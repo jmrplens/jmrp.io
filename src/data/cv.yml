@@ -205,14 +205,20 @@
 - title: Experience
   type: time_table
   contents:
-    - title: DevOps Engineer - R&D
+    - title: R&D Software Developer
       institution: Power Electronics (<a href="https://power-electronics.com/en/">PE</a>)
       department: Solar + Storage (<a href="https://power-electronics.com/en/solar/">PE Solar</a>)
       location: Lliria, Spain
       year: Apr 2023 - Current
+      summary:
+        "Firmware development for embedded systems (STM32 and ARM architectures) applied to power electronics, specifically for utility-scale inverters in renewable energy plants (Solar & Storage).
+        <br><br>
+        Key contributions:"
       description:
-        - Development on ARM architecture.
-        - Development of new functionalities and unit tests.
+        - Development of real-time control software in C for high-power inverters using CMake, Keil uVision and CLion.
+        - "Implementation and maintenance of industrial communication protocols: I2C, SPI, SCI, RS485, Modbus RTU and Modbus TCP."
+        - Design and development of automated testing tools and verification scripts using Python.
+        - Management of software versions and collaborative workflows using Git.
 
     - title: Predoctoral researcher
       institution: Polytechnic University of Valencia (<a href="http://www.upv.es/en"><b>UPV</b></a>) + Spanish National Research Council (<a href="http://www.upv.es/en"><b>CSIC</b></a>) + Hospital La Fe (<a href="https://www.iislafe.es/en/"><b>IIS</b></a>)
@@ -333,7 +339,9 @@
       icon: fas fa-code
       items:
         - name: MATLAB
-          level: Professional level.
+          level: Advanced level.
+        - name: C
+          level: Advanced level.
         - name: C++
           level: Intermediate level..
         - name: Python
@@ -352,9 +360,9 @@
       icon: fas fa-window-maximize
       items:
         - name: PyCharm
-          level: Intermediate level.
+          level: Advanced level.
         - name: CLion
-          level: Intermediate level.
+          level: Advanced level.
         - name: COMSOL Multiphysics
           level: Advanced level.
         - name: LabView
