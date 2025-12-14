@@ -1,0 +1,87 @@
+---
+import "../styles/global.css";
+// Supports weights 100-900
+import "../styles/fonts.css";
+
+import fs from "fs";
+import path from "path";
+import yaml from "js-yaml";
+
+const sitePath = path.join(process.cwd(), "src/data/site.yml");
+const siteRaw = fs.readFileSync(sitePath, "utf8");
+const siteData = yaml.load(siteRaw) as any;
+
+interface Props {
+    title: string;
+    description?: string;
+    image?: string;
+    type?: string;
+    schema?: any;
+}
+
+const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+
+const {
+    title,
+    description = siteData.description,
+    image = siteData.image,
+    type = "website",
+    schema,
+} = Astro.props;
+
+// Default Schema if none provided
+const defaultSchema = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    url: siteData.url,
+    name: "José M. Requena Plens",
+    headline: title,
+    description: description,
+    author: {
+        "@type": "Person",
+        name: siteData.author,
+    },
+};
+
+const jsonLD = schema || defaultSchema;
+---
+
+<!-- Global Metadata -->
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<meta name="generator" content={Astro.generator} />
+
+<!-- SEO -->
+<meta name="keywords" content={siteData.keywords} />
+<meta name="author" content={siteData.author} />
+<meta name="fediverse:creator" content={siteData.fediverse_creator} />
+
+<link rel="canonical" href={canonicalURL} />
+
+<!-- Primary Meta Tags -->
+<title>{title}</title>
+<meta name="title" content={title} />
+<meta name="description" content={description} />
+
+<!-- Open Graph / Facebook -->
+<meta property="og:type" content={type} />
+<meta property="og:url" content={Astro.url} />
+<meta property="og:title" content={title} />
+<meta property="og:description" content={description} />
+<meta property="og:image" content={new URL(image, Astro.url)} />
+<meta property="og:site_name" content="José M. Requena Plens" />
+
+<!-- Twitter -->
+<meta property="twitter:card" content="summary_large_image" />
+<meta property="twitter:url" content={Astro.url} />
+<meta property="twitter:title" content={title} />
+<meta property="twitter:description" content={description} />
+<meta property="twitter:image" content={new URL(image, Astro.url)} />
+
+<!-- JSON-LD -->
+<script
+    type="application/ld+json"
+    nonce="NGINX_CSP_NONCE"
+    set:html={JSON.stringify(jsonLD)}
+/>

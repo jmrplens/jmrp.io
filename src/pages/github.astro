@@ -1,0 +1,121 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+---
+
+<BaseLayout
+    title="GitHub Repositories | José Manuel Requena Plens"
+    description="My Open Source Contributions"
+>
+    <div class="container">
+        <h1 class="page-title">GitHub Repositories</h1>
+        <p class="intro">
+            Check out my latest open source contributions and projects on <a
+                href="https://github.com/jmrplens"
+                target="_blank">GitHub</a
+            >.
+        </p>
+
+        <div id="repos-container" class="repos-grid">
+            <div class="loading">Loading repositories...</div>
+        </div>
+    </div>
+</BaseLayout>
+
+<script src="/scripts/github.js" nonce="NGINX_CSP_NONCE" defer></script>
+
+<style>
+    .page-title {
+        margin-bottom: var(--space-md);
+        border-bottom: 2px solid var(--color-border);
+        padding-bottom: var(--space-md);
+    }
+
+    .intro {
+        font-size: 1.1rem;
+        color: var(--color-text-muted);
+        margin-bottom: var(--space-xl);
+    }
+
+    .repos-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: var(--space-lg);
+    }
+
+    .repo-card {
+        background-color: var(--color-bg-secondary);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-md);
+        padding: var(--space-md);
+        display: flex;
+        flex-direction: column;
+        transition:
+            transform 0.2s,
+            box-shadow 0.2s;
+    }
+
+    .repo-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        border-color: var(--color-primary);
+    }
+
+    .repo-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: var(--space-sm);
+    }
+
+    .repo-header h3 {
+        margin: 0;
+        font-size: 1.2rem;
+    }
+
+    .repo-header a {
+        color: var(--color-primary);
+        text-decoration: none;
+    }
+
+    .repo-header a:hover {
+        text-decoration: underline;
+    }
+
+    .stars {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 0.9rem;
+        color: var(--color-text-muted);
+    }
+
+    .repo-desc {
+        color: var(--color-text-muted);
+        font-size: 0.95rem;
+        flex-grow: 1;
+        margin-bottom: var(--space-md);
+    }
+
+    .repo-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.85rem;
+        color: var(--color-text-muted);
+    }
+
+    .lang-badge {
+        background-color: var(--color-border);
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 0.8rem;
+    }
+
+    .loading,
+    .error {
+        grid-column: 1 / -1;
+        text-align: center;
+        color: var(--color-text-muted);
+        padding: var(--space-lg);
+    }
+</style>

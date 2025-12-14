@@ -1,0 +1,433 @@
+- title: General Information
+  type: map
+  contents:
+    - name: Full Name
+      value: José Manuel Requena Plens
+    - name: Languages
+      value: Spanish (native), English (intermediate)
+    - name: Download CV 
+      links:
+        - link: /pdf/CV_RequenaPlensJoseManuel_SPA.pdf
+          name: CV PDF [SPANISH]
+        - link: /pdf/CV_RequenaPlensJoseManuel_ENG.pdf
+          name: CV PDF [ENGLISH]
+
+- title: Formal education
+  type: time_table
+  contents:
+    - title: PhD in Health and Wellness Technologies
+      institution: Polytechnic University of Valencia (<a href="http://www.upv.es/en"><b>UPV</b></a>)
+      department: Ultrasound Medical and Industrial Laboratory (<a href="https://www.i3m-detectors.i3m.upv.es/research/ultrasound-medical-and-industrial-laboratory-umil/"><b>UMIL</b></a>)
+      location: Valencia, Spain
+      year: current
+      summary: 
+        Industrial and biomedical applications of metamaterials for the control of acoustic beams.
+        <br><br>
+        In this project, we propose to combine new air-coupled ultrasound transducers with hyperbolic metamaterials to design vision systems that exceed the imaging capabilities of traditional systems. We will investigate the application of acoustic hyperlenses in the biomedical context to image beyond the diffraction limit, enabling imaging with deep sub-wavelength resolution. In addition, we will investigate the capabilities of air-coupled chiral hyperlenses and Bessel beams to manipulate objects, aiming to efficiently trap, move and rotate microparticles on the subwavelength scale. The results of this project could have a wide application in biomedical applications but also in agri-food and industrial applications.
+      linkitems:
+        - link: /pdf/degree/PhDExpEng.pdf
+          linkname: 'Academic record'
+    - title: Master's Degree in Acoustical Engineering
+      institution: Polytechnic University of Valencia (<a href="http://www.upv.es/en"><b>UPV</b></a>)
+      department: Higher Polytechnic School of Gandia (<a href="http://www.upv.es/contenidos/CGANDIA/index-en.html"><b>EPSG</b></a>)
+      location: Gandia, Spain
+      year: 2019
+      summary: 
+        "Degree obtained with honors in: Fundamentals of Acoustics, Acoustic Isolation, Musical Acoustics, Signal Processing in Acoustic Engineering, Ultrasonics and Acoustic Simulation Techniques.
+        <br><br>
+        Final Master's thesis entitled <strong>Difusores acústicos basados en resonadores de membrana y placa</strong> ('Acoustic diffusers based on membrane and plate resonators'), qualified with honors with special mention."
+      linkitems:
+        - link: /pdf/degree/Acoustic.pdf
+          linkname: 'Diploma'
+        - link: /pdf/degree/AcousticExpEng.pdf
+          linkname: 'Academic record'
+    - title: Degree in Telecommunication Engineering in Sound and Image
+      institution: University of Alicante (<a href="https://www.ua.es/"><b>UPV</b></a>)
+      department: Higher Polytechnic School (<a href="https://eps.ua.es/en/home.html"><b>EPS</b></a>)
+      location: Alicante, Spain
+      year: 2018
+      summary: 
+        "Degree obtained together with the 2 specializations: Acoustic Engineering and Audiovisual Technology.
+        <br><br>
+        Final Degree Work entitled <a href='http://hdl.handle.net/10045/77578'>Estudio de la relación campo directo/reverberado; útil/perjudicial</a> ('Study of the direct/reverberated field relationship; useful/harmful')"
+      linkitems:
+        - link: /pdf/degree/Telecom.pdf
+          linkname: 'Diploma'
+        - link: /pdf/degree/TelecomExpEng.pdf
+          linkname: 'Academic record'
+    - title: Certificate of Higher Education in Electronics Technician & Superior Sound Technician
+      institution: <a href="https://elche.salesianos.edu/colegio/san-jose-artesano/">IES Salesianos (San Jóse Artesano)</a> & <a href="https://ies-berlanga.info/index.php/es/">IES Luis García Berlanga</a>
+      location: Elche & Alicante, Spain
+      year: 2009/2011
+      linkitems:
+        - link: /pdf/degree/CFGM_Electronica.pdf
+          linkname: 'Diploma (Electronics)'
+        - link: /pdf/degree/CFGS_Sonido.pdf
+          linkname: 'Diploma (Sound)'
+
+- title: Certificates
+  type: list_groups
+  contents:
+    - category: Occupational Health and Safety
+      icon: fas fa-medkit
+      items:
+        - name: Generic
+          school: INVASSAT
+          time: 50 Hours
+          link: /pdf/certificates/PRL/PRL_Generico.pdf
+          linkname: CERT
+        - name: Nanomaterials
+          school: INVASSAT
+          time: 50 Hours
+          link: /pdf/certificates/PRL/PRL_Nanomateriales.pdf
+          linkname: CERT
+        - name: Chemical sector
+          school: INVASSAT
+          time: 50 Hours
+          link: /pdf/certificates/PRL/PRL_Quimico.pdf
+          linkname: CERT
+        - name: Emergencies
+          school: INVASSAT
+          time: 70 Hours
+          link: /pdf/certificates/PRL/PRL_Emergencias.pdf
+          linkname: CERT
+        - name: Nutrition
+          school: INVASSAT
+          time: 50 Hours
+          link: /pdf/certificates/PRL/PRL_Alimentario.pdf
+          linkname: CERT
+        - name: Educational
+          school: INVASSAT
+          time: 50 Hours
+          link: /pdf/certificates/PRL/PRL_Educativo.pdf
+          linkname: CERT
+        - name: Services
+          school: INVASSAT
+          time: 50 Hours
+          link: /pdf/certificates/PRL/PRL_Servicios.pdf
+          linkname: CERT
+        - name: Researcher
+          school: UPV
+          time: 15 Hours
+          link: /pdf/certificates/PRL/CertificadoPRLUPV.pdf
+          linkname: CERT
+
+    - category: Transversal competences
+      icon: fas fa-users
+      items:
+        - name: Gender perspective
+          school: EVES
+          time: 20 Hours
+          link: /pdf/certificates/PerspectivaDeGenero.pdf
+          linkname: CERT
+        - name: Teamwork
+          school: Labora
+          time: 25 Hours
+          link: /pdf/certificates/TrabajoEnEquipo.pdf
+          linkname: CERT
+        - name: Design Thinking
+          school: Labora
+          time: 25 Hours
+          link: /pdf/certificates/DesignThinking.pdf
+          linkname: CERT
+        - name: Critical Thinking
+          school: Labora
+          time: 25 Hours
+          link: /pdf/certificates/PensamientoCritico.pdf
+          linkname: CERT
+        - name: Adaptability, flexibility and agility
+          school: Labora
+          time: 25 Hours
+          link: /pdf/certificates/AdaptacionFlexibilidadAgilidad.pdf
+          linkname: CERT
+        - name: Autonomy, innovation, ...
+          school: Labora
+          time: 25 Hours
+          link: /pdf/certificates/AutonomiaInnovacion.pdf
+          linkname: CERT
+        - name: Improving profesional efficiency
+          school: Labora
+          time: 25 Hours
+          link: /pdf/certificates/MejoraEficiencia.pdf
+          linkname: CERT
+        - name: Entrepreneur gender perspective
+          school: UPV
+          time: 20 Hours
+          link: /pdf/certificates/EmprendimientoPerspectivaGenero.pdf
+          linkname: CERT
+    - category: Labor/Industrial
+      icon: fas fa-industry
+      items:
+        - name: Op. Industrial trucks
+          school: Gescoform
+          time: 15 Hours
+          link: /pdf/certificates/Certificado_Carretilla.pdf
+          linkname: CERT
+        - name: Food Hygiene Course
+          school: Asonoman
+          time: 30 Hours
+          link: https://www.asonaman.es/files/crt/2022/10/09/CBBUWIQEBMUJKENWAKEZHYAGHKKA.pdf
+          linkname: CERT
+        - name: Self-protection plans
+          school: INVASSAT
+          time: 15 Hours
+          link: /pdf/certificates/PlanesAutoproteccion.pdf
+          linkname: CERT
+        - name: Static electricity
+          school: INVASSAT
+          time: 15 Hours
+          link: /pdf/certificates/ElectricidadEstatica.pdf
+          linkname: CERT
+        - name: Data privacy
+          school: CSIRT-CV
+          time: 10 Hours
+          link: /pdf/certificates/ProteccionDeDatos.pdf
+          linkname: CERT
+    - category: Information technology
+      icon: fas fa-laptop-code
+      items:
+        - name: Using Python for Research
+          school: HardvardX
+          time: 50 Hours
+          link: https://courses.edx.org/certificates/f1fb6cbd6f39431c9f57c7ee3a5dc3ad
+          linkname: CERT
+        - name: Analyzing Data With Python
+          school: IBM
+          time: 20 Hours
+          link: https://courses.edx.org/certificates/62fed4c86a17427ebb5b6bbbc39e34df
+          linkname: CERT
+        - name: Visualizing Data with Python
+          school: IBM
+          time: 20 Hours
+          link: https://courses.edx.org/certificates/0f49b9baa42f4464b2e0d99ade544790
+          linkname: CERT
+
+- title: Experience
+  type: time_table
+  contents:
+    - title: DevOps Engineer - R&D
+      institution: Power Electronics (<a href="https://power-electronics.com/en/">PE</a>)
+      department: Solar + Storage (<a href="https://power-electronics.com/en/solar/">PE Solar</a>)
+      location: Lliria, Spain
+      year: Apr 2023 - Current
+      description:
+        - Development on ARM architecture.
+        - Development of new functionalities and unit tests.
+
+    - title: Predoctoral researcher
+      institution: Polytechnic University of Valencia (<a href="http://www.upv.es/en"><b>UPV</b></a>) + Spanish National Research Council (<a href="http://www.upv.es/en"><b>CSIC</b></a>) + Hospital La Fe (<a href="https://www.iislafe.es/en/"><b>IIS</b></a>)
+      department: Medical Imaging and Therapy Systems (<a href="https://www.i3m-stim.i3m.upv.es/"><b>i3M</b></a>)
+      year: Jan 2023 - Apr 2023
+      location: Valencia, Spain
+      summary: 
+        'Researcher in the R&D line: <b>Acoustic Metamaterials for Ultrasound Histotripsy treatments</b>.
+        <br><br>
+        <b>Project</b>: New generation of smart metasurfaces based on additive manufacturing for strategic applications in telecommunications (Metasmart). Funded by the Valencian Agency for Innovation (Reference: INNEST/2022/345).
+        <br><br>
+        Some planned tasks:'
+      description:
+        - Ultra-close focus acoustic lens design.
+        - Prototype manufacturing.
+        - Experimentation with ex-vivo tissues.
+
+    - title: Predoctoral researcher
+      institution: Polytechnic University of Valencia (<a href="http://www.upv.es/en"><b>UPV</b></a>) + Spanish National Research Council (<a href="http://www.upv.es/en"><b>CSIC</b></a>)
+      department: Medical Imaging and Therapy Systems (<a href="https://www.i3m-stim.i3m.upv.es/"><b>i3M</b></a>)
+      year: Jul 2021 - Jul 2022
+      location: Valencia, Spain
+      summary: 
+        'The main objective is to conduct research and development of acoustic metamaterials for use in architectural applications and medical imaging.
+        <br><br>
+        Goals achieved:'
+      description:
+        - Theoretical development of acoustic metadiffusers based on membranes or plates reducing the size of commercial diffusers.
+        - Simulation of the acoustic diffusers and validation of results (MATLAB & COMSOL).
+        - title: 'Two publications in national and international congresses:'
+          contents: 
+            - Tecniacústica - <a href="/pdf/paper-resources/Conferences/Tecniacustica/JimenezTEC2020a.pdf">Beyond Schroeder diffusers using acoustic metasurfaces</a>.
+            - Euronoise - <a href="/pdf/paper-resources/Conferences/Euronoise/plensEuro2021_2.pdf">Sound diffusing metasurfaces based on elastic plates and membranes</a>
+        - Development and simulation of metamaterial-based waveguides for improved ultrasound resolution in air.
+        - Fabrication of waveguide prototypes.
+        - Validated experimental results against those obtained in simulation.
+        - Advisor of the Master thesis of a student of the Master's Degree in Acoustic Engineering of the UPV.
+
+    - title: Researcher in European project
+      institution: Higher Polytechnic School of Gandia (<a href="http://www.upv.es/contenidos/CGANDIA/index-en.html"><b>UPV</b></a>) + European Space Agency (<a href="https://www.esa.int/"><b>ESA</b></a>)
+      department: Complex Media Acoustics Group of IGIC (<a href="http://igic.webs.upv.es/"><b>IGIC</b></a>)
+      year: Feb 2020 - Jul 2021
+      location: Gandia, Spain
+      summary: 
+        "Implement and experimentally validate a sound mitigation method, applicable to a real space vehicle launch configuration (VEGA), that results in a significant decrease in sound pressure levels generated in the launch area during spacecraft liftoff.
+        <br><br>
+        Project funded by ESA (European Space Agency) with reference ESA AO/1-9479/18/NL/LvH, in collaboration with: CNRS/Laboratoire d'Acoustique de la Université du Mans; COMET Ingeniería; Spanish National Research Council (CSIC) and Polytechnic University of Madrid.
+        <br><br>
+        All project objectives were completed at 100%:"
+      description:
+        - Design of the optimum geometry of the acoustic metamaterial to reduce noise levels.
+        - Simulation of a real environment to validate design performance (MATLAB, COMSOL & Python).
+        - Design of the industrial model for the manufacture of the prototype by means of plastic injection.
+        - Development of software for acoustic measurements according to ISO 10534-2:1998 and ASTM 2611-19 standards. <a href="https://github.com/jmrplens/A-Lab">A|Lab</a> 
+        - 'Design and development of a 3-axis robotic system to perform experimental measurements. Photos and some information here: <a href="https://cienciagandia.webs.upv.es/en/2022/03/metamaterial-to-reduce-noise-in-space-rocket-launches/">NEWS</a>'
+        - Results validated and accepted by ESA.
+        - title: 'Three publications/presentations at international congresses (Euronoise and ECSSMET) and one at a national congress (Tecniacústica):'
+          contents: 
+            - Euronoise - <a href="/pdf/paper-resources/Conferences/Euronoise/plensEuro2021.pdf">Perfect broadband sound absorber metamaterial for noise reduction in a rocket launch</a>.
+            - Euronoise - <a href="/pdf/paper-resources/Conferences/Euronoise/EscartiEuro2021.pdf">Application of metamaterials to control noise scattering during space vehicle lift-off</a>.
+            - 'ECSSMET - Launch sound level characterisation and mitigation: numerical modelling framework and metamaterial proof of concept.'
+            - Tecniacústica - <a href="/pdf/paper-resources/Conferences/Tecniacustica/plensTEC2020.pdf">Acoustic field prediction during the launch of rockets</a>.
+
+    - title: Research internship
+      institution: University of Alicante (<a href="https://www.ua.es/en/index.html"><b>UA</b></a>)
+      department: Dep. of Physics, Systems Engineering and Signal Theory (<a href="https://dfests.ua.es/"><b>DFESTS</b></a>)
+      year: Feb 2018 - Jul 2018
+      location: Alicante, Spain
+      summary: 
+        'Internship in different research projects in the <a href="https://iufacyt.ua.es/es/grupos-de-investigacion/acustica-aplicada.html">Applied Acoustics Group</a>, belonging to the University Institute of Physics Applied to Sciences and Technologies of the Higher Polytechnic School of Alicante.
+        <br><br>
+        Goals achieved:'
+      description:
+        - Simulation of acoustic models.
+        - Acoustic measurements by means of a LabView-controlled robotic system.
+        - 'Investigation of the acoustic radiation efficiency (Vibration-borne noise) of metallic plates for an initial study of ship noise emissions in water. Carried out in collaboration with <a href="https://electronica-submarina.com/">SAES</a>, here you can read a news item on the subject: <a href="https://electronica-submarina.com/2018/11/05/saes-latest-researches-on-underwater-noise-by-ships-are-presented-at-tecniacustica/">NEWS</a>.'
+        - title: 'A publication at a national congress:'
+          contents: 
+            - Tecniacústica - <a href="/pdf/paper-resources/Conferences/Tecniacustica/saura2018.pdf">Comportamiento vibroacústico de contenedores cilíndricos en aire</a>.
+
+    - title: Founder and Vocal Member
+      institution: AmicroTech (<a href="https://www.linkedin.com/company/a-\%C2\%B5tech/"><b>AµTech</b></a>)
+      department: University of Alicante (<a href="https://www.ua.es/en/index.html"><b>UA</b></a>)
+      year: Sep 2016 - Jul 2018
+      location: Alicante, Spain
+      summary: 
+        'Association based at the Higher Polytechnic School of the University of Alicante. Founded in 2016. Promotes project-oriented microcontroller programming knowledge.
+        <br><br>
+        Activities performed:'
+      description:
+        - Group classes of reinforcement and extension of the subject "Digital Electronic Systems" of the Degree in Sound and Image Engineering of the University of Alicante.
+        - Laboratory organization and planning (located at the Colegio Mayor).
+        - Communication and Public Relations.
+
+    - title: Sound technician
+      institution: Acusticox (<a href="http://acusticox.com/"><b>web</b></a>)
+      year: Jun 2011 - Feb 2018
+      location: Cox, Spain
+      description:
+        - Equipment installation and adjustment for events.
+        - Equipment installation and adjustment for permanent installation.
+        - FOH Technician.
+        - Customer acquisition.
+
+    - title: Laboratory technician
+      institution: Profdent (<a href="https://profdent.es/"><b>web</b></a>)
+      year: Sep 2005 - Nov 2009
+      location: Alicante, Spain
+      description:
+        - Reception of work from dentists.
+        - Model preparation and retouching.
+        - Minor responsibilities.
+
+- title: Other knowledge and skills
+  type: list_groups
+  contents:
+    - category: Programing languages
+      icon: fas fa-code
+      items:
+        - name: MATLAB
+          level: Professional level.
+        - name: C++
+          level: Intermediate level..
+        - name: Python
+          level: Intermediate/advanced level.
+        - name: Java
+          level: Intermediate level.
+        - name: VBA
+          level: Elementary level.
+        - name: HTML
+          level: Intermediate level.
+        - name: PHP
+          level: Elementary level.
+        - name: CSS
+          level: Intermediate level.
+    - category: Software
+      icon: fas fa-window-maximize
+      items:
+        - name: PyCharm
+          level: Intermediate level.
+        - name: CLion
+          level: Intermediate level.
+        - name: COMSOL Multiphysics
+          level: Advanced level.
+        - name: LabView
+          level: Intermediate level.
+        - name: CATT-Acoustic
+          level: Intermediate/advanced.
+        - name: EASE
+          level: Intermediate level.
+        - name: Excel
+          level: Advanced level.
+        - name: Suite Adobe
+          level: Intermediate level.
+    - category: Document composition
+      icon: fas fa-book
+      items:
+        - name: LaTeX
+          level: Advanced level.
+        - name: Word
+          level: Intermediate/advanced level.
+        - name: Power Point
+          level: Advanced level.
+    - category: Microcontroller development
+      icon: fas fa-microchip
+      items:
+        - name: Texas Instruments
+          level: Intermediate level.
+        - name: Arduino
+          level: Advanced level.
+        - name: Espressif
+          level: Advanced level.
+    - category: Operating systems
+      icon: fas fa-desktop
+      items:
+        - name: MacOS
+          level: Advanced level.
+        - name: Windows
+          level: Advanced level.
+        - name: Linux
+          level: Intermediate/advanced level.
+        - name: iOS
+          level: Advanced level.
+        - name: Android
+          level: Intermediate level.
+    - category: Instrumentation
+      icon: fas fa-toolbox
+      items:
+        - name: DAQs
+          level: NI PXI & Compact, TiePie HS, Red Pitaya.
+        - name: Laser Vibrometer
+          level: Polytec.
+        - name: Accelerometers
+          level: Brüel & Kjær.
+        - name: Microphones
+          level: Brüel & Kjær.
+        - name: Sound level meters
+          level: Brüel & Kjær, NTI, CESVA.
+        - name: Oscilloscopes
+          level: Tektronix, Rigol.
+
+
+# - title: Academic Interests
+#   type: nested_list
+#   contents:
+#     - title: Topic 1.
+#       items: 
+#         - Description 1.
+#         - Description 2.
+#     - title: Topic 2.
+#       items:
+#         - Description 1.
+#         - Description 2.
+
+# - title: Other Interests
+#   type: list
+#   contents:
+#     - <u>Hobbies:</u> Hobby 1, Hobby 2, etc.

@@ -1,0 +1,569 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { getCVData } from "../utils/cv";
+import { Icon } from "astro-icon/components";
+
+const cvData = getCVData();
+
+// Helper to map FontAwesome classes to Iconify names
+const getIconName = (faClass: string) => {
+    if (!faClass) return "";
+    const parts = faClass.split(" ");
+    const style = parts[0]; // fab, fas
+    const name = parts[1]?.replace("fa-", "") || "";
+
+    if (style === "fab") return `fa-brands:${name}`;
+    if (style === "fas") return `fa-solid:${name}`;
+    return `fa-solid:${name}`; // Default
+};
+
+// Construct Person Schema
+const personSchema = {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    name: "José Manuel Requena Plens",
+    jobTitle: "R&D Engineer",
+    worksFor: {
+        "@type": "Organization",
+        name: "Power Electronics",
+    },
+    url: "https://jmrp.io",
+    sameAs: [
+        "https://github.com/jmrplens",
+        "https://mstdn.jmrp.io/@jmrplens",
+        "https://linkedin.com/in/jmrplens",
+    ],
+    knowsAbout:
+        cvData
+            .find((s) => s.title === "Other knowledge and skills")
+            ?.contents?.flatMap((g: any) => g.items.map((i: any) => i.name)) ||
+        [],
+    alumniOf:
+        cvData
+            .find((s) => s.title === "Formal education")
+            ?.contents?.map((edu: any) => ({
+                "@type": "EducationalOrganization",
+                name: edu.institution,
+                department: edu.department,
+            })) || [],
+};
+---
+
+<BaseLayout
+    title="CV | José Manuel Requena Plens"
+    description="Curriculum Vitae"
+    type="profile"
+    schema={personSchema}
+>
+    <div class="cv-container container">
+        <div class="cv-header">
+            <h1>Curriculum Vitae</h1>
+        </div>
+
+        <nav class="cv-toc">
+            <ul>
+                <li><a href="#general-information">General</a></li>
+                <li><a href="#experience">Experience</a></li>
+                <li><a href="#formal-education">Education</a></li>
+                <li><a href="#certificates">Certificates</a></li>
+                <li><a href="#other-knowledge-and-skills">Skills</a></li>
+            </ul>
+        </nav>
+
+        {
+            // Define custom order
+            [
+                cvData.find((s) => s.title === "General Information"),
+                cvData.find((s) => s.title === "Experience"),
+                cvData.find((s) => s.title === "Formal education"),
+                cvData.find((s) => s.title === "Certificates"),
+                cvData.find((s) => s.title === "Other knowledge and skills"),
+            ]
+                .filter(Boolean)
+                .map((section: any) => (
+                    <section
+                        class="cv-section"
+                        id={section.title.toLowerCase().replace(/ /g, "-")}
+                    >
+                        <h2 class="section-title">{section.title}</h2>
+
+                        {section.type === "map" && (
+                            <div class="cv-map">
+                                {section.contents.map((item: any) => (
+                                    <div class="map-item">
+                                        <strong>{item.name}:</strong>
+                                        {item.value && (
+                                            <span>{item.value}</span>
+                                        )}
+                                        {item.links && (
+                                            <div class="links">
+                                                {item.links.map((link: any) => (
+                                                    <a
+                                                        href={link.link}
+                                                        class="btn-sm"
+                                                        download={link.download}
+                                                    >
+                                                        {link.name}
+                                                    </a>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {section.type === "time_table" && (
+                            <div class="timeline">
+                                {section.contents.map((item: any) => (
+                                    <div class="timeline-item">
+                                        <div class="timeline-card">
+                                            <div class="item-header">
+                                                <h3>{item.title}</h3>
+                                                <span class="year">
+                                                    {item.year}
+                                                </span>
+                                            </div>
+                                            {item.institution && (
+                                                <div
+                                                    class="institution"
+                                                    set:html={item.institution}
+                                                />
+                                            )}
+                                            {item.department && (
+                                                <div
+                                                    class="department"
+                                                    set:html={item.department}
+                                                />
+                                            )}
+                                            {item.location && (
+                                                <div class="location">
+                                                    <Icon name="fa-solid:map-marker-alt" />{" "}
+                                                    {item.location}
+                                                </div>
+                                            )}
+
+                                            {item.summary && (
+                                                <div
+                                                    class="description summary"
+                                                    set:html={item.summary}
+                                                />
+                                            )}
+
+                                            {item.description &&
+                                                Array.isArray(
+                                                    item.description,
+                                                ) && (
+                                                    <ul class="task-list">
+                                                        {item.description.map(
+                                                            (desc: any) => {
+                                                                if (
+                                                                    typeof desc ===
+                                                                    "string"
+                                                                )
+                                                                    return (
+                                                                        <li>
+                                                                            <div
+                                                                                set:html={
+                                                                                    desc
+                                                                                }
+                                                                            />
+                                                                        </li>
+                                                                    );
+                                                                if (
+                                                                    desc.title &&
+                                                                    desc.contents
+                                                                ) {
+                                                                    // Nested contents in description
+                                                                    return (
+                                                                        <li>
+                                                                            <strong>
+                                                                                {
+                                                                                    desc.title
+                                                                                }
+                                                                            </strong>
+                                                                            <ul>
+                                                                                {desc.contents.map(
+                                                                                    (
+                                                                                        sub: string,
+                                                                                    ) => (
+                                                                                        <li>
+                                                                                            <div
+                                                                                                set:html={
+                                                                                                    sub
+                                                                                                }
+                                                                                            />
+                                                                                        </li>
+                                                                                    ),
+                                                                                )}
+                                                                            </ul>
+                                                                        </li>
+                                                                    );
+                                                                }
+                                                                return null;
+                                                            },
+                                                        )}
+                                                    </ul>
+                                                )}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {section.type === "list_groups" && (
+                            <div class="list-groups-compact">
+                                {section.contents.map((group: any) => (
+                                    <div class="group-category">
+                                        <h3>
+                                            {group.icon && (
+                                                <Icon
+                                                    name={getIconName(
+                                                        group.icon,
+                                                    )}
+                                                />
+                                            )}{" "}
+                                            {group.category}
+                                        </h3>
+                                        <div class="compact-list">
+                                            {group.items.map((item: any) => (
+                                                <div class="compact-item">
+                                                    <div class="compact-header">
+                                                        <span class="compact-name">
+                                                            {item.name}
+                                                        </span>
+                                                        {item.time && (
+                                                            <span class="compact-time">
+                                                                {item.time}
+                                                            </span>
+                                                        )}
+                                                    </div>
+
+                                                    {/* Additional Details */}
+                                                    {(item.school ||
+                                                        item.level ||
+                                                        item.link) && (
+                                                        <div class="compact-details">
+                                                            {item.school && (
+                                                                <span class="detail-school">
+                                                                    {
+                                                                        item.school
+                                                                    }
+                                                                </span>
+                                                            )}
+                                                            {item.school &&
+                                                                item.level && (
+                                                                    <span class="separator">
+                                                                        •
+                                                                    </span>
+                                                                )}
+                                                            {item.level && (
+                                                                <span class="detail-level">
+                                                                    {item.level}
+                                                                </span>
+                                                            )}
+                                                            {(item.school ||
+                                                                item.level) &&
+                                                                item.link && (
+                                                                    <span class="separator">
+                                                                        •
+                                                                    </span>
+                                                                )}
+                                                            {item.link && (
+                                                                <a
+                                                                    href={
+                                                                        item.link
+                                                                    }
+                                                                    target="_blank"
+                                                                    class="detail-link"
+                                                                >
+                                                                    {item.linkname ||
+                                                                        "View"}{" "}
+                                                                    <Icon
+                                                                        name="fa-solid:external-link-alt"
+                                                                        class="text-xs"
+                                                                    />
+                                                                </a>
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </section>
+                ))
+        }
+
+        <style>
+            .cv-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: var(--space-md);
+                border-bottom: 2px solid var(--color-border);
+                padding-bottom: var(--space-md);
+            }
+
+            .cv-toc {
+                position: webkit-sticky; /* Safari support */
+                position: sticky;
+                top: 70px; /* Header (64px) + small gap */
+                background: var(--color-bg);
+                padding: var(--space-sm) 0;
+                margin-bottom: var(--space-lg);
+                z-index: 10;
+                border-bottom: 1px solid var(--color-border);
+            }
+
+            .cv-toc ul {
+                display: flex;
+                gap: var(--space-md);
+                list-style: none;
+                padding: 0;
+                margin: 0;
+                overflow-x: auto;
+            }
+
+            .cv-toc a {
+                text-decoration: none;
+                color: var(--color-text-muted);
+                font-weight: 600;
+                font-size: 0.95rem;
+                white-space: nowrap;
+            }
+
+            .cv-toc a:hover {
+                color: var(--color-primary);
+            }
+
+            .cv-section {
+                margin-bottom: var(--space-lg);
+            }
+
+            .section-title {
+                /* Overriding global default to match CV preference (border-bottom) */
+                border-left: none;
+                border-bottom: 1px solid var(--color-border);
+                padding-left: 0;
+            }
+
+            /* Map Type */
+            .cv-map {
+                display: flex;
+                flex-direction: column;
+                gap: var(--space-sm);
+            }
+
+            .map-item {
+                font-size: 1.1rem;
+            }
+
+            .links {
+                display: inline-flex;
+                gap: var(--space-sm);
+                margin-left: var(--space-sm);
+            }
+
+            /* Time Table */
+            .timeline {
+                border-left: 2px solid var(--color-border);
+                padding-left: var(--space-lg);
+            }
+
+            .timeline-item {
+                position: relative;
+                margin-bottom: var(--space-lg);
+            }
+
+            .timeline-item::before {
+                content: "";
+                position: absolute;
+                left: calc(-1 * var(--space-lg) - 5px);
+                top: 24px; /* Align with card top/header roughly */
+                width: 10px;
+                height: 10px;
+                border-radius: 50%;
+                background-color: var(--color-primary);
+                z-index: 1;
+            }
+
+            .timeline-card {
+                background-color: var(--color-bg-secondary);
+                border: 1px solid var(--color-border);
+                border-radius: var(--radius-md);
+                padding: var(--space-lg);
+                position: relative;
+                transition:
+                    transform 0.2s,
+                    border-color 0.2s;
+            }
+
+            .timeline-card:hover {
+                transform: translateY(-2px);
+                border-color: var(--color-primary);
+            }
+
+            /* Arrow pointing to timeline */
+            .timeline-card::before {
+                content: "";
+                position: absolute;
+                top: 20px;
+                left: -8px;
+                width: 16px;
+                height: 16px;
+                background-color: var(--color-bg-secondary);
+                border-left: 1px solid var(--color-border);
+                border-bottom: 1px solid var(--color-border);
+                transform: rotate(45deg);
+            }
+
+            .timeline-card:hover::before {
+                border-color: var(--color-primary); /* Match hover border */
+            }
+
+            .item-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: baseline;
+                margin-bottom: var(--space-xs);
+            }
+
+            .year {
+                font-family: var(--font-mono);
+                color: var(--color-accent);
+                font-weight: bold;
+            }
+
+            .institution,
+            .department {
+                font-size: 1.1rem;
+                color: var(--color-text-muted);
+                font-weight: 500;
+            }
+
+            .location {
+                font-size: 0.9rem;
+                color: var(--color-text-muted);
+                font-style: italic;
+                margin-bottom: var(--space-md);
+            }
+
+            .main-desc {
+                margin-bottom: var(--space-md);
+            }
+
+            .task-list {
+                padding-left: var(--space-lg);
+            }
+
+            .task-list li {
+                margin-bottom: var(--space-xs);
+            }
+
+            .list-groups-compact {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+                gap: var(--space-lg) var(--space-lg);
+                align-items: start;
+            }
+
+            .group-category {
+                break-inside: avoid;
+            }
+
+            .compact-list {
+                display: flex;
+                flex-direction: column;
+                gap: var(--space-xs);
+                border-top: 1px solid var(--color-border);
+                padding-top: var(--space-sm);
+            }
+
+            .compact-item {
+                padding: var(--space-xs) var(--space-sm);
+                border-bottom: 1px dotted var(--color-border);
+                display: flex;
+                flex-direction: column;
+            }
+
+            .compact-item:last-child {
+                border-bottom: none;
+            }
+
+            @media (min-width: 600px) {
+                .compact-item {
+                    flex-direction: row;
+                    justify-content: space-between;
+                    align-items: baseline;
+                    gap: var(--space-sm);
+                }
+
+                .compact-header {
+                    flex: 1;
+                    display: flex;
+                    align-items: baseline;
+                    gap: var(--space-sm);
+                    flex-wrap: wrap; /* Allow wrapping if needed */
+                }
+            }
+
+            .compact-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: baseline;
+                gap: var(--space-sm);
+            }
+
+            .item-header h3 {
+                margin: 0;
+                font-size: 1.25rem;
+                color: var(--color-text);
+            }
+
+            .compact-name {
+                font-weight: 600;
+                color: var(--color-text);
+                font-size: 1rem;
+            }
+
+            .compact-time {
+                font-family: var(--font-mono);
+                color: var(--color-text-muted);
+                font-size: 0.85rem;
+                white-space: nowrap;
+            }
+
+            .compact-details {
+                font-size: 0.9rem;
+                color: var(--color-text-muted);
+                display: flex;
+                align-items: center;
+                gap: 0.5em;
+                flex-wrap: wrap;
+            }
+
+            .detail-link {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.3em;
+                padding: 0.2rem 0.6rem;
+                background-color: var(--color-primary);
+                color: #fff !important; /* Force white text */
+                border-radius: var(--radius-sm);
+                text-decoration: none;
+                font-size: 0.8rem;
+                font-weight: 500;
+                transition: background-color 0.2s;
+            }
+
+            .detail-link:hover {
+                background-color: var(--color-primary-hover);
+                text-decoration: none;
+            }
+        </style>
+    </div></BaseLayout
+>

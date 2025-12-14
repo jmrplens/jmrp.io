@@ -1,0 +1,66 @@
+---
+import { Icon } from "astro-icon/components";
+---
+
+<button id="theme-toggle" class="theme-toggle" aria-label="Toggle Dark Mode">
+    <span class="icon-sun"><Icon name="fa-solid:sun" /></span>
+    <span class="icon-moon"><Icon name="fa-solid:moon" /></span>
+</button>
+
+<style>
+    .theme-toggle {
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: var(--color-text);
+        padding: 0.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: color 0.2s;
+        font-size: 1.2rem;
+    }
+
+    .theme-toggle:hover {
+        color: var(--color-primary);
+    }
+
+    /* Hide icons based on theme via class added to body/html */
+    :global(.light-mode) .icon-sun {
+        display: none;
+    }
+    :global(.light-mode) .icon-moon {
+        display: block;
+    }
+
+    :global(.dark-mode) .icon-sun {
+        display: block;
+    }
+    :global(.dark-mode) .icon-moon {
+        display: none;
+    }
+
+    /* Default (no class or during loading) - maybe assume dark mode as default for this site */
+    .icon-sun {
+        display: block;
+    }
+    .icon-moon {
+        display: none;
+    }
+
+    :global(html[data-theme="light"]) .icon-sun {
+        display: none;
+    }
+    :global(html[data-theme="light"]) .icon-moon {
+        display: block;
+    }
+
+    :global(html[data-theme="dark"]) .icon-sun {
+        display: block;
+    }
+    :global(html[data-theme="dark"]) .icon-moon {
+        display: none;
+    }
+</style>
+
+<script src="/scripts/theme-toggle.js" nonce="NGINX_CSP_NONCE" defer></script>

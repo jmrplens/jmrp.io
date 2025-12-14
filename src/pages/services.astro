@@ -1,0 +1,427 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { Icon } from "astro-icon/components";
+import ServiceCard from "../components/ServiceCard.astro";
+import ServiceStats from "../components/ServiceStats";
+
+const servicesSchema = {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    name: "Self-Hosted Services",
+    hasPart: [
+        {
+            "@type": "Service",
+            name: "Mastodon Instance",
+            description:
+                "A decentralized social network server. Part of the Fediverse.",
+            url: "https://mstdn.jmrp.io/",
+            provider: {
+                "@type": "Person",
+                name: "José Manuel Requena Plens",
+            },
+        },
+        {
+            "@type": "Service",
+            name: "Matrix Homeserver",
+            description: "Secure, decentralized communication.",
+            url: "https://matrix.to/#/@jmrplens:matrix.jmrp.io",
+            provider: {
+                "@type": "Person",
+                name: "José Manuel Requena Plens",
+            },
+        },
+        {
+            "@type": "Service",
+            name: "Meshtastic Infrastructure",
+            description:
+                "Infrastructure for the Meshtastic mesh network. Includes Map, Node Database, and Network Monitors.",
+            url: "https://mesh.jmrp.io",
+            provider: {
+                "@type": "Person",
+                name: "José Manuel Requena Plens",
+            },
+        },
+    ],
+};
+---
+
+<BaseLayout
+    title="Services | José Manuel Requena Plens"
+    description="Self-hosted Services"
+    schema={servicesSchema}
+>
+    <section>
+        <div class="container">
+            <h1 class="page-title">Self-Hosted Services</h1>
+            <p class="intro">
+                I maintain several self-hosted services to support decentralized
+                networks and personal infrastructure. Below are some of the
+                public services I provide.
+            </p>
+
+            <div class="services-grid">
+                {/* Mastodon */}
+                <ServiceCard
+                    title="Mastodon"
+                    icon="fa-brands:mastodon"
+                    description="A decentralized social network server. Part of the Fediverse."
+                    link="https://mstdn.jmrp.io/"
+                    linkText="Visit mstdn.jmrp.io"
+                >
+                    <div id="mastodon-stats" class="stats-container">
+                        <ServiceStats client:visible type="mastodon" />
+                    </div>
+                </ServiceCard>
+
+                {/* Matrix */}
+                <ServiceCard
+                    title="Matrix"
+                    icon="simple-icons:matrix"
+                    description="Secure, decentralized communication. My Server: matrix.jmrp.io"
+                    link="https://matrix.to/#/@jmrplens:matrix.jmrp.io"
+                    linkText="Chat on Matrix"
+                >
+                    <div slot="extra" class="user-info">
+                        User: <code>@jmrplens:matrix.jmrp.io</code>
+                    </div>
+                    <div id="matrix-stats" class="stats-container">
+                        <ServiceStats client:visible type="matrix" />
+                    </div>
+                </ServiceCard>
+
+                {/* Meshtastic */}
+                <ServiceCard
+                    title="Meshtastic"
+                    icon="fa-solid:broadcast-tower"
+                    description="Infrastructure for the Meshtastic mesh network. Includes Map, Node Database, and Network Monitors."
+                    link="https://mesh.jmrp.io"
+                    linkText="Open Mesh Hub"
+                >
+                    <div id="meshtastic-stats" class="stats-container">
+                        <ServiceStats
+                            client:visible
+                            type="meshtastic-combined"
+                        />
+                    </div>
+                </ServiceCard>
+            </div>
+        </div>
+    </section>
+</BaseLayout>
+
+<style>
+    .intro {
+        font-size: 1.1rem;
+        color: var(--color-text-muted);
+        margin-bottom: var(--space-xl);
+        max-width: 800px;
+    }
+
+    .services-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+        gap: var(--space-lg);
+    }
+
+    /* Content Styling for Slots */
+    .user-info {
+        background: var(--color-bg);
+        padding: var(--space-sm);
+        border-radius: var(--radius-sm);
+        margin-bottom: var(--space-md);
+        font-family: var(--font-mono);
+        font-size: 0.9rem;
+        color: var(--color-accent);
+        overflow-wrap: break-word; /* Prevent overflow */
+    }
+
+    code {
+        background: var(--color-bg);
+        padding: 2px 4px;
+        border-radius: 4px;
+        color: var(--color-accent);
+    }
+
+    .stats-container {
+        width: 100%;
+        box-sizing: border-box;
+        background: transparent;
+        border-radius: var(--radius-sm);
+        font-size: 0.85rem;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        overflow-wrap: break-word;
+        word-break: break-all;
+    }
+
+    #mastodon-stats.stats-container,
+    #matrix-stats.stats-container,
+    #meshtastic-stats.stats-container {
+        background: transparent;
+        border: none;
+        padding: 0;
+        margin-top: 0;
+    }
+</style>
+
+<style is:global>
+    /* Styling for React ServiceStats component */
+    .stats-wrapper-col {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .stats-wrapper-small-gap {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    /* Status Header */
+    .status-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        font-size: 0.9em;
+    }
+
+    .status-badge {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        background: rgba(16, 185, 129, 0.1);
+        color: #10b981;
+        padding: 2px 8px;
+        border-radius: 12px;
+    }
+
+    .status-dot {
+        width: 6px;
+        height: 6px;
+        background: #10b981;
+        border-radius: 50%;
+    }
+
+    .status-text-muted {
+        color: var(--color-text-muted);
+    }
+
+    .status-text {
+        color: var(--color-text);
+    }
+
+    /* Grids */
+    .server-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+        gap: 0.5rem;
+        width: 100%;
+    }
+
+    .component-row {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: var(--color-bg);
+        padding: 0.4rem 0.6rem;
+        border-radius: 6px;
+        border: 1px solid var(--color-border);
+    }
+
+    .component-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 20px;
+        height: 20px;
+    }
+
+    .brand-mastodon {
+        color: #6364ff;
+    }
+
+    .brand-matrix {
+        color: #000000;
+        background: white;
+        border-radius: 50%;
+        padding: 2px;
+    }
+
+    .component-info {
+        display: flex;
+        flex-direction: column;
+        line-height: 1.1;
+    }
+
+    .component-name {
+        font-size: 0.75em;
+        color: var(--color-text-muted);
+        font-weight: 500;
+    }
+
+    .component-version {
+        font-size: 0.85em;
+        font-weight: bold;
+        color: var(--color-text);
+    }
+
+    /* Trends */
+    .trending-header {
+        margin: 0 0 0.5rem;
+        font-size: 0.8em;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--color-text-muted);
+    }
+
+    .trending-grid {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .stat-btn-filled {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        background: var(--color-bg-secondary);
+        color: var(--color-text);
+        padding: 0.25rem 0.5rem;
+        border-radius: var(--radius-md); /* Check radius usage */
+        font-size: 0.8em;
+        transition: background 0.2s;
+        border: 1px solid var(--color-border);
+    }
+
+    .stat-btn-filled:hover {
+        background: var(--color-border);
+        text-decoration: none;
+    }
+
+    .opacity-60 {
+        opacity: 0.6;
+    }
+
+    /* Meshtastic Rows */
+    .meshtastic-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .meshtastic-left {
+        display: flex;
+        align-items: center;
+    }
+
+    .status-dot-inline {
+        width: 8px;
+        height: 8px;
+        background: #10b981;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 6px;
+    }
+
+    .meshtastic-title {
+        font-size: 0.95em;
+        display: block;
+        line-height: 1.2;
+    }
+
+    .meshtastic-sub {
+        font-size: 0.85em;
+        color: var(--color-text-muted);
+    }
+
+    .meshtastic-ver {
+        opacity: 0.7;
+        margin-left: 4px;
+    }
+
+    /* Buttons */
+    .btn {
+        display: inline-block;
+        font-weight: 500;
+        text-align: center;
+        white-space: nowrap;
+        vertical-align: middle;
+        user-select: none;
+        border: 1px solid transparent;
+        padding: 0.375rem 0.75rem;
+        font-size: 1rem;
+        line-height: 1.5;
+        border-radius: var(--radius-sm);
+        transition:
+            color 0.15s ease-in-out,
+            background-color 0.15s ease-in-out,
+            border-color 0.15s ease-in-out,
+            box-shadow 0.15s ease-in-out;
+        cursor: pointer;
+    }
+
+    .btn-outline {
+        color: var(--color-primary);
+        border-color: var(--color-primary);
+        background-color: transparent;
+    }
+
+    .btn-outline:hover {
+        color: #fff;
+        background-color: var(--color-primary);
+        text-decoration: none;
+    }
+
+    .btn-sm {
+        padding: 2px 8px;
+        font-size: 0.8em;
+    }
+
+    .btn-xs {
+        padding: 1px 6px; /* Even smaller */
+        font-size: 0.75em;
+    }
+
+    .stats-error,
+    .stats-loading {
+        text-align: center;
+        padding: 1rem;
+        color: var(--color-text-muted);
+        font-style: italic;
+        width: 100%;
+    }
+
+    /* Legacy Stats Grid (if still used anywhere?) */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.5rem;
+        width: 100%;
+    }
+
+    .stat-item {
+        background: var(--color-bg);
+        padding: 0.5rem;
+        border-radius: 4px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        border: 1px solid var(--color-border);
+    }
+
+    .stat-value {
+        font-weight: 700;
+        color: var(--color-primary);
+        font-size: 1.1em;
+    }
+
+    .stat-label {
+        font-size: 0.75em;
+        color: var(--color-text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+</style>
