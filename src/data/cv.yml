@@ -235,11 +235,18 @@
       institution: Polytechnic University of Valencia (<a href="http://www.upv.es/en"><b>UPV</b></a>)
       department: Ultrasound Medical and Industrial Laboratory (<a href="https://www.i3m-detectors.i3m.upv.es/research/ultrasound-medical-and-industrial-laboratory-umil/"><b>UMIL</b></a>)
       location: Valencia, Spain
-      year: current
+      year: 2023
       summary: 
-        Industrial and biomedical applications of metamaterials for the control of acoustic beams.
+        Industrial and biomedical applications of metamaterials for the control of acoustic beams. In this project, we propose to combine new air-coupled ultrasound transducers with hyperbolic metamaterials to design vision systems that exceed the imaging capabilities of traditional systems.
         <br><br>
-        In this project, we propose to combine new air-coupled ultrasound transducers with hyperbolic metamaterials to design vision systems that exceed the imaging capabilities of traditional systems. We will investigate the application of acoustic hyperlenses in the biomedical context to image beyond the diffraction limit, enabling imaging with deep sub-wavelength resolution. In addition, we will investigate the capabilities of air-coupled chiral hyperlenses and Bessel beams to manipulate objects, aiming to efficiently trap, move and rotate microparticles on the subwavelength scale. The results of this project could have a wide application in biomedical applications but also in agri-food and industrial applications.
+        "During my PhD in Acoustic Engineering applied to Biomedicine, I conducted advanced research on:"
+      description:
+        - Biomedical signal processing and acoustic analysis algorithms.
+        - Ultrasound characterization for medical applications.
+        - Computational modeling and simulation of acoustic phenomena.
+        - Development of experimental methodologies for biomedical studies.
+        - Publication of results in specialized conferences and journals.
+        - "After nearly completing the doctoral program, I made the strategic decision to redirect my career toward industrial software development. This transition allowed me to apply my solid foundation in data analysis, programming, and analytical thinking to the software sector, where I found a more direct alignment between my technical skills and my long-term professional goals."
       linkitems:
         - link: /pdf/degree/PhDExpEng.pdf
           linkname: 'Academic record'
