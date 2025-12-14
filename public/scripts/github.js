@@ -42,7 +42,7 @@ async function fetchProfile() {
                 <a href="${user.html_url}" target="_blank" style="color: var(--color-text-muted); text-decoration: none; margin-bottom: 8px; display: block;">@${user.login}</a>
                 <p style="margin-bottom: 16px; max-width: 600px;">${user.bio || "Open Source Enthusiast"}</p>
                 
-                <div class="profile-stats" style="display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; md:justify-content: flex-start;">
+                <div class="profile-stats" style="display: flex; gap: 20px; flex-wrap: wrap; justify-content: center;">
                     <div class="stat">
                         <strong>${user.public_repos}</strong> <span style="color: var(--color-text-muted);">Repositories</span>
                     </div>
