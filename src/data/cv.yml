@@ -12,196 +12,6 @@
         - link: /pdf/CV_RequenaPlensJoseManuel_ENG.pdf
           name: CV PDF [ENGLISH]
 
-- title: Formal education
-  type: time_table
-  contents:
-    - title: PhD in Health and Wellness Technologies
-      institution: Polytechnic University of Valencia (<a href="http://www.upv.es/en"><b>UPV</b></a>)
-      department: Ultrasound Medical and Industrial Laboratory (<a href="https://www.i3m-detectors.i3m.upv.es/research/ultrasound-medical-and-industrial-laboratory-umil/"><b>UMIL</b></a>)
-      location: Valencia, Spain
-      year: current
-      summary: 
-        Industrial and biomedical applications of metamaterials for the control of acoustic beams.
-        <br><br>
-        In this project, we propose to combine new air-coupled ultrasound transducers with hyperbolic metamaterials to design vision systems that exceed the imaging capabilities of traditional systems. We will investigate the application of acoustic hyperlenses in the biomedical context to image beyond the diffraction limit, enabling imaging with deep sub-wavelength resolution. In addition, we will investigate the capabilities of air-coupled chiral hyperlenses and Bessel beams to manipulate objects, aiming to efficiently trap, move and rotate microparticles on the subwavelength scale. The results of this project could have a wide application in biomedical applications but also in agri-food and industrial applications.
-      linkitems:
-        - link: /pdf/degree/PhDExpEng.pdf
-          linkname: 'Academic record'
-    - title: Master's Degree in Acoustical Engineering
-      institution: Polytechnic University of Valencia (<a href="http://www.upv.es/en"><b>UPV</b></a>)
-      department: Higher Polytechnic School of Gandia (<a href="http://www.upv.es/contenidos/CGANDIA/index-en.html"><b>EPSG</b></a>)
-      location: Gandia, Spain
-      year: 2019
-      summary: 
-        "Degree obtained with honors in: Fundamentals of Acoustics, Acoustic Isolation, Musical Acoustics, Signal Processing in Acoustic Engineering, Ultrasonics and Acoustic Simulation Techniques.
-        <br><br>
-        Final Master's thesis entitled <strong>Difusores acústicos basados en resonadores de membrana y placa</strong> ('Acoustic diffusers based on membrane and plate resonators'), qualified with honors with special mention."
-      linkitems:
-        - link: /pdf/degree/Acoustic.pdf
-          linkname: 'Diploma'
-        - link: /pdf/degree/AcousticExpEng.pdf
-          linkname: 'Academic record'
-    - title: Degree in Telecommunication Engineering in Sound and Image
-      institution: University of Alicante (<a href="https://www.ua.es/"><b>UPV</b></a>)
-      department: Higher Polytechnic School (<a href="https://eps.ua.es/en/home.html"><b>EPS</b></a>)
-      location: Alicante, Spain
-      year: 2018
-      summary: 
-        "Degree obtained together with the 2 specializations: Acoustic Engineering and Audiovisual Technology.
-        <br><br>
-        Final Degree Work entitled <a href='http://hdl.handle.net/10045/77578'>Estudio de la relación campo directo/reverberado; útil/perjudicial</a> ('Study of the direct/reverberated field relationship; useful/harmful')"
-      linkitems:
-        - link: /pdf/degree/Telecom.pdf
-          linkname: 'Diploma'
-        - link: /pdf/degree/TelecomExpEng.pdf
-          linkname: 'Academic record'
-    - title: Certificate of Higher Education in Electronics Technician & Superior Sound Technician
-      institution: <a href="https://elche.salesianos.edu/colegio/san-jose-artesano/">IES Salesianos (San Jóse Artesano)</a> & <a href="https://ies-berlanga.info/index.php/es/">IES Luis García Berlanga</a>
-      location: Elche & Alicante, Spain
-      year: 2009/2011
-      linkitems:
-        - link: /pdf/degree/CFGM_Electronica.pdf
-          linkname: 'Diploma (Electronics)'
-        - link: /pdf/degree/CFGS_Sonido.pdf
-          linkname: 'Diploma (Sound)'
-
-- title: Certificates
-  type: list_groups
-  contents:
-    - category: Occupational Health and Safety
-      icon: fas fa-medkit
-      items:
-        - name: Generic
-          school: INVASSAT
-          time: 50 Hours
-          link: /pdf/certificates/PRL/PRL_Generico.pdf
-          linkname: CERT
-        - name: Nanomaterials
-          school: INVASSAT
-          time: 50 Hours
-          link: /pdf/certificates/PRL/PRL_Nanomateriales.pdf
-          linkname: CERT
-        - name: Chemical sector
-          school: INVASSAT
-          time: 50 Hours
-          link: /pdf/certificates/PRL/PRL_Quimico.pdf
-          linkname: CERT
-        - name: Emergencies
-          school: INVASSAT
-          time: 70 Hours
-          link: /pdf/certificates/PRL/PRL_Emergencias.pdf
-          linkname: CERT
-        - name: Nutrition
-          school: INVASSAT
-          time: 50 Hours
-          link: /pdf/certificates/PRL/PRL_Alimentario.pdf
-          linkname: CERT
-        - name: Educational
-          school: INVASSAT
-          time: 50 Hours
-          link: /pdf/certificates/PRL/PRL_Educativo.pdf
-          linkname: CERT
-        - name: Services
-          school: INVASSAT
-          time: 50 Hours
-          link: /pdf/certificates/PRL/PRL_Servicios.pdf
-          linkname: CERT
-        - name: Researcher
-          school: UPV
-          time: 15 Hours
-          link: /pdf/certificates/PRL/CertificadoPRLUPV.pdf
-          linkname: CERT
-
-    - category: Transversal competences
-      icon: fas fa-users
-      items:
-        - name: Gender perspective
-          school: EVES
-          time: 20 Hours
-          link: /pdf/certificates/PerspectivaDeGenero.pdf
-          linkname: CERT
-        - name: Teamwork
-          school: Labora
-          time: 25 Hours
-          link: /pdf/certificates/TrabajoEnEquipo.pdf
-          linkname: CERT
-        - name: Design Thinking
-          school: Labora
-          time: 25 Hours
-          link: /pdf/certificates/DesignThinking.pdf
-          linkname: CERT
-        - name: Critical Thinking
-          school: Labora
-          time: 25 Hours
-          link: /pdf/certificates/PensamientoCritico.pdf
-          linkname: CERT
-        - name: Adaptability, flexibility and agility
-          school: Labora
-          time: 25 Hours
-          link: /pdf/certificates/AdaptacionFlexibilidadAgilidad.pdf
-          linkname: CERT
-        - name: Autonomy, innovation, ...
-          school: Labora
-          time: 25 Hours
-          link: /pdf/certificates/AutonomiaInnovacion.pdf
-          linkname: CERT
-        - name: Improving profesional efficiency
-          school: Labora
-          time: 25 Hours
-          link: /pdf/certificates/MejoraEficiencia.pdf
-          linkname: CERT
-        - name: Entrepreneur gender perspective
-          school: UPV
-          time: 20 Hours
-          link: /pdf/certificates/EmprendimientoPerspectivaGenero.pdf
-          linkname: CERT
-    - category: Labor/Industrial
-      icon: fas fa-industry
-      items:
-        - name: Op. Industrial trucks
-          school: Gescoform
-          time: 15 Hours
-          link: /pdf/certificates/Certificado_Carretilla.pdf
-          linkname: CERT
-        - name: Food Hygiene Course
-          school: Asonoman
-          time: 30 Hours
-          link: https://www.asonaman.es/files/crt/2022/10/09/CBBUWIQEBMUJKENWAKEZHYAGHKKA.pdf
-          linkname: CERT
-        - name: Self-protection plans
-          school: INVASSAT
-          time: 15 Hours
-          link: /pdf/certificates/PlanesAutoproteccion.pdf
-          linkname: CERT
-        - name: Static electricity
-          school: INVASSAT
-          time: 15 Hours
-          link: /pdf/certificates/ElectricidadEstatica.pdf
-          linkname: CERT
-        - name: Data privacy
-          school: CSIRT-CV
-          time: 10 Hours
-          link: /pdf/certificates/ProteccionDeDatos.pdf
-          linkname: CERT
-    - category: Information technology
-      icon: fas fa-laptop-code
-      items:
-        - name: Using Python for Research
-          school: HardvardX
-          time: 50 Hours
-          link: https://courses.edx.org/certificates/f1fb6cbd6f39431c9f57c7ee3a5dc3ad
-          linkname: CERT
-        - name: Analyzing Data With Python
-          school: IBM
-          time: 20 Hours
-          link: https://courses.edx.org/certificates/62fed4c86a17427ebb5b6bbbc39e34df
-          linkname: CERT
-        - name: Visualizing Data with Python
-          school: IBM
-          time: 20 Hours
-          link: https://courses.edx.org/certificates/0f49b9baa42f4464b2e0d99ade544790
-          linkname: CERT
-
 - title: Experience
   type: time_table
   contents:
@@ -332,110 +142,278 @@
         - Model preparation and retouching.
         - Minor responsibilities.
 
-- title: Other knowledge and skills
+- title: Technical Skills
   type: list_groups
   contents:
-    - category: Programing languages
-      icon: fas fa-code
+    - category: Embedded Firmware & Electronics
+      icon: fa-solid:microchip
       items:
-        - name: MATLAB
-          level: Advanced level.
         - name: C
-          level: Advanced level.
-        - name: C++
-          level: Intermediate level..
+          icon: logos:c
+          level: 4
+        - name: STM32 & ARM
+          icon: simple-icons:arm
+          level: 4
+        - name: Comm. Protocols
+          desc: (I2C, SPI, RS485, Modbus)
+          icon: fa-solid:project-diagram
+          level: 4
+        - name: Keil uVision
+          icon: simple-icons:arm
+          level: 4
+        - name: Instrumentation
+          desc: (Oscilloscopes, DAQs, Logic A.)
+          icon: fa-solid:wave-square
+          level: 4
+        - name: Espressif / Arduino
+          icon: logos:arduino
+          level: 4
+
+    - category: Software Engineering & Tools
+      icon: fa-solid:code
+      items:
         - name: Python
-          level: Intermediate/advanced level.
-        - name: Java
-          level: Intermediate level.
-        - name: VBA
-          level: Elementary level.
-        - name: HTML
-          level: Intermediate level.
-        - name: PHP
-          level: Elementary level.
-        - name: CSS
-          level: Intermediate level.
-    - category: Software
-      icon: fas fa-window-maximize
+          icon: logos:python
+          level: 4
+        - name: C++
+          icon: logos:c-plusplus
+          level: 3
+        - name: Git
+          icon: logos:git-icon
+          level: 4
+        - name: MATLAB
+          icon: vscode-icons:file-type-matlab
+          level: 4
+        - name: CMake
+          icon: vscode-icons:file-type-cmake
+          level: 3
+        - name: JetBrains Toolbox
+          desc: (CLion, PyCharm, WebStorm)
+          icon: logos:jetbrains
+          level: 4
+
+    - category: Simulation & Acoustics
+      icon: fa-solid:wave-square
       items:
-        - name: PyCharm
-          level: Advanced level.
-        - name: CLion
-          level: Advanced level.
         - name: COMSOL Multiphysics
-          level: Advanced level.
+          icon: simple-icons:comsol
+          level: 4
         - name: LabView
-          level: Intermediate level.
+          icon: simple-icons:labview
+          level: 3
         - name: CATT-Acoustic
-          level: Intermediate/advanced.
+          icon: fa-solid:volume-up
+          level: 4
         - name: EASE
-          level: Intermediate level.
-        - name: Excel
-          level: Advanced level.
-        - name: Suite Adobe
-          level: Intermediate level.
-    - category: Document composition
-      icon: fas fa-book
+          icon: fa-solid:volume-up
+          level: 3
+
+    - category: General & Platforms
+      icon: fa-solid:desktop
       items:
-        - name: LaTeX
-          level: Advanced level.
-        - name: Word
-          level: Intermediate/advanced level.
-        - name: Power Point
-          level: Advanced level.
-    - category: Microcontroller development
-      icon: fas fa-microchip
-      items:
-        - name: Texas Instruments
-          level: Intermediate level.
-        - name: Arduino
-          level: Advanced level.
-        - name: Espressif
-          level: Advanced level.
-    - category: Operating systems
-      icon: fas fa-desktop
-      items:
+        - name: Linux / Unix
+          icon: logos:linux-tux
+          level: 4
         - name: MacOS
-          level: Advanced level.
+          icon: simple-icons:apple
+          level: 4
         - name: Windows
-          level: Advanced level.
-        - name: Linux
-          level: Intermediate/advanced level.
-        - name: iOS
-          level: Advanced level.
-        - name: Android
-          level: Intermediate level.
-    - category: Instrumentation
-      icon: fas fa-toolbox
+          icon: logos:microsoft-windows-icon
+          level: 4
+        - name: LaTeX
+          icon: vscode-icons:file-type-tex
+          level: 4
+        - name: HTML / CSS
+          icon: vscode-icons:file-type-html
+          level: 3
+
+
+- title: Formal education
+  type: time_table
+  contents:
+    - title: PhD in Health and Wellness Technologies
+      institution: Polytechnic University of Valencia (<a href="http://www.upv.es/en"><b>UPV</b></a>)
+      department: Ultrasound Medical and Industrial Laboratory (<a href="https://www.i3m-detectors.i3m.upv.es/research/ultrasound-medical-and-industrial-laboratory-umil/"><b>UMIL</b></a>)
+      location: Valencia, Spain
+      year: current
+      summary: 
+        Industrial and biomedical applications of metamaterials for the control of acoustic beams.
+        <br><br>
+        In this project, we propose to combine new air-coupled ultrasound transducers with hyperbolic metamaterials to design vision systems that exceed the imaging capabilities of traditional systems. We will investigate the application of acoustic hyperlenses in the biomedical context to image beyond the diffraction limit, enabling imaging with deep sub-wavelength resolution. In addition, we will investigate the capabilities of air-coupled chiral hyperlenses and Bessel beams to manipulate objects, aiming to efficiently trap, move and rotate microparticles on the subwavelength scale. The results of this project could have a wide application in biomedical applications but also in agri-food and industrial applications.
+      linkitems:
+        - link: /pdf/degree/PhDExpEng.pdf
+          linkname: 'Academic record'
+    - title: Master's Degree in Acoustical Engineering
+      institution: Polytechnic University of Valencia (<a href="http://www.upv.es/en"><b>UPV</b></a>)
+      department: Higher Polytechnic School of Gandia (<a href="http://www.upv.es/contenidos/CGANDIA/index-en.html"><b>EPSG</b></a>)
+      location: Gandia, Spain
+      year: 2019
+      summary: 
+        "Degree obtained with honors in: Fundamentals of Acoustics, Acoustic Isolation, Musical Acoustics, Signal Processing in Acoustic Engineering, Ultrasonics and Acoustic Simulation Techniques.
+        <br><br>
+        Final Master's thesis entitled <strong>Difusores acústicos basados en resonadores de membrana y placa</strong> ('Acoustic diffusers based on membrane and plate resonators'), qualified with honors with special mention."
+      linkitems:
+        - link: /pdf/degree/Acoustic.pdf
+          linkname: 'Diploma'
+        - link: /pdf/degree/AcousticExpEng.pdf
+          linkname: 'Academic record'
+    - title: Degree in Telecommunication Engineering in Sound and Image
+      institution: University of Alicante (<a href="https://www.ua.es/"><b>UPV</b></a>)
+      department: Higher Polytechnic School (<a href="https://eps.ua.es/en/home.html"><b>EPS</b></a>)
+      location: Alicante, Spain
+      year: 2018
+      summary: 
+        "Degree obtained together with the 2 specializations: Acoustic Engineering and Audiovisual Technology.
+        <br><br>
+        Final Degree Work entitled <a href='http://hdl.handle.net/10045/77578'>Estudio de la relación campo directo/reverberado; útil/perjudicial</a> ('Study of the direct/reverberated field relationship; useful/harmful')"
+      linkitems:
+        - link: /pdf/degree/Telecom.pdf
+          linkname: 'Diploma'
+        - link: /pdf/degree/TelecomExpEng.pdf
+          linkname: 'Academic record'
+    - title: Certificate of Higher Education in Electronics Technician & Superior Sound Technician
+      institution: <a href="https://elche.salesianos.edu/colegio/san-jose-artesano/">IES Salesianos (San Jóse Artesano)</a> & <a href="https://ies-berlanga.info/index.php/es/">IES Luis García Berlanga</a>
+      location: Elche & Alicante, Spain
+      year: 2009/2011
+      linkitems:
+        - link: /pdf/degree/CFGM_Electronica.pdf
+          linkname: 'Diploma (Electronics)'
+        - link: /pdf/degree/CFGS_Sonido.pdf
+          linkname: 'Diploma (Sound)'
+
+- title: Certificates
+  type: certificate_list
+  contents:
+    - category: Occupational Health and Safety
+      icon: fa-solid:medkit
       items:
-        - name: DAQs
-          level: NI PXI & Compact, TiePie HS, Red Pitaya.
-        - name: Laser Vibrometer
-          level: Polytec.
-        - name: Accelerometers
-          level: Brüel & Kjær.
-        - name: Microphones
-          level: Brüel & Kjær.
-        - name: Sound level meters
-          level: Brüel & Kjær, NTI, CESVA.
-        - name: Oscilloscopes
-          level: Tektronix, Rigol.
+        - name: Generic
+          school: INVASSAT
+          time: 50 Hours
+          link: /pdf/certificates/PRL/PRL_Generico.pdf
+          linkname: CERT
+        - name: Nanomaterials
+          school: INVASSAT
+          time: 50 Hours
+          link: /pdf/certificates/PRL/PRL_Nanomateriales.pdf
+          linkname: CERT
+        - name: Chemical sector
+          school: INVASSAT
+          time: 50 Hours
+          link: /pdf/certificates/PRL/PRL_Quimico.pdf
+          linkname: CERT
+        - name: Emergencies
+          school: INVASSAT
+          time: 70 Hours
+          link: /pdf/certificates/PRL/PRL_Emergencias.pdf
+          linkname: CERT
+        - name: Nutrition
+          school: INVASSAT
+          time: 50 Hours
+          link: /pdf/certificates/PRL/PRL_Alimentario.pdf
+          linkname: CERT
+        - name: Educational
+          school: INVASSAT
+          time: 50 Hours
+          link: /pdf/certificates/PRL/PRL_Educativo.pdf
+          linkname: CERT
+        - name: Services
+          school: INVASSAT
+          time: 50 Hours
+          link: /pdf/certificates/PRL/PRL_Servicios.pdf
+          linkname: CERT
+        - name: Researcher
+          school: UPV
+          time: 15 Hours
+          link: /pdf/certificates/PRL/CertificadoPRLUPV.pdf
+          linkname: CERT
 
-
-# - title: Academic Interests
-#   type: nested_list
-#   contents:
-#     - title: Topic 1.
-#       items: 
-#         - Description 1.
-#         - Description 2.
-#     - title: Topic 2.
-#       items:
-#         - Description 1.
-#         - Description 2.
-
-# - title: Other Interests
-#   type: list
-#   contents:
-#     - <u>Hobbies:</u> Hobby 1, Hobby 2, etc.
+    - category: Transversal competences
+      icon: fa-solid:users
+      items:
+        - name: Gender perspective
+          school: EVES
+          time: 20 Hours
+          link: /pdf/certificates/PerspectivaDeGenero.pdf
+          linkname: CERT
+        - name: Teamwork
+          school: Labora
+          time: 25 Hours
+          link: /pdf/certificates/TrabajoEnEquipo.pdf
+          linkname: CERT
+        - name: Design Thinking
+          school: Labora
+          time: 25 Hours
+          link: /pdf/certificates/DesignThinking.pdf
+          linkname: CERT
+        - name: Critical Thinking
+          school: Labora
+          time: 25 Hours
+          link: /pdf/certificates/PensamientoCritico.pdf
+          linkname: CERT
+        - name: Adaptability, flexibility and agility
+          school: Labora
+          time: 25 Hours
+          link: /pdf/certificates/AdaptacionFlexibilidadAgilidad.pdf
+          linkname: CERT
+        - name: Autonomy, innovation, ...
+          school: Labora
+          time: 25 Hours
+          link: /pdf/certificates/AutonomiaInnovacion.pdf
+          linkname: CERT
+        - name: Improving profesional efficiency
+          school: Labora
+          time: 25 Hours
+          link: /pdf/certificates/MejoraEficiencia.pdf
+          linkname: CERT
+        - name: Entrepreneur gender perspective
+          school: UPV
+          time: 20 Hours
+          link: /pdf/certificates/EmprendimientoPerspectivaGenero.pdf
+          linkname: CERT
+    - category: Labor/Industrial
+      icon: fa-solid:industry
+      items:
+        - name: Op. Industrial trucks
+          school: Gescoform
+          time: 15 Hours
+          link: /pdf/certificates/Certificado_Carretilla.pdf
+          linkname: CERT
+        - name: Food Hygiene Course
+          school: Asonoman
+          time: 30 Hours
+          link: https://www.asonaman.es/files/crt/2022/10/09/CBBUWIQEBMUJKENWAKEZHYAGHKKA.pdf
+          linkname: CERT
+        - name: Self-protection plans
+          school: INVASSAT
+          time: 15 Hours
+          link: /pdf/certificates/PlanesAutoproteccion.pdf
+          linkname: CERT
+        - name: Static electricity
+          school: INVASSAT
+          time: 15 Hours
+          link: /pdf/certificates/ElectricidadEstatica.pdf
+          linkname: CERT
+        - name: Data privacy
+          school: CSIRT-CV
+          time: 10 Hours
+          link: /pdf/certificates/ProteccionDeDatos.pdf
+          linkname: CERT
+    - category: Information technology
+      icon: fa-solid:laptop-code
+      items:
+        - name: Using Python for Research
+          school: HardvardX
+          time: 50 Hours
+          link: https://courses.edx.org/certificates/f1fb6cbd6f39431c9f57c7ee3a5dc3ad
+          linkname: CERT
+        - name: Analyzing Data With Python
+          school: IBM
+          time: 20 Hours
+          link: https://courses.edx.org/certificates/62fed4c86a17427ebb5b6bbbc39e34df
+          linkname: CERT
+        - name: Visualizing Data with Python
+          school: IBM
+          time: 20 Hours
+          link: https://courses.edx.org/certificates/0f49b9baa42f4464b2e0d99ade544790
+          linkname: CERT

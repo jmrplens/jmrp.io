@@ -1,0 +1,185 @@
+---
+import { Icon } from "astro-icon/components";
+
+const { group } = Astro.props;
+
+const levelTextMap = {
+    1: "Elementary",
+    2: "Basic",
+    3: "Intermediate",
+    4: "Advanced",
+    5: "Expert",
+};
+---
+
+<div class="group-category">
+    <h3>
+        {group.icon && <Icon name={group.icon} />}
+        {group.category}
+    </h3>
+    <div class="compact-list">
+        {
+            group.items.map((item: any) => {
+                const score = typeof item.level === "number" ? item.level : 0;
+                const levelLabel =
+                    levelTextMap[score as keyof typeof levelTextMap] ||
+                    item.level;
+
+                return (
+                    <div class="compact-item skill-item">
+                        {item.icon && (
+                            <div class="skill-icon-wrapper">
+                                <Icon name={item.icon} class="skill-icon" />
+                            </div>
+                        )}
+                        <div class="skill-content">
+                            <div class="skill-header">
+                                <span class="compact-name">{item.name}</span>
+                                {item.time && (
+                                    <span class="compact-time">
+                                        {item.time}
+                                    </span>
+                                )}
+                                {item.desc && (
+                                    <span class="skill-desc">{item.desc}</span>
+                                )}
+                            </div>
+                            {item.level && (
+                                <div class="skill-meta">
+                                    <div class="level-dots" title={levelLabel}>
+                                        {[1, 2, 3, 4, 5].map((i) => (
+                                            <div
+                                                class={`dot ${i <= score ? "filled" : ""}`}
+                                            />
+                                        ))}
+                                    </div>
+                                    <span class="level-text">{levelLabel}</span>
+                                </div>
+                            )}
+                            {(item.school || item.link) && (
+                                <div class="compact-details">
+                                    {item.school && (
+                                        <span class="detail-school">
+                                            {item.school}
+                                        </span>
+                                    )}
+                                    {item.link && (
+                                        <a
+                                            href={item.link}
+                                            target="_blank"
+                                            class="detail-link"
+                                        >
+                                            {item.linkname || "View"}{" "}
+                                            {/* <Icon
+                                                name="fa-solid:external-link-alt"
+                                                class="text-xs"
+                                            /> */}
+                                        </a>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                );
+            })
+        }
+    </div>
+</div>
+
+<style>
+    .group-category {
+        break-inside: avoid;
+    }
+
+    .group-category h3 {
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+        border-bottom: 2px solid var(--color-border);
+        padding-bottom: var(--space-xs);
+        margin-bottom: var(--space-md);
+        /* Fixed height for alignment if grid isn't enough, but grid is preferred */
+    }
+
+    .compact-list {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-sm);
+    }
+
+    /* Skill Item Styles duplicate from cv.astro to ensure self-contained style or inherit from global */
+    .skill-item {
+        display: flex;
+        align-items: center; /* Center vertically */
+        gap: var(--space-sm);
+    }
+
+    .skill-icon-wrapper {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 24px;
+    }
+
+    .skill-icon {
+        width: 1.5rem;
+        height: 1.5rem;
+    }
+
+    .skill-content {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        overflow: hidden; /* Prevent overflow */
+    }
+
+    .skill-header {
+        display: flex;
+        align-items: baseline;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .skill-desc {
+        font-size: 0.75rem;
+        color: var(--color-text-offset);
+        white-space: nowrap; /* Prevent breaking mid-word */
+    }
+
+    .skill-meta {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .level-dots {
+        display: flex;
+        gap: 3px;
+    }
+
+    .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background-color: var(--color-border);
+    }
+
+    .dot.filled {
+        background-color: var(--color-primary); /* Uses theme color */
+    }
+
+    .level-text {
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        color: var(--color-text-offset);
+        letter-spacing: 0.5px;
+    }
+
+    .compact-time {
+        font-family: var(--font-mono);
+        color: var(--color-text-muted);
+        font-size: 0.85rem;
+        white-space: nowrap;
+        margin-left: auto; /* Push to right if flex */
+    }
+</style>

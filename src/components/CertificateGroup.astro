@@ -1,0 +1,148 @@
+---
+import { Icon } from "astro-icon/components";
+
+const { group } = Astro.props;
+---
+
+<div class="group-category">
+    <h3>
+        {group.icon && <Icon name={group.icon} />}
+        {group.category}
+    </h3>
+    <div class="certificate-list">
+        {
+            group.items.map((item: any) => (
+                <div class="certificate-item">
+                    <div class="cert-main">
+                        <span class="cert-name">{item.name}</span>
+                        <div class="cert-meta">
+                            {item.school && (
+                                <span class="cert-school">
+                                    <Icon
+                                        name="fa-solid:university"
+                                        class="meta-icon"
+                                    />
+                                    {item.school}
+                                </span>
+                            )}
+                            {item.time && (
+                                <span class="cert-time">
+                                    <Icon
+                                        name="fa-solid:clock"
+                                        class="meta-icon"
+                                    />
+                                    {item.time}
+                                </span>
+                            )}
+                        </div>
+                    </div>
+
+                    {item.link && (
+                        <a href={item.link} class="btn-download" download>
+                            <Icon name="fa-solid:download" />
+                            {item.linkname || "Download"}
+                        </a>
+                    )}
+                </div>
+            ))
+        }
+    </div>
+</div>
+
+<style>
+    .group-category {
+        break-inside: avoid;
+    }
+
+    .group-category h3 {
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+        border-bottom: 2px solid var(--color-border);
+        padding-bottom: var(--space-xs);
+        margin-bottom: var(--space-md);
+        color: var(--color-text);
+    }
+
+    .certificate-list {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-sm);
+    }
+
+    .certificate-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: var(--space-sm);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-sm);
+        background-color: var(--color-bg-secondary);
+        gap: var(--space-md);
+    }
+
+    .cert-main {
+        display: flex;
+        flex-direction: column;
+        gap: 0.2rem;
+    }
+
+    .cert-name {
+        font-weight: 600;
+        color: var(--color-text);
+        font-size: 1rem;
+    }
+
+    .cert-meta {
+        display: flex;
+        gap: var(--space-md);
+        font-size: 0.85rem;
+        color: var(--color-text-muted);
+        flex-wrap: wrap;
+    }
+
+    .cert-meta span {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+
+    .meta-icon {
+        font-size: 0.8em;
+        opacity: 0.8;
+    }
+
+    .btn-download {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.4rem 0.8rem;
+        background-color: var(--color-primary);
+        color: white;
+        text-decoration: none;
+        border-radius: var(--radius-sm);
+        font-size: 0.85rem;
+        font-weight: 500;
+        transition: background-color 0.2s;
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
+    .btn-download:hover {
+        background-color: var(--color-primary-hover);
+        text-decoration: none;
+    }
+
+    @media (max-width: 600px) {
+        .certificate-item {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: var(--space-sm);
+        }
+
+        .btn-download {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+</style>
