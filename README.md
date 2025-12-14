@@ -1,43 +1,95 @@
-# Astro Starter Kit: Minimal
+# jmrp.io - Personal R&D Portfolio
 
-```sh
-npm create astro@latest -- --template minimal
-```
+![Astro](https://img.shields.io/badge/astro-5.16.5-orange?style=flat&logo=astro)
+![License](https://img.shields.io/badge/license-MIT-blue.svg)
+![Mozilla Observatory Grade](https://img.shields.io/mozilla-observatory/grade/jmrp.io?publish)
+![PageSpeed Mobile](https://img.shields.io/badge/PageSpeed%20Mobile-100-brightgreen)
+![PageSpeed Desktop](https://img.shields.io/badge/PageSpeed%20Desktop-100-brightgreen)
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+High-performance, accessibility-first portfolio website for **José Manuel Requena Plens**, R&D Engineer. Built with **Astro**, **Preact**, and **TypeScript**, designed to be fast, secure, and easy to configure.
 
-## 🚀 Project Structure
+## 🚀 Features
 
-Inside of your Astro project, you'll see the following folders and files:
+-   **Performance First**: Core Web Vitals optimized. Zero CLS, LCP < 1.0s.
+-   **Security Hardened**: Strict Content Security Policy (CSP) with nonces, HSTS, and security headers. A+ on Mozilla Observatory.
+-   **Accessible**: Semantic HTML, ARIA labels, and keyboard navigation support.
+-   **Themeable**: Light/Dark mode with system preference detection and reduced motion support.
+-   **Configurable**: centralized configuration via YAML files.
+-   **SEO Optimized**: Dynamic Schema.org (JSON-LD), Open Graph, and Twitter Cards.
+
+## 🛠️ Tech Stack
+
+-   **Framework**: [Astro](https://astro.build/)
+-   **UI**: [Preact](https://preactjs.com/) (for interactive islands)
+-   **Styling**: Native CSS (Variables, Flexbox/Grid)
+-   **Icons**: [Astro Icon](https://www.astroicon.dev/) (FontAwesome & Material Design)
+-   **Search**: [Pagefind](https://pagefind.app/) (Static search indexing)
+-   **Server**: Nginx (serving static build)
+
+## 📂 Project Structure
 
 ```text
 /
-├── public/
+├── public/          # Static assets (PDFs, Images, Scripts)
 ├── src/
-│   └── pages/
-│       └── index.astro
-└── package.json
+│   ├── components/  # Astro & Preact components
+│   ├── data/        # Configuration YAMLs (site, cv, socials)
+│   ├── layouts/     # Page layouts (BaseLayout)
+│   ├── pages/       # Route definitions
+│   └── styles/      # Global CSS & Fonts
+├── scripts/         # Build scripts (CSP generation)
+└── astro.config.mjs # Astro configuration
 ```
 
-Astro looks for `.astro` or `.md` files in the `src/pages/` directory. Each page is exposed as a route based on its file name.
+## ⚙️ Configuration
 
-There's nothing special about `src/components/`, but that's where we like to put any Astro/React/Vue/Svelte/Preact components.
+The site is designed to be easily customizable through three main configuration files in `src/data/`:
 
-Any static assets, like images, can be placed in the `public/` directory.
+1.  **`site.yml`**: General site settings.
+    -   `logo_text`: Text displayed in the header.
+    -   `nav`: Navigation menu items.
+    -   `hero`: Home page title, subtitle, and bio.
+    -   `author`: Name used for metadata and copyright.
 
-## 🧞 Commands
+2.  **`socials.yml`**: Social media links.
+    -   Add/remove keys like `github_username`, `linkedin_username`, or `matrix_id`.
+    -   Footer and Contact sections will update automatically.
 
-All commands are run from the root of the project, from a terminal:
+3.  **`cv.yml`**: Curriculum Vitae data.
+    -   Structured data for Experience, Education, and Skills.
+    -   Automatically generates the CV page and `Person` schema.
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
+## 💻 Development
 
-## 👀 Want to learn more?
+### Prerequisites
 
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+-   Node.js (v18+)
+-   npm
+
+### Commands
+
+| Command | Action |
+| :--- | :--- |
+| `npm install` | Install dependencies |
+| `npm run dev` | Start local development server at `localhost:4321` |
+| `npm run build` | Build for production to `./dist/` |
+| `npm run preview` | Preview production build locally |
+
+## 📦 Deployment
+
+The project is built as a static site.
+
+1.  **Build**:
+    ```bash
+    npm run build
+    ```
+    *This runs `astro build`, generates search indexes with `pagefind`, and calculates CSP hashes.*
+
+2.  **Web Server (Nginx)**:
+    -   Serve the `dist/` folder.
+    -   Ensure `nginx/snippets/security_headers.conf` is included for CSP and security headers.
+    -   The `styles-src` and `script-src` hashes in `security_headers.conf` are automatically updated by the `postbuild` script.
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
