@@ -33,33 +33,94 @@ async function fetchProfile() {
     if (!response.ok) throw new Error("Failed to fetch profile");
     const user = await response.json();
 
-    container.innerHTML = `
-            <div class="profile-avatar">
-                <img src="${user.avatar_url}" alt="${user.name}" style="width: 120px; height: 120px; border-radius: 50%; border: 3px solid var(--color-primary);">
-            </div>
-            <div class="profile-info">
-                <h2 style="margin: 0; font-size: 1.8rem;">${user.name}</h2>
-                <a href="${user.html_url}" target="_blank" style="color: var(--color-text-muted); text-decoration: none; margin-bottom: 8px; display: block;">@${user.login}</a>
-                <p style="margin-bottom: 16px; max-width: 600px;">${user.bio || "Open Source Enthusiast"}</p>
-                
-                <div class="profile-stats" style="display: flex; gap: 20px; flex-wrap: wrap; justify-content: center;">
-                    <div class="stat">
-                        <strong>${user.public_repos}</strong> <span style="color: var(--color-text-muted);">Repositories</span>
-                    </div>
-                    <div class="stat">
-                        <strong>${user.followers}</strong> <span style="color: var(--color-text-muted);">Followers</span>
-                    </div>
-                    <div class="stat">
-                        <strong>${user.following}</strong> <span style="color: var(--color-text-muted);">Following</span>
-                    </div>
-                </div>
+    container.innerHTML = ""; // Clear loading
 
-                ${user.location ? `<p style="margin-top: 12px; font-size: 0.9rem; color: var(--color-text-muted);"><i class="fas fa-map-marker-alt"></i> ${user.location}</p>` : ""}
-            </div>
-        `;
+    // Avatar Wrapper
+    const avatarDiv = document.createElement("div");
+    avatarDiv.className = "profile-avatar";
+    const img = document.createElement("img");
+    img.src = user.avatar_url;
+    img.alt = user.name;
+    // Classes handle styling now
+    avatarDiv.appendChild(img);
+    container.appendChild(avatarDiv);
+
+    // Profile Info Wrapper
+    const infoDiv = document.createElement("div");
+    infoDiv.className = "profile-info";
+
+    // Name
+    const name = document.createElement("h2");
+    name.textContent = user.name;
+    infoDiv.appendChild(name);
+
+    // Username
+    const usernameLink = document.createElement("a");
+    usernameLink.href = user.html_url;
+    usernameLink.target = "_blank";
+    usernameLink.className = "username";
+    usernameLink.textContent = `@${user.login}`;
+    infoDiv.appendChild(usernameLink);
+
+    // Bio
+    const bio = document.createElement("p");
+    bio.className = "bio";
+    bio.textContent = user.bio || "Open Source Enthusiast";
+    infoDiv.appendChild(bio);
+
+    // Stats
+    const statsDiv = document.createElement("div");
+    statsDiv.className = "profile-stats";
+
+    const stats = [
+      { label: "Repositories", value: user.public_repos },
+      { label: "Followers", value: user.followers },
+      { label: "Following", value: user.following },
+    ];
+
+    stats.forEach((stat) => {
+      const statDiv = document.createElement("div");
+      statDiv.className = "stat";
+      const strong = document.createElement("strong");
+      strong.textContent = stat.value;
+      const span = document.createElement("span");
+      span.textContent = ` ${stat.label}`;
+      statDiv.appendChild(strong);
+      statDiv.appendChild(span);
+      statsDiv.appendChild(statDiv);
+    });
+    infoDiv.appendChild(statsDiv);
+
+    // Location
+    if (user.location) {
+      const locP = document.createElement("p");
+      locP.className = "location";
+      // SVG icon for location
+      const svgNS = "http://www.w3.org/2000/svg";
+      const svg = document.createElementNS(svgNS, "svg");
+      svg.setAttribute("aria-hidden", "true");
+      svg.setAttribute("height", "16");
+      svg.setAttribute("width", "16");
+      svg.setAttribute("viewBox", "0 0 16 16");
+      svg.setAttribute("fill", "currentColor");
+      const path = document.createElementNS(svgNS, "path");
+      path.setAttribute("d", "M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10zm0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6z");
+      svg.appendChild(path);
+
+      locP.appendChild(svg);
+      locP.appendChild(document.createTextNode(` ${user.location}`));
+      infoDiv.appendChild(locP);
+    }
+
+    container.appendChild(infoDiv);
+
   } catch (error) {
     console.error("Profile fetch error:", error);
-    container.innerHTML = `<div class="error">Failed to load profile.</div>`;
+    container.innerHTML = "";
+    const errDiv = document.createElement("div");
+    errDiv.className = "error";
+    errDiv.textContent = "Failed to load profile.";
+    container.appendChild(errDiv);
   }
 }
 
@@ -75,12 +136,19 @@ async function fetchRepos() {
     renderRepos(allRepos);
   } catch (error) {
     console.error(error);
-    container.innerHTML = `
-            <div class="error">
-                <p>Failed to load repositories.</p>
-                <a href="https://github.com/${USERNAME}" target="_blank">Visit my GitHub Profile</a>
-            </div>
-        `;
+    container.innerHTML = "";
+    const errDiv = document.createElement("div");
+    errDiv.className = "error";
+    const p = document.createElement("p");
+    p.textContent = "Failed to load repositories.";
+    errDiv.appendChild(p);
+
+    const a = document.createElement("a");
+    a.href = `https://github.com/${USERNAME}`;
+    a.target = "_blank";
+    a.textContent = "Visit my GitHub Profile";
+    errDiv.appendChild(a);
+    container.appendChild(errDiv);
   }
 }
 
@@ -89,13 +157,12 @@ function renderRepos(repos) {
   container.innerHTML = "";
 
   if (repos.length === 0) {
-    container.innerHTML =
-      '<div class="error">No repositories found matching your search.</div>';
+    const errDiv = document.createElement("div");
+    errDiv.className = "error";
+    errDiv.textContent = "No repositories found matching your search.";
+    container.appendChild(errDiv);
     return;
   }
-
-  // Filter out forks if needed, or keeping them. Let's keep them but maybe mark them?
-  // Let's filter out non-public ones just in case? API only returns public usually.
 
   repos.forEach((repo) => {
     const card = document.createElement("div");
@@ -126,8 +193,16 @@ function renderRepos(repos) {
     if (repo.language) {
       const langItem = document.createElement("div");
       langItem.className = "meta-item";
+
+      const dot = document.createElement("span");
+      dot.className = "lang-dot";
       const color = langColors[repo.language] || "#ccc";
-      langItem.innerHTML = `<span class="lang-dot" style="background-color: ${color};"></span> ${repo.language}`;
+      // This is the only "inline style", but setting property via JS is usually allowed.
+      // If stricter CSP is needed, we'd need a whitelist class system, but this is a standard pattern.
+      dot.style.backgroundColor = color;
+
+      langItem.appendChild(dot);
+      langItem.appendChild(document.createTextNode(` ${repo.language}`));
       meta.appendChild(langItem);
     }
 
@@ -135,7 +210,20 @@ function renderRepos(repos) {
     if (repo.stargazers_count > 0) {
       const starItem = document.createElement("div");
       starItem.className = "meta-item";
-      starItem.innerHTML = `<svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-star"><path fill="currentColor" d="M8 .25a.75.75 0 01.673.418l1.882 3.815 4.21.612a.75.75 0 01.416 1.279l-3.046 2.97.719 4.192a.75.75 0 01-1.088.791L8 12.347l-3.766 1.98a.75.75 0 01-1.088-.79l.72-4.194L.818 6.374a.75.75 0 01.416-1.28l4.21-.611L7.327.668A.75.75 0 018 .25z"></path></svg> ${repo.stargazers_count}`;
+      // SVG creation
+      const svgNS = "http://www.w3.org/2000/svg";
+      const svg = document.createElementNS(svgNS, "svg");
+      svg.setAttribute("aria-hidden", "true");
+      svg.setAttribute("height", "16");
+      svg.setAttribute("viewBox", "0 0 16 16");
+      svg.setAttribute("width", "16");
+      const path = document.createElementNS(svgNS, "path");
+      path.setAttribute("fill", "currentColor");
+      path.setAttribute("d", "M8 .25a.75.75 0 01.673.418l1.882 3.815 4.21.612a.75.75 0 01.416 1.279l-3.046 2.97.719 4.192a.75.75 0 01-1.088.791L8 12.347l-3.766 1.98a.75.75 0 01-1.088-.79l.72-4.194L.818 6.374a.75.75 0 01.416-1.28l4.21-.611L7.327.668A.75.75 0 018 .25z");
+      svg.appendChild(path);
+
+      starItem.appendChild(svg);
+      starItem.appendChild(document.createTextNode(` ${repo.stargazers_count}`));
       meta.appendChild(starItem);
     }
 
@@ -143,7 +231,20 @@ function renderRepos(repos) {
     if (repo.forks_count > 0) {
       const forkItem = document.createElement("div");
       forkItem.className = "meta-item";
-      forkItem.innerHTML = `<svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-repo-forked"><path fill="currentColor" d="M5 5.372v.878c0 .414.336.75.75.75h4.5a.75.75 0 01.75.75v1.628a2.25 2.25 0 11-1.5 0V7.75A2.25 2.25 0 017.25 5.5h-4.5A2.25 2.25 0 01.5 7.75v2.028a2.25 2.25 0 11-1.5 0V7.75A.75.75 0 011.25 7h4.5a.75.75 0 01.75.75v1.628a2.25 2.25 0 11-1.5 0V5.372a2.25 2.25 0 111.5 0zm-3.75 5.75a.75.75 0 100-1.5.75.75 0 000 1.5zm10.5-1.5a.75.75 0 100 1.5.75.75 0 000-1.5z"></path></svg> ${repo.forks_count}`;
+      // SVG creation
+      const svgNS = "http://www.w3.org/2000/svg";
+      const svg = document.createElementNS(svgNS, "svg");
+      svg.setAttribute("aria-hidden", "true");
+      svg.setAttribute("height", "16");
+      svg.setAttribute("viewBox", "0 0 16 16");
+      svg.setAttribute("width", "16");
+      const path = document.createElementNS(svgNS, "path");
+      path.setAttribute("fill", "currentColor");
+      path.setAttribute("d", "M5 5.372v.878c0 .414.336.75.75.75h4.5a.75.75 0 01.75.75v1.628a2.25 2.25 0 11-1.5 0V7.75A2.25 2.25 0 017.25 5.5h-4.5A2.25 2.25 0 01.5 7.75v2.028a2.25 2.25 0 11-1.5 0V7.75A.75.75 0 011.25 7h4.5a.75.75 0 01.75.75v1.628a2.25 2.25 0 11-1.5 0V5.372a2.25 2.25 0 111.5 0zm-3.75 5.75a.75.75 0 100-1.5.75.75 0 000 1.5zm10.5-1.5a.75.75 0 100 1.5.75.75 0 000-1.5z");
+      svg.appendChild(path);
+
+      forkItem.appendChild(svg);
+      forkItem.appendChild(document.createTextNode(` ${repo.forks_count}`));
       meta.appendChild(forkItem);
     }
 
@@ -176,7 +277,6 @@ document.addEventListener("astro:page-load", () => {
   initSearch();
 });
 
-// Initial load fallback for non-SPA
 if (document.readyState === "complete" || document.readyState === "interactive") {
   fetchProfile();
   fetchRepos();

@@ -71,6 +71,72 @@ import BaseLayout from "../layouts/BaseLayout.astro";
             align-items: flex-start;
             gap: var(--space-xl);
         }
+
+        :global(.profile-stats) {
+            justify-content: flex-start;
+        }
+    }
+
+    /* Profile Elements (Previously Inline) */
+    :global(.profile-avatar img) {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        border: 3px solid var(--color-primary);
+        max-width: 100%;
+        object-fit: cover;
+    }
+
+    :global(.profile-info h2) {
+        margin: 0;
+        font-size: 1.8rem;
+        word-break: break-word;
+    }
+
+    :global(.profile-info .username) {
+        color: var(--color-text-muted);
+        text-decoration: none;
+        margin-bottom: 8px;
+        display: block;
+    }
+
+    :global(.profile-info .bio) {
+        margin-bottom: 16px;
+        max-width: 600px;
+        overflow-wrap: anywhere;
+    }
+
+    :global(.profile-stats) {
+        display: flex;
+        gap: 20px;
+        flex-wrap: wrap;
+        justify-content: center;
+        margin-top: var(--space-md);
+    }
+
+    :global(.stat strong) {
+        color: var(--color-text);
+        font-weight: 700;
+    }
+
+    :global(.stat span) {
+        color: var(--color-text-muted);
+    }
+
+    :global(.location) {
+        margin-top: 12px;
+        font-size: 0.9rem;
+        color: var(--color-text-muted);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        justify-content: center;
+    }
+
+    @media (min-width: 768px) {
+        :global(.location) {
+            justify-content: flex-start;
+        }
     }
 
     /* Search Bar */
