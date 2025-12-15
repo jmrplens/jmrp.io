@@ -4,7 +4,7 @@
   "version": "0.0.1",
   "scripts": {
     "dev": "astro dev",
-    "build": "astro build && npx pagefind --site dist",
+    "build": "astro build && pagefind --site dist",
     "postbuild": "node scripts/generate-csp-hashes.mjs",
     "preview": "astro preview",
     "astro": "astro"

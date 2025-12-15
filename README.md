@@ -64,16 +64,16 @@ The site is designed to be easily customizable through three main configuration 
 ### Prerequisites
 
 -   Node.js (v18+)
--   npm
+-   pnpm
 
 ### Commands
 
 | Command | Action |
 | :--- | :--- |
-| `npm install` | Install dependencies |
-| `npm run dev` | Start local development server at `localhost:4321` |
-| `npm run build` | Build for production to `./dist/` |
-| `npm run preview` | Preview production build locally |
+| `pnpm install` | Install dependencies |
+| `pnpm run dev` | Start local development server at `localhost:4321` |
+| `pnpm run build` | Build for production to `./dist/` |
+| `pnpm run preview` | Preview production build locally |
 
 ## 📦 Deployment
 
@@ -81,7 +81,7 @@ The project is built as a static site.
 
 1.  **Build**:
     ```bash
-    npm run build
+    pnpm run build
     ```
     *This runs `astro build`, generates search indexes with `pagefind`, and calculates CSP hashes.*
 
