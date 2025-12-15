@@ -26,29 +26,28 @@ const { title, description, type, schema, image } = Astro.props;
         />
         <script is:inline nonce="NGINX_CSP_NONCE">
             // Critical: Execute immediately to prevent FOUC
-            const getTheme = () => {
-                if (
-                    typeof localStorage !== "undefined" &&
-                    localStorage.getItem("theme")
-                ) {
-                    return localStorage.getItem("theme");
+            (function () {
+                const e = () => {
+                    if (
+                        typeof localStorage !== "undefined" &&
+                        localStorage.getItem("theme")
+                    )
+                        return localStorage.getItem("theme");
+                    return window.matchMedia("(prefers-color-scheme: light)")
+                        .matches
+                        ? "light"
+                        : "dark";
+                };
+                const t = e();
+                document.documentElement.setAttribute("data-theme", t);
+                if (t === "light") {
+                    document.documentElement.classList.add("light-mode");
+                    document.documentElement.classList.remove("dark-mode");
+                } else {
+                    document.documentElement.classList.add("dark-mode");
+                    document.documentElement.classList.remove("light-mode");
                 }
-                if (
-                    window.matchMedia("(prefers-color-scheme: light)").matches
-                ) {
-                    return "light";
-                }
-                return "dark";
-            };
-            const theme = getTheme();
-            document.documentElement.setAttribute("data-theme", theme);
-            if (theme === "light") {
-                document.documentElement.classList.add("light-mode");
-                document.documentElement.classList.remove("dark-mode");
-            } else {
-                document.documentElement.classList.add("dark-mode");
-                document.documentElement.classList.remove("light-mode");
-            }
+            })();
         </script>
     </head>
     <body>

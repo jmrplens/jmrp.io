@@ -30,8 +30,8 @@ const {
 } = Astro.props;
 
 // Default Schema if none provided
-const defaultSchema = {
-    "@context": "https://schema.org",
+// Default Schema if none provided
+const websiteSchema = {
     "@type": "WebSite",
     url: siteData.url,
     name: "José M. Requena Plens",
@@ -41,6 +41,17 @@ const defaultSchema = {
         "@type": "Person",
         name: siteData.author,
     },
+};
+
+const navSchema = (siteData.nav || []).map((item: any) => ({
+    "@type": "SiteNavigationElement",
+    name: item.label,
+    url: new URL(item.href, siteData.url).toString(),
+}));
+
+const defaultSchema = {
+    "@context": "https://schema.org",
+    "@graph": [websiteSchema, ...navSchema],
 };
 
 const jsonLD = schema || defaultSchema;
