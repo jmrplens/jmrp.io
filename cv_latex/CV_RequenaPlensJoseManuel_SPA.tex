@@ -26,8 +26,12 @@
 \usepackage{calc} 
 
 % Fuente
-\usepackage[default]{inter}
-\setmainfont{Inter}
+\usepackage[default]{lato}
+\setmainfont{Lato}
+
+% List design
+\usepackage{enumitem}
+\setlist[itemize]{label=\textcolor{emphasis}{\faAngleRight}, leftmargin=*, nosep, noitemsep, topsep=0.5em}
 
 % Texto - otros
 \usepackage{csquotes}
@@ -107,20 +111,18 @@
 
 \footnotesize{\bf Para más información puede hacer click sobre el nombre de títulos, lugares, certificados o cursos que aparecen en el currículum.}
 
+\vspace{1.5em}
 \cvsection{Experiencia}
 
-\cvevent{Ingeniero de software}{\href{https://power-electronics.com/}{Power Electronics}}{Abril 2023 -- actualmente}{Departamento de I+D. Ãrea de solar.}
+\begin{minipage}{\linewidth}
+\cvevent{Ingeniero de software}{\href{https://power-electronics.com/}{Power Electronics}}{Abril 2023 -- actualmente}{Departamento de I+D. Área de solar.}
 \vspace{-1em}
 \begin{justify}
 Desarrollador de software embebido para equipos de electrónica de potencia relacionada con la energía renovable: inversores, conversores, cargadores, enlaces a red eléctrica, etc.
 
 \noindent Implementación de nuevas funcionalidades y corrección de bugs.
 \end{justify}
-\vspace{-0.75em}
-\vspace{0.25em}
-Algunas tareas:
-\vspace{0.25em}
-\begin{itemize}\setlength\itemsep{0em}
+\begin{itemize}
 	\item Desarrollo en C de software embebido.
 	\item Test unitarios: Ceedling, Unity, CMock.
 	\item Versionado de implementaciones mediante GIT.
@@ -128,9 +130,12 @@ Algunas tareas:
 	\item Uso de herramientas: CLion, VSCode, Keil, GitLab.
 	\item Metodologías agiles: scrums, kanban, etc.
 \end{itemize}	
+\end{minipage}
+\vspace{0.5em}
 
 \divider
 
+\begin{minipage}{\linewidth}
 \cvevent{Investigador predoctoral}{\href{http://www.upv.es/es}{Universidad Politécnica de Valencia} + \href{https://www.csic.es/es}{CSIC} + \href{https://www.iislafe.es/es/}{Hospital La Fe} + \href{https://innoavi.es/es/}{AVI}}{Enero 2023 -- Abril 2023}{\href{https://www.i3m-stim.i3m.upv.es/}{Instituto de Instrumentación para Imagen Molecular i3M}}
 \vspace{-1em}
 \begin{justify}
@@ -138,33 +143,28 @@ Investigador en la línea de I+D: {\bf Metamateriales Acústicos para tratamient
 
 \noindent {\bf Proyecto}: Nueva generación de metasuperficies inteligentes basadas en fabricación aditiva para aplicaciones estratégicas en telecomunicaciones (Metasmart). Financiado por la Agencia Valenciana de Innovación (Referencia: INNEST/2022/345).
 \end{justify}
-\vspace{-0.75em}
-\vspace{0.25em}
-Algunas tareas en ejecución:
-\vspace{0.25em}
-\begin{itemize}\setlength\itemsep{0em}
+\begin{itemize}
 	\item Diseño de lentes acústicas de foco ultracercano.
 	\item Fabricación de prototipos.
 	\item Experimentación con tejidos ex-vivo.
 \end{itemize}	
+\end{minipage}
+\vspace{0.5em}
 
 
 \divider
 
+\begin{minipage}{\linewidth}
 \cvevent{Investigador predoctoral}{\href{http://www.upv.es/es}{Universidad Politécnica de Valencia} + \href{https://www.csic.es/es}{CSIC}}{Julio 2021 -- Julio 2022}{\href{https://www.i3m-stim.i3m.upv.es/}{Instituto de Instrumentación para Imagen Molecular i3M}}
 \vspace{-1em}
 \begin{justify}
 El objetivo principal es realizar la investigación y desarrollo de metamateriales acústicos para su uso en aplicaciones arquitectónicas y en el ámbito de la imagen médica.
 \end{justify}
-\vspace{-1em}
-\vspace{0.25em}
-Objetivos conseguidos:
-\vspace{0.25em}
-\begin{itemize}\setlength\itemsep{0em}
+\begin{itemize}
 	\item Desarrollo teórico de metadifusores acústicos basados en membranas o placas reduciendo el tamaño de los difusores comerciales.
 	\item Simulación de los difusores acústicos validando los resultados.
 	\item Dos publicaciones en congresos nacionales e internacionales:
-	\begin{itemize}\setlength\itemsep{0em}
+	\begin{itemize}
 		\item Tecniacústica - \href{https://jmrp.io/pdf/paper-resources/Conferences/Tecniacustica/JimenezTEC2020a.pdf}{\bf Beyond Schroeder diffusers using acoustic metasurfaces}.
 		\item Euronoise - \href{https://jmrp.io/pdf/paper-resources/Conferences/Euronoise/plensEuro2021_2.pdf}{\bf Sound diffusing metasurfaces based on elastic plates and membranes}.
 	\end{itemize}
@@ -173,24 +173,25 @@ Objetivos conseguidos:
 	\item Validados los resultados experimentales frente a los obtenidos en simulación.
 	\item Dirección de Trabajo Final de Máster de alumno del Máster en Ingeniería Acústica de la UPV.
 \end{itemize}
+\end{minipage}
+\vspace{0.5em}
 
 
 \divider
 
+\begin{minipage}{\linewidth}
 \cvevent{Investigador en proyecto europeo}{\href{http://www.upv.es/contenidos/CGANDIA/}{Escuela Politécnica Superior de Gandia}}{Febrero 2020 -- Julio 2021}{\href{http://igic.webs.upv.es/}{Grupo de Acústica en Medios Complejos del IGIC}}
 \vspace{-1em}
 \begin{justify}
 Implementar y validar experimentalmente un método de mitigación de sonido, aplicable a una configuración de lanzamiento de vehículo espacial real (VEGA), que resulte en una disminución significativa de los niveles de presión de sonido generados en el área de lanzamiento durante el despegue de vehículos espaciales.
 \vspace{0.5em}
 
-\noindent Proyecto financiado por la ESA (European Space Agency) con referencia ESA AO/1-9479/18/NL/LvH, en colaboración con: CNRS/Laboratoire dâAcoustique de la Université du Mans; COMET Ingeniería; Consejo Superior de Investigaciones Científicas (CSIC) y Universidad Politécnica de Madrid.
+\noindent Proyecto financiado por la ESA (European Space Agency) con referencia ESA AO/1-9479/18/NL/LvH, en colaboración con: CNRS/Laboratoire dâ€™Acoustique de la Université du Mans; COMET Ingeniería; Consejo Superior de Investigaciones Científicas (CSIC) y Universidad Politécnica de Madrid.
 \vspace{0.5em}
 
 \noindent Todos los objetivos del proyecto se completaron al 100\%:
 \end{justify}
-\vspace{-1em}
-\vspace{0.25em}
-\begin{itemize}\setlength\itemsep{0em}
+\begin{itemize}
 	\vspace{0.25em}
 	\item Diseño de la geometría optima para reducir los niveles de ruido.
 	\item Simulación de un entorno real para validar el funcionamiento del diseño.
@@ -206,9 +207,12 @@ Implementar y validar experimentalmente un método de mitigación de sonido, apl
 	\end{itemize}
 	
 \end{itemize}
+\end{minipage}
+\vspace{0.5em}
 
 \divider
 
+\begin{minipage}{\linewidth}
 \cvevent{Prácticas de investigación}{\href{https://dfests.ua.es/}{Departamento de Física, Ingeniería de Sistemas y Teoría de la Señal}}{Febrero 2018 -- Julio 2018}{\href{https://www.ua.es/}{Universidad de Alicante}}
 \vspace{-0.5em}
 \begin{justify}
@@ -217,20 +221,20 @@ Prácticas en diferentes proyectos de investigación en el \href{https://iufacyt
 
 \noindent Objetivos conseguidos:
 \end{justify}
-\vspace{-0.75em}
-\vspace{0.25em}
-\begin{itemize}\setlength\itemsep{0em}
-\vspace{0.25em}	
+\begin{itemize}
 	\item Simulación de modelos acústicos.
 	\item Medidas acústicas mediante sistema robótico controlado con LabView.
 	\item Una publicación en congreso nacional:
-    \begin{itemize}\setlength\itemsep{0.1em}
+    \begin{itemize}
 	\item Tecniacústica - \href{https://jmrp.io/pdf/paper-resources/Conferences/Tecniacustica/saura2018.pdf}{\bf Comportamiento vibroacústico de contenedores cilíndricos en aire}.
 	\end{itemize}
 \end{itemize}
+\end{minipage}
+\vspace{0.5em}
 
 \divider
 
+\begin{minipage}{\linewidth}
 \cvevent{Fundador y Vocal}{\href{https://www.linkedin.com/company/a-\%C2\%B5tech/}{A:µTech}}{Septiembre 2016 -- Julio 2018}{\href{https://www.ua.es/}{Universidad de Alicante}}
 \vspace{-0.5em}
 \begin{justify}
@@ -239,36 +243,42 @@ Asociación con domicilio en la Escuela Politécnica Superior de la Universidad 
 
 \noindent Actividades realizadas:
 \end{justify}
-\vspace{-0.7em}
-\vspace{0.25em}
-\begin{itemize}\setlength\itemsep{0em}
+\begin{itemize}
 	\item Clases grupales de refuerzo y ampliación de la asignatura ``Sistemas Electrónicos Digitales"\, del Grado de Ingeniería en Sonido e Imagen de la Universidad de Alicante.
 	\item Organización y planificación de laboratorio (ubicado en el Colegio Mayor).
 	\item Comunicación y RRPP.
 \end{itemize}
+\end{minipage}
+\vspace{0.5em}
 
 
 \divider 
 
+\begin{minipage}{\linewidth}
 \cvevent{Técnico de sonido}{\href{http://acusticox.com/}{Acusticox}}{Junio 2011 --  Febrero 2018}{Cox, Alicante}
 
-\begin{itemize}\setlength\itemsep{0em}
+\begin{itemize}
 	\item Instalación de equipos y ajuste para eventos.
 	\item Instalación de equipos y ajuste para instalación permanente.
 	\item Técnico de FOH.
 	\item Captación de clientes.
 \end{itemize}
+\end{minipage}
+\vspace{0.5em}
 
 \divider
 
 
+\begin{minipage}{\linewidth}
  \cvevent{Técnico de laboratorio}{\href{https://profdent.es/}{Profdent}}{Septiembre 2005 -- Noviembre 2009}{Alicante}
 
-\begin{itemize}\setlength\itemsep{0em}
+\begin{itemize}
 	\item Recepción de trabajos.
 	\item Preparación de modelos y retoque.
 	\item Pequeñas responsabilidades.
 \end{itemize}
+\end{minipage}
+\vspace{0.5em}
 
 \vspace{1em}
 
@@ -289,46 +299,48 @@ Asociación con domicilio en la Escuela Politécnica Superior de la Universidad 
 %}
 %\newpage
 
+\vspace{1em}
 \cvsection{Otros conocimientos y aptitudes}
 
 \begin{minipage}[t]{0.45\textwidth}
 \cvskillheader{Firmware Embebido y Electrónica}
-\cvskill{C}{4}
-\cvskill{STM32 \& ARM}{4}
-\cvskill{Protocolos de com.}{4}
-\cvskill{Keil uVision}{4}
-\cvskill{Instrumentación}{4}
-\cvskill{Espressif / Arduino}{4}
+\cvskill{\faCuttlefish~C}{4}
+\cvskill{\faMicrochip~STM32 \& ARM}{4}
+\cvskill{\faNetworkWired~Protocolos de com.}{4}
+\cvskill{\faLaptopCode~Keil uVision}{4}
+\cvskill{\faTools~Instrumentación}{4}
+\cvskill{\faMicrochip~Espressif / Arduino}{4}
 
 \vspace{1em}
 
 \cvskillheader{Simulación y Acústica}
-\cvskill{COMSOL Multiphysics}{4}
-\cvskill{LabView}{3}
-\cvskill{CATT-Acoustic}{4}
-\cvskill{EASE}{3}
+\cvskill{\faAtom~COMSOL Multiphysics}{4}
+\cvskill{\faWaveSquare~LabView}{3}
+\cvskill{\faVolumeUp~CATT-Acoustic}{4}
+\cvskill{\faVolumeUp~EASE}{3}
 \end{minipage}
+\vspace{0.5em}
 \hfill
 \begin{minipage}[t]{0.45\textwidth}
 \cvskillheader{Ingeniería de Software y Herramientas}
-\cvskill{Python}{4}
-\cvskill{C++}{3}
-\cvskill{Git}{4}
-\cvskill{MATLAB}{4}
-\cvskill{CMake}{3}
-\cvskill{JetBrains Toolbox}{4}
+\cvskill{\faPython~Python}{4}
+\cvskill{\faCode~C++}{3}
+\cvskill{\faGit*~Git}{4}
+\cvskill{\faFileCode~MATLAB}{4}
+\cvskill{\faCogs~CMake}{3}
+\cvskill{\faToolbox~JetBrains Toolbox}{4}
 
 \vspace{1em}
 
 \cvskillheader{General y Plataformas}
-\cvskill{Linux / Unix}{4}
-\cvskill{MacOS}{4}
-\cvskill{Windows}{4}
-\cvskill{LaTeX}{4}
-\cvskill{HTML / CSS}{3}
+\cvskill{\faLinux~Linux / Unix}{4}
+\cvskill{\faApple~MacOS}{4}
+\cvskill{\faWindows~Windows}{4}
+\cvskill{\faFile~LaTeX}{4}
+\cvskill{\faHtml5~HTML / CSS}{3}
 \end{minipage}
+\vspace{0.5em}
 
-\vspace{2em}
 %\cvachievement{\faToolbox}{Habilidades técnico/manuales}{
 %\begin{description}[itemindent=10pt+\widthof{\bfseries Electricidad},labelwidth=\widthof{\bfseries Electricidad},leftmargin=\parindent,labelindent=\parindent]
 %	\setlength\itemsep{0.1em}
@@ -341,10 +353,12 @@ Asociación con domicilio en la Escuela Politécnica Superior de la Universidad 
 %}
 
 %
+\vspace{1.5em}
 \cvsection{Educación}
 
 \cvsubsection{Formación oficial}
 
+\begin{minipage}{\linewidth}
 \cvevent{\href{http://www.upv.es/entidades/EDOCTORADO/info/1005218normalc.html}{Doctorado en Tecnologías para la Salud y el Bienestar}}{\small \href{http://www.upv.es/es}{Universidad Politécnica de Valencia}}{Septiembre 2020 -- 2023}{\href{https://www.i3m-stim.i3m.upv.es/}{Instituto de Instrumentación para Imagen Molecular i3M}}
 
 \begin{description}
@@ -366,9 +380,12 @@ Tras completar casi la totalidad del programa de doctorado, tomé la decisión e
 \end{description}
 
 \noindent \cvtag{\href{https://jmrp.io/pdf/degree/PhDExpCas.pdf}{Expediente}}
+\end{minipage}
+\vspace{0.5em}
 
 \divider
 
+\begin{minipage}{\linewidth}
 \cvevent{\href{http://www.upv.es/titulaciones/MUIA/indexc.html}{Máster en Ingeniería Acústica}}{\small \href{http://www.upv.es/es}{Universidad Politécnica de Valencia}}{Septiembre 2018 -- Junio 2019}{\href{http://www.upv.es/contenidos/CGANDIA/}{Campus de Gandía}}
 \vspace{-0.5em}
 \begin{justify}
@@ -381,8 +398,11 @@ Titulación obtenida con honores en: Fundamentos de acústica, Aislamiento acús
 \noindent \cvtag{\href{https://jmrp.io/pdf/degree/Acoustic.pdf}{Título}} \cvtag{\href{https://jmrp.io/pdf/degree/AcousticExpCas.pdf}{Expediente}} 
 \end{justify}
 \vspace{-0.5em}
+\end{minipage}
+\vspace{0.5em}
 \divider
 
+\begin{minipage}{\linewidth}
 \cvevent{\href{https://web.ua.es/es/oia/documentos/publicaciones/grados-folletos/grado-ingenieria-sonido-imagen.pdf}{Grado en Ingeniería en Telecomunicación en Sonido e Imagen}}{\small \href{https://www.ua.es/}{Universidad de Alicante}}{Julio 2018}{\href{https://eps.ua.es/}{Escuela Politécnica Superior}}
 \vspace{-0.5em}
 \begin{justify}
@@ -395,15 +415,21 @@ Titulación obtenida junto a las 2 especializaciones: Ingeniería Acústica y Te
 \noindent \cvtag{\href{https://jmrp.io/pdf/degree/Telecom.pdf}{Título}} \cvtag{\href{https://jmrp.io/pdf/degree/TelecomExpCas.pdf}{Expediente}} 
 \end{justify}
 \vspace{-0.5em}
+\end{minipage}
+\vspace{0.5em}
 \divider
 
+\begin{minipage}{\linewidth}
 \cvevent{\href{https://www.todofp.es/que-estudiar/logse/electricidad-electronica/equipos-electronicos-consumo.html}{CFGM Técnico en Electrónica} | \href{https://www.todofp.es/que-estudiar/logse/comunicacion-imagen-sonido/sonido.html}{CFGS Técnico Superior de Sonido}}{\small \href{https://elche.salesianos.edu/colegio/san-jose-artesano/}{IES Salesianos (San José Artesano)} | \href{https://ies-berlanga.info/index.php/es/}{IES Luis García Berlanga} + \href{https://sptcv.net/ciudad-de-la-luz/}{Ciudad de la Luz}}{2009 | 2011}{Elche | Alicante}
 \vspace{0.5em}
 
 \noindent \cvtag{\href{https://jmrp.io/pdf/degree/ElectronicSound.pdf}{Títulos}} 
+\end{minipage}
+\vspace{0.5em} 
 
 \divider 
 
+\vspace{1.5em}
 \cvsection{Certificados}
 \vspace{-0.6em}
 {\footnotesize Los certificados son accesibles pulsando sobre el nombre de cada uno de ellos.}
@@ -411,7 +437,7 @@ Titulación obtenida junto a las 2 especializaciones: Ingeniería Acústica y Te
 
 \begin{minipage}[t]{0.49\textwidth}
     {\normalsize\bfseries\color{emphasis}Prevención de riesgos laborales}\par\smallskip
-    \scriptsize
+    \small
     \begin{tabular}{@{} l @{\extracolsep{\fill}} r @{}}
     	\href{https://jmrp.io/pdf/certificates/PRL/PRL_Generico.pdf}{Genérico} & \href{https://invassat.gva.es/}{INVASSAT}. {\bf 50} H.\\
     	\href{https://jmrp.io/pdf/certificates/PRL/PRL_Nanomateriales.pdf}{Nanomateriales} & \href{https://invassat.gva.es/}{INVASSAT}. {\bf 50} H.\\
@@ -426,7 +452,7 @@ Titulación obtenida junto a las 2 especializaciones: Ingeniería Acústica y Te
     \vspace{1em}
 
     {\normalsize\bfseries\color{emphasis}Laboral/Industrial}\par\smallskip
-    \scriptsize
+    \small
     \begin{tabular}{@{} l @{\extracolsep{\fill}} r @{}}
     	\href{https://jmrp.io/pdf/certificates/Certificado_Carretilla.pdf}{Operador carretilla} & \href{https://gescoform.es/}{Gescoform}. {\bf 15} H.\\
     	\href{https://www.asonaman.es/files/crt/2022/10/09/CBBUWIQEBMUJKENWAKEZHYAGHKKA.pdf}{Manipulador alimentos} & \href{https://www.asonaman.es/}{Asonaman}. {\bf 30} H.\\
@@ -435,10 +461,11 @@ Titulación obtenida junto a las 2 especializaciones: Ingeniería Acústica y Te
     	\href{https://jmrp.io/pdf/certificates/ProteccionDeDatos.pdf}{Protección de datos} & \href{https://www.csirtcv.gva.es/}{CSIRT-CV}. {\bf 10} H.\\
     \end{tabular}
 \end{minipage}
+\vspace{0.5em}
 \hfill
 \begin{minipage}[t]{0.49\textwidth}
     {\normalsize\bfseries\color{emphasis}Competencias transversales}\par\smallskip
-    \scriptsize
+    \small
     \begin{tabular}{@{} l @{\extracolsep{\fill}} r @{}}
     	\href{https://jmrp.io/pdf/certificates/PerspectivaDeGenero.pdf}{Perspectiva de género} & \href{https://eves.san.gva.es}{EVES}. {\bf 20} H.\\
     	\href{https://jmrp.io/pdf/certificates/TrabajoEnEquipo.pdf}{Trabajo en equipo} & \href{https://labora.gva.es/es/ciutadania}{Labora}. {\bf 25} H.\\
@@ -453,16 +480,18 @@ Titulación obtenida junto a las 2 especializaciones: Ingeniería Acústica y Te
     \vspace{1em}
 
     {\normalsize\bfseries\color{emphasis}Tecnologías de la información}\par\smallskip
-    \scriptsize
+    \small
     \begin{tabular}{@{} l @{\extracolsep{\fill}} r @{}}
     	\href{https://courses.edx.org/certificates/f1fb6cbd6f39431c9f57c7ee3a5dc3ad}{Using Python for Research} & \href{https://vpal.harvard.edu/harvard-online-harvardx}{HarvardX}. {\bf 50} H.\\
     	\href{https://courses.edx.org/certificates/62fed4c86a17427ebb5b6bbbc39e34df}{Analyzing Data w/ Python} & \href{https://www.edx.org/school/ibm}{IBM}. {\bf 20} H.\\
     	\href{https://courses.edx.org/certificates/0f49b9baa42f4464b2e0d99ade544790}{Visualizing Data w/ Python} & \href{https://www.edx.org/school/ibm}{IBM}. {\bf 20} H.\\
     \end{tabular}
 \end{minipage}
-\vspace{-2em}
+\vspace{0.5em}
+\par\vspace{1em}
 
 \cvsubsection{Cursos y seminarios}
+\normalsize
 \begin{itemize}\setlength\itemsep{0em}
 	\item {\bf \href{https://jmrp.io/pdf/programs/COST2019.pdf}{Use and characterisation of new acoustic treatments and tools}}. \href{https://www.cost.eu/}{European Cooperation in Science and Technology (COST)}. 15 Horas.
 	\item {\bf \href{http://www.upv.es/pls/oalu/sic_gdoc.get_content?P_ASI=40010&P_IDIOMA=c&P_VISTA=&P_TIT=0&P_CACA=2022}{Métodos numéricos con MATLAB}}. \href{http://www.upv.es/es}{UPV}. 50 Horas.
@@ -470,6 +499,7 @@ Titulación obtenida junto a las 2 especializaciones: Ingeniería Acústica y Te
 	\item {\bf \href{http://www.upv.es/pls/oalu/sic_gdoc.get_content?P_ASI=40012&P_IDIOMA=c&P_VISTA=&P_TIT=0&P_CACA=2022}{Computación científica}}. \href{http://www.upv.es/es}{UPV}. 50 Horas.
 	\item {\bf \href{http://www.upv.es/pls/oalu/sic_gdoc.get_content?P_ASI=40016&P_IDIOMA=c&P_VISTA=&P_TIT=0&P_CACA=2022}{Perspectiva de género en la investigación}}. \href{http://www.upv.es/es}{UPV}. 50 Horas.
 \end{itemize}
+\vspace{1.5em}
 \cvsection{Publicaciones}
 \vspace{0.5em}
 \vspace{-1em}
