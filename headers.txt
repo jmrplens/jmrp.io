@@ -1,0 +1,18 @@
+HTTP/2 200 
+date: Mon, 15 Dec 2025 10:52:38 GMT
+content-type: application/pdf
+vary: Accept-Encoding
+server: jmrp.io
+cache-control: public, max-age=3600, must-revalidate
+strict-transport-security: max-age=63072000; includeSubDomains; preload
+x-content-type-options: nosniff
+x-frame-options: DENY
+x-xss-protection: 1; mode=block
+referrer-policy: strict-origin-when-cross-origin
+cross-origin-resource-policy: same-origin
+cross-origin-embedder-policy: require-corp
+cross-origin-opener-policy: same-origin
+expect-ct: max-age=86400, enforce
+content-security-policy: default-src 'none'; script-src 'self' 'nonce-2ba2ebcd9190611ce2fd33522f74f0bc' https://static.cloudflareinsights.com 'sha256-Q2BPg90ZMplYY+FSdApNErhpWafg2hcRRbndmvxuL/Q=' 'sha256-U7a72oKuFFz8D7GUHLA1NZ0ciymHmDOc9T9aVDg2rWU='; style-src 'self' 'sha256-TRCry7es6yc02TQIQL+uaXoUlU8dEspfkv1RB96cbFc=' 'sha256-MZdvHna4rR5BljcEn8qLVsel4zgsb1TuM3PNt5g35Og=' 'sha256-vv9IoKo7BSLbWcUHr3tNmfNVmm5L/9Cfn2H6LMk7/ow=' 'sha256-HOFAXWMaw5NZnjgpOz1YlRM9jUNj6rljWxrLOTzq7J8=' 'sha256-zh67cJ5fe18bC6W2k3T2Nn5K7Ci3p+iyLJVzRo2W2To=' 'sha256-C5lOjRtKF0y5RpkYs+y5mEGD7mh9tM07ntiJGnNfzNQ='; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://mstdn.jmrp.io https://matrix.jmrp.io https://potatomesh.jmrp.io https://*.jmrp.io https://api.github.com https://cloudflareinsights.com https://static.cloudflareinsights.com; media-src 'self'; manifest-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests;
+permissions-policy: accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()
+
