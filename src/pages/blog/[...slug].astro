@@ -1,0 +1,307 @@
+---
+import { type CollectionEntry, getCollection } from "astro:content";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { Icon } from "astro-icon/components";
+
+import Callout from "../../components/Callout.astro";
+import CodeTabs from "../../components/CodeTabs.astro";
+import CodeTabItem from "../../components/CodeTabItem.astro";
+
+export async function getStaticPaths() {
+    const posts = await getCollection("posts");
+    return posts.map((post) => ({
+        params: { slug: post.slug },
+        props: post,
+    }));
+}
+
+type Props = CollectionEntry<"posts">;
+
+const post = Astro.props;
+const { Content, headings } = await post.render();
+---
+
+<BaseLayout
+    title={post.data.title}
+    description={post.data.description}
+    type="article"
+>
+    <article class="post-content">
+        <header class="post-header">
+            <div class="content-wrapper">
+                <a href="/blog" class="back-link">
+                    <Icon name="mdi:arrow-left" /> Back to Blog
+                </a>
+                <div class="meta">
+                    <time datetime={post.data.publishedDate.toISOString()}>
+                        {
+                            post.data.publishedDate.toLocaleDateString(
+                                "en-US",
+                                {
+                                    year: "numeric",
+                                    month: "long",
+                                    day: "numeric",
+                                },
+                            )
+                        }
+                    </time>
+                    <span class="separator">•</span>
+                    {
+                        post.data.tags && (
+                            <div class="tags">
+                                {post.data.tags.map((tag) => (
+                                    <span class="tag">#{tag}</span>
+                                ))}
+                            </div>
+                        )
+                    }
+                </div>
+                <h1>{post.data.title}</h1>
+                <p class="lead">{post.data.description}</p>
+            </div>
+        </header>
+
+        <div class="layout-grid content-wrapper">
+            <aside class="toc-sidebar">
+                {
+                    headings.length > 0 && (
+                        <nav class="toc">
+                            <h3>Table of Contents</h3>
+                            <ul>
+                                {headings.map((heading) => (
+                                    <li class={`toc-depth-${heading.depth}`}>
+                                        <a href={`#${heading.slug}`}>
+                                            {heading.text}
+                                        </a>
+                                    </li>
+                                ))}
+                            </ul>
+                        </nav>
+                    )
+                }
+            </aside>
+
+            <div class="prose">
+                <Content components={{ Callout, CodeTabs, CodeTabItem }} />
+            </div>
+        </div>
+    </article>
+</BaseLayout>
+
+<style>
+    .post-header {
+        padding: 6rem 0 4rem;
+        background: radial-gradient(
+            circle at center,
+            var(--color-bg-subtle) 0%,
+            transparent 70%
+        );
+        margin-bottom: 3rem;
+        border-bottom: 1px solid var(--color-border);
+    }
+
+    .content-wrapper {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 2rem;
+    }
+
+    .back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--color-text-muted);
+        text-decoration: none;
+        font-size: 0.9rem;
+        margin-bottom: 2rem;
+        transition: color 0.2s;
+    }
+
+    .back-link:hover {
+        color: var(--color-primary);
+    }
+
+    .meta {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        color: var(--color-text-muted);
+        font-size: 0.9rem;
+        margin-bottom: 1rem;
+    }
+
+    .separator {
+        opacity: 0.5;
+    }
+
+    h1 {
+        font-size: 3.5rem;
+        line-height: 1.1;
+        font-weight: 800;
+        color: var(--color-text-heading);
+        margin-bottom: 1.5rem;
+        letter-spacing: -0.02em;
+    }
+
+    .lead {
+        font-size: 1.25rem;
+        color: var(--color-text-body);
+        max-width: 70ch;
+        line-height: 1.6;
+        opacity: 0.9;
+    }
+
+    .tags {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .tag {
+        color: var(--color-primary);
+        font-weight: 600;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .layout-grid {
+        display: grid;
+        grid-template-columns: 250px 1fr;
+        gap: 4rem;
+        position: relative;
+    }
+
+    .toc-sidebar {
+        position: sticky;
+        top: 2rem;
+        height: fit-content;
+        display: none;
+    }
+
+    @media (min-width: 1024px) {
+        .toc-sidebar {
+            display: block;
+        }
+    }
+
+    .toc h3 {
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--color-text-muted);
+        margin-bottom: 1rem;
+    }
+
+    .toc ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        border-left: 2px solid var(--color-border);
+    }
+
+    .toc li {
+        margin: 0;
+    }
+
+    .toc a {
+        display: block;
+        padding: 0.4rem 0 0.4rem 1rem;
+        text-decoration: none;
+        color: var(--color-text-muted);
+        font-size: 0.9rem;
+        transition: all 0.2s;
+        border-left: 2px solid transparent;
+        margin-left: -2px;
+    }
+
+    .toc a:hover {
+        color: var(--color-primary);
+        border-left-color: var(--color-primary);
+    }
+
+    .toc-depth-3 {
+        padding-left: 1rem;
+    }
+
+    .prose {
+        max-width: 75ch;
+        margin: 0 auto; /* Center if TOC is hidden */
+        color: var(--color-text-body);
+        font-size: 1.125rem;
+        line-height: 1.8;
+    }
+
+    @media (min-width: 1024px) {
+        .prose {
+            margin: 0; /* Reset margin in grid */
+        }
+    }
+
+    /* Typography Overrides */
+    .prose :global(h2) {
+        font-size: 2rem;
+        font-weight: 700;
+        margin: 3rem 0 1.5rem;
+        color: var(--color-text-heading);
+        letter-spacing: -0.01em;
+    }
+
+    .prose :global(h3) {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin: 2.5rem 0 1rem;
+        color: var(--color-text-heading);
+    }
+
+    .prose :global(p) {
+        margin-bottom: 1.75rem;
+    }
+
+    .prose :global(ul) {
+        margin-bottom: 1.75rem;
+    }
+
+    .prose :global(a) {
+        color: var(--color-primary);
+        text-decoration: underline;
+        text-underline-offset: 4px;
+        transition: color 0.2s;
+    }
+
+    .prose :global(a:hover) {
+        color: var(--color-primary-hover);
+    }
+
+    /* Expressive Code Overrides handled by integration, but ensuring context */
+    .prose :global(.expressive-code) {
+        margin: 2rem 0;
+        font-size: 0.9em;
+        border-radius: 8px;
+        overflow: hidden;
+        border: 1px solid var(--color-border);
+    }
+
+    @media (max-width: 768px) {
+        .post-header {
+            padding: 4rem 0 2rem;
+            text-align: left;
+        }
+
+        h1 {
+            font-size: 2.25rem;
+        }
+
+        .layout-grid {
+            grid-template-columns: 1fr;
+            gap: 2rem;
+        }
+
+        .content-wrapper {
+            padding: 0 1.5rem;
+        }
+
+        .lead {
+            font-size: 1.125rem;
+        }
+    }
+</style>

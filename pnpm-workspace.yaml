@@ -1,0 +1,4 @@
+onlyBuiltDependencies:
+  - citation-js
+  - esbuild
+  - sharp

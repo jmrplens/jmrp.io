@@ -1,0 +1,135 @@
+---
+
+---
+
+<script>
+    class CodeTabs extends HTMLElement {
+        constructor() {
+            super();
+            const headers = this.querySelector(".tab-headers");
+            const panels = this.querySelectorAll(".code-tab-panel");
+
+            if (!headers || panels.length === 0) return;
+
+            panels.forEach((panel, index) => {
+                const title =
+                    panel.getAttribute("data-label") || `Tab ${index + 1}`;
+                const button = document.createElement("button");
+                button.textContent = title;
+                button.role = "tab";
+                button.setAttribute(
+                    "aria-selected",
+                    index === 0 ? "true" : "false",
+                );
+
+                button.addEventListener("click", () => {
+                    // Deactivate all
+                    headers
+                        .querySelectorAll("button")
+                        .forEach((b) =>
+                            b.setAttribute("aria-selected", "false"),
+                        );
+                    panels.forEach((p) => (p.style.display = "none"));
+
+                    // Activate clicked
+                    button.setAttribute("aria-selected", "true");
+                    // The original code directly set the clicked panel to 'block'.
+                    // The user's change implies iterating through all panels to set their display.
+                    // To make the provided snippet syntactically correct and functional,
+                    // we need to determine the 'selectedIndex' based on the clicked button.
+                    const selectedIndex = Array.from(
+                        headers.querySelectorAll("button"),
+                    ).indexOf(button);
+
+                    panels.forEach((element, i) => {
+                        const tab = element as HTMLElement;
+                        if (i === selectedIndex) {
+                            tab.style.display = "block";
+                        } else {
+                            tab.style.display = "none";
+                        }
+                    });
+                });
+
+                headers.appendChild(button);
+                // Initial state
+                if (index !== 0) (panel as HTMLElement).style.display = "none";
+            });
+        }
+    }
+
+    customElements.define("code-tabs", CodeTabs);
+</script>
+
+<style is:global>
+    /* Use is:global to target the structure we create/expect */
+    code-tabs {
+        display: block;
+        border: 1px solid var(--color-border);
+        border-radius: 8px;
+        background: var(--color-bg-subtle);
+        overflow: hidden;
+        margin: 1.5rem 0;
+    }
+
+    .tab-headers {
+        display: flex;
+        background: var(--color-bg-secondary);
+        border-bottom: 1px solid var(--color-border);
+        overflow-x: auto;
+    }
+
+    .tab-headers button {
+        appearance: none;
+        background: transparent;
+        border: none;
+        padding: 0.75rem 1.25rem;
+        color: var(--color-text-muted);
+        font-size: 0.9rem;
+        cursor: pointer;
+        border-right: 1px solid var(--color-border);
+        transition: all 0.2s;
+    }
+
+    .tab-headers button:hover {
+        color: var(--color-text-body);
+        background: rgba(255, 255, 255, 0.02);
+    }
+
+    .tab-headers button[aria-selected="true"] {
+        color: var(--color-primary);
+        background: var(--color-bg-subtle);
+        border-bottom: 2px solid var(--color-primary);
+        margin-bottom: -1px;
+        font-weight: 500;
+    }
+
+    .code-tab-panel {
+        padding: 0;
+        margin: 0;
+        /* Ensure only the active panel is shown. The JS handles display property. */
+    }
+
+    /* Override expressive code margins inside tabs */
+    .code-tab-panel :global(.expressive-code) {
+        margin: 0 !important;
+        border-radius: 0 !important;
+        border: none !important;
+    }
+
+    .code-tab-panel :global(figure) {
+        margin: 0 !important;
+        border: none !important;
+        border-radius: 0 !important;
+    }
+
+    /* Fix for potential double rendering or layout shifts */
+    code-tabs:not(:defined) .tab-panels {
+        visibility: hidden;
+    }
+</style>
+
+<code-tabs>
+    <div class="tab-headers"></div>
+    <slot />
+</code-tabs>

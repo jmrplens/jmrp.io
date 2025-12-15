@@ -21,6 +21,8 @@ nav:
     href: "/publications"
   - label: "Repositories"
     href: "/github"
+  - label: "Blog"
+    href: "/blog"
   - label: "Services"
     href: "/services"
 

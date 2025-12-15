@@ -10,4 +10,16 @@ const news = defineCollection({
     }),
 });
 
-export const collections = { news };
+
+const posts = defineCollection({
+    type: 'content',
+    schema: z.object({
+        title: z.string(),
+        publishedDate: z.coerce.date(),
+        draft: z.boolean().default(false),
+        description: z.string().optional(),
+        tags: z.array(z.string()).optional(),
+    }),
+});
+
+export const collections = { news, posts };
