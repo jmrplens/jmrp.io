@@ -90,6 +90,31 @@ The project is built as a static site.
     -   Ensure `nginx/snippets/security_headers.conf` is included for CSP and security headers.
     -   The `styles-src` and `script-src` hashes in `security_headers.conf` are automatically updated by the `postbuild` script.
 
+## 📄 CV LaTeX Compilation
+
+The project includes LaTeX source files for generating the PDF versions of the CV.
+
+### Prerequisites
+
+-   TeX Live (Full distribution recommended)
+-   `lualatex` compiler
+-   `latexmk` build tool
+-   `inter` font package (included in `texlive-fonts-extra`)
+
+### Compilation
+
+Navigate to the `cv_latex` directory and run:
+
+```bash
+cd cv_latex
+latexmk -lualatex -interaction=nonstopmode CV_RequenaPlensJoseManuel_ENG.tex CV_RequenaPlensJoseManuel_SPA.tex
+```
+
+The generated PDFs will be:
+
+-   `CV_RequenaPlensJoseManuel_ENG.pdf`
+-   `CV_RequenaPlensJoseManuel_SPA.pdf`
+
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

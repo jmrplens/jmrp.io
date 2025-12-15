@@ -20,13 +20,13 @@
       department: Solar + Storage (<a href="https://power-electronics.com/en/solar/">PE Solar</a>)
       location: Lliria, Spain
       year: Apr 2023 - Current
-      summary:
-        "Firmware development for embedded systems (STM32 and ARM architectures) applied to power electronics, specifically for utility-scale inverters in renewable energy plants (Solar & Storage).
+      summary: >
+        Firmware development for embedded systems (STM32 and ARM architectures) applied to power electronics, specifically for utility-scale inverters in renewable energy plants (Solar & Storage).
         <br><br>
-        Key contributions:"
-      description:
+        Key contributions:
+      description: >
         - Development of real-time control software in C for high-power inverters using CMake, Keil uVision and CLion.
-        - "Implementation and maintenance of industrial communication protocols: I2C, SPI, SCI, RS485, Modbus RTU and Modbus TCP."
+        - Implementation and maintenance of industrial communication protocols: I2C, SPI, SCI, RS485, Modbus RTU and Modbus TCP.
         - Design and development of automated testing tools and verification scripts using Python.
         - Management of software versions and collaborative workflows using Git.
 
@@ -35,12 +35,12 @@
       department: Medical Imaging and Therapy Systems (<a href="https://www.i3m-stim.i3m.upv.es/"><b>i3M</b></a>)
       year: Jan 2023 - Apr 2023
       location: Valencia, Spain
-      summary: 
-        'Researcher in the R&D line: <b>Acoustic Metamaterials for Ultrasound Histotripsy treatments</b>.
+      summary: >
+        Researcher in the R&D line: <b>Acoustic Metamaterials for Ultrasound Histotripsy treatments</b>.
         <br><br>
         <b>Project</b>: New generation of smart metasurfaces based on additive manufacturing for strategic applications in telecommunications (Metasmart). Funded by the Valencian Agency for Innovation (Reference: INNEST/2022/345).
         <br><br>
-        Some planned tasks:'
+        Some planned tasks:
       description:
         - Ultra-close focus acoustic lens design.
         - Prototype manufacturing.
@@ -51,10 +51,10 @@
       department: Medical Imaging and Therapy Systems (<a href="https://www.i3m-stim.i3m.upv.es/"><b>i3M</b></a>)
       year: Jul 2021 - Jul 2022
       location: Valencia, Spain
-      summary: 
-        'The main objective is to conduct research and development of acoustic metamaterials for use in architectural applications and medical imaging.
+      summary: >
+        The main objective is to conduct research and development of acoustic metamaterials for use in architectural applications and medical imaging.
         <br><br>
-        Goals achieved:'
+        Goals achieved:
       description:
         - Theoretical development of acoustic metadiffusers based on membranes or plates reducing the size of commercial diffusers.
         - Simulation of the acoustic diffusers and validation of results (MATLAB & COMSOL).
@@ -236,10 +236,10 @@
       department: Ultrasound Medical and Industrial Laboratory (<a href="https://www.i3m-detectors.i3m.upv.es/research/ultrasound-medical-and-industrial-laboratory-umil/"><b>UMIL</b></a>)
       location: Valencia, Spain
       year: 2023
-      summary: 
+      summary: >
         Industrial and biomedical applications of metamaterials for the control of acoustic beams. In this project, we propose to combine new air-coupled ultrasound transducers with hyperbolic metamaterials to design vision systems that exceed the imaging capabilities of traditional systems.
         <br><br>
-        "During my PhD in Acoustic Engineering applied to Biomedicine, I conducted advanced research on:"
+        During my PhD in Acoustic Engineering applied to Biomedicine, I conducted advanced research:
       description:
         - Biomedical signal processing and acoustic analysis algorithms.
         - Ultrasound characterization for medical applications.
@@ -255,10 +255,10 @@
       department: Higher Polytechnic School of Gandia (<a href="http://www.upv.es/contenidos/CGANDIA/index-en.html"><b>EPSG</b></a>)
       location: Gandia, Spain
       year: 2019
-      summary: 
-        "Degree obtained with honors in: Fundamentals of Acoustics, Acoustic Isolation, Musical Acoustics, Signal Processing in Acoustic Engineering, Ultrasonics and Acoustic Simulation Techniques.
+      summary: >
+        Degree obtained with honors in: Fundamentals of Acoustics, Acoustic Isolation, Musical Acoustics, Signal Processing in Acoustic Engineering, Ultrasonics and Acoustic Simulation Techniques.
         <br><br>
-        Final Master's thesis entitled <strong>Difusores acústicos basados en resonadores de membrana y placa</strong> ('Acoustic diffusers based on membrane and plate resonators'), qualified with honors with special mention."
+        Final Master's thesis entitled <strong>Difusores acústicos basados en resonadores de membrana y placa</strong> ('Acoustic diffusers based on membrane and plate resonators'), qualified with honors with special mention.
       linkitems:
         - link: /pdf/degree/Acoustic.pdf
           linkname: 'Diploma'
@@ -269,10 +269,10 @@
       department: Higher Polytechnic School (<a href="https://eps.ua.es/en/home.html"><b>EPS</b></a>)
       location: Alicante, Spain
       year: 2018
-      summary: 
-        "Degree obtained together with the 2 specializations: Acoustic Engineering and Audiovisual Technology.
+      summary: >
+        Degree obtained together with the 2 specializations: Acoustic Engineering and Audiovisual Technology.
         <br><br>
-        Final Degree Work entitled <a href='http://hdl.handle.net/10045/77578'>Estudio de la relación campo directo/reverberado; útil/perjudicial</a> ('Study of the direct/reverberated field relationship; useful/harmful')"
+        Final Degree Work entitled <a href='http://hdl.handle.net/10045/77578'>Estudio de la relación campo directo/reverberado; útil/perjudicial</a> ('Study of the direct/reverberated field relationship; useful/harmful')
       linkitems:
         - link: /pdf/degree/Telecom.pdf
           linkname: 'Diploma'
