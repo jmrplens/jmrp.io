@@ -50,7 +50,10 @@ const jsonLD = schema || defaultSchema;
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="sitemap" href="/sitemap-index.xml" />
 <meta name="generator" content={Astro.generator} />
+<meta name="theme-color" content={siteData.theme_color} />
+<meta name="robots" content="index, follow" />
 
 <!-- SEO -->
 <meta name="keywords" content={siteData.keywords} />
@@ -72,10 +75,13 @@ const jsonLD = schema || defaultSchema;
 <meta property="og:image" content={new URL(image, Astro.url)} />
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="800" />
+<meta property="og:locale" content={siteData.locale} />
 <meta property="og:site_name" content="José M. Requena Plens" />
 
 <!-- Twitter -->
 <meta property="twitter:card" content="summary_large_image" />
+<meta property="twitter:site" content={siteData.twitter_creator} />
+<meta property="twitter:creator" content={siteData.twitter_creator} />
 <meta property="twitter:url" content={Astro.url} />
 <meta property="twitter:title" content={title} />
 <meta property="twitter:description" content={description} />
