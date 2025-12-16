@@ -145,7 +145,11 @@ openssl req -new -x509 -days 3650 -key ca.key -out ca.crt -config openssl.cnf
 
 **Option B: Non-Interactive (Fast)**
 
-If you want to skip the prompts and password (useful for scripts, though less secure for high-value keys):
+If you want to skip the prompts and password (useful for scripts).
+
+<Callout type="warning">
+  **Security Note:** The `-nodes` flag stands for "No DES". This means the private key will **not** be encrypted with a password. If someone gains access to the `ca.key` file, they can sign certificates without needing a password.
+</Callout>
 
 ```bash
 # Generate key without password (-nodes) and cert in one go
@@ -191,6 +195,10 @@ openssl req -new -key user.key -out user.csr
 
 **Option B: Non-Interactive (One-Liner)**
 
+<Callout type="info">
+    Just like with the CA, we use `-nodes` here to create an unencrypted private key.
+</Callout>
+
 ```bash
 # Generate key and CSR with a specific Common Name (CN)
 openssl req -new -newkey rsa:2048 -nodes -keyout user.key -out user.csr -subj "/CN=iphone-user"
@@ -208,6 +216,8 @@ openssl ca -config openssl.cnf -in user.csr -out user.crt
 *You will be asked to confirm signing (Y/n).*
 
 **Option B: Non-Interactive (Batch mode)**
+
+Use the `-batch` flag to automatically answer "yes" to all prompts.
 
 ```bash
 openssl ca -config openssl.cnf -batch -in user.csr -out user.crt
