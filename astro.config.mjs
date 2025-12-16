@@ -47,7 +47,21 @@ export default defineConfig({
   // Markdown and MDX configuration
   markdown: {
     // Remark plugins: transformation before HTML compilation
-    remarkPlugins: [remarkMath, [remarkMermaid, { mermaidConfig: { theme: 'neutral' } }]],
+    remarkPlugins: [remarkMath, [remarkMermaid, {
+      mermaidConfig: {
+        theme: 'neutral',
+        sequence: {
+          showSequenceNumbers: false,
+          actorMargin: 50,
+          boxMargin: 10,
+          boxTextMargin: 5,
+          noteMargin: 10,
+          messageMargin: 35,
+          mirrorActors: false,
+          bottomMarginAdj: 10
+        }
+      }
+    }]],
     // Rehype plugins: transformation of the HTML output
     rehypePlugins: [
       rehypeMathjax,

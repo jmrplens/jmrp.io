@@ -11,10 +11,10 @@ references:
     url: "https://www.openssl.org/docs/manmaster/man1/openssl.html"
   - text: "Cloudflare: What is Mutual TLS (mTLS)?"
     url: "https://www.cloudflare.com/learning/access-management/what-is-mutual-tls/"
-  - text: "Smallstep: Everything you should know about mTLS"
-    url: "https://smallstep.com/blog/everything-pki-mtls/"
-  - text: "F5: Authentication vs. Authorization"
-    url: "https://www.f5.com/labs/articles/education/authentication-vs-authorization"
+  - text: "Smallstep: Hello mTLS"
+    url: "https://smallstep.com/hello-mtls/"
+  - text: "Okta: Authentication vs. Authorization"
+    url: "https://www.okta.com/identity-101/authentication-vs-authorization/"
 ---
 import Callout from '../../components/Callout.astro';
 import References from '../../components/References.astro';
@@ -27,41 +27,32 @@ Implementing **Mutual TLS (mTLS)** is one of the most robust ways to secure priv
 
 If the client doesn't have the certificate, the Nginx server rejects the connection entirely—often before even serving the login page. This is perfect for securing private administration panels, NAS interfaces, or internal tools like the one running on `secure.example.com`.
 
-In this guide, I'll walk you through creating a bespoke Certificate Authority, generating client keys, and configuring Nginx on Linux. We'll also cover installing these certificates on Windows, macOS, iOS, and Android.
+In this guide, I'll walk you through creating a bespoke Certificate Authority, generating client certificates, configuring Nginx, and handling advanced scenarios like **revoking access** for lost devices or restricting specific users.
 
 ## How it Works
 
 Before diving into the commands, let's look at the handshake process.
 
+### The Full Logic Flow
 
-### Successful Connection
-When a user has the correct certificate installed:
-
-```mermaid
-sequenceDiagram
-    participant User as 📱 Client (iPhone/PC)
-    participant Nginx as 🖥️ Nginx Server
-    
-    User->>Nginx: Hello (I want to connect)
-    Nginx->>User: Server Cert + "Show me your ID!" (Certificate Request)
-    User->>Nginx: Here is my Client Certificate 🎫
-    Nginx->>Nginx: Verifies CA Signature & Date ✅
-    Nginx->>User: 200 OK (Access Granted)
-```
-
-### Rejected Connection
-When a stranger (or bot) tries to access the site:
+Here is how Nginx effectively decides who gets in:
 
 ```mermaid
 sequenceDiagram
-    participant Attacker as 🕵️ Attacker
-    participant Nginx as 🖥️ Nginx Server
+    participant C as Client
+    participant N as Nginx
     
-    Attacker->>Nginx: Hello (I want to connect)
-    Nginx->>Attacker: Server Cert + "Show me your ID!"
-    Attacker->>Nginx: (No Certificate) 🤷
-    Nginx->>Attacker: 400 Bad Request (No required SSL certificate was sent) ⛔
-    Note right of Nginx: Connection closed immediately.
+    C->>N: Client Hello
+    N->>C: Request Cert
+    C->>N: Client Cert
+    
+    Note right of N: Verification: CA, CRL, CN
+    
+    alt Passed
+        N->>C: 200 OK
+    else Failed
+        N->>C: 403 Forbidden
+    end
 ```
 
 ## Strategies and Use Cases
@@ -82,33 +73,102 @@ Why go through the trouble of managing certificates?
 
 ## Step 1: Create Your Certificate Authority (CA)
 
-First, we need to become our own Authority. We will create a root CA key and a self-signed root certificate. This certificate will be used to sign all the client certificates you issue.
+First, we need to become our own Authority. To ensure we can properly revoke certificates later, we need a consistent configuration and database.
 
-Create a directory to store your keys safely:
+Create a directory to store your keys safely and set up the CA database:
 
 ```bash
 mkdir -p /etc/nginx/client-certs
 cd /etc/nginx/client-certs
+mkdir -p newcerts
+touch index.txt
+echo 1000 > serial
 ```
 
-### Generate the CA Key and Certificate
+### 1. Create a Minimal `openssl.cnf`
+
+Create a file named `openssl.cnf` in this directory. This file ensures that `openssl ca` (used for signing and revocation) knows where your files are.
+
+```ini title="/etc/nginx/client-certs/openssl.cnf"
+[ ca ]
+default_ca = CA_default
+
+[ CA_default ]
+dir             = .
+database        = $dir/index.txt
+new_certs_dir   = $dir/newcerts
+certificate     = $dir/ca.crt
+serial          = $dir/serial
+private_key     = $dir/ca.key
+default_days    = 365
+default_crl_days= 30
+default_md      = sha256
+policy          = policy_loose
+copy_extensions = copy
+
+[ policy_loose ]
+countryName             = optional
+stateOrProvinceName     = optional
+localityName            = optional
+organizationName        = optional
+organizationalUnitName  = optional
+commonName              = supplied
+emailAddress            = optional
+
+[ req ]
+distinguished_name = req_distinguished_name
+prompt             = no
+
+[ req_distinguished_name ]
+# You can change these to match your organization
+C  = US
+ST = State
+L  = City
+O  = MyPrivateServer
+OU = IT
+CN = MyRootCA
+```
+
+### 2. Generate the CA Key and Certificate
+
+Now generate the root CA.
+
+**Option A: Interactive (Guided)**
 
 ```bash
-# Generate CA private key (keep this safe!)
+# Generate CA private key
 openssl genrsa -des3 -out ca.key 4096
 
-# Generate the CA Root Certificate (valid for 10 years)
-openssl req -new -x509 -days 3650 -key ca.key -out ca.crt
+# Generate the CA Root Certificate
+openssl req -new -x509 -days 3650 -key ca.key -out ca.crt -config openssl.cnf
 ```
 
-<Callout type="warning">
-  **Important:** You will be asked for a passphrase for the `ca.key`. Remember it; you'll need it every time you sign a new user certificate.
-</Callout>
+**Option B: Non-Interactive (Fast)**
+
+If you want to skip the prompts and password (useful for scripts, though less secure for high-value keys):
+
+```bash
+# Generate key without password (-nodes) and cert in one go
+openssl req -new -x509 -nodes -days 3650 -out ca.crt -keyout ca.key -config openssl.cnf
+```
 
 You can verify your new CA certificate content:
 
 ```bash
-openssl x509 -in ca.crt -text -noout
+openssl x509 -in ca.crt -text -noout | head -n 10
+```
+
+*Output example:*
+```text
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number:
+            5f:3b:0a...
+        Signature Algorithm: sha256WithRSAEncryption
+        Issuer: C=US, ST=State, L=City, O=MyPrivateServer, OU=IT, CN=MyRootCA
+        Validity
+            Not Before: Dec 16 18:00:00 2025 GMT
 ```
 
 ---
@@ -119,7 +179,7 @@ Now let's create a certificate for a specific user (e.g., "iphone-user" or "admi
 
 ### 1. Generate User Private Key and CSR
 
-Create a Certificate Signing Request (CSR) for the client:
+**Option A: Interactive**
 
 ```bash
 # Generate client private key
@@ -129,25 +189,52 @@ openssl genrsa -out user.key 2048
 openssl req -new -key user.key -out user.csr
 ```
 
-### 2. Sign the CSR with your CA
-
-This is where you authorize the user. We will create a certificate (`user.crt`) valid for 1 year (365 days):
+**Option B: Non-Interactive (One-Liner)**
 
 ```bash
-openssl x509 -req -days 365 -in user.csr -CA ca.crt -CAkey ca.key -set_serial 01 -out user.crt
+# Generate key and CSR with a specific Common Name (CN)
+openssl req -new -newkey rsa:2048 -nodes -keyout user.key -out user.csr -subj "/CN=iphone-user"
 ```
 
-*Note: Increment `-set_serial` for each new user you create (01, 02, etc.).*
+### 2. Sign the CSR with your CA
+
+This is the most critical step. We use `openssl ca` to sign the request, which adds it to our database so we can revoke it later if needed.
+
+**Option A: Interactive (Review details)**
+
+```bash
+openssl ca -config openssl.cnf -in user.csr -out user.crt
+```
+*You will be asked to confirm signing (Y/n).*
+
+**Option B: Non-Interactive (Batch mode)**
+
+```bash
+openssl ca -config openssl.cnf -batch -in user.csr -out user.crt
+```
+
+*Output example:*
+```
+Check that the request matches the signature
+Signature ok
+Certificate Details:
+        ...
+        Subject:
+            commonName                = iphone-user
+Certificate is to be certified until Dec 16 18:05:00 2026 GMT (365 days)
+Write out database with 1 new entries
+Data Base Updated
+```
 
 ### 3. Convert to PKCS#12 (.p12)
 
-Browsers and mobile devices prefer the `.p12` (or `.pfx`) format, which bundles the public certificate and the private key together.
+Browsers and mobile devices prefer the `.p12` format.
 
 ```bash
 openssl pkcs12 -export -out user.p12 -inkey user.key -in user.crt -certfile ca.crt
 ```
 
-You will be asked to create an **export password**. This password is used to encrypt the file itself. You will need to type this password when importing the certificate onto your phone or laptop.
+You will be asked to create an **export password**. This protects the file itself.
 
 ---
 
@@ -196,7 +283,91 @@ Now, if you try to visit `https://secure.example.com` from a device *without* th
 
 ---
 
-## Step 4: Installing Certificates on Clients
+## Step 4: Advanced Access Control
+
+By default, **any** client with a valid certificate signed by your CA can access the site. But what if you have multiple services and want to restrict "John" to *Service A* and "Alice" to *Service B*?
+
+You can use the **Common Name (CN)** from the certificate to authorize specific users.
+
+Open your Nginx config again. We will use the `map` directive (place this **outside** the `server` block, usually in `nginx.conf` or at the top of your site config):
+
+```nginx
+# Map the client certificate DN (Distinguished Name) to an access variable
+map $ssl_client_s_dn $ssl_access_allowed {
+    default 0;
+    # Format: /CN=CommonName
+    "/CN=iphone-admin" 1;
+    "/CN=laptop-work" 1;
+    "/CN=ipad-home" 1;
+}
+```
+
+Then, inside your `server` block:
+
+```nginx
+server {
+    # ... ssl configuration ...
+
+    location / {
+        # First, ensure the cert is valid (already handled by ssl_verify_client)
+        
+        # Then check our custom map
+        if ($ssl_access_allowed = 0) {
+            return 403 "Forbidden: You have a valid certificate, but are not authorized for this resource.";
+        }
+        
+        # ... proxy_pass ...
+    }
+}
+```
+
+Now, creating a certificate for a friend won't automatically grant them access to this specific site unless you add their CN to the whitelist.
+
+---
+
+## Step 5: Revoking Certificates (CRL)
+
+What happens if you lose your phone? The certificate on it is still valid for a year. You need a way to **revoke** it effectively. This is done using a **Certificate Revocation List (CRL)**.
+
+### 1. Revoke a Certificate
+Let's say `user.crt` (from the lost phone) needs to be revoked.
+
+```bash
+# Revoke using the CA config
+openssl ca -config openssl.cnf -revoke user.crt
+```
+
+*Output example:*
+```
+Revoking Certificate 1000.
+Data Base Updated
+```
+
+### 2. Generate the CRL File
+After revoking, you must generate the list itself so Nginx can read it:
+
+```bash
+openssl ca -config openssl.cnf -gencrl -out crl.pem
+```
+
+*Output: (No output usually means success)*
+
+### 3. Configure Nginx to Check the CRL
+Update your Nginx server block to check this list:
+
+```nginx
+ssl_crl /etc/nginx/client-certs/crl.pem;
+```
+
+Reload Nginx. Now, even if the "lost phone" presents its certificate, Nginx sees it in the CRL and blocks access.
+
+<Callout type="warning">
+  **Maintenance:** You must regenerate the `crl.pem` file and reload Nginx every time you revoke a certificate.
+</Callout>
+
+---
+
+## Step 6: Installing Certificates on Clients
 
 Now you need to install the `.p12` file (generated in Step 2.3) onto your devices.
 
@@ -235,6 +406,30 @@ Now you need to install the `.p12` file (generated in Step 2.3) onto your device
     5.  Enter the password and give the certificate a name.
   </TabItem>
 </Tabs>
+
+---
+
+## Troubleshooting
+
+Here are the most common issues you might face.
+
+### 400 Bad Request (No required SSL certificate...)
+*   **Cause:** The browser didn't send a certificate.
+*   **Fix:** Ensure the `.p12` is installed. Restart the browser completely. Try **Incognito/Private** mode, as browsers sometimes stick to a "no-cert" session state.
+
+### 400 Bad Request (The SSL certificate error...)
+*   **Cause:** The certificate exists but Nginx doesn't like it.
+*   **Fix:** Nginx might not trust the CA. Check `ssl_client_certificate`. Ensure the chain is correct.
+
+### 403 Forbidden
+*   **Cause:** The certificate was accepted, but access was denied later.
+*   **Fix:** 
+    *   If using CRL: The cert might be revoked.
+    *   If using `map` (Access Control): The CN might not match. Check Nginx error logs (`/var/log/nginx/error.log`) to see the actual `$ssl_client_s_dn` being received.
+    
+### "Certificate Connection" Dialog loop
+*   **Cause:** On macOS/iOS, sometimes the system prompts repeatedly.
+*   **Fix:** Ensure the CA certificate is also trusted in the Keychain (though technically not required for client auth, it helps the OS validate the chain).
 
 ---
 

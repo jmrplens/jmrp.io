@@ -184,6 +184,7 @@ const articleSchema = {
     .tags {
         display: flex;
         gap: 0.5rem;
+        flex-wrap: wrap;
     }
 
     .tag {
@@ -196,8 +197,8 @@ const articleSchema = {
 
     .layout-grid {
         display: grid;
-        grid-template-columns: 250px minmax(0, 1fr);
-        gap: 4rem;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 2rem;
         position: relative;
     }
 
@@ -253,6 +254,11 @@ const articleSchema = {
         .toc-sidebar {
             display: block;
         }
+
+        .layout-grid {
+            grid-template-columns: 250px minmax(0, 1fr);
+            gap: 4rem;
+        }
     }
 
     /* ... omitted intermediate css ... */
@@ -265,11 +271,6 @@ const articleSchema = {
 
         h1 {
             font-size: 2.25rem;
-        }
-
-        .layout-grid {
-            grid-template-columns: minmax(0, 1fr);
-            gap: 2rem;
         }
 
         .content-wrapper {

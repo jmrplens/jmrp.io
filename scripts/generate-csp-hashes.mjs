@@ -37,11 +37,12 @@ async function generateHashes() {
                 }
             }
 
-            // 2. Find inline style attributes (style="...")
-            const styleAttrRegex = /\sstyle="([^"]*)"/g;
+            // 2. Find inline style attributes (style="..." or style='...')
+            // Use [\s\S]*? to match across newlines
+            const styleAttrRegex = /\sstyle\s*=\s*(["'])([\s\S]*?)\1/g;
             while ((match = styleAttrRegex.exec(content)) !== null) {
-                if (match[1]) {
-                    const hash = crypto.createHash('sha256').update(match[1]).digest('base64');
+                if (match[2]) {
+                    const hash = crypto.createHash('sha256').update(match[2]).digest('base64');
                     styleHashes.add(`'sha256-${hash}'`);
                 }
             }
