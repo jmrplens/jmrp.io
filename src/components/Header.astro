@@ -190,11 +190,32 @@ const logoText = siteData.logo_text || "<JMRP />";
         }
 
         .nav-links a {
-            font-size: 1.25rem;
-            padding: 0.75rem 1rem;
-            display: block;
-            border-radius: var(--radius-sm);
+            font-size: 1.1rem;
+            padding: 1rem 1.25rem;
+            display: flex; /* Use flex for potential icons or alignment */
+            justify-content: space-between;
+            align-items: center;
+            border-radius: var(--radius-md);
+            background-color: rgba(255, 255, 255, 0.03); /* Subtle card bg */
+            border: 1px solid var(--color-border);
+            color: var(--color-text);
+            transition: all 0.2s ease;
         }
+
+        .nav-links a:hover,
+        .nav-links a:focus {
+            background-color: rgba(
+                179,
+                137,
+                245,
+                0.1
+            ); /* Primary color low opacity */
+            border-color: var(--color-primary);
+            color: var(--color-primary);
+            transform: translateX(5px); /* Subtle slide effect */
+        }
+
+        /* Optional: Add a pseudo-element for an arrow if desired, currently plain text */
     }
 
     /* Backdrop Overlay */
