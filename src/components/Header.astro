@@ -151,34 +151,74 @@ const logoText = siteData.logo_text || "<JMRP />";
     @media (max-width: 768px) {
         .menu-toggle {
             display: block; /* Visible on mobile */
+            z-index: 1002; /* Ensure above overlay */
+            position: relative;
         }
 
         .nav-links {
-            display: none; /* Hidden by default on mobile */
+            display: flex;
             flex-direction: column;
-            width: 100%;
-            position: absolute;
-            top: 100%; /* Below header */
-            left: 0;
+            justify-content: flex-start; /* Align items to top */
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 300px; /* Fixed width side drawer */
+            max-width: 80vw; /* Responsive constraint */
+            height: 100vh;
             background-color: var(--color-bg-secondary);
-            border-bottom: 1px solid var(--color-border);
-            padding: var(--space-md);
-            gap: 1rem;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            border-left: 1px solid var(--color-border);
+            padding: 5rem 2rem 2rem 2rem; /* Top padding for close button/logo area */
+            gap: 1.5rem;
+            z-index: 1001; /* Above backdrop */
+            box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
+
+            /* Hidden State */
+            transform: translateX(100%);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            visibility: hidden;
         }
 
-        /* Only apply 'open' class on mobile */
+        /* Open state */
         .nav-links.open {
-            display: flex;
+            transform: translateX(0);
+            visibility: visible;
         }
 
         .nav-links li {
             width: 100%;
-            text-align: center;
+            text-align: left;
         }
 
         .nav-links a {
-            padding: 0.75rem; /* Larger padding for mobile */
+            font-size: 1.25rem;
+            padding: 0.75rem 1rem;
+            display: block;
+            border-radius: var(--radius-sm);
         }
+    }
+
+    /* Backdrop Overlay */
+    :global(.menu-backdrop) {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease;
+        backdrop-filter: blur(2px);
+    }
+
+    :global(.menu-backdrop.open) {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    /* Prevent scrolling when menu is open */
+    :global(body.menu-open) {
+        overflow: hidden;
     }
 </style>
