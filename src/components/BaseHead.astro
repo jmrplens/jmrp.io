@@ -3,9 +3,26 @@ import "../styles/global.css";
 // Supports weights 100-900
 import "../styles/fonts.css";
 
+import { getImage } from "astro:assets";
+import faviconSrc from "../assets/favicon.png";
+import appleTouchIconSrc from "../assets/apple-touch-icon.png";
+
 import fs from "fs";
 import path from "path";
 import yaml from "js-yaml";
+
+const favicon = await getImage({
+    src: faviconSrc,
+    format: "webp",
+    width: 32,
+    height: 32,
+});
+const appleTouchIcon = await getImage({
+    src: appleTouchIconSrc,
+    format: "webp",
+    width: 180,
+    height: 180,
+});
 
 const sitePath = path.join(process.cwd(), "src/data/site.yml");
 const siteRaw = fs.readFileSync(sitePath, "utf8");
@@ -60,8 +77,8 @@ const jsonLD = schema || defaultSchema;
 <!-- Global Metadata -->
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<link rel="icon" type="image/png" href="/favicon.png" />
-<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+<link rel="icon" type="image/webp" href={favicon.src} />
+<link rel="apple-touch-icon" href={appleTouchIcon.src} />
 <link rel="sitemap" href="/sitemap-index.xml" />
 <meta name="generator" content={Astro.generator} />
 <meta name="theme-color" content={siteData.theme_color} />

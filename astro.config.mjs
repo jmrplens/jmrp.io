@@ -1,5 +1,6 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
+import { fileURLToPath } from 'url';
 
 import mdx from '@astrojs/mdx';
 import sitemap from '@astrojs/sitemap';
@@ -9,19 +10,23 @@ import rehypeExternalLinks from 'rehype-external-links';
 
 import icon from 'astro-icon';
 
+
 import preact from '@astrojs/preact';
-import react from '@astrojs/react';
-
-
-import keystatic from '@keystatic/astro';
 
 import astroExpressiveCode from 'astro-expressive-code';
+import remarkMermaid from 'remark-mermaidjs';
 
 // https://astro.build/config
 export default defineConfig({
+
   site: 'https://jmrp.io',
 
+  image: {
+    domains: ['www.google.com'],
+  },
+
   integrations: [
+
     astroExpressiveCode({
       themes: ['github-dark', 'github-light'],
       themeCssSelector: (theme, { styleVariants }) => {
@@ -30,6 +35,7 @@ export default defineConfig({
           const altTheme = styleVariants.find((v) => v.theme.type !== baseTheme.type)?.theme;
           if (theme === baseTheme || theme === altTheme) return `[data-theme='${theme.type}']`;
         }
+
         return `[data-theme='${theme.name}']`; // Fallback
       },
     }),
@@ -37,12 +43,10 @@ export default defineConfig({
     sitemap(),
     icon(),
     preact({ include: ['**/src/**/*.{jsx,tsx}'] }),
-    react({ include: ['**/@keystatic/**'] }),
-    process.env.NODE_ENV === 'development' ? keystatic() : null,
   ].filter(Boolean),
 
   markdown: {
-    remarkPlugins: [remarkMath],
+    remarkPlugins: [remarkMath, [remarkMermaid, { mermaidConfig: { theme: 'neutral' } }]],
     rehypePlugins: [
       rehypeMathjax,
       [rehypeExternalLinks, {
@@ -54,10 +58,10 @@ export default defineConfig({
 
   vite: {
     server: {
-      https: {
-        key: 'private.key',
-        cert: 'certificate.crt',
-      }
+      // https: {
+      //   key: fileURLToPath(new URL('private.key', import.meta.url)),
+      //   cert: fileURLToPath(new URL('certificate.crt', import.meta.url)),
+      // },
     },
     ssr: {
       noExternal: ['citation-js']

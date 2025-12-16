@@ -1,0 +1,12 @@
+---
+interface Props {
+    label: string;
+    icon?: string;
+}
+
+const { label, icon } = Astro.props;
+---
+
+<div class="tab-panel" data-label={label} data-icon={icon}>
+    <slot />
+</div>

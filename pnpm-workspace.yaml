@@ -1,3 +1,6 @@
+ignoredBuiltDependencies:
+  - puppeteer
+
 onlyBuiltDependencies:
   - citation-js
   - esbuild

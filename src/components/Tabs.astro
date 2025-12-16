@@ -1,0 +1,159 @@
+---
+interface Props {
+    class?: string;
+}
+
+const { class: className } = Astro.props;
+---
+
+<script>
+    class TabsComponent extends HTMLElement {
+        constructor() {
+            super();
+            const headers = this.querySelector(".tab-headers");
+            const panels = this.querySelectorAll(".tab-panel");
+
+            if (!headers || panels.length === 0) return;
+
+            panels.forEach((panel, index) => {
+                const title =
+                    panel.getAttribute("data-label") || `Tab ${index + 1}`;
+                const icon = panel.getAttribute("data-icon");
+
+                const button = document.createElement("button");
+
+                if (icon) {
+                    // Icon handling logic can be added here if needed
+                }
+
+                button.textContent = title;
+                button.role = "tab";
+                button.setAttribute(
+                    "aria-selected",
+                    index === 0 ? "true" : "false",
+                );
+
+                button.addEventListener("click", () => {
+                    headers
+                        .querySelectorAll("button")
+                        .forEach((b) =>
+                            b.setAttribute("aria-selected", "false"),
+                        );
+                    panels.forEach(
+                        (p) => ((p as HTMLElement).style.display = "none"),
+                    );
+
+                    button.setAttribute("aria-selected", "true");
+                    (panel as HTMLElement).style.display = "block";
+                });
+
+                headers.appendChild(button);
+                if (index !== 0) (panel as HTMLElement).style.display = "none";
+            });
+        }
+    }
+
+    customElements.define("ui-tabs", TabsComponent);
+</script>
+
+<ui-tabs class:list={[className]}>
+    <div class="tab-headers"></div>
+    <div class="tab-content">
+        <slot />
+    </div>
+</ui-tabs>
+
+<style is:global>
+    ui-tabs {
+        display: block;
+        margin: 1.5rem 0;
+        background: var(--color-card-bg, rgba(255, 255, 255, 0.05));
+        border: 1px solid var(--color-border);
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    ui-tabs .tab-headers {
+        display: flex;
+        background: transparent;
+        border-bottom: 1px solid var(--color-border);
+        overflow-x: auto;
+        scrollbar-width: none; /* Firefox */
+    }
+
+    ui-tabs .tab-headers::-webkit-scrollbar {
+        display: none; /* Chrome/Safari */
+    }
+
+    ui-tabs .tab-headers button {
+        appearance: none;
+        background: transparent;
+        border: none;
+        padding: 1rem 1.5rem;
+        color: var(--color-text-muted, #888);
+        font-size: 0.95rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        border-bottom: 2px solid transparent;
+        white-space: nowrap;
+    }
+
+    ui-tabs .tab-headers button:hover {
+        color: var(--color-text-body);
+        background: rgba(255, 255, 255, 0.05);
+    }
+
+    ui-tabs .tab-headers button[aria-selected="true"] {
+        color: var(--color-primary);
+        border-bottom-color: var(--color-primary);
+        background: var(--color-card-bg);
+    }
+
+    ui-tabs .tab-content {
+        padding: 1.5rem;
+        max-width: 100%;
+    }
+
+    .tab-panel {
+        animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(5px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Robust overflow handling for content within tabs AND global MDX content */
+    :global(html),
+    :global(body) {
+        overflow-x: hidden !important;
+        width: 100% !important;
+    }
+
+    :global(pre),
+    :global(.expressive-code) {
+        max-width: 100% !important;
+        overflow-x: auto !important;
+    }
+
+    ui-tabs :global(pre),
+    ui-tabs :global(.expressive-code),
+    ui-tabs :global(.mermaid) {
+        max-width: 100% !important;
+        overflow-x: auto !important;
+    }
+
+    /* General responsive safety */
+    ui-tabs img,
+    ui-tabs svg {
+        max-width: 100%;
+        height: auto;
+    }
+</style>
