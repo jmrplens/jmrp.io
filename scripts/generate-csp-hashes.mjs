@@ -81,14 +81,6 @@ async function generateHashes() {
 
         MANUAL_IMG_DOMAINS.forEach(domain => imageDomains.add(domain));
 
-        // Manual domains for images (e.g. redirects like gstatic)
-        const MANUAL_IMG_DOMAINS = [
-            '*.gstatic.com',
-            'avatars.githubusercontent.com'
-        ];
-
-
-
         console.log(`\nFound ${styleHashes.size} unique style hashes.`);
         console.log(`Found ${scriptHashes.size} unique script hashes.`);
         console.log(`Found ${imageDomains.size} unique image domains.`);
