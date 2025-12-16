@@ -205,7 +205,7 @@ const logoText = siteData.logo_text || "<JMRP />";
         width: 100vw;
         height: 100vh;
         background-color: rgba(0, 0, 0, 0.5);
-        z-index: 1000;
+        z-index: 990; /* Below Header (1000) */
         opacity: 0;
         visibility: hidden;
         transition: opacity 0.3s ease;
@@ -218,7 +218,10 @@ const logoText = siteData.logo_text || "<JMRP />";
     }
 
     /* Prevent scrolling when menu is open */
-    :global(body.menu-open) {
+    :global(body.menu-open),
+    :global(html:has(body.menu-open)) {
         overflow: hidden;
+        height: 100vh; /* Lock height to viewport */
+        touch-action: none; /* Prevent touch scrolling */
     }
 </style>

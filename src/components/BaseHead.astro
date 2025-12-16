@@ -5,7 +5,7 @@
  * - Global metadata (charset, viewport)
  * - SEO tags (title, description, keywords)
  * - Open Graph and Twitter cards
- * - JSON-LD Schema.org structured data
+ * - JSON-LD Schema.org structured data (Merged Graph)
  * - Favicons and fonts
  */
 import "../styles/global.css";
@@ -42,7 +42,12 @@ interface Props {
     description?: string;
     image?: string;
     type?: string;
-    schema?: any; // Custom JSON-LD schema to override default
+    // Article specific props
+    publishDate?: Date;
+    modifiedDate?: Date;
+    authors?: string[]; // Defaults to siteData.author
+    tags?: string[];
+    schema?: any; // Custom JSON-LD schema to merge or override
 }
 
 const canonicalURL = new URL(Astro.url.pathname, Astro.site);
@@ -52,34 +57,62 @@ const {
     description = siteData.description,
     image = siteData.image,
     type = "website",
+    publishDate,
+    modifiedDate,
+    authors = [siteData.author],
+    tags = [],
     schema,
 } = Astro.props;
 
-// Default Schema if none provided
+const fullTitle =
+    title === siteData.title ? title : `${title} | ${siteData.author}`;
+const resolvedImage = new URL(image, Astro.url);
+
+// --- Schema.org Construction ---
+
+// 1. WebSite Schema (Global)
 const websiteSchema = {
     "@type": "WebSite",
+    "@id": `${siteData.url}/#website`,
     url: siteData.url,
     name: "José M. Requena Plens",
-    headline: title,
-    description: description,
-    author: {
+    description: siteData.description,
+    inLanguage: siteData.locale,
+    publisher: {
         "@type": "Person",
+        "@id": `${siteData.url}/#person`,
         name: siteData.author,
+        url: siteData.url,
+        sameAs: [
+            `https://twitter.com/${siteData.twitter_creator.replace("@", "")}`,
+            // Add other social links if available in site.yml
+        ],
     },
 };
 
+// 2. Navigation Schema
 const navSchema = (siteData.nav || []).map((item: any) => ({
     "@type": "SiteNavigationElement",
     name: item.label,
     url: new URL(item.href, siteData.url).toString(),
 }));
 
-const defaultSchema = {
-    "@context": "https://schema.org",
-    "@graph": [websiteSchema, ...navSchema],
-};
+// 3. Merge Logic
+// We use a @graph to include multiple items (Website, Page, Breadcrumbs, etc.)
+let schemaGraph = [websiteSchema, ...navSchema];
 
-const jsonLD = schema || defaultSchema;
+if (schema) {
+    if (Array.isArray(schema)) {
+        schemaGraph = [...schemaGraph, ...schema];
+    } else {
+        schemaGraph.push(schema);
+    }
+}
+
+const jsonLD = {
+    "@context": "https://schema.org",
+    "@graph": schemaGraph,
+};
 ---
 
 <!-- Global Metadata -->
@@ -100,7 +133,7 @@ const jsonLD = schema || defaultSchema;
 <link rel="canonical" href={canonicalURL} />
 
 <!-- Primary Meta Tags -->
-<title>{title}</title>
+<title>{fullTitle}</title>
 <meta name="title" content={title} />
 <meta name="description" content={description} />
 
@@ -109,11 +142,37 @@ const jsonLD = schema || defaultSchema;
 <meta property="og:url" content={Astro.url} />
 <meta property="og:title" content={title} />
 <meta property="og:description" content={description} />
-<meta property="og:image" content={new URL(image, Astro.url)} />
+<meta property="og:image" content={resolvedImage} />
 <meta property="og:image:width" content="1200" />
-<meta property="og:image:height" content="800" />
+<meta property="og:image:height" content="630" />
 <meta property="og:locale" content={siteData.locale} />
-<meta property="og:site_name" content="José M. Requena Plens" />
+<meta property="og:site_name" content={siteData.author} />
+
+<!-- Article Specific OG Tags -->
+{
+    type === "article" && (
+        <>
+            {publishDate && (
+                <meta
+                    property="article:published_time"
+                    content={publishDate.toISOString()}
+                />
+            )}
+            {modifiedDate && (
+                <meta
+                    property="article:modified_time"
+                    content={modifiedDate.toISOString()}
+                />
+            )}
+            {authors.map((author) => (
+                <meta property="article:author" content={author} />
+            ))}
+            {tags.map((tag) => (
+                <meta property="article:tag" content={tag} />
+            ))}
+        </>
+    )
+}
 
 <!-- Twitter -->
 <meta property="twitter:card" content="summary_large_image" />
@@ -122,7 +181,7 @@ const jsonLD = schema || defaultSchema;
 <meta property="twitter:url" content={Astro.url} />
 <meta property="twitter:title" content={title} />
 <meta property="twitter:description" content={description} />
-<meta property="twitter:image" content={new URL(image, Astro.url)} />
+<meta property="twitter:image" content={resolvedImage} />
 
 <!-- JSON-LD -->
 <script

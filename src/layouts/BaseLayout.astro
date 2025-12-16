@@ -18,9 +18,24 @@ interface Props {
     type?: string;
     schema?: any; // JSON-LD schema defaults or overrides
     image?: string;
+    // Article specific
+    publishDate?: Date;
+    modifiedDate?: Date;
+    authors?: string[];
+    tags?: string[];
 }
 
-const { title, description, type, schema, image } = Astro.props;
+const {
+    title,
+    description,
+    type,
+    schema,
+    image,
+    publishDate,
+    modifiedDate,
+    authors,
+    tags,
+} = Astro.props;
 ---
 
 <!doctype html>
@@ -32,6 +47,10 @@ const { title, description, type, schema, image } = Astro.props;
             type={type}
             schema={schema}
             image={image}
+            publishDate={publishDate}
+            modifiedDate={modifiedDate}
+            authors={authors}
+            tags={tags}
         />
         <script is:inline nonce="NGINX_CSP_NONCE">
             // Critical: Execute immediately to prevent FOUC
@@ -60,13 +79,31 @@ const { title, description, type, schema, image } = Astro.props;
         </script>
     </head>
     <body>
+        <a href="#main-content" class="skip-link">Skip to content</a>
         <Header />
-        <main data-pagefind-body>
+        <main id="main-content" data-pagefind-body>
             <slot />
         </main>
         <Footer />
 
         <style is:global>
+            /* Accessibility: Skip Link */
+            .skip-link {
+                position: absolute;
+                top: -9999px;
+                left: 0.5rem;
+                background: var(--color-primary);
+                color: white;
+                padding: 0.5rem 1rem;
+                z-index: 9999;
+                text-decoration: none;
+                font-weight: bold;
+                border-radius: 0 0 0.5rem 0.5rem;
+            }
+            .skip-link:focus {
+                top: 0;
+            }
+
             /* Critical Layout Fixes */
             html,
             body {
