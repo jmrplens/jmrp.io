@@ -56,12 +56,45 @@ const { title, description, type, schema, image } = Astro.props;
             <slot />
         </main>
         <Footer />
-        <style>
+
+        <style is:global>
+            /* Critical Layout Fixes */
+            html,
+            body {
+                overflow-x: hidden;
+                max-width: 100vw;
+            }
+
             main {
                 flex: 1;
                 display: flex;
                 flex-direction: column;
                 width: 100%;
+                overflow-x: clip; /* Prevent main from forcing scroll */
+            }
+
+            /* Prevent content blowout from wide elements */
+            pre,
+            code,
+            .expressive-code,
+            .mermaid,
+            table,
+            img,
+            video,
+            iframe {
+                max-width: 100%;
+            }
+
+            /* Allow horizontal scroll for code and diagrams */
+            pre,
+            .expressive-code,
+            .mermaid {
+                overflow-x: auto;
+            }
+
+            .mermaid svg {
+                max-width: 100% !important;
+                height: auto !important;
             }
         </style>
     </body>
