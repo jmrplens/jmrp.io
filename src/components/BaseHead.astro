@@ -1,4 +1,13 @@
 ---
+/**
+ * BaseHead component.
+ * Included in all pages to handle:
+ * - Global metadata (charset, viewport)
+ * - SEO tags (title, description, keywords)
+ * - Open Graph and Twitter cards
+ * - JSON-LD Schema.org structured data
+ * - Favicons and fonts
+ */
 import "../styles/global.css";
 // Supports weights 100-900
 import "../styles/fonts.css";
@@ -33,7 +42,7 @@ interface Props {
     description?: string;
     image?: string;
     type?: string;
-    schema?: any;
+    schema?: any; // Custom JSON-LD schema to override default
 }
 
 const canonicalURL = new URL(Astro.url.pathname, Astro.site);
@@ -46,7 +55,6 @@ const {
     schema,
 } = Astro.props;
 
-// Default Schema if none provided
 // Default Schema if none provided
 const websiteSchema = {
     "@type": "WebSite",

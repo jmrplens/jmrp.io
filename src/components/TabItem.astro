@@ -1,7 +1,11 @@
 ---
+/**
+ * TabItem component.
+ * Represents a single tab panel within a <Tabs> container.
+ */
 interface Props {
-    label: string;
-    icon?: string;
+    label: string; // Tab title
+    icon?: string; // Optional icon for the tab
 }
 
 const { label, icon } = Astro.props;

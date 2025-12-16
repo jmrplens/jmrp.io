@@ -1,4 +1,9 @@
 ---
+/**
+ * Tabs component.
+ * A client-side web component (<ui-tabs>) for switching content panels.
+ * Supports icons and responsive design.
+ */
 interface Props {
     class?: string;
 }
@@ -21,10 +26,6 @@ const { class: className } = Astro.props;
                 const icon = panel.getAttribute("data-icon");
 
                 const button = document.createElement("button");
-
-                if (icon) {
-                    // Icon handling logic can be added here if needed
-                }
 
                 button.textContent = title;
                 button.role = "tab";

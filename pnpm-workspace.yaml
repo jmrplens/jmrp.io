@@ -1,5 +1,6 @@
-ignoredBuiltDependencies:
-  - puppeteer
+packages:
+  - "."
+
 
 onlyBuiltDependencies:
   - citation-js

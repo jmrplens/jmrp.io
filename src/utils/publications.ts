@@ -3,18 +3,39 @@ import path from 'path';
 import yaml from 'js-yaml';
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
-const Cite = require('citation-js');
+const Cite = require('citation-js'); // Library to parse BibTeX files
 
+/**
+ * Represents a group of publications categorized by type (e.g., Journals, Conferences).
+ */
 export interface PublicationGroup {
     title: string;
     items: any[];
 }
 
+/**
+ * Interface for co-author matching configuration.
+ * Used to link author names to their personal websites.
+ */
 interface Coauthor {
-    firstname: string[];
-    url: string;
+    firstname: string[]; // Variations of the first name to match
+    url: string; // URL to the co-author's website
 }
 
+/**
+ * Fetches, parses, and processes publications from the BibTeX file.
+ * File location: src/data/_bibliography/papers.bib
+ * 
+ * Process involves:
+ * 1. Reading the .bib file.
+ * 2. Parsing entries using citation-js.
+ * 3. Sorting by year (descending).
+ * 4. Matching authors with the coauthors.yml file to add profile links.
+ * 5. Extracting custom fields (slides, poster) that citation-js might miss.
+ * 6. Grouping into categories: Journal, Conference, Thesis, Others.
+ * 
+ * @returns {Promise<PublicationGroup[]>} Structured list of publication groups.
+ */
 export async function getPublications(): Promise<PublicationGroup[]> {
     try {
         const filePath = path.join(process.cwd(), 'src/data/_bibliography/papers.bib');
@@ -25,6 +46,10 @@ export async function getPublications(): Promise<PublicationGroup[]> {
         const coauthorsRaw = fs.readFileSync(coauthorsPath, 'utf8');
         const coauthors: Record<string, Coauthor[]> = yaml.load(coauthorsRaw) as any;
 
+        /**
+         * Helper to manually extract custom fields from the raw BibTeX string.
+         * Used for fields like 'slides' or 'poster' which standard parsers might ignore.
+         */
         const extractCustomField = (id: string, field: string): string | null => {
             // Find the specific entry block first to avoid matching fields from subsequent entries
             // Match from @Type{id, until the next @ or end of string. 
@@ -52,6 +77,10 @@ export async function getPublications(): Promise<PublicationGroup[]> {
             return yearB - yearA;
         });
 
+        /**
+         * Matches bibtex authors against the coauthors.yml list.
+         * If a match is found based on family name and first name variation, adds the URL.
+         */
         const processAuthors = (authors: any[]) => {
             if (!authors) return [];
             return authors.map((author: any) => {
@@ -85,7 +114,7 @@ export async function getPublications(): Promise<PublicationGroup[]> {
             if (!item.slides) item.slides = extractCustomField(item.id, 'slides');
             if (!item.poster) item.poster = extractCustomField(item.id, 'poster');
 
-            // Extract raw bibtex entry
+            // Extract raw bibtex entry for display/copying
             const extractRawBibtex = (id: string) => {
                 const entryRegex = new RegExp(`@.*?\\{${id},[\\s\\S]*?(?=\\n@|$)`, 'i');
                 const match = fileContents.match(entryRegex);

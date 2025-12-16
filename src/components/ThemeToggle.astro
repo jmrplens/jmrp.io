@@ -1,4 +1,9 @@
 ---
+/**
+ * ThemeToggle component.
+ * A button that toggles between light and dark themes.
+ * Relies on the `data-theme` attribute on the html element.
+ */
 import { Icon } from "astro-icon/components";
 ---
 
@@ -25,22 +30,7 @@ import { Icon } from "astro-icon/components";
         color: var(--color-primary);
     }
 
-    /* Hide icons based on theme via class added to body/html */
-    :global(.light-mode) .icon-sun {
-        display: none;
-    }
-    :global(.light-mode) .icon-moon {
-        display: block;
-    }
-
-    :global(.dark-mode) .icon-sun {
-        display: block;
-    }
-    :global(.dark-mode) .icon-moon {
-        display: none;
-    }
-
-    /* Default (no class or during loading) - maybe assume dark mode as default for this site */
+    /* Icon display logic based on data-theme */
     .icon-sun {
         display: block;
     }

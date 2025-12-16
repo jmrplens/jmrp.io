@@ -1,4 +1,9 @@
 ---
+/**
+ * CV Page.
+ * Displays curriculum vitae data loaded from `src/data/cv.yml`.
+ * Renders sections dynamically using specific components (SkillGroup, CertificateGroup) or generic map/timeline layouts.
+ */
 import BaseLayout from "../layouts/BaseLayout.astro";
 import { getCVData } from "../utils/cv";
 import { Icon } from "astro-icon/components";
@@ -261,7 +266,7 @@ const personSchema = {
             }
 
             .cv-toc {
-                position: webkit-sticky; /* Safari support */
+                position: -webkit-sticky; /* Safari support */
                 position: sticky;
                 top: 70px; /* Header (64px) + small gap */
                 background: var(--color-bg);

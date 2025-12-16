@@ -1,9 +1,30 @@
 ---
 import { Icon } from "astro-icon/components";
 
+interface SkillItem {
+    name: string;
+    level?: number | string;
+    time?: string;
+    desc?: string;
+    icon?: string;
+    school?: string;
+    link?: string;
+    linkname?: string;
+}
+
+interface Group {
+    category: string;
+    icon?: string;
+    items: SkillItem[];
+}
+
+interface Props {
+    group: Group;
+}
+
 const { group } = Astro.props;
 
-const levelTextMap = {
+const levelTextMap: Record<number, string> = {
     1: "Elementary",
     2: "Basic",
     3: "Intermediate",
@@ -22,8 +43,9 @@ const levelTextMap = {
             group.items.map((item: any) => {
                 const score = typeof item.level === "number" ? item.level : 0;
                 const levelLabel =
-                    levelTextMap[score as keyof typeof levelTextMap] ||
-                    item.level;
+                    (typeof item.level === "number"
+                        ? levelTextMap[item.level]
+                        : item.level) || item.level;
 
                 return (
                     <div class="compact-item skill-item">
@@ -70,10 +92,6 @@ const levelTextMap = {
                                             class="detail-link"
                                         >
                                             {item.linkname || "View"}{" "}
-                                            {/* <Icon
-                                                name="fa-solid:external-link-alt"
-                                                class="text-xs"
-                                            /> */}
                                         </a>
                                     )}
                                 </div>

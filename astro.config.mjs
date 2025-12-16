@@ -1,52 +1,54 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
-import { fileURLToPath } from 'url';
 
-import mdx from '@astrojs/mdx';
-import sitemap from '@astrojs/sitemap';
-import remarkMath from 'remark-math';
-import rehypeMathjax from 'rehype-mathjax';
-import rehypeExternalLinks from 'rehype-external-links';
-
-import icon from 'astro-icon';
-
-
-import preact from '@astrojs/preact';
-
-import astroExpressiveCode from 'astro-expressive-code';
-import remarkMermaid from 'remark-mermaidjs';
+// Adapters and Integrations
+import mdx from '@astrojs/mdx'; // Support for MDX (Markdown with JSX)
+import sitemap from '@astrojs/sitemap'; // Generates a sitemap.xml
+import remarkMath from 'remark-math'; // Remark plugin to support math equations
+import rehypeMathjax from 'rehype-mathjax'; // Rehype plugin to render math with MathJax
+import rehypeExternalLinks from 'rehype-external-links'; // Adds target="_blank" to external links
+import icon from 'astro-icon'; // Icon support
+import preact from '@astrojs/preact'; // Preact integration (lighter alternative to React)
+import astroExpressiveCode from 'astro-expressive-code'; // Advanced code blocks with syntax highlighting
+import remarkMermaid from 'remark-mermaidjs'; // Mermaid diagrams support in Markdown
 
 // https://astro.build/config
 export default defineConfig({
-
+  // The site URL, used for SEO and sitemap generation
   site: 'https://jmrp.io',
 
+  // Image optimization configuration
   image: {
     domains: ['www.google.com'],
   },
 
+  // List of integrations to extend Astro functionality
   integrations: [
-
+    // Configuration for code blocks (Expressive Code)
     astroExpressiveCode({
       themes: ['github-dark', 'github-light'],
+      // Dynamic theme selector based on data-theme attribute
       themeCssSelector: (theme, { styleVariants }) => {
         if (styleVariants.length >= 2) {
           const baseTheme = styleVariants[0].theme;
           const altTheme = styleVariants.find((v) => v.theme.type !== baseTheme.type)?.theme;
           if (theme === baseTheme || theme === altTheme) return `[data-theme='${theme.type}']`;
         }
-
         return `[data-theme='${theme.name}']`; // Fallback
       },
     }),
     mdx(),
     sitemap(),
     icon(),
+    // Include Preact for interactive components
     preact({ include: ['**/src/**/*.{jsx,tsx}'] }),
   ].filter(Boolean),
 
+  // Markdown and MDX configuration
   markdown: {
+    // Remark plugins: transformation before HTML compilation
     remarkPlugins: [remarkMath, [remarkMermaid, { mermaidConfig: { theme: 'neutral' } }]],
+    // Rehype plugins: transformation of the HTML output
     rehypePlugins: [
       rehypeMathjax,
       [rehypeExternalLinks, {
@@ -56,19 +58,18 @@ export default defineConfig({
     ]
   },
 
+  // Vite configuration (underlying bundler)
   vite: {
-    server: {
-      // https: {
-      //   key: fileURLToPath(new URL('private.key', import.meta.url)),
-      //   cert: fileURLToPath(new URL('certificate.crt', import.meta.url)),
-      // },
-    },
+    server: {},
     ssr: {
+      // Force externalization of citation-js for SSR to avoid bundling issues
       noExternal: ['citation-js']
     }
   },
 
+  // Build configuration
   build: {
+    // Inline small stylesheets to improve performance
     inlineStylesheets: 'always'
   }
 });

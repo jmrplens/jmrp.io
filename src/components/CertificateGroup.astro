@@ -1,6 +1,24 @@
 ---
 import { Icon } from "astro-icon/components";
 
+interface CertificateItem {
+    name: string;
+    school?: string;
+    time?: string;
+    link?: string;
+    linkname?: string;
+}
+
+interface Group {
+    category: string;
+    icon?: string;
+    items: CertificateItem[];
+}
+
+interface Props {
+    group: Group;
+}
+
 const { group } = Astro.props;
 ---
 

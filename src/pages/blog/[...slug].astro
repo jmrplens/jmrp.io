@@ -1,4 +1,12 @@
 ---
+/**
+ * Blog Post Page ([...slug].astro).
+ * Renders individual blog posts dynamically based on their slug.
+ * Includes support for:
+ * - Custom components (Callout, CodeTabs, YouTube) in MDX
+ * - Automated Table of Contents generation
+ * - SEO Schema for blog postings
+ */
 import { type CollectionEntry, getCollection } from "astro:content";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { Icon } from "astro-icon/components";

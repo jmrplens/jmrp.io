@@ -1,7 +1,13 @@
 ---
+/**
+ * Footer component.
+ * Displays copyright info and social media links loaded from `src/data/socials.yml`.
+ * Includes logic to map FontAwesome classes to Iconify names.
+ */
 import fs from "fs";
 import path from "path";
 import yaml from "js-yaml";
+import { Icon } from "astro-icon/components";
 
 const today = new Date();
 
@@ -12,7 +18,7 @@ const socials = yaml.load(socialsRaw) as any;
 
 const sitePath = path.join(process.cwd(), "src/data/site.yml");
 const siteRaw = fs.readFileSync(sitePath, "utf8");
-const siteConfig = yaml.load(siteRaw) as any; // Rename to avoid conflict if any
+const siteConfig = yaml.load(siteRaw) as any;
 
 const socialLinks: any[] = [];
 
@@ -97,8 +103,6 @@ if (socials.custom_social) {
     });
 }
 
-import { Icon } from "astro-icon/components";
-
 // Helper to map FontAwesome classes to Iconify names
 const getIconName = (faClass: string) => {
     if (!faClass) return "";
@@ -107,8 +111,8 @@ const getIconName = (faClass: string) => {
     const name = parts[1]?.replace("fa-", "") || "";
 
     if (style === "fab") return `fa-brands:${name}`;
-    if (style === "fas") return `fa-solid:${name}`;
-    return `fa-solid:${name}`; // Default
+    // Default to solid for fas or others
+    return `fa-solid:${name}`;
 };
 ---
 

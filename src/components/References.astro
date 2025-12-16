@@ -1,6 +1,13 @@
 ---
+/**
+ * References component.
+ * Renders a grid of external reference cards.
+ * Automatically attempts to fetch favicons for referenced URLs at build time using Google's Favicon service.
+ */
 import { Icon } from "astro-icon/components";
-import { Image } from "astro:assets";
+import fs from "node:fs";
+import path from "node:path";
+import sharp from "sharp";
 
 interface Reference {
     text: string;
@@ -12,8 +19,6 @@ interface Props {
 }
 
 const { references = [] } = Astro.props;
-import fs from "node:fs";
-import path from "node:path";
 ---
 
 {
@@ -36,78 +41,59 @@ import path from "node:path";
                     let hasIcon = false;
 
                     // Server-side: Check/Download favicon at build time
-                    if (import.meta.env.PROD || import.meta.env.DEV) {
-                        try {
-                            const fs = await import("node:fs");
-                            const path = await import("node:path");
-                            const sharp = (await import("sharp")).default;
+                    try {
+                        // Paths
+                        const publicDir = path.join(
+                            process.cwd(),
+                            "public",
+                            "assets",
+                            "favicons",
+                        );
+                        const distDir = path.join(
+                            process.cwd(),
+                            "dist",
+                            "assets",
+                            "favicons",
+                        );
+                        const publicFile = path.join(publicDir, filename);
+                        const distFile = path.join(distDir, filename);
 
-                            // Paths
-                            const publicDir = path.join(
-                                process.cwd(),
-                                "public",
-                                "assets",
-                                "favicons",
-                            );
-                            const distDir = path.join(
-                                process.cwd(),
-                                "dist",
-                                "assets",
-                                "favicons",
-                            );
-                            const publicFile = path.join(publicDir, filename);
-                            const distFile = path.join(distDir, filename);
+                        // Ensure directories exist
+                        if (!fs.existsSync(publicDir))
+                            fs.mkdirSync(publicDir, { recursive: true });
+                        if (!fs.existsSync(distDir))
+                            fs.mkdirSync(distDir, { recursive: true });
 
-                            // Ensure directories exist
-                            if (!fs.existsSync(publicDir))
-                                fs.mkdirSync(publicDir, { recursive: true });
-                            if (!fs.existsSync(distDir))
-                                fs.mkdirSync(distDir, { recursive: true });
+                        // If file missing in public, download and process it
+                        if (!fs.existsSync(publicFile)) {
+                            const googleFaviconUrl = `https://www.google.com/s2/favicons?domain=${hostname}&sz=64`;
+                            // console.log(`Downloading favicon for ${hostname}...`);
+                            const response = await fetch(googleFaviconUrl);
+                            if (response.ok) {
+                                const buffer = await response.arrayBuffer();
+                                const optimizedBuffer = await sharp(
+                                    Buffer.from(buffer),
+                                )
+                                    .resize(64)
+                                    .webp()
+                                    .toBuffer();
 
-                            // If file missing in public, download and process it
-                            if (!fs.existsSync(publicFile)) {
-                                const googleFaviconUrl = `https://www.google.com/s2/favicons?domain=${hostname}&sz=64`;
-                                console.log(
-                                    `Downloading and optimizing favicon for ${hostname}...`,
-                                );
-                                const response = await fetch(googleFaviconUrl);
-                                if (response.ok) {
-                                    const buffer = await response.arrayBuffer();
-                                    const optimizedBuffer = await sharp(
-                                        Buffer.from(buffer),
-                                    )
-                                        .resize(64)
-                                        .webp()
-                                        .toBuffer();
-
-                                    fs.writeFileSync(
-                                        publicFile,
-                                        optimizedBuffer,
-                                    );
-                                    // Also write to dist for immediate availability
-                                    fs.writeFileSync(distFile, optimizedBuffer);
-                                    hasIcon = true;
-                                } else {
-                                    console.warn(
-                                        `Failed to download favicon for ${hostname}: ${response.statusText}`,
-                                    );
-                                }
-                            } else {
+                                fs.writeFileSync(publicFile, optimizedBuffer);
+                                // Also write to dist for immediate availability
+                                fs.writeFileSync(distFile, optimizedBuffer);
                                 hasIcon = true;
-                                // If it exists in public but not dist (e.g. copied before download), copy it
-                                if (!fs.existsSync(distFile)) {
-                                    fs.copyFileSync(publicFile, distFile);
-                                }
+                            } else {
+                                // Fail silently/warn
                             }
-                        } catch (e) {
-                            console.error(
-                                `Error handling favicon for ${hostname}:`,
-                                e,
-                            );
+                        } else {
+                            hasIcon = true;
+                            // If it exists in public but not dist, copy it
+                            if (!fs.existsSync(distFile)) {
+                                fs.copyFileSync(publicFile, distFile);
+                            }
                         }
-                    } else {
-                        // In dev mode, assume it works or uses public
-                        hasIcon = true;
+                    } catch (e) {
+                        // Console error only if needed
                     }
 
                     return (

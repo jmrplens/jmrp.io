@@ -1,25 +1,19 @@
 import { defineCollection, z } from 'astro:content';
 
-const news = defineCollection({
-    type: 'content',
-    schema: z.object({
-        date: z.coerce.date(),
-        title: z.string().optional(),
-        inline: z.boolean().optional(),
-        related_posts: z.boolean().optional(),
-    }),
-});
-
-
+/**
+ * Collection definition for 'posts'.
+ * Represents standard blog posts or articles.
+ */
 const posts = defineCollection({
     type: 'content',
     schema: z.object({
-        title: z.string(),
-        publishedDate: z.coerce.date(),
-        draft: z.boolean().default(false),
-        description: z.string().optional(),
-        tags: z.array(z.string()).optional(),
+        title: z.string(), // Post title (required)
+        publishedDate: z.coerce.date(), // Publication date
+        draft: z.boolean().default(false), // Draft status, defaults to false
+        description: z.string().optional(), // SEO description
+        tags: z.array(z.string()).optional(), // List of tags/categories
     }),
 });
 
-export const collections = { news, posts };
+// Export collections variable to register them with Astro
+export const collections = { posts };

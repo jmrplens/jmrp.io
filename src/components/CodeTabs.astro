@@ -1,5 +1,9 @@
 ---
-
+/**
+ * CodeTabs component.
+ * A client-side web component (<code-tabs>) that manages switching between multiple
+ * <CodeTabItem> children. Useful for showing code in different languages.
+ */
 ---
 
 <script>
@@ -29,7 +33,9 @@
                         .forEach((b) =>
                             b.setAttribute("aria-selected", "false"),
                         );
-                    panels.forEach((p) => (p.style.display = "none"));
+                    panels.forEach(
+                        (p) => ((p as HTMLElement).style.display = "none"),
+                    );
 
                     // Activate clicked
                     button.setAttribute("aria-selected", "true");
