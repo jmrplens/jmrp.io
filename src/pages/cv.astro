@@ -222,6 +222,9 @@ const personSchema = {
                                                                 class="btn-sm"
                                                                 target="_blank"
                                                                 rel="noopener noreferrer"
+                                                                aria-label={
+                                                                    link.ariaLabel
+                                                                }
                                                             >
                                                                 <Icon name="fa-solid:file-pdf" />
                                                                 {link.linkname}
@@ -452,6 +455,19 @@ const personSchema = {
                 display: inline-flex;
                 align-items: center;
                 gap: 6px;
+                font-weight: 600; /* Accessibility: Distinguish links by weight */
+            }
+
+            /* Accessibility: Distinguish links by weight
+               Using :global() because these links are injected via set:html */
+            .timeline-card :global(a),
+            .map-item :global(a:not(.btn-sm)) {
+                font-weight: 600;
+            }
+
+            /* Ensure button links also have sufficient weight if they are text-like */
+            .map-item :global(.btn-sm) {
+                font-weight: 600;
             }
         </style>
     </div></BaseLayout

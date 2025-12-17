@@ -56,7 +56,12 @@ const { group } = Astro.props;
                     </div>
 
                     {item.link && (
-                        <a href={item.link} class="btn-download" download>
+                        <a
+                            href={item.link}
+                            class="btn-download"
+                            download
+                            aria-label={`Download certificate: ${item.name}`}
+                        >
                             <Icon name="fa-solid:download" />
                             {item.linkname || "Download"}
                         </a>
