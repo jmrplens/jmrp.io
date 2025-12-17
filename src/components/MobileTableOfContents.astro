@@ -32,7 +32,7 @@ const { headings } = Astro.props;
 
             <div id="toc-drawer" class="toc-drawer" aria-hidden="true">
                 <div class="toc-header">
-                    <h3>Table of Contents</h3>
+                    <h2>Table of Contents</h2>
                     <button
                         id="toc-close-btn"
                         class="toc-close"
@@ -150,7 +150,11 @@ const { headings } = Astro.props;
         border-top-right-radius: var(--radius-lg);
         z-index: 1001; /* Above Header if needed, or equal? Header is 1000. Let's cover header if bottom sheet is tall */
         transform: translateY(100%);
-        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        /* Hide visibility after transform finishes */
+        visibility: hidden;
+        transition:
+            transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+            visibility 0s 0.3s;
         display: flex;
         flex-direction: column;
         box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.2);
@@ -158,6 +162,11 @@ const { headings } = Astro.props;
 
     .toc-drawer.open {
         transform: translateY(0);
+        visibility: visible;
+        /* Show visibility immediately when opening */
+        transition:
+            transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+            visibility 0s;
     }
 
     .toc-header {
@@ -168,7 +177,7 @@ const { headings } = Astro.props;
         border-bottom: 1px solid var(--color-border);
     }
 
-    .toc-header h3 {
+    .toc-header h2 {
         margin: 0;
         font-size: 1.25rem;
         color: var(--color-text-heading);

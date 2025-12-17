@@ -105,9 +105,12 @@ const {
             }
 
             /* Critical Layout Fixes */
-            html,
-            body {
+            html {
                 overflow-x: hidden;
+                max-width: 100vw;
+            }
+            body {
+                overflow-x: visible; /* Ensure sticky works */
                 max-width: 100vw;
             }
 

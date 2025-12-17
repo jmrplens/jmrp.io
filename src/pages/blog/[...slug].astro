@@ -124,7 +124,7 @@ const articleSchema = [
                 {
                     headings.length > 0 && (
                         <nav class="toc">
-                            <h3>Table of Contents</h3>
+                            <h2>Table of Contents</h2>
                             <ul>
                                 {headings.map((heading) => (
                                     <li class={`toc-depth-${heading.depth}`}>
@@ -203,6 +203,13 @@ const articleSchema = [
         color: var(--color-text-heading);
         margin-bottom: 1.5rem;
         letter-spacing: -0.02em;
+    }
+
+    .toc h2 {
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        color: var(--color-text-heading);
     }
 
     .lead {
