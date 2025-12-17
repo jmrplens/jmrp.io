@@ -29,4 +29,4 @@ Allow: /
 User-agent: ImagesiftBot
 Allow: /
 
-Sitemap: https://jmrp.io/sitemap-index.xml
+Sitemap: https://jmrp.io/sitemap.xml

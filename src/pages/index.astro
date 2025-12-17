@@ -42,6 +42,7 @@ const { hero } = siteData;
                             src={mehomeImg}
                             alt="José Manuel Requena Plens"
                             width={350}
+                            height={350}
                             widths={[200, 350, 400, 700]}
                             sizes="(max-width: 768px) 200px, 350px"
                             loading="eager"
@@ -174,7 +175,9 @@ const { hero } = siteData;
 
         .profile-image {
             order: -1;
+            width: 200px; /* Fixed width */
             max-width: 200px;
+            min-height: 200px; /* Reserve vertical space */
             margin: 0 auto var(--space-lg) auto; /* Center and keep bottom margin */
             aspect-ratio: 1 / 1; /* Reserve space for image */
         }
