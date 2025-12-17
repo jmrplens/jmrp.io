@@ -9,8 +9,10 @@ const posts = defineCollection({
     schema: z.object({
         title: z.string(), // Post title (required)
         publishedDate: z.coerce.date(), // Publication date
+        updatedDate: z.coerce.date().optional(), // Last updated date
         draft: z.boolean().default(false), // Draft status, defaults to false
         description: z.string().optional(), // SEO description
+        coverImage: z.string().optional(), // Cover image URL or path
         tags: z.array(z.string()).optional(), // List of tags/categories
     }),
 });
