@@ -11,20 +11,31 @@ interface Props {
 
 const { title } = Astro.props;
 ---
-<div class="terminal-output-wrapper" role="log" aria-live="polite" aria-label={title ? `Terminal Output: ${title}` : 'Terminal Output'}>
-    {title && (
-        <div class="output-header" aria-hidden="true">
-            <Icon name="mdi:chevron-right-box-outline" class="output-icon" />
-            <span class="output-title">{title}</span>
-        </div>
-    )}
+
+<div
+    class="terminal-output-wrapper"
+    role="log"
+    aria-live="polite"
+    aria-label={title ? `Terminal Output: ${title}` : "Terminal Output"}
+>
+    {
+        title && (
+            <div class="output-header" aria-hidden="true">
+                <Icon
+                    name="mdi:chevron-right-box-outline"
+                    class="output-icon"
+                />
+                <span class="output-title">{title}</span>
+            </div>
+        )
+    }
     <div class="output-body">
         <pre><slot /></pre>
     </div>
 </div>
 <style>
     .terminal-output-wrapper {
-        border: 1px solid var(--color-border);
+        border: var(--border-subtle);
         border-radius: var(--radius-md);
         margin: 1.5rem 0;
         background-color: var(--color-bg-secondary);
@@ -57,7 +68,7 @@ const { title } = Astro.props;
     .output-body :global(pre .copy) {
         display: none !important;
     }
-    
+
     .output-body :global(pre) {
         margin: 0 !important;
         padding: 0 !important;

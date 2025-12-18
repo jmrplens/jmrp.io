@@ -73,7 +73,11 @@ const posts = (await getCollection("posts"))
 
 <style>
     .content-wrapper {
-        max-width: 1200px;
+        .blog-container {
+            max-width: var(--max-width-container);
+            margin: 0 auto;
+            padding: 0 var(--space-md);
+        }
         margin: 0 auto;
         padding: 4rem 2rem;
         width: 100%;
@@ -115,7 +119,7 @@ const posts = (await getCollection("posts"))
 
     .post-card {
         background: var(--color-bg-card);
-        border: 1px solid var(--color-border);
+        border: var(--border-subtle);
         border-radius: 16px;
         transition: all 0.3s ease;
         height: 100%;

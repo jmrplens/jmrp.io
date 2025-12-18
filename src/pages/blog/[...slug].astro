@@ -15,7 +15,8 @@ import Callout from "../../components/Callout.astro";
 import CodeTabs from "../../components/CodeTabs.astro";
 import CodeTabItem from "../../components/CodeTabItem.astro";
 import YouTube from "../../components/YouTube.astro";
-import MobileTableOfContents from "../../components/MobileTableOfContents.astro";
+import TableOfContentsDrawer from "../../components/TableOfContentsDrawer.astro";
+import References from "../../components/References.astro";
 
 export async function getStaticPaths() {
     const posts = await getCollection("posts");
@@ -40,21 +41,26 @@ while ((match = linkRegex.exec(post.body)) !== null) {
 }
 
 // Also find raw <a> tags in the body, as MDX allows HTML
-const htmlLinkRegex = /<a\s+(?:[^>]*?\s+)?href="(https?:\/\/[^"]*)"[^>]*>([\s\S]*?)<\/a>/gi;
+const htmlLinkRegex =
+    /<a\s+(?:[^>]*?\s+)?href="(https?:\/\/[^"]*)"[^>]*>([\s\S]*?)<\/a>/gi;
 while ((match = htmlLinkRegex.exec(post.body)) !== null) {
     const url = match[1];
     // Sanitize inner HTML to get a readable text version
     const rawText = match[2];
-    const text = rawText.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+    const text = rawText
+        .replace(/<[^>]+>/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
     if (text) {
         collectedRefsFromMarkdown.push({ text, url });
     }
 }
 
 // Combine frontmatter references with collected ones and deduplicate
-const allPostReferences = [...(post.data.references || []), ...collectedRefsFromMarkdown];
+// Combine collected references and deduplicate
+const allPostReferences = [...collectedRefsFromMarkdown];
 const uniqueUrls = new Set<string>();
-const finalReferences = allPostReferences.filter(ref => {
+const finalReferences = allPostReferences.filter((ref) => {
     if (!uniqueUrls.has(ref.url)) {
         uniqueUrls.add(ref.url);
         return true;
@@ -116,7 +122,8 @@ const articleSchema = [
     modifiedDate={post.data.updatedDate}
     tags={post.data.tags}
     schema={articleSchema}
-    references={finalReferences}
+    tags={post.data.tags}
+    schema={articleSchema}
 >
     <article class="post-content">
         <header class="post-header">
@@ -171,18 +178,52 @@ const articleSchema = [
                         </nav>
                     )
                 }
+
+                <button
+                    class="desktop-toc-btn toc-trigger"
+                    aria-label="Open Table of Contents"
+                >
+                    <Icon name="mdi:format-list-bulleted" />
+                    <span>Contents</span>
+                </button>
             </aside>
 
             <div class="prose">
                 <Content
                     components={{ Callout, CodeTabs, CodeTabItem, YouTube }}
                 />
+                <References references={finalReferences} />
             </div>
         </div>
     </article>
 
-    <MobileTableOfContents headings={headings} />
+    <TableOfContentsDrawer headings={headings} />
 </BaseLayout>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const tocNav = document.querySelector(".toc");
+        if (!tocNav) return;
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                entries.forEach((entry) => {
+                    if (!entry.isIntersecting) {
+                        document.body.classList.add("desktop-toc-visible");
+                    } else {
+                        document.body.classList.remove("desktop-toc-visible");
+                    }
+                });
+            },
+            {
+                rootMargin: `-${getComputedStyle(document.documentElement).getPropertyValue("--header-height").trim()} 0px 0px 0px`,
+                threshold: 0,
+            },
+        );
+
+        observer.observe(tocNav);
+    });
+</script>
 
 <style>
     .post-header {
@@ -270,16 +311,71 @@ const articleSchema = [
 
     .layout-grid {
         display: grid;
-        grid-template-columns: minmax(0, 1fr);
-        gap: 2rem;
+        grid-template-columns: 240px minmax(0, 1fr);
+        gap: var(--space-xl);
+        max-width: var(--max-width-container);
+        margin: 0 auto;
+        padding: 0 var(--space-md);
         position: relative;
     }
 
+    .prose {
+        max-width: var(--max-width-prose);
+        margin: 0 auto; /* Center the prose content */
+        width: 100%;
+    }
+
     .toc-sidebar {
-        position: sticky;
+        /* position: sticky; <--- Removing sticky for the container */
         top: 2rem;
-        height: fit-content;
+        height: 100%; /* Fill height */
         display: none;
+    }
+
+    .desktop-toc-btn {
+        position: sticky;
+        top: calc(var(--header-height) + 0.5rem);
+        margin-top: 1rem;
+
+        display: none; /* Hidden by default */
+        align-items: center;
+        gap: 0.5rem;
+
+        background-color: var(--color-bg-secondary);
+        border: var(--border-subtle);
+        color: var(--color-text-muted);
+        padding: 0.75rem 1rem;
+        border-radius: var(--radius-md);
+        font-size: 0.9rem;
+        font-weight: 500;
+        cursor: pointer;
+        width: fit-content;
+        transition: all 0.2s;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        z-index: 10;
+    }
+
+    /* Only show the button when the body class is present (toggled by JS) */
+    :global(.desktop-toc-visible) .desktop-toc-btn {
+        display: flex;
+        animation: fadeIn 0.3s ease;
+    }
+
+    .desktop-toc-btn:hover {
+        background-color: var(--color-bg-hover);
+        color: var(--color-primary);
+        border-color: var(--color-primary);
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
 
     .toc ul {

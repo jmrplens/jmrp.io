@@ -22,6 +22,20 @@
   --radius-sm: 4px;
   --radius-md: 8px;
   --radius-lg: 16px;
+
+  /* Layout */
+  --header-height: 64px;
+  --max-width-container: 1200px;
+  --max-width-prose: 70ch;
+
+  /* Borders */
+  --border-subtle: 1px solid var(--color-border);
+
+  /* Z-Indices */
+  --z-fab: 900;
+  --z-header: 1000;
+  --z-backdrop: 1010;
+  --z-drawer: 1020;
 }
 
 *,
@@ -110,7 +124,7 @@ h1 {
 
 /* Utilities */
 .container {
-  max-width: 1200px;
+  max-width: var(--max-width-container);
   margin: 0 auto;
   padding: 0 var(--space-md);
 }
@@ -194,7 +208,7 @@ h1 {
   font-size: 0.85rem;
   border-radius: var(--radius-sm);
   font-weight: 500;
-  border: 1px solid var(--color-border);
+  border: var(--border-subtle);
   color: var(--color-text-muted);
   background: transparent;
   /* Force transparent for buttons */

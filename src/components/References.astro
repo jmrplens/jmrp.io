@@ -43,7 +43,12 @@ const { references = [] } = Astro.props;
                     // It now just checks if the icon exists in the public directory.
                     // A separate script should handle favicon generation at build time.
                     try {
-                        const publicDir = path.join(process.cwd(), "public", "assets", "favicons");
+                        const publicDir = path.join(
+                            process.cwd(),
+                            "public",
+                            "assets",
+                            "favicons",
+                        );
                         const publicFile = path.join(publicDir, filename);
                         if (fs.existsSync(publicFile)) {
                             hasIcon = true;
@@ -53,7 +58,12 @@ const { references = [] } = Astro.props;
                     }
 
                     return (
-                        <a href={ref.url} target="_blank" rel="noopener noreferrer" class="reference-card">
+                        <a
+                            href={ref.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="reference-card"
+                        >
                             <div class="card-icon">
                                 {hasIcon ? (
                                     <img
@@ -66,7 +76,9 @@ const { references = [] } = Astro.props;
                                         onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden');"
                                     />
                                 ) : null}
-                                <div class={`fallback-icon ${hasIcon ? "hidden" : ""}`}>
+                                <div
+                                    class={`fallback-icon ${hasIcon ? "hidden" : ""}`}
+                                >
                                     <Icon name="mdi:web" />
                                 </div>
                             </div>
@@ -118,7 +130,7 @@ const { references = [] } = Astro.props;
         gap: 1rem;
         padding: 1rem;
         background: var(--color-subtle-bg, rgba(125, 125, 125, 0.05));
-        border: 1px solid var(--color-border);
+        border: var(--border-subtle);
         border-radius: 12px;
         text-decoration: none;
         color: var(--color-text-body);

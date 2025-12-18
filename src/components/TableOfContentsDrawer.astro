@@ -1,8 +1,8 @@
 ---
 /**
- * MobileTableOfContents.astro
- * A floating action button that opens a bottom sheet with the Table of Contents.
- * Only visible on mobile devices.
+ * TableOfContentsDrawer.astro
+ * A drawer component that shows the Table of Contents.
+ * Acts as a bottom sheet on mobile and side drawer on desktop.
  */
 import { Icon } from "astro-icon/components";
 
@@ -22,7 +22,7 @@ const { headings } = Astro.props;
         <>
             <button
                 id="toc-toggle-btn"
-                class="toc-fab"
+                class="toc-fab toc-trigger mobile-only"
                 aria-label="Table of Contents"
                 aria-haspopup="true"
                 aria-expanded="false"
@@ -59,31 +59,34 @@ const { headings } = Astro.props;
 
 <script>
     function setupMobileTOC() {
-        const btn = document.getElementById("toc-toggle-btn");
+        const btns = document.querySelectorAll(".toc-trigger"); // Changed from single ID to class
         const drawer = document.getElementById("toc-drawer");
         const closeBtn = document.getElementById("toc-close-btn");
         const backdrop = document.getElementById("toc-backdrop");
         const links = drawer?.querySelectorAll("a");
 
-        if (!btn || !drawer || !backdrop) return;
+        if (!btns.length || !drawer || !backdrop) return;
 
         const openTOC = () => {
             drawer.classList.add("open");
             backdrop.classList.add("open");
-            btn.setAttribute("aria-expanded", "true");
+            btns.forEach((btn) => btn.setAttribute("aria-expanded", "true"));
             drawer.setAttribute("aria-hidden", "false");
-            document.body.style.overflow = "hidden"; // Lock scroll
+            // Lock scroll only on mobile to prevent breaking sticky header on desktop
+            if (window.innerWidth < 1024) {
+                document.body.style.overflow = "hidden";
+            }
         };
 
         const closeTOC = () => {
             drawer.classList.remove("open");
             backdrop.classList.remove("open");
-            btn.setAttribute("aria-expanded", "false");
+            btns.forEach((btn) => btn.setAttribute("aria-expanded", "false"));
             drawer.setAttribute("aria-hidden", "true");
             document.body.style.overflow = ""; // Unlock scroll
         };
 
-        btn.addEventListener("click", openTOC);
+        btns.forEach((btn) => btn.addEventListener("click", openTOC));
         closeBtn?.addEventListener("click", closeTOC);
         backdrop.addEventListener("click", closeTOC);
 
@@ -122,7 +125,7 @@ const { headings } = Astro.props;
         align-items: center;
         justify-content: center;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-        z-index: 900; /* Below Header (1000) but above content */
+        z-index: var(--z-fab); /* Below Header but above content */
         cursor: pointer;
         transition:
             transform 0.2s,
@@ -148,7 +151,7 @@ const { headings } = Astro.props;
         background-color: var(--color-bg-secondary);
         border-top-left-radius: var(--radius-lg);
         border-top-right-radius: var(--radius-lg);
-        z-index: 1001; /* Above Header if needed, or equal? Header is 1000. Let's cover header if bottom sheet is tall */
+        z-index: var(--z-drawer); /* Above Header */
         transform: translateY(100%);
         /* Hide visibility after transform finishes */
         visibility: hidden;
@@ -247,7 +250,7 @@ const { headings } = Astro.props;
         width: 100vw;
         height: 100vh;
         background-color: rgba(0, 0, 0, 0.5);
-        z-index: 999; /* Below Drawer (1001) but above everything else */
+        z-index: var(--z-backdrop); /* Above Header to ensure blur covers it */
         opacity: 0;
         visibility: hidden;
         transition: opacity 0.3s;
@@ -261,10 +264,61 @@ const { headings } = Astro.props;
 
     /* Desktop Hide */
     @media (min-width: 1024px) {
-        .toc-fab,
-        .toc-drawer,
-        .toc-backdrop {
+        .toc-fab.mobile-only {
             display: none !important;
+        }
+
+        .toc-drawer {
+            display: none;
+        }
+
+        .toc-backdrop {
+            display: none;
+        }
+
+        /* Allow showing via class even on desktop */
+        :global(.desktop-toc-visible) .toc-fab {
+            display: flex;
+        }
+
+        /* When open on desktop, show these */
+        :global(.desktop-toc-visible) .toc-drawer.open,
+        :global(.desktop-toc-visible) .toc-backdrop.open {
+            display: flex; /* or block/flex as appropriate */
+        }
+
+        :global(.desktop-toc-visible) .toc-drawer {
+            display: flex;
+            /* Desktop specific positioning */
+            top: 0;
+            left: 0;
+            bottom: auto;
+            height: 100vh;
+            max-height: none; /* Override mobile max-height */
+            border-radius: 0;
+            border-top-left-radius: 0;
+            border-top-right-radius: 0;
+
+            /* Layering: Above Header */
+            z-index: var(--z-drawer);
+
+            /* Width logic */
+            width: fit-content;
+            min-width: 300px;
+            max-width: 400px;
+
+            /* Animation override */
+            transform: translateX(-100%);
+            border-right: var(--border-subtle);
+        }
+
+        :global(.desktop-toc-visible) .toc-drawer.open {
+            transform: translateX(0);
+        }
+
+        :global(.desktop-toc-visible) .toc-backdrop {
+            display: block;
+            z-index: var(--z-backdrop); /* Above Header */
         }
     }
 </style>
