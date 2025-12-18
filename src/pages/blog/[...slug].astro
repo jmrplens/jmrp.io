@@ -321,8 +321,10 @@ const articleSchema = [
 
     .prose {
         max-width: var(--max-width-prose);
-        margin: 0 auto; /* Center the prose content */
+        margin: 0 auto;
         width: 100%;
+        min-width: 0; /* Allow shrinking below content size in Grid */
+        overflow-wrap: break-word; /* Ensure text wraps */
     }
 
     .toc-sidebar {
