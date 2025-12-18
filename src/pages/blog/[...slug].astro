@@ -30,6 +30,39 @@ type Props = CollectionEntry<"posts">;
 const post = Astro.props;
 const { Content, headings } = await post.render();
 
+// --- Reference Collection Logic ---
+// Regex to find all markdown links: [text](url)
+const linkRegex = /\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/g;
+const collectedRefsFromMarkdown = [];
+let match;
+while ((match = linkRegex.exec(post.body)) !== null) {
+    collectedRefsFromMarkdown.push({ text: match[1], url: match[2] });
+}
+
+// Also find raw <a> tags in the body, as MDX allows HTML
+const htmlLinkRegex = /<a\s+(?:[^>]*?\s+)?href="(https?:\/\/[^"]*)"[^>]*>([\s\S]*?)<\/a>/gi;
+while ((match = htmlLinkRegex.exec(post.body)) !== null) {
+    const url = match[1];
+    // Sanitize inner HTML to get a readable text version
+    const rawText = match[2];
+    const text = rawText.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+    if (text) {
+        collectedRefsFromMarkdown.push({ text, url });
+    }
+}
+
+// Combine frontmatter references with collected ones and deduplicate
+const allPostReferences = [...(post.data.references || []), ...collectedRefsFromMarkdown];
+const uniqueUrls = new Set<string>();
+const finalReferences = allPostReferences.filter(ref => {
+    if (!uniqueUrls.has(ref.url)) {
+        uniqueUrls.add(ref.url);
+        return true;
+    }
+    return false;
+});
+// --- End of Reference Logic ---
+
 const articleSchema = [
     {
         "@type": "BlogPosting",
@@ -83,6 +116,7 @@ const articleSchema = [
     modifiedDate={post.data.updatedDate}
     tags={post.data.tags}
     schema={articleSchema}
+    references={finalReferences}
 >
     <article class="post-content">
         <header class="post-header">

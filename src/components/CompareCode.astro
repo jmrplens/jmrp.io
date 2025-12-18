@@ -1,0 +1,98 @@
+---
+import { Icon } from "astro-icon/components";
+
+interface Props {
+  badTitle?: string;
+  goodTitle?: string;
+}
+
+const { badTitle = "Blocked / Insecure", goodTitle = "Allowed / Secure" } = Astro.props;
+---
+
+<div class="compare-code-wrapper">
+  <div class="compare-block bad">
+    <div class="header">
+      <Icon name="mdi:close-circle-outline" class="icon" />
+      <span>{badTitle}</span>
+    </div>
+    <div class="content">
+      <slot name="bad" />
+    </div>
+  </div>
+  <div class="compare-block good">
+    <div class="header">
+      <Icon name="mdi:check-circle-outline" class="icon" />
+      <span>{goodTitle}</span>
+    </div>
+    <div class="content">
+      <slot name="good" />
+    </div>
+  </div>
+</div>
+
+<style>
+  .compare-code-wrapper {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    margin: 2rem 0;
+  }
+
+  @media (min-width: 768px) {
+    .compare-code-wrapper {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  .compare-block {
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    border: 1px solid var(--color-border);
+  }
+
+  .compare-block.bad {
+    border-color: var(--color-danger);
+    background-color: rgba(var(--color-danger-rgb), 0.05);
+  }
+
+  .compare-block.good {
+    border-color: var(--color-success);
+    background-color: rgba(var(--color-success-rgb), 0.05);
+  }
+
+  .header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    font-weight: bold;
+    font-size: 0.9rem;
+    border-bottom: 1px solid inherit;
+  }
+
+  .bad .header {
+    background-color: var(--color-danger);
+    color: white;
+  }
+
+  .good .header {
+    background-color: var(--color-success);
+    color: white;
+  }
+
+  .icon {
+    font-size: 1.25rem;
+  }
+
+  .content {
+    padding: 1rem;
+    font-size: 0.9rem;
+  }
+
+  /* Adjust internal code blocks to fit better */
+  .content :global(pre) {
+    margin: 0 !important;
+    border: none !important;
+    background: transparent !important;
+  }
+</style>

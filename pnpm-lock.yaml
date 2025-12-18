@@ -87,6 +87,9 @@ importers:
         specifier: ^2.17.0
         version: 2.17.0
     devDependencies:
+      '@iconify-json/devicon':
+        specifier: ^1.2.53
+        version: 1.2.53
       '@types/js-yaml':
         specifier: ^4.0.9
         version: 4.0.9
@@ -513,6 +516,9 @@ packages:
 
   '@iconify-json/carbon@1.2.15':
     resolution: {integrity: sha512-9tW0nZY5QtKkMhuYzW09BM1345SyXNuA+gx2ub0j/fnfHOD5XVimMJ/D76H3tTez25NJbPYCLIQoFhvJc1HVBQ==}
+
+  '@iconify-json/devicon@1.2.53':
+    resolution: {integrity: sha512-uMBNP2Xmyre5w0XmQ3Sye64d6NokSiee+zb51AMqREjnUfM0s47bA+PO9Sy4M2GBjs6NIovi0rJQucWMpylMcQ==}
 
   '@iconify-json/fa-brands@1.2.2':
     resolution: {integrity: sha512-Aze0j7l95gmOLdeC4L+8MvvpN3+QmAVk9IuTJN170zYH5I7jS0jGSIMFsf0KE8vGbG8jPpXkmmDq7qQU8Rymnw==}
@@ -3610,6 +3616,10 @@ snapshots:
   '@fortawesome/fontawesome-free@6.7.2': {}
 
   '@iconify-json/carbon@1.2.15':
+    dependencies:
+      '@iconify/types': 2.0.0
+
+  '@iconify-json/devicon@1.2.53':
     dependencies:
       '@iconify/types': 2.0.0
 
