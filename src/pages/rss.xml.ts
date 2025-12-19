@@ -36,8 +36,7 @@ export async function GET(context: APIContext) {
       // Patterns are anchored (^$) and bounded by newline, safe from ReDoS
       const cleanBody = postBody
         .replaceAll(/^import\s+[^\n]*$/gm, '')
-        // NOSONAR: typescript:S5852 - False positive, pattern is anchored and bounded by \n
-        .replaceAll(/^export\s+[^\n]*$/gm, '');
+        .replaceAll(/^export\s+[^\n]*$/gm, ''); // NOSONAR typescript:S5852
 
       const html = await marked.parse(cleanBody);
       const sanitizedHtml = sanitizeHtml(html, {

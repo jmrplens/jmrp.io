@@ -9,8 +9,7 @@ const TARGET_DIR = path.join(DIST_DIR, ASSETS_DIR);
 
 // Regex to capture url("data:...") or url('data:...') or url(data:...)
 // Pattern is bounded by ) which prevents catastrophic backtracking
-// NOSONAR: javascript:S5852 - False positive, [^)]* is safe as ) is unambiguous end delimiter
-const DATA_URI_REGEX = /url\(\s*(['"]?)data:([^;,]+)(;base64)?\s*,\s*([^)]*)\1\s*\)/gi;
+const DATA_URI_REGEX = /url\(\s*(['"]?)data:([^;,]+)(;base64)?\s*,\s*([^)]*)\1\s*\)/gi; // NOSONAR javascript:S5852
 
 async function extractDataUris() {
     console.log('Starting Data URI extraction...');

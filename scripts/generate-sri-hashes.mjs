@@ -91,14 +91,12 @@ async function main() {
 
         // Process <script src="...">
         // Pattern is bounded by > which prevents catastrophic backtracking
-        // NOSONAR: javascript:S5852 - False positive, [^>]* is safe as > is unambiguous delimiter
-        const scriptRegex = /<script\s+([^>]*src=["']([^"']+)["'][^>]*)>/gi;
+        const scriptRegex = /<script\s+([^>]*src=["']([^"']+)["'][^>]*)>/gi; // NOSONAR javascript:S5852
         processTags(scriptRegex, 'script');
 
         // Process <link rel="stylesheet" href="...">
-        // Pattern is bounded by > which prevents catastrophic backtracking  
-        // NOSONAR: javascript:S5852 - False positive, [^>]* is safe as > is unambiguous delimiter
-        const styleRegex = /<link\s+([^>]*href=["']([^"']+)["'][^>]*)>/gi;
+        // Pattern is bounded by > which prevents catastrophic backtracking
+        const styleRegex = /<link\s+([^>]*href=["']([^"']+)["'][^>]*)>/gi; // NOSONAR javascript:S5852
         processTags(styleRegex, 'link', (attrs) => attrs.includes('rel="stylesheet"') || attrs.includes("rel='stylesheet'"));
 
         if (modified) {

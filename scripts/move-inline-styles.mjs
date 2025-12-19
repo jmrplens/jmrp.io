@@ -26,8 +26,7 @@ async function moveInlineStyles() {
         // 5. (.*?)           : Match style content (group 4) - lazy needed here to stop at quote
         // 6. \3              : Match closing quote (backreference)
         // 7. ([^>]*)(>)      : Match post-attributes and closing bracket (group 5, 6) - greedy safe
-        // NOSONAR: javascript:S5852 - False positive, [^>]* bounded by > is safe from ReDoS
-        const TAG_REGEX = /(<[\w-]+)([^>]*)\s+style=(["'])(.*?)\3([^>]*)(>)/gi;
+        const TAG_REGEX = /(<[\w-]+)([^>]*)\s+style=(["'])(.*?)\3([^>]*)(>)/gi; // NOSONAR javascript:S5852
 
         content = content.replaceAll(TAG_REGEX, (match, tagStart, preAttrs, quote, styleContent, postAttrs, tagEnd) => {
             // Normalize attributes to strings (undefined guard)
