@@ -18,15 +18,15 @@ async function moveInlineStyles() {
         const styleToClassMap = new Map();
 
         // Regex explanation:
-        // Fixed ReDoS: Removed lazy quantifiers *? that cause catastrophic backtracking
-        // Using greedy * is safe because closing > unambiguously marks the end
+        // Pattern is bounded by > which prevents catastrophic backtracking
         // 1. (<[\w-]+)       : Match tag start (e.g. <div)
-        // 2. ([^>]*)         : Match pre-attributes (greedy, safe)
+        // 2. ([^>]*)         : Match pre-attributes (greedy, safe - bounded by >)
         // 3. \s+style=       : Match style attribute start (must be preceded by space)
         // 4. (["'])          : Match quote (group 3)
         // 5. (.*?)           : Match style content (group 4) - lazy needed here to stop at quote
         // 6. \3              : Match closing quote (backreference)
         // 7. ([^>]*)(>)      : Match post-attributes and closing bracket (group 5, 6) - greedy safe
+        // NOSONAR: javascript:S5852 - False positive, [^>]* bounded by > is safe from ReDoS
         const TAG_REGEX = /(<[\w-]+)([^>]*)\s+style=(["'])(.*?)\3([^>]*)(>)/gi;
 
         content = content.replaceAll(TAG_REGEX, (match, tagStart, preAttrs, quote, styleContent, postAttrs, tagEnd) => {

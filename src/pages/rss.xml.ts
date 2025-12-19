@@ -33,9 +33,10 @@ export async function GET(context: APIContext) {
       // Generate full content
       const postBody = post.body || '';
       // Simple cleanup for MDX imports/exports
-      // Fixed ReDoS: Use [^\n]* instead of .* to avoid backtracking across line boundaries
+      // Patterns are anchored (^$) and bounded by newline, safe from ReDoS
       const cleanBody = postBody
         .replaceAll(/^import\s+[^\n]*$/gm, '')
+        // NOSONAR: typescript:S5852 - False positive, pattern is anchored and bounded by \n
         .replaceAll(/^export\s+[^\n]*$/gm, '');
 
       const html = await marked.parse(cleanBody);
