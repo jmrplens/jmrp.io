@@ -3,7 +3,7 @@
  * A component to display a shell command in a simulated terminal window,
  * with a button to copy the command.
  */
-import { Icon } from "astro-icon/components";
+import CopyButton from "./CopyButton.astro";
 
 interface Props {
     command: string;
@@ -13,48 +13,27 @@ interface Props {
 const { command, prompt = "$" } = Astro.props;
 ---
 
-<div class="terminal-command-wrapper">
+<div class="terminal-command-wrapper copy-container">
     <div class="command-container">
         <span class="prompt" aria-hidden="true">{prompt}</span>
         <pre><code class="language-bash" aria-label={`Command: ${command}`}>{command}</code></pre>
     </div>
-    <button class="copy-button" aria-label="Copy command to clipboard">
-        <Icon name="mdi:clipboard-outline" class="copy-icon" />
-    </button>
+    <CopyButton />
 </div>
-
-<script>
-    document
-        .querySelectorAll(".terminal-command-wrapper")
-        .forEach((wrapper) => {
-            const copyButton = wrapper.querySelector(".copy-button");
-            const command = wrapper.querySelector("code")?.textContent || "";
-
-            if (!copyButton || !command) return;
-
-            copyButton.addEventListener("click", () => {
-                navigator.clipboard.writeText(command).then(
-                    () => {
-                        // Success! No visual feedback needed per user request.
-                    },
-                    (err) => {
-                        console.error("Failed to copy command: ", err);
-                        copyButton.setAttribute("title", "Failed to copy!");
-                    },
-                );
-            });
-        });
-</script>
 
 <style>
     .terminal-command-wrapper {
         position: relative;
         background-color: var(--color-bg-secondary);
         border-radius: var(--radius-md);
-        padding: 1rem;
+        padding: 0.75rem 1rem;
         margin: 1.5rem 0;
         border: var(--border-subtle);
-        overflow: hidden; /* Ensures button stays within border-radius */
+        overflow: hidden;
+        display: flex; /* Flex layout */
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
     }
 
     .command-container {
@@ -63,6 +42,18 @@ const { command, prompt = "$" } = Astro.props;
         overflow-x: auto;
         -ms-overflow-style: none; /* IE and Edge */
         scrollbar-width: none; /* Firefox */
+        flex-grow: 1; /* Take available space */
+        min-width: 0; /* Enable shrinking/scrolling */
+        padding-right: 0.5rem;
+    }
+
+    /* Override copy button for flex integration */
+    :global(.terminal-command-wrapper .copy-button) {
+        position: static !important; /* Make it part of the flow */
+        background-color: var(--color-bg-subtle) !important;
+        border: 1px solid var(--color-border) !important;
+        flex-shrink: 0; /* Prevent button shrinking */
+        margin: 0; /* Remove margins */
     }
     /* Hide scrollbar for Chrome, Safari and Opera */
     .command-container::-webkit-scrollbar {
@@ -84,44 +75,5 @@ const { command, prompt = "$" } = Astro.props;
         border: none;
         flex-grow: 1;
         overflow: visible;
-    }
-
-    .copy-button {
-        position: absolute;
-        top: 0.5rem;
-        right: 0.5rem;
-        background-color: var(--color-bg-subtle);
-        border: var(--border-subtle);
-        border-radius: var(--radius-sm);
-        padding: 0.3rem 0.5rem;
-        cursor: pointer;
-        opacity: 0.6;
-        transition: all 0.2s ease;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .terminal-command-wrapper:hover .copy-button {
-        opacity: 1;
-    }
-
-    .copy-button:hover {
-        background-color: var(--color-bg-secondary);
-    }
-    .copy-button:active {
-        transform: scale(0.95);
-    }
-
-    .copy-icon,
-    .success-icon {
-        font-size: 1rem;
-        color: var(--color-text-muted);
-    }
-    .success-icon {
-        color: var(--color-success);
-    }
-    .hidden {
-        display: none;
     }
 </style>
