@@ -1,0 +1,248 @@
+---
+/**
+ * Header component.
+ * Contains the logo, navigation menu, and theme toggle.
+ * Responsive design with a hamburger menu for mobile.
+ */
+import ThemeToggle from "./ThemeToggle.astro";
+import { Icon } from "astro-icon/components";
+import fs from "fs";
+import path from "path";
+import yaml from "js-yaml";
+
+const sitePath = path.join(process.cwd(), "src/data/site.yml");
+const siteRaw = fs.readFileSync(sitePath, "utf8");
+const siteData = yaml.load(siteRaw) as any;
+
+const navItems = siteData.nav || [];
+const logoText = siteData.logo_text || "<JMRP />";
+---
+
+<header>
+    <nav class="container">
+        <a href="/" class="logo">
+            <span class="text-mono">{logoText}</span>
+        </a>
+        <div class="nav-right">
+            <button
+                id="menu-toggle"
+                aria-label="Toggle Navigation"
+                aria-expanded="false"
+                class="menu-toggle"
+            >
+                <span class="icon-container">
+                    <Icon name="fa-solid:bars" class="icon-bars" />
+                    <Icon name="fa-solid:times" class="icon-times" />
+                </span>
+            </button>
+            <ul id="nav-links" class="nav-links">
+                {
+                    navItems.map((item: any) => (
+                        <li>
+                            <a href={item.href}>{item.label}</a>
+                        </li>
+                    ))
+                }
+            </ul>
+            <ThemeToggle />
+        </div>
+    </nav>
+</header>
+
+<script src="../scripts/header.js"></script>
+
+<style>
+    header {
+        background-color: var(--color-bg-secondary);
+        border-bottom: 1px solid var(--color-border);
+        padding: var(--space-md) 0;
+        position: sticky;
+        top: 0;
+        z-index: var(--z-header);
+        height: var(--header-height); /* Fix height to prevent CLS */
+        display: flex;
+        align-items: center;
+    }
+
+    nav {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap; /* Allow wrapping for mobile menu */
+        width: 100%; /* Force full width for space-between */
+    }
+
+    .logo {
+        font-weight: 800;
+        font-size: 1.25rem;
+        color: var(--color-primary);
+        text-decoration: none;
+        padding: 0.5rem;
+        z-index: calc(var(--z-header) + 1); /* Stay above mobile menu */
+    }
+
+    .nav-right {
+        display: flex;
+        align-items: center;
+        gap: var(--space-md);
+    }
+
+    /* Default Mobile-First Approach or explicitly Desktop-First? 
+       The current CSS is Desktop-First (styles are default, then overridden by max-width).
+    */
+
+    /* Desktop Styles (Default) */
+    .menu-toggle {
+        display: none; /* Hidden by default */
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        color: var(--color-text);
+        cursor: pointer;
+        padding: 0.5rem;
+    }
+
+    .icon-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* Icon toggling logic */
+    .icon-times {
+        display: none;
+    }
+
+    .menu-toggle[aria-expanded="true"] .icon-bars {
+        display: none;
+    }
+
+    .menu-toggle[aria-expanded="true"] .icon-times {
+        display: block;
+    }
+
+    .nav-links {
+        display: flex;
+        gap: var(--space-sm);
+        list-style: none;
+        margin: 0;
+        padding: 0;
+    }
+
+    .nav-links a {
+        color: var(--color-text);
+        font-weight: 600;
+        text-decoration: none;
+        padding: 0.5rem 0.75rem;
+        border-radius: var(--radius-sm);
+        transition:
+            background-color 0.2s,
+            color 0.2s;
+        display: block; /* Make block for better mobile hit area */
+    }
+
+    .nav-links a:hover,
+    .nav-links a:focus {
+        color: var(--color-primary);
+        background-color: rgba(179, 137, 245, 0.1);
+    }
+
+    /* Mobile Styles */
+    @media (max-width: 768px) {
+        .menu-toggle {
+            display: block; /* Visible on mobile */
+            z-index: calc(var(--z-header) + 2); /* Ensure above overlay */
+            position: relative;
+        }
+
+        .nav-links {
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start; /* Align items to top */
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 300px; /* Fixed width side drawer */
+            max-width: 80vw; /* Responsive constraint */
+            height: 100vh;
+            background-color: var(--color-bg-secondary);
+            border-left: 1px solid var(--color-border);
+            padding: 5rem 2rem 2rem 2rem; /* Top padding for close button/logo area */
+            gap: 1.5rem;
+            z-index: calc(var(--z-header) + 1); /* Above backdrop */
+            box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
+
+            /* Hidden State */
+            transform: translateX(100%);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            visibility: hidden;
+        }
+
+        /* Open state */
+        .nav-links.open {
+            transform: translateX(0);
+            visibility: visible;
+        }
+
+        .nav-links li {
+            width: 100%;
+            text-align: left;
+        }
+
+        .nav-links a {
+            font-size: 1.1rem;
+            padding: 1rem 1.25rem;
+            display: flex; /* Use flex for potential icons or alignment */
+            justify-content: space-between;
+            align-items: center;
+            border-radius: var(--radius-md);
+            background-color: rgba(255, 255, 255, 0.03); /* Subtle card bg */
+            border: var(--border-subtle);
+            color: var(--color-text);
+            transition: all 0.2s ease;
+        }
+
+        .nav-links a:hover,
+        .nav-links a:focus {
+            background-color: rgba(
+                179,
+                137,
+                245,
+                0.1
+            ); /* Primary color low opacity */
+            border-color: var(--color-primary);
+            color: var(--color-primary);
+            transform: translateX(5px); /* Subtle slide effect */
+        }
+
+        /* Optional: Add a pseudo-element for an arrow if desired, currently plain text */
+    }
+
+    /* Backdrop Overlay */
+    :global(.menu-backdrop) {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 990; /* Below Header (1000) */
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease;
+        backdrop-filter: blur(2px);
+    }
+
+    :global(.menu-backdrop.open) {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    /* Prevent scrolling when menu is open */
+    :global(body.menu-open),
+    :global(html:has(body.menu-open)) {
+        overflow: hidden;
+        height: 100vh; /* Lock height to viewport */
+        touch-action: none; /* Prevent touch scrolling */
+    }
+</style>

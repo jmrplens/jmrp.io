@@ -1,0 +1,110 @@
+---
+/**
+ * A component to display file content, with the filename in a tab-like header.
+ * Uses a <slot> for the content, which should be a code block.
+ */
+import { Icon } from "astro-icon/components";
+import CopyButton from "./CopyButton.astro";
+
+interface Props {
+    filename: string;
+    icon?: string; // e.g., 'mdi:file-document-outline'
+}
+
+const { filename, icon } = Astro.props;
+
+// Infer icon from filename
+const getIconForFile = (name: string) => {
+    if (name.includes("nginx")) return "devicon:nginx";
+    if (name.includes(".conf")) return "mdi:file-cog-outline";
+    if (name.endsWith(".txt")) return "mdi:file-document-outline";
+    if (name.endsWith(".json")) return "mdi:code-json";
+    if (name.endsWith(".yml") || name.endsWith(".yaml"))
+        return "mdi:file-settings-outline";
+    if (name.endsWith(".xml")) return "mdi:file-xml-box";
+    return "mdi:file-outline";
+};
+
+const finalIcon = icon || getIconForFile(filename);
+---
+
+<div
+    class="file-content-wrapper copy-container"
+    role="group"
+    aria-label={`Content of file: ${filename}`}
+>
+    <div class="file-header">
+        <div class="file-info">
+            <Icon name={finalIcon} class="file-icon" />
+            <span class="file-name">{filename}</span>
+        </div>
+        <!-- Copy Button integrated into header -->
+        <CopyButton class="file-header-copy-btn" />
+    </div>
+    <div class="file-body">
+        <slot />
+    </div>
+</div>
+
+<style>
+    .file-content-wrapper {
+        border: var(--border-subtle);
+        border-radius: var(--radius-md);
+        margin: 1.5rem 0;
+        overflow: hidden; /* Keep children within rounded corners */
+        background-color: var(--color-bg-secondary);
+    }
+
+    .file-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between; /* Push copy button to the right */
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        background-color: var(--color-bg-subtle);
+        border-bottom: 1px solid var(--color-border);
+        font-family: var(--font-mono);
+        font-size: 0.85rem;
+        color: var(--color-text-muted);
+        min-height: 48px; /* Ensure good alignment height */
+    }
+
+    .file-info {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .file-icon {
+        font-size: 1.3rem;
+    }
+    .file-name {
+        font-weight: 500;
+    }
+
+    /* Style the <pre> element that comes from the slot */
+    .file-body :global(pre) {
+        margin: 0 !important;
+        border-radius: 0 0 var(--radius-md) var(--radius-md) !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
+
+    /* Hide the default expressive-code copy button inside FileContent to avoid duplicates */
+    .file-body :global(.expressive-code .copy) {
+        display: none !important;
+    }
+
+    /* Override copy button positioning for header integration */
+    :global(.file-header-copy-btn) {
+        position: static !important;
+        background-color: transparent !important;
+        border: 1px solid var(--color-border) !important;
+        opacity: 0.7;
+    }
+    :global(.file-header-copy-btn:hover) {
+        opacity: 1;
+        background-color: var(--color-bg-secondary) !important;
+        border-color: var(--color-text-muted) !important;
+    }
+</style>

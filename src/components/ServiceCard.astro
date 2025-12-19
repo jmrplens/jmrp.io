@@ -1,0 +1,108 @@
+---
+import { Icon } from "astro-icon/components";
+
+/**
+ * ServiceCard component.
+ * Displays a card for a service or skill area, with optional slots for extra content.
+ */
+interface Props {
+    title: string;
+    icon: string;
+    description: string;
+    link?: string;
+    linkText?: string;
+    id?: string;
+}
+
+const { title, icon, description, link, linkText, id } = Astro.props;
+---
+
+<div class="service-card" id={id}>
+    <div class="service-header">
+        <Icon name={icon} class="service-icon" />
+        <h3>{title}</h3>
+    </div>
+    <p class="service-description">
+        {description}
+    </p>
+
+    {/* Extra content slot (e.g., Matrix User Info) */}
+    <slot name="extra" />
+
+    {/* Main Content / Stats Slot */}
+    <div class="stats-wrapper">
+        <slot />
+    </div>
+
+    {
+        link && linkText && (
+            <a
+                href={link}
+                target="_blank"
+                class="btn btn-primary btn-sm service-link"
+            >
+                {linkText}
+            </a>
+        )
+    }
+</div>
+
+<style>
+    .service-card {
+        background-color: var(--color-bg-secondary);
+        border: var(--border-subtle);
+        border-radius: var(--radius-md);
+        padding: var(--space-lg);
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        transition: transform 0.2s;
+        height: 100%; /* Ensure cards match height in grid */
+    }
+
+    .service-card:hover {
+        transform: translateY(-2px);
+        border-color: var(--color-primary);
+    }
+
+    /* Prevent overflow issues */
+    .service-card * {
+        max-width: 100%;
+        overflow-wrap: break-word; /* legacy */
+        overflow-wrap: anywhere;
+    }
+
+    .service-header {
+        display: flex;
+        align-items: center;
+        gap: var(--space-md);
+        margin-bottom: var(--space-md);
+    }
+
+    .service-icon {
+        font-size: 2rem;
+        color: var(--color-primary);
+    }
+
+    .service-header h3 {
+        margin: 0;
+        font-size: 1.4rem;
+    }
+
+    .service-description {
+        color: var(--color-text-muted);
+        margin-bottom: var(--space-md);
+        line-height: 1.5;
+        flex-grow: 0;
+    }
+
+    .stats-wrapper {
+        width: 100%; /* Important for stats container */
+        margin-bottom: var(--space-md);
+        flex-grow: 1; /* Pushes button to bottom if content is short? No, actions do that. */
+    }
+
+    .service-link {
+        margin-top: auto; /* Pushes button to bottom */
+    }
+</style>

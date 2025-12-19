@@ -1,0 +1,309 @@
+:root {
+  /* Color Palette - Default (Dark) */
+  --color-bg: #000000;
+  --color-bg-secondary: #0d1117;
+  --color-bg-subtle: rgba(255, 255, 255, 0.05);
+  --color-text: #c9d1d9;
+  --color-text-muted: #8b949e;
+  --color-primary: #B389F5;
+  --color-primary-hover: #c49af5;
+  --color-accent: #B389F5;
+  --color-border: #30363d;
+
+  /* Typography */
+  --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  /* Spacing & Radius */
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 2rem;
+  --space-xl: 4rem;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 16px;
+
+  /* Layout */
+  --header-height: 64px;
+  --max-width-container: 1200px;
+  --max-width-prose: 70ch;
+
+  /* Borders */
+  --border-subtle: 1px solid var(--color-border);
+
+  /* Z-Indices */
+  --z-fab: 900;
+  --z-header: 1000;
+  --z-backdrop: 1010;
+  --z-drawer: 1020;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --color-bg: #ffffff;
+    --color-bg-secondary: #f6f8fa;
+    --color-bg-subtle: rgba(0, 0, 0, 0.05);
+    --color-text: #24292f;
+    --color-text-muted: #57606a;
+    --color-primary: #b509ac;
+    /* Light mode highlight */
+    --color-primary-hover: #d11cd1;
+    --color-accent: #b509ac;
+    --color-border: #d0d7de;
+  }
+}
+
+:root[data-theme="light"] {
+  --color-bg: #ffffff;
+  --color-bg-secondary: #f6f8fa;
+  --color-bg-subtle: rgba(0, 0, 0, 0.05);
+  --color-text: #24292f;
+  --color-text-muted: #57606a;
+  --color-primary: #b509ac;
+  /* Light mode highlight */
+  --color-primary-hover: #d11cd1;
+  --color-accent: #b509ac;
+  --color-border: #d0d7de;
+}
+
+:root[data-theme="dark"] {
+  /* Ensure these values match the default dark values at the top */
+  --color-bg: #000000;
+  --color-bg-secondary: #0d1117;
+  --color-bg-subtle: rgba(255, 255, 255, 0.05);
+  --color-text: #c9d1d9;
+  --color-text-muted: #8b949e;
+  --color-primary: #B389F5;
+  --color-primary-hover: #c49af5;
+  --color-accent: #B389F5;
+  --color-border: #30363d;
+}
+
+html {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: 100%;
+  /* Ensure standard 16px */
+  line-height: 1.6;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  /* Prevent horizontal scroll globally */
+  width: 100%;
+  overflow-x: hidden;
+  overflow-wrap: break-word;
+  /* Prevent long words from breaking layout */
+}
+
+img,
+video,
+iframe,
+svg {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+pre {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+a {
+  color: var(--color-accent);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Global Styles */
+h1 {
+  font-size: 1.75em;
+  /* Slightly smaller than 2em for better hierarchy */
+}
+
+/* Utilities */
+.container {
+  max-width: var(--max-width-container);
+  margin: 0 auto;
+  padding: 0 var(--space-md);
+}
+
+.text-mono {
+  font-family: var(--font-mono);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Mobile Optimizations - Reinforced */
+@media (max-width: 900px) {
+  :root {
+    /* Tighter spacing for mobile */
+    --space-md: 0.75rem !important;
+    --space-lg: 1.25rem !important;
+    --space-xl: 2.5rem !important;
+  }
+
+  html {
+    /* Scale down base font size */
+    font-size: 90% !important;
+  }
+
+  h1 {
+    font-size: 1.5em !important;
+  }
+}
+
+/* Standard Buttons and Inputs */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: var(--space-sm) var(--space-lg);
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  text-decoration: none;
+  transition: transform 0.2s, background-color 0.2s, border-color 0.2s, color 0.2s;
+  border: 1px solid transparent;
+  cursor: pointer;
+  line-height: 1.5;
+  font-size: 1rem;
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  text-decoration: none;
+}
+
+.btn-primary {
+  background-color: var(--color-primary);
+  color: white;
+  border-color: var(--color-primary);
+}
+
+.btn-outline {
+  background-color: transparent;
+  border-color: var(--color-border);
+  color: var(--color-text);
+}
+
+.btn-outline:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.btn-sm {
+  padding: 4px 12px;
+  font-size: 0.85rem;
+  border-radius: var(--radius-sm);
+  font-weight: 500;
+  border: var(--border-subtle);
+  color: var(--color-text-muted);
+  background: transparent;
+  /* Force transparent for buttons */
+}
+
+.btn-sm:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background: rgba(179, 137, 245, 0.1);
+  text-decoration: none;
+}
+
+/* Page & Section Titles */
+.page-title {
+  margin-bottom: var(--space-xl);
+  border-bottom: 2px solid var(--color-border);
+  padding-bottom: var(--space-md);
+  font-size: 2rem;
+  /* Ensure consistent h1 size */
+}
+
+.section-title {
+  font-size: 1.5rem;
+  color: var(--color-primary);
+  margin-bottom: var(--space-lg);
+  border-left: 4px solid var(--color-accent);
+  /* Standardize on border-left */
+  padding-left: var(--space-sm);
+}
+
+/* Standardize section-title variants */
+.section-title.standard {
+  border-left: none;
+  border-bottom: 1px solid var(--color-border);
+  padding-left: 0;
+  padding-bottom: var(--space-sm);
+}
+
+/* Mermaid Diagram Theme Alignment */
+.mermaid,
+svg[id^="mermaid-"] {
+  background-color: transparent !important;
+  overflow-x: auto;
+  display: block;
+  margin: 0 auto;
+}
+
+[data-theme="dark"] .mermaid,
+[data-theme="dark"] svg[id^="mermaid-"],
+html.dark .mermaid,
+html.dark svg[id^="mermaid-"] {
+  filter: invert(1) hue-rotate(180deg);
+}
+
+.mermaid svg,
+svg[id^="mermaid-"] {
+  max-width: 100% !important;
+  height: auto !important;
+}
+
+/* Fix Expressive Code copy button on mobile */
+.expressive-code .copy button {
+  opacity: 0.8 !important;
+  /* Ensure visible without hover */
+  min-width: 2.5rem;
+  min-height: 2.5rem;
+}
+
+.expressive-code .copy button:hover {
+  opacity: 1 !important;
+}
+
+/* Ensure icon visibility */
+.expressive-code .copy button::after {
+  opacity: 1 !important;
+  background-color: var(--ec-frm-inlBtnFg, currentColor) !important;
+}

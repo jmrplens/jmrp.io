@@ -1,0 +1,576 @@
+%% CV basado en altacv, están modificadas muchas partes.
+%% Usar solamente con LuaLatex
+
+%% Importar recursos
+\makeatletter
+   \def\input@path{{./resources}}
+\makeatother
+
+%% Clase documento
+\documentclass[10pt,a4paper,ragged2e,normalphoto,withhyper]{altacv}
+
+%% Etiquetas del pdf
+\hypersetup{%
+    baseurl={https://jmrp.io},
+	pdfauthor={José Manuel Requena Plens},
+	pdftitle={CV of José Manuel Requena Plens},
+	pdfsubject={Curriculum Vitae of José Manuel Requena Plens},
+	pdfproducer={LaTeX},
+	pdfcreator={Texifier with LuaLatex on MacOS},
+	pdflang={en-EN},
+	pdfkeywords={CV, Curriculum Vitae, Jose Manuel Requena Plens, Information},
+    }
+    
+%% Formato página
+\geometry{left=2cm,right=2cm,marginparwidth=6.8cm,marginparsep=1.2cm,top=1.5cm,bottom=1.5cm}
+\usepackage{calc} 
+
+% Fuente
+\usepackage[default]{lato}
+\setmainfont{Lato}
+
+% List design
+\usepackage{enumitem}
+\setlist[itemize]{label=\textcolor{emphasis}{\faAngleRight}, leftmargin=*, nosep, noitemsep, topsep=0.5em}
+
+% Texto - otros
+\usepackage{csquotes}
+\usepackage[english]{babel}
+
+% Colores
+\definecolor{VividPurple}{HTML}{B509AC}
+\definecolor{SlateGrey}{HTML}{2E2E2E}
+\definecolor{LightGrey}{HTML}{555555}
+\colorlet{heading}{VividPurple}
+\colorlet{accent}{VividPurple}
+\colorlet{emphasis}{SlateGrey}
+\colorlet{body}{LightGrey}
+\colorlet{tagline}{accent}
+
+% Redefine cvevent to make the title bold
+\renewcommand{\cvevent}[4]{%
+  {\large\color{emphasis}\bfseries #1\par}
+  \smallskip\normalsize
+  \ifstrequal{#2}{}{}{
+  \textbf{\color{accent}#2}\par
+  \smallskip}
+  \ifstrequal{#3}{}{}{{\small\makebox[0.5\linewidth][l]{\faCalendar~#3}}}%
+  \ifstrequal{#4}{}{}{{\small\makebox[0.5\linewidth][l]{\faMapMarker~#4}}}\par
+  \medskip\normalsize
+}
+
+% Custom header for skill columns (smaller than cvsubsection)
+\newcommand{\cvskillheader}[1]{%
+  {\normalsize\bfseries\color{emphasis}#1}\par\medskip
+}
+
+%% BIBLIOGRAFIA
+\input{pubs-authoryear.cfg}
+\addbibresource{resources/papers.bib}
+
+\begin{document}
+\name{José Manuel Requena Plens}
+\tagline{R\&D Engineer specializing in Embedded Systems \& Acoustics. \newline Software Engineer.}
+\photo{2.5cm}{foto}
+\personalinfo{
+  \email{jmrplens@gmail.com}
+  \location{Valencia, Spain}
+  \homepage{jmrp.io}
+  \linkedin{linkedin.com/in/jmrplens}
+  \github{github.com/jmrplens}
+  \mbox{\textcolor{accent}{\normalfont \faBook}~
+      \href{https://scholar.google.com/citations?user=9b0kPaUAAAAJ}{\utffriendlydetokenize{Google Scholar}}\hspace{2em}}
+  }
+
+%% Make the header extend all the way to the right, if you want.
+%\begin{fullwidth}
+\makecvheader
+%\end{fullwidth}
+
+%% Provide the file name containing the sidebar contents as an optional parameter to \cvsection.
+%% You can always just use \marginpar{...} if you do
+%% not need to align the top of the contents to any
+%% \cvsection title in the "main" bar.
+
+%¿Algún texto sobre mí como carta de presentación aquí?
+
+%\cvaboutme{Sobre mí}
+
+\footnotesize{\bf For more information you can click on the name of places, certificates or courses that appear in the curriculum.}
+
+
+\vspace{1.5em}
+\cvsection{Work experience}
+
+\begin{minipage}{\linewidth}
+\cvevent{Software Engineer}{\href{https://power-electronics.com/}{Power Electronics}}{Abril 2023 -- currently}{R\&D Department. Solar area.}
+\begin{justify}
+Embedded software developer for power electronics equipment related to solar energy: inverters, converters, chargers, grid links, etc.
+
+\noindent Implementation of new functionalities and bug fixes.
+\end{justify}
+Some tasks:
+\begin{itemize}
+	\item Embedded software development in C.
+	\item Performing unit tests with Ceedling.
+	\item Versioning of implementations through GIT.
+	\item Use of tools: CLion, VS Code, Keil, GitLab.
+	\item Agile Methodologies: scrums, kanban, etc.
+\end{itemize}	
+\end{minipage}
+\vspace{0.5em}
+
+\divider
+
+\begin{minipage}{\linewidth}
+\cvevent{Predoctoral researcher}{\href{http://www.upv.es/en}{Polytechnic University of Valencia} + \href{https://www.csic.es/en}{CSIC} + \href{https://www.iislafe.es/es/}{Hospital La Fe} + \href{https://innoavi.es/en/}{AVI}}{Enero 2023 -- April 2023}{\href{https://www.i3m-stim.i3m.upv.es/}{Medical Imaging and Therapy Systems i3M}}
+\vspace{-1em}
+\begin{justify}
+Researcher in the R\&D line: {\bf Acoustic Metamaterials for Ultrasound Histotripsy treatments}.
+
+\noindent {\sloppy {\bf Project}: New generation of smart metasurfaces based on additive manufacturing for strategic applications in telecommunications (Metasmart). Funded by the Valencian Agency for Innovation (Reference: INNEST/2022/345).\par}
+\end{justify}
+
+\begin{itemize}
+	\item Ultra-close focus acoustic lens design.
+	\item Prototype manufacturing.
+	\item Experimentation with ex-vivo tissues.
+\end{itemize}	
+\end{minipage}
+\vspace{0.5em}
+
+
+\divider
+
+\begin{minipage}{\linewidth}
+\cvevent{Predoctoral researcher}{\href{http://www.upv.es/en}{Polytechnic University of Valencia} + \href{https://www.csic.es/en}{CSIC}}{July 2021 -- July 2022}{\href{https://www.i3m-stim.i3m.upv.es/}{Medical Imaging and Therapy Systems i3M}}
+\vspace{-1em}
+\begin{justify}
+The main objective is to conduct research and development of acoustic metamaterials for use in architectural applications and medical imaging.
+\vspace{0.25em}
+
+\noindent Goals achieved:
+\end{justify}
+\begin{itemize}
+	\item Theoretical development of acoustic metadiffusers based on membranes or plates reducing the size of commercial diffusers.
+	\item Simulation of the acoustic diffusers and validation of results (MATLAB \& COMSOL).
+	\item Two publications in national and international congresses:
+	\begin{itemize}
+		\item Tecniacústica - \href{https://jmrp.io/pdf/paper-resources/Conferences/Tecniacustica/JimenezTEC2020a.pdf}{\bf Beyond Schroeder diffusers using acoustic metasurfaces}
+		\item Euronoise - \href{https://jmrp.io/pdf/paper-resources/Conferences/Euronoise/plensEuro2021_2.pdf}{\bf Sound diffusing metasurfaces based on elastic plates and membranes}
+	\end{itemize}
+	\item Development and simulation of metamaterial-based waveguides for improved ultrasound resolution in air. 
+	\item Fabrication of waveguide prototypes.
+	\item Validated experimental results against those obtained in simulation.
+	\item Advisor of the Master thesis of a student of the Master's Degree in Acoustic Engineering of the UPV.
+\end{itemize}
+\end{minipage}
+\vspace{0.5em}
+
+
+\divider
+
+\begin{minipage}{\linewidth}
+\cvevent{Researcher in European project}{\href{http://www.upv.es/contenidos/CGANDIA/index-en.html}{Higher Polytechnic School of Gandia}}{February 2020 -- July 2021}{\href{http://igic.webs.upv.es/}{Complex Media Acoustics Group of IGIC}}
+\vspace{-1em}
+\begin{justify}
+Implement and experimentally validate a sound mitigation method, applicable to a real space vehicle launch configuration (VEGA), that results in a significant decrease in sound pressure levels generated in the launch area during spacecraft liftoff.
+\vspace{0.5em}
+
+\noindent Project funded by ESA (European Space Agency) with reference ESA AO/1-9479/18/NL/LvH, in collaboration with: CNRS/Laboratoire d'Acoustique de la Université du Mans; COMET Ingeniería; Spanish National Research Council (CSIC) and Polytechnic University of Madrid.
+\vspace{0.5em}
+
+\noindent All project objectives were completed at 100\%:
+\end{justify}
+\begin{itemize}
+	\item Design of the optimum geometry of the acoustic metamaterial to reduce noise levels.
+	\item Simulation of a real environment to validate design performance (MATLAB, COMSOL \& Python).
+	\item Design of the industrial model for the manufacture of the prototype by means of plastic injection.
+	\item Development of software for acoustic measurements according to ISO 10534-2:1998 and ASTM 2611-19 standards. \href{https://github.com/jmrplens/A-Lab}{\bf A|Lab}.
+	\item Design and development of a 3-axis robotic system to perform experimental measurements. Photos and some information here: \href{https://cienciagandia.webs.upv.es/en/2022/03/metamaterial-to-reduce-noise-in-space-rocket-launches/}{\bf NEWS}.
+	\item Results validated and accepted by ESA.
+	\item Three publications/presentations at international congresses (Euronoise and ECSSMET) and one at a national congress (Tecniacústica):
+	\begin{itemize}\setlength\itemsep{0em}
+	\item Euronoise - \href{https://jmrp.io/pdf/paper-resources/Conferences/Euronoise/plensEuro2021.pdf}{\bf Perfect broadband sound absorber metamaterial for noise reduction in a rocket launch} 
+	\item Euronoise - \href{https://jmrp.io/pdf/paper-resources/Conferences/Euronoise/EscartiEuro2021.pdf}{\bf Application of metamaterials to control noise scattering during space vehicle lift-off}
+	\item ECSSMET - Launch sound level characterisation and mitigation: numerical modelling framework and metamaterial proof of concept
+	\item Tecniacústica - \href{https://jmrp.io/pdf/paper-resources/Conferences/Tecniacustica/plensTEC2020.pdf}{\bf Acoustic field prediction during the launch of rockets}
+	\end{itemize}
+	
+\end{itemize}
+\end{minipage}
+\vspace{0.5em}
+
+\divider
+
+\begin{minipage}{\linewidth}
+\cvevent{Research internship}{\href{https://dfests.ua.es/}{Dep. of Physics, Systems Engineering and Signal Theory}}{February 2018 -- July 2018}{\href{https://www.ua.es/en/index.html}{University of Alicante}}
+\vspace{-1em}
+\begin{justify}
+Internship in different research projects in the \href{https://iufacyt.ua.es/es/grupos-de-investigacion/acustica-aplicada.html}{\bf Applied Acoustics Group}, belonging to the University Institute of Physics Applied to Sciences and Technologies of the Higher Polytechnic School of Alicante.
+\vspace{0.25em}
+
+\noindent Goals achieved:
+\end{justify}
+\begin{itemize}
+	\item Simulation of acoustic models.
+	\item Acoustic measurements by means of a LabView-controlled robotic system.
+	\item Investigation of the acoustic radiation efficiency (Vibration-borne noise) of metallic plates for an initial study of ship noise emissions in water. Carried out in collaboration with \href{https://electronica-submarina.com/}{SAES}, here you can read a news item on the subject: \href{https://electronica-submarina.com/2018/11/05/saes-latest-researches-on-underwater-noise-by-ships-are-presented-at-tecniacustica/}{\bf NEWS}.
+	\item A publication at a national congress:
+    \begin{itemize}\setlength\itemsep{0em}
+	\item Tecniacústica - \href{https://jmrp.io/pdf/paper-resources/Conferences/Tecniacustica/saura2018.pdf}{\bf Comportamiento vibroacústico de contenedores cilíndricos en aire} 
+	\end{itemize}
+\end{itemize}
+\end{minipage}
+\vspace{0.5em}
+
+\divider
+
+\begin{minipage}{\linewidth}
+\cvevent{Founder and Vocal Member}{\href{https://www.linkedin.com/company/a-\%C2\%B5tech/}{AµTech}}{Septiembre 2016 -- Julio 2018}{\href{https://www.ua.es/en/index.html}{University of Alicante}}
+\vspace{-1em}
+\begin{justify}
+Association based at the Higher Polytechnic School of the University of Alicante. Founded in 2016. Promotes project-oriented microcontroller programming knowledge.
+\vspace{0.1em}
+
+\noindent Activities performed:
+\end{justify}
+\begin{itemize}
+	\item Group classes of reinforcement and extension of the subject "Digital Electronic Systems" of the Degree in Sound and Image Engineering of the University of Alicante.
+	\item Laboratory organization and planning (located at the Colegio Mayor).
+	\item Communication and Public Relations.
+\end{itemize}
+\end{minipage}
+\vspace{0.5em}
+
+
+\divider 
+
+\begin{minipage}{\linewidth}
+\cvevent{Sound technician}{\href{http://acusticox.com/}{Acusticox}}{June 2011 --  February 2018}{Cox, Alicante}
+
+\begin{itemize}
+	\item Equipment installation and adjustment for events.
+	\item Equipment installation and adjustment for permanent installation.
+	\item FOH Technician.
+	\item Customer acquisition.
+\end{itemize}
+\end{minipage}
+\vspace{0.5em}
+
+
+\divider
+
+
+\begin{minipage}{\linewidth}
+\cvevent{Laboratory technician}{\href{https://profdent.es/}{Profdent}}{September 2005 -- November 2009}{Alicante}
+
+\begin{itemize}
+	\item Reception of work from dentists.
+	\item Model preparation and retouching.
+	\item Minor responsibilities.
+\end{itemize}
+\end{minipage}
+\vspace{0.5em}
+
+%\cvsection{A Day of My Life}
+%
+% Adapted from @Jake's answer from http://tex.stackexchange.com/a/82729/226
+% \wheelchart{outer radius}{inner radius}{
+% comma-separated list of value/text width/color/detail}
+%\wheelchart{1.5cm}{0.5cm}{%
+%  10/13em/accent!30/Sleeping \& dreaming about work, 
+%  25/9em/accent!60/Public resolving issues with Yahoo!\ investors,
+%  5/12em/accent!10/New York \& San Francisco Ballet Jawbone board member, 
+%  20/12em/accent!40/Spending time with family,
+%  5/8em/accent!20/Business development for Yahoo!\ after the Verizon acquisition,
+%  30/9em/accent/Showing Yahoo!\ employees that their work has meaning,
+%  5/8em/accent!20/Baking cupcakes
+%}
+%\newpage
+
+\vspace{1em}
+\cvsection{Other knowledge and skills}
+
+\begin{minipage}[t]{0.45\textwidth}
+\cvskillheader{Embedded Firmware \& Electronics}
+\cvskill{\faCuttlefish~C}{4}
+\cvskill{\faMicrochip~STM32 \& ARM}{4}
+\cvskill{\faNetworkWired~Comm. Protocols}{4}
+\cvskill{\faLaptopCode~Keil uVision}{4}
+\cvskill{\faTools~Instrumentation}{4}
+\cvskill{\faMicrochip~Espressif / Arduino}{4}
+
+\vspace{1em}
+
+\cvskillheader{Simulation \& Acoustics}
+\cvskill{\faAtom~COMSOL Multiphysics}{4}
+\cvskill{\faWaveSquare~LabView}{3}
+\cvskill{\faVolumeUp~CATT-Acoustic}{4}
+\cvskill{\faVolumeUp~EASE}{3}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.45\textwidth}
+\cvskillheader{Software Engineering \& Tools}
+\cvskill{\faPython~Python}{4}
+\cvskill{\faCode~C++}{3}
+\cvskill{\faGit*~Git}{4}
+\cvskill{\faFileCode~MATLAB}{4}
+\cvskill{\faCogs~CMake}{3}
+\cvskill{\faToolbox~JetBrains Toolbox}{4}
+
+\vspace{1em}
+
+\cvskillheader{General \& Platforms}
+\cvskill{\faLinux~Linux / Unix}{4}
+\cvskill{\faApple~MacOS}{4}
+\cvskill{\faWindows~Windows}{4}
+\cvskill{\faFile~LaTeX}{4}
+\cvskill{\faHtml5~HTML / CSS}{3}
+\end{minipage}
+
+\vspace{2em}
+%\cvachievement{\faToolbox}{Habilidades técnico/manuales}{
+%\begin{description}[itemindent=10pt+\widthof{\bfseries Electricidad},labelwidth=\widthof{\bfseries Electricidad},leftmargin=\parindent,labelindent=\parindent]
+%	\setlength\itemsep{0.1em}
+%	\item[Electricidad] Instalaciones y mantenimiento.
+%	\item[Carpintería] Fabricación y montaje.
+%	\item[Jardinería] Plantación y mantenimiento.
+%	\item[Bricolaje] Habilidad alta en general.
+%	\item[Ciclismo] Mecánica y mantenimiento.
+%\end{description}
+%}
+
+%
+\vspace{-1.5em}
+
+\vspace{1.5em}
+\cvsection{Education}
+
+\cvsubsection{Formal education}
+
+\begin{minipage}{\linewidth}
+\cvevent{\href{http://www.upv.es/entidades/EDOCTORADO/info/1005218normali.html}{PhD in Health and Wellness Technologies}}{\small \href{http://www.upv.es/en}{Polytechnic University of Valencia}}{September 2020 -- 2023}{\href{https://www.i3m-stim.i3m.upv.es/}{Medical Imaging and Therapy Systems i3M}}
+
+\begin{description}
+	
+\item[Title] \begin{justify}Industrial and biomedical applications of metamaterials for the control of acoustic beams. In this project, we propose to combine new air-coupled ultrasound transducers with hyperbolic metamaterials to design vision systems that exceed the imaging capabilities of traditional systems.\end{justify}
+\vspace{0.5em}
+\item[Description] \begin{justify}
+During my PhD in Acoustic Engineering applied to Biomedicine, I conducted advanced research:
+\begin{itemize}
+    \item Biomedical signal processing and acoustic analysis algorithms.
+    \item Ultrasound characterization for medical applications.
+    \item Computational modeling and simulation of acoustic phenomena.
+    \item Development of experimental methodologies for biomedical studies.
+    \item Publication of results in specialized conferences and journals.
+\end{itemize}
+\vspace{0.5em}
+After nearly completing the doctoral program, I made the strategic decision to redirect my career toward industrial software development. This transition allowed me to apply my solid foundation in data analysis, programming, and analytical thinking to the software sector, where I found a more direct alignment between my technical skills and my long-term professional goals.
+\end{justify}
+\end{description}
+
+\noindent \cvtag{\href{https://jmrp.io/pdf/degree/PhDExpEng.pdf}{Academic record}}
+\end{minipage}
+\vspace{0.5em}
+
+\divider
+
+\begin{minipage}{\linewidth}
+\cvevent{\href{http://www.upv.es/titulaciones/MUIA/indexi.html}{Master's Degree in Acoustical Engineering}}{\small \href{http://www.upv.es/en}{Polytechnic University of Valencia}}{September 2018 -- June 2019}{\href{http://www.upv.es/contenidos/CGANDIA/index-en.html}{Higher Polytechnic School of Gandia}}
+\vspace{-0.5em}
+\begin{justify}
+Degree obtained with honors in: Fundamentals of Acoustics, Acoustic Isolation, Musical Acoustics, Signal Processing in Acoustic Engineering, Ultrasonics and Acoustic Simulation Techniques.
+\vspace{0.5em}
+
+\noindent Final Master's thesis entitled ``Difusores acústicos basados en resonadores de membrana y placa" (``Acoustic diffusers based on membrane and plate resonators"), qualified with honors with special mention.
+\vspace{0.5em}
+
+\noindent \cvtag{\href{https://jmrp.io/pdf/degree/Acoustic.pdf}{Diploma}} \cvtag{\href{https://jmrp.io/pdf/degree/AcousticExpEng.pdf}{Academic record}} 
+\end{justify}
+\vspace{-0.5em}
+\end{minipage}
+\vspace{0.5em}
+\divider
+
+\begin{minipage}{\linewidth}
+\cvevent{\href{https://web.ua.es/en/oia/documentos/publicaciones/grados-folletos/grado-ingenieria-sonido-imagen.pdf}{Degree in Telecommunication Engineering in Sound and Image}}{\small \href{https://www.ua.es/}{Universidad de Alicante}}{Julio 2018}{\href{https://eps.ua.es/en/home.html}{Higher Polytechnic School}}
+\vspace{-0.5em}
+\begin{justify}
+Degree obtained together with the 2 specializations: Acoustic Engineering and Audiovisual Technology.
+\vspace{0.5em}
+
+\noindent Final Degree Work entitled \href{http://hdl.handle.net/10045/77578}{``Estudio de la relación campo directo/reverberado; útil/perjudicial"} (``Study of the direct/reverberated field relationship; useful/harmful").
+\vspace{0.5em}
+
+\noindent \cvtag{\href{https://jmrp.io/pdf/degree/Telecom.pdf}{Diploma}} \cvtag{\href{https://jmrp.io/pdf/degree/TelecomExpEng.pdf}{Academic record}} 
+\end{justify}
+\vspace{-0.5em}
+\end{minipage}
+\vspace{0.5em}
+\divider
+
+\begin{minipage}{\linewidth}
+\cvevent{\href{https://www.todofp.es/dam/jcr:4466fc14-1a96-4781-9e62-35a60e791d30/equipos-electronicos-de-consumo-ingles-pdf.pdf}{Certificate of Higher Education in Electronics Technician} \& \href{https://www.todofp.es/dam/jcr:b431f75a-979a-4b79-a5b8-b8e84d654a11/sonido-ingles-pdf.pdf}{Superior Sound Technician}}{\small \href{https://elche.salesianos.edu/colegio/san-jose-artesano/}{IES Salesianos (San Jóse Artesano)} | \href{https://ies-berlanga.info/index.php/es/}{IES Luis García Berlanga} + \href{https://sptcv.net/ciudad-de-la-luz/}{Ciudad de la Luz}}{2009 | 2011}{Elche | Alicante}
+\vspace{0.5em}
+
+\noindent \cvtag{\href{https://jmrp.io/pdf/degree/ElectronicSound.pdf}{Diplomas}} 
+\end{minipage} 
+\vspace{0.5em} 
+
+\divider 
+
+\vspace{1.5em}
+\cvsection{Certificates}
+\vspace{-0.6em}
+{\footnotesize The certificates can be accessed by clicking on the name of each one.}
+\vspace{0.5em}
+
+\begin{minipage}[t]{0.49\textwidth}
+    {\normalsize\bfseries\color{emphasis}Occupational Health and Safety}\par\smallskip
+    \small
+    \begin{tabular}{@{} l @{\extracolsep{\fill}} r @{}}
+        \href{https://jmrp.io/pdf/certificates/PRL/PRL_Generico.pdf}{Generic} & \href{https://invassat.gva.es/}{INVASSAT}. {\bf 50} H.\\
+        \href{https://jmrp.io/pdf/certificates/PRL/PRL_Nanomateriales.pdf}{Nanomaterials} & \href{https://invassat.gva.es/}{INVASSAT}. {\bf 50} H.\\
+        \href{https://jmrp.io/pdf/certificates/PRL/PRL_Quimico.pdf}{Chemical sector} & \href{https://invassat.gva.es/}{INVASSAT}. {\bf 50} H.\\
+        \href{https://jmrp.io/pdf/certificates/PRL/PRL_Emergencias.pdf}{Emergencies} & \href{https://invassat.gva.es/}{INVASSAT}. {\bf 70} H.\\
+        \href{https://jmrp.io/pdf/certificates/PRL/PRL_Alimentario.pdf}{Nutrition} & \href{https://invassat.gva.es/}{INVASSAT}. {\bf 50} H.\\
+        \href{https://jmrp.io/pdf/certificates/PRL/PRL_Educativo.pdf}{Educational} & \href{https://invassat.gva.es/}{INVASSAT}. {\bf 50} H.\\
+        \href{https://jmrp.io/pdf/certificates/PRL/PRL_Servicios.pdf}{Services} & \href{https://invassat.gva.es/}{INVASSAT}. {\bf 50} H.\\
+        \href{https://jmrp.io/pdf/certificates/CertificadoPRLUPV.pdf}{Researcher} & \href{https://www.cfp.upv.es/formacion-permanente/curso/prevencion-riesgos-laborales-perfil-investigador-laboratorio_55773.html}{UPV}. {\bf 15} H.\\
+    \end{tabular}
+    
+    \vspace{1em}
+
+    {\normalsize\bfseries\color{emphasis}Labor/Industrial}\par\smallskip
+    \small
+    \begin{tabular}{@{} l @{\extracolsep{\fill}} r @{}}
+    	\href{https://jmrp.io/pdf/certificates/Certificado_Carretilla.pdf}{Op. industrial trucks} & \href{https://gescoform.es/}{Gescoform}. {\bf 15} H.\\
+    	\href{https://www.asonaman.es/files/crt/2022/10/09/CBBUWIQEBMUJKENWAKEZHYAGHKKA.pdf}{Food Hygiene Course} & \href{https://www.asonaman.es/}{Asonaman}. {\bf 30} H.\\
+    	\href{https://jmrp.io/pdf/certificates/PlanesAutoproteccion.pdf}{Self-protection plans} & \href{https://invassat.gva.es/}{INVASSAT}. {\bf 15} H.\\
+    	\href{https://jmrp.io/pdf/certificates/ElectricidadEstatica.pdf}{Static electricity} & \href{https://invassat.gva.es/}{INVASSAT}. {\bf 15} H.\\
+    	\href{https://jmrp.io/pdf/certificates/ProteccionDeDatos.pdf}{Protección de datos} & \href{https://www.csirtcv.gva.es/}{CSIRT-CV}. {\bf 10} H.\\
+    \end{tabular}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.49\textwidth}
+    {\normalsize\bfseries\color{emphasis}Transversal competences}\par\smallskip
+    \small
+    \begin{tabular}{@{} l @{\extracolsep{\fill}} r @{}}
+    	\href{https://jmrp.io/pdf/certificates/PerspectivaDeGenero.pdf}{Gender perspective} & \href{https://eves.san.gva.es}{EVES}. {\bf 20} H.\\
+    	\href{https://jmrp.io/pdf/certificates/TrabajoEnEquipo.pdf}{Teamwork} & \href{https://labora.gva.es/es/ciutadania}{Labora}. {\bf 25} H.\\
+    	\href{https://jmrp.io/pdf/certificates/DesignThinking.pdf}{Design Thinking} & \href{https://labora.gva.es/es/ciutadania}{Labora}. {\bf 25} H.\\
+    	\href{https://jmrp.io/pdf/certificates/PensamientoCritico.pdf}{Critical thinking} & \href{https://labora.gva.es/es/ciutadania}{Labora}. {\bf 25} H.\\
+    	\href{https://jmrp.io/pdf/certificates/AdaptacionFlexibilidadAgilidad.pdf}{Adaptability, flexibility} & \href{https://labora.gva.es/es/ciutadania}{Labora}. {\bf 25} H.\\
+    	\href{https://jmrp.io/pdf/certificates/AutonomiaInnovacion.pdf}{Autonomy, innovation} & \href{https://labora.gva.es/es/ciutadania}{Labora}. {\bf 25} H.\\
+    	\href{https://jmrp.io/pdf/certificates/MejoraEficiencia.pdf}{Prof. efficiency} & \href{https://labora.gva.es/es/ciutadania}{Labora}. {\bf 25} H.\\
+    	\href{https://jmrp.io/pdf/certificates/EmprendimientoPerspectivaGenero.pdf}{Entrepreneurship} & \href{https://www.cfp.upv.es/formacion-permanente/curso/emprendimiento-perspectiva-genero_86214.html}{UPV}. {\bf 20} H.\\
+    \end{tabular}
+
+    \vspace{1em}
+
+    {\normalsize\bfseries\color{emphasis}Information technology}\par\smallskip
+    \small
+    \begin{tabular}{@{} l @{\extracolsep{\fill}} r @{}}
+    	\href{https://courses.edx.org/certificates/f1fb6cbd6f39431c9f57c7ee3a5dc3ad}{Using Python for Research} & \href{https://vpal.harvard.edu/harvard-online-harvardx}{HarvardX}. {\bf 50} H.\\
+    	\href{https://courses.edx.org/certificates/62fed4c86a17427ebb5b6bbbc39e34df}{Analyzing Data w/ Python} & \href{https://www.edx.org/school/ibm}{IBM}. {\bf 20} H.\\
+    	\href{https://courses.edx.org/certificates/0f49b9baa42f4464b2e0d99ade544790}{Visualizing Data w/ Python} & \href{https://www.edx.org/school/ibm}{IBM}. {\bf 20} H.\\
+    \end{tabular}
+\end{minipage}
+\par\vspace{1em}
+
+\cvsubsection{Courses and seminars}
+\normalsize
+\begin{itemize}\setlength\itemsep{0em}
+	\item {\bf \href{https://jmrp.io/pdf/programs/COST2019.pdf}{Use and characterisation of new acoustic treatments and tools}}. \href{https://www.cost.eu/}{European Cooperation in Science and Technology (COST)}. 15 Hours.
+	\item {\bf \href{http://www.upv.es/pls/oalu/sic_gdoc.get_content?P_ASI=40010&P_VISTA=&P_TIT=0&P_CACA=2022&P_IDIOMA=i}{Numerical methods with MATLAB}}. \href{http://www.upv.es/es}{UPV}. 50 Hours.
+	\item {\bf \href{http://www.upv.es/pls/oalu/sic_gdoc.get_content?P_ASI=40011&P_VISTA=&P_TIT=0&P_CACA=2022&P_IDIOMA=i}{Composition of high quality documents and presentations with LaTeX}}. \href{http://www.upv.es/es}{UPV}. 56 Hours.
+	\item {\bf \href{http://www.upv.es/pls/oalu/sic_gdoc.get_content?P_ASI=40012&P_VISTA=&P_TIT=0&P_CACA=2022&P_IDIOMA=i}{Scientific computing}}. \href{http://www.upv.es/es}{UPV}. 50 Hours.
+	\item {\bf \href{http://www.upv.es/pls/oalu/sic_gdoc.get_content?P_ASI=40016&P_VISTA=&P_TIT=0&P_CACA=2022&P_IDIOMA=i}{Gender perspective in research}}. \href{http://www.upv.es/es}{UPV}. 50 Hours.
+\end{itemize}
+
+\vspace{1em}
+\vspace{1.5em}
+\cvsection{Publications}
+\vspace{0.5em}
+\vspace{-1em}
+\begin{justify}
+Some publications have been presented at conferences, most of the slides are available on my website: \\ \href{https://jmrp.io/publications/}{\bf jmrp.io/publications}.
+\end{justify}
+\nocite{*}
+\printbibliography[heading=none]
+%
+%
+\vspace{-1em}
+%\cvsection{References}
+%%
+%%% \cvref{name}{email}{mailing address}
+%
+%\cvrefb{Doc.\ Noé Jiménez González}
+%{\href{mailto:noe.jimenez@csic.es}{noe.jimenez@csic.es}}
+%{\href{https://www.i3m-stim.i3m.upv.es/}{Medical Imaging and Therapy Systems i3M}\\
+%~~\href{https://www.csic.es/en}{Consejo Superior de Investigaciones Científicas (CSIC)}\\
+%~~\href{http://www.upv.es/en}{\bf Polytechnic University of Valencia}}
+%{\href{https://nojigon.webs.upv.es/}{https://nojigon.webs.upv.es/}}
+%
+%\divider
+%
+%\cvrefb{Doc.\ Jaime Ramis Soriano}
+%{\href{mailto:jramis@ua.es}{jramis@ua.es}}
+%{\href{https://eps.ua.es/}{Escuela Politécnica Superior}\\
+%~~\href{https://dfests.ua.es/}{Dep. of Physics, Systems Engineering and Signal Theory}\\
+%~~\href{https://www.ua.es/}{\bf University of Alicante}}
+%{\href{https://cvnet.cpd.ua.es/curriculum-breve/es/ramis-soriano-jaime/6475}{https://cvnet.cpd.ua.es/curriculum-breve/es/ramis-soriano-jaime/6475}}
+%
+%
+%\divider
+%
+%\cvrefb{Doc.\ Francisco Camarena Femenia}
+%{\href{mailto:fracafe@fis.upv.es}{fracafe@fis.upv.es}}
+%{\href{https://www.i3m-stim.i3m.upv.es/}{Medical Imaging and Therapy Systems i3M}\\
+%~~\href{https://www.csic.es/es}{Consejo Superior de Investigaciones Científicas (CSIC)}\\
+%~~\href{http://www.upv.es/es}{\bf Polytechnic University of Valencia}}
+%{\href{http://www.upv.es/ficha-personal/fracafe}{http://www.upv.es/ficha-personal/fracafe}}
+%
+%
+%\divider
+%
+%\cvrefb{Doc.\ Rubén Picó Vila}
+%{\href{mailto:rpico@fis.upv.es}{rpico@fis.upv.es}}
+%{\href{http://igic.webs.upv.es/}{Complex Media Acoustics Group of IGIC}\\
+%~~\href{http://www.upv.es/es}{\bf Polytechnic University of Valencia}}
+%{\href{http://www.upv.es/ficha-personal/rpico}{http://www.upv.es/ficha-personal/rpico}}
+%
+%
+%\divider
+%
+%\cvrefb{Doc.\ Víctor José Sánchez Morcillo}
+%{\href{mailto:victorsm@fis.upv.es}{victorsm@fis.upv.es}}
+%{\href{http://igic.webs.upv.es/}{Complex Media Acoustics Group of IGIC}\\
+%~~\href{http://www.upv.es/es}{\bf Polytechnic University of Valencia}}
+%{\href{http://www.upv.es/ficha-personal/victorsm}{http://www.upv.es/ficha-personal/victorsm}}
+%
+%
+%\divider
+%
+%
+%
+%%\printbibliography[heading=pubtype,title={\printinfo{\faBook}{Books}},type=book]
+%
+%%\divider
+%
+%%\printbibliography
+%
+%%\divider
+%
+%%\printbibliography[heading=pubtype,title={\printinfo{\faGroup}{Conference Proceedings}},type=inproceedings]
+%
+%%% If the NEXT page doesn't start with a \cvsection but you'd
+%%% still like to add a sidebar, then use this command on THIS
+%%% page to add it. The optional argument lets you pull up the 
+%%% sidebar a bit so that it looks aligned with the top of the
+%%% main column.
+%% \addnextpagesidebar[]{page2sidebar}
+%
+%
+\end{document}

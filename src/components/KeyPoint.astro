@@ -1,0 +1,52 @@
+---
+/**
+ * A component for highlighting a key takeaway or pro-tip,
+ * as a lighter alternative to a full Callout block.
+ */
+import { Icon } from "astro-icon/components";
+
+interface Props {
+    icon?: string; // Icon name from astro-icon
+}
+
+const { icon = "mdi:lightbulb-on-outline" } = Astro.props;
+---
+
+<div class="key-point" role="note">
+    <div class="icon-wrapper" aria-hidden="true">
+        <Icon name={icon} class="key-icon" />
+    </div>
+    <div class="content-wrapper">
+        <slot />
+    </div>
+</div>
+
+<style>
+    .key-point {
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+        background-color: var(--color-bg-subtle);
+        border: var(--border-subtle);
+        border-left: 4px solid var(--color-primary);
+        border-radius: var(--radius-md);
+        padding: 1.25rem;
+        margin: 1.5rem 0;
+        color: var(--color-text-body);
+    }
+    .icon-wrapper {
+        color: var(--color-primary);
+        font-size: 1.5rem;
+        margin-top: 0.1rem; /* Align better with text */
+    }
+    .content-wrapper {
+        flex: 1;
+    }
+    /* Make paragraphs inside look normal */
+    .content-wrapper :global(p) {
+        margin: 0;
+    }
+    .content-wrapper :global(p:not(:last-child)) {
+        margin-bottom: 1rem;
+    }
+</style>

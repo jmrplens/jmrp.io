@@ -1,0 +1,86 @@
+---
+/**
+ * A component to display the output of a shell command, visually
+ * distinct from an executable command.
+ */
+import { Icon } from "astro-icon/components";
+
+interface Props {
+    title?: string;
+}
+
+const { title } = Astro.props;
+---
+
+<div
+    class="terminal-output-wrapper"
+    role="log"
+    aria-live="polite"
+    aria-label={title ? `Terminal Output: ${title}` : "Terminal Output"}
+>
+    {
+        title && (
+            <div class="output-header" aria-hidden="true">
+                <Icon
+                    name="mdi:chevron-right-box-outline"
+                    class="output-icon"
+                />
+                <span class="output-title">{title}</span>
+            </div>
+        )
+    }
+    <div class="output-body">
+        <pre><slot /></pre>
+    </div>
+</div>
+<style>
+    .terminal-output-wrapper {
+        border: var(--border-subtle);
+        border-radius: var(--radius-md);
+        margin: 1.5rem 0;
+        background-color: var(--color-bg-secondary);
+        overflow: hidden;
+    }
+
+    .output-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.6rem 1rem;
+        border-bottom: 1px solid var(--color-border);
+        font-family: var(--font-mono);
+        font-size: 0.85rem;
+        color: var(--color-text-muted);
+    }
+    .output-icon {
+        font-size: 1.1rem;
+    }
+
+    .output-body {
+        padding: 1rem;
+        font-family: var(--font-mono);
+        font-size: 0.85em;
+        color: var(--color-text-muted);
+        overflow-x: auto;
+    }
+
+    /* Hide the default expressive-code copy button */
+    .output-body :global(.expressive-code .copy, .custom-code-copy-btn) {
+        display: none !important;
+    }
+
+    .output-body :global(pre) {
+        margin: 0 !important;
+        padding: 0 !important;
+        background: none !important;
+        border: none !important;
+        font-size: inherit !important;
+        color: inherit !important;
+    }
+
+    .output-body :global(code) {
+        font-size: inherit !important;
+        color: inherit !important;
+        background-color: transparent !important;
+    }
+</style>

@@ -1,0 +1,225 @@
+---
+/**
+ * Footer component.
+ * Displays copyright info and social media links loaded from `src/data/socials.yml`.
+ * Includes logic to map FontAwesome classes to Iconify names.
+ */
+import fs from "fs";
+import path from "path";
+import yaml from "js-yaml";
+import { Icon } from "astro-icon/components";
+
+const today = new Date();
+
+// Load socials
+const socialsPath = path.join(process.cwd(), "src/data/socials.yml");
+const socialsRaw = fs.readFileSync(socialsPath, "utf8");
+const socials = yaml.load(socialsRaw) as any;
+
+const sitePath = path.join(process.cwd(), "src/data/site.yml");
+const siteRaw = fs.readFileSync(sitePath, "utf8");
+const siteConfig = yaml.load(siteRaw) as any;
+
+const socialLinks: any[] = [];
+
+if (socials.github_username) {
+    socialLinks.push({
+        url: `https://github.com/${socials.github_username}`,
+        icon: "fab fa-github",
+        label: "GitHub",
+    });
+}
+
+if (socials.linkedin_username) {
+    socialLinks.push({
+        url: `https://linkedin.com/in/${socials.linkedin_username}`,
+        icon: "fab fa-linkedin",
+        label: "LinkedIn",
+    });
+}
+
+if (socials.mastodon_username) {
+    let url = socials.mastodon_username;
+    if (!url.startsWith("http")) {
+        url = `https://${url}`;
+    }
+    socialLinks.push({
+        url: url,
+        icon: "fab fa-mastodon",
+        label: "Mastodon",
+        rel: "me",
+    });
+}
+
+if (socials.scholar_userid) {
+    socialLinks.push({
+        url: `https://scholar.google.com/citations?user=${socials.scholar_userid}`,
+        icon: "fas fa-graduation-cap",
+        label: "Google Scholar",
+    });
+}
+
+if (socials.matrix_id) {
+    socialLinks.push({
+        url: `https://matrix.to/#/${socials.matrix_id}`,
+        icon_name: "simple-icons:matrix",
+        label: "Matrix",
+    });
+}
+
+// Custom Socials
+if (socials.custom_social) {
+    const customs = Array.isArray(socials.custom_social)
+        ? socials.custom_social
+        : [socials.custom_social];
+    customs.forEach((item: any) => {
+        if (item.icon) {
+            socialLinks.push({
+                url: item.url,
+                icon: item.icon,
+                label: item.title,
+            });
+        } else if (item.icon_name) {
+            socialLinks.push({
+                url: item.url,
+                icon_name: item.icon_name,
+                label: item.title,
+            });
+        } else if (item.icon_light && item.icon_dark) {
+            socialLinks.push({
+                url: item.url,
+                img_light: item.icon_light,
+                img_dark: item.icon_dark,
+                label: item.title,
+            });
+        } else {
+            // Generic fallback
+            socialLinks.push({
+                url: item.url,
+                icon: "fas fa-link",
+                label: item.title,
+            });
+        }
+    });
+}
+
+// Helper to map FontAwesome classes to Iconify names
+const getIconName = (faClass: string) => {
+    if (!faClass) return "";
+    const parts = faClass.split(" ");
+    const style = parts[0]; // fab, fas
+    const name = parts[1]?.replace("fa-", "") || "";
+
+    if (style === "fab") return `fa-brands:${name}`;
+    // Default to solid for fas or others
+    return `fa-solid:${name}`;
+};
+---
+
+<footer>
+    <div class="container">
+        <p>
+            &copy; {today.getFullYear()}
+            {siteConfig.author}. All rights reserved.
+        </p>
+        <div class="social-links">
+            {
+                socialLinks.map((link) => (
+                    <a
+                        href={link.url}
+                        target="_blank"
+                        rel={link.rel || "noopener noreferrer"}
+                        aria-label={link.label}
+                        title={link.label}
+                        class="social-btn"
+                    >
+                        {link.icon && (
+                            <Icon
+                                name={getIconName(link.icon)}
+                                class="social-icon-svg"
+                            />
+                        )}
+                        {link.icon_name && (
+                            <Icon
+                                name={link.icon_name}
+                                class="social-icon-svg"
+                            />
+                        )}
+                        {link.img_light && link.img_dark && (
+                            <>
+                                <img
+                                    src={link.img_light}
+                                    alt={link.label}
+                                    class="social-icon light-icon"
+                                />
+                                <img
+                                    src={link.img_dark}
+                                    alt={link.label}
+                                    class="social-icon dark-icon"
+                                />
+                            </>
+                        )}
+                    </a>
+                ))
+            }
+        </div>
+    </div>
+</footer>
+
+<style>
+    footer {
+        padding: var(--space-lg) 0;
+        text-align: center;
+        color: var(--color-text-muted);
+        font-size: 0.9rem;
+        margin-top: auto;
+    }
+
+    .container {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-sm);
+    }
+
+    .social-links {
+        display: flex;
+        justify-content: center;
+        gap: var(--space-md);
+        font-size: 1.5rem;
+    }
+
+    .social-links a {
+        color: var(--color-text-muted);
+    }
+
+    .social-links a:hover {
+        color: var(--color-primary);
+    }
+
+    .social-icon,
+    .social-icon-svg {
+        width: 1.5rem;
+        height: 1.5rem;
+        object-fit: contain;
+    }
+
+    .light-icon {
+        display: block;
+    }
+    .dark-icon {
+        display: none;
+    }
+
+    :global(html[data-theme="dark"]) .light-icon {
+        display: none;
+    }
+    :global(html[data-theme="dark"]) .dark-icon {
+        display: block;
+    }
+
+    .social-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+</style>

@@ -1,0 +1,17 @@
+# Ignore Astro/Template variables (both literal and URL encoded)
+.*\$\{.*
+.*\%7B.*
+.*\%7D.*
+
+# Ignore specific domains that block bots or require auth
+linkedin\.com
+cloudflare\.com
+scholar\.google\.com
+youtube\.com/embed/
+
+# Ignore RSS/Atom Namespaces (Standard IDs, do not change)
+http://www\.w3\.org/2005/Atom
+http://purl\.org/rss/1.0/modules/content/
+
+# Localhost
+http://localhost.*

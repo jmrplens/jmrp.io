@@ -1,0 +1,66 @@
+---
+/**
+ * Code component.
+ * Displays a code block with syntax highlighting and a copy button.
+ * Use this instead of markdown code blocks when you want explicit control.
+ */
+import CopyButton from "./CopyButton.astro";
+
+interface Props {
+    lang?: string; // Language for syntax highlighting (e.g., 'nginx', 'javascript')
+    class?: string;
+}
+
+const { lang = "text", class: className } = Astro.props;
+---
+
+<div class:list={["code-wrapper", "copy-container", className]}>
+    <pre><code class={`language-${lang}`}><slot /></code></pre>
+    <CopyButton class="code-copy-button" />
+</div>
+
+<style>
+    .code-wrapper {
+        position: relative;
+        margin: 1.5rem 0;
+        border-radius: var(--radius-md);
+        overflow: hidden;
+    }
+
+    .code-wrapper :global(.code-copy-button) {
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+        z-index: 10;
+    }
+
+    pre {
+        margin: 0;
+        padding: 0.75rem 1rem; /* Reduced vertical padding from 1rem */
+        padding-right: 3rem; /* Space for copy button */
+        overflow-x: auto;
+        background-color: var(--color-bg-secondary);
+        border: var(--border-subtle);
+        border-radius: var(--radius-md);
+    }
+
+    code {
+        font-family: var(--font-mono);
+        font-size: 0.9rem;
+        line-height: 1.6;
+        color: var(--color-text);
+    }
+
+    /* Remove margin from MDX-generated p tags */
+    code :global(p) {
+        margin: 0;
+        display: inline;
+    }
+
+    /* Basic syntax highlighting fallback */
+    code.language-nginx,
+    code.language-bash,
+    code.language-shell {
+        color: var(--color-text);
+    }
+</style>

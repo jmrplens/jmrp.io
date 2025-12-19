@@ -1,0 +1,52 @@
+# build output
+dist/
+# generated types
+.astro/
+
+.claude/
+.qodo/
+
+# dependencies
+node_modules/
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+
+# environment variables
+.env
+.env.production
+
+# macOS-specific files
+.DS_Store
+
+# jetbrains setting folder
+.idea/
+
+# LaTeX build artifacts
+*.aux
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.pdf
+*.synctex.gz
+*.bbl
+*.bcf
+*.blg
+*.run.xml
+*.toc
+*.xdv
+
+
+# Local Knowledge
+PROJECT_KNOWLEDGE.md
+
+# Agent
+.agent/
+
+# Large CV files
+CV_RequenaPlensJoseManuel_*.pdf

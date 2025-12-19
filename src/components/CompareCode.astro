@@ -1,0 +1,149 @@
+---
+/**
+ * CompareCode component.
+ * Displays two code blocks side by side for comparison (bad vs good).
+ * Each block has its own copy button in the top-right corner.
+ */
+import { Icon } from "astro-icon/components";
+import CopyButton from "./CopyButton.astro";
+
+interface Props {
+  badTitle?: string;
+  goodTitle?: string;
+}
+
+const { badTitle = "Blocked / Insecure", goodTitle = "Allowed / Secure" } =
+  Astro.props;
+---
+
+<div class="compare-code-wrapper">
+  <div class="compare-block bad">
+    <div class="header">
+      <Icon name="mdi:close-circle-outline" class="icon" />
+      <span>{badTitle}</span>
+    </div>
+    <div class="content copy-container">
+      <slot name="bad" />
+      <CopyButton class="compare-copy-button" />
+    </div>
+  </div>
+  <div class="compare-block good">
+    <div class="header">
+      <Icon name="mdi:check-circle-outline" class="icon" />
+      <span>{goodTitle}</span>
+    </div>
+    <div class="content copy-container">
+      <slot name="good" />
+      <CopyButton class="compare-copy-button" />
+    </div>
+  </div>
+</div>
+
+<style>
+  .compare-code-wrapper {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    margin: 2rem 0;
+  }
+
+  @media (min-width: 768px) {
+    .compare-code-wrapper {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  .compare-block {
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    border: var(--border-subtle);
+  }
+
+  .compare-block.bad {
+    border-color: #dc2626; /* Red-600 for light mode */
+    background-color: rgba(220, 38, 38, 0.05);
+  }
+
+  .compare-block.good {
+    border-color: #16a34a; /* Green-600 for light mode */
+    background-color: rgba(22, 163, 74, 0.05);
+  }
+
+  /* Darker borders in dark mode to reduce glare */
+  :root[data-theme="dark"] .compare-block.bad {
+    border-color: #b91c1c; /* Red-700 - softer in dark mode */
+    background-color: rgba(185, 28, 28, 0.05);
+  }
+
+  :root[data-theme="dark"] .compare-block.good {
+    border-color: #15803d; /* Green-700 - softer in dark mode */
+    background-color: rgba(21, 128, 61, 0.05);
+  }
+
+  .header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    font-weight: bold;
+    font-size: 0.9rem;
+    border-bottom: 1px solid inherit;
+  }
+
+  .bad .header {
+    background-color: #dc2626; /* Red-600 for light mode */
+    color: #ffffff;
+  }
+
+  .good .header {
+    background-color: #16a34a; /* Green-600 for light mode */
+    color: #ffffff;
+  }
+
+  /* Darker header backgrounds in dark mode to reduce glare */
+  :root[data-theme="dark"] .bad .header {
+    background-color: #b91c1c; /* Red-700 - less intense in dark mode */
+  }
+
+  :root[data-theme="dark"] .good .header {
+    background-color: #15803d; /* Green-700 - less intense in dark mode */
+  }
+
+  .icon {
+    font-size: 1.25rem;
+  }
+
+  .content {
+    position: relative; /* For copy button positioning */
+    padding: 0; /* Remove padding to let code blocks fill */
+    font-size: 0.9rem;
+  }
+
+  /* Position copy button in top-right corner of each content area */
+  .content :global(.compare-copy-button) {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    z-index: 10;
+  }
+
+  /* Adjust internal code blocks to fit better */
+  .content :global(pre) {
+    margin: 0 !important;
+    border: none !important;
+    background: transparent !important;
+    border-radius: 0 !important;
+  }
+
+  .content :global(.expressive-code) {
+    margin: 0 !important;
+    border: none !important;
+    border-radius: 0 !important;
+  }
+
+  /* Hide the default expressive-code copy button to avoid duplicates */
+  /* Same approach as FileContent.astro and TabPanel.astro */
+  .content :global(.expressive-code .copy) {
+    display: none !important;
+  }
+</style>

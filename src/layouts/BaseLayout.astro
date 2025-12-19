@@ -1,0 +1,151 @@
+---
+/**
+ * BaseLayout component.
+ * The foundational layout for all pages.
+ * Includes:
+ * - <BaseHead>: Metadata and global styles.
+ * - <Header>: Navigation and branding.
+ * - <Footer>: Copyright and social links.
+ * - Theme toggle logic handling FOUC (Flash of Unstyled Content).
+ */
+import BaseHead from "../components/BaseHead.astro";
+import Header from "../components/Header.astro";
+import Footer from "../components/Footer.astro";
+
+interface Props {
+    title: string;
+    description?: string;
+    type?: string;
+    schema?: any; // JSON-LD schema defaults or overrides
+    image?: string;
+    // Article specific
+    publishDate?: Date;
+    modifiedDate?: Date;
+    authors?: string[];
+    tags?: string[];
+}
+
+const {
+    title,
+    description,
+    type,
+    schema,
+    image,
+    publishDate,
+    modifiedDate,
+    authors,
+    tags,
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+    <head>
+        <BaseHead
+            title={title}
+            description={description}
+            type={type}
+            schema={schema}
+            image={image}
+            publishDate={publishDate}
+            modifiedDate={modifiedDate}
+            authors={authors}
+            tags={tags}
+        />
+        <script is:inline nonce="NGINX_CSP_NONCE">
+            // Critical: Execute immediately to prevent FOUC
+            (function () {
+                const e = () => {
+                    if (
+                        typeof localStorage !== "undefined" &&
+                        localStorage.getItem("theme")
+                    )
+                        return localStorage.getItem("theme");
+                    return window.matchMedia("(prefers-color-scheme: light)")
+                        .matches
+                        ? "light"
+                        : "dark";
+                };
+                const t = e();
+                document.documentElement.setAttribute("data-theme", t);
+                if (t === "light") {
+                    document.documentElement.classList.add("light-mode");
+                    document.documentElement.classList.remove("dark-mode");
+                } else {
+                    document.documentElement.classList.add("dark-mode");
+                    document.documentElement.classList.remove("light-mode");
+                }
+            })();
+        </script>
+    </head>
+    <body>
+        <a href="#main-content" class="skip-link">Skip to content</a>
+        <Header />
+        <main id="main-content" data-pagefind-body>
+            <slot />
+            {type === "article" && <slot name="references" />}
+        </main>
+        <Footer />
+
+        <style is:global>
+            /* Accessibility: Skip Link */
+            .skip-link {
+                position: absolute;
+                top: -9999px;
+                left: 0.5rem;
+                background: var(--color-primary);
+                color: white;
+                padding: 0.5rem 1rem;
+                z-index: 9999;
+                text-decoration: none;
+                font-weight: bold;
+                border-radius: 0 0 0.5rem 0.5rem;
+            }
+            .skip-link:focus {
+                top: 0;
+            }
+
+            /* Critical Layout Fixes */
+            html {
+                overflow-x: hidden;
+                max-width: 100vw;
+            }
+            body {
+                overflow-x: visible; /* Ensure sticky works */
+                max-width: 100vw;
+            }
+
+            main {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                width: 100%;
+                overflow-x: clip; /* Prevent main from forcing scroll */
+            }
+
+            /* Prevent content blowout from wide elements */
+            pre,
+            code,
+            .expressive-code,
+            .mermaid,
+            table,
+            img,
+            video,
+            iframe {
+                max-width: 100%;
+            }
+
+            /* Allow horizontal scroll for code and diagrams */
+            pre,
+            .expressive-code,
+            .mermaid {
+                overflow-x: auto;
+            }
+
+            .mermaid svg {
+                max-width: 100% !important;
+                height: auto !important;
+            }
+        </style>
+    </body>
+</html>
