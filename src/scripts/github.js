@@ -115,7 +115,6 @@ async function fetchProfile() {
     container.appendChild(infoDiv);
 
   } catch (error) {
-    console.error("Profile fetch error:", error);
     container.innerHTML = "";
     const errDiv = document.createElement("div");
     errDiv.className = "error";
@@ -135,7 +134,6 @@ async function fetchRepos() {
     allRepos = await response.json(); // Store for searching
     renderRepos(allRepos);
   } catch (error) {
-    console.error(error);
     container.innerHTML = "";
     const errDiv = document.createElement("div");
     errDiv.className = "error";
