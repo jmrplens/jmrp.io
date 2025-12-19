@@ -8,12 +8,13 @@ const ASSETS_DIR = 'assets/extracted';
 const TARGET_DIR = path.join(DIST_DIR, ASSETS_DIR);
 
 // Regex to capture url("data:...") or url('data:...') or url(data:...)
+// Fixed ReDoS: Replaced [\s\S]*? with [^)]+ to avoid catastrophic backtracking
 // Captures: 
-// Group 1: Opening quote (or undefined)
+// Group 1: Opening quote (or empty string)
 // Group 2: Mime type (e.g. image/svg+xml)
 // Group 3: Encoding (e.g. ;base64) or undefined
-// Group 4: The data itself
-const DATA_URI_REGEX = /url\(\s*(['"]?)\s*data:([^;,]+)(;base64)?\s*,\s*([\s\S]*?)\1\s*\)/gi;
+// Group 4: The data itself (up to closing paren or quote)
+const DATA_URI_REGEX = /url\(\s*(['"]?)\s*data:([^;,]+)(;base64)?\s*,\s*([^)]+?)\1\s*\)/gi;
 
 async function extractDataUris() {
     console.log('Starting Data URI extraction...');

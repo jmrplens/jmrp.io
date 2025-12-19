@@ -33,9 +33,10 @@ export async function GET(context: APIContext) {
       // Generate full content
       const postBody = post.body || '';
       // Simple cleanup for MDX imports/exports
+      // Fixed ReDoS: Use [^\n]* instead of .* to avoid backtracking across line boundaries
       const cleanBody = postBody
-        .replaceAll(/^import\s+.*;$/gm, '')
-        .replaceAll(/^export\s+.*;$/gm, '');
+        .replaceAll(/^import\s+[^\n]*$/gm, '')
+        .replaceAll(/^export\s+[^\n]*$/gm, '');
 
       const html = await marked.parse(cleanBody);
       const sanitizedHtml = sanitizeHtml(html, {
