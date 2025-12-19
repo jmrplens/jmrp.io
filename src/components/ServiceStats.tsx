@@ -6,6 +6,129 @@ interface Props {
     readonly children?: any;
 }
 
+/**
+ * Fetch Mastodon service statistics
+ */
+async function fetchMastodonStats(setError: (error: boolean) => void) {
+    let peersCount = 0;
+    let mastodonTrends = [] as any[];
+    let instanceVersion = "Unknown";
+
+    try {
+        const [resPeers, resTrends, resInstance] = await Promise.all([
+            fetch("https://mstdn.jmrp.io/api/v1/instance/peers"),
+            fetch("https://mstdn.jmrp.io/api/v1/trends/tags?limit=3"),
+            fetch("https://mstdn.jmrp.io/api/v1/instance")
+        ]);
+
+        if (resPeers.ok) {
+            const peersData = await resPeers.json();
+            peersCount = Array.isArray(peersData) ? peersData.length : 0;
+        }
+
+        if (resTrends.ok) {
+            mastodonTrends = await resTrends.json();
+        }
+
+        if (resInstance.ok) {
+            const instanceData = await resInstance.json();
+            instanceVersion = instanceData.version;
+        }
+    } catch (e) {
+        console.error("Mastodon Network Error:", e);
+        setError(true);
+    }
+
+    return { peersCount, mastodonTrends, instanceVersion };
+}
+
+/**
+ * Fetch Matrix service statistics
+ */
+async function fetchMatrixStats(setError: (error: boolean) => void) {
+    let matrixData: any = {};
+    let matrixFed: any = null;
+
+    try {
+        const resConfig = await fetch("https://matrix.jmrp.io/.well-known/matrix/client");
+        if (resConfig.ok) matrixData = await resConfig.json();
+
+        const resVer = await fetch("https://matrix.jmrp.io/_matrix/client/versions");
+        if (resVer.ok) {
+            matrixData.online = true;
+            const verData = await resVer.json();
+            matrixData.versions = verData.versions;
+        }
+
+        const resFed = await fetch("https://matrix.jmrp.io/_matrix/federation/v1/version");
+        if (resFed.ok) matrixFed = await resFed.json();
+
+        const resDest = await fetch("https://matrix.jmrp.io/public_stats/federation");
+        if (resDest.ok) {
+            const destData = await resDest.json();
+            matrixData.federationTotal = destData.total;
+        }
+    } catch (e) {
+        console.error("Matrix Network Error:", e);
+        setError(true);
+    }
+
+    return { matrixData, matrixFed };
+}
+
+/**
+ * Fetch Meshtastic combined service statistics
+ */
+async function fetchMeshtasticStats() {
+    const [resPotato, resLF, resMF] = await Promise.all([
+        fetch("https://potatomesh.jmrp.io/api/nodes").catch(() => null),
+        fetch("https://mesh.jmrp.io/public_stats/lf").catch(() => null),
+        fetch("https://mesh.jmrp.io/public_stats/mf").catch(() => null)
+    ]);
+
+    let potatoNodes = 0;
+    let lfNodes = 0;
+    let mfNodes = 0;
+
+    if (resPotato?.ok) {
+        const data = await resPotato.json();
+        potatoNodes = Array.isArray(data) ? data.length : 0;
+    }
+    if (resLF?.ok) {
+        const data = await resLF.json();
+        lfNodes = data.data?.activeNodes ?? 0;
+    }
+    if (resMF?.ok) {
+        const data = await resMF.json();
+        mfNodes = data.data?.activeNodes ?? 0;
+    }
+
+    const potatoVersion = await fetchPotatoVersion();
+
+    return { potatoNodes, lfNodes, mfNodes, potatoVersion };
+}
+
+/**
+ * Fetch PotatoMesh version
+ */
+async function fetchPotatoVersion(): Promise<string> {
+    let potatoVersion = "";
+    try {
+        const resVer = await fetch("https://potatomesh.jmrp.io/version");
+        if (resVer.ok) {
+            try {
+                const verJson = await resVer.json();
+                potatoVersion = verJson.version;
+            } catch {
+                potatoVersion = await resVer.text();
+            }
+        }
+    } catch (e) {
+        console.error("Potato Version Error", e);
+    }
+    return potatoVersion;
+}
+
 export default function ServiceStats({ type, children }: Props) {
     const [stats, setStats] = useState<any>(null);
     const [loading, setLoading] = useState(true);
@@ -14,120 +137,15 @@ export default function ServiceStats({ type, children }: Props) {
     useEffect(() => {
         const fetchData = async () => {
             try {
+                let data;
                 if (type === 'mastodon') {
-                    // Fetch Peers, Trends, and Instance Version
-                    let peersCount = 0;
-                    let mastodonTrends = [] as any[];
-                    let instanceVersion = "Unknown";
-
-                    try {
-                        const [resPeers, resTrends, resInstance] = await Promise.all([
-                            fetch("https://mstdn.jmrp.io/api/v1/instance/peers"),
-                            fetch("https://mstdn.jmrp.io/api/v1/trends/tags?limit=3"),
-                            fetch("https://mstdn.jmrp.io/api/v1/instance")
-                        ]);
-
-                        if (resPeers.ok) {
-                            const peersData = await resPeers.json();
-                            peersCount = Array.isArray(peersData) ? peersData.length : 0;
-                        }
-
-                        if (resTrends.ok) {
-                            mastodonTrends = await resTrends.json();
-                        }
-
-                        if (resInstance.ok) {
-                            const instanceData = await resInstance.json();
-                            instanceVersion = instanceData.version;
-                        }
-                    } catch (e) {
-                        console.error("Mastodon Network Error:", e);
-                        setError(true);
-                    }
-
-                    setStats({ peersCount, mastodonTrends, instanceVersion });
-
+                    data = await fetchMastodonStats(setError);
                 } else if (type === 'matrix') {
-                    // Matrix Logic
-                    let matrixData: any = {};
-                    let matrixFed: any = null;
-
-                    try {
-                        const resConfig = await fetch("https://matrix.jmrp.io/.well-known/matrix/client");
-                        if (resConfig.ok) matrixData = await resConfig.json();
-
-                        const resVer = await fetch("https://matrix.jmrp.io/_matrix/client/versions");
-                        if (resVer.ok) {
-                            matrixData.online = true;
-                            const verData = await resVer.json();
-                            matrixData.versions = verData.versions;
-                        }
-
-                        const resFed = await fetch("https://matrix.jmrp.io/_matrix/federation/v1/version");
-                        if (resFed.ok) matrixFed = await resFed.json();
-
-                        // Fetch Federation Count (via secure proxy)
-                        const resDest = await fetch("https://matrix.jmrp.io/public_stats/federation");
-                        if (resDest.ok) {
-                            const destData = await resDest.json();
-                            matrixData.federationTotal = destData.total;
-                        }
-                    } catch (e) {
-                        console.error("Matrix Network Error:", e);
-                        setError(true);
-                    }
-
-                    setStats({ matrixData, matrixFed });
+                    data = await fetchMatrixStats(setError);
                 } else if (type === 'meshtastic-combined') {
-                    // Fetch all 3 sources in parallel
-
-                    const [resPotato, resLF, resMF] = await Promise.all([
-                        fetch("https://potatomesh.jmrp.io/api/nodes").catch(() => null),
-                        fetch("https://mesh.jmrp.io/public_stats/lf").catch(() => null),
-                        fetch("https://mesh.jmrp.io/public_stats/mf").catch(() => null)
-                    ]);
-
-                    let totalNodes = 0;
-                    let potatoNodes = 0;
-                    let lfNodes = 0;
-                    let mfNodes = 0;
-
-                    if (resPotato?.ok) {
-                        const data = await resPotato.json();
-                        potatoNodes = Array.isArray(data) ? data.length : 0;
-                    }
-                    if (resLF?.ok) {
-                        const data = await resLF.json();
-                        // API returns { success: true, data: { activeNodes: 123, ... } }
-                        lfNodes = data.data?.activeNodes ?? 0;
-                    }
-                    if (resMF?.ok) {
-                        const data = await resMF.json();
-                        mfNodes = data.data?.activeNodes ?? 0;
-                    }
-
-                    // Fetch PotatoMesh Version
-                    let potatoVersion = "";
-                    try {
-                        const resVer = await fetch("https://potatomesh.jmrp.io/version");
-                        if (resVer.ok) {
-                            // Try JSON first, fallback to text
-                            try {
-                                const verJson = await resVer.json();
-                                potatoVersion = verJson.version;
-                            } catch {
-                                potatoVersion = await resVer.text();
-                            }
-                        }
-                    } catch (e) {
-                        console.error("Potato Version Error", e);
-                    }
-
-                    setStats({ potatoNodes, lfNodes, mfNodes, potatoVersion });
-
-
+                    data = await fetchMeshtasticStats();
                 }
-
+                setStats(data);
             } catch (err) {
                 console.error("ServiceStats Error:", err);
                 setError(true);
