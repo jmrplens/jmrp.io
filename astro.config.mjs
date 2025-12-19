@@ -84,6 +84,6 @@ export default defineConfig({
   // Build configuration
   build: {
     // Inline small stylesheets to improve performance
-    inlineStylesheets: 'always'
+    inlineStylesheets: 'never'
   }
 });
