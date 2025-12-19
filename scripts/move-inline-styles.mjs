@@ -25,7 +25,7 @@ async function moveInlineStyles() {
         // 5. (.*?)           : Match style content (group 4)
         // 6. \3              : Match closing quote
         // 7. ([^>]*?)(>)     : Match post-attributes and closing bracket (group 5, 6)
-        const TAG_REGEX = /(<[\w-]+)((?:\s+[^>]*?)?)\s+style=(["'])(.*?)\3([^>]*?)(>)/gi;
+        const TAG_REGEX = /(<[\w-]+)([^>]*?)\s+style=(["'])(.*?)\3([^>]*?)(>)/gi;
 
         content = content.replaceAll(TAG_REGEX, (match, tagStart, preAttrs, quote, styleContent, postAttrs, tagEnd) => {
             // Normalize attributes to strings (undefined guard)
