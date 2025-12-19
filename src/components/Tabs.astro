@@ -11,7 +11,7 @@ interface Props {
 const { class: className } = Astro.props;
 ---
 
-<script>
+<script nonce="NGINX_CSP_NONCE" lang="ts">
     class TabsComponent extends HTMLElement {
         constructor() {
             super();
@@ -40,16 +40,20 @@ const { class: className } = Astro.props;
                         .forEach((b) =>
                             b.setAttribute("aria-selected", "false"),
                         );
-                    panels.forEach(
-                        (p) => ((p as HTMLElement).style.display = "none"),
-                    );
+                    panels.forEach((p) => {
+                        if (p instanceof HTMLElement) p.style.display = "none";
+                    });
 
                     button.setAttribute("aria-selected", "true");
-                    (panel as HTMLElement).style.display = "block";
+                    if (panel instanceof HTMLElement)
+                        panel.style.display = "block";
                 });
 
                 headers.appendChild(button);
-                if (index !== 0) (panel as HTMLElement).style.display = "none";
+                if (index !== 0) {
+                    if (panel instanceof HTMLElement)
+                        panel.style.display = "none";
+                }
             });
         }
     }

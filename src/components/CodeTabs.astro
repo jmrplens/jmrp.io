@@ -6,7 +6,7 @@
  */
 ---
 
-<script>
+<script nonce="NGINX_CSP_NONCE" lang="ts">
     class CodeTabs extends HTMLElement {
         constructor() {
             super();
@@ -51,9 +51,9 @@
                         b.setAttribute("aria-selected", "false");
                         b.setAttribute("tabindex", "-1");
                     });
-                    panels.forEach(
-                        (p) => ((p as HTMLElement).style.display = "none"),
-                    );
+                    panels.forEach((p) => {
+                        if (p instanceof HTMLElement) p.style.display = "none";
+                    });
 
                     // Activate clicked
                     button.setAttribute("aria-selected", "true");
@@ -61,23 +61,27 @@
 
                     // Show corresponding panel
                     // Using direct reference since we created the closure
-                    (panel as HTMLElement).style.display = "block";
+                    if (panel instanceof HTMLElement)
+                        panel.style.display = "block";
                 });
 
                 // Keyboard navigation (Arrows)
                 button.addEventListener("keydown", (e) => {
                     if (e.key === "ArrowRight") {
                         e.preventDefault();
-                        const next = button.nextElementSibling as HTMLElement;
-                        if (next) next.click();
-                        next?.focus();
+                        const next = button.nextElementSibling;
+                        if (next instanceof HTMLElement) {
+                            next.click();
+                            next.focus();
+                        }
                     }
                     if (e.key === "ArrowLeft") {
                         e.preventDefault();
-                        const prev =
-                            button.previousElementSibling as HTMLElement;
-                        if (prev) prev.click();
-                        prev?.focus();
+                        const prev = button.previousElementSibling;
+                        if (prev instanceof HTMLElement) {
+                            prev.click();
+                            prev.focus();
+                        }
                     }
                 });
 
@@ -85,9 +89,11 @@
 
                 // Initial state
                 if (index !== 0) {
-                    (panel as HTMLElement).style.display = "none";
+                    if (panel instanceof HTMLElement)
+                        panel.style.display = "none";
                 } else {
-                    (panel as HTMLElement).style.display = "block";
+                    if (panel instanceof HTMLElement)
+                        panel.style.display = "block";
                 }
             });
         }
