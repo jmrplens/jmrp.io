@@ -1,0 +1,107 @@
+---
+# ============================================================================
+# BLOG POST TEMPLATE
+# ============================================================================
+# Copy this template to create new blog posts in src/content/posts/
+# Rename the file to match your post slug (e.g., my-awesome-post.mdx)
+# ============================================================================
+
+# REQUIRED FIELDS
+# ----------------------------------------------------------------------------
+title: "Your Post Title Here"
+title: "Post Title"
+slug: "post-url-slug" # Required for permanent links when using ordered filenames (e.g. 001-post.mdx)
+publishedDate: 2025-12-17  # Format: YYYY-MM-DD
+
+# OPTIONAL FIELDS (but recommended for complete metadata)
+# ----------------------------------------------------------------------------
+description: "Short description for SEO and RSS feed..."
+
+# Author information (defaults to site author if not specified)
+author: "José Manuel Requena Plens"
+authorEmail: "mail@jmrp.io"
+
+# Dates
+updatedDate: 2025-12-17  # Last update date (defaults to publishedDate if not set)
+
+# Publication status
+draft: false  # Set to true to hide from production builds
+
+# Cover image (optional - uses default if not specified)
+# coverImage: "/img/my-post-cover.jpg"  # Path relative to public/ directory
+
+# Tags/Categories (optional but recommended for organization)
+tags: ["category1", "category2", "topic"]
+
+# References (optional - for citing sources)
+references:
+  - text: "Reference Title"
+    url: "https://example.com/reference"
+  - text: "Another Reference"
+    url: "https://example.com/another"
+---
+
+import Callout from '../../components/Callout.astro';
+import References from '../../components/References.astro';
+import Tabs from '../../components/Tabs.astro';
+import TabPanel from '../../components/TabPanel.astro';
+import YouTube from '../../components/YouTube.astro';
+
+{/* ========================================================================
+    POST CONTENT STARTS HERE
+    ======================================================================== */}
+
+Your post content goes here. You can use standard Markdown and MDX components.
+
+## Using Custom Components
+
+### Callout Component
+Use callouts to highlight important information:
+
+<Callout type="info">
+  This is an info callout. Available types: info, warning, danger, success
+</Callout>
+
+### Tabs
+Show multiple code examples or content side by side:
+
+<Tabs>
+  <TabPanel label="JavaScript" noPadding>
+    ```javascript
+    console.log('Hello World');
+    ```
+  </TabPanel>
+  <TabPanel label="Python" noPadding>
+    ```python
+    print("Hello World")
+    ```
+  </TabPanel>
+</Tabs>
+
+### YouTube Embed
+<YouTube id="VIDEO_ID_HERE" title="Video Title" />
+
+### References Section
+Add at the end of your post to display all references:
+
+<References references={frontmatter.references} />
+
+{/* ========================================================================
+    FIELD REFERENCE
+    ========================================================================
+
+    REQUIRED:
+    - title: String - The post title
+    - publishedDate: Date (YYYY-MM-DD) - Publication date
+
+    OPTIONAL:
+    - description: String - SEO description (recommended)
+    - author: String - Author name (defaults to "José Manuel Requena Plens")
+    - authorEmail: String (email format) - Author email for RSS (defaults to "mail@jmrp.io")
+    - updatedDate: Date (YYYY-MM-DD) - Last update date (defaults to publishedDate)
+    - draft: Boolean - Draft status (defaults to false)
+    - coverImage: String - Path to cover image (defaults to site default)
+    - tags: Array[String] - Post tags/categories
+    - references: Array[{text: String, url: String}] - External references
+
+    ======================================================================== */}

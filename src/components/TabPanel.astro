@@ -1,0 +1,43 @@
+---
+/**
+ * TabPanel component.
+ * Represents a single panel within a <Tabs> container.
+ * Can contain any content: code blocks, text, images, etc.
+ */
+import CopyButton from "./CopyButton.astro";
+
+interface Props {
+    label: string; // The text to display in the tab button
+    noPadding?: boolean; // Set to true for code blocks that don't need padding
+}
+
+const { label, noPadding = false } = Astro.props;
+---
+
+<div
+    class:list={["tab-panel", "copy-container", { "no-padding": noPadding }]}
+    data-label={label}
+>
+    <slot />
+    {noPadding && <CopyButton class="panel-copy-button" />}
+</div>
+
+<style>
+    /* Position copy button in the panel */
+    .tab-panel {
+        position: relative;
+    }
+
+    .tab-panel :global(.panel-copy-button) {
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+        z-index: 10;
+    }
+
+    /* Hide the default expressive-code copy button inside TabPanel to avoid duplicates */
+    /* Same approach as FileContent.astro */
+    .tab-panel :global(.expressive-code .copy) {
+        display: none !important;
+    }
+</style>

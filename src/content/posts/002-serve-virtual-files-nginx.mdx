@@ -1,0 +1,274 @@
+---
+title: "Serve Virtual Files with Nginx: Beyond the Document Root"
+slug: "serve-virtual-files-nginx"
+description: "Learn how to configure Nginx to serve dynamic or protected files like robots.txt, security.txt, and JSON responses without them physically existing in your web root. A practical guide for containerized apps and managed services."
+author: "José Manuel Requena Plens"
+authorEmail: "mail@jmrp.io"
+publishedDate: 2025-12-18
+updatedDate: 2025-12-18
+draft: false
+heroImage: "/src/assets/images/posts/features-guide-hero.png"
+tags: ["nginx", "sysadmin", "webperf", "devops", "tutorial"]
+---
+import Callout from '../../components/Callout.astro';
+import Tabs from '../../components/Tabs.astro';
+import TabPanel from '../../components/TabPanel.astro';
+import TerminalCommand from '../../components/TerminalCommand.astro';
+import FileContent from '../../components/FileContent.astro';
+import KeyPoint from '../../components/KeyPoint.astro';
+
+When deploying a modern web application, especially a containerized one or a service running on a managed platform, you often don't have easy access to its web root. What happens when you need to serve a standard file like `robots.txt` or `.well-known/security.txt`? You can't just drop it into the folder.
+
+Fortunately, Nginx is more than just a reverse proxy; it's a powerful tool for manipulating requests and responses. In this guide, we'll explore how to use Nginx to serve files and content that don't physically reside in the path of the service being exposed. This is perfect for adding standard files to applications where you can't—or shouldn't—modify the underlying image or file system.
+
+## The Core Techniques
+
+There are two primary methods to achieve this, each with its own use case.
+
+1.  **Using an [`alias`](https://nginx.org/en/docs/http/ngx_http_core_module.html#alias)**: This directive tells Nginx to serve a request from a file located elsewhere on the filesystem. It's ideal when you have a static file you want to serve, but it's not in your application's document root.
+
+2.  **Using [`return`](https://nginx.org/en/docs/http/ngx_http_rewrite_module.html#return)**: This directive can stop processing and immediately return a specific response code and content. It's incredibly efficient for small, simple text files where creating a separate file feels like overkill.
+
+<KeyPoint icon="mdi:vector-difference">
+  **`root` vs. `alias`**: A common point of confusion is the difference between `root` and `alias`. With `root`, Nginx appends the request URI to the path you specify. With `alias`, Nginx *discards* the matched part of the request URI and uses the path you specify directly. For serving a single file, `alias` is often more direct.
+</KeyPoint>
+
+---
+
+## Example 1: The Ubiquitous `robots.txt`
+
+The <a href="https://developers.google.com/search/docs/crawling-indexing/robots/intro" target="_blank" rel="noopener noreferrer" aria-label="Read the Google Search Central documentation on robots.txt">`robots.txt`</a> file tells web crawlers which parts of your site they should or shouldn't access. It's a fundamental part of SEO and site management.
+
+### Method A: Serve a Local File with `alias`
+
+Let's say your application runs from `/var/www/app`, but you want to manage all your configuration files, including `robots.txt`, from a central location like `/etc/nginx/assets/`.
+
+First, create your `robots.txt` file:
+
+<FileContent filename="/etc/nginx/assets/robots.txt">
+```txt
+User-agent: *
+Allow: /
+Sitemap: https://www.example.com/sitemap.xml
+```
+</FileContent>
+
+Now, configure your Nginx server block to intercept requests for `/robots.txt` and serve your custom file.
+
+<FileContent filename="Nginx Site Configuration" icon="devicon:nginx">
+```nginx
+server {
+    server_name www.example.com;
+
+    # The `location =` block provides an exact match, which is highly efficient.
+    # See the Nginx docs for more on the `location` directive.
+    location = /robots.txt {
+        alias /etc/nginx/assets/robots.txt;
+        # Ensure the correct content type is served
+        add_header Content-Type text/plain;
+    }
+
+    # All other requests go to your main application
+    location / {
+        proxy_pass http://localhost:3000;
+        # ... other proxy settings
+    }
+}
+```
+</FileContent>
+
+### Method B: Generate Content with `return`
+
+If your `robots.txt` is very simple and you don't want to manage another file, you can embed its content directly in the Nginx configuration. This is fantastic for container-based deployments where you want the entire configuration to be self-contained.
+
+<FileContent filename="Nginx Site Configuration" icon="devicon:nginx">
+```nginx
+server {
+    server_name www.example.com;
+
+    location = /robots.txt {
+        # The 'return 200' sends a success status code with the content.
+        # The text must be a single string in Nginx.
+        return 200 "User-agent: *\nDisallow: /private/\n";
+        add_header Content-Type text/plain;
+    }
+
+    location / {
+        proxy_pass http://localhost:3000;
+    }
+}
+```
+</FileContent>
+
+<Callout type="warning">
+  The content in a `return` directive must be a single, unbroken string. Newlines (`\n`) are permitted within the string to format the output.
+</Callout>
+
+---
+
+## Example 2: `security.txt` for Responsible Disclosure
+
+The `security.txt` file is a standard proposed by the [security.txt project](https://securitytxt.org/) that allows security researchers to easily find information on how to report vulnerabilities. It should be placed at the `/.well-known/security.txt` path.
+
+Let's create the file content. Note the use of `\n` for line breaks.
+
+<FileContent filename="Nginx Site Configuration" icon="devicon:nginx">
+```nginx
+server {
+    # ... server config ...
+
+    # Use a case-sensitive match for the well-known path
+    location = /.well-known/security.txt {
+        return 200 "Contact: mailto:security@example.com\nExpires: 2026-12-31T23:59:59.000Z\nPreferred-Languages: en\n";
+        add_header Content-Type text/plain;
+    }
+
+    # ... other locations ...
+}
+```
+</FileContent>
+
+This configuration makes it easy for security researchers to get in touch, enhancing your site's security posture, without touching your application code.
+
+---
+
+## Example 3: `humans.txt` for Credits
+
+The <a href="https://humanstxt.org/" target="_blank" rel="noopener noreferrer" aria-label="Visit the humans.txt website">`humans.txt`</a> initiative is for giving credit to the people behind the website. It's a simple, human-readable text file.
+
+### Method A: Using `alias`
+
+<FileContent filename="/etc/nginx/assets/humans.txt">
+```txt
+# TEAM
+# Lead Developer: Jane Doe
+# Contact: mailto:jane@example.com
+# Twitter: @janedoe
+
+# SITE
+# Last update: 2025-12-18
+# Standards: HTML5, CSS3
+# Software: Nginx, Astro
+```
+</FileContent>
+<FileContent filename="Nginx Site Configuration" icon="devicon:nginx">
+```nginx
+location = /humans.txt {
+    alias /etc/nginx/assets/humans.txt;
+    add_header Content-Type text/plain;
+}
+```
+</FileContent>
+
+### Method B: Using `return`
+
+<FileContent filename="Nginx Site Configuration" icon="devicon:nginx">
+```nginx
+location = /humans.txt {
+    return 200 "# TEAM\nLead Developer: Jane Doe\nContact: mailto:jane@example.com\n\n# SITE\nLast update: 2025-12-18\n";
+    add_header Content-Type text/plain;
+}
+```
+</FileContent>
+
+---
+
+## Example 4: A Dynamic JSON Health Check
+
+Sometimes you need a simple health check endpoint that returns a JSON response, like `{"status": "ok"}`. This is often used by load balancers or monitoring tools. Generating this with Nginx is far more efficient than waking up a full application instance just to respond.
+
+<FileContent filename="Nginx Site Configuration" icon="devicon:nginx">
+```nginx
+server {
+    # ...
+
+    location = /health {
+        # This directive is part of the standard HttpHeadersModule
+        # See the docs for more on `add_header`.
+        add_header 'Content-Type' 'application/json';
+        
+        # Return a simple JSON object
+        return 200 '{"status":"ok", "version":"1.2.3"}';
+    }
+
+    # This location prevents the health check from appearing in access logs
+    location = /health {
+        access_log off;
+        # ... content from previous block ...
+    }
+
+    # ...
+}
+```
+</FileContent>
+
+<Callout type="info">
+  To keep your logs clean, you can combine the location block with `access_log off;`. This prevents health check pings from spamming your access logs.
+</Callout>
+
+---
+
+## Example 5: Let's Encrypt HTTP-01 Challenges
+
+A very common and practical use case is handling validation for SSL certificates from <a href="https://letsencrypt.org/docs/challenge-types/#http-01-challenge" target="_blank" rel="noopener noreferrer" aria-label="Learn about HTTP-01 challenges on Let's Encrypt">Let's Encrypt</a>. The `http-01` challenge requires serving a specific file from the `/.well-known/acme-challenge/` directory. When running multiple services or Docker containers behind a single Nginx proxy, you can't place the file in each application.
+
+The solution is to have Nginx intercept these requests and serve them from a common, shared directory that your ACME client (like `certbot`) can write to.
+
+<FileContent filename="Nginx Site Configuration" icon="devicon:nginx">
+```nginx
+server {
+    # ...
+
+    location /.well-known/acme-challenge/ {
+        # Point all requests to a common directory
+        root /var/www/certbot;
+    }
+
+    # ... all other locations for your app
+}
+```
+</FileContent>
+
+With this configuration, no matter which `server_name` receives the validation request, Nginx will always look for the challenge file in `/var/www/certbot`. Just make sure your ACME client is configured to place its files there.
+
+---
+
+## Example 6: Mobile App Association Files
+
+To create seamless links between your website and your mobile app ([Android App Links](https://developer.android.com/training/app-links/verify-applinks) and [iOS Universal Links](https://developer.apple.com/documentation/xcode/supporting-associated-domains)), you need to host specific JSON files.
+
+-   **Android:** `/.well-known/assetlinks.json`
+-   **iOS:** `/.well-known/apple-app-site-association` (note: no file extension)
+
+Nginx can serve both. The iOS file is particularly interesting because it **must** be served with the `application/json` content type.
+
+<FileContent filename="Nginx Site Configuration" icon="devicon:nginx">
+```nginx
+server {
+    # ...
+
+    # Android App Links
+    location = /.well-known/assetlinks.json {
+        alias /etc/nginx/assets/assetlinks.json;
+        add_header 'Content-Type' 'application/json';
+    }
+
+    # iOS Universal Links
+    location = /.well-known/apple-app-site-association {
+        alias /etc/nginx/assets/apple-app-site-association;
+        # iOS requires this specific content type
+        add_header 'Content-Type' 'application/json';
+    }
+
+    # ...
+}
+```
+</FileContent>
+
+---
+
+## Conclusion
+
+By leveraging Nginx's `alias` and `return` directives, you gain immense flexibility in how you serve content. This approach decouples standard web files from your application's codebase, making it easier to manage deployments, secure your environment, and improve performance.
+
+Whether you're running a Docker container, a managed Node.js service, or a complex Java application, Nginx can act as a powerful gatekeeper that serves these essential "virtual" files on your behalf, simply and efficiently.

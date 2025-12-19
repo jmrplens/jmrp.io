@@ -1,0 +1,594 @@
+---
+/**
+ * Blog Post Page ([...slug].astro).
+ * Renders individual blog posts dynamically based on their slug.
+ * Includes support for:
+ * - Custom components (Callout, CodeTabs, YouTube) in MDX
+ * - Automated Table of Contents generation
+ * - SEO Schema for blog postings
+ */
+import { type CollectionEntry, getCollection } from "astro:content";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { Icon } from "astro-icon/components";
+
+import Callout from "../../components/Callout.astro";
+import Tabs from "../../components/Tabs.astro";
+import TabPanel from "../../components/TabPanel.astro";
+import YouTube from "../../components/YouTube.astro";
+import Code from "../../components/Code.astro";
+import TableOfContentsDrawer from "../../components/TableOfContentsDrawer.astro";
+import References from "../../components/References.astro";
+
+export async function getStaticPaths() {
+    const posts = await getCollection("posts");
+    return posts.map((post) => ({
+        params: { slug: post.slug },
+        props: post,
+    }));
+}
+
+type Props = CollectionEntry<"posts">;
+
+const post = Astro.props;
+const { Content, headings } = await post.render();
+
+// --- Reference Collection Logic ---
+// Regex to find all markdown links: [text](url)
+const linkRegex = /\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/g;
+const collectedRefsFromMarkdown = [];
+let match;
+while ((match = linkRegex.exec(post.body)) !== null) {
+    collectedRefsFromMarkdown.push({ text: match[1], url: match[2] });
+}
+
+// Also find raw <a> tags in the body, as MDX allows HTML
+const htmlLinkRegex =
+    /<a\s+(?:[^>]*?\s+)?href="(https?:\/\/[^"]*)"[^>]*>([\s\S]*?)<\/a>/gi;
+while ((match = htmlLinkRegex.exec(post.body)) !== null) {
+    const url = match[1];
+    // Sanitize inner HTML to get a readable text version
+    const rawText = match[2];
+    const text = rawText
+        .replace(/<[^>]+>/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+    if (text) {
+        collectedRefsFromMarkdown.push({ text, url });
+    }
+}
+
+// Combine frontmatter references with collected ones and deduplicate
+// Combine collected references and deduplicate
+const allPostReferences = [...collectedRefsFromMarkdown];
+const uniqueUrls = new Set<string>();
+const finalReferences = allPostReferences.filter((ref) => {
+    if (!uniqueUrls.has(ref.url)) {
+        uniqueUrls.add(ref.url);
+        return true;
+    }
+    return false;
+});
+// --- End of Reference Logic ---
+
+const articleSchema = [
+    {
+        "@type": "BlogPosting",
+        "@id":
+            new URL(`/blog/${post.slug}`, Astro.site).toString() + "#article",
+        headline: post.data.title,
+        description: post.data.description,
+        datePublished: post.data.publishedDate.toISOString(),
+        dateModified: (
+            post.data.updatedDate || post.data.publishedDate
+        ).toISOString(),
+        author: {
+            "@type": "Person",
+            "@id": "https://jmrp.io/#person", // Reference global person
+        },
+        image: new URL(
+            post.data.coverImage || "/default-blog-cover.jpg",
+            Astro.site,
+        ).toString(),
+        mainEntityOfPage: {
+            "@type": "WebPage",
+            "@id": new URL(`/blog/${post.slug}`, Astro.site).toString(),
+        },
+    },
+    {
+        "@type": "BreadcrumbList",
+        itemListElement: [
+            {
+                "@type": "ListItem",
+                position: 1,
+                name: "Blog",
+                item: new URL("/blog", Astro.site).toString(),
+            },
+            {
+                "@type": "ListItem",
+                position: 2,
+                name: post.data.title,
+                item: new URL(`/blog/${post.slug}`, Astro.site).toString(),
+            },
+        ],
+    },
+];
+---
+
+<BaseLayout
+    title={post.data.title}
+    description={post.data.description}
+    type="article"
+    image={post.data.coverImage}
+    publishDate={post.data.publishedDate}
+    modifiedDate={post.data.updatedDate}
+    tags={post.data.tags}
+    schema={articleSchema}
+    tags={post.data.tags}
+    schema={articleSchema}
+>
+    <article class="post-content">
+        <header class="post-header">
+            <div class="content-wrapper">
+                <a href="/blog" class="back-link">
+                    <Icon name="mdi:arrow-left" /> Back to Blog
+                </a>
+                <div class="meta">
+                    <time datetime={post.data.publishedDate.toISOString()}>
+                        {
+                            post.data.publishedDate.toLocaleDateString(
+                                "en-US",
+                                {
+                                    year: "numeric",
+                                    month: "long",
+                                    day: "numeric",
+                                },
+                            )
+                        }
+                    </time>
+                    <span class="separator">•</span>
+                    {
+                        post.data.tags && (
+                            <div class="tags">
+                                {post.data.tags.map((tag) => (
+                                    <span class="tag">#{tag}</span>
+                                ))}
+                            </div>
+                        )
+                    }
+                </div>
+                <h1>{post.data.title}</h1>
+                <p class="lead">{post.data.description}</p>
+            </div>
+        </header>
+
+        <div class="layout-grid content-wrapper">
+            <aside class="toc-sidebar">
+                {
+                    headings.length > 0 && (
+                        <nav class="toc">
+                            <h2>Table of Contents</h2>
+                            <ul>
+                                {headings.map((heading) => (
+                                    <li class={`toc-depth-${heading.depth}`}>
+                                        <a href={`#${heading.slug}`}>
+                                            {heading.text}
+                                        </a>
+                                    </li>
+                                ))}
+                            </ul>
+                        </nav>
+                    )
+                }
+
+                <button
+                    class="desktop-toc-btn toc-trigger"
+                    aria-label="Open Table of Contents"
+                >
+                    <Icon name="mdi:format-list-bulleted" />
+                    <span>Contents</span>
+                </button>
+            </aside>
+
+            <div class="prose">
+                <Content
+                    components={{ Callout, Tabs, TabPanel, YouTube, Code }}
+                />
+                <References references={finalReferences} />
+            </div>
+        </div>
+    </article>
+
+    <TableOfContentsDrawer headings={headings} />
+</BaseLayout>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const tocNav = document.querySelector(".toc");
+        if (!tocNav) return;
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                entries.forEach((entry) => {
+                    if (!entry.isIntersecting) {
+                        document.body.classList.add("desktop-toc-visible");
+                    } else {
+                        document.body.classList.remove("desktop-toc-visible");
+                    }
+                });
+            },
+            {
+                rootMargin: `-${getComputedStyle(document.documentElement).getPropertyValue("--header-height").trim()} 0px 0px 0px`,
+                threshold: 0,
+            },
+        );
+
+        observer.observe(tocNav);
+    });
+
+    // Replace Expressive Code copy buttons with our custom buttons
+    // Only for standalone code blocks (not inside FileContent, Tabs, CompareCode)
+    document.addEventListener("DOMContentLoaded", () => {
+        // Find all .expressive-code blocks in the prose content
+        const proseContent = document.querySelector(".prose");
+        if (!proseContent) return;
+
+        const codeBlocks = proseContent.querySelectorAll(".expressive-code");
+
+        codeBlocks.forEach((block) => {
+            // Skip if already inside a special component
+            if (
+                block.closest(".file-content-wrapper") ||
+                block.closest(".tab-panel") ||
+                block.closest(".compare-block")
+            ) {
+                return; // Already handled by component
+            }
+
+            // Hide the Expressive Code copy button
+            const expressiveButton = block.querySelector(".copy");
+            if (expressiveButton instanceof HTMLElement) {
+                expressiveButton.style.display = "none";
+            }
+
+            // Check if we already added our button
+            if (block.querySelector(".custom-code-copy-btn")) {
+                return; // Already processed
+            }
+
+            // Create our custom copy button
+            const copyButton = document.createElement("button");
+            copyButton.className = "custom-code-copy-btn";
+            copyButton.setAttribute("aria-label", "Copy to clipboard");
+            copyButton.innerHTML = `
+                <svg class="copy-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
+                    <path fill="currentColor" d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z" />
+                </svg>
+                <svg class="success-icon hidden" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
+                    <path fill="currentColor" d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z" />
+                </svg>
+            `;
+
+            // Add click handler
+            copyButton.addEventListener("click", () => {
+                const codeElement = block.querySelector("code");
+                const text = codeElement ? codeElement.textContent : null;
+
+                if (!text) {
+                    console.warn("No code element found in block.");
+                    return;
+                }
+
+                navigator.clipboard.writeText(text).then(
+                    () => {
+                        const copyIcon = copyButton.querySelector(".copy-icon");
+                        const successIcon =
+                            copyButton.querySelector(".success-icon");
+
+                        if (
+                            copyIcon instanceof HTMLElement &&
+                            successIcon instanceof HTMLElement
+                        ) {
+                            copyIcon.classList.add("hidden");
+                            successIcon.classList.remove("hidden");
+
+                            setTimeout(() => {
+                                copyIcon.classList.remove("hidden");
+                                successIcon.classList.add("hidden");
+                            }, 2000);
+                        }
+                    },
+                    (err) => {
+                        console.error("Failed to copy:", err);
+                    },
+                );
+            });
+
+            // Make the block relative for positioning
+            if (block instanceof HTMLElement) {
+                block.style.position = "relative";
+            }
+
+            // Add the button to the block
+            block.appendChild(copyButton);
+        });
+    });
+</script>
+
+<style>
+    .post-header {
+        padding: 6rem 0 4rem;
+        background: radial-gradient(
+            circle at center,
+            var(--color-bg-subtle) 0%,
+            transparent 70%
+        );
+        margin-bottom: 3rem;
+        border-bottom: 1px solid var(--color-border);
+    }
+
+    .content-wrapper {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 2rem;
+    }
+
+    .back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--color-text-muted);
+        text-decoration: none;
+        font-size: 0.9rem;
+        margin-bottom: 2rem;
+        transition: color 0.2s;
+    }
+
+    .back-link:hover {
+        color: var(--color-primary);
+    }
+
+    .meta {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        color: var(--color-text-muted);
+        font-size: 0.9rem;
+        margin-bottom: 1rem;
+    }
+
+    .separator {
+        opacity: 0.5;
+    }
+
+    h1 {
+        font-size: 3.5rem;
+        line-height: 1.1;
+        font-weight: 800;
+        color: var(--color-text-heading);
+        margin-bottom: 1.5rem;
+        letter-spacing: -0.02em;
+    }
+
+    .toc h2 {
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        color: var(--color-text-heading);
+    }
+
+    .lead {
+        font-size: 1.25rem;
+        color: var(--color-text-body);
+        max-width: 70ch;
+        line-height: 1.6;
+        opacity: 0.9;
+    }
+
+    .tags {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .tag {
+        color: var(--color-primary);
+        font-weight: 600;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .layout-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: var(--space-xl);
+        max-width: var(--max-width-container);
+        margin: 0 auto;
+        padding: 0 var(--space-md);
+        position: relative;
+    }
+
+    .prose {
+        max-width: var(--max-width-prose);
+        margin: 0 auto;
+        width: 100%;
+        min-width: 0; /* Allow shrinking below content size in Grid */
+        overflow-wrap: break-word; /* Ensure text wraps */
+    }
+
+    /* Enhance link contrast in post content */
+    .prose :global(a) {
+        font-weight: 600;
+    }
+
+    .toc-sidebar {
+        /* position: sticky; <--- Removing sticky for the container */
+        top: 2rem;
+        height: 100%; /* Fill height */
+        display: none;
+    }
+
+    .desktop-toc-btn {
+        position: sticky;
+        top: calc(var(--header-height) + 0.5rem);
+        margin-top: 1rem;
+
+        display: none; /* Hidden by default */
+        align-items: center;
+        gap: 0.5rem;
+
+        background-color: var(--color-bg-secondary);
+        border: var(--border-subtle);
+        color: var(--color-text-muted);
+        padding: 0.75rem 1rem;
+        border-radius: var(--radius-md);
+        font-size: 0.9rem;
+        font-weight: 500;
+        cursor: pointer;
+        width: fit-content;
+        transition: all 0.2s;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        z-index: 10;
+    }
+
+    /* Only show the button when the body class is present (toggled by JS) */
+    :global(.desktop-toc-visible) .desktop-toc-btn {
+        display: flex;
+        animation: fadeIn 0.3s ease;
+    }
+
+    .desktop-toc-btn:hover {
+        background-color: var(--color-bg-hover);
+        color: var(--color-primary);
+        border-color: var(--color-primary);
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .toc ul {
+        list-style: none;
+        padding: 0;
+    }
+
+    .toc li {
+        margin-bottom: 0.5rem;
+    }
+
+    .toc li a {
+        text-decoration: none;
+        color: var(--color-text-muted);
+        font-size: 0.9rem;
+        transition: color 0.2s;
+        display: block;
+        padding: 0.2rem 0;
+    }
+
+    .toc li a:hover {
+        color: var(--color-primary);
+    }
+
+    /* TOC Indentation */
+    .toc-depth-2 {
+        padding-left: 0;
+    }
+    .toc-depth-3 {
+        padding-left: 1rem;
+        font-size: 0.85rem;
+    }
+    .toc-depth-4 {
+        padding-left: 2rem;
+        font-size: 0.85rem;
+    }
+    .toc-depth-5 {
+        padding-left: 3rem;
+    }
+    .toc-depth-6 {
+        padding-left: 4rem;
+    }
+
+    @media (min-width: 1024px) {
+        .toc-sidebar {
+            display: block;
+        }
+
+        .layout-grid {
+            grid-template-columns: 250px minmax(0, 1fr);
+            gap: 4rem;
+        }
+    }
+
+    /* ... omitted intermediate css ... */
+
+    @media (max-width: 768px) {
+        .post-header {
+            padding: 4rem 0 2rem;
+            text-align: left;
+        }
+
+        h1 {
+            font-size: 2.25rem;
+        }
+
+        .content-wrapper {
+            padding: 0 1.5rem;
+        }
+
+        .lead {
+            font-size: 1.125rem;
+        }
+    }
+
+    /* Custom copy button for standalone code blocks */
+    :global(.custom-code-copy-btn) {
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+        background-color: var(--color-bg-subtle, rgba(255, 255, 255, 0.1));
+        border: var(--border-subtle, 1px solid rgba(255, 255, 255, 0.1));
+        border-radius: 4px;
+        padding: 0.3rem 0.5rem;
+        cursor: pointer;
+        opacity: 0.8;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 32px;
+        min-height: 32px;
+        z-index: 10;
+    }
+
+    :global(.custom-code-copy-btn:hover) {
+        opacity: 1;
+        background-color: var(--color-bg-secondary, #222);
+    }
+
+    :global(.custom-code-copy-btn:active) {
+        transform: scale(0.95);
+    }
+
+    :global(.custom-code-copy-btn .copy-icon),
+    :global(.custom-code-copy-btn .success-icon) {
+        width: 1.2rem;
+        height: 1.2rem;
+        color: var(--color-text-muted, #888);
+        display: block;
+    }
+
+    :global(.custom-code-copy-btn .success-icon) {
+        color: var(--color-success, #2ea043);
+    }
+
+    :global(.custom-code-copy-btn .hidden) {
+        display: none;
+    }
+</style>

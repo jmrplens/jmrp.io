@@ -1,0 +1,454 @@
+---
+title: "Securing Nginx with Client Certificates (mTLS)"
+slug: "secure-nginx-client-certificates"
+description: "A comprehensive guide on implementing Mutual TLS (mTLS) with Nginx. Learn how to create your own Certificate Authority, generate client certificates, and configure your Linux server to restrict access to only authorized devices."
+author: "José Manuel Requena Plens"
+authorEmail: "mail@jmrp.io"
+publishedDate: 2025-12-16
+updatedDate: 2025-12-16
+draft: false
+tags: ["nginx", "security", "linux", "certificates", "tutorial"]
+---
+import Callout from '../../components/Callout.astro';
+import Tabs from '../../components/Tabs.astro';
+import TabPanel from '../../components/TabPanel.astro';
+import TerminalCommand from '../../components/TerminalCommand.astro';
+import FileContent from '../../components/FileContent.astro';
+import TerminalOutput from '../../components/TerminalOutput.astro';
+import Collapsible from '../../components/Collapsible.astro';
+
+Implementing **<a href="https://www.cloudflare.com/learning/access-management/what-is-mutual-tls/" target="_blank" rel="noopener noreferrer" aria-label="Learn more about Mutual TLS (mTLS) on Cloudflare">Mutual TLS (mTLS)</a>** is one of the most robust ways to secure private web services. Unlike standard password authentication, mTLS requires the client (your browser/device) to present a valid certificate signed by your own Certificate Authority (CA).
+
+If the client doesn't have the certificate, the Nginx server rejects the connection entirely—often before even serving the login page. This is perfect for securing private administration panels, NAS interfaces, or internal tools like the one running on `secure.example.com`.
+
+In this guide, I'll walk you through creating a bespoke Certificate Authority, generating client certificates, configuring Nginx, and handling advanced scenarios like **revoking access** for lost devices or restricting specific users. You can find more deep-dive tutorials from providers like [Smallstep's Hello mTLS](https://smallstep.com/hello-mtls)..
+
+## How it Works
+
+Before diving into the commands, let's look at the handshake process.
+
+### The Full Logic Flow
+
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant N as Nginx
+    
+    C->>N: Client Hello
+    N->>C: Request Cert
+    C->>N: Client Cert
+    
+    Note right of N: Verification: CA, CRL, CN
+    
+    alt Passed
+        N->>C: 200 OK
+    else Failed
+        N->>C: 403 Forbidden
+    end
+```
+
+## Strategies and Use Cases
+
+Why go through the trouble of managing certificates? It separates the concepts of [authentication and authorization](https://www.okta.com/identity-101/authentication-vs-authorization/) at the infrastructure level.
+
+1.  **Zero Trust Access**: Even if an attacker steals your password, they can't access the site without the physical file (the private key/certificate) installed on their device.
+2.  **Reduction of Attack Surface**: "Script kiddies" and bots scanning for vulnerabilities (like open WordPress login pages) will simply receive a 400 Bad Request or connection reset. They won't even see the application.
+3.  **Seamless Experience**: Once installed, the browser handles the handshake automatically. No need to type 2FA codes every time.
+
+## Prerequisites
+
+- A Linux server (Debian/Ubuntu/CentOS) with Nginx installed.
+- Access to the terminal.
+- The [`openssl`](https://docs.openssl.org/) command-line tool installed (standard on almost all Linux distros).
+
+---
+
+## Step 1: Create Your Certificate Authority (CA)
+
+First, we need to become our own Authority. To ensure we can properly revoke certificates later, we need a consistent configuration and database.
+
+Create a directory to store your keys safely and set up the CA database:
+
+<TerminalCommand command="mkdir -p /etc/nginx/client-certs && cd /etc/nginx/client-certs" prompt="#"/>
+<TerminalCommand command="mkdir -p newcerts && touch index.txt && echo 1000 > serial" prompt="#"/>
+
+### 1. Create a Minimal `openssl.cnf`
+
+Create a file named `openssl.cnf` in this directory. This file ensures that `openssl ca` (used for signing and revocation) knows where your files are.
+
+<FileContent filename="/etc/nginx/client-certs/openssl.cnf">
+```ini
+[ ca ]
+default_ca = CA_default
+[ CA_default ]
+dir             = .
+database        = $dir/index.txt
+new_certs_dir   = $dir/newcerts
+certificate     = $dir/ca.crt
+serial          = $dir/serial
+private_key     = $dir/ca.key
+default_days    = 365
+default_crl_days= 30
+default_md      = sha256
+policy          = policy_loose
+copy_extensions = copy
+[ policy_loose ]
+countryName             = optional
+stateOrProvinceName     = optional
+localityName            = optional
+organizationName        = optional
+organizationalUnitName  = optional
+commonName              = supplied
+emailAddress            = optional
+[ req ]
+distinguished_name = req_distinguished_name
+prompt             = no
+[ req_distinguished_name ]
+C  = ES
+ST = Valencia
+L  = Valencia
+O  = JMRP-IO-LAB
+OU = IT Services
+CN = JMRP-IO-LAB Root CA
+```
+</FileContent>
+
+### 2. Generate the CA Key and Certificate
+
+Now generate the root CA, which consists of a private key (`ca.key`) and a public certificate (`ca.crt`).
+
+<TerminalCommand command="openssl req -new -x509 -nodes -days 3650 -out ca.crt -keyout ca.key -config openssl.cnf" />
+
+<Collapsible summary="Example ca.key content">
+<FileContent filename="ca.key" icon="mdi:key-variant">
+```text
+-----BEGIN PRIVATE KEY-----
+(Your unique, long, private key text will be here)
+...
+-----END PRIVATE KEY-----
+```
+</FileContent>
+</Collapsible>
+
+<Collapsible summary="Example ca.crt content">
+<FileContent filename="ca.crt" icon="mdi:certificate-outline">
+```text
+-----BEGIN CERTIFICATE-----
+MIIDqTCCApGgAwIBAgIUGXK4wXR7k/+3vuH7tS7NsTS13OUwDQYJKoZIhvcNAQEL
+BQAwfTELMAkGA1UEBhMCRVMxETAPBgNVBAgMCFZhbGVuY2lhMREwDwYDVQQHDAhW
+YWxlbmNpYTEUMBIGA1UECgwLSk1SUC1JTy1MQUIxFDASBgNVBAsMC0lUIFNlcnZp
+Y2VzMRwwGgYDVQQDDBNKTVJQLUlPLUxBQiBSb290IENBMB4XDTI1MTIxODAwNTkz
+MFoXDTM1MTIxNjAwNTkzMFowfTELMAkGA1UEBhMCRVMxETAPBgNVBAgMCFZhbGVu
+Y2lhMREwDwYDVQQHDAhWYWxlbmNpYTEUMBIGA1UECgwLSk1SUC1JTy1MQUIxFDAS
+BgNVBAsMC0lUIFNlcnZpY2VzMRwwGgYDVQQDDBNKTVJQLUlPLUxBQiBSb290IENB
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEArZ5az+q02GgeSIdkxfm/
+NSRl5ymjIjj/z8oek7UaZNMuHERleKghRjmaQngCsfYsBjf9MWwiil9nN03gzcTt
+TWftgBuSnvFTzmvGGyZ3nhLJPJufB1vv3253sDPT1+wfTK5/5oWGVqpAm0ZJkS7+
+kQuXr/KpD0jeQlNRqVPZjD94IKqCoHyHIzwkboKi5LZ20S/SvhNWCdddxP+mdqxb
+sapKxLvE9+9jkCbngNU1Stglw4JxUesHvU5XgHl98tfGmedFy3NyAdFdVGhC9gzD
+TTwLeu+LFn1nPcwKwz7pnregEd4XcDJRYWwhbEMJwpaHPVyZu0a3RfA3HitqD7fG
+UQIDAQABoyEwHzAdBgNVHQ4EFgQUxM0JVaHLJ8EAthfjrrVlGzE6BswwDQYJKoZI
+hvcNAQELBQADggEBAJw4N1HXIqjZp1fUiARAFjM/UqeKLwuON7oJWMHcqTLq3don
+hbqrvif80STPzVdvIcMvfa+mjMAAkHETpj1GWDZcQ8TL0wAUsR1gjiRDrg1kZBx+
+V/fo+WmEQDbn6581e0g7NxBwTXkoHT3bF4rbVcIPmx9/YfkcSQm8GKcyKan6TcZ7
+emZW46QBbiohOw1znFmDaI+NHZoMzIYQLs1zP8td+xl1TTxbDekqp+jS9GYwBqHa
+QOa0k/ZXcjFqpTopvlAb8AA8XsxVDcmAHfSItB8qNxwL8FnIIvlj/Yg9OGxraArJ
+2fXleID8q60zmJik0fcTyVoBdEg6KWVAykEia+E=
+-----END CERTIFICATE-----
+```
+</FileContent>
+</Collapsible>
+
+
+You can verify your new CA certificate content:
+<TerminalCommand command="openssl x509 -in ca.crt -text -noout" />
+<TerminalOutput title="Decoded CA Certificate">
+```text
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number:
+            1a:c9:b8:c1:74:7b:93:ff:b7:be:e1:fb:b5:2e:cd:b1:34:b5:dd:ce
+        Signature Algorithm: sha256WithRSAEncryption
+        Issuer: C = ES, ST = Valencia, L = Valencia, O = JMRP-IO-LAB, OU = IT Services, CN = JMRP-IO-LAB Root CA
+        Validity
+            Not Before: Dec 18 00:59:30 2025 GMT
+            Not After : Dec 16 00:59:30 2035 GMT
+        Subject: C = ES, ST = Valencia, L = Valencia, O = JMRP-IO-LAB, OU = IT Services, CN = JMRP-IO-LAB Root CA
+        Subject Public Key Info:
+            Public Key Algorithm: rsaEncryption
+                Public-Key: (4096 bit)
+                Modulus:
+                    00:ad:9e:5a:cf:ea:b4:d8:68:1e:48:87:64:c5:f9:
+                    ...
+                Exponent: 65537 (0x10001)
+        X509v3 extensions:
+            X509v3 Subject Key Identifier: 
+                C4:CD:09:55:A1:CB:27:C1:00:B6:17:E3:AE:B5:65:1B:31:3A:06:CC
+            X509v3 Authority Key Identifier: 
+                C4:CD:09:55:A1:CB:27:C1:00:B6:17:E3:AE:B5:65:1B:31:3A:06:CC
+            X509v3 Basic Constraints: critical
+                CA:TRUE
+    Signature Algorithm: sha256WithRSAEncryption
+    Signature Value:
+        9c:38:37:51:d7:22:a8:d9:a7:57:d4:88:04:40:16:33:3f:52:
+        ...
+```
+</TerminalOutput>
+
+---
+
+## Step 2: Generate Client Certificates
+
+Now let's create a certificate for a specific user.
+
+### 1. Generate User Private Key and CSR
+
+<TerminalCommand command='openssl req -new -newkey rsa:2048 -nodes -keyout user.key -out user.csr -subj "/CN=jmrp.io-client"' />
+
+### 2. Sign the CSR with your CA
+
+<TerminalCommand command="openssl ca -config openssl.cnf -batch -in user.csr -out user.crt" />
+<TerminalOutput title="Example 'openssl ca' Output">
+```text
+Using configuration from openssl.cnf
+Check that the request matches the signature
+Signature ok
+The Subject's Distinguished Name is as follows
+commonName            :ASN.1 12:'jmrp.io-client'
+Certificate is to be certified until Dec 18 00:59:34 2026 GMT (365 days)
+
+Write out database with 1 new entries
+Database updated
+```
+</TerminalOutput>
+
+This process creates `user.key` and `user.crt`.
+
+<Collapsible summary="Example user.key content">
+<FileContent filename="user.key" icon="mdi:key-variant">
+```text
+-----BEGIN PRIVATE KEY-----
+(A different unique, long, private key text will be here)
+...
+-----END PRIVATE KEY-----
+```
+</FileContent>
+</Collapsible>
+
+<Collapsible summary="Example user.crt content">
+<FileContent filename="user.crt" icon="mdi:certificate-outline">
+```text
+-----BEGIN CERTIFICATE-----
+(The text for the user's certificate will be here. It will be
+signed by your "JMRP-IO-LAB Root CA".)
+...
+-----END CERTIFICATE-----
+```
+</FileContent>
+</Collapsible>
+
+
+### 3. Convert to PKCS#12 (.p12)
+
+<TerminalCommand command="openssl pkcs12 -export -out user.p12 -inkey user.key -in user.crt -certfile ca.crt" />
+You will be asked to create an **export password**. This protects the file itself.
+
+---
+
+## Step 3: Configure Nginx
+
+With the certificates generated, we need to tell Server Block to trust any client signed by our CA. All the directives used here are part of the [Nginx SSL Module](https://nginx.org/en/docs/http/ngx_http_ssl_module.html).
+
+Edit your site configuration:
+<FileContent filename="/etc/nginx/sites-available/secure.example.com.conf" icon="devicon:nginx">
+```nginx
+server {
+    server_name secure.example.com;
+    listen 443 ssl;
+
+    # ... other SSL settings ...
+
+    # ---------------------------------------------
+    # Client Certificate Verification
+    # ---------------------------------------------
+    
+    # Path to the CA certificate we created in Step 1
+    ssl_client_certificate /etc/nginx/client-certs/ca.crt;
+    
+    # Enable verification
+    ssl_verify_client on;
+    
+    # Optional: Verify chain depth
+    ssl_verify_depth 2;
+
+    location / {
+        # ... proxy settings ...
+    }
+}
+```
+</FileContent>
+
+### Test and Reload
+
+Before applying, always check the configuration syntax:
+<TerminalCommand command="sudo nginx -t" prompt="#" />
+<TerminalCommand command="sudo systemctl reload nginx" prompt="#" />
+
+Now, if you try to visit `https://secure.example.com` from a device *without* the certificate, Nginx will return a **400 Bad Request (No required SSL certificate was sent)**. The gate is closed!
+
+---
+
+## Step 4: Advanced Access Control
+
+By default, **any** client with a valid certificate signed by your CA can access the site. But what if you have multiple services and want to restrict "John" to *Service A* and "Alice" to *Service B*?
+
+You can use the **Common Name (CN)** from the certificate to authorize specific users.
+
+Open your Nginx config again. We will use the `map` directive (place this **outside** the `server` block, usually in `nginx.conf` or at the top of your site config):
+
+<FileContent filename="/etc/nginx/nginx.conf" icon="devicon:nginx">
+```nginx
+# Map the client certificate DN (Distinguished Name) to an access variable
+map $ssl_client_s_dn $ssl_access_allowed {
+    default 0;
+    # Format: /CN=CommonName
+    "/CN=iphone-admin" 1;
+    "/CN=laptop-work" 1;
+    "/CN=ipad-home" 1;
+}
+```
+</FileContent>
+
+Then, inside your `server` block:
+<FileContent filename="/etc/nginx/sites-available/secure.example.com.conf" icon="devicon:nginx">
+```nginx
+server {
+    # ... ssl configuration ...
+
+    location / {
+        # First, ensure the cert is valid (already handled by ssl_verify_client)
+        
+        # Then check our custom map
+        if ($ssl_access_allowed = 0) {
+            return 403 "Forbidden: You have a valid certificate, but are not authorized for this resource.";
+        }
+        
+        # ... proxy_pass ...
+    }
+}
+```
+</FileContent>
+
+Now, creating a certificate for a friend won't automatically grant them access to this specific site unless you add their CN to the whitelist.
+
+---
+
+## Step 5: Revoking Certificates (CRL)
+
+What happens if you lose your phone? The certificate on it is still valid for a year. You need a way to **revoke** it effectively. This is done using a **Certificate Revocation List (CRL)**.
+
+### 1. Revoke a Certificate
+Let's say `user.crt` (from the lost phone) needs to be revoked.
+<TerminalCommand command="openssl ca -config openssl.cnf -revoke user.crt" />
+<TerminalOutput title="Example 'openssl ca -revoke' Output">
+```text
+Using configuration from openssl.cnf
+Revoking Certificate 1000.
+Data Base Updated
+```
+</TerminalOutput>
+
+### 2. Generate the CRL File
+After revoking, you must generate the list itself so Nginx can read it:
+<TerminalCommand command="openssl ca -config openssl.cnf -gencrl -out crl.pem" />
+*Output: (No output usually means success)*
+
+### 3. Configure Nginx to Check the CRL
+Update your Nginx server block to check this list:
+<FileContent filename="/etc/nginx/sites-available/secure.example.com.conf" icon="devicon:nginx">
+```nginx
+# inside server block
+ssl_crl /etc/nginx/client-certs/crl.pem;
+```
+</FileContent>
+
+Reload Nginx. Now, even if the "lost phone" presents its certificate, Nginx sees it in the CRL and blocks access.
+
+<Callout type="warning">
+  **Maintenance:** You must regenerate the `crl.pem` file and reload Nginx every time you revoke a certificate.
+</Callout>
+
+---
+
+## Step 6: Installing Certificates on Clients
+
+Now you need to install the `.p12` file (generated in Step 2.3) onto your devices.
+
+<Callout type="info">
+  **Tip:** Transfer the `.p12` file securely. Use AirDrop, a private USB, or a secure cloud folder. Avoid sending it via plain email if possible.
+</Callout>
+
+<Tabs>
+  <TabPanel label="iOS (iPhone/iPad)">
+    1.  Send the `.p12` file to yourself via **AirDrop** or save it to **iCloud Drive** (Files app).
+    2.  Tap on the file in the **Files** app.
+    3.  Go to **Settings** > **Profile Downloaded** (appears at the top).
+    4.  Install the profile and enter your device passcode.
+    5.  Enter the certificate password.
+    6.  The certificate is now installed! Safari will automatically use it when accessing the site.
+  </TabPanel>
+  <TabPanel label="macOS">
+    1.  Double-click the `user.p12` file.
+    2.  **Keychain Access** will open. You will be prompted for the *export password* you created earlier.
+    3.  Ensure the certificate is added to your "login" keychain.
+    4.  Restart your browser (Chrome/Safari). When you visit the site, macOS will prompt you to "Select a Certificate" to authenticate.
+  </TabPanel>
+  <TabPanel label="Windows">
+    1.  Double-click the `user.p12` file.
+    2.  The **Certificate Import Wizard** will launch.
+    3.  Select **Current User**.
+    4.  Enter the password.
+    5.  Allow it to automatically select the certificate store (usually "Personal").
+    6.  Restart your browser.
+  </TabPanel>
+  <TabPanel label="Android">
+    1.  Save the `.p12` file to your device storage.
+    2.  Go to **Settings** > **Security** > **Encryption & credentials** > **Install a certificate**.
+    3.  Select **VPN & app user certificate**.
+    4.  Navigate to the `.p12` file and select it.
+    5.  Enter the password and give the certificate a name.
+  </TabPanel>
+</Tabs>
+
+---
+
+## Troubleshooting
+
+Here are the most common issues you might face.
+
+### 400 Bad Request (No required SSL certificate...)
+*   **Cause:** The browser didn't send a certificate.
+*   **Fix:** Ensure the `.p12` is installed. Restart the browser completely. Try **Incognito/Private** mode, as browsers sometimes stick to a "no-cert" session state.
+
+### 400 Bad Request (The SSL certificate error...)
+*   **Cause:** The certificate exists but Nginx doesn't like it.
+*   **Fix:** Nginx might not trust the CA. Check `ssl_client_certificate`. Ensure the chain is correct.
+
+### 403 Forbidden
+*   **Cause:** The certificate was accepted, but access was denied later.
+*   **Fix:** 
+    *   If using CRL: The cert might be revoked.
+    *   If using `map` (Access Control): The CN might not match. Check Nginx error logs (`/var/log/nginx/error.log`) to see the actual `$ssl_client_s_dn` being received.
+    
+### "Certificate Connection" Dialog loop
+*   **Cause:** On macOS/iOS, sometimes the system prompts repeatedly.
+*   **Fix:** Ensure the CA certificate is also trusted in the Keychain (though technically not required for client auth, it helps the OS validate the chain).
+
+---
+
+## Conclusion
+
+You have now implemented military-grade authentication for your home server services. By combining Nginx's `ssl_verify_client` with your own Certificate Authority, you've ensured that only trusted devices can even *see* your login screen.
+
+This setup is ideal for exposing sensitive services like TrueNAS, Home Assistant, or private Wikis to the internet without relying solely on their built-in login forms.

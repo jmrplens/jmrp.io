@@ -1,0 +1,80 @@
+---
+import { Icon } from "astro-icon/components";
+
+/**
+ * Callout component.
+ * Renders a colored alert box with an icon to highlight information.
+ */
+interface Props {
+    type?: "info" | "warning" | "error" | "success";
+}
+
+const { type = "info" } = Astro.props;
+
+const icons = {
+    info: "mdi:information-outline",
+    warning: "mdi:alert-outline",
+    error: "mdi:alert-circle-outline",
+    success: "mdi:check-circle-outline",
+};
+
+const colors = {
+    info: "var(--color-primary)",
+    warning: "#f59e0b",
+    error: "#ef4444",
+    success: "#10b981",
+};
+
+const bgColors = {
+    info: "rgba(59, 130, 246, 0.1)",
+    warning: "rgba(245, 158, 11, 0.1)",
+    error: "rgba(239, 68, 68, 0.1)",
+    success: "rgba(16, 185, 129, 0.1)",
+};
+---
+
+<div class={`callout callout-${type}`}>
+    <div class="icon">
+        <Icon name={icons[type]} size={24} />
+    </div>
+    <div class="content">
+        <slot />
+    </div>
+</div>
+
+<style
+    define:vars={{
+        "callout-color": colors[type],
+        "callout-bg": bgColors[type],
+    }}
+>
+    .callout {
+        display: flex;
+        gap: 1rem;
+        padding: 1rem 1.25rem;
+        background: var(--callout-bg);
+        border-left: 4px solid var(--callout-color);
+        border-radius: 0.5rem;
+        margin: 1.5rem 0;
+    }
+
+    .icon {
+        color: var(--callout-color);
+        flex-shrink: 0;
+        margin-top: 0.1rem;
+    }
+
+    .content {
+        color: var(--color-text-body);
+        font-size: 0.95rem;
+        line-height: 1.6;
+    }
+
+    .content :global(p:last-child) {
+        margin-bottom: 0;
+    }
+
+    .content :global(p:first-child) {
+        margin-top: 0;
+    }
+</style>

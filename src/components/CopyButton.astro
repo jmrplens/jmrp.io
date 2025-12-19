@@ -1,0 +1,113 @@
+---
+/**
+ * CopyButton.astro
+ * A reusable copy button that finds the nearest <code> block
+ * within its parent wrapper and copies its text content.
+ */
+import { Icon } from "astro-icon/components";
+
+interface Props {
+    class?: string;
+}
+
+const { class: className } = Astro.props;
+---
+
+<button class:list={["copy-button", className]} aria-label="Copy to clipboard">
+    <Icon name="mdi:clipboard-outline" class="copy-icon" />
+    <Icon name="mdi:check" class="success-icon hidden" />
+</button>
+
+<script nonce="NGINX_CSP_NONCE" lang="ts">
+    document.querySelectorAll(".copy-button").forEach((button) => {
+        button.addEventListener("click", () => {
+            // Find the closest wrapper (assuming the button is inside a relative container)
+            // We look for a standardized class .copy-container to find the scope
+            const wrapper =
+                button.closest(".copy-container") || button.parentElement;
+            if (!wrapper) return;
+
+            // Try to find a code element inside the wrapper
+            const codeBlock = wrapper.querySelector("code");
+            const text = codeBlock ? codeBlock.textContent : null;
+
+            if (!text) {
+                console.warn("CopyButton: No code element found in wrapper.");
+                return;
+            }
+
+            navigator.clipboard.writeText(text).then(
+                () => {
+                    // Visual feedback
+                    const copyIcon = button.querySelector(".copy-icon");
+                    const successIcon = button.querySelector(".success-icon");
+
+                    if (
+                        copyIcon instanceof HTMLElement &&
+                        successIcon instanceof HTMLElement
+                    ) {
+                        copyIcon.classList.add("hidden");
+                        successIcon.classList.remove("hidden");
+
+                        setTimeout(() => {
+                            copyIcon.classList.remove("hidden");
+                            successIcon.classList.add("hidden");
+                        }, 2000);
+                    }
+                },
+                (err) => {
+                    console.error("Failed to copy:", err);
+                    button.setAttribute("title", "Failed to copy!");
+                },
+            );
+        });
+    });
+</script>
+
+<style>
+    .copy-button {
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+        background-color: var(--color-bg-subtle, rgba(255, 255, 255, 0.1));
+        border: var(--border-subtle, 1px solid rgba(255, 255, 255, 0.1));
+        border-radius: 4px; /* Use variable if available, fallback for reuse */
+        padding: 0.3rem 0.5rem;
+        cursor: pointer;
+        opacity: 0.8;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 32px;
+        min-height: 32px;
+        z-index: 10; /* Ensure it stays above content/headers */
+    }
+
+    .copy-button:hover {
+        opacity: 1;
+        background-color: var(--color-bg-secondary, #222);
+    }
+
+    .copy-button:active {
+        transform: scale(0.95);
+    }
+
+    /* Icons */
+    .copy-icon,
+    .success-icon {
+        font-size: 1.2rem;
+        width: 1.2rem;
+        height: 1.2rem;
+        color: var(--color-text-muted, #888);
+        display: block;
+    }
+
+    .success-icon {
+        color: var(--color-success, #2ea043);
+    }
+
+    .hidden {
+        display: none;
+    }
+</style>

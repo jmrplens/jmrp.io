@@ -1,0 +1,79 @@
+---
+/**
+ * A component to display a shell command in a simulated terminal window,
+ * with a button to copy the command.
+ */
+import CopyButton from "./CopyButton.astro";
+
+interface Props {
+    command: string;
+    prompt?: string;
+}
+
+const { command, prompt = "$" } = Astro.props;
+---
+
+<div class="terminal-command-wrapper copy-container">
+    <div class="command-container">
+        <span class="prompt" aria-hidden="true">{prompt}</span>
+        <pre><code class="language-bash" aria-label={`Command: ${command}`}>{command}</code></pre>
+    </div>
+    <CopyButton />
+</div>
+
+<style>
+    .terminal-command-wrapper {
+        position: relative;
+        background-color: var(--color-bg-secondary);
+        border-radius: var(--radius-md);
+        padding: 0.75rem 1rem;
+        margin: 1.5rem 0;
+        border: var(--border-subtle);
+        overflow: hidden;
+        display: flex; /* Flex layout */
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+    }
+
+    .command-container {
+        display: flex;
+        align-items: baseline;
+        overflow-x: auto;
+        -ms-overflow-style: none; /* IE and Edge */
+        scrollbar-width: none; /* Firefox */
+        flex-grow: 1; /* Take available space */
+        min-width: 0; /* Enable shrinking/scrolling */
+        padding-right: 0.5rem;
+    }
+
+    /* Override copy button for flex integration */
+    :global(.terminal-command-wrapper .copy-button) {
+        position: static !important; /* Make it part of the flow */
+        background-color: var(--color-bg-subtle) !important;
+        border: 1px solid var(--color-border) !important;
+        flex-shrink: 0; /* Prevent button shrinking */
+        margin: 0; /* Remove margins */
+    }
+    /* Hide scrollbar for Chrome, Safari and Opera */
+    .command-container::-webkit-scrollbar {
+        display: none;
+    }
+
+    .prompt {
+        color: var(--color-text-muted);
+        margin-right: 0.75rem;
+        font-family: var(--font-mono);
+        font-size: 0.9em;
+    }
+
+    /* Reset default styles for pre/code */
+    .command-container pre {
+        margin: 0;
+        padding: 0;
+        background: none !important;
+        border: none;
+        flex-grow: 1;
+        overflow: visible;
+    }
+</style>
