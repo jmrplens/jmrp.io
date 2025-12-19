@@ -1,0 +1,52 @@
+name: Quality Checks
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  schedule:
+    - cron: '0 9 * * 1' # Run every Monday at 9am
+
+jobs:
+  link-checker:
+    name: Link Checker (Lychee)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Restore lychee cache
+        uses: actions/cache@v4
+        with:
+          path: .lycheecache
+          key: cache-lychee-${{ github.sha }}
+          restore-keys: cache-lychee-
+
+      - name: Check Links
+        uses: lycheeverse/lychee-action@v1.9.0
+        with:
+          # Check Markdown, HTML, Astro, TS/JS files
+          args: >-
+            --cache 
+            --max-cache-age 1d 
+            --verbose 
+            --no-progress 
+            --exclude-mail 
+            './**/*.md' 
+            './**/*.mdx' 
+            './**/*.html' 
+            './src/**/*.astro' 
+            './src/**/*.ts'
+            './src/**/*.tsx'
+          fail: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  spell-checker:
+    name: Spell Checker (Typos)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Check Spelling
+        uses: crate-ci/typos@master
