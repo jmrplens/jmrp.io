@@ -1,5 +1,4 @@
 
-import { h } from 'preact';
 import { useState, useEffect } from 'preact/hooks';
 
 interface Props {
@@ -93,16 +92,16 @@ export default function ServiceStats({ type, children }: Props) {
                     let lfNodes = 0;
                     let mfNodes = 0;
 
-                    if (resPotato && resPotato.ok) {
+                    if (resPotato?.ok) {
                         const data = await resPotato.json();
                         potatoNodes = Array.isArray(data) ? data.length : 0;
                     }
-                    if (resLF && resLF.ok) {
+                    if (resLF?.ok) {
                         const data = await resLF.json();
                         // API returns { success: true, data: { activeNodes: 123, ... } }
                         lfNodes = data.data?.activeNodes ?? 0;
                     }
-                    if (resMF && resMF.ok) {
+                    if (resMF?.ok) {
                         const data = await resMF.json();
                         mfNodes = data.data?.activeNodes ?? 0;
                     }
@@ -207,7 +206,7 @@ export default function ServiceStats({ type, children }: Props) {
                         <span class="status-dot"></span>
                         <strong>Online</strong>
                     </div>
-                    {matrixData && matrixData.federationTotal && (
+                    {matrixData?.federationTotal && (
                         <div class="status-text-muted">
                             <strong class="status-text">{matrixData.federationTotal.toLocaleString()}</strong> Known Servers
                         </div>

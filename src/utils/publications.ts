@@ -56,13 +56,13 @@ export async function getPublications(): Promise<PublicationGroup[]> {
             // Note: This relies on entries starting with @ and id being the first token.
             // We use a lookahead for the next @ or end of file.
             const entryRegex = new RegExp(String.raw`@.*?\{${id},([\s\S]*?)(?=\n@|$)`, 'i');
-            const entryMatch = fileContents.match(entryRegex);
+            const entryMatch = entryRegex.exec(fileContents);
 
             if (!entryMatch) return null;
 
             const entryBody = entryMatch[1];
             const fieldRegex = new RegExp(String.raw`${field}\s*=\s*\{(.*?)\}`, 'i');
-            const fieldMatch = entryBody.match(fieldRegex);
+            const fieldMatch = fieldRegex.exec(entryBody);
 
             return fieldMatch ? fieldMatch[1] : null;
         };
@@ -118,7 +118,7 @@ export async function getPublications(): Promise<PublicationGroup[]> {
          */
         const extractRawBibtex = (id: string) => {
             const entryRegex = new RegExp(String.raw`@.*?\{${id},[\s\S]*?(?=\n@|$)`, 'i');
-            const match = fileContents.match(entryRegex);
+            const match = entryRegex.exec(fileContents);
             return match ? match[0].trim() : '';
         };
 
