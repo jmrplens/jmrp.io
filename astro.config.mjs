@@ -10,7 +10,7 @@ import rehypeExternalLinks from 'rehype-external-links'; // Adds target="_blank"
 import icon from 'astro-icon'; // Icon support
 import preact from '@astrojs/preact'; // Preact integration (lighter alternative to React)
 import astroExpressiveCode from 'astro-expressive-code'; // Advanced code blocks with syntax highlighting
-import remarkMermaid from 'remark-mermaidjs'; // Mermaid diagrams support in Markdown
+import rehypeMermaid from 'rehype-mermaid'; // Mermaid diagrams support in Markdown
 
 // https://astro.build/config
 export default defineConfig({
@@ -47,24 +47,26 @@ export default defineConfig({
   // Markdown and MDX configuration
   markdown: {
     // Remark plugins: transformation before HTML compilation
-    remarkPlugins: [remarkMath, [remarkMermaid, {
-      mermaidConfig: {
-        theme: 'neutral',
-        sequence: {
-          showSequenceNumbers: false,
-          actorMargin: 50,
-          boxMargin: 10,
-          boxTextMargin: 5,
-          noteMargin: 10,
-          messageMargin: 35,
-          mirrorActors: false,
-          bottomMarginAdj: 10
-        }
-      }
-    }]],
+    remarkPlugins: [remarkMath],
     // Rehype plugins: transformation of the HTML output
     rehypePlugins: [
       rehypeMathjax,
+      [rehypeMermaid, {
+        strategy: 'img-svg',
+        mermaidConfig: {
+          theme: 'neutral',
+          sequence: {
+            showSequenceNumbers: false,
+            actorMargin: 50,
+            boxMargin: 10,
+            boxTextMargin: 5,
+            noteMargin: 10,
+            messageMargin: 35,
+            mirrorActors: false,
+            bottomMarginAdj: 10
+          }
+        }
+      }],
       [rehypeExternalLinks, {
         rel: ['external', 'noopener'],
         target: '_blank'
