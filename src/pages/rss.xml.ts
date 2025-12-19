@@ -35,7 +35,7 @@ export async function GET(context: APIContext) {
       // Simple cleanup for MDX imports/exports
       // Patterns are anchored (^$) and bounded by newline, safe from ReDoS
       const cleanBody = postBody
-        .replaceAll(/^import\s+[^\n]*$/gm, '')
+        .replaceAll(/^import\s+[^\n]*$/gm, '')  // NOSONAR typescript:S5852
         .replaceAll(/^export\s+[^\n]*$/gm, ''); // NOSONAR typescript:S5852
 
       const html = await marked.parse(cleanBody);
