@@ -15,6 +15,7 @@ import "../styles/fonts.css";
 import { getImage } from "astro:assets";
 import faviconSrc from "../assets/favicon.png";
 import appleTouchIconSrc from "../assets/apple-touch-icon.png";
+import defaultOgImage from "../assets/mehome_landscape.jpeg";
 
 import fs from "fs";
 import path from "path";
@@ -66,7 +67,36 @@ const {
 
 const fullTitle =
     title === siteData.title ? title : `${title} | ${siteData.author}`;
-const resolvedImage = new URL(image, Astro.url);
+
+// Image resolution logic
+let resolvedImage;
+if (image) {
+    // If props provide an image
+    if (typeof image === "string") {
+        // External URL or legacy path (though we shouldn't have legacy paths now)
+        try {
+            resolvedImage = new URL(image, Astro.url);
+        } catch {
+            // Relative path or other, try to resolve against site
+            resolvedImage = new URL(image, siteData.url);
+        }
+    } else {
+        // It's likely an imported Image object passed via props
+        resolvedImage = image.src
+            ? new URL(image.src, Astro.url)
+            : new URL(image, Astro.url);
+    }
+} else {
+    // Fallback to default site image (imported)
+    // We strictly use the imported asset for the default to ensure optimization
+    const optimizedDefault = await getImage({
+        src: defaultOgImage,
+        format: "webp",
+        width: 1200,
+        height: 630,
+    });
+    resolvedImage = new URL(optimizedDefault.src, Astro.url);
+}
 
 // --- Schema.org Construction ---
 
@@ -122,7 +152,12 @@ const jsonLD = {
 <link rel="apple-touch-icon" href={appleTouchIcon.src} />
 <link rel="manifest" href="/site.webmanifest" />
 <link rel="sitemap" href="/sitemap.xml" />
-<link rel="alternate" type="application/rss+xml" title="JMRP Blog RSS Feed" href="/rss.xml" />
+<link
+    rel="alternate"
+    type="application/rss+xml"
+    title="JMRP Blog RSS Feed"
+    href="/rss.xml"
+/>
 <meta name="generator" content={Astro.generator} />
 <meta name="theme-color" content={siteData.theme_color} />
 <meta name="robots" content="index, follow" />

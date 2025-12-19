@@ -35,7 +35,7 @@ const { references = [] } = Astro.props;
                     const urlObj = new URL(ref.url);
                     const hostname = urlObj.hostname;
                     const filename = `${hostname.replace(/[^a-z0-9]/gi, "_")}.webp`;
-                    const localUrl = `/assets/favicons/${filename}`;
+                    const localUrl = `/icons/${filename}`;
 
                     let hasIcon = false;
 
@@ -46,8 +46,7 @@ const { references = [] } = Astro.props;
                         const publicDir = path.join(
                             process.cwd(),
                             "public",
-                            "assets",
-                            "favicons",
+                            "icons",
                         );
                         const publicFile = path.join(publicDir, filename);
                         if (fs.existsSync(publicFile)) {

@@ -5,6 +5,15 @@
  * Includes search functionality and stats.
  */
 import BaseLayout from "../layouts/BaseLayout.astro";
+import { getImage } from "astro:assets";
+import githubAvatar from "../assets/github-avatar.png";
+
+const optimizedAvatar = await getImage({
+    src: githubAvatar,
+    format: "webp",
+    width: 120,
+    height: 120,
+});
 ---
 
 <BaseLayout
@@ -15,7 +24,11 @@ import BaseLayout from "../layouts/BaseLayout.astro";
         <h1 class="page-title">GitHub Repositories</h1>
 
         <!-- Profile Section -->
-        <div id="profile-container" class="profile-header">
+        <div
+            id="profile-container"
+            class="profile-header"
+            data-avatar-url={optimizedAvatar.src}
+        >
             <div class="profile-loading">Loading profile...</div>
         </div>
 
@@ -36,7 +49,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     </div>
 </BaseLayout>
 
-<script src="/scripts/github.js?v=2" nonce="NGINX_CSP_NONCE" defer></script>
+<script src="../scripts/github.js"></script>
 
 <style>
     .page-title {

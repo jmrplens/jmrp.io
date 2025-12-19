@@ -327,6 +327,11 @@ const articleSchema = [
         overflow-wrap: break-word; /* Ensure text wraps */
     }
 
+    /* Enhance link contrast in post content */
+    .prose :global(a) {
+        font-weight: 600;
+    }
+
     .toc-sidebar {
         /* position: sticky; <--- Removing sticky for the container */
         top: 2rem;

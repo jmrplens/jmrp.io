@@ -1,7 +1,7 @@
-import fs from 'fs';
-import path from 'path';
+import fs from 'node:fs';
+import path from 'node:path';
 import { glob } from 'glob';
-import crypto from 'crypto';
+import crypto from 'node:crypto';
 
 const DIST_DIR = 'dist';
 const ASSETS_DIR = 'assets/extracted';
@@ -27,18 +27,17 @@ async function extractDataUris() {
     const cssFiles = await glob(`${DIST_DIR}/**/*.css`);
     // 2. Scan HTML files (for inline styles)
     const htmlFiles = await glob(`${DIST_DIR}/**/*.html`);
-    
+
     const allFiles = [...cssFiles, ...htmlFiles];
     let totalExtracted = 0;
 
     for (const file of allFiles) {
         let content = fs.readFileSync(file, 'utf-8');
         let modified = false;
-        let match;
-        
+
         // We need to use a loop with replace or matchAll to handle multiple occurrences
         // Using replace with a callback is safer for string manipulation
-        content = content.replace(DATA_URI_REGEX, (fullMatch, quote, mime, encoding, data) => {
+        content = content.replaceAll(DATA_URI_REGEX, (fullMatch, quote, mime, encoding, data) => {
             try {
                 // Decode data
                 let buffer;
@@ -68,14 +67,13 @@ async function extractDataUris() {
                 // Write file if it doesn't exist (deduplication)
                 if (!fs.existsSync(filePath)) {
                     fs.writeFileSync(filePath, buffer);
-                    // console.log(`Created ${filename} from ${path.basename(file)}`);
                     totalExtracted++;
                 }
 
                 // Construct new URL
                 // We need the path relative to the site root for the CSS/HTML
                 const newUrl = `/${ASSETS_DIR}/${filename}`;
-                
+
                 modified = true;
                 // Return the new CSS url(...)
                 // Maintain the original quote style if present, or use double quotes
@@ -97,4 +95,4 @@ async function extractDataUris() {
     console.log(`Extraction complete. Extracted ${totalExtracted} unique assets.`);
 }
 
-extractDataUris();
+await extractDataUris();

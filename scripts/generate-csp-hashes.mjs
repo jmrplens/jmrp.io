@@ -1,14 +1,104 @@
-import fs from 'fs';
-import path from 'path';
-import crypto from 'crypto';
+import fs from 'node:fs';
+import crypto from 'node:crypto';
 import { glob } from 'glob';
-import { exec } from 'child_process';
+import { exec } from 'node:child_process';
+import { promisify } from 'node:util';
+
+const execAsync = promisify(exec);
 
 // Configuration
 const DIST_DIR = 'dist';
 const HTML_PATTERN = '**/*.html';
 const NGINX_CONF = '/etc/nginx/snippets/security_headers.conf';
 
+/**
+ * Extract hashes from content
+ */
+function extractHashes(content, styleHashes, scriptHashes, imageDomains) {
+    // 1. Find content inside <style> tags
+    const styleTagRegex = /<style([^>]*)>([\s\S]*?)<\/style>/gi;
+    let match;
+    while ((match = styleTagRegex.exec(content)) !== null) {
+        const attrs = match[1] || '';
+        if (!attrs.includes('nonce') && match[2]) {
+            const hash = crypto.createHash('sha256').update(match[2]).digest('base64');
+            styleHashes.add(`'sha256-${hash}'`);
+        }
+    }
+
+    // 2. Find inline scripts (<script>...</script>)
+    const scriptTagRegex = /<script(?![^>]*\bsrc=)([^>]*)>([\s\S]*?)<\/script>/gi;
+    while ((match = scriptTagRegex.exec(content)) !== null) {
+        const attrs = match[1] || '';
+        if (!attrs.includes('nonce') && match[2]) {
+            const hash = crypto.createHash('sha256').update(match[2]).digest('base64');
+            scriptHashes.add(`'sha256-${hash}'`);
+        }
+    }
+
+    // 3. Find external images (<img src="...">)
+    const imgTagRegex = /<img[^>]+src="([^"]+)"/gi;
+    while ((match = imgTagRegex.exec(content)) !== null) {
+        const src = match[1];
+        if (src.startsWith('http')) {
+            try {
+                const url = new URL(src);
+                imageDomains.add(url.hostname);
+            } catch {
+                // Ignore invalid URLs
+            }
+        }
+    }
+}
+
+/**
+ * Update Nginx Configuration
+ */
+function updateNginxConfig(styleHashString, scriptHashString, imgDomainString) {
+    if (!fs.existsSync(NGINX_CONF)) {
+        console.warn(`Warning: Nginx config not found at ${NGINX_CONF}`);
+        return;
+    }
+
+    console.log(`\nUpdating ${NGINX_CONF}...`);
+    let nginxConfig = fs.readFileSync(NGINX_CONF, 'utf-8');
+
+    // Update style-src
+    const styleSrcRegex = /style-src 'self'[^;]*;/g;
+    const newStyleSrc = `style-src 'self' 'nonce-$cspNonce' ${styleHashString};`;
+
+    if (styleSrcRegex.test(nginxConfig)) {
+        nginxConfig = nginxConfig.replaceAll(styleSrcRegex, newStyleSrc);
+    } else {
+        console.warn('Warning: Could not find style-src directive');
+    }
+
+    // Update script-src
+    const scriptSrcRegex = /script-src 'self'[^;]*;/g;
+    const staticScriptParts = "'self' 'nonce-$cspNonce' https://static.cloudflareinsights.com https://cloudflareinsights.com";
+    const newScriptSrc = `script-src ${staticScriptParts} ${scriptHashString};`;
+    if (scriptSrcRegex.test(nginxConfig)) {
+        nginxConfig = nginxConfig.replaceAll(scriptSrcRegex, newScriptSrc);
+    } else {
+        console.warn('Warning: Could not find script-src directive');
+    }
+
+    // Update img-src
+    const imgSrcRegex = /img-src 'self'[^;]*;/g;
+    const imgSrcValue = `img-src 'self' ${imgDomainString};`;
+    if (imgSrcRegex.test(nginxConfig)) {
+        nginxConfig = nginxConfig.replaceAll(imgSrcRegex, imgSrcValue);
+    } else {
+        console.warn('Warning: Could not find img-src directive');
+    }
+
+    fs.writeFileSync(NGINX_CONF, nginxConfig);
+    console.log('Nginx configuration updated.');
+}
+
+/**
+ * Main function
+ */
 async function generateHashes() {
     console.log(`Scanning ${DIST_DIR} for HTML files...`);
 
@@ -26,61 +116,8 @@ async function generateHashes() {
 
         for (const file of files) {
             const content = fs.readFileSync(file, 'utf-8');
-
-            // 1. Find content inside <style> tags
-            const styleTagRegex = /<style([^>]*)>([\s\S]*?)<\/style>/gi;
-            let match;
-            while ((match = styleTagRegex.exec(content)) !== null) {
-                const attrs = match[1] || '';
-                // Skip if it has a nonce
-                if (!attrs.includes('nonce')) {
-                    if (match[2]) {
-                        const hash = crypto.createHash('sha256').update(match[2]).digest('base64');
-                        styleHashes.add(`'sha256-${hash}'`);
-                    }
-                }
-            }
-
-            // 2. Find inline style attributes (style="..." or style='...')
-            // ... (keep finding these, as they should have been removed by move-inline-styles.mjs if targetted, 
-            // but if any remain they still need unsafe-hashes or to be blocked, so we keep hashing them or let them fail if no unsafe-hashes)
-            // The previous logic for style attributes works fine.
-
-            // 3. Find inline scripts (<script>...</script>)
-            // key: exclude <script src="..."> tags which don't have inline content usually, 
-            // but regex will capture content if it exists.
-            const scriptTagRegex = /<script(?![^>]*\bsrc=)([^>]*)>([\s\S]*?)<\/script>/gi;
-            while ((match = scriptTagRegex.exec(content)) !== null) {
-                const attrs = match[1] || '';
-                // Skip if it has a nonce
-                if (!attrs.includes('nonce')) {
-                    if (match[2]) {
-                        const hash = crypto.createHash('sha256').update(match[2]).digest('base64');
-                        scriptHashes.add(`'sha256-${hash}'`);
-                    }
-                }
-            }
-
-            // 4. Find external images (<img src="...">)
-            const imgTagRegex = /<img[^>]+src="([^"]+)"/gi;
-            while ((match = imgTagRegex.exec(content)) !== null) {
-                const src = match[1];
-                if (src.startsWith('http')) {
-                    try {
-                        const url = new URL(src);
-                        imageDomains.add(url.hostname);
-                    } catch (e) {
-                        // ignore invalid urls
-                    }
-                }
-            }
+            extractHashes(content, styleHashes, scriptHashes, imageDomains);
         }
-
-
-        // Manual domains for images (e.g. redirects like gstatic)
-        const MANUAL_IMG_DOMAINS = [];
-
-        MANUAL_IMG_DOMAINS.forEach(domain => imageDomains.add(domain));
 
         console.log(`\nFound ${styleHashes.size} unique style hashes.`);
         console.log(`Found ${scriptHashes.size} unique script hashes.`);
@@ -89,62 +126,21 @@ async function generateHashes() {
         if (styleHashes.size > 0 || scriptHashes.size > 0 || imageDomains.size > 0) {
             const styleHashString = Array.from(styleHashes).join(' ');
             const scriptHashString = Array.from(scriptHashes).join(' ');
-
-            // Generate img-src domains
             const imgDomainString = Array.from(imageDomains).map(d => `https://${d}`).join(' ');
-            const imgSrcValue = `img-src 'self' ${imgDomainString};`;
 
-
-            // Console output
             console.log('\nStyle Hashes: ' + styleHashString);
             console.log('Script Hashes: ' + scriptHashString);
             console.log('Image Domains: ' + imgDomainString);
 
-            // Update Nginx Config
-            if (fs.existsSync(NGINX_CONF)) {
-                console.log(`\nUpdating ${NGINX_CONF}...`);
-                let nginxConfig = fs.readFileSync(NGINX_CONF, 'utf-8');
+            updateNginxConfig(styleHashString, scriptHashString, imgDomainString);
 
-                // Update style-src
-                // Regex: style-src 'self' ... ;
-                const styleSrcRegex = /style-src 'self'[^;]*;/g;
-                const newStyleSrc = `style-src 'self' 'nonce-$cspNonce' ${styleHashString};`;
-
-                if (styleSrcRegex.test(nginxConfig)) {
-                    nginxConfig = nginxConfig.replace(styleSrcRegex, newStyleSrc);
-                } else {
-                    console.warn('Warning: Could not find style-src directive');
-                }
-
-                // Update script-src
-                const scriptSrcRegex = /script-src 'self'[^;]*;/g;
-                const staticScriptParts = "'self' 'nonce-$cspNonce' https://static.cloudflareinsights.com https://cloudflareinsights.com";
-                const newScriptSrc = `script-src ${staticScriptParts} ${scriptHashString};`;
-                if (scriptSrcRegex.test(nginxConfig)) {
-                    nginxConfig = nginxConfig.replace(scriptSrcRegex, newScriptSrc);
-                } else {
-                    console.warn('Warning: Could not find script-src directive');
-                }
-
-                // Update img-src
-                const imgSrcRegex = /img-src 'self'[^;]*;/g;
-                if (imgSrcRegex.test(nginxConfig)) {
-                    nginxConfig = nginxConfig.replace(imgSrcRegex, imgSrcValue);
-                } else {
-                    console.warn('Warning: Could not find img-src directive');
-                }
-
-                fs.writeFileSync(NGINX_CONF, nginxConfig);
-                console.log('Nginx configuration updated.');
-
-                // Reload Nginx
-                exec('systemctl reload nginx', (error, stdout, stderr) => {
-                    if (error) {
-                        console.error(`Error reloading Nginx: ${error.message}`);
-                        process.exit(1);
-                    }
-                    console.log('Nginx reloaded successfully.');
-                });
+            // Reload Nginx
+            try {
+                await execAsync('systemctl reload nginx');
+                console.log('Nginx reloaded successfully.');
+            } catch (error) {
+                console.error(`Error reloading Nginx: ${error.message}`);
+                process.exit(1);
             }
         }
 
@@ -154,4 +150,4 @@ async function generateHashes() {
     }
 }
 
-generateHashes();
+await generateHashes();

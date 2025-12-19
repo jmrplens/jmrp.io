@@ -3,6 +3,9 @@ dist/
 # generated types
 .astro/
 
+.claude/
+.qodo/
+
 # dependencies
 node_modules/
 
@@ -41,9 +44,6 @@ pnpm-debug.log*
 
 # Local Knowledge
 PROJECT_KNOWLEDGE.md
-
-# Generated Assets
-public/img/github-avatar.png
 
 # Agent
 .agent/

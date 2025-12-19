@@ -39,7 +39,7 @@ async function fetchProfile() {
     const avatarDiv = document.createElement("div");
     avatarDiv.className = "profile-avatar";
     const img = document.createElement("img");
-    img.src = "/img/github-avatar.png"; // Use locally downloaded avatar
+    img.src = container.dataset.avatarUrl || "/img/github-avatar.png"; // Use passed URL or fallback
     img.alt = user.name;
     // Classes handle styling now
     avatarDiv.appendChild(img);
@@ -264,27 +264,27 @@ function initSearch() {
     const filtered = allRepos.filter(
       (repo) =>
         repo.name.toLowerCase().includes(term) ||
-        (repo.description && repo.description.toLowerCase().includes(term)),
+        (repo.description?.toLowerCase().includes(term)),
     );
     renderRepos(filtered);
   });
 }
 
 // Init
-document.addEventListener("astro:page-load", () => {
-  fetchProfile();
-  fetchRepos();
+async function init() {
+  await fetchProfile();
+  await fetchRepos();
   initSearch();
-});
-
-if (document.readyState === "complete" || document.readyState === "interactive") {
-  fetchProfile();
-  fetchRepos();
-  initSearch();
-} else {
-  document.addEventListener("DOMContentLoaded", () => {
-    fetchProfile();
-    fetchRepos();
-    initSearch();
-  });
 }
+
+// 1. Run immediately (Top-Level Await in module)
+await init();
+
+// 2. Future-proofing for View Transitions (if added later)
+document.addEventListener("astro:page-load", () => {
+  // If standard load already ran, this might conflict if ViewTransitions are mistakenly thought to be active
+  // But strictly speaking, astro:page-load only fires if the router is integrated.
+  // We can leave it as a safe fallback or remove it.
+  // The user code existing had it.
+  // We'll trust TLA for the main load.
+});
