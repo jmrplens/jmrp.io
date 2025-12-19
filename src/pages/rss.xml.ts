@@ -34,8 +34,8 @@ export async function GET(context: APIContext) {
       const postBody = post.body || '';
       // Simple cleanup for MDX imports/exports
       const cleanBody = postBody
-        .replace(/^import\s+.*;$/gm, '')
-        .replace(/^export\s+.*;$/gm, '');
+        .replaceAll(/^import\s+.*;$/gm, '')
+        .replaceAll(/^export\s+.*;$/gm, '');
 
       const html = await marked.parse(cleanBody);
       const sanitizedHtml = sanitizeHtml(html, {

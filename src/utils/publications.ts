@@ -1,7 +1,7 @@
-import fs from 'fs';
-import path from 'path';
+import fs from 'node:fs';
+import path from 'node:path';
 import yaml from 'js-yaml';
-import { createRequire } from 'module';
+import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 const Cite = require('citation-js'); // Library to parse BibTeX files
 
@@ -55,13 +55,13 @@ export async function getPublications(): Promise<PublicationGroup[]> {
             // Match from @Type{id, until the next @ or end of string. 
             // Note: This relies on entries starting with @ and id being the first token.
             // We use a lookahead for the next @ or end of file.
-            const entryRegex = new RegExp(`@.*?\\{${id},([\\s\\S]*?)(?=\\n@|$)`, 'i');
+            const entryRegex = new RegExp(String.raw`@.*?\{${id},([\s\S]*?)(?=\n@|$)`, 'i');
             const entryMatch = fileContents.match(entryRegex);
 
             if (!entryMatch) return null;
 
             const entryBody = entryMatch[1];
-            const fieldRegex = new RegExp(`${field}\\s*=\\s*\\{(.*?)\\}`, 'i');
+            const fieldRegex = new RegExp(String.raw`${field}\s*=\s*\{(.*?)\}`, 'i');
             const fieldMatch = entryBody.match(fieldRegex);
 
             return fieldMatch ? fieldMatch[1] : null;
@@ -78,6 +78,15 @@ export async function getPublications(): Promise<PublicationGroup[]> {
         });
 
         /**
+         * Checks if a given name matches any variation in the coauthor's firstname list.
+         */
+        const isNameMatch = (bibGiven: string, firstnameVariations: string[]): boolean => {
+            return firstnameVariations.some(n =>
+                n === bibGiven || n.includes(bibGiven) || bibGiven.includes(n)
+            );
+        };
+
+        /**
          * Matches bibtex authors against the coauthors.yml list.
          * If a match is found based on family name and first name variation, adds the URL.
          */
@@ -86,12 +95,10 @@ export async function getPublications(): Promise<PublicationGroup[]> {
             return authors.map((author: any) => {
                 const family = author.family;
                 if (coauthors[family]) {
-                    const match = coauthors[family].find(c => {
-                        return c.firstname.some(n => {
-                            const bibGiven = author.given || "";
-                            return n === bibGiven || n.includes(bibGiven) || bibGiven.includes(n);
-                        });
-                    });
+                    const bibGiven = author.given || "";
+                    const match = coauthors[family].find(c =>
+                        isNameMatch(bibGiven, c.firstname)
+                    );
 
                     if (match) {
                         return { ...author, url: match.url };
@@ -107,6 +114,15 @@ export async function getPublications(): Promise<PublicationGroup[]> {
         const thesisList: any[] = [];
         const others: any[] = [];
 
+        /**
+         * Extract raw bibtex entry for display/copying
+         */
+        const extractRawBibtex = (id: string) => {
+            const entryRegex = new RegExp(String.raw`@.*?\{${id},[\s\S]*?(?=\n@|$)`, 'i');
+            const match = fileContents.match(entryRegex);
+            return match ? match[0].trim() : '';
+        };
+
         for (const item of data) {
             const type = item.type;
 
@@ -115,11 +131,6 @@ export async function getPublications(): Promise<PublicationGroup[]> {
             if (!item.poster) item.poster = extractCustomField(item.id, 'poster');
 
             // Extract raw bibtex entry for display/copying
-            const extractRawBibtex = (id: string) => {
-                const entryRegex = new RegExp(`@.*?\\{${id},[\\s\\S]*?(?=\\n@|$)`, 'i');
-                const match = fileContents.match(entryRegex);
-                return match ? match[0].trim() : '';
-            };
             item.bibtex = extractRawBibtex(item.id);
 
             // Enrich authors with links

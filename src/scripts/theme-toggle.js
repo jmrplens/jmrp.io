@@ -8,14 +8,14 @@ const initThemeToggle = () => {
         ) {
             return localStorage.getItem("theme");
         }
-        if (window.matchMedia("(prefers-color-scheme: light)").matches) {
+        if (globalThis.matchMedia("(prefers-color-scheme: light)").matches) {
             return "light";
         }
         return "dark"; // Default
     };
 
     const setTheme = (theme) => {
-        document.documentElement.setAttribute("data-theme", theme);
+        document.documentElement.dataset.theme = theme;
         localStorage.setItem("theme", theme);
 
         // Also toggle global class for older css usage if any

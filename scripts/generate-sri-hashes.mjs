@@ -50,101 +50,52 @@ async function main() {
 
         // A better approach for replacement is to use replaceAll with a callback
         // <script ... src="path" ... >
+        /**
+         * Generic helper to process a tag match, calculate SRI, and update the tag string.
+         * @param {RegExp} regex 
+         * @param {string} tagName 
+         * @param {function(string): boolean} [shouldProcess] 
+         */
+        const processTags = (regex, tagName, shouldProcess = () => true) => {
+            content = content.replaceAll(regex, (match, attrs, url) => {
+                if (attrs.includes('integrity=')) return match; // Already has integrity
+                if (!shouldProcess(attrs)) return match; // Failed custom check (e.g. rel="stylesheet")
+
+                try {
+                    // Check exclusion conditions (external, relative, etc.)
+                    if (url.startsWith('http') || url.startsWith('//')) return match;
+                    if (!url.startsWith('/')) return match; // Only process root-relative for safety
+
+                    const filePath = path.join(DIST_DIR, url).split('?')[0];
+                    if (!fs.existsSync(filePath)) return match;
+
+                    let hash;
+                    if (hashCache.has(filePath)) {
+                        hash = hashCache.get(filePath);
+                    } else {
+                        const fileContent = fs.readFileSync(filePath);
+                        hash = calculateSRI(fileContent);
+                        hashCache.set(filePath, hash);
+                    }
+
+                    totalTagsUpdated++;
+                    modified = true;
+                    return `<${tagName} ${attrs} integrity="${hash}" crossorigin="anonymous">`;
+
+                } catch (err) {
+                    console.warn(`Error processing ${tagName} ${url}:`, err.message);
+                    return match;
+                }
+            });
+        };
+
+        // Process <script src="...">
         const scriptRegex = /<script\s+([^>]*\bsrc=["']([^"']+)["'][^>]*)>/gi;
-        content = content.replaceAll(scriptRegex, (match, attrs, src) => {
-            if (attrs.includes('integrity=')) return match; // Already has integrity
-            if (src.startsWith('http') || src.startsWith('//')) return match; // External
-
-            try {
-                // Resolve file path. src is usually like "/_astro/file.hash.js" or "./file.js"
-                // We need to map this to the filesystem path in dist/
-
-                let filePath;
-                if (src.startsWith('/')) {
-                    filePath = path.join(DIST_DIR, src);
-                } else {
-                    // Relative path, resolve relative to the HTML file
-                    const htmlDir = path.dirname(file);
-                    // This is tricky if we don't know the exact base, but assuming flat structure or standard relative handling
-                    // For now, let's assume standard root-relative assets as Astro usually generates
-                    // If it's pure relative, we need to path.join(htmlDir, src) but we are running from project root
-                    filePath = path.join(path.dirname(file), src);
-                }
-
-                // Quick fix: If path tries to go outside DIST_DIR or is not found, skip
-                // Actually, let's just try to read it.
-                // But wait, Astro usually produces root-relative links e.g. /script.js
-                // So path.join(DIST_DIR, src) is usually correct for src starting with /
-                if (!src.startsWith('/')) {
-                    // Handle relative paths? Astro usually uses root relative /...
-                    // Let's defer relative path handling unless we verify it's needed.
-                    // For now, only process root-relative paths for safety and simplicity as per standard Astro output.
-                    return match;
-                }
-
-                // Remove query strings if any
-                const cleanFilePath = filePath.split('?')[0];
-
-                if (!fs.existsSync(cleanFilePath)) {
-                    // console.warn(`Asset not found: ${cleanFilePath}`);
-                    return match;
-                }
-
-                let hash;
-                if (hashCache.has(cleanFilePath)) {
-                    hash = hashCache.get(cleanFilePath);
-                } else {
-                    const fileContent = fs.readFileSync(cleanFilePath);
-                    hash = calculateSRI(fileContent);
-                    hashCache.set(cleanFilePath, hash);
-                }
-
-                totalTagsUpdated++;
-                modified = true;
-                return `<script ${attrs} integrity="${hash}" crossorigin="anonymous">`;
-
-            } catch (err) {
-                console.warn(`Error processing script ${src}:`, err.message);
-                return match;
-            }
-        });
+        processTags(scriptRegex, 'script');
 
         // Process <link rel="stylesheet" href="...">
         const styleRegex = /<link\s+([^>]*\bhref=["']([^"']+)["'][^>]*)>/gi;
-        content = content.replaceAll(styleRegex, (match, attrs, href) => {
-            // Check if it is a stylesheet
-            if (!attrs.includes('rel="stylesheet"') && !attrs.includes("rel='stylesheet'")) return match;
-            if (attrs.includes('integrity=')) return match;
-            if (href.startsWith('http') || href.startsWith('//')) return match;
-
-            try {
-                if (!href.startsWith('/')) return match; // Skip relative for now
-
-                const filePath = path.join(DIST_DIR, href);
-                const cleanFilePath = filePath.split('?')[0];
-
-                if (!fs.existsSync(cleanFilePath)) {
-                    return match;
-                }
-
-                let hash;
-                if (hashCache.has(cleanFilePath)) {
-                    hash = hashCache.get(cleanFilePath);
-                } else {
-                    const fileContent = fs.readFileSync(cleanFilePath);
-                    hash = calculateSRI(fileContent);
-                    hashCache.set(cleanFilePath, hash);
-                }
-
-                totalTagsUpdated++;
-                modified = true;
-                return `<link ${attrs} integrity="${hash}" crossorigin="anonymous">`;
-
-            } catch (err) {
-                console.warn(`Error processing style ${href}:`, err.message);
-                return match;
-            }
-        });
+        processTags(styleRegex, 'link', (attrs) => attrs.includes('rel="stylesheet"') || attrs.includes("rel='stylesheet'"));
 
         if (modified) {
             fs.writeFileSync(file, content, 'utf-8');
