@@ -78,7 +78,7 @@ const logoText = siteData.logo_text || "<JMRP />";
         color: var(--color-primary);
         text-decoration: none;
         padding: 0.5rem;
-        z-index: 1001; /* Stay above mobile menu */
+        z-index: calc(var(--z-header) + 1); /* Stay above mobile menu */
     }
 
     .nav-right {
@@ -151,7 +151,7 @@ const logoText = siteData.logo_text || "<JMRP />";
     @media (max-width: 768px) {
         .menu-toggle {
             display: block; /* Visible on mobile */
-            z-index: 1002; /* Ensure above overlay */
+            z-index: calc(var(--z-header) + 2); /* Ensure above overlay */
             position: relative;
         }
 
@@ -169,7 +169,7 @@ const logoText = siteData.logo_text || "<JMRP />";
             border-left: 1px solid var(--color-border);
             padding: 5rem 2rem 2rem 2rem; /* Top padding for close button/logo area */
             gap: 1.5rem;
-            z-index: 1001; /* Above backdrop */
+            z-index: calc(var(--z-header) + 1); /* Above backdrop */
             box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
 
             /* Hidden State */

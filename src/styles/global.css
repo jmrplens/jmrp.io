@@ -2,6 +2,7 @@
   /* Color Palette - Default (Dark) */
   --color-bg: #000000;
   --color-bg-secondary: #0d1117;
+  --color-bg-subtle: rgba(255, 255, 255, 0.05);
   --color-text: #c9d1d9;
   --color-text-muted: #8b949e;
   --color-primary: #B389F5;
@@ -48,6 +49,7 @@
   :root:not([data-theme="dark"]) {
     --color-bg: #ffffff;
     --color-bg-secondary: #f6f8fa;
+    --color-bg-subtle: rgba(0, 0, 0, 0.05);
     --color-text: #24292f;
     --color-text-muted: #57606a;
     --color-primary: #b509ac;
@@ -61,6 +63,7 @@
 :root[data-theme="light"] {
   --color-bg: #ffffff;
   --color-bg-secondary: #f6f8fa;
+  --color-bg-subtle: rgba(0, 0, 0, 0.05);
   --color-text: #24292f;
   --color-text-muted: #57606a;
   --color-primary: #b509ac;
@@ -74,6 +77,7 @@
   /* Ensure these values match the default dark values at the top */
   --color-bg: #000000;
   --color-bg-secondary: #0d1117;
+  --color-bg-subtle: rgba(255, 255, 255, 0.05);
   --color-text: #c9d1d9;
   --color-text-muted: #8b949e;
   --color-primary: #B389F5;
@@ -284,4 +288,22 @@ html.dark svg[id^="mermaid-"] {
 svg[id^="mermaid-"] {
   max-width: 100% !important;
   height: auto !important;
+}
+
+/* Fix Expressive Code copy button on mobile */
+.expressive-code .copy button {
+  opacity: 0.8 !important;
+  /* Ensure visible without hover */
+  min-width: 2.5rem;
+  min-height: 2.5rem;
+}
+
+.expressive-code .copy button:hover {
+  opacity: 1 !important;
+}
+
+/* Ensure icon visibility */
+.expressive-code .copy button::after {
+  opacity: 1 !important;
+  background-color: var(--ec-frm-inlBtnFg, currentColor) !important;
 }
