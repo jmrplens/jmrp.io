@@ -10,7 +10,7 @@
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=jmrplens_jmrp.io&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=jmrplens_jmrp.io)
 
 <!-- Performance & Security -->
-![Mozilla Observatory Grade](https://img.shields.io/mozilla-observatory/grade/jmrp.io?publish)
+[![Mozilla Observatory Grade](https://img.shields.io/mozilla-observatory/grade/jmrp.io?publish)](https://observatory.mozilla.org/analyze/jmrp.io)
 ![PageSpeed Desktop](https://img.shields.io/badge/PageSpeed%20Desktop-100-brightgreen)
 ![PageSpeed Mobile](https://img.shields.io/badge/PageSpeed%20Mobile-100-brightgreen)
 
