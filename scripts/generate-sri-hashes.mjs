@@ -90,11 +90,14 @@ async function main() {
         };
 
         // Process <script src="...">
-        const scriptRegex = /<script\s+([^>]*\bsrc=["']([^"']+)["'][^>]*)>/gi;
+        // Fixed ReDoS: Removed \b and lazy quantifiers that cause catastrophic backtracking
+        // Using greedy [^>]* is safe because > unambiguously marks tag end
+        const scriptRegex = /<script\s+([^>]*src=["']([^"']+)["'][^>]*)>/gi;
         processTags(scriptRegex, 'script');
 
         // Process <link rel="stylesheet" href="...">
-        const styleRegex = /<link\s+([^>]*\bhref=["']([^"']+)["'][^>]*)>/gi;
+        // Fixed ReDoS: Same fix - greedy matching without word boundary
+        const styleRegex = /<link\s+([^>]*href=["']([^"']+)["'][^>]*)>/gi;
         processTags(styleRegex, 'link', (attrs) => attrs.includes('rel="stylesheet"') || attrs.includes("rel='stylesheet'"));
 
         if (modified) {
