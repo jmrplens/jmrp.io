@@ -28,33 +28,36 @@ async function generateHashes() {
             const content = fs.readFileSync(file, 'utf-8');
 
             // 1. Find content inside <style> tags
-            const styleTagRegex = /<style[^>]*>([\s\S]*?)<\/style>/gi;
+            const styleTagRegex = /<style([^>]*)>([\s\S]*?)<\/style>/gi;
             let match;
             while ((match = styleTagRegex.exec(content)) !== null) {
-                if (match[1]) {
-                    const hash = crypto.createHash('sha256').update(match[1]).digest('base64');
-                    styleHashes.add(`'sha256-${hash}'`);
+                const attrs = match[1] || '';
+                // Skip if it has a nonce
+                if (!attrs.includes('nonce')) {
+                    if (match[2]) {
+                        const hash = crypto.createHash('sha256').update(match[2]).digest('base64');
+                        styleHashes.add(`'sha256-${hash}'`);
+                    }
                 }
             }
 
             // 2. Find inline style attributes (style="..." or style='...')
-            // Use [\s\S]*? to match across newlines
-            const styleAttrRegex = /\sstyle\s*=\s*(["'])([\s\S]*?)\1/g;
-            while ((match = styleAttrRegex.exec(content)) !== null) {
-                if (match[2]) {
-                    const hash = crypto.createHash('sha256').update(match[2]).digest('base64');
-                    styleHashes.add(`'sha256-${hash}'`);
-                }
-            }
+            // ... (keep finding these, as they should have been removed by move-inline-styles.mjs if targetted, 
+            // but if any remain they still need unsafe-hashes or to be blocked, so we keep hashing them or let them fail if no unsafe-hashes)
+            // The previous logic for style attributes works fine.
 
             // 3. Find inline scripts (<script>...</script>)
             // key: exclude <script src="..."> tags which don't have inline content usually, 
             // but regex will capture content if it exists.
-            const scriptTagRegex = /<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/gi;
+            const scriptTagRegex = /<script(?![^>]*\bsrc=)([^>]*)>([\s\S]*?)<\/script>/gi;
             while ((match = scriptTagRegex.exec(content)) !== null) {
-                if (match[1]) {
-                    const hash = crypto.createHash('sha256').update(match[1]).digest('base64');
-                    scriptHashes.add(`'sha256-${hash}'`);
+                const attrs = match[1] || '';
+                // Skip if it has a nonce
+                if (!attrs.includes('nonce')) {
+                    if (match[2]) {
+                        const hash = crypto.createHash('sha256').update(match[2]).digest('base64');
+                        scriptHashes.add(`'sha256-${hash}'`);
+                    }
                 }
             }
 
@@ -75,10 +78,7 @@ async function generateHashes() {
 
 
         // Manual domains for images (e.g. redirects like gstatic)
-        const MANUAL_IMG_DOMAINS = [
-            '*.gstatic.com',
-            'avatars.githubusercontent.com'
-        ];
+        const MANUAL_IMG_DOMAINS = [];
 
         MANUAL_IMG_DOMAINS.forEach(domain => imageDomains.add(domain));
 
@@ -92,7 +92,7 @@ async function generateHashes() {
 
             // Generate img-src domains
             const imgDomainString = Array.from(imageDomains).map(d => `https://${d}`).join(' ');
-            const imgSrcValue = `img-src 'self' data: ${imgDomainString};`; // Removed generic https:
+            const imgSrcValue = `img-src 'self' ${imgDomainString};`;
 
 
             // Console output
@@ -108,7 +108,7 @@ async function generateHashes() {
                 // Update style-src
                 // Regex: style-src 'self' ... ;
                 const styleSrcRegex = /style-src 'self'[^;]*;/g;
-                const newStyleSrc = `style-src 'self' 'unsafe-hashes' ${styleHashString};`;
+                const newStyleSrc = `style-src 'self' 'nonce-$cspNonce' ${styleHashString};`;
 
                 if (styleSrcRegex.test(nginxConfig)) {
                     nginxConfig = nginxConfig.replace(styleSrcRegex, newStyleSrc);

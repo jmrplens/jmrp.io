@@ -57,7 +57,7 @@ const { headings } = Astro.props;
     )
 }
 
-<script>
+<script nonce="NGINX_CSP_NONCE">
     function setupMobileTOC() {
         const btns = document.querySelectorAll(".toc-trigger"); // Changed from single ID to class
         const drawer = document.getElementById("toc-drawer");

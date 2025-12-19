@@ -39,7 +39,7 @@ async function fetchProfile() {
     const avatarDiv = document.createElement("div");
     avatarDiv.className = "profile-avatar";
     const img = document.createElement("img");
-    img.src = user.avatar_url;
+    img.src = "/img/github-avatar.png"; // Use locally downloaded avatar
     img.alt = user.name;
     // Classes handle styling now
     avatarDiv.appendChild(img);

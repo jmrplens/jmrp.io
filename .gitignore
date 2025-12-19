@@ -38,3 +38,12 @@ pnpm-debug.log*
 *.toc
 *.xdv
 
+
+# Local Knowledge
+PROJECT_KNOWLEDGE.md
+
+# Generated Assets
+public/img/github-avatar.png
+
+# Agent
+.agent/

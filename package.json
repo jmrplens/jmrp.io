@@ -4,8 +4,9 @@
   "version": "0.0.1",
   "scripts": {
     "dev": "astro dev",
+    "prebuild": "node scripts/fetch-github-avatar.mjs",
     "build": "astro build && pagefind --site dist",
-    "postbuild": "node scripts/setup-sitemap.mjs && node scripts/generate-csp-hashes.mjs",
+    "postbuild": "node scripts/setup-sitemap.mjs && node scripts/move-inline-styles.mjs && node scripts/extract-css-data-uris.mjs && node scripts/generate-csp-hashes.mjs && rm -rf /var/cache/nginx/*",
     "preview": "astro preview",
     "astro": "astro"
   },
