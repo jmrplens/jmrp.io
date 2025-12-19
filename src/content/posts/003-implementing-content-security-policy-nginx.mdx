@@ -7,8 +7,8 @@ tags: ["nginx", "security", "csp", "webdev", "astro"]
 ---
 
 import Callout from '../../components/Callout.astro';
-import CodeTabs from '../../components/CodeTabs.astro';
-import CodeTabItem from '../../components/CodeTabItem.astro';
+import Tabs from '../../components/Tabs.astro';
+import TabPanel from '../../components/TabPanel.astro';
 import KeyPoint from '../../components/KeyPoint.astro';
 import CompareCode from '../../components/CompareCode.astro';
 import FileContent from '../../components/FileContent.astro';
@@ -103,24 +103,24 @@ server {
 
 Here is what happens "on the wire" when Nginx processes a request:
 
-<CodeTabs>
-  <CodeTabItem label="Before (File on Disk)">
+<Tabs>
+  <TabPanel label="Before (File on Disk)">
     ```html
     <!-- What is stored in /var/www/... -->
     <script nonce="NGINX_NONCE_CSP">
       console.log('Static Placeholder');
     </script>
     ```
-  </CodeTabItem>
-  <CodeTabItem label="After (Sent to Browser)">
+  </TabPanel>
+  <TabPanel label="After (Sent to Browser)">
     ```html
     <!-- What the user actually receives -->
     <script nonce="a1b2c3d4e5f6g7h8i9j0...">
       console.log('Static Placeholder');
     </script>
     ```
-  </CodeTabItem>
-</CodeTabs>
+  </TabPanel>
+</Tabs>
 
 ## Anatomy of a Strict CSP
 
@@ -128,9 +128,10 @@ Let's break down the directives used in a production-ready policy. A weak CSP pr
 
 ### 1. The Safety Net: `default-src`
 
-```nginx
+<Code lang="nginx">
 default-src 'none';
-```
+</Code>
+
 **Recommendation:** Always start with `'none'`. This ensures that any directive you forget to configure defaults to "block" rather than "allow". It forces you to be explicit about what you trust.
 
 ### 2. The Danger Zone: `script-src`

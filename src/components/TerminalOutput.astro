@@ -64,8 +64,8 @@ const { title } = Astro.props;
         overflow-x: auto;
     }
 
-    /* Hide the copy button from expressive-code */
-    .output-body :global(pre .copy) {
+    /* Hide the default expressive-code copy button */
+    .output-body :global(.expressive-code .copy, .custom-code-copy-btn) {
         display: none !important;
     }
 

@@ -10,8 +10,8 @@ draft: false
 tags: ["nginx", "security", "linux", "certificates", "tutorial"]
 ---
 import Callout from '../../components/Callout.astro';
-import CodeTabs from '../../components/CodeTabs.astro';
-import CodeTabItem from '../../components/CodeTabItem.astro';
+import Tabs from '../../components/Tabs.astro';
+import TabPanel from '../../components/TabPanel.astro';
 import TerminalCommand from '../../components/TerminalCommand.astro';
 import FileContent from '../../components/FileContent.astro';
 import TerminalOutput from '../../components/TerminalOutput.astro';
@@ -389,37 +389,37 @@ Now you need to install the `.p12` file (generated in Step 2.3) onto your device
   **Tip:** Transfer the `.p12` file securely. Use AirDrop, a private USB, or a secure cloud folder. Avoid sending it via plain email if possible.
 </Callout>
 
-<CodeTabs>
-  <CodeTabItem label="iOS (iPhone/iPad)">
+<Tabs>
+  <TabPanel label="iOS (iPhone/iPad)">
     1.  Send the `.p12` file to yourself via **AirDrop** or save it to **iCloud Drive** (Files app).
     2.  Tap on the file in the **Files** app.
     3.  Go to **Settings** > **Profile Downloaded** (appears at the top).
     4.  Install the profile and enter your device passcode.
     5.  Enter the certificate password.
     6.  The certificate is now installed! Safari will automatically use it when accessing the site.
-  </CodeTabItem>
-  <CodeTabItem label="macOS">
+  </TabPanel>
+  <TabPanel label="macOS">
     1.  Double-click the `user.p12` file.
     2.  **Keychain Access** will open. You will be prompted for the *export password* you created earlier.
     3.  Ensure the certificate is added to your "login" keychain.
     4.  Restart your browser (Chrome/Safari). When you visit the site, macOS will prompt you to "Select a Certificate" to authenticate.
-  </CodeTabItem>
-  <CodeTabItem label="Windows">
+  </TabPanel>
+  <TabPanel label="Windows">
     1.  Double-click the `user.p12` file.
     2.  The **Certificate Import Wizard** will launch.
     3.  Select **Current User**.
     4.  Enter the password.
     5.  Allow it to automatically select the certificate store (usually "Personal").
     6.  Restart your browser.
-  </CodeTabItem>
-  <CodeTabItem label="Android">
+  </TabPanel>
+  <TabPanel label="Android">
     1.  Save the `.p12` file to your device storage.
     2.  Go to **Settings** > **Security** > **Encryption & credentials** > **Install a certificate**.
     3.  Select **VPN & app user certificate**.
     4.  Navigate to the `.p12` file and select it.
     5.  Enter the password and give the certificate a name.
-  </CodeTabItem>
-</CodeTabs>
+  </TabPanel>
+</Tabs>
 
 ---
 

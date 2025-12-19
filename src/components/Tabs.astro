@@ -1,9 +1,11 @@
 ---
 /**
  * Tabs component.
- * A client-side web component (<ui-tabs>) for switching content panels.
- * Supports icons and responsive design.
+ * A versatile client-side web component for switching between content panels.
+ * Works with any content: code, text, images, etc.
+ * Supports icons, keyboard navigation, and accessibility.
  */
+
 interface Props {
     class?: string;
 }
@@ -13,46 +15,90 @@ const { class: className } = Astro.props;
 
 <script nonce="NGINX_CSP_NONCE" lang="ts">
     class TabsComponent extends HTMLElement {
-        constructor() {
-            super();
+        connectedCallback() {
+            // Use requestAnimationFrame to ensure the children are fully parsed
+            // connectedCallback fires before child elements are available
+            requestAnimationFrame(() => {
+                this.initializeTabs();
+            });
+        }
+
+        initializeTabs() {
             const headers = this.querySelector(".tab-headers");
             const panels = this.querySelectorAll(".tab-panel");
 
             if (!headers || panels.length === 0) return;
 
+            // Generate unique IDs for ARIA
+            const uniqueId = Math.random().toString(36).substring(2, 9);
+
             panels.forEach((panel, index) => {
                 const title =
                     panel.getAttribute("data-label") || `Tab ${index + 1}`;
-                const icon = panel.getAttribute("data-icon");
+                const panelId = `panel-${uniqueId}-${index}`;
+                const tabId = `tab-${uniqueId}-${index}`;
 
+                // Setup Panel ARIA
+                panel.setAttribute("id", panelId);
+                panel.setAttribute("role", "tabpanel");
+                panel.setAttribute("aria-labelledby", tabId);
+
+                // Create Tab Button
                 const button = document.createElement("button");
-
                 button.textContent = title;
+                button.id = tabId;
                 button.role = "tab";
+                button.setAttribute("aria-controls", panelId);
                 button.setAttribute(
                     "aria-selected",
                     index === 0 ? "true" : "false",
                 );
+                button.setAttribute("tabindex", index === 0 ? "0" : "-1");
 
                 button.addEventListener("click", () => {
-                    headers
-                        .querySelectorAll("button")
-                        .forEach((b) =>
-                            b.setAttribute("aria-selected", "false"),
-                        );
+                    // Deactivate all
+                    headers.querySelectorAll("button").forEach((b) => {
+                        b.setAttribute("aria-selected", "false");
+                        b.setAttribute("tabindex", "-1");
+                    });
                     panels.forEach((p) => {
                         if (p instanceof HTMLElement) p.style.display = "none";
                     });
 
+                    // Activate clicked
                     button.setAttribute("aria-selected", "true");
+                    button.setAttribute("tabindex", "0");
+
+                    // Show corresponding panel
                     if (panel instanceof HTMLElement)
                         panel.style.display = "block";
                 });
 
+                // Keyboard navigation
+                button.addEventListener("keydown", (e) => {
+                    if (e.key === "ArrowRight") {
+                        e.preventDefault();
+                        const next = button.nextElementSibling;
+                        if (next instanceof HTMLElement) {
+                            next.click();
+                            next.focus();
+                        }
+                    }
+                    if (e.key === "ArrowLeft") {
+                        e.preventDefault();
+                        const prev = button.previousElementSibling;
+                        if (prev instanceof HTMLElement) {
+                            prev.click();
+                            prev.focus();
+                        }
+                    }
+                });
+
                 headers.appendChild(button);
-                if (index !== 0) {
-                    if (panel instanceof HTMLElement)
-                        panel.style.display = "none";
+
+                // Initial state - hide all except first
+                if (panel instanceof HTMLElement) {
+                    panel.style.display = index === 0 ? "block" : "none";
                 }
             });
         }
@@ -62,7 +108,7 @@ const { class: className } = Astro.props;
 </script>
 
 <ui-tabs class:list={[className]}>
-    <div class="tab-headers"></div>
+    <div class="tab-headers" role="tablist" aria-label="Tabbed Content"></div>
     <div class="tab-content">
         <slot />
     </div>
@@ -72,82 +118,71 @@ const { class: className } = Astro.props;
     ui-tabs {
         display: block;
         margin: 1.5rem 0;
-        background: var(--color-card-bg, rgba(255, 255, 255, 0.05));
+        background: var(--color-bg-subtle);
         border: var(--border-subtle);
-        border-radius: 12px;
+        border-radius: var(--radius-md);
         overflow: hidden;
+        position: relative;
     }
 
     ui-tabs .tab-headers {
         display: flex;
-        background: transparent;
+        background: var(--color-bg-secondary);
         border-bottom: 1px solid var(--color-border);
         overflow-x: auto;
-        scrollbar-width: none; /* Firefox */
+        overflow-y: hidden;
+        scrollbar-width: thin;
     }
 
     ui-tabs .tab-headers::-webkit-scrollbar {
-        display: none; /* Chrome/Safari */
+        height: 4px;
     }
 
     ui-tabs .tab-headers button {
         appearance: none;
         background: transparent;
         border: none;
-        padding: 1rem 1.5rem;
-        color: var(--color-text-muted, #888);
-        font-size: 0.95rem;
+        padding: 0.75rem 1.25rem;
+        color: var(--color-text-muted);
+        font-size: 0.9rem;
         font-weight: 500;
         cursor: pointer;
         transition: all 0.2s;
         border-bottom: 2px solid transparent;
         white-space: nowrap;
+        flex-shrink: 0;
+        border-right: 1px solid var(--color-border);
     }
 
     ui-tabs .tab-headers button:hover {
         color: var(--color-text-body);
-        background: rgba(255, 255, 255, 0.05);
+        background: rgba(255, 255, 255, 0.02);
     }
 
     ui-tabs .tab-headers button[aria-selected="true"] {
         color: var(--color-primary);
         border-bottom-color: var(--color-primary);
-        background: var(--color-card-bg);
+        background: var(--color-bg-subtle);
+        margin-bottom: -1px;
     }
 
     ui-tabs .tab-content {
-        padding: 1.5rem;
+        padding: 0;
         max-width: 100%;
+        position: relative;
     }
 
     .tab-panel {
-        animation: fadeIn 0.3s ease;
+        padding: 1.5rem;
+        /* No animation - content should appear instantly */
     }
 
-    @keyframes fadeIn {
-        from {
-            opacity: 0;
-            transform: translateY(5px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
+    /* For code-only tabs (no padding needed) */
+    .tab-panel.no-padding {
+        padding: 0;
     }
 
-    /* Robust overflow handling for content within tabs AND global MDX content */
-    :global(html),
-    :global(body) {
-        overflow-x: hidden !important;
-        width: 100% !important;
-    }
-
-    :global(pre),
-    :global(.expressive-code) {
-        max-width: 100% !important;
-        overflow-x: auto !important;
-    }
-
+    /* Responsive overflow handling */
     ui-tabs :global(pre),
     ui-tabs :global(.expressive-code),
     ui-tabs :global(.mermaid) {
@@ -155,7 +190,6 @@ const { class: className } = Astro.props;
         overflow-x: auto !important;
     }
 
-    /* General responsive safety */
     ui-tabs img,
     ui-tabs svg {
         max-width: 100%;

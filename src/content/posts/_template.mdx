@@ -43,8 +43,8 @@ references:
 
 import Callout from '../../components/Callout.astro';
 import References from '../../components/References.astro';
-import CodeTabs from '../../components/CodeTabs.astro';
-import CodeTabItem from '../../components/CodeTabItem.astro';
+import Tabs from '../../components/Tabs.astro';
+import TabPanel from '../../components/TabPanel.astro';
 import YouTube from '../../components/YouTube.astro';
 
 {/* ========================================================================
@@ -62,21 +62,21 @@ Use callouts to highlight important information:
   This is an info callout. Available types: info, warning, danger, success
 </Callout>
 
-### Code Tabs
-Show multiple code examples side by side:
+### Tabs
+Show multiple code examples or content side by side:
 
-<CodeTabs>
-  <CodeTabItem label="JavaScript">
+<Tabs>
+  <TabPanel label="JavaScript" noPadding>
     ```javascript
     console.log('Hello World');
     ```
-  </CodeTabItem>
-  <CodeTabItem label="Python">
+  </TabPanel>
+  <TabPanel label="Python" noPadding>
     ```python
     print("Hello World")
     ```
-  </CodeTabItem>
-</CodeTabs>
+  </TabPanel>
+</Tabs>
 
 ### YouTube Embed
 <YouTube id="VIDEO_ID_HERE" title="Video Title" />

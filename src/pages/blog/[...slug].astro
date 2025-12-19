@@ -12,9 +12,10 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 import { Icon } from "astro-icon/components";
 
 import Callout from "../../components/Callout.astro";
-import CodeTabs from "../../components/CodeTabs.astro";
-import CodeTabItem from "../../components/CodeTabItem.astro";
+import Tabs from "../../components/Tabs.astro";
+import TabPanel from "../../components/TabPanel.astro";
 import YouTube from "../../components/YouTube.astro";
+import Code from "../../components/Code.astro";
 import TableOfContentsDrawer from "../../components/TableOfContentsDrawer.astro";
 import References from "../../components/References.astro";
 
@@ -190,7 +191,7 @@ const articleSchema = [
 
             <div class="prose">
                 <Content
-                    components={{ Callout, CodeTabs, CodeTabItem, YouTube }}
+                    components={{ Callout, Tabs, TabPanel, YouTube, Code }}
                 />
                 <References references={finalReferences} />
             </div>
@@ -222,6 +223,94 @@ const articleSchema = [
         );
 
         observer.observe(tocNav);
+    });
+
+    // Replace Expressive Code copy buttons with our custom buttons
+    // Only for standalone code blocks (not inside FileContent, Tabs, CompareCode)
+    document.addEventListener("DOMContentLoaded", () => {
+        // Find all .expressive-code blocks in the prose content
+        const proseContent = document.querySelector(".prose");
+        if (!proseContent) return;
+
+        const codeBlocks = proseContent.querySelectorAll(".expressive-code");
+
+        codeBlocks.forEach((block) => {
+            // Skip if already inside a special component
+            if (
+                block.closest(".file-content-wrapper") ||
+                block.closest(".tab-panel") ||
+                block.closest(".compare-block")
+            ) {
+                return; // Already handled by component
+            }
+
+            // Hide the Expressive Code copy button
+            const expressiveButton = block.querySelector(".copy");
+            if (expressiveButton instanceof HTMLElement) {
+                expressiveButton.style.display = "none";
+            }
+
+            // Check if we already added our button
+            if (block.querySelector(".custom-code-copy-btn")) {
+                return; // Already processed
+            }
+
+            // Create our custom copy button
+            const copyButton = document.createElement("button");
+            copyButton.className = "custom-code-copy-btn";
+            copyButton.setAttribute("aria-label", "Copy to clipboard");
+            copyButton.innerHTML = `
+                <svg class="copy-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
+                    <path fill="currentColor" d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z" />
+                </svg>
+                <svg class="success-icon hidden" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
+                    <path fill="currentColor" d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z" />
+                </svg>
+            `;
+
+            // Add click handler
+            copyButton.addEventListener("click", () => {
+                const codeElement = block.querySelector("code");
+                const text = codeElement ? codeElement.textContent : null;
+
+                if (!text) {
+                    console.warn("No code element found in block.");
+                    return;
+                }
+
+                navigator.clipboard.writeText(text).then(
+                    () => {
+                        const copyIcon = copyButton.querySelector(".copy-icon");
+                        const successIcon =
+                            copyButton.querySelector(".success-icon");
+
+                        if (
+                            copyIcon instanceof HTMLElement &&
+                            successIcon instanceof HTMLElement
+                        ) {
+                            copyIcon.classList.add("hidden");
+                            successIcon.classList.remove("hidden");
+
+                            setTimeout(() => {
+                                copyIcon.classList.remove("hidden");
+                                successIcon.classList.add("hidden");
+                            }, 2000);
+                        }
+                    },
+                    (err) => {
+                        console.error("Failed to copy:", err);
+                    },
+                );
+            });
+
+            // Make the block relative for positioning
+            if (block instanceof HTMLElement) {
+                block.style.position = "relative";
+            }
+
+            // Add the button to the block
+            block.appendChild(copyButton);
+        });
     });
 </script>
 
@@ -456,5 +545,50 @@ const articleSchema = [
         .lead {
             font-size: 1.125rem;
         }
+    }
+
+    /* Custom copy button for standalone code blocks */
+    :global(.custom-code-copy-btn) {
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+        background-color: var(--color-bg-subtle, rgba(255, 255, 255, 0.1));
+        border: var(--border-subtle, 1px solid rgba(255, 255, 255, 0.1));
+        border-radius: 4px;
+        padding: 0.3rem 0.5rem;
+        cursor: pointer;
+        opacity: 0.8;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 32px;
+        min-height: 32px;
+        z-index: 10;
+    }
+
+    :global(.custom-code-copy-btn:hover) {
+        opacity: 1;
+        background-color: var(--color-bg-secondary, #222);
+    }
+
+    :global(.custom-code-copy-btn:active) {
+        transform: scale(0.95);
+    }
+
+    :global(.custom-code-copy-btn .copy-icon),
+    :global(.custom-code-copy-btn .success-icon) {
+        width: 1.2rem;
+        height: 1.2rem;
+        color: var(--color-text-muted, #888);
+        display: block;
+    }
+
+    :global(.custom-code-copy-btn .success-icon) {
+        color: var(--color-success, #2ea043);
+    }
+
+    :global(.custom-code-copy-btn .hidden) {
+        display: none;
     }
 </style>
