@@ -3,7 +3,7 @@
 <!-- Project & Status -->
 ![Astro](https://img.shields.io/badge/astro-5.16.6-orange?style=flat&logo=astro)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
-[![Dependabot](https://badgen.net/badge/Dependabot/enabled/green?icon=dependabot)](https://github.com/jmrplens/jmrp.io/network/updates)
+[![Dependabot](https://badgen.net/badge/Dependabot/enabled/green?icon=dependabot)](https://github.com/jmrplens/jmrp.io/pulls)
 
 <!-- Code Quality -->
 [![Quality Checks](https://github.com/jmrplens/jmrp.io/actions/workflows/quality.yml/badge.svg)](https://github.com/jmrplens/jmrp.io/actions/workflows/quality.yml)
