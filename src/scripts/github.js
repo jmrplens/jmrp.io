@@ -115,6 +115,7 @@ async function fetchProfile() {
     container.appendChild(infoDiv);
 
   } catch (error) {
+    console.error("Failed to fetch GitHub profile:", error);
     container.innerHTML = "";
     const errDiv = document.createElement("div");
     errDiv.className = "error";
@@ -134,6 +135,7 @@ async function fetchRepos() {
     allRepos = await response.json(); // Store for searching
     renderRepos(allRepos);
   } catch (error) {
+    console.error("Failed to fetch GitHub repositories:", error);
     container.innerHTML = "";
     const errDiv = document.createElement("div");
     errDiv.className = "error";

@@ -112,7 +112,6 @@ export async function getPublications(): Promise<PublicationGroup[]> {
         const journalArticles: any[] = [];
         const conferencePapers: any[] = [];
         const thesisList: any[] = [];
-        const others: any[] = [];
 
         /**
          * Extract raw bibtex entry for display/copying
@@ -142,9 +141,8 @@ export async function getPublications(): Promise<PublicationGroup[]> {
                 conferencePapers.push(item);
             } else if (type === 'thesis' || type === 'report') {
                 thesisList.push(item);
-            } else {
-                others.push(item);
             }
+            // Note: Publications with other types are intentionally ignored
         }
 
         return [
