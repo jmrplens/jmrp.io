@@ -2,8 +2,8 @@
 import { useState, useEffect } from 'preact/hooks';
 
 interface Props {
-    type: 'mastodon' | 'matrix' | 'meshmonitor-lf' | 'meshmonitor-mf' | 'meshtastic-combined';
-    children?: any;
+    readonly type: 'mastodon' | 'matrix' | 'meshmonitor-lf' | 'meshmonitor-mf' | 'meshtastic-combined';
+    readonly children?: any;
 }
 
 export default function ServiceStats({ type, children }: Props) {
@@ -148,7 +148,7 @@ export default function ServiceStats({ type, children }: Props) {
     }
 
     if (type === 'mastodon') {
-        const { peersCount, mastodonTrends, instanceVersion } = stats as any;
+        const { peersCount, mastodonTrends, instanceVersion } = stats;
 
         return (
             <div class="stats-wrapper-col">
@@ -195,7 +195,7 @@ export default function ServiceStats({ type, children }: Props) {
     }
 
     if (type === 'matrix') {
-        const { matrixData, matrixFed } = stats as any;
+        const { matrixData, matrixFed } = stats;
         const synapseVersion = matrixFed?.server?.version || "Unknown";
 
         return (
@@ -250,7 +250,7 @@ export default function ServiceStats({ type, children }: Props) {
     }
 
     if (type === 'meshtastic-combined') {
-        const { potatoNodes, lfNodes, mfNodes, potatoVersion } = stats as any;
+        const { potatoNodes, lfNodes, mfNodes, potatoVersion } = stats;
 
         // Helper to render the green dot status
         const StatusDot = () => (
