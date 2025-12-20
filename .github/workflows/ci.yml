@@ -11,9 +11,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # Build once and share artifact with all other jobs
-  build:
-    name: Build & Quality Checks
+  lint:
+    name: Lint & Type Check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -39,6 +38,25 @@ jobs:
       - name: Security Audit
         run: pnpm audit --audit-level=high
         continue-on-error: true
+
+  # Build once and share artifact with all other jobs
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 20
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install
 
       - name: Install Playwright Browsers
         run: pnpm exec playwright install --with-deps
@@ -73,9 +91,42 @@ jobs:
       - name: Run Lighthouse CI
         run: |
           npm install -g @lhci/cli
-          lhci autorun
+          lhci autorun | tee lhci_output.txt
         env:
           LHCI_GITHUB_TOKEN: ${{ secrets.TOKEN_GITHUB }}
+      
+      - name: Format Lighthouse Report
+        id: format_report
+        if: always()
+        run: |
+          # Extract URL from output
+          LH_URL=$(grep -o 'https://storage.googleapis.com/lighthouse-infrastructure/[^ ]*' lhci_output.txt | head -n 1)
+          
+          # Run the node script to get the table
+          node scripts/format-lighthouse-report.js > lighthouse_comment.md
+          
+          # Append URL
+          if [ ! -z "$LH_URL" ]; then
+            echo "" >> lighthouse_comment.md
+            echo "[View Full Report]($LH_URL)" >> lighthouse_comment.md
+          fi
+          
+          # Read into env for github-script
+          echo "LH_COMMENT<<EOF" >> $GITHUB_ENV
+          cat lighthouse_comment.md >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+      - name: Post Comment
+        if: github.event_name == 'pull_request' && env.LH_COMMENT != ''
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: process.env.LH_COMMENT
+            })
 
   # Accessibility testing
   accessibility:
