@@ -39,7 +39,7 @@ async function fetchMastodonStats(setError: (error: boolean) => void) {
       instanceVersion = instanceData.version;
     }
   } catch (e) {
-    console.error("Mastodon Network Error:", e);
+    console.warn("Mastodon Network Error:", e);
     setError(true);
   }
 
@@ -81,7 +81,7 @@ async function fetchMatrixStats(setError: (error: boolean) => void) {
       matrixData.federationTotal = destData.total;
     }
   } catch (e) {
-    console.error("Matrix Network Error:", e);
+    console.warn("Matrix Network Error:", e);
     setError(true);
   }
 
@@ -136,7 +136,7 @@ async function fetchPotatoVersion(): Promise<string> {
       }
     }
   } catch (e) {
-    console.error("Potato Version Error", e);
+    console.warn("Potato Version Error", e);
   }
   return potatoVersion;
 }
@@ -159,7 +159,7 @@ export default function ServiceStats({ type, children }: Props) {
         }
         setStats(data);
       } catch (err) {
-        console.error("ServiceStats Error:", err);
+        console.warn("ServiceStats Error:", err);
         setError(true);
       } finally {
         setLoading(false);
