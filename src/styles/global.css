@@ -148,6 +148,8 @@ h1 {
   max-width: var(--max-width-container);
   margin: 0 auto;
   padding: 0 var(--space-md);
+  min-width: 0;
+  /* Prevent flex child expansion */
 }
 
 .text-mono {
@@ -164,6 +166,10 @@ h1 {
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border-width: 0;
+}
+
+.hidden {
+  display: none !important;
 }
 
 /* Mobile Optimizations - Reinforced */
@@ -232,7 +238,12 @@ h1 {
   border: var(--border-subtle);
   color: var(--color-text-muted);
   background: transparent;
-  /* Force transparent for buttons */
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  line-height: 1;
+  text-decoration: none;
+  cursor: pointer;
 }
 
 .btn-sm:hover {

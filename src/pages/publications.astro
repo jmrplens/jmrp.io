@@ -7,6 +7,9 @@
 import BaseLayout from "../layouts/BaseLayout.astro";
 import { getPublications } from "../utils/publications";
 import { Icon } from "astro-icon/components";
+import { Code } from "astro-expressive-code/components";
+import CopyButton from "../components/CopyButton.astro";
+import PublicationItem from "../components/PublicationItem.astro";
 
 const publicationGroups = await getPublications();
 
@@ -52,201 +55,17 @@ const publicationsSchema = {
         {
             publicationGroups.map((group) => (
                 <section class="pub-section">
-                    <h2 class="section-title">{group.title}</h2>
+                    <h2 class="section-title text-primary border-b border-border pb-2">
+                        {group.title}
+                    </h2>
                     <div class="publications-list">
                         {group.items.map((pub: any) => (
-                            <div class="publication-item">
-                                <div class="pub-year">
-                                    {pub.issued?.["date-parts"]?.[0]?.[0]}
-                                </div>
-                                <div class="pub-content">
-                                    <h3 class="pub-title">{pub.title}</h3>
-                                    <div class="pub-authors">
-                                        {pub.author?.map(
-                                            (author: any, index: number) => (
-                                                <span>
-                                                    {author.url ? (
-                                                        <a
-                                                            href={author.url}
-                                                            target="_blank"
-                                                            class="author-link"
-                                                        >
-                                                            {author.given}{" "}
-                                                            {author.family}
-                                                        </a>
-                                                    ) : (
-                                                        <>
-                                                            {author.given}{" "}
-                                                            {author.family}
-                                                        </>
-                                                    )}
-                                                    {index <
-                                                    pub.author.length - 1
-                                                        ? ", "
-                                                        : ""}
-                                                </span>
-                                            ),
-                                        )}
-                                    </div>
-                                    <div class="pub-bvenue">
-                                        <span class="venue-name">
-                                            {pub["container-title"] ||
-                                                pub.publisher}
-                                        </span>
-                                    </div>
-
-                                    <div class="pub-actions">
-                                        <button
-                                            class="btn-sm btn-abstract"
-                                            data-id={pub.id}
-                                        >
-                                            <Icon
-                                                name="fa-solid:align-left"
-                                                class="icon-sm"
-                                            />{" "}
-                                            Abstract
-                                        </button>
-
-                                        {pub.DOI && (
-                                            <a
-                                                href={`https://doi.org/${pub.DOI}`}
-                                                target="_blank"
-                                                class="btn-sm"
-                                            >
-                                                <Icon
-                                                    name="fa-solid:external-link-alt"
-                                                    class="icon-sm"
-                                                />{" "}
-                                                DOI
-                                            </a>
-                                        )}
-
-                                        {pub.URL && (
-                                            <a
-                                                href={
-                                                    pub.URL.startsWith("http")
-                                                        ? pub.URL
-                                                        : `/pdf/${pub.URL}`
-                                                }
-                                                target="_blank"
-                                                class="btn-sm"
-                                            >
-                                                <Icon
-                                                    name="fa-solid:file-pdf"
-                                                    class="icon-sm"
-                                                />{" "}
-                                                PDF
-                                            </a>
-                                        )}
-
-                                        {pub.pdf && (
-                                            <a
-                                                href={
-                                                    pub.pdf.startsWith("http")
-                                                        ? pub.pdf
-                                                        : `/pdf/${pub.pdf}`
-                                                }
-                                                target="_blank"
-                                                class="btn-sm"
-                                            >
-                                                <Icon
-                                                    name="fa-solid:file-pdf"
-                                                    class="icon-sm"
-                                                />{" "}
-                                                PDF
-                                            </a>
-                                        )}
-
-                                        {pub.slides && (
-                                            <a
-                                                href={
-                                                    pub.slides.startsWith(
-                                                        "http",
-                                                    )
-                                                        ? pub.slides
-                                                        : `/pdf/${pub.slides}`
-                                                }
-                                                target="_blank"
-                                                class="btn-sm"
-                                            >
-                                                <Icon
-                                                    name="fa-solid:chalkboard-teacher"
-                                                    class="icon-sm"
-                                                />{" "}
-                                                Slides
-                                            </a>
-                                        )}
-
-                                        {pub.poster && (
-                                            <a
-                                                href={
-                                                    pub.poster.startsWith(
-                                                        "http",
-                                                    )
-                                                        ? pub.poster
-                                                        : `/pdf/${pub.poster}`
-                                                }
-                                                target="_blank"
-                                                class="btn-sm"
-                                            >
-                                                <Icon
-                                                    name="fa-solid:image"
-                                                    class="icon-sm"
-                                                />{" "}
-                                                Poster
-                                            </a>
-                                        )}
-                                        <button
-                                            class="btn-sm btn-bibtex-toggle"
-                                            data-id={pub.id}
-                                        >
-                                            <Icon
-                                                name="fa-solid:code"
-                                                class="icon-sm"
-                                            />{" "}
-                                            BibTeX
-                                        </button>
-                                    </div>
-
-                                    {/* Abstract Box */}
-                                    <div
-                                        id={`abstract-${pub.id}`}
-                                        class="pub-abstract hidden"
-                                    >
-                                        <p>{pub.abstract}</p>
-                                    </div>
-
-                                    {/* BibTeX Box */}
-                                    <div
-                                        id={`bibtex-${pub.id}`}
-                                        class="pub-bibtex hidden"
-                                    >
-                                        <div class="bibtex-content">
-                                            <pre>
-                                                <code>
-                                                    {cleanBibtex(pub.bibtex)}
-                                                </code>
-                                            </pre>
-                                            <button
-                                                class="btn-sm btn-copy-bibtex"
-                                                data-bibtex={pub.bibtex}
-                                            >
-                                                <Icon name="fa-solid:copy" />{" "}
-                                                Copy
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                            <PublicationItem pub={pub} />
                         ))}
                     </div>
                 </section>
             ))
         }
-    </div>
-
-    <div id="bibtex-feedback" class="bibtex-feedback hidden">
-        Copied to clipboard!
     </div>
 </BaseLayout>
 
@@ -263,147 +82,12 @@ const publicationsSchema = {
         gap: var(--space-lg);
     }
 
-    .publication-item {
-        display: flex; /* Keep flex for Year + Content layout inside card */
-        gap: var(--space-lg);
-        padding: var(--space-lg);
-        background-color: var(--color-bg-secondary);
-        border: var(--border-subtle);
-        border-radius: var(--radius-md);
-        transition:
-            transform 0.2s,
-            border-color 0.2s;
-    }
-
-    .publication-item:hover {
-        transform: translateY(-2px);
-        border-color: var(--color-primary);
-    }
-
-    .pub-year {
-        font-family: var(--font-mono);
-        color: var(--color-accent);
+    /* Minimal styles as most logic is now in the component */
+    .section-title {
+        font-size: 1.5rem;
         font-weight: bold;
-        font-size: 1.2rem;
-        min-width: 50px; /* Reduced min-width */
-        padding-top: 2px; /* Visual alignment with title */
-    }
-
-    .pub-content {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-    }
-
-    .pub-title {
-        margin: 0 0 var(--space-xs) 0;
-        font-size: 1.15rem; /* Slightly larger */
-        line-height: 1.4;
-    }
-
-    .pub-authors {
-        color: var(--color-text-muted);
-        font-size: 0.95rem;
-        margin-bottom: var(--space-sm);
-        line-height: 1.5;
-    }
-
-    .author-link {
-        color: var(--color-primary);
-        text-decoration: none;
-    }
-    .author-link:hover {
-        text-decoration: underline;
-    }
-
-    .pub-bvenue {
-        margin-bottom: var(--space-sm);
-    }
-
-    .venue-name {
-        font-style: italic;
-        color: var(--color-text);
-        font-weight: 500;
-    }
-
-    .pub-actions {
-        margin-top: auto; /* Push to bottom if height varies */
-        display: flex;
-        gap: var(--space-sm);
-        flex-wrap: wrap;
-    }
-
-    .btn-abstract {
-        /* Specific style for abstract toggle if needed */
-    }
-
-    /* Abstract & Bibtex Boxes */
-    .pub-abstract,
-    .pub-bibtex {
-        margin-top: var(--space-md);
-        padding: var(--space-md);
-        background-color: var(
-            --color-bg
-        ); /* Darker/Lighter contrast inside card */
-        border: var(--border-subtle);
-        border-radius: var(--radius-sm);
-        font-size: 0.9rem;
-        color: var(--color-text-muted);
-        line-height: 1.6;
-    }
-
-    .pub-abstract {
-        border-left: 3px solid var(--color-primary);
-    }
-
-    .hidden {
-        display: none;
-    }
-
-    .bibtex-feedback {
-        position: fixed;
-        bottom: 2rem;
-        right: 2rem;
-        background-color: var(--color-primary);
-        color: white;
-        padding: 0.5rem 1rem;
-        border-radius: var(--radius-md);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-        z-index: 1000;
-        opacity: 0;
-        transition: opacity 0.3s;
-        pointer-events: none;
-    }
-
-    .bibtex-feedback.show {
-        opacity: 1;
-        display: block;
-    }
-
-    .bibtex-content pre {
-        margin: 0;
-        white-space: pre-wrap;
-        word-break: break-all;
-        font-family: var(--font-mono);
-        font-size: 0.8rem;
-        color: var(--color-text-muted);
-    }
-
-    .btn-copy-bibtex {
-        margin-top: var(--space-sm);
-    }
-
-    @media (max-width: 600px) {
-        .publication-item {
-            flex-direction: column;
-            gap: var(--space-sm);
-        }
-
-        .pub-year {
-            font-size: 1rem;
-            color: var(--color-text-muted);
-            margin-bottom: -4px;
-        }
+        margin-bottom: var(--space-md);
+        display: inline-block;
+        padding-right: var(--space-lg);
     }
 </style>
-```

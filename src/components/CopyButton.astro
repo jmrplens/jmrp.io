@@ -8,28 +8,47 @@ import { Icon } from "astro-icon/components";
 
 interface Props {
     class?: string;
+    content?: string;
 }
 
-const { class: className } = Astro.props;
+const { class: className, content } = Astro.props;
+const encodedContent = content ? encodeURIComponent(content) : undefined;
 ---
 
-<button class:list={["copy-button", className]} aria-label="Copy to clipboard">
-    <Icon name="mdi:clipboard-outline" class="copy-icon" />
-    <Icon name="mdi:check" class="success-icon hidden" />
+<button
+    class:list={["copy-button", className]}
+    aria-label="Copy to clipboard"
+    data-content={encodedContent}
+>
+    <Icon name="mdi:clipboard-outline" class="copy-icon" aria-hidden="true" />
+    <Icon name="mdi:check" class="success-icon hidden" aria-hidden="true" />
 </button>
 
-<script nonce="NGINX_CSP_NONCE" lang="ts">
+<script lang="ts">
     document.querySelectorAll(".copy-button").forEach((button) => {
         button.addEventListener("click", () => {
-            // Find the closest wrapper (assuming the button is inside a relative container)
-            // We look for a standardized class .copy-container to find the scope
-            const wrapper =
-                button.closest(".copy-container") || button.parentElement;
-            if (!wrapper) return;
+            let text = null;
+            const rawContent = button.getAttribute("data-content");
+            if (rawContent && rawContent !== "undefined") {
+                try {
+                    text = decodeURIComponent(rawContent);
+                } catch (e) {
+                    console.error("Failed to decode data-content", e);
+                }
+            }
 
-            // Try to find a code element inside the wrapper
-            const codeBlock = wrapper.querySelector("code");
-            const text = codeBlock ? codeBlock.textContent : null;
+            if (!text) {
+                const wrapper =
+                    button.closest(".copy-container") || button.parentElement;
+                if (!wrapper) return;
+
+                const codeBlock = wrapper.querySelector("code, .copy-content");
+                text = codeBlock
+                    ? codeBlock.innerText || codeBlock.textContent
+                    : null;
+
+                if (!text && codeBlock) text = codeBlock.textContent;
+            }
 
             if (!text) {
                 console.warn("CopyButton: No code element found in wrapper.");
@@ -42,17 +61,14 @@ const { class: className } = Astro.props;
                     const copyIcon = button.querySelector(".copy-icon");
                     const successIcon = button.querySelector(".success-icon");
 
-                    if (
-                        copyIcon instanceof HTMLElement &&
-                        successIcon instanceof HTMLElement
-                    ) {
+                    if (copyIcon && successIcon) {
                         copyIcon.classList.add("hidden");
                         successIcon.classList.remove("hidden");
 
                         setTimeout(() => {
                             copyIcon.classList.remove("hidden");
                             successIcon.classList.add("hidden");
-                        }, 2000);
+                        }, 1000);
                     }
                 },
                 (err) => {

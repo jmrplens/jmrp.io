@@ -221,8 +221,4 @@ const jsonLD = {
 <meta property="twitter:image" content={resolvedImage} />
 
 <!-- JSON-LD -->
-<script
-    type="application/ld+json"
-    nonce="NGINX_CSP_NONCE"
-    set:html={JSON.stringify(jsonLD)}
-/>
+<script type="application/ld+json" set:html={JSON.stringify(jsonLD)} />
