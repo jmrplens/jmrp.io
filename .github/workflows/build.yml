@@ -1,20 +1,17 @@
-name: SonarCloud
+name: Build
 
 on:
   push:
-    branches:
-      - main
+    branches: ["main"]
   pull_request:
-    types: [opened, synchronize, reopened]
+    branches: ["main"]
 
 jobs:
-  sonarcloud:
-    name: SonarCloud
+  build:
+    name: Build & Check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
@@ -28,8 +25,11 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-      - name: SonarCloud Scan
-        uses: SonarSource/sonarqube-scan-action@v7
-        env:
-          GITHUB_TOKEN: ${{ secrets.TOKEN_GITHUB }}
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      - name: Install Playwright Browsers
+        run: pnpm exec playwright install --with-deps
+
+      - name: Build Astro
+        run: pnpm astro build
+
+      - name: Run Pagefind
+        run: pnpm pagefind --site dist

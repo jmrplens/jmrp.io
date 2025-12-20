@@ -41,21 +41,22 @@ references:
     url: "https://example.com/another"
 ---
 
-import Callout from '../../components/Callout.astro';
-import References from '../../components/References.astro';
-import Tabs from '../../components/Tabs.astro';
-import TabPanel from '../../components/TabPanel.astro';
-import YouTube from '../../components/YouTube.astro';
+import Callout from "../../components/Callout.astro";
+import References from "../../components/References.astro";
+import Tabs from "../../components/Tabs.astro";
+import TabPanel from "../../components/TabPanel.astro";
+import YouTube from "../../components/YouTube.astro";
 
-{/* ========================================================================
-    POST CONTENT STARTS HERE
-    ======================================================================== */}
+{/_ ========================================================================
+POST CONTENT STARTS HERE
+======================================================================== _/}
 
 Your post content goes here. You can use standard Markdown and MDX components.
 
 ## Using Custom Components
 
 ### Callout Component
+
 Use callouts to highlight important information:
 
 <Callout type="info">
@@ -63,32 +64,31 @@ Use callouts to highlight important information:
 </Callout>
 
 ### Tabs
+
 Show multiple code examples or content side by side:
 
 <Tabs>
   <TabPanel label="JavaScript" noPadding>
-    ```javascript
-    console.log('Hello World');
-    ```
+    ```javascript console.log('Hello World'); ```
   </TabPanel>
   <TabPanel label="Python" noPadding>
-    ```python
-    print("Hello World")
-    ```
+    ```python print("Hello World") ```
   </TabPanel>
 </Tabs>
 
 ### YouTube Embed
+
 <YouTube id="VIDEO_ID_HERE" title="Video Title" />
 
 ### References Section
+
 Add at the end of your post to display all references:
 
 <References references={frontmatter.references} />
 
-{/* ========================================================================
-    FIELD REFERENCE
-    ========================================================================
+{/\* ========================================================================
+FIELD REFERENCE
+========================================================================
 
     REQUIRED:
     - title: String - The post title

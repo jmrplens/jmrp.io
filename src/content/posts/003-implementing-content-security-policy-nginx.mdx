@@ -6,12 +6,12 @@ description: "A comprehensive guide to implementing a strict Content Security Po
 tags: ["nginx", "security", "csp", "webdev", "astro"]
 ---
 
-import Callout from '../../components/Callout.astro';
-import Tabs from '../../components/Tabs.astro';
-import TabPanel from '../../components/TabPanel.astro';
-import KeyPoint from '../../components/KeyPoint.astro';
-import CompareCode from '../../components/CompareCode.astro';
-import FileContent from '../../components/FileContent.astro';
+import Callout from "../../components/Callout.astro";
+import Tabs from "../../components/Tabs.astro";
+import TabPanel from "../../components/TabPanel.astro";
+import KeyPoint from "../../components/KeyPoint.astro";
+import CompareCode from "../../components/CompareCode.astro";
+import FileContent from "../../components/FileContent.astro";
 
 In the modern web, security cannot be an afterthought. Cross-Site Scripting (XSS) remains one of the most prevalent vulnerabilities, allow and execute. **[Content Security Policy (CSP)](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CSP)** is the most effective countermeasure against these attacks, acting as a whitelist that tells the browser exactly which resources are allowed to load and execute.
 
@@ -21,57 +21,67 @@ In this deep dive, I will explain how to implement an A+ rated CSP using [Nginx]
 
 ## Why Do We Need CSP? The Threat Landscape
 
-Before diving into the code, it's crucial to understand *what* we are protecting against. CSP is not just a "nice to have"; it is a critical defense layer against several specific types of attacks.
+Before diving into the code, it's crucial to understand _what_ we are protecting against. CSP is not just a "nice to have"; it is a critical defense layer against several specific types of attacks.
 
 ### 1. <a href="https://developer.mozilla.org/en-US/docs/Glossary/Cross-site_scripting" target="_blank" rel="noopener noreferrer" aria-label="Learn more about Cross-Site Scripting (XSS) on MDN Web Docs">Cross-Site Scripting (XSS)</a>
+
 **What is it?** XSS occurs when an attacker injects malicious code (usually JavaScript) into a legitimate website.
-*   **The Risk:** If an attacker can execute their script in your user's browser, they can steal session cookies (account hijacking), redirect the user to a phishing site, or perform actions on the user's behalf.
-*   **How CSP Helps:** By defining a `script-src` whitelist, CSP tells the browser: "Only execute scripts from *this* domain or scripts that have *this* specific nonce." Even if an attacker injects `<script>alert('Hacked')</script>`, the browser will refuse to run it because it lacks the valid nonce.
+
+- **The Risk:** If an attacker can execute their script in your user's browser, they can steal session cookies (account hijacking), redirect the user to a phishing site, or perform actions on the user's behalf.
+- **How CSP Helps:** By defining a `script-src` whitelist, CSP tells the browser: "Only execute scripts from _this_ domain or scripts that have _this_ specific nonce." Even if an attacker injects `<script>alert('Hacked')</script>`, the browser will refuse to run it because it lacks the valid nonce.
 
 ### 2. Data Injection & <a href="https://www.cloudflare.com/learning/security/what-is-data-exfiltration/" target="_blank" rel="noopener noreferrer" aria-label="Learn more about Data Exfiltration on Cloudflare Learning">Exfiltration</a>
+
 **What is it?** Attackers might try to load external resources (like tracking pixels) or send sensitive data (like keystrokes) to their own servers.
-*   **The Risk:** Unsolicited tracking or theft of private user data entered into forms.
-*   **How CSP Helps:** Directives like `connect-src` and `img-src` limit where the browser can send data. If an attacker tries to send your credit card number to `malicious-site.com`, CSP blocks the connection.
+
+- **The Risk:** Unsolicited tracking or theft of private user data entered into forms.
+- **How CSP Helps:** Directives like `connect-src` and `img-src` limit where the browser can send data. If an attacker tries to send your credit card number to `malicious-site.com`, CSP blocks the connection.
 
 ### 3. <a href="https://owasp.org/www-community/attacks/Clickjacking" target="_blank" rel="noopener noreferrer" aria-label="Read about Clickjacking attacks on OWASP">Clickjacking</a> (UI Redressing)
+
 **What is it?** An attacker embeds your website inside an invisible `<iframe>` on their own site. They then trick users into clicking buttons on your site (like "Delete Account" or "Transfer Money") thinking they are clicking something else.
-*   **How CSP Helps:** The `frame-ancestors` directive effectively replaces the older `X-Frame-Options` header. Setting it to `'none'` ensures your site cannot be embedded anywhere, completely neutralizing this attack.
+
+- **How CSP Helps:** The `frame-ancestors` directive effectively replaces the older `X-Frame-Options` header. Setting it to `'none'` ensures your site cannot be embedded anywhere, completely neutralizing this attack.
 
 ### 4. Packet Sniffing (<a href="https://developer.mozilla.org/en-US/docs/Web/Security/Defenses/Mixed_content" target="_blank" rel="noopener noreferrer" aria-label="Learn about Mixed Content security on MDN Web Docs">Mixed Content</a>)
+
 **What is it?** Loading insecure (HTTP) resources on a secure (HTTPS) page.
-*   **The Risk:** An attacker on the same network (like a public Wi-Fi) can see or modify the insecure content.
-*   **How CSP Helps:** The `upgrade-insecure-requests` directive forces the browser to try and load all resources over HTTPS, even if the code specifically asks for HTTP.
+
+- **The Risk:** An attacker on the same network (like a public Wi-Fi) can see or modify the insecure content.
+- **How CSP Helps:** The `upgrade-insecure-requests` directive forces the browser to try and load all resources over HTTPS, even if the code specifically asks for HTTP.
 
 ---
 
 ## The Challenge: Static Content vs. Dynamic Security
 
-A robust CSP relies on **nonces** (numbers used once)—random, unpredictable tokens generated for *every single request*.
+A robust CSP relies on **nonces** (numbers used once)—random, unpredictable tokens generated for _every single request_.
 
 1.  The server generates a token: `nonce="abc123..."`.
 2.  The server sends this token in the `Content-Security-Policy` header.
-3.  The server puts the *same* token on `<script>` tags: `<script nonce="abc123...">`.
+3.  The server puts the _same_ token on `<script>` tags: `<script nonce="abc123...">`.
 4.  The browser executes the script only if the header and tag match.
 
-**The Problem:** Static Site Generators (SSG) build HTML files *once* at build time. They cannot predict the random nonce that Nginx will generate weeks later when a user visits the site.
+**The Problem:** Static Site Generators (SSG) build HTML files _once_ at build time. They cannot predict the random nonce that Nginx will generate weeks later when a user visits the site.
 
 ## The Solution: Nginx Sub-Filter & Placeholders
 
 The elegant solution used on `jmrp.io` involves a partnership between the static build and the web server.
 
 ### 1. The Placeholder
+
 In our source code (Astro, React, plain HTML), we don't use a random number. We use a known, static string as a placeholder. I use `NGINX_NONCE_CSP`.
 
 <FileContent filename="src/layouts/BaseLayout.astro" icon="simple-icons:astro">
-```html
-<script is:inline nonce="NGINX_NONCE_CSP">
-  // Your critical inline script
-  console.log("Hello from a secure inline script!");
-</script>
-```
+  ```html
+  <script is:inline nonce="NGINX_NONCE_CSP">
+    // Your critical inline script console.log("Hello from a secure inline
+    script!");
+  </script>
+  ```
 </FileContent>
 
 ### 2. The Injection (Nginx)
+
 We configure Nginx to generate a request ID and search-and-replace our placeholder with this ID before sending the response to the user.
 
 <FileContent filename="/etc/nginx/sites-available/jmrp.io.conf" icon="devicon:nginx">
@@ -91,8 +101,10 @@ server {
     # 3. Add the CSP Header
     # We reference the same variable ($cspNonce) in the header
     add_header Content-Security-Policy "script-src 'self' 'nonce-$cspNonce' ..." always;
+
 }
-```
+
+````
 </FileContent>
 
 <KeyPoint icon="mdi:check-decagram">
@@ -244,3 +256,4 @@ After tuning the policy for `jmrp.io`, removing unsafe directives, and implement
 </Callout>
 
 This setup proves that you don't need to sacrifice security for the convenience of a static site generator. With a few lines of Nginx configuration, you can achieve top-tier protection.
+````
