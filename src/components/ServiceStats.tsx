@@ -39,7 +39,6 @@ async function fetchMastodonStats(setError: (error: boolean) => void) {
       instanceVersion = instanceData.version;
     }
   } catch (e) {
-
     setError(true);
   }
 
@@ -81,7 +80,6 @@ async function fetchMatrixStats(setError: (error: boolean) => void) {
       matrixData.federationTotal = destData.total;
     }
   } catch (e) {
-    
     setError(true);
   }
 
@@ -135,9 +133,7 @@ async function fetchPotatoVersion(): Promise<string> {
         potatoVersion = await resVer.text();
       }
     }
-  } catch (e) {
-    
-  }
+  } catch (e) {}
   return potatoVersion;
 }
 
@@ -159,7 +155,6 @@ export default function ServiceStats({ type, children }: Props) {
         }
         setStats(data);
       } catch (err) {
-        
         setError(true);
       } finally {
         setLoading(false);
