@@ -39,6 +39,7 @@ async function fetchMastodonStats(setError: (error: boolean) => void) {
       instanceVersion = instanceData.version;
     }
   } catch (e) {
+    console.error("Error fetching Mastodon stats:", e);
     setError(true);
   }
 
@@ -80,6 +81,7 @@ async function fetchMatrixStats(setError: (error: boolean) => void) {
       matrixData.federationTotal = destData.total;
     }
   } catch (e) {
+    console.error("Error fetching Matrix stats:", e);
     setError(true);
   }
 
@@ -129,11 +131,17 @@ async function fetchPotatoVersion(): Promise<string> {
       try {
         const verJson = await resVer.json();
         potatoVersion = verJson.version;
-      } catch {
+      } catch (e) {
+        console.error(
+          "Error parsing PotatoMesh version as JSON, falling back to text:",
+          e,
+        );
         potatoVersion = await resVer.text();
       }
     }
-  } catch (e) {}
+  } catch (e) {
+    console.error("Error fetching PotatoMesh version:", e);
+  }
   return potatoVersion;
 }
 
@@ -146,8 +154,8 @@ export default function ServiceStats({ type, children }: Props) {
     const fetchData = async () => {
       // Avoid fetching in CI/Localhost to prevent CORS errors in Lighthouse
       if (
-        typeof window !== "undefined" &&
-        window.location.hostname === "localhost"
+        typeof globalThis.window !== "undefined" &&
+        globalThis.window.location.hostname === "localhost"
       ) {
         setLoading(false);
         return;
@@ -164,6 +172,7 @@ export default function ServiceStats({ type, children }: Props) {
         }
         setStats(data);
       } catch (err) {
+        console.error("Error fetching service stats:", err);
         setError(true);
       } finally {
         setLoading(false);
