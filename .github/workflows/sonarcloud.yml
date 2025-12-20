@@ -47,11 +47,7 @@ jobs:
         run: pnpm install
 
       - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@v3
+        uses: SonarSource/sonarqube-scan-action@v7
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.TOKEN_GITHUB }}
-        with:
-          args: >
-            -Dsonar.projectKey=jmrplens_jmrp.io
-            -Dsonar.organization=jmrplens
