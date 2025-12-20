@@ -144,6 +144,15 @@ export default function ServiceStats({ type, children }: Props) {
 
   useEffect(() => {
     const fetchData = async () => {
+      // Avoid fetching in CI/Localhost to prevent CORS errors in Lighthouse
+      if (
+        typeof window !== "undefined" &&
+        window.location.hostname === "localhost"
+      ) {
+        setLoading(false);
+        return;
+      }
+
       try {
         let data;
         if (type === "mastodon") {
