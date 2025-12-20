@@ -25,6 +25,10 @@ categories:
     labels:
       - 'security'
       - 'sec'
+template: |
+  ## What's Changed
+
+  $CHANGES
 change-template: '- $TITLE @$AUTHOR (#$NUMBER)'
 version-resolver:
   major:
