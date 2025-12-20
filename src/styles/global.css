@@ -5,14 +5,14 @@
   --color-bg-subtle: rgba(255, 255, 255, 0.05);
   --color-text: #c9d1d9;
   --color-text-muted: #8b949e;
-  --color-primary: #B389F5;
+  --color-primary: #b389f5;
   --color-primary-hover: #c49af5;
-  --color-accent: #B389F5;
+  --color-accent: #b389f5;
   --color-border: #30363d;
 
   /* Typography */
-  --font-body: 'Inter', system-ui, -apple-system, sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
+  --font-body: "Inter", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
 
   /* Spacing & Radius */
   --space-xs: 0.25rem;
@@ -80,9 +80,9 @@
   --color-bg-subtle: rgba(255, 255, 255, 0.05);
   --color-text: #c9d1d9;
   --color-text-muted: #8b949e;
-  --color-primary: #B389F5;
+  --color-primary: #b389f5;
   --color-primary-hover: #c49af5;
-  --color-accent: #B389F5;
+  --color-accent: #b389f5;
   --color-border: #30363d;
 }
 
@@ -201,7 +201,11 @@ h1 {
   border-radius: var(--radius-md);
   font-weight: 600;
   text-decoration: none;
-  transition: transform 0.2s, background-color 0.2s, border-color 0.2s, color 0.2s;
+  transition:
+    transform 0.2s,
+    background-color 0.2s,
+    border-color 0.2s,
+    color 0.2s;
   border: 1px solid transparent;
   cursor: pointer;
   line-height: 1.5;

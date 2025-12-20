@@ -10,60 +10,154 @@
   - firstname: ["Trevor", "Trevor J.", "Trevor Cox"]
     url: http://trevorcox.me/
 
-"Groby": 
+"Groby":
   - firstname: ["Jean-Philippe", "J. P. G.", "Jean-Philippe G."]
     url: http://perso.univ-lemans.fr/~jpgroby/webpage_jpgroby.html
 
 "Romero-García":
-  - firstname: ["Vicente","Vicent Romero-García","Vicente Romero-García", "V. R. G.","Vicente R.","Vicent R."]
+  - firstname:
+      [
+        "Vicente",
+        "Vicent Romero-García",
+        "Vicente Romero-García",
+        "V. R. G.",
+        "Vicente R.",
+        "Vicent R.",
+      ]
     url: http://perso.univ-lemans.fr/~vromero/index.html
 
 "Cebrecos":
-  - firstname: ["Alejandro","Alejandro Cebrecos", "Alejandro Cebrecos Ruiz", "Alejandro C. R."]
+  - firstname:
+      [
+        "Alejandro",
+        "Alejandro Cebrecos",
+        "Alejandro Cebrecos Ruiz",
+        "Alejandro C. R.",
+      ]
     url: http://www.upv.es/ficha-personal/alcebrui
 
 "Picó":
-  - firstname: ["Rubén","Rubén Picó", "Rubén Picó Vila", "Rubén Picó"]
+  - firstname: ["Rubén", "Rubén Picó", "Rubén Picó Vila", "Rubén Picó"]
     url: http://www.upv.es/ficha-personal/rpico
 
 "Sánchez-Morcillo":
-  - firstname: ["Víctor", "Víctor J.", "Víctor J. Sánchez", "Sánchez-Morcillo", "Sánchez Morcillo", "Víctor J. Sánchez Morcillo", "Víctor José Sánchez Morcillo", "Víctor José Sánchez-Morcillo", "Víctor J. Sánchez-Morcillo"]
+  - firstname:
+      [
+        "Víctor",
+        "Víctor J.",
+        "Víctor J. Sánchez",
+        "Sánchez-Morcillo",
+        "Sánchez Morcillo",
+        "Víctor J. Sánchez Morcillo",
+        "Víctor José Sánchez Morcillo",
+        "Víctor José Sánchez-Morcillo",
+        "Víctor J. Sánchez-Morcillo",
+      ]
     url: http://www.upv.es/ficha-personal/victorsm
 
 "Ramis":
-  - firstname: ["Jaime", "Jaime Ramis Soriano", "Jaime R. S.", "Ramis Soriano", "Jaime Ramis", "Ramis Soriano, Jaime", "Soriano, Jaime Ramis"]
+  - firstname:
+      [
+        "Jaime",
+        "Jaime Ramis Soriano",
+        "Jaime R. S.",
+        "Ramis Soriano",
+        "Jaime Ramis",
+        "Ramis Soriano, Jaime",
+        "Soriano, Jaime Ramis",
+      ]
     url: https://cvnet.cpd.ua.es/curriculum-breve/es/ramis-soriano-jaime/6475
 
 "Soriano":
-  - firstname: ["Jaime", "Jaime Ramis Soriano", "Jaime R. S.", "Ramis Soriano", "Jaime Ramis", "Ramis Soriano, Jaime", "Soriano, Jaime Ramis"]
+  - firstname:
+      [
+        "Jaime",
+        "Jaime Ramis Soriano",
+        "Jaime R. S.",
+        "Ramis Soriano",
+        "Jaime Ramis",
+        "Ramis Soriano, Jaime",
+        "Soriano, Jaime Ramis",
+      ]
     url: https://cvnet.cpd.ua.es/curriculum-breve/es/ramis-soriano-jaime/6475
 
 "Ramis-Soriano":
-  - firstname: ["Jaime", "Jaime Ramis Soriano", "Jaime R. S.", "Ramis Soriano", "Jaime Ramis", "Ramis Soriano, Jaime", "Soriano, Jaime Ramis"]
+  - firstname:
+      [
+        "Jaime",
+        "Jaime Ramis Soriano",
+        "Jaime R. S.",
+        "Ramis Soriano",
+        "Jaime Ramis",
+        "Ramis Soriano, Jaime",
+        "Soriano, Jaime Ramis",
+      ]
     url: https://cvnet.cpd.ua.es/curriculum-breve/es/ramis-soriano-jaime/6475
 
 "Guarinos":
-  - firstname: ["Jenaro", "Jenaro Vera", "Jenaro Vera Guarinos", "Vera Guarinos", "Vera Guarinos, Jenaro"]
+  - firstname:
+      [
+        "Jenaro",
+        "Jenaro Vera",
+        "Jenaro Vera Guarinos",
+        "Vera Guarinos",
+        "Vera Guarinos, Jenaro",
+      ]
     url: https://cvnet.cpd.ua.es/curriculum-breve/es/vera-guarinos-jenaro/11844
 
 "Vera Guarinos":
-  - firstname: ["Jenaro", "Jenaro Vera", "Jenaro Vera Guarinos", "Vera Guarinos", "Vera Guarinos, Jenaro"]
+  - firstname:
+      [
+        "Jenaro",
+        "Jenaro Vera",
+        "Jenaro Vera Guarinos",
+        "Vera Guarinos",
+        "Vera Guarinos, Jenaro",
+      ]
     url: https://scholar.google.es/citations?user=x-q6R-QAAAAJ
 
 "Carbajo":
-  - firstname: ["Jesus", "Jesús", "Jesús Carbajo San Martín", "Carbajo San Martín", "Jesus Carbajo", "Jesús Carbajo","Carbajo San Martı́n, Jesús"]
+  - firstname:
+      [
+        "Jesus",
+        "Jesús",
+        "Jesús Carbajo San Martín",
+        "Carbajo San Martín",
+        "Jesus Carbajo",
+        "Jesús Carbajo",
+        "Carbajo San Martı́n, Jesús",
+      ]
     url: https://cvnet.cpd.ua.es/curriculum-breve/es/carbajo-san-martin-jesus/12139
 
 "Carbajo San Martín":
-  - firstname: ["Jesus", "Jesús", "Carbajo San Martín", "Jesus Carbajo", "Jesús Carbajo", "Carbajo San Martı́n, Jesús"]
+  - firstname:
+      [
+        "Jesus",
+        "Jesús",
+        "Carbajo San Martín",
+        "Jesus Carbajo",
+        "Jesús Carbajo",
+        "Carbajo San Martı́n, Jesús",
+      ]
     url: https://cvnet.cpd.ua.es/curriculum-breve/es/carbajo-san-martin-jesus/12139
 
 "Martín":
-  - firstname: ["Jesus", "Jesús","Jesús Carbajo San", "Jesús Carbajo San Martín", "Carbajo San Martín", "Jesus Carbajo", "Jesús Carbajo","Carbajo San Martı́n, Jesús"]
+  - firstname:
+      [
+        "Jesus",
+        "Jesús",
+        "Jesús Carbajo San",
+        "Jesús Carbajo San Martín",
+        "Carbajo San Martín",
+        "Jesus Carbajo",
+        "Jesús Carbajo",
+        "Carbajo San Martı́n, Jesús",
+      ]
     url: https://cvnet.cpd.ua.es/curriculum-breve/es/carbajo-san-martin-jesus/12139
 
 "Poveda":
-  - firstname: ["Pedro", "Poveda-Martínez", "Pedro Poveda-Martínez","Pedro Poveda"]
+  - firstname:
+      ["Pedro", "Poveda-Martínez", "Pedro Poveda-Martínez", "Pedro Poveda"]
     url: https://cvnet.cpd.ua.es/curriculum-breve/es/poveda-martinez-pedro/21395
 
 "González":
@@ -75,5 +169,6 @@
     url: https://www.linkedin.com/in/mara-escart%C3%AD-guillem-b10183141
 
 "Raffi":
-  - firstname: ["Luis Miguel García", "Luis Miguel García Raffi", "García Raffi"]
+  - firstname:
+      ["Luis Miguel García", "Luis Miguel García Raffi", "García Raffi"]
     url: http://www.upv.es/ficha-personal/lmgarcia

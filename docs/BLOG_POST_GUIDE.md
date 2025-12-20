@@ -3,6 +3,7 @@
 ## Quick Start
 
 1. Copy the template file:
+
    ```bash
    cp src/content/posts/_template.mdx src/content/posts/my-new-post.mdx
    ```
@@ -21,23 +22,23 @@
 
 ### Required Fields
 
-| Field | Type | Description | Example |
-|-------|------|-------------|---------|
-| `title` | String | Post title | `"My Awesome Post"` |
-| `publishedDate` | Date | Publication date (YYYY-MM-DD) | `2025-12-17` |
+| Field           | Type   | Description                   | Example             |
+| --------------- | ------ | ----------------------------- | ------------------- |
+| `title`         | String | Post title                    | `"My Awesome Post"` |
+| `publishedDate` | Date   | Publication date (YYYY-MM-DD) | `2025-12-17`        |
 
 ### Optional Fields (Recommended)
 
-| Field | Type | Description | Example | Default |
-|-------|------|-------------|---------|---------|
-| `description` | String | SEO description & RSS | `"A brief description..."` | Uses site description |
-| `author` | String | Author name | `"José Manuel Requena Plens"` | Site author |
-| `authorEmail` | String | Author email (RFC 822) | `"mail@jmrp.io"` | `mail@jmrp.io` |
-| `updatedDate` | Date | Last update date | `2025-12-18` | Same as `publishedDate` |
-| `draft` | Boolean | Hide in production | `true` or `false` | `false` |
-| `coverImage` | String | Cover image path | `"/img/cover.jpg"` | Default blog image |
-| `tags` | Array | Post categories/tags | `["nginx", "security"]` | `[]` |
-| `references` | Array | External citations | See below | `[]` |
+| Field         | Type    | Description            | Example                       | Default                 |
+| ------------- | ------- | ---------------------- | ----------------------------- | ----------------------- |
+| `description` | String  | SEO description & RSS  | `"A brief description..."`    | Uses site description   |
+| `author`      | String  | Author name            | `"José Manuel Requena Plens"` | Site author             |
+| `authorEmail` | String  | Author email (RFC 822) | `"mail@jmrp.io"`              | `mail@jmrp.io`          |
+| `updatedDate` | Date    | Last update date       | `2025-12-18`                  | Same as `publishedDate` |
+| `draft`       | Boolean | Hide in production     | `true` or `false`             | `false`                 |
+| `coverImage`  | String  | Cover image path       | `"/img/cover.jpg"`            | Default blog image      |
+| `tags`        | Array   | Post categories/tags   | `["nginx", "security"]`       | `[]`                    |
+| `references`  | Array   | External citations     | See below                     | `[]`                    |
 
 ### References Format
 
@@ -75,12 +76,11 @@ references:
 Highlight important information with colored boxes:
 
 ```mdx
-<Callout type="info">
-  This is an informational callout.
-</Callout>
+<Callout type="info">This is an informational callout.</Callout>
 ```
 
 **Available types:**
+
 - `info` - Blue informational box
 - `warning` - Yellow warning box
 - `danger` - Red danger/error box
@@ -90,20 +90,14 @@ Highlight important information with colored boxes:
 
 Show multiple code examples in tabs:
 
-```mdx
+````mdx
 <CodeTabs>
   <CodeTabItem label="JavaScript">
-    ```javascript
-    console.log('Hello');
-    ```
+    ```javascript console.log('Hello'); ```
   </CodeTabItem>
-  <CodeTabItem label="Python">
-    ```python
-    print("Hello")
-    ```
-  </CodeTabItem>
+  <CodeTabItem label="Python">```python print("Hello") ```</CodeTabItem>
 </CodeTabs>
-```
+````
 
 ### YouTube Embed
 
@@ -124,11 +118,13 @@ Display all references at the end of your post:
 ## Content Writing Tips
 
 ### Headers
+
 - Use `#` for the main title (already in frontmatter, don't repeat)
 - Start content headers with `##` (H2)
 - Use `###` for subsections (H3)
 
 ### Code Blocks
+
 Specify language for syntax highlighting:
 
 ````markdown
@@ -139,6 +135,7 @@ console.log(greeting);
 ````
 
 ### Images
+
 Place images in `public/img/` and reference them:
 
 ```markdown
@@ -146,6 +143,7 @@ Place images in `public/img/` and reference them:
 ```
 
 ### Links
+
 - External links: `[Text](https://example.com)`
 - Internal links: `[Text](/blog/other-post)`
 
@@ -160,6 +158,7 @@ Place images in `public/img/` and reference them:
 ## RSS Feed Integration
 
 All posts are automatically included in the RSS feed at `/rss.xml`:
+
 - Uses `author` and `authorEmail` from frontmatter
 - Includes `description` in feed
 - Shows all `tags` as categories
@@ -168,6 +167,7 @@ All posts are automatically included in the RSS feed at `/rss.xml`:
 ## Schema.org Metadata
 
 Each post automatically generates:
+
 - `BlogPosting` schema with all metadata
 - `BreadcrumbList` for navigation
 - References author from main site schema
@@ -191,13 +191,15 @@ Before publishing your post:
 - [ ] Check mobile responsiveness
 
 ## File Naming and Ordering
+
 - **Requirement:** Files must start with a 3-digit numeric index to maintain order in the filesystem.
-    - Example: `001-post-slug.mdx`
-    - Start from `001`, `002`, `003`, etc.
+  - Example: `001-post-slug.mdx`
+  - Start from `001`, `002`, `003`, etc.
 - **Slug:** You **MUST** define the `slug` property in the frontmatter.
-    - This ensures the URL remains `/blog/post-slug/` regardless of the file prefix.
+  - This ensures the URL remains `/blog/post-slug/` regardless of the file prefix.
 
 ## Required Frontmatter
+
 ```yaml
 title: "Post Title"
 slug: "post-url-slug" # REQUIRED: Defines the URL
@@ -217,6 +219,7 @@ publishedDate: 2025-12-17
 ## Testing
 
 ### Local Testing
+
 ```bash
 # Development server
 npm run dev
@@ -227,6 +230,7 @@ npm run preview
 ```
 
 ### Validation
+
 - **RSS Feed**: https://validator.w3.org/feed/
 - **Schema**: https://validator.schema.org/
 - **SEO**: https://pagespeed.web.dev/

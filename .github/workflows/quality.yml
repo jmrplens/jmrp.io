@@ -2,11 +2,11 @@ name: Quality Checks
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
   schedule:
-    - cron: '0 9 * * 1' # Run every Monday at 9am
+    - cron: "0 9 * * 1" # Run every Monday at 9am
 
 jobs:
   link-checker:
@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      
+
       - name: Restore lychee cache
         uses: actions/cache@v5
         with:
@@ -46,6 +46,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      
+
       - name: Check Spelling
         uses: crate-ci/typos@master

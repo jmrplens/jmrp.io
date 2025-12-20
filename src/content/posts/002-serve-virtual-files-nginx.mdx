@@ -10,12 +10,13 @@ draft: false
 heroImage: "/src/assets/images/posts/features-guide-hero.png"
 tags: ["nginx", "sysadmin", "webperf", "devops", "tutorial"]
 ---
-import Callout from '../../components/Callout.astro';
-import Tabs from '../../components/Tabs.astro';
-import TabPanel from '../../components/TabPanel.astro';
-import TerminalCommand from '../../components/TerminalCommand.astro';
-import FileContent from '../../components/FileContent.astro';
-import KeyPoint from '../../components/KeyPoint.astro';
+
+import Callout from "../../components/Callout.astro";
+import Tabs from "../../components/Tabs.astro";
+import TabPanel from "../../components/TabPanel.astro";
+import TerminalCommand from "../../components/TerminalCommand.astro";
+import FileContent from "../../components/FileContent.astro";
+import KeyPoint from "../../components/KeyPoint.astro";
 
 When deploying a modern web application, especially a containerized one or a service running on a managed platform, you often don't have easy access to its web root. What happens when you need to serve a standard file like `robots.txt` or `.well-known/security.txt`? You can't just drop it into the folder.
 
@@ -30,7 +31,11 @@ There are two primary methods to achieve this, each with its own use case.
 2.  **Using [`return`](https://nginx.org/en/docs/http/ngx_http_rewrite_module.html#return)**: This directive can stop processing and immediately return a specific response code and content. It's incredibly efficient for small, simple text files where creating a separate file feels like overkill.
 
 <KeyPoint icon="mdi:vector-difference">
-  **`root` vs. `alias`**: A common point of confusion is the difference between `root` and `alias`. With `root`, Nginx appends the request URI to the path you specify. With `alias`, Nginx *discards* the matched part of the request URI and uses the path you specify directly. For serving a single file, `alias` is often more direct.
+  **`root` vs. `alias`**: A common point of confusion is the difference between
+  `root` and `alias`. With `root`, Nginx appends the request URI to the path you
+  specify. With `alias`, Nginx *discards* the matched part of the request URI
+  and uses the path you specify directly. For serving a single file, `alias` is
+  often more direct.
 </KeyPoint>
 
 ---
@@ -46,11 +51,7 @@ Let's say your application runs from `/var/www/app`, but you want to manage all 
 First, create your `robots.txt` file:
 
 <FileContent filename="/etc/nginx/assets/robots.txt">
-```txt
-User-agent: *
-Allow: /
-Sitemap: https://www.example.com/sitemap.xml
-```
+  ```txt User-agent: * Allow: / Sitemap: https://www.example.com/sitemap.xml ```
 </FileContent>
 
 Now, configure your Nginx server block to intercept requests for `/robots.txt` and serve your custom file.
@@ -73,8 +74,10 @@ server {
         proxy_pass http://localhost:3000;
         # ... other proxy settings
     }
+
 }
-```
+
+````
 </FileContent>
 
 ### Method B: Generate Content with `return`
@@ -97,11 +100,13 @@ server {
         proxy_pass http://localhost:3000;
     }
 }
-```
+````
+
 </FileContent>
 
 <Callout type="warning">
-  The content in a `return` directive must be a single, unbroken string. Newlines (`\n`) are permitted within the string to format the output.
+  The content in a `return` directive must be a single, unbroken string.
+  Newlines (`\n`) are permitted within the string to format the output.
 </Callout>
 
 ---
@@ -124,8 +129,10 @@ server {
     }
 
     # ... other locations ...
+
 }
-```
+
+````
 </FileContent>
 
 This configuration makes it easy for security researchers to get in touch, enhancing your site's security posture, without touching your application code.
@@ -149,7 +156,8 @@ The <a href="https://humanstxt.org/" target="_blank" rel="noopener noreferrer" a
 # Last update: 2025-12-18
 # Standards: HTML5, CSS3
 # Software: Nginx, Astro
-```
+````
+
 </FileContent>
 <FileContent filename="Nginx Site Configuration" icon="devicon:nginx">
 ```nginx
@@ -186,7 +194,7 @@ server {
         # This directive is part of the standard HttpHeadersModule
         # See the docs for more on `add_header`.
         add_header 'Content-Type' 'application/json';
-        
+
         # Return a simple JSON object
         return 200 '{"status":"ok", "version":"1.2.3"}';
     }
@@ -198,8 +206,10 @@ server {
     }
 
     # ...
+
 }
-```
+
+````
 </FileContent>
 
 <Callout type="info">
@@ -226,7 +236,8 @@ server {
 
     # ... all other locations for your app
 }
-```
+````
+
 </FileContent>
 
 With this configuration, no matter which `server_name` receives the validation request, Nginx will always look for the challenge file in `/var/www/certbot`. Just make sure your ACME client is configured to place its files there.
@@ -237,8 +248,8 @@ With this configuration, no matter which `server_name` receives the validation r
 
 To create seamless links between your website and your mobile app ([Android App Links](https://developer.android.com/training/app-links/verify-applinks) and [iOS Universal Links](https://developer.apple.com/documentation/xcode/supporting-associated-domains)), you need to host specific JSON files.
 
--   **Android:** `/.well-known/assetlinks.json`
--   **iOS:** `/.well-known/apple-app-site-association` (note: no file extension)
+- **Android:** `/.well-known/assetlinks.json`
+- **iOS:** `/.well-known/apple-app-site-association` (note: no file extension)
 
 Nginx can serve both. The iOS file is particularly interesting because it **must** be served with the `application/json` content type.
 
@@ -261,7 +272,9 @@ server {
     }
 
     # ...
+
 }
+
 ```
 </FileContent>
 
@@ -272,3 +285,4 @@ server {
 By leveraging Nginx's `alias` and `return` directives, you gain immense flexibility in how you serve content. This approach decouples standard web files from your application's codebase, making it easier to manage deployments, secure your environment, and improve performance.
 
 Whether you're running a Docker container, a managed Node.js service, or a complex Java application, Nginx can act as a powerful gatekeeper that serves these essential "virtual" files on your behalf, simply and efficiently.
+```

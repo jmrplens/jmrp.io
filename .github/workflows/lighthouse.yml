@@ -2,16 +2,16 @@ name: Lighthouse CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
 jobs:
   lighthouse:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      
+
       - name: Install pnpm
         uses: pnpm/action-setup@v4
 
@@ -19,7 +19,7 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: 20
-          cache: 'pnpm'
+          cache: "pnpm"
 
       - name: Install dependencies
         run: pnpm install
@@ -29,10 +29,10 @@ jobs:
 
       - name: Build Astro
         run: pnpm astro build
-      
+
       - name: Run Lighthouse CI
         run: |
           npm install -g @lhci/cli
           lhci autorun
         env:
-          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+          LHCI_GITHUB_TOKEN: ${{ secrets.TOKEN_GITHUB }}
