@@ -1,0 +1,51 @@
+name-template: 'v$RESOLVED_VERSION'
+tag-template: 'v$RESOLVED_VERSION'
+categories:
+  - title: '🚀 Features'
+    labels:
+      - 'feature'
+      - 'feat'
+  - title: '🐛 Bug Fixes'
+    labels:
+      - 'fix'
+      - 'bug'
+  - title: '🧰 Maintenance'
+    labels:
+      - 'chore'
+      - 'maintenance'
+  - title: '📚 Documentation'
+    labels:
+      - 'docs'
+      - 'documentation'
+  - title: '⚡ Performance'
+    labels:
+      - 'perf'
+      - 'performance'
+  - title: '🛡️ Security'
+    labels:
+      - 'security'
+      - 'sec'
+change-template: '- $TITLE @$AUTHOR (#$NUMBER)'
+version-resolver:
+  major:
+    labels:
+      - 'major'
+      - 'breaking'
+  minor:
+    labels:
+      - 'minor'
+      - 'feat'
+      - 'feature'
+  patch:
+    labels:
+      - 'fix'
+      - 'bug'
+      - 'chore'
+      - 'docs'
+      - 'perf'
+      - 'refactor'
+      - 'style'
+      - 'test'
+  default: patch
+exclude-labels:
+  - 'skip-changelog'
