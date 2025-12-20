@@ -1,20 +1,16 @@
-name: SonarCloud
+name: Prettier Check
 
 on:
   push:
-    branches:
-      - main
+    branches: ["main"]
   pull_request:
-    types: [opened, synchronize, reopened]
+    branches: ["main"]
 
 jobs:
-  sonarcloud:
-    name: SonarCloud
+  prettier:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
@@ -28,8 +24,5 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-      - name: SonarCloud Scan
-        uses: SonarSource/sonarqube-scan-action@v7
-        env:
-          GITHUB_TOKEN: ${{ secrets.TOKEN_GITHUB }}
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      - name: Check Formatting
+        run: pnpm exec prettier --check .

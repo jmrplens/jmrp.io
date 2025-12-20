@@ -5,7 +5,7 @@
       value: José Manuel Requena Plens
     - name: Languages
       value: Spanish (native), English (intermediate)
-    - name: Download CV 
+    - name: Download CV
       links:
         - link: /pdf/CV_RequenaPlensJoseManuel_SPA.pdf
           name: CV PDF [SPANISH]
@@ -58,8 +58,8 @@
       description:
         - Theoretical development of acoustic metadiffusers based on membranes or plates reducing the size of commercial diffusers.
         - Simulation of the acoustic diffusers and validation of results (MATLAB & COMSOL).
-        - title: 'Two publications in national and international congresses:'
-          contents: 
+        - title: "Two publications in national and international congresses:"
+          contents:
             - Tecniacústica - <a href="/pdf/paper-resources/Conferences/Tecniacustica/JimenezTEC2020a.pdf">Beyond Schroeder diffusers using acoustic metasurfaces</a>.
             - Euronoise - <a href="/pdf/paper-resources/Conferences/Euronoise/plensEuro2021_2.pdf">Sound diffusing metasurfaces based on elastic plates and membranes</a>
         - Development and simulation of metamaterial-based waveguides for improved ultrasound resolution in air.
@@ -72,7 +72,7 @@
       department: Complex Media Acoustics Group of IGIC (<a href="http://igic.webs.upv.es/">IGIC</a>)
       year: Feb 2020 - Jul 2021
       location: Gandia, Spain
-      summary: 
+      summary:
         "Implement and experimentally validate a sound mitigation method, applicable to a real space vehicle launch configuration (VEGA), that results in a significant decrease in sound pressure levels generated in the launch area during spacecraft liftoff.
         <br><br>
         Project funded by ESA (European Space Agency) with reference ESA AO/1-9479/18/NL/LvH, in collaboration with: CNRS/Laboratoire d'Acoustique de la Université du Mans; COMET Ingeniería; Spanish National Research Council (CSIC) and Polytechnic University of Madrid.
@@ -82,14 +82,14 @@
         - Design of the optimum geometry of the acoustic metamaterial to reduce noise levels.
         - Simulation of a real environment to validate design performance (MATLAB, COMSOL & Python).
         - Design of the industrial model for the manufacture of the prototype by means of plastic injection.
-        - Development of software for acoustic measurements according to ISO 10534-2:1998 and ASTM 2611-19 standards. <a href="https://github.com/jmrplens/A-Lab">A|Lab</a> 
+        - Development of software for acoustic measurements according to ISO 10534-2:1998 and ASTM 2611-19 standards. <a href="https://github.com/jmrplens/A-Lab">A|Lab</a>
         - 'Design and development of a 3-axis robotic system to perform experimental measurements. Photos and some information here: <a href="https://cienciagandia.webs.upv.es/en/2022/03/metamaterial-to-reduce-noise-in-space-rocket-launches/" aria-label="News: Metamaterial to reduce noise in space rocket launches">NEWS</a>'
         - Results validated and accepted by ESA.
-        - title: 'Three publications/presentations at international congresses (Euronoise and ECSSMET) and one at a national congress (Tecniacústica):'
-          contents: 
+        - title: "Three publications/presentations at international congresses (Euronoise and ECSSMET) and one at a national congress (Tecniacústica):"
+          contents:
             - Euronoise - <a href="/pdf/paper-resources/Conferences/Euronoise/plensEuro2021.pdf">Perfect broadband sound absorber metamaterial for noise reduction in a rocket launch</a>.
             - Euronoise - <a href="/pdf/paper-resources/Conferences/Euronoise/EscartiEuro2021.pdf">Application of metamaterials to control noise scattering during space vehicle lift-off</a>.
-            - 'ECSSMET - Launch sound level characterisation and mitigation: numerical modelling framework and metamaterial proof of concept.'
+            - "ECSSMET - Launch sound level characterisation and mitigation: numerical modelling framework and metamaterial proof of concept."
             - Tecniacústica - <a href="/pdf/paper-resources/Conferences/Tecniacustica/plensTEC2020.pdf">Acoustic field prediction during the launch of rockets</a>.
 
     - title: Research internship
@@ -97,7 +97,7 @@
       department: Dep. of Physics, Systems Engineering and Signal Theory (<a href="https://dfests.ua.es/">DFESTS</a>)
       year: Feb 2018 - Jul 2018
       location: Alicante, Spain
-      summary: 
+      summary:
         'Internship in different research projects in the <a href="https://iufacyt.ua.es/es/grupos-de-investigacion/acustica-aplicada.html">Applied Acoustics Group</a>, belonging to the University Institute of Physics Applied to Sciences and Technologies of the Higher Polytechnic School of Alicante.
         <br><br>
         Goals achieved:'
@@ -105,8 +105,8 @@
         - Simulation of acoustic models.
         - Acoustic measurements by means of a LabView-controlled robotic system.
         - 'Investigation of the acoustic radiation efficiency (Vibration-borne noise) of metallic plates for an initial study of ship noise emissions in water. Carried out in collaboration with <a href="https://electronica-submarina.com/">SAES</a>, here you can read a news item on the subject: <a href="https://electronica-submarina.com/2018/11/05/saes-latest-researches-on-underwater-noise-by-ships-are-presented-at-tecniacustica/" aria-label="News: SAES researches on underwater noise">NEWS</a>.'
-        - title: 'A publication at a national congress:'
-          contents: 
+        - title: "A publication at a national congress:"
+          contents:
             - Tecniacústica - <a href="/pdf/paper-resources/Conferences/Tecniacustica/saura2018.pdf">Comportamiento vibroacústico de contenedores cilíndricos en aire</a>.
 
     - title: Founder and Vocal Member
@@ -114,10 +114,10 @@
       department: University of Alicante (<a href="https://www.ua.es/en/index.html">UA</a>)
       year: Sep 2016 - Jul 2018
       location: Alicante, Spain
-      summary: 
-        'Association based at the Higher Polytechnic School of the University of Alicante. Founded in 2016. Promotes project-oriented microcontroller programming knowledge.
+      summary:
+        "Association based at the Higher Polytechnic School of the University of Alicante. Founded in 2016. Promotes project-oriented microcontroller programming knowledge.
         <br><br>
-        Activities performed:'
+        Activities performed:"
       description:
         - Group classes of reinforcement and extension of the subject "Digital Electronic Systems" of the Degree in Sound and Image Engineering of the University of Alicante.
         - Laboratory organization and planning (located at the Colegio Mayor).
@@ -227,7 +227,6 @@
           icon: vscode-icons:file-type-html
           level: 3
 
-
 - title: Formal education
   type: time_table
   contents:
@@ -249,8 +248,8 @@
         - "After nearly completing the doctoral program, I made the strategic decision to redirect my career toward industrial software development. This transition allowed me to apply my solid foundation in data analysis, programming, and analytical thinking to the software sector, where I found a more direct alignment between my technical skills and my long-term professional goals."
       linkitems:
         - link: /pdf/degree/PhDExpEng.pdf
-          linkname: 'Academic record'
-          ariaLabel: 'Academic record (PhD)'
+          linkname: "Academic record"
+          ariaLabel: "Academic record (PhD)"
     - title: Master's Degree in Acoustical Engineering
       institution: Polytechnic University of Valencia (<a href="http://www.upv.es/en">UPV</a>)
       department: Higher Polytechnic School of Gandia (<a href="http://www.upv.es/contenidos/CGANDIA/index-en.html" aria-label="EPSG (UPV Gandia Campus)">EPSG</a>)
@@ -262,11 +261,11 @@
         Final Master's thesis entitled <strong>Difusores acústicos basados en resonadores de membrana y placa</strong> ('Acoustic diffusers based on membrane and plate resonators'), qualified with honors with special mention.
       linkitems:
         - link: /pdf/degree/Acoustic.pdf
-          linkname: 'Diploma'
-          ariaLabel: 'Diploma (Acoustical Engineering)'
+          linkname: "Diploma"
+          ariaLabel: "Diploma (Acoustical Engineering)"
         - link: /pdf/degree/AcousticExpEng.pdf
-          linkname: 'Academic record'
-          ariaLabel: 'Academic record (Acoustical Engineering)'
+          linkname: "Academic record"
+          ariaLabel: "Academic record (Acoustical Engineering)"
     - title: Degree in Telecommunication Engineering in Sound and Image
       institution: University of Alicante (<a href="https://www.ua.es/en/index.html">UA</a>)
       department: Higher Polytechnic School (<a href="https://eps.ua.es/en/home.html">EPS</a>)
@@ -278,20 +277,20 @@
         Final Degree Work entitled <a href='http://hdl.handle.net/10045/77578'>Estudio de la relación campo directo/reverberado; útil/perjudicial</a> ('Study of the direct/reverberated field relationship; useful/harmful')
       linkitems:
         - link: /pdf/degree/Telecom.pdf
-          linkname: 'Diploma'
-          ariaLabel: 'Diploma (Telecommunications)'
+          linkname: "Diploma"
+          ariaLabel: "Diploma (Telecommunications)"
         - link: /pdf/degree/TelecomExpEng.pdf
-          linkname: 'Academic record'
-          ariaLabel: 'Academic record (Telecommunications)'
+          linkname: "Academic record"
+          ariaLabel: "Academic record (Telecommunications)"
     - title: Certificate of Higher Education in Electronics Technician & Superior Sound Technician
       institution: <a href="https://elche.salesianos.edu/colegio/san-jose-artesano/">IES Salesianos (San Jóse Artesano)</a> & <a href="https://ies-berlanga.info/index.php/es/">IES Luis García Berlanga</a>
       location: Elche & Alicante, Spain
       year: 2009/2011
       linkitems:
         - link: /pdf/degree/CFGM_Electronica.pdf
-          linkname: 'Diploma (Electronics)'
+          linkname: "Diploma (Electronics)"
         - link: /pdf/degree/CFGS_Sonido.pdf
-          linkname: 'Diploma (Sound)'
+          linkname: "Diploma (Sound)"
 
 - title: Certificates
   type: certificate_list

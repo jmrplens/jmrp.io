@@ -104,7 +104,10 @@ async function fetchProfile() {
       svg.setAttribute("viewBox", "0 0 16 16");
       svg.setAttribute("fill", "currentColor");
       const path = document.createElementNS(svgNS, "path");
-      path.setAttribute("d", "M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10zm0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6z");
+      path.setAttribute(
+        "d",
+        "M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10zm0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6z",
+      );
       svg.appendChild(path);
 
       locP.appendChild(svg);
@@ -113,7 +116,6 @@ async function fetchProfile() {
     }
 
     container.appendChild(infoDiv);
-
   } catch (error) {
     console.error("Failed to fetch GitHub profile:", error);
     container.innerHTML = "";
@@ -219,11 +221,16 @@ function renderRepos(repos) {
       svg.setAttribute("width", "16");
       const path = document.createElementNS(svgNS, "path");
       path.setAttribute("fill", "currentColor");
-      path.setAttribute("d", "M8 .25a.75.75 0 01.673.418l1.882 3.815 4.21.612a.75.75 0 01.416 1.279l-3.046 2.97.719 4.192a.75.75 0 01-1.088.791L8 12.347l-3.766 1.98a.75.75 0 01-1.088-.79l.72-4.194L.818 6.374a.75.75 0 01.416-1.28l4.21-.611L7.327.668A.75.75 0 018 .25z");
+      path.setAttribute(
+        "d",
+        "M8 .25a.75.75 0 01.673.418l1.882 3.815 4.21.612a.75.75 0 01.416 1.279l-3.046 2.97.719 4.192a.75.75 0 01-1.088.791L8 12.347l-3.766 1.98a.75.75 0 01-1.088-.79l.72-4.194L.818 6.374a.75.75 0 01.416-1.28l4.21-.611L7.327.668A.75.75 0 018 .25z",
+      );
       svg.appendChild(path);
 
       starItem.appendChild(svg);
-      starItem.appendChild(document.createTextNode(` ${repo.stargazers_count}`));
+      starItem.appendChild(
+        document.createTextNode(` ${repo.stargazers_count}`),
+      );
       meta.appendChild(starItem);
     }
 
@@ -240,7 +247,10 @@ function renderRepos(repos) {
       svg.setAttribute("width", "16");
       const path = document.createElementNS(svgNS, "path");
       path.setAttribute("fill", "currentColor");
-      path.setAttribute("d", "M5 5.372v.878c0 .414.336.75.75.75h4.5a.75.75 0 01.75.75v1.628a2.25 2.25 0 11-1.5 0V7.75A2.25 2.25 0 017.25 5.5h-4.5A2.25 2.25 0 01.5 7.75v2.028a2.25 2.25 0 11-1.5 0V7.75A.75.75 0 011.25 7h4.5a.75.75 0 01.75.75v1.628a2.25 2.25 0 11-1.5 0V5.372a2.25 2.25 0 111.5 0zm-3.75 5.75a.75.75 0 100-1.5.75.75 0 000 1.5zm10.5-1.5a.75.75 0 100 1.5.75.75 0 000-1.5z");
+      path.setAttribute(
+        "d",
+        "M5 5.372v.878c0 .414.336.75.75.75h4.5a.75.75 0 01.75.75v1.628a2.25 2.25 0 11-1.5 0V7.75A2.25 2.25 0 017.25 5.5h-4.5A2.25 2.25 0 01.5 7.75v2.028a2.25 2.25 0 11-1.5 0V7.75A.75.75 0 011.25 7h4.5a.75.75 0 01.75.75v1.628a2.25 2.25 0 11-1.5 0V5.372a2.25 2.25 0 111.5 0zm-3.75 5.75a.75.75 0 100-1.5.75.75 0 000 1.5zm10.5-1.5a.75.75 0 100 1.5.75.75 0 000-1.5z",
+      );
       svg.appendChild(path);
 
       forkItem.appendChild(svg);
@@ -264,7 +274,7 @@ function initSearch() {
     const filtered = allRepos.filter(
       (repo) =>
         repo.name.toLowerCase().includes(term) ||
-        (repo.description?.toLowerCase().includes(term)),
+        repo.description?.toLowerCase().includes(term),
     );
     renderRepos(filtered);
   });

@@ -20,7 +20,7 @@ const { title, icon, description, link, linkText, id } = Astro.props;
 <div class="service-card" id={id}>
     <div class="service-header">
         <Icon name={icon} class="service-icon" />
-        <h3>{title}</h3>
+        <h2>{title}</h2>
     </div>
     <p class="service-description">
         {description}
@@ -84,7 +84,7 @@ const { title, icon, description, link, linkText, id } = Astro.props;
         color: var(--color-primary);
     }
 
-    .service-header h3 {
+    .service-header h2 {
         margin: 0;
         font-size: 1.4rem;
     }

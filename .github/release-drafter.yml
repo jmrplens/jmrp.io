@@ -1,55 +1,55 @@
-name-template: 'v$RESOLVED_VERSION'
-tag-template: 'v$RESOLVED_VERSION'
+name-template: "v$RESOLVED_VERSION"
+tag-template: "v$RESOLVED_VERSION"
 categories:
-  - title: '🚀 Features'
+  - title: "🚀 Features"
     labels:
-      - 'feature'
-      - 'feat'
-  - title: '🐛 Bug Fixes'
+      - "feature"
+      - "feat"
+  - title: "🐛 Bug Fixes"
     labels:
-      - 'fix'
-      - 'bug'
-  - title: '🧰 Maintenance'
+      - "fix"
+      - "bug"
+  - title: "🧰 Maintenance"
     labels:
-      - 'chore'
-      - 'maintenance'
-  - title: '📚 Documentation'
+      - "chore"
+      - "maintenance"
+  - title: "📚 Documentation"
     labels:
-      - 'docs'
-      - 'documentation'
-  - title: '⚡ Performance'
+      - "docs"
+      - "documentation"
+  - title: "⚡ Performance"
     labels:
-      - 'perf'
-      - 'performance'
-  - title: '🛡️ Security'
+      - "perf"
+      - "performance"
+  - title: "🛡️ Security"
     labels:
-      - 'security'
-      - 'sec'
+      - "security"
+      - "sec"
 template: |
   ## What's Changed
 
   $CHANGES
-change-template: '- $TITLE @$AUTHOR (#$NUMBER)'
+change-template: "- $TITLE @$AUTHOR (#$NUMBER)"
 version-resolver:
   major:
     labels:
-      - 'major'
-      - 'breaking'
+      - "major"
+      - "breaking"
   minor:
     labels:
-      - 'minor'
-      - 'feat'
-      - 'feature'
+      - "minor"
+      - "feat"
+      - "feature"
   patch:
     labels:
-      - 'fix'
-      - 'bug'
-      - 'chore'
-      - 'docs'
-      - 'perf'
-      - 'refactor'
-      - 'style'
-      - 'test'
+      - "fix"
+      - "bug"
+      - "chore"
+      - "docs"
+      - "perf"
+      - "refactor"
+      - "style"
+      - "test"
   default: patch
 exclude-labels:
-  - 'skip-changelog'
+  - "skip-changelog"
