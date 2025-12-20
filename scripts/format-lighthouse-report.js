@@ -1,30 +1,36 @@
 import fs from "fs";
 import path from "path";
 
-const manifestPath = "./.lighthouseci/manifest.json";
-const linksPath = "./.lighthouseci/links.json";
+const lhciDir = "./.lighthouseci";
+const linksPath = path.join(lhciDir, "links.json");
 
 try {
-  // Check if manifest exists
-  if (!fs.existsSync(manifestPath)) {
-    console.error("Lighthouse manifest not found");
-    process.exit(0); // Exit gracefully if no report
+  if (!fs.existsSync(lhciDir)) {
+    console.error("Lighthouse directory not found");
+    process.exit(0);
   }
 
-  const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
-  // Links file is created by lhci upload if using temporary-public-storage?
-  // Actually, lhci autorun might not create links.json with temporary-public-storage unless configured.
-  // We might have to rely on the output capture or just list the scores if URL is missing.
-  // However, usually manifest contains local paths.
+  // 1. Get Scores
+  // Look for manifest.json first, if not find all lhr-*.json files
+  let manifest = [];
+  const manifestPath = path.join(lhciDir, "manifest.json");
 
-  // Let's assume we want to average the scores if there are multiple runs.
-  // manifest is an array of entries.
+  if (fs.existsSync(manifestPath)) {
+    manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+  } else {
+    // Fallback: find all lhr-*.json files
+    const files = fs.readdirSync(lhciDir);
+    const jsonFiles = files.filter(
+      (f) => f.startsWith("lhr-") && f.endsWith(".json"),
+    );
+    manifest = jsonFiles.map((f) => ({ jsonPath: path.join(lhciDir, f) }));
+  }
 
   const summary = {};
   let count = 0;
 
   manifest.forEach((run) => {
-    if (!run.jsonPath) return;
+    if (!run.jsonPath || !fs.existsSync(run.jsonPath)) return;
     const json = JSON.parse(fs.readFileSync(run.jsonPath, "utf8"));
     const categories = json.categories;
 
@@ -45,11 +51,13 @@ try {
     scores[key] = Math.round((summary[key] / count) * 100);
   });
 
-  // Read the URL from the output capture if passed as arg, or try to find links.json
-  // For temporary-public-storage, lhci prints it.
-  // We will pass the captured URL as an environment variable or argument if possible.
-  // Or simpler: Just output the markdown table, and let the workflow append the URL if it found it.
+  // 2. Get Links
+  let links = {};
+  if (fs.existsSync(linksPath)) {
+    links = JSON.parse(fs.readFileSync(linksPath, "utf8"));
+  }
 
+  // 3. Generate Output
   console.log("### ⚡ Lighthouse Report");
   console.log("| Category | Score |");
   console.log("| --- | --- |");
@@ -57,9 +65,16 @@ try {
   console.log(`| ♿ Accessibility | ${scores.accessibility}% |`);
   console.log(`| 💡 Best Practices | ${scores["best-practices"]}% |`);
   console.log(`| 🔍 SEO | ${scores.seo}% |`);
-  // PWA might not be present or important, check if it exists
   if (scores.pwa) {
     console.log(`| 📱 PWA | ${scores.pwa}% |`);
+  }
+
+  const linkKeys = Object.keys(links);
+  if (linkKeys.length > 0) {
+    console.log("\n#### 🔗 Full Reports");
+    linkKeys.forEach((url) => {
+      console.log(`- [${url}](${links[url]})`);
+    });
   }
 } catch (e) {
   console.error(e);
