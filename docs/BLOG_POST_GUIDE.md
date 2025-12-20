@@ -134,13 +134,15 @@ console.log(greeting);
 ```
 ````
 
+````
+
 ### Images
 
 Place images in `public/img/` and reference them:
 
 ```markdown
 ![Alt text](/img/my-image.jpg)
-```
+````
 
 ### Links
 

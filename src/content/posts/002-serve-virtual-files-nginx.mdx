@@ -51,7 +51,9 @@ Let's say your application runs from `/var/www/app`, but you want to manage all 
 First, create your `robots.txt` file:
 
 <FileContent filename="/etc/nginx/assets/robots.txt">
-  ```txt User-agent: * Allow: / Sitemap: https://www.example.com/sitemap.xml ```
+  ```txt 
+  User-agent: * Allow: / Sitemap: https://www.example.com/sitemap.xml 
+  ```
 </FileContent>
 
 Now, configure your Nginx server block to intercept requests for `/robots.txt` and serve your custom file.
@@ -76,8 +78,7 @@ server {
     }
 
 }
-
-````
+```
 </FileContent>
 
 ### Method B: Generate Content with `return`
@@ -100,7 +101,7 @@ server {
         proxy_pass http://localhost:3000;
     }
 }
-````
+```
 
 </FileContent>
 
@@ -131,8 +132,7 @@ server {
     # ... other locations ...
 
 }
-
-````
+```
 </FileContent>
 
 This configuration makes it easy for security researchers to get in touch, enhancing your site's security posture, without touching your application code.
@@ -156,7 +156,7 @@ The <a href="https://humanstxt.org/" target="_blank" rel="noopener noreferrer" a
 # Last update: 2025-12-18
 # Standards: HTML5, CSS3
 # Software: Nginx, Astro
-````
+```
 
 </FileContent>
 <FileContent filename="Nginx Site Configuration" icon="devicon:nginx">
@@ -208,8 +208,7 @@ server {
     # ...
 
 }
-
-````
+```
 </FileContent>
 
 <Callout type="info">
@@ -236,8 +235,7 @@ server {
 
     # ... all other locations for your app
 }
-````
-
+```
 </FileContent>
 
 With this configuration, no matter which `server_name` receives the validation request, Nginx will always look for the challenge file in `/var/www/certbot`. Just make sure your ACME client is configured to place its files there.
@@ -274,7 +272,6 @@ server {
     # ...
 
 }
-
 ```
 </FileContent>
 
@@ -285,4 +282,3 @@ server {
 By leveraging Nginx's `alias` and `return` directives, you gain immense flexibility in how you serve content. This approach decouples standard web files from your application's codebase, making it easier to manage deployments, secure your environment, and improve performance.
 
 Whether you're running a Docker container, a managed Node.js service, or a complex Java application, Nginx can act as a powerful gatekeeper that serves these essential "virtual" files on your behalf, simply and efficiently.
-```
