@@ -90,14 +90,14 @@ Highlight important information with colored boxes:
 
 Show multiple code examples in tabs:
 
-```mdx
+````mdx
 <CodeTabs>
   <CodeTabItem label="JavaScript">
     ```javascript console.log('Hello'); ```
   </CodeTabItem>
   <CodeTabItem label="Python">```python print("Hello") ```</CodeTabItem>
 </CodeTabs>
-```
+````
 
 ### YouTube Embed
 
@@ -127,12 +127,14 @@ Display all references at the end of your post:
 
 Specify language for syntax highlighting:
 
-```markdown
+````markdown
 ```javascript
 const greeting = "Hello World";
 console.log(greeting);
 ```
-```
+````
+
+````
 
 ### Images
 
@@ -140,7 +142,7 @@ Place images in `public/img/` and reference them:
 
 ```markdown
 ![Alt text](/img/my-image.jpg)
-```
+````
 
 ### Links
 
