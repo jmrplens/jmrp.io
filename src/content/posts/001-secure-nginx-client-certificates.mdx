@@ -84,16 +84,44 @@ Create a directory to store your keys safely and set up the CA database:
 Create a file named `openssl.cnf` in this directory. This file ensures that `openssl ca` (used for signing and revocation) knows where your files are.
 
 <FileContent filename="/etc/nginx/client-certs/openssl.cnf">
-  ```ini [ ca ] default_ca = CA_default [ CA_default ] dir = . database =
-  $dir/index.txt new_certs_dir = $dir/newcerts certificate = $dir/ca.crt serial
-  = $dir/serial private_key = $dir/ca.key default_days = 365 default_crl_days=
-  30 default_md = sha256 policy = policy_loose copy_extensions = copy [
-  policy_loose ] countryName = optional stateOrProvinceName = optional
-  localityName = optional organizationName = optional organizationalUnitName =
-  optional commonName = supplied emailAddress = optional [ req ]
-  distinguished_name = req_distinguished_name prompt = no [
-  req_distinguished_name ] C = ES ST = Valencia L = Valencia O = JMRP-IO-LAB OU
-  = IT Services CN = JMRP-IO-LAB Root CA ```
+  ```ini
+  [ ca ]
+  default_ca = CA_default
+
+  [ CA_default ]
+  dir = .
+  database = $dir/index.txt
+  new_certs_dir = $dir/newcerts
+  certificate = $dir/ca.crt
+  serial = $dir/serial
+  private_key = $dir/ca.key
+  default_days = 365
+  default_crl_days= 30
+  default_md = sha256
+  policy = policy_loose
+  copy_extensions = copy
+
+  [ policy_loose ]
+  countryName = optional
+  stateOrProvinceName = optional
+  localityName = optional
+  organizationName = optional
+  organizationalUnitName = optional
+  commonName = supplied
+  emailAddress = optional
+
+  [ req ]
+  distinguished_name = req_distinguished_name
+  prompt = no
+
+  [ req_distinguished_name ]
+  C = ES
+  ST = Valencia
+  L = Valencia
+  O = JMRP-IO-LAB
+  OU = IT Services
+  CN = JMRP-IO-LAB Root CA
+  ```
 </FileContent>
 
 ### 2. Generate the CA Key and Certificate
@@ -181,7 +209,7 @@ Certificate is to be certified until Dec 18 00:59:34 2026 GMT (365 days)
 Write out database with 1 new entries
 Database updated
 
-````
+```
 </TerminalOutput>
 
 This process creates `user.key` and `user.crt`.
@@ -193,7 +221,7 @@ This process creates `user.key` and `user.crt`.
 (A different unique, long, private key text will be here)
 ...
 -----END PRIVATE KEY-----
-````
+```
 
 </FileContent>
 </Collapsible>
@@ -247,7 +275,7 @@ server {
 
 }
 
-````
+```
 </FileContent>
 
 ### Test and Reload
@@ -278,7 +306,7 @@ map $ssl_client_s_dn $ssl_access_allowed {
     "/CN=laptop-work" 1;
     "/CN=ipad-home" 1;
 }
-````
+```
 
 </FileContent>
 
@@ -302,7 +330,7 @@ server {
 
 }
 
-````
+```
 </FileContent>
 
 Now, creating a certificate for a friend won't automatically grant them access to this specific site unless you add their CN to the whitelist.
@@ -321,7 +349,7 @@ Let's say `user.crt` (from the lost phone) needs to be revoked.
 Using configuration from openssl.cnf
 Revoking Certificate 1000.
 Data Base Updated
-````
+```
 
 </TerminalOutput>
 
