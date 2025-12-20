@@ -117,8 +117,138 @@ pnpm run build
 
 ### Nginx Configuration
 
-This project relies on Nginx for serving the static files and enforcing security policies.
-The `generate-csp-hashes.mjs` script automatically maintains the CSP headers in `/etc/nginx/snippets/security_headers.conf`.
+This project relies on Nginx for serving the static files and enforcing security policies. Below are example configurations demonstrating how to serve the site with high performance and security.
+
+<details>
+<summary><strong>📄 nginx.conf (Main Configuration)</strong></summary>
+
+```nginx
+user nginx;
+worker_processes auto;
+pid /run/nginx.pid;
+
+events {
+    worker_connections 1024;
+}
+
+http {
+    include       mime.types;
+    default_type  application/octet-stream;
+
+    # Performance
+    sendfile on;
+    tcp_nopush on;
+    tcp_nodelay on;
+    keepalive_timeout 65;
+    types_hash_max_size 2048;
+
+    # Compression (Brotli/Gzip)
+    gzip on;
+    gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;
+
+    # Include modular configs
+    include /etc/nginx/conf.d/*.conf;
+    include /etc/nginx/sites-enabled/*;
+}
+```
+</details>
+
+<details>
+<summary><strong>🌐 example.com.conf (Site Configuration)</strong></summary>
+
+```nginx
+server {
+    listen 80;
+    listen [::]:80;
+    server_name example.com;
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name example.com;
+    root /var/www/example.com/dist;
+    index index.html;
+
+    # SSL Certificates (Managed by Certbot or Cloudflare)
+    ssl_certificate /etc/ssl/certs/example.com.pem;
+    ssl_certificate_key /etc/ssl/private/example.com.key;
+
+    # Logging
+    access_log /var/log/nginx/example.com.access.log;
+    error_log /var/log/nginx/example.com.error.log warn;
+
+    # -------------------------------------------------------
+    # CSP Nonce Generation
+    # -------------------------------------------------------
+    set $cspNonce $request_id;
+    sub_filter_once off;
+    sub_filter_types *;
+    sub_filter NGINX_CSP_NONCE $cspNonce;
+
+    # Security Headers (Includes CSP with Nonce)
+    include /etc/nginx/snippets/security_headers.conf;
+
+    # -------------------------------------------------------
+    # Caching Strategies
+    # -------------------------------------------------------
+
+    # Immutable Assets (Hashed filenames)
+    location /_astro/ {
+        expires 1y;
+        add_header Cache-Control "public, max-age=31536000, immutable";
+        access_log off;
+    }
+
+    # Static Assets
+    location /assets/ {
+        expires 1y;
+        add_header Cache-Control "public, max-age=31536000, immutable";
+        access_log off;
+    }
+
+    # Main Content
+    location / {
+        try_files $uri $uri/ =404;
+        add_header Cache-Control "public, max-age=3600, must-revalidate";
+    }
+
+    # Block access to hidden files
+    location ~ /\. {
+        deny all;
+    }
+}
+```
+</details>
+
+<details>
+<summary><strong>🔒 security_headers.conf (Generated/Managed)</strong></summary>
+
+*This file is automatically updated by `npm run build` to include the correct SHA-256 hashes for inline scripts and styles.*
+
+```nginx
+# HSTS (Strict Transport Security)
+add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload" always;
+
+# Anti-Sniffing
+add_header X-Content-Type-Options "nosniff" always;
+
+# Frame Options (Prevent Clickjacking)
+add_header X-Frame-Options "DENY" always;
+
+# XSS Protection
+add_header X-XSS-Protection "1; mode=block" always;
+
+# Referrer Policy
+add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+
+# Content Security Policy (CSP)
+# - 'nonce-$cspNonce': Allows scripts with the matching nonce (injected by Nginx)
+# - hashes: Allow specific inline scripts/styles found during build
+add_header Content-Security-Policy "default-src 'none'; script-src 'self' 'nonce-$cspNonce' 'sha256-...' 'sha256-...'; style-src 'self' 'nonce-$cspNonce' 'sha256-...'; img-src 'self' https:; font-src 'self'; connect-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests;" always;
+```
+</details>
 
 **Key Security Features:**
 -   **SRI (Subresource Integrity)**: Ensures that fetched resources haven't been manipulated.
@@ -151,6 +281,20 @@ We take accessibility seriously:
 -   **Screen Readers**: `aria-label` used on icon-only buttons; decorative elements hidden with `aria-hidden="true"`.
 -   **Keyboard Navigation**: Visible focus rings and logical tab order.
 -   **Reduced Motion**: Respects `prefers-reduced-motion` media query.
+
+## 📚 References & Resources
+
+Here are some resources that guided the development of this project:
+
+-   **Framework**: [Astro Documentation](https://docs.astro.build/)
+-   **Security**:
+    -   [MDN: Content Security Policy (CSP)](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP)
+    -   [MDN: Subresource Integrity (SRI)](https://developer.mozilla.org/en-US/docs/Web/Security/Subresource_Integrity)
+    -   [Nginx Documentation](https://nginx.org/en/docs/)
+    -   [Mozilla Observatory](https://observatory.mozilla.org/)
+-   **Accessibility**:
+    -   [W3C Web Accessibility Initiative (WAI)](https://www.w3.org/WAI/)
+    -   [A11y Project](https://www.a11yproject.com/)
 
 ## 📄 License
 
