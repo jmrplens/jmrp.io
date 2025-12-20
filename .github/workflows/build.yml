@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: ["main"]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     name: Build & Check
@@ -24,6 +28,9 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install
+
+      - name: TypeScript Type Check
+        run: pnpm exec tsc --noEmit
 
       - name: Install Playwright Browsers
         run: pnpm exec playwright install --with-deps
