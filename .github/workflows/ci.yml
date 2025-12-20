@@ -88,46 +88,49 @@ jobs:
           name: dist-build
           path: dist
 
-            - name: Run Lighthouse CI
-              shell: bash
-              run: |
-                set -o pipefail
-                npm install -g @lhci/cli
-                lhci autorun | tee lhci_output.txt
-      
-            - name: Debug Lighthouse Artifacts
-              if: always()
-              run: |
-                echo "Current working directory: $(pwd)"
-                ls -la
-                if [ -d ".lighthouseci" ]; then
-                  echo "Listing .lighthouseci:"
-                  ls -R .lighthouseci
-                else
-                  echo ".lighthouseci directory not found!"
-                fi
-            
-            - name: Format Lighthouse Report
-              id: format_report
-              if: always()
-              run: |
-                # Extract URL from output
-                LH_URL=$(grep -o 'https://storage.googleapis.com/lighthouse-infrastructure/[^ ]*' lhci_output.txt | head -n 1)
-                
-                # Run the node script to get the table
-                node scripts/format-lighthouse-report.js > lighthouse_comment.md
-                
-                # Append URL
-                if [ ! -z "$LH_URL" ]; then
-                  echo "" >> lighthouse_comment.md
-                  echo "[View Full Report]($LH_URL)" >> lighthouse_comment.md
-                fi
-                
-                # Read into env for github-script
-                echo "LH_COMMENT<<EOF" >> $GITHUB_ENV
-                cat lighthouse_comment.md >> $GITHUB_ENV
-                echo "EOF" >> $GITHUB_ENV
-            - name: Post Comment
+      - name: Run Lighthouse CI
+        shell: bash
+        run: |
+          set -o pipefail
+          npm install -g @lhci/cli
+          lhci autorun | tee lhci_output.txt
+        env:
+          LHCI_GITHUB_TOKEN: ${{ secrets.TOKEN_GITHUB }}
+
+      - name: Debug Lighthouse Artifacts
+        if: always()
+        run: |
+          echo "Current working directory: $(pwd)"
+          ls -la
+          if [ -d ".lighthouseci" ]; then
+            echo "Listing .lighthouseci:"
+            ls -R .lighthouseci
+          else
+            echo ".lighthouseci directory not found!"
+          fi
+
+      - name: Format Lighthouse Report
+        id: format_report
+        if: always()
+        run: |
+          # Extract URL from output
+          LH_URL=$(grep -o 'https://storage.googleapis.com/lighthouse-infrastructure/[^ ]*' lhci_output.txt | head -n 1)
+          
+          # Run the node script to get the table
+          node scripts/format-lighthouse-report.js > lighthouse_comment.md
+          
+          # Append URL
+          if [ ! -z "$LH_URL" ]; then
+            echo "" >> lighthouse_comment.md
+            echo "[View Full Report]($LH_URL)" >> lighthouse_comment.md
+          fi
+          
+          # Read into env for github-script
+          echo "LH_COMMENT<<EOF" >> $GITHUB_ENV
+          cat lighthouse_comment.md >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+      - name: Post Comment
         if: github.event_name == 'pull_request' && env.LH_COMMENT != ''
         uses: actions/github-script@v7
         with:
