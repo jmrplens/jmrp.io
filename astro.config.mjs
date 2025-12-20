@@ -9,8 +9,9 @@ import rehypeMathjax from 'rehype-mathjax'; // Rehype plugin to render math with
 import rehypeExternalLinks from 'rehype-external-links'; // Adds target="_blank" to external links
 import icon from 'astro-icon'; // Icon support
 import preact from '@astrojs/preact'; // Preact integration (lighter alternative to React)
-import astroExpressiveCode from 'astro-expressive-code'; // Advanced code blocks with syntax highlighting
-import rehypeMermaid from 'rehype-mermaid'; // Mermaid diagrams support in Markdown
+import astroExpressiveCode from 'astro-expressive-code';
+import rehypeMermaid from 'rehype-mermaid';
+
 
 // https://astro.build/config
 export default defineConfig({
@@ -24,19 +25,9 @@ export default defineConfig({
 
   // List of integrations to extend Astro functionality
   integrations: [
+
     // Configuration for code blocks (Expressive Code)
-    astroExpressiveCode({
-      themes: ['github-dark', 'github-light'],
-      // Dynamic theme selector based on data-theme attribute
-      themeCssSelector: (theme, { styleVariants }) => {
-        if (styleVariants.length >= 2) {
-          const baseTheme = styleVariants[0].theme;
-          const altTheme = styleVariants.find((v) => v.theme.type !== baseTheme.type)?.theme;
-          if (theme === baseTheme || theme === altTheme) return `[data-theme='${theme.type}']`;
-        }
-        return `[data-theme='${theme.name}']`; // Fallback
-      },
-    }),
+    astroExpressiveCode(),
     mdx(),
     sitemap(),
     icon(),

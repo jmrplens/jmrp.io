@@ -57,7 +57,7 @@ const { headings } = Astro.props;
     )
 }
 
-<script nonce="NGINX_CSP_NONCE">
+<script>
     function setupMobileTOC() {
         const btns = document.querySelectorAll(".toc-trigger"); // Changed from single ID to class
         const drawer = document.getElementById("toc-drawer");
@@ -67,11 +67,20 @@ const { headings } = Astro.props;
 
         if (!btns.length || !drawer || !backdrop) return;
 
+        let lastFocusedElement: HTMLElement | null = null;
+
         const openTOC = () => {
+            lastFocusedElement = document.activeElement as HTMLElement;
             drawer.classList.add("open");
             backdrop.classList.add("open");
             btns.forEach((btn) => btn.setAttribute("aria-expanded", "true"));
             drawer.setAttribute("aria-hidden", "false");
+
+            // Focus on close button or first link
+            if (closeBtn) {
+                closeBtn.focus();
+            }
+
             // Lock scroll only on mobile to prevent breaking sticky header on desktop
             if (window.innerWidth < 1024) {
                 document.body.style.overflow = "hidden";
@@ -79,6 +88,17 @@ const { headings } = Astro.props;
         };
 
         const closeTOC = () => {
+            // Restore focus BEFORE hiding to avoid aria-hidden violation
+            if (lastFocusedElement) {
+                lastFocusedElement.focus();
+            } else if (btns.length > 0) {
+                // Fallback to the FAButton if we lost track
+                (btns[0] as HTMLElement).focus();
+            } else {
+                // Absolute fallback: blur so focusing is not on hidden element
+                (document.activeElement as HTMLElement)?.blur();
+            }
+
             drawer.classList.remove("open");
             backdrop.classList.remove("open");
             btns.forEach((btn) => btn.setAttribute("aria-expanded", "false"));

@@ -1,0 +1,354 @@
+---
+import { Code } from "astro-expressive-code/components";
+import CopyButton from "./CopyButton.astro";
+import { Icon } from "astro-icon/components";
+
+const { pub } = Astro.props;
+
+// Function to clean BibTeX
+const cleanBibtex = (bibtex: string) => {
+    if (!bibtex) return "";
+    const lines = bibtex.split("\n");
+    const cleaned = lines.filter((line: string) => {
+        const l = line.trim().toLowerCase();
+        return (
+            !l.startsWith("file") &&
+            !l.startsWith("abstract") &&
+            !l.startsWith("keywords") &&
+            !l.startsWith("doi") &&
+            !l.startsWith("url") &&
+            !l.startsWith("pdf") &&
+            !l.startsWith("slides") &&
+            !l.startsWith("poster") &&
+            !l.startsWith("bibtex_show")
+        );
+    });
+    return cleaned.join("\n");
+};
+
+// Data Formatting
+const year = pub.issued?.["date-parts"]?.[0]?.[0] || "N/A";
+const authors = pub.author || [];
+
+const venue =
+    pub["container-title"] ||
+    pub.publisher ||
+    pub.school ||
+    pub.institution ||
+    "";
+const venue_short = pub["container-title-short"] || "";
+
+const url = pub.url || pub.URL || "";
+const doi = pub.doi || pub.DOI || "";
+let pdf = pub.pdf || pub.PDF || "";
+let slides = pub.slides || "";
+let poster = pub.poster || "";
+
+// Generate IDs for toggles
+const abstractId = `abstract-${pub.id}`;
+const bibtexId = `bibtex-${pub.id}`;
+
+// Clean BibTeX once
+const cleanedBibtex = cleanBibtex(pub.bibtex);
+---
+
+<div class="publication-item group">
+    <div class="pub-main">
+        <div class="pub-year">{year}</div>
+        <div class="pub-content">
+            <h3 class="pub-title">{pub.title}</h3>
+            <div class="pub-authors">
+                {
+                    authors.map((author: any, index: number) => (
+                        <>
+                            {author.url ? (
+                                <a
+                                    href={author.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    {author.given} {author.family}
+                                </a>
+                            ) : (
+                                <span>
+                                    {author.given} {author.family}
+                                </span>
+                            )}
+                            {index < authors.length - 1 && ", "}
+                        </>
+                    ))
+                }
+            </div>
+            <div class="pub-venue">
+                {venue}
+                {
+                    venue_short && (
+                        <span class="venue-short">({venue_short})</span>
+                    )
+                }
+            </div>
+
+            <div class="pub-actions">
+                <button
+                    class="btn-sm btn-abstract"
+                    data-id={pub.id}
+                    aria-label="Toggle Abstract"
+                    aria-expanded="false"
+                    aria-controls={abstractId}
+                >
+                    <Icon name="fa-solid:align-left" /> Abstract
+                </button>
+                <button
+                    class="btn-sm btn-bibtex-toggle"
+                    data-id={pub.id}
+                    aria-label="Toggle BibTeX"
+                    aria-expanded="false"
+                    aria-controls={bibtexId}
+                >
+                    <Icon name="fa-solid:code" /> BibTeX
+                </button>
+                {
+                    pdf && (
+                        <a
+                            href={pdf}
+                            class="btn-sm"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            <Icon name="fa-solid:file-pdf" /> PDF
+                        </a>
+                    )
+                }
+                {
+                    doi && (
+                        <a
+                            href={doi}
+                            class="btn-sm"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            <Icon name="fa-solid:external-link-alt" /> DOI
+                        </a>
+                    )
+                }
+                {
+                    url && !doi && (
+                        <a
+                            href={url}
+                            class="btn-sm"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            <Icon name="fa-solid:link" /> URL
+                        </a>
+                    )
+                }
+                {
+                    slides && (
+                        <a
+                            href={slides}
+                            class="btn-sm"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            <Icon name="fa-solid:chalkboard-teacher" /> Slides
+                        </a>
+                    )
+                }
+                {
+                    poster && (
+                        <a
+                            href={poster}
+                            class="btn-sm"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            <Icon name="fa-solid:image" /> Poster
+                        </a>
+                    )
+                }
+            </div>
+
+            <div id={abstractId} class="pub-abstract hidden">
+                <div class="pub-card-wrapper copy-container">
+                    <div class="pub-card-header">
+                        <span class="pub-card-title">Abstract</span>
+                        <CopyButton
+                            class="pub-copy-btn"
+                            content={pub.abstract}
+                        />
+                    </div>
+                    <div class="pub-card-content copy-content">
+                        {pub.abstract}
+                    </div>
+                </div>
+            </div>
+
+            <div id={bibtexId} class="pub-bibtex hidden">
+                <div class="pub-card-wrapper copy-container">
+                    <div class="pub-card-header">
+                        <span class="pub-card-title">BibTeX</span>
+                        <CopyButton
+                            class="pub-copy-btn"
+                            content={cleanedBibtex}
+                        />
+                    </div>
+                    <div class="pub-card-content">
+                        <Code code={cleanedBibtex} lang="bibtex" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .publication-item {
+        /* Use Grid for robust layout containment */
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: var(--space-md);
+        padding: var(--space-lg);
+        background-color: var(--color-bg-secondary);
+        border: var(--border-subtle);
+        border-radius: var(--radius-md);
+        transition: border-color 0.2s;
+    }
+
+    .publication-item:hover {
+        border-color: var(--color-primary);
+    }
+
+    .pub-main {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: var(--space-md);
+        min-width: 0; /* Critical for grid item containment */
+    }
+
+    /* Desktop layout: Year on the left */
+    @media (min-width: 768px) {
+        .pub-main {
+            grid-template-columns: auto 1fr;
+            gap: var(--space-lg);
+        }
+    }
+
+    .pub-year {
+        font-family: var(--font-mono);
+        color: var(--color-primary);
+        font-weight: bold;
+        padding-top: 0.2rem; /* Align with title baseline */
+    }
+
+    .pub-content {
+        display: flex;
+        flex-direction: column;
+        min-width: 0; /* Critical constraint */
+    }
+
+    .pub-title {
+        margin: 0 0 var(--space-xs) 0;
+        font-size: 1.15rem;
+        font-weight: 600;
+        line-height: 1.4;
+    }
+
+    .pub-authors {
+        color: var(--color-text);
+        margin-bottom: var(--space-xs);
+    }
+
+    .pub-venue {
+        font-style: italic;
+        color: var(--color-text-muted);
+        margin-bottom: var(--space-md);
+    }
+
+    .pub-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-sm);
+        align-items: center;
+    }
+
+    /* Abstract & Bibtex Containers (Outer wrapper for toggle) */
+    .pub-abstract,
+    .pub-bibtex {
+        margin-top: var(--space-md);
+        /* Layout containment */
+        max-width: 100%;
+        min-width: 0;
+    }
+
+    /* 
+     * UNIFIED CARD STYLING
+     * Shared by Abstract and BibTeX boxes
+     */
+    .pub-card-wrapper {
+        display: grid;
+        /* minmax(0, 1fr) is the key to forcing children to shrink */
+        grid-template-columns: minmax(0, 1fr);
+        max-width: 100%;
+        background-color: var(--color-bg);
+        border: var(--border-subtle);
+        border-radius: var(--radius-sm);
+        overflow: hidden; /* Ensure header radius works */
+    }
+
+    .pub-card-header {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        gap: var(--space-sm);
+        padding: var(--space-xs) var(--space-sm);
+        background-color: var(--color-bg-secondary);
+        border-bottom: var(--border-subtle);
+    }
+
+    .pub-card-title {
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        color: var(--color-text-muted);
+        font-weight: bold;
+    }
+
+    .pub-card-content {
+        overflow-x: auto; /* Scroll inside this container */
+        width: 100%;
+    }
+
+    /* Specific styles */
+    .pub-card-content.copy-content {
+        padding: var(--space-md);
+        color: var(--color-text-muted);
+        font-size: 0.9rem;
+        line-height: 1.6;
+        white-space: normal;
+        overflow-wrap: break-word;
+        word-wrap: break-word;
+    }
+
+    /* Custom Copy Button Styling */
+    .pub-card-wrapper :global(.pub-copy-btn) {
+        position: static;
+        width: 28px;
+        height: 28px;
+        min-width: 28px;
+        min-height: 28px;
+        padding: 0;
+        border: none;
+        background: transparent;
+        color: var(--color-text-muted);
+    }
+
+    .pub-card-wrapper :global(.pub-copy-btn:hover) {
+        background-color: var(--color-bg-hover);
+        color: var(--color-text);
+    }
+
+    /* Hide Expressive Code's default copy button */
+    .pub-card-wrapper :global(.copy) {
+        display: none !important;
+    }
+</style>

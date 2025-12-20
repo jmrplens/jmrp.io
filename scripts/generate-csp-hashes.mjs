@@ -7,7 +7,7 @@ import { promisify } from 'node:util';
 const execAsync = promisify(exec);
 
 // Configuration
-const DIST_DIR = 'dist';
+const DIST_DIR = process.env.DIST_DIR || 'dist';
 const HTML_PATTERN = '**/*.html';
 const NGINX_CONF = '/etc/nginx/snippets/security_headers.conf';
 

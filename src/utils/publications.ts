@@ -52,19 +52,18 @@ export async function getPublications(): Promise<PublicationGroup[]> {
          */
         const extractCustomField = (id: string, field: string): string | null => {
             // Find the specific entry block first to avoid matching fields from subsequent entries
-            // Match from @Type{id, until the next @ or end of string. 
-            // Note: This relies on entries starting with @ and id being the first token.
-            // We use a lookahead for the next @ or end of file.
             const entryRegex = new RegExp(String.raw`@.*?\{${id},([\s\S]*?)(?=\n@|$)`, 'i');
             const entryMatch = entryRegex.exec(fileContents);
 
             if (!entryMatch) return null;
 
             const entryBody = entryMatch[1];
-            const fieldRegex = new RegExp(String.raw`${field}\s*=\s*\{(.*?)\}`, 'i');
+            // Match braced content {value} or unbraced value (e.g. true, 2021) up to comma or end of line
+            const fieldRegex = new RegExp(String.raw`${field}\s*=\s*(?:\{(.*?)\}|([^{},]+))`, 'i');
             const fieldMatch = fieldRegex.exec(entryBody);
 
-            return fieldMatch ? fieldMatch[1] : null;
+            if (!fieldMatch) return null;
+            return (fieldMatch[1] || fieldMatch[2] || "").trim();
         };
 
         const citations = new Cite(fileContents);
@@ -77,19 +76,12 @@ export async function getPublications(): Promise<PublicationGroup[]> {
             return yearB - yearA;
         });
 
-        /**
-         * Checks if a given name matches any variation in the coauthor's firstname list.
-         */
+        // ... (authors logic kept) ...
         const isNameMatch = (bibGiven: string, firstnameVariations: string[]): boolean => {
             return firstnameVariations.some(n =>
                 n === bibGiven || n.includes(bibGiven) || bibGiven.includes(n)
             );
         };
-
-        /**
-         * Matches bibtex authors against the coauthors.yml list.
-         * If a match is found based on family name and first name variation, adds the URL.
-         */
         const processAuthors = (authors: any[]) => {
             if (!authors) return [];
             return authors.map((author: any) => {
@@ -99,10 +91,7 @@ export async function getPublications(): Promise<PublicationGroup[]> {
                     const match = coauthors[family].find(c =>
                         isNameMatch(bibGiven, c.firstname)
                     );
-
-                    if (match) {
-                        return { ...author, url: match.url };
-                    }
+                    if (match) return { ...author, url: match.url };
                 }
                 return author;
             });
@@ -113,9 +102,6 @@ export async function getPublications(): Promise<PublicationGroup[]> {
         const conferencePapers: any[] = [];
         const thesisList: any[] = [];
 
-        /**
-         * Extract raw bibtex entry for display/copying
-         */
         const extractRawBibtex = (id: string) => {
             const entryRegex = new RegExp(String.raw`@.*?\{${id},[\s\S]*?(?=\n@|$)`, 'i');
             const match = entryRegex.exec(fileContents);
@@ -123,11 +109,16 @@ export async function getPublications(): Promise<PublicationGroup[]> {
         };
 
         for (const item of data) {
+            // Filter by bibtex_show
+            const bibtexShow = extractCustomField(item.id, 'bibtex_show');
+            if (bibtexShow && bibtexShow.toLowerCase() !== 'true') continue;
+
             const type = item.type;
 
-            // Manually inject slides/poster if missing
+            // Manually inject slides/poster/pdf if missing
             if (!item.slides) item.slides = extractCustomField(item.id, 'slides');
             if (!item.poster) item.poster = extractCustomField(item.id, 'poster');
+            if (!item.pdf) item.pdf = extractCustomField(item.id, 'pdf');
 
             // Extract raw bibtex entry for display/copying
             item.bibtex = extractRawBibtex(item.id);

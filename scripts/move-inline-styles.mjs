@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import { glob } from 'glob';
 import crypto from 'node:crypto';
 
-const DIST_DIR = 'dist';
+const DIST_DIR = process.env.DIST_DIR || 'dist';
 
 async function moveInlineStyles() {
     console.log(`Scanning ${DIST_DIR} for inline styles to extract...`);
