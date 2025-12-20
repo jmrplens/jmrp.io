@@ -154,8 +154,8 @@ export default function ServiceStats({ type, children }: Props) {
     const fetchData = async () => {
       // Avoid fetching in CI/Localhost to prevent CORS errors in Lighthouse
       if (
-        typeof globalThis.window !== "undefined" &&
-        globalThis.window.location.hostname === "localhost"
+        typeof globalThis !== "undefined" &&
+        globalThis.location?.hostname === "localhost"
       ) {
         setLoading(false);
         return;
