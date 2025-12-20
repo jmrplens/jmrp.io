@@ -30,8 +30,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-      - name: TypeScript Type Check
-        run: pnpm exec tsc --noEmit
+      - name: Astro Check (TypeScript + Templates)
+        run: pnpm exec astro check
 
       - name: Check Formatting
         run: pnpm exec prettier --check .
