@@ -19,9 +19,9 @@ const { command, prompt = "$" } = Astro.props;
         tabindex="0"
         aria-label={`Terminal command: ${command}`}
     >
-        <span class="prompt" aria-hidden=\"true\">{prompt}</span>
+        <span class="prompt" aria-hidden="true">{prompt}</span>
         <pre><code class="language-bash">{command}</code></pre>
-    </div>
+    </section>
     <CopyButton />
 </div>
 

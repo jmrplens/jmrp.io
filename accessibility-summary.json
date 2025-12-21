@@ -1,0 +1,43 @@
+{
+  "totalPages": 9,
+  "passed": 9,
+  "failed": 0,
+  "pages": [
+    {
+      "page": "Home (/)",
+      "violations": 0
+    },
+    {
+      "page": "Blog (/blog/)",
+      "violations": 0
+    },
+    {
+      "page": "Blog - Implementing Content Security Policy Nginx (/blog/implementing-content-security-policy-nginx/)",
+      "violations": 0
+    },
+    {
+      "page": "Blog - Secure Nginx Client Certificates (/blog/secure-nginx-client-certificates/)",
+      "violations": 0
+    },
+    {
+      "page": "Blog - Serve Virtual Files Nginx (/blog/serve-virtual-files-nginx/)",
+      "violations": 0
+    },
+    {
+      "page": "Cv (/cv/)",
+      "violations": 0
+    },
+    {
+      "page": "Github (/github/)",
+      "violations": 0
+    },
+    {
+      "page": "Publications (/publications/)",
+      "violations": 0
+    },
+    {
+      "page": "Services (/services/)",
+      "violations": 0
+    }
+  ]
+}
