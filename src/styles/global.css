@@ -12,8 +12,8 @@
 
   /* Typography */
   --font-body: "Inter", "Inter Fallback", system-ui, -apple-system, sans-serif;
-  --font-mono: "JetBrains Mono", "JetBrains Mono Fallback", "Courier New",
-    monospace;
+  --font-mono:
+    "JetBrains Mono", "JetBrains Mono Fallback", "Courier New", monospace;
 
   /* Spacing & Radius */
   --space-xs: 0.25rem;
