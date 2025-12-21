@@ -6,7 +6,7 @@ const linksPath = path.join(lhciDir, "links.json");
 
 // Helper: Map URL to a friendly Page Name
 const getPageName = (url) => {
-  if (url.endsWith("localhost/") || url.endsWith("localhost")) return "Home";
+  if (/localhost(:\d+)?\/$/.test(url)) return "Home"; // Matches localhost/ or localhost:port/
   if (url.includes("/services/")) return "Services";
   if (url.includes("/cv/")) return "CV";
   if (url.includes("/publications/")) return "Publications";
