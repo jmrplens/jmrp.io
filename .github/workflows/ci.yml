@@ -237,3 +237,14 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Total Size" >> $GITHUB_STEP_SUMMARY
           du -sh dist | awk '{print "**Total**: "$1}' >> $GITHUB_STEP_SUMMARY
+
+  release-drafter:
+    name: Update Release Draft
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - uses: release-drafter/release-drafter@v6
+        with:
+          config-name: release-drafter.yml
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN_GITHUB }}
