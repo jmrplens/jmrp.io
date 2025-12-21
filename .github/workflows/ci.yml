@@ -148,10 +148,8 @@ jobs:
       - run: pnpm install
       - name: Install Playwright Browsers
         run: pnpm exec playwright install --with-deps
-      - name: Build Astro
-        run: pnpm astro build
-      - name: Run Pagefind
-        run: pnpm pagefind --site dist
+      - name: Build Project (Production)
+        run: pnpm run build
       - name: Upload build artifact
         uses: actions/upload-artifact@v6
         with:
