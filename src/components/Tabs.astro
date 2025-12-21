@@ -128,7 +128,7 @@ const { class: className } = Astro.props;
     ui-tabs .tab-headers {
         display: flex;
         background: var(--color-bg-secondary);
-        border-bottom: 1px solid var(--color-border);
+        border-bottom: var(--border-subtle);
         overflow-x: auto;
         overflow-y: hidden;
         scrollbar-width: thin;
@@ -151,7 +151,7 @@ const { class: className } = Astro.props;
         border-bottom: 2px solid transparent;
         white-space: nowrap;
         flex-shrink: 0;
-        border-right: 1px solid var(--color-border);
+        border-right: var(--border-subtle);
     }
 
     ui-tabs .tab-headers button:hover {
