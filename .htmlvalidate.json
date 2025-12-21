@@ -5,10 +5,10 @@
     "no-trailing-whitespace": "off",
     "void-style": "off",
     "element-permitted-content": "off",
-    "long-title": "off",
     "valid-id": ["error", { "relaxed": true }],
     "no-raw-characters": "error",
     "no-implicit-button-type": "error",
-    "no-inline-style": "error"
+    "no-inline-style": "error",
+    "long-title": "error"
   }
 }

@@ -1,0 +1,18 @@
+
+/var/www/jmrp.io_astro/dist/github/index.html
+  1:1154  error  title text cannot be longer than 70 characters  long-title
+
+/var/www/jmrp.io_astro/dist/blog/implementing-content-security-policy-nginx/index.html
+  1:1211  error  title text cannot be longer than 70 characters  long-title
+
+/var/www/jmrp.io_astro/dist/blog/secure-nginx-client-certificates/index.html
+  1:1184  error  title text cannot be longer than 70 characters  long-title
+
+/var/www/jmrp.io_astro/dist/blog/serve-virtual-files-nginx/index.html
+  1:1187  error  title text cannot be longer than 70 characters  long-title
+
+✖ 4 problems (4 errors, 0 warnings)
+
+More information:
+  https://html-validate.org/rules/long-title.html
+

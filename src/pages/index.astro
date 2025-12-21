@@ -26,11 +26,14 @@ const { hero } = siteData;
             <div class="hero-content">
                 <div class="hero-text">
                     <h1>{hero.title}</h1>
-                    <p class="subtitle" set:html={hero.subtitle} />
+                    <p
+                        class="subtitle"
+                        set:html={hero.subtitle.replace(/&/g, "&amp;")}
+                    />
                     <div class="bio">
                         {
                             hero.bio.map((paragraph: string) => (
-                                <p set:html={paragraph} />
+                                <p set:html={paragraph.replace(/&/g, "&amp;")} />
                             ))
                         }
                     </div>

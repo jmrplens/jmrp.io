@@ -285,17 +285,16 @@ const articleSchema = [
                         const successIcon =
                             copyButton.querySelector(".success-icon");
 
-                        if (
-                            copyIcon instanceof HTMLElement &&
-                            successIcon instanceof HTMLElement
-                        ) {
-                            copyIcon.classList.add("hidden");
-                            successIcon.classList.remove("hidden");
+                        if (copyIcon instanceof HTMLElement) {
+                            if (successIcon instanceof HTMLElement) {
+                                copyIcon.classList.add("hidden");
+                                successIcon.classList.remove("hidden");
 
-                            setTimeout(() => {
-                                copyIcon.classList.remove("hidden");
-                                successIcon.classList.add("hidden");
-                            }, 2000);
+                                setTimeout(() => {
+                                    copyIcon.classList.remove("hidden");
+                                    successIcon.classList.add("hidden");
+                                }, 2000);
+                            }
                         }
                     },
                     (err) => {
