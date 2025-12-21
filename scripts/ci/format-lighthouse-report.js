@@ -73,14 +73,14 @@ try {
       const scores = groupedResults[url][cat];
       // Sort numerically
       scores.sort((a, b) => a - b);
-      
+
       // Calculate Median
       const mid = Math.floor(scores.length / 2);
-      const median = 
-        scores.length % 2 !== 0 
-          ? scores[mid] 
+      const median =
+        scores.length % 2 !== 0
+          ? scores[mid]
           : (scores[mid - 1] + scores[mid]) / 2;
-          
+
       averagedResults[url][cat] = Math.round(median);
     });
   });
