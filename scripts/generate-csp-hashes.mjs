@@ -145,15 +145,21 @@ async function generateHashes() {
       console.log("Script Hashes: " + scriptHashString);
       console.log("Image Domains: " + imgDomainString);
 
-      updateNginxConfig(styleHashString, scriptHashString, imgDomainString);
+      if (fs.existsSync(NGINX_CONF)) {
+        updateNginxConfig(styleHashString, scriptHashString, imgDomainString);
 
-      // Reload Nginx
-      try {
-        await execAsync("systemctl reload nginx");
-        console.log("Nginx reloaded successfully.");
-      } catch (error) {
-        console.error(`Error reloading Nginx: ${error.message}`);
-        process.exit(1);
+        // Reload Nginx
+        try {
+          await execAsync("systemctl reload nginx");
+          console.log("Nginx reloaded successfully.");
+        } catch (error) {
+          console.error(`Error reloading Nginx: ${error.message}`);
+          process.exit(1);
+        }
+      } else {
+        console.log(
+          `\nSkipping Nginx update: ${NGINX_CONF} not found (likely CI environment).`,
+        );
       }
     }
   } catch (err) {

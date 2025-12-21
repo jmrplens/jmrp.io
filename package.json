@@ -11,7 +11,7 @@
     "dev": "astro dev",
     "prebuild": "node scripts/fetch-github-avatar.mjs",
     "build": "export DIST_DIR=dist_new && rm -rf $DIST_DIR && astro build --outDir $DIST_DIR && pagefind --site $DIST_DIR && DIST_DIR=$DIST_DIR npm run _postbuild && rm -rf dist_old && (mv dist dist_old || true) && mv $DIST_DIR dist && rm -rf dist_old && pnpm exec prettier --check .",
-    "_postbuild": "node scripts/setup-sitemap.mjs && node scripts/move-inline-styles.mjs && node scripts/extract-css-data-uris.mjs && node scripts/extract-html-img-data-uris.mjs && node scripts/generate-sri-hashes.mjs && node scripts/generate-csp-hashes.mjs && rm -rf /var/cache/nginx/*",
+    "_postbuild": "node scripts/setup-sitemap.mjs && node scripts/move-inline-styles.mjs && node scripts/extract-css-data-uris.mjs && node scripts/extract-html-img-data-uris.mjs && node scripts/generate-sri-hashes.mjs && node scripts/generate-csp-hashes.mjs && (rm -rf /var/cache/nginx/* 2>/dev/null || true)",
     "preview": "astro preview",
     "astro": "astro"
   },
@@ -51,11 +51,13 @@
     "@types/sanitize-html": "^2.16.0",
     "@types/xml2js": "^0.4.14",
     "glob": "^13.0.0",
+    "html-validate": "^10.5.0",
     "js-yaml": "^4.1.1",
     "pagefind": "^1.4.0",
     "playwright": "^1.57.0",
     "prettier": "^3.7.4",
     "rehype-mermaid": "^3.0.0",
+    "rss-parser": "^3.13.0",
     "sharp": "^0.34.5",
     "xml2js": "^0.6.2"
   }

@@ -22,6 +22,7 @@ const { headings } = Astro.props;
         <>
             <button
                 id="toc-toggle-btn"
+                type="button"
                 class="toc-fab toc-trigger mobile-only"
                 aria-label="Table of Contents"
                 aria-haspopup="true"
@@ -43,13 +44,14 @@ const { headings } = Astro.props;
                     <h2 id="toc-title">Table of Contents</h2>
                     <button
                         id="toc-close-btn"
+                        type="button"
                         class="toc-close"
                         aria-label="Close"
                     >
                         <Icon name="mdi:close" />
                     </button>
                 </div>
-                <nav class="toc-content">
+                <nav class="toc-content" aria-label="Table of Contents Drawer">
                     <ul>
                         {headings.map((heading) => (
                             <li class={`toc-depth-${heading.depth}`}>
@@ -105,7 +107,9 @@ const { headings } = Astro.props;
                 (btns[0] as HTMLElement).focus();
             } else {
                 // Absolute fallback: blur so focusing is not on hidden element
-                (document.activeElement as HTMLElement)?.blur();
+                if (document.activeElement instanceof HTMLElement) {
+                    document.activeElement.blur();
+                }
             }
 
             drawer.classList.remove("open");
@@ -117,20 +121,26 @@ const { headings } = Astro.props;
         };
 
         btns.forEach((btn) => btn.addEventListener("click", openTOC));
-        closeBtn?.addEventListener("click", closeTOC);
+        if (closeBtn) {
+            closeBtn.addEventListener("click", closeTOC);
+        }
         backdrop.addEventListener("click", closeTOC);
 
-        links?.forEach((link) => {
-            link.addEventListener("click", () => {
-                closeTOC();
-                // Optional: Wait for close animation or just let browser jump
+        if (links) {
+            links.forEach((link) => {
+                link.addEventListener("click", () => {
+                    closeTOC();
+                    // Optional: Wait for close animation or just let browser jump
+                });
             });
-        });
+        }
 
         // Close on Escape
         document.addEventListener("keydown", (e) => {
-            if (e.key === "Escape" && drawer.classList.contains("open")) {
-                closeTOC();
+            if (e.key === "Escape") {
+                if (drawer.classList.contains("open")) {
+                    closeTOC();
+                }
             }
         });
     }

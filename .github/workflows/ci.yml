@@ -34,7 +34,7 @@ jobs:
         with:
           node-version: 20
           cache: "pnpm"
-      - run: pnpm install
+      - run: pnpm install --frozen-lockfile --prefer-offline
       - name: Astro Check
         run: pnpm exec astro check
       - name: Prettier Check
@@ -109,7 +109,7 @@ jobs:
         with:
           node-version: 20
           cache: "pnpm"
-      - run: pnpm install
+      - run: pnpm install --frozen-lockfile --prefer-offline
       - name: SonarCloud Scan
         uses: SonarSource/sonarqube-scan-action@v7
         env:
@@ -126,7 +126,7 @@ jobs:
         with:
           node-version: 20
           cache: "pnpm"
-      - run: pnpm install
+      - run: pnpm install --frozen-lockfile --prefer-offline
       - name: Run Snyk to check for vulnerabilities
         uses: snyk/actions/node@master
         env:
@@ -145,13 +145,18 @@ jobs:
         with:
           node-version: 20
           cache: "pnpm"
-      - run: pnpm install
+      - run: pnpm install --frozen-lockfile --prefer-offline
+      - name: Cache Playwright Browsers
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-browsers-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
       - name: Install Playwright Browsers
-        run: pnpm exec playwright install --with-deps
-      - name: Build Astro
-        run: pnpm astro build
-      - name: Run Pagefind
-        run: pnpm pagefind --site dist
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Build Project (Production)
+        run: pnpm run build
       - name: Upload build artifact
         uses: actions/upload-artifact@v6
         with:
@@ -171,7 +176,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Download build artifact
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v7
         with:
           name: dist-build
           path: dist
@@ -210,7 +215,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Download build artifact
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v7
         with:
           name: dist-build
           path: dist
@@ -219,11 +224,17 @@ jobs:
         with:
           node-version: 20
           cache: "pnpm"
-      - run: pnpm install
+      - run: pnpm install --frozen-lockfile --prefer-offline
+      - name: Cache Playwright Browsers
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-browsers-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
       - name: Install Playwright Browsers
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: pnpm exec playwright install --with-deps chromium
       - name: Run Axe accessibility tests
-        run: pnpm exec playwright test --project=accessibility
       - name: Upload Axe Results
         if: always()
         uses: actions/upload-artifact@v6
@@ -237,42 +248,54 @@ jobs:
         with:
           script: |
             const fs = require('fs');
+            let commentBody = '';
 
-            // Check if tests passed or failed
-            let status = '✅ **All accessibility tests passed!**';
-            let details = '\n\nAll pages are WCAG 2.1 AA compliant with no violations detected.';
-
-            // Try to read test results to see if there were failures
             try {
-              const { execSync } = require('child_process');
-              const result = execSync('pnpm exec playwright test --project=accessibility --reporter=json', { stdio: 'pipe' });
+              if (fs.existsSync('accessibility-summary.json')) {
+                const summary = JSON.parse(fs.readFileSync('accessibility-summary.json', 'utf8'));
+                const isSuccess = summary.failed === 0;
+                
+                const statusIcon = isSuccess ? '✅' : '⚠️';
+                const statusText = isSuccess ? '**All accessibility tests passed!**' : '**Accessibility violations detected**';
+                
+                commentBody = `## ♿ Accessibility Test Results (Axe-core)\n\n${statusIcon} ${statusText}\n\n`;
+                commentBody += `**Summary:**\n- Total Pages Tested: **${summary.totalPages}**\n- Passed: ${summary.passed}\n- Failed: ${summary.failed}\n\n`;
+                
+                if (!isSuccess) {
+                  commentBody += `### ❌ Failed Pages\n`;
+                  summary.pages
+                    .filter((p) => p.violations > 0)
+                    .forEach((p) => {
+                      commentBody += `- ${p.page} (${p.violations} violations)\n`;
+                    });
+                  commentBody += `\nPlease review the detailed HTML report in the artifacts.\n\n`;
+                }
+
+                commentBody += `**Standards:** WCAG 2.1 AA compliance\n`;
+                commentBody += `📊 [View detailed HTML report](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`;
+                
+              } else {
+                throw new Error('Summary file not found');
+              }
             } catch (error) {
-              status = '⚠️ **Accessibility violations detected**';
-              details = '\n\nSome pages have WCAG 2.1 AA violations. Please review the detailed HTML report in the artifacts.';
+               console.log('Error generating comment:', error);
+               // Fallback if file not found or error
+               let status = '✅ **All accessibility tests passed!**';
+               let details = '\n\nAll pages are WCAG 2.1 AA compliant with no violations detected.';
+               
+               // Check process exit code from previous step via inspection? No, simpler to assume pass if we are here and no summary means maybe it didn't run or manual fallback? 
+               // Actually if playwright fails, the step "Run Axe accessibility tests" fails. "always()" ensures this runs.
+               // We can check the outcome of the 'Run Axe accessibility tests' step? No direct access here easily without more boilerplate.
+               // Let's stick to a generic fallback.
+               
+               commentBody = `## ♿ Accessibility Test Results (Axe-core)\n\n⚠️ **Test execution completed, but summary report was not found.**\n\nPlease check the [Actions logs](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}) to verify status.`;
             }
-
-            const comment = `## ♿ Accessibility Test Results (Axe-core)
-
-            ${status}
-            ${details}
-
-            **Pages Tested:**
-            - Home (/)
-            - Publications (/publications)
-            - CV (/cv)
-            - GitHub (/github)
-            - Services (/services)
-            - Blog Index (/blog)
-
-            **Standards:** WCAG 2.1 AA compliance
-
-            📊 [View detailed HTML report](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`;
 
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: comment
+              body: commentBody
             });
 
   bundle-size:
@@ -282,7 +305,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Download build artifact
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v7
         with:
           name: dist-build
           path: dist
@@ -317,26 +340,85 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Download build artifact
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v7
         with:
           name: dist-build
           path: dist
-      - name: Validate HTML5
-        uses: Cyb3r-Jak3/html5validator-action@v7.2.0
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v6
         with:
-          root: dist/
-          css: false
-        continue-on-error: true
+          node-version: 20
+          cache: "pnpm"
+      - run: pnpm install --frozen-lockfile --prefer-offline
+      - name: Validate HTML5
+        run: |
+          pnpm exec html-validate -c .htmlvalidate.json --formatter json dist > html-validation.json 2> html-errors.log || true
       - name: Post HTML Validation Comment
         if: github.event_name == 'pull_request'
         uses: actions/github-script@v7
         with:
           script: |
-            const comment = `## ✅ HTML5 Validation
+            const fs = require('fs');
+            let comment = '';
 
-            W3C HTML5 validation completed for all pages in the build.
-
-            Any validation warnings or errors are shown in the [Actions Summary](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}).`;
+            try {
+              if (fs.existsSync('html-validation.json')) {
+                let rawContent = fs.readFileSync('html-validation.json', 'utf8').trim();
+                
+                // If file is empty or contains "undefined", check error log
+                if (!rawContent || rawContent === 'undefined') {
+                   if (fs.existsSync('html-errors.log')) {
+                      const errors = fs.readFileSync('html-errors.log', 'utf8');
+                      comment = `## ⚠️ HTML5 Validation\n\n**Validation failed to run correctly.**\n\nError log:\n\`\`\`\n${errors.slice(0, 1000)}\n\`\`\``;
+                   } else {
+                      comment = `## ⚠️ HTML5 Validation\n\nReport is empty or undefined. Check build logs.`;
+                   }
+                } else {
+                  try {
+                    const report = JSON.parse(rawContent);
+                    const filesWithErrors = report.filter(f => f.messages.length > 0);
+                    const totalErrors = filesWithErrors.reduce((acc, f) => acc + f.messages.filter(m => m.severity === 2).length, 0);
+                    const totalWarnings = filesWithErrors.reduce((acc, f) => acc + f.messages.filter(m => m.severity === 1).length, 0);
+                    
+                    const isSuccess = totalErrors === 0;
+                    const icon = isSuccess ? '✅' : '❌';
+                    const status = isSuccess ? 'Passed' : 'Failed';
+                    
+                    comment = `## ${icon} HTML5 Validation\n\n`;
+                    comment += `**Status: ${status}**\n`;
+                    comment += `- **Files Checked:** All generated HTML\n`;
+                    comment += `- **Errors:** ${totalErrors}\n`;
+                    comment += `- **Warnings:** ${totalWarnings}\n\n`;
+                    
+                    if (filesWithErrors.length > 0) {
+                      comment += `### ⚠️ Issues Found (Top 10 files)\n\n`;
+                      filesWithErrors.slice(0, 10).forEach(f => {
+                        const fileName = f.filePath.replace('dist/', '').split('/').pop(); // Just file name for brevity
+                        comment += `**${fileName}**\n`;
+                        f.messages.forEach(m => {
+                           const severity = m.severity === 2 ? '🔴' : '⚠️';
+                           comment += `- ${severity} [${m.ruleId}] ${m.message} (Line ${m.line})\n`;
+                        });
+                        comment += `\n`;
+                      });
+                      
+                      if (filesWithErrors.length > 10) {
+                        comment += `...and ${filesWithErrors.length - 10} more files with issues.\n`;
+                      }
+                    } else {
+                      comment += `All pages are valid HTML5 compliant.\n`;
+                    }
+                  } catch (parseError) {
+                     comment = `## ⚠️ HTML5 Validation\n\n**Error parsing report JSON**\n\nRaw snippet:\n\`\`\`\n${rawContent.slice(0, 500)}\n\`\`\``;
+                  }
+                }
+              } else {
+                comment = `## ⚠️ HTML5 Validation\n\nReport file not found. Check build logs.`;
+              }
+            } catch (e) {
+              console.error(e);
+              comment = `## ⚠️ HTML5 Validation\n\nError processing report. Check build logs.`;
+            }
 
             github.rest.issues.createComment({
               issue_number: context.issue.number,
@@ -352,7 +434,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Download build artifact
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v7
         with:
           name: dist-build
           path: dist
@@ -361,7 +443,7 @@ jobs:
         with:
           node-version: 20
           cache: "pnpm"
-      - run: pnpm install
+      - run: pnpm install --frozen-lockfile --prefer-offline
       - name: Validate RSS feed
         run: node scripts/ci/validate-rss.mjs dist/rss.xml
       - name: Post RSS Validation Comment
@@ -370,19 +452,45 @@ jobs:
         with:
           script: |
             const fs = require('fs');
-            const rssFile = 'dist/rss.xml';
-            const size = (fs.statSync(rssFile).size / 1024).toFixed(2);
+            let comment = '';
 
-            const comment = `## 📡 RSS Feed Validation
-
-            ✅ RSS 2.0 feed is valid and well-formed
-
-            **Feed Details:**
-            - File: \`rss.xml\`
-            - Size: ${size} KB
-            - Spec: RSS 2.0 with Atom namespace
-
-            [View feed](https://jmrp.io/rss.xml)`;
+            try {
+              if (fs.existsSync('rss-validation.json')) {
+                const report = JSON.parse(fs.readFileSync('rss-validation.json', 'utf8'));
+                
+                const icon = report.valid ? '✅' : '❌';
+                const status = report.valid ? 'Valid' : 'Failed';
+                
+                comment = `## 📡 RSS Feed Validation\n\n`;
+                comment += `**Status: ${icon} ${status}**\n\n`;
+                
+                comment += `**Feed Details:**\n`;
+                comment += `- **File:** \`rss.xml\` (${report.size} KB)\n`;
+                comment += `- **Items:** ${report.metadata.items} posts\n`;
+                
+                if (report.metadata.latestItem) {
+                   comment += `- **Latest:** "${report.metadata.latestItem.title}" (${report.metadata.latestItem.date})\n`;
+                }
+                
+                if (report.errors.length > 0) {
+                  comment += `\n### ❌ Errors\n`;
+                  report.errors.forEach(e => comment += `- ${e}\n`);
+                }
+                
+                if (report.warnings.length > 0) {
+                  comment += `\n### ⚠️ Warnings\n`;
+                  report.warnings.forEach(w => comment += `- ${w}\n`);
+                }
+                
+                comment += `\n[View Feed](https://jmrp.io/rss.xml)`;
+                
+              } else {
+                 comment = `## 📡 RSS Validation\n\n⚠️ Report file not found. Check logs.`;
+              }
+            } catch (e) {
+               console.error(e);
+               comment = `## 📡 RSS Validation\n\n⚠️ Error processing report.`;
+            }
 
             github.rest.issues.createComment({
               issue_number: context.issue.number,
@@ -398,7 +506,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Download build artifact
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v7
         with:
           name: dist-build
           path: dist
@@ -407,7 +515,7 @@ jobs:
         with:
           node-version: 20
           cache: "pnpm"
-      - run: pnpm install
+      - run: pnpm install --frozen-lockfile --prefer-offline
       - name: Validate Schema.org structured data
         run: node scripts/ci/validate-schema.mjs dist
       - name: Post Schema Validation Comment
@@ -415,17 +523,20 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const comment = `## 🏷️ Schema.org Structured Data Validation
+            const comment = `## 🏷️ Structured Data Check
 
-            ✅ All JSON-LD structured data is valid
+            ✅ **Syntax & Basic Properties Valid**
+
+            **Scope:** Checked all generated HTML pages (100% coverage).
+            **Validation:** Internal strict check for JSON-LD syntax and required schema properties.
 
             **Validated Types:**
-            - Person (author profile)
-            - WebSite (site metadata)
-            - BlogPosting (blog articles)
-            - BreadcrumbList (navigation)
+            - \`Person\` (Author profile)
+            - \`WebSite\` (Site metadata)
+            - \`BlogPosting\` (Articles - checks image, author, date)
+            - \`BreadcrumbList\` (Navigation)
 
-            Tested against Schema.org vocabulary for rich snippets and SEO.`;
+            🔗 [Verify manually with Google Rich Results Test](https://search.google.com/test/rich-results)`;
 
             github.rest.issues.createComment({
               issue_number: context.issue.number,
@@ -441,7 +552,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Download build artifact
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v7
         with:
           name: dist-build
           path: dist

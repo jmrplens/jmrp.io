@@ -44,17 +44,15 @@ const publicationsSchema = {
 ---
 
 <BaseLayout
-    title="Publications | José Manuel Requena Plens"
-    description="Academic Publications"
-    type="article"
-    schema={publicationsSchema}
+    title="Publications"
+    description="Academic publications and research."
 >
     <div class="container">
         <h1 class="page-title">Publications</h1>
 
         {
             publicationGroups.map((group) => (
-                <section class="pub-section">
+                <section class="pub-section" aria-label={group.title}>
                     <h2 class="section-title text-primary border-b border-border pb-2">
                         {group.title}
                     </h2>

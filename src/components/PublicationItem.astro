@@ -91,6 +91,7 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
             <div class="pub-actions">
                 <button
                     class="btn-sm btn-abstract"
+                    type="button"
                     data-id={pub.id}
                     aria-label={`Toggle Abstract for ${pub.title}`}
                     aria-expanded="false"
@@ -100,6 +101,7 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
                 </button>
                 <button
                     class="btn-sm btn-bibtex-toggle"
+                    type="button"
                     data-id={pub.id}
                     aria-label={`Toggle BibTeX for ${pub.title}`}
                     aria-expanded="false"
@@ -177,7 +179,7 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
             <div id={abstractId} class="pub-abstract hidden">
                 <div class="pub-card-wrapper copy-container">
                     <div class="pub-card-header">
-                        <span class="pub-card-title">Abstract</span>
+                        <div class="pub-card-title">Abstract</div>
                         <CopyButton
                             class="pub-copy-btn"
                             content={pub.abstract}
@@ -192,7 +194,7 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
             <div id={bibtexId} class="pub-bibtex hidden">
                 <div class="pub-card-wrapper copy-container">
                     <div class="pub-card-header">
-                        <span class="pub-card-title">BibTeX</span>
+                        <div class="pub-card-title">BibTeX</div>
                         <CopyButton
                             class="pub-copy-btn"
                             content={cleanedBibtex}

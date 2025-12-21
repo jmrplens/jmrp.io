@@ -165,7 +165,7 @@ const articleSchema = [
             <aside class="toc-sidebar">
                 {
                     headings.length > 0 && (
-                        <nav class="toc">
+                        <nav class="toc" aria-label="Table of Contents">
                             <h2>Table of Contents</h2>
                             <ul>
                                 {headings.map((heading) => (
@@ -182,6 +182,7 @@ const articleSchema = [
 
                 <button
                     class="desktop-toc-btn toc-trigger"
+                    type="button"
                     aria-label="Open Table of Contents"
                 >
                     <Icon name="mdi:format-list-bulleted" />
@@ -284,17 +285,16 @@ const articleSchema = [
                         const successIcon =
                             copyButton.querySelector(".success-icon");
 
-                        if (
-                            copyIcon instanceof HTMLElement &&
-                            successIcon instanceof HTMLElement
-                        ) {
-                            copyIcon.classList.add("hidden");
-                            successIcon.classList.remove("hidden");
+                        if (copyIcon instanceof HTMLElement) {
+                            if (successIcon instanceof HTMLElement) {
+                                copyIcon.classList.add("hidden");
+                                successIcon.classList.remove("hidden");
 
-                            setTimeout(() => {
-                                copyIcon.classList.remove("hidden");
-                                successIcon.classList.add("hidden");
-                            }, 2000);
+                                setTimeout(() => {
+                                    copyIcon.classList.remove("hidden");
+                                    successIcon.classList.add("hidden");
+                                }, 2000);
+                            }
                         }
                     },
                     (err) => {

@@ -3,3 +3,4 @@ dist/
 dist_new/
 .astro/
 node_modules/
+html-validation.json

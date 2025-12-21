@@ -1,5 +1,10 @@
 export default {
   themes: ["github-dark", "github-light"],
+  // Disable built-in copy button as it generates invalid HTML (div inside button)
+  // and we use our own custom CopyButton component.
+  frames: {
+    showCopyToClipboardButton: false,
+  },
   // Dynamic theme selector based on data-theme attribute
   themeCssSelector: (theme, { styleVariants }) => {
     if (styleVariants.length >= 2) {
