@@ -30,9 +30,17 @@ const { headings } = Astro.props;
                 <Icon name="mdi:format-list-bulleted" class="toc-icon" />
             </button>
 
-            <div id="toc-drawer" class="toc-drawer" aria-hidden="true">
+            <div
+                id="toc-drawer"
+                class="toc-drawer"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="toc-title"
+                aria-hidden="true"
+                inert
+            >
                 <div class="toc-header">
-                    <h2>Table of Contents</h2>
+                    <h2 id="toc-title">Table of Contents</h2>
                     <button
                         id="toc-close-btn"
                         class="toc-close"
@@ -75,6 +83,7 @@ const { headings } = Astro.props;
             backdrop.classList.add("open");
             btns.forEach((btn) => btn.setAttribute("aria-expanded", "true"));
             drawer.setAttribute("aria-hidden", "false");
+            drawer.removeAttribute("inert");
 
             // Focus on close button or first link
             if (closeBtn) {
@@ -103,6 +112,7 @@ const { headings } = Astro.props;
             backdrop.classList.remove("open");
             btns.forEach((btn) => btn.setAttribute("aria-expanded", "false"));
             drawer.setAttribute("aria-hidden", "true");
+            drawer.setAttribute("inert", "");
             document.body.style.overflow = ""; // Unlock scroll
         };
 
