@@ -11,8 +11,21 @@
   --color-border: #30363d;
 
   /* Typography */
-  --font-body: "Inter", system-ui, -apple-system, sans-serif;
-  --font-mono: "JetBrains Mono", monospace;
+  --font-body: "Inter", "Inter Fallback", system-ui, -apple-system, sans-serif;
+  --font-mono:
+    "JetBrains Mono", "JetBrains Mono Fallback", "Courier New", monospace;
+
+  /* Font Weights */
+  --fw-normal: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+  --fw-bold: 700;
+  --fw-extrabold: 800;
+
+  /* Semantic font-weight aliases */
+  --fw-link-emphasis: 600;
+  /* For accessibility - distinguishing links from text */
+  --fw-heading: 600;
 
   /* Spacing & Radius */
   --space-xs: 0.25rem;
@@ -30,7 +43,8 @@
   --max-width-prose: 70ch;
 
   /* Borders */
-  --border-subtle: 1px solid var(--color-border);
+  --border-1: 1px solid var(--color-border);
+  --border-2: var(--border-2);
 
   /* Z-Indices */
   --z-fab: 900;
@@ -199,7 +213,7 @@ h1 {
   gap: 8px;
   padding: var(--space-sm) var(--space-lg);
   border-radius: var(--radius-md);
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
   text-decoration: none;
   transition:
     transform 0.2s,
@@ -238,8 +252,8 @@ h1 {
   padding: 4px 12px;
   font-size: 0.85rem;
   border-radius: var(--radius-sm);
-  font-weight: 500;
-  border: var(--border-subtle);
+  font-weight: var(--fw-medium);
+  border: var(--border-1);
   color: var(--color-text-muted);
   background: transparent;
   display: inline-flex;
@@ -260,7 +274,7 @@ h1 {
 /* Page & Section Titles */
 .page-title {
   margin-bottom: var(--space-xl);
-  border-bottom: 2px solid var(--color-border);
+  border-bottom: var(--border-2);
   padding-bottom: var(--space-md);
   font-size: 2rem;
   /* Ensure consistent h1 size */
@@ -278,7 +292,7 @@ h1 {
 /* Standardize section-title variants */
 .section-title.standard {
   border-left: none;
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: var(--border-1);
   padding-left: 0;
   padding-bottom: var(--space-sm);
 }

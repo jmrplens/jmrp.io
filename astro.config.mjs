@@ -80,7 +80,7 @@ export default defineConfig({
 
   // Build configuration
   build: {
-    // Inline small stylesheets to improve performance
-    inlineStylesheets: "never",
+    // Inline critical CSS to improve performance
+    inlineStylesheets: "auto",
   },
 });

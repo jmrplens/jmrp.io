@@ -264,7 +264,7 @@ const personSchema = {
                 justify-content: space-between;
                 align-items: center;
                 margin-bottom: var(--space-md);
-                border-bottom: 2px solid var(--color-border);
+                border-bottom: var(--border-2);
                 padding-bottom: var(--space-md);
             }
 
@@ -276,7 +276,7 @@ const personSchema = {
                 padding: var(--space-sm) 0;
                 margin-bottom: var(--space-lg);
                 z-index: 10;
-                border-bottom: 1px solid var(--color-border);
+                border-bottom: var(--border-1);
             }
 
             .cv-toc ul {
@@ -291,7 +291,7 @@ const personSchema = {
             .cv-toc a {
                 text-decoration: none;
                 color: var(--color-text-muted);
-                font-weight: 600;
+                font-weight: var(--fw-semibold);
                 font-size: 0.95rem;
                 white-space: nowrap;
             }
@@ -307,7 +307,7 @@ const personSchema = {
             .section-title {
                 /* Overriding global default to match CV preference (border-bottom) */
                 border-left: none;
-                border-bottom: 1px solid var(--color-border);
+                border-bottom: var(--border-1);
                 padding-left: 0;
             }
 
@@ -330,7 +330,7 @@ const personSchema = {
 
             /* Time Table */
             .timeline {
-                border-left: 2px solid var(--color-border);
+                border-left: var(--border-2);
                 padding-left: var(--space-lg);
             }
 
@@ -353,7 +353,7 @@ const personSchema = {
 
             .timeline-card {
                 background-color: var(--color-bg-secondary);
-                border: var(--border-subtle);
+                border: var(--border-1);
                 border-radius: var(--radius-md);
                 padding: var(--space-lg);
                 position: relative;
@@ -376,8 +376,8 @@ const personSchema = {
                 width: 16px;
                 height: 16px;
                 background-color: var(--color-bg-secondary);
-                border-left: 1px solid var(--color-border);
-                border-bottom: 1px solid var(--color-border);
+                border-left: var(--border-1);
+                border-bottom: var(--border-1);
                 transform: rotate(45deg);
             }
 
@@ -402,7 +402,7 @@ const personSchema = {
             .department {
                 font-size: 1.1rem;
                 color: var(--color-text-muted);
-                font-weight: 500;
+                font-weight: var(--fw-medium);
             }
 
             .location {
@@ -447,7 +447,7 @@ const personSchema = {
                 flex-wrap: wrap;
                 gap: var(--space-sm);
                 margin-top: var(--space-md);
-                border-top: 1px solid var(--color-border);
+                border-top: var(--border-1);
                 padding-top: var(--space-sm);
             }
 
@@ -455,19 +455,21 @@ const personSchema = {
                 display: inline-flex;
                 align-items: center;
                 gap: 6px;
-                font-weight: 600; /* Accessibility: Distinguish links by weight */
+                font-weight: var(
+                    --fw-link-emphasis
+                ); /* Accessibility: Distinguish links by weight */
             }
 
             /* Accessibility: Distinguish links by weight
                Using :global() because these links are injected via set:html */
             .timeline-card :global(a),
             .map-item :global(a:not(.btn-sm)) {
-                font-weight: 600;
+                font-weight: var(--fw-link-emphasis);
             }
 
             /* Ensure button links also have sufficient weight if they are text-like */
             .map-item :global(.btn-sm) {
-                font-weight: 600;
+                font-weight: var(--fw-link-emphasis);
             }
         </style>
     </div></BaseLayout

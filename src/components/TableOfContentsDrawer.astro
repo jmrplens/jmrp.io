@@ -197,7 +197,7 @@ const { headings } = Astro.props;
         justify-content: space-between;
         align-items: center;
         padding: 1rem 1.5rem;
-        border-bottom: 1px solid var(--color-border);
+        border-bottom: var(--border-1);
     }
 
     .toc-header h2 {
@@ -329,7 +329,7 @@ const { headings } = Astro.props;
 
             /* Animation override */
             transform: translateX(-100%);
-            border-right: var(--border-subtle);
+            border-right: var(--border-1);
         }
 
         :global(.desktop-toc-visible) .toc-drawer.open {
