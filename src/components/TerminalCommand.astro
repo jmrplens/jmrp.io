@@ -14,14 +14,13 @@ const { command, prompt = "$" } = Astro.props;
 ---
 
 <div class="terminal-command-wrapper copy-container">
-    <div
+    <section
         class="command-container"
         tabindex="0"
-        role="group"
-        aria-label="Terminal command"
+        aria-label={`Terminal command: ${command}`}
     >
-        <span class="prompt" aria-hidden="true">{prompt}</span>
-        <pre><code class="language-bash" aria-label={`Command: ${command}`}>{command}</code></pre>
+        <span class="prompt" aria-hidden=\"true\">{prompt}</span>
+        <pre><code class="language-bash">{command}</code></pre>
     </div>
     <CopyButton />
 </div>

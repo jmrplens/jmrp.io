@@ -24,7 +24,7 @@ const posts = (await getCollection("posts"))
             <p class="subtitle">Thoughts, tutorials, and engineering notes.</p>
         </header>
 
-        <section class="posts-grid">
+        <section class="posts-grid" aria-label="Blog posts grid">
             {
                 posts.map((post) => (
                     <article class="post-card">

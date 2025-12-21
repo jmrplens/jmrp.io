@@ -54,7 +54,7 @@ const publicationsSchema = {
 
         {
             publicationGroups.map((group) => (
-                <section class="pub-section">
+                <section class="pub-section" aria-label={group.title}>
                     <h2 class="section-title text-primary border-b border-border pb-2">
                         {group.title}
                     </h2>

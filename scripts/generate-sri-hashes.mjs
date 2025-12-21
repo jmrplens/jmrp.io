@@ -81,7 +81,7 @@ async function main() {
           totalTagsUpdated++;
           modified = true;
           // Strip trailing slash for self-closing tags to avoid <tag attr / integrity="...">
-          const cleanAttrs = attrs.trim().replace(/\/$/, "").trim();
+          const cleanAttrs = attrs.replace(/\/\s*$/, "").trim();
           return `<${tagName} ${cleanAttrs} integrity="${hash}" crossorigin="anonymous">`;
         } catch (err) {
           console.warn(`Error processing ${tagName} ${url}:`, err.message);

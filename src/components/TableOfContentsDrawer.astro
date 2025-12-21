@@ -51,7 +51,7 @@ const { headings } = Astro.props;
                         <Icon name="mdi:close" />
                     </button>
                 </div>
-                <nav class="toc-content">
+                <nav class="toc-content" aria-label="Table of Contents Drawer">
                     <ul>
                         {headings.map((heading) => (
                             <li class={`toc-depth-${heading.depth}`}>

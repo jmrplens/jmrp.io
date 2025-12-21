@@ -10,7 +10,6 @@
     "unrecognized-char-ref": "off",
     "element-permitted-content": "off",
     "valid-id": "off",
-    "no-implicit-button-type": "off",
-    "parser-error": "off"
+    "no-implicit-button-type": "off"
   }
 }
