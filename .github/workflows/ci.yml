@@ -338,6 +338,7 @@ jobs:
         with:
           node-version: 20
           cache: "pnpm"
+      - run: pnpm install
       - name: Validate HTML5
         run: |
           pnpm exec html-validate --formatter json dist > html-validation.json 2>&1 || true
