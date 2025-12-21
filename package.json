@@ -56,6 +56,7 @@
     "playwright": "^1.57.0",
     "prettier": "^3.7.4",
     "rehype-mermaid": "^3.0.0",
+    "rss-parser": "^3.13.0",
     "sharp": "^0.34.5",
     "xml2js": "^0.6.2"
   }

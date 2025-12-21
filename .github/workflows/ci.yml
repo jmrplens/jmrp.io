@@ -423,19 +423,45 @@ jobs:
         with:
           script: |
             const fs = require('fs');
-            const rssFile = 'dist/rss.xml';
-            const size = (fs.statSync(rssFile).size / 1024).toFixed(2);
+            let comment = '';
 
-            const comment = `## 📡 RSS Feed Validation
-
-            ✅ RSS 2.0 feed is valid and well-formed
-
-            **Feed Details:**
-            - File: \`rss.xml\`
-            - Size: ${size} KB
-            - Spec: RSS 2.0 with Atom namespace
-
-            [View feed](https://jmrp.io/rss.xml)`;
+            try {
+              if (fs.existsSync('rss-validation.json')) {
+                const report = JSON.parse(fs.readFileSync('rss-validation.json', 'utf8'));
+                
+                const icon = report.valid ? '✅' : '❌';
+                const status = report.valid ? 'Valid' : 'Failed';
+                
+                comment = `## 📡 RSS Feed Validation\n\n`;
+                comment += `**Status: ${icon} ${status}**\n\n`;
+                
+                comment += `**Feed Details:**\n`;
+                comment += `- **File:** \`rss.xml\` (${report.size} KB)\n`;
+                comment += `- **Items:** ${report.metadata.items} posts\n`;
+                
+                if (report.metadata.latestItem) {
+                   comment += `- **Latest:** "${report.metadata.latestItem.title}" (${report.metadata.latestItem.date})\n`;
+                }
+                
+                if (report.errors.length > 0) {
+                  comment += `\n### ❌ Errors\n`;
+                  report.errors.forEach(e => comment += `- ${e}\n`);
+                }
+                
+                if (report.warnings.length > 0) {
+                  comment += `\n### ⚠️ Warnings\n`;
+                  report.warnings.forEach(w => comment += `- ${w}\n`);
+                }
+                
+                comment += `\n[View Feed](https://jmrp.io/rss.xml)`;
+                
+              } else {
+                 comment = `## 📡 RSS Validation\n\n⚠️ Report file not found. Check logs.`;
+              }
+            } catch (e) {
+               console.error(e);
+               comment = `## 📡 RSS Validation\n\n⚠️ Error processing report.`;
+            }
 
             github.rest.issues.createComment({
               issue_number: context.issue.number,
