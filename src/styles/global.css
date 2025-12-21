@@ -157,6 +157,11 @@ h1 {
   /* Slightly smaller than 2em for better hierarchy */
 }
 
+/* Safety: ensure any h1 inside .prose matches the global h1 size */
+.prose h1 {
+  font-size: 1.75em;
+}
+
 /* Utilities */
 .container {
   max-width: var(--max-width-container);
