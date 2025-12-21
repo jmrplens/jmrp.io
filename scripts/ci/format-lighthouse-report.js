@@ -3,16 +3,34 @@ import path from "path";
 
 const lhciDir = "./.lighthouseci";
 const linksPath = path.join(lhciDir, "links.json");
+const THRESHOLD = 95;
 
 // Helper: Map URL to a friendly Page Name
 const getPageName = (url) => {
-  if (/localhost(:\d+)?\/$/.test(url)) return "Home"; // Matches localhost/ or localhost:port/
-  if (url.includes("/services/")) return "Services";
-  if (url.includes("/cv/")) return "CV";
-  if (url.includes("/publications/")) return "Publications";
-  if (url.includes("/github/")) return "Repositories";
-  if (url.includes("/blog/")) return "Blog";
+  const cleanUrl = url.replace(/:\d+/, ""); // Remove port if present
+  if (/localhost\/?$/.test(cleanUrl)) return "Home";
+  if (cleanUrl.includes("/services/")) return "Services";
+  if (cleanUrl.includes("/cv/")) return "CV";
+  if (cleanUrl.includes("/publications/")) return "Publications";
+  if (cleanUrl.includes("/github/")) return "GitHub";
+  if (cleanUrl.includes("/blog/")) return "Blog Index";
+  // Extract slug for posts/others
+  const match = cleanUrl.match(/localhost\/([\w-/]+)\/?$/);
+  if (match) return match[1].replace(/\/$/, "");
   return "Unknown";
+};
+
+// Identify Core Pages
+const isCorePage = (url) => {
+  const name = getPageName(url);
+  return [
+    "Home",
+    "Services",
+    "CV",
+    "Publications",
+    "GitHub",
+    "Blog Index",
+  ].includes(name);
 };
 
 // Helper: Get Emoji for Score
@@ -65,24 +83,34 @@ try {
     process.exit(0);
   }
 
-  // Calculate Median
-  const averagedResults = {};
+  // Calculate Median Scores per Page
+  const pageScores = {};
+  const failedPages = [];
+
   Object.keys(groupedResults).forEach((url) => {
-    averagedResults[url] = {};
+    pageScores[url] = {};
+    let hasFailure = false;
+
     Object.keys(groupedResults[url]).forEach((cat) => {
       const scores = groupedResults[url][cat];
-      // Sort numerically
       scores.sort((a, b) => a - b);
-
-      // Calculate Median
       const mid = Math.floor(scores.length / 2);
       const median =
         scores.length % 2 !== 0
           ? scores[mid]
           : (scores[mid - 1] + scores[mid]) / 2;
+      const finalScore = Math.round(median);
 
-      averagedResults[url][cat] = Math.round(median);
+      pageScores[url][cat] = finalScore;
+
+      if (finalScore < THRESHOLD) {
+        hasFailure = true;
+      }
     });
+
+    if (hasFailure) {
+      failedPages.push(url);
+    }
   });
 
   // 2. Get Links
@@ -91,10 +119,10 @@ try {
     links = JSON.parse(fs.readFileSync(linksPath, "utf8"));
   }
 
-  // 3. Generate Output Table
+  // --- OUTPUT GENERATION ---
+
   console.log("### ⚡ Lighthouse Report");
 
-  const urls = Object.keys(averagedResults);
   const categories = [
     "performance",
     "accessibility",
@@ -117,42 +145,117 @@ try {
     pwa: "PWA",
   };
 
-  const validCategories = categories.filter((cat) =>
-    urls.some((url) => averagedResults[url][cat] !== undefined),
-  );
+  const allUrls = Object.keys(pageScores);
+  const coreUrls = allUrls.filter(isCorePage);
 
-  // Table Header
-  let headerRow = "| Category |";
-  let separatorRow = "| --- |";
+  // SECTION 1: Global Summary
+  // Calculate median across ALL pages for each category
+  console.log("\n#### 📊 Site Summary (Median)");
+  console.log("| Metric | Site Score | Lowest Score |");
+  console.log("| :--- | :--- | :--- |");
 
-  urls.forEach((url) => {
-    headerRow += ` ${getPageName(url)} |`;
-    separatorRow += " --- |";
+  categories.forEach((cat) => {
+    if (!allUrls.some((u) => pageScores[u][cat] !== undefined)) return;
+
+    // Site Median
+    const catScores = allUrls.map((u) => pageScores[u][cat]);
+    catScores.sort((a, b) => a - b);
+    const mid = Math.floor(catScores.length / 2);
+    const siteMedian =
+      catScores.length % 2 !== 0
+        ? catScores[mid]
+        : (catScores[mid - 1] + catScores[mid]) / 2;
+
+    // Lowest Score
+    const minScore = Math.min(...catScores);
+    const worstUrl = allUrls.find((u) => pageScores[u][cat] === minScore);
+    const worstName = getPageName(worstUrl);
+
+    console.log(
+      "| " +
+        categoryIcons[cat] +
+        " " +
+        categoryNames[cat] +
+        " | " +
+        Math.round(siteMedian) +
+        "% | " +
+        minScore +
+        "% (" +
+        worstName +
+        ") |",
+    );
   });
 
-  console.log(headerRow);
-  console.log(separatorRow);
-
-  // Table Body
-  validCategories.forEach((cat) => {
-    let row = `| ${categoryIcons[cat]} ${categoryNames[cat]} |`;
-    urls.forEach((url) => {
-      const score = averagedResults[url][cat];
-      row += ` ${score ? `${getScoreEmoji(score)} ${score}%` : "-"} |`;
+  // SECTION 2: Core Pages Detail
+  if (coreUrls.length > 0) {
+    console.log("\n#### 🏆 Core Pages");
+    let header = "| Category |";
+    let separator = "| :--- |";
+    coreUrls.forEach((url) => {
+      header = header + " " + getPageName(url) + " |";
+      separator = separator + " :---: |";
     });
-    console.log(row);
-  });
+    console.log(header);
+    console.log(separator);
 
-  // 4. Full Report Links
-  const linkKeys = Object.keys(links);
-  if (linkKeys.length > 0) {
-    console.log("\n#### 🔗 Full Reports");
-    linkKeys.forEach((url) => {
-      const pageName = getPageName(url);
-      console.log(`- [${pageName} Report](${links[url]})`);
+    categories.forEach((cat) => {
+      if (!coreUrls.some((u) => pageScores[u][cat] !== undefined)) return;
+      let row = "| " + categoryIcons[cat] + " " + categoryNames[cat] + " |";
+      coreUrls.forEach((url) => {
+        const score = pageScores[url][cat];
+        row =
+          row +
+          " " +
+          (score ? getScoreEmoji(score) + " " + score + "%" : "-") +
+          " |";
+      });
+      console.log(row);
     });
   }
-} catch (e) {
-  console.error(e);
-  process.exit(1);
+
+  // SECTION 3: Alerts (Failures < 95%)
+  if (failedPages.length > 0) {
+    console.log("\n#### ⚠️ Alerts (<" + THRESHOLD + "%)");
+    failedPages.forEach((url) => {
+      const name = getPageName(url);
+      const failures = categories
+        .filter((cat) => pageScores[url][cat] < THRESHOLD)
+        .map(
+          (cat) =>
+            categoryIcons[cat] +
+            " " +
+            categoryNames[cat] +
+            ": " +
+            pageScores[url][cat] +
+            "%",
+        )
+        .join(", ");
+      console.log("- **" + name + "**: " + failures);
+    });
+  } else {
+    console.log("\n✅ **All pages met the " + THRESHOLD + "% threshold!**");
+  }
+
+  // SECTION 4: Links
+  const relevantUrls = new Set([...coreUrls, ...failedPages]);
+  const relevantLinks = Object.keys(links).filter((url) =>
+    relevantUrls.has(url),
+  );
+
+  if (relevantLinks.length > 0) {
+    console.log("\n#### 🔗 Reports");
+    relevantLinks.forEach((url) => {
+      const name = getPageName(url);
+      console.log("- [" + name + " Report](" + links[url] + ")");
+    });
+    if (Object.keys(links).length > relevantLinks.length) {
+      console.log(
+        "\n_(And " +
+          (Object.keys(links).length - relevantLinks.length) +
+          " other reports available in artifacts)_",
+      );
+    }
+  }
+} catch (error) {
+  console.error("Error generating report:", error);
 }
