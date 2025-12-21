@@ -340,7 +340,7 @@ jobs:
           cache: "pnpm"
       - name: Validate HTML5
         run: |
-          pnpm dlx html-validate@latest --format json "dist/**/*.html" > html-validation.json || true
+          pnpm exec html-validate --formatter json "dist/**/*.html" > html-validation.json || true
       - name: Post HTML Validation Comment
         if: github.event_name == 'pull_request'
         uses: actions/github-script@v7
