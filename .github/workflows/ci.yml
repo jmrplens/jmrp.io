@@ -89,11 +89,11 @@ jobs:
         language: ["javascript-typescript"]
     steps:
       - uses: actions/checkout@v6
-      - uses: github/codeql-action/init@v3
+      - uses: github/codeql-action/init@v4
         with:
           languages: ${{ matrix.language }}
-      - uses: github/codeql-action/autobuild@v3
-      - uses: github/codeql-action/analyze@v3
+      - uses: github/codeql-action/autobuild@v4
+      - uses: github/codeql-action/analyze@v4
         with:
           category: "/language:${{ matrix.language }}"
 
@@ -237,11 +237,11 @@ jobs:
         with:
           script: |
             const fs = require('fs');
-            
+
             // Check if tests passed or failed
             let status = '✅ **All accessibility tests passed!**';
             let details = '\n\nAll pages are WCAG 2.1 AA compliant with no violations detected.';
-            
+
             // Try to read test results to see if there were failures
             try {
               const { execSync } = require('child_process');
@@ -250,12 +250,12 @@ jobs:
               status = '⚠️ **Accessibility violations detected**';
               details = '\n\nSome pages have WCAG 2.1 AA violations. Please review the detailed HTML report in the artifacts.';
             }
-            
+
             const comment = `## ♿ Accessibility Test Results (Axe-core)
-            
+
             ${status}
             ${details}
-            
+
             **Pages Tested:**
             - Home (/)
             - Publications (/publications)
@@ -263,11 +263,11 @@ jobs:
             - GitHub (/github)
             - Services (/services)
             - Blog Index (/blog)
-            
+
             **Standards:** WCAG 2.1 AA compliance
-            
+
             📊 [View detailed HTML report](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`;
-            
+
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
@@ -333,11 +333,11 @@ jobs:
         with:
           script: |
             const comment = `## ✅ HTML5 Validation
-            
+
             W3C HTML5 validation completed for all pages in the build.
-            
+
             Any validation warnings or errors are shown in the [Actions Summary](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}).`;
-            
+
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
@@ -389,12 +389,12 @@ jobs:
         with:
           script: |
             const { execSync } = require('child_process');
-            
+
             // Count images
             const webpCount = execSync('find dist -type f -name "*.webp" 2>/dev/null | wc -l || echo "0"', { encoding: 'utf-8' }).trim();
             const pngCount = execSync('find dist -type f -name "*.png" 2>/dev/null | wc -l || echo "0"', { encoding: 'utf-8' }).trim();
             const jpgCount = execSync('find dist -type f \\( -name "*.jpg" -o -name "*.jpeg" \\) 2>/dev/null | wc -l || echo "0"', { encoding: 'utf-8' }).trim();
-            
+
             // Check for large images
             let largeImagesOutput = '';
             try {
@@ -414,17 +414,17 @@ jobs:
             } catch (e) {
               largeImagesOutput = '\n\n✅ **No large images found**';
             }
-            
+
             const comment = `## 🖼️ Image Optimization Analysis
-            
+
             **Format Distribution:**
             - WebP: ${webpCount} images ✅
             - PNG: ${pngCount} images
             - JPG/JPEG: ${jpgCount} images
             ${largeImagesOutput}
-            
+
             [View full report](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`;
-            
+
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
