@@ -28,7 +28,7 @@ const getPageName = (url) => {
       const slug = pathName.split("/").pop();
       // Capitalize for nicer display
       const friendlySlug = slug.charAt(0).toUpperCase() + slug.slice(1);
-      return `Post: ${friendlySlug}`;
+      return "Post: " + friendlySlug;
     }
 
     // Fallback: return path
@@ -38,7 +38,7 @@ const getPageName = (url) => {
   }
 };
 
-// Identify Core Pages
+// Identify Core Pages (for linking purposes)
 const isCorePage = (url) => {
   const name = getPageName(url);
   return [
@@ -204,34 +204,7 @@ try {
     );
   });
 
-  // SECTION 2: Core Pages Detail
-  if (coreUrls.length > 0) {
-    console.log("\n#### 🏆 Core Pages");
-    let header = "| Category |";
-    let separator = "| :--- |";
-    coreUrls.forEach((url) => {
-      header = header + " " + getPageName(url) + " |";
-      separator = separator + " :---: |";
-    });
-    console.log(header);
-    console.log(separator);
-
-    categories.forEach((cat) => {
-      if (!coreUrls.some((u) => pageScores[u][cat] !== undefined)) return;
-      let row = "| " + categoryIcons[cat] + " " + categoryNames[cat] + " |";
-      coreUrls.forEach((url) => {
-        const score = pageScores[url][cat];
-        row =
-          row +
-          " " +
-          (score ? getScoreEmoji(score) + " " + score + "%" : "-") +
-          " |";
-      });
-      console.log(row);
-    });
-  }
-
-  // SECTION 3: Alerts (Failures < 95%)
+  // SECTION 2: Alerts (Failures < 95%)
   if (failedPages.length > 0) {
     console.log("\n#### ⚠️ Alerts (<" + THRESHOLD + "%)");
     failedPages.forEach((url) => {
@@ -248,13 +221,14 @@ try {
             "%",
         )
         .join(", ");
-      console.log("- **" + name + "**: " + failures);
+      console.log("- **" + name + ": " + failures + "**");
     });
   } else {
     console.log("\n✅ **All pages met the " + THRESHOLD + "% threshold!**");
   }
 
-  // SECTION 4: Links
+  // SECTION 3: Links
+  // Only show links for Core Pages and Failed Pages to save space
   const relevantUrls = new Set([...coreUrls, ...failedPages]);
   const relevantLinks = Object.keys(links).filter((url) =>
     relevantUrls.has(url),
@@ -268,7 +242,7 @@ try {
     });
     if (Object.keys(links).length > relevantLinks.length) {
       console.log(
-        "\n_(And " +
+        "\n_(" +
           (Object.keys(links).length - relevantLinks.length) +
           " other reports available in artifacts)_",
       );
