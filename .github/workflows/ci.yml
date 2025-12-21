@@ -116,6 +116,25 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.TOKEN_GITHUB }}
 
+  snyk-security:
+    name: Snyk Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 20
+          cache: "pnpm"
+      - run: pnpm install
+      - name: Run Snyk to check for vulnerabilities
+        uses: snyk/actions/node@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high
+        continue-on-error: true
+
   build:
     name: Build Artifact
     runs-on: ubuntu-latest
@@ -247,3 +266,71 @@ jobs:
           config-name: release-drafter.yml
         env:
           GITHUB_TOKEN: ${{ secrets.TOKEN_GITHUB }}
+
+  html-validator:
+    name: HTML Validation
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v6
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dist-build
+          path: dist
+      - name: Validate HTML5
+        uses: Cyb3r-Jak3/html5validator-action@v7.2.0
+        with:
+          root: dist/
+          css: false
+        continue-on-error: true
+
+  image-optimization:
+    name: Image Optimization Check
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v6
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dist-build
+          path: dist
+      - name: Analyze images
+        run: |
+          echo "## 🖼️ Image Optimization Analysis" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Count WebP vs other formats
+          WEBP_COUNT=$(find dist -type f -name "*.webp" 2>/dev/null | wc -l || echo "0")
+          PNG_COUNT=$(find dist -type f -name "*.png" 2>/dev/null | wc -l || echo "0")
+          JPG_COUNT=$(find dist -type f \( -name "*.jpg" -o -name "*.jpeg" \) 2>/dev/null | wc -l || echo "0")
+
+          echo "### Image Format Distribution" >> $GITHUB_STEP_SUMMARY
+          echo "- WebP images: $WEBP_COUNT ✅" >> $GITHUB_STEP_SUMMARY
+          echo "- PNG images: $PNG_COUNT" >> $GITHUB_STEP_SUMMARY
+          echo "- JPG images: $JPG_COUNT" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Check for large images (>500KB)
+          echo "### Large Images (>500KB)" >> $GITHUB_STEP_SUMMARY
+          LARGE_IMAGES=$(find dist -type f \( -name "*.webp" -o -name "*.png" -o -name "*.jpg" -o -name "*.jpeg" \) -size +500k 2>/dev/null || echo "")
+          if [ -z "$LARGE_IMAGES" ]; then
+            echo "✅ No large images found" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "$LARGE_IMAGES" | while read -r img; do
+              SIZE=$(ls -lh "$img" | awk '{print $5}')
+              echo "- \`${img#dist/}\`: $SIZE ⚠️" >> $GITHUB_STEP_SUMMARY
+            done
+          fi
+
+  carbon-footprint:
+    name: Website Carbon Footprint
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - name: Calculate Carbon Footprint
+        uses: EndBug/pages-carbon@v1
+        with:
+          url: https://jmrp.io
+        continue-on-error: true

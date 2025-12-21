@@ -91,24 +91,24 @@ Our CI/CD pipeline ensures code quality, security, and performance through autom
 ```mermaid
 graph LR
     A[Push/PR] --> B{Stage 1: Parallel Analysis}
-    
+
     B --> C[Lint & Type Check]
     B --> D[Link Checker]
     B --> E[Spell Checker]
     B --> F[CodeQL Security]
     B --> G[SonarCloud]
     B --> H[Build Artifact]
-    
+
     H --> I{Stage 2: Post-Build Tests}
-    
+
     I --> J[Lighthouse Performance]
     I --> K[Accessibility Axe]
     I --> L[Bundle Size Check]
-    
+
     J --> M[PR Comment]
     K --> M
     L --> M
-    
+
     style A fill:#e1f5ff
     style B fill:#fff3cd
     style I fill:#fff3cd
@@ -135,7 +135,6 @@ graph LR
 #### Continuous
 
 - **Release Drafter**: Auto-generates release notes from merged PRs
-
 
 ## 🚀 Getting Started
 
