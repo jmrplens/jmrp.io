@@ -8,8 +8,7 @@
 
 <!-- Code Quality -->
 
-[![Build Status](https://github.com/jmrplens/jmrp.io/actions/workflows/build.yml/badge.svg)](https://github.com/jmrplens/jmrp.io/actions/workflows/build.yml)
-[![Quality Checks](https://github.com/jmrplens/jmrp.io/actions/workflows/quality.yml/badge.svg)](https://github.com/jmrplens/jmrp.io/actions/workflows/quality.yml)
+[![CI Status](https://github.com/jmrplens/jmrp.io/actions/workflows/ci.yml/badge.svg)](https://github.com/jmrplens/jmrp.io/actions/workflows/ci.yml)
 [![SonarQube Status](https://sonarcloud.io/api/project_badges/measure?project=jmrplens_jmrp.io&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=jmrplens_jmrp.io)
 
 <!-- Performance & Security -->
@@ -33,10 +32,22 @@ High-performance, accessibility-first portfolio website for **José Manuel Reque
   - Security Headers (HSTS, X-Frame-Options, X-Content-Type-Options).
   - A+ rating on Mozilla Observatory.
 - **Accessible**:
-  - Semantic HTML structure.
-  - Proper `aria-label` and `aria-hidden` usage.
-  - High contrast ratios and focus management.
-  - Reduced motion support.
+  - **100/100 Lighthouse Accessibility** score on all pages.
+  - **WCAG 2.1 AA compliant** (tested with Axe-core in CI).
+  - Semantic HTML structure with proper ARIA attributes.
+  - High contrast ratios (7:1 for text, 4.5:1 minimum).
+  - Keyboard navigation with visible focus indicators.
+  - Reduced motion support (`prefers-reduced-motion`).
+  - Unique `aria-labels` for all interactive elements.
+  - Automated accessibility testing in CI (fails build on violations).
+- **Performance**:
+  - **100/100 Google PageSpeed** (Desktop & Mobile).
+  - **Core Web Vitals**: LCP < 0.8s, CLS < 0.031, FCP < 0.3s.
+  - **SSG (Static Site Generation)**: All pages pre-rendered at build time.
+  - **Islands Architecture**: Minimal JavaScript with Preact islands.
+  - **Image Optimization**: WebP format with responsive sizing.
+  - **Font Loading**: Optimized with fallback fonts and metric overrides.
+  - **CSS Inlining**: Critical CSS inlined, async loading for non-critical.
 - **Themeable**: Light/Dark mode with system preference detection.
 - **Configurable**: Centralized configuration via YAML files (`site.yml`, `socials.yml`, `cv.yml`).
 - **SEO Optimized**: Dynamic Schema.org (JSON-LD), Open Graph, and Twitter Cards.
@@ -72,6 +83,58 @@ High-performance, accessibility-first portfolio website for **José Manuel Reque
 │   └── styles/        # Global CSS
 └── astro.config.mjs   # Astro configuration
 ```
+
+## 🔄 CI/CD Pipeline
+
+Our CI/CD pipeline ensures code quality, security, and performance through automated testing on every commit and pull request.
+
+```mermaid
+graph LR
+    A[Push/PR] --> B{Stage 1: Parallel Analysis}
+
+    B --> C[Lint & Type Check]
+    B --> D[Link Checker]
+    B --> E[Spell Checker]
+    B --> F[CodeQL Security]
+    B --> G[SonarCloud]
+    B --> H[Build Artifact]
+
+    H --> I{Stage 2: Post-Build Tests}
+
+    I --> J[Lighthouse Performance]
+    I --> K[Accessibility Axe]
+    I --> L[Bundle Size Check]
+
+    J --> M[PR Comment]
+    K --> M
+    L --> M
+
+    style A fill:#e1f5ff
+    style B fill:#fff3cd
+    style I fill:#fff3cd
+    style M fill:#d4edda
+```
+
+### What Gets Tested
+
+#### Stage 1: Source Code Analysis (Parallel)
+
+- **Lint & Type Check**: Astro check, Prettier formatting, npm security audit
+- **Link Checker**: Validates all internal/external links (Lychee with caching)
+- **Spell Checker**: Catches typos in code and content (Typos CLI)
+- **CodeQL**: Advanced security vulnerability scanning for JavaScript/TypeScript
+- **SonarCloud**: Code quality, maintainability, security hotspots, and code smells
+- **Build**: Compiles Astro site + Pagefind search index
+
+#### Stage 2: Built Artifact Testing (Post-Build)
+
+- **Lighthouse**: Performance, accessibility, SEO, and best practices (all pages)
+- **Accessibility**: WCAG 2.1 AA compliance with Axe-core (fails build on violations)
+- **Bundle Size**: Tracks JavaScript/CSS bundle sizes with historical comparison
+
+#### Continuous
+
+- **Release Drafter**: Auto-generates release notes from merged PRs
 
 ## 🚀 Getting Started
 

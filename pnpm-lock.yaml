@@ -61,9 +61,6 @@ importers:
       citation-js:
         specifier: ^0.7.21
         version: 0.7.21
-      glob:
-        specifier: ^13.0.0
-        version: 13.0.0
       marked:
         specifier: ^17.0.1
         version: 17.0.1
@@ -86,9 +83,15 @@ importers:
         specifier: ^2.17.0
         version: 2.17.0
     devDependencies:
+      "@axe-core/playwright":
+        specifier: ^4.11.0
+        version: 4.11.0(playwright-core@1.57.0)
       "@iconify-json/devicon":
         specifier: ^1.2.53
         version: 1.2.53
+      "@playwright/test":
+        specifier: ^1.57.0
+        version: 1.57.0
       "@types/js-yaml":
         specifier: ^4.0.9
         version: 4.0.9
@@ -98,6 +101,12 @@ importers:
       "@types/sanitize-html":
         specifier: ^2.16.0
         version: 2.16.0
+      "@types/xml2js":
+        specifier: ^0.4.14
+        version: 0.4.14
+      glob:
+        specifier: ^13.0.0
+        version: 13.0.0
       js-yaml:
         specifier: ^4.1.1
         version: 4.1.1
@@ -116,6 +125,9 @@ importers:
       sharp:
         specifier: ^0.34.5
         version: 0.34.5
+      xml2js:
+        specifier: ^0.6.2
+        version: 0.6.2
 
 packages:
   "@antfu/install-pkg@1.1.0":
@@ -191,6 +203,14 @@ packages:
         integrity: sha512-UFBgfeldP06qu6khs/yY+q1cDAaArM2/7AEIqQ9Cuvf7B1hNLq0xDrZkct+QoIGyjq56y8IaE2I3CTvG99mlhQ==,
       }
     engines: { node: 18.20.8 || ^20.3.0 || >=22.0.0 }
+
+  "@axe-core/playwright@4.11.0":
+    resolution:
+      {
+        integrity: sha512-70vBT/Ylqpm65RQz2iCG2o0JJCEG/WCNyefTr2xcOcr1CoSee60gNQYUMZZ7YukoKkFLv26I/jjlsvwwp532oQ==,
+      }
+    peerDependencies:
+      playwright-core: ">= 1.0.0"
 
   "@babel/code-frame@7.27.1":
     resolution:
@@ -1179,6 +1199,14 @@ packages:
     cpu: [x64]
     os: [win32]
 
+  "@playwright/test@1.57.0":
+    resolution:
+      {
+        integrity: sha512-6TyEnHgd6SArQO8UO2OMTxshln3QMWBtPGrOCgs3wVEmQmwyuNtB10IZMfmYDE0riwNR1cu4q+pPcxMVtaG3TA==,
+      }
+    engines: { node: ">=18" }
+    hasBin: true
+
   "@preact/preset-vite@2.10.2":
     resolution:
       {
@@ -1787,6 +1815,12 @@ packages:
         integrity: sha512-ko/gIFJRv177XgZsZcBwnqJN5x/Gien8qNOn0D5bQU/zAzVf9Zt3BlcUiLqhV9y4ARk0GbT3tnUiPNgnTXzc/Q==,
       }
 
+  "@types/xml2js@0.4.14":
+    resolution:
+      {
+        integrity: sha512-4YnrRemBShWRO2QjvUin8ESA41rH+9nQGLUGZV/1IDhi3SL9OhdpNC/MrulTWuptXKwhx/aDxE7toV0f/ypIXQ==,
+      }
+
   "@types/yauzl@2.10.3":
     resolution:
       {
@@ -1923,6 +1957,13 @@ packages:
     engines:
       { node: 18.20.8 || ^20.3.0 || >=22.0.0, npm: ">=9.6.5", pnpm: ">=7.1.0" }
     hasBin: true
+
+  axe-core@4.11.0:
+    resolution:
+      {
+        integrity: sha512-ilYanEU8vxxBexpJd8cWM4ElSQq4QctCLKih0TSfjIfCQTeyH/6zVrmIJfLPrKTKJRbiG+cfnZbQIjAlJmF1jQ==,
+      }
+    engines: { node: ">=4" }
 
   axobject-query@4.1.0:
     resolution:
@@ -5447,6 +5488,20 @@ packages:
         integrity: sha512-l4Sp/DRseor9wL6EvV2+TuQn63dMkPjZ/sp9XkghTEbV9KlPS1xUsZ3u7/IQO4wxtcFB4bgpQPRcR3QCvezPcQ==,
       }
 
+  xml2js@0.6.2:
+    resolution:
+      {
+        integrity: sha512-T4rieHaC1EXcES0Kxxj4JWgaUQHDk+qwHcYOCFHfiwKz7tOVPLq7Hjq9dM1WCMhylqMEfP7hMcOIChvotiZegA==,
+      }
+    engines: { node: ">=4.0.0" }
+
+  xmlbuilder@11.0.1:
+    resolution:
+      {
+        integrity: sha512-fDlsI/kFEx7gLvbecc0/ohLG50fugQp8ryHzMTuW9vSa1GJ0XYWKnhsUx7oie3G98+r56aTQIUB4kht42R3JvA==,
+      }
+    engines: { node: ">=4.0" }
+
   xxhash-wasm@1.1.0:
     resolution:
       {
@@ -5642,6 +5697,11 @@ snapshots:
       which-pm-runs: 1.1.0
     transitivePeerDependencies:
       - supports-color
+
+  "@axe-core/playwright@4.11.0(playwright-core@1.57.0)":
+    dependencies:
+      axe-core: 4.11.0
+      playwright-core: 1.57.0
 
   "@babel/code-frame@7.27.1":
     dependencies:
@@ -6226,6 +6286,10 @@ snapshots:
   "@pagefind/windows-x64@1.4.0":
     optional: true
 
+  "@playwright/test@1.57.0":
+    dependencies:
+      playwright: 1.57.0
+
   "@preact/preset-vite@2.10.2(@babel/core@7.28.5)(preact@10.28.0)(vite@6.4.1(@types/node@25.0.3)(yaml@2.8.2))":
     dependencies:
       "@babel/core": 7.28.5
@@ -6563,6 +6627,10 @@ snapshots:
 
   "@types/unist@3.0.3": {}
 
+  "@types/xml2js@0.4.14":
+    dependencies:
+      "@types/node": 25.0.3
+
   "@types/yauzl@2.10.3":
     dependencies:
       "@types/node": 25.0.3
@@ -6723,6 +6791,8 @@ snapshots:
       - typescript
       - uploadthing
       - yaml
+
+  axe-core@4.11.0: {}
 
   axobject-query@4.1.0: {}
 
@@ -9243,6 +9313,13 @@ snapshots:
       strip-ansi: 7.1.2
 
   wrappy@1.0.2: {}
+
+  xml2js@0.6.2:
+    dependencies:
+      sax: 1.4.3
+      xmlbuilder: 11.0.1
+
+  xmlbuilder@11.0.1: {}
 
   xxhash-wasm@1.1.0: {}
 

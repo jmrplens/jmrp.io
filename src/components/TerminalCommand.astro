@@ -14,7 +14,12 @@ const { command, prompt = "$" } = Astro.props;
 ---
 
 <div class="terminal-command-wrapper copy-container">
-    <div class="command-container">
+    <div
+        class="command-container"
+        tabindex="0"
+        role="group"
+        aria-label="Terminal command"
+    >
         <span class="prompt" aria-hidden="true">{prompt}</span>
         <pre><code class="language-bash" aria-label={`Command: ${command}`}>{command}</code></pre>
     </div>
@@ -45,6 +50,14 @@ const { command, prompt = "$" } = Astro.props;
         flex-grow: 1; /* Take available space */
         min-width: 0; /* Enable shrinking/scrolling */
         padding-right: 0.5rem;
+        border-radius: var(--radius-sm);
+        transition: outline 0.2s;
+    }
+
+    /* Keyboard focus indicator */
+    .command-container:focus {
+        outline: 2px solid var(--color-primary);
+        outline-offset: 2px;
     }
 
     /* Override copy button for flex integration */

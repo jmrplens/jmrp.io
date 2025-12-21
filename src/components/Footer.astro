@@ -198,8 +198,8 @@ const getIconName = (faClass: string) => {
 
     .social-icon,
     .social-icon-svg {
-        width: 1.5rem;
-        height: 1.5rem;
+        width: 1.75rem;
+        height: 1.75rem;
         object-fit: contain;
     }
 
@@ -221,5 +221,16 @@ const getIconName = (faClass: string) => {
         display: flex;
         align-items: center;
         justify-content: center;
+        /* Ensure minimum 44x44px touch target */
+        min-width: 44px;
+        min-height: 44px;
+        padding: 0.5rem;
+        border-radius: var(--radius-sm);
+        transition: background-color 0.2s;
+    }
+
+    .social-btn:hover,
+    .social-btn:focus {
+        background-color: rgba(179, 137, 245, 0.1);
     }
 </style>
