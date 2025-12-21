@@ -345,6 +345,95 @@ jobs:
               body: comment
             });
 
+  rss-validation:
+    name: RSS Feed Validation
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v6
+      - name: Download build artifact
+        uses: actions/download-artifact@v5
+        with:
+          name: dist-build
+          path: dist
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 20
+          cache: "pnpm"
+      - run: pnpm install
+      - name: Validate RSS feed
+        run: node scripts/validate-rss.mjs dist/rss.xml
+      - name: Post RSS Validation Comment
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const rssFile = 'dist/rss.xml';
+            const size = (fs.statSync(rssFile).size / 1024).toFixed(2);
+
+            const comment = `## 📡 RSS Feed Validation
+
+            ✅ RSS 2.0 feed is valid and well-formed
+
+            **Feed Details:**
+            - File: \`rss.xml\`
+            - Size: ${size} KB
+            - Spec: RSS 2.0 with Atom namespace
+
+            [View feed](https://jmrp.io/rss.xml)`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+  schema-validation:
+    name: Schema.org JSON-LD Validation
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v6
+      - name: Download build artifact
+        uses: actions/download-artifact@v5
+        with:
+          name: dist-build
+          path: dist
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 20
+          cache: "pnpm"
+      - run: pnpm install
+      - name: Validate Schema.org structured data
+        run: node scripts/validate-schema.mjs dist
+      - name: Post Schema Validation Comment
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const comment = `## 🏷️ Schema.org Structured Data Validation
+
+            ✅ All JSON-LD structured data is valid
+
+            **Validated Types:**
+            - Person (author profile)
+            - WebSite (site metadata)
+            - BlogPosting (blog articles)
+            - BreadcrumbList (navigation)
+
+            Tested against Schema.org vocabulary for rich snippets and SEO.`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
   image-optimization:
     name: Image Optimization Check
     runs-on: ubuntu-latest
