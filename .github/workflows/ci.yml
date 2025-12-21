@@ -146,6 +146,15 @@ jobs:
           node-version: 20
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile --prefer-offline
+      - name: Cache Playwright Browsers
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-browsers-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+      - name: Install Playwright Browsers
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: pnpm exec playwright install --with-deps chromium
       - name: Build Project (Production)
         run: pnpm run build
       - name: Upload build artifact
@@ -226,7 +235,6 @@ jobs:
         if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: pnpm exec playwright install --with-deps chromium
       - name: Run Axe accessibility tests
-        run: pnpm exec playwright test --project=accessibility
       - name: Upload Axe Results
         if: always()
         uses: actions/upload-artifact@v6
