@@ -12,9 +12,8 @@ interface Props {
 const { title } = Astro.props;
 ---
 
-<div
+<section
     class="terminal-output-wrapper"
-    role="log"
     aria-live="polite"
     aria-label={title ? `Terminal Output: ${title}` : "Terminal Output"}
 >

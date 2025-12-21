@@ -56,11 +56,10 @@ const {
             // Critical: Execute immediately to prevent FOUC
             (function () {
                 const e = () => {
-                    if (
-                        typeof localStorage !== "undefined" &&
-                        localStorage.getItem("theme")
-                    )
-                        return localStorage.getItem("theme");
+                    if (typeof localStorage !== "undefined") {
+                        const saved = localStorage.getItem("theme");
+                        if (saved) return saved;
+                    }
                     return window.matchMedia("(prefers-color-scheme: light)")
                         .matches
                         ? "light"

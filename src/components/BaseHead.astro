@@ -66,8 +66,18 @@ const {
     schema,
 } = Astro.props;
 
-const fullTitle =
-    title === siteData.title ? title : `${title} | ${siteData.author}`;
+const fullTitle = (() => {
+    if (title === siteData.title) return title;
+    const suffix = siteData.author;
+    const shortSuffix = "JMRP";
+
+    if (`${title} | ${suffix}`.length <= 65) {
+        return `${title} | ${suffix}`;
+    } else if (`${title} | ${shortSuffix}`.length <= 65) {
+        return `${title} | ${shortSuffix}`;
+    }
+    return title;
+})();
 
 // Image resolution logic
 let resolvedImage;
@@ -226,4 +236,7 @@ const jsonLD = {
 <meta property="twitter:image" content={resolvedImage} />
 
 <!-- JSON-LD -->
-<script type="application/ld+json" set:html={JSON.stringify(jsonLD)} />
+<script
+    type="application/ld+json"
+    set:html={JSON.stringify(jsonLD).replace(/&/g, "\\u0026")}
+/>
