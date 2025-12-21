@@ -92,7 +92,7 @@ try {
     "best-practices",
     "seo",
     "pwa",
-  ]; 
+  ];
   const categoryIcons = {
     performance: "⚡",
     accessibility: "♿",
