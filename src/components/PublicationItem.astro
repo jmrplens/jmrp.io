@@ -92,7 +92,7 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
                 <button
                     class="btn-sm btn-abstract"
                     data-id={pub.id}
-                    aria-label="Toggle Abstract"
+                    aria-label={`Toggle Abstract for ${pub.title}`}
                     aria-expanded="false"
                     aria-controls={abstractId}
                 >
@@ -101,7 +101,7 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
                 <button
                     class="btn-sm btn-bibtex-toggle"
                     data-id={pub.id}
-                    aria-label="Toggle BibTeX"
+                    aria-label={`Toggle BibTeX for ${pub.title}`}
                     aria-expanded="false"
                     aria-controls={bibtexId}
                 >
@@ -114,6 +114,7 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
                             class="btn-sm"
                             target="_blank"
                             rel="noopener noreferrer"
+                            aria-label={`Download PDF for ${pub.title}`}
                         >
                             <Icon name="fa-solid:file-pdf" /> PDF
                         </a>
@@ -126,6 +127,7 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
                             class="btn-sm"
                             target="_blank"
                             rel="noopener noreferrer"
+                            aria-label={`View DOI for ${pub.title}`}
                         >
                             <Icon name="fa-solid:external-link-alt" /> DOI
                         </a>
@@ -138,6 +140,7 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
                             class="btn-sm"
                             target="_blank"
                             rel="noopener noreferrer"
+                            aria-label={`View URL for ${pub.title}`}
                         >
                             <Icon name="fa-solid:link" /> URL
                         </a>
@@ -150,6 +153,7 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
                             class="btn-sm"
                             target="_blank"
                             rel="noopener noreferrer"
+                            aria-label={`View Slides for ${pub.title}`}
                         >
                             <Icon name="fa-solid:chalkboard-teacher" /> Slides
                         </a>
@@ -162,6 +166,7 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
                             class="btn-sm"
                             target="_blank"
                             rel="noopener noreferrer"
+                            aria-label={`View Poster for ${pub.title}`}
                         >
                             <Icon name="fa-solid:image" /> Poster
                         </a>
@@ -210,7 +215,7 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
         gap: var(--space-md);
         padding: var(--space-lg);
         background-color: var(--color-bg-secondary);
-        border: var(--border-subtle);
+        border: var(--border-1);
         border-radius: var(--radius-md);
         transition: border-color 0.2s;
     }
@@ -250,7 +255,7 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
     .pub-title {
         margin: 0 0 var(--space-xs) 0;
         font-size: 1.15rem;
-        font-weight: 600;
+        font-weight: var(--fw-semibold);
         line-height: 1.4;
     }
 
@@ -291,7 +296,7 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
         grid-template-columns: minmax(0, 1fr);
         max-width: 100%;
         background-color: var(--color-bg);
-        border: var(--border-subtle);
+        border: var(--border-1);
         border-radius: var(--radius-sm);
         overflow: hidden; /* Ensure header radius works */
     }
@@ -303,7 +308,7 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
         gap: var(--space-sm);
         padding: var(--space-xs) var(--space-sm);
         background-color: var(--color-bg-secondary);
-        border-bottom: var(--border-subtle);
+        border-bottom: var(--border-1);
     }
 
     .pub-card-title {
@@ -350,5 +355,11 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
     /* Hide Expressive Code's default copy button */
     .pub-card-wrapper :global(.copy) {
         display: none !important;
+    }
+
+    /* Accessibility: Distinguish author links by weight
+       Similar to CV page solution for link visibility */
+    .pub-authors a {
+        font-weight: var(--fw-link-emphasis);
     }
 </style>
