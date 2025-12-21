@@ -108,7 +108,7 @@ function updateNginxConfig(styleHashString, scriptHashString, imgDomainString) {
   const scriptSrcRegex = /script-src 'self'[^;]*;/g;
   // strict-dynamic allows scripts trusted by hash/nonce to load other scripts
   // 'self' is ignored by browsers supporting strict-dynamic, but kept for fallback
-  const staticScriptParts = "'self' 'strict-dynamic' 'nonce-$cspNonce'";
+  const staticScriptParts = "'self' 'nonce-$cspNonce'";
   const newScriptSrc = `script-src ${staticScriptParts} ${scriptHashString};`;
   if (scriptSrcRegex.test(nginxConfig)) {
     nginxConfig = nginxConfig.replaceAll(scriptSrcRegex, newScriptSrc);
@@ -123,6 +123,17 @@ function updateNginxConfig(styleHashString, scriptHashString, imgDomainString) {
     nginxConfig = nginxConfig.replaceAll(imgSrcRegex, imgSrcValue);
   } else {
     console.warn("Warning: Could not find img-src directive");
+  }
+
+  // Update connect-src to ensure Cloudflare Analytics works
+  const connectSrcRegex = /connect-src 'self'[^;]*;/g;
+  const staticConnectParts =
+    "'self' https://cloudflareinsights.com https://mstdn.jmrp.io https://matrix.jmrp.io https://potatomesh.jmrp.io https://*.jmrp.io https://api.github.com";
+  if (connectSrcRegex.test(nginxConfig)) {
+    nginxConfig = nginxConfig.replaceAll(
+      connectSrcRegex,
+      `connect-src ${staticConnectParts};`,
+    );
   }
 
   fs.writeFileSync(NGINX_CONF, nginxConfig);
