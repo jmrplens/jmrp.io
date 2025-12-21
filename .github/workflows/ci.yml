@@ -521,13 +521,4 @@ jobs:
               body: comment
             });
 
-  carbon-footprint:
-    name: Website Carbon Footprint
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    steps:
-      - name: Calculate Carbon Footprint
-        uses: EndBug/pages-carbon@v1
-        with:
-          url: https://jmrp.io
-        continue-on-error: true
+
