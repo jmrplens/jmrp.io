@@ -82,7 +82,7 @@ function updateNginxConfig(styleHashString, scriptHashString, imgDomainString) {
   // Update script-src
   const scriptSrcRegex = /script-src 'self'[^;]*;/g;
   const staticScriptParts =
-    "'self' 'nonce-$cspNonce' https://static.cloudflareinsights.com https://cloudflareinsights.com";
+    "'self' 'nonce-$cspNonce'";
   const newScriptSrc = `script-src ${staticScriptParts} ${scriptHashString};`;
   if (scriptSrcRegex.test(nginxConfig)) {
     nginxConfig = nginxConfig.replaceAll(scriptSrcRegex, newScriptSrc);
