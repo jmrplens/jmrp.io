@@ -1,0 +1,30 @@
+/**
+ * Font Metric Overrides for CLS Reduction
+ * 
+ * These fallback font-face declarations ensure that system fonts occupy
+ * the same vertical and horizontal space as the web fonts (Inter and JetBrains Mono).
+ * This prevents Cumulative Layout Shift (CLS) during font loading.
+ * 
+ * Metrics calculated to match web font dimensions as closely as possible.
+ * Reference: https://web.dev/css-size-adjust/
+ */
+
+/* Fallback for Inter (using Arial as base) */
+@font-face {
+  font-family: "Inter Fallback";
+  src: local("Arial");
+  size-adjust: 106.5%;
+  ascent-override: 90%;
+  descent-override: 22%;
+  line-gap-override: 0%;
+}
+
+/* Fallback for JetBrains Mono (using Courier New as base) */
+@font-face {
+  font-family: "JetBrains Mono Fallback";
+  src: local("Courier New");
+  size-adjust: 96%;
+  ascent-override: 92%;
+  descent-override: 24%;
+  line-gap-override: 0%;
+}

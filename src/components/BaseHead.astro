@@ -11,6 +11,7 @@
 import "../styles/global.css";
 // Supports weights 100-900
 import "../styles/fonts.css";
+import "../styles/font-fallbacks.css";
 
 import { getImage } from "astro:assets";
 import faviconSrc from "../assets/favicon.png";
@@ -150,6 +151,28 @@ const jsonLD = {
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <link rel="icon" type="image/webp" href={favicon.src} />
 <link rel="apple-touch-icon" href={appleTouchIcon.src} />
+
+<!-- Preload critical fonts for faster rendering -->
+<link
+    rel="preload"
+    href="/_astro/inter-latin-400-normal.C38fXH4l.woff2"
+    as="font"
+    type="font/woff2"
+    crossorigin="anonymous"
+/>
+<link
+    rel="preload"
+    href="/_astro/inter-latin-600-normal.LgqL8muc.woff2"
+    as="font"
+    type="font/woff2"
+    crossorigin="anonymous"
+/>
+
+<!-- DNS Prefetch for external resources -->
+<link rel="dns-prefetch" href="https://www.google.com" />
+<link rel="dns-prefetch" href="https://cloudflareinsights.com" />
+<link rel="dns-prefetch" href="https://static.cloudflareinsights.com" />
+
 <link rel="manifest" href="/site.webmanifest" />
 <link rel="sitemap" href="/sitemap.xml" />
 <link
