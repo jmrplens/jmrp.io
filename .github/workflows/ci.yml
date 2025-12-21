@@ -341,7 +341,7 @@ jobs:
       - run: pnpm install
       - name: Validate HTML5
         run: |
-          pnpm exec html-validate --formatter json dist > html-validation.json 2>&1 || true
+          pnpm exec html-validate -c .htmlvalidate.json --formatter json dist > html-validation.json 2> html-errors.log || true
       - name: Post HTML Validation Comment
         if: github.event_name == 'pull_request'
         uses: actions/github-script@v7
@@ -352,51 +352,55 @@ jobs:
 
             try {
               if (fs.existsSync('html-validation.json')) {
-                const rawContent = fs.readFileSync('html-validation.json', 'utf8');
-                console.log('Raw HTML Validation Output:', rawContent);
+                let rawContent = fs.readFileSync('html-validation.json', 'utf8').trim();
                 
-                try {
-                  const report = JSON.parse(rawContent);
-                  
-                  // html-validate json format is array of files with messages
-                  const filesWithErrors = report.filter(f => f.messages.length > 0);
-                  const totalErrors = filesWithErrors.reduce((acc, f) => acc + f.messages.filter(m => m.severity === 2).length, 0);
-                  const totalWarnings = filesWithErrors.reduce((acc, f) => acc + f.messages.filter(m => m.severity === 1).length, 0);
-                  
-                  const isSuccess = totalErrors === 0;
-                  const icon = isSuccess ? '✅' : '❌';
-                  const status = isSuccess ? 'Passed' : 'Failed';
-                  
-                  comment = `## ${icon} HTML5 Validation\n\n`;
-                  comment += `**Status: ${status}**\n`;
-                  comment += `- **Files Checked:** All generated HTML\n`;
-                  comment += `- **Errors:** ${totalErrors}\n`;
-                  comment += `- **Warnings:** ${totalWarnings}\n\n`;
-                  
-                  if (filesWithErrors.length > 0) {
-                    comment += `### ⚠️ Issues Found\n\n`;
-                    // List top 10 files with issues
-                    filesWithErrors.slice(0, 10).forEach(f => {
-                      const fileName = f.filePath.replace('dist/', '');
-                      comment += `**${fileName}**\n`;
-                      f.messages.forEach(m => {
-                         const severity = m.severity === 2 ? '🔴' : 'Vk';
-                         comment += `- ${severity} [${m.ruleId}] ${m.message} (Line ${m.line})\n`;
-                      });
-                      comment += `\n`;
-                    });
+                // If file is empty or contains "undefined", check error log
+                if (!rawContent || rawContent === 'undefined') {
+                   if (fs.existsSync('html-errors.log')) {
+                      const errors = fs.readFileSync('html-errors.log', 'utf8');
+                      comment = `## ⚠️ HTML5 Validation\n\n**Validation failed to run correctly.**\n\nError log:\n\`\`\`\n${errors.slice(0, 1000)}\n\`\`\``;
+                   } else {
+                      comment = `## ⚠️ HTML5 Validation\n\nReport is empty or undefined. Check build logs.`;
+                   }
+                } else {
+                  try {
+                    const report = JSON.parse(rawContent);
+                    const filesWithErrors = report.filter(f => f.messages.length > 0);
+                    const totalErrors = filesWithErrors.reduce((acc, f) => acc + f.messages.filter(m => m.severity === 2).length, 0);
+                    const totalWarnings = filesWithErrors.reduce((acc, f) => acc + f.messages.filter(m => m.severity === 1).length, 0);
                     
-                    if (filesWithErrors.length > 10) {
-                      comment += `...and ${filesWithErrors.length - 10} more files with issues.\n`;
+                    const isSuccess = totalErrors === 0;
+                    const icon = isSuccess ? '✅' : '❌';
+                    const status = isSuccess ? 'Passed' : 'Failed';
+                    
+                    comment = `## ${icon} HTML5 Validation\n\n`;
+                    comment += `**Status: ${status}**\n`;
+                    comment += `- **Files Checked:** All generated HTML\n`;
+                    comment += `- **Errors:** ${totalErrors}\n`;
+                    comment += `- **Warnings:** ${totalWarnings}\n\n`;
+                    
+                    if (filesWithErrors.length > 0) {
+                      comment += `### ⚠️ Issues Found (Top 10 files)\n\n`;
+                      filesWithErrors.slice(0, 10).forEach(f => {
+                        const fileName = f.filePath.replace('dist/', '').split('/').pop(); // Just file name for brevity
+                        comment += `**${fileName}**\n`;
+                        f.messages.forEach(m => {
+                           const severity = m.severity === 2 ? '🔴' : '⚠️';
+                           comment += `- ${severity} [${m.ruleId}] ${m.message} (Line ${m.line})\n`;
+                        });
+                        comment += `\n`;
+                      });
+                      
+                      if (filesWithErrors.length > 10) {
+                        comment += `...and ${filesWithErrors.length - 10} more files with issues.\n`;
+                      }
+                    } else {
+                      comment += `All pages are valid HTML5 compliant.\n`;
                     }
-                  } else {
-                    comment += `All pages are valid HTML5 compliant.\n`;
+                  } catch (parseError) {
+                     comment = `## ⚠️ HTML5 Validation\n\n**Error parsing report JSON**\n\nRaw snippet:\n\`\`\`\n${rawContent.slice(0, 500)}\n\`\`\``;
                   }
-                } catch (parseError) {
-                   console.error('JSON Parse Error:', parseError);
-                   comment = `## ⚠️ HTML5 Validation\n\n**Error parsing report**\n\nRaw output:\n\`\`\`\n${rawContent.slice(0, 1000)}\n\`\`\``;
                 }
-                
               } else {
                 comment = `## ⚠️ HTML5 Validation\n\nReport file not found. Check build logs.`;
               }

@@ -34,9 +34,9 @@ const bgColors = {
 ---
 
 <div class={`callout callout-${type}`}>
-    <div class="icon">
+    <span class="icon">
         <Icon name={icons[type]} size={24} />
-    </div>
+    </span>
     <div class="content">
         <slot />
     </div>
@@ -62,6 +62,7 @@ const bgColors = {
         color: var(--callout-color);
         flex-shrink: 0;
         margin-top: 0.1rem;
+        display: block;
     }
 
     .content {

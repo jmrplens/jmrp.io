@@ -15,7 +15,7 @@
 - title: Experience
   type: time_table
   contents:
-    - title: R&D Software Developer
+    - title: R & D Software Developer
       institution: Power Electronics (<a href="https://power-electronics.com/en/">PE</a>)
       department: Solar + Storage (<a href="https://power-electronics.com/en/solar/">PE Solar</a>)
       location: Lliria, Spain
@@ -36,7 +36,7 @@
       year: Jan 2023 - Apr 2023
       location: Valencia, Spain
       summary: >
-        Researcher in the R&D line: <b>Acoustic Metamaterials for Ultrasound Histotripsy treatments</b>.
+        Researcher in the R & D line: <b>Acoustic Metamaterials for Ultrasound Histotripsy treatments</b>.
         <br><br>
         <b>Project</b>: New generation of smart metasurfaces based on additive manufacturing for strategic applications in telecommunications (Metasmart). Funded by the Valencian Agency for Innovation (Reference: INNEST/2022/345).
         <br><br>
@@ -274,7 +274,7 @@
       summary: >
         Degree obtained together with the 2 specializations: Acoustic Engineering and Audiovisual Technology.
         <br><br>
-        Final Degree Work entitled <a href='http://hdl.handle.net/10045/77578'>Estudio de la relación campo directo/reverberado; útil/perjudicial</a> ('Study of the direct/reverberated field relationship; useful/harmful')
+        Final Degree Work entitled <a href="http://hdl.handle.net/10045/77578">Estudio de la relación campo directo/reverberado; útil/perjudicial</a> ('Study of the direct/reverberated field relationship; useful/harmful')
       linkitems:
         - link: /pdf/degree/Telecom.pdf
           linkname: "Diploma"
