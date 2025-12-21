@@ -157,9 +157,9 @@ h1 {
   /* Slightly smaller than 2em for better hierarchy */
 }
 
-/* Ensure h1 in prose content also has explicit size */
+/* Safety: ensure any h1 inside .prose matches the global h1 size */
 .prose h1 {
-  font-size: 2.25em;
+  font-size: 1.75em;
 }
 
 /* Utilities */
