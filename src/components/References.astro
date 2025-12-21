@@ -34,21 +34,23 @@ const { references = [] } = Astro.props;
                 {references.map(async (ref) => {
                     const urlObj = new URL(ref.url);
                     const hostname = urlObj.hostname;
-                    const filename = `${hostname.replace(/[^a-z0-9]/gi, "_")}.webp`;
-                    const localUrl = `/icons/${filename}`;
+                    const baseFilename = hostname.replace(/[^a-z0-9]/gi, "_");
+                    const pngFilename = `${baseFilename}.png`;
+                    const webpFilename = `${baseFilename}.webp`;
+                    const localUrl = `/icons/${webpFilename}`;
 
                     let hasIcon = false;
 
                     // This logic is simplified from the original as it was causing issues.
-                    // It now just checks if the icon exists in the public directory.
-                    // A separate script should handle favicon generation at build time.
+                    // It now just checks if the icon exists in the public directory (as a PNG source).
+                    // A separate script should handle conversion to WebP at build time.
                     try {
                         const publicDir = path.join(
                             process.cwd(),
                             "public",
                             "icons",
                         );
-                        const publicFile = path.join(publicDir, filename);
+                        const publicFile = path.join(publicDir, pngFilename);
                         if (fs.existsSync(publicFile)) {
                             hasIcon = true;
                         }
