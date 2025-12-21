@@ -120,10 +120,8 @@ try {
   let separatorRow = "| --- |";
 
   urls.forEach((url) => {
-    headerRow += ` ${getPageName(url)} |
-`;
-    separatorRow += " --- |
-";
+    headerRow += ` ${getPageName(url)} |`;
+    separatorRow += " --- |";
   });
 
   console.log(headerRow);
