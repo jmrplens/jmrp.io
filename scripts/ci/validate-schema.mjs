@@ -59,6 +59,12 @@ function validateSingleSchema(schema, prefix = "") {
       if (!schema.headline) errors.push(`${p}: Missing headline`);
       if (!schema.datePublished) warnings.push(`${p}: Missing datePublished`);
       if (!schema.author) warnings.push(`${p}: Missing author`);
+      // Google Recommendation: Image is required for many Rich Results
+      if (!schema.image)
+        warnings.push(
+          `${p}: Missing image (recommended for Google Rich Results)`,
+        );
+      if (!schema.publisher) warnings.push(`${p}: Missing publisher`);
       break;
 
     case "BreadcrumbList":

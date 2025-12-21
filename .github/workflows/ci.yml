@@ -427,17 +427,20 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const comment = `## 🏷️ Schema.org Structured Data Validation
+            const comment = `## 🏷️ Structured Data Check
 
-            ✅ All JSON-LD structured data is valid
+            ✅ **Syntax & Basic Properties Valid**
+
+            **Scope:** Checked all generated HTML pages (100% coverage).
+            **Validation:** Internal strict check for JSON-LD syntax and required schema properties.
 
             **Validated Types:**
-            - Person (author profile)
-            - WebSite (site metadata)
-            - BlogPosting (blog articles)
-            - BreadcrumbList (navigation)
+            - \`Person\` (Author profile)
+            - \`WebSite\` (Site metadata)
+            - \`BlogPosting\` (Articles - checks image, author, date)
+            - \`BreadcrumbList\` (Navigation)
 
-            Tested against Schema.org vocabulary for rich snippets and SEO.`;
+            🔗 [Verify manually with Google Rich Results Test](https://search.google.com/test/rich-results)`;
 
             github.rest.issues.createComment({
               issue_number: context.issue.number,
