@@ -7,17 +7,35 @@ const THRESHOLD = 95;
 
 // Helper: Map URL to a friendly Page Name
 const getPageName = (url) => {
-  const cleanUrl = url.replace(/:\d+/, ""); // Remove port if present
-  if (/localhost\/?$/.test(cleanUrl)) return "Home";
-  if (cleanUrl.includes("/services/")) return "Services";
-  if (cleanUrl.includes("/cv/")) return "CV";
-  if (cleanUrl.includes("/publications/")) return "Publications";
-  if (cleanUrl.includes("/github/")) return "GitHub";
-  if (cleanUrl.includes("/blog/")) return "Blog Index";
-  // Extract slug for posts/others
-  const match = cleanUrl.match(/localhost\/([\w-/]+)\/?$/);
-  if (match) return match[1].replace(/\/$/, "");
-  return "Unknown";
+  try {
+    const urlObj = new URL(url);
+    let pathName = urlObj.pathname;
+
+    // Normalize: remove trailing slash if present (but keep root /)
+    if (pathName.length > 1 && pathName.endsWith("/")) {
+      pathName = pathName.slice(0, -1);
+    }
+
+    if (pathName === "/" || pathName === "") return "Home";
+    if (pathName === "/services") return "Services";
+    if (pathName === "/cv") return "CV";
+    if (pathName === "/publications") return "Publications";
+    if (pathName === "/github") return "GitHub";
+    if (pathName === "/blog") return "Blog Index";
+
+    // Check for blog posts
+    if (pathName.startsWith("/blog/")) {
+      const slug = pathName.split("/").pop();
+      // Capitalize for nicer display
+      const friendlySlug = slug.charAt(0).toUpperCase() + slug.slice(1);
+      return `Post: ${friendlySlug}`;
+    }
+
+    // Fallback: return path
+    return pathName;
+  } catch (e) {
+    return "Unknown";
+  }
 };
 
 // Identify Core Pages
