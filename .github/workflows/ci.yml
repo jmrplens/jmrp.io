@@ -187,7 +187,7 @@ jobs:
         id: format_report
         if: always()
         run: |
-          node scripts/format-lighthouse-report.js > lighthouse_comment.md
+          node scripts/ci/format-lighthouse-report.js > lighthouse_comment.md
           echo "LH_COMMENT<<EOF" >> $GITHUB_ENV
           cat lighthouse_comment.md >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
@@ -363,7 +363,7 @@ jobs:
           cache: "pnpm"
       - run: pnpm install
       - name: Validate RSS feed
-        run: node scripts/validate-rss.mjs dist/rss.xml
+        run: node scripts/ci/validate-rss.mjs dist/rss.xml
       - name: Post RSS Validation Comment
         if: github.event_name == 'pull_request' && always()
         uses: actions/github-script@v7
@@ -409,7 +409,7 @@ jobs:
           cache: "pnpm"
       - run: pnpm install
       - name: Validate Schema.org structured data
-        run: node scripts/validate-schema.mjs dist
+        run: node scripts/ci/validate-schema.mjs dist
       - name: Post Schema Validation Comment
         if: github.event_name == 'pull_request' && always()
         uses: actions/github-script@v7
