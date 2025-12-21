@@ -264,7 +264,7 @@ const personSchema = {
                 justify-content: space-between;
                 align-items: center;
                 margin-bottom: var(--space-md);
-                border-bottom: 2px solid var(--color-border);
+                border-bottom: var(--border-2);
                 padding-bottom: var(--space-md);
             }
 
@@ -276,7 +276,7 @@ const personSchema = {
                 padding: var(--space-sm) 0;
                 margin-bottom: var(--space-lg);
                 z-index: 10;
-                border-bottom: var(--border-subtle);
+                border-bottom: var(--border-1);
             }
 
             .cv-toc ul {
@@ -307,7 +307,7 @@ const personSchema = {
             .section-title {
                 /* Overriding global default to match CV preference (border-bottom) */
                 border-left: none;
-                border-bottom: var(--border-subtle);
+                border-bottom: var(--border-1);
                 padding-left: 0;
             }
 
@@ -330,7 +330,7 @@ const personSchema = {
 
             /* Time Table */
             .timeline {
-                border-left: 2px solid var(--color-border);
+                border-left: var(--border-2);
                 padding-left: var(--space-lg);
             }
 
@@ -353,7 +353,7 @@ const personSchema = {
 
             .timeline-card {
                 background-color: var(--color-bg-secondary);
-                border: var(--border-subtle);
+                border: var(--border-1);
                 border-radius: var(--radius-md);
                 padding: var(--space-lg);
                 position: relative;
@@ -376,8 +376,8 @@ const personSchema = {
                 width: 16px;
                 height: 16px;
                 background-color: var(--color-bg-secondary);
-                border-left: var(--border-subtle);
-                border-bottom: var(--border-subtle);
+                border-left: var(--border-1);
+                border-bottom: var(--border-1);
                 transform: rotate(45deg);
             }
 
@@ -447,7 +447,7 @@ const personSchema = {
                 flex-wrap: wrap;
                 gap: var(--space-sm);
                 margin-top: var(--space-md);
-                border-top: var(--border-subtle);
+                border-top: var(--border-1);
                 padding-top: var(--space-sm);
             }
 

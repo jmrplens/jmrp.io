@@ -43,7 +43,8 @@
   --max-width-prose: 70ch;
 
   /* Borders */
-  --border-subtle: 1px solid var(--color-border);
+  --border-1: 1px solid var(--color-border);
+  --border-2: var(--border-2);
 
   /* Z-Indices */
   --z-fab: 900;
@@ -252,7 +253,7 @@ h1 {
   font-size: 0.85rem;
   border-radius: var(--radius-sm);
   font-weight: var(--fw-medium);
-  border: var(--border-subtle);
+  border: var(--border-1);
   color: var(--color-text-muted);
   background: transparent;
   display: inline-flex;
@@ -273,7 +274,7 @@ h1 {
 /* Page & Section Titles */
 .page-title {
   margin-bottom: var(--space-xl);
-  border-bottom: 2px solid var(--color-border);
+  border-bottom: var(--border-2);
   padding-bottom: var(--space-md);
   font-size: 2rem;
   /* Ensure consistent h1 size */
@@ -291,7 +292,7 @@ h1 {
 /* Standardize section-title variants */
 .section-title.standard {
   border-left: none;
-  border-bottom: var(--border-subtle);
+  border-bottom: var(--border-1);
   padding-left: 0;
   padding-bottom: var(--space-sm);
 }
