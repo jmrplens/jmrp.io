@@ -1,0 +1,205 @@
+---
+import type { GitHubRepo } from "../utils/github";
+import { langColors } from "../utils/github";
+import { Icon } from "astro-icon/components";
+
+interface Props {
+    initialRepos: GitHubRepo[];
+}
+
+const { initialRepos } = Astro.props;
+---
+
+<div class="github-repos-wrapper">
+    <!-- Search Bar -->
+    <div class="search-container">
+        <input
+            type="text"
+            id="repo-search"
+            placeholder="Find a repository..."
+            aria-label="Search repositories"
+        />
+    </div>
+
+    <!-- Repos Grid - STATIC INITIAL CONTENT -->
+    <div id="repos-container" class="repos-grid">
+        {
+            initialRepos.map((repo) => (
+                <div
+                    class="repo-card"
+                    data-name={repo.name.toLowerCase()}
+                    data-desc={(repo.description || "").toLowerCase()}
+                >
+                    <div class="repo-header">
+                        <h3>
+                            <a
+                                href={repo.html_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                {repo.name}
+                            </a>
+                        </h3>
+                    </div>
+                    <p class="repo-desc">
+                        {repo.description || "No description provided."}
+                    </p>
+                    <div class="repo-meta">
+                        {repo.language && (
+                            <div class="meta-item">
+                                <span
+                                    class="lang-dot"
+                                    style={`background-color: ${langColors[repo.language] || "#ccc"}`}
+                                />
+                                {repo.language}
+                            </div>
+                        )}
+                        {repo.stargazers_count > 0 && (
+                            <div class="meta-item">
+                                <Icon name="fa-solid:star" />
+                                {repo.stargazers_count}
+                            </div>
+                        )}
+                        {repo.forks_count > 0 && (
+                            <div class="meta-item">
+                                <Icon name="fa-solid:code-branch" />
+                                {repo.forks_count}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            ))
+        }
+    </div>
+</div>
+
+<script>
+    // Lightweight client-side search - NO API calls, NO hydration needed
+    document.addEventListener("DOMContentLoaded", () => {
+        const searchInput = document.getElementById("repo-search");
+        const container = document.getElementById("repos-container");
+
+        if (searchInput && container) {
+            searchInput.addEventListener("input", (e) => {
+                const term = (e.target as HTMLInputElement).value.toLowerCase();
+
+                const cards = container.querySelectorAll(".repo-card");
+                cards.forEach((card) => {
+                    const name = card.getAttribute("data-name") || "";
+                    const desc = card.getAttribute("data-desc") || "";
+                    const matches = name.includes(term) || desc.includes(term);
+
+                    (card as HTMLElement).style.display = matches ? "" : "none";
+                });
+            });
+        }
+    });
+</script>
+
+<style>
+    .search-container {
+        margin-bottom: var(--space-lg);
+    }
+
+    #repo-search {
+        width: 100%;
+        padding: var(--space-sm) var(--space-md);
+        font-size: 1rem;
+        background-color: var(--color-bg);
+        border: var(--border-1);
+        border-radius: var(--radius-md);
+        color: var(--color-text);
+        transition: border-color 0.2s;
+    }
+
+    #repo-search:focus {
+        border-color: var(--color-primary);
+        outline: none;
+    }
+
+    .repos-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: var(--space-lg);
+    }
+
+    :global(.repo-card) {
+        background-color: var(--color-bg-secondary);
+        border: var(--border-1);
+        border-radius: var(--radius-md);
+        padding: var(--space-md);
+        display: flex;
+        flex-direction: column;
+        transition:
+            transform 0.2s,
+            box-shadow 0.2s,
+            border-color 0.2s;
+        height: 100%;
+        min-width: 0;
+    }
+
+    :global(.repo-card:hover) {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        border-color: var(--color-primary);
+    }
+
+    :global(.repo-header) {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: var(--space-sm);
+    }
+
+    :global(.repo-header h3) {
+        margin: 0;
+        font-size: 1.1rem;
+        font-weight: var(--fw-semibold);
+    }
+
+    :global(.repo-header a) {
+        color: var(--color-primary);
+        text-decoration: none;
+    }
+
+    :global(.repo-header a:hover) {
+        text-decoration: underline;
+    }
+
+    :global(.repo-desc) {
+        color: var(--color-text-muted);
+        font-size: 0.9rem;
+        flex-grow: 1;
+        margin-bottom: var(--space-md);
+        line-height: 1.5;
+        overflow-wrap: anywhere;
+    }
+
+    :global(.repo-card *) {
+        max-width: 100%;
+    }
+
+    :global(.repo-meta) {
+        display: flex;
+        align-items: center;
+        gap: var(--space-md);
+        font-size: 0.85rem;
+        color: var(--color-text-muted);
+        border-top: var(--border-1);
+        padding-top: var(--space-sm);
+        margin-top: auto;
+    }
+
+    :global(.meta-item) {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    :global(.lang-dot) {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        display: inline-block;
+    }
+</style>

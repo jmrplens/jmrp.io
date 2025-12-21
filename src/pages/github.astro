@@ -1,12 +1,20 @@
 ---
 /**
  * GitHub Repositories Page.
- * Displays a list of my GitHub repositories, fetched via the GitHub API client-side.
- * Includes search functionality and stats.
+ * Displays GitHub repositories using SSG + Islands architecture.
+ * Profile and top 12 repos are fetched at build time for optimal performance.
+ * Search functionality is client-side only (no API calls).
  */
 import BaseLayout from "../layouts/BaseLayout.astro";
 import { getImage } from "astro:assets";
 import githubAvatar from "../assets/github-avatar.png";
+import { fetchGitHubProfile, fetchTopRepositories } from "../utils/github";
+import GitHubSearch from "../components/GitHubSearch.astro";
+import { Icon } from "astro-icon/components";
+
+// Fetch data at build time (SSG)
+const profile = await fetchGitHubProfile();
+const repos = await fetchTopRepositories(12); // Top 12 most recently updated
 
 const optimizedAvatar = await getImage({
     src: githubAvatar,
@@ -23,33 +31,56 @@ const optimizedAvatar = await getImage({
     <div class="container github-page">
         <h1 class="page-title">GitHub Repositories</h1>
 
-        <!-- Profile Section -->
-        <div
-            id="profile-container"
-            class="profile-header"
-            data-avatar-url={optimizedAvatar.src}
-        >
-            <div class="profile-loading">Loading profile...</div>
+        <!-- Profile Section - NOW STATIC SSG -->
+        <div class="profile-header">
+            <div class="profile-avatar">
+                <img
+                    src={optimizedAvatar.src}
+                    alt={profile.name}
+                    width="120"
+                    height="120"
+                />
+            </div>
+            <div class="profile-info">
+                <h2>{profile.name}</h2>
+                <a
+                    href={profile.html_url}
+                    class="username"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >
+                    @{profile.login}
+                </a>
+                <p class="bio">{profile.bio || "Open Source Enthusiast"}</p>
+                <div class="profile-stats">
+                    <div class="stat">
+                        <strong>{profile.public_repos}</strong>
+                        <span> Repositories</span>
+                    </div>
+                    <div class="stat">
+                        <strong>{profile.followers}</strong>
+                        <span> Followers</span>
+                    </div>
+                    <div class="stat">
+                        <strong>{profile.following}</strong>
+                        <span> Following</span>
+                    </div>
+                </div>
+                {
+                    profile.location && (
+                        <p class="location">
+                            <Icon name="fa-solid:map-marker-alt" />{" "}
+                            {profile.location}
+                        </p>
+                    )
+                }
+            </div>
         </div>
 
-        <!-- Search Bar -->
-        <div class="search-container">
-            <input
-                type="text"
-                id="repo-search"
-                placeholder="Find a repository..."
-                aria-label="Search repositories"
-            />
-        </div>
-
-        <!-- Repos Grid -->
-        <div id="repos-container" class="repos-grid">
-            <div class="loading">Loading repositories...</div>
-        </div>
+        <!-- Search and Repos Component - Progressive Enhancement -->
+        <GitHubSearch initialRepos={repos} />
     </div>
 </BaseLayout>
-
-<script src="/scripts/github.js" type="module" defer></script>
 
 <style>
     .page-title {
@@ -70,15 +101,8 @@ const optimizedAvatar = await getImage({
         align-items: center;
         gap: var(--space-md);
         text-align: center;
-        max-width: 100%; /* Prevent expansion */
-        overflow: hidden; /* Detail */
-    }
-
-    /* Ensure text inside profile doesn't force width */
-    :global(.profile-info),
-    :global(.profile-stats) {
         max-width: 100%;
-        overflow-wrap: anywhere;
+        overflow: hidden;
     }
 
     /* Responsive Profile: Grid on Desktop */
@@ -90,13 +114,17 @@ const optimizedAvatar = await getImage({
             gap: var(--space-xl);
         }
 
-        :global(.profile-stats) {
-            justify-content: flex-start;
+        .profile-stats {
+            justify-content: flex-start !important;
+        }
+
+        .location {
+            justify-content: flex-start !important;
         }
     }
 
-    /* Profile Elements (Previously Inline) */
-    :global(.profile-avatar img) {
+    /* Profile Elements */
+    .profile-avatar img {
         width: 120px;
         height: 120px;
         border-radius: 50%;
@@ -105,43 +133,50 @@ const optimizedAvatar = await getImage({
         object-fit: cover;
     }
 
-    :global(.profile-info h2) {
+    .profile-info {
+        max-width: 100%;
+        overflow-wrap: anywhere;
+    }
+
+    .profile-info h2 {
         margin: 0;
         font-size: 1.8rem;
         word-break: break-word;
     }
 
-    :global(.profile-info .username) {
+    .profile-info .username {
         color: var(--color-text-muted);
         text-decoration: none;
         margin-bottom: 8px;
         display: block;
     }
 
-    :global(.profile-info .bio) {
+    .profile-info .bio {
         margin-bottom: 16px;
         max-width: 600px;
         overflow-wrap: anywhere;
     }
 
-    :global(.profile-stats) {
+    .profile-stats {
         display: flex;
         gap: 20px;
         flex-wrap: wrap;
         justify-content: center;
         margin-top: var(--space-md);
+        max-width: 100%;
+        overflow-wrap: anywhere;
     }
 
-    :global(.stat strong) {
+    .stat strong {
         color: var(--color-text);
         font-weight: var(--fw-bold);
     }
 
-    :global(.stat span) {
+    .stat span {
         color: var(--color-text-muted);
     }
 
-    :global(.location) {
+    .location {
         margin-top: 12px;
         font-size: 0.9rem;
         color: var(--color-text-muted);
@@ -149,130 +184,5 @@ const optimizedAvatar = await getImage({
         align-items: center;
         gap: 6px;
         justify-content: center;
-    }
-
-    @media (min-width: 768px) {
-        :global(.location) {
-            justify-content: flex-start;
-        }
-    }
-
-    /* Search Bar */
-    .search-container {
-        margin-bottom: var(--space-lg);
-    }
-
-    #repo-search {
-        width: 100%;
-        padding: var(--space-sm) var(--space-md);
-        font-size: 1rem;
-        background-color: var(--color-bg);
-        border: var(--border-1);
-        border-radius: var(--radius-md);
-        color: var(--color-text);
-        transition: border-color 0.2s;
-    }
-
-    #repo-search:focus {
-        border-color: var(--color-primary);
-        outline: none;
-    }
-
-    /* Repos Grid */
-    .repos-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-        gap: var(--space-lg);
-    }
-
-    /* Repo Card Styling (Generated by JS) */
-    :global(.repo-card) {
-        background-color: var(--color-bg-secondary);
-        border: var(--border-1);
-        border-radius: var(--radius-md);
-        padding: var(--space-md);
-        display: flex;
-        flex-direction: column;
-        transition:
-            transform 0.2s,
-            box-shadow 0.2s,
-            border-color 0.2s;
-        height: 100%;
-        min-width: 0; /* Crucial for Grid overflow prevention */
-    }
-
-    :global(.repo-card:hover) {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-        border-color: var(--color-primary);
-    }
-
-    :global(.repo-header) {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        margin-bottom: var(--space-sm);
-    }
-
-    :global(.repo-header h3) {
-        margin: 0;
-        font-size: 1.1rem;
-        font-weight: var(--fw-semibold);
-    }
-
-    :global(.repo-header a) {
-        color: var(--color-primary);
-        text-decoration: none;
-    }
-
-    :global(.repo-header a:hover) {
-        text-decoration: underline;
-    }
-
-    :global(.repo-desc) {
-        color: var(--color-text-muted);
-        font-size: 0.9rem;
-        flex-grow: 1;
-        margin-bottom: var(--space-md);
-        line-height: 1.5;
-        overflow-wrap: anywhere; /* Prevent long words from breaking layout */
-    }
-
-    /* Safety for all text in cards */
-    :global(.repo-card *) {
-        max-width: 100%;
-    }
-
-    :global(.repo-meta) {
-        display: flex;
-        align-items: center;
-        gap: var(--space-md);
-        font-size: 0.85rem;
-        color: var(--color-text-muted);
-        border-top: var(--border-1);
-        padding-top: var(--space-sm);
-        margin-top: auto;
-    }
-
-    :global(.meta-item) {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-    }
-
-    :global(.lang-dot) {
-        width: 10px;
-        height: 10px;
-        border-radius: 50%;
-        display: inline-block;
-    }
-
-    .loading,
-    .error,
-    .profile-loading {
-        grid-column: 1 / -1;
-        text-align: center;
-        color: var(--color-text-muted);
-        padding: var(--space-lg);
     }
 </style>
