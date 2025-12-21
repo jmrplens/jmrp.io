@@ -29,7 +29,6 @@ try {
   }
 
   // 1. Get Scores
-  // Look for manifest.json first, if not find all lhr-*.json files
   let manifest = [];
   const manifestPath = path.join(lhciDir, "manifest.json");
 
@@ -45,7 +44,6 @@ try {
   }
 
   // Group by URL
-  // structure: { "http://localhost/": { performance: [98, 99], ... } }
   const groupedResults = {};
 
   manifest.forEach((run) => {
@@ -78,7 +76,7 @@ try {
     });
   });
 
-  // 2. Get Links (Public URLs from temporary-public-storage)
+  // 2. Get Links
   let links = {};
   if (fs.existsSync(linksPath)) {
     links = JSON.parse(fs.readFileSync(linksPath, "utf8"));
@@ -94,7 +92,7 @@ try {
     "best-practices",
     "seo",
     "pwa",
-  ]; // Standard order
+  ]; 
   const categoryIcons = {
     performance: "⚡",
     accessibility: "♿",
@@ -110,7 +108,6 @@ try {
     pwa: "PWA",
   };
 
-  // Filter categories: Only show PWA if at least one page has it
   const validCategories = categories.filter((cat) =>
     urls.some((url) => averagedResults[url][cat] !== undefined),
   );
@@ -129,12 +126,10 @@ try {
 
   // Table Body
   validCategories.forEach((cat) => {
-    let row = `| ${categoryIcons[cat]} ${categoryNames[cat]} |
-`;
+    let row = `| ${categoryIcons[cat]} ${categoryNames[cat]} |`;
     urls.forEach((url) => {
       const score = averagedResults[url][cat];
-      row += ` ${score ? `${getScoreEmoji(score)} ${score}%` : "-"} |
-`;
+      row += ` ${score ? `${getScoreEmoji(score)} ${score}%` : "-"} |`;
     });
     console.log(row);
   });
