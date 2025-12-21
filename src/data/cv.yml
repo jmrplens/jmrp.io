@@ -15,13 +15,13 @@
 - title: Experience
   type: time_table
   contents:
-    - title: R & D Software Developer
+    - title: R &amp; D Software Developer
       institution: Power Electronics (<a href="https://power-electronics.com/en/">PE</a>)
       department: Solar + Storage (<a href="https://power-electronics.com/en/solar/">PE Solar</a>)
       location: Lliria, Spain
       year: Apr 2023 - Current
       summary: >
-        Firmware development for embedded systems (STM32 and ARM architectures) applied to power electronics, specifically for utility-scale inverters in renewable energy plants (Solar & Storage).
+        Firmware development for embedded systems (STM32 and ARM architectures) applied to power electronics, specifically for utility-scale inverters in renewable energy plants (Solar &amp; Storage).
         <br><br>
         Key contributions:
       description:
@@ -36,7 +36,7 @@
       year: Jan 2023 - Apr 2023
       location: Valencia, Spain
       summary: >
-        Researcher in the R & D line: <b>Acoustic Metamaterials for Ultrasound Histotripsy treatments</b>.
+        Researcher in the R &amp; D line: <b>Acoustic Metamaterials for Ultrasound Histotripsy treatments</b>.
         <br><br>
         <b>Project</b>: New generation of smart metasurfaces based on additive manufacturing for strategic applications in telecommunications (Metasmart). Funded by the Valencian Agency for Innovation (Reference: INNEST/2022/345).
         <br><br>
@@ -57,7 +57,7 @@
         Goals achieved:
       description:
         - Theoretical development of acoustic metadiffusers based on membranes or plates reducing the size of commercial diffusers.
-        - Simulation of the acoustic diffusers and validation of results (MATLAB & COMSOL).
+        - Simulation of the acoustic diffusers and validation of results (MATLAB &amp; COMSOL).
         - title: "Two publications in national and international congresses:"
           contents:
             - Tecniacústica - <a href="/pdf/paper-resources/Conferences/Tecniacustica/JimenezTEC2020a.pdf">Beyond Schroeder diffusers using acoustic metasurfaces</a>.
@@ -80,7 +80,7 @@
         All project objectives were completed at 100%:"
       description:
         - Design of the optimum geometry of the acoustic metamaterial to reduce noise levels.
-        - Simulation of a real environment to validate design performance (MATLAB, COMSOL & Python).
+        - Simulation of a real environment to validate design performance (MATLAB, COMSOL &amp; Python).
         - Design of the industrial model for the manufacture of the prototype by means of plastic injection.
         - Development of software for acoustic measurements according to ISO 10534-2:1998 and ASTM 2611-19 standards. <a href="https://github.com/jmrplens/A-Lab">A|Lab</a>
         - 'Design and development of a 3-axis robotic system to perform experimental measurements. Photos and some information here: <a href="https://cienciagandia.webs.upv.es/en/2022/03/metamaterial-to-reduce-noise-in-space-rocket-launches/" aria-label="News: Metamaterial to reduce noise in space rocket launches">NEWS</a>'
@@ -145,13 +145,13 @@
 - title: Technical Skills
   type: list_groups
   contents:
-    - category: Embedded Firmware & Electronics
+    - category: Embedded Firmware &amp; Electronics
       icon: fa-solid:microchip
       items:
         - name: C
           icon: logos:c
           level: 4
-        - name: STM32 & ARM
+        - name: STM32 &amp; ARM
           icon: simple-icons:arm
           level: 4
         - name: Comm. Protocols
@@ -169,7 +169,7 @@
           icon: logos:arduino
           level: 4
 
-    - category: Software Engineering & Tools
+    - category: Software Engineering &amp; Tools
       icon: fa-solid:code
       items:
         - name: Python
@@ -192,7 +192,7 @@
           icon: logos:jetbrains
           level: 4
 
-    - category: Simulation & Acoustics
+    - category: Simulation &amp; Acoustics
       icon: fa-solid:wave-square
       items:
         - name: COMSOL Multiphysics
@@ -208,7 +208,7 @@
           icon: fa-solid:volume-up
           level: 3
 
-    - category: General & Platforms
+    - category: General &amp; Platforms
       icon: fa-solid:desktop
       items:
         - name: Linux / Unix
@@ -282,9 +282,9 @@
         - link: /pdf/degree/TelecomExpEng.pdf
           linkname: "Academic record"
           ariaLabel: "Academic record (Telecommunications)"
-    - title: Certificate of Higher Education in Electronics Technician & Superior Sound Technician
-      institution: <a href="https://elche.salesianos.edu/colegio/san-jose-artesano/">IES Salesianos (San Jóse Artesano)</a> & <a href="https://ies-berlanga.info/index.php/es/">IES Luis García Berlanga</a>
-      location: Elche & Alicante, Spain
+    - title: Certificate of Higher Education in Electronics Technician &amp; Superior Sound Technician
+      institution: <a href="https://elche.salesianos.edu/colegio/san-jose-artesano/">IES Salesianos (San Jóse Artesano)</a> &amp; <a href="https://ies-berlanga.info/index.php/es/">IES Luis García Berlanga</a>
+      location: Elche &amp; Alicante, Spain
       year: 2009/2011
       linkitems:
         - link: /pdf/degree/CFGM_Electronica.pdf

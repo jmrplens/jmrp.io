@@ -226,4 +226,7 @@ const jsonLD = {
 <meta property="twitter:image" content={resolvedImage} />
 
 <!-- JSON-LD -->
-<script type="application/ld+json" set:html={JSON.stringify(jsonLD)} />
+<script
+    type="application/ld+json"
+    set:html={JSON.stringify(jsonLD).replace(/&/g, "\\u0026")}
+/>

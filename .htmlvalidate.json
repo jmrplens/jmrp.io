@@ -4,12 +4,11 @@
   "rules": {
     "no-trailing-whitespace": "off",
     "void-style": "off",
-    "no-inline-style": "off",
-    "long-title": "off",
-    "no-raw-characters": "off",
-    "unrecognized-char-ref": "off",
     "element-permitted-content": "off",
-    "valid-id": "off",
-    "no-implicit-button-type": "off"
+    "long-title": "off",
+    "valid-id": ["error", { "relaxed": true }],
+    "no-raw-characters": "error",
+    "no-implicit-button-type": "error",
+    "no-inline-style": "error"
   }
 }
