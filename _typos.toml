@@ -4,6 +4,5 @@ extend-exclude = [
     "src/data/_bibliography/papers.bib",
     "src/content/posts/001-secure-nginx-client-certificates.mdx",
     "pnpm-lock.yaml",
-    "package-lock.json",
-    "**/*.woff2"
+    "package-lock.json"
 ]
