@@ -334,21 +334,62 @@ jobs:
           name: dist-build
           path: dist
       - name: Validate HTML5
-        uses: Cyb3r-Jak3/html5validator-action@v7.2.0
-        with:
-          root: dist/
-          css: false
-        continue-on-error: true
+        run: |
+          pnpm dlx html-validate "dist/**/*.html" --format json > html-validation.json || true
       - name: Post HTML Validation Comment
         if: github.event_name == 'pull_request'
         uses: actions/github-script@v7
         with:
           script: |
-            const comment = `## ✅ HTML5 Validation
+            const fs = require('fs');
+            let comment = '';
 
-            W3C HTML5 validation completed for all pages in the build.
-
-            Any validation warnings or errors are shown in the [Actions Summary](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}).`;
+            try {
+              if (fs.existsSync('html-validation.json')) {
+                const report = JSON.parse(fs.readFileSync('html-validation.json', 'utf8'));
+                
+                // html-validate json format is array of files with messages
+                const filesWithErrors = report.filter(f => f.messages.length > 0);
+                const totalErrors = filesWithErrors.reduce((acc, f) => acc + f.messages.filter(m => m.severity === 2).length, 0);
+                const totalWarnings = filesWithErrors.reduce((acc, f) => acc + f.messages.filter(m => m.severity === 1).length, 0);
+                
+                const isSuccess = totalErrors === 0;
+                const icon = isSuccess ? '✅' : '❌';
+                const status = isSuccess ? 'Passed' : 'Failed';
+                
+                comment = `## ${icon} HTML5 Validation\n\n`;
+                comment += `**Status: ${status}**\n`;
+                comment += `- **Files Checked:** All generated HTML\n`;
+                comment += `- **Errors:** ${totalErrors}\n`;
+                comment += `- **Warnings:** ${totalWarnings}\n\n`;
+                
+                if (filesWithErrors.length > 0) {
+                  comment += `### ⚠️ Issues Found\n\n`;
+                  // List top 10 files with issues
+                  filesWithErrors.slice(0, 10).forEach(f => {
+                    const fileName = f.filePath.replace('dist/', '');
+                    comment += `**${fileName}**\n`;
+                    f.messages.forEach(m => {
+                       const severity = m.severity === 2 ? '🔴' : 'Vk';
+                       comment += `- ${severity} [${m.ruleId}] ${m.message} (Line ${m.line})\n`;
+                    });
+                    comment += `\n`;
+                  });
+                  
+                  if (filesWithErrors.length > 10) {
+                    comment += `...and ${filesWithErrors.length - 10} more files with issues.\n`;
+                  }
+                } else {
+                  comment += `All pages are valid HTML5 compliant.\n`;
+                }
+                
+              } else {
+                comment = `## ⚠️ HTML5 Validation\n\nReport file not found. Check build logs.`;
+              }
+            } catch (e) {
+              console.error(e);
+              comment = `## ⚠️ HTML5 Validation\n\nError processing report. Check build logs.`;
+            }
 
             github.rest.issues.createComment({
               issue_number: context.issue.number,
