@@ -237,42 +237,62 @@ jobs:
         with:
           script: |
             const fs = require('fs');
+            let commentBody = '';
 
-            // Check if tests passed or failed
-            let status = '✅ **All accessibility tests passed!**';
-            let details = '\n\nAll pages are WCAG 2.1 AA compliant with no violations detected.';
-
-            // Try to read test results to see if there were failures
             try {
-              const { execSync } = require('child_process');
-              const result = execSync('pnpm exec playwright test --project=accessibility --reporter=json', { stdio: 'pipe' });
+              if (fs.existsSync('accessibility-summary.json')) {
+                const summary = JSON.parse(fs.readFileSync('accessibility-summary.json', 'utf8'));
+                const isSuccess = summary.failed === 0;
+                
+                const statusIcon = isSuccess ? '✅' : '⚠️';
+                const statusText = isSuccess ? '**All accessibility tests passed!**' : '**Accessibility violations detected**';
+                
+                commentBody = `## ♿ Accessibility Test Results (Axe-core)\n\n${statusIcon} ${statusText}\n\n`;
+                commentBody += `**Summary:**\n- Total Pages Tested: **${summary.totalPages}**\n- Passed: ${summary.passed}\n- Failed: ${summary.failed}\n\n`;
+                
+                if (!isSuccess) {
+                  commentBody += `### ❌ Failed Pages\n`;
+                  summary.pages.filter(p => p.violations > 0).forEach(p => {
+                     commentBody += `- ${p.page} (${p.violations} violations)\n`;
+                  });
+                  commentBody += `\nPlease review the detailed HTML report in the artifacts.\n\n`;
+                }
+
+                if (summary.totalPages <= 15) {
+                   commentBody += `### 📄 Tested Pages\n`;
+                   summary.pages.forEach(p => {
+                      const icon = p.violations === 0 ? '✅' : '❌';
+                      commentBody += `- ${icon} ${p.page}\n`;
+                   });
+                } else if (isSuccess) {
+                   commentBody += `_Tested ${summary.totalPages} pages. See full list in artifact._\n`;
+                }
+                
+                commentBody += `\n**Standards:** WCAG 2.1 AA compliance\n`;
+                commentBody += `📊 [View detailed HTML report](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`;
+                
+              } else {
+                throw new Error('Summary file not found');
+              }
             } catch (error) {
-              status = '⚠️ **Accessibility violations detected**';
-              details = '\n\nSome pages have WCAG 2.1 AA violations. Please review the detailed HTML report in the artifacts.';
+               console.log('Error generating comment:', error);
+               // Fallback if file not found or error
+               let status = '✅ **All accessibility tests passed!**';
+               let details = '\n\nAll pages are WCAG 2.1 AA compliant with no violations detected.';
+               
+               // Check process exit code from previous step via inspection? No, simpler to assume pass if we are here and no summary means maybe it didn't run or manual fallback? 
+               // Actually if playwright fails, the step "Run Axe accessibility tests" fails. "always()" ensures this runs.
+               // We can check the outcome of the 'Run Axe accessibility tests' step? No direct access here easily without more boilerplate.
+               // Let's stick to a generic fallback.
+               
+               commentBody = `## ♿ Accessibility Test Results (Axe-core)\n\n⚠️ **Test execution completed, but summary report was not found.**\n\nPlease check the [Actions logs](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}) to verify status.`;
             }
-
-            const comment = `## ♿ Accessibility Test Results (Axe-core)
-
-            ${status}
-            ${details}
-
-            **Pages Tested:**
-            - Home (/)
-            - Publications (/publications)
-            - CV (/cv)
-            - GitHub (/github)
-            - Services (/services)
-            - Blog Index (/blog)
-
-            **Standards:** WCAG 2.1 AA compliance
-
-            📊 [View detailed HTML report](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`;
 
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: comment
+              body: commentBody
             });
 
   bundle-size:

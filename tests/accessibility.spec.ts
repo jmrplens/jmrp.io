@@ -118,5 +118,17 @@ test.describe("Accessibility Tests (Axe-core WCAG 2.1 AA)", () => {
     console.log(
       `   Pages with violations: ${results.filter((r) => r.violations > 0).length}`,
     );
+
+    // Save results to file for CI reporting
+    const summary = {
+      totalPages: results.length,
+      passed: results.filter((r) => r.violations === 0).length,
+      failed: results.filter((r) => r.violations > 0).length,
+      pages: results,
+    };
+    fs.writeFileSync(
+      "accessibility-summary.json",
+      JSON.stringify(summary, null, 2),
+    );
   });
 });
