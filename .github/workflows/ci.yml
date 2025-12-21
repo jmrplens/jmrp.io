@@ -333,6 +333,11 @@ jobs:
         with:
           name: dist-build
           path: dist
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 20
+          cache: "pnpm"
       - name: Validate HTML5
         run: |
           pnpm dlx html-validate "dist/**/*.html" --format json > html-validation.json || true
