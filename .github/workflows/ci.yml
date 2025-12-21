@@ -252,23 +252,15 @@ jobs:
                 
                 if (!isSuccess) {
                   commentBody += `### ❌ Failed Pages\n`;
-                  summary.pages.filter(p => p.violations > 0).forEach(p => {
-                     commentBody += `- ${p.page} (${p.violations} violations)\n`;
-                  });
+                  summary.pages
+                    .filter((p) => p.violations > 0)
+                    .forEach((p) => {
+                      commentBody += `- ${p.page} (${p.violations} violations)\n`;
+                    });
                   commentBody += `\nPlease review the detailed HTML report in the artifacts.\n\n`;
                 }
 
-                if (summary.totalPages <= 15) {
-                   commentBody += `### 📄 Tested Pages\n`;
-                   summary.pages.forEach(p => {
-                      const icon = p.violations === 0 ? '✅' : '❌';
-                      commentBody += `- ${icon} ${p.page}\n`;
-                   });
-                } else if (isSuccess) {
-                   commentBody += `_Tested ${summary.totalPages} pages. See full list in artifact._\n`;
-                }
-                
-                commentBody += `\n**Standards:** WCAG 2.1 AA compliance\n`;
+                commentBody += `**Standards:** WCAG 2.1 AA compliance\n`;
                 commentBody += `📊 [View detailed HTML report](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`;
                 
               } else {
