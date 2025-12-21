@@ -50,11 +50,13 @@
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^25.0.3",
     "@types/sanitize-html": "^2.16.0",
+    "@types/xml2js": "^0.4.14",
     "js-yaml": "^4.1.1",
     "pagefind": "^1.4.0",
     "playwright": "^1.57.0",
     "prettier": "^3.7.4",
     "rehype-mermaid": "^3.0.0",
-    "sharp": "^0.34.5"
+    "sharp": "^0.34.5",
+    "xml2js": "^0.6.2"
   }
 }

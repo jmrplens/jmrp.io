@@ -1,23 +1,82 @@
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
+import { parseStringPromise } from "xml2js";
+import * as fs from "fs";
+import * as path from "path";
 
-const pages = [
-  { name: "Home", url: "/" },
-  { name: "Publications", url: "/publications" },
-  { name: "CV", url: "/cv" },
-  { name: "GitHub", url: "/github" },
-  { name: "Services", url: "/services" },
-  { name: "Blog Index", url: "/blog" },
-];
+// Read and parse sitemap to discover all pages automatically
+async function getPagesFromSitemap(): Promise<
+  Array<{ name: string; url: string }>
+> {
+  const sitemapPath = path.join(process.cwd(), "dist", "sitemap-0.xml");
+
+  if (!fs.existsSync(sitemapPath)) {
+    console.warn("⚠️  Sitemap not found, using manual page list");
+    return getManualPages();
+  }
+
+  try {
+    const sitemapContent = fs.readFileSync(sitemapPath, "utf-8");
+    const sitemap = await parseStringPromise(sitemapContent);
+
+    const urls = sitemap.urlset.url.map((entry: any) => {
+      const fullUrl = entry.loc[0];
+      const urlPath = fullUrl.replace("https://jmrp.io", "");
+
+      // Generate friendly name from path
+      const name =
+        urlPath === "/"
+          ? "Home"
+          : urlPath
+              .split("/")
+              .filter(Boolean)
+              .map((s) =>
+                s
+                  .split("-")
+                  .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+                  .join(" "),
+              )
+              .join(" - ");
+
+      return { name, url: urlPath };
+    });
+
+    console.log(`📄 Found ${urls.length} pages in sitemap`);
+    return urls;
+  } catch (error) {
+    console.error("❌ Error parsing sitemap:", error);
+    return getManualPages();
+  }
+}
+
+// Fallback: Manual page list (used if sitemap not available)
+function getManualPages(): Array<{ name: string; url: string }> {
+  return [
+    { name: "Home", url: "/" },
+    { name: "Publications", url: "/publications" },
+    { name: "CV", url: "/cv" },
+    { name: "GitHub", url: "/github" },
+    { name: "Services", url: "/services" },
+    { name: "Blog Index", url: "/blog" },
+  ];
+}
 
 test.describe("Accessibility Tests (Axe-core WCAG 2.1 AA)", () => {
-  for (const page of pages) {
-    test(`${page.name} should have no accessibility violations`, async ({
-      page: browserPage,
-    }) => {
-      await browserPage.goto(page.url);
+  let pages: Array<{ name: string; url: string }>;
 
-      // Wait for page to be fully loaded
+  // Load pages once before all tests
+  test.beforeAll(async () => {
+    pages = await getPagesFromSitemap();
+  });
+
+  // Dynamically generate tests for all discovered pages
+  test("should have no accessibility violations on all pages", async ({
+    page: browserPage,
+  }) => {
+    const results: Array<{ page: string; violations: number }> = [];
+
+    for (const pageInfo of pages) {
+      await browserPage.goto(pageInfo.url);
       await browserPage.waitForLoadState("networkidle");
 
       const accessibilityScanResults = await new AxeBuilder({
@@ -29,7 +88,7 @@ test.describe("Accessibility Tests (Axe-core WCAG 2.1 AA)", () => {
       // Log violations for debugging
       if (accessibilityScanResults.violations.length > 0) {
         console.log(
-          `\n⚠️  ${page.name} has ${accessibilityScanResults.violations.length} accessibility violations:\n`,
+          `\n⚠️  ${pageInfo.name} (${pageInfo.url}) has ${accessibilityScanResults.violations.length} accessibility violations:\n`,
         );
         accessibilityScanResults.violations.forEach((violation, index) => {
           console.log(
@@ -41,7 +100,23 @@ test.describe("Accessibility Tests (Axe-core WCAG 2.1 AA)", () => {
         });
       }
 
-      expect(accessibilityScanResults.violations).toEqual([]);
-    });
-  }
+      results.push({
+        page: `${pageInfo.name} (${pageInfo.url})`,
+        violations: accessibilityScanResults.violations.length,
+      });
+
+      // Fail immediately if violations found
+      expect(
+        accessibilityScanResults.violations,
+        `${pageInfo.name} (${pageInfo.url}) should have no violations`,
+      ).toEqual([]);
+    }
+
+    // Summary
+    console.log("\n✅ Accessibility Test Summary:");
+    console.log(`   Total pages tested: ${results.length}`);
+    console.log(
+      `   Pages with violations: ${results.filter((r) => r.violations > 0).length}`,
+    );
+  });
 });
