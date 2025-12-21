@@ -34,7 +34,7 @@ jobs:
         with:
           node-version: 20
           cache: "pnpm"
-      - run: pnpm install
+      - run: pnpm install --frozen-lockfile --prefer-offline
       - name: Astro Check
         run: pnpm exec astro check
       - name: Prettier Check
@@ -109,7 +109,7 @@ jobs:
         with:
           node-version: 20
           cache: "pnpm"
-      - run: pnpm install
+      - run: pnpm install --frozen-lockfile --prefer-offline
       - name: SonarCloud Scan
         uses: SonarSource/sonarqube-scan-action@v7
         env:
@@ -126,7 +126,7 @@ jobs:
         with:
           node-version: 20
           cache: "pnpm"
-      - run: pnpm install
+      - run: pnpm install --frozen-lockfile --prefer-offline
       - name: Run Snyk to check for vulnerabilities
         uses: snyk/actions/node@master
         env:
@@ -145,9 +145,7 @@ jobs:
         with:
           node-version: 20
           cache: "pnpm"
-      - run: pnpm install
-      - name: Install Playwright Browsers
-        run: pnpm exec playwright install --with-deps
+      - run: pnpm install --frozen-lockfile --prefer-offline
       - name: Build Project (Production)
         run: pnpm run build
       - name: Upload build artifact
@@ -217,8 +215,15 @@ jobs:
         with:
           node-version: 20
           cache: "pnpm"
-      - run: pnpm install
+      - run: pnpm install --frozen-lockfile --prefer-offline
+      - name: Cache Playwright Browsers
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-browsers-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
       - name: Install Playwright Browsers
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: pnpm exec playwright install --with-deps chromium
       - name: Run Axe accessibility tests
         run: pnpm exec playwright test --project=accessibility
@@ -336,7 +341,7 @@ jobs:
         with:
           node-version: 20
           cache: "pnpm"
-      - run: pnpm install
+      - run: pnpm install --frozen-lockfile --prefer-offline
       - name: Validate HTML5
         run: |
           pnpm exec html-validate -c .htmlvalidate.json --formatter json dist > html-validation.json 2> html-errors.log || true
@@ -430,7 +435,7 @@ jobs:
         with:
           node-version: 20
           cache: "pnpm"
-      - run: pnpm install
+      - run: pnpm install --frozen-lockfile --prefer-offline
       - name: Validate RSS feed
         run: node scripts/ci/validate-rss.mjs dist/rss.xml
       - name: Post RSS Validation Comment
@@ -502,7 +507,7 @@ jobs:
         with:
           node-version: 20
           cache: "pnpm"
-      - run: pnpm install
+      - run: pnpm install --frozen-lockfile --prefer-offline
       - name: Validate Schema.org structured data
         run: node scripts/ci/validate-schema.mjs dist
       - name: Post Schema Validation Comment
