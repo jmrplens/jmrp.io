@@ -291,7 +291,7 @@ const personSchema = {
             .cv-toc a {
                 text-decoration: none;
                 color: var(--color-text-muted);
-                font-weight: 600;
+                font-weight: var(--fw-semibold);
                 font-size: 0.95rem;
                 white-space: nowrap;
             }
@@ -402,7 +402,7 @@ const personSchema = {
             .department {
                 font-size: 1.1rem;
                 color: var(--color-text-muted);
-                font-weight: 500;
+                font-weight: var(--fw-medium);
             }
 
             .location {
@@ -455,19 +455,21 @@ const personSchema = {
                 display: inline-flex;
                 align-items: center;
                 gap: 6px;
-                font-weight: 600; /* Accessibility: Distinguish links by weight */
+                font-weight: var(
+                    --fw-link-emphasis
+                ); /* Accessibility: Distinguish links by weight */
             }
 
             /* Accessibility: Distinguish links by weight
                Using :global() because these links are injected via set:html */
             .timeline-card :global(a),
             .map-item :global(a:not(.btn-sm)) {
-                font-weight: 600;
+                font-weight: var(--fw-link-emphasis);
             }
 
             /* Ensure button links also have sufficient weight if they are text-like */
             .map-item :global(.btn-sm) {
-                font-weight: 600;
+                font-weight: var(--fw-link-emphasis);
             }
         </style>
     </div></BaseLayout

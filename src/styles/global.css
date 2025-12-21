@@ -15,6 +15,18 @@
   --font-mono:
     "JetBrains Mono", "JetBrains Mono Fallback", "Courier New", monospace;
 
+  /* Font Weights */
+  --fw-normal: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+  --fw-bold: 700;
+  --fw-extrabold: 800;
+
+  /* Semantic font-weight aliases */
+  --fw-link-emphasis: 600;
+  /* For accessibility - distinguishing links from text */
+  --fw-heading: 600;
+
   /* Spacing & Radius */
   --space-xs: 0.25rem;
   --space-sm: 0.5rem;
@@ -200,7 +212,7 @@ h1 {
   gap: 8px;
   padding: var(--space-sm) var(--space-lg);
   border-radius: var(--radius-md);
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
   text-decoration: none;
   transition:
     transform 0.2s,
@@ -239,7 +251,7 @@ h1 {
   padding: 4px 12px;
   font-size: 0.85rem;
   border-radius: var(--radius-sm);
-  font-weight: 500;
+  font-weight: var(--fw-medium);
   border: var(--border-subtle);
   color: var(--color-text-muted);
   background: transparent;

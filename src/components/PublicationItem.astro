@@ -255,7 +255,7 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
     .pub-title {
         margin: 0 0 var(--space-xs) 0;
         font-size: 1.15rem;
-        font-weight: 600;
+        font-weight: var(--fw-semibold);
         line-height: 1.4;
     }
 
@@ -360,6 +360,6 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
     /* Accessibility: Distinguish author links by weight
        Similar to CV page solution for link visibility */
     .pub-authors a {
-        font-weight: 700;
+        font-weight: var(--fw-link-emphasis);
     }
 </style>
