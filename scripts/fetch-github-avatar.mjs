@@ -15,6 +15,9 @@ if (!fs.existsSync(OUTPUT_DIR)) {
 }
 
 // 1. Get Profile Data to find Avatar URL
+const outputPath = path.join(OUTPUT_DIR, OUTPUT_FILE);
+const fallbackPath = path.join(OUTPUT_DIR, "mehome.jpg");
+
 try {
   const profile = await fetchJson(API_URL);
   if (!profile.avatar_url) {
@@ -24,13 +27,28 @@ try {
   console.log(`Found avatar URL: ${profile.avatar_url}`);
 
   // 2. Download Image
-  const outputPath = path.join(OUTPUT_DIR, OUTPUT_FILE);
   await downloadFile(profile.avatar_url, outputPath);
 
   console.log(`Avatar saved to ${outputPath}`);
 } catch (error) {
-  console.error("Error downloading avatar:", error.message);
-  process.exit(1);
+  console.warn(
+    `Warning: Could not download GitHub avatar (${error.message}). Using fallback.`,
+  );
+
+  // If the file doesn't exist, use mehome.jpg as fallback
+  if (!fs.existsSync(outputPath)) {
+    if (fs.existsSync(fallbackPath)) {
+      console.log(`Copying ${fallbackPath} to ${outputPath} as fallback...`);
+      fs.copyFileSync(fallbackPath, outputPath);
+    } else {
+      console.error(
+        "Critical Error: Neither GitHub avatar nor fallback image found!",
+      );
+      process.exit(1);
+    }
+  } else {
+    console.log("Using existing github-avatar.png from previous build.");
+  }
 }
 
 function fetchJson(url) {
