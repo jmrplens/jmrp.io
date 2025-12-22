@@ -252,8 +252,8 @@ jobs:
             let commentBody = '';
 
             try {
-              if (fs.existsSync('accessibility-summary.json')) {
-                const summary = JSON.parse(fs.readFileSync('accessibility-summary.json', 'utf8'));
+              if (fs.existsSync('playwright-report/accessibility-summary.json')) {
+                const summary = JSON.parse(fs.readFileSync('playwright-report/accessibility-summary.json', 'utf8'));
                 const isSuccess = summary.failed === 0;
                 
                 const statusIcon = isSuccess ? '✅' : '⚠️';

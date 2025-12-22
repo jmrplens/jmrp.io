@@ -162,7 +162,7 @@ test.describe("Accessibility Tests (Axe-core WCAG 2.1 AA)", () => {
       pages: results,
     };
     fs.writeFileSync(
-      "accessibility-summary.json",
+      "playwright-report/accessibility-summary.json",
       JSON.stringify(summary, null, 2),
     );
   });
