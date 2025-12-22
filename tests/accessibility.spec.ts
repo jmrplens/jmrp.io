@@ -70,8 +70,8 @@ test.describe("Accessibility Tests (Axe-core WCAG 2.1 AA)", () => {
   test.beforeAll(async () => {
     pages = await getPagesFromSitemap();
     // Ensure report directory exists
-    if (!fs.existsSync("playwright-report/accessibility")) {
-      fs.mkdirSync("playwright-report/accessibility", { recursive: true });
+    if (!fs.existsSync("accessibility-report")) {
+      fs.mkdirSync("accessibility-report", { recursive: true });
     }
   });
 
@@ -79,7 +79,11 @@ test.describe("Accessibility Tests (Axe-core WCAG 2.1 AA)", () => {
   test("should have no accessibility violations on all pages", async ({
     page: browserPage,
   }) => {
-    const results: Array<{ page: string; violations: number }> = [];
+    const results: Array<{
+      page: string;
+      violations: number;
+      violationIds?: string[];
+    }> = [];
 
     for (const pageInfo of pages) {
       await browserPage.goto(pageInfo.url);
@@ -108,7 +112,7 @@ test.describe("Accessibility Tests (Axe-core WCAG 2.1 AA)", () => {
         results: accessibilityScanResults,
         options: {
           projectKey: "JMRP.io",
-          outputDir: "playwright-report/accessibility",
+          outputDir: "accessibility-report",
           reportFileName: reportFileName,
         },
       });
@@ -129,7 +133,7 @@ test.describe("Accessibility Tests (Axe-core WCAG 2.1 AA)", () => {
 
         // Screenshot on failure
         await browserPage.screenshot({
-          path: `playwright-report/accessibility/${safeName}-failure.png`,
+          path: `accessibility-report/${safeName}-failure.png`,
           fullPage: true,
         });
       }
@@ -162,7 +166,7 @@ test.describe("Accessibility Tests (Axe-core WCAG 2.1 AA)", () => {
       pages: results,
     };
     fs.writeFileSync(
-      "playwright-report/accessibility-summary.json",
+      "accessibility-report/accessibility-summary.json",
       JSON.stringify(summary, null, 2),
     );
   });

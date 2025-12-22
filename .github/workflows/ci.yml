@@ -241,7 +241,7 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: axe-accessibility-report
-          path: playwright-report/
+          path: accessibility-report/
           retention-days: 7
       - name: Post Accessibility Comment
         if: github.event_name == 'pull_request' && always()
@@ -253,13 +253,13 @@ jobs:
             let commentBody = '';
 
             try {
-              const summaryPath = 'playwright-report/accessibility-summary.json';
+              const summaryPath = 'accessibility-report/accessibility-summary.json';
               console.log('Checking for summary file at:', summaryPath);
               
-              if (fs.existsSync('playwright-report')) {
-                 console.log('playwright-report contents:', fs.readdirSync('playwright-report'));
+              if (fs.existsSync('accessibility-report')) {
+                 console.log('accessibility-report contents:', fs.readdirSync('accessibility-report'));
               } else {
-                 console.log('playwright-report directory NOT found');
+                 console.log('accessibility-report directory NOT found');
               }
 
               if (fs.existsSync(summaryPath)) {
