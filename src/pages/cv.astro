@@ -125,7 +125,9 @@ const personSchema = {
                             <div class="timeline">
                                 {section.contents.map((item: any) => (
                                     <div class="timeline-item">
+                                        <div class="timeline-dot" aria-hidden="true"></div>
                                         <div class="timeline-card">
+                                            <div class="timeline-arrow" aria-hidden="true"></div>
                                             <div class="item-header">
                                                 <h3>{item.title}</h3>
                                                 <span class="year">
@@ -351,8 +353,7 @@ const personSchema = {
                 margin-bottom: var(--space-lg);
             }
 
-            .timeline-item::before {
-                content: "";
+            .timeline-dot {
                 position: absolute;
                 left: calc(-1 * var(--space-lg) - 5px);
                 top: 24px; /* Align with card top/header roughly */
@@ -380,7 +381,7 @@ const personSchema = {
             }
 
             /* Arrow pointing to timeline */
-            .timeline-card::before {
+            .timeline-arrow {
                 content: "";
                 position: absolute;
                 top: 20px;
@@ -393,7 +394,7 @@ const personSchema = {
                 transform: rotate(45deg);
             }
 
-            .timeline-card:hover::before {
+            .timeline-card:hover .timeline-arrow {
                 border-color: var(--color-primary); /* Match hover border */
             }
 
