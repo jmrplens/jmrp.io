@@ -271,7 +271,7 @@ jobs:
                 const statusText = isSuccess ? '**All accessibility tests passed!**' : '**Accessibility violations detected**';
                 
                 commentBody = `## ♿ Accessibility Test Results (Axe-core)\n\n${statusIcon} ${statusText}\n\n`;
-                commentBody += `**Summary:**\n- Total Pages Tested: **${summary.totalPages}**\n- Passed: ${summary.passed}\n- Failed: ${summary.failed}\n\n`;
+                commentBody += `**Summary:**\n- Total Pages Tested: **${summary.totalPages}**\n- Passed: ${summary.passed}\n- Failed: ${summary.failed}\n- Review Needed (Incomplete): ${summary.incomplete || 0} 🔍\n\n`;
                 
                 if (!isSuccess) {
                   commentBody += `### ❌ Failed Pages\n`;

@@ -82,6 +82,7 @@ test.describe("Accessibility Tests (Axe-core WCAG 2.1 AA)", () => {
     const results: Array<{
       page: string;
       violations: number;
+      incomplete: number;
       violationIds?: string[];
       reportPath: string;
     }> = [];
@@ -142,6 +143,7 @@ test.describe("Accessibility Tests (Axe-core WCAG 2.1 AA)", () => {
       results.push({
         page: `${pageInfo.name} (${pageInfo.url})`,
         violations: accessibilityScanResults.violations.length,
+        incomplete: accessibilityScanResults.incomplete.length,
         violationIds: accessibilityScanResults.violations.map((v) => v.id),
         reportPath: reportFileName,
       });
@@ -159,12 +161,16 @@ test.describe("Accessibility Tests (Axe-core WCAG 2.1 AA)", () => {
     console.log(
       `   Pages with violations: ${results.filter((r) => r.violations > 0).length}`,
     );
+    console.log(
+      `   Pages requiring review: ${results.filter((r) => r.incomplete > 0).length}`,
+    );
 
     // Save results to file for CI reporting
     const summary = {
       totalPages: results.length,
       passed: results.filter((r) => r.violations === 0).length,
       failed: results.filter((r) => r.violations > 0).length,
+      incomplete: results.filter((r) => r.incomplete > 0).length,
       pages: results,
     };
     fs.writeFileSync(
@@ -194,6 +200,7 @@ test.describe("Accessibility Tests (Axe-core WCAG 2.1 AA)", () => {
         tr:hover { background: #f9f9f9; }
         .status-pass { color: #27ae60; font-weight: bold; }
         .status-fail { color: #e74c3c; font-weight: bold; }
+        .status-review { color: #f39c12; font-weight: bold; }
         .btn { display: inline-block; padding: 0.5rem 1rem; background: #3498db; color: white; text-decoration: none; border-radius: 4px; font-size: 0.9rem; transition: background 0.2s; }
         .btn:hover { background: #2980b9; }
     </style>
@@ -214,6 +221,10 @@ test.describe("Accessibility Tests (Axe-core WCAG 2.1 AA)", () => {
                 <span class="stat-value ${results.filter((r) => r.violations > 0).length > 0 ? "status-fail" : "status-pass"}">${results.filter((r) => r.violations > 0).length}</span>
                 <span class="stat-label">Failed</span>
             </div>
+            <div class="stat-item">
+                <span class="stat-value status-review">${results.filter((r) => r.incomplete > 0).length}</span>
+                <span class="stat-label">Review Needed</span>
+            </div>
         </div>
         <p>Generated on: ${new Date().toLocaleString()}</p>
     </div>
@@ -222,6 +233,7 @@ test.describe("Accessibility Tests (Axe-core WCAG 2.1 AA)", () => {
             <tr>
                 <th>Page Name & URL</th>
                 <th>Violations</th>
+                <th>Incomplete (Review)</th>
                 <th>Report</th>
             </tr>
         </thead>
@@ -232,6 +244,7 @@ test.describe("Accessibility Tests (Axe-core WCAG 2.1 AA)", () => {
                 <tr>
                     <td>${r.page}</td>
                     <td><span class="${r.violations === 0 ? "status-pass" : "status-fail"}">${r.violations}</span></td>
+                    <td><span class="${r.incomplete === 0 ? "" : "status-review"}">${r.incomplete}</span></td>
                     <td><a href="${r.reportPath}" class="btn">View Details</a></td>
                 </tr>
             `,
