@@ -1,47 +1,27 @@
-# jmrp.io - Personal R&D Portfolio
+# JMRP.io (Astro v5)
 
-<!-- Project & Status -->
+[![CI](https://github.com/jmrplens/jmrp.io/actions/workflows/ci.yml/badge.svg)](https://github.com/jmrplens/jmrp.io/actions/workflows/ci.yml)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=jmrplens_jmrp.io&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=jmrplens_jmrp.io)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Astro](https://img.shields.io/badge/Built_with-Astro-ff5a1f.svg)](https://astro.build)
 
-![Astro](https://img.shields.io/badge/astro-5.16.6-orange?style=flat&logo=astro)
-![License](https://img.shields.io/badge/license-MIT-blue.svg)
-[![Dependabot](https://badgen.net/badge/Dependabot/enabled/green?icon=dependabot)](https://github.com/jmrplens/jmrp.io/pulls)
+This is the source code for my personal website, **[jmrp.io](https://jmrp.io)**, rebuilt with **Astro 5**. It features a high-performance static architecture, robust security headers (including a strict CSP), and a focus on accessibility and modern web standards.
 
-<!-- Code Quality -->
+## 📑 Table of Contents
 
-[![CI Status](https://github.com/jmrplens/jmrp.io/actions/workflows/ci.yml/badge.svg)](https://github.com/jmrplens/jmrp.io/actions/workflows/ci.yml)
-[![SonarQube Status](https://sonarcloud.io/api/project_badges/measure?project=jmrplens_jmrp.io&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=jmrplens_jmrp.io)
+- [Features](#-features)
+- [Tech Stack](#-tech-stack)
+- [Project Structure](#-project-structure)
+- [Getting Started](#-getting-started)
+- [Quality Assurance](#-quality-assurance)
+- [Deployment](#-deployment)
+- [Security & Nginx](#-security--nginx)
+- [LaTeX CV Compilation](#-latex-cv-compilation)
 
-<!-- Performance & Security -->
-
-[![Mozilla Observatory Grade](https://img.shields.io/badge/Mozilla%20Observatory-145%2F100-brightgreen?style=flat-square&logo=mozilla)](https://observatory.mozilla.org/analyze/jmrp.io)
-![PageSpeed Desktop](https://img.shields.io/badge/PageSpeed%20Desktop-100-brightgreen)
-![PageSpeed Mobile](https://img.shields.io/badge/PageSpeed%20Mobile-100-brightgreen)
-
-> **"Steal this website"**
->
-> I believe in the open web. You are free (and encouraged!) to copy, modify, and reuse this project for your own portfolio or website. The code is open source under the MIT license. Go ahead, clone it, break it, and make it yours.
-
-High-performance, accessibility-first portfolio website for **José Manuel Requena Plens**, R&D Engineer. Built with **Astro**, **Preact**, and **TypeScript**, designed to be fast, secure, and easy to configure.
+---
 
 ## 🚀 Features
 
-- **Performance First**: Core Web Vitals optimized. Zero CLS, LCP < 1.0s.
-- **Security Hardened**:
-  - Strict Content Security Policy (CSP) with `nonce` generation.
-  - Subresource Integrity (SRI) for all scripts and styles.
-  - Security Headers (HSTS, X-Frame-Options, X-Content-Type-Options).
-  - **Trusted Types** support for DOM XSS protection.
-  - Real-time **CSP violation reporting** via Telegram (see [docs](docs/CSP_REPORTER.md)).
-  - A+ rating on Mozilla Observatory.
-- **Accessible**:
-  - **100/100 Lighthouse Accessibility** score on all pages.
-  - **WCAG 2.1 AA compliant** (tested with Axe-core in CI).
-  - Semantic HTML structure with proper ARIA attributes.
-  - High contrast ratios (7:1 for text, 4.5:1 minimum).
-  - Keyboard navigation with visible focus indicators.
-  - Reduced motion support (`prefers-reduced-motion`).
-  - Unique `aria-labels` for all interactive elements.
-  - Automated accessibility testing in CI (fails build on violations).
 - **Performance**:
   - **100/100 Google PageSpeed** (Desktop & Mobile).
   - **Core Web Vitals**: LCP < 0.8s, CLS < 0.031, FCP < 0.3s.
@@ -50,203 +30,132 @@ High-performance, accessibility-first portfolio website for **José Manuel Reque
   - **Image Optimization**: WebP format with responsive sizing.
   - **Font Loading**: Optimized with fallback fonts and metric overrides.
   - **CSS Inlining**: Critical CSS inlined, async loading for non-critical.
+- **Accessibility**:
+  - **Axe-core Testing**: Automated WCAG 2.1 AA validation via Playwright for all pages.
+  - **HTML5 Compliance**: Strict HTML validation (`html-validate`).
+  - **Lighthouse CI**: Accessibility auditing on every commit.
+  - **Inclusive Design**: Keyboard navigation, focus indicators, and unique `aria-labels`.
+  - **Motion Sensitivity**: Respects `prefers-reduced-motion` settings.
+- **Content**:
+  - **Blog**: Technical articles with MDX support.
+  - **RSS Feed**: Automatic generation of `rss.xml` for blog posts.
+  - **CV Generation**: Automated LaTeX compilation for PDF resumes.
 - **Themeable**: Light/Dark mode with system preference detection.
 - **Configurable**: Centralized configuration via YAML files (`site.yml`, `socials.yml`, `cv.yml`).
 - **SEO Optimized**: Dynamic Schema.org (JSON-LD), Open Graph, and Twitter Cards.
-- **LaTeX CV**: Automated generation of PDF CVs (English & Spanish) from LaTeX sources.
 
 ## 🛠️ Tech Stack
 
 - **Framework**: [Astro](https://astro.build/)
-- **UI**: [Preact](https://preactjs.com/) (for interactive islands)
-- **Styling**: Native CSS (Variables, Flexbox/Grid)
-- **Icons**: [Astro Icon](https://www.astroicon.dev/)
-- **Search**: [Pagefind](https://pagefind.app/)
-- **Server**: Nginx
+- **UI Components**: [Preact](https://preactjs.com/)
+- **Styling**: Native CSS (Variables, Nesting) & Astro Scoped Styles
+- **Icons**: [Iconify](https://icon-sets.iconify.design/)
+- **Testing**: [Playwright](https://playwright.dev/) & [Lighthouse](https://developers.google.com/web/tools/lighthouse)
+- **CI/CD**: GitHub Actions
 
 ## 📂 Project Structure
 
-```text
+<details>
+<summary>Click to expand folder structure</summary>
+
+```
 /
-├── .github/workflows/ # CI/CD (Build, Quality, SonarQube)
-├── cv_latex/          # LaTeX source files for CV
-├── dist/              # Production build output
-├── docs/              # Documentation (e.g., CSP Reporter)
-├── scripts/           # Post-build processing scripts
-│   ├── generate-csp-hashes.mjs  # Updates Nginx CSP config
-│   ├── generate-sri-hashes.mjs  # Injects SRI hashes into HTML
-│   └── setup-sitemap.mjs        # Sitemap configuration
 ├── src/
-│   ├── assets/        # Images and icons
-│   ├── components/    # Astro & Preact components
-│   ├── content/       # MDX Blog posts
-│   ├── data/          # YAML Configuration
-│   ├── layouts/       # Page layouts
-│   ├── pages/         # Routes
-│   └── styles/        # Global CSS
-└── astro.config.mjs   # Astro configuration
+│   ├── components/   # Reusable Astro & Preact components
+│   ├── content/      # Content Collections (Blog posts)
+│   ├── data/         # YAML Data files (Site config, CV, Socials)
+│   ├── layouts/      # Page layouts (Base, etc.)
+│   ├── pages/        # File-based routing
+│   ├── styles/       # Global CSS & Fonts
+│   └── utils/        # Helper functions
+├── public/           # Static assets (images, fonts, robots.txt)
+├── scripts/          # Build & Maintenance scripts
+├── tests/            # Playwright E2E & Accessibility tests
+├── cv_latex/         # LaTeX source files for CV
+├── astro.config.mjs  # Astro configuration
+└── package.json      # Dependencies & Scripts
 ```
 
-## 🔄 CI/CD Pipeline
+</details>
 
-Our CI/CD pipeline ensures code quality, security, and performance through automated testing on every commit and pull request.
-
-```mermaid
-graph LR
-    A[Push/PR] --> B{Stage 1: Parallel Analysis}
-
-    B --> C[Lint & Type Check]
-    B --> D[Link Checker]
-    B --> E[Spell Checker]
-    B --> F[CodeQL Security]
-    B --> G[SonarCloud]
-    B --> H[Build Artifact]
-
-    H --> I{Stage 2: Post-Build Tests}
-
-    I --> J[Lighthouse Performance]
-    I --> K[Accessibility Axe]
-    I --> L[Bundle Size Check]
-
-    J --> M[PR Comment]
-    K --> M
-    L --> M
-
-    style A fill:#e1f5ff
-    style B fill:#fff3cd
-    style I fill:#fff3cd
-    style M fill:#d4edda
-```
-
-### What Gets Tested
-
-#### Stage 1: Source Code Analysis (Parallel)
-
-- **Lint & Type Check**: Astro check, Prettier formatting, npm security audit
-- **Link Checker**: Validates all internal/external links (Lychee with caching)
-- **Spell Checker**: Catches typos in code and content (Typos CLI)
-- **CodeQL**: Advanced security vulnerability scanning for JavaScript/TypeScript
-- **SonarCloud**: Code quality, maintainability, security hotspots, and code smells
-- **Build**: Compiles Astro site + Pagefind search index
-
-#### Stage 2: Built Artifact Testing (Post-Build)
-
-- **Lighthouse**: Performance, accessibility, SEO, and best practices (all pages)
-- **Accessibility**: WCAG 2.1 AA compliance with Axe-core (fails build on violations)
-- **Bundle Size**: Tracks JavaScript/CSS bundle sizes with historical comparison
-
-#### Continuous
-
-- **Release Drafter**: Auto-generates release notes from merged PRs
-
-## 🚀 Getting Started
+## 🏁 Getting Started
 
 ### Prerequisites
 
 - Node.js (v18+)
-- pnpm (`npm install -g pnpm`)
+- pnpm
 
 ### Installation
 
-1.  **Clone the repository:**
+```bash
+# Clone the repository
+git clone https://github.com/jmrplens/jmrp.io.git
 
-    ```bash
-    git clone https://github.com/jmrplens/jmrp.io.git
-    cd jmrp.io
-    ```
+# Install dependencies
+pnpm install
 
-2.  **Install dependencies:**
+# Start development server
+pnpm run dev
+```
 
-    ```bash
-    pnpm install
-    ```
-
-3.  **Start development server:**
-    ```bash
-    pnpm run dev
-    ```
-    Visit `http://localhost:4321`.
-
-## 🏗️ Building & Deployment
-
-### Production Build
-
-To create a production build:
+### Build
 
 ```bash
 pnpm run build
 ```
 
-**What happens during build:**
+This command will:
+1. Fetch latest avatars.
+2. Build the Astro site.
+3. Index content for search.
+4. Process inline styles and extract assets.
+5. Generate SRI and CSP hashes.
 
-1.  **Astro Build**: Compiles the site to static HTML/CSS/JS in `dist/`.
-2.  **Pagefind**: Indexes the site for search.
-3.  **Post-Processing**:
-    - `extract-css-data-uris.mjs`: Optimizes CSS.
-    - `extract-html-img-data-uris.mjs`: Optimizes inline images.
-    - `generate-sri-hashes.mjs`: Calculates SHA-384 hashes for assets and injects `integrity="..."`.
-    - `generate-csp-hashes.mjs`: Scans for inline scripts/styles, calculates SHA-256 hashes, and updates the Nginx `security_headers.conf` file to enforce strict CSP.
+## 🧪 Quality Assurance
 
-### Nginx Configuration
+This project employs a rigorous testing pipeline to ensure quality and compliance.
 
-This project relies on Nginx for serving the static files and enforcing security policies. Below are example configurations demonstrating how to serve the site with high performance and security.
+### Accessibility Testing
 
-<details>
-<summary><strong>📄 nginx.conf (Main Configuration)</strong></summary>
+We perform comprehensive accessibility checks:
+*   **Axe-core (via Playwright)**: Scans every page against **WCAG 2.1 AA** and **Best Practice** rules. It generates detailed HTML reports (`accessibility-report/`) and fails the build on any violation.
+*   **Lighthouse CI**: Runs Lighthouse audits on all pages, enforcing high scores for Accessibility, Performance, and SEO.
+*   **Manual Checks**: The pipeline flags "incomplete" checks (e.g., complex color contrast) for manual review.
 
-```nginx
-user nginx;
-worker_processes auto;
-pid /run/nginx.pid;
+### Content Validation
 
-events {
-    worker_connections 1024;
-}
+*   **HTML Validation**: `html-validate` checks generated HTML for standard compliance and semantic correctness.
+*   **RSS Validation**: `validate-rss.mjs` ensures the generated `rss.xml` strictly follows RSS 2.0 specifications.
+*   **Schema.org**: `validate-schema.mjs` verifies the structure of JSON-LD data for SEO.
 
-http {
-    include       mime.types;
-    default_type  application/octet-stream;
+## 🚀 Deployment
 
-    # Performance
-    sendfile on;
-    tcp_nopush on;
-    tcp_nodelay on;
-    keepalive_timeout 65;
-    types_hash_max_size 2048;
+The site is built as a static folder (`dist/`) and can be deployed to any static host. I use **Docker** with **Nginx**.
 
-    # Compression (Brotli/Gzip)
-    gzip on;
-    gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;
+### Docker
 
-    # Include modular configs
-    include /etc/nginx/conf.d/*.conf;
-    include /etc/nginx/sites-enabled/*;
-}
+```bash
+docker build -t jmrp-io .
+docker run -p 8080:80 jmrp-io
 ```
 
-</details>
+## 🔒 Security & Nginx
+
+The project includes advanced Nginx configuration for security headers and asset delivery.
 
 <details>
-<summary><strong>🌐 example.com.conf (Site Configuration)</strong></summary>
+<summary><strong>📄 nginx.conf (Snippet)</strong></summary>
 
 ```nginx
 server {
     listen 80;
-    listen [::]:80;
-    server_name example.com;
-    return 301 https://$host$request_uri;
-}
-
-server {
-    listen 443 ssl http2;
-    listen [::]:443 ssl http2;
-    server_name example.com;
-    root /var/www/example.com/dist;
+    server_name localhost;
+    root /usr/share/nginx/html;
     index index.html;
 
-    # SSL Certificates (Managed by Certbot or Cloudflare)
-    ssl_certificate /etc/ssl/certs/example.com.pem;
-    ssl_certificate_key /etc/ssl/private/example.com.key;
+    # Gzip Compression
+    gzip on;
+    gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;
 
     # Logging
     access_log /var/log/nginx/example.com.access.log;
@@ -351,35 +260,3 @@ The project includes LaTeX source files to generate professional PDF CVs.
 cd cv_latex
 latexmk -lualatex -interaction=nonstopmode CV_RequenaPlensJoseManuel_ENG.tex CV_RequenaPlensJoseManuel_SPA.tex
 ```
-
-This generates `CV_RequenaPlensJoseManuel_ENG.pdf` and `CV_RequenaPlensJoseManuel_SPA.pdf`.
-
-## ♿ Accessibility
-
-We take accessibility seriously:
-
-- **Contrast**: Colors are checked against WCAG AA standards.
-- **Semantic HTML**: Proper use of `<main>`, `<article>`, `<nav>`, etc.
-- **Screen Readers**: `aria-label` used on icon-only buttons; decorative elements hidden with `aria-hidden="true"`.
-- **Keyboard Navigation**: Visible focus rings and logical tab order.
-- **Reduced Motion**: Respects `prefers-reduced-motion` media query.
-
-## 📚 References & Resources
-
-Here are some resources that guided the development of this project:
-
-- **Framework**: [Astro Documentation](https://docs.astro.build/)
-- **Security**:
-  - [MDN: Content Security Policy (CSP)](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP)
-  - [MDN: Subresource Integrity (SRI)](https://developer.mozilla.org/en-US/docs/Web/Security/Subresource_Integrity)
-  - [Nginx Documentation](https://nginx.org/en/docs/)
-  - [Mozilla Observatory](https://observatory.mozilla.org/)
-- **Accessibility**:
-  - [W3C Web Accessibility Initiative (WAI)](https://www.w3.org/WAI/)
-  - [A11y Project](https://www.a11yproject.com/)
-
-## 📄 License
-
-This project is open source and available under the **MIT License**.
-
-See the [LICENSE](LICENSE) file for more info.
