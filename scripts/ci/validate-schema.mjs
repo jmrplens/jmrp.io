@@ -33,6 +33,11 @@ function validateSingleSchema(schema, prefix = "") {
   const errors = [];
   const warnings = [];
 
+  // Check if schema is just a string (e.g. "https://schema.org/Male") or null
+  if (!schema || typeof schema !== "object") {
+    return { errors, warnings };
+  }
+
   // Check @type
   if (!schema["@type"]) {
     errors.push(`${prefix ? prefix + ": " : ""}Missing @type property`);
@@ -43,28 +48,76 @@ function validateSingleSchema(schema, prefix = "") {
   const type = schema["@type"];
   const p = prefix ? `${prefix} (${type})` : type;
 
+  // Helpers
+  const checkUrl = (url, name) => {
+    try {
+      new URL(url);
+    } catch {
+      warnings.push(`${p}: Invalid URL for ${name}: "${url}"`);
+    }
+  };
+
+  const checkDate = (date, name) => {
+    if (isNaN(Date.parse(date))) {
+      errors.push(`${p}: Invalid ISO date for ${name}: "${date}"`);
+    }
+  };
+
+  const validateNested = (propName) => {
+    if (schema[propName]) {
+      if (Array.isArray(schema[propName])) {
+        schema[propName].forEach((item, i) => {
+          if (typeof item === "object") {
+            const res = validateSingleSchema(item, `${p}.${propName}[${i}]`);
+            errors.push(...res.errors);
+            warnings.push(...res.warnings);
+          }
+        });
+      } else if (typeof schema[propName] === "object") {
+        const res = validateSingleSchema(schema[propName], `${p}.${propName}`);
+        errors.push(...res.errors);
+        warnings.push(...res.warnings);
+      }
+    }
+  };
+
   switch (type) {
     case "Person":
-      if (!schema.name) errors.push(`${p}: Missing name`);
-      if (!schema.url) warnings.push(`${p}: Missing url`);
+      if (!schema.name && !schema["@id"]) errors.push(`${p}: Missing name`);
+      if (schema.url) checkUrl(schema.url, "url");
       break;
 
     case "WebSite":
-      if (!schema.name) errors.push(`${p}: Missing name`);
+      if (!schema.name && !schema["@id"]) errors.push(`${p}: Missing name`);
       if (!schema.url) errors.push(`${p}: Missing url`);
+      if (schema.url) checkUrl(schema.url, "url");
+      validateNested("publisher");
       break;
 
     case "BlogPosting":
     case "Article":
       if (!schema.headline) errors.push(`${p}: Missing headline`);
-      if (!schema.datePublished) warnings.push(`${p}: Missing datePublished`);
+      if (!schema.datePublished) {
+        warnings.push(`${p}: Missing datePublished`);
+      } else {
+        checkDate(schema.datePublished, "datePublished");
+      }
+      if (!schema.dateModified) {
+        // Optional but good
+      } else {
+        checkDate(schema.dateModified, "dateModified");
+      }
+
       if (!schema.author) warnings.push(`${p}: Missing author`);
-      // Google Recommendation: Image is required for many Rich Results
       if (!schema.image)
         warnings.push(
           `${p}: Missing image (recommended for Google Rich Results)`,
         );
       if (!schema.publisher) warnings.push(`${p}: Missing publisher`);
+
+      validateNested("author");
+      validateNested("publisher");
+      validateNested("mainEntityOfPage");
       break;
 
     case "BreadcrumbList":
@@ -72,14 +125,30 @@ function validateSingleSchema(schema, prefix = "") {
         errors.push(`${p}: Missing itemListElement`);
       } else if (!Array.isArray(schema.itemListElement)) {
         errors.push(`${p}: itemListElement must be an array`);
+      } else {
+        // Deep validate items
+        schema.itemListElement.forEach((item, i) => {
+          const itemP = `${p}.itemListElement[${i}]`;
+          if (!item["@type"] || item["@type"] !== "ListItem") {
+            errors.push(`${itemP}: Must be type ListItem`);
+          }
+          if (!item.position) errors.push(`${itemP}: Missing position`);
+          if (!item.name) errors.push(`${itemP}: Missing name`);
+          if (!item.item) errors.push(`${itemP}: Missing item URL`);
+          else checkUrl(item.item, "item");
+        });
       }
       break;
 
     case "SiteNavigationElement":
-      // Valid type, just needs name and url
       if (!schema.name) warnings.push(`${p}: Missing name`);
       if (!schema.url) warnings.push(`${p}: Missing url`);
+      if (schema.url) checkUrl(schema.url, "url");
       break;
+      
+    case "WebPage":
+        if (!schema["@id"]) warnings.push(`${p}: Missing @id`);
+        break;
   }
 
   return { errors, warnings };
