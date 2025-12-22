@@ -82,7 +82,10 @@ async function main() {
           modified = true;
           // Strip trailing slash for self-closing tags to avoid <tag attr / integrity="...">
           const cleanAttrs = attrs.replace(/\/\s*$/, "").trim();
-          return `<${tagName} ${cleanAttrs} integrity="${hash}" crossorigin="anonymous">`;
+
+          // Inject Nginx Nonce placeholder along with SRI
+          // Nginx sub_filter will replace NGINX_CSP_NONCE with the real request ID
+          return `<${tagName} ${cleanAttrs} nonce="NGINX_CSP_NONCE" integrity="${hash}" crossorigin="anonymous">`;
         } catch (err) {
           console.warn(`Error processing ${tagName} ${url}:`, err.message);
           return match;

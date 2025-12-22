@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import crypto from "node:crypto";
+import path from "node:path";
 import { glob } from "glob";
 import { exec } from "node:child_process";
 import { promisify } from "node:util";
@@ -42,7 +43,31 @@ function extractHashes(content, styleHashes, scriptHashes, imageDomains) {
     }
   }
 
-  // 3. Find external images (<img src="...">)
+  // 3. Find external local scripts (<script src="/...">) to support strict-dynamic
+  const scriptSrcRegex = /<script\s+([^>]*src=["']([^"']+)["'][^>]*)>/gi;
+  while ((match = scriptSrcRegex.exec(content)) !== null) {
+    const src = match[2];
+    // Only process local scripts (start with / and not //)
+    if (src.startsWith("/") && !src.startsWith("//")) {
+      try {
+        // Remove query parameters
+        const cleanSrc = src.split("?")[0];
+        const filePath = path.join(DIST_DIR, cleanSrc);
+        if (fs.existsSync(filePath)) {
+          const fileContent = fs.readFileSync(filePath);
+          const hash = crypto
+            .createHash("sha256")
+            .update(fileContent)
+            .digest("base64");
+          scriptHashes.add(`'sha256-${hash}'`);
+        }
+      } catch (err) {
+        console.warn(`Warning: Could not hash script ${src}: ${err.message}`);
+      }
+    }
+  }
+
+  // 4. Find external images (<img src="...">)
   const imgTagRegex = /<img[^>]+src="([^"]+)"/gi;
   while ((match = imgTagRegex.exec(content)) !== null) {
     const src = match[1];
@@ -81,8 +106,9 @@ function updateNginxConfig(styleHashString, scriptHashString, imgDomainString) {
 
   // Update script-src
   const scriptSrcRegex = /script-src 'self'[^;]*;/g;
-  const staticScriptParts =
-    "'self' 'nonce-$cspNonce' https://static.cloudflareinsights.com https://cloudflareinsights.com";
+  // strict-dynamic allows scripts trusted by hash/nonce to load other scripts
+  // 'self' is ignored by browsers supporting strict-dynamic, but kept for fallback
+  const staticScriptParts = "'self' 'strict-dynamic' 'nonce-$cspNonce'";
   const newScriptSrc = `script-src ${staticScriptParts} ${scriptHashString};`;
   if (scriptSrcRegex.test(nginxConfig)) {
     nginxConfig = nginxConfig.replaceAll(scriptSrcRegex, newScriptSrc);
@@ -97,6 +123,17 @@ function updateNginxConfig(styleHashString, scriptHashString, imgDomainString) {
     nginxConfig = nginxConfig.replaceAll(imgSrcRegex, imgSrcValue);
   } else {
     console.warn("Warning: Could not find img-src directive");
+  }
+
+  // Update connect-src to ensure Cloudflare Analytics works
+  const connectSrcRegex = /connect-src 'self'[^;]*;/g;
+  const staticConnectParts =
+    "'self' https://cloudflareinsights.com https://mstdn.jmrp.io https://matrix.jmrp.io https://potatomesh.jmrp.io https://*.jmrp.io https://api.github.com";
+  if (connectSrcRegex.test(nginxConfig)) {
+    nginxConfig = nginxConfig.replaceAll(
+      connectSrcRegex,
+      `connect-src ${staticConnectParts};`,
+    );
   }
 
   fs.writeFileSync(NGINX_CONF, nginxConfig);
