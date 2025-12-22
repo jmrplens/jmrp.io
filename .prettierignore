@@ -14,3 +14,4 @@ public/scripts/cf-beacon.js
 .DS_Store
 **/*.min.js
 **/*.svg
+src/content/posts/

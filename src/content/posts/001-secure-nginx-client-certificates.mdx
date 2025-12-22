@@ -84,16 +84,45 @@ Create a directory to store your keys safely and set up the CA database:
 Create a file named `openssl.cnf` in this directory. This file ensures that `openssl ca` (used for signing and revocation) knows where your files are.
 
 <FileContent filename="/etc/nginx/client-certs/openssl.cnf">
-  ```ini [ ca ] default_ca = CA_default [ CA_default ] dir = . database =
-  $dir/index.txt new_certs_dir = $dir/newcerts certificate = $dir/ca.crt serial
-  = $dir/serial private_key = $dir/ca.key default_days = 365 default_crl_days=
-  30 default_md = sha256 policy = policy_loose copy_extensions = copy [
-  policy_loose ] countryName = optional stateOrProvinceName = optional
-  localityName = optional organizationName = optional organizationalUnitName =
-  optional commonName = supplied emailAddress = optional [ req ]
-  distinguished_name = req_distinguished_name prompt = no [
-  req_distinguished_name ] C = ES ST = Valencia L = Valencia O = JMRP-IO-LAB OU
-  = IT Services CN = JMRP-IO-LAB Root CA ```
+```ini
+[ ca ]
+default_ca = CA_default
+
+[ CA_default ]
+dir = .
+database = $dir/index.txt
+new_certs_dir = $dir/newcerts
+certificate = $dir/ca.crt
+serial = $dir/serial
+private_key = $dir/ca.key
+default_days = 365
+default_crl_days = 30
+default_md = sha256
+policy = policy_loose
+copy_extensions = copy
+
+[ policy_loose ]
+countryName = optional
+stateOrProvinceName = optional
+localityName = optional
+organizationName = optional
+organizationalUnitName = optional
+commonName = supplied
+emailAddress = optional
+
+[ req ]
+distinguished_name = req_distinguished_name
+prompt = no
+
+[ req_distinguished_name ]
+C = ES
+ST = Valencia
+L = Valencia
+O = JMRP-IO-LAB
+OU = IT Services
+CN = JMRP-IO-LAB Root CA
+
+````
 </FileContent>
 
 ### 2. Generate the CA Key and Certificate
@@ -104,34 +133,42 @@ Now generate the root CA, which consists of a private key (`ca.key`) and a publi
 
 <Collapsible summary="Example ca.key content">
   <FileContent filename="ca.key" icon="mdi:key-variant">
-    ```text -----BEGIN PRIVATE KEY----- (Your unique, long, private key text
-    will be here) ... -----END PRIVATE KEY----- ```
+```text
+-----BEGIN PRIVATE KEY-----
+(Your unique, long, private key text will be here)
+...
+-----END PRIVATE KEY-----
+````
+
   </FileContent>
 </Collapsible>
 
 <Collapsible summary="Example ca.crt content">
   <FileContent filename="ca.crt" icon="mdi:certificate-outline">
-    ```text -----BEGIN CERTIFICATE-----
-    MIIDqTCCApGgAwIBAgIUGXK4wXR7k/+3vuH7tS7NsTS13OUwDQYJKoZIhvcNAQEL
-    BQAwfTELMAkGA1UEBhMCRVMxETAPBgNVBAgMCFZhbGVuY2lhMREwDwYDVQQHDAhW
-    YWxlbmNpYTEUMBIGA1UECgwLSk1SUC1JTy1MQUIxFDASBgNVBAsMC0lUIFNlcnZp
-    Y2VzMRwwGgYDVQQDDBNKTVJQLUlPLUxBQiBSb290IENBMB4XDTI1MTIxODAwNTkz
-    MFoXDTM1MTIxNjAwNTkzMFowfTELMAkGA1UEBhMCRVMxETAPBgNVBAgMCFZhbGVu
-    Y2lhMREwDwYDVQQHDAhWYWxlbmNpYTEUMBIGA1UECgwLSk1SUC1JTy1MQUIxFDAS
-    BgNVBAsMC0lUIFNlcnZpY2VzMRwwGgYDVQQDDBNKTVJQLUlPLUxBQiBSb290IENB
-    MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEArZ5az+q02GgeSIdkxfm/
-    NSRl5ymjIjj/z8oek7UaZNMuHERleKghRjmaQngCsfYsBjf9MWwiil9nN03gzcTt
-    TWftgBuSnvFTzmvGGyZ3nhLJPJufB1vv3253sDPT1+wfTK5/5oWGVqpAm0ZJkS7+
-    kQuXr/KpD0jeQlNRqVPZjD94IKqCoHyHIzwkboKi5LZ20S/SvhNWCdddxP+mdqxb
-    sapKxLvE9+9jkCbngNU1Stglw4JxUesHvU5XgHl98tfGmedFy3NyAdFdVGhC9gzD
-    TTwLeu+LFn1nPcwKwz7pnregEd4XcDJRYWwhbEMJwpaHPVyZu0a3RfA3HitqD7fG
-    UQIDAQABoyEwHzAdBgNVHQ4EFgQUxM0JVaHLJ8EAthfjrrVlGzE6BswwDQYJKoZI
-    hvcNAQELBQADggEBAJw4N1HXIqjZp1fUiARAFjM/UqeKLwuON7oJWMHcqTLq3don
-    hbqrvif80STPzVdvIcMvfa+mjMAAkHETpj1GWDZcQ8TL0wAUsR1gjiRDrg1kZBx+
-    V/fo+WmEQDbn6581e0g7NxBwTXkoHT3bF4rbVcIPmx9/YfkcSQm8GKcyKan6TcZ7
-    emZW46QBbiohOw1znFmDaI+NHZoMzIYQLs1zP8td+xl1TTxbDekqp+jS9GYwBqHa
-    QOa0k/ZXcjFqpTopvlAb8AA8XsxVDcmAHfSItB8qNxwL8FnIIvlj/Yg9OGxraArJ
-    2fXleID8q60zmJik0fcTyVoBdEg6KWVAykEia+E= -----END CERTIFICATE----- ```
+```text
+-----BEGIN CERTIFICATE-----
+MIIDqTCCApGgAwIBAgIUGXK4wXR7k/+3vuH7tS7NsTS13OUwDQYJKoZIhvcNAQEL
+BQAwfTELMAkGA1UEBhMCRVMxETAPBgNVBAgMCFZhbGVuY2lhMREwDwYDVQQHDAhW
+YWxlbmNpYTEUMBIGA1UECgwLSk1SUC1JTy1MQUIxFDASBgNVBAsMC0lUIFNlcnZp
+Y2VzMRwwGgYDVQQDDBNKTVJQLUlPLUxBQiBSb290IENBMB4XDTI1MTIxODAwNTkz
+MFoXDTM1MTIxNjAwNTkzMFowfTELMAkGA1UEBhMCRVMxETAPBgNVBAgMCFZhbGVu
+Y2lhMREwDwYDVQQHDAhWYWxlbmNpYTEUMBIGA1UECgwLSk1SUC1JTy1MQUIxFDAS
+BgNVBAsMC0lUIFNlcnZpY2VzMRwwGgYDVQQDDBNKTVJQLUlPLUxBQiBSb290IENB
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEArZ5az+q02GgeSIdkxfm/
+NSRl5ymjIjj/z8oek7UaZNMuHERleKghRjmaQngCsfYsBjf9MWwiil9nN03gzcTt
+TWftgBuSnvFTzmvGGyZ3nhLJPJufB1vv3253sDPT1+wfTK5/5oWGVqpAm0ZJkS7+
+kQuXr/KpD0jeQlNRqVPZjD94IKqCoHyHIzwkboKi5LZ20S/SvhNWCdddxP+mdqxb
+sapKxLvE9+9jkCbngNU1Stglw4JxUesHvU5XgHl98tfGmedFy3NyAdFdVGhC9gzD
+TTwLeu+LFn1nPcwKwz7pnregEd4XcDJRYWwhbEMJwpaHPVyZu0a3RfA3HitqD7fG
+UQIDAQABoyEwHzAdBgNVHQ4EFgQUxM0JVaHLJ8EAthfjrrVlGzE6BswwDQYJKoZI
+hvcNAQELBQADggEBAJw4N1HXIqjZp1fUiARAFjM/UqeKLwuON7oJWMHcqTLq3don
+hbqrvif80STPzVdvIcMvfa+mjMAAkHETpj1GWDZcQ8TL0wAUsR1gjiRDrg1kZBx+
+V/fo+WmEQDbn6581e0g7NxBwTXkoHT3bF4rbVcIPmx9/YfkcSQm8GKcyKan6TcZ7
+emZW46QBbiohOw1znFmDaI+NHZoMzIYQLs1zP8td+xl1TTxbDekqp+jS9GYwBqHa
+QOa0k/ZXcjFqpTopvlAb8AA8XsxVDcmAHfSItB8qNxwL8FnIIvlj/Yg9OGxraArJ
+2fXleID8q60zmJik0fcTyVoBdEg6KWVAykEia+E=
+-----END CERTIFICATE-----
+```
   </FileContent>
 </Collapsible>
 
@@ -180,8 +217,7 @@ Certificate is to be certified until Dec 18 00:59:34 2026 GMT (365 days)
 
 Write out database with 1 new entries
 Database updated
-
-````
+```
 </TerminalOutput>
 
 This process creates `user.key` and `user.crt`.
@@ -193,16 +229,18 @@ This process creates `user.key` and `user.crt`.
 (A different unique, long, private key text will be here)
 ...
 -----END PRIVATE KEY-----
-````
-
+```
 </FileContent>
 </Collapsible>
 
 <Collapsible summary="Example user.crt content">
   <FileContent filename="user.crt" icon="mdi:certificate-outline">
-    ```text -----BEGIN CERTIFICATE----- (The text for the user's certificate
-    will be here. It will be signed by your "JMRP-IO-LAB Root CA".) ... -----END
-    CERTIFICATE----- ```
+```text
+-----BEGIN CERTIFICATE-----
+(The text for the user's certificate will be here. It will be signed by your "JMRP-IO-LAB Root CA".)
+...
+-----END CERTIFICATE-----
+```
   </FileContent>
 </Collapsible>
 
