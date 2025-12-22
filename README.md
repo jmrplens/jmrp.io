@@ -105,6 +105,7 @@ pnpm run build
 ```
 
 This command will:
+
 1. Fetch latest avatars.
 2. Build the Astro site.
 3. Index content for search.
@@ -118,15 +119,16 @@ This project employs a rigorous testing pipeline to ensure quality and complianc
 ### Accessibility Testing
 
 We perform comprehensive accessibility checks:
-*   **Axe-core (via Playwright)**: Scans every page against **WCAG 2.1 AA** and **Best Practice** rules. It generates detailed HTML reports (`accessibility-report/`) and fails the build on any violation.
-*   **Lighthouse CI**: Runs Lighthouse audits on all pages, enforcing high scores for Accessibility, Performance, and SEO.
-*   **Manual Checks**: The pipeline flags "incomplete" checks (e.g., complex color contrast) for manual review.
+
+- **Axe-core (via Playwright)**: Scans every page against **WCAG 2.1 AA** and **Best Practice** rules. It generates detailed HTML reports (`accessibility-report/`) and fails the build on any violation.
+- **Lighthouse CI**: Runs Lighthouse audits on all pages, enforcing high scores for Accessibility, Performance, and SEO.
+- **Manual Checks**: The pipeline flags "incomplete" checks (e.g., complex color contrast) for manual review.
 
 ### Content Validation
 
-*   **HTML Validation**: `html-validate` checks generated HTML for standard compliance and semantic correctness.
-*   **RSS Validation**: `validate-rss.mjs` ensures the generated `rss.xml` strictly follows RSS 2.0 specifications.
-*   **Schema.org**: `validate-schema.mjs` verifies the structure of JSON-LD data for SEO.
+- **HTML Validation**: `html-validate` checks generated HTML for standard compliance and semantic correctness.
+- **RSS Validation**: `validate-rss.mjs` ensures the generated `rss.xml` strictly follows RSS 2.0 specifications.
+- **Schema.org**: `validate-schema.mjs` verifies the structure of JSON-LD data for SEO.
 
 ## 🚀 Deployment
 
