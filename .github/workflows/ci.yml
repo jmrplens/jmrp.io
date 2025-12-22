@@ -267,12 +267,13 @@ jobs:
                   summary.pages
                     .filter((p) => p.violations > 0)
                     .forEach((p) => {
-                      commentBody += `- ${p.page} (${p.violations} violations)\n`;
+                      const rules = p.violationIds ? `\n   - **Rules:** \`${p.violationIds.join(', ')}\`` : '';
+                      commentBody += `- **${p.page}** (${p.violations} violations)${rules}\n`;
                     });
-                  commentBody += `\nPlease review the detailed HTML report in the artifacts.\n\n`;
+                  commentBody += `\n📸 **Screenshots and detailed HTML reports are available in the 'axe-accessibility-report' artifact.**\n\n`;
                 }
 
-                commentBody += `**Standards:** WCAG 2.1 AA compliance\n`;
+                commentBody += `**Standards:** WCAG 2.1/2.2 AA & Best Practices\n`;
                 commentBody += `📊 [View detailed HTML report](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`;
                 
               } else {

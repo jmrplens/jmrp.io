@@ -88,7 +88,13 @@ test.describe("Accessibility Tests (Axe-core WCAG 2.1 AA)", () => {
       const accessibilityScanResults = await new AxeBuilder({
         page: browserPage,
       })
-        .withTags(["wcag2a", "wcag2aa", "wcag21aa", "best-practice"])
+        .withTags([
+          "wcag2a",
+          "wcag2aa",
+          "wcag21aa",
+          "wcag22aa",
+          "best-practice",
+        ])
         .analyze();
 
       // Generate HTML Report
@@ -131,6 +137,7 @@ test.describe("Accessibility Tests (Axe-core WCAG 2.1 AA)", () => {
       results.push({
         page: `${pageInfo.name} (${pageInfo.url})`,
         violations: accessibilityScanResults.violations.length,
+        violationIds: accessibilityScanResults.violations.map((v) => v.id),
       });
 
       // Fail immediately if violations found
