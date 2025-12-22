@@ -30,6 +30,8 @@ High-performance, accessibility-first portfolio website for **José Manuel Reque
   - Strict Content Security Policy (CSP) with `nonce` generation.
   - Subresource Integrity (SRI) for all scripts and styles.
   - Security Headers (HSTS, X-Frame-Options, X-Content-Type-Options).
+  - **Trusted Types** support for DOM XSS protection.
+  - Real-time **CSP violation reporting** via Telegram (see [docs](docs/CSP_REPORTER.md)).
   - A+ rating on Mozilla Observatory.
 - **Accessible**:
   - **100/100 Lighthouse Accessibility** score on all pages.
@@ -69,6 +71,7 @@ High-performance, accessibility-first portfolio website for **José Manuel Reque
 ├── .github/workflows/ # CI/CD (Build, Quality, SonarQube)
 ├── cv_latex/          # LaTeX source files for CV
 ├── dist/              # Production build output
+├── docs/              # Documentation (e.g., CSP Reporter)
 ├── scripts/           # Post-build processing scripts
 │   ├── generate-csp-hashes.mjs  # Updates Nginx CSP config
 │   ├── generate-sri-hashes.mjs  # Injects SRI hashes into HTML
@@ -316,8 +319,9 @@ add_header Referrer-Policy "strict-origin-when-cross-origin" always;
 
 # Content Security Policy (CSP)
 # - 'nonce-$cspNonce': Allows scripts with the matching nonce (injected by Nginx)
+# - 'strict-dynamic': Trust scripts loaded by trusted scripts
 # - hashes: Allow specific inline scripts/styles found during build
-add_header Content-Security-Policy "default-src 'none'; script-src 'self' 'nonce-$cspNonce' 'sha256-...' 'sha256-...'; style-src 'self' 'nonce-$cspNonce' 'sha256-...'; img-src 'self' https:; font-src 'self'; connect-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests;" always;
+add_header Content-Security-Policy "default-src 'none'; script-src 'self' 'strict-dynamic' 'nonce-$cspNonce' 'sha256-...' 'sha256-...'; style-src 'self' 'nonce-$cspNonce' 'sha256-...'; img-src 'self' https:; font-src 'self'; connect-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests; report-uri /csp-report; require-trusted-types-for 'script'; trusted-types default;" always;
 ```
 
 </details>
