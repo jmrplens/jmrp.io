@@ -241,7 +241,7 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: axe-accessibility-report
-          path: playwright-report/
+          path: accessibility-report/
           retention-days: 7
       - name: Post Accessibility Comment
         if: github.event_name == 'pull_request' && always()
@@ -249,47 +249,50 @@ jobs:
         with:
           script: |
             const fs = require('fs');
+            const path = require('path');
             let commentBody = '';
 
             try {
-              if (fs.existsSync('accessibility-summary.json')) {
-                const summary = JSON.parse(fs.readFileSync('accessibility-summary.json', 'utf8'));
+              const summaryPath = 'accessibility-report/accessibility-summary.json';
+              console.log('Checking for summary file at:', summaryPath);
+              
+              if (fs.existsSync('accessibility-report')) {
+                 console.log('accessibility-report contents:', fs.readdirSync('accessibility-report'));
+              } else {
+                 console.log('accessibility-report directory NOT found');
+              }
+
+              if (fs.existsSync(summaryPath)) {
+                const summary = JSON.parse(fs.readFileSync(summaryPath, 'utf8'));
+                // ... rest of logic
                 const isSuccess = summary.failed === 0;
                 
                 const statusIcon = isSuccess ? '✅' : '⚠️';
                 const statusText = isSuccess ? '**All accessibility tests passed!**' : '**Accessibility violations detected**';
                 
                 commentBody = `## ♿ Accessibility Test Results (Axe-core)\n\n${statusIcon} ${statusText}\n\n`;
-                commentBody += `**Summary:**\n- Total Pages Tested: **${summary.totalPages}**\n- Passed: ${summary.passed}\n- Failed: ${summary.failed}\n\n`;
+                commentBody += `**Summary:**\n- Total Pages Tested: **${summary.totalPages}**\n- Passed: ${summary.passed}\n- Failed: ${summary.failed}\n- Review Needed (Incomplete): ${summary.incomplete || 0} 🔍\n\n`;
                 
                 if (!isSuccess) {
                   commentBody += `### ❌ Failed Pages\n`;
                   summary.pages
                     .filter((p) => p.violations > 0)
                     .forEach((p) => {
-                      commentBody += `- ${p.page} (${p.violations} violations)\n`;
+                      const rules = p.violationIds ? `\n   - **Rules:** \`${p.violationIds.join(', ')}\`` : '';
+                      commentBody += `- **${p.page}** (${p.violations} violations)${rules}\n`;
                     });
-                  commentBody += `\nPlease review the detailed HTML report in the artifacts.\n\n`;
+                  commentBody += `\n📸 **Screenshots and detailed HTML reports are available in the 'axe-accessibility-report' artifact.**\n\n`;
                 }
 
-                commentBody += `**Standards:** WCAG 2.1 AA compliance\n`;
+                commentBody += `**Standards:** WCAG 2.1/2.2 AA & Best Practices\n`;
                 commentBody += `📊 [View detailed HTML report](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`;
                 
               } else {
-                throw new Error('Summary file not found');
+                throw new Error(`Summary file not found at ${summaryPath}`);
               }
             } catch (error) {
                console.log('Error generating comment:', error);
-               // Fallback if file not found or error
-               let status = '✅ **All accessibility tests passed!**';
-               let details = '\n\nAll pages are WCAG 2.1 AA compliant with no violations detected.';
-               
-               // Check process exit code from previous step via inspection? No, simpler to assume pass if we are here and no summary means maybe it didn't run or manual fallback? 
-               // Actually if playwright fails, the step "Run Axe accessibility tests" fails. "always()" ensures this runs.
-               // We can check the outcome of the 'Run Axe accessibility tests' step? No direct access here easily without more boilerplate.
-               // Let's stick to a generic fallback.
-               
-               commentBody = `## ♿ Accessibility Test Results (Axe-core)\n\n⚠️ **Test execution completed, but summary report was not found.**\n\nPlease check the [Actions logs](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}) to verify status.`;
+               commentBody = `## ♿ Accessibility Test Results (Axe-core)\n\n⚠️ **Test execution completed, but summary report was not found.**\n\nPlease check the [Actions logs](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}) to verify status.\n\nError: ${error.message}`;
             }
 
             github.rest.issues.createComment({

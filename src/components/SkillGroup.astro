@@ -67,15 +67,22 @@ const levelTextMap: Record<number, string> = {
                                 )}
                             </div>
                             {item.level && (
-                                <div class="skill-meta">
-                                    <div class="level-dots" title={levelLabel}>
+                                <div 
+                                    class="skill-meta" 
+                                    role="meter" 
+                                    aria-valuemin="0" 
+                                    aria-valuemax="5" 
+                                    aria-valuenow={score}
+                                    aria-label={`${item.name} level: ${levelLabel}`}
+                                >
+                                    <div class="level-dots" aria-hidden="true">
                                         {[1, 2, 3, 4, 5].map((i) => (
                                             <div
                                                 class={`dot ${i <= score ? "filled" : ""}`}
                                             />
                                         ))}
                                     </div>
-                                    <span class="level-text">{levelLabel}</span>
+                                    <span class="level-text" aria-hidden="true">{levelLabel}</span>
                                 </div>
                             )}
                             {(item.school || item.link) && (
@@ -172,18 +179,21 @@ const levelTextMap: Record<number, string> = {
 
     .level-dots {
         display: flex;
-        gap: 3px;
+        gap: 4px;
     }
 
     .dot {
-        width: 6px;
-        height: 6px;
+        width: 10px;
+        height: 10px;
         border-radius: 50%;
-        background-color: var(--color-border);
+        background-color: transparent;
+        border: 1.5px solid var(--color-border);
+        transition: all 0.2s ease;
     }
 
     .dot.filled {
         background-color: var(--color-primary); /* Uses theme color */
+        border-color: var(--color-primary);
     }
 
     .level-text {

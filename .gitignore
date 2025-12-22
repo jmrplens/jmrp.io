@@ -18,6 +18,8 @@ pnpm-debug.log*
 
 # test results
 test-results/
+playwright-report/
+accessibility-report/
 
 
 # environment variables
