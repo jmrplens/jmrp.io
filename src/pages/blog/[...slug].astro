@@ -19,6 +19,14 @@ import Code from "../../components/Code.astro";
 import TableOfContentsDrawer from "../../components/TableOfContentsDrawer.astro";
 import References from "../../components/References.astro";
 
+import fs from "fs";
+import path from "path";
+import yaml from "js-yaml";
+
+const sitePath = path.join(process.cwd(), "src/data/site.yml");
+const siteRaw = fs.readFileSync(sitePath, "utf8");
+const siteData = yaml.load(siteRaw) as any;
+
 export async function getStaticPaths() {
     const posts = await getCollection("posts");
     return posts.map((post) => ({
@@ -83,11 +91,15 @@ const articleSchema = [
         ).toISOString(),
         author: {
             "@type": "Person",
-            "@id": "https://jmrp.io/#person", // Reference global person
+            "@id": `${siteData.url}/#person`,
+            name: siteData.author,
+            url: siteData.url,
         },
         publisher: {
             "@type": "Person",
-            "@id": "https://jmrp.io/#person",
+            "@id": `${siteData.url}/#person`,
+            name: siteData.author,
+            url: siteData.url,
         },
         image: new URL(
             post.data.coverImage || "/default-blog-cover.jpg",

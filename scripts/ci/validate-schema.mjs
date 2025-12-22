@@ -83,12 +83,12 @@ function validateSingleSchema(schema, prefix = "") {
 
   switch (type) {
     case "Person":
-      if (!schema.name && !schema["@id"]) errors.push(`${p}: Missing name`);
+      if (!schema.name) errors.push(`${p}: Missing name`);
       if (schema.url) checkUrl(schema.url, "url");
       break;
 
     case "WebSite":
-      if (!schema.name && !schema["@id"]) errors.push(`${p}: Missing name`);
+      if (!schema.name) errors.push(`${p}: Missing name`);
       if (!schema.url) errors.push(`${p}: Missing url`);
       if (schema.url) checkUrl(schema.url, "url");
       validateNested("publisher");
@@ -145,10 +145,10 @@ function validateSingleSchema(schema, prefix = "") {
       if (!schema.url) warnings.push(`${p}: Missing url`);
       if (schema.url) checkUrl(schema.url, "url");
       break;
-      
+
     case "WebPage":
-        if (!schema["@id"]) warnings.push(`${p}: Missing @id`);
-        break;
+      if (!schema["@id"]) warnings.push(`${p}: Missing @id`);
+      break;
   }
 
   return { errors, warnings };
