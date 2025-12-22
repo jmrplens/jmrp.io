@@ -108,7 +108,7 @@ function updateNginxConfig(styleHashString, scriptHashString, imgDomainString) {
   const scriptSrcRegex = /script-src 'self'[^;]*;/g;
   // strict-dynamic allows scripts trusted by hash/nonce to load other scripts
   // 'self' is ignored by browsers supporting strict-dynamic, but kept for fallback
-  const staticScriptParts = "'self' 'nonce-$cspNonce'";
+  const staticScriptParts = "'self' 'strict-dynamic' 'nonce-$cspNonce'";
   const newScriptSrc = `script-src ${staticScriptParts} ${scriptHashString};`;
   if (scriptSrcRegex.test(nginxConfig)) {
     nginxConfig = nginxConfig.replaceAll(scriptSrcRegex, newScriptSrc);
