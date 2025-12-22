@@ -144,19 +144,19 @@ docker run -p 8080:80 jmrp-io
 The project includes advanced Nginx configuration for security headers and asset delivery.
 
 <details>
-<summary><strong>📄 nginx.conf (Snippet)</strong></summary>
+<summary><strong>📄 example.com.conf (Snippet)</strong></summary>
 
 ```nginx
 # Redirect HTTP to HTTPS
 server {
     listen 80;
     listen [::]:80;
-    server_name jmrp.io;
+    server_name example.com;
     return 301 https://$host$request_uri;
 }
 
 server {
-    server_name jmrp.io;
+    server_name example.com;
 
     # Listen on standard HTTPS ports + QUIC/HTTP3
     listen 443 ssl;
@@ -164,11 +164,13 @@ server {
     listen 443 quic;
     listen [::]:443 quic;
 
-    root /usr/share/nginx/html;
+    root /var/www/example.com/dist;
     index index.html;
 
-    # SSL Settings (Managed by Cloudflare/Certbot)
-    include /etc/nginx/snippets/server_ssl.conf;
+    # SSL Settings
+    ssl_certificate /etc/ssl/certs/example.com.crt;
+    ssl_certificate_key /etc/ssl/private/example.com.key;
+    ssl_protocols TLSv1.2 TLSv1.3;
     add_header Alt-Svc 'h3=":443"' always;
 
     # Gzip Compression
