@@ -166,7 +166,7 @@ const articleSchema = [
         </header>
 
         <div class="layout-grid content-wrapper">
-            <aside class="toc-sidebar">
+            <div class="toc-sidebar">
                 {
                     headings.length > 0 && (
                         <nav class="toc" aria-label="Table of Contents">
@@ -192,7 +192,7 @@ const articleSchema = [
                     <Icon name="mdi:format-list-bulleted" />
                     <span>Contents</span>
                 </button>
-            </aside>
+            </div>
 
             <div class="prose">
                 <Content
@@ -206,8 +206,40 @@ const articleSchema = [
     <TableOfContentsDrawer headings={headings} />
 </BaseLayout>
 
-<script>
+<script is:inline>
     document.addEventListener("DOMContentLoaded", () => {
+        // Accessibility: Fix duplicate role="region" on code blocks
+        // Expressive Code adds role="region" via JS, so we need to observe changes
+        const applyLabels = () => {
+            const codeBlocks = document.querySelectorAll(
+                'pre[role="region"]:not([aria-label])',
+            );
+            codeBlocks.forEach((block, index) => {
+                const lang = block.getAttribute("data-language") || "Code";
+                block.setAttribute(
+                    "aria-label",
+                    `${lang} example ${index + 1}`,
+                );
+            });
+        };
+
+        // Run once initially
+        applyLabels();
+
+        // Observe for changes (if Expressive Code hydrates later)
+        const prose = document.querySelector(".prose");
+        if (prose) {
+            const observer = new MutationObserver(() => {
+                applyLabels();
+            });
+            observer.observe(prose, {
+                childList: true,
+                subtree: true,
+                attributes: true,
+                attributeFilter: ["role"],
+            });
+        }
+
         const tocNav = document.querySelector(".toc");
         if (!tocNav) return;
 
