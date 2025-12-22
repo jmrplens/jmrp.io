@@ -321,6 +321,9 @@ add_header Referrer-Policy "strict-origin-when-cross-origin" always;
 # - 'nonce-$cspNonce': Allows scripts with the matching nonce (injected by Nginx)
 # - 'strict-dynamic': Trust scripts loaded by trusted scripts
 # - hashes: Allow specific inline scripts/styles found during build
+# - 'report-uri': Instructs the browser to send CSP violation reports to the given endpoint (here, /csp-report)
+# - 'require-trusted-types-for': Enforces Trusted Types for the specified sinks (here, 'script') to mitigate DOM-based XSS
+# - 'trusted-types': Defines which Trusted Types policies are allowed (here, only the 'default' policy)
 add_header Content-Security-Policy "default-src 'none'; script-src 'self' 'strict-dynamic' 'nonce-$cspNonce' 'sha256-...' 'sha256-...'; style-src 'self' 'nonce-$cspNonce' 'sha256-...'; img-src 'self' https:; font-src 'self'; connect-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests; report-uri /csp-report; require-trusted-types-for 'script'; trusted-types default;" always;
 ```
 
