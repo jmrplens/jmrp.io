@@ -3,6 +3,8 @@ import AxeBuilder from "@axe-core/playwright";
 import { parseStringPromise } from "xml2js";
 import * as fs from "fs";
 import * as path from "path";
+// @ts-ignore
+import { createHtmlReport } from "axe-html-reporter";
 
 // Read and parse sitemap to discover all pages automatically
 async function getPagesFromSitemap(): Promise<
@@ -67,6 +69,10 @@ test.describe("Accessibility Tests (Axe-core WCAG 2.1 AA)", () => {
   // Load pages once before all tests
   test.beforeAll(async () => {
     pages = await getPagesFromSitemap();
+    // Ensure report directory exists
+    if (!fs.existsSync("playwright-report/accessibility")) {
+      fs.mkdirSync("playwright-report/accessibility", { recursive: true });
+    }
   });
 
   // Dynamically generate tests for all discovered pages
@@ -82,8 +88,24 @@ test.describe("Accessibility Tests (Axe-core WCAG 2.1 AA)", () => {
       const accessibilityScanResults = await new AxeBuilder({
         page: browserPage,
       })
-        .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
+        .withTags(["wcag2a", "wcag2aa", "wcag21aa", "best-practice"])
         .analyze();
+
+      // Generate HTML Report
+      const safeName = pageInfo.name
+        .replace(/[^a-z0-9]/gi, "_")
+        .toLowerCase()
+        .replace(/^_+|_+$/g, "");
+      const reportFileName = `${safeName}.html`;
+
+      createHtmlReport({
+        results: accessibilityScanResults,
+        options: {
+          projectKey: "JMRP.io",
+          outputDir: "playwright-report/accessibility",
+          reportFileName: reportFileName,
+        },
+      });
 
       // Log violations for debugging
       if (accessibilityScanResults.violations.length > 0) {
@@ -97,6 +119,12 @@ test.describe("Accessibility Tests (Axe-core WCAG 2.1 AA)", () => {
           console.log(`   Impact: ${violation.impact}`);
           console.log(`   Help: ${violation.helpUrl}`);
           console.log(`   Affected elements: ${violation.nodes.length}\n`);
+        });
+
+        // Screenshot on failure
+        await browserPage.screenshot({
+          path: `playwright-report/accessibility/${safeName}-failure.png`,
+          fullPage: true,
         });
       }
 
