@@ -9,7 +9,7 @@
   "packageManager": "pnpm@9.0.0",
   "scripts": {
     "dev": "astro dev",
-    "prebuild": "node scripts/fetch-github-avatar.mjs",
+    "prebuild": "node scripts/fetch-github-avatar.mjs && curl -s https://static.cloudflareinsights.com/beacon.min.js -o public/scripts/cf-beacon.js",
     "build": "export DIST_DIR=dist_new && rm -rf $DIST_DIR && astro build --outDir $DIST_DIR && pagefind --site $DIST_DIR && DIST_DIR=$DIST_DIR npm run _postbuild && rm -rf dist_old && (mv dist dist_old || true) && mv $DIST_DIR dist && rm -rf dist_old && pnpm exec prettier --check .",
     "_postbuild": "node scripts/setup-sitemap.mjs && node scripts/move-inline-styles.mjs && node scripts/extract-css-data-uris.mjs && node scripts/extract-html-img-data-uris.mjs && node scripts/generate-sri-hashes.mjs && node scripts/generate-csp-hashes.mjs && (rm -rf /var/cache/nginx/* 2>/dev/null || true)",
     "preview": "astro preview",
