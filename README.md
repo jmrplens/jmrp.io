@@ -147,23 +147,35 @@ The project includes advanced Nginx configuration for security headers and asset
 <summary><strong>📄 nginx.conf (Snippet)</strong></summary>
 
 ```nginx
+# Redirect HTTP to HTTPS
 server {
     listen 80;
-    server_name localhost;
+    listen [::]:80;
+    server_name jmrp.io;
+    return 301 https://$host$request_uri;
+}
+
+server {
+    server_name jmrp.io;
+
+    # Listen on standard HTTPS ports + QUIC/HTTP3
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    listen 443 quic;
+    listen [::]:443 quic;
+
     root /usr/share/nginx/html;
     index index.html;
+
+    # SSL Settings (Managed by Cloudflare/Certbot)
+    include /etc/nginx/snippets/server_ssl.conf;
+    add_header Alt-Svc 'h3=":443"' always;
 
     # Gzip Compression
     gzip on;
     gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;
 
-    # Logging
-    access_log /var/log/nginx/example.com.access.log;
-    error_log /var/log/nginx/example.com.error.log warn;
-
-    # -------------------------------------------------------
     # CSP Nonce Generation
-    # -------------------------------------------------------
     set $cspNonce $request_id;
     sub_filter_once off;
     sub_filter_types *;
@@ -172,25 +184,19 @@ server {
     # Security Headers (Includes CSP with Nonce)
     include /etc/nginx/snippets/security_headers.conf;
 
-    # -------------------------------------------------------
     # Caching Strategies
-    # -------------------------------------------------------
-
-    # Immutable Assets (Hashed filenames)
     location /_astro/ {
         expires 1y;
         add_header Cache-Control "public, max-age=31536000, immutable";
         access_log off;
     }
 
-    # Static Assets
     location /assets/ {
         expires 1y;
         add_header Cache-Control "public, max-age=31536000, immutable";
         access_log off;
     }
 
-    # Main Content
     location / {
         try_files $uri $uri/ =404;
         add_header Cache-Control "public, max-age=3600, must-revalidate";
