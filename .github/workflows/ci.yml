@@ -249,11 +249,22 @@ jobs:
         with:
           script: |
             const fs = require('fs');
+            const path = require('path');
             let commentBody = '';
 
             try {
-              if (fs.existsSync('playwright-report/accessibility-summary.json')) {
-                const summary = JSON.parse(fs.readFileSync('playwright-report/accessibility-summary.json', 'utf8'));
+              const summaryPath = 'playwright-report/accessibility-summary.json';
+              console.log('Checking for summary file at:', summaryPath);
+              
+              if (fs.existsSync('playwright-report')) {
+                 console.log('playwright-report contents:', fs.readdirSync('playwright-report'));
+              } else {
+                 console.log('playwright-report directory NOT found');
+              }
+
+              if (fs.existsSync(summaryPath)) {
+                const summary = JSON.parse(fs.readFileSync(summaryPath, 'utf8'));
+                // ... rest of logic
                 const isSuccess = summary.failed === 0;
                 
                 const statusIcon = isSuccess ? '✅' : '⚠️';
@@ -277,20 +288,11 @@ jobs:
                 commentBody += `📊 [View detailed HTML report](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`;
                 
               } else {
-                throw new Error('Summary file not found');
+                throw new Error(`Summary file not found at ${summaryPath}`);
               }
             } catch (error) {
                console.log('Error generating comment:', error);
-               // Fallback if file not found or error
-               let status = '✅ **All accessibility tests passed!**';
-               let details = '\n\nAll pages are WCAG 2.1 AA compliant with no violations detected.';
-               
-               // Check process exit code from previous step via inspection? No, simpler to assume pass if we are here and no summary means maybe it didn't run or manual fallback? 
-               // Actually if playwright fails, the step "Run Axe accessibility tests" fails. "always()" ensures this runs.
-               // We can check the outcome of the 'Run Axe accessibility tests' step? No direct access here easily without more boilerplate.
-               // Let's stick to a generic fallback.
-               
-               commentBody = `## ♿ Accessibility Test Results (Axe-core)\n\n⚠️ **Test execution completed, but summary report was not found.**\n\nPlease check the [Actions logs](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}) to verify status.`;
+               commentBody = `## ♿ Accessibility Test Results (Axe-core)\n\n⚠️ **Test execution completed, but summary report was not found.**\n\nPlease check the [Actions logs](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}) to verify status.\n\nError: ${error.message}`;
             }
 
             github.rest.issues.createComment({
