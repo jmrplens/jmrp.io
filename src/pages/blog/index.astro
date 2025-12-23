@@ -27,7 +27,7 @@ const posts = (await getCollection("posts"))
 
         <section class="posts-grid" aria-label="Blog posts grid">
             {
-                posts.map((post) => (
+                posts.map((post, index) => (
                     <article class="post-card">
                         <a href={`/blog/${post.slug}/`}>
                             {post.data.coverImage && (
@@ -41,6 +41,10 @@ const posts = (await getCollection("posts"))
                                         height={225}
                                         widths={[400, 800]}
                                         sizes="(max-width: 640px) 100vw, 400px"
+                                        loading={index === 0 ? "eager" : "lazy"}
+                                        fetchpriority={
+                                            index === 0 ? "high" : "auto"
+                                        }
                                     />
                                 </div>
                             )}
