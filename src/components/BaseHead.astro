@@ -92,10 +92,15 @@ if (image) {
             resolvedImage = new URL(image, siteData.url);
         }
     } else {
-        // It's likely an imported Image object passed via props
-        resolvedImage = image.src
-            ? new URL(image.src, Astro.url)
-            : new URL(image, Astro.url);
+        // It's an imported Image object passed via props
+        // Optimize it for OG/Twitter (Standard 1200x630, WebP for efficiency)
+        const optimizedImage = await getImage({
+            src: image,
+            format: "webp",
+            width: 1200,
+            height: 630,
+        });
+        resolvedImage = new URL(optimizedImage.src, Astro.url);
     }
 } else {
     // Fallback to default site image (imported)
