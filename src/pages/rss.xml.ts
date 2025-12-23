@@ -67,14 +67,14 @@ export async function GET(context: APIContext) {
           try {
             const optimizedImage = await getImage({
               src: post.data.coverImage,
-              format: "jpeg", // RSS enclosures typically prefer standard formats like JPEG
+              format: "webp",
               width: 1200,
             });
             const imageUrl = new URL(
               optimizedImage.src,
               context.site || "https://jmrp.io",
             ).toString();
-            enclosure = `<enclosure url="${imageUrl}" length="${optimizedImage.attributes.size || 0}" type="image/jpeg" />`;
+            enclosure = `<enclosure url="${imageUrl}" length="${optimizedImage.attributes.size || 0}" type="image/webp" />`;
           } catch (e) {
             console.warn(`Failed to optimize RSS image for ${post.slug}`, e);
           }
