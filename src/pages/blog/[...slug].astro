@@ -94,53 +94,25 @@ if (post.data.coverImage) {
     jsonLdImage = optimizedJsonLdImage.src;
 }
 
-const articleSchema = [
-    {
-        "@type": "BlogPosting",
-        "@id":
-            new URL(`/blog/${post.slug}`, Astro.site).toString() + "#article",
-        headline: post.data.title,
-        description: post.data.description,
-        datePublished: post.data.publishedDate.toISOString(),
-        dateModified: (
-            post.data.updatedDate || post.data.publishedDate
-        ).toISOString(),
-        author: {
-            "@type": "Person",
-            "@id": `${siteData.url}/#person`,
-            name: siteData.author,
-            url: siteData.url,
-        },
-        publisher: {
-            "@type": "Person",
-            "@id": `${siteData.url}/#person`,
-            name: siteData.author,
-            url: siteData.url,
-        },
-        image: new URL(jsonLdImage, Astro.site).toString(),
-        mainEntityOfPage: {
-            "@type": "WebPage",
-            "@id": new URL(`/blog/${post.slug}`, Astro.site).toString(),
-        },
-    },
-    {
-        "@type": "BreadcrumbList",
-        itemListElement: [
-            {
-                "@type": "ListItem",
-                position: 1,
-                name: "Blog",
-                item: new URL("/blog", Astro.site).toString(),
-            },
-            {
-                "@type": "ListItem",
-                position: 2,
-                name: post.data.title,
-                item: new URL(`/blog/${post.slug}`, Astro.site).toString(),
-            },
-        ],
-    },
-];
+// --- LCP & Preload Optimization ---
+let lcpImagePreload = null;
+if (post.data.coverImage) {
+    const optimizedLcp = await getImage({
+        src: post.data.coverImage,
+        format: "webp",
+        width: 1200,
+        height: 675,
+        widths: [360, 720, 1200],
+        quality: 60,
+    });
+    lcpImagePreload = {
+        href: optimizedLcp.src,
+        imagesrcset: optimizedLcp.attributes.srcset,
+        imagesizes: "(max-width: 768px) 100vw, 1200px",
+    };
+}
+
+
 ---
 
 <BaseLayout
@@ -155,6 +127,19 @@ const articleSchema = [
     tags={post.data.tags}
     schema={articleSchema}
 >
+    {
+        lcpImagePreload && (
+            <link
+                slot="head"
+                rel="preload"
+                as="image"
+                href={lcpImagePreload.href}
+                imagesrcset={lcpImagePreload.imagesrcset}
+                imagesizes={lcpImagePreload.imagesizes}
+                fetchpriority="high"
+            />
+        )
+    }
     <article class="post-content">
         <header class="post-header">
             <div class="content-wrapper">
