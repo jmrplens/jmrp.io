@@ -34,7 +34,8 @@ const posts = (await getCollection("posts"))
                                 <div class="image-container">
                                     <Image
                                         src={post.data.coverImage}
-                                        alt=""
+                                        alt={post.data.title}
+                                        format="webp"
                                         class="card-image"
                                         width={400}
                                         height={225}

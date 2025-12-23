@@ -186,7 +186,9 @@ const articleSchema = [
                                 src={post.data.coverImage}
                                 alt={`Cover image for ${post.data.title}`}
                                 class="cover-image"
-                                loading="eager"
+                                width={1200}
+                                height={675}
+                                loading="lazy"
                             />
                         </div>
                     )
@@ -458,7 +460,6 @@ const articleSchema = [
         box-shadow: var(--shadow-lg);
         background-color: var(--color-bg-secondary);
         aspect-ratio: 16 / 9;
-        max-height: 500px;
     }
 
     .cover-image {
