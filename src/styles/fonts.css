@@ -2,7 +2,7 @@
 @font-face {
   font-family: "Inter";
   font-style: normal;
-  font-display: swap;
+  font-display: optional;
   font-weight: 400;
   src: url("@fontsource/inter/files/inter-latin-400-normal.woff2")
     format("woff2");
@@ -16,7 +16,7 @@
 @font-face {
   font-family: "Inter";
   font-style: normal;
-  font-display: swap;
+  font-display: optional;
   font-weight: 600;
   src: url("@fontsource/inter/files/inter-latin-600-normal.woff2")
     format("woff2");
@@ -30,7 +30,7 @@
 @font-face {
   font-family: "Inter";
   font-style: normal;
-  font-display: swap;
+  font-display: optional;
   font-weight: 800;
   src: url("@fontsource/inter/files/inter-latin-800-normal.woff2")
     format("woff2");
@@ -44,7 +44,7 @@
 @font-face {
   font-family: "JetBrains Mono";
   font-style: normal;
-  font-display: swap;
+  font-display: optional;
   font-weight: 400;
   src: url("@fontsource/jetbrains-mono/files/jetbrains-mono-latin-400-normal.woff2")
     format("woff2");
@@ -58,7 +58,7 @@
 @font-face {
   font-family: "JetBrains Mono";
   font-style: normal;
-  font-display: swap;
+  font-display: optional;
   font-weight: 700;
   src: url("@fontsource/jetbrains-mono/files/jetbrains-mono-latin-700-normal.woff2")
     format("woff2");
