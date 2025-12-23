@@ -344,14 +344,33 @@ const articleSchema = [
             const copyButton = document.createElement("button");
             copyButton.className = "custom-code-copy-btn";
             copyButton.setAttribute("aria-label", "Copy to clipboard");
-            copyButton.innerHTML = `
-                <svg class="copy-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
-                    <path fill="currentColor" d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z" />
-                </svg>
-                <svg class="success-icon hidden" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
-                    <path fill="currentColor" d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z" />
-                </svg>
-            `;
+
+            const svgNS = "http://www.w3.org/2000/svg";
+
+            // Create copy icon
+            const copyIcon = document.createElementNS(svgNS, "svg");
+            copyIcon.setAttribute("class", "copy-icon");
+            copyIcon.setAttribute("width", "20");
+            copyIcon.setAttribute("height", "20");
+            copyIcon.setAttribute("viewBox", "0 0 24 24");
+            const copyPath = document.createElementNS(svgNS, "path");
+            copyPath.setAttribute("fill", "currentColor");
+            copyPath.setAttribute("d", "M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z");
+            copyIcon.appendChild(copyPath);
+
+            // Create success icon
+            const successIcon = document.createElementNS(svgNS, "svg");
+            successIcon.setAttribute("class", "success-icon hidden");
+            successIcon.setAttribute("width", "20");
+            successIcon.setAttribute("height", "20");
+            successIcon.setAttribute("viewBox", "0 0 24 24");
+            const successPath = document.createElementNS(svgNS, "path");
+            successPath.setAttribute("fill", "currentColor");
+            successPath.setAttribute("d", "M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z");
+            successIcon.appendChild(successPath);
+            
+            copyButton.appendChild(copyIcon);
+            copyButton.appendChild(successIcon);
 
             // Add click handler
             copyButton.addEventListener("click", () => {
@@ -365,21 +384,13 @@ const articleSchema = [
 
                 navigator.clipboard.writeText(text).then(
                     () => {
-                        const copyIcon = copyButton.querySelector(".copy-icon");
-                        const successIcon =
-                            copyButton.querySelector(".success-icon");
+                        copyIcon.classList.add("hidden");
+                        successIcon.classList.remove("hidden");
 
-                        if (copyIcon instanceof HTMLElement) {
-                            if (successIcon instanceof HTMLElement) {
-                                copyIcon.classList.add("hidden");
-                                successIcon.classList.remove("hidden");
-
-                                setTimeout(() => {
-                                    copyIcon.classList.remove("hidden");
-                                    successIcon.classList.add("hidden");
-                                }, 2000);
-                            }
-                        }
+                        setTimeout(() => {
+                            copyIcon.classList.remove("hidden");
+                            successIcon.classList.add("hidden");
+                        }, 2000);
                     },
                     (err) => {
                         console.error("Failed to copy:", err);
