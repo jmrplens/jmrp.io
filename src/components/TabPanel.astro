@@ -34,10 +34,4 @@ const { label, noPadding = false } = Astro.props;
         right: 0.5rem;
         z-index: 10;
     }
-
-    /* Hide the default expressive-code copy button inside TabPanel to avoid duplicates */
-    /* Same approach as FileContent.astro */
-    .tab-panel :global(.expressive-code .copy) {
-        display: none !important;
-    }
 </style>
