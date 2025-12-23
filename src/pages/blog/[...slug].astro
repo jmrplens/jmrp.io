@@ -79,6 +79,20 @@ const finalReferences = allPostReferences.filter((ref) => {
 });
 // --- End of Reference Logic ---
 
+// --- Image Optimization for JSON-LD ---
+import { getImage } from "astro:assets";
+
+let jsonLdImage = "/default-blog-cover.jpg";
+if (post.data.coverImage) {
+    const optimizedJsonLdImage = await getImage({
+        src: post.data.coverImage,
+        format: "webp",
+        width: 1200,
+        height: 630,
+    });
+    jsonLdImage = optimizedJsonLdImage.src;
+}
+
 const articleSchema = [
     {
         "@type": "BlogPosting",
@@ -102,10 +116,7 @@ const articleSchema = [
             name: siteData.author,
             url: siteData.url,
         },
-        image: new URL(
-            post.data.coverImage?.src || "/default-blog-cover.jpg",
-            Astro.site,
-        ).toString(),
+        image: new URL(jsonLdImage, Astro.site).toString(),
         mainEntityOfPage: {
             "@type": "WebPage",
             "@id": new URL(`/blog/${post.slug}`, Astro.site).toString(),
@@ -188,7 +199,10 @@ const articleSchema = [
                                 class="cover-image"
                                 width={1200}
                                 height={675}
+                                format="webp"
                                 loading="lazy"
+                                widths={[400, 800, 1200]}
+                                sizes="(max-width: 768px) 100vw, 1200px"
                             />
                         </div>
                     )

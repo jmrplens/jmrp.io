@@ -39,6 +39,8 @@ const posts = (await getCollection("posts"))
                                         class="card-image"
                                         width={400}
                                         height={225}
+                                        widths={[400, 800]}
+                                        sizes="(max-width: 640px) 100vw, 400px"
                                     />
                                 </div>
                             )}
