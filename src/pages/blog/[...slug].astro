@@ -174,6 +174,18 @@ const articleSchema = [
                 </div>
                 <h1>{post.data.title}</h1>
                 <p class="lead">{post.data.description}</p>
+                {
+                    post.data.coverImage && (
+                        <div class="cover-image-container">
+                            <img
+                                src={post.data.coverImage}
+                                alt={`Cover image for ${post.data.title}`}
+                                class="cover-image"
+                                loading="eager"
+                            />
+                        </div>
+                    )
+                }
             </div>
         </header>
 
@@ -426,6 +438,23 @@ const articleSchema = [
         max-width: 70ch;
         line-height: 1.6;
         opacity: 0.9;
+    }
+
+    .cover-image-container {
+        margin-top: 3rem;
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+        box-shadow: var(--shadow-lg);
+        background-color: var(--color-bg-secondary);
+        aspect-ratio: 16 / 9;
+        max-height: 500px;
+    }
+
+    .cover-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
     }
 
     .tags {
