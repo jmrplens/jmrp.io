@@ -419,7 +419,7 @@ const articleSchema = [
     }
 
     .author {
-        font-weight: 600;
+        font-weight: var(--fw-semibold);
         color: var(--color-text-body);
     }
 
@@ -476,7 +476,7 @@ const articleSchema = [
 
     .tag {
         color: var(--color-primary);
-        font-weight: 600;
+        font-weight: var(--fw-semibold);
         font-size: 0.85rem;
         text-transform: uppercase;
         letter-spacing: 0.05em;
@@ -502,7 +502,7 @@ const articleSchema = [
 
     /* Enhance link contrast in post content */
     .prose :global(a) {
-        font-weight: 600;
+        font-weight: var(--fw-semibold);
     }
 
     .toc-sidebar {
