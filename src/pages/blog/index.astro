@@ -39,8 +39,9 @@ const posts = (await getCollection("posts"))
                                         class="card-image"
                                         width={400}
                                         height={225}
-                                        widths={[400, 800]}
+                                        widths={[360, 480, 720, 800]}
                                         sizes="(max-width: 640px) 100vw, 400px"
+                                        quality={60}
                                         loading={index === 0 ? "eager" : "lazy"}
                                         fetchpriority={
                                             index === 0 ? "high" : "auto"
