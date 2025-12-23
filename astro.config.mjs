@@ -140,6 +140,6 @@ export default defineConfig({
   // Build configuration
   build: {
     // Inline critical CSS to improve performance
-    inlineStylesheets: "auto",
+    inlineStylesheets: "always",
   },
 });
