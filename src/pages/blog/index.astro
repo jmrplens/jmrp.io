@@ -221,6 +221,7 @@ const posts = (await getCollection("posts"))
         -webkit-line-clamp: 3;
         -webkit-box-orient: vertical;
         overflow: hidden;
+        min-height: 4.8rem; /* Reserve space for 3 lines to prevent CLS */
     }
 
     .card-footer {
