@@ -10,6 +10,7 @@
 import { type CollectionEntry, getCollection } from "astro:content";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { Icon } from "astro-icon/components";
+import { Image } from "astro:assets";
 
 import Callout from "../../components/Callout.astro";
 import Tabs from "../../components/Tabs.astro";
@@ -102,7 +103,7 @@ const articleSchema = [
             url: siteData.url,
         },
         image: new URL(
-            post.data.coverImage || "/default-blog-cover.jpg",
+            post.data.coverImage?.src || "/default-blog-cover.jpg",
             Astro.site,
         ).toString(),
         mainEntityOfPage: {
@@ -149,6 +150,10 @@ const articleSchema = [
                     <Icon name="mdi:arrow-left" /> Back to Blog
                 </a>
                 <div class="meta">
+                    <span class="author">
+                        {post.data.author || siteData.author}
+                    </span>
+                    <span class="separator">•</span>
                     <time datetime={post.data.publishedDate.toISOString()}>
                         {
                             post.data.publishedDate.toLocaleDateString(
@@ -177,7 +182,7 @@ const articleSchema = [
                 {
                     post.data.coverImage && (
                         <div class="cover-image-container">
-                            <img
+                            <Image
                                 src={post.data.coverImage}
                                 alt={`Cover image for ${post.data.title}`}
                                 class="cover-image"
@@ -410,6 +415,12 @@ const articleSchema = [
         color: var(--color-text-muted);
         font-size: 0.9rem;
         margin-bottom: 1rem;
+        flex-wrap: wrap; /* Allow wrapping on small screens */
+    }
+
+    .author {
+        font-weight: 600;
+        color: var(--color-text-body);
     }
 
     .separator {
