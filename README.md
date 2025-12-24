@@ -161,6 +161,7 @@ The project includes advanced Nginx configuration for security headers and asset
 - [Security Headers Example](examples/nginx/security_headers.conf.example)
 
 **Key Security Features:**: Nginx reverse proxy handles requests to external services (Mastodon, Matrix, Meshtastic), hiding upstreams and preventing CORS issues.
+
 - **SRI (Subresource Integrity)**: Ensures that fetched resources haven't been manipulated.
 - **CSP (Content Security Policy)**: Uses `nonce` and SHA-256 hashes. Strict-dynamic was replaced with precise hashes for better compatibility with Astro's hydration.
 - **HSTS**: Enforces HTTPS.

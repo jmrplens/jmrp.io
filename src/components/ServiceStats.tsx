@@ -122,13 +122,13 @@ async function fetchPotatoVersion(): Promise<string> {
     if (resVer.ok) {
       // The API Proxy handles parsing or wrapping text in { version: "..." }
       const contentType = resVer.headers.get("content-type");
-      if (contentType && contentType.includes("application/json")) {
+      if (contentType?.includes("application/json")) {
         try {
           const verJson = await resVer.json();
           const ver = verJson.version;
           potatoVersion = ver || "";
-        } catch (e) {
-          // Fallback
+        } catch {
+          // Fallback to text if JSON parse fails
         }
       } else {
         // Upstream likely returned plain text if not JSON
