@@ -149,31 +149,6 @@ const {
                 height: auto !important;
             }
 
-            /* Mermaid Dark Mode Toggle */
-            .mermaid-wrapper {
-                display: block;
-                width: 100%;
-            }
-            .mermaid-dark,
-            .mermaid-light {
-                max-width: 100%;
-                height: auto !important; /* Override HTML height attribute to prevent distortion/cutting */
-                display: block;
-            }
-
-            html[data-theme="light"] .mermaid-light {
-                display: block;
-            }
-            .mermaid-light,
-            html[data-theme="dark"] .mermaid-light {
-                display: none;
-            }
-            html[data-theme="light"] .mermaid-dark {
-                display: none;
-            }
-            html[data-theme="dark"] .mermaid-dark {
-                display: block;
-            }
             /* System preference defaults (when no theme is set) */
             @media (prefers-color-scheme: light) {
                 :root:not([data-theme="dark"]) .mermaid-dark {

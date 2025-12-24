@@ -59,9 +59,6 @@ export default defineConfig({
             },
           },
           dark: true,
-          playwright: {
-            viewport: { width: 1400, height: 4000 },
-          },
         },
       ],
       [
