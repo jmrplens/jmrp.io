@@ -151,11 +151,15 @@ const getIconName = (faClass: string) => {
                                     src={link.img_light}
                                     alt={link.label}
                                     class="social-icon light-icon"
+                                    loading="lazy"
+                                    decoding="async"
                                 />
                                 <img
                                     src={link.img_dark}
                                     alt={link.label}
                                     class="social-icon dark-icon"
+                                    loading="lazy"
+                                    decoding="async"
                                 />
                             </>
                         )}

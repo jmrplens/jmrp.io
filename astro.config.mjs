@@ -58,6 +58,10 @@ export default defineConfig({
               bottomMarginAdj: 10,
             },
           },
+          dark: true,
+          playwright: {
+            viewport: { width: 1400, height: 4000 },
+          },
         },
       ],
       [
