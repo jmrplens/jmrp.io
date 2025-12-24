@@ -206,7 +206,8 @@ async function extractHtmlImgDataUris() {
     content = content.replaceAll(IMG_TAG_REGEX, replacer);
     content = content.replaceAll(SOURCE_TAG_REGEX, replacer);
 
-    // Post-process Mermaid Picture tags to support Manual Theme Toggle via CSS
+    // Post-process Mermaid Picture tags to support Manual Theme Toggle AND Inline SVG
+    // This solves layout issues and allows CSS styling if needed.
     const MERMAID_PICTURE_REGEX =
       /<picture>\s*<source\s+([^>]*?)srcset="([^"]+)"\s*([^>]*?)>\s*<img\s+([^>]*?)src="([^"]+)"\s*([^>]*?)>\s*<\/picture>/gi;
     content = content.replaceAll(
@@ -214,20 +215,89 @@ async function extractHtmlImgDataUris() {
       (match, sPre, darkUrl, sPost, iPre, lightUrl, iPost) => {
         if (!match.includes("mermaid-")) return match;
 
-        // Remove 'media' attribute from source parts
-        const cleanSPre = sPre
-          .replace(/media="[^"]*"/g, "")
-          .replace(/srcset="[^"]*"/g, ""); // srcset is captured, ensure we dont dupe
-        const cleanSPost = sPost
-          .replace(/media="[^"]*"/g, "")
-          .replace(/srcset="[^"]*"/g, "");
+        // Helper to read and prefix SVG
+        const inlineSvg = (url, suffix) => {
+          try {
+            // Convert URL to file path: /assets/extracted/foo.svg -> dist_new/assets/extracted/foo.svg
+            // The URL is root-relative.
+            const relPath = url.startsWith("/") ? url.slice(1) : url;
+            const fullPath = path.join(
+              DIST_DIR,
+              relPath.replace(/^.*assets\//, "assets/"),
+            ); // Attempt to locate file
 
-        // Source tag is void, so it doesn't have closing tag usually, but we are making it an img
-        // It might have width/height.
+            // Actually, relPath is like assets/extracted/hash.svg
+            // DIST_DIR is dist_new
+            // fullPath = dist_new/assets/extracted/hash.svg
+
+            const resolvedPath = path.join(DIST_DIR, relPath);
+
+            if (!fs.existsSync(resolvedPath)) {
+              console.warn(
+                `[InlineSVG] Could not find file: ${resolvedPath} (Url: ${url})`,
+              );
+              return `<img src="${url}" class="mermaid-${suffix}" />`; // Fallback
+            }
+
+            let svgContent = fs.readFileSync(resolvedPath, "utf8");
+
+            // We must prefix IDs to avoid conflicts (light vs dark) in the same DOM
+            // We use SVGO for prefixing
+            const uniquePrefix = `mermaid-${suffix}-${crypto.randomBytes(4).toString("hex")}`;
+
+            const result = optimize(svgContent, {
+              multipass: true,
+              plugins: [
+                {
+                  name: "preset-default",
+                  params: {
+                    overrides: {
+                      cleanupIDs: false, // We will handle IDs via prefix
+                      removeViewBox: false,
+                      cleanupNumericValues: false,
+                    },
+                  },
+                },
+                {
+                  name: "prefixIds",
+                  params: {
+                    prefix: uniquePrefix,
+                    delim: "-",
+                  },
+                },
+              ],
+            });
+
+            // Return valid SVG string with class. Add class to <svg> tag.
+            // We use regex to inject class because SVGO might not preserve it if we just added it to string?
+            // Actually we want to ADD a class.
+            let finalSvg = result.data;
+            if (finalSvg.includes('class="')) {
+              finalSvg = finalSvg.replace(
+                'class="',
+                `class=\"mermaid-${suffix} `,
+              );
+            } else {
+              finalSvg = finalSvg.replace(
+                "<svg",
+                `<svg class="mermaid-${suffix}"`,
+              );
+            }
+            return finalSvg;
+          } catch (e) {
+            console.warn(`[InlineSVG] Error inlining ${url}: ${e.message}`);
+            return `<img src="${url}" class="mermaid-${suffix}" />`;
+          }
+        };
+
+        const darkSvg = inlineSvg(darkUrl, "dark");
+        const lightSvg = inlineSvg(lightUrl, "light");
+
+        console.log(`[InlineSVG] Inlined Mermaid diagram (Light & Dark)`);
 
         return `<div class="mermaid-wrapper">
-            <img src="${darkUrl}" ${cleanSPre} ${cleanSPost} class="mermaid-dark" />
-            <img src="${lightUrl}" ${iPre} ${iPost} class="mermaid-light" />
+            <div class="mermaid-dark">${darkSvg}</div>
+            <div class="mermaid-light">${lightSvg}</div>
         </div>`;
       },
     );
