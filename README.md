@@ -1,9 +1,21 @@
 # JMRP.io (Astro v5)
 
-[![CI](https://github.com/jmrplens/jmrp.io/actions/workflows/ci.yml/badge.svg)](https://github.com/jmrplens/jmrp.io/actions/workflows/ci.yml)
-[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=jmrplens_jmrp.io&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=jmrplens_jmrp.io)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Astro](https://img.shields.io/badge/Built_with-Astro-ff5a1f.svg)](https://astro.build)
+<!-- Project & Status -->
+
+![Astro](https://img.shields.io/badge/astro-5.16.6-orange?style=flat&logo=astro)
+![License](https://img.shields.io/badge/license-MIT-blue.svg)
+[![Dependabot](https://badgen.net/badge/Dependabot/enabled/green?icon=dependabot)](https://github.com/jmrplens/jmrp.io/pulls)
+
+<!-- Code Quality -->
+
+[![CI Status](https://github.com/jmrplens/jmrp.io/actions/workflows/ci.yml/badge.svg)](https://github.com/jmrplens/jmrp.io/actions/workflows/ci.yml)
+[![SonarQube Status](https://sonarcloud.io/api/project_badges/measure?project=jmrplens_jmrp.io&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=jmrplens_jmrp.io)
+
+<!-- Performance & Security -->
+
+[![Mozilla Observatory Grade](https://img.shields.io/badge/Mozilla%20Observatory-145%2F100-brightgreen?style=flat-square&logo=mozilla)](https://observatory.mozilla.org/analyze/jmrp.io)
+![PageSpeed Desktop](https://img.shields.io/badge/PageSpeed%20Desktop-100-brightgreen)
+![PageSpeed Mobile](https://img.shields.io/badge/PageSpeed%20Mobile-100-brightgreen)
 
 This is the source code for my personal website, **[jmrp.io](https://jmrp.io)**, built with **Astro 5**. It features a high-performance static architecture, robust security headers (including a strict CSP), and a focus on accessibility and modern web standards.
 
@@ -145,113 +157,12 @@ docker run -p 8080:80 jmrp-io
 
 The project includes advanced Nginx configuration for security headers and asset delivery.
 
-<details>
-<summary><strong>📄 example.com.conf (Snippet)</strong></summary>
+- [Main Nginx Configuration Example](examples/nginx/nginx.conf.example)
+- [Security Headers Example](examples/nginx/security_headers.conf.example)
 
-```nginx
-# Redirect HTTP to HTTPS
-server {
-    listen 80;
-    listen [::]:80;
-    server_name example.com;
-    return 301 https://$host$request_uri;
-}
-
-server {
-    server_name example.com;
-
-    # Listen on standard HTTPS ports + QUIC/HTTP3
-    listen 443 ssl;
-    listen [::]:443 ssl;
-    listen 443 quic;
-    listen [::]:443 quic;
-
-    root /var/www/example.com/dist;
-    index index.html;
-
-    # SSL Settings
-    ssl_certificate /etc/ssl/certs/example.com.crt;
-    ssl_certificate_key /etc/ssl/private/example.com.key;
-    ssl_protocols TLSv1.2 TLSv1.3;
-    add_header Alt-Svc 'h3=":443"' always;
-
-    # Gzip Compression
-    gzip on;
-    gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;
-
-    # CSP Nonce Generation
-    set $cspNonce $request_id;
-    sub_filter_once off;
-    sub_filter_types *;
-    sub_filter NGINX_CSP_NONCE $cspNonce;
-
-    # Security Headers (Includes CSP with Nonce)
-    include /etc/nginx/snippets/security_headers.conf;
-
-    # Caching Strategies
-    location /_astro/ {
-        expires 1y;
-        add_header Cache-Control "public, max-age=31536000, immutable";
-        access_log off;
-    }
-
-    location /assets/ {
-        expires 1y;
-        add_header Cache-Control "public, max-age=31536000, immutable";
-        access_log off;
-    }
-
-    location / {
-        try_files $uri $uri/ =404;
-        add_header Cache-Control "public, max-age=3600, must-revalidate";
-    }
-
-    # Block access to hidden files
-    location ~ /\. {
-        deny all;
-    }
-}
-```
-
-</details>
-
-<details>
-<summary><strong>🔒 security_headers.conf (Generated/Managed)</strong></summary>
-
-_This file is automatically updated by `npm run build` to include the correct SHA-256 hashes for inline scripts and styles._
-
-```nginx
-# HSTS (Strict Transport Security)
-add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload" always;
-
-# Anti-Sniffing
-add_header X-Content-Type-Options "nosniff" always;
-
-# Frame Options (Prevent Clickjacking)
-add_header X-Frame-Options "DENY" always;
-
-# XSS Protection
-add_header X-XSS-Protection "1; mode=block" always;
-
-# Referrer Policy
-add_header Referrer-Policy "strict-origin-when-cross-origin" always;
-
-# Content Security Policy (CSP)
-# - 'nonce-$cspNonce': Allows scripts with the matching nonce (injected by Nginx)
-# - 'strict-dynamic': Trust scripts loaded by trusted scripts
-# - hashes: Allow specific inline scripts/styles found during build
-# - 'report-uri': Instructs the browser to send CSP violation reports to the given endpoint (here, /csp-report)
-# - 'require-trusted-types-for': Enforces Trusted Types for the specified sinks (here, 'script') to mitigate DOM-based XSS
-# - 'trusted-types': Defines which Trusted Types policies are allowed (here, only the 'default' policy)
-add_header Content-Security-Policy "default-src 'none'; script-src 'self' 'strict-dynamic' 'nonce-$cspNonce' 'sha256-...' 'sha256-...'; style-src 'self' 'nonce-$cspNonce' 'sha256-...'; img-src 'self' https:; font-src 'self'; connect-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests; report-uri /csp-report; require-trusted-types-for 'script'; trusted-types default;" always;
-```
-
-</details>
-
-**Key Security Features:**
-
+**Key Security Features:**: Nginx reverse proxy handles requests to external services (Mastodon, Matrix, Meshtastic), hiding upstreams and preventing CORS issues.
 - **SRI (Subresource Integrity)**: Ensures that fetched resources haven't been manipulated.
-- **CSP (Content Security Policy)**: Uses `nonce` and hashes to prevent XSS. Only allowed scripts and styles can execute.
+- **CSP (Content Security Policy)**: Uses `nonce` and SHA-256 hashes. Strict-dynamic was replaced with precise hashes for better compatibility with Astro's hydration.
 - **HSTS**: Enforces HTTPS.
 
 ## 📄 LaTeX CV Compilation

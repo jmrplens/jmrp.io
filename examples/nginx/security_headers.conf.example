@@ -1,0 +1,20 @@
+# HSTS (Strict Transport Security)
+add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload" always;
+
+# Anti-Sniffing
+add_header X-Content-Type-Options "nosniff" always;
+
+# Frame Options (Prevent Clickjacking)
+add_header X-Frame-Options "DENY" always;
+
+# XSS Protection
+add_header X-XSS-Protection "1; mode=block" always;
+
+# Referrer Policy
+add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+
+# Content Security Policy (CSP)
+# - 'nonce-$cspNonce': Allows scripts with the matching nonce (injected by Nginx)
+# - hashes: Allow specific inline scripts/styles found during build
+# - 'report-uri': Instructs the browser to send CSP violation reports to the given endpoint
+add_header Content-Security-Policy "default-src 'none'; script-src 'self' 'nonce-$cspNonce' 'sha256-...' 'sha256-...'; style-src 'self' 'unsafe-hashes' 'nonce-$cspNonce' 'sha256-...'; img-src 'self' https://*.jmrp.io; font-src 'self'; connect-src 'self' https://api.github.com; media-src 'self'; manifest-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests; report-uri /csp-report;" always;
