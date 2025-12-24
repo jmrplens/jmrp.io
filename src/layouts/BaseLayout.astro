@@ -52,6 +52,7 @@ const {
             authors={authors}
             tags={tags}
         />
+        <slot name="head" />
         <script is:inline>
             // Critical: Execute immediately to prevent FOUC
             (function () {
@@ -76,7 +77,9 @@ const {
                 }
             })();
         </script>
+        <slot name="head" />
     </head>
+
     <body>
         <a href="#main-content" class="skip-link">Skip to content</a>
         <Header />

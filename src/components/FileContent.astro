@@ -90,11 +90,6 @@ const finalIcon = icon || getIconForFile(filename);
         box-shadow: none !important;
     }
 
-    /* Hide the default expressive-code copy button inside FileContent to avoid duplicates */
-    .file-body :global(.expressive-code .copy) {
-        display: none !important;
-    }
-
     /* Override copy button positioning for header integration */
     :global(.file-header-copy-btn) {
         position: static !important;

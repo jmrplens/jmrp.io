@@ -324,20 +324,4 @@ svg[id^="mermaid-"] {
   height: auto !important;
 }
 
-/* Fix Expressive Code copy button on mobile */
-.expressive-code .copy button {
-  opacity: 0.8 !important;
-  /* Ensure visible without hover */
-  min-width: 2.5rem;
-  min-height: 2.5rem;
-}
-
-.expressive-code .copy button:hover {
-  opacity: 1 !important;
-}
-
-/* Ensure icon visibility */
-.expressive-code .copy button::after {
-  opacity: 1 !important;
-  background-color: var(--ec-frm-inlBtnFg, currentColor) !important;
-}
+/* Mermaid Diagram Theme Alignment */

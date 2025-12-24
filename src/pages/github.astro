@@ -6,7 +6,7 @@
  * Search functionality is client-side only (no API calls).
  */
 import BaseLayout from "../layouts/BaseLayout.astro";
-import { getImage } from "astro:assets";
+import { Image, getImage } from "astro:assets";
 import githubAvatar from "../assets/github-avatar.png";
 import { fetchGitHubProfile, fetchTopRepositories } from "../utils/github";
 import GitHubSearch from "../components/GitHubSearch.astro";
@@ -21,6 +21,8 @@ const optimizedAvatar = await getImage({
     format: "webp",
     width: 120,
     height: 120,
+    widths: [60, 120, 240],
+    sizes: "(max-width: 768px) 120px, 240px",
 });
 ---
 
@@ -34,11 +36,13 @@ const optimizedAvatar = await getImage({
         <!-- Profile Section - NOW STATIC SSG -->
         <div class="profile-header">
             <div class="profile-avatar">
-                <img
-                    src={optimizedAvatar.src}
+                <Image
+                    src={githubAvatar}
                     alt={profile.name}
                     width="120"
                     height="120"
+                    widths={[60, 120, 240]}
+                    sizes="(max-width: 768px) 120px, 240px"
                 />
             </div>
             <div class="profile-info">

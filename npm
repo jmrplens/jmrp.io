@@ -1,0 +1,4 @@
+#!/bin/bash
+# Wrapper to redirect npm commands to pnpm in this workspace
+echo "ℹ️  Redirecting npm to pnpm..." >&2
+exec pnpm "$@"

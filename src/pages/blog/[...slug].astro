@@ -10,6 +10,7 @@
 import { type CollectionEntry, getCollection } from "astro:content";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { Icon } from "astro-icon/components";
+import { Image } from "astro:assets";
 
 import Callout from "../../components/Callout.astro";
 import Tabs from "../../components/Tabs.astro";
@@ -78,6 +79,33 @@ const finalReferences = allPostReferences.filter((ref) => {
 });
 // --- End of Reference Logic ---
 
+// --- Image Optimization (LCP & JSON-LD) ---
+import { getImage } from "astro:assets";
+
+let lcpImagePreload = null;
+let jsonLdImage = "/default-blog-cover.jpg";
+
+if (post.data.coverImage) {
+    // 1. Optimize for LCP (WebP, Responsive)
+    const optimizedLcp = await getImage({
+        src: post.data.coverImage,
+        format: "webp",
+        width: 1200,
+        height: 675,
+        widths: [360, 480, 640, 720, 960, 1200],
+        quality: 60,
+    });
+
+    lcpImagePreload = {
+        href: optimizedLcp.src,
+        imagesrcset: optimizedLcp.attributes.srcset,
+        imagesizes: "(max-width: 768px) 100vw, 1200px",
+    };
+
+    // 2. Reuse for JSON-LD (Using the main src)
+    jsonLdImage = optimizedLcp.src;
+}
+
 const articleSchema = [
     {
         "@type": "BlogPosting",
@@ -101,10 +129,7 @@ const articleSchema = [
             name: siteData.author,
             url: siteData.url,
         },
-        image: new URL(
-            post.data.coverImage || "/default-blog-cover.jpg",
-            Astro.site,
-        ).toString(),
+        image: new URL(jsonLdImage, Astro.site).toString(),
         mainEntityOfPage: {
             "@type": "WebPage",
             "@id": new URL(`/blog/${post.slug}`, Astro.site).toString(),
@@ -134,7 +159,7 @@ const articleSchema = [
     title={post.data.title}
     description={post.data.description}
     type="article"
-    image={post.data.coverImage}
+    image={post.data.coverImage?.src}
     publishDate={post.data.publishedDate}
     modifiedDate={post.data.updatedDate}
     tags={post.data.tags}
@@ -142,6 +167,19 @@ const articleSchema = [
     tags={post.data.tags}
     schema={articleSchema}
 >
+    {
+        lcpImagePreload && (
+            <link
+                slot="head"
+                rel="preload"
+                as="image"
+                href={lcpImagePreload.href}
+                imagesrcset={lcpImagePreload.imagesrcset}
+                imagesizes={lcpImagePreload.imagesizes}
+                fetchpriority="high"
+            />
+        )
+    }
     <article class="post-content">
         <header class="post-header">
             <div class="content-wrapper">
@@ -149,6 +187,10 @@ const articleSchema = [
                     <Icon name="mdi:arrow-left" /> Back to Blog
                 </a>
                 <div class="meta">
+                    <span class="author">
+                        {post.data.author || siteData.author}
+                    </span>
+                    <span class="separator">•</span>
                     <time datetime={post.data.publishedDate.toISOString()}>
                         {
                             post.data.publishedDate.toLocaleDateString(
@@ -174,6 +216,25 @@ const articleSchema = [
                 </div>
                 <h1>{post.data.title}</h1>
                 <p class="lead">{post.data.description}</p>
+                {
+                    post.data.coverImage && (
+                        <div class="cover-image-container">
+                            <Image
+                                src={post.data.coverImage}
+                                alt={`Cover image for ${post.data.title}`}
+                                class="cover-image"
+                                width={1200}
+                                height={675}
+                                format="webp"
+                                loading="eager"
+                                fetchpriority="high"
+                                widths={[360, 480, 640, 720, 960, 1200]}
+                                sizes="(max-width: 768px) 100vw, 1200px"
+                                quality={60}
+                            />
+                        </div>
+                    )
+                }
             </div>
         </header>
 
@@ -308,14 +369,39 @@ const articleSchema = [
             const copyButton = document.createElement("button");
             copyButton.className = "custom-code-copy-btn";
             copyButton.setAttribute("aria-label", "Copy to clipboard");
-            copyButton.innerHTML = `
-                <svg class="copy-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
-                    <path fill="currentColor" d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z" />
-                </svg>
-                <svg class="success-icon hidden" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
-                    <path fill="currentColor" d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z" />
-                </svg>
-            `;
+
+            const svgNS = "http://www.w3.org/2000/svg";
+
+            // Create copy icon
+            const copyIcon = document.createElementNS(svgNS, "svg");
+            copyIcon.setAttribute("class", "copy-icon");
+            copyIcon.setAttribute("width", "20");
+            copyIcon.setAttribute("height", "20");
+            copyIcon.setAttribute("viewBox", "0 0 24 24");
+            const copyPath = document.createElementNS(svgNS, "path");
+            copyPath.setAttribute("fill", "currentColor");
+            copyPath.setAttribute(
+                "d",
+                "M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z",
+            );
+            copyIcon.appendChild(copyPath);
+
+            // Create success icon
+            const successIcon = document.createElementNS(svgNS, "svg");
+            successIcon.setAttribute("class", "success-icon hidden");
+            successIcon.setAttribute("width", "20");
+            successIcon.setAttribute("height", "20");
+            successIcon.setAttribute("viewBox", "0 0 24 24");
+            const successPath = document.createElementNS(svgNS, "path");
+            successPath.setAttribute("fill", "currentColor");
+            successPath.setAttribute(
+                "d",
+                "M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z",
+            );
+            successIcon.appendChild(successPath);
+
+            copyButton.appendChild(copyIcon);
+            copyButton.appendChild(successIcon);
 
             // Add click handler
             copyButton.addEventListener("click", () => {
@@ -329,21 +415,13 @@ const articleSchema = [
 
                 navigator.clipboard.writeText(text).then(
                     () => {
-                        const copyIcon = copyButton.querySelector(".copy-icon");
-                        const successIcon =
-                            copyButton.querySelector(".success-icon");
+                        copyIcon.classList.add("hidden");
+                        successIcon.classList.remove("hidden");
 
-                        if (copyIcon instanceof HTMLElement) {
-                            if (successIcon instanceof HTMLElement) {
-                                copyIcon.classList.add("hidden");
-                                successIcon.classList.remove("hidden");
-
-                                setTimeout(() => {
-                                    copyIcon.classList.remove("hidden");
-                                    successIcon.classList.add("hidden");
-                                }, 2000);
-                            }
-                        }
+                        setTimeout(() => {
+                            copyIcon.classList.remove("hidden");
+                            successIcon.classList.add("hidden");
+                        }, 2000);
                     },
                     (err) => {
                         console.error("Failed to copy:", err);
@@ -398,6 +476,12 @@ const articleSchema = [
         color: var(--color-text-muted);
         font-size: 0.9rem;
         margin-bottom: 1rem;
+        flex-wrap: wrap; /* Allow wrapping on small screens */
+    }
+
+    .author {
+        font-weight: var(--fw-semibold);
+        color: var(--color-text-body);
     }
 
     .separator {
@@ -428,6 +512,22 @@ const articleSchema = [
         opacity: 0.9;
     }
 
+    .cover-image-container {
+        margin-top: 3rem;
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+        box-shadow: var(--shadow-lg);
+        background-color: var(--color-bg-secondary);
+        aspect-ratio: 16 / 9;
+    }
+
+    .cover-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+
     .tags {
         display: flex;
         gap: 0.5rem;
@@ -436,7 +536,7 @@ const articleSchema = [
 
     .tag {
         color: var(--color-primary);
-        font-weight: 600;
+        font-weight: var(--fw-semibold);
         font-size: 0.85rem;
         text-transform: uppercase;
         letter-spacing: 0.05em;
@@ -462,7 +562,7 @@ const articleSchema = [
 
     /* Enhance link contrast in post content */
     .prose :global(a) {
-        font-weight: 600;
+        font-weight: var(--fw-semibold);
     }
 
     .toc-sidebar {

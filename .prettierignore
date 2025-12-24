@@ -17,3 +17,5 @@ public/scripts/cf-beacon.js
 **/*.min.js
 **/*.svg
 src/content/posts/
+report_lighthouse_jmrpio.json
+rss-validation.json

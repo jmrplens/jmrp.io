@@ -5,6 +5,7 @@
  */
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { getCollection } from "astro:content";
+import { Image, getImage } from "astro:assets";
 
 const posts = (await getCollection("posts"))
     .filter((post) => !post.data.draft)
@@ -12,12 +13,45 @@ const posts = (await getCollection("posts"))
         (a, b) =>
             b.data.publishedDate.valueOf() - a.data.publishedDate.valueOf(),
     );
+
+// Optimize LCP image for preload
+const lcpPost = posts[0];
+let lcpImagePreload = null;
+
+if (lcpPost && lcpPost.data.coverImage) {
+    const optimizedLcp = await getImage({
+        src: lcpPost.data.coverImage,
+        format: "webp",
+        width: 400,
+        height: 225,
+        widths: [360, 480, 720, 800],
+        quality: 60,
+    });
+    lcpImagePreload = {
+        href: optimizedLcp.src,
+        imagesrcset: optimizedLcp.attributes.srcset,
+        imagesizes: "(max-width: 640px) 100vw, 400px",
+    };
+}
 ---
 
 <BaseLayout
     title="Blog"
     description="Writing about software development, home lab, and engineering."
 >
+    {
+        lcpImagePreload && (
+            <link
+                slot="head"
+                rel="preload"
+                as="image"
+                href={lcpImagePreload.href}
+                imagesrcset={lcpImagePreload.imagesrcset}
+                imagesizes={lcpImagePreload.imagesizes}
+                fetchpriority="high"
+            />
+        )
+    }
     <div class="content-wrapper">
         <header class="page-header">
             <h1 class="gradient-text">Blog</h1>
@@ -26,9 +60,28 @@ const posts = (await getCollection("posts"))
 
         <section class="posts-grid" aria-label="Blog posts grid">
             {
-                posts.map((post) => (
+                posts.map((post, index) => (
                     <article class="post-card">
                         <a href={`/blog/${post.slug}/`}>
+                            {post.data.coverImage && (
+                                <div class="image-container">
+                                    <Image
+                                        src={post.data.coverImage}
+                                        alt={post.data.title}
+                                        format="webp"
+                                        class="card-image"
+                                        width={400}
+                                        height={225}
+                                        widths={[360, 480, 640, 720, 800]}
+                                        sizes="(max-width: 360px) 360px, (max-width: 480px) 480px, (max-width: 720px) 720px, 800px"
+                                        quality={60}
+                                        loading={index === 0 ? "eager" : "lazy"}
+                                        fetchpriority={
+                                            index === 0 ? "high" : "auto"
+                                        }
+                                    />
+                                </div>
+                            )}
                             <div class="card-content">
                                 <div class="post-meta">
                                     <time
@@ -111,7 +164,7 @@ const posts = (await getCollection("posts"))
     }
 
     .post-card {
-        background: var(--color-bg-card);
+        background: var(--color-bg-secondary);
         border: var(--border-1);
         border-radius: 16px;
         transition: all 0.3s ease;
@@ -119,6 +172,7 @@ const posts = (await getCollection("posts"))
         display: flex;
         flex-direction: column;
         overflow: hidden;
+        position: relative;
     }
 
     .post-card:hover {
@@ -135,9 +189,31 @@ const posts = (await getCollection("posts"))
         color: inherit;
     }
 
+    /* Image Card Styles */
+    .image-container {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 16 / 9;
+        overflow: hidden;
+    }
+
+    .card-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.5s ease;
+    }
+
+    .post-card:hover .card-image {
+        transform: scale(1.05);
+    }
+
+    /* Standard Card Styles */
     .card-content {
         padding: 2rem;
         flex: 1;
+        display: flex;
+        flex-direction: column;
     }
 
     .post-meta {
@@ -179,6 +255,7 @@ const posts = (await getCollection("posts"))
         -webkit-line-clamp: 3;
         -webkit-box-orient: vertical;
         overflow: hidden;
+        min-height: 4.8rem; /* Reserve space for 3 lines to prevent CLS */
     }
 
     .card-footer {
@@ -188,7 +265,7 @@ const posts = (await getCollection("posts"))
     }
 
     .read-more {
-        font-weight: 600;
+        font-weight: var(--fw-semibold);
         color: var(--color-primary);
         font-size: 0.9rem;
     }
