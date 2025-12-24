@@ -30,15 +30,30 @@ export async function fetchGitHubProfile(): Promise<GitHubProfile> {
     headers.Authorization = `token ${GITHUB_TOKEN}`;
   }
 
-  const res = await fetch(`https://api.github.com/users/${USERNAME}`, {
-    headers,
-  });
+  try {
+    const res = await fetch(`https://api.github.com/users/${USERNAME}`, {
+      headers,
+    });
 
-  if (!res.ok) {
-    throw new Error(`GitHub API error: ${res.status}`);
+    if (!res.ok) {
+      throw new Error(`GitHub API error: ${res.status}`);
+    }
+
+    return res.json();
+  } catch (error) {
+    console.warn("Failed to fetch GitHub profile, using fallback data:", error);
+    return {
+      name: "José Manuel Requena Plens",
+      login: USERNAME,
+      bio: "R&D Engineer | Embedded Systems & Acoustics | Software Engineer",
+      html_url: `https://github.com/${USERNAME}`,
+      avatar_url: "/github-avatar.png", // Fallback to local asset
+      location: "Valencia, Spain",
+      public_repos: 0,
+      followers: 0,
+      following: 0,
+    };
   }
-
-  return res.json();
 }
 
 export async function fetchTopRepositories(limit = 12): Promise<GitHubRepo[]> {
@@ -47,16 +62,21 @@ export async function fetchTopRepositories(limit = 12): Promise<GitHubRepo[]> {
     headers.Authorization = `token ${GITHUB_TOKEN}`;
   }
 
-  const res = await fetch(
-    `https://api.github.com/users/${USERNAME}/repos?sort=updated&per_page=${limit}`,
-    { headers },
-  );
+  try {
+    const res = await fetch(
+      `https://api.github.com/users/${USERNAME}/repos?sort=updated&per_page=${limit}`,
+      { headers },
+    );
 
-  if (!res.ok) {
-    throw new Error(`GitHub API error: ${res.status}`);
+    if (!res.ok) {
+      throw new Error(`GitHub API error: ${res.status}`);
+    }
+
+    return res.json();
+  } catch (error) {
+    console.warn("Failed to fetch GitHub repos, using empty list:", error);
+    return [];
   }
-
-  return res.json();
 }
 
 export const langColors: Record<string, string> = {

@@ -7,7 +7,7 @@ authorEmail: "mail@jmrp.io"
 publishedDate: 2025-12-18
 updatedDate: 2025-12-18
 draft: false
-heroImage: "/src/assets/images/posts/features-guide-hero.png"
+coverImage: "../../assets/images/blog/virtual-files.webp"
 tags: ["nginx", "sysadmin", "webperf", "devops", "tutorial"]
 ---
 
@@ -124,7 +124,7 @@ server {
 
     # Use a case-sensitive match for the well-known path
     location = /.well-known/security.txt {
-        return 200 "Contact: mailto:security@example.com\nExpires: 2026-12-31T23:59:59.000Z\nPreferred-Languages: en\n";
+        return 200 "Contact: security[at]example.com\nExpires: 2026-12-31T23:59:59.000Z\nPreferred-Languages: en\n";
         add_header Content-Type text/plain;
     }
 
@@ -149,7 +149,7 @@ The <a href="https://humanstxt.org/" target="_blank" rel="noopener noreferrer" a
 ```txt
 # TEAM
 # Lead Developer: Jane Doe
-# Contact: mailto:jane@example.com
+# Contact: jane[at]example.com
 # Twitter: @janedoe
 
 # SITE
@@ -173,7 +173,7 @@ location = /humans.txt {
 <FileContent filename="Nginx Site Configuration" icon="devicon:nginx">
 ```nginx
 location = /humans.txt {
-    return 200 "# TEAM\nLead Developer: Jane Doe\nContact: mailto:jane@example.com\n\n# SITE\nLast update: 2025-12-18\n";
+    return 200 "# TEAM\nLead Developer: Jane Doe\nContact: jane[at]example.com\n\n# SITE\nLast update: 2025-12-18\n";
     add_header Content-Type text/plain;
 }
 ```

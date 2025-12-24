@@ -13,6 +13,14 @@ import "../styles/global.css";
 import "../styles/fonts.css";
 import "../styles/font-fallbacks.css";
 
+import inter400 from "@fontsource/inter/files/inter-latin-400-normal.woff2?url";
+import inter600 from "@fontsource/inter/files/inter-latin-600-normal.woff2?url";
+import inter800 from "@fontsource/inter/files/inter-latin-800-normal.woff2?url";
+import jetbrains400 from "@fontsource/jetbrains-mono/files/jetbrains-mono-latin-400-normal.woff2?url";
+import jetbrains700 from "@fontsource/jetbrains-mono/files/jetbrains-mono-latin-700-normal.woff2?url";
+
+import jetbrains800 from "@fontsource/jetbrains-mono/files/jetbrains-mono-latin-800-normal.woff2?url";
+
 import { getImage } from "astro:assets";
 import faviconSrc from "../assets/favicon.png";
 import appleTouchIconSrc from "../assets/apple-touch-icon.png";
@@ -92,10 +100,15 @@ if (image) {
             resolvedImage = new URL(image, siteData.url);
         }
     } else {
-        // It's likely an imported Image object passed via props
-        resolvedImage = image.src
-            ? new URL(image.src, Astro.url)
-            : new URL(image, Astro.url);
+        // It's an imported Image object passed via props
+        // Optimize it for OG/Twitter (Standard 1200x630, WebP for efficiency)
+        const optimizedImage = await getImage({
+            src: image,
+            format: "webp",
+            width: 1200,
+            height: 630,
+        });
+        resolvedImage = new URL(optimizedImage.src, Astro.url);
     }
 } else {
     // Fallback to default site image (imported)
@@ -159,6 +172,51 @@ const jsonLD = {
 <!-- Global Metadata -->
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
+
+<!-- Font Preloads (Critical for LCP/CLS) -->
+<link
+    rel="preload"
+    href={inter400}
+    as="font"
+    type="font/woff2"
+    crossorigin="anonymous"
+/>
+<link
+    rel="preload"
+    href={inter600}
+    as="font"
+    type="font/woff2"
+    crossorigin="anonymous"
+/>
+<link
+    rel="preload"
+    href={inter800}
+    as="font"
+    type="font/woff2"
+    crossorigin="anonymous"
+/>
+<link
+    rel="preload"
+    href={jetbrains400}
+    as="font"
+    type="font/woff2"
+    crossorigin="anonymous"
+/>
+<link
+    rel="preload"
+    href={jetbrains700}
+    as="font"
+    type="font/woff2"
+    crossorigin="anonymous"
+/>
+<link
+    rel="preload"
+    href={jetbrains800}
+    as="font"
+    type="font/woff2"
+    crossorigin="anonymous"
+/>
+
 <link rel="icon" type="image/webp" href={favicon.src} />
 <link rel="apple-touch-icon" href={appleTouchIcon.src} />
 

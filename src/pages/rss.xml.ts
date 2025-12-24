@@ -1,5 +1,6 @@
 import rss from "@astrojs/rss";
 import { getCollection } from "astro:content";
+import { getImage } from "astro:assets";
 import type { APIContext } from "astro";
 import sanitizeHtml from "sanitize-html";
 import { marked } from "marked";
@@ -60,6 +61,25 @@ export async function GET(context: APIContext) {
           },
         });
 
+        // Resolve cover image
+        let enclosure = "";
+        if (post.data.coverImage) {
+          try {
+            const optimizedImage = await getImage({
+              src: post.data.coverImage,
+              format: "webp",
+              width: 1200,
+            });
+            const imageUrl = new URL(
+              optimizedImage.src,
+              context.site || "https://jmrp.io",
+            ).toString();
+            enclosure = `<enclosure url="${imageUrl}" length="${optimizedImage.attributes.size || 0}" type="image/webp" />`;
+          } catch (e) {
+            console.warn(`Failed to optimize RSS image for ${post.slug}`, e);
+          }
+        }
+
         return {
           title: post.data.title,
           description: post.data.description || "",
@@ -68,10 +88,7 @@ export async function GET(context: APIContext) {
           categories: post.data.tags || [],
           author: authorString,
           content: sanitizedHtml,
-          // Include cover image if available
-          customData: post.data.coverImage
-            ? `<enclosure url="${new URL(post.data.coverImage, context.site || "https://jmrp.io").toString()}" type="image/jpeg" />`
-            : "",
+          customData: enclosure,
         };
       }),
     ),
