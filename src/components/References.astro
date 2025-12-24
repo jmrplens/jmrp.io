@@ -20,7 +20,7 @@ const { references = [] } = Astro.props;
 
 // Import all png files from icons folder eagerly so we can use them in the map
 const iconFiles = import.meta.glob<{ default: ImageMetadata }>(
-    "/src/assets/icons/*.png",
+    "/src/assets/icons/*.webp",
     { eager: true },
 );
 ---
@@ -43,7 +43,7 @@ const iconFiles = import.meta.glob<{ default: ImageMetadata }>(
                     const iconName = hostname.replace(/[^a-z0-9]/gi, "_");
 
                     // Try to find the matching icon
-                    const iconPath = `/src/assets/icons/${iconName}.png`;
+                    const iconPath = `/src/assets/icons/${iconName}.webp`;
                     const iconModule = iconFiles[iconPath];
 
                     return (
