@@ -14,6 +14,7 @@ const TARGET_DIR = path.join(DIST_DIR, ASSETS_DIR);
 // Group 3: The content of src
 // Group 4: Attributes after src
 const IMG_TAG_REGEX = /<img([^>]*)\bsrc=(["'])(.*?)\2([^>]*)>/gi; // NOSONAR javascript:S5852
+const SOURCE_TAG_REGEX = /<source([^>]*)\bsrcset=(["'])(.*?)\2([^>]*)>/gi; // NOSONAR javascript:S5852
 
 async function extractHtmlImgDataUris() {
   console.log("Starting HTML Image Data URI extraction...");
@@ -31,73 +32,78 @@ async function extractHtmlImgDataUris() {
     let content = fs.readFileSync(file, "utf-8");
     let modified = false;
 
-    content = content.replaceAll(
-      IMG_TAG_REGEX,
-      (fullMatch, preAttrs, quote, srcContent, postAttrs) => {
-        // Check if it is a Data URI
-        if (!srcContent.trim().startsWith("data:")) {
-          return fullMatch;
+    const replacer = (fullMatch, preAttrs, quote, srcContent, postAttrs) => {
+      // Check if it is a Data URI
+      if (!srcContent.trim().startsWith("data:")) {
+        return fullMatch;
+      }
+
+      try {
+        // Parse Data URI manually
+        // Format: data:[<mediatype>][;base64],<data>
+        const commaIndex = srcContent.indexOf(",");
+        if (commaIndex === -1) return fullMatch;
+
+        const metadata = srcContent.substring(5, commaIndex); // remove 'data:'
+        const rawData = srcContent.substring(commaIndex + 1);
+
+        const isBase64 = metadata.endsWith(";base64");
+        const mimeType = isBase64 ? metadata.slice(0, -7) : metadata;
+
+        // Decode data
+        let buffer;
+        if (isBase64) {
+          buffer = Buffer.from(rawData, "base64");
+        } else {
+          // URI encoded
+          buffer = Buffer.from(decodeURIComponent(rawData.trim()));
         }
 
-        try {
-          // Parse Data URI manually
-          // Format: data:[<mediatype>][;base64],<data>
-          const commaIndex = srcContent.indexOf(",");
-          if (commaIndex === -1) return fullMatch;
+        // Determine extension
+        let ext = "bin";
+        if (mimeType.includes("svg")) ext = "svg";
+        else if (mimeType.includes("png")) ext = "png";
+        else if (mimeType.includes("jpeg") || mimeType.includes("jpg"))
+          ext = "jpg";
+        else if (mimeType.includes("gif")) ext = "gif";
+        else if (mimeType.includes("webp")) ext = "webp";
 
-          const metadata = srcContent.substring(5, commaIndex); // remove 'data:'
-          const rawData = srcContent.substring(commaIndex + 1);
+        // Generate Hash for filename
+        const hash = crypto
+          .createHash("sha256")
+          .update(buffer)
+          .digest("hex")
+          .substring(0, 16);
+        const filename = `${hash}.${ext}`;
+        const filePath = path.join(TARGET_DIR, filename);
 
-          const isBase64 = metadata.endsWith(";base64");
-          const mimeType = isBase64 ? metadata.slice(0, -7) : metadata;
-
-          // Decode data
-          let buffer;
-          if (isBase64) {
-            buffer = Buffer.from(rawData, "base64");
-          } else {
-            // URI encoded
-            buffer = Buffer.from(decodeURIComponent(rawData.trim()));
-          }
-
-          // Determine extension
-          let ext = "bin";
-          if (mimeType.includes("svg")) ext = "svg";
-          else if (mimeType.includes("png")) ext = "png";
-          else if (mimeType.includes("jpeg") || mimeType.includes("jpg"))
-            ext = "jpg";
-          else if (mimeType.includes("gif")) ext = "gif";
-          else if (mimeType.includes("webp")) ext = "webp";
-
-          // Generate Hash for filename
-          const hash = crypto
-            .createHash("sha256")
-            .update(buffer)
-            .digest("hex")
-            .substring(0, 16);
-          const filename = `${hash}.${ext}`;
-          const filePath = path.join(TARGET_DIR, filename);
-
-          // Write file if it doesn't exist (deduplication)
-          if (!fs.existsSync(filePath)) {
-            fs.writeFileSync(filePath, buffer);
-            totalExtracted++;
-          }
-
-          // Construct new URL
-          const newUrl = `/${ASSETS_DIR}/${filename}`;
-          modified = true;
-
-          // Reconstruct the img tag
-          return `<img${preAttrs} src=${quote}${newUrl}${quote}${postAttrs}>`;
-        } catch (err) {
-          console.warn(
-            `Failed to process Image Data URI in ${file}: ${err.message}`,
-          );
-          return fullMatch; // Do not replace if error
+        // Write file if it doesn't exist (deduplication)
+        if (!fs.existsSync(filePath)) {
+          fs.writeFileSync(filePath, buffer);
+          totalExtracted++;
         }
-      },
-    );
+
+        // Construct new URL
+        const newUrl = `/${ASSETS_DIR}/${filename}`;
+        modified = true;
+
+        let tagName = "img";
+        let attrName = "src";
+        if (fullMatch.toLowerCase().startsWith("<source")) {
+          tagName = "source";
+          attrName = "srcset";
+        }
+
+        // Reconstruct the tag
+        return `<${tagName}${preAttrs} ${attrName}=${quote}${newUrl}${quote}${postAttrs}>`;
+      } catch (err) {
+        console.warn(`Failed to process Data URI in ${file}: ${err.message}`);
+        return fullMatch; // Do not replace if error
+      }
+    };
+
+    content = content.replaceAll(IMG_TAG_REGEX, replacer);
+    content = content.replaceAll(SOURCE_TAG_REGEX, replacer);
 
     if (modified) {
       fs.writeFileSync(file, content, "utf-8");
