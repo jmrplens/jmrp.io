@@ -61,8 +61,9 @@ const iconFiles = import.meta.glob<{ default: ImageMetadata }>(
                                         width={40}
                                         height={40}
                                         format="webp"
-                                        widths={[360, 480, 640, 720, 960, 1200]}
+                                        widths={[40, 80, 120]}
                                         class="ref-favicon"
+                                        loading="lazy"
                                     />
                                 ) : (
                                     <div class="fallback-icon">
