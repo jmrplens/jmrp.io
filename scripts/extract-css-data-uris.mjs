@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { glob } from "glob";
 import crypto from "node:crypto";
+import { optimize } from "svgo";
 
 const DIST_DIR = process.env.DIST_DIR || "dist";
 const ASSETS_DIR = "assets/extracted";
@@ -69,7 +70,49 @@ async function extractDataUris() {
 
           // Write file if it doesn't exist (deduplication)
           if (!fs.existsSync(filePath)) {
-            fs.writeFileSync(filePath, buffer);
+            if (ext === "svg") {
+              try {
+                const svgString = buffer.toString("utf-8");
+                const optimized = optimize(svgString, {
+                  multipass: true,
+                  plugins: [
+                    {
+                      name: "preset-default",
+                      params: {
+                        overrides: {
+                          cleanupNumericValues: false,
+                          removeViewBox: false,
+                        },
+                        cleanupIDs: {
+                          minify: false,
+                          remove: false,
+                        },
+                        convertPathData: false,
+                      },
+                    },
+                    "sortAttrs",
+                    {
+                      name: "addAttributesToSVGElement",
+                      params: {
+                        attributes: [{ xmlns: "http://www.w3.org/2000/svg" }],
+                      },
+                    },
+                  ],
+                });
+                if (optimized.data) {
+                  fs.writeFileSync(filePath, optimized.data);
+                } else {
+                  fs.writeFileSync(filePath, buffer);
+                }
+              } catch (e) {
+                console.warn(
+                  `SVGO optimization failed for extracted SVG, using raw: ${e.message}`,
+                );
+                fs.writeFileSync(filePath, buffer);
+              }
+            } else {
+              fs.writeFileSync(filePath, buffer);
+            }
             totalExtracted++;
           }
 

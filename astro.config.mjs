@@ -58,6 +58,7 @@ export default defineConfig({
               bottomMarginAdj: 10,
             },
           },
+          dark: true,
         },
       ],
       [
