@@ -40,45 +40,44 @@ const {
 
 <!doctype html>
 <html lang="en">
-    <head>
-        <BaseHead
-            title={title}
-            description={description}
-            type={type}
-            schema={schema}
-            image={image}
-            publishDate={publishDate}
-            modifiedDate={modifiedDate}
-            authors={authors}
-            tags={tags}
-        />
-        <slot name="head" />
-        <script is:inline>
-            // Critical: Execute immediately to prevent FOUC
-            (function () {
-                const e = () => {
-                    if (typeof localStorage !== "undefined") {
-                        const saved = localStorage.getItem("theme");
-                        if (saved) return saved;
-                    }
-                    return window.matchMedia("(prefers-color-scheme: light)")
-                        .matches
-                        ? "light"
-                        : "dark";
-                };
-                const t = e();
-                document.documentElement.setAttribute("data-theme", t);
-                if (t === "light") {
-                    document.documentElement.classList.add("light-mode");
-                    document.documentElement.classList.remove("dark-mode");
-                } else {
-                    document.documentElement.classList.add("dark-mode");
-                    document.documentElement.classList.remove("light-mode");
+    <BaseHead
+        title={title}
+        description={description}
+        type={type}
+        schema={schema}
+        image={image}
+        publishDate={publishDate}
+        modifiedDate={modifiedDate}
+        authors={authors}
+        tags={tags}
+    />
+    <slot name="head" />
+    <script is:inline>
+        // Critical: Execute immediately to prevent FOUC
+        (function () {
+            const e = () => {
+                if (typeof localStorage !== "undefined") {
+                    const saved = localStorage.getItem("theme");
+                    if (saved) return saved;
                 }
-            })();
-        </script>
-        <slot name="head" />
-    </head>
+                return window.matchMedia("(prefers-color-scheme: light)")
+                    .matches
+                    ? "light"
+                    : "dark";
+            };
+            const t = e();
+            document.documentElement.setAttribute("data-theme", t);
+            if (t === "light") {
+                document.documentElement.classList.add("light-mode");
+                document.documentElement.classList.remove("dark-mode");
+            } else {
+                document.documentElement.classList.add("dark-mode");
+                document.documentElement.classList.remove("light-mode");
+            }
+        })();
+    </script>
+    <slot name="head" />
+
     <body>
         <a href="#main-content" class="skip-link">Skip to content</a>
         <Header />

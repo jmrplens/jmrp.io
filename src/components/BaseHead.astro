@@ -19,6 +19,8 @@ import inter800 from "@fontsource/inter/files/inter-latin-800-normal.woff2?url";
 import jetbrains400 from "@fontsource/jetbrains-mono/files/jetbrains-mono-latin-400-normal.woff2?url";
 import jetbrains700 from "@fontsource/jetbrains-mono/files/jetbrains-mono-latin-700-normal.woff2?url";
 
+import jetbrains800 from "@fontsource/jetbrains-mono/files/jetbrains-mono-latin-800-normal.woff2?url";
+
 import { getImage } from "astro:assets";
 import faviconSrc from "../assets/favicon.png";
 import appleTouchIconSrc from "../assets/apple-touch-icon.png";
@@ -196,6 +198,20 @@ const jsonLD = {
 <link
     rel="preload"
     href={jetbrains400}
+    as="font"
+    type="font/woff2"
+    crossorigin="anonymous"
+/>
+<link
+    rel="preload"
+    href={jetbrains700}
+    as="font"
+    type="font/woff2"
+    crossorigin="anonymous"
+/>
+<link
+    rel="preload"
+    href={jetbrains800}
     as="font"
     type="font/woff2"
     crossorigin="anonymous"

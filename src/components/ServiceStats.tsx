@@ -20,9 +20,9 @@ async function fetchMastodonStats(setError: (error: boolean) => void) {
 
   try {
     const [resPeers, resTrends, resInstance] = await Promise.all([
-      fetch("https://mstdn.jmrp.io/api/v1/instance/peers"),
-      fetch("https://mstdn.jmrp.io/api/v1/trends/tags?limit=3"),
-      fetch("https://mstdn.jmrp.io/api/v1/instance"),
+      fetch("/api/proxy/mastodon/peers"),
+      fetch("/api/proxy/mastodon/trends"),
+      fetch("/api/proxy/mastodon/instance"),
     ]);
 
     if (resPeers.ok) {
@@ -54,28 +54,20 @@ async function fetchMatrixStats(setError: (error: boolean) => void) {
   let matrixFed: any = null;
 
   try {
-    const resConfig = await fetch(
-      "https://matrix.jmrp.io/.well-known/matrix/client",
-    );
+    const resConfig = await fetch("/api/proxy/matrix/config");
     if (resConfig.ok) matrixData = await resConfig.json();
 
-    const resVer = await fetch(
-      "https://matrix.jmrp.io/_matrix/client/versions",
-    );
+    const resVer = await fetch("/api/proxy/matrix/versions");
     if (resVer.ok) {
       matrixData.online = true;
       const verData = await resVer.json();
       matrixData.versions = verData.versions;
     }
 
-    const resFed = await fetch(
-      "https://matrix.jmrp.io/_matrix/federation/v1/version",
-    );
+    const resFed = await fetch("/api/proxy/matrix/federation");
     if (resFed.ok) matrixFed = await resFed.json();
 
-    const resDest = await fetch(
-      "https://matrix.jmrp.io/public_stats/federation",
-    );
+    const resDest = await fetch("/api/proxy/matrix/stats");
     if (resDest.ok) {
       const destData = await resDest.json();
       matrixData.federationTotal = destData.total;
@@ -93,9 +85,9 @@ async function fetchMatrixStats(setError: (error: boolean) => void) {
  */
 async function fetchMeshtasticStats() {
   const [resPotato, resLF, resMF] = await Promise.all([
-    fetch("https://potatomesh.jmrp.io/api/nodes").catch(() => null),
-    fetch("https://mesh.jmrp.io/public_stats/lf").catch(() => null),
-    fetch("https://mesh.jmrp.io/public_stats/mf").catch(() => null),
+    fetch("/api/proxy/potato/nodes").catch(() => null),
+    fetch("/api/proxy/mesh/lf").catch(() => null),
+    fetch("/api/proxy/mesh/mf").catch(() => null),
   ]);
 
   let potatoNodes = 0;
@@ -126,16 +118,20 @@ async function fetchMeshtasticStats() {
 async function fetchPotatoVersion(): Promise<string> {
   let potatoVersion = "";
   try {
-    const resVer = await fetch("https://potatomesh.jmrp.io/version");
+    const resVer = await fetch("/api/proxy/potato/version");
     if (resVer.ok) {
-      try {
-        const verJson = await resVer.json();
-        potatoVersion = verJson.version;
-      } catch (e) {
-        console.error(
-          "Error parsing PotatoMesh version as JSON, falling back to text:",
-          e,
-        );
+      // The API Proxy handles parsing or wrapping text in { version: "..." }
+      const contentType = resVer.headers.get("content-type");
+      if (contentType && contentType.includes("application/json")) {
+        try {
+          const verJson = await resVer.json();
+          const ver = verJson.version;
+          potatoVersion = ver || "";
+        } catch (e) {
+          // Fallback
+        }
+      } else {
+        // Upstream likely returned plain text if not JSON
         potatoVersion = await resVer.text();
       }
     }
