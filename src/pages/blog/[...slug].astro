@@ -79,40 +79,80 @@ const finalReferences = allPostReferences.filter((ref) => {
 });
 // --- End of Reference Logic ---
 
-// --- Image Optimization for JSON-LD ---
+// --- Image Optimization (LCP & JSON-LD) ---
 import { getImage } from "astro:assets";
 
-let jsonLdImage = "/default-blog-cover.jpg";
-if (post.data.coverImage) {
-    const optimizedJsonLdImage = await getImage({
-        src: post.data.coverImage,
-        format: "webp",
-        width: 1200,
-        height: 630,
-        quality: 60,
-    });
-    jsonLdImage = optimizedJsonLdImage.src;
-}
-
-// --- LCP & Preload Optimization ---
 let lcpImagePreload = null;
+let jsonLdImage = "/default-blog-cover.jpg";
+
 if (post.data.coverImage) {
+    // 1. Optimize for LCP (WebP, Responsive)
     const optimizedLcp = await getImage({
         src: post.data.coverImage,
         format: "webp",
         width: 1200,
         height: 675,
-        widths: [360, 720, 1200],
+        widths: [360, 480, 640, 720, 960, 1200],
         quality: 60,
     });
+    
     lcpImagePreload = {
         href: optimizedLcp.src,
         imagesrcset: optimizedLcp.attributes.srcset,
         imagesizes: "(max-width: 768px) 100vw, 1200px",
     };
+
+    // 2. Reuse for JSON-LD (Using the main src)
+    jsonLdImage = optimizedLcp.src;
 }
 
-
+const articleSchema = [
+    {
+        "@type": "BlogPosting",
+        "@id":
+            new URL(`/blog/${post.slug}`, Astro.site).toString() + "#article",
+        headline: post.data.title,
+        description: post.data.description,
+        datePublished: post.data.publishedDate.toISOString(),
+        dateModified: (
+            post.data.updatedDate || post.data.publishedDate
+        ).toISOString(),
+        author: {
+            "@type": "Person",
+            "@id": `${siteData.url}/#person`,
+            name: siteData.author,
+            url: siteData.url,
+        },
+        publisher: {
+            "@type": "Person",
+            "@id": `${siteData.url}/#person`,
+            name: siteData.author,
+            url: siteData.url,
+        },
+        image: new URL(jsonLdImage, Astro.site).toString(),
+        mainEntityOfPage: {
+            "@type": "WebPage",
+            "@id": new URL(`/blog/${post.slug}`, Astro.site).toString(),
+        },
+    },
+    {
+        "@type": "BreadcrumbList",
+        itemListElement: [
+            {
+                "@type": "ListItem",
+                position: 1,
+                name: "Blog",
+                item: new URL("/blog", Astro.site).toString(),
+            },
+            {
+                "@type": "ListItem",
+                position: 2,
+                name: post.data.title,
+                item: new URL(`/blog/${post.slug}`, Astro.site).toString(),
+            },
+        ],
+    },
+];
 ---
 
 <BaseLayout

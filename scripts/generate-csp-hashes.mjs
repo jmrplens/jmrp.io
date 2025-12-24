@@ -10,6 +10,7 @@ const execAsync = promisify(exec);
 // Configuration
 const DIST_DIR = process.env.DIST_DIR || "dist";
 const HTML_PATTERN = "**/*.html";
+const JS_PATTERN = "**/*.js";
 const NGINX_CONF = "/etc/nginx/snippets/security_headers.conf";
 
 /**
@@ -161,6 +162,15 @@ async function generateHashes() {
     for (const file of files) {
       const content = fs.readFileSync(file, "utf-8");
       extractHashes(content, styleHashes, scriptHashes, imageDomains);
+    }
+
+    // Process all JS files to add their hashes (fixes strict-dynamic issues)
+    const jsFiles = await glob(JS_PATTERN, { cwd: DIST_DIR, absolute: true });
+    console.log(`Found ${jsFiles.length} JS files to hash.`);
+    for (const file of jsFiles) {
+      const content = fs.readFileSync(file);
+      const hash = crypto.createHash("sha256").update(content).digest("base64");
+      scriptHashes.add(`'sha256-${hash}'`);
     }
 
     console.log(`\nFound ${styleHashes.size} unique style hashes.`);
