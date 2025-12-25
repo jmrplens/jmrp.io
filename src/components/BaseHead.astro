@@ -9,17 +9,15 @@
  * - Favicons and fonts
  */
 import "../styles/global.css";
-// Supports weights 100-900
-import "../styles/fonts.css";
+// Variable Fonts (automatically injects @font-face)
+import "@fontsource-variable/inter";
+import "@fontsource-variable/jetbrains-mono";
 import "../styles/font-fallbacks.css";
 
-import inter400 from "@fontsource/inter/files/inter-latin-400-normal.woff2?url";
-import inter600 from "@fontsource/inter/files/inter-latin-600-normal.woff2?url";
-import inter800 from "@fontsource/inter/files/inter-latin-800-normal.woff2?url";
-import jetbrains400 from "@fontsource/jetbrains-mono/files/jetbrains-mono-latin-400-normal.woff2?url";
-import jetbrains700 from "@fontsource/jetbrains-mono/files/jetbrains-mono-latin-700-normal.woff2?url";
+import interVariable from "@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url";
+import jetbrainsVariable from "@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2?url";
 
-import jetbrains800 from "@fontsource/jetbrains-mono/files/jetbrains-mono-latin-800-normal.woff2?url";
+// ... other imports
 
 import { getImage } from "astro:assets";
 import faviconSrc from "../assets/favicon.png";
@@ -174,20 +172,27 @@ const jsonLD = {
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 
 <!-- Font Preloads (Critical for LCP/CLS) -->
+<!-- Font Preloads (Variable Fonts for LCP Optimization) -->
+<!-- Inter Variable: Covers all weights (400-800) in one request -->
 <link
     rel="preload"
-    href={inter400}
+    href={interVariable}
     as="font"
     type="font/woff2"
     crossorigin="anonymous"
+    fetchpriority="high"
 />
+<!-- JetBrains Mono Variable: Covers all weights (400-800) in one request -->
 <link
     rel="preload"
-    href={inter600}
+    href={jetbrainsVariable}
     as="font"
     type="font/woff2"
     crossorigin="anonymous"
+    fetchpriority="high"
 />
+<!-- Inter 800 is not generally critical above fold -->
+<!--
 <link
     rel="preload"
     href={inter800}
@@ -195,27 +200,7 @@ const jsonLD = {
     type="font/woff2"
     crossorigin="anonymous"
 />
-<link
-    rel="preload"
-    href={jetbrains400}
-    as="font"
-    type="font/woff2"
-    crossorigin="anonymous"
-/>
-<link
-    rel="preload"
-    href={jetbrains700}
-    as="font"
-    type="font/woff2"
-    crossorigin="anonymous"
-/>
-<link
-    rel="preload"
-    href={jetbrains800}
-    as="font"
-    type="font/woff2"
-    crossorigin="anonymous"
-/>
+-->
 
 <link rel="icon" type="image/webp" href={favicon.src} />
 <link rel="apple-touch-icon" href={appleTouchIcon.src} />

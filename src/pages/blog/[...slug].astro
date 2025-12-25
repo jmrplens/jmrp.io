@@ -259,7 +259,7 @@ const articleSchema = [
     document.addEventListener("DOMContentLoaded", () => {
         // Accessibility: Fix duplicate role="region" on code blocks
         // We use requestIdleCallback to avoid forced reflows during initial layout
-        // caused by reading/writing DOM concurrently with Expressive Code's scripts.
+        // caused by reading/writing DOM concurrently with scripts.
         const rIC = window.requestIdleCallback || ((cb) => setTimeout(cb, 50));
 
         const applyLabels = () => {
@@ -382,7 +382,6 @@ const articleSchema = [
 
             // Add click handler
             copyButton.addEventListener("click", () => {
-                // Expressive code uses code, Shiki uses code too, but structure might differ slightly.
                 // Usually pre > code.
                 let codeElement = block.querySelector("code");
                 if (!codeElement && block.tagName === "PRE") {
@@ -418,7 +417,6 @@ const articleSchema = [
             // Make the block relative for positioning
             if (block instanceof HTMLElement) {
                 // If it's a pre tag (Shiki), make it relative.
-                // If it's a wrapper (Expressive Code), it usually handles it, but good to ensure.
                 block.style.position = "relative";
             }
 

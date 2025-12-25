@@ -140,7 +140,19 @@ try {
 
   // --- OUTPUT GENERATION ---
 
-  console.log("### ⚡ Lighthouse Report");
+  const theme = process.env.THEME || "unknown";
+
+  const themeNames = {
+    light: "☀️ Light Mode",
+    dark: "🌙 Dark Mode",
+  };
+  const themeName = themeNames[theme] || "Report";
+
+  // Custom Header matching the previous CI YAML logic
+  console.log(`## 🌓 Lighthouse Report`);
+  console.log(`\n**Theme:** ${themeName}`);
+
+  console.log("\n#### ⚡ Details");
 
   const categories = [
     "performance",
@@ -192,16 +204,16 @@ try {
 
     console.log(
       "| " +
-      categoryIcons[cat] +
-      " " +
-      categoryNames[cat] +
-      " | " +
-      Math.round(siteMedian) +
-      "% | " +
-      minScore +
-      "% (" +
-      worstName +
-      ") |",
+        categoryIcons[cat] +
+        " " +
+        categoryNames[cat] +
+        " | " +
+        Math.round(siteMedian) +
+        "% | " +
+        minScore +
+        "% (" +
+        worstName +
+        ") |",
     );
   });
 
@@ -244,8 +256,8 @@ try {
     if (Object.keys(links).length > relevantLinks.length) {
       console.log(
         "\n_(" +
-        (Object.keys(links).length - relevantLinks.length) +
-        " other reports available in artifacts)_",
+          (Object.keys(links).length - relevantLinks.length) +
+          " other reports available in artifacts)_",
       );
     }
   }

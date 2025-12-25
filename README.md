@@ -132,8 +132,12 @@ This project employs a rigorous testing pipeline to ensure quality and complianc
 
 We perform comprehensive accessibility checks:
 
-- **Axe-core (via Playwright)**: Scans every page against **WCAG 2.1 AA** and **Best Practice** rules. It generates detailed HTML reports (`accessibility-report/`) and fails the build on any violation.
+- **Axe-core (via Playwright)**: Scans every page against **WCAG 2.1 AA** and **Best Practice** rules.
+  - **Dual-Theme Matrix**: Tests run in parallel for both **Light** and **Dark** modes to ensure contrast compliance in all contexts.
+  - **Global SVG Exclusion**: Prevents false positives in diagrams (Mermaid, etc.).
+  - Generates detailed HTML reports (`accessibility-report/`) and fails the build on any violation.
 - **Lighthouse CI**: Runs Lighthouse audits on all pages, enforcing high scores for Accessibility, Performance, and SEO.
+  - **Dual-Theme Execution**: configured to run separate audits for **Light** and **Dark** modes (2 runs each, 4 total per page).
 - **Manual Checks**: The pipeline flags "incomplete" checks (e.g., complex color contrast) for manual review.
 
 ### Content Validation
