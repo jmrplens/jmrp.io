@@ -284,7 +284,7 @@ const articleSchema = [
         // Accessibility: Fix duplicate role="region" on code blocks
         // We use requestIdleCallback to avoid forced reflows during initial layout
         // caused by reading/writing DOM concurrently with Expressive Code's scripts.
-        const rIC = window.requestIdleCallback || ((cb) => setTimeout(cb, 1));
+        const rIC = window.requestIdleCallback || ((cb) => setTimeout(cb, 50));
 
         const applyLabels = () => {
             rIC(() => {
@@ -705,13 +705,13 @@ const articleSchema = [
 
         h1 {
             font-size: 1.75rem; /* Reduce size to minimize wrapping */
-            min-height: 5.5em; /* Aggressively reserve space (4-5 lines) */
+            min-height: 4em; /* Stabilize roughly 3-4 lines */
             text-wrap: initial; /* frequent recalc of balance can cause shifts, revert to standard */
         }
 
         .lead {
             font-size: 1.125rem;
-            min-height: 7em; /* Aggressive reservation for description */
+            min-height: 5em; /* Stabilize roughly 4 lines */
         }
 
         .content-wrapper {
