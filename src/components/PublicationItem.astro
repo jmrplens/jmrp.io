@@ -1,7 +1,7 @@
 ---
 import CopyButton from "./CopyButton.astro";
 import { Icon } from "astro-icon/components";
-import { Code } from "astro-expressive-code/components";
+import { Code } from "astro:components";
 
 const { pub } = Astro.props;
 
@@ -201,7 +201,20 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
                         />
                     </div>
                     <div class="pub-card-content">
-                        <Code code={cleanedBibtex} lang="bibtex" />
+                        <div class="code-block-dark">
+                            <Code
+                                code={cleanedBibtex}
+                                lang="bibtex"
+                                theme="github-dark"
+                            />
+                        </div>
+                        <div class="code-block-light">
+                            <Code
+                                code={cleanedBibtex}
+                                lang="bibtex"
+                                theme="github-light"
+                            />
+                        </div>
                     </div>
                 </div>
             </div>
@@ -368,13 +381,49 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
         font-weight: var(--fw-link-emphasis);
     }
 
-    /* Code component overrides if necessary, but default Shiki output is usually good.
-       We might want to ensure overflow handling fits the card. */
+    /* Code component overrides (Zero-JS Theme Switching) */
     .pub-card-content :global(pre) {
         margin: 0 !important;
         padding: var(--space-md) !important;
         background-color: var(--color-bg-secondary) !important;
         border-radius: 0 0 var(--radius-sm) var(--radius-sm) !important;
         overflow-x: auto;
+    }
+
+    /* Default (Hidden) */
+    .code-block-dark,
+    .code-block-light {
+        display: none;
+    }
+
+    /* Theme logic: Show Dark by default or if data-theme='dark' */
+    :global([data-theme="dark"]) .code-block-dark,
+    :global(:root:not([data-theme])) .code-block-light {
+        /* Fallback logic mostly handled by JS script, but assuming light default? 
+           Actually user site seems to use data-theme attribute. */
+        display: block;
+    }
+
+    /* If specifically light */
+    :global([data-theme="light"]) .code-block-light {
+        display: block;
+    }
+
+    /* If specifically dark (override potential defaults) */
+    :global([data-theme="dark"]) .code-block-light {
+        display: none;
+    }
+    :global([data-theme="light"]) .code-block-dark {
+        display: none;
+    }
+
+    /* System preference handling if no data-theme present (optional, generally managed by the theme script) */
+    @media (prefers-color-scheme: dark) {
+        :global(:root:not([data-theme])) .code-block-dark {
+            display: block;
+        }
+        :global(:root:not([data-theme])) .code-block-light {
+            display: none;
+        }
     }
 </style>
