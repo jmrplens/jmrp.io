@@ -92,26 +92,14 @@ const rehypeMermaidSplitter = () => (/** @type {any} */ tree) => {
 
 // Setup Shiki themes with overrides
 // Clone the themes to allow modification (they are frozen by default)
-const minLight = structuredClone((await bundledThemes["min-light"]()).default);
-const minDark = structuredClone((await bundledThemes["min-dark"]()).default);
+const githubLight = structuredClone(
+  (await bundledThemes["github-light-high-contrast"]()).default,
+);
+const githubDark = structuredClone(
+  (await bundledThemes["github-dark-high-contrast"]()).default,
+);
 
-// Override comment colors for WCAG AA compliance or preference
-if (!minLight.settings) minLight.settings = [];
-if (!minDark.settings) minDark.settings = [];
-
-minLight.settings.push({
-  scope: ["comment", "punctuation.definition.comment"],
-  settings: {
-    foreground: "#6a6a6a",
-  },
-});
-
-minDark.settings.push({
-  scope: ["comment", "punctuation.definition.comment"],
-  settings: {
-    foreground: "#a8a8a8",
-  },
-});
+// No manual overrides needed for high contrast themes
 
 // https://astro.build/config
 export default defineConfig({
@@ -140,8 +128,8 @@ export default defineConfig({
   markdown: {
     shikiConfig: {
       themes: {
-        light: minLight,
-        dark: minDark,
+        light: githubLight,
+        dark: githubDark,
       },
     },
     // Remark plugins: transformation before HTML compilation
