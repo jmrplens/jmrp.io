@@ -1,3 +1,4 @@
+/** @type {import('astro-expressive-code').AstroExpressiveCodeOptions} */
 export default {
   themes: ["github-dark", "github-light"],
   // Disable built-in copy button as it generates invalid HTML (div inside button)
@@ -16,5 +17,11 @@ export default {
         return `[data-theme='${theme.type}']`;
     }
     return `[data-theme='${theme.name}']`; // Fallback
+  },
+  useThemedScrollbars: false,
+  useThemedSelection: false,
+  styleOverrides: {
+    codeFontFamily: "var(--font-mono)",
+    uiFontFamily: "var(--font-sans)",
   },
 };
