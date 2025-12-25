@@ -13,9 +13,12 @@
   --color-border: #30363d;
 
   /* Typography */
-  --font-body: "Inter", "Inter Fallback", system-ui, -apple-system, sans-serif;
+  --font-body:
+    "Inter Variable", "Inter", "Inter Fallback", system-ui, -apple-system,
+    sans-serif;
   --font-mono:
-    "JetBrains Mono", "JetBrains Mono Fallback", "Courier New", monospace;
+    "JetBrains Mono Variable", "JetBrains Mono", "JetBrains Mono Fallback",
+    "Courier New", monospace;
 
   /* Font Weights */
   --fw-normal: 400;

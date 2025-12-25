@@ -100,7 +100,7 @@ test.describe("Accessibility Tests (Axe-core WCAG 2.1 AA)", () => {
 
       // Verify theme application (optional, helps debugging)
       await browserPage.evaluate((t) => {
-        document.documentElement.setAttribute("data-theme", t);
+        document.documentElement.dataset.theme = t;
         if (t === "dark") document.documentElement.classList.add("dark");
         else document.documentElement.classList.remove("dark");
       }, theme);
