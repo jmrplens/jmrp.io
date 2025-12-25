@@ -598,19 +598,16 @@ jobs:
               body: comment
             });
 
-  # Dual-Theme Lighthouse Testing (Light + Dark Mode)
+  # Dual-Theme Lighthouse Testing (All Pages from Sitemap)
   lighthouse-dual-theme:
-    name: Lighthouse (${{ matrix.theme }} - ${{ matrix.page.name }})
+    name: Lighthouse (${{ matrix.theme }} mode)
     runs-on: ubuntu-latest
     needs: build
     strategy:
       matrix:
         theme: [light, dark]
-        page:
-          - url: "/"
-            name: "home"
-          - url: "/blog/secure-nginx-client-certificates/"
-            name: "blog-mtls"
+    permissions:
+      pull-requests: write
     steps:
       - uses: actions/checkout@v6
       - name: Download build artifact
@@ -625,40 +622,60 @@ jobs:
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile --prefer-offline
       
-      - name: Serve site
-        run: pnpm exec serve -p 4321 dist &
-        
-      - name: Wait for server
-        run: npx wait-on http://localhost:4321
-        
-      - name: Run Lighthouse (${{ matrix.theme }} - ${{ matrix.page.name }})
+      - name: Run Lighthouse CI (${{ matrix.theme }} mode)
+        shell: bash
         run: |
-          CHROME_FLAGS=""
+          set -o pipefail
+          npm install -g @lhci/cli
+          
+          # Set Chrome flags based on theme
           if [ "${{ matrix.theme }}" = "dark" ]; then
-            CHROME_FLAGS="--force-dark-mode --force-prefers-color-scheme=dark"
+            export LHCI_CHROME_FLAGS="--force-dark-mode --force-prefers-color-scheme=dark"
           fi
           
-          npx lighthouse http://localhost:4321${{ matrix.page.url }} \
-            --preset=desktop \
-            --chrome-flags="$CHROME_FLAGS" \
-            --only-categories=accessibility,performance \
-            --output=json \
-            --output=html \
-            --output-path=./lighthouse-${{ matrix.page.name }}-${{ matrix.theme }}
-            
-      - name: Upload Lighthouse results
+          lhci autorun | tee lhci_output_${{ matrix.theme }}.txt
+        env:
+          LHCI_GITHUB_TOKEN: ${{ secrets.TOKEN_GITHUB }}
+          
+      - name: Format Lighthouse Report
+        id: format_report
+        if: always()
+        run: |
+          node scripts/ci/format-lighthouse-report.js > lighthouse_comment_${{ matrix.theme }}.md
+          echo "LH_COMMENT_${{ matrix.theme }}<<EOF" >> $GITHUB_ENV
+          cat lighthouse_comment_${{ matrix.theme }}.md >> $GITHUB_ENV  
+          echo "EOF" >> $GITHUB_ENV
+          
+      - name: Upload Lighthouse Results
+        if: always()
         uses: actions/upload-artifact@v6
         with:
-          name: lighthouse-${{ matrix.page.name }}-${{ matrix.theme }}
+          name: lighthouse-results-${{ matrix.theme }}
           path: |
-            lighthouse-${{ matrix.page.name }}-${{ matrix.theme }}.report.json
-            lighthouse-${{ matrix.page.name }}-${{ matrix.theme }}.report.html
+            .lighthouseci/
+            lhci_output_${{ matrix.theme }}.txt
+            lighthouse_comment_${{ matrix.theme }}.md
           retention-days: 7
           
-      - name: Check accessibility score
-        run: |
-          SCORE=$(jq '.categories.accessibility.score' lighthouse-${{ matrix.page.name }}-${{ matrix.theme }}.report.json)
-          echo "Accessibility Score (${{ matrix.theme }} - ${{ matrix.page.name }}): $SCORE"
-          if (( $(echo "$SCORE < 0.95" | bc -l) )); then
-            echo "::warning::Accessibility score below 0.95 for ${{ matrix.page.name }} in ${{ matrix.theme }} mode"
-          fi
+      - name: Post Comment (${{ matrix.theme }} mode)
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let comment = '';
+            
+            const commentFile = 'lighthouse_comment_${{ matrix.theme }}.md';
+            if (fs.existsSync(commentFile)) {
+              comment = fs.readFileSync(commentFile, 'utf8');
+              comment = `## 🌓 ${comment.replace('###', '####')}\n\n**Theme:** ${{ matrix.theme === 'light' ? '☀️ Light Mode' : '🌙 Dark Mode' }}\n\n${comment}`;
+            } else {
+              comment = '## ⚡ Lighthouse Report (${{ matrix.theme }} mode)\n\n⚠️ Report generation failed. Check artifacts.';
+            }
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
