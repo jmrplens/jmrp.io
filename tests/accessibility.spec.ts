@@ -30,15 +30,15 @@ async function getPagesFromSitemap(): Promise<
         urlPath === "/"
           ? "Home"
           : urlPath
-            .split("/")
-            .filter(Boolean)
-            .map((s) =>
-              s
-                .split("-")
-                .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-                .join(" "),
-            )
-            .join(" - ");
+              .split("/")
+              .filter(Boolean)
+              .map((s) =>
+                s
+                  .split("-")
+                  .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+                  .join(" "),
+              )
+              .join(" - ");
 
       return { name, url: urlPath };
     });
@@ -263,8 +263,8 @@ test.describe("Accessibility Tests (Axe-core WCAG 2.1 AA)", () => {
         </thead>
         <tbody>
             ${results
-        .map(
-          (r) => `
+              .map(
+                (r) => `
                 <tr>
                     <td>${r.page}</td>
                     <td><span class="${r.violations === 0 ? "status-pass" : "status-fail"}">${r.violations}</span></td>
@@ -272,8 +272,8 @@ test.describe("Accessibility Tests (Axe-core WCAG 2.1 AA)", () => {
                     <td><a href="${r.reportPath}" class="btn">View Details</a></td>
                 </tr>
             `,
-        )
-        .join("")}
+              )
+              .join("")}
         </tbody>
     </table>
 </body>
