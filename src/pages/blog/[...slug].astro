@@ -282,28 +282,35 @@ const articleSchema = [
 <script is:inline>
     document.addEventListener("DOMContentLoaded", () => {
         // Accessibility: Fix duplicate role="region" on code blocks
-        // Expressive Code adds role="region" via JS, so we need to observe changes
+        // We use requestIdleCallback to avoid forced reflows during initial layout
+        // caused by reading/writing DOM concurrently with Expressive Code's scripts.
+        const rIC = window.requestIdleCallback || ((cb) => setTimeout(cb, 1));
+
         const applyLabels = () => {
-            const codeBlocks = document.querySelectorAll(
-                'pre[role="region"]:not([aria-label])',
-            );
-            codeBlocks.forEach((block, index) => {
-                const lang = block.getAttribute("data-language") || "Code";
-                block.setAttribute(
-                    "aria-label",
-                    `${lang} example ${index + 1}`,
+            rIC(() => {
+                const codeBlocks = document.querySelectorAll(
+                    'pre[role="region"]:not([aria-label])',
                 );
+                codeBlocks.forEach((block, index) => {
+                    const lang = block.getAttribute("data-language") || "Code";
+                    block.setAttribute(
+                        "aria-label",
+                        `${lang} example ${index + 1}`,
+                    );
+                });
             });
         };
 
-        // Run once initially
-        applyLabels();
+        // Run once initially, but slightly deferred
+        setTimeout(applyLabels, 100);
 
-        // Observe for changes (if Expressive Code hydrates later)
+        // Debounced observer for hydration changes
         const prose = document.querySelector(".prose");
         if (prose) {
+            let timeout;
             const observer = new MutationObserver(() => {
-                applyLabels();
+                clearTimeout(timeout);
+                timeout = setTimeout(applyLabels, 300);
             });
             observer.observe(prose, {
                 childList: true,
@@ -477,6 +484,7 @@ const articleSchema = [
         font-size: 0.9rem;
         margin-bottom: 1rem;
         flex-wrap: wrap; /* Allow wrapping on small screens */
+        min-height: 1.5em; /* Stabilize for CLS */
     }
 
     .author {
@@ -495,6 +503,8 @@ const articleSchema = [
         color: var(--color-text-heading);
         margin-bottom: 1.5rem;
         letter-spacing: -0.02em;
+        min-height: 2.2em; /* Reserve ~2 lines for title */
+        text-wrap: balance;
     }
 
     .toc h2 {
@@ -510,6 +520,7 @@ const articleSchema = [
         max-width: 70ch;
         line-height: 1.6;
         opacity: 0.9;
+        min-height: 3.2em; /* Reserve 2 lines */
     }
 
     .cover-image-container {
@@ -532,6 +543,7 @@ const articleSchema = [
         display: flex;
         gap: 0.5rem;
         flex-wrap: wrap;
+        min-height: 1.5em; /* Stabilize for CLS */
     }
 
     .tag {
@@ -540,6 +552,15 @@ const articleSchema = [
         font-size: 0.85rem;
         text-transform: uppercase;
         letter-spacing: 0.05em;
+    }
+
+    /* Stabilize Generic Content Images (Mermaid, etc.) */
+    .prose :global(img) {
+        max-width: 100%;
+        height: auto;
+        border-radius: var(--radius-md);
+        /* Ensure SVGs have a default aspect ratio or behavior to minimize shift */
+        content-visibility: auto;
     }
 
     .layout-grid {
@@ -563,6 +584,10 @@ const articleSchema = [
     /* Enhance link contrast in post content */
     .prose :global(a) {
         font-weight: var(--fw-semibold);
+    }
+
+    .prose :global(li) {
+        min-height: 1.5em; /* Stabilize for CLS (font shifts) */
     }
 
     .toc-sidebar {
@@ -679,15 +704,18 @@ const articleSchema = [
         }
 
         h1 {
-            font-size: 2.25rem;
-        }
-
-        .content-wrapper {
-            padding: 0 1.5rem;
+            font-size: 1.75rem; /* Reduce size to minimize wrapping */
+            min-height: 5.5em; /* Aggressively reserve space (4-5 lines) */
+            text-wrap: initial; /* frequent recalc of balance can cause shifts, revert to standard */
         }
 
         .lead {
             font-size: 1.125rem;
+            min-height: 7em; /* Aggressive reservation for description */
+        }
+
+        .content-wrapper {
+            padding: 0 1.5rem;
         }
     }
 

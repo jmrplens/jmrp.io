@@ -10,6 +10,7 @@ import rehypeExternalLinks from "rehype-external-links"; // Adds target="_blank"
 import icon from "astro-icon"; // Icon support
 import preact from "@astrojs/preact"; // Preact integration (lighter alternative to React)
 import astroExpressiveCode from "astro-expressive-code";
+import expressiveCodeConfig from "./ec.config.mjs";
 import rehypeMermaid from "rehype-mermaid";
 import { ViteImageOptimizer } from "vite-plugin-image-optimizer";
 
@@ -26,7 +27,8 @@ export default defineConfig({
   // List of integrations to extend Astro functionality
   integrations: [
     // Configuration for code blocks (Expressive Code)
-    astroExpressiveCode(),
+    // Configuration for code blocks (Expressive Code)
+    astroExpressiveCode(expressiveCodeConfig),
     mdx(),
     sitemap(),
     icon(),
