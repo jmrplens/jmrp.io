@@ -1,5 +1,5 @@
-import fs from "fs";
-import path from "path";
+import fs from "node:fs";
+import path from "node:path";
 
 const lhciDir = "./.lighthouseci";
 const linksPath = path.join(lhciDir, "links.json");
@@ -34,6 +34,7 @@ const getPageName = (url) => {
     // Fallback: return path
     return pathName;
   } catch (e) {
+    console.error("Error parsing URL:", e.message);
     return "Unknown";
   }
 };
@@ -114,7 +115,7 @@ try {
       scores.sort((a, b) => a - b);
       const mid = Math.floor(scores.length / 2);
       const median =
-        scores.length % 2 !== 0
+        scores.length % 2 === 1
           ? scores[mid]
           : (scores[mid - 1] + scores[mid]) / 2;
       const finalScore = Math.round(median);
@@ -180,7 +181,7 @@ try {
     catScores.sort((a, b) => a - b);
     const mid = Math.floor(catScores.length / 2);
     const siteMedian =
-      catScores.length % 2 !== 0
+      catScores.length % 2 === 1
         ? catScores[mid]
         : (catScores[mid - 1] + catScores[mid]) / 2;
 
@@ -191,16 +192,16 @@ try {
 
     console.log(
       "| " +
-        categoryIcons[cat] +
-        " " +
-        categoryNames[cat] +
-        " | " +
-        Math.round(siteMedian) +
-        "% | " +
-        minScore +
-        "% (" +
-        worstName +
-        ") |",
+      categoryIcons[cat] +
+      " " +
+      categoryNames[cat] +
+      " | " +
+      Math.round(siteMedian) +
+      "% | " +
+      minScore +
+      "% (" +
+      worstName +
+      ") |",
     );
   });
 
@@ -243,8 +244,8 @@ try {
     if (Object.keys(links).length > relevantLinks.length) {
       console.log(
         "\n_(" +
-          (Object.keys(links).length - relevantLinks.length) +
-          " other reports available in artifacts)_",
+        (Object.keys(links).length - relevantLinks.length) +
+        " other reports available in artifacts)_",
       );
     }
   }
