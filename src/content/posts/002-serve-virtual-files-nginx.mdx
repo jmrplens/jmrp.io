@@ -51,7 +51,9 @@ Let's say your application runs from `/var/www/app`, but you want to manage all 
 First, create your `robots.txt` file:
 
 <FileContent filename="/etc/nginx/assets/robots.txt">
-  ```txt User-agent: * Allow: / Sitemap: https://www.example.com/sitemap.xml ```
+  ```txt 
+  User-agent: * Allow: / Sitemap: https://www.example.com/sitemap.xml
+  ```
 </FileContent>
 
 Now, configure your Nginx server block to intercept requests for `/robots.txt` and serve your custom file.
