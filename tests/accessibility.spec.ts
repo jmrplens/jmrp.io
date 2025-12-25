@@ -30,15 +30,15 @@ async function getPagesFromSitemap(): Promise<
         urlPath === "/"
           ? "Home"
           : urlPath
-            .split("/")
-            .filter(Boolean)
-            .map((s: string) =>
-              s
-                .split("-")
-                .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1))
-                .join(" "),
-            )
-            .join(" - ");
+              .split("/")
+              .filter(Boolean)
+              .map((s: string) =>
+                s
+                  .split("-")
+                  .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1))
+                  .join(" "),
+              )
+              .join(" - ");
 
       return { name, url: urlPath };
     });
