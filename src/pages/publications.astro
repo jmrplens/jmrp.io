@@ -7,18 +7,10 @@
 import BaseLayout from "../layouts/BaseLayout.astro";
 import { getPublications } from "../utils/publications";
 import { Icon } from "astro-icon/components";
-import { Code } from "astro-expressive-code/components";
 import CopyButton from "../components/CopyButton.astro";
 import PublicationItem from "../components/PublicationItem.astro";
 
 const publicationGroups = await getPublications();
-
-function cleanBibtex(bibtex: string) {
-    return bibtex.replace(
-        /(?:pdf|url|bibtex_show|poster|slides)\s*=\s*\{[^}]*\},\s*\n?/gi,
-        "",
-    );
-}
 
 const publicationsSchema = {
     "@context": "https://schema.org",

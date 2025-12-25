@@ -1,5 +1,4 @@
 ---
-import { Code } from "astro-expressive-code/components";
 import CopyButton from "./CopyButton.astro";
 import { Icon } from "astro-icon/components";
 
@@ -201,7 +200,8 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
                         />
                     </div>
                     <div class="pub-card-content">
-                        <Code code={cleanedBibtex} lang="bibtex" />
+                        <pre
+                            class="bibtex-code"><code class="language-bibtex">{cleanedBibtex}</code></pre>
                     </div>
                 </div>
             </div>
@@ -259,17 +259,20 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
         font-size: 1.15rem;
         font-weight: var(--fw-semibold);
         line-height: 1.4;
+        min-height: 1.4em; /* Stabilize for CLS */
     }
 
     .pub-authors {
         color: var(--color-text);
         margin-bottom: var(--space-xs);
+        min-height: 1.25em; /* Stabilize for CLS */
     }
 
     .pub-venue {
         font-style: italic;
         color: var(--color-text-muted);
         margin-bottom: var(--space-md);
+        min-height: 1.25em; /* Stabilize for CLS */
     }
 
     .pub-actions {
@@ -363,5 +366,17 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
        Similar to CV page solution for link visibility */
     .pub-authors a {
         font-weight: var(--fw-link-emphasis);
+    }
+
+    .bibtex-code {
+        margin: 0;
+        padding: var(--space-md);
+        background-color: var(--color-bg-secondary);
+        font-family: var(--font-mono);
+        font-size: 0.85rem;
+        overflow-x: auto;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        color: var(--color-text);
     }
 </style>
