@@ -79,31 +79,22 @@ const finalReferences = allPostReferences.filter((ref) => {
 });
 // --- End of Reference Logic ---
 
-// --- Image Optimization (LCP & JSON-LD) ---
+// --- Image Optimization (JSON-LD) ---
 import { getImage } from "astro:assets";
 
-let lcpImagePreload = null;
 let jsonLdImage = "/default-blog-cover.jpg";
 
 if (post.data.coverImage) {
-    // 1. Optimize for LCP (WebP, Responsive)
-    const optimizedLcp = await getImage({
+    // Optimize for JSON-LD schema
+    const optimizedImage = await getImage({
         src: post.data.coverImage,
         format: "webp",
         width: 1200,
         height: 675,
-        widths: [360, 480, 640, 720, 960, 1200],
         quality: 60,
     });
 
-    lcpImagePreload = {
-        href: optimizedLcp.src,
-        imagesrcset: optimizedLcp.attributes.srcset,
-        imagesizes: "(max-width: 768px) 100vw, 1200px",
-    };
-
-    // 2. Reuse for JSON-LD (Using the main src)
-    jsonLdImage = optimizedLcp.src;
+    jsonLdImage = optimizedImage.src;
 }
 
 const articleSchema = [
@@ -164,22 +155,7 @@ const articleSchema = [
     modifiedDate={post.data.updatedDate}
     tags={post.data.tags}
     schema={articleSchema}
-    tags={post.data.tags}
-    schema={articleSchema}
 >
-    {
-        lcpImagePreload && (
-            <link
-                slot="head"
-                rel="preload"
-                as="image"
-                href={lcpImagePreload.href}
-                imagesrcset={lcpImagePreload.imagesrcset}
-                imagesizes={lcpImagePreload.imagesizes}
-                fetchpriority="high"
-            />
-        )
-    }
     <article class="post-content">
         <header class="post-header">
             <div class="content-wrapper">
@@ -342,17 +318,14 @@ const articleSchema = [
         observer.observe(tocNav);
     });
 
-    // Replace Expressive Code copy buttons with our custom buttons
-    // Only for standalone code blocks (not inside FileContent, Tabs, CompareCode)
+    // Add copy buttons to standalone code blocks
+    // Only for blocks not inside FileContent, Tabs, or CompareCode components
     document.addEventListener("DOMContentLoaded", () => {
-        // Find all .expressive-code blocks in the prose content
         const proseContent = document.querySelector(".prose");
         if (!proseContent) return;
 
-        // Find all code blocks (Expressive Code or Native Shiki)
-        const codeBlocks = proseContent.querySelectorAll(
-            ".expressive-code, .astro-code",
-        );
+        // Find all Shiki code blocks
+        const codeBlocks = proseContent.querySelectorAll(".astro-code");
 
         codeBlocks.forEach((block) => {
             // Skip if already inside a special component
@@ -362,12 +335,6 @@ const articleSchema = [
                 block.closest(".compare-block")
             ) {
                 return; // Already handled by component
-            }
-
-            // Hide the Expressive Code copy button
-            const expressiveButton = block.querySelector(".copy");
-            if (expressiveButton instanceof HTMLElement) {
-                expressiveButton.style.display = "none";
             }
 
             // Check if we already added our button

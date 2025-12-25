@@ -69,7 +69,7 @@ const { headings } = Astro.props;
 
 <script>
     function setupMobileTOC() {
-        const btns = document.querySelectorAll(".toc-trigger"); // Changed from single ID to class
+        const btns = document.querySelectorAll(".toc-trigger");
         const drawer = document.getElementById("toc-drawer");
         const closeBtn = document.getElementById("toc-close-btn");
         const backdrop = document.getElementById("toc-backdrop");
@@ -79,6 +79,31 @@ const { headings } = Astro.props;
 
         let lastFocusedElement: HTMLElement | null = null;
 
+        // Focus Trap Logic
+        const handleFocusTrap = (e: KeyboardEvent) => {
+            if (e.key !== "Tab") return;
+
+            const focusables = drawer.querySelectorAll(
+                'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+            );
+            const firstElement = focusables[0] as HTMLElement;
+            const lastElement = focusables[
+                focusables.length - 1
+            ] as HTMLElement;
+
+            if (e.shiftKey) {
+                if (document.activeElement === firstElement) {
+                    lastElement.focus();
+                    e.preventDefault();
+                }
+            } else {
+                if (document.activeElement === lastElement) {
+                    firstElement.focus();
+                    e.preventDefault();
+                }
+            }
+        };
+
         const openTOC = () => {
             lastFocusedElement = document.activeElement as HTMLElement;
             drawer.classList.add("open");
@@ -86,6 +111,8 @@ const { headings } = Astro.props;
             btns.forEach((btn) => btn.setAttribute("aria-expanded", "true"));
             drawer.setAttribute("aria-hidden", "false");
             drawer.removeAttribute("inert");
+
+            document.addEventListener("keydown", handleFocusTrap);
 
             // Focus on close button or first link
             if (closeBtn) {
@@ -99,6 +126,8 @@ const { headings } = Astro.props;
         };
 
         const closeTOC = () => {
+            document.removeEventListener("keydown", handleFocusTrap);
+
             // Restore focus BEFORE hiding to avoid aria-hidden violation
             if (lastFocusedElement) {
                 lastFocusedElement.focus();
@@ -130,7 +159,6 @@ const { headings } = Astro.props;
             links.forEach((link) => {
                 link.addEventListener("click", () => {
                     closeTOC();
-                    // Optional: Wait for close animation or just let browser jump
                 });
             });
         }

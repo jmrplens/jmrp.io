@@ -101,9 +101,6 @@ export default defineConfig({
 
   // List of integrations to extend Astro functionality
   integrations: [
-    // Configuration for code blocks (Expressive Code)
-    // Configuration for code blocks (Expressive Code)
-    // astroExpressiveCode(expressiveCodeConfig), // REPLACED BY NATIVE SHIKI
     sitemap(),
     mdx({
       // MDX needs to know about remark plugins too if we want it to work in .mdx files
@@ -119,7 +116,7 @@ export default defineConfig({
   markdown: {
     shikiConfig: {
       themes: {
-        light: "github-light",
+        light: "min-light",
         dark: "github-dark",
       },
     },
