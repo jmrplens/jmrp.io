@@ -192,16 +192,16 @@ try {
 
     console.log(
       "| " +
-      categoryIcons[cat] +
-      " " +
-      categoryNames[cat] +
-      " | " +
-      Math.round(siteMedian) +
-      "% | " +
-      minScore +
-      "% (" +
-      worstName +
-      ") |",
+        categoryIcons[cat] +
+        " " +
+        categoryNames[cat] +
+        " | " +
+        Math.round(siteMedian) +
+        "% | " +
+        minScore +
+        "% (" +
+        worstName +
+        ") |",
     );
   });
 
@@ -244,8 +244,8 @@ try {
     if (Object.keys(links).length > relevantLinks.length) {
       console.log(
         "\n_(" +
-        (Object.keys(links).length - relevantLinks.length) +
-        " other reports available in artifacts)_",
+          (Object.keys(links).length - relevantLinks.length) +
+          " other reports available in artifacts)_",
       );
     }
   }
