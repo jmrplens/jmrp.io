@@ -1,5 +1,6 @@
 // @ts-check
 import { defineConfig } from "astro/config";
+import { bundledThemes } from "shiki";
 
 // Adapters and Integrations
 import mdx from "@astrojs/mdx"; // Support for MDX (Markdown with JSX)
@@ -89,6 +90,29 @@ const rehypeMermaidSplitter = () => (/** @type {any} */ tree) => {
   );
 };
 
+// Setup Shiki themes with overrides
+// Clone the themes to allow modification (they are frozen by default)
+const minLight = structuredClone((await bundledThemes["min-light"]()).default);
+const minDark = structuredClone((await bundledThemes["min-dark"]()).default);
+
+// Override comment colors for WCAG AA compliance or preference
+if (!minLight.settings) minLight.settings = [];
+if (!minDark.settings) minDark.settings = [];
+
+minLight.settings.push({
+  scope: ["comment", "punctuation.definition.comment"],
+  settings: {
+    foreground: "#6a6a6a",
+  },
+});
+
+minDark.settings.push({
+  scope: ["comment", "punctuation.definition.comment"],
+  settings: {
+    foreground: "#a8a8a8",
+  },
+});
+
 // https://astro.build/config
 export default defineConfig({
   // The site URL, used for SEO and sitemap generation
@@ -116,8 +140,8 @@ export default defineConfig({
   markdown: {
     shikiConfig: {
       themes: {
-        light: "min-light",
-        dark: "github-dark",
+        light: minLight,
+        dark: minDark,
       },
     },
     // Remark plugins: transformation before HTML compilation

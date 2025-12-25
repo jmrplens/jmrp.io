@@ -118,39 +118,6 @@
   text-decoration: var(--shiki-dark-text-decoration) !important;
 }
 
-/* Moderate font-weight increase for better contrast in light mode */
-:root:not([data-theme="dark"]) .astro-code,
-:root:not([data-theme="dark"]) .astro-code span {
-  font-weight: 500 !important;
-  background-color: transparent !important;
-}
-
-/* Force darker comments in light mode for WCAG AA compliance */
-/* Hash sh-89ac0276 is deterministic (based on #C2C3C5 color from min-light theme) */
-:root:not([data-theme="dark"]) .astro-code .sh-89ac0276 {
-  color: #6a6a6a !important;
-}
-
-/* Force lighter comments in dark mode for WCAG AA compliance */
-:root[data-theme="dark"] .astro-code .sh-89ac0276 {
-  color: #a8a8a8 !important;
-}
-
-/* Force darker green strings in light mode for WCAG AA compliance */
-/* Class sh-31606bd3 for strings - #22863a has 4.13:1 on #f2f2f2, needs 4.5:1 */
-:root:not([data-theme="dark"]) .astro-code .sh-31606bd3,
-:root:not([data-theme="dark"]) .astro-code .sh-c047851b,
-:root:not([data-theme="dark"]) .astro-code .sh-f69b9e68 {
-  color: #166b29 !important;
-}
-
-/* Force darker blue keywords in light mode for WCAG AA compliance */
-/* Class sh-5955e045 for keywords - #1976d2 has 4.11:1 on #f2f2f2, needs 4.5:1 */
-:root:not([data-theme="dark"]) .astro-code .sh-5955e045,
-:root:not([data-theme="dark"]) .astro-code .sh-da0c2359 {
-  color: #1565c0 !important;
-}
-
 html {
   background-color: var(--color-bg);
   color: var(--color-text);
