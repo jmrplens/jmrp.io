@@ -1,7 +1,7 @@
 ---
 import CopyButton from "./CopyButton.astro";
 import { Icon } from "astro-icon/components";
-import { Code } from "astro:components";
+import { Code } from "astro-expressive-code/components";
 
 const { pub } = Astro.props;
 
@@ -201,11 +201,7 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
                         />
                     </div>
                     <div class="pub-card-content">
-                        <Code
-                            code={cleanedBibtex}
-                            lang="bibtex"
-                            theme="github-dark"
-                        />
+                        <Code code={cleanedBibtex} lang="bibtex" />
                     </div>
                 </div>
             </div>
