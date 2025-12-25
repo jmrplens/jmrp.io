@@ -1,6 +1,7 @@
 ---
 import CopyButton from "./CopyButton.astro";
 import { Icon } from "astro-icon/components";
+import { Code } from "astro:components";
 
 const { pub } = Astro.props;
 
@@ -200,8 +201,11 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
                         />
                     </div>
                     <div class="pub-card-content">
-                        <pre
-                            class="bibtex-code"><code class="language-bibtex">{cleanedBibtex}</code></pre>
+                        <Code
+                            code={cleanedBibtex}
+                            lang="bibtex"
+                            theme="github-dark"
+                        />
                     </div>
                 </div>
             </div>
@@ -368,15 +372,13 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
         font-weight: var(--fw-link-emphasis);
     }
 
-    .bibtex-code {
-        margin: 0;
-        padding: var(--space-md);
-        background-color: var(--color-bg-secondary);
-        font-family: var(--font-mono);
-        font-size: 0.85rem;
+    /* Code component overrides if necessary, but default Shiki output is usually good.
+       We might want to ensure overflow handling fits the card. */
+    .pub-card-content :global(pre) {
+        margin: 0 !important;
+        padding: var(--space-md) !important;
+        background-color: var(--color-bg-secondary) !important;
+        border-radius: 0 0 var(--radius-sm) var(--radius-sm) !important;
         overflow-x: auto;
-        white-space: pre-wrap;
-        word-wrap: break-word;
-        color: var(--color-text);
     }
 </style>
