@@ -60,12 +60,10 @@ const { badTitle = "Blocked / Insecure", goodTitle = "Allowed / Secure" } =
   }
 
   .compare-block.bad {
-    border-color: #dc2626; /* Red-600 for light mode */
     background-color: rgba(220, 38, 38, 0.05);
   }
 
   .compare-block.good {
-    border-color: #16a34a; /* Green-600 for light mode */
     background-color: rgba(22, 163, 74, 0.05);
   }
 
@@ -91,22 +89,22 @@ const { badTitle = "Blocked / Insecure", goodTitle = "Allowed / Secure" } =
   }
 
   .bad .header {
-    background-color: #dc2626; /* Red-600 for light mode */
+    background-color: #b91c1c; /* Red-700 for better contrast (4.58:1) */
     color: #ffffff;
   }
 
   .good .header {
-    background-color: #047857; /* Green-700 for better contrast (4.64:1) */
+    background-color: #15803d; /* Green-700 for better contrast (4.53:1) */
     color: #ffffff;
   }
 
   /* Darker header backgrounds in dark mode to reduce glare */
   :root[data-theme="dark"] .bad .header {
-    background-color: #b91c1c; /* Red-700 - less intense in dark mode */
+    background-color: #7f1d1d; /* Darker Red for better dark mode feel */
   }
 
   :root[data-theme="dark"] .good .header {
-    background-color: #059669; /* Green-600 - better contrast in dark mode */
+    background-color: #064e3b; /* Darker Green for better dark mode feel */
   }
 
   .icon {
@@ -132,12 +130,6 @@ const { badTitle = "Blocked / Insecure", goodTitle = "Allowed / Secure" } =
     margin: 0 !important;
     border: none !important;
     background: transparent !important;
-    border-radius: 0 !important;
-  }
-
-  .content :global(.expressive-code) {
-    margin: 0 !important;
-    border: none !important;
     border-radius: 0 !important;
   }
 </style>

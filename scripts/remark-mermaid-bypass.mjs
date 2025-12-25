@@ -4,8 +4,6 @@ export function remarkMermaidBypass() {
   return (tree) => {
     visit(tree, "code", (node, index, parent) => {
       if (node.lang === "mermaid-render") {
-        // Transform to a single pre.mermaid block
-        // rehype-mermaid will pick this up automatically
         const newNode = {
           type: "element",
           tagName: "pre",
@@ -18,7 +16,6 @@ export function remarkMermaidBypass() {
               value: node.value,
             },
           ],
-          // For MDX/HAST conversion
           data: {
             hName: "pre",
             hProperties: {

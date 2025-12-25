@@ -82,16 +82,44 @@ const finalIcon = icon || getIconForFile(filename);
         font-weight: 500;
     }
 
+    .file-body {
+        padding: 0;
+        overflow: hidden;
+    }
+
     /* Style the <pre> element that comes from the slot */
     .file-body :global(pre),
     .file-body :global(.astro-code) {
         margin: 0 !important;
-        border-radius: 0 0 var(--radius-md) var(--radius-md) !important;
+        padding: 1.25rem 1.5rem !important; /* Generous padding like other components */
+        border-radius: 0 !important;
         border: none !important;
         box-shadow: none !important;
-        background-color: var(
-            --color-bg-secondary
-        ) !important; /* Force theme bg */
+        overflow-x: auto;
+    }
+
+    /* Accessibility: Boost contrast in light mode */
+    :root:not([data-theme="dark"]) .file-content-wrapper {
+        background-color: #ffffff; /* pure white for maximum contrast */
+        border-color: var(--color-border);
+    }
+
+    :root:not([data-theme="dark"]) .file-header {
+        background-color: #f6f8fa; /* standard light gray header */
+    }
+
+    :root:not([data-theme="dark"]) .file-body :global(pre),
+    :root:not([data-theme="dark"]) .file-body :global(.astro-code) {
+        background-color: #ffffff !important;
+    }
+
+    /* Dark mode adjustments */
+    :root[data-theme="dark"] .file-content-wrapper {
+        background-color: var(--color-bg-secondary);
+    }
+
+    :root[data-theme="dark"] .file-body :global(pre) {
+        background-color: transparent !important;
     }
 
     /* Override copy button positioning for header integration */
@@ -99,8 +127,9 @@ const finalIcon = icon || getIconForFile(filename);
         position: static !important;
         background-color: transparent !important;
         border: 1px solid var(--color-border) !important;
-        opacity: 0.7;
+        opacity: 0.8;
     }
+
     :global(.file-header-copy-btn:hover) {
         opacity: 1;
         background-color: var(--color-bg-secondary) !important;

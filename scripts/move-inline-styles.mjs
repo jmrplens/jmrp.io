@@ -42,7 +42,7 @@ async function moveInlineStyles() {
             .createHash("shake256", { outputLength: 4 })
             .update(styleContent)
             .digest("hex");
-          styleToClassMap.set(styleContent, `ec-${hash}`);
+          styleToClassMap.set(styleContent, `sh-${hash}`);
         }
         const newClassName = styleToClassMap.get(styleContent);
 
