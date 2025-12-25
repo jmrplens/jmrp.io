@@ -30,15 +30,15 @@ async function getPagesFromSitemap(): Promise<
         urlPath === "/"
           ? "Home"
           : urlPath
-              .split("/")
-              .filter(Boolean)
-              .map((s) =>
-                s
-                  .split("-")
-                  .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-                  .join(" "),
-              )
-              .join(" - ");
+            .split("/")
+            .filter(Boolean)
+            .map((s) =>
+              s
+                .split("-")
+                .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+                .join(" "),
+            )
+            .join(" - ");
 
       return { name, url: urlPath };
     });
@@ -187,25 +187,9 @@ test.describe("Accessibility Tests (Axe-core WCAG 2.1 AA)", () => {
         violationIds: accessibilityScanResults.violations.map((v) => v.id),
         reportPath: reportFileName,
       });
-
-      // Fail immediately if violations found
-      expect(
-        accessibilityScanResults.violations,
-        `${pageInfo.name} (${pageInfo.url}) should have no violations`,
-      ).toEqual([]);
     }
 
-    // Summary
-    console.log("\n✅ Accessibility Test Summary:");
-    console.log(`   Total pages tested: ${results.length}`);
-    console.log(
-      `   Pages with violations: ${results.filter((r) => r.violations > 0).length}`,
-    );
-    console.log(
-      `   Pages requiring review: ${results.filter((r) => r.incomplete > 0).length}`,
-    );
-
-    // Save results to file for CI reporting
+    // Generate summary BEFORE assertions so it's available even if tests fail
     const summary = {
       totalPages: results.length,
       passed: results.filter((r) => r.violations === 0).length,
@@ -279,8 +263,8 @@ test.describe("Accessibility Tests (Axe-core WCAG 2.1 AA)", () => {
         </thead>
         <tbody>
             ${results
-              .map(
-                (r) => `
+        .map(
+          (r) => `
                 <tr>
                     <td>${r.page}</td>
                     <td><span class="${r.violations === 0 ? "status-pass" : "status-fail"}">${r.violations}</span></td>
@@ -288,13 +272,33 @@ test.describe("Accessibility Tests (Axe-core WCAG 2.1 AA)", () => {
                     <td><a href="${r.reportPath}" class="btn">View Details</a></td>
                 </tr>
             `,
-              )
-              .join("")}
+        )
+        .join("")}
         </tbody>
     </table>
 </body>
 </html>
     `;
     fs.writeFileSync("accessibility-report/index.html", indexHtml);
+
+    // Summary console log
+    console.log("\n✅ Accessibility Test Summary:");
+    console.log(`   Total pages tested: ${results.length}`);
+    console.log(
+      `   Pages with violations: ${results.filter((r) => r.violations > 0).length}`,
+    );
+    console.log(
+      `   Pages requiring review: ${results.filter((r) => r.incomplete > 0).length}`,
+    );
+
+    // Assert after generating reports
+    const failedPages = results.filter((r) => r.violations > 0);
+    for (const failedPage of failedPages) {
+      // Fail with detailed message
+      expect(
+        [],
+        `${failedPage.page} has ${failedPage.violations} violations: ${failedPage.violationIds?.join(", ")}`,
+      ).toEqual(failedPage.violationIds);
+    }
   });
 });

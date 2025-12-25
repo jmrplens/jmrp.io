@@ -128,6 +128,12 @@
   color: #a8a8a8 !important;
 }
 
+/* Force darker green strings in light mode for WCAG AA compliance */
+/* Class sh-31606bd3 commonly used for strings - #22863a has 4.36:1 contrast, needs 4.5:1 */
+:root:not([data-theme="dark"]) .astro-code .sh-31606bd3 {
+  color: #1a7a2e !important;
+}
+
 html {
   background-color: var(--color-bg);
   color: var(--color-text);
