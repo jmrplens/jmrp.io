@@ -664,18 +664,13 @@ jobs:
           script: |
             const fs = require('fs');
             let comment = '';
+            const theme = '${{ matrix.theme }}';
+            const themeName = theme === 'light' ? '☀️ Light Mode' : '🌙 Dark Mode';
             
-            const commentFile = 'lighthouse_comment_${{ matrix.theme }}.md';
+            const commentFile = `lighthouse_comment_${theme}.md`;
             if (fs.existsSync(commentFile)) {
               comment = fs.readFileSync(commentFile, 'utf8');
-              comment = `## 🌓 ${comment.replace('###', '####')}\n\n**Theme:** ${{ matrix.theme === 'light' ? '☀️ Light Mode' : '🌙 Dark Mode' }}\n\n${comment}`;
+              comment = `## 🌓 ${comment.replace('###', '####')}\n\n**Theme:** ${themeName}\n\n${comment}`;
             } else {
-              comment = '## ⚡ Lighthouse Report (${{ matrix.theme }} mode)\n\n⚠️ Report generation failed. Check artifacts.';
-            }
-            
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
               body: comment
             });
