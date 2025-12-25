@@ -44,7 +44,7 @@ module.exports = {
     collect: {
       staticDistDir: "./dist",
       url: getUrls(),
-      numberOfRuns: 4,
+      numberOfRuns: 2,
     },
     upload: {
       target: "temporary-public-storage",
