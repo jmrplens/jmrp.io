@@ -9,10 +9,85 @@ import rehypeMathjax from "rehype-mathjax"; // Rehype plugin to render math with
 import rehypeExternalLinks from "rehype-external-links"; // Adds target="_blank" to external links
 import icon from "astro-icon"; // Icon support
 import preact from "@astrojs/preact"; // Preact integration (lighter alternative to React)
-import astroExpressiveCode from "astro-expressive-code";
-import expressiveCodeConfig from "./ec.config.mjs";
+import { fromHtmlIsomorphic } from "hast-util-from-html-isomorphic";
+import { visit } from "unist-util-visit";
+import rehypeRaw from "rehype-raw";
 import rehypeMermaid from "rehype-mermaid";
+import { remarkMermaidBypass } from "./scripts/remark-mermaid-bypass.mjs";
 import { ViteImageOptimizer } from "vite-plugin-image-optimizer";
+
+/**
+ * Custom Rehype plugin to split the <picture> output from rehype-mermaid
+ * and inline the SVGs into theme-specific wrappers.
+ */
+const rehypeMermaidSplitter = () => (/** @type {any} */ tree) => {
+  visit(
+    tree,
+    "element",
+    (
+      /** @type {any} */ node,
+      /** @type {any} */ index,
+      /** @type {any} */ parent,
+    ) => {
+      if (node.tagName === "picture") {
+        const source = node.children.find(
+          (/** @type {any} */ c) => c.tagName === "source",
+        );
+        const img = node.children.find(
+          (/** @type {any} */ c) => c.tagName === "img",
+        );
+
+        if (source && img) {
+          // Extract SVGs from DataURIs
+          const decodeSvg = (/** @type {any} */ dataUri) => {
+            if (!dataUri) return "";
+            if (dataUri.includes(";base64,")) {
+              return Buffer.from(
+                dataUri.split(";base64,")[1],
+                "base64",
+              ).toString("utf-8");
+            }
+            return decodeURIComponent(dataUri.split(",")[1]);
+          };
+
+          const darkSvgStr = decodeSvg(source.properties?.srcset);
+          const lightSvgStr = decodeSvg(img.properties?.src);
+
+          if (lightSvgStr && darkSvgStr) {
+            const lightSvgHAST = fromHtmlIsomorphic(lightSvgStr, {
+              fragment: true,
+            }).children[0];
+            const darkSvgHAST = fromHtmlIsomorphic(darkSvgStr, {
+              fragment: true,
+            }).children[0];
+
+            const splitBlock = {
+              type: "element",
+              tagName: "div",
+              properties: { className: ["mermaid-split-wrap"] },
+              children: [
+                {
+                  type: "element",
+                  tagName: "div",
+                  properties: { className: ["mermaid-light-wrap"] },
+                  children: [lightSvgHAST],
+                },
+                {
+                  type: "element",
+                  tagName: "div",
+                  properties: { className: ["mermaid-dark-wrap"] },
+                  children: [darkSvgHAST],
+                },
+              ],
+            };
+
+            parent.children.splice(index, 1, splitBlock);
+          }
+        }
+      }
+    },
+  );
+};
 
 // https://astro.build/config
 export default defineConfig({
@@ -28,18 +103,28 @@ export default defineConfig({
   integrations: [
     // Configuration for code blocks (Expressive Code)
     // Configuration for code blocks (Expressive Code)
-    astroExpressiveCode(expressiveCodeConfig),
-    mdx(),
+    // astroExpressiveCode(expressiveCodeConfig), // REPLACED BY NATIVE SHIKI
     sitemap(),
-    icon(),
-    // Include Preact for interactive components
+    mdx({
+      // MDX needs to know about remark plugins too if we want it to work in .mdx files
+      remarkPlugins: [remarkMermaidBypass],
+    }),
+    icon({
+      iconDir: "src/assets/icons",
+    }),
     preact({ include: ["**/src/**/*.{jsx,tsx}"] }),
   ].filter(Boolean),
 
   // Markdown and MDX configuration
   markdown: {
+    shikiConfig: {
+      themes: {
+        light: "github-light",
+        dark: "github-dark",
+      },
+    },
     // Remark plugins: transformation before HTML compilation
-    remarkPlugins: [remarkMath],
+    remarkPlugins: [remarkMath, remarkMermaidBypass],
     // Rehype plugins: transformation of the HTML output
     rehypePlugins: [
       rehypeMathjax,
@@ -49,20 +134,53 @@ export default defineConfig({
           strategy: "img-svg",
           mermaidConfig: {
             theme: "neutral",
-            sequence: {
-              showSequenceNumbers: false,
-              actorMargin: 50,
-              boxMargin: 10,
-              boxTextMargin: 5,
-              noteMargin: 10,
-              messageMargin: 35,
-              mirrorActors: false,
-              bottomMarginAdj: 10,
+          },
+          dark: {
+            theme: "base",
+            themeVariables: {
+              // General
+              primaryColor: "#1f2937",
+              primaryTextColor: "#f3f4f6",
+              primaryBorderColor: "#4b5563",
+              lineColor: "#f3f4f6",
+              secondaryColor: "#374151",
+              tertiaryColor: "#111827",
+              mainBkg: "#1f2937",
+
+              // Nodes/Flowchart
+              nodeBkg: "#111827",
+              nodeBorder: "#4b5563",
+              clusterBkg: "#111827",
+              titleColor: "#f3f4f6",
+              edgeLabelBackground: "#374151",
+              defaultLinkColor: "#f3f4f6",
+
+              // Sequence Diagram Specifics
+              actorBkg: "#111827",
+              actorBorder: "#4b5563",
+              actorTextColor: "#f3f4f6",
+              actorLineColor: "#f3f4f6",
+              signalColor: "#f3f4f6",
+              signalTextColor: "#f3f4f6",
+              labelBoxBkgColor: "#111827",
+              labelBoxBorderColor: "#4b5563",
+              labelTextColor: "#f3f4f6",
+              loopTextColor: "#f3f4f6",
+              noteBkgColor: "#374151",
+              noteTextColor: "#f3f4f6",
+              noteBorderColor: "#4b5563",
+              messageTextColor: "#f3f4f6",
+              messageLineColor: "#f3f4f6",
+              sequenceNumberColor: "#111827",
             },
           },
-          dark: true,
+          launchOptions: {
+            args: ["--no-sandbox", "--disable-setuid-sandbox"],
+          },
         },
       ],
+      rehypeMermaidSplitter,
+      rehypeRaw,
       [
         rehypeExternalLinks,
         {

@@ -349,7 +349,10 @@ const articleSchema = [
         const proseContent = document.querySelector(".prose");
         if (!proseContent) return;
 
-        const codeBlocks = proseContent.querySelectorAll(".expressive-code");
+        // Find all code blocks (Expressive Code or Native Shiki)
+        const codeBlocks = proseContent.querySelectorAll(
+            ".expressive-code, .astro-code",
+        );
 
         codeBlocks.forEach((block) => {
             // Skip if already inside a special component
@@ -412,8 +415,17 @@ const articleSchema = [
 
             // Add click handler
             copyButton.addEventListener("click", () => {
-                const codeElement = block.querySelector("code");
-                const text = codeElement ? codeElement.textContent : null;
+                // Expressive code uses code, Shiki uses code too, but structure might differ slightly.
+                // Usually pre > code.
+                let codeElement = block.querySelector("code");
+                if (!codeElement && block.tagName === "PRE") {
+                    codeElement = block.querySelector("code");
+                }
+
+                // For Shiki, sometimes the text is inside span lines. textContent usually works fine on the whole code block.
+                const text = codeElement
+                    ? codeElement.textContent
+                    : block.textContent;
 
                 if (!text) {
                     console.warn("No code element found in block.");
@@ -438,6 +450,8 @@ const articleSchema = [
 
             // Make the block relative for positioning
             if (block instanceof HTMLElement) {
+                // If it's a pre tag (Shiki), make it relative.
+                // If it's a wrapper (Expressive Code), it usually handles it, but good to ensure.
                 block.style.position = "relative";
             }
 
