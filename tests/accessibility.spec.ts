@@ -30,15 +30,15 @@ async function getPagesFromSitemap(): Promise<
         urlPath === "/"
           ? "Home"
           : urlPath
-              .split("/")
-              .filter(Boolean)
-              .map((s) =>
-                s
-                  .split("-")
-                  .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-                  .join(" "),
-              )
-              .join(" - ");
+            .split("/")
+            .filter(Boolean)
+            .map((s) =>
+              s
+                .split("-")
+                .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+                .join(" "),
+            )
+            .join(" - ");
 
       return { name, url: urlPath };
     });
@@ -118,6 +118,7 @@ test.describe("Accessibility Tests (Axe-core WCAG 2.1 AA)", () => {
       const accessibilityScanResults = await new AxeBuilder({
         page: browserPage,
       })
+        .exclude(["svg"]) // Exclude all SVGs as requested by user to avoid false positives in diagrams
         .withTags([
           "wcag2a",
           "wcag2aa",
@@ -125,7 +126,7 @@ test.describe("Accessibility Tests (Axe-core WCAG 2.1 AA)", () => {
           "wcag22aa",
           "best-practice",
         ])
-        .options({ iframes: true }) // Enable iframe testing
+        .options({ iframes: true })
         .analyze();
 
       // Generate HTML Report
@@ -264,8 +265,8 @@ test.describe("Accessibility Tests (Axe-core WCAG 2.1 AA)", () => {
         </thead>
         <tbody>
             ${results
-              .map(
-                (r) => `
+        .map(
+          (r) => `
                 <tr>
                     <td>${r.page}</td>
                     <td><span class="${r.violations === 0 ? "status-pass" : "status-fail"}">${r.violations}</span></td>
@@ -273,8 +274,8 @@ test.describe("Accessibility Tests (Axe-core WCAG 2.1 AA)", () => {
                     <td><a href="${r.reportPath}" class="btn">View Details</a></td>
                 </tr>
             `,
-              )
-              .join("")}
+        )
+        .join("")}
         </tbody>
     </table>
 </body>
