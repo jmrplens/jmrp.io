@@ -100,6 +100,16 @@
   --color-border: #30363d;
 }
 
+/* Force Shiki to use dark theme variables when data-theme is dark */
+:root[data-theme="dark"] .astro-code,
+:root[data-theme="dark"] .astro-code span {
+  color: var(--shiki-dark) !important;
+  background-color: var(--shiki-dark-bg) !important;
+  font-style: var(--shiki-dark-font-style) !important;
+  font-weight: var(--shiki-dark-font-weight) !important;
+  text-decoration: var(--shiki-dark-text-decoration) !important;
+}
+
 html {
   background-color: var(--color-bg);
   color: var(--color-text);
@@ -302,6 +312,23 @@ h1 {
   padding-bottom: var(--space-sm);
 }
 
+/* Dual Theme Mermaid Handling */
+.mermaid-dark-wrap {
+  display: none !important;
+}
+
+.mermaid-light-wrap {
+  display: block !important;
+}
+
+[data-theme="dark"] .mermaid-dark-wrap {
+  display: block !important;
+}
+
+[data-theme="dark"] .mermaid-light-wrap {
+  display: none !important;
+}
+
 /* Mermaid Diagram Theme Alignment */
 .mermaid,
 svg[id^="mermaid-"] {
@@ -309,13 +336,6 @@ svg[id^="mermaid-"] {
   overflow-x: auto;
   display: block;
   margin: 0 auto;
-}
-
-[data-theme="dark"] .mermaid,
-[data-theme="dark"] svg[id^="mermaid-"],
-html.dark .mermaid,
-html.dark svg[id^="mermaid-"] {
-  filter: invert(1) hue-rotate(180deg);
 }
 
 .mermaid svg,

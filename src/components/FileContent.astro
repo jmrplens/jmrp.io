@@ -83,11 +83,15 @@ const finalIcon = icon || getIconForFile(filename);
     }
 
     /* Style the <pre> element that comes from the slot */
-    .file-body :global(pre) {
+    .file-body :global(pre),
+    .file-body :global(.astro-code) {
         margin: 0 !important;
         border-radius: 0 0 var(--radius-md) var(--radius-md) !important;
         border: none !important;
         box-shadow: none !important;
+        background-color: var(
+            --color-bg-secondary
+        ) !important; /* Force theme bg */
     }
 
     /* Override copy button positioning for header integration */
