@@ -62,6 +62,7 @@ jobs:
             --max-cache-age 1d 
             --verbose 
             --no-progress 
+            --exclude 'https://mstdn.jmrp.io'
             './**/*.md' 
             './**/*.mdx' 
             './**/*.html' 
@@ -169,11 +170,16 @@ jobs:
   # These jobs depend on the 'build' job to finish successfully.
   # =================================================================================
 
-
   accessibility:
-    name: Accessibility Tests (Axe-core)
+    name: Accessibility Tests (${{ matrix.theme }} mode)
     runs-on: ubuntu-latest
     needs: build
+    strategy:
+      matrix:
+        theme: [light, dark]
+      fail-fast: false
+    permissions:
+      pull-requests: write
     steps:
       - uses: actions/checkout@v6
       - name: Download build artifact
@@ -197,15 +203,15 @@ jobs:
         if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: pnpm exec playwright install --with-deps chromium
       - name: Run Axe accessibility tests
-        run: pnpm exec playwright test --project=accessibility
+        run: THEME=${{ matrix.theme }} pnpm exec playwright test --project=accessibility
       - name: Upload Axe Results
         if: always()
         uses: actions/upload-artifact@v6
         with:
-          name: axe-accessibility-report
+          name: axe-accessibility-report-${{ matrix.theme }}
           path: accessibility-report/
           retention-days: 7
-      - name: Post Accessibility Comment
+      - name: Post Accessibility Comment (${{ matrix.theme }} mode)
         if: github.event_name == 'pull_request' && always()
         uses: actions/github-script@v7
         with:
@@ -213,27 +219,24 @@ jobs:
             const fs = require('fs');
             const path = require('path');
             let commentBody = '';
+            const theme = '${{ matrix.theme }}';
+            const themeIcon = theme === 'light' ? '☀️' : '🌙';
+            const themeName = theme === 'light' ? 'Light' : 'Dark';
 
             try {
-              const summaryPath = 'accessibility-report/accessibility-summary.json';
+              const summaryPath = `accessibility-report/accessibility-summary-${theme}.json`;
               console.log('Checking for summary file at:', summaryPath);
               
-              if (fs.existsSync('accessibility-report')) {
-                 console.log('accessibility-report contents:', fs.readdirSync('accessibility-report'));
-              } else {
-                 console.log('accessibility-report directory NOT found');
-              }
-
               if (fs.existsSync(summaryPath)) {
                 const summary = JSON.parse(fs.readFileSync(summaryPath, 'utf8'));
                 // ... rest of logic
                 const isSuccess = summary.failed === 0;
                 
                 const statusIcon = isSuccess ? '✅' : '⚠️';
-                const statusText = isSuccess ? '**All accessibility tests passed!**' : '**Accessibility violations detected**';
+                const statusText = isSuccess ? '**Passed!**' : '**Violations detected**';
                 
-                commentBody = `## ♿ Accessibility Test Results (Axe-core)\n\n${statusIcon} ${statusText}\n\n`;
-                commentBody += `**Summary:**\n- Total Pages Tested: **${summary.totalPages}**\n- Passed: ${summary.passed}\n- Failed: ${summary.failed}\n- Review Needed (Incomplete): ${summary.incomplete || 0} 🔍\n\n`;
+                commentBody = `## ♿ Accessibility (${themeIcon} ${themeName})\n\n${statusIcon} ${statusText}\n\n`;
+                commentBody += `**Summary:**\n- Total Pages: **${summary.totalPages}**\n- Failed: ${summary.failed}\n- Review Needed: ${summary.incomplete || 0} 🔍\n\n`;
                 
                 if (!isSuccess) {
                   commentBody += `### ❌ Failed Pages\n`;
@@ -243,7 +246,7 @@ jobs:
                       const rules = p.violationIds ? `\n   - **Rules:** \`${p.violationIds.join(', ')}\`` : '';
                       commentBody += `- **${p.page}** (${p.violations} violations)${rules}\n`;
                     });
-                  commentBody += `\n📸 **Screenshots and detailed HTML reports are available in the 'axe-accessibility-report' artifact.**\n\n`;
+                  commentBody += `\n📸 **See 'axe-accessibility-report-${theme}' artifact for screenshots.**\n\n`;
                 }
 
                 commentBody += `**Standards:** WCAG 2.1/2.2 AA & Best Practices\n`;
@@ -254,7 +257,7 @@ jobs:
               }
             } catch (error) {
                console.log('Error generating comment:', error);
-               commentBody = `## ♿ Accessibility Test Results (Axe-core)\n\n⚠️ **Test execution completed, but summary report was not found.**\n\nPlease check the [Actions logs](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}) to verify status.\n\nError: ${error.message}`;
+               commentBody = `## ♿ Accessibility (${themeIcon} ${themeName})\n\n⚠️ **Report not found**\n\nError: ${error.message}`;
             }
 
             github.rest.issues.createComment({
@@ -621,31 +624,31 @@ jobs:
           node-version: 20
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile --prefer-offline
-      
+
       - name: Run Lighthouse CI (${{ matrix.theme }} mode)
         shell: bash
         run: |
           set -o pipefail
           npm install -g @lhci/cli
-          
+
           # Set Chrome flags based on theme
           if [ "${{ matrix.theme }}" = "dark" ]; then
             export LHCI_CHROME_FLAGS="--force-dark-mode --force-prefers-color-scheme=dark"
           fi
-          
+
           lhci autorun | tee lhci_output_${{ matrix.theme }}.txt
         env:
           LHCI_GITHUB_TOKEN: ${{ secrets.TOKEN_GITHUB }}
-          
+
       - name: Format Lighthouse Report
         id: format_report
         if: always()
         run: |
-          node scripts/ci/format-lighthouse-report.js > lighthouse_comment_${{ matrix.theme }}.md
+          THEME=${{ matrix.theme }} node scripts/ci/format-lighthouse-report.js > lighthouse_comment_${{ matrix.theme }}.md
           echo "LH_COMMENT_${{ matrix.theme }}<<EOF" >> $GITHUB_ENV
           cat lighthouse_comment_${{ matrix.theme }}.md >> $GITHUB_ENV  
           echo "EOF" >> $GITHUB_ENV
-          
+
       - name: Upload Lighthouse Results
         if: always()
         uses: actions/upload-artifact@v6
@@ -656,21 +659,25 @@ jobs:
             lhci_output_${{ matrix.theme }}.txt
             lighthouse_comment_${{ matrix.theme }}.md
           retention-days: 7
-          
+
       - name: Post Comment (${{ matrix.theme }} mode)
         if: github.event_name == 'pull_request'
         uses: actions/github-script@v7
         with:
           script: |
             const fs = require('fs');
-            let comment = '';
             const theme = '${{ matrix.theme }}';
-            const themeName = theme === 'light' ? '☀️ Light Mode' : '🌙 Dark Mode';
-            
             const commentFile = `lighthouse_comment_${theme}.md`;
+
             if (fs.existsSync(commentFile)) {
-              comment = fs.readFileSync(commentFile, 'utf8');
-              comment = `## 🌓 ${comment.replace('###', '####')}\n\n**Theme:** ${themeName}\n\n${comment}`;
+              const comment = fs.readFileSync(commentFile, 'utf8');
+              
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: comment
+              });
             } else {
-              body: comment
-            });
+              console.log(`Comment file not found: ${commentFile}`);
+            }

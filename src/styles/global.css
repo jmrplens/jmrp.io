@@ -7,13 +7,18 @@
   --color-text-muted: #8b949e;
   --color-primary: #b389f5;
   --color-primary-hover: #c49af5;
+  --color-on-primary: #000000;
+  /* Dark text on light primary for contrast */
   --color-accent: #b389f5;
   --color-border: #30363d;
 
   /* Typography */
-  --font-body: "Inter", "Inter Fallback", system-ui, -apple-system, sans-serif;
+  --font-body:
+    "Inter Variable", "Inter", "Inter Fallback", system-ui, -apple-system,
+    sans-serif;
   --font-mono:
-    "JetBrains Mono", "JetBrains Mono Fallback", "Courier New", monospace;
+    "JetBrains Mono Variable", "JetBrains Mono", "JetBrains Mono Fallback",
+    "Courier New", monospace;
 
   /* Font Weights */
   --fw-normal: 400;
@@ -69,6 +74,7 @@
     --color-primary: #b509ac;
     /* Light mode highlight */
     --color-primary-hover: #d11cd1;
+    --color-on-primary: #ffffff;
     --color-accent: #b509ac;
     --color-border: #d0d7de;
   }
@@ -83,6 +89,7 @@
   --color-primary: #b509ac;
   /* Light mode highlight */
   --color-primary-hover: #d11cd1;
+  --color-on-primary: #ffffff;
   --color-accent: #b509ac;
   --color-border: #d0d7de;
 }
@@ -96,6 +103,7 @@
   --color-text-muted: #8b949e;
   --color-primary: #b389f5;
   --color-primary-hover: #c49af5;
+  --color-on-primary: #000000;
   --color-accent: #b389f5;
   --color-border: #30363d;
 }
@@ -126,6 +134,21 @@
 /* Force lighter comments in dark mode for WCAG AA compliance */
 :root[data-theme="dark"] .astro-code .sh-89ac0276 {
   color: #a8a8a8 !important;
+}
+
+/* Force darker green strings in light mode for WCAG AA compliance */
+/* Class sh-31606bd3 for strings - #22863a has 4.13:1 on #f2f2f2, needs 4.5:1 */
+:root:not([data-theme="dark"]) .astro-code .sh-31606bd3,
+:root:not([data-theme="dark"]) .astro-code .sh-c047851b,
+:root:not([data-theme="dark"]) .astro-code .sh-f69b9e68 {
+  color: #166b29 !important;
+}
+
+/* Force darker blue keywords in light mode for WCAG AA compliance */
+/* Class sh-5955e045 for keywords - #1976d2 has 4.11:1 on #f2f2f2, needs 4.5:1 */
+:root:not([data-theme="dark"]) .astro-code .sh-5955e045,
+:root:not([data-theme="dark"]) .astro-code .sh-da0c2359 {
+  color: #1565c0 !important;
 }
 
 html {
@@ -266,7 +289,7 @@ h1 {
 
 .btn-primary {
   background-color: var(--color-primary);
-  color: white;
+  color: var(--color-on-primary);
   border-color: var(--color-primary);
 }
 

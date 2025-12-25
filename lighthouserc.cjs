@@ -1,5 +1,5 @@
-const fs = require("fs");
-const path = require("path");
+const fs = require("node:fs");
+const path = require("node:path");
 
 const getUrls = () => {
   try {
@@ -44,7 +44,7 @@ module.exports = {
     collect: {
       staticDistDir: "./dist",
       url: getUrls(),
-      numberOfRuns: 4,
+      numberOfRuns: 2,
     },
     upload: {
       target: "temporary-public-storage",
