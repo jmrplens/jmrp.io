@@ -24,12 +24,38 @@ const optimizedAvatar = await getImage({
     widths: [60, 120, 240],
     sizes: "(max-width: 768px) 120px, 240px",
 });
+
+const avatarSrcSet = [60, 120, 240]
+    .map(
+        async (w) =>
+            `${
+                (
+                    await getImage({
+                        src: githubAvatar,
+                        format: "webp",
+                        width: w,
+                        height: w,
+                    })
+                ).src
+            } ${w}w`,
+    )
+    .reduce(async (acc, curr) => `${await acc}, ${await curr}`);
+
+const avatarSrcSetString = await avatarSrcSet;
 ---
 
 <BaseLayout
     title="GitHub Repositories"
     description="My Open Source Contributions"
 >
+    <link
+        slot="head"
+        rel="preload"
+        as="image"
+        imagesrcset={avatarSrcSetString}
+        imagesizes="(max-width: 768px) 120px, 240px"
+        fetchpriority="high"
+    />
     <div class="container github-page">
         <h1 class="page-title">GitHub Repositories</h1>
 
@@ -43,6 +69,8 @@ const optimizedAvatar = await getImage({
                     height="120"
                     widths={[60, 120, 240]}
                     sizes="(max-width: 768px) 120px, 240px"
+                    loading="eager"
+                    fetchpriority="high"
                 />
             </div>
             <div class="profile-info">
@@ -159,6 +187,7 @@ const optimizedAvatar = await getImage({
         margin-bottom: 16px;
         max-width: 600px;
         overflow-wrap: anywhere;
+        min-height: 1.5em; /* Stabilize for CLS */
     }
 
     .profile-stats {
@@ -169,6 +198,7 @@ const optimizedAvatar = await getImage({
         margin-top: var(--space-md);
         max-width: 100%;
         overflow-wrap: anywhere;
+        min-height: 1.5em; /* Stabilize for CLS */
     }
 
     .stat strong {
@@ -178,6 +208,13 @@ const optimizedAvatar = await getImage({
 
     .stat span {
         color: var(--color-text-muted);
+    }
+
+    .stat {
+        min-height: 1.5em; /* Stabilize for micro-CLS */
+        display: flex;
+        align-items: center;
+        gap: 4px;
     }
 
     .location {
