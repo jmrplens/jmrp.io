@@ -125,9 +125,15 @@ const personSchema = {
                             <div class="timeline">
                                 {section.contents.map((item: any) => (
                                     <div class="timeline-item">
-                                        <div class="timeline-dot" aria-hidden="true"></div>
+                                        <div
+                                            class="timeline-dot"
+                                            aria-hidden="true"
+                                        />
                                         <div class="timeline-card">
-                                            <div class="timeline-arrow" aria-hidden="true"></div>
+                                            <div
+                                                class="timeline-arrow"
+                                                aria-hidden="true"
+                                            />
                                             <div class="item-header">
                                                 <h3>{item.title}</h3>
                                                 <span class="year">
@@ -137,6 +143,7 @@ const personSchema = {
                                             {item.institution && (
                                                 <div
                                                     class="institution"
+                                                    style="min-height: 1.2em"
                                                     set:html={item.institution.replace(
                                                         /&(?!(amp|lt|gt|quot|apos);)/g,
                                                         "&amp;",
@@ -162,6 +169,7 @@ const personSchema = {
                                             {item.summary && (
                                                 <div
                                                     class="description summary"
+                                                    style="min-height: 1.5em"
                                                     set:html={item.summary.replace(
                                                         /&(?!(amp|lt|gt|quot|apos);)/g,
                                                         "&amp;",
