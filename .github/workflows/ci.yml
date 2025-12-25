@@ -641,7 +641,7 @@ jobs:
         id: format_report
         if: always()
         run: |
-          node scripts/ci/format-lighthouse-report.js > lighthouse_comment_${{ matrix.theme }}.md
+          THEME=${{ matrix.theme }} node scripts/ci/format-lighthouse-report.js > lighthouse_comment_${{ matrix.theme }}.md
           echo "LH_COMMENT_${{ matrix.theme }}<<EOF" >> $GITHUB_ENV
           cat lighthouse_comment_${{ matrix.theme }}.md >> $GITHUB_ENV  
           echo "EOF" >> $GITHUB_ENV
@@ -663,14 +663,18 @@ jobs:
         with:
           script: |
             const fs = require('fs');
-            let comment = '';
             const theme = '${{ matrix.theme }}';
-            const themeName = theme === 'light' ? '☀️ Light Mode' : '🌙 Dark Mode';
-
             const commentFile = `lighthouse_comment_${theme}.md`;
+
             if (fs.existsSync(commentFile)) {
-              comment = fs.readFileSync(commentFile, 'utf8');
-              comment = `## 🌓 ${comment.replace('###', '####')}\n\n**Theme:** ${themeName}\n\n${comment}`;
+              const comment = fs.readFileSync(commentFile, 'utf8');
+              
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: comment
+              });
             } else {
-              body: comment
-            });
+              console.log(`Comment file not found: ${commentFile}`);
+            }

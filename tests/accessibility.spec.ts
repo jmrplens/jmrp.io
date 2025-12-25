@@ -1,8 +1,8 @@
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { parseStringPromise } from "xml2js";
-import * as fs from "fs";
-import * as path from "path";
+import * as fs from "node:fs";
+import * as path from "node:path";
 // @ts-ignore
 import { createHtmlReport } from "axe-html-reporter";
 
@@ -30,15 +30,15 @@ async function getPagesFromSitemap(): Promise<
         urlPath === "/"
           ? "Home"
           : urlPath
-            .split("/")
-            .filter(Boolean)
-            .map((s) =>
-              s
-                .split("-")
-                .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-                .join(" "),
-            )
-            .join(" - ");
+              .split("/")
+              .filter(Boolean)
+              .map((s: string) =>
+                s
+                  .split("-")
+                  .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1))
+                  .join(" "),
+              )
+              .join(" - ");
 
       return { name, url: urlPath };
     });
@@ -100,14 +100,13 @@ test.describe("Accessibility Tests (Axe-core WCAG 2.1 AA)", () => {
       await browserPage.evaluate(() => {
         const elements = document.querySelectorAll("*");
         elements.forEach((el) => {
-          const style = window.getComputedStyle(el);
+          const style = globalThis.getComputedStyle(el);
           const bg = style.backgroundImage;
-          if (bg && bg.includes("gradient")) {
+          if (bg?.includes("gradient")) {
             // Very simple heuristic: try to find a color-like string in the gradient
             // or just use the theme's background color as a safe fallback for the engine
-            const colorMatch = bg.match(
-              /(#[a-f0-9]{3,6}|rgba?\([^)]+\)|var\(--[^)]+\))/,
-            );
+            const colorMatch =
+              /(#[a-f0-9]{3,6}|rgba?\([^)]+\)|var\(--[^)]+\))/.exec(bg);
             if (colorMatch) {
               (el as HTMLElement).style.backgroundColor = colorMatch[0];
             }
@@ -131,9 +130,9 @@ test.describe("Accessibility Tests (Axe-core WCAG 2.1 AA)", () => {
 
       // Generate HTML Report
       const safeName = pageInfo.name
-        .replace(/[^a-z0-9]/gi, "_")
+        .replaceAll(/[^a-z0-9]/gi, "_")
         .toLowerCase()
-        .replace(/^_+|_+$/g, "");
+        .replaceAll(/(^_+)|(_+$)/g, "");
       const reportFileName = `${safeName}.html`;
 
       createHtmlReport({
@@ -244,7 +243,7 @@ test.describe("Accessibility Tests (Axe-core WCAG 2.1 AA)", () => {
                 <span class="stat-label">Passed</span>
             </div>
             <div class="stat-item">
-                <span class="stat-value ${results.filter((r) => r.violations > 0).length > 0 ? "status-fail" : "status-pass"}">${results.filter((r) => r.violations > 0).length}</span>
+                <span class="stat-value ${results.some((r) => r.violations > 0) ? "status-fail" : "status-pass"}">${results.filter((r) => r.violations > 0).length}</span>
                 <span class="stat-label">Failed</span>
             </div>
             <div class="stat-item">
@@ -254,6 +253,7 @@ test.describe("Accessibility Tests (Axe-core WCAG 2.1 AA)", () => {
         </div>
         <p>Generated on: ${new Date().toLocaleString()}</p>
     </div>
+
     <table>
         <thead>
             <tr>
@@ -265,8 +265,8 @@ test.describe("Accessibility Tests (Axe-core WCAG 2.1 AA)", () => {
         </thead>
         <tbody>
             ${results
-        .map(
-          (r) => `
+              .map(
+                (r) => `
                 <tr>
                     <td>${r.page}</td>
                     <td><span class="${r.violations === 0 ? "status-pass" : "status-fail"}">${r.violations}</span></td>
@@ -274,8 +274,8 @@ test.describe("Accessibility Tests (Axe-core WCAG 2.1 AA)", () => {
                     <td><a href="${r.reportPath}" class="btn">View Details</a></td>
                 </tr>
             `,
-        )
-        .join("")}
+              )
+              .join("")}
         </tbody>
     </table>
 </body>

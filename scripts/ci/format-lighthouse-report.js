@@ -140,7 +140,19 @@ try {
 
   // --- OUTPUT GENERATION ---
 
-  console.log("### ⚡ Lighthouse Report");
+  const theme = process.env.THEME || "unknown";
+
+  const themeNames = {
+    light: "☀️ Light Mode",
+    dark: "🌙 Dark Mode",
+  };
+  const themeName = themeNames[theme] || "Report";
+
+  // Custom Header matching the previous CI YAML logic
+  console.log(`## 🌓 Lighthouse Report`);
+  console.log(`\n**Theme:** ${themeName}`);
+
+  console.log("\n#### ⚡ Details");
 
   const categories = [
     "performance",
