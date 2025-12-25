@@ -168,7 +168,11 @@ test.describe("Accessibility Tests (Axe-core WCAG 2.1 AA)", () => {
           );
           console.log(`   Impact: ${violation.impact}`);
           console.log(`   Help: ${violation.helpUrl}`);
-          console.log(`   Affected elements: ${violation.nodes.length}\n`);
+          violation.nodes.forEach((node) => {
+            console.log(`   - Target: ${node.target}`);
+            console.log(`   - HTML: ${node.html}`);
+            console.log(`   - Failure Summary: ${node.failureSummary}`);
+          });
         });
 
         // Screenshot on failure

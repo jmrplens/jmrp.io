@@ -7,6 +7,8 @@
   --color-text-muted: #8b949e;
   --color-primary: #b389f5;
   --color-primary-hover: #c49af5;
+  --color-on-primary: #000000;
+  /* Dark text on light primary for contrast */
   --color-accent: #b389f5;
   --color-border: #30363d;
 
@@ -69,6 +71,7 @@
     --color-primary: #b509ac;
     /* Light mode highlight */
     --color-primary-hover: #d11cd1;
+    --color-on-primary: #ffffff;
     --color-accent: #b509ac;
     --color-border: #d0d7de;
   }
@@ -83,6 +86,7 @@
   --color-primary: #b509ac;
   /* Light mode highlight */
   --color-primary-hover: #d11cd1;
+  --color-on-primary: #ffffff;
   --color-accent: #b509ac;
   --color-border: #d0d7de;
 }
@@ -96,6 +100,7 @@
   --color-text-muted: #8b949e;
   --color-primary: #b389f5;
   --color-primary-hover: #c49af5;
+  --color-on-primary: #000000;
   --color-accent: #b389f5;
   --color-border: #30363d;
 }
@@ -281,7 +286,7 @@ h1 {
 
 .btn-primary {
   background-color: var(--color-primary);
-  color: white;
+  color: var(--color-on-primary);
   border-color: var(--color-primary);
 }
 
