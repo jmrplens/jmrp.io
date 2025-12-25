@@ -129,9 +129,16 @@
 }
 
 /* Force darker green strings in light mode for WCAG AA compliance */
-/* Class sh-31606bd3 commonly used for strings - #22863a has 4.36:1 contrast, needs 4.5:1 */
+/* Class sh-31606bd3 for strings - #22863a has 4.13:1 on #f2f2f2, needs 4.5:1 */
 :root:not([data-theme="dark"]) .astro-code .sh-31606bd3 {
-  color: #1a7a2e !important;
+  color: #166b29 !important;
+}
+
+/* Force darker blue keywords in light mode for WCAG AA compliance */
+/* Class sh-5955e045 for keywords - #1976d2 has 4.11:1 on #f2f2f2, needs 4.5:1 */
+:root:not([data-theme="dark"]) .astro-code .sh-59551e045,
+:root:not([data-theme="dark"]) .astro-code .sh-da0c2359 {
+  color: #1565c0 !important;
 }
 
 html {
