@@ -1,6 +1,5 @@
 // @ts-check
 import { defineConfig } from "astro/config";
-import { bundledThemes } from "shiki";
 
 // Adapters and Integrations
 import mdx from "@astrojs/mdx"; // Support for MDX (Markdown with JSX)
@@ -90,14 +89,9 @@ const rehypeMermaidSplitter = () => (/** @type {any} */ tree) => {
   );
 };
 
-// Setup Shiki themes with overrides
-// Clone the themes to allow modification (they are frozen by default)
-const githubLight = structuredClone(
-  (await bundledThemes["github-light-high-contrast"]()).default,
-);
-const githubDark = structuredClone(
-  (await bundledThemes["github-dark-high-contrast"]()).default,
-);
+// Setup Shiki themes
+const githubLight = "github-light-high-contrast";
+const githubDark = "github-dark-high-contrast";
 
 // No manual overrides needed for high contrast themes
 

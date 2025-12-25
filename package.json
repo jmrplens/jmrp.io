@@ -64,7 +64,6 @@
     "rehype-mermaid": "^3.0.0",
     "rss-parser": "^3.13.0",
     "sharp": "^0.34.5",
-    "shiki": "^3.20.0",
     "svgo": "^4.0.0",
     "unist-util-visit": "^5.0.0",
     "vite-plugin-image-optimizer": "^2.0.3",
