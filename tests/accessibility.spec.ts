@@ -69,6 +69,7 @@ test.describe("Accessibility Tests (Axe-core WCAG 2.1 AA)", () => {
   // Load pages once before all tests
   test.beforeAll(async () => {
     pages = await getPagesFromSitemap();
+
     // Ensure report directory exists
     if (!fs.existsSync("accessibility-report")) {
       fs.mkdirSync("accessibility-report", { recursive: true });
