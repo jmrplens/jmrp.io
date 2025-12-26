@@ -89,6 +89,12 @@ const rehypeMermaidSplitter = () => (/** @type {any} */ tree) => {
   );
 };
 
+// Setup Shiki themes
+const githubLight = "github-light-high-contrast";
+const githubDark = "github-dark-high-contrast";
+
+// No manual overrides needed for high contrast themes
+
 // https://astro.build/config
 export default defineConfig({
   // The site URL, used for SEO and sitemap generation
@@ -116,8 +122,8 @@ export default defineConfig({
   markdown: {
     shikiConfig: {
       themes: {
-        light: "min-light",
-        dark: "github-dark",
+        light: githubLight,
+        dark: githubDark,
       },
     },
     // Remark plugins: transformation before HTML compilation

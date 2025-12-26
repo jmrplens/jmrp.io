@@ -5,7 +5,11 @@ import { fileURLToPath } from "node:url";
 // Configuration
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const DIST_DIR = path.resolve(__dirname, "..", process.env.DIST_DIR || "dist");
+const DIST_DIR = path.resolve(
+  __dirname,
+  "..",
+  process.argv[2] || process.env.DIST_DIR || "dist",
+);
 
 /**
  * Copies sitemap-index.xml to sitemap.xml

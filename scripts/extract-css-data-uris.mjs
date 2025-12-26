@@ -4,7 +4,7 @@ import { glob } from "glob";
 import crypto from "node:crypto";
 import { optimize } from "svgo";
 
-const DIST_DIR = process.env.DIST_DIR || "dist";
+const DIST_DIR = process.argv[2] || process.env.DIST_DIR || "dist";
 const ASSETS_DIR = "assets/extracted";
 const TARGET_DIR = path.join(DIST_DIR, ASSETS_DIR);
 
