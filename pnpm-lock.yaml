@@ -13,7 +13,7 @@ importers:
         version: 4.3.13(astro@5.16.6(@types/node@25.0.3)(idb-keyval@6.2.2)(rollup@4.53.4)(typescript@5.9.3)(yaml@2.8.2))
       '@astrojs/preact':
         specifier: ^4.1.3
-        version: 4.1.3(@babel/core@7.28.5)(@types/node@25.0.3)(preact@10.28.0)(yaml@2.8.2)
+        version: 4.1.3(@babel/core@7.28.5)(@types/node@25.0.3)(preact@10.28.1)(yaml@2.8.2)
       '@astrojs/rss':
         specifier: ^4.0.14
         version: 4.0.14
@@ -72,8 +72,8 @@ importers:
         specifier: ^11.12.2
         version: 11.12.2
       preact:
-        specifier: ^10.28.0
-        version: 10.28.0
+        specifier: ^10.28.1
+        version: 10.28.1
       rehype-external-links:
         specifier: ^3.0.0
         version: 3.0.0
@@ -2808,8 +2808,8 @@ packages:
     peerDependencies:
       preact: '>=10 || >= 11.0.0-0'
 
-  preact@10.28.0:
-    resolution: {integrity: sha512-rytDAoiXr3+t6OIP3WGlDd0ouCUG1iCWzkcY3++Nreuoi17y6T5i/zRhe6uYfoVcxq6YU+sBtJouuRDsq8vvqA==}
+  preact@10.28.1:
+    resolution: {integrity: sha512-u1/ixq/lVQI0CakKNvLDEcW5zfCjUQfZdK9qqWuIJtsezuyG6pk9TWj75GMuI/EzRSZB/VAE43sNWWZfiy8psw==}
 
   prettier@3.7.4:
     resolution: {integrity: sha512-v6UNi1+3hSlVvv8fSaoUbggEM5VErKmmpGA7Pl3HF8V6uKY7rvClBOJlH6yNwQtfTueNkGVpOv/mtWL9L4bgRA==}
@@ -3611,12 +3611,12 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@astrojs/preact@4.1.3(@babel/core@7.28.5)(@types/node@25.0.3)(preact@10.28.0)(yaml@2.8.2)':
+  '@astrojs/preact@4.1.3(@babel/core@7.28.5)(@types/node@25.0.3)(preact@10.28.1)(yaml@2.8.2)':
     dependencies:
-      '@preact/preset-vite': 2.10.2(@babel/core@7.28.5)(preact@10.28.0)(vite@6.4.1(@types/node@25.0.3)(yaml@2.8.2))
-      '@preact/signals': 2.5.1(preact@10.28.0)
-      preact: 10.28.0
-      preact-render-to-string: 6.6.4(preact@10.28.0)
+      '@preact/preset-vite': 2.10.2(@babel/core@7.28.5)(preact@10.28.1)(vite@6.4.1(@types/node@25.0.3)(yaml@2.8.2))
+      '@preact/signals': 2.5.1(preact@10.28.1)
+      preact: 10.28.1
+      preact-render-to-string: 6.6.4(preact@10.28.1)
       vite: 6.4.1(@types/node@25.0.3)(yaml@2.8.2)
     transitivePeerDependencies:
       - '@babel/core'
@@ -4233,12 +4233,12 @@ snapshots:
     dependencies:
       playwright: 1.57.0
 
-  '@preact/preset-vite@2.10.2(@babel/core@7.28.5)(preact@10.28.0)(vite@6.4.1(@types/node@25.0.3)(yaml@2.8.2))':
+  '@preact/preset-vite@2.10.2(@babel/core@7.28.5)(preact@10.28.1)(vite@6.4.1(@types/node@25.0.3)(yaml@2.8.2))':
     dependencies:
       '@babel/core': 7.28.5
       '@babel/plugin-transform-react-jsx': 7.27.1(@babel/core@7.28.5)
       '@babel/plugin-transform-react-jsx-development': 7.27.1(@babel/core@7.28.5)
-      '@prefresh/vite': 2.4.11(preact@10.28.0)(vite@6.4.1(@types/node@25.0.3)(yaml@2.8.2))
+      '@prefresh/vite': 2.4.11(preact@10.28.1)(vite@6.4.1(@types/node@25.0.3)(yaml@2.8.2))
       '@rollup/pluginutils': 4.2.1
       babel-plugin-transform-hook-names: 1.0.2(@babel/core@7.28.5)
       debug: 4.4.3
@@ -4251,27 +4251,27 @@ snapshots:
 
   '@preact/signals-core@1.12.1': {}
 
-  '@preact/signals@2.5.1(preact@10.28.0)':
+  '@preact/signals@2.5.1(preact@10.28.1)':
     dependencies:
       '@preact/signals-core': 1.12.1
-      preact: 10.28.0
+      preact: 10.28.1
 
   '@prefresh/babel-plugin@0.5.2': {}
 
-  '@prefresh/core@1.5.9(preact@10.28.0)':
+  '@prefresh/core@1.5.9(preact@10.28.1)':
     dependencies:
-      preact: 10.28.0
+      preact: 10.28.1
 
   '@prefresh/utils@1.2.1': {}
 
-  '@prefresh/vite@2.4.11(preact@10.28.0)(vite@6.4.1(@types/node@25.0.3)(yaml@2.8.2))':
+  '@prefresh/vite@2.4.11(preact@10.28.1)(vite@6.4.1(@types/node@25.0.3)(yaml@2.8.2))':
     dependencies:
       '@babel/core': 7.28.5
       '@prefresh/babel-plugin': 0.5.2
-      '@prefresh/core': 1.5.9(preact@10.28.0)
+      '@prefresh/core': 1.5.9(preact@10.28.1)
       '@prefresh/utils': 1.2.1
       '@rollup/pluginutils': 4.2.1
-      preact: 10.28.0
+      preact: 10.28.1
       vite: 6.4.1(@types/node@25.0.3)(yaml@2.8.2)
     transitivePeerDependencies:
       - supports-color
@@ -6762,11 +6762,11 @@ snapshots:
       picocolors: 1.1.1
       source-map-js: 1.2.1
 
-  preact-render-to-string@6.6.4(preact@10.28.0):
+  preact-render-to-string@6.6.4(preact@10.28.1):
     dependencies:
-      preact: 10.28.0
+      preact: 10.28.1
 
-  preact@10.28.0: {}
+  preact@10.28.1: {}
 
   prettier@3.7.4: {}
 
