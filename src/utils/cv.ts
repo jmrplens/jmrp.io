@@ -13,12 +13,12 @@ export interface CVEntry {
 
 /**
  * Reads and parses the CV data from the YAML file.
- * Located at: src/data/cv.yml
+ * Located at: src/data/cv/cv.yml
  *
  * @returns {CVEntry[]} Array of CV sections and their contents.
  */
 export function getCVData() {
-  const filePath = path.join(process.cwd(), "src/data/cv.yml");
+  const filePath = path.join(process.cwd(), "src/data/cv/cv.yml");
   const fileContents = fs.readFileSync(filePath, "utf8");
   return yaml.load(fileContents) as CVEntry[];
 }

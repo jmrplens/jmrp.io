@@ -10,7 +10,7 @@ import fs from "fs";
 import path from "path";
 import yaml from "js-yaml";
 
-const sitePath = path.join(process.cwd(), "src/data/site.yml");
+const sitePath = path.join(process.cwd(), "src/data/config/site.yml");
 const siteRaw = fs.readFileSync(sitePath, "utf8");
 const siteData = yaml.load(siteRaw) as any;
 

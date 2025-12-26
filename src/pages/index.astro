@@ -2,7 +2,7 @@
 /**
  * Home Page (Index).
  * Displays the hero section, biography, and quick links.
- * Content is configured via `src/data/site.yml`.
+ * Content is configured via `src/data/config/site.yml`.
  */
 import BaseLayout from "../layouts/BaseLayout.astro";
 import { Image, getImage } from "astro:assets";
@@ -13,7 +13,7 @@ import fs from "fs";
 import path from "path";
 import yaml from "js-yaml";
 
-const sitePath = path.join(process.cwd(), "src/data/site.yml");
+const sitePath = path.join(process.cwd(), "src/data/config/site.yml");
 const siteRaw = fs.readFileSync(sitePath, "utf8");
 const siteData = yaml.load(siteRaw) as any;
 
