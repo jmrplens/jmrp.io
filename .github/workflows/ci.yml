@@ -213,7 +213,7 @@ jobs:
           retention-days: 7
       - name: Post Accessibility Comment (${{ matrix.theme }} mode)
         if: github.event_name == 'pull_request' && always()
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const fs = require('fs');
@@ -324,7 +324,7 @@ jobs:
           pnpm exec html-validate -c .htmlvalidate.json --formatter json dist > html-validation.json 2> html-errors.log || true
       - name: Post HTML Validation Comment
         if: github.event_name == 'pull_request'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const fs = require('fs');
@@ -417,7 +417,7 @@ jobs:
         run: node scripts/ci/validate-rss.mjs dist/rss.xml
       - name: Post RSS Validation Comment
         if: github.event_name == 'pull_request' && always()
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const fs = require('fs');
@@ -489,7 +489,7 @@ jobs:
         run: node scripts/ci/validate-schema.mjs dist
       - name: Post Schema Validation Comment
         if: github.event_name == 'pull_request' && always()
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const comment = `## 🏷️ Structured Data Check
@@ -554,7 +554,7 @@ jobs:
           fi
       - name: Post Image Optimization Comment
         if: github.event_name == 'pull_request'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const { execSync } = require('child_process');
@@ -662,7 +662,7 @@ jobs:
 
       - name: Post Comment (${{ matrix.theme }} mode)
         if: github.event_name == 'pull_request'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const fs = require('fs');
