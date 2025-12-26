@@ -3,7 +3,7 @@ import crypto from "node:crypto";
 import path from "node:path";
 import { glob } from "glob";
 
-const DIST_DIR = process.env.DIST_DIR || "dist";
+const DIST_DIR = process.argv[2] || process.env.DIST_DIR || "dist";
 const HTML_PATTERN = "**/*.html";
 
 /**
