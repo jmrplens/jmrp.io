@@ -316,7 +316,7 @@ const articleSchema = [
 
     // Add copy buttons to standalone code blocks
     // Only for blocks not inside FileContent, Tabs, or CompareCode components
-    document.addEventListener("DOMContentLoaded", () => {
+    const setupCodeCopyButtons = () => {
         const proseContent = document.querySelector(".prose");
         if (!proseContent) return;
 
@@ -384,7 +384,10 @@ const articleSchema = [
             // Add the button to the block
             block.appendChild(copyWrapper);
         });
-    });
+    };
+
+    document.addEventListener("DOMContentLoaded", setupCodeCopyButtons);
+    document.addEventListener("astro:page-load", setupCodeCopyButtons);
 </script>
 
 <style>
