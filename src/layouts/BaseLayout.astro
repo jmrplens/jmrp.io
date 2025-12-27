@@ -11,13 +11,14 @@
 import BaseHead from "@components/layout/BaseHead.astro";
 import Header from "@components/layout/Header.astro";
 import Footer from "@components/layout/Footer.astro";
+import type { ImageMetadata } from "astro";
 
 interface Props {
     title: string;
     description?: string;
     type?: string;
-    schema?: any; // JSON-LD schema defaults or overrides
-    image?: string;
+    schema?: Record<string, unknown> | Record<string, unknown>[];
+    image?: string | ImageMetadata;
     // Article specific
     publishDate?: Date;
     modifiedDate?: Date;

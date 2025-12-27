@@ -18,6 +18,7 @@ import interVariable from "@fontsource-variable/inter/files/inter-latin-wght-nor
 import jetbrainsVariable from "@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2?url";
 
 import { getImage } from "astro:assets";
+import type { ImageMetadata } from "astro";
 import faviconSrc from "@assets/favicon.png";
 import appleTouchIconSrc from "@assets/apple-touch-icon.png";
 import defaultOgImage from "@assets/mehome_landscape.jpeg";
@@ -43,7 +44,7 @@ const appleTouchIcon = await getImage({
 interface Props {
     title: string;
     description?: string;
-    image?: string;
+    image?: string | ImageMetadata;
     type?: string;
     // Article specific props
     publishDate?: Date;
@@ -58,7 +59,7 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 const {
     title,
     description = siteData.description,
-    image = siteData.url + "/img/mehome_landscape.jpeg", // Default OG
+    image,
     type = "website",
     publishDate,
     modifiedDate,
@@ -80,20 +81,25 @@ const fullTitle = (() => {
     return title;
 })();
 
-// Image resolution logic
-let resolvedImage: string | URL;
-if (image && typeof image === "string" && image.startsWith("http")) {
-    resolvedImage = new URL(image);
-} else {
-    // Fallback to default site image (imported)
-    const optimizedDefault = await getImage({
-        src: defaultOgImage,
+// Image resolution logic for Open Graph
+const resolvedImage = await (async () => {
+    let imageSrc = image || defaultOgImage;
+
+    // If it's a string and already a full URL, return it
+    if (typeof imageSrc === "string" && imageSrc.startsWith("http")) {
+        return imageSrc;
+    }
+
+    // Otherwise, optimize it
+    const optimized = await getImage({
+        src: imageSrc,
         format: "webp",
         width: 1200,
         height: 630,
     });
-    resolvedImage = new URL(optimizedDefault.src, Astro.url);
-}
+
+    return new URL(optimized.src, Astro.url).toString();
+})();
 
 // --- Schema.org Construction ---
 

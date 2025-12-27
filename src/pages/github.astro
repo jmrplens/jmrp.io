@@ -25,23 +25,19 @@ const optimizedAvatar = await getImage({
     sizes: "(max-width: 768px) 120px, 240px",
 });
 
-const avatarSrcSet = [60, 120, 240]
-    .map(
-        async (w) =>
-            `${
-                (
-                    await getImage({
-                        src: githubAvatar,
-                        format: "webp",
-                        width: w,
-                        height: w,
-                    })
-                ).src
-            } ${w}w`,
+const avatarSrcSetString = (
+    await Promise.all(
+        [60, 120, 240].map(async (w) => {
+            const img = await getImage({
+                src: githubAvatar,
+                format: "webp",
+                width: w,
+                height: w,
+            });
+            return `${img.src} ${w}w`;
+        }),
     )
-    .reduce(async (acc, curr) => `${await acc}, ${await curr}`);
-
-const avatarSrcSetString = await avatarSrcSet;
+).join(", ");
 ---
 
 <BaseLayout
