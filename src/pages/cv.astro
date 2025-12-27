@@ -9,8 +9,13 @@ import { getCVData } from "@utils/cv";
 import { Icon } from "astro-icon/components";
 import SkillGroup from "@components/cv/SkillGroup.astro";
 import CertificateGroup from "@components/cv/CertificateGroup.astro";
+import { getEntry } from "astro:content";
 
 const cvData = await getCVData();
+const siteEntry = await getEntry("site", "config");
+const siteData = siteEntry!.data;
+const socialsEntry = await getEntry("socials", "main");
+const socials = socialsEntry!.data;
 
 // Helper to map FontAwesome classes to Iconify names
 const getIconName = (faClass: string) => {
@@ -28,18 +33,22 @@ const getIconName = (faClass: string) => {
 const personSchema = {
     "@context": "https://schema.org",
     "@type": "Person",
-    name: "José Manuel Requena Plens",
-    jobTitle: "R&D Engineer",
+    name: siteData.author,
+    jobTitle: "R&D Engineer", // Could also be in site.yml
     worksFor: {
         "@type": "Organization",
         name: "Power Electronics",
     },
-    url: "https://jmrp.io",
+    url: siteData.url,
     sameAs: [
-        "https://github.com/jmrplens",
-        "https://mstdn.jmrp.io/@jmrplens",
-        "https://www.linkedin.com/in/jmrplens",
-    ],
+        socials.github_username
+            ? `https://github.com/${socials.github_username}`
+            : "",
+        socials.mastodon_username ? `https://${socials.mastodon_username}` : "",
+        socials.linkedin_username
+            ? `https://www.linkedin.com/in/${socials.linkedin_username}`
+            : "",
+    ].filter(Boolean),
     knowsAbout:
         cvData
             .find((s) => s.title === "Technical Skills")
