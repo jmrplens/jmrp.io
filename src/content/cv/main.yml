@@ -289,8 +289,10 @@
       linkitems:
         - link: /pdf/degree/CFGM_Electronica.pdf
           linkname: "Diploma (Electronics)"
+          ariaLabel: "Diploma (Electronics)"
         - link: /pdf/degree/CFGS_Sonido.pdf
           linkname: "Diploma (Sound)"
+          ariaLabel: "Diploma (Sound)"
 
 - title: Certificates
   type: certificate_list

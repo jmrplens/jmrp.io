@@ -45,7 +45,7 @@ const personSchema = {
             .find((s) => s.title === "Technical Skills")
             ?.contents?.flatMap((g) => {
                 if ("items" in g) {
-                    return g.items.map((i: any) => i.name);
+                    return g.items.map((i) => i.name);
                 }
                 return [];
             }) || [],
@@ -62,7 +62,7 @@ const personSchema = {
                 }
                 return null;
             })
-            .filter((e): e is Record<string, any> => !!e) || [],
+            .filter((e): e is Record<string, unknown> => !!e) || [],
 };
 ---
 

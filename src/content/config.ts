@@ -118,7 +118,7 @@ const CVTimelineContent = z.object({
       z.object({
         link: z.string(),
         linkname: z.string(),
-        ariaLabel: z.string(),
+        ariaLabel: z.string().optional(),
       }),
     )
     .optional(),
@@ -154,11 +154,28 @@ const CVCertificateContent = z.object({
 const cv = defineCollection({
   type: "data",
   schema: z.array(
-    z.object({
-      title: z.string(),
-      type: z.enum(["map", "time_table", "list_groups", "certificate_list"]),
-      contents: z.array(z.any()),
-    }),
+    z.discriminatedUnion("type", [
+      z.object({
+        type: z.literal("map"),
+        title: z.string(),
+        contents: z.array(CVMapContent),
+      }),
+      z.object({
+        type: z.literal("time_table"),
+        title: z.string(),
+        contents: z.array(CVTimelineContent),
+      }),
+      z.object({
+        type: z.literal("list_groups"),
+        title: z.string(),
+        contents: z.array(CVListGroupContent),
+      }),
+      z.object({
+        type: z.literal("certificate_list"),
+        title: z.string(),
+        contents: z.array(CVCertificateContent),
+      }),
+    ]),
   ),
 });
 
