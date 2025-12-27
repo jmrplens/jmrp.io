@@ -191,6 +191,9 @@ async function generateHashes() {
     }
 
     // Process all JS files to add their hashes (fixes strict-dynamic issues)
+    // OPTIMIZATION: We rely on 'self' for external scripts, so we don't need to hash them.
+    // This prevents the CSP header from exceeding server limits (e.g. Nginx 4k/8k limit).
+    /*
     const jsFiles = await glob(JS_PATTERN, { cwd: DIST_DIR, absolute: true });
     console.log(`Found ${jsFiles.length} JS files to hash.`);
     for (const file of jsFiles) {
@@ -198,6 +201,7 @@ async function generateHashes() {
       const hash = crypto.createHash("sha256").update(content).digest("base64");
       scriptHashes.add(`'sha256-${hash}'`);
     }
+    */
 
     // Explicitly add 'unsafe-inline' for style-src if strictly necessary,
     // but ideally we rely on hashes.  Mozilla observatory penalizes 'unsafe-inline'

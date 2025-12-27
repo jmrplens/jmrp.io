@@ -250,7 +250,7 @@ const articleSchema = [
     <TableOfContentsDrawer headings={headings} />
 </BaseLayout>
 
-<script is:inline>
+<script is:inline nonce="NGINX_CSP_NONCE">
     document.addEventListener("DOMContentLoaded", () => {
         // Accessibility: Fix duplicate role="region" on code blocks
         // We use requestIdleCallback to avoid forced reflows during initial layout

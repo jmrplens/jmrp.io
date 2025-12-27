@@ -62,7 +62,7 @@ const language = siteData.locale?.split("_")[0] || "en";
         />
         <ClientRouter />
         <slot name="head" />
-        <script is:inline>
+        <script is:inline nonce="NGINX_CSP_NONCE">
             // Critical: Execute immediately to prevent FOUC
             (function () {
                 const e = () => {

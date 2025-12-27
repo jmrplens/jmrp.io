@@ -5,10 +5,10 @@
  * Supports abstract toggling, BibTeX copying, and external links (DOI, PDF, Slides).
  */
 import BaseLayout from "@layouts/BaseLayout.astro";
-import { getPublications } from "@utils/publications";
+import { getPublications, type PublicationItem } from "@utils/publications";
 import { Icon } from "astro-icon/components";
 import CopyButton from "@components/ui/CopyButton.astro";
-import PublicationItem from "@components/publications/PublicationItem.astro";
+import PublicationItemComponent from "@components/publications/PublicationItem.astro";
 
 const publicationGroups = await getPublications();
 
@@ -17,7 +17,7 @@ const publicationsSchema = {
     "@type": "CollectionPage",
     name: "Publications",
     hasPart: publicationGroups.flatMap((group) =>
-        group.items.map((pub: any) => ({
+        group.items.map((pub: PublicationItem) => ({
             "@type": "ScholarlyArticle",
             headline: pub.title,
             datePublished: pub.issued?.["date-parts"]?.[0]?.join("-"),
@@ -49,8 +49,8 @@ const publicationsSchema = {
                         {group.title}
                     </h2>
                     <div class="publications-list">
-                        {group.items.map((pub: any) => (
-                            <PublicationItem pub={pub} />
+                        {group.items.map((pub: PublicationItem) => (
+                            <PublicationItemComponent pub={pub} />
                         ))}
                     </div>
                 </section>

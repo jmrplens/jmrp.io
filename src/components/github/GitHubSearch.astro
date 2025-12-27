@@ -74,7 +74,7 @@ const { initialRepos } = Astro.props;
     <span class="sr-only" id="search-announcement" aria-live="polite"></span>
 </div>
 
-<script>
+<script nonce="NGINX_CSP_NONCE">
     // Lightweight client-side search - NO API calls, NO hydration needed
     const setupRepoSearch = () => {
         const searchInput = document.getElementById("repo-search") as HTMLInputElement;

@@ -13,7 +13,7 @@ interface Props {
 const { class: className } = Astro.props;
 ---
 
-<script lang="ts">
+<script lang="ts" nonce="NGINX_CSP_NONCE">
     class TabsComponent extends HTMLElement {
         connectedCallback() {
             // Use requestAnimationFrame to ensure the children are fully parsed
@@ -102,7 +102,7 @@ const { class: className } = Astro.props;
                 }
             });
 
-            headers.appendChild(fragment);
+            headers?.appendChild(fragment);
         }
     }
 

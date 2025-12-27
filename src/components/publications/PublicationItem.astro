@@ -57,7 +57,7 @@ const bibtexId = `bibtex-${pub.id}`;
 const cleanedBibtex = cleanBibtex(pub.bibtex || "");
 ---
 
-<script>
+<script nonce="NGINX_CSP_NONCE">
     class PublicationItem extends HTMLElement {
         constructor() {
             super();
