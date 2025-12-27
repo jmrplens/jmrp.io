@@ -334,14 +334,16 @@ const articleSchema = [
             }
 
             // Check if we already added our button
-            if (block.querySelector(".custom-code-copy-btn")) {
+            if (block.querySelector("copy-button")) {
                 return; // Already processed
             }
 
-            // Create our custom copy button
+            // Create our custom-element copy button
+            const copyWrapper = document.createElement("copy-button");
             const copyButton = document.createElement("button");
-            copyButton.className = "custom-code-copy-btn";
+            copyButton.className = "copy-button custom-code-copy-btn";
             copyButton.setAttribute("aria-label", "Copy to clipboard");
+            copyButton.type = "button";
 
             const svgNS = "http://www.w3.org/2000/svg";
 
@@ -351,6 +353,7 @@ const articleSchema = [
             copyIcon.setAttribute("width", "20");
             copyIcon.setAttribute("height", "20");
             copyIcon.setAttribute("viewBox", "0 0 24 24");
+            copyIcon.setAttribute("aria-hidden", "true");
             const copyPath = document.createElementNS(svgNS, "path");
             copyPath.setAttribute("fill", "currentColor");
             copyPath.setAttribute(
@@ -365,6 +368,7 @@ const articleSchema = [
             successIcon.setAttribute("width", "20");
             successIcon.setAttribute("height", "20");
             successIcon.setAttribute("viewBox", "0 0 24 24");
+            successIcon.setAttribute("aria-hidden", "true");
             const successPath = document.createElementNS(svgNS, "path");
             successPath.setAttribute("fill", "currentColor");
             successPath.setAttribute(
@@ -375,43 +379,10 @@ const articleSchema = [
 
             copyButton.appendChild(copyIcon);
             copyButton.appendChild(successIcon);
-
-            // Add click handler
-            copyButton.addEventListener("click", () => {
-                // Usually pre > code.
-                let codeElement = block.querySelector("code");
-                if (!codeElement && block.tagName === "PRE") {
-                    codeElement = block.querySelector("code");
-                }
-
-                // For Shiki, sometimes the text is inside span lines. textContent usually works fine on the whole code block.
-                const text = codeElement
-                    ? codeElement.textContent
-                    : block.textContent;
-
-                if (!text) {
-                    console.warn("No code element found in block.");
-                    return;
-                }
-
-                navigator.clipboard.writeText(text).then(
-                    () => {
-                        copyIcon.classList.add("hidden");
-                        successIcon.classList.remove("hidden");
-
-                        setTimeout(() => {
-                            copyIcon.classList.remove("hidden");
-                            successIcon.classList.add("hidden");
-                        }, 2000);
-                    },
-                    (err) => {
-                        console.error("Failed to copy:", err);
-                    },
-                );
-            });
+            copyWrapper.appendChild(copyButton);
 
             // Add the button to the block
-            block.appendChild(copyButton);
+            block.appendChild(copyWrapper);
         });
     });
 </script>
@@ -629,15 +600,14 @@ const articleSchema = [
     }
 
     /* Custom copy button for standalone code blocks */
-    :global(.custom-code-copy-btn) {
+    :global(.astro-code > copy-button) {
         position: absolute;
         top: 0.5rem;
         right: 0.5rem;
-        background-color: var(--color-bg-subtle, rgba(255, 255, 255, 0.1));
-        border: var(--border-1, 1px solid rgba(255, 255, 255, 0.1));
-        border-radius: 4px;
-        padding: 0.3rem 0.5rem;
-        cursor: pointer;
+        z-index: 10;
+    }
+
+    :global(.custom-code-copy-btn) {
         opacity: 0.8;
         transition: all 0.2s ease;
         display: flex;
@@ -645,7 +615,6 @@ const articleSchema = [
         justify-content: center;
         min-width: 32px;
         min-height: 32px;
-        z-index: 10;
     }
 
     :global(.custom-code-copy-btn:hover) {

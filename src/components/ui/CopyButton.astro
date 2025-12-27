@@ -15,19 +15,18 @@ const { class: className, content } = Astro.props;
 const encodedContent = content ? encodeURIComponent(content) : undefined;
 ---
 
-<button
-    class:list={["copy-button", className]}
-    type="button"
-    aria-label="Copy to clipboard"
-    data-content={encodedContent}
->
-    <Icon name="mdi:clipboard-outline" class="copy-icon" aria-hidden="true" />
-    <Icon name="mdi:check" class="success-icon hidden" aria-hidden="true" />
-</button>
+<script>
+    class CopyButton extends HTMLElement {
+        constructor() {
+            super();
+            const button = this.querySelector("button");
+            button?.addEventListener("click", () => this.copy());
+        }
 
-<script lang="ts">
-    document.querySelectorAll(".copy-button").forEach((button) => {
-        button.addEventListener("click", () => {
+        async copy() {
+            const button = this.querySelector("button");
+            if (!button) return;
+
             let text = null;
             const rawContent = button.getAttribute("data-content");
             if (rawContent && rawContent !== "undefined") {
@@ -56,30 +55,49 @@ const encodedContent = content ? encodeURIComponent(content) : undefined;
                 return;
             }
 
-            navigator.clipboard.writeText(text).then(
-                () => {
-                    // Visual feedback
-                    const copyIcon = button.querySelector(".copy-icon");
-                    const successIcon = button.querySelector(".success-icon");
+            try {
+                await navigator.clipboard.writeText(text);
+                this.showSuccess(button);
+            } catch (err) {
+                console.error("Failed to copy:", err);
+                button.setAttribute("title", "Failed to copy!");
+            }
+        }
 
-                    if (copyIcon && successIcon) {
-                        copyIcon.classList.add("hidden");
-                        successIcon.classList.remove("hidden");
+        showSuccess(button: HTMLButtonElement) {
+            const copyIcon = button.querySelector(".copy-icon");
+            const successIcon = button.querySelector(".success-icon");
 
-                        setTimeout(() => {
-                            copyIcon.classList.remove("hidden");
-                            successIcon.classList.add("hidden");
-                        }, 1000);
-                    }
-                },
-                (err) => {
-                    console.error("Failed to copy:", err);
-                    button.setAttribute("title", "Failed to copy!");
-                },
-            );
-        });
-    });
+            if (copyIcon && successIcon) {
+                copyIcon.classList.add("hidden");
+                successIcon.classList.remove("hidden");
+
+                setTimeout(() => {
+                    copyIcon.classList.remove("hidden");
+                    successIcon.classList.add("hidden");
+                }, 2000);
+            }
+        }
+    }
+
+    customElements.define("copy-button", CopyButton);
 </script>
+
+<copy-button>
+    <button
+        class:list={["copy-button", className]}
+        type="button"
+        aria-label="Copy to clipboard"
+        data-content={encodedContent}
+    >
+        <Icon
+            name="mdi:clipboard-outline"
+            class="copy-icon"
+            aria-hidden="true"
+        />
+        <Icon name="mdi:check" class="success-icon hidden" aria-hidden="true" />
+    </button>
+</copy-button>
 
 <style>
     .copy-button {
