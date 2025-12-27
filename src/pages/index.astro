@@ -51,13 +51,13 @@ const imageSrcSet = optimizedImages
                     <h1>{hero.title}</h1>
                     <p
                         class="subtitle"
-                        set:html={hero.subtitle}
+                        set:html={hero.subtitle.replace(/&(?!(amp|lt|gt|quot|apos);)/g, "&amp;")}
                     />
                     <div class="bio">
                         {
                             hero.bio.map((paragraph: string) => (
                                 <p
-                                    set:html={paragraph}
+                                    set:html={paragraph.replace(/&(?!(amp|lt|gt|quot|apos);)/g, "&amp;")}
                                 />
                             ))
                         }

@@ -163,13 +163,19 @@ const personSchema = {
                                                 <div
                                                     class="institution"
                                                     style="min-height: 1.2em"
-                                                    set:html={item.institution}
+                                                    set:html={item.institution.replace(
+                                                        /&(?!(amp|lt|gt|quot|apos);)/g,
+                                                        "&amp;",
+                                                    )}
                                                 />
                                             )}
                                             {item.department && (
                                                 <div
                                                     class="department"
-                                                    set:html={item.department}
+                                                    set:html={item.department.replace(
+                                                        /&(?!(amp|lt|gt|quot|apos);)/g,
+                                                        "&amp;",
+                                                    )}
                                                 />
                                             )}
                                             {item.location && (
@@ -183,7 +189,10 @@ const personSchema = {
                                                 <div
                                                     class="description summary"
                                                     style="min-height: 1.5em"
-                                                    set:html={item.summary}
+                                                    set:html={item.summary.replace(
+                                                        /&(?!(amp|lt|gt|quot|apos);)/g,
+                                                        "&amp;",
+                                                    )}
                                                 />
                                             )}
 
@@ -198,7 +207,10 @@ const personSchema = {
                                                                 return (
                                                                     <li>
                                                                         <div
-                                                                            set:html={desc}
+                                                                            set:html={desc.replace(
+                                                                                /&(?!(amp|lt|gt|quot|apos);)/g,
+                                                                                "&amp;",
+                                                                            )}
                                                                         />
                                                                     </li>
                                                                 );
@@ -221,7 +233,10 @@ const personSchema = {
                                                                                 ) => (
                                                                                     <li>
                                                                                         <div
-                                                                                            set:html={sub}
+                                                                                            set:html={sub.replace(
+                                                                                                /&(?!(amp|lt|gt|quot|apos);)/g,
+                                                                                                "&amp;",
+                                                                                            )}
                                                                                         />
                                                                                     </li>
                                                                                 ),
