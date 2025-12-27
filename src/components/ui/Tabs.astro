@@ -31,6 +31,7 @@ const { class: className } = Astro.props;
 
             // Generate unique IDs for ARIA
             const uniqueId = Math.random().toString(36).substring(2, 9);
+            const fragment = document.createDocumentFragment();
 
             panels.forEach((panel, index) => {
                 const title =
@@ -94,13 +95,15 @@ const { class: className } = Astro.props;
                     }
                 });
 
-                headers.appendChild(button);
+                fragment.appendChild(button);
 
                 // Initial state - hide all except first
                 if (panel instanceof HTMLElement) {
                     panel.style.display = index === 0 ? "block" : "none";
                 }
             });
+
+            headers.appendChild(fragment);
         }
     }
 

@@ -305,7 +305,8 @@ const articleSchema = [
                 });
             },
             {
-                rootMargin: `-${getComputedStyle(document.documentElement).getPropertyValue("--header-height").trim()} 0px 0px 0px`,
+                // Use a hardcoded value or a safe default instead of reading from DOM
+                rootMargin: "-80px 0px 0px 0px",
                 threshold: 0,
             },
         );
@@ -409,12 +410,6 @@ const articleSchema = [
                 );
             });
 
-            // Make the block relative for positioning
-            if (block instanceof HTMLElement) {
-                // If it's a pre tag (Shiki), make it relative.
-                block.style.position = "relative";
-            }
-
             // Add the button to the block
             block.appendChild(copyButton);
         });
@@ -422,72 +417,7 @@ const articleSchema = [
 </script>
 
 <style>
-    .post-header {
-        padding: 6rem 0 4rem;
-        background-color: var(--color-bg-subtle);
-        margin-bottom: 3rem;
-        border-bottom: var(--border-1);
-    }
-
-    .content-wrapper {
-        max-width: 1200px;
-        margin: 0 auto;
-        padding: 0 2rem;
-    }
-
-    .back-link {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-        color: var(--color-text-muted);
-        text-decoration: none;
-        font-size: 0.9rem;
-        margin-bottom: 2rem;
-        transition: color 0.2s;
-    }
-
-    .back-link:hover {
-        color: var(--color-primary);
-    }
-
-    .meta {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-        color: var(--color-text-muted);
-        font-size: 0.9rem;
-        margin-bottom: 1rem;
-        flex-wrap: wrap; /* Allow wrapping on small screens */
-        min-height: 1.5em; /* Stabilize for CLS */
-    }
-
-    .author {
-        font-weight: var(--fw-semibold);
-        color: var(--color-text-body);
-    }
-
-    .separator {
-        opacity: 0.5;
-    }
-
-    h1 {
-        font-size: 3.5rem;
-        line-height: 1.1;
-        font-weight: 800;
-        color: var(--color-text-heading);
-        margin-bottom: 1.5rem;
-        letter-spacing: -0.02em;
-        min-height: 2.2em; /* Reserve ~2 lines for title */
-        text-wrap: balance;
-    }
-
-    .toc h2 {
-        font-size: 1.1rem;
-        font-weight: 700;
-        margin-bottom: 1rem;
-        color: var(--color-text-heading);
-    }
-
+    /* ... existing styles ... */
     .lead {
         font-size: 1.25rem;
         color: var(--color-text-body);
@@ -495,6 +425,11 @@ const articleSchema = [
         line-height: 1.6;
         opacity: 0.9;
         min-height: 3.2em; /* Reserve 2 lines */
+    }
+
+    /* Target Shiki blocks specifically to ensure they are relative for our copy button */
+    .prose :global(.astro-code) {
+        position: relative !important;
     }
 
     .cover-image-container {
