@@ -100,6 +100,9 @@ export default defineConfig({
   // The site URL, used for SEO and sitemap generation
   site: "https://jmrp.io",
 
+  // URL configuration
+  trailingSlash: "always",
+
   // Enable prefetch for better navigation speed
   prefetch: {
     prefetchAll: true,

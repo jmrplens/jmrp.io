@@ -73,16 +73,22 @@ This is the source code for my personal website, **[jmrp.io](https://jmrp.io)**,
 ```
 /
 ├── src/
-│   ├── components/   # Reusable Astro & Preact components
-│   ├── content/      # Content Collections (Blog posts)
-│   ├── data/         # YAML Data files (Site config, CV, Socials)
-│   ├── layouts/      # Page layouts (Base, etc.)
-│   ├── pages/        # File-based routing
+│   ├── components/   # Organized Astro & Preact components
+│   │   ├── layout/   # Header, Footer, BaseHead
+│   │   ├── ui/       # Buttons, Tabs, Code blocks
+│   │   └── [section]/ # CV, Publications, GitHub, etc.
+│   ├── content/      # Content Collections
+│   │   ├── posts/    # Blog articles (MDX)
+│   │   ├── cv/       # CV data (YAML)
+│   │   ├── site/     # Site config (YAML)
+│   │   └── socials/  # Social links (YAML)
+│   ├── layouts/      # Page layouts
+│   ├── pages/        # File-based routing & API endpoints
 │   ├── styles/       # Global CSS & Fonts
-│   └── utils/        # Helper functions
-├── public/           # Static assets (images, fonts, robots.txt)
+│   └── utils/        # Shared helper functions
+├── public/           # Static assets (PDFs, robots.txt)
 ├── scripts/          # Build & Maintenance scripts
-├── tests/            # Playwright E2E & Accessibility tests
+│   └── build/        # Post-build processing (SRI, CSP, Sitemap)
 ├── cv_latex/         # LaTeX source files for CV
 ├── astro.config.mjs  # Astro configuration
 └── package.json      # Dependencies & Scripts
