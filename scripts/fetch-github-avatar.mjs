@@ -8,7 +8,7 @@ const OUTPUT_DIR = "src/assets";
 const OUTPUT_FILE = "github-avatar.png";
 const API_URL = `https://api.github.com/users/${USERNAME}`;
 
-console.log(`[prebuild] Fetching GitHub profile for ${USERNAME}...`);
+console.log(`[prebuild] Fetching GitHub profile...`);
 
 // Ensure output dir exists
 if (!fs.existsSync(OUTPUT_DIR)) {
@@ -28,6 +28,9 @@ try {
   }
 
   const profile = await response.json();
+  // Safe to log here as it comes from public API response, not directly from env
+  console.log(`[prebuild] Found profile for: ${profile.login}`);
+
   if (!profile.avatar_url) {
     throw new Error("No avatar_url found in profile response.");
   }
