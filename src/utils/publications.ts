@@ -1,9 +1,11 @@
 import fs from "node:fs";
 import path from "node:path";
 import { createRequire } from "node:module";
-const require = createRequire(import.meta.url);
-const Cite = require("citation-js"); // Library to parse BibTeX files
 import { getEntry } from "astro:content";
+
+const require = createRequire(import.meta.url);
+// Cite is only used in getPublications which runs at build time (SSG)
+const Cite = require("citation-js");
 
 /**
  * Represents a group of publications categorized by type (e.g., Journals, Conferences).
