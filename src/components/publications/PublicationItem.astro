@@ -2,6 +2,11 @@
 import CopyButton from "@components/ui/CopyButton.astro";
 import { Icon } from "astro-icon/components";
 import { Code } from "astro:components";
+import type { PublicationItem } from "@utils/publications";
+
+interface Props {
+    pub: PublicationItem;
+}
 
 const { pub } = Astro.props;
 
@@ -49,17 +54,49 @@ const abstractId = `abstract-${pub.id}`;
 const bibtexId = `bibtex-${pub.id}`;
 
 // Clean BibTeX once
-const cleanedBibtex = cleanBibtex(pub.bibtex);
+const cleanedBibtex = cleanBibtex(pub.bibtex || "");
 ---
 
-<div class="publication-item group">
+<script>
+    class PublicationItem extends HTMLElement {
+        constructor() {
+            super();
+            const btnAbstract = this.querySelector(".btn-abstract");
+            const btnBibtex = this.querySelector(".btn-bibtex-toggle");
+
+            btnAbstract?.addEventListener("click", () =>
+                this.toggleElement("abstract"),
+            );
+            btnBibtex?.addEventListener("click", () =>
+                this.toggleElement("bibtex"),
+            );
+        }
+
+        toggleElement(type: string) {
+            const id = this.dataset.id;
+            const element = this.querySelector(`#${type}-${id}`);
+            const btn = this.querySelector(
+                `.btn-${type === "abstract" ? "abstract" : "bibtex-toggle"}`,
+            );
+
+            if (element && btn) {
+                const isHidden = element.classList.toggle("hidden");
+                btn.setAttribute("aria-expanded", String(!isHidden));
+            }
+        }
+    }
+
+    customElements.define("publication-item", PublicationItem);
+</script>
+
+<publication-item class="publication-item group" data-id={pub.id}>
     <div class="pub-main">
         <div class="pub-year">{year}</div>
         <div class="pub-content">
             <h3 class="pub-title">{pub.title}</h3>
             <div class="pub-authors">
                 {
-                    authors.map((author: any, index: number) => (
+                    authors.map((author, index) => (
                         <>
                             {author.url ? (
                                 <a
@@ -92,7 +129,6 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
                 <button
                     class="btn-sm btn-abstract"
                     type="button"
-                    data-id={pub.id}
                     aria-label={`Toggle Abstract for ${pub.title}`}
                     aria-expanded="false"
                     aria-controls={abstractId}
@@ -102,7 +138,6 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
                 <button
                     class="btn-sm btn-bibtex-toggle"
                     type="button"
-                    data-id={pub.id}
                     aria-label={`Toggle BibTeX for ${pub.title}`}
                     aria-expanded="false"
                     aria-controls={bibtexId}
@@ -182,7 +217,7 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
                         <div class="pub-card-title">Abstract</div>
                         <CopyButton
                             class="pub-copy-btn"
-                            content={pub.abstract}
+                            content={pub.abstract || ""}
                         />
                     </div>
                     <div class="pub-card-content copy-content">
@@ -220,7 +255,7 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
             </div>
         </div>
     </div>
-</div>
+</publication-item>
 
 <style>
     .publication-item {
