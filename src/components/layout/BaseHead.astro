@@ -8,11 +8,11 @@
  * - JSON-LD Schema.org structured data (Merged Graph)
  * - Favicons and fonts
  */
-import "../../styles/global.css";
+import "@styles/global.css";
 // Variable Fonts (automatically injects @font-face)
 import "@fontsource-variable/inter";
 import "@fontsource-variable/jetbrains-mono";
-import "../../styles/font-fallbacks.css";
+import "@styles/font-fallbacks.css";
 
 import interVariable from "@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url";
 import jetbrainsVariable from "@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2?url";
@@ -20,9 +20,9 @@ import jetbrainsVariable from "@fontsource-variable/jetbrains-mono/files/jetbrai
 // ... other imports
 
 import { getImage } from "astro:assets";
-import faviconSrc from "../../assets/favicon.png";
-import appleTouchIconSrc from "../../assets/apple-touch-icon.png";
-import defaultOgImage from "../../assets/mehome_landscape.jpeg";
+import faviconSrc from "@assets/favicon.png";
+import appleTouchIconSrc from "@assets/apple-touch-icon.png";
+import defaultOgImage from "@assets/mehome_landscape.jpeg";
 
 import fs from "fs";
 import path from "path";

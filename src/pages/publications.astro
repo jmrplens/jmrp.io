@@ -4,11 +4,11 @@
  * Lists academic publications stored in `src/data/publications/bibliography/papers.bib`.
  * Supports abstract toggling, BibTeX copying, and external links (DOI, PDF, Slides).
  */
-import BaseLayout from "../layouts/BaseLayout.astro";
-import { getPublications } from "../utils/publications";
+import BaseLayout from "@layouts/BaseLayout.astro";
+import { getPublications } from "@utils/publications";
 import { Icon } from "astro-icon/components";
-import CopyButton from "../components/ui/CopyButton.astro";
-import PublicationItem from "../components/publications/PublicationItem.astro";
+import CopyButton from "@components/ui/CopyButton.astro";
+import PublicationItem from "@components/publications/PublicationItem.astro";
 
 const publicationGroups = await getPublications();
 
@@ -60,7 +60,7 @@ const publicationsSchema = {
 </BaseLayout>
 
 <script>
-    import "../scripts/publications.js";
+    import "@scripts/publications.js";
 </script>
 
 <style>

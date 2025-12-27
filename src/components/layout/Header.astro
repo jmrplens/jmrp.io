@@ -4,7 +4,7 @@
  * Contains the logo, navigation menu, and theme toggle.
  * Responsive design with a hamburger menu for mobile.
  */
-import ThemeToggle from "../ui/ThemeToggle.astro";
+import ThemeToggle from "@components/ui/ThemeToggle.astro";
 import { Icon } from "astro-icon/components";
 import fs from "fs";
 import path from "path";
@@ -51,7 +51,7 @@ const logoText = siteData.logo_text || "<JMRP />";
 </header>
 
 <script>
-    import "../../scripts/header.js";
+    import "@scripts/header.js";
 </script>
 
 <style>

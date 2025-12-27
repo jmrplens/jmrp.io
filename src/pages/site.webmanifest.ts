@@ -1,7 +1,7 @@
 import type { APIRoute } from "astro";
 import { getImage } from "astro:assets";
-import icon192Src from "../assets/icons/pwa/icon-192.png";
-import icon512Src from "../assets/icons/pwa/icon-512.png";
+import icon192Src from "@assets/icons/pwa/icon-192.png";
+import icon512Src from "@assets/icons/pwa/icon-512.png";
 
 export const GET: APIRoute = async () => {
   const icon192 = await getImage({
