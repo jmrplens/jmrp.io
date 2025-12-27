@@ -67,14 +67,17 @@ const encodedContent = content ? encodeURIComponent(content) : undefined;
         showSuccess(button: HTMLButtonElement) {
             const copyIcon = button.querySelector(".copy-icon");
             const successIcon = button.querySelector(".success-icon");
+            const announcement = this.querySelector(".sr-only");
 
             if (copyIcon && successIcon) {
                 copyIcon.classList.add("hidden");
                 successIcon.classList.remove("hidden");
+                if (announcement) announcement.textContent = "Copied to clipboard";
 
                 setTimeout(() => {
                     copyIcon.classList.remove("hidden");
                     successIcon.classList.add("hidden");
+                    if (announcement) announcement.textContent = "";
                 }, 2000);
             }
         }
@@ -96,6 +99,7 @@ const encodedContent = content ? encodeURIComponent(content) : undefined;
             aria-hidden="true"
         />
         <Icon name="mdi:check" class="success-icon hidden" aria-hidden="true" />
+        <span class="sr-only" aria-live="polite"></span>
     </button>
 </copy-button>
 

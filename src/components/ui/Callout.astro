@@ -31,10 +31,28 @@ const bgColors = {
     error: "rgba(239, 68, 68, 0.1)",
     success: "rgba(16, 185, 129, 0.1)",
 };
+
+const ariaLabels = {
+    info: "Information",
+    warning: "Warning",
+    error: "Error",
+    success: "Success",
+};
+
+const roles = {
+    info: "note",
+    warning: "status",
+    error: "alert",
+    success: "status",
+};
 ---
 
-<div class={`callout callout-${type}`}>
-    <span class="icon">
+<div
+    class={`callout callout-${type}`}
+    role={roles[type]}
+    aria-label={ariaLabels[type]}
+>
+    <span class="icon" aria-hidden="true">
         <Icon name={icons[type]} size={24} />
     </span>
     <div class="content">
