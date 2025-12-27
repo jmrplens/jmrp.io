@@ -11,12 +11,12 @@ coverImage: "../../assets/images/blog/virtual-files.webp"
 tags: ["nginx", "sysadmin", "webperf", "devops", "tutorial"]
 ---
 
-import Callout from "../../components/Callout.astro";
-import Tabs from "../../components/Tabs.astro";
-import TabPanel from "../../components/TabPanel.astro";
-import TerminalCommand from "../../components/TerminalCommand.astro";
-import FileContent from "../../components/FileContent.astro";
-import KeyPoint from "../../components/KeyPoint.astro";
+import Callout from "@components/ui/Callout.astro";
+import Tabs from "@components/ui/Tabs.astro";
+import TabPanel from "@components/ui/TabPanel.astro";
+import TerminalCommand from "@components/ui/TerminalCommand.astro";
+import FileContent from "@components/ui/FileContent.astro";
+import KeyPoint from "@components/cv/KeyPoint.astro";
 
 When deploying a modern web application, especially a containerized one or a service running on a managed platform, you often don't have easy access to its web root. What happens when you need to serve a standard file like `robots.txt` or `.well-known/security.txt`? You can't just drop it into the folder.
 

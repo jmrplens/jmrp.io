@@ -1,7 +1,7 @@
 ---
 /**
  * Footer component.
- * Displays copyright info and social media links loaded from `src/data/socials.yml`.
+ * Displays copyright info and social media links loaded from `src/data/config/socials.yml`.
  * Includes logic to map FontAwesome classes to Iconify names.
  */
 import fs from "fs";
@@ -12,11 +12,11 @@ import { Icon } from "astro-icon/components";
 const today = new Date();
 
 // Load socials
-const socialsPath = path.join(process.cwd(), "src/data/socials.yml");
+const socialsPath = path.join(process.cwd(), "src/data/config/socials.yml");
 const socialsRaw = fs.readFileSync(socialsPath, "utf8");
 const socials = yaml.load(socialsRaw) as any;
 
-const sitePath = path.join(process.cwd(), "src/data/site.yml");
+const sitePath = path.join(process.cwd(), "src/data/config/site.yml");
 const siteRaw = fs.readFileSync(sitePath, "utf8");
 const siteConfig = yaml.load(siteRaw) as any;
 

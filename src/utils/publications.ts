@@ -24,7 +24,7 @@ interface Coauthor {
 
 /**
  * Fetches, parses, and processes publications from the BibTeX file.
- * File location: src/data/_bibliography/papers.bib
+ * File location: src/data/publications/bibliography/papers.bib
  *
  * Process involves:
  * 1. Reading the .bib file.
@@ -40,12 +40,15 @@ export async function getPublications(): Promise<PublicationGroup[]> {
   try {
     const filePath = path.join(
       process.cwd(),
-      "src/data/_bibliography/papers.bib",
+      "src/data/publications/bibliography/papers.bib",
     );
     const fileContents = fs.readFileSync(filePath, "utf8");
 
     // Load coauthors
-    const coauthorsPath = path.join(process.cwd(), "src/data/coauthors.yml");
+    const coauthorsPath = path.join(
+      process.cwd(),
+      "src/data/publications/coauthors.yml",
+    );
     const coauthorsRaw = fs.readFileSync(coauthorsPath, "utf8");
     const coauthors: Record<string, Coauthor[]> = yaml.load(
       coauthorsRaw,

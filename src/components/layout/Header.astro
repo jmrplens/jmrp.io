@@ -4,13 +4,13 @@
  * Contains the logo, navigation menu, and theme toggle.
  * Responsive design with a hamburger menu for mobile.
  */
-import ThemeToggle from "./ThemeToggle.astro";
+import ThemeToggle from "@components/ui/ThemeToggle.astro";
 import { Icon } from "astro-icon/components";
 import fs from "fs";
 import path from "path";
 import yaml from "js-yaml";
 
-const sitePath = path.join(process.cwd(), "src/data/site.yml");
+const sitePath = path.join(process.cwd(), "src/data/config/site.yml");
 const siteRaw = fs.readFileSync(sitePath, "utf8");
 const siteData = yaml.load(siteRaw) as any;
 
@@ -50,7 +50,9 @@ const logoText = siteData.logo_text || "<JMRP />";
     </nav>
 </header>
 
-<script src="/scripts/header.js" defer></script>
+<script>
+    import "@scripts/header.js";
+</script>
 
 <style>
     header {

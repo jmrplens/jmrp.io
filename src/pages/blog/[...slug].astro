@@ -8,23 +8,23 @@
  * - SEO Schema for blog postings
  */
 import { type CollectionEntry, getCollection } from "astro:content";
-import BaseLayout from "../../layouts/BaseLayout.astro";
+import BaseLayout from "@layouts/BaseLayout.astro";
 import { Icon } from "astro-icon/components";
 import { Image } from "astro:assets";
 
-import Callout from "../../components/Callout.astro";
-import Tabs from "../../components/Tabs.astro";
-import TabPanel from "../../components/TabPanel.astro";
-import YouTube from "../../components/YouTube.astro";
-import Code from "../../components/Code.astro";
-import TableOfContentsDrawer from "../../components/TableOfContentsDrawer.astro";
-import References from "../../components/References.astro";
+import Callout from "@components/ui/Callout.astro";
+import Tabs from "@components/ui/Tabs.astro";
+import TabPanel from "@components/ui/TabPanel.astro";
+import YouTube from "@components/ui/YouTube.astro";
+import Code from "@components/ui/Code.astro";
+import TableOfContentsDrawer from "@components/layout/TableOfContentsDrawer.astro";
+import References from "@components/cv/References.astro";
 
 import fs from "fs";
 import path from "path";
 import yaml from "js-yaml";
 
-const sitePath = path.join(process.cwd(), "src/data/site.yml");
+const sitePath = path.join(process.cwd(), "src/data/config/site.yml");
 const siteRaw = fs.readFileSync(sitePath, "utf8");
 const siteData = yaml.load(siteRaw) as any;
 
