@@ -71,29 +71,40 @@ const { initialRepos } = Astro.props;
             ))
         }
     </div>
+    <span class="sr-only" id="search-announcement" aria-live="polite"></span>
 </div>
 
 <script>
     // Lightweight client-side search - NO API calls, NO hydration needed
-    document.addEventListener("DOMContentLoaded", () => {
-        const searchInput = document.getElementById("repo-search");
+    const setupRepoSearch = () => {
+        const searchInput = document.getElementById("repo-search") as HTMLInputElement;
         const container = document.getElementById("repos-container");
+        const announcement = document.getElementById("search-announcement");
 
         if (searchInput && container) {
             searchInput.addEventListener("input", (e) => {
                 const term = (e.target as HTMLInputElement).value.toLowerCase();
-
                 const cards = container.querySelectorAll(".repo-card");
+                let visibleCount = 0;
+
                 cards.forEach((card) => {
                     const name = card.getAttribute("data-name") || "";
                     const desc = card.getAttribute("data-desc") || "";
                     const matches = name.includes(term) || desc.includes(term);
 
                     (card as HTMLElement).style.display = matches ? "" : "none";
+                    if (matches) visibleCount++;
                 });
+
+                if (announcement) {
+                    announcement.textContent = `Showing ${visibleCount} of ${cards.length} repositories`;
+                }
             });
         }
-    });
+    };
+
+    document.addEventListener("DOMContentLoaded", setupRepoSearch);
+    document.addEventListener("astro:after-swap", setupRepoSearch);
 </script>
 
 <style>
