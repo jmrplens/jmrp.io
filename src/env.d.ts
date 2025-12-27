@@ -16,6 +16,8 @@ interface ImportMeta {
   readonly env: ImportMetaEnv;
 }
 
+declare module "citation-js";
+
 /**
  * Declare module for 'citation-js' as it lacks official TypeScript definitions.
  * This prevents implicit 'any' errors when importing it.

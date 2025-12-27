@@ -100,6 +100,12 @@ export default defineConfig({
   // The site URL, used for SEO and sitemap generation
   site: "https://jmrp.io",
 
+  // Enable prefetch for better navigation speed
+  prefetch: {
+    prefetchAll: true,
+    defaultStrategy: "viewport",
+  },
+
   // Image optimization configuration
   image: {
     domains: ["www.google.com"],
