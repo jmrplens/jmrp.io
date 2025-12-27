@@ -43,41 +43,16 @@ const personSchema = {
     knowsAbout:
         cvData
             .find((s) => s.title === "Technical Skills")
-            ?.contents?.flatMap((g) =>
-                (g as { items: { name: string }[] }).items.map((i) => i.name),
-            ) || [],
+            ?.contents?.flatMap((g) => g.items.map((i) => i.name)) || [],
     alumniOf:
         cvData
             .find((s) => s.title === "Formal education")
             ?.contents?.map((edu) => ({
                 "@type": "EducationalOrganization",
-                name: (edu as { institution: string }).institution,
-                department: (edu as { department: string }).department,
+                name: edu.institution,
+                department: edu.department,
             })) || [],
 };
-
-interface LinkItem {
-    link: string;
-    linkname: string;
-    ariaLabel: string;
-}
-
-interface TimelineItem {
-    title: string;
-    year: string;
-    institution?: string;
-    department?: string;
-    location?: string;
-    summary?: string;
-    description?: (string | { title: string; contents: string[] })[];
-    linkitems?: LinkItem[];
-}
-
-interface MapItem {
-    name: string;
-    value?: string;
-    links?: { link: string; name: string; download?: string }[];
-}
 ---
 
 <BaseLayout
@@ -121,7 +96,7 @@ interface MapItem {
 
                         {section.type === "map" && (
                             <div class="cv-map">
-                                {(section.contents as MapItem[]).map((item) => (
+                                {section.contents.map((item) => (
                                     <div class="map-item">
                                         <strong>{item.name}:</strong>
                                         {item.value && (
@@ -147,147 +122,138 @@ interface MapItem {
 
                         {section.type === "time_table" && (
                             <div class="timeline">
-                                {(section.contents as TimelineItem[]).map(
-                                    (item) => (
-                                        <div class="timeline-item">
+                                {section.contents.map((item) => (
+                                    <div class="timeline-item">
+                                        <div
+                                            class="timeline-dot"
+                                            aria-hidden="true"
+                                        />
+                                        <div class="timeline-card">
                                             <div
-                                                class="timeline-dot"
+                                                class="timeline-arrow"
                                                 aria-hidden="true"
                                             />
-                                            <div class="timeline-card">
-                                                <div
-                                                    class="timeline-arrow"
-                                                    aria-hidden="true"
-                                                />
-                                                <div class="item-header">
-                                                    <h3>{item.title}</h3>
-                                                    <span class="year">
-                                                        {item.year}
-                                                    </span>
-                                                </div>
-                                                {item.institution && (
-                                                    <div
-                                                        class="institution"
-                                                        style="min-height: 1.2em"
-                                                        set:html={item.institution.replace(
-                                                            /&(?!(amp|lt|gt|quot|apos);)/g,
-                                                            "&amp;",
-                                                        )}
-                                                    />
-                                                )}
-                                                {item.department && (
-                                                    <div
-                                                        class="department"
-                                                        set:html={item.department.replace(
-                                                            /&(?!(amp|lt|gt|quot|apos);)/g,
-                                                            "&amp;",
-                                                        )}
-                                                    />
-                                                )}
-                                                {item.location && (
-                                                    <div class="location">
-                                                        <Icon name="fa-solid:map-marker-alt" />{" "}
-                                                        {item.location}
-                                                    </div>
-                                                )}
-
-                                                {item.summary && (
-                                                    <div
-                                                        class="description summary"
-                                                        style="min-height: 1.5em"
-                                                        set:html={item.summary.replace(
-                                                            /&(?!(amp|lt|gt|quot|apos);)/g,
-                                                            "&amp;",
-                                                        )}
-                                                    />
-                                                )}
-
-                                                {item.description &&
-                                                    Array.isArray(
-                                                        item.description,
-                                                    ) && (
-                                                        <ul class="task-list">
-                                                            {item.description.map(
-                                                                (desc) => {
-                                                                    if (
-                                                                        typeof desc ===
-                                                                        "string"
-                                                                    )
-                                                                        return (
-                                                                            <li>
-                                                                                <div
-                                                                                    set:html={desc.replace(
-                                                                                        /&(?!(amp|lt|gt|quot|apos);)/g,
-                                                                                        "&amp;",
-                                                                                    )}
-                                                                                />
-                                                                            </li>
-                                                                        );
-                                                                    if (
-                                                                        desc.title &&
-                                                                        desc.contents
-                                                                    ) {
-                                                                        // Nested contents in description
-                                                                        return (
-                                                                            <li>
-                                                                                <strong>
-                                                                                    {
-                                                                                        desc.title
-                                                                                    }
-                                                                                </strong>
-                                                                                <ul>
-                                                                                    {desc.contents.map(
-                                                                                        (
-                                                                                            sub: string,
-                                                                                        ) => (
-                                                                                            <li>
-                                                                                                <div
-                                                                                                    set:html={sub.replace(
-                                                                                                        /&(?!(amp|lt|gt|quot|apos);)/g,
-                                                                                                        "&amp;",
-                                                                                                    )}
-                                                                                                />
-                                                                                            </li>
-                                                                                        ),
-                                                                                    )}
-                                                                                </ul>
-                                                                            </li>
-                                                                        );
-                                                                    }
-                                                                    return null;
-                                                                },
-                                                            )}
-                                                        </ul>
-                                                    )}
-
-                                                {item.linkitems && (
-                                                    <div class="timeline-links">
-                                                        {item.linkitems.map(
-                                                            (link) => (
-                                                                <a
-                                                                    href={
-                                                                        link.link
-                                                                    }
-                                                                    class="btn-sm"
-                                                                    target="_blank"
-                                                                    rel="noopener noreferrer"
-                                                                    aria-label={
-                                                                        link.ariaLabel
-                                                                    }
-                                                                >
-                                                                    <Icon name="fa-solid:file-pdf" />
-                                                                    {
-                                                                        link.linkname
-                                                                    }
-                                                                </a>
-                                                            ),
-                                                        )}
-                                                    </div>
-                                                )}
+                                            <div class="item-header">
+                                                <h3>{item.title}</h3>
+                                                <span class="year">
+                                                    {item.year}
+                                                </span>
                                             </div>
+                                            {item.institution && (
+                                                <div
+                                                    class="institution"
+                                                    style="min-height: 1.2em"
+                                                    set:html={item.institution.replace(
+                                                        /&(?!(amp|lt|gt|quot|apos);)/g,
+                                                        "&amp;",
+                                                    )}
+                                                />
+                                            )}
+                                            {item.department && (
+                                                <div
+                                                    class="department"
+                                                    set:html={item.department.replace(
+                                                        /&(?!(amp|lt|gt|quot|apos);)/g,
+                                                        "&amp;",
+                                                    )}
+                                                />
+                                            )}
+                                            {item.location && (
+                                                <div class="location">
+                                                    <Icon name="fa-solid:map-marker-alt" />{" "}
+                                                    {item.location}
+                                                </div>
+                                            )}
+
+                                            {item.summary && (
+                                                <div
+                                                    class="description summary"
+                                                    style="min-height: 1.5em"
+                                                    set:html={item.summary.replace(
+                                                        /&(?!(amp|lt|gt|quot|apos);)/g,
+                                                        "&amp;",
+                                                    )}
+                                                />
+                                            )}
+
+                                            {item.description && (
+                                                <ul class="task-list">
+                                                    {item.description.map(
+                                                        (desc) => {
+                                                            if (
+                                                                typeof desc ===
+                                                                "string"
+                                                            )
+                                                                return (
+                                                                    <li>
+                                                                        <div
+                                                                            set:html={desc.replace(
+                                                                                /&(?!(amp|lt|gt|quot|apos);)/g,
+                                                                                "&amp;",
+                                                                            )}
+                                                                        />
+                                                                    </li>
+                                                                );
+                                                            if (
+                                                                desc.title &&
+                                                                desc.contents
+                                                            ) {
+                                                                // Nested contents in description
+                                                                return (
+                                                                    <li>
+                                                                        <strong>
+                                                                            {
+                                                                                desc.title
+                                                                            }
+                                                                        </strong>
+                                                                        <ul>
+                                                                            {desc.contents.map(
+                                                                                (
+                                                                                    sub: string,
+                                                                                ) => (
+                                                                                    <li>
+                                                                                        <div
+                                                                                            set:html={sub.replace(
+                                                                                                /&(?!(amp|lt|gt|quot|apos);)/g,
+                                                                                                "&amp;",
+                                                                                            )}
+                                                                                        />
+                                                                                    </li>
+                                                                                ),
+                                                                            )}
+                                                                        </ul>
+                                                                    </li>
+                                                                );
+                                                            }
+                                                            return null;
+                                                        },
+                                                    )}
+                                                </ul>
+                                            )}
+
+                                            {item.linkitems && (
+                                                <div class="timeline-links">
+                                                    {item.linkitems.map(
+                                                        (link) => (
+                                                            <a
+                                                                href={link.link}
+                                                                class="btn-sm"
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                aria-label={
+                                                                    link.ariaLabel
+                                                                }
+                                                            >
+                                                                <Icon name="fa-solid:file-pdf" />
+                                                                {link.linkname}
+                                                            </a>
+                                                        ),
+                                                    )}
+                                                </div>
+                                            )}
                                         </div>
-                                    ),
-                                )}
+                                    </div>
+                                ))}
                             </div>
                         )}
 

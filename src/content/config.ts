@@ -79,8 +79,78 @@ const socials = defineCollection({
 });
 
 /**
- * Curriculum Vitae data.
+ * Curriculum Vitae data schemas.
  */
+const CVMapContent = z.object({
+  name: z.string(),
+  value: z.string().optional(),
+  links: z
+    .array(
+      z.object({
+        link: z.string(),
+        name: z.string(),
+        download: z.string().optional(),
+      }),
+    )
+    .optional(),
+});
+
+const CVTimelineContent = z.object({
+  title: z.string(),
+  institution: z.string().optional(),
+  department: z.string().optional(),
+  year: z.coerce.string(),
+  location: z.string().optional(),
+  summary: z.string().optional(),
+  description: z
+    .array(
+      z.union([
+        z.string(),
+        z.object({
+          title: z.string(),
+          contents: z.array(z.string()),
+        }),
+      ]),
+    )
+    .optional(),
+  linkitems: z
+    .array(
+      z.object({
+        link: z.string(),
+        linkname: z.string(),
+        ariaLabel: z.string(),
+      }),
+    )
+    .optional(),
+});
+
+const CVListGroupContent = z.object({
+  category: z.string(),
+  icon: z.string(),
+  items: z.array(
+    z.object({
+      name: z.string(),
+      icon: z.string().optional(),
+      level: z.number().optional(),
+      desc: z.string().optional(),
+    }),
+  ),
+});
+
+const CVCertificateContent = z.object({
+  category: z.string(),
+  icon: z.string(),
+  items: z.array(
+    z.object({
+      name: z.string(),
+      school: z.string(),
+      time: z.string(),
+      link: z.string(),
+      linkname: z.string(),
+    }),
+  ),
+});
+
 const cv = defineCollection({
   type: "data",
   schema: z.array(

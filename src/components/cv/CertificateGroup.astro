@@ -3,10 +3,10 @@ import { Icon } from "astro-icon/components";
 
 interface CertificateItem {
     name: string;
-    school?: string;
-    time?: string;
-    link?: string;
-    linkname?: string;
+    school: string;
+    time: string;
+    link: string;
+    linkname: string;
 }
 
 interface Group {
@@ -29,7 +29,7 @@ const { group } = Astro.props;
     </h3>
     <div class="certificate-list">
         {
-            group.items.map((item: any) => (
+            group.items.map((item) => (
                 <div class="certificate-item">
                     <div class="cert-main">
                         <span class="cert-name">{item.name}</span>

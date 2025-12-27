@@ -3,13 +3,9 @@ import { Icon } from "astro-icon/components";
 
 interface SkillItem {
     name: string;
-    level?: number | string;
-    time?: string;
-    desc?: string;
     icon?: string;
-    school?: string;
-    link?: string;
-    linkname?: string;
+    level?: number;
+    desc?: string;
 }
 
 interface Group {
@@ -40,12 +36,12 @@ const levelTextMap: Record<number, string> = {
     </h3>
     <div class="compact-list">
         {
-            group.items.map((item: any) => {
+            group.items.map((item) => {
                 const score = typeof item.level === "number" ? item.level : 0;
                 const levelLabel =
                     (typeof item.level === "number"
                         ? levelTextMap[item.level]
-                        : item.level) || item.level;
+                        : null) || "";
 
                 return (
                     <div class="compact-item skill-item">
@@ -57,21 +53,16 @@ const levelTextMap: Record<number, string> = {
                         <div class="skill-content">
                             <div class="skill-header">
                                 <span class="compact-name">{item.name}</span>
-                                {item.time && (
-                                    <span class="compact-time">
-                                        {item.time}
-                                    </span>
-                                )}
                                 {item.desc && (
                                     <span class="skill-desc">{item.desc}</span>
                                 )}
                             </div>
                             {item.level && (
-                                <div 
-                                    class="skill-meta" 
-                                    role="meter" 
-                                    aria-valuemin="0" 
-                                    aria-valuemax="5" 
+                                <div
+                                    class="skill-meta"
+                                    role="meter"
+                                    aria-valuemin="0"
+                                    aria-valuemax="5"
                                     aria-valuenow={score}
                                     aria-label={`${item.name} level: ${levelLabel}`}
                                 >
@@ -82,25 +73,9 @@ const levelTextMap: Record<number, string> = {
                                             />
                                         ))}
                                     </div>
-                                    <span class="level-text" aria-hidden="true">{levelLabel}</span>
-                                </div>
-                            )}
-                            {(item.school || item.link) && (
-                                <div class="compact-details">
-                                    {item.school && (
-                                        <span class="detail-school">
-                                            {item.school}
-                                        </span>
-                                    )}
-                                    {item.link && (
-                                        <a
-                                            href={item.link}
-                                            target="_blank"
-                                            class="detail-link"
-                                        >
-                                            {item.linkname || "View"}{" "}
-                                        </a>
-                                    )}
+                                    <span class="level-text" aria-hidden="true">
+                                        {levelLabel}
+                                    </span>
                                 </div>
                             )}
                         </div>
