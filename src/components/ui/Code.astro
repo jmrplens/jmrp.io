@@ -4,7 +4,7 @@
  * Displays a code block with syntax highlighting and a copy button.
  * Use this instead of markdown code blocks when you want explicit control.
  */
-import CopyButton from "./CopyButton.astro";
+import CopyButton from "@components/ui/CopyButton.astro";
 
 interface Props {
     lang?: string; // Language for syntax highlighting (e.g., 'nginx', 'javascript')
@@ -27,7 +27,7 @@ const { lang = "text", class: className } = Astro.props;
         overflow: hidden;
     }
 
-    .code-wrapper :global(.code-copy-button) {
+    .code-wrapper :global(copy-button) {
         position: absolute;
         top: 0.5rem;
         right: 0.5rem;

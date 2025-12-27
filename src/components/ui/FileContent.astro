@@ -4,7 +4,7 @@
  * Uses a <slot> for the content, which should be a code block.
  */
 import { Icon } from "astro-icon/components";
-import CopyButton from "./CopyButton.astro";
+import CopyButton from "@components/ui/CopyButton.astro";
 
 interface Props {
     filename: string;
@@ -123,15 +123,21 @@ const finalIcon = icon || getIconForFile(filename);
     }
 
     /* Override copy button positioning for header integration */
-    :global(.file-header-copy-btn) {
+    .file-header :global(copy-button) {
         position: static !important;
-        background-color: transparent !important;
-        border: 1px solid var(--color-border) !important;
         opacity: 0.8;
     }
 
-    :global(.file-header-copy-btn:hover) {
+    .file-header :global(.file-header-copy-btn) {
+        background-color: transparent !important;
+        border: 1px solid var(--color-border) !important;
+    }
+
+    .file-header :global(copy-button:hover) {
         opacity: 1;
+    }
+
+    .file-header :global(.file-header-copy-btn:hover) {
         background-color: var(--color-bg-secondary) !important;
         border-color: var(--color-text-muted) !important;
     }

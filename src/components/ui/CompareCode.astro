@@ -5,7 +5,7 @@
  * Each block has its own copy button in the top-right corner.
  */
 import { Icon } from "astro-icon/components";
-import CopyButton from "./CopyButton.astro";
+import CopyButton from "@components/ui/CopyButton.astro";
 
 interface Props {
   badTitle?: string;
@@ -118,7 +118,7 @@ const { badTitle = "Blocked / Insecure", goodTitle = "Allowed / Secure" } =
   }
 
   /* Position copy button in top-right corner of each content area */
-  .content :global(.compare-copy-button) {
+  .content :global(copy-button) {
     position: absolute;
     top: 0.5rem;
     right: 0.5rem;
