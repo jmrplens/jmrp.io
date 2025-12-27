@@ -24,8 +24,8 @@ const { class: className } = Astro.props;
         }
 
         initializeTabs() {
-            const headers = this.querySelector(".tab-headers");
-            const panels = this.querySelectorAll(".tab-panel");
+            const headers = this.querySelector(".tab-headers") as HTMLElement | null;
+            const panels = this.querySelectorAll(".tab-panel") as NodeListOf<HTMLElement>;
 
             if (!headers || panels.length === 0) return;
 
@@ -63,7 +63,7 @@ const { class: className } = Astro.props;
                         b.setAttribute("tabindex", "-1");
                     });
                     panels.forEach((p) => {
-                        if (p instanceof HTMLElement) p.style.display = "none";
+                        p.style.display = "none";
                     });
 
                     // Activate clicked
@@ -71,8 +71,7 @@ const { class: className } = Astro.props;
                     button.setAttribute("tabindex", "0");
 
                     // Show corresponding panel
-                    if (panel instanceof HTMLElement)
-                        panel.style.display = "block";
+                    panel.style.display = "block";
                 });
 
                 // Keyboard navigation
