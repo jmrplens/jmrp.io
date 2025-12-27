@@ -4,23 +4,29 @@
  * Displays copyright info and social media links loaded from `src/data/config/socials.yml`.
  * Includes logic to map FontAwesome classes to Iconify names.
  */
-import fs from "fs";
-import path from "path";
-import yaml from "js-yaml";
 import { Icon } from "astro-icon/components";
+import { getEntry } from "astro:content";
 
 const today = new Date();
 
 // Load socials
-const socialsPath = path.join(process.cwd(), "src/data/config/socials.yml");
-const socialsRaw = fs.readFileSync(socialsPath, "utf8");
-const socials = yaml.load(socialsRaw) as any;
+const socialsEntry = await getEntry("socials", "main");
+const socials = socialsEntry!.data;
 
-const sitePath = path.join(process.cwd(), "src/data/config/site.yml");
-const siteRaw = fs.readFileSync(sitePath, "utf8");
-const siteConfig = yaml.load(siteRaw) as any;
+const siteEntry = await getEntry("site", "config");
+const siteConfig = siteEntry!.data;
 
-const socialLinks: any[] = [];
+interface SocialLink {
+    url: string;
+    icon?: string;
+    icon_name?: string;
+    img_light?: string;
+    img_dark?: string;
+    label: string;
+    rel?: string;
+}
+
+const socialLinks: SocialLink[] = [];
 
 if (socials.github_username) {
     socialLinks.push({
@@ -69,10 +75,7 @@ if (socials.matrix_id) {
 
 // Custom Socials
 if (socials.custom_social) {
-    const customs = Array.isArray(socials.custom_social)
-        ? socials.custom_social
-        : [socials.custom_social];
-    customs.forEach((item: any) => {
+    socials.custom_social.forEach((item) => {
         if (item.icon) {
             socialLinks.push({
                 url: item.url,

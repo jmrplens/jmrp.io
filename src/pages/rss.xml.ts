@@ -1,5 +1,5 @@
 import rss from "@astrojs/rss";
-import { getCollection } from "astro:content";
+import { getCollection, getEntry } from "astro:content";
 import { getImage } from "astro:assets";
 import type { APIContext } from "astro";
 import sanitizeHtml from "sanitize-html";
@@ -7,6 +7,8 @@ import { marked } from "marked";
 
 export async function GET(context: APIContext) {
   const posts = await getCollection("posts");
+  const siteEntry = await getEntry("site", "config");
+  const siteData = siteEntry!.data;
 
   // Filter out draft posts in production
   const publishedPosts = posts.filter((post) => {
@@ -25,15 +27,14 @@ export async function GET(context: APIContext) {
   });
 
   return rss({
-    title: "José Manuel Requena Plens | Blog",
-    description:
-      "Technical blog on R&D, Embedded Systems, Software Engineering, and Acoustics",
-    site: context.site || "https://jmrp.io",
+    title: `${siteData.author} | Blog`,
+    description: siteData.description,
+    site: context.site || siteData.url,
     items: await Promise.all(
       publishedPosts.map(async (post) => {
         // Build author string in RFC 822 format: email (Name)
         const authorEmail = post.data.authorEmail || "mail@jmrp.io";
-        const authorName = post.data.author || "José Manuel Requena Plens";
+        const authorName = post.data.author || siteData.author;
         const authorString = `${authorEmail} (${authorName})`;
 
         // Generate full content
@@ -72,7 +73,7 @@ export async function GET(context: APIContext) {
             });
             const imageUrl = new URL(
               optimizedImage.src,
-              context.site || "https://jmrp.io",
+              context.site || siteData.url,
             ).toString();
             enclosure = `<enclosure url="${imageUrl}" length="${optimizedImage.attributes.size || 0}" type="image/webp" />`;
           } catch (e) {
@@ -92,9 +93,9 @@ export async function GET(context: APIContext) {
         };
       }),
     ),
-    customData: `<language>en-us</language>
+    customData: `<language>${siteData.locale.toLowerCase()}</language>
 <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>
-<atom:link href="${new URL("rss.xml", context.site || "https://jmrp.io").toString()}" rel="self" type="application/rss+xml" />`,
+<atom:link href="${new URL("rss.xml", context.site || siteData.url).toString()}" rel="self" type="application/rss+xml" />`,
     xmlns: {
       atom: "http://www.w3.org/2005/Atom",
       content: "http://purl.org/rss/1.0/modules/content/",

@@ -7,15 +7,45 @@ interface Props {
     | "meshmonitor-lf"
     | "meshmonitor-mf"
     | "meshtastic-combined";
-  readonly children?: any;
+  readonly children?: preact.ComponentChildren;
 }
+
+interface MastodonStats {
+  peersCount: number;
+  mastodonTrends: { url: string; name: string }[];
+  instanceVersion: string;
+}
+
+interface MatrixStats {
+  matrixData: {
+    online?: boolean;
+    versions?: string[];
+    federationTotal?: number;
+  };
+  matrixFed: {
+    server?: {
+      version?: string;
+    };
+  } | null;
+}
+
+interface MeshtasticStats {
+  potatoNodes: number;
+  lfNodes: number;
+  mfNodes: number;
+  potatoVersion: string;
+}
+
+type StatsData = MastodonStats | MatrixStats | MeshtasticStats;
 
 /**
  * Fetch Mastodon service statistics
  */
-async function fetchMastodonStats(setError: (error: boolean) => void) {
+async function fetchMastodonStats(
+  setError: (error: boolean) => void,
+): Promise<MastodonStats> {
   let peersCount = 0;
-  let mastodonTrends = [] as any[];
+  let mastodonTrends = [] as { url: string; name: string }[];
   let instanceVersion = "Unknown";
 
   try {
@@ -49,9 +79,11 @@ async function fetchMastodonStats(setError: (error: boolean) => void) {
 /**
  * Fetch Matrix service statistics
  */
-async function fetchMatrixStats(setError: (error: boolean) => void) {
-  let matrixData: any = {};
-  let matrixFed: any = null;
+async function fetchMatrixStats(
+  setError: (error: boolean) => void,
+): Promise<MatrixStats> {
+  let matrixData: MatrixStats["matrixData"] = {};
+  let matrixFed: MatrixStats["matrixFed"] = null;
 
   try {
     const resConfig = await fetch("/api/proxy/matrix/config");
@@ -83,7 +115,7 @@ async function fetchMatrixStats(setError: (error: boolean) => void) {
 /**
  * Fetch Meshtastic combined service statistics
  */
-async function fetchMeshtasticStats() {
+async function fetchMeshtasticStats(): Promise<MeshtasticStats> {
   const [resPotato, resLF, resMF] = await Promise.all([
     fetch("/api/proxy/potato/nodes").catch(() => null),
     fetch("/api/proxy/mesh/lf").catch(() => null),
@@ -142,7 +174,7 @@ async function fetchPotatoVersion(): Promise<string> {
 }
 
 export default function ServiceStats({ type, children }: Props) {
-  const [stats, setStats] = useState<any>(null);
+  const [stats, setStats] = useState<StatsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
@@ -166,7 +198,7 @@ export default function ServiceStats({ type, children }: Props) {
         } else if (type === "meshtastic-combined") {
           data = await fetchMeshtasticStats();
         }
-        setStats(data);
+        if (data) setStats(data);
       } catch (err) {
         console.error("Error fetching service stats:", err);
         setError(true);
@@ -187,7 +219,8 @@ export default function ServiceStats({ type, children }: Props) {
   }
 
   if (type === "mastodon") {
-    const { peersCount, mastodonTrends, instanceVersion } = stats;
+    const { peersCount, mastodonTrends, instanceVersion } =
+      stats as MastodonStats;
 
     return (
       <div class="stats-wrapper-col">
@@ -234,7 +267,7 @@ export default function ServiceStats({ type, children }: Props) {
           <div>
             <h5 class="trending-header">Trending Now</h5>
             <div class="trending-grid">
-              {mastodonTrends.map((tag: any) => (
+              {mastodonTrends.map((tag) => (
                 <a href={tag.url} target="_blank" class="stat-btn-filled">
                   <span class="opacity-60">#</span> {tag.name}
                 </a>
@@ -247,7 +280,7 @@ export default function ServiceStats({ type, children }: Props) {
   }
 
   if (type === "matrix") {
-    const { matrixData, matrixFed } = stats;
+    const { matrixData, matrixFed } = stats as MatrixStats;
     const synapseVersion = matrixFed?.server?.version || "Unknown";
 
     return (
@@ -296,26 +329,9 @@ export default function ServiceStats({ type, children }: Props) {
     );
   }
 
-  if (type === "meshmonitor-lf") {
-    return (
-      <div class="stat-item">
-        <span>LongFast Nodes:</span>{" "}
-        <strong>{stats.data?.activeNodes || "?"}</strong>
-      </div>
-    );
-  }
-
-  if (type === "meshmonitor-mf") {
-    return (
-      <div class="stat-item">
-        <span>MedFast Nodes:</span>{" "}
-        <strong>{stats.data?.activeNodes || "?"}</strong>
-      </div>
-    );
-  }
-
   if (type === "meshtastic-combined") {
-    const { potatoNodes, lfNodes, mfNodes, potatoVersion } = stats;
+    const { potatoNodes, lfNodes, mfNodes, potatoVersion } =
+      stats as MeshtasticStats;
 
     // Helper to render the green dot status
     const StatusDot = () => <span class="status-dot-inline"></span>;

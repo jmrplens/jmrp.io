@@ -8,14 +8,10 @@ import BaseLayout from "@layouts/BaseLayout.astro";
 import { Image, getImage } from "astro:assets";
 import mehomeImg from "@assets/mehome.jpg";
 import { Icon } from "astro-icon/components";
-// Config
-import fs from "fs";
-import path from "path";
-import yaml from "js-yaml";
+import { getEntry } from "astro:content";
 
-const sitePath = path.join(process.cwd(), "src/data/config/site.yml");
-const siteRaw = fs.readFileSync(sitePath, "utf8");
-const siteData = yaml.load(siteRaw) as any;
+const siteEntry = await getEntry("site", "config");
+const siteData = siteEntry!.data;
 
 const { hero } = siteData;
 

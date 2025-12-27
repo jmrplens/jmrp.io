@@ -1,4 +1,4 @@
----
+--- 
 /**
  * BaseHead component.
  * Included in all pages to handle:
@@ -17,16 +17,15 @@ import "@styles/font-fallbacks.css";
 import interVariable from "@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url";
 import jetbrainsVariable from "@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2?url";
 
-// ... other imports
-
 import { getImage } from "astro:assets";
 import faviconSrc from "@assets/favicon.png";
 import appleTouchIconSrc from "@assets/apple-touch-icon.png";
 import defaultOgImage from "@assets/mehome_landscape.jpeg";
 
-import fs from "fs";
-import path from "path";
-import yaml from "js-yaml";
+import { getEntry } from "astro:content";
+
+const siteEntry = await getEntry("site", "config");
+const siteData = siteEntry!.data;
 
 const favicon = await getImage({
     src: faviconSrc,
@@ -41,10 +40,6 @@ const appleTouchIcon = await getImage({
     height: 180,
 });
 
-const sitePath = path.join(process.cwd(), "src/data/config/site.yml");
-const siteRaw = fs.readFileSync(sitePath, "utf8");
-const siteData = yaml.load(siteRaw) as any;
-
 interface Props {
     title: string;
     description?: string;
@@ -55,7 +50,7 @@ interface Props {
     modifiedDate?: Date;
     authors?: string[]; // Defaults to siteData.author
     tags?: string[];
-    schema?: any; // Custom JSON-LD schema to merge or override
+    schema?: Record<string, unknown> | Record<string, unknown>[]; // Custom JSON-LD schema to merge or override
 }
 
 const canonicalURL = new URL(Astro.url.pathname, Astro.site);
@@ -63,7 +58,7 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 const {
     title,
     description = siteData.description,
-    image = siteData.image,
+    image = siteData.url + "/img/mehome_landscape.jpeg", // Default OG
     type = "website",
     publishDate,
     modifiedDate,
@@ -86,31 +81,11 @@ const fullTitle = (() => {
 })();
 
 // Image resolution logic
-let resolvedImage;
-if (image) {
-    // If props provide an image
-    if (typeof image === "string") {
-        // External URL or legacy path (though we shouldn't have legacy paths now)
-        try {
-            resolvedImage = new URL(image, Astro.url);
-        } catch {
-            // Relative path or other, try to resolve against site
-            resolvedImage = new URL(image, siteData.url);
-        }
-    } else {
-        // It's an imported Image object passed via props
-        // Optimize it for OG/Twitter (Standard 1200x630, WebP for efficiency)
-        const optimizedImage = await getImage({
-            src: image,
-            format: "webp",
-            width: 1200,
-            height: 630,
-        });
-        resolvedImage = new URL(optimizedImage.src, Astro.url);
-    }
+let resolvedImage: string | URL;
+if (image && typeof image === "string" && image.startsWith("http")) {
+    resolvedImage = new URL(image);
 } else {
     // Fallback to default site image (imported)
-    // We strictly use the imported asset for the default to ensure optimization
     const optimizedDefault = await getImage({
         src: defaultOgImage,
         format: "webp",
@@ -123,7 +98,7 @@ if (image) {
 // --- Schema.org Construction ---
 
 // 1. WebSite Schema (Global)
-const websiteSchema = {
+const websiteSchema: Record<string, unknown> = {
     "@type": "WebSite",
     "@id": `${siteData.url}/#website`,
     url: siteData.url,
@@ -136,22 +111,23 @@ const websiteSchema = {
         name: siteData.author,
         url: siteData.url,
         sameAs: [
-            `https://twitter.com/${siteData.twitter_creator.replace("@", "")}`,
-            // Add other social links if available in site.yml
+            `https://twitter.com/${siteData.twitter_creator?.replace("@", "")}`,
         ],
     },
 };
 
 // 2. Navigation Schema
-const navSchema = (siteData.nav || []).map((item: any) => ({
+const navSchema = (siteData.nav || []).map((item) => ({
     "@type": "SiteNavigationElement",
     name: item.label,
     url: new URL(item.href, siteData.url).toString(),
 }));
 
 // 3. Merge Logic
-// We use a @graph to include multiple items (Website, Page, Breadcrumbs, etc.)
-let schemaGraph = [websiteSchema, ...navSchema];
+let schemaGraph: Record<string, unknown>[] = [
+    websiteSchema,
+    ...(navSchema as Record<string, unknown>[]),
+];
 
 if (schema) {
     if (Array.isArray(schema)) {
@@ -171,9 +147,7 @@ const jsonLD = {
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 
-<!-- Font Preloads (Critical for LCP/CLS) -->
-<!-- Font Preloads (Variable Fonts for LCP Optimization) -->
-<!-- Inter Variable: Covers all weights (400-800) in one request -->
+<!-- Font Preloads -->
 <link
     rel="preload"
     href={interVariable}
@@ -182,7 +156,6 @@ const jsonLD = {
     crossorigin="anonymous"
     fetchpriority="high"
 />
-<!-- JetBrains Mono Variable: Covers all weights (400-800) in one request -->
 <link
     rel="preload"
     href={jetbrainsVariable}
@@ -191,21 +164,9 @@ const jsonLD = {
     crossorigin="anonymous"
     fetchpriority="high"
 />
-<!-- Inter 800 is not generally critical above fold -->
-<!--
-<link
-    rel="preload"
-    href={inter800}
-    as="font"
-    type="font/woff2"
-    crossorigin="anonymous"
-/>
--->
 
 <link rel="icon" type="image/webp" href={favicon.src} />
 <link rel="apple-touch-icon" href={appleTouchIcon.src} />
-
-<!-- DNS Prefetch for external resources -->
 
 <link rel="manifest" href="/site.webmanifest" />
 <link rel="sitemap" href="/sitemap.xml" />
@@ -280,5 +241,5 @@ const jsonLD = {
 <!-- JSON-LD -->
 <script
     type="application/ld+json"
-    set:html={JSON.stringify(jsonLD).replace(/&/g, "\\u0026")}
+    set:html={JSON.stringify(jsonLD).replace(/&/g, "\\u0026")} 
 />

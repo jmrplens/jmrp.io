@@ -1,24 +1,26 @@
-import fs from "node:fs";
-import path from "node:path";
-import yaml from "js-yaml";
+import { getEntry } from "astro:content";
 
 /**
- * Interface representing a section in the CV (e.g., Education, Experience).
+ * Interface for a CV section.
  */
-export interface CVEntry {
-  title: string; // Title of the section
-  type: string; // layout type identifier
-  contents: any[]; // List of items in this section
+export interface CVSection {
+  title: string;
+  type: "map" | "time_table" | "list_groups" | "certificate_list";
+  contents: any[];
 }
 
 /**
- * Reads and parses the CV data from the YAML file.
- * Located at: src/data/cv/cv.yml
+ * Loads CV data from the content collection.
  *
- * @returns {CVEntry[]} Array of CV sections and their contents.
+ * @returns {Promise<CVSection[]>} The parsed CV data.
  */
-export function getCVData() {
-  const filePath = path.join(process.cwd(), "src/data/cv/cv.yml");
-  const fileContents = fs.readFileSync(filePath, "utf8");
-  return yaml.load(fileContents) as CVEntry[];
+export async function getCVData(): Promise<CVSection[]> {
+  try {
+    const entry = await getEntry("cv", "main");
+    if (!entry) return [];
+    return entry.data as CVSection[];
+  } catch (error) {
+    console.error("Error loading CV data:", error);
+    return [];
+  }
 }

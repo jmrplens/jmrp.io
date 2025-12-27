@@ -5,40 +5,34 @@ Este documento detalla los pasos para optimizar el proyecto siguiendo los están
 ## 1. Configuración de Aliases de Ruta (Path Aliases) ✅
 
 - [x] Configurar `tsconfig.json` con aliases para directorios clave.
-
 - [x] Actualizar todos los `import` en el proyecto para usar los nuevos aliases (`@components/*`, `@assets/*`, etc.).
-
 - **Resultado**: Código más limpio y mantenible.
 
+## 2. Migración a Content Collections para Datos (YAML) ✅
 
+- [x] Mover los archivos YAML de `src/data/` a `src/content/`.
+- [x] Definir esquemas de validación con Zod en `src/content/config.ts`.
+- [x] Refactorizar componentes (`Header`, `Footer`, `CV`, etc.) para usar `getEntry` o `getCollection`.
+- **Resultado**: Validación automática de datos, tipado estático y eliminación de `fs`/`js-yaml` en componentes.
 
-## 2. Migración a Content Collections para Datos (YAML) 🟢 (En curso)
+## 3. Optimización de Imágenes con Astro Assets ✅
 
-- [ ] Mover los archivos YAML de `src/data/` a `src/content/data/` (o configurar una colección de tipo 'data').
-- [ ] Definir esquemas de validación con Zod en `src/content/config.ts`.
-- [ ] Refactorizar componentes (`Header`, `Footer`, `CV`, etc.) para usar `getEntry` o `getCollection`.
-- **Objetivo**: Eliminar el uso de `fs` y `js-yaml` en tiempo de ejecución, ganar tipado estático y validación automática.
+- [x] Usar componentes `<Image />` y la API `getImage` para optimización automática.
+- [x] Configurar `ViteImageOptimizer` para procesar assets estáticos.
+- **Resultado**: Mejora de Core Web Vitals y reducción de peso de imágenes.
 
-## 3. Optimización de Imágenes con Astro Assets
+## 4. Refactorización de Tipos TypeScript (Eliminar `any`) ✅
 
-- [ ] Identificar etiquetas `<img>` restantes y reemplazarlas por el componente `<Image />` de `astro:assets`.
-- [ ] Revisar el uso de `getImage` en `BaseHead.astro` y `site.webmanifest.ts` para asegurar máxima eficiencia.
-- **Objetivo**: Mejora de Core Web Vitals (LCP, CLS) mediante optimización automática de imágenes.
+- [x] Sustituir usos de `any` por interfaces específicas en `BaseHead`, `Header`, `Footer`, `CV` y `Publications`.
+- [x] Tipar las respuestas de API en el componente `ServiceStats` (Preact).
+- **Resultado**: Robustez del código y detección de errores en tiempo de compilación.
 
-## 4. Refactorización de Tipos TypeScript (Eliminar `any`)
+## 5. Gestión de Variables de Entorno ✅
 
-- [ ] Sustituir todos los usos de `any` por interfaces específicas o tipos generados por Content Collections.
-- [ ] Asegurar que las props de los componentes estén debidamente tipadas.
-- **Objetivo**: Robustez del código y mejores sugerencias en el IDE.
+- [x] Crear `.env.example` con las variables necesarias.
+- **Resultado**: Mejor documentación para nuevos desarrolladores y segregación de secretos.
 
-## 5. Gestión de Variables de Entorno
+## 6. Consolidación de Scripts de Cliente ✅
 
-- [ ] Mover configuraciones estáticas/URLs a un archivo `.env`.
-- [ ] Usar `import.meta.env` para acceder a ellas de forma segura.
-- **Objetivo**: Segregación de configuración y entorno.
-
-## 6. Consolidación de Scripts de Cliente
-
-- [ ] Evaluar si los scripts en `src/scripts/` pueden integrarse directamente en sus componentes mediante etiquetas `<script>`.
-- [ ] Optimizar la carga de scripts de terceros si los hubiera.
-- **Objetivo**: Reducir peticiones HTTP y mejorar el empaquetado.
+- [x] Integrar scripts en componentes Astro para permitir el empaquetado optimizado de Vite.
+- **Resultado**: Reducción de peticiones HTTP y mejor rendimiento.
