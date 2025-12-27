@@ -194,5 +194,30 @@ const publications = defineCollection({
   ),
 });
 
+/**
+ * Self-hosted services data.
+ */
+const services = defineCollection({
+  type: "data",
+  schema: z.array(
+    z.object({
+      id: z.string(),
+      title: z.string(),
+      icon: z.string(),
+      description: z.string(),
+      link: z.string().url(),
+      linkText: z.string(),
+      extraInfo: z.string().optional(),
+      statsType: z.enum([
+        "mastodon",
+        "matrix",
+        "meshmonitor-lf",
+        "meshmonitor-mf",
+        "meshtastic-combined",
+      ]),
+    }),
+  ),
+});
+
 // Export collections variable to register them with Astro
-export const collections = { posts, site, socials, cv, publications };
+export const collections = { posts, site, socials, cv, publications, services };

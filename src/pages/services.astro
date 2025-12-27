@@ -8,45 +8,25 @@ import BaseLayout from "@layouts/BaseLayout.astro";
 import { Icon } from "astro-icon/components";
 import ServiceCard from "@components/services/ServiceCard.astro";
 import ServiceStats from "@components/services/ServiceStats";
+import { getEntry } from "astro:content";
+
+const servicesEntry = await getEntry("services", "main");
+const servicesList = servicesEntry!.data;
 
 const servicesSchema = {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
     name: "Self-Hosted Services",
-    hasPart: [
-        {
-            "@type": "Service",
-            name: "Mastodon Instance",
-            description:
-                "A decentralized social network server. Part of the Fediverse.",
-            url: "https://mstdn.jmrp.io/",
-            provider: {
-                "@type": "Person",
-                name: "José Manuel Requena Plens",
-            },
+    hasPart: servicesList.map((s) => ({
+        "@type": "Service",
+        name: s.title,
+        description: s.description,
+        url: s.link,
+        provider: {
+            "@type": "Person",
+            name: "José Manuel Requena Plens",
         },
-        {
-            "@type": "Service",
-            name: "Matrix Homeserver",
-            description: "Secure, decentralized communication.",
-            url: "https://matrix.to/#/@jmrplens:matrix.jmrp.io",
-            provider: {
-                "@type": "Person",
-                name: "José Manuel Requena Plens",
-            },
-        },
-        {
-            "@type": "Service",
-            name: "Meshtastic Infrastructure",
-            description:
-                "Infrastructure for the Meshtastic mesh network. Includes Map, Node Database, and Network Monitors.",
-            url: "https://mesh.jmrp.io",
-            provider: {
-                "@type": "Person",
-                name: "José Manuel Requena Plens",
-            },
-        },
-    ],
+    })),
 };
 ---
 
@@ -65,50 +45,41 @@ const servicesSchema = {
             </p>
 
             <div class="services-grid">
-                {/* Mastodon */}
-                <ServiceCard
-                    title="Mastodon"
-                    icon="fa-brands:mastodon"
-                    description="A decentralized social network server. Part of the Fediverse."
-                    link="https://mstdn.jmrp.io/"
-                    linkText="Visit mstdn.jmrp.io"
-                >
-                    <div id="mastodon-stats" class="stats-container">
-                        <ServiceStats client:visible type="mastodon" />
-                    </div>
-                </ServiceCard>
-
-                {/* Matrix */}
-                <ServiceCard
-                    title="Matrix"
-                    icon="simple-icons:matrix"
-                    description="Secure, decentralized communication. My Server: matrix.jmrp.io"
-                    link="https://matrix.to/#/@jmrplens:matrix.jmrp.io"
-                    linkText="Chat on Matrix"
-                >
-                    <div slot="extra" class="user-info">
-                        User: <code>@jmrplens:matrix.jmrp.io</code>
-                    </div>
-                    <div id="matrix-stats" class="stats-container">
-                        <ServiceStats client:visible type="matrix" />
-                    </div>
-                </ServiceCard>
-
-                {/* Meshtastic */}
-                <ServiceCard
-                    title="Meshtastic"
-                    icon="fa-solid:broadcast-tower"
-                    description="Infrastructure for the Meshtastic mesh network. Includes Map, Node Database, and Network Monitors."
-                    link="https://mesh.jmrp.io"
-                    linkText="Open Mesh Hub"
-                >
-                    <div id="meshtastic-stats" class="stats-container">
-                        <ServiceStats
-                            client:visible
-                            type="meshtastic-combined"
-                        />
-                    </div>
-                </ServiceCard>
+                {
+                    servicesList.map((service) => (
+                        <ServiceCard
+                            id={service.id}
+                            title={service.title}
+                            icon={service.icon}
+                            description={service.description}
+                            link={service.link}
+                            linkText={service.linkText}
+                        >
+                            {service.extraInfo && (
+                                <div slot="extra" class="user-info">
+                                    {service.extraInfo.includes(":") ? (
+                                        <>
+                                            {service.extraInfo.split(":")[0]}:{" "}
+                                            <code>
+                                                {service.extraInfo
+                                                    .split(":")[1]
+                                                    .trim()}
+                                            </code>
+                                        </>
+                                    ) : (
+                                        service.extraInfo
+                                    )}
+                                </div>
+                            )}
+                            <div class="stats-container">
+                                <ServiceStats
+                                    client:visible
+                                    type={service.statsType}
+                                />
+                            </div>
+                        </ServiceCard>
+                    ))
+                }
             </div>
         </div>
     </section>
@@ -151,22 +122,12 @@ const servicesSchema = {
         width: 100%;
         box-sizing: border-box;
         background: transparent;
-        border-radius: var(--radius-sm);
         font-size: 0.85rem;
         display: flex;
         flex-direction: column;
         gap: 4px;
         overflow-wrap: break-word;
         word-break: break-all;
-    }
-
-    #mastodon-stats.stats-container,
-    #matrix-stats.stats-container,
-    #meshtastic-stats.stats-container {
-        background: transparent;
-        border: none;
-        padding: 0;
-        margin-top: 0;
     }
 </style>
 

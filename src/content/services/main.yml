@@ -1,0 +1,24 @@
+- id: mastodon
+  title: Mastodon
+  icon: fa-brands:mastodon
+  description: A decentralized social network server. Part of the Fediverse.
+  link: https://mstdn.jmrp.io/
+  linkText: Visit mstdn.jmrp.io
+  statsType: mastodon
+
+- id: matrix
+  title: Matrix
+  icon: simple-icons:matrix
+  description: "Secure, decentralized communication. My Server: matrix.jmrp.io"
+  link: https://matrix.to/#/@jmrplens:matrix.jmrp.io
+  linkText: Chat on Matrix
+  extraInfo: "User: @jmrplens:matrix.jmrp.io"
+  statsType: matrix
+
+- id: meshtastic
+  title: Meshtastic
+  icon: fa-solid:broadcast-tower
+  description: Infrastructure for the Meshtastic mesh network. Includes Map, Node Database, and Network Monitors.
+  link: https://mesh.jmrp.io
+  linkText: Open Mesh Hub
+  statsType: meshtastic-combined
