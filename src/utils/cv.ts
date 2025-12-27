@@ -1,24 +1,18 @@
-import { getEntry } from "astro:content";
+import { getEntry, type CollectionEntry } from "astro:content";
 
-/**
- * Interface for a CV section.
- */
-export interface CVSection {
-  title: string;
-  type: "map" | "time_table" | "list_groups" | "certificate_list";
-  contents: any[];
-}
+export type CVData = CollectionEntry<"cv">["data"];
+export type CVSection = CVData[number];
 
 /**
  * Loads CV data from the content collection.
  *
- * @returns {Promise<CVSection[]>} The parsed CV data.
+ * @returns {Promise<CVData>} The parsed CV data.
  */
-export async function getCVData(): Promise<CVSection[]> {
+export async function getCVData(): Promise<CVData> {
   try {
     const entry = await getEntry("cv", "main");
     if (!entry) return [];
-    return entry.data as CVSection[];
+    return entry.data;
   } catch (error) {
     console.error("Error loading CV data:", error);
     return [];

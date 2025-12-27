@@ -21,7 +21,8 @@ export interface GitHubProfile {
   following: number;
 }
 
-const USERNAME = import.meta.env.GITHUB_USERNAME || "jmrplens";
+const GITHUB_USERNAME_ENV = import.meta.env.GITHUB_USERNAME;
+const USERNAME = GITHUB_USERNAME_ENV || "jmrplens";
 const GITHUB_TOKEN = import.meta.env.GITHUB_TOKEN; // Optional, for rate limits
 
 export async function fetchGitHubProfile(): Promise<GitHubProfile> {
@@ -47,7 +48,7 @@ export async function fetchGitHubProfile(): Promise<GitHubProfile> {
       login: USERNAME,
       bio: "R&D Engineer | Embedded Systems & Acoustics | Software Engineer",
       html_url: `https://github.com/${USERNAME}`,
-      avatar_url: "/github-avatar.png", // Fallback to local asset
+      avatar_url: "/_astro/github-avatar.png", // Attempt to use processed asset if possible, or relative to root
       location: "Valencia, Spain",
       public_repos: 0,
       followers: 0,

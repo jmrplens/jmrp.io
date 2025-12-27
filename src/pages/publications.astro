@@ -21,7 +21,7 @@ const publicationsSchema = {
             "@type": "ScholarlyArticle",
             headline: pub.title,
             datePublished: pub.issued?.["date-parts"]?.[0]?.join("-"),
-            author: pub.author?.map((a: any) => ({
+            author: pub.author?.map((a) => ({
                 "@type": "Person",
                 name: `${a.given} ${a.family}`,
             })),

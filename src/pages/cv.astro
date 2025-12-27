@@ -43,15 +43,26 @@ const personSchema = {
     knowsAbout:
         cvData
             .find((s) => s.title === "Technical Skills")
-            ?.contents?.flatMap((g) => g.items.map((i) => i.name)) || [],
+            ?.contents?.flatMap((g) => {
+                if ("items" in g) {
+                    return g.items.map((i: any) => i.name);
+                }
+                return [];
+            }) || [],
     alumniOf:
         cvData
             .find((s) => s.title === "Formal education")
-            ?.contents?.map((edu) => ({
-                "@type": "EducationalOrganization",
-                name: edu.institution,
-                department: edu.department,
-            })) || [],
+            ?.contents?.map((edu) => {
+                if ("institution" in edu) {
+                    return {
+                        "@type": "EducationalOrganization",
+                        name: edu.institution,
+                        department: edu.department,
+                    };
+                }
+                return null;
+            })
+            .filter((e): e is Record<string, any> => !!e) || [],
 };
 ---
 
