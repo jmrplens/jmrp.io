@@ -83,14 +83,15 @@ const fullTitle = (() => {
 
 // Image resolution logic for Open Graph
 const resolvedImage = await (async () => {
-    let imageSrc = image || defaultOgImage;
+    // If no image prop is provided, use the imported default asset
+    const imageSrc = image || defaultOgImage;
 
     // If it's a string and already a full URL, return it
     if (typeof imageSrc === "string" && imageSrc.startsWith("http")) {
         return imageSrc;
     }
 
-    // Otherwise, optimize it
+    // Otherwise (if it's an ImageMetadata object or relative path), optimize it
     const optimized = await getImage({
         src: imageSrc,
         format: "webp",

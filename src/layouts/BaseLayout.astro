@@ -12,6 +12,7 @@ import BaseHead from "@components/layout/BaseHead.astro";
 import Header from "@components/layout/Header.astro";
 import Footer from "@components/layout/Footer.astro";
 import type { ImageMetadata } from "astro";
+import { ClientRouter } from "astro:transitions";
 
 interface Props {
     title: string;
@@ -53,6 +54,7 @@ const {
             authors={authors}
             tags={tags}
         />
+        <ClientRouter />
         <slot name="head" />
         <script is:inline>
             // Critical: Execute immediately to prevent FOUC
