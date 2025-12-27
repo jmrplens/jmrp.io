@@ -81,7 +81,6 @@ async function extractDataUris() {
                       params: {
                         overrides: {
                           cleanupNumericValues: false,
-                          removeViewBox: false,
                         },
                         cleanupIDs: {
                           minify: false,
@@ -89,6 +88,10 @@ async function extractDataUris() {
                         },
                         convertPathData: false,
                       },
+                    },
+                    {
+                      name: "removeViewBox",
+                      active: false,
                     },
                     "sortAttrs",
                     {

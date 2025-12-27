@@ -21,7 +21,7 @@ export interface GitHubProfile {
   following: number;
 }
 
-const USERNAME = "jmrplens";
+const USERNAME = import.meta.env.GITHUB_USERNAME || "jmrplens";
 const GITHUB_TOKEN = import.meta.env.GITHUB_TOKEN; // Optional, for rate limits
 
 export async function fetchGitHubProfile(): Promise<GitHubProfile> {

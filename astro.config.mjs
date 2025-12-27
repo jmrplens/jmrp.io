@@ -207,7 +207,6 @@ export default defineConfig({
               params: {
                 overrides: {
                   cleanupNumericValues: false,
-                  removeViewBox: false, // https://github.com/svg/svgo/issues/1128
                 },
                 cleanupIDs: {
                   minify: false,
@@ -215,6 +214,10 @@ export default defineConfig({
                 },
                 convertPathData: false,
               },
+            },
+            {
+              name: "removeViewBox",
+              active: false,
             },
             "sortAttrs",
             {

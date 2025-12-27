@@ -333,6 +333,16 @@ export default function ServiceStats({ type, children }: Props) {
     const { potatoNodes, lfNodes, mfNodes, potatoVersion } =
       stats as MeshtasticStats;
 
+    // URLs from environment variables (with fallbacks for safety)
+    const potatoUrl =
+      import.meta.env.PUBLIC_POTATOMESH_URL || "https://potatomesh.jmrp.io";
+    const meshLfUrl =
+      import.meta.env.PUBLIC_MESH_LF_URL ||
+      "https://mesh_lf.jmrp.io/meshmonitor";
+    const meshMfUrl =
+      import.meta.env.PUBLIC_MESH_MF_URL ||
+      "https://mesh_mf.jmrp.io/meshmonitor";
+
     // Helper to render the green dot status
     const StatusDot = () => <span class="status-dot-inline"></span>;
 
@@ -353,7 +363,7 @@ export default function ServiceStats({ type, children }: Props) {
             </div>
           </div>
           <a
-            href="https://potatomesh.jmrp.io"
+            href={potatoUrl}
             target="_blank"
             class="btn btn-outline btn-xs"
             aria-label="View PotatoMesh Map"
@@ -372,7 +382,7 @@ export default function ServiceStats({ type, children }: Props) {
             </div>
           </div>
           <a
-            href="https://mesh_lf.jmrp.io/meshmonitor"
+            href={meshLfUrl}
             target="_blank"
             class="btn btn-outline btn-xs"
             aria-label="View MeshMonitor LF"
@@ -391,7 +401,7 @@ export default function ServiceStats({ type, children }: Props) {
             </div>
           </div>
           <a
-            href="https://mesh_mf.jmrp.io/meshmonitor"
+            href={meshMfUrl}
             target="_blank"
             class="btn btn-outline btn-xs"
             aria-label="View MeshMonitor MF"
