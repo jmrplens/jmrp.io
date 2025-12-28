@@ -56,7 +56,7 @@ export const GET: APIRoute = async () => {
         purpose: "maskable",
       },
     ],
-    shortcuts: siteData?.shortcuts?.map((s) => ({
+    shortcuts: siteData?.shortcuts?.map((s: any) => ({
       name: s.name,
       url: s.url,
       description: s.description,
