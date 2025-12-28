@@ -29,7 +29,7 @@ async function getSitemapUrls() {
   return urls;
 }
 
-test.describe("Site-wide Functional Checks", async () => {
+test.describe("Site-wide Functional Checks", () => {
   let urls: string[] = [];
 
   test.beforeAll(async () => {
@@ -38,8 +38,7 @@ test.describe("Site-wide Functional Checks", async () => {
 
   // Dynamic tests for every page in the sitemap
   test("check all pages from sitemap", async ({ page }) => {
-    const sitemapUrls = await getSitemapUrls();
-    for (const url of sitemapUrls) {
+    for (const url of urls) {
       await test.step(`Checking page: ${url}`, async () => {
         const response = await page.goto(url);
         expect(response?.status()).toBe(200);

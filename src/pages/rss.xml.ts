@@ -1,5 +1,5 @@
 import rss from "@astrojs/rss";
-import { getCollection, getEntry } from "astro:content";
+import { getCollection, getEntry, type CollectionEntry } from "astro:content";
 import { getImage } from "astro:assets";
 import type { APIContext } from "astro";
 import sanitizeHtml from "sanitize-html";
@@ -134,7 +134,7 @@ ${body}
     .replaceAll(/^import\s+[^;]*;?$/gm, "") // NOSONAR
     .replaceAll(/^export\s+[^;]*;?$/gm, "") // NOSONAR
     .replaceAll(/{\/\*[\s\S]*?\*\/}/g, "") // NOSONAR
-    .replaceAll(/{[^}]*}/g, ""); // NOSONAR
+    .replaceAll(/\{[a-zA-Z_$][\w.$]*\}/g, ""); // MDX variables (simple identifiers) // NOSONAR
 
   return flattened;
 }
@@ -145,7 +145,7 @@ export async function GET(context: APIContext) {
   const siteData = siteEntry?.data;
 
   // Filter out draft posts in production
-  const publishedPosts = posts.filter((post: any) => {
+  const publishedPosts = posts.filter((post: CollectionEntry<"posts">) => {
     if (import.meta.env.PROD) {
       return !post.data.draft;
     }
@@ -153,25 +153,27 @@ export async function GET(context: APIContext) {
   });
 
   // Sort by publication date (newest first)
-  publishedPosts.sort((a: any, b: any) => {
-    return (
-      new Date(b.data.publishedDate).getTime() -
-      new Date(a.data.publishedDate).getTime()
-    );
-  });
+  publishedPosts.sort(
+    (a: CollectionEntry<"posts">, b: CollectionEntry<"posts">) => {
+      return (
+        new Date(b.data.publishedDate).getTime() -
+        new Date(a.data.publishedDate).getTime()
+      );
+    },
+  );
 
   return rss({
     title: siteData?.title || "José Manuel Requena Plens | Blog",
     description: siteData?.description || "Technical blog",
     site: context.site || "https://jmrp.io",
     items: await Promise.all(
-      publishedPosts.map(async (post: any) => {
+      publishedPosts.map(async (post: CollectionEntry<"posts">) => {
         // Build author string in RFC 822 format: email (Name)
         const authorEmail = post.data.authorEmail || "mail@jmrp.io";
         const authorName = post.data.author || "José Manuel Requena Plens";
         const authorString = `${authorEmail} (${authorName})`;
 
-        // Flatten MDX components to HTML
+        // Preprocess MDX body: transform custom components into styled HTML/Markdown fragments for RSS
         const postBody = post.body || "";
         const flattenedBody = flattenComponents(postBody);
 
@@ -247,7 +249,7 @@ export async function GET(context: APIContext) {
         };
       }),
     ),
-    customData: `<language>${siteData?.locale?.replace("_", "-").toLowerCase() || "en-us"}</language>
+    customData: `<language>${siteData?.locale?.replaceAll("_", "-").toLowerCase() || "en-us"}</language>
 <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>
 <generator>Astro RSS Generator</generator>
 <atom:link href="${new URL("rss.xml", context.site || "https://jmrp.io").toString()}" rel="self" type="application/rss+xml" />`,

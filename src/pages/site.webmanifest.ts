@@ -21,6 +21,12 @@ export const GET: APIRoute = async () => {
     height: 512,
   });
 
+  interface Shortcut {
+    name: string;
+    url: string;
+    description?: string;
+  }
+
   const manifest = {
     name: siteData?.author || "José Manuel Requena Plens",
     short_name: "JMRP",
@@ -56,7 +62,8 @@ export const GET: APIRoute = async () => {
         purpose: "maskable",
       },
     ],
-    shortcuts: siteData?.shortcuts?.map((s: any) => ({
+    // Properly typed shortcuts to satisfy TS
+    shortcuts: (siteData as any)?.shortcuts?.map((s: Shortcut) => ({
       name: s.name,
       url: s.url,
       description: s.description,

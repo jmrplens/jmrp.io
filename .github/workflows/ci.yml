@@ -159,7 +159,7 @@ jobs:
       - name: Build Project (Production)
         run: pnpm run build
       - name: Upload build artifact
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: dist-build
           path: dist/
@@ -206,7 +206,7 @@ jobs:
         run: THEME=${{ matrix.theme }} pnpm exec playwright test --project=accessibility
       - name: Upload Axe Results
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: axe-accessibility-report-${{ matrix.theme }}
           path: accessibility-report/
@@ -651,7 +651,7 @@ jobs:
 
       - name: Upload Lighthouse Results
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: lighthouse-results-${{ matrix.theme }}
           path: |
@@ -712,7 +712,7 @@ jobs:
         run: pnpm exec playwright test --project=functional
       - name: Upload Functional Results
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: functional-test-report
           path: playwright-report/
