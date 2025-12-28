@@ -13,7 +13,7 @@ interface Props {
 const { class: className } = Astro.props;
 ---
 
-<script lang="ts">
+<script is:inline>
     class TabsComponent extends HTMLElement {
         connectedCallback() {
             // Use requestAnimationFrame to ensure the children are fully parsed

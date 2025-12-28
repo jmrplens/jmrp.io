@@ -1,30 +1,28 @@
 import fs from "node:fs";
 import path from "node:path";
-import yaml from "js-yaml";
-import { createRequire } from "node:module";
-const require = createRequire(import.meta.url);
-const Cite = require("citation-js"); // Library to parse BibTeX files
+import { getEntry } from "astro:content";
+import Cite from "citation-js"; // Library to parse BibTeX files
+
+export interface PublicationItem {
+  id: string;
+  type: string;
+  title: string;
+  author?: { family: string; given?: string; url?: string }[];
+  issued?: { "date-parts": number[][] };
+  [key: string]: any;
+}
 
 /**
  * Represents a group of publications categorized by type (e.g., Journals, Conferences).
  */
 export interface PublicationGroup {
   title: string;
-  items: any[];
-}
-
-/**
- * Interface for co-author matching configuration.
- * Used to link author names to their personal websites.
- */
-interface Coauthor {
-  firstname: string[]; // Variations of the first name to match
-  url: string; // URL to the co-author's website
+  items: PublicationItem[];
 }
 
 /**
  * Fetches, parses, and processes publications from the BibTeX file.
- * File location: src/data/_bibliography/papers.bib
+ * File location: src/data/publications/bibliography/papers.bib
  *
  * Process involves:
  * 1. Reading the .bib file.
@@ -40,16 +38,13 @@ export async function getPublications(): Promise<PublicationGroup[]> {
   try {
     const filePath = path.join(
       process.cwd(),
-      "src/data/_bibliography/papers.bib",
+      "src/data/publications/bibliography/papers.bib",
     );
     const fileContents = fs.readFileSync(filePath, "utf8");
 
     // Load coauthors
-    const coauthorsPath = path.join(process.cwd(), "src/data/coauthors.yml");
-    const coauthorsRaw = fs.readFileSync(coauthorsPath, "utf8");
-    const coauthors: Record<string, Coauthor[]> = yaml.load(
-      coauthorsRaw,
-    ) as any;
+    const coauthorsEntry = await getEntry("publications_data", "coauthors");
+    const coauthors = coauthorsEntry?.data || {};
 
     /**
      * Helper to manually extract custom fields from the raw BibTeX string.
@@ -78,10 +73,10 @@ export async function getPublications(): Promise<PublicationGroup[]> {
     };
 
     const citations = new Cite(fileContents);
-    const data = citations.data;
+    const data: PublicationItem[] = citations.data;
 
     // Sort all by year desc first
-    data.sort((a: any, b: any) => {
+    data.sort((a, b) => {
       const yearA = a.issued?.["date-parts"]?.[0]?.[0] || 0;
       const yearB = b.issued?.["date-parts"]?.[0]?.[0] || 0;
       return yearB - yearA;
@@ -96,9 +91,11 @@ export async function getPublications(): Promise<PublicationGroup[]> {
         (n) => n === bibGiven || n.includes(bibGiven) || bibGiven.includes(n),
       );
     };
-    const processAuthors = (authors: any[]) => {
+    const processAuthors = (
+      authors: { family: string; given?: string; url?: string }[] | undefined,
+    ) => {
       if (!authors) return [];
-      return authors.map((author: any) => {
+      return authors.map((author) => {
         const family = author.family;
         if (coauthors[family]) {
           const bibGiven = author.given || "";
@@ -112,9 +109,9 @@ export async function getPublications(): Promise<PublicationGroup[]> {
     };
 
     // Grouping containers
-    const journalArticles: any[] = [];
-    const conferencePapers: any[] = [];
-    const thesisList: any[] = [];
+    const journalArticles: PublicationItem[] = [];
+    const conferencePapers: PublicationItem[] = [];
+    const thesisList: PublicationItem[] = [];
 
     const extractRawBibtex = (id: string) => {
       const entryRegex = new RegExp(

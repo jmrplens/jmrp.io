@@ -10,13 +10,13 @@ draft: false
 coverImage: "../../assets/images/blog/mtls-auth.webp"
 tags: ["nginx", "security", "linux", "certificates", "tutorial"]
 ---
-import Callout from '../../components/Callout.astro';
-import Tabs from '../../components/Tabs.astro';
-import TabPanel from '../../components/TabPanel.astro';
-import TerminalCommand from '../../components/TerminalCommand.astro';
-import FileContent from '../../components/FileContent.astro';
-import TerminalOutput from '../../components/TerminalOutput.astro';
-import Collapsible from '../../components/Collapsible.astro';
+import Callout from '@components/ui/Callout.astro';
+import Tabs from '@components/ui/Tabs.astro';
+import TabPanel from '@components/ui/TabPanel.astro';
+import TerminalCommand from '@components/ui/TerminalCommand.astro';
+import FileContent from '@components/ui/FileContent.astro';
+import TerminalOutput from '@components/ui/TerminalOutput.astro';
+import Collapsible from '@components/ui/Collapsible.astro';
 
 Implementing **<a href="https://www.cloudflare.com/learning/access-management/what-is-mutual-tls/" target="_blank" rel="noopener noreferrer" aria-label="Learn more about Mutual TLS (mTLS) on Cloudflare">Mutual TLS (mTLS)</a>** is one of the most robust ways to secure private web services. Unlike standard password authentication, mTLS requires the client (your browser/device) to present a valid certificate signed by your own Certificate Authority (CA).
 

@@ -4,15 +4,13 @@
  * Contains the logo, navigation menu, and theme toggle.
  * Responsive design with a hamburger menu for mobile.
  */
-import ThemeToggle from "./ThemeToggle.astro";
+import ThemeToggle from "@components/ui/ThemeToggle.astro";
 import { Icon } from "astro-icon/components";
-import fs from "fs";
-import path from "path";
-import yaml from "js-yaml";
+import { getEntry } from "astro:content";
+import type { SiteConfig } from "@src/types";
 
-const sitePath = path.join(process.cwd(), "src/data/site.yml");
-const siteRaw = fs.readFileSync(sitePath, "utf8");
-const siteData = yaml.load(siteRaw) as any;
+const siteEntry = await getEntry("site_config", "site");
+const siteData = (siteEntry?.data || {}) as SiteConfig;
 
 const navItems = siteData.nav || [];
 const logoText = siteData.logo_text || "<JMRP />";
@@ -38,7 +36,7 @@ const logoText = siteData.logo_text || "<JMRP />";
             </button>
             <ul id="nav-links" class="nav-links">
                 {
-                    navItems.map((item: any) => (
+                    navItems.map((item) => (
                         <li>
                             <a href={item.href}>{item.label}</a>
                         </li>
@@ -50,7 +48,69 @@ const logoText = siteData.logo_text || "<JMRP />";
     </nav>
 </header>
 
-<script src="/scripts/header.js" defer></script>
+<script>
+    function setupMobileMenu() {
+        const menuToggle = document.getElementById("menu-toggle");
+        const navLinks = document.getElementById("nav-links");
+
+        // Create backdrop if it doesn't exist
+        let backdrop = document.querySelector(".menu-backdrop");
+        if (!backdrop) {
+            backdrop = document.createElement("div");
+            backdrop.classList.add("menu-backdrop");
+            document.body.appendChild(backdrop);
+        }
+
+        if (menuToggle && navLinks && backdrop) {
+            const closeMenu = () => {
+                menuToggle.setAttribute("aria-expanded", "false");
+                navLinks.classList.remove("open");
+                backdrop.classList.remove("open");
+                document.body.classList.remove("menu-open");
+            };
+
+            const toggleMenu = () => {
+                const isExpanded =
+                    menuToggle.getAttribute("aria-expanded") === "true";
+                if (isExpanded) {
+                    closeMenu();
+                } else {
+                    menuToggle.setAttribute("aria-expanded", "true");
+                    navLinks.classList.add("open");
+                    backdrop.classList.add("open");
+                    document.body.classList.add("menu-open");
+                }
+            };
+
+            // Toggle menu
+            menuToggle.addEventListener("click", (e) => {
+                e.stopPropagation(); // Prevent immediate close from document click
+                toggleMenu();
+            });
+
+            // Close when clicking the backdrop
+            backdrop.addEventListener("click", closeMenu);
+
+            // Close menu when a link is clicked
+            navLinks.querySelectorAll("a").forEach((link) => {
+                link.addEventListener("click", closeMenu);
+            });
+
+            // Keydown (Escape) to close
+            document.addEventListener("keydown", (e) => {
+                if (
+                    e.key === "Escape" &&
+                    navLinks.classList.contains("open")
+                ) {
+                    closeMenu();
+                }
+            });
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", setupMobileMenu);
+    document.addEventListener("astro:after-swap", setupMobileMenu);
+</script>
 
 <style>
     header {

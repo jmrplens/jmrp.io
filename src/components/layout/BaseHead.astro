@@ -8,11 +8,11 @@
  * - JSON-LD Schema.org structured data (Merged Graph)
  * - Favicons and fonts
  */
-import "../styles/global.css";
+import "@styles/global.css";
 // Variable Fonts (automatically injects @font-face)
 import "@fontsource-variable/inter";
 import "@fontsource-variable/jetbrains-mono";
-import "../styles/font-fallbacks.css";
+import "@styles/font-fallbacks.css";
 
 import interVariable from "@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url";
 import jetbrainsVariable from "@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2?url";
@@ -20,13 +20,12 @@ import jetbrainsVariable from "@fontsource-variable/jetbrains-mono/files/jetbrai
 // ... other imports
 
 import { getImage } from "astro:assets";
-import faviconSrc from "../assets/favicon.png";
-import appleTouchIconSrc from "../assets/apple-touch-icon.png";
-import defaultOgImage from "../assets/mehome_landscape.jpeg";
+import faviconSrc from "@assets/favicon.png";
+import appleTouchIconSrc from "@assets/apple-touch-icon.png";
+import defaultOgImage from "@assets/mehome_landscape.jpeg";
 
-import fs from "fs";
-import path from "path";
-import yaml from "js-yaml";
+import { getEntry } from "astro:content";
+import type { SiteConfig } from "@src/types";
 
 const favicon = await getImage({
     src: faviconSrc,
@@ -36,14 +35,13 @@ const favicon = await getImage({
 });
 const appleTouchIcon = await getImage({
     src: appleTouchIconSrc,
-    format: "webp",
+    format: "png",
     width: 180,
     height: 180,
 });
 
-const sitePath = path.join(process.cwd(), "src/data/site.yml");
-const siteRaw = fs.readFileSync(sitePath, "utf8");
-const siteData = yaml.load(siteRaw) as any;
+const siteEntry = await getEntry("site_config", "site");
+const siteData = (siteEntry?.data || {}) as SiteConfig;
 
 interface Props {
     title: string;
@@ -63,7 +61,7 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 const {
     title,
     description = siteData.description,
-    image = siteData.image,
+    image,
     type = "website",
     publishDate,
     modifiedDate,
@@ -95,7 +93,7 @@ if (image) {
             resolvedImage = new URL(image, Astro.url);
         } catch {
             // Relative path or other, try to resolve against site
-            resolvedImage = new URL(image, siteData.url);
+            resolvedImage = new URL(image, Astro.site);
         }
     } else {
         // It's an imported Image object passed via props
@@ -125,16 +123,16 @@ if (image) {
 // 1. WebSite Schema (Global)
 const websiteSchema = {
     "@type": "WebSite",
-    "@id": `${siteData.url}/#website`,
-    url: siteData.url,
+    "@id": `${Astro.site}/#website`,
+    url: Astro.site,
     name: "José M. Requena Plens",
     description: siteData.description,
     inLanguage: siteData.locale,
     publisher: {
         "@type": "Person",
-        "@id": `${siteData.url}/#person`,
+        "@id": `${Astro.site}/#person`,
         name: siteData.author,
-        url: siteData.url,
+        url: Astro.site,
         sameAs: [
             `https://twitter.com/${siteData.twitter_creator.replace("@", "")}`,
             // Add other social links if available in site.yml
@@ -143,10 +141,10 @@ const websiteSchema = {
 };
 
 // 2. Navigation Schema
-const navSchema = (siteData.nav || []).map((item: any) => ({
+const navSchema = (siteData.nav || []).map((item) => ({
     "@type": "SiteNavigationElement",
     name: item.label,
-    url: new URL(item.href, siteData.url).toString(),
+    url: new URL(item.href, Astro.site).toString(),
 }));
 
 // 3. Merge Logic
@@ -279,6 +277,7 @@ const jsonLD = {
 
 <!-- JSON-LD -->
 <script
+    is:inline
     type="application/ld+json"
     set:html={JSON.stringify(jsonLD).replace(/&/g, "\\u0026")}
 />

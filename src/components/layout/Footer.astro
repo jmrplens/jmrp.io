@@ -1,26 +1,34 @@
 ---
 /**
  * Footer component.
- * Displays copyright info and social media links loaded from `src/data/socials.yml`.
+ * Displays copyright info and social media links loaded from `src/content/site_config/socials.yaml`.
  * Includes logic to map FontAwesome classes to Iconify names.
  */
-import fs from "fs";
-import path from "path";
-import yaml from "js-yaml";
+import { getEntry } from "astro:content";
 import { Icon } from "astro-icon/components";
+import { Image } from "astro:assets";
+import type { SiteConfig, SocialsConfig } from "@src/types";
 
 const today = new Date();
 
 // Load socials
-const socialsPath = path.join(process.cwd(), "src/data/socials.yml");
-const socialsRaw = fs.readFileSync(socialsPath, "utf8");
-const socials = yaml.load(socialsRaw) as any;
+const socialsEntry = await getEntry("site_config", "socials");
+const socials = (socialsEntry?.data || {}) as SocialsConfig;
 
-const sitePath = path.join(process.cwd(), "src/data/site.yml");
-const siteRaw = fs.readFileSync(sitePath, "utf8");
-const siteConfig = yaml.load(siteRaw) as any;
+const siteEntry = await getEntry("site_config", "site");
+const siteConfig = (siteEntry?.data || {}) as SiteConfig;
 
-const socialLinks: any[] = [];
+interface SocialLink {
+    url: string;
+    label: string;
+    icon?: string;
+    icon_name?: string;
+    img_light?: string;
+    img_dark?: string;
+    rel?: string;
+}
+
+const socialLinks: SocialLink[] = [];
 
 if (socials.github_username) {
     socialLinks.push({
@@ -69,10 +77,8 @@ if (socials.matrix_id) {
 
 // Custom Socials
 if (socials.custom_social) {
-    const customs = Array.isArray(socials.custom_social)
-        ? socials.custom_social
-        : [socials.custom_social];
-    customs.forEach((item: any) => {
+    const customs = socials.custom_social;
+    customs.forEach((item) => {
         if (item.icon) {
             socialLinks.push({
                 url: item.url,
@@ -147,16 +153,20 @@ const getIconName = (faClass: string) => {
                         )}
                         {link.img_light && link.img_dark && (
                             <>
-                                <img
+                                <Image
                                     src={link.img_light}
                                     alt={link.label}
+                                    width={28}
+                                    height={28}
                                     class="social-icon light-icon"
                                     loading="lazy"
                                     decoding="async"
                                 />
-                                <img
+                                <Image
                                     src={link.img_dark}
                                     alt={link.label}
+                                    width={28}
+                                    height={28}
                                     class="social-icon dark-icon"
                                     loading="lazy"
                                     decoding="async"
