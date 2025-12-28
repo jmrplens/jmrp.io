@@ -52,13 +52,6 @@ const isCorePage = (url) => {
   ].includes(name);
 };
 
-// Helper: Get Emoji for Score
-const getScoreEmoji = (score) => {
-  if (score >= 90) return "🟢";
-  if (score >= 50) return "🟠";
-  return "🔴";
-};
-
 try {
   if (!fs.existsSync(lhciDir)) {
     console.error("Lighthouse directory not found");

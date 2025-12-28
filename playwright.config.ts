@@ -6,7 +6,7 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
-  reporter: process.env.CI ? "html" : "list",
+  reporter: process.env.CI ? [["html", { open: "never" }]] : "list",
 
   use: {
     baseURL: "http://localhost:4321",
@@ -15,6 +15,11 @@ export default defineConfig({
   },
 
   projects: [
+    {
+      name: "functional",
+      testMatch: /.*\.spec\.ts/,
+      testIgnore: /accessibility\.spec\.ts/,
+    },
     {
       name: "accessibility",
       use: { ...devices["Desktop Chrome"] },

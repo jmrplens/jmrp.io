@@ -1,30 +1,31 @@
 ---
 /**
  * CV Page.
- * Displays curriculum vitae data loaded from `src/data/cv.yml`.
+ * Displays curriculum vitae data loaded from `src/data/cv/cv.yml`.
  * Renders sections dynamically using specific components (SkillGroup, CertificateGroup) or generic map/timeline layouts.
  */
-import BaseLayout from "../layouts/BaseLayout.astro";
-import { getCVData } from "../utils/cv";
+import BaseLayout from "@layouts/BaseLayout.astro";
+import { getCVData } from "@utils/cv";
+import type { CVSection } from "@src/types";
 import { Icon } from "astro-icon/components";
-import SkillGroup from "../components/SkillGroup.astro";
-import CertificateGroup from "../components/CertificateGroup.astro";
+import SkillGroup from "@components/cv/SkillGroup.astro";
+import CertificateGroup from "@components/cv/CertificateGroup.astro";
 
-const cvData = getCVData();
+const cvData = await getCVData();
 
-// Helper to map FontAwesome classes to Iconify names
-const getIconName = (faClass: string) => {
-    if (!faClass) return "";
-    const parts = faClass.split(" ");
-    const style = parts[0]; // fab, fas
-    const name = parts[1]?.replace("fa-", "") || "";
-
-    if (style === "fab") return `fa-brands:${name}`;
-    if (style === "fas") return `fa-solid:${name}`;
-    return `fa-solid:${name}`; // Default
-};
+// Define custom order and filter
+const sortedSections = [
+    cvData.find((s) => s.title === "General Information"),
+    cvData.find((s) => s.title === "Experience"),
+    cvData.find((s) => s.title === "Technical Skills"),
+    cvData.find((s) => s.title === "Formal education"),
+    cvData.find((s) => s.title === "Certificates"),
+].filter((s): s is CVSection => !!s);
 
 // Construct Person Schema
+const technicalSkills = sortedSections.find((s) => s.title === "Technical Skills");
+const formalEducation = sortedSections.find((s) => s.title === "Formal education");
+
 const personSchema = {
     "@context": "https://schema.org",
     "@type": "Person",
@@ -41,18 +42,17 @@ const personSchema = {
         "https://www.linkedin.com/in/jmrplens",
     ],
     knowsAbout:
-        cvData
-            .find((s) => s.title === "Technical Skills")
-            ?.contents?.flatMap((g: any) => g.items.map((i: any) => i.name)) ||
-        [],
+        technicalSkills?.type === "list_groups"
+            ? technicalSkills.contents.flatMap((g) => g.items.map((i) => i.name))
+            : [],
     alumniOf:
-        cvData
-            .find((s) => s.title === "Formal education")
-            ?.contents?.map((edu: any) => ({
+        formalEducation?.type === "time_table"
+            ? formalEducation.contents.map((edu) => ({
                 "@type": "EducationalOrganization",
                 name: edu.institution,
                 department: edu.department,
-            })) || [],
+            }))
+            : [],
 };
 ---
 
@@ -78,16 +78,7 @@ const personSchema = {
         </nav>
 
         {
-            // Define custom order
-            [
-                cvData.find((s) => s.title === "General Information"),
-                cvData.find((s) => s.title === "Experience"),
-                cvData.find((s) => s.title === "Technical Skills"),
-                cvData.find((s) => s.title === "Formal education"),
-                cvData.find((s) => s.title === "Certificates"),
-            ]
-                .filter(Boolean)
-                .map((section: any) => (
+            sortedSections.map((section) => (
                     <section
                         class="cv-section"
                         id={section.title.toLowerCase().replace(/ /g, "-")}
@@ -97,7 +88,7 @@ const personSchema = {
 
                         {section.type === "map" && (
                             <div class="cv-map">
-                                {section.contents.map((item: any) => (
+                                {section.contents.map((item) => (
                                     <div class="map-item">
                                         <strong>{item.name}:</strong>
                                         {item.value && (
@@ -105,7 +96,7 @@ const personSchema = {
                                         )}
                                         {item.links && (
                                             <div class="links">
-                                                {item.links.map((link: any) => (
+                                                {item.links.map((link) => (
                                                     <a
                                                         href={link.link}
                                                         class="btn-sm"
@@ -123,7 +114,7 @@ const personSchema = {
 
                         {section.type === "time_table" && (
                             <div class="timeline">
-                                {section.contents.map((item: any) => (
+                                {section.contents.map((item) => (
                                     <div class="timeline-item">
                                         <div
                                             class="timeline-dot"
@@ -183,7 +174,7 @@ const personSchema = {
                                                 ) && (
                                                     <ul class="task-list">
                                                         {item.description.map(
-                                                            (desc: any) => {
+                                                            (desc) => {
                                                                 if (
                                                                     typeof desc ===
                                                                     "string"
@@ -238,7 +229,7 @@ const personSchema = {
                                             {item.linkitems && (
                                                 <div class="timeline-links">
                                                     {item.linkitems.map(
-                                                        (link: any) => (
+                                                        (link) => (
                                                             <a
                                                                 href={link.link}
                                                                 class="btn-sm"
@@ -263,7 +254,7 @@ const personSchema = {
 
                         {section.type === "list_groups" && (
                             <div class="list-groups-compact">
-                                {section.contents.map((group: any) => (
+                                {section.contents.map((group) => (
                                     <SkillGroup group={group} />
                                 ))}
                             </div>
@@ -271,7 +262,7 @@ const personSchema = {
 
                         {section.type === "certificate_list" && (
                             <div class="list-groups-compact">
-                                {section.contents.map((group: any) => (
+                                {section.contents.map((group) => (
                                     <CertificateGroup group={group} />
                                 ))}
                             </div>

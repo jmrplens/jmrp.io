@@ -98,7 +98,7 @@ const githubDark = "github-dark-high-contrast";
 // https://astro.build/config
 export default defineConfig({
   // The site URL, used for SEO and sitemap generation
-  site: "https://jmrp.io",
+  site: process.env.PUBLIC_SITE_URL || "https://jmrp.io",
 
   // Image optimization configuration
   image: {

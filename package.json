@@ -10,10 +10,13 @@
   "scripts": {
     "dev": "astro dev",
     "prebuild": "node scripts/fetch-github-avatar.mjs",
-    "build": "export DIST_DIR=dist_new && rm -rf $DIST_DIR && astro build --outDir $DIST_DIR && pagefind --site $DIST_DIR && DIST_DIR=$DIST_DIR npm run _postbuild && rm -rf dist_old && (mv dist dist_old || true) && mv $DIST_DIR dist && rm -rf dist_old && pnpm exec prettier --check .",
-    "_postbuild": "node scripts/setup-sitemap.mjs $DIST_DIR && node scripts/move-inline-styles.mjs $DIST_DIR && node scripts/extract-css-data-uris.mjs $DIST_DIR && node scripts/extract-html-img-data-uris.mjs $DIST_DIR && node scripts/generate-sri-hashes.mjs $DIST_DIR && node scripts/generate-csp-hashes.mjs $DIST_DIR && (rm -rf /var/cache/nginx/* 2>/dev/null || true)",
+    "build": "export DIST_DIR=dist_new && rm -rf $DIST_DIR && astro build --outDir $DIST_DIR && pagefind --site $DIST_DIR && DIST_DIR=$DIST_DIR pnpm run _postbuild && rm -rf dist_old && (mv dist dist_old || true) && mv $DIST_DIR dist && rm -rf dist_old && pnpm exec prettier --check .",
+    "_postbuild": "node scripts/build/setup-sitemap.mjs $DIST_DIR && node scripts/build/move-inline-styles.mjs $DIST_DIR && node scripts/build/extract-css-data-uris.mjs $DIST_DIR && node scripts/build/extract-html-img-data-uris.mjs $DIST_DIR && node scripts/build/generate-sri-hashes.mjs $DIST_DIR && node scripts/build/generate-csp-hashes.mjs $DIST_DIR && (rm -rf /var/cache/nginx/* 2>/dev/null || true)",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "lint:html": "html-validate -c .htmlvalidate.json dist",
+    "test:e2e": "playwright test",
+    "verify": "pnpm build && pnpm lint:html && pnpm test:e2e"
   },
   "dependencies": {
     "@astrojs/mdx": "^4.3.13",
@@ -45,6 +48,7 @@
     "sanitize-html": "^2.17.0"
   },
   "devDependencies": {
+    "@astrojs/check": "^0.9.6",
     "@axe-core/playwright": "^4.11.0",
     "@iconify-json/devicon": "^1.2.55",
     "@playwright/test": "^1.57.0",
@@ -65,6 +69,7 @@
     "rss-parser": "^3.13.0",
     "sharp": "^0.34.5",
     "svgo": "^4.0.0",
+    "typescript": "^5.9.3",
     "unist-util-visit": "^5.0.0",
     "vite-plugin-image-optimizer": "^2.0.3",
     "xml2js": "^0.6.2"

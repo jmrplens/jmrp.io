@@ -30,7 +30,7 @@ async function moveInlineStyles() {
 
     content = content.replaceAll(
       TAG_REGEX,
-      (match, tagStart, preAttrs, quote, styleContent, postAttrs, tagEnd) => {
+      (_match, tagStart, preAttrs, _quote, styleContent, postAttrs, tagEnd) => {
         // Normalize attributes to strings (undefined guard)
         preAttrs = preAttrs || "";
         postAttrs = postAttrs || "";

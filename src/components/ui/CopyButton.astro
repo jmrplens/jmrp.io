@@ -25,7 +25,7 @@ const encodedContent = content ? encodeURIComponent(content) : undefined;
     <Icon name="mdi:check" class="success-icon hidden" aria-hidden="true" />
 </button>
 
-<script lang="ts">
+<script is:inline lang="ts">
     document.querySelectorAll(".copy-button").forEach((button) => {
         button.addEventListener("click", () => {
             let text = null;
