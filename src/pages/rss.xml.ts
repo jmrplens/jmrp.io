@@ -112,9 +112,8 @@ ${body}
     },
   );
 
-  // 8. YouTube: <YouTube id="..." title="..." />
-  flattened = flattened.replaceAll(/<YouTube\s+([^>]*)\/>/g, (_, attrs) => {
-    // NOSONAR
+  // prettier-ignore
+  flattened = flattened.replaceAll(/<YouTube\s+([^>]*)\/>/g, (_, attrs) => { // NOSONAR
     const id = attrs.match(/id=["']([^"']*)["']/)?.[1] || ""; // NOSONAR
     const title = attrs.match(/title=["']([^"']*)["']/)?.[1] || "Video"; // NOSONAR
     const url = `https://www.youtube.com/watch?v=${id}`;
