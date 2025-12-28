@@ -1,5 +1,5 @@
 import rss from "@astrojs/rss";
-import { getCollection } from "astro:content";
+import { getCollection, getEntry } from "astro:content";
 import { getImage } from "astro:assets";
 import type { APIContext } from "astro";
 import sanitizeHtml from "sanitize-html";
@@ -7,6 +7,8 @@ import { marked } from "marked";
 
 export async function GET(context: APIContext) {
   const posts = await getCollection("posts");
+  const siteEntry = await getEntry("site_config", "site");
+  const siteData = siteEntry?.data;
 
   // Filter out draft posts in production
   const publishedPosts = posts.filter((post) => {
@@ -25,9 +27,8 @@ export async function GET(context: APIContext) {
   });
 
   return rss({
-    title: "José Manuel Requena Plens | Blog",
-    description:
-      "Technical blog on R&D, Embedded Systems, Software Engineering, and Acoustics",
+    title: siteData?.title || "José Manuel Requena Plens | Blog",
+    description: siteData?.description || "Technical blog",
     site: context.site || "https://jmrp.io",
     items: await Promise.all(
       publishedPosts.map(async (post) => {
@@ -38,11 +39,9 @@ export async function GET(context: APIContext) {
 
         // Generate full content
         const postBody = post.body || "";
-        // Simple cleanup for MDX imports/exports
-        // Patterns are anchored (^$) and bounded by newline, safe from ReDoS
         const cleanBody = postBody
-          .replaceAll(/^import\s+[^\n]*$/gm, "") // NOSONAR typescript:S5852
-          .replaceAll(/^export\s+[^\n]*$/gm, ""); // NOSONAR typescript:S5852
+          .replaceAll(/^import\s+[^\n]*$/gm, "")
+          .replaceAll(/^export\s+[^\n]*$/gm, "");
 
         const html = await marked.parse(cleanBody);
         const sanitizedHtml = sanitizeHtml(html, {
@@ -61,8 +60,8 @@ export async function GET(context: APIContext) {
           },
         });
 
-        // Resolve cover image
-        let enclosure = "";
+        // Generate Media RSS and Enclosure data
+        let customItemData = "";
         if (post.data.coverImage) {
           try {
             const optimizedImage = await getImage({
@@ -70,11 +69,24 @@ export async function GET(context: APIContext) {
               format: "webp",
               width: 1200,
             });
+            const thumbnailImage = await getImage({
+              src: post.data.coverImage,
+              format: "webp",
+              width: 400,
+            });
+
             const imageUrl = new URL(
               optimizedImage.src,
               context.site || "https://jmrp.io",
             ).toString();
-            enclosure = `<enclosure url="${imageUrl}" length="${optimizedImage.attributes.size || 0}" type="image/webp" />`;
+            const thumbUrl = new URL(
+              thumbnailImage.src,
+              context.site || "https://jmrp.io",
+            ).toString();
+
+            customItemData += `<enclosure url="${imageUrl}" length="${optimizedImage.attributes.size || 0}" type="image/webp" />\n`;
+            customItemData += `<media:content url="${imageUrl}" medium="image" type="image/webp" width="${optimizedImage.attributes.width}" height="${optimizedImage.attributes.height}" />\n`;
+            customItemData += `<media:thumbnail url="${thumbUrl}" width="${thumbnailImage.attributes.width}" height="${thumbnailImage.attributes.height}" />`;
           } catch (e) {
             console.warn(`Failed to optimize RSS image for ${post.slug}`, e);
           }
@@ -88,16 +100,18 @@ export async function GET(context: APIContext) {
           categories: post.data.tags || [],
           author: authorString,
           content: sanitizedHtml,
-          customData: enclosure,
+          customData: customItemData,
         };
       }),
     ),
-    customData: `<language>en-us</language>
+    customData: `<language>${siteData?.locale?.replace("_", "-").toLowerCase() || "en-us"}</language>
 <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>
+<generator>Astro RSS Generator</generator>
 <atom:link href="${new URL("rss.xml", context.site || "https://jmrp.io").toString()}" rel="self" type="application/rss+xml" />`,
     xmlns: {
       atom: "http://www.w3.org/2005/Atom",
       content: "http://purl.org/rss/1.0/modules/content/",
+      media: "http://search.yahoo.com/mrss/",
     },
   });
 }
