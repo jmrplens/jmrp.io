@@ -34,6 +34,7 @@ const site_config = defineCollection({
       locale: z.string(),
       type: z.string(),
       theme_color: z.string(),
+      background_color: z.string().optional(),
       twitter_creator: z.string(),
       logo_text: z.string(),
       nav: z.array(z.object({ label: z.string(), href: z.string() })),
@@ -42,6 +43,15 @@ const site_config = defineCollection({
         subtitle: z.string(),
         bio: z.array(z.string()),
       }),
+      shortcuts: z
+        .array(
+          z.object({
+            name: z.string(),
+            url: z.string(),
+            description: z.string().optional(),
+          }),
+        )
+        .optional(),
     }),
     // Socials Config
     z

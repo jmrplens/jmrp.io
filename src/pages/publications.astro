@@ -1,7 +1,7 @@
 ---
 /**
  * Publications Page.
- * Lists academic publications stored in `src/data/publications/bibliography/papers.bib`.
+ * Lists academic publications stored in `src/content/publications_data/papers.bib`.
  * Supports abstract toggling, BibTeX copying, and external links (DOI, PDF, Slides).
  */
 import BaseLayout from "@layouts/BaseLayout.astro";
@@ -43,7 +43,9 @@ const publicationGroups = await getPublications();
                     e.preventDefault();
                     const target = e.currentTarget as HTMLElement;
                     const id = target.dataset.id;
-                    const element = document.getElementById(`${idPrefix}-${id}`);
+                    const element = document.getElementById(
+                        `${idPrefix}-${id}`,
+                    );
                     if (element) {
                         const isHidden = element.classList.toggle("hidden");
                         target.setAttribute("aria-expanded", String(!isHidden));

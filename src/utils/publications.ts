@@ -38,7 +38,7 @@ export async function getPublications(): Promise<PublicationGroup[]> {
   try {
     const filePath = path.join(
       process.cwd(),
-      "src/data/publications/bibliography/papers.bib",
+      "src/content/publications_data/papers.bib",
     );
     const fileContents = fs.readFileSync(filePath, "utf8");
 

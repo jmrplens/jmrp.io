@@ -12,6 +12,7 @@ youtube\.com/embed/
 # Ignore RSS/Atom Namespaces (Standard IDs, do not change)
 http://www\.w3\.org/2005/Atom
 http://purl\.org/rss/1.0/modules/content/
+http://search\.yahoo\.com/mrss/
 
 # Localhost
 http://localhost.*
