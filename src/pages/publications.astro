@@ -36,7 +36,28 @@ const publicationGroups = await getPublications();
 </BaseLayout>
 
 <script>
-    import "@scripts/publications.js";
+    function initPublications() {
+        const handleAbstracts = (selector: string, idPrefix: string) => {
+            document.querySelectorAll(selector).forEach((btn) => {
+                (btn as HTMLElement).onclick = (e) => {
+                    e.preventDefault();
+                    const target = e.currentTarget as HTMLElement;
+                    const id = target.dataset.id;
+                    const element = document.getElementById(`${idPrefix}-${id}`);
+                    if (element) {
+                        const isHidden = element.classList.toggle("hidden");
+                        target.setAttribute("aria-expanded", String(!isHidden));
+                    }
+                };
+            });
+        };
+
+        handleAbstracts(".btn-abstract", "abstract");
+        handleAbstracts(".btn-bibtex-toggle", "bibtex");
+    }
+
+    document.addEventListener("astro:page-load", initPublications);
+    document.addEventListener("DOMContentLoaded", initPublications);
 </script>
 
 <style>
