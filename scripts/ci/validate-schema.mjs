@@ -154,7 +154,7 @@ function validateSingleSchema(schema, prefix = "") {
   return { errors, warnings };
 }
 
-function validateSchema(schema, filePath) {
+function validateSchema(schema, _filePath) {
   const errors = [];
   const warnings = [];
 

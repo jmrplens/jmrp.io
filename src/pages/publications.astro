@@ -6,33 +6,9 @@
  */
 import BaseLayout from "@layouts/BaseLayout.astro";
 import { getPublications } from "@utils/publications";
-import { Icon } from "astro-icon/components";
-import CopyButton from "@components/ui/CopyButton.astro";
 import PublicationItem from "@components/publications/PublicationItem.astro";
 
 const publicationGroups = await getPublications();
-
-const publicationsSchema = {
-    "@context": "https://schema.org",
-    "@type": "CollectionPage",
-    name: "Publications",
-    hasPart: publicationGroups.flatMap((group) =>
-        group.items.map((pub: any) => ({
-            "@type": "ScholarlyArticle",
-            headline: pub.title,
-            datePublished: pub.issued?.["date-parts"]?.[0]?.join("-"),
-            author: pub.author?.map((a: any) => ({
-                "@type": "Person",
-                name: `${a.given} ${a.family}`,
-            })),
-            publication:
-                pub["container-title"] || pub.publisher || pub.school || "N/A",
-            sameAs: pub.DOI ? `https://doi.org/${pub.DOI}` : undefined,
-            url: pub.URL || undefined,
-            abstract: pub.abstract,
-        })),
-    ),
-};
 ---
 
 <BaseLayout
@@ -49,7 +25,7 @@ const publicationsSchema = {
                         {group.title}
                     </h2>
                     <div class="publications-list">
-                        {group.items.map((pub: any) => (
+                        {group.items.map((pub) => (
                             <PublicationItem pub={pub} />
                         ))}
                     </div>

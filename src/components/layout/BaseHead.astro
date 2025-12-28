@@ -93,7 +93,7 @@ if (image) {
             resolvedImage = new URL(image, Astro.url);
         } catch {
             // Relative path or other, try to resolve against site
-            resolvedImage = new URL(image, siteData.url);
+            resolvedImage = new URL(image, import.meta.env.PUBLIC_SITE_URL);
         }
     } else {
         // It's an imported Image object passed via props
@@ -123,16 +123,16 @@ if (image) {
 // 1. WebSite Schema (Global)
 const websiteSchema = {
     "@type": "WebSite",
-    "@id": `${siteData.url}/#website`,
-    url: siteData.url,
+    "@id": `${import.meta.env.PUBLIC_SITE_URL}/#website`,
+    url: import.meta.env.PUBLIC_SITE_URL,
     name: "José M. Requena Plens",
     description: siteData.description,
     inLanguage: siteData.locale,
     publisher: {
         "@type": "Person",
-        "@id": `${siteData.url}/#person`,
+        "@id": `${import.meta.env.PUBLIC_SITE_URL}/#person`,
         name: siteData.author,
-        url: siteData.url,
+        url: import.meta.env.PUBLIC_SITE_URL,
         sameAs: [
             `https://twitter.com/${siteData.twitter_creator.replace("@", "")}`,
             // Add other social links if available in site.yml
@@ -144,7 +144,7 @@ const websiteSchema = {
 const navSchema = (siteData.nav || []).map((item) => ({
     "@type": "SiteNavigationElement",
     name: item.label,
-    url: new URL(item.href, siteData.url).toString(),
+    url: new URL(item.href, import.meta.env.PUBLIC_SITE_URL).toString(),
 }));
 
 // 3. Merge Logic
@@ -277,6 +277,7 @@ const jsonLD = {
 
 <!-- JSON-LD -->
 <script
+    is:inline
     type="application/ld+json"
     set:html={JSON.stringify(jsonLD).replace(/&/g, "\\u0026")}
 />

@@ -22,18 +22,6 @@ const sortedSections = [
     cvData.find((s) => s.title === "Certificates"),
 ].filter((s): s is CVSection => !!s);
 
-// Helper to map FontAwesome classes to Iconify names
-const getIconName = (faClass: string) => {
-    if (!faClass) return "";
-    const parts = faClass.split(" ");
-    const style = parts[0]; // fab, fas
-    const name = parts[1]?.replace("fa-", "") || "";
-
-    if (style === "fab") return `fa-brands:${name}`;
-    if (style === "fas") return `fa-solid:${name}`;
-    return `fa-solid:${name}`; // Default
-};
-
 // Construct Person Schema
 const technicalSkills = sortedSections.find((s) => s.title === "Technical Skills");
 const formalEducation = sortedSections.find((s) => s.title === "Formal education");

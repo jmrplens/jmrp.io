@@ -1,9 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
-import { getEntry, type CollectionEntry } from "astro:content";
-import { createRequire } from "node:module";
-const require = createRequire(import.meta.url);
-const Cite = require("citation-js"); // Library to parse BibTeX files
+import { getEntry } from "astro:content";
+import Cite from "citation-js"; // Library to parse BibTeX files
 
 export interface PublicationItem {
   id: string;

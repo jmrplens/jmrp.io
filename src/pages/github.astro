@@ -16,15 +16,6 @@ import { Icon } from "astro-icon/components";
 const profile = await fetchGitHubProfile();
 const repos = await fetchTopRepositories(12); // Top 12 most recently updated
 
-const optimizedAvatar = await getImage({
-    src: githubAvatar,
-    format: "webp",
-    width: 120,
-    height: 120,
-    widths: [60, 120, 240],
-    sizes: "(max-width: 768px) 120px, 240px",
-});
-
 const avatarSrcSet = [60, 120, 240]
     .map(
         async (w) =>

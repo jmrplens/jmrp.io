@@ -7,7 +7,6 @@ interface Props {
     | "meshmonitor-lf"
     | "meshmonitor-mf"
     | "meshtastic-combined";
-  readonly children?: any;
 }
 
 /**
@@ -15,7 +14,7 @@ interface Props {
  */
 async function fetchMastodonStats(setError: (error: boolean) => void) {
   let peersCount = 0;
-  let mastodonTrends = [] as any[];
+  let mastodonTrends = [] as { url: string; name: string }[];
   let instanceVersion = "Unknown";
 
   try {
@@ -141,7 +140,7 @@ async function fetchPotatoVersion(): Promise<string> {
   return potatoVersion;
 }
 
-export default function ServiceStats({ type, children }: Props) {
+export default function ServiceStats({ type }: Props) {
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -234,7 +233,7 @@ export default function ServiceStats({ type, children }: Props) {
           <div>
             <h5 class="trending-header">Trending Now</h5>
             <div class="trending-grid">
-              {mastodonTrends.map((tag: any) => (
+              {mastodonTrends.map((tag: { url: string; name: string }) => (
                 <a href={tag.url} target="_blank" class="stat-btn-filled">
                   <span class="opacity-60">#</span> {tag.name}
                 </a>

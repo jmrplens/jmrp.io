@@ -108,15 +108,15 @@ const articleSchema = [
         ).toISOString(),
         author: {
             "@type": "Person",
-            "@id": `${siteData.url}/#person`,
+            "@id": `${import.meta.env.PUBLIC_SITE_URL}/#person`,
             name: siteData.author,
-            url: siteData.url,
+            url: import.meta.env.PUBLIC_SITE_URL,
         },
         publisher: {
             "@type": "Person",
-            "@id": `${siteData.url}/#person`,
+            "@id": `${import.meta.env.PUBLIC_SITE_URL}/#person`,
             name: siteData.author,
-            url: siteData.url,
+            url: import.meta.env.PUBLIC_SITE_URL,
         },
         image: new URL(jsonLdImage, Astro.site).toString(),
         mainEntityOfPage: {
