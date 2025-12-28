@@ -213,33 +213,7 @@ const articleSchema = [
         </header>
 
         <div class="layout-grid content-wrapper">
-            <div class="toc-sidebar">
-                {
-                    headings.length > 0 && (
-                        <nav class="toc" aria-label="Table of Contents">
-                            <h2>Table of Contents</h2>
-                            <ul>
-                                {headings.map((heading) => (
-                                    <li class={`toc-depth-${heading.depth}`}>
-                                        <a href={`#${heading.slug}`}>
-                                            {heading.text}
-                                        </a>
-                                    </li>
-                                ))}
-                            </ul>
-                        </nav>
-                    )
-                }
-
-                <button
-                    class="desktop-toc-btn toc-trigger"
-                    type="button"
-                    aria-label="Open Table of Contents"
-                >
-                    <Icon name="mdi:format-list-bulleted" />
-                    <span>Contents</span>
-                </button>
-            </div>
+<!-- TOC sidebar removed -->
 
             <div class="prose">
                 <Content
@@ -294,27 +268,7 @@ const articleSchema = [
             });
         }
 
-        const tocNav = document.querySelector(".toc");
-        if (!tocNav) return;
 
-        const observer = new IntersectionObserver(
-            (entries) => {
-                entries.forEach((entry) => {
-                    if (!entry.isIntersecting) {
-                        document.body.classList.add("desktop-toc-visible");
-                    } else {
-                        document.body.classList.remove("desktop-toc-visible");
-                    }
-                });
-            },
-            {
-                rootMargin: `-${getComputedStyle(document.documentElement).getPropertyValue("--header-height").trim()} 0px 0px 0px`,
-                threshold: 0,
-            },
-        );
-
-        observer.observe(tocNav);
-    });
 
     // Add copy buttons to standalone code blocks
     // Only for blocks not inside FileContent, Tabs, or CompareCode components
@@ -551,11 +505,26 @@ const articleSchema = [
     }
 
     .prose {
-        max-width: var(--max-width-prose);
+        max-width: 100%;
         margin: 0 auto;
         width: 100%;
         min-width: 0; /* Allow shrinking below content size in Grid */
         overflow-wrap: break-word; /* Ensure text wraps */
+    }
+
+    /* Restrict width of heavy components to maintain readability */
+    .prose :global(.code-wrapper),
+    .prose :global(.file-content-wrapper),
+    .prose :global(.terminal-command-wrapper),
+    .prose :global(.compare-block),
+    .prose :global(.terminal-output-wrapper),
+    .prose :global(.collapsible-wrapper),
+    .prose :global(.callout),
+    .prose :global(ui-tabs),
+    .prose :global(.youtube-embed) {
+        max-width: var(--max-width-prose, 70ch);
+        margin-left: auto;
+        margin-right: auto;
     }
 
     /* Enhance link contrast in post content */
@@ -567,108 +536,15 @@ const articleSchema = [
         min-height: 1.5em; /* Stabilize for CLS (font shifts) */
     }
 
-    .toc-sidebar {
-        /* position: sticky; <--- Removing sticky for the container */
-        top: 2rem;
-        height: 100%; /* Fill height */
-        display: none;
-    }
 
-    .desktop-toc-btn {
-        position: sticky;
-        top: calc(var(--header-height) + 0.5rem);
-        margin-top: 1rem;
 
-        display: none; /* Hidden by default */
-        align-items: center;
-        gap: 0.5rem;
 
-        background-color: var(--color-bg-secondary);
-        border: var(--border-1);
-        color: var(--color-text-muted);
-        padding: 0.75rem 1rem;
-        border-radius: var(--radius-md);
-        font-size: 0.9rem;
-        font-weight: 500;
-        cursor: pointer;
-        width: fit-content;
-        transition: all 0.2s;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-        z-index: 10;
-    }
-
-    /* Only show the button when the body class is present (toggled by JS) */
-    :global(.desktop-toc-visible) .desktop-toc-btn {
-        display: flex;
-        animation: fadeIn 0.3s ease;
-    }
-
-    .desktop-toc-btn:hover {
-        background-color: var(--color-bg-hover);
-        color: var(--color-primary);
-        border-color: var(--color-primary);
-    }
-
-    @keyframes fadeIn {
-        from {
-            opacity: 0;
-            transform: translateY(-10px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    .toc ul {
-        list-style: none;
-        padding: 0;
-    }
-
-    .toc li {
-        margin-bottom: 0.5rem;
-    }
-
-    .toc li a {
-        text-decoration: none;
-        color: var(--color-text-muted);
-        font-size: 0.9rem;
-        transition: color 0.2s;
-        display: block;
-        padding: 0.2rem 0;
-    }
-
-    .toc li a:hover {
-        color: var(--color-primary);
-    }
-
-    /* TOC Indentation */
-    .toc-depth-2 {
-        padding-left: 0;
-    }
-    .toc-depth-3 {
-        padding-left: 1rem;
-        font-size: 0.85rem;
-    }
-    .toc-depth-4 {
-        padding-left: 2rem;
-        font-size: 0.85rem;
-    }
-    .toc-depth-5 {
-        padding-left: 3rem;
-    }
-    .toc-depth-6 {
-        padding-left: 4rem;
-    }
 
     @media (min-width: 1024px) {
-        .toc-sidebar {
-            display: block;
-        }
-
         .layout-grid {
-            grid-template-columns: 250px minmax(0, 1fr);
-            gap: 4rem;
+             /* Use a centered single-column layout, but slightly wider than before if desired */
+            grid-template-columns: 1fr;
+            /* gap: 4rem; removed gap no need without columns */
         }
     }
 
