@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import yaml from "js-yaml";
+import { getEntry } from "astro:content";
 import { createRequire } from "node:module";
 const require = createRequire(import.meta.url);
 const Cite = require("citation-js"); // Library to parse BibTeX files
@@ -45,14 +45,9 @@ export async function getPublications(): Promise<PublicationGroup[]> {
     const fileContents = fs.readFileSync(filePath, "utf8");
 
     // Load coauthors
-    const coauthorsPath = path.join(
-      process.cwd(),
-      "src/data/publications/coauthors.yml",
-    );
-    const coauthorsRaw = fs.readFileSync(coauthorsPath, "utf8");
-    const coauthors: Record<string, Coauthor[]> = yaml.load(
-      coauthorsRaw,
-    ) as any;
+    const coauthorsEntry = await getEntry("publications_data", "coauthors");
+    const coauthors: Record<string, Coauthor[]> =
+      (coauthorsEntry?.data as unknown as Record<string, Coauthor[]>) || {};
 
     /**
      * Helper to manually extract custom fields from the raw BibTeX string.

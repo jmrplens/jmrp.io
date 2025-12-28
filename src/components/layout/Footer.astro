@@ -1,24 +1,20 @@
 ---
 /**
  * Footer component.
- * Displays copyright info and social media links loaded from `src/data/config/socials.yml`.
+ * Displays copyright info and social media links loaded from `src/content/site_config/socials.yaml`.
  * Includes logic to map FontAwesome classes to Iconify names.
  */
-import fs from "fs";
-import path from "path";
-import yaml from "js-yaml";
+import { getEntry } from "astro:content";
 import { Icon } from "astro-icon/components";
 
 const today = new Date();
 
 // Load socials
-const socialsPath = path.join(process.cwd(), "src/data/config/socials.yml");
-const socialsRaw = fs.readFileSync(socialsPath, "utf8");
-const socials = yaml.load(socialsRaw) as any;
+const socialsEntry = await getEntry("site_config", "socials");
+const socials: any = socialsEntry?.data || {};
 
-const sitePath = path.join(process.cwd(), "src/data/config/site.yml");
-const siteRaw = fs.readFileSync(sitePath, "utf8");
-const siteConfig = yaml.load(siteRaw) as any;
+const siteEntry = await getEntry("site_config", "site");
+const siteConfig: any = siteEntry?.data || {};
 
 const socialLinks: any[] = [];
 

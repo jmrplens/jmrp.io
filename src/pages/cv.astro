@@ -10,7 +10,7 @@ import { Icon } from "astro-icon/components";
 import SkillGroup from "@components/cv/SkillGroup.astro";
 import CertificateGroup from "@components/cv/CertificateGroup.astro";
 
-const cvData = getCVData();
+const cvData = await getCVData();
 
 // Helper to map FontAwesome classes to Iconify names
 const getIconName = (faClass: string) => {

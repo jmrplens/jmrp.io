@@ -24,9 +24,7 @@ import faviconSrc from "@assets/favicon.png";
 import appleTouchIconSrc from "@assets/apple-touch-icon.png";
 import defaultOgImage from "@assets/mehome_landscape.jpeg";
 
-import fs from "fs";
-import path from "path";
-import yaml from "js-yaml";
+import { getEntry } from "astro:content";
 
 const favicon = await getImage({
     src: faviconSrc,
@@ -41,9 +39,8 @@ const appleTouchIcon = await getImage({
     height: 180,
 });
 
-const sitePath = path.join(process.cwd(), "src/data/config/site.yml");
-const siteRaw = fs.readFileSync(sitePath, "utf8");
-const siteData = yaml.load(siteRaw) as any;
+const siteEntry = await getEntry("site_config", "site");
+const siteData: any = siteEntry?.data || {};
 
 interface Props {
     title: string;
