@@ -10,8 +10,6 @@ Este documento detalla los pasos para optimizar el proyecto siguiendo los están
 
 - **Resultado**: Código más limpio y mantenible.
 
-
-
 ## 2. Migración a Content Collections para Datos (YAML) 🟢 (En curso)
 
 - [ ] Mover los archivos YAML de `src/data/` a `src/content/data/` (o configurar una colección de tipo 'data').

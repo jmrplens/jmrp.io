@@ -10,9 +10,10 @@ import mehomeImg from "@assets/mehome.jpg";
 import { Icon } from "astro-icon/components";
 // Config
 import { getEntry } from "astro:content";
+import type { SiteConfig } from "@src/types";
 
 const siteEntry = await getEntry("site_config", "site");
-const siteData: any = siteEntry?.data || {};
+const siteData = (siteEntry?.data || {}) as SiteConfig;
 
 const { hero } = siteData;
 

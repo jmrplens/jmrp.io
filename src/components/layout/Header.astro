@@ -7,9 +7,10 @@
 import ThemeToggle from "@components/ui/ThemeToggle.astro";
 import { Icon } from "astro-icon/components";
 import { getEntry } from "astro:content";
+import type { SiteConfig } from "@src/types";
 
 const siteEntry = await getEntry("site_config", "site");
-const siteData: any = siteEntry?.data || {};
+const siteData = (siteEntry?.data || {}) as SiteConfig;
 
 const navItems = siteData.nav || [];
 const logoText = siteData.logo_text || "<JMRP />";
@@ -35,7 +36,7 @@ const logoText = siteData.logo_text || "<JMRP />";
             </button>
             <ul id="nav-links" class="nav-links">
                 {
-                    navItems.map((item: any) => (
+                    navItems.map((item) => (
                         <li>
                             <a href={item.href}>{item.label}</a>
                         </li>

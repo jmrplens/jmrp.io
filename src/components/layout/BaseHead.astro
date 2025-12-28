@@ -25,6 +25,7 @@ import appleTouchIconSrc from "@assets/apple-touch-icon.png";
 import defaultOgImage from "@assets/mehome_landscape.jpeg";
 
 import { getEntry } from "astro:content";
+import type { SiteConfig } from "@src/types";
 
 const favicon = await getImage({
     src: faviconSrc,
@@ -40,7 +41,7 @@ const appleTouchIcon = await getImage({
 });
 
 const siteEntry = await getEntry("site_config", "site");
-const siteData: any = siteEntry?.data || {};
+const siteData = (siteEntry?.data || {}) as SiteConfig;
 
 interface Props {
     title: string;
@@ -60,7 +61,7 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 const {
     title,
     description = siteData.description,
-    image = siteData.image,
+    image,
     type = "website",
     publishDate,
     modifiedDate,
@@ -140,7 +141,7 @@ const websiteSchema = {
 };
 
 // 2. Navigation Schema
-const navSchema = (siteData.nav || []).map((item: any) => ({
+const navSchema = (siteData.nav || []).map((item) => ({
     "@type": "SiteNavigationElement",
     name: item.label,
     url: new URL(item.href, siteData.url).toString(),

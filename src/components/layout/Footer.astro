@@ -7,17 +7,28 @@
 import { getEntry } from "astro:content";
 import { Icon } from "astro-icon/components";
 import { Image } from "astro:assets";
+import type { SiteConfig, SocialsConfig } from "@src/types";
 
 const today = new Date();
 
 // Load socials
 const socialsEntry = await getEntry("site_config", "socials");
-const socials: any = socialsEntry?.data || {};
+const socials = (socialsEntry?.data || {}) as SocialsConfig;
 
 const siteEntry = await getEntry("site_config", "site");
-const siteConfig: any = siteEntry?.data || {};
+const siteConfig = (siteEntry?.data || {}) as SiteConfig;
 
-const socialLinks: any[] = [];
+interface SocialLink {
+    url: string;
+    label: string;
+    icon?: string;
+    icon_name?: string;
+    img_light?: string;
+    img_dark?: string;
+    rel?: string;
+}
+
+const socialLinks: SocialLink[] = [];
 
 if (socials.github_username) {
     socialLinks.push({
@@ -66,10 +77,8 @@ if (socials.matrix_id) {
 
 // Custom Socials
 if (socials.custom_social) {
-    const customs = Array.isArray(socials.custom_social)
-        ? socials.custom_social
-        : [socials.custom_social];
-    customs.forEach((item: any) => {
+    const customs = socials.custom_social;
+    customs.forEach((item) => {
         if (item.icon) {
             socialLinks.push({
                 url: item.url,

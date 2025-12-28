@@ -21,9 +21,10 @@ import TableOfContentsDrawer from "@components/layout/TableOfContentsDrawer.astr
 import References from "@components/cv/References.astro";
 
 import { getEntry } from "astro:content";
+import type { SiteConfig } from "@src/types";
 
 const siteEntry = await getEntry("site_config", "site");
-const siteData: any = siteEntry?.data || {};
+const siteData = (siteEntry?.data || {}) as SiteConfig;
 
 export async function getStaticPaths() {
     const posts = await getCollection("posts");
