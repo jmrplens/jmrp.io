@@ -6,6 +6,7 @@
  */
 import { getEntry } from "astro:content";
 import { Icon } from "astro-icon/components";
+import { Image } from "astro:assets";
 
 const today = new Date();
 
@@ -143,16 +144,20 @@ const getIconName = (faClass: string) => {
                         )}
                         {link.img_light && link.img_dark && (
                             <>
-                                <img
+                                <Image
                                     src={link.img_light}
                                     alt={link.label}
+                                    width={28}
+                                    height={28}
                                     class="social-icon light-icon"
                                     loading="lazy"
                                     decoding="async"
                                 />
-                                <img
+                                <Image
                                     src={link.img_dark}
                                     alt={link.label}
+                                    width={28}
+                                    height={28}
                                     class="social-icon dark-icon"
                                     loading="lazy"
                                     decoding="async"
