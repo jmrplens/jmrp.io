@@ -1,8 +1,13 @@
 ---
 /**
- * CompareCode component.
- * Displays two code blocks side by side for comparison (bad vs good).
- * Each block has its own copy button in the top-right corner.
+ * CompareCode Component
+ * Displays two code blocks side by side for comparison (e.g., Bad vs Good).
+ *
+ * Usage:
+ * <CompareCode badTitle="Vulnerable" goodTitle="Secure">
+ *   <div slot="bad">...code...</div>
+ *   <div slot="good">...code...</div>
+ * </CompareCode>
  */
 import { Icon } from "astro-icon/components";
 import CopyButton from "./CopyButton.astro";
@@ -17,24 +22,24 @@ const { badTitle = "Blocked / Insecure", goodTitle = "Allowed / Secure" } =
 ---
 
 <div class="compare-code-wrapper">
-  <div class="compare-block bad">
+  <div class="compare-block bad copy-container">
     <div class="header">
       <Icon name="mdi:close-circle-outline" class="icon" />
       <span>{badTitle}</span>
-    </div>
-    <div class="content copy-container">
-      <slot name="bad" />
       <CopyButton class="compare-copy-button" />
     </div>
+    <div class="content">
+      <slot name="bad" />
+    </div>
   </div>
-  <div class="compare-block good">
+  <div class="compare-block good copy-container">
     <div class="header">
       <Icon name="mdi:check-circle-outline" class="icon" />
       <span>{goodTitle}</span>
-    </div>
-    <div class="content copy-container">
-      <slot name="good" />
       <CopyButton class="compare-copy-button" />
+    </div>
+    <div class="content">
+      <slot name="good" />
     </div>
   </div>
 </div>
@@ -49,87 +54,95 @@ const { badTitle = "Blocked / Insecure", goodTitle = "Allowed / Secure" } =
 
   @media (min-width: 768px) {
     .compare-code-wrapper {
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   }
 
   .compare-block {
+    display: flex;
+    flex-direction: column;
     border-radius: var(--radius-md);
-    overflow: hidden;
-    border: var(--border-1);
+    border: 1px solid var(--compare-border-color);
+    background-color: var(--color-bg-secondary); /* Standard solid background */
+    overflow: hidden; /* Clear clip */
   }
 
   .compare-block.bad {
-    background-color: rgba(220, 38, 38, 0.05);
+    --compare-border-color: var(--color-border-bad);
+    --compare-header-bg: var(--color-bg-bad-header);
+    --compare-header-text: #ffffff;
   }
 
   .compare-block.good {
-    background-color: rgba(22, 163, 74, 0.05);
+    --compare-border-color: var(--color-border-good);
+    --compare-header-bg: var(--color-bg-good-header);
+    --compare-header-text: #ffffff;
   }
 
-  /* Darker borders in dark mode to reduce glare */
-  :root[data-theme="dark"] .compare-block.bad {
-    border-color: #b91c1c; /* Red-700 - softer in dark mode */
-    background-color: rgba(185, 28, 28, 0.05);
+  /* Theme Tokens */
+  :root {
+    /* Safe Colors (WCAG AA) */
+    --color-bg-bad-header: #b91c1c; /* Red 700 */
+    --color-border-bad: #b91c1c;
+
+    --color-bg-good-header: #15803d; /* Green 700 */
+    --color-border-good: #15803d;
   }
 
-  :root[data-theme="dark"] .compare-block.good {
-    border-color: #15803d; /* Green-700 - softer in dark mode */
-    background-color: rgba(21, 128, 61, 0.05);
+  :root[data-theme="dark"] {
+    --color-bg-bad-header: #991b1b; /* Red 800 */
+    --color-border-bad: #7f1d1d;
+
+    --color-bg-good-header: #166534; /* Green 800 */
+    --color-border-good: #14532d;
   }
 
   .header {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    padding: 0.75rem 1rem;
+    padding: 0.5rem 1rem;
     font-weight: bold;
     font-size: 0.9rem;
-    border-bottom: 1px solid inherit;
-  }
-
-  .bad .header {
-    background-color: #b91c1c; /* Red-700 for better contrast (4.58:1) */
-    color: #ffffff;
-  }
-
-  .good .header {
-    background-color: #15803d; /* Green-700 for better contrast (4.53:1) */
-    color: #ffffff;
-  }
-
-  /* Darker header backgrounds in dark mode to reduce glare */
-  :root[data-theme="dark"] .bad .header {
-    background-color: #7f1d1d; /* Darker Red for better dark mode feel */
-  }
-
-  :root[data-theme="dark"] .good .header {
-    background-color: #064e3b; /* Darker Green for better dark mode feel */
+    background-color: var(--compare-header-bg);
+    color: var(--compare-header-text);
   }
 
   .icon {
     font-size: 1.25rem;
+    color: currentColor;
+  }
+
+  /* Header Copy Button */
+  .header :global(.compare-copy-button) {
+    position: static;
+    margin-left: auto;
+    border-color: rgba(255, 255, 255, 0.3);
+    background-color: rgba(0, 0, 0, 0.2);
+    color: #fff;
+    width: 28px;
+    height: 28px;
+    min-width: 0;
+    min-height: 0;
   }
 
   .content {
-    position: relative; /* For copy button positioning */
-    padding: 0; /* Remove padding to let code blocks fill */
-    font-size: 0.9rem;
+    /* No relative positioning needed if copy button is in header */
+    padding: 0;
   }
 
-  /* Position copy button in top-right corner of each content area */
-  .content :global(.compare-copy-button) {
-    position: absolute;
-    top: 0.5rem;
-    right: 0.5rem;
-    z-index: 10;
-  }
-
-  /* Adjust internal code blocks to fit better */
+  /* Force Code Block Styles */
   .content :global(pre) {
     margin: 0 !important;
+    padding: 1rem !important;
     border: none !important;
-    background: transparent !important;
+    background: transparent !important; /* Let container bg show through */
     border-radius: 0 !important;
+    overflow-x: auto;
+  }
+
+  /* Ensure code text is visible */
+  .content :global(code) {
+    background-color: transparent !important;
   }
 </style>

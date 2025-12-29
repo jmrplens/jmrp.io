@@ -23,7 +23,7 @@ const { headings } = Astro.props;
             <button
                 id="toc-toggle-btn"
                 type="button"
-                class="toc-fab toc-trigger mobile-only"
+                class="toc-fab toc-trigger"
                 aria-label="Table of Contents"
                 aria-haspopup="true"
                 aria-expanded="false"
@@ -330,63 +330,26 @@ const { headings } = Astro.props;
         visibility: visible;
     }
 
-    /* Desktop Hide */
+    /* Desktop Styles */
     @media (min-width: 1024px) {
-        .toc-fab.mobile-only {
-            display: none !important;
-        }
+        /* On desktop, we still use the FAB and drawer, but maybe style the drawer as a side panel */
+        /* The existing CSS for .toc-drawer is mostly fine, we just need to ensure it's not hidden by media queries */
 
         .toc-drawer {
-            display: none;
-        }
-
-        .toc-backdrop {
-            display: none;
-        }
-
-        /* Allow showing via class even on desktop */
-        :global(.desktop-toc-visible) .toc-fab {
-            display: flex;
-        }
-
-        /* When open on desktop, show these */
-        :global(.desktop-toc-visible) .toc-drawer.open,
-        :global(.desktop-toc-visible) .toc-backdrop.open {
-            display: flex; /* or block/flex as appropriate */
-        }
-
-        :global(.desktop-toc-visible) .toc-drawer {
-            display: flex;
-            /* Desktop specific positioning */
+            /* Ensure it acts as a side drawer on desktop */
             top: 0;
             left: 0;
-            bottom: auto;
-            height: 100vh;
-            max-height: none; /* Override mobile max-height */
-            border-radius: 0;
-            border-top-left-radius: 0;
-            border-top-right-radius: 0;
-
-            /* Layering: Above Header */
-            z-index: var(--z-drawer);
-
-            /* Width logic */
-            width: fit-content;
-            min-width: 300px;
+            bottom: 0; /* Full height */
+            width: 320px; /* Fixed width */
             max-width: 400px;
-
-            /* Animation override */
-            transform: translateX(-100%);
+            max-height: none;
+            border-radius: 0;
+            transform: translateX(-100%); /* Slide from left */
             border-right: var(--border-1);
         }
 
-        :global(.desktop-toc-visible) .toc-drawer.open {
+        .toc-drawer.open {
             transform: translateX(0);
-        }
-
-        :global(.desktop-toc-visible) .toc-backdrop {
-            display: block;
-            z-index: var(--z-backdrop); /* Above Header */
         }
     }
 </style>
