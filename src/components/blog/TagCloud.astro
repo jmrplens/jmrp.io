@@ -10,7 +10,7 @@ const tags = getUniqueTags(posts);
   <h3>Topics</h3>
   <div class="tags">
     {tags.map(({ tag, count }) => (
-      <a href={`/blog/tags/${tag}`} class="tag">
+      <a href={`/blog/tags/${encodeURIComponent(tag)}`} class="tag">
         <span class="hash">#</span>{tag} <span class="count">{count}</span>
       </a>
     ))}

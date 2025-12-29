@@ -4,6 +4,7 @@ import PostGrid from "@components/blog/PostGrid.astro";
 import TagCloud from "@components/blog/TagCloud.astro";
 import { getCollection } from "astro:content";
 import { getUniqueTags } from "@utils/blog";
+import "@styles/blog.css";
 
 export async function getStaticPaths() {
   const posts = (await getCollection("posts")).filter((post) => !post.data.draft);
@@ -23,11 +24,29 @@ export async function getStaticPaths() {
 
 const { tag } = Astro.params;
 const { posts } = Astro.props;
+
+// Schema.org: CollectionPage with ItemList
+const schema = {
+  "@type": "CollectionPage",
+  name: `Blog posts tagged with #${tag}`,
+  description: `Browse ${posts.length} articles about ${tag}.`,
+  url: new URL(Astro.url.pathname, Astro.site).toString(),
+  mainEntity: {
+    "@type": "ItemList",
+    itemListElement: posts.map((post, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      url: new URL(`/blog/${post.slug}/`, Astro.site).toString(),
+      name: post.data.title,
+    })),
+  },
+};
 ---
 
 <BaseLayout
   title={`Blog - #${tag}`}
   description={`Posts tagged with #${tag}`}
+  schema={schema}
 >
   <div class="content-wrapper">
     <header class="page-header">
@@ -50,34 +69,6 @@ const { posts } = Astro.props;
 </BaseLayout>
 
 <style>
-    .content-wrapper {
-        max-width: var(--max-width-container);
-        margin: 0 auto;
-        padding: 4rem 2rem;
-        width: 100%;
-    }
-
-    .page-header {
-        margin-bottom: 4rem;
-        text-align: center;
-    }
-
-    .page-header h1 {
-        font-size: 3.5rem;
-        font-weight: 800;
-        margin-bottom: 0.5rem;
-        letter-spacing: -0.02em;
-    }
-
-    .gradient-text {
-        color: var(--color-primary);
-    }
-
-    .subtitle {
-        font-size: 1.25rem;
-        color: var(--color-text-muted);
-    }
-    
     .back-link {
         margin-top: 1rem;
     }
@@ -92,42 +83,5 @@ const { posts } = Astro.props;
     .back-link a:hover {
         border-color: currentColor;
         color: var(--color-primary);
-    }
-
-    .blog-layout {
-        display: grid;
-        grid-template-columns: 1fr 300px;
-        gap: 3rem;
-        align-items: start;
-    }
-
-    @media (max-width: 900px) {
-        .page-header {
-            margin-bottom: 1rem;
-        }
-        .blog-layout {
-            grid-template-columns: 1fr;
-            display: flex;
-            flex-direction: column;
-            gap: 2rem;
-        }
-
-        aside {
-            order: -1;
-            width: 100%;
-            position: sticky;
-            top: 0;
-            z-index: 10;
-        }
-    }
-    
-    @media (max-width: 640px) {
-        .content-wrapper {
-            padding: 2rem 1rem;
-        }
-
-        .page-header h1 {
-            font-size: 2.5rem;
-        }
     }
 </style>

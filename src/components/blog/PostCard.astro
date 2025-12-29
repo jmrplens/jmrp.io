@@ -41,7 +41,7 @@ const { post, loading = "lazy", fetchpriority = "auto" } = Astro.props;
       {post.data.tags && (
         <div class="tags">
           {post.data.tags.slice(0, 3).map((tag) => (
-            <a href={`/blog/tags/${tag}`} class="tag">#{tag}</a>
+            <a href={`/blog/tags/${encodeURIComponent(tag)}`} class="tag">#{tag}</a>
           ))}
         </div>
       )}
