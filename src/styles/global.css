@@ -177,6 +177,17 @@ h1 {
   font-size: 1.75em;
 }
 
+/* Accessibility: Ensure links in prose are always distinguishable */
+.prose a {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+
+.prose a:hover {
+  text-decoration-thickness: 2px;
+}
+
 /* Utilities */
 .container {
   max-width: var(--max-width-container);
