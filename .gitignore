@@ -60,3 +60,5 @@ CV_RequenaPlensJoseManuel_*.pdf
 html-validation.json
 html-errors.log
 accessibility-summary.json
+test_output.txt
+validation_*.txt

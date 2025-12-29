@@ -4,3 +4,11 @@ package.json
 pnpm-lock.yaml
 docs
 src/content/posts
+
+# Dependencies
+node_modules
+
+# Build & Test Artifacts
+test-results
+playwright-report
+accessibility-report
