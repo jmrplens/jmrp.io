@@ -19,6 +19,7 @@ import YouTube from "@components/ui/YouTube.astro";
 import Code from "@components/ui/Code.astro";
 import TableOfContentsDrawer from "@components/layout/TableOfContentsDrawer.astro";
 import References from "@components/cv/References.astro";
+import "@styles/blog.css";
 
 import { getEntry } from "astro:content";
 import type { SiteConfig } from "@src/types";
@@ -182,7 +183,12 @@ const articleSchema = [
                         post.data.tags && (
                             <div class="tags">
                                 {post.data.tags.map((tag) => (
-                                    <span class="tag">#{tag}</span>
+                                    <a
+                                        href={`/blog/tags/${encodeURIComponent(tag)}`}
+                                        class="tag"
+                                    >
+                                        #{tag}
+                                    </a>
                                 ))}
                             </div>
                         )
@@ -385,27 +391,6 @@ const articleSchema = [
         border-bottom: var(--border-1);
     }
 
-    .content-wrapper {
-        max-width: 1200px;
-        margin: 0 auto;
-        padding: 0 2rem;
-    }
-
-    .back-link {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-        color: var(--color-text-muted);
-        text-decoration: none;
-        font-size: 0.9rem;
-        margin-bottom: 2rem;
-        transition: color 0.2s;
-    }
-
-    .back-link:hover {
-        color: var(--color-primary);
-    }
-
     .meta {
         display: flex;
         align-items: center;
@@ -459,6 +444,8 @@ const articleSchema = [
         overflow: hidden;
         box-shadow: var(--shadow-lg);
         background-color: var(--color-bg-secondary);
+        width: 100%;
+        /* Default aspect ratio for mobile */
         aspect-ratio: 16 / 9;
     }
 
@@ -469,19 +456,15 @@ const articleSchema = [
         display: block;
     }
 
-    .tags {
-        display: flex;
-        gap: 0.5rem;
-        flex-wrap: wrap;
-        min-height: 1.5em; /* Stabilize for CLS */
-    }
-
-    .tag {
-        color: var(--color-primary);
-        font-weight: var(--fw-semibold);
-        font-size: 0.85rem;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
+    /* Desktop adjustments for cover image */
+    @media (min-width: 768px) {
+        .cover-image-container {
+            aspect-ratio: auto; /* Allow height to be constrained */
+            max-height: 400px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
     }
 
     /* Stabilize Generic Content Images (Mermaid, etc.) */
