@@ -59,122 +59,89 @@ const { badTitle = "Blocked / Insecure", goodTitle = "Allowed / Secure" } =
   }
 
   .compare-block {
-    border-radius: var(--radius-md);
-    border: var(--border-1);
-    min-width: 0; /* Fix for grid blowout on overflow */
     display: flex;
     flex-direction: column;
-    position: relative; /* Context for sticky */
-    background-color: var(--compare-bg);
-    border-color: var(--compare-border);
-
-    /* Override global theme vars for the CopyButton within this block */
-    --color-text-muted: rgba(255, 255, 255, 0.9);
-    --color-bg-subtle: rgba(255, 255, 255, 0.2);
-    --color-bg-secondary: rgba(255, 255, 255, 0.3); /* Hover state */
+    border-radius: var(--radius-md);
+    border: 1px solid var(--compare-border-color);
+    background-color: var(--color-bg-secondary); /* Standard solid background */
+    overflow: hidden; /* Clear clip */
   }
 
   .compare-block.bad {
-    --compare-bg: var(--color-bg-bad);
-    --compare-border: var(--color-border-bad);
-    --compare-header-bg: var(--color-header-bad);
+    --compare-border-color: var(--color-border-bad);
+    --compare-header-bg: var(--color-bg-bad-header);
     --compare-header-text: #ffffff;
-    --compare-icon-color: #ffffff;
   }
 
   .compare-block.good {
-    --compare-bg: var(--color-bg-good);
-    --compare-border: var(--color-border-good);
-    --compare-header-bg: var(--color-header-good);
+    --compare-border-color: var(--color-border-good);
+    --compare-header-bg: var(--color-bg-good-header);
     --compare-header-text: #ffffff;
-    --compare-icon-color: #ffffff;
   }
 
   /* Theme Tokens */
   :root {
-    /* Light Mode Defaults */
-    --color-bg-bad: rgba(
-      220,
-      38,
-      38,
-      0.02
-    ); /* Reduced opacity for contrast (was 0.05) */
-    --color-border-bad: rgba(220, 38, 38, 0.2);
-    --color-header-bad: #b91c1c; /* Red 700 for better contrast safety */
+    /* Safe Colors (WCAG AA) */
+    --color-bg-bad-header: #b91c1c; /* Red 700 */
+    --color-border-bad: #b91c1c;
 
-    --color-bg-good: rgba(22, 163, 74, 0.05);
-    --color-border-good: rgba(22, 163, 74, 0.2);
-    --color-header-good: #15803d; /* Green 700 for accessible contrast */
+    --color-bg-good-header: #15803d; /* Green 700 */
+    --color-border-good: #15803d;
   }
 
   :root[data-theme="dark"] {
-    /* Dark Mode Defaults - Softer borders, darker headers */
-    --color-bg-bad: rgba(127, 29, 29, 0.1); /* Red 900 base */
-    --color-border-bad: rgba(185, 28, 28, 0.4);
-    --color-header-bad: #991b1b; /* Red 800 */
+    --color-bg-bad-header: #991b1b; /* Red 800 */
+    --color-border-bad: #7f1d1d;
 
-    --color-bg-good: rgba(20, 83, 45, 0.1); /* Green 900 base */
-    --color-border-good: rgba(21, 128, 61, 0.4);
-    --color-header-good: #166534; /* Green 800 */
+    --color-bg-good-header: #166534; /* Green 800 */
+    --color-border-good: #14532d;
   }
 
   .header {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    padding: 0.75rem 1rem;
+    padding: 0.5rem 1rem;
     font-weight: bold;
     font-size: 0.9rem;
     background-color: var(--compare-header-bg);
     color: var(--compare-header-text);
-
-    /* Sticky Positioning Restored */
-    position: sticky;
-    top: 0;
-    z-index: 20;
-
-    /* Manual Radius to match parent since overflow is visible */
-    border-top-left-radius: calc(var(--radius-md) - 1px);
-    border-top-right-radius: calc(var(--radius-md) - 1px);
   }
 
   .icon {
     font-size: 1.25rem;
-    color: var(--compare-icon-color);
+    color: currentColor;
   }
 
-  /* Style CopyButton in Header */
+  /* Header Copy Button */
   .header :global(.compare-copy-button) {
-    position: static; /* No longer absolute */
-    margin-left: auto; /* Push to right */
+    position: static;
+    margin-left: auto;
     border-color: rgba(255, 255, 255, 0.3);
+    background-color: rgba(0, 0, 0, 0.2);
+    color: #fff;
+    width: 28px;
+    height: 28px;
+    min-width: 0;
+    min-height: 0;
   }
 
   .content {
-    position: relative;
+    /* No relative positioning needed if copy button is in header */
     padding: 0;
-    font-size: 0.9rem;
-    flex: 1;
   }
 
-  /* Adjust internal code blocks to fit better */
+  /* Force Code Block Styles */
   .content :global(pre) {
     margin: 0 !important;
-    padding: 0.75rem 1rem !important;
-    /* padding-right removed, button is gone */
+    padding: 1rem !important;
     border: none !important;
-
-    /* Use standard background (same as Code component) instead of tint */
-    background: var(--color-bg-secondary) !important;
-
+    background: transparent !important; /* Let container bg show through */
     border-radius: 0 !important;
-
-    /* Manual Radius for bottom */
-    border-bottom-left-radius: calc(var(--radius-md) - 1px) !important;
-    border-bottom-right-radius: calc(var(--radius-md) - 1px) !important;
+    overflow-x: auto;
   }
 
-  /* Ensure text contrast is standard */
+  /* Ensure code text is visible */
   .content :global(code) {
     background-color: transparent !important;
   }
