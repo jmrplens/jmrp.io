@@ -49,33 +49,59 @@ const { badTitle = "Blocked / Insecure", goodTitle = "Allowed / Secure" } =
 
   @media (min-width: 768px) {
     .compare-code-wrapper {
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   }
 
   .compare-block {
     border-radius: var(--radius-md);
-    overflow: hidden;
     border: var(--border-1);
+    min-width: 0; /* Fix for grid blowout on overflow */
+    display: flex;
+    flex-direction: column;
+    /* overflow: hidden; REMOVED to allow sticky headers to work */
+    position: relative; /* Context for sticky */
+    background-color: var(--compare-bg);
+    border-color: var(--compare-border);
   }
 
   .compare-block.bad {
-    background-color: rgba(220, 38, 38, 0.05);
+    --compare-bg: var(--color-bg-bad);
+    --compare-border: var(--color-border-bad);
+    --compare-header-bg: var(--color-header-bad);
+    --compare-header-text: #ffffff;
+    --compare-icon-color: #ffffff;
   }
 
   .compare-block.good {
-    background-color: rgba(22, 163, 74, 0.05);
+    --compare-bg: var(--color-bg-good);
+    --compare-border: var(--color-border-good);
+    --compare-header-bg: var(--color-header-good);
+    --compare-header-text: #ffffff;
+    --compare-icon-color: #ffffff;
   }
 
-  /* Darker borders in dark mode to reduce glare */
-  :root[data-theme="dark"] .compare-block.bad {
-    border-color: #b91c1c; /* Red-700 - softer in dark mode */
-    background-color: rgba(185, 28, 28, 0.05);
+  /* Theme Tokens */
+  :root {
+    /* Light Mode Defaults */
+    --color-bg-bad: rgba(220, 38, 38, 0.05);
+    --color-border-bad: rgba(220, 38, 38, 0.2);
+    --color-header-bad: #dc2626; /* Red 600 */
+
+    --color-bg-good: rgba(22, 163, 74, 0.05);
+    --color-border-good: rgba(22, 163, 74, 0.2);
+    --color-header-good: #16a34a; /* Green 600 */
   }
 
-  :root[data-theme="dark"] .compare-block.good {
-    border-color: #15803d; /* Green-700 - softer in dark mode */
-    background-color: rgba(21, 128, 61, 0.05);
+  :root[data-theme="dark"] {
+    /* Dark Mode Defaults - Softer borders, darker headers */
+    --color-bg-bad: rgba(127, 29, 29, 0.1); /* Red 900 base */
+    --color-border-bad: rgba(185, 28, 28, 0.4);
+    --color-header-bad: #991b1b; /* Red 800 */
+
+    --color-bg-good: rgba(20, 83, 45, 0.1); /* Green 900 base */
+    --color-border-good: rgba(21, 128, 61, 0.4);
+    --color-header-good: #166534; /* Green 800 */
   }
 
   .header {
@@ -85,39 +111,33 @@ const { badTitle = "Blocked / Insecure", goodTitle = "Allowed / Secure" } =
     padding: 0.75rem 1rem;
     font-weight: bold;
     font-size: 0.9rem;
-    border-bottom: 1px solid inherit;
-  }
+    background-color: var(--compare-header-bg);
+    color: var(--compare-header-text);
 
-  .bad .header {
-    background-color: #b91c1c; /* Red-700 for better contrast (4.58:1) */
-    color: #ffffff;
-  }
+    /* Sticky Positioning */
+    position: sticky;
+    top: 0;
+    z-index: 20;
 
-  .good .header {
-    background-color: #15803d; /* Green-700 for better contrast (4.53:1) */
-    color: #ffffff;
-  }
-
-  /* Darker header backgrounds in dark mode to reduce glare */
-  :root[data-theme="dark"] .bad .header {
-    background-color: #7f1d1d; /* Darker Red for better dark mode feel */
-  }
-
-  :root[data-theme="dark"] .good .header {
-    background-color: #064e3b; /* Darker Green for better dark mode feel */
+    /* Manual Radius to match parent since overflow is visible */
+    border-top-left-radius: calc(var(--radius-md) - 1px);
+    border-top-right-radius: calc(var(--radius-md) - 1px);
   }
 
   .icon {
     font-size: 1.25rem;
+    color: var(--compare-icon-color);
   }
 
   .content {
     position: relative; /* For copy button positioning */
     padding: 0; /* Remove padding to let code blocks fill */
     font-size: 0.9rem;
+    flex: 1; /* Stretch to fill height if needed */
   }
 
-  /* Position copy button in top-right corner of each content area */
+  /* Position copy button in top-right corner */
+  /* Ensure it sticks or stays relative to the content? Absolute is relative to content container. */
   .content :global(.compare-copy-button) {
     position: absolute;
     top: 0.5rem;
@@ -128,8 +148,14 @@ const { badTitle = "Blocked / Insecure", goodTitle = "Allowed / Secure" } =
   /* Adjust internal code blocks to fit better */
   .content :global(pre) {
     margin: 0 !important;
+    padding: 0.75rem 1rem !important; /* Match Code component padding */
+    padding-right: 3rem !important; /* Space for copy button */
     border: none !important;
     background: transparent !important;
     border-radius: 0 !important;
+
+    /* Manual Radius for bottom */
+    border-bottom-left-radius: calc(var(--radius-md) - 1px) !important;
+    border-bottom-right-radius: calc(var(--radius-md) - 1px) !important;
   }
 </style>

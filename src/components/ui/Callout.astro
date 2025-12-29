@@ -6,16 +6,19 @@ import { Icon } from "astro-icon/components";
  * Renders a colored alert box with an icon to highlight information.
  */
 interface Props {
-    type?: "info" | "warning" | "error" | "success";
+    type?: "info" | "warning" | "error" | "success" | "tip" | "note";
+    title?: string;
 }
 
-const { type = "info" } = Astro.props;
+const { type = "info", title } = Astro.props;
 
 const icons = {
     info: "mdi:information-outline",
     warning: "mdi:alert-outline",
     error: "mdi:alert-circle-outline",
     success: "mdi:check-circle-outline",
+    tip: "mdi:lightbulb-outline",
+    note: "mdi:information-variant-circle-outline",
 };
 
 const colors = {
@@ -23,6 +26,8 @@ const colors = {
     warning: "#f59e0b",
     error: "#ef4444",
     success: "#10b981",
+    tip: "#8b5cf6", // Violet-500
+    note: "#6b7280", // Gray-500
 };
 
 const bgColors = {
@@ -30,17 +35,26 @@ const bgColors = {
     warning: "rgba(245, 158, 11, 0.1)",
     error: "rgba(239, 68, 68, 0.1)",
     success: "rgba(16, 185, 129, 0.1)",
+    tip: "rgba(139, 92, 246, 0.1)",
+    note: "rgba(107, 114, 128, 0.1)",
 };
 ---
 
-<div class={`callout callout-${type}`}>
-    <span class="icon">
+<aside
+    class={`callout callout-${type}`}
+    role="note"
+    aria-label={title || `${type} callout`}
+>
+    <div class="icon-wrapper" aria-hidden="true">
         <Icon name={icons[type]} size={24} />
-    </span>
-    <div class="content">
-        <slot />
     </div>
-</div>
+    <div class="content-wrapper">
+        {title && <strong class="callout-title">{title}</strong>}
+        <div class="content">
+            <slot />
+        </div>
+    </div>
+</aside>
 
 <style
     define:vars={{
@@ -54,15 +68,36 @@ const bgColors = {
         padding: 1rem 1.25rem;
         background: var(--callout-bg);
         border-left: 4px solid var(--callout-color);
-        border-radius: 0.5rem;
+        border-radius: var(--radius-md);
         margin: 1.5rem 0;
+        position: relative;
+        overflow: hidden;
     }
 
-    .icon {
+    /* Subtle background pattern/texture could go here if desired */
+
+    .icon-wrapper {
         color: var(--callout-color);
         flex-shrink: 0;
-        margin-top: 0.1rem;
+        margin-top: 2px; /* Visual alignment with title/text */
+        display: flex;
+        align-items: flex-start;
+    }
+
+    .content-wrapper {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+        width: 100%;
+        min-width: 0; /* Prevent flex blowout */
+    }
+
+    .callout-title {
         display: block;
+        color: var(--callout-color);
+        font-weight: var(--fw-bold);
+        font-size: 1rem;
+        margin-bottom: 0.25rem;
     }
 
     .content {
@@ -77,5 +112,16 @@ const bgColors = {
 
     .content :global(p:first-child) {
         margin-top: 0;
+    }
+
+    /* Links inside callout */
+    .content :global(a) {
+        text-decoration: underline;
+        text-decoration-color: var(--callout-color);
+        text-underline-offset: 2px;
+    }
+
+    .content :global(a:hover) {
+        color: var(--callout-color);
     }
 </style>

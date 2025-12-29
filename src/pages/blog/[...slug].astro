@@ -213,7 +213,7 @@ const articleSchema = [
         </header>
 
         <div class="layout-grid content-wrapper">
-<!-- TOC sidebar removed -->
+            <!-- TOC sidebar removed -->
 
             <div class="prose">
                 <Content
@@ -267,8 +267,7 @@ const articleSchema = [
                 attributeFilter: ["role"],
             });
         }
-
-
+    });
 
     // Add copy buttons to standalone code blocks
     // Only for blocks not inside FileContent, Tabs, or CompareCode components
@@ -516,10 +515,9 @@ const articleSchema = [
     .prose :global(.code-wrapper),
     .prose :global(.file-content-wrapper),
     .prose :global(.terminal-command-wrapper),
-    .prose :global(.compare-block),
+    .prose :global(.compare-code-wrapper),
     .prose :global(.terminal-output-wrapper),
     .prose :global(.collapsible-wrapper),
-    .prose :global(.callout),
     .prose :global(ui-tabs),
     .prose :global(.youtube-embed) {
         max-width: var(--max-width-prose, 70ch);
@@ -536,13 +534,9 @@ const articleSchema = [
         min-height: 1.5em; /* Stabilize for CLS (font shifts) */
     }
 
-
-
-
-
     @media (min-width: 1024px) {
         .layout-grid {
-             /* Use a centered single-column layout, but slightly wider than before if desired */
+            /* Use a centered single-column layout, but slightly wider than before if desired */
             grid-template-columns: 1fr;
             /* gap: 4rem; removed gap no need without columns */
         }

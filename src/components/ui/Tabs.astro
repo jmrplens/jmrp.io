@@ -194,4 +194,10 @@ const { class: className } = Astro.props;
         max-width: 100%;
         height: auto;
     }
+
+    /* Fix for code blocks inside tabs having mismatched background in light mode */
+    ui-tabs .astro-code,
+    ui-tabs .astro-code span {
+        background-color: transparent !important;
+    }
 </style>
