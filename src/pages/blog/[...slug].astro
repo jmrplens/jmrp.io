@@ -226,8 +226,6 @@ const articleSchema = [
         </header>
 
         <div class="layout-grid content-wrapper">
-            <!-- TOC sidebar removed -->
-
             <div class="prose">
                 <Content
                     components={{ Callout, Tabs, TabPanel, YouTube, Code }}
@@ -450,8 +448,6 @@ const articleSchema = [
         margin-bottom: 1.25rem;
         letter-spacing: -0.02em;
         text-wrap: balance;
-        /* Accessibility fix: ensure background is known for contrast checks */
-        background-color: var(--color-bg-secondary);
     }
 
     .lead {
@@ -459,8 +455,6 @@ const articleSchema = [
         color: var(--color-text-body);
         line-height: 1.6;
         opacity: 0.9;
-        /* Accessibility fix: ensure background is known for contrast checks */
-        background-color: var(--color-bg-secondary);
     }
 
     .cover-image-container {
