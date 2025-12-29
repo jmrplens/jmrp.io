@@ -22,24 +22,24 @@ const { badTitle = "Blocked / Insecure", goodTitle = "Allowed / Secure" } =
 ---
 
 <div class="compare-code-wrapper">
-  <div class="compare-block bad">
+  <div class="compare-block bad copy-container">
     <div class="header">
       <Icon name="mdi:close-circle-outline" class="icon" />
       <span>{badTitle}</span>
-    </div>
-    <div class="content copy-container">
-      <slot name="bad" />
       <CopyButton class="compare-copy-button" />
     </div>
+    <div class="content">
+      <slot name="bad" />
+    </div>
   </div>
-  <div class="compare-block good">
+  <div class="compare-block good copy-container">
     <div class="header">
       <Icon name="mdi:check-circle-outline" class="icon" />
       <span>{goodTitle}</span>
-    </div>
-    <div class="content copy-container">
-      <slot name="good" />
       <CopyButton class="compare-copy-button" />
+    </div>
+    <div class="content">
+      <slot name="good" />
     </div>
   </div>
 </div>
@@ -64,10 +64,14 @@ const { badTitle = "Blocked / Insecure", goodTitle = "Allowed / Secure" } =
     min-width: 0; /* Fix for grid blowout on overflow */
     display: flex;
     flex-direction: column;
-    /* overflow: hidden; REMOVED to allow sticky headers to work */
     position: relative; /* Context for sticky */
     background-color: var(--compare-bg);
     border-color: var(--compare-border);
+
+    /* Override global theme vars for the CopyButton within this block */
+    --color-text-muted: rgba(255, 255, 255, 0.9);
+    --color-bg-subtle: rgba(255, 255, 255, 0.2);
+    --color-bg-secondary: rgba(255, 255, 255, 0.3); /* Hover state */
   }
 
   .compare-block.bad {
@@ -89,7 +93,12 @@ const { badTitle = "Blocked / Insecure", goodTitle = "Allowed / Secure" } =
   /* Theme Tokens */
   :root {
     /* Light Mode Defaults */
-    --color-bg-bad: rgba(220, 38, 38, 0.05);
+    --color-bg-bad: rgba(
+      220,
+      38,
+      38,
+      0.02
+    ); /* Reduced opacity for contrast (was 0.05) */
     --color-border-bad: rgba(220, 38, 38, 0.2);
     --color-header-bad: #b91c1c; /* Red 700 for better contrast safety */
 
@@ -119,7 +128,7 @@ const { badTitle = "Blocked / Insecure", goodTitle = "Allowed / Secure" } =
     background-color: var(--compare-header-bg);
     color: var(--compare-header-text);
 
-    /* Sticky Positioning */
+    /* Sticky Positioning Restored */
     position: sticky;
     top: 0;
     z-index: 20;
@@ -134,29 +143,30 @@ const { badTitle = "Blocked / Insecure", goodTitle = "Allowed / Secure" } =
     color: var(--compare-icon-color);
   }
 
-  .content {
-    position: relative; /* For copy button positioning */
-    padding: 0; /* Remove padding to let code blocks fill */
-    font-size: 0.9rem;
-    flex: 1; /* Stretch to fill height if needed */
+  /* Style CopyButton in Header */
+  .header :global(.compare-copy-button) {
+    position: static; /* No longer absolute */
+    margin-left: auto; /* Push to right */
+    border-color: rgba(255, 255, 255, 0.3);
   }
 
-  /* Position copy button in top-right corner */
-  /* Ensure it sticks or stays relative to the content? Absolute is relative to content container. */
-  .content :global(.compare-copy-button) {
-    position: absolute;
-    top: 0.5rem;
-    right: 0.5rem;
-    z-index: 10;
+  .content {
+    position: relative;
+    padding: 0;
+    font-size: 0.9rem;
+    flex: 1;
   }
 
   /* Adjust internal code blocks to fit better */
   .content :global(pre) {
     margin: 0 !important;
-    padding: 0.75rem 1rem !important; /* Match Code component padding */
-    padding-right: 3rem !important; /* Space for copy button */
+    padding: 0.75rem 1rem !important;
+    /* padding-right removed, button is gone */
     border: none !important;
-    background: transparent !important;
+
+    /* Use explicit background instead of transparent to help accessibility tools */
+    background: var(--compare-bg) !important;
+
     border-radius: 0 !important;
 
     /* Manual Radius for bottom */

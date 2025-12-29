@@ -1,0 +1,78 @@
+
+Running 1 test using 1 worker
+
+📄 Found 9 pages in sitemap
+HTML report was saved into the following directory /var/www/jmrp.io_astro/accessibility-report/home-light.html
+HTML report was saved into the following directory /var/www/jmrp.io_astro/accessibility-report/blog-light.html
+HTML report was saved into the following directory /var/www/jmrp.io_astro/accessibility-report/blog___implementing_content_security_policy_nginx-light.html
+
+⚠️  Blog - Implementing Content Security Policy Nginx (/blog/implementing-content-security-policy-nginx/) [light] has 1 accessibility violations:
+
+1. color-contrast: Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds
+   Impact: serious
+   Help: https://dequeuniversity.com/rules/axe/4.11/color-contrast?application=playwright
+   - Target: .bad.compare-block.copy-container > .content[data-astro-cid-kl5zfmhl=""] > div > .astro-code.astro-code-themes[data-language="html"] > code > .line:nth-child(1) > .sh-1f133f56
+   - HTML: <span class="sh-1f133f56">&lt;!-- Blocked by CSP --&gt;</span>
+   - Failure Summary: Fix any of the following:
+  Element has insufficient color contrast of 4.34 (foreground color: #66707b, background color: #fceaea, font size: 10.8pt (14.4px), font weight: normal). Expected contrast ratio of 4.5:1
+   - Target: .bad.compare-block.copy-container > .content[data-astro-cid-kl5zfmhl=""] > div > .astro-code.astro-code-themes[data-language="nginx"] > code > .line:nth-child(1) > .sh-1f133f56
+   - HTML: <span class="sh-1f133f56"># Allows any inline script</span>
+   - Failure Summary: Fix any of the following:
+  Element has insufficient color contrast of 4.34 (foreground color: #66707b, background color: #fceaea, font size: 10.8pt (14.4px), font weight: normal). Expected contrast ratio of 4.5:1
+
+🔍 Blog - Implementing Content Security Policy Nginx (/blog/implementing-content-security-policy-nginx/) [light] has 1 incomplete checks (need manual review):
+1. color-contrast: Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds
+   - Node HTML: <span class="sh-1f133f56">&lt;!-- Also Blocked (Event Handlers) --&gt;</span>
+   - Reason: Element's background color could not be determined because it's partially obscured by another element
+   - Node HTML: <span class="sh-9163d6a2">&gt;Click Me&lt;/</span>
+   - Reason: Element's background color could not be determined because it's partially obscured by another element
+   - Node HTML: <span class="sh-640b704c">button</span>
+   - Reason: Element's background color could not be determined because it's partially obscured by another element
+   - Node HTML: <span class="sh-9163d6a2">, doSomething);</span>
+   - Reason: Element's background color could not be determined because it's partially obscured by another element
+   - Node HTML: <span class="sh-1f133f56"># Allows loading scripts from ANY HTTPS URL</span>
+   - Reason: Element's background color could not be determined because it's partially obscured by another element
+   - Node HTML: <span class="sh-9163d6a2"> https:;</span>
+   - Reason: Element's background color could not be determined because it's partially obscured by another element
+   - Node HTML: <span class="sh-1f133f56"># Only allows specific, trusted scripts</span>
+   - Reason: Element's background color could not be determined because it's partially obscured by another element
+HTML report was saved into the following directory /var/www/jmrp.io_astro/accessibility-report/blog___secure_nginx_client_certificates-light.html
+HTML report was saved into the following directory /var/www/jmrp.io_astro/accessibility-report/blog___serve_virtual_files_nginx-light.html
+HTML report was saved into the following directory /var/www/jmrp.io_astro/accessibility-report/cv-light.html
+HTML report was saved into the following directory /var/www/jmrp.io_astro/accessibility-report/github-light.html
+HTML report was saved into the following directory /var/www/jmrp.io_astro/accessibility-report/publications-light.html
+HTML report was saved into the following directory /var/www/jmrp.io_astro/accessibility-report/services-light.html
+  ✘  1 [accessibility] › tests/accessibility.spec.ts:77:3 › Accessibility Tests (Axe-core WCAG 2.1 AA) › should have no accessibility violations on all pages (light mode) (35.0s)
+
+
+  1) [accessibility] › tests/accessibility.spec.ts:77:3 › Accessibility Tests (Axe-core WCAG 2.1 AA) › should have no accessibility violations on all pages (light mode) 
+
+    Error: Blog - Implementing Content Security Policy Nginx (/blog/implementing-content-security-policy-nginx/) [light] has 1 violations: color-contrast
+
+    [2mexpect([22m[31mreceived[39m[2m).[22mtoEqual[2m([22m[32mexpected[39m[2m) // deep equality[22m
+
+    [32m- Expected  - 3[39m
+    [31m+ Received  + 1[39m
+
+    [32m- Array [[39m
+    [32m-   "color-contrast",[39m
+    [32m- ][39m
+    [31m+ Array [][39m
+
+      229 |         [],
+      230 |         `${failedPage.page} [${theme}] has ${failedPage.violations} violations: ${failedPage.violationIds?.join(", ")}`,
+    > 231 |       ).toEqual(failedPage.violationIds);
+          |         ^
+      232 |     }
+      233 |   });
+      234 | });
+        at /var/www/jmrp.io_astro/tests/accessibility.spec.ts:231:9
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/accessibility-Accessibilit-85afc-ns-on-all-pages-light-mode--accessibility/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/accessibility-Accessibilit-85afc-ns-on-all-pages-light-mode--accessibility/error-context.md
+
+  1 failed
+    [accessibility] › tests/accessibility.spec.ts:77:3 › Accessibility Tests (Axe-core WCAG 2.1 AA) › should have no accessibility violations on all pages (light mode) 
