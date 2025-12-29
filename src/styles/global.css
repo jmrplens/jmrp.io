@@ -185,6 +185,18 @@ h1 {
   font-size: 1.75em;
 }
 
+/* Accessibility: Links in text blocks must have non-color indicator */
+.prose a {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--color-accent);
+}
+
+.prose a:hover {
+  text-decoration-thickness: 2px;
+}
+
 /* Utilities */
 .container {
   max-width: var(--max-width-container);
