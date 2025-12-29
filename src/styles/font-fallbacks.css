@@ -13,7 +13,9 @@
 /* Fallback for Inter - Weight 400 (Normal) */
 @font-face {
   font-family: "Inter Fallback";
-  src: local("Arial");
+  src:
+    local("Arial"), local("Roboto"), local("Helvetica Neue"),
+    local("sans-serif");
   font-weight: 400;
   font-style: normal;
   size-adjust: 106.5%;
@@ -25,7 +27,9 @@
 /* Fallback for Inter - Weight 600 (SemiBold) */
 @font-face {
   font-family: "Inter Fallback";
-  src: local("Arial");
+  src:
+    local("Arial"), local("Roboto"), local("Helvetica Neue"),
+    local("sans-serif");
   font-weight: 600;
   font-style: normal;
   size-adjust: 106.5%;
@@ -37,7 +41,9 @@
 /* Fallback for Inter - Weight 800 (ExtraBold) */
 @font-face {
   font-family: "Inter Fallback";
-  src: local("Arial");
+  src:
+    local("Arial"), local("Roboto"), local("Helvetica Neue"),
+    local("sans-serif");
   font-weight: 800;
   font-style: normal;
   size-adjust: 106.5%;
@@ -49,7 +55,9 @@
 /* Fallback for JetBrains Mono - Weight 400 (Normal) */
 @font-face {
   font-family: "JetBrains Mono Fallback";
-  src: local("Courier New");
+  src:
+    local("Courier New"), local("Roboto Mono"), local("Menlo"), local("Monaco"),
+    local("Consolas"), local("monospace");
   font-weight: 400;
   font-style: normal;
   size-adjust: 96%;
@@ -61,7 +69,9 @@
 /* Fallback for JetBrains Mono - Weight 700 (Bold) */
 @font-face {
   font-family: "JetBrains Mono Fallback";
-  src: local("Courier New");
+  src:
+    local("Courier New"), local("Roboto Mono"), local("Menlo"), local("Monaco"),
+    local("Consolas"), local("monospace");
   font-weight: 700;
   font-style: normal;
   size-adjust: 96%;
