@@ -78,8 +78,8 @@ async function main() {
           }
 
           if (!fs.existsSync(filePath)) {
-             // console.warn(`File not found for SRI: ${url} (resolved: ${filePath})`);
-             return match;
+            // console.warn(`File not found for SRI: ${url} (resolved: ${filePath})`);
+            return match;
           }
 
           let hash;
@@ -121,6 +121,65 @@ async function main() {
         attrs.includes('rel="stylesheet"') ||
         attrs.includes("rel='stylesheet'"),
     );
+
+    // Process <astro-island> to inject modulepreload with integrity for dynamic imports
+    const astroIslandRegex = /<astro-island\s+([^>]*)>/gi;
+    const moduleUrls = new Set();
+    let islandMatch;
+    while ((islandMatch = astroIslandRegex.exec(content)) !== null) {
+      const attrs = islandMatch[1];
+      const componentUrlMatch = /component-url=["']([^"']+)["']/.exec(attrs);
+      const rendererUrlMatch = /renderer-url=["']([^"']+)["']/.exec(attrs);
+
+      if (componentUrlMatch) moduleUrls.add(componentUrlMatch[1]);
+      if (rendererUrlMatch) moduleUrls.add(rendererUrlMatch[1]);
+    }
+
+    if (moduleUrls.size > 0) {
+      let preloadLinks = "";
+      for (const url of moduleUrls) {
+        // Skip if already preloaded (simple check)
+        if (content.includes(`<link rel="modulepreload" href="${url}"`))
+          continue;
+
+        try {
+          if (url.startsWith("http") || url.startsWith("//")) continue;
+
+          let filePath;
+          const urlClean = url.split("?")[0].split("#")[0];
+
+          if (urlClean.startsWith("/")) {
+            filePath = path.join(DIST_DIR, urlClean);
+          } else {
+            const htmlDir = path.dirname(file);
+            filePath = path.resolve(htmlDir, urlClean);
+          }
+
+          if (!fs.existsSync(filePath)) continue;
+
+          let hash;
+          if (hashCache.has(filePath)) {
+            hash = hashCache.get(filePath);
+          } else {
+            const fileContent = fs.readFileSync(filePath);
+            hash = calculateSRI(fileContent);
+            hashCache.set(filePath, hash);
+          }
+
+          preloadLinks += `<link rel="modulepreload" href="${url}" nonce="NGINX_CSP_NONCE" integrity="${hash}" crossorigin="anonymous">\n`;
+          totalTagsUpdated++;
+        } catch (err) {
+          console.warn(`Error processing modulepreload ${url}:`, err.message);
+        }
+      }
+
+      if (preloadLinks) {
+        if (content.includes("</head>")) {
+          content = content.replace("</head>", `${preloadLinks}</head>`);
+          modified = true;
+        }
+      }
+    }
 
     if (modified) {
       fs.writeFileSync(file, content, "utf-8");
