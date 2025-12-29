@@ -218,8 +218,8 @@ const articleSchema = [
                                         360, 480, 540, 600, 720, 840, 960, 1080,
                                         1200,
                                     ]}
-                                    sizes="(max-width: 768px) calc(100vw - 2.5rem), (max-width: 1024px) 600px, 600px"
-                                    quality={80}
+                                    sizes="(max-width: 768px) 100vw, (max-width: 1024px) 600px, 600px"
+                                    quality={60}
                                     style="width: 100%; height: auto; aspect-ratio: 16/9;"
                                 />
                             </div>
@@ -450,7 +450,6 @@ const articleSchema = [
         font-weight: 800;
         color: var(--color-text-heading);
         margin-bottom: 1.25rem;
-        letter-spacing: -0.02em;
         letter-spacing: -0.02em;
     }
 
