@@ -2,8 +2,13 @@
 import { Icon } from "astro-icon/components";
 
 /**
- * Callout component.
+ * Callout Component
  * Renders a colored alert box with an icon to highlight information.
+ *
+ * Usage:
+ * <Callout type="info" title="Did you know?">
+ *   This is an informational callout.
+ * </Callout>
  */
 interface Props {
     type?: "info" | "warning" | "error" | "success" | "tip" | "note";

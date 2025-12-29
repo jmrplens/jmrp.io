@@ -1,8 +1,13 @@
 ---
 /**
- * CompareCode component.
- * Displays two code blocks side by side for comparison (bad vs good).
- * Each block has its own copy button in the top-right corner.
+ * CompareCode Component
+ * Displays two code blocks side by side for comparison (e.g., Bad vs Good).
+ *
+ * Usage:
+ * <CompareCode badTitle="Vulnerable" goodTitle="Secure">
+ *   <div slot="bad">...code...</div>
+ *   <div slot="good">...code...</div>
+ * </CompareCode>
  */
 import { Icon } from "astro-icon/components";
 import CopyButton from "./CopyButton.astro";
