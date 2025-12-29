@@ -1,0 +1,119 @@
+---
+import BaseLayout from "@layouts/BaseLayout.astro";
+import PostGrid from "@components/blog/PostGrid.astro";
+import TagCloud from "@components/blog/TagCloud.astro";
+import { getCollection } from "astro:content";
+import { getUniqueTags } from "@utils/blog";
+
+export async function getStaticPaths() {
+  const posts = (await getCollection("posts")).filter((post) => !post.data.draft);
+  const tags = getUniqueTags(posts);
+
+  return tags.map(({ tag }) => {
+    const filteredPosts = posts
+      .filter((post) => post.data.tags?.includes(tag))
+      .sort((a, b) => b.data.publishedDate.valueOf() - a.data.publishedDate.valueOf());
+      
+    return {
+      params: { tag },
+      props: { posts: filteredPosts },
+    };
+  });
+}
+
+const { tag } = Astro.params;
+const { posts } = Astro.props;
+---
+
+<BaseLayout
+  title={`Blog - #${tag}`}
+  description={`Posts tagged with #${tag}`}
+>
+  <div class="content-wrapper">
+    <header class="page-header">
+      <h1 class="gradient-text">#{tag}</h1>
+      <p class="subtitle">{posts.length} {posts.length === 1 ? 'post' : 'posts'} about this topic</p>
+      <div class="back-link">
+          <a href="/blog">&larr; Back to all posts</a>
+      </div>
+    </header>
+
+    <div class="blog-layout">
+      <main>
+        <PostGrid posts={posts} />
+      </main>
+      <aside>
+          <TagCloud />
+      </aside>
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+    .content-wrapper {
+        max-width: var(--max-width-container);
+        margin: 0 auto;
+        padding: 4rem 2rem;
+        width: 100%;
+    }
+
+    .page-header {
+        margin-bottom: 4rem;
+        text-align: center;
+    }
+
+    .page-header h1 {
+        font-size: 3.5rem;
+        font-weight: 800;
+        margin-bottom: 0.5rem;
+        letter-spacing: -0.02em;
+    }
+
+    .gradient-text {
+        color: var(--color-primary);
+    }
+
+    .subtitle {
+        font-size: 1.25rem;
+        color: var(--color-text-muted);
+    }
+    
+    .back-link {
+        margin-top: 1rem;
+    }
+    
+    .back-link a {
+        color: var(--color-text-body);
+        text-decoration: none;
+        border-bottom: 1px solid transparent;
+        transition: border-color 0.2s;
+    }
+    
+    .back-link a:hover {
+        border-color: currentColor;
+        color: var(--color-primary);
+    }
+
+    .blog-layout {
+        display: grid;
+        grid-template-columns: 1fr 300px;
+        gap: 3rem;
+        align-items: start;
+    }
+
+    @media (max-width: 900px) {
+        .blog-layout {
+            grid-template-columns: 1fr;
+        }
+    }
+    
+    @media (max-width: 640px) {
+        .content-wrapper {
+            padding: 2rem 1rem;
+        }
+
+        .page-header h1 {
+            font-size: 2.5rem;
+        }
+    }
+</style>
