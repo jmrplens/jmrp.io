@@ -9,128 +9,150 @@ const tags = getUniqueTags(posts);
 <div class="tag-cloud">
   <h3>Topics</h3>
   <div class="tags">
-    {tags.map(({ tag, count }) => (
-      <a href={`/blog/tags/${encodeURIComponent(tag)}`} class="tag">
-        <span class="hash">#</span>{tag} <span class="count">{count}</span>
-      </a>
-    ))}
+    {
+      tags.map(({ tag, count }) => (
+        <a href={`/blog/tags/${encodeURIComponent(tag)}`} class="tag">
+          <span class="tag-name">
+            <span class="hash">#</span>
+            {tag}
+          </span>
+          <span class="count">{count}</span>
+        </a>
+      ))
+    }
   </div>
 </div>
 
 <style>
+  /* Base/Mobile Styles */
   .tag-cloud {
-    background: var(--color-bg-secondary);
-    border: var(--border-1);
-    border-radius: 16px;
-    padding: 1.5rem;
+    width: 100%;
+    position: relative;
+    /* Ensure we span full width to edges if possible, or just contain nicely */
   }
-  
+
+  /* Gradient Fade for Mobile */
+  .tag-cloud::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 80px;
+    background: linear-gradient(to right, transparent, var(--color-bg));
+    pointer-events: none;
+    z-index: 10;
+  }
+
   h3 {
-      margin-top: 0;
-      margin-bottom: 1rem;
-      font-size: 1.1rem;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: var(--color-text-muted);
-      font-weight: 600;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-text-muted);
+    font-weight: var(--fw-bold);
+    margin-bottom: var(--space-md);
+    display: none;
   }
 
   .tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
+    display: grid;
+    grid-template-rows: repeat(2, auto); /* restore 2-row layout */
+    grid-auto-flow: column;
+    gap: var(--space-sm);
+    overflow-x: auto;
+    padding-bottom: var(--space-sm);
+    padding-right: var(--space-xl); /* Space for gradient */
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .tags::-webkit-scrollbar {
+    display: none;
   }
 
   .tag {
     display: inline-flex;
     align-items: center;
-    gap: 0.3rem;
-    background: var(--color-bg-subtle);
-    padding: 0.4rem 0.8rem;
-    border-radius: 99px; /* Pill shape */
-    font-size: 0.9rem;
+    gap: var(--space-sm);
+    padding: 0.35rem 0.8rem;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+    border-radius: 9999px;
     color: var(--color-text-body);
     text-decoration: none;
+    font-size: 0.85rem;
+    white-space: nowrap;
     transition: all 0.2s ease;
-    border: 1px solid transparent;
+    width: max-content;
   }
 
-  .tag:hover {
-    background: var(--color-bg-tertiary);
-    color: var(--color-primary);
-    border-color: var(--color-primary);
-    transform: translateY(-1px);
-  }
-  
   .hash {
-      color: var(--color-primary);
-      opacity: 0.7;
-  }
-  
-  .count {
-      font-size: 0.75rem;
-      background: rgba(0,0,0,0.05);
-      padding: 0.1rem 0.4rem;
-      border-radius: 99px;
-      margin-left: 0.2rem;
-  }
-  
-  /* Dark mode adjustment for count background if needed */
-  :global(.dark) .count {
-      background: rgba(255,255,255,0.1);
+    color: var(--color-primary);
+    opacity: 0.8;
   }
 
-  @media (max-width: 900px) {
+  .count {
+    font-size: 0.75rem;
+    background: rgba(0, 0, 0, 0.1);
+    padding: 0.1rem var(--space-sm);
+    border-radius: 9999px;
+    opacity: 0.7;
+  }
+
+  /* Desktop Styles (Sidebar List) */
+  @media (min-width: 900px) {
     .tag-cloud {
-      background: var(--color-bg);
-      border: none;
-      border-radius: 0;
-      padding: 0;
-      margin: 0 -1rem;
-      width: calc(100% + 2rem);
-      position: relative;
+      position: sticky;
+      top: var(--space-lg);
+      background: transparent;
     }
-    
-    /* Fade effect to indicate scroll - even wider */
+
     .tag-cloud::after {
-      content: "";
-      position: absolute;
-      top: 0;
-      right: 0;
-      bottom: 0;
-      width: 80px;
-      background: linear-gradient(to right, transparent, var(--color-bg));
-      pointer-events: none;
-      z-index: 10;
+      display: none; /* No gradient on desktop */
     }
-    
+
     h3 {
-        display: none;
+      display: block;
+      padding-left: 0.75rem;
     }
 
     .tags {
-      display: grid;
-      grid-template-rows: repeat(2, auto);
-      grid-auto-flow: column;
-      gap: 0.4rem 0.6rem;
-      
-      overflow-x: auto;
-      padding: 0.5rem 1rem;
-      padding-right: 5rem; /* Increased padding to accommodate wider fade */
-      
-      -webkit-overflow-scrolling: touch;
-      scrollbar-width: none;
-    }
-    
-    .tags::-webkit-scrollbar {
-        display: none;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-xs);
+      overflow-x: visible;
+      padding-bottom: 0;
+      padding-right: 0;
     }
 
     .tag {
-        white-space: nowrap;
-        padding: 0.35rem 0.8rem;
-        font-size: 0.8rem;
-        width: max-content;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      padding: var(--space-sm) 0.75rem;
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: var(--radius-md);
+    }
+
+    .tag:hover {
+      background: var(--color-bg-secondary);
+      color: var(--color-text-heading);
+      transform: translateX(4px);
+    }
+
+    .tag:hover .hash {
+      opacity: 1;
+    }
+
+    .count {
+      background: var(--color-bg-subtle, rgba(255, 255, 255, 0.05));
+    }
+
+    .tag:hover .count {
+      background: var(--color-bg, #000);
+      color: var(--color-text-body);
     }
   }
 </style>

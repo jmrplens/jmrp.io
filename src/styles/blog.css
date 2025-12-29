@@ -3,19 +3,19 @@
 .content-wrapper {
   max-width: var(--max-width-container);
   margin: 0 auto;
-  padding: 4rem 2rem;
+  padding: var(--space-lg) var(--space-lg);
   width: 100%;
 }
 
 .page-header {
-  margin-bottom: 4rem;
+  margin-bottom: var(--space-lg);
   text-align: center;
 }
 
 .page-header h1 {
   font-size: 3.5rem;
   font-weight: 800;
-  margin-bottom: 0.5rem;
+  margin-bottom: var(--space-sm);
   letter-spacing: -0.02em;
 }
 
@@ -31,13 +31,13 @@
 .blog-layout {
   display: grid;
   grid-template-columns: 1fr 300px;
-  gap: 3rem;
+  gap: var(--space-lg-xl);
   align-items: start;
 }
 
 .tags {
   display: flex;
-  gap: 0.5rem;
+  gap: var(--space-sm);
   flex-wrap: wrap;
   min-height: 1.5em;
 }
@@ -60,12 +60,12 @@
 .back-link {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-sm);
   color: var(--color-text-muted);
   text-decoration: none;
   font-size: 0.9rem;
   transition: color 0.2s;
-  margin-bottom: 1rem;
+  margin-bottom: var(--space-md);
 }
 
 .back-link:hover {
@@ -80,14 +80,14 @@
 /* Mobile responsive adjustments */
 @media (max-width: 900px) {
   .page-header {
-    margin-bottom: 1rem;
+    margin-bottom: var(--space-md);
   }
 
   .blog-layout {
     grid-template-columns: 1fr;
     display: flex;
     flex-direction: column;
-    gap: 2rem;
+    gap: var(--space-md);
   }
 
   aside {
@@ -101,7 +101,7 @@
 
 @media (max-width: 640px) {
   .content-wrapper {
-    padding: 2rem 1rem;
+    padding: var(--space-lg) var(--space-md);
   }
 
   .page-header h1 {
