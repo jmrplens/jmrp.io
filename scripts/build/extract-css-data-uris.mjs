@@ -81,7 +81,6 @@ async function extractDataUris() {
                       params: {
                         overrides: {
                           cleanupNumericValues: false,
-                          removeViewBox: false,
                         },
                         cleanupIDs: {
                           minify: false,

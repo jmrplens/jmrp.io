@@ -9,10 +9,11 @@
  * - Favicons and fonts
  */
 import "@styles/global.css";
+
 // Variable Fonts (automatically injects @font-face)
 import "@fontsource-variable/inter";
 import "@fontsource-variable/jetbrains-mono";
-import "@styles/font-fallbacks.css";
+// import "@styles/font-fallbacks.css"; // Disabled
 
 import interVariable from "@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url";
 import jetbrainsVariable from "@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2?url";
@@ -170,8 +171,6 @@ const jsonLD = {
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 
 <!-- Font Preloads (Critical for LCP/CLS) -->
-<!-- Font Preloads (Variable Fonts for LCP Optimization) -->
-<!-- Inter Variable: Covers all weights (400-800) in one request -->
 <link
     rel="preload"
     href={interVariable}
@@ -180,7 +179,6 @@ const jsonLD = {
     crossorigin="anonymous"
     fetchpriority="high"
 />
-<!-- JetBrains Mono Variable: Covers all weights (400-800) in one request -->
 <link
     rel="preload"
     href={jetbrainsVariable}
@@ -189,16 +187,6 @@ const jsonLD = {
     crossorigin="anonymous"
     fetchpriority="high"
 />
-<!-- Inter 800 is not generally critical above fold -->
-<!--
-<link
-    rel="preload"
-    href={inter800}
-    as="font"
-    type="font/woff2"
-    crossorigin="anonymous"
-/>
--->
 
 <link rel="icon" type="image/webp" href={favicon.src} />
 <link rel="apple-touch-icon" href={appleTouchIcon.src} />

@@ -1,0 +1,188 @@
+---
+import { Image } from "astro:assets";
+import type { CollectionEntry } from "astro:content";
+
+interface Props {
+  post: CollectionEntry<"posts">;
+  loading?: "eager" | "lazy";
+  fetchpriority?: "high" | "auto" | "low";
+}
+
+const { post, loading = "lazy", fetchpriority = "auto" } = Astro.props;
+---
+
+<article class="post-card">
+  {post.data.coverImage && (
+    <div class="image-container">
+      <Image
+        src={post.data.coverImage}
+        alt={post.data.title}
+        format="webp"
+        class="card-image"
+        width={400}
+        height={225}
+        widths={[360, 480, 640, 720, 960, 1200]}
+        sizes="(max-width: 640px) 100vw, 400px"
+        quality={60}
+        loading={loading}
+        fetchpriority={fetchpriority}
+      />
+    </div>
+  )}
+  <div class="card-content">
+    <div class="post-meta">
+      <time datetime={post.data.publishedDate.toISOString()}>
+        {post.data.publishedDate.toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+        })}
+      </time>
+      {post.data.tags && (
+        <div class="tags">
+          {post.data.tags.slice(0, 3).map((tag) => (
+            <a href={`/blog/tags/${encodeURIComponent(tag)}`} class="tag">#{tag}</a>
+          ))}
+        </div>
+      )}
+    </div>
+    <h2>
+      <a href={`/blog/${post.slug}/`} class="main-link">
+        {post.data.title}
+      </a>
+    </h2>
+    <p>{post.data.description}</p>
+  </div>
+  <div class="card-footer">
+    <span class="read-more">Read article &rarr;</span>
+  </div>
+</article>
+
+<style>
+  .post-card {
+    background: var(--color-bg-secondary);
+    border: var(--border-1);
+    border-radius: 16px;
+    transition: all 0.3s ease;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .post-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px -10px rgba(0, 0, 0, 0.15);
+    border-color: var(--color-primary);
+  }
+
+  /* Image Card Styles */
+  .image-container {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+  }
+
+  .card-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+  }
+
+  .post-card:hover .card-image {
+    transform: scale(1.05);
+  }
+
+  /* Standard Card Styles */
+  .card-content {
+    padding: 2rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .post-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    font-size: 0.875rem;
+    color: var(--color-text-muted);
+  }
+
+  .tags {
+    display: flex;
+    gap: 0.5rem;
+    min-height: 1.5em; /* Stabilize for CLS */
+    position: relative;
+    z-index: 2; /* Ensure tags are clickable above the card link */
+  }
+
+  .tag {
+    background: var(--color-bg-subtle);
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--color-text-body);
+    text-decoration: none;
+    transition: background-color 0.2s ease;
+  }
+
+  .tag:hover {
+    background: var(--color-bg-tertiary);
+    color: var(--color-primary);
+  }
+
+  .post-card h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+    line-height: 1.3;
+    min-height: 2.6em; /* Reserve 2 lines roughly */
+  }
+
+  .main-link {
+    color: var(--color-text-heading);
+    text-decoration: none;
+  }
+
+  .main-link::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1;
+  }
+
+  .post-card p {
+    color: var(--color-text-body);
+    line-height: 1.6;
+    font-size: 1rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    min-height: 4.8rem; /* Reserve space for 3 lines to prevent CLS */
+  }
+
+  .card-footer {
+    padding: 1.5rem 2rem;
+    border-top: var(--border-1);
+    background: var(--color-bg-subtle);
+    min-height: 4.5rem; /* Stabilize for CLS */
+    display: flex; /* Ensure alignment */
+    align-items: center;
+  }
+
+  .read-more {
+    font-weight: var(--fw-semibold);
+    color: var(--color-primary);
+    font-size: 0.9rem;
+  }
+</style>
