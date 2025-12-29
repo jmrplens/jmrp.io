@@ -19,6 +19,7 @@ import YouTube from "@components/ui/YouTube.astro";
 import Code from "@components/ui/Code.astro";
 import TableOfContentsDrawer from "@components/layout/TableOfContentsDrawer.astro";
 import References from "@components/cv/References.astro";
+import "@styles/blog.css";
 
 import { getEntry } from "astro:content";
 import type { SiteConfig } from "@src/types";
@@ -157,64 +158,78 @@ const articleSchema = [
     <article class="post-content">
         <header class="post-header">
             <div class="content-wrapper">
-                <a href="/blog" class="back-link">
-                    <Icon name="mdi:arrow-left" /> Back to Blog
-                </a>
-                <div class="meta">
-                    <span class="author">
-                        {post.data.author || siteData.author}
-                    </span>
-                    <span class="separator">•</span>
-                    <time datetime={post.data.publishedDate.toISOString()}>
+                <div class="header-meta">
+                    <a href="/blog" class="back-link">
+                        <Icon name="mdi:arrow-left" /> Back to Blog
+                    </a>
+                    <div class="meta">
+                        <span class="author">
+                            {post.data.author || siteData.author}
+                        </span>
+                        <span class="separator">•</span>
+                        <time datetime={post.data.publishedDate.toISOString()}>
+                            {
+                                post.data.publishedDate.toLocaleDateString(
+                                    "en-US",
+                                    {
+                                        year: "numeric",
+                                        month: "long",
+                                        day: "numeric",
+                                    },
+                                )
+                            }
+                        </time>
+                        <span class="separator">•</span>
                         {
-                            post.data.publishedDate.toLocaleDateString(
-                                "en-US",
-                                {
-                                    year: "numeric",
-                                    month: "long",
-                                    day: "numeric",
-                                },
+                            post.data.tags && (
+                                <div class="tags">
+                                    {post.data.tags.map((tag) => (
+                                        <a
+                                            href={`/blog/tags/${encodeURIComponent(tag)}`}
+                                            class="tag"
+                                        >
+                                            #{tag}
+                                        </a>
+                                    ))}
+                                </div>
                             )
                         }
-                    </time>
-                    <span class="separator">•</span>
+                    </div>
+                </div>
+
+                <div class="header-grid">
+                    <div class="header-content">
+                        <h1>{post.data.title}</h1>
+                        <p class="lead">{post.data.description}</p>
+                    </div>
                     {
-                        post.data.tags && (
-                            <div class="tags">
-                                {post.data.tags.map((tag) => (
-                                    <span class="tag">#{tag}</span>
-                                ))}
+                        post.data.coverImage && (
+                            <div class="cover-image-container">
+                                <Image
+                                    src={post.data.coverImage}
+                                    alt={`Cover image for ${post.data.title}`}
+                                    class="cover-image"
+                                    width={1200}
+                                    height={675}
+                                    format="webp"
+                                    loading="eager"
+                                    fetchpriority="high"
+                                    widths={[
+                                        360, 480, 540, 600, 720, 840, 960, 1080,
+                                        1200,
+                                    ]}
+                                    sizes="(max-width: 768px) calc(100vw - 2.5rem), (max-width: 1024px) 600px, 600px"
+                                    quality={70}
+                                    style="width: 100%; height: auto; aspect-ratio: 16/9;"
+                                />
                             </div>
                         )
                     }
                 </div>
-                <h1>{post.data.title}</h1>
-                <p class="lead">{post.data.description}</p>
-                {
-                    post.data.coverImage && (
-                        <div class="cover-image-container">
-                            <Image
-                                src={post.data.coverImage}
-                                alt={`Cover image for ${post.data.title}`}
-                                class="cover-image"
-                                width={1200}
-                                height={675}
-                                format="webp"
-                                loading="eager"
-                                fetchpriority="high"
-                                widths={[360, 480, 640, 720, 960, 1200]}
-                                sizes="(max-width: 768px) 100vw, 1200px"
-                                quality={60}
-                            />
-                        </div>
-                    )
-                }
             </div>
         </header>
 
         <div class="layout-grid content-wrapper">
-            <!-- TOC sidebar removed -->
-
             <div class="prose">
                 <Content
                     components={{ Callout, Tabs, TabPanel, YouTube, Code }}
@@ -379,42 +394,45 @@ const articleSchema = [
 
 <style>
     .post-header {
-        padding: 6rem 0 4rem;
-        background-color: var(--color-bg-subtle);
-        margin-bottom: 3rem;
+        padding: var(--space-lg) 0;
+        background-color: var(--color-bg-secondary);
+        margin-bottom: var(--space-md-lg);
         border-bottom: var(--border-1);
     }
 
     .content-wrapper {
-        max-width: 1200px;
+        max-width: var(--max-width-container);
         margin: 0 auto;
-        padding: 0 2rem;
+        padding: 0 var(--space-lg);
+        width: 100%;
     }
 
-    .back-link {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-        color: var(--color-text-muted);
-        text-decoration: none;
-        font-size: 0.9rem;
-        margin-bottom: 2rem;
-        transition: color 0.2s;
+    .header-grid {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-lg);
     }
 
-    .back-link:hover {
-        color: var(--color-primary);
+    /* New container for top metadata */
+    .header-meta {
+        margin-bottom: var(--space-lg);
+    }
+
+    .header-content {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
     }
 
     .meta {
         display: flex;
         align-items: center;
-        gap: 1rem;
+        gap: var(--space-md);
         color: var(--color-text-muted);
         font-size: 0.9rem;
-        margin-bottom: 1rem;
-        flex-wrap: wrap; /* Allow wrapping on small screens */
-        min-height: 1.5em; /* Stabilize for CLS */
+        /* margin-bottom removed, handled by container */
+        flex-wrap: wrap;
+        min-height: 1.5em;
     }
 
     .author {
@@ -427,142 +445,101 @@ const articleSchema = [
     }
 
     h1 {
-        font-size: 3.5rem;
+        font-size: 2.5rem;
         line-height: 1.1;
         font-weight: 800;
         color: var(--color-text-heading);
-        margin-bottom: 1.5rem;
+        margin-bottom: 1.25rem;
         letter-spacing: -0.02em;
-        min-height: 2.2em; /* Reserve ~2 lines for title */
-        text-wrap: balance;
-    }
-
-    .toc h2 {
-        font-size: 1.1rem;
-        font-weight: 700;
-        margin-bottom: 1rem;
-        color: var(--color-text-heading);
     }
 
     .lead {
         font-size: 1.25rem;
         color: var(--color-text-body);
-        max-width: 70ch;
         line-height: 1.6;
         opacity: 0.9;
-        min-height: 3.2em; /* Reserve 2 lines */
     }
 
     .cover-image-container {
-        margin-top: 3rem;
         border-radius: var(--radius-lg);
         overflow: hidden;
         box-shadow: var(--shadow-lg);
         background-color: var(--color-bg-secondary);
+        width: 100%;
+        height: auto;
         aspect-ratio: 16 / 9;
     }
 
     .cover-image {
         width: 100%;
-        height: 100%;
+        height: auto;
         object-fit: cover;
         display: block;
+        aspect-ratio: 16 / 9;
     }
 
-    .tags {
-        display: flex;
-        gap: 0.5rem;
-        flex-wrap: wrap;
-        min-height: 1.5em; /* Stabilize for CLS */
-    }
-
-    .tag {
-        color: var(--color-primary);
-        font-weight: var(--fw-semibold);
-        font-size: 0.85rem;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-    }
-
-    /* Stabilize Generic Content Images (Mermaid, etc.) */
-    .prose :global(img) {
-        max-width: 100%;
-        height: auto;
-        border-radius: var(--radius-md);
-        /* Ensure SVGs have a default aspect ratio or behavior to minimize shift */
-        content-visibility: auto;
-    }
-
-    .layout-grid {
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: var(--space-xl);
-        max-width: var(--max-width-container);
-        margin: 0 auto;
-        padding: 0 var(--space-md);
-        position: relative;
-    }
-
-    .prose {
-        max-width: 100%;
-        margin: 0 auto;
-        width: 100%;
-        min-width: 0; /* Allow shrinking below content size in Grid */
-        overflow-wrap: break-word; /* Ensure text wraps */
-    }
-
-    /* Restrict width of heavy components to maintain readability */
-    .prose :global(.code-wrapper),
-    .prose :global(.file-content-wrapper),
-    .prose :global(.terminal-command-wrapper),
-    .prose :global(.compare-code-wrapper),
-    .prose :global(.terminal-output-wrapper),
-    .prose :global(.collapsible-wrapper),
-    .prose :global(ui-tabs),
-    .prose :global(.youtube-embed) {
-        max-width: var(--max-width-prose, 70ch);
-        margin-left: auto;
-        margin-right: auto;
-    }
-
-    /* Enhance link contrast in post content */
-    .prose :global(a) {
-        font-weight: var(--fw-semibold);
-    }
-
-    .prose :global(li) {
-        min-height: 1.5em; /* Stabilize for CLS (font shifts) */
-    }
-
+    /* Desktop Split Layout */
     @media (min-width: 1024px) {
-        .layout-grid {
-            /* Use a centered single-column layout, but slightly wider than before if desired */
-            grid-template-columns: 1fr;
-            /* gap: 4rem; removed gap no need without columns */
+        .post-header {
+            padding: var(--space-lg-xl) 0;
+        }
+
+        .header-grid {
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr;
+            gap: var(--space-xl);
+            align-items: center;
+        }
+
+        h1 {
+            font-size: 3.5rem;
+        }
+
+        .cover-image-container {
+            /* Reset any margins */
+            margin: 0;
+            /* Allow image to take natural height based on aspect ratio */
+            height: auto;
+            max-height: none;
+            max-width: none;
         }
     }
 
-    /* ... omitted intermediate css ... */
+    /* Tablet/Mobile Adjustments */
+    @media (max-width: 1024px) {
+        .cover-image-container {
+            margin-top: var(--space-md-lg);
+            order: 2;
+            /* Constrain width so it doesn't become huge when stacked */
+            max-width: 600px;
+            /* Center the image */
+            margin-left: auto;
+            margin-right: auto;
+        }
+    }
 
     @media (max-width: 768px) {
         .post-header {
-            padding: 4rem 0 2rem;
+            padding: var(--space-lg) 0;
             text-align: left;
         }
 
         h1 {
-            font-size: 1.75rem; /* Reduce size to minimize wrapping */
-            min-height: 4em; /* Stabilize roughly 3-4 lines */
-            text-wrap: initial; /* frequent recalc of balance can cause shifts, revert to standard */
+            font-size: 2rem;
         }
 
         .lead {
             font-size: 1.125rem;
-            min-height: 5em; /* Stabilize roughly 4 lines */
         }
 
         .content-wrapper {
-            padding: 0 1.5rem;
+            padding: 0 1.25rem;
+        }
+
+        .cover-image-container {
+            /* On very small screens, let it be full width again if needed,
+               but 600px max-width usually covers it nicely. */
+            width: 100%;
         }
     }
 

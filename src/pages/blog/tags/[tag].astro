@@ -1,0 +1,69 @@
+---
+import BaseLayout from "@layouts/BaseLayout.astro";
+import PostGrid from "@components/blog/PostGrid.astro";
+import TagCloud from "@components/blog/TagCloud.astro";
+import { getCollection } from "astro:content";
+import { getUniqueTags } from "@utils/blog";
+import "@styles/blog.css";
+
+export async function getStaticPaths() {
+  const posts = (await getCollection("posts")).filter((post) => !post.data.draft);
+  const tags = getUniqueTags(posts);
+
+  return tags.map(({ tag }) => {
+    const filteredPosts = posts
+      .filter((post) => post.data.tags?.includes(tag))
+      .sort((a, b) => b.data.publishedDate.valueOf() - a.data.publishedDate.valueOf());
+      
+    return {
+      params: { tag },
+      props: { posts: filteredPosts },
+    };
+  });
+}
+
+const { tag } = Astro.params;
+const { posts } = Astro.props;
+
+// Schema.org: CollectionPage with ItemList
+const schema = {
+  "@type": "CollectionPage",
+  name: `Blog posts tagged with #${tag}`,
+  description: `Browse ${posts.length} articles about ${tag}.`,
+  url: new URL(Astro.url.pathname, Astro.site).toString(),
+  mainEntity: {
+    "@type": "ItemList",
+    itemListElement: posts.map((post, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      url: new URL(`/blog/${post.slug}/`, Astro.site).toString(),
+      name: post.data.title,
+    })),
+  },
+};
+---
+
+<BaseLayout
+  title={`Blog - #${tag}`}
+  description={`Posts tagged with #${tag}`}
+  schema={schema}
+>
+  <div class="content-wrapper">
+    <header class="page-header">
+      <h1 class="gradient-text">#{tag}</h1>
+      <p class="subtitle">{posts.length} {posts.length === 1 ? 'post' : 'posts'} about this topic</p>
+      <div class="back-link">
+          <a href="/blog">&larr; Back to all posts</a>
+      </div>
+    </header>
+
+    <div class="blog-layout">
+      <div class="posts-container">
+        <PostGrid posts={posts} />
+      </div>
+      <aside>
+          <TagCloud />
+      </aside>
+    </div>
+  </div>
+</BaseLayout>

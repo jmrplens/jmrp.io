@@ -16,7 +16,7 @@ const { icon = "mdi:lightbulb-on-outline" } = Astro.props;
     <div class="icon-wrapper" aria-hidden="true">
         <Icon name={icon} class="key-icon" />
     </div>
-    <div class="content-wrapper">
+    <div class="keypoint-content-wrapper">
         <slot />
     </div>
 </div>
@@ -39,14 +39,14 @@ const { icon = "mdi:lightbulb-on-outline" } = Astro.props;
         font-size: 1.5rem;
         margin-top: 0.1rem; /* Align better with text */
     }
-    .content-wrapper {
+    .keypoint-content-wrapper {
         flex: 1;
     }
     /* Make paragraphs inside look normal */
-    .content-wrapper :global(p) {
+    .keypoint-content-wrapper :global(p) {
         margin: 0;
     }
-    .content-wrapper :global(p:not(:last-child)) {
+    .keypoint-content-wrapper :global(p:not(:last-child)) {
         margin-bottom: 1rem;
     }
 </style>

@@ -1,0 +1,158 @@
+---
+import { getCollection } from "astro:content";
+import { getUniqueTags } from "@utils/blog";
+
+const posts = (await getCollection("posts")).filter((post) => !post.data.draft);
+const tags = getUniqueTags(posts);
+---
+
+<div class="tag-cloud">
+  <h3>Topics</h3>
+  <div class="tags">
+    {
+      tags.map(({ tag, count }) => (
+        <a href={`/blog/tags/${encodeURIComponent(tag)}`} class="tag">
+          <span class="tag-name">
+            <span class="hash">#</span>
+            {tag}
+          </span>
+          <span class="count">{count}</span>
+        </a>
+      ))
+    }
+  </div>
+</div>
+
+<style>
+  /* Base/Mobile Styles */
+  .tag-cloud {
+    width: 100%;
+    position: relative;
+    /* Ensure we span full width to edges if possible, or just contain nicely */
+  }
+
+  /* Gradient Fade for Mobile */
+  .tag-cloud::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 80px;
+    background: linear-gradient(to right, transparent, var(--color-bg));
+    pointer-events: none;
+    z-index: 10;
+  }
+
+  h3 {
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-text-muted);
+    font-weight: var(--fw-bold);
+    margin-bottom: var(--space-md);
+    display: none;
+  }
+
+  .tags {
+    display: grid;
+    grid-template-rows: repeat(2, auto); /* restore 2-row layout */
+    grid-auto-flow: column;
+    gap: var(--space-sm);
+    overflow-x: auto;
+    padding-bottom: var(--space-sm);
+    padding-right: var(--space-xl); /* Space for gradient */
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .tags::-webkit-scrollbar {
+    display: none;
+  }
+
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: 0.35rem 0.8rem;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+    border-radius: 9999px;
+    color: var(--color-text-body);
+    text-decoration: none;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+    width: max-content;
+  }
+
+  .hash {
+    color: var(--color-primary);
+    opacity: 0.8;
+  }
+
+  .count {
+    font-size: 0.75rem;
+    background: rgba(0, 0, 0, 0.1);
+    padding: 0.1rem var(--space-sm);
+    border-radius: 9999px;
+    opacity: 0.7;
+  }
+
+  /* Desktop Styles (Sidebar List) */
+  @media (min-width: 900px) {
+    .tag-cloud {
+      position: sticky;
+      top: var(--space-lg);
+      background: transparent;
+    }
+
+    .tag-cloud::after {
+      display: none; /* No gradient on desktop */
+    }
+
+    h3 {
+      display: block;
+      padding-left: 0.75rem;
+    }
+
+    .tags {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-xs);
+      overflow-x: visible;
+      padding-bottom: 0;
+      padding-right: 0;
+    }
+
+    .tag {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      padding: var(--space-sm) 0.75rem;
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: var(--radius-md);
+    }
+
+    .tag:hover {
+      background: var(--color-bg-secondary);
+      color: var(--color-text-heading);
+      transform: translateX(4px);
+    }
+
+    .tag:hover .hash {
+      opacity: 1;
+    }
+
+    .count {
+      background: var(--color-bg-subtle, rgba(255, 255, 255, 0.05));
+    }
+
+    .tag:hover .count {
+      background: var(--color-bg, #000);
+      color: var(--color-text-body);
+    }
+  }
+</style>

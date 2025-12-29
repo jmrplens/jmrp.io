@@ -36,7 +36,7 @@ const icons = {
     <div class="icon-wrapper" aria-hidden="true">
         <Icon name={icons[type]} size={24} />
     </div>
-    <div class="content-wrapper">
+    <div class="callout-content-wrapper">
         {title && <strong class="callout-title">{title}</strong>}
         <div class="content">
             <slot />
@@ -48,7 +48,7 @@ const icons = {
     .callout {
         display: flex;
         gap: 1rem;
-        padding: 1rem 1.25rem;
+        padding: 0.75rem 1rem;
         background: var(--callout-bg);
         border-left: 4px solid var(--callout-color);
         border-radius: var(--radius-md);
@@ -157,12 +157,12 @@ const icons = {
     .icon-wrapper {
         color: var(--callout-color);
         flex-shrink: 0;
-        margin-top: 2px; /* Visual alignment with title/text */
+        margin-top: 0.125rem; /* Precise alignment with text cap-height */
         display: flex;
         align-items: flex-start;
     }
 
-    .content-wrapper {
+    .callout-content-wrapper {
         display: flex;
         flex-direction: column;
         gap: 0.25rem;
@@ -179,16 +179,10 @@ const icons = {
     }
 
     .content {
-        color: var(
-            --color-text
-        ); /* Use main text color for readability, or use callout color? Main text is better for contrast usually */
+        color: var(--color-text);
         font-size: 0.95rem;
         line-height: 1.6;
     }
-
-    /* OPTIONAL: If we want colored text, we must ensure it passes.
-       Using --color-text avoids having to tune another set of colors for body text inside callout.
-       The icons/titles/borders use the brand color. */
 
     .content :global(p:last-child) {
         margin-bottom: 0;
