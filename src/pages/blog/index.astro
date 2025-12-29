@@ -35,11 +35,29 @@ if (lcpPost && lcpPost.data.coverImage) {
         imagesizes: "(max-width: 640px) 100vw, 400px",
     };
 }
+
+// Schema.org: CollectionPage with ItemList for Blog Index
+const schema = {
+  "@type": "CollectionPage",
+  name: "Blog - José Manuel Requena Plens",
+  description: "Thoughts, tutorials, and engineering notes on software development and home lab.",
+  url: new URL(Astro.url.pathname, Astro.site).toString(),
+  mainEntity: {
+    "@type": "ItemList",
+    itemListElement: posts.map((post, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      url: new URL(`/blog/${post.slug}/`, Astro.site).toString(),
+      name: post.data.title,
+    })),
+  },
+};
 ---
 
 <BaseLayout
     title="Blog"
     description="Writing about software development, home lab, and engineering."
+    schema={schema}
 >
     {
         lcpImagePreload && (
