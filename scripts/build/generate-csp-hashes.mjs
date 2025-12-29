@@ -14,9 +14,6 @@ const JS_PATTERN = "**/*.js";
 const NGINX_CONF = "/etc/nginx/snippets/security_headers.conf";
 
 /**
- * Extract hashes from content
- */
-/**
  * Helper: Add style hashes
  */
 function addStyleHashes(content, styleHashes) {
@@ -55,26 +52,34 @@ function addInlineScriptHashes(content, scriptHashes) {
 /**
  * Helper: Add script hashes (external local)
  */
-function addExternalScriptHashes(content, scriptHashes) {
+function addExternalScriptHashes(content, scriptHashes, file) {
   const scriptSrcRegex = /<script\s+([^>]*src=["']([^"']+)["'][^>]*)>/gi;
   let match;
   while ((match = scriptSrcRegex.exec(content)) !== null) {
     const src = match[2];
-    if (src.startsWith("/") && !src.startsWith("//")) {
-      try {
-        const cleanSrc = src.split("?")[0];
-        const filePath = path.join(DIST_DIR, cleanSrc);
-        if (fs.existsSync(filePath)) {
-          const fileContent = fs.readFileSync(filePath);
-          const hash = crypto
-            .createHash("sha256")
-            .update(fileContent)
-            .digest("base64");
-          scriptHashes.add(`'sha256-${hash}'`);
-        }
-      } catch (err) {
-        console.warn(`Warning: Could not hash script ${src}: ${err.message}`);
+    if (src.startsWith("http") || src.startsWith("//")) continue;
+
+    try {
+      let filePath;
+      const urlClean = src.split("?")[0].split("#")[0];
+
+      if (urlClean.startsWith("/")) {
+        filePath = path.join(DIST_DIR, urlClean);
+      } else {
+        const htmlDir = path.dirname(file);
+        filePath = path.resolve(htmlDir, urlClean);
       }
+
+      if (fs.existsSync(filePath)) {
+        const fileContent = fs.readFileSync(filePath);
+        const hash = crypto
+          .createHash("sha256")
+          .update(fileContent)
+          .digest("base64");
+        scriptHashes.add(`'sha256-${hash}'`);
+      }
+    } catch (err) {
+      console.warn(`Warning: Could not hash script ${src}: ${err.message}`);
     }
   }
 }
@@ -101,10 +106,10 @@ function addImageDomains(content, imageDomains) {
 /**
  * Extract hashes from content
  */
-function extractHashes(content, styleHashes, scriptHashes, imageDomains) {
+function extractHashes(content, styleHashes, scriptHashes, imageDomains, file) {
   addStyleHashes(content, styleHashes);
   addInlineScriptHashes(content, scriptHashes);
-  addExternalScriptHashes(content, scriptHashes);
+  addExternalScriptHashes(content, scriptHashes, file);
   addImageDomains(content, imageDomains);
 }
 
@@ -187,7 +192,7 @@ async function generateHashes() {
 
     for (const file of files) {
       const content = fs.readFileSync(file, "utf-8");
-      extractHashes(content, styleHashes, scriptHashes, imageDomains);
+      extractHashes(content, styleHashes, scriptHashes, imageDomains, file);
     }
 
     // Process all JS files to add their hashes (fixes strict-dynamic issues)

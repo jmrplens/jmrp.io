@@ -62,12 +62,25 @@ async function main() {
         if (!shouldProcess(attrs)) return match; // Failed custom check (e.g. rel="stylesheet")
 
         try {
-          // Check exclusion conditions (external, relative, etc.)
+          // Check exclusion conditions (external)
           if (url.startsWith("http") || url.startsWith("//")) return match;
-          if (!url.startsWith("/")) return match; // Only process root-relative for safety
 
-          const filePath = path.join(DIST_DIR, url).split("?")[0];
-          if (!fs.existsSync(filePath)) return match;
+          let filePath;
+          const urlClean = url.split("?")[0].split("#")[0];
+
+          if (urlClean.startsWith("/")) {
+            // Root-relative path
+            filePath = path.join(DIST_DIR, urlClean);
+          } else {
+            // Relative path
+            const htmlDir = path.dirname(file);
+            filePath = path.resolve(htmlDir, urlClean);
+          }
+
+          if (!fs.existsSync(filePath)) {
+             // console.warn(`File not found for SRI: ${url} (resolved: ${filePath})`);
+             return match;
+          }
 
           let hash;
           if (hashCache.has(filePath)) {
