@@ -1,9 +1,14 @@
 ---
 /**
- * Tabs component.
+ * Tabs Component
  * A versatile client-side web component for switching between content panels.
- * Works with any content: code, text, images, etc.
- * Supports icons, keyboard navigation, and accessibility.
+ * Works in conjunction with <TabPanel> children.
+ *
+ * Usage:
+ * <Tabs>
+ *   <TabPanel label="Tab 1">Content 1</TabPanel>
+ *   <TabPanel label="Tab 2">Content 2</TabPanel>
+ * </Tabs>
  */
 
 interface Props {
@@ -194,4 +199,11 @@ const { class: className } = Astro.props;
         max-width: 100%;
         height: auto;
     }
+
+    /* Fix for code blocks inside tabs having mismatched background in light mode */
+    /* REMOVED to fix accessibility contrast issues. Code blocks will now have their own background (card style) */
+    /* ui-tabs .astro-code,
+    ui-tabs .astro-code span {
+        background-color: transparent !important;
+    } */
 </style>

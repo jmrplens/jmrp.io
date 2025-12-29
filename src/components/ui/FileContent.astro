@@ -1,7 +1,12 @@
 ---
 /**
- * A component to display file content, with the filename in a tab-like header.
- * Uses a <slot> for the content, which should be a code block.
+ * FileContent Component
+ * Displays code content inside a file-like window frame with a filename header.
+ *
+ * Usage:
+ * <FileContent filename="nginx.conf">
+ *   ...code...
+ * </FileContent>
  */
 import { Icon } from "astro-icon/components";
 import CopyButton from "./CopyButton.astro";

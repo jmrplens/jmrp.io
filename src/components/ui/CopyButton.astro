@@ -1,8 +1,13 @@
 ---
 /**
- * CopyButton.astro
- * A reusable copy button that finds the nearest <code> block
- * within its parent wrapper and copies its text content.
+ * CopyButton Component
+ * A reusable button that copies text from the nearest parent `.copy-container`.
+ *
+ * Usage:
+ * <div class="copy-container">
+ *   <code>Some text to copy</code>
+ *   <CopyButton />
+ * </div>
  */
 import { Icon } from "astro-icon/components";
 

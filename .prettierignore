@@ -1,21 +1,14 @@
 dist
-dist_new
-dist_old
 .astro
-node_modules
+package.json
 pnpm-lock.yaml
-coverage
+docs
+src/content/posts
+
+# Dependencies
+node_modules
+
+# Build & Test Artifacts
 test-results
 playwright-report
-playwright-report/
 accessibility-report
-accessibility-report/
-.cache
-public/scripts/cf-beacon.js
-.env
-.DS_Store
-**/*.min.js
-**/*.svg
-src/content/posts/
-report_lighthouse_jmrpio.json
-rss-validation.json

@@ -73,35 +73,65 @@ references:
 
 ### Callout
 
-Highlight important information with colored boxes:
+Highlight important information with colored boxes. **These now span the full width of the content.**
 
 ```mdx
-<Callout type="info">This is an informational callout.</Callout>
+<Callout type="info" title="Did you know?">
+  This is an informational callout with a title.
+</Callout>
 ```
 
 **Available types:**
 
-- `info` - Blue informational box
-- `warning` - Yellow warning box
-- `danger` - Red danger/error box
+- `info` - Blue informational box (default)
+- `warning` - Yellow warning/highlight
+- `error` - Red danger/error box
 - `success` - Green success box
+- `tip` - Purple helpful tip
+- `note` - Gray neutral note
 
-### Code Tabs
+### Tabs
 
-Show multiple code examples in tabs:
+Show multiple content blocks in tabs (e.g., code examples):
 
-````mdx
-<CodeTabs>
-  <CodeTabItem label="JavaScript">
-    ```javascript console.log('Hello'); ```
-  </CodeTabItem>
-  <CodeTabItem label="Python">```python print("Hello") ```</CodeTabItem>
-</CodeTabs>
-````
+```mdx
+<Tabs labels={["JavaScript", "Python"]}>
+  <TabPanel index={0}>
+    ```javascript
+    console.log("Hello");
+    ```
+  </TabPanel>
+  <TabPanel index={1}>
+    ```python
+    print("Hello")
+    ```
+  </TabPanel>
+</Tabs>
+```
+
+### CompareCode
+
+Display "Bad" vs "Good" code side-by-side. Useful for showing security fixes or refactoring.
+**Note:** The header titles default to "Blocked / Insecure" (Red) and "Allowed / Secure" (Green) but can be overridden.
+
+```mdx
+<CompareCode badTitle="Vulnerable" goodTitle="Secure">
+  <div slot="bad">
+    ```javascript
+    eval(input);
+    ```
+  </div>
+  <div slot="good">
+    ```javascript
+    JSON.parse(input);
+    ```
+  </div>
+</CompareCode>
+```
 
 ### YouTube Embed
 
-Embed YouTube videos responsively:
+Embed YouTube videos responsively (centered, max-width 70ch):
 
 ```mdx
 <YouTube id="dQw4w9WgXcQ" title="Video Title" />
@@ -114,6 +144,11 @@ Display all references at the end of your post:
 ```mdx
 <References references={frontmatter.references} />
 ```
+
+### Component Layout Notes
+
+- **Full Width Components:** `Callout`
+- **Centered / Width-Restricted Components (70ch):** `Code` blocks, `Tabs`, `CompareCode`, `YouTube`, `TerminalCommand`, `TerminalOutput`.
 
 ## Content Writing Tips
 

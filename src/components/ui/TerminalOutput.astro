@@ -1,7 +1,12 @@
 ---
 /**
- * A component to display the output of a shell command, visually
- * distinct from an executable command.
+ * TerminalOutput Component
+ * Displays the output of a shell command in a distinct visual style.
+ *
+ * Usage:
+ * <TerminalOutput title="Output">
+ *   Package installed successfully.
+ * </TerminalOutput>
  */
 import { Icon } from "astro-icon/components";
 
@@ -31,7 +36,7 @@ const { title } = Astro.props;
     <div class="output-body">
         <pre><slot /></pre>
     </div>
-</div>
+</section>
 <style>
     .terminal-output-wrapper {
         border: var(--border-1);
