@@ -17,6 +17,7 @@ interface Props {
 
 const { type = "info", title } = Astro.props;
 
+/* Map icons but handle colors in CSS */
 const icons = {
     info: "mdi:information-outline",
     warning: "mdi:alert-outline",
@@ -24,24 +25,6 @@ const icons = {
     success: "mdi:check-circle-outline",
     tip: "mdi:lightbulb-outline",
     note: "mdi:information-variant-circle-outline",
-};
-
-const colors = {
-    info: "var(--color-primary)",
-    warning: "#f59e0b",
-    error: "#ef4444",
-    success: "#10b981",
-    tip: "#8b5cf6", // Violet-500
-    note: "#6b7280", // Gray-500
-};
-
-const bgColors = {
-    info: "rgba(59, 130, 246, 0.1)",
-    warning: "rgba(245, 158, 11, 0.1)",
-    error: "rgba(239, 68, 68, 0.1)",
-    success: "rgba(16, 185, 129, 0.1)",
-    tip: "rgba(139, 92, 246, 0.1)",
-    note: "rgba(107, 114, 128, 0.1)",
 };
 ---
 
@@ -61,12 +44,7 @@ const bgColors = {
     </div>
 </aside>
 
-<style
-    define:vars={{
-        "callout-color": colors[type],
-        "callout-bg": bgColors[type],
-    }}
->
+<style>
     .callout {
         display: flex;
         gap: 1rem;
@@ -79,7 +57,102 @@ const bgColors = {
         overflow: hidden;
     }
 
-    /* Subtle background pattern/texture could go here if desired */
+    /* 
+     * Theme Definitions 
+     * Uses 700 scale for text in Light Mode (Contrast > 4.5:1)
+     * Uses 400/500 scale for text in Dark Mode
+     */
+
+    /* Default (Dark Mode) */
+    :root {
+        --color-info-text: var(--color-primary);
+        --color-info-bg: rgba(59, 130, 246, 0.1);
+
+        --color-warning-text: #fbbf24; /* Amber 400 */
+        --color-warning-bg: rgba(245, 158, 11, 0.1);
+
+        --color-error-text: #f87171; /* Red 400 */
+        --color-error-bg: rgba(239, 68, 68, 0.1);
+
+        --color-success-text: #34d399; /* Emerald 400 */
+        --color-success-bg: rgba(16, 185, 129, 0.1);
+
+        --color-tip-text: #a78bfa; /* Violet 400 */
+        --color-tip-bg: rgba(139, 92, 246, 0.1);
+
+        --color-note-text: #9ca3af; /* Gray 400 */
+        --color-note-bg: rgba(107, 114, 128, 0.1);
+    }
+
+    /* Light Mode Overrides */
+    @media (prefers-color-scheme: light) {
+        :root:not([data-theme="dark"]) {
+            --color-info-text: #1d4ed8; /* Blue 700 */
+            --color-info-bg: rgba(59, 130, 246, 0.1);
+
+            --color-warning-text: #b45309; /* Amber 700 */
+            --color-warning-bg: rgba(245, 158, 11, 0.1);
+
+            --color-error-text: #dc2626; /* Red 600 */
+            --color-error-bg: rgba(239, 68, 68, 0.1);
+
+            --color-success-text: #047857; /* Emerald 700 */
+            --color-success-bg: rgba(16, 185, 129, 0.1);
+
+            --color-tip-text: #6d28d9; /* Violet 700 */
+            --color-tip-bg: rgba(139, 92, 246, 0.1);
+
+            --color-note-text: #374151; /* Gray 700 */
+            --color-note-bg: rgba(107, 114, 128, 0.1);
+        }
+    }
+
+    /* Explicit Light Mode Force */
+    :global(:root[data-theme="light"]) {
+        --color-info-text: #1d4ed8; /* Blue 700 */
+        --color-info-bg: rgba(59, 130, 246, 0.1);
+
+        --color-warning-text: #b45309; /* Amber 700 */
+        --color-warning-bg: rgba(245, 158, 11, 0.1);
+
+        --color-error-text: #dc2626; /* Red 600 */
+        --color-error-bg: rgba(239, 68, 68, 0.1);
+
+        --color-success-text: #047857; /* Emerald 700 */
+        --color-success-bg: rgba(16, 185, 129, 0.1);
+
+        --color-tip-text: #6d28d9; /* Violet 700 */
+        --color-tip-bg: rgba(139, 92, 246, 0.1);
+
+        --color-note-text: #374151; /* Gray 700 */
+        --color-note-bg: rgba(107, 114, 128, 0.1);
+    }
+
+    /* Assignments */
+    .callout-info {
+        --callout-color: var(--color-info-text);
+        --callout-bg: var(--color-info-bg);
+    }
+    .callout-warning {
+        --callout-color: var(--color-warning-text);
+        --callout-bg: var(--color-warning-bg);
+    }
+    .callout-error {
+        --callout-color: var(--color-error-text);
+        --callout-bg: var(--color-error-bg);
+    }
+    .callout-success {
+        --callout-color: var(--color-success-text);
+        --callout-bg: var(--color-success-bg);
+    }
+    .callout-tip {
+        --callout-color: var(--color-tip-text);
+        --callout-bg: var(--color-tip-bg);
+    }
+    .callout-note {
+        --callout-color: var(--color-note-text);
+        --callout-bg: var(--color-note-bg);
+    }
 
     .icon-wrapper {
         color: var(--callout-color);
@@ -106,10 +179,16 @@ const bgColors = {
     }
 
     .content {
-        color: var(--color-text-body);
+        color: var(
+            --color-text
+        ); /* Use main text color for readability, or use callout color? Main text is better for contrast usually */
         font-size: 0.95rem;
         line-height: 1.6;
     }
+
+    /* OPTIONAL: If we want colored text, we must ensure it passes.
+       Using --color-text avoids having to tune another set of colors for body text inside callout.
+       The icons/titles/borders use the brand color. */
 
     .content :global(p:last-child) {
         margin-bottom: 0;
@@ -124,6 +203,7 @@ const bgColors = {
         text-decoration: underline;
         text-decoration-color: var(--callout-color);
         text-underline-offset: 2px;
+        color: var(--color-text);
     }
 
     .content :global(a:hover) {

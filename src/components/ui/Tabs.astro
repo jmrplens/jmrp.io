@@ -201,8 +201,9 @@ const { class: className } = Astro.props;
     }
 
     /* Fix for code blocks inside tabs having mismatched background in light mode */
-    ui-tabs .astro-code,
+    /* REMOVED to fix accessibility contrast issues. Code blocks will now have their own background (card style) */
+    /* ui-tabs .astro-code,
     ui-tabs .astro-code span {
         background-color: transparent !important;
-    }
+    } */
 </style>
