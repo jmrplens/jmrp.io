@@ -79,4 +79,58 @@ const tags = getUniqueTags(posts);
   :global(.dark) .count {
       background: rgba(255,255,255,0.1);
   }
+
+  @media (max-width: 900px) {
+    .tag-cloud {
+      background: var(--color-bg);
+      border: none;
+      border-radius: 0;
+      padding: 0;
+      margin: 0 -1rem;
+      width: calc(100% + 2rem);
+      position: relative;
+    }
+    
+    /* Fade effect to indicate scroll - even wider */
+    .tag-cloud::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      width: 80px;
+      background: linear-gradient(to right, transparent, var(--color-bg));
+      pointer-events: none;
+      z-index: 10;
+    }
+    
+    h3 {
+        display: none;
+    }
+
+    .tags {
+      display: grid;
+      grid-template-rows: repeat(2, auto);
+      grid-auto-flow: column;
+      gap: 0.4rem 0.6rem;
+      
+      overflow-x: auto;
+      padding: 0.5rem 1rem;
+      padding-right: 5rem; /* Increased padding to accommodate wider fade */
+      
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    
+    .tags::-webkit-scrollbar {
+        display: none;
+    }
+
+    .tag {
+        white-space: nowrap;
+        padding: 0.35rem 0.8rem;
+        font-size: 0.8rem;
+        width: max-content;
+    }
+  }
 </style>

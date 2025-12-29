@@ -108,8 +108,22 @@ if (lcpPost && lcpPost.data.coverImage) {
     }
 
     @media (max-width: 900px) {
+        .page-header {
+            margin-bottom: 1rem;
+        }
         .blog-layout {
             grid-template-columns: 1fr;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        aside {
+            order: -1;
+            width: 100%;
+            position: sticky;
+            top: 0;
+            z-index: 10;
         }
     }
 
