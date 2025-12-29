@@ -164,13 +164,18 @@ const { badTitle = "Blocked / Insecure", goodTitle = "Allowed / Secure" } =
     /* padding-right removed, button is gone */
     border: none !important;
 
-    /* Use explicit background instead of transparent to help accessibility tools */
-    background: var(--compare-bg) !important;
+    /* Use standard background (same as Code component) instead of tint */
+    background: var(--color-bg-secondary) !important;
 
     border-radius: 0 !important;
 
     /* Manual Radius for bottom */
     border-bottom-left-radius: calc(var(--radius-md) - 1px) !important;
     border-bottom-right-radius: calc(var(--radius-md) - 1px) !important;
+  }
+
+  /* Ensure text contrast is standard */
+  .content :global(code) {
+    background-color: transparent !important;
   }
 </style>

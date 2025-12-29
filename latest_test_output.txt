@@ -28,6 +28,6 @@ HTML report was saved into the following directory /var/www/jmrp.io_astro/access
 HTML report was saved into the following directory /var/www/jmrp.io_astro/accessibility-report/github-light.html
 HTML report was saved into the following directory /var/www/jmrp.io_astro/accessibility-report/publications-light.html
 HTML report was saved into the following directory /var/www/jmrp.io_astro/accessibility-report/services-light.html
-  ✓  1 [accessibility] › tests/accessibility.spec.ts:77:3 › Accessibility Tests (Axe-core WCAG 2.1 AA) › should have no accessibility violations on all pages (light mode) (31.6s)
+  ✓  1 [accessibility] › tests/accessibility.spec.ts:77:3 › Accessibility Tests (Axe-core WCAG 2.1 AA) › should have no accessibility violations on all pages (light mode) (29.3s)
 
-  1 passed (46.4s)
+  1 passed (36.2s)
