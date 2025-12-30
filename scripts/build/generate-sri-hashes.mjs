@@ -122,6 +122,14 @@ async function main() {
         attrs.includes("rel='stylesheet'"),
     );
 
+    // Process <link rel="preload" href="...">
+    processTags(
+      styleRegex,
+      "link",
+      (attrs) =>
+        attrs.includes('rel="preload"') || attrs.includes("rel='preload'"),
+    );
+
     // Process <astro-island> to inject modulepreload with integrity for dynamic imports
     const astroIslandRegex = /<astro-island\s+([^>]*)>/gi;
     const moduleUrls = new Set();
