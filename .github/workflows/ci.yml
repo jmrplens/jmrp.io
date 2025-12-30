@@ -46,14 +46,8 @@ jobs:
   link-checker:
     name: Link Checker (Lychee)
     runs-on: ubuntu-latest
-    needs: build
     steps:
       - uses: actions/checkout@v6
-      - name: Download build artifact
-        uses: actions/download-artifact@v7
-        with:
-          name: dist-build
-          path: dist
       - name: Restore lychee cache
         uses: actions/cache@v5
         with:
@@ -72,9 +66,12 @@ jobs:
             --exclude 'https://electronica-submarina.com'
             --exclude 'https://ies-berlanga.info'
             --exclude 'https://www.i3m-detectors.i3m.upv.es'
-            --remap "https://jmrp.io/ /"
-            --root-dir "$GITHUB_WORKSPACE/dist"
-            './dist/**/*.html'
+            './**/*.md' 
+            './**/*.mdx' 
+            './**/*.html' 
+            './src/**/*.astro' 
+            './src/**/*.ts'
+            './src/**/*.tsx'
           fail: true
         env:
           GITHUB_TOKEN: ${{ secrets.TOKEN_GITHUB }}
@@ -249,7 +246,9 @@ jobs:
                   summary.pages
                     .filter((p) => p.violations > 0)
                     .forEach((p) => {
-                      const rules = p.violationIds ? `\n   - **Rules:** \`${p.violationIds.join(', ')}\`` : '';
+                      const rules = p.violationIds ? `\n   - **Rules:** 
+${p.violationIds.join(', ')}
+`` : '';
                       commentBody += `- **${p.page}** (${p.violations} violations)${rules}\n`;
                     });
                   commentBody += `\n📸 **See 'axe-accessibility-report-${theme}' artifact for screenshots.**\n\n`;
@@ -344,7 +343,10 @@ jobs:
                 if (!rawContent || rawContent === 'undefined') {
                    if (fs.existsSync('html-errors.log')) {
                       const errors = fs.readFileSync('html-errors.log', 'utf8');
-                      comment = `## ⚠️ HTML5 Validation\n\n**Validation failed to run correctly.**\n\nError log:\n\`\`\`\n${errors.slice(0, 1000)}\n\`\`\``;
+                      comment = `## ⚠️ HTML5 Validation\n\n**Validation failed to run correctly.**\n\nError log:\n
+```
+${errors.slice(0, 1000)}
+``` `;
                    } else {
                       comment = `## ⚠️ HTML5 Validation\n\nReport is empty or undefined. Check build logs.`;
                    }
@@ -384,7 +386,10 @@ jobs:
                       comment += `All pages are valid HTML5 compliant.\n`;
                     }
                   } catch (parseError) {
-                     comment = `## ⚠️ HTML5 Validation\n\n**Error parsing report JSON**\n\nRaw snippet:\n\`\`\`\n${rawContent.slice(0, 500)}\n\`\`\``;
+                     comment = `## ⚠️ HTML5 Validation\n\n**Error parsing report JSON**\n\nRaw snippet:\n
+```
+${rawContent.slice(0, 500)}
+``` `;
                   }
                 }
               } else {
@@ -448,7 +453,10 @@ jobs:
                 comment += `**Status: ${icon} ${status}**\n\n`;
                 
                 comment += `**Feed Details:**\n`;
-                comment += `- **File:** \`rss.xml\` (${report.size} KB)\n`;
+                comment += `- **File:** 
+rss.xml
+ (${report.size} KB)
+`;
                 comment += `- **Items:** ${report.metadata.items} posts\n`;
                 
                 if (report.metadata.latestItem) {
@@ -467,7 +475,9 @@ jobs:
                 
                 comment += `\n### 🖼️ Visual Preview\n`;
                 comment += `A visual preview of the RSS content has been generated.\n`;
-                comment += `📥 **Download \`rss-preview\` artifact** from the [Workflow Run](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}) to verify styles and components.\n\n`;
+                comment += `📥 **Download 
+rss-preview
+ artifact** from the [Workflow Run](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}) to verify styles and components.\n\n`;
                 comment += `[View Feed](https://jmrp.io/rss.xml)`;
                 
               } else {
@@ -517,10 +527,18 @@ jobs:
             **Validation:** Internal strict check for JSON-LD syntax and required schema properties.
 
             **Validated Types:**
-            - \`Person\` (Author profile)
-            - \`WebSite\` (Site metadata)
-            - \`BlogPosting\` (Articles - checks image, author, date)
-            - \`BreadcrumbList\` (Navigation)
+            - 
+`Person`
+ (Author profile)
+            - 
+`WebSite`
+ (Site metadata)
+            - 
+`BlogPosting`
+ (Articles - checks image, author, date)
+            - 
+`BreadcrumbList`
+ (Navigation)
 
             🔗 [Verify manually with Google Rich Results Test](https://search.google.com/test/rich-results)`;
 
@@ -566,7 +584,9 @@ jobs:
           else
             echo "$LARGE_IMAGES" | while read -r img; do
               SIZE=$(ls -lh "$img" | awk '{print $5}')
-              echo "- \`${img#dist/}\`: $SIZE ⚠️" >> $GITHUB_STEP_SUMMARY
+              echo "- 
+${img#dist/}
+: $SIZE ⚠️" >> $GITHUB_STEP_SUMMARY
             done
           fi
       - name: Post Image Optimization Comment
@@ -579,19 +599,21 @@ jobs:
             // Count images
             const webpCount = execSync('find dist -type f -name "*.webp" 2>/dev/null | wc -l || echo "0"', { encoding: 'utf-8' }).trim();
             const pngCount = execSync('find dist -type f -name "*.png" 2>/dev/null | wc -l || echo "0"', { encoding: 'utf-8' }).trim();
-            const jpgCount = execSync('find dist -type f \\( -name "*.jpg" -o -name "*.jpeg" \\) 2>/dev/null | wc -l || echo "0"', { encoding: 'utf-8' }).trim();
+            const jpgCount = execSync('find dist -type f \( -name "*.jpg" -o -name "*.jpeg" \) 2>/dev/null | wc -l || echo "0"', { encoding: 'utf-8' }).trim();
 
             // Check for large images
             let largeImagesOutput = '';
             try {
-              const largeImages = execSync('find dist -type f \\( -name "*.webp" -o -name "*.png" -o -name "*.jpg" -o -name "*.jpeg" \\) -size +500k 2>/dev/null || echo ""', { encoding: 'utf-8' }).trim();
+              const largeImages = execSync('find dist -type f \( -name "*.webp" -o -name "*.png" -o -name "*.jpg" -o -name "*.jpeg" \) -size +500k 2>/dev/null || echo ""', { encoding: 'utf-8' }).trim();
               if (largeImages) {
                 largeImagesOutput = '\n\n⚠️ **Large images detected (>500KB)**\n\nConsider further optimization for:\n';
                 const lines = largeImages.split('\n');
                 lines.forEach(img => {
                   if (img) {
                     const size = execSync(`ls -lh "${img}" | awk '{print $5}'`, { encoding: 'utf-8' }).trim();
-                    largeImagesOutput += `- \`${img.replace('dist/', '')}\` (${size})\n`;
+                    largeImagesOutput += `- 
+${img.replace('dist/', '')}
+ (${size})\n`;
                   }
                 });
               } else {
