@@ -4,32 +4,62 @@ const path = require("node:path");
 const theme = process.env.THEME || "light";
 const resultsDir = ".lighthouseci";
 
-function formatReport() {
-  if (!fs.existsSync(resultsDir)) {
-    console.log(
-      "## ⚡ Lighthouse Analysis (" + theme + ")\n\n⚠️ No results found.",
-    );
-    return;
-  }
+function findManifest(dir) {
+  if (!fs.existsSync(dir)) return null;
+  const files = fs.readdirSync(dir);
 
-  const manifestFiles = fs
-    .readdirSync(resultsDir)
-    .filter((f) => f.startsWith("manifest.json"));
-  if (manifestFiles.length === 0) {
-    console.log(
-      "## ⚡ Lighthouse Analysis (" + theme + ")\n\n⚠️ No manifest found.",
-    );
-    return;
-  }
-
-  const manifest = JSON.parse(
-    fs.readFileSync(path.join(resultsDir, manifestFiles[0]), "utf8"),
+  // Try direct manifest.json first
+  const directMatch = files.find(
+    (f) => f === "manifest.json" || f.startsWith("manifest.json"),
   );
+  if (directMatch) return path.join(dir, directMatch);
+
+  // Search subdirectories
+  for (const file of files) {
+    const fullPath = path.join(dir, file);
+    if (fs.statSync(fullPath).isDirectory()) {
+      const found = findManifest(fullPath);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
+function formatReport() {
+  const manifestPath = findManifest(resultsDir);
+
+  if (!manifestPath) {
+    console.log(
+      "## ⚡ Lighthouse Analysis (" +
+        theme +
+        ")\n\n⚠️ No manifest found in " +
+        resultsDir,
+    );
+    // Log directory structure for debugging in CI logs (stderr)
+    try {
+      if (fs.existsSync(resultsDir)) {
+        console.error(
+          "Contents of " + resultsDir + ":",
+          fs.readdirSync(resultsDir),
+        );
+      } else {
+        console.error(
+          resultsDir + " directory does not exist at " + process.cwd(),
+        );
+      }
+    } catch (e) {}
+    return;
+  }
+
+  const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
   let body = "## ⚡ Lighthouse Analysis (" + theme + ")\n\n";
   body += "| Page | Performance | Accessibility | Best Practices | SEO |\n";
   body += "| :--- | :---: | :---: | :---: | :---: |\n";
 
   manifest.forEach((entry) => {
+    // entry.summary might be missing if run failed for a specific URL
+    if (!entry.summary) return;
+
     const perf = Math.round(entry.summary.performance * 100);
     const acc = Math.round(entry.summary.accessibility * 100);
     const bp = Math.round(entry.summary["best-practices"] * 100);
