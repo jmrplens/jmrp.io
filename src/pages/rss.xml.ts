@@ -3,11 +3,12 @@ import { getCollection, getEntry, type CollectionEntry } from "astro:content";
 import { getImage } from "astro:assets";
 import type { APIContext } from "astro";
 import sanitizeHtml from "sanitize-html";
-import { marked } from "marked";
+import { Marked } from "marked";
 import juice from "juice";
 import fs from "node:fs";
 import path from "node:path";
 import { createMermaidRenderer } from "mermaid-isomorphic";
+import { createHighlighter } from "shiki";
 
 const RSS_STYLES = fs.readFileSync(path.resolve("src/styles/rss.css"), "utf-8");
 
@@ -47,10 +48,51 @@ const mermaidRenderer = createMermaidRenderer({
   launchOptions: { args: ["--no-sandbox", "--disable-setuid-sandbox"] },
 });
 
+const highlighter = await createHighlighter({
+  themes: ["github-light"],
+  langs: [
+    "javascript",
+    "typescript",
+    "nginx",
+    "bash",
+    "yaml",
+    "ini",
+    "html",
+    "css",
+    "text",
+    "json",
+    "markdown",
+  ],
+});
+
+const marked = new Marked({
+  async: true,
+  renderer: {
+    code({ text, lang }) {
+      const language = lang || "text";
+      try {
+        return highlighter.codeToHtml(text, {
+          lang: language,
+          theme: "github-light",
+        });
+      } catch (e) {
+        return `<pre><code>${text}</code></pre>`;
+      }
+    },
+  },
+});
+
+if (typeof process !== "undefined" && typeof process.on === "function") {
+  process.on("beforeExit", async () => {
+    const r = mermaidRenderer as any;
+    if (r && typeof r.close === "function") await r.close();
+  });
+}
+
 async function flattenComponents(content: string): Promise<string> {
   let flattened = content;
 
-  // Cleanup
+  // 0. Cleanup
   flattened = flattened.replaceAll(/^import\s+[^;]*;?$/gm, ""); // NOSONAR
   flattened = flattened.replaceAll(/^export\s+[^;]*;?$/gm, ""); // NOSONAR
   flattened = flattened.replaceAll(/{\/\*[\s\S]*?\*\/}/g, ""); // NOSONAR
@@ -60,8 +102,8 @@ async function flattenComponents(content: string): Promise<string> {
     /<TerminalCommand\s+([^>]*)\inaly/g,
     (match, attrs) => {
       // NOSONAR
-      const command = attrs.match(/command=\"([^\"]*)\"/)?.[1] || ""; // NOSONAR
-      const prompt = attrs.match(/prompt=\"([^\"]*)\"/)?.[1] || "$"; // NOSONAR
+      const command = attrs.match(/command=\"([^\"]*)\"/)?.["1"] || ""; // NOSONAR
+      const prompt = attrs.match(/prompt=\"([^\"]*)\"/)?.["1"] || "$"; // NOSONAR
       return `<div style="background:#1a1b26;color:#a9b1d6;padding:12px;font-family:monospace;margin:16px 0;"><span style="color:#565f89;margin-right:8px;">${prompt}</span> ${command}</div>`;
     },
   );
@@ -71,7 +113,7 @@ async function flattenComponents(content: string): Promise<string> {
     /<FileContent\s+([^>]*?)>([\s\S]*?)<\/FileContent>/g,
     (match, attrs, body) => {
       // NOSONAR
-      const filename = attrs.match(/filename=\"([^\"]*)\"/)?.[1] || "File"; // NOSONAR
+      const filename = attrs.match(/filename=\"([^\"]*)\"/)?.["1"] || "File"; // NOSONAR
       return `<div style="border:1px solid #e1e4e8;margin:16px 0;overflow:hidden;"><div style="background:#f6f8fa;padding:8px 16px;border-bottom:1px solid #e1e4e8;font-family:monospace;font-size:12px;font-weight:bold;">📄 ${filename}</div><div style="padding:0;">
 
 ${body}
@@ -145,19 +187,19 @@ ${body}
     /<CompareCode\s+([^>]*?)>([\s\S]*?)<\/CompareCode>/g,
     (match, attrs, body) => {
       // NOSONAR
-      const badTitle = attrs.match(/badTitle=\"([^\"]*)\"/)?.[1] || "Bad"; // NOSONAR
-      const goodTitle = attrs.match(/goodTitle=\"([^\"]*)\"/)?.[1] || "Good"; // NOSONAR
-      const badContent =
-        body.match(/<[^>]*slot=\"bad\"[^>]*>([\s\S]*?)<\/[^>]*>/)?.[1] || ""; // NOSONAR
-      const goodContent =
-        body.match(/<[^>]*slot=\"good\"[^>]*>([\s\S]*?)<\/[^>]*>/)?.[1] || ""; // NOSONAR
-      return `<div style="margin:24px 0;"><div style="border:1px solid #ef4444;margin-bottom:12px;"><div style="background:#ef4444;color:white;padding:4px 12px;font-weight:bold;font-size:13px;">✕ ${badTitle}</div><div style="padding:0;">
+      const bt = attrs.match(/badTitle=\"([^\"]*)\"/)?.["1"] || "Bad"; // NOSONAR
+      const gt = attrs.match(/goodTitle=\"([^\"]*)\"/)?.["1"] || "Good"; // NOSONAR
+      const bc =
+        body.match(/<[^>]*slot=\"bad\"[^>]*>([\s\S]*?)<\/[^>]*>/)?.["1"] || ""; // NOSONAR
+      const gc =
+        body.match(/<[^>]*slot=\"good\"[^>]*>([\s\S]*?)<\/[^>]*>/)?.["1"] || ""; // NOSONAR
+      return `<div style="margin:24px 0;"><div style="border:1px solid #ef4444;margin-bottom:12px;"><div style="background:#ef4444;color:white;padding:4px 12px;font-weight:bold;font-size:13px;">✕ ${bt}</div><div style="padding:0;">
 
-${badContent}
+${bc}
 
-</div></div><div style="border:1px solid #10b981;"><div style="background:#10b981;color:white;padding:4px 12px;font-weight:bold;font-size:13px;">✓ ${goodTitle}</div><div style="padding:0;">
+</div></div><div style="border:1px solid #10b981;"><div style="background:#10b981;color:white;padding:4px 12px;font-weight:bold;font-size:13px;">✓ ${gt}</div><div style="padding:0;">
 
-${goodContent}
+${gc}
 
 </div></div></div>`;
     },
@@ -168,8 +210,8 @@ ${goodContent}
     /<YouTube\s+([^>]*)\inaly/g,
     (match, attrs) => {
       // NOSONAR
-      const id = attrs.match(/id=\"([^\"]*)\"/)?.[1] || ""; // NOSONAR
-      const title = attrs.match(/title=\"([^\"]*)\"/)?.[1] || "Video"; // NOSONAR
+      const id = attrs.match(/id=\"([^\"]*)\"/)?.["1"] || ""; // NOSONAR
+      const title = attrs.match(/title=\"([^\"]*)\"/)?.["1"] || "Video"; // NOSONAR
       return `<div style="margin:16px 0;text-align:center;border:1px solid #e1e4e8;padding:20px;background:#f9f9f9;"><p style="margin-bottom:10px;">📺 <strong>${title}</strong></p><a href="https://www.youtube.com/watch?v=${id}" style="color:#B509AC;text-decoration:underline;">Watch on YouTube</a></div>`;
     },
   );
@@ -177,27 +219,25 @@ ${goodContent}
   // 9. Mermaid Render
   const mermaidRegex = /```mermaid-render([\s\S]*?)```/g; // NOSONAR
   const mermaidMatches = Array.from(flattened.matchAll(mermaidRegex)); // NOSONAR
-
   if (mermaidMatches.length > 0) {
     const codes = mermaidMatches.map((m) => m[1].trim());
     try {
-      const resultsLight = await mermaidRenderer(codes, {
+      const resL = await mermaidRenderer(codes, {
         mermaidConfig: { theme: "neutral" },
       });
-      const resultsDark = await mermaidRenderer(codes, {
+      const resD = await mermaidRenderer(codes, {
         mermaidConfig: { theme: "base", themeVariables: MERMAID_DARK_VARS },
       });
-
-      let matchIndex = 0;
+      let mi = 0;
       flattened = flattened.replaceAll(mermaidRegex, () => {
         // NOSONAR
-        const i = matchIndex++;
-        const resL = resultsLight[i];
-        const resD = resultsDark[i];
-        if (resL?.status === "fulfilled" && resD?.status === "fulfilled") {
-          const base64L = Buffer.from(resL.value.svg).toString("base64");
-          const base64D = Buffer.from(resD.value.svg).toString("base64");
-          return `<div style="margin:24px 0;text-align:center;"><picture><source srcset="data:image/svg+xml;base64,${base64D}" media="(prefers-color-scheme: dark)"><img src="data:image/svg+xml;base64,${base64L}" alt="Mermaid Diagram" width="${resL.value.width}" height="${resL.value.height}" style="max-width:100%;height:auto;display:block;margin:0 auto;" /></picture></div>`;
+        const i = mi++;
+        const l = resL[i];
+        const d = resD[i];
+        if (l?.status === "fulfilled" && d?.status === "fulfilled") {
+          const bL = Buffer.from(l.value.svg).toString("base64");
+          const bD = Buffer.from(d.value.svg).toString("base64");
+          return `<div style="margin:24px 0;text-align:center;"><picture><source srcset="data:image/svg+xml;base64,${bD}" media="(prefers-color-scheme: dark)"><img src="data:image/svg+xml;base64,${bL}" alt="Mermaid Diagram" width="${l.value.width}" height="${l.value.height}" style="max-width:100%;height:auto;display:block;margin:0 auto;" /></picture></div>`;
         }
         return "<blockquote>[Diagram rendering failed]</blockquote>";
       });
@@ -279,7 +319,7 @@ export async function GET(context: APIContext) {
             img: ["src", "alt", "title", "width", "height", "style"],
             source: ["srcset", "media", "type"],
             a: ["href", "name", "target", "title", "rel"],
-            code: ["class"],
+            code: ["class", "style"],
             span: ["class", "style"],
             div: ["style"],
             p: ["style"],
@@ -359,7 +399,7 @@ export async function GET(context: APIContext) {
     xmlns: {
       atom: "http://www.w3.org/2005/Atom",
       content: "http://purl.org/rss/1.0/modules/content/",
-      media: "http://search.yahoo.com/mrss/",
+      media: "http://search.yahoo.com/mrss/", // NOSONAR
     },
   });
 }
