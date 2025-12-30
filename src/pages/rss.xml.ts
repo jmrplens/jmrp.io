@@ -225,12 +225,10 @@ async function flattenComponents(content: string): Promise<string> {
   for (const m of ccMatches) {
     const bt = m[1].match(/badTitle=["']([^"']*)["']/)?.[1] || "Bad"; // NOSONAR
     const gt = m[1].match(/goodTitle=["']([^"']*)["']/)?.[1] || "Good"; // NOSONAR
-    const bcM = m[2].match(
-      /<[^>]*slot=["']?bad["']?[^>]*>([\s\S]*?)<\/[^>]*>/i,
-    ); // NOSONAR
-    const gcM = m[2].match(
-      /<[^>]*slot=["']?good["']?[^>]*>([\s\S]*?)<\/[^>]*>/i,
-    ); // NOSONAR
+    // prettier-ignore
+    const bcM = m[2].match(/<[^>]*slot=["']?bad["']?[^>]*>([\s\S]*?)<\/[^>]*>/i); // NOSONAR
+    // prettier-ignore
+    const gcM = m[2].match(/<[^>]*slot=["']?good["']?[^>]*>([\s\S]*?)<\/[^>]*>/i); // NOSONAR
     const bc = bcM ? await renderBody(bcM[1]) : "";
     const gc = gcM ? await renderBody(gcM[1]) : "";
     res = res.replace(
