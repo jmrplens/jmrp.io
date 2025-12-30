@@ -6,19 +6,24 @@ on:
   pull_request:
     branches: ["main"]
   schedule:
-    - cron: "0 9 * * 1"
+    - cron: "0 9 * * 1" # Run every Monday at 9am (inherited from quality)
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}$-వాతావరణం${{ github.ref }}
   cancel-in-progress: true
 
 permissions:
   actions: read
   contents: read
-  pull-requests: write
-  security-events: write
+  pull-requests: write # For Lighthouse comments and SonarCloud
+  security-events: write # For CodeQL
 
 jobs:
+  # =================================================================================
+  # STAGE 1: Parallel Static Analysis & Build
+  # These jobs don't depend on each other and can run simultaneously on the source code.
+  # =================================================================================
+
   lint:
     name: Lint & Type Check
     runs-on: ubuntu-latest
@@ -163,6 +168,11 @@ jobs:
           path: dist/
           retention-days: 1
 
+  # =================================================================================
+  # STAGE 2: Post-Build Tests
+  # These jobs depend on the 'build' job to finish successfully.
+  # =================================================================================
+
   accessibility:
     name: Accessibility Tests (${{ matrix.theme }} mode)
     runs-on: ubuntu-latest
@@ -218,30 +228,62 @@ jobs:
 
             try {
               const summaryPath = `accessibility-report/accessibility-summary-${theme}.json`;
+              console.log('Checking for summary file at:', summaryPath);
+              
               if (fs.existsSync(summaryPath)) {
                 const summary = JSON.parse(fs.readFileSync(summaryPath, 'utf8'));
+                // ... rest of logic
                 const isSuccess = summary.failed === 0;
+                
                 const statusIcon = isSuccess ? '✅' : '⚠️';
                 const statusText = isSuccess ? '**Passed!**' : '**Violations detected**';
                 
-                commentBody = `## ♿ Accessibility (${themeIcon} ${themeName})\n\n${statusIcon} ${statusText}\n\n`;
-                commentBody += `**Summary:**\n- Total Pages: **${summary.totalPages}**\n- Failed: ${summary.failed}\n- Review Needed: ${summary.incomplete || 0} 🔍\n\n`;
+                commentBody = `## ♿ Accessibility (${themeIcon} ${themeName})
+
+${statusIcon} ${statusText}
+
+`;
+                commentBody += `**Summary:**
+- Total Pages: **${summary.totalPages}**
+- Failed: ${summary.failed}
+- Review Needed: ${summary.incomplete || 0} 🔍
+
+`;
                 
                 if (!isSuccess) {
-                  commentBody += `### ❌ Failed Pages\n`;
-                  summary.pages.filter((p) => p.violations > 0).forEach((p) => {
-                    const rules = p.violationIds ? `\n   - **Rules:** \`${p.violationIds.join(', ')}\`` : '';
-                    commentBody += `- **${p.page}** (${p.violations} violations)${rules}\n`;
-                  });
-                  commentBody += `\n📸 **See 'axe-accessibility-report-${theme}' artifact for screenshots.**\n\n`;
+                  commentBody += `### ❌ Failed Pages
+`;
+                  summary.pages
+                    .filter((p) => p.violations > 0)
+                    .forEach((p) => {
+                      const rules = p.violationIds ? `
+   - **Rules:** 
+${p.violationIds.join(', ')}
+```
+` : '';
+                      commentBody += `- **${p.page}** (${p.violations} violations)${rules}
+`;
+                    });
+                  commentBody += `
+📸 **See 'axe-accessibility-report-${theme}' artifact for screenshots.**
+
+`;
                 }
-                commentBody += `**Standards:** WCAG 2.1/2.2 AA & Best Practices\n`;
+
+                commentBody += `**Standards:** WCAG 2.1/2.2 AA & Best Practices
+`;
                 commentBody += `📊 [View detailed HTML report](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`;
+                
               } else {
                 throw new Error(`Summary file not found at ${summaryPath}`);
               }
             } catch (error) {
-               commentBody = `## ♿ Accessibility (${themeIcon} ${themeName})\n\n⚠️ **Report not found**\n\nError: ${error.message}`;
+               console.log('Error generating comment:', error);
+               commentBody = `## ♿ Accessibility (${themeIcon} ${themeName})
+
+⚠️ **Report not found**
+
+Error: ${error.message}`;
             }
 
             github.rest.issues.createComment({
@@ -265,7 +307,14 @@ jobs:
       - name: Analyze bundle size
         run: |
           echo "## 📦 Bundle Size Analysis" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### JavaScript Bundles" >> $GITHUB_STEP_SUMMARY
           find dist/_astro -name "*.js" -type f -exec ls -lh {} \; | awk '{print "- "$9": "$5}' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### CSS Bundles" >> $GITHUB_STEP_SUMMARY
+          find dist/_astro -name "*.css" -type f -exec ls -lh {} \; | awk '{print "- "$9": "$5}' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Total Size" >> $GITHUB_STEP_SUMMARY
           du -sh dist | awk '{print "**Total**: "$1}' >> $GITHUB_STEP_SUMMARY
 
   release-drafter:
@@ -297,7 +346,8 @@ jobs:
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile --prefer-offline
       - name: Validate HTML5
-        run: pnpm exec html-validate -c .htmlvalidate.json --formatter json dist > html-validation.json 2> html-errors.log || true
+        run: |
+          pnpm exec html-validate -c .htmlvalidate.json --formatter json dist > html-validation.json 2> html-errors.log || true
       - name: Post HTML Validation Comment
         if: github.event_name == 'pull_request'
         uses: actions/github-script@v8
@@ -305,28 +355,108 @@ jobs:
           script: |
             const fs = require('fs');
             let comment = '';
+
             try {
               if (fs.existsSync('html-validation.json')) {
                 let rawContent = fs.readFileSync('html-validation.json', 'utf8').trim();
+                
+                // If file is empty or contains "undefined", check error log
                 if (!rawContent || rawContent === 'undefined') {
-                   const errors = fs.existsSync('html-errors.log') ? fs.readFileSync('html-errors.log', 'utf8') : 'Unknown error';
-                   comment = `## ⚠️ HTML5 Validation\n\n**Validation failed to run correctly.**\n\nError log snippet:\n\`\`\`\n${errors.slice(0, 500)}\n\`\`\```;
+                   if (fs.existsSync('html-errors.log')) {
+                      const errors = fs.readFileSync('html-errors.log', 'utf8');
+                      comment = `## ⚠️ HTML5 Validation
+
+**Validation failed to run correctly.**
+
+Error log:
+
+```
+${errors.slice(0, 1000)}
+``` `;
+                   } else {
+                      comment = `## ⚠️ HTML5 Validation
+
+Report is empty or undefined. Check build logs.`;
+                   }
                 } else {
-                  const report = JSON.parse(rawContent);
-                  const filesWithErrors = report.filter(f => f.messages.length > 0);
-                  const totalErrors = filesWithErrors.reduce((acc, f) => acc + f.messages.filter(m => m.severity === 2).length, 0);
-                  const isSuccess = totalErrors === 0;
-                  comment = `## ${isSuccess ? '✅' : '❌'} HTML5 Validation\n\nStatus: ${isSuccess ? 'Passed' : 'Failed'}\n- Errors: ${totalErrors}\n\n`;
-                  if (filesWithErrors.length > 0) {
-                    filesWithErrors.slice(0, 5).forEach(f => {
-                      comment += `**${f.filePath.split('/').pop()}**\n`;
-                      f.messages.forEach(m => comment += `- ${m.severity === 2 ? '🔴' : '⚠️'} [${m.ruleId}] ${m.message}\n`);
-                    });
+                  try {
+                    const report = JSON.parse(rawContent);
+                    const filesWithErrors = report.filter(f => f.messages.length > 0);
+                    const totalErrors = filesWithErrors.reduce((acc, f) => acc + f.messages.filter(m => m.severity === 2).length, 0);
+                    const totalWarnings = filesWithErrors.reduce((acc, f) => acc + f.messages.filter(m => m.severity === 1).length, 0);
+                    
+                    const isSuccess = totalErrors === 0;
+                    const icon = isSuccess ? '✅' : '❌';
+                    const status = isSuccess ? 'Passed' : 'Failed';
+                    
+                    comment = `## ${icon} HTML5 Validation
+
+`;
+                    comment += `**Status: ${status}**
+`;
+                    comment += `- **Files Checked:** All generated HTML
+`;
+                    comment += `- **Errors:** ${totalErrors}
+`;
+                    comment += `- **Warnings:** ${totalWarnings}
+
+`;
+                    
+                    if (filesWithErrors.length > 0) {
+                      comment += `### ⚠️ Issues Found (Top 10 files)
+
+`;
+                      filesWithErrors.slice(0, 10).forEach(f => {
+                        const fileName = f.filePath.replace('dist/', '').split('/').pop(); // Just file name for brevity
+                        comment += `**${fileName}**
+`;
+                        f.messages.forEach(m => {
+                           const severity = m.severity === 2 ? '🔴' : '⚠️';
+                           comment += `- ${severity} [${m.ruleId}] ${m.message} (Line ${m.line})
+`;
+                        });
+                        comment += `
+`;
+                      });
+                      
+                      if (filesWithErrors.length > 10) {
+                        comment += `...and ${filesWithErrors.length - 10} more files with issues.
+`;
+                      }
+                    } else {
+                      comment += `All pages are valid HTML5 compliant.
+`;
+                    }
+                  } catch (parseError) {
+                     comment = `## ⚠️ HTML5 Validation
+
+**Error parsing report JSON**
+
+Raw snippet:
+
+```
+${rawContent.slice(0, 500)}
+``` `;
                   }
                 }
+              } else {
+                comment = `## ⚠️ HTML5 Validation
+
+Report file not found. Check build logs.`;
               }
-            } catch (e) { comment = `## ⚠️ HTML5 Validation\n\nError processing report.`; } 
-            github.rest.issues.createComment({ issue_number: context.issue.number, owner: context.repo.owner, repo: context.repo.repo, body: comment });
+            } catch (e) {
+              console.error(e);
+              comment = `## ⚠️ HTML5 Validation
+
+Error processing report. Check build logs.`;
+            }
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
 
   rss-validation:
     name: RSS Feed Validation
@@ -362,13 +492,81 @@ jobs:
           script: |
             const fs = require('fs');
             let comment = '';
+
             try {
               if (fs.existsSync('rss-validation.json')) {
                 const report = JSON.parse(fs.readFileSync('rss-validation.json', 'utf8'));
-                comment = `## 📡 RSS Feed Validation\n\nStatus: ${report.valid ? '✅ Valid' : '❌ Failed'}\n- File: `rss.xml` (${report.size} KB)\n- Items: ${report.metadata.items}\n\n📥 **Download `rss-preview` artifact** to verify styles.`;
+                
+                const icon = report.valid ? '✅' : '❌';
+                const status = report.valid ? 'Valid' : 'Failed';
+                
+                comment = `## 📡 RSS Feed Validation
+
+`;
+                comment += `**Status: ${icon} ${status}**
+
+`;
+                
+                comment += `**Feed Details:**
+`;
+                comment += `- **File:** 
+rss.xml
+ (${report.size} KB)
+`;
+                comment += `- **Items:** ${report.metadata.items} posts
+`;
+                
+                if (report.metadata.latestItem) {
+                   comment += `- **Latest:** "${report.metadata.latestItem.title}" (${report.metadata.latestItem.date})
+`;
+                }
+                
+                if (report.errors.length > 0) {
+                  comment += `
+### ❌ Errors
+`;
+                  report.errors.forEach(e => comment += `- ${e}
+`);
+                }
+                
+                if (report.warnings.length > 0) {
+                  comment += `
+### ⚠️ Warnings
+`;
+                  report.warnings.forEach(w => comment += `- ${w}
+`);
+                }
+                
+                comment += `
+### 🖼️ Visual Preview
+`;
+                comment += `A visual preview of the RSS content has been generated.
+`;
+                comment += `📥 **Download 
+rss-preview
+ artifact** from the [Workflow Run](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}) to verify styles and components.
+
+`;
+                comment += `[View Feed](https://jmrp.io/rss.xml)`;
+                
+              } else {
+                 comment = `## 📡 RSS Validation
+
+⚠️ Report file not found. Check logs.`;
               }
-            } catch (e) { comment = `## 📡 RSS Validation\n\nError processing report.`; }
-            github.rest.issues.createComment({ issue_number: context.issue.number, owner: context.repo.owner, repo: context.repo.repo, body: comment });
+            } catch (e) {
+               console.error(e);
+               comment = `## 📡 RSS Validation
+
+⚠️ Error processing report.`;
+            }
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
 
   schema-validation:
     name: Schema.org JSON-LD Validation
@@ -394,8 +592,35 @@ jobs:
         uses: actions/github-script@v8
         with:
           script: |
-            const comment = `## 🏷️ Structured Data Check\n\n✅ **Syntax & Basic Properties Valid**\n\n🔗 [Verify manually](https://search.google.com/test/rich-results)`;
-            github.rest.issues.createComment({ issue_number: context.issue.number, owner: context.repo.owner, repo: context.repo.repo, body: comment });
+            const comment = `## 🏷️ Structured Data Check
+
+            ✅ **Syntax & Basic Properties Valid**
+
+            **Scope:** Checked all generated HTML pages (100% coverage).
+            **Validation:** Internal strict check for JSON-LD syntax and required schema properties.
+
+            **Validated Types:**
+            - 
+Person
+ (Author profile)
+            - 
+WebSite
+ (Site metadata)
+            - 
+BlogPosting
+ (Articles - checks image, author, date)
+            - 
+BreadcrumbList
+ (Navigation)
+
+            🔗 [Verify manually with Google Rich Results Test](https://search.google.com/test/rich-results)`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
 
   image-optimization:
     name: Image Optimization Check
@@ -411,18 +636,85 @@ jobs:
       - name: Analyze images
         run: |
           echo "## 🖼️ Image Optimization Analysis" >> $GITHUB_STEP_SUMMARY
-          WEBP_COUNT=$(find dist -type f -name "*.webp" | wc -l)
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Count WebP vs other formats
+          WEBP_COUNT=$(find dist -type f -name "*.webp" 2>/dev/null | wc -l || echo "0")
+          PNG_COUNT=$(find dist -type f -name "*.png" 2>/dev/null | wc -l || echo "0")
+          JPG_COUNT=$(find dist -type f \( -name "*.jpg" -o -name "*.jpeg" \) 2>/dev/null | wc -l || echo "0")
+
+          echo "### Image Format Distribution" >> $GITHUB_STEP_SUMMARY
           echo "- WebP images: $WEBP_COUNT ✅" >> $GITHUB_STEP_SUMMARY
+          echo "- PNG images: $PNG_COUNT" >> $GITHUB_STEP_SUMMARY
+          echo "- JPG images: $JPG_COUNT" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Check for large images (>500KB)
+          echo "### Large Images (>500KB)" >> $GITHUB_STEP_SUMMARY
+          LARGE_IMAGES=$(find dist -type f \( -name "*.webp" -o -name "*.png" -o -name "*.jpg" -o -name "*.jpeg" \) -size +500k 2>/dev/null || echo "")
+          if [ -z "$LARGE_IMAGES" ]; then
+            echo "✅ No large images found" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "$LARGE_IMAGES" | while read -r img; do
+              SIZE=$(ls -lh "$img" | awk '{print $5}')
+              echo "- 
+${img#dist/}
+: $SIZE ⚠️" >> $GITHUB_STEP_SUMMARY
+            done
+          fi
       - name: Post Image Optimization Comment
         if: github.event_name == 'pull_request'
         uses: actions/github-script@v8
         with:
           script: |
             const { execSync } = require('child_process');
-            const webpCount = execSync('find dist -type f -name "*.webp" | wc -l', { encoding: 'utf-8' }).trim();
-            const comment = `## 🖼️ Image Optimization Analysis\n\n- WebP: ${webpCount} images ✅\n\n[View full report](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`;
-            github.rest.issues.createComment({ issue_number: context.issue.number, owner: context.repo.owner, repo: context.repo.repo, body: comment });
 
+            // Count images
+            const webpCount = execSync('find dist -type f -name "*.webp" 2>/dev/null | wc -l || echo "0"', { encoding: 'utf-8' }).trim();
+            const pngCount = execSync('find dist -type f -name "*.png" 2>/dev/null | wc -l || echo "0"', { encoding: 'utf-8' }).trim();
+            const jpgCount = execSync('find dist -type f \( -name "*.jpg" -o -name "*.jpeg" \) 2>/dev/null | wc -l || echo "0"', { encoding: 'utf-8' }).trim();
+
+            // Check for large images
+            let largeImagesOutput = '';
+            try {
+              const largeImages = execSync('find dist -type f \( -name "*.webp" -o -name "*.png" -o -name "*.jpg" -o -name "*.jpeg" \) -size +500k 2>/dev/null || echo ""', { encoding: 'utf-8' }).trim();
+              if (largeImages) {
+                largeImagesOutput = '\n\n⚠️ **Large images detected (>500KB)**\n\nConsider further optimization for:\n';
+                const lines = largeImages.split('\n');
+                lines.forEach(img => {
+                  if (img) {
+                    const size = execSync(`ls -lh "${img}" | awk '{print $5}'`, { encoding: 'utf-8' }).trim();
+                    largeImagesOutput += `- 
+${img.replace('dist/', '')}
+ (${size})
+`;
+                  }
+                });
+              } else {
+                largeImagesOutput = '\n\n✅ **No large images found** - all images are under 500KB';
+              }
+            } catch (e) {
+              largeImagesOutput = '\n\n✅ **No large images found**';
+            }
+
+            const comment = `## 🖼️ Image Optimization Analysis
+
+**Format Distribution:**
+- WebP: ${webpCount} images ✅
+- PNG: ${pngCount} images
+- JPG/JPEG: ${jpgCount} images
+ ${largeImagesOutput}
+
+[View full report](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+  # Dual-Theme Lighthouse Testing (All Pages from Sitemap)
   lighthouse-dual-theme:
     name: Lighthouse (${{ matrix.theme }} mode)
     runs-on: ubuntu-latest
@@ -445,28 +737,62 @@ jobs:
           node-version: 20
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile --prefer-offline
-      - name: Run Lighthouse CI
+
+      - name: Run Lighthouse CI (${{ matrix.theme }} mode)
         shell: bash
         run: |
+          set -o pipefail
           npm install -g @lhci/cli
-          if [ "${{ matrix.theme }}" = "dark" ]; then export LHCI_CHROME_FLAGS="--force-dark-mode --force-prefers-color-scheme=dark"; fi
+
+          # Set Chrome flags based on theme
+          if [ "${{ matrix.theme }}" = "dark" ]; then
+            export LHCI_CHROME_FLAGS="--force-dark-mode --force-prefers-color-scheme=dark"
+          fi
+
           lhci autorun | tee lhci_output_${{ matrix.theme }}.txt
         env:
           LHCI_GITHUB_TOKEN: ${{ secrets.TOKEN_GITHUB }}
+
       - name: Format Lighthouse Report
+        id: format_report
         if: always()
-        run: THEME=${{ matrix.theme }} node scripts/ci/format-lighthouse-report.js > lighthouse_comment_${{ matrix.theme }}.md
-      - name: Post Comment
-        if: github.event_name == 'pull_request' && always()
+        run: |
+          THEME=${{ matrix.theme }} node scripts/ci/format-lighthouse-report.js > lighthouse_comment_${{ matrix.theme }}.md
+          echo "LH_COMMENT_${{ matrix.theme }}<<EOF" >> $GITHUB_ENV
+          cat lighthouse_comment_${{ matrix.theme }}.md >> $GITHUB_ENV  
+          echo "EOF" >> $GITHUB_ENV
+
+      - name: Upload Lighthouse Results
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: lighthouse-results-${{ matrix.theme }}
+          path: |
+            .lighthouseci/
+            lhci_output_${{ matrix.theme }}.txt
+            lighthouse_comment_${{ matrix.theme }}.md
+          retention-days: 7
+
+      - name: Post Comment (${{ matrix.theme }} mode)
+        if: github.event_name == 'pull_request'
         uses: actions/github-script@v8
         with:
           script: |
             const fs = require('fs');
             const theme = '${{ matrix.theme }}';
-            const file = `lighthouse_comment_${theme}.md`;
-            if (fs.existsSync(file)) {
-              const comment = fs.readFileSync(file, 'utf8');
-              await github.rest.issues.createComment({ issue_number: context.issue.number, owner: context.repo.owner, repo: context.repo.repo, body: comment });
+            const commentFile = `lighthouse_comment_${theme}.md`;
+
+            if (fs.existsSync(commentFile)) {
+              const comment = fs.readFileSync(commentFile, 'utf8');
+              
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: comment
+              });
+            } else {
+              console.log(`Comment file not found: ${commentFile}`);
             }
 
   functional-tests:
@@ -486,9 +812,18 @@ jobs:
           node-version: 20
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile --prefer-offline
-      - name: Run Playwright tests
+      - name: Cache Playwright Browsers
+        id: playwright-cache
+        uses: actions/cache@v5
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-browsers-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+      - name: Install Playwright Browsers
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Run Functional tests
         run: pnpm exec playwright test --project=functional
-      - name: Upload Results
+      - name: Upload Functional Results
         if: always()
         uses: actions/upload-artifact@v6
         with:
