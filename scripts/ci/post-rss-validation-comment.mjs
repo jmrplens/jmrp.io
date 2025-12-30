@@ -13,6 +13,10 @@ export default async ({ github, context }) => {
 
       comment = `### 📡 RSS Feed Validation\n\n${icon} ${status}\n\n`;
 
+      if (surgeUrl) {
+        comment += `> 🚀 [**Open Live RSS Preview**](https://${surgeUrl}) ✨\n\n`;
+      }
+
       comment += "| Property | Detail |\n";
       comment += "| :--- | :--- |\n";
       comment += `| 📄 File | 
@@ -21,7 +25,7 @@ export default async ({ github, context }) => {
       comment += `| 📝 Items | **${report.metadata.items}** posts |\n`;
 
       if (report.metadata.latestItem) {
-        comment += `| 🆕 Latest | "${report.metadata.latestItem.title}" |\n`;
+        comment += `| 🆕 Latest | \"${report.metadata.latestItem.title}\" |\n`;
       }
       comment += "\n";
 
@@ -43,10 +47,9 @@ export default async ({ github, context }) => {
 
       comment += "#### 🖼️ Visual Verification\n";
       comment +=
-        "> A visual preview of the RSS content has been generated. ✨\n";
-      comment +=
-        "> 📥 **Download `rss-preview` artifact** from the build logs to verify component styles.\n\n";
-      comment += `--- \n🔗 [Live RSS Feed](https://jmrp.io/rss.xml)
+        "> A visual preview of the RSS content has been generated to verify component styles and layout.\n\n";
+
+      comment += `--- \n🔗 [Production Feed](https://jmrp.io/rss.xml)
 `;
     } else {
       comment =

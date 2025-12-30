@@ -1,14 +1,18 @@
 import { execSync } from "child_process";
 
 export default async ({ github, context }) => {
-  const webpCount = execSync(
-    'find dist -type f -name "*.webp" 2>/dev/null | wc -l || echo "0"',
-    { encoding: "utf-8" },
-  ).trim();
-  const pngCount = execSync(
-    'find dist -type f -name "*.png" 2>/dev/null | wc -l || echo "0"',
-    { encoding: "utf-8" },
-  ).trim();
+  const getCount = (pattern) => {
+    try {
+      return execSync(`find dist -type f ${pattern} 2>/dev/null | wc -l`, {
+        encoding: "utf-8",
+      }).trim();
+    } catch {
+      return "0";
+    }
+  };
+
+  const webpCount = getCount('-name "*.webp"');
+  const pngCount = getCount('-name "*.png"');
   const jpgCount = execSync(
     'find dist -type f | grep -iE "\.jpe?g$" | wc -l || echo "0"',
     { encoding: "utf-8" },
@@ -18,27 +22,30 @@ export default async ({ github, context }) => {
   let hasLargeImages = false;
 
   try {
-    const largeImages = execSync(
+    const largeImagesRaw = execSync(
       'find dist -type f -size +500k 2>/dev/null | grep -iE "\.(webp|png|jpe?g)$" || echo ""',
       { encoding: "utf-8" },
     ).trim();
-    if (largeImages) {
-      hasLargeImages = true;
-      largeImagesOutput =
-        "\n<details>\n<summary><b>⚠️ View Large Images (>500KB)</b></summary>\n\n| Image Path | Size |\n| :--- | :--- |\n";
-      const lines = largeImages.split("\n");
-      lines.forEach((img) => {
-        if (img) {
+
+    if (largeImagesRaw) {
+      const lines = largeImagesRaw.split("\n").filter(Boolean);
+      if (lines.length > 0) {
+        hasLargeImages = true;
+        largeImagesOutput =
+          "\n<details>\n<summary><b>⚠️ View Large Images (>500KB)</b></summary>\n\n| Image Path | Size |\n| :--- | :--- |\n";
+
+        const imageDetails = lines.map((img) => {
           const size = execSync(`ls -lh "${img}" | awk '{print $5}'`, {
             encoding: "utf-8",
           }).trim();
-          largeImagesOutput += `| ${img.replace("dist/", "")} | **${size}** |\n`;
-        }
-      });
-      largeImagesOutput += "\n</details>\n";
+          return "| `" + img.replace("dist/", "") + "` | **" + size + "** |";
+        });
+
+        largeImagesOutput += imageDetails.join("\n") + "\n</details>\n";
+      }
     }
-  } catch (e) {
-    // Silent catch
+  } catch {
+    // Large image check failed or no images found
   }
 
   const statusIcon = hasLargeImages ? "⚠️" : "✅";
@@ -46,15 +53,17 @@ export default async ({ github, context }) => {
     ? "**Action Recommended**"
     : "**Fully Optimized!**";
 
-  let comment = `### 🖼️ Image Optimization Analysis\n\n${statusIcon} ${statusText}\n\n`;
-  comment += "| Format | Count | Status |\n";
-  comment += "| :--- | :---: | :--- |\n";
-  comment += `| 💎 **WebP** | **${webpCount}** | Optimized ✅ |\n`;
-  comment += `| 🖼️ **PNG** | **${pngCount}** | Legacy |\n`;
-  comment += `| 📸 **JPG/JPEG** | **${jpgCount}** | Legacy |\n`;
+  const comment = `### 🖼️ Image Optimization Analysis
 
-  comment += largeImagesOutput;
-  comment += `\n> 📊 [View Full Build Report](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`;
+${statusIcon} ${statusText}
+
+| Format | Count | Status |
+| :--- | :---: | :--- |
+| 💎 **WebP** | **${webpCount}** | Optimized ✅ |
+| 🖼️ **PNG** | **${pngCount}** | Legacy |
+| 📸 **JPG/JPEG** | **${jpgCount}** | Legacy |
+${largeImagesOutput}
+> 📊 [View Full Build Report](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`;
 
   await github.rest.issues.createComment({
     issue_number: context.issue.number,
