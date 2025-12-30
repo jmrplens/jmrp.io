@@ -74,14 +74,14 @@ async function flattenComponents(content: string): Promise<string> {
   const regexTerminalCommand = /<TerminalCommand\s+([^>]*)\/?>/g; // NOSONAR
   const regexFileContent = /<FileContent\s+([^>]*?)>([\s\S]*?)<\/FileContent>/g; // NOSONAR
   const regexTerminalOutput =
-    /<TerminalOutput\s+title=[\"']([^"']*)["'][^>]*>([\s\S]*?)<\/TerminalOutput>/g; // NOSONAR
+    /<TerminalOutput\s+title=["']([^"']*)["'][^>]*>([\s\S]*?)<\/TerminalOutput>/g; // NOSONAR
   const regexCallout =
-    /<Callout\s+type=[\"']([^"']*)["'][^>]*>([\s\S]*?)<\/Callout>/g; // NOSONAR
+    /<Callout\s+type=["']([^"']*)["'][^>]*>([\s\S]*?)<\/Callout>/g; // NOSONAR
   const regexCollapsible =
-    /<Collapsible\s+summary=[\"']([^"']*)["'][^>]*>([\s\S]*?)<\/Collapsible>/g; // NOSONAR
+    /<Collapsible\s+summary=["']([^"']*)["'][^>]*>([\s\S]*?)<\/Collapsible>/g; // NOSONAR
   const regexTabs = /<Tabs[^>]*>([\s\S]*?)<\/Tabs>/g; // NOSONAR
   const regexTabPanel =
-    /<TabPanel\s+label=[\"']([^"']*)["'][^>]*>([\s\S]*?)<\/TabPanel>/g; // NOSONAR
+    /<TabPanel\s+label=["']([^"']*)["'][^>]*>([\s\S]*?)<\/TabPanel>/g; // NOSONAR
   const regexCompareCode = /<CompareCode\s+([^>]*?)>([\s\S]*?)<\/CompareCode>/g; // NOSONAR
   const regexYouTube = /<YouTube\s+([^>]*)\/?>/g; // NOSONAR
   const regexMermaid = /```mermaid-render([\s\S]*?)```/g; // NOSONAR
@@ -94,8 +94,8 @@ async function flattenComponents(content: string): Promise<string> {
 
   // 1. TerminalCommand
   flattened = flattened.replace(regexTerminalCommand, (match, attrs) => {
-    const command = attrs.match(/command=[\"']([^"']*)["']/)?.[1] || ""; // NOSONAR
-    const prompt = attrs.match(/prompt=[\"']([^"']*)["']/)?.[1] || "$"; // NOSONAR
+    const command = attrs.match(/command=["']([^"']*)["']/)?.[1] || ""; // NOSONAR
+    const prompt = attrs.match(/prompt=["']([^"']*)["']/)?.[1] || "$"; // NOSONAR
     return `<div style="background: #1a1b26; color: #a9b1d6; padding: 12px; font-family: monospace; margin: 16px 0;">
 <span style="color: #565f89; margin-right: 8px;">${prompt}</span> ${command}
 </div>`;
@@ -103,7 +103,7 @@ async function flattenComponents(content: string): Promise<string> {
 
   // 2. FileContent
   flattened = flattened.replace(regexFileContent, (match, attrs, body) => {
-    const filename = attrs.match(/filename=[\"']([^"']*)["']/)?.[1] || "File"; // NOSONAR
+    const filename = attrs.match(/filename=["']([^"']*)["']/)?.[1] || "File"; // NOSONAR
     return `<div style="border: 1px solid #e1e4e8; margin: 16px 0; overflow: hidden;">
 <div style="background: #f6f8fa; padding: 8px 16px; border-bottom: 1px solid #e1e4e8; font-family: monospace; font-size: 12px; font-weight: bold;">📄 ${filename}</div>
 <div style="padding: 0;">
@@ -171,8 +171,8 @@ ${body}
 
   // 7. CompareCode
   flattened = flattened.replace(regexCompareCode, (match, attrs, body) => {
-    const badTitle = attrs.match(/badTitle=[\"']([^"']*)["']/)?.[1] || "Bad"; // NOSONAR
-    const goodTitle = attrs.match(/goodTitle=[\"']([^"']*)["']/)?.[1] || "Good"; // NOSONAR
+    const badTitle = attrs.match(/badTitle=["']([^"']*)["']/)?.[1] || "Bad"; // NOSONAR
+    const goodTitle = attrs.match(/goodTitle=["']([^"']*)["']/)?.[1] || "Good"; // NOSONAR
     const badContent =
       body.match(/<[^>]*slot=\"bad\"[^>]*>([\s\S]*?)<\/[^>]*>/)?.[1] || ""; // NOSONAR
     const goodContent =
@@ -200,8 +200,8 @@ ${goodContent}
 
   // 8. YouTube
   flattened = flattened.replace(regexYouTube, (match, attrs) => {
-    const id = attrs.match(/id=[\"']([^"']*)["']/)?.[1] || ""; // NOSONAR
-    const title = attrs.match(/title=[\"']([^"']*)["']/)?.[1] || "Video"; // NOSONAR
+    const id = attrs.match(/id=["']([^"']*)["']/)?.[1] || ""; // NOSONAR
+    const title = attrs.match(/title=["']([^"']*)["']/)?.[1] || "Video"; // NOSONAR
     const url = `https://www.youtube.com/watch?v=${id}`;
     return `<div style="margin: 16px 0; text-align: center; border: 1px solid #e1e4e8; padding: 20px; background: #f9f9f9;">
 <p style="margin-bottom: 10px;">📺 <strong>${title}</strong></p>
