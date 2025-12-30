@@ -120,33 +120,29 @@ async function renderBody(body: string): Promise<string> {
 async function flattenComponents(content: string): Promise<string> {
   let res = content;
 
-  // Regex constants to avoid syntax errors with NOSONAR
-  const regImp = /^import\s+[^;]*;?$/gm; // NOSONAR
-  const regExp = /^export\s+[^;]*;?$/gm; // NOSONAR
-  const regMdx = /{\/\*[\s\S]*?\*\/}/g; // NOSONAR
-  const regMer = /```mermaid-render([\s\S]*?)```/g; // NOSONAR
-  const regTmc = /<TerminalCommand\s+([^>]*?)\/?>/g; // NOSONAR
-  const regFct = /<FileContent\s+([^>]*?)>([\s\S]*?)<\/FileContent>/g; // NOSONAR
-  const regTou =
+  // Regex constants
+  const rImp = /^import\s+[^;]*;?$/gm; // NOSONAR
+  const rExp = /^export\s+[^;]*;?$/gm; // NOSONAR
+  const rMdx = /{\/\*[\s\S]*?\*\/}/g; // NOSONAR
+  const rMer = /```mermaid-render([\s\S]*?)```/g; // NOSONAR
+  const rTmc = /<TerminalCommand\s+([^>]*?)\/?>((?:<\/TerminalCommand>)?)/g; // NOSONAR
+  const rFct = /<FileContent\s+([^>]*?)>([\s\S]*?)<\/FileContent>/g; // NOSONAR
+  const rTou =
     /<TerminalOutput\s+title=[\"']([^"']*)["'][^>]*>([\s\S]*?)<\/TerminalOutput>/g; // NOSONAR
-  const regCal =
-    /<Callout\s+type=[\"']([^"']*)["'][^>]*>([\s\S]*?)<\/Callout>/g; // NOSONAR
-  const regCol =
+  const rCal = /<Callout\s+type=[\"']([^"']*)["'][^>]*>([\s\S]*?)<\/Callout>/g; // NOSONAR
+  const rCol =
     /<Collapsible\s+summary=[\"']([^"']*)["'][^>]*>([\s\S]*?)<\/Collapsible>/g; // NOSONAR
-  const regTbs = /<Tabs[^>]*>([\s\S]*?)<\/Tabs>/g; // NOSONAR
-  const regTpn =
+  const rTbs = /<Tabs[^>]*>([\s\S]*?)<\/Tabs>/g; // NOSONAR
+  const rTpn =
     /<TabPanel\s+label=[\"']([^"']*)["'][^>]*>([\s\S]*?)<\/TabPanel>/g; // NOSONAR
-  const regCpc = /<CompareCode\s+([^>]*?)>([\s\S]*?)<\/CompareCode>/g; // NOSONAR
-  const regYtb = /<YouTube\s+([^>]*?)\/?>/g; // NOSONAR
+  const rCpc = /<CompareCode\s+([^>]*?)>([\s\S]*?)<\/CompareCode>/g; // NOSONAR
+  const rYtb = /<YouTube\s+([^>]*?)\/?>/g; // NOSONAR
 
   // 0. Cleanup
-  res = res
-    .replaceAll(regImp, "")
-    .replaceAll(regExp, "")
-    .replaceAll(regMdx, ""); // NOSONAR
+  res = res.replaceAll(rImp, "").replaceAll(rExp, "").replaceAll(rMdx, ""); // NOSONAR
 
   // 1. Mermaid (Async)
-  const mMatches = Array.from(res.matchAll(regMer));
+  const mMatches = Array.from(res.matchAll(rMer));
   if (mMatches.length > 0) {
     const codes = mMatches.map((m) => m[1].trim());
     const resL = await mermaidRenderer(codes, {
@@ -168,14 +164,14 @@ async function flattenComponents(content: string): Promise<string> {
   }
 
   // 2. TerminalCommand
-  res = res.replaceAll(regTmc, (m, a) => {
+  res = res.replaceAll(rTmc, (_m, a) => {
     const c = a.match(/command=["']([^"']*)["']/)?.[1] || "";
     const p = a.match(/prompt=["']([^"']*)["']/)?.[1] || "$";
     return `\n\n<div style="background:#1a1b26;color:#a9b1d6;padding:12px;font-family:monospace;margin:16px 0;"><span style="color:#565f89;margin-right:8px;">${p}</span> ${c}</div>\n\n`;
   });
 
   // 3. FileContent (Async)
-  const fcMatches = Array.from(res.matchAll(regFct));
+  const fcMatches = Array.from(res.matchAll(rFct));
   for (const m of fcMatches) {
     const fn = m[1].match(/filename=["']([^"']*)["']/)?.[1] || "File";
     const body = await renderBody(m[2]);
@@ -186,17 +182,17 @@ async function flattenComponents(content: string): Promise<string> {
   }
 
   // 4. TerminalOutput
-  const toMatches = Array.from(res.matchAll(regTou));
+  const toMatches = Array.from(res.matchAll(rTou));
   for (const m of toMatches) {
     const body = await renderBody(m[2]);
     res = res.replace(
       m[0],
-      `<div style="border:1px solid #e1e4e8;margin:16px 0;overflow:hidden;background:#fafafa;"><div style="padding:8px 16px;border-bottom:1px solid #e1e4e8;font-family:monospace;font-size:12px;color:#666;"> > ${m[1]}</div><div style="padding:12px;font-family:monospace;font-size:13px;color:#555;">${body}</div></div>`,
+      `<div style="border:1px solid #e1e4e8;margin:16px 0;overflow:hidden;background:#fafafa;"><div style="padding:8px 16px;border-bottom:1px solid #e1e4e8;font-family:monospace;font-size:12px;color:#666;">> ${m[1]}</div><div style="padding:12px;font-family:monospace;font-size:13px;color:#555;">${body}</div></div>`,
     );
   }
 
   // 5. Callout
-  const coMatches = Array.from(res.matchAll(regCal));
+  const coMatches = Array.from(res.matchAll(rCal));
   for (const m of coMatches) {
     const colors: any = {
       info: "#3b82f6",
@@ -213,8 +209,8 @@ async function flattenComponents(content: string): Promise<string> {
   }
 
   // 6. Tabs & TabPanel
-  res = res.replaceAll(regTbs, "$1");
-  const tpMatches = Array.from(res.matchAll(regTpn));
+  res = res.replaceAll(rTbs, "$1");
+  const tpMatches = Array.from(res.matchAll(rTpn));
   for (const m of tpMatches) {
     const body = await renderBody(m[2]);
     res = res.replace(
@@ -224,7 +220,7 @@ async function flattenComponents(content: string): Promise<string> {
   }
 
   // 7. CompareCode
-  const ccMatches = Array.from(res.matchAll(regCpc));
+  const ccMatches = Array.from(res.matchAll(rCpc));
   for (const m of ccMatches) {
     const bt = m[1].match(/badTitle=["']([^"']*)["']/)?.[1] || "Bad";
     const gt = m[1].match(/goodTitle=["']([^"']*)["']/)?.[1] || "Good";
@@ -243,7 +239,8 @@ async function flattenComponents(content: string): Promise<string> {
   }
 
   // 8. YouTube
-  res = res.replaceAll(regYtb, (m, a) => {
+  res = res.replaceAll(rYtb, (_m, a) => {
+    // NOSONAR
     const id = a.match(/id=["']([^"']*)["']/)?.[1] || "";
     const t = a.match(/title=["']([^"']*)["']/)?.[1] || "Video";
     return `<div style="margin:16px 0;text-align:center;border:1px solid #e1e4e8;padding:20px;background:#f9f9f9;"><p style="margin-bottom:10px;">📺 <strong>${t}</strong></p><a href="https://www.youtube.com/watch?v=${id}" style="color:#B509AC;text-decoration:underline;">Watch on YouTube</a></div>`;
@@ -367,7 +364,7 @@ export async function GET(context: APIContext) {
               format: "webp",
               width: 400,
             });
-            const imgUrl = new URL(
+            const url = new URL(
               opt.src,
               context.site || "https://jmrp.io",
             ).toString();
@@ -375,7 +372,7 @@ export async function GET(context: APIContext) {
               thumb.src,
               context.site || "https://jmrp.io",
             ).toString();
-            customData += `<enclosure url="${imgUrl}" length="0" type="image/webp" />\n<media:content url="${imgUrl}" medium="image" type="image/webp" width="${opt.attributes.width}" height="${opt.attributes.height}" />\n<media:thumbnail url="${thumbUrl}" width="${thumb.attributes.width}" height="${thumb.attributes.height}" />`;
+            customData += `<enclosure url="${url}" length="0" type="image/webp" />\n<media:content url="${url}" medium="image" type="image/webp" width="${opt.attributes.width}" height="${opt.attributes.height}" />\n<media:thumbnail url="${thumbUrl}" width="${thumb.attributes.width}" height="${thumb.attributes.height}" />`;
           } catch (e) {}
         }
 
