@@ -1,9 +1,5 @@
-/* RSS Feed Styles - Theme Agnostic (optimized for both Light & Dark modes) */
+/* RSS Feed Styles - Simplified for Maximum Interoperability (W3C Compliant) */
 
-/* 
- * We avoid setting fixed text and background colors on the body 
- * to allow the RSS reader to apply its own theme (Light/Dark).
- */
 body {
   font-family:
     -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial,
@@ -65,17 +61,16 @@ blockquote {
   margin: 1.5em 0;
   padding: 0 1em;
   color: #57606a;
-  border-left: 0.25em solid #d0d7de;
+  border-left: 4px solid #d0d7de;
 }
 
-/* Code blocks: neutral background that looks acceptable in both modes */
+/* Code blocks: Simplified background and borders (no radius) */
 pre {
   padding: 16px;
   overflow: auto;
   font-size: 85%;
   line-height: 1.45;
-  background-color: #f6f8fa; /* Readers usually darken this in dark mode */
-  border-radius: 6px;
+  background-color: #f6f8fa;
   border: 1px solid #d0d7de;
   margin-bottom: 1.25em;
 }
@@ -90,9 +85,8 @@ code {
     Liberation Mono,
     monospace;
   font-size: 85%;
-  background-color: rgba(175, 184, 193, 0.2);
+  background-color: #eff1f3; /* Hex equivalent of light grey */
   padding: 0.2em 0.4em;
-  border-radius: 6px;
 }
 
 pre code {
@@ -106,7 +100,6 @@ img {
   height: auto;
   display: block;
   margin: 1.5em auto;
-  border-radius: 4px;
 }
 
 table {
@@ -124,25 +117,24 @@ td {
 
 th {
   font-weight: 600;
-  background-color: rgba(175, 184, 193, 0.1);
+  background-color: #f6f8fa;
 }
 
 tr:nth-child(2n) {
-  background-color: rgba(175, 184, 193, 0.05);
+  background-color: #fafbfc;
 }
 
 hr {
-  height: 0.25em;
+  height: 4px;
   padding: 0;
   margin: 24px 0;
   background-color: #d0d7de;
   border: 0;
 }
 
-/* Custom Component Fallbacks */
+/* Custom Component Fallbacks (simplified) */
 details {
   border: 1px solid #d0d7de;
-  border-radius: 6px;
   padding: 0.5em 0.5em 0;
   margin-bottom: 1em;
 }
@@ -152,6 +144,6 @@ summary {
   margin: -0.5em -0.5em 0;
   padding: 0.5em;
   cursor: pointer;
-  background-color: rgba(175, 184, 193, 0.1);
+  background-color: #f6f8fa;
   border-bottom: 1px solid #d0d7de;
 }
