@@ -90,163 +90,173 @@ if (typeof process !== "undefined" && typeof process.on === "function") {
 }
 
 function cleanContent(text: string): string {
-  // Remove common indentation and ensure it starts with a fresh line for Markdown
-  return text
-    .split("\n")
-    .map((line) => line.trimStart())
+  if (!text) return "";
+  const lines = text.split("\n");
+  const nonEmptyLines = lines.filter((l) => l.trim().length > 0);
+  if (nonEmptyLines.length === 0) return "";
+  const minIndent = Math.min(
+    ...nonEmptyLines.map((l) => l.match(/^\s*/)?.[0].length || 0),
+  );
+  return lines
+    .map((l) => l.slice(minIndent))
     .join("\n")
     .trim();
 }
 
-async function flattenComponents(content: string): Promise<string> {
-  let flattened = content;
+function extractCodeBlock(text: string) {
+  const match = text.match(/```(\w+)?\n([\s\S]*?)```/);
+  return match ? { lang: match[1] || "text", code: match[2].trim() } : null;
+}
 
-  // 0. Cleanup
-  flattened = flattened.replaceAll(/^import\s+[^;]*;?$/gm, ""); // NOSONAR
-  flattened = flattened.replaceAll(/^export\s+[^;]*;?$/gm, ""); // NOSONAR
-  flattened = flattened.replaceAll(/{\/\*[\s\S]*?\*\/}/g, ""); // NOSONAR
-
-  // 1. TerminalCommand
-  flattened = flattened.replaceAll(
-    /<TerminalCommand\s+([^>]*)\inaly/g,
-    (match, attrs) => {
-      // NOSONAR
-      const command = attrs.match(/command=["']([^"']*)["']/)?.[1] || ""; // NOSONAR
-      const prompt = attrs.match(/prompt=["']([^"']*)["']/)?.[1] || "$"; // NOSONAR
-      return `\n\n<div style=\"background:#1a1b26;color:#a9b1d6;padding:12px;font-family:monospace;margin:16px 0;\"><span style=\"color:#565f89;margin-right:8px;\">${prompt}</span> ${command}</div>\n\n`;
-    },
-  );
-
-  // 2. FileContent
-  flattened = flattened.replaceAll(
-    /<FileContent\s+([^>]*?)>([\s\S]*?)<\/FileContent>/g,
-    (match, attrs, body) => {
-      // NOSONAR
-      const filename = attrs.match(/filename=["']([^"']*)["']/)?.[1] || "File"; // NOSONAR
-      return `\n\n<div style=\"border:1px solid #e1e4e8;margin:16px 0;overflow:hidden;\"><div style=\"background:#f6f8fa;padding:8px 16px;border-bottom:1px solid #e1e4e8;font-family:monospace;font-size:12px;font-weight:bold;\">📄 ${filename}</div><div style=\"padding:0;\">\n\n${body.trim()}\n\n</div></div>\n\n`;
-    },
-  );
-
-  // 3. TerminalOutput
-  flattened = flattened.replaceAll(
-    /<TerminalOutput\s+title=["']([^"']*)["'][^>]*>([\s\S]*?)<\/TerminalOutput>/g,
-    (match, title, body) => {
-      // NOSONAR
-      return `\n\n<div style=\"border:1px solid #e1e4e8;margin:16px 0;overflow:hidden;background:#fafafa;\"><div style=\"padding:8px 16px;border-bottom:1px solid #e1e4e8;font-family:monospace;font-size:12px;color:#666;\">> ${title}</div><div style=\"padding:12px;font-family:monospace;font-size:13px;color:#555;\">\n\n${body.trim()}\n\n</div></div>\n\n`;
-    },
-  );
-
-  // 4. Callout
-  flattened = flattened.replaceAll(
-    /<Callout\s+type=["']([^"']*)["'][^>]*>([\s\S]*?)<\/Callout>/g,
-    (match, type, body) => {
-      // NOSONAR
-      const colors: any = {
-        info: "#3b82f6",
-        warning: "#f59e0b",
-        danger: "#ef4444",
-        success: "#10b981",
-      };
-      const color = colors[type] || colors.info;
-      return `\n\n<div style=\"padding:16px;margin:16px 0;border-left:4px solid ${color};background:#f8fafc;\"><strong style=\"color:${color};text-transform:uppercase;font-size:12px;display:block;margin-bottom:4px;\">${type}</strong>\n\n${body.trim()}\n\n</div>\n\n`;
-    },
-  );
-
-  // 5. Collapsible
-  flattened = flattened.replaceAll(
-    /<Collapsible\s+summary=["']([^"']*)["'][^>]*>([\s\S]*?)<\/Collapsible>/g,
-    (match, summary, body) => {
-      // NOSONAR
-      return `\n\n<details style=\"border:1px solid #e1e4e8;margin:16px 0;\"><summary style=\"padding:12px;cursor:pointer;font-weight:bold;background:#f6f8fa;\">${summary}</summary><div style=\"padding:12px;\">\n\n${body.trim()}\n\n</div></details>\n\n`;
-    },
-  );
-
-  // 6. Tabs & TabPanel
-  flattened = flattened.replaceAll(/<Tabs[^>]*>([\s\S]*?)<\/Tabs>/g, "$1"); // NOSONAR
-  flattened = flattened.replaceAll(
-    /<TabPanel\s+label=["']([^"']*)["'][^>]*>([\s\S]*?)<\/TabPanel>/g,
-    (match, label, body) => {
-      // NOSONAR
-      return `\n\n<div style=\"margin:16px 0;border:1px solid #e1e4e8;\"><div style=\"background:#f6f8fa;padding:4px 12px;border-bottom:1px solid #e1e4e8;font-size:12px;color:#666;\">Tab: ${label}</div><div style=\"padding:0;\">\n\n${body.trim()}\n\n</div></div>\n\n`;
-    },
-  );
-
-  // 7. CompareCode
-  flattened = flattened.replaceAll(
-    /<CompareCode\s+([^>]*?)>([\s\S]*?)<\/CompareCode>/g,
-    (match, attrs, body) => {
-      // NOSONAR
-      const bt = attrs.match(/badTitle=["']([^"']*)["']/)?.[1] || "Bad"; // NOSONAR
-      const gt = attrs.match(/goodTitle=["']([^"']*)["']/)?.[1] || "Good"; // NOSONAR
-      const bcMatch = body.match(
-        /<[^>]*slot=["']?bad["']?[^>]*>([\s\S]*?)<\/[^>]*>/,
-      ); // NOSONAR
-      const gcMatch = body.match(
-        /<[^>]*slot=["']?good["']?[^>]*>([\s\S]*?)<\/[^>]*>/,
-      ); // NOSONAR
-      const bc = bcMatch ? bcMatch[1].trim() : "";
-      const gc = gcMatch ? gcMatch[1].trim() : "";
-      return `\n\n<div style=\"margin:24px 0;\"><div style=\"border:1px solid #ef4444;margin-bottom:12px;\"><div style=\"background:#ef4444;color:white;padding:4px 12px;font-weight:bold;font-size:13px;\">✕ ${bt}</div><div style=\"padding:0;\">\n\n${bc}\n\n</div></div><div style=\"border:1px solid #10b981;\"><div style=\"background:#10b981;color:white;padding:4px 12px;font-weight:bold;font-size:13px;\">✓ ${gt}</div><div style=\"padding:0;\">\n\n${gc}\n\n</div></div></div>\n\n`;
-    },
-  );
-
-  // 8. YouTube
-  flattened = flattened.replaceAll(
-    /<YouTube\s+([^>]*)\inaly/g,
-    (match, attrs) => {
-      // NOSONAR
-      const id = attrs.match(/id=["']([^"']*)["']/)?.[1] || ""; // NOSONAR
-      const title = attrs.match(/title=["']([^"']*)["']/)?.[1] || "Video"; // NOSONAR
-      return `\n\n<div style=\"margin:16px 0;text-align:center;border:1px solid #e1e4e8;padding:20px;background:#f9f9f9;\"><p style=\"margin-bottom:10px;\">📺 <strong>${title}</strong></p><a href=\"https://www.youtube.com/watch?v=${id}\" style=\"color:#B509AC;text-decoration:underline;\">Watch on YouTube</a></div>\n\n`;
-    },
-  );
-
-  // 9. Mermaid Render
-  const mermaidRegex = /```mermaid-render([\s\S]*?)```/g; // NOSONAR
-  const mermaidMatches = Array.from(flattened.matchAll(mermaidRegex)); // NOSONAR
-  if (mermaidMatches.length > 0) {
-    const codes = mermaidMatches.map((m) => m[1].trim());
+async function renderBody(body: string): Promise<string> {
+  const code = extractCodeBlock(body);
+  if (code) {
     try {
-      const resL = await mermaidRenderer(codes, {
-        mermaidConfig: { theme: "neutral" },
-      });
-      const resD = await mermaidRenderer(codes, {
-        mermaidConfig: { theme: "base", themeVariables: MERMAID_DARK_VARS },
-      });
-      let mi = 0;
-      flattened = flattened.replaceAll(mermaidRegex, () => {
-        // NOSONAR
-        const i = mi++;
-        const l = resL[i];
-        const d = resD[i];
-        if (l?.status === "fulfilled" && d?.status === "fulfilled") {
-          const bL = Buffer.from(l.value.svg).toString("base64");
-          const bD = Buffer.from(d.value.svg).toString("base64");
-          return `\n\n<div style=\"margin:24px 0;text-align:center;\"><picture><source srcset=\"data:image/svg+xml;base64,${bD}\" media=\"(prefers-color-scheme: dark)\"><img src=\"data:image/svg+xml;base64,${bL}\" alt=\"Mermaid Diagram\" width=\"${resL.value.width}\" height=\"${resL.value.height}\" style=\"max-width:100%;height:auto;display:block;margin:0 auto;\" /></picture></div>\n\n`;
-        }
-        return `\n\n<blockquote>[Diagram rendering failed]</blockquote>\n\n`;
+      return highlighter.codeToHtml(code.code, {
+        lang: code.lang,
+        theme: "github-light",
       });
     } catch (e) {
-      flattened = flattened.replaceAll(
-        mermaidRegex,
-        "<blockquote>[Diagram rendering failed]</blockquote>",
-      ); // NOSONAR
+      return `<pre><code>${code.code}</code></pre>`;
+    }
+  }
+  return await marked.parse(cleanContent(body));
+}
+
+async function flattenComponents(content: string): Promise<string> {
+  let res = content;
+
+  // 0. Cleanup
+  res = res
+    .replaceAll(/^import\s+[^;]*;?$/gm, "")
+    .replaceAll(/^export\s+[^;]*;?$/gm, "")
+    .replaceAll(/{\/\*[\s\S]*?\*\/}/g, ""); // NOSONAR
+
+  // 1. Mermaid (Async)
+  const mermaidRegex = /```mermaid-render([\s\S]*?)```/g; // NOSONAR
+  const mMatches = Array.from(res.matchAll(mermaidRegex));
+  if (mMatches.length > 0) {
+    const codes = mMatches.map((m) => m[1].trim());
+    const resL = await mermaidRenderer(codes, {
+      mermaidConfig: { theme: "neutral" },
+    });
+    const resD = await mermaidRenderer(codes, {
+      mermaidConfig: { theme: "base", themeVariables: MERMAID_DARK_VARS },
+    });
+    for (let i = 0; i < mMatches.length; i++) {
+      const l = resL[i],
+        d = resD[i];
+      if (l?.status === "fulfilled" && d?.status === "fulfilled") {
+        const bL = Buffer.from(l.value.svg).toString("base64"),
+          bD = Buffer.from(d.value.svg).toString("base64");
+        const img = `<div style="margin:24px 0;text-align:center;"><picture><source srcset="data:image/svg+xml;base64,${bD}" media="(prefers-color-scheme: dark)"><img src="data:image/svg+xml;base64,${bL}" alt="Mermaid Diagram" width="${l.value.width}" height="${l.value.height}" style="max-width:100%;height:auto;display:block;margin:0 auto;" /></picture></div>`;
+        res = res.replace(mMatches[i][0], img);
+      }
     }
   }
 
-  return flattened;
+  // 2. TerminalCommand
+  res = res.replaceAll(/<TerminalCommand\s+([^>]*?)\/?>/g, (m, a) => {
+    // NOSONAR
+    const cmd = a.match(/command=[\"']([^\"']*)["']/)?.[1] || "";
+    const pmt = a.match(/prompt=[\"']([^\"']*)["']/)?.[1] || "$";
+    return `<div style="background:#1a1b26;color:#a9b1d6;padding:12px;font-family:monospace;margin:16px 0;"><span style="color:#565f89;margin-right:8px;">${pmt}</span> ${cmd}</div>`;
+  });
+
+  // 3. FileContent (Async)
+  const fcRegex = /<FileContent\s+([^>]*?)>([\s\S]*?)<\/FileContent>/g; // NOSONAR
+  const fcMatches = Array.from(res.matchAll(fcRegex));
+  for (const m of fcMatches) {
+    const fn = m[1].match(/filename=[\"']([^\"']*)["']/)?.[1] || "File";
+    const body = await renderBody(m[2]);
+    res = res.replace(
+      m[0],
+      `<div style="border:1px solid #e1e4e8;margin:16px 0;overflow:hidden;"><div style="background:#f6f8fa;padding:8px 16px;border-bottom:1px solid #e1e4e8;font-family:monospace;font-size:12px;font-weight:bold;">📄 ${fn}</div><div style="padding:0;">${body}</div></div>`,
+    );
+  }
+
+  // 4. TerminalOutput
+  const toRegex =
+    /<TerminalOutput\s+title=[\"']([^"']*)["'][^>]*>([\s\S]*?)<\/TerminalOutput>/g; // NOSONAR
+  const toMatches = Array.from(res.matchAll(toRegex));
+  for (const m of toMatches) {
+    const body = await renderBody(m[2]);
+    res = res.replace(
+      m[0],
+      `<div style="border:1px solid #e1e4e8;margin:16px 0;overflow:hidden;background:#fafafa;"><div style="padding:8px 16px;border-bottom:1px solid #e1e4e8;font-family:monospace;font-size:12px;color:#666;">> ${m[1]}</div><div style="padding:12px;font-family:monospace;font-size:13px;color:#555;">${body}</div></div>`,
+    );
+  }
+
+  // 5. Callout
+  const coRegex =
+    /<Callout\s+type=[\"']([^"']*)["'][^>]*>([\s\S]*?)<\/Callout>/g; // NOSONAR
+  const coMatches = Array.from(res.matchAll(coRegex));
+  for (const m of coMatches) {
+    const colors: any = {
+      info: "#3b82f6",
+      warning: "#f59e0b",
+      danger: "#ef4444",
+      success: "#10b981",
+    };
+    const color = colors[m[1]] || colors.info;
+    const body = await marked.parse(cleanContent(m[2]));
+    res = res.replace(
+      m[0],
+      `<div style="padding:16px;margin:16px 0;border-left:4px solid ${color};background:#f8fafc;"><strong style="color:${color};text-transform:uppercase;font-size:12px;display:block;margin-bottom:4px;">${m[1]}</strong>${body}</div>`,
+    );
+  }
+
+  // 6. Tabs & TabPanel
+  res = res.replaceAll(/<Tabs[^>]*>([\s\S]*?)<\/Tabs>/g, "$1"); // NOSONAR
+  const tpRegex =
+    /<TabPanel\s+label=[\"']([^"']*)["'][^>]*>([\s\S]*?)<\/TabPanel>/g; // NOSONAR
+  const tpMatches = Array.from(res.matchAll(tpRegex));
+  for (const m of tpMatches) {
+    const body = await renderBody(m[2]);
+    res = res.replace(
+      m[0],
+      `<div style="margin:16px 0;border:1px solid #e1e4e8;"><div style="background:#f6f8fa;padding:4px 12px;border-bottom:1px solid #e1e4e8;font-size:12px;color:#666;">Tab: ${m[1]}</div><div style="padding:0;">${body}</div></div>`,
+    );
+  }
+
+  // 7. CompareCode
+  const ccRegex = /<CompareCode\s+([^>]*?)>([\s\S]*?)<\/CompareCode>/g; // NOSONAR
+  const ccMatches = Array.from(res.matchAll(ccRegex));
+  for (const m of ccMatches) {
+    const bt = m[1].match(/badTitle=[\"']([^\"']*)["']/)?.[1] || "Bad";
+    const gt = m[1].match(/goodTitle=[\"']([^\"']*)["']/)?.[1] || "Good";
+    const bcM = m[2].match(
+      /<[^>]*slot=[\"']?bad[\"']?[^>]*>([\s\S]*?)<\/[^>]*>/i,
+    );
+    const gcM = m[2].match(
+      /<[^>]*slot=[\"']?good[\"']?[^>]*>([\s\S]*?)<\/[^>]*>/i,
+    );
+    const bc = bcM ? await renderBody(bcM[1]) : "";
+    const gc = gcM ? await renderBody(gcM[1]) : "";
+    res = res.replace(
+      m[0],
+      `<div style="margin:24px 0;"><div style="border:1px solid #ef4444;margin-bottom:12px;"><div style="background:#ef4444;color:white;padding:4px 12px;font-weight:bold;font-size:13px;">✕ ${bt}</div><div style="padding:0;">${bc}</div></div><div style="border:1px solid #10b981;"><div style="background:#10b981;color:white;padding:4px 12px;font-weight:bold;font-size:13px;">✓ ${gt}</div><div style="padding:0;">${gc}</div></div></div>`,
+    );
+  }
+
+  // 8. YouTube
+  res = res.replaceAll(/<YouTube\s+([^>]*?)\/?>/g, (m, a) => {
+    // NOSONAR
+    const id = a.match(/id=[\"']([^\"']*)["']/)?.[1] || "";
+    const t = a.match(/title=[\"']([^\"']*)["']/)?.[1] || "Video";
+    return `<div style="margin:16px 0;text-align:center;border:1px solid #e1e4e8;padding:20px;background:#f9f9f9;"><p style="margin-bottom:10px;">📺 <strong>${t}</strong></p><a href="https://www.youtube.com/watch?v=${id}" style="color:#B509AC;text-decoration:underline;">Watch on YouTube</a></div>`;
+  });
+
+  return res;
 }
 
 export async function GET(context: APIContext) {
   const posts = await getCollection("posts");
   const siteEntry = await getEntry("site_config", "site");
   const siteData = siteEntry?.data;
-
-  const publishedPosts = posts.filter((post: CollectionEntry<"posts">) => {
-    if (import.meta.env.PROD) return !post.data.draft;
-    return true;
-  });
-
+  const publishedPosts = posts.filter((p) =>
+    import.meta.env.PROD ? !p.data.draft : true,
+  );
   publishedPosts.sort(
     (a, b) =>
       new Date(b.data.publishedDate).getTime() -
@@ -259,10 +269,11 @@ export async function GET(context: APIContext) {
     site: context.site || "https://jmrp.io",
     items: await Promise.all(
       publishedPosts.map(async (post) => {
-        const authorString = `${post.data.authorEmail || "mail@jmrp.io"} (${post.data.author || "José Manuel Requena Plens"})`;
-        const flattenedBody = await flattenComponents(post.body || "");
-        const html = await marked.parse(flattenedBody);
-        const sanitizedHtml = sanitizeHtml(html, {
+        const author = `${post.data.authorEmail || "mail@jmrp.io"} (${post.data.author || "José Manuel Requena Plens"})`;
+        const html = await marked.parse(
+          await flattenComponents(post.body || ""),
+        );
+        const cleanHtml = sanitizeHtml(html, {
           allowedTags: sanitizeHtml.defaults.allowedTags.concat([
             "img",
             "pre",
@@ -332,7 +343,7 @@ export async function GET(context: APIContext) {
           },
         });
 
-        const styledHtml = juice(sanitizedHtml, {
+        const styledHtml = juice(cleanHtml, {
           extraCss: RSS_STYLES,
           applyStyleTags: false,
           removeStyleTags: true,
@@ -341,30 +352,28 @@ export async function GET(context: APIContext) {
           insertPreservedExtraCss: false,
         });
 
-        let customItemData = "";
+        let customData = "";
         if (post.data.coverImage) {
           try {
-            const optImg = await getImage({
+            const opt = await getImage({
               src: post.data.coverImage,
               format: "webp",
               width: 1200,
             });
-            const thumbImg = await getImage({
+            const thumb = await getImage({
               src: post.data.coverImage,
               format: "webp",
               width: 400,
             });
-            const imgUrl = new URL(
-              optImg.src,
+            const url = new URL(
+              opt.src,
               context.site || "https://jmrp.io",
             ).toString();
             const thumbUrl = new URL(
-              thumbImg.src,
+              thumb.src,
               context.site || "https://jmrp.io",
             ).toString();
-            customItemData += `<enclosure url="${imgUrl}" length="0" type="image/webp" />\n`;
-            customItemData += `<media:content url="${imgUrl}" medium="image" type="image/webp" width="${optImg.attributes.width}" height="${optImg.attributes.height}" />\n`;
-            customItemData += `<media:thumbnail url="${thumbUrl}" width="${thumbImg.attributes.width}" height="${thumbImg.attributes.height}" />`;
+            customData += `<enclosure url="${url}" length="0" type="image/webp" />\n<media:content url="${url}" medium="image" type="image/webp" width="${opt.attributes.width}" height="${opt.attributes.height}" />\n<media:thumbnail url="${thumbUrl}" width="${thumb.attributes.width}" height="${thumb.attributes.height}" />`;
           } catch (e) {}
         }
 
@@ -374,9 +383,9 @@ export async function GET(context: APIContext) {
           pubDate: new Date(post.data.publishedDate),
           link: `/blog/${post.slug}/`,
           categories: post.data.tags || [],
-          author: authorString,
+          author,
           content: styledHtml,
-          customData: customItemData,
+          customData,
         };
       }),
     ),
@@ -384,7 +393,7 @@ export async function GET(context: APIContext) {
     xmlns: {
       atom: "http://www.w3.org/2005/Atom",
       content: "http://purl.org/rss/1.0/modules/content/",
-      media: "http://search.yahoo.com/mrss/", // NOSONAR
+      media: "http://search.yahoo.com/mrss/",
     },
   });
 }
