@@ -70,7 +70,7 @@ jobs:
             --no-progress 
             --exclude 'https://mstdn.jmrp.io'
             --remap "https://jmrp.io/ /"
-            --base dist
+            --root-dir "$GITHUB_WORKSPACE/dist"
             './dist/**/*.html'
           fail: true
         env:
