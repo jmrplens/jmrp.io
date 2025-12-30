@@ -1,27 +1,27 @@
 ---
-/* SRI Incident Reporter - Captura fallos de integridad y los envía a /csp-report */
+/* SRI Incident Reporter - Captures integrity failures and sends them to /csp-report */
 ---
 <script is:inline nonce="NGINX_CSP_NONCE">
   /**
    * SRI Incident Reporter
-   * Captura errores de carga de recursos (como fallos de SRI) y los reporta.
+   * Captures resource loading errors (like SRI failures) and reports them.
    */
   (function() {
     window.addEventListener('error', function(e) {
       const target = e.target;
-      // Solo nos interesan elementos con atributo 'integrity' (firmados por nosotros)
+      // Only interested in elements with 'integrity' attribute (signed by us)
       if (target && (target.tagName === 'SCRIPT' || target.tagName === 'LINK')) {
         if (target.integrity) {
           const resourceUrl = target.src || target.href;
           
-          // Evitar spam: no reportar el mismo recurso más de una vez por sesión
+          // Avoid spam: do not report the same resource more than once per session
           const storageKey = 'sri_fail_' + btoa(resourceUrl).substring(0, 16);
           if (sessionStorage.getItem(storageKey)) return;
           sessionStorage.setItem(storageKey, '1');
 
           console.error('[SRI] Integrity validation failed:', resourceUrl);
 
-          // Enviamos el reporte simulando el formato de CSP para máxima compatibilidad
+          // Send report mimicking CSP format for maximum compatibility
           const report = {
             "csp-report": {
               "document-uri": window.location.href,
@@ -40,10 +40,10 @@
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(report),
-            keepalive: true // Asegura que la petición se envíe aunque la página se cierre
+            keepalive: true // Ensures the request is sent even if the page is closed
           }).catch(function() {});
         }
       }
-    }, true); // El 'true' (fase de captura) es obligatorio para detectar errores en recursos
+    }, true); // 'true' (capture phase) is required to detect resource loading errors
   })();
 </script>

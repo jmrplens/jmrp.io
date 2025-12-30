@@ -67,10 +67,10 @@ async function main() {
           totalTagsUpdated++;
           modified = true;
 
-          // Limpiar atributos para evitar duplicados
+          // Clean attributes to avoid duplicates
           let cleanAttrs = attrs.replace(/\/\s*$/, "").trim();
 
-          // Determinar si necesita nonce (solo scripts y estilos)
+          // Determine if nonce is needed (only scripts and styles)
           const isScript = tagName === "script";
           const isStyle =
             tagName === "link" &&
@@ -81,7 +81,7 @@ async function main() {
               ? ' nonce="NGINX_CSP_NONCE"'
               : "";
 
-          // Solo añadir crossorigin si no existe
+          // Only add crossorigin if it doesn't exist
           const crossoriginAttr = !attrs.includes("crossorigin")
             ? ' crossorigin="anonymous"'
             : "";
@@ -98,7 +98,7 @@ async function main() {
     const scriptRegex = /<script\s+([^>]*src=["']([^"']+)["'][^>]*)>/gi;
     processTags(scriptRegex, "script");
 
-    // 2. Links (Solo los permitidos por el estándar para 'integrity')
+    // 2. Links (Only those allowed by the standard for 'integrity')
     const linkRegex = /<link\s+([^>]*href=["']([^"']+)["'][^>]*)>/gi;
     processTags(linkRegex, "link", (attrs) => {
       const allowedRels = ["stylesheet", "preload", "modulepreload"];
@@ -108,7 +108,7 @@ async function main() {
       );
     });
 
-    // 3. Imágenes
+    // 3. Images
     const imgRegex = /<img\s+([^>]*src=["']([^"']+)["'][^>]*)>/gi;
     processTags(imgRegex, "img");
 
