@@ -10,7 +10,7 @@
   "scripts": {
     "dev": "astro dev",
     "prebuild": "node scripts/fetch-github-avatar.mjs",
-    "build": "export DIST_DIR=dist_new && rm -rf $DIST_DIR && astro build --outDir $DIST_DIR && pagefind --site $DIST_DIR && DIST_DIR=$DIST_DIR pnpm run _postbuild && rm -rf dist_old && (mv dist dist_old || true) && mv $DIST_DIR dist && rm -rf dist_old && pnpm exec prettier --check .",
+    "build": "export DIST_DIR=dist_new && rm -rf $DIST_DIR && astro build --outDir $DIST_DIR && DIST_DIR=$DIST_DIR pnpm run _postbuild && rm -rf dist_old && (mv dist dist_old || true) && mv $DIST_DIR dist && rm -rf dist_old && pnpm exec prettier --check .",
     "_postbuild": "node scripts/build/setup-sitemap.mjs $DIST_DIR && node scripts/build/move-inline-styles.mjs $DIST_DIR && node scripts/build/extract-css-data-uris.mjs $DIST_DIR && node scripts/build/extract-html-img-data-uris.mjs $DIST_DIR && node scripts/build/generate-sri-hashes.mjs $DIST_DIR && node scripts/build/generate-csp-hashes.mjs $DIST_DIR && (rm -rf /var/cache/nginx/* 2>/dev/null || true)",
     "preview": "astro preview",
     "astro": "astro",
@@ -38,6 +38,7 @@
     "astro": "^5.16.6",
     "astro-icon": "^1.1.5",
     "citation-js": "^0.7.21",
+    "juice": "^11.0.3",
     "marked": "^17.0.1",
     "mermaid": "^11.12.2",
     "preact": "^10.28.1",
@@ -45,7 +46,8 @@
     "rehype-mathjax": "^7.1.0",
     "rehype-raw": "^7.0.0",
     "remark-math": "^6.0.0",
-    "sanitize-html": "^2.17.0"
+    "sanitize-html": "^2.17.0",
+    "shiki": "^3.20.0"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.6",
@@ -61,13 +63,14 @@
     "hast-util-from-html-isomorphic": "^2.0.0",
     "html-validate": "^10.5.0",
     "js-yaml": "^4.1.1",
-    "pagefind": "^1.4.0",
+    "mermaid-isomorphic": "^3.0.4",
     "playwright": "^1.57.0",
     "prettier": "^3.7.4",
     "puppeteer": "^24.34.0",
     "rehype-mermaid": "^3.0.0",
     "rss-parser": "^3.13.0",
     "sharp": "^0.34.5",
+    "sonar-scanner": "^3.1.0",
     "svgo": "^4.0.0",
     "typescript": "^5.9.3",
     "unist-util-visit": "^5.0.0",
