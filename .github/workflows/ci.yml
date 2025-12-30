@@ -238,21 +238,11 @@ jobs:
                 const statusIcon = isSuccess ? '✅' : '⚠️';
                 const statusText = isSuccess ? '**Passed!**' : '**Violations detected**';
                 
-                commentBody = `## ♿ Accessibility (${themeIcon} ${themeName})
-
-${statusIcon} ${statusText}
-
-`;
-                commentBody += `**Summary:**
-- Total Pages: **${summary.totalPages}**
-- Failed: ${summary.failed}
-- Review Needed: ${summary.incomplete || 0} 🔍
-
-`;
+                commentBody = `## ♿ Accessibility (${themeIcon} ${themeName})\n\n${statusIcon} ${statusText}\n\n`;
+                commentBody += `**Summary:**\n- Total Pages: **${summary.totalPages}**\n- Failed: ${summary.failed}\n- Review Needed: ${summary.incomplete || 0} 🔍\n\n`;
                 
                 if (!isSuccess) {
-                  commentBody += `### ❌ Failed Pages
-`;
+                  commentBody += `### ❌ Failed Pages\n`;
                   summary.pages
                     .filter((p) => p.violations > 0)
                     .forEach((p) => {
