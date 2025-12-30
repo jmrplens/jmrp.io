@@ -16,30 +16,43 @@ export default async ({ github, context }) => {
       const statusIcon = isSuccess ? "✅" : "⚠️";
       const statusText = isSuccess ? "**Passed!**" : "**Violations detected**";
 
-      commentBody = `## ♿ Accessibility (${themeIcon} ${themeName})\n\n${statusIcon} ${statusText}\n\n`;
-      commentBody += `**Summary:**\n- Total Pages: **${summary.totalPages}**\n- Failed: ${summary.failed}\n- Review Needed: ${summary.incomplete || 0} 🔍\n\n`;
+      commentBody = `### ♿ Accessibility (${themeIcon} ${themeName})\n\n`;
+      commentBody += `${statusIcon} ${statusText}\n\n`;
+
+      commentBody += "| Metric | Value |\n";
+      commentBody += "| :--- | :--- |\n";
+      commentBody += `| 📄 Total Pages | **${summary.totalPages}** |\n`;
+      commentBody += `| ✅ Passed | **${summary.passed}** |\n`;
+      commentBody += `| ❌ Failed | **${summary.failed}** |\n`;
+      commentBody += `| 🔍 Review Needed | **${summary.incomplete || 0}** |\n\n`;
 
       if (!isSuccess) {
-        commentBody += `### ❌ Failed Pages\n`;
+        commentBody +=
+          "<details>\n<summary><b>🔍 View Failed Pages & Rules</b></summary>\n\n";
+        commentBody += "#### ❌ Issues Found\n\n";
         summary.pages
           .filter((p) => p.violations > 0)
           .forEach((p) => {
             const rules = p.violationIds
-              ? `\n   - **Rules:** 
+              ? `\n   - **Violated Rules:** 
 ${p.violationIds.join(", ")}`
               : "";
             commentBody += `- **${p.page}** (${p.violations} violations)${rules}\n`;
           });
-        commentBody += `\n📸 **See 'axe-accessibility-report-${theme}' artifact for screenshots.**\n\n`;
+        commentBody +=
+          "\n---\n📸 *Screenshots are available in the 'axe-accessibility-report-" +
+          theme +
+          "' artifact.*\n";
+        commentBody += "</details>\n\n";
       }
 
-      commentBody += `**Standards:** WCAG 2.1/2.2 AA & Best Practices\n`;
-      commentBody += `📊 [View detailed HTML report](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`;
+      commentBody += `> **Standards:** WCAG 2.1/2.2 AA & Best Practices\n`;
+      commentBody += `> 📊 [View Detailed Report](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`;
     } else {
       throw new Error(`Summary file not found at ${summaryPath}`);
     }
   } catch (error) {
-    commentBody = `## ♿ Accessibility (${themeIcon} ${themeName})\n\n⚠️ **Report not found**\n\nError: ${error.message}`;
+    commentBody = `### ♿ Accessibility (${themeIcon} ${themeName})\n\n⚠️ **Report not found**\n\n> Error: ${error.message}`;
   }
 
   await github.rest.issues.createComment({

@@ -10,9 +10,13 @@ export default async ({ github, context }) => {
       if (!rawContent || rawContent === "undefined") {
         if (fs.existsSync("html-errors.log")) {
           const errors = fs.readFileSync("html-errors.log", "utf8");
-          comment = `## ⚠️ HTML5 Validation\n\n**Validation failed to run correctly.**\n\nError log:\n${errors.slice(0, 1000)}\n`;
+          comment =
+            "### ⚠️ HTML5 Validation\n\n**Validation failed to run correctly.**\n\n<details>\n<summary><b>📄 View Error Log</b></summary>\n\n```\n" +
+            errors.slice(0, 1000) +
+            "\n```\n</details>";
         } else {
-          comment = `## ⚠️ HTML5 Validation\n\nReport is empty or undefined. Check build logs.`;
+          comment =
+            "### ⚠️ HTML5 Validation\n\n> Report is empty or undefined. Check build logs.";
         }
       } else {
         try {
@@ -29,37 +33,46 @@ export default async ({ github, context }) => {
 
           const isSuccess = totalErrors === 0;
           const icon = isSuccess ? "✅" : "❌";
-          const status = isSuccess ? "Passed" : "Failed";
+          const status = isSuccess ? "**Passed!**" : "**Errors found**";
 
-          comment = `## ${icon} HTML5 Validation\n\n`;
-          comment += `**Status: ${status}**\n`;
-          comment += `- **Files Checked:** All generated HTML\n`;
-          comment += `- **Errors:** ${totalErrors}\n`;
-          comment += `- **Warnings:** ${totalWarnings}\n\n`;
+          comment = `### ${icon} HTML5 Validation\n\n${status}\n\n`;
+          comment += "| Metric | Value |\n";
+          comment += "| :--- | :--- |\n";
+          comment += "| 📄 Files Checked | **All generated HTML** |\n";
+          comment += `| 🔴 Errors | **${totalErrors}** |\n`;
+          comment += `| ⚠️ Warnings | **${totalWarnings}** |\n\n`;
 
           if (filesWithErrors.length > 0) {
-            comment += `### ⚠️ Issues Found (Top 5 files)\n\n`;
-            filesWithErrors.slice(0, 5).forEach((f) => {
+            comment +=
+              "<details>\n<summary><b>🔍 View Detailed Issues</b></summary>\n\n";
+            filesWithErrors.slice(0, 10).forEach((f) => {
               const fileName = f.filePath.replace("dist/", "").split("/").pop();
-              comment += `**${fileName}**\n`;
+              comment += `#### 📄 **${fileName}**\n`;
               f.messages.forEach((m) => {
                 const severity = m.severity === 2 ? "🔴" : "⚠️";
                 comment += `- ${severity} [${m.ruleId}] ${m.message} (Line ${m.line})\n`;
               });
-              comment += `\n`;
+              comment += "\n---\n";
             });
+
+            if (filesWithErrors.length > 10) {
+              comment += `\n*...and ${filesWithErrors.length - 10} more files with issues (see build logs for full list).* \n`;
+            }
+            comment += "</details>\n\n";
           } else {
-            comment += `All pages are valid HTML5 compliant.\n`;
+            comment += "> All pages are valid HTML5 compliant. ✨\n";
           }
         } catch (parseError) {
-          comment = `## ⚠️ HTML5 Validation\n\n**Error parsing report JSON**`;
+          comment =
+            "### ⚠️ HTML5 Validation\n\n❌ **Error parsing report JSON**";
         }
       }
     } else {
-      comment = `## ⚠️ HTML5 Validation\n\nReport file not found.`;
+      comment =
+        "### ⚠️ HTML5 Validation\n\n> ⚠️ Report file not found. Check build logs.";
     }
   } catch (e) {
-    comment = `## ⚠️ HTML5 Validation\n\nError processing report.`;
+    comment = "### ⚠️ HTML5 Validation\n\n> ❌ Error processing report.";
   }
 
   await github.rest.issues.createComment({

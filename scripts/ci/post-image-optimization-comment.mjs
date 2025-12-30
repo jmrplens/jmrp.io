@@ -15,31 +15,46 @@ export default async ({ github, context }) => {
   ).trim();
 
   let largeImagesOutput = "";
+  let hasLargeImages = false;
+
   try {
     const largeImages = execSync(
       'find dist -type f -size +500k 2>/dev/null | grep -iE "\.(webp|png|jpe?g)$" || echo ""',
       { encoding: "utf-8" },
     ).trim();
     if (largeImages) {
+      hasLargeImages = true;
       largeImagesOutput =
-        "\n\n⚠️ **Large images detected (>500KB)**\n\nConsider further optimization for:\n";
+        "\n<details>\n<summary><b>⚠️ View Large Images (>500KB)</b></summary>\n\n| Image Path | Size |\n| :--- | :--- |\n";
       const lines = largeImages.split("\n");
       lines.forEach((img) => {
         if (img) {
           const size = execSync(`ls -lh "${img}" | awk '{print $5}'`, {
             encoding: "utf-8",
           }).trim();
-          largeImagesOutput += `- ecue${img.replace("dist/", "")}ecue (${size})\n`;
+          largeImagesOutput += `| ${img.replace("dist/", "")} | **${size}** |\n`;
         }
       });
-    } else {
-      largeImagesOutput = "\n\n✅ **No large images found**";
+      largeImagesOutput += "\n</details>\n";
     }
   } catch (e) {
-    largeImagesOutput = "\n\n✅ **No large images found**";
+    // Silent catch
   }
 
-  const comment = `## 🖼️ Image Optimization Analysis\n\n**Format Distribution:**\n- WebP: ${webpCount} images ✅\n- PNG: ${pngCount} images\n- JPG/JPEG: ${jpgCount} images${largeImagesOutput}\n\n[View full report](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`;
+  const statusIcon = hasLargeImages ? "⚠️" : "✅";
+  const statusText = hasLargeImages
+    ? "**Action Recommended**"
+    : "**Fully Optimized!**";
+
+  let comment = `### 🖼️ Image Optimization Analysis\n\n${statusIcon} ${statusText}\n\n`;
+  comment += "| Format | Count | Status |\n";
+  comment += "| :--- | :---: | :--- |\n";
+  comment += `| 💎 **WebP** | **${webpCount}** | Optimized ✅ |\n`;
+  comment += `| 🖼️ **PNG** | **${pngCount}** | Legacy |\n`;
+  comment += `| 📸 **JPG/JPEG** | **${jpgCount}** | Legacy |\n`;
+
+  comment += largeImagesOutput;
+  comment += `\n> 📊 [View Full Build Report](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`;
 
   await github.rest.issues.createComment({
     issue_number: context.issue.number,
