@@ -85,7 +85,7 @@ const {
     <body>
         <a href="#main-content" class="skip-link">Skip to content</a>
         <Header />
-        <main id="main-content" data-pagefind-body>
+        <main id="main-content">
             <slot />
             {type === "article" && <slot name="references" />}
         </main>

@@ -12,6 +12,39 @@ import { createMermaidRenderer } from "mermaid-isomorphic";
 // Read RSS specific styles
 const RSS_STYLES = fs.readFileSync(path.resolve("src/styles/rss.css"), "utf-8");
 
+// Dark theme variables for Mermaid (matching astro.config.mjs)
+const MERMAID_DARK_VARS = {
+  primaryColor: "#1f2937",
+  primaryTextColor: "#f3f4f6",
+  primaryBorderColor: "#4b5563",
+  lineColor: "#f3f4f6",
+  secondaryColor: "#374151",
+  tertiaryColor: "#111827",
+  mainBkg: "#1f2937",
+  nodeBkg: "#111827",
+  nodeBorder: "#4b5563",
+  clusterBkg: "#111827",
+  titleColor: "#f3f4f6",
+  edgeLabelBackground: "#374151",
+  defaultLinkColor: "#f3f4f6",
+  actorBkg: "#111827",
+  actorBorder: "#4b5563",
+  actorTextColor: "#f3f4f6",
+  actorLineColor: "#f3f4f6",
+  signalColor: "#f3f4f6",
+  signalTextColor: "#f3f4f6",
+  labelBoxBkgColor: "#111827",
+  labelBoxBorderColor: "#4b5563",
+  labelTextColor: "#f3f4f6",
+  loopTextColor: "#f3f4f6",
+  noteBkgColor: "#374151",
+  noteTextColor: "#f3f4f6",
+  noteBorderColor: "#4b5563",
+  messageTextColor: "#f3f4f6",
+  messageLineColor: "#f3f4f6",
+  sequenceNumberColor: "#111827",
+};
+
 // Initialize Mermaid renderer
 const mermaidRenderer = createMermaidRenderer({
   launchOptions: {
@@ -106,7 +139,7 @@ ${body}
     },
   );
 
-  // 6. Tabs & TabPanel: <Tabs> <TabPanel label="..."> ... </TabPanel> </Tabs>
+  // 6. Tabs & TabPanel
   flattened = flattened.replace(/<Tabs[^>]*>([\s\S]*?)<\/Tabs>/g, "$1");
   flattened = flattened.replace(
     /<TabPanel\s+label=["']([^"']*)["'][^>]*>([\s\S]*?)<\/TabPanel>/g,
@@ -127,8 +160,7 @@ ${body}
     /<CompareCode\s+([^>]*?)>([\s\S]*?)<\/CompareCode>/g,
     (match, attrs, body) => {
       const badTitle = attrs.match(/badTitle=["']([^"']*)["']/)?.[1] || "Bad";
-      const goodTitle =
-        attrs.match(/goodTitle=["']([^"']*)["']/)?.[1] || "Good";
+      const goodTitle = attrs.match(/goodTitle=["']([^"']*)["']/)?.[1] || "Good";
       const badContent =
         body.match(/<[^>]*slot="bad"[^>]*>([\s\S]*?)<\/[^>]*>/)?.[1] || "";
       const goodContent =
@@ -166,25 +198,44 @@ ${goodContent}
 </div>`;
   });
 
-  // 9. Mermaid Render
+  // 9. Mermaid Render (Dual Theme)
   const mermaidRegex = /```mermaid-render([\s\S]*?)```/g;
   const mermaidMatches = Array.from(flattened.matchAll(mermaidRegex));
 
   if (mermaidMatches.length > 0) {
     const codes = mermaidMatches.map((m) => m[1].trim());
     try {
-      const results = await mermaidRenderer(codes, {
+      // Render Light
+      const resultsLight = await mermaidRenderer(codes, {
         mermaidConfig: { theme: "neutral" },
+      });
+      // Render Dark
+      const resultsDark = await mermaidRenderer(codes, {
+        mermaidConfig: { theme: "base", themeVariables: MERMAID_DARK_VARS },
       });
 
       let matchIndex = 0;
       flattened = flattened.replace(mermaidRegex, () => {
-        const result = results[matchIndex++];
-        if (result && result.status === "fulfilled") {
-          const svg = result.value.svg;
-          const base64 = Buffer.from(svg).toString("base64");
+        const lightResult = resultsLight[matchIndex];
+        const darkResult = resultsDark[matchIndex++];
+
+        if (
+          lightResult?.status === "fulfilled" &&
+          darkResult?.status === "fulfilled"
+        ) {
+          const lightBase64 = Buffer.from(lightResult.value.svg).toString(
+            "base64",
+          );
+          const darkBase64 = Buffer.from(darkResult.value.svg).toString(
+            "base64",
+          );
+          const { width, height } = lightResult.value;
+
           return `<div style="margin: 24px 0; text-align: center;">
-<img src="data:image/svg+xml;base64,${base64}" alt="Mermaid Diagram" style="max-width: 100%; height: auto;" />
+<picture>
+  <source srcset="data:image/svg+xml;base64,${darkBase64}" media="(prefers-color-scheme: dark)">
+  <img src="data:image/svg+xml;base64,${lightBase64}" alt="Mermaid Diagram" width="${width}" height="${height}" style="max-width: 100%; height: auto; display: block; margin: 0 auto;" />
+</picture>
 </div>`;
         }
         return "<blockquote>[Diagram rendering failed]</blockquote>";
@@ -270,10 +321,13 @@ export async function GET(context: APIContext) {
             "i",
             "em",
             "u",
+            "picture",
+            "source",
           ]),
           allowedAttributes: {
             ...sanitizeHtml.defaults.allowedAttributes,
             img: ["src", "alt", "title", "width", "height", "style"],
+            source: ["srcset", "media", "type"],
             a: ["href", "name", "target", "title", "rel"],
             code: ["class"],
             span: ["class", "style"],
@@ -296,6 +350,10 @@ export async function GET(context: APIContext) {
             h5: ["style"],
             h6: ["style"],
             blockquote: ["style"],
+          },
+          allowedSchemesByTag: {
+            img: ["http", "https", "data"],
+            source: ["data"],
           },
         });
 

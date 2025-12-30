@@ -134,9 +134,12 @@ const websiteSchema = {
         "@id": `${Astro.site}/#person`,
         name: siteData.author,
         url: Astro.site,
+        image: new URL(defaultOgImage.src, Astro.site).toString(),
         sameAs: [
+            "https://github.com/jmrplens",
+            "https://www.linkedin.com/in/jmrplens",
+            "https://mstdn.jmrp.io/@jmrplens",
             `https://twitter.com/${siteData.twitter_creator.replace("@", "")}`,
-            // Add other social links if available in site.yml
         ],
     },
 };
@@ -148,9 +151,37 @@ const navSchema = (siteData.nav || []).map((item) => ({
     url: new URL(item.href, Astro.site).toString(),
 }));
 
-// 3. Merge Logic
+// 3. Breadcrumb Schema (Automatic)
+const pathSegments = Astro.url.pathname.split("/").filter((s) => s);
+const breadcrumbList = {
+    "@type": "BreadcrumbList",
+    "@id": `${Astro.url.toString()}#breadcrumb`,
+    itemListElement: [
+        {
+            "@type": "ListItem",
+            position: 1,
+            name: "Home",
+            item: Astro.site,
+        },
+        ...pathSegments.map((segment, index) => {
+            const path = `/${pathSegments.slice(0, index + 1).join("/")}`;
+            // Capitalize and clean name
+            const name = segment
+                .replace(/-/g, " ")
+                .replace(/\b\w/g, (l) => l.toUpperCase());
+            return {
+                "@type": "ListItem",
+                position: index + 2,
+                name: name,
+                item: new URL(path, Astro.site).toString(),
+            };
+        }),
+    ],
+};
+
+// 4. Merge Logic
 // We use a @graph to include multiple items (Website, Page, Breadcrumbs, etc.)
-let schemaGraph = [websiteSchema, ...navSchema];
+let schemaGraph = [websiteSchema, ...navSchema, breadcrumbList];
 
 if (schema) {
     if (Array.isArray(schema)) {

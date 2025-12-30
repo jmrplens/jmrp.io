@@ -1,40 +1,25 @@
-/* RSS Feed Styles - Optimized for Feed Readers */
+/* RSS Feed Styles - Theme Agnostic (optimized for both Light & Dark modes) */
 
+/* 
+ * We avoid setting fixed text and background colors on the body 
+ * to allow the RSS reader to apply its own theme (Light/Dark).
+ */
 body {
-  font-family:
-    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial,
-    sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
   line-height: 1.6;
-  color: #333333;
   font-size: 16px;
 }
 
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
+h1, h2, h3, h4, h5, h6 {
   margin-top: 1.5em;
   margin-bottom: 0.5em;
   font-weight: 700;
   line-height: 1.2;
-  color: #111111;
 }
 
-h1 {
-  font-size: 2em;
-  border-bottom: 1px solid #eaeaea;
-  padding-bottom: 0.3em;
-}
-h2 {
-  font-size: 1.5em;
-  border-bottom: 1px solid #eaeaea;
-  padding-bottom: 0.3em;
-}
-h3 {
-  font-size: 1.25em;
-}
+h1 { font-size: 2em; border-bottom: 1px solid #eaeaea; padding-bottom: 0.3em; }
+h2 { font-size: 1.5em; border-bottom: 1px solid #eaeaea; padding-bottom: 0.3em; }
+h3 { font-size: 1.25em; }
 
 p {
   margin-bottom: 1.25em;
@@ -49,8 +34,7 @@ a:hover {
   text-decoration: underline;
 }
 
-ul,
-ol {
+ul, ol {
   margin-bottom: 1.25em;
   padding-left: 2em;
 }
@@ -66,26 +50,20 @@ blockquote {
   border-left: 0.25em solid #d0d7de;
 }
 
+/* Code blocks: neutral background that looks acceptable in both modes */
 pre {
   padding: 16px;
   overflow: auto;
   font-size: 85%;
   line-height: 1.45;
-  background-color: #f6f8fa;
+  background-color: #f6f8fa; /* Readers usually darken this in dark mode */
   border-radius: 6px;
   border: 1px solid #d0d7de;
   margin-bottom: 1.25em;
 }
 
 code {
-  font-family:
-    ui-monospace,
-    SFMono-Regular,
-    SF Mono,
-    Menlo,
-    Consolas,
-    Liberation Mono,
-    monospace;
+  font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, Liberation Mono, monospace;
   font-size: 85%;
   background-color: rgba(175, 184, 193, 0.2);
   padding: 0.2em 0.4em;
@@ -113,19 +91,18 @@ table {
   width: 100%;
 }
 
-th,
-td {
+th, td {
   padding: 6px 13px;
   border: 1px solid #d0d7de;
 }
 
 th {
   font-weight: 600;
-  background-color: #f6f8fa;
+  background-color: rgba(175, 184, 193, 0.1);
 }
 
 tr:nth-child(2n) {
-  background-color: #f6f8fa;
+  background-color: rgba(175, 184, 193, 0.05);
 }
 
 hr {
@@ -136,7 +113,7 @@ hr {
   border: 0;
 }
 
-/* Custom Component Fallbacks (already handled by flattenComponents but adding base styles just in case) */
+/* Custom Component Fallbacks */
 details {
   border: 1px solid #d0d7de;
   border-radius: 6px;
@@ -149,14 +126,6 @@ summary {
   margin: -0.5em -0.5em 0;
   padding: 0.5em;
   cursor: pointer;
-  background-color: #f6f8fa;
+  background-color: rgba(175, 184, 193, 0.1);
   border-bottom: 1px solid #d0d7de;
-}
-
-details[open] {
-  padding: 0.5em;
-}
-
-details[open] summary {
-  margin-bottom: 0.5em;
 }
