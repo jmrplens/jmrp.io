@@ -13,11 +13,17 @@ const RSS_STYLES = fs.readFileSync(path.resolve("src/styles/rss.css"), "utf-8");
 
 function flattenComponents(content: string): string {
   let flattened = content;
-  // ... (rest of the function remains the same, assuming it's correctly matching the old string context)
+
+  // 0. Generic Cleanup (Imports, Exports, MDX Comments) - Do this FIRST
+  // We do NOT remove {variable} patterns anymore to preserve code blocks inside components
+  flattened = flattened
+    .replaceAll(/^import\s+[^;]*;?$/gm, "") // NOSONAR
+    .replaceAll(/^export\s+[^;]*;?$/gm, "") // NOSONAR
+    .replaceAll(/{\/\*[\s\S]*?\*\/}/g, ""); // NOSONAR
 
   // 1. TerminalCommand: <TerminalCommand command="..." prompt="..." />
   flattened = flattened.replaceAll(
-    /<TerminalCommand\s+([^>]*)\/>/g, // NOSONAR
+    /<TerminalCommand\s+([^>]*)\/ >/g, // NOSONAR
     (_, attrs) => {
       const command = attrs.match(/command=["']([^"']*)["']/)?.[1] || "";
       const prompt = attrs.match(/prompt=["']([^"']*)["']/)?.[1] || "$";
@@ -28,10 +34,11 @@ function flattenComponents(content: string): string {
   );
 
   // 2. FileContent: <FileContent filename="..."> ... </FileContent>
-  // Handles balanced tags by searching for the closing tag
+  // Robust regex to handle attributes in any order
   flattened = flattened.replaceAll(
-    /<FileContent\s+filename=["']([^"']*)["'][^>]*>([\s\S]*?)<\/FileContent>/g, // NOSONAR
-    (_, filename, body) => {
+    /<FileContent\s+([^>]*?)>([\s\S]*?)<\/FileContent>/g, // NOSONAR
+    (_, attrs, body) => {
+      const filename = attrs.match(/filename=["']([^"']*)["']/)?.[1] || "File";
       return `<div style="border: 1px solid #e1e4e8; margin: 16px 0; overflow: hidden;">
 <div style="background: #f6f8fa; padding: 8px 16px; border-bottom: 1px solid #e1e4e8; font-family: monospace; font-size: 12px; font-weight: bold;">📄 ${filename}</div>
 <div style="padding: 0;">${body}</div>
@@ -120,7 +127,7 @@ ${body}
   );
 
   // prettier-ignore
-  flattened = flattened.replaceAll(/<YouTube\s+([^>]*)\/>/g, (_, attrs) => { // NOSONAR
+  flattened = flattened.replaceAll(/<YouTube\s+([^>]*)\/ >/g, (_, attrs) => { // NOSONAR
     const id = attrs.match(/id=["']([^"']*)["']/)?.[1] || ""; // NOSONAR
     const title = attrs.match(/title=["']([^"']*)["']/)?.[1] || "Video"; // NOSONAR
     const url = `https://www.youtube.com/watch?v=${id}`;
@@ -135,13 +142,6 @@ ${body}
     /```mermaid-render([\s\S]*?)```/g, // NOSONAR
     "<blockquote>[Diagram not renderable in RSS. Visit site to view]</blockquote>",
   );
-
-  // 10. Generic Cleanup
-  flattened = flattened
-    .replaceAll(/^import\s+[^;]*;?$/gm, "") // NOSONAR
-    .replaceAll(/^export\s+[^;]*;?$/gm, "") // NOSONAR
-    .replaceAll(/{\/\*[\s\S]*?\*\/}/g, "") // NOSONAR
-    .replaceAll(/\{[a-zA-Z_$][\w.$]*\}/g, ""); // MDX variables (simple identifiers) // NOSONAR
 
   return flattened;
 }
