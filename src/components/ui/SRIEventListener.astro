@@ -1,0 +1,49 @@
+---
+/* SRI Incident Reporter - Captura fallos de integridad y los envía a /csp-report */
+---
+<script is:inline nonce="NGINX_CSP_NONCE">
+  /**
+   * SRI Incident Reporter
+   * Captura errores de carga de recursos (como fallos de SRI) y los reporta.
+   */
+  (function() {
+    window.addEventListener('error', function(e) {
+      const target = e.target;
+      // Solo nos interesan elementos con atributo 'integrity' (firmados por nosotros)
+      if (target && (target.tagName === 'SCRIPT' || target.tagName === 'LINK')) {
+        if (target.integrity) {
+          const resourceUrl = target.src || target.href;
+          
+          // Evitar spam: no reportar el mismo recurso más de una vez por sesión
+          const storageKey = 'sri_fail_' + btoa(resourceUrl).substring(0, 16);
+          if (sessionStorage.getItem(storageKey)) return;
+          sessionStorage.setItem(storageKey, '1');
+
+          console.error('[SRI] Integrity validation failed:', resourceUrl);
+
+          // Enviamos el reporte simulando el formato de CSP para máxima compatibilidad
+          const report = {
+            "csp-report": {
+              "document-uri": window.location.href,
+              "referrer": document.referrer,
+              "violated-directive": "sri-integrity",
+              "effective-directive": "sri",
+              "original-policy": "SRI Validation",
+              "disposition": "enforce",
+              "blocked-uri": resourceUrl,
+              "status-code": 0,
+              "script-sample": "SRI check failed"
+            }
+          };
+
+          fetch('/csp-report', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(report),
+            keepalive: true // Asegura que la petición se envíe aunque la página se cierre
+          }).catch(function() {});
+        }
+      }
+    }, true); // El 'true' (fase de captura) es obligatorio para detectar errores en recursos
+  })();
+</script>
