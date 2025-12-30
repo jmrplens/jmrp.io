@@ -4,9 +4,16 @@ import { getImage } from "astro:assets";
 import type { APIContext } from "astro";
 import sanitizeHtml from "sanitize-html";
 import { marked } from "marked";
+import juice from "juice";
+import fs from "node:fs";
+import path from "node:path";
+
+// Read RSS specific styles
+const RSS_STYLES = fs.readFileSync(path.resolve("src/styles/rss.css"), "utf-8");
 
 function flattenComponents(content: string): string {
   let flattened = content;
+  // ... (rest of the function remains the same, assuming it's correctly matching the old string context)
 
   // 1. TerminalCommand: <TerminalCommand command="..." prompt="..." />
   flattened = flattened.replaceAll(
@@ -190,6 +197,28 @@ export async function GET(context: APIContext) {
             "strong",
             "p",
             "div",
+            "h1",
+            "h2",
+            "h3",
+            "h4",
+            "h5",
+            "h6",
+            "ul",
+            "ol",
+            "li",
+            "a",
+            "table",
+            "thead",
+            "tbody",
+            "tr",
+            "th",
+            "td",
+            "hr",
+            "br",
+            "b",
+            "i",
+            "em",
+            "u",
           ]),
           allowedAttributes: {
             ...sanitizeHtml.defaults.allowedAttributes,
@@ -199,10 +228,34 @@ export async function GET(context: APIContext) {
             span: ["class", "style"],
             div: ["style"],
             p: ["style"],
-            details: ["style"],
+            details: ["style", "open"],
             summary: ["style"],
             strong: ["style"],
+            pre: ["style", "class"],
+            table: ["style"],
+            th: ["style"],
+            td: ["style"],
+            li: ["style"],
+            ul: ["style"],
+            ol: ["style"],
+            h1: ["style"],
+            h2: ["style"],
+            h3: ["style"],
+            h4: ["style"],
+            h5: ["style"],
+            h6: ["style"],
+            blockquote: ["style"],
           },
+        });
+
+        // Apply inline styles for RSS readers
+        const styledHtml = juice(sanitizedHtml, {
+          extraCss: RSS_STYLES,
+          applyStyleTags: false,
+          removeStyleTags: true,
+          preserveMediaQueries: false,
+          preserveFontFaces: false,
+          insertPreservedExtraCss: false,
         });
 
         // Generate Media RSS and Enclosure data
@@ -244,7 +297,7 @@ export async function GET(context: APIContext) {
           link: `/blog/${post.slug}/`,
           categories: post.data.tags || [],
           author: authorString,
-          content: sanitizedHtml,
+          content: styledHtml,
           customData: customItemData,
         };
       }),

@@ -38,6 +38,7 @@
     "astro": "^5.16.6",
     "astro-icon": "^1.1.5",
     "citation-js": "^0.7.21",
+    "juice": "^11.0.3",
     "marked": "^17.0.1",
     "mermaid": "^11.12.2",
     "preact": "^10.28.1",
