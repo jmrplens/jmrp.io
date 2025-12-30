@@ -18,7 +18,9 @@ module.exports = async ({ github, context }) => {
   try {
     const largeImages = execSync(
       'find dist -type f \( -name "*.webp" -o -name "*.png" -o -name "*.jpg" -o -name "*.jpeg" \) -size +500k 2>/dev/null || echo ""',
-      { encoding: "utf-8" },
+      {
+        encoding: "utf-8",
+      },
     ).trim();
     if (largeImages) {
       largeImagesOutput =

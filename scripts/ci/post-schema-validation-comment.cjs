@@ -12,7 +12,7 @@ module.exports = async ({ github, context }) => {
   - 
   - 
 
-  🔗 [Verify manually with Google Rich Results Test](https://search.google.com/test/rich-results)`;
+  🔗 [Verify manually with Google Rich Results Test](https://search.google.com/test/rich-results)வித`;
 
   await github.rest.issues.createComment({
     issue_number: context.issue.number,
