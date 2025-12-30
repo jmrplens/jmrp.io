@@ -120,23 +120,41 @@ async function renderBody(body: string): Promise<string> {
 async function flattenComponents(content: string): Promise<string> {
   let res = content;
 
+  // Pattern to match attributes safely, including those with '>' inside quotes
+  const attrPattern = "((?:[^\"'>]|\"[^\"]*\"|'[^']*' )*?)";
+
   // Regex constants
   const rImp = /^import\s+[^;]*;?$/gm; // NOSONAR
   const rExp = /^export\s+[^;]*;?$/gm; // NOSONAR
   const rMdx = /{\/\*[\s\S]*?\*\/}/g; // NOSONAR
   const rMer = /```mermaid-render([\s\S]*?)```/g; // NOSONAR
-  const rTmc = /<TerminalCommand\s+([^>]*?)\/?>((?:<\/TerminalCommand>)?)/g; // NOSONAR
-  const rFct = /<FileContent\s+([^>]*?)>([\s\S]*?)<\/FileContent>/g; // NOSONAR
-  const rTou =
-    /<TerminalOutput\s+title=[\"']([^"']*)["'][^>]*>([\s\S]*?)<\/TerminalOutput>/g; // NOSONAR
-  const rCal = /<Callout\s+type=[\"']([^"']*)["'][^>]*>([\s\S]*?)<\/Callout>/g; // NOSONAR
-  const rCol =
-    /<Collapsible\s+summary=[\"']([^"']*)["'][^>]*>([\s\S]*?)<\/Collapsible>/g; // NOSONAR
+  const rTmc = new RegExp(`<TerminalCommand\s+${attrPattern}\s*\/?>`, "g"); // NOSONAR
+  const rFct = new RegExp(
+    `<FileContent\s+${attrPattern}>([\s\S]*?)<\/FileContent>`,
+    "g",
+  ); // NOSONAR
+  const rTou = new RegExp(
+    `<TerminalOutput\s+${attrPattern}>([\s\S]*?)<\/TerminalOutput>`,
+    "g",
+  ); // NOSONAR
+  const rCal = new RegExp(
+    `<Callout\s+${attrPattern}>([\s\S]*?)<\/Callout>`,
+    "g",
+  ); // NOSONAR
+  const rCol = new RegExp(
+    `<Collapsible\s+${attrPattern}>([\s\S]*?)<\/Collapsible>`,
+    "g",
+  ); // NOSONAR
   const rTbs = /<Tabs[^>]*>([\s\S]*?)<\/Tabs>/g; // NOSONAR
-  const rTpn =
-    /<TabPanel\s+label=[\"']([^"']*)["'][^>]*>([\s\S]*?)<\/TabPanel>/g; // NOSONAR
-  const rCpc = /<CompareCode\s+([^>]*?)>([\s\S]*?)<\/CompareCode>/g; // NOSONAR
-  const rYtb = /<YouTube\s+([^>]*?)\/?>/g; // NOSONAR
+  const rTpn = new RegExp(
+    `<TabPanel\s+${attrPattern}>([\s\S]*?)<\/TabPanel>`,
+    "g",
+  ); // NOSONAR
+  const rCpc = new RegExp(
+    `<CompareCode\s+${attrPattern}>([\s\S]*?)<\/CompareCode>`,
+    "g",
+  ); // NOSONAR
+  const rYtb = new RegExp(`<YouTube\s+${attrPattern}\s*\/?>`, "g"); // NOSONAR
 
   // 0. Cleanup
   res = res.replaceAll(rImp, "").replaceAll(rExp, "").replaceAll(rMdx, ""); // NOSONAR
@@ -226,21 +244,20 @@ async function flattenComponents(content: string): Promise<string> {
     const gt = m[1].match(/goodTitle=["']([^"']*)["']/)?.[1] || "Good";
     const bcM = m[2].match(
       /<[^>]*slot=["']?bad["']?[^>]*>([\s\S]*?)<\/[^>]*>/i,
-    ); // NOSONAR
+    );
     const gcM = m[2].match(
       /<[^>]*slot=["']?good["']?[^>]*>([\s\S]*?)<\/[^>]*>/i,
-    ); // NOSONAR
+    );
     const bc = bcM ? await renderBody(bcM[1]) : "";
     const gc = gcM ? await renderBody(gcM[1]) : "";
     res = res.replace(
       m[0],
       `<div style="margin:24px 0;"><div style="border:1px solid #ef4444;margin-bottom:12px;"><div style="background:#ef4444;color:white;padding:4px 12px;font-weight:bold;font-size:13px;">✕ ${bt}</div><div style="padding:0;">${bc}</div></div><div style="border:1px solid #10b981;"><div style="background:#10b981;color:white;padding:4px 12px;font-weight:bold;font-size:13px;">✓ ${gt}</div><div style="padding:0;">${gc}</div></div></div>`,
-    ); // NOSONAR
+    );
   }
 
   // 8. YouTube
   res = res.replaceAll(rYtb, (_m, a) => {
-    // NOSONAR
     const id = a.match(/id=["']([^"']*)["']/)?.[1] || "";
     const t = a.match(/title=["']([^"']*)["']/)?.[1] || "Video";
     return `<div style="margin:16px 0;text-align:center;border:1px solid #e1e4e8;padding:20px;background:#f9f9f9;"><p style="margin-bottom:10px;">📺 <strong>${t}</strong></p><a href="https://www.youtube.com/watch?v=${id}" style="color:#B509AC;text-decoration:underline;">Watch on YouTube</a></div>`;
@@ -364,7 +381,7 @@ export async function GET(context: APIContext) {
               format: "webp",
               width: 400,
             });
-            const url = new URL(
+            const imgUrl = new URL(
               opt.src,
               context.site || "https://jmrp.io",
             ).toString();
@@ -372,7 +389,7 @@ export async function GET(context: APIContext) {
               thumb.src,
               context.site || "https://jmrp.io",
             ).toString();
-            customData += `<enclosure url="${url}" length="0" type="image/webp" />\n<media:content url="${url}" medium="image" type="image/webp" width="${opt.attributes.width}" height="${opt.attributes.height}" />\n<media:thumbnail url="${thumbUrl}" width="${thumb.attributes.width}" height="${thumb.attributes.height}" />`;
+            customData += `<enclosure url="${imgUrl}" length="0" type="image/webp" />\n<media:content url="${imgUrl}" medium="image" type="image/webp" width="${opt.attributes.width}" height="${opt.attributes.height}" />\n<media:thumbnail url="${thumbUrl}" width="${thumb.attributes.width}" height="${thumb.attributes.height}" />`;
           } catch (e) {}
         }
 
