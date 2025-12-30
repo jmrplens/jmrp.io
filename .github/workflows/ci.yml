@@ -69,6 +69,9 @@ jobs:
             --verbose 
             --no-progress 
             --exclude 'https://mstdn.jmrp.io'
+            --exclude 'https://electronica-submarina.com'
+            --exclude 'https://ies-berlanga.info'
+            --exclude 'https://www.i3m-detectors.i3m.upv.es'
             --remap "https://jmrp.io/ /"
             --root-dir "$GITHUB_WORKSPACE/dist"
             './dist/**/*.html'

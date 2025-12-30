@@ -16,8 +16,8 @@
   type: time_table
   contents:
     - title: R&D Software Developer
-      institution: Power Electronics (<a href="https://power-electronics.com/en/">PE</a>)
-      department: Solar + Storage (<a href="https://power-electronics.com/en/solar/">PE Solar</a>)
+      institution: Power Electronics (<a href="https://power-electronics.com/en">PE</a>)
+      department: Solar + Storage (<a href="https://power-electronics.com/en/solar">PE Solar</a>)
       location: Lliria, Spain
       year: Apr 2023 - Current
       summary: >
@@ -26,13 +26,13 @@
         Key contributions:
       description:
         - "Development of real-time control software in C for high-power inverters using CMake, Keil uVision and CLion."
-        - "Implementation and maintenance of industrial communication protocols: I2C, SPI, SCI, RS485, Modbus RTU and Modbus TCP."
+        - "Implementation and maintenance of industrial communication protocols: I2C, SPI, RS485, Modbus RTU and Modbus TCP."
         - "Design and development of automated testing tools and verification scripts using Python."
         - "Management of software versions and collaborative workflows using Git."
 
     - title: Predoctoral researcher
-      institution: Polytechnic University of Valencia (<a href="http://www.upv.es/en">UPV</a>) + Spanish National Research Council (<a href="http://www.upv.es/en">CSIC</a>) + Hospital La Fe (<a href="https://www.iislafe.es/en/">IIS</a>)
-      department: Medical Imaging and Therapy Systems (<a href="https://www.i3m-stim.i3m.upv.es/">i3M</a>)
+      institution: Polytechnic University of Valencia (<a href="https://www.upv.es/index-en.html">UPV</a>) + Spanish National Research Council (<a href="https://www.upv.es/index-en.html">CSIC</a>) + Hospital La Fe (<a href="https://www.iislafe.es/en/">IIS</a>)
+      department: Medical Imaging and Therapy Systems (<a href="https://i3m.csic.upv.es/">i3M</a>)
       year: Jan 2023 - Apr 2023
       location: Valencia, Spain
       summary: >
@@ -47,8 +47,8 @@
         - Experimentation with ex-vivo tissues.
 
     - title: Predoctoral researcher
-      institution: Polytechnic University of Valencia (<a href="http://www.upv.es/en">UPV</a>) + Spanish National Research Council (<a href="http://www.upv.es/en">CSIC</a>)
-      department: Medical Imaging and Therapy Systems (<a href="https://www.i3m-stim.i3m.upv.es/">i3M</a>)
+      institution: Polytechnic University of Valencia (<a href="https://www.upv.es/index-en.html">UPV</a>) + Spanish National Research Council (<a href="https://www.upv.es/index-en.html">CSIC</a>)
+      department: Medical Imaging and Therapy Systems (<a href="https://i3m.csic.upv.es/">i3M</a>)
       year: Jul 2021 - Jul 2022
       location: Valencia, Spain
       summary: >
@@ -68,8 +68,8 @@
         - Advisor of the Master thesis of a student of the Master's Degree in Acoustic Engineering of the UPV.
 
     - title: Researcher in European project
-      institution: Higher Polytechnic School of Gandia (<a href="http://www.upv.es/contenidos/CGANDIA/index-en.html" aria-label="UPV Gandia Campus">UPV</a>) + European Space Agency (<a href="https://www.esa.int/">ESA</a>)
-      department: Complex Media Acoustics Group of IGIC (<a href="http://igic.webs.upv.es/">IGIC</a>)
+      institution: Higher Polytechnic School of Gandia (<a href="https://www.upv.es/entidades/epsg/en/home/" aria-label="UPV Gandia Campus">UPV</a>) + European Space Agency (<a href="https://www.esa.int/">ESA</a>)
+      department: Complex Media Acoustics Group of IGIC (<a href="https://igic.webs.upv.es/">IGIC</a>)
       year: Feb 2020 - Jul 2021
       location: Gandia, Spain
       summary:
@@ -110,7 +110,7 @@
             - Tecniacústica - <a href="/pdf/paper-resources/Conferences/Tecniacustica/saura2018.pdf">Comportamiento vibroacústico de contenedores cilíndricos en aire</a>.
 
     - title: Founder and Vocal Member
-      institution: AmicroTech (<a href="https://www.linkedin.com/company/a-\%C2\%B5tech/">AµTech</a>)
+      institution: AmicroTech (<a href="https://www.linkedin.com/company/a-%5C%25C2%5C%25B5tech/">AµTech</a>)
       department: University of Alicante (<a href="https://www.ua.es/en/index.html">UA</a>)
       year: Sep 2016 - Jul 2018
       location: Alicante, Spain
@@ -231,8 +231,8 @@
   type: time_table
   contents:
     - title: PhD in Health and Wellness Technologies
-      institution: Polytechnic University of Valencia (<a href="http://www.upv.es/en">UPV</a>)
-      department: Ultrasound Medical and Industrial Laboratory (<a href="https://www.i3m-detectors.i3m.upv.es/research/ultrasound-medical-and-industrial-laboratory-umil/">UMIL</a>)
+      institution: Polytechnic University of Valencia (<a href="https://www.upv.es/index-en.html">UPV</a>)
+      department: Ultrasound Medical and Industrial Laboratory (<a href="https://i3m.csic.upv.es/">UMIL</a>)
       location: Valencia, Spain
       year: 2023
       summary: >
@@ -251,8 +251,8 @@
           linkname: "Academic record"
           ariaLabel: "Academic record (PhD)"
     - title: Master's Degree in Acoustical Engineering
-      institution: Polytechnic University of Valencia (<a href="http://www.upv.es/en">UPV</a>)
-      department: Higher Polytechnic School of Gandia (<a href="http://www.upv.es/contenidos/CGANDIA/index-en.html" aria-label="EPSG (UPV Gandia Campus)">EPSG</a>)
+      institution: Polytechnic University of Valencia (<a href="https://www.upv.es/index-en.html">UPV</a>)
+      department: Higher Polytechnic School of Gandia (<a href="https://www.upv.es/entidades/epsg/en/home/">EPSG</a>)
       location: Gandia, Spain
       year: 2019
       summary: >
@@ -274,7 +274,7 @@
       summary: >
         Degree obtained together with the 2 specializations: Acoustic Engineering and Audiovisual Technology.
         <br><br>
-        Final Degree Work entitled <a href="http://hdl.handle.net/10045/77578">Estudio de la relación campo directo/reverberado; útil/perjudicial</a> ('Study of the direct/reverberated field relationship; useful/harmful')
+        Final Degree Work entitled <a href="https://rua.ua.es/handle/10045/77578">Estudio de la relación campo directo/reverberado; útil/perjudicial</a> ('Study of the direct/reverberated field relationship; useful/harmful')
       linkitems:
         - link: /pdf/degree/Telecom.pdf
           linkname: "Diploma"
