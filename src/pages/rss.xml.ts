@@ -46,7 +46,6 @@ const MERMAID_DARK_VARS = {
 };
 
 // Initialize Mermaid renderer
-// Reused across requests, closed on process exit
 const mermaidRenderer = createMermaidRenderer({
   launchOptions: {
     args: ["--no-sandbox", "--disable-setuid-sandbox"],
