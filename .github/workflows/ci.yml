@@ -246,9 +246,7 @@ jobs:
                   summary.pages
                     .filter((p) => p.violations > 0)
                     .forEach((p) => {
-                      const rules = p.violationIds ? `\n   - **Rules:** 
-${p.violationIds.join(', ')}
-`` : '';
+                      const rules = p.violationIds ? `\n   - **Rules:** \`${p.violationIds.join(', ')}\`` : '';
                       commentBody += `- **${p.page}** (${p.violations} violations)${rules}\n`;
                     });
                   commentBody += `\n📸 **See 'axe-accessibility-report-${theme}' artifact for screenshots.**\n\n`;
