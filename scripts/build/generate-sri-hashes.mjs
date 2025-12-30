@@ -29,19 +29,12 @@ async function main() {
   let modifiedFilesCount = 0;
   let totalTagsUpdated = 0;
 
-  // Cache for file hashes to avoid re-reading/hashing the same asset multiple times
   const hashCache = new Map();
 
   for (const file of files) {
     let content = fs.readFileSync(file, "utf-8");
     let modified = false;
 
-    /**
-     * Generic helper to process a tag match, calculate SRI, and update the tag string.
-     * @param {RegExp} regex
-     * @param {string} tagName
-     * @param {function(string): boolean} [shouldProcess]
-     */
     const processTags = (regex, tagName, shouldProcess = () => true) => {
       content = content.replaceAll(regex, (match, attrs, url) => {
         if (attrs.includes("integrity=")) return match;
@@ -73,19 +66,27 @@ async function main() {
 
           totalTagsUpdated++;
           modified = true;
-          const cleanAttrs = attrs.replace(/\/\s*$/, "").trim();
 
-          // Only add nonce to tags that are restricted by script-src or style-src in CSP
-          const needsNonce =
-            tagName === "script" ||
-            (tagName === "link" &&
-              (attrs.includes("stylesheet") ||
-                attrs.includes('as="style"') ||
-                attrs.includes('as="script"')));
+          // Limpiar atributos para evitar duplicados
+          let cleanAttrs = attrs.replace(/\/\s*$/, "").trim();
 
-          const nonceAttr = needsNonce ? ' nonce="NGINX_CSP_NONCE"' : "";
+          // Determinar si necesita nonce (solo scripts y estilos)
+          const isScript = tagName === "script";
+          const isStyle =
+            tagName === "link" &&
+            (attrs.includes("stylesheet") || attrs.includes('as="style"'));
+          const needsNonce = isScript || isStyle;
+          const nonceAttr =
+            needsNonce && !attrs.includes("nonce=")
+              ? ' nonce="NGINX_CSP_NONCE"'
+              : "";
 
-          return `<${tagName} ${cleanAttrs}${nonceAttr} integrity="${hash}" crossorigin="anonymous">`;
+          // Solo añadir crossorigin si no existe
+          const crossoriginAttr = !attrs.includes("crossorigin")
+            ? ' crossorigin="anonymous"'
+            : "";
+
+          return `<${tagName} ${cleanAttrs}${nonceAttr} integrity="${hash}"${crossoriginAttr}>`;
         } catch (err) {
           console.warn(`Error processing ${tagName} ${url}:`, err.message);
           return match;
@@ -93,35 +94,28 @@ async function main() {
       });
     };
 
-    // 1. Process <script src="...">
-    const scriptRegex = /<script\s+([^>]*src=["']([^"']+)["'][^>]*)>/gi; // NOSONAR javascript:S5852
+    // 1. Scripts
+    const scriptRegex = /<script\s+([^>]*src=["']([^"']+)["'][^>]*)>/gi;
     processTags(scriptRegex, "script");
 
-    // 2. Process <link href="...">
-    const linkRegex = /<link\s+([^>]*href=["']([^"']+)["'][^>]*)>/gi; // NOSONAR javascript:S5852
+    // 2. Links (Solo los permitidos por el estándar para 'integrity')
+    const linkRegex = /<link\s+([^>]*href=["']([^"']+)["'][^>]*)>/gi;
     processTags(linkRegex, "link", (attrs) => {
-      const types = [
-        "stylesheet",
-        "preload",
-        "modulepreload",
-        "icon",
-        "manifest",
-        "apple-touch-icon",
-      ];
-      return types.some(
-        (t) => attrs.includes(`rel="${t}"`) || attrs.includes(`rel='${t}'`),
+      const allowedRels = ["stylesheet", "preload", "modulepreload"];
+      return allowedRels.some(
+        (rel) =>
+          attrs.includes(`rel="${rel}"`) || attrs.includes(`rel='${rel}'`),
       );
     });
 
-    // 3. Process <img> tags
-    const imgRegex = /<img\s+([^>]*src=["']([^"']+)["'][^>]*)>/gi; // NOSONAR javascript:S5852
+    // 3. Imágenes
+    const imgRegex = /<img\s+([^>]*src=["']([^"']+)["'][^>]*)>/gi;
     processTags(imgRegex, "img");
 
-    // 4. Process <video>, <audio>, <source>
+    // 4. Multimedia
     const mediaRegex =
-      /<(video|audio|source)\s+([^>]*src=["']([^"']+)["'][^>]*)>/gi; // NOSONAR javascript:S5852
+      /<(video|audio|source)\s+([^>]*src=["']([^"']+)["'][^>]*)>/gi;
     content = content.replaceAll(mediaRegex, (match, tag, attrs, url) => {
-      // Logic duplicated from processTags for speed/simplicity here
       if (attrs.includes("integrity=")) return match;
       try {
         if (url.startsWith("http") || url.startsWith("//")) return match;
@@ -142,14 +136,17 @@ async function main() {
 
         totalTagsUpdated++;
         modified = true;
-        return `<${tag} ${attrs.replace(/\/\s*$/, "").trim()} integrity="${hash}" crossorigin="anonymous">`;
+        const crossoriginAttr = !attrs.includes("crossorigin")
+          ? ' crossorigin="anonymous"'
+          : "";
+        return `<${tag} ${attrs.replace(/\/\s*$/, "").trim()} integrity="${hash}"${crossoriginAttr}>`;
       } catch {
         return match;
       }
     });
 
-    // 5. Process <astro-island> dynamic modules
-    const astroIslandRegex = /<astro-island\s+([^>]*)>/gi; // NOSONAR javascript:S5852
+    // 5. Astro Island Preloads
+    const astroIslandRegex = /<astro-island\s+([^>]*)>/gi;
     const moduleUrls = new Set();
     let islandMatch;
     while ((islandMatch = astroIslandRegex.exec(content)) !== null) {
