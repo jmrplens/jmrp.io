@@ -4,17 +4,19 @@ const path = require("node:path");
 const theme = process.env.THEME || "light";
 const resultsDir = ".lighthouseci";
 
+/**
+ * Recursively find manifest.json in a directory
+ */
 function findManifest(dir) {
   if (!fs.existsSync(dir)) return null;
+
   const files = fs.readdirSync(dir);
 
-  // Try direct manifest.json first
-  const directMatch = files.find(
-    (f) => f === "manifest.json" || f.startsWith("manifest.json"),
-  );
-  if (directMatch) return path.join(dir, directMatch);
+  // Look for manifest.json in current dir
+  const manifest = files.find((f) => f === "manifest.json");
+  if (manifest) return path.join(dir, manifest);
 
-  // Search subdirectories
+  // Look in subdirectories
   for (const file of files) {
     const fullPath = path.join(dir, file);
     if (fs.statSync(fullPath).isDirectory()) {
@@ -22,6 +24,7 @@ function findManifest(dir) {
       if (found) return found;
     }
   }
+
   return null;
 }
 
@@ -35,61 +38,57 @@ function formatReport() {
         ")\n\n⚠️ No manifest found in " +
         resultsDir,
     );
-    // Log directory structure for debugging in CI logs (stderr)
-    try {
-      if (fs.existsSync(resultsDir)) {
-        console.error(
-          "Contents of " + resultsDir + ":",
-          fs.readdirSync(resultsDir),
-        );
-      } else {
-        console.error(
-          resultsDir + " directory does not exist at " + process.cwd(),
-        );
-      }
-    } catch (e) {}
     return;
   }
 
-  const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
-  let body = "## ⚡ Lighthouse Analysis (" + theme + ")\n\n";
-  body += "| Page | Performance | Accessibility | Best Practices | SEO |\n";
-  body += "| :--- | :---: | :---: | :---: | :---: |\n";
+  try {
+    const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+    let body = "## ⚡ Lighthouse Analysis (" + theme + ")\n\n";
+    body += "| Page | Performance | Accessibility | Best Practices | SEO |\n";
+    body += "| :--- | :---: | :---: | :---: | :---: |\n";
 
-  manifest.forEach((entry) => {
-    // entry.summary might be missing if run failed for a specific URL
-    if (!entry.summary) return;
+    manifest.forEach((entry) => {
+      if (!entry.summary) return;
 
-    const perf = Math.round(entry.summary.performance * 100);
-    const acc = Math.round(entry.summary.accessibility * 100);
-    const bp = Math.round(entry.summary["best-practices"] * 100);
-    const seo = Math.round(entry.summary.seo * 100);
+      const perf = Math.round(entry.summary.performance * 100);
+      const acc = Math.round(entry.summary.accessibility * 100);
+      const bp = Math.round(entry.summary["best-practices"] * 100);
+      const seo = Math.round(entry.summary.seo * 100);
 
-    const getIcon = (score) => (score >= 90 ? "🟢" : score >= 50 ? "🟠" : "🔴");
+      const getIcon = (score) =>
+        score >= 90 ? "🟢" : score >= 50 ? "🟠" : "🔴";
 
-    body +=
-      "| " +
-      entry.url +
-      " | " +
-      getIcon(perf) +
-      " " +
-      perf +
-      " | " +
-      getIcon(acc) +
-      " " +
-      acc +
-      " | " +
-      getIcon(bp) +
-      " " +
-      bp +
-      " | " +
-      getIcon(seo) +
-      " " +
-      seo +
-      " |\n";
-  });
+      body +=
+        "| " +
+        entry.url +
+        " | " +
+        getIcon(perf) +
+        " " +
+        perf +
+        " | " +
+        getIcon(acc) +
+        " " +
+        acc +
+        " | " +
+        getIcon(bp) +
+        " " +
+        bp +
+        " | " +
+        getIcon(seo) +
+        " " +
+        seo +
+        " |\n";
+    });
 
-  console.log(body);
+    console.log(body);
+  } catch (e) {
+    console.log(
+      "## ⚡ Lighthouse Analysis (" +
+        theme +
+        ")\n\n❌ Error parsing manifest: " +
+        e.message,
+    );
+  }
 }
 
 formatReport();
