@@ -1,5 +1,4 @@
 import { createMermaidRenderer } from "mermaid-isomorphic";
-import fs from "node:fs";
 
 async function test() {
   console.log("Testing Mermaid Render with v3 API...");

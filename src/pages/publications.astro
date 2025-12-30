@@ -33,12 +33,14 @@ const collectionSchema = {
                     ? String(pub.issued["date-parts"][0][0])
                     : undefined,
                 author:
-                    pub.author?.map((a: { given: string; family: string }) => ({
-                        "@type": "Person",
-                        givenName: a.given,
-                        familyName: a.family,
-                        name: `${a.given} ${a.family}`,
-                    })) || [],
+                    pub.author?.map(
+                        (a: { family: string; given?: string }) => ({
+                            "@type": "Person",
+                            givenName: a.given || "",
+                            familyName: a.family,
+                            name: a.given ? `${a.given} ${a.family}` : a.family,
+                        }),
+                    ) || [],
                 publication:
                     pub["container-title"] ||
                     pub.publisher ||
