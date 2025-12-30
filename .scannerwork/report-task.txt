@@ -1,7 +1,0 @@
-organization=jmrplens
-projectKey=jmrp.io
-serverUrl=https://sonarcloud.io
-serverVersion=8.0.0.78018
-dashboardUrl=https://sonarcloud.io/dashboard?id=jmrp.io
-ceTaskId=AZtvA7QBnxyW-pIJkZ9X
-ceTaskUrl=https://sonarcloud.io/api/ce/task?id=AZtvA7QBnxyW-pIJkZ9X

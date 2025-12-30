@@ -26,7 +26,7 @@
         Key contributions:
       description:
         - "Development of real-time control software in C for high-power inverters using CMake, Keil uVision and CLion."
-        - "Implementation and maintenance of industrial communication protocols: I2C, SPI, RS485, Modbus RTU and Modbus TCP."
+        - "Implementation and maintenance of industrial communication protocols: I2C, SPI, SCI, RS485, Modbus RTU and Modbus TCP."
         - "Design and development of automated testing tools and verification scripts using Python."
         - "Management of software versions and collaborative workflows using Git."
 
