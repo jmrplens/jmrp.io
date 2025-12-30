@@ -160,7 +160,8 @@ ${body}
     /<CompareCode\s+([^>]*?)>([\s\S]*?)<\/CompareCode>/g,
     (match, attrs, body) => {
       const badTitle = attrs.match(/badTitle=["']([^"']*)["']/)?.[1] || "Bad";
-      const goodTitle = attrs.match(/goodTitle=["']([^"']*)["']/)?.[1] || "Good";
+      const goodTitle =
+        attrs.match(/goodTitle=["']([^"']*)["']/)?.[1] || "Good";
       const badContent =
         body.match(/<[^>]*slot="bad"[^>]*>([\s\S]*?)<\/[^>]*>/)?.[1] || "";
       const goodContent =
