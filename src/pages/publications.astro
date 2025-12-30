@@ -9,11 +9,63 @@ import { getPublications } from "@utils/publications";
 import PublicationItem from "@components/publications/PublicationItem.astro";
 
 const publicationGroups = await getPublications();
+
+// Flatten all publications for Schema
+const allPublications = publicationGroups.flatMap((group) => group.items);
+
+const collectionSchema = {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    "@id": new URL(Astro.url.pathname, Astro.site).toString() + "#collection",
+    name: "Publications",
+    description: "Academic publications and research by José Manuel Requena Plens.",
+    url: new URL(Astro.url.pathname, Astro.site).toString(),
+    mainEntity: {
+        "@type": "ItemList",
+        itemListElement: allPublications.map((pub, index) => ({
+            "@type": "ListItem",
+            position: index + 1,
+            item: {
+                "@type": "ScholarlyArticle",
+                headline: pub.title,
+                name: pub.title,
+                datePublished: pub.issued?.["date-parts"]?.[0]?.[0]
+                    ? String(pub.issued["date-parts"][0][0])
+                    : undefined,
+                author:
+                    pub.author?.map((a: any) => ({
+                        "@type": "Person",
+                        givenName: a.given,
+                        familyName: a.family,
+                        name: `${a.given} ${a.family}`,
+                    })) || [],
+                publication:
+                    pub["container-title"] ||
+                    pub.publisher ||
+                    pub.school ||
+                    pub.institution
+                        ? {
+                              "@type": "Periodical",
+                              name:
+                                  pub["container-title"] ||
+                                  pub.publisher ||
+                                  pub.school ||
+                                  pub.institution,
+                          }
+                        : undefined,
+                abstract: pub.abstract,
+                url: pub.url || pub.doi || undefined,
+                sameAs: pub.doi ? [pub.doi] : [],
+            },
+        })),
+    },
+};
 ---
 
 <BaseLayout
     title="Publications"
     description="Academic publications and research."
+    schema={collectionSchema}
 >
     <div class="container">
         <h1 class="page-title">Publications</h1>

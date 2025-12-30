@@ -147,7 +147,37 @@ function validateSingleSchema(schema, prefix = "") {
       break;
 
     case "WebPage":
+    case "ProfilePage":
+    case "CollectionPage":
       if (!schema["@id"]) warnings.push(`${p}: Missing @id`);
+      if (schema.mainEntity) validateNested("mainEntity");
+      break;
+
+    case "ItemList":
+      if (!schema.itemListElement) {
+        errors.push(`${p}: Missing itemListElement`);
+      } else if (!Array.isArray(schema.itemListElement)) {
+        errors.push(`${p}: itemListElement must be an array`);
+      } else {
+        schema.itemListElement.forEach((item, i) => {
+          if (typeof item === "object") {
+            validateSingleSchema(item, `${p}.itemListElement[${i}]`);
+          }
+        });
+      }
+      break;
+
+    case "ScholarlyArticle":
+      if (!schema.headline && !schema.name)
+        errors.push(`${p}: Missing headline or name`);
+      if (!schema.author) warnings.push(`${p}: Missing author`);
+      validateNested("author");
+      break;
+
+    case "EducationalOccupationalCredential":
+      if (!schema.name) errors.push(`${p}: Missing name`);
+      if (!schema.credentialCategory)
+        warnings.push(`${p}: Missing credentialCategory`);
       break;
   }
 

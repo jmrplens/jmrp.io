@@ -28,6 +28,7 @@ const { posts } = Astro.props;
 // Schema.org: CollectionPage with ItemList
 const schema = {
   "@type": "CollectionPage",
+  "@id": new URL(Astro.url.pathname, Astro.site).toString() + "#collection",
   name: `Blog posts tagged with #${tag}`,
   description: `Browse ${posts.length} articles about ${tag}.`,
   url: new URL(Astro.url.pathname, Astro.site).toString(),
