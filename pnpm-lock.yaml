@@ -132,6 +132,9 @@ importers:
       js-yaml:
         specifier: ^4.1.1
         version: 4.1.1
+      mermaid-isomorphic:
+        specifier: ^3.0.4
+        version: 3.0.4(playwright@1.57.0)
       pagefind:
         specifier: ^1.4.0
         version: 1.4.0

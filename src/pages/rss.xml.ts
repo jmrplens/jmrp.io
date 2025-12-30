@@ -7,24 +7,31 @@ import { marked } from "marked";
 import juice from "juice";
 import fs from "node:fs";
 import path from "node:path";
+import { createMermaidRenderer } from "mermaid-isomorphic";
 
 // Read RSS specific styles
 const RSS_STYLES = fs.readFileSync(path.resolve("src/styles/rss.css"), "utf-8");
 
-function flattenComponents(content: string): string {
+// Initialize Mermaid renderer
+const mermaidRenderer = createMermaidRenderer({
+  launchOptions: {
+    args: ["--no-sandbox", "--disable-setuid-sandbox"],
+  },
+});
+
+async function flattenComponents(content: string): Promise<string> {
   let flattened = content;
 
   // 0. Generic Cleanup (Imports, Exports, MDX Comments) - Do this FIRST
-  // We do NOT remove {variable} patterns anymore to preserve code blocks inside components
   flattened = flattened
-    .replaceAll(/^import\s+[^;]*;?$/gm, "") // NOSONAR
-    .replaceAll(/^export\s+[^;]*;?$/gm, "") // NOSONAR
-    .replaceAll(/{\/\*[\s\S]*?\*\/}/g, ""); // NOSONAR
+    .replace(/^import\s+[^;]*;?$/gm, "")
+    .replace(/^export\s+[^;]*;?$/gm, "")
+    .replace(/{\/\*[\s\S]*?\*\/}/g, "");
 
   // 1. TerminalCommand: <TerminalCommand command="..." prompt="..." />
-  flattened = flattened.replaceAll(
-    /<TerminalCommand\s+([^>]*)\/ >/g, // NOSONAR
-    (_, attrs) => {
+  flattened = flattened.replace(
+    /<TerminalCommand\s+([^>]*)\inaly/g,
+    (match, attrs) => {
       const command = attrs.match(/command=["']([^"']*)["']/)?.[1] || "";
       const prompt = attrs.match(/prompt=["']([^"']*)["']/)?.[1] || "$";
       return `<div style="background: #1a1b26; color: #a9b1d6; padding: 12px; font-family: monospace; margin: 16px 0;">
@@ -34,33 +41,40 @@ function flattenComponents(content: string): string {
   );
 
   // 2. FileContent: <FileContent filename="..."> ... </FileContent>
-  // Robust regex to handle attributes in any order
-  flattened = flattened.replaceAll(
-    /<FileContent\s+([^>]*?)>([\s\S]*?)<\/FileContent>/g, // NOSONAR
-    (_, attrs, body) => {
+  flattened = flattened.replace(
+    /<FileContent\s+([^>]*?)>([\s\S]*?)<\/FileContent>/g,
+    (match, attrs, body) => {
       const filename = attrs.match(/filename=["']([^"']*)["']/)?.[1] || "File";
       return `<div style="border: 1px solid #e1e4e8; margin: 16px 0; overflow: hidden;">
 <div style="background: #f6f8fa; padding: 8px 16px; border-bottom: 1px solid #e1e4e8; font-family: monospace; font-size: 12px; font-weight: bold;">📄 ${filename}</div>
-<div style="padding: 0;">${body}</div>
+<div style="padding: 0;">
+
+${body}
+
+</div>
 </div>`;
     },
   );
 
   // 3. TerminalOutput: <TerminalOutput title="..."> ... </TerminalOutput>
-  flattened = flattened.replaceAll(
-    /<TerminalOutput\s+title=["']([^"']*)["'][^>]*>([\s\S]*?)<\/TerminalOutput>/g, // NOSONAR
-    (_, title, body) => {
+  flattened = flattened.replace(
+    /<TerminalOutput\s+title=["']([^"']*)["'][^>]*>([\s\S]*?)<\/TerminalOutput>/g,
+    (match, title, body) => {
       return `<div style="border: 1px solid #e1e4e8; margin: 16px 0; overflow: hidden; background: #fafafa;">
 <div style="padding: 8px 16px; border-bottom: 1px solid #e1e4e8; font-family: monospace; font-size: 12px; color: #666;">> ${title}</div>
-<div style="padding: 12px; font-family: monospace; font-size: 13px; color: #555;">${body}</div>
+<div style="padding: 12px; font-family: monospace; font-size: 13px; color: #555;">
+
+${body}
+
+</div>
 </div>`;
     },
   );
 
   // 4. Callout: <Callout type="..."> ... </Callout>
-  flattened = flattened.replaceAll(
-    /<Callout\s+type=["']([^"']*)["'][^>]*>([\s\S]*?)<\/Callout>/g, // NOSONAR
-    (_, type, body) => {
+  flattened = flattened.replace(
+    /<Callout\s+type=["']([^"']*)["'][^>]*>([\s\S]*?)<\/Callout>/g,
+    (match, type, body) => {
       const colors: Record<string, string> = {
         info: "#3b82f6",
         warning: "#f59e0b",
@@ -70,66 +84,81 @@ function flattenComponents(content: string): string {
       const color = colors[type] || colors.info;
       return `<div style="padding: 16px; margin: 16px 0; border-left: 4px solid ${color}; background: #f8fafc;">
 <strong style="color: ${color}; text-transform: uppercase; font-size: 12px; display: block; margin-bottom: 4px;">${type}</strong>
+
 ${body}
+
 </div>`;
     },
   );
 
   // 5. Collapsible: <Collapsible summary="..."> ... </Collapsible>
-  flattened = flattened.replaceAll(
-    /<Collapsible\s+summary=["']([^"']*)["'][^>]*>([\s\S]*?)<\/Collapsible>/g, // NOSONAR
-    (_, summary, body) => {
+  flattened = flattened.replace(
+    /<Collapsible\s+summary=["']([^"']*)["'][^>]*>([\s\S]*?)<\/Collapsible>/g,
+    (match, summary, body) => {
       return `<details style="border: 1px solid #e1e4e8; margin: 16px 0;">
 <summary style="padding: 12px; cursor: pointer; font-weight: bold; background: #f6f8fa;">${summary}</summary>
-<div style="padding: 12px;">${body}</div>
+<div style="padding: 12px;">
+
+${body}
+
+</div>
 </details>`;
     },
   );
 
   // 6. Tabs & TabPanel: <Tabs> <TabPanel label="..."> ... </TabPanel> </Tabs>
-  // Simple flattening: show all panels with their labels as headers
-  flattened = flattened.replaceAll(/<Tabs[^>]*>([\s\S]*?)<\/Tabs>/g, "$1"); // NOSONAR
-  flattened = flattened.replaceAll(
-    /<TabPanel\s+label=["']([^"']*)["'][^>]*>([\s\S]*?)<\/TabPanel>/g, // NOSONAR
-    (_, label, body) => {
+  flattened = flattened.replace(/<Tabs[^>]*>([\s\S]*?)<\/Tabs>/g, "$1");
+  flattened = flattened.replace(
+    /<TabPanel\s+label=["']([^"']*)["'][^>]*>([\s\S]*?)<\/TabPanel>/g,
+    (match, label, body) => {
       return `<div style="margin: 16px 0; border: 1px solid #e1e4e8;">
 <div style="background: #f6f8fa; padding: 4px 12px; border-bottom: 1px solid #e1e4e8; font-size: 12px; color: #666;">Tab: ${label}</div>
-<div style="padding: 0;">${body}</div>
+<div style="padding: 0;">
+
+${body}
+
+</div>
 </div>`;
     },
   );
 
-  // 7. CompareCode: <CompareCode badTitle="..." goodTitle="..."> <div slot="bad">...</div> <div slot="good">...</div> </CompareCode>
-  flattened = flattened.replaceAll(
-    /<CompareCode\s+([^>]*?)>([\s\S]*?)<\/CompareCode>/g, // NOSONAR
-    (_, attrs, body) => {
+  // 7. CompareCode
+  flattened = flattened.replace(
+    /<CompareCode\s+([^>]*?)>([\s\S]*?)<\/CompareCode>/g,
+    (match, attrs, body) => {
       const badTitle = attrs.match(/badTitle=["']([^"']*)["']/)?.[1] || "Bad";
       const goodTitle =
         attrs.match(/goodTitle=["']([^"']*)["']/)?.[1] || "Good";
-
-      // Extract slot content
       const badContent =
-        body.match(/<[^>]*slot="bad"[^>]*>([\s\S]*?)<\/[^>]*>/)?.[1] || ""; // NOSONAR
+        body.match(/<[^>]*slot="bad"[^>]*>([\s\S]*?)<\/[^>]*>/)?.[1] || "";
       const goodContent =
-        body.match(/<[^>]*slot="good"[^>]*>([\s\S]*?)<\/[^>]*>/)?.[1] || ""; // NOSONAR
+        body.match(/<[^>]*slot="good"[^>]*>([\s\S]*?)<\/[^>]*>/)?.[1] || "";
 
       return `<div style="margin: 24px 0;">
 <div style="border: 1px solid #ef4444; margin-bottom: 12px;">
 <div style="background: #ef4444; color: white; padding: 4px 12px; font-weight: bold; font-size: 13px;">✕ ${badTitle}</div>
-<div style="padding: 0;">${badContent}</div>
+<div style="padding: 0;">
+
+${badContent}
+
+</div>
 </div>
 <div style="border: 1px solid #10b981;">
 <div style="background: #10b981; color: white; padding: 4px 12px; font-weight: bold; font-size: 13px;">✓ ${goodTitle}</div>
-<div style="padding: 0;">${goodContent}</div>
+<div style="padding: 0;">
+
+${goodContent}
+
+</div>
 </div>
 </div>`;
     },
   );
 
-  // prettier-ignore
-  flattened = flattened.replaceAll(/<YouTube\s+([^>]*)\/ >/g, (_, attrs) => { // NOSONAR
-    const id = attrs.match(/id=["']([^"']*)["']/)?.[1] || ""; // NOSONAR
-    const title = attrs.match(/title=["']([^"']*)["']/)?.[1] || "Video"; // NOSONAR
+  // 8. YouTube
+  flattened = flattened.replace(/<YouTube\s+([^>]*)\inaly/g, (match, attrs) => {
+    const id = attrs.match(/id=["']([^"']*)["']/)?.[1] || "";
+    const title = attrs.match(/title=["']([^"']*)["']/)?.[1] || "Video";
     const url = `https://www.youtube.com/watch?v=${id}`;
     return `<div style="margin: 16px 0; text-align: center; border: 1px solid #e1e4e8; padding: 20px; background: #f9f9f9;">
 <p style="margin-bottom: 10px;">📺 <strong>${title}</strong></p>
@@ -137,11 +166,37 @@ ${body}
 </div>`;
   });
 
-  // 9. Mermaid Render: ```mermaid-render ... ```
-  flattened = flattened.replaceAll(
-    /```mermaid-render([\s\S]*?)```/g, // NOSONAR
-    "<blockquote>[Diagram not renderable in RSS. Visit site to view]</blockquote>",
-  );
+  // 9. Mermaid Render
+  const mermaidRegex = /```mermaid-render([\s\S]*?)```/g;
+  const mermaidMatches = Array.from(flattened.matchAll(mermaidRegex));
+
+  if (mermaidMatches.length > 0) {
+    const codes = mermaidMatches.map((m) => m[1].trim());
+    try {
+      const results = await mermaidRenderer(codes, {
+        mermaidConfig: { theme: "neutral" },
+      });
+
+      let matchIndex = 0;
+      flattened = flattened.replace(mermaidRegex, () => {
+        const result = results[matchIndex++];
+        if (result && result.status === "fulfilled") {
+          const svg = result.value.svg;
+          const base64 = Buffer.from(svg).toString("base64");
+          return `<div style="margin: 24px 0; text-align: center;">
+<img src="data:image/svg+xml;base64,${base64}" alt="Mermaid Diagram" style="max-width: 100%; height: auto;" />
+</div>`;
+        }
+        return "<blockquote>[Diagram rendering failed]</blockquote>";
+      });
+    } catch (e) {
+      console.error("Failed to render Mermaid diagrams for RSS:", e);
+      flattened = flattened.replace(
+        mermaidRegex,
+        "<blockquote>[Diagram rendering failed]</blockquote>",
+      );
+    }
+  }
 
   return flattened;
 }
@@ -151,7 +206,6 @@ export async function GET(context: APIContext) {
   const siteEntry = await getEntry("site_config", "site");
   const siteData = siteEntry?.data;
 
-  // Filter out draft posts in production
   const publishedPosts = posts.filter((post: CollectionEntry<"posts">) => {
     if (import.meta.env.PROD) {
       return !post.data.draft;
@@ -159,7 +213,6 @@ export async function GET(context: APIContext) {
     return true;
   });
 
-  // Sort by publication date (newest first)
   publishedPosts.sort(
     (a: CollectionEntry<"posts">, b: CollectionEntry<"posts">) => {
       return (
@@ -175,14 +228,12 @@ export async function GET(context: APIContext) {
     site: context.site || "https://jmrp.io",
     items: await Promise.all(
       publishedPosts.map(async (post: CollectionEntry<"posts">) => {
-        // Build author string in RFC 822 format: email (Name)
         const authorEmail = post.data.authorEmail || "mail@jmrp.io";
         const authorName = post.data.author || "José Manuel Requena Plens";
         const authorString = `${authorEmail} (${authorName})`;
 
-        // Preprocess MDX body: transform custom components into styled HTML/Markdown fragments for RSS
         const postBody = post.body || "";
-        const flattenedBody = flattenComponents(postBody);
+        const flattenedBody = await flattenComponents(postBody);
 
         const html = await marked.parse(flattenedBody);
         const sanitizedHtml = sanitizeHtml(html, {
@@ -222,7 +273,7 @@ export async function GET(context: APIContext) {
           ]),
           allowedAttributes: {
             ...sanitizeHtml.defaults.allowedAttributes,
-            img: ["src", "alt", "title", "width", "height"],
+            img: ["src", "alt", "title", "width", "height", "style"],
             a: ["href", "name", "target", "title", "rel"],
             code: ["class"],
             span: ["class", "style"],
@@ -248,7 +299,6 @@ export async function GET(context: APIContext) {
           },
         });
 
-        // Apply inline styles for RSS readers
         const styledHtml = juice(sanitizedHtml, {
           extraCss: RSS_STYLES,
           applyStyleTags: false,
@@ -258,7 +308,6 @@ export async function GET(context: APIContext) {
           insertPreservedExtraCss: false,
         });
 
-        // Generate Media RSS and Enclosure data
         let customItemData = "";
         if (post.data.coverImage) {
           try {
