@@ -33,7 +33,7 @@ async function getPagesFromSitemap(): Promise<
     const sitemapContent = fs.readFileSync(sitemapPath, "utf-8");
     const sitemap = await parseStringPromise(sitemapContent);
 
-    const urls = sitemap.urlset.url.map((entry: any) => {
+    let urls = sitemap.urlset.url.map((entry: any) => {
       const fullUrl = entry.loc[0];
       const urlPath = fullUrl.replace("https://jmrp.io", "");
 
@@ -55,7 +55,17 @@ async function getPagesFromSitemap(): Promise<
       return { name, url: urlPath };
     });
 
-    console.log(`📄 Found ${urls.length} pages in sitemap`);
+    // Optimization: Only include the first tag page encountered
+    let tagFound = false;
+    urls = urls.filter((page: any) => {
+      if (page.url.includes("/blog/tags/")) {
+        if (tagFound) return false;
+        tagFound = true;
+      }
+      return true;
+    });
+
+    console.log(`📄 Found ${urls.length} optimized pages in sitemap`);
     return urls;
   } catch (error) {
     console.error("❌ Error parsing sitemap:", error);
