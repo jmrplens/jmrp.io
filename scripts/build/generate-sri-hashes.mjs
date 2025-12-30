@@ -9,11 +9,11 @@ const HTML_PATTERN = "**/*.html";
 /**
  * Calculate the SRI hash for a file content
  * @param {string} content
- * @returns {string} The integrity string (e.g., "sha384-...")
+ * @returns {string} The integrity string (e.g., "sha512-...")
  */
 function calculateSRI(content) {
-  const hash = crypto.createHash("sha384").update(content).digest("base64");
-  return `sha384-${hash}`;
+  const hash = crypto.createHash("sha512").update(content).digest("base64");
+  return `sha512-${hash}`;
 }
 
 async function main() {
@@ -29,44 +29,30 @@ async function main() {
   let modifiedFilesCount = 0;
   let totalTagsUpdated = 0;
 
-  // Cache for file hashes to avoid re-reading/hashing the same asset multiple times
   const hashCache = new Map();
 
   for (const file of files) {
     let content = fs.readFileSync(file, "utf-8");
     let modified = false;
 
-    // Process <script src="...">
-    // We look for scripts that have a src, don't have integrity yet, and are local (not starting with http/https/double slash)
-    // Regex explanation:
-    // <script : literal
-    // [^>]* : any attributes before src
-    // \bsrc=["'] : src attribute start
-    // ([^"']+) : capture the src path
-    // ["'] : src attribute end
-    // [^>]* : any attributes after src
-    // > : closing tag
-    // We need to be careful with regex replacement to allow inserting the integrity attribute.
-
-    // A better approach for replacement is to use replaceAll with a callback
-    // <script ... src="path" ... >
-    /**
-     * Generic helper to process a tag match, calculate SRI, and update the tag string.
-     * @param {RegExp} regex
-     * @param {string} tagName
-     * @param {function(string): boolean} [shouldProcess]
-     */
     const processTags = (regex, tagName, shouldProcess = () => true) => {
       content = content.replaceAll(regex, (match, attrs, url) => {
-        if (attrs.includes("integrity=")) return match; // Already has integrity
-        if (!shouldProcess(attrs)) return match; // Failed custom check (e.g. rel="stylesheet")
+        if (attrs.includes("integrity=")) return match;
+        if (!shouldProcess(attrs)) return match;
 
         try {
-          // Check exclusion conditions (external, relative, etc.)
           if (url.startsWith("http") || url.startsWith("//")) return match;
-          if (!url.startsWith("/")) return match; // Only process root-relative for safety
 
-          const filePath = path.join(DIST_DIR, url).split("?")[0];
+          let filePath;
+          const urlClean = url.split("?")[0].split("#")[0];
+
+          if (urlClean.startsWith("/")) {
+            filePath = path.join(DIST_DIR, urlClean);
+          } else {
+            const htmlDir = path.dirname(file);
+            filePath = path.resolve(htmlDir, urlClean);
+          }
+
           if (!fs.existsSync(filePath)) return match;
 
           let hash;
@@ -80,12 +66,27 @@ async function main() {
 
           totalTagsUpdated++;
           modified = true;
-          // Strip trailing slash for self-closing tags to avoid <tag attr / integrity="...">
-          const cleanAttrs = attrs.replace(/\/\s*$/, "").trim();
 
-          // Inject Nginx Nonce placeholder along with SRI
-          // Nginx sub_filter will replace NGINX_CSP_NONCE with the real request ID
-          return `<${tagName} ${cleanAttrs} nonce="NGINX_CSP_NONCE" integrity="${hash}" crossorigin="anonymous">`;
+          // Clean attributes to avoid duplicates
+          let cleanAttrs = attrs.replace(/\/\s*$/, "").trim();
+
+          // Determine if nonce is needed (only scripts and styles)
+          const isScript = tagName === "script";
+          const isStyle =
+            tagName === "link" &&
+            (attrs.includes("stylesheet") || attrs.includes('as="style"'));
+          const needsNonce = isScript || isStyle;
+          const nonceAttr =
+            needsNonce && !attrs.includes("nonce=")
+              ? ' nonce="NGINX_CSP_NONCE"'
+              : "";
+
+          // Only add crossorigin if it doesn't exist
+          const crossoriginAttr = !attrs.includes("crossorigin")
+            ? ' crossorigin="anonymous"'
+            : "";
+
+          return `<${tagName} ${cleanAttrs}${nonceAttr} integrity="${hash}"${crossoriginAttr}>`;
         } catch (err) {
           console.warn(`Error processing ${tagName} ${url}:`, err.message);
           return match;
@@ -93,21 +94,102 @@ async function main() {
       });
     };
 
-    // Process <script src="...">
-    // Pattern is bounded by > which prevents catastrophic backtracking
-    const scriptRegex = /<script\s+([^>]*src=["']([^"']+)["'][^>]*)>/gi; // NOSONAR javascript:S5852
+    // 1. Scripts
+    const scriptRegex = /<script\s+([^>]*src=["']([^"']+)["'][^>]*)>/gi;
     processTags(scriptRegex, "script");
 
-    // Process <link rel="stylesheet" href="...">
-    // Pattern is bounded by > which prevents catastrophic backtracking
-    const styleRegex = /<link\s+([^>]*href=["']([^"']+)["'][^>]*)>/gi; // NOSONAR javascript:S5852
-    processTags(
-      styleRegex,
-      "link",
-      (attrs) =>
-        attrs.includes('rel="stylesheet"') ||
-        attrs.includes("rel='stylesheet'"),
-    );
+    // 2. Links (Only those allowed by the standard for 'integrity')
+    const linkRegex = /<link\s+([^>]*href=["']([^"']+)["'][^>]*)>/gi;
+    processTags(linkRegex, "link", (attrs) => {
+      const allowedRels = ["stylesheet", "preload", "modulepreload"];
+      return allowedRels.some(
+        (rel) =>
+          attrs.includes(`rel="${rel}"`) || attrs.includes(`rel='${rel}'`),
+      );
+    });
+
+    // 3. Images
+    const imgRegex = /<img\s+([^>]*src=["']([^"']+)["'][^>]*)>/gi;
+    processTags(imgRegex, "img");
+
+    // 4. Multimedia
+    const mediaRegex =
+      /<(video|audio|source)\s+([^>]*src=["']([^"']+)["'][^>]*)>/gi;
+    content = content.replaceAll(mediaRegex, (match, tag, attrs, url) => {
+      if (attrs.includes("integrity=")) return match;
+      try {
+        if (url.startsWith("http") || url.startsWith("//")) return match;
+        const urlClean = url.split("?")[0].split("#")[0];
+        const filePath = urlClean.startsWith("/")
+          ? path.join(DIST_DIR, urlClean)
+          : path.resolve(path.dirname(file), urlClean);
+
+        if (!fs.existsSync(filePath)) return match;
+
+        let hash;
+        if (hashCache.has(filePath)) {
+          hash = hashCache.get(filePath);
+        } else {
+          hash = calculateSRI(fs.readFileSync(filePath));
+          hashCache.set(filePath, hash);
+        }
+
+        totalTagsUpdated++;
+        modified = true;
+        const crossoriginAttr = !attrs.includes("crossorigin")
+          ? ' crossorigin="anonymous"'
+          : "";
+        return `<${tag} ${attrs.replace(/\/\s*$/, "").trim()} integrity="${hash}"${crossoriginAttr}>`;
+      } catch {
+        return match;
+      }
+    });
+
+    // 5. Astro Island Preloads
+    const astroIslandRegex = /<astro-island\s+([^>]*)>/gi;
+    const moduleUrls = new Set();
+    let islandMatch;
+    while ((islandMatch = astroIslandRegex.exec(content)) !== null) {
+      const attrs = islandMatch[1];
+      const componentUrlMatch = /component-url=["']([^"']+)["']/.exec(attrs);
+      const rendererUrlMatch = /renderer-url=["']([^"']+)["']/.exec(attrs);
+      if (componentUrlMatch) moduleUrls.add(componentUrlMatch[1]);
+      if (rendererUrlMatch) moduleUrls.add(rendererUrlMatch[1]);
+    }
+
+    if (moduleUrls.size > 0) {
+      let preloadLinks = "";
+      for (const url of moduleUrls) {
+        if (content.includes(`<link rel="modulepreload" href="${url}"`))
+          continue;
+        try {
+          if (url.startsWith("http") || url.startsWith("//")) continue;
+          const urlClean = url.split("?")[0].split("#")[0];
+          const filePath = urlClean.startsWith("/")
+            ? path.join(DIST_DIR, urlClean)
+            : path.resolve(path.dirname(file), urlClean);
+
+          if (!fs.existsSync(filePath)) continue;
+
+          let hash;
+          if (hashCache.has(filePath)) {
+            hash = hashCache.get(filePath);
+          } else {
+            hash = calculateSRI(fs.readFileSync(filePath));
+            hashCache.set(filePath, hash);
+          }
+          preloadLinks += `<link rel="modulepreload" href="${url}" nonce="NGINX_CSP_NONCE" integrity="${hash}" crossorigin="anonymous">
+`;
+          totalTagsUpdated++;
+        } catch (err) {
+          console.warn(`Error processing modulepreload ${url}:`, err.message);
+        }
+      }
+      if (preloadLinks && content.includes("</head>")) {
+        content = content.replace("</head>", `${preloadLinks}</head>`);
+        modified = true;
+      }
+    }
 
     if (modified) {
       fs.writeFileSync(file, content, "utf-8");
@@ -115,7 +197,8 @@ async function main() {
     }
   }
 
-  console.log(`\nSRI Injection complete.`);
+  console.log(`
+SRI Injection complete.`);
   console.log(`Modified ${modifiedFilesCount} files.`);
   console.log(`Updated ${totalTagsUpdated} tags with integrity attributes.`);
 }
