@@ -166,6 +166,7 @@ const breadcrumbList = {
         ...pathSegments.map((segment, index) => {
             const path = `/${pathSegments.slice(0, index + 1).join("/")}/`;
             const isLastSegment = index === pathSegments.length - 1;
+            const absoluteUrl = new URL(path, Astro.site).toString();
 
             // Prefer page title for the last segment if available
             const fallbackName = segment
@@ -180,7 +181,7 @@ const breadcrumbList = {
                 "@type": "ListItem",
                 position: index + 2,
                 name: name,
-                item: new URL(path, Astro.site).toString(),
+                item: absoluteUrl,
             };
         }),
     ],
