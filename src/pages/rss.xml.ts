@@ -96,9 +96,8 @@ function cleanContent(text: string): string {
   const nonEmptyLines = lines.filter((l) => l.trim().length > 0);
   if (nonEmptyLines.length === 0) return "";
   const indentRegex = /^\s*/; // NOSONAR
-  const minIndent = Math.min(
-    ...nonEmptyLines.map((l) => indentRegex.exec(l)?.[0].length || 0),
-  ); // NOSONAR
+  // prettier-ignore
+  const minIndent = Math.min(...nonEmptyLines.map((l) => indentRegex.exec(l)?.[0].length || 0)); // NOSONAR
   return lines
     .map((l) => l.slice(minIndent))
     .join("\n")
@@ -106,6 +105,7 @@ function cleanContent(text: string): string {
 }
 
 async function renderBody(body: string): Promise<string> {
+  // prettier-ignore
   const codeRegex = /```(\w+)?\n([\s\S]*?)```/; // NOSONAR
   const codeMatch = codeRegex.exec(body); // NOSONAR
   if (codeMatch) {
@@ -123,6 +123,7 @@ async function renderBody(body: string): Promise<string> {
 
 async function processMermaid(content: string): Promise<string> {
   let res = content;
+  // prettier-ignore
   const mermaidRegex = /```mermaid-render([\s\S]*?)```/g; // NOSONAR
   const mMatches = Array.from(res.matchAll(mermaidRegex)); // NOSONAR
   if (mMatches.length > 0) {
@@ -146,10 +147,8 @@ async function processMermaid(content: string): Promise<string> {
       }
     } catch (e) {
       console.error("[RSS] Mermaid process error:", e);
-      res = res.replaceAll(
-        mermaidRegex,
-        "<blockquote>[Diagram rendering failed]</blockquote>",
-      ); // NOSONAR
+      // prettier-ignore
+      res = res.replaceAll(mermaidRegex, "<blockquote>[Diagram rendering failed]</blockquote>"); // NOSONAR
     }
   }
   return res;
@@ -158,22 +157,18 @@ async function processMermaid(content: string): Promise<string> {
 async function processAsyncComponents(content: string): Promise<string> {
   let res = content;
   // FileContent
-  const fcMatches = Array.from(
-    res.matchAll(/<FileContent\s+([^>]*?)>([\s\S]*?)<\/FileContent>/g),
-  ); // NOSONAR
+  // prettier-ignore
+  const fcMatches = Array.from(res.matchAll(/<FileContent\s+([^>]*?)>([\s\S]*?)<\/FileContent>/g)); // NOSONAR
   for (const m of fcMatches) {
-    const fn = m[1].match(/filename=[\"']([^\"']*)["']/)?.[1] || "File"; // NOSONAR
+    const fn = m[1].match(/filename=["']([^"']*)["']/)?.[1] || "File"; // NOSONAR
     res = res.replace(
       m[0],
       `<div style="border:1px solid #e1e4e8;margin:16px 0;overflow:hidden;"><div style="background:#f6f8fa;padding:8px 16px;border-bottom:1px solid #e1e4e8;font-family:monospace;font-size:12px;font-weight:bold;">📄 ${fn}</div><div style="padding:0;">${await renderBody(m[2])}</div></div>`,
     ); // NOSONAR
   }
   // TerminalOutput
-  const toMatches = Array.from(
-    res.matchAll(
-      /<TerminalOutput\s+title=[\"']([^\"']*)["'][^>]*>([\s\S]*?)<\/TerminalOutput>/g,
-    ),
-  ); // NOSONAR
+  // prettier-ignore
+  const toMatches = Array.from(res.matchAll(/<TerminalOutput\s+title=["']([^"']*)["'][^>]*>([\s\S]*?)<\/TerminalOutput>/g)); // NOSONAR
   for (const m of toMatches) {
     res = res.replace(
       m[0],
@@ -182,11 +177,8 @@ async function processAsyncComponents(content: string): Promise<string> {
   }
   // Tabs & TabPanel
   res = res.replaceAll(/<Tabs[^>]*>([\s\S]*?)<\/Tabs>/g, "$1"); // NOSONAR
-  const tpMatches = Array.from(
-    res.matchAll(
-      /<TabPanel\s+label=[\"']([^\"']*)["'][^>]*>([\s\S]*?)<\/TabPanel>/g,
-    ),
-  ); // NOSONAR
+  // prettier-ignore
+  const tpMatches = Array.from(res.matchAll(/<TabPanel\s+label=["']([^"']*)["'][^>]*>([\s\S]*?)<\/TabPanel>/g)); // NOSONAR
   for (const m of tpMatches) {
     res = res.replace(
       m[0],
@@ -194,16 +186,15 @@ async function processAsyncComponents(content: string): Promise<string> {
     ); // NOSONAR
   }
   // CompareCode
-  const ccMatches = Array.from(
-    res.matchAll(/<CompareCode\s+([^>]*?)>([\s\S]*?)<\/CompareCode>/g),
-  ); // NOSONAR
+  // prettier-ignore
+  const ccMatches = Array.from(res.matchAll(/<CompareCode\s+([^>]*?)>([\s\S]*?)<\/CompareCode>/g)); // NOSONAR
   for (const m of ccMatches) {
-    const bt = m[1].match(/badTitle=[\"']([^\"']*)["']/)?.[1] || "Bad"; // NOSONAR
-    const gt = m[1].match(/goodTitle=[\"']([^\"']*)["']/)?.[1] || "Good"; // NOSONAR
+    const bt = m[1].match(/badTitle=["']([^"']*)["']/)?.[1] || "Bad"; // NOSONAR
+    const gt = m[1].match(/goodTitle=["']([^"']*)["']/)?.[1] || "Good"; // NOSONAR
     // prettier-ignore
-    const bcM = m[2].match(/<[^>]*slot=[\"']?bad[\"']?[^>]*>([\s\S]*?)<\/[^>]*>/i); // NOSONAR
+    const bcM = m[2].match(/<[^>]*slot=["']?bad["']?[^>]*>([\s\S]*?)<\/[^>]*>/i); // NOSONAR
     // prettier-ignore
-    const gcM = m[2].match(/<[^>]*slot=[\"']?good[\"']?[^>]*>([\s\S]*?)<\/[^>]*>/i); // NOSONAR
+    const gcM = m[2].match(/<[^>]*slot=["']?good["']?[^>]*>([\s\S]*?)<\/[^>]*>/i); // NOSONAR
     res = res.replace(
       m[0],
       `<div style="margin:24px 0;"><div style="border:1px solid #ef4444;margin-bottom:12px;"><div style="background:#ef4444;color:white;padding:4px 12px;font-weight:bold;font-size:13px;">✕ ${bt}</div><div style="padding:0;">${bcM ? await renderBody(bcM[1]) : ""}</div></div><div style="border:1px solid #10b981;"><div style="background:#10b981;color:white;padding:4px 12px;font-weight:bold;font-size:13px;">✓ ${gt}</div><div style="padding:0;">${gcM ? await renderBody(gcM[1]) : ""}</div></div></div>`,
@@ -215,30 +206,22 @@ async function processAsyncComponents(content: string): Promise<string> {
 async function flattenComponents(content: string): Promise<string> {
   let res = content;
   // 0. Cleanup
-  res = res
-    .replaceAll(/^import\s+[^;]*;?$/gm, "")
-    .replaceAll(/^export\s+[^;]*;?$/gm, "")
-    .replaceAll(/{\/\*[\s\S]*?\*\/}/g, ""); // NOSONAR
+  // prettier-ignore
+  res = res.replaceAll(/^import\s+[^;]*;?$/gm, "").replaceAll(/^export\s+[^;]*;?$/gm, "").replaceAll(/{\/\*[\s\S]*?\*\/}/g, ""); // NOSONAR
   // 1. Mermaid
   res = await processMermaid(res);
   // 2. Async Components
   res = await processAsyncComponents(res);
   // 3. TerminalCommand
-  res = res.replaceAll(
-    /<TerminalCommand\s+([^>]*?)\/?>((?:<\/TerminalCommand>)?)/g,
-    (_m, a) => {
-      // NOSONAR
-      const c = a.match(/command=[\"']([^\"']*)["']/)?.[1] || ""; // NOSONAR
-      const p = a.match(/prompt=[\"']([^\"']*)["']/)?.[1] || "$"; // NOSONAR
-      return `<div style="background:#1a1b26;color:#a9b1d6;padding:12px;font-family:monospace;margin:16px 0;"><span style="color:#565f89;margin-right:8px;">${p}</span> ${c}</div>`;
-    },
-  );
+  // prettier-ignore
+  res = res.replaceAll(/<TerminalCommand\s+([^>]*?)\/?>((?:<\/TerminalCommand>)?)/g, (_m, a) => { // NOSONAR
+    const c = a.match(/command=["']([^"']*)["']/)?.[1] || ""; // NOSONAR
+    const p = a.match(/prompt=["']([^"']*)["']/)?.[1] || "$"; // NOSONAR
+    return `<div style="background:#1a1b26;color:#a9b1d6;padding:12px;font-family:monospace;margin:16px 0;"><span style="color:#565f89;margin-right:8px;">${p}</span> ${c}</div>`;
+  });
   // 4. Callout
-  const coMatches = Array.from(
-    res.matchAll(
-      /<Callout\s+type=[\"']([^\"']*)["'][^>]*>([\s\S]*?)<\/Callout>/g,
-    ),
-  ); // NOSONAR
+  // prettier-ignore
+  const coMatches = Array.from(res.matchAll(/<Callout\s+type=["']([^"']*)["'][^>]*>([\s\S]*?)<\/Callout>/g)); // NOSONAR
   for (const m of coMatches) {
     const colors: any = {
       info: "#3b82f6",
@@ -252,10 +235,10 @@ async function flattenComponents(content: string): Promise<string> {
     ); // NOSONAR
   }
   // 5. YouTube
-  res = res.replaceAll(/<YouTube\s+([^>]*?)\/?>/g, (_m, a) => {
-    // NOSONAR
-    const id = a.match(/id=[\"']([^\"']*)["']/)?.[1] || ""; // NOSONAR
-    const t = a.match(/title=[\"']([^\"']*)["']/)?.[1] || "Video"; // NOSONAR
+  // prettier-ignore
+  res = res.replaceAll(/<YouTube\s+([^>]*?)\/?>/g, (_m, a) => { // NOSONAR
+    const id = a.match(/id=["']([^"']*)["']/)?.[1] || ""; // NOSONAR
+    const t = a.match(/title=["']([^"']*)["']/)?.[1] || "Video"; // NOSONAR
     return `<div style="margin:16px 0;text-align:center;border:1px solid #e1e4e8;padding:20px;background:#f9f9f9;"><p style="margin-bottom:10px;">📺 <strong>${t}</strong></p><a href="https://www.youtube.com/watch?v=${id}" style="color:#B509AC;text-decoration:underline;">Watch on YouTube</a></div>`;
   });
   return res;
