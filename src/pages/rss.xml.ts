@@ -50,7 +50,19 @@ const mermaidRenderer = createMermaidRenderer({
 
 const highlighter = await createHighlighter({
   themes: ["github-light"],
-  langs: ["javascript", "typescript", "nginx", "bash", "yaml", "ini", "html", "css", "text", "json", "markdown"],
+  langs: [
+    "javascript",
+    "typescript",
+    "nginx",
+    "bash",
+    "yaml",
+    "ini",
+    "html",
+    "css",
+    "text",
+    "json",
+    "markdown",
+  ],
 });
 
 const marked = new Marked({
@@ -59,7 +71,10 @@ const marked = new Marked({
     code({ text, lang }) {
       const language = lang || "text";
       try {
-        return highlighter.codeToHtml(text, { lang: language, theme: "github-light" });
+        return highlighter.codeToHtml(text, {
+          lang: language,
+          theme: "github-light",
+        });
       } catch (e) {
         return `<pre><code>${text}</code></pre>`;
       }
@@ -76,20 +91,25 @@ if (typeof process !== "undefined" && typeof process.on === "function") {
 
 function cleanContent(text: string): string {
   if (!text) return "";
-  const lines = text.split('\n');
-  const nonEmptyLines = lines.filter(l => l.trim().length > 0);
+  const lines = text.split("\n");
+  const nonEmptyLines = lines.filter((l) => l.trim().length > 0);
   if (nonEmptyLines.length === 0) return "";
-  const minIndent = Math.min(...nonEmptyLines.map(l => l.match(/^\s*/)?.[0].length || 0)); // NOSONAR
-  return lines.map(l => l.slice(minIndent)).join('\n').trim();
+  const minIndent = Math.min(
+    ...nonEmptyLines.map((l) => l.match(/^\s*/)?.[0].length || 0),
+  ); // NOSONAR
+  return lines
+    .map((l) => l.slice(minIndent))
+    .join("\n")
+    .trim();
 }
 
 async function renderBody(body: string): Promise<string> {
   const codeMatch = body.match(/```(\w+)?\n([\s\S]*?)```/); // NOSONAR
   if (codeMatch) {
     try {
-      const l = codeMatch[1] || 'text';
+      const l = codeMatch[1] || "text";
       const c = codeMatch[2].trim();
-      return highlighter.codeToHtml(c, { lang: l, theme: 'github-light' });
+      return highlighter.codeToHtml(c, { lang: l, theme: "github-light" });
     } catch (e) {
       return `<pre><code>${body}</code></pre>`;
     }
@@ -107,11 +127,14 @@ async function flattenComponents(content: string): Promise<string> {
   const rMer = /```mermaid-render([\s\S]*?)```/g; // NOSONAR
   const rTmc = /<TerminalCommand\s+([^>]*?)\/?>((?:<\/TerminalCommand>)?)/g; // NOSONAR
   const rFct = /<FileContent\s+([^>]*?)>([\s\S]*?)<\/FileContent>/g; // NOSONAR
-  const rTou = /<TerminalOutput\s+title=["']([^"']*)["'][^>]*>([\s\S]*?)<\/TerminalOutput>/g; // NOSONAR
+  const rTou =
+    /<TerminalOutput\s+title=["']([^"']*)["'][^>]*>([\s\S]*?)<\/TerminalOutput>/g; // NOSONAR
   const rCal = /<Callout\s+type=["']([^"']*)["'][^>]*>([\s\S]*?)<\/Callout>/g; // NOSONAR
-  const rCol = /<Collapsible\s+summary=["']([^"']*)["'][^>]*>([\s\S]*?)<\/Collapsible>/g; // NOSONAR
+  const rCol =
+    /<Collapsible\s+summary=["']([^"']*)["'][^>]*>([\s\S]*?)<\/Collapsible>/g; // NOSONAR
   const rTbs = /<Tabs[^>]*>([\s\S]*?)<\/Tabs>/g; // NOSONAR
-  const rTpn = /<TabPanel\s+label=["']([^"']*)["'][^>]*>([\s\S]*?)<\/TabPanel>/g; // NOSONAR
+  const rTpn =
+    /<TabPanel\s+label=["']([^"']*)["'][^>]*>([\s\S]*?)<\/TabPanel>/g; // NOSONAR
   const rCpc = /<CompareCode\s+([^>]*?)>([\s\S]*?)<\/CompareCode>/g; // NOSONAR
   const rYtb = /<YouTube\s+([^>]*?)\/?>/g; // NOSONAR
 
