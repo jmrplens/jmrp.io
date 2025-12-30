@@ -36,20 +36,6 @@ async function main() {
     let content = fs.readFileSync(file, "utf-8");
     let modified = false;
 
-    // Process <script src="...">
-    // We look for scripts that have a src, don't have integrity yet, and are local (not starting with http/https/double slash)
-    // Regex explanation:
-    // <script : literal
-    // [^>]* : any attributes before src
-    // \bsrc=["'] : src attribute start
-    // ([^"']+) : capture the src path
-    // ["'] : src attribute end
-    // [^>]* : any attributes after src
-    // > : closing tag
-    // We need to be careful with regex replacement to allow inserting the integrity attribute.
-
-    // A better approach for replacement is to use replaceAll with a callback
-    // <script ... src="path" ... >
     /**
      * Generic helper to process a tag match, calculate SRI, and update the tag string.
      * @param {RegExp} regex
@@ -58,29 +44,23 @@ async function main() {
      */
     const processTags = (regex, tagName, shouldProcess = () => true) => {
       content = content.replaceAll(regex, (match, attrs, url) => {
-        if (attrs.includes("integrity=")) return match; // Already has integrity
-        if (!shouldProcess(attrs)) return match; // Failed custom check (e.g. rel="stylesheet")
+        if (attrs.includes("integrity=")) return match;
+        if (!shouldProcess(attrs)) return match;
 
         try {
-          // Check exclusion conditions (external)
           if (url.startsWith("http") || url.startsWith("//")) return match;
 
           let filePath;
           const urlClean = url.split("?")[0].split("#")[0];
 
           if (urlClean.startsWith("/")) {
-            // Root-relative path
             filePath = path.join(DIST_DIR, urlClean);
           } else {
-            // Relative path
             const htmlDir = path.dirname(file);
             filePath = path.resolve(htmlDir, urlClean);
           }
 
-          if (!fs.existsSync(filePath)) {
-            // console.warn(`File not found for SRI: ${url} (resolved: ${filePath})`);
-            return match;
-          }
+          if (!fs.existsSync(filePath)) return match;
 
           let hash;
           if (hashCache.has(filePath)) {
@@ -93,12 +73,19 @@ async function main() {
 
           totalTagsUpdated++;
           modified = true;
-          // Strip trailing slash for self-closing tags to avoid <tag attr / integrity="...">
           const cleanAttrs = attrs.replace(/\/\s*$/, "").trim();
 
-          // Inject Nginx Nonce placeholder along with SRI
-          // Nginx sub_filter will replace NGINX_CSP_NONCE with the real request ID
-          return `<${tagName} ${cleanAttrs} nonce="NGINX_CSP_NONCE" integrity="${hash}" crossorigin="anonymous">`;
+          // Only add nonce to tags that are restricted by script-src or style-src in CSP
+          const needsNonce =
+            tagName === "script" ||
+            (tagName === "link" &&
+              (attrs.includes("stylesheet") ||
+                attrs.includes('as="style"') ||
+                attrs.includes('as="script"')));
+
+          const nonceAttr = needsNonce ? ' nonce="NGINX_CSP_NONCE"' : "";
+
+          return `<${tagName} ${cleanAttrs}${nonceAttr} integrity="${hash}" crossorigin="anonymous">`;
         } catch (err) {
           console.warn(`Error processing ${tagName} ${url}:`, err.message);
           return match;
@@ -106,15 +93,13 @@ async function main() {
       });
     };
 
-    // Process <script src="...">
-    // Pattern is bounded by > which prevents catastrophic backtracking
+    // 1. Process <script src="...">
     const scriptRegex = /<script\s+([^>]*src=["']([^"']+)["'][^>]*)>/gi; // NOSONAR javascript:S5852
     processTags(scriptRegex, "script");
 
-    // Process <link ...>
-    // Targets: stylesheet, preload, modulepreload, icon, manifest, apple-touch-icon
-    const styleRegex = /<link\s+([^>]*href=["']([^"']+)["'][^>]*)>/gi; // NOSONAR javascript:S5852
-    processTags(styleRegex, "link", (attrs) => {
+    // 2. Process <link href="...">
+    const linkRegex = /<link\s+([^>]*href=["']([^"']+)["'][^>]*)>/gi; // NOSONAR javascript:S5852
+    processTags(linkRegex, "link", (attrs) => {
       const types = [
         "stylesheet",
         "preload",
@@ -123,23 +108,54 @@ async function main() {
         "manifest",
         "apple-touch-icon",
       ];
-      // Check if rel contains any of the target types
-      // Simple check: rel="..." contains type
-      // Robust check would parse rel, but includes is likely sufficient for generated code
       return types.some(
         (t) => attrs.includes(`rel="${t}"`) || attrs.includes(`rel='${t}'`),
       );
     });
 
-    // Process <astro-island> to inject modulepreload with integrity for dynamic imports
-    const astroIslandRegex = /<astro-island\s+([^>]*)>/gi;
+    // 3. Process <img> tags
+    const imgRegex = /<img\s+([^>]*src=["']([^"']+)["'][^>]*)>/gi; // NOSONAR javascript:S5852
+    processTags(imgRegex, "img");
+
+    // 4. Process <video>, <audio>, <source>
+    const mediaRegex =
+      /<(video|audio|source)\s+([^>]*src=["']([^"']+)["'][^>]*)>/gi; // NOSONAR javascript:S5852
+    content = content.replaceAll(mediaRegex, (match, tag, attrs, url) => {
+      // Logic duplicated from processTags for speed/simplicity here
+      if (attrs.includes("integrity=")) return match;
+      try {
+        if (url.startsWith("http") || url.startsWith("//")) return match;
+        const urlClean = url.split("?")[0].split("#")[0];
+        const filePath = urlClean.startsWith("/")
+          ? path.join(DIST_DIR, urlClean)
+          : path.resolve(path.dirname(file), urlClean);
+
+        if (!fs.existsSync(filePath)) return match;
+
+        let hash;
+        if (hashCache.has(filePath)) {
+          hash = hashCache.get(filePath);
+        } else {
+          hash = calculateSRI(fs.readFileSync(filePath));
+          hashCache.set(filePath, hash);
+        }
+
+        totalTagsUpdated++;
+        modified = true;
+        return `<${tag} ${attrs.replace(/\/\s*$/, "").trim()} integrity="${hash}" crossorigin="anonymous">`;
+      } catch {
+        return match;
+      }
+    });
+
+    // 5. Process <astro-island> dynamic modules
+    const astroIslandRegex = /<astro-island\s+([^>]*)>/gi; // NOSONAR javascript:S5852
     const moduleUrls = new Set();
     let islandMatch;
     while ((islandMatch = astroIslandRegex.exec(content)) !== null) {
       const attrs = islandMatch[1];
       const componentUrlMatch = /component-url=["']([^"']+)["']/.exec(attrs);
       const rendererUrlMatch = /renderer-url=["']([^"']+)["']/.exec(attrs);
-
       if (componentUrlMatch) moduleUrls.add(componentUrlMatch[1]);
       if (rendererUrlMatch) moduleUrls.add(rendererUrlMatch[1]);
     }
@@ -147,22 +163,14 @@ async function main() {
     if (moduleUrls.size > 0) {
       let preloadLinks = "";
       for (const url of moduleUrls) {
-        // Skip if already preloaded (simple check)
         if (content.includes(`<link rel="modulepreload" href="${url}"`))
           continue;
-
         try {
           if (url.startsWith("http") || url.startsWith("//")) continue;
-
-          let filePath;
           const urlClean = url.split("?")[0].split("#")[0];
-
-          if (urlClean.startsWith("/")) {
-            filePath = path.join(DIST_DIR, urlClean);
-          } else {
-            const htmlDir = path.dirname(file);
-            filePath = path.resolve(htmlDir, urlClean);
-          }
+          const filePath = urlClean.startsWith("/")
+            ? path.join(DIST_DIR, urlClean)
+            : path.resolve(path.dirname(file), urlClean);
 
           if (!fs.existsSync(filePath)) continue;
 
@@ -170,23 +178,19 @@ async function main() {
           if (hashCache.has(filePath)) {
             hash = hashCache.get(filePath);
           } else {
-            const fileContent = fs.readFileSync(filePath);
-            hash = calculateSRI(fileContent);
+            hash = calculateSRI(fs.readFileSync(filePath));
             hashCache.set(filePath, hash);
           }
-
-          preloadLinks += `<link rel="modulepreload" href="${url}" nonce="NGINX_CSP_NONCE" integrity="${hash}" crossorigin="anonymous">\n`;
+          preloadLinks += `<link rel="modulepreload" href="${url}" nonce="NGINX_CSP_NONCE" integrity="${hash}" crossorigin="anonymous">
+`;
           totalTagsUpdated++;
         } catch (err) {
           console.warn(`Error processing modulepreload ${url}:`, err.message);
         }
       }
-
-      if (preloadLinks) {
-        if (content.includes("</head>")) {
-          content = content.replace("</head>", `${preloadLinks}</head>`);
-          modified = true;
-        }
+      if (preloadLinks && content.includes("</head>")) {
+        content = content.replace("</head>", `${preloadLinks}</head>`);
+        modified = true;
       }
     }
 
@@ -196,7 +200,8 @@ async function main() {
     }
   }
 
-  console.log(`\nSRI Injection complete.`);
+  console.log(`
+SRI Injection complete.`);
   console.log(`Modified ${modifiedFilesCount} files.`);
   console.log(`Updated ${totalTagsUpdated} tags with integrity attributes.`);
 }
