@@ -55,30 +55,44 @@ const mermaidRenderer = createMermaidRenderer({
 async function flattenComponents(content: string): Promise<string> {
   let flattened = content;
 
-  // 0. Generic Cleanup (Imports, Exports, MDX Comments) - Do this FIRST
-  flattened = flattened
-    .replace(/^import\s+[^;]*;?$/gm, "") // NOSONAR
-    .replace(/^export\s+[^;]*;?$/gm, "") // NOSONAR
-    .replace(/{\/\*[\s\S]*?\*\/}/g, ""); // NOSONAR
+  // Pre-define regex constants to avoid syntax errors with NOSONAR comments
+  const regexImport = /^import\s+[^;]*;?$/gm; // NOSONAR
+  const regexExport = /^export\s+[^;]*;?$/gm; // NOSONAR
+  const regexMdxComment = /{\/\*[\s\S]*?\*\/}/g; // NOSONAR
+  const regexTerminalCommand = /<TerminalCommand\s+([^>]*)\/?>/g; // NOSONAR
+  const regexFileContent = /<FileContent\s+([^>]*?)>([\s\S]*?)<\/FileContent>/g; // NOSONAR
+  const regexTerminalOutput =
+    /<TerminalOutput\s+title=[\"']([^"']*)["'][^>]*>([\s\S]*?)<\/TerminalOutput>/g; // NOSONAR
+  const regexCallout =
+    /<Callout\s+type=[\"']([^"']*)["'][^>]*>([\s\S]*?)<\/Callout>/g; // NOSONAR
+  const regexCollapsible =
+    /<Collapsible\s+summary=[\"']([^"']*)["'][^>]*>([\s\S]*?)<\/Collapsible>/g; // NOSONAR
+  const regexTabs = /<Tabs[^>]*>([\s\S]*?)<\/Tabs>/g; // NOSONAR
+  const regexTabPanel =
+    /<TabPanel\s+label=[\"']([^"']*)["'][^>]*>([\s\S]*?)<\/TabPanel>/g; // NOSONAR
+  const regexCompareCode = /<CompareCode\s+([^>]*?)>([\s\S]*?)<\/CompareCode>/g; // NOSONAR
+  const regexYouTube = /<YouTube\s+([^>]*)\/?>/g; // NOSONAR
+  const regexMermaid = /```mermaid-render([\s\S]*?)```/g; // NOSONAR
 
-  // 1. TerminalCommand: <TerminalCommand command="..." prompt="..." />
-  flattened = flattened.replace(
-    /<TerminalCommand\s+([^>]*)\\\/>/g, // NOSONAR
-    (match, attrs) => {
-      const command = attrs.match(/command=[\"']([^\"']*)[\"']/)?.[1] || ""; // NOSONAR
-      const prompt = attrs.match(/prompt=[\"']([^\"']*)[\"']/)?.[1] || "$"; // NOSONAR
-      return `<div style="background: #1a1b26; color: #a9b1d6; padding: 12px; font-family: monospace; margin: 16px 0;">
+  // 0. Generic Cleanup
+  flattened = flattened
+    .replace(regexImport, "")
+    .replace(regexExport, "")
+    .replace(regexMdxComment, "");
+
+  // 1. TerminalCommand
+  flattened = flattened.replace(regexTerminalCommand, (match, attrs) => {
+    const command = attrs.match(/command=[\"']([^"']*)["']/)?.[1] || ""; // NOSONAR
+    const prompt = attrs.match(/prompt=[\"']([^"']*)["']/)?.[1] || "$"; // NOSONAR
+    return `<div style="background: #1a1b26; color: #a9b1d6; padding: 12px; font-family: monospace; margin: 16px 0;">
 <span style="color: #565f89; margin-right: 8px;">${prompt}</span> ${command}
 </div>`;
-    },
-  );
+  });
 
-  // 2. FileContent: <FileContent filename="..."> ... </FileContent>
-  flattened = flattened.replace(
-    /<FileContent\s+([^>]*?)>([\s\S]*?)<\/FileContent>/g, // NOSONAR
-    (match, attrs, body) => {
-      const filename = attrs.match(/filename=[\"']([^\"']*)[\"']/)?.[1] || "File"; // NOSONAR
-      return `<div style="border: 1px solid #e1e4e8; margin: 16px 0; overflow: hidden;">
+  // 2. FileContent
+  flattened = flattened.replace(regexFileContent, (match, attrs, body) => {
+    const filename = attrs.match(/filename=[\"']([^"']*)["']/)?.[1] || "File"; // NOSONAR
+    return `<div style="border: 1px solid #e1e4e8; margin: 16px 0; overflow: hidden;">
 <div style="background: #f6f8fa; padding: 8px 16px; border-bottom: 1px solid #e1e4e8; font-family: monospace; font-size: 12px; font-weight: bold;">📄 ${filename}</div>
 <div style="padding: 0;">
 
@@ -86,14 +100,11 @@ ${body}
 
 </div>
 </div>`;
-    },
-  );
+  });
 
-  // 3. TerminalOutput: <TerminalOutput title="..."> ... </TerminalOutput>
-  flattened = flattened.replace(
-    /<TerminalOutput\s+title=[\"']([^\"']*)[\"'][^>]*>([\s\S]*?)<\/TerminalOutput>/g, // NOSONAR
-    (match, title, body) => {
-      return `<div style="border: 1px solid #e1e4e8; margin: 16px 0; overflow: hidden; background: #fafafa;">
+  // 3. TerminalOutput
+  flattened = flattened.replace(regexTerminalOutput, (match, title, body) => {
+    return `<div style="border: 1px solid #e1e4e8; margin: 16px 0; overflow: hidden; background: #fafafa;">
 <div style="padding: 8px 16px; border-bottom: 1px solid #e1e4e8; font-family: monospace; font-size: 12px; color: #666;">> ${title}</div>
 <div style="padding: 12px; font-family: monospace; font-size: 13px; color: #555;">
 
@@ -101,34 +112,28 @@ ${body}
 
 </div>
 </div>`;
-    },
-  );
+  });
 
-  // 4. Callout: <Callout type="..."> ... </Callout>
-  flattened = flattened.replace(
-    /<Callout\s+type=[\"']([^\"']*)[\"'][^>]*>([\s\S]*?)<\/Callout>/g, // NOSONAR
-    (match, type, body) => {
-      const colors: Record<string, string> = {
-        info: "#3b82f6",
-        warning: "#f59e0b",
-        danger: "#ef4444",
-        success: "#10b981",
-      };
-      const color = colors[type] || colors.info;
-      return `<div style="padding: 16px; margin: 16px 0; border-left: 4px solid ${color}; background: #f8fafc;">
+  // 4. Callout
+  flattened = flattened.replace(regexCallout, (match, type, body) => {
+    const colors: Record<string, string> = {
+      info: "#3b82f6",
+      warning: "#f59e0b",
+      danger: "#ef4444",
+      success: "#10b981",
+    };
+    const color = colors[type] || colors.info;
+    return `<div style="padding: 16px; margin: 16px 0; border-left: 4px solid ${color}; background: #f8fafc;">
 <strong style="color: ${color}; text-transform: uppercase; font-size: 12px; display: block; margin-bottom: 4px;">${type}</strong>
 
 ${body}
 
 </div>`;
-    },
-  );
+  });
 
-  // 5. Collapsible: <Collapsible summary="..."> ... </Collapsible>
-  flattened = flattened.replace(
-    /<Collapsible\s+summary=[\"']([^\"']*)[\"'][^>]*>([\s\S]*?)<\/Collapsible>/g, // NOSONAR
-    (match, summary, body) => {
-      return `<details style="border: 1px solid #e1e4e8; margin: 16px 0;">
+  // 5. Collapsible
+  flattened = flattened.replace(regexCollapsible, (match, summary, body) => {
+    return `<details style="border: 1px solid #e1e4e8; margin: 16px 0;">
 <summary style="padding: 12px; cursor: pointer; font-weight: bold; background: #f6f8fa;">${summary}</summary>
 <div style="padding: 12px;">
 
@@ -136,14 +141,12 @@ ${body}
 
 </div>
 </details>`;
-    },
-  );
+  });
 
   // 6. Tabs & TabPanel
-  flattened = flattened.replace(/<Tabs[^>]*>([\s\S]*?)<\/Tabs>/g, "$1"); // NOSONAR
-  flattened = flattened.replace(
-    /<TabPanel\s+label=[\"']([^\"']*)[\"'][^>]*>([\s\S]*?)<\/TabPanel>/g, // NOSONAR
-    (match, label, body) => {
+  flattened = flattened
+    .replace(regexTabs, "$1")
+    .replace(regexTabPanel, (match, label, body) => {
       return `<div style="margin: 16px 0; border: 1px solid #e1e4e8;">
 <div style="background: #f6f8fa; padding: 4px 12px; border-bottom: 1px solid #e1e4e8; font-size: 12px; color: #666;">Tab: ${label}</div>
 <div style="padding: 0;">
@@ -152,21 +155,18 @@ ${body}
 
 </div>
 </div>`;
-    },
-  );
+    });
 
   // 7. CompareCode
-  flattened = flattened.replace(
-    /<CompareCode\s+([^>]*?)>([\s\S]*?)<\/CompareCode>/g, // NOSONAR
-    (match, attrs, body) => {
-      const badTitle = attrs.match(/badTitle=[\"']([^\"']*)[\"']/)?.[1] || "Bad"; // NOSONAR
-      const goodTitle = attrs.match(/goodTitle=[\"']([^\"']*)[\"']/)?.[1] || "Good"; // NOSONAR
-      const badContent =
-        body.match(/<[^>]*slot=\"bad\"[^>]*>([\s\S]*?)<\/[^>]*>/)?.[1] || ""; // NOSONAR
-      const goodContent =
-        body.match(/<[^>]*slot=\"good\"[^>]*>([\s\S]*?)<\/[^>]*>/)?.[1] || ""; // NOSONAR
+  flattened = flattened.replace(regexCompareCode, (match, attrs, body) => {
+    const badTitle = attrs.match(/badTitle=[\"']([^"']*)["']/)?.[1] || "Bad"; // NOSONAR
+    const goodTitle = attrs.match(/goodTitle=[\"']([^"']*)["']/)?.[1] || "Good"; // NOSONAR
+    const badContent =
+      body.match(/<[^>]*slot=\"bad\"[^>]*>([\s\S]*?)<\/[^>]*>/)?.[1] || ""; // NOSONAR
+    const goodContent =
+      body.match(/<[^>]*slot=\"good\"[^>]*>([\s\S]*?)<\/[^>]*>/)?.[1] || ""; // NOSONAR
 
-      return `<div style="margin: 24px 0;">
+    return `<div style="margin: 24px 0;">
 <div style="border: 1px solid #ef4444; margin-bottom: 12px;">
 <div style="background: #ef4444; color: white; padding: 4px 12px; font-weight: bold; font-size: 13px;">✕ ${badTitle}</div>
 <div style="padding: 0;">
@@ -184,13 +184,12 @@ ${goodContent}
 </div>
 </div>
 </div>`;
-    },
-  );
+  });
 
   // 8. YouTube
-  flattened = flattened.replace(/<YouTube\s+([^>]*)\\\/>/g, (match, attrs) => { // NOSONAR
-    const id = attrs.match(/id=[\"']([^\"']*)[\"']/)?.[1] || ""; // NOSONAR
-    const title = attrs.match(/title=[\"']([^\"']*)[\"']/)?.[1] || "Video"; // NOSONAR
+  flattened = flattened.replace(regexYouTube, (match, attrs) => {
+    const id = attrs.match(/id=[\"']([^"']*)["']/)?.[1] || ""; // NOSONAR
+    const title = attrs.match(/title=[\"']([^"']*)["']/)?.[1] || "Video"; // NOSONAR
     const url = `https://www.youtube.com/watch?v=${id}`;
     return `<div style="margin: 16px 0; text-align: center; border: 1px solid #e1e4e8; padding: 20px; background: #f9f9f9;">
 <p style="margin-bottom: 10px;">📺 <strong>${title}</strong></p>
@@ -198,9 +197,8 @@ ${goodContent}
 </div>`;
   });
 
-  // 9. Mermaid Render (Dual Theme)
-  const mermaidRegex = /```mermaid-render([\s\S]*?)```/g; // NOSONAR
-  const mermaidMatches = Array.from(flattened.matchAll(mermaidRegex));
+  // 9. Mermaid Render
+  const mermaidMatches = Array.from(flattened.matchAll(regexMermaid));
 
   if (mermaidMatches.length > 0) {
     const codes = mermaidMatches.map((m) => m[1].trim());
@@ -215,7 +213,7 @@ ${goodContent}
       });
 
       let matchIndex = 0;
-      flattened = flattened.replace(mermaidRegex, () => {
+      flattened = flattened.replace(regexMermaid, () => {
         const lightResult = resultsLight[matchIndex];
         const darkResult = resultsDark[matchIndex++];
 
@@ -243,7 +241,7 @@ ${goodContent}
     } catch (e) {
       console.error("Failed to render Mermaid diagrams for RSS:", e);
       flattened = flattened.replace(
-        mermaidRegex,
+        regexMermaid,
         "<blockquote>[Diagram rendering failed]</blockquote>",
       );
     }
