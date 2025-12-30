@@ -111,24 +111,25 @@ async function main() {
     const scriptRegex = /<script\s+([^>]*src=["']([^"']+)["'][^>]*)>/gi; // NOSONAR javascript:S5852
     processTags(scriptRegex, "script");
 
-    // Process <link rel="stylesheet" href="...">
-    // Pattern is bounded by > which prevents catastrophic backtracking
+    // Process <link ...>
+    // Targets: stylesheet, preload, modulepreload, icon, manifest, apple-touch-icon
     const styleRegex = /<link\s+([^>]*href=["']([^"']+)["'][^>]*)>/gi; // NOSONAR javascript:S5852
-    processTags(
-      styleRegex,
-      "link",
-      (attrs) =>
-        attrs.includes('rel="stylesheet"') ||
-        attrs.includes("rel='stylesheet'"),
-    );
-
-    // Process <link rel="preload" href="...">
-    processTags(
-      styleRegex,
-      "link",
-      (attrs) =>
-        attrs.includes('rel="preload"') || attrs.includes("rel='preload'"),
-    );
+    processTags(styleRegex, "link", (attrs) => {
+      const types = [
+        "stylesheet",
+        "preload",
+        "modulepreload",
+        "icon",
+        "manifest",
+        "apple-touch-icon",
+      ];
+      // Check if rel contains any of the target types
+      // Simple check: rel="..." contains type
+      // Robust check would parse rel, but includes is likely sufficient for generated code
+      return types.some(
+        (t) => attrs.includes(`rel="${t}"`) || attrs.includes(`rel='${t}'`),
+      );
+    });
 
     // Process <astro-island> to inject modulepreload with integrity for dynamic imports
     const astroIslandRegex = /<astro-island\s+([^>]*)>/gi;
