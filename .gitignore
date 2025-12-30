@@ -62,3 +62,5 @@ html-errors.log
 accessibility-summary.json
 test_output.txt
 validation_*.txt
+.scannerwork/
+rss-validation.json

@@ -22,43 +22,76 @@ const sortedSections = [
     cvData.find((s) => s.title === "Certificates"),
 ].filter((s): s is CVSection => !!s);
 
-// Construct Person Schema
+// Construct Schema.org Data
 const technicalSkills = sortedSections.find(
     (s) => s.title === "Technical Skills",
 );
 const formalEducation = sortedSections.find(
     (s) => s.title === "Formal education",
 );
+const experience = sortedSections.find((s) => s.title === "Experience");
+const certificates = sortedSections.find((s) => s.title === "Certificates");
 
 const personSchema = {
     "@context": "https://schema.org",
-    "@type": "Person",
-    name: "José Manuel Requena Plens",
-    jobTitle: "R&D Engineer",
-    worksFor: {
-        "@type": "Organization",
-        name: "Power Electronics",
+    "@type": "ProfilePage",
+    "@id": new URL(Astro.url.pathname, Astro.site).toString() + "#profile",
+    mainEntity: {
+        "@type": "Person",
+        name: "José Manuel Requena Plens",
+        jobTitle: "R&D Engineer",
+        description:
+            "R&D Engineer specializing in software development, cloud infrastructure, and security.",
+        url: "https://jmrp.io",
+        image: "https://jmrp.io/assets/mehome.webp",
+        sameAs: [
+            "https://github.com/jmrplens",
+            "https://mstdn.jmrp.io/@jmrplens",
+            "https://www.linkedin.com/in/jmrplens",
+        ],
+        worksFor: {
+            "@type": "Organization",
+            name: "Power Electronics",
+        },
+        knowsAbout:
+            technicalSkills?.type === "list_groups"
+                ? technicalSkills.contents.flatMap((g) =>
+                      g.items.map((i) => i.name),
+                  )
+                : [],
+        alumniOf:
+            formalEducation?.type === "time_table"
+                ? formalEducation.contents.map((edu) => ({
+                      "@type": "EducationalOrganization",
+                      name: edu.institution,
+                      department: edu.department,
+                  }))
+                : [],
+        hasOccupation:
+            experience?.type === "time_table"
+                ? experience.contents.map((job) => ({
+                      "@type": "Occupation",
+                      name: job.title,
+                      description: job.summary,
+                      skills: [], // Could map description items here if structured
+                  }))
+                : [],
+        hasCredential:
+            certificates?.type === "certificate_list"
+                ? certificates.contents.flatMap((group) =>
+                      group.items.map((cert) => ({
+                          "@type": "EducationalOccupationalCredential",
+                          name: cert.name,
+                          credentialCategory: group.category,
+                          recognizedBy: {
+                              "@type": "Organization",
+                              name: cert.school,
+                          },
+                          url: cert.link,
+                      })),
+                  )
+                : [],
     },
-    url: "https://jmrp.io",
-    sameAs: [
-        "https://github.com/jmrplens",
-        "https://mstdn.jmrp.io/@jmrplens",
-        "https://www.linkedin.com/in/jmrplens",
-    ],
-    knowsAbout:
-        technicalSkills?.type === "list_groups"
-            ? technicalSkills.contents.flatMap((g) =>
-                  g.items.map((i) => i.name),
-              )
-            : [],
-    alumniOf:
-        formalEducation?.type === "time_table"
-            ? formalEducation.contents.map((edu) => ({
-                  "@type": "EducationalOrganization",
-                  name: edu.institution,
-                  department: edu.department,
-              }))
-            : [],
 };
 ---
 

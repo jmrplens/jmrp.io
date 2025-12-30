@@ -3,6 +3,7 @@ extend-exclude = [
     "cv_latex/**",
     "src/content/publications_data/papers.bib",
     "src/content/posts/001-secure-nginx-client-certificates.mdx",
+    "src/pages/rss.xml.ts",
     "pnpm-lock.yaml",
     "package-lock.json"
 ]

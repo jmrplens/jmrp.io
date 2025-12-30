@@ -12,3 +12,6 @@ node_modules
 test-results
 playwright-report
 accessibility-report
+src/pages/rss.xml.ts
+rss-validation.json
+html-validation.json

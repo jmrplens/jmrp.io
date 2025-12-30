@@ -45,6 +45,7 @@ module.exports = {
       staticDistDir: "./dist",
       url: getUrls(),
       numberOfRuns: 2,
+      outputDir: ".lighthouseci",
     },
     upload: {
       target: "temporary-public-storage",

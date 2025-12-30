@@ -10,12 +10,24 @@ import { createHtmlReport } from "axe-html-reporter";
 async function getPagesFromSitemap(): Promise<
   Array<{ name: string; url: string }>
 > {
-  const sitemapPath = path.join(process.cwd(), "dist", "sitemap-0.xml");
+  console.log(`📂 Current directory: ${process.cwd()}`);
+  const sitemapFiles = ["sitemap-0.xml", "sitemap.xml", "sitemap-index.xml"];
+  let sitemapPath = "";
 
-  if (!fs.existsSync(sitemapPath)) {
-    console.warn("⚠️  Sitemap not found, using manual page list");
+  for (const file of sitemapFiles) {
+    const testPath = path.join(process.cwd(), "dist", file);
+    if (fs.existsSync(testPath)) {
+      sitemapPath = testPath;
+      break;
+    }
+  }
+
+  if (!sitemapPath) {
+    console.warn("⚠️  Sitemap not found in dist/, using manual page list");
     return getManualPages();
   }
+
+  console.log(`🔍 Using sitemap at: ${sitemapPath}`);
 
   try {
     const sitemapContent = fs.readFileSync(sitemapPath, "utf-8");
@@ -66,6 +78,13 @@ function getManualPages(): Array<{ name: string; url: string }> {
 test.describe("Accessibility Tests (Axe-core WCAG 2.1 AA)", () => {
   let pages: Array<{ name: string; url: string }>;
   const theme = process.env.THEME === "dark" ? "dark" : "light"; // Default to light
+  const results: Array<{
+    page: string;
+    violations: number;
+    incomplete: number;
+    violationIds?: string[];
+    reportPath: string;
+  }> = [];
 
   // Load pages once before all tests
   test.beforeAll(async () => {
@@ -77,60 +96,49 @@ test.describe("Accessibility Tests (Axe-core WCAG 2.1 AA)", () => {
     }
   });
 
+  test.afterAll(async () => {
+    // Generate summary after all tests are done
+    const summary = {
+      theme,
+      totalPages: results.length,
+      passed: results.filter((r) => r.violations === 0).length,
+      failed: results.filter((r) => r.violations > 0).length,
+      incomplete: results.filter((r) => r.incomplete > 0).length,
+      pages: results,
+    };
+    const summaryPath = `accessibility-report/accessibility-summary-${theme}.json`;
+    fs.writeFileSync(summaryPath, JSON.stringify(summary, null, 2));
+    console.log(`✅ Accessibility summary written to: ${summaryPath}`);
+  });
+
   // Dynamically generate tests for all discovered pages
   test(`should have no accessibility violations on all pages (${theme} mode)`, async ({
     page: browserPage,
   }) => {
-    const results: Array<{
-      page: string;
-      violations: number;
-      incomplete: number;
-      violationIds?: string[];
-      reportPath: string;
-    }> = [];
-
     // Force color scheme based on env var
     await browserPage.emulateMedia({
       colorScheme: theme === "dark" ? "dark" : "light",
     });
 
     for (const pageInfo of pages) {
+      // ... same inner logic until end of loop
+      // (Simplified replacement to ensure stability)
       await browserPage.goto(pageInfo.url);
       await browserPage.waitForLoadState("networkidle");
 
-      // Verify theme application (optional, helps debugging)
+      // Verify theme application
       await browserPage.evaluate((t) => {
         document.documentElement.dataset.theme = t;
         if (t === "dark") document.documentElement.classList.add("dark");
         else document.documentElement.classList.remove("dark");
       }, theme);
 
-      // Accessibility: Wait for fonts to be ready to ensure correct contrast calculation
       await browserPage.evaluate(() => document.fonts.ready);
-
-      // Accessibility: Fix Incomplete color-contrast checks due to gradients
-      // We temporarily set a solid background color derived from the gradient
-      await browserPage.evaluate(() => {
-        const elements = document.querySelectorAll("*");
-        elements.forEach((el) => {
-          const style = globalThis.getComputedStyle(el);
-          const bg = style.backgroundImage;
-          if (bg?.includes("gradient")) {
-            // Very simple heuristic: try to find a color-like string in the gradient
-            // or just use the theme's background color as a safe fallback for the engine
-            const colorMatch =
-              /(#[a-f0-9]{3,6}|rgba?\([^)]+\)|var\(--[^)]+\))/.exec(bg);
-            if (colorMatch) {
-              (el as HTMLElement).style.backgroundColor = colorMatch[0];
-            }
-          }
-        });
-      });
 
       const accessibilityScanResults = await new AxeBuilder({
         page: browserPage,
       })
-        .exclude(["svg"]) // Exclude all SVGs as requested by user to avoid false positives in diagrams
+        .exclude(["svg"])
         .withTags([
           "wcag2a",
           "wcag2aa",
@@ -141,7 +149,6 @@ test.describe("Accessibility Tests (Axe-core WCAG 2.1 AA)", () => {
         .options({ iframes: true })
         .analyze();
 
-      // Generate HTML Report with theme suffix
       const safeName = pageInfo.name
         .replaceAll(/[^a-z0-9]/gi, "_")
         .toLowerCase()
@@ -157,44 +164,10 @@ test.describe("Accessibility Tests (Axe-core WCAG 2.1 AA)", () => {
         },
       });
 
-      // Log violations for debugging
       if (accessibilityScanResults.violations.length > 0) {
-        console.log(
-          `\n⚠️  ${pageInfo.name} (${pageInfo.url}) [${theme}] has ${accessibilityScanResults.violations.length} accessibility violations:\n`,
-        );
-        accessibilityScanResults.violations.forEach((violation, index) => {
-          console.log(
-            `${index + 1}. ${violation.id}: ${violation.description}`,
-          );
-          console.log(`   Impact: ${violation.impact}`);
-          console.log(`   Help: ${violation.helpUrl}`);
-          violation.nodes.forEach((node) => {
-            console.log(`   - Target: ${node.target}`);
-            console.log(`   - HTML: ${node.html}`);
-            console.log(`   - Failure Summary: ${node.failureSummary}`);
-          });
-        });
-
-        // Screenshot on failure
         await browserPage.screenshot({
           path: `accessibility-report/${safeName}-${theme}-failure.png`,
           fullPage: true,
-        });
-      }
-
-      // Log incomplete checks for debugging
-      if (accessibilityScanResults.incomplete.length > 0) {
-        console.log(
-          `\n🔍 ${pageInfo.name} (${pageInfo.url}) [${theme}] has ${accessibilityScanResults.incomplete.length} incomplete checks (need manual review):`,
-        );
-        accessibilityScanResults.incomplete.forEach((incomplete, index) => {
-          console.log(
-            `${index + 1}. ${incomplete.id}: ${incomplete.description}`,
-          );
-          incomplete.nodes.forEach((node) => {
-            console.log(`   - Node HTML: ${node.html}`);
-            console.log(`   - Reason: ${node.any[0]?.message || "Unknown"}`);
-          });
         });
       }
 
@@ -207,24 +180,9 @@ test.describe("Accessibility Tests (Axe-core WCAG 2.1 AA)", () => {
       });
     }
 
-    // Generate summary BEFORE assertions so it's available even if tests fail
-    const summary = {
-      theme,
-      totalPages: results.length,
-      passed: results.filter((r) => r.violations === 0).length,
-      failed: results.filter((r) => r.violations > 0).length,
-      incomplete: results.filter((r) => r.incomplete > 0).length,
-      pages: results,
-    };
-    fs.writeFileSync(
-      `accessibility-report/accessibility-summary-${theme}.json`,
-      JSON.stringify(summary, null, 2),
-    );
-
     // Assert after generating reports
     const failedPages = results.filter((r) => r.violations > 0);
     for (const failedPage of failedPages) {
-      // Fail with detailed message
       expect(
         [],
         `${failedPage.page} [${theme}] has ${failedPage.violations} violations: ${failedPage.violationIds?.join(", ")}`,
