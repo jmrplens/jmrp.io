@@ -92,14 +92,14 @@ if (typeof process !== "undefined" && typeof process.on === "function") {
 async function flattenComponents(content: string): Promise<string> {
   let flattened = content;
 
-  // 0. Cleanup
+  // 0. Cleanup MDX comments and imports/exports
   flattened = flattened.replaceAll(/^import\s+[^;]*;?$/gm, ""); // NOSONAR
   flattened = flattened.replaceAll(/^export\s+[^;]*;?$/gm, ""); // NOSONAR
   flattened = flattened.replaceAll(/{\/\*[\s\S]*?\*\/}/g, ""); // NOSONAR
 
   // 1. TerminalCommand
   flattened = flattened.replaceAll(
-    /<TerminalCommand\s+([^>]*)\inaly/g,
+    /<TerminalCommand\s+([^>]*)\\/g,
     (match, attrs) => {
       // NOSONAR
       const command = attrs.match(/command=[\"']([^\"']*)[\"']/)?.[1] || ""; // NOSONAR
@@ -180,15 +180,12 @@ async function flattenComponents(content: string): Promise<string> {
   );
 
   // 8. YouTube
-  flattened = flattened.replaceAll(
-    /<YouTube\s+([^>]*)\inaly/g,
-    (match, attrs) => {
-      // NOSONAR
-      const id = attrs.match(/id=[\"']([^\"']*)[\"']/)?.[1] || ""; // NOSONAR
-      const title = attrs.match(/title=[\"']([^\"']*)[\"']/)?.[1] || "Video"; // NOSONAR
-      return `<div style=\"margin:16px 0;text-align:center;border:1px solid #e1e4e8;padding:20px;background:#f9f9f9;\"><p style=\"margin-bottom:10px;\">📺 <strong>${title}</strong></p><a href=\"https://www.youtube.com/watch?v=${id}\" style=\"color:#B509AC;text-decoration:underline;\">Watch on YouTube</a></div>`;
-    },
-  );
+  flattened = flattened.replaceAll(/<YouTube\s+([^>]*)\\/g, (match, attrs) => {
+    // NOSONAR
+    const id = attrs.match(/id=[\"']([^\"']*)[\"']/)?.[1] || ""; // NOSONAR
+    const title = attrs.match(/title=[\"']([^\"']*)[\"']/)?.[1] || "Video"; // NOSONAR
+    return `<div style=\"margin:16px 0;text-align:center;border:1px solid #e1e4e8;padding:20px;background:#f9f9f9;\"><p style=\"margin-bottom:10px;\">📺 <strong>${title}</strong></p><a href=\"https://www.youtube.com/watch?v=${id}\" style=\"color:#B509AC;text-decoration:underline;\">Watch on YouTube</a></div>`;
+  });
 
   // 9. Mermaid Render
   const mermaidRegex = /```mermaid-render([\s\S]*?)```/g; // NOSONAR
