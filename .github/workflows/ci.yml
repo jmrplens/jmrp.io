@@ -415,6 +415,14 @@ jobs:
       - run: pnpm install --frozen-lockfile --prefer-offline
       - name: Validate RSS feed
         run: node scripts/ci/validate-rss.mjs dist/rss.xml
+      - name: Generate RSS preview
+        run: node scripts/preview-rss.mjs
+      - name: Upload RSS preview artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: rss-preview
+          path: dist/rss-preview.html
+          retention-days: 7
       - name: Post RSS Validation Comment
         if: github.event_name == 'pull_request' && always()
         uses: actions/github-script@v8
@@ -451,7 +459,10 @@ jobs:
                   report.warnings.forEach(w => comment += `- ${w}\n`);
                 }
                 
-                comment += `\n[View Feed](https://jmrp.io/rss.xml)`;
+                comment += `\n### 🖼️ Visual Preview\n`;
+                comment += `A visual preview of the RSS content has been generated.\n`;
+                comment += `📥 **Download \`rss-preview\` artifact** from the [Workflow Run](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}) to verify styles and components.\n\n`;
+                comment += `[View Feed](https://jmrp.io/rss.xml)`;
                 
               } else {
                  comment = `## 📡 RSS Validation\n\n⚠️ Report file not found. Check logs.`;
