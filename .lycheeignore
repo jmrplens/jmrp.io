@@ -16,6 +16,3 @@ http://search\.yahoo\.com/mrss/
 
 # Localhost
 http://localhost.*
-
-# Pending deployment assets
-https://jmrp\.io/assets/mehome\.webp
