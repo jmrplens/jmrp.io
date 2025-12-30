@@ -164,7 +164,7 @@ const breadcrumbList = {
             item: Astro.site,
         },
         ...pathSegments.map((segment, index) => {
-            const path = `/${pathSegments.slice(0, index + 1).join("/")}`;
+            const path = `/${pathSegments.slice(0, index + 1).join("/")}/`;
             // Capitalize and clean name
             const name = segment
                 .replace(/-/g, " ")
