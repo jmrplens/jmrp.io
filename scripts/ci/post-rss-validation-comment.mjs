@@ -6,6 +6,7 @@ export default async ({ github, context }) => {
   try {
     if (fs.existsSync("rss-validation.json")) {
       const report = JSON.parse(fs.readFileSync("rss-validation.json", "utf8"));
+      const surgeUrl = process.env.SURGE_URL;
 
       const icon = report.valid ? "✅" : "❌";
       const status = report.valid ? "**Passed!**" : "**Validation failed**";
@@ -45,7 +46,8 @@ export default async ({ github, context }) => {
         "> A visual preview of the RSS content has been generated. ✨\n";
       comment +=
         "> 📥 **Download `rss-preview` artifact** from the build logs to verify component styles.\n\n";
-      comment += `--- \n🔗 [Live RSS Feed](https://jmrp.io/rss.xml)`;
+      comment += `--- \n🔗 [Live RSS Feed](https://jmrp.io/rss.xml)
+`;
     } else {
       comment =
         "### 📡 RSS Validation\n\n⚠️ **Report file not found.**\n\n> Please check the build logs for details.";

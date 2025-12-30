@@ -5,6 +5,7 @@ export default async ({ github, context }) => {
   const themeIcon = theme === "light" ? "☀️" : "🌙";
   const themeName = theme === "light" ? "Light" : "Dark";
   const summaryPath = `accessibility-report/accessibility-summary-${theme}.json`;
+  const surgeUrl = process.env.SURGE_URL;
 
   let commentBody = "";
 
@@ -24,7 +25,12 @@ export default async ({ github, context }) => {
       commentBody += `| 📄 Total Pages | **${summary.totalPages}** |\n`;
       commentBody += `| ✅ Passed | **${summary.passed}** |\n`;
       commentBody += `| ❌ Failed | **${summary.failed}** |\n`;
-      commentBody += `| 🔍 Review Needed | **${summary.incomplete || 0}** |\n\n`;
+      commentBody += `| 🔍 Review Needed | **${summary.incomplete || 0}** |\n`;
+
+      if (surgeUrl) {
+        commentBody += `| 🌐 Full Report | [**Open Interactive Report**](https://${surgeUrl}) 🚀 |\n`;
+      }
+      commentBody += "\n";
 
       if (!isSuccess) {
         commentBody +=
@@ -33,21 +39,22 @@ export default async ({ github, context }) => {
         summary.pages
           .filter((p) => p.violations > 0)
           .forEach((p) => {
-            const rules = p.violationIds
-              ? `\n   - **Violated Rules:** 
-${p.violationIds.join(", ")}`
+            const rulesText = p.violationIds
+              ? "\n   - **Violated Rules:** `" + p.violationIds.join(", ") + "`"
               : "";
-            commentBody += `- **${p.page}** (${p.violations} violations)${rules}\n`;
+            commentBody += `- **${p.page}** (${p.violations} violations)${rulesText}\n`;
           });
         commentBody +=
-          "\n---\n📸 *Screenshots are available in the 'axe-accessibility-report-" +
-          theme +
-          "' artifact.*\n";
+          "\n---\n📸 *Screenshots are available in the build artifacts.*\n";
         commentBody += "</details>\n\n";
       }
 
       commentBody += `> **Standards:** WCAG 2.1/2.2 AA & Best Practices\n`;
-      commentBody += `> 📊 [View Detailed Report](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`;
+
+      if (!surgeUrl) {
+        commentBody += `> 📊 [View Build Logs](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})
+`;
+      }
     } else {
       throw new Error(`Summary file not found at ${summaryPath}`);
     }

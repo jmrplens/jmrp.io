@@ -139,18 +139,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 20
-          cache: "pnpm"
-      - run: pnpm install --frozen-lockfile --prefer-offline
       - name: Cache Playwright Browsers
         id: playwright-cache
         uses: actions/cache@v5
         with:
           path: ~/.cache/ms-playwright
           key: playwright-browsers-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 20
+          cache: "pnpm"
+      - run: pnpm install --frozen-lockfile --prefer-offline
       - name: Install Playwright Browsers
         if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: pnpm exec playwright install --with-deps chromium
@@ -204,11 +204,17 @@ jobs:
           name: axe-accessibility-report-${{ matrix.theme }}
           path: accessibility-report/
           retention-days: 7
+      - name: Deploy Accessibility Report to Surge
+        if: github.event_name == 'pull_request' && always()
+        shell: bash
+        run: |
+          pnpm exec surge ./accessibility-report jmrp-a11y-pr-${{ github.event.number }}-${{ matrix.theme }}.surge.sh --token ${{ secrets.SURGE_TOKEN }}
       - name: Post Accessibility Comment (${{ matrix.theme }} mode)
         if: github.event_name == 'pull_request' && always()
         uses: actions/github-script@v8
         env:
           THEME: ${{ matrix.theme }}
+          SURGE_URL: jmrp-a11y-pr-${{ github.event.number }}-${{ matrix.theme }}.surge.sh
         with:
           script: |
             const { default: script } = await import(`${process.env.GITHUB_WORKSPACE}/scripts/ci/post-accessibility-comment.mjs`)
@@ -297,9 +303,19 @@ jobs:
           name: rss-preview
           path: dist/rss-preview.html
           retention-days: 3
+      - name: Deploy RSS Preview to Surge
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          # Copy preview to a dedicated folder for surge to avoid deploying the whole dist
+          mkdir -p preview-deploy
+          cp dist/rss-preview.html preview-deploy/index.html
+          pnpm exec surge ./preview-deploy jmrp-rss-pr-${{ github.event.number }}.surge.sh --token ${{ secrets.SURGE_TOKEN }}
       - name: Post RSS Validation Comment
         if: github.event_name == 'pull_request' && always()
         uses: actions/github-script@v8
+        env:
+          SURGE_URL: jmrp-rss-pr-${{ github.event.number }}.surge.sh
         with:
           script: |
             const { default: script } = await import(`${process.env.GITHUB_WORKSPACE}/scripts/ci/post-rss-validation-comment.mjs`)
@@ -389,11 +405,19 @@ jobs:
       - name: Format Lighthouse Report
         if: always()
         run: THEME=${{ matrix.theme }} node scripts/ci/format-lighthouse-report.js > lighthouse_comment_${{ matrix.theme }}.md
+      - name: Deploy Lighthouse Report to Surge
+        if: github.event_name == 'pull_request' && always()
+        shell: bash
+        run: |
+          # The manifest contains URLs to reports if target is public storage, 
+          # but we can also deploy the local folder for a branded experience
+          pnpm exec surge ./.lighthouseci jmrp-lh-pr-${{ github.event.number }}-${{ matrix.theme }}.surge.sh --token ${{ secrets.SURGE_TOKEN }}
       - name: Post Comment
         if: github.event_name == 'pull_request' && always()
         uses: actions/github-script@v8
         env:
           THEME: ${{ matrix.theme }}
+          SURGE_URL: jmrp-lh-pr-${{ github.event.number }}-${{ matrix.theme }}.surge.sh
         with:
           script: |
             const { default: script } = await import(`${process.env.GITHUB_WORKSPACE}/scripts/ci/post-lighthouse-comment.mjs`)
