@@ -9,11 +9,11 @@ const HTML_PATTERN = "**/*.html";
 /**
  * Calculate the SRI hash for a file content
  * @param {string} content
- * @returns {string} The integrity string (e.g., "sha384-...")
+ * @returns {string} The integrity string (e.g., "sha512-...")
  */
 function calculateSRI(content) {
-  const hash = crypto.createHash("sha384").update(content).digest("base64");
-  return `sha384-${hash}`;
+  const hash = crypto.createHash("sha512").update(content).digest("base64");
+  return `sha512-${hash}`;
 }
 
 async function main() {
