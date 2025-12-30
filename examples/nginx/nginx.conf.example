@@ -15,6 +15,12 @@ server {
     listen 443 quic;
     listen [::]:443 quic;
 
+    # Increase header buffers for large CSP policies. 
+    # Required when using many SHA-384/512 hashes or nonces.
+    large_client_header_buffers 4 16k;
+    http2_max_field_size 16k;
+    http2_max_header_size 32k;
+
     root /var/www/example.com/dist;
     index index.html;
 

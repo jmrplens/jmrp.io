@@ -164,10 +164,20 @@ The project includes advanced Nginx configuration for security headers and asset
 - [Main Nginx Configuration Example](examples/nginx/nginx.conf.example)
 - [Security Headers Example](examples/nginx/security_headers.conf.example)
 
-**Key Security Features:**: Nginx reverse proxy handles requests to external services (Mastodon, Matrix, Meshtastic), hiding upstreams and preventing CORS issues.
+### Security Features
 
-- **SRI (Subresource Integrity)**: Ensures that fetched resources haven't been manipulated.
-- **CSP (Content Security Policy)**: Uses `nonce` and SHA-256 hashes. Strict-dynamic was replaced with precise hashes for better compatibility with Astro's hydration.
+- **Reverse Proxy**: Nginx reverse proxy handles requests to external services (Mastodon, Matrix, Meshtastic), hiding upstreams and preventing CORS issues.
+- **SRI (Subresource Integrity)**: Comprehensive protection for all local resources. A post-build script calculates hashes for:
+  - All `<script>` and `<link rel="stylesheet">` tags.
+  - `<link rel="preload">` and `<link rel="modulepreload">` (including fonts and Astro dynamic components).
+  - PWA Metadatas (Favicons, Icons, and Web Manifest).
+  - Multimedia assets (`<img>`, `<video>`, `<audio>`, `<source>`).
+- **CSP (Content Security Policy)**: Uses a combined strategy of request-specific `nonce` (injected via Nginx `sub_filter`) and SHA-512 hashes for all scripts and styles.
+  - _Note_: Requires increasing Nginx header buffers (`large_client_header_buffers`) to support the large CSP header size resulting from SHA-512 hashes.
+- **Incident Reporting**: Real-time monitoring of security violations:
+  - **CSP Violations**: Natively reported by the browser.
+  - **SRI Failures**: Tracked via a custom event listener (`SRIEventListener.astro`) that captures integrity validation errors.
+  - **Telegram Integration**: A dedicated backend (`csp-reporter.mjs`) receives these reports and sends instant notifications to Telegram.
 - **HSTS**: Enforces HTTPS.
 
 ## 📄 LaTeX CV Compilation

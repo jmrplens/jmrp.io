@@ -12,10 +12,8 @@ const DIST_DIR = process.argv[2] || process.env.DIST_DIR || "dist";
 const HTML_PATTERN = "**/*.html";
 const JS_PATTERN = "**/*.js";
 const NGINX_CONF = "/etc/nginx/snippets/security_headers.conf";
+const HASH_ALGO = "sha512"; // Upgraded from sha384
 
-/**
- * Extract hashes from content
- */
 /**
  * Helper: Add style hashes
  */
@@ -26,10 +24,10 @@ function addStyleHashes(content, styleHashes) {
     const attrs = match[1] || "";
     if (!attrs.includes("nonce") && match[2]) {
       const hash = crypto
-        .createHash("sha256")
+        .createHash(HASH_ALGO)
         .update(match[2])
         .digest("base64");
-      styleHashes.add(`'sha256-${hash}'`);
+      styleHashes.add(`'${HASH_ALGO}-${hash}'`);
     }
   }
 }
@@ -44,10 +42,10 @@ function addInlineScriptHashes(content, scriptHashes) {
     const attrs = match[1] || "";
     if (!attrs.includes("nonce") && match[2]) {
       const hash = crypto
-        .createHash("sha256")
+        .createHash(HASH_ALGO)
         .update(match[2])
         .digest("base64");
-      scriptHashes.add(`'sha256-${hash}'`);
+      scriptHashes.add(`'${HASH_ALGO}-${hash}'`);
     }
   }
 }
@@ -55,26 +53,34 @@ function addInlineScriptHashes(content, scriptHashes) {
 /**
  * Helper: Add script hashes (external local)
  */
-function addExternalScriptHashes(content, scriptHashes) {
+function addExternalScriptHashes(content, scriptHashes, file) {
   const scriptSrcRegex = /<script\s+([^>]*src=["']([^"']+)["'][^>]*)>/gi;
   let match;
   while ((match = scriptSrcRegex.exec(content)) !== null) {
     const src = match[2];
-    if (src.startsWith("/") && !src.startsWith("//")) {
-      try {
-        const cleanSrc = src.split("?")[0];
-        const filePath = path.join(DIST_DIR, cleanSrc);
-        if (fs.existsSync(filePath)) {
-          const fileContent = fs.readFileSync(filePath);
-          const hash = crypto
-            .createHash("sha256")
-            .update(fileContent)
-            .digest("base64");
-          scriptHashes.add(`'sha256-${hash}'`);
-        }
-      } catch (err) {
-        console.warn(`Warning: Could not hash script ${src}: ${err.message}`);
+    if (src.startsWith("http") || src.startsWith("//")) continue;
+
+    try {
+      let filePath;
+      const urlClean = src.split("?")[0].split("#")[0];
+
+      if (urlClean.startsWith("/")) {
+        filePath = path.join(DIST_DIR, urlClean);
+      } else {
+        const htmlDir = path.dirname(file);
+        filePath = path.resolve(htmlDir, urlClean);
       }
+
+      if (fs.existsSync(filePath)) {
+        const fileContent = fs.readFileSync(filePath);
+        const hash = crypto
+          .createHash(HASH_ALGO)
+          .update(fileContent)
+          .digest("base64");
+        scriptHashes.add(`'${HASH_ALGO}-${hash}'`);
+      }
+    } catch (err) {
+      console.warn(`Warning: Could not hash script ${src}: ${err.message}`);
     }
   }
 }
@@ -83,7 +89,7 @@ function addExternalScriptHashes(content, scriptHashes) {
  * Helper: Extract image domains
  */
 function addImageDomains(content, imageDomains) {
-  const imgTagRegex = /<img[^>]+src="([^"]+)"/gi;
+  const imgTagRegex = /<img[^>]+src=["']([^"']+)["']/gi;
   let match;
   while ((match = imgTagRegex.exec(content)) !== null) {
     const src = match[1];
@@ -101,10 +107,10 @@ function addImageDomains(content, imageDomains) {
 /**
  * Extract hashes from content
  */
-function extractHashes(content, styleHashes, scriptHashes, imageDomains) {
+function extractHashes(content, styleHashes, scriptHashes, imageDomains, file) {
   addStyleHashes(content, styleHashes);
   addInlineScriptHashes(content, scriptHashes);
-  addExternalScriptHashes(content, scriptHashes);
+  addExternalScriptHashes(content, scriptHashes, file);
   addImageDomains(content, imageDomains);
 }
 
@@ -120,20 +126,14 @@ function updateNginxConfig(styleHashString, scriptHashString, imgDomainString) {
   console.log(`\nUpdating ${NGINX_CONF}...`);
   let nginxConfig = fs.readFileSync(NGINX_CONF, "utf-8");
 
-  // Construct the full CSP string to replace the existing directive entirely
-  // This is safer than regex replacing individual parts which might overlap or be missing
   const staticScriptParts = "'self' 'nonce-$cspNonce'";
-  // We need to keep the static connect domains
   const staticConnectParts = "'self' https://api.github.com";
-
-  // Build the new CSP value
-  // Note: We use ${styleHashString} which contains 'sha256-...' items
 
   const components = [
     "default-src 'none'",
     `script-src ${staticScriptParts} ${scriptHashString}`,
     `style-src 'self' 'unsafe-hashes' 'nonce-$cspNonce' ${styleHashString}`,
-    `img-src 'self' ${imgDomainString} https://*.jmrp.io`, // Added wildcard img src just in case
+    `img-src 'self' ${imgDomainString} https://*.jmrp.io`,
     "font-src 'self'",
     `connect-src ${staticConnectParts}`,
     "media-src 'self'",
@@ -148,15 +148,11 @@ function updateNginxConfig(styleHashString, scriptHashString, imgDomainString) {
   ];
 
   const newCspHeader = `add_header Content-Security-Policy "${components.join("; ")};" always;`;
-
-  // Find and replace the existing CSP header line
-  // Only match the Content-Security-Policy line
   const cspRegex = /add_header Content-Security-Policy ".*?" always;/s;
 
   if (cspRegex.test(nginxConfig)) {
     nginxConfig = nginxConfig.replace(cspRegex, newCspHeader);
   } else {
-    // If not found, append it (or warn) - here we assume it exists based on previous logic
     console.warn(
       "Warning: Could not find existing CSP header to replace. Appending new one.",
     );
@@ -187,42 +183,32 @@ async function generateHashes() {
 
     for (const file of files) {
       const content = fs.readFileSync(file, "utf-8");
-      extractHashes(content, styleHashes, scriptHashes, imageDomains);
+      extractHashes(content, styleHashes, scriptHashes, imageDomains, file);
     }
 
-    // Process all JS files to add their hashes (fixes strict-dynamic issues)
     const jsFiles = await glob(JS_PATTERN, { cwd: DIST_DIR, absolute: true });
     console.log(`Found ${jsFiles.length} JS files to hash.`);
     for (const file of jsFiles) {
       const content = fs.readFileSync(file);
-      const hash = crypto.createHash("sha256").update(content).digest("base64");
-      scriptHashes.add(`'sha256-${hash}'`);
+      const hash = crypto
+        .createHash(HASH_ALGO)
+        .update(content)
+        .digest("base64");
+      scriptHashes.add(`'${HASH_ALGO}-${hash}'`);
     }
-
-    // Explicitly add 'unsafe-inline' for style-src if strictly necessary,
-    // but ideally we rely on hashes.  Mozilla observatory penalizes 'unsafe-inline'
-    // in script-src (critical) and style-src (warning).
-    // For now we stick to hashes/nonces.
 
     console.log(`\nFound ${styleHashes.size} unique style hashes.`);
     console.log(`Found ${scriptHashes.size} unique script hashes.`);
     console.log(`Found ${imageDomains.size} unique image domains.`);
 
-    // Always update config even if empty sets, to ensure critical directives are present
     const styleHashString = Array.from(styleHashes).join(" ");
     const scriptHashString = Array.from(scriptHashes).join(" ");
     const imgDomainString = Array.from(imageDomains)
       .map((d) => `https://${d}`)
       .join(" ");
 
-    console.log("\nStyle Hashes: " + styleHashString);
-    console.log("Script Hashes: " + scriptHashString);
-    console.log("Image Domains: " + imgDomainString);
-
     if (fs.existsSync(NGINX_CONF)) {
       updateNginxConfig(styleHashString, scriptHashString, imgDomainString);
-
-      // Reload Nginx
       try {
         await execAsync("systemctl reload nginx");
         console.log("Nginx reloaded successfully.");
