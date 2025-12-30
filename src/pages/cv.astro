@@ -36,8 +36,6 @@ const personSchema = {
     "@context": "https://schema.org",
     "@type": "ProfilePage",
     "@id": new URL(Astro.url.pathname, Astro.site).toString() + "#profile",
-    dateCreated: new Date().toISOString(),
-    dateModified: new Date().toISOString(),
     mainEntity: {
         "@type": "Person",
         name: "José Manuel Requena Plens",
@@ -75,7 +73,6 @@ const personSchema = {
                       "@type": "Occupation",
                       name: job.title,
                       description: job.summary,
-                      mainEntityOfPage: undefined, // Avoid circular refs if any
                       skills: [], // Could map description items here if structured
                   }))
                 : [],

@@ -160,9 +160,18 @@ function validateSingleSchema(schema, prefix = "") {
         errors.push(`${p}: itemListElement must be an array`);
       } else {
         schema.itemListElement.forEach((item, i) => {
-          if (typeof item === "object") {
-            validateSingleSchema(item, `${p}.itemListElement[${i}]`);
+          const itemP = `${p}.itemListElement[${i}]`;
+          if (!item || typeof item !== "object") {
+            errors.push(`${itemP}: Must be an object ListItem`);
+            return;
           }
+          if (!item["@type"] || item["@type"] !== "ListItem") {
+            errors.push(`${itemP}: Must be type ListItem`);
+          }
+          if (item.position === undefined || item.position === null) {
+            errors.push(`${itemP}: Missing position`);
+          }
+          validateSingleSchema(item, itemP);
         });
       }
       break;

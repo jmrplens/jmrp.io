@@ -165,10 +165,17 @@ const breadcrumbList = {
         },
         ...pathSegments.map((segment, index) => {
             const path = `/${pathSegments.slice(0, index + 1).join("/")}/`;
-            // Capitalize and clean name
-            const name = segment
+            const isLastSegment = index === pathSegments.length - 1;
+
+            // Prefer page title for the last segment if available
+            const fallbackName = segment
                 .replace(/-/g, " ")
                 .replace(/\b\w/g, (l) => l.toUpperCase());
+            const name =
+                isLastSegment && title && title !== siteData.title
+                    ? title
+                    : fallbackName;
+
             return {
                 "@type": "ListItem",
                 position: index + 2,

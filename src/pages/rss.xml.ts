@@ -46,11 +46,24 @@ const MERMAID_DARK_VARS = {
 };
 
 // Initialize Mermaid renderer
+// Reused across requests, closed on process exit
 const mermaidRenderer = createMermaidRenderer({
   launchOptions: {
     args: ["--no-sandbox", "--disable-setuid-sandbox"],
   },
 });
+
+// Proper cleanup for the browser instance
+if (typeof process !== "undefined" && typeof process.on === "function") {
+  process.on("beforeExit", async () => {
+    const maybeClose = (
+      mermaidRenderer as unknown as { close?: () => Promise<void> }
+    ).close;
+    if (typeof maybeClose === "function") {
+      await maybeClose();
+    }
+  });
+}
 
 async function flattenComponents(content: string): Promise<string> {
   let flattened = content;
@@ -204,11 +217,13 @@ ${goodContent}
     const codes = mermaidMatches.map((m) => m[1].trim());
     try {
       // Render Light
-      const resultsLight = await mermaidRenderer(codes, {
+      const resultsLight = await mermaidRenderer({
+        codes,
         mermaidConfig: { theme: "neutral" },
       });
       // Render Dark
-      const resultsDark = await mermaidRenderer(codes, {
+      const resultsDark = await mermaidRenderer({
+        codes,
         mermaidConfig: { theme: "base", themeVariables: MERMAID_DARK_VARS },
       });
 

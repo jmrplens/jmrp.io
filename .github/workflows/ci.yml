@@ -425,7 +425,7 @@ jobs:
         with:
           name: rss-preview
           path: dist/rss-preview.html
-          retention-days: 7
+          retention-days: 3
       - name: Post RSS Validation Comment
         if: github.event_name == 'pull_request' && always()
         uses: actions/github-script@v8
