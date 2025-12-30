@@ -197,7 +197,7 @@ jobs:
           THEME: ${{ matrix.theme }}
         with:
           script: |
-            const script = require('./scripts/ci/post-accessibility-comment.js')
+            const script = require('./scripts/ci/post-accessibility-comment.cjs')
             await script({github, context})
 
   bundle-size:
@@ -253,7 +253,7 @@ jobs:
         uses: actions/github-script@v8
         with:
           script: |
-            const script = require('./scripts/ci/post-html-validation-comment.js')
+            const script = require('./scripts/ci/post-html-validation-comment.cjs')
             await script({github, context})
 
   rss-validation:
@@ -288,7 +288,7 @@ jobs:
         uses: actions/github-script@v8
         with:
           script: |
-            const script = require('./scripts/ci/post-rss-validation-comment.js')
+            const script = require('./scripts/ci/post-rss-validation-comment.cjs')
             await script({github, context})
 
   schema-validation:
@@ -315,7 +315,7 @@ jobs:
         uses: actions/github-script@v8
         with:
           script: |
-            const script = require('./scripts/ci/post-schema-validation-comment.js')
+            const script = require('./scripts/ci/post-schema-validation-comment.cjs')
             await script({github, context})
 
   image-optimization:
@@ -339,7 +339,7 @@ jobs:
         uses: actions/github-script@v8
         with:
           script: |
-            const script = require('./scripts/ci/post-image-optimization-comment.js')
+            const script = require('./scripts/ci/post-image-optimization-comment.cjs')
             await script({github, context})
 
   lighthouse-dual-theme:
@@ -374,7 +374,7 @@ jobs:
           LHCI_GITHUB_TOKEN: ${{ secrets.TOKEN_GITHUB }}
       - name: Format Lighthouse Report
         if: always()
-        run: THEME=${{ matrix.theme }} node scripts/ci/format-lighthouse-report.js > lighthouse_comment_${{ matrix.theme }}.md
+        run: THEME=${{ matrix.theme }} node scripts/ci/format-lighthouse-report.cjs > lighthouse_comment_${{ matrix.theme }}.md
       - name: Post Comment
         if: github.event_name == 'pull_request' && always()
         uses: actions/github-script@v8
@@ -382,7 +382,7 @@ jobs:
           THEME: ${{ matrix.theme }}
         with:
           script: |
-            const script = require('./scripts/ci/post-lighthouse-comment.js')
+            const script = require('./scripts/ci/post-lighthouse-comment.cjs')
             await script({github, context})
 
   functional-tests:
