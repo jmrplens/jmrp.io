@@ -9,6 +9,8 @@ module.exports = async ({ github, context }) => {
     'find dist -type f -name "*.png" 2>/dev/null | wc -l || echo "0"',
     { encoding: "utf-8" },
   ).trim();
+  
+  // Fix: Double escape backslashes for parentheses so they are passed to shell as \( ... \)
   const jpgCount = execSync(
     'find dist -type f \( -name "*.jpg" -o -name "*.jpeg" \) 2>/dev/null | wc -l || echo "0"',
     { encoding: "utf-8" },
@@ -16,6 +18,7 @@ module.exports = async ({ github, context }) => {
 
   let largeImagesOutput = "";
   try {
+    // Fix: Double escape backslashes here too
     const largeImages = execSync(
       'find dist -type f \( -name "*.webp" -o -name "*.png" -o -name "*.jpg" -o -name "*.jpeg" \) -size +500k 2>/dev/null || echo ""',
       {
@@ -28,7 +31,7 @@ module.exports = async ({ github, context }) => {
       const lines = largeImages.split("\n");
       lines.forEach((img) => {
         if (img) {
-          const size = execSync('ls -lh "' + img + "\" | awk '{print $5}'", {
+          const size = execSync('ls -lh "' + img + '" | awk \'{print $5}\'', {
             encoding: "utf-8",
           }).trim();
           largeImagesOutput +=
