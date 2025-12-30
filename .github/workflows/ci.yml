@@ -72,7 +72,8 @@ jobs:
             --exclude 'https://electronica-submarina.com'
             --exclude 'https://ies-berlanga.info'
             --exclude 'https://www.i3m-detectors.i3m.upv.es'
-            --remap "https://jmrp.io/ file://$GITHUB_WORKSPACE/dist/"
+            --remap "https://jmrp.io/ /"
+            --root-dir "dist"
             './dist/**/*.html'
           fail: true
         env:

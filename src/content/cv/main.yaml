@@ -17,7 +17,7 @@
   contents:
     - title: R&D Software Developer
       institution: Power Electronics (<a href="https://power-electronics.com/en">PE</a>)
-      department: Solar + Storage (<a href="https://power-electronics.com/ensolar">PE Solar</a>)
+      department: Solar + Storage (<a href="https://power-electronics.com/en/solar">PE Solar</a>)
       location: Lliria, Spain
       year: Apr 2023 - Current
       summary: >
@@ -104,13 +104,13 @@
       description:
         - Simulation of acoustic models.
         - Acoustic measurements by means of a LabView-controlled robotic system.
-        - 'Investigation of the acoustic radiation efficiency (Vibration-borne noise) of metallic plates for an initial study of ship noise emissions in water. Carried out in collaboration with <a href="https://www.saes.es/">SAES</a>, here you can read a news item on the subject: <a href="https://www.saes.es/2018/11/05/saes-latest-researches-on-underwater-noise-by-ships-are-presented-at-tecniacustica/" aria-label="News: SAES researches on underwater noise">NEWS</a>.'
+        - 'Investigation of the acoustic radiation efficiency (Vibration-borne noise) of metallic plates for an initial study of ship noise emissions in water. Carried out in collaboration with <a href="https://electronica-submarina.com/">SAES</a>, here you can read a news item on the subject: <a href="https://electronica-submarina.com/2018/11/05/saes-latest-researches-on-underwater-noise-by-ships-are-presented-at-tecniacustica/" aria-label="News: SAES researches on underwater noise">NEWS</a>.'
         - title: "A publication at a national congress:"
           contents:
             - Tecniacústica - <a href="/pdf/paper-resources/Conferences/Tecniacustica/saura2018.pdf">Comportamiento vibroacústico de contenedores cilíndricos en aire</a>.
 
     - title: Founder and Vocal Member
-      institution: AmicroTech (<a href="https://www.linkedin.com/company/a-%5C%25C2%5C%25B5tech/">AµTech</a>)
+      institution: AmicroTech (<a href="https://www.linkedin.com/company/a-\%C2\%B5tech/">AµTech</a>)
       department: University of Alicante (<a href="https://www.ua.es/en/index.html">UA</a>)
       year: Sep 2016 - Jul 2018
       location: Alicante, Spain
