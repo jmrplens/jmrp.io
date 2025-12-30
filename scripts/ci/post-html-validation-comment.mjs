@@ -10,10 +10,7 @@ export default async ({ github, context }) => {
       if (!rawContent || rawContent === "undefined") {
         if (fs.existsSync("html-errors.log")) {
           const errors = fs.readFileSync("html-errors.log", "utf8");
-          comment = `## ⚠️ HTML5 Validation\n\n**Validation failed to run correctly.**\n\nError log:\n\
-${errors.slice(0, 1000)}\n
-
-`;
+          comment = `## ⚠️ HTML5 Validation\n\n**Validation failed to run correctly.**\n\nError log:\n${errors.slice(0, 1000)}\n`;
         } else {
           comment = `## ⚠️ HTML5 Validation\n\nReport is empty or undefined. Check build logs.`;
         }
