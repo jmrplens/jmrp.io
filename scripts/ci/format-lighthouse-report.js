@@ -34,7 +34,6 @@ const getPageName = (url) => {
     // Fallback: return path
     return pathName;
   } catch (e) {
-    console.error("Error parsing URL:", e.message);
     return "Unknown";
   }
 };
@@ -91,7 +90,7 @@ try {
   });
 
   if (Object.keys(groupedResults).length === 0) {
-    console.log("No runs found");
+    console.log("### 🌓 Lighthouse Report\n\n> ⚠️ No runs found.");
     process.exit(0);
   }
 
@@ -141,42 +140,29 @@ try {
   };
   const themeName = themeNames[theme] || "Report";
 
-  // Custom Header matching the previous CI YAML logic
-  console.log(`## 🌓 Lighthouse Report`);
-  console.log(`\n**Theme:** ${themeName}`);
+  console.log(`### 🌓 Lighthouse Analysis (${themeName})`);
 
-  console.log("\n#### ⚡ Details");
-
-  const categories = [
-    "performance",
-    "accessibility",
-    "best-practices",
-    "seo",
-    "pwa",
-  ];
+  const categories = ["performance", "accessibility", "best-practices", "seo"];
   const categoryIcons = {
     performance: "⚡",
     accessibility: "♿",
     "best-practices": "💡",
     seo: "🔍",
-    pwa: "📱",
   };
   const categoryNames = {
     performance: "Perf",
     accessibility: "A11y",
     "best-practices": "Best",
     seo: "SEO",
-    pwa: "PWA",
   };
 
   const allUrls = Object.keys(pageScores);
   const coreUrls = allUrls.filter(isCorePage);
 
   // SECTION 1: Global Summary
-  // Calculate median across ALL pages for each category
   console.log("\n#### 📊 Site Summary (Median)");
-  console.log("| Metric | Site Score | Lowest Score |");
-  console.log("| :--- | :--- | :--- |");
+  console.log("| Metric | Score | Lowest |");
+  console.log("| :--- | :---: | :--- |");
 
   categories.forEach((cat) => {
     if (!allUrls.some((u) => pageScores[u][cat] !== undefined)) return;
@@ -185,75 +171,58 @@ try {
     const catScores = allUrls.map((u) => pageScores[u][cat]);
     catScores.sort((a, b) => a - b);
     const mid = Math.floor(catScores.length / 2);
-    const siteMedian =
+    const siteMedian = Math.round(
       catScores.length % 2 === 1
         ? catScores[mid]
-        : (catScores[mid - 1] + catScores[mid]) / 2;
+        : (catScores[mid - 1] + catScores[mid]) / 2,
+    );
 
     // Lowest Score
     const minScore = Math.min(...catScores);
     const worstUrl = allUrls.find((u) => pageScores[u][cat] === minScore);
     const worstName = getPageName(worstUrl);
 
+    const getIcon = (s) => (s >= 90 ? "🟢" : s >= 50 ? "🟠" : "🔴");
+
     console.log(
-      "| " +
-        categoryIcons[cat] +
-        " " +
-        categoryNames[cat] +
-        " | " +
-        Math.round(siteMedian) +
-        "% | " +
-        minScore +
-        "% (" +
-        worstName +
-        ") |",
+      `| ${categoryIcons[cat]} ${categoryNames[cat]} | ${getIcon(siteMedian)} **${siteMedian}%** | ${minScore}% (${worstName}) |`,
     );
   });
 
-  // SECTION 2: Alerts (Failures < 95%)
+  // SECTION 2: Alerts
   if (failedPages.length > 0) {
-    console.log("\n#### ⚠️ Alerts (<" + THRESHOLD + "%)");
+    console.log(
+      "\n<details>\n<summary><b>⚠️ View Performance Alerts</b></summary>\n",
+    );
     failedPages.forEach((url) => {
       const name = getPageName(url);
       const failures = categories
         .filter((cat) => pageScores[url][cat] < THRESHOLD)
         .map(
           (cat) =>
-            categoryIcons[cat] +
-            " " +
-            categoryNames[cat] +
-            ": " +
-            pageScores[url][cat] +
-            "%",
+            `${categoryIcons[cat]} ${categoryNames[cat]}: **${pageScores[url][cat]}%**`,
         )
         .join(", ");
-      console.log("- **" + name + ": " + failures + "**");
+      console.log(`- **${name}**: ${failures}`);
     });
+    console.log("\n</details>");
   } else {
-    console.log("\n✅ **All pages met the " + THRESHOLD + "% threshold!**");
+    console.log(`\n✅ **All pages met the ${THRESHOLD}% threshold!**`);
   }
 
   // SECTION 3: Links
-  // Only show links for Core Pages and Failed Pages to save space
   const relevantUrls = new Set([...coreUrls, ...failedPages]);
   const relevantLinks = Object.keys(links).filter((url) =>
     relevantUrls.has(url),
   );
 
   if (relevantLinks.length > 0) {
-    console.log("\n#### 🔗 Reports");
+    console.log("\n#### 🔗 Detailed Reports");
     relevantLinks.forEach((url) => {
       const name = getPageName(url);
-      console.log("- [" + name + " Report](" + links[url] + ")");
+      console.log(`- [${name} Report](${links[url]})`);
     });
-    if (Object.keys(links).length > relevantLinks.length) {
-      console.log(
-        "\n_(" +
-          (Object.keys(links).length - relevantLinks.length) +
-          " other reports available in artifacts)_",
-      );
-    }
   }
 } catch (error) {
-  console.error("Error generating report:", error);
+  console.log("### 🌓 Lighthouse Analysis\n\n❌ **Error generating report.**");
 }
