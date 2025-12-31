@@ -58,9 +58,16 @@ PROJECT_KNOWLEDGE.md
 # Large CV files
 CV_RequenaPlensJoseManuel_*.pdf
 html-validation.json
+html-report.html
 html-errors.log
 accessibility-summary.json
+bundle-analysis.json
+test-report.html
+test-report.json
 test_output.txt
 validation_*.txt
 .scannerwork/
 rss-validation.json
+
+# CI deployment temporary folders
+*-deploy/

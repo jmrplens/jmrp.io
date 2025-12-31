@@ -20,8 +20,19 @@ async function generatePreview() {
   const xml = fs.readFileSync(RSS_FILE, "utf-8");
   const feed = await parser.parseString(xml);
 
+  const escapeHtml = (unsafe) => {
+    if (unsafe == null) return "";
+    return String(unsafe)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  };
+
   let htmlContent = `
   <!DOCTYPE html>
+  <!-- [html-validate-disable-block no-inline-style] -->
   <html lang="en">
   <head>
     <meta charset="UTF-8">
@@ -77,8 +88,8 @@ async function generatePreview() {
   <body>
     <div class="container">
       <div class="feed-header">
-        <h1>RSS Preview: ${feed.title}</h1>
-        <p>${feed.description}</p>
+        <h1>RSS Preview: ${escapeHtml(feed.title)}</h1>
+        <p>${escapeHtml(feed.description)}</p>
         <p><small>Generated from local dist/rss.xml</small></p>
       </div>
 
@@ -88,8 +99,8 @@ async function generatePreview() {
           return `
         <article class="rss-item">
           <div class="meta">
-            <h2>${item.title}</h2>
-            <time>${item.pubDate}</time> | <a href="${item.link}" target="_blank">Original Link</a>
+            <h2>${escapeHtml(item.title)}</h2>
+            <time>${escapeHtml(item.pubDate)}</time> | <a href="${escapeHtml(item.link)}" target="_blank">Original Link</a>
           </div>
           <!-- The content below relies heavily on the inline styles we generated -->
           <div class="content-preview">
