@@ -67,6 +67,7 @@ const logoText = siteData.logo_text || "<JMRP />";
                 navLinks.classList.remove("open");
                 backdrop.classList.remove("open");
                 document.body.classList.remove("menu-open");
+                menuToggle.focus(); // Restore focus
             };
 
             const toggleMenu = () => {
