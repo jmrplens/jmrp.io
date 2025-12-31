@@ -118,10 +118,10 @@ async function processMermaid(content: string): Promise<string> {
       const resL = await mermaidRenderer(codes, { mermaidConfig: { theme: "neutral" } });
       const resD = await mermaidRenderer(codes, { mermaidConfig: { theme: "base", themeVariables: MERMAID_DARK_VARS } });
       for (let i = 0; i < mMatches.length; i++) {
-        const l = resL[i], d = resD[i];
-        if (l?.status === "fulfilled" && d?.status === "fulfilled") {
-          const bL = Buffer.from(l.value.svg).toString("base64"), bD = Buffer.from(d.value.svg).toString("base64");
-          const img = `<div style="margin:24px 0;text-align:center;"><picture><source srcset="data:image/svg+xml;base64,${bD}" media="(prefers-color-scheme: dark)"><img src="data:image/svg+xml;base64,${bL}" alt="Mermaid Diagram" width="${l.value.width}" height="${l.value.height}" style="max-width:100%;height:auto;display:block;margin:0 auto;" /></picture></div>`;
+        const l = resL[i];
+        if (l?.status === "fulfilled") {
+          const bL = Buffer.from(l.value.svg).toString("base64");
+          const img = `<div style="margin:24px 0;text-align:center;"><img src="data:image/svg+xml;base64,${bL}" alt="Mermaid Diagram" width="${l.value.width}" height="${l.value.height}" style="max-width:100%;height:auto;display:block;margin:0 auto;" /></div>`;
           res = res.replace(mMatches[i][0], img); // NOSONAR
         }
       }
@@ -291,14 +291,43 @@ export async function GET(context: APIContext) {
           insertPreservedExtraCss: false,
         });
 
+        let finalContent = styledHtml;
         let customData = "";
+        let enclosure = undefined;
+
         if (post.data.coverImage) {
           try {
-            const opt = await getImage({ src: post.data.coverImage, format: "webp", width: 1200 });
-            const thumb = await getImage({ src: post.data.coverImage, format: "webp", width: 400 });
-            const imgUrl = new URL(opt.src, context.site || "https://jmrp.io").toString();
-            const thumbUrl = new URL(thumb.src, context.site || "https://jmrp.io").toString();
-            customData += `<enclosure url="${imgUrl}" length="0" type="image/webp" />\n<media:content url="${imgUrl}" medium="image" type="image/webp" width="${opt.attributes.width}" height="${opt.attributes.height}" />\n<media:thumbnail url="${thumbUrl}" width="${thumb.attributes.width}" height="${thumb.attributes.height}" />`;
+            const opt = await getImage({
+              src: post.data.coverImage,
+              format: "jpg",
+              width: 1200,
+            });
+            const thumb = await getImage({
+              src: post.data.coverImage,
+              format: "jpg",
+              width: 400,
+            });
+            const imgUrl = new URL(
+              opt.src,
+              context.site || "https://jmrp.io",
+            ).toString();
+            const thumbUrl = new URL(
+              thumb.src,
+              context.site || "https://jmrp.io",
+            ).toString();
+
+            // 1. Prepend image to content for readers that don't support enclosures
+            finalContent = `<div style="margin-bottom: 24px;"><img src="${imgUrl}" alt="${post.data.title}" style="max-width:100%; height:auto; border-radius: 8px;" /></div>${styledHtml}`;
+
+            // 2. Set official enclosure (Astro will add the <enclosure> tag)
+            enclosure = {
+              url: imgUrl,
+              length: 0,
+              type: "image/jpeg",
+            };
+
+            // 3. Add Media RSS tags for advanced readers
+            customData += `<media:content url="${imgUrl}" medium="image" type="image/jpeg" width="${opt.attributes.width}" height="${opt.attributes.height}" />\n<media:thumbnail url="${thumbUrl}" width="${thumb.attributes.width}" height="${thumb.attributes.height}" />`;
           } catch (e) {
             console.warn("[RSS] Cover image process failed:", e);
           }
@@ -311,7 +340,8 @@ export async function GET(context: APIContext) {
           link: `/blog/${post.slug}/`,
           categories: post.data.tags || [],
           author,
-          content: styledHtml,
+          content: finalContent,
+          enclosure,
           customData,
         };
       }),
