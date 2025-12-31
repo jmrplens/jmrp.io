@@ -58,13 +58,13 @@ export default async function script({ github, context }) {
       // Optionally add error details if needed, but keeping it brief for now
     });
 
-    body += `\n[View Full Report](${process.env.SURGE_URL})\n`;
-  } else {
-    body += `All functional tests passed! ✅\n`;
-  }
-
-  // Post the comment
-  if (context.payload.pull_request) {
+        body += `\n[View Full Report](https://${process.env.SURGE_URL})\n`;
+      } else {
+          body += `All functional tests passed! ✅\n`;
+          body += `\n[View Full Report](https://${process.env.SURGE_URL})\n`;
+      }
+    
+      // Post the comment  if (context.payload.pull_request) {
     await github.rest.issues.createComment({
       owner: context.repo.owner,
       repo: context.repo.repo,
