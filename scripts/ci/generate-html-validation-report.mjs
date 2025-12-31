@@ -1,5 +1,4 @@
 import fs from "fs";
-import path from "path";
 
 const JSON_REPORT = "html-validation.json";
 const OUTPUT_FILE = "html-report.html";
@@ -35,8 +34,11 @@ function generateReport() {
 
   const files = Array.isArray(report) ? report : report.files || [];
 
-  const totalErrors = files.reduce((acc, f) => acc + f.errorCount, 0);
-  const totalWarnings = files.reduce((acc, f) => acc + f.warningCount, 0);
+  const totalErrors = files.reduce((acc, f) => acc + (f.errorCount ?? 0), 0);
+  const totalWarnings = files.reduce(
+    (acc, f) => acc + (f.warningCount ?? 0),
+    0,
+  );
   const statusClass =
     totalErrors > 0 ? "failed" : totalWarnings > 0 ? "warning" : "passed";
   const statusEmoji = totalErrors > 0 ? "❌" : totalWarnings > 0 ? "⚠️" : "✅";
@@ -97,14 +99,14 @@ function generateReport() {
 
   ${files
     .map((file) => {
-      if (file.messages.length === 0) return "";
+      if (!file.messages || file.messages.length === 0) return "";
       const fileStatus = file.errorCount > 0 ? "failed" : "warning";
       const fileEmoji = file.errorCount > 0 ? "🔴" : "⚠️";
 
       return `
     <details class="file-card" open>
       <summary class="file-header">
-        <span class="file-path">${fileEmoji} ${file.filePath}</span>
+        <span class="file-path">${fileEmoji} ${escapeHtml(file.filePath)}</span>
         <span class="file-stats badge ${fileStatus}">${file.errorCount}E / ${file.warningCount}W</span>
       </summary>
       <ul class="messages">
@@ -117,8 +119,8 @@ function generateReport() {
             </span>
             <div class="content">
               <span class="location">Line ${msg.line}, Col ${msg.column}</span>
-              <strong class="message-text">${msg.message}</strong>
-              <a href="https://html-validate.org/rules/${msg.ruleId}.html" target="_blank" class="rule-link">${msg.ruleId}</a>
+              <strong class="message-text">${escapeHtml(msg.message)}</strong>
+              <a href="https://html-validate.org/rules/${escapeHtml(msg.ruleId)}.html" target="_blank" class="rule-link">${escapeHtml(msg.ruleId)}</a>
               ${msg.context ? `<div class="code-snippet">${escapeHtml(msg.context)}</div>` : ""}
             </div>
           </li>
@@ -132,7 +134,7 @@ function generateReport() {
     .join("")}
   
   ${
-    files.every((f) => f.messages.length === 0)
+    files.every((f) => !f.messages || f.messages.length === 0)
       ? `<div class="file-card"><div class="file-header" style="justify-content:center; color:green">✅ No issues found in ${files.length} files!</div></div>`
       : ""
   }

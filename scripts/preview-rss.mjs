@@ -21,7 +21,8 @@ async function generatePreview() {
   const feed = await parser.parseString(xml);
 
   const escapeHtml = (unsafe) => {
-    return unsafe
+    if (unsafe == null) return "";
+    return String(unsafe)
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;")
@@ -99,7 +100,7 @@ async function generatePreview() {
         <article class="rss-item">
           <div class="meta">
             <h2>${escapeHtml(item.title)}</h2>
-            <time>${escapeHtml(item.pubDate)}</time> | <a href="${item.link}" target="_blank">Original Link</a>
+            <time>${escapeHtml(item.pubDate)}</time> | <a href="${escapeHtml(item.link)}" target="_blank">Original Link</a>
           </div>
           <!-- The content below relies heavily on the inline styles we generated -->
           <div class="content-preview">
