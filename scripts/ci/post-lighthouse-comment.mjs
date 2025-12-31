@@ -1,3 +1,10 @@
+/**
+ * GitHub Comment Poster: Lighthouse
+ *
+ * Integration script for GitHub Actions (using github-script).
+ * Reads the formatted Lighthouse markdown report and posts it as a PR comment.
+ */
+
 import fs from "fs";
 
 export default async ({ github, context }) => {

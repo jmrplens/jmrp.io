@@ -1,3 +1,11 @@
+/**
+ * GitHub Comment Poster: Image Optimization
+ *
+ * Integration script for GitHub Actions.
+ * Summarizes the image optimization status (WebP coverage) and flags
+ * any oversized assets (>500KB) directly in the PR.
+ */
+
 import { execSync } from "child_process";
 
 export default async ({ github, context }) => {

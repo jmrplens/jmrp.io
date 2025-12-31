@@ -1,3 +1,11 @@
+/**
+ * GitHub Comment Poster: Schema.org Validation
+ *
+ * Integration script for GitHub Actions.
+ * Posts a summary of the structured data (JSON-LD) validation coverage
+ * and results as a PR comment.
+ */
+
 export default async ({ github, context }) => {
   let comment = "### 🏷️ Structured Data Check\n\n";
   comment += "✅ **Passed!**\n\n";

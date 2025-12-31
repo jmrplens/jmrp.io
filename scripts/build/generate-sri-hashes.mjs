@@ -1,3 +1,15 @@
+/**
+ * Subresource Integrity (SRI) Injector
+ *
+ * This script scans all generated HTML files and automatically adds 'integrity'
+ * attributes (SHA-512 hashes) to <script>, <link>, and <img> tags.
+ *
+ * Benefits:
+ * - Security: Ensures that resources have not been tampered with.
+ * - Performance: Handles Astro island module preloads automatically.
+ * - Reliability: Adds 'crossorigin="anonymous"' where necessary for proper verification.
+ */
+
 import fs from "node:fs";
 import crypto from "node:crypto";
 import path from "node:path";
@@ -8,7 +20,7 @@ const HTML_PATTERN = "**/*.html";
 
 /**
  * Calculate the SRI hash for a file content
- * @param {string} content
+ * @param {Buffer|string} content
  * @returns {string} The integrity string (e.g., "sha512-...")
  */
 function calculateSRI(content) {
@@ -67,10 +79,8 @@ async function main() {
           totalTagsUpdated++;
           modified = true;
 
-          // Clean attributes to avoid duplicates
           let cleanAttrs = attrs.replace(/\/\s*$/, "").trim();
 
-          // Determine if nonce is needed (only scripts and styles)
           const isScript = tagName === "script";
           const isStyle =
             tagName === "link" &&
@@ -81,7 +91,6 @@ async function main() {
               ? ' nonce="NGINX_CSP_NONCE"'
               : "";
 
-          // Only add crossorigin if it doesn't exist
           const crossoriginAttr = !attrs.includes("crossorigin")
             ? ' crossorigin="anonymous"'
             : "";
@@ -98,7 +107,7 @@ async function main() {
     const scriptRegex = /<script\s+([^>]*src=["']([^"']+)["'][^>]*)>/gi;
     processTags(scriptRegex, "script");
 
-    // 2. Links (Only those allowed by the standard for 'integrity')
+    // 2. Links (CSS, Preloads)
     const linkRegex = /<link\s+([^>]*href=["']([^"']+)["'][^>]*)>/gi;
     processTags(linkRegex, "link", (attrs) => {
       const allowedRels = ["stylesheet", "preload", "modulepreload"];
