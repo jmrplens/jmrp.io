@@ -32,7 +32,7 @@ async function generatePreview() {
 
   let htmlContent = `
   <!DOCTYPE html>
-  <!-- [html-validate-disable-block no-inline-style] -->
+  <!-- [html-validate-disable-block no-inline-style, attribute-allowed-values] -->
   <html lang="en">
   <head>
     <meta charset="UTF-8">

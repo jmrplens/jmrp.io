@@ -14,11 +14,8 @@ function generateReport() {
   let report;
   try {
     const content = fs.readFileSync(JSON_REPORT, "utf-8");
+    console.log(`📖 Read ${content.length} bytes from ${JSON_REPORT}`);
     if (!content.trim()) {
-      // Empty file means no errors if the tool didn't crash, but usually it outputs an empty array or similar.
-      // If we used `> file`, empty means no output?
-      // html-validate json output is usually an object or array.
-      // If it's truly empty, assume success (or handled elsewhere).
       report = [];
     } else {
       report = JSON.parse(content);
@@ -28,11 +25,10 @@ function generateReport() {
     return;
   }
 
-  // html-validate JSON format is typically an array of objects (one per file) or an object with "files" key.
-  // We need to handle both just in case, but usually it's array of { filePath, messages, ... }
-  // Actually, checking docs/output, it might be an array of result objects.
-
-  const files = Array.isArray(report) ? report : report.files || [];
+  const files = Array.isArray(report)
+    ? report
+    : report.results || report.files || [];
+  console.log(`📊 Found ${files.length} file entries in report`);
 
   const totalErrors = files.reduce((acc, f) => acc + (f.errorCount ?? 0), 0);
   const totalWarnings = files.reduce(
@@ -99,16 +95,26 @@ function generateReport() {
 
   ${files
     .map((file) => {
-      if (!file.messages || file.messages.length === 0) return "";
-      const fileStatus = file.errorCount > 0 ? "failed" : "warning";
-      const fileEmoji = file.errorCount > 0 ? "🔴" : "⚠️";
+      const isClean = !file.messages || file.messages.length === 0;
+      const fileStatus =
+        file.errorCount > 0
+          ? "failed"
+          : file.warningCount > 0
+            ? "warning"
+            : "passed";
+      const fileEmoji =
+        file.errorCount > 0 ? "🔴" : file.warningCount > 0 ? "⚠️" : "✅";
 
       return `
-    <details class="file-card" open>
+    <details class="file-card" ${isClean ? "" : "open"}>
       <summary class="file-header">
         <span class="file-path">${fileEmoji} ${escapeHtml(file.filePath)}</span>
         <span class="file-stats badge ${fileStatus}">${file.errorCount}E / ${file.warningCount}W</span>
       </summary>
+      ${
+        isClean
+          ? ""
+          : `
       <ul class="messages">
         ${file.messages
           .map(
@@ -128,16 +134,12 @@ function generateReport() {
           )
           .join("")}
       </ul>
+      `
+      }
     </details>
     `;
     })
     .join("")}
-  
-  ${
-    files.every((f) => !f.messages || f.messages.length === 0)
-      ? `<div class="file-card"><div class="file-header" style="justify-content:center; color:green">✅ No issues found in ${files.length} files!</div></div>`
-      : ""
-  }
 
 </body>
 </html>
