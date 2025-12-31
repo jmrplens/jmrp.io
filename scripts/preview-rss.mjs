@@ -21,7 +21,7 @@ async function generatePreview() {
   const xml = fs.readFileSync(RSS_FILE, "utf-8");
   const feed = await parser.parseString(xml);
 
-  let htmlContent = `
+  const htmlContent = `
   <!DOCTYPE html>
   <!-- [html-validate-disable-block no-inline-style, attribute-allowed-values] -->
   <html lang="en">
@@ -30,58 +30,73 @@ async function generatePreview() {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RSS Feed Preview</title>
     <style>
+      :root {
+        --bg: #f3f4f6;
+        --card: #ffffff;
+        --text: #1f2937;
+        --muted: #6b7280;
+        --accent: #4f46e5;
+      }
       body {
-        background-color: #f0f0f0;
-        font-family: system-ui, -apple-system, sans-serif;
+        background-color: var(--bg);
+        font-family: Inter, system-ui, -apple-system, sans-serif;
         margin: 0;
-        padding: 20px;
+        padding: 40px 20px;
+        color: var(--text);
       }
       .container {
         max-width: 800px;
         margin: 0 auto;
       }
       .feed-header {
-        background: white;
-        padding: 20px;
-        border-radius: 8px;
-        margin-bottom: 20px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        background: var(--card);
+        padding: 30px;
+        border-radius: 12px;
+        margin-bottom: 30px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        border: 1px solid #e5e7eb;
       }
+      h1 { margin: 0 0 10px 0; font-size: 1.5rem; }
+      .feed-description { color: var(--muted); margin-bottom: 0; }
+      
       .rss-item {
-        background: white;
-        padding: 40px; /* Generous padding like a reader */
-        border-radius: 8px;
+        background: var(--card);
+        padding: 40px;
+        border-radius: 12px;
         margin-bottom: 40px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        overflow: hidden; /* Simulate reader constraints */
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        border: 1px solid #e5e7eb;
       }
       .meta {
-        color: #666;
-        font-size: 0.9em;
-        margin-bottom: 20px;
-        border-bottom: 1px solid #eee;
-        padding-bottom: 10px;
+        color: var(--muted);
+        font-size: 0.875rem;
+        margin-bottom: 24px;
+        border-bottom: 1px solid #f3f4f6;
+        padding-bottom: 16px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
       }
-      /* Reset generic styles to ensure we only see inline styles */
+      .meta h2 { margin: 0; color: var(--text); font-size: 1.25rem; flex: 1; }
+      .meta-info { display: flex; gap: 12px; align-items: center; }
+      .meta a { color: var(--accent); text-decoration: none; font-weight: 500; }
+      .meta a:hover { text-decoration: underline; }
+
       .content-preview {
-        all: initial; 
-        font-family: inherit;
-        display: block;
+        line-height: 1.7;
+        color: #374151;
       }
-      /* But allowed inherited properties like a reader would */
-      .content-preview {
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        line-height: 1.6;
-        color: #333;
-      }
+      .content-preview h1, .content-preview h2, .content-preview h3 { color: #111827; }
+      .content-preview img { max-width: 100%; height: auto; border-radius: 8px; }
+      .content-preview pre { background: #f8fafc; padding: 16px; border-radius: 8px; overflow-x: auto; }
     </style>
   </head>
   <body>
     <div class="container">
       <div class="feed-header">
         <h1>RSS Preview: ${escapeHtml(feed.title)}</h1>
-        <p>${escapeHtml(feed.description)}</p>
-        <p><small>Generated from local dist/rss.xml</small></p>
+        <p class="feed-description">${escapeHtml(feed.description)}</p>
+        <p><small>Generated from <code>dist/rss.xml</code> on ${new Date().toUTCString()}</small></p>
       </div>
 
       ${feed.items
@@ -91,9 +106,12 @@ async function generatePreview() {
         <article class="rss-item">
           <div class="meta">
             <h2>${escapeHtml(item.title)}</h2>
-            <time>${escapeHtml(item.pubDate)}</time> | <a href="${escapeHtml(item.link)}" target="_blank">Original Link</a>
+            <div class="meta-info">
+              <time>${escapeHtml(item.pubDate)}</time>
+              <span>•</span>
+              <a href="${escapeHtml(item.link)}" target="_blank">View Post</a>
+            </div>
           </div>
-          <!-- The content below relies heavily on the inline styles we generated -->
           <div class="content-preview">
             ${content}
           </div>
@@ -108,7 +126,6 @@ async function generatePreview() {
 
   fs.writeFileSync(OUTPUT_FILE, htmlContent);
   console.log(`✅ Preview generated at: ${path.resolve(OUTPUT_FILE)}`);
-  console.log(`👉 Open this file in your browser to verify inline styles.`);
 }
 
 generatePreview().catch((err) => console.error(err));

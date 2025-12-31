@@ -1,9 +1,10 @@
-export function escapeHtml(unsafe) {
-  if (unsafe == null) return "";
-  return String(unsafe)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+import he from "he";
+
+/**
+ * Escapes HTML special characters to prevent XSS.
+ * Uses the 'he' package for a robust implementation.
+ */
+export function escapeHtml(str) {
+  if (typeof str !== "string") return "";
+  return he.encode(str);
 }
