@@ -25,7 +25,7 @@ export default async ({ github, context }) => {
       comment += `| 📝 Items | **${report.metadata.items}** posts |\n`;
 
       if (report.metadata.latestItem) {
-        comment += `| 🆕 Latest | \"${report.metadata.latestItem.title}\" |\n`;
+        comment += `| 🆕 Latest | "${report.metadata.latestItem.title}" |\n`;
       }
       comment += "\n";
 
@@ -49,7 +49,8 @@ export default async ({ github, context }) => {
       comment +=
         "> A visual preview of the RSS content has been generated to verify component styles and layout.\n\n";
 
-      comment += `--- \n🔗 [Production Feed](https://jmrp.io/rss.xml)
+      comment += `--- 
+🔗 [Production Feed](https://jmrp.io/rss.xml)
 `;
     } else {
       comment =

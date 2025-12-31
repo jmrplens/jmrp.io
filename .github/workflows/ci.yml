@@ -268,9 +268,19 @@ jobs:
       - name: Validate HTML5
         run: |
           pnpm exec html-validate -c .htmlvalidate.json --formatter json dist > html-validation.json 2> html-errors.log || true
+          pnpm exec html-validate -c .htmlvalidate.json --formatter html dist > html-report.html || true
+      - name: Deploy HTML Report to Surge
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          mkdir -p html-deploy
+          cp html-report.html html-deploy/index.html
+          pnpm exec surge ./html-deploy jmrp-html-pr-${{ github.event.number }}.surge.sh --token ${{ secrets.SURGE_TOKEN }}
       - name: Post HTML Validation Comment
         if: github.event_name == 'pull_request'
         uses: actions/github-script@v8
+        env:
+          SURGE_URL: jmrp-html-pr-${{ github.event.number }}.surge.sh
         with:
           script: |
             const { default: script } = await import(`${process.env.GITHUB_WORKSPACE}/scripts/ci/post-html-validation-comment.mjs`)
@@ -307,7 +317,6 @@ jobs:
         if: github.event_name == 'pull_request'
         shell: bash
         run: |
-          # Copy preview to a dedicated folder for surge to avoid deploying the whole dist
           mkdir -p preview-deploy
           cp dist/rss-preview.html preview-deploy/index.html
           pnpm exec surge ./preview-deploy jmrp-rss-pr-${{ github.event.number }}.surge.sh --token ${{ secrets.SURGE_TOKEN }}
@@ -409,8 +418,6 @@ jobs:
         if: github.event_name == 'pull_request' && always()
         shell: bash
         run: |
-          # The manifest contains URLs to reports if target is public storage, 
-          # but we can also deploy the local folder for a branded experience
           pnpm exec surge ./.lighthouseci jmrp-lh-pr-${{ github.event.number }}-${{ matrix.theme }}.surge.sh --token ${{ secrets.SURGE_TOKEN }}
       - name: Post Comment
         if: github.event_name == 'pull_request' && always()

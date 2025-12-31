@@ -2,6 +2,7 @@ import fs from "fs";
 
 export default async ({ github, context }) => {
   let comment = "";
+  const surgeUrl = process.env.SURGE_URL;
 
   try {
     if (fs.existsSync("html-validation.json")) {
@@ -40,11 +41,16 @@ export default async ({ github, context }) => {
           comment += "| :--- | :--- |\n";
           comment += "| 📄 Files Checked | **All generated HTML** |\n";
           comment += `| 🔴 Errors | **${totalErrors}** |\n`;
-          comment += `| ⚠️ Warnings | **${totalWarnings}** |\n\n`;
+          comment += `| ⚠️ Warnings | **${totalWarnings}** |\n`;
+
+          if (surgeUrl) {
+            comment += `| 🌐 Full Report | [**Open Interactive Report**](https://${surgeUrl}) 🚀 |\n`;
+          }
+          comment += "\n";
 
           if (filesWithErrors.length > 0) {
-            comment +=
-              "<details>\n<summary><b>🔍 View Detailed Issues</b></summary>\n\n";
+            comment +
+              "<details>\n<summary><b>🔍 View Detailed Issues (Top 10)</b></summary>\n\n";
             filesWithErrors.slice(0, 10).forEach((f) => {
               const fileName = f.filePath.replace("dist/", "").split("/").pop();
               comment += `#### 📄 **${fileName}**\n`;
