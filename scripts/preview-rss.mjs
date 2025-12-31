@@ -181,25 +181,39 @@ async function generatePreview() {
         </div>
       </div>
 
-      ${feed.items
-        .map((item) => {
-          const content = item["content:encoded"] || item.content;
-          const enclosure =
-            item.enclosure ||
-            (item["media:content"] ? item["media:content"].$ : null);
+                  ${feed.items
 
-          let enclosureHtml = "";
-          if (
-            enclosure &&
-            enclosure.url &&
-            enclosure.type &&
-            enclosure.type.startsWith("image")
-          ) {
-            enclosureHtml = `<div class="enclosure"><img src="${enclosure.url}" alt="Cover Image"></div>`;
-          }
+                    .map((item) => {
 
-          return `
-        <article class="rss-item">
+                      let content = item["content:encoded"] || item.content;
+
+                      // Make absolute URLs relative for preview consistency (loads from current build/deploy)
+
+                      // Using ./ allows it to work even when opened directly via file:// protocol
+
+                      content = content.replaceAll("https://jmrp.io/", "./"); 
+
+            
+
+                      const enclosure = item.enclosure || (item["media:content"] ? item["media:content"].$ : null);
+
+                      
+
+                      let enclosureHtml = "";
+
+                      if (enclosure && enclosure.url && enclosure.type && enclosure.type.startsWith("image")) {
+
+                          const localUrl = enclosure.url.replace("https://jmrp.io/", "./");
+
+                          enclosureHtml = `<div class="enclosure"><img src="${localUrl}" alt="Cover Image"></div>`;
+
+                      }
+
+            
+
+                      return `
+
+                    <article class="rss-item">
           ${enclosureHtml}
           <div class="item-header">
             <h2 class="item-title"><a href="${escapeHtml(item.link)}" target="_blank">${escapeHtml(item.title)}</a></h2>

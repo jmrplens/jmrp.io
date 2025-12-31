@@ -35,6 +35,8 @@ export default async ({ github, context }) => {
         comment += `| 🌐 Full Preview | [**Open Live RSS Preview**](https://${surgeUrl}) 🚀 |\n`;
       }
 
+      comment += `| 🛠️ Validator | [**W3C Feed Validator**](https://validator.w3.org/feed/check.cgi?url=https://jmrp.io/rss.xml) |\n`;
+
       comment += "\n";
 
       if (report.errors.length > 0 || report.warnings.length > 0) {

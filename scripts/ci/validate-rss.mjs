@@ -108,6 +108,19 @@ async function validateRSS() {
             results.errors.push(`Item ${idx}: Invalid URL (${item.link})`);
           }
         }
+
+        // 3. Content Validation (Dangerous Styles)
+        const content = item["content:encoded"] || item.content || "";
+        if (content.includes("text-transform")) {
+          results.warnings.push(
+            `Item ${idx}: Contains potentially dangerous 'text-transform' style attribute.`,
+          );
+        }
+        if (content.includes("position:")) {
+          results.warnings.push(
+            `Item ${idx}: Contains 'position' style attribute, which may break some readers.`,
+          );
+        }
       });
     }
   } catch (error) {
