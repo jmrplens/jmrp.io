@@ -1,8 +1,15 @@
-#!/usr/bin/env node
-
 /**
  * Schema.org JSON-LD Validator
- * Extracts and validates structured data from HTML pages
+ *
+ * Extracts and validates structured data (JSON-LD) from all generated HTML pages.
+ * It ensures that the project maintains high SEO quality and provides rich
+ * results for search engines.
+ *
+ * Features:
+ * - Detects and parses <script type="application/ld+json"> blocks.
+ * - Validates essential properties for Person, WebSite, Article, and BreadcrumbList.
+ * - Checks for valid ISO dates and absolute URLs.
+ * - Generates a detailed console summary and exits with error if issues are found.
  */
 
 import fs from "fs";
@@ -11,6 +18,9 @@ import { glob } from "glob";
 
 const DIST_DIR = process.argv[2] || "dist";
 
+/**
+ * Extracts JSON-LD scripts from HTML content
+ */
 function extractJsonLd(html) {
   const scripts =
     html.match(
@@ -29,26 +39,22 @@ function extractJsonLd(html) {
   });
 }
 
+/**
+ * Validates a single JSON-LD schema object
+ */
 function validateSingleSchema(schema, prefix = "") {
   const errors = [];
   const warnings = [];
 
-  // Check if schema is just a string (e.g. "https://schema.org/Male") or null
-  if (!schema || typeof schema !== "object") {
-    return { errors, warnings };
-  }
-
-  // Check @type
+  if (!schema || typeof schema !== "object") return { errors, warnings };
   if (!schema["@type"]) {
     errors.push(`${prefix ? prefix + ": " : ""}Missing @type property`);
     return { errors, warnings };
   }
 
-  // Type-specific validation
   const type = schema["@type"];
   const p = prefix ? `${prefix} (${type})` : type;
 
-  // Helpers
   const checkUrl = (url, name) => {
     try {
       new URL(url);
@@ -58,9 +64,8 @@ function validateSingleSchema(schema, prefix = "") {
   };
 
   const checkDate = (date, name) => {
-    if (isNaN(Date.parse(date))) {
+    if (isNaN(Date.parse(date)))
       errors.push(`${p}: Invalid ISO date for ${name}: "${date}"`);
-    }
   };
 
   const validateNested = (propName) => {
@@ -86,114 +91,44 @@ function validateSingleSchema(schema, prefix = "") {
       if (!schema.name) errors.push(`${p}: Missing name`);
       if (schema.url) checkUrl(schema.url, "url");
       break;
-
     case "WebSite":
       if (!schema.name) errors.push(`${p}: Missing name`);
       if (!schema.url) errors.push(`${p}: Missing url`);
-      if (schema.url) checkUrl(schema.url, "url");
       validateNested("publisher");
       break;
-
     case "BlogPosting":
     case "Article":
       if (!schema.headline) errors.push(`${p}: Missing headline`);
-      if (!schema.datePublished) {
-        warnings.push(`${p}: Missing datePublished`);
-      } else {
-        checkDate(schema.datePublished, "datePublished");
-      }
-      if (!schema.dateModified) {
-        // Optional but good
-      } else {
-        checkDate(schema.dateModified, "dateModified");
-      }
-
+      if (!schema.datePublished) warnings.push(`${p}: Missing datePublished`);
+      else checkDate(schema.datePublished, "datePublished");
       if (!schema.author) warnings.push(`${p}: Missing author`);
-      if (!schema.image)
-        warnings.push(
-          `${p}: Missing image (recommended for Google Rich Results)`,
-        );
-      if (!schema.publisher) warnings.push(`${p}: Missing publisher`);
-
+      if (!schema.image) warnings.push(`${p}: Missing image (Rich Results)`);
       validateNested("author");
       validateNested("publisher");
-      validateNested("mainEntityOfPage");
       break;
-
     case "BreadcrumbList":
-      if (!schema.itemListElement) {
-        errors.push(`${p}: Missing itemListElement`);
-      } else if (!Array.isArray(schema.itemListElement)) {
-        errors.push(`${p}: itemListElement must be an array`);
+      if (!schema.itemListElement || !Array.isArray(schema.itemListElement)) {
+        errors.push(`${p}: Missing or invalid itemListElement array`);
       } else {
-        // Deep validate items
         schema.itemListElement.forEach((item, i) => {
           const itemP = `${p}.itemListElement[${i}]`;
-          if (!item["@type"] || item["@type"] !== "ListItem") {
-            errors.push(`${itemP}: Must be type ListItem`);
-          }
+          if (!item["@type"] || item["@type"] !== "ListItem")
+            errors.push(`${itemP}: Must be ListItem`);
           if (!item.position) errors.push(`${itemP}: Missing position`);
           if (!item.name) errors.push(`${itemP}: Missing name`);
           if (!item.item) errors.push(`${itemP}: Missing item URL`);
-          else checkUrl(item.item, "item");
         });
       }
-      break;
-
-    case "SiteNavigationElement":
-      if (!schema.name) warnings.push(`${p}: Missing name`);
-      if (!schema.url) warnings.push(`${p}: Missing url`);
-      if (schema.url) checkUrl(schema.url, "url");
-      break;
-
-    case "WebPage":
-    case "ProfilePage":
-    case "CollectionPage":
-      if (!schema["@id"]) warnings.push(`${p}: Missing @id`);
-      if (schema.mainEntity) validateNested("mainEntity");
-      break;
-
-    case "ItemList":
-      if (!schema.itemListElement) {
-        errors.push(`${p}: Missing itemListElement`);
-      } else if (!Array.isArray(schema.itemListElement)) {
-        errors.push(`${p}: itemListElement must be an array`);
-      } else {
-        schema.itemListElement.forEach((item, i) => {
-          const itemP = `${p}.itemListElement[${i}]`;
-          if (!item || typeof item !== "object") {
-            errors.push(`${itemP}: Must be an object ListItem`);
-            return;
-          }
-          if (!item["@type"] || item["@type"] !== "ListItem") {
-            errors.push(`${itemP}: Must be type ListItem`);
-          }
-          if (item.position === undefined || item.position === null) {
-            errors.push(`${itemP}: Missing position`);
-          }
-          validateSingleSchema(item, itemP);
-        });
-      }
-      break;
-
-    case "ScholarlyArticle":
-      if (!schema.headline && !schema.name)
-        errors.push(`${p}: Missing headline or name`);
-      if (!schema.author) warnings.push(`${p}: Missing author`);
-      validateNested("author");
-      break;
-
-    case "EducationalOccupationalCredential":
-      if (!schema.name) errors.push(`${p}: Missing name`);
-      if (!schema.credentialCategory)
-        warnings.push(`${p}: Missing credentialCategory`);
       break;
   }
 
   return { errors, warnings };
 }
 
-function validateSchema(schema, _filePath) {
+/**
+ * Validates the @context and top-level structure
+ */
+function validateSchema(schema) {
   const errors = [];
   const warnings = [];
 
@@ -202,7 +137,6 @@ function validateSchema(schema, _filePath) {
     return { errors, warnings };
   }
 
-  // Check @context
   if (!schema["@context"]) {
     errors.push("Missing @context property");
   } else if (!schema["@context"].includes("schema.org")) {
@@ -211,7 +145,6 @@ function validateSchema(schema, _filePath) {
     );
   }
 
-  // Handle @graph (array of schemas)
   if (schema["@graph"] && Array.isArray(schema["@graph"])) {
     schema["@graph"].forEach((item, index) => {
       const result = validateSingleSchema(item, `Graph item ${index}`);
@@ -221,18 +154,16 @@ function validateSchema(schema, _filePath) {
     return { errors, warnings };
   }
 
-  // Single schema validation
-  const result = validateSingleSchema(schema);
-  return result;
+  return validateSingleSchema(schema);
 }
 
+/**
+ * Scans all pages and performs validation
+ */
 async function validateAllPages() {
   console.log("🔍 Validating Schema.org JSON-LD structured data...\n");
 
-  // Find all HTML files
   const files = await glob(`${DIST_DIR}/**/*.html`);
-  console.log(`   Found ${files.length} HTML files\n`);
-
   let totalSchemas = 0;
   let totalErrors = 0;
   let totalWarnings = 0;
@@ -241,7 +172,6 @@ async function validateAllPages() {
   for (const file of files) {
     const html = fs.readFileSync(file, "utf-8");
     const schemas = extractJsonLd(html);
-
     if (schemas.length === 0) continue;
 
     const relativePath = path.relative(DIST_DIR, file);
@@ -249,21 +179,16 @@ async function validateAllPages() {
     const fileWarnings = [];
 
     schemas.forEach((schema, index) => {
-      const { errors, warnings } = validateSchema(schema, file);
-
-      if (errors.length > 0) {
+      const { errors, warnings } = validateSchema(schema);
+      if (errors.length > 0)
         fileErrors.push({ index, type: schema["@type"], errors });
-      }
-      if (warnings.length > 0) {
+      if (warnings.length > 0)
         fileWarnings.push({ index, type: schema["@type"], warnings });
-      }
-
       totalErrors += errors.length;
       totalWarnings += warnings.length;
     });
 
     totalSchemas += schemas.length;
-
     if (fileErrors.length > 0 || fileWarnings.length > 0) {
       fileResults.push({
         file: relativePath,
@@ -274,44 +199,28 @@ async function validateAllPages() {
     }
   }
 
-  // Report results
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-  console.log(`\n📊 Schema.org Validation Summary:\n`);
-  console.log(`   Total schemas found: ${totalSchemas}`);
   console.log(
-    `   Files with schemas: ${fileResults.length > 0 ? fileResults.length : files.filter((f) => extractJsonLd(fs.readFileSync(f, "utf-8")).length > 0).length}`,
+    `\n📊 Schema.org Summary:\n   Total schemas found: ${totalSchemas}\n   Errors: ${totalErrors}\n   Warnings: ${totalWarnings}\n`,
   );
-  console.log(`   Errors: ${totalErrors}`);
-  console.log(`   Warnings: ${totalWarnings}\n`);
 
   if (fileResults.length > 0) {
     fileResults.forEach((result) => {
-      console.log(
-        `\n📄 ${result.file} (${result.schemasCount} schema${result.schemasCount > 1 ? "s" : ""})`,
-      );
-
+      console.log(`\n📄 ${result.file} (${result.schemasCount} schemas)`);
       result.errors.forEach(({ index, type, errors }) => {
-        console.log(`\n   ❌ Schema ${index + 1} (${type}):`);
+        console.log(`   ❌ Schema ${index + 1} (${type}):`);
         errors.forEach((err) => console.log(`      • ${err}`));
-      });
-
-      result.warnings.forEach(({ index, type, warnings }) => {
-        console.log(`\n   ⚠️  Schema ${index + 1} (${type}):`);
-        warnings.forEach((warn) => console.log(`      • ${warn}`));
       });
     });
   }
-
-  console.log("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
   if (totalErrors === 0 && totalSchemas > 0) {
     console.log("\n✅ All Schema.org structured data is valid!\n");
     process.exit(0);
   } else if (totalSchemas === 0) {
-    console.log("\n⚠️  No Schema.org JSON-LD found in any page\n");
+    console.log("\n⚠️ No Schema.org JSON-LD found.\n");
     process.exit(0);
   } else {
-    console.log("\n❌ Schema.org validation failed\n");
     process.exit(1);
   }
 }

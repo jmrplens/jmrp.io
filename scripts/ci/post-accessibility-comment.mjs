@@ -1,3 +1,11 @@
+/**
+ * GitHub Comment Poster: Accessibility
+ *
+ * Integration script for GitHub Actions.
+ * Reads the 'accessibility-summary.json' results and posts a detailed summary
+ * of WCAG violations and passed checks as a PR comment.
+ */
+
 import fs from "fs";
 
 export default async ({ github, context }) => {

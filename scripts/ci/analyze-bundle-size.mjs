@@ -1,3 +1,13 @@
+/**
+ * Static Bundle Size Analyzer
+ *
+ * This script recursively scans the 'dist' directory, calculates the size
+ * of every file, and categorizes them by type (JS, CSS, Images, etc.).
+ *
+ * It generates a 'bundle-analysis.json' report used by CI to track
+ * growth and identify the largest assets in the project.
+ */
+
 import fs from "fs";
 import path from "path";
 import { glob } from "glob";
@@ -5,6 +15,9 @@ import { glob } from "glob";
 const DIST_DIR = "dist";
 const OUTPUT_FILE = "bundle-analysis.json";
 
+/**
+ * Format bytes to human readable string
+ */
 function formatSize(bytes) {
   if (bytes < 1024) return bytes + " B";
   if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + " KB";
@@ -59,18 +72,16 @@ async function analyze() {
     stats.categories[category].files.push({ path: relativePath, size });
   }
 
-  // Sort files by size (descending) in each category
+  // Sort by size and keep only Top 5 for the report
   for (const cat in stats.categories) {
     stats.categories[cat].files.sort((a, b) => b.size - a.size);
-    // Keep only top 5 largest files per category for detailed report
     stats.categories[cat].largestFiles = stats.categories[cat].files.slice(
       0,
       5,
     );
-    delete stats.categories[cat].files; // Remove full list to keep JSON small
+    delete stats.categories[cat].files; // Drop full list to keep report small
   }
 
-  // Calculate readable sizes
   stats.readableTotalSize = formatSize(stats.totalSize);
   for (const cat in stats.categories) {
     stats.categories[cat].readableSize = formatSize(stats.categories[cat].size);

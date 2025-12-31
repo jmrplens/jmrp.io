@@ -1,3 +1,11 @@
+/**
+ * GitHub Comment Poster: Bundle Size
+ *
+ * Integration script for GitHub Actions.
+ * Reads 'bundle-analysis.json' and posts a categorized summary of the
+ * build assets size as a PR comment, including a list of the largest files.
+ */
+
 import fs from "fs";
 
 export default async ({ github, context }) => {
@@ -39,7 +47,7 @@ export default async ({ github, context }) => {
       cat.largestFiles.forEach((f) => {
         const sizeStr =
           f.size < 1024 ? f.size + " B" : (f.size / 1024).toFixed(2) + " KB";
-        output += `| \`${f.path}\` | ${sizeStr} |\n`;
+        output += "| `" + f.path + "` | " + sizeStr + " |\n";
       });
       output += "\n";
       return output;

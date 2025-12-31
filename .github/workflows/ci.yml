@@ -281,12 +281,10 @@ jobs:
       - run: pnpm install --frozen-lockfile --prefer-offline
       - name: Validate HTML5
         run: |
-          # Run validation, output to console (codeframe) and save JSON report
-          # We use "|| true" to prevent the step from failing immediately so we can generate the report
-          pnpm exec html-validate -c .htmlvalidate.json --formatter codeframe dist || true
+          # Generate JSON report for automated processing
           pnpm exec html-validate -c .htmlvalidate.json --formatter json dist > html-validation.json || true
 
-          # Generate the HTML report
+          # Create the interactive HTML report and exit with error if issues are found
           node scripts/ci/generate-html-validation-report.mjs
       - name: Deploy HTML Report to Surge
         if: github.event_name == 'pull_request'

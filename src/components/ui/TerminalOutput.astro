@@ -3,6 +3,9 @@
  * TerminalOutput Component
  * Displays the output of a shell command in a distinct visual style.
  *
+ * NOTE: We use a <div> with 'white-space: pre-wrap' instead of a <pre> tag
+ * to avoid nested <pre> tags when the slot contains code blocks.
+ *
  * Usage:
  * <TerminalOutput title="Output">
  *   Package installed successfully.
@@ -34,10 +37,14 @@ const { title } = Astro.props;
         )
     }
     <div class="output-body">
-        <pre><slot /></pre>
+        <div class="terminal-content"><slot /></div>
     </div>
 </section>
 <style>
+    .terminal-content {
+        white-space: pre-wrap;
+        word-break: break-all;
+    }
     .terminal-output-wrapper {
         border: var(--border-1);
         border-radius: var(--radius-md);

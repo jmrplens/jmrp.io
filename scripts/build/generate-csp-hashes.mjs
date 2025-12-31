@@ -1,3 +1,18 @@
+/**
+ * CSP Hash Generator & Nginx Updater
+ *
+ * This script scans all generated HTML and JS files to calculate cryptographic
+ * hashes (SHA-512) for inline styles and scripts. It then updates the Nginx
+ * configuration to allow these hashes in the Content-Security-Policy header.
+ *
+ * Features:
+ * - Scans HTML for <style> and <script> tags without nonces.
+ * - Scans all local .js files to ensure they are allowed by the CSP.
+ * - Detects external image domains to update 'img-src'.
+ * - Dynamically updates Nginx security snippets and reloads the service.
+ * - Automatically chunks script hashes into multiple Nginx variables if they exceed size limits.
+ */
+
 import fs from "node:fs";
 import crypto from "node:crypto";
 import path from "node:path";
@@ -12,10 +27,10 @@ const DIST_DIR = process.argv[2] || process.env.DIST_DIR || "dist";
 const HTML_PATTERN = "**/*.html";
 const JS_PATTERN = "**/*.js";
 const NGINX_CONF = "/etc/nginx/snippets/security_headers.conf";
-const HASH_ALGO = "sha512"; // Upgraded from sha384
+const HASH_ALGO = "sha512";
 
 /**
- * Helper: Add style hashes
+ * Calculates and adds hashes for <style> tags
  */
 function addStyleHashes(content, styleHashes) {
   const styleTagRegex = /<style([^>]*)>([\s\S]*?)<\/style>/gi;
@@ -33,7 +48,7 @@ function addStyleHashes(content, styleHashes) {
 }
 
 /**
- * Helper: Add script hashes (inline)
+ * Calculates and adds hashes for inline <script> tags
  */
 function addInlineScriptHashes(content, scriptHashes) {
   const scriptTagRegex = /<script(?![^>]*\bsrc=)([^>]*)>([\s\S]*?)<\/script>/gi;
@@ -51,7 +66,7 @@ function addInlineScriptHashes(content, scriptHashes) {
 }
 
 /**
- * Helper: Add script hashes (external local)
+ * Calculates hashes for external local scripts found in HTML
  */
 function addExternalScriptHashes(content, scriptHashes, file) {
   const scriptSrcRegex = /<script\s+([^>]*src=["']([^"']+)["'][^>]*)>/gi;
@@ -86,7 +101,7 @@ function addExternalScriptHashes(content, scriptHashes, file) {
 }
 
 /**
- * Helper: Extract image domains
+ * Identifies external domains used in <img> tags to update 'img-src'
  */
 function addImageDomains(content, imageDomains) {
   const imgTagRegex = /<img[^>]+src=["']([^"']+)["']/gi;
@@ -105,7 +120,7 @@ function addImageDomains(content, imageDomains) {
 }
 
 /**
- * Extract hashes from content
+ * Orchestrates hash extraction from a single file
  */
 function extractHashes(content, styleHashes, scriptHashes, imageDomains, file) {
   addStyleHashes(content, styleHashes);
@@ -115,7 +130,7 @@ function extractHashes(content, styleHashes, scriptHashes, imageDomains, file) {
 }
 
 /**
- * Update Nginx Configuration
+ * Updates the Nginx configuration snippet with new hashes
  */
 function updateNginxConfig(styleHashString, scriptHashString, imgDomainString) {
   if (!fs.existsSync(NGINX_CONF)) {
@@ -125,8 +140,8 @@ function updateNginxConfig(styleHashString, scriptHashString, imgDomainString) {
 
   console.log(`\nUpdating ${NGINX_CONF}...`);
 
-  // Logic to split script hashes into chunks for Nginx variables
-  const MAX_CHUNK_SIZE = 2048; // Safe limit below Nginx's typical 4096 buffer
+  // Logic to split script hashes into chunks for Nginx variables due to buffer limits
+  const MAX_CHUNK_SIZE = 2048;
   let nginxSetDirectives = "";
   const scriptVars = [];
 
@@ -147,22 +162,16 @@ function updateNginxConfig(styleHashString, scriptHashString, imgDomainString) {
         currentChunk = prospectiveChunk;
       }
     }
-    // Add the final chunk
     if (currentChunk) {
       const varName = `$csp_script_src_${chunkCounter}`;
       scriptVars.push(varName);
       nginxSetDirectives += `set ${varName} "${currentChunk.trim()}";\n`;
     }
-  } else {
-    // If it fits, just use the string directly (or a single variable, but direct is fine if short)
-    // To keep it simple, we'll just put it directly if short,
-    // BUT to handle the replacement logic below cleanly, let's just use the string if short.
   }
 
   const staticScriptParts = "'self' 'nonce-$cspNonce'";
   const staticConnectParts = "'self' https://api.github.com";
 
-  // Construct script-src value
   let scriptSrcValue;
   if (scriptVars.length > 0) {
     scriptSrcValue = `${staticScriptParts} ${scriptVars.join(" ")}`;
@@ -188,29 +197,13 @@ function updateNginxConfig(styleHashString, scriptHashString, imgDomainString) {
     "report-uri /csp-report",
   ];
 
-  // We need to either overwrite the whole file or carefully replace sections.
-  // Previous logic replaced just the CSP header. Now we also need to manage related `set` directives.
-  //
-  // To avoid breaking other security headers that may live in this snippet (HSTS, X-Frame, etc.),
-  // we continue to read the existing file and update only the CSP-related parts. This preserves
-  // the relative ordering of any other directives that are already present.
-  //
-  // NOTE: `security_headers.conf` is assumed to be included from a context (e.g. a server block)
-  // where `set` directives are allowed and where having the CSP-related `set` variables defined
-  // before the CSP header is acceptable. If this file is ever reused in other contexts, or if
-  // other directives must precede these `set` statements, the inclusion strategy or this script
-  // should be revisited to enforce the desired ordering explicitly.
-
   let nginxConfig = fs.readFileSync(NGINX_CONF, "utf-8");
 
-  // Remove old 'set $csp_script_src_...' directives if they exist (cleanup)
+  // Cleanup old dynamic directives
   nginxConfig = nginxConfig.replace(/set \$csp_script_src_\d+ ".*?";\n/g, "");
 
   const newCspHeader = `add_header Content-Security-Policy "${components.join("; ")};" always;`;
   const cspRegex = /add_header Content-Security-Policy "[^"]*" always;/;
-
-  // Prepend the new set directives to the config content or place them before the CSP header?
-  // Placing them at the top of the file is safest for visibility.
 
   let newContent = nginxConfig;
 
@@ -223,7 +216,6 @@ function updateNginxConfig(styleHashString, scriptHashString, imgDomainString) {
     newContent += `\n${newCspHeader}\n`;
   }
 
-  // Add the set directives at the beginning
   if (nginxSetDirectives) {
     newContent = nginxSetDirectives + "\n" + newContent;
   }
@@ -233,7 +225,7 @@ function updateNginxConfig(styleHashString, scriptHashString, imgDomainString) {
 }
 
 /**
- * Main function
+ * Main function: Scans dist, calculates all hashes, and triggers Nginx update
  */
 async function generateHashes() {
   console.log(`Scanning ${DIST_DIR} for HTML files...`);
@@ -255,6 +247,7 @@ async function generateHashes() {
       extractHashes(content, styleHashes, scriptHashes, imageDomains, file);
     }
 
+    // Also hash local JS files directly
     const jsFiles = await glob(JS_PATTERN, { cwd: DIST_DIR, absolute: true });
     console.log(`Found ${jsFiles.length} JS files to hash.`);
     for (const file of jsFiles) {

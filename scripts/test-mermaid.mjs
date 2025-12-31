@@ -1,3 +1,11 @@
+/**
+ * Mermaid Rendering Test
+ *
+ * A utility script to verify the 'mermaid-isomorphic' renderer.
+ * It attempts to render a sequence diagram to SVG to ensure the headless
+ * browser (Puppeteer) and Mermaid configuration are working correctly.
+ */
+
 import { createMermaidRenderer } from "mermaid-isomorphic";
 
 async function test() {
@@ -40,7 +48,7 @@ async function test() {
   } catch (e) {
     console.error("Caught error:", e);
   } finally {
-    // Explicitly try to close if it has a close method
+    // Explicitly close the renderer to free up resources
     if (mermaidRenderer.close) {
       await mermaidRenderer.close();
     }
