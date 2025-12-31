@@ -472,6 +472,8 @@ jobs:
     name: Functional Tests
     runs-on: ubuntu-latest
     needs: build
+    permissions:
+      pull-requests: write
     steps:
       - uses: actions/checkout@v6
       - name: Download build artifact
@@ -496,3 +498,17 @@ jobs:
           name: functional-test-report
           path: playwright-report/
           retention-days: 7
+      - name: Deploy Playwright Report to Surge
+        if: github.event_name == 'pull_request' && always()
+        shell: bash
+        run: |
+          pnpm exec surge ./playwright-report jmrp-functional-pr-${{ github.event.number }}.surge.sh --token ${{ secrets.SURGE_TOKEN }}
+      - name: Post Functional Test Comment
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v8
+        env:
+          SURGE_URL: jmrp-functional-pr-${{ github.event.number }}.surge.sh
+        with:
+          script: |
+            const { default: script } = await import(`${process.env.GITHUB_WORKSPACE}/scripts/ci/post-functional-test-comment.mjs`)
+            await script({github, context})
