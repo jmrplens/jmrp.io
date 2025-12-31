@@ -285,7 +285,7 @@ jobs:
           # We use "|| true" to prevent the step from failing immediately so we can generate the report
           pnpm exec html-validate -c .htmlvalidate.json --formatter codeframe dist || true
           pnpm exec html-validate -c .htmlvalidate.json --formatter json dist > html-validation.json || true
-          
+
           # Generate the HTML report
           node scripts/ci/generate-html-validation-report.mjs
       - name: Deploy HTML Report to Surge
