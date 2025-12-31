@@ -178,13 +178,13 @@ async function flattenComponents(content: string): Promise<string> {
   const coMatches = Array.from(res.matchAll(/<Callout\s+type=["']([^"']*)["'][^>]*>([\s\S]*?)<\/Callout>/g)); // NOSONAR
   for (const m of coMatches) {
     const colors: any = { info: "#3b82f6", warning: "#f59e0b", danger: "#ef4444", success: "#10b981" };
-    res = res.replace(m[0], `<div style="padding:16px;margin:16px 0;border-left:4px solid ${colors[m[1]] || colors.info};background:#f8fafc;"><strong style="color:${colors[m[1]] || colors.info};text-transform:uppercase;font-size:12px;display:block;margin-bottom:4px;">${m[1]}</strong>${await marked.parse(cleanContent(m[2]))}</div>`); // NOSONAR
+    res = res.replace(m[0], `<div style="padding:16px;margin:16px 0;border-left:4px solid ${colors[m[1]] || colors.info};background:#f8fafc;"><strong style="color:${colors[m[1]] || colors.info};font-size:12px;display:block;margin-bottom:4px;">${m[1].toUpperCase()}</strong>${await marked.parse(cleanContent(m[2]))}</div>`); // NOSONAR
   }
   // 5. KeyPoint
   const kpMatches = Array.from(res.matchAll(/<KeyPoint[^>]*>([\s\S]*?)<\/KeyPoint>/g)); // NOSONAR
   for (const m of kpMatches) {
     const body = await marked.parse(cleanContent(m[1]));
-    res = res.replace(m[0], `<div style="padding:16px;margin:16px 0;border-left:4px solid #B509AC;background:#fff5ff;font-style:italic;"><strong style="color:#B509AC;text-transform:uppercase;font-size:12px;display:block;margin-bottom:4px;">Key Point</strong>${body}</div>`); // NOSONAR
+    res = res.replace(m[0], `<div style="padding:16px;margin:16px 0;border-left:4px solid #B509AC;background:#fff5ff;font-style:italic;"><strong style="color:#B509AC;font-size:12px;display:block;margin-bottom:4px;">KEY POINT</strong>${body}</div>`); // NOSONAR
   }
   // 6. YouTube
   res = res.replaceAll(/<YouTube\s+([^>]*?)\/?>/g, (_m, a) => { // NOSONAR

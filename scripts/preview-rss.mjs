@@ -24,7 +24,7 @@ async function generatePreview() {
 
   const parser = new Parser({
     customFields: {
-      item: ["content:encoded"],
+      item: ["content:encoded", "media:content", "media:thumbnail"],
     },
   });
 
@@ -33,96 +33,182 @@ async function generatePreview() {
 
   const htmlContent = `
   <!DOCTYPE html>
-  <!-- [html-validate-disable-block no-inline-style, attribute-allowed-values -- RSS content relies on these] -->
   <html lang="en">
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RSS Feed Preview</title>
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,300;0,400;0,700;1,300&family=Inter:wght@400;600&display=swap" rel="stylesheet">
     <style>
       :root {
-        --bg: #f3f4f6;
-        --card: #ffffff;
-        --text: #1f2937;
-        --muted: #6b7280;
-        --accent: #4f46e5;
+        --bg: #f7f7f7;
+        --card-bg: #ffffff;
+        --text: #333333;
+        --muted: #666666;
+        --link: #0066cc;
+        --border: #e0e0e0;
       }
       body {
         background-color: var(--bg);
-        font-family: Inter, system-ui, -apple-system, sans-serif;
+        font-family: 'Merriweather', serif;
         margin: 0;
         padding: 40px 20px;
         color: var(--text);
+        line-height: 1.6;
       }
       .container {
-        max-width: 800px;
+        max-width: 720px;
         margin: 0 auto;
       }
-      .feed-header {
-        background: var(--card);
-        padding: 30px;
-        border-radius: 12px;
-        margin-bottom: 30px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        border: 1px solid #e5e7eb;
+      .header-actions {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 20px;
       }
-      h1 { margin: 0 0 10px 0; font-size: 1.5rem; }
-      .feed-description { color: var(--muted); margin-bottom: 0; }
+      .btn {
+          background: #333;
+          color: white;
+          padding: 8px 16px;
+          text-decoration: none;
+          border-radius: 4px;
+          font-family: 'Inter', sans-serif;
+          font-size: 14px;
+      }
+      .feed-header {
+        background: var(--card-bg);
+        padding: 40px;
+        border-radius: 8px;
+        margin-bottom: 40px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        border: 1px solid var(--border);
+        text-align: center;
+      }
+      .feed-header h1 { 
+          font-family: 'Inter', sans-serif;
+          margin: 0 0 10px 0; 
+          font-weight: 700;
+      }
+      .feed-meta {
+          font-family: 'Inter', sans-serif;
+          color: var(--muted);
+          font-size: 0.9rem;
+      }
       
       .rss-item {
-        background: var(--card);
+        background: var(--card-bg);
         padding: 40px;
-        border-radius: 12px;
+        border-radius: 8px;
         margin-bottom: 40px;
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-        border: 1px solid #e5e7eb;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        border: 1px solid var(--border);
       }
-      .meta {
+      .item-header {
+        border-bottom: 1px solid #f0f0f0;
+        padding-bottom: 20px;
+        margin-bottom: 20px;
+      }
+      .item-title {
+        font-family: 'Inter', sans-serif;
+        margin: 0 0 10px 0;
+        font-size: 1.8rem;
+        line-height: 1.3;
+      }
+      .item-title a {
+          color: #111;
+          text-decoration: none;
+      }
+      .item-title a:hover {
+          color: var(--link);
+      }
+      .item-meta {
+        font-family: 'Inter', sans-serif;
         color: var(--muted);
-        font-size: 0.875rem;
-        margin-bottom: 24px;
-        border-bottom: 1px solid #f3f4f6;
-        padding-bottom: 16px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
+        font-size: 0.85rem;
       }
-      .meta h2 { margin: 0; color: var(--text); font-size: 1.25rem; flex: 1; }
-      .meta-info { display: flex; gap: 12px; align-items: center; }
-      .meta a { color: var(--accent); text-decoration: none; font-weight: 500; }
-      .meta a:hover { text-decoration: underline; }
 
-      .content-preview {
-        line-height: 1.7;
-        color: #374151;
+      /* Content Styling similar to Readers (Feedly/Reeder) */
+      .content-body {
+        font-size: 1.125rem;
+        color: #2c2c2c;
       }
-      .content-preview h1, .content-preview h2, .content-preview h3 { color: #111827; }
-      .content-preview img { max-width: 100%; height: auto; border-radius: 8px; }
-      .content-preview pre { background: #f8fafc; padding: 16px; border-radius: 8px; overflow-x: auto; }
+      .content-body a { color: var(--link); text-decoration: underline; }
+      .content-body img { max-width: 100%; height: auto; display: block; margin: 20px auto; border-radius: 4px; }
+      .content-body pre { 
+          background: #f5f7f9; 
+          padding: 15px; 
+          border-radius: 4px; 
+          overflow-x: auto; 
+          font-family: 'Menlo', 'Monaco', monospace; 
+          font-size: 0.9rem;
+          border: 1px solid #e1e4e8;
+      }
+      .content-body blockquote {
+          border-left: 4px solid var(--link);
+          margin: 20px 0;
+          padding-left: 20px;
+          color: var(--muted);
+          font-style: italic;
+      }
+      .content-body code {
+          background: #f0f0f0;
+          padding: 2px 4px;
+          border-radius: 3px;
+          font-size: 0.9em;
+      }
+      
+      .enclosure {
+          margin-bottom: 20px;
+      }
+      .enclosure img {
+          width: 100%;
+          border-radius: 8px;
+      }
     </style>
   </head>
   <body>
     <div class="container">
+      <div class="header-actions">
+          <a href="https://validator.w3.org/feed/check.cgi?url=https://jmrp.io/rss.xml" class="btn" target="_blank">Validate Feed</a>
+          <a href="/rss.xml" class="btn" target="_blank">View Raw XML</a>
+      </div>
+      
       <div class="feed-header">
-        <h1>RSS Preview: ${escapeHtml(feed.title)}</h1>
-        <p class="feed-description">${escapeHtml(feed.description)}</p>
-        <p><small>Generated from <code>dist/rss.xml</code> on ${new Date().toUTCString()}</small></p>
+        <h1>${escapeHtml(feed.title)}</h1>
+        <p>${escapeHtml(feed.description)}</p>
+        <div class="feed-meta">
+            Generated: ${new Date().toUTCString()} • ${feed.items.length} Items
+        </div>
       </div>
 
       ${feed.items
         .map((item) => {
           const content = item["content:encoded"] || item.content;
+          const enclosure =
+            item.enclosure ||
+            (item["media:content"] ? item["media:content"].$ : null);
+
+          let enclosureHtml = "";
+          if (
+            enclosure &&
+            enclosure.url &&
+            enclosure.type &&
+            enclosure.type.startsWith("image")
+          ) {
+            enclosureHtml = `<div class="enclosure"><img src="${enclosure.url}" alt="Cover Image"></div>`;
+          }
+
           return `
         <article class="rss-item">
-          <div class="meta">
-            <h2>${escapeHtml(item.title)}</h2>
-            <div class="meta-info">
+          ${enclosureHtml}
+          <div class="item-header">
+            <h2 class="item-title"><a href="${escapeHtml(item.link)}" target="_blank">${escapeHtml(item.title)}</a></h2>
+            <div class="item-meta">
               <time>${escapeHtml(item.pubDate)}</time>
-              <span>•</span>
-              <a href="${escapeHtml(item.link)}" target="_blank">View Post</a>
+               • ${escapeHtml(item.creator || "Unknown Author")}
             </div>
           </div>
-          <div class="content-preview">
+          <div class="content-body">
             ${content}
           </div>
         </article>

@@ -21,7 +21,7 @@ export default async ({ github, context }) => {
 
       comment = `### 📡 RSS Feed Validation\n\n${icon} ${status}\n\n`;
 
-      comment += "| Property | Detail |\n";
+      comment += "| Metric | Value |\n";
       comment += "| :--- | :--- |\n";
       comment += "| 📄 File | `rss.xml` |\n";
       comment += `| 📦 Size | **${report.size} KB** |\n`;
