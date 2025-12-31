@@ -322,6 +322,8 @@ jobs:
       - run: pnpm install --frozen-lockfile --prefer-offline
       - name: Validate RSS feed
         run: node scripts/ci/validate-rss.mjs dist/rss.xml
+      - name: Validate RSS HTML Content
+        run: node scripts/ci/validate-rss-content-html.mjs
       - name: Generate RSS preview
         run: node scripts/preview-rss.mjs
       - name: Upload RSS preview artifact
