@@ -317,28 +317,26 @@ export async function GET(context: APIContext) {
               context.site || "https://jmrp.io",
             ).toString();
 
-            // 1. Prepend image to content for readers that don't support enclosures
-            const imageHtml = `<img src="${imgUrl}" alt="${post.data.title}" width="${opt.attributes.width}" height="${opt.attributes.height}" style="max-width:100%; height:auto; border-radius: 8px; margin-bottom: 24px;" />`;
+            // 1. Prepend image to content - Some readers only look here
+            const imageHtml = `<img src="${imgUrl}" alt="${post.data.title}" width="${opt.attributes.width}" height="${opt.attributes.height}" style="display: block; margin-bottom: 24px; border-radius: 8px; max-width: 100%; height: auto;" />`;
             finalContent = `${imageHtml}${styledHtml}`;
 
             // 2. Set official enclosure (Astro will add the <enclosure> tag)
             enclosure = {
               url: imgUrl,
-              length: 1024, // Dummy non-zero length
+              length: 65535, // Non-zero length (many readers ignore 0)
               type: "image/jpeg",
             };
 
             // 3. Add Media RSS tags for advanced readers
-            customData += `<media:content url="${imgUrl}" medium="image" type="image/jpeg" width="${opt.attributes.width}" height="${opt.attributes.height}" isDefault="true" />\n<media:thumbnail url="${thumbUrl}" width="${thumb.attributes.width}" height="${thumb.attributes.height}" />`;
+            customData += `<media:content url="${imgUrl}" medium="image" type="image/jpeg" width="${opt.attributes.width}" height="${opt.attributes.height}" />\n<media:thumbnail url="${thumbUrl}" width="${thumb.attributes.width}" height="${thumb.attributes.height}" />`;
           } catch (e) {
             console.warn("[RSS] Cover image process failed:", e);
           }
         }
 
-        const itemDescription =
-          post.data.coverImage && imgUrl
-            ? `<img src="${imgUrl}" alt="${post.data.title}"/><br/>${post.data.description || ""}`
-            : post.data.description || "";
+        // Standardize description for readers that don't support content:encoded
+        const itemDescription = post.data.description || "";
 
         return {
           title: post.data.title,

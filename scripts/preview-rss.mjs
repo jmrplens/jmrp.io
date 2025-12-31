@@ -184,26 +184,27 @@ async function generatePreview() {
             ${feed.items
 
               .map((item) => {
-
                 const content = item["content:encoded"] || item.content;
 
-                const enclosure = item.enclosure || (item["media:content"] ? item["media:content"].$ : null);
-
-                
+                const enclosure =
+                  item.enclosure ||
+                  (item["media:content"] ? item["media:content"].$ : null);
 
                 let enclosureHtml = "";
 
-                // If the content already starts with an image (our new structure), we don't need to show enclosure separately 
+                // If the content already starts with an image (our new structure), we don't need to show enclosure separately
 
                 // but for the preview let's keep it consistent.
 
-                if (enclosure && enclosure.url && enclosure.type && enclosure.type.startsWith("image") && !content.includes(enclosure.url)) {
-
-                    enclosureHtml = `<div class="enclosure"><img src="${enclosure.url}" alt="Cover Image"></div>`;
-
+                if (
+                  enclosure &&
+                  enclosure.url &&
+                  enclosure.type &&
+                  enclosure.type.startsWith("image") &&
+                  !content.includes(enclosure.url)
+                ) {
+                  enclosureHtml = `<div class="enclosure"><img src="${enclosure.url}" alt="Cover Image"></div>`;
                 }
-
-      
 
                 return `
 
@@ -221,8 +222,8 @@ async function generatePreview() {
           </div>
         </article>
         `;
-        })
-        .join("")}
+              })
+              .join("")}
     </div>
   </body>
   </html>
