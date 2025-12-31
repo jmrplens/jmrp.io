@@ -294,6 +294,7 @@ export async function GET(context: APIContext) {
         let finalContent = styledHtml;
         let customData = "";
         let enclosure = undefined;
+        let imgUrl = "";
 
         if (post.data.coverImage) {
           try {
@@ -307,7 +308,7 @@ export async function GET(context: APIContext) {
               format: "jpg",
               width: 400,
             });
-            const imgUrl = new URL(
+            imgUrl = new URL(
               opt.src,
               context.site || "https://jmrp.io",
             ).toString();
@@ -317,25 +318,31 @@ export async function GET(context: APIContext) {
             ).toString();
 
             // 1. Prepend image to content for readers that don't support enclosures
-            finalContent = `<div style="margin-bottom: 24px;"><img src="${imgUrl}" alt="${post.data.title}" style="max-width:100%; height:auto; border-radius: 8px;" /></div>${styledHtml}`;
+            const imageHtml = `<img src="${imgUrl}" alt="${post.data.title}" width="${opt.attributes.width}" height="${opt.attributes.height}" style="max-width:100%; height:auto; border-radius: 8px; margin-bottom: 24px;" />`;
+            finalContent = `${imageHtml}${styledHtml}`;
 
             // 2. Set official enclosure (Astro will add the <enclosure> tag)
             enclosure = {
               url: imgUrl,
-              length: 0,
+              length: 1024, // Dummy non-zero length
               type: "image/jpeg",
             };
 
             // 3. Add Media RSS tags for advanced readers
-            customData += `<media:content url="${imgUrl}" medium="image" type="image/jpeg" width="${opt.attributes.width}" height="${opt.attributes.height}" />\n<media:thumbnail url="${thumbUrl}" width="${thumb.attributes.width}" height="${thumb.attributes.height}" />`;
+            customData += `<media:content url="${imgUrl}" medium="image" type="image/jpeg" width="${opt.attributes.width}" height="${opt.attributes.height}" isDefault="true" />\n<media:thumbnail url="${thumbUrl}" width="${thumb.attributes.width}" height="${thumb.attributes.height}" />`;
           } catch (e) {
             console.warn("[RSS] Cover image process failed:", e);
           }
         }
 
+        const itemDescription =
+          post.data.coverImage && imgUrl
+            ? `<img src="${imgUrl}" alt="${post.data.title}"/><br/>${post.data.description || ""}`
+            : post.data.description || "";
+
         return {
           title: post.data.title,
-          description: post.data.description || "",
+          description: itemDescription,
           pubDate: new Date(post.data.publishedDate),
           link: `/blog/${post.slug}/`,
           categories: post.data.tags || [],

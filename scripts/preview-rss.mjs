@@ -181,25 +181,33 @@ async function generatePreview() {
         </div>
       </div>
 
-      ${feed.items
-        .map((item) => {
-          const content = item["content:encoded"] || item.content;
-          const enclosure =
-            item.enclosure ||
-            (item["media:content"] ? item["media:content"].$ : null);
+            ${feed.items
 
-          let enclosureHtml = "";
-          if (
-            enclosure &&
-            enclosure.url &&
-            enclosure.type &&
-            enclosure.type.startsWith("image")
-          ) {
-            enclosureHtml = `<div class="enclosure"><img src="${enclosure.url}" alt="Cover Image"></div>`;
-          }
+              .map((item) => {
 
-          return `
-        <article class="rss-item">
+                const content = item["content:encoded"] || item.content;
+
+                const enclosure = item.enclosure || (item["media:content"] ? item["media:content"].$ : null);
+
+                
+
+                let enclosureHtml = "";
+
+                // If the content already starts with an image (our new structure), we don't need to show enclosure separately 
+
+                // but for the preview let's keep it consistent.
+
+                if (enclosure && enclosure.url && enclosure.type && enclosure.type.startsWith("image") && !content.includes(enclosure.url)) {
+
+                    enclosureHtml = `<div class="enclosure"><img src="${enclosure.url}" alt="Cover Image"></div>`;
+
+                }
+
+      
+
+                return `
+
+              <article class="rss-item">
           ${enclosureHtml}
           <div class="item-header">
             <h2 class="item-title"><a href="${escapeHtml(item.link)}" target="_blank">${escapeHtml(item.title)}</a></h2>
