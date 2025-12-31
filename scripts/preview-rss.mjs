@@ -1,3 +1,13 @@
+/**
+ * RSS Feed Preview Generator
+ *
+ * This script parses the generated RSS XML file and creates a clean HTML preview.
+ * It's useful for verifying how the blog content will look in RSS readers,
+ * especially regarding inline styles, images, and Mermaid diagrams.
+ *
+ * Usage: node scripts/preview-rss.mjs (requires dist/rss.xml to exist)
+ */
+
 import Parser from "rss-parser";
 import fs from "node:fs";
 import path from "node:path";
@@ -23,7 +33,7 @@ async function generatePreview() {
 
   const htmlContent = `
   <!DOCTYPE html>
-  <!-- [html-validate-disable-block no-inline-style, attribute-allowed-values] -->
+  <!-- [html-validate-disable-block no-inline-style, attribute-allowed-values -- RSS content relies on these] -->
   <html lang="en">
   <head>
     <meta charset="UTF-8">

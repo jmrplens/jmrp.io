@@ -1,3 +1,9 @@
+/**
+ * HTML Utilities
+ *
+ * Shared helper functions for HTML manipulation and safety across scripts.
+ */
+
 import he from "he";
 
 /**

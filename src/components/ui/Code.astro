@@ -3,6 +3,9 @@
  * Code Component
  * Displays a code block with support for syntax highlighting and a copy button.
  *
+ * NOTE: We use a <span> with 'display: block' instead of a <code> tag because
+ * MDX often injects <p> tags inside code slots, which is invalid inside <code>.
+ *
  * Usage:
  * <Code lang="javascript">
  *   console.log('Hello');

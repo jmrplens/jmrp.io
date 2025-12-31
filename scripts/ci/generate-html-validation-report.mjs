@@ -1,3 +1,13 @@
+/**
+ * HTML Validation Report Generator
+ *
+ * This script parses the JSON output from html-validate and generates a
+ * user-friendly, modern HTML report. It provides high-level statistics,
+ * aggregates common issue types, and lists detailed errors per file.
+ *
+ * It is used in the CI pipeline to provide visual feedback on HTML quality.
+ */
+
 import fs from "fs";
 import path from "path";
 import { execSync } from "child_process";
@@ -9,7 +19,10 @@ const DIST_DIR = "dist";
 const CONFIG_FILE = ".htmlvalidate.json";
 
 /**
- * Recursively find all HTML files in a directory
+ * Recursively find all HTML files in a directory to ensure 100% coverage reporting.
+ * @param {string} dir - Directory to scan.
+ * @param {string[]} fileList - Accumulated list of files.
+ * @returns {string[]} List of relative paths to HTML files.
  */
 function getAllHtmlFiles(dir, fileList = []) {
   if (!fs.existsSync(dir)) return fileList;
@@ -20,6 +33,7 @@ function getAllHtmlFiles(dir, fileList = []) {
     if (fs.statSync(name).isDirectory()) {
       getAllHtmlFiles(name, fileList);
     } else if (name.endsWith(".html")) {
+      // Use relative paths for consistency across environments
       fileList.push(path.relative(process.cwd(), name));
     }
   });
@@ -27,15 +41,16 @@ function getAllHtmlFiles(dir, fileList = []) {
 }
 
 /**
- * Get active rules from html-validate
+ * Retrieves the active rules from html-validate for documentation in the report.
+ * @returns {Object} Map of active rules and their configurations.
  */
 function getActiveRules() {
   try {
-    // We pick one file to print config for, as rules might vary per file,
-    // but in this project they are mostly global.
-    const firstHtml = getAllHtmlFiles(DIST_DIR)[0];
+    const allFiles = getAllHtmlFiles(DIST_DIR);
+    const firstHtml = allFiles[0];
     if (!firstHtml) return {};
 
+    // Print the effective config for the first file found
     const configJson = execSync(
       `pnpm exec html-validate -c ${CONFIG_FILE} --print-config ${firstHtml}`,
       { encoding: "utf-8" },
@@ -48,6 +63,9 @@ function getActiveRules() {
   }
 }
 
+/**
+ * Main function to generate the HTML report.
+ */
 function generateReport() {
   if (!fs.existsSync(JSON_REPORT)) {
     console.error(`❌ Error: ${JSON_REPORT} not found!`);
@@ -77,13 +95,14 @@ function generateReport() {
   const activeRules = getActiveRules();
   const ruleCount = Object.keys(activeRules).length;
 
-  // Map results by relative path
+  // Create lookup map for files with validation messages
   const resultMap = new Map();
   results.forEach((res) => {
     const relPath = path.relative(process.cwd(), res.filePath);
     resultMap.set(relPath, res);
   });
 
+  // Merge scan results with overall file list
   const files = allFiles.map((filePath) => {
     const res = resultMap.get(filePath);
     return {
@@ -100,6 +119,7 @@ function generateReport() {
     0,
   );
 
+  // Aggregate rule triggers for the "Analysis Overview" section
   const ruleCounts = new Map();
   files.forEach((file) => {
     (file.messages || []).forEach((msg) => {
