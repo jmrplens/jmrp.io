@@ -1,33 +1,11 @@
 import { test, expect } from "@playwright/test";
-import fs from "node:fs";
-import path from "node:path";
-import { parseStringPromise } from "xml2js";
+import { getSitemapUrls } from "./utils";
 
 /**
  * Functional Tests
  * Dynamically generated from the production sitemap.
  * Ensures all pages are accessible and have core layout elements.
  */
-
-const SITEMAP_PATH = path.resolve("dist/sitemap-0.xml");
-
-// Helper to get URLs from sitemap
-async function getSitemapUrls() {
-  if (!fs.existsSync(SITEMAP_PATH)) {
-    console.warn(
-      `Sitemap not found at ${SITEMAP_PATH}. Defaulting to core pages.`,
-    );
-    return ["/", "/blog/", "/cv/", "/publications/", "/services/"];
-  }
-
-  const sitemapContent = fs.readFileSync(SITEMAP_PATH, "utf-8");
-  const parsed = await parseStringPromise(sitemapContent);
-  const urls = parsed.urlset.url.map((u: any) => {
-    const loc = u.loc[0];
-    return new URL(loc).pathname;
-  });
-  return urls;
-}
 
 test.describe("Site-wide Functional Checks", () => {
   let urls: string[] = [];
@@ -38,10 +16,28 @@ test.describe("Site-wide Functional Checks", () => {
 
   // Dynamic tests for every page in the sitemap
   test("check all pages from sitemap", async ({ page }) => {
+    // Listen for console errors
+    const consoleErrors: string[] = [];
+    page.on("console", (msg) => {
+      if (msg.type() === "error") {
+        consoleErrors.push(`[${msg.type()}] ${msg.text()}`);
+      }
+    });
+
+    // Listen for unhandled exceptions
+    const pageErrors: Error[] = [];
+    page.on("pageerror", (exception) => {
+      pageErrors.push(exception);
+    });
+
     for (const url of urls) {
       await test.step(`Checking page: ${url}`, async () => {
         const response = await page.goto(url);
         expect(response?.status()).toBe(200);
+
+        // Fail if there were errors
+        expect(consoleErrors, `Console errors on ${url}`).toEqual([]);
+        expect(pageErrors, `Page errors on ${url}`).toEqual([]);
 
         // Header & Footer should be present on every page
         // Use .first() to avoid strict mode violations if multiple headers/footers exist
