@@ -76,12 +76,15 @@ function generateReport() {
   });
 
   const totalErrors = files.reduce((acc, f) => acc + (f.errorCount ?? 0), 0);
-  const totalWarnings = files.reduce((acc, f) => acc + (f.warningCount ?? 0), 0);
-  
+  const totalWarnings = files.reduce(
+    (acc, f) => acc + (f.warningCount ?? 0),
+    0,
+  );
+
   // Aggregate rules
   const ruleCounts = new Map();
-  files.forEach(file => {
-    (file.messages || []).forEach(msg => {
+  files.forEach((file) => {
+    (file.messages || []).forEach((msg) => {
       if (!msg.ruleId) return;
       const count = ruleCounts.get(msg.ruleId) || 0;
       ruleCounts.set(msg.ruleId, count + 1);
@@ -99,7 +102,9 @@ function generateReport() {
   console.log(`⚠️  Warnings:      ${totalWarnings}`);
   if (sortedRules.length > 0) {
     console.log("🔝 Top Rules:");
-    sortedRules.forEach(([rule, count]) => console.log(`   - ${rule}: ${count}`));
+    sortedRules.forEach(([rule, count]) =>
+      console.log(`   - ${rule}: ${count}`),
+    );
   }
   console.log("-----------------------------------------");
 
@@ -111,9 +116,11 @@ function generateReport() {
     console.log("✅ Validation passed!");
   }
 
-  const statusClass = totalErrors > 0 ? "failed" : (totalWarnings > 0 ? "warning" : "passed");
-  const statusEmoji = totalErrors > 0 ? "❌" : (totalWarnings > 0 ? "⚠️" : "✅");
-  const statusText = totalErrors > 0 ? "Failed" : (totalWarnings > 0 ? "Warnings" : "Passed");
+  const statusClass =
+    totalErrors > 0 ? "failed" : totalWarnings > 0 ? "warning" : "passed";
+  const statusEmoji = totalErrors > 0 ? "❌" : totalWarnings > 0 ? "⚠️" : "✅";
+  const statusText =
+    totalErrors > 0 ? "Failed" : totalWarnings > 0 ? "Warnings" : "Passed";
 
   const html = `
 <!DOCTYPE html>
@@ -331,17 +338,25 @@ function generateReport() {
         </div>
       </div>
       
-      ${sortedRules.length > 0 ? `
+      ${
+        sortedRules.length > 0
+          ? `
       <div class="top-rules">
         <h3>Top Rules Triggered</h3>
-        ${sortedRules.map(([rule, count]) => `
+        ${sortedRules
+          .map(
+            ([rule, count]) => `
           <div class="rule-item">
             <span class="rule-name">${escapeHtml(rule)}</span>
             <span class="rule-count">${count}</span>
           </div>
-        `).join('')}
+        `,
+          )
+          .join("")}
       </div>
-      ` : ''}
+      `
+          : ""
+      }
     </div>
   </header>
 
@@ -355,8 +370,18 @@ function generateReport() {
     ${files
       .map((file) => {
         const isClean = !file.messages || file.messages.length === 0;
-        const fileStatus = (file.errorCount ?? 0) > 0 ? "failed" : ((file.warningCount ?? 0) > 0 ? "warning" : "passed");
-        const fileEmoji = (file.errorCount ?? 0) > 0 ? "🔴" : ((file.warningCount ?? 0) > 0 ? "⚠️" : "✅");
+        const fileStatus =
+          (file.errorCount ?? 0) > 0
+            ? "failed"
+            : (file.warningCount ?? 0) > 0
+              ? "warning"
+              : "passed";
+        const fileEmoji =
+          (file.errorCount ?? 0) > 0
+            ? "🔴"
+            : (file.warningCount ?? 0) > 0
+              ? "⚠️"
+              : "✅";
 
         return `
       <details class="file-card" ${isClean ? "" : "open"}>
@@ -371,9 +396,19 @@ function generateReport() {
         <ul class="messages">
           ${(file.messages || [])
             .map((msg) => {
-              const severityClass = msg.severity === 2 ? "failed" : msg.severity === 1 ? "warning" : "info";
-              const severityText = msg.severity === 2 ? "Error" : msg.severity === 1 ? "Warning" : "Info";
-              
+              const severityClass =
+                msg.severity === 2
+                  ? "failed"
+                  : msg.severity === 1
+                    ? "warning"
+                    : "info";
+              const severityText =
+                msg.severity === 2
+                  ? "Error"
+                  : msg.severity === 1
+                    ? "Warning"
+                    : "Info";
+
               return `
             <li class="message">
               <div class="severity-col">
@@ -403,7 +438,10 @@ function generateReport() {
                   msg.context && typeof msg.context === "object"
                     ? `<div class="context-data">
                         ${Object.entries(msg.context)
-                          .map(([key, val]) => `<div><span class="context-label">${escapeHtml(key)}:</span> <code>${escapeHtml(String(val))}</code></div>`)
+                          .map(
+                            ([key, val]) =>
+                              `<div><span class="context-label">${escapeHtml(key)}:</span> <code>${escapeHtml(String(val))}</code></div>`,
+                          )
                           .join("")}
                        </div>`
                     : ""
