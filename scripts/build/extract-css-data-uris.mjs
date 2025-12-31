@@ -1,3 +1,16 @@
+/**
+ * CSS Data URI Extractor
+ *
+ * This script scans generated CSS and HTML files for embedded base64 Data URIs
+ * (like images or SVG icons) and extracts them into physical files in
+ * 'dist/assets/extracted'.
+ *
+ * Reasons for extraction:
+ * 1. Performance: Allows browser caching of assets.
+ * 2. Security: Enables a stricter CSP by avoiding large inline data blocks.
+ * 3. Optimization: SVGs are automatically optimized using SVGO before saving.
+ */
+
 import fs from "node:fs";
 import path from "node:path";
 import { glob } from "glob";
@@ -8,8 +21,7 @@ const DIST_DIR = process.argv[2] || process.env.DIST_DIR || "dist";
 const ASSETS_DIR = "assets/extracted";
 const TARGET_DIR = path.join(DIST_DIR, ASSETS_DIR);
 
-// Regex to capture url("data:...") or url('data:...') or url(data:...)
-// Pattern is bounded by ) which prevents catastrophic backtracking
+// Regex to capture url("data:...") blocks in CSS/HTML
 const DATA_URI_REGEX =
   /url\(\s*(['"]?)data:([^;,]+)(;base64)?\s*,\s*([^)]*)\1\s*\)/gi; // NOSONAR javascript:S5852
 
@@ -21,9 +33,8 @@ async function extractDataUris() {
     fs.mkdirSync(TARGET_DIR, { recursive: true });
   }
 
-  // 1. Scan CSS files
+  // Scan CSS and HTML (for inline styles)
   const cssFiles = await glob(`${DIST_DIR}/**/*.css`);
-  // 2. Scan HTML files (for inline styles)
   const htmlFiles = await glob(`${DIST_DIR}/**/*.html`);
 
   const allFiles = [...cssFiles, ...htmlFiles];
@@ -33,25 +44,20 @@ async function extractDataUris() {
     let content = fs.readFileSync(file, "utf-8");
     let modified = false;
 
-    // We need to use a loop with replace or matchAll to handle multiple occurrences
-    // Using replace with a callback is safer for string manipulation
     content = content.replaceAll(
       DATA_URI_REGEX,
       (fullMatch, quote, mime, encoding, data) => {
         try {
-          // Decode data
+          // Decode data based on encoding
           let buffer;
           if (encoding === ";base64") {
             buffer = Buffer.from(data, "base64");
           } else {
-            // It's likely URI encoded (percent encoding)
-            // Sometimes data in CSS might have escaped characters, standard decodeURIComponent should work
-            // but we might need to handle specific CSS escaping if present.
-            // Usually for SVG in CSS it's just %3C...
+            // Percent-encoded URI data
             buffer = Buffer.from(decodeURIComponent(data.trim()));
           }
 
-          // Determine extension
+          // Determine file extension
           let ext = "bin";
           if (mime.includes("svg")) ext = "svg";
           else if (mime.includes("png")) ext = "png";
@@ -59,7 +65,7 @@ async function extractDataUris() {
           else if (mime.includes("gif")) ext = "gif";
           else if (mime.includes("webp")) ext = "webp";
 
-          // Generate Hash for filename
+          // Generate deterministic filename based on content hash
           const hash = crypto
             .createHash("sha256")
             .update(buffer)
@@ -68,9 +74,10 @@ async function extractDataUris() {
           const filename = `${hash}.${ext}`;
           const filePath = path.join(TARGET_DIR, filename);
 
-          // Write file if it doesn't exist (deduplication)
+          // deduplication check
           if (!fs.existsSync(filePath)) {
             if (ext === "svg") {
+              // Optimize SVG files
               try {
                 const svgString = buffer.toString("utf-8");
                 const optimized = optimize(svgString, {
@@ -79,14 +86,7 @@ async function extractDataUris() {
                     {
                       name: "preset-default",
                       params: {
-                        overrides: {
-                          cleanupNumericValues: false,
-                        },
-                        cleanupIDs: {
-                          minify: false,
-                          remove: false,
-                        },
-                        convertPathData: false,
+                        overrides: { cleanupNumericValues: false },
                       },
                     },
                     "sortAttrs",
@@ -98,14 +98,10 @@ async function extractDataUris() {
                     },
                   ],
                 });
-                if (optimized.data) {
-                  fs.writeFileSync(filePath, optimized.data);
-                } else {
-                  fs.writeFileSync(filePath, buffer);
-                }
+                fs.writeFileSync(filePath, optimized.data || buffer);
               } catch (e) {
                 console.warn(
-                  `SVGO optimization failed for extracted SVG, using raw: ${e.message}`,
+                  `SVGO optimization failed for ${filename}: ${e.message}`,
                 );
                 fs.writeFileSync(filePath, buffer);
               }
@@ -115,18 +111,13 @@ async function extractDataUris() {
             totalExtracted++;
           }
 
-          // Construct new URL
-          // We need the path relative to the site root for the CSS/HTML
           const newUrl = `/${ASSETS_DIR}/${filename}`;
-
           modified = true;
-          // Return the new CSS url(...)
-          // Maintain the original quote style if present, or use double quotes
           const q = quote || '"';
           return `url(${q}${newUrl}${q})`;
         } catch (err) {
           console.warn(`Failed to process Data URI in ${file}: ${err.message}`);
-          return fullMatch; // Do not replace if error
+          return fullMatch;
         }
       },
     );

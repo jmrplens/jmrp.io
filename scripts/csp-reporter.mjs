@@ -1,3 +1,18 @@
+/**
+ * CSP Violation Reporter Server
+ *
+ * A simple HTTP server that listens for Content-Security-Policy (CSP) violation reports.
+ *
+ * Key Features:
+ * - Logs all violations to a local file (logs/csp-violations.log).
+ * - Sends instant notifications to a Telegram chat using a bot.
+ * - Implements basic rate limiting to avoid spamming Telegram during attacks.
+ * - Handles Payload Too Large (413) and Invalid JSON (400) errors gracefully.
+ *
+ * Setup:
+ * Requires TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID in environment variables or .env file.
+ */
+
 import http from "http";
 import https from "https";
 import fs from "fs";
@@ -7,6 +22,9 @@ import { dirname, join } from "path";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+/**
+ * Loads environment variables from .env file manually
+ */
 function loadEnv() {
   const envPath = join(__dirname, "../.env");
   if (fs.existsSync(envPath)) {
@@ -40,7 +58,7 @@ const PORT = (() => {
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 const LOG_FILE = join(__dirname, "../logs/csp-violations.log");
-const RATE_LIMIT_WINDOW = 10 * 60 * 1000; // 10 minutes
+const RATE_LIMIT_WINDOW = 10 * 60 * 1000; // 10 minutes window for repeated reports
 const MAX_BODY_SIZE = 10 * 1024; // 10KB limit for CSP reports
 
 // In-memory cache for rate limiting: { "ip:blocked-uri": last_timestamp }
@@ -63,6 +81,9 @@ if (!fs.existsSync(logDir)) {
   fs.mkdirSync(logDir, { recursive: true });
 }
 
+/**
+ * Main HTTP Server
+ */
 const server = http.createServer((req, res) => {
   if (req.method === "POST") {
     let body = "";
@@ -95,7 +116,7 @@ const server = http.createServer((req, res) => {
         res.writeHead(204);
         res.end();
       } catch (e) {
-        console.error("Error parsing CSP report:", e);
+        console.error("Error parsing CSP report JSON:", e.message);
         res.writeHead(400);
         res.end("Invalid JSON");
       }
@@ -106,6 +127,9 @@ const server = http.createServer((req, res) => {
   }
 });
 
+/**
+ * Processes the received report and handles logging/notification
+ */
 function processReport(report, ip, ua) {
   const r = report["csp-report"] || report;
   if (!r) return;
@@ -114,7 +138,7 @@ function processReport(report, ip, ua) {
   const cacheKey = `${ip}:${blockedUri}`;
   const now = Date.now();
 
-  // Log everything to file
+  // Log everything to file for audit history
   const logEntry =
     JSON.stringify({
       timestamp: new Date().toISOString(),
@@ -127,7 +151,7 @@ function processReport(report, ip, ua) {
     if (err) console.error("Error writing to log file:", err);
   });
 
-  // Rate limit Telegram notifications
+  // Rate limit Telegram notifications to prevent flooding during attacks or dev issues
   const lastReport = reportCache.get(cacheKey);
   if (lastReport && now - lastReport < RATE_LIMIT_WINDOW) {
     return;
@@ -145,10 +169,13 @@ function processReport(report, ip, ua) {
   }
 }
 
+/**
+ * Escapes HTML for Telegram message compatibility
+ */
 function escapeHTML(str) {
   if (!str) return "N/A";
   return str.replace(
-    /[&<>"]'/g,
+    /[&<>"']/g,
     (m) =>
       ({
         "&": "&amp;",
@@ -160,6 +187,9 @@ function escapeHTML(str) {
   );
 }
 
+/**
+ * Sends the violation report to Telegram
+ */
 function sendToTelegram(report, ip, ua) {
   const r = report["csp-report"] || report;
   const date = new Date().toLocaleString("en-GB", {

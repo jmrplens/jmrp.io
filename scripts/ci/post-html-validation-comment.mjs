@@ -1,3 +1,11 @@
+/**
+ * GitHub Comment Poster: HTML5 Validation
+ *
+ * Integration script for GitHub Actions.
+ * Reads 'html-validation.json' and posts a summary of HTML5 compliance
+ * for all generated pages as a PR comment.
+ */
+
 import fs from "fs";
 
 export default async ({ github, context }) => {
@@ -9,16 +17,8 @@ export default async ({ github, context }) => {
       let rawContent = fs.readFileSync("html-validation.json", "utf8").trim();
 
       if (!rawContent || rawContent === "undefined") {
-        if (fs.existsSync("html-errors.log")) {
-          const errors = fs.readFileSync("html-errors.log", "utf8");
-          comment =
-            "### ⚠️ HTML5 Validation\n\n**Validation failed to run correctly.**\n\n<details>\n<summary><b>📄 View Error Log</b></summary>\n\n```\n" +
-            errors.slice(0, 1000) +
-            "\n```\n</details>";
-        } else {
-          comment =
-            "### ⚠️ HTML5 Validation\n\n> Report is empty or undefined. Check build logs.";
-        }
+        comment =
+          "### ⚠️ HTML5 Validation\n\n> Report is empty or undefined. Check build logs.";
       } else {
         try {
           const report = JSON.parse(rawContent);
@@ -49,7 +49,7 @@ export default async ({ github, context }) => {
           comment += "\n";
 
           if (filesWithErrors.length > 0) {
-            comment +
+            comment +=
               "<details>\n<summary><b>🔍 View Detailed Issues (Top 10)</b></summary>\n\n";
             filesWithErrors.slice(0, 10).forEach((f) => {
               const fileName = f.filePath.replace("dist/", "").split("/").pop();

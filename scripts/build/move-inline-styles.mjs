@@ -1,3 +1,16 @@
+/**
+ * Inline Style to Class Converter
+ *
+ * This script scans generated HTML for inline 'style' attributes and moves
+ * them into a <style> block in the <head>.
+ *
+ * Purpose:
+ * - Content-Security-Policy (CSP) Compliance: Allows using a strict CSP without
+ *   'unsafe-inline' by hashing or noncing the resulting <style> blocks.
+ * - Deduplication: Identical inline styles across elements are consolidated
+ *   into a single CSS class.
+ */
+
 import fs from "node:fs";
 import { glob } from "glob";
 import crypto from "node:crypto";
@@ -17,27 +30,17 @@ async function moveInlineStyles() {
 
     const styleToClassMap = new Map();
 
-    // Regex explanation:
-    // Pattern is bounded by > which prevents catastrophic backtracking
-    // 1. (<[\w-]+)       : Match tag start (e.g. <div)
-    // 2. ([^>]*)         : Match pre-attributes (greedy, safe - bounded by >)
-    // 3. \s+style=       : Match style attribute start (must be preceded by space)
-    // 4. (["'])          : Match quote (group 3)
-    // 5. (.*?)           : Match style content (group 4) - lazy needed here to stop at quote
-    // 6. \3              : Match closing quote (backreference)
-    // 7. ([^>]*)(>)      : Match post-attributes and closing bracket (group 5, 6) - greedy safe
+    // Regex to capture elements with 'style' attribute
     const TAG_REGEX = /(<[\w-]+)([^>]*)\s+style=(["'])(.*?)\3([^>]*)(>)/gi; // NOSONAR javascript:S5852
 
     content = content.replaceAll(
       TAG_REGEX,
       (_match, tagStart, preAttrs, _quote, styleContent, postAttrs, tagEnd) => {
-        // Normalize attributes to strings (undefined guard)
         preAttrs = preAttrs || "";
         postAttrs = postAttrs || "";
 
-        // Generate class name
+        // Generate short deterministic class name from style content
         if (!styleToClassMap.has(styleContent)) {
-          // Short deterministic hash
           const hash = crypto
             .createHash("shake256", { outputLength: 4 })
             .update(styleContent)
@@ -49,17 +52,14 @@ async function moveInlineStyles() {
         modified = true;
         totalReplacements++;
 
-        // Helper to check and inject class
         const classAttrRegex = /class=(["'])(.*?)\1/;
         const injectClass = (attrs) => {
           return attrs.replace(classAttrRegex, (m, q, c) => {
-            // Avoid duplicate classes if rerunning
             if (c.split(/\s+/).includes(newClassName)) return m;
             return `class=${q}${c} ${newClassName}${q}`;
           });
         };
 
-        // Check if class attribute exists in pre or post attributes
         if (classAttrRegex.test(preAttrs)) {
           preAttrs = injectClass(preAttrs);
           return `${tagStart}${preAttrs}${postAttrs}${tagEnd}`;
@@ -67,8 +67,6 @@ async function moveInlineStyles() {
           postAttrs = injectClass(postAttrs);
           return `${tagStart}${preAttrs}${postAttrs}${tagEnd}`;
         } else {
-          // No existing class attribute, append new one (convention: after preAttrs)
-          // Ensure space if preAttrs is not empty/space already (it captures leading space)
           return `${tagStart}${preAttrs} class="${newClassName}"${postAttrs}${tagEnd}`;
         }
       },
@@ -80,10 +78,9 @@ async function moveInlineStyles() {
         cssRules += `.${className}{${styleDef}}`;
       }
 
-      // The nonce placeholder is exactly "NGINX_CSP_NONCE" based on user's setup
+      // Add Nginx nonce placeholder for CSP compatibility
       const styleBlock = `<style nonce="NGINX_CSP_NONCE">${cssRules}</style>`;
 
-      // Insert before </head>
       if (content.includes("</head>")) {
         content = content.replace("</head>", `${styleBlock}</head>`);
       } else {

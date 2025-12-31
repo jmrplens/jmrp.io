@@ -1,3 +1,17 @@
+/**
+ * Lighthouse Report Formatter
+ *
+ * This script processes the raw JSON output from Lighthouse CI, calculates
+ * median scores across multiple runs, and generates a GitHub-flavored Markdown
+ * summary for use in PR comments.
+ *
+ * Features:
+ * - Groups results by URL and calculates median scores for reliability.
+ * - Highlights pages falling below the performance threshold (95%).
+ * - Generates a site-wide summary table with icons.
+ * - Supports theme-specific reporting (Light/Dark mode).
+ */
+
 import fs from "node:fs";
 import path from "node:path";
 
@@ -5,13 +19,14 @@ const lhciDir = "./.lighthouseci";
 const linksPath = path.join(lhciDir, "links.json");
 const THRESHOLD = 95;
 
-// Helper: Map URL to a friendly Page Name
+/**
+ * Map URL to a human-friendly Page Name
+ */
 const getPageName = (url) => {
   try {
     const urlObj = new URL(url);
     let pathName = urlObj.pathname;
 
-    // Normalize: remove trailing slash if present (but keep root /)
     if (pathName.length > 1 && pathName.endsWith("/")) {
       pathName = pathName.slice(0, -1);
     }
@@ -23,22 +38,20 @@ const getPageName = (url) => {
     if (pathName === "/github") return "GitHub";
     if (pathName === "/blog") return "Blog Index";
 
-    // Check for blog posts
     if (pathName.startsWith("/blog/")) {
       const slug = pathName.split("/").pop();
-      // Capitalize for nicer display
-      const friendlySlug = slug.charAt(0).toUpperCase() + slug.slice(1);
-      return "Post: " + friendlySlug;
+      return "Post: " + slug.charAt(0).toUpperCase() + slug.slice(1);
     }
 
-    // Fallback: return path
     return pathName;
   } catch (e) {
     return "Unknown";
   }
 };
 
-// Identify Core Pages (for linking purposes)
+/**
+ * Filter for Core Pages
+ */
 const isCorePage = (url) => {
   const name = getPageName(url);
   return [
@@ -57,14 +70,13 @@ try {
     process.exit(0);
   }
 
-  // 1. Get Scores
+  // 1. Extract Scores from Manifest or LHR files
   let manifest = [];
   const manifestPath = path.join(lhciDir, "manifest.json");
 
   if (fs.existsSync(manifestPath)) {
     manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
   } else {
-    // Fallback: find all lhr-*.json files
     const files = fs.readdirSync(lhciDir);
     const jsonFiles = files.filter(
       (f) => f.startsWith("lhr-") && f.endsWith(".json"),
@@ -72,7 +84,6 @@ try {
     manifest = jsonFiles.map((f) => ({ jsonPath: path.join(lhciDir, f) }));
   }
 
-  // Group by URL
   const groupedResults = {};
 
   manifest.forEach((run) => {
@@ -94,7 +105,7 @@ try {
     process.exit(0);
   }
 
-  // Calculate Median Scores per Page
+  // 2. Calculate Median Scores per Page
   const pageScores = {};
   const failedPages = [];
 
@@ -113,32 +124,25 @@ try {
       const finalScore = Math.round(median);
 
       pageScores[url][cat] = finalScore;
-
-      if (finalScore < THRESHOLD) {
-        hasFailure = true;
-      }
+      if (finalScore < THRESHOLD) hasFailure = true;
     });
 
-    if (hasFailure) {
-      failedPages.push(url);
-    }
+    if (hasFailure) failedPages.push(url);
   });
 
-  // 2. Get Links
+  // 3. Output Generation (Markdown)
   let links = {};
   if (fs.existsSync(linksPath)) {
     links = JSON.parse(fs.readFileSync(linksPath, "utf8"));
   }
 
-  // --- OUTPUT GENERATION ---
-
   const theme = process.env.THEME || "unknown";
-
-  const themeNames = {
-    light: "☀️ Light Mode",
-    dark: "🌙 Dark Mode",
-  };
-  const themeName = themeNames[theme] || "Report";
+  const themeName =
+    theme === "light"
+      ? "☀️ Light Mode"
+      : theme === "dark"
+        ? "🌙 Dark Mode"
+        : "Report";
 
   console.log(`### 🌓 Lighthouse Analysis (${themeName})`);
 
@@ -159,7 +163,6 @@ try {
   const allUrls = Object.keys(pageScores);
   const coreUrls = allUrls.filter(isCorePage);
 
-  // SECTION 1: Global Summary
   console.log("\n#### 📊 Site Summary (Median)");
   console.log("| Metric | Score | Lowest |");
   console.log("| :--- | :---: | :--- |");
@@ -167,7 +170,6 @@ try {
   categories.forEach((cat) => {
     if (!allUrls.some((u) => pageScores[u][cat] !== undefined)) return;
 
-    // Site Median
     const catScores = allUrls.map((u) => pageScores[u][cat]);
     catScores.sort((a, b) => a - b);
     const mid = Math.floor(catScores.length / 2);
@@ -177,7 +179,6 @@ try {
         : (catScores[mid - 1] + catScores[mid]) / 2,
     );
 
-    // Lowest Score
     const minScore = Math.min(...catScores);
     const worstUrl = allUrls.find((u) => pageScores[u][cat] === minScore);
     const worstName = getPageName(worstUrl);
@@ -189,7 +190,6 @@ try {
     );
   });
 
-  // SECTION 2: Alerts
   if (failedPages.length > 0) {
     console.log(
       "\n<details>\n<summary><b>⚠️ View Performance Alerts</b></summary>\n",
@@ -210,7 +210,6 @@ try {
     console.log(`\n✅ **All pages met the ${THRESHOLD}% threshold!**`);
   }
 
-  // SECTION 3: Links
   const relevantUrls = new Set([...coreUrls, ...failedPages]);
   const relevantLinks = Object.keys(links).filter((url) =>
     relevantUrls.has(url),

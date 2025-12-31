@@ -1,3 +1,11 @@
+/**
+ * GitHub Comment Poster: RSS Validation
+ *
+ * Integration script for GitHub Actions.
+ * Reads 'rss-validation.json' and posts a summary of the RSS feed status,
+ * including its size, item count, and any specification violations.
+ */
+
 import fs from "fs";
 
 export default async ({ github, context }) => {
@@ -13,10 +21,6 @@ export default async ({ github, context }) => {
 
       comment = `### 📡 RSS Feed Validation\n\n${icon} ${status}\n\n`;
 
-      if (surgeUrl) {
-        comment += `> 🚀 [**Open Live RSS Preview**](https://${surgeUrl}) ✨\n\n`;
-      }
-
       comment += "| Property | Detail |\n";
       comment += "| :--- | :--- |\n";
       comment += "| 📄 File | `rss.xml` |\n";
@@ -26,6 +30,11 @@ export default async ({ github, context }) => {
       if (report.metadata.latestItem) {
         comment += `| 🆕 Latest | \"${report.metadata.latestItem.title}\" |\n`;
       }
+
+      if (surgeUrl) {
+        comment += `| 🌐 Full Preview | [**Open Live RSS Preview**](https://${surgeUrl}) 🚀 |\n`;
+      }
+
       comment += "\n";
 
       if (report.errors.length > 0 || report.warnings.length > 0) {

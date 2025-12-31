@@ -1,9 +1,15 @@
-#!/usr/bin/env node
-
 /**
  * RSS Feed Validator
- * Validates RSS feed against RSS 2.0 specification
- * Uses both xml2js (structure) and rss-parser (consumption)
+ *
+ * Validates the generated RSS feed (rss.xml) against the RSS 2.0 specification.
+ * It uses 'xml2js' for structural integrity and 'rss-parser' to simulate
+ * consumption by real-world RSS readers.
+ *
+ * Checks:
+ * - Presence of required RSS elements (<rss>, <channel>, etc.).
+ * - Version compatibility.
+ * - Date and URL format validity for all posts.
+ * - Basic metadata consistency.
  */
 
 import fs from "fs";
@@ -30,7 +36,6 @@ async function validateRSS() {
     },
   };
 
-  // Check file exists
   if (!fs.existsSync(RSS_FILE)) {
     results.errors.push(`RSS feed not found: ${RSS_FILE}`);
     writeResults(results);
@@ -39,8 +44,9 @@ async function validateRSS() {
 
   results.size = (fs.statSync(RSS_FILE).size / 1024).toFixed(2);
 
-  // 1. Structural Validation (xml2js)
   const content = fs.readFileSync(RSS_FILE, "utf-8");
+
+  // 1. Structural Validation (xml2js)
   try {
     const feedXml = await parseStringPromise(content);
 
@@ -58,7 +64,6 @@ async function validateRSS() {
         results.errors.push("Missing <channel> element");
       } else {
         const channel = rss.channel[0];
-        // Check atom:link
         if (!channel["atom:link"]) {
           results.warnings.push('Missing <atom:link rel="self">');
         }
@@ -68,7 +73,7 @@ async function validateRSS() {
     results.errors.push(`XML Parsing Error: ${error.message}`);
   }
 
-  // 2. Consumption & Data Validation (rss-parser)
+  // 2. Data Validation (rss-parser)
   const parser = new Parser();
   try {
     const feed = await parser.parseString(content);
@@ -83,10 +88,8 @@ async function validateRSS() {
         date: latest.pubDate,
       };
 
-      // Validate Dates and URLs
       feed.items.forEach((item, i) => {
         const idx = i + 1;
-        // Date
         if (item.pubDate) {
           const date = new Date(item.pubDate);
           if (isNaN(date.getTime())) {
@@ -98,7 +101,6 @@ async function validateRSS() {
           results.warnings.push(`Item ${idx}: Missing pubDate`);
         }
 
-        // Link
         if (item.link) {
           try {
             new URL(item.link);
@@ -112,16 +114,11 @@ async function validateRSS() {
     results.errors.push(`RSS Parser Error: ${error.message}`);
   }
 
-  // Final Decision
   results.valid = results.errors.length === 0;
 
-  // Report to Console
   if (results.valid) {
     console.log("✅ RSS feed is valid!");
     console.log(`   Items: ${results.metadata.items}`);
-    console.log(
-      `   Latest: ${results.metadata.latestItem?.title} (${results.metadata.latestItem?.date})`,
-    );
   } else {
     console.log(
       `❌ RSS validation failed with ${results.errors.length} errors.`,

@@ -1,3 +1,15 @@
+/**
+ * HTML Image Data URI Extractor
+ *
+ * This script identifies <img> and <source> tags with embedded base64 Data URIs
+ * in the 'src' or 'srcset' attributes and extracts them into physical files.
+ *
+ * Purpose:
+ * - Reduces HTML document size significantly.
+ * - Enables browser caching for extracted assets.
+ * - Compatible with SRI and CSP security headers.
+ */
+
 import fs from "node:fs";
 import path from "node:path";
 import { glob } from "glob";
@@ -7,24 +19,16 @@ const DIST_DIR = process.argv[2] || process.env.DIST_DIR || "dist";
 const ASSETS_DIR = "assets/extracted";
 const TARGET_DIR = path.join(DIST_DIR, ASSETS_DIR);
 
-// Capture generic img tags with src attribute
-// We catch the whole tag to be able to replace the src attribute correctly within it
-// Group 1: Attributes before src
-// Group 2: Quote char (" or ')
-// Group 3: The content of src
-// Group 4: Attributes after src
 const IMG_TAG_REGEX = /<img([^>]*)\bsrc=(["'])(.*?)\2([^>]*)>/gi; // NOSONAR javascript:S5852
 const SOURCE_TAG_REGEX = /<source([^>]*)\bsrcset=(["'])(.*?)\2([^>]*)>/gi; // NOSONAR javascript:S5852
 
 async function extractHtmlImgDataUris() {
   console.log("Starting HTML Image Data URI extraction...");
 
-  // Ensure target directory exists
   if (!fs.existsSync(TARGET_DIR)) {
     fs.mkdirSync(TARGET_DIR, { recursive: true });
   }
 
-  // Scan HTML files
   const htmlFiles = await glob(`${DIST_DIR}/**/*.html`);
   let totalExtracted = 0;
 
@@ -33,33 +37,22 @@ async function extractHtmlImgDataUris() {
     let modified = false;
 
     const replacer = (fullMatch, preAttrs, quote, srcContent, postAttrs) => {
-      // Check if it is a Data URI
-      if (!srcContent.trim().startsWith("data:")) {
-        return fullMatch;
-      }
+      if (!srcContent.trim().startsWith("data:")) return fullMatch;
 
       try {
-        // Parse Data URI manually
-        // Format: data:[<mediatype>][;base64],<data>
         const commaIndex = srcContent.indexOf(",");
         if (commaIndex === -1) return fullMatch;
 
-        const metadata = srcContent.substring(5, commaIndex); // remove 'data:'
+        const metadata = srcContent.substring(5, commaIndex);
         const rawData = srcContent.substring(commaIndex + 1);
 
         const isBase64 = metadata.endsWith(";base64");
         const mimeType = isBase64 ? metadata.slice(0, -7) : metadata;
 
-        // Decode data
-        let buffer;
-        if (isBase64) {
-          buffer = Buffer.from(rawData, "base64");
-        } else {
-          // URI encoded
-          buffer = Buffer.from(decodeURIComponent(rawData.trim()));
-        }
+        let buffer = isBase64
+          ? Buffer.from(rawData, "base64")
+          : Buffer.from(decodeURIComponent(rawData.trim()));
 
-        // Determine extension
         let ext = "bin";
         if (mimeType.includes("svg")) ext = "svg";
         else if (mimeType.includes("png")) ext = "png";
@@ -68,7 +61,6 @@ async function extractHtmlImgDataUris() {
         else if (mimeType.includes("gif")) ext = "gif";
         else if (mimeType.includes("webp")) ext = "webp";
 
-        // Generate Hash for filename
         const hash = crypto
           .createHash("sha256")
           .update(buffer)
@@ -77,28 +69,23 @@ async function extractHtmlImgDataUris() {
         const filename = `${hash}.${ext}`;
         const filePath = path.join(TARGET_DIR, filename);
 
-        // Write file if it doesn't exist (deduplication)
         if (!fs.existsSync(filePath)) {
           fs.writeFileSync(filePath, buffer);
           totalExtracted++;
         }
 
-        // Construct new URL
         const newUrl = `/${ASSETS_DIR}/${filename}`;
         modified = true;
 
-        let tagName = "img";
-        let attrName = "src";
-        if (fullMatch.toLowerCase().startsWith("<source")) {
-          tagName = "source";
-          attrName = "srcset";
-        }
+        let tagName = fullMatch.toLowerCase().startsWith("<source")
+          ? "source"
+          : "img";
+        let attrName = tagName === "source" ? "srcset" : "src";
 
-        // Reconstruct the tag
         return `<${tagName}${preAttrs} ${attrName}=${quote}${newUrl}${quote}${postAttrs}>`;
       } catch (err) {
         console.warn(`Failed to process Data URI in ${file}: ${err.message}`);
-        return fullMatch; // Do not replace if error
+        return fullMatch;
       }
     };
 

@@ -1,10 +1,20 @@
+/**
+ * Image Optimization Audit
+ *
+ * This script scans the production 'dist' directory to detect unoptimized images
+ * (PNG/JPG) and oversized assets (>500KB). It generates an HTML report
+ * to help maintain a lightweight and high-performance site.
+ */
+
 import fs from "fs";
 import { execSync } from "child_process";
 
 const generateReport = () => {
+  /**
+   * Helper to find files using shell 'find'
+   */
   const findFiles = (pattern) => {
     try {
-      // Add || true to prevent execSync from throwing when no files match
       const output = execSync(
         `find dist -type f ${pattern} 2>/dev/null || echo ""`,
         { encoding: "utf-8" },
@@ -15,9 +25,11 @@ const generateReport = () => {
     }
   };
 
+  /**
+   * Helper to find files using regex 'grep'
+   */
   const findWithGrep = (pattern) => {
     try {
-      // grep returns 1 if no matches found, which throws in execSync. We use || true.
       const output = execSync(
         `find dist -type f 2>/dev/null | grep -iE "${pattern}" || echo ""`,
         { encoding: "utf-8" },
@@ -53,7 +65,7 @@ const generateReport = () => {
 
   const html = `
   <!DOCTYPE html>
-  <html>
+  <html lang="en">
   <head>
     <meta charset="utf-8">
     <title>Image Optimization Report</title>
