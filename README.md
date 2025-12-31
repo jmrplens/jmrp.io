@@ -173,7 +173,10 @@ The project includes advanced Nginx configuration for security headers and asset
   - PWA Metadatas (Favicons, Icons, and Web Manifest).
   - Multimedia assets (`<img>`, `<video>`, `<audio>`, `<source>`).
 - **CSP (Content Security Policy)**: Uses a combined strategy of request-specific `nonce` (injected via Nginx `sub_filter`) and SHA-512 hashes for all scripts and styles.
-  - _Note_: Requires increasing Nginx header buffers (`large_client_header_buffers`) to support the large CSP header size resulting from SHA-512 hashes.
+  - **Features**:
+    - **SHA-512 Hashing**: Upgraded from SHA-384 for stronger security.
+    - **Automatic Splitting**: Splits long CSP header strings into multiple Nginx variables to avoid "too long parameter" errors.
+    - **Nginx Reload**: Automatically reloads Nginx after updating the configuration.
 - **Incident Reporting**: Real-time monitoring of security violations:
   - **CSP Violations**: Natively reported by the browser.
   - **SRI Failures**: Tracked via a custom event listener (`SRIEventListener.astro`) that captures integrity validation errors.
