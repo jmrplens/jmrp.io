@@ -184,32 +184,35 @@ async function generatePreview() {
                   ${feed.items
 
                     .map((item) => {
-
                       let content = item["content:encoded"] || item.content;
 
                       // Make absolute URLs relative for preview consistency (loads from current build/deploy)
 
                       // Using ./ allows it to work even when opened directly via file:// protocol
 
-                      content = content.replaceAll("https://jmrp.io/", "./"); 
+                      content = content.replaceAll("https://jmrp.io/", "./");
 
-            
-
-                      const enclosure = item.enclosure || (item["media:content"] ? item["media:content"].$ : null);
-
-                      
+                      const enclosure =
+                        item.enclosure ||
+                        (item["media:content"]
+                          ? item["media:content"].$
+                          : null);
 
                       let enclosureHtml = "";
 
-                      if (enclosure && enclosure.url && enclosure.type && enclosure.type.startsWith("image")) {
+                      if (
+                        enclosure &&
+                        enclosure.url &&
+                        enclosure.type &&
+                        enclosure.type.startsWith("image")
+                      ) {
+                        const localUrl = enclosure.url.replace(
+                          "https://jmrp.io/",
+                          "./",
+                        );
 
-                          const localUrl = enclosure.url.replace("https://jmrp.io/", "./");
-
-                          enclosureHtml = `<div class="enclosure"><img src="${localUrl}" alt="Cover Image"></div>`;
-
+                        enclosureHtml = `<div class="enclosure"><img src="${localUrl}" alt="Cover Image"></div>`;
                       }
-
-            
 
                       return `
 
@@ -227,8 +230,8 @@ async function generatePreview() {
           </div>
         </article>
         `;
-        })
-        .join("")}
+                    })
+                    .join("")}
     </div>
   </body>
   </html>
