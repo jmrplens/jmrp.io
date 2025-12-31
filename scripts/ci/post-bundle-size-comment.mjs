@@ -20,18 +20,12 @@ export default async ({ github, context }) => {
     commentBody += `| 🎨 CSS | ${stats.categories.css.readableSize} | ${stats.categories.css.count} |\n`;
     commentBody += `| 📄 HTML | ${stats.categories.html.readableSize} | ${stats.categories.html.count} |\n`;
     commentBody += `| 🖼️ Images | ${stats.categories.image.readableSize} | ${stats.categories.image.count} |\n`;
-    commentBody += `| 🔤 Fonts | ${stats.categories.font.readableSize} | ${stats.categories.font.count} |\n\n`;
-
-    // Warnings
-    if (stats.warnings.length > 0) {
-      commentBody += "#### ⚠️ Large Files Detected\n\n";
-      commentBody += "| File | Size | Limit |\n";
-      commentBody += "| :--- | :--- | :--- |\n";
-      stats.warnings.forEach((w) => {
-        commentBody += `| \`${w.file}\` | **${w.size}** | ${w.limit} |\n`;
-      });
-      commentBody += "\n";
+    commentBody += `| 📑 PDFs | ${stats.categories.pdf.readableSize} | ${stats.categories.pdf.count} |\n`;
+    commentBody += `| 🔤 Fonts | ${stats.categories.font.readableSize} | ${stats.categories.font.count} |\n`;
+    if (stats.categories.other.count > 0) {
+      commentBody += `| 📦 Other | ${stats.categories.other.readableSize} | ${stats.categories.other.count} |\n`;
     }
+    commentBody += "\n";
 
     // Largest Assets Detail
     commentBody +=
@@ -54,6 +48,8 @@ export default async ({ github, context }) => {
     commentBody += printCategory("JavaScript", stats.categories.js);
     commentBody += printCategory("CSS", stats.categories.css);
     commentBody += printCategory("Images", stats.categories.image);
+    commentBody += printCategory("PDFs", stats.categories.pdf);
+    commentBody += printCategory("Other", stats.categories.other);
 
     commentBody += "</details>\n";
 

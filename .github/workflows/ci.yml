@@ -226,6 +226,8 @@ jobs:
     name: Bundle Size Check
     runs-on: ubuntu-latest
     needs: build
+    permissions:
+      pull-requests: write
     steps:
       - uses: actions/checkout@v6
       - name: Download build artifact

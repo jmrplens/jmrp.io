@@ -5,14 +5,6 @@ import { glob } from "glob";
 const DIST_DIR = "dist";
 const OUTPUT_FILE = "bundle-analysis.json";
 
-// Thresholds in KB
-const THRESHOLDS = {
-  js: 200,
-  css: 50,
-  html: 50,
-  image: 300,
-};
-
 function formatSize(bytes) {
   if (bytes < 1024) return bytes + " B";
   if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + " KB";
@@ -37,9 +29,9 @@ async function analyze() {
       html: { size: 0, count: 0, files: [] },
       image: { size: 0, count: 0, files: [] },
       font: { size: 0, count: 0, files: [] },
+      pdf: { size: 0, count: 0, files: [] },
       other: { size: 0, count: 0, files: [] },
     },
-    warnings: [],
   };
 
   for (const file of files) {
@@ -54,29 +46,27 @@ async function analyze() {
     if (ext === ".js") category = "js";
     else if (ext === ".css") category = "css";
     else if (ext === ".html") category = "html";
-    else if ([".png", ".jpg", ".jpeg", ".webp", ".gif", ".svg", ".ico"].includes(ext)) category = "image";
-    else if ([".woff", ".woff2", ".ttf", ".otf", ".eot"].includes(ext)) category = "font";
+    else if (
+      [".png", ".jpg", ".jpeg", ".webp", ".gif", ".svg", ".ico"].includes(ext)
+    )
+      category = "image";
+    else if ([".woff", ".woff2", ".ttf", ".otf", ".eot"].includes(ext))
+      category = "font";
+    else if (ext === ".pdf") category = "pdf";
 
     stats.categories[category].size += size;
     stats.categories[category].count++;
     stats.categories[category].files.push({ path: relativePath, size });
-
-    // Check thresholds
-    const threshold = THRESHOLDS[category === 'image' ? 'image' : category]; // Simple mapping
-    if (threshold && size > threshold * 1024) {
-      stats.warnings.push({
-        file: relativePath,
-        size: formatSize(size),
-        limit: `${threshold} KB`,
-      });
-    }
   }
 
   // Sort files by size (descending) in each category
   for (const cat in stats.categories) {
     stats.categories[cat].files.sort((a, b) => b.size - a.size);
-    // Keep only top 10 largest files per category for detailed report
-    stats.categories[cat].largestFiles = stats.categories[cat].files.slice(0, 5);
+    // Keep only top 5 largest files per category for detailed report
+    stats.categories[cat].largestFiles = stats.categories[cat].files.slice(
+      0,
+      5,
+    );
     delete stats.categories[cat].files; // Remove full list to keep JSON small
   }
 
@@ -89,12 +79,9 @@ async function analyze() {
   fs.writeFileSync(OUTPUT_FILE, JSON.stringify(stats, null, 2));
   console.log(`✅ Analysis complete! Report saved to ${OUTPUT_FILE}`);
   console.log(`Total Size: ${stats.readableTotalSize}`);
-  if (stats.warnings.length > 0) {
-    console.warn(`⚠️  ${stats.warnings.length} files exceeded size thresholds.`);
-  }
 }
 
-analyze().catch(err => {
+analyze().catch((err) => {
   console.error(err);
   process.exit(1);
 });
