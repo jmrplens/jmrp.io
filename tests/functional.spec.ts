@@ -38,10 +38,28 @@ test.describe("Site-wide Functional Checks", () => {
 
   // Dynamic tests for every page in the sitemap
   test("check all pages from sitemap", async ({ page }) => {
+    // Listen for console errors
+    const consoleErrors: string[] = [];
+    page.on("console", (msg) => {
+      if (msg.type() === "error") {
+        consoleErrors.push(`[${msg.type()}] ${msg.text()}`);
+      }
+    });
+
+    // Listen for unhandled exceptions
+    const pageErrors: Error[] = [];
+    page.on("pageerror", (exception) => {
+      pageErrors.push(exception);
+    });
+
     for (const url of urls) {
       await test.step(`Checking page: ${url}`, async () => {
         const response = await page.goto(url);
         expect(response?.status()).toBe(200);
+
+        // Fail if there were errors
+        expect(consoleErrors, `Console errors on ${url}`).toEqual([]);
+        expect(pageErrors, `Page errors on ${url}`).toEqual([]);
 
         // Header & Footer should be present on every page
         // Use .first() to avoid strict mode violations if multiple headers/footers exist

@@ -54,6 +54,31 @@ test.describe("Keyboard Navigation Accessibility", () => {
     expect(results.violations).toEqual([]);
   });
 
+  test("Skip Link Functionality", async ({ page }) => {
+    await page.goto("/");
+
+    // Ensure we start fresh
+    await page.focus("body");
+
+    // 1. Tab to Skip Link
+    await page.keyboard.press("Tab");
+    const skipLink = page.locator(".skip-link");
+
+    // Verify it is focused (might need to check if it's the first element)
+    // Based on previous logs: Focused element after 1st Tab: A.skip-link
+    await expect(skipLink).toBeFocused();
+
+    // 2. Activate it
+    await page.keyboard.press("Enter");
+
+    // 3. Verify focus moves to Main Content target
+    // The skip link href is #main-content
+    await expect(page).toHaveURL(/#main-content/);
+
+    const mainContent = page.locator("#main-content");
+    await expect(mainContent).toBeFocused();
+  });
+
   test("Mobile Menu Keyboard Interaction", async ({ page }) => {
     // Force mobile viewport
     await page.setViewportSize({ width: 375, height: 667 });
