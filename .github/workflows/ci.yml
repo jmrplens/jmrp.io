@@ -272,13 +272,17 @@ jobs:
       - name: Validate HTML5
         run: |
           pnpm exec html-validate -c .htmlvalidate.json --formatter json dist > html-validation.json || true
-          pnpm exec html-validate -c .htmlvalidate.json --formatter html dist > html-report.html || true
+          pnpm exec html-validate -c .htmlvalidate.json --formatter html dist > html-report-body.html || true
+          # Wrap the fragment in a full HTML document
+          echo '<!DOCTYPE html><html><head><meta charset="utf-8"><title>HTML Validation Report</title><style>body{font-family:sans-serif;padding:20px;line-height:1.5}.container{max-width:1200px;margin:0 auto}h1{border-bottom:1px solid #eee}</style></head><body><div class="container"><h1>HTML Validation Report</h1>' > html-report.html
+          cat html-report-body.html >> html-report.html
+          echo '</div></body></html>' >> html-report.html
       - name: Deploy HTML Report to Surge
         if: github.event_name == 'pull_request'
         shell: bash
         run: |
           mkdir -p html-deploy
-          if [ -f html-report.html ]; then cp html-report.html html-deploy/index.html; else echo "<h1>No errors found</h1>" > html-deploy/index.html; fi
+          cp html-report.html html-deploy/index.html
           pnpm exec surge ./html-deploy jmrp-html-pr-${{ github.event.number }}.surge.sh --token ${{ secrets.SURGE_TOKEN }}
       - name: Post HTML Validation Comment
         if: github.event_name == 'pull_request'
@@ -311,6 +315,12 @@ jobs:
         run: node scripts/ci/validate-rss.mjs dist/rss.xml
       - name: Generate RSS preview
         run: node scripts/preview-rss.mjs
+      - name: Upload RSS preview artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: rss-preview
+          path: dist/rss-preview.html
+          retention-days: 3
       - name: Deploy RSS Preview to Surge
         if: github.event_name == 'pull_request'
         shell: bash
@@ -436,7 +446,7 @@ jobs:
           mkdir -p lh-deploy
           cp -r .lighthouseci/* lh-deploy/ || true
           REPORT_FILE=$(find lh-deploy -name "*.html" | head -n 1)
-          if [ -n "$REPORT_FILE" ]; then cp "$REPORT_FILE" lh-deploy/index.html; fi
+          if [ -n "$REPORT_FILE" ]; then cp "$REPORT_FILE" lh-deploy/index.html; else echo "<h1>Lighthouse Report not found</h1>" > lh-deploy/index.html; fi
           pnpm exec surge ./lh-deploy jmrp-lh-pr-${{ github.event.number }}-${{ matrix.theme }}.surge.sh --token ${{ secrets.SURGE_TOKEN }}
       - name: Post Comment
         if: github.event_name == 'pull_request' && always()

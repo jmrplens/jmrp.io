@@ -1,30 +1,47 @@
 import fs from "fs";
 import { execSync } from "child_process";
-import path from "path";
 
 const generateReport = () => {
-  const webp = execSync('find dist -type f -name "*.webp" 2>/dev/null', {
-    encoding: "utf-8",
-  })
-    .split("\n")
-    .filter(Boolean);
-  const png = execSync('find dist -type f -name "*.png" 2>/dev/null', {
-    encoding: "utf-8",
-  })
-    .split("\n")
-    .filter(Boolean);
-  const jpg = execSync('find dist -type f | grep -iE "\.jpe?g$"', {
-    encoding: "utf-8",
-  })
-    .split("\n")
-    .filter(Boolean);
+  const findFiles = (pattern) => {
+    try {
+      // Add || true to prevent execSync from throwing when no files match
+      const output = execSync(
+        `find dist -type f ${pattern} 2>/dev/null || echo ""`,
+        { encoding: "utf-8" },
+      ).trim();
+      return output ? output.split("\n") : [];
+    } catch {
+      return [];
+    }
+  };
+
+  const findWithGrep = (pattern) => {
+    try {
+      // grep returns 1 if no matches found, which throws in execSync. We use || true.
+      const output = execSync(
+        `find dist -type f 2>/dev/null | grep -iE "${pattern}" || echo ""`,
+        { encoding: "utf-8" },
+      ).trim();
+      return output ? output.split("\n") : [];
+    } catch {
+      return [];
+    }
+  };
+
+  const webp = findFiles('-name "*.webp"');
+  const png = findFiles('-name "*.png"');
+  const jpg = findWithGrep("\.jpe?g$");
 
   const getDetails = (list) => {
     return list.map((img) => {
-      const size = execSync(`ls -lh "${img}" | awk '{print $5}'`, {
-        encoding: "utf-8",
-      }).trim();
-      return { path: img.replace("dist/", ""), size };
+      try {
+        const size = execSync(`ls -lh "${img}" | awk '{print $5}'`, {
+          encoding: "utf-8",
+        }).trim();
+        return { path: img.replace("dist/", ""), size };
+      } catch {
+        return { path: img.replace("dist/", ""), size: "N/A" };
+      }
     });
   };
 
@@ -38,11 +55,12 @@ const generateReport = () => {
   <!DOCTYPE html>
   <html>
   <head>
+    <meta charset="utf-8">
     <title>Image Optimization Report</title>
     <style>
       body { font-family: -apple-system, system-ui, sans-serif; line-height: 1.5; color: #333; max-width: 1000px; margin: 40px auto; padding: 0 20px; }
       h1 { border-bottom: 2px solid #eee; padding-bottom: 10px; }
-      .summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin: 30px 0; }
+      .summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin: 30px 0; }
       .card { background: #f8f9fa; padding: 20px; border-radius: 8px; text-align: center; border: 1px solid #eee; }
       .card h3 { margin: 0; color: #666; font-size: 14px; text-transform: uppercase; }
       .card div { font-size: 32px; font-weight: bold; margin: 10px 0; }
@@ -51,17 +69,18 @@ const generateReport = () => {
       th { background: #f8f9fa; }
       .size { font-family: monospace; font-weight: bold; }
       .large { color: #d73a49; }
+      code { background: #f1f1f1; padding: 2px 4px; border-radius: 4px; }
     </style>
   </head>
   <body>
     <h1>🖼️ Image Optimization Report</h1>
     <div class="summary">
       <div class="card"><h3>WebP</h3><div>${webp.length}</div>✅ Optimized</div>
-      <div class="card"><h3>PNG</h3><div>${png.length}</div>⚠️ Legacy</div>
-      <div class="card"><h3>JPG</h3><div>${jpg.length}</div>⚠️ Legacy</div>
+      <div class="card"><h3>PNG</h3><div>${png.length}</div>${png.length > 0 ? "⚠️ Legacy" : "✅ None"}</div>
+      <div class="card"><h3>JPG</h3><div>${jpg.length}</div>${jpg.length > 0 ? "⚠️ Legacy" : "✅ None"}</div>
     </div>
     
-    <h2>All Images</h2>
+    <h2>All Assets</h2>
     <table>
       <thead>
         <tr><th>Path</th><th>Format</th><th>Size</th></tr>
@@ -83,6 +102,7 @@ const generateReport = () => {
         `,
           )
           .join("")}
+        ${webp.length + png.length + jpg.length === 0 ? '<tr><td colspan="3">No images found in dist/</td></tr>' : ""}
       </tbody>
     </table>
   </body>
