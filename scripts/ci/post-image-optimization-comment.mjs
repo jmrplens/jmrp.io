@@ -1,45 +1,72 @@
 import { execSync } from "child_process";
 
 export default async ({ github, context }) => {
-  const webpCount = execSync(
-    'find dist -type f -name "*.webp" 2>/dev/null | wc -l || echo "0"',
-    { encoding: "utf-8" },
-  ).trim();
-  const pngCount = execSync(
-    'find dist -type f -name "*.png" 2>/dev/null | wc -l || echo "0"',
-    { encoding: "utf-8" },
-  ).trim();
+  const getCount = (pattern) => {
+    try {
+      return execSync(`find dist -type f ${pattern} 2>/dev/null | wc -l`, {
+        encoding: "utf-8",
+      }).trim();
+    } catch {
+      return "0";
+    }
+  };
+
+  const webpCount = getCount('-name "*.webp"');
+  const pngCount = getCount('-name "*.png"');
   const jpgCount = execSync(
     'find dist -type f | grep -iE "\.jpe?g$" | wc -l || echo "0"',
     { encoding: "utf-8" },
   ).trim();
 
+  const surgeUrl = process.env.SURGE_URL;
   let largeImagesOutput = "";
+  let hasLargeImages = false;
+
   try {
-    const largeImages = execSync(
+    const largeImagesRaw = execSync(
       'find dist -type f -size +500k 2>/dev/null | grep -iE "\.(webp|png|jpe?g)$" || echo ""',
       { encoding: "utf-8" },
     ).trim();
-    if (largeImages) {
-      largeImagesOutput =
-        "\n\n⚠️ **Large images detected (>500KB)**\n\nConsider further optimization for:\n";
-      const lines = largeImages.split("\n");
-      lines.forEach((img) => {
-        if (img) {
+
+    if (largeImagesRaw) {
+      const lines = largeImagesRaw.split("\n").filter(Boolean);
+      if (lines.length > 0) {
+        hasLargeImages = true;
+        largeImagesOutput =
+          "\n<details>\n<summary><b>⚠️ View Large Images (>500KB)</b></summary>\n\n| Image Path | Size |\n| :--- | :--- |\n";
+
+        const imageDetails = lines.map((img) => {
           const size = execSync(`ls -lh "${img}" | awk '{print $5}'`, {
             encoding: "utf-8",
           }).trim();
-          largeImagesOutput += `- ecue${img.replace("dist/", "")}ecue (${size})\n`;
-        }
-      });
-    } else {
-      largeImagesOutput = "\n\n✅ **No large images found**";
+          return "| `" + img.replace("dist/", "") + "` | **" + size + "** |";
+        });
+
+        largeImagesOutput += imageDetails.join("\n") + "\n</details>\n";
+      }
     }
-  } catch (e) {
-    largeImagesOutput = "\n\n✅ **No large images found**";
+  } catch {
+    // Silent
   }
 
-  const comment = `## 🖼️ Image Optimization Analysis\n\n**Format Distribution:**\n- WebP: ${webpCount} images ✅\n- PNG: ${pngCount} images\n- JPG/JPEG: ${jpgCount} images${largeImagesOutput}\n\n[View full report](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`;
+  const statusIcon = hasLargeImages ? "⚠️" : "✅";
+  const statusText = hasLargeImages
+    ? "**Action Recommended**"
+    : "**Fully Optimized!**";
+
+  let comment = `### 🖼️ Image Optimization Analysis\n\n${statusIcon} ${statusText}\n\n`;
+  comment += "| Format | Count | Status |\n";
+  comment += "| :--- | :---: | :--- |\n";
+  comment += `| 💎 **WebP** | **${webpCount}** | Optimized ✅ |\n`;
+  comment += `| 🖼️ **PNG** | **${pngCount}** | Legacy |\n`;
+  comment += `| 📸 **JPG/JPEG** | **${jpgCount}** | Legacy |\n`;
+
+  if (surgeUrl) {
+    comment += `| 🌐 Full Report | [**Open Image Audit**](https://${surgeUrl}) 🚀 |\n`;
+  }
+
+  comment += largeImagesOutput;
+  comment += `\n> 📊 [View Build Logs](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`;
 
   await github.rest.issues.createComment({
     issue_number: context.issue.number,
