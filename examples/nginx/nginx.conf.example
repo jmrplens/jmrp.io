@@ -15,8 +15,9 @@ server {
     listen 443 quic;
     listen [::]:443 quic;
 
-        # Root directory
-        root /var/www/jmrp.io_astro/dist;    index index.html;
+    # Root directory
+    root /var/www/example.com/dist;
+    index index.html;
 
     # SSL Settings
     ssl_certificate /etc/ssl/certs/example.com.crt;
