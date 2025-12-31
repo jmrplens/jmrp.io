@@ -18,6 +18,7 @@ export default async ({ github, context }) => {
     { encoding: "utf-8" },
   ).trim();
 
+  const surgeUrl = process.env.SURGE_URL;
   let largeImagesOutput = "";
   let hasLargeImages = false;
 
@@ -45,7 +46,7 @@ export default async ({ github, context }) => {
       }
     }
   } catch {
-    // Large image check failed or no images found
+    // Silent
   }
 
   const statusIcon = hasLargeImages ? "⚠️" : "✅";
@@ -53,17 +54,19 @@ export default async ({ github, context }) => {
     ? "**Action Recommended**"
     : "**Fully Optimized!**";
 
-  const comment = `### 🖼️ Image Optimization Analysis
+  let comment = `### 🖼️ Image Optimization Analysis\n\n${statusIcon} ${statusText}\n\n`;
+  comment += "| Format | Count | Status |\n";
+  comment += "| :--- | :---: | :--- |\n";
+  comment += `| 💎 **WebP** | **${webpCount}** | Optimized ✅ |\n`;
+  comment += `| 🖼️ **PNG** | **${pngCount}** | Legacy |\n`;
+  comment += `| 📸 **JPG/JPEG** | **${jpgCount}** | Legacy |\n`;
 
-${statusIcon} ${statusText}
+  if (surgeUrl) {
+    comment += `| 🌐 Full Report | [**Open Image Audit**](https://${surgeUrl}) 🚀 |\n`;
+  }
 
-| Format | Count | Status |
-| :--- | :---: | :--- |
-| 💎 **WebP** | **${webpCount}** | Optimized ✅ |
-| 🖼️ **PNG** | **${pngCount}** | Legacy |
-| 📸 **JPG/JPEG** | **${jpgCount}** | Legacy |
-${largeImagesOutput}
-> 📊 [View Full Build Report](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`;
+  comment += largeImagesOutput;
+  comment += `\n> 📊 [View Build Logs](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`;
 
   await github.rest.issues.createComment({
     issue_number: context.issue.number,

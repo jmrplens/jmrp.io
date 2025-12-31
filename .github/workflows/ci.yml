@@ -208,12 +208,10 @@ jobs:
         if: github.event_name == 'pull_request' && always()
         shell: bash
         run: |
-          # Use the summary HTML as index.html for surge
           mkdir -p a11y-deploy
           cp accessibility-report/*.html a11y-deploy/
-          # Find the main report and make it index
           REPORT_FILE=$(ls a11y-deploy/ | grep "home" | head -n 1)
-          cp "a11y-deploy/$REPORT_FILE" a11y-deploy/index.html || true
+          if [ -n "$REPORT_FILE" ]; then cp "a11y-deploy/$REPORT_FILE" a11y-deploy/index.html; fi
           pnpm exec surge ./a11y-deploy jmrp-a11y-pr-${{ github.event.number }}-${{ matrix.theme }}.surge.sh --token ${{ secrets.SURGE_TOKEN }}
       - name: Post Accessibility Comment (${{ matrix.theme }} mode)
         if: github.event_name == 'pull_request' && always()
@@ -273,18 +271,14 @@ jobs:
       - run: pnpm install --frozen-lockfile --prefer-offline
       - name: Validate HTML5
         run: |
-          pnpm exec html-validate -c .htmlvalidate.json --formatter json dist > html-validation.json 2> html-errors.log || true
-          pnpm exec html-validate -c .htmlvalidate.json --formatter html dist > html-report.html 2>> html-errors.log || true
+          pnpm exec html-validate -c .htmlvalidate.json --formatter json dist > html-validation.json || true
+          pnpm exec html-validate -c .htmlvalidate.json --formatter html dist > html-report.html || true
       - name: Deploy HTML Report to Surge
         if: github.event_name == 'pull_request'
         shell: bash
         run: |
           mkdir -p html-deploy
-          if [ -f html-report.html ]; then
-            cp html-report.html html-deploy/index.html
-          else
-            echo "<h1>HTML Validation Failed to generate report</h1>" > html-deploy/index.html
-          fi
+          if [ -f html-report.html ]; then cp html-report.html html-deploy/index.html; else echo "<h1>No errors found</h1>" > html-deploy/index.html; fi
           pnpm exec surge ./html-deploy jmrp-html-pr-${{ github.event.number }}.surge.sh --token ${{ secrets.SURGE_TOKEN }}
       - name: Post HTML Validation Comment
         if: github.event_name == 'pull_request'
@@ -317,12 +311,6 @@ jobs:
         run: node scripts/ci/validate-rss.mjs dist/rss.xml
       - name: Generate RSS preview
         run: node scripts/preview-rss.mjs
-      - name: Upload RSS preview artifact
-        uses: actions/upload-artifact@v6
-        with:
-          name: rss-preview
-          path: dist/rss-preview.html
-          retention-days: 3
       - name: Deploy RSS Preview to Surge
         if: github.event_name == 'pull_request'
         shell: bash
@@ -378,14 +366,31 @@ jobs:
         with:
           name: dist-build
           path: dist
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 20
+          cache: "pnpm"
+      - run: pnpm install --frozen-lockfile --prefer-offline
       - name: Analyze images
         run: |
           echo "## 🖼️ Image Optimization Analysis" >> $GITHUB_STEP_SUMMARY
           WEBP_COUNT=$(find dist -type f -name "*.webp" | wc -l)
           echo "- WebP images: $WEBP_COUNT ✅" >> $GITHUB_STEP_SUMMARY
+      - name: Generate Image HTML Report
+        run: node scripts/ci/generate-image-report.mjs
+      - name: Deploy Image Report to Surge
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          mkdir -p img-deploy
+          cp image-report.html img-deploy/index.html
+          pnpm exec surge ./img-deploy jmrp-img-pr-${{ github.event.number }}.surge.sh --token ${{ secrets.SURGE_TOKEN }}
       - name: Post Image Optimization Comment
         if: github.event_name == 'pull_request'
         uses: actions/github-script@v8
+        env:
+          SURGE_URL: jmrp-img-pr-${{ github.event.number }}.surge.sh
         with:
           script: |
             const { default: script } = await import(`${process.env.GITHUB_WORKSPACE}/scripts/ci/post-image-optimization-comment.mjs`)
@@ -428,15 +433,10 @@ jobs:
         if: github.event_name == 'pull_request' && always()
         shell: bash
         run: |
-          # Find the HTML report in .lighthouseci subfolders and make it index.html
           mkdir -p lh-deploy
           cp -r .lighthouseci/* lh-deploy/ || true
           REPORT_FILE=$(find lh-deploy -name "*.html" | head -n 1)
-          if [ -n "$REPORT_FILE" ]; then
-            cp "$REPORT_FILE" lh-deploy/index.html
-          else
-            echo "<h1>Lighthouse Report not found</h1>" > lh-deploy/index.html
-          fi
+          if [ -n "$REPORT_FILE" ]; then cp "$REPORT_FILE" lh-deploy/index.html; fi
           pnpm exec surge ./lh-deploy jmrp-lh-pr-${{ github.event.number }}-${{ matrix.theme }}.surge.sh --token ${{ secrets.SURGE_TOKEN }}
       - name: Post Comment
         if: github.event_name == 'pull_request' && always()
