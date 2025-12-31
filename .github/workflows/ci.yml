@@ -490,7 +490,7 @@ jobs:
       - name: Install Playwright Browsers
         run: pnpm exec playwright install --with-deps chromium
       - name: Run Playwright tests
-        run: pnpm exec playwright test --project=functional
+        run: pnpm exec playwright test --project=functional --project=mobile-functional
       - name: Upload Results
         if: always()
         uses: actions/upload-artifact@v6

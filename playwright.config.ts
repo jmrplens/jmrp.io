@@ -22,8 +22,13 @@ export default defineConfig({
   projects: [
     {
       name: "functional",
-      testMatch: /.*\.spec\.ts/,
-      testIgnore: /accessibility\.spec\.ts/,
+      use: { ...devices["Desktop Chrome"] },
+      testMatch: /functional\.spec\.ts|integration\.spec\.ts|seo\.spec\.ts/,
+    },
+    {
+      name: "mobile-functional",
+      use: { ...devices["Pixel 5"] },
+      testMatch: /functional\.spec\.ts/, // Integration tests might need specific mobile adjustments, starting with functional
     },
     {
       name: "accessibility",
