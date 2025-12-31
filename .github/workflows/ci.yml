@@ -210,8 +210,6 @@ jobs:
         run: |
           mkdir -p a11y-deploy
           cp accessibility-report/*.html a11y-deploy/
-          REPORT_FILE=$(ls a11y-deploy/ | grep "home" | head -n 1)
-          if [ -n "$REPORT_FILE" ]; then cp "a11y-deploy/$REPORT_FILE" a11y-deploy/index.html; fi
           pnpm exec surge ./a11y-deploy jmrp-a11y-pr-${{ github.event.number }}-${{ matrix.theme }}.surge.sh --token ${{ secrets.SURGE_TOKEN }}
       - name: Post Accessibility Comment (${{ matrix.theme }} mode)
         if: github.event_name == 'pull_request' && always()
