@@ -208,7 +208,13 @@ jobs:
         if: github.event_name == 'pull_request' && always()
         shell: bash
         run: |
-          pnpm exec surge ./accessibility-report jmrp-a11y-pr-${{ github.event.number }}-${{ matrix.theme }}.surge.sh --token ${{ secrets.SURGE_TOKEN }}
+          # Use the summary HTML as index.html for surge
+          mkdir -p a11y-deploy
+          cp accessibility-report/*.html a11y-deploy/
+          # Find the main report and make it index
+          REPORT_FILE=$(ls a11y-deploy/ | grep "home" | head -n 1)
+          cp "a11y-deploy/$REPORT_FILE" a11y-deploy/index.html || true
+          pnpm exec surge ./a11y-deploy jmrp-a11y-pr-${{ github.event.number }}-${{ matrix.theme }}.surge.sh --token ${{ secrets.SURGE_TOKEN }}
       - name: Post Accessibility Comment (${{ matrix.theme }} mode)
         if: github.event_name == 'pull_request' && always()
         uses: actions/github-script@v8
@@ -268,13 +274,17 @@ jobs:
       - name: Validate HTML5
         run: |
           pnpm exec html-validate -c .htmlvalidate.json --formatter json dist > html-validation.json 2> html-errors.log || true
-          pnpm exec html-validate -c .htmlvalidate.json --formatter html dist > html-report.html || true
+          pnpm exec html-validate -c .htmlvalidate.json --formatter html dist > html-report.html 2>> html-errors.log || true
       - name: Deploy HTML Report to Surge
         if: github.event_name == 'pull_request'
         shell: bash
         run: |
           mkdir -p html-deploy
-          cp html-report.html html-deploy/index.html
+          if [ -f html-report.html ]; then
+            cp html-report.html html-deploy/index.html
+          else
+            echo "<h1>HTML Validation Failed to generate report</h1>" > html-deploy/index.html
+          fi
           pnpm exec surge ./html-deploy jmrp-html-pr-${{ github.event.number }}.surge.sh --token ${{ secrets.SURGE_TOKEN }}
       - name: Post HTML Validation Comment
         if: github.event_name == 'pull_request'
@@ -418,7 +428,16 @@ jobs:
         if: github.event_name == 'pull_request' && always()
         shell: bash
         run: |
-          pnpm exec surge ./.lighthouseci jmrp-lh-pr-${{ github.event.number }}-${{ matrix.theme }}.surge.sh --token ${{ secrets.SURGE_TOKEN }}
+          # Find the HTML report in .lighthouseci subfolders and make it index.html
+          mkdir -p lh-deploy
+          cp -r .lighthouseci/* lh-deploy/ || true
+          REPORT_FILE=$(find lh-deploy -name "*.html" | head -n 1)
+          if [ -n "$REPORT_FILE" ]; then
+            cp "$REPORT_FILE" lh-deploy/index.html
+          else
+            echo "<h1>Lighthouse Report not found</h1>" > lh-deploy/index.html
+          fi
+          pnpm exec surge ./lh-deploy jmrp-lh-pr-${{ github.event.number }}-${{ matrix.theme }}.surge.sh --token ${{ secrets.SURGE_TOKEN }}
       - name: Post Comment
         if: github.event_name == 'pull_request' && always()
         uses: actions/github-script@v8
