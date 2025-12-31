@@ -124,14 +124,55 @@ function updateNginxConfig(styleHashString, scriptHashString, imgDomainString) {
   }
 
   console.log(`\nUpdating ${NGINX_CONF}...`);
-  let nginxConfig = fs.readFileSync(NGINX_CONF, "utf-8");
+
+  // Logic to split script hashes into chunks for Nginx variables
+  const MAX_CHUNK_SIZE = 2048; // Safe limit below Nginx's typical 4096 buffer
+  let nginxSetDirectives = "";
+  const scriptVars = [];
+
+  if (scriptHashString.length > MAX_CHUNK_SIZE) {
+    const hashes = scriptHashString.split(" ");
+    let currentChunk = "";
+    let chunkCounter = 1;
+
+    for (const hash of hashes) {
+      const prospectiveChunk = currentChunk ? currentChunk + " " + hash : hash;
+      if (currentChunk && prospectiveChunk.length > MAX_CHUNK_SIZE) {
+        const varName = `$csp_script_src_${chunkCounter}`;
+        scriptVars.push(varName);
+        nginxSetDirectives += `set ${varName} "${currentChunk.trim()}";\n`;
+        currentChunk = hash;
+        chunkCounter++;
+      } else {
+        currentChunk = prospectiveChunk;
+      }
+    }
+    // Add the final chunk
+    if (currentChunk) {
+      const varName = `$csp_script_src_${chunkCounter}`;
+      scriptVars.push(varName);
+      nginxSetDirectives += `set ${varName} "${currentChunk.trim()}";\n`;
+    }
+  } else {
+    // If it fits, just use the string directly (or a single variable, but direct is fine if short)
+    // To keep it simple, we'll just put it directly if short,
+    // BUT to handle the replacement logic below cleanly, let's just use the string if short.
+  }
 
   const staticScriptParts = "'self' 'nonce-$cspNonce'";
   const staticConnectParts = "'self' https://api.github.com";
 
+  // Construct script-src value
+  let scriptSrcValue;
+  if (scriptVars.length > 0) {
+    scriptSrcValue = `${staticScriptParts} ${scriptVars.join(" ")}`;
+  } else {
+    scriptSrcValue = `${staticScriptParts} ${scriptHashString}`;
+  }
+
   const components = [
     "default-src 'none'",
-    `script-src ${staticScriptParts} ${scriptHashString}`,
+    `script-src ${scriptSrcValue}`,
     `style-src 'self' 'unsafe-hashes' 'nonce-$cspNonce' ${styleHashString}`,
     `img-src 'self' ${imgDomainString} https://*.jmrp.io`,
     "font-src 'self'",
@@ -147,19 +188,47 @@ function updateNginxConfig(styleHashString, scriptHashString, imgDomainString) {
     "report-uri /csp-report",
   ];
 
-  const newCspHeader = `add_header Content-Security-Policy "${components.join("; ")};" always;`;
-  const cspRegex = /add_header Content-Security-Policy ".*?" always;/s;
+  // We need to either overwrite the whole file or carefully replace sections.
+  // Previous logic replaced just the CSP header. Now we also need to manage related `set` directives.
+  //
+  // To avoid breaking other security headers that may live in this snippet (HSTS, X-Frame, etc.),
+  // we continue to read the existing file and update only the CSP-related parts. This preserves
+  // the relative ordering of any other directives that are already present.
+  //
+  // NOTE: `security_headers.conf` is assumed to be included from a context (e.g. a server block)
+  // where `set` directives are allowed and where having the CSP-related `set` variables defined
+  // before the CSP header is acceptable. If this file is ever reused in other contexts, or if
+  // other directives must precede these `set` statements, the inclusion strategy or this script
+  // should be revisited to enforce the desired ordering explicitly.
 
-  if (cspRegex.test(nginxConfig)) {
-    nginxConfig = nginxConfig.replace(cspRegex, newCspHeader);
+  let nginxConfig = fs.readFileSync(NGINX_CONF, "utf-8");
+
+  // Remove old 'set $csp_script_src_...' directives if they exist (cleanup)
+  nginxConfig = nginxConfig.replace(/set \$csp_script_src_\d+ ".*?";\n/g, "");
+
+  const newCspHeader = `add_header Content-Security-Policy "${components.join("; ")};" always;`;
+  const cspRegex = /add_header Content-Security-Policy "[^"]*" always;/;
+
+  // Prepend the new set directives to the config content or place them before the CSP header?
+  // Placing them at the top of the file is safest for visibility.
+
+  let newContent = nginxConfig;
+
+  if (cspRegex.test(newContent)) {
+    newContent = newContent.replace(cspRegex, newCspHeader);
   } else {
     console.warn(
       "Warning: Could not find existing CSP header to replace. Appending new one.",
     );
-    nginxConfig += `\n${newCspHeader}\n`;
+    newContent += `\n${newCspHeader}\n`;
   }
 
-  fs.writeFileSync(NGINX_CONF, nginxConfig);
+  // Add the set directives at the beginning
+  if (nginxSetDirectives) {
+    newContent = nginxSetDirectives + "\n" + newContent;
+  }
+
+  fs.writeFileSync(NGINX_CONF, newContent);
   console.log("Nginx configuration updated.");
 }
 
