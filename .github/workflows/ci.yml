@@ -274,8 +274,12 @@ jobs:
           pnpm exec html-validate -c .htmlvalidate.json --formatter json dist > html-validation.json || true
           pnpm exec html-validate -c .htmlvalidate.json --formatter html dist > html-report-body.html || true
           # Wrap the fragment in a full HTML document
-          echo '<!DOCTYPE html><html><head><meta charset="utf-8"><title>HTML Validation Report</title><style>body{font-family:sans-serif;padding:20px;line-height:1.5}.container{max-width:1200px;margin:0 auto}h1{border-bottom:1px solid #eee}</style></head><body><div class="container"><h1>HTML Validation Report</h1>' > html-report.html
-          cat html-report-body.html >> html-report.html
+          echo '<!DOCTYPE html><html><head><meta charset="utf-8"><title>HTML Validation Report</title><style>body{font-family:sans-serif;padding:20px;line-height:1.5}.container{max-width:1200px;margin:0 auto}h1{border-bottom:1px solid #eee} .success{color:#2ea043;background:#f0fff4;padding:20px;border-radius:8px;border:1px solid #2ea043}</style></head><body><div class="container"><h1>HTML Validation Report</h1>' > html-report.html
+          if [ -s html-report-body.html ]; then
+            cat html-report-body.html >> html-report.html
+          else
+            echo '<div class="success"><h2>✅ No issues found!</h2><p>All HTML files are valid according to your configuration.</p></div>' >> html-report.html
+          fi
           echo '</div></body></html>' >> html-report.html
       - name: Deploy HTML Report to Surge
         if: github.event_name == 'pull_request'
