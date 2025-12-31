@@ -1,6 +1,7 @@
 import Parser from "rss-parser";
 import fs from "node:fs";
 import path from "node:path";
+import { escapeHtml } from "./utils/html.mjs";
 
 const RSS_FILE = "dist/rss.xml";
 const OUTPUT_FILE = "dist/rss-preview.html";
@@ -19,16 +20,6 @@ async function generatePreview() {
 
   const xml = fs.readFileSync(RSS_FILE, "utf-8");
   const feed = await parser.parseString(xml);
-
-  const escapeHtml = (unsafe) => {
-    if (unsafe == null) return "";
-    return String(unsafe)
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#039;");
-  };
 
   let htmlContent = `
   <!DOCTYPE html>
