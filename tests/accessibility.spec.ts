@@ -120,6 +120,14 @@ test.describe("Accessibility Tests (Axe-core WCAG 2.1 AA)", () => {
     fs.writeFileSync(summaryPath, JSON.stringify(summary, null, 2));
     console.log(`✅ Accessibility summary written to: ${summaryPath}`);
 
+    const escapeHtml = (unsafe: string) =>
+      unsafe
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+
     // Generate index.html for navigation
     const indexHtml = `
       <!DOCTYPE html>
@@ -175,14 +183,14 @@ test.describe("Accessibility Tests (Axe-core WCAG 2.1 AA)", () => {
             .map(
               (r) => `
             <li class="page-item">
-              <a href="${r.reportPath}" class="page-link">
+              <a href="${escapeHtml(r.reportPath)}" class="page-link">
                 <span class="status">${r.violations === 0 ? "✅" : "❌"}</span>
                 <div class="details">
-                  <span class="page-name">${r.page.split("(")[0].trim()}</span>
+                  <span class="page-name">${escapeHtml(r.page.split("(")[0].trim())}</span>
                   <div style="margin-top: 4px;">
-                    <span class="page-url">${
-                      r.page.match(/\((.*?)\)/)?.[1] || ""
-                    }</span>
+                    <span class="page-url">${escapeHtml(
+                      r.page.match(/\((.*?)\)/)?.[1] || "",
+                    )}</span>
                   </div>
                   ${
                     r.violations > 0
