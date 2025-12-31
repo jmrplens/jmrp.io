@@ -19,11 +19,19 @@ const { lang = "text", class: className } = Astro.props;
 ---
 
 <div class:list={["code-wrapper", "copy-container", className]}>
-    <pre><code class={`language-${lang}`}><slot /></code></pre>
+    <pre><span class={`code-content language-${lang}`}><slot /></span></pre>
     <CopyButton class="code-copy-button" />
 </div>
 
 <style>
+    .code-content {
+        display: block; /* Ensure it behaves like a block for multi-line */
+        font-family: var(--font-mono);
+        font-size: 0.9rem;
+        line-height: 1.6;
+        color: var(--color-text);
+    }
+
     .code-wrapper {
         position: relative;
         margin: 1.5rem 0;

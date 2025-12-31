@@ -34,10 +34,14 @@ const { title } = Astro.props;
         )
     }
     <div class="output-body">
-        <pre><slot /></pre>
+        <div class="terminal-content"><slot /></div>
     </div>
 </section>
 <style>
+    .terminal-content {
+        white-space: pre-wrap;
+        word-break: break-all;
+    }
     .terminal-output-wrapper {
         border: var(--border-1);
         border-radius: var(--radius-md);
