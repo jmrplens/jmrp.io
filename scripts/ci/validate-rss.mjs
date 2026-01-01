@@ -74,7 +74,16 @@ async function validateRSS() {
   }
 
   // 2. Data Validation (rss-parser)
-  const parser = new Parser();
+  const parser = new Parser({
+    customFields: {
+      item: [
+        ["media:content", "mediaContent"],
+        ["media:thumbnail", "mediaThumbnail"],
+        ["enclosure", "enclosure"],
+      ],
+    },
+  });
+
   try {
     const feed = await parser.parseString(content);
     results.metadata.title = feed.title || "Unknown Title";
@@ -90,6 +99,8 @@ async function validateRSS() {
 
       feed.items.forEach((item, i) => {
         const idx = i + 1;
+
+        // Date Check
         if (item.pubDate) {
           const date = new Date(item.pubDate);
           if (isNaN(date.getTime())) {
@@ -101,11 +112,39 @@ async function validateRSS() {
           results.warnings.push(`Item ${idx}: Missing pubDate`);
         }
 
+        // URL Check
         if (item.link) {
           try {
             new URL(item.link);
           } catch {
             results.errors.push(`Item ${idx}: Invalid URL (${item.link})`);
+          }
+        }
+
+        // Content Check - must contain "Continue reading" link
+        const content = item.content || item.description || "";
+        if (!content.includes("Continue reading")) {
+          results.warnings.push(
+            `Item ${idx}: Content missing 'Continue reading' link`,
+          );
+        }
+
+        // Enclosure Check - must exist and be an image
+        if (!item.enclosure) {
+          results.errors.push(
+            `Item ${idx}: Missing <enclosure> for cover image`,
+          );
+        } else {
+          if (!item.enclosure.url) {
+            results.errors.push(`Item ${idx}: Enclosure missing URL`);
+          }
+          if (
+            !item.enclosure.type ||
+            !item.enclosure.type.startsWith("image/")
+          ) {
+            results.errors.push(
+              `Item ${idx}: Enclosure type '${item.enclosure.type}' is not an image`,
+            );
           }
         }
       });
