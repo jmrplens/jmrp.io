@@ -3,6 +3,15 @@ import { getCollection, getEntry } from "astro:content";
 import { getImage } from "astro:assets";
 import type { APIContext } from "astro";
 
+function escapeHtml(unsafe: string) {
+  return unsafe
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 export async function GET(context: APIContext) {
   const posts = await getCollection("posts");
   const siteEntry = await getEntry("site_config", "site");
@@ -31,8 +40,12 @@ export async function GET(context: APIContext) {
             const thumbUrl = new URL(thumb.src, context.site || "https://jmrp.io").toString();
 
             // RSS 2.0 Enclosure (Used by most modern readers for the main image)
-            // Length "0" is often acceptable if size is unknown, or we could fetch it if fs allows, but 0 is usually fine for generated media.
-            customData += `<enclosure url="${imgUrl}" length="0" type="image/jpeg" />\n`;
+            // Estimate file size in bytes from image dimensions (3 bytes per pixel) to provide a non-zero length.
+            const estimatedLength =
+              typeof opt.attributes?.width === "number" && typeof opt.attributes?.height === "number"
+                ? (opt.attributes.width * opt.attributes.height * 3).toString()
+                : "0";
+            customData += `<enclosure url="${imgUrl}" length="${estimatedLength}" type="image/jpeg" />\n`;
 
             // Media RSS extensions (Common in Feedly, etc)
             customData += `<media:content url="${imgUrl}" medium="image" type="image/jpeg" width="${opt.attributes.width}" height="${opt.attributes.height}" />\n`;
@@ -45,7 +58,7 @@ export async function GET(context: APIContext) {
         // Add "Continue Reading" link to description/content
         // Some readers prefer 'content:encoded', others 'description'. We can populate both with the same summary + link.
         const continueLink = `<br/><br/><a href="${fullLink}">Continue reading on jmrp.io &rarr;</a>`;
-        const finalContent = description + continueLink;
+        const finalContent = escapeHtml(description) + continueLink;
 
         return {
           title: post.data.title,

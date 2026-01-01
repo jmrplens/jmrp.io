@@ -1,13 +1,13 @@
 {
   "valid": true,
   "file": "dist/rss.xml",
-  "size": "4.96",
+  "size": "4.97",
   "errors": [],
   "warnings": [],
   "metadata": {
     "items": 3,
     "title": "José Manuel Requena Plens | R&D Engineer",
-    "lastBuildDate": "Thu, 01 Jan 2026 19:51:30 GMT",
+    "lastBuildDate": "Thu, 01 Jan 2026 21:56:26 GMT",
     "latestItem": {
       "title": "Serve Virtual Files with Nginx: Beyond the Document Root",
       "date": "Thu, 18 Dec 2025 00:00:00 GMT"
