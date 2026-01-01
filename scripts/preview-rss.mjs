@@ -111,7 +111,12 @@ async function generatePreview() {
 
       ${feed.items
         .map((item) => {
-          const content = item["content:encoded"] || item.content;
+          const content =
+            item["content:encoded"] || item.content || item.description || "";
+          const enclosure = item.enclosure
+            ? `<img src="${item.enclosure.url}" alt="Cover Image" style="width:100%; max-height: 400px; object-fit: cover; border-radius: 8px; margin-bottom: 20px;">`
+            : "";
+
           return `
         <article class="rss-item">
           <div class="meta">
@@ -122,6 +127,7 @@ async function generatePreview() {
               <a href="${escapeHtml(item.link)}" target="_blank">View Post</a>
             </div>
           </div>
+          ${enclosure}
           <div class="content-preview">
             ${content}
           </div>

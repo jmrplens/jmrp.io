@@ -74,7 +74,17 @@ async function validateRSS() {
   }
 
   // 2. Data Validation (rss-parser)
-  const parser = new Parser();
+  const parser = new Parser({
+    customFields: {
+      item: [
+        ["media:content", "mediaContent"],
+        ["media:thumbnail", "mediaThumbnail"],
+        ["enclosure", "enclosure"],
+        ["content:encoded", "contentEncoded"],
+      ],
+    },
+  });
+
   try {
     const feed = await parser.parseString(content);
     results.metadata.title = feed.title || "Unknown Title";
@@ -90,6 +100,8 @@ async function validateRSS() {
 
       feed.items.forEach((item, i) => {
         const idx = i + 1;
+
+        // Date Check
         if (item.pubDate) {
           const date = new Date(item.pubDate);
           if (isNaN(date.getTime())) {
@@ -101,11 +113,46 @@ async function validateRSS() {
           results.warnings.push(`Item ${idx}: Missing pubDate`);
         }
 
+        // URL Check
         if (item.link) {
           try {
             new URL(item.link);
           } catch {
             results.errors.push(`Item ${idx}: Invalid URL (${item.link})`);
+          }
+        }
+
+        // Content Check - must contain "Continue reading" link (or at least a link back to the post)
+        // We use contentEncoded if available (rss-parser standard content might strip things?)
+        const content =
+          item.contentEncoded || item.content || item.description || "";
+        const contentLower = content.toLowerCase();
+        if (
+          !contentLower.includes("continue reading") &&
+          !content.includes(item.link)
+        ) {
+          results.warnings.push(
+            `Item ${idx}: Content missing 'Continue reading' link or backlink`,
+          );
+        }
+
+        // Enclosure Check - strictly enforced as per requirements
+        // NOTE: Copilot suggested this might be too strict, but for this specific redesign we WANT all posts to have covers.
+        if (!item.enclosure) {
+          results.warnings.push(
+            `Item ${idx}: Missing <enclosure> for cover image`,
+          );
+        } else {
+          if (!item.enclosure.url) {
+            results.errors.push(`Item ${idx}: Enclosure missing URL`);
+          }
+          if (
+            !item.enclosure.type ||
+            !item.enclosure.type.startsWith("image/")
+          ) {
+            results.errors.push(
+              `Item ${idx}: Enclosure type '${item.enclosure.type}' is not an image`,
+            );
           }
         }
       });
