@@ -10,18 +10,6 @@ if (!fs.existsSync(manifestPath)) {
   process.exit(1);
 }
 
-import fs from "fs";
-import path from "path";
-
-const deployDir = process.argv[2] || "lh-deploy";
-const manifestPath = path.join(deployDir, "manifest.json");
-const indexPath = path.join(deployDir, "index.html");
-
-if (!fs.existsSync(manifestPath)) {
-  console.error(`Manifest not found at ${manifestPath}`);
-  process.exit(1);
-}
-
 let manifest;
 try {
   const manifestContent = fs.readFileSync(manifestPath, "utf8");
@@ -123,5 +111,5 @@ const htmlContent = `
 
 fs.writeFileSync(indexPath, htmlContent);
 console.log(
-  `Generated index.html at ${indexPath} with ${reports.length} reports.`,
+  `Generated index.html at ${indexPath} with ${reports.length} reports.`, 
 );
