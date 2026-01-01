@@ -130,6 +130,40 @@ function extractHashes(content, styleHashes, scriptHashes, imageDomains, file) {
 }
 
 /**
+ * Helper to split long hash strings into Nginx variables
+ */
+function generateChunkedVariables(hashString, type, maxChunkSize = 2048) {
+  const vars = [];
+  let directives = "";
+
+  if (hashString.length > maxChunkSize) {
+    const hashes = hashString.split(" ");
+    let currentChunk = "";
+    let chunkCounter = 1;
+
+    for (const hash of hashes) {
+      const prospectiveChunk = currentChunk ? currentChunk + " " + hash : hash;
+      if (currentChunk && prospectiveChunk.length > maxChunkSize) {
+        const varName = `$csp_${type}_src_${chunkCounter}`;
+        vars.push(varName);
+        directives += `set ${varName} "${currentChunk.trim()}";\n`;
+        currentChunk = hash;
+        chunkCounter++;
+      } else {
+        currentChunk = prospectiveChunk;
+      }
+    }
+    if (currentChunk) {
+      const varName = `$csp_${type}_src_${chunkCounter}`;
+      vars.push(varName);
+      directives += `set ${varName} "${currentChunk.trim()}";\n`;
+    }
+  }
+
+  return { vars, directives };
+}
+
+/**
  * Updates the Nginx configuration snippet with new hashes
  */
 function updateNginxConfig(styleHashString, scriptHashString, imgDomainString) {
@@ -140,49 +174,38 @@ function updateNginxConfig(styleHashString, scriptHashString, imgDomainString) {
 
   console.log(`\nUpdating ${NGINX_CONF}...`);
 
-  // Logic to split script hashes into chunks for Nginx variables due to buffer limits
-  const MAX_CHUNK_SIZE = 2048;
   let nginxSetDirectives = "";
-  const scriptVars = [];
 
-  if (scriptHashString.length > MAX_CHUNK_SIZE) {
-    const hashes = scriptHashString.split(" ");
-    let currentChunk = "";
-    let chunkCounter = 1;
-
-    for (const hash of hashes) {
-      const prospectiveChunk = currentChunk ? currentChunk + " " + hash : hash;
-      if (currentChunk && prospectiveChunk.length > MAX_CHUNK_SIZE) {
-        const varName = `$csp_script_src_${chunkCounter}`;
-        scriptVars.push(varName);
-        nginxSetDirectives += `set ${varName} "${currentChunk.trim()}";\n`;
-        currentChunk = hash;
-        chunkCounter++;
-      } else {
-        currentChunk = prospectiveChunk;
-      }
-    }
-    if (currentChunk) {
-      const varName = `$csp_script_src_${chunkCounter}`;
-      scriptVars.push(varName);
-      nginxSetDirectives += `set ${varName} "${currentChunk.trim()}";\n`;
-    }
-  }
+  // Process Script Hashes
+  const scriptChunks = generateChunkedVariables(scriptHashString, "script");
+  nginxSetDirectives += scriptChunks.directives;
 
   const staticScriptParts = "'self' 'nonce-$cspNonce'";
   const staticConnectParts = "'self' https://api.github.com";
 
   let scriptSrcValue;
-  if (scriptVars.length > 0) {
-    scriptSrcValue = `${staticScriptParts} ${scriptVars.join(" ")}`;
+  if (scriptChunks.vars.length > 0) {
+    scriptSrcValue = `${staticScriptParts} ${scriptChunks.vars.join(" ")}`;
   } else {
     scriptSrcValue = `${staticScriptParts} ${scriptHashString}`;
+  }
+
+  // Process Style Hashes
+  const styleChunks = generateChunkedVariables(styleHashString, "style");
+  nginxSetDirectives += styleChunks.directives;
+
+  const staticStyleParts = "'self' 'unsafe-hashes' 'nonce-$cspNonce'";
+  let styleSrcValue;
+  if (styleChunks.vars.length > 0) {
+    styleSrcValue = `${staticStyleParts} ${styleChunks.vars.join(" ")}`;
+  } else {
+    styleSrcValue = `${staticStyleParts} ${styleHashString}`;
   }
 
   const components = [
     "default-src 'none'",
     `script-src ${scriptSrcValue}`,
-    `style-src 'self' 'unsafe-hashes' 'nonce-$cspNonce' ${styleHashString}`,
+    `style-src ${styleSrcValue}`,
     `img-src 'self' ${imgDomainString} https://*.jmrp.io`,
     "font-src 'self'",
     `connect-src ${staticConnectParts}`,
@@ -220,8 +243,11 @@ function updateNginxConfig(styleHashString, scriptHashString, imgDomainString) {
     nginxConfig = nginxConfig.replace(blockRegex, finalBlock);
   } else {
     // Migration: Block doesn't exist.
-    // 1. Remove old dynamic set directives
-    nginxConfig = nginxConfig.replace(/set \$csp_script_src_\d+ ".*?";\n/g, "");
+    // 1. Remove old dynamic set directives (now covering both script and style)
+    nginxConfig = nginxConfig.replace(
+      /set \$csp_(script|style)_src_\d+ ".*?";\n/g,
+      "",
+    );
 
     // 2. Find and replace the old add_header line with the new block
     const oldCspRegex =
