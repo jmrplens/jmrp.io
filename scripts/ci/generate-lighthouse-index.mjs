@@ -10,7 +10,28 @@ if (!fs.existsSync(manifestPath)) {
   process.exit(1);
 }
 
-const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+import fs from "fs";
+import path from "path";
+
+const deployDir = process.argv[2] || "lh-deploy";
+const manifestPath = path.join(deployDir, "manifest.json");
+const indexPath = path.join(deployDir, "index.html");
+
+if (!fs.existsSync(manifestPath)) {
+  console.error(`Manifest not found at ${manifestPath}`);
+  process.exit(1);
+}
+
+let manifest;
+try {
+  const manifestContent = fs.readFileSync(manifestPath, "utf8");
+  manifest = JSON.parse(manifestContent);
+} catch (error) {
+  console.error(
+    `Failed to parse manifest JSON at ${manifestPath}: ${error.message}`,
+  );
+  process.exit(1);
+}
 
 // Group by URL to handle multiple runs if needed, though usually we display representative runs.
 // LHCI manifest usually has one entry per run. If 'isRepresentativeRun' is true, we prioritize it?
@@ -18,6 +39,56 @@ const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
 // Let's just list all representative runs or unique URLs.
 
 const reports = manifest.filter((entry) => entry.isRepresentativeRun);
+
+function escapeHtml(unsafe) {
+  return unsafe
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+const listItems =
+  reports.length === 0
+    ? `<li><div style="text-align: center; color: #666;">No reports found.</div></li>`
+    : reports
+        .map((report) => {
+          // report.htmlPath is absolute path from LHCI. We need relative filename.
+          const filename = path.basename(report.htmlPath);
+          let urlDisplay = report.url;
+
+          try {
+            const parsedUrl = new URL(report.url);
+            if (parsedUrl.hostname === "localhost") {
+              urlDisplay = parsedUrl.pathname || "/";
+            }
+          } catch {
+            // Keep original URL if parsing fails
+          }
+
+          // Calculate average score if available (summary object)
+          // manifest entries might look like: { url, isRepresentativeRun, htmlPath, jsonPath, summary: { performance: 0.9, ... } }
+          let scoreBadge = "";
+          if (report.summary) {
+            const scores = Object.values(report.summary);
+            if (scores.length > 0) {
+              const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
+              const scoreClass =
+                avg >= 0.9 ? "pass" : avg >= 0.5 ? "avg" : "fail";
+              scoreBadge = `<span class="score ${scoreClass}">Avg: ${Math.round(avg * 100)}%</span>`;
+            }
+          }
+
+          return `<li>
+                <a href="${escapeHtml(filename)}">
+                    <span>${escapeHtml(urlDisplay)}</span>
+                    ${scoreBadge}
+                    <div class="url">${escapeHtml(report.url)}</div>
+                </a>
+            </li>`;
+        })
+        .join("\n");
 
 const htmlContent = `
 <!DOCTYPE html>
@@ -44,32 +115,7 @@ const htmlContent = `
     <h1>🔭 Lighthouse Reports</h1>
     <p>Generated on ${new Date().toLocaleString()}</p>
     <ul>
-        ${reports
-          .map((report) => {
-            // report.htmlPath is absolute path from LHCI. We need relative filename.
-            const filename = path.basename(report.htmlPath);
-            const url = report.url.replace("http://localhost", "");
-
-            // Calculate average score if available (summary object)
-            // manifest entries might look like: { url, isRepresentativeRun, htmlPath, jsonPath, summary: { performance: 0.9, ... } }
-            let scoreBadge = "";
-            if (report.summary) {
-              const scores = Object.values(report.summary);
-              const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
-              const scoreClass =
-                avg >= 0.9 ? "pass" : avg >= 0.5 ? "avg" : "fail";
-              scoreBadge = `<span class="score ${scoreClass}">Avg: ${Math.round(avg * 100)}%</span>`;
-            }
-
-            return `<li>
-                <a href="${filename}">
-                    <span>${url || "/"}</span>
-                    ${scoreBadge}
-                    <div class="url">${report.url}</div>
-                </a>
-            </li>`;
-          })
-          .join("\n")}
+        ${listItems}
     </ul>
 </body>
 </html>
