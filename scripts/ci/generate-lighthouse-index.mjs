@@ -111,5 +111,5 @@ const htmlContent = `
 
 fs.writeFileSync(indexPath, htmlContent);
 console.log(
-  `Generated index.html at ${indexPath} with ${reports.length} reports.`, 
+  `Generated index.html at ${indexPath} with ${reports.length} reports.`,
 );
