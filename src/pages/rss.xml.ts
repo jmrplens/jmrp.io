@@ -26,6 +26,7 @@ export async function GET(context: APIContext) {
           try {
             const opt = await getImage({ src: post.data.coverImage, format: "jpeg", width: 1200 });
             const thumb = await getImage({ src: post.data.coverImage, format: "jpeg", width: 400 });
+            // JPEG chosen over WebP for maximum compatibility with RSS readers
             const imgUrl = new URL(opt.src, context.site || "https://jmrp.io").toString();
             const thumbUrl = new URL(thumb.src, context.site || "https://jmrp.io").toString();
 
