@@ -53,6 +53,7 @@
     "@astrojs/check": "^0.9.6",
     "@axe-core/playwright": "^4.11.0",
     "@iconify-json/devicon": "^1.2.55",
+    "@lhci/cli": "^0.15.1",
     "@playwright/test": "^1.57.0",
     "@types/he": "^1.2.3",
     "@types/js-yaml": "^4.0.9",

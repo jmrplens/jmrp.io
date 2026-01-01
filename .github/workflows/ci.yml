@@ -441,9 +441,8 @@ jobs:
       - name: Run Lighthouse CI
         shell: bash
         run: |
-          npm install -g @lhci/cli
           if [ "${{ matrix.theme }}" = "dark" ]; then export LHCI_CHROME_FLAGS="--force-dark-mode --force-prefers-color-scheme=dark"; fi
-          lhci autorun | tee lhci_output_${{ matrix.theme }}.txt
+          pnpm exec lhci autorun | tee lhci_output_${{ matrix.theme }}.txt
         env:
           LHCI_GITHUB_TOKEN: ${{ secrets.TOKEN_GITHUB }}
       - name: Format Lighthouse Report
