@@ -197,30 +197,51 @@ function updateNginxConfig(styleHashString, scriptHashString, imgDomainString) {
     "report-uri /csp-report",
   ];
 
+  const newCspHeader = `add_header Content-Security-Policy "${components.join("; ")};" always;`;
+
+  // Construct the new block
+  let blockContent = "";
+  if (nginxSetDirectives) {
+    blockContent += nginxSetDirectives.trim() + "\n";
+  }
+  blockContent += newCspHeader;
+
+  const BLOCK_START = "# --- CSP BLOCK START ---";
+  const BLOCK_END = "# --- CSP BLOCK END ---";
+  const finalBlock = `${BLOCK_START}\n${blockContent}\n${BLOCK_END}`;
+
   let nginxConfig = fs.readFileSync(NGINX_CONF, "utf-8");
 
-  // Cleanup old dynamic directives
-  nginxConfig = nginxConfig.replace(/set \$csp_script_src_\d+ ".*?";\n/g, "");
+  // Regex to find the existing block
+  const blockRegex = new RegExp(`${BLOCK_START}[\\s\\S]*?${BLOCK_END}`, "g");
 
-  const newCspHeader = `add_header Content-Security-Policy "${components.join("; ")};" always;`;
-  const cspRegex = /add_header Content-Security-Policy "[^"]*" always;/;
-
-  let newContent = nginxConfig;
-
-  if (cspRegex.test(newContent)) {
-    newContent = newContent.replace(cspRegex, newCspHeader);
+  if (blockRegex.test(nginxConfig)) {
+    // Block exists, replace it
+    nginxConfig = nginxConfig.replace(blockRegex, finalBlock);
   } else {
-    console.warn(
-      "Warning: Could not find existing CSP header to replace. Appending new one.",
-    );
-    newContent += `\n${newCspHeader}\n`;
+    // Migration: Block doesn't exist.
+    // 1. Remove old dynamic set directives
+    nginxConfig = nginxConfig.replace(/set \$csp_script_src_\d+ ".*?";\n/g, "");
+
+    // 2. Find and replace the old add_header line with the new block
+    const oldCspRegex =
+      /add_header Content-Security-Policy "[^"]*" always;(\r?\n)?/;
+
+    if (oldCspRegex.test(nginxConfig)) {
+      nginxConfig = nginxConfig.replace(oldCspRegex, finalBlock + "\n");
+    } else {
+      // Fallback: Prepend to file if header not found
+      console.warn(
+        "Warning: Could not find existing CSP header. Prepending new block.",
+      );
+      nginxConfig = finalBlock + "\n" + nginxConfig;
+    }
   }
 
-  if (nginxSetDirectives) {
-    newContent = nginxSetDirectives + "\n" + newContent;
-  }
+  // Cleanup excessive newlines (3 or more -> 2)
+  nginxConfig = nginxConfig.replace(/\n{3,}/g, "\n\n");
 
-  fs.writeFileSync(NGINX_CONF, newContent);
+  fs.writeFileSync(NGINX_CONF, nginxConfig);
   console.log("Nginx configuration updated.");
 }
 
