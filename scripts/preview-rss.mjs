@@ -11,6 +11,7 @@
 import Parser from "rss-parser";
 import fs from "node:fs";
 import path from "node:path";
+import he from "he";
 import { escapeHtml } from "./utils/html.mjs";
 
 const RSS_FILE = "dist/rss.xml";
@@ -181,32 +182,40 @@ async function generatePreview() {
         </div>
       </div>
 
-            ${feed.items
+                  ${feed.items
 
-              .map((item) => {
-                const content = item["content:encoded"] || item.content;
+                    .map((item) => {
+                      let content = item["content:encoded"] || item.content;
 
-                const enclosure =
-                  item.enclosure ||
-                  (item["media:content"] ? item["media:content"].$ : null);
+                      // Decode entities to ensure HTML is rendered
 
-                let enclosureHtml = "";
+                      if (content) {
+                        content = he.decode(content);
+                      }
 
-                // If the content already starts with an image (our new structure), we don't need to show enclosure separately
+                      const enclosure =
+                        item.enclosure ||
+                        (item["media:content"]
+                          ? item["media:content"].$
+                          : null);
 
-                // but for the preview let's keep it consistent.
+                      let enclosureHtml = "";
 
-                if (
-                  enclosure &&
-                  enclosure.url &&
-                  enclosure.type &&
-                  enclosure.type.startsWith("image") &&
-                  !content.includes(enclosure.url)
-                ) {
-                  enclosureHtml = `<div class="enclosure"><img src="${enclosure.url}" alt="Cover Image"></div>`;
-                }
+                      // If the content already starts with an image (our new structure), we don't need to show enclosure separately
 
-                return `
+                      // but for the preview let's keep it consistent.
+
+                      if (
+                        enclosure &&
+                        enclosure.url &&
+                        enclosure.type &&
+                        enclosure.type.startsWith("image") &&
+                        !content.includes(enclosure.url)
+                      ) {
+                        enclosureHtml = `<div class="enclosure"><img src="${enclosure.url}" alt="Cover Image"></div>`;
+                      }
+
+                      return `
 
               <article class="rss-item">
           ${enclosureHtml}
@@ -222,8 +231,8 @@ async function generatePreview() {
           </div>
         </article>
         `;
-              })
-              .join("")}
+                    })
+                    .join("")}
     </div>
   </body>
   </html>

@@ -40,7 +40,7 @@ async function validate() {
   for (const item of items) {
     const title = item.title[0];
     const content = item["content:encoded"][0];
-    
+
     // Wrap in a div to ensure a root element exists if multiple top-levels
     const htmlToValidate = `<div>${content}</div>`;
 
@@ -51,16 +51,18 @@ async function validate() {
       hasErrors = true;
       report.results.forEach((result) => {
         result.messages.forEach((msg) => {
-          console.error(`   [${msg.ruleId}] ${msg.message} (Line: ${msg.line}, Col: ${msg.column})`);
+          console.error(
+            `   [${msg.ruleId}] ${msg.message} (Line: ${msg.line}, Col: ${msg.column})`,
+          );
         });
       });
-      
+
       // Save failed content for inspection
-      const safeTitle = title.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+      const safeTitle = title.replace(/[^a-z0-9]/gi, "_").toLowerCase();
       fs.writeFileSync(`debug-rss-fail-${safeTitle}.html`, htmlToValidate);
       console.log(`   Saved failed HTML to: debug-rss-fail-${safeTitle}.html`);
     } else {
-        console.log(`✅ Valid HTML content: "${title}"`);
+      console.log(`✅ Valid HTML content: "${title}"`);
     }
   }
 
