@@ -454,8 +454,7 @@ jobs:
         run: |
           mkdir -p lh-deploy
           cp -r .lighthouseci/* lh-deploy/ || true
-          REPORT_FILE=$(find lh-deploy -name "*.html" | head -n 1)
-          if [ -n "$REPORT_FILE" ]; then cp "$REPORT_FILE" lh-deploy/index.html; else echo "<h1>Lighthouse Report not found</h1>" > lh-deploy/index.html; fi
+          node scripts/ci/generate-lighthouse-index.mjs lh-deploy
           pnpm exec surge ./lh-deploy jmrp-lh-pr-${{ github.event.number }}-${{ matrix.theme }}.surge.sh --token ${{ secrets.SURGE_TOKEN }}
       - name: Post Comment
         if: github.event_name == 'pull_request' && always()

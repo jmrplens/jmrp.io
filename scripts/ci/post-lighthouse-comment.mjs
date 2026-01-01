@@ -16,7 +16,7 @@ export default async ({ github, context }) => {
     let comment = fs.readFileSync(commentFile, "utf8");
 
     if (surgeUrl) {
-      comment += `\n\n#### 🌐 Live Report\n> 🚀 [**Open Full Lighthouse Audit**](https://${surgeUrl}) for detailed insights.`;
+      comment += `\n\n#### 🌐 Live Report\n> 🚀 [**Open Lighthouse Reports Dashboard**](https://${surgeUrl}) for detailed insights.`;
     }
 
     await github.rest.issues.createComment({
