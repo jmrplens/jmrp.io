@@ -1,23 +1,23 @@
-import fs from 'fs';
-import path from 'path';
+import fs from "fs";
+import path from "path";
 
-const deployDir = process.argv[2] || 'lh-deploy';
-const manifestPath = path.join(deployDir, 'manifest.json');
-const indexPath = path.join(deployDir, 'index.html');
+const deployDir = process.argv[2] || "lh-deploy";
+const manifestPath = path.join(deployDir, "manifest.json");
+const indexPath = path.join(deployDir, "index.html");
 
 if (!fs.existsSync(manifestPath)) {
   console.error(`Manifest not found at ${manifestPath}`);
   process.exit(1);
 }
 
-const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
 
 // Group by URL to handle multiple runs if needed, though usually we display representative runs.
 // LHCI manifest usually has one entry per run. If 'isRepresentativeRun' is true, we prioritize it?
 // The manifest structure is array of objects.
 // Let's just list all representative runs or unique URLs.
 
-const reports = manifest.filter(entry => entry.isRepresentativeRun);
+const reports = manifest.filter((entry) => entry.isRepresentativeRun);
 
 const htmlContent = `
 <!DOCTYPE html>
@@ -44,34 +44,38 @@ const htmlContent = `
     <h1>🔭 Lighthouse Reports</h1>
     <p>Generated on ${new Date().toLocaleString()}</p>
     <ul>
-        ${reports.map(report => {
+        ${reports
+          .map((report) => {
             // report.htmlPath is absolute path from LHCI. We need relative filename.
             const filename = path.basename(report.htmlPath);
-            const url = report.url.replace('http://localhost', '');
-            
+            const url = report.url.replace("http://localhost", "");
+
             // Calculate average score if available (summary object)
             // manifest entries might look like: { url, isRepresentativeRun, htmlPath, jsonPath, summary: { performance: 0.9, ... } }
-            let scoreBadge = '';
+            let scoreBadge = "";
             if (report.summary) {
-                const scores = Object.values(report.summary);
-                const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
-                const scoreClass = avg >= 0.9 ? 'pass' : (avg >= 0.5 ? 'avg' : 'fail');
-                scoreBadge = `<span class="score ${scoreClass}">Avg: ${Math.round(avg * 100)}%</span>`;
+              const scores = Object.values(report.summary);
+              const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
+              const scoreClass =
+                avg >= 0.9 ? "pass" : avg >= 0.5 ? "avg" : "fail";
+              scoreBadge = `<span class="score ${scoreClass}">Avg: ${Math.round(avg * 100)}%</span>`;
             }
 
             return `<li>
                 <a href="${filename}">
-                    <span>${url || '/'}</span>
+                    <span>${url || "/"}</span>
                     ${scoreBadge}
                     <div class="url">${report.url}</div>
                 </a>
             </li>`;
-        }).join('\n')}
+          })
+          .join("\n")}
     </ul>
 </body>
 </html>
 `;
 
 fs.writeFileSync(indexPath, htmlContent);
-console.log(`Generated index.html at ${indexPath} with ${reports.length} reports.`);
-
+console.log(
+  `Generated index.html at ${indexPath} with ${reports.length} reports.`,
+);
