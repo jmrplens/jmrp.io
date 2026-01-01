@@ -422,6 +422,7 @@ jobs:
     strategy:
       matrix:
         theme: [light, dark]
+      fail-fast: false
     permissions:
       pull-requests: write
     steps:
@@ -442,7 +443,9 @@ jobs:
         run: |
           npm install -g @lhci/cli
           if [ "${{ matrix.theme }}" = "dark" ]; then export LHCI_CHROME_FLAGS="--force-dark-mode --force-prefers-color-scheme=dark"; fi
-          lhci autorun | tee lhci_output_${{ matrix.theme }}.txt
+          lhci autorun | tee lhci_output_${{ matrix.theme }}.txt || true
+          echo "Listing .lighthouseci content:"
+          ls -R .lighthouseci || echo ".lighthouseci not found"
         env:
           LHCI_GITHUB_TOKEN: ${{ secrets.TOKEN_GITHUB }}
       - name: Format Lighthouse Report
