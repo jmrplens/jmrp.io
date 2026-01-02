@@ -162,26 +162,33 @@ graph LR
 Once the build is ready, we execute comprehensive testing matrices and generate unified reports.
 
 ```mermaid
-graph TD
-    Build[Build Artifact]
+graph LR
+    Build[Build Artifact] --> TM
+    Build --> CV
 
-    subgraph "Testing Matrices"
-        Build --> A11y[Accessibility Tests]
-        Build --> LH[Lighthouse Audit]
-        Build --> Func[Functional Tests]
+    subgraph TM [Testing Matrices]
+        direction TB
+        A11y[Accessibility Tests]
+        LH[Lighthouse Audit]
+        Func[Functional Tests]
     end
 
-    subgraph "Content Validations"
-        Build --> HTML[HTML5]
-        Build --> RSS
-        Build --> Schema
-        Build --> Img[Images]
+    subgraph CV [Content Validations]
+        direction TB
+        HTML[HTML5]
+        RSS
+        Schema
+        Img[Images]
     end
 
-    subgraph "Reporting Pipelines"
-        A11y --> A11yAgg[A11y Dashboard] --> A11yCom[PR Comment]
-        LH --> LHAgg[LH Dashboard] --> LHCom[PR Comment]
+    subgraph Rep [Reporting Pipelines]
+        direction TB
+        A11yAgg[A11y Dashboard] --> A11yCom[PR Comment]
+        LHAgg[LH Dashboard] --> LHCom[PR Comment]
     end
+
+    A11y --> A11yAgg
+    LH --> LHAgg
 ```
 
 ### Accessibility Testing
