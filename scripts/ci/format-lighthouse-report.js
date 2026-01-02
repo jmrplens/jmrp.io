@@ -6,8 +6,8 @@
  * and outputs a Markdown table.
  */
 
-const fs = require("fs");
-const path = require("path");
+import fs from "fs";
+import path from "path";
 
 const lhDir = process.argv[2] || ".lighthouseci";
 
