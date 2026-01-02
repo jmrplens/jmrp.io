@@ -142,12 +142,12 @@ graph TD
 Static analysis tools run in parallel with the production build to provide fast feedback.
 
 ```mermaid
-graph LR
+graph TD
     Trigger[Push / PR] --> SA[Static Analysis]
     Trigger --> Build[Build Artifact]
 
     subgraph SA [Static Analysis]
-        direction TB
+        direction LR
         Lint[Lint & Type Check]
         Links[Link Checker]
         Spell[Spell Checker]
@@ -174,7 +174,7 @@ graph LR
     end
 
     subgraph CV [Content Validations]
-        direction TB
+        direction LR
         HTML[HTML5]
         RSS
         Schema
