@@ -189,28 +189,49 @@ async function validateAllPages() {
     });
 
     totalSchemas += schemas.length;
-    if (fileErrors.length > 0 || fileWarnings.length > 0) {
-      fileResults.push({
-        file: relativePath,
-        schemasCount: schemas.length,
-        errors: fileErrors,
-        warnings: fileWarnings,
-      });
-    }
+    // Always push if schemas exist, so we can show "Valid" pages too
+    fileResults.push({
+      file: relativePath,
+      schemasCount: schemas.length,
+      errors: fileErrors,
+      warnings: fileWarnings,
+      valid: fileErrors.length === 0,
+      schemas: schemas, // Include raw schemas for display
+    });
   }
+
+  const report = {
+    summary: {
+      totalSchemas,
+      totalErrors,
+      totalWarnings,
+      totalPages: fileResults.length,
+    },
+    results: fileResults,
+    timestamp: new Date().toISOString(),
+  };
+
+  fs.writeFileSync("schema-report.json", JSON.stringify(report, null, 2));
+  console.log("✅ Written schema-report.json");
 
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
   console.log(
     `\n📊 Schema.org Summary:\n   Total schemas found: ${totalSchemas}\n   Errors: ${totalErrors}\n   Warnings: ${totalWarnings}\n`,
   );
 
-  if (fileResults.length > 0) {
+  if (fileResults.some((r) => !r.valid || r.warnings.length > 0)) {
     fileResults.forEach((result) => {
-      console.log(`\n📄 ${result.file} (${result.schemasCount} schemas)`);
-      result.errors.forEach(({ index, type, errors }) => {
-        console.log(`   ❌ Schema ${index + 1} (${type}):`);
-        errors.forEach((err) => console.log(`      • ${err}`));
-      });
+      if (result.errors.length > 0 || result.warnings.length > 0) {
+        console.log(`\n📄 ${result.file} (${result.schemasCount} schemas)`);
+        result.errors.forEach(({ index, type, errors }) => {
+          console.log(`   ❌ Schema ${index + 1} (${type}):`);
+          errors.forEach((err) => console.log(`      • ${err}`));
+        });
+        result.warnings.forEach(({ index, type, warnings }) => {
+          console.log(`   ⚠️ Schema ${index + 1} (${type}):`);
+          warnings.forEach((warn) => console.log(`      • ${warn}`));
+        });
+      }
     });
   }
 
