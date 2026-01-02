@@ -6,7 +6,7 @@
     "node": ">=18",
     "pnpm": ">=8"
   },
-  "packageManager": "pnpm@9.0.0",
+  "packageManager": "pnpm@10.27.0",
   "scripts": {
     "dev": "astro dev",
     "prebuild": "node scripts/fetch-github-avatar.mjs",
