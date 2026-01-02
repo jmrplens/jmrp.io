@@ -68,6 +68,12 @@ function addIntegrityToTag(match, tagName, attrs, url, file, hashCache) {
   if (attrs.includes("integrity=")) return match;
   if (shouldSkipUrl(url)) return match;
 
+  // Check if it's an image preload
+  const isPreload =
+    attrs.includes('rel="preload"') || attrs.includes("rel='preload'");
+  const isImage = attrs.includes('as="image"') || attrs.includes("as='image'");
+  const skipIntegrity = isPreload && isImage;
+
   try {
     const filePath = resolveFilePath(url, path.dirname(file));
     if (!fs.existsSync(filePath)) return match;
@@ -87,6 +93,14 @@ function addIntegrityToTag(match, tagName, attrs, url, file, hashCache) {
     const crossoriginAttr = attrs.includes("crossorigin")
       ? ""
       : ' crossorigin="anonymous"';
+
+    // For image preloads, we ONLY add crossorigin, NO integrity
+    if (skipIntegrity) {
+      // If crossorigin is already there, and we skip integrity, we might change nothing?
+      // But we want to ensure crossorigin is there.
+      if (attrs.includes("crossorigin")) return match;
+      return `<${tagName} ${cleanAttrs}${crossoriginAttr}>`;
+    }
 
     return `<${tagName} ${cleanAttrs}${nonceAttr} integrity="${hash}"${crossoriginAttr}>`;
   } catch (err) {
