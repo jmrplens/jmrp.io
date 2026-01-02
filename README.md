@@ -144,10 +144,13 @@ graph TD
         G --> G1((Validation Reports))
     end
 
-    D1 --> H[Aggregate & Dashboard]
-    E1 --> H
-    H --> I[Deploy to Surge]
-    I --> J[PR Comment]
+    D1 --> H1[Aggregate & Dashboard]
+    H1 --> I1[Deploy to Surge]
+    I1 --> J1[PR Comment]
+
+    E1 --> H2[Aggregate & Dashboard]
+    H2 --> I2[Deploy to Surge]
+    I2 --> J2[PR Comment]
 ```
 
 ### Accessibility Testing
