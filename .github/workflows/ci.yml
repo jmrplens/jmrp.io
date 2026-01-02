@@ -110,6 +110,7 @@ jobs:
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile --prefer-offline
       - name: SonarCloud Scan
+        if: ${{ secrets.SONAR_TOKEN != '' }}
         uses: SonarSource/sonarqube-scan-action@v7
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -127,6 +128,7 @@ jobs:
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile --prefer-offline
       - name: Run Snyk to check for vulnerabilities
+        if: ${{ secrets.SNYK_TOKEN != '' }}
         uses: snyk/actions/node@master
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
@@ -237,7 +239,7 @@ jobs:
         run: node scripts/ci/generate-accessibility-index.mjs a11y-deploy
 
       - name: Deploy to Surge
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && secrets.SURGE_TOKEN != ''
         run: |
           pnpm exec surge ./a11y-deploy jmrp-a11y-pr-${{ github.event.number }}.surge.sh --token ${{ secrets.SURGE_TOKEN }}
 
@@ -339,7 +341,7 @@ jobs:
           # Create the interactive HTML report and exit with error if issues are found
           node scripts/ci/generate-html-validation-report.mjs
       - name: Deploy HTML Report to Surge
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && secrets.SURGE_TOKEN != ''
         shell: bash
         run: |
           mkdir -p html-deploy
@@ -383,7 +385,7 @@ jobs:
           path: dist/rss-preview.html
           retention-days: 3
       - name: Deploy RSS Preview to Surge
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && secrets.SURGE_TOKEN != ''
         shell: bash
         run: |
           mkdir -p preview-deploy
@@ -428,7 +430,7 @@ jobs:
             echo "schema-report.json not found. Skipping generation."
           fi
       - name: Deploy Schema Report to Surge
-        if: github.event_name == 'pull_request' && always()
+        if: github.event_name == 'pull_request' && always() && secrets.SURGE_TOKEN != ''
         run: |
           if [ -f schema-report.html ]; then
             mkdir -p schema-deploy
@@ -501,7 +503,7 @@ jobs:
       - name: Generate Image HTML Report
         run: node scripts/ci/generate-image-report.mjs
       - name: Deploy Image Report to Surge
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && secrets.SURGE_TOKEN != ''
         shell: bash
         run: |
           mkdir -p img-deploy
@@ -548,7 +550,7 @@ jobs:
           path: playwright-report/
           retention-days: 7
       - name: Deploy Playwright Report to Surge
-        if: github.event_name == 'pull_request' && always()
+        if: github.event_name == 'pull_request' && always() && secrets.SURGE_TOKEN != ''
         shell: bash
         run: |
           pnpm exec surge ./playwright-report jmrp-functional-pr-${{ github.event.number }}.surge.sh --token ${{ secrets.SURGE_TOKEN }}
@@ -646,7 +648,7 @@ jobs:
         run: node scripts/ci/generate-lighthouse-index.mjs lh-deploy
 
       - name: Deploy to Surge
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && secrets.SURGE_TOKEN != ''
         run: |
           pnpm exec surge ./lh-deploy jmrp-lh-pr-${{ github.event.number }}.surge.sh --token ${{ secrets.SURGE_TOKEN }}
 
