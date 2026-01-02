@@ -24,7 +24,7 @@ function syntaxHighlight(json) {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;");
   return json.replace(
-    /("(\u[a-zA-Z0-9]{4}|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
+    /("(\u[a-zA-Z0-9]{4}|[^\\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
     function (match) {
       let cls = "number";
       if (/^"/.test(match)) {
@@ -41,6 +41,54 @@ function syntaxHighlight(json) {
       return '<span class="' + cls + '">' + match + "</span>";
     },
   );
+}
+
+function renderVisual(data) {
+  if (data === null || data === undefined)
+    return '<span class="v-null">null</span>';
+
+  if (Array.isArray(data)) {
+    if (data.length === 0) return '<span class="v-empty">[]</span>';
+    return `<div class="v-list">${data.map((item) => `<div class="v-list-item">${renderVisual(item)}</div>`).join("")}</div>`;
+  }
+
+  if (typeof data === "object") {
+    const type = data["@type"];
+    let html = '<div class="v-object">';
+
+    if (type) {
+      html += `<div class="v-type-badge">${type}</div>`;
+    }
+
+    const keys = Object.keys(data).filter(
+      (k) => k !== "@context" && k !== "@type",
+    );
+    if (keys.length === 0) return html + "</div>";
+
+    html += '<div class="v-props">';
+    keys.forEach((key) => {
+      html += `
+                <div class="v-row">
+                    <div class="v-key">${key}:</div>
+                    <div class="v-val">${renderVisual(data[key])}</div>
+                </div>`;
+    });
+    html += "</div></div>";
+    return html;
+  }
+
+  // Primitive values
+  if (typeof data === "string") {
+    if (data.startsWith("http")) {
+      if (data.match(/\.(jpg|jpeg|png|webp|gif|svg)$/i)) {
+        return `<a href="${data}" target="_blank"><img src="${data}" class="v-img" loading="lazy" /></a>`;
+      }
+      return `<a href="${data}" target="_blank" class="v-link">${data}</a>`;
+    }
+    return `<span class="v-string">"${data}"</span>`;
+  }
+
+  return `<span class="v-prim">${data}</span>`;
 }
 
 const html = `
@@ -63,6 +111,13 @@ const html = `
             --primary: #0d6efd;
             --shadow: 0 4px 6px rgba(0,0,0,0.05);
             --code-bg: #f1f3f5;
+            
+            /* Visual Schema Styles */
+            --v-border: #e9ecef;
+            --v-bg-obj: #ffffff;
+            --v-key: #6c757d;
+            --v-string: #212529;
+            --v-prim: #0d6efd;
         }
         @media (prefers-color-scheme: dark) {
             :root {
@@ -74,6 +129,12 @@ const html = `
                 --primary: #6ea8fe;
                 --shadow: 0 4px 6px rgba(0,0,0,0.3);
                 --code-bg: #2d2d30;
+                
+                --v-border: #333;
+                --v-bg-obj: #252526;
+                --v-key: #a0a0a0;
+                --v-string: #e0e0e0;
+                --v-prim: #6ea8fe;
             }
         }
         body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg-body); color: var(--text-main); margin: 0; padding: 2rem 1rem; line-height: 1.5; }
@@ -105,11 +166,26 @@ const html = `
         .issue-type { font-weight: 700; font-size: 0.85rem; margin-bottom: 0.25rem; display: flex; align-items: center; gap: 0.5rem; }
         .issue-msg { font-size: 0.9rem; color: var(--text-main); margin-left: 1.5rem; }
 
-        .schema-viewer { margin-top: 1.5rem; }
-        .schema-title { font-size: 0.9rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.25rem; display: inline-block; }
+        /* Schema Viewer Styles */
+        .schema-container { margin-top: 2rem; border-top: 1px dashed var(--border-color); padding-top: 1.5rem; }
+        .schema-tabs { display: flex; gap: 1rem; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); }
+        .tab-btn { padding: 0.5rem 1rem; cursor: pointer; border: none; background: none; font-weight: 600; color: var(--text-muted); border-bottom: 2px solid transparent; }
+        .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
         
         pre { background: var(--code-bg); padding: 1rem; border-radius: 8px; overflow-x: auto; font-size: 0.85rem; border: 1px solid var(--border-color); margin: 0; }
         
+        .visual-view { font-size: 0.9rem; }
+        .v-object { border: 1px solid var(--v-border); background: var(--v-bg-obj); border-radius: 6px; padding: 0.75rem; margin-bottom: 0.5rem; }
+        .v-type-badge { display: inline-block; background: var(--primary); color: white; font-size: 0.7rem; font-weight: bold; padding: 0.1rem 0.4rem; border-radius: 4px; margin-bottom: 0.5rem; }
+        .v-row { display: flex; gap: 0.5rem; margin-bottom: 0.25rem; }
+        .v-key { font-weight: 600; color: var(--v-key); min-width: 80px; flex-shrink: 0; }
+        .v-val { flex: 1; overflow-wrap: break-word; word-break: break-word; color: var(--v-string); }
+        .v-list { display: flex; flex-direction: column; gap: 0.5rem; padding-left: 0.5rem; border-left: 2px solid var(--v-border); }
+        .v-link { color: var(--primary); text-decoration: none; }
+        .v-link:hover { text-decoration: underline; }
+        .v-img { max-width: 100px; max-height: 100px; border-radius: 4px; border: 1px solid var(--v-border); display: block; margin-top: 0.25rem; }
+        .v-prim { color: var(--v-prim); font-weight: 500; }
+
         /* Syntax Highlighting */
         .string { color: #22863a; }
         .number { color: #005cc5; }
@@ -125,11 +201,18 @@ const html = `
             .key { color: #ff7b72; }
         }
     </style>
+    <script>
+        function switchTab(id, mode) {
+            document.getElementById(id + '-visual').style.display = mode === 'visual' ? 'block' : 'none';
+            document.getElementById(id + '-code').style.display = mode === 'code' ? 'block' : 'none';
+            document.getElementById(id + '-btn-visual').classList.toggle('active', mode === 'visual');
+            document.getElementById(id + '-btn-code').classList.toggle('active', mode === 'code');
+        }
+    </script>
 </head>
 <body>
     <div class="container">
         <h1>🏷️ Schema.org Report</h1>
-        <p style="text-align: center; color: var(--text-muted); margin-bottom: 2rem;">Generated on ${new Date().toLocaleString()}</p>
         
         <div class="summary-grid">
             <div class="card">
@@ -152,7 +235,7 @@ const html = `
 
         <div class="results-list">
             ${results
-              .map((r) => {
+              .map((r, idx) => {
                 const status =
                   r.valid && r.warnings.length === 0
                     ? "pass"
@@ -166,6 +249,7 @@ const html = `
                       ? "Invalid"
                       : "Warning";
                 const badgeClass = `status-${status}`;
+                const uniqueId = `schema-${idx}`;
 
                 let detailsHtml = "";
 
@@ -191,12 +275,25 @@ const html = `
 
                 // Schemas View
                 if (r.schemas && r.schemas.length > 0) {
-                  detailsHtml += '<div class="schema-viewer">';
+                  detailsHtml += '<div class="schema-container">';
                   r.schemas.forEach((schema, i) => {
+                    const schemaId = uniqueId + "-" + i;
                     detailsHtml += `
-                            <div class="schema-block" style="margin-bottom: 1.5rem;">
-                                <div class="schema-title">Schema ${i + 1}: ${schema["@type"] || "Unknown"}</div>
-                                <pre>${syntaxHighlight(schema)}</pre>
+                            <div class="schema-block" style="margin-bottom: 2rem;">
+                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+                                    <div style="font-weight:700; color:var(--text-muted);">Schema ${i + 1}</div>
+                                    <div class="schema-tabs" style="margin-bottom:0; border-bottom:none;">
+                                        <button id="${schemaId}-btn-visual" class="tab-btn active" onclick="switchTab('${schemaId}', 'visual')">Visual</button>
+                                        <button id="${schemaId}-btn-code" class="tab-btn" onclick="switchTab('${schemaId}', 'code')">JSON</button>
+                                    </div>
+                                </div>
+                                
+                                <div id="${schemaId}-visual" class="visual-view">
+                                    ${renderVisual(schema)}
+                                </div>
+                                <div id="${schemaId}-code" style="display:none;">
+                                    <pre>${syntaxHighlight(schema)}</pre>
+                                </div>
                             </div>
                         `;
                   });
