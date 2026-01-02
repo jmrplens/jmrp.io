@@ -128,35 +128,78 @@ This command will:
 
 This project employs a rigorous testing pipeline to ensure quality and compliance.
 
+### Pipeline Overview
+
 ```mermaid
 graph TD
-    A[Push / PR] --> B{Lint & Security}
-    B --> C[Build Artifact]
-    C --> D[Accessibility Tests]
-    C --> E[Lighthouse Audit]
-    C --> F[Functional Tests]
-    C --> G[Validations]
+    Trigger[Push / PR] --> Phase1[Analysis & Build]
+    Phase1 --> Phase2[Deep Testing]
+    Phase2 --> Phase3[Reporting]
+```
 
-    subgraph "Parallel Testing"
-        D -- Light/Dark --> D1((A11y Reports))
-        E -- Matrix: 4 Jobs --> E1((LH Results))
-        F --> F1((Playwright Report))
-        G --> G1((Validation Reports))
+### Phase 1: Parallel Analysis & Build
+
+Static analysis tools run in parallel with the production build to provide fast feedback.
+
+```mermaid
+graph TD
+    Trigger[Push / PR] --> SA[Static Analysis]
+    Trigger --> Build[Build Artifact]
+
+    subgraph SA [Static Analysis]
+        direction LR
+        Lint[Lint & Type Check]
+        Links[Link Checker]
+        Spell[Spell Checker]
+        CodeQL
+        Sonar[SonarCloud]
+        Snyk[Snyk Security]
+    end
+```
+
+### Phase 2: Deep Testing & Reporting
+
+Once the build is ready, we execute comprehensive testing matrices and generate unified reports.
+
+```mermaid
+graph LR
+    Build[Build Artifact] --> TM
+    Build --> CV
+
+    subgraph TM [Testing Matrices]
+        direction TB
+        A11y[Accessibility Tests]
+        LH[Lighthouse Audit]
+        Func[Functional Tests]
     end
 
-    E1 --> H[Aggregate & Dashboard]
-    H --> I[Deploy to Surge]
-    I --> J[PR Comment]
+    subgraph CV [Content Validations]
+        direction LR
+        HTML[HTML5]
+        RSS
+        Schema
+        Img[Images]
+    end
+
+    subgraph Rep [Reporting Pipelines]
+        direction TB
+        A11yAgg[A11y Dashboard] --> A11yCom[PR Comment]
+        LHAgg[LH Dashboard] --> LHCom[PR Comment]
+    end
+
+    A11y --> A11yAgg
+    LH --> LHAgg
 ```
 
 ### Accessibility Testing
 
 We perform comprehensive accessibility checks:
 
-- **Axe-core (via Playwright)**: Scans every page against **WCAG 2.1 AA** and **Best Practice** rules.
+- **Axe-core (via Playwright)**: Scans every page against **WCAG 2.1/2.2 AA** and **Best Practice** rules.
   - **Dual-Theme Matrix**: Tests run in parallel for both **Light** and **Dark** modes to ensure contrast compliance in all contexts.
+  - **Unified Dashboard**: Aggregates results into an interactive HTML dashboard deployed to Surge, providing a single point of review for both themes.
   - **Global SVG Exclusion**: Prevents false positives in diagrams (Mermaid, etc.).
-  - Generates detailed HTML reports (`accessibility-report/`) and fails the build on any violation.
+  - Fails the build on any violation.
 - **Lighthouse CI**: Runs Lighthouse audits on all pages, enforcing high scores for Accessibility, Performance, and SEO.
   - **Parallel Matrix Execution**: Runs 4 parallel jobs covering **Mobile** & **Desktop** form factors across both **Light** & **Dark** themes.
   - **Unified Dashboard**: Aggregates all results into a single, interactive HTML dashboard deployed to Surge for easy review.
