@@ -82,7 +82,7 @@ jsonFiles.forEach((filePath) => {
       });
     }
   } catch (e) {
-    console.warn(`Skipping: ${filePath}`);
+    console.warn(`Skipping: ${filePath} - ${e.message}`);
   }
 });
 
@@ -96,7 +96,7 @@ reports.forEach((r) => {
       desktop: { light: [], dark: [] },
     };
 
-  if (grouped[r.url][r.formFactor] && grouped[r.url][r.formFactor][r.theme]) {
+  if (grouped[r.url]?.[r.formFactor]?.[r.theme]) {
     grouped[r.url][r.formFactor][r.theme].push(r);
   }
 });

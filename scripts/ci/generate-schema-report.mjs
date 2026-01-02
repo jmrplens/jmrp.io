@@ -57,7 +57,9 @@ function renderVisual(data) {
 
   if (Array.isArray(data)) {
     if (data.length === 0) return '<span class="v-empty">[]</span>';
-    return `<div class="v-list">${data.map((item) => `<div class="v-list-item">${renderVisual(item)}</div>`).join("")}</div>`;
+
+    const listItems = data.map((item) => `<div class="v-list-item">${renderVisual(item)}</div>`).join("");
+    return `<div class="v-list">${listItems}</div>`;
   }
 
   if (typeof data === "object") {
@@ -89,7 +91,7 @@ function renderVisual(data) {
   if (typeof data === "string") {
     if (data.startsWith("http")) {
       const escapedUrl = escapeHtml(data);
-      if (data.match(/\.(jpg|jpeg|png|webp|gif|svg)$/i)) {
+      if (/\.(jpg|jpeg|png|webp|gif|svg)$/i.exec(data)) {
         return `<a href="${escapedUrl}" target="_blank"><img src="${escapedUrl}" class="v-img" loading="lazy" /></a>`;
       }
       return `<a href="${escapedUrl}" target="_blank" class="v-link">${escapedUrl}</a>`;
@@ -250,18 +252,20 @@ const html = `
         <div class="results-list">
             ${results
     .map((r, idx) => {
-      const status =
-        r.valid && r.warnings.length === 0
-          ? "pass"
-          : r.errors.length > 0
-            ? "fail"
-            : "warn";
-      const label =
-        status === "pass"
-          ? "Valid"
-          : status === "fail"
-            ? "Invalid"
-            : "Warning";
+      let status = "warn";
+      if (r.valid && r.warnings.length === 0) {
+        status = "pass";
+      } else if (r.errors.length > 0) {
+        status = "fail";
+      }
+
+      let label = "Warning";
+      if (status === "pass") {
+        label = "Valid";
+      } else if (status === "fail") {
+        label = "Invalid";
+      }
+
       const badgeClass = `status-${status}`;
       const uniqueId = `schema-${idx}`;
 
