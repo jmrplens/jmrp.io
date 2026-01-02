@@ -165,6 +165,34 @@ function processMultimedia(content, file, hashCache, stats) {
 }
 
 /**
+ * Processes image preloads (with imagesrcset) to add crossorigin
+ * SRI is not added because imagesrcset references multiple files
+ */
+function processImagePreloads(content, stats) {
+  const linkRegex = /<link\s+([^>]*imagesrcset=["']([^"']+)["'][^>]*)>/gi;
+  return content.replaceAll(linkRegex, (match, attrs, url) => {
+    // Only target image preloads
+    const isPreload =
+      attrs.includes('rel="preload"') || attrs.includes("rel='preload'");
+    const isImage =
+      attrs.includes('as="image"') || attrs.includes("as='image'");
+
+    if (!isPreload || !isImage) return match;
+
+    // Check if crossorigin is already present
+    if (attrs.includes("crossorigin")) return match;
+
+    // Add crossorigin="anonymous" to match the <img> tags that get SRI
+    // We clean up trailing slashes if present to avoid syntax errors
+    const cleanAttrs = attrs.replace(/\/\s*$/, "").trim();
+    const result = `<link ${cleanAttrs} crossorigin="anonymous">`;
+
+    if (result !== match) stats.count++;
+    return result;
+  });
+}
+
+/**
  * Extracts module URLs from Astro island tags
  */
 function extractAstroModuleUrls(content) {
@@ -233,6 +261,7 @@ function processHtmlFile(file, hashCache) {
   content = processLinks(content, file, hashCache, stats);
   content = processImages(content, file, hashCache, stats);
   content = processMultimedia(content, file, hashCache, stats);
+  content = processImagePreloads(content, stats);
   content = processAstroIslandPreloads(content, file, hashCache, stats);
 
   const modified = content !== originalContent;
