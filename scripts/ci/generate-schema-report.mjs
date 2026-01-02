@@ -15,6 +15,34 @@ if (!fs.existsSync(REPORT_FILE)) {
 const data = JSON.parse(fs.readFileSync(REPORT_FILE, "utf-8"));
 const { summary, results } = data;
 
+function syntaxHighlight(json) {
+  if (typeof json !== "string") {
+    json = JSON.stringify(json, undefined, 2);
+  }
+  json = json
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+  return json.replace(
+    /("(\u[a-zA-Z0-9]{4}|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
+    function (match) {
+      let cls = "number";
+      if (/^"/.test(match)) {
+        if (/:$/.test(match)) {
+          cls = "key";
+        } else {
+          cls = "string";
+        }
+      } else if (/true|false/.test(match)) {
+        cls = "boolean";
+      } else if (/null/.test(match)) {
+        cls = "null";
+      }
+      return '<span class="' + cls + '">' + match + "</span>";
+    },
+  );
+}
+
 const html = `
 <!DOCTYPE html>
 <html lang="en">
@@ -34,6 +62,7 @@ const html = `
             --danger: #dc3545;
             --primary: #0d6efd;
             --shadow: 0 4px 6px rgba(0,0,0,0.05);
+            --code-bg: #f1f3f5;
         }
         @media (prefers-color-scheme: dark) {
             :root {
@@ -44,6 +73,7 @@ const html = `
                 --border-color: #333333;
                 --primary: #6ea8fe;
                 --shadow: 0 4px 6px rgba(0,0,0,0.3);
+                --code-bg: #2d2d30;
             }
         }
         body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg-body); color: var(--text-main); margin: 0; padding: 2rem 1rem; line-height: 1.5; }
@@ -58,7 +88,7 @@ const html = `
         .results-list { display: flex; flex-direction: column; gap: 1rem; }
         .result-item { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; }
         
-        .result-header { padding: 1rem; display: flex; align-items: center; justify-content: space-between; cursor: pointer; background: rgba(128,128,128,0.02); }
+        .result-header { padding: 1rem; display: flex; align-items: center; justify-content: space-between; cursor: pointer; background: rgba(128,128,128,0.02); transition: background 0.2s; }
         .result-header:hover { background: rgba(128,128,128,0.05); }
         .page-name { font-weight: 600; font-family: monospace; font-size: 0.9rem; }
         .status-badge { padding: 0.25rem 0.75rem; border-radius: 99px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; }
@@ -66,19 +96,40 @@ const html = `
         .status-fail { background-color: rgba(220, 53, 69, 0.1); color: var(--danger); }
         .status-warn { background-color: rgba(255, 193, 7, 0.1); color: #856404; }
 
-        .details { padding: 1rem; border-top: 1px solid var(--border-color); display: none; }
+        .details { padding: 1.5rem; border-top: 1px solid var(--border-color); display: none; animation: fadeIn 0.3s ease; }
         details[open] .details { display: block; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         
-        .issue { margin-bottom: 0.75rem; padding-left: 1rem; border-left: 3px solid transparent; }
-        .issue-error { border-left-color: var(--danger); }
-        .issue-warning { border-left-color: var(--warning); }
-        .issue-type { font-weight: 700; font-size: 0.8rem; margin-bottom: 0.25rem; }
-        .issue-msg { font-size: 0.9rem; color: var(--text-muted); }
+        .issue { margin-bottom: 0.75rem; padding: 0.75rem; border-radius: 6px; background: rgba(255,0,0,0.05); border-left: 4px solid var(--danger); }
+        .issue-warning { background: rgba(255,193,7,0.05); border-left-color: var(--warning); }
+        .issue-type { font-weight: 700; font-size: 0.85rem; margin-bottom: 0.25rem; display: flex; align-items: center; gap: 0.5rem; }
+        .issue-msg { font-size: 0.9rem; color: var(--text-main); margin-left: 1.5rem; }
+
+        .schema-viewer { margin-top: 1.5rem; }
+        .schema-title { font-size: 0.9rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.25rem; display: inline-block; }
+        
+        pre { background: var(--code-bg); padding: 1rem; border-radius: 8px; overflow-x: auto; font-size: 0.85rem; border: 1px solid var(--border-color); margin: 0; }
+        
+        /* Syntax Highlighting */
+        .string { color: #22863a; }
+        .number { color: #005cc5; }
+        .boolean { color: #005cc5; }
+        .null { color: #005cc5; }
+        .key { color: #d73a49; }
+
+        @media (prefers-color-scheme: dark) {
+            .string { color: #7ee787; }
+            .number { color: #79c0ff; }
+            .boolean { color: #79c0ff; }
+            .null { color: #79c0ff; }
+            .key { color: #ff7b72; }
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>🏷️ Schema.org Report</h1>
+        <p style="text-align: center; color: var(--text-muted); margin-bottom: 2rem;">Generated on ${new Date().toLocaleString()}</p>
         
         <div class="summary-grid">
             <div class="card">
@@ -117,21 +168,39 @@ const html = `
                 const badgeClass = `status-${status}`;
 
                 let detailsHtml = "";
+
+                // Issues Section
                 if (status !== "pass") {
+                  detailsHtml += '<div class="issues-section">';
                   r.errors.forEach((e) => {
                     detailsHtml += `
                             <div class="issue issue-error">
-                                <div class="issue-type">Error (Schema ${e.index + 1}: ${e.type})</div>
+                                <div class="issue-type">❌ Error (Schema ${e.index + 1}: ${e.type})</div>
                                 ${e.errors.map((msg) => `<div class="issue-msg">${msg}</div>`).join("")}
                             </div>`;
                   });
                   r.warnings.forEach((w) => {
                     detailsHtml += `
                             <div class="issue issue-warning">
-                                <div class="issue-type">Warning (Schema ${w.index + 1}: ${w.type})</div>
+                                <div class="issue-type">⚠️ Warning (Schema ${w.index + 1}: ${w.type})</div>
                                 ${w.warnings.map((msg) => `<div class="issue-msg">${msg}</div>`).join("")}
                             </div>`;
                   });
+                  detailsHtml += "</div>";
+                }
+
+                // Schemas View
+                if (r.schemas && r.schemas.length > 0) {
+                  detailsHtml += '<div class="schema-viewer">';
+                  r.schemas.forEach((schema, i) => {
+                    detailsHtml += `
+                            <div class="schema-block" style="margin-bottom: 1.5rem;">
+                                <div class="schema-title">Schema ${i + 1}: ${schema["@type"] || "Unknown"}</div>
+                                <pre>${syntaxHighlight(schema)}</pre>
+                            </div>
+                        `;
+                  });
+                  detailsHtml += "</div>";
                 }
 
                 return `
@@ -140,7 +209,7 @@ const html = `
                             <span class="page-name">${r.file}</span>
                             <span class="status-badge ${badgeClass}">${label}</span>
                         </summary>
-                        ${detailsHtml ? `<div class="details">${detailsHtml}</div>` : ""}
+                        <div class="details">${detailsHtml}</div>
                     </details>
                 `;
               })

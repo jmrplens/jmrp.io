@@ -196,6 +196,7 @@ async function validateAllPages() {
       errors: fileErrors,
       warnings: fileWarnings,
       valid: fileErrors.length === 0,
+      schemas: schemas, // Include raw schemas for display
     });
   }
 
