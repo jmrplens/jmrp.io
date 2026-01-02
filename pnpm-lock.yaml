@@ -51,8 +51,8 @@ importers:
         specifier: ^1.2.3
         version: 1.2.3
       '@iconify-json/simple-icons':
-        specifier: ^1.2.63
-        version: 1.2.63
+        specifier: ^1.2.64
+        version: 1.2.64
       '@iconify-json/vscode-icons':
         specifier: ^1.2.37
         version: 1.2.37
@@ -103,8 +103,8 @@ importers:
         specifier: ^4.11.0
         version: 4.11.0(playwright-core@1.57.0)
       '@iconify-json/devicon':
-        specifier: ^1.2.55
-        version: 1.2.55
+        specifier: ^1.2.56
+        version: 1.2.56
       '@lhci/cli':
         specifier: ^0.15.1
         version: 0.15.1
@@ -642,8 +642,8 @@ packages:
   '@iconify-json/carbon@1.2.15':
     resolution: {integrity: sha512-9tW0nZY5QtKkMhuYzW09BM1345SyXNuA+gx2ub0j/fnfHOD5XVimMJ/D76H3tTez25NJbPYCLIQoFhvJc1HVBQ==}
 
-  '@iconify-json/devicon@1.2.55':
-    resolution: {integrity: sha512-wmRH2ur/JJNWs6A3gVCESqMVO24M8RmdLz4ymzzL7PqIe7Nou1XIVOHBRG7Ttkni+lnbED5m0zGcilvy49JEmA==}
+  '@iconify-json/devicon@1.2.56':
+    resolution: {integrity: sha512-4HYxc/MXcIgaAbs9h27asp+JyUlGs/F1uPxkYeVdHCxopxRYi1f+U10zmjCzkzhdCACgHbG7Jg8w4zeGS9OxlA==}
 
   '@iconify-json/fa-brands@1.2.2':
     resolution: {integrity: sha512-Aze0j7l95gmOLdeC4L+8MvvpN3+QmAVk9IuTJN170zYH5I7jS0jGSIMFsf0KE8vGbG8jPpXkmmDq7qQU8Rymnw==}
@@ -660,8 +660,8 @@ packages:
   '@iconify-json/mdi@1.2.3':
     resolution: {integrity: sha512-O3cLwbDOK7NNDf2ihaQOH5F9JglnulNDFV7WprU2dSoZu3h3cWH//h74uQAB87brHmvFVxIOkuBX2sZSzYhScg==}
 
-  '@iconify-json/simple-icons@1.2.63':
-    resolution: {integrity: sha512-xZl2UWCwE58VlqZ+pDPmaUhE2tq8MVSTJRr4/9nzzHlDdjJ0Ud1VxNXPrwTSgESKY29iCQw3S0r2nJTSNNngHw==}
+  '@iconify-json/simple-icons@1.2.64':
+    resolution: {integrity: sha512-SMmm//tjZBvHnT0EAzZLnBTL6bukSkncM0pwkOXjr0FsAeCqjQtqoxBR0Mp+PazIJjXJKHm1Ju0YgnCIPOodJg==}
 
   '@iconify-json/vscode-icons@1.2.37':
     resolution: {integrity: sha512-HLRdU6nZks4N8x3JYz6j+b3+hcUCvYvlTLwGzM3xyXfTJyDSA2cAdWcEXfoA4hQMJGA+zCDSPAWFelFptH5Kbw==}
@@ -5296,7 +5296,7 @@ snapshots:
     dependencies:
       '@iconify/types': 2.0.0
 
-  '@iconify-json/devicon@1.2.55':
+  '@iconify-json/devicon@1.2.56':
     dependencies:
       '@iconify/types': 2.0.0
 
@@ -5320,7 +5320,7 @@ snapshots:
     dependencies:
       '@iconify/types': 2.0.0
 
-  '@iconify-json/simple-icons@1.2.63':
+  '@iconify-json/simple-icons@1.2.64':
     dependencies:
       '@iconify/types': 2.0.0
 
