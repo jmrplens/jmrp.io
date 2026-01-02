@@ -1,3 +1,12 @@
+/**
+ * Generate Lighthouse Reports Dashboard
+ *
+ * Scans a directory for Lighthouse JSON reports, groups them by URL,
+ * Device, and Theme, and generates a unified HTML dashboard index.
+ *
+ * Usage: node generate-lighthouse-index.mjs <deploy-dir>
+ */
+
 import fs from "fs";
 import path from "path";
 

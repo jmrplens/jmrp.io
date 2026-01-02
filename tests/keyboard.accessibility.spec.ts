@@ -115,7 +115,7 @@ test.describe("Keyboard Navigation Accessibility", () => {
     // but we want to ensure we are at least navigating the menu items.
 
     // For this test, let's verify we can tab through the mobile links
-    const mobileLinks = page.locator("#nav-links a");
+    // const mobileLinks = page.locator("#nav-links a");
     // const firstLink = mobileLinks.first();
 
     // If focus didn't move automatically (common issue), we might still be on the toggle or next element.
