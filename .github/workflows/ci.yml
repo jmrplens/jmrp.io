@@ -9,7 +9,7 @@ on:
     - cron: "0 9 * * 1"
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}$-{{ github.ref }}
   cancel-in-progress: true
 
 permissions:
@@ -442,11 +442,11 @@ jobs:
         shell: bash
         run: |
           if [ "${{ matrix.theme }}" = "dark" ]; then export LHCI_CHROME_FLAGS="--force-dark-mode --force-prefers-color-scheme=dark"; fi
-          
+
           echo "📱 Running Lighthouse Mobile..."
           export FORM_FACTOR=mobile
           pnpm exec lhci autorun
-          
+
           echo "🖥️ Running Lighthouse Desktop..."
           export FORM_FACTOR=desktop
           pnpm exec lhci autorun
@@ -518,3 +518,119 @@ jobs:
           script: |
             const { default: script } = await import(`${process.env.GITHUB_WORKSPACE}/scripts/ci/post-functional-test-comment.mjs`)
             await script({github, context})
+
+  lighthouse-audit:
+    name: LH Audit (${{ matrix.theme }} - ${{ matrix.formFactor }})
+    runs-on: ubuntu-latest
+    needs: build
+    strategy:
+      matrix:
+        theme: [light, dark]
+        formFactor: [mobile, desktop]
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v6
+      - name: Download build artifact
+        uses: actions/download-artifact@v7
+        with:
+          name: dist-build
+          path: dist
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 20
+          cache: "pnpm"
+      - run: pnpm install --frozen-lockfile --prefer-offline
+      - name: Run Lighthouse CI
+        shell: bash
+        env:
+          FORM_FACTOR: ${{ matrix.formFactor }}
+          LHCI_GITHUB_TOKEN: ${{ secrets.TOKEN_GITHUB }}
+        run: |
+          if [ "${{ matrix.theme }}" = "dark" ]; then export LHCI_CHROME_FLAGS="--force-dark-mode --force-prefers-color-scheme=dark"; fi
+          pnpm exec lhci autorun
+      - name: Upload Lighthouse Results
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: lh-results-${{ matrix.theme }}-${{ matrix.formFactor }}
+          path: .lighthouseci/
+          retention-days: 1
+
+  lighthouse-report:
+    name: Lighthouse Report
+    runs-on: ubuntu-latest
+    needs: lighthouse-audit
+    if: always()
+    permissions:
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 20
+          cache: "pnpm"
+      - run: pnpm install --frozen-lockfile --prefer-offline
+
+      # Download artifacts for each combination and place in structure
+      - name: Download LH Results (Light - Mobile)
+        uses: actions/download-artifact@v7
+        continue-on-error: true
+        with:
+          name: lh-results-light-mobile
+          path: lh-deploy/light/mobile
+      - name: Download LH Results (Light - Desktop)
+        uses: actions/download-artifact@v7
+        continue-on-error: true
+        with:
+          name: lh-results-light-desktop
+          path: lh-deploy/light/desktop
+      - name: Download LH Results (Dark - Mobile)
+        uses: actions/download-artifact@v7
+        continue-on-error: true
+        with:
+          name: lh-results-dark-mobile
+          path: lh-deploy/dark/mobile
+      - name: Download LH Results (Dark - Desktop)
+        uses: actions/download-artifact@v7
+        continue-on-error: true
+        with:
+          name: lh-results-dark-desktop
+          path: lh-deploy/dark/desktop
+
+      - name: Generate Dashboard
+        run: node scripts/ci/generate-lighthouse-index.mjs lh-deploy
+
+      - name: Deploy to Surge
+        if: github.event_name == 'pull_request'
+        run: |
+          pnpm exec surge ./lh-deploy jmrp-lh-pr-${{ github.event.number }}.surge.sh --token ${{ secrets.SURGE_TOKEN }}
+
+      - name: Format Report for Comment
+        run: |
+          # The format script now scans recursively
+          node scripts/ci/format-lighthouse-report.js lh-deploy > lighthouse_comment.md
+
+      - name: Post Comment
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v8
+        env:
+          SURGE_URL: jmrp-lh-pr-${{ github.event.number }}.surge.sh
+        with:
+          script: |
+            const fs = require('fs');
+            const commentFile = 'lighthouse_comment.md';
+            if (fs.existsSync(commentFile)) {
+              let comment = fs.readFileSync(commentFile, 'utf8');
+              const surgeUrl = process.env.SURGE_URL;
+              if (surgeUrl) {
+                comment += `\n\n#### 🌐 Live Report\n> 🚀 [**Open Lighthouse Reports Dashboard**](https://${surgeUrl}) for detailed insights.`;
+              }
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: comment,
+              });
+            }

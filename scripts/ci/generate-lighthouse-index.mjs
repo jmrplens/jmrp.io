@@ -9,7 +9,7 @@ if (!fs.existsSync(deployDir)) {
   process.exit(1);
 }
 
-// Helper: Scan for all JSON reports in the directory (recursive or flat)
+// Helper: Scan for all JSON reports in the directory (recursive)
 function findReports(dir, fileList = []) {
   const files = fs.readdirSync(dir);
   files.forEach((file) => {
@@ -35,14 +35,29 @@ jsonFiles.forEach((filePath) => {
   try {
     const content = fs.readFileSync(filePath, "utf8");
     const json = JSON.parse(content);
-    // Basic validation to ensure it's a Lighthouse report
+
+    // Detect theme from path
+    const lowerPath = filePath.toLowerCase();
+    let theme = "unknown";
+    if (lowerPath.includes("/light/") || lowerPath.includes("\\light\\"))
+      theme = "light";
+    if (lowerPath.includes("/dark/") || lowerPath.includes("\\dark\\"))
+      theme = "dark";
+
+    // Basic validation
     if (json.lighthouseVersion && json.finalUrl) {
       reports.push({
         filePath,
         fileName: path.basename(filePath),
         htmlName: path.basename(filePath).replace(".json", ".html"),
+        // If the HTML file is in a subdirectory, we need the relative path from index.html
+        // We assume index.html is at deployDir root.
+        relativePath: path
+          .relative(deployDir, filePath)
+          .replace(".json", ".html"),
         url: json.finalUrl,
         formFactor: json.configSettings?.formFactor || "mobile",
+        theme: theme,
         scores: {
           performance: json.categories.performance?.score || 0,
           accessibility: json.categories.accessibility?.score || 0,
@@ -57,15 +72,16 @@ jsonFiles.forEach((filePath) => {
   }
 });
 
-// 1. Group reports by URL and Form Factor
+// Grouping: URL -> Theme -> FormFactor -> Runs
 const grouped = {};
 
 reports.forEach((r) => {
-  if (!grouped[r.url]) {
-    grouped[r.url] = { mobile: [], desktop: [] };
-  }
-  if (grouped[r.url][r.formFactor]) {
-    grouped[r.url][r.formFactor].push(r);
+  if (!grouped[r.url]) grouped[r.url] = {};
+  if (!grouped[r.url][r.theme])
+    grouped[r.url][r.theme] = { mobile: [], desktop: [] };
+
+  if (grouped[r.url][r.theme][r.formFactor]) {
+    grouped[r.url][r.theme][r.formFactor].push(r);
   }
 });
 
@@ -105,131 +121,150 @@ function calculateAverage(runList, category) {
 }
 
 const listItems = Object.entries(grouped)
-  .map(([url, devices]) => {
+  .map(([url, themes]) => {
     let urlDisplay = url;
     try {
       const parsedUrl = new URL(url);
       if (parsedUrl.hostname === "localhost") {
         urlDisplay = parsedUrl.pathname || "/";
       }
-    } catch {
-      // Keep original
-    }
+    } catch {} // Keep original
 
     const cats = ["performance", "accessibility", "best-practices", "seo"];
 
-    // Calculate averages for Mobile
-    const mobileAvgs = {};
-    cats.forEach((c) => (mobileAvgs[c] = calculateAverage(devices.mobile, c)));
-    const hasMobile = devices.mobile.length > 0;
+    // We render sections for each theme present
+    const themeSections = Object.entries(themes)
+      .sort()
+      .map(([themeName, devices]) => {
+        // Calculate averages
+        const mobileAvgs = {};
+        cats.forEach(
+          (c) => (mobileAvgs[c] = calculateAverage(devices.mobile, c)),
+        );
+        const hasMobile = devices.mobile.length > 0;
 
-    // Calculate averages for Desktop
-    const desktopAvgs = {};
-    cats.forEach(
-      (c) => (desktopAvgs[c] = calculateAverage(devices.desktop, c)),
-    );
-    const hasDesktop = devices.desktop.length > 0;
+        const desktopAvgs = {};
+        cats.forEach(
+          (c) => (desktopAvgs[c] = calculateAverage(devices.desktop, c)),
+        );
+        const hasDesktop = devices.desktop.length > 0;
 
-    const renderRunRows = (runList) => {
-      return runList
-        .map((run, idx) => {
-          const badges = cats
-            .map(
-              (c) =>
-                `<span class="mini-score ${getScoreClass(run.scores[c])}">${formatScore(run.scores[c])}</span>`,
-            )
+        const renderRunRows = (runList) => {
+          return runList
+            .map((run, idx) => {
+              const badges = cats
+                .map(
+                  (c) =>
+                    `<span class="mini-score ${getScoreClass(run.scores[c])}">${formatScore(run.scores[c])}</span>`,
+                )
+                .join("");
+              return `
+                    <a href="${run.relativePath}" class="run-item">
+                        <span class="run-name">Run #${idx + 1}</span>
+                        <div class="run-scores">${badges}</div>
+                        <span class="run-link-text">Open &rarr;</span>
+                    </a>
+                `;
+            })
             .join("");
-          return `
-                <a href="${run.htmlName}" class="run-item">
-                    <span class="run-name">Run #${idx + 1}</span>
-                    <div class="run-scores">${badges}</div>
-                    <span class="run-link-text">Open &rarr;</span>
-                </a>
-            `;
-        })
-        .join("");
-    };
+        };
+
+        const themeIcon =
+          themeName === "light" ? "☀️" : themeName === "dark" ? "🌙" : "❓";
+        const themeLabel =
+          themeName.charAt(0).toUpperCase() + themeName.slice(1);
+
+        return `
+            <div class="theme-section ${themeName}-theme">
+                <div class="theme-header">
+                    <span class="theme-title">${themeIcon} ${themeLabel} Mode</span>
+                </div>
+                <div class="device-summary-row">
+                    ${
+                      hasMobile
+                        ? `
+                        <div class="device-block">
+                            <span class="device-label">Mobile</span>
+                            <div class="average-scores">
+                                ${renderScoreBadge("Perf", mobileAvgs.performance)}
+                                ${renderScoreBadge("A11y", mobileAvgs.accessibility)}
+                                ${renderScoreBadge("Best", mobileAvgs["best-practices"])}
+                                ${renderScoreBadge("SEO", mobileAvgs.seo)}
+                            </div>
+                        </div>
+                    `
+                        : ""
+                    }
+                    ${
+                      hasDesktop
+                        ? `
+                        <div class="device-block desktop-block">
+                            <span class="device-label">Desktop</span>
+                            <div class="average-scores">
+                                ${renderScoreBadge("Perf", desktopAvgs.performance)}
+                                ${renderScoreBadge("A11y", desktopAvgs.accessibility)}
+                                ${renderScoreBadge("Best", desktopAvgs["best-practices"])}
+                                ${renderScoreBadge("SEO", desktopAvgs.seo)}
+                            </div>
+                        </div>
+                    `
+                        : ""
+                    }
+                </div>
+                
+                <div class="runs-list-collapsible">
+                    <details>
+                        <summary>View Individual Runs</summary>
+                        <div class="runs-grid-container">
+                            ${
+                              hasMobile
+                                ? `
+                                <div class="device-column">
+                                    <h4>Mobile Runs</h4>
+                                    <div class="runs-header">
+                                        <span>Run</span>
+                                        <div class="header-scores"><span>P</span><span>A</span><span>B</span><span>S</span></div>
+                                        <span>Link</span>
+                                    </div>
+                                    ${renderRunRows(devices.mobile)}
+                                </div>
+                            `
+                                : ""
+                            }
+                            ${
+                              hasDesktop
+                                ? `
+                                <div class="device-column">
+                                    <h4>Desktop Runs</h4>
+                                    <div class="runs-header">
+                                        <span>Run</span>
+                                        <div class="header-scores"><span>P</span><span>A</span><span>B</span><span>S</span></div>
+                                        <span>Link</span>
+                                    </div>
+                                    ${renderRunRows(devices.desktop)}
+                                </div>
+                            `
+                                : ""
+                            }
+                        </div>
+                    </details>
+                </div>
+            </div>
+        `;
+      })
+      .join("");
 
     return `
       <li class="report-card">
-        <details>
-          <summary>
-            <div class="summary-header">
-              <div class="url-container">
+        <div class="card-header">
+            <div class="url-container">
                 <span class="url-path">${escapeHtml(urlDisplay)}</span>
                 <span class="url-full">${escapeHtml(url)}</span>
-              </div>
-              <div class="device-summary">
-                ${
-                  hasMobile
-                    ? `
-                    <div class="device-block">
-                        <span class="device-label">Mobile</span>
-                        <div class="average-scores">
-                            ${renderScoreBadge("Perf", mobileAvgs.performance)}
-                            ${renderScoreBadge("A11y", mobileAvgs.accessibility)}
-                            ${renderScoreBadge("Best", mobileAvgs["best-practices"])}
-                            ${renderScoreBadge("SEO", mobileAvgs.seo)}
-                        </div>
-                    </div>
-                `
-                    : ""
-                }
-                ${
-                  hasDesktop
-                    ? `
-                    <div class="device-block desktop-block">
-                        <span class="device-label">Desktop</span>
-                        <div class="average-scores">
-                            ${renderScoreBadge("Perf", desktopAvgs.performance)}
-                            ${renderScoreBadge("A11y", desktopAvgs.accessibility)}
-                            ${renderScoreBadge("Best", desktopAvgs["best-practices"])}
-                            ${renderScoreBadge("SEO", desktopAvgs.seo)}
-                        </div>
-                    </div>
-                `
-                    : ""
-                }
-              </div>
-              <div class="toggle-icon">▼</div>
             </div>
-          </summary>
-          <div class="runs-list">
-            <div class="runs-grid-container">
-                ${
-                  hasMobile
-                    ? `
-                    <div class="device-column">
-                        <h4>Mobile Runs (${devices.mobile.length})</h4>
-                        <div class="runs-header">
-                            <span>Run</span>
-                            <div class="header-scores"><span>P</span><span>A</span><span>B</span><span>S</span></div>
-                            <span>Link</span>
-                        </div>
-                        ${renderRunRows(devices.mobile)}
-                    </div>
-                `
-                    : ""
-                }
-                
-                ${
-                  hasDesktop
-                    ? `
-                    <div class="device-column">
-                        <h4>Desktop Runs (${devices.desktop.length})</h4>
-                        <div class="runs-header">
-                            <span>Run</span>
-                            <div class="header-scores"><span>P</span><span>A</span><span>B</span><span>S</span></div>
-                            <span>Link</span>
-                        </div>
-                        ${renderRunRows(devices.desktop)}
-                    </div>
-                `
-                    : ""
-                }
-            </div>
-          </div>
-        </details>
+        </div>
+        <div class="themes-container">
+            ${themeSections}
+        </div>
       </li>
     `;
   })
@@ -254,6 +289,8 @@ const htmlContent = `
             --score-avg: #ffa400;
             --score-fail: #ff4e42;
             --shadow: 0 2px 5px rgba(0,0,0,0.05);
+            --bg-theme-light: #fafafa;
+            --bg-theme-dark: #2d2d30;
         }
 
         @media (prefers-color-scheme: dark) {
@@ -265,6 +302,8 @@ const htmlContent = `
                 --border-color: #3f3f46;
                 --primary: #60a5fa;
                 --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+                --bg-theme-light: #3f3f46;
+                --bg-theme-dark: #18181b;
             }
         }
 
@@ -278,25 +317,9 @@ const htmlContent = `
             line-height: 1.5;
         }
 
-        .container {
-            max-width: 1100px;
-            margin: 0 auto;
-        }
-
-        h1 {
-            text-align: center;
-            margin-bottom: 2rem;
-            font-weight: 300;
-            letter-spacing: -0.5px;
-        }
-
-        ul {
-            list-style: none;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
-        }
+        .container { max-width: 1100px; margin: 0 auto; }
+        h1 { text-align: center; margin-bottom: 2rem; font-weight: 300; letter-spacing: -0.5px; }
+        ul { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 2rem; }
 
         .report-card {
             background: var(--bg-card);
@@ -306,238 +329,96 @@ const htmlContent = `
             border: 1px solid var(--border-color);
         }
 
-        details > summary {
-            list-style: none;
-            cursor: pointer;
+        .card-header {
             padding: 1.5rem;
-            transition: background 0.2s;
-        }
-
-        details > summary::-webkit-details-marker { display: none; }
-        details > summary:hover { background-color: rgba(128, 128, 128, 0.05); }
-
-        .summary-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 1rem;
-            flex-wrap: wrap;
-        }
-
-        .url-container {
-            flex: 1;
-            min-width: 200px;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        .url-path {
-            font-size: 1.2rem;
-            font-weight: 600;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .url-full {
-            font-size: 0.85rem;
-            color: var(--text-muted);
-            font-family: monospace;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .device-summary {
-            display: flex;
-            gap: 2rem;
-            align-items: center;
-        }
-
-        .device-block {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        
-        .desktop-block {
-            border-left: 1px solid var(--border-color);
-            padding-left: 2rem;
-        }
-
-        .device-label {
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            font-weight: bold;
-            color: var(--text-muted);
-            letter-spacing: 1px;
-        }
-
-        .average-scores {
-            display: flex;
-            gap: 1rem;
-        }
-
-        /* Increased size as requested */
-        .score-badge {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            width: 65px;
-            height: 65px;
-            border-radius: 50%;
-            border: 4px solid transparent;
-            font-weight: bold;
-            position: relative;
-        }
-
-        .score-badge.pass { border-color: var(--score-pass); color: var(--score-pass); }
-        .score-badge.avg { border-color: var(--score-avg); color: var(--score-avg); }
-        .score-badge.fail { border-color: var(--score-fail); color: var(--score-fail); }
-
-        .score-value { font-size: 1.4rem; line-height: 1; }
-        .score-label { font-size: 0.65rem; text-transform: uppercase; margin-top: 4px; color: var(--text-muted); }
-
-        .toggle-icon {
-            font-size: 0.8rem;
-            color: var(--text-muted);
-            transition: transform 0.2s;
-            margin-left: 1rem;
-        }
-
-        details[open] .toggle-icon { transform: rotate(180deg); }
-
-        .runs-list {
-            padding: 0;
-            border-top: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--border-color);
             background-color: rgba(128, 128, 128, 0.02);
         }
 
+        .url-path { font-size: 1.3rem; font-weight: 700; display: block; margin-bottom: 0.25rem; }
+        .url-full { font-size: 0.85rem; color: var(--text-muted); font-family: monospace; word-break: break-all; }
+
+        .themes-container { display: flex; flex-direction: column; }
+
+        .theme-section {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .theme-section:last-child { border-bottom: none; }
+
+        .theme-header { margin-bottom: 1rem; }
+        .theme-title { font-weight: bold; font-size: 1rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); display: flex; align-items: center; gap: 0.5rem; }
+
+        .device-summary-row {
+            display: flex;
+            gap: 3rem;
+            flex-wrap: wrap;
+            margin-bottom: 1.5rem;
+        }
+
+        .device-block { display: flex; flex-direction: column; gap: 0.75rem; }
+        
+        .device-label {
+            font-size: 0.75rem; text-transform: uppercase; font-weight: bold;
+            color: var(--text-muted); letter-spacing: 1px; border-left: 3px solid var(--primary);
+            padding-left: 0.5rem;
+        }
+
+        .average-scores { display: flex; gap: 1rem; }
+
+        .score-badge {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            width: 60px; height: 60px; border-radius: 50%;
+            border: 4px solid transparent; font-weight: bold;
+        }
+        .score-badge.pass { border-color: var(--score-pass); color: var(--score-pass); }
+        .score-badge.avg { border-color: var(--score-avg); color: var(--score-avg); }
+        .score-badge.fail { border-color: var(--score-fail); color: var(--score-fail); }
+        .score-value { font-size: 1.3rem; line-height: 1; }
+        .score-label { font-size: 0.6rem; text-transform: uppercase; margin-top: 2px; color: var(--text-muted); }
+
+        .runs-list-collapsible details summary {
+            cursor: pointer;
+            color: var(--primary);
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-bottom: 1rem;
+            outline: none;
+        }
+        
         .runs-grid-container {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 0; 
-        }
-        
-        .device-column {
-            padding: 1.5rem;
-        }
-        
-        .device-column:not(:last-child) {
-            border-right: 1px solid var(--border-color);
+            gap: 2rem;
+            background-color: rgba(128, 128, 128, 0.03);
+            padding: 1rem;
+            border-radius: 8px;
         }
 
-        .device-column h4 {
-            margin: 0 0 1rem;
-            font-size: 0.9rem;
-            text-transform: uppercase;
-            color: var(--text-muted);
-            letter-spacing: 0.5px;
-            border-bottom: 2px solid var(--border-color);
-            padding-bottom: 0.5rem;
-            display: inline-block;
-        }
-
-        .runs-header {
-            display: grid;
-            grid-template-columns: 60px 1fr 60px;
-            padding: 0.5rem 0;
-            font-size: 0.75rem;
-            font-weight: bold;
-            color: var(--text-muted);
+        .device-column h4 { margin: 0 0 0.5rem; font-size: 0.85rem; text-transform: uppercase; color: var(--text-muted); }
+        .runs-header, .run-item {
+            display: grid; grid-template-columns: 50px 1fr 50px; 
+            padding: 0.5rem 0; font-size: 0.8rem; align-items: center;
             border-bottom: 1px solid var(--border-color);
-            text-transform: uppercase;
         }
-        
-        .header-scores {
-            display: flex;
-            justify-content: space-between;
-            padding: 0 1rem;
-        }
-
-        .run-item {
-            display: grid;
-            grid-template-columns: 60px 1fr 60px;
-            align-items: center;
-            padding: 0.75rem 0;
-            text-decoration: none;
-            color: inherit;
-            border-bottom: 1px solid var(--border-color);
-            transition: background 0.1s;
-        }
-
+        .runs-header { font-weight: bold; color: var(--text-muted); border-bottom: 2px solid var(--border-color); }
+        .run-item { text-decoration: none; color: inherit; }
         .run-item:last-child { border-bottom: none; }
         .run-item:hover { background-color: rgba(128, 128, 128, 0.05); }
-
-        .run-name { font-weight: 500; font-size: 0.85rem; }
         
-        .run-scores {
-            display: flex;
-            justify-content: space-between;
-            padding: 0 1rem;
-        }
-
+        .header-scores, .run-scores { display: flex; justify-content: space-between; padding: 0 0.5rem; }
         .mini-score {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            font-weight: bold;
-            font-size: 0.8rem;
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 28px; height: 28px; border-radius: 50%; font-weight: bold; font-size: 0.75rem;
         }
-        
         .mini-score.pass { background-color: rgba(12, 206, 107, 0.15); color: var(--score-pass); }
         .mini-score.avg { background-color: rgba(255, 164, 0, 0.15); color: var(--score-avg); }
         .mini-score.fail { background-color: rgba(255, 78, 66, 0.15); color: var(--score-fail); }
+        .run-link-text { color: var(--primary); text-align: right; }
 
-        .run-link-text {
-            font-size: 0.8rem;
-            color: var(--primary);
-            text-align: right;
-        }
-
-        @media (max-width: 800px) {
-            .summary-header {
-                flex-direction: column;
-                align-items: stretch;
-            }
-            .device-summary {
-                flex-direction: column;
-                gap: 1rem;
-                align-items: stretch;
-            }
-            .desktop-block {
-                border-left: none;
-                padding-left: 0;
-                border-top: 1px dashed var(--border-color);
-                padding-top: 1rem;
-            }
-            .device-block {
-                flex-direction: row;
-                justify-content: space-between;
-            }
-            .average-scores {
-                justify-content: flex-end;
-            }
-            .score-badge {
-                width: 50px;
-                height: 50px;
-                border-width: 3px;
-            }
-            .score-value { font-size: 1.1rem; }
-            
-            .runs-grid-container {
-                grid-template-columns: 1fr;
-            }
-            .device-column:not(:last-child) {
-                border-right: none;
-                border-bottom: 1px solid var(--border-color);
-            }
+        @media (max-width: 768px) {
+            .device-summary-row { flex-direction: column; gap: 1.5rem; }
+            .runs-grid-container { grid-template-columns: 1fr; }
         }
     </style>
 </head>

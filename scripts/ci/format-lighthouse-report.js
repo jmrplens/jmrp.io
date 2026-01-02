@@ -2,7 +2,7 @@
  * Format Lighthouse Report for PR Comment
  *
  * Scans the .lighthouseci directory for JSON reports,
- * aggregates scores by URL and Form Factor (Mobile/Desktop),
+ * aggregates scores by URL, Theme, and Form Factor,
  * and outputs a Markdown table.
  */
 
@@ -10,26 +10,37 @@ const fs = require("fs");
 const path = require("path");
 
 const lhDir = process.argv[2] || ".lighthouseci";
-const theme = process.env.THEME || "light";
 
 if (!fs.existsSync(lhDir)) {
   console.log("No Lighthouse reports found.");
   process.exit(0);
 }
 
-// Find all JSON reports
-const files = fs
-  .readdirSync(lhDir)
-  .filter(
-    (f) =>
-      f.endsWith(".json") && !f.includes("manifest") && !f.includes("links"),
-  );
+// Recursive scan
+function findReports(dir, fileList = []) {
+  const files = fs.readdirSync(dir);
+  files.forEach((file) => {
+    const filePath = path.join(dir, file);
+    const stat = fs.statSync(filePath);
+    if (stat.isDirectory()) {
+      findReports(filePath, fileList);
+    } else if (
+      file.endsWith(".json") &&
+      !file.includes("manifest") &&
+      !file.includes("links")
+    ) {
+      fileList.push(filePath);
+    }
+  });
+  return fileList;
+}
 
+const files = findReports(lhDir);
 const results = {};
 
-files.forEach((file) => {
+files.forEach((filePath) => {
   try {
-    const content = fs.readFileSync(path.join(lhDir, file), "utf8");
+    const content = fs.readFileSync(filePath, "utf8");
     const json = JSON.parse(content);
 
     if (!json.finalUrl) return;
@@ -43,75 +54,74 @@ files.forEach((file) => {
       }
     } catch (e) {}
 
-    // Fallback: look at configSettings.formFactor, default to mobile
     const formFactor = json.configSettings?.formFactor || "mobile";
+
+    // Detect theme
+    const lowerPath = filePath.toLowerCase();
+    let theme = "unknown";
+    if (lowerPath.includes("/light/") || lowerPath.includes("\light\ "))
+      theme = "light";
+    if (lowerPath.includes("/dark/") || lowerPath.includes("\dark\ "))
+      theme = "dark";
 
     const scores = {
       p: (json.categories.performance?.score || 0) * 100,
-      a: (json.categories.accessibility?.score || 0) * 100,
-      b: (json.categories["best-practices"]?.score || 0) * 100,
-      s: (json.categories.seo?.score || 0) * 100,
     };
 
-    if (!results[url]) {
-      results[url] = { mobile: [], desktop: [] };
+    if (!results[url]) results[url] = {};
+    if (!results[url][theme]) results[url][theme] = { mobile: [], desktop: [] };
+    if (results[url][theme][formFactor]) {
+      results[url][theme][formFactor].push(scores);
     }
-
-    // Safety check for formFactor array existence
-    if (!results[url][formFactor]) {
-      results[url][formFactor] = [];
-    }
-    results[url][formFactor].push(scores);
-  } catch (e) {
-    // ignore invalid json
-  }
+  } catch (e) {}
 });
 
 // Calculate averages
 const getAvg = (list) => {
   if (!list || list.length === 0) return null;
-  const totals = { p: 0, a: 0, b: 0, s: 0 };
-  list.forEach((item) => {
-    totals.p += item.p;
-    totals.a += item.a;
-    totals.b += item.b;
-    totals.s += item.s;
-  });
-  return {
-    p: Math.round(totals.p / list.length),
-    a: Math.round(totals.a / list.length),
-    b: Math.round(totals.b / list.length),
-    s: Math.round(totals.s / list.length),
-  };
+  const totalP = list.reduce((sum, item) => sum + item.p, 0);
+  return Math.round(totalP / list.length);
 };
 
 const rows = Object.entries(results)
   .sort()
-  .map(([url, data]) => {
-    const m = getAvg(data.mobile);
-    const d = getAvg(data.desktop);
-
+  .map(([url, themes]) => {
     const formatScore = (val) => {
       if (val === null) return "—";
       const icon = val >= 90 ? "🟢" : val >= 50 ? "🟠" : "🔴";
       return `${icon} ${val}`;
     };
 
-    return `| \`${url}\` | ${formatScore(m ? m.p : null)} | ${formatScore(d ? d.p : null)} |`;
+    // Columns: Mobile Light | Desktop Light | Mobile Dark | Desktop Dark
+    // Only if themes exist
+    const ml = getAvg(themes.light?.mobile);
+    const dl = getAvg(themes.light?.desktop);
+    const md = getAvg(themes.dark?.mobile);
+    const dd = getAvg(themes.dark?.desktop);
+
+    return (
+      "| `" +
+      url +
+      "` | " +
+      formatScore(ml) +
+      " | " +
+      formatScore(dl) +
+      " | " +
+      formatScore(md) +
+      " | " +
+      formatScore(dd) +
+      " |"
+    );
   });
 
 if (rows.length === 0) {
   console.log("No valid Lighthouse results parsed.");
 } else {
-  console.log(
-    `### ⚡ Lighthouse Report (${theme.charAt(0).toUpperCase() + theme.slice(1)})`,
-  );
+  console.log(`### ⚡ Lighthouse Performance Report`);
   console.log("");
-  console.log("| Page | 📱 Mobile (Perf) | 🖥️ Desktop (Perf) |");
-  console.log("| :--- | :---: | :---: |");
+  console.log("| Page | 📱 Light | 🖥️ Light | 📱 Dark | 🖥️ Dark |");
+  console.log("| :--- | :---: | :---: | :---: | :---: |");
   console.log(rows.join("\n"));
   console.log("");
-  console.log(
-    "_Scores represent the average Performance metric across multiple runs._",
-  );
+  console.log("_Scores represent the average Performance metric across runs._");
 }
