@@ -38,19 +38,27 @@ jsonFiles.forEach((filePath) => {
 
     const lowerPath = filePath.toLowerCase();
     let theme = "unknown";
-    if (lowerPath.includes("/light/") || lowerPath.includes("\\light\\"))
+    if (lowerPath.includes("/light/") || lowerPath.includes("\light\ "))
       theme = "light";
-    if (lowerPath.includes("/dark/") || lowerPath.includes("\\dark\\"))
+    if (lowerPath.includes("/dark/") || lowerPath.includes("\dark\ "))
       theme = "dark";
 
     if (json.lighthouseVersion && json.finalUrl) {
+      let finalUrl = json.finalUrl;
+      try {
+        const parsed = new URL(finalUrl);
+        if (parsed.hostname === "localhost") {
+          finalUrl = parsed.pathname;
+        }
+      } catch (e) {}
+
       reports.push({
         filePath,
         fileName: path.basename(filePath),
         relativePath: path
           .relative(deployDir, filePath)
           .replace(".json", ".html"),
-        url: json.finalUrl,
+        url: finalUrl, // Normalized URL
         formFactor: json.configSettings?.formFactor || "mobile",
         theme: theme,
         scores: {
@@ -116,20 +124,11 @@ function calculateAverage(runList, category) {
   return total / runList.length;
 }
 
-function calculateCombinedAverage(listA, listB, category) {
-  const all = [...listA, ...listB];
-  return calculateAverage(all, category);
-}
-
 const listItems = Object.entries(grouped)
+  .sort()
   .map(([url, devices]) => {
     let urlDisplay = url;
-    try {
-      const parsedUrl = new URL(url);
-      if (parsedUrl.hostname === "localhost") {
-        urlDisplay = parsedUrl.pathname || "/";
-      }
-    } catch {} // Keep original
+    // url is already normalized path (e.g. "/" or "/blog/")
 
     const cats = ["performance", "accessibility", "best-practices", "seo"];
 
@@ -206,7 +205,6 @@ const listItems = Object.entries(grouped)
       <li class="report-card">
         <div class="card-header">
             <span class="url-path">${escapeHtml(urlDisplay)}</span>
-            <span class="url-full">${escapeHtml(url)}</span>
         </div>
         <div class="devices-grid">
             ${renderDeviceBlock("mobile", "Mobile", "📱")}
