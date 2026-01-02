@@ -66,62 +66,57 @@ function getActiveRules() {
 }
 
 /**
- * Main function to generate the HTML report.
+ * Loads and parses the validation report JSON
  */
-function generateReport() {
+function loadAndParseReport() {
   if (!fs.existsSync(JSON_REPORT)) {
     console.error(`❌ Error: ${JSON_REPORT} not found!`);
     process.exit(1);
   }
 
-  let report;
   try {
     const content = fs.readFileSync(JSON_REPORT, "utf-8");
     if (!content.trim()) {
       console.warn(
         "⚠️ HTML validation JSON report is empty. Assuming no issues found.",
       );
-      report = [];
-    } else {
-      report = JSON.parse(content);
+      return [];
     }
+    const report = JSON.parse(content);
+    return Array.isArray(report)
+      ? report
+      : report.results || report.files || [];
   } catch (e) {
     console.error("❌ Error parsing JSON report:", e.message);
     process.exit(1);
   }
+}
 
-  const results = Array.isArray(report)
-    ? report
-    : report.results || report.files || [];
-  const allFiles = getAllHtmlFiles(DIST_DIR);
-  const activeRules = getActiveRules();
-  const ruleCount = Object.keys(activeRules).length;
-
-  // Create lookup map for files with validation messages
+/**
+ * Processes validation data and merges with all HTML files
+ */
+function processValidationData(results, allFiles) {
   const resultMap = new Map();
   results.forEach((res) => {
     const relPath = path.relative(process.cwd(), res.filePath);
     resultMap.set(relPath, res);
   });
 
-  // Merge scan results with overall file list
-  const files = allFiles.map((filePath) => {
+  return allFiles.map((filePath) => {
     const res = resultMap.get(filePath);
     return {
       filePath,
-      messages: res ? res.messages : [],
-      errorCount: res ? res.errorCount : 0,
-      warningCount: res ? res.warningCount : 0,
+      messages: res?.messages || [],
+      errorCount: res?.errorCount || 0,
+      warningCount: res?.warningCount || 0,
     };
   });
+}
 
-  const totalErrors = files.reduce((acc, f) => acc + (f.errorCount ?? 0), 0);
-  const totalWarnings = files.reduce(
-    (acc, f) => acc + (f.warningCount ?? 0),
-    0,
-  );
-
-  // Aggregate rule triggers for the "Analysis Overview" section
+/**
+ * Aggregates rule violation counts across all files
+ */
+function calculateRuleCounts(files) {
   const ruleCounts = new Map();
   files.forEach((file) => {
     (file.messages || []).forEach((msg) => {
@@ -131,15 +126,43 @@ function generateReport() {
     });
   });
 
-  const sortedRules = Array.from(ruleCounts.entries())
+  return Array.from(ruleCounts.entries())
     .sort((a, b) => b[1] - a[1])
     .slice(0, 5);
+}
 
-  const statusClass =
-    totalErrors > 0 ? "failed" : totalWarnings > 0 ? "warning" : "passed";
-  const statusEmoji = totalErrors > 0 ? "❌" : totalWarnings > 0 ? "⚠️" : "✅";
-  const statusText =
-    totalErrors > 0 ? "Failed" : totalWarnings > 0 ? "Warnings" : "Passed";
+/**
+ * Determines validation status based on error/warning counts
+ */
+function determineStatus(totalErrors, totalWarnings) {
+  if (totalErrors > 0) {
+    return { class: "failed", emoji: "❌", text: "Failed" };
+  }
+  if (totalWarnings > 0) {
+    return { class: "warning", emoji: "⚠️", text: "Warnings" };
+  }
+  return { class: "passed", emoji: "✅", text: "Passed" };
+}
+
+/**
+ * Main function to generate the HTML report.
+ */
+function generateReport() {
+  const results = loadAndParseReport();
+  const allFiles = getAllHtmlFiles(DIST_DIR);
+  const activeRules = getActiveRules();
+  const ruleCount = Object.keys(activeRules).length;
+
+  const files = processValidationData(results, allFiles);
+
+  const totalErrors = files.reduce((acc, f) => acc + (f.errorCount ?? 0), 0);
+  const totalWarnings = files.reduce(
+    (acc, f) => acc + (f.warningCount ?? 0),
+    0,
+  );
+
+  const sortedRules = calculateRuleCounts(files);
+  const status = determineStatus(totalErrors, totalWarnings);
 
   const html = `
 <!DOCTYPE html>
@@ -302,7 +325,7 @@ function generateReport() {
 <body>
   <header>
     <div class="container">
-      <div class="status-banner ${statusClass}">${statusEmoji} Validation ${statusText}</div>
+      <div class="status-banner ${status.class}">${status.emoji} Validation ${status.text}</div>
       <h1>HTML Validation Report</h1>
       <p class="subtitle">Generated for project <strong>jmrp.io</strong> on ${new Date().toUTCString()}</p>
     </div>
@@ -333,31 +356,30 @@ function generateReport() {
       <div class="info-grid">
         <div class="info-item">
           <h4>Top Issue Types</h4>
-          ${
-            sortedRules.length > 0
-              ? `
+          ${sortedRules.length > 0
+      ? `
             <div style="display: flex; flex-direction: column; gap: 8px;">
               ${sortedRules
-                .map(
-                  ([rule, count]) => `
+        .map(
+          ([rule, count]) => `
                 <div style="display: flex; justify-content: space-between; font-size: 0.9rem;">
                   <code style="font-weight: 600;">${escapeHtml(rule)}</code>
                   <span style="font-weight: 800; color: var(--error);">${count}</span>
                 </div>
               `,
-                )
-                .join("")}
+        )
+        .join("")}
             </div>
           `
-              : '<p style="margin:0; color: var(--success); font-weight: 600;">No issues found!</p>'
-          }
+      : '<p style="margin:0; color: var(--success); font-weight: 600;">No issues found!</p>'
+    }
         </div>
         <div class="info-item">
           <h4>Rules Analyzed</h4>
           <ul class="rule-list">
             ${Object.keys(activeRules)
-              .map((rule) => `<li class="rule-tag">${escapeHtml(rule)}</li>`)
-              .join("")}
+      .map((rule) => `<li class="rule-tag">${escapeHtml(rule)}</li>`)
+      .join("")}
           </ul>
         </div>
       </div>
@@ -366,16 +388,16 @@ function generateReport() {
     <h2 class="section-title">📂 Detailed Results</h2>
     <div class="file-list">
       ${files
-        .map((file) => {
-          const isClean = !file.messages || file.messages.length === 0;
-          const fileEmoji =
-            (file.errorCount ?? 0) > 0
-              ? "🔴"
-              : (file.warningCount ?? 0) > 0
-                ? "⚠️"
-                : "✅";
+      .map((file) => {
+        const isClean = !file.messages || file.messages.length === 0;
+        const fileEmoji =
+          (file.errorCount ?? 0) > 0
+            ? "🔴"
+            : (file.warningCount ?? 0) > 0
+              ? "⚠️"
+              : "✅";
 
-          return `
+        return `
           <details class="file-item" ${isClean ? "" : "open"}>
             <summary class="file-header">
               <span class="file-name">
@@ -389,23 +411,22 @@ function generateReport() {
               </div>
             </summary>
             
-            ${
-              isClean
-                ? `
+            ${isClean
+            ? `
               <div style="padding: 24px; text-align: center; color: var(--success); font-weight: 600; background: var(--success-bg);">
                 ✨ No validation issues found in this file.
               </div>
             `
-                : `
+            : `
               <ul class="issue-list">
                 ${(file.messages || [])
-                  .map((msg) => {
-                    const severityLabel =
-                      msg.severity === 2 ? "Error" : "Warning";
-                    const severityClass =
-                      msg.severity === 2 ? "error" : "warning";
+              .map((msg) => {
+                const severityLabel =
+                  msg.severity === 2 ? "Error" : "Warning";
+                const severityClass =
+                  msg.severity === 2 ? "error" : "warning";
 
-                    return `
+                return `
                     <li class="issue-item">
                       <div class="issue-severity">
                         <span class="severity-pill ${severityClass}">${severityLabel}</span>
@@ -424,39 +445,37 @@ function generateReport() {
                           </a>
                         </div>
 
-                        ${
-                          msg.context
-                            ? `
+                        ${msg.context
+                    ? `
                           <div class="issue-context">
-                            ${
-                              typeof msg.context === "object"
-                                ? Object.entries(msg.context)
-                                    .map(
-                                      ([k, v]) => `
+                            ${typeof msg.context === "object"
+                      ? Object.entries(msg.context)
+                        .map(
+                          ([k, v]) => `
                                 <div class="context-row"><span class="context-key">${escapeHtml(k)}:</span> <code>${escapeHtml(String(v))}</code></div>
                               `,
-                                    )
-                                    .join("")
-                                : escapeHtml(msg.context)
-                            }
+                        )
+                        .join("")
+                      : escapeHtml(msg.context)
+                    }
                           </div>
                         `
-                            : ""
-                        }
+                    : ""
+                  }
 
                         ${msg.extract ? `<div class="code-extract">${escapeHtml(msg.extract)}</div>` : ""}
                       </div>
                     </li>
                   `;
-                  })
-                  .join("")}
+              })
+              .join("")}
               </ul>
             `
-            }
+          }
           </details>
         `;
-        })
-        .join("")}
+      })
+      .join("")}
     </div>
   </div>
 
