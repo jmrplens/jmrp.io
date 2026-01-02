@@ -9,8 +9,8 @@
  */
 
 import sharp from "sharp";
-import fs from "fs";
-import path from "path";
+import fs from "node:fs";
+import path from "node:path";
 
 const dir = "src/assets/images/blog";
 const files = ["csp-shield.png", "mtls-auth.png", "virtual-files.png"];

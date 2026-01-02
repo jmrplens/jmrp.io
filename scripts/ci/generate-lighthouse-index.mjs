@@ -7,8 +7,8 @@
  * Usage: node generate-lighthouse-index.mjs <deploy-dir>
  */
 
-import fs from "fs";
-import path from "path";
+import fs from "node:fs";
+import path from "node:path";
 
 const deployDir = process.argv[2] || "lh-deploy";
 const indexPath = path.join(deployDir, "index.html");

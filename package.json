@@ -4,9 +4,9 @@
   "version": "0.0.1",
   "engines": {
     "node": ">=18",
-    "pnpm": ">=8"
+    "pnpm": ">=10"
   },
-  "packageManager": "pnpm@9.0.0",
+  "packageManager": "pnpm@10.27.0",
   "scripts": {
     "dev": "astro dev",
     "prebuild": "node scripts/fetch-github-avatar.mjs",
@@ -73,6 +73,7 @@
     "rehype-mermaid": "^3.0.0",
     "rss-parser": "^3.13.0",
     "sharp": "^0.34.5",
+    "snyk": "^1.1301.2",
     "sonar-scanner": "^3.1.0",
     "surge": "^0.24.6",
     "svgo": "^4.0.0",

@@ -2,7 +2,7 @@
  * Generate Schema.org Validation Report (HTML)
  */
 
-import fs from "fs";
+import fs from "node:fs";
 
 const REPORT_FILE = "schema-report.json";
 const OUTPUT_FILE = "schema-report.html";

@@ -122,17 +122,17 @@ export async function getPublications(): Promise<PublicationGroup[]> {
       return match ? match[0].trim() : "";
     };
 
-    for (const item of data) {
+    const processItem = (item: PublicationItem) => {
       // Filter by bibtex_show
       const bibtexShow = extractCustomField(item.id, "bibtex_show");
-      if (bibtexShow && bibtexShow.toLowerCase() !== "true") continue;
+      if (bibtexShow && bibtexShow.toLowerCase() !== "true") return;
 
       const type = item.type;
 
       // Manually inject slides/poster/pdf if missing
-      if (!item.slides) item.slides = extractCustomField(item.id, "slides");
-      if (!item.poster) item.poster = extractCustomField(item.id, "poster");
-      if (!item.pdf) item.pdf = extractCustomField(item.id, "pdf");
+      item.slides = item.slides ?? extractCustomField(item.id, "slides");
+      item.poster = item.poster ?? extractCustomField(item.id, "poster");
+      item.pdf = item.pdf ?? extractCustomField(item.id, "pdf");
 
       // Extract raw bibtex entry for display/copying
       item.bibtex = extractRawBibtex(item.id);
@@ -147,8 +147,9 @@ export async function getPublications(): Promise<PublicationGroup[]> {
       } else if (type === "thesis" || type === "report") {
         thesisList.push(item);
       }
-      // Note: Publications with other types are intentionally ignored
-    }
+    };
+
+    data.forEach(processItem);
 
     return [
       { title: "Journal articles", items: journalArticles },

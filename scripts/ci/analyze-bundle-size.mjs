@@ -8,8 +8,8 @@
  * growth and identify the largest assets in the project.
  */
 
-import fs from "fs";
-import path from "path";
+import fs from "node:fs";
+import path from "node:path";
 import { glob } from "glob";
 
 const DIST_DIR = "dist";
