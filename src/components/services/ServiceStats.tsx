@@ -192,7 +192,12 @@ function MastodonStats({ stats }: { readonly stats: any }) {
           <h5 class="trending-header">Trending Now</h5>
           <div class="trending-grid">
             {mastodonTrends.map((tag: { url: string; name: string }) => (
-              <a href={tag.url} target="_blank" class="stat-btn-filled">
+              <a
+                href={tag.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="stat-btn-filled"
+              >
                 <span class="opacity-60">#</span> {tag.name}
               </a>
             ))}
@@ -283,6 +288,7 @@ function MeshtasticStats({ stats }: { readonly stats: any }) {
         <a
           href="https://potatomesh.jmrp.io"
           target="_blank"
+          rel="noopener noreferrer"
           class="btn btn-outline btn-xs"
           aria-label="View PotatoMesh Map"
         >
@@ -302,6 +308,7 @@ function MeshtasticStats({ stats }: { readonly stats: any }) {
         <a
           href="https://mesh_lf.jmrp.io/meshmonitor"
           target="_blank"
+          rel="noopener noreferrer"
           class="btn btn-outline btn-xs"
           aria-label="View MeshMonitor LF"
         >
@@ -321,6 +328,7 @@ function MeshtasticStats({ stats }: { readonly stats: any }) {
         <a
           href="https://mesh_mf.jmrp.io/meshmonitor"
           target="_blank"
+          rel="noopener noreferrer"
           class="btn btn-outline btn-xs"
           aria-label="View MeshMonitor MF"
         >

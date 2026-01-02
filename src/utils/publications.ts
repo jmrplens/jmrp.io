@@ -130,9 +130,9 @@ export async function getPublications(): Promise<PublicationGroup[]> {
       const type = item.type;
 
       // Manually inject slides/poster/pdf if missing
-      item.slides = item.slides || extractCustomField(item.id, "slides");
-      item.poster = item.poster || extractCustomField(item.id, "poster");
-      item.pdf = item.pdf || extractCustomField(item.id, "pdf");
+      item.slides = item.slides ?? extractCustomField(item.id, "slides");
+      item.poster = item.poster ?? extractCustomField(item.id, "poster");
+      item.pdf = item.pdf ?? extractCustomField(item.id, "pdf");
 
       // Extract raw bibtex entry for display/copying
       item.bibtex = extractRawBibtex(item.id);
