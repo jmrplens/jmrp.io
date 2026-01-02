@@ -2,11 +2,11 @@ import { useState, useEffect } from "preact/hooks";
 
 interface Props {
   readonly type:
-  | "mastodon"
-  | "matrix"
-  | "meshmonitor-lf"
-  | "meshmonitor-mf"
-  | "meshtastic-combined";
+    | "mastodon"
+    | "matrix"
+    | "meshmonitor-lf"
+    | "meshmonitor-mf"
+    | "meshtastic-combined";
 }
 
 /**
@@ -391,4 +391,3 @@ export default function ServiceStats({ type }: Props) {
 
   return null;
 }
-
