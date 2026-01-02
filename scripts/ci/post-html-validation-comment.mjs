@@ -8,13 +8,87 @@
 
 import fs from "node:fs";
 
+/**
+ * Builds the summary table for validation metrics
+ */
+function buildSummaryTable(totalErrors, totalWarnings, surgeUrl) {
+  let table = "| Metric | Value |\n";
+  table += "| :--- | :--- |\n";
+  table += "| 📄 Files Checked | **All generated HTML** |\n";
+  table += `| 🔴 Errors | **${totalErrors}** |\n`;
+  table += `| ⚠️ Warnings | **${totalWarnings}** |\n`;
+
+  if (surgeUrl) {
+    table += `| 🌐 Full Report | [**Open Interactive Report**](https://${surgeUrl}) 🚀 |\n`;
+  }
+
+  return table + "\n";
+}
+
+/**
+ * Builds the detailed issues section
+ */
+function buildIssuesSection(filesWithErrors) {
+  if (filesWithErrors.length === 0) {
+    return "> All pages are valid HTML5 compliant. ✨\n";
+  }
+
+  let section =
+    "<details>\n<summary><b>🔍 View Detailed Issues (Top 10)</b></summary>\n\n";
+
+  filesWithErrors.slice(0, 10).forEach((f) => {
+    const fileName = f.filePath.replace("dist/", "").split("/").pop();
+    section += `#### 📄 **${fileName}**\n`;
+    f.messages.forEach((m) => {
+      const severity = m.severity === 2 ? "🔴" : "⚠️";
+      section += `- ${severity} [${m.ruleId}] ${m.message} (Line ${m.line})\n`;
+    });
+    section += "\n---\n";
+  });
+
+  if (filesWithErrors.length > 10) {
+    section += `\n*...and ${filesWithErrors.length - 10} more files with issues (see build logs for full list).* \n`;
+  }
+
+  section += "</details>\n\n";
+  return section;
+}
+
+/**
+ * Builds the complete comment from the validation report
+ */
+function buildCommentFromReport(report, surgeUrl) {
+  const filesWithErrors = report.filter((f) => f.messages.length > 0);
+  const totalErrors = filesWithErrors.reduce(
+    (acc, f) => acc + f.messages.filter((m) => m.severity === 2).length,
+    0,
+  );
+  const totalWarnings = filesWithErrors.reduce(
+    (acc, f) => acc + f.messages.filter((m) => m.severity === 1).length,
+    0,
+  );
+
+  const isSuccess = totalErrors === 0;
+  const icon = isSuccess ? "✅" : "❌";
+  const status = isSuccess ? "**Passed!**" : "**Errors found**";
+
+  let comment = `### ${icon} HTML5 Validation\n\n${status}\n\n`;
+  comment += buildSummaryTable(totalErrors, totalWarnings, surgeUrl);
+  comment += buildIssuesSection(filesWithErrors);
+
+  return comment;
+}
+
 export default async function postHtmlValidationComment({ github, context }) {
-  let comment = "";
+  let comment;
   const surgeUrl = process.env.SURGE_URL;
 
   try {
-    if (fs.existsSync("html-validation.json")) {
-      let rawContent = fs.readFileSync("html-validation.json", "utf8").trim();
+    if (!fs.existsSync("html-validation.json")) {
+      comment =
+        "### ⚠️ HTML5 Validation\n\n> ⚠️ Report file not found. Check build logs.";
+    } else {
+      const rawContent = fs.readFileSync("html-validation.json", "utf8").trim();
 
       if (!rawContent || rawContent === "undefined") {
         comment =
@@ -22,61 +96,13 @@ export default async function postHtmlValidationComment({ github, context }) {
       } else {
         try {
           const report = JSON.parse(rawContent);
-          const filesWithErrors = report.filter((f) => f.messages.length > 0);
-          const totalErrors = filesWithErrors.reduce(
-            (acc, f) => acc + f.messages.filter((m) => m.severity === 2).length,
-            0,
-          );
-          const totalWarnings = filesWithErrors.reduce(
-            (acc, f) => acc + f.messages.filter((m) => m.severity === 1).length,
-            0,
-          );
-
-          const isSuccess = totalErrors === 0;
-          const icon = isSuccess ? "✅" : "❌";
-          const status = isSuccess ? "**Passed!**" : "**Errors found**";
-
-          comment = `### ${icon} HTML5 Validation\n\n${status}\n\n`;
-          comment += "| Metric | Value |\n";
-          comment += "| :--- | :--- |\n";
-          comment += "| 📄 Files Checked | **All generated HTML** |\n";
-          comment += `| 🔴 Errors | **${totalErrors}** |\n`;
-          comment += `| ⚠️ Warnings | **${totalWarnings}** |\n`;
-
-          if (surgeUrl) {
-            comment += `| 🌐 Full Report | [**Open Interactive Report**](https://${surgeUrl}) 🚀 |\n`;
-          }
-          comment += "\n";
-
-          if (filesWithErrors.length > 0) {
-            comment +=
-              "<details>\n<summary><b>🔍 View Detailed Issues (Top 10)</b></summary>\n\n";
-            filesWithErrors.slice(0, 10).forEach((f) => {
-              const fileName = f.filePath.replace("dist/", "").split("/").pop();
-              comment += `#### 📄 **${fileName}**\n`;
-              f.messages.forEach((m) => {
-                const severity = m.severity === 2 ? "🔴" : "⚠️";
-                comment += `- ${severity} [${m.ruleId}] ${m.message} (Line ${m.line})\n`;
-              });
-              comment += "\n---\n";
-            });
-
-            if (filesWithErrors.length > 10) {
-              comment += `\n*...and ${filesWithErrors.length - 10} more files with issues (see build logs for full list).* \n`;
-            }
-            comment += "</details>\n\n";
-          } else {
-            comment += "> All pages are valid HTML5 compliant. ✨\n";
-          }
+          comment = buildCommentFromReport(report, surgeUrl);
         } catch (parseError) {
           comment =
             "### ⚠️ HTML5 Validation\n\n❌ **Error parsing report JSON**";
           console.error("HTML validation parse error:", parseError);
         }
       }
-    } else {
-      comment =
-        "### ⚠️ HTML5 Validation\n\n> ⚠️ Report file not found. Check build logs.";
     }
   } catch (e) {
     comment = "### ⚠️ HTML5 Validation\n\n> ❌ Error processing report.";
