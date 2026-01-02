@@ -48,9 +48,9 @@ jsonFiles.forEach((filePath) => {
 
     const lowerPath = filePath.toLowerCase();
     let theme = "unknown";
-    if (lowerPath.includes("/light/") || lowerPath.includes("\light\ "))
+    if (lowerPath.includes("/light/") || lowerPath.includes("\\light\\"))
       theme = "light";
-    if (lowerPath.includes("/dark/") || lowerPath.includes("\dark\ "))
+    if (lowerPath.includes("/dark/") || lowerPath.includes("\\dark\\"))
       theme = "dark";
 
     if (json.lighthouseVersion && json.finalUrl) {

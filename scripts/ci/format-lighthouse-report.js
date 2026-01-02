@@ -61,9 +61,9 @@ files.forEach((filePath) => {
     // Detect theme
     const lowerPath = filePath.toLowerCase();
     let theme = "unknown";
-    if (lowerPath.includes("/light/") || lowerPath.includes("\light\ "))
+    if (lowerPath.includes("/light/") || lowerPath.includes("\\light\\"))
       theme = "light";
-    if (lowerPath.includes("/dark/") || lowerPath.includes("\dark\ "))
+    if (lowerPath.includes("/dark/") || lowerPath.includes("\\dark\\"))
       theme = "dark";
 
     const scores = {
