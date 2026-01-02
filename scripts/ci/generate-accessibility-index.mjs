@@ -49,7 +49,7 @@ const reports = [];
 htmlFiles.forEach((filePath) => {
   const lowerPath = filePath.toLowerCase();
   let theme = "unknown";
-  
+
   // Prioritize checks to avoid ambiguity
   if (lowerPath.includes("/light/") || lowerPath.includes("\\light\\")) {
     theme = "light";
@@ -66,27 +66,31 @@ htmlFiles.forEach((filePath) => {
 });
 
 const grouped = { light: [], dark: [], unknown: [] };
-reports.forEach(r => {
-    if (grouped[r.theme]) grouped[r.theme].push(r);
-    else grouped.unknown.push(r);
+reports.forEach((r) => {
+  if (grouped[r.theme]) grouped[r.theme].push(r);
+  else grouped.unknown.push(r);
 });
 
 function renderReportList(theme, list) {
-    if (list.length === 0) return '';
-    
-    const icon = theme === 'light' ? '☀️' : (theme === 'dark' ? '🌙' : '❓');
-    const title = theme.charAt(0).toUpperCase() + theme.slice(1);
-    
-    const items = list.map(r => `
+  if (list.length === 0) return "";
+
+  const icon = theme === "light" ? "☀️" : theme === "dark" ? "🌙" : "❓";
+  const title = theme.charAt(0).toUpperCase() + theme.slice(1);
+
+  const items = list
+    .map(
+      (r) => `
         <li>
             <a href="${escapeHtml(r.relativePath)}" class="report-link">
                 <span class="report-name">${escapeHtml(r.fileName)}</span>
                 <span class="report-arrow">→</span>
             </a>
         </li>
-    `).join("");
+    `,
+    )
+    .join("");
 
-    return `
+  return `
         <div class="theme-card ${theme}-theme">
             <h3>${icon} ${title} Mode</h3>
             <ul class="report-list">
@@ -142,9 +146,9 @@ const htmlContent = `
         <h1>♿ Accessibility Reports</h1>
         <p style="text-align: center; color: var(--text-muted); margin-bottom: 3rem;">Generated on ${new Date().toLocaleString()}</p>
         <div class="grid">
-            ${renderReportList('light', grouped.light)}
-            ${renderReportList('dark', grouped.dark)}
-            ${grouped.unknown.length > 0 ? renderReportList('unknown', grouped.unknown) : ''}
+            ${renderReportList("light", grouped.light)}
+            ${renderReportList("dark", grouped.dark)}
+            ${grouped.unknown.length > 0 ? renderReportList("unknown", grouped.unknown) : ""}
         </div>
     </div>
 </body>
