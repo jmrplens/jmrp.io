@@ -18,6 +18,16 @@ if (!fs.existsSync(deployDir)) {
   process.exit(1);
 }
 
+// Helper: Escape HTML characters
+function escapeHtml(unsafe) {
+  return unsafe
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 // Helper: Scan for all HTML reports
 function findReports(dir, fileList = []) {
   const files = fs.readdirSync(dir);
@@ -26,7 +36,7 @@ function findReports(dir, fileList = []) {
     const stat = fs.statSync(filePath);
     if (stat.isDirectory()) {
       findReports(filePath, fileList);
-    } else if (file.endsWith(".html") && !file.includes("index.html")) {
+    } else if (file.endsWith(".html") && file !== "index.html") {
       fileList.push(filePath);
     }
   });
@@ -39,10 +49,13 @@ const reports = [];
 htmlFiles.forEach((filePath) => {
   const lowerPath = filePath.toLowerCase();
   let theme = "unknown";
-  if (lowerPath.includes("/light/") || lowerPath.includes("\\light\\"))
+  
+  // Prioritize checks to avoid ambiguity
+  if (lowerPath.includes("/light/") || lowerPath.includes("\\light\\")) {
     theme = "light";
-  if (lowerPath.includes("/dark/") || lowerPath.includes("\\dark\\"))
+  } else if (lowerPath.includes("/dark/") || lowerPath.includes("\\dark\\")) {
     theme = "dark";
+  }
 
   reports.push({
     filePath,
@@ -53,31 +66,27 @@ htmlFiles.forEach((filePath) => {
 });
 
 const grouped = { light: [], dark: [], unknown: [] };
-reports.forEach((r) => {
-  if (grouped[r.theme]) grouped[r.theme].push(r);
-  else grouped.unknown.push(r);
+reports.forEach(r => {
+    if (grouped[r.theme]) grouped[r.theme].push(r);
+    else grouped.unknown.push(r);
 });
 
 function renderReportList(theme, list) {
-  if (list.length === 0) return "";
-
-  const icon = theme === "light" ? "☀️" : theme === "dark" ? "🌙" : "❓";
-  const title = theme.charAt(0).toUpperCase() + theme.slice(1);
-
-  const items = list
-    .map(
-      (r) => `
+    if (list.length === 0) return '';
+    
+    const icon = theme === 'light' ? '☀️' : (theme === 'dark' ? '🌙' : '❓');
+    const title = theme.charAt(0).toUpperCase() + theme.slice(1);
+    
+    const items = list.map(r => `
         <li>
-            <a href="${r.relativePath}" class="report-link">
-                <span class="report-name">${r.fileName}</span>
+            <a href="${escapeHtml(r.relativePath)}" class="report-link">
+                <span class="report-name">${escapeHtml(r.fileName)}</span>
                 <span class="report-arrow">→</span>
             </a>
         </li>
-    `,
-    )
-    .join("");
+    `).join("");
 
-  return `
+    return `
         <div class="theme-card ${theme}-theme">
             <h3>${icon} ${title} Mode</h3>
             <ul class="report-list">
@@ -133,9 +142,9 @@ const htmlContent = `
         <h1>♿ Accessibility Reports</h1>
         <p style="text-align: center; color: var(--text-muted); margin-bottom: 3rem;">Generated on ${new Date().toLocaleString()}</p>
         <div class="grid">
-            ${renderReportList("light", grouped.light)}
-            ${renderReportList("dark", grouped.dark)}
-            ${grouped.unknown.length > 0 ? renderReportList("unknown", grouped.unknown) : ""}
+            ${renderReportList('light', grouped.light)}
+            ${renderReportList('dark', grouped.dark)}
+            ${grouped.unknown.length > 0 ? renderReportList('unknown', grouped.unknown) : ''}
         </div>
     </div>
 </body>

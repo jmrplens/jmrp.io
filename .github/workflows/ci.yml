@@ -222,11 +222,13 @@ jobs:
       # Download artifacts
       - name: Download Axe Results (Light)
         uses: actions/download-artifact@v7
+        continue-on-error: true
         with:
           name: axe-accessibility-report-light
           path: a11y-deploy/light
       - name: Download Axe Results (Dark)
         uses: actions/download-artifact@v7
+        continue-on-error: true
         with:
           name: axe-accessibility-report-dark
           path: a11y-deploy/dark
@@ -240,7 +242,7 @@ jobs:
           pnpm exec surge ./a11y-deploy jmrp-a11y-pr-${{ github.event.number }}.surge.sh --token ${{ secrets.SURGE_TOKEN }}
 
       - name: Format Report for Comment
-        run: node scripts/ci/format-accessibility-report.js a11y-deploy > accessibility_comment.md
+        run: node scripts/ci/format-accessibility-report.mjs a11y-deploy > accessibility_comment.md
 
       - name: Post Comment
         if: github.event_name == 'pull_request'
@@ -251,18 +253,25 @@ jobs:
           script: |
             const fs = require('fs');
             const commentFile = 'accessibility_comment.md';
-            if (fs.existsSync(commentFile)) {
-              let comment = fs.readFileSync(commentFile, 'utf8');
-              const surgeUrl = process.env.SURGE_URL;
-              if (surgeUrl) {
-                comment += `\n\n#### 🌐 Live Report\n> 🚀 [**Open Accessibility Reports Dashboard**](https://${surgeUrl}) for detailed insights.`;
+
+            try {
+              if (fs.existsSync(commentFile)) {
+                let comment = fs.readFileSync(commentFile, 'utf8');
+                const surgeUrl = process.env.SURGE_URL;
+                if (surgeUrl) {
+                  comment += `\n\n#### 🌐 Live Report\n> 🚀 [**Open Accessibility Reports Dashboard**](https://${surgeUrl}) for detailed insights.`;
+                }
+                await github.rest.issues.createComment({
+                  issue_number: context.issue.number,
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  body: comment,
+                });
+              } else {
+                console.log("Comment file not found, skipping.");
               }
-              await github.rest.issues.createComment({
-                issue_number: context.issue.number,
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                body: comment,
-              });
+            } catch (error) {
+              console.error("Failed to post accessibility comment:", error);
             }
 
   bundle-size:
