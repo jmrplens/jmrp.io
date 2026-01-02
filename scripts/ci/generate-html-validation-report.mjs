@@ -373,30 +373,31 @@ function generateReport() {
       <div class="info-grid">
         <div class="info-item">
           <h4>Top Issue Types</h4>
-          ${sortedRules.length > 0
-      ? `
+          ${
+            sortedRules.length > 0
+              ? `
             <div style="display: flex; flex-direction: column; gap: 8px;">
               ${sortedRules
-        .map(
-          ([rule, count]) => `
+                .map(
+                  ([rule, count]) => `
                 <div style="display: flex; justify-content: space-between; font-size: 0.9rem;">
                   <code style="font-weight: 600;">${escapeHtml(rule)}</code>
                   <span style="font-weight: 800; color: var(--error);">${count}</span>
                 </div>
               `,
-        )
-        .join("")}
+                )
+                .join("")}
             </div>
           `
-      : '<p style="margin:0; color: var(--success); font-weight: 600;">No issues found!</p>'
-    }
+              : '<p style="margin:0; color: var(--success); font-weight: 600;">No issues found!</p>'
+          }
         </div>
         <div class="info-item">
           <h4>Rules Analyzed</h4>
           <ul class="rule-list">
             ${Object.keys(activeRules)
-      .map((rule) => `<li class="rule-tag">${escapeHtml(rule)}</li>`)
-      .join("")}
+              .map((rule) => `<li class="rule-tag">${escapeHtml(rule)}</li>`)
+              .join("")}
           </ul>
         </div>
       </div>
@@ -405,18 +406,18 @@ function generateReport() {
     <h2 class="section-title">📂 Detailed Results</h2>
     <div class="file-list">
       ${files
-      .map((file) => {
-        const isClean = !file.messages || file.messages.length === 0;
-        let fileEmoji;
-        if ((file.errorCount ?? 0) > 0) {
-          fileEmoji = "🔴";
-        } else if ((file.warningCount ?? 0) > 0) {
-          fileEmoji = "⚠️";
-        } else {
-          fileEmoji = "✅";
-        }
+        .map((file) => {
+          const isClean = !file.messages || file.messages.length === 0;
+          let fileEmoji;
+          if ((file.errorCount ?? 0) > 0) {
+            fileEmoji = "🔴";
+          } else if ((file.warningCount ?? 0) > 0) {
+            fileEmoji = "⚠️";
+          } else {
+            fileEmoji = "✅";
+          }
 
-        return `
+          return `
           <details class="file-item" ${isClean ? "" : "open"}>
             <summary class="file-header">
               <span class="file-name">
@@ -430,22 +431,23 @@ function generateReport() {
               </div>
             </summary>
             
-            ${isClean
-            ? `
+            ${
+              isClean
+                ? `
               <div style="padding: 24px; text-align: center; color: var(--success); font-weight: 600; background: var(--success-bg);">
                 ✨ No validation issues found in this file.
               </div>
             `
-            : `
+                : `
               <ul class="issue-list">
                 ${(file.messages || [])
-              .map((msg) => {
-                const severityLabel =
-                  msg.severity === 2 ? "Error" : "Warning";
-                const severityClass =
-                  msg.severity === 2 ? "error" : "warning";
+                  .map((msg) => {
+                    const severityLabel =
+                      msg.severity === 2 ? "Error" : "Warning";
+                    const severityClass =
+                      msg.severity === 2 ? "error" : "warning";
 
-                return `
+                    return `
                     <li class="issue-item">
                       <div class="issue-severity">
                         <span class="severity-pill ${severityClass}">${severityLabel}</span>
@@ -464,28 +466,29 @@ function generateReport() {
                           </a>
                         </div>
 
-                        ${msg.context
-                    ? `
+                        ${
+                          msg.context
+                            ? `
                           <div class="issue-context">
                             ${renderContext(msg.context)}
                           </div>
                         `
-                    : ""
-                  }
+                            : ""
+                        }
 
                         ${msg.extract ? `<div class="code-extract">${escapeHtml(msg.extract)}</div>` : ""}
                       </div>
                     </li>
                   `;
-              })
-              .join("")}
+                  })
+                  .join("")}
               </ul>
             `
-          }
+            }
           </details>
         `;
-      })
-      .join("")}
+        })
+        .join("")}
     </div>
   </div>
 

@@ -16,8 +16,6 @@ if (!fs.existsSync(REPORT_FILE)) {
 const data = JSON.parse(fs.readFileSync(REPORT_FILE, "utf-8"));
 const { summary, results } = data;
 
-
-
 function syntaxHighlight(json) {
   if (typeof json !== "string") {
     json = JSON.stringify(json, undefined, 2);
@@ -29,26 +27,26 @@ function syntaxHighlight(json) {
   const strPattern = /("(\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?)/.source;
   const boolPattern = /\b(true|false|null)\b/.source;
   const numPattern = /-?\d+(?:\.\d*)?(?:[eE][+-]?\d+)?/.source;
-  const jsonTokenRegex = new RegExp(`(${strPattern}|${boolPattern}|${numPattern})`, "g");
-
-  return json.replaceAll(
-    jsonTokenRegex,
-    function (match) {
-      let cls = "number";
-      if (match.startsWith('"')) {
-        if (match.endsWith(":")) {
-          cls = "key";
-        } else {
-          cls = "string";
-        }
-      } else if (/true|false/.test(match)) {
-        cls = "boolean";
-      } else if (/null/.test(match)) {
-        cls = "null";
-      }
-      return '<span class="' + cls + '">' + match + "</span>";
-    },
+  const jsonTokenRegex = new RegExp(
+    `(${strPattern}|${boolPattern}|${numPattern})`,
+    "g",
   );
+
+  return json.replaceAll(jsonTokenRegex, function (match) {
+    let cls = "number";
+    if (match.startsWith('"')) {
+      if (match.endsWith(":")) {
+        cls = "key";
+      } else {
+        cls = "string";
+      }
+    } else if (/true|false/.test(match)) {
+      cls = "boolean";
+    } else if (/null/.test(match)) {
+      cls = "null";
+    }
+    return '<span class="' + cls + '">' + match + "</span>";
+  });
 }
 
 function renderVisual(data) {
@@ -58,7 +56,9 @@ function renderVisual(data) {
   if (Array.isArray(data)) {
     if (data.length === 0) return '<span class="v-empty">[]</span>';
 
-    const listItems = data.map((item) => `<div class="v-list-item">${renderVisual(item)}</div>`).join("");
+    const listItems = data
+      .map((item) => `<div class="v-list-item">${renderVisual(item)}</div>`)
+      .join("");
     return `<div class="v-list">${listItems}</div>`;
   }
 
@@ -251,52 +251,52 @@ const html = `
 
         <div class="results-list">
             ${results
-    .map((r, idx) => {
-      let status = "warn";
-      if (r.valid && r.warnings.length === 0) {
-        status = "pass";
-      } else if (r.errors.length > 0) {
-        status = "fail";
-      }
+              .map((r, idx) => {
+                let status = "warn";
+                if (r.valid && r.warnings.length === 0) {
+                  status = "pass";
+                } else if (r.errors.length > 0) {
+                  status = "fail";
+                }
 
-      let label = "Warning";
-      if (status === "pass") {
-        label = "Valid";
-      } else if (status === "fail") {
-        label = "Invalid";
-      }
+                let label = "Warning";
+                if (status === "pass") {
+                  label = "Valid";
+                } else if (status === "fail") {
+                  label = "Invalid";
+                }
 
-      const badgeClass = `status-${status}`;
-      const uniqueId = `schema-${idx}`;
+                const badgeClass = `status-${status}`;
+                const uniqueId = `schema-${idx}`;
 
-      let detailsHtml = "";
+                let detailsHtml = "";
 
-      // Issues Section
-      if (status !== "pass") {
-        detailsHtml += '<div class="issues-section">';
-        r.errors.forEach((e) => {
-          detailsHtml += `
+                // Issues Section
+                if (status !== "pass") {
+                  detailsHtml += '<div class="issues-section">';
+                  r.errors.forEach((e) => {
+                    detailsHtml += `
                             <div class="issue issue-error">
                                 <div class="issue-type">❌ Error (Schema ${e.index + 1}: ${escapeHtml(e.type || "Unknown")})</div>
                                 ${e.errors.map((msg) => `<div class="issue-msg">${escapeHtml(msg)}</div>`).join("")}
                             </div>`;
-        });
-        r.warnings.forEach((w) => {
-          detailsHtml += `
+                  });
+                  r.warnings.forEach((w) => {
+                    detailsHtml += `
                             <div class="issue issue-warning">
                                 <div class="issue-type">⚠️ Warning (Schema ${w.index + 1}: ${escapeHtml(w.type || "Unknown")})</div>
                                 ${w.warnings.map((msg) => `<div class="issue-msg">${escapeHtml(msg)}</div>`).join("")}
                             </div>`;
-        });
-        detailsHtml += "</div>";
-      }
+                  });
+                  detailsHtml += "</div>";
+                }
 
-      // Schemas View
-      if (r.schemas && r.schemas.length > 0) {
-        detailsHtml += '<div class="schema-container">';
-        r.schemas.forEach((schema, i) => {
-          const schemaId = uniqueId + "-" + i;
-          detailsHtml += `
+                // Schemas View
+                if (r.schemas && r.schemas.length > 0) {
+                  detailsHtml += '<div class="schema-container">';
+                  r.schemas.forEach((schema, i) => {
+                    const schemaId = uniqueId + "-" + i;
+                    detailsHtml += `
                             <div class="schema-block" style="margin-bottom: 2rem;">
                                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
                                     <div style="font-weight:700; color:var(--text-muted);">Schema ${i + 1}: ${escapeHtml(schema["@type"] || "Unknown")}</div>
@@ -314,11 +314,11 @@ const html = `
                                 </div>
                             </div>
                         `;
-        });
-        detailsHtml += "</div>";
-      }
+                  });
+                  detailsHtml += "</div>";
+                }
 
-      return `
+                return `
                     <details class="result-item">
                         <summary class="result-header">
                             <span class="page-name">${escapeHtml(r.file)}</span>
@@ -327,8 +327,8 @@ const html = `
                         <div class="details">${detailsHtml}</div>
                     </details>
                 `;
-    })
-    .join("")}
+              })
+              .join("")}
         </div>
     </div>
 </body>

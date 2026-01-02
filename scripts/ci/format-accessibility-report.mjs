@@ -22,7 +22,9 @@ function getStatusText(result) {
   return result.failed === 0 ? "✅ Passed" : "❌ Failed";
 }
 
-const report = JSON.parse(fs.readFileSync("accessibility-report.json", "utf-8"));
+const report = JSON.parse(
+  fs.readFileSync("accessibility-report.json", "utf-8"),
+);
 const results = {
   light: report.find((r) => r.theme === "light"),
   dark: report.find((r) => r.theme === "dark"),
@@ -61,12 +63,11 @@ console.log("");
   const themeName =
     themeResult.theme.charAt(0).toUpperCase() + themeResult.theme.slice(1);
 
-  if (
-    themeResult.violations.length > 0 ||
-    themeResult.incomplete.length > 0
-  ) {
+  if (themeResult.violations.length > 0 || themeResult.incomplete.length > 0) {
     console.log(`<details>`);
-    console.log(`<summary><b>${emoji} ${themeName} Theme Details</b></summary>`);
+    console.log(
+      `<summary><b>${emoji} ${themeName} Theme Details</b></summary>`,
+    );
     console.log("");
 
     if (themeResult.violations.length > 0) {

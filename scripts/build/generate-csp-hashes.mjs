@@ -265,7 +265,10 @@ function updateNginxConfig(styleHashString, scriptHashString, imgDomainString) {
   const finalBlock = `${BLOCK_START}\n${blockContent}\n${BLOCK_END}`;
 
   let nginxConfig = fs.readFileSync(NGINX_CONF, "utf-8");
-  const blockRegex = new RegExp(String.raw`${BLOCK_START}[\s\S]*?${BLOCK_END}`, "g");
+  const blockRegex = new RegExp(
+    String.raw`${BLOCK_START}[\s\S]*?${BLOCK_END}`,
+    "g",
+  );
 
   if (blockRegex.test(nginxConfig)) {
     nginxConfig = nginxConfig.replaceAll(blockRegex, finalBlock);

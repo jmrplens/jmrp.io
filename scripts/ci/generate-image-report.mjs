@@ -199,21 +199,21 @@ const generateReport = () => {
             </thead>
             <tbody>
                 ${[
-      ...data.webp.map((i) => ({ ...i, f: "WebP" })),
-      ...data.png.map((i) => ({ ...i, f: "PNG" })),
-      ...data.jpg.map((i) => ({ ...i, f: "JPG" })),
-    ]
-      .sort((_, b) => (b.size.includes("M") ? 1 : -1))
-      .map(
-        (img) => `
+                  ...data.webp.map((i) => ({ ...i, f: "WebP" })),
+                  ...data.png.map((i) => ({ ...i, f: "PNG" })),
+                  ...data.jpg.map((i) => ({ ...i, f: "JPG" })),
+                ]
+                  .sort((_, b) => (b.size.includes("M") ? 1 : -1))
+                  .map(
+                    (img) => `
                   <tr>
                     <td class="path-cell">${img.path}</td>
                     <td><span class="badge ${img.f === "WebP" ? "badge-webp" : "badge-legacy"}">${img.f}</span></td>
                     <td class="size-cell ${img.size.includes("K") && Number.parseInt(img.size) > 500 ? "size-large" : ""}"> ${img.size}</td>
                   </tr>
                 `,
-      )
-      .join("")}
+                  )
+                  .join("")}
                 ${totalImages === 0 ? '<tr><td colspan="3" style="text-align:center; padding: 2rem;">No images found in dist/</td></tr>' : ""}
             </tbody>
         </table>

@@ -37,12 +37,12 @@ if (summary.totalErrors > 0 || summary.totalWarnings > 0) {
       );
       console.log(
         "| `" +
-        r.file +
-        "` | " +
-        (errorCount > 0 ? "🔴 " + errorCount : "-") +
-        " | " +
-        (warningCount > 0 ? "⚠️ " + warningCount : "-") +
-        " |",
+          r.file +
+          "` | " +
+          (errorCount > 0 ? "🔴 " + errorCount : "-") +
+          " | " +
+          (warningCount > 0 ? "⚠️ " + warningCount : "-") +
+          " |",
       );
     });
 } else {

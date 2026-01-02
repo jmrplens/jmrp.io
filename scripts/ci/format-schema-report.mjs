@@ -35,7 +35,7 @@ if (summary.totalErrors > 0 || summary.totalWarnings > 0) {
         (acc, s) => acc + s.warnings.length,
         0,
       );
-      // Using template literals as suggested by Copilot for better readability
+
       const errorsCol = errorCount > 0 ? `🔴 ${errorCount}` : "-";
       const warningsCol = warningCount > 0 ? `⚠️ ${warningCount}` : "-";
       console.log(`| \`${r.file}\` | ${errorsCol} | ${warningsCol} |`);

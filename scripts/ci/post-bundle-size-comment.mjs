@@ -79,4 +79,4 @@ export default async function postBundleSizeComment({ github, context }) {
       body: errorBody,
     });
   }
-};
+}

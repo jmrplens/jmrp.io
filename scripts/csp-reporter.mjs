@@ -72,7 +72,7 @@ if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
   if (!TELEGRAM_CHAT_ID) missingVars.push("TELEGRAM_CHAT_ID");
   console.error(
     `Missing required environment variable(s): ${missingVars.join(", ")}. ` +
-    `Please set them in your environment or in the .env file located at ${join(__dirname, "../.env")}.`,
+      `Please set them in your environment or in the .env file located at ${join(__dirname, "../.env")}.`,
   );
   process.exit(1);
 }
@@ -170,8 +170,6 @@ function processReport(report, ip, ua) {
     }
   }
 }
-
-
 
 /**
  * Sends the violation report to Telegram

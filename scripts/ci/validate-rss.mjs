@@ -53,8 +53,7 @@ function validateItemUrl(item, idx, results) {
  * Validates the content of an RSS item for required elements
  */
 function validateItemContent(item, idx, results) {
-  const content =
-    item.contentEncoded || item.content || item.description || "";
+  const content = item.contentEncoded || item.content || item.description || "";
   const contentLower = content.toLowerCase();
 
   if (

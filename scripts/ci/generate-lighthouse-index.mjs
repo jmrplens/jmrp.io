@@ -101,8 +101,6 @@ reports.forEach((r) => {
   }
 });
 
-
-
 function getScoreClass(score) {
   if (score >= 0.9) return "pass";
   if (score >= 0.5) return "avg";
@@ -179,8 +177,6 @@ const listItems = Object.entries(grouped)
       // Top-level averages (Combined)
       const avgs = {};
       cats.forEach((c) => (avgs[c] = calculateAverage(allRuns, c)));
-
-
 
       return `
             <div class="device-card">

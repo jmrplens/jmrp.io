@@ -126,7 +126,7 @@ function downloadFile(url, dest) {
         });
       })
       .on("error", (err) => {
-        fs.unlink(dest, () => { }); // Delete failed file
+        fs.unlink(dest, () => {}); // Delete failed file
         reject(err);
       });
   });

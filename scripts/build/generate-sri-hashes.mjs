@@ -82,9 +82,7 @@ function addIntegrityToTag(match, tagName, attrs, url, file, hashCache) {
       (attrs.includes("stylesheet") || attrs.includes('as="style"'));
     const needsNonce = isScript || isStyle;
     const nonceAttr =
-      needsNonce && !attrs.includes("nonce=")
-        ? ' nonce="NGINX_CSP_NONCE"'
-        : "";
+      needsNonce && !attrs.includes("nonce=") ? ' nonce="NGINX_CSP_NONCE"' : "";
 
     const crossoriginAttr = attrs.includes("crossorigin")
       ? ""
@@ -103,7 +101,14 @@ function addIntegrityToTag(match, tagName, attrs, url, file, hashCache) {
 function processScripts(content, file, hashCache, stats) {
   const scriptRegex = /<script\s+([^>]*src=["']([^"']+)["'][^>]*)>/gi;
   return content.replaceAll(scriptRegex, (match, attrs, url) => {
-    const result = addIntegrityToTag(match, "script", attrs, url, file, hashCache);
+    const result = addIntegrityToTag(
+      match,
+      "script",
+      attrs,
+      url,
+      file,
+      hashCache,
+    );
     if (result !== match) stats.count++;
     return result;
   });
@@ -117,12 +122,18 @@ function processLinks(content, file, hashCache, stats) {
   return content.replaceAll(linkRegex, (match, attrs, url) => {
     const allowedRels = ["stylesheet", "preload", "modulepreload"];
     const hasAllowedRel = allowedRels.some(
-      (rel) =>
-        attrs.includes(`rel="${rel}"`) || attrs.includes(`rel='${rel}'`),
+      (rel) => attrs.includes(`rel="${rel}"`) || attrs.includes(`rel='${rel}'`),
     );
     if (!hasAllowedRel) return match;
 
-    const result = addIntegrityToTag(match, "link", attrs, url, file, hashCache);
+    const result = addIntegrityToTag(
+      match,
+      "link",
+      attrs,
+      url,
+      file,
+      hashCache,
+    );
     if (result !== match) stats.count++;
     return result;
   });
