@@ -8,7 +8,7 @@
 
 import fs from "node:fs";
 
-export default async ({ github, context }) => {
+export default async function postRssValidationComment({ github, context }) {
   let comment = "";
 
   try {
@@ -28,7 +28,7 @@ export default async ({ github, context }) => {
       comment += `| 📝 Items | **${report.metadata.items}** posts |\n`;
 
       if (report.metadata.latestItem) {
-        comment += `| 🆕 Latest | \"${report.metadata.latestItem.title}\" |\n`;
+        comment += `| 🆕 Latest | "${report.metadata.latestItem.title}" |\n`;
       }
 
       if (surgeUrl) {
@@ -60,6 +60,7 @@ export default async ({ github, context }) => {
     }
   } catch (e) {
     comment = "### 📡 RSS Validation\n\n❌ **Error processing report.**";
+    console.error("RSS validation comment error:", e);
   }
 
   await github.rest.issues.createComment({
@@ -68,4 +69,4 @@ export default async ({ github, context }) => {
     repo: context.repo.repo,
     body: comment,
   });
-};
+}

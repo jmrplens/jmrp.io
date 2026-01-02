@@ -43,10 +43,16 @@ console.log("### ♿ Accessibility Report");
 console.log("");
 
 // Status Header
-const statusLight =
-  results.light?.failed === 0 ? "✅ Passed" : results.light ? "❌ Failed" : "—";
-const statusDark =
-  results.dark?.failed === 0 ? "✅ Passed" : results.dark ? "❌ Failed" : "—";
+const statusLight = results.light
+  ? results.light.failed === 0
+    ? "✅ Passed"
+    : "❌ Failed"
+  : "—";
+const statusDark = results.dark
+  ? results.dark.failed === 0
+    ? "✅ Passed"
+    : "❌ Failed"
+  : "—";
 
 console.log("| Theme | Status | Passed | Failed | Incomplete |");
 console.log("| :--- | :--- | :---: | :---: | :---: |");
@@ -83,7 +89,7 @@ if (hasFailures) {
         .filter((p) => p.violations > 0)
         .forEach((p) => {
           // Sanitize page name to prevent markdown injection
-          const pageName = (p.page || "Unknown Page").replace(/[[\\]*`]/g, "");
+          const pageName = (p.page || "Unknown Page").replaceAll(/[[\\]*`]/g, "");
           console.log(`- **${pageName}**: ${p.violations} violations`);
           if (p.violationIds) {
             console.log("  - Rules: `" + p.violationIds.join(", ") + "`");

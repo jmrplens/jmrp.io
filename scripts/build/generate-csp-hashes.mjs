@@ -235,7 +235,7 @@ function generateCspBlockContent(
  * Cleans up legacy Nginx configuration
  */
 function cleanupLegacyConfig(config) {
-  return config.replace(/set \$csp_(script|style)_src_\d+ ".*?";\n/g, "");
+  return config.replaceAll(/set \$csp_(script|style)_src_\d+ ".*?";\n/g, "");
 }
 
 /**
@@ -265,10 +265,10 @@ function updateNginxConfig(styleHashString, scriptHashString, imgDomainString) {
   const finalBlock = `${BLOCK_START}\n${blockContent}\n${BLOCK_END}`;
 
   let nginxConfig = fs.readFileSync(NGINX_CONF, "utf-8");
-  const blockRegex = new RegExp(`${BLOCK_START}[\\s\\S]*?${BLOCK_END}`, "g");
+  const blockRegex = new RegExp(String.raw`${BLOCK_START}[\s\S]*?${BLOCK_END}`, "g");
 
   if (blockRegex.test(nginxConfig)) {
-    nginxConfig = nginxConfig.replace(blockRegex, finalBlock);
+    nginxConfig = nginxConfig.replaceAll(blockRegex, finalBlock);
   } else {
     // Migration logic
     nginxConfig = cleanupLegacyConfig(nginxConfig);
@@ -286,7 +286,7 @@ function updateNginxConfig(styleHashString, scriptHashString, imgDomainString) {
   }
 
   // Cleanup excessive newlines
-  nginxConfig = nginxConfig.replace(/\n{3,}/g, "\n\n");
+  nginxConfig = nginxConfig.replaceAll(/\n{3,}/g, "\n\n");
   fs.writeFileSync(NGINX_CONF, nginxConfig);
   console.log("Nginx configuration updated.");
 }

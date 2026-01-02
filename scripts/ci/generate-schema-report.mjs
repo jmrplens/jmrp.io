@@ -17,11 +17,11 @@ const { summary, results } = data;
 
 function escapeHtml(unsafe) {
   return unsafe
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 }
 
 function syntaxHighlight(json) {
@@ -29,15 +29,15 @@ function syntaxHighlight(json) {
     json = JSON.stringify(json, undefined, 2);
   }
   json = json
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;");
   return json.replace(
     /("(\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
     function (match) {
       let cls = "number";
-      if (/^"/.test(match)) {
-        if (/:$/.test(match)) {
+      if (match.startsWith('"')) {
+        if (match.endsWith(":")) {
           cls = "key";
         } else {
           cls = "string";
@@ -250,50 +250,50 @@ const html = `
 
         <div class="results-list">
             ${results
-              .map((r, idx) => {
-                const status =
-                  r.valid && r.warnings.length === 0
-                    ? "pass"
-                    : r.errors.length > 0
-                      ? "fail"
-                      : "warn";
-                const label =
-                  status === "pass"
-                    ? "Valid"
-                    : status === "fail"
-                      ? "Invalid"
-                      : "Warning";
-                const badgeClass = `status-${status}`;
-                const uniqueId = `schema-${idx}`;
+    .map((r, idx) => {
+      const status =
+        r.valid && r.warnings.length === 0
+          ? "pass"
+          : r.errors.length > 0
+            ? "fail"
+            : "warn";
+      const label =
+        status === "pass"
+          ? "Valid"
+          : status === "fail"
+            ? "Invalid"
+            : "Warning";
+      const badgeClass = `status-${status}`;
+      const uniqueId = `schema-${idx}`;
 
-                let detailsHtml = "";
+      let detailsHtml = "";
 
-                // Issues Section
-                if (status !== "pass") {
-                  detailsHtml += '<div class="issues-section">';
-                  r.errors.forEach((e) => {
-                    detailsHtml += `
+      // Issues Section
+      if (status !== "pass") {
+        detailsHtml += '<div class="issues-section">';
+        r.errors.forEach((e) => {
+          detailsHtml += `
                             <div class="issue issue-error">
                                 <div class="issue-type">❌ Error (Schema ${e.index + 1}: ${escapeHtml(e.type || "Unknown")})</div>
                                 ${e.errors.map((msg) => `<div class="issue-msg">${escapeHtml(msg)}</div>`).join("")}
                             </div>`;
-                  });
-                  r.warnings.forEach((w) => {
-                    detailsHtml += `
+        });
+        r.warnings.forEach((w) => {
+          detailsHtml += `
                             <div class="issue issue-warning">
                                 <div class="issue-type">⚠️ Warning (Schema ${w.index + 1}: ${escapeHtml(w.type || "Unknown")})</div>
                                 ${w.warnings.map((msg) => `<div class="issue-msg">${escapeHtml(msg)}</div>`).join("")}
                             </div>`;
-                  });
-                  detailsHtml += "</div>";
-                }
+        });
+        detailsHtml += "</div>";
+      }
 
-                // Schemas View
-                if (r.schemas && r.schemas.length > 0) {
-                  detailsHtml += '<div class="schema-container">';
-                  r.schemas.forEach((schema, i) => {
-                    const schemaId = uniqueId + "-" + i;
-                    detailsHtml += `
+      // Schemas View
+      if (r.schemas && r.schemas.length > 0) {
+        detailsHtml += '<div class="schema-container">';
+        r.schemas.forEach((schema, i) => {
+          const schemaId = uniqueId + "-" + i;
+          detailsHtml += `
                             <div class="schema-block" style="margin-bottom: 2rem;">
                                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
                                     <div style="font-weight:700; color:var(--text-muted);">Schema ${i + 1}: ${escapeHtml(schema["@type"] || "Unknown")}</div>
@@ -311,11 +311,11 @@ const html = `
                                 </div>
                             </div>
                         `;
-                  });
-                  detailsHtml += "</div>";
-                }
+        });
+        detailsHtml += "</div>";
+      }
 
-                return `
+      return `
                     <details class="result-item">
                         <summary class="result-header">
                             <span class="page-name">${escapeHtml(r.file)}</span>
@@ -324,8 +324,8 @@ const html = `
                         <div class="details">${detailsHtml}</div>
                     </details>
                 `;
-              })
-              .join("")}
+    })
+    .join("")}
         </div>
     </div>
 </body>

@@ -13,10 +13,10 @@
  * Requires TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID in environment variables or .env file.
  */
 
-import http from "http";
-import https from "https";
+import http from "node:http";
+import https from "node:https";
 import fs from "node:fs";
-import { fileURLToPath } from "url";
+import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -51,7 +51,7 @@ const DEFAULT_PORT = 58291;
 const PORT = (() => {
   const envPort = process.env.CSP_REPORTER_PORT;
   if (!envPort) return DEFAULT_PORT;
-  const parsed = parseInt(envPort, 10);
+  const parsed = Number.parseInt(envPort, 10);
   return Number.isNaN(parsed) || parsed <= 0 ? DEFAULT_PORT : parsed;
 })();
 
@@ -70,7 +70,7 @@ if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
   if (!TELEGRAM_CHAT_ID) missingVars.push("TELEGRAM_CHAT_ID");
   console.error(
     `Missing required environment variable(s): ${missingVars.join(", ")}. ` +
-      `Please set them in your environment or in the .env file located at ${join(__dirname, "../.env")}.`,
+    `Please set them in your environment or in the .env file located at ${join(__dirname, "../.env")}.`,
   );
   process.exit(1);
 }
@@ -196,7 +196,7 @@ function sendToTelegram(report, ip, ua) {
     timeZone: "Europe/Madrid",
   });
 
-  let sample = (r["script-sample"] || "N/A").replace(/\n/g, " ").trim();
+  let sample = (r["script-sample"] || "N/A").replaceAll(/\n/g, " ").trim();
   if (sample.length > 100) sample = sample.substring(0, 97) + "...";
 
   // Safely handle document-uri

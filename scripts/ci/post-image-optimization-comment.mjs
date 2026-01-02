@@ -8,7 +8,7 @@
 
 import { execSync } from "node:child_process";
 
-export default async ({ github, context }) => {
+export default async function postImageOptimizationComment({ github, context }) {
   const getCount = (pattern) => {
     try {
       return execSync(`find dist -type f ${pattern} 2>/dev/null | wc -l`, {
@@ -82,4 +82,4 @@ export default async ({ github, context }) => {
     repo: context.repo.repo,
     body: comment,
   });
-};
+}

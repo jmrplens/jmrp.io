@@ -59,7 +59,7 @@ jsonFiles.forEach((filePath) => {
         if (parsed.hostname === "localhost") {
           finalUrl = parsed.pathname;
         }
-      } catch (e) {}
+      } catch (e) { }
 
       reports.push({
         filePath,
@@ -100,11 +100,11 @@ reports.forEach((r) => {
 
 function escapeHtml(unsafe) {
   return unsafe
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 }
 
 function getScoreClass(score) {

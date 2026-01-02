@@ -8,7 +8,7 @@
 
 import fs from "node:fs";
 
-export default async ({ github, context }) => {
+export default async function postBundleSizeComment({ github, context }) {
   const reportPath = "bundle-analysis.json";
 
   try {
