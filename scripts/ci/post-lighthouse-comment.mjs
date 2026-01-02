@@ -5,7 +5,7 @@
  * Reads the formatted Lighthouse markdown report and posts it as a PR comment.
  */
 
-import fs from "fs";
+import fs from "node:fs";
 
 export default async ({ github, context }) => {
   const theme = process.env.THEME;

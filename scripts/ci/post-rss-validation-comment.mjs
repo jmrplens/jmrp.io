@@ -6,7 +6,7 @@
  * including its size, item count, and any specification violations.
  */
 
-import fs from "fs";
+import fs from "node:fs";
 
 export default async ({ github, context }) => {
   let comment = "";

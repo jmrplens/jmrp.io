@@ -12,7 +12,7 @@
  * - Basic metadata consistency.
  */
 
-import fs from "fs";
+import fs from "node:fs";
 import { parseStringPromise } from "xml2js";
 import Parser from "rss-parser";
 
