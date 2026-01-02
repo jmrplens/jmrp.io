@@ -60,7 +60,9 @@ jsonFiles.forEach((filePath) => {
         if (parsed.hostname === "localhost") {
           finalUrl = parsed.pathname;
         }
-      } catch (e) { }
+      } catch (e) {
+        console.warn(`URL parsing failed for ${filePath}:`, e.message);
+      }
 
       reports.push({
         filePath,

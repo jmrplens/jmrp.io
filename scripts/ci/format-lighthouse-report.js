@@ -54,6 +54,7 @@ files.forEach((filePath) => {
       }
     } catch (e) {
       // Fallback to original URL if parsing fails
+      console.warn(`URL parsing failed for ${filePath}:`, e.message);
     }
 
     const formFactor = json.configSettings?.formFactor || "mobile";
@@ -77,6 +78,7 @@ files.forEach((filePath) => {
     }
   } catch (e) {
     // Skip invalid files
+    console.warn(`Failed to process ${filePath}:`, e.message);
   }
 });
 
