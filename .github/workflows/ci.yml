@@ -415,8 +415,6 @@ jobs:
             const { default: script } = await import(`${process.env.GITHUB_WORKSPACE}/scripts/ci/post-image-optimization-comment.mjs`)
             await script({github, context})
 
-
-
   functional-tests:
     name: Functional Tests
     runs-on: ubuntu-latest
