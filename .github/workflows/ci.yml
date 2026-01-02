@@ -418,13 +418,44 @@ jobs:
       - run: pnpm install --frozen-lockfile --prefer-offline
       - name: Validate Schema.org structured data
         run: node scripts/ci/validate-schema.mjs dist
+      - name: Generate Schema Report
+        if: always()
+        run: node scripts/ci/generate-schema-report.mjs
+      - name: Deploy Schema Report to Surge
+        if: github.event_name == 'pull_request' && always()
+        run: |
+          mkdir -p schema-deploy
+          cp schema-report.html schema-deploy/index.html
+          pnpm exec surge ./schema-deploy jmrp-schema-pr-${{ github.event.number }}.surge.sh --token ${{ secrets.SURGE_TOKEN }}
+      - name: Format Schema Comment
+        if: github.event_name == 'pull_request' && always()
+        run: node scripts/ci/format-schema-report.js schema-report.json > schema_comment.md
       - name: Post Schema Validation Comment
         if: github.event_name == 'pull_request' && always()
         uses: actions/github-script@v8
+        env:
+          SURGE_URL: jmrp-schema-pr-${{ github.event.number }}.surge.sh
         with:
           script: |
-            const { default: script } = await import(`${process.env.GITHUB_WORKSPACE}/scripts/ci/post-schema-validation-comment.mjs`)
-            await script({github, context})
+            const fs = require('fs');
+            const commentFile = 'schema_comment.md';
+            try {
+              if (fs.existsSync(commentFile)) {
+                let comment = fs.readFileSync(commentFile, 'utf8');
+                const surgeUrl = process.env.SURGE_URL;
+                if (surgeUrl) {
+                  comment += `\n\n#### 🌐 Live Report\n> 🚀 [**Open Schema Validation Report**](https://${surgeUrl}) for detailed insights.`;
+                }
+                await github.rest.issues.createComment({
+                  issue_number: context.issue.number,
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  body: comment,
+                });
+              }
+            } catch (e) {
+              console.error(e);
+            }
 
   image-optimization:
     name: Image Optimization Check
