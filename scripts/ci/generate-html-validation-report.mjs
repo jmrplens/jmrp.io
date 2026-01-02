@@ -10,7 +10,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
-import { execSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 import { escapeHtml } from "../utils/html.mjs";
 
 const JSON_REPORT = "html-validation.json";
@@ -51,8 +51,10 @@ function getActiveRules() {
     if (!firstHtml) return {};
 
     // Print the effective config for the first file found
-    const configJson = execSync(
-      `pnpm exec html-validate -c ${CONFIG_FILE} --print-config ${firstHtml}`,
+    // Using execFileSync with arguments array prevents shell injection
+    const configJson = execFileSync(
+      "pnpm",
+      ["exec", "html-validate", "-c", CONFIG_FILE, "--print-config", firstHtml],
       { encoding: "utf-8" },
     );
     const config = JSON.parse(configJson);
