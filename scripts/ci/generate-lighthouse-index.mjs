@@ -129,6 +129,36 @@ function calculateAverage(runList, category) {
   return total / runList.length;
 }
 
+function renderSubList(title, runs, cats) {
+  if (runs.length === 0) return "";
+  const runRows = runs
+    .map((run, idx) => {
+      const badges = cats
+        .map(
+          (c) =>
+            `<span class="mini-score ${getScoreClass(run.scores[c])}">${formatScore(run.scores[c])}</span>`,
+        )
+        .join("");
+      return `
+              <a href="${run.relativePath}" class="run-item">
+                  <span class="run-name">Run ${idx + 1}</span>
+                  <div class="run-scores">${badges}</div>
+                  <span class="run-arrow">→</span>
+              </a>
+          `;
+    })
+    .join("");
+
+  return `
+          <div class="theme-group">
+              <h5 class="theme-title">${title}</h5>
+              <div class="runs-list">
+                  ${runRows}
+              </div>
+          </div>
+      `;
+}
+
 const listItems = Object.entries(grouped)
   .sort((a, b) => a[0].localeCompare(b[0]))
   .map(([url, devices]) => {
@@ -150,36 +180,7 @@ const listItems = Object.entries(grouped)
       const avgs = {};
       cats.forEach((c) => (avgs[c] = calculateAverage(allRuns, c)));
 
-      // Sub-list Renderer
-      const renderSubList = (title, runs) => {
-        if (runs.length === 0) return "";
-        const runRows = runs
-          .map((run, idx) => {
-            const badges = cats
-              .map(
-                (c) =>
-                  `<span class="mini-score ${getScoreClass(run.scores[c])}">${formatScore(run.scores[c])}</span>`,
-              )
-              .join("");
-            return `
-                    <a href="${run.relativePath}" class="run-item">
-                        <span class="run-name">Run ${idx + 1}</span>
-                        <div class="run-scores">${badges}</div>
-                        <span class="run-arrow">→</span>
-                    </a>
-                `;
-          })
-          .join("");
 
-        return `
-                <div class="theme-group">
-                    <h5 class="theme-title">${title}</h5>
-                    <div class="runs-list">
-                        ${runRows}
-                    </div>
-                </div>
-            `;
-      };
 
       return `
             <div class="device-card">
@@ -198,8 +199,8 @@ const listItems = Object.entries(grouped)
                         <div class="device-hint">View ${allRuns.length} Tests (Light & Dark)</div>
                     </summary>
                     <div class="device-details-content">
-                        ${renderSubList("☀️ Light Mode", lightRuns)}
-                        ${renderSubList("🌙 Dark Mode", darkRuns)}
+                        ${renderSubList("☀️ Light Mode", lightRuns, cats)}
+                        ${renderSubList("🌙 Dark Mode", darkRuns, cats)}
                     </div>
                 </details>
             </div>

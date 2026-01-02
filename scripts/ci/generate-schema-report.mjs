@@ -26,8 +26,13 @@ function syntaxHighlight(json) {
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;");
+  const strPattern = /("(\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?)/.source;
+  const boolPattern = /\b(true|false|null)\b/.source;
+  const numPattern = /-?\d+(?:\.\d*)?(?:[eE][+-]?\d+)?/.source;
+  const jsonTokenRegex = new RegExp(`(${strPattern}|${boolPattern}|${numPattern})`, "g");
+
   return json.replaceAll(
-    /("(\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
+    jsonTokenRegex,
     function (match) {
       let cls = "number";
       if (match.startsWith('"')) {

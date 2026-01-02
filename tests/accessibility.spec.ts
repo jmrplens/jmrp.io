@@ -188,7 +188,7 @@ test.describe("Accessibility Tests (Axe-core WCAG 2.1 AA)", () => {
                   <span class="page-name">${escapeHtml(r.page.split("(")[0].trim())}</span>
                   <div style="margin-top: 4px;">
                     <span class="page-url">${escapeHtml(
-            r.page.match(/\((.*?)\)/)?.[1] || "",
+            /\((.*?)\)/.exec(r.page)?.[1] || "",
           )}</span>
                   </div>
                   ${r.violations > 0

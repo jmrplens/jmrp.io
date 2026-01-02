@@ -36,7 +36,7 @@ const generateReport = () => {
 
   const webp = findFiles('-name "*.webp"');
   const png = findFiles('-name "*.png"');
-  const jpg = findWithGrep("\.jpe?g$");
+  const jpg = findWithGrep(".jpe?g$");
 
   const getDetails = (list) => {
     return list.map((img) => {

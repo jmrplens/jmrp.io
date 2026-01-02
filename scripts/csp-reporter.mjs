@@ -31,7 +31,8 @@ function loadEnv() {
   if (fs.existsSync(envPath)) {
     const content = fs.readFileSync(envPath, "utf8");
     content.split("\n").forEach((line) => {
-      const match = line.match(/^\s*([\w.-]+)\s*=\s*(.*)?\s*$/);
+      const envRegex = /^\s*([\w.-]+)\s*=\s*(.*)\s*$/;
+      const match = envRegex.exec(line);
       if (match) {
         const key = match[1];
         let value = match[2] || "";
@@ -181,7 +182,7 @@ function sendToTelegram(report, ip, ua) {
     timeZone: "Europe/Madrid",
   });
 
-  let sample = (r["script-sample"] || "N/A").replaceAll(/\n/g, " ").trim();
+  let sample = (r["script-sample"] || "N/A").replaceAll("\n", " ").trim();
   if (sample.length > 100) sample = sample.substring(0, 97) + "...";
 
   // Safely handle document-uri

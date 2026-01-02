@@ -145,6 +145,23 @@ function determineStatus(totalErrors, totalWarnings) {
 }
 
 /**
+ * Renders the context of a validation message
+ */
+function renderContext(context) {
+  if (!context) return "";
+  if (typeof context === "object") {
+    return Object.entries(context)
+      .map(
+        ([k, v]) => `
+          <div class="context-row"><span class="context-key">${escapeHtml(k)}:</span> <code>${escapeHtml(String(v))}</code></div>
+        `,
+      )
+      .join("");
+  }
+  return escapeHtml(context);
+}
+
+/**
  * Main function to generate the HTML report.
  */
 function generateReport() {
@@ -390,12 +407,14 @@ function generateReport() {
       ${files
       .map((file) => {
         const isClean = !file.messages || file.messages.length === 0;
-        const fileEmoji =
-          (file.errorCount ?? 0) > 0
-            ? "🔴"
-            : (file.warningCount ?? 0) > 0
-              ? "⚠️"
-              : "✅";
+        let fileEmoji;
+        if ((file.errorCount ?? 0) > 0) {
+          fileEmoji = "🔴";
+        } else if ((file.warningCount ?? 0) > 0) {
+          fileEmoji = "⚠️";
+        } else {
+          fileEmoji = "✅";
+        }
 
         return `
           <details class="file-item" ${isClean ? "" : "open"}>
@@ -448,16 +467,7 @@ function generateReport() {
                         ${msg.context
                     ? `
                           <div class="issue-context">
-                            ${typeof msg.context === "object"
-                      ? Object.entries(msg.context)
-                        .map(
-                          ([k, v]) => `
-                                <div class="context-row"><span class="context-key">${escapeHtml(k)}:</span> <code>${escapeHtml(String(v))}</code></div>
-                              `,
-                        )
-                        .join("")
-                      : escapeHtml(msg.context)
-                    }
+                            ${renderContext(msg.context)}
                           </div>
                         `
                     : ""

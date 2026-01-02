@@ -22,7 +22,7 @@ export default async function postImageOptimizationComment({ github, context }) 
   const webpCount = getCount('-name "*.webp"');
   const pngCount = getCount('-name "*.png"');
   const jpgCount = execSync(
-    'find dist -type f | grep -iE "\.jpe?g$" | wc -l || echo "0"',
+    'find dist -type f | grep -iE ".jpe?g$" | wc -l || echo "0"',
     { encoding: "utf-8" },
   ).trim();
 
@@ -32,7 +32,7 @@ export default async function postImageOptimizationComment({ github, context }) 
 
   try {
     const largeImagesRaw = execSync(
-      'find dist -type f -size +500k 2>/dev/null | grep -iE "\.(webp|png|jpe?g)$" || echo ""',
+      'find dist -type f -size +500k 2>/dev/null | grep -iE ".(webp|png|jpe?g)$" || echo ""',
       { encoding: "utf-8" },
     ).trim();
 
