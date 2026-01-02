@@ -136,5 +136,5 @@ if (rows.length === 0) {
   console.log("| :--- | :---: | :---: | :---: | :---: |");
   console.log(rows.join("\n"));
   console.log("");
-  console.log("_Scores represent the average Performance metric across runs.");
+  console.log("_Scores represent the average Performance metric across runs._");
 }
