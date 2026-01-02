@@ -50,7 +50,6 @@ htmlFiles.forEach((filePath) => {
   const lowerPath = filePath.toLowerCase();
   let theme = "unknown";
 
-  // Prioritize checks to avoid ambiguity
   if (lowerPath.includes("/light/") || lowerPath.includes("\\light\\")) {
     theme = "light";
   } else if (lowerPath.includes("/dark/") || lowerPath.includes("\\dark\\")) {
@@ -77,25 +76,31 @@ function renderReportList(theme, list) {
   const icon = theme === "light" ? "☀️" : theme === "dark" ? "🌙" : "❓";
   const title = theme.charAt(0).toUpperCase() + theme.slice(1);
 
+  // Sort logic could be added here if filenames contain timestamps
   const items = list
     .map(
       (r) => `
-        <li>
-            <a href="${escapeHtml(r.relativePath)}" class="report-link">
+        <a href="${escapeHtml(r.relativePath)}" class="report-card">
+            <div class="card-icon">${icon}</div>
+            <div class="card-content">
                 <span class="report-name">${escapeHtml(r.fileName)}</span>
-                <span class="report-arrow">→</span>
-            </a>
-        </li>
+                <span class="report-meta">Full Page Audit</span>
+            </div>
+            <div class="card-action">View Report &rarr;</div>
+        </a>
     `,
     )
     .join("");
 
   return `
-        <div class="theme-card ${theme}-theme">
-            <h3>${icon} ${title} Mode</h3>
-            <ul class="report-list">
+        <div class="theme-section">
+            <div class="section-header">
+                <h2>${icon} ${title} Mode</h2>
+                <span class="badge">${list.length} Reports</span>
+            </div>
+            <div class="reports-grid">
                 ${items}
-            </ul>
+            </div>
         </div>
     `;
 }
@@ -109,47 +114,183 @@ const htmlContent = `
     <title>Accessibility Reports Dashboard</title>
     <style>
         :root {
-            --bg-body: #f8f9fa;
+            --bg-body: #f4f4f9;
             --bg-card: #ffffff;
-            --text-main: #212529;
-            --text-muted: #6c757d;
-            --border-color: #dee2e6;
-            --primary: #0d6efd;
-            --shadow: 0 4px 6px rgba(0,0,0,0.05);
+            --text-main: #333333;
+            --text-muted: #666666;
+            --border-color: #e0e0e0;
+            --primary: #2563eb;
+            --hover-bg: #f8f9fa;
+            --shadow: 0 2px 8px rgba(0,0,0,0.06);
         }
+
         @media (prefers-color-scheme: dark) {
             :root {
-                --bg-body: #121212;
-                --bg-card: #1e1e1e;
-                --text-main: #e0e0e0;
-                --text-muted: #a0a0a0;
-                --border-color: #333333;
-                --primary: #6ea8fe;
-                --shadow: 0 4px 6px rgba(0,0,0,0.3);
+                --bg-body: #18181b;
+                --bg-card: #27272a;
+                --text-main: #e4e4e7;
+                --text-muted: #a1a1aa;
+                --border-color: #3f3f46;
+                --primary: #60a5fa;
+                --hover-bg: #303036;
+                --shadow: 0 4px 12px rgba(0,0,0,0.3);
             }
         }
-        body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg-body); color: var(--text-main); margin: 0; padding: 2rem; }
-        .container { max-width: 800px; margin: 0 auto; }
-        h1 { text-align: center; margin-bottom: 2rem; font-weight: 300; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; }
-        .theme-card { background: var(--bg-card); border-radius: 12px; padding: 1.5rem; box-shadow: var(--shadow); border: 1px solid var(--border-color); }
-        h3 { margin-top: 0; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; }
-        ul { list-style: none; padding: 0; margin: 0; }
-        li { margin-bottom: 0.5rem; }
-        .report-link { display: flex; justify-content: space-between; padding: 0.75rem; background: rgba(128,128,128,0.05); border-radius: 6px; text-decoration: none; color: inherit; transition: background 0.2s; }
-        .report-link:hover { background: rgba(128,128,128,0.1); }
-        .report-arrow { color: var(--primary); font-weight: bold; }
+
+        * { box-sizing: border-box; }
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            margin: 0;
+            padding: 3rem 1rem;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin: 0 0 0.5rem 0;
+            letter-spacing: -1px;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 1rem;
+        }
+
+        .theme-section {
+            margin-bottom: 3rem;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 0.75rem;
+        }
+
+        h2 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .badge {
+            background-color: var(--primary);
+            color: white;
+            font-size: 0.75rem;
+            font-weight: bold;
+            padding: 0.25rem 0.75rem;
+            border-radius: 999px;
+        }
+
+        .reports-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1rem;
+        }
+
+        .report-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            text-decoration: none;
+            color: inherit;
+            transition: all 0.2s ease;
+            box-shadow: var(--shadow);
+        }
+
+        .report-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--primary);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.1);
+        }
+
+        .card-icon {
+            font-size: 2rem;
+            background-color: var(--hover-bg);
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+        }
+
+        .card-content {
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .report-name {
+            display: block;
+            font-weight: 600;
+            font-size: 1rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-bottom: 0.25rem;
+        }
+
+        .report-meta {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .card-action {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--primary);
+            white-space: nowrap;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem;
+            color: var(--text-muted);
+            background: var(--bg-card);
+            border-radius: 12px;
+            border: 1px dashed var(--border-color);
+        }
+
+        @media (max-width: 600px) {
+            h1 { font-size: 2rem; }
+            .reports-grid { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>♿ Accessibility Reports</h1>
-        <p style="text-align: center; color: var(--text-muted); margin-bottom: 3rem;">Generated on ${new Date().toLocaleString()}</p>
-        <div class="grid">
-            ${renderReportList("light", grouped.light)}
-            ${renderReportList("dark", grouped.dark)}
-            ${grouped.unknown.length > 0 ? renderReportList("unknown", grouped.unknown) : ""}
-        </div>
+        <header>
+            <h1>♿ Accessibility Reports</h1>
+            <div class="subtitle">Generated on ${new Date().toLocaleString()}</div>
+        </header>
+        
+        ${
+          Object.values(grouped).every((l) => l.length === 0)
+            ? '<div class="empty-state">No accessibility reports found.</div>'
+            : ""
+        }
+
+        ${renderReportList("light", grouped.light)}
+        ${renderReportList("dark", grouped.dark)}
+        ${grouped.unknown.length > 0 ? renderReportList("unknown", grouped.unknown) : ""}
     </div>
 </body>
 </html>
