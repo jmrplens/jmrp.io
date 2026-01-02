@@ -3,6 +3,7 @@
  */
 
 import fs from "node:fs";
+import { escapeHtml } from "../utils/html.mjs";
 
 const REPORT_FILE = "schema-report.json";
 const OUTPUT_FILE = "schema-report.html";
@@ -15,14 +16,7 @@ if (!fs.existsSync(REPORT_FILE)) {
 const data = JSON.parse(fs.readFileSync(REPORT_FILE, "utf-8"));
 const { summary, results } = data;
 
-function escapeHtml(unsafe) {
-  return unsafe
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
+
 
 function syntaxHighlight(json) {
   if (typeof json !== "string") {
@@ -32,7 +26,7 @@ function syntaxHighlight(json) {
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;");
-  return json.replace(
+  return json.replaceAll(
     /("(\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
     function (match) {
       let cls = "number";

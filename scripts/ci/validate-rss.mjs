@@ -54,19 +54,21 @@ async function validateRSS() {
       results.errors.push("Missing <rss> root element");
     } else {
       const rss = feedXml.rss;
-      if (!rss.$ || !rss.$.version) {
+      if (rss.$ && rss.$.version) {
+        if (rss.$.version !== "2.0") {
+          results.warnings.push(`RSS version is ${rss.$.version}, expected 2.0`);
+        }
+      } else {
         results.errors.push("Missing RSS version attribute");
-      } else if (rss.$.version !== "2.0") {
-        results.warnings.push(`RSS version is ${rss.$.version}, expected 2.0`);
       }
 
-      if (!rss.channel || !rss.channel[0]) {
-        results.errors.push("Missing <channel> element");
-      } else {
+      if (rss.channel?.[0]) {
         const channel = rss.channel[0];
         if (!channel["atom:link"]) {
           results.warnings.push('Missing <atom:link rel="self">');
         }
+      } else {
+        results.errors.push("Missing <channel> element");
       }
     }
   } catch (error) {
@@ -104,7 +106,7 @@ async function validateRSS() {
         // Date Check
         if (item.pubDate) {
           const date = new Date(item.pubDate);
-          if (isNaN(date.getTime())) {
+          if (Number.isNaN(date.getTime())) {
             results.errors.push(
               `Item ${idx}: Invalid pubDate format (${item.pubDate})`,
             );
@@ -146,10 +148,9 @@ async function validateRSS() {
           if (!item.enclosure.url) {
             results.errors.push(`Item ${idx}: Enclosure missing URL`);
           }
-          if (
-            !item.enclosure.type ||
-            !item.enclosure.type.startsWith("image/")
-          ) {
+          if (item.enclosure.type?.startsWith("image/")) {
+            // Valid image type
+          } else {
             results.errors.push(
               `Item ${idx}: Enclosure type '${item.enclosure.type}' is not an image`,
             );
@@ -181,7 +182,9 @@ function writeResults(data) {
   fs.writeFileSync(OUTPUT_FILE, JSON.stringify(data, null, 2));
 }
 
-validateRSS().catch((error) => {
+try {
+  await validateRSS();
+} catch (error) {
   console.error("❌ Unexpected error:", error);
   process.exit(1);
-});
+}

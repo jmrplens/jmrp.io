@@ -174,7 +174,7 @@ function processReport(report, ip, ua) {
  */
 function escapeHTML(str) {
   if (!str) return "N/A";
-  return str.replace(
+  return str.replaceAll(
     /[&<>"']/g,
     (m) =>
       ({

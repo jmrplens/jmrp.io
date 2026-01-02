@@ -8,7 +8,7 @@
 
 import fs from "node:fs";
 
-export default async ({ github, context }) => {
+export default async function postHtmlValidationComment({ github, context }) {
   let comment = "";
   const surgeUrl = process.env.SURGE_URL;
 
@@ -71,6 +71,7 @@ export default async ({ github, context }) => {
         } catch (parseError) {
           comment =
             "### ⚠️ HTML5 Validation\n\n❌ **Error parsing report JSON**";
+          console.error("HTML validation parse error:", parseError);
         }
       }
     } else {
@@ -79,6 +80,7 @@ export default async ({ github, context }) => {
     }
   } catch (e) {
     comment = "### ⚠️ HTML5 Validation\n\n> ❌ Error processing report.";
+    console.error("HTML validation comment error:", e);
   }
 
   await github.rest.issues.createComment({
@@ -87,4 +89,4 @@ export default async ({ github, context }) => {
     repo: context.repo.repo,
     body: comment,
   });
-};
+}

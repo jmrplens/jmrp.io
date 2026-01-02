@@ -9,6 +9,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
+import { escapeHtml } from "../utils/html.mjs";
 
 const deployDir = process.argv[2] || "lh-deploy";
 const indexPath = path.join(deployDir, "index.html");
@@ -98,14 +99,7 @@ reports.forEach((r) => {
   }
 });
 
-function escapeHtml(unsafe) {
-  return unsafe
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
+
 
 function getScoreClass(score) {
   if (score >= 0.9) return "pass";
@@ -134,7 +128,7 @@ function calculateAverage(runList, category) {
 }
 
 const listItems = Object.entries(grouped)
-  .sort()
+  .sort((a, b) => a[0].localeCompare(b[0]))
   .map(([url, devices]) => {
     let urlDisplay = url;
     // url is already normalized path (e.g. "/" or "/blog/")

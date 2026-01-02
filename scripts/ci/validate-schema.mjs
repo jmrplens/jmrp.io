@@ -64,7 +64,7 @@ function validateSingleSchema(schema, prefix = "") {
   };
 
   const checkDate = (date, name) => {
-    if (isNaN(Date.parse(date)))
+    if (Number.isNaN(Date.parse(date)))
       errors.push(`${p}: Invalid ISO date for ${name}: "${date}"`);
   };
 
@@ -107,9 +107,7 @@ function validateSingleSchema(schema, prefix = "") {
       validateNested("publisher");
       break;
     case "BreadcrumbList":
-      if (!schema.itemListElement || !Array.isArray(schema.itemListElement)) {
-        errors.push(`${p}: Missing or invalid itemListElement array`);
-      } else {
+      if (schema.itemListElement && Array.isArray(schema.itemListElement)) {
         schema.itemListElement.forEach((item, i) => {
           const itemP = `${p}.itemListElement[${i}]`;
           if (!item["@type"] || item["@type"] !== "ListItem")
@@ -118,6 +116,8 @@ function validateSingleSchema(schema, prefix = "") {
           if (!item.name) errors.push(`${itemP}: Missing name`);
           if (!item.item) errors.push(`${itemP}: Missing item URL`);
         });
+      } else {
+        errors.push(`${p}: Missing or invalid itemListElement array`);
       }
       break;
   }
@@ -246,7 +246,9 @@ async function validateAllPages() {
   }
 }
 
-validateAllPages().catch((error) => {
+try {
+  await validateAllPages();
+} catch (error) {
   console.error("❌ Unexpected error:", error);
   process.exit(1);
-});
+}
