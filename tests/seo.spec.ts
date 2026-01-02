@@ -39,7 +39,7 @@ test.describe("SEO & Metadata Checks", () => {
         expect(canonical).toBeTruthy();
         // Canonical should probably match the current URL (absolute)
         // Adjust logic if you have specific canonical rules
-        const currentUrl = page.url();
+        // const currentUrl = page.url();
         // Simple check: Canonical should be a valid URL
         expect(canonical).toMatch(/^https?:\/\//);
 

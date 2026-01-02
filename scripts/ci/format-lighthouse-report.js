@@ -1,227 +1,127 @@
 /**
- * Lighthouse Report Formatter
+ * Format Lighthouse Report for PR Comment
  *
- * This script processes the raw JSON output from Lighthouse CI, calculates
- * median scores across multiple runs, and generates a GitHub-flavored Markdown
- * summary for use in PR comments.
- *
- * Features:
- * - Groups results by URL and calculates median scores for reliability.
- * - Highlights pages falling below the performance threshold (95%).
- * - Generates a site-wide summary table with icons.
- * - Supports theme-specific reporting (Light/Dark mode).
+ * Scans the .lighthouseci directory for JSON reports,
+ * aggregates scores by URL, Theme, and Form Factor,
+ * and outputs a Markdown table.
  */
 
-import fs from "node:fs";
-import path from "node:path";
+import fs from "fs";
+import path from "path";
 
-const lhciDir = "./.lighthouseci";
-const linksPath = path.join(lhciDir, "links.json");
-const THRESHOLD = 95;
+const lhDir = process.argv[2] || ".lighthouseci";
 
-/**
- * Map URL to a human-friendly Page Name
- */
-const getPageName = (url) => {
+if (!fs.existsSync(lhDir)) {
+  console.log("No Lighthouse reports found.");
+  process.exit(0);
+}
+
+// Recursive scan
+function findReports(dir, fileList = []) {
+  const files = fs.readdirSync(dir);
+  files.forEach((file) => {
+    const filePath = path.join(dir, file);
+    const stat = fs.statSync(filePath);
+    if (stat.isDirectory()) {
+      findReports(filePath, fileList);
+    } else if (
+      file.endsWith(".json") &&
+      !file.includes("manifest") &&
+      !file.includes("links")
+    ) {
+      fileList.push(filePath);
+    }
+  });
+  return fileList;
+}
+
+const files = findReports(lhDir);
+const results = {};
+
+files.forEach((filePath) => {
   try {
-    const urlObj = new URL(url);
-    let pathName = urlObj.pathname;
+    const content = fs.readFileSync(filePath, "utf8");
+    const json = JSON.parse(content);
 
-    if (pathName.length > 1 && pathName.endsWith("/")) {
-      pathName = pathName.slice(0, -1);
+    if (!json.finalUrl) return;
+
+    // Normalize URL
+    let url = json.finalUrl;
+    try {
+      const parsed = new URL(url);
+      if (parsed.hostname === "localhost") {
+        url = parsed.pathname || "/";
+      }
+    } catch (e) {}
+
+    const formFactor = json.configSettings?.formFactor || "mobile";
+
+    // Detect theme
+    const lowerPath = filePath.toLowerCase();
+    let theme = "unknown";
+    if (lowerPath.includes("/light/") || lowerPath.includes("\light\ "))
+      theme = "light";
+    if (lowerPath.includes("/dark/") || lowerPath.includes("\dark\ "))
+      theme = "dark";
+
+    const scores = {
+      p: (json.categories.performance?.score || 0) * 100,
+    };
+
+    if (!results[url]) results[url] = {};
+    if (!results[url][theme]) results[url][theme] = { mobile: [], desktop: [] };
+    if (results[url][theme][formFactor]) {
+      results[url][theme][formFactor].push(scores);
     }
+  } catch (e) {}
+});
 
-    if (pathName === "/" || pathName === "") return "Home";
-    if (pathName === "/services") return "Services";
-    if (pathName === "/cv") return "CV";
-    if (pathName === "/publications") return "Publications";
-    if (pathName === "/github") return "GitHub";
-    if (pathName === "/blog") return "Blog Index";
-
-    if (pathName.startsWith("/blog/")) {
-      const slug = pathName.split("/").pop();
-      return "Post: " + slug.charAt(0).toUpperCase() + slug.slice(1);
-    }
-
-    return pathName;
-  } catch (e) {
-    return "Unknown";
-  }
+// Calculate averages
+const getAvg = (list) => {
+  if (!list || list.length === 0) return null;
+  const totalP = list.reduce((sum, item) => sum + item.p, 0);
+  return Math.round(totalP / list.length);
 };
 
-/**
- * Filter for Core Pages
- */
-const isCorePage = (url) => {
-  const name = getPageName(url);
-  return [
-    "Home",
-    "Services",
-    "CV",
-    "Publications",
-    "GitHub",
-    "Blog Index",
-  ].includes(name);
+const PAGE_NAMES = {
+  "/": "Home",
+  "/cv/": "CV",
+  "/publications/": "Publications",
+  "/github/": "Repositories",
+  "/services/": "Services",
+  "/blog/": "Blog",
 };
 
-try {
-  if (!fs.existsSync(lhciDir)) {
-    console.error("Lighthouse directory not found");
-    process.exit(0);
-  }
+const rows = Object.entries(results)
+  .sort()
+  .map(([url, themes]) => {
+    // Only include main pages
+    if (!PAGE_NAMES[url]) return null;
 
-  // 1. Extract Scores from Manifest or LHR files
-  let manifest = [];
-  const manifestPath = path.join(lhciDir, "manifest.json");
+    const formatScore = (val) => {
+      if (val === null) return "—";
+      const icon = val >= 90 ? "🟢" : val >= 50 ? "🟠" : "🔴";
+      return `${icon} ${val}`;
+    };
 
-  if (fs.existsSync(manifestPath)) {
-    manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
-  } else {
-    const files = fs.readdirSync(lhciDir);
-    const jsonFiles = files.filter(
-      (f) => f.startsWith("lhr-") && f.endsWith(".json"),
-    );
-    manifest = jsonFiles.map((f) => ({ jsonPath: path.join(lhciDir, f) }));
-  }
+    // Columns: Mobile Light | Desktop Light | Mobile Dark | Desktop Dark
+    const ml = getAvg(themes.light?.mobile);
+    const dl = getAvg(themes.light?.desktop);
+    const md = getAvg(themes.dark?.mobile);
+    const dd = getAvg(themes.dark?.desktop);
 
-  const groupedResults = {};
+    return `| **${PAGE_NAMES[url]}** | ${formatScore(ml)} | ${formatScore(dl)} | ${formatScore(md)} | ${formatScore(dd)} |`;
+  })
+  .filter((row) => row !== null);
 
-  manifest.forEach((run) => {
-    if (!run.jsonPath || !fs.existsSync(run.jsonPath)) return;
-    const json = JSON.parse(fs.readFileSync(run.jsonPath, "utf8"));
-    const url = json.finalUrl || json.requestedUrl;
-    const categories = json.categories;
-
-    if (!groupedResults[url]) groupedResults[url] = {};
-
-    Object.keys(categories).forEach((key) => {
-      if (!groupedResults[url][key]) groupedResults[url][key] = [];
-      groupedResults[url][key].push(categories[key].score * 100);
-    });
-  });
-
-  if (Object.keys(groupedResults).length === 0) {
-    console.log("### 🌓 Lighthouse Report\n\n> ⚠️ No runs found.");
-    process.exit(0);
-  }
-
-  // 2. Calculate Median Scores per Page
-  const pageScores = {};
-  const failedPages = [];
-
-  Object.keys(groupedResults).forEach((url) => {
-    pageScores[url] = {};
-    let hasFailure = false;
-
-    Object.keys(groupedResults[url]).forEach((cat) => {
-      const scores = groupedResults[url][cat];
-      scores.sort((a, b) => a - b);
-      const mid = Math.floor(scores.length / 2);
-      const median =
-        scores.length % 2 === 1
-          ? scores[mid]
-          : (scores[mid - 1] + scores[mid]) / 2;
-      const finalScore = Math.round(median);
-
-      pageScores[url][cat] = finalScore;
-      if (finalScore < THRESHOLD) hasFailure = true;
-    });
-
-    if (hasFailure) failedPages.push(url);
-  });
-
-  // 3. Output Generation (Markdown)
-  let links = {};
-  if (fs.existsSync(linksPath)) {
-    links = JSON.parse(fs.readFileSync(linksPath, "utf8"));
-  }
-
-  const theme = process.env.THEME || "unknown";
-  const themeName =
-    theme === "light"
-      ? "☀️ Light Mode"
-      : theme === "dark"
-        ? "🌙 Dark Mode"
-        : "Report";
-
-  console.log(`### 🌓 Lighthouse Analysis (${themeName})`);
-
-  const categories = ["performance", "accessibility", "best-practices", "seo"];
-  const categoryIcons = {
-    performance: "⚡",
-    accessibility: "♿",
-    "best-practices": "💡",
-    seo: "🔍",
-  };
-  const categoryNames = {
-    performance: "Perf",
-    accessibility: "A11y",
-    "best-practices": "Best",
-    seo: "SEO",
-  };
-
-  const allUrls = Object.keys(pageScores);
-  const coreUrls = allUrls.filter(isCorePage);
-
-  console.log("\n#### 📊 Site Summary (Median)");
-  console.log("| Metric | Score | Lowest |");
-  console.log("| :--- | :---: | :--- |");
-
-  categories.forEach((cat) => {
-    if (!allUrls.some((u) => pageScores[u][cat] !== undefined)) return;
-
-    const catScores = allUrls.map((u) => pageScores[u][cat]);
-    catScores.sort((a, b) => a - b);
-    const mid = Math.floor(catScores.length / 2);
-    const siteMedian = Math.round(
-      catScores.length % 2 === 1
-        ? catScores[mid]
-        : (catScores[mid - 1] + catScores[mid]) / 2,
-    );
-
-    const minScore = Math.min(...catScores);
-    const worstUrl = allUrls.find((u) => pageScores[u][cat] === minScore);
-    const worstName = getPageName(worstUrl);
-
-    const getIcon = (s) => (s >= 90 ? "🟢" : s >= 50 ? "🟠" : "🔴");
-
-    console.log(
-      `| ${categoryIcons[cat]} ${categoryNames[cat]} | ${getIcon(siteMedian)} **${siteMedian}%** | ${minScore}% (${worstName}) |`,
-    );
-  });
-
-  if (failedPages.length > 0) {
-    console.log(
-      "\n<details>\n<summary><b>⚠️ View Performance Alerts</b></summary>\n",
-    );
-    failedPages.forEach((url) => {
-      const name = getPageName(url);
-      const failures = categories
-        .filter((cat) => pageScores[url][cat] < THRESHOLD)
-        .map(
-          (cat) =>
-            `${categoryIcons[cat]} ${categoryNames[cat]}: **${pageScores[url][cat]}%**`,
-        )
-        .join(", ");
-      console.log(`- **${name}**: ${failures}`);
-    });
-    console.log("\n</details>");
-  } else {
-    console.log(`\n✅ **All pages met the ${THRESHOLD}% threshold!**`);
-  }
-
-  const relevantUrls = new Set([...coreUrls, ...failedPages]);
-  const relevantLinks = Object.keys(links).filter((url) =>
-    relevantUrls.has(url),
-  );
-
-  if (relevantLinks.length > 0) {
-    console.log("\n#### 🔗 Detailed Reports");
-    relevantLinks.forEach((url) => {
-      const name = getPageName(url);
-      console.log(`- [${name} Report](${links[url]})`);
-    });
-  }
-} catch (error) {
-  console.log("### 🌓 Lighthouse Analysis\n\n❌ **Error generating report.**");
+if (rows.length === 0) {
+  console.log("No valid Lighthouse results parsed.");
+} else {
+  console.log(`### ⚡ Lighthouse Performance Report`);
+  console.log("");
+  console.log("| Page | 📱 Light | 🖥️ Light | 📱 Dark | 🖥️ Dark |");
+  console.log("| :--- | :---: | :---: | :---: | :---: |");
+  console.log(rows.join("\n"));
+  console.log("");
+  console.log("_Scores represent the average Performance metric across runs.");
 }

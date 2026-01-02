@@ -128,6 +128,27 @@ This command will:
 
 This project employs a rigorous testing pipeline to ensure quality and compliance.
 
+```mermaid
+graph TD
+    A[Push / PR] --> B{Lint & Security}
+    B --> C[Build Artifact]
+    C --> D[Accessibility Tests]
+    C --> E[Lighthouse Audit]
+    C --> F[Functional Tests]
+    C --> G[Validations]
+
+    subgraph "Parallel Testing"
+        D -- Light/Dark --> D1((A11y Reports))
+        E -- Matrix: 4 Jobs --> E1((LH Results))
+        F --> F1((Playwright Report))
+        G --> G1((Validation Reports))
+    end
+
+    E1 --> H[Aggregate & Dashboard]
+    H --> I[Deploy to Surge]
+    I --> J[PR Comment]
+```
+
 ### Accessibility Testing
 
 We perform comprehensive accessibility checks:
@@ -137,7 +158,8 @@ We perform comprehensive accessibility checks:
   - **Global SVG Exclusion**: Prevents false positives in diagrams (Mermaid, etc.).
   - Generates detailed HTML reports (`accessibility-report/`) and fails the build on any violation.
 - **Lighthouse CI**: Runs Lighthouse audits on all pages, enforcing high scores for Accessibility, Performance, and SEO.
-  - **Dual-Theme Execution**: configured to run separate audits for **Light** and **Dark** modes (2 runs each, 4 total per page).
+  - **Parallel Matrix Execution**: Runs 4 parallel jobs covering **Mobile** & **Desktop** form factors across both **Light** & **Dark** themes.
+  - **Unified Dashboard**: Aggregates all results into a single, interactive HTML dashboard deployed to Surge for easy review.
 - **Manual Checks**: The pipeline flags "incomplete" checks (e.g., complex color contrast) for manual review.
 
 ### Content Validation
