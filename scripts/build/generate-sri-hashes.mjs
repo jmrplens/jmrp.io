@@ -55,6 +55,9 @@ async function main() {
         try {
           if (url.startsWith("http") || url.startsWith("//")) return match;
 
+          // Skip fonts to avoid SRI failures due to CDN/compression issues
+          if (/\.(woff2?|ttf|otf|eot)(\?.*)?$/.test(url)) return match;
+
           let filePath;
           const urlClean = url.split("?")[0].split("#")[0];
 
