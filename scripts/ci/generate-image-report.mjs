@@ -103,7 +103,7 @@ const generateReport = () => {
           ...data.png.map((i) => ({ ...i, f: "PNG" })),
           ...data.jpg.map((i) => ({ ...i, f: "JPG" })),
         ]
-          .sort((a, b) => (b.size.includes("M") ? 1 : -1))
+          .sort((_, b) => (b.size.includes("M") ? 1 : -1))
           .map(
             (img) => `
           <tr>
