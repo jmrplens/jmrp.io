@@ -66,21 +66,18 @@ jsonFiles.forEach((filePath) => {
   }
 });
 
-// Group by URL -> Env Key (e.g. "light-mobile")
+// Grouping: URL -> FormFactor -> Theme -> Runs
 const grouped = {};
 
 reports.forEach((r) => {
   if (!grouped[r.url])
     grouped[r.url] = {
-      "light-mobile": [],
-      "light-desktop": [],
-      "dark-mobile": [],
-      "dark-desktop": [],
+      mobile: { light: [], dark: [] },
+      desktop: { light: [], dark: [] },
     };
 
-  const key = `${r.theme}-${r.formFactor}`;
-  if (grouped[r.url][key]) {
-    grouped[r.url][key].push(r);
+  if (grouped[r.url][r.formFactor] && grouped[r.url][r.formFactor][r.theme]) {
+    grouped[r.url][r.formFactor][r.theme].push(r);
   }
 });
 
@@ -119,8 +116,13 @@ function calculateAverage(runList, category) {
   return total / runList.length;
 }
 
+function calculateCombinedAverage(listA, listB, category) {
+  const all = [...listA, ...listB];
+  return calculateAverage(all, category);
+}
+
 const listItems = Object.entries(grouped)
-  .map(([url, envs]) => {
+  .map(([url, devices]) => {
     let urlDisplay = url;
     try {
       const parsedUrl = new URL(url);
@@ -130,27 +132,23 @@ const listItems = Object.entries(grouped)
     } catch {} // Keep original
 
     const cats = ["performance", "accessibility", "best-practices", "seo"];
-    const envKeys = [
-      "light-mobile",
-      "light-desktop",
-      "dark-mobile",
-      "dark-desktop",
-    ];
-    const envLabels = {
-      "light-mobile": "📱 Light Mobile",
-      "light-desktop": "🖥️ Light Desktop",
-      "dark-mobile": "📱 Dark Mobile",
-      "dark-desktop": "🖥️ Dark Desktop",
-    };
 
-    const envBlocks = envKeys
-      .map((key) => {
-        const runs = envs[key];
+    // --- Device Block Renderer ---
+    const renderDeviceBlock = (deviceType, label, icon) => {
+      const data = devices[deviceType];
+      const lightRuns = data.light;
+      const darkRuns = data.dark;
+      const allRuns = [...lightRuns, ...darkRuns];
+
+      if (allRuns.length === 0) return "";
+
+      // Top-level averages (Combined)
+      const avgs = {};
+      cats.forEach((c) => (avgs[c] = calculateAverage(allRuns, c)));
+
+      // Sub-list Renderer
+      const renderSubList = (title, runs) => {
         if (runs.length === 0) return "";
-
-        const avgs = {};
-        cats.forEach((c) => (avgs[c] = calculateAverage(runs, c)));
-
         const runRows = runs
           .map((run, idx) => {
             const badges = cats
@@ -160,36 +158,49 @@ const listItems = Object.entries(grouped)
               )
               .join("");
             return `
-                <a href="${run.relativePath}" class="run-item">
-                    <span class="run-name">Run ${idx + 1}</span>
-                    <div class="run-scores">${badges}</div>
-                    <span class="run-arrow">→</span>
-                </a>
-            `;
+                    <a href="${run.relativePath}" class="run-item">
+                        <span class="run-name">Run ${idx + 1}</span>
+                        <div class="run-scores">${badges}</div>
+                        <span class="run-arrow">→</span>
+                    </a>
+                `;
           })
           .join("");
 
         return `
-            <div class="env-card">
-                <div class="env-header">
-                    <span class="env-title">${envLabels[key]}</span>
-                </div>
-                <div class="env-summary">
-                    ${renderScoreBadge("Perf", avgs.performance)}
-                    ${renderScoreBadge("A11y", avgs.accessibility)}
-                    ${renderScoreBadge("Best", avgs["best-practices"])}
-                    ${renderScoreBadge("SEO", avgs.seo)}
-                </div>
-                <details class="runs-details">
-                    <summary>Show Runs (${runs.length})</summary>
+                <div class="theme-group">
+                    <h5 class="theme-title">${title}</h5>
                     <div class="runs-list">
                         ${runRows}
+                    </div>
+                </div>
+            `;
+      };
+
+      return `
+            <div class="device-card">
+                <details>
+                    <summary>
+                        <div class="device-header">
+                            <span class="device-title">${icon} ${label}</span>
+                            <div class="toggle-icon">▼</div>
+                        </div>
+                        <div class="device-summary">
+                            ${renderScoreBadge("Perf", avgs.performance)}
+                            ${renderScoreBadge("A11y", avgs.accessibility)}
+                            ${renderScoreBadge("Best", avgs["best-practices"])}
+                            ${renderScoreBadge("SEO", avgs.seo)}
+                        </div>
+                        <div class="device-hint">View ${allRuns.length} Tests (Light & Dark)</div>
+                    </summary>
+                    <div class="device-details-content">
+                        ${renderSubList("☀️ Light Mode", lightRuns)}
+                        ${renderSubList("🌙 Dark Mode", darkRuns)}
                     </div>
                 </details>
             </div>
         `;
-      })
-      .join("");
+    };
 
     return `
       <li class="report-card">
@@ -197,8 +208,9 @@ const listItems = Object.entries(grouped)
             <span class="url-path">${escapeHtml(urlDisplay)}</span>
             <span class="url-full">${escapeHtml(url)}</span>
         </div>
-        <div class="envs-grid">
-            ${envBlocks}
+        <div class="devices-grid">
+            ${renderDeviceBlock("mobile", "Mobile", "📱")}
+            ${renderDeviceBlock("desktop", "Desktop", "🖥️")}
         </div>
       </li>
     `;
@@ -218,12 +230,13 @@ const htmlContent = `
             --bg-card: #ffffff;
             --text-main: #212529;
             --text-muted: #6c757d;
-            --border-color: #dee2e6;
+            --border-color: #e9ecef;
             --primary: #0d6efd;
             --score-pass: #0cce6b;
             --score-avg: #ffa400;
             --score-fail: #ff4e42;
-            --shadow: 0 4px 6px rgba(0,0,0,0.05);
+            --shadow: 0 4px 12px rgba(0,0,0,0.08);
+            --hover-bg: rgba(0,0,0,0.02);
         }
 
         @media (prefers-color-scheme: dark) {
@@ -234,7 +247,8 @@ const htmlContent = `
                 --text-muted: #a0a0a0;
                 --border-color: #333333;
                 --primary: #6ea8fe;
-                --shadow: 0 4px 6px rgba(0,0,0,0.3);
+                --shadow: 0 4px 12px rgba(0,0,0,0.4);
+                --hover-bg: rgba(255,255,255,0.05);
             }
         }
 
@@ -248,10 +262,10 @@ const htmlContent = `
             line-height: 1.5;
         }
 
-        .container { max-width: 1200px; margin: 0 auto; }
+        .container { max-width: 1000px; margin: 0 auto; }
         h1 { text-align: center; margin-bottom: 2rem; font-weight: 300; letter-spacing: -0.5px; }
         
-        ul { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 2.5rem; }
+        ul { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 2rem; }
 
         .report-card {
             background: var(--bg-card);
@@ -262,120 +276,152 @@ const htmlContent = `
         }
 
         .card-header {
-            padding: 1.5rem;
+            padding: 1.25rem 1.5rem;
             border-bottom: 1px solid var(--border-color);
-            background-color: rgba(128,128,128,0.03);
+            background-color: var(--hover-bg);
             display: flex;
             flex-direction: column;
-            gap: 0.25rem;
         }
 
-        .url-path { font-size: 1.5rem; font-weight: 700; color: var(--primary); }
-        .url-full { font-size: 0.85rem; color: var(--text-muted); font-family: monospace; }
+        .url-path { font-size: 1.4rem; font-weight: 700; color: var(--primary); }
+        .url-full { font-size: 0.85rem; color: var(--text-muted); font-family: monospace; opacity: 0.8; }
 
-        .envs-grid {
+        .devices-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-            gap: 1px; /* Borders via gap */
-            background-color: var(--border-color); /* Lines between cells */
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1px;
+            background-color: var(--border-color);
         }
 
-        .env-card {
+        .device-card {
             background-color: var(--bg-card);
+        }
+
+        details > summary {
+            list-style: none;
+            cursor: pointer;
             padding: 1.5rem;
+            transition: background 0.2s;
+            position: relative;
+        }
+        details > summary::-webkit-details-marker { display: none; }
+        details > summary:hover { background-color: var(--hover-bg); }
+
+        .device-header {
             display: flex;
-            flex-direction: column;
+            justify-content: space-between;
             align-items: center;
-            gap: 1.25rem;
+            margin-bottom: 1rem;
         }
 
-        .env-header { width: 100%; text-align: center; border-bottom: 2px solid rgba(128,128,128,0.1); padding-bottom: 0.75rem; margin-bottom: 0.5rem; }
-        .env-title { font-weight: 700; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 1px; color: var(--text-muted); }
+        .device-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-main);
+        }
 
-        .env-summary {
+        .device-summary {
             display: flex;
-            gap: 1rem;
             justify-content: center;
+            gap: 1.5rem;
+            margin-bottom: 0.5rem;
         }
 
-        /* Large Badges */
+        .device-hint {
+            text-align: center;
+            font-size: 0.75rem;
+            color: var(--primary);
+            font-weight: 500;
+            margin-top: 1rem;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        details > summary:hover .device-hint { opacity: 1; }
+
+        /* Badges */
         .score-badge {
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            width: 65px; height: 65px; border-radius: 50%;
+            width: 60px; height: 60px; border-radius: 50%;
             border: 4px solid transparent; font-weight: bold;
         }
         .score-badge.pass { border-color: var(--score-pass); color: var(--score-pass); }
         .score-badge.avg { border-color: var(--score-avg); color: var(--score-avg); }
         .score-badge.fail { border-color: var(--score-fail); color: var(--score-fail); }
-        .score-value { font-size: 1.4rem; line-height: 1; }
+        .score-value { font-size: 1.3rem; line-height: 1; }
         .score-label { font-size: 0.6rem; text-transform: uppercase; margin-top: 3px; color: var(--text-muted); }
 
-        .runs-details {
-            width: 100%;
-            margin-top: auto; /* Push to bottom */
+        .toggle-icon {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            transition: transform 0.2s;
+        }
+        details[open] .toggle-icon { transform: rotate(180deg); }
+        details[open] .device-hint { display: none; }
+
+        /* Expanded Content */
+        .device-details-content {
+            padding: 0 1.5rem 1.5rem;
+            border-top: 1px solid var(--border-color);
+            background-color: var(--hover-bg);
+            animation: slideDown 0.2s ease-out;
         }
 
-        .runs-details summary {
-            cursor: pointer;
-            text-align: center;
-            color: var(--primary);
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .theme-group { margin-top: 1.5rem; }
+        .theme-title {
             font-size: 0.85rem;
-            font-weight: 500;
-            padding: 0.5rem;
-            border-radius: 6px;
-            transition: background 0.2s;
-            list-style: none;
-        }
-        .runs-details summary:hover { background-color: rgba(128,128,128,0.05); }
-        .runs-details summary::-webkit-details-marker { display: none; }
-
-        .runs-list {
-            margin-top: 1rem;
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-            animation: fadeIn 0.3s ease;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin: 0 0 0.75rem;
+            padding-bottom: 0.25rem;
+            border-bottom: 2px solid var(--border-color);
+            display: inline-block;
         }
 
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+        .runs-list { display: flex; flex-direction: column; gap: 0.5rem; }
 
         .run-item {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0.6rem 0.8rem;
-            background: rgba(128,128,128,0.03);
+            padding: 0.75rem 1rem;
+            background: var(--bg-card);
             border-radius: 8px;
             text-decoration: none;
             color: inherit;
-            transition: transform 0.1s, background 0.1s;
-            border: 1px solid transparent;
+            border: 1px solid var(--border-color);
+            transition: all 0.1s;
         }
-        
         .run-item:hover {
-            background: rgba(128,128,128,0.06);
-            transform: scale(1.01);
-            border-color: rgba(128,128,128,0.1);
+            transform: translateX(4px);
+            border-color: var(--primary);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
 
-        .run-name { font-size: 0.8rem; font-weight: 600; color: var(--text-muted); }
-        
-        .run-scores { display: flex; gap: 0.5rem; }
+        .run-name { font-size: 0.85rem; font-weight: 600; color: var(--text-muted); width: 60px; }
+        .run-scores { display: flex; gap: 0.75rem; flex: 1; justify-content: center; }
         
         .mini-score {
             display: inline-flex; align-items: center; justify-content: center;
-            width: 26px; height: 26px; border-radius: 50%;
-            font-size: 0.75rem; font-weight: 700;
+            width: 32px; height: 32px; border-radius: 50%;
+            font-size: 0.8rem; font-weight: 700;
         }
         .mini-score.pass { background-color: var(--score-pass); color: #fff; }
         .mini-score.avg { background-color: var(--score-avg); color: #fff; }
         .mini-score.fail { background-color: var(--score-fail); color: #fff; }
 
-        .run-arrow { font-size: 1rem; color: var(--text-muted); opacity: 0.5; }
+        .run-arrow { color: var(--primary); font-weight: bold; }
 
-        @media (max-width: 600px) {
-            .envs-grid { grid-template-columns: 1fr; }
+        @media (max-width: 650px) {
+            .devices-grid { grid-template-columns: 1fr; }
             .url-path { font-size: 1.2rem; }
+            .run-item { padding: 0.5rem; }
+            .mini-score { width: 28px; height: 28px; font-size: 0.75rem; }
         }
     </style>
 </head>
