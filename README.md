@@ -128,11 +128,24 @@ This command will:
 
 This project employs a rigorous testing pipeline to ensure quality and compliance.
 
+### Pipeline Overview
+
+```mermaid
+graph LR
+    Trigger[Push / PR] --> Phase1[Analysis & Build]
+    Phase1 --> Phase2[Deep Testing]
+    Phase2 --> Phase3[Reporting]
+```
+
+### Phase 1: Parallel Analysis & Build
+
+Static analysis tools run in parallel with the production build to provide fast feedback.
+
 ```mermaid
 graph TD
     Trigger[Push / PR]
 
-    subgraph "Parallel Analysis (No Build Req.)"
+    subgraph "Static Analysis"
         Lint[Lint & Type Check]
         Links[Link Checker]
         Spell[Spell Checker]
@@ -149,8 +162,17 @@ graph TD
     Trigger --> Snyk
 
     Trigger --> Build[Build Artifact]
+```
 
-    subgraph "Post-Build Tests"
+### Phase 2: Deep Testing & Reporting
+
+Once the build is ready, we execute comprehensive testing matrices and generate unified reports.
+
+```mermaid
+graph TD
+    Build[Build Artifact]
+
+    subgraph "Testing Matrices"
         Build --> A11y[Accessibility Tests]
         Build --> LH[Lighthouse Audit]
         Build --> Func[Functional Tests]
@@ -158,15 +180,13 @@ graph TD
     end
 
     subgraph "A11y Reporting"
-        A11y -- Matrix: Light/Dark --> A11yAgg[Aggregate & Dashboard]
-        A11yAgg --> A11yDep[Deploy to Surge]
-        A11yDep --> A11yCom[PR Comment]
+        A11y -- Light/Dark --> A11yAgg[Dashboard]
+        A11yAgg --> A11yCom[PR Comment]
     end
 
     subgraph "Lighthouse Reporting"
-        LH -- Matrix: 4 Jobs --> LHAgg[Aggregate & Dashboard]
-        LHAgg --> LHDep[Deploy to Surge]
-        LHDep --> LHCom[PR Comment]
+        LH -- 4 Jobs (Dev/Theme) --> LHAgg[Dashboard]
+        LHAgg --> LHCom[PR Comment]
     end
 ```
 
