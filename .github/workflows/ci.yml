@@ -495,7 +495,7 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: lh-results-${{ matrix.theme }}-${{ matrix.formFactor }}
-          path: .lighthouseci/
+          path: lighthouse-results/
           retention-days: 1
 
   lighthouse-report:

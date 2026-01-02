@@ -54,7 +54,7 @@ module.exports = {
       staticDistDir: "./dist",
       url: getUrls(),
       numberOfRuns: 2,
-      outputDir: ".lighthouseci",
+      outputDir: "lighthouse-results",
       settings: {
         formFactor: process.env.FORM_FACTOR || "mobile",
         screenEmulation:
@@ -71,7 +71,7 @@ module.exports = {
     },
     upload: {
       target: "filesystem",
-      outputDir: ".lighthouseci",
+      outputDir: "lighthouse-results",
     },
   },
 };
