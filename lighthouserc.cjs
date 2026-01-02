@@ -55,6 +55,19 @@ module.exports = {
       url: getUrls(),
       numberOfRuns: 2,
       outputDir: ".lighthouseci",
+      settings: {
+        formFactor: process.env.FORM_FACTOR || "mobile",
+        screenEmulation:
+          process.env.FORM_FACTOR === "desktop"
+            ? {
+                mobile: false,
+                width: 1350,
+                height: 940,
+                deviceScaleFactor: 1,
+                disabled: false,
+              }
+            : undefined, // undefined uses default mobile emulation
+      },
     },
     upload: {
       target: "filesystem",

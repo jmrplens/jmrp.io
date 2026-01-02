@@ -442,7 +442,14 @@ jobs:
         shell: bash
         run: |
           if [ "${{ matrix.theme }}" = "dark" ]; then export LHCI_CHROME_FLAGS="--force-dark-mode --force-prefers-color-scheme=dark"; fi
-          pnpm exec lhci autorun | tee lhci_output_${{ matrix.theme }}.txt
+          
+          echo "📱 Running Lighthouse Mobile..."
+          export FORM_FACTOR=mobile
+          pnpm exec lhci autorun
+          
+          echo "🖥️ Running Lighthouse Desktop..."
+          export FORM_FACTOR=desktop
+          pnpm exec lhci autorun
         env:
           LHCI_GITHUB_TOKEN: ${{ secrets.TOKEN_GITHUB }}
       - name: Format Lighthouse Report

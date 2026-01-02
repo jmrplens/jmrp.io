@@ -2,32 +2,71 @@ import fs from "fs";
 import path from "path";
 
 const deployDir = process.argv[2] || "lh-deploy";
-const manifestPath = path.join(deployDir, "manifest.json");
 const indexPath = path.join(deployDir, "index.html");
 
-if (!fs.existsSync(manifestPath)) {
-  console.error(`Manifest not found at ${manifestPath}`);
+if (!fs.existsSync(deployDir)) {
+  console.error(`Deploy directory not found at ${deployDir}`);
   process.exit(1);
 }
 
-let manifest;
-try {
-  const manifestContent = fs.readFileSync(manifestPath, "utf8");
-  manifest = JSON.parse(manifestContent);
-} catch (error) {
-  console.error(
-    `Failed to parse manifest JSON at ${manifestPath}: ${error.message}`,
-  );
-  process.exit(1);
+// Helper: Scan for all JSON reports in the directory (recursive or flat)
+function findReports(dir, fileList = []) {
+  const files = fs.readdirSync(dir);
+  files.forEach((file) => {
+    const filePath = path.join(dir, file);
+    const stat = fs.statSync(filePath);
+    if (stat.isDirectory()) {
+      findReports(filePath, fileList);
+    } else if (
+      file.endsWith(".json") &&
+      !file.includes("manifest") &&
+      !file.includes("links")
+    ) {
+      fileList.push(filePath);
+    }
+  });
+  return fileList;
 }
 
-// 1. Group reports by URL
-const groupedReports = {};
-manifest.forEach((entry) => {
-  if (!groupedReports[entry.url]) {
-    groupedReports[entry.url] = [];
+const jsonFiles = findReports(deployDir);
+const reports = [];
+
+jsonFiles.forEach((filePath) => {
+  try {
+    const content = fs.readFileSync(filePath, "utf8");
+    const json = JSON.parse(content);
+    // Basic validation to ensure it's a Lighthouse report
+    if (json.lighthouseVersion && json.finalUrl) {
+      reports.push({
+        filePath,
+        fileName: path.basename(filePath),
+        htmlName: path.basename(filePath).replace(".json", ".html"),
+        url: json.finalUrl,
+        formFactor: json.configSettings?.formFactor || "mobile",
+        scores: {
+          performance: json.categories.performance?.score || 0,
+          accessibility: json.categories.accessibility?.score || 0,
+          "best-practices": json.categories["best-practices"]?.score || 0,
+          seo: json.categories.seo?.score || 0,
+        },
+        timestamp: json.fetchTime,
+      });
+    }
+  } catch (e) {
+    console.warn(`Skipping invalid JSON file: ${filePath}`);
   }
-  groupedReports[entry.url].push(entry);
+});
+
+// 1. Group reports by URL and Form Factor
+const grouped = {};
+
+reports.forEach((r) => {
+  if (!grouped[r.url]) {
+    grouped[r.url] = { mobile: [], desktop: [] };
+  }
+  if (grouped[r.url][r.formFactor]) {
+    grouped[r.url][r.formFactor].push(r);
+  }
 });
 
 function escapeHtml(unsafe) {
@@ -59,9 +98,14 @@ function renderScoreBadge(label, score) {
   `;
 }
 
-const listItems = Object.entries(groupedReports)
-  .map(([url, runs]) => {
-    // 2. Calculate Averages
+function calculateAverage(runList, category) {
+  if (!runList || runList.length === 0) return 0;
+  const total = runList.reduce((sum, r) => sum + r.scores[category], 0);
+  return total / runList.length;
+}
+
+const listItems = Object.entries(grouped)
+  .map(([url, devices]) => {
     let urlDisplay = url;
     try {
       const parsedUrl = new URL(url);
@@ -69,72 +113,43 @@ const listItems = Object.entries(groupedReports)
         urlDisplay = parsedUrl.pathname || "/";
       }
     } catch {
-      // Keep original URL
+      // Keep original
     }
 
-    // Categories to track
-    const categories = [
-      "performance",
-      "accessibility",
-      "best-practices",
-      "seo",
-    ];
-    const totals = {
-      performance: 0,
-      accessibility: 0,
-      "best-practices": 0,
-      seo: 0,
-    };
-    const counts = {
-      performance: 0,
-      accessibility: 0,
-      "best-practices": 0,
-      seo: 0,
-    };
+    const cats = ["performance", "accessibility", "best-practices", "seo"];
 
-    runs.forEach((run) => {
-      if (run.summary) {
-        categories.forEach((cat) => {
-          if (typeof run.summary[cat] === "number") {
-            totals[cat] += run.summary[cat];
-            counts[cat]++;
-          }
-        });
-      }
-    });
+    // Calculate averages for Mobile
+    const mobileAvgs = {};
+    cats.forEach((c) => (mobileAvgs[c] = calculateAverage(devices.mobile, c)));
+    const hasMobile = devices.mobile.length > 0;
 
-    const averages = {};
-    categories.forEach((cat) => {
-      averages[cat] = counts[cat] > 0 ? totals[cat] / counts[cat] : 0;
-    });
+    // Calculate averages for Desktop
+    const desktopAvgs = {};
+    cats.forEach(
+      (c) => (desktopAvgs[c] = calculateAverage(devices.desktop, c)),
+    );
+    const hasDesktop = devices.desktop.length > 0;
 
-    // 3. Render Individual Runs List
-    const runsHtml = runs
-      .map((run, index) => {
-        const filename = path.basename(run.htmlPath);
-        const date = new Date().toLocaleTimeString(); // Start time isn't in manifest usually, so we just list them.
-
-        let runBadges = "";
-        if (run.summary) {
-          runBadges = categories
-            .map((cat) => {
-              const val = run.summary[cat] || 0;
-              return `<span class="mini-score ${getScoreClass(val)}">${formatScore(val)}</span>`;
-            })
+    const renderRunRows = (runList) => {
+      return runList
+        .map((run, idx) => {
+          const badges = cats
+            .map(
+              (c) =>
+                `<span class="mini-score ${getScoreClass(run.scores[c])}">${formatScore(run.scores[c])}</span>`,
+            )
             .join("");
-        }
+          return `
+                <a href="${run.htmlName}" class="run-item">
+                    <span class="run-name">Run #${idx + 1}</span>
+                    <div class="run-scores">${badges}</div>
+                    <span class="run-link-text">Open &rarr;</span>
+                </a>
+            `;
+        })
+        .join("");
+    };
 
-        return `
-          <a href="${escapeHtml(filename)}" class="run-item">
-            <span class="run-name">Run #${index + 1}</span>
-            <div class="run-scores">${runBadges}</div>
-            <span class="run-link-text">Open Report &rarr;</span>
-          </a>
-        `;
-      })
-      .join("");
-
-    // 4. Render Main Card
     return `
       <li class="report-card">
         <details>
@@ -144,26 +159,74 @@ const listItems = Object.entries(groupedReports)
                 <span class="url-path">${escapeHtml(urlDisplay)}</span>
                 <span class="url-full">${escapeHtml(url)}</span>
               </div>
-              <div class="average-scores">
-                ${renderScoreBadge("Perf", averages.performance)}
-                ${renderScoreBadge("A11y", averages.accessibility)}
-                ${renderScoreBadge("Best", averages["best-practices"])}
-                ${renderScoreBadge("SEO", averages.seo)}
+              <div class="device-summary">
+                ${
+                  hasMobile
+                    ? `
+                    <div class="device-block">
+                        <span class="device-label">Mobile</span>
+                        <div class="average-scores">
+                            ${renderScoreBadge("Perf", mobileAvgs.performance)}
+                            ${renderScoreBadge("A11y", mobileAvgs.accessibility)}
+                            ${renderScoreBadge("Best", mobileAvgs["best-practices"])}
+                            ${renderScoreBadge("SEO", mobileAvgs.seo)}
+                        </div>
+                    </div>
+                `
+                    : ""
+                }
+                ${
+                  hasDesktop
+                    ? `
+                    <div class="device-block desktop-block">
+                        <span class="device-label">Desktop</span>
+                        <div class="average-scores">
+                            ${renderScoreBadge("Perf", desktopAvgs.performance)}
+                            ${renderScoreBadge("A11y", desktopAvgs.accessibility)}
+                            ${renderScoreBadge("Best", desktopAvgs["best-practices"])}
+                            ${renderScoreBadge("SEO", desktopAvgs.seo)}
+                        </div>
+                    </div>
+                `
+                    : ""
+                }
               </div>
               <div class="toggle-icon">▼</div>
             </div>
           </summary>
           <div class="runs-list">
-            <h4>Individual Runs (${runs.length})</h4>
-            <div class="runs-grid">
-                <div class="runs-header">
-                    <span>Run</span>
-                    <div class="header-scores">
-                        <span>Perf</span><span>A11y</span><span>Best</span><span>SEO</span>
+            <div class="runs-grid-container">
+                ${
+                  hasMobile
+                    ? `
+                    <div class="device-column">
+                        <h4>Mobile Runs (${devices.mobile.length})</h4>
+                        <div class="runs-header">
+                            <span>Run</span>
+                            <div class="header-scores"><span>P</span><span>A</span><span>B</span><span>S</span></div>
+                            <span>Link</span>
+                        </div>
+                        ${renderRunRows(devices.mobile)}
                     </div>
-                    <span>Link</span>
-                </div>
-                ${runsHtml}
+                `
+                    : ""
+                }
+                
+                ${
+                  hasDesktop
+                    ? `
+                    <div class="device-column">
+                        <h4>Desktop Runs (${devices.desktop.length})</h4>
+                        <div class="runs-header">
+                            <span>Run</span>
+                            <div class="header-scores"><span>P</span><span>A</span><span>B</span><span>S</span></div>
+                            <span>Link</span>
+                        </div>
+                        ${renderRunRows(devices.desktop)}
+                    </div>
+                `
+                    : ""
+                }
             </div>
           </div>
         </details>
@@ -216,7 +279,7 @@ const htmlContent = `
         }
 
         .container {
-            max-width: 900px;
+            max-width: 1100px;
             margin: 0 auto;
         }
 
@@ -232,7 +295,7 @@ const htmlContent = `
             padding: 0;
             display: flex;
             flex-direction: column;
-            gap: 1rem;
+            gap: 1.5rem;
         }
 
         .report-card {
@@ -246,33 +309,31 @@ const htmlContent = `
         details > summary {
             list-style: none;
             cursor: pointer;
-            padding: 1.25rem;
+            padding: 1.5rem;
             transition: background 0.2s;
         }
 
-        details > summary::-webkit-details-marker {
-            display: none;
-        }
-
-        details > summary:hover {
-            background-color: rgba(128, 128, 128, 0.05);
-        }
+        details > summary::-webkit-details-marker { display: none; }
+        details > summary:hover { background-color: rgba(128, 128, 128, 0.05); }
 
         .summary-header {
-            display: grid;
-            grid-template-columns: 1fr auto auto;
+            display: flex;
             align-items: center;
+            justify-content: space-between;
             gap: 1rem;
+            flex-wrap: wrap;
         }
 
         .url-container {
+            flex: 1;
+            min-width: 200px;
             display: flex;
             flex-direction: column;
             overflow: hidden;
         }
 
         .url-path {
-            font-size: 1.1rem;
+            font-size: 1.2rem;
             font-weight: 600;
             white-space: nowrap;
             overflow: hidden;
@@ -288,20 +349,47 @@ const htmlContent = `
             text-overflow: ellipsis;
         }
 
-        .average-scores {
+        .device-summary {
             display: flex;
-            gap: 0.75rem;
+            gap: 2rem;
+            align-items: center;
         }
 
+        .device-block {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .desktop-block {
+            border-left: 1px solid var(--border-color);
+            padding-left: 2rem;
+        }
+
+        .device-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            font-weight: bold;
+            color: var(--text-muted);
+            letter-spacing: 1px;
+        }
+
+        .average-scores {
+            display: flex;
+            gap: 1rem;
+        }
+
+        /* Increased size as requested */
         .score-badge {
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            width: 50px;
-            height: 50px;
+            width: 65px;
+            height: 65px;
             border-radius: 50%;
-            border: 3px solid transparent;
+            border: 4px solid transparent;
             font-weight: bold;
             position: relative;
         }
@@ -310,54 +398,71 @@ const htmlContent = `
         .score-badge.avg { border-color: var(--score-avg); color: var(--score-avg); }
         .score-badge.fail { border-color: var(--score-fail); color: var(--score-fail); }
 
-        .score-value { font-size: 1.1rem; line-height: 1; }
-        .score-label { font-size: 0.6rem; text-transform: uppercase; margin-top: 2px; color: var(--text-muted); }
+        .score-value { font-size: 1.4rem; line-height: 1; }
+        .score-label { font-size: 0.65rem; text-transform: uppercase; margin-top: 4px; color: var(--text-muted); }
 
         .toggle-icon {
             font-size: 0.8rem;
             color: var(--text-muted);
             transition: transform 0.2s;
+            margin-left: 1rem;
         }
 
-        details[open] .toggle-icon {
-            transform: rotate(180deg);
-        }
+        details[open] .toggle-icon { transform: rotate(180deg); }
 
         .runs-list {
-            padding: 0 1.25rem 1.25rem;
+            padding: 0;
             border-top: 1px solid var(--border-color);
             background-color: rgba(128, 128, 128, 0.02);
         }
 
-        .runs-list h4 {
-            margin: 1rem 0 0.5rem;
+        .runs-grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 0; 
+        }
+        
+        .device-column {
+            padding: 1.5rem;
+        }
+        
+        .device-column:not(:last-child) {
+            border-right: 1px solid var(--border-color);
+        }
+
+        .device-column h4 {
+            margin: 0 0 1rem;
             font-size: 0.9rem;
             text-transform: uppercase;
             color: var(--text-muted);
             letter-spacing: 0.5px;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 0.5rem;
+            display: inline-block;
         }
 
         .runs-header {
             display: grid;
-            grid-template-columns: 80px 1fr 100px;
-            padding: 0.5rem;
-            font-size: 0.8rem;
+            grid-template-columns: 60px 1fr 60px;
+            padding: 0.5rem 0;
+            font-size: 0.75rem;
             font-weight: bold;
             color: var(--text-muted);
             border-bottom: 1px solid var(--border-color);
+            text-transform: uppercase;
         }
         
         .header-scores {
             display: flex;
-            justify-content: space-around;
+            justify-content: space-between;
             padding: 0 1rem;
         }
 
         .run-item {
             display: grid;
-            grid-template-columns: 80px 1fr 100px;
+            grid-template-columns: 60px 1fr 60px;
             align-items: center;
-            padding: 0.75rem 0.5rem;
+            padding: 0.75rem 0;
             text-decoration: none;
             color: inherit;
             border-bottom: 1px solid var(--border-color);
@@ -367,22 +472,23 @@ const htmlContent = `
         .run-item:last-child { border-bottom: none; }
         .run-item:hover { background-color: rgba(128, 128, 128, 0.05); }
 
-        .run-name { font-weight: 500; font-size: 0.9rem; }
+        .run-name { font-weight: 500; font-size: 0.85rem; }
         
         .run-scores {
             display: flex;
-            justify-content: space-around;
+            justify-content: space-between;
             padding: 0 1rem;
         }
 
         .mini-score {
-            display: inline-block;
-            width: 30px;
-            text-align: center;
-            border-radius: 4px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
             font-weight: bold;
-            font-size: 0.85rem;
-            padding: 2px 0;
+            font-size: 0.8rem;
         }
         
         .mini-score.pass { background-color: rgba(12, 206, 107, 0.15); color: var(--score-pass); }
@@ -390,36 +496,48 @@ const htmlContent = `
         .mini-score.fail { background-color: rgba(255, 78, 66, 0.15); color: var(--score-fail); }
 
         .run-link-text {
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             color: var(--primary);
             text-align: right;
         }
 
-        @media (max-width: 600px) {
+        @media (max-width: 800px) {
             .summary-header {
-                grid-template-columns: 1fr auto;
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .device-summary {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: stretch;
+            }
+            .desktop-block {
+                border-left: none;
+                padding-left: 0;
+                border-top: 1px dashed var(--border-color);
+                padding-top: 1rem;
+            }
+            .device-block {
+                flex-direction: row;
+                justify-content: space-between;
             }
             .average-scores {
-                grid-column: 1 / -1;
-                justify-content: space-between;
-                margin-top: 0.5rem;
+                justify-content: flex-end;
             }
             .score-badge {
-                width: 40px;
-                height: 40px;
+                width: 50px;
+                height: 50px;
+                border-width: 3px;
             }
-            .score-value { font-size: 0.9rem; }
-            .score-label { font-size: 0.5rem; }
+            .score-value { font-size: 1.1rem; }
             
-            .runs-header { display: none; }
-            .run-item {
-                display: flex;
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 0.5rem;
+            .runs-grid-container {
+                grid-template-columns: 1fr;
             }
-            .run-scores { width: 100%; justify-content: space-between; padding: 0; }
-            .run-link-text { display: none; }
+            .device-column:not(:last-child) {
+                border-right: none;
+                border-bottom: 1px solid var(--border-color);
+            }
         }
     </style>
 </head>
@@ -430,7 +548,7 @@ const htmlContent = `
             Generated on ${new Date().toLocaleString()}
         </p>
         
-        ${Object.keys(groupedReports).length === 0 ? '<p style="text-align: center;">No reports found.</p>' : ""}
+        ${Object.keys(grouped).length === 0 ? '<p style="text-align: center;">No reports found in ' + deployDir + "</p>" : ""}
         
         <ul>
             ${listItems}
@@ -442,5 +560,5 @@ const htmlContent = `
 
 fs.writeFileSync(indexPath, htmlContent);
 console.log(
-  `Generated index.html at ${indexPath} with ${Object.keys(groupedReports).length} URL groups.`,
+  `Generated index.html at ${indexPath} with ${Object.keys(grouped).length} URLs.`,
 );
