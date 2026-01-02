@@ -174,13 +174,13 @@ const html = `
         
         pre { background: var(--code-bg); padding: 1rem; border-radius: 8px; overflow-x: auto; font-size: 0.85rem; border: 1px solid var(--border-color); margin: 0; }
         
-        .visual-view { font-size: 0.9rem; }
-        .v-object { border: 1px solid var(--v-border); background: var(--v-bg-obj); border-radius: 6px; padding: 0.75rem; margin-bottom: 0.5rem; }
+        .visual-view { font-size: 0.9rem; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        .v-object { border: 1px solid var(--v-border); background: var(--v-bg-obj); border-radius: 6px; padding: 0.75rem; margin-bottom: 0.5rem; min-width: min-content; }
         .v-type-badge { display: inline-block; background: var(--primary); color: white; font-size: 0.7rem; font-weight: bold; padding: 0.1rem 0.4rem; border-radius: 4px; margin-bottom: 0.5rem; }
         .v-row { display: flex; gap: 0.5rem; margin-bottom: 0.25rem; }
         .v-key { font-weight: 600; color: var(--v-key); min-width: 80px; flex-shrink: 0; }
-        .v-val { flex: 1; overflow-wrap: break-word; word-break: break-word; color: var(--v-string); }
-        .v-list { display: flex; flex-direction: column; gap: 0.5rem; padding-left: 0.5rem; border-left: 2px solid var(--v-border); }
+        .v-val { flex: 1; overflow-wrap: break-word; word-break: break-all; color: var(--v-string); }
+        .v-list { display: flex; flex-direction: column; gap: 0.5rem; padding-left: 0.5rem; border-left: 2px solid var(--v-border); overflow-x: auto; }
         .v-link { color: var(--primary); text-decoration: none; }
         .v-link:hover { text-decoration: underline; }
         .v-img { max-width: 100px; max-height: 100px; border-radius: 4px; border: 1px solid var(--v-border); display: block; margin-top: 0.25rem; }
