@@ -3,7 +3,7 @@ import AxeBuilder from "@axe-core/playwright";
 import { parseStringPromise } from "xml2js";
 import * as fs from "node:fs";
 import * as path from "node:path";
-// @ts-ignore
+
 import { createHtmlReport } from "axe-html-reporter";
 
 // Read and parse sitemap to discover all pages automatically
@@ -122,11 +122,11 @@ test.describe("Accessibility Tests (Axe-core WCAG 2.1 AA)", () => {
 
     const escapeHtml = (unsafe: string) =>
       unsafe
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
 
     // Generate index.html for navigation
     const indexHtml = `
@@ -189,7 +189,7 @@ test.describe("Accessibility Tests (Axe-core WCAG 2.1 AA)", () => {
                   <span class="page-name">${escapeHtml(r.page.split("(")[0].trim())}</span>
                   <div style="margin-top: 4px;">
                     <span class="page-url">${escapeHtml(
-                      r.page.match(/\((.*?)\)/)?.[1] || "",
+                      /\((.*?)\)/.exec(r.page)?.[1] || "",
                     )}</span>
                   </div>
                   ${

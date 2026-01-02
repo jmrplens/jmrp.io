@@ -36,7 +36,7 @@ const generateReport = () => {
 
   const webp = findFiles('-name "*.webp"');
   const png = findFiles('-name "*.png"');
-  const jpg = findWithGrep("\.jpe?g$");
+  const jpg = findWithGrep(".jpe?g$");
 
   const getDetails = (list) => {
     return list.map((img) => {
@@ -209,7 +209,7 @@ const generateReport = () => {
                   <tr>
                     <td class="path-cell">${img.path}</td>
                     <td><span class="badge ${img.f === "WebP" ? "badge-webp" : "badge-legacy"}">${img.f}</span></td>
-                    <td class="size-cell ${img.size.includes("K") && parseInt(img.size) > 500 ? "size-large" : ""}">${img.size}</td>
+                    <td class="size-cell ${img.size.includes("K") && Number.parseInt(img.size) > 500 ? "size-large" : ""}"> ${img.size}</td>
                   </tr>
                 `,
                   )

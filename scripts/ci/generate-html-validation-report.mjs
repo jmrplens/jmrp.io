@@ -10,7 +10,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
-import { execSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 import { escapeHtml } from "../utils/html.mjs";
 
 const JSON_REPORT = "html-validation.json";
@@ -51,8 +51,10 @@ function getActiveRules() {
     if (!firstHtml) return {};
 
     // Print the effective config for the first file found
-    const configJson = execSync(
-      `pnpm exec html-validate -c ${CONFIG_FILE} --print-config ${firstHtml}`,
+    // Using execFileSync with arguments array prevents shell injection
+    const configJson = execFileSync(
+      "pnpm",
+      ["exec", "html-validate", "-c", CONFIG_FILE, "--print-config", firstHtml],
       { encoding: "utf-8" },
     );
     const config = JSON.parse(configJson);
@@ -64,62 +66,57 @@ function getActiveRules() {
 }
 
 /**
- * Main function to generate the HTML report.
+ * Loads and parses the validation report JSON
  */
-function generateReport() {
+function loadAndParseReport() {
   if (!fs.existsSync(JSON_REPORT)) {
     console.error(`❌ Error: ${JSON_REPORT} not found!`);
     process.exit(1);
   }
 
-  let report;
   try {
     const content = fs.readFileSync(JSON_REPORT, "utf-8");
     if (!content.trim()) {
       console.warn(
         "⚠️ HTML validation JSON report is empty. Assuming no issues found.",
       );
-      report = [];
-    } else {
-      report = JSON.parse(content);
+      return [];
     }
+    const report = JSON.parse(content);
+    return Array.isArray(report)
+      ? report
+      : report.results || report.files || [];
   } catch (e) {
     console.error("❌ Error parsing JSON report:", e.message);
     process.exit(1);
   }
+}
 
-  const results = Array.isArray(report)
-    ? report
-    : report.results || report.files || [];
-  const allFiles = getAllHtmlFiles(DIST_DIR);
-  const activeRules = getActiveRules();
-  const ruleCount = Object.keys(activeRules).length;
-
-  // Create lookup map for files with validation messages
+/**
+ * Processes validation data and merges with all HTML files
+ */
+function processValidationData(results, allFiles) {
   const resultMap = new Map();
   results.forEach((res) => {
     const relPath = path.relative(process.cwd(), res.filePath);
     resultMap.set(relPath, res);
   });
 
-  // Merge scan results with overall file list
-  const files = allFiles.map((filePath) => {
+  return allFiles.map((filePath) => {
     const res = resultMap.get(filePath);
     return {
       filePath,
-      messages: res ? res.messages : [],
-      errorCount: res ? res.errorCount : 0,
-      warningCount: res ? res.warningCount : 0,
+      messages: res?.messages || [],
+      errorCount: res?.errorCount || 0,
+      warningCount: res?.warningCount || 0,
     };
   });
+}
 
-  const totalErrors = files.reduce((acc, f) => acc + (f.errorCount ?? 0), 0);
-  const totalWarnings = files.reduce(
-    (acc, f) => acc + (f.warningCount ?? 0),
-    0,
-  );
-
-  // Aggregate rule triggers for the "Analysis Overview" section
+/**
+ * Aggregates rule violation counts across all files
+ */
+function calculateRuleCounts(files) {
   const ruleCounts = new Map();
   files.forEach((file) => {
     (file.messages || []).forEach((msg) => {
@@ -129,15 +126,60 @@ function generateReport() {
     });
   });
 
-  const sortedRules = Array.from(ruleCounts.entries())
+  return Array.from(ruleCounts.entries())
     .sort((a, b) => b[1] - a[1])
     .slice(0, 5);
+}
 
-  const statusClass =
-    totalErrors > 0 ? "failed" : totalWarnings > 0 ? "warning" : "passed";
-  const statusEmoji = totalErrors > 0 ? "❌" : totalWarnings > 0 ? "⚠️" : "✅";
-  const statusText =
-    totalErrors > 0 ? "Failed" : totalWarnings > 0 ? "Warnings" : "Passed";
+/**
+ * Determines validation status based on error/warning counts
+ */
+function determineStatus(totalErrors, totalWarnings) {
+  if (totalErrors > 0) {
+    return { class: "failed", emoji: "❌", text: "Failed" };
+  }
+  if (totalWarnings > 0) {
+    return { class: "warning", emoji: "⚠️", text: "Warnings" };
+  }
+  return { class: "passed", emoji: "✅", text: "Passed" };
+}
+
+/**
+ * Renders the context of a validation message
+ */
+function renderContext(context) {
+  if (!context) return "";
+  if (typeof context === "object") {
+    return Object.entries(context)
+      .map(
+        ([k, v]) => `
+          <div class="context-row"><span class="context-key">${escapeHtml(k)}:</span> <code>${escapeHtml(String(v))}</code></div>
+        `,
+      )
+      .join("");
+  }
+  return escapeHtml(context);
+}
+
+/**
+ * Main function to generate the HTML report.
+ */
+function generateReport() {
+  const results = loadAndParseReport();
+  const allFiles = getAllHtmlFiles(DIST_DIR);
+  const activeRules = getActiveRules();
+  const ruleCount = Object.keys(activeRules).length;
+
+  const files = processValidationData(results, allFiles);
+
+  const totalErrors = files.reduce((acc, f) => acc + (f.errorCount ?? 0), 0);
+  const totalWarnings = files.reduce(
+    (acc, f) => acc + (f.warningCount ?? 0),
+    0,
+  );
+
+  const sortedRules = calculateRuleCounts(files);
+  const status = determineStatus(totalErrors, totalWarnings);
 
   const html = `
 <!DOCTYPE html>
@@ -300,7 +342,7 @@ function generateReport() {
 <body>
   <header>
     <div class="container">
-      <div class="status-banner ${statusClass}">${statusEmoji} Validation ${statusText}</div>
+      <div class="status-banner ${status.class}">${status.emoji} Validation ${status.text}</div>
       <h1>HTML Validation Report</h1>
       <p class="subtitle">Generated for project <strong>jmrp.io</strong> on ${new Date().toUTCString()}</p>
     </div>
@@ -366,12 +408,14 @@ function generateReport() {
       ${files
         .map((file) => {
           const isClean = !file.messages || file.messages.length === 0;
-          const fileEmoji =
-            (file.errorCount ?? 0) > 0
-              ? "🔴"
-              : (file.warningCount ?? 0) > 0
-                ? "⚠️"
-                : "✅";
+          let fileEmoji;
+          if ((file.errorCount ?? 0) > 0) {
+            fileEmoji = "🔴";
+          } else if ((file.warningCount ?? 0) > 0) {
+            fileEmoji = "⚠️";
+          } else {
+            fileEmoji = "✅";
+          }
 
           return `
           <details class="file-item" ${isClean ? "" : "open"}>
@@ -426,17 +470,7 @@ function generateReport() {
                           msg.context
                             ? `
                           <div class="issue-context">
-                            ${
-                              typeof msg.context === "object"
-                                ? Object.entries(msg.context)
-                                    .map(
-                                      ([k, v]) => `
-                                <div class="context-row"><span class="context-key">${escapeHtml(k)}:</span> <code>${escapeHtml(String(v))}</code></div>
-                              `,
-                                    )
-                                    .join("")
-                                : escapeHtml(msg.context)
-                            }
+                            ${renderContext(msg.context)}
                           </div>
                         `
                             : ""

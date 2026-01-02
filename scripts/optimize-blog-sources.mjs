@@ -37,4 +37,9 @@ async function optimize() {
   }
 }
 
-optimize().catch(console.error);
+try {
+  await optimize();
+} catch (error) {
+  console.error(error);
+  process.exit(1);
+}

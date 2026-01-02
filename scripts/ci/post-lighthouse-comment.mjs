@@ -7,7 +7,7 @@
 
 import fs from "node:fs";
 
-export default async ({ github, context }) => {
+export default async function postLighthouseComment({ github, context }) {
   const theme = process.env.THEME;
   const surgeUrl = process.env.SURGE_URL;
   const commentFile = `lighthouse_comment_${theme}.md`;
@@ -28,4 +28,4 @@ export default async ({ github, context }) => {
   } else {
     console.log(`Comment file not found: ${commentFile}`);
   }
-};
+}

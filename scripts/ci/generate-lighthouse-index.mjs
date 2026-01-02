@@ -9,6 +9,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
+import { escapeHtml } from "../utils/html.mjs";
 
 const deployDir = process.argv[2] || "lh-deploy";
 const indexPath = path.join(deployDir, "index.html");
@@ -47,9 +48,9 @@ jsonFiles.forEach((filePath) => {
 
     const lowerPath = filePath.toLowerCase();
     let theme = "unknown";
-    if (lowerPath.includes("/light/") || lowerPath.includes("\light\ "))
+    if (lowerPath.includes("/light/") || lowerPath.includes("\\light\\"))
       theme = "light";
-    if (lowerPath.includes("/dark/") || lowerPath.includes("\dark\ "))
+    if (lowerPath.includes("/dark/") || lowerPath.includes("\\dark\\"))
       theme = "dark";
 
     if (json.lighthouseVersion && json.finalUrl) {
@@ -59,7 +60,9 @@ jsonFiles.forEach((filePath) => {
         if (parsed.hostname === "localhost") {
           finalUrl = parsed.pathname;
         }
-      } catch (e) {}
+      } catch (e) {
+        console.warn(`URL parsing failed for ${filePath}:`, e.message);
+      }
 
       reports.push({
         filePath,
@@ -79,7 +82,7 @@ jsonFiles.forEach((filePath) => {
       });
     }
   } catch (e) {
-    console.warn(`Skipping: ${filePath}`);
+    console.warn(`Skipping: ${filePath} - ${e.message}`);
   }
 });
 
@@ -93,19 +96,10 @@ reports.forEach((r) => {
       desktop: { light: [], dark: [] },
     };
 
-  if (grouped[r.url][r.formFactor] && grouped[r.url][r.formFactor][r.theme]) {
+  if (grouped[r.url]?.[r.formFactor]?.[r.theme]) {
     grouped[r.url][r.formFactor][r.theme].push(r);
   }
 });
-
-function escapeHtml(unsafe) {
-  return unsafe
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
 
 function getScoreClass(score) {
   if (score >= 0.9) return "pass";
@@ -133,8 +127,38 @@ function calculateAverage(runList, category) {
   return total / runList.length;
 }
 
+function renderSubList(title, runs, cats) {
+  if (runs.length === 0) return "";
+  const runRows = runs
+    .map((run, idx) => {
+      const badges = cats
+        .map(
+          (c) =>
+            `<span class="mini-score ${getScoreClass(run.scores[c])}">${formatScore(run.scores[c])}</span>`,
+        )
+        .join("");
+      return `
+              <a href="${run.relativePath}" class="run-item">
+                  <span class="run-name">Run ${idx + 1}</span>
+                  <div class="run-scores">${badges}</div>
+                  <span class="run-arrow">→</span>
+              </a>
+          `;
+    })
+    .join("");
+
+  return `
+          <div class="theme-group">
+              <h5 class="theme-title">${title}</h5>
+              <div class="runs-list">
+                  ${runRows}
+              </div>
+          </div>
+      `;
+}
+
 const listItems = Object.entries(grouped)
-  .sort()
+  .sort((a, b) => a[0].localeCompare(b[0]))
   .map(([url, devices]) => {
     let urlDisplay = url;
     // url is already normalized path (e.g. "/" or "/blog/")
@@ -154,37 +178,6 @@ const listItems = Object.entries(grouped)
       const avgs = {};
       cats.forEach((c) => (avgs[c] = calculateAverage(allRuns, c)));
 
-      // Sub-list Renderer
-      const renderSubList = (title, runs) => {
-        if (runs.length === 0) return "";
-        const runRows = runs
-          .map((run, idx) => {
-            const badges = cats
-              .map(
-                (c) =>
-                  `<span class="mini-score ${getScoreClass(run.scores[c])}">${formatScore(run.scores[c])}</span>`,
-              )
-              .join("");
-            return `
-                    <a href="${run.relativePath}" class="run-item">
-                        <span class="run-name">Run ${idx + 1}</span>
-                        <div class="run-scores">${badges}</div>
-                        <span class="run-arrow">→</span>
-                    </a>
-                `;
-          })
-          .join("");
-
-        return `
-                <div class="theme-group">
-                    <h5 class="theme-title">${title}</h5>
-                    <div class="runs-list">
-                        ${runRows}
-                    </div>
-                </div>
-            `;
-      };
-
       return `
             <div class="device-card">
                 <details>
@@ -202,8 +195,8 @@ const listItems = Object.entries(grouped)
                         <div class="device-hint">View ${allRuns.length} Tests (Light & Dark)</div>
                     </summary>
                     <div class="device-details-content">
-                        ${renderSubList("☀️ Light Mode", lightRuns)}
-                        ${renderSubList("🌙 Dark Mode", darkRuns)}
+                        ${renderSubList("☀️ Light Mode", lightRuns, cats)}
+                        ${renderSubList("🌙 Dark Mode", darkRuns, cats)}
                     </div>
                 </details>
             </div>
