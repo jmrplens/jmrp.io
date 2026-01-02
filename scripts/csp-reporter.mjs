@@ -18,6 +18,7 @@ import https from "node:https";
 import fs from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
+import { escapeHtml } from "./utils/html.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -169,23 +170,7 @@ function processReport(report, ip, ua) {
   }
 }
 
-/**
- * Escapes HTML for Telegram message compatibility
- */
-function escapeHTML(str) {
-  if (!str) return "N/A";
-  return str.replaceAll(
-    /[&<>"']/g,
-    (m) =>
-      ({
-        "&": "&amp;",
-        "<": "&lt;",
-        ">": "&gt;",
-        '"': "&quot;",
-        "'": "&#39;",
-      })[m],
-  );
-}
+
 
 /**
  * Sends the violation report to Telegram
@@ -201,7 +186,7 @@ function sendToTelegram(report, ip, ua) {
 
   // Safely handle document-uri
   const rawDocUri = r["document-uri"] || "";
-  const escapedDocUri = escapeHTML(rawDocUri || "about:blank");
+  const escapedDocUri = escapeHtml(rawDocUri || "about:blank");
   let docPath = rawDocUri || "N/A";
   try {
     if (rawDocUri) {
@@ -216,12 +201,12 @@ function sendToTelegram(report, ip, ua) {
     `🛡️ <b>CSP Violation Detected</b>`,
     ``,
     `📅 <b>Date:</b> ${date}`,
-    `🌐 <b>IP:</b> <code>${escapeHTML(ip)}</code>`,
-    `📄 <b>Doc:</b> <a href="${escapedDocUri}">${escapeHTML(docPath)}</a>`,
-    `🚫 <b>Blocked:</b> <code>${escapeHTML(r["blocked-uri"] || "inline/eval")}</code>`,
-    `🛠️ <b>Directive:</b> <code>${escapeHTML(r["violated-directive"])}</code>`,
-    `🔍 <b>Sample:</b> <code>${escapeHTML(sample)}</code>`,
-    `📱 <b>UA:</b> <code>${escapeHTML(ua.substring(0, 80))}</code>`,
+    `🌐 <b>IP:</b> <code>${escapeHtml(ip)}</code>`,
+    `📄 <b>Doc:</b> <a href="${escapedDocUri}">${escapeHtml(docPath)}</a>`,
+    `🚫 <b>Blocked:</b> <code>${escapeHtml(r["blocked-uri"] || "inline/eval")}</code>`,
+    `🛠️ <b>Directive:</b> <code>${escapeHtml(r["violated-directive"])}</code>`,
+    `🔍 <b>Sample:</b> <code>${escapeHtml(sample)}</code>`,
+    `📱 <b>UA:</b> <code>${escapeHtml(ua.substring(0, 80))}</code>`,
   ];
 
   const caption = lines.join("\n");

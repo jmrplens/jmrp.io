@@ -19,15 +19,7 @@ if (!fs.existsSync(deployDir)) {
     process.exit(1);
 }
 
-// Helper: Escape HTML characters
-function escapeHtml(unsafe) {
-    return unsafe
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
-}
+
 
 // Helper: Scan for all HTML reports
 function findReports(dir, fileList = []) {
