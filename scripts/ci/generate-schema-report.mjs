@@ -15,6 +15,15 @@ if (!fs.existsSync(REPORT_FILE)) {
 const data = JSON.parse(fs.readFileSync(REPORT_FILE, "utf-8"));
 const { summary, results } = data;
 
+function escapeHtml(unsafe) {
+  return unsafe
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 function syntaxHighlight(json) {
   if (typeof json !== "string") {
     json = JSON.stringify(json, undefined, 2);
@@ -24,7 +33,7 @@ function syntaxHighlight(json) {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;");
   return json.replace(
-    /("(\u[a-zA-Z0-9]{4}|[^\\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
+    /("(\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
     function (match) {
       let cls = "number";
       if (/^"/.test(match)) {
@@ -57,7 +66,7 @@ function renderVisual(data) {
     let html = '<div class="v-object">';
 
     if (type) {
-      html += `<div class="v-type-badge">${type}</div>`;
+      html += `<div class="v-type-badge">${escapeHtml(type)}</div>`;
     }
 
     const keys = Object.keys(data).filter(
@@ -69,7 +78,7 @@ function renderVisual(data) {
     keys.forEach((key) => {
       html += `
                 <div class="v-row">
-                    <div class="v-key">${key}:</div>
+                    <div class="v-key">${escapeHtml(key)}:</div>
                     <div class="v-val">${renderVisual(data[key])}</div>
                 </div>`;
     });
@@ -80,15 +89,16 @@ function renderVisual(data) {
   // Primitive values
   if (typeof data === "string") {
     if (data.startsWith("http")) {
+      const escapedUrl = escapeHtml(data);
       if (data.match(/\.(jpg|jpeg|png|webp|gif|svg)$/i)) {
-        return `<a href="${data}" target="_blank"><img src="${data}" class="v-img" loading="lazy" /></a>`;
+        return `<a href="${escapedUrl}" target="_blank"><img src="${escapedUrl}" class="v-img" loading="lazy" /></a>`;
       }
-      return `<a href="${data}" target="_blank" class="v-link">${data}</a>`;
+      return `<a href="${escapedUrl}" target="_blank" class="v-link">${escapedUrl}</a>`;
     }
-    return `<span class="v-string">"${data}"</span>`;
+    return `<span class="v-string">"${escapeHtml(data)}"</span>`;
   }
 
-  return `<span class="v-prim">${data}</span>`;
+  return `<span class="v-prim">${escapeHtml(String(data))}</span>`;
 }
 
 const html = `
@@ -107,6 +117,7 @@ const html = `
             --border-color: #dee2e6;
             --success: #198754;
             --warning: #ffc107;
+            --warning-dark: #856404;
             --danger: #dc3545;
             --primary: #0d6efd;
             --shadow: 0 4px 6px rgba(0,0,0,0.05);
@@ -127,6 +138,7 @@ const html = `
                 --text-muted: #a0a0a0;
                 --border-color: #333333;
                 --primary: #6ea8fe;
+                --warning-dark: #ffc107; /* Brighter in dark mode */
                 --shadow: 0 4px 6px rgba(0,0,0,0.3);
                 --code-bg: #2d2d30;
                 
@@ -149,8 +161,9 @@ const html = `
         .results-list { display: flex; flex-direction: column; gap: 1rem; }
         .result-item { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; }
         
-        .result-header { padding: 1rem; display: flex; align-items: center; justify-content: space-between; cursor: pointer; background: rgba(128,128,128,0.02); transition: background 0.2s; }
+        .result-header { padding: 1rem; display: flex; align-items: center; justify-content: space-between; cursor: pointer; background: rgba(128,128,128,0.02); transition: background 0.2s; outline: none; }
         .result-header:hover { background: rgba(128,128,128,0.05); }
+        .result-header:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
         .page-name { font-weight: 600; font-family: monospace; font-size: 0.9rem; }
         .status-badge { padding: 0.25rem 0.75rem; border-radius: 99px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; }
         .status-pass { background-color: rgba(25, 135, 84, 0.1); color: var(--success); }
@@ -166,8 +179,9 @@ const html = `
         .issue-type { font-weight: 700; font-size: 0.85rem; margin-bottom: 0.25rem; display: flex; align-items: center; gap: 0.5rem; }
         .issue-msg { font-size: 0.9rem; color: var(--text-main); margin-left: 1.5rem; }
 
-        /* Schema Viewer Styles */
-        .schema-container { margin-top: 2rem; border-top: 1px dashed var(--border-color); padding-top: 1.5rem; }
+        .schema-viewer { margin-top: 1.5rem; }
+        .schema-title { font-size: 0.9rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.25rem; display: inline-block; }
+        
         .schema-tabs { display: flex; gap: 1rem; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); }
         .tab-btn { padding: 0.5rem 1rem; cursor: pointer; border: none; background: none; font-weight: 600; color: var(--text-muted); border-bottom: 2px solid transparent; }
         .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
@@ -213,6 +227,7 @@ const html = `
 <body>
     <div class="container">
         <h1>🏷️ Schema.org Report</h1>
+        <p style="text-align: center; color: var(--text-muted); margin-bottom: 2rem;">Generated on ${new Date().toLocaleString()}</p>
         
         <div class="summary-grid">
             <div class="card">
@@ -229,7 +244,7 @@ const html = `
             </div>
             <div class="card">
                 <div class="card-label">Warnings</div>
-                <div class="card-value" style="color: ${summary.totalWarnings > 0 ? "#ffc107" : "inherit"}">${summary.totalWarnings}</div>
+                <div class="card-value" style="color: ${summary.totalWarnings > 0 ? "var(--warning-dark)" : "inherit"}">${summary.totalWarnings}</div>
             </div>
         </div>
 
@@ -259,15 +274,15 @@ const html = `
                   r.errors.forEach((e) => {
                     detailsHtml += `
                             <div class="issue issue-error">
-                                <div class="issue-type">❌ Error (Schema ${e.index + 1}: ${e.type})</div>
-                                ${e.errors.map((msg) => `<div class="issue-msg">${msg}</div>`).join("")}
+                                <div class="issue-type">❌ Error (Schema ${e.index + 1}: ${escapeHtml(e.type || "Unknown")})</div>
+                                ${e.errors.map((msg) => `<div class="issue-msg">${escapeHtml(msg)}</div>`).join("")}
                             </div>`;
                   });
                   r.warnings.forEach((w) => {
                     detailsHtml += `
                             <div class="issue issue-warning">
-                                <div class="issue-type">⚠️ Warning (Schema ${w.index + 1}: ${w.type})</div>
-                                ${w.warnings.map((msg) => `<div class="issue-msg">${msg}</div>`).join("")}
+                                <div class="issue-type">⚠️ Warning (Schema ${w.index + 1}: ${escapeHtml(w.type || "Unknown")})</div>
+                                ${w.warnings.map((msg) => `<div class="issue-msg">${escapeHtml(msg)}</div>`).join("")}
                             </div>`;
                   });
                   detailsHtml += "</div>";
@@ -281,7 +296,7 @@ const html = `
                     detailsHtml += `
                             <div class="schema-block" style="margin-bottom: 2rem;">
                                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
-                                    <div style="font-weight:700; color:var(--text-muted);">Schema ${i + 1}</div>
+                                    <div style="font-weight:700; color:var(--text-muted);">Schema ${i + 1}: ${escapeHtml(schema["@type"] || "Unknown")}</div>
                                     <div class="schema-tabs" style="margin-bottom:0; border-bottom:none;">
                                         <button id="${schemaId}-btn-visual" class="tab-btn active" onclick="switchTab('${schemaId}', 'visual')">Visual</button>
                                         <button id="${schemaId}-btn-code" class="tab-btn" onclick="switchTab('${schemaId}', 'code')">JSON</button>
@@ -303,7 +318,7 @@ const html = `
                 return `
                     <details class="result-item">
                         <summary class="result-header">
-                            <span class="page-name">${r.file}</span>
+                            <span class="page-name">${escapeHtml(r.file)}</span>
                             <span class="status-badge ${badgeClass}">${label}</span>
                         </summary>
                         <div class="details">${detailsHtml}</div>

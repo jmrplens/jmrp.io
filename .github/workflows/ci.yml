@@ -420,16 +420,27 @@ jobs:
         run: node scripts/ci/validate-schema.mjs dist
       - name: Generate Schema Report
         if: always()
-        run: node scripts/ci/generate-schema-report.mjs
+        run: |
+          if [ -f schema-report.json ]; then
+            echo "schema-report.json found. Generating HTML report..."
+            node scripts/ci/generate-schema-report.mjs
+          else
+            echo "schema-report.json not found. Skipping generation."
+          fi
       - name: Deploy Schema Report to Surge
         if: github.event_name == 'pull_request' && always()
         run: |
-          mkdir -p schema-deploy
-          cp schema-report.html schema-deploy/index.html
-          pnpm exec surge ./schema-deploy jmrp-schema-pr-${{ github.event.number }}.surge.sh --token ${{ secrets.SURGE_TOKEN }}
+          if [ -f schema-report.html ]; then
+            mkdir -p schema-deploy
+            cp schema-report.html schema-deploy/index.html
+            pnpm exec surge ./schema-deploy jmrp-schema-pr-${{ github.event.number }}.surge.sh --token ${{ secrets.SURGE_TOKEN }}
+          fi
       - name: Format Schema Comment
         if: github.event_name == 'pull_request' && always()
-        run: node scripts/ci/format-schema-report.js schema-report.json > schema_comment.md
+        run: |
+          if [ -f schema-report.json ]; then
+            node scripts/ci/format-schema-report.mjs schema-report.json > schema_comment.md
+          fi
       - name: Post Schema Validation Comment
         if: github.event_name == 'pull_request' && always()
         uses: actions/github-script@v8
@@ -439,22 +450,30 @@ jobs:
           script: |
             const fs = require('fs');
             const commentFile = 'schema_comment.md';
+
             try {
               if (fs.existsSync(commentFile)) {
                 let comment = fs.readFileSync(commentFile, 'utf8');
                 const surgeUrl = process.env.SURGE_URL;
-                if (surgeUrl) {
+                
+                if (surgeUrl && /^jmrp-schema-pr-\d+\.surge\.sh$/.test(surgeUrl)) {
                   comment += `\n\n#### 🌐 Live Report\n> 🚀 [**Open Schema Validation Report**](https://${surgeUrl}) for detailed insights.`;
+                } else if (surgeUrl) {
+                   console.warn('Skipping live report link due to invalid SURGE_URL format:', surgeUrl);
                 }
+
                 await github.rest.issues.createComment({
                   issue_number: context.issue.number,
                   owner: context.repo.owner,
                   repo: context.repo.repo,
                   body: comment,
                 });
+              } else {
+                console.log("Comment file not found (validation might have failed completely), posting fallback.");
+                // Optional: Post fallback
               }
             } catch (e) {
-              console.error(e);
+              core.setFailed(`Failed to post schema validation comment: ${e.message}`);
             }
 
   image-optimization:
