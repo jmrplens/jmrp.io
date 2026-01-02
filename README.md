@@ -130,27 +130,44 @@ This project employs a rigorous testing pipeline to ensure quality and complianc
 
 ```mermaid
 graph TD
-    A[Push / PR] --> B{Lint & Security}
-    B --> C[Build Artifact]
-    C --> D[Accessibility Tests]
-    C --> E[Lighthouse Audit]
-    C --> F[Functional Tests]
-    C --> G[Validations]
+    Trigger[Push / PR]
 
-    subgraph "Parallel Testing"
-        D -- Matrix: Light/Dark --> D1((A11y Reports))
-        E -- Matrix: 4 Jobs --> E1((LH Results))
-        F --> F1((Playwright Report))
-        G --> G1((Validation Reports))
+    subgraph "Parallel Analysis (No Build Req.)"
+        Lint[Lint & Type Check]
+        Links[Link Checker]
+        Spell[Spell Checker]
+        CodeQL
+        Sonar[SonarCloud]
+        Snyk[Snyk Security]
     end
 
-    D1 --> H1[Aggregate & Dashboard]
-    H1 --> I1[Deploy to Surge]
-    I1 --> J1[PR Comment]
+    Trigger --> Lint
+    Trigger --> Links
+    Trigger --> Spell
+    Trigger --> CodeQL
+    Trigger --> Sonar
+    Trigger --> Snyk
 
-    E1 --> H2[Aggregate & Dashboard]
-    H2 --> I2[Deploy to Surge]
-    I2 --> J2[PR Comment]
+    Trigger --> Build[Build Artifact]
+
+    subgraph "Post-Build Tests"
+        Build --> A11y[Accessibility Tests]
+        Build --> LH[Lighthouse Audit]
+        Build --> Func[Functional Tests]
+        Build --> Valid[Validations]
+    end
+
+    subgraph "A11y Reporting"
+        A11y -- Matrix: Light/Dark --> A11yAgg[Aggregate & Dashboard]
+        A11yAgg --> A11yDep[Deploy to Surge]
+        A11yDep --> A11yCom[PR Comment]
+    end
+
+    subgraph "Lighthouse Reporting"
+        LH -- Matrix: 4 Jobs --> LHAgg[Aggregate & Dashboard]
+        LHAgg --> LHDep[Deploy to Surge]
+        LHDep --> LHCom[PR Comment]
+    end
 ```
 
 ### Accessibility Testing
