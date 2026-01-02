@@ -110,7 +110,7 @@ async function validateStructure(content, results) {
     }
 
     const rss = feedXml.rss;
-    if (rss.$ && rss.$.version) {
+    if (rss.$?.version) {
       if (rss.$.version !== "2.0") {
         results.warnings.push(`RSS version is ${rss.$.version}, expected 2.0`);
       }

@@ -84,10 +84,7 @@ export default async function postHtmlValidationComment({ github, context }) {
   const surgeUrl = process.env.SURGE_URL;
 
   try {
-    if (!fs.existsSync("html-validation.json")) {
-      comment =
-        "### ⚠️ HTML5 Validation\n\n> ⚠️ Report file not found. Check build logs.";
-    } else {
+    if (fs.existsSync("html-validation.json")) {
       const rawContent = fs.readFileSync("html-validation.json", "utf8").trim();
 
       if (!rawContent || rawContent === "undefined") {
@@ -103,6 +100,9 @@ export default async function postHtmlValidationComment({ github, context }) {
           console.error("HTML validation parse error:", parseError);
         }
       }
+    } else {
+      comment =
+        "### ⚠️ HTML5 Validation\n\n> ⚠️ Report file not found. Check build logs.";
     }
   } catch (e) {
     comment = "### ⚠️ HTML5 Validation\n\n> ❌ Error processing report.";

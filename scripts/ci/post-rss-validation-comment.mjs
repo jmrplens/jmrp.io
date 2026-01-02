@@ -72,13 +72,13 @@ export default async function postRssValidationComment({ github, context }) {
   let comment;
 
   try {
-    if (!fs.existsSync("rss-validation.json")) {
-      comment =
-        "### 📡 RSS Validation\n\n⚠️ **Report file not found.**\n\n> Please check the build logs for details.";
-    } else {
+    if (fs.existsSync("rss-validation.json")) {
       const report = JSON.parse(fs.readFileSync("rss-validation.json", "utf8"));
       const surgeUrl = process.env.SURGE_URL;
       comment = buildCommentFromReport(report, surgeUrl);
+    } else {
+      comment =
+        "### 📡 RSS Validation\n\n⚠️ **Report file not found.**\n\n> Please check the build logs for details.";
     }
   } catch (e) {
     comment = "### 📡 RSS Validation\n\n❌ **Error processing report.**";

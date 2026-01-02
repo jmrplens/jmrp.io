@@ -43,16 +43,16 @@ console.log("### ♿ Accessibility Report");
 console.log("");
 
 // Status Header
-const statusLight = results.light
-  ? results.light.failed === 0
+const statusLight = !results.light
+  ? "—"
+  : results.light.failed === 0
     ? "✅ Passed"
-    : "❌ Failed"
-  : "—";
-const statusDark = results.dark
-  ? results.dark.failed === 0
+    : "❌ Failed";
+const statusDark = !results.dark
+  ? "—"
+  : results.dark.failed === 0
     ? "✅ Passed"
-    : "❌ Failed"
-  : "—";
+    : "❌ Failed";
 
 console.log("| Theme | Status | Passed | Failed | Incomplete |");
 console.log("| :--- | :--- | :---: | :---: | :---: |");
