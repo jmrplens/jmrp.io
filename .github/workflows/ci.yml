@@ -253,7 +253,7 @@ jobs:
         if: github.event_name == 'pull_request'
         uses: actions/github-script@v8
         env:
-          SURGE_URL: jmrp-a11y-pr-${{ github.event.number }}.surge.sh
+          SURGE_URL: ${{ secrets.SURGE_TOKEN != '' && format('jmrp-a11y-pr-{0}.surge.sh', github.event.number) || '' }}
         with:
           script: |
             const fs = require('fs');
@@ -356,7 +356,7 @@ jobs:
         if: github.event_name == 'pull_request'
         uses: actions/github-script@v8
         env:
-          SURGE_URL: jmrp-html-pr-${{ github.event.number }}.surge.sh
+          SURGE_URL: ${{ secrets.SURGE_TOKEN != '' && format('jmrp-html-pr-{0}.surge.sh', github.event.number) || '' }}
         with:
           script: |
             const { default: script } = await import(`${process.env.GITHUB_WORKSPACE}/scripts/ci/post-html-validation-comment.mjs`)
@@ -402,7 +402,7 @@ jobs:
         if: github.event_name == 'pull_request' && always()
         uses: actions/github-script@v8
         env:
-          SURGE_URL: jmrp-rss-pr-${{ github.event.number }}.surge.sh
+          SURGE_URL: ${{ secrets.SURGE_TOKEN != '' && format('jmrp-rss-pr-{0}.surge.sh', github.event.number) || '' }}
         with:
           script: |
             const { default: script } = await import(`${process.env.GITHUB_WORKSPACE}/scripts/ci/post-rss-validation-comment.mjs`)
@@ -456,7 +456,7 @@ jobs:
         if: github.event_name == 'pull_request' && always()
         uses: actions/github-script@v8
         env:
-          SURGE_URL: jmrp-schema-pr-${{ github.event.number }}.surge.sh
+          SURGE_URL: ${{ secrets.SURGE_TOKEN != '' && format('jmrp-schema-pr-{0}.surge.sh', github.event.number) || '' }}
         with:
           script: |
             const fs = require('fs');
@@ -524,7 +524,7 @@ jobs:
         if: github.event_name == 'pull_request'
         uses: actions/github-script@v8
         env:
-          SURGE_URL: jmrp-img-pr-${{ github.event.number }}.surge.sh
+          SURGE_URL: ${{ secrets.SURGE_TOKEN != '' && format('jmrp-img-pr-{0}.surge.sh', github.event.number) || '' }}
         with:
           script: |
             const { default: script } = await import(`${process.env.GITHUB_WORKSPACE}/scripts/ci/post-image-optimization-comment.mjs`)
@@ -571,7 +571,7 @@ jobs:
         if: github.event_name == 'pull_request' && always()
         uses: actions/github-script@v8
         env:
-          SURGE_URL: jmrp-functional-pr-${{ github.event.number }}.surge.sh
+          SURGE_URL: ${{ secrets.SURGE_TOKEN != '' && format('jmrp-functional-pr-{0}.surge.sh', github.event.number) || '' }}
         with:
           script: |
             const { default: script } = await import(`${process.env.GITHUB_WORKSPACE}/scripts/ci/post-functional-test-comment.mjs`)
@@ -676,7 +676,7 @@ jobs:
         if: github.event_name == 'pull_request'
         uses: actions/github-script@v8
         env:
-          SURGE_URL: jmrp-lh-pr-${{ github.event.number }}.surge.sh
+          SURGE_URL: ${{ secrets.SURGE_TOKEN != '' && format('jmrp-lh-pr-{0}.surge.sh', github.event.number) || '' }}
         with:
           script: |
             const fs = require('fs');
