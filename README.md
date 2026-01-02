@@ -131,7 +131,7 @@ This project employs a rigorous testing pipeline to ensure quality and complianc
 ### Pipeline Overview
 
 ```mermaid
-graph LR
+graph TD
     Trigger[Push / PR] --> Phase1[Analysis & Build]
     Phase1 --> Phase2[Deep Testing]
     Phase2 --> Phase3[Reporting]
@@ -142,10 +142,12 @@ graph LR
 Static analysis tools run in parallel with the production build to provide fast feedback.
 
 ```mermaid
-graph TD
-    Trigger[Push / PR]
+graph LR
+    Trigger[Push / PR] --> SA[Static Analysis]
+    Trigger --> Build[Build Artifact]
 
-    subgraph "Static Analysis"
+    subgraph SA [Static Analysis]
+        direction TB
         Lint[Lint & Type Check]
         Links[Link Checker]
         Spell[Spell Checker]
@@ -153,15 +155,6 @@ graph TD
         Sonar[SonarCloud]
         Snyk[Snyk Security]
     end
-
-    Trigger --> Lint
-    Trigger --> Links
-    Trigger --> Spell
-    Trigger --> CodeQL
-    Trigger --> Sonar
-    Trigger --> Snyk
-
-    Trigger --> Build[Build Artifact]
 ```
 
 ### Phase 2: Deep Testing & Reporting
@@ -169,24 +162,27 @@ graph TD
 Once the build is ready, we execute comprehensive testing matrices and generate unified reports.
 
 ```mermaid
-graph TD
-    Build[Build Artifact]
+graph LR
+    Build[Build Artifact] --> TM[Testing Matrices]
+    TM --> Rep[Reporting]
 
-    subgraph "Testing Matrices"
-        Build --> A11y[Accessibility Tests]
-        Build --> LH[Lighthouse Audit]
-        Build --> Func[Functional Tests]
-        Build --> Valid[Validations]
+    subgraph TM [Testing Matrices]
+        direction TB
+        A11y[Accessibility Tests]
+        LH[Lighthouse Audit]
+        Func[Functional Tests]
+        subgraph Valid [Validations]
+            HTML5
+            RSS
+            Schema
+            Images
+        end
     end
 
-    subgraph "A11y Reporting"
-        A11y -- Light/Dark --> A11yAgg[Dashboard]
-        A11yAgg --> A11yCom[PR Comment]
-    end
-
-    subgraph "Lighthouse Reporting"
-        LH -- 4 Jobs (Dev/Theme) --> LHAgg[Dashboard]
-        LHAgg --> LHCom[PR Comment]
+    subgraph Rep [Reporting]
+        direction TB
+        A11y -- Dashboard --> A11yRep[A11y PR Comment]
+        LH -- Dashboard --> LHRep[LH PR Comment]
     end
 ```
 
