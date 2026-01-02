@@ -83,9 +83,21 @@ const getAvg = (list) => {
   return Math.round(totalP / list.length);
 };
 
+const PAGE_NAMES = {
+  "/": "Home",
+  "/cv/": "CV",
+  "/publications/": "Publications",
+  "/github/": "Repositories",
+  "/services/": "Services",
+  "/blog/": "Blog",
+};
+
 const rows = Object.entries(results)
   .sort()
   .map(([url, themes]) => {
+    // Only include main pages
+    if (!PAGE_NAMES[url]) return null;
+
     const formatScore = (val) => {
       if (val === null) return "—";
       const icon = val >= 90 ? "🟢" : val >= 50 ? "🟠" : "🔴";
@@ -93,26 +105,14 @@ const rows = Object.entries(results)
     };
 
     // Columns: Mobile Light | Desktop Light | Mobile Dark | Desktop Dark
-    // Only if themes exist
     const ml = getAvg(themes.light?.mobile);
     const dl = getAvg(themes.light?.desktop);
     const md = getAvg(themes.dark?.mobile);
     const dd = getAvg(themes.dark?.desktop);
 
-    return (
-      "| `" +
-      url +
-      "` | " +
-      formatScore(ml) +
-      " | " +
-      formatScore(dl) +
-      " | " +
-      formatScore(md) +
-      " | " +
-      formatScore(dd) +
-      " |"
-    );
-  });
+    return `| **${PAGE_NAMES[url]}** | ${formatScore(ml)} | ${formatScore(dl)} | ${formatScore(md)} | ${formatScore(dd)} |`;
+  })
+  .filter((row) => row !== null);
 
 if (rows.length === 0) {
   console.log("No valid Lighthouse results parsed.");
