@@ -2,7 +2,7 @@
  * Format Schema Report for PR Comment
  */
 
-import fs from "fs";
+import fs from "node:fs";
 
 const REPORT_FILE = process.argv[2] || "schema-report.json";
 

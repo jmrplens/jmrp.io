@@ -8,9 +8,9 @@
  * It is used in the CI pipeline to provide visual feedback on HTML quality.
  */
 
-import fs from "fs";
-import path from "path";
-import { execSync } from "child_process";
+import fs from "node:fs";
+import path from "node:path";
+import { execSync } from "node:child_process";
 import { escapeHtml } from "../utils/html.mjs";
 
 const JSON_REPORT = "html-validation.json";

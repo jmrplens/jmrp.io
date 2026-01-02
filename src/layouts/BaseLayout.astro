@@ -70,7 +70,7 @@ const {
                         : "dark";
                 };
                 const t = e();
-                document.documentElement.setAttribute("data-theme", t);
+                document.documentElement.dataset.theme = t;
                 if (t === "light") {
                     document.documentElement.classList.add("light-mode");
                     document.documentElement.classList.remove("dark-mode");

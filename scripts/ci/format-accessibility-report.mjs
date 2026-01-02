@@ -4,8 +4,8 @@
  * Scans for accessibility summaries (Light/Dark) and generates a Markdown table.
  */
 
-import fs from "fs";
-import path from "path";
+import fs from "node:fs";
+import path from "node:path";
 
 const deployDir = process.argv[2] || "a11y-deploy";
 

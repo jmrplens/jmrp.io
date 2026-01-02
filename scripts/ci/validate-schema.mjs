@@ -12,8 +12,8 @@
  * - Generates a detailed console summary and exits with error if issues are found.
  */
 
-import fs from "fs";
-import path from "path";
+import fs from "node:fs";
+import path from "node:path";
 import { glob } from "glob";
 
 const DIST_DIR = process.argv[2] || "dist";

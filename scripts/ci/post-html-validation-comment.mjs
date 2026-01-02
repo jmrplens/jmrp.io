@@ -6,7 +6,7 @@
  * for all generated pages as a PR comment.
  */
 
-import fs from "fs";
+import fs from "node:fs";
 
 export default async ({ github, context }) => {
   let comment = "";

@@ -6,7 +6,7 @@
  * build assets size as a PR comment, including a list of the largest files.
  */
 
-import fs from "fs";
+import fs from "node:fs";
 
 export default async ({ github, context }) => {
   const reportPath = "bundle-analysis.json";
