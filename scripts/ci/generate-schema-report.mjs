@@ -3,6 +3,7 @@
  */
 
 import fs from "node:fs";
+import { escapeHtml } from "../utils/html.mjs";
 
 const REPORT_FILE = "schema-report.json";
 const OUTPUT_FILE = "schema-report.html";
@@ -15,41 +16,37 @@ if (!fs.existsSync(REPORT_FILE)) {
 const data = JSON.parse(fs.readFileSync(REPORT_FILE, "utf-8"));
 const { summary, results } = data;
 
-function escapeHtml(unsafe) {
-  return unsafe
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
-
 function syntaxHighlight(json) {
   if (typeof json !== "string") {
     json = JSON.stringify(json, undefined, 2);
   }
   json = json
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
-  return json.replace(
-    /("(\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
-    function (match) {
-      let cls = "number";
-      if (/^"/.test(match)) {
-        if (/:$/.test(match)) {
-          cls = "key";
-        } else {
-          cls = "string";
-        }
-      } else if (/true|false/.test(match)) {
-        cls = "boolean";
-      } else if (/null/.test(match)) {
-        cls = "null";
-      }
-      return '<span class="' + cls + '">' + match + "</span>";
-    },
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;");
+  const strPattern = /("(\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?)/.source;
+  const boolPattern = /\b(true|false|null)\b/.source;
+  const numPattern = /-?\d+(?:\.\d*)?(?:[eE][+-]?\d+)?/.source;
+  const jsonTokenRegex = new RegExp(
+    `(${strPattern}|${boolPattern}|${numPattern})`,
+    "g",
   );
+
+  return json.replaceAll(jsonTokenRegex, function (match) {
+    let cls = "number";
+    if (match.startsWith('"')) {
+      if (match.endsWith(":")) {
+        cls = "key";
+      } else {
+        cls = "string";
+      }
+    } else if (/true|false/.test(match)) {
+      cls = "boolean";
+    } else if (/null/.test(match)) {
+      cls = "null";
+    }
+    return '<span class="' + cls + '">' + match + "</span>";
+  });
 }
 
 function renderVisual(data) {
@@ -58,7 +55,11 @@ function renderVisual(data) {
 
   if (Array.isArray(data)) {
     if (data.length === 0) return '<span class="v-empty">[]</span>';
-    return `<div class="v-list">${data.map((item) => `<div class="v-list-item">${renderVisual(item)}</div>`).join("")}</div>`;
+
+    const listItems = data
+      .map((item) => `<div class="v-list-item">${renderVisual(item)}</div>`)
+      .join("");
+    return `<div class="v-list">${listItems}</div>`;
   }
 
   if (typeof data === "object") {
@@ -90,7 +91,7 @@ function renderVisual(data) {
   if (typeof data === "string") {
     if (data.startsWith("http")) {
       const escapedUrl = escapeHtml(data);
-      if (data.match(/\.(jpg|jpeg|png|webp|gif|svg)$/i)) {
+      if (/\.(jpg|jpeg|png|webp|gif|svg)$/i.exec(data)) {
         return `<a href="${escapedUrl}" target="_blank"><img src="${escapedUrl}" class="v-img" loading="lazy" /></a>`;
       }
       return `<a href="${escapedUrl}" target="_blank" class="v-link">${escapedUrl}</a>`;
@@ -251,18 +252,20 @@ const html = `
         <div class="results-list">
             ${results
               .map((r, idx) => {
-                const status =
-                  r.valid && r.warnings.length === 0
-                    ? "pass"
-                    : r.errors.length > 0
-                      ? "fail"
-                      : "warn";
-                const label =
-                  status === "pass"
-                    ? "Valid"
-                    : status === "fail"
-                      ? "Invalid"
-                      : "Warning";
+                let status = "warn";
+                if (r.valid && r.warnings.length === 0) {
+                  status = "pass";
+                } else if (r.errors.length > 0) {
+                  status = "fail";
+                }
+
+                let label = "Warning";
+                if (status === "pass") {
+                  label = "Valid";
+                } else if (status === "fail") {
+                  label = "Invalid";
+                }
+
                 const badgeClass = `status-${status}`;
                 const uniqueId = `schema-${idx}`;
 

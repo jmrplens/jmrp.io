@@ -92,7 +92,9 @@ async function analyze() {
   console.log(`Total Size: ${stats.readableTotalSize}`);
 }
 
-analyze().catch((err) => {
+try {
+  await analyze();
+} catch (err) {
   console.error(err);
   process.exit(1);
-});
+}

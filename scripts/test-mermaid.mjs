@@ -55,4 +55,9 @@ async function test() {
   }
 }
 
-test();
+try {
+  await test();
+} catch (error) {
+  console.error("Test failed:", error);
+  process.exit(1);
+}

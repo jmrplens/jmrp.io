@@ -13,11 +13,12 @@
  * Requires TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID in environment variables or .env file.
  */
 
-import http from "http";
-import https from "https";
+import http from "node:http";
+import https from "node:https";
 import fs from "node:fs";
-import { fileURLToPath } from "url";
+import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
+import { escapeHtml } from "./utils/html.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -30,7 +31,8 @@ function loadEnv() {
   if (fs.existsSync(envPath)) {
     const content = fs.readFileSync(envPath, "utf8");
     content.split("\n").forEach((line) => {
-      const match = line.match(/^\s*([\w.-]+)\s*=\s*(.*)?\s*$/);
+      const envRegex = /^\s*([\w.-]+)\s*=\s*(.*)\s*$/;
+      const match = envRegex.exec(line);
       if (match) {
         const key = match[1];
         let value = match[2] || "";
@@ -51,7 +53,7 @@ const DEFAULT_PORT = 58291;
 const PORT = (() => {
   const envPort = process.env.CSP_REPORTER_PORT;
   if (!envPort) return DEFAULT_PORT;
-  const parsed = parseInt(envPort, 10);
+  const parsed = Number.parseInt(envPort, 10);
   return Number.isNaN(parsed) || parsed <= 0 ? DEFAULT_PORT : parsed;
 })();
 
@@ -170,24 +172,6 @@ function processReport(report, ip, ua) {
 }
 
 /**
- * Escapes HTML for Telegram message compatibility
- */
-function escapeHTML(str) {
-  if (!str) return "N/A";
-  return str.replace(
-    /[&<>"']/g,
-    (m) =>
-      ({
-        "&": "&amp;",
-        "<": "&lt;",
-        ">": "&gt;",
-        '"': "&quot;",
-        "'": "&#39;",
-      })[m],
-  );
-}
-
-/**
  * Sends the violation report to Telegram
  */
 function sendToTelegram(report, ip, ua) {
@@ -196,12 +180,12 @@ function sendToTelegram(report, ip, ua) {
     timeZone: "Europe/Madrid",
   });
 
-  let sample = (r["script-sample"] || "N/A").replace(/\n/g, " ").trim();
+  let sample = (r["script-sample"] || "N/A").replaceAll("\n", " ").trim();
   if (sample.length > 100) sample = sample.substring(0, 97) + "...";
 
   // Safely handle document-uri
   const rawDocUri = r["document-uri"] || "";
-  const escapedDocUri = escapeHTML(rawDocUri || "about:blank");
+  const escapedDocUri = escapeHtml(rawDocUri || "about:blank");
   let docPath = rawDocUri || "N/A";
   try {
     if (rawDocUri) {
@@ -216,12 +200,12 @@ function sendToTelegram(report, ip, ua) {
     `🛡️ <b>CSP Violation Detected</b>`,
     ``,
     `📅 <b>Date:</b> ${date}`,
-    `🌐 <b>IP:</b> <code>${escapeHTML(ip)}</code>`,
-    `📄 <b>Doc:</b> <a href="${escapedDocUri}">${escapeHTML(docPath)}</a>`,
-    `🚫 <b>Blocked:</b> <code>${escapeHTML(r["blocked-uri"] || "inline/eval")}</code>`,
-    `🛠️ <b>Directive:</b> <code>${escapeHTML(r["violated-directive"])}</code>`,
-    `🔍 <b>Sample:</b> <code>${escapeHTML(sample)}</code>`,
-    `📱 <b>UA:</b> <code>${escapeHTML(ua.substring(0, 80))}</code>`,
+    `🌐 <b>IP:</b> <code>${escapeHtml(ip)}</code>`,
+    `📄 <b>Doc:</b> <a href="${escapedDocUri}">${escapeHtml(docPath)}</a>`,
+    `🚫 <b>Blocked:</b> <code>${escapeHtml(r["blocked-uri"] || "inline/eval")}</code>`,
+    `🛠️ <b>Directive:</b> <code>${escapeHtml(r["violated-directive"])}</code>`,
+    `🔍 <b>Sample:</b> <code>${escapeHtml(sample)}</code>`,
+    `📱 <b>UA:</b> <code>${escapeHtml(ua.substring(0, 80))}</code>`,
   ];
 
   const caption = lines.join("\n");

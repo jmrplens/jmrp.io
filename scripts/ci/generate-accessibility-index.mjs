@@ -9,6 +9,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
+import { escapeHtml } from "../utils/html.mjs";
 
 const deployDir = process.argv[2] || "a11y-deploy";
 const indexPath = path.join(deployDir, "index.html");
@@ -16,16 +17,6 @@ const indexPath = path.join(deployDir, "index.html");
 if (!fs.existsSync(deployDir)) {
   console.error(`Deploy directory not found at ${deployDir}`);
   process.exit(1);
-}
-
-// Helper: Escape HTML characters
-function escapeHtml(unsafe) {
-  return unsafe
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
 }
 
 // Helper: Scan for all HTML reports
@@ -73,7 +64,14 @@ reports.forEach((r) => {
 function renderReportList(theme, list) {
   if (list.length === 0) return "";
 
-  const icon = theme === "light" ? "☀️" : theme === "dark" ? "🌙" : "❓";
+  let icon;
+  if (theme === "light") {
+    icon = "☀️";
+  } else if (theme === "dark") {
+    icon = "🌙";
+  } else {
+    icon = "❓";
+  }
   const title = theme.charAt(0).toUpperCase() + theme.slice(1);
 
   // Sort logic could be added here if filenames contain timestamps

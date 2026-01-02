@@ -35,10 +35,10 @@ if (summary.totalErrors > 0 || summary.totalWarnings > 0) {
         (acc, s) => acc + s.warnings.length,
         0,
       );
-      // Using template literals as suggested by Copilot for better readability
-      console.log(
-        `| \`${r.file}\` | ${errorCount > 0 ? `🔴 ${errorCount}` : "-"} | ${warningCount > 0 ? `⚠️ ${warningCount}` : "-"} |`,
-      );
+
+      const errorsCol = errorCount > 0 ? `🔴 ${errorCount}` : "-";
+      const warningsCol = warningCount > 0 ? `⚠️ ${warningCount}` : "-";
+      console.log(`| \`${r.file}\` | ${errorsCol} | ${warningsCol} |`);
     });
 } else {
   console.log("> All pages have valid structured data.");

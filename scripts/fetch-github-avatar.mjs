@@ -50,18 +50,16 @@ try {
   );
 
   // If the file doesn't exist, use fallbackPath as fallback
-  if (!fs.existsSync(outputPath)) {
-    if (fs.existsSync(fallbackPath)) {
-      console.log(`Copying ${fallbackPath} to ${outputPath} as fallback...`);
-      fs.copyFileSync(fallbackPath, outputPath);
-    } else {
-      console.error(
-        "Critical Error: Neither GitHub avatar nor fallback image found!",
-      );
-      process.exit(1);
-    }
-  } else {
+  if (fs.existsSync(outputPath)) {
     console.log("Using existing github-avatar.png from previous build.");
+  } else if (fs.existsSync(fallbackPath)) {
+    console.log(`Copying ${fallbackPath} to ${outputPath} as fallback...`);
+    fs.copyFileSync(fallbackPath, outputPath);
+  } else {
+    console.error(
+      "Critical Error: Neither GitHub avatar nor fallback image found!",
+    );
+    process.exit(1);
   }
 }
 

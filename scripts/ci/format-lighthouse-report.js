@@ -6,8 +6,8 @@
  * and outputs a Markdown table.
  */
 
-import fs from "fs";
-import path from "path";
+import fs from "node:fs";
+import path from "node:path";
 
 const lhDir = process.argv[2] || ".lighthouseci";
 
@@ -52,16 +52,19 @@ files.forEach((filePath) => {
       if (parsed.hostname === "localhost") {
         url = parsed.pathname || "/";
       }
-    } catch (e) {}
+    } catch (e) {
+      // Fallback to original URL if parsing fails
+      console.warn(`URL parsing failed for ${filePath}:`, e.message);
+    }
 
     const formFactor = json.configSettings?.formFactor || "mobile";
 
     // Detect theme
     const lowerPath = filePath.toLowerCase();
     let theme = "unknown";
-    if (lowerPath.includes("/light/") || lowerPath.includes("\light\ "))
+    if (lowerPath.includes("/light/") || lowerPath.includes("\\light\\"))
       theme = "light";
-    if (lowerPath.includes("/dark/") || lowerPath.includes("\dark\ "))
+    if (lowerPath.includes("/dark/") || lowerPath.includes("\\dark\\"))
       theme = "dark";
 
     const scores = {
@@ -73,7 +76,10 @@ files.forEach((filePath) => {
     if (results[url][theme][formFactor]) {
       results[url][theme][formFactor].push(scores);
     }
-  } catch (e) {}
+  } catch (e) {
+    // Skip invalid files
+    console.warn(`Failed to process ${filePath}:`, e.message);
+  }
 });
 
 // Calculate averages
@@ -93,14 +99,21 @@ const PAGE_NAMES = {
 };
 
 const rows = Object.entries(results)
-  .sort()
+  .sort((a, b) => a[0].localeCompare(b[0]))
   .map(([url, themes]) => {
     // Only include main pages
     if (!PAGE_NAMES[url]) return null;
 
     const formatScore = (val) => {
       if (val === null) return "—";
-      const icon = val >= 90 ? "🟢" : val >= 50 ? "🟠" : "🔴";
+      let icon;
+      if (val >= 90) {
+        icon = "🟢";
+      } else if (val >= 50) {
+        icon = "🟠";
+      } else {
+        icon = "🔴";
+      }
       return `${icon} ${val}`;
     };
 
@@ -123,5 +136,5 @@ if (rows.length === 0) {
   console.log("| :--- | :---: | :---: | :---: | :---: |");
   console.log(rows.join("\n"));
   console.log("");
-  console.log("_Scores represent the average Performance metric across runs.");
+  console.log("_Scores represent the average Performance metric across runs._");
 }

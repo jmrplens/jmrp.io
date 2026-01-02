@@ -3,7 +3,7 @@ import type { CollectionEntry } from "astro:content";
 export function getUniqueTags(posts: CollectionEntry<"posts">[]) {
   const tags = posts
     .flatMap((post) => post.data.tags)
-    .filter((tag) => tag !== undefined) as string[];
+    .filter((tag): tag is string => tag !== undefined);
 
   const tagCounts = tags.reduce(
     (acc, tag) => {

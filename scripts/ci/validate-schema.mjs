@@ -40,6 +40,70 @@ function extractJsonLd(html) {
 }
 
 /**
+ * Validates a Person schema
+ */
+function validatePersonSchema(schema, p, errors, warnings) {
+  if (!schema.name) errors.push(`${p}: Missing name`);
+  if (schema.url) {
+    try {
+      new URL(schema.url);
+    } catch {
+      warnings.push(`${p}: Invalid URL for url: "${schema.url}"`);
+    }
+  }
+}
+
+/**
+ * Validates a WebSite schema
+ */
+function validateWebSiteSchema(schema, p, errors, validateNested) {
+  if (!schema.name) errors.push(`${p}: Missing name`);
+  if (!schema.url) errors.push(`${p}: Missing url`);
+  validateNested("publisher");
+}
+
+/**
+ * Validates an Article or BlogPosting schema
+ */
+function validateArticleSchema(schema, p, errors, warnings, validateNested) {
+  if (!schema.headline) errors.push(`${p}: Missing headline`);
+
+  if (!schema.datePublished) {
+    warnings.push(`${p}: Missing datePublished`);
+  } else if (Number.isNaN(Date.parse(schema.datePublished))) {
+    errors.push(
+      `${p}: Invalid ISO date for datePublished: "${schema.datePublished}"`,
+    );
+  }
+
+  if (!schema.author) warnings.push(`${p}: Missing author`);
+  if (!schema.image) warnings.push(`${p}: Missing image (Rich Results)`);
+
+  validateNested("author");
+  validateNested("publisher");
+}
+
+/**
+ * Validates a BreadcrumbList schema
+ */
+function validateBreadcrumbListSchema(schema, p, errors) {
+  if (!schema.itemListElement || !Array.isArray(schema.itemListElement)) {
+    errors.push(`${p}: Missing or invalid itemListElement array`);
+    return;
+  }
+
+  schema.itemListElement.forEach((item, i) => {
+    const itemP = `${p}.itemListElement[${i}]`;
+    if (!item["@type"] || item["@type"] !== "ListItem") {
+      errors.push(`${itemP}: Must be ListItem`);
+    }
+    if (!item.position) errors.push(`${itemP}: Missing position`);
+    if (!item.name) errors.push(`${itemP}: Missing name`);
+    if (!item.item) errors.push(`${itemP}: Missing item URL`);
+  });
+}
+
+/**
  * Validates a single JSON-LD schema object
  */
 function validateSingleSchema(schema, prefix = "") {
@@ -47,6 +111,7 @@ function validateSingleSchema(schema, prefix = "") {
   const warnings = [];
 
   if (!schema || typeof schema !== "object") return { errors, warnings };
+
   if (!schema["@type"]) {
     errors.push(`${prefix ? prefix + ": " : ""}Missing @type property`);
     return { errors, warnings };
@@ -55,70 +120,39 @@ function validateSingleSchema(schema, prefix = "") {
   const type = schema["@type"];
   const p = prefix ? `${prefix} (${type})` : type;
 
-  const checkUrl = (url, name) => {
-    try {
-      new URL(url);
-    } catch {
-      warnings.push(`${p}: Invalid URL for ${name}: "${url}"`);
-    }
-  };
-
-  const checkDate = (date, name) => {
-    if (isNaN(Date.parse(date)))
-      errors.push(`${p}: Invalid ISO date for ${name}: "${date}"`);
-  };
-
+  // Helper function to validate nested schemas
   const validateNested = (propName) => {
-    if (schema[propName]) {
-      if (Array.isArray(schema[propName])) {
-        schema[propName].forEach((item, i) => {
-          if (typeof item === "object") {
-            const res = validateSingleSchema(item, `${p}.${propName}[${i}]`);
-            errors.push(...res.errors);
-            warnings.push(...res.warnings);
-          }
-        });
-      } else if (typeof schema[propName] === "object") {
-        const res = validateSingleSchema(schema[propName], `${p}.${propName}`);
-        errors.push(...res.errors);
-        warnings.push(...res.warnings);
-      }
+    if (!schema[propName]) return;
+
+    if (Array.isArray(schema[propName])) {
+      schema[propName].forEach((item, i) => {
+        if (typeof item === "object") {
+          const res = validateSingleSchema(item, `${p}.${propName}[${i}]`);
+          errors.push(...res.errors);
+          warnings.push(...res.warnings);
+        }
+      });
+    } else if (typeof schema[propName] === "object") {
+      const res = validateSingleSchema(schema[propName], `${p}.${propName}`);
+      errors.push(...res.errors);
+      warnings.push(...res.warnings);
     }
   };
 
+  // Validate based on schema type
   switch (type) {
     case "Person":
-      if (!schema.name) errors.push(`${p}: Missing name`);
-      if (schema.url) checkUrl(schema.url, "url");
+      validatePersonSchema(schema, p, errors, warnings);
       break;
     case "WebSite":
-      if (!schema.name) errors.push(`${p}: Missing name`);
-      if (!schema.url) errors.push(`${p}: Missing url`);
-      validateNested("publisher");
+      validateWebSiteSchema(schema, p, errors, validateNested);
       break;
     case "BlogPosting":
     case "Article":
-      if (!schema.headline) errors.push(`${p}: Missing headline`);
-      if (!schema.datePublished) warnings.push(`${p}: Missing datePublished`);
-      else checkDate(schema.datePublished, "datePublished");
-      if (!schema.author) warnings.push(`${p}: Missing author`);
-      if (!schema.image) warnings.push(`${p}: Missing image (Rich Results)`);
-      validateNested("author");
-      validateNested("publisher");
+      validateArticleSchema(schema, p, errors, warnings, validateNested);
       break;
     case "BreadcrumbList":
-      if (!schema.itemListElement || !Array.isArray(schema.itemListElement)) {
-        errors.push(`${p}: Missing or invalid itemListElement array`);
-      } else {
-        schema.itemListElement.forEach((item, i) => {
-          const itemP = `${p}.itemListElement[${i}]`;
-          if (!item["@type"] || item["@type"] !== "ListItem")
-            errors.push(`${itemP}: Must be ListItem`);
-          if (!item.position) errors.push(`${itemP}: Missing position`);
-          if (!item.name) errors.push(`${itemP}: Missing name`);
-          if (!item.item) errors.push(`${itemP}: Missing item URL`);
-        });
-      }
+      validateBreadcrumbListSchema(schema, p, errors);
       break;
   }
 
@@ -246,7 +280,9 @@ async function validateAllPages() {
   }
 }
 
-validateAllPages().catch((error) => {
+try {
+  await validateAllPages();
+} catch (error) {
   console.error("❌ Unexpected error:", error);
   process.exit(1);
-});
+}

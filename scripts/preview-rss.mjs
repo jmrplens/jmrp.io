@@ -144,4 +144,9 @@ async function generatePreview() {
   console.log(`✅ Preview generated at: ${path.resolve(OUTPUT_FILE)}`);
 }
 
-generatePreview().catch((err) => console.error(err));
+try {
+  await generatePreview();
+} catch (err) {
+  console.error(err);
+  process.exit(1);
+}

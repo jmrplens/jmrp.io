@@ -8,58 +8,81 @@
 
 import fs from "node:fs";
 
-export default async ({ github, context }) => {
-  let comment = "";
+/**
+ * Builds the summary table for the RSS report
+ */
+function buildSummaryTable(report, surgeUrl) {
+  let table = "| Property | Detail |\n";
+  table += "| :--- | :--- |\n";
+  table += "| 📄 File | `rss.xml` |\n";
+  table += `| 📦 Size | **${report.size} KB** |\n`;
+  table += `| 📝 Items | **${report.metadata.items}** posts |\n`;
+
+  if (report.metadata.latestItem) {
+    table += `| 🆕 Latest | "${report.metadata.latestItem.title}" |\n`;
+  }
+
+  if (surgeUrl) {
+    table += `| 🌐 Full Preview | [**Open Live RSS Preview**](https://${surgeUrl}) 🚀 |\n`;
+  }
+
+  return table + "\n";
+}
+
+/**
+ * Builds the issues section if there are errors or warnings
+ */
+function buildIssuesSection(report) {
+  if (report.errors.length === 0 && report.warnings.length === 0) {
+    return "";
+  }
+
+  let section =
+    "<details>\n<summary><b>🔍 View Issues & Alerts</b></summary>\n\n";
+
+  if (report.errors.length > 0) {
+    section += "#### ❌ Errors\n";
+    report.errors.forEach((e) => (section += `- ${e}\n`));
+  }
+
+  if (report.warnings.length > 0) {
+    section += "\n#### ⚠️ Warnings\n";
+    report.warnings.forEach((w) => (section += `- ${w}\n`));
+  }
+
+  return section + "</details>\n\n";
+}
+
+/**
+ * Builds the complete comment from the RSS validation report
+ */
+function buildCommentFromReport(report, surgeUrl) {
+  const icon = report.valid ? "✅" : "❌";
+  const status = report.valid ? "**Passed!**" : "**Validation failed**";
+
+  let comment = `### 📡 RSS Feed Validation\n\n${icon} ${status}\n\n`;
+  comment += buildSummaryTable(report, surgeUrl);
+  comment += buildIssuesSection(report);
+  comment += "---\n";
+
+  return comment;
+}
+
+export default async function postRssValidationComment({ github, context }) {
+  let comment;
 
   try {
     if (fs.existsSync("rss-validation.json")) {
       const report = JSON.parse(fs.readFileSync("rss-validation.json", "utf8"));
       const surgeUrl = process.env.SURGE_URL;
-
-      const icon = report.valid ? "✅" : "❌";
-      const status = report.valid ? "**Passed!**" : "**Validation failed**";
-
-      comment = `### 📡 RSS Feed Validation\n\n${icon} ${status}\n\n`;
-
-      comment += "| Property | Detail |\n";
-      comment += "| :--- | :--- |\n";
-      comment += "| 📄 File | `rss.xml` |\n";
-      comment += `| 📦 Size | **${report.size} KB** |\n`;
-      comment += `| 📝 Items | **${report.metadata.items}** posts |\n`;
-
-      if (report.metadata.latestItem) {
-        comment += `| 🆕 Latest | \"${report.metadata.latestItem.title}\" |\n`;
-      }
-
-      if (surgeUrl) {
-        comment += `| 🌐 Full Preview | [**Open Live RSS Preview**](https://${surgeUrl}) 🚀 |\n`;
-      }
-
-      comment += "\n";
-
-      if (report.errors.length > 0 || report.warnings.length > 0) {
-        comment +=
-          "<details>\n<summary><b>🔍 View Issues & Alerts</b></summary>\n\n";
-
-        if (report.errors.length > 0) {
-          comment += "#### ❌ Errors\n";
-          report.errors.forEach((e) => (comment += `- ${e}\n`));
-        }
-
-        if (report.warnings.length > 0) {
-          comment += "\n#### ⚠️ Warnings\n";
-          report.warnings.forEach((w) => (comment += `- ${w}\n`));
-        }
-        comment += "</details>\n\n";
-      }
-
-      comment += "---\n";
+      comment = buildCommentFromReport(report, surgeUrl);
     } else {
       comment =
         "### 📡 RSS Validation\n\n⚠️ **Report file not found.**\n\n> Please check the build logs for details.";
     }
   } catch (e) {
     comment = "### 📡 RSS Validation\n\n❌ **Error processing report.**";
+    console.error("RSS validation comment error:", e);
   }
 
   await github.rest.issues.createComment({
@@ -68,4 +91,4 @@ export default async ({ github, context }) => {
     repo: context.repo.repo,
     body: comment,
   });
-};
+}
