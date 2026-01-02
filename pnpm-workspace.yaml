@@ -5,3 +5,6 @@ onlyBuiltDependencies:
   - citation-js
   - esbuild
   - sharp
+  - puppeteer
+  - snyk
+  - sonar-scanner

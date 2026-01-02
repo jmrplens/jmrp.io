@@ -7,13 +7,6 @@
     "pnpm": ">=10"
   },
   "packageManager": "pnpm@10.27.0",
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "puppeteer",
-      "snyk",
-      "sonar-scanner"
-    ]
-  },
   "scripts": {
     "dev": "astro dev",
     "prebuild": "node scripts/fetch-github-avatar.mjs",
