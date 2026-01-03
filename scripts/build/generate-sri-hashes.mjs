@@ -56,8 +56,7 @@ function resolveFilePath(url, fileDir) {
  * Checks if a URL should be skipped for SRI
  */
 function shouldSkipUrl(url) {
-  if (url.startsWith("http") || url.startsWith("//")) return true;
-  return false;
+  return url.startsWith("http") || url.startsWith("//");
 }
 
 /**
