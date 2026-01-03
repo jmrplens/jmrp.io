@@ -323,7 +323,8 @@ const jsonLD = {
 
         // SRI hash injected by build process - validate before setting
         const integrityHash = "__BEACON_INTEGRITY_HASH__";
-        if (integrityHash && integrityHash !== "__BEACON_INTEGRITY_HASH__") {
+        // Check if placeholder was replaced (hash will start with 'sha512-')
+        if (integrityHash && integrityHash.startsWith("sha")) {
             script.integrity = integrityHash;
             script.crossOrigin = "anonymous";
         } else if (
