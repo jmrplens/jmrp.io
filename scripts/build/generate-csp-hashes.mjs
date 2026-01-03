@@ -187,9 +187,9 @@ function buildCspHeader(scriptSrcValue, styleSrcValue, imgDomainString) {
 
   const cspHeader = `add_header Content-Security-Policy "${components.join("; ")};" always;`;
 
-  // Modern Permissions-Policy (Standard & Proposed features for privacy/security)
+  // Standard Permissions-Policy features for privacy/security
   const permissionsPolicy =
-    'add_header Permissions-Policy "accelerometer=(), autoplay=(), camera=(), encrypted-media=(), fullscreen=(), geolocation=(), gyroscope=(), interest-cohort=(), magnetometer=(), microphone=(), midi=(), payment=(), picture-in-picture=(), publickey-credentials-get=(), sync-xhr=(), usb=(), xr-spatial-tracking=()" always;';
+    'add_header Permissions-Policy "accelerometer=(), autoplay=(), browsing-topics=(), camera=(), encrypted-media=(), fullscreen=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), midi=(), payment=(), picture-in-picture=(), publickey-credentials-get=(self), sync-xhr=(), usb=(), xr-spatial-tracking=()" always;';
 
   return `${cspHeader}\n${permissionsPolicy}`;
 }
@@ -247,7 +247,7 @@ function cleanupLegacyConfig(config) {
   );
   // Remove standalone Permissions-Policy if it exists outside the block (prevents duplicates)
   cleaned = cleaned.replaceAll(
-    /add_header Permissions-Policy "[^"]*" always;(\r?\n)?/g,
+    /^[ \t]*add_header Permissions-Policy "(?:[^"\\]|\\.)*" always;[ \t]*(?:\r?\n)?/gm,
     "",
   );
   return cleaned;
