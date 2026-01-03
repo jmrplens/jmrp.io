@@ -3,7 +3,7 @@
  *
  * Scans the .lighthouseci directory for JSON reports,
  * aggregates scores by URL, Theme, and Form Factor,
- * and outputs a Markdown table.
+ * and outputs an HTML table for GitHub.
  */
 
 import fs from "node:fs";
@@ -106,32 +106,38 @@ const PAGE_NAMES = {
   "/blog/": "Blog",
 };
 
+const formatScore = (avg) => {
+  if (avg === null) return "—";
+  let icon;
+  if (avg >= 90) {
+    icon = "🟢";
+  } else if (avg >= 50) {
+    icon = "🟠";
+  } else {
+    icon = "🔴";
+  }
+  return `${icon} <b>${avg}%</b>`;
+};
+
 const rows = Object.entries(results)
   .sort((a, b) => a[0].localeCompare(b[0]))
   .map(([url, themes]) => {
     // Only include main pages
     if (!PAGE_NAMES[url]) return null;
 
-    const formatScore = (avg) => {
-      if (avg === null) return "—";
-      let icon;
-      if (avg >= 90) {
-        icon = "🟢";
-      } else if (avg >= 50) {
-        icon = "🟠";
-      } else {
-        icon = "🔴";
-      }
-      return `${icon} ${avg}%`;
-    };
-
-    // Columns: Mobile Light | Mobile Dark | Desktop Light | Desktop Dark
     const ml = getAggregatedScore(themes.light?.mobile);
     const md = getAggregatedScore(themes.dark?.mobile);
     const dl = getAggregatedScore(themes.light?.desktop);
     const dd = getAggregatedScore(themes.dark?.desktop);
 
-    return `| **${PAGE_NAMES[url]}** | ${formatScore(ml)} | ${formatScore(md)} | ${formatScore(dl)} | ${formatScore(dd)} |`;
+    return `
+    <tr>
+      <td align="left"><b>${PAGE_NAMES[url]}</b></td>
+      <td align="center">${formatScore(ml)}</td>
+      <td align="center">${formatScore(md)}</td>
+      <td align="center">${formatScore(dl)}</td>
+      <td align="center">${formatScore(dd)}</td>
+    </tr>`;
   })
   .filter((row) => row !== null);
 
@@ -140,9 +146,26 @@ if (rows.length === 0) {
 } else {
   console.log(`### ⚡ Lighthouse Audit Report`);
   console.log("");
-  console.log("| Page | 📱 Light | 📱 Dark | 🖥️ Light | 🖥️ Dark |");
-  console.log("| :--- | :---: | :---: | :---: | :---: |");
-  console.log(rows.join("\n"));
+  console.log(`
+<table>
+  <thead>
+    <tr>
+      <th rowspan="2" align="left">Page</th>
+      <th colspan="2" align="center">📱 Mobile</th>
+      <th colspan="2" align="center">🖥️ Desktop</th>
+    </tr>
+    <tr>
+      <th align="center">Light</th>
+      <th align="center">Dark</th>
+      <th align="center">Light</th>
+      <th align="center">Dark</th>
+    </tr>
+  </thead>
+  <tbody>
+    ${rows.join("")}
+  </tbody>
+</table>
+`);
   console.log("");
   console.log(
     "_Each score is the **average of the maximum values** obtained across 3 runs for Performance, Accessibility, Best Practices, and SEO._",
