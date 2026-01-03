@@ -37,7 +37,7 @@ const HASH_ALGO = "sha512";
 function isPathSafe(filePath) {
   const resolvedPath = path.resolve(filePath);
   const relative = path.relative(DIST_DIR, resolvedPath);
-  return !relative.startsWith("..") && !path.isAbsolute(relative);
+  return !relative.startsWith("..");
 }
 
 /**
@@ -96,10 +96,14 @@ function addExternalScriptHashes(content, scriptHashes, file) {
         const htmlDir = path.dirname(file);
         filePath = path.resolve(htmlDir, urlClean);
       }
-
-      if (fs.existsSync(filePath) && isPathSafe(filePath)) {
+      if (fs.existsSync(filePath)) {
+        if (!isPathSafe(filePath)) {
+          console.warn(`Skipping script with unsafe path: ${filePath}`);
+          continue;
+        }
         // deepcode ignore PT: filePath is validated by isPathSafe() to be within DIST_DIR
         const fileContent = fs.readFileSync(filePath);
+
         const hash = crypto
           .createHash(HASH_ALGO)
           .update(fileContent)
@@ -348,7 +352,10 @@ async function generateHashes() {
     const jsFiles = await glob(JS_PATTERN, { cwd: DIST_DIR, absolute: true });
     console.log(`Found ${jsFiles.length} JS files to hash.`);
     for (const file of jsFiles) {
-      if (!isPathSafe(file)) continue;
+      if (!isPathSafe(file)) {
+        console.warn(`Skipping JS file with unsafe path: ${file}`);
+        continue;
+      }
       // deepcode ignore PT: file is validated by isPathSafe() to be within DIST_DIR
       const content = fs.readFileSync(file);
       const hash = crypto

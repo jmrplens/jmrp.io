@@ -26,7 +26,7 @@ const HTML_PATTERN = "**/*.html";
 function isPathSafe(filePath) {
   const resolvedPath = path.resolve(filePath);
   const relative = path.relative(DIST_DIR, resolvedPath);
-  return !relative.startsWith("..") && !path.isAbsolute(relative);
+  return !relative.startsWith("..");
 }
 
 /**
@@ -86,7 +86,11 @@ function addIntegrityToTag(match, tagName, attrs, url, file, hashCache) {
 
   try {
     const filePath = resolveFilePath(url, path.dirname(file));
-    if (!fs.existsSync(filePath) || !isPathSafe(filePath)) return match;
+    if (!fs.existsSync(filePath)) return match;
+    if (!isPathSafe(filePath)) {
+      console.warn(`Skipping ${tagName} with unsafe path: ${filePath}`);
+      return match;
+    }
 
     const hash = getHashForFile(filePath, hashCache);
     const cleanAttrs = attrs.replace(/\/\s*$/, "").trim();
@@ -254,7 +258,11 @@ function processAstroIslandPreloads(content, file, hashCache, stats) {
       if (shouldSkipUrl(url)) continue;
 
       const filePath = resolveFilePath(url, path.dirname(file));
-      if (!fs.existsSync(filePath) || !isPathSafe(filePath)) continue;
+      if (!fs.existsSync(filePath)) continue;
+      if (!isPathSafe(filePath)) {
+        console.warn(`Skipping modulepreload with unsafe path: ${filePath}`);
+        continue;
+      }
 
       const hash = getHashForFile(filePath, hashCache);
       preloadLinks += `<link rel="modulepreload" href="${url}" nonce="NGINX_CSP_NONCE" integrity="${hash}" crossorigin="anonymous">
@@ -286,9 +294,16 @@ function injectBeaconHash(content, file, hashCache, stats) {
   try {
     const beaconPath = path.join(DIST_DIR, "scripts", "cf-beacon.js");
 
-    if (!fs.existsSync(beaconPath) || !isPathSafe(beaconPath)) {
+    if (!fs.existsSync(beaconPath)) {
       console.warn(
         `Beacon file not found at ${beaconPath}, skipping hash injection`,
+      );
+      return content;
+    }
+
+    if (!isPathSafe(beaconPath)) {
+      console.warn(
+        `Skipping beacon injection due to unsafe path: ${beaconPath}`,
       );
       return content;
     }

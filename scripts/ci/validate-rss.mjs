@@ -17,19 +17,21 @@ import path from "node:path";
 import { parseStringPromise } from "xml2js";
 import Parser from "rss-parser";
 
-const RSS_FILE = path.resolve(process.argv[2] || "dist/rss.xml");
+const DIST_DIR = path.resolve(
+  process.argv[3] || process.env.DIST_DIR || "dist",
+);
+const RSS_FILE = path.resolve(
+  process.argv[2] || path.join(DIST_DIR, "rss.xml"),
+);
 const OUTPUT_FILE = "rss-validation.json";
 
 /**
- * Validates that a path is safe (not escaping the base directory if possible)
- * For RSS we just want to ensure it's not arbitrary.
- * We'll use the parent directory of RSS_FILE as a base for validation if needed,
- * but here we just check against common sense.
+ * Validates that a path is safe (not escaping the dist directory)
  */
 function isPathSafe(filePath) {
   const resolvedPath = path.resolve(filePath);
-  // For RSS, we allow reading within the project directory
-  return resolvedPath.startsWith(path.resolve(process.cwd()));
+  const relative = path.relative(DIST_DIR, resolvedPath);
+  return !relative.startsWith("..");
 }
 
 /**
@@ -197,8 +199,15 @@ async function validateRSS() {
     },
   };
 
-  if (!fs.existsSync(RSS_FILE) || !isPathSafe(RSS_FILE)) {
-    results.errors.push(`RSS feed not found or invalid path: ${RSS_FILE}`);
+  if (!fs.existsSync(RSS_FILE)) {
+    results.errors.push(`RSS feed not found: ${RSS_FILE}`);
+    writeResults(results);
+    process.exit(1);
+  }
+
+  if (!isPathSafe(RSS_FILE)) {
+    console.warn(`Skipping RSS validation due to unsafe path: ${RSS_FILE}`);
+    results.errors.push(`RSS feed has an unsafe path: ${RSS_FILE}`);
     writeResults(results);
     process.exit(1);
   }

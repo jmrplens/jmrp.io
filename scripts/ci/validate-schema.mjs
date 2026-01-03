@@ -24,7 +24,7 @@ const DIST_DIR = path.resolve(process.argv[2] || "dist");
 function isPathSafe(filePath) {
   const resolvedPath = path.resolve(filePath);
   const relative = path.relative(DIST_DIR, resolvedPath);
-  return !relative.startsWith("..") && !path.isAbsolute(relative);
+  return !relative.startsWith("..");
 }
 
 /**
@@ -213,7 +213,10 @@ async function validateAllPages() {
   const fileResults = [];
 
   for (const file of files) {
-    if (!isPathSafe(file)) continue;
+    if (!isPathSafe(file)) {
+      console.warn(`Skipping file with unsafe path: ${file}`);
+      continue;
+    }
     // deepcode ignore PT: file is validated by isPathSafe()
     const html = fs.readFileSync(file, "utf-8");
     const schemas = extractJsonLd(html);

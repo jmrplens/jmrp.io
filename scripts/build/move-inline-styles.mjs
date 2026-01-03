@@ -26,7 +26,7 @@ const DIST_DIR = path.resolve(
 function isPathSafe(filePath) {
   const resolvedPath = path.resolve(filePath);
   const relative = path.relative(DIST_DIR, resolvedPath);
-  return !relative.startsWith("..") && !path.isAbsolute(relative);
+  return !relative.startsWith("..");
 }
 
 async function moveInlineStyles() {
@@ -37,7 +37,10 @@ async function moveInlineStyles() {
   let totalFilesModified = 0;
 
   for (const file of files) {
-    if (!isPathSafe(file)) continue;
+    if (!isPathSafe(file)) {
+      console.warn(`Skipping file with unsafe path: ${file}`);
+      continue;
+    }
     // deepcode ignore PT: file is validated by isPathSafe()
     let content = fs.readFileSync(file, "utf-8");
     let modified = false;
