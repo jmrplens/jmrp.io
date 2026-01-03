@@ -1,3 +1,13 @@
+@font-face {
+  font-family: "Inter Variable";
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "JetBrains Mono Variable";
+  font-display: swap;
+}
+
 /* Font Fallbacks for CLS mitigation */
 @font-face {
   font-family: "Inter Fallback";
@@ -6,6 +16,7 @@
   descent-override: 22.56%;
   line-gap-override: 0%;
   size-adjust: 107.06%;
+  font-display: swap;
 }
 
 @font-face {
@@ -15,6 +26,7 @@
   descent-override: 29%;
   line-gap-override: 0%;
   size-adjust: 100%;
+  font-display: swap;
 }
 
 :root {
@@ -151,6 +163,10 @@ html {
   line-height: 1.6;
   -webkit-text-size-adjust: 100%; /* Prevent font scaling in landscape on iOS */
   text-size-adjust: 100%;
+}
+
+p {
+  text-wrap: pretty;
 }
 
 body {
