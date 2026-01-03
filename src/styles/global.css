@@ -1,3 +1,22 @@
+/* Font Fallbacks for CLS mitigation */
+@font-face {
+  font-family: "Inter Fallback";
+  src: local("Arial");
+  ascent-override: 90.49%;
+  descent-override: 22.56%;
+  line-gap-override: 0%;
+  size-adjust: 107.06%;
+}
+
+@font-face {
+  font-family: "JetBrains Mono Fallback";
+  src: local("Courier New");
+  ascent-override: 102%;
+  descent-override: 29%;
+  line-gap-override: 0%;
+  size-adjust: 100%;
+}
+
 :root {
   /* Color Palette - Default (Dark) */
   --color-bg: #000000;
@@ -179,6 +198,8 @@ a:hover {
 /* Global Styles */
 h1 {
   font-size: 1.75em;
+  line-height: 1.2;
+  text-wrap: balance;
   /* Slightly smaller than 2em for better hierarchy */
 }
 
