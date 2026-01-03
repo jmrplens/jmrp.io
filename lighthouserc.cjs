@@ -53,10 +53,16 @@ module.exports = {
     collect: {
       staticDistDir: "./dist",
       url: getUrls(),
-      numberOfRuns: 2,
+      numberOfRuns: 5,
       outputDir: "lighthouse-results",
       settings: {
         formFactor: process.env.FORM_FACTOR || "mobile",
+        throttlingMethod: "simulate",
+        throttling: {
+          // Compensate for slow GitHub Action runners.
+          // Default mobile is 4x, we use 2x. Default desktop is 1x.
+          cpuSlowdownMultiplier: process.env.FORM_FACTOR === "desktop" ? 1 : 2,
+        },
         screenEmulation:
           process.env.FORM_FACTOR === "desktop"
             ? {

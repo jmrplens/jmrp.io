@@ -11,13 +11,23 @@ import fs from "node:fs";
 import path from "node:path";
 import { escapeHtml } from "../utils/html.mjs";
 
-const deployDir = process.argv[2] || "a11y-deploy";
-const indexPath = path.join(deployDir, "index.html");
+const inputDir = process.argv[2] || "a11y-deploy";
+// Security: Prevent path traversal by resolving to absolute path and checking strict prefix
+const deployDir = path.resolve(process.cwd(), inputDir);
+
+if (!deployDir.startsWith(process.cwd())) {
+  console.error(
+    `Error: Invalid deploy directory ${deployDir}. Must be within project root.`,
+  );
+  process.exit(1);
+}
 
 if (!fs.existsSync(deployDir)) {
   console.error(`Deploy directory not found at ${deployDir}`);
   process.exit(1);
 }
+
+const indexPath = path.join(deployDir, "index.html");
 
 // Helper: Scan for all HTML reports
 function findReports(dir, fileList = []) {
@@ -296,3 +306,61 @@ const htmlContent = `
 
 fs.writeFileSync(indexPath, htmlContent);
 console.log(`Generated accessibility index at ${indexPath}`);
+
+// --- Aggregation of JSON Summaries ---
+
+function findSummaries(dir, fileList = []) {
+  const files = fs.readdirSync(dir);
+  files.forEach((file) => {
+    const filePath = path.join(dir, file);
+    const stat = fs.statSync(filePath);
+    if (stat.isDirectory()) {
+      findSummaries(filePath, fileList);
+    } else if (
+      file.startsWith("accessibility-summary-") &&
+      file.endsWith(".json")
+    ) {
+      fileList.push(filePath);
+    }
+  });
+  return fileList;
+}
+
+const summaryFiles = findSummaries(deployDir);
+if (summaryFiles.length > 0) {
+  const aggregatedReport = summaryFiles
+    .map((file) => {
+      try {
+        return JSON.parse(fs.readFileSync(file, "utf-8"));
+      } catch (e) {
+        console.error(`Error parsing summary ${file}:`, e);
+        return null;
+      }
+    })
+    .filter(Boolean);
+
+  // Write the aggregated report to the root, as format-accessibility-report.mjs expects it there
+  fs.writeFileSync(
+    "accessibility-report.json",
+    JSON.stringify(aggregatedReport, null, 2),
+  );
+  console.log("Generated aggregated accessibility-report.json");
+
+  // Also rename keys to match format-accessibility-report.mjs expectation if needed
+  // The formatter looks for: violations, incomplete (arrays)
+  // Our updated spec produces: violations, incompleteList (arrays)
+  // We should map incompleteList -> incomplete for compatibility
+
+  const compatibilityReport = aggregatedReport.map((report) => ({
+    ...report,
+    incomplete: report.incompleteList, // Map incompleteList to incomplete for the formatter
+  }));
+  fs.writeFileSync(
+    "accessibility-report.json",
+    JSON.stringify(compatibilityReport, null, 2),
+  );
+} else {
+  console.warn(
+    "No accessibility-summary-*.json files found. Comment generation might fail.",
+  );
+}
