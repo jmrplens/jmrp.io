@@ -1,6 +1,30 @@
 import { test, expect } from "@playwright/test";
 import { getSitemapUrls } from "./utils";
 
+function isCloudflareInsightsError(text: string): boolean {
+  // Extract potential URLs from the console message and check their hostnames.
+  const urlPattern = /\bhttps?:\/\/[^\s"']+/g;
+  const matches = text.match(urlPattern);
+  if (!matches) {
+    return false;
+  }
+  for (const candidate of matches) {
+    try {
+      const url = new URL(candidate);
+      const host = url.hostname.toLowerCase();
+      if (
+        host === "cloudflareinsights.com" ||
+        host.endsWith(".cloudflareinsights.com")
+      ) {
+        return true;
+      }
+    } catch {
+      // Ignore parse errors and continue checking other candidates.
+    }
+  }
+  return false;
+}
+
 /**
  * Functional Tests
  * Dynamically generated from the production sitemap.
@@ -27,7 +51,7 @@ test.describe("Site-wide Functional Checks", () => {
         const text = msg.text();
         // Ignore known CORS/network errors from Cloudflare Analytics
         if (
-          text.includes("cloudflareinsights.com") ||
+          isCloudflareInsightsError(text) ||
           text.includes("Access-Control-Allow-Origin") ||
           text.includes("net::ERR_FAILED")
         ) {
