@@ -3,7 +3,7 @@
  *
  * Scans the .lighthouseci directory for JSON reports,
  * aggregates scores by URL, Theme, and Form Factor,
- * and outputs a Markdown table.
+ * and outputs an HTML table for GitHub.
  */
 
 import fs from "node:fs";
@@ -68,7 +68,10 @@ files.forEach((filePath) => {
       theme = "dark";
 
     const scores = {
-      p: (json.categories.performance?.score || 0) * 100,
+      p: Math.round((json.categories.performance?.score || 0) * 100),
+      a: Math.round((json.categories.accessibility?.score || 0) * 100),
+      b: Math.round((json.categories["best-practices"]?.score || 0) * 100),
+      s: Math.round((json.categories.seo?.score || 0) * 100),
     };
 
     if (!results[url]) results[url] = {};
@@ -82,11 +85,16 @@ files.forEach((filePath) => {
   }
 });
 
-// Calculate averages
-const getAvg = (list) => {
+// Calculate maximums per category and then average those maximums
+const getAggregatedScore = (list) => {
   if (!list || list.length === 0) return null;
-  const totalP = list.reduce((sum, item) => sum + item.p, 0);
-  return Math.round(totalP / list.length);
+
+  const maxP = Math.max(...list.map((item) => item.p));
+  const maxA = Math.max(...list.map((item) => item.a));
+  const maxB = Math.max(...list.map((item) => item.b));
+  const maxS = Math.max(...list.map((item) => item.s));
+
+  return Math.round((maxP + maxA + maxB + maxS) / 4);
 };
 
 const PAGE_NAMES = {
@@ -98,43 +106,52 @@ const PAGE_NAMES = {
   "/blog/": "Blog",
 };
 
+const formatScore = (avg) => {
+  if (avg === null) return "—";
+  let icon;
+  if (avg >= 90) {
+    icon = "🟢";
+  } else if (avg >= 50) {
+    icon = "🟠";
+  } else {
+    icon = "🔴";
+  }
+  return `${icon} <b>${avg}%</b>`;
+};
+
 const rows = Object.entries(results)
   .sort((a, b) => a[0].localeCompare(b[0]))
   .map(([url, themes]) => {
     // Only include main pages
     if (!PAGE_NAMES[url]) return null;
 
-    const formatScore = (val) => {
-      if (val === null) return "—";
-      let icon;
-      if (val >= 90) {
-        icon = "🟢";
-      } else if (val >= 50) {
-        icon = "🟠";
-      } else {
-        icon = "🔴";
-      }
-      return `${icon} ${val}`;
-    };
+    const ml = getAggregatedScore(themes.light?.mobile);
+    const md = getAggregatedScore(themes.dark?.mobile);
+    const dl = getAggregatedScore(themes.light?.desktop);
+    const dd = getAggregatedScore(themes.dark?.desktop);
 
-    // Columns: Mobile Light | Desktop Light | Mobile Dark | Desktop Dark
-    const ml = getAvg(themes.light?.mobile);
-    const dl = getAvg(themes.light?.desktop);
-    const md = getAvg(themes.dark?.mobile);
-    const dd = getAvg(themes.dark?.desktop);
-
-    return `| **${PAGE_NAMES[url]}** | ${formatScore(ml)} | ${formatScore(dl)} | ${formatScore(md)} | ${formatScore(dd)} |`;
+    return `<tr><td align="left"><b>${PAGE_NAMES[url]}</b></td><td align="center">${formatScore(ml)}</td><td align="center">${formatScore(md)}</td><td align="center">${formatScore(dl)}</td><td align="center">${formatScore(dd)}</td></tr>`;
   })
   .filter((row) => row !== null);
 
 if (rows.length === 0) {
   console.log("No valid Lighthouse results parsed.");
 } else {
-  console.log(`### ⚡ Lighthouse Performance Report`);
-  console.log("");
-  console.log("| Page | 📱 Light | 🖥️ Light | 📱 Dark | 🖥️ Dark |");
-  console.log("| :--- | :---: | :---: | :---: | :---: |");
-  console.log(rows.join("\n"));
-  console.log("");
-  console.log("_Scores represent the average Performance metric across runs._");
+  process.stdout.write(`### ⚡ Lighthouse Audit Report\n\n`);
+  process.stdout.write(`<table>\n`);
+  process.stdout.write(`<thead>\n`);
+  process.stdout.write(
+    `<tr><th rowspan="2" align="left">Page</th><th colspan="2" align="center">📱 Mobile</th><th colspan="2" align="center">🖥️ Desktop</th></tr>\n`,
+  );
+  process.stdout.write(
+    `<tr><th align="center">Light</th><th align="center">Dark</th><th align="center">Light</th><th align="center">Dark</th></tr>\n`,
+  );
+  process.stdout.write(`</thead>\n`);
+  process.stdout.write(`<tbody>\n`);
+  process.stdout.write(rows.join("\n"));
+  process.stdout.write(`</tbody>\n`);
+  process.stdout.write(`</table>\n\n`);
+  process.stdout.write(
+    `_Each score is the **average of the maximum values** obtained across 3 runs for Performance, Accessibility, Best Practices, and SEO._\n`,
+  );
 }
