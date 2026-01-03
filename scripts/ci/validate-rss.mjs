@@ -13,11 +13,26 @@
  */
 
 import fs from "node:fs";
+import path from "node:path";
 import { parseStringPromise } from "xml2js";
 import Parser from "rss-parser";
 
-const RSS_FILE = process.argv[2] || "dist/rss.xml";
+const DIST_DIR = path.resolve(
+  process.argv[3] || process.env.DIST_DIR || "dist",
+);
+const RSS_FILE = path.resolve(
+  process.argv[2] || path.join(DIST_DIR, "rss.xml"),
+);
 const OUTPUT_FILE = "rss-validation.json";
+
+/**
+ * Validates that a path is safe (not escaping the dist directory)
+ */
+function isPathSafe(filePath) {
+  const resolvedPath = path.resolve(filePath);
+  const relative = path.relative(DIST_DIR, resolvedPath);
+  return !relative.startsWith("..");
+}
 
 /**
  * Validates the publication date of an RSS item
@@ -190,7 +205,15 @@ async function validateRSS() {
     process.exit(1);
   }
 
+  if (!isPathSafe(RSS_FILE)) {
+    console.warn(`Skipping RSS validation due to unsafe path: ${RSS_FILE}`);
+    results.errors.push(`RSS feed has an unsafe path: ${RSS_FILE}`);
+    writeResults(results);
+    process.exit(1);
+  }
+
   results.size = (fs.statSync(RSS_FILE).size / 1024).toFixed(2);
+  // deepcode ignore PT: RSS_FILE is validated by isPathSafe()
   const content = fs.readFileSync(RSS_FILE, "utf-8");
 
   await validateStructure(content, results);
