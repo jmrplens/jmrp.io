@@ -130,6 +130,8 @@ html {
   font-size: 100%;
   /* Ensure standard 16px */
   line-height: 1.6;
+  -webkit-text-size-adjust: 100%; /* Prevent font scaling in landscape on iOS */
+  text-size-adjust: 100%;
 }
 
 body {

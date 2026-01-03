@@ -73,8 +73,17 @@ First, we need to become our own Authority. To ensure we can properly revoke cer
 
 Create a directory to store your keys safely and set up the CA database:
 
-<TerminalCommand command="mkdir -p /etc/nginx/client-certs && cd /etc/nginx/client-certs" prompt="#"/>
-<TerminalCommand command="mkdir -p newcerts && touch index.txt && echo 1000 > serial" prompt="#"/>
+
+
+<TerminalCommand>
+```bash
+# Create directory to store certs
+mkdir -p /etc/nginx/client-certs && cd /etc/nginx/client-certs
+
+# Initialize serial
+mkdir -p newcerts && touch index.txt && echo 1000 > serial
+```
+</TerminalCommand>
 
 ### 1. Create a Minimal `openssl.cnf`
 
@@ -121,7 +130,9 @@ CN = JMRP-IO-LAB Root CA
 
 Now generate the root CA, which consists of a private key (`ca.key`) and a public certificate (`ca.crt`).
 
-<TerminalCommand command="openssl req -new -x509 -nodes -days 3650 -out ca.crt -keyout ca.key -config openssl.cnf" />
+<TerminalCommand>
+  openssl req -new -x509 -nodes -days 3650 -out ca.crt -keyout ca.key -config openssl.cnf
+</TerminalCommand>
 
 <Collapsible summary="Example ca.key content">
 <FileContent filename="ca.key" icon="mdi:key-variant">
@@ -164,8 +175,12 @@ QOa0k/ZXcjFqpTopvlAb8AA8XsxVDcmAHfSItB8qNxwL8FnIIvlj/Yg9OGxraArJ
 </Collapsible>
 
 
-You can verify your new CA certificate content:
-<TerminalCommand command="openssl x509 -in ca.crt -text -noout" />
+You will be asked for details like Country, State, etc. Fill these out for your organization. The "Common Name" (CN) is important—set it to something like `jmrp.io-CA`.
+
+To verify your new CA certificate:
+<TerminalCommand>
+  openssl x509 -in ca.crt -text -noout
+</TerminalCommand>
 <TerminalOutput title="Decoded CA Certificate">
 ```text
 Certificate:
@@ -208,11 +223,15 @@ Now let's create a certificate for a specific user.
 
 ### 1. Generate User Private Key and CSR
 
-<TerminalCommand command='openssl req -new -newkey rsa:2048 -nodes -keyout user.key -out user.csr -subj "/CN=jmrp.io-client"' />
+<TerminalCommand>
+  openssl req -new -newkey rsa:2048 -nodes -keyout user.key -out user.csr -subj "/CN=jmrp.io-client"
+</TerminalCommand>
 
 ### 2. Sign the CSR with your CA
 
-<TerminalCommand command="openssl ca -config openssl.cnf -batch -in user.csr -out user.crt" />
+<TerminalCommand>
+  openssl ca -config openssl.cnf -batch -in user.csr -out user.crt
+</TerminalCommand>
 <TerminalOutput title="Example 'openssl ca' Output">
 ```text
 Using configuration from openssl.cnf
@@ -255,7 +274,9 @@ signed by your "JMRP-IO-LAB Root CA".)
 
 ### 3. Convert to PKCS#12 (.p12)
 
-<TerminalCommand command="openssl pkcs12 -export -out user.p12 -inkey user.key -in user.crt -certfile ca.crt" />
+<TerminalCommand>
+  openssl pkcs12 -export -out user.p12 -inkey user.key -in user.crt -certfile ca.crt
+</TerminalCommand>
 You will be asked to create an **export password**. This protects the file itself.
 
 ---
@@ -296,8 +317,12 @@ server {
 ### Test and Reload
 
 Before applying, always check the configuration syntax:
-<TerminalCommand command="sudo nginx -t" prompt="#" />
-<TerminalCommand command="sudo systemctl reload nginx" prompt="#" />
+<TerminalCommand>
+  sudo nginx -t
+</TerminalCommand>
+<TerminalCommand>
+  sudo systemctl reload nginx
+</TerminalCommand>
 
 Now, if you try to visit `https://secure.example.com` from a device *without* the certificate, Nginx will return a **400 Bad Request (No required SSL certificate was sent)**. The gate is closed!
 
@@ -354,7 +379,9 @@ What happens if you lose your phone? The certificate on it is still valid for a 
 
 ### 1. Revoke a Certificate
 Let's say `user.crt` (from the lost phone) needs to be revoked.
-<TerminalCommand command="openssl ca -config openssl.cnf -revoke user.crt" />
+<TerminalCommand>
+  openssl ca -config openssl.cnf -revoke user.crt
+</TerminalCommand>
 <TerminalOutput title="Example 'openssl ca -revoke' Output">
 ```text
 Using configuration from openssl.cnf
@@ -365,7 +392,9 @@ Data Base Updated
 
 ### 2. Generate the CRL File
 After revoking, you must generate the list itself so Nginx can read it:
-<TerminalCommand command="openssl ca -config openssl.cnf -gencrl -out crl.pem" />
+<TerminalCommand>
+  openssl ca -config openssl.cnf -gencrl -out crl.pem
+</TerminalCommand>
 *Output: (No output usually means success)*
 
 ### 3. Configure Nginx to Check the CRL
