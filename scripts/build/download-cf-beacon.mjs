@@ -20,25 +20,27 @@ const OUTPUT_FILE = path.join(OUTPUT_DIR, "cf-beacon.js");
 
 // Ensure directory exists
 if (!fs.existsSync(OUTPUT_DIR)) {
-    fs.mkdirSync(OUTPUT_DIR, { recursive: true });
+  fs.mkdirSync(OUTPUT_DIR, { recursive: true });
 }
 
 console.log(`Downloading Cloudflare Beacon from ${BEACON_URL}...`);
 
-https.get(BEACON_URL, (res) => {
+https
+  .get(BEACON_URL, (res) => {
     if (res.statusCode !== 200) {
-        console.error(`Failed to download beacon: Status Code ${res.statusCode}`);
-        process.exit(1);
+      console.error(`Failed to download beacon: Status Code ${res.statusCode}`);
+      process.exit(1);
     }
 
     const fileStream = fs.createWriteStream(OUTPUT_FILE);
     res.pipe(fileStream);
 
     fileStream.on("finish", () => {
-        fileStream.close();
-        console.log(`Beacon saved to ${OUTPUT_FILE}`);
+      fileStream.close();
+      console.log(`Beacon saved to ${OUTPUT_FILE}`);
     });
-}).on("error", (err) => {
+  })
+  .on("error", (err) => {
     console.error(`Error downloading beacon: ${err.message}`);
     process.exit(1);
-});
+  });
