@@ -53,19 +53,25 @@ module.exports = {
     collect: {
       staticDistDir: "./dist",
       url: getUrls(),
-      numberOfRuns: 2,
+      numberOfRuns: 5,
       outputDir: "lighthouse-results",
       settings: {
         formFactor: process.env.FORM_FACTOR || "mobile",
+        throttlingMethod: "simulated",
+        throttling: {
+          // Compensate for slow GitHub Action runners
+          // Default mobile is 4x, we use 2x because the host CPU is already slow
+          cpuSlowdownMultiplier: 2,
+        },
         screenEmulation:
           process.env.FORM_FACTOR === "desktop"
             ? {
-                mobile: false,
-                width: 1350,
-                height: 940,
-                deviceScaleFactor: 1,
-                disabled: false,
-              }
+              mobile: false,
+              width: 1350,
+              height: 940,
+              deviceScaleFactor: 1,
+              disabled: false,
+            }
             : undefined, // undefined uses default mobile emulation
       },
     },
