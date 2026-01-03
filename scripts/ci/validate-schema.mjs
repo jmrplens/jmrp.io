@@ -16,7 +16,16 @@ import fs from "node:fs";
 import path from "node:path";
 import { glob } from "glob";
 
-const DIST_DIR = process.argv[2] || "dist";
+const DIST_DIR = path.resolve(process.argv[2] || "dist");
+
+/**
+ * Validates that a path is within the DIST_DIR
+ */
+function isPathSafe(filePath) {
+  const resolvedPath = path.resolve(filePath);
+  const relative = path.relative(DIST_DIR, resolvedPath);
+  return !relative.startsWith("..");
+}
 
 /**
  * Extracts JSON-LD scripts from HTML content
@@ -197,13 +206,18 @@ function validateSchema(schema) {
 async function validateAllPages() {
   console.log("🔍 Validating Schema.org JSON-LD structured data...\n");
 
-  const files = await glob(`${DIST_DIR}/**/*.html`);
+  const files = await glob(`${DIST_DIR}/**/*.html`, { absolute: true });
   let totalSchemas = 0;
   let totalErrors = 0;
   let totalWarnings = 0;
   const fileResults = [];
 
   for (const file of files) {
+    if (!isPathSafe(file)) {
+      console.warn(`Skipping file with unsafe path: ${file}`);
+      continue;
+    }
+    // deepcode ignore PT: file is validated by isPathSafe()
     const html = fs.readFileSync(file, "utf-8");
     const schemas = extractJsonLd(html);
     if (schemas.length === 0) continue;

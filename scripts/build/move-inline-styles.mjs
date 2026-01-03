@@ -14,8 +14,20 @@
 import fs from "node:fs";
 import { glob } from "glob";
 import crypto from "node:crypto";
+import path from "node:path";
 
-const DIST_DIR = process.argv[2] || process.env.DIST_DIR || "dist";
+const DIST_DIR = path.resolve(
+  process.argv[2] || process.env.DIST_DIR || "dist",
+);
+
+/**
+ * Validates that a path is within the DIST_DIR
+ */
+function isPathSafe(filePath) {
+  const resolvedPath = path.resolve(filePath);
+  const relative = path.relative(DIST_DIR, resolvedPath);
+  return !relative.startsWith("..");
+}
 
 async function moveInlineStyles() {
   console.log(`Scanning ${DIST_DIR} for inline styles to extract...`);
@@ -25,6 +37,11 @@ async function moveInlineStyles() {
   let totalFilesModified = 0;
 
   for (const file of files) {
+    if (!isPathSafe(file)) {
+      console.warn(`Skipping file with unsafe path: ${file}`);
+      continue;
+    }
+    // deepcode ignore PT: file is validated by isPathSafe()
     let content = fs.readFileSync(file, "utf-8");
     let modified = false;
 
