@@ -130,44 +130,28 @@ const rows = Object.entries(results)
     const dl = getAggregatedScore(themes.light?.desktop);
     const dd = getAggregatedScore(themes.dark?.desktop);
 
-    return `
-    <tr>
-      <td align="left"><b>${PAGE_NAMES[url]}</b></td>
-      <td align="center">${formatScore(ml)}</td>
-      <td align="center">${formatScore(md)}</td>
-      <td align="center">${formatScore(dl)}</td>
-      <td align="center">${formatScore(dd)}</td>
-    </tr>`;
+    return `<tr><td align="left"><b>${PAGE_NAMES[url]}</b></td><td align="center">${formatScore(ml)}</td><td align="center">${formatScore(md)}</td><td align="center">${formatScore(dl)}</td><td align="center">${formatScore(dd)}</td></tr>`;
   })
   .filter((row) => row !== null);
 
 if (rows.length === 0) {
   console.log("No valid Lighthouse results parsed.");
 } else {
-  console.log(`### ⚡ Lighthouse Audit Report`);
-  console.log("");
-  console.log(`
-<table>
-  <thead>
-    <tr>
-      <th rowspan="2" align="left">Page</th>
-      <th colspan="2" align="center">📱 Mobile</th>
-      <th colspan="2" align="center">🖥️ Desktop</th>
-    </tr>
-    <tr>
-      <th align="center">Light</th>
-      <th align="center">Dark</th>
-      <th align="center">Light</th>
-      <th align="center">Dark</th>
-    </tr>
-  </thead>
-  <tbody>
-    ${rows.join("")}
-  </tbody>
-</table>
-`);
-  console.log("");
-  console.log(
-    "_Each score is the **average of the maximum values** obtained across 3 runs for Performance, Accessibility, Best Practices, and SEO._",
+  process.stdout.write(`### ⚡ Lighthouse Audit Report\n\n`);
+  process.stdout.write(`<table>\n`);
+  process.stdout.write(`<thead>\n`);
+  process.stdout.write(
+    `<tr><th rowspan="2" align="left">Page</th><th colspan="2" align="center">📱 Mobile</th><th colspan="2" align="center">🖥️ Desktop</th></tr>\n`,
+  );
+  process.stdout.write(
+    `<tr><th align="center">Light</th><th align="center">Dark</th><th align="center">Light</th><th align="center">Dark</th></tr>\n`,
+  );
+  process.stdout.write(`</thead>\n`);
+  process.stdout.write(`<tbody>\n`);
+  process.stdout.write(rows.join("\n"));
+  process.stdout.write(`</tbody>\n`);
+  process.stdout.write(`</table>\n\n`);
+  process.stdout.write(
+    `_Each score is the **average of the maximum values** obtained across 3 runs for Performance, Accessibility, Best Practices, and SEO._\n`,
   );
 }
