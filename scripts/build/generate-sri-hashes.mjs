@@ -57,7 +57,6 @@ function resolveFilePath(url, fileDir) {
  */
 function shouldSkipUrl(url) {
   if (url.startsWith("http") || url.startsWith("//")) return true;
-  if (/\.(woff2?|ttf|otf|eot)(\?.*)?$/.test(url)) return true;
   return false;
 }
 

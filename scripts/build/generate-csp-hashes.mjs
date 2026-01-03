@@ -173,7 +173,7 @@ function buildCspHeader(scriptSrcValue, styleSrcValue, imgDomainString) {
     `style-src ${styleSrcValue}`,
     `img-src 'self' ${imgDomainString} https://*.jmrp.io`,
     "font-src 'self'",
-    `connect-src 'self' https://api.github.com`,
+    `connect-src 'self' https://api.github.com https://cloudflareinsights.com`,
     "media-src 'self'",
     "manifest-src 'self'",
     "frame-src 'none'",
