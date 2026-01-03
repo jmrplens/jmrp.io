@@ -74,3 +74,6 @@ rss-validation.json
 
 # Vendored scripts (downloaded at build time)
 public/scripts/cf-beacon.js
+
+# Lighthouse CI
+.lighthouseci/
