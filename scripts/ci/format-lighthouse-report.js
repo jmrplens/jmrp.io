@@ -132,7 +132,9 @@ if (rows.length === 0) {
 } else {
   console.log(`### ⚡ Lighthouse Audit Report (Max Scores)`);
   console.log("");
-  console.log("| Page | 📱 Light (P/A/B/S) | 🖥️ Light (P/A/B/S) | 📱 Dark (P/A/B/S) | 🖥️ Dark (P/A/B/S) |");
+  console.log(
+    "| Page | 📱 Light (P/A/B/S) | 🖥️ Light (P/A/B/S) | 📱 Dark (P/A/B/S) | 🖥️ Dark (P/A/B/S) |",
+  );
   console.log("| :--- | :---: | :---: | :---: | :---: |");
   console.log(rows.join("\n"));
   console.log("");
