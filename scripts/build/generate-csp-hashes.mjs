@@ -23,11 +23,20 @@ import { promisify } from "node:util";
 const execAsync = promisify(exec);
 
 // Configuration
-const DIST_DIR = process.argv[2] || process.env.DIST_DIR || "dist";
+const DIST_DIR = path.resolve(process.argv[2] || process.env.DIST_DIR || "dist");
 const HTML_PATTERN = "**/*.html";
 const JS_PATTERN = "**/*.js";
 const NGINX_CONF = "/etc/nginx/snippets/security_headers.conf";
 const HASH_ALGO = "sha512";
+
+/**
+ * Validates that a path is within the DIST_DIR
+ */
+function isPathSafe(filePath) {
+  const resolvedPath = path.resolve(filePath);
+  const relative = path.relative(DIST_DIR, resolvedPath);
+  return !relative.startsWith("..") && !path.isAbsolute(relative);
+}
 
 /**
  * Calculates and adds hashes for <style> tags
@@ -86,7 +95,8 @@ function addExternalScriptHashes(content, scriptHashes, file) {
         filePath = path.resolve(htmlDir, urlClean);
       }
 
-      if (fs.existsSync(filePath)) {
+      if (fs.existsSync(filePath) && isPathSafe(filePath)) {
+        // deepcode ignore PT: filePath is validated by isPathSafe() to be within DIST_DIR
         const fileContent = fs.readFileSync(filePath);
         const hash = crypto
           .createHash(HASH_ALGO)
@@ -336,6 +346,8 @@ async function generateHashes() {
     const jsFiles = await glob(JS_PATTERN, { cwd: DIST_DIR, absolute: true });
     console.log(`Found ${jsFiles.length} JS files to hash.`);
     for (const file of jsFiles) {
+      if (!isPathSafe(file)) continue;
+      // deepcode ignore PT: file is validated by isPathSafe() to be within DIST_DIR
       const content = fs.readFileSync(file);
       const hash = crypto
         .createHash(HASH_ALGO)

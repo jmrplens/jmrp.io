@@ -15,8 +15,17 @@ import crypto from "node:crypto";
 import path from "node:path";
 import { glob } from "glob";
 
-const DIST_DIR = process.argv[2] || process.env.DIST_DIR || "dist";
+const DIST_DIR = path.resolve(process.argv[2] || process.env.DIST_DIR || "dist");
 const HTML_PATTERN = "**/*.html";
+
+/**
+ * Validates that a path is within the DIST_DIR
+ */
+function isPathSafe(filePath) {
+  const resolvedPath = path.resolve(filePath);
+  const relative = path.relative(DIST_DIR, resolvedPath);
+  return !relative.startsWith("..") && !path.isAbsolute(relative);
+}
 
 /**
  * Calculate the SRI hash for a file content
@@ -34,6 +43,7 @@ function getHashForFile(filePath, hashCache) {
     return hashCache.get(filePath);
   }
 
+  // deepcode ignore PT: filePath is validated by isPathSafe() before calling this function
   const fileContent = fs.readFileSync(filePath);
   const hash = calculateSRI(fileContent);
   hashCache.set(filePath, hash);
@@ -74,7 +84,7 @@ function addIntegrityToTag(match, tagName, attrs, url, file, hashCache) {
 
   try {
     const filePath = resolveFilePath(url, path.dirname(file));
-    if (!fs.existsSync(filePath)) return match;
+    if (!fs.existsSync(filePath) || !isPathSafe(filePath)) return match;
 
     const hash = getHashForFile(filePath, hashCache);
     const cleanAttrs = attrs.replace(/\/\s*$/, "").trim();
@@ -242,7 +252,7 @@ function processAstroIslandPreloads(content, file, hashCache, stats) {
       if (shouldSkipUrl(url)) continue;
 
       const filePath = resolveFilePath(url, path.dirname(file));
-      if (!fs.existsSync(filePath)) continue;
+      if (!fs.existsSync(filePath) || !isPathSafe(filePath)) continue;
 
       const hash = getHashForFile(filePath, hashCache);
       preloadLinks += `<link rel="modulepreload" href="${url}" nonce="NGINX_CSP_NONCE" integrity="${hash}" crossorigin="anonymous">
@@ -274,13 +284,14 @@ function injectBeaconHash(content, file, hashCache, stats) {
   try {
     const beaconPath = path.join(DIST_DIR, "scripts", "cf-beacon.js");
 
-    if (!fs.existsSync(beaconPath)) {
+    if (!fs.existsSync(beaconPath) || !isPathSafe(beaconPath)) {
       console.warn(
         `Beacon file not found at ${beaconPath}, skipping hash injection`,
       );
       return content;
     }
 
+    // deepcode ignore PT: beaconPath is validated by isPathSafe()
     const hash = getHashForFile(beaconPath, hashCache);
     const result = content.replaceAll(placeholder, hash);
 

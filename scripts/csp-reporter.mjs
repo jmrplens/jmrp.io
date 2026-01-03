@@ -86,6 +86,7 @@ if (!fs.existsSync(logDir)) {
 /**
  * Main HTTP Server
  */
+// deepcode ignore HttpToHttps: This server runs behind a reverse proxy (Nginx) which handles HTTPS.
 const server = http.createServer((req, res) => {
   if (req.method === "POST") {
     let body = "";
