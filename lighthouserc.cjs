@@ -57,7 +57,7 @@ module.exports = {
       outputDir: "lighthouse-results",
       settings: {
         formFactor: process.env.FORM_FACTOR || "mobile",
-        throttlingMethod: "simulated",
+        throttlingMethod: "simulate",
         throttling: {
           // Compensate for slow GitHub Action runners.
           // Default mobile is 4x, we use 2x. Default desktop is 1x.
