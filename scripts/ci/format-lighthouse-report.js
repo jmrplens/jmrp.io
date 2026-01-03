@@ -68,7 +68,10 @@ files.forEach((filePath) => {
       theme = "dark";
 
     const scores = {
-      p: (json.categories.performance?.score || 0) * 100,
+      p: Math.round((json.categories.performance?.score || 0) * 100),
+      a: Math.round((json.categories.accessibility?.score || 0) * 100),
+      b: Math.round((json.categories["best-practices"]?.score || 0) * 100),
+      s: Math.round((json.categories.seo?.score || 0) * 100),
     };
 
     if (!results[url]) results[url] = {};
@@ -82,11 +85,15 @@ files.forEach((filePath) => {
   }
 });
 
-// Calculate averages
-const getAvg = (list) => {
+// Calculate maximums
+const getMax = (list) => {
   if (!list || list.length === 0) return null;
-  const totalP = list.reduce((sum, item) => sum + item.p, 0);
-  return Math.round(totalP / list.length);
+  return {
+    p: Math.max(...list.map((item) => item.p)),
+    a: Math.max(...list.map((item) => item.a)),
+    b: Math.max(...list.map((item) => item.b)),
+    s: Math.max(...list.map((item) => item.s)),
+  };
 };
 
 const PAGE_NAMES = {
@@ -104,37 +111,32 @@ const rows = Object.entries(results)
     // Only include main pages
     if (!PAGE_NAMES[url]) return null;
 
-    const formatScore = (val) => {
-      if (val === null) return "—";
-      let icon;
-      if (val >= 90) {
-        icon = "🟢";
-      } else if (val >= 50) {
-        icon = "🟠";
-      } else {
-        icon = "🔴";
-      }
-      return `${icon} ${val}`;
+    const formatScores = (scores) => {
+      if (!scores) return "—";
+      const getIcon = (val) => (val >= 90 ? "🟢" : val >= 50 ? "🟠" : "🔴");
+      return `${getIcon(scores.p)}${scores.p} <br/> ${getIcon(scores.a)}${scores.a} <br/> ${getIcon(scores.b)}${scores.b} <br/> ${getIcon(scores.s)}${scores.s}`;
     };
 
     // Columns: Mobile Light | Desktop Light | Mobile Dark | Desktop Dark
-    const ml = getAvg(themes.light?.mobile);
-    const dl = getAvg(themes.light?.desktop);
-    const md = getAvg(themes.dark?.mobile);
-    const dd = getAvg(themes.dark?.desktop);
+    const ml = getMax(themes.light?.mobile);
+    const dl = getMax(themes.light?.desktop);
+    const md = getMax(themes.dark?.mobile);
+    const dd = getMax(themes.dark?.desktop);
 
-    return `| **${PAGE_NAMES[url]}** | ${formatScore(ml)} | ${formatScore(dl)} | ${formatScore(md)} | ${formatScore(dd)} |`;
+    return `| **${PAGE_NAMES[url]}** | ${formatScores(ml)} | ${formatScores(dl)} | ${formatScores(md)} | ${formatScores(dd)} |`;
   })
   .filter((row) => row !== null);
 
 if (rows.length === 0) {
   console.log("No valid Lighthouse results parsed.");
 } else {
-  console.log(`### ⚡ Lighthouse Performance Report`);
+  console.log(`### ⚡ Lighthouse Audit Report (Max Scores)`);
   console.log("");
-  console.log("| Page | 📱 Light | 🖥️ Light | 📱 Dark | 🖥️ Dark |");
+  console.log("| Page | 📱 Light (P/A/B/S) | 🖥️ Light (P/A/B/S) | 📱 Dark (P/A/B/S) | 🖥️ Dark (P/A/B/S) |");
   console.log("| :--- | :---: | :---: | :---: | :---: |");
   console.log(rows.join("\n"));
   console.log("");
-  console.log("_Scores represent the average Performance metric across runs._");
+  console.log(
+    "_Scores represent the **maximum** value obtained across 3 runs for Performance, Accessibility, Best Practices, and SEO._",
+  );
 }
