@@ -143,7 +143,7 @@ const articleSchema = [
             <div class="content-wrapper">
                 <div class="header-meta">
                     <a href="/blog" class="back-link">
-                        <Icon name="mdi:arrow-left" /> Back to Blog
+                        <Icon name="mdi:arrow-left" size={20} /> Back to Blog
                     </a>
                     <div class="meta">
                         <span class="author">
@@ -429,11 +429,12 @@ const articleSchema = [
 
     h1 {
         font-size: 2.5rem;
-        line-height: 1.1;
+        line-height: 1.2;
         font-weight: 800;
         color: var(--color-text-heading);
         margin-bottom: 1.25rem;
         letter-spacing: -0.02em;
+        text-wrap: balance;
     }
 
     .lead {
