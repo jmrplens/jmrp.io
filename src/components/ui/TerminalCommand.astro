@@ -2,20 +2,25 @@
 /**
  * TerminalCommand Component
  * Displays a shell command in a simulated terminal window.
- * 
- * Usage using a slot for content:
+ *
+ * Usage using a slot for content (Plain text or Code Fence):
+ *
  * <TerminalCommand>
  *   # This is a comment (aligned with command text)
  *   npm install
- * 
- *   # Another comment
- *   npm run build
  * </TerminalCommand>
- * 
+ *
+ * <TerminalCommand>
+ * ```bash
+ * # With code fence (preserves whitespace better)
+ * npm install
+ * npm run build
+ * ```
+ * </TerminalCommand>
+ *
  * Renders each non-empty line with a prompt ($).
  * Comments and empty lines use a spacer to maintain horizontal alignment.
- */
-import CopyButton from "./CopyButton.astro";
+ */import CopyButton from "./CopyButton.astro";
 import { decodeHtml } from "../../../scripts/utils/html.mjs";
 
 let lines: string[] = [];
@@ -24,7 +29,7 @@ let rawContent = "";
 if (Astro.slots.has("default")) {
     const htmlContent = await Astro.slots.render("default");
 
-    // Robustly handle MDX/HTML output to extract lines
+    // Handle MDX/HTML output
     let processed = htmlContent
         .replace(/<\/p>/g, "\n")
         .replace(/<\/div>/g, "\n")
@@ -32,7 +37,6 @@ if (Astro.slots.has("default")) {
 
     processed = processed.replace(/<[^>]+>/g, "");
 
-    // Decode HTML entities using shared utility
     processed = decodeHtml(processed);
 
     const trimmed = processed.trim();
@@ -43,7 +47,7 @@ if (Astro.slots.has("default")) {
     rawContent = lines.join("\n");
 }
 
-// Pre-calculate line properties and TRIM each line to remove accidental whitespace
+// Pre-calculate line properties
 const renderedLines = lines.map((line) => {
     const trimmedLine = line.trim();
     return {
@@ -167,7 +171,7 @@ const renderedLines = lines.map((line) => {
 
     .prompt {
         color: var(--color-primary);
-        margin-right: 0; /* Removed completely to test */
+        margin-right: 0;
         user-select: none;
         flex-shrink: 0;
         font-family: inherit;
