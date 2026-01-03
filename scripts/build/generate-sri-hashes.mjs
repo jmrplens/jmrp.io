@@ -56,8 +56,7 @@ function resolveFilePath(url, fileDir) {
  * Checks if a URL should be skipped for SRI
  */
 function shouldSkipUrl(url) {
-  if (url.startsWith("http") || url.startsWith("//")) return true;
-  return false;
+  return url.startsWith("http") || url.startsWith("//");
 }
 
 /**
@@ -112,7 +111,7 @@ function addIntegrityToTag(match, tagName, attrs, url, file, hashCache) {
  * Processes script tags to add SRI
  */
 function processScripts(content, file, hashCache, stats) {
-  const scriptRegex = /<script\s+([^>]*src=["']([^"']+)["'][^>]*)>/gi;
+  const scriptRegex = /<script\s+([^>]*src=["']([^"']+)["'][^>]*)>/gi; // NOSONAR (javascript:S5852) - Controlled input: processing build-generated HTML only
   return content.replaceAll(scriptRegex, (match, attrs, url) => {
     const result = addIntegrityToTag(
       match,
@@ -131,7 +130,7 @@ function processScripts(content, file, hashCache, stats) {
  * Processes link tags (CSS, preloads) to add SRI
  */
 function processLinks(content, file, hashCache, stats) {
-  const linkRegex = /<link\s+([^>]*href=["']([^"']+)["'][^>]*)>/gi;
+  const linkRegex = /<link\s+([^>]*href=["']([^"']+)["'][^>]*)>/gi; // NOSONAR (javascript:S5852) - Controlled input: processing build-generated HTML only
   return content.replaceAll(linkRegex, (match, attrs, url) => {
     const allowedRels = ["stylesheet", "preload", "modulepreload"];
     const hasAllowedRel = allowedRels.some(
@@ -156,7 +155,7 @@ function processLinks(content, file, hashCache, stats) {
  * Processes image tags to add SRI
  */
 function processImages(content, file, hashCache, stats) {
-  const imgRegex = /<img\s+([^>]*src=["']([^"']+)["'][^>]*)>/gi;
+  const imgRegex = /<img\s+([^>]*src=["']([^"']+)["'][^>]*)>/gi; // NOSONAR (javascript:S5852) - Controlled input: processing build-generated HTML only
   return content.replaceAll(imgRegex, (match, attrs, url) => {
     const result = addIntegrityToTag(match, "img", attrs, url, file, hashCache);
     if (result !== match) stats.count++;
@@ -169,7 +168,7 @@ function processImages(content, file, hashCache, stats) {
  */
 function processMultimedia(content, file, hashCache, stats) {
   const mediaRegex =
-    /<(video|audio|source)\s+([^>]*src=["']([^"']+)["'][^>]*)>/gi;
+    /<(video|audio|source)\s+([^>]*src=["']([^"']+)["'][^>]*)>/gi; // NOSONAR (javascript:S5852) - Controlled input: processing build-generated HTML only
   return content.replaceAll(mediaRegex, (match, tag, attrs, url) => {
     const result = addIntegrityToTag(match, tag, attrs, url, file, hashCache);
     if (result !== match) stats.count++;
@@ -182,7 +181,7 @@ function processMultimedia(content, file, hashCache, stats) {
  * SRI is not added because imagesrcset references multiple files
  */
 function processImagePreloads(content, stats) {
-  const linkRegex = /<link\s+([^>]*imagesrcset=["']([^"']+)["'][^>]*)>/gi;
+  const linkRegex = /<link\s+([^>]*imagesrcset=["']([^"']+)["'][^>]*)>/gi; // NOSONAR (javascript:S5852) - Controlled input: processing build-generated HTML only
   return content.replaceAll(linkRegex, (match, attrs, url) => {
     // Only target image preloads
     const isPreload =
@@ -209,7 +208,7 @@ function processImagePreloads(content, stats) {
  * Extracts module URLs from Astro island tags
  */
 function extractAstroModuleUrls(content) {
-  const astroIslandRegex = /<astro-island\s+([^>]*)>/gi;
+  const astroIslandRegex = /<astro-island\s+([^>]*)>/gi; // NOSONAR (javascript:S5852) - Controlled input: processing build-generated HTML only
   const moduleUrls = new Set();
   let match;
 
@@ -262,6 +261,42 @@ function processAstroIslandPreloads(content, file, hashCache, stats) {
 }
 
 /**
+ * Injects the actual SRI hash for the Cloudflare beacon script
+ * Replaces __BEACON_INTEGRITY_HASH__ placeholder with the real hash
+ */
+function injectBeaconHash(content, file, hashCache, stats) {
+  const placeholder = "__BEACON_INTEGRITY_HASH__";
+
+  if (!content.includes(placeholder)) {
+    return content;
+  }
+
+  try {
+    const beaconPath = path.join(DIST_DIR, "scripts", "cf-beacon.js");
+
+    if (!fs.existsSync(beaconPath)) {
+      console.warn(
+        `Beacon file not found at ${beaconPath}, skipping hash injection`,
+      );
+      return content;
+    }
+
+    const hash = getHashForFile(beaconPath, hashCache);
+    const result = content.replaceAll(placeholder, hash);
+
+    // Track successful injection
+    if (result !== content) {
+      stats.count++;
+    }
+
+    return result;
+  } catch (err) {
+    console.warn(`Error injecting beacon hash in ${file}:`, err.message);
+    return content;
+  }
+}
+
+/**
  * Processes a single HTML file to add SRI hashes
  */
 function processHtmlFile(file, hashCache) {
@@ -276,6 +311,7 @@ function processHtmlFile(file, hashCache) {
   content = processMultimedia(content, file, hashCache, stats);
   content = processImagePreloads(content, stats);
   content = processAstroIslandPreloads(content, file, hashCache, stats);
+  content = injectBeaconHash(content, file, hashCache, stats);
 
   const modified = content !== originalContent;
 
