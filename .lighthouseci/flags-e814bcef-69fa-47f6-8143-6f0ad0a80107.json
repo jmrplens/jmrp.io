@@ -1,6 +1,0 @@
-{
-  "formFactor": "mobile",
-  "throttlingMethod": "simulated",
-  "throttling": { "cpuSlowdownMultiplier": 2 },
-  "chromeFlags": " --headless=new"
-}
