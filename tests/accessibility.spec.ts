@@ -3,8 +3,8 @@ import AxeBuilder from "@axe-core/playwright";
 import { parseStringPromise } from "xml2js";
 import * as fs from "node:fs";
 import * as path from "node:path";
-
 import { createHtmlReport } from "axe-html-reporter";
+import { escapeHtml } from "../scripts/utils/html.mjs"; // Import shared utility
 
 // Read and parse sitemap to discover all pages automatically
 async function getPagesFromSitemap(): Promise<
@@ -156,14 +156,6 @@ test.describe("Accessibility Tests (Axe-core WCAG 2.1 AA)", () => {
     const summaryPath = `accessibility-report/accessibility-summary-${theme}.json`;
     fs.writeFileSync(summaryPath, JSON.stringify(summary, null, 2));
     console.log(`✅ Accessibility summary written to: ${summaryPath}`);
-
-    const escapeHtml = (unsafe: string) =>
-      unsafe
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
 
     // Generate index.html for navigation
     const indexHtml = `

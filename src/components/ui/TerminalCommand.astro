@@ -1,31 +1,105 @@
----
+--- 
 /**
  * TerminalCommand Component
  * Displays a shell command in a simulated terminal window.
  *
- * Usage:
- * <TerminalCommand command="npm install" prompt="$" />
- */
-import CopyButton from "./CopyButton.astro";
+ * Usage using a slot for content (Plain text or Code Fence):
+ *
+ * <TerminalCommand>
+ *   # This is a comment (aligned with command text)
+ *   npm install
+ * </TerminalCommand>
+ *
+ * <TerminalCommand>
+ * ```bash
+ * # With code fence (preserves whitespace better)
+ * npm install
+ * npm run build
+ * ```
+ * </TerminalCommand>
+ *
+ * Renders each non-empty line with a prompt ($).
+ * Comments and empty lines use a spacer to maintain horizontal alignment.
+ */import CopyButton from "./CopyButton.astro";
+import { decodeHtml } from "../../../scripts/utils/html.mjs";
 
-interface Props {
-    command: string;
-    prompt?: string;
+let lines: string[] = [];
+let rawContent = "";
+
+if (Astro.slots.has("default")) {
+    const htmlContent = await Astro.slots.render("default");
+
+    // Handle MDX/HTML output
+    let processed = htmlContent
+        .replace(/<\/p>/g, "\n")
+        .replace(/<\/div>/g, "\n")
+        .replace(/<br\s*\/?>/gi, "\n");
+
+    processed = processed.replace(/<[^>]+>/g, "");
+
+    processed = decodeHtml(processed);
+
+    const trimmed = processed.trim();
+    if (trimmed) {
+        lines = trimmed.split(/\r?\n/);
+    }
+
+    rawContent = lines.join("\n");
 }
 
-const { command, prompt = "$" } = Astro.props;
+// Pre-calculate line properties
+const renderedLines = lines.map((line) => {
+    const trimmedLine = line.trim();
+    return {
+        text: trimmedLine || " ",
+        isComment: trimmedLine.startsWith("#"),
+        isEmpty: !trimmedLine,
+    };
+});
 ---
 
 <div class="terminal-command-wrapper copy-container">
-    <section
-        class="command-container"
-        tabindex="0"
-        aria-label={`Terminal command: ${command}`}
+    <div class="terminal-header">
+        <div class="terminal-controls">
+            <span class="dot red"></span>
+            <span class="dot yellow"></span>
+            <span class="dot green"></span>
+        </div>
+        <div class="action-area">
+            <CopyButton />
+        </div>
+    </div>
+
+    <div class="terminal-window" tabindex="0" role="group" aria-label="Terminal command">
+        {
+            renderedLines.map((line) => (
+                <div class="command-line">
+                    <span class="prompt" aria-hidden="true">
+                        {!line.isEmpty && !line.isComment ? "$" : "\u00A0"}
+                    </span>
+                    <span
+                        class:list={
+                            [
+                                "line-content",
+                                {"is-comment": line.isComment},
+                            ]
+                        }
+                    >
+                        {line.text}
+                    </span>
+                </div>
+            ))
+        }
+    </div>
+
+    {/* Hidden element for CopyButton to grab clean text without prompts */}
+    <div
+        class="copy-content"
+        style="display: none;"
+        aria-hidden="true"
+        set:text={rawContent}
     >
-        <span class="prompt" aria-hidden="true">{prompt}</span>
-        <pre><code class="language-bash">{command}</code></pre>
-    </section>
-    <CopyButton />
+    </div>
 </div>
 
 <style>
@@ -33,62 +107,100 @@ const { command, prompt = "$" } = Astro.props;
         position: relative;
         background-color: var(--color-bg-secondary);
         border-radius: var(--radius-md);
-        padding: 0.75rem 1rem;
         margin: 1.5rem 0;
         border: var(--border-1);
         overflow: hidden;
-        display: flex; /* Flex layout */
+        display: flex;
+        flex-direction: column;
+    }
+
+    .terminal-header {
+        display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 1rem;
+        padding: 0.5rem 0.75rem;
+        background-color: var(--color-bg-subtle);
+        border-bottom: var(--border-1);
+        min-height: 36px;
     }
 
-    .command-container {
+    .terminal-controls {
         display: flex;
-        align-items: baseline;
+        gap: 6px;
+    }
+
+    .dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background-color: var(--color-border);
+    }
+    .dot.red {
+        background-color: #ff5f56;
+    }
+    .dot.yellow {
+        background-color: #ffbd2e;
+    }
+    .dot.green {
+        background-color: #27c93f;
+    }
+
+    .terminal-window {
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1;
         overflow-x: auto;
-        -ms-overflow-style: none; /* IE and Edge */
-        scrollbar-width: none; /* Firefox */
-        flex-grow: 1; /* Take available space */
-        min-width: 0; /* Enable shrinking/scrolling */
-        padding-right: 0.5rem;
-        border-radius: var(--radius-sm);
-        transition: outline 0.2s;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+        min-width: 0;
+        padding: 0.75rem 1rem;
     }
-
-    /* Keyboard focus indicator */
-    .command-container:focus {
-        outline: 2px solid var(--color-primary);
-        outline-offset: 2px;
-    }
-
-    /* Override copy button for flex integration */
-    :global(.terminal-command-wrapper .copy-button) {
-        position: static !important; /* Make it part of the flow */
-        background-color: var(--color-bg-subtle) !important;
-        border: 1px solid var(--color-border) !important;
-        flex-shrink: 0; /* Prevent button shrinking */
-        margin: 0; /* Remove margins */
-    }
-    /* Hide scrollbar for Chrome, Safari and Opera */
-    .command-container::-webkit-scrollbar {
+    .terminal-window::-webkit-scrollbar {
         display: none;
     }
 
-    .prompt {
-        color: var(--color-text-muted);
-        margin-right: 0.75rem;
+    .command-line {
+        display: flex;
+        align-items: baseline;
         font-family: var(--font-mono);
-        font-size: 0.9em;
+        font-size: 0.85em;
+        line-height: 1.6;
+        white-space: pre;
+        min-height: 1.6em;
     }
 
-    /* Reset default styles for pre/code */
-    .command-container pre {
-        margin: 0;
-        padding: 0;
-        background: none !important;
-        border: none;
+    .prompt {
+        color: var(--color-primary);
+        margin-right: 0;
+        user-select: none;
+        flex-shrink: 0;
+        font-family: inherit;
+        font-weight: bold;
+        opacity: 0.8;
+    }
+
+    .line-content {
+        color: var(--color-text);
         flex-grow: 1;
-        overflow: visible;
+        font-family: inherit;
+    }
+
+    .line-content.is-comment {
+        color: var(--color-text-muted);
+        font-style: italic;
+    }
+
+    :global(.terminal-command-wrapper .copy-button) {
+        position: static !important;
+        background-color: transparent !important;
+        border: none !important;
+        padding: 4px !important;
+        min-width: 24px !important;
+        min-height: 24px !important;
+        opacity: 0.7;
+    }
+    :global(.terminal-command-wrapper .copy-button:hover) {
+        background-color: rgba(255, 255, 255, 0.1) !important;
+        opacity: 1;
     }
 </style>
