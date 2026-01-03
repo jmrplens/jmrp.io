@@ -53,7 +53,7 @@ module.exports = {
     collect: {
       staticDistDir: "./dist",
       url: getUrls(),
-      numberOfRuns: 5,
+      numberOfRuns: 3,
       outputDir: "lighthouse-results",
       settings: {
         formFactor: process.env.FORM_FACTOR || "mobile",

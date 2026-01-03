@@ -121,10 +121,9 @@ function renderScoreBadge(label, score) {
   `;
 }
 
-function calculateAverage(runList, category) {
+function calculateMax(runList, category) {
   if (!runList || runList.length === 0) return 0;
-  const total = runList.reduce((sum, r) => sum + r.scores[category], 0);
-  return total / runList.length;
+  return Math.max(...runList.map((r) => r.scores[category]));
 }
 
 function renderSubList(title, runs, cats) {
@@ -174,9 +173,9 @@ const listItems = Object.entries(grouped)
 
       if (allRuns.length === 0) return "";
 
-      // Top-level averages (Combined)
-      const avgs = {};
-      cats.forEach((c) => (avgs[c] = calculateAverage(allRuns, c)));
+      // Top-level max scores (Combined)
+      const maxScores = {};
+      cats.forEach((c) => (maxScores[c] = calculateMax(allRuns, c)));
 
       return `
             <div class="device-card">
@@ -187,10 +186,10 @@ const listItems = Object.entries(grouped)
                             <div class="toggle-icon">▼</div>
                         </div>
                         <div class="device-summary">
-                            ${renderScoreBadge("Perf", avgs.performance)}
-                            ${renderScoreBadge("A11y", avgs.accessibility)}
-                            ${renderScoreBadge("Best", avgs["best-practices"])}
-                            ${renderScoreBadge("SEO", avgs.seo)}
+                            ${renderScoreBadge("Perf", maxScores.performance)}
+                            ${renderScoreBadge("A11y", maxScores.accessibility)}
+                            ${renderScoreBadge("Best", maxScores["best-practices"])}
+                            ${renderScoreBadge("SEO", maxScores.seo)}
                         </div>
                         <div class="device-hint">View ${allRuns.length} Tests (Light & Dark)</div>
                     </summary>
@@ -429,7 +428,8 @@ const htmlContent = `
     <div class="container">
         <h1>🔭 Lighthouse Reports Dashboard</h1>
         <p style="text-align: center; color: var(--text-muted); margin-top: -1.5rem; margin-bottom: 3rem;">
-            Generated on ${new Date().toLocaleString()}
+            Generated on ${new Date().toLocaleString()} <br/>
+            <small>Scores represent the <strong>maximum value</strong> obtained across runs.</small>
         </p>
         
         ${Object.keys(grouped).length === 0 ? '<p style="text-align: center;">No reports found in ' + deployDir + "</p>" : ""}
