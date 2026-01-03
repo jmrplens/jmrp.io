@@ -16,7 +16,9 @@ import { glob } from "glob";
 import crypto from "node:crypto";
 import path from "node:path";
 
-const DIST_DIR = path.resolve(process.argv[2] || process.env.DIST_DIR || "dist");
+const DIST_DIR = path.resolve(
+  process.argv[2] || process.env.DIST_DIR || "dist",
+);
 
 /**
  * Validates that a path is within the DIST_DIR
