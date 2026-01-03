@@ -59,19 +59,19 @@ module.exports = {
         formFactor: process.env.FORM_FACTOR || "mobile",
         throttlingMethod: "simulated",
         throttling: {
-          // Compensate for slow GitHub Action runners
-          // Default mobile is 4x, we use 2x because the host CPU is already slow
-          cpuSlowdownMultiplier: 2,
+          // Compensate for slow GitHub Action runners.
+          // Default mobile is 4x, we use 2x. Default desktop is 1x.
+          cpuSlowdownMultiplier: process.env.FORM_FACTOR === "desktop" ? 1 : 2,
         },
         screenEmulation:
           process.env.FORM_FACTOR === "desktop"
             ? {
-              mobile: false,
-              width: 1350,
-              height: 940,
-              deviceScaleFactor: 1,
-              disabled: false,
-            }
+                mobile: false,
+                width: 1350,
+                height: 940,
+                deviceScaleFactor: 1,
+                disabled: false,
+              }
             : undefined, // undefined uses default mobile emulation
       },
     },
