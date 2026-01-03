@@ -264,7 +264,7 @@ function processAstroIslandPreloads(content, file, hashCache, stats) {
  * Injects the actual SRI hash for the Cloudflare beacon script
  * Replaces __BEACON_INTEGRITY_HASH__ placeholder with the real hash
  */
-function injectBeaconHash(content, file, hashCache) {
+function injectBeaconHash(content, file, hashCache, stats) {
   const placeholder = "__BEACON_INTEGRITY_HASH__";
 
   if (!content.includes(placeholder)) {
@@ -282,7 +282,14 @@ function injectBeaconHash(content, file, hashCache) {
     }
 
     const hash = getHashForFile(beaconPath, hashCache);
-    return content.replaceAll(placeholder, hash);
+    const result = content.replaceAll(placeholder, hash);
+
+    // Track successful injection
+    if (result !== content) {
+      stats.count++;
+    }
+
+    return result;
   } catch (err) {
     console.warn(`Error injecting beacon hash in ${file}:`, err.message);
     return content;
@@ -304,7 +311,7 @@ function processHtmlFile(file, hashCache) {
   content = processMultimedia(content, file, hashCache, stats);
   content = processImagePreloads(content, stats);
   content = processAstroIslandPreloads(content, file, hashCache, stats);
-  content = injectBeaconHash(content, file, hashCache);
+  content = injectBeaconHash(content, file, hashCache, stats);
 
   const modified = content !== originalContent;
 
