@@ -262,6 +262,35 @@ function processAstroIslandPreloads(content, file, hashCache, stats) {
 }
 
 /**
+ * Injects the actual SRI hash for the Cloudflare beacon script
+ * Replaces __BEACON_INTEGRITY_HASH__ placeholder with the real hash
+ */
+function injectBeaconHash(content, file, hashCache) {
+  const placeholder = "__BEACON_INTEGRITY_HASH__";
+
+  if (!content.includes(placeholder)) {
+    return content;
+  }
+
+  try {
+    const beaconPath = path.join(DIST_DIR, "scripts", "cf-beacon.js");
+
+    if (!fs.existsSync(beaconPath)) {
+      console.warn(
+        `Beacon file not found at ${beaconPath}, skipping hash injection`,
+      );
+      return content;
+    }
+
+    const hash = getHashForFile(beaconPath, hashCache);
+    return content.replaceAll(placeholder, hash);
+  } catch (err) {
+    console.warn(`Error injecting beacon hash in ${file}:`, err.message);
+    return content;
+  }
+}
+
+/**
  * Processes a single HTML file to add SRI hashes
  */
 function processHtmlFile(file, hashCache) {
@@ -276,6 +305,7 @@ function processHtmlFile(file, hashCache) {
   content = processMultimedia(content, file, hashCache, stats);
   content = processImagePreloads(content, stats);
   content = processAstroIslandPreloads(content, file, hashCache, stats);
+  content = injectBeaconHash(content, file, hashCache);
 
   const modified = content !== originalContent;
 
