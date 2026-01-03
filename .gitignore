@@ -77,3 +77,5 @@ public/scripts/cf-beacon.js
 
 # Lighthouse CI
 .lighthouseci/
+rss-validation.json
+bundle-analysis.json
