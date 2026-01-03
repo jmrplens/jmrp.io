@@ -10,7 +10,6 @@ tags: ["nginx", "security", "csp", "webdev", "astro"]
 import Callout from "@components/ui/Callout.astro";
 import Tabs from "@components/ui/Tabs.astro";
 import TabPanel from "@components/ui/TabPanel.astro";
-import KeyPoint from "@components/cv/KeyPoint.astro";
 import CompareCode from "@components/ui/CompareCode.astro";
 import FileContent from "@components/ui/FileContent.astro";
 
@@ -108,9 +107,9 @@ server {
 ````
 </FileContent>
 
-<KeyPoint icon="mdi:check-decagram">
+<Callout type="keypoint" icon="mdi:check-decagram">
   **Why this works:** The browser receives a valid HTML file with a matching nonce in the header and the body, completely unaware that Nginx modified the HTML on the fly. This allows us to have the performance of a static site with the security of a dynamic one.
-</KeyPoint>
+</Callout>
 
 ### The Transformation
 

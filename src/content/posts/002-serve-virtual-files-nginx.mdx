@@ -16,7 +16,6 @@ import Tabs from "@components/ui/Tabs.astro";
 import TabPanel from "@components/ui/TabPanel.astro";
 import TerminalCommand from "@components/ui/TerminalCommand.astro";
 import FileContent from "@components/ui/FileContent.astro";
-import KeyPoint from "@components/cv/KeyPoint.astro";
 
 When deploying a modern web application, especially a containerized one or a service running on a managed platform, you often don't have easy access to its web root. What happens when you need to serve a standard file like `robots.txt` or `.well-known/security.txt`? You can't just drop it into the folder.
 
@@ -30,13 +29,13 @@ There are two primary methods to achieve this, each with its own use case.
 
 2.  **Using [`return`](https://nginx.org/en/docs/http/ngx_http_rewrite_module.html#return)**: This directive can stop processing and immediately return a specific response code and content. It's incredibly efficient for small, simple text files where creating a separate file feels like overkill.
 
-<KeyPoint icon="mdi:vector-difference">
+<Callout type="keypoint" icon="mdi:vector-difference">
   **`root` vs. `alias`**: A common point of confusion is the difference between
   `root` and `alias`. With `root`, Nginx appends the request URI to the path you
   specify. With `alias`, Nginx *discards* the matched part of the request URI
   and uses the path you specify directly. For serving a single file, `alias` is
   often more direct.
-</KeyPoint>
+</Callout>
 
 ---
 

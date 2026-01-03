@@ -353,6 +353,7 @@ if (summaryFiles.length > 0) {
 
   const compatibilityReport = aggregatedReport.map((report) => ({
     ...report,
+    incompleteCount: report.incomplete, // Preserve count as separate property
     incomplete: report.incompleteList, // Map incompleteList to incomplete for the formatter
   }));
   fs.writeFileSync(

@@ -43,13 +43,13 @@ console.log("| :--- | :--- | :---: | :---: | :---: |");
 
 if (results.light) {
   console.log(
-    `| ☀️ Light | ${statusLight} | ${results.light.passed} | ${results.light.failed} | ${results.light.incomplete} |`,
+    `| ☀️ Light | ${statusLight} | ${results.light.passed} | ${results.light.failed} | ${results.light.incompleteCount} |`,
   );
 }
 
 if (results.dark) {
   console.log(
-    `| 🌙 Dark | ${statusDark} | ${results.dark.passed} | ${results.dark.failed} | ${results.dark.incomplete} |`,
+    `| 🌙 Dark | ${statusDark} | ${results.dark.passed} | ${results.dark.failed} | ${results.dark.incompleteCount} |`,
   );
 }
 
@@ -97,7 +97,7 @@ console.log("---");
 const totalPassed = (results.light?.passed || 0) + (results.dark?.passed || 0);
 const totalFailed = (results.light?.failed || 0) + (results.dark?.failed || 0);
 const totalIncomplete =
-  (results.light?.incomplete || 0) + (results.dark?.incomplete || 0);
+  (results.light?.incompleteCount || 0) + (results.dark?.incompleteCount || 0);
 
 console.log(
   `**Total**: ${totalPassed} passed, ${totalFailed} failed, ${totalIncomplete} incomplete`,

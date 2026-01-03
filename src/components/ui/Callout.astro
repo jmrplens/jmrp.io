@@ -9,13 +9,25 @@ import { Icon } from "astro-icon/components";
  * <Callout type="info" title="Did you know?">
  *   This is an informational callout.
  * </Callout>
+ *
+ * <Callout type="keypoint" icon="mdi:rocket">
+ *   This is a keypoint with a custom icon.
+ * </Callout>
  */
 interface Props {
-    type?: "info" | "warning" | "error" | "success" | "tip" | "note";
+    type?:
+        | "info"
+        | "warning"
+        | "error"
+        | "success"
+        | "tip"
+        | "note"
+        | "keypoint";
     title?: string;
+    icon?: string;
 }
 
-const { type = "info", title } = Astro.props;
+const { type = "info", title, icon } = Astro.props;
 
 /* Map icons but handle colors in CSS */
 const icons = {
@@ -25,7 +37,10 @@ const icons = {
     success: "mdi:check-circle-outline",
     tip: "mdi:lightbulb-outline",
     note: "mdi:information-variant-circle-outline",
+    keypoint: "mdi:lightbulb-on-outline",
 };
+
+const iconName = icon || icons[type];
 ---
 
 <aside
@@ -34,7 +49,7 @@ const icons = {
     aria-label={title || `${type} callout`}
 >
     <div class="icon-wrapper" aria-hidden="true">
-        <Icon name={icons[type]} size={24} />
+        <Icon name={iconName} size={24} />
     </div>
     <div class="callout-content-wrapper">
         {title && <strong class="callout-title">{title}</strong>}
@@ -57,8 +72,8 @@ const icons = {
         overflow: hidden;
     }
 
-    /* 
-     * Theme Definitions 
+    /*
+     * Theme Definitions
      * Uses 700 scale for text in Light Mode (Contrast > 4.5:1)
      * Uses 400/500 scale for text in Dark Mode
      */
@@ -82,6 +97,9 @@ const icons = {
 
         --color-note-text: #9ca3af; /* Gray 400 */
         --color-note-bg: rgba(107, 114, 128, 0.1);
+
+        --color-keypoint-text: var(--color-primary);
+        --color-keypoint-bg: var(--color-bg-subtle);
     }
 
     /* Light Mode Overrides */
@@ -104,6 +122,9 @@ const icons = {
 
             --color-note-text: #374151; /* Gray 700 */
             --color-note-bg: rgba(107, 114, 128, 0.1);
+
+            --color-keypoint-text: #1d4ed8; /* Blue 700 */
+            --color-keypoint-bg: var(--color-bg-subtle);
         }
     }
 
@@ -126,6 +147,9 @@ const icons = {
 
         --color-note-text: #374151; /* Gray 700 */
         --color-note-bg: rgba(107, 114, 128, 0.1);
+
+        --color-keypoint-text: #1d4ed8; /* Blue 700 */
+        --color-keypoint-bg: var(--color-bg-subtle);
     }
 
     /* Assignments */
@@ -152,6 +176,13 @@ const icons = {
     .callout-note {
         --callout-color: var(--color-note-text);
         --callout-bg: var(--color-note-bg);
+    }
+    .callout-keypoint {
+        --callout-color: var(--color-keypoint-text);
+        --callout-bg: var(--color-keypoint-bg);
+        border: var(--border-1);
+        border-left: 4px solid var(--callout-color);
+        padding: 1.25rem;
     }
 
     .icon-wrapper {

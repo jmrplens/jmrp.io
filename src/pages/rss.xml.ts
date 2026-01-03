@@ -2,15 +2,7 @@ import rss from "@astrojs/rss";
 import { getCollection, getEntry } from "astro:content";
 import { getImage } from "astro:assets";
 import type { APIContext } from "astro";
-
-function escapeHtml(unsafe: string) {
-  return unsafe
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
+import { escapeHtml } from "../../scripts/utils/html.mjs";
 
 export async function GET(context: APIContext) {
   const posts = await getCollection("posts");
