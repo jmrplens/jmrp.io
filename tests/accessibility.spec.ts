@@ -42,15 +42,15 @@ async function getPagesFromSitemap(): Promise<
         urlPath === "/"
           ? "Home"
           : urlPath
-              .split("/")
-              .filter(Boolean)
-              .map((s: string) =>
-                s
-                  .split("-")
-                  .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1))
-                  .join(" "),
-              )
-              .join(" - ");
+            .split("/")
+            .filter(Boolean)
+            .map((s: string) =>
+              s
+                .split("-")
+                .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1))
+                .join(" "),
+            )
+            .join(" - ");
 
       return { name, url: urlPath };
     });
@@ -88,12 +88,15 @@ function getManualPages(): Array<{ name: string; url: string }> {
 test.describe("Accessibility Tests (Axe-core WCAG 2.1 AA)", () => {
   let pages: Array<{ name: string; url: string }>;
   const theme = process.env.THEME === "dark" ? "dark" : "light"; // Default to light
+  /* Updated results structure to store full violation details for aggregation */
   const results: Array<{
     page: string;
     violations: number;
     incomplete: number;
     violationIds?: string[];
     reportPath: string;
+    detailedViolations: any[]; // Store full Axe violations
+    detailedIncomplete: any[]; // Store full Axe incomplete
   }> = [];
 
   // Load pages once before all tests
@@ -107,6 +110,36 @@ test.describe("Accessibility Tests (Axe-core WCAG 2.1 AA)", () => {
   });
 
   test.afterAll(async () => {
+    // Aggregating violations across all pages
+    const uniqueViolations = new Map<string, any>();
+    const uniqueIncomplete = new Map<string, any>();
+
+    results.forEach((pageResult) => {
+      pageResult.detailedViolations.forEach((v) => {
+        if (!uniqueViolations.has(v.id)) {
+          uniqueViolations.set(v.id, {
+            id: v.id,
+            impact: v.impact,
+            description: v.description,
+            nodes: 0,
+          });
+        }
+        uniqueViolations.get(v.id).nodes += v.nodes.length;
+      });
+
+      pageResult.detailedIncomplete.forEach((i) => {
+        if (!uniqueIncomplete.has(i.id)) {
+          uniqueIncomplete.set(i.id, {
+            id: i.id,
+            impact: i.impact,
+            description: i.description,
+            nodes: 0,
+          });
+        }
+        uniqueIncomplete.get(i.id).nodes += i.nodes.length;
+      });
+    });
+
     // Generate summary after all tests are done
     const summary = {
       theme,
@@ -114,7 +147,9 @@ test.describe("Accessibility Tests (Axe-core WCAG 2.1 AA)", () => {
       passed: results.filter((r) => r.violations === 0).length,
       failed: results.filter((r) => r.violations > 0).length,
       incomplete: results.filter((r) => r.incomplete > 0).length,
-      pages: results,
+      violations: Array.from(uniqueViolations.values()),
+      incompleteList: Array.from(uniqueIncomplete.values()),
+      pages: results.map(({ detailedViolations, detailedIncomplete, ...rest }) => rest), // Exclude heavy details from pages list in summary
     };
     const summaryPath = `accessibility-report/accessibility-summary-${theme}.json`;
     fs.writeFileSync(summaryPath, JSON.stringify(summary, null, 2));
@@ -158,9 +193,8 @@ test.describe("Accessibility Tests (Axe-core WCAG 2.1 AA)", () => {
         </style>
       </head>
       <body>
-        <h1>Accessibility Reports (${
-          theme === "dark" ? "Dark" : "Light"
-        } Mode)</h1>
+        <h1>Accessibility Reports (${theme === "dark" ? "Dark" : "Light"
+      } Mode)</h1>
         
         <div class="summary">
           <div class="card ${summary.failed === 0 ? "passed" : ""}">
@@ -180,8 +214,8 @@ test.describe("Accessibility Tests (Axe-core WCAG 2.1 AA)", () => {
         <h3>Page Reports</h3>
         <ul class="page-list">
           ${results
-            .map(
-              (r) => `
+        .map(
+          (r) => `
             <li class="page-item">
               <a href="${escapeHtml(r.reportPath)}" class="page-link">
                 <span class="status">${r.violations === 0 ? "✅" : "❌"}</span>
@@ -189,21 +223,20 @@ test.describe("Accessibility Tests (Axe-core WCAG 2.1 AA)", () => {
                   <span class="page-name">${escapeHtml(r.page.split("(")[0].trim())}</span>
                   <div style="margin-top: 4px;">
                     <span class="page-url">${escapeHtml(
-                      /\((.*?)\)/.exec(r.page)?.[1] || "",
-                    )}</span>
+            /\((.*?)\)/.exec(r.page)?.[1] || "",
+          )}</span>
                   </div>
-                  ${
-                    r.violations > 0
-                      ? `<div class="violations">⚠️ ${r.violations} violations found</div>`
-                      : ""
-                  }
+                  ${r.violations > 0
+              ? `<div class="violations">⚠️ ${r.violations} violations found</div>`
+              : ""
+            }
                 </div>
                 <div style="color: #999;">&rarr;</div>
               </a>
             </li>
           `,
-            )
-            .join("")}
+        )
+        .join("")}
         </ul>
         <p style="text-align: center; margin-top: 30px; color: #999; font-size: 0.8em;">Generated by Playwright & Axe-core</p>
       </body>
@@ -281,6 +314,8 @@ test.describe("Accessibility Tests (Axe-core WCAG 2.1 AA)", () => {
         incomplete: accessibilityScanResults.incomplete.length,
         violationIds: accessibilityScanResults.violations.map((v) => v.id),
         reportPath: reportFileName,
+        detailedViolations: accessibilityScanResults.violations,
+        detailedIncomplete: accessibilityScanResults.incomplete,
       });
     }
 

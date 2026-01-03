@@ -15,69 +15,69 @@ const deployDir = process.argv[2] || "a11y-deploy";
 const indexPath = path.join(deployDir, "index.html");
 
 if (!fs.existsSync(deployDir)) {
-  console.error(`Deploy directory not found at ${deployDir}`);
-  process.exit(1);
+    console.error(`Deploy directory not found at ${deployDir}`);
+    process.exit(1);
 }
 
 // Helper: Scan for all HTML reports
 function findReports(dir, fileList = []) {
-  const files = fs.readdirSync(dir);
-  files.forEach((file) => {
-    const filePath = path.join(dir, file);
-    const stat = fs.statSync(filePath);
-    if (stat.isDirectory()) {
-      findReports(filePath, fileList);
-    } else if (file.endsWith(".html") && file !== "index.html") {
-      fileList.push(filePath);
-    }
-  });
-  return fileList;
+    const files = fs.readdirSync(dir);
+    files.forEach((file) => {
+        const filePath = path.join(dir, file);
+        const stat = fs.statSync(filePath);
+        if (stat.isDirectory()) {
+            findReports(filePath, fileList);
+        } else if (file.endsWith(".html") && file !== "index.html") {
+            fileList.push(filePath);
+        }
+    });
+    return fileList;
 }
 
 const htmlFiles = findReports(deployDir);
 const reports = [];
 
 htmlFiles.forEach((filePath) => {
-  const lowerPath = filePath.toLowerCase();
-  let theme = "unknown";
+    const lowerPath = filePath.toLowerCase();
+    let theme = "unknown";
 
-  if (lowerPath.includes("/light/") || lowerPath.includes("\\light\\")) {
-    theme = "light";
-  } else if (lowerPath.includes("/dark/") || lowerPath.includes("\\dark\\")) {
-    theme = "dark";
-  }
+    if (lowerPath.includes("/light/") || lowerPath.includes("\\light\\")) {
+        theme = "light";
+    } else if (lowerPath.includes("/dark/") || lowerPath.includes("\\dark\\")) {
+        theme = "dark";
+    }
 
-  reports.push({
-    filePath,
-    fileName: path.basename(filePath),
-    relativePath: path.relative(deployDir, filePath),
-    theme: theme,
-  });
+    reports.push({
+        filePath,
+        fileName: path.basename(filePath),
+        relativePath: path.relative(deployDir, filePath),
+        theme: theme,
+    });
 });
 
 const grouped = { light: [], dark: [], unknown: [] };
 reports.forEach((r) => {
-  if (grouped[r.theme]) grouped[r.theme].push(r);
-  else grouped.unknown.push(r);
+    if (grouped[r.theme]) grouped[r.theme].push(r);
+    else grouped.unknown.push(r);
 });
 
 function renderReportList(theme, list) {
-  if (list.length === 0) return "";
+    if (list.length === 0) return "";
 
-  let icon;
-  if (theme === "light") {
-    icon = "☀️";
-  } else if (theme === "dark") {
-    icon = "🌙";
-  } else {
-    icon = "❓";
-  }
-  const title = theme.charAt(0).toUpperCase() + theme.slice(1);
+    let icon;
+    if (theme === "light") {
+        icon = "☀️";
+    } else if (theme === "dark") {
+        icon = "🌙";
+    } else {
+        icon = "❓";
+    }
+    const title = theme.charAt(0).toUpperCase() + theme.slice(1);
 
-  // Sort logic could be added here if filenames contain timestamps
-  const items = list
-    .map(
-      (r) => `
+    // Sort logic could be added here if filenames contain timestamps
+    const items = list
+        .map(
+            (r) => `
         <a href="${escapeHtml(r.relativePath)}" class="report-card">
             <div class="card-icon">${icon}</div>
             <div class="card-content">
@@ -87,10 +87,10 @@ function renderReportList(theme, list) {
             <div class="card-action">View Report &rarr;</div>
         </a>
     `,
-    )
-    .join("");
+        )
+        .join("");
 
-  return `
+    return `
         <div class="theme-section">
             <div class="section-header">
                 <h2>${icon} ${title} Mode</h2>
@@ -280,11 +280,10 @@ const htmlContent = `
             <div class="subtitle">Generated on ${new Date().toLocaleString()}</div>
         </header>
         
-        ${
-          Object.values(grouped).every((l) => l.length === 0)
-            ? '<div class="empty-state">No accessibility reports found.</div>'
-            : ""
-        }
+        ${Object.values(grouped).every((l) => l.length === 0)
+        ? '<div class="empty-state">No accessibility reports found.</div>'
+        : ""
+    }
 
         ${renderReportList("light", grouped.light)}
         ${renderReportList("dark", grouped.dark)}
@@ -296,3 +295,49 @@ const htmlContent = `
 
 fs.writeFileSync(indexPath, htmlContent);
 console.log(`Generated accessibility index at ${indexPath}`);
+
+// --- Aggregation of JSON Summaries ---
+
+function findSummaries(dir, fileList = []) {
+    const files = fs.readdirSync(dir);
+    files.forEach((file) => {
+        const filePath = path.join(dir, file);
+        const stat = fs.statSync(filePath);
+        if (stat.isDirectory()) {
+            findSummaries(filePath, fileList);
+        } else if (file.startsWith("accessibility-summary-") && file.endsWith(".json")) {
+            fileList.push(filePath);
+        }
+    });
+    return fileList;
+}
+
+const summaryFiles = findSummaries(deployDir);
+if (summaryFiles.length > 0) {
+    const aggregatedReport = summaryFiles.map(file => {
+        try {
+            return JSON.parse(fs.readFileSync(file, 'utf-8'));
+        } catch (e) {
+            console.error(`Error parsing summary ${file}:`, e);
+            return null;
+        }
+    }).filter(Boolean);
+
+    // Write the aggregated report to the root, as format-accessibility-report.mjs expects it there
+    fs.writeFileSync("accessibility-report.json", JSON.stringify(aggregatedReport, null, 2));
+    console.log("Generated aggregated accessibility-report.json");
+
+    // Also rename keys to match format-accessibility-report.mjs expectation if needed
+    // The formatter looks for: violations, incomplete (arrays)
+    // Our updated spec produces: violations, incompleteList (arrays)
+    // We should map incompleteList -> incomplete for compatibility
+
+    const compatibilityReport = aggregatedReport.map(report => ({
+        ...report,
+        incomplete: report.incompleteList // Map incompleteList to incomplete for the formatter
+    }));
+    fs.writeFileSync("accessibility-report.json", JSON.stringify(compatibilityReport, null, 2));
+
+} else {
+    console.warn("No accessibility-summary-*.json files found. Comment generation might fail.");
+}

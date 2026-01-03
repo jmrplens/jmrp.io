@@ -71,3 +71,6 @@ rss-validation.json
 
 # CI deployment temporary folders
 *-deploy/
+
+# Vendored scripts (downloaded at build time)
+public/scripts/cf-beacon.js
