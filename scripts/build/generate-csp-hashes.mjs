@@ -185,7 +185,13 @@ function buildCspHeader(scriptSrcValue, styleSrcValue, imgDomainString) {
     "report-uri /csp-report",
   ];
 
-  return `add_header Content-Security-Policy "${components.join("; ")};" always;`;
+  const cspHeader = `add_header Content-Security-Policy "${components.join("; ")};" always;`;
+
+  // Modern Permissions-Policy (Standard & Proposed features for privacy/security)
+  const permissionsPolicy =
+    'add_header Permissions-Policy "accelerometer=(), autoplay=(), camera=(), encrypted-media=(), fullscreen=(), geolocation=(), gyroscope=(), interest-cohort=(), magnetometer=(), microphone=(), midi=(), payment=(), picture-in-picture=(), publickey-credentials-get=(), sync-xhr=(), usb=(), xr-spatial-tracking=()" always;';
+
+  return `${cspHeader}\n${permissionsPolicy}`;
 }
 
 /**
@@ -216,7 +222,7 @@ function generateCspBlockContent(
       ? `${staticStyleParts} ${styleChunks.vars.join(" ")}`
       : `${staticStyleParts} ${styleHashString}`;
 
-  const newCspHeader = buildCspHeader(
+  const headers = buildCspHeader(
     scriptSrcValue,
     styleSrcValue,
     imgDomainString,
@@ -226,7 +232,7 @@ function generateCspBlockContent(
   if (nginxSetDirectives) {
     blockContent += nginxSetDirectives.trim() + "\n";
   }
-  blockContent += newCspHeader;
+  blockContent += headers;
 
   return blockContent;
 }
@@ -235,7 +241,16 @@ function generateCspBlockContent(
  * Cleans up legacy Nginx configuration
  */
 function cleanupLegacyConfig(config) {
-  return config.replaceAll(/set \$csp_(script|style)_src_\d+ ".*?";\n/g, "");
+  let cleaned = config.replaceAll(
+    /set \$csp_(script|style)_src_\d+ ".*?";\n/g,
+    "",
+  );
+  // Remove standalone Permissions-Policy if it exists outside the block (prevents duplicates)
+  cleaned = cleaned.replaceAll(
+    /add_header Permissions-Policy "[^"]*" always;(\r?\n)?/g,
+    "",
+  );
+  return cleaned;
 }
 
 /**
