@@ -85,15 +85,16 @@ files.forEach((filePath) => {
   }
 });
 
-// Calculate maximums
-const getMax = (list) => {
+// Calculate maximums per category and then average those maximums
+const getAggregatedScore = (list) => {
   if (!list || list.length === 0) return null;
-  return {
-    p: Math.max(...list.map((item) => item.p)),
-    a: Math.max(...list.map((item) => item.a)),
-    b: Math.max(...list.map((item) => item.b)),
-    s: Math.max(...list.map((item) => item.s)),
-  };
+
+  const maxP = Math.max(...list.map((item) => item.p));
+  const maxA = Math.max(...list.map((item) => item.a));
+  const maxB = Math.max(...list.map((item) => item.b));
+  const maxS = Math.max(...list.map((item) => item.s));
+
+  return Math.round((maxP + maxA + maxB + maxS) / 4);
 };
 
 const PAGE_NAMES = {
@@ -111,34 +112,39 @@ const rows = Object.entries(results)
     // Only include main pages
     if (!PAGE_NAMES[url]) return null;
 
-    const formatScores = (scores) => {
-      if (!scores) return "—";
-      const getIcon = (val) => (val >= 90 ? "🟢" : val >= 50 ? "🟠" : "🔴");
-      return `${getIcon(scores.p)}${scores.p} <br/> ${getIcon(scores.a)}${scores.a} <br/> ${getIcon(scores.b)}${scores.b} <br/> ${getIcon(scores.s)}${scores.s}`;
+    const formatScore = (avg) => {
+      if (avg === null) return "—";
+      let icon;
+      if (avg >= 90) {
+        icon = "🟢";
+      } else if (avg >= 50) {
+        icon = "🟠";
+      } else {
+        icon = "🔴";
+      }
+      return `${icon} ${avg}%`;
     };
 
-    // Columns: Mobile Light | Desktop Light | Mobile Dark | Desktop Dark
-    const ml = getMax(themes.light?.mobile);
-    const dl = getMax(themes.light?.desktop);
-    const md = getMax(themes.dark?.mobile);
-    const dd = getMax(themes.dark?.desktop);
+    // Columns: Mobile Light | Mobile Dark | Desktop Light | Desktop Dark
+    const ml = getAggregatedScore(themes.light?.mobile);
+    const md = getAggregatedScore(themes.dark?.mobile);
+    const dl = getAggregatedScore(themes.light?.desktop);
+    const dd = getAggregatedScore(themes.dark?.desktop);
 
-    return `| **${PAGE_NAMES[url]}** | ${formatScores(ml)} | ${formatScores(dl)} | ${formatScores(md)} | ${formatScores(dd)} |`;
+    return `| **${PAGE_NAMES[url]}** | ${formatScore(ml)} | ${formatScore(md)} | ${formatScore(dl)} | ${formatScore(dd)} |`;
   })
   .filter((row) => row !== null);
 
 if (rows.length === 0) {
   console.log("No valid Lighthouse results parsed.");
 } else {
-  console.log(`### ⚡ Lighthouse Audit Report (Max Scores)`);
+  console.log(`### ⚡ Lighthouse Audit Report`);
   console.log("");
-  console.log(
-    "| Page | 📱 Light (P/A/B/S) | 🖥️ Light (P/A/B/S) | 📱 Dark (P/A/B/S) | 🖥️ Dark (P/A/B/S) |",
-  );
+  console.log("| Page | 📱 Light | 📱 Dark | 🖥️ Light | 🖥️ Dark |");
   console.log("| :--- | :---: | :---: | :---: | :---: |");
   console.log(rows.join("\n"));
   console.log("");
   console.log(
-    "_Scores represent the **maximum** value obtained across 3 runs for Performance, Accessibility, Best Practices, and SEO._",
+    "_Each score is the **average of the maximum values** obtained across 3 runs for Performance, Accessibility, Best Practices, and SEO._",
   );
 }
