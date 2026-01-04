@@ -95,7 +95,12 @@ export default [
   },
   // 6. Content Config Override (virtual modules cause strict type errors)
   {
-    files: ["src/content/config.ts"],
+    files: [
+      "src/content/config.ts",
+      "src/pages/rss.xml.ts",
+      "src/pages/site.webmanifest.ts",
+      "src/utils/**/*.ts",
+    ],
     plugins: {
       "@typescript-eslint": tseslint.plugin,
     },
