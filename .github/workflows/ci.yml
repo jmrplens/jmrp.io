@@ -124,9 +124,18 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     if: always()
-    needs: [astro-check, prettier-check, eslint-check, link-checker, spell-checker, security-audit, snyk-security]
+    needs:
+      [
+        astro-check,
+        prettier-check,
+        eslint-check,
+        link-checker,
+        spell-checker,
+        security-audit,
+        snyk-security,
+      ]
     permissions:
-       pull-requests: write
+      pull-requests: write
     steps:
       - uses: actions/checkout@v6
       - name: Post Static Analysis Comment
@@ -144,7 +153,7 @@ jobs:
           script: |
             const { default: script } = await import(`${process.env.GITHUB_WORKSPACE}/scripts/ci/post-static-analysis-comment.mjs`)
             await script({github, context})
-      
+
       - name: Check Failure
         if: |
           contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
@@ -326,8 +335,6 @@ jobs:
           script: |
             const { default: script } = await import(`${process.env.GITHUB_WORKSPACE}/scripts/ci/post-bundle-size-comment.mjs`)
             await script({github, context})
-
-
 
   html-validator:
     name: HTML Validation
