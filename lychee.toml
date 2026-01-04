@@ -1,6 +1,6 @@
 cache = true
 max_cache_age = "1d"
-verbose = true
+
 no_progress = true
 
 # Exclude specific domains/URLs
