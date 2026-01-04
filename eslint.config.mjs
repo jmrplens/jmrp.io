@@ -20,7 +20,6 @@ export default [
   // This automatically configures the parser for .astro files
   ...eslintPluginAstro.configs.recommended,
 
-
   // 2. TypeScript Configuration
   // We apply this to all TS/TSX files.
   ...tseslint.configs.recommendedTypeChecked.map((config) => ({

@@ -5,22 +5,16 @@ on:
     branches: ["main"]
   pull_request:
     branches: ["main"]
-  schedule:
-    - cron: "0 9 * * 1"
 
 concurrency:
   group: ${{ github.workflow }} - ${{ github.ref }}
   cancel-in-progress: true
 
-permissions:
-  actions: read
-  contents: read
-  pull-requests: write
-  security-events: write
-
 jobs:
-  lint:
-    name: Lint & Type Check
+  # --- Parallel Static Analysis Jobs ---
+
+  astro-check:
+    name: Astro Check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -30,16 +24,36 @@ jobs:
           node-version: 20
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile --prefer-offline
-      - name: Astro Check
-        run: pnpm exec astro check
-      - name: Prettier Check
-        run: pnpm exec prettier --check .
-      - name: Security Audit
-        run: pnpm audit --audit-level=high
-        continue-on-error: true
+      - run: pnpm exec astro check
+
+  prettier-check:
+    name: Prettier Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 20
+          cache: "pnpm"
+      - run: pnpm install --frozen-lockfile --prefer-offline
+      - run: pnpm exec prettier --check .
+
+  eslint-check:
+    name: ESLint Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 20
+          cache: "pnpm"
+      - run: pnpm install --frozen-lockfile --prefer-offline
+      - run: pnpm exec eslint . --max-warnings=0
 
   link-checker:
-    name: Link Checker (Lychee)
+    name: Link Checker
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -49,77 +63,38 @@ jobs:
           path: .lycheecache
           key: cache-lychee-${{ github.sha }}
           restore-keys: cache-lychee-
-      - name: Check Links
-        uses: lycheeverse/lychee-action@v2.7.0
+      - uses: lycheeverse/lychee-action@v2.7.0
         with:
-          args: >-
-            --cache 
-            --max-cache-age 1d 
-            --verbose 
-            --no-progress 
-            --exclude 'https://mstdn.jmrp.io'
-            --exclude 'https://electronica-submarina.com'
-            --exclude 'https://ies-berlanga.info'
-            --exclude 'https://www.i3m-detectors.i3m.upv.es'
-            './**/*.md' 
-            './**/*.mdx' 
-            './**/*.html' 
-            './src/**/*.astro' 
-            './src/**/*.ts'
-            './src/**/*.tsx'
+          args: --config lychee.toml
           fail: true
         env:
           GITHUB_TOKEN: ${{ secrets.TOKEN_GITHUB }}
 
   spell-checker:
-    name: Spell Checker (Typos)
+    name: Spell Checker
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - name: Check Spelling
-        uses: crate-ci/typos@master
+      - uses: crate-ci/typos@master
 
-  codeql:
-    name: CodeQL Analysis
+  security-audit:
+    name: Security Audit
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        language: ["javascript-typescript"]
     steps:
       - uses: actions/checkout@v6
-      - uses: github/codeql-action/init@v4
-        with:
-          languages: ${{ matrix.language }}
-      - uses: github/codeql-action/autobuild@v4
-      - uses: github/codeql-action/analyze@v4
-        with:
-          category: "/language:${{ matrix.language }}"
-
-  sonarcloud:
-    name: SonarCloud Analysis
-    runs-on: ubuntu-latest
-    env:
-      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
           node-version: 20
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile --prefer-offline
-      - name: SonarCloud Scan
-        if: env.SONAR_TOKEN != ''
-        uses: SonarSource/sonarqube-scan-action@v7
-        env:
-          GITHUB_TOKEN: ${{ secrets.TOKEN_GITHUB }}
+      - run: pnpm audit --audit-level=high
 
   snyk-security:
-    name: Snyk Security Scan
+    name: Snyk Security
     runs-on: ubuntu-latest
+    # Skip if no token is provided
+    if: secrets.SNYK_TOKEN != ''
     env:
       SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
     steps:
@@ -131,11 +106,42 @@ jobs:
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile --prefer-offline
       - name: Run Snyk to check for vulnerabilities
-        if: env.SNYK_TOKEN != ''
         uses: snyk/actions/node@master
         with:
           args: --severity-threshold=high
-        continue-on-error: true
+        continue-on-error: true # Snyk acts as a warning system for now
+
+  static-analysis-report:
+    name: Static Analysis Report
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [astro-check, prettier-check, eslint-check, link-checker, spell-checker, security-audit, snyk-security]
+    permissions:
+       pull-requests: write
+    steps:
+      - uses: actions/checkout@v6
+      - name: Post Static Analysis Comment
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v8
+        env:
+          OUTCOME_ASTRO: ${{ needs.astro-check.result }}
+          OUTCOME_PRETTIER: ${{ needs.prettier-check.result }}
+          OUTCOME_ESLINT: ${{ needs.eslint-check.result }}
+          OUTCOME_LYCHEE: ${{ needs.link-checker.result }}
+          OUTCOME_TYPOS: ${{ needs.spell-checker.result }}
+          OUTCOME_SECURITY: ${{ needs.security-audit.result }}
+          OUTCOME_SNYK: ${{ needs.snyk-security.result }}
+        with:
+          script: |
+            const { default: script } = await import(`${process.env.GITHUB_WORKSPACE}/scripts/ci/post-static-analysis-comment.mjs`)
+            await script({github, context})
+      
+      - name: Check Failure
+        if: |
+          contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+        run: |
+          echo "::error::One or more static analysis jobs failed."
+          exit 1
 
   build:
     name: Build Artifact
@@ -308,21 +314,14 @@ jobs:
             const { default: script } = await import(`${process.env.GITHUB_WORKSPACE}/scripts/ci/post-bundle-size-comment.mjs`)
             await script({github, context})
 
-  release-drafter:
-    name: Update Release Draft
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    steps:
-      - uses: release-drafter/release-drafter@v6
-        with:
-          config-name: release-drafter.yml
-        env:
-          GITHUB_TOKEN: ${{ secrets.TOKEN_GITHUB }}
+
 
   html-validator:
     name: HTML Validation
     runs-on: ubuntu-latest
     needs: build
+    permissions:
+      pull-requests: write
     env:
       SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
     steps:
@@ -366,6 +365,8 @@ jobs:
     name: RSS Feed Validation
     runs-on: ubuntu-latest
     needs: build
+    permissions:
+      pull-requests: write
     env:
       SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
     steps:
@@ -412,6 +413,8 @@ jobs:
     name: Schema.org JSON-LD Validation
     runs-on: ubuntu-latest
     needs: build
+    permissions:
+      pull-requests: write
     env:
       SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
     steps:
@@ -491,6 +494,8 @@ jobs:
     name: Image Optimization Check
     runs-on: ubuntu-latest
     needs: build
+    permissions:
+      pull-requests: write
     env:
       SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
     steps:
