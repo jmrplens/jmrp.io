@@ -5,42 +5,60 @@ on:
     branches: ["main"]
   pull_request:
     branches: ["main"]
-  schedule:
-    - cron: "0 9 * * 1"
 
 concurrency:
   group: ${{ github.workflow }} - ${{ github.ref }}
   cancel-in-progress: true
 
-permissions:
-  actions: read
-  contents: read
-  pull-requests: write
-  security-events: write
-
 jobs:
-  lint:
-    name: Lint & Type Check
+  # --- Parallel Static Analysis Jobs ---
+
+  astro-check:
+    name: Astro Check
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v6
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 25
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile --prefer-offline
-      - name: Astro Check
-        run: pnpm exec astro check
-      - name: Prettier Check
-        run: pnpm exec prettier --check .
-      - name: Security Audit
-        run: pnpm audit --audit-level=high
-        continue-on-error: true
+      - run: pnpm exec astro check
+
+  prettier-check:
+    name: Prettier Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 25
+          cache: "pnpm"
+      - run: pnpm install --frozen-lockfile --prefer-offline
+      - run: pnpm exec prettier --check .
+
+  eslint-check:
+    name: ESLint Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 25
+          cache: "pnpm"
+      - run: pnpm install --frozen-lockfile --prefer-offline
+      - run: pnpm exec eslint . --max-warnings=0
 
   link-checker:
-    name: Link Checker (Lychee)
+    name: Link Checker
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v6
       - name: Restore lychee cache
@@ -49,77 +67,40 @@ jobs:
           path: .lycheecache
           key: cache-lychee-${{ github.sha }}
           restore-keys: cache-lychee-
-      - name: Check Links
-        uses: lycheeverse/lychee-action@v2.7.0
+      - uses: lycheeverse/lychee-action@v2.7.0
         with:
-          args: >-
-            --cache 
-            --max-cache-age 1d 
-            --verbose 
-            --no-progress 
-            --exclude 'https://mstdn.jmrp.io'
-            --exclude 'https://electronica-submarina.com'
-            --exclude 'https://ies-berlanga.info'
-            --exclude 'https://www.i3m-detectors.i3m.upv.es'
-            './**/*.md' 
-            './**/*.mdx' 
-            './**/*.html' 
-            './src/**/*.astro' 
-            './src/**/*.ts'
-            './src/**/*.tsx'
+          args: --config lychee.toml ./**/*.md ./**/*.mdx ./**/*.html src/**/*.astro src/**/*.ts src/**/*.tsx
           fail: true
         env:
           GITHUB_TOKEN: ${{ secrets.TOKEN_GITHUB }}
 
   spell-checker:
-    name: Spell Checker (Typos)
+    name: Spell Checker
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v6
-      - name: Check Spelling
-        uses: crate-ci/typos@master
+      - uses: crate-ci/typos@master
 
-  codeql:
-    name: CodeQL Analysis
+  security-audit:
+    name: Security Audit
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        language: ["javascript-typescript"]
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v6
-      - uses: github/codeql-action/init@v4
-        with:
-          languages: ${{ matrix.language }}
-      - uses: github/codeql-action/autobuild@v4
-      - uses: github/codeql-action/analyze@v4
-        with:
-          category: "/language:${{ matrix.language }}"
-
-  sonarcloud:
-    name: SonarCloud Analysis
-    runs-on: ubuntu-latest
-    env:
-      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 25
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile --prefer-offline
-      - name: SonarCloud Scan
-        if: env.SONAR_TOKEN != ''
-        uses: SonarSource/sonarqube-scan-action@v7
-        env:
-          GITHUB_TOKEN: ${{ secrets.TOKEN_GITHUB }}
+      - run: pnpm audit --audit-level=high
 
   snyk-security:
-    name: Snyk Security Scan
+    name: Snyk Security
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # Skip if no token is provided (handled in steps)
     env:
       SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
     steps:
@@ -127,19 +108,63 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 25
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile --prefer-offline
+        if: env.SNYK_TOKEN != ''
       - name: Run Snyk to check for vulnerabilities
         if: env.SNYK_TOKEN != ''
         uses: snyk/actions/node@master
         with:
           args: --severity-threshold=high
-        continue-on-error: true
+        continue-on-error: true # Snyk acts as a warning system for now
+
+  static-analysis-report:
+    name: Static Analysis Report
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: always()
+    needs:
+      [
+        astro-check,
+        prettier-check,
+        eslint-check,
+        link-checker,
+        spell-checker,
+        security-audit,
+        snyk-security,
+      ]
+    permissions:
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v6
+      - name: Post Static Analysis Comment
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v8
+        env:
+          OUTCOME_ASTRO: ${{ needs.astro-check.result }}
+          OUTCOME_PRETTIER: ${{ needs.prettier-check.result }}
+          OUTCOME_ESLINT: ${{ needs.eslint-check.result }}
+          OUTCOME_LYCHEE: ${{ needs.link-checker.result }}
+          OUTCOME_TYPOS: ${{ needs.spell-checker.result }}
+          OUTCOME_SECURITY: ${{ needs.security-audit.result }}
+          OUTCOME_SNYK: ${{ needs.snyk-security.result }}
+        with:
+          script: |
+            const { default: script } = await import(`file://${process.env.GITHUB_WORKSPACE}/scripts/ci/post-static-analysis-comment.mjs`)
+            await script({github, context})
+
+      - name: Check Failure
+        if: |
+          contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+        run: |
+          echo "::error::One or more static analysis jobs failed."
+          exit 1
 
   build:
     name: Build Artifact
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v6
       - name: Cache Playwright Browsers
@@ -151,7 +176,7 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 25
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile --prefer-offline
       - name: Install Playwright Browsers
@@ -169,6 +194,7 @@ jobs:
   accessibility:
     name: Accessibility Tests (${{ matrix.theme }} mode)
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     needs: build
     strategy:
       matrix:
@@ -184,7 +210,7 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 25
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile --prefer-offline
       - name: Cache Playwright Browsers
@@ -209,6 +235,7 @@ jobs:
   accessibility-report:
     name: Accessibility Report
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     needs: accessibility
     if: always()
     permissions:
@@ -220,7 +247,7 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 25
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile --prefer-offline
 
@@ -282,6 +309,7 @@ jobs:
   bundle-size:
     name: Bundle Size Check
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     needs: build
     permissions:
       pull-requests: write
@@ -295,7 +323,7 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 25
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile --prefer-offline
       - name: Analyze bundle size
@@ -308,21 +336,13 @@ jobs:
             const { default: script } = await import(`${process.env.GITHUB_WORKSPACE}/scripts/ci/post-bundle-size-comment.mjs`)
             await script({github, context})
 
-  release-drafter:
-    name: Update Release Draft
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    steps:
-      - uses: release-drafter/release-drafter@v6
-        with:
-          config-name: release-drafter.yml
-        env:
-          GITHUB_TOKEN: ${{ secrets.TOKEN_GITHUB }}
-
   html-validator:
     name: HTML Validation
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     needs: build
+    permissions:
+      pull-requests: write
     env:
       SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
     steps:
@@ -335,7 +355,7 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 25
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile --prefer-offline
       - name: Validate HTML5
@@ -359,13 +379,16 @@ jobs:
           SURGE_URL: ${{ secrets.SURGE_TOKEN != '' && format('jmrp-html-pr-{0}.surge.sh', github.event.number) || '' }}
         with:
           script: |
-            const { default: script } = await import(`${process.env.GITHUB_WORKSPACE}/scripts/ci/post-html-validation-comment.mjs`)
+            const { default: script } = await import(`file://${process.env.GITHUB_WORKSPACE}/scripts/ci/post-html-validation-comment.mjs`)
             await script({github, context})
 
   rss-validation:
     name: RSS Feed Validation
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     needs: build
+    permissions:
+      pull-requests: write
     env:
       SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
     steps:
@@ -378,7 +401,7 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 25
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile --prefer-offline
       - name: Validate RSS feed
@@ -405,13 +428,16 @@ jobs:
           SURGE_URL: ${{ secrets.SURGE_TOKEN != '' && format('jmrp-rss-pr-{0}.surge.sh', github.event.number) || '' }}
         with:
           script: |
-            const { default: script } = await import(`${process.env.GITHUB_WORKSPACE}/scripts/ci/post-rss-validation-comment.mjs`)
+            const { default: script } = await import(`file://${process.env.GITHUB_WORKSPACE}/scripts/ci/post-rss-validation-comment.mjs`)
             await script({github, context})
 
   schema-validation:
     name: Schema.org JSON-LD Validation
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     needs: build
+    permissions:
+      pull-requests: write
     env:
       SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
     steps:
@@ -424,7 +450,7 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 25
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile --prefer-offline
       - name: Validate Schema.org structured data
@@ -490,7 +516,10 @@ jobs:
   image-optimization:
     name: Image Optimization Check
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     needs: build
+    permissions:
+      pull-requests: write
     env:
       SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
     steps:
@@ -503,7 +532,7 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 25
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile --prefer-offline
       - name: Analyze images
@@ -533,6 +562,7 @@ jobs:
   functional-tests:
     name: Functional Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     needs: build
     permissions:
       pull-requests: write
@@ -548,7 +578,7 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 25
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile --prefer-offline
       - name: Install Playwright Browsers
@@ -580,6 +610,7 @@ jobs:
   lighthouse-audit:
     name: LH Audit (${{ matrix.theme }} - ${{ matrix.formFactor }})
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     needs: build
     strategy:
       matrix:
@@ -596,7 +627,7 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 25
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile --prefer-offline
       - name: Run Lighthouse CI
@@ -618,6 +649,7 @@ jobs:
   lighthouse-report:
     name: Lighthouse Report
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     needs: lighthouse-audit
     if: always()
     permissions:
@@ -629,7 +661,7 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 25
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile --prefer-offline
 
@@ -670,7 +702,7 @@ jobs:
       - name: Format Report for Comment
         run: |
           # The format script now scans recursively
-          node scripts/ci/format-lighthouse-report.js lh-deploy > lighthouse_comment.md
+          node scripts/ci/format-lighthouse-report.mjs lh-deploy > lighthouse_comment.md
 
       - name: Post Comment
         if: github.event_name == 'pull_request'

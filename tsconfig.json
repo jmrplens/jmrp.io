@@ -12,7 +12,6 @@
       "@layouts/*": ["src/layouts/*"],
       "@utils/*": ["src/utils/*"],
       "@styles/*": ["src/styles/*"],
-      "@scripts/*": ["src/scripts/*"],
       "@data/*": ["src/data/*"],
       "@src/*": ["src/*"]
     }

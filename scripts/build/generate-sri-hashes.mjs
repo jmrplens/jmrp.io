@@ -198,7 +198,7 @@ function processMultimedia(content, file, hashCache, stats) {
  */
 function processImagePreloads(content, stats) {
   const linkRegex = /<link\s+([^>]*imagesrcset=["']([^"']+)["'][^>]*)>/gi; // NOSONAR (javascript:S5852) - Controlled input: processing build-generated HTML only
-  return content.replaceAll(linkRegex, (match, attrs, url) => {
+  return content.replaceAll(linkRegex, (match, attrs, _url) => {
     // Only target image preloads
     const isPreload =
       attrs.includes('rel="preload"') || attrs.includes("rel='preload'");

@@ -4,10 +4,17 @@ import { getImage } from "astro:assets";
 import type { APIContext } from "astro";
 import { escapeHtml } from "../../scripts/utils/html.mjs";
 
+interface SiteData {
+  title: string;
+  description: string;
+  author: string;
+  locale: string;
+}
+
 export async function GET(context: APIContext) {
   const posts = await getCollection("posts");
   const siteEntry = await getEntry("site_config", "site");
-  const siteData = siteEntry?.data;
+  const siteData = siteEntry?.data as unknown as SiteData;
   const publishedPosts = posts.filter((p) => (import.meta.env.PROD ? !p.data.draft : true));
   publishedPosts.sort((a, b) => new Date(b.data.publishedDate).getTime() - new Date(a.data.publishedDate).getTime());
 
@@ -20,7 +27,9 @@ export async function GET(context: APIContext) {
         const link = `/blog/${post.slug}/`;
         const fullLink = new URL(link, context.site || "https://jmrp.io").toString();
         let customData = "";
-        let description = post.data.description || "";
+        const description =
+          post.data.description ||
+          "Academic and R&D Portfolio of José Manuel Requena Plens. Specializing in Embedded Systems, Acoustics, and Industrial Software Development.";
 
         // Add correct cover image enclosure (compliant with RSS readers)
         if (post.data.coverImage) {

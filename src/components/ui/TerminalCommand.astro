@@ -1,27 +1,12 @@
---- 
+---
 /**
  * TerminalCommand Component
  * Displays a shell command in a simulated terminal window.
- *
- * Usage using a slot for content (Plain text or Code Fence):
- *
- * <TerminalCommand>
- *   # This is a comment (aligned with command text)
- *   npm install
- * </TerminalCommand>
- *
- * <TerminalCommand>
- * ```bash
- * # With code fence (preserves whitespace better)
- * npm install
- * npm run build
- * ```
- * </TerminalCommand>
- *
- * Renders each non-empty line with a prompt ($).
- * Comments and empty lines use a spacer to maintain horizontal alignment.
- */import CopyButton from "./CopyButton.astro";
-import { decodeHtml } from "../../../scripts/utils/html.mjs";
+ */
+
+import CopyButton from "./CopyButton.astro";
+import { decodeHtml } from "@utils/html";
+import { randomUUID } from "node:crypto";
 
 let lines: string[] = [];
 let rawContent = "";
@@ -56,6 +41,8 @@ const renderedLines = lines.map((line) => {
         isEmpty: !trimmedLine,
     };
 });
+
+const uuid = randomUUID().substring(0, 8);
 ---
 
 <div class="terminal-command-wrapper copy-container">
@@ -66,31 +53,20 @@ const renderedLines = lines.map((line) => {
             <span class="dot green"></span>
         </div>
         <div class="action-area">
-            <CopyButton />
+            <CopyButton content={rawContent} />
         </div>
     </div>
 
-    <div class="terminal-window" tabindex="0" role="group" aria-label="Terminal command">
-        {
-            renderedLines.map((line) => (
-                <div class="command-line">
-                    <span class="prompt" aria-hidden="true">
-                        {!line.isEmpty && !line.isComment ? "$" : "\u00A0"}
-                    </span>
-                    <span
-                        class:list={
-                            [
-                                "line-content",
-                                {"is-comment": line.isComment},
-                            ]
-                        }
-                    >
-                        {line.text}
-                    </span>
-                </div>
-            ))
-        }
-    </div>
+    {
+        /* Accessible scrollable container: Using <pre> implies preformatted text/code, which is semantically correct and allows tabindex */
+    }
+    {/* eslint-disable jsx-a11y/no-noninteractive-tabindex */}
+    <pre
+        class="terminal-window"
+        tabindex="0"
+        role="group"
+        aria-label={`Terminal command ${uuid}`}>{renderedLines.map((line) => (<span class="command-line"><span class="prompt" aria-hidden="true">{!line.isEmpty && !line.isComment ? "$" : "\u00A0"}</span><span class:list={["line-content", {"is-comment": line.isComment}]}>{line.text}</span></span>))}</pre>
+    {/* eslint-enable jsx-a11y/no-noninteractive-tabindex */}
 
     {/* Hidden element for CopyButton to grab clean text without prompts */}
     <div
@@ -98,8 +74,7 @@ const renderedLines = lines.map((line) => {
         style="display: none;"
         aria-hidden="true"
         set:text={rawContent}
-    >
-    </div>
+    />
 </div>
 
 <style>
@@ -154,6 +129,7 @@ const renderedLines = lines.map((line) => {
         scrollbar-width: none;
         min-width: 0;
         padding: 0.75rem 1rem;
+        margin: 0; /* Reset pre default margin */
     }
     .terminal-window::-webkit-scrollbar {
         display: none;
@@ -171,7 +147,7 @@ const renderedLines = lines.map((line) => {
 
     .prompt {
         color: var(--color-primary);
-        margin-right: 0;
+        margin-right: 0.75rem;
         user-select: none;
         flex-shrink: 0;
         font-family: inherit;
@@ -193,14 +169,12 @@ const renderedLines = lines.map((line) => {
     :global(.terminal-command-wrapper .copy-button) {
         position: static !important;
         background-color: transparent !important;
-        border: none !important;
-        padding: 4px !important;
-        min-width: 24px !important;
-        min-height: 24px !important;
-        opacity: 0.7;
+        border: 1px solid var(--color-border) !important;
+        opacity: 0.8;
     }
     :global(.terminal-command-wrapper .copy-button:hover) {
-        background-color: rgba(255, 255, 255, 0.1) !important;
         opacity: 1;
+        background-color: var(--color-bg-secondary) !important;
+        border-color: var(--color-text-muted) !important;
     }
 </style>

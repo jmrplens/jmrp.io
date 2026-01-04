@@ -11,7 +11,11 @@ const tags = getUniqueTags(posts);
   <div class="tags">
     {
       tags.map(({ tag, count }) => (
-        <a href={`/blog/tags/${encodeURIComponent(tag)}`} class="tag">
+        <a
+          href={`/blog/tags/${encodeURIComponent(tag)}`}
+          class="tag"
+          aria-label={`View all posts tagged with ${tag}`}
+        >
           <span class="tag-name">
             <span class="hash">#</span>
             {tag}
