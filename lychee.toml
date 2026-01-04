@@ -25,16 +25,5 @@ exclude = [
     # Localhost
     "http://localhost.*"
 ]
-
-# File globs to check
-include = [
-    "./**/*.md",
-    "./**/*.mdx",
-    "./**/*.html",
-    "./src/**/*.astro",
-    "./src/**/*.ts",
-    "./src/**/*.tsx"
-]
-
 # Fail on error
 fail_on_error = true
