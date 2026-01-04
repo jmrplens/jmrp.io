@@ -93,4 +93,18 @@ export default [
       "@typescript-eslint/triple-slash-reference": "off",
     },
   },
+  // 6. Content Config Override (virtual modules cause strict type errors)
+  {
+    files: ["src/content/config.ts"],
+    plugins: {
+      "@typescript-eslint": tseslint.plugin,
+    },
+    rules: {
+      "@typescript-eslint/no-unsafe-assignment": "off",
+      "@typescript-eslint/no-unsafe-call": "off",
+      "@typescript-eslint/no-unsafe-member-access": "off",
+      "@typescript-eslint/no-unsafe-return": "off",
+      "@typescript-eslint/no-unsafe-argument": "off",
+    },
+  },
 ];
