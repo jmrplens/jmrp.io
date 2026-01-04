@@ -11,7 +11,6 @@ import { Icon } from "astro-icon/components";
 // Config
 import { getEntry } from "astro:content";
 import type { SiteConfig } from "@src/types";
-import { escapeHtml } from "../../scripts/utils/html.mjs";
 
 const siteEntry = await getEntry("site_config", "site");
 const siteData = (siteEntry?.data || {}) as SiteConfig;
@@ -54,13 +53,13 @@ const imageSrcSet = optimizedImages
                     <h1>{hero.title}</h1>
                     <p
                         class="subtitle"
-                        set:html={escapeHtml(hero.subtitle)}
+                        set:html={hero.subtitle}
                     />
                     <div class="bio">
                         {
                             hero.bio.map((paragraph: string) => (
                                 <p
-                                    set:html={escapeHtml(paragraph)}
+                                    set:html={paragraph}
                                 />
                             ))
                         }

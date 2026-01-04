@@ -9,7 +9,7 @@ export interface PublicationItem {
   title: string;
   author?: { family: string; given?: string; url?: string }[];
   issued?: { "date-parts": number[][] };
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 /**
@@ -18,6 +18,15 @@ export interface PublicationItem {
 export interface PublicationGroup {
   title: string;
   items: PublicationItem[];
+}
+
+interface Coauthor {
+  firstname: string[];
+  url: string;
+}
+
+interface CoauthorMap {
+  [family: string]: Coauthor[];
 }
 
 /**
@@ -44,7 +53,7 @@ export async function getPublications(): Promise<PublicationGroup[]> {
 
     // Load coauthors
     const coauthorsEntry = await getEntry("publications_data", "coauthors");
-    const coauthors = coauthorsEntry?.data || {};
+    const coauthors = (coauthorsEntry?.data || {}) as CoauthorMap;
 
     /**
      * Helper to manually extract custom fields from the raw BibTeX string.
@@ -130,9 +139,11 @@ export async function getPublications(): Promise<PublicationGroup[]> {
       const type = item.type;
 
       // Manually inject slides/poster/pdf if missing
-      item.slides = item.slides ?? extractCustomField(item.id, "slides");
-      item.poster = item.poster ?? extractCustomField(item.id, "poster");
-      item.pdf = item.pdf ?? extractCustomField(item.id, "pdf");
+      item.slides =
+        (item.slides as string) ?? extractCustomField(item.id, "slides");
+      item.poster =
+        (item.poster as string) ?? extractCustomField(item.id, "poster");
+      item.pdf = (item.pdf as string) ?? extractCustomField(item.id, "pdf");
 
       // Extract raw bibtex entry for display/copying
       item.bibtex = extractRawBibtex(item.id);

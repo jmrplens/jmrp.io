@@ -52,6 +52,7 @@ const iconFiles = import.meta.glob<{ default: ImageMetadata }>(
                             target="_blank"
                             rel="noopener noreferrer"
                             class="reference-card"
+                            aria-label={`${ref.text} (${hostname}${urlObj.pathname !== "/" ? urlObj.pathname : ""})`}
                         >
                             <div class="card-icon">
                                 {iconModule ? (

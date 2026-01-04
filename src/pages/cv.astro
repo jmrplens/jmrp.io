@@ -6,6 +6,7 @@
  */
 import BaseLayout from "@layouts/BaseLayout.astro";
 import { getCVData } from "@utils/cv";
+import { stripHtml } from "@utils/html";
 import type { CVSection } from "@src/types";
 import { Icon } from "astro-icon/components";
 import SkillGroup from "@components/cv/SkillGroup.astro";
@@ -63,8 +64,8 @@ const personSchema = {
             formalEducation?.type === "time_table"
                 ? formalEducation.contents.map((edu) => ({
                       "@type": "EducationalOrganization",
-                      name: edu.institution,
-                      department: edu.department,
+                      name: stripHtml(edu.institution),
+                      department: stripHtml(edu.department),
                   }))
                 : [],
         hasOccupation:
@@ -72,7 +73,7 @@ const personSchema = {
                 ? experience.contents.map((job) => ({
                       "@type": "Occupation",
                       name: job.title,
-                      description: job.summary,
+                      description: stripHtml(job.summary),
                       skills: [], // Could map description items here if structured
                   }))
                 : [],

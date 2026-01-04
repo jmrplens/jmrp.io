@@ -9,6 +9,39 @@ interface Props {
     | "meshtastic-combined";
 }
 
+interface MastodonStatsData {
+  peersCount: number;
+  mastodonTrends: { url: string; name: string }[];
+  instanceVersion: string;
+}
+
+interface MatrixData {
+  online?: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  versions?: any; // Keep specific any if structure is unknown/complex or refine later
+  federationTotal?: number;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  [key: string]: any; // Allow loose structure for now
+}
+
+interface MatrixFed {
+  server?: {
+    version?: string;
+  };
+}
+
+interface MatrixStatsData {
+  matrixData: MatrixData;
+  matrixFed: MatrixFed | null;
+}
+
+interface MeshtasticStatsData {
+  potatoNodes: number;
+  lfNodes: number;
+  mfNodes: number;
+  potatoVersion: string;
+}
+
 /**
  * Fetch Mastodon service statistics
  */
@@ -25,16 +58,19 @@ async function fetchMastodonStats(setError: (error: boolean) => void) {
     ]);
 
     if (resPeers.ok) {
-      const peersData = await resPeers.json();
+      const peersData = (await resPeers.json()) as unknown[];
       peersCount = Array.isArray(peersData) ? peersData.length : 0;
     }
 
     if (resTrends.ok) {
-      mastodonTrends = await resTrends.json();
+      mastodonTrends = (await resTrends.json()) as {
+        url: string;
+        name: string;
+      }[];
     }
 
     if (resInstance.ok) {
-      const instanceData = await resInstance.json();
+      const instanceData = (await resInstance.json()) as { version: string };
       instanceVersion = instanceData.version;
     }
   } catch (e) {
@@ -49,26 +85,26 @@ async function fetchMastodonStats(setError: (error: boolean) => void) {
  * Fetch Matrix service statistics
  */
 async function fetchMatrixStats(setError: (error: boolean) => void) {
-  let matrixData: any = {};
-  let matrixFed: any = null;
+  let matrixData: MatrixData = {};
+  let matrixFed: MatrixFed | null = null;
 
   try {
     const resConfig = await fetch("/api/proxy/matrix/config");
-    if (resConfig.ok) matrixData = await resConfig.json();
+    if (resConfig.ok) matrixData = (await resConfig.json()) as MatrixData;
 
     const resVer = await fetch("/api/proxy/matrix/versions");
     if (resVer.ok) {
       matrixData.online = true;
-      const verData = await resVer.json();
+      const verData = (await resVer.json()) as { versions: unknown };
       matrixData.versions = verData.versions;
     }
 
     const resFed = await fetch("/api/proxy/matrix/federation");
-    if (resFed.ok) matrixFed = await resFed.json();
+    if (resFed.ok) matrixFed = (await resFed.json()) as MatrixFed;
 
     const resDest = await fetch("/api/proxy/matrix/stats");
     if (resDest.ok) {
-      const destData = await resDest.json();
+      const destData = (await resDest.json()) as { total: number };
       matrixData.federationTotal = destData.total;
     }
   } catch (e) {
@@ -94,15 +130,15 @@ async function fetchMeshtasticStats() {
   let mfNodes = 0;
 
   if (resPotato?.ok) {
-    const data = await resPotato.json();
+    const data = (await resPotato.json()) as unknown[];
     potatoNodes = Array.isArray(data) ? data.length : 0;
   }
   if (resLF?.ok) {
-    const data = await resLF.json();
+    const data = (await resLF.json()) as { data?: { activeNodes: number } };
     lfNodes = data.data?.activeNodes ?? 0;
   }
   if (resMF?.ok) {
-    const data = await resMF.json();
+    const data = (await resMF.json()) as { data?: { activeNodes: number } };
     mfNodes = data.data?.activeNodes ?? 0;
   }
 
@@ -123,7 +159,7 @@ async function fetchPotatoVersion(): Promise<string> {
       const contentType = resVer.headers.get("content-type");
       if (contentType?.includes("application/json")) {
         try {
-          const verJson = await resVer.json();
+          const verJson = (await resVer.json()) as { version: string };
           const ver = verJson.version;
           potatoVersion = ver || "";
         } catch {
@@ -143,7 +179,7 @@ async function fetchPotatoVersion(): Promise<string> {
 /**
  * Mastodon Stats Component
  */
-function MastodonStats({ stats }: { readonly stats: any }) {
+function MastodonStats({ stats }: { readonly stats: MastodonStatsData }) {
   const { peersCount, mastodonTrends, instanceVersion } = stats;
 
   return (
@@ -210,7 +246,7 @@ function MastodonStats({ stats }: { readonly stats: any }) {
 /**
  * Matrix Stats Component
  */
-function MatrixStats({ stats }: { readonly stats: any }) {
+function MatrixStats({ stats }: { readonly stats: MatrixStatsData }) {
   const { matrixData, matrixFed } = stats;
   const synapseVersion = matrixFed?.server?.version || "Unknown";
 
@@ -263,7 +299,7 @@ function MatrixStats({ stats }: { readonly stats: any }) {
 /**
  * Meshtastic Combined Stats Component
  */
-function MeshtasticStats({ stats }: { readonly stats: any }) {
+function MeshtasticStats({ stats }: { readonly stats: MeshtasticStatsData }) {
   const { potatoNodes, lfNodes, mfNodes, potatoVersion } = stats;
 
   const StatusDot = () => <span class="status-dot-inline"></span>;
@@ -339,7 +375,9 @@ function MeshtasticStats({ stats }: { readonly stats: any }) {
 }
 
 export default function ServiceStats({ type }: Props) {
-  const [stats, setStats] = useState<any>(null);
+  const [stats, setStats] = useState<
+    MastodonStatsData | MatrixStatsData | MeshtasticStatsData | null
+  >(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
@@ -363,7 +401,7 @@ export default function ServiceStats({ type }: Props) {
         } else if (type === "meshtastic-combined") {
           data = await fetchMeshtasticStats();
         }
-        setStats(data);
+        if (data) setStats(data);
       } catch (err) {
         console.error("Error fetching service stats:", err);
         setError(true);
@@ -372,7 +410,7 @@ export default function ServiceStats({ type }: Props) {
       }
     };
 
-    fetchData();
+    void fetchData();
   }, [type]);
 
   if (loading) {
@@ -385,15 +423,15 @@ export default function ServiceStats({ type }: Props) {
 
   // Route to appropriate component based on type
   if (type === "mastodon") {
-    return <MastodonStats stats={stats} />;
+    return <MastodonStats stats={stats as MastodonStatsData} />;
   }
 
   if (type === "matrix") {
-    return <MatrixStats stats={stats} />;
+    return <MatrixStats stats={stats as MatrixStatsData} />;
   }
 
   if (type === "meshtastic-combined") {
-    return <MeshtasticStats stats={stats} />;
+    return <MeshtasticStats stats={stats as MeshtasticStatsData} />;
   }
 
   return null;

@@ -1,0 +1,39 @@
+cache = true
+max_cache_age = "1d"
+
+no_progress = true
+
+# Exclude specific domains/URLs
+exclude = [
+    "https://mstdn.jmrp.io",
+    "https://electronica-submarina.com",
+    "https://ies-berlanga.info",
+    "https://www.i3m-detectors.i3m.upv.es",
+    # Ignore Astro/Template variables
+    ".*\\$\\{.*",
+    ".*\\%7B.*",
+    ".*\\%7D.*",
+    # Blocked bots or auth required
+    "linkedin\\.com",
+    "cloudflare\\.com",
+    "scholar\\.google\\.com",
+    "youtube\\.com/embed/",
+    # RSS/Atom Namespaces
+    "http://www\\.w3\\.org/2005/Atom",
+    "http://purl\\.org/rss/1.0/modules/content/",
+    "http://search\\.yahoo\\.com/mrss/",
+    # Localhost
+    "http://localhost.*"
+]
+
+# File globs to check (used locally)
+include = [
+    "./**/*.md",
+    "./**/*.mdx",
+    "./**/*.html",
+    "./src/**/*.astro",
+    "./src/**/*.ts",
+    "./src/**/*.tsx"
+]
+# Fail on error
+fail_on_error = true

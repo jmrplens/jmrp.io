@@ -185,9 +185,7 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
                             content={pub.abstract}
                         />
                     </div>
-                    <div class="pub-card-content copy-content">
-                        {pub.abstract}
-                    </div>
+                    <div class="pub-card-content copy-content" set:html={pub.abstract} />
                 </div>
             </div>
 

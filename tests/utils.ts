@@ -4,6 +4,18 @@ import { parseStringPromise } from "xml2js";
 
 const SITEMAP_PATH = path.resolve("dist/sitemap-0.xml");
 
+interface SitemapUrl {
+  loc: string[];
+}
+
+interface SitemapUrlSet {
+  url: SitemapUrl[];
+}
+
+interface SitemapResult {
+  urlset: SitemapUrlSet;
+}
+
 export async function getSitemapUrls(): Promise<string[]> {
   if (!fs.existsSync(SITEMAP_PATH)) {
     console.warn(
@@ -13,8 +25,9 @@ export async function getSitemapUrls(): Promise<string[]> {
   }
 
   const sitemapContent = fs.readFileSync(SITEMAP_PATH, "utf-8");
-  const parsed = await parseStringPromise(sitemapContent);
-  const urls = parsed.urlset.url.map((u: any) => {
+
+  const parsed = (await parseStringPromise(sitemapContent)) as SitemapResult;
+  const urls: string[] = parsed.urlset.url.map((u) => {
     const loc = u.loc[0];
     return new URL(loc).pathname;
   });
