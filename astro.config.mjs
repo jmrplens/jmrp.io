@@ -14,6 +14,7 @@ import { visit } from "unist-util-visit";
 import rehypeRaw from "rehype-raw";
 import rehypeMermaid from "rehype-mermaid";
 import { remarkMermaidBypass } from "./scripts/remark-mermaid-bypass.mjs";
+import { rehypeLinkDisambiguator } from "./scripts/rehype-link-disambiguator.mjs";
 import { ViteImageOptimizer } from "vite-plugin-image-optimizer";
 
 /**
@@ -191,6 +192,7 @@ export default defineConfig({
           target: "_blank",
         },
       ],
+      rehypeLinkDisambiguator,
     ],
   },
 
