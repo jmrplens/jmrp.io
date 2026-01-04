@@ -94,7 +94,7 @@ jobs:
     name: Snyk Security
     runs-on: ubuntu-latest
     # Skip if no token is provided
-    if: secrets.SNYK_TOKEN != ''
+    if: "${{ secrets.SNYK_TOKEN != '' }}"
     env:
       SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
     steps:
