@@ -244,7 +244,7 @@ You can then add `'sha256-AbCdEf...'` to your `script-src`.
 A broken CSP breaks your site. Never deploy a strict policy to production without testing.
 
 1.  **Report-Only Mode:** Use `Content-Security-Policy-Report-Only` header first. Browsers will report violations to the console (or a `report-uri`) but won't block anything.
-2.  **[Mozilla Observatory](https://observatory.mozilla.org/)**: The gold standard for grading your headers.
+2.  **<a href="https://observatory.mozilla.org/" target="_blank" rel="noopener noreferrer" aria-label="Visit the Mozilla Observatory home page">Mozilla Observatory</a>**: The gold standard for grading your headers.
 3.  **[Google CSP Evaluator](https://csp-evaluator.withgoogle.com/)**: Helps find logical holes in your policy (like trusting widely compromised CDNs).
 
 ### My Results
@@ -252,7 +252,7 @@ A broken CSP breaks your site. Never deploy a strict policy to production withou
 After tuning the policy for `jmrp.io`, removing unsafe directives, and implementing the Nginx nonce injection:
 
 <Callout type="success">
-  **Score: 140/100 (A+)** on [Mozilla Observatory](https://observatory.mozilla.org/analyze/jmrp.io).
+  **Score: 145/100 (A+)** on <a href="https://observatory.mozilla.org/analyze/jmrp.io" target="_blank" rel="noopener noreferrer" aria-label="View the jmrp.io security analysis on Mozilla Observatory">Mozilla Observatory</a>.
 </Callout>
 
 This setup proves that you don't need to sacrifice security for the convenience of a static site generator. With a few lines of Nginx configuration, you can achieve top-tier protection.
