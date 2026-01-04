@@ -33,10 +33,20 @@ export default tseslint.config(
     },
   },
 
-  // 3. Accessibility Configuration
+  // JSX A11y Configuration
   {
     files: ["**/*.astro", "**/*.tsx", "**/*.jsx"],
     ...jsxA11y.flatConfigs.recommended,
+    rules: {
+        // Allow scrollable regions (like code blocks) to be focusable for keyboard accessibility
+        "jsx-a11y/no-noninteractive-tabindex": [
+            "error",
+            {
+                tags: [],
+                roles: ["region"],
+            },
+        ],
+    }
   },
 
   // 4. Astro Overrides
