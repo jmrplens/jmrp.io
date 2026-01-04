@@ -20,6 +20,7 @@ export default [
   // This automatically configures the parser for .astro files
   ...eslintPluginAstro.configs.recommended,
 
+
   // 2. TypeScript Configuration
   // We apply this to all TS/TSX files.
   ...tseslint.configs.recommendedTypeChecked.map((config) => ({
@@ -48,7 +49,6 @@ export default [
     files: ["**/*.astro", "**/*.tsx", "**/*.jsx"],
     ...jsxA11y.flatConfigs.recommended,
     rules: {
-      // Allow scrollable regions (like code blocks) to be focusable for keyboard accessibility
       // Allow scrollable regions (like code blocks) to be focusable for keyboard accessibility
       "jsx-a11y/no-noninteractive-tabindex": [
         "error",

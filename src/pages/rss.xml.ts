@@ -28,6 +28,7 @@ export async function GET(context: APIContext) {
         const fullLink = new URL(link, context.site || "https://jmrp.io").toString();
         let customData = "";
         const description =
+          post.data.description ||
           "Academic and R&D Portfolio of José Manuel Requena Plens. Specializing in Embedded Systems, Acoustics, and Industrial Software Development.";
 
         // Add correct cover image enclosure (compliant with RSS readers)
