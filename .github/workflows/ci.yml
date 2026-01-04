@@ -22,7 +22,7 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 25
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile --prefer-offline
       - run: pnpm exec astro check
@@ -36,7 +36,7 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 25
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile --prefer-offline
       - run: pnpm exec prettier --check .
@@ -50,7 +50,7 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 25
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile --prefer-offline
       - run: pnpm exec eslint . --max-warnings=0
@@ -91,7 +91,7 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 25
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile --prefer-offline
       - run: pnpm audit --audit-level=high
@@ -108,7 +108,7 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 25
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile --prefer-offline
         if: env.SNYK_TOKEN != ''
@@ -167,7 +167,7 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 25
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile --prefer-offline
       - name: Install Playwright Browsers
@@ -201,7 +201,7 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 25
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile --prefer-offline
       - name: Cache Playwright Browsers
@@ -238,7 +238,7 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 25
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile --prefer-offline
 
@@ -314,7 +314,7 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 25
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile --prefer-offline
       - name: Analyze bundle size
@@ -348,7 +348,7 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 25
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile --prefer-offline
       - name: Validate HTML5
@@ -394,7 +394,7 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 25
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile --prefer-offline
       - name: Validate RSS feed
@@ -443,7 +443,7 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 25
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile --prefer-offline
       - name: Validate Schema.org structured data
@@ -525,7 +525,7 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 25
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile --prefer-offline
       - name: Analyze images
@@ -571,7 +571,7 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 25
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile --prefer-offline
       - name: Install Playwright Browsers
@@ -620,7 +620,7 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 25
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile --prefer-offline
       - name: Run Lighthouse CI
@@ -654,7 +654,7 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 25
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile --prefer-offline
 
