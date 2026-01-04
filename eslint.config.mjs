@@ -2,7 +2,8 @@ import eslintPluginAstro from "eslint-plugin-astro";
 import tseslint from "typescript-eslint";
 import jsxA11y from "eslint-plugin-jsx-a11y";
 
-export default tseslint.config(
+/** @type {import('eslint').Linter.Config[]} */
+export default [
   // Global Ignores
   {
     ignores: [
@@ -21,9 +22,18 @@ export default tseslint.config(
 
   // 2. TypeScript Configuration
   // We apply this to all TS/TSX files.
+  ...tseslint.configs.recommendedTypeChecked.map((config) => ({
+    ...config,
+    files: ["**/*.ts", "**/*.tsx"],
+  })),
   {
     files: ["**/*.ts", "**/*.tsx"],
-    extends: [...tseslint.configs.recommended],
+    languageOptions: {
+      parserOptions: {
+        project: "./tsconfig.json",
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
     rules: {
       "@typescript-eslint/no-unused-vars": [
         "warn",
@@ -33,34 +43,24 @@ export default tseslint.config(
     },
   },
 
-  // JSX A11y Configuration
+  // 3. JSX A11y Configuration
   {
     files: ["**/*.astro", "**/*.tsx", "**/*.jsx"],
     ...jsxA11y.flatConfigs.recommended,
     rules: {
-        // Allow scrollable regions (like code blocks) to be focusable for keyboard accessibility
-        "jsx-a11y/no-noninteractive-tabindex": [
-            "error",
-            {
-                tags: [],
-                roles: ["region"],
-            },
-        ],
-    }
-  },
-
-  // 4. Astro Overrides
-  {
-    files: ["**/*.astro"],
-    // We need to make sure the TS plugin is available here if we want to use its rules
-    // extending tseslint.configs.base or similar usually helps, but Astro plugin might already do it.
-    // Let's just rely on what Astro plugin provides + override specific Astro rules if needed.
-    rules: {
-      // "astro/no-set-html-directive": "off"
+      // Allow scrollable regions (like code blocks) to be focusable for keyboard accessibility
+      // Allow scrollable regions (like code blocks) to be focusable for keyboard accessibility
+      "jsx-a11y/no-noninteractive-tabindex": [
+        "error",
+        {
+          tags: [],
+          roles: ["region"],
+        },
+      ],
     },
   },
 
-  // 5. Node Scripts Configuration
+  // 4. Node Scripts Configuration
   {
     files: ["scripts/**/*.mjs", "scripts/**/*.js", "**/*.cjs", "*.mjs"],
     // Explicitly include the plugin so we can turn off its rules
@@ -84,7 +84,7 @@ export default tseslint.config(
     },
   },
 
-  // 6. Specific overrides
+  // 5. Specific overrides
   {
     files: ["src/env.d.ts"],
     plugins: {
@@ -94,4 +94,4 @@ export default tseslint.config(
       "@typescript-eslint/triple-slash-reference": "off",
     },
   },
-);
+];

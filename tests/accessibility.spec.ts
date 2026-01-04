@@ -5,6 +5,38 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { createHtmlReport } from "axe-html-reporter";
 import { escapeHtml } from "../scripts/utils/html.mjs"; // Import shared utility
+// import type { AxeResults } from "axe-core"; // Types are problematic
+
+interface AxeNode {
+  html: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  target: any; // Axe-core uses complex selectors (UnlabelledFrameSelector)
+  failureSummary?: string;
+}
+
+interface Result {
+  id: string;
+  impact?: string | null;
+  tags: string[];
+  description: string;
+  help: string;
+  helpUrl: string;
+  nodes: AxeNode[];
+}
+
+type AggregatedResult = Omit<Result, "nodes"> & { nodes: number };
+
+interface SitemapUrl {
+  loc: string[];
+}
+
+interface SitemapUrlSet {
+  url: SitemapUrl[];
+}
+
+interface SitemapResult {
+  urlset: SitemapUrlSet;
+}
 
 // Read and parse sitemap to discover all pages automatically
 async function getPagesFromSitemap(): Promise<
@@ -31,9 +63,9 @@ async function getPagesFromSitemap(): Promise<
 
   try {
     const sitemapContent = fs.readFileSync(sitemapPath, "utf-8");
-    const sitemap = await parseStringPromise(sitemapContent);
+    const sitemap = (await parseStringPromise(sitemapContent)) as SitemapResult;
 
-    let urls = sitemap.urlset.url.map((entry: any) => {
+    let urls = sitemap.urlset.url.map((entry) => {
       const fullUrl = entry.loc[0];
       const urlPath = fullUrl.replace("https://jmrp.io", "");
 
@@ -57,7 +89,7 @@ async function getPagesFromSitemap(): Promise<
 
     // Optimization: Only include the first tag page encountered
     let tagFound = false;
-    urls = urls.filter((page: any) => {
+    urls = urls.filter((page) => {
       if (page.url.includes("/blog/tags/")) {
         if (tagFound) return false;
         tagFound = true;
@@ -95,8 +127,8 @@ test.describe("Accessibility Tests (Axe-core WCAG 2.1 AA)", () => {
     incomplete: number;
     violationIds?: string[];
     reportPath: string;
-    detailedViolations: any[]; // Store full Axe violations
-    detailedIncomplete: any[]; // Store full Axe incomplete
+    detailedViolations: Result[]; // Store full Axe violations
+    detailedIncomplete: Result[]; // Store full Axe incomplete
   }> = [];
 
   // Load pages once before all tests
@@ -109,34 +141,36 @@ test.describe("Accessibility Tests (Axe-core WCAG 2.1 AA)", () => {
     }
   });
 
-  test.afterAll(async () => {
+  test.afterAll(() => {
     // Aggregating violations across all pages
-    const uniqueViolations = new Map<string, any>();
-    const uniqueIncomplete = new Map<string, any>();
+    const uniqueViolations = new Map<string, AggregatedResult>();
+    const uniqueIncomplete = new Map<string, AggregatedResult>();
 
     results.forEach((pageResult) => {
       pageResult.detailedViolations.forEach((v) => {
         if (!uniqueViolations.has(v.id)) {
           uniqueViolations.set(v.id, {
-            id: v.id,
-            impact: v.impact,
-            description: v.description,
+            ...v,
             nodes: 0,
           });
         }
-        uniqueViolations.get(v.id).nodes += v.nodes.length;
+        const violation = uniqueViolations.get(v.id);
+        if (violation) {
+          violation.nodes += v.nodes.length;
+        }
       });
 
       pageResult.detailedIncomplete.forEach((i) => {
         if (!uniqueIncomplete.has(i.id)) {
           uniqueIncomplete.set(i.id, {
-            id: i.id,
-            impact: i.impact,
-            description: i.description,
+            ...i,
             nodes: 0,
           });
         }
-        uniqueIncomplete.get(i.id).nodes += i.nodes.length;
+        const incomplete = uniqueIncomplete.get(i.id);
+        if (incomplete) {
+          incomplete.nodes += i.nodes.length;
+        }
       });
     });
 
@@ -150,6 +184,7 @@ test.describe("Accessibility Tests (Axe-core WCAG 2.1 AA)", () => {
       violations: Array.from(uniqueViolations.values()),
       incompleteList: Array.from(uniqueIncomplete.values()),
       pages: results.map(
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         ({ detailedViolations, detailedIncomplete, ...rest }) => rest,
       ), // Exclude heavy details from pages list in summary
     };

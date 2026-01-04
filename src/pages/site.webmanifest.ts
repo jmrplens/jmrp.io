@@ -5,8 +5,22 @@ import icon192Src from "@assets/icons/pwa/icon-192.png";
 import icon512Src from "@assets/icons/pwa/icon-512.png";
 
 export const GET: APIRoute = async () => {
+  interface Shortcut {
+    name: string;
+    url: string;
+    description?: string;
+  }
+
+  interface SiteData {
+    author?: string;
+    description?: string;
+    background_color?: string;
+    theme_color?: string;
+    shortcuts?: Shortcut[];
+  }
+
   const siteEntry = await getEntry("site_config", "site");
-  const siteData = siteEntry?.data;
+  const siteData = siteEntry?.data as unknown as SiteData;
 
   const icon192 = await getImage({
     src: icon192Src,
@@ -20,12 +34,6 @@ export const GET: APIRoute = async () => {
     width: 512,
     height: 512,
   });
-
-  interface Shortcut {
-    name: string;
-    url: string;
-    description?: string;
-  }
 
   const manifest = {
     name: siteData?.author || "José Manuel Requena Plens",
@@ -63,7 +71,7 @@ export const GET: APIRoute = async () => {
       },
     ],
     // Properly typed shortcuts to satisfy TS
-    shortcuts: (siteData as any)?.shortcuts?.map((s: Shortcut) => ({
+    shortcuts: siteData?.shortcuts?.map((s) => ({
       name: s.name,
       url: s.url,
       description: s.description,

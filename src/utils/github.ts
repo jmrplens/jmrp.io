@@ -22,7 +22,9 @@ export interface GitHubProfile {
 }
 
 const USERNAME = "jmrplens";
-const GITHUB_TOKEN = import.meta.env.GITHUB_TOKEN; // Optional, for rate limits
+const GITHUB_TOKEN: string | undefined = import.meta.env.GITHUB_TOKEN as
+  | string
+  | undefined; // Optional, for rate limits
 
 export async function fetchGitHubProfile(): Promise<GitHubProfile> {
   const headers: HeadersInit = {};
@@ -39,7 +41,7 @@ export async function fetchGitHubProfile(): Promise<GitHubProfile> {
       throw new Error(`GitHub API error: ${res.status}`);
     }
 
-    return res.json();
+    return (await res.json()) as GitHubProfile;
   } catch (error) {
     console.warn("Failed to fetch GitHub profile, using fallback data:", error);
     return {
@@ -72,7 +74,7 @@ export async function fetchTopRepositories(limit = 12): Promise<GitHubRepo[]> {
       throw new Error(`GitHub API error: ${res.status}`);
     }
 
-    return res.json();
+    return (await res.json()) as GitHubRepo[];
   } catch (error) {
     console.warn("Failed to fetch GitHub repos, using empty list:", error);
     return [];
