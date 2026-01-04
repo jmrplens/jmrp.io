@@ -10,8 +10,7 @@ concurrency:
   group: ${{ github.workflow }} - ${{ github.ref }}
   cancel-in-progress: true
 
-env:
-  SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
 
 jobs:
   # --- Parallel Static Analysis Jobs ---
