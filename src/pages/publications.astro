@@ -6,6 +6,7 @@
  */
 import BaseLayout from "@layouts/BaseLayout.astro";
 import { getPublications } from "@utils/publications";
+import { stripHtml } from "@utils/html";
 import PublicationItem from "@components/publications/PublicationItem.astro";
 
 const publicationGroups = await getPublications();
@@ -55,7 +56,7 @@ const collectionSchema = {
                                   pub.institution,
                           }
                         : undefined,
-                abstract: pub.abstract,
+                abstract: stripHtml(pub.abstract),
                 url: pub.url || pub.doi || undefined,
                 sameAs: pub.doi ? [pub.doi] : [],
             },

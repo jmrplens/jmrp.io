@@ -670,7 +670,7 @@ jobs:
       - name: Format Report for Comment
         run: |
           # The format script now scans recursively
-          node scripts/ci/format-lighthouse-report.js lh-deploy > lighthouse_comment.md
+          node scripts/ci/format-lighthouse-report.mjs lh-deploy > lighthouse_comment.md
 
       - name: Post Comment
         if: github.event_name == 'pull_request'

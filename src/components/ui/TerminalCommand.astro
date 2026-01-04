@@ -21,7 +21,7 @@
  * Renders each non-empty line with a prompt ($).
  * Comments and empty lines use a spacer to maintain horizontal alignment.
  */import CopyButton from "./CopyButton.astro";
-import { decodeHtml } from "../../../scripts/utils/html.mjs";
+import { decodeHtml } from "@utils/html";
 
 let lines: string[] = [];
 let rawContent = "";
@@ -70,7 +70,9 @@ const renderedLines = lines.map((line) => {
         </div>
     </div>
 
-    <div class="terminal-window" tabindex="0" role="group" aria-label="Terminal command">
+    {/* Accessible scrollable container */}
+    {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex */}
+    <div class="terminal-window" tabindex="0" role="region" aria-label="Terminal command">
         {
             renderedLines.map((line) => (
                 <div class="command-line">

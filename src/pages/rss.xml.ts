@@ -20,7 +20,8 @@ export async function GET(context: APIContext) {
         const link = `/blog/${post.slug}/`;
         const fullLink = new URL(link, context.site || "https://jmrp.io").toString();
         let customData = "";
-        let description = post.data.description || "";
+    const description =
+        "Academic and R&D Portfolio of José Manuel Requena Plens. Specializing in Embedded Systems, Acoustics, and Industrial Software Development.";
 
         // Add correct cover image enclosure (compliant with RSS readers)
         if (post.data.coverImage) {
