@@ -5,8 +5,6 @@
  * and posts a unified summary table to the GitHub Pull Request.
  */
 
-
-
 // Helper to get status icon
 const getStatusIcon = (outcome) => {
   return outcome === "success" ? "✅" : "❌";
