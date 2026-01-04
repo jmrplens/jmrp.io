@@ -81,9 +81,7 @@ export async function getPublications(): Promise<PublicationGroup[]> {
       return (fieldMatch[1] || fieldMatch[2] || "").trim();
     };
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
     const citations = new Cite(fileContents);
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
     const data: PublicationItem[] = citations.data;
 
     // Sort all by year desc first
