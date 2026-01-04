@@ -97,18 +97,17 @@ export default async ({ github, context }) => {
   const existingComment = comments.find((c) => c.body.includes(header));
 
   if (existingComment) {
-    await github.rest.issues.updateComment({
+    await github.rest.issues.deleteComment({
       owner: context.repo.owner,
       repo: context.repo.repo,
       comment_id: existingComment.id,
-      body: commentBody,
-    });
-  } else {
-    await github.rest.issues.createComment({
-      owner: context.repo.owner,
-      repo: context.repo.repo,
-      issue_number: context.issue.number,
-      body: commentBody,
     });
   }
+
+  await github.rest.issues.createComment({
+    owner: context.repo.owner,
+    repo: context.repo.repo,
+    issue_number: context.issue.number,
+    body: commentBody,
+  });
 };

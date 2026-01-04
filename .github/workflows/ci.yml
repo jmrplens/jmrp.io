@@ -151,7 +151,7 @@ jobs:
           OUTCOME_SNYK: ${{ needs.snyk-security.result }}
         with:
           script: |
-            const { default: script } = await import(`${process.env.GITHUB_WORKSPACE}/scripts/ci/post-static-analysis-comment.mjs`)
+            const { default: script } = await import(`file://${process.env.GITHUB_WORKSPACE}/scripts/ci/post-static-analysis-comment.mjs`)
             await script({github, context})
 
       - name: Check Failure
@@ -379,7 +379,7 @@ jobs:
           SURGE_URL: ${{ secrets.SURGE_TOKEN != '' && format('jmrp-html-pr-{0}.surge.sh', github.event.number) || '' }}
         with:
           script: |
-            const { default: script } = await import(`${process.env.GITHUB_WORKSPACE}/scripts/ci/post-html-validation-comment.mjs`)
+            const { default: script } = await import(`file://${process.env.GITHUB_WORKSPACE}/scripts/ci/post-html-validation-comment.mjs`)
             await script({github, context})
 
   rss-validation:
@@ -428,7 +428,7 @@ jobs:
           SURGE_URL: ${{ secrets.SURGE_TOKEN != '' && format('jmrp-rss-pr-{0}.surge.sh', github.event.number) || '' }}
         with:
           script: |
-            const { default: script } = await import(`${process.env.GITHUB_WORKSPACE}/scripts/ci/post-rss-validation-comment.mjs`)
+            const { default: script } = await import(`file://${process.env.GITHUB_WORKSPACE}/scripts/ci/post-rss-validation-comment.mjs`)
             await script({github, context})
 
   schema-validation:
