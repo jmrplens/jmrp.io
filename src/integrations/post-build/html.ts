@@ -6,11 +6,7 @@ import * as cheerio from "cheerio";
 import type { Element } from "domhandler";
 import type { CspData } from "./types.js";
 import { writeHtml, getFileHash, resolveFile } from "./utils.js";
-import {
-  ASSETS_DIR,
-  STYLE_CLASS_HASH_LENGTH,
-  ASSET_FILENAME_HASH_LENGTH,
-} from "./constants.js";
+import { ASSETS_DIR, STYLE_CLASS_HASH_LENGTH } from "./constants.js";
 
 /**
  * processHtmlFiles: Consolidated pass for all HTML transformations
@@ -22,9 +18,21 @@ export async function processHtmlFiles(distDir: string, cspData: CspData) {
   const targetDir = path.join(distDir, ASSETS_DIR);
   if (!fs.existsSync(targetDir)) fs.mkdirSync(targetDir, { recursive: true });
 
+  // Special handling for cf-beacon.js to avoid Lighthouse errors while keeping SRI
+  const beaconPath = path.join(distDir, "scripts", "cf-beacon.js");
+  if (fs.existsSync(beaconPath)) {
+    console.log("[PostBuild] Hardening cf-beacon.js with local guard...");
+    const originalBeacon = fs.readFileSync(beaconPath, "utf-8");
+    // Prepend a guard that stops execution on localhost/127.0.0.1
+    // We wrap it in a function to allow 'return' at the top level of the logic
+    const hardenedBeacon = `(function(){if(location.hostname.includes('localhost')||location.hostname.includes('127.0.0.1'))return;${originalBeacon}})();`;
+    fs.writeFileSync(beaconPath, hardenedBeacon, "utf-8");
+    // Force re-calculation of hash for this file
+    hashCache.delete(beaconPath);
+  }
+
   let modifiedFilesCount = 0;
   let updatedSriTags = 0;
-  let extractedDataUris = 0;
 
   for (const file of htmlFiles) {
     const content = fs.readFileSync(file, "utf-8");
@@ -62,45 +70,10 @@ export async function processHtmlFiles(distDir: string, cspData: CspData) {
       isModified = true;
     }
 
-    // 2. extractHtmlImgDataUris logic
-    $('img[src^="data:"], source[srcset^="data:"]').each((_, el) => {
-      const $el = $(el);
-      const tagName = el.tagName;
-      const attrName = tagName === "source" ? "srcset" : "src";
-      const srcContent = $el.attr(attrName);
-
-      if (!srcContent || !srcContent.trim().startsWith("data:")) return;
-
-      try {
-        const commaIndex = srcContent.indexOf(",");
-        if (commaIndex === -1) return;
-
-        const metadata = srcContent.substring(5, commaIndex);
-        const rawData = srcContent.substring(commaIndex + 1);
-        const isBase64 = metadata.endsWith(";base64");
-
-        const buffer = isBase64
-          ? Buffer.from(rawData, "base64")
-          : Buffer.from(decodeURIComponent(rawData.trim()));
-
-        const hash = crypto
-          .createHash("sha256")
-          .update(buffer)
-          .digest("hex")
-          .substring(0, ASSET_FILENAME_HASH_LENGTH);
-        const filename = `${hash}.bin`; // Default to bin for HTML extractions for now
-        const filePath = path.join(targetDir, filename);
-
-        if (!fs.existsSync(filePath)) {
-          fs.writeFileSync(filePath, buffer);
-          extractedDataUris++;
-        }
-
-        $el.attr(attrName, `/${ASSETS_DIR}/${filename}`);
-        isModified = true;
-      } catch {
-        /* ignore */
-      }
+    // 2. Add nonces to ALL inline scripts and styles (essential for Mermaid and Astro islands)
+    $("script:not([src]), style:not([nonce])").each((_, el) => {
+      $(el).attr("nonce", "NGINX_CSP_NONCE");
+      isModified = true;
     });
 
     // 3. SRI and Nonces for linked resources
@@ -115,6 +88,7 @@ export async function processHtmlFiles(distDir: string, cspData: CspData) {
       const rel = $el.attr("rel");
       const as = $el.attr("as");
 
+      // Ensure crossorigin for standard SRI-eligible resources
       if (
         type === "script" ||
         rel === "stylesheet" ||
@@ -128,6 +102,7 @@ export async function processHtmlFiles(distDir: string, cspData: CspData) {
         }
       }
 
+      // Add Integrity if local and not already present
       if (!$el.attr("integrity")) {
         const filePath = resolveFile(url, path.dirname(file), distDir);
         if (filePath) {
@@ -138,6 +113,7 @@ export async function processHtmlFiles(distDir: string, cspData: CspData) {
         }
       }
 
+      // Add Nonce to scripts and styles
       if (
         !$el.attr("nonce") &&
         (type === "script" || rel === "stylesheet" || as === "style")
@@ -153,7 +129,6 @@ export async function processHtmlFiles(distDir: string, cspData: CspData) {
     ).each((_, el) => processSri($(el), "href", "link"));
 
     // 4. Collect hashes for ALL inline content AND add nonces
-    // Prioritizing hashes means we calculate them, but we still keep nonces for Mermaid/Astro stability
     $("style:not([data-generated-style])").each((_, el) => {
       const $el = $(el);
       const styleHtml = $el.html() || "";
@@ -178,7 +153,7 @@ export async function processHtmlFiles(distDir: string, cspData: CspData) {
       }
     });
 
-    // 5. Collect image domains for CSP (and validate)
+    // 5. Collect image domains for CSP
     const HOSTNAME_REGEX = /^[A-Za-z0-9.-]+$/;
     $("img[src]").each((_, el) => {
       const src = $(el).attr("src");
@@ -195,7 +170,7 @@ export async function processHtmlFiles(distDir: string, cspData: CspData) {
       }
     });
 
-    // 6. Manual Beacon Replace
+    // 6. Manual Beacon Replace (Cloudflare)
     let finalHtml = $.html();
     if (finalHtml.includes("__BEACON_INTEGRITY_HASH__")) {
       const beaconPath = path.join(distDir, "scripts", "cf-beacon.js");
@@ -213,6 +188,5 @@ export async function processHtmlFiles(distDir: string, cspData: CspData) {
   }
 
   console.log(`  ✓ Updated ${updatedSriTags} tags with SRI.`);
-  console.log(`  ✓ Extracted ${extractedDataUris} data URIs from HTML.`);
   console.log(`  ✓ Modified ${modifiedFilesCount} HTML files.`);
 }
