@@ -9,7 +9,6 @@
     "no-raw-characters": "error",
     "no-implicit-button-type": "error",
     "no-inline-style": "error",
-    "long-title": "error",
-    "attribute-empty-style": "off"
+    "long-title": "error"
   }
 }

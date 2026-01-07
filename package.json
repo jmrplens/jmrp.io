@@ -24,7 +24,8 @@
     "astro": "astro",
     "lint": "eslint .",
     "lint:html": "html-validate -c .htmlvalidate.json dist",
-    "typecheck": "astro check && tsc --noEmit",
+    "typecheck": "astro check",
+    "typecheck:tsc": "tsc --noEmit",
     "test:e2e": "playwright test",
     "verify": "pnpm build && pnpm lint:html && pnpm test:e2e"
   },

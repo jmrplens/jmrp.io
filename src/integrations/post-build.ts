@@ -2,7 +2,7 @@
  * Post-Build Integration
  *
  * This integration consolidates the post-build scripts into the Astro lifecycle.
- * It runs after the build is complete (`onPostBuild` hook).
+ * It runs after the build is complete (`astro:build:done` hook).
  *
  * Replaces:
  * - scripts/build/setup-sitemap.mjs
@@ -13,8 +13,6 @@
  * - scripts/build/generate-csp-hashes.mjs
  */
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import type { AstroIntegration } from "astro";
 import fs from "node:fs";
 import path from "node:path";
@@ -24,10 +22,19 @@ import * as cheerio from "cheerio";
 import { optimize } from "svgo";
 import { fileURLToPath } from "node:url";
 
-// Define a minimal interface for Cheerio elements to avoid 'any' issues
-type AnyElement = { tagName: string; [key: string]: any };
-
 // --- Logic from Scripts ---
+
+/**
+ * writeHtml: Helper to write HTML with cleanup for boolean attributes
+ */
+function writeHtml(filePath: string, html: string) {
+  // Fix Cheerio boolean attribute serialization (e.g., inert="" -> inert)
+  const cleaned = html.replace(
+    / (inert|download|disabled|checked|readonly|required|multiple|async|autofocus|autoplay|controls|default|defer|formnovalidate|ismap|itemscope|loop|nomodule|novalidate|open|playsinline|reversed|scoped|selected)=""/g,
+    " $1",
+  );
+  fs.writeFileSync(filePath, cleaned, "utf-8");
+}
 
 /**
  * setupSitemap: Copies sitemap-index.xml to sitemap.xml
@@ -78,15 +85,35 @@ async function moveInlineStyles(distDir: string) {
       modified = true;
     });
 
+    if (styleToClassMap.size > 0) {
+      let cssRules = "";
+      for (const [styleDef, className] of styleToClassMap.entries()) {
+        cssRules += `.${className}{${styleDef}}`;
+      }
+      $("head").append(`<style nonce="NGINX_CSP_NONCE">${cssRules}</style>`);
+      modified = true;
+    }
+
     if (modified) {
       // Fix Cheerio boolean attribute serialization
-      let output = $.html();
-      output = output.replace(/ inert=""/g, " inert");
-      fs.writeFileSync(file, output, "utf-8");
+      const output = $.html();
+      writeHtml(file, output);
       count++;
     }
   }
   console.log(`  ✓ Modified ${count} files.`);
+}
+
+/**
+ * Helper to get extension from mime type
+ */
+function getExtensionFromMime(mimeType: string): string {
+  if (mimeType.includes("svg")) return "svg";
+  if (mimeType.includes("png")) return "png";
+  if (mimeType.includes("jpeg") || mimeType.includes("jpg")) return "jpg";
+  if (mimeType.includes("gif")) return "gif";
+  if (mimeType.includes("webp")) return "webp";
+  return "bin";
 }
 
 /**
@@ -126,13 +153,7 @@ async function extractCssDataUris(distDir: string) {
             buffer = Buffer.from(decodeURIComponent(data.trim()));
           }
 
-          let ext = "bin";
-          if (mime.includes("svg")) ext = "svg";
-          else if (mime.includes("png")) ext = "png";
-          else if (mime.includes("jpeg") || mime.includes("jpg")) ext = "jpg";
-          else if (mime.includes("gif")) ext = "gif";
-          else if (mime.includes("webp")) ext = "webp";
-
+          const ext = getExtensionFromMime(mime);
           const hash = crypto
             .createHash("sha256")
             .update(buffer)
@@ -178,7 +199,11 @@ async function extractCssDataUris(distDir: string) {
           const newUrl = `/${assetsDir}/${filename}`;
           const q = quote || '"';
           return `url(${q}${newUrl}${q})`;
-        } catch {
+        } catch (e: unknown) {
+          const message = e instanceof Error ? e.message : String(e);
+          console.warn(
+            `  ⚠ Failed to process CSS Data URI in ${path.basename(file)}: ${message}`,
+          );
           return fullMatch;
         }
       },
@@ -208,12 +233,13 @@ async function extractHtmlImgDataUris(distDir: string) {
     const $ = cheerio.load(content);
     let modified = false;
 
-    $('img[src^="data:"], source[srcset^="data:"]').each((_, el: any) => {
-      const $el = $(el);
-      // Cast to AnyElement to access tagName safely
-      const element = el as AnyElement;
-      const tagName = element.tagName.toLowerCase();
-      const attrName = tagName === "source" ? "srcset" : "src";
+    $('img[src^="data:"], source[srcset^="data:"]').each(
+      (_, el: cheerio.Element) => {
+        const $el = $(el);
+        // Cast to access tagName safely
+        const element = el as unknown as { tagName: string };
+        const tagName = element.tagName.toLowerCase();
+        const attrName = tagName === "source" ? "srcset" : "src";
       const srcContent = $el.attr(attrName);
 
       if (!srcContent || !srcContent.trim().startsWith("data:")) return;
@@ -231,13 +257,7 @@ async function extractHtmlImgDataUris(distDir: string) {
           ? Buffer.from(rawData, "base64")
           : Buffer.from(decodeURIComponent(rawData.trim()));
 
-        let ext = "bin";
-        if (mimeType.includes("svg")) ext = "svg";
-        else if (mimeType.includes("png")) ext = "png";
-        else if (mimeType.includes("jpeg") || mimeType.includes("jpg"))
-          ext = "jpg";
-        else if (mimeType.includes("gif")) ext = "gif";
-        else if (mimeType.includes("webp")) ext = "webp";
+        const ext = getExtensionFromMime(mimeType);
 
         const hash = crypto
           .createHash("sha256")
@@ -255,17 +275,16 @@ async function extractHtmlImgDataUris(distDir: string) {
         const newUrl = `/${assetsDir}/${filename}`;
         $el.attr(attrName, newUrl);
         modified = true;
-      } catch {
+      } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : String(e);
         console.warn(
-          `  ⚠ Failed to process Data URI in ${path.basename(file)}`,
+          `  ⚠ Failed to process HTML Data URI in ${path.basename(file)}: ${message}`,
         );
       }
     });
 
     if (modified) {
-      let output = $.html();
-      output = output.replace(/ inert=""/g, " inert");
-      fs.writeFileSync(file, output, "utf-8");
+      writeHtml(file, $.html());
     }
   }
   console.log(`  ✓ Extracted ${extracted} assets.`);
@@ -313,7 +332,7 @@ async function generateSriHashes(distDir: string) {
 
     // Helper to process elements
     const processEl = (
-      $el: cheerio.Cheerio<any>,
+      $el: cheerio.Cheerio<cheerio.Element>,
       attr: string,
       type: "script" | "link" | "img" | "media",
     ) => {
@@ -355,22 +374,17 @@ async function generateSriHashes(distDir: string) {
     };
 
     $("script[src]").each((_, el) =>
-      processEl($(el) as cheerio.Cheerio<any>, "src", "script"),
+      processEl($(el) as cheerio.Cheerio<cheerio.Element>, "src", "script"),
     );
     $(
       'link[rel="stylesheet"], link[rel="preload"], link[rel="modulepreload"]',
-    ).each((_, el) => processEl($(el) as cheerio.Cheerio<any>, "href", "link"));
-    $("img[src]").each((_, el) =>
-      processEl($(el) as cheerio.Cheerio<any>, "src", "img"),
-    );
-    $("video[src], audio[src], source[src]").each((_, el) =>
-      processEl($(el) as cheerio.Cheerio<any>, "src", "media"),
-    );
+    ).each((_, el) => processEl($(el) as cheerio.Cheerio<cheerio.Element>, "href", "link"));
+    // Removed SRI for img/media as it's not widely supported/useful
 
     // Astro Islands
     const moduleUrls = new Set<string>();
     $("astro-island").each((_, el) => {
-      const $el = $(el) as cheerio.Cheerio<any>;
+      const $el = $(el) as cheerio.Cheerio<cheerio.Element>;
       const comp = $el.attr("component-url");
       const rend = $el.attr("renderer-url");
       if (comp) moduleUrls.add(comp);
@@ -404,8 +418,7 @@ async function generateSriHashes(distDir: string) {
     }
 
     if (modified) {
-      finalContent = finalContent.replace(/ inert=""/g, " inert");
-      fs.writeFileSync(file, finalContent, "utf-8");
+      writeHtml(file, finalContent);
     }
   }
   console.log(`  ✓ Updated ${updatedTags} tags.`);
@@ -430,7 +443,7 @@ async function generateCspHashes(distDir: string) {
     const $ = cheerio.load(content);
 
     $("style").each((_, el) => {
-      const $el = $(el) as cheerio.Cheerio<any>;
+      const $el = $(el) as cheerio.Cheerio<cheerio.Element>;
       if (!$el.attr("nonce")) {
         const h = crypto
           .createHash("sha512")
@@ -441,7 +454,7 @@ async function generateCspHashes(distDir: string) {
     });
 
     $("script:not([src])").each((_, el) => {
-      const $el = $(el) as cheerio.Cheerio<any>;
+      const $el = $(el) as cheerio.Cheerio<cheerio.Element>;
       if (!$el.attr("nonce")) {
         const h = crypto
           .createHash("sha512")
@@ -453,7 +466,7 @@ async function generateCspHashes(distDir: string) {
 
     // External Scripts hashing
     $("script[src]").each((_, el) => {
-      const $el = $(el) as cheerio.Cheerio<any>;
+      const $el = $(el) as cheerio.Cheerio<cheerio.Element>;
       const src = $el.attr("src");
       if (src && !src.startsWith("http") && !src.startsWith("//")) {
         const cleanUrl = src.split("?")[0].split("#")[0];
@@ -472,13 +485,16 @@ async function generateCspHashes(distDir: string) {
     });
 
     $("img[src^='http']").each((_, el) => {
-      const $el = $(el) as cheerio.Cheerio<any>;
+      const $el = $(el) as cheerio.Cheerio<cheerio.Element>;
       const src = $el.attr("src");
       if (src) {
         try {
           imageDomains.add(new URL(src).hostname);
-        } catch {
-          // Ignore
+        } catch (e: unknown) {
+          const message = e instanceof Error ? e.message : String(e);
+          console.warn(
+            `  ⚠ Failed to parse image URL "${src}" in ${path.basename(file)}: ${message}`,
+          );
         }
       }
     });
@@ -493,8 +509,38 @@ async function generateCspHashes(distDir: string) {
     scriptHashes.add(`'sha512-${h}'`);
   }
 
-  const scriptSrc = Array.from(scriptHashes).join(" ");
-  const styleSrc = Array.from(styleHashes).join(" ");
+  // Chunking Helper
+  const chunkHashes = (
+    hashes: Set<string>,
+    prefix: string,
+  ): { vars: string; usage: string } => {
+    const list = Array.from(hashes);
+    const chunks: string[] = [];
+    let current = "";
+    // Nginx variable safe limit ~4k, keeping 2k for safety
+    const LIMIT = 2048;
+
+    for (const h of list) {
+      if (current.length + h.length + 1 > LIMIT) {
+        chunks.push(current);
+        current = "";
+      }
+      current += (current ? " " : "") + h;
+    }
+    if (current) chunks.push(current);
+
+    if (chunks.length === 0) return { vars: "", usage: "" };
+
+    const varsDef = chunks
+      .map((c, i) => `set $${prefix}_${i + 1} "${c}";`)
+      .join("\n");
+    const usage = chunks.map((_, i) => `$${prefix}_${i + 1}`).join(" ");
+    return { vars: varsDef, usage };
+  };
+
+  const scriptChunks = chunkHashes(scriptHashes, "csp_script");
+  const styleChunks = chunkHashes(styleHashes, "csp_style");
+
   const imgSrc = Array.from(imageDomains)
     .map((d) => `https://${d}`)
     .join(" ");
@@ -502,8 +548,8 @@ async function generateCspHashes(distDir: string) {
   // Generate Config
   const cspHeader = [
     "default-src 'none'",
-    `script-src 'self' 'nonce-$cspNonce' ${scriptSrc}`,
-    `style-src 'self' 'unsafe-hashes' 'nonce-$cspNonce' ${styleSrc}`,
+    `script-src 'self' 'nonce-$cspNonce' ${scriptChunks.usage}`,
+    `style-src 'self' 'unsafe-hashes' 'nonce-$cspNonce' ${styleChunks.usage}`,
     `img-src 'self' ${imgSrc} https://*.jmrp.io`,
     "font-src 'self'",
     "connect-src 'self' https://api.github.com https://cloudflareinsights.com",
@@ -515,7 +561,7 @@ async function generateCspHashes(distDir: string) {
     "form-action 'self'",
     "frame-ancestors 'none'",
     "upgrade-insecure-requests",
-    "report-uri /csp-report;",
+    "report-uri /csp-report",
   ].join("; ");
 
   const permissionsPolicy = [
@@ -538,7 +584,10 @@ async function generateCspHashes(distDir: string) {
     "xr-spatial-tracking=()",
   ].join(", ");
 
-  const content = `# CSP Config Generated by Astro Integration
+  const content = `# Security Headers Configuration Generated by Astro Post-Build Integration
+${scriptChunks.vars}
+${styleChunks.vars}
+
 add_header Content-Security-Policy "${cspHeader}" always;
 add_header Permissions-Policy "${permissionsPolicy}" always;
 `;
@@ -557,21 +606,36 @@ export default function postBuildIntegration(): AstroIntegration {
           `\n[\x1b[36mPostBuild\x1b[0m] Starting optimizations in ${distDir}`,
         );
 
-        try {
-          setupSitemap(distDir);
-          await moveInlineStyles(distDir);
-          await extractCssDataUris(distDir);
-          await extractHtmlImgDataUris(distDir);
-          await generateSriHashes(distDir);
-          await generateCspHashes(distDir);
+        const steps: { name: string; run: () => void | Promise<void> }[] = [
+          { name: "setupSitemap", run: () => setupSitemap(distDir) },
+          { name: "moveInlineStyles", run: () => moveInlineStyles(distDir) },
+          {
+            name: "extractCssDataUris",
+            run: () => extractCssDataUris(distDir),
+          },
+          {
+            name: "extractHtmlImgDataUris",
+            run: () => extractHtmlImgDataUris(distDir),
+          },
+          { name: "generateSriHashes", run: () => generateSriHashes(distDir) },
+          { name: "generateCspHashes", run: () => generateCspHashes(distDir) },
+        ];
 
-          console.log(
-            `[\x1b[36mPostBuild\x1b[0m] \x1b[32mCompleted successfully.\x1b[0m\n`,
-          );
-        } catch (e) {
-          console.error(`[\x1b[31mPostBuild\x1b[0m] Error:`, e);
-          process.exit(1);
+        for (const step of steps) {
+          try {
+            await step.run();
+          } catch (e) {
+            console.error(
+              `[\x1b[31mPostBuild\x1b[0m] Error in step "${step.name}":`,
+              e,
+            );
+            process.exit(1);
+          }
         }
+
+        console.log(
+          `[\x1b[36mPostBuild\x1b[0m] \x1b[32mCompleted successfully.\x1b[0m\n`,
+        );
       },
     },
   };
