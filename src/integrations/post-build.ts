@@ -3,14 +3,6 @@
  *
  * This integration consolidates the post-build scripts into the Astro lifecycle.
  * It runs after the build is complete (`astro:build:done` hook).
- *
- * Replaces:
- * - scripts/build/setup-sitemap.mjs
- * - scripts/build/move-inline-styles.mjs
- * - scripts/build/extract-css-data-uris.mjs
- * - scripts/build/extract-html-img-data-uris.mjs
- * - scripts/build/generate-sri-hashes.mjs
- * - scripts/build/generate-csp-hashes.mjs
  */
 
 import type { AstroIntegration } from "astro";
@@ -23,19 +15,75 @@ import type { Element } from "domhandler";
 import { optimize } from "svgo";
 import { fileURLToPath } from "node:url";
 
-// --- Logic from Scripts ---
+// --- Types ---
+
+interface CspData {
+  styleHashes: Set<string>;
+  scriptHashes: Set<string>;
+  imageDomains: Set<string>;
+}
+
+// --- Helpers ---
 
 /**
  * writeHtml: Helper to write HTML with cleanup for boolean attributes
  */
 function writeHtml(filePath: string, html: string) {
-  // Fix Cheerio boolean attribute serialization (e.g., inert="" -> inert)
   const cleaned = html.replace(
     / (inert|download|disabled|checked|readonly|required|multiple|async|autofocus|autoplay|controls|default|defer|formnovalidate|ismap|itemscope|loop|nomodule|novalidate|open|playsinline|reversed|scoped|selected)=""/g,
     " $1",
   );
   fs.writeFileSync(filePath, cleaned, "utf-8");
 }
+
+/**
+ * getExtensionFromMime: Helper to get extension from mime type
+ */
+function getExtensionFromMime(mimeType: string): string {
+  if (mimeType.includes("svg")) return "svg";
+  if (mimeType.includes("png")) return "png";
+  if (mimeType.includes("jpeg") || mimeType.includes("jpg")) return "jpg";
+  if (mimeType.includes("gif")) return "gif";
+  if (mimeType.includes("webp")) return "webp";
+  return "bin";
+}
+
+/**
+ * getHash: Helper to generate sha512 hash
+ */
+function getFileHash(filePath: string, cache: Map<string, string>): string {
+  if (cache.has(filePath)) return cache.get(filePath)!;
+  const content = fs.readFileSync(filePath);
+  const hash = `sha512-${crypto.createHash("sha512").update(content).digest("base64")}`;
+  cache.set(filePath, hash);
+  return hash;
+}
+
+/**
+ * resolveFile: Helper to resolve URL to local file path
+ */
+function resolveFile(
+  url: string,
+  baseDir: string,
+  distDir: string,
+): string | null {
+  const cleanUrl = url.split("?")[0].split("#")[0];
+  if (cleanUrl.startsWith("http") || cleanUrl.startsWith("//")) return null;
+
+  let filePath;
+  if (cleanUrl.startsWith("/")) {
+    filePath = path.join(distDir, cleanUrl);
+  } else {
+    filePath = path.resolve(baseDir, cleanUrl);
+  }
+
+  const rel = path.relative(distDir, filePath);
+  if (rel.startsWith("..")) return null;
+
+  return fs.existsSync(filePath) ? filePath : null;
+}
+
+// --- Integration Steps ---
 
 /**
  * setupSitemap: Copies sitemap-index.xml to sitemap.xml
@@ -54,71 +102,8 @@ function setupSitemap(distDir: string) {
 }
 
 /**
- * moveInlineStyles: Extracts inline styles to classes
- */
-async function moveInlineStyles(distDir: string) {
-  console.log("[PostBuild] Extracting inline styles...");
-  const files = await glob("**/*.html", { cwd: distDir, absolute: true });
-  let count = 0;
-
-  for (const file of files) {
-    const content = fs.readFileSync(file, "utf-8");
-    const $ = cheerio.load(content);
-    let modified = false;
-    const styleToClassMap = new Map<string, string>();
-
-    $("[style]").each((_, el) => {
-      const $el = $(el);
-      const styleContent = $el.attr("style");
-      if (!styleContent) return;
-
-      if (!styleToClassMap.has(styleContent)) {
-        const hash = crypto
-          .createHash("shake256", { outputLength: 4 })
-          .update(styleContent)
-          .digest("hex");
-        styleToClassMap.set(styleContent, `sh-${hash}`);
-      }
-      const newClassName = styleToClassMap.get(styleContent)!;
-
-      $el.removeAttr("style");
-      $el.addClass(newClassName);
-      modified = true;
-    });
-
-    if (styleToClassMap.size > 0) {
-      let cssRules = "";
-      for (const [styleDef, className] of styleToClassMap.entries()) {
-        cssRules += `.${className}{${styleDef}}`;
-      }
-      $("head").append(`<style nonce="NGINX_CSP_NONCE">${cssRules}</style>`);
-      modified = true;
-    }
-
-    if (modified) {
-      // Fix Cheerio boolean attribute serialization
-      const output = $.html();
-      writeHtml(file, output);
-      count++;
-    }
-  }
-  console.log(`  ✓ Modified ${count} files.`);
-}
-
-/**
- * Helper to get extension from mime type
- */
-function getExtensionFromMime(mimeType: string): string {
-  if (mimeType.includes("svg")) return "svg";
-  if (mimeType.includes("png")) return "png";
-  if (mimeType.includes("jpeg") || mimeType.includes("jpg")) return "jpg";
-  if (mimeType.includes("gif")) return "gif";
-  if (mimeType.includes("webp")) return "webp";
-  return "bin";
-}
-
-/**
- * extractCssDataUris: Extracts data URIs from CSS/HTML files
+ * extractCssDataUris: Extracts data URIs from CSS files
+ * Note: Still separate as it processes CSS files.
  */
 async function extractCssDataUris(distDir: string) {
   console.log("[PostBuild] Extracting CSS Data URIs...");
@@ -127,16 +112,13 @@ async function extractCssDataUris(distDir: string) {
   if (!fs.existsSync(targetDir)) fs.mkdirSync(targetDir, { recursive: true });
 
   const cssFiles = await glob("**/*.css", { cwd: distDir, absolute: true });
-  const htmlFiles = await glob("**/*.html", { cwd: distDir, absolute: true });
-  const allFiles = [...cssFiles, ...htmlFiles];
   const DATA_URI_REGEX =
     /url\(\s*(['"]?)data:([^;,]+)(;base64)?\s*,\s*([\s\S]*?)\1\s*\)/gi;
 
   let extracted = 0;
 
-  for (const file of allFiles) {
+  for (const file of cssFiles) {
     const content = fs.readFileSync(file, "utf-8");
-
     const newContent = content.replaceAll(
       DATA_URI_REGEX,
       (
@@ -189,9 +171,6 @@ async function extractCssDataUris(distDir: string) {
               });
 
               if ("error" in optimized) {
-                console.warn(
-                  `  ⚠ SVGO optimization failed for ${filename}: ${String(optimized.error)}`,
-                );
                 fs.writeFileSync(filePath, buffer);
               } else {
                 fs.writeFileSync(filePath, optimized.data);
@@ -205,11 +184,7 @@ async function extractCssDataUris(distDir: string) {
           const newUrl = `/${assetsDir}/${filename}`;
           const q = quote || '"';
           return `url(${q}${newUrl}${q})`;
-        } catch (e: unknown) {
-          const message = e instanceof Error ? e.message : String(e);
-          console.warn(
-            `  ⚠ Failed to process CSS Data URI in ${path.basename(file)}: ${message}`,
-          );
+        } catch (_e) {
           return fullMatch;
         }
       },
@@ -219,31 +194,62 @@ async function extractCssDataUris(distDir: string) {
       fs.writeFileSync(file, newContent, "utf-8");
     }
   }
-  console.log(`  ✓ Extracted ${extracted} assets.`);
+  console.log(`  ✓ Extracted ${extracted} assets from CSS.`);
 }
 
 /**
- * extractHtmlImgDataUris: Extracts data URIs from img/source tags
+ * processHtmlFiles: Consolidated pass for all HTML transformations
  */
-async function extractHtmlImgDataUris(distDir: string) {
-  console.log("[PostBuild] Extracting HTML image Data URIs...");
+async function processHtmlFiles(distDir: string, cspData: CspData) {
+  console.log("[PostBuild] Processing HTML files (consolidated pass)...");
+  const htmlFiles = await glob("**/*.html", { cwd: distDir, absolute: true });
+  const hashCache = new Map<string, string>();
   const assetsDir = "assets/extracted";
   const targetDir = path.join(distDir, assetsDir);
   if (!fs.existsSync(targetDir)) fs.mkdirSync(targetDir, { recursive: true });
 
-  const files = await glob("**/*.html", { cwd: distDir, absolute: true });
-  let extracted = 0;
+  let modifiedFilesCount = 0;
+  let updatedSriTags = 0;
+  let extractedDataUris = 0;
 
-  for (const file of files) {
+  for (const file of htmlFiles) {
     const content = fs.readFileSync(file, "utf-8");
     const $ = cheerio.load(content);
-    let modified = false;
+    let isModified = false;
 
-    $('img[src^="data:"], source[srcset^="data:"]').each((_, el: unknown) => {
-      const $el = $(el as Element);
-      // Access tagName safely
-      const element = el as Element;
-      const tagName = element.tagName;
+    // 1. moveInlineStyles logic
+    const styleToClassMap = new Map<string, string>();
+    $("[style]").each((_, el) => {
+      const $el = $(el);
+      const styleContent = $el.attr("style");
+      if (!styleContent) return;
+
+      if (!styleToClassMap.has(styleContent)) {
+        const hash = crypto
+          .createHash("shake256", { outputLength: 4 })
+          .update(styleContent)
+          .digest("hex");
+        styleToClassMap.set(styleContent, `sh-${hash}`);
+      }
+      const newClassName = styleToClassMap.get(styleContent)!;
+      $el.removeAttr("style");
+      $el.addClass(newClassName);
+      isModified = true;
+    });
+
+    if (styleToClassMap.size > 0) {
+      let cssRules = "";
+      for (const [styleDef, className] of styleToClassMap.entries()) {
+        cssRules += `.${className}{${styleDef}}`;
+      }
+      $("head").append(`<style nonce="NGINX_CSP_NONCE">${cssRules}</style>`);
+      isModified = true;
+    }
+
+    // 2. extractHtmlImgDataUris logic
+    $('img[src^="data:"], source[srcset^="data:"]').each((_, el) => {
+      const $el = $(el);
+      const tagName = el.tagName;
       const attrName = tagName === "source" ? "srcset" : "src";
       const srcContent = $el.attr(attrName);
 
@@ -263,7 +269,6 @@ async function extractHtmlImgDataUris(distDir: string) {
           : Buffer.from(decodeURIComponent(rawData.trim()));
 
         const ext = getExtensionFromMime(mimeType);
-
         const hash = crypto
           .createHash("sha256")
           .update(buffer)
@@ -274,117 +279,62 @@ async function extractHtmlImgDataUris(distDir: string) {
 
         if (!fs.existsSync(filePath)) {
           fs.writeFileSync(filePath, buffer);
-          extracted++;
+          extractedDataUris++;
         }
 
-        const newUrl = `/${assetsDir}/${filename}`;
-        $el.attr(attrName, newUrl);
-        modified = true;
-      } catch (e: unknown) {
-        const message = e instanceof Error ? e.message : String(e);
-        console.warn(
-          `  ⚠ Failed to process HTML Data URI in ${path.basename(file)}: ${message}`,
-        );
+        $el.attr(attrName, `/${assetsDir}/${filename}`);
+        isModified = true;
+      } catch (_e) {
+        /* ignore */
       }
     });
 
-    if (modified) {
-      writeHtml(file, $.html());
-    }
-  }
-  console.log(`  ✓ Extracted ${extracted} assets.`);
-}
-
-/**
- * generateSriHashes: Adds integrity attributes
- */
-async function generateSriHashes(distDir: string) {
-  console.log("[PostBuild] Generating SRI Hashes...");
-  const files = await glob("**/*.html", { cwd: distDir, absolute: true });
-  const hashCache = new Map<string, string>();
-  let updatedTags = 0;
-
-  function getHash(filePath: string): string {
-    if (hashCache.has(filePath)) return hashCache.get(filePath)!;
-    const content = fs.readFileSync(filePath);
-    const hash = `sha512-${crypto.createHash("sha512").update(content).digest("base64")}`;
-    hashCache.set(filePath, hash);
-    return hash;
-  }
-
-  function resolveFile(url: string, baseDir: string): string | null {
-    const cleanUrl = url.split("?")[0].split("#")[0];
-    if (cleanUrl.startsWith("http") || cleanUrl.startsWith("//")) return null;
-
-    let filePath;
-    if (cleanUrl.startsWith("/")) {
-      filePath = path.join(distDir, cleanUrl);
-    } else {
-      filePath = path.resolve(baseDir, cleanUrl);
-    }
-
-    // Safety check
-    const rel = path.relative(distDir, filePath);
-    if (rel.startsWith("..")) return null;
-
-    return fs.existsSync(filePath) ? filePath : null;
-  }
-
-  for (const file of files) {
-    const content = fs.readFileSync(file, "utf-8");
-    const $ = cheerio.load(content);
-    let modified = false;
-
-    // Helper to process elements
-    const processEl = (
+    // 3. generateSriHashes logic (and nonces)
+    const processSri = (
       $el: cheerio.Cheerio<Element>,
       attr: string,
-      type: "script" | "link" | "img" | "media",
+      type: "script" | "link",
     ) => {
       const url = $el.attr(attr);
       if (!url) return;
-      if ($el.attr("integrity")) return;
 
-      const filePath = resolveFile(url, path.dirname(file));
-
-      // Image preloads: only crossorigin
+      // Handle image preloads separately (crossorigin only)
       const rel = $el.attr("rel");
       const as = $el.attr("as");
-      const isPreload = rel === "preload";
-      const isImage = as === "image";
-      if (isPreload && isImage) {
+      if (rel === "preload" && as === "image") {
         if (!$el.attr("crossorigin")) {
           $el.attr("crossorigin", "anonymous");
-          modified = true;
-          updatedTags++;
+          isModified = true;
+          updatedSriTags++;
         }
         return;
       }
 
+      if ($el.attr("integrity")) return;
+
+      const filePath = resolveFile(url, path.dirname(file), distDir);
       if (!filePath) return;
 
-      const hash = getHash(filePath);
+      const hash = getFileHash(filePath, hashCache);
       $el.attr("integrity", hash);
       if (!$el.attr("crossorigin")) $el.attr("crossorigin", "anonymous");
 
-      if ((type === "script" || type === "link") && !$el.attr("nonce")) {
-        // Only for stylesheets/scripts
+      if (!$el.attr("nonce")) {
         if (type === "script" || rel === "stylesheet" || as === "style") {
           $el.attr("nonce", "NGINX_CSP_NONCE");
         }
       }
 
-      modified = true;
-      updatedTags++;
+      isModified = true;
+      updatedSriTags++;
     };
 
-    $("script[src]").each((_, el) => processEl($(el), "src", "script"));
+    $("script[src]").each((_, el) => processSri($(el), "src", "script"));
     $(
       'link[rel="stylesheet"], link[rel="preload"], link[rel="modulepreload"]',
-    ).each((_, el) => processEl($(el), "href", "link"));
-    // Removed SRI for img/media as it's not widely supported/useful
+    ).each((_, el) => processSri($(el), "href", "link"));
 
-    // Astro Islands
+    // Astro Islands modulepreload injection
     const moduleUrls = new Set<string>();
     $("astro-island").each((_, el) => {
       const $el = $(el);
@@ -400,57 +350,19 @@ async function generateSriHashes(distDir: string) {
           (_, el) => $(el).attr("href") === url,
         ).length === 0
       ) {
-        const filePath = resolveFile(url, path.dirname(file));
+        const filePath = resolveFile(url, path.dirname(file), distDir);
         if (filePath) {
-          const hash = getHash(filePath);
+          const hash = getFileHash(filePath, hashCache);
           $("head").append(
             `<link rel="modulepreload" href="${url}" nonce="NGINX_CSP_NONCE" integrity="${hash}" crossorigin="anonymous">`,
           );
-          modified = true;
-          updatedTags++;
+          isModified = true;
+          updatedSriTags++;
         }
       }
     }
 
-    let finalContent = $.html();
-    // Manual Beacon Replace
-    if (finalContent.includes("__BEACON_INTEGRITY_HASH__")) {
-      const beaconPath = path.join(distDir, "scripts", "cf-beacon.js");
-      if (fs.existsSync(beaconPath)) {
-        const hash = getHash(beaconPath);
-        finalContent = finalContent.replaceAll(
-          "__BEACON_INTEGRITY_HASH__",
-          hash,
-        );
-        modified = true;
-        updatedTags++;
-      }
-    }
-
-    if (modified) {
-      writeHtml(file, finalContent);
-    }
-  }
-  console.log(`  ✓ Updated ${updatedTags} tags.`);
-}
-
-/**
- * generateCspHashes: Generates security_headers.conf
- */
-async function generateCspHashes(distDir: string) {
-  console.log("[PostBuild] Generating CSP Hashes...");
-  const files = await glob("**/*.html", { cwd: distDir, absolute: true });
-  const jsFiles = await glob("**/*.js", { cwd: distDir, absolute: true });
-
-  const styleHashes = new Set<string>();
-  const scriptHashes = new Set<string>();
-  const imageDomains = new Set<string>();
-
-  // Hash HTML content
-  for (const file of files) {
-    const content = fs.readFileSync(file, "utf-8");
-    const $ = cheerio.load(content);
-
+    // 4. collectCspData logic (from HTML)
     $("style").each((_, el) => {
       const $el = $(el);
       if (!$el.attr("nonce")) {
@@ -458,7 +370,7 @@ async function generateCspHashes(distDir: string) {
           .createHash("sha512")
           .update($el.html() || "")
           .digest("base64");
-        styleHashes.add(`'sha512-${h}'`);
+        cspData.styleHashes.add(`'sha512-${h}'`);
       }
     });
 
@@ -469,7 +381,7 @@ async function generateCspHashes(distDir: string) {
           .createHash("sha512")
           .update($el.html() || "")
           .digest("base64");
-        scriptHashes.add(`'sha512-${h}'`);
+        cspData.scriptHashes.add(`'sha512-${h}'`);
       }
     });
 
@@ -479,22 +391,48 @@ async function generateCspHashes(distDir: string) {
       if (src && (src.startsWith("http") || src.startsWith("//"))) {
         try {
           const fullUrl = src.startsWith("//") ? `https:${src}` : src;
-          imageDomains.add(new URL(fullUrl).hostname);
-        } catch (e: unknown) {
-          const message = e instanceof Error ? e.message : String(e);
-          console.warn(
-            `  ⚠ Failed to parse image URL "${src}" in ${path.basename(file)}: ${message}`,
-          );
+          cspData.imageDomains.add(new URL(fullUrl).hostname);
+        } catch (_e) {
+          /* ignore */
         }
       }
     });
+
+    // 5. Manual Beacon Replace
+    let finalHtml = $.html();
+    if (finalHtml.includes("__BEACON_INTEGRITY_HASH__")) {
+      const beaconPath = path.join(distDir, "scripts", "cf-beacon.js");
+      if (fs.existsSync(beaconPath)) {
+        const hash = getFileHash(beaconPath, hashCache);
+        finalHtml = finalHtml.replaceAll("__BEACON_INTEGRITY_HASH__", hash);
+        isModified = true;
+        updatedSriTags++;
+      }
+    }
+
+    if (isModified) {
+      writeHtml(file, finalHtml);
+      modifiedFilesCount++;
+    }
   }
 
-  // Hash standalone JS files
+  console.log(`  ✓ Updated ${updatedSriTags} tags with SRI/Nonces.`);
+  console.log(`  ✓ Extracted ${extractedDataUris} data URIs from HTML.`);
+  console.log(`  ✓ Modified ${modifiedFilesCount} HTML files.`);
+}
+
+/**
+ * finalizeCspConfig: Generates security_headers.conf
+ */
+async function finalizeCspConfig(distDir: string, cspData: CspData) {
+  console.log("[PostBuild] Finalizing CSP and Security Headers...");
+
+  // Hash standalone JS files (not in HTML)
+  const jsFiles = await glob("**/*.js", { cwd: distDir, absolute: true });
   for (const file of jsFiles) {
     const c = fs.readFileSync(file);
     const h = crypto.createHash("sha512").update(c).digest("base64");
-    scriptHashes.add(`'sha512-${h}'`);
+    cspData.scriptHashes.add(`'sha512-${h}'`);
   }
 
   // Chunking Helper
@@ -505,7 +443,6 @@ async function generateCspHashes(distDir: string) {
     const list = Array.from(hashes);
     const chunks: string[] = [];
     let current = "";
-    // Nginx variable safe limit ~4k, keeping 2k for safety
     const LIMIT = 2048;
 
     for (const h of list) {
@@ -526,14 +463,13 @@ async function generateCspHashes(distDir: string) {
     return { vars: varsDef, usage };
   };
 
-  const scriptChunks = chunkHashes(scriptHashes, "csp_script");
-  const styleChunks = chunkHashes(styleHashes, "csp_style");
+  const scriptChunks = chunkHashes(cspData.scriptHashes, "csp_script");
+  const styleChunks = chunkHashes(cspData.styleHashes, "csp_style");
 
-  const imgSrc = Array.from(imageDomains)
+  const imgSrc = Array.from(cspData.imageDomains)
     .map((d) => `https://${d}`)
     .join(" ");
 
-  // Generate Config
   const cspHeader = [
     "default-src 'none'",
     `script-src 'self' 'nonce-$cspNonce' ${scriptChunks.usage}`,
@@ -599,38 +535,20 @@ export default function postBuildIntegration(): AstroIntegration {
           `\n[\x1b[36mPostBuild\x1b[0m] Starting optimizations in ${distDir}`,
         );
 
-        const steps: { name: string; run: () => void | Promise<void> }[] = [
-          { name: "setupSitemap", run: () => setupSitemap(distDir) },
-          { name: "moveInlineStyles", run: () => moveInlineStyles(distDir) },
-          {
-            name: "extractCssDataUris",
-            run: () => extractCssDataUris(distDir),
-          },
-          {
-            name: "extractHtmlImgDataUris",
-            run: () => extractHtmlImgDataUris(distDir),
-          },
-          { name: "generateSriHashes", run: () => generateSriHashes(distDir) },
-          { name: "generateCspHashes", run: () => generateCspHashes(distDir) },
-        ];
+        const cspData: CspData = {
+          styleHashes: new Set<string>(),
+          scriptHashes: new Set<string>(),
+          imageDomains: new Set<string>(),
+        };
 
-        for (const step of steps) {
-          try {
-            await step.run();
-          } catch (e) {
-            console.error(
-              `[\x1b[31mPostBuild\x1b[0m] Error in step "${step.name}":`,
-              e,
-            );
-            if (e instanceof Error) {
-              e.message = `PostBuild step "${step.name}" failed: ${e.message}`;
-              throw e;
-            } else {
-              throw new Error(
-                `PostBuild step "${step.name}" failed: ${String(e)}`,
-              );
-            }
-          }
+        try {
+          setupSitemap(distDir);
+          await extractCssDataUris(distDir);
+          await processHtmlFiles(distDir, cspData);
+          await finalizeCspConfig(distDir, cspData);
+        } catch (e) {
+          console.error(`[\x1b[31mPostBuild\x1b[0m] Fatal error:`, e);
+          throw e;
         }
 
         console.log(
