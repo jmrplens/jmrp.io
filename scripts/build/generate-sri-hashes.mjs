@@ -14,7 +14,6 @@ import fs from "node:fs";
 import crypto from "node:crypto";
 import path from "node:path";
 import { glob } from "glob";
-import * as cheerio from "cheerio";
 
 const DIST_DIR = path.resolve(
   process.argv[2] || process.env.DIST_DIR || "dist",
@@ -73,74 +72,187 @@ function shouldSkipUrl(url) {
 }
 
 /**
- * Adds integrity and necessary attributes to a cheerio element
+ * Adds integrity and necessary attributes to a tag
  */
-function addIntegrityToEl($el, urlAttr, tagName, file, hashCache) {
-  const url = $el.attr(urlAttr);
-  if (!url || shouldSkipUrl(url)) return false;
-  if ($el.attr("integrity")) return false;
+function addIntegrityToTag(match, tagName, attrs, url, file, hashCache) {
+  if (attrs.includes("integrity=")) return match;
+  if (shouldSkipUrl(url)) return match;
 
-  const rel = $el.attr("rel");
-  const as = $el.attr("as");
-  const isPreload = rel === "preload";
-  const isImage = as === "image";
+  // Check if it's an image preload
+  const isPreload =
+    attrs.includes('rel="preload"') || attrs.includes("rel='preload'");
+  const isImage = attrs.includes('as="image"') || attrs.includes("as='image'");
   const skipIntegrity = isPreload && isImage;
 
   try {
     const filePath = resolveFilePath(url, path.dirname(file));
-    if (!fs.existsSync(filePath)) return false;
+    if (!fs.existsSync(filePath)) return match;
     if (!isPathSafe(filePath)) {
       console.warn(`Skipping ${tagName} with unsafe path: ${filePath}`);
-      return false;
-    }
-
-    if (skipIntegrity) {
-      if (!$el.attr("crossorigin")) {
-        $el.attr("crossorigin", "anonymous");
-        return true;
-      }
-      return false;
+      return match;
     }
 
     const hash = getHashForFile(filePath, hashCache);
-    $el.attr("integrity", hash);
+    const cleanAttrs = attrs.replace(/\/\s*$/, "").trim();
 
-    if (!$el.attr("crossorigin")) {
-      $el.attr("crossorigin", "anonymous");
-    }
-
-    // Add nonce for scripts and stylesheets
+    // Determine if nonce is needed
     const isScript = tagName === "script";
     const isStyle =
-      tagName === "link" && (rel === "stylesheet" || as === "style");
-    if ((isScript || isStyle) && !$el.attr("nonce")) {
-      $el.attr("nonce", "NGINX_CSP_NONCE");
+      tagName === "link" &&
+      (attrs.includes("stylesheet") || attrs.includes('as="style"'));
+    const needsNonce = isScript || isStyle;
+    const nonceAttr =
+      needsNonce && !attrs.includes("nonce=") ? ' nonce="NGINX_CSP_NONCE"' : "";
+
+    const crossoriginAttr = attrs.includes("crossorigin")
+      ? ""
+      : ' crossorigin="anonymous"';
+
+    // For image preloads, we ONLY add crossorigin, NO integrity
+    if (skipIntegrity) {
+      // If crossorigin is already there, and we skip integrity, we might change nothing?
+      // But we want to ensure crossorigin is there.
+      if (attrs.includes("crossorigin")) return match;
+      return `<${tagName} ${cleanAttrs}${crossoriginAttr}>`;
     }
 
-    return true;
+    return `<${tagName} ${cleanAttrs}${nonceAttr} integrity="${hash}"${crossoriginAttr}>`;
   } catch (err) {
     console.warn(`Error processing ${tagName} ${url}:`, err.message);
-    return false;
+    return match;
   }
+}
+
+/**
+ * Processes script tags to add SRI
+ */
+function processScripts(content, file, hashCache, stats) {
+  const scriptRegex = /<script\s+([^>]*src=["']([^"']+)["'][^>]*)>/gi; // NOSONAR (javascript:S5852) - Controlled input: processing build-generated HTML only
+  return content.replaceAll(scriptRegex, (match, attrs, url) => {
+    const result = addIntegrityToTag(
+      match,
+      "script",
+      attrs,
+      url,
+      file,
+      hashCache,
+    );
+    if (result !== match) stats.count++;
+    return result;
+  });
+}
+
+/**
+ * Processes link tags (CSS, preloads) to add SRI
+ */
+function processLinks(content, file, hashCache, stats) {
+  const linkRegex = /<link\s+([^>]*href=["']([^"']+)["'][^>]*)>/gi; // NOSONAR (javascript:S5852) - Controlled input: processing build-generated HTML only
+  return content.replaceAll(linkRegex, (match, attrs, url) => {
+    const allowedRels = ["stylesheet", "preload", "modulepreload"];
+    const hasAllowedRel = allowedRels.some(
+      (rel) => attrs.includes(`rel="${rel}"`) || attrs.includes(`rel='${rel}'`),
+    );
+    if (!hasAllowedRel) return match;
+
+    const result = addIntegrityToTag(
+      match,
+      "link",
+      attrs,
+      url,
+      file,
+      hashCache,
+    );
+    if (result !== match) stats.count++;
+    return result;
+  });
+}
+
+/**
+ * Processes image tags to add SRI
+ */
+function processImages(content, file, hashCache, stats) {
+  const imgRegex = /<img\s+([^>]*src=["']([^"']+)["'][^>]*)>/gi; // NOSONAR (javascript:S5852) - Controlled input: processing build-generated HTML only
+  return content.replaceAll(imgRegex, (match, attrs, url) => {
+    const result = addIntegrityToTag(match, "img", attrs, url, file, hashCache);
+    if (result !== match) stats.count++;
+    return result;
+  });
+}
+
+/**
+ * Processes multimedia tags (video, audio, source) to add SRI
+ */
+function processMultimedia(content, file, hashCache, stats) {
+  const mediaRegex =
+    /<(video|audio|source)\s+([^>]*src=["']([^"']+)["'][^>]*)>/gi; // NOSONAR (javascript:S5852) - Controlled input: processing build-generated HTML only
+  return content.replaceAll(mediaRegex, (match, tag, attrs, url) => {
+    const result = addIntegrityToTag(match, tag, attrs, url, file, hashCache);
+    if (result !== match) stats.count++;
+    return result;
+  });
+}
+
+/**
+ * Processes image preloads (with imagesrcset) to add crossorigin
+ * SRI is not added because imagesrcset references multiple files
+ */
+function processImagePreloads(content, stats) {
+  const linkRegex = /<link\s+([^>]*imagesrcset=["']([^"']+)["'][^>]*)>/gi; // NOSONAR (javascript:S5852) - Controlled input: processing build-generated HTML only
+  return content.replaceAll(linkRegex, (match, attrs, _url) => {
+    // Only target image preloads
+    const isPreload =
+      attrs.includes('rel="preload"') || attrs.includes("rel='preload'");
+    const isImage =
+      attrs.includes('as="image"') || attrs.includes("as='image'");
+
+    if (!isPreload || !isImage) return match;
+
+    // Check if crossorigin is already present
+    if (attrs.includes("crossorigin")) return match;
+
+    // Add crossorigin="anonymous" to match the <img> tags that get SRI
+    // We clean up trailing slashes if present to avoid syntax errors
+    const cleanAttrs = attrs.replace(/\/\s*$/, "").trim();
+    const result = `<link ${cleanAttrs} crossorigin="anonymous">`;
+
+    if (result !== match) stats.count++;
+    return result;
+  });
+}
+
+/**
+ * Extracts module URLs from Astro island tags
+ */
+function extractAstroModuleUrls(content) {
+  const astroIslandRegex = /<astro-island\s+([^>]*)>/gi; // NOSONAR (javascript:S5852) - Controlled input: processing build-generated HTML only
+  const moduleUrls = new Set();
+  let match;
+
+  while ((match = astroIslandRegex.exec(content)) !== null) {
+    const attrs = match[1];
+    const componentUrlMatch = /component-url=["']([^"']+)["']/.exec(attrs);
+    const rendererUrlMatch = /renderer-url=["']([^"']+)["']/.exec(attrs);
+
+    if (componentUrlMatch) moduleUrls.add(componentUrlMatch[1]);
+    if (rendererUrlMatch) moduleUrls.add(rendererUrlMatch[1]);
+  }
+
+  return moduleUrls;
 }
 
 /**
  * Processes Astro island preloads
  */
-function processAstroIslandPreloads($, file, hashCache, stats) {
-  const moduleUrls = new Set();
-  $("astro-island").each((_, el) => {
-    const $el = $(el);
-    const componentUrl = $el.attr("component-url");
-    const rendererUrl = $el.attr("renderer-url");
-    if (componentUrl) moduleUrls.add(componentUrl);
-    if (rendererUrl) moduleUrls.add(rendererUrl);
-  });
+function processAstroIslandPreloads(content, file, hashCache, stats) {
+  const moduleUrls = extractAstroModuleUrls(content);
+  if (moduleUrls.size === 0) return content;
 
-  if (moduleUrls.size === 0) return;
+  let preloadLinks = "";
 
   for (const url of moduleUrls) {
-    if ($(`link[rel="modulepreload"][href="${url}"]`).length > 0) continue;
+    if (content.includes(`<link rel="modulepreload" href="${url}"`)) {
+      continue;
+    }
 
     try {
       if (shouldSkipUrl(url)) continue;
@@ -153,31 +265,58 @@ function processAstroIslandPreloads($, file, hashCache, stats) {
       }
 
       const hash = getHashForFile(filePath, hashCache);
-      $("head").append(
-        `<link rel="modulepreload" href="${url}" nonce="NGINX_CSP_NONCE" integrity="${hash}" crossorigin="anonymous">`,
-      );
+      preloadLinks += `<link rel="modulepreload" href="${url}" nonce="NGINX_CSP_NONCE" integrity="${hash}" crossorigin="anonymous">
+`;
       stats.count++;
     } catch (err) {
       console.warn(`Error processing modulepreload ${url}:`, err.message);
     }
   }
+
+  if (preloadLinks && content.includes("</head>")) {
+    return content.replace("</head>", `${preloadLinks}</head>`);
+  }
+
+  return content;
 }
 
 /**
  * Injects the actual SRI hash for the Cloudflare beacon script
+ * Replaces __BEACON_INTEGRITY_HASH__ placeholder with the real hash
  */
 function injectBeaconHash(content, file, hashCache, stats) {
   const placeholder = "__BEACON_INTEGRITY_HASH__";
-  if (!content.includes(placeholder)) return content;
+
+  if (!content.includes(placeholder)) {
+    return content;
+  }
 
   try {
     const beaconPath = path.join(DIST_DIR, "scripts", "cf-beacon.js");
-    if (!fs.existsSync(beaconPath)) return content;
-    if (!isPathSafe(beaconPath)) return content;
 
+    if (!fs.existsSync(beaconPath)) {
+      console.warn(
+        `Beacon file not found at ${beaconPath}, skipping hash injection`,
+      );
+      return content;
+    }
+
+    if (!isPathSafe(beaconPath)) {
+      console.warn(
+        `Skipping beacon injection due to unsafe path: ${beaconPath}`,
+      );
+      return content;
+    }
+
+    // deepcode ignore PT: beaconPath is validated by isPathSafe()
     const hash = getHashForFile(beaconPath, hashCache);
     const result = content.replaceAll(placeholder, hash);
-    if (result !== content) stats.count++;
+
+    // Track successful injection
+    if (result !== content) {
+      stats.count++;
+    }
+
     return result;
   } catch (err) {
     console.warn(`Error injecting beacon hash in ${file}:`, err.message);
@@ -189,54 +328,21 @@ function injectBeaconHash(content, file, hashCache, stats) {
  * Processes a single HTML file to add SRI hashes
  */
 function processHtmlFile(file, hashCache) {
-  const originalContent = fs.readFileSync(file, "utf-8");
-  const $ = cheerio.load(originalContent);
+  let content = fs.readFileSync(file, "utf-8");
   const stats = { count: 0 };
 
-  // Scripts
-  $("script[src]").each((_, el) => {
-    if (addIntegrityToEl($(el), "src", "script", file, hashCache))
-      stats.count++;
-  });
+  const originalContent = content;
 
-  // Links
-  $(
-    'link[rel="stylesheet"], link[rel="preload"], link[rel="modulepreload"]',
-  ).each((_, el) => {
-    if (addIntegrityToEl($(el), "href", "link", file, hashCache)) stats.count++;
-  });
-
-  // Images
-  $("img[src]").each((_, el) => {
-    if (addIntegrityToEl($(el), "src", "img", file, hashCache)) stats.count++;
-  });
-
-  // Multimedia
-  $("video[src], audio[src], source[src]").each((_, el) => {
-    if (
-      addIntegrityToEl($(el), "src", el.tagName.toLowerCase(), file, hashCache)
-    )
-      stats.count++;
-  });
-
-  // Image preloads (crossorigin only)
-  $('link[rel="preload"][as="image"][imagesrcset]').each((_, el) => {
-    const $el = $(el);
-    if (!$el.attr("crossorigin")) {
-      $el.attr("crossorigin", "anonymous");
-      stats.count++;
-    }
-  });
-
-  // Astro Islands
-  processAstroIslandPreloads($, file, hashCache, stats);
-
-  let content = $.html();
-
-  // Beacon Hash Injection (String replacement)
+  content = processScripts(content, file, hashCache, stats);
+  content = processLinks(content, file, hashCache, stats);
+  content = processImages(content, file, hashCache, stats);
+  content = processMultimedia(content, file, hashCache, stats);
+  content = processImagePreloads(content, stats);
+  content = processAstroIslandPreloads(content, file, hashCache, stats);
   content = injectBeaconHash(content, file, hashCache, stats);
 
   const modified = content !== originalContent;
+
   if (modified) {
     fs.writeFileSync(file, content, "utf-8");
   }
