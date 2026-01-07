@@ -418,7 +418,10 @@ async function generateSriHashes(distDir: string) {
       const beaconPath = path.join(distDir, "scripts", "cf-beacon.js");
       if (fs.existsSync(beaconPath)) {
         const hash = getHash(beaconPath);
-        finalContent = finalContent.replace("__BEACON_INTEGRITY_HASH__", hash);
+        finalContent = finalContent.replaceAll(
+          "__BEACON_INTEGRITY_HASH__",
+          hash,
+        );
         modified = true;
         updatedTags++;
       }
@@ -470,12 +473,13 @@ async function generateCspHashes(distDir: string) {
       }
     });
 
-    $("img[src^='http']").each((_, el) => {
+    $("img[src]").each((_, el) => {
       const $el = $(el);
       const src = $el.attr("src");
-      if (src) {
+      if (src && (src.startsWith("http") || src.startsWith("//"))) {
         try {
-          imageDomains.add(new URL(src).hostname);
+          const fullUrl = src.startsWith("//") ? `https:${src}` : src;
+          imageDomains.add(new URL(fullUrl).hostname);
         } catch (e: unknown) {
           const message = e instanceof Error ? e.message : String(e);
           console.warn(

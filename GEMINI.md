@@ -35,7 +35,7 @@
 | `pnpm lint` | Run ESLint across the codebase. |
 | `pnpm lint:html` | Validate the generated HTML in `dist/` (run after build). |
 | `pnpm test:e2e` | Execute Playwright end-to-end and accessibility tests. |
-| `pnpm verify` | Full quality check: build, lint HTML, and run E2E tests. |
+| `pnpm verify` | Full quality check: typecheck, lint, build, validate HTML, and run E2E tests. |
 
 ### CV Compilation (LaTeX)
 
@@ -59,9 +59,9 @@ latexmk -lualatex -interaction=nonstopmode CV_RequenaPlensJoseManuel_ENG.tex CV_
 *   **Static Analysis:** Use `pnpm verify` to ensure all checks pass before committing.
 
 ### Project Structure
-*   `src/components`: Reusable Astro and Preact components.
-*   `src/content`: Content collections (Blog posts) and configuration.
-*   `src/pages`: File-based routing for the site.
-*   `scripts`: Custom build scripts (SRI, CSP, Sitemap) and CI utilities.
+*   `components`: Reusable Astro and Preact components.
+*   `content`: Content collections (Blog posts) and configuration.
+*   `pages`: File-based routing for the site.
+*   `scripts`: Pre-build helpers and CI utilities (build processing is handled by the Astro post-build integration).
 *   `cv_latex`: LaTeX source files for the resume.
 *   `public`: Static assets (images, robots.txt, etc.).
