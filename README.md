@@ -94,7 +94,7 @@ This is the source code for my personal website, **[jmrp.io](https://jmrp.io)**,
 
 ### Prerequisites
 
-- Node.js (v22+)
+- Node.js (v22+): Required to ensure compatibility with the latest LTS features and modern build tooling.
 - pnpm
 
 ### Installation

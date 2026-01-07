@@ -27,7 +27,8 @@ export async function extractCssDataUris(distDir: string) {
   const allFiles = [...cssFiles, ...htmlFiles];
 
   // Regex that correctly handles optional quotes and prevents over-capturing unquoted URIs
-  const DATA_URI_REGEX = /url\(\s*(?:(['"])(data:[^"']+)\1|([^'"\s)]+))\s*\)/gi;
+  const DATA_URI_REGEX =
+    /url\(\s*(?:(['"])(data:[^"']+)\1|(data:[^'\")]+))\s*\)/gi;
 
   let extracted = 0;
 
@@ -109,7 +110,10 @@ export async function extractCssDataUris(distDir: string) {
           const newUrl = `/${ASSETS_DIR}/${filename}`;
           const q = quote || '"';
           return `url(${q}${newUrl}${q})`;
-        } catch {
+        } catch (error) {
+          console.error(
+            `[PostBuild] Error extracting CSS data URI in file: ${file} - ${error instanceof Error ? error.message : error}`,
+          );
           return fullMatch;
         }
       },

@@ -36,7 +36,7 @@ export async function processHtmlFiles(distDir: string, cspData: CspData) {
     const originalBeacon = fs.readFileSync(beaconPath, "utf-8");
     // Prepend a guard that stops execution on localhost/127.0.0.1
     // We wrap it in a function to allow 'return' at the top level of the logic
-    const hardenedBeacon = `(function(){if(location.hostname.includes('localhost')||location.hostname.includes('127.0.0.1'))return;${originalBeacon}})();`;
+    const hardenedBeacon = `(function(){var h=location.hostname;if(h==='localhost'||h==='127.0.0.1')return;${originalBeacon}})();`;
     fs.writeFileSync(beaconPath, hardenedBeacon, "utf-8");
     // Force re-calculation of hash for this file
     hashCache.delete(beaconPath);
@@ -163,7 +163,8 @@ export async function processHtmlFiles(distDir: string, cspData: CspData) {
     });
 
     // 5. Collect image domains for CSP
-    const HOSTNAME_REGEX = /^[A-Za-z0-9.-]+$/;
+    const HOSTNAME_REGEX =
+      /^[A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?(\.[A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?)*$/;
     $("img[src]").each((_, el) => {
       const src = $(el).attr("src");
       if (src && (src.startsWith("http") || src.startsWith("//"))) {
@@ -173,8 +174,10 @@ export async function processHtmlFiles(distDir: string, cspData: CspData) {
           if (HOSTNAME_REGEX.test(hostname)) {
             cspData.imageDomains.add(hostname);
           }
-        } catch {
-          /* ignore */
+        } catch (err) {
+          console.warn(
+            `[PostBuild] Skipping invalid image URL during CSP collection: ${src}. Error: ${err instanceof Error ? err.message : err}`,
+          );
         }
       }
     });

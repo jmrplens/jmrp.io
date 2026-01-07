@@ -16,8 +16,15 @@ export function setupSitemap(distDir: string) {
   const targetPath = path.join(distDir, "sitemap-index.xml");
 
   if (fs.existsSync(targetPath)) {
-    fs.copyFileSync(targetPath, sitemapPath);
-    console.log("  ✓ Copied sitemap-index.xml -> sitemap.xml");
+    try {
+      fs.copyFileSync(targetPath, sitemapPath);
+      console.log("  ✓ Copied sitemap-index.xml -> sitemap.xml");
+    } catch (error) {
+      console.error(
+        "  ✗ Failed to copy sitemap-index.xml to sitemap.xml:",
+        error,
+      );
+    }
   } else {
     console.warn("  ⚠ sitemap-index.xml not found.");
   }

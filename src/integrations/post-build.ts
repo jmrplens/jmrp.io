@@ -68,12 +68,24 @@ export default function postBuildIntegration(): AstroIntegration {
                 execSync("nginx -t", { stdio: "pipe" });
                 execSync("nginx -s reload", { stdio: "inherit" });
                 console.log("  ✓ Nginx configuration reloaded successfully.");
-              } catch (error) {
+              } catch (validationError) {
                 console.error(
-                  "  ⚠ Nginx validation failed! Reverting changes.",
-                  error,
+                  "  ⚠ Nginx validation/reload failed! Reverting changes.",
+                  validationError,
                 );
-                fs.writeFileSync(systemNginxPath, originalContent);
+                try {
+                  fs.writeFileSync(systemNginxPath, originalContent);
+                  console.log(
+                    "  ✓ Successfully reverted to the previous Nginx configuration.",
+                  );
+                  // Final validation to ensure system is left in a stable state
+                  execSync("nginx -t", { stdio: "pipe" });
+                } catch (revertError) {
+                  console.error(
+                    "  CRITICAL: Failed to revert Nginx configuration. Manual intervention required.",
+                    revertError,
+                  );
+                }
               }
             } catch (error) {
               console.error(

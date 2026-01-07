@@ -78,7 +78,7 @@ export async function finalizeCspConfig(distDir: string, cspData: CspData) {
   const cspHeader = [
     "default-src 'none'",
     `script-src 'self' 'nonce-$cspNonce' ${scriptChunks.usage}`,
-    `style-src 'self' 'unsafe-hashes' 'nonce-$cspNonce' ${styleChunks.usage}`,
+    `style-src 'self' 'nonce-$cspNonce' ${styleChunks.usage}`,
     imgSrc
       ? `img-src 'self' data: ${imgSrc} https://*.jmrp.io`
       : "img-src 'self' data: https://*.jmrp.io",

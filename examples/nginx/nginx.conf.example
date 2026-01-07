@@ -68,10 +68,10 @@ server {
         include /etc/nginx/snippets/security_headers.conf;
     }
 
-    # Well-known (Security.txt, etc.)
+    # Security: Well-known location for security.txt, etc.
     location ^~ /.well-known/ {
-        allow all;
         try_files $uri $uri/ =404;
+        include /etc/nginx/snippets/security_headers.conf;
     }
 
     # Main application
