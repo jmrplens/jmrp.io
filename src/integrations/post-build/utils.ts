@@ -3,7 +3,11 @@ import path from "node:path";
 import crypto from "node:crypto";
 
 /**
- * writeHtml: Helper to write HTML with cleanup for boolean attributes
+ * Writes the provided HTML content to a file, cleaning up empty boolean attributes
+ * that can cause validation issues (e.g., async="" becomes async).
+ *
+ * @param {string} filePath - Absolute path to the destination file.
+ * @param {string} html - HTML content to write.
  */
 export function writeHtml(filePath: string, html: string) {
   const cleaned = html.replace(
@@ -14,7 +18,10 @@ export function writeHtml(filePath: string, html: string) {
 }
 
 /**
- * getExtensionFromMime: Helper to get extension from mime type
+ * Resolves a MIME type to a corresponding file extension.
+ *
+ * @param {string} mimeType - The MIME type string to evaluate.
+ * @returns {string} The appropriate file extension (e.g., 'png', 'svg') or 'bin' if unknown.
  */
 export function getExtensionFromMime(mimeType: string): string {
   if (mimeType.includes("svg")) return "svg";
@@ -26,7 +33,12 @@ export function getExtensionFromMime(mimeType: string): string {
 }
 
 /**
- * getFileHash: Helper to generate sha512 hash
+ * Generates a SHA-512 integrity hash for the specified file.
+ * Uses a cache to avoid re-reading and re-hashing identical files.
+ *
+ * @param {string} filePath - Path to the file to hash.
+ * @param {Map<string, string>} cache - Cache map storing filePath -> hash.
+ * @returns {string} The integrity hash in 'sha512-...' format.
  */
 export function getFileHash(
   filePath: string,
@@ -40,7 +52,13 @@ export function getFileHash(
 }
 
 /**
- * resolveFile: Helper to resolve URL to local file path
+ * Resolves a URL or relative path to an absolute path within the distribution directory.
+ * Filters out external URLs (http/https).
+ *
+ * @param {string} url - The URL or path to resolve.
+ * @param {string} baseDir - The directory containing the file that references the URL.
+ * @param {string} distDir - The project's distribution (output) directory.
+ * @returns {string | null} The absolute local file path, or null if it's external or doesn't exist.
  */
 export function resolveFile(
   url: string,

@@ -6,7 +6,17 @@ import type { CspData } from "./types.js";
 import { NGINX_VARIABLE_SIZE_LIMIT } from "./constants.js";
 
 /**
- * finalizeCspConfig: Generates security_headers.conf with prioritized Hashes and Nonce fallback
+ * Generates the final Nginx security headers configuration file.
+ *
+ * This function consolidates all collected SRI hashes, CSP nonces, and third-party
+ * domains into a robust Content Security Policy. It also includes other standard
+ * security headers like HSTS, X-Frame-Options, and Referrer-Policy.
+ *
+ * Due to Nginx variable size limits, large CSP policies are automatically chunked
+ * into multiple variables.
+ *
+ * @param {string} distDir - The absolute path to the production build output.
+ * @param {CspData} cspData - The data object containing hashes and domains collected during HTML processing.
  */
 export async function finalizeCspConfig(distDir: string, cspData: CspData) {
   console.log("[PostBuild] Finalizing CSP and Security Headers...");
@@ -27,7 +37,10 @@ export async function finalizeCspConfig(distDir: string, cspData: CspData) {
   ]);
   const allStyleHashes = cspData.styleHashes;
 
-  // Chunking Helper for Nginx variables
+  /**
+   * Helper to chunk a large set of CSP hashes into multiple Nginx variables.
+   * This avoids exceeding the ~4KB limit for individual variables in Nginx.
+   */
   const chunkHashes = (
     hashes: Set<string>,
     prefix: string,

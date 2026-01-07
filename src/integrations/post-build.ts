@@ -16,6 +16,19 @@ import fs from "node:fs";
 import path from "node:path";
 import { execSync } from "node:child_process";
 
+/**
+ * Creates the jmrp-post-build Astro integration.
+ *
+ * This integration performs several critical optimizations and security hardening
+ * tasks after the site has been built:
+ * - HTML transformation (SRI, Nonces, style-to-class conversion).
+ * - CSS optimization (Data URI extraction).
+ * - Sitemap configuration.
+ * - CSP and security headers generation.
+ * - Automatic deployment/reload of system Nginx configuration (if applicable).
+ *
+ * @returns {AstroIntegration} The configured Astro integration.
+ */
 export default function postBuildIntegration(): AstroIntegration {
   return {
     name: "jmrp-post-build",
@@ -43,18 +56,11 @@ export default function postBuildIntegration(): AstroIntegration {
           const generatedPath = path.join(distDir, "security_headers.conf");
 
           if (fs.existsSync(systemNginxPath) && fs.existsSync(generatedPath)) {
-            // Safety: Validate the new configuration in a temporary file before overwriting system config
-            const tempConfigPath = path.join(
-              path.dirname(generatedPath),
-              "test_security_headers.conf",
-            );
-            fs.copyFileSync(generatedPath, tempConfigPath);
-
+            // Safety: We will validate the configuration after deployment and revert if it fails.
             console.log(`[PostBuild] Validating Nginx configuration...`);
             try {
-              // We can't easily test a snippet alone with nginx -t,
-              // but we can try to see if the syntax is roughly correct or just rely on the fallback.
-              // A better way is to copy, test, and revert if failed.
+              // We can't easily test a snippet alone with nginx -t without a full config context,
+              // so we perform an atomic-like swap and revert if the global validation fails.
               const originalContent = fs.readFileSync(systemNginxPath);
               fs.copyFileSync(generatedPath, systemNginxPath);
 

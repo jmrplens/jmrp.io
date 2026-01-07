@@ -4,6 +4,16 @@ import { getEntry } from "astro:content";
 import icon192Src from "@assets/icons/pwa/icon-192.png";
 import icon512Src from "@assets/icons/pwa/icon-512.png";
 
+/**
+ * Endpoint for generating the Progressive Web App (PWA) manifest file.
+ *
+ * This manifest includes:
+ * - Application metadata (name, description, theme colors).
+ * - Multi-resolution icons for different devices and purposes (any, maskable).
+ * - Navigation shortcuts for quick access to key site sections.
+ *
+ * @returns {Promise<Response>} A JSON response containing the web manifest.
+ */
 export const GET: APIRoute = async () => {
   interface Shortcut {
     name: string;

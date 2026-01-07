@@ -9,7 +9,18 @@ import { writeHtml, getFileHash, resolveFile } from "./utils.js";
 import { ASSETS_DIR, STYLE_CLASS_HASH_LENGTH } from "./constants.js";
 
 /**
- * processHtmlFiles: Consolidated pass for all HTML transformations
+ * Performs a consolidated pass over all HTML files in the distribution directory.
+ *
+ * This function handles several critical post-build tasks:
+ * 1. Converts inline style attributes to scoped classes (to support strict CSP).
+ * 2. Injects security nonces into all inline script and style tags.
+ * 3. Generates Subresource Integrity (SRI) hashes for all local linked resources.
+ * 4. Collects hashes for the final CSP configuration.
+ * 5. Identifies external image domains used on the site.
+ * 6. Hardens the Cloudflare Insights beacon script with local environment guards.
+ *
+ * @param {string} distDir - The absolute path to the production build output.
+ * @param {CspData} cspData - Shared object to store collected CSP hashes and domains.
  */
 export async function processHtmlFiles(distDir: string, cspData: CspData) {
   console.log("[PostBuild] Processing HTML files (consolidated pass)...");
@@ -71,10 +82,8 @@ export async function processHtmlFiles(distDir: string, cspData: CspData) {
     }
 
     // 2. Add nonces to ALL inline scripts and styles (essential for Mermaid and Astro islands)
-    $("script:not([src]), style:not([nonce])").each((_, el) => {
-      $(el).attr("nonce", "NGINX_CSP_NONCE");
-      isModified = true;
-    });
+    // Consolidated into Step 4 for hashing, but we still need to catch any missed ones
+    // like the ones that don't need hashing (e.g. data-generated-style already has it from Step 1)
 
     // 3. SRI and Nonces for linked resources
     const processSri = (

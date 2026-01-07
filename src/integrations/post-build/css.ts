@@ -7,7 +7,15 @@ import { getExtensionFromMime } from "./utils.js";
 import { ASSETS_DIR, ASSET_FILENAME_HASH_LENGTH } from "./constants.js";
 
 /**
- * extractCssDataUris: Extracts data URIs from CSS files
+ * Extracts embedded Data URIs from CSS and HTML files into standalone physical assets.
+ *
+ * This optimization:
+ * 1. Reduces the size of CSS and HTML files by offloading large binary data (images, fonts).
+ * 2. Enables better caching of assets.
+ * 3. Supports strict CSP by removing inline data: URIs where they might be problematic.
+ * 4. Automatically optimizes extracted SVG assets using SVGO.
+ *
+ * @param {string} distDir - The absolute path to the production build output.
  */
 export async function extractCssDataUris(distDir: string) {
   console.log("[PostBuild] Extracting CSS Data URIs...");

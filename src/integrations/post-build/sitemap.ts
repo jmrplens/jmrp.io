@@ -2,7 +2,13 @@ import fs from "node:fs";
 import path from "node:path";
 
 /**
- * setupSitemap: Copies sitemap-index.xml to sitemap.xml
+ * Configures the final sitemap location.
+ *
+ * Astro by default generates 'sitemap-index.xml'. This helper ensures 'sitemap.xml'
+ * exists by copying the index, providing compatibility with standard SEO crawler
+ * expectations.
+ *
+ * @param {string} distDir - The absolute path to the production build output.
  */
 export function setupSitemap(distDir: string) {
   console.log("[PostBuild] Setting up sitemap...");

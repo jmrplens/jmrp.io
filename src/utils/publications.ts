@@ -3,6 +3,9 @@ import path from "node:path";
 import { getEntry } from "astro:content";
 import Cite from "citation-js"; // Library to parse BibTeX files
 
+/**
+ * Represents a single publication entry with its metadata.
+ */
 export interface PublicationItem {
   id: string;
   type: string;
@@ -20,11 +23,17 @@ export interface PublicationGroup {
   items: PublicationItem[];
 }
 
+/**
+ * Metadata for a co-author, including their name variations and profile link.
+ */
 interface Coauthor {
   firstname: string[];
   url: string;
 }
 
+/**
+ * Map of co-author family names to their respective details.
+ */
 interface CoauthorMap {
   [family: string]: Coauthor[];
 }
@@ -91,7 +100,13 @@ export async function getPublications(): Promise<PublicationGroup[]> {
       return yearB - yearA;
     });
 
-    // ... (authors logic kept) ...
+    /**
+     * Determines if a given name matches any of the provided firstname variations.
+     *
+     * @param {string} bibGiven - The given name from the BibTeX entry.
+     * @param {string[]} firstnameVariations - List of possible firstname variations for a co-author.
+     * @returns {boolean} True if a match is found.
+     */
     const isNameMatch = (
       bibGiven: string,
       firstnameVariations: string[],
@@ -100,6 +115,13 @@ export async function getPublications(): Promise<PublicationGroup[]> {
         (n) => n === bibGiven || n.includes(bibGiven) || bibGiven.includes(n),
       );
     };
+
+    /**
+     * Enriches an array of authors with profile URLs from the co-authors map.
+     *
+     * @param {Array<{ family: string; given?: string; url?: string }>} authors - The raw authors array.
+     * @returns {Array<{ family: string; given?: string; url?: string }>} The enriched authors array.
+     */
     const processAuthors = (
       authors: { family: string; given?: string; url?: string }[] | undefined,
     ) => {
@@ -122,6 +144,12 @@ export async function getPublications(): Promise<PublicationGroup[]> {
     const conferencePapers: PublicationItem[] = [];
     const thesisList: PublicationItem[] = [];
 
+    /**
+     * Extracts the raw BibTeX entry string for a specific publication ID.
+     *
+     * @param {string} id - The publication ID.
+     * @returns {string} The raw BibTeX entry.
+     */
     const extractRawBibtex = (id: string) => {
       const entryRegex = new RegExp(
         String.raw`@.*?\{${id},[\s\S]*?(?=\n@|$)`,
@@ -131,6 +159,11 @@ export async function getPublications(): Promise<PublicationGroup[]> {
       return match ? match[0].trim() : "";
     };
 
+    /**
+     * Processes a single publication item, performing filtering, enrichment, and categorization.
+     *
+     * @param {PublicationItem} item - The item to process.
+     */
     const processItem = (item: PublicationItem) => {
       // Filter by bibtex_show
       const bibtexShow = extractCustomField(item.id, "bibtex_show");

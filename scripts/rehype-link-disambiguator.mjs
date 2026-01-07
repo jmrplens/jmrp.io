@@ -1,7 +1,10 @@
 import { visit } from "unist-util-visit";
 
 /**
- * Helper to extract all text content from a HAST node.
+ * Helper to recursively extract all text content from a HAST node.
+ *
+ * @param {object} node - The HAST node to process.
+ * @returns {string} The concatenated text content of the node and its children.
  */
 function toText(node) {
   if (node.type === "text") return node.value;
@@ -10,7 +13,11 @@ function toText(node) {
 }
 
 /**
- * Generates a human-friendly label for a URL destination.
+ * Generates a human-friendly and descriptive label for a link's destination.
+ *
+ * @param {string} href - The destination URL of the link.
+ * @param {string} text - The visible link text.
+ * @returns {string} A descriptive string (e.g., "Read more (on /blog)") to clarify the link's purpose.
  */
 function getDestinationLabel(href, text) {
   if (!URL.canParse(href, "https://jmrp.io")) {
