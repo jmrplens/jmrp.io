@@ -94,7 +94,7 @@ This is the source code for my personal website, **[jmrp.io](https://jmrp.io)**,
 
 ### Prerequisites
 
-- Node.js (v18+)
+- Node.js (v22+)
 - pnpm
 
 ### Installation
@@ -118,11 +118,14 @@ pnpm run build
 
 This command will:
 
-1. Fetch latest avatars.
+1. Fetch latest avatars from GitHub.
 2. Build the Astro site.
-3. Index content for search.
-4. Process inline styles and extract assets.
-5. Generate SRI and CSP hashes.
+3. Automatically execute post-build optimizations:
+   - Extract inline styles to classes.
+   - Convert CSS/HTML data URIs to physical assets.
+   - Generate SHA-512 hashes for SRI and CSP.
+4. Validate and deploy `security_headers.conf` to Nginx (if on server).
+5. Reload Nginx service automatically.
 
 ## 🧪 Quality Assurance
 
@@ -232,21 +235,22 @@ The project includes advanced Nginx configuration for security headers and asset
 ### Security Features
 
 - **Reverse Proxy**: Nginx reverse proxy handles requests to external services (Mastodon, Matrix, Meshtastic), hiding upstreams and preventing CORS issues.
-- **SRI (Subresource Integrity)**: Comprehensive protection for all local resources. A post-build script calculates hashes for:
+- **SRI (Subresource Integrity)**: Comprehensive protection for all local resources. A modularized Astro Integration (`src/integrations/post-build/`) calculates hashes for:
   - All `<script>` and `<link rel="stylesheet">` tags.
   - `<link rel="preload">` and `<link rel="modulepreload">` (including fonts and Astro dynamic components).
-  - PWA Metadatas (Favicons, Icons, and Web Manifest).
-  - Multimedia assets (`<img>`, `<video>`, `<audio>`, `<source>`).
-- **CSP (Content Security Policy)**: Uses a combined strategy of request-specific `nonce` (injected via Nginx `sub_filter`) and SHA-512 hashes for all scripts and styles.
+  - PWA Metadata (Favicons, Icons, and Web Manifest).
+  - Multimedia assets (`<img>`, `<source>`).
+- **CSP (Content Security Policy)**: Uses a robust hybrid strategy of SHA-512 hashes for all inline content and request-specific `nonce` (injected via Nginx `sub_filter`) as a fallback.
   - **Features**:
-    - **SHA-512 Hashing**: Upgraded from SHA-384 for stronger security.
-    - **Automatic Splitting**: Splits long CSP header strings into multiple Nginx variables to avoid "too long parameter" errors.
-    - **Nginx Reload**: Automatically reloads Nginx after updating the configuration.
+    - **SHA-512 Hashing**: Prioritized for all static inline scripts and styles.
+    - **Nonce Fallback**: Ensures dynamic or third-party generated content (like Mermaid diagrams) works reliably.
+    - **Automatic Splitting**: Splits long CSP header strings into multiple Nginx variables to avoid configuration limits.
+    - **Automatic Deployment**: The build process automatically validates and deploys `security_headers.conf` to the local Nginx installation and reloads the service.
 - **Incident Reporting**: Real-time monitoring of security violations:
   - **CSP Violations**: Natively reported by the browser.
   - **SRI Failures**: Tracked via a custom event listener (`SRIEventListener.astro`) that captures integrity validation errors.
-  - **Telegram Integration**: A dedicated backend (`csp-reporter.mjs`) receives these reports and sends instant notifications to Telegram.
-- **HSTS**: Enforces HTTPS.
+  - **Telegram Integration**: A dedicated backend (`csp-reporter.mjs`) receives these reports and sends instant notifications.
+- **Hardened Headers**: Full suite of modern headers (HSTS, XFO, CORP, COOP, COEP) achieving the maximum score on Mozilla Observatory.
 
 ## 📄 LaTeX CV Compilation
 
