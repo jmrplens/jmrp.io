@@ -22,6 +22,9 @@ import * as cheerio from "cheerio";
 import { optimize } from "svgo";
 import { fileURLToPath } from "node:url";
 
+// Define a minimal interface for Cheerio elements to avoid 'any' issues
+type AnyElement = { tagName: string; [key: string]: any };
+
 // --- Logic from Scripts ---
 
 /**
@@ -105,7 +108,6 @@ async function extractCssDataUris(distDir: string) {
 
   for (const file of allFiles) {
     const content = fs.readFileSync(file, "utf-8");
-    let modified = false;
 
     const newContent = content.replaceAll(
       DATA_URI_REGEX,
@@ -174,7 +176,6 @@ async function extractCssDataUris(distDir: string) {
           }
 
           const newUrl = `/${assetsDir}/${filename}`;
-          modified = true;
           const q = quote || '"';
           return `url(${q}${newUrl}${q})`;
         } catch {
@@ -183,7 +184,7 @@ async function extractCssDataUris(distDir: string) {
       },
     );
 
-    if (modified) {
+    if (newContent !== content) {
       fs.writeFileSync(file, newContent, "utf-8");
     }
   }
@@ -207,9 +208,11 @@ async function extractHtmlImgDataUris(distDir: string) {
     const $ = cheerio.load(content);
     let modified = false;
 
-    $('img[src^="data:"], source[srcset^="data:"]').each((_, el) => {
+    $('img[src^="data:"], source[srcset^="data:"]').each((_, el: any) => {
       const $el = $(el);
-      const tagName = el.tagName.toLowerCase();
+      // Cast to AnyElement to access tagName safely
+      const element = el as AnyElement;
+      const tagName = element.tagName.toLowerCase();
       const attrName = tagName === "source" ? "srcset" : "src";
       const srcContent = $el.attr(attrName);
 
@@ -308,7 +311,7 @@ async function generateSriHashes(distDir: string) {
 
     // Helper to process elements
     const processEl = (
-      $el: cheerio.Cheerio<cheerio.Element>,
+      $el: cheerio.Cheerio<any>,
       attr: string,
       type: "script" | "link" | "img" | "media",
     ) => {
@@ -340,11 +343,7 @@ async function generateSriHashes(distDir: string) {
 
       if ((type === "script" || type === "link") && !$el.attr("nonce")) {
         // Only for stylesheets/scripts
-        if (
-          type === "script" ||
-          rel === "stylesheet" ||
-          as === "style"
-        ) {
+        if (type === "script" || rel === "stylesheet" || as === "style") {
           $el.attr("nonce", "NGINX_CSP_NONCE");
         }
       }
@@ -353,19 +352,25 @@ async function generateSriHashes(distDir: string) {
       updatedTags++;
     };
 
-    $("script[src]").each((_, el) => processEl($(el), "src", "script"));
+    $("script[src]").each((_, el) =>
+      processEl($(el) as cheerio.Cheerio<any>, "src", "script"),
+    );
     $(
       'link[rel="stylesheet"], link[rel="preload"], link[rel="modulepreload"]',
-    ).each((_, el) => processEl($(el), "href", "link"));
-    $("img[src]").each((_, el) => processEl($(el), "src", "img"));
+    ).each((_, el) =>
+      processEl($(el) as cheerio.Cheerio<any>, "href", "link"),
+    );
+    $("img[src]").each((_, el) =>
+      processEl($(el) as cheerio.Cheerio<any>, "src", "img"),
+    );
     $("video[src], audio[src], source[src]").each((_, el) =>
-      processEl($(el), "src", "media"),
+      processEl($(el) as cheerio.Cheerio<any>, "src", "media"),
     );
 
     // Astro Islands
     const moduleUrls = new Set<string>();
     $("astro-island").each((_, el) => {
-      const $el = $(el);
+      const $el = $(el) as cheerio.Cheerio<any>;
       const comp = $el.attr("component-url");
       const rend = $el.attr("renderer-url");
       if (comp) moduleUrls.add(comp);
@@ -416,6 +421,7 @@ async function generateCspHashes(distDir: string) {
   const styleHashes = new Set<string>();
   const scriptHashes = new Set<string>();
   const imageDomains = new Set<string>();
+  const processedScripts = new Set<string>();
 
   // Hash HTML content
   for (const file of files) {
@@ -423,7 +429,7 @@ async function generateCspHashes(distDir: string) {
     const $ = cheerio.load(content);
 
     $("style").each((_, el) => {
-      const $el = $(el);
+      const $el = $(el) as cheerio.Cheerio<any>;
       if (!$el.attr("nonce")) {
         const h = crypto
           .createHash("sha512")
@@ -434,7 +440,7 @@ async function generateCspHashes(distDir: string) {
     });
 
     $("script:not([src])").each((_, el) => {
-      const $el = $(el);
+      const $el = $(el) as cheerio.Cheerio<any>;
       if (!$el.attr("nonce")) {
         const h = crypto
           .createHash("sha512")
@@ -446,7 +452,7 @@ async function generateCspHashes(distDir: string) {
 
     // External Scripts hashing
     $("script[src]").each((_, el) => {
-      const $el = $(el);
+      const $el = $(el) as cheerio.Cheerio<any>;
       const src = $el.attr("src");
       if (src && !src.startsWith("http") && !src.startsWith("//")) {
         const cleanUrl = src.split("?")[0].split("#")[0];
@@ -455,6 +461,8 @@ async function generateCspHashes(distDir: string) {
           : path.resolve(path.dirname(file), cleanUrl);
 
         if (fs.existsSync(filePath)) {
+          // Optimization: Avoid double hashing if processed in JS loop or elsewhere
+          processedScripts.add(filePath);
           const c = fs.readFileSync(filePath);
           const h = crypto.createHash("sha512").update(c).digest("base64");
           scriptHashes.add(`'sha512-${h}'`);
@@ -463,7 +471,8 @@ async function generateCspHashes(distDir: string) {
     });
 
     $("img[src^='http']").each((_, el) => {
-      const src = $(el).attr("src");
+      const $el = $(el) as cheerio.Cheerio<any>;
+      const src = $el.attr("src");
       if (src) {
         try {
           imageDomains.add(new URL(src).hostname);
@@ -476,6 +485,8 @@ async function generateCspHashes(distDir: string) {
 
   // Hash standalone JS files
   for (const file of jsFiles) {
+    if (processedScripts.has(file)) continue;
+
     const c = fs.readFileSync(file);
     const h = crypto.createHash("sha512").update(c).digest("base64");
     scriptHashes.add(`'sha512-${h}'`);
@@ -488,9 +499,47 @@ async function generateCspHashes(distDir: string) {
     .join(" ");
 
   // Generate Config
+  const cspHeader = [
+    "default-src 'none'",
+    `script-src 'self' 'nonce-$cspNonce' ${scriptSrc}`,
+    `style-src 'self' 'unsafe-hashes' 'nonce-$cspNonce' ${styleSrc}`,
+    `img-src 'self' ${imgSrc} https://*.jmrp.io`,
+    "font-src 'self'",
+    "connect-src 'self' https://api.github.com https://cloudflareinsights.com",
+    "media-src 'self'",
+    "manifest-src 'self'",
+    "frame-src 'none'",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "frame-ancestors 'none'",
+    "upgrade-insecure-requests",
+    "report-uri /csp-report;",
+  ].join("; ");
+
+  const permissionsPolicy = [
+    "accelerometer=()",
+    "autoplay=()",
+    "browsing-topics=()",
+    "camera=()",
+    "encrypted-media=()",
+    "fullscreen=()",
+    "geolocation=()",
+    "gyroscope=()",
+    "magnetometer=()",
+    "microphone=()",
+    "midi=()",
+    "payment=()",
+    "picture-in-picture=()",
+    "publickey-credentials-get=(self)",
+    "sync-xhr=()",
+    "usb=()",
+    "xr-spatial-tracking=()",
+  ].join(", ");
+
   const content = `# CSP Config Generated by Astro Integration
-add_header Content-Security-Policy "default-src 'none'; script-src 'self' 'nonce-$cspNonce' ${scriptSrc}; style-src 'self' 'unsafe-hashes' 'nonce-$cspNonce' ${styleSrc}; img-src 'self' ${imgSrc} https://*.jmrp.io; font-src 'self'; connect-src 'self' https://api.github.com https://cloudflareinsights.com; media-src 'self'; manifest-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests; report-uri /csp-report;" always;
-add_header Permissions-Policy "accelerometer=(), autoplay=(), browsing-topics=(), camera=(), encrypted-media=(), fullscreen=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), midi=(), payment=(), picture-in-picture=(), publickey-credentials-get=(self), sync-xhr=(), usb=(), xr-spatial-tracking=()" always;
+add_header Content-Security-Policy "${cspHeader}" always;
+add_header Permissions-Policy "${permissionsPolicy}" always;
 `;
 
   fs.writeFileSync(path.join(distDir, "security_headers.conf"), content);
