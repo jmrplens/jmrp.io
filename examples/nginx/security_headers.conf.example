@@ -18,8 +18,11 @@ add_header Cross-Origin-Embedder-Policy "require-corp" always;
 add_header Cross-Origin-Opener-Policy "same-origin" always;
 add_header Cross-Origin-Resource-Policy "same-origin" always;
 
-# Security Cookie (Example dummy session cookie with security flags)
-# Note: In production, your application should set its own secure cookies.
+# Security Cookie (Workaround for security scanners)
+# Note: This dummy cookie is a workaround for security scanners that check for secure
+# cookie flags. Your application (or authentication gateway) should set its own secure
+# session cookies with appropriate flags (Secure, HttpOnly, SameSite, __Host- prefix).
+# Remove this line if your application handles session cookies properly.
 add_header Set-Cookie "__Host-Session=1; path=/; Secure; HttpOnly; SameSite=Strict" always;
 
 # Content Security Policy (Nonce-based with SHA fallback)

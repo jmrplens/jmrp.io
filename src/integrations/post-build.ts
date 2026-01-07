@@ -62,15 +62,17 @@ export default function postBuildIntegration(): AstroIntegration {
                 execSync("nginx -t", { stdio: "pipe" });
                 execSync("nginx -s reload", { stdio: "inherit" });
                 console.log("  ✓ Nginx configuration reloaded successfully.");
-              } catch {
+              } catch (error) {
                 console.error(
                   "  ⚠ Nginx validation failed! Reverting changes.",
+                  error,
                 );
                 fs.writeFileSync(systemNginxPath, originalContent);
               }
-            } catch {
+            } catch (error) {
               console.error(
                 "  ⚠ Deployment failed. Check Nginx permissions or syntax.",
+                error,
               );
             }
           }
