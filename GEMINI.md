@@ -21,7 +21,7 @@
 ## Building and Running
 
 ### Prerequisites
-*   Node.js (v18+)
+*   Node.js (v22+)
 *   pnpm (v10+)
 
 ### Key Commands
@@ -30,7 +30,7 @@
 | :--- | :--- |
 | `pnpm install` | Install project dependencies. |
 | `pnpm dev` | Start the local development server (Astro). |
-| `pnpm build` | Create a production build in `dist/`. Includes post-build processing (SRI/CSP generation). |
+| `pnpm build` | Create a production build in `dist/`. Includes post-build processing (SRI/CSP generation). **Note:** This generates `dist/security_headers.conf`, which must be deployed to the web server. |
 | `pnpm preview` | Preview the production build locally. |
 | `pnpm lint` | Run ESLint across the codebase. |
 | `pnpm lint:html` | Validate the generated HTML in `dist/` (run after build). |

@@ -15,6 +15,13 @@ import type { Element } from "domhandler";
 import { optimize } from "svgo";
 import { fileURLToPath } from "node:url";
 
+// --- Constants ---
+
+const STYLE_CLASS_HASH_LENGTH = 4;
+const ASSET_FILENAME_HASH_LENGTH = 16;
+// Nginx variable safe limit ~4k, keeping 2k for safety
+const NGINX_VARIABLE_SIZE_LIMIT = 2048;
+
 // --- Types ---
 
 interface CspData {
@@ -141,7 +148,7 @@ async function extractCssDataUris(distDir: string) {
             .createHash("sha256")
             .update(buffer)
             .digest("hex")
-            .substring(0, 16);
+            .substring(0, ASSET_FILENAME_HASH_LENGTH);
           const filename = `${hash}.${ext}`;
           const filePath = path.join(targetDir, filename);
 
@@ -226,7 +233,7 @@ async function processHtmlFiles(distDir: string, cspData: CspData) {
 
       if (!styleToClassMap.has(styleContent)) {
         const hash = crypto
-          .createHash("shake256", { outputLength: 4 })
+          .createHash("shake256", { outputLength: STYLE_CLASS_HASH_LENGTH })
           .update(styleContent)
           .digest("hex");
         styleToClassMap.set(styleContent, `sh-${hash}`);
@@ -273,7 +280,7 @@ async function processHtmlFiles(distDir: string, cspData: CspData) {
           .createHash("sha256")
           .update(buffer)
           .digest("hex")
-          .substring(0, 16);
+          .substring(0, ASSET_FILENAME_HASH_LENGTH);
         const filename = `${hash}.${ext}`;
         const filePath = path.join(targetDir, filename);
 
@@ -443,10 +450,9 @@ async function finalizeCspConfig(distDir: string, cspData: CspData) {
     const list = Array.from(hashes);
     const chunks: string[] = [];
     let current = "";
-    const LIMIT = 2048;
 
     for (const h of list) {
-      if (current.length + h.length + 1 > LIMIT) {
+      if (current.length + h.length + 1 > NGINX_VARIABLE_SIZE_LIMIT) {
         chunks.push(current);
         current = "";
       }
@@ -473,7 +479,7 @@ async function finalizeCspConfig(distDir: string, cspData: CspData) {
   const cspHeader = [
     "default-src 'none'",
     `script-src 'self' 'nonce-$cspNonce' ${scriptChunks.usage}`,
-    `style-src 'self' 'nonce-$cspNonce' ${styleChunks.usage}`,
+    `style-src 'self' 'unsafe-hashes' 'nonce-$cspNonce' ${styleChunks.usage}`,
     imgSrc
       ? `img-src 'self' ${imgSrc} https://*.jmrp.io`
       : "img-src 'self' https://*.jmrp.io",
