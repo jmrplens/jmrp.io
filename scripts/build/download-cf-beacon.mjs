@@ -37,6 +37,7 @@ try {
 
   console.log(`Beacon saved to ${OUTPUT_FILE}`);
 } catch (err) {
-  console.error(`Error downloading beacon: ${err.message}`);
+  const errorMessage = err instanceof Error ? err.message : String(err);
+  console.error(`Error downloading beacon: ${errorMessage}`);
   process.exit(1);
 }

@@ -34,12 +34,12 @@ export async function processHtmlFiles(distDir: string, cspData: CspData) {
   if (fs.existsSync(beaconPath)) {
     console.log("[PostBuild] Hardening cf-beacon.js with local guard...");
     const originalBeacon = fs.readFileSync(beaconPath, "utf-8");
-    // Prepend a guard that stops execution on localhost/127.0.0.1
+    // Prepend a guard that stops execution on localhost/127.0.0.1/0.0.0.0/::1
     // We wrap it in a function to allow 'return' at the top level of the logic
-    const hardenedBeacon = `(function(){var h=location.hostname;if(h==='localhost'||h==='127.0.0.1')return;${originalBeacon}})();`;
+    const hardenedBeacon = `(function(){var h=location.hostname;if(h==='localhost'||h==='127.0.0.1'||h==='0.0.0.0'||h==='::1')return;${originalBeacon}})();`;
     fs.writeFileSync(beaconPath, hardenedBeacon, "utf-8");
     // Force re-calculation of hash for this file
-    hashCache.delete(beaconPath);
+    hashCache.delete(`${beaconPath}:sha512`);
   }
 
   let modifiedFilesCount = 0;
@@ -163,21 +163,24 @@ export async function processHtmlFiles(distDir: string, cspData: CspData) {
     });
 
     // 5. Collect image domains for CSP
-    const HOSTNAME_REGEX =
-      /^[A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?(\.[A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?)*$/;
+    const DOMAIN_REGEX =
+      /(?:https?:)?\/\/([a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9](?:\.[a-zA-Z]{2,})+)/;
     $("img[src]").each((_, el) => {
       const src = $(el).attr("src");
-      if (src && (src.startsWith("http") || src.startsWith("//"))) {
-        try {
-          const fullUrl = src.startsWith("//") ? `https:${src}` : src;
-          const hostname = new URL(fullUrl).hostname;
-          if (HOSTNAME_REGEX.test(hostname)) {
-            cspData.imageDomains.add(hostname);
+      if (src) {
+        if (src.startsWith("http") || src.startsWith("//")) {
+          try {
+            const match = src.match(DOMAIN_REGEX);
+            if (match && match[1]) {
+              cspData.imageDomains.add(match[1]);
+            }
+          } catch (err) {
+            const errorMessage =
+              err instanceof Error ? err.message : String(err);
+            console.warn(
+              `[PostBuild] Skipping invalid image URL during CSP collection: ${src}. Error: ${errorMessage}`,
+            );
           }
-        } catch (err) {
-          console.warn(
-            `[PostBuild] Skipping invalid image URL during CSP collection: ${src}. Error: ${err instanceof Error ? err.message : err}`,
-          );
         }
       }
     });
@@ -187,7 +190,7 @@ export async function processHtmlFiles(distDir: string, cspData: CspData) {
     if (finalHtml.includes("__BEACON_INTEGRITY_HASH__")) {
       const beaconPath = path.join(distDir, "scripts", "cf-beacon.js");
       if (fs.existsSync(beaconPath)) {
-        const hash = getFileHash(beaconPath, hashCache);
+        const hash = getFileHash(beaconPath, hashCache, "sha512");
         finalHtml = finalHtml.replaceAll("__BEACON_INTEGRITY_HASH__", hash);
         isModified = true;
       }

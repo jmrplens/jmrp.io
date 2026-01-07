@@ -33,21 +33,24 @@ export function getExtensionFromMime(mimeType: string): string {
 }
 
 /**
- * Generates a SHA-512 integrity hash for the specified file.
+ * Generates an integrity hash for the specified file.
  * Uses a cache to avoid re-reading and re-hashing identical files.
  *
  * @param {string} filePath - Path to the file to hash.
  * @param {Map<string, string>} cache - Cache map storing filePath -> hash.
- * @returns {string} The integrity hash in 'sha512-...' format.
+ * @param {"sha384" | "sha512"} algorithm - The hashing algorithm to use (default: sha512).
+ * @returns {string} The integrity hash in 'algo-...' format.
  */
 export function getFileHash(
   filePath: string,
   cache: Map<string, string>,
+  algorithm: "sha384" | "sha512" = "sha512",
 ): string {
-  if (cache.has(filePath)) return cache.get(filePath)!;
+  const cacheKey = `${filePath}:${algorithm}`;
+  if (cache.has(cacheKey)) return cache.get(cacheKey)!;
   const content = fs.readFileSync(filePath);
-  const hash = `sha512-${crypto.createHash("sha512").update(content).digest("base64")}`;
-  cache.set(filePath, hash);
+  const hash = `${algorithm}-${crypto.createHash(algorithm).update(content).digest("base64")}`;
+  cache.set(cacheKey, hash);
   return hash;
 }
 

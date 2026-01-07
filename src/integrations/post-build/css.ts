@@ -111,8 +111,10 @@ export async function extractCssDataUris(distDir: string) {
           const q = quote || '"';
           return `url(${q}${newUrl}${q})`;
         } catch (error) {
+          const errorMessage =
+            error instanceof Error ? error.message : String(error);
           console.error(
-            `[PostBuild] Error extracting CSS data URI in file: ${file} - ${error instanceof Error ? error.message : error}`,
+            `[PostBuild] Error extracting CSS data URI in file: ${file} - ${errorMessage}`,
           );
           return fullMatch;
         }

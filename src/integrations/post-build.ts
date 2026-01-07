@@ -81,22 +81,34 @@ export default function postBuildIntegration(): AstroIntegration {
                   // Final validation to ensure system is left in a stable state
                   execSync("nginx -t", { stdio: "pipe" });
                 } catch (revertError) {
+                  const revertErrorMessage =
+                    revertError instanceof Error
+                      ? revertError.message
+                      : String(revertError);
                   console.error(
                     "  CRITICAL: Failed to revert Nginx configuration. Manual intervention required.",
-                    revertError,
+                    revertErrorMessage,
                   );
+                  process.exit(1);
                 }
               }
             } catch (error) {
+              const errorMessage =
+                error instanceof Error ? error.message : String(error);
               console.error(
                 "  ⚠ Deployment failed. Check Nginx permissions or syntax.",
-                error,
+                errorMessage,
               );
+              process.exit(1);
             }
           }
         } catch (e) {
-          console.error(`[\x1b[31mPostBuild\x1b[0m] Fatal error:`, e);
-          throw e;
+          const errorMessage = e instanceof Error ? e.message : String(e);
+          console.error(
+            `[\x1b[31mPostBuild\x1b[0m] Fatal error:`,
+            errorMessage,
+          );
+          process.exit(1);
         }
 
         console.log(
