@@ -15,6 +15,7 @@ import fs from "node:fs";
 import { glob } from "glob";
 import crypto from "node:crypto";
 import path from "node:path";
+import * as cheerio from "cheerio";
 
 const DIST_DIR = path.resolve(
   process.argv[2] || process.env.DIST_DIR || "dist",
@@ -42,52 +43,34 @@ async function moveInlineStyles() {
       continue;
     }
     // deepcode ignore PT: file is validated by isPathSafe()
-    let content = fs.readFileSync(file, "utf-8");
+    const content = fs.readFileSync(file, "utf-8");
+    const $ = cheerio.load(content);
     let modified = false;
 
     const styleToClassMap = new Map();
 
-    // Regex to capture elements with 'style' attribute
-    const TAG_REGEX = /(<[\w-]+)([^>]*)\s+style=(["'])(.*?)\3([^>]*)(>)/gi; // NOSONAR javascript:S5852
+    $("[style]").each((_, el) => {
+      const $el = $(el);
+      const styleContent = $el.attr("style");
 
-    content = content.replaceAll(
-      TAG_REGEX,
-      (_match, tagStart, preAttrs, _quote, styleContent, postAttrs, tagEnd) => {
-        preAttrs = preAttrs || "";
-        postAttrs = postAttrs || "";
+      if (!styleContent) return;
 
-        // Generate short deterministic class name from style content
-        if (!styleToClassMap.has(styleContent)) {
-          const hash = crypto
-            .createHash("shake256", { outputLength: 4 })
-            .update(styleContent)
-            .digest("hex");
-          styleToClassMap.set(styleContent, `sh-${hash}`);
-        }
-        const newClassName = styleToClassMap.get(styleContent);
+      // Generate short deterministic class name from style content
+      if (!styleToClassMap.has(styleContent)) {
+        const hash = crypto
+          .createHash("shake256", { outputLength: 4 })
+          .update(styleContent)
+          .digest("hex");
+        styleToClassMap.set(styleContent, `sh-${hash}`);
+      }
+      const newClassName = styleToClassMap.get(styleContent);
 
-        modified = true;
-        totalReplacements++;
+      $el.removeAttr("style");
+      $el.addClass(newClassName);
 
-        const classAttrRegex = /class=(["'])(.*?)\1/;
-        const injectClass = (attrs) => {
-          return attrs.replace(classAttrRegex, (m, q, c) => {
-            if (c.split(/\s+/).includes(newClassName)) return m;
-            return `class=${q}${c} ${newClassName}${q}`;
-          });
-        };
-
-        if (classAttrRegex.test(preAttrs)) {
-          preAttrs = injectClass(preAttrs);
-          return `${tagStart}${preAttrs}${postAttrs}${tagEnd}`;
-        } else if (classAttrRegex.test(postAttrs)) {
-          postAttrs = injectClass(postAttrs);
-          return `${tagStart}${preAttrs}${postAttrs}${tagEnd}`;
-        } else {
-          return `${tagStart}${preAttrs} class="${newClassName}"${postAttrs}${tagEnd}`;
-        }
-      },
-    );
+      modified = true;
+      totalReplacements++;
+    });
 
     if (modified) {
       let cssRules = "";
@@ -97,14 +80,9 @@ async function moveInlineStyles() {
 
       // Add Nginx nonce placeholder for CSP compatibility
       const styleBlock = `<style nonce="NGINX_CSP_NONCE">${cssRules}</style>`;
+      $("head").append(styleBlock);
 
-      if (content.includes("</head>")) {
-        content = content.replace("</head>", `${styleBlock}</head>`);
-      } else {
-        content += styleBlock;
-      }
-
-      fs.writeFileSync(file, content, "utf-8");
+      fs.writeFileSync(file, $.html(), "utf-8");
       totalFilesModified++;
     }
   }
