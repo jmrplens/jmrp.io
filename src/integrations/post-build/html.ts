@@ -103,7 +103,7 @@ export async function processHtmlFiles(distDir: string, cspData: CspData) {
 
         $el.attr(attrName, `/${ASSETS_DIR}/${filename}`);
         isModified = true;
-      } catch (_e) {
+      } catch {
         /* ignore */
       }
     });
@@ -211,7 +211,7 @@ export async function processHtmlFiles(distDir: string, cspData: CspData) {
         try {
           const fullUrl = src.startsWith("//") ? `https:${src}` : src;
           cspData.imageDomains.add(new URL(fullUrl).hostname);
-        } catch (_e) {
+        } catch {
           /* ignore */
         }
       }

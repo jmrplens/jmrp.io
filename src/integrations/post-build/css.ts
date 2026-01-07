@@ -87,7 +87,7 @@ export async function extractCssDataUris(distDir: string) {
           const newUrl = `/${ASSETS_DIR}/${filename}`;
           const q = quote || '"';
           return `url(${q}${newUrl}${q})`;
-        } catch (_e) {
+        } catch {
           return fullMatch;
         }
       },
