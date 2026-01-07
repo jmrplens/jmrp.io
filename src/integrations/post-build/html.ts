@@ -112,7 +112,7 @@ export async function processHtmlFiles(distDir: string, cspData: CspData) {
     const processSri = (
       $el: cheerio.Cheerio<Element>,
       attr: string,
-      type: "script" | "link",
+      type: "script" | "link" | "img",
     ) => {
       const url = $el.attr(attr);
       if (!url) return;
@@ -138,10 +138,11 @@ export async function processHtmlFiles(distDir: string, cspData: CspData) {
       $el.attr("integrity", hash);
       if (!$el.attr("crossorigin")) $el.attr("crossorigin", "anonymous");
 
-      if (!$el.attr("nonce")) {
-        if (type === "script" || rel === "stylesheet" || as === "style") {
-          $el.attr("nonce", "NGINX_CSP_NONCE");
-        }
+      if (
+        !$el.attr("nonce") &&
+        (type === "script" || rel === "stylesheet" || as === "style")
+      ) {
+        $el.attr("nonce", "NGINX_CSP_NONCE");
       }
 
       isModified = true;
@@ -152,6 +153,13 @@ export async function processHtmlFiles(distDir: string, cspData: CspData) {
     $(
       'link[rel="stylesheet"], link[rel="preload"], link[rel="modulepreload"]',
     ).each((_, el) => processSri($(el), "href", "link"));
+    $("img[src], source[src], source[srcset]").each((_, el) => {
+      const $el = $(el);
+      const tagName = el.tagName;
+      const attr =
+        tagName === "source" && $el.attr("srcset") ? "srcset" : "src";
+      processSri($el, attr, "img");
+    });
 
     // Astro Islands modulepreload injection
     const moduleUrls = new Set<string>();

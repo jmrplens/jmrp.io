@@ -15,12 +15,14 @@ export async function extractCssDataUris(distDir: string) {
   if (!fs.existsSync(targetDir)) fs.mkdirSync(targetDir, { recursive: true });
 
   const cssFiles = await glob("**/*.css", { cwd: distDir, absolute: true });
+  const htmlFiles = await glob("**/*.html", { cwd: distDir, absolute: true });
+  const allFiles = [...cssFiles, ...htmlFiles];
   const DATA_URI_REGEX =
     /url\(\s*(['"]?)data:([^;,]+)(;base64)?\s*,\s*([\s\S]*?)\1\s*\)/gi;
 
   let extracted = 0;
 
-  for (const file of cssFiles) {
+  for (const file of allFiles) {
     const content = fs.readFileSync(file, "utf-8");
     const newContent = content.replaceAll(
       DATA_URI_REGEX,
