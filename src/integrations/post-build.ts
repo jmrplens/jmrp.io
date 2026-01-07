@@ -130,7 +130,7 @@ async function extractCssDataUris(distDir: string) {
   const htmlFiles = await glob("**/*.html", { cwd: distDir, absolute: true });
   const allFiles = [...cssFiles, ...htmlFiles];
   const DATA_URI_REGEX =
-    /url\(\s*(['"]?)data:([^;,]+)(;base64)?\s*,\s*([^)]*)\1\s*\)/gi;
+    /url\(\s*(['"]?)data:([^;,]+)(;base64)?\s*,\s*([\s\S]*?)\1\s*\)/gi;
 
   let extracted = 0;
 
@@ -165,31 +165,36 @@ async function extractCssDataUris(distDir: string) {
 
           if (!fs.existsSync(filePath)) {
             if (ext === "svg") {
-              try {
-                const optimized = optimize(buffer.toString("utf-8"), {
-                  multipass: true,
-                  plugins: [
-                    {
-                      name: "preset-default",
-                      params: {
-                        overrides: {
-                          cleanupNumericValues: false,
-                          removeViewBox: false,
-                        },
+              const svgString = buffer.toString("utf-8");
+              const optimized = optimize(svgString, {
+                multipass: true,
+                plugins: [
+                  {
+                    name: "preset-default",
+                    params: {
+                      overrides: {
+                        cleanupNumericValues: false,
+                        removeViewBox: false,
                       },
                     },
-                    "sortAttrs",
-                    {
-                      name: "addAttributesToSVGElement",
-                      params: {
-                        attributes: [{ xmlns: "http://www.w3.org/2000/svg" }],
-                      },
+                  },
+                  "sortAttrs",
+                  {
+                    name: "addAttributesToSVGElement",
+                    params: {
+                      attributes: [{ xmlns: "http://www.w3.org/2000/svg" }],
                     },
-                  ],
-                });
-                fs.writeFileSync(filePath, optimized.data);
-              } catch {
+                  },
+                ],
+              });
+
+              if ("error" in optimized) {
+                console.warn(
+                  `  ⚠ SVGO optimization failed for ${filename}: ${String(optimized.error)}`,
+                );
                 fs.writeFileSync(filePath, buffer);
+              } else {
+                fs.writeFileSync(filePath, optimized.data);
               }
             } else {
               fs.writeFileSync(filePath, buffer);
@@ -238,7 +243,7 @@ async function extractHtmlImgDataUris(distDir: string) {
       const $el = $(el as Element);
       // Access tagName safely
       const element = el as Element;
-      const tagName = element.tagName.toLowerCase();
+      const tagName = element.tagName;
       const attrName = tagName === "source" ? "srcset" : "src";
       const srcContent = $el.attr(attrName);
 
@@ -390,7 +395,11 @@ async function generateSriHashes(distDir: string) {
     });
 
     for (const url of moduleUrls) {
-      if ($(`link[rel="modulepreload"][href="${url}"]`).length === 0) {
+      if (
+        $('link[rel="modulepreload"]').filter(
+          (_, el) => $(el).attr("href") === url,
+        ).length === 0
+      ) {
         const filePath = resolveFile(url, path.dirname(file));
         if (filePath) {
           const hash = getHash(filePath);
@@ -468,9 +477,11 @@ async function generateCspHashes(distDir: string) {
       const src = $el.attr("src");
       if (src && !src.startsWith("http") && !src.startsWith("//")) {
         const cleanUrl = src.split("?")[0].split("#")[0];
-        const filePath = cleanUrl.startsWith("/")
-          ? path.join(distDir, cleanUrl)
-          : path.resolve(path.dirname(file), cleanUrl);
+        const filePath = path.normalize(
+          cleanUrl.startsWith("/")
+            ? path.join(distDir, cleanUrl)
+            : path.resolve(path.dirname(file), cleanUrl),
+        );
 
         if (fs.existsSync(filePath)) {
           // Optimization: Avoid double hashing if processed in JS loop or elsewhere
@@ -547,8 +558,10 @@ async function generateCspHashes(distDir: string) {
   const cspHeader = [
     "default-src 'none'",
     `script-src 'self' 'nonce-$cspNonce' ${scriptChunks.usage}`,
-    `style-src 'self' 'unsafe-hashes' 'nonce-$cspNonce' ${styleChunks.usage}`,
-    `img-src 'self' ${imgSrc} https://*.jmrp.io`,
+    `style-src 'self' 'nonce-$cspNonce' ${styleChunks.usage}`,
+    imgSrc
+      ? `img-src 'self' ${imgSrc} https://*.jmrp.io`
+      : "img-src 'self' https://*.jmrp.io",
     "font-src 'self'",
     "connect-src 'self' https://api.github.com https://cloudflareinsights.com",
     "media-src 'self'",
@@ -560,7 +573,9 @@ async function generateCspHashes(distDir: string) {
     "frame-ancestors 'none'",
     "upgrade-insecure-requests",
     "report-uri /csp-report",
-  ].join("; ");
+  ]
+    .map((s) => s.trim())
+    .join("; ");
 
   const permissionsPolicy = [
     "accelerometer=()",
@@ -582,11 +597,12 @@ async function generateCspHashes(distDir: string) {
     "xr-spatial-tracking=()",
   ].join(", ");
 
-  const content = `# Security Headers Configuration Generated by Astro Post-Build Integration
-${scriptChunks.vars}
-${styleChunks.vars}
+  const headerVars = [scriptChunks.vars, styleChunks.vars]
+    .filter((v) => v && v.trim() !== "")
+    .join("\n");
 
-add_header Content-Security-Policy "${cspHeader}" always;
+  const content = `# Security Headers Configuration Generated by Astro Post-Build Integration
+${headerVars ? `${headerVars}\n\n` : ""}add_header Content-Security-Policy "${cspHeader}" always;
 add_header Permissions-Policy "${permissionsPolicy}" always;
 `;
 
@@ -627,7 +643,14 @@ export default function postBuildIntegration(): AstroIntegration {
               `[\x1b[31mPostBuild\x1b[0m] Error in step "${step.name}":`,
               e,
             );
-            process.exit(1);
+            if (e instanceof Error) {
+              e.message = `PostBuild step "${step.name}" failed: ${e.message}`;
+              throw e;
+            } else {
+              throw new Error(
+                `PostBuild step "${step.name}" failed: ${String(e)}`,
+              );
+            }
           }
         }
 
