@@ -14,6 +14,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
+import https from "node:https";
 
 const USERNAME = "jmrplens";
 const OUTPUT_DIR = "src/assets";
@@ -32,15 +33,7 @@ const fallbackPath = path.join(OUTPUT_DIR, "mehome.jpg");
 
 try {
   // 1. Get Profile Data to find Avatar URL
-  const profile = await fetch(API_URL, {
-    headers: { "User-Agent": "Node.js/Build-Script" },
-  }).then((res) => {
-    if (!res.ok) {
-      throw new Error(`API Request failed with status code ${res.status}`);
-    }
-    return res.json();
-  });
-
+  const profile = await fetchJson(API_URL);
   if (!profile.avatar_url) {
     throw new Error("No avatar_url found in profile response.");
   }
@@ -48,16 +41,7 @@ try {
   console.log(`Found avatar URL: ${profile.avatar_url}`);
 
   // 2. Download Image
-  const imageRes = await fetch(profile.avatar_url, {
-    headers: { "User-Agent": "Node.js/Build-Script" },
-  });
-
-  if (!imageRes.ok) {
-    throw new Error(`Image Request failed with status code ${imageRes.status}`);
-  }
-
-  const buffer = Buffer.from(await imageRes.arrayBuffer());
-  fs.writeFileSync(outputPath, buffer);
+  await downloadFile(profile.avatar_url, outputPath);
 
   console.log(`Avatar saved to ${outputPath}`);
 } catch (error) {
@@ -77,4 +61,73 @@ try {
     );
     process.exit(1);
   }
+}
+
+/**
+ * Fetch JSON from URL
+ */
+function fetchJson(url) {
+  return new Promise((resolve, reject) => {
+    const options = {
+      headers: {
+        "User-Agent": "Node.js/Build-Script",
+      },
+    };
+
+    https
+      .get(url, options, (res) => {
+        if (res.statusCode !== 200) {
+          reject(
+            new Error(`API Request failed with status code ${res.statusCode}`),
+          );
+          return;
+        }
+
+        let data = "";
+        res.on("data", (chunk) => (data += chunk));
+        res.on("end", () => {
+          try {
+            resolve(JSON.parse(data));
+          } catch (e) {
+            reject(e);
+          }
+        });
+      })
+      .on("error", reject);
+  });
+}
+
+/**
+ * Download file from URL to local path
+ */
+function downloadFile(url, dest) {
+  return new Promise((resolve, reject) => {
+    const file = fs.createWriteStream(dest);
+    const options = {
+      headers: {
+        "User-Agent": "Node.js/Build-Script",
+      },
+    };
+
+    https
+      .get(url, options, (res) => {
+        if (res.statusCode !== 200) {
+          reject(
+            new Error(
+              `Image Request failed with status code ${res.statusCode}`,
+            ),
+          );
+          return;
+        }
+        res.pipe(file);
+        file.on("finish", () => {
+          file.close();
+          resolve();
+        });
+      })
+      .on("error", (err) => {
+        fs.unlink(dest, () => {}); // Delete failed file
+        reject(err);
+      });
+  });
 }
