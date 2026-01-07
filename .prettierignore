@@ -4,6 +4,7 @@ package.json
 pnpm-lock.yaml
 docs
 src/content/posts
+GEMINI.md
 
 # Dependencies
 node_modules
