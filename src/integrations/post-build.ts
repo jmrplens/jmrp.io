@@ -79,12 +79,10 @@ async function moveInlineStyles(distDir: string) {
     });
 
     if (modified) {
-      let cssRules = "";
-      for (const [styleDef, className] of styleToClassMap.entries()) {
-        cssRules += `.${className}{${styleDef}}`;
-      }
-      $("head").append(`<style nonce="NGINX_CSP_NONCE">${cssRules}</style>`);
-      fs.writeFileSync(file, $.html(), "utf-8");
+      // Fix Cheerio boolean attribute serialization
+      let output = $.html();
+      output = output.replace(/ inert=""/g, " inert");
+      fs.writeFileSync(file, output, "utf-8");
       count++;
     }
   }
@@ -265,7 +263,9 @@ async function extractHtmlImgDataUris(distDir: string) {
     });
 
     if (modified) {
-      fs.writeFileSync(file, $.html(), "utf-8");
+      let output = $.html();
+      output = output.replace(/ inert=""/g, " inert");
+      fs.writeFileSync(file, output, "utf-8");
     }
   }
   console.log(`  ✓ Extracted ${extracted} assets.`);
@@ -404,6 +404,7 @@ async function generateSriHashes(distDir: string) {
     }
 
     if (modified) {
+      finalContent = finalContent.replace(/ inert=""/g, " inert");
       fs.writeFileSync(file, finalContent, "utf-8");
     }
   }
