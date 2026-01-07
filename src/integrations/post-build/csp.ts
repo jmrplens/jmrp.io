@@ -50,11 +50,17 @@ export async function finalizeCspConfig(distDir: string, cspData: CspData) {
     let current = "";
 
     for (const h of list) {
-      if (current.length + h.length + 1 > NGINX_VARIABLE_SIZE_LIMIT) {
+      const separator = current ? " " : "";
+      const candidate = current + separator + h;
+      if (
+        Buffer.byteLength(candidate, "utf8") > NGINX_VARIABLE_SIZE_LIMIT &&
+        current
+      ) {
         chunks.push(current);
-        current = "";
+        current = h;
+      } else {
+        current = candidate;
       }
-      current += (current ? " " : "") + h;
     }
     if (current) chunks.push(current);
 

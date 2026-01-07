@@ -22,9 +22,6 @@ interface SiteData {
  * - Enclosures and Media RSS (thumbnails/hero images).
  * - Proper escaping and "Continue Reading" links for better reader compatibility.
  * - Automatic filtering of draft posts in production.
- *
- * @param {APIContext} context - Astro API context.
- * @returns {Response} The generated RSS feed as an XML response.
  */
 export async function GET(context: APIContext) {
   const posts = await getCollection("posts");

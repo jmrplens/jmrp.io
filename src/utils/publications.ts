@@ -118,9 +118,6 @@ export async function getPublications(): Promise<PublicationGroup[]> {
 
     /**
      * Enriches an array of authors with profile URLs from the co-authors map.
-     *
-     * @param {Array<{ family: string; given?: string; url?: string }>} authors - The raw authors array.
-     * @returns {Array<{ family: string; given?: string; url?: string }>} The enriched authors array.
      */
     const processAuthors = (
       authors: { family: string; given?: string; url?: string }[] | undefined,
@@ -146,9 +143,6 @@ export async function getPublications(): Promise<PublicationGroup[]> {
 
     /**
      * Extracts the raw BibTeX entry string for a specific publication ID.
-     *
-     * @param {string} id - The publication ID.
-     * @returns {string} The raw BibTeX entry.
      */
     const extractRawBibtex = (id: string) => {
       const entryRegex = new RegExp(

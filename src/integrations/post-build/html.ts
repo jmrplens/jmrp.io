@@ -21,8 +21,13 @@ import { ASSETS_DIR, STYLE_CLASS_HASH_LENGTH } from "./constants.js";
  *
  * @param {string} distDir - The absolute path to the production build output.
  * @param {CspData} cspData - Shared object to store collected CSP hashes and domains.
+ * @param {boolean} enableCsp - Whether to enable CSP-specific features (nonces, hashes, style conversion).
  */
-export async function processHtmlFiles(distDir: string, cspData: CspData) {
+export async function processHtmlFiles(
+  distDir: string,
+  cspData: CspData,
+  enableCsp: boolean,
+) {
   console.log("[PostBuild] Processing HTML files (consolidated pass)...");
   const htmlFiles = await glob("**/*.html", { cwd: distDir, absolute: true });
   const hashCache = new Map<string, string>();
@@ -51,6 +56,7 @@ export async function processHtmlFiles(distDir: string, cspData: CspData) {
     let isModified = false;
 
     // 1. moveInlineStyles logic (converts style="..." to classes)
+    // Always enabled to ensure HTML validity (no-inline-style rule)
     const styleToClassMap = new Map<string, string>();
     $("[style]").each((_, el) => {
       const $el = $(el);
@@ -75,8 +81,10 @@ export async function processHtmlFiles(distDir: string, cspData: CspData) {
         cssRules += `.${className}{${styleDef}}`;
       }
       // Add a marker to identify generated styles and avoid re-noncing them
+      // We only add the nonce if CSP is enabled
+      const styleNonce = enableCsp ? ' nonce="NGINX_CSP_NONCE"' : "";
       $("head").append(
-        `<style nonce="NGINX_CSP_NONCE" data-generated-style="true">${cssRules}</style>`,
+        `<style${styleNonce} data-generated-style="true">${cssRules}</style>`,
       );
       isModified = true;
     }
@@ -124,6 +132,7 @@ export async function processHtmlFiles(distDir: string, cspData: CspData) {
 
       // Add Nonce to scripts and styles
       if (
+        enableCsp &&
         !$el.attr("nonce") &&
         (type === "script" || rel === "stylesheet" || as === "style")
       ) {
@@ -140,39 +149,50 @@ export async function processHtmlFiles(distDir: string, cspData: CspData) {
     // 4. Collect hashes for ALL inline content AND add nonces
     $("style:not([data-generated-style])").each((_, el) => {
       const $el = $(el);
-      const styleHtml = $el.html() || "";
-      const h = crypto.createHash("sha512").update(styleHtml).digest("base64");
-      cspData.styleHashes.add(`'sha512-${h}'`);
+      if (enableCsp) {
+        const styleHtml = $el.html() || "";
+        const h = crypto
+          .createHash("sha512")
+          .update(styleHtml)
+          .digest("base64");
+        cspData.styleHashes.add(`'sha512-${h}'`);
 
-      if (!$el.attr("nonce")) {
-        $el.attr("nonce", "NGINX_CSP_NONCE");
-        isModified = true;
+        if (!$el.attr("nonce")) {
+          $el.attr("nonce", "NGINX_CSP_NONCE");
+          isModified = true;
+        }
       }
     });
 
     $("script:not([src])").each((_, el) => {
       const $el = $(el);
-      const scriptHtml = $el.html() || "";
-      const h = crypto.createHash("sha512").update(scriptHtml).digest("base64");
-      cspData.scriptHashes.add(`'sha512-${h}'`);
+      if (enableCsp) {
+        const scriptHtml = $el.html() || "";
+        const h = crypto
+          .createHash("sha512")
+          .update(scriptHtml)
+          .digest("base64");
+        cspData.scriptHashes.add(`'sha512-${h}'`);
 
-      if (!$el.attr("nonce")) {
-        $el.attr("nonce", "NGINX_CSP_NONCE");
-        isModified = true;
+        if (!$el.attr("nonce")) {
+          $el.attr("nonce", "NGINX_CSP_NONCE");
+          isModified = true;
+        }
       }
     });
 
     // 5. Collect image domains for CSP
-    const DOMAIN_REGEX =
-      /(?:https?:)?\/\/([a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9](?:\.[a-zA-Z]{2,})+)/;
-    $("img[src]").each((_, el) => {
-      const src = $(el).attr("src");
-      if (src) {
-        if (src.startsWith("http") || src.startsWith("//")) {
+    if (enableCsp) {
+      $("img[src]").each((_, el) => {
+        const src = $(el).attr("src");
+        if (src && (src.startsWith("http") || src.startsWith("//"))) {
           try {
-            const match = src.match(DOMAIN_REGEX);
-            if (match && match[1]) {
-              cspData.imageDomains.add(match[1]);
+            // Use the URL constructor to safely parse the image URL and extract the hostname.
+            const url = src.startsWith("//")
+              ? new URL(`https:${src}`)
+              : new URL(src);
+            if (url.hostname) {
+              cspData.imageDomains.add(url.hostname);
             }
           } catch (err) {
             const errorMessage =
@@ -182,8 +202,8 @@ export async function processHtmlFiles(distDir: string, cspData: CspData) {
             );
           }
         }
-      }
-    });
+      });
+    }
 
     // 6. Manual Beacon Replace (Cloudflare)
     let finalHtml = $.html();

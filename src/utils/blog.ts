@@ -2,9 +2,6 @@ import type { CollectionEntry } from "astro:content";
 
 /**
  * Processes a collection of blog posts to extract all unique tags and their occurrence counts.
- *
- * @param {CollectionEntry<"posts">[]} posts - Array of blog post entries.
- * @returns {Array<{ tag: string; count: number }>} Sorted array of objects containing the tag name and its frequency, from most to least frequent.
  */
 export function getUniqueTags(posts: CollectionEntry<"posts">[]) {
   const tags = posts

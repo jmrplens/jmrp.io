@@ -48,58 +48,89 @@ export default function postBuildIntegration(): AstroIntegration {
         try {
           setupSitemap(distDir);
           await extractCssDataUris(distDir);
-          await processHtmlFiles(distDir, cspData);
-          await finalizeCspConfig(distDir, cspData);
 
-          // Auto-deploy security headers to system Nginx if on the server
-          const systemNginxPath = "/etc/nginx/snippets/security_headers.conf";
-          const generatedPath = path.join(distDir, "security_headers.conf");
+          const systemNginxPath =
+            process.env.POSTBUILD_NGINX_SNIPPETS_PATH || "";
+          const enableCsp = !!systemNginxPath;
 
-          if (fs.existsSync(systemNginxPath) && fs.existsSync(generatedPath)) {
-            // Safety: We will validate the configuration after deployment and revert if it fails.
-            console.log(`[PostBuild] Validating Nginx configuration...`);
-            try {
-              // We can't easily test a snippet alone with nginx -t without a full config context,
-              // so we perform an atomic-like swap and revert if the global validation fails.
-              const originalContent = fs.readFileSync(systemNginxPath);
-              fs.copyFileSync(generatedPath, systemNginxPath);
+          if (!enableCsp) {
+            console.log(
+              "[PostBuild] Skipping CSP generation and Nginx deployment (POSTBUILD_NGINX_SNIPPETS_PATH is empty).",
+            );
+          }
 
+          await processHtmlFiles(distDir, cspData, enableCsp);
+
+          if (enableCsp) {
+            await finalizeCspConfig(distDir, cspData);
+
+            // Auto-deploy security headers to system Nginx if on the server
+            const generatedPath = path.join(distDir, "security_headers.conf");
+
+            if (
+              fs.existsSync(systemNginxPath) &&
+              fs.existsSync(generatedPath)
+            ) {
+              // Safety: We will validate the configuration after deployment and revert if it fails.
+              console.log(`[PostBuild] Validating Nginx configuration...`);
               try {
-                execSync("nginx -t", { stdio: "pipe" });
-                execSync("nginx -s reload", { stdio: "inherit" });
-                console.log("  ✓ Nginx configuration reloaded successfully.");
-              } catch (validationError) {
-                console.error(
-                  "  ⚠ Nginx validation/reload failed! Reverting changes.",
-                  validationError,
-                );
+                // We can't easily test a snippet alone with nginx -t without a full config context,
+                // so we perform an atomic-like swap and revert if the global validation fails.
+                const originalContent = fs.readFileSync(systemNginxPath);
+                fs.copyFileSync(generatedPath, systemNginxPath);
+
                 try {
-                  fs.writeFileSync(systemNginxPath, originalContent);
-                  console.log(
-                    "  ✓ Successfully reverted to the previous Nginx configuration.",
-                  );
-                  // Final validation to ensure system is left in a stable state
                   execSync("nginx -t", { stdio: "pipe" });
-                } catch (revertError) {
-                  const revertErrorMessage =
-                    revertError instanceof Error
-                      ? revertError.message
-                      : String(revertError);
+                  execSync("nginx -s reload", { stdio: "inherit" });
+                  console.log("  ✓ Nginx configuration reloaded successfully.");
+                } catch (validationError) {
                   console.error(
-                    "  CRITICAL: Failed to revert Nginx configuration. Manual intervention required.",
-                    revertErrorMessage,
+                    "  ⚠ Nginx validation/reload failed! Reverting changes.",
                   );
-                  process.exit(1);
+                  if (
+                    validationError instanceof Error &&
+                    "stderr" in validationError
+                  ) {
+                    console.error(
+                      `Nginx stderr: ${String(validationError.stderr)}`,
+                    );
+                  }
+                  if (
+                    validationError instanceof Error &&
+                    "stdout" in validationError
+                  ) {
+                    console.error(
+                      `Nginx stdout: ${String(validationError.stdout)}`,
+                    );
+                  }
+                  try {
+                    fs.writeFileSync(systemNginxPath, originalContent);
+                    console.log(
+                      "  ✓ Successfully reverted to the previous Nginx configuration.",
+                    );
+                    // Final validation to ensure system is left in a stable state
+                    execSync("nginx -t", { stdio: "pipe" });
+                  } catch (revertError) {
+                    const revertErrorMessage =
+                      revertError instanceof Error
+                        ? revertError.message
+                        : String(revertError);
+                    console.error(
+                      "  CRITICAL: Failed to revert Nginx configuration. Manual intervention required.",
+                      revertErrorMessage,
+                    );
+                    process.exit(1);
+                  }
                 }
+              } catch (error) {
+                const errorMessage =
+                  error instanceof Error ? error.message : String(error);
+                console.error(
+                  "  ⚠ Deployment failed. Check Nginx permissions or syntax.",
+                  errorMessage,
+                );
+                process.exit(1);
               }
-            } catch (error) {
-              const errorMessage =
-                error instanceof Error ? error.message : String(error);
-              console.error(
-                "  ⚠ Deployment failed. Check Nginx permissions or syntax.",
-                errorMessage,
-              );
-              process.exit(1);
             }
           }
         } catch (e) {

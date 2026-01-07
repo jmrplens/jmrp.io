@@ -35,8 +35,6 @@ const GITHUB_TOKEN: string | undefined = import.meta.env.GITHUB_TOKEN as
 /**
  * Fetches the public GitHub profile data for the configured user.
  * Implements a fallback to local data if the API is unreachable or rate-limited.
- *
- * @returns {Promise<GitHubProfile>} The fetched profile data or fallback object.
  */
 export async function fetchGitHubProfile(): Promise<GitHubProfile> {
   const headers: HeadersInit = {};
@@ -72,9 +70,6 @@ export async function fetchGitHubProfile(): Promise<GitHubProfile> {
 
 /**
  * Fetches the top repositories for the configured user, sorted by last update.
- *
- * @param {number} [limit=12] - Maximum number of repositories to return.
- * @returns {Promise<GitHubRepo[]>} Array of repository data objects.
  */
 export async function fetchTopRepositories(limit = 12): Promise<GitHubRepo[]> {
   const headers: HeadersInit = {};
