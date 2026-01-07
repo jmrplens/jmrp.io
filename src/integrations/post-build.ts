@@ -19,6 +19,7 @@ import path from "node:path";
 import crypto from "node:crypto";
 import { glob } from "glob";
 import * as cheerio from "cheerio";
+import type { Element } from "domhandler";
 import { optimize } from "svgo";
 import { fileURLToPath } from "node:url";
 
@@ -233,56 +234,54 @@ async function extractHtmlImgDataUris(distDir: string) {
     const $ = cheerio.load(content);
     let modified = false;
 
-    $('img[src^="data:"], source[srcset^="data:"]').each(
-      (_, el: cheerio.Element) => {
-        const $el = $(el);
-        // Cast to access tagName safely
-        const element = el as unknown as { tagName: string };
-        const tagName = element.tagName.toLowerCase();
-        const attrName = tagName === "source" ? "srcset" : "src";
-        const srcContent = $el.attr(attrName);
+    $('img[src^="data:"], source[srcset^="data:"]').each((_, el: unknown) => {
+      const $el = $(el as Element);
+      // Access tagName safely
+      const element = el as Element;
+      const tagName = element.tagName.toLowerCase();
+      const attrName = tagName === "source" ? "srcset" : "src";
+      const srcContent = $el.attr(attrName);
 
-        if (!srcContent || !srcContent.trim().startsWith("data:")) return;
+      if (!srcContent || !srcContent.trim().startsWith("data:")) return;
 
-        try {
-          const commaIndex = srcContent.indexOf(",");
-          if (commaIndex === -1) return;
+      try {
+        const commaIndex = srcContent.indexOf(",");
+        if (commaIndex === -1) return;
 
-          const metadata = srcContent.substring(5, commaIndex);
-          const rawData = srcContent.substring(commaIndex + 1);
-          const isBase64 = metadata.endsWith(";base64");
-          const mimeType = isBase64 ? metadata.slice(0, -7) : metadata;
+        const metadata = srcContent.substring(5, commaIndex);
+        const rawData = srcContent.substring(commaIndex + 1);
+        const isBase64 = metadata.endsWith(";base64");
+        const mimeType = isBase64 ? metadata.slice(0, -7) : metadata;
 
-          const buffer = isBase64
-            ? Buffer.from(rawData, "base64")
-            : Buffer.from(decodeURIComponent(rawData.trim()));
+        const buffer = isBase64
+          ? Buffer.from(rawData, "base64")
+          : Buffer.from(decodeURIComponent(rawData.trim()));
 
-          const ext = getExtensionFromMime(mimeType);
+        const ext = getExtensionFromMime(mimeType);
 
-          const hash = crypto
-            .createHash("sha256")
-            .update(buffer)
-            .digest("hex")
-            .substring(0, 16);
-          const filename = `${hash}.${ext}`;
-          const filePath = path.join(targetDir, filename);
+        const hash = crypto
+          .createHash("sha256")
+          .update(buffer)
+          .digest("hex")
+          .substring(0, 16);
+        const filename = `${hash}.${ext}`;
+        const filePath = path.join(targetDir, filename);
 
-          if (!fs.existsSync(filePath)) {
-            fs.writeFileSync(filePath, buffer);
-            extracted++;
-          }
-
-          const newUrl = `/${assetsDir}/${filename}`;
-          $el.attr(attrName, newUrl);
-          modified = true;
-        } catch (e: unknown) {
-          const message = e instanceof Error ? e.message : String(e);
-          console.warn(
-            `  ⚠ Failed to process HTML Data URI in ${path.basename(file)}: ${message}`,
-          );
+        if (!fs.existsSync(filePath)) {
+          fs.writeFileSync(filePath, buffer);
+          extracted++;
         }
-      },
-    );
+
+        const newUrl = `/${assetsDir}/${filename}`;
+        $el.attr(attrName, newUrl);
+        modified = true;
+      } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : String(e);
+        console.warn(
+          `  ⚠ Failed to process HTML Data URI in ${path.basename(file)}: ${message}`,
+        );
+      }
+    });
 
     if (modified) {
       writeHtml(file, $.html());
@@ -333,7 +332,7 @@ async function generateSriHashes(distDir: string) {
 
     // Helper to process elements
     const processEl = (
-      $el: cheerio.Cheerio<cheerio.Element>,
+      $el: cheerio.Cheerio<Element>,
       attr: string,
       type: "script" | "link" | "img" | "media",
     ) => {
@@ -374,20 +373,16 @@ async function generateSriHashes(distDir: string) {
       updatedTags++;
     };
 
-    $("script[src]").each((_, el) =>
-      processEl($(el) as cheerio.Cheerio<cheerio.Element>, "src", "script"),
-    );
+    $("script[src]").each((_, el) => processEl($(el), "src", "script"));
     $(
       'link[rel="stylesheet"], link[rel="preload"], link[rel="modulepreload"]',
-    ).each((_, el) =>
-      processEl($(el) as cheerio.Cheerio<cheerio.Element>, "href", "link"),
-    );
+    ).each((_, el) => processEl($(el), "href", "link"));
     // Removed SRI for img/media as it's not widely supported/useful
 
     // Astro Islands
     const moduleUrls = new Set<string>();
     $("astro-island").each((_, el) => {
-      const $el = $(el) as cheerio.Cheerio<cheerio.Element>;
+      const $el = $(el);
       const comp = $el.attr("component-url");
       const rend = $el.attr("renderer-url");
       if (comp) moduleUrls.add(comp);
@@ -446,7 +441,7 @@ async function generateCspHashes(distDir: string) {
     const $ = cheerio.load(content);
 
     $("style").each((_, el) => {
-      const $el = $(el) as cheerio.Cheerio<cheerio.Element>;
+      const $el = $(el);
       if (!$el.attr("nonce")) {
         const h = crypto
           .createHash("sha512")
@@ -457,7 +452,7 @@ async function generateCspHashes(distDir: string) {
     });
 
     $("script:not([src])").each((_, el) => {
-      const $el = $(el) as cheerio.Cheerio<cheerio.Element>;
+      const $el = $(el);
       if (!$el.attr("nonce")) {
         const h = crypto
           .createHash("sha512")
@@ -469,7 +464,7 @@ async function generateCspHashes(distDir: string) {
 
     // External Scripts hashing
     $("script[src]").each((_, el) => {
-      const $el = $(el) as cheerio.Cheerio<cheerio.Element>;
+      const $el = $(el);
       const src = $el.attr("src");
       if (src && !src.startsWith("http") && !src.startsWith("//")) {
         const cleanUrl = src.split("?")[0].split("#")[0];
@@ -488,7 +483,7 @@ async function generateCspHashes(distDir: string) {
     });
 
     $("img[src^='http']").each((_, el) => {
-      const $el = $(el) as cheerio.Cheerio<cheerio.Element>;
+      const $el = $(el);
       const src = $el.attr("src");
       if (src) {
         try {
