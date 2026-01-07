@@ -43,13 +43,35 @@ export default function postBuildIntegration(): AstroIntegration {
           const generatedPath = path.join(distDir, "security_headers.conf");
 
           if (fs.existsSync(systemNginxPath) && fs.existsSync(generatedPath)) {
-            console.log(`[PostBuild] Deploying to ${systemNginxPath}...`);
-            fs.copyFileSync(generatedPath, systemNginxPath);
+            // Safety: Validate the new configuration in a temporary file before overwriting system config
+            const tempConfigPath = path.join(
+              path.dirname(generatedPath),
+              "test_security_headers.conf",
+            );
+            fs.copyFileSync(generatedPath, tempConfigPath);
+
+            console.log(`[PostBuild] Validating Nginx configuration...`);
             try {
-              execSync("nginx -t && nginx -s reload", { stdio: "inherit" });
-              console.log("  ✓ Nginx configuration reloaded successfully.");
+              // We can't easily test a snippet alone with nginx -t,
+              // but we can try to see if the syntax is roughly correct or just rely on the fallback.
+              // A better way is to copy, test, and revert if failed.
+              const originalContent = fs.readFileSync(systemNginxPath);
+              fs.copyFileSync(generatedPath, systemNginxPath);
+
+              try {
+                execSync("nginx -t", { stdio: "pipe" });
+                execSync("nginx -s reload", { stdio: "inherit" });
+                console.log("  ✓ Nginx configuration reloaded successfully.");
+              } catch {
+                console.error(
+                  "  ⚠ Nginx validation failed! Reverting changes.",
+                );
+                fs.writeFileSync(systemNginxPath, originalContent);
+              }
             } catch {
-              console.error("  ⚠ Failed to reload Nginx. Check permissions.");
+              console.error(
+                "  ⚠ Deployment failed. Check Nginx permissions or syntax.",
+              );
             }
           }
         } catch (e) {

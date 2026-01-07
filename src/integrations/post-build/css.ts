@@ -17,25 +17,37 @@ export async function extractCssDataUris(distDir: string) {
   const cssFiles = await glob("**/*.css", { cwd: distDir, absolute: true });
   const htmlFiles = await glob("**/*.html", { cwd: distDir, absolute: true });
   const allFiles = [...cssFiles, ...htmlFiles];
-  const DATA_URI_REGEX =
-    /url\(\s*(['"]?)data:([^;,]+)(;base64)?\s*,\s*([\s\S]*?)\1\s*\)/gi;
+
+  // Regex that correctly handles optional quotes and prevents over-capturing unquoted URIs
+  const DATA_URI_REGEX = /url\(\s*(?:(['"])(data:[^"']+)\1|([^'"\s)]+))\s*\)/gi;
 
   let extracted = 0;
 
   for (const file of allFiles) {
     const content = fs.readFileSync(file, "utf-8");
+
     const newContent = content.replaceAll(
       DATA_URI_REGEX,
       (
         fullMatch: string,
         quote: string,
-        mime: string,
-        encoding: string,
-        data: string,
+        quotedData: string,
+        unquotedData: string,
       ) => {
+        const rawDataUri = quotedData || unquotedData;
+        if (!rawDataUri || !rawDataUri.startsWith("data:")) return fullMatch;
+
         try {
+          const commaIndex = rawDataUri.indexOf(",");
+          if (commaIndex === -1) return fullMatch;
+
+          const metadata = rawDataUri.substring(5, commaIndex);
+          const data = rawDataUri.substring(commaIndex + 1);
+          const isBase64 = metadata.includes(";base64");
+          const mime = metadata.split(";")[0] || "application/octet-stream";
+
           let buffer: Buffer;
-          if (encoding === ";base64") {
+          if (isBase64) {
             buffer = Buffer.from(data, "base64");
           } else {
             buffer = Buffer.from(decodeURIComponent(data.trim()));
@@ -99,5 +111,5 @@ export async function extractCssDataUris(distDir: string) {
       fs.writeFileSync(file, newContent, "utf-8");
     }
   }
-  console.log(`  ✓ Extracted ${extracted} assets from CSS.`);
+  console.log(`  ✓ Extracted ${extracted} assets from CSS/HTML.`);
 }
