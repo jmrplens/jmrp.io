@@ -142,9 +142,6 @@ importers:
       axe-html-reporter:
         specifier: ^2.2.11
         version: 2.2.11(axe-core@4.11.0)
-      cheerio:
-        specifier: ^1.1.2
-        version: 1.1.2
       eslint:
         specifier: ^9.39.2
         version: 9.39.2

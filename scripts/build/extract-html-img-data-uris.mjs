@@ -14,11 +14,13 @@ import fs from "node:fs";
 import path from "node:path";
 import { glob } from "glob";
 import crypto from "node:crypto";
-import * as cheerio from "cheerio";
 
 const DIST_DIR = process.argv[2] || process.env.DIST_DIR || "dist";
 const ASSETS_DIR = "assets/extracted";
 const TARGET_DIR = path.join(DIST_DIR, ASSETS_DIR);
+
+const IMG_TAG_REGEX = /<img([^>]*)\bsrc=(["'])(.*?)\2([^>]*)>/gi; // NOSONAR javascript:S5852
+const SOURCE_TAG_REGEX = /<source([^>]*)\bsrcset=(["'])(.*?)\2([^>]*)>/gi; // NOSONAR javascript:S5852
 
 async function extractHtmlImgDataUris() {
   console.log("Starting HTML Image Data URI extraction...");
@@ -32,20 +34,14 @@ async function extractHtmlImgDataUris() {
 
   for (const file of htmlFiles) {
     let content = fs.readFileSync(file, "utf-8");
-    const $ = cheerio.load(content);
     let modified = false;
 
-    $('img[src^="data:"], source[srcset^="data:"]').each((_, el) => {
-      const $el = $(el);
-      const tagName = el.tagName.toLowerCase();
-      const attrName = tagName === "source" ? "srcset" : "src";
-      const srcContent = $el.attr(attrName);
-
-      if (!srcContent || !srcContent.trim().startsWith("data:")) return;
+    const replacer = (fullMatch, preAttrs, quote, srcContent, postAttrs) => {
+      if (!srcContent.trim().startsWith("data:")) return fullMatch;
 
       try {
         const commaIndex = srcContent.indexOf(",");
-        if (commaIndex === -1) return;
+        if (commaIndex === -1) return fullMatch;
 
         const metadata = srcContent.substring(5, commaIndex);
         const rawData = srcContent.substring(commaIndex + 1);
@@ -79,15 +75,25 @@ async function extractHtmlImgDataUris() {
         }
 
         const newUrl = `/${ASSETS_DIR}/${filename}`;
-        $el.attr(attrName, newUrl);
         modified = true;
+
+        let tagName = fullMatch.toLowerCase().startsWith("<source")
+          ? "source"
+          : "img";
+        let attrName = tagName === "source" ? "srcset" : "src";
+
+        return `<${tagName}${preAttrs} ${attrName}=${quote}${newUrl}${quote}${postAttrs}>`;
       } catch (err) {
         console.warn(`Failed to process Data URI in ${file}: ${err.message}`);
+        return fullMatch;
       }
-    });
+    };
+
+    content = content.replaceAll(IMG_TAG_REGEX, replacer);
+    content = content.replaceAll(SOURCE_TAG_REGEX, replacer);
 
     if (modified) {
-      fs.writeFileSync(file, $.html(), "utf-8");
+      fs.writeFileSync(file, content, "utf-8");
       console.log(`Updated ${file}`);
     }
   }
