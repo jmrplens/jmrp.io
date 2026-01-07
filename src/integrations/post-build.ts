@@ -12,6 +12,9 @@ import { extractCssDataUris } from "./post-build/css.js";
 import { processHtmlFiles } from "./post-build/html.js";
 import { finalizeCspConfig } from "./post-build/csp.js";
 import type { CspData } from "./post-build/types.js";
+import fs from "node:fs";
+import path from "node:path";
+import { execSync } from "node:child_process";
 
 export default function postBuildIntegration(): AstroIntegration {
   return {
@@ -34,6 +37,21 @@ export default function postBuildIntegration(): AstroIntegration {
           await extractCssDataUris(distDir);
           await processHtmlFiles(distDir, cspData);
           await finalizeCspConfig(distDir, cspData);
+
+          // Auto-deploy security headers to system Nginx if on the server
+          const systemNginxPath = "/etc/nginx/snippets/security_headers.conf";
+          const generatedPath = path.join(distDir, "security_headers.conf");
+
+          if (fs.existsSync(systemNginxPath) && fs.existsSync(generatedPath)) {
+            console.log(`[PostBuild] Deploying to ${systemNginxPath}...`);
+            fs.copyFileSync(generatedPath, systemNginxPath);
+            try {
+              execSync("nginx -t && nginx -s reload", { stdio: "inherit" });
+              console.log("  ✓ Nginx configuration reloaded successfully.");
+            } catch {
+              console.error("  ⚠ Failed to reload Nginx. Check permissions.");
+            }
+          }
         } catch (e) {
           console.error(`[\x1b[31mPostBuild\x1b[0m] Fatal error:`, e);
           throw e;
