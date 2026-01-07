@@ -442,7 +442,6 @@ async function generateCspHashes(distDir: string) {
   const styleHashes = new Set<string>();
   const scriptHashes = new Set<string>();
   const imageDomains = new Set<string>();
-  const processedScripts = new Set<string>();
 
   // Hash HTML content
   for (const file of files) {
@@ -471,28 +470,6 @@ async function generateCspHashes(distDir: string) {
       }
     });
 
-    // External Scripts hashing
-    $("script[src]").each((_, el) => {
-      const $el = $(el);
-      const src = $el.attr("src");
-      if (src && !src.startsWith("http") && !src.startsWith("//")) {
-        const cleanUrl = src.split("?")[0].split("#")[0];
-        const filePath = path.normalize(
-          cleanUrl.startsWith("/")
-            ? path.join(distDir, cleanUrl)
-            : path.resolve(path.dirname(file), cleanUrl),
-        );
-
-        if (fs.existsSync(filePath)) {
-          // Optimization: Avoid double hashing if processed in JS loop or elsewhere
-          processedScripts.add(filePath);
-          const c = fs.readFileSync(filePath);
-          const h = crypto.createHash("sha512").update(c).digest("base64");
-          scriptHashes.add(`'sha512-${h}'`);
-        }
-      }
-    });
-
     $("img[src^='http']").each((_, el) => {
       const $el = $(el);
       const src = $el.attr("src");
@@ -511,8 +488,6 @@ async function generateCspHashes(distDir: string) {
 
   // Hash standalone JS files
   for (const file of jsFiles) {
-    if (processedScripts.has(file)) continue;
-
     const c = fs.readFileSync(file);
     const h = crypto.createHash("sha512").update(c).digest("base64");
     scriptHashes.add(`'sha512-${h}'`);
