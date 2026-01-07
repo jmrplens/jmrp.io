@@ -27,7 +27,7 @@ export async function finalizeCspConfig(distDir: string, cspData: CspData) {
   ]);
   const allStyleHashes = cspData.styleHashes;
 
-  // Chunking Helper
+  // Chunking Helper for Nginx variables
   const chunkHashes = (
     hashes: Set<string>,
     prefix: string,
@@ -125,7 +125,7 @@ add_header X-XSS-Protection "1; mode=block" always;
 # Referrer Policy
 add_header Referrer-Policy "strict-origin-when-cross-origin" always;
 
-# Cross-Origin Policies
+# Cross-Origin Policies (COOP, COEP, CORP)
 add_header Cross-Origin-Embedder-Policy "require-corp" always;
 add_header Cross-Origin-Opener-Policy "same-origin" always;
 add_header Cross-Origin-Resource-Policy "same-origin" always;
