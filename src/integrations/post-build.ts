@@ -240,48 +240,49 @@ async function extractHtmlImgDataUris(distDir: string) {
         const element = el as unknown as { tagName: string };
         const tagName = element.tagName.toLowerCase();
         const attrName = tagName === "source" ? "srcset" : "src";
-      const srcContent = $el.attr(attrName);
+        const srcContent = $el.attr(attrName);
 
-      if (!srcContent || !srcContent.trim().startsWith("data:")) return;
+        if (!srcContent || !srcContent.trim().startsWith("data:")) return;
 
-      try {
-        const commaIndex = srcContent.indexOf(",");
-        if (commaIndex === -1) return;
+        try {
+          const commaIndex = srcContent.indexOf(",");
+          if (commaIndex === -1) return;
 
-        const metadata = srcContent.substring(5, commaIndex);
-        const rawData = srcContent.substring(commaIndex + 1);
-        const isBase64 = metadata.endsWith(";base64");
-        const mimeType = isBase64 ? metadata.slice(0, -7) : metadata;
+          const metadata = srcContent.substring(5, commaIndex);
+          const rawData = srcContent.substring(commaIndex + 1);
+          const isBase64 = metadata.endsWith(";base64");
+          const mimeType = isBase64 ? metadata.slice(0, -7) : metadata;
 
-        const buffer = isBase64
-          ? Buffer.from(rawData, "base64")
-          : Buffer.from(decodeURIComponent(rawData.trim()));
+          const buffer = isBase64
+            ? Buffer.from(rawData, "base64")
+            : Buffer.from(decodeURIComponent(rawData.trim()));
 
-        const ext = getExtensionFromMime(mimeType);
+          const ext = getExtensionFromMime(mimeType);
 
-        const hash = crypto
-          .createHash("sha256")
-          .update(buffer)
-          .digest("hex")
-          .substring(0, 16);
-        const filename = `${hash}.${ext}`;
-        const filePath = path.join(targetDir, filename);
+          const hash = crypto
+            .createHash("sha256")
+            .update(buffer)
+            .digest("hex")
+            .substring(0, 16);
+          const filename = `${hash}.${ext}`;
+          const filePath = path.join(targetDir, filename);
 
-        if (!fs.existsSync(filePath)) {
-          fs.writeFileSync(filePath, buffer);
-          extracted++;
+          if (!fs.existsSync(filePath)) {
+            fs.writeFileSync(filePath, buffer);
+            extracted++;
+          }
+
+          const newUrl = `/${assetsDir}/${filename}`;
+          $el.attr(attrName, newUrl);
+          modified = true;
+        } catch (e: unknown) {
+          const message = e instanceof Error ? e.message : String(e);
+          console.warn(
+            `  ⚠ Failed to process HTML Data URI in ${path.basename(file)}: ${message}`,
+          );
         }
-
-        const newUrl = `/${assetsDir}/${filename}`;
-        $el.attr(attrName, newUrl);
-        modified = true;
-      } catch (e: unknown) {
-        const message = e instanceof Error ? e.message : String(e);
-        console.warn(
-          `  ⚠ Failed to process HTML Data URI in ${path.basename(file)}: ${message}`,
-        );
-      }
-    });
+      },
+    );
 
     if (modified) {
       writeHtml(file, $.html());
@@ -378,7 +379,9 @@ async function generateSriHashes(distDir: string) {
     );
     $(
       'link[rel="stylesheet"], link[rel="preload"], link[rel="modulepreload"]',
-    ).each((_, el) => processEl($(el) as cheerio.Cheerio<cheerio.Element>, "href", "link"));
+    ).each((_, el) =>
+      processEl($(el) as cheerio.Cheerio<cheerio.Element>, "href", "link"),
+    );
     // Removed SRI for img/media as it's not widely supported/useful
 
     // Astro Islands
