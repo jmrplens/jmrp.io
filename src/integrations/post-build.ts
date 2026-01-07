@@ -13,6 +13,8 @@
  * - scripts/build/generate-csp-hashes.mjs
  */
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import type { AstroIntegration } from "astro";
 import fs from "node:fs";
 import path from "node:path";
@@ -57,7 +59,7 @@ async function moveInlineStyles(distDir: string) {
     let modified = false;
     const styleToClassMap = new Map<string, string>();
 
-    $('[style]').each((_, el) => {
+    $("[style]").each((_, el) => {
       const $el = $(el);
       const styleContent = $el.attr("style");
       if (!styleContent) return;
@@ -357,9 +359,7 @@ async function generateSriHashes(distDir: string) {
     );
     $(
       'link[rel="stylesheet"], link[rel="preload"], link[rel="modulepreload"]',
-    ).each((_, el) =>
-      processEl($(el) as cheerio.Cheerio<any>, "href", "link"),
-    );
+    ).each((_, el) => processEl($(el) as cheerio.Cheerio<any>, "href", "link"));
     $("img[src]").each((_, el) =>
       processEl($(el) as cheerio.Cheerio<any>, "src", "img"),
     );
