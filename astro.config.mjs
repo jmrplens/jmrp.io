@@ -16,6 +16,7 @@ import rehypeMermaid from "rehype-mermaid";
 import { remarkMermaidBypass } from "./scripts/remark-mermaid-bypass.mjs";
 import { rehypeLinkDisambiguator } from "./scripts/rehype-link-disambiguator.mjs";
 import { ViteImageOptimizer } from "vite-plugin-image-optimizer";
+import postBuildIntegration from "./src/integrations/post-build.ts";
 
 /**
  * Custom Rehype plugin to split the <picture> output from rehype-mermaid
@@ -117,6 +118,7 @@ export default defineConfig({
       iconDir: "src/assets/icons",
     }),
     preact({ include: ["**/src/**/*.{jsx,tsx}"] }),
+    postBuildIntegration(),
   ].filter(Boolean),
 
   // Markdown and MDX configuration
