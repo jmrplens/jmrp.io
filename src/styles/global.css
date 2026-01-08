@@ -210,7 +210,7 @@ h1 {
   font-family: var(--font-mono);
 }
 
-.gradient-text {
+.text-primary {
   color: var(--color-primary);
 }
 
