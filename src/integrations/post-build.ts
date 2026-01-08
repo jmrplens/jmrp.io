@@ -7,7 +7,6 @@
 
 import type { AstroIntegration } from "astro";
 import { fileURLToPath } from "node:url";
-import { setupSitemap } from "./post-build/sitemap.js";
 import { extractCssDataUris } from "./post-build/css.js";
 import { processHtmlFiles } from "./post-build/html.js";
 import { finalizeCspConfig } from "./post-build/csp.js";
@@ -46,7 +45,6 @@ export default function postBuildIntegration(): AstroIntegration {
         };
 
         try {
-          setupSitemap(distDir);
           await extractCssDataUris(distDir);
 
           const systemNginxPath =
