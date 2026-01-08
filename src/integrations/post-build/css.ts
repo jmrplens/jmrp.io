@@ -27,8 +27,9 @@ export async function extractCssDataUris(distDir: string) {
   const htmlFiles = await glob("**/*.html", { cwd: distDir, absolute: true });
 
   // Regex that correctly handles optional quotes and prevents over-capturing unquoted URIs
+  // Optimized to avoid ReDoS and unnecessary escapes
   const DATA_URI_REGEX =
-    /url\(\s*(?:(['"])(data:[^"']+)\1|(data:[^'\")]+))\s*\)/gi;
+    /url\(\s*(?:(['"])(data:[^"']+)\1|(data:[^'")\s]+))\s*\)/gi;
 
   let extracted = 0;
 
@@ -45,7 +46,7 @@ export async function extractCssDataUris(distDir: string) {
         unquotedData: string,
       ) => {
         const rawDataUri = quotedData || unquotedData;
-        if (!rawDataUri || !rawDataUri.startsWith("data:")) return fullMatch;
+        if (!rawDataUri?.startsWith("data:")) return fullMatch;
 
         try {
           const commaIndex = rawDataUri.indexOf(",");

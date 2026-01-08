@@ -91,3 +91,4 @@ cv_latex/*.blg
 cv_latex/*.run.xml
 cv_latex/*.bcf
 cv_latex/*.pdf
+.scannerwork/

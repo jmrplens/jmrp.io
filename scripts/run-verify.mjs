@@ -8,6 +8,21 @@
 import { execSync } from "node:child_process";
 import fs from "node:fs";
 
+// Load environment variables from .env if present
+if (fs.existsSync(".env")) {
+  const envContent = fs.readFileSync(".env", "utf-8");
+  envContent.split("\n").forEach((line) => {
+    const match = line.match(/^([^=]+)=(.*)$/);
+    if (match) {
+      const key = match[1].trim();
+      const value = match[2].trim().replace(/^["']|["']$/g, ""); // Remove quotes
+      if (!process.env[key]) {
+        process.env[key] = value;
+      }
+    }
+  });
+}
+
 // ANSI colors for pretty output
 const colors = {
   reset: "\x1b[0m",
@@ -83,6 +98,16 @@ async function runVerify() {
       command: "pnpm exec snyk test --all-projects --severity-threshold=high",
       condition: () => !!process.env.SNYK_TOKEN,
     },
+    {
+      name: "Security: SonarCloud Analysis",
+      command: "pnpm exec sonar-scanner",
+      condition: () => !!process.env.SONAR_TOKEN,
+    },
+    {
+      name: "Analyze: SonarCloud Issues",
+      command: "node scripts/ci/get-sonar-issues.mjs",
+      condition: () => !!process.env.SONAR_TOKEN,
+    },
     { name: "Tests: Playwright E2E", command: "pnpm test:e2e" },
   ];
 
@@ -92,7 +117,12 @@ async function runVerify() {
     const success = runStep(step.name, step.command, step.condition ?? true);
     if (!success) {
       failedSteps.push(step.name);
-      // In verify, we want to fail fast to save time
+      // If SonarCloud Analysis failed (likely Quality Gate), continue to the next step
+      // to fetch and display the issues so the user knows what went wrong.
+      if (step.name === "Security: SonarCloud Analysis") {
+        continue;
+      }
+      // For other steps, fail fast
       break;
     }
   }

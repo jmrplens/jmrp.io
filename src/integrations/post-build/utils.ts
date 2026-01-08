@@ -10,9 +10,42 @@ import crypto from "node:crypto";
  * @param {string} html - HTML content to write.
  */
 export function writeHtml(filePath: string, html: string) {
-  const cleaned = html.replace(
-    / (inert|download|disabled|checked|readonly|required|multiple|async|autofocus|autoplay|controls|default|defer|formnovalidate|ismap|itemscope|loop|nomodule|novalidate|open|playsinline|reversed|scoped|selected)=""/g,
-    " $1",
+  const BOOLEAN_ATTRIBUTES = new Set([
+    "inert",
+    "download",
+    "disabled",
+    "checked",
+    "readonly",
+    "required",
+    "multiple",
+    "async",
+    "autofocus",
+    "autoplay",
+    "controls",
+    "default",
+    "defer",
+    "formnovalidate",
+    "ismap",
+    "itemscope",
+    "loop",
+    "nomodule",
+    "novalidate",
+    "open",
+    "playsinline",
+    "reversed",
+    "scoped",
+    "selected",
+  ]);
+
+  // Use a simpler regex and check the set in the callback
+  const cleaned = html.replaceAll(
+    / ([a-z]+)=""/g,
+    (match: string, attr: string) => {
+      if (BOOLEAN_ATTRIBUTES.has(attr)) {
+        return ` ${attr}`;
+      }
+      return match;
+    },
   );
   fs.writeFileSync(filePath, cleaned, "utf-8");
 }
