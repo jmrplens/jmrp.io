@@ -140,7 +140,10 @@ export default defineConfig({
     icon({
       iconDir: "src/assets/icons",
     }),
-    preact({ include: ["**/src/**/*.{jsx,tsx}"] }),
+    preact({
+      include: ["**/src/**/*.{jsx,tsx}"],
+      devtools: true,
+    }),
     postBuildIntegration(),
   ].filter(Boolean),
 

@@ -14,8 +14,8 @@ test.describe("SEO & Metadata Checks", () => {
     expect(robots?.status()).toBe(200);
     expect(await robots?.text()).toContain("User-agent:");
 
-    // Check sitemap.xml redirect or content
-    const sitemap = await page.goto("/sitemap.xml");
+    // Check sitemap-index.xml redirect or content
+    const sitemap = await page.goto("/sitemap-index.xml");
     expect(sitemap?.status()).toBe(200);
     const text = await sitemap?.text();
     expect(text).toMatch(/urlset|sitemapindex/);
