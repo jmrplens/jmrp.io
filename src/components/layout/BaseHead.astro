@@ -10,16 +10,8 @@
  */
 import "@styles/global.css";
 
-// Variable Fonts (automatically injects @font-face)
-import "@fontsource-variable/inter";
-import "@fontsource-variable/jetbrains-mono";
-
-import interVariable from "@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url";
-import jetbrainsVariable from "@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2?url";
-
-// ... other imports
-
-import { getImage } from "astro:assets";
+// Variable Fonts (managed by Astro Experimental Fonts)
+import { Font, getImage } from "astro:assets";
 import faviconSrc from "@assets/favicon.png";
 import appleTouchIconSrc from "@assets/apple-touch-icon.png";
 import defaultOgImage from "@assets/mehome_landscape.webp";
@@ -207,23 +199,9 @@ const jsonLD = {
 <!-- Global Metadata -->
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 
-<!-- Font Preloads (Critical for LCP/CLS) -->
-<link
-    rel="preload"
-    href={interVariable}
-    as="font"
-    type="font/woff2"
-    crossorigin="anonymous"
-    fetchpriority="high"
-/>
-<link
-    rel="preload"
-    href={jetbrainsVariable}
-    as="font"
-    type="font/woff2"
-    crossorigin="anonymous"
-    fetchpriority="high"
-/>
+<!-- Font Preloads (Managed by Astro) -->
+<Font cssVariable="--font-inter" />
+<Font cssVariable="--font-jetbrains-mono" />
 
 <link rel="icon" type="image/webp" href={favicon.src} />
 <link rel="apple-touch-icon" href={appleTouchIcon.src} />

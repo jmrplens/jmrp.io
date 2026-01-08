@@ -34,10 +34,10 @@
 
   /* Typography */
   --font-body:
-    "Inter Variable", "Inter", "Inter Fallback", system-ui, -apple-system,
+    var(--font-inter), "Inter", "Inter Fallback", system-ui, -apple-system,
     sans-serif;
   --font-mono:
-    "JetBrains Mono Variable", "JetBrains Mono", "JetBrains Mono Fallback",
+    var(--font-jetbrains-mono), "JetBrains Mono", "JetBrains Mono Fallback",
     "Courier New", monospace;
 
   /* Font Weights */

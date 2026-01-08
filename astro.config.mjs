@@ -1,5 +1,5 @@
 // @ts-check
-import { defineConfig, envField } from "astro/config";
+import { defineConfig, envField, fontProviders } from "astro/config";
 
 // Adapters and Integrations
 import mdx from "@astrojs/mdx"; // Support for MDX (Markdown with JSX)
@@ -100,6 +100,26 @@ const githubDark = "github-dark-high-contrast";
 
 // https://astro.build/config
 export default defineConfig({
+  experimental: {
+    fonts: [
+      {
+        name: "Inter",
+        provider: fontProviders.google(),
+        cssVariable: "--font-inter",
+        weights: [400, 500, 600, 700, 800],
+        styles: ["normal"],
+        subsets: ["latin"],
+      },
+      {
+        name: "JetBrains Mono",
+        provider: fontProviders.google(),
+        cssVariable: "--font-jetbrains-mono",
+        weights: [400, 500, 600, 700, 800],
+        styles: ["normal"],
+        subsets: ["latin"],
+      },
+    ],
+  },
   // New Environment Variables API (Astro 5)
   env: {
     schema: {
