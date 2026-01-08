@@ -1,22 +1,3 @@
-/* Font Fallbacks for CLS mitigation */
-@font-face {
-  font-family: "Inter Fallback";
-  src: local("Arial");
-  ascent-override: 90.49%;
-  descent-override: 22.56%;
-  line-gap-override: 0%;
-  size-adjust: 107.06%;
-}
-
-@font-face {
-  font-family: "JetBrains Mono Fallback";
-  src: local("Courier New");
-  ascent-override: 102%;
-  descent-override: 29%;
-  line-gap-override: 0%;
-  size-adjust: 100%;
-}
-
 :root {
   /* Color Palette - Default (Dark) */
   --color-bg: #000000;
@@ -32,13 +13,9 @@
   --color-accent: #b389f5;
   --color-border: #30363d;
 
-  /* Typography */
-  --font-body:
-    var(--font-inter), "Inter", "Inter Fallback", system-ui, -apple-system,
-    sans-serif;
-  --font-mono:
-    var(--font-jetbrains-mono), "JetBrains Mono", "JetBrains Mono Fallback",
-    "Courier New", monospace;
+  /* Typography (Managed by Astro Fonts) */
+  --font-body: var(--font-inter), system-ui, -apple-system, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), monospace;
 
   /* Font Weights */
   --fw-normal: 400;
