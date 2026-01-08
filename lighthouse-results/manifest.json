@@ -1,0 +1,122 @@
+[
+  {
+    "url": "http://localhost:10661/",
+    "isRepresentativeRun": true,
+    "htmlPath": "/var/www/jmrp.io/lighthouse-results/localhost--2026_01_08_19_20_55.report.html",
+    "jsonPath": "/var/www/jmrp.io/lighthouse-results/localhost--2026_01_08_19_20_55.report.json",
+    "summary": {
+      "performance": 0.72,
+      "accessibility": 1,
+      "best-practices": 1,
+      "seo": 1
+    }
+  },
+  {
+    "url": "http://localhost:10661/blog/",
+    "isRepresentativeRun": true,
+    "htmlPath": "/var/www/jmrp.io/lighthouse-results/localhost-blog_-2026_01_08_19_21_06.report.html",
+    "jsonPath": "/var/www/jmrp.io/lighthouse-results/localhost-blog_-2026_01_08_19_21_06.report.json",
+    "summary": {
+      "performance": 0.63,
+      "accessibility": 1,
+      "best-practices": 1,
+      "seo": 1
+    }
+  },
+  {
+    "url": "http://localhost:10661/blog/001-secure-nginx-client-certificates/",
+    "isRepresentativeRun": true,
+    "htmlPath": "/var/www/jmrp.io/lighthouse-results/localhost-blog_001_secure_nginx_client_certificates_-2026_01_08_19_21_17.report.html",
+    "jsonPath": "/var/www/jmrp.io/lighthouse-results/localhost-blog_001_secure_nginx_client_certificates_-2026_01_08_19_21_17.report.json",
+    "summary": {
+      "performance": 0.67,
+      "accessibility": 1,
+      "best-practices": 1,
+      "seo": 1
+    }
+  },
+  {
+    "url": "http://localhost:10661/blog/002-serve-virtual-files-nginx/",
+    "isRepresentativeRun": true,
+    "htmlPath": "/var/www/jmrp.io/lighthouse-results/localhost-blog_002_serve_virtual_files_nginx_-2026_01_08_19_21_29.report.html",
+    "jsonPath": "/var/www/jmrp.io/lighthouse-results/localhost-blog_002_serve_virtual_files_nginx_-2026_01_08_19_21_29.report.json",
+    "summary": {
+      "performance": 1,
+      "accessibility": 1,
+      "best-practices": 1,
+      "seo": 1
+    }
+  },
+  {
+    "url": "http://localhost:10661/blog/003-implementing-content-security-policy-nginx/",
+    "isRepresentativeRun": true,
+    "htmlPath": "/var/www/jmrp.io/lighthouse-results/localhost-blog_003_implementing_content_security_policy_nginx_-2026_01_08_19_21_41.report.html",
+    "jsonPath": "/var/www/jmrp.io/lighthouse-results/localhost-blog_003_implementing_content_security_policy_nginx_-2026_01_08_19_21_41.report.json",
+    "summary": {
+      "performance": 0.61,
+      "accessibility": 1,
+      "best-practices": 1,
+      "seo": 1
+    }
+  },
+  {
+    "url": "http://localhost:10661/blog/tags/astro/",
+    "isRepresentativeRun": true,
+    "htmlPath": "/var/www/jmrp.io/lighthouse-results/localhost-blog_tags_astro_-2026_01_08_19_21_53.report.html",
+    "jsonPath": "/var/www/jmrp.io/lighthouse-results/localhost-blog_tags_astro_-2026_01_08_19_21_53.report.json",
+    "summary": {
+      "performance": 0.99,
+      "accessibility": 1,
+      "best-practices": 1,
+      "seo": 1
+    }
+  },
+  {
+    "url": "http://localhost:10661/cv/",
+    "isRepresentativeRun": true,
+    "htmlPath": "/var/www/jmrp.io/lighthouse-results/localhost-cv_-2026_01_08_19_22_04.report.html",
+    "jsonPath": "/var/www/jmrp.io/lighthouse-results/localhost-cv_-2026_01_08_19_22_04.report.json",
+    "summary": {
+      "performance": 0.68,
+      "accessibility": 1,
+      "best-practices": 1,
+      "seo": 1
+    }
+  },
+  {
+    "url": "http://localhost:10661/github/",
+    "isRepresentativeRun": true,
+    "htmlPath": "/var/www/jmrp.io/lighthouse-results/localhost-github_-2026_01_08_19_22_16.report.html",
+    "jsonPath": "/var/www/jmrp.io/lighthouse-results/localhost-github_-2026_01_08_19_22_16.report.json",
+    "summary": {
+      "performance": 0.71,
+      "accessibility": 1,
+      "best-practices": 1,
+      "seo": 1
+    }
+  },
+  {
+    "url": "http://localhost:10661/publications/",
+    "isRepresentativeRun": true,
+    "htmlPath": "/var/www/jmrp.io/lighthouse-results/localhost-publications_-2026_01_08_19_22_27.report.html",
+    "jsonPath": "/var/www/jmrp.io/lighthouse-results/localhost-publications_-2026_01_08_19_22_27.report.json",
+    "summary": {
+      "performance": 1,
+      "accessibility": 1,
+      "best-practices": 1,
+      "seo": 1
+    }
+  },
+  {
+    "url": "http://localhost:10661/services/",
+    "isRepresentativeRun": true,
+    "htmlPath": "/var/www/jmrp.io/lighthouse-results/localhost-services_-2026_01_08_19_22_38.report.html",
+    "jsonPath": "/var/www/jmrp.io/lighthouse-results/localhost-services_-2026_01_08_19_22_38.report.json",
+    "summary": {
+      "performance": 1,
+      "accessibility": 1,
+      "best-practices": 1,
+      "seo": 1
+    }
+  }
+]

@@ -84,6 +84,10 @@ async function runVerify() {
       condition: () => !!process.env.SNYK_TOKEN,
     },
     { name: "Tests: Playwright E2E", command: "pnpm test:e2e" },
+    {
+      name: "Tests: Local Lighthouse Audit",
+      command: "pnpm exec lhci autorun --collect.numberOfRuns=1",
+    },
   ];
 
   let failedSteps = [];
