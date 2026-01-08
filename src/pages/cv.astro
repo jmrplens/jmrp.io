@@ -36,7 +36,7 @@ const certificates = sortedSections.find((s) => s.title === "Certificates");
 const personSchema = {
     "@context": "https://schema.org",
     "@type": "ProfilePage",
-    "@id": new URL(Astro.url.pathname, Astro.site).toString() + "#profile",
+    "@id": new URL(Astro.url.pathname, import.meta.env.SITE).toString() + "#profile",
     mainEntity: {
         "@type": "Person",
         name: "José Manuel Requena Plens",

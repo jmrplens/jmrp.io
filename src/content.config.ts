@@ -20,7 +20,7 @@ const posts = defineCollection({
       draft: z.boolean().default(false), // Draft status, defaults to false
       description: z.string().optional(), // SEO description
       author: z.string().optional(), // Author name (defaults to site author)
-      authorEmail: z.string().email().optional(), // Author email for RSS feed
+      authorEmail: z.email().optional(), // Author email for RSS feed
       coverImage: image().optional(), // Cover image URL or path
       tags: z.array(z.string()).optional(), // List of tags/categories
     }),

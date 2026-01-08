@@ -28,16 +28,16 @@ const { posts } = Astro.props;
 // Schema.org: CollectionPage with ItemList
 const schema = {
   "@type": "CollectionPage",
-  "@id": new URL(Astro.url.pathname, Astro.site).toString() + "#collection",
+  "@id": new URL(Astro.url.pathname, import.meta.env.SITE).toString() + "#collection",
   name: `Blog posts tagged with #${tag}`,
   description: `Browse ${posts.length} articles about ${tag}.`,
-  url: new URL(Astro.url.pathname, Astro.site).toString(),
+  url: new URL(Astro.url.pathname, import.meta.env.SITE).toString(),
   mainEntity: {
     "@type": "ItemList",
     itemListElement: posts.map((post, index) => ({
       "@type": "ListItem",
       position: index + 1,
-      url: new URL(`/blog/${post.id}/`, Astro.site).toString(),
+      url: new URL(`/blog/${post.id}/`, import.meta.env.SITE).toString(),
       name: post.data.title,
     })),
   },

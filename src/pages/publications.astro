@@ -17,11 +17,11 @@ const allPublications = publicationGroups.flatMap((group) => group.items);
 const collectionSchema = {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
-    "@id": new URL(Astro.url.pathname, Astro.site).toString() + "#collection",
+    "@id": new URL(Astro.url.pathname, import.meta.env.SITE).toString() + "#collection",
     name: "Publications",
     description:
         "Academic publications and research by José Manuel Requena Plens.",
-    url: new URL(Astro.url.pathname, Astro.site).toString(),
+    url: new URL(Astro.url.pathname, import.meta.env.SITE).toString(),
     mainEntity: {
         "@type": "ItemList",
         itemListElement: allPublications.map((pub, index) => ({

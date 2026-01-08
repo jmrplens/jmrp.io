@@ -101,7 +101,7 @@ const articleSchema = [
     {
         "@type": "BlogPosting",
         "@id":
-            new URL(`/blog/${post.id}`, Astro.site).toString() + "#article",
+            new URL(`/blog/${post.id}`, import.meta.env.SITE).toString() + "#article",
         headline: post.data.title,
         description: post.data.description,
         datePublished: post.data.publishedDate.toISOString(),
@@ -110,20 +110,19 @@ const articleSchema = [
         ).toISOString(),
         author: {
             "@type": "Person",
-            "@id": `${Astro.site}/#person`,
             name: siteData.author,
-            url: Astro.site,
+            url: import.meta.env.SITE,
         },
         publisher: {
             "@type": "Person",
-            "@id": `${Astro.site}/#person`,
+            "@id": `${import.meta.env.SITE}/#person`,
             name: siteData.author,
-            url: Astro.site,
+            url: import.meta.env.SITE,
         },
-        image: new URL(jsonLdImage, Astro.site).toString(),
+        image: new URL(jsonLdImage, import.meta.env.SITE).toString(),
         mainEntityOfPage: {
             "@type": "WebPage",
-            "@id": new URL(`/blog/${post.id}`, Astro.site).toString(),
+            "@id": new URL(`/blog/${post.id}`, import.meta.env.SITE).toString(),
         },
     },
 ];

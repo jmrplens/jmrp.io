@@ -11,7 +11,7 @@ import ServiceStats from "@components/services/ServiceStats";
 const servicesSchema = {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
-    "@id": new URL(Astro.url.pathname, Astro.site).toString() + "#collection",
+    "@id": new URL(Astro.url.pathname, import.meta.env.SITE).toString() + "#collection",
     name: "Self-Hosted Services",
     hasPart: [
         {

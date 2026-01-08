@@ -56,7 +56,7 @@ interface Props {
     schema?: any; // Custom JSON-LD schema to merge or override
 }
 
-const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+const canonicalURL = new URL(Astro.url.pathname, import.meta.env.SITE);
 
 const {
     title,
@@ -93,7 +93,7 @@ if (image) {
             resolvedImage = new URL(image, Astro.url);
         } catch {
             // Relative path or other, try to resolve against site
-            resolvedImage = new URL(image, Astro.site);
+            resolvedImage = new URL(image, import.meta.env.SITE);
         }
     } else {
         // It's an imported Image object passed via props
@@ -123,17 +123,17 @@ if (image) {
 // 1. WebSite Schema (Global)
 const websiteSchema = {
     "@type": "WebSite",
-    "@id": `${Astro.site}/#website`,
-    url: Astro.site,
+    "@id": `${import.meta.env.SITE}/#website`,
+    url: import.meta.env.SITE,
     name: "José M. Requena Plens",
     description: siteData.description,
     inLanguage: siteData.locale,
     publisher: {
         "@type": "Person",
-        "@id": `${Astro.site}/#person`,
+        "@id": `${import.meta.env.SITE}/#person`,
         name: siteData.author,
-        url: Astro.site,
-        image: new URL(defaultOgImage.src, Astro.site).toString(),
+        url: import.meta.env.SITE,
+        image: new URL(defaultOgImage.src, import.meta.env.SITE).toString(),
         sameAs: [
             "https://github.com/jmrplens",
             "https://www.linkedin.com/in/jmrplens",
@@ -147,7 +147,7 @@ const websiteSchema = {
 const navSchema = (siteData.nav || []).map((item) => ({
     "@type": "SiteNavigationElement",
     name: item.label,
-    url: new URL(item.href, Astro.site).toString(),
+    url: new URL(item.href, import.meta.env.SITE).toString(),
 }));
 
 // 3. Breadcrumb Schema (Automatic)
@@ -160,12 +160,12 @@ const breadcrumbList = {
             "@type": "ListItem",
             position: 1,
             name: "Home",
-            item: Astro.site,
+            item: import.meta.env.SITE,
         },
         ...pathSegments.map((segment, index) => {
             const path = `/${pathSegments.slice(0, index + 1).join("/")}/`;
             const isLastSegment = index === pathSegments.length - 1;
-            const absoluteUrl = new URL(path, Astro.site).toString();
+            const absoluteUrl = new URL(path, import.meta.env.SITE).toString();
 
             // Prefer page title for the last segment if available
             const fallbackName = segment
