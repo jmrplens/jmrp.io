@@ -5,8 +5,62 @@ import { glob } from "glob";
 import * as cheerio from "cheerio";
 import type { Element } from "domhandler";
 import type { CspData } from "./types.js";
-import { writeHtml, getFileHash, resolveFile } from "./utils.js";
-import { ASSETS_DIR, STYLE_CLASS_HASH_LENGTH } from "./constants.js";
+import {
+  writeHtml,
+  getFileHash,
+  resolveFile,
+  getExtensionFromMime,
+} from "./utils.js";
+import {
+  ASSETS_DIR,
+  STYLE_CLASS_HASH_LENGTH,
+  ASSET_FILENAME_HASH_LENGTH,
+} from "./constants.js";
+
+/**
+ * Helper to extract a data URI to a physical file and return the new relative URL.
+ */
+function extractDataUri(
+  rawDataUri: string,
+  targetDir: string,
+): { url: string; extracted: boolean } | null {
+  if (!rawDataUri || !rawDataUri.startsWith("data:")) return null;
+
+  try {
+    const commaIndex = rawDataUri.indexOf(",");
+    if (commaIndex === -1) return null;
+
+    const metadata = rawDataUri.substring(5, commaIndex);
+    const data = rawDataUri.substring(commaIndex + 1);
+    const isBase64 = metadata.includes(";base64");
+    const mime = metadata.split(";")[0] || "application/octet-stream";
+
+    let buffer: Buffer;
+    if (isBase64) {
+      buffer = Buffer.from(data, "base64");
+    } else {
+      buffer = Buffer.from(decodeURIComponent(data.trim()));
+    }
+
+    const ext = getExtensionFromMime(mime);
+    const hash = crypto
+      .createHash("sha256")
+      .update(buffer)
+      .digest("hex")
+      .substring(0, ASSET_FILENAME_HASH_LENGTH);
+    const filename = `${hash}.${ext}`;
+    const filePath = path.join(targetDir, filename);
+
+    if (!fs.existsSync(filePath)) {
+      fs.writeFileSync(filePath, buffer);
+      return { url: `/${ASSETS_DIR}/${filename}`, extracted: true };
+    }
+
+    return { url: `/${ASSETS_DIR}/${filename}`, extracted: false };
+  } catch {
+    return null;
+  }
+}
 
 /**
  * Performs a consolidated pass over all HTML files in the distribution directory.
@@ -49,11 +103,31 @@ export async function processHtmlFiles(
 
   let modifiedFilesCount = 0;
   let updatedSriTags = 0;
+  let extractedImages = 0;
 
   for (const file of htmlFiles) {
     const content = fs.readFileSync(file, "utf-8");
     const $ = cheerio.load(content);
     let isModified = false;
+
+    // 0. Extract image Data URIs
+    const processImageSource = (attr: string) => {
+      $(`img[${attr}^="data:"], source[${attr}^="data:"]`).each((_, el) => {
+        const $el = $(el);
+        const dataUri = $el.attr(attr);
+        if (dataUri) {
+          const result = extractDataUri(dataUri, targetDir);
+          if (result) {
+            $el.attr(attr, result.url);
+            if (result.extracted) extractedImages++;
+            isModified = true;
+          }
+        }
+      });
+    };
+
+    processImageSource("src");
+    processImageSource("srcset");
 
     // 1. moveInlineStyles logic (converts style="..." to classes)
     // Always enabled to ensure HTML validity (no-inline-style rule)
@@ -225,5 +299,6 @@ export async function processHtmlFiles(
   }
 
   console.log(`  ✓ Updated ${updatedSriTags} tags with SRI.`);
+  console.log(`  ✓ Extracted ${extractedImages} images from HTML.`);
   console.log(`  ✓ Modified ${modifiedFilesCount} HTML files.`);
 }

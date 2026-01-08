@@ -57,7 +57,12 @@ try {
   }
 
   const buffer = Buffer.from(await imageRes.arrayBuffer());
-  fs.writeFileSync(outputPath, buffer);
+  try {
+    fs.writeFileSync(outputPath, buffer);
+  } catch (writeError) {
+    if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath);
+    throw writeError;
+  }
 
   console.log(`Avatar saved to ${outputPath}`);
 } catch (error) {

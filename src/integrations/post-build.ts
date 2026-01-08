@@ -84,25 +84,14 @@ export default function postBuildIntegration(): AstroIntegration {
                   execSync("nginx -s reload", { stdio: "inherit" });
                   console.log("  ✓ Nginx configuration reloaded successfully.");
                 } catch (validationError) {
+                  const validationErrorMessage =
+                    validationError instanceof Error
+                      ? validationError.message
+                      : String(validationError);
                   console.error(
                     "  ⚠ Nginx validation/reload failed! Reverting changes.",
                   );
-                  if (
-                    validationError instanceof Error &&
-                    "stderr" in validationError
-                  ) {
-                    console.error(
-                      `Nginx stderr: ${String(validationError.stderr)}`,
-                    );
-                  }
-                  if (
-                    validationError instanceof Error &&
-                    "stdout" in validationError
-                  ) {
-                    console.error(
-                      `Nginx stdout: ${String(validationError.stdout)}`,
-                    );
-                  }
+                  console.error(`  Nginx Error: ${validationErrorMessage}`);
                   try {
                     fs.writeFileSync(systemNginxPath, originalContent);
                     console.log(

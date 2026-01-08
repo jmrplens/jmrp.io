@@ -27,7 +27,15 @@ function getEnvToken() {
 
     const envContent = fs.readFileSync(envPath, "utf-8");
     const match = envContent.match(/^PUBLIC_CF_BEACON_TOKEN=(.*)$/m);
-    return match ? match[1].trim() : null;
+    if (!match) return null;
+
+    // Strip inline comments (#), then trim
+    let value = match[1].split("#")[0].trim();
+
+    // Remove optional surrounding single or double quotes
+    value = value.replace(/^(['"])(.*)(\1)$/, "$2");
+
+    return value || null;
   } catch {
     return null;
   }

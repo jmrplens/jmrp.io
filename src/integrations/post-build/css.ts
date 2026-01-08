@@ -81,11 +81,12 @@ export async function extractCssDataUris(distDir: string) {
                     name: "preset-default",
                     params: {
                       overrides: {
-                        cleanupNumericValues: true,
+                        cleanupNumericValues: {},
                         removeViewBox: false,
                       },
                     },
-                  },
+                  } as PluginConfig,
+
                   "sortAttrs",
                   {
                     name: "addAttributesToSVGElement",
@@ -123,7 +124,11 @@ export async function extractCssDataUris(distDir: string) {
     );
 
     if (newContent !== content) {
-      fs.writeFileSync(file, newContent, "utf-8");
+      if (file.endsWith(".html")) {
+        writeHtml(file, newContent);
+      } else {
+        fs.writeFileSync(file, newContent, "utf-8");
+      }
     }
   }
   console.log(`  ✓ Extracted ${extracted} assets from CSS/HTML.`);
