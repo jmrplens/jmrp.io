@@ -7,7 +7,7 @@
  * - Automated Table of Contents generation
  * - SEO Schema for blog postings
  */
-import { type CollectionEntry, getCollection } from "astro:content";
+import { type CollectionEntry, getCollection, render } from "astro:content";
 import BaseLayout from "@layouts/BaseLayout.astro";
 import { Icon } from "astro-icon/components";
 import { Image } from "astro:assets";
@@ -31,7 +31,7 @@ const siteData = (siteEntry?.data || {}) as SiteConfig;
 export async function getStaticPaths() {
     const posts = await getCollection("posts");
     return posts.map((post) => ({
-        params: { slug: post.slug },
+        params: { slug: post.id },
         props: post,
     }));
 }
@@ -39,11 +39,11 @@ export async function getStaticPaths() {
 type Props = CollectionEntry<"posts">;
 
 const post = Astro.props;
-const { Content, headings } = await post.render();
+const { Content, headings } = await render(post);
 
 // --- Reference Collection Logic ---
 // Strip code blocks to avoid false positives from code examples
-const bodyWithoutCode = post.body
+const bodyWithoutCode = (post.body || "")
     .replace(/```[\s\S]*?```/g, "")
     .replace(/`[^`]*?`/g, "");
 
@@ -101,7 +101,7 @@ const articleSchema = [
     {
         "@type": "BlogPosting",
         "@id":
-            new URL(`/blog/${post.slug}`, Astro.site).toString() + "#article",
+            new URL(`/blog/${post.id}`, Astro.site).toString() + "#article",
         headline: post.data.title,
         description: post.data.description,
         datePublished: post.data.publishedDate.toISOString(),
@@ -123,7 +123,7 @@ const articleSchema = [
         image: new URL(jsonLdImage, Astro.site).toString(),
         mainEntityOfPage: {
             "@type": "WebPage",
-            "@id": new URL(`/blog/${post.slug}`, Astro.site).toString(),
+            "@id": new URL(`/blog/${post.id}`, Astro.site).toString(),
         },
     },
 ];

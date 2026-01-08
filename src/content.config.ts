@@ -1,11 +1,17 @@
-import { defineCollection, z } from "astro:content";
+import { defineCollection } from "astro:content";
+import { glob } from "astro/loaders";
+import { z } from "astro/zod";
 
 /**
  * Configuration for 'posts' content collection.
  * Defines the schema for blog posts (MDX files).
  */
 const posts = defineCollection({
-  type: "content",
+  loader: glob({
+    pattern: "**/[^_]*.{md,mdx}",
+    base: "./src/content/posts",
+    generateId: ({ entry }) => entry.replace(/\.mdx?$/, ""),
+  }),
   schema: ({ image }) =>
     z.object({
       title: z.string(), // Post title (required)
@@ -25,7 +31,11 @@ const posts = defineCollection({
  * Includes general site settings and social media information.
  */
 const site_config = defineCollection({
-  type: "data",
+  loader: glob({
+    pattern: "**/*.yaml",
+    base: "./src/content/site_config",
+    generateId: ({ entry }) => entry.replace(/\.yaml$/, ""),
+  }),
   schema: z.union([
     // Site Config
     z.object({
@@ -157,7 +167,11 @@ const CVCertificateGroup = z.object({
  * Defines the complex structure for the multi-section resume.
  */
 const cv = defineCollection({
-  type: "data",
+  loader: glob({
+    pattern: "**/*.yaml",
+    base: "./src/content/cv",
+    generateId: ({ entry }) => entry.replace(/\.yaml$/, ""),
+  }),
   schema: z.array(
     z.union([
       z.object({
@@ -189,7 +203,11 @@ const cv = defineCollection({
  * Stores co-author mapping and other publication-related metadata.
  */
 const publications_data = defineCollection({
-  type: "data",
+  loader: glob({
+    pattern: "**/*.yaml",
+    base: "./src/content/publications_data",
+    generateId: ({ entry }) => entry.replace(/\.yaml$/, ""),
+  }),
   schema: z.record(
     z.string(),
     z.array(

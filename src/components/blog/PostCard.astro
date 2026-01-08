@@ -59,7 +59,7 @@ const { post, loading = "lazy", fetchpriority = "auto" } = Astro.props;
       }
     </div>
     <h2>
-      <a href={`/blog/${post.slug}/`} class="main-link">
+      <a href={`/blog/${post.id}/`} class="main-link">
         {post.data.title}
       </a>
     </h2>

@@ -36,7 +36,7 @@ export async function GET(context: APIContext) {
     site: context.site || "https://jmrp.io",
     items: await Promise.all(
       publishedPosts.map(async (post) => {
-        const link = `/blog/${post.slug}/`;
+        const link = `/blog/${post.id}/`;
         const fullLink = new URL(link, context.site || "https://jmrp.io").toString();
         let customData = "";
         const description =
