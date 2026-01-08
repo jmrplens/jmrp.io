@@ -1,8 +1,8 @@
 import { defineCollection, z } from "astro:content";
 
 /**
- * Collection definition for 'posts'.
- * Represents standard blog posts or articles.
+ * Configuration for 'posts' content collection.
+ * Defines the schema for blog posts (MDX files).
  */
 const posts = defineCollection({
   type: "content",
@@ -20,6 +20,10 @@ const posts = defineCollection({
     }),
 });
 
+/**
+ * Configuration for 'site_config' collection.
+ * Includes general site settings and social media information.
+ */
 const site_config = defineCollection({
   type: "data",
   schema: z.union([
@@ -79,7 +83,7 @@ const site_config = defineCollection({
   ]),
 });
 
-// CV Schema Definitions
+/** Schema for a link item within the CV. */
 const CVLink = z.object({
   link: z.string(),
   name: z.string().optional(),
@@ -88,12 +92,14 @@ const CVLink = z.object({
   ariaLabel: z.string().optional(),
 });
 
+/** Schema for a simple key-value or list item in CV sections. */
 const CVMapItem = z.object({
   name: z.string(),
   value: z.string().optional(),
   links: z.array(CVLink).optional(),
 });
 
+/** Schema for a chronologically listed item (Education, Experience). */
 const CVTimelineItem = z.object({
   title: z.string(),
   institution: z.string().optional(),
@@ -115,6 +121,7 @@ const CVTimelineItem = z.object({
   linkitems: z.array(CVLink).optional(),
 });
 
+/** Schema for an individual skill or tool. */
 const CVSkillItem = z.object({
   name: z.string(),
   icon: z.string().optional(),
@@ -122,12 +129,14 @@ const CVSkillItem = z.object({
   desc: z.string().optional(),
 });
 
+/** Schema for a grouped collection of skills. */
 const CVSkillGroup = z.object({
   category: z.string(),
   icon: z.string().optional(),
   items: z.array(CVSkillItem),
 });
 
+/** Schema for a certificate or award. */
 const CVCertificateItem = z.object({
   name: z.string(),
   school: z.string(),
@@ -136,12 +145,17 @@ const CVCertificateItem = z.object({
   linkname: z.string(),
 });
 
+/** Schema for a grouped collection of certificates. */
 const CVCertificateGroup = z.object({
   category: z.string(),
   icon: z.string().optional(),
   items: z.array(CVCertificateItem),
 });
 
+/**
+ * Configuration for 'cv' data collection.
+ * Defines the complex structure for the multi-section resume.
+ */
 const cv = defineCollection({
   type: "data",
   schema: z.array(
@@ -170,6 +184,10 @@ const cv = defineCollection({
   ),
 });
 
+/**
+ * Configuration for 'publications_data' collection.
+ * Stores co-author mapping and other publication-related metadata.
+ */
 const publications_data = defineCollection({
   type: "data",
   schema: z.record(

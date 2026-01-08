@@ -1,0 +1,374 @@
+import crypto from "node:crypto";
+import path from "node:path";
+import fs from "node:fs";
+import { glob } from "glob";
+import * as cheerio from "cheerio";
+import type { Element } from "domhandler";
+import type { CspData } from "./types.js";
+import {
+  writeHtml,
+  getFileHash,
+  resolveFile,
+  getExtensionFromMime,
+} from "./utils.js";
+import {
+  ASSETS_DIR,
+  STYLE_CLASS_HASH_LENGTH,
+  ASSET_FILENAME_HASH_LENGTH,
+} from "./constants.js";
+
+/**
+ * Helper to extract a data URI to a physical file and return the new relative URL.
+ */
+function extractDataUri(
+  rawDataUri: string,
+  targetDir: string,
+): { url: string; extracted: boolean } | null {
+  if (!rawDataUri || !rawDataUri.startsWith("data:")) return null;
+
+  try {
+    const commaIndex = rawDataUri.indexOf(",");
+    if (commaIndex === -1) return null;
+
+    const metadata = rawDataUri.substring(5, commaIndex);
+    const data = rawDataUri.substring(commaIndex + 1);
+    const isBase64 = metadata.includes(";base64");
+    const mime = metadata.split(";")[0] || "application/octet-stream";
+
+    let buffer: Buffer;
+    if (isBase64) {
+      buffer = Buffer.from(data, "base64");
+    } else {
+      buffer = Buffer.from(decodeURIComponent(data.trim()));
+    }
+
+    const ext = getExtensionFromMime(mime);
+    const hash = crypto
+      .createHash("sha256")
+      .update(buffer)
+      .digest("hex")
+      .substring(0, ASSET_FILENAME_HASH_LENGTH);
+    const filename = `${hash}.${ext}`;
+    const filePath = path.join(targetDir, filename);
+
+    if (!fs.existsSync(filePath)) {
+      fs.writeFileSync(filePath, buffer);
+      return { url: `/${ASSETS_DIR}/${filename}`, extracted: true };
+    }
+
+    return { url: `/${ASSETS_DIR}/${filename}`, extracted: false };
+  } catch (e) {
+    const message = e instanceof Error ? e.message : String(e);
+    console.error(`[PostBuild] Error extracting data URI: ${message}`);
+    return null;
+  }
+}
+
+/**
+ * Performs a consolidated pass over all HTML files in the distribution directory.
+ *
+ * This function handles several critical post-build tasks:
+ * 1. Converts inline style attributes to scoped classes (to support strict CSP).
+ * 2. Injects security nonces into all inline script and style tags.
+ * 3. Generates Subresource Integrity (SRI) hashes for all local linked resources.
+ * 4. Collects hashes for the final CSP configuration.
+ * 5. Identifies external image domains used on the site.
+ * 6. Hardens the Cloudflare Insights beacon script with local environment guards.
+ *
+ * @param {string} distDir - The absolute path to the production build output.
+ * @param {CspData} cspData - Shared object to store collected CSP hashes and domains.
+ * @param {boolean} enableCsp - Whether to enable CSP-specific features (nonces, hashes, style conversion).
+ */
+export async function processHtmlFiles(
+  distDir: string,
+  cspData: CspData,
+  enableCsp: boolean,
+) {
+  console.log("[PostBuild] Processing HTML files (consolidated pass)...");
+  const htmlFiles = await glob("**/*.html", { cwd: distDir, absolute: true });
+  const hashCache = new Map<string, string>();
+  const targetDir = path.join(distDir, ASSETS_DIR);
+  if (!fs.existsSync(targetDir)) fs.mkdirSync(targetDir, { recursive: true });
+
+  // Special handling for cf-beacon.js to avoid Lighthouse errors while keeping SRI
+  const beaconPath = path.join(distDir, "scripts", "cf-beacon.js");
+  if (fs.existsSync(beaconPath)) {
+    console.log("[PostBuild] Hardening cf-beacon.js with local guard...");
+    const originalBeacon = fs.readFileSync(beaconPath, "utf-8");
+    // Prepend a guard that stops execution on localhost/127.0.0.1/0.0.0.0/::1/[::1]
+    // Using an IIFE that returns early to safely wrap the original beacon code
+    const hardenedBeacon = `(function(){var h=location.hostname;if(h==='localhost'||h==='127.0.0.1'||h==='0.0.0.0'||h==='::1'||h==='[::1]')return;${originalBeacon}})();`;
+    fs.writeFileSync(beaconPath, hardenedBeacon, "utf-8");
+    // Force re-calculation of hash for this file
+    hashCache.delete(`${beaconPath}:sha512`);
+  }
+
+  let modifiedFilesCount = 0;
+  let updatedSriTags = 0;
+  let extractedImages = 0;
+
+  for (const file of htmlFiles) {
+    const content = fs.readFileSync(file, "utf-8");
+    const $ = cheerio.load(content);
+    let isModified = false;
+
+    // 0. Extract image Data URIs
+    const processImageSrc = () => {
+      $('img[src^="data:"], source[src^="data:"]').each((_, el) => {
+        const $el = $(el);
+        const dataUri = $el.attr("src");
+        if (!dataUri) return;
+
+        const result = extractDataUri(dataUri, targetDir);
+        if (!result) return;
+
+        $el.attr("src", result.url);
+        if (result.extracted) extractedImages++;
+        isModified = true;
+      });
+    };
+
+    const processImageSrcset = () => {
+      // Use *="data:" so we also handle mixed-candidate srcset values
+      $('img[srcset*="data:"], source[srcset*="data:"]').each((_, el) => {
+        const $el = $(el);
+        const srcset = $el.attr("srcset");
+        if (!srcset) return;
+
+        let modifiedSrcset = false;
+
+        const newCandidates = srcset
+          .split(",")
+          .map((rawCandidate) => {
+            const candidate = rawCandidate.trim();
+            if (!candidate) return "";
+
+            // Split into URL and descriptor(s), e.g. "url 1x", "url 2x", "url 100w"
+            const [url, ...descriptorParts] = candidate.split(/\s+/);
+            if (!url || !url.startsWith("data:")) {
+              return candidate;
+            }
+
+            const result = extractDataUri(url, targetDir);
+            if (!result) {
+              return candidate;
+            }
+
+            modifiedSrcset = true;
+            isModified = true;
+            if (result.extracted) extractedImages++;
+
+            const descriptor = descriptorParts.join(" ");
+            return descriptor ? `${result.url} ${descriptor}` : result.url;
+          })
+          .filter(Boolean);
+
+        if (modifiedSrcset) {
+          $el.attr("srcset", newCandidates.join(", "));
+        }
+      });
+    };
+
+    processImageSrc();
+    processImageSrcset();
+
+    // 1. moveInlineStyles logic (converts style="..." to classes)
+    // Always enabled to ensure HTML validity (no-inline-style rule)
+    const styleToClassMap = new Map<string, string>();
+    $("[style]").each((_, el) => {
+      const $el = $(el);
+      const styleContent = $el.attr("style");
+      if (!styleContent) return;
+
+      const hash = crypto
+        .createHash("shake256", { outputLength: STYLE_CLASS_HASH_LENGTH })
+        .update(styleContent)
+        .digest("hex");
+      const className = `sh-${hash}`;
+      styleToClassMap.set(styleContent, className);
+
+      $el.removeAttr("style");
+      $el.addClass(className);
+      isModified = true;
+    });
+
+    if (styleToClassMap.size > 0) {
+      let cssRules = "";
+      for (const [styleDef, className] of styleToClassMap.entries()) {
+        // Skip styles with unbalanced braces that could break CSS
+        if (
+          (styleDef.match(/{/g) || []).length !==
+          (styleDef.match(/}/g) || []).length
+        ) {
+          console.warn(
+            `[PostBuild] Skipping potentially malformed style: ${styleDef.substring(0, 50)}...`,
+          );
+          continue;
+        }
+        cssRules += `.${className}{${styleDef}}`;
+      }
+      // Add a marker to identify generated styles and avoid re-noncing them
+      // We only add the nonce if CSP is enabled
+      const styleNonce = enableCsp ? ' nonce="NGINX_CSP_NONCE"' : "";
+      $("head").append(
+        `<style${styleNonce} data-generated-style="true">${cssRules}</style>`,
+      );
+      isModified = true;
+    }
+
+    // 2. Add nonces to ALL inline scripts and styles (essential for Mermaid and Astro islands)
+    // Consolidated into Step 4 for hashing, but we still need to catch any missed ones
+    // like the ones that don't need hashing (e.g. data-generated-style already has it from Step 1)
+
+    // 3. SRI and Nonces for linked resources
+    const processSri = (
+      $el: cheerio.Cheerio<Element>,
+      attr: string,
+      type: "script" | "link",
+    ) => {
+      const url = $el.attr(attr);
+      if (!url) return;
+
+      const rel = $el.attr("rel");
+      const as = $el.attr("as");
+
+      // Ensure crossorigin for standard SRI-eligible resources
+      if (
+        type === "script" ||
+        rel === "stylesheet" ||
+        as === "style" ||
+        as === "script" ||
+        as === "font"
+      ) {
+        if (!$el.attr("crossorigin")) {
+          $el.attr("crossorigin", "anonymous");
+          isModified = true;
+        }
+      }
+
+      // Add Integrity if local and not already present
+      if (!$el.attr("integrity")) {
+        const filePath = resolveFile(url, path.dirname(file), distDir);
+        if (filePath) {
+          const hash = getFileHash(filePath, hashCache);
+          $el.attr("integrity", hash);
+          isModified = true;
+          updatedSriTags++;
+        }
+      }
+
+      // Add Nonce to scripts and styles
+      if (
+        enableCsp &&
+        !$el.attr("nonce") &&
+        (type === "script" || rel === "stylesheet" || as === "style")
+      ) {
+        // Only apply nonce to <script> and <style> tags, not <link> tags.
+        // rel="stylesheet" and as="style" are <link> tags.
+        if (type === "script") {
+          $el.attr("nonce", "NGINX_CSP_NONCE");
+          isModified = true;
+        }
+      }
+    };
+
+    $("script[src]").each((_, el) => processSri($(el), "src", "script"));
+    $(
+      'link[rel="stylesheet"], link[rel="preload"], link[rel="modulepreload"]',
+    ).each((_, el) => processSri($(el), "href", "link"));
+
+    // 4. Collect hashes for ALL inline content AND add nonces
+    $("style:not([data-generated-style])").each((_, el) => {
+      const $el = $(el);
+      if (enableCsp) {
+        const styleHtml = $el.html() || "";
+        const h = crypto
+          .createHash("sha512")
+          .update(styleHtml)
+          .digest("base64");
+        cspData.styleHashes.add(`'sha512-${h}'`);
+
+        if (!$el.attr("nonce")) {
+          $el.attr("nonce", "NGINX_CSP_NONCE");
+          isModified = true;
+        }
+      }
+    });
+
+    $("script:not([src])").each((_, el) => {
+      const $el = $(el);
+      if (enableCsp) {
+        const scriptHtml = $el.html() || "";
+        const h = crypto
+          .createHash("sha512")
+          .update(scriptHtml)
+          .digest("base64");
+        cspData.scriptHashes.add(`'sha512-${h}'`);
+
+        if (!$el.attr("nonce")) {
+          $el.attr("nonce", "NGINX_CSP_NONCE");
+          isModified = true;
+        }
+      }
+    });
+
+    // 5. Collect image domains for CSP
+    if (enableCsp) {
+      $("img[src], source[srcset], img[srcset]").each((_, el) => {
+        const $el = $(el);
+        const sources =
+          ($el.attr("src") || "") + " " + ($el.attr("srcset") || "");
+
+        sources.split(/,?\s+/).forEach((srcCandidate) => {
+          const src = srcCandidate.trim().split(" ")[0]; // Get URL part from srcset entry
+          if (src && (src.startsWith("http") || src.startsWith("//"))) {
+            try {
+              // Use the URL constructor to safely parse the image URL and extract the hostname.
+              const url = src.startsWith("//")
+                ? new URL(`https:${src}`)
+                : new URL(src);
+              if (url.hostname) {
+                cspData.imageDomains.add(url.hostname);
+              }
+            } catch (err) {
+              const errorMessage =
+                err instanceof Error ? err.message : String(err);
+              const sanitizedSrc = src.split("?")[0] || "unknown";
+              console.warn(
+                `[PostBuild] Skipping invalid image URL during CSP collection: ${sanitizedSrc}. Error: ${errorMessage}`,
+              );
+            }
+          }
+        });
+      });
+    }
+
+    // 6. Manual Beacon Replace (Cloudflare)
+    const beaconScriptsPath = path.join(distDir, "scripts", "cf-beacon.js");
+    if ($.html().includes("__BEACON_INTEGRITY_HASH__")) {
+      if (fs.existsSync(beaconScriptsPath)) {
+        const hash = getFileHash(beaconScriptsPath, hashCache, "sha512");
+        // We find the script specifically to be more precise
+        $('script[integrity="__BEACON_INTEGRITY_HASH__"]').each((_, el) => {
+          $(el).attr("integrity", hash);
+        });
+        isModified = true;
+      } else {
+        console.warn(
+          `[PostBuild] Beacon file missing. Removing script tag from ${file}`,
+        );
+        $('script[integrity="__BEACON_INTEGRITY_HASH__"]').remove();
+        isModified = true;
+      }
+    }
+
+    if (isModified) {
+      writeHtml(file, $.html());
+      modifiedFilesCount++;
+    }
+  }
+
+  console.log(`  ✓ Updated ${updatedSriTags} tags with SRI.`);
+  console.log(`  ✓ Extracted ${extractedImages} images from HTML.`);
+  console.log(`  ✓ Modified ${modifiedFilesCount} HTML files.`);
+}
