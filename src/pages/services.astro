@@ -7,12 +7,12 @@
 import BaseLayout from "@layouts/BaseLayout.astro";
 import ServiceCard from "@components/services/ServiceCard.astro";
 import ServiceStats from "@components/services/ServiceStats";
+import { getSiteUrl } from "@utils/site";
 
 const servicesSchema = {
-    "@context": "https://schema.org",
     "@type": "CollectionPage",
-    "@id": new URL(Astro.url.pathname, import.meta.env.SITE).toString() + "#collection",
-    name: "Self-Hosted Services",
+    "@id": new URL("#collection", new URL(Astro.url.pathname, getSiteUrl())).toString(),
+    name: "Services",
     hasPart: [
         {
             "@type": "Service",

@@ -116,12 +116,14 @@ if (image) {
 // 1. WebSite Schema (Global)
 const websiteSchema = {
     "@type": "WebSite",
-            url: getSiteUrl(),    name: "José M. Requena Plens",
+    "@id": new URL("#website", getSiteUrl()).toString(),
+    url: getSiteUrl(),
+    name: "José M. Requena Plens",
     description: siteData.description,
     inLanguage: siteData.locale,
     publisher: {
         "@type": "Person",
-        "@id": `${getSiteUrl()}/#person`,
+        "@id": new URL("#person", getSiteUrl()).toString(),
         name: siteData.author,
         url: getSiteUrl(),
         image: new URL(defaultOgImage.src, getSiteUrl()).toString(),

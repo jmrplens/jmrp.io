@@ -11,6 +11,7 @@ import type { CVSection } from "@src/types";
 import { Icon } from "astro-icon/components";
 import SkillGroup from "@components/cv/SkillGroup.astro";
 import CertificateGroup from "@components/cv/CertificateGroup.astro";
+import { getSiteUrl } from "@utils/site";
 
 const cvData = await getCVData();
 
@@ -36,7 +37,7 @@ const certificates = sortedSections.find((s) => s.title === "Certificates");
 const personSchema = {
     "@context": "https://schema.org",
     "@type": "ProfilePage",
-    "@id": new URL(Astro.url.pathname, import.meta.env.SITE).toString() + "#profile",
+    "@id": new URL("#profile", new URL(Astro.url.pathname, getSiteUrl())).toString(),
     mainEntity: {
         "@type": "Person",
         name: "José Manuel Requena Plens",

@@ -42,7 +42,7 @@ if (lcpPost && lcpPost.data.coverImage) {
 // Schema.org: CollectionPage with ItemList for Blog Index
 const schema = {
     "@type": "CollectionPage",
-    "@id": new URL(Astro.url.pathname, getSiteUrl()).toString() + "#collection",
+    "@id": new URL("#collection", new URL(Astro.url.pathname, getSiteUrl())).toString(),
     name: "Blog - José Manuel Requena Plens",
     description:
         "Thoughts, tutorials, and engineering notes on software development and home lab.",

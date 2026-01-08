@@ -101,8 +101,7 @@ if (post.data.coverImage) {
 const articleSchema = [
     {
         "@type": "BlogPosting",
-        "@id":
-            new URL(`/blog/${post.id}`, getSiteUrl()).toString() + "#article",
+        "@id": new URL("#article", new URL(`/blog/${post.id}`, getSiteUrl())).toString(),
         headline: post.data.title,
         description: post.data.description,
         datePublished: post.data.publishedDate.toISOString(),
@@ -111,13 +110,13 @@ const articleSchema = [
         ).toISOString(),
         publisher: {
             "@type": "Person",
-            "@id": `${getSiteUrl()}/#person`,
+            "@id": new URL("#person", getSiteUrl()).toString(),
             name: siteData.author,
             url: getSiteUrl(),
         },
         author: {
             "@type": "Person",
-            "@id": `${getSiteUrl()}/#person`,
+            "@id": new URL("#person", getSiteUrl()).toString(),
             name: siteData.author,
             url: getSiteUrl(),
         },
