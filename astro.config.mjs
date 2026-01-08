@@ -144,9 +144,13 @@ export default defineConfig({
   // The site URL, used for SEO and sitemap generation
   site: process.env.PUBLIC_SITE_URL || "https://jmrp.io",
 
+  // Build behavior for prerendering conflicts
+  prerenderConflictBehavior: "error",
+
   // Image optimization configuration
   image: {
     domains: ["www.google.com"],
+    responsiveStyles: true,
   },
 
   // List of integrations to extend Astro functionality
