@@ -136,6 +136,7 @@ export default defineConfig({
     mdx({
       // MDX needs to know about remark plugins too if we want it to work in .mdx files
       remarkPlugins: [remarkMermaidBypass],
+      optimize: true,
     }),
     icon({
       iconDir: "src/assets/icons",
