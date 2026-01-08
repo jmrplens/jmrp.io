@@ -22,8 +22,7 @@ export default function preBuildIntegration(): AstroIntegration {
           "",
         );
 
-        // We run this on both 'dev' and 'build' to ensure assets exist locally
-        logger.info(`Initialising environment (${command})...`);
+        logger.info(`Environment initialization: [${command}]`);
 
         try {
           const avatarPath = "src/assets/github-avatar.png";
@@ -35,7 +34,7 @@ export default function preBuildIntegration(): AstroIntegration {
           if (shouldRunGithubAvatar) {
             await setupGithubAvatar();
           } else {
-            logger.info("Skipping GitHub avatar fetch (already exists).");
+            logger.info("GitHub avatar exists locally. Skipping fetch.");
           }
 
           // Only fetch beacon if we are building for production
@@ -45,18 +44,18 @@ export default function preBuildIntegration(): AstroIntegration {
         } catch (error) {
           const message =
             error instanceof Error ? error.message : String(error);
-          logger.error(`Fatal error: ${message}`);
+          logger.error(`Initialization failure: ${message}`);
 
           // In dev mode, we don't want to crash the whole process for pre-build failures
           if (command === "dev") {
-            logger.warn("Continuing in dev mode despite errors...");
+            logger.warn("Continuing in development mode despite errors...");
             return;
           } else {
             throw error instanceof Error ? error : new Error(message);
           }
         }
 
-        logger.info("Completed successfully.");
+        logger.info("Initialization completed.");
       },
     },
   };

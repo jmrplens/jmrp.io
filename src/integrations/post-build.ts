@@ -34,7 +34,8 @@ export default function postBuildIntegration(): AstroIntegration {
     hooks: {
       "astro:build:done": async ({ dir, logger }) => {
         const distDir = fileURLToPath(dir);
-        logger.info(`Starting optimizations in ${distDir}`);
+        const relativeDist = path.relative(process.cwd(), distDir);
+        logger.info(`Starting optimizations in [${relativeDist}]`);
 
         const cspData: CspData = {
           styleHashes: new Set<string>(),
@@ -65,15 +66,16 @@ export default function postBuildIntegration(): AstroIntegration {
               !systemNginxPath.endsWith(".conf") ||
               systemNginxPath.includes("..")
             ) {
+              const sanitizedPath = path.basename(systemNginxPath);
               throw new Error(
-                `[PostBuild] Invalid Nginx configuration path: ${systemNginxPath}. Must be an absolute path ending in .conf.`,
+                `Invalid Nginx configuration path: ${sanitizedPath}. Must be an absolute path ending in .conf.`,
               );
             }
           }
 
           if (!enableCsp) {
             logger.info(
-              "Skipping CSP generation and Nginx deployment (POSTBUILD_NGINX_SNIPPETS_PATH is empty).",
+              "Skipping CSP generation and Nginx deployment (environment variable POSTBUILD_NGINX_SNIPPETS_PATH is not set).",
             );
           }
 
@@ -94,12 +96,12 @@ export default function postBuildIntegration(): AstroIntegration {
                 fs.accessSync(systemNginxPath, fs.constants.W_OK);
               } catch {
                 throw new Error(
-                  `[PostBuild] No write permission for system Nginx path: ${systemNginxPath}. Build must run with appropriate permissions to deploy security headers.`,
+                  `No write permission for system Nginx configuration. Build must run with appropriate permissions.`,
                 );
               }
 
               // Safety: We will validate the configuration after deployment and revert if it fails.
-              logger.info(`Validating Nginx configuration...`);
+              logger.info(`Deploying security headers to system Nginx...`);
               try {
                 // We can't easily test a snippet alone with nginx -t without a full config context,
                 // so we perform an atomic-like swap and revert if the global validation fails.
@@ -115,20 +117,22 @@ export default function postBuildIntegration(): AstroIntegration {
                     stdio: "inherit",
                     timeout: nginxReloadTimeout,
                   });
-                  logger.info("✓ Nginx configuration reloaded successfully.");
+                  logger.info(
+                    "✓ Nginx security headers deployed and reloaded.",
+                  );
                 } catch (validationError) {
                   const validationErrorMessage =
                     validationError instanceof Error
                       ? validationError.message
                       : String(validationError);
                   logger.error(
-                    "⚠ Nginx validation/reload failed or timed out! Reverting changes.",
+                    "⚠ Nginx validation failed! Reverting to previous configuration.",
                   );
-                  logger.error(`Nginx Error: ${validationErrorMessage}`);
+                  logger.debug(`Internal Error: ${validationErrorMessage}`);
                   try {
                     fs.writeFileSync(systemNginxPath, originalContent);
                     logger.info(
-                      "✓ Successfully reverted to the previous Nginx configuration.",
+                      "✓ Successfully reverted to the previous stable configuration.",
                     );
                     // Final validation to ensure system is left in a stable state
                     execSync("nginx -t", {
@@ -141,7 +145,10 @@ export default function postBuildIntegration(): AstroIntegration {
                         ? revertError.message
                         : String(revertError);
                     logger.error(
-                      `CRITICAL: Failed to revert Nginx configuration. Manual intervention required. ${revertErrorMessage}`,
+                      `CRITICAL: Failed to revert Nginx configuration. Manual intervention required.`,
+                    );
+                    logger.debug(
+                      `Revert failure details: ${revertErrorMessage}`,
                     );
                     throw revertError instanceof Error
                       ? revertError
@@ -152,19 +159,20 @@ export default function postBuildIntegration(): AstroIntegration {
                 const errorMessage =
                   error instanceof Error ? error.message : String(error);
                 logger.error(
-                  `⚠ Deployment failed. Check Nginx permissions or syntax. ${errorMessage}`,
+                  "⚠ Deployment failed. Check Nginx permissions or environment state.",
                 );
+                logger.debug(`Deployment error details: ${errorMessage}`);
                 throw error instanceof Error ? error : new Error(errorMessage);
               }
             }
           }
         } catch (e) {
           const errorMessage = e instanceof Error ? e.message : String(e);
-          logger.error(`Fatal error: ${errorMessage}`);
+          logger.error(`Fatal optimization error: ${errorMessage}`);
           throw e instanceof Error ? e : new Error(errorMessage);
         }
 
-        logger.info(`Completed successfully.`);
+        logger.info(`Optimizations completed successfully.`);
       },
     },
   };
