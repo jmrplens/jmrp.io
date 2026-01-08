@@ -23,23 +23,23 @@ const getUrls = () => {
 
     while ((match = regex.exec(content)) !== null) {
       let url = match[1];
-      // Keep original domain as requested
+      // Replace production domain with localhost magic string for LHCI
+      url = url.replace("https://jmrp.io", "http://localhost");
       urls.push(url);
     }
 
-    // Filter: Keep only core pages, remove posts (/blog/001...) and tags (/blog/tags/...)
+    // Optimization: Only analyze the first tag page encountered
+    let tagFound = false;
     urls = urls.filter((url) => {
-      const path = new URL(url).pathname;
-      // Exclude posts (any path starting with /blog/ followed by content)
-      // and tags. We keep exactly '/blog/' (index).
-      if (path.startsWith("/blog/") && path !== "/blog/") {
-        return false;
+      if (url.includes("/blog/tags/")) {
+        if (tagFound) return false;
+        tagFound = true;
       }
       return true;
     });
 
     console.log(
-      `📄 Found ${urls.length} core pages in sitemap for quick Lighthouse analysis.`,
+      `📄 Found ${urls.length} optimized pages in sitemap for Lighthouse analysis.`,
     );
     return urls;
   } catch (e) {
@@ -51,8 +51,9 @@ const getUrls = () => {
 module.exports = {
   ci: {
     collect: {
+      staticDistDir: "./dist",
       url: getUrls(),
-      numberOfRuns: 1,
+      numberOfRuns: 3,
       outputDir: "lighthouse-results",
       settings: {
         chromeFlags: "--no-sandbox --headless",
