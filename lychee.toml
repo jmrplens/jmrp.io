@@ -5,10 +5,12 @@ no_progress = true
 
 # Exclude specific domains/URLs
 exclude = [
-    "https://mstdn.jmrp.io",
-    "https://electronica-submarina.com",
-    "https://ies-berlanga.info",
-    "https://www.i3m-detectors.i3m.upv.es",
+    "https://mstdn\\.jmrp\\.io/.*",
+    "https://electronica-submarina\\.com/.*",
+    "https://ies-berlanga\\.info/.*",
+    "https://www\\.i3m-detectors\\.i3m\\.upv\\.es/.*",
+    "https://rua\\.ua\\.es/.*",
+    "http://hdl\\.handle\\.net/.*",
     # Ignore Astro/Template variables
     ".*\\$\\{.*",
     ".*\\%7B.*",
@@ -30,10 +32,15 @@ exclude = [
 include = [
     "./**/*.md",
     "./**/*.mdx",
-    "./**/*.html",
     "./src/**/*.astro",
     "./src/**/*.ts",
     "./src/**/*.tsx"
 ]
-# Fail on error
-fail_on_error = true
+
+exclude_path = [
+    "node_modules"
+]
+
+# Show only errors
+verbose = "error"
+

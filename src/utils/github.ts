@@ -1,3 +1,6 @@
+/**
+ * Represents a simplified GitHub repository object.
+ */
 export interface GitHubRepo {
   id: number;
   name: string;
@@ -9,6 +12,9 @@ export interface GitHubRepo {
   updated_at: string;
 }
 
+/**
+ * Represents a simplified GitHub user profile.
+ */
 export interface GitHubProfile {
   name: string;
   login: string;
@@ -26,6 +32,10 @@ const GITHUB_TOKEN: string | undefined = import.meta.env.GITHUB_TOKEN as
   | string
   | undefined; // Optional, for rate limits
 
+/**
+ * Fetches the public GitHub profile data for the configured user.
+ * Implements a fallback to local data if the API is unreachable or rate-limited.
+ */
 export async function fetchGitHubProfile(): Promise<GitHubProfile> {
   const headers: HeadersInit = {};
   if (GITHUB_TOKEN) {
@@ -58,6 +68,9 @@ export async function fetchGitHubProfile(): Promise<GitHubProfile> {
   }
 }
 
+/**
+ * Fetches the top repositories for the configured user, sorted by last update.
+ */
 export async function fetchTopRepositories(limit = 12): Promise<GitHubRepo[]> {
   const headers: HeadersInit = {};
   if (GITHUB_TOKEN) {
@@ -81,6 +94,9 @@ export async function fetchTopRepositories(limit = 12): Promise<GitHubRepo[]> {
   }
 }
 
+/**
+ * Map of programming languages to their representative Hex colors.
+ */
 export const langColors: Record<string, string> = {
   JavaScript: "#f1e05a",
   TypeScript: "#2b7489",

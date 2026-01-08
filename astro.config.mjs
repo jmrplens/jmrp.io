@@ -1,5 +1,5 @@
 // @ts-check
-import { defineConfig } from "astro/config";
+import { defineConfig, envField } from "astro/config";
 
 // Adapters and Integrations
 import mdx from "@astrojs/mdx"; // Support for MDX (Markdown with JSX)
@@ -16,6 +16,8 @@ import rehypeMermaid from "rehype-mermaid";
 import { remarkMermaidBypass } from "./scripts/remark-mermaid-bypass.mjs";
 import { rehypeLinkDisambiguator } from "./scripts/rehype-link-disambiguator.mjs";
 import { ViteImageOptimizer } from "vite-plugin-image-optimizer";
+import postBuildIntegration from "./src/integrations/post-build.ts";
+import preBuildIntegration from "./src/integrations/pre-build.ts";
 
 /**
  * Custom Rehype plugin to split the <picture> output from rehype-mermaid
@@ -98,6 +100,27 @@ const githubDark = "github-dark-high-contrast";
 
 // https://astro.build/config
 export default defineConfig({
+  // New Environment Variables API (Astro 5)
+  env: {
+    schema: {
+      PUBLIC_SITE_URL: envField.string({
+        context: "client",
+        access: "public",
+        optional: true,
+      }),
+      PUBLIC_CF_BEACON_TOKEN: envField.string({
+        context: "client",
+        access: "public",
+        optional: true,
+      }),
+      POSTBUILD_NGINX_SNIPPETS_PATH: envField.string({
+        context: "server",
+        access: "secret",
+        optional: true,
+      }),
+    },
+  },
+
   // The site URL, used for SEO and sitemap generation
   site: process.env.PUBLIC_SITE_URL || "https://jmrp.io",
 
@@ -108,6 +131,7 @@ export default defineConfig({
 
   // List of integrations to extend Astro functionality
   integrations: [
+    preBuildIntegration(),
     sitemap(),
     mdx({
       // MDX needs to know about remark plugins too if we want it to work in .mdx files
@@ -117,6 +141,7 @@ export default defineConfig({
       iconDir: "src/assets/icons",
     }),
     preact({ include: ["**/src/**/*.{jsx,tsx}"] }),
+    postBuildIntegration(),
   ].filter(Boolean),
 
   // Markdown and MDX configuration
@@ -203,29 +228,43 @@ export default defineConfig({
         /* pass your config */
         svg: {
           multipass: true,
-          plugins: [
+          plugins: /** @type {import('svgo').PluginConfig[]} */ ([
             {
               name: "preset-default",
               params: {
                 overrides: {
-                  cleanupNumericValues: false,
+                  cleanupNumericValues: {
+                    floatPrecision: 1,
+                  },
                   removeViewBox: false, // https://github.com/svg/svgo/issues/1128
+                  removeTitle: true,
+                  removeDesc: true,
+                  removeUselessDefs: true,
+                  collapseGroups: true,
+                  cleanupIDs: true,
+                  removeEmptyContainers: true,
+                  removeEmptyAttrs: true,
+                  cleanupAttrs: true,
+                  removeStyleElement: true,
+                  removeDimensions: true,
+                  removeRasterImages: true,
                 },
-                cleanupIDs: {
-                  minify: false,
-                  remove: false,
-                },
-                convertPathData: false,
               },
             },
             "sortAttrs",
+            {
+              name: "removeAttrs",
+              params: {
+                attrs: "(class|id|data-name)",
+              },
+            },
             {
               name: "addAttributesToSVGElement",
               params: {
                 attributes: [{ xmlns: "http://www.w3.org/2000/svg" }],
               },
             },
-          ],
+          ]),
         },
         png: {
           // https://sharp.pixelplumbing.com/api-output#png

@@ -4,6 +4,7 @@ package.json
 pnpm-lock.yaml
 docs
 src/content/posts
+GEMINI.md
 
 # Dependencies
 node_modules
@@ -15,3 +16,4 @@ accessibility-report
 src/pages/rss.xml.ts
 rss-validation.json
 html-validation.json
+schema-report.json

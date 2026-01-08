@@ -4,6 +4,9 @@ import { getImage } from "astro:assets";
 import type { APIContext } from "astro";
 import { escapeHtml } from "../../scripts/utils/html.mjs";
 
+/**
+ * Represents basic site metadata used for RSS feed generation.
+ */
 interface SiteData {
   title: string;
   description: string;
@@ -11,6 +14,15 @@ interface SiteData {
   locale: string;
 }
 
+/**
+ * Endpoint for generating the site's RSS 2.0 feed.
+ *
+ * Includes full support for:
+ * - Content collections (blog posts).
+ * - Enclosures and Media RSS (thumbnails/hero images).
+ * - Proper escaping and "Continue Reading" links for better reader compatibility.
+ * - Automatic filtering of draft posts in production.
+ */
 export async function GET(context: APIContext) {
   const posts = await getCollection("posts");
   const siteEntry = await getEntry("site_config", "site");

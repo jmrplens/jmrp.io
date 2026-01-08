@@ -7,6 +7,7 @@
 import CopyButton from "./CopyButton.astro";
 import { decodeHtml } from "@utils/html";
 import { randomUUID } from "node:crypto";
+import * as cheerio from "cheerio";
 
 let lines: string[] = [];
 let rawContent = "";
@@ -14,13 +15,16 @@ let rawContent = "";
 if (Astro.slots.has("default")) {
     const htmlContent = await Astro.slots.render("default");
 
-    // Handle MDX/HTML output
-    let processed = htmlContent
-        .replace(/<\/p>/g, "\n")
-        .replace(/<\/div>/g, "\n")
-        .replace(/<br\s*\/?>/gi, "\n");
+    // Handle MDX/HTML output using cheerio for robust text extraction
+    const $ = cheerio.load(htmlContent);
 
-    processed = processed.replace(/<[^>]+>/g, "");
+    // Convert common block elements and breaks to newlines
+    $("br").replaceWith("\n");
+    $("p, div, li, h1, h2, h3, h4, h5, h6").each((_, el) => {
+        $(el).append("\n");
+    });
+
+    let processed = $.text();
 
     processed = decodeHtml(processed);
 
