@@ -32,11 +32,9 @@ export default function postBuildIntegration(): AstroIntegration {
   return {
     name: "jmrp-post-build",
     hooks: {
-      "astro:build:done": async ({ dir }) => {
+      "astro:build:done": async ({ dir, logger }) => {
         const distDir = fileURLToPath(dir);
-        console.log(
-          `\n[\x1b[36mPostBuild\x1b[0m] Starting optimizations in ${distDir}`,
-        );
+        logger.info(`Starting optimizations in ${distDir}`);
 
         const cspData: CspData = {
           styleHashes: new Set<string>(),
@@ -74,8 +72,8 @@ export default function postBuildIntegration(): AstroIntegration {
           }
 
           if (!enableCsp) {
-            console.log(
-              "[PostBuild] Skipping CSP generation and Nginx deployment (POSTBUILD_NGINX_SNIPPETS_PATH is empty).",
+            logger.info(
+              "Skipping CSP generation and Nginx deployment (POSTBUILD_NGINX_SNIPPETS_PATH is empty).",
             );
           }
 
@@ -101,7 +99,7 @@ export default function postBuildIntegration(): AstroIntegration {
               }
 
               // Safety: We will validate the configuration after deployment and revert if it fails.
-              console.log(`[PostBuild] Validating Nginx configuration...`);
+              logger.info(`Validating Nginx configuration...`);
               try {
                 // We can't easily test a snippet alone with nginx -t without a full config context,
                 // so we perform an atomic-like swap and revert if the global validation fails.
@@ -117,20 +115,20 @@ export default function postBuildIntegration(): AstroIntegration {
                     stdio: "inherit",
                     timeout: nginxReloadTimeout,
                   });
-                  console.log("  ✓ Nginx configuration reloaded successfully.");
+                  logger.info("✓ Nginx configuration reloaded successfully.");
                 } catch (validationError) {
                   const validationErrorMessage =
                     validationError instanceof Error
                       ? validationError.message
                       : String(validationError);
-                  console.error(
-                    "  ⚠ Nginx validation/reload failed or timed out! Reverting changes.",
+                  logger.error(
+                    "⚠ Nginx validation/reload failed or timed out! Reverting changes.",
                   );
-                  console.error(`  Nginx Error: ${validationErrorMessage}`);
+                  logger.error(`Nginx Error: ${validationErrorMessage}`);
                   try {
                     fs.writeFileSync(systemNginxPath, originalContent);
-                    console.log(
-                      "  ✓ Successfully reverted to the previous Nginx configuration.",
+                    logger.info(
+                      "✓ Successfully reverted to the previous Nginx configuration.",
                     );
                     // Final validation to ensure system is left in a stable state
                     execSync("nginx -t", {
@@ -142,9 +140,8 @@ export default function postBuildIntegration(): AstroIntegration {
                       revertError instanceof Error
                         ? revertError.message
                         : String(revertError);
-                    console.error(
-                      "  CRITICAL: Failed to revert Nginx configuration. Manual intervention required.",
-                      revertErrorMessage,
+                    logger.error(
+                      `CRITICAL: Failed to revert Nginx configuration. Manual intervention required. ${revertErrorMessage}`,
                     );
                     throw revertError instanceof Error
                       ? revertError
@@ -154,9 +151,8 @@ export default function postBuildIntegration(): AstroIntegration {
               } catch (error) {
                 const errorMessage =
                   error instanceof Error ? error.message : String(error);
-                console.error(
-                  "  ⚠ Deployment failed. Check Nginx permissions or syntax.",
-                  errorMessage,
+                logger.error(
+                  `⚠ Deployment failed. Check Nginx permissions or syntax. ${errorMessage}`,
                 );
                 throw error instanceof Error ? error : new Error(errorMessage);
               }
@@ -164,16 +160,11 @@ export default function postBuildIntegration(): AstroIntegration {
           }
         } catch (e) {
           const errorMessage = e instanceof Error ? e.message : String(e);
-          console.error(
-            `[\x1b[31mPostBuild\x1b[0m] Fatal error:`,
-            errorMessage,
-          );
+          logger.error(`Fatal error: ${errorMessage}`);
           throw e instanceof Error ? e : new Error(errorMessage);
         }
 
-        console.log(
-          `[\x1b[36mPostBuild\x1b[0m] \x1b[32mCompleted successfully.\x1b[0m\n`,
-        );
+        logger.info(`Completed successfully.`);
       },
     },
   };
