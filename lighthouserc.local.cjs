@@ -41,10 +41,11 @@ const getUrls = () => {
 module.exports = {
   ci: {
     collect: {
+      staticDistDir: null,
       url: getUrls(),
       numberOfRuns: 1,
       settings: {
-        chromeFlags: "--no-sandbox --headless",
+        chromeFlags: "--no-sandbox --headless --ignore-certificate-errors",
         formFactor: process.env.FORM_FACTOR || "mobile",
         throttlingMethod: "simulate",
       },
