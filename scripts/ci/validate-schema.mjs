@@ -15,6 +15,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { glob } from "glob";
+import * as cheerio from "cheerio";
 
 const DIST_DIR = path.resolve(process.argv[2] || "dist");
 
@@ -31,21 +32,21 @@ function isPathSafe(filePath) {
  * Extracts JSON-LD scripts from HTML content
  */
 function extractJsonLd(html) {
-  const scripts =
-    html.match(
-      /<script[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/gi,
-    ) || [];
-  return scripts.map((script) => {
-    const content = script
-      .replace(/<script[^>]*>/, "")
-      .replace(/<\/script>/, "")
-      .trim();
+  const $ = cheerio.load(html);
+  const jsonLdBlocks = [];
+
+  $('script[type="application/ld+json"]').each((_, el) => {
+    const content = $(el).text().trim();
+    if (!content) return;
+
     try {
-      return JSON.parse(content);
+      jsonLdBlocks.push(JSON.parse(content));
     } catch (e) {
-      return { error: e.message, raw: content };
+      jsonLdBlocks.push({ error: e.message, raw: content });
     }
   });
+
+  return jsonLdBlocks;
 }
 
 /**

@@ -2,8 +2,9 @@ import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
 import { glob } from "glob";
+import * as cheerio from "cheerio";
 import { optimize, type Config, type PluginConfig } from "svgo";
-import { getExtensionFromMime } from "./utils.js";
+import { getExtensionFromMime, writeHtml } from "./utils.js";
 import { ASSETS_DIR, ASSET_FILENAME_HASH_LENGTH } from "./constants.js";
 
 /**
@@ -24,7 +25,6 @@ export async function extractCssDataUris(distDir: string) {
 
   const cssFiles = await glob("**/*.css", { cwd: distDir, absolute: true });
   const htmlFiles = await glob("**/*.html", { cwd: distDir, absolute: true });
-  const allFiles = [...cssFiles, ...htmlFiles];
 
   // Regex that correctly handles optional quotes and prevents over-capturing unquoted URIs
   const DATA_URI_REGEX =
@@ -32,10 +32,11 @@ export async function extractCssDataUris(distDir: string) {
 
   let extracted = 0;
 
-  for (const file of allFiles) {
-    const content = fs.readFileSync(file, "utf-8");
-
-    const newContent = content.replaceAll(
+  /**
+   * Helper to process CSS content and replace data URIs
+   */
+  const processCssContent = (content: string, file: string): string => {
+    return content.replaceAll(
       DATA_URI_REGEX,
       (
         fullMatch: string,
@@ -86,7 +87,6 @@ export async function extractCssDataUris(distDir: string) {
                       },
                     },
                   } as PluginConfig,
-
                   "sortAttrs",
                   {
                     name: "addAttributesToSVGElement",
@@ -122,14 +122,53 @@ export async function extractCssDataUris(distDir: string) {
         }
       },
     );
+  };
 
+  // Process standalone CSS files
+  for (const file of cssFiles) {
+    const content = fs.readFileSync(file, "utf-8");
+    const newContent = processCssContent(content, file);
     if (newContent !== content) {
-      if (file.endsWith(".html")) {
-        writeHtml(file, newContent);
-      } else {
-        fs.writeFileSync(file, newContent, "utf-8");
-      }
+      fs.writeFileSync(file, newContent, "utf-8");
     }
   }
+
+  // Process HTML files using cheerio for precision
+  for (const file of htmlFiles) {
+    const content = fs.readFileSync(file, "utf-8");
+    const $ = cheerio.load(content);
+    let isModified = false;
+
+    // Process <style> tags
+    $("style").each((_, el) => {
+      const $el = $(el);
+      const styleContent = $el.html();
+      if (styleContent) {
+        const newStyleContent = processCssContent(styleContent, file);
+        if (newStyleContent !== styleContent) {
+          $el.html(newStyleContent);
+          isModified = true;
+        }
+      }
+    });
+
+    // Process style attributes
+    $("[style]").each((_, el) => {
+      const $el = $(el);
+      const styleAttr = $el.attr("style");
+      if (styleAttr) {
+        const newStyleAttr = processCssContent(styleAttr, file);
+        if (newStyleAttr !== styleAttr) {
+          $el.attr("style", newStyleAttr);
+          isModified = true;
+        }
+      }
+    });
+
+    if (isModified) {
+      writeHtml(file, $.html());
+    }
+  }
+
   console.log(`  ✓ Extracted ${extracted} assets from CSS/HTML.`);
 }
