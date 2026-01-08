@@ -23,7 +23,7 @@ if (!fs.existsSync(deployDir)) {
 // Helper: Scan for all JSON reports
 function findReports(dir, fileList = []) {
   const files = fs.readdirSync(dir);
-  files.forEach((file) => {
+  for (const file of files) {
     const filePath = path.join(dir, file);
     const stat = fs.statSync(filePath);
     if (stat.isDirectory()) {
@@ -35,14 +35,14 @@ function findReports(dir, fileList = []) {
     ) {
       fileList.push(filePath);
     }
-  });
+  }
   return fileList;
 }
 
 const jsonFiles = findReports(deployDir);
 const reports = [];
 
-jsonFiles.forEach((filePath) => {
+for (const filePath of jsonFiles) {
   try {
     const content = fs.readFileSync(filePath, "utf8");
     const json = JSON.parse(content);
@@ -61,8 +61,8 @@ jsonFiles.forEach((filePath) => {
         if (parsed.hostname === "localhost") {
           finalUrl = parsed.pathname;
         }
-      } catch (e) {
-        console.warn(`URL parsing failed for ${filePath}:`, e.message);
+      } catch (error) {
+        console.warn(`URL parsing failed for ${filePath}:`, error.message);
       }
 
       reports.push({
@@ -82,15 +82,15 @@ jsonFiles.forEach((filePath) => {
         },
       });
     }
-  } catch (e) {
-    console.warn(`Skipping: ${filePath} - ${e.message}`);
+  } catch (error) {
+    console.warn(`Skipping: ${filePath} - ${error.message}`);
   }
-});
+}
 
 // Grouping: URL -> FormFactor -> Theme -> Runs
 const grouped = {};
 
-reports.forEach((r) => {
+for (const r of reports) {
   if (!grouped[r.url])
     grouped[r.url] = {
       mobile: { light: [], dark: [] },
@@ -100,7 +100,7 @@ reports.forEach((r) => {
   if (grouped[r.url]?.[r.formFactor]?.[r.theme]) {
     grouped[r.url][r.formFactor][r.theme].push(r);
   }
-});
+}
 
 function getScoreClass(score) {
   if (score >= 0.9) return "pass";
@@ -176,7 +176,7 @@ const listItems = Object.entries(grouped)
 
       // Top-level max scores (Combined)
       const maxScores = {};
-      cats.forEach((c) => (maxScores[c] = calculateMax(allRuns, c)));
+      for (const c of cats) maxScores[c] = calculateMax(allRuns, c);
 
       return `
             <div class="device-card">

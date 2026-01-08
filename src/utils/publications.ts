@@ -179,12 +179,25 @@ export async function getPublications(): Promise<PublicationGroup[]> {
       // Enrich authors with links
       item.author = processAuthors(item.author);
 
-      if (type === "article-journal") {
-        journalArticles.push(item);
-      } else if (type === "paper-conference" || type === "chapter") {
-        conferencePapers.push(item);
-      } else if (type === "thesis" || type === "report") {
-        thesisList.push(item);
+      switch (type) {
+        case "article-journal": {
+          journalArticles.push(item);
+
+          break;
+        }
+        case "paper-conference":
+        case "chapter": {
+          conferencePapers.push(item);
+
+          break;
+        }
+        case "thesis":
+        case "report": {
+          thesisList.push(item);
+
+          break;
+        }
+        // No default
       }
     };
 

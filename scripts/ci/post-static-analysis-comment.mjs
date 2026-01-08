@@ -69,11 +69,7 @@ function generateComment(results) {
         ? tool.outcome.charAt(0).toUpperCase() + tool.outcome.slice(1)
         : tool.outcome || "Unknown";
 
-    if (tool.value) {
-      outcomeText = `**${tool.value}**`;
-    } else {
-      outcomeText = `**${outcomeText}**`;
-    }
+    outcomeText = tool.value ? `**${tool.value}**` : `**${outcomeText}**`;
 
     md += `| ${badge} | ${icon} | ${outcomeText} |\n`;
   }
@@ -93,7 +89,7 @@ function generateComment(results) {
  * @param {object} params.context - The GitHub Action context object.
  * @returns {Promise<void>} Resolves when the comment is posted or updated.
  */
-export default async ({ github, context }) => {
+export default async function postStaticAnalysisComment({ github, context }) {
   // Read step outcomes from environment variables set in the workflow
   const results = {
     astro: process.env.OUTCOME_ASTRO,
@@ -139,4 +135,4 @@ export default async ({ github, context }) => {
     issue_number: context.issue.number,
     body: commentBody,
   });
-};
+}

@@ -174,9 +174,9 @@ async function validateFeedContent(content, results) {
         date: latest.pubDate,
       };
 
-      feed.items.forEach((item, i) => {
+      for (const [i, item] of feed.items.entries()) {
         validateItem(item, i + 1, results);
-      });
+      }
     }
   } catch (error) {
     results.errors.push(`RSS Parser Error: ${error.message}`);
@@ -215,7 +215,7 @@ async function validateRSS() {
 
   results.size = (fs.statSync(RSS_FILE).size / 1024).toFixed(2);
   // deepcode ignore PT: RSS_FILE is validated by isPathSafe()
-  const content = fs.readFileSync(RSS_FILE, "utf-8");
+  const content = fs.readFileSync(RSS_FILE, "utf8");
 
   await validateStructure(content, results);
   await validateFeedContent(content, results);
@@ -229,7 +229,7 @@ async function validateRSS() {
     console.log(
       `❌ RSS validation failed with ${results.errors.length} errors.`,
     );
-    results.errors.forEach((e) => console.log(`   - ${e}`));
+    for (const e of results.errors) console.log(`   - ${e}`);
   }
 
   writeResults(results);

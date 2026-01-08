@@ -36,7 +36,7 @@ async function test() {
     });
 
     console.log("Results received. Count:", results.length);
-    results.forEach((res, i) => {
+    for (const [i, res] of results.entries()) {
       if (res.status === "fulfilled") {
         console.log(
           `Result ${i}: Success (SVG length: ${res.value.svg.length})`,
@@ -44,9 +44,9 @@ async function test() {
       } else {
         console.log(`Result ${i}: Failed - ${res.reason}`);
       }
-    });
-  } catch (e) {
-    console.error("Caught error:", e);
+    }
+  } catch (error) {
+    console.error("Caught error:", error);
   } finally {
     // Explicitly close the renderer to free up resources
     if (mermaidRenderer.close) {

@@ -42,12 +42,12 @@ function buildIssuesSection(report) {
 
   if (report.errors.length > 0) {
     section += "#### ❌ Errors\n";
-    report.errors.forEach((e) => (section += `- ${e}\n`));
+    for (const e of report.errors) section += `- ${e}\n`;
   }
 
   if (report.warnings.length > 0) {
     section += "\n#### ⚠️ Warnings\n";
-    report.warnings.forEach((w) => (section += `- ${w}\n`));
+    for (const w of report.warnings) section += `- ${w}\n`;
   }
 
   return section + "</details>\n\n";
@@ -88,9 +88,9 @@ export default async function postRssValidationComment({ github, context }) {
       comment =
         "### 📡 RSS Validation\n\n⚠️ **Report file not found.**\n\n> Please check the build logs for details.";
     }
-  } catch (e) {
+  } catch (error) {
     comment = "### 📡 RSS Validation\n\n❌ **Error processing report.**";
-    console.error("RSS validation comment error:", e);
+    console.error("RSS validation comment error:", error);
   }
 
   await github.rest.issues.createComment({

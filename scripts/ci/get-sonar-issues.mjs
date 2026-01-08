@@ -38,19 +38,19 @@ async function fetchIssues() {
       console.log("✅ No open issues found in SonarCloud.");
     } else {
       console.log(`⚠️ Found ${issues.length} open issues:`);
-      issues.forEach((issue, index) => {
+      for (const [index, issue] of issues.entries()) {
         const severityColor =
           issue.severity === "CRITICAL" || issue.severity === "BLOCKER"
-            ? "\x1b[31m"
-            : "\x1b[33m";
+            ? "\u001B[31m"
+            : "\u001B[33m";
         console.log(
-          `\n  ${index + 1}. [${severityColor}${issue.severity}\x1b[0m] ${issue.message}`,
+          `\n  ${index + 1}. [${severityColor}${issue.severity}\u001B[0m] ${issue.message}`,
         );
         console.log(`     📍 ${issue.component} (Line ${issue.line || "N/A"})`);
         console.log(
           `     🔗 https://sonarcloud.io/project/issues?id=${PROJECT_KEY}&open=${issue.key}`,
         );
-      });
+      }
     }
 
     // 2. Fetch Security Hotspots
@@ -66,12 +66,12 @@ async function fetchIssues() {
         console.log(
           `\n🔥 Found ${hotspots.length} security hotspots to review:`,
         );
-        hotspots.forEach((h, index) => {
+        for (const [index, h] of hotspots.entries()) {
           console.log(
             `  - ${index + 1}. [${h.vulnerabilityProbability}] ${h.message}`,
           );
           console.log(`    📍 ${h.component} (Line ${h.line || "N/A"})`);
-        });
+        }
       }
     }
   } catch (error) {

@@ -55,29 +55,26 @@ export async function extractCssDataUris(distDir: string) {
           if (commaIndex === -1) return fullMatch;
 
           const metadata = rawDataUri.substring(5, commaIndex);
-          const data = rawDataUri.substring(commaIndex + 1);
+          const data = rawDataUri.slice(Math.max(0, commaIndex + 1));
           const isBase64 = metadata.includes(";base64");
           const mime = metadata.split(";")[0] || "application/octet-stream";
 
-          let buffer: Buffer;
-          if (isBase64) {
-            buffer = Buffer.from(data, "base64");
-          } else {
-            buffer = Buffer.from(decodeURIComponent(data.trim()));
-          }
+          const buffer = isBase64
+            ? Buffer.from(data, "base64")
+            : Buffer.from(decodeURIComponent(data.trim()));
 
           const ext = getExtensionFromMime(mime);
           const hash = crypto
             .createHash("sha256")
             .update(buffer)
             .digest("hex")
-            .substring(0, ASSET_FILENAME_HASH_LENGTH);
+            .slice(0, Math.max(0, ASSET_FILENAME_HASH_LENGTH));
           const filename = `${hash}.${ext}`;
           const filePath = path.join(targetDir, filename);
 
           if (!fs.existsSync(filePath)) {
             if (ext === "svg") {
-              const svgString = buffer.toString("utf-8");
+              const svgString = buffer.toString("utf8");
               const svgoConfig: Config = {
                 multipass: true,
                 plugins: [
@@ -151,16 +148,16 @@ export async function extractCssDataUris(distDir: string) {
 
   // Process standalone CSS files
   for (const file of cssFiles) {
-    const content = fs.readFileSync(file, "utf-8");
+    const content = fs.readFileSync(file, "utf8");
     const newContent = processCssContent(content, file);
     if (newContent !== content) {
-      fs.writeFileSync(file, newContent, "utf-8");
+      fs.writeFileSync(file, newContent, "utf8");
     }
   }
 
   // Process HTML files using cheerio for precision
   for (const file of htmlFiles) {
-    const content = fs.readFileSync(file, "utf-8");
+    const content = fs.readFileSync(file, "utf8");
     const $ = cheerio.load(content);
     let isModified = false;
 

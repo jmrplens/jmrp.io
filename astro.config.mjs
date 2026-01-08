@@ -48,7 +48,7 @@ const rehypeMermaidSplitter = () => (/** @type {any} */ tree) => {
               return Buffer.from(
                 dataUri.split(";base64,")[1],
                 "base64",
-              ).toString("utf-8");
+              ).toString("utf8");
             }
             return decodeURIComponent(dataUri.split(",")[1]);
           };
@@ -106,16 +106,16 @@ export default defineConfig({
         name: "Inter",
         provider: fontProviders.google(),
         cssVariable: "--font-inter",
-        weights: [400, 500, 600, 700, 800],
-        styles: ["normal"],
+        weights: [400, 700],
+        styles: ["normal", "italic"],
         subsets: ["latin"],
       },
       {
         name: "JetBrains Mono",
         provider: fontProviders.google(),
         cssVariable: "--font-jetbrains-mono",
-        weights: [400, 500, 600, 700, 800],
-        styles: ["normal"],
+        weights: [400, 700],
+        styles: ["normal", "italic"],
         subsets: ["latin"],
       },
     ],

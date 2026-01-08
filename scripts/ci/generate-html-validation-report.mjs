@@ -29,7 +29,7 @@ function getAllHtmlFiles(dir, fileList = []) {
   if (!fs.existsSync(dir)) return fileList;
 
   const files = fs.readdirSync(dir);
-  files.forEach((file) => {
+  for (const file of files) {
     const name = path.join(dir, file);
     if (fs.statSync(name).isDirectory()) {
       getAllHtmlFiles(name, fileList);
@@ -37,7 +37,7 @@ function getAllHtmlFiles(dir, fileList = []) {
       // Use relative paths for consistency across environments
       fileList.push(path.relative(process.cwd(), name));
     }
-  });
+  }
   return fileList;
 }
 
@@ -56,12 +56,12 @@ function getActiveRules() {
     const configJson = execFileSync(
       "pnpm",
       ["exec", "html-validate", "-c", CONFIG_FILE, "--print-config", firstHtml],
-      { encoding: "utf-8" },
+      { encoding: "utf8" },
     );
     const config = JSON.parse(configJson);
     return config.rules || {};
-  } catch (e) {
-    console.warn("⚠️ Could not retrieve active rules list:", e.message);
+  } catch (error) {
+    console.warn("⚠️ Could not retrieve active rules list:", error.message);
     return {};
   }
 }
@@ -76,7 +76,7 @@ function loadAndParseReport() {
   }
 
   try {
-    const content = fs.readFileSync(JSON_REPORT, "utf-8");
+    const content = fs.readFileSync(JSON_REPORT, "utf8");
     if (!content.trim()) {
       console.warn(
         "⚠️ HTML validation JSON report is empty. Assuming no issues found.",
@@ -87,8 +87,8 @@ function loadAndParseReport() {
     return Array.isArray(report)
       ? report
       : report.results || report.files || [];
-  } catch (e) {
-    console.error("❌ Error parsing JSON report:", e.message);
+  } catch (error) {
+    console.error("❌ Error parsing JSON report:", error.message);
     process.exit(1);
   }
 }
@@ -98,10 +98,10 @@ function loadAndParseReport() {
  */
 function processValidationData(results, allFiles) {
   const resultMap = new Map();
-  results.forEach((res) => {
+  for (const res of results) {
     const relPath = path.relative(process.cwd(), res.filePath);
     resultMap.set(relPath, res);
-  });
+  }
 
   return allFiles.map((filePath) => {
     const res = resultMap.get(filePath);
@@ -119,17 +119,15 @@ function processValidationData(results, allFiles) {
  */
 function calculateRuleCounts(files) {
   const ruleCounts = new Map();
-  files.forEach((file) => {
-    (file.messages || []).forEach((msg) => {
-      if (!msg.ruleId) return;
+  for (const file of files) {
+    for (const msg of file.messages || []) {
+      if (!msg.ruleId) continue;
       const count = ruleCounts.get(msg.ruleId) || 0;
       ruleCounts.set(msg.ruleId, count + 1);
-    });
-  });
+    }
+  }
 
-  return Array.from(ruleCounts.entries())
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 5);
+  return [...ruleCounts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5);
 }
 
 /**

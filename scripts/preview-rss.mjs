@@ -30,7 +30,7 @@ async function generatePreview() {
     },
   });
 
-  const xml = fs.readFileSync(RSS_FILE, "utf-8");
+  const xml = fs.readFileSync(RSS_FILE, "utf8");
   const feed = await parser.parseString(xml);
 
   const htmlContent = `
@@ -148,7 +148,7 @@ async function generatePreview() {
 
 try {
   await generatePreview();
-} catch (err) {
-  console.error(err);
+} catch (error) {
+  console.error(error);
   process.exit(1);
 }

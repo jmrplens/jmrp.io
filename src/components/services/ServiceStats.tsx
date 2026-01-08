@@ -73,8 +73,8 @@ async function fetchMastodonStats(setError: (error: boolean) => void) {
       const instanceData = (await resInstance.json()) as { version: string };
       instanceVersion = instanceData.version;
     }
-  } catch (e) {
-    console.error("Error fetching Mastodon stats:", e);
+  } catch (error) {
+    console.error("Error fetching Mastodon stats:", error);
     setError(true);
   }
 
@@ -107,8 +107,8 @@ async function fetchMatrixStats(setError: (error: boolean) => void) {
       const destData = (await resDest.json()) as { total: number };
       matrixData.federationTotal = destData.total;
     }
-  } catch (e) {
-    console.error("Error fetching Matrix stats:", e);
+  } catch (error) {
+    console.error("Error fetching Matrix stats:", error);
     setError(true);
   }
 
@@ -170,8 +170,8 @@ async function fetchPotatoVersion(): Promise<string> {
         potatoVersion = await resVer.text();
       }
     }
-  } catch (e) {
-    console.error("Error fetching PotatoMesh version:", e);
+  } catch (error) {
+    console.error("Error fetching PotatoMesh version:", error);
   }
   return potatoVersion;
 }
@@ -402,16 +402,27 @@ export default function ServiceStats({ type }: Props) {
 
       try {
         let data;
-        if (type === "mastodon") {
-          data = await fetchMastodonStats(setError);
-        } else if (type === "matrix") {
-          data = await fetchMatrixStats(setError);
-        } else if (type === "meshtastic-combined") {
-          data = await fetchMeshtasticStats();
+        switch (type) {
+          case "mastodon": {
+            data = await fetchMastodonStats(setError);
+
+            break;
+          }
+          case "matrix": {
+            data = await fetchMatrixStats(setError);
+
+            break;
+          }
+          case "meshtastic-combined": {
+            data = await fetchMeshtasticStats();
+
+            break;
+          }
+          // No default
         }
         if (data) setStats(data);
-      } catch (err) {
-        console.error("Error fetching service stats:", err);
+      } catch (error_) {
+        console.error("Error fetching service stats:", error_);
         setError(true);
       } finally {
         setLoading(false);

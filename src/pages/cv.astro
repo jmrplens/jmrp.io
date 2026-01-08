@@ -122,7 +122,7 @@ const personSchema = {
             sortedSections.map((section) => (
                 <section
                     class="cv-section"
-                    id={section.title.toLowerCase().replace(/ /g, "-")}
+                    id={section.title.toLowerCase().replaceAll(' ', "-")}
                     aria-label={section.title}
                 >
                     <h2 class="section-title">{section.title}</h2>
@@ -174,7 +174,7 @@ const personSchema = {
                                             <div
                                                 class="institution"
                                                 style="min-height: 1.2em"
-                                                set:html={item.institution.replace(
+                                                set:html={item.institution.replaceAll(
                                                     /&(?!(amp|lt|gt|quot|apos);)/g,
                                                     "&amp;",
                                                 )}
@@ -183,7 +183,7 @@ const personSchema = {
                                         {item.department && (
                                             <div
                                                 class="department"
-                                                set:html={item.department.replace(
+                                                set:html={item.department.replaceAll(
                                                     /&(?!(amp|lt|gt|quot|apos);)/g,
                                                     "&amp;",
                                                 )}
@@ -200,7 +200,7 @@ const personSchema = {
                                             <div
                                                 class="description summary"
                                                 style="min-height: 1.5em"
-                                                set:html={item.summary.replace(
+                                                set:html={item.summary.replaceAll(
                                                     /&(?!(amp|lt|gt|quot|apos);)/g,
                                                     "&amp;",
                                                 )}
@@ -219,7 +219,7 @@ const personSchema = {
                                                                 return (
                                                                     <li>
                                                                         <div
-                                                                            set:html={desc.replace(
+                                                                            set:html={desc.replaceAll(
                                                                                 /&(?!(amp|lt|gt|quot|apos);)/g,
                                                                                 "&amp;",
                                                                             )}
@@ -245,7 +245,7 @@ const personSchema = {
                                                                                 ) => (
                                                                                     <li>
                                                                                         <div
-                                                                                            set:html={sub.replace(
+                                                                                            set:html={sub.replaceAll(
                                                                                                 /&(?!(amp|lt|gt|quot|apos);)/g,
                                                                                                 "&amp;",
                                                                                             )}

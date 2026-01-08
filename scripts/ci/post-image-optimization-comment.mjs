@@ -24,7 +24,7 @@ export default async function postImageOptimizationComment({
   const getCount = (pattern) => {
     try {
       return execSync(`find dist -type f ${pattern} 2>/dev/null | wc -l`, {
-        encoding: "utf-8",
+        encoding: "utf8",
       }).trim();
     } catch {
       return "0";
@@ -35,7 +35,7 @@ export default async function postImageOptimizationComment({
   const pngCount = getCount('-name "*.png"');
   const jpgCount = execSync(
     'find dist -type f | grep -iE ".jpe?g$" | wc -l || echo "0"',
-    { encoding: "utf-8" },
+    { encoding: "utf8" },
   ).trim();
 
   const surgeUrl = process.env.SURGE_URL;
@@ -45,7 +45,7 @@ export default async function postImageOptimizationComment({
   try {
     const largeImagesRaw = execSync(
       'find dist -type f -size +500k 2>/dev/null | grep -iE ".(webp|png|jpe?g)$" || echo ""',
-      { encoding: "utf-8" },
+      { encoding: "utf8" },
     ).trim();
 
     if (largeImagesRaw) {
@@ -57,7 +57,7 @@ export default async function postImageOptimizationComment({
 
         const imageDetails = lines.map((img) => {
           const size = execSync(`ls -lh "${img}" | awk '{print $5}'`, {
-            encoding: "utf-8",
+            encoding: "utf8",
           }).trim();
           return "| `" + img.replace("dist/", "") + "` | **" + size + "** |";
         });

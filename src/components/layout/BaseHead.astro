@@ -143,7 +143,7 @@ const navSchema = (siteData.nav || []).map((item) => ({
 }));
 
 // 3. Breadcrumb Schema (Automatic)
-const pathSegments = Astro.url.pathname.split("/").filter((s) => s);
+const pathSegments = Astro.url.pathname.split("/").filter(Boolean);
 const breadcrumbList = {
     "@type": "BreadcrumbList",
     "@id": `${Astro.url.toString()}#breadcrumb`,
@@ -161,8 +161,8 @@ const breadcrumbList = {
 
             // Prefer page title for the last segment if available
             const fallbackName = segment
-                .replace(/-/g, " ")
-                .replace(/\b\w/g, (l) => l.toUpperCase());
+                .replaceAll('-', " ")
+                .replaceAll(/\b\w/g, (l) => l.toUpperCase());
             const name =
                 isLastSegment && title && title !== siteData.title
                     ? title

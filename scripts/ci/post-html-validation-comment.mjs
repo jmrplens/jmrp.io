@@ -36,15 +36,15 @@ function buildIssuesSection(filesWithErrors) {
   let section =
     "<details>\n<summary><b>🔍 View Detailed Issues (Top 10)</b></summary>\n\n";
 
-  filesWithErrors.slice(0, 10).forEach((f) => {
+  for (const f of filesWithErrors.slice(0, 10)) {
     const fileName = f.filePath.replace("dist/", "").split("/").pop();
     section += `#### 📄 **${fileName}**\n`;
-    f.messages.forEach((m) => {
+    for (const m of f.messages) {
       const severity = m.severity === 2 ? "🔴" : "⚠️";
       section += `- ${severity} [${m.ruleId}] ${m.message} (Line ${m.line})\n`;
-    });
+    }
     section += "\n---\n";
-  });
+  }
 
   if (filesWithErrors.length > 10) {
     section += `\n*...and ${filesWithErrors.length - 10} more files with issues (see build logs for full list).* \n`;
@@ -112,9 +112,9 @@ export default async function postHtmlValidationComment({ github, context }) {
       comment =
         "### ⚠️ HTML5 Validation\n\n> ⚠️ Report file not found. Check build logs.";
     }
-  } catch (e) {
+  } catch (error) {
     comment = "### ⚠️ HTML5 Validation\n\n> ❌ Error processing report.";
-    console.error("HTML validation comment error:", e);
+    console.error("HTML validation comment error:", error);
   }
 
   await github.rest.issues.createComment({

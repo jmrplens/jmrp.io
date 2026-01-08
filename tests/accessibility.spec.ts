@@ -64,7 +64,7 @@ async function getPagesFromSitemap(): Promise<
   console.log(`🔍 Using sitemap at: ${sitemapPath}`);
 
   try {
-    const sitemapContent = fs.readFileSync(sitemapPath, "utf-8");
+    const sitemapContent = fs.readFileSync(sitemapPath, "utf8");
     const sitemap = (await parseStringPromise(sitemapContent)) as SitemapResult;
 
     let urls = sitemap.urlset.url.map((entry) => {
@@ -148,8 +148,8 @@ test.describe("Accessibility Tests (Axe-core WCAG 2.1 AA)", () => {
     const uniqueViolations = new Map<string, AggregatedResult>();
     const uniqueIncomplete = new Map<string, AggregatedResult>();
 
-    results.forEach((pageResult) => {
-      pageResult.detailedViolations.forEach((v) => {
+    for (const pageResult of results) {
+      for (const v of pageResult.detailedViolations) {
         if (!uniqueViolations.has(v.id)) {
           uniqueViolations.set(v.id, {
             ...v,
@@ -160,9 +160,9 @@ test.describe("Accessibility Tests (Axe-core WCAG 2.1 AA)", () => {
         if (violation) {
           violation.nodes += v.nodes.length;
         }
-      });
+      }
 
-      pageResult.detailedIncomplete.forEach((i) => {
+      for (const i of pageResult.detailedIncomplete) {
         if (!uniqueIncomplete.has(i.id)) {
           uniqueIncomplete.set(i.id, {
             ...i,
@@ -173,8 +173,8 @@ test.describe("Accessibility Tests (Axe-core WCAG 2.1 AA)", () => {
         if (incomplete) {
           incomplete.nodes += i.nodes.length;
         }
-      });
-    });
+      }
+    }
 
     // Generate summary after all tests are done
     const summary = {
@@ -183,8 +183,8 @@ test.describe("Accessibility Tests (Axe-core WCAG 2.1 AA)", () => {
       passed: results.filter((r) => r.violations === 0).length,
       failed: results.filter((r) => r.violations > 0).length,
       incomplete: results.filter((r) => r.incomplete > 0).length,
-      violations: Array.from(uniqueViolations.values()),
-      incompleteList: Array.from(uniqueIncomplete.values()),
+      violations: [...uniqueViolations.values()],
+      incompleteList: [...uniqueIncomplete.values()],
       pages: results.map(
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         ({ detailedViolations, detailedIncomplete, ...rest }) => rest,
@@ -299,8 +299,7 @@ test.describe("Accessibility Tests (Axe-core WCAG 2.1 AA)", () => {
       // Verify theme application
       await browserPage.evaluate((t) => {
         document.documentElement.dataset.theme = t;
-        if (t === "dark") document.documentElement.classList.add("dark");
-        else document.documentElement.classList.remove("dark");
+        document.documentElement.classList.toggle("dark", t === "dark");
       }, theme);
 
       await browserPage.evaluate(() => document.fonts.ready);

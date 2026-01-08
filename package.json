@@ -89,6 +89,7 @@
     "eslint-plugin-playwright": "^2.4.0",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-simple-import-sort": "^12.1.1",
+    "eslint-plugin-unicorn": "^62.0.0",
     "glob": "^13.0.0",
     "hast-util-from-html-isomorphic": "^2.0.0",
     "he": "^1.2.0",

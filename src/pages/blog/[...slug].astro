@@ -44,8 +44,8 @@ const { Content, headings } = await render(post);
 // --- Reference Collection Logic ---
 // Strip code blocks to avoid false positives from code examples
 const bodyWithoutCode = post.body!
-    .replace(/```[\s\S]*?```/g, "")
-    .replace(/`[^`]*?`/g, "");
+    .replaceAll(/```[\s\S]*?```/g, "")
+    .replaceAll(/`[^`]*?`/g, "");
 
 // Regex to find all markdown links: [text](url)
 const linkRegex = /\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/g;
@@ -60,7 +60,7 @@ const $ = cheerio.load(bodyWithoutCode);
 $('a[href^="http"], a[href^="//"]').each((_, el) => {
     const $el = $(el);
     const url = $el.attr("href");
-    const text = $el.text().replace(/\s+/g, " ").trim();
+    const text = $el.text().replaceAll(/\s+/g, " ").trim();
     if (url && text) {
         collectedRefsFromMarkdown.push({ text, url });
     }

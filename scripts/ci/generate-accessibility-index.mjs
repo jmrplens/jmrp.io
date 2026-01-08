@@ -33,7 +33,7 @@ const indexPath = path.join(deployDir, "index.html");
 // Helper: Scan for all HTML reports
 function findReports(dir, fileList = []) {
   const files = fs.readdirSync(dir);
-  files.forEach((file) => {
+  for (const file of files) {
     const filePath = path.join(dir, file);
     const stat = fs.statSync(filePath);
     if (stat.isDirectory()) {
@@ -41,14 +41,14 @@ function findReports(dir, fileList = []) {
     } else if (file.endsWith(".html") && file !== "index.html") {
       fileList.push(filePath);
     }
-  });
+  }
   return fileList;
 }
 
 const htmlFiles = findReports(deployDir);
 const reports = [];
 
-htmlFiles.forEach((filePath) => {
+for (const filePath of htmlFiles) {
   const lowerPath = filePath.toLowerCase();
   let theme = "unknown";
 
@@ -64,13 +64,13 @@ htmlFiles.forEach((filePath) => {
     relativePath: path.relative(deployDir, filePath),
     theme: theme,
   });
-});
+}
 
 const grouped = { light: [], dark: [], unknown: [] };
-reports.forEach((r) => {
+for (const r of reports) {
   if (grouped[r.theme]) grouped[r.theme].push(r);
   else grouped.unknown.push(r);
-});
+}
 
 function renderReportList(theme, list) {
   if (list.length === 0) return "";
@@ -312,7 +312,7 @@ console.log(`Generated accessibility index at ${indexPath}`);
 
 function findSummaries(dir, fileList = []) {
   const files = fs.readdirSync(dir);
-  files.forEach((file) => {
+  for (const file of files) {
     const filePath = path.join(dir, file);
     const stat = fs.statSync(filePath);
     if (stat.isDirectory()) {
@@ -323,7 +323,7 @@ function findSummaries(dir, fileList = []) {
     ) {
       fileList.push(filePath);
     }
-  });
+  }
   return fileList;
 }
 
@@ -332,9 +332,9 @@ if (summaryFiles.length > 0) {
   const aggregatedReport = summaryFiles
     .map((file) => {
       try {
-        return JSON.parse(fs.readFileSync(file, "utf-8"));
-      } catch (e) {
-        console.error(`Error parsing summary ${file}:`, e);
+        return JSON.parse(fs.readFileSync(file, "utf8"));
+      } catch (error) {
+        console.error(`Error parsing summary ${file}:`, error);
         return null;
       }
     })

@@ -10,28 +10,28 @@ import fs from "node:fs";
 
 // Load environment variables from .env if present
 if (fs.existsSync(".env")) {
-  const envContent = fs.readFileSync(".env", "utf-8");
-  envContent.split("\n").forEach((line) => {
+  const envContent = fs.readFileSync(".env", "utf8");
+  for (const line of envContent.split("\n")) {
     const match = line.match(/^([^=]+)=(.*)$/);
     if (match) {
       const key = match[1].trim();
-      const value = match[2].trim().replace(/^["']|["']$/g, ""); // Remove quotes
+      const value = match[2].trim().replaceAll(/^["']|["']$/g, ""); // Remove quotes
       if (!process.env[key]) {
         process.env[key] = value;
       }
     }
-  });
+  }
 }
 
 // ANSI colors for pretty output
 const colors = {
-  reset: "\x1b[0m",
-  bright: "\x1b[1m",
-  green: "\x1b[32m",
-  yellow: "\x1b[33m",
-  red: "\x1b[31m",
-  cyan: "\x1b[36m",
-  magenta: "\x1b[35m",
+  reset: "\u001B[0m",
+  bright: "\u001B[1m",
+  green: "\u001B[32m",
+  yellow: "\u001B[33m",
+  red: "\u001B[31m",
+  cyan: "\u001B[36m",
+  magenta: "\u001B[35m",
 };
 
 /**
@@ -159,15 +159,15 @@ try {
     "html-validation.json",
     "rss-validation.json",
   ];
-  reportFiles.forEach((f) => {
+  for (const f of reportFiles) {
     if (fs.existsSync(f)) fs.unlinkSync(f);
-  });
-} catch (err) {
-  const message = err instanceof Error ? err.message : String(err);
+  }
+} catch (error) {
+  const message = error instanceof Error ? error.message : String(error);
   console.warn(`[Verify] Warning: Pre-run cleanup failed: ${message}`);
 }
 
-runVerify().catch((err) => {
-  console.error(err);
+runVerify().catch((error) => {
+  console.error(error);
   process.exit(1);
 });

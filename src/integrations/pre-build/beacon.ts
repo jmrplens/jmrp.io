@@ -25,7 +25,7 @@ export async function setupCfBeacon(token: string | undefined) {
 
   try {
     const res = await fetch(BEACON_URL, {
-      signal: AbortSignal.timeout(10000),
+      signal: AbortSignal.timeout(10_000),
     });
 
     if (!res.ok) throw new Error(`Status ${res.status}`);

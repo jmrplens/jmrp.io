@@ -31,7 +31,7 @@ function loadEnv() {
   const envPath = join(__dirname, "../.env");
   if (fs.existsSync(envPath)) {
     const content = fs.readFileSync(envPath, "utf8");
-    content.split("\n").forEach((line) => {
+    for (const line of content.split("\n")) {
       const envRegex = /^\s*([\w.-]+)\s*=\s*(.*)\s*$/;
       const match = envRegex.exec(line);
       if (match) {
@@ -43,14 +43,14 @@ function loadEnv() {
           value = value.slice(1, -1);
         process.env[key] = value;
       }
-    });
+    }
   }
 }
 
 loadEnv();
 
 // Port for the CSP reporter; can be overridden via the CSP_REPORTER_PORT environment variable.
-const DEFAULT_PORT = 58291;
+const DEFAULT_PORT = 58_291;
 const PORT = (() => {
   const envPort = process.env.CSP_REPORTER_PORT;
   if (!envPort) return DEFAULT_PORT;
@@ -119,8 +119,8 @@ const server = http.createServer((req, res) => {
         processReport(report, clientIp, userAgent);
         res.writeHead(204);
         res.end();
-      } catch (e) {
-        console.error("Error parsing CSP report JSON:", e.message);
+      } catch (error) {
+        console.error("Error parsing CSP report JSON:", error.message);
         res.writeHead(400);
         res.end("Invalid JSON");
       }
@@ -183,7 +183,7 @@ function sendToTelegram(report, ip, ua) {
   });
 
   let sample = (r["script-sample"] || "N/A").replaceAll("\n", " ").trim();
-  if (sample.length > 100) sample = sample.substring(0, 97) + "...";
+  if (sample.length > 100) sample = sample.slice(0, 97) + "...";
 
   // Safely handle document-uri
   const rawDocUri = r["document-uri"] || "";
@@ -207,7 +207,7 @@ function sendToTelegram(report, ip, ua) {
     `🚫 <b>Blocked:</b> <code>${escapeHtml(r["blocked-uri"] || "inline/eval")}</code>`,
     `🛠️ <b>Directive:</b> <code>${escapeHtml(r["violated-directive"])}</code>`,
     `🔍 <b>Sample:</b> <code>${escapeHtml(sample)}</code>`,
-    `📱 <b>UA:</b> <code>${escapeHtml(ua.substring(0, 80))}</code>`,
+    `📱 <b>UA:</b> <code>${escapeHtml(ua.slice(0, 80))}</code>`,
   ];
 
   const caption = lines.join("\n");
@@ -217,7 +217,7 @@ function sendToTelegram(report, ip, ua) {
     2,
   );
   const boundary =
-    "----WebKitFormBoundary" + Math.random().toString(36).substring(2);
+    "----WebKitFormBoundary" + Math.random().toString(36).slice(2);
 
   const payload = Buffer.concat([
     Buffer.from(

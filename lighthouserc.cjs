@@ -42,8 +42,8 @@ const getUrls = () => {
       `📄 Found ${urls.length} optimized pages in sitemap for Lighthouse analysis.`,
     );
     return urls;
-  } catch (e) {
-    console.error("❌ Error parsing sitemap for URLs:", e);
+  } catch (error) {
+    console.error("❌ Error parsing sitemap for URLs:", error);
     return ["http://localhost/"];
   }
 };

@@ -47,7 +47,7 @@ export async function finalizeCspConfig(distDir: string, cspData: CspData) {
     hashes: Set<string>,
     prefix: string,
   ): { vars: string; usage: string } => {
-    const list = Array.from(hashes);
+    const list = [...hashes];
     const chunks: string[] = [];
     let current = "";
 
@@ -78,9 +78,7 @@ export async function finalizeCspConfig(distDir: string, cspData: CspData) {
   const scriptChunks = chunkHashes(allScriptHashes, "csp_script");
   const styleChunks = chunkHashes(allStyleHashes, "csp_style");
 
-  const imgSrc = Array.from(cspData.imageDomains)
-    .map((d) => `https://${d}`)
-    .join(" ");
+  const imgSrc = [...cspData.imageDomains].map((d) => `https://${d}`).join(" ");
 
   // Modern and Strict CSP
   const cspHeader = [

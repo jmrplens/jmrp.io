@@ -22,9 +22,7 @@ function getStatusText(result) {
   return result.failed === 0 ? "✅ Passed" : "❌ Failed";
 }
 
-const report = JSON.parse(
-  fs.readFileSync("accessibility-report.json", "utf-8"),
-);
+const report = JSON.parse(fs.readFileSync("accessibility-report.json", "utf8"));
 const results = {
   light: report.find((r) => r.theme === "light"),
   dark: report.find((r) => r.theme === "dark"),
@@ -56,8 +54,8 @@ if (results.dark) {
 console.log("");
 
 // Details for each theme
-[results.light, results.dark].forEach((themeResult) => {
-  if (!themeResult) return;
+for (const themeResult of [results.light, results.dark]) {
+  if (!themeResult) continue;
 
   const emoji = themeResult.theme === "light" ? "☀️" : "🌙";
   const themeName =
@@ -72,25 +70,25 @@ console.log("");
 
     if (themeResult.violations.length > 0) {
       console.log("#### ❌ Violations");
-      themeResult.violations.forEach((v) => {
+      for (const v of themeResult.violations) {
         console.log(`- **${v.id}**: ${v.impact} - ${v.description}`);
         console.log(`  - Affected: ${v.nodes} node(s)`);
-      });
+      }
       console.log("");
     }
 
     if (themeResult.incomplete.length > 0) {
       console.log("#### ⚠️ Incomplete");
-      themeResult.incomplete.forEach((i) => {
+      for (const i of themeResult.incomplete) {
         console.log(`- **${i.id}**: ${i.description}`);
         console.log(`  - Manual review needed: ${i.nodes} node(s)`);
-      });
+      }
     }
 
     console.log("</details>");
     console.log("");
   }
-});
+}
 
 console.log("---");
 

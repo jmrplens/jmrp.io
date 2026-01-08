@@ -42,8 +42,8 @@ function extractJsonLd(html) {
 
     try {
       jsonLdBlocks.push(JSON.parse(content));
-    } catch (e) {
-      jsonLdBlocks.push({ error: e.message, raw: content });
+    } catch (error) {
+      jsonLdBlocks.push({ error: error.message, raw: content });
     }
   });
 
@@ -103,7 +103,7 @@ function validateBreadcrumbListSchema(schema, p, errors) {
     return;
   }
 
-  schema.itemListElement.forEach((item, i) => {
+  for (const [i, item] of schema.itemListElement.entries()) {
     const itemP = `${p}.itemListElement[${i}]`;
     if (!item["@type"] || item["@type"] !== "ListItem") {
       errors.push(`${itemP}: Must be ListItem`);
@@ -111,7 +111,7 @@ function validateBreadcrumbListSchema(schema, p, errors) {
     if (!item.position) errors.push(`${itemP}: Missing position`);
     if (!item.name) errors.push(`${itemP}: Missing name`);
     if (!item.item) errors.push(`${itemP}: Missing item URL`);
-  });
+  }
 }
 
 /**
@@ -136,13 +136,13 @@ function validateSingleSchema(schema, prefix = "") {
     if (!schema[propName]) return;
 
     if (Array.isArray(schema[propName])) {
-      schema[propName].forEach((item, i) => {
+      for (const [i, item] of schema[propName].entries()) {
         if (typeof item === "object") {
           const res = validateSingleSchema(item, `${p}.${propName}[${i}]`);
           errors.push(...res.errors);
           warnings.push(...res.warnings);
         }
-      });
+      }
     } else if (typeof schema[propName] === "object") {
       const res = validateSingleSchema(schema[propName], `${p}.${propName}`);
       errors.push(...res.errors);
@@ -152,19 +152,23 @@ function validateSingleSchema(schema, prefix = "") {
 
   // Validate based on schema type
   switch (type) {
-    case "Person":
+    case "Person": {
       validatePersonSchema(schema, p, errors, warnings);
       break;
-    case "WebSite":
+    }
+    case "WebSite": {
       validateWebSiteSchema(schema, p, errors, validateNested);
       break;
+    }
     case "BlogPosting":
-    case "Article":
+    case "Article": {
       validateArticleSchema(schema, p, errors, warnings, validateNested);
       break;
-    case "BreadcrumbList":
+    }
+    case "BreadcrumbList": {
       validateBreadcrumbListSchema(schema, p, errors);
       break;
+    }
   }
 
   return { errors, warnings };
@@ -191,11 +195,11 @@ function validateSchema(schema) {
   }
 
   if (schema["@graph"] && Array.isArray(schema["@graph"])) {
-    schema["@graph"].forEach((item, index) => {
+    for (const [index, item] of schema["@graph"].entries()) {
       const result = validateSingleSchema(item, `Graph item ${index}`);
       errors.push(...result.errors);
       warnings.push(...result.warnings);
-    });
+    }
     return { errors, warnings };
   }
 
@@ -220,7 +224,7 @@ async function validateAllPages() {
       continue;
     }
     // deepcode ignore PT: file is validated by isPathSafe()
-    const html = fs.readFileSync(file, "utf-8");
+    const html = fs.readFileSync(file, "utf8");
     const schemas = extractJsonLd(html);
     if (schemas.length === 0) continue;
 
@@ -228,7 +232,7 @@ async function validateAllPages() {
     const fileErrors = [];
     const fileWarnings = [];
 
-    schemas.forEach((schema, index) => {
+    for (const [index, schema] of schemas.entries()) {
       const { errors, warnings } = validateSchema(schema);
       if (errors.length > 0)
         fileErrors.push({ index, type: schema["@type"], errors });
@@ -236,7 +240,7 @@ async function validateAllPages() {
         fileWarnings.push({ index, type: schema["@type"], warnings });
       totalErrors += errors.length;
       totalWarnings += warnings.length;
-    });
+    }
 
     totalSchemas += schemas.length;
     // Always push if schemas exist, so we can show "Valid" pages too
@@ -270,19 +274,19 @@ async function validateAllPages() {
   );
 
   if (fileResults.some((r) => !r.valid || r.warnings.length > 0)) {
-    fileResults.forEach((result) => {
+    for (const result of fileResults) {
       if (result.errors.length > 0 || result.warnings.length > 0) {
         console.log(`\n📄 ${result.file} (${result.schemasCount} schemas)`);
-        result.errors.forEach(({ index, type, errors }) => {
+        for (const { index, type, errors } of result.errors) {
           console.log(`   ❌ Schema ${index + 1} (${type}):`);
-          errors.forEach((err) => console.log(`      • ${err}`));
-        });
-        result.warnings.forEach(({ index, type, warnings }) => {
+          for (const err of errors) console.log(`      • ${err}`);
+        }
+        for (const { index, type, warnings } of result.warnings) {
           console.log(`   ⚠️ Schema ${index + 1} (${type}):`);
-          warnings.forEach((warn) => console.log(`      • ${warn}`));
-        });
+          for (const warn of warnings) console.log(`      • ${warn}`);
+        }
       }
-    });
+    }
   }
 
   if (totalErrors === 0 && totalSchemas > 0) {

@@ -47,7 +47,7 @@ export function writeHtml(filePath: string, html: string) {
       return match;
     },
   );
-  fs.writeFileSync(filePath, cleaned, "utf-8");
+  fs.writeFileSync(filePath, cleaned, "utf8");
 }
 
 /**
@@ -104,12 +104,9 @@ export function resolveFile(
   const cleanUrl = url.split("?")[0].split("#")[0];
   if (cleanUrl.startsWith("http") || cleanUrl.startsWith("//")) return null;
 
-  let filePath;
-  if (cleanUrl.startsWith("/")) {
-    filePath = path.join(distDir, cleanUrl);
-  } else {
-    filePath = path.resolve(baseDir, cleanUrl);
-  }
+  const filePath = cleanUrl.startsWith("/")
+    ? path.join(distDir, cleanUrl)
+    : path.resolve(baseDir, cleanUrl);
 
   const rel = path.relative(distDir, filePath);
   if (rel.startsWith("..")) return null;

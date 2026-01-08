@@ -78,7 +78,7 @@ if (socials.matrix_id) {
 // Custom Socials
 if (socials.custom_social) {
     const customs = socials.custom_social;
-    customs.forEach((item) => {
+    for (const item of customs) {
         if (item.icon) {
             socialLinks.push({
                 url: item.url,
@@ -106,7 +106,7 @@ if (socials.custom_social) {
                 label: item.title,
             });
         }
-    });
+    }
 }
 
 // Helper to map FontAwesome classes to Iconify names

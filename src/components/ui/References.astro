@@ -40,7 +40,7 @@ const iconFiles = import.meta.glob<{ default: ImageMetadata }>(
                     const urlObj = new URL(ref.url);
                     const hostname = urlObj.hostname;
                     // Match filename logic: hostname with special chars replaced by underscore
-                    const iconName = hostname.replace(/[^a-z0-9]/gi, "_");
+                    const iconName = hostname.replaceAll(/[^a-z0-9]/gi, "_");
 
                     // Try to find the matching icon
                     const iconPath = `/src/assets/icons/${iconName}.webp`;
@@ -52,7 +52,7 @@ const iconFiles = import.meta.glob<{ default: ImageMetadata }>(
                             target="_blank"
                             rel="noopener noreferrer"
                             class="reference-card"
-                            aria-label={`${ref.text} (${hostname}${urlObj.pathname !== "/" ? urlObj.pathname : ""})`}
+                            aria-label={`${ref.text} (${hostname}${urlObj.pathname === "/" ? "" : urlObj.pathname})`}
                         >
                             <div class="card-icon">
                                 {iconModule ? (

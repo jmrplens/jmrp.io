@@ -89,7 +89,7 @@ export const GET: APIRoute = async () => {
     dir: "ltr",
   };
 
-  return new Response(JSON.stringify(manifest), {
+  return Response.json(manifest, {
     headers: {
       "Content-Type": "application/manifest+json; charset=utf-8",
     },

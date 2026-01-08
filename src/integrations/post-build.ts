@@ -65,10 +65,14 @@ export default function postBuildIntegration(): AstroIntegration {
             await finalizeCspConfig(distDir, cspData);
             deploySecurityHeaders(distDir, systemNginxPath, logger);
           }
-        } catch (e) {
+        } catch (error) {
           logger.error("Fatal optimization error:");
-          logger.error(e instanceof Error ? e.stack || e.message : String(e));
-          throw e instanceof Error ? e : new Error(String(e));
+          logger.error(
+            error instanceof Error
+              ? error.stack || error.message
+              : String(error),
+          );
+          throw error instanceof Error ? error : new Error(String(error));
         }
 
         logger.info(`Optimizations completed successfully.`);

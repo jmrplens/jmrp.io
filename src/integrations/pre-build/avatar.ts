@@ -37,7 +37,7 @@ async function fetchGitHubAvatarBuffer(): Promise<Buffer> {
   // 1. Get Profile Data
   const profile = (await fetch(API_URL, {
     headers: { "User-Agent": "Astro-PreBuild-Integration" },
-    signal: AbortSignal.timeout(10000),
+    signal: AbortSignal.timeout(10_000),
   }).then((res) => {
     if (!res.ok) throw new Error(`API error: ${res.status}`);
     return res.json();
@@ -48,7 +48,7 @@ async function fetchGitHubAvatarBuffer(): Promise<Buffer> {
   // 2. Download Image
   const imageRes = await fetch(profile.avatar_url, {
     headers: { "User-Agent": "Astro-PreBuild-Integration" },
-    signal: AbortSignal.timeout(15000),
+    signal: AbortSignal.timeout(15_000),
   });
 
   if (!imageRes.ok) throw new Error(`Image error: ${imageRes.status}`);

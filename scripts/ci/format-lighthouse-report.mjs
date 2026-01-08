@@ -19,7 +19,7 @@ if (!fs.existsSync(lhDir)) {
 // Recursive scan
 function findReports(dir, fileList = []) {
   const files = fs.readdirSync(dir);
-  files.forEach((file) => {
+  for (const file of files) {
     const filePath = path.join(dir, file);
     const stat = fs.statSync(filePath);
     if (stat.isDirectory()) {
@@ -31,19 +31,19 @@ function findReports(dir, fileList = []) {
     ) {
       fileList.push(filePath);
     }
-  });
+  }
   return fileList;
 }
 
 const files = findReports(lhDir);
 const results = {};
 
-files.forEach((filePath) => {
+for (const filePath of files) {
   try {
     const content = fs.readFileSync(filePath, "utf8");
     const json = JSON.parse(content);
 
-    if (!json.finalUrl) return;
+    if (!json.finalUrl) continue;
 
     // Normalize URL
     let url = json.finalUrl;
@@ -52,9 +52,9 @@ files.forEach((filePath) => {
       if (parsed.hostname === "localhost") {
         url = parsed.pathname || "/";
       }
-    } catch (e) {
+    } catch (error) {
       // Fallback to original URL if parsing fails
-      console.warn(`URL parsing failed for ${filePath}:`, e.message);
+      console.warn(`URL parsing failed for ${filePath}:`, error.message);
     }
 
     const formFactor = json.configSettings?.formFactor || "mobile";
@@ -79,11 +79,11 @@ files.forEach((filePath) => {
     if (results[url][theme][formFactor]) {
       results[url][theme][formFactor].push(scores);
     }
-  } catch (e) {
+  } catch (error) {
     // Skip invalid files
-    console.warn(`Failed to process ${filePath}:`, e.message);
+    console.warn(`Failed to process ${filePath}:`, error.message);
   }
-});
+}
 
 // Calculate maximums per category and then average those maximums
 const getAggregatedScore = (list) => {

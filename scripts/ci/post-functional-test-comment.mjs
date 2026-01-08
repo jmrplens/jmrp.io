@@ -60,16 +60,16 @@ export default async function script({ github, context }) {
         }
       }
       for (const child of suite.suites || []) {
-        failedTests = failedTests.concat(findFailedTests(child));
+        failedTests = [...failedTests, ...findFailedTests(child)];
       }
       return failedTests;
     }
 
     const failedTests = findFailedTests({ suites: report.suites });
 
-    failedTests.forEach((spec) => {
+    for (const spec of failedTests) {
       body += `- **${spec.title}** (${spec.file})\n`;
-    });
+    }
     body += "</details>\n\n";
   } else {
     body += "> All functional tests passed! ✨\n";

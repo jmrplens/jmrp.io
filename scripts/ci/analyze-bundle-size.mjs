@@ -57,16 +57,31 @@ async function analyze() {
     stats.fileCount++;
 
     let category = "other";
-    if (ext === ".js") category = "js";
-    else if (ext === ".css") category = "css";
-    else if (ext === ".html") category = "html";
-    else if (
-      [".png", ".jpg", ".jpeg", ".webp", ".gif", ".svg", ".ico"].includes(ext)
-    )
-      category = "image";
-    else if ([".woff", ".woff2", ".ttf", ".otf", ".eot"].includes(ext))
-      category = "font";
-    else if (ext === ".pdf") category = "pdf";
+    switch (ext) {
+      case ".js": {
+        category = "js";
+        break;
+      }
+      case ".css": {
+        category = "css";
+        break;
+      }
+      case ".html": {
+        category = "html";
+        break;
+      }
+      default: {
+        if (
+          [".png", ".jpg", ".jpeg", ".webp", ".gif", ".svg", ".ico"].includes(
+            ext,
+          )
+        )
+          category = "image";
+        else if ([".woff", ".woff2", ".ttf", ".otf", ".eot"].includes(ext))
+          category = "font";
+        else if (ext === ".pdf") category = "pdf";
+      }
+    }
 
     stats.categories[category].size += size;
     stats.categories[category].count++;
@@ -95,7 +110,7 @@ async function analyze() {
 
 try {
   await analyze();
-} catch (err) {
-  console.error(err);
+} catch (error) {
+  console.error(error);
   process.exit(1);
 }

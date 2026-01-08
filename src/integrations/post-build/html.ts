@@ -33,23 +33,20 @@ function extractDataUri(
     if (commaIndex === -1) return null;
 
     const metadata = rawDataUri.substring(5, commaIndex);
-    const data = rawDataUri.substring(commaIndex + 1);
+    const data = rawDataUri.slice(Math.max(0, commaIndex + 1));
     const isBase64 = metadata.includes(";base64");
     const mime = metadata.split(";")[0] || "application/octet-stream";
 
-    let buffer: Buffer;
-    if (isBase64) {
-      buffer = Buffer.from(data, "base64");
-    } else {
-      buffer = Buffer.from(decodeURIComponent(data.trim()));
-    }
+    const buffer = isBase64
+      ? Buffer.from(data, "base64")
+      : Buffer.from(decodeURIComponent(data.trim()));
 
     const ext = getExtensionFromMime(mime);
     const hash = crypto
       .createHash("sha256")
       .update(buffer)
       .digest("hex")
-      .substring(0, ASSET_FILENAME_HASH_LENGTH);
+      .slice(0, Math.max(0, ASSET_FILENAME_HASH_LENGTH));
     const filename = `${hash}.${ext}`;
     const filePath = path.join(targetDir, filename);
 
@@ -59,8 +56,8 @@ function extractDataUri(
     }
 
     return { url: `/${ASSETS_DIR}/${filename}`, extracted: false };
-  } catch (e) {
-    const message = e instanceof Error ? e.message : String(e);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
     console.error(`[PostBuild] Error extracting data URI: ${message}`);
     return null;
   }
@@ -122,10 +119,10 @@ function hardenBeaconScript(distDir: string, hashCache: Map<string, string>) {
   const beaconPath = path.join(distDir, "scripts", "cf-beacon.js");
   if (fs.existsSync(beaconPath)) {
     console.log("[PostBuild] Hardening cf-beacon.js with local guard...");
-    const originalBeacon = fs.readFileSync(beaconPath, "utf-8");
+    const originalBeacon = fs.readFileSync(beaconPath, "utf8");
     // Prepend a guard that stops execution on localhost/127.0.0.1/0.0.0.0/::1/[::1]
     const hardenedBeacon = `(function(){var h=location.hostname;if(h==='localhost'||h==='127.0.0.1'||h==='0.0.0.0'||h==='::1'||h==='[::1]')return;${originalBeacon}})();`;
-    fs.writeFileSync(beaconPath, hardenedBeacon, "utf-8");
+    fs.writeFileSync(beaconPath, hardenedBeacon, "utf8");
     // Force re-calculation of hash for this file
     hashCache.delete(`${beaconPath}:sha512`);
   }
@@ -139,7 +136,7 @@ function processSingleHtmlFile(
   hashCache: Map<string, string>,
   enableCsp: boolean,
 ): { modified: boolean; updatedSriTags: number; extractedImages: number } {
-  const content = fs.readFileSync(file, "utf-8");
+  const content = fs.readFileSync(file, "utf8");
   const $ = cheerio.load(content);
   let isModified = false;
   let updatedSriTags = 0;
@@ -368,11 +365,9 @@ function ensureCrossorigin(
   $el: cheerio.Cheerio<Element>,
   type: "script" | "link",
 ): boolean {
-  if (isSriEligible($el, type)) {
-    if (!$el.attr("crossorigin")) {
-      $el.attr("crossorigin", "anonymous");
-      return true;
-    }
+  if (isSriEligible($el, type) && !$el.attr("crossorigin")) {
+    $el.attr("crossorigin", "anonymous");
+    return true;
   }
   return false;
 }
@@ -399,11 +394,9 @@ function addNonce(
   $el: cheerio.Cheerio<Element>,
   type: "script" | "link",
 ): boolean {
-  if (isNonceEligible($el, type)) {
-    if (!$el.attr("nonce")) {
-      $el.attr("nonce", "NGINX_CSP_NONCE");
-      return true;
-    }
+  if (isNonceEligible($el, type) && !$el.attr("nonce")) {
+    $el.attr("nonce", "NGINX_CSP_NONCE");
+    return true;
   }
   return false;
 }
@@ -472,7 +465,7 @@ function collectImageDomains($: cheerio.CheerioAPI, cspData: CspData) {
     const $el = $(el);
     const sources = ($el.attr("src") || "") + " " + ($el.attr("srcset") || "");
 
-    sources.split(/,?\s+/).forEach((srcCandidate) => {
+    for (const srcCandidate of sources.split(/,?\s+/)) {
       const src = srcCandidate.trim().split(" ")[0];
       if (src && (src.startsWith("http") || src.startsWith("//"))) {
         try {
@@ -486,7 +479,7 @@ function collectImageDomains($: cheerio.CheerioAPI, cspData: CspData) {
           // Ignore invalid URLs
         }
       }
-    });
+    }
   });
 }
 

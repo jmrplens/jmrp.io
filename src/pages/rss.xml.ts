@@ -65,8 +65,8 @@ export async function GET(_context: APIContext) {
             // Media RSS extensions (Common in Feedly, etc)
             customData += `<media:content url="${imgUrl}" medium="image" type="image/jpeg" width="${opt.attributes.width}" height="${opt.attributes.height}" />\n`;
             customData += `<media:thumbnail url="${thumbUrl}" width="${thumb.attributes.width}" height="${thumb.attributes.height}" />\n`;
-          } catch (e) {
-            console.warn("[RSS] Cover image process failed:", e);
+          } catch (error) {
+            console.warn("[RSS] Cover image process failed:", error);
           }
         }
 

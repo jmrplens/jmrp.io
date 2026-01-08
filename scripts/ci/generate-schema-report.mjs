@@ -14,7 +14,7 @@ if (!fs.existsSync(REPORT_FILE)) {
   process.exit(1);
 }
 
-const data = JSON.parse(fs.readFileSync(REPORT_FILE, "utf-8"));
+const data = JSON.parse(fs.readFileSync(REPORT_FILE, "utf8"));
 const { summary, results } = data;
 
 function syntaxHighlight(json) {
@@ -36,11 +36,7 @@ function syntaxHighlight(json) {
   return json.replaceAll(jsonTokenRegex, function (match) {
     let cls = "number";
     if (match.startsWith('"')) {
-      if (match.endsWith(":")) {
-        cls = "key";
-      } else {
-        cls = "string";
-      }
+      cls = match.endsWith(":") ? "key" : "string";
     } else if (/true|false/.test(match)) {
       cls = "boolean";
     } else if (/null/.test(match)) {
@@ -77,13 +73,13 @@ function renderVisual(data) {
     if (keys.length === 0) return html + "</div>";
 
     html += '<div class="v-props">';
-    keys.forEach((key) => {
+    for (const key of keys) {
       html += `
                 <div class="v-row">
                     <div class="v-key">${escapeHtml(key)}:</div>
                     <div class="v-val">${renderVisual(data[key])}</div>
                 </div>`;
-    });
+    }
     html += "</div></div>";
     return html;
   }
@@ -92,7 +88,7 @@ function renderVisual(data) {
   if (typeof data === "string") {
     if (data.startsWith("http")) {
       const escapedUrl = escapeHtml(data);
-      if (/\.(jpg|jpeg|png|webp|gif|svg)$/i.exec(data)) {
+      if (/\.(jpg|jpeg|png|webp|gif|svg)$/i.test(data)) {
         return `<a href="${escapedUrl}" target="_blank"><img src="${escapedUrl}" class="v-img" loading="lazy" /></a>`;
       }
       return `<a href="${escapedUrl}" target="_blank" class="v-link">${escapedUrl}</a>`;
@@ -275,27 +271,27 @@ const html = `
                 // Issues Section
                 if (status !== "pass") {
                   detailsHtml += '<div class="issues-section">';
-                  r.errors.forEach((e) => {
+                  for (const e of r.errors) {
                     detailsHtml += `
                             <div class="issue issue-error">
                                 <div class="issue-type">❌ Error (Schema ${e.index + 1}: ${escapeHtml(e.type || "Unknown")})</div>
                                 ${e.errors.map((msg) => `<div class="issue-msg">${escapeHtml(msg)}</div>`).join("")}
                             </div>`;
-                  });
-                  r.warnings.forEach((w) => {
+                  }
+                  for (const w of r.warnings) {
                     detailsHtml += `
                             <div class="issue issue-warning">
                                 <div class="issue-type">⚠️ Warning (Schema ${w.index + 1}: ${escapeHtml(w.type || "Unknown")})</div>
                                 ${w.warnings.map((msg) => `<div class="issue-msg">${escapeHtml(msg)}</div>`).join("")}
                             </div>`;
-                  });
+                  }
                   detailsHtml += "</div>";
                 }
 
                 // Schemas View
                 if (r.schemas && r.schemas.length > 0) {
                   detailsHtml += '<div class="schema-container">';
-                  r.schemas.forEach((schema, i) => {
+                  for (const [i, schema] of r.schemas.entries()) {
                     const schemaId = uniqueId + "-" + i;
                     detailsHtml += `
                             <div class="schema-block" style="margin-bottom: 2rem;">
@@ -315,7 +311,7 @@ const html = `
                                 </div>
                             </div>
                         `;
-                  });
+                  }
                   detailsHtml += "</div>";
                 }
 

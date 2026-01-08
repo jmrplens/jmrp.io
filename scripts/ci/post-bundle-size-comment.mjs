@@ -52,11 +52,11 @@ export default async function postBundleSizeComment({ github, context }) {
       let output = `**${name}**\n\n`;
       output += "| File | Size |\n";
       output += "| :--- | :--- |\n";
-      cat.largestFiles.forEach((f) => {
+      for (const f of cat.largestFiles) {
         const sizeStr =
           f.size < 1024 ? f.size + " B" : (f.size / 1024).toFixed(2) + " KB";
         output += "| `" + f.path + "` | " + sizeStr + " |\n";
-      });
+      }
       output += "\n";
       return output;
     };
