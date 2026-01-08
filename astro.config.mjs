@@ -1,21 +1,21 @@
 // @ts-check
-import { defineConfig, envField, fontProviders } from "astro/config";
-
 // Adapters and Integrations
 import mdx from "@astrojs/mdx"; // Support for MDX (Markdown with JSX)
-import sitemap from "@astrojs/sitemap"; // Generates a sitemap.xml
-import remarkMath from "remark-math"; // Remark plugin to support math equations
-import rehypeMathjax from "rehype-mathjax"; // Rehype plugin to render math with MathJax
-import rehypeExternalLinks from "rehype-external-links"; // Adds target="_blank" to external links
-import icon from "astro-icon"; // Icon support
 import preact from "@astrojs/preact"; // Preact integration (lighter alternative to React)
+import sitemap from "@astrojs/sitemap"; // Generates a sitemap.xml
+import { defineConfig, envField, fontProviders } from "astro/config";
+import icon from "astro-icon"; // Icon support
 import { fromHtmlIsomorphic } from "hast-util-from-html-isomorphic";
-import { visit } from "unist-util-visit";
-import rehypeRaw from "rehype-raw";
+import rehypeExternalLinks from "rehype-external-links"; // Adds target="_blank" to external links
+import rehypeMathjax from "rehype-mathjax"; // Rehype plugin to render math with MathJax
 import rehypeMermaid from "rehype-mermaid";
-import { remarkMermaidBypass } from "./scripts/remark-mermaid-bypass.mjs";
-import { rehypeLinkDisambiguator } from "./scripts/rehype-link-disambiguator.mjs";
+import rehypeRaw from "rehype-raw";
+import remarkMath from "remark-math"; // Remark plugin to support math equations
+import { visit } from "unist-util-visit";
 import { ViteImageOptimizer } from "vite-plugin-image-optimizer";
+
+import { rehypeLinkDisambiguator } from "./scripts/rehype-link-disambiguator.mjs";
+import { remarkMermaidBypass } from "./scripts/remark-mermaid-bypass.mjs";
 import postBuildIntegration from "./src/integrations/post-build.ts";
 import preBuildIntegration from "./src/integrations/pre-build.ts";
 

@@ -4,10 +4,10 @@
  * Lists academic publications stored in `src/content/publications_data/papers.bib`.
  * Supports abstract toggling, BibTeX copying, and external links (DOI, PDF, Slides).
  */
-import BaseLayout from "@layouts/BaseLayout.astro";
-import { getPublications } from "@utils/publications";
-import { stripHtml } from "@utils/html";
 import PublicationItem from "@components/publications/PublicationItem.astro";
+import BaseLayout from "@layouts/BaseLayout.astro";
+import { stripHtml } from "@utils/html";
+import { getPublications } from "@utils/publications";
 import { getSiteUrl } from "@utils/site";
 
 const publicationGroups = await getPublications();

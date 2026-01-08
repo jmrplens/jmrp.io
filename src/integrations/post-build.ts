@@ -5,15 +5,17 @@
  * It runs after the build is complete (`astro:build:done` hook).
  */
 
-import type { AstroIntegration, AstroIntegrationLogger } from "astro";
-import { fileURLToPath } from "node:url";
-import { extractCssDataUris } from "./post-build/css.js";
-import { processHtmlFiles } from "./post-build/html.js";
-import { finalizeCspConfig } from "./post-build/csp.js";
-import type { CspData } from "./post-build/types.js";
+import { execSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
-import { execSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
+
+import type { AstroIntegration, AstroIntegrationLogger } from "astro";
+
+import { finalizeCspConfig } from "./post-build/csp.js";
+import { extractCssDataUris } from "./post-build/css.js";
+import { processHtmlFiles } from "./post-build/html.js";
+import type { CspData } from "./post-build/types.js";
 
 /**
  * Creates the jmrp-post-build Astro integration.

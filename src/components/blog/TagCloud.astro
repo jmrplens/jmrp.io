@@ -1,6 +1,6 @@
 ---
-import { getCollection } from "astro:content";
 import { getUniqueTags } from "@utils/blog";
+import { getCollection } from "astro:content";
 
 const posts = (await getCollection("posts")).filter((post) => !post.data.draft);
 const tags = getUniqueTags(posts);

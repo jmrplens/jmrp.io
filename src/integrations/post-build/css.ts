@@ -1,11 +1,13 @@
+import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
-import crypto from "node:crypto";
-import { glob } from "glob";
+
 import * as cheerio from "cheerio";
-import { optimize, type Config, type PluginConfig } from "svgo";
+import { glob } from "glob";
+import { type Config, optimize, type PluginConfig } from "svgo";
+
+import { ASSET_FILENAME_HASH_LENGTH, ASSETS_DIR } from "./constants.js";
 import { getExtensionFromMime, writeHtml } from "./utils.js";
-import { ASSETS_DIR, ASSET_FILENAME_HASH_LENGTH } from "./constants.js";
 
 /**
  * Extracts embedded Data URIs from CSS and HTML files into standalone physical assets.

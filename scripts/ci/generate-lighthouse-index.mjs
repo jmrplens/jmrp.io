@@ -9,6 +9,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
+
 import { escapeHtml } from "../utils/html.mjs";
 
 const deployDir = process.argv[2] || "lh-deploy";

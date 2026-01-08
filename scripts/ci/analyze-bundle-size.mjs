@@ -10,6 +10,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
+
 import { glob } from "glob";
 
 const DIST_DIR = "dist";

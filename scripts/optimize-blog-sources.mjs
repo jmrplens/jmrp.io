@@ -8,9 +8,10 @@
  * It also removes the original PNG files after optimization to keep the repo clean.
  */
 
-import sharp from "sharp";
 import fs from "node:fs";
 import path from "node:path";
+
+import sharp from "sharp";
 
 const dir = "src/assets/images/blog";
 const files = ["csp-shield.png", "mtls-auth.png", "virtual-files.png"];

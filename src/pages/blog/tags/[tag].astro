@@ -1,11 +1,12 @@
 ---
-import BaseLayout from "@layouts/BaseLayout.astro";
+import "@styles/blog.css";
+
 import PostGrid from "@components/blog/PostGrid.astro";
 import TagCloud from "@components/blog/TagCloud.astro";
-import { getCollection } from "astro:content";
+import BaseLayout from "@layouts/BaseLayout.astro";
 import { getUniqueTags } from "@utils/blog";
 import { getSiteUrl } from "@utils/site";
-import "@styles/blog.css";
+import { getCollection } from "astro:content";
 
 export async function getStaticPaths() {
   const posts = (await getCollection("posts")).filter((post) => !post.data.draft);

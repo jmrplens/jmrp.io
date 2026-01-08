@@ -3,14 +3,14 @@
  * Blog Index Page.
  * Lists all published blog posts, sorted by date (newest first).
  */
-import BaseLayout from "@layouts/BaseLayout.astro";
-import { getCollection } from "astro:content";
-import { getImage } from "astro:assets";
+import "@styles/blog.css";
+
 import PostGrid from "@components/blog/PostGrid.astro";
 import TagCloud from "@components/blog/TagCloud.astro";
+import BaseLayout from "@layouts/BaseLayout.astro";
 import { getSiteUrl } from "@utils/site";
-
-import "@styles/blog.css";
+import { getImage } from "astro:assets";
+import { getCollection } from "astro:content";
 
 const posts = (await getCollection("posts"))
     .filter((post) => !post.data.draft)

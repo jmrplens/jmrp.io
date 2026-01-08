@@ -4,14 +4,14 @@
  * Displays the hero section, biography, and quick links.
  * Content is configured via `src/content/site_config/site.yaml`.
  */
-import BaseLayout from "@layouts/BaseLayout.astro";
-import { Image, getImage } from "astro:assets";
 import mehomeImg from "@assets/mehome.webp";
-import { Icon } from "astro-icon/components";
-// Config
-import { getEntry } from "astro:content";
+import BaseLayout from "@layouts/BaseLayout.astro";
 import type { SiteConfig } from "@src/types";
 import { getSiteUrl } from "@utils/site";
+import { getImage,Image } from "astro:assets";
+// Config
+import { getEntry } from "astro:content";
+import { Icon } from "astro-icon/components";
 
 const siteEntry = await getEntry("site_config", "site");
 const siteData = (siteEntry?.data || {}) as SiteConfig;

@@ -1,6 +1,8 @@
+import fs from "node:fs";
+
 import type { AstroIntegration } from "astro";
 import { loadEnv } from "vite";
-import fs from "node:fs";
+
 import { setupGithubAvatar } from "./pre-build/avatar.js";
 import { setupCfBeacon } from "./pre-build/beacon.js";
 

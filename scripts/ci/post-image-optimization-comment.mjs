@@ -8,6 +8,15 @@
 
 import { execSync } from "node:child_process";
 
+/**
+ * Posts a comment on the GitHub Pull Request with the image optimization analysis report.
+ * It checks for WebP conversion coverage and flags large image files.
+ *
+ * @param {object} params - The GitHub Action context parameters.
+ * @param {object} params.github - The authenticated Octokit client.
+ * @param {object} params.context - The GitHub Action context object.
+ * @returns {Promise<void>} Resolves when the comment is successfully created.
+ */
 export default async function postImageOptimizationComment({
   github,
   context,

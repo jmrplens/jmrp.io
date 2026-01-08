@@ -1,4 +1,4 @@
-import { useState, useEffect } from "preact/hooks";
+import { useEffect, useState } from "preact/hooks";
 
 interface Props {
   readonly type:
@@ -296,13 +296,13 @@ function MatrixStats({ stats }: { readonly stats: MatrixStatsData }) {
   );
 }
 
+const StatusDot = () => <span class="status-dot-inline"></span>;
+
 /**
  * Meshtastic Combined Stats Component
  */
 function MeshtasticStats({ stats }: { readonly stats: MeshtasticStatsData }) {
   const { potatoNodes, lfNodes, mfNodes, potatoVersion } = stats;
-
-  const StatusDot = () => <span class="status-dot-inline"></span>;
 
   return (
     <div class="stats-wrapper-small-gap">
@@ -374,6 +374,14 @@ function MeshtasticStats({ stats }: { readonly stats: MeshtasticStatsData }) {
   );
 }
 
+/**
+ * Displays live statistics for a specific service (Mastodon, Matrix, or Meshtastic).
+ * Fetches data on the client side and renders the appropriate sub-component.
+ *
+ * @param props - Component properties.
+ * @param props.type - The service type to display stats for.
+ * @returns The rendered stats component.
+ */
 export default function ServiceStats({ type }: Props) {
   const [stats, setStats] = useState<
     MastodonStatsData | MatrixStatsData | MeshtasticStatsData | null

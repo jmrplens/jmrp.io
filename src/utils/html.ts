@@ -1,5 +1,5 @@
-import sanitizeHtml from "sanitize-html";
 import he from "he";
+import sanitizeHtml from "sanitize-html";
 
 /**
  * Strips all HTML tags from a string to produce plain text.

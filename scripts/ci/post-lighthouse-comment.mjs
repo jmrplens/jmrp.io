@@ -7,6 +7,15 @@
 
 import fs from "node:fs";
 
+/**
+ * Posts a comment on the GitHub Pull Request with the Lighthouse performance report.
+ * It reads the generated markdown report file based on the active theme.
+ *
+ * @param {object} params - The GitHub Action context parameters.
+ * @param {object} params.github - The authenticated Octokit client.
+ * @param {object} params.context - The GitHub Action context object.
+ * @returns {Promise<void>} Resolves when the comment is successfully created.
+ */
 export default async function postLighthouseComment({ github, context }) {
   const theme = process.env.THEME;
   const surgeUrl = process.env.SURGE_URL;

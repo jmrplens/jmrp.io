@@ -1,4 +1,5 @@
-import { test, expect } from "@playwright/test";
+import { expect, test } from "@playwright/test";
+
 import { getSitemapUrls } from "./utils";
 
 test.describe("SEO & Metadata Checks", () => {
@@ -33,22 +34,12 @@ test.describe("SEO & Metadata Checks", () => {
         expect(title.length).toBeLessThan(70); // Google truncates ~60-70 chars
 
         // 2. Canonical Tag
-        const canonical = await page
-          .locator('link[rel="canonical"]')
-          .getAttribute("href");
-        expect(canonical).toBeTruthy();
-        // Canonical should probably match the current URL (absolute)
-        // Adjust logic if you have specific canonical rules
-        // const currentUrl = page.url();
-        // Simple check: Canonical should be a valid URL
-        expect(canonical).toMatch(/^https?:\/\//);
+        const canonical = page.locator('link[rel="canonical"]');
+        await expect(canonical).toHaveAttribute("href", /^https?:\/\//);
 
         // 3. Meta Description
-        const description = await page
-          .locator('meta[name="description"]')
-          .getAttribute("content");
-        expect(description).toBeTruthy();
-        expect(description?.length).toBeGreaterThan(10); // Minimum length check
+        const description = page.locator('meta[name="description"]');
+        await expect(description).toHaveAttribute("content", /.{10,}/);
 
         // 4. Open Graph Tags (Social Sharing)
         await expect(page.locator('meta[property="og:title"]')).toHaveAttribute(

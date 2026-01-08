@@ -94,6 +94,10 @@ async function runVerify() {
       command: "lychee --config lychee.toml --root-dir dist dist/**/*.html",
     },
     {
+      name: "Lint: JSDoc Coverage",
+      command: "node scripts/ci/calculate-jsdoc-coverage.mjs",
+    },
+    {
       name: "Security: Snyk Audit",
       command: "pnpm exec snyk test --all-projects --severity-threshold=high",
       condition: () => !!process.env.SNYK_TOKEN,

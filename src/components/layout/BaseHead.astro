@@ -10,15 +10,14 @@
  */
 import "@styles/global.css";
 
-// Variable Fonts (managed by Astro Experimental Fonts)
-import { Font, getImage } from "astro:assets";
-import faviconSrc from "@assets/favicon.png";
 import appleTouchIconSrc from "@assets/apple-touch-icon.png";
+import faviconSrc from "@assets/favicon.png";
 import defaultOgImage from "@assets/mehome_landscape.webp";
-
-import { getEntry } from "astro:content";
 import type { SiteConfig } from "@src/types";
 import { getSiteUrl } from "@utils/site";
+// Variable Fonts (managed by Astro Experimental Fonts)
+import { Font, getImage } from "astro:assets";
+import { getEntry } from "astro:content";
 
 const favicon = await getImage({
     src: faviconSrc,

@@ -1,6 +1,10 @@
 import eslintPluginAstro from "eslint-plugin-astro";
-import tseslint from "typescript-eslint";
+import jsdoc from "eslint-plugin-jsdoc";
 import jsxA11y from "eslint-plugin-jsx-a11y";
+import playwright from "eslint-plugin-playwright";
+import reactHooks from "eslint-plugin-react-hooks";
+import simpleImportSort from "eslint-plugin-simple-import-sort";
+import tseslint from "typescript-eslint";
 
 /** @type {import('eslint').Linter.Config[]} */
 export default [
@@ -59,7 +63,44 @@ export default [
     },
   },
 
-  // 4. Node Scripts Configuration
+  // 4. JSDoc Configuration (Documentation Enforcement)
+  {
+    files: ["**/*.ts", "**/*.tsx", "**/*.mjs", "scripts/**/*.js"],
+    plugins: {
+      jsdoc,
+    },
+    rules: {
+      "jsdoc/require-jsdoc": [
+        "warn",
+        {
+          publicOnly: true,
+          require: {
+            FunctionDeclaration: true,
+            MethodDefinition: true,
+            ClassDeclaration: true,
+            ArrowFunctionExpression: true,
+            FunctionExpression: true,
+          },
+        },
+      ],
+      "jsdoc/require-description": "warn",
+      "jsdoc/require-param": "off", // TS already handles types, we want descriptions mostly
+      "jsdoc/require-returns": "off", // TS handles return types
+      "jsdoc/require-file-overview": [
+        "warn",
+        {
+          tags: {
+            file: {
+              initialCommentsOnly: true,
+              mustExist: false, // Optional if we use description
+            },
+          },
+        },
+      ],
+    },
+  },
+
+  // 5. Node Scripts Configuration
   {
     files: ["scripts/**/*.mjs", "scripts/**/*.js", "**/*.cjs", "*.mjs"],
     // Explicitly include the plugin so we can turn off its rules
@@ -83,7 +124,35 @@ export default [
     },
   },
 
-  // 5. Specific overrides
+  // 6. Import Sorting (Organization)
+  {
+    plugins: {
+      "simple-import-sort": simpleImportSort,
+    },
+    rules: {
+      "simple-import-sort/imports": "error",
+      "simple-import-sort/exports": "error",
+    },
+  },
+
+  // 7. Playwright (E2E Testing)
+  {
+    ...playwright.configs["flat/recommended"],
+    files: ["tests/**"],
+  },
+
+  // 8. React Hooks (Stability for Preact)
+  {
+    files: ["**/*.tsx", "**/*.jsx"],
+    plugins: {
+      "react-hooks": reactHooks,
+    },
+    rules: {
+      ...reactHooks.configs.recommended.rules,
+    },
+  },
+
+  // 9. Specific overrides
   {
     files: ["src/env.d.ts"],
     plugins: {
@@ -93,7 +162,7 @@ export default [
       "@typescript-eslint/triple-slash-reference": "off",
     },
   },
-  // 6. Content Config Override (virtual modules cause strict type errors)
+  // 10. Content Config Override (virtual modules cause strict type errors)
   {
     files: [
       "src/content.config.ts",

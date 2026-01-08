@@ -9,6 +9,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
+
 import { escapeHtml } from "../utils/html.mjs";
 
 const inputDir = process.argv[2] || "a11y-deploy";

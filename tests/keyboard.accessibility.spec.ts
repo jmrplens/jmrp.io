@@ -1,5 +1,5 @@
-import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
+import { expect, test } from "@playwright/test";
 
 test.describe("Keyboard Navigation Accessibility", () => {
   test("Navigate Main Menu with Keyboard", async ({ page }) => {
@@ -10,7 +10,7 @@ test.describe("Keyboard Navigation Accessibility", () => {
 
     // 1. Tab to "Skip to content" (if it exists) or Logo
     // Ensure the page is hydrated/ready
-    await page.waitForTimeout(500);
+    await page.waitForLoadState("domcontentloaded");
     await page.keyboard.press("Tab");
 
     // Check if the focused element is the logo or skip link
@@ -26,9 +26,12 @@ test.describe("Keyboard Navigation Accessibility", () => {
     console.log(`Focused element after 1st Tab: ${focusedTag}.${focusedClass}`);
 
     // If skip-link is focused (BaseLayout), tab again to enter Header
+    // eslint-disable-next-line playwright/no-conditional-in-test
     if (focusedClass?.includes("skip-link")) {
+      // eslint-disable-next-line playwright/no-conditional-expect
       await expect(page.locator(".skip-link")).toBeFocused();
       await page.keyboard.press("Tab");
+      // eslint-disable-next-line playwright/no-conditional-in-test
     } else if (focusedTag === "BODY") {
       // Fallback if initial tab didn't move focus (rare in Playwright unless configured)
       await page.keyboard.press("Tab");
@@ -134,9 +137,6 @@ test.describe("Keyboard Navigation Accessibility", () => {
     // 4. Close menu with Escape
     await page.keyboard.press("Escape");
     await expect(navLinksContainer).not.toHaveClass(/open/);
-
-    // Allow small tick for JS to execute focus()
-    await page.waitForTimeout(100);
 
     // 5. Verify focus returns to toggle (Best Practice)
     await expect(menuToggle).toBeFocused();

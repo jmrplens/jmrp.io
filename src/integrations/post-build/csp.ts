@@ -1,9 +1,11 @@
+import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
-import crypto from "node:crypto";
+
 import { glob } from "glob";
-import type { CspData } from "./types.js";
+
 import { NGINX_VARIABLE_SIZE_LIMIT } from "./constants.js";
+import type { CspData } from "./types.js";
 
 /**
  * Generates the final Nginx security headers configuration file.

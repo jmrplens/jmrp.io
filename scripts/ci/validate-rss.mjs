@@ -14,8 +14,9 @@
 
 import fs from "node:fs";
 import path from "node:path";
-import { parseStringPromise } from "xml2js";
+
 import Parser from "rss-parser";
+import { parseStringPromise } from "xml2js";
 
 const DIST_DIR = path.resolve(
   process.argv[3] || process.env.DIST_DIR || "dist",

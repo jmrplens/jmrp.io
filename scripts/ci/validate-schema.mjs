@@ -14,8 +14,9 @@
 
 import fs from "node:fs";
 import path from "node:path";
-import { glob } from "glob";
+
 import * as cheerio from "cheerio";
+import { glob } from "glob";
 
 const DIST_DIR = path.resolve(process.argv[2] || "dist");
 

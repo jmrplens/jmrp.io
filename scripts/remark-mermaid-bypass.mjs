@@ -11,6 +11,12 @@
 
 import { visit } from "unist-util-visit";
 
+/**
+ * Creates a Remark plugin that transforms 'mermaid-render' code blocks into HTML <pre> tags.
+ * This preserves the Mermaid syntax for client-side rendering.
+ *
+ * @returns {import('unified').Transformer} A unified/remark transformer function.
+ */
 export function remarkMermaidBypass() {
   return (tree) => {
     visit(tree, "code", (node, index, parent) => {

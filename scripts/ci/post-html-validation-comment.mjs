@@ -79,6 +79,14 @@ function buildCommentFromReport(report, surgeUrl) {
   return comment;
 }
 
+/**
+ * Posts a comment on the GitHub Pull Request with the HTML5 validation report.
+ *
+ * @param {object} params - The GitHub Action context parameters.
+ * @param {object} params.github - The authenticated Octokit client.
+ * @param {object} params.context - The GitHub Action context object.
+ * @returns {Promise<void>} Resolves when the comment is successfully created.
+ */
 export default async function postHtmlValidationComment({ github, context }) {
   let comment;
   const surgeUrl = process.env.SURGE_URL;

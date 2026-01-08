@@ -3,6 +3,7 @@
  */
 
 import fs from "node:fs";
+
 import { escapeHtml } from "../utils/html.mjs";
 
 const REPORT_FILE = "schema-report.json";

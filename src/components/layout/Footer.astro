@@ -4,10 +4,10 @@
  * Displays copyright info and social media links loaded from `src/content/site_config/socials.yaml`.
  * Includes logic to map FontAwesome classes to Iconify names.
  */
+import type { SiteConfig, SocialsConfig } from "@src/types";
+import { Image } from "astro:assets";
 import { getEntry } from "astro:content";
 import { Icon } from "astro-icon/components";
-import { Image } from "astro:assets";
-import type { SiteConfig, SocialsConfig } from "@src/types";
 
 const today = new Date();
 

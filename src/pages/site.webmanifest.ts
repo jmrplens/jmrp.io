@@ -1,8 +1,8 @@
+import icon192Src from "@assets/icons/pwa/icon-192.png";
+import icon512Src from "@assets/icons/pwa/icon-512.png";
 import type { APIRoute } from "astro";
 import { getImage } from "astro:assets";
 import { getEntry } from "astro:content";
-import icon192Src from "@assets/icons/pwa/icon-192.png";
-import icon512Src from "@assets/icons/pwa/icon-512.png";
 
 /**
  * Endpoint for generating the Progressive Web App (PWA) manifest file.

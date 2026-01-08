@@ -7,24 +7,23 @@
  * - Automated Table of Contents generation
  * - SEO Schema for blog postings
  */
-import { type CollectionEntry, getCollection, render } from "astro:content";
-import BaseLayout from "@layouts/BaseLayout.astro";
-import { Icon } from "astro-icon/components";
-import { Image } from "astro:assets";
-
-import Callout from "@components/ui/Callout.astro";
-import Tabs from "@components/ui/Tabs.astro";
-import TabPanel from "@components/ui/TabPanel.astro";
-import YouTube from "@components/ui/YouTube.astro";
-import Code from "@components/ui/Code.astro";
-import TableOfContentsDrawer from "@components/layout/TableOfContentsDrawer.astro";
-import References from "@components/ui/References.astro";
 import "@styles/blog.css";
-import * as cheerio from "cheerio";
 
-import { getEntry } from "astro:content";
+import TableOfContentsDrawer from "@components/layout/TableOfContentsDrawer.astro";
+import Callout from "@components/ui/Callout.astro";
+import Code from "@components/ui/Code.astro";
+import References from "@components/ui/References.astro";
+import TabPanel from "@components/ui/TabPanel.astro";
+import Tabs from "@components/ui/Tabs.astro";
+import YouTube from "@components/ui/YouTube.astro";
+import BaseLayout from "@layouts/BaseLayout.astro";
 import type { SiteConfig } from "@src/types";
 import { getSiteUrl } from "@utils/site";
+import { Image } from "astro:assets";
+import { type CollectionEntry, getCollection, render } from "astro:content";
+import { getEntry } from "astro:content";
+import { Icon } from "astro-icon/components";
+import * as cheerio from "cheerio";
 
 const siteEntry = await getEntry("site_config", "site");
 const siteData = (siteEntry?.data || {}) as SiteConfig;

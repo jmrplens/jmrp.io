@@ -1,6 +1,16 @@
-import { getEntry, type CollectionEntry } from "astro:content";
+/**
+ * CV Data Utilities
+ *
+ * Functions for retrieving and typing the Curriculum Vitae data
+ * from the content collection.
+ */
 
+import { type CollectionEntry, getEntry } from "astro:content";
+
+/** Type definition for the full CV data structure */
 export type CVData = CollectionEntry<"cv">["data"];
+
+/** Type definition for a generic CV section */
 export type CVSection = CVData[number];
 
 /**

@@ -1,9 +1,11 @@
-import { test, expect } from "@playwright/test";
-import AxeBuilder from "@axe-core/playwright";
-import { parseStringPromise } from "xml2js";
 import * as fs from "node:fs";
 import * as path from "node:path";
+
+import AxeBuilder from "@axe-core/playwright";
+import { expect, test } from "@playwright/test";
 import { createHtmlReport } from "axe-html-reporter";
+import { parseStringPromise } from "xml2js";
+
 import { escapeHtml } from "../scripts/utils/html.mjs"; // Import shared utility
 // import type { AxeResults } from "axe-core"; // Types are problematic
 
@@ -292,7 +294,7 @@ test.describe("Accessibility Tests (Axe-core WCAG 2.1 AA)", () => {
       // ... same inner logic until end of loop
       // (Simplified replacement to ensure stability)
       await browserPage.goto(pageInfo.url);
-      await browserPage.waitForLoadState("networkidle");
+      await browserPage.waitForLoadState("domcontentloaded");
 
       // Verify theme application
       await browserPage.evaluate((t) => {
@@ -332,6 +334,7 @@ test.describe("Accessibility Tests (Axe-core WCAG 2.1 AA)", () => {
         },
       });
 
+      // eslint-disable-next-line playwright/no-conditional-in-test
       if (accessibilityScanResults.violations.length > 0) {
         await browserPage.screenshot({
           path: `accessibility-report/${safeName}-${theme}-failure.png`,

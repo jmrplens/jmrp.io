@@ -1,5 +1,12 @@
+/**
+ * Test Utilities
+ *
+ * Helper functions for Playwright end-to-end tests.
+ */
+
 import fs from "node:fs";
 import path from "node:path";
+
 import { parseStringPromise } from "xml2js";
 
 const SITEMAP_PATH = path.resolve("dist/sitemap-0.xml");
@@ -16,6 +23,12 @@ interface SitemapResult {
   urlset: SitemapUrlSet;
 }
 
+/**
+ * Parses the generated sitemap to retrieve a list of all site URLs.
+ * Useful for verifying that all public pages are accessible or valid.
+ *
+ * @returns {Promise<string[]>} A list of relative pathnames found in the sitemap.
+ */
 export async function getSitemapUrls(): Promise<string[]> {
   if (!fs.existsSync(SITEMAP_PATH)) {
     console.warn(

@@ -24,6 +24,8 @@ const LOGOS = {
     "https://img.shields.io/badge/Typos-grey?style=flat&logo=microsoftexcel&logoColor=white", // Placeholder or generic text icon
   security:
     "https://img.shields.io/badge/NPM_Audit-CB3837?style=flat&logo=npm&logoColor=white",
+  jsdoc:
+    "https://img.shields.io/badge/JSDoc-000000?style=flat&logo=javascript&logoColor=white",
 };
 
 // Main function to generate comment body
@@ -34,12 +36,18 @@ function generateComment(results) {
     { id: "eslint", name: "ESLint", outcome: results.eslint },
     { id: "lychee", name: "Link Checker", outcome: results.lychee },
     { id: "typos", name: "Spell Checker", outcome: results.typos },
+    {
+      id: "jsdoc",
+      name: "JSDoc Coverage",
+      outcome: results.jsdoc,
+      value: results.jsdocCoverage,
+    },
     { id: "security", name: "Security Audit", outcome: results.security },
   ];
 
   // Check if all passed
   const allPassed = tools.every(
-    (t) => t.outcome === "success" || t.outcome === "skipped",
+    (t) => t.outcome === "success" || t.outcome === "skipped" || !t.outcome,
   ); // skipped counts as pass contextually or ignored
 
   let md = `### 🛡️ Static Analysis Report\n\n`;
@@ -51,13 +59,23 @@ function generateComment(results) {
   md += `| :--- | :---: | :---: |\n`;
 
   for (const tool of tools) {
+    if (!tool.outcome && !tool.value) continue; // Skip if no data
+
     const icon = getStatusIcon(tool.outcome);
     const badge = `![${tool.name}](${LOGOS[tool.id]})`;
-    // Format outcome to be capitalized
-    const outcomeText = tool.outcome
-      ? tool.outcome.charAt(0).toUpperCase() + tool.outcome.slice(1)
-      : "Unknown";
-    md += `| ${badge} | ${icon} | **${outcomeText}** |\n`;
+    // Format outcome to be capitalized or show value
+    let outcomeText =
+      tool.outcome === "success" || tool.outcome === "failure"
+        ? tool.outcome.charAt(0).toUpperCase() + tool.outcome.slice(1)
+        : tool.outcome || "Unknown";
+
+    if (tool.value) {
+      outcomeText = `**${tool.value}**`;
+    } else {
+      outcomeText = `**${outcomeText}**`;
+    }
+
+    md += `| ${badge} | ${icon} | ${outcomeText} |\n`;
   }
 
   md += `\n<details><summary>Debug Info</summary>\n\n\`\`\`json\n${JSON.stringify(results, null, 2)}\n\`\`\`\n</details>`;
@@ -66,6 +84,15 @@ function generateComment(results) {
 }
 
 // GitHub Script Entry Point
+/**
+ * Main execution function for the static analysis comment script.
+ * Aggregates results from multiple tools and updates the PR comment.
+ *
+ * @param {object} params - The GitHub Action context parameters.
+ * @param {object} params.github - The authenticated Octokit client.
+ * @param {object} params.context - The GitHub Action context object.
+ * @returns {Promise<void>} Resolves when the comment is posted or updated.
+ */
 export default async ({ github, context }) => {
   // Read step outcomes from environment variables set in the workflow
   const results = {
@@ -75,6 +102,8 @@ export default async ({ github, context }) => {
     lychee: process.env.OUTCOME_LYCHEE,
     typos: process.env.OUTCOME_TYPOS,
     security: process.env.OUTCOME_SECURITY,
+    jsdoc: process.env.OUTCOME_JSDOC,
+    jsdocCoverage: process.env.JSDOC_COVERAGE,
   };
 
   if (!context.payload.pull_request) {

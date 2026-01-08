@@ -6,8 +6,8 @@
  * to help maintain a lightweight and high-performance site.
  */
 
-import fs from "node:fs";
 import { execSync } from "node:child_process";
+import fs from "node:fs";
 
 const generateReport = () => {
   const findFiles = (pattern) => {

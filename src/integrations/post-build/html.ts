@@ -1,21 +1,23 @@
 import crypto from "node:crypto";
-import path from "node:path";
 import fs from "node:fs";
-import { glob } from "glob";
+import path from "node:path";
+
 import * as cheerio from "cheerio";
 import type { Element } from "domhandler";
-import type { CspData } from "./types.js";
+import { glob } from "glob";
+
 import {
-  writeHtml,
-  getFileHash,
-  resolveFile,
-  getExtensionFromMime,
-} from "./utils.js";
-import {
+  ASSET_FILENAME_HASH_LENGTH,
   ASSETS_DIR,
   STYLE_CLASS_HASH_LENGTH,
-  ASSET_FILENAME_HASH_LENGTH,
 } from "./constants.js";
+import type { CspData } from "./types.js";
+import {
+  getExtensionFromMime,
+  getFileHash,
+  resolveFile,
+  writeHtml,
+} from "./utils.js";
 
 /**
  * Helper to extract a data URI to a physical file and return the new relative URL.

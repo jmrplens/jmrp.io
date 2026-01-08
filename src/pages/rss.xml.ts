@@ -1,9 +1,10 @@
 import rss from "@astrojs/rss";
-import { getCollection, getEntry } from "astro:content";
-import { getImage } from "astro:assets";
-import type { APIContext } from "astro";
-import { escapeHtml } from "../../scripts/utils/html.mjs";
 import { getSiteUrl } from "@utils/site";
+import type { APIContext } from "astro";
+import { getImage } from "astro:assets";
+import { getCollection, getEntry } from "astro:content";
+
+import { escapeHtml } from "../../scripts/utils/html.mjs";
 
 /**
  * Represents basic site metadata used for RSS feed generation.

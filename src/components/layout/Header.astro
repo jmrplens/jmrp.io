@@ -5,9 +5,9 @@
  * Responsive design with a hamburger menu for mobile.
  */
 import ThemeToggle from "@components/ui/ThemeToggle.astro";
-import { Icon } from "astro-icon/components";
-import { getEntry } from "astro:content";
 import type { SiteConfig } from "@src/types";
+import { getEntry } from "astro:content";
+import { Icon } from "astro-icon/components";
 
 const siteEntry = await getEntry("site_config", "site");
 const siteData = (siteEntry?.data || {}) as SiteConfig;

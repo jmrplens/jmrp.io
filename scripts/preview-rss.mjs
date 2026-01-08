@@ -8,9 +8,11 @@
  * Usage: node scripts/preview-rss.mjs (requires dist/rss.xml to exist)
  */
 
-import Parser from "rss-parser";
 import fs from "node:fs";
 import path from "node:path";
+
+import Parser from "rss-parser";
+
 import { escapeHtml } from "./utils/html.mjs";
 
 const RSS_FILE = "dist/rss.xml";
