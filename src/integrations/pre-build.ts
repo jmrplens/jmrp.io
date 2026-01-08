@@ -54,6 +54,7 @@ export default function preBuildIntegration(): AstroIntegration {
             console.warn(
               "[\x1b[33mPreBuild\x1b[0m] Continuing in dev mode despite errors...",
             );
+            return;
           } else {
             throw error instanceof Error ? error : new Error(message);
           }

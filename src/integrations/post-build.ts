@@ -93,7 +93,7 @@ export default function postBuildIntegration(): AstroIntegration {
                 fs.copyFileSync(generatedPath, systemNginxPath);
 
                 try {
-                  execSync("nginx -t", { stdio: "pipe", timeout: 10000 });
+                  execSync("nginx -t", { stdio: "inherit", timeout: 10000 });
                   execSync("nginx -s reload", {
                     stdio: "inherit",
                     timeout: 30000,
@@ -114,7 +114,10 @@ export default function postBuildIntegration(): AstroIntegration {
                       "  ✓ Successfully reverted to the previous Nginx configuration.",
                     );
                     // Final validation to ensure system is left in a stable state
-                    execSync("nginx -t", { stdio: "pipe", timeout: 10000 });
+                    execSync("nginx -t", {
+                      stdio: "inherit",
+                      timeout: 10000,
+                    });
                   } catch (revertError) {
                     const revertErrorMessage =
                       revertError instanceof Error

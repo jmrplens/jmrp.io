@@ -3,7 +3,7 @@
   "type": "module",
   "version": "0.0.1",
   "engines": {
-    "node": ">=20.19.0",
+    "node": ">=20.0.0",
     "pnpm": ">=10"
   },
   "pnpm": {
@@ -29,7 +29,6 @@
   "packageManager": "pnpm@10.27.0",
   "scripts": {
     "dev": "astro dev",
-    "prebuild": "",
     "build": "export DIST_DIR=dist_new && rm -rf $DIST_DIR && astro build --outDir $DIST_DIR && rm -rf dist_old && (mv dist dist_old || true) && mv $DIST_DIR dist && rm -rf dist_old && pnpm exec prettier --check .",
     "preview": "astro preview",
     "astro": "astro",

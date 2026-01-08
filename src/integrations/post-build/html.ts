@@ -195,6 +195,16 @@ export async function processHtmlFiles(
     if (styleToClassMap.size > 0) {
       let cssRules = "";
       for (const [styleDef, className] of styleToClassMap.entries()) {
+        // Skip styles with unbalanced braces that could break CSS
+        if (
+          (styleDef.match(/{/g) || []).length !==
+          (styleDef.match(/}/g) || []).length
+        ) {
+          console.warn(
+            `[PostBuild] Skipping potentially malformed style: ${styleDef.substring(0, 50)}...`,
+          );
+          continue;
+        }
         cssRules += `.${className}{${styleDef}}`;
       }
       // Add a marker to identify generated styles and avoid re-noncing them

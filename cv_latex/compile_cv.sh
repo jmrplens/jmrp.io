@@ -55,8 +55,9 @@ compile_latex() {
 
 # Clean previous temp files
 # Note: This removes temporary LaTeX files and specific target PDFs before compilation
-rm -f *.aux *.log *.out *.toc *.bbl *.blg *.run.xml *.bcf
-rm -f CV_RequenaPlensJoseManuel_ENG.pdf CV_RequenaPlensJoseManuel_SPA.pdf
+for file in "${FILES[@]}"; do
+    rm -f "${file}.aux" "${file}.log" "${file}.out" "${file}.toc" "${file}.bbl" "${file}.blg" "${file}.run.xml" "${file}.bcf" "${file}.pdf"
+done
 
 # Compile all files
 for file in "${FILES[@]}"; do
@@ -65,6 +66,8 @@ done
 
 # Final cleanup of temporary LaTeX files
 echo "Cleaning up temporary files..."
-rm -f *.aux *.log *.out *.toc *.bbl *.blg *.run.xml *.bcf
+for file in "${FILES[@]}"; do
+    rm -f "${file}.aux" "${file}.log" "${file}.out" "${file}.toc" "${file}.bbl" "${file}.blg" "${file}.run.xml" "${file}.bcf"
+done
 
 echo "CV compilation process completed."

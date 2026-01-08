@@ -82,12 +82,31 @@ export async function extractCssDataUris(distDir: string) {
                     name: "preset-default",
                     params: {
                       overrides: {
-                        cleanupNumericValues: {},
+                        cleanupNumericValues: {
+                          floatPrecision: 1,
+                        },
                         removeViewBox: false,
+                        removeTitle: true,
+                        removeDesc: true,
+                        removeUselessDefs: true,
+                        collapseGroups: true,
+                        cleanupIDs: true,
+                        removeEmptyContainers: true,
+                        removeEmptyAttrs: true,
+                        cleanupAttrs: true,
+                        removeStyleElement: true,
+                        removeDimensions: true,
+                        removeRasterImages: true,
                       },
                     },
-                  } as PluginConfig,
+                  },
                   "sortAttrs",
+                  {
+                    name: "removeAttrs",
+                    params: {
+                      attrs: "(class|id|data-name)",
+                    },
+                  },
                   {
                     name: "addAttributesToSVGElement",
                     params: {
@@ -96,12 +115,15 @@ export async function extractCssDataUris(distDir: string) {
                   },
                 ] as PluginConfig[],
               };
-              const optimized = optimize(svgString, svgoConfig);
 
-              if ("error" in optimized) {
-                fs.writeFileSync(filePath, buffer);
-              } else {
+              try {
+                const optimized = optimize(svgString, svgoConfig);
                 fs.writeFileSync(filePath, optimized.data);
+              } catch (optimizeError) {
+                console.warn(
+                  `[PostBuild] SVGO optimization failed for extracted asset, using original: ${filename}`,
+                );
+                fs.writeFileSync(filePath, buffer);
               }
             } else {
               fs.writeFileSync(filePath, buffer);
