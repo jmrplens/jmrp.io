@@ -52,7 +52,7 @@ while ((match = linkRegex.exec(post.body)) !== null) {
 
 // Also find raw <a> tags in the body, as MDX allows HTML
 const $ = cheerio.load(post.body);
-$('a[href^="http"]').each((_, el) => {
+$('a[href^="http"], a[href^="//"]').each((_, el) => {
     const $el = $(el);
     const url = $el.attr("href");
     const text = $el.text().replace(/\s+/g, " ").trim();

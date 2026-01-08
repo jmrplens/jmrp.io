@@ -86,9 +86,9 @@ export async function finalizeCspConfig(distDir: string, cspData: CspData) {
     `script-src 'self' 'nonce-$cspNonce' ${scriptChunks.usage}`,
     `style-src 'self' 'nonce-$cspNonce' ${styleChunks.usage}`,
     imgSrc
-      ? `img-src 'self' data: ${imgSrc} https://*.jmrp.io`
-      : "img-src 'self' data: https://*.jmrp.io",
-    "font-src 'self' data:",
+      ? `img-src 'self' ${imgSrc} https://*.jmrp.io`
+      : "img-src 'self' https://*.jmrp.io",
+    "font-src 'self'",
     "connect-src 'self' https://api.github.com https://cloudflareinsights.com",
     "media-src 'self'",
     "manifest-src 'self'",

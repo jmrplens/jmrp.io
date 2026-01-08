@@ -81,6 +81,32 @@ server {
         include /etc/nginx/snippets/security_headers.conf;
     }
 
+    # API Proxy for Services (Examples)
+    # Allows the frontend to fetch stats without exposing external domains/CORS
+    
+    # Mastodon (Proxies to external server)
+    location = /api/proxy/mastodon/peers { 
+        proxy_pass https://mstdn.example.com/api/v1/instance/peers; 
+        proxy_ssl_server_name on; 
+        include /etc/nginx/snippets/security_headers.conf;
+    }
+
+    # PotatoMesh (Optimized Local Proxy)
+    # Bypasses Cloudflare WAF by hitting localhost port directly and enforcing pagination
+    location = /api/proxy/potato/nodes { 
+        proxy_pass http://127.0.0.1:41447/api/nodes?limit=1000;
+        proxy_set_header Host $host;
+        include /etc/nginx/snippets/security_headers.conf;
+    }
+
+    # MeshMonitor (Protected with Token)
+    location = /api/proxy/mesh/lf { 
+        proxy_pass http://127.0.0.1:3001/meshmonitor/api/v1/network;
+        proxy_set_header Authorization "Bearer YOUR_TOKEN_HERE";
+        proxy_set_header Host $host;
+        include /etc/nginx/snippets/security_headers.conf;
+    }
+
     # CSP Violation Reporting Endpoint
     location /csp-report {
         access_log off;

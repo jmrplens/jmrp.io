@@ -119,14 +119,18 @@ async function runVerify() {
 }
 
 // Ensure reports are cleaned before starting
-const reportFiles = [
-  "schema-report.json",
-  "html-validation.json",
-  "rss-validation.json",
-];
-reportFiles.forEach((f) => {
-  if (fs.existsSync(f)) fs.unlinkSync(f);
-});
+try {
+  const reportFiles = [
+    "schema-report.json",
+    "html-validation.json",
+    "rss-validation.json",
+  ];
+  reportFiles.forEach((f) => {
+    if (fs.existsSync(f)) fs.unlinkSync(f);
+  });
+} catch (err) {
+  console.warn(`[Verify] Warning: Pre-run cleanup failed: ${err.message}`);
+}
 
 runVerify().catch((err) => {
   console.error(err);

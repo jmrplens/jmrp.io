@@ -57,7 +57,9 @@ function extractDataUri(
     }
 
     return { url: `/${ASSETS_DIR}/${filename}`, extracted: false };
-  } catch {
+  } catch (e) {
+    const message = e instanceof Error ? e.message : String(e);
+    console.error(`[PostBuild] Error extracting data URI: ${message}`);
     return null;
   }
 }
@@ -93,9 +95,9 @@ export async function processHtmlFiles(
   if (fs.existsSync(beaconPath)) {
     console.log("[PostBuild] Hardening cf-beacon.js with local guard...");
     const originalBeacon = fs.readFileSync(beaconPath, "utf-8");
-    // Prepend a guard that stops execution on localhost/127.0.0.1/0.0.0.0/::1
+    // Prepend a guard that stops execution on localhost/127.0.0.1/0.0.0.0/::1/[::1]
     // Using simple if/else instead of IIFE to avoid potential scope issues with the original script
-    const hardenedBeacon = `var h=location.hostname;if(h==='localhost'||h==='127.0.0.1'||h==='0.0.0.0'||h==='::1'){/*Skip Cloudflare*/}else{${originalBeacon}}`;
+    const hardenedBeacon = `var h=location.hostname;if(h==='localhost'||h==='127.0.0.1'||h==='0.0.0.0'||h==='::1'||h==='[::1]'){/*Skip Cloudflare*/}else{${originalBeacon}}`;
     fs.writeFileSync(beaconPath, hardenedBeacon, "utf-8");
     // Force re-calculation of hash for this file
     hashCache.delete(`${beaconPath}:sha512`);
@@ -257,43 +259,56 @@ export async function processHtmlFiles(
 
     // 5. Collect image domains for CSP
     if (enableCsp) {
-      $("img[src]").each((_, el) => {
-        const src = $(el).attr("src");
-        if (src && (src.startsWith("http") || src.startsWith("//"))) {
-          try {
-            // Use the URL constructor to safely parse the image URL and extract the hostname.
-            const url = src.startsWith("//")
-              ? new URL(`https:${src}`)
-              : new URL(src);
-            if (url.hostname) {
-              cspData.imageDomains.add(url.hostname);
+      $("img[src], source[srcset], img[srcset]").each((_, el) => {
+        const $el = $(el);
+        const sources =
+          ($el.attr("src") || "") + " " + ($el.attr("srcset") || "");
+
+        sources.split(/,?\s+/).forEach((srcCandidate) => {
+          const src = srcCandidate.trim().split(" ")[0]; // Get URL part from srcset entry
+          if (src && (src.startsWith("http") || src.startsWith("//"))) {
+            try {
+              // Use the URL constructor to safely parse the image URL and extract the hostname.
+              const url = src.startsWith("//")
+                ? new URL(`https:${src}`)
+                : new URL(src);
+              if (url.hostname) {
+                cspData.imageDomains.add(url.hostname);
+              }
+            } catch (err) {
+              const errorMessage =
+                err instanceof Error ? err.message : String(err);
+              const sanitizedSrc = src.split("?")[0] || "unknown";
+              console.warn(
+                `[PostBuild] Skipping invalid image URL during CSP collection: ${sanitizedSrc}. Error: ${errorMessage}`,
+              );
             }
-          } catch (err) {
-            const errorMessage =
-              err instanceof Error ? err.message : String(err);
-            const sanitizedSrc = src.split("?")[0] || "unknown";
-            console.warn(
-              `[PostBuild] Skipping invalid image URL during CSP collection: ${sanitizedSrc}. Error: ${errorMessage}`,
-            );
           }
-        }
+        });
       });
     }
 
     // 6. Manual Beacon Replace (Cloudflare)
-    let finalHtml = $.html();
     const beaconScriptsPath = path.join(distDir, "scripts", "cf-beacon.js");
-    if (
-      finalHtml.includes("__BEACON_INTEGRITY_HASH__") &&
-      fs.existsSync(beaconScriptsPath)
-    ) {
-      const hash = getFileHash(beaconScriptsPath, hashCache, "sha512");
-      finalHtml = finalHtml.replaceAll("__BEACON_INTEGRITY_HASH__", hash);
-      isModified = true;
+    if ($.html().includes("__BEACON_INTEGRITY_HASH__")) {
+      if (fs.existsSync(beaconScriptsPath)) {
+        const hash = getFileHash(beaconScriptsPath, hashCache, "sha512");
+        // We find the script specifically to be more precise
+        $('script[integrity="__BEACON_INTEGRITY_HASH__"]').each((_, el) => {
+          $(el).attr("integrity", hash);
+        });
+        isModified = true;
+      } else {
+        console.warn(
+          `[PostBuild] Beacon file missing. Removing script tag from ${file}`,
+        );
+        $('script[integrity="__BEACON_INTEGRITY_HASH__"]').remove();
+        isModified = true;
+      }
     }
 
     if (isModified) {
-      writeHtml(file, finalHtml);
+      writeHtml(file, $.html());
       modifiedFilesCount++;
     }
   }

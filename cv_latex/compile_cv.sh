@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 
 # Configuration
 LATEX_DIR="/var/www/jmrp.io/cv_latex"
@@ -15,14 +16,20 @@ compile_latex() {
     echo "Compiling $filename..."
     
     # Run xelatex (first pass)
-    xelatex -interaction=nonstopmode "${filename}.tex" > /dev/null
+    if ! xelatex -interaction=nonstopmode "${filename}.tex" > /dev/null 2>&1; then
+        echo "  ✗ Error: xelatex first pass failed for ${filename}"
+        return 1
+    fi
     
     # Run biber for bibliography
-    biber "$filename" > /dev/null
+    if ! biber "$filename" > /dev/null 2>&1; then
+        echo "  ✗ Error: biber failed for ${filename}"
+        return 1
+    fi
     
     # Run xelatex (multiple passes for references/layout)
-    xelatex -interaction=nonstopmode "${filename}.tex" > /dev/null
-    xelatex -interaction=nonstopmode "${filename}.tex" > /dev/null
+    xelatex -interaction=nonstopmode "${filename}.tex" > /dev/null 2>&1
+    xelatex -interaction=nonstopmode "${filename}.tex" > /dev/null 2>&1
     
     # Move to public directory
     if [ -f "${filename}.pdf" ]; then
@@ -35,7 +42,9 @@ compile_latex() {
 }
 
 # Clean previous temp files
-rm -f *.aux *.log *.out *.toc *.bbl *.blg *.run.xml *.bcf *.pdf
+# Note: This removes temporary LaTeX files and specific target PDFs before compilation
+rm -f *.aux *.log *.out *.toc *.bbl *.blg *.run.xml *.bcf
+rm -f CV_RequenaPlensJoseManuel_ENG.pdf CV_RequenaPlensJoseManuel_SPA.pdf
 
 # Compile all files
 for file in "${FILES[@]}"; do

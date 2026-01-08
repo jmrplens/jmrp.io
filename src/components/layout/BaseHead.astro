@@ -307,7 +307,7 @@ const jsonLD = {
             is:inline
             defer
             src="/scripts/cf-beacon.js"
-            data-cf-beacon={`{"token": "${import.meta.env.PUBLIC_CF_BEACON_TOKEN}"}`}
+            data-cf-beacon={JSON.stringify({ token: import.meta.env.PUBLIC_CF_BEACON_TOKEN })}
             integrity="__BEACON_INTEGRITY_HASH__"
             crossorigin="anonymous"
         />

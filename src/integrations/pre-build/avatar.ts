@@ -49,7 +49,11 @@ export async function setupGithubAvatar() {
       fs.writeFileSync(outputPath, buffer);
       console.log(`  ✓ Avatar saved to ${outputPath}`);
     } catch (writeError) {
-      if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath);
+      try {
+        fs.rmSync(outputPath, { force: true });
+      } catch {
+        // Ignore removal errors during cleanup
+      }
       throw writeError;
     }
   } catch (error) {

@@ -53,6 +53,19 @@ export default function postBuildIntegration(): AstroIntegration {
             process.env.POSTBUILD_NGINX_SNIPPETS_PATH || "";
           const enableCsp = !!systemNginxPath;
 
+          if (enableCsp) {
+            // Safety check for Nginx path to prevent arbitrary file overwrites
+            if (
+              !path.isAbsolute(systemNginxPath) ||
+              !systemNginxPath.endsWith(".conf") ||
+              systemNginxPath.includes("..")
+            ) {
+              throw new Error(
+                `[PostBuild] Invalid Nginx configuration path: ${systemNginxPath}. Must be an absolute path ending in .conf.`,
+              );
+            }
+          }
+
           if (!enableCsp) {
             console.log(
               "[PostBuild] Skipping CSP generation and Nginx deployment (POSTBUILD_NGINX_SNIPPETS_PATH is empty).",
@@ -80,8 +93,11 @@ export default function postBuildIntegration(): AstroIntegration {
                 fs.copyFileSync(generatedPath, systemNginxPath);
 
                 try {
-                  execSync("nginx -t", { stdio: "pipe" });
-                  execSync("nginx -s reload", { stdio: "inherit" });
+                  execSync("nginx -t", { stdio: "pipe", timeout: 10000 });
+                  execSync("nginx -s reload", {
+                    stdio: "inherit",
+                    timeout: 30000,
+                  });
                   console.log("  ✓ Nginx configuration reloaded successfully.");
                 } catch (validationError) {
                   const validationErrorMessage =
@@ -89,7 +105,7 @@ export default function postBuildIntegration(): AstroIntegration {
                       ? validationError.message
                       : String(validationError);
                   console.error(
-                    "  ⚠ Nginx validation/reload failed! Reverting changes.",
+                    "  ⚠ Nginx validation/reload failed or timed out! Reverting changes.",
                   );
                   console.error(`  Nginx Error: ${validationErrorMessage}`);
                   try {
@@ -98,7 +114,7 @@ export default function postBuildIntegration(): AstroIntegration {
                       "  ✓ Successfully reverted to the previous Nginx configuration.",
                     );
                     // Final validation to ensure system is left in a stable state
-                    execSync("nginx -t", { stdio: "pipe" });
+                    execSync("nginx -t", { stdio: "pipe", timeout: 10000 });
                   } catch (revertError) {
                     const revertErrorMessage =
                       revertError instanceof Error

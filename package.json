@@ -3,7 +3,7 @@
   "type": "module",
   "version": "0.0.1",
   "engines": {
-    "node": ">=22",
+    "node": ">=20.19.0",
     "pnpm": ">=10"
   },
   "pnpm": {
@@ -24,11 +24,6 @@
       "mathjax-full": ">=3.2.2",
       "request": ">=2.88.2",
       "whatwg-encoding": ">=3.1.1"
-    },
-    "auditConfig": {
-      "ignoreCves": [
-        "CVE-2023-28155"
-      ]
     }
   },
   "packageManager": "pnpm@10.27.0",

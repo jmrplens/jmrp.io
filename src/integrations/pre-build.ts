@@ -1,5 +1,6 @@
 import type { AstroIntegration } from "astro";
 import { loadEnv } from "vite";
+import fs from "node:fs";
 import { setupGithubAvatar } from "./pre-build/avatar.js";
 import { setupCfBeacon } from "./pre-build/beacon.js";
 
@@ -27,7 +28,17 @@ export default function preBuildIntegration(): AstroIntegration {
         );
 
         try {
-          await setupGithubAvatar();
+          const avatarPath = "src/assets/github-avatar.png";
+          const shouldRunGithubAvatar =
+            command === "build" ||
+            env.PREBUILD_RUN_ON_DEV === "true" ||
+            !fs.existsSync(avatarPath);
+
+          if (shouldRunGithubAvatar) {
+            await setupGithubAvatar();
+          } else {
+            console.log("  ✓ Skipping GitHub avatar fetch (already exists).");
+          }
 
           // Only fetch beacon if we are building for production
           if (command === "build") {
