@@ -424,7 +424,7 @@ function isSriEligible(
 }
 
 function isNonceEligible(
-  $el: cheerio.Cheerio<Element>,
+  _el: cheerio.Cheerio<Element>,
   type: "script" | "link",
 ): boolean {
   // Only apply nonce to <script> and <style> tags

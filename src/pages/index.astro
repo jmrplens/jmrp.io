@@ -8,7 +8,7 @@ import mehomeImg from "@assets/mehome.webp";
 import BaseLayout from "@layouts/BaseLayout.astro";
 import type { SiteConfig } from "@src/types";
 import { getSiteUrl } from "@utils/site";
-import { getImage,Image } from "astro:assets";
+import { Image } from "astro:assets";
 // Config
 import { getEntry } from "astro:content";
 import { Icon } from "astro-icon/components";
@@ -17,25 +17,6 @@ const siteEntry = await getEntry("site_config", "site");
 const siteData = (siteEntry?.data || {}) as SiteConfig;
 
 const { hero } = siteData;
-
-const widths = [200, 350, 400, 700];
-const sizes = "(max-width: 768px) 200px, 350px";
-
-// Generate optimized images for preload
-const optimizedImages = await Promise.all(
-    widths.map((w) =>
-        getImage({
-            src: mehomeImg,
-            format: "webp",
-            width: w,
-            height: w, // Square aspect ratio
-        }),
-    ),
-);
-
-const imageSrcSet = optimizedImages
-    .map((img, i) => `${img.src} ${widths[i]}w`)
-    .join(", ");
 
 // --- Schema.org Construction ---
 const personSchema = {
