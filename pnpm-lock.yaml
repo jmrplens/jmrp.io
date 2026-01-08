@@ -13,7 +13,7 @@ overrides:
   tmp: '>=0.2.3'
   glob: '>=13.0.0'
   rimraf: '>=6.0.0'
-  request>uuid: '>=3.4.0'
+  request>uuid: 3.4.0
   uuid: '>=11.0.0'
   boolean: '>=3.2.0'
   fstream: '>=1.0.12'
@@ -5138,6 +5138,11 @@ packages:
 
   uuid@13.0.0:
     resolution: {integrity: sha512-XQegIaBTVUjSHliKqcnFqYypAd4S+WCYt5NIeRs6w/UAry7z8Y9j5ZwRRL4kzq9U3sD6v+85er9FvkEaBpji2w==}
+    hasBin: true
+
+  uuid@3.4.0:
+    resolution: {integrity: sha512-HjSDRw6gZE5JMggctHBcjVak08+KEVhSIiDzFnT9S9aegmp85S/bReBVTb4QTFaRNptJ9kuYaNhnbNEOkbKb/A==}
+    deprecated: Please upgrade  to version 7 or higher.  Older versions may use Math.random() in certain circumstances, which is known to be problematic.  See https://v8.dev/blog/math-random for details.
     hasBin: true
 
   vary@1.1.2:
@@ -10711,7 +10716,7 @@ snapshots:
       safe-buffer: 5.2.1
       tough-cookie: 6.0.0
       tunnel-agent: 0.6.0
-      uuid: 13.0.0
+      uuid: 3.4.0
 
   require-directory@2.1.1: {}
 
@@ -11580,6 +11585,8 @@ snapshots:
   utils-merge@1.0.1: {}
 
   uuid@13.0.0: {}
+
+  uuid@3.4.0: {}
 
   vary@1.1.2: {}
 
