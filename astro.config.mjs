@@ -235,15 +235,33 @@ export default defineConfig({
                 overrides: {
                   cleanupNumericValues: false,
                   removeViewBox: false, // https://github.com/svg/svgo/issues/1128
+                  removeTitle: true,
+                  removeDesc: true,
+                  removeUselessDefs: true,
+                  collapseGroups: true,
+                  cleanupIDs: true,
+                  removeEmptyContainers: true,
+                  removeEmptyAttrs: true,
+                  cleanupAttrs: true,
                 },
-                cleanupIDs: {
-                  minify: false,
-                  remove: false,
-                },
-                convertPathData: false,
               },
             },
             "sortAttrs",
+            "removeStyleElement",
+            "removeDimensions",
+            "removeRasterImages",
+            {
+              name: "cleanupNumericValues",
+              params: {
+                floatPrecision: 1,
+              },
+            },
+            {
+              name: "removeAttrs",
+              params: {
+                attrs: "(class|id|data-name)",
+              },
+            },
             {
               name: "addAttributesToSVGElement",
               params: {
