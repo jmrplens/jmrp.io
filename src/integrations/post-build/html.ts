@@ -113,23 +113,64 @@ export async function processHtmlFiles(
     let isModified = false;
 
     // 0. Extract image Data URIs
-    const processImageSource = (attr: string) => {
-      $(`img[${attr}^="data:"], source[${attr}^="data:"]`).each((_, el) => {
+    const processImageSrc = () => {
+      $('img[src^="data:"], source[src^="data:"]').each((_, el) => {
         const $el = $(el);
-        const dataUri = $el.attr(attr);
-        if (dataUri) {
-          const result = extractDataUri(dataUri, targetDir);
-          if (result) {
-            $el.attr(attr, result.url);
-            if (result.extracted) extractedImages++;
+        const dataUri = $el.attr("src");
+        if (!dataUri) return;
+
+        const result = extractDataUri(dataUri, targetDir);
+        if (!result) return;
+
+        $el.attr("src", result.url);
+        if (result.extracted) extractedImages++;
+        isModified = true;
+      });
+    };
+
+    const processImageSrcset = () => {
+      // Use *="data:" so we also handle mixed-candidate srcset values
+      $('img[srcset*="data:"], source[srcset*="data:"]').each((_, el) => {
+        const $el = $(el);
+        const srcset = $el.attr("srcset");
+        if (!srcset) return;
+
+        let modifiedSrcset = false;
+
+        const newCandidates = srcset
+          .split(",")
+          .map((rawCandidate) => {
+            const candidate = rawCandidate.trim();
+            if (!candidate) return "";
+
+            // Split into URL and descriptor(s), e.g. "url 1x", "url 2x", "url 100w"
+            const [url, ...descriptorParts] = candidate.split(/\s+/);
+            if (!url || !url.startsWith("data:")) {
+              return candidate;
+            }
+
+            const result = extractDataUri(url, targetDir);
+            if (!result) {
+              return candidate;
+            }
+
+            modifiedSrcset = true;
             isModified = true;
-          }
+            if (result.extracted) extractedImages++;
+
+            const descriptor = descriptorParts.join(" ");
+            return descriptor ? `${result.url} ${descriptor}` : result.url;
+          })
+          .filter(Boolean);
+
+        if (modifiedSrcset) {
+          $el.attr("srcset", newCandidates.join(", "));
         }
       });
     };
 
-    processImageSource("src");
-    processImageSource("srcset");
+    processImageSrc();
+    processImageSrcset();
 
     // 1. moveInlineStyles logic (converts style="..." to classes)
     // Always enabled to ensure HTML validity (no-inline-style rule)

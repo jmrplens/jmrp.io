@@ -2,9 +2,14 @@
 set -euo pipefail
 IFS=$'\n\t'
 
-# Configuration
-LATEX_DIR="/var/www/jmrp.io/cv_latex"
-OUTPUT_DIR="/var/www/jmrp.io/public/pdf"
+# Determine script directory for relative paths
+SCRIPT_DIR="$(cd -- "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
+
+# Configuration (env vars can override these defaults)
+# Default: LaTeX sources in the same directory as this script
+LATEX_DIR="${LATEX_DIR:-$SCRIPT_DIR}"
+# Default: output PDF directory as ../public/pdf relative to this script
+OUTPUT_DIR="${OUTPUT_DIR:-"$SCRIPT_DIR/../public/pdf"}"
 FILES=("CV_RequenaPlensJoseManuel_ENG" "CV_RequenaPlensJoseManuel_SPA")
 
 cd "$LATEX_DIR" || exit 1

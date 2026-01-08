@@ -233,7 +233,9 @@ export default defineConfig({
               name: "preset-default",
               params: {
                 overrides: {
-                  cleanupNumericValues: false,
+                  cleanupNumericValues: {
+                    floatPrecision: 1,
+                  },
                   removeViewBox: false, // https://github.com/svg/svgo/issues/1128
                   removeTitle: true,
                   removeDesc: true,
@@ -243,19 +245,13 @@ export default defineConfig({
                   removeEmptyContainers: true,
                   removeEmptyAttrs: true,
                   cleanupAttrs: true,
+                  removeStyleElement: true,
+                  removeDimensions: true,
+                  removeRasterImages: true,
                 },
               },
             },
             "sortAttrs",
-            "removeStyleElement",
-            "removeDimensions",
-            "removeRasterImages",
-            {
-              name: "cleanupNumericValues",
-              params: {
-                floatPrecision: 1,
-              },
-            },
             {
               name: "removeAttrs",
               params: {

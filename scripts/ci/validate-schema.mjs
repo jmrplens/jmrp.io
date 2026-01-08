@@ -32,7 +32,7 @@ function isPathSafe(filePath) {
  * Extracts JSON-LD scripts from HTML content
  */
 function extractJsonLd(html) {
-  const $ = cheerio.load(html, { xmlMode: true, script: false }, false);
+  const $ = cheerio.load(html, { xmlMode: false });
   const jsonLdBlocks = [];
 
   $('script[type="application/ld+json"]').each((_, el) => {

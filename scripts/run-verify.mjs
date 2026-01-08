@@ -129,7 +129,8 @@ try {
     if (fs.existsSync(f)) fs.unlinkSync(f);
   });
 } catch (err) {
-  console.warn(`[Verify] Warning: Pre-run cleanup failed: ${err.message}`);
+  const message = err instanceof Error ? err.message : String(err);
+  console.warn(`[Verify] Warning: Pre-run cleanup failed: ${message}`);
 }
 
 runVerify().catch((err) => {
