@@ -22,7 +22,6 @@ import { execSync } from "node:child_process";
  * tasks after the site has been built:
  * - HTML transformation (SRI, Nonces, style-to-class conversion).
  * - CSS optimization (Data URI extraction).
- * - Sitemap configuration.
  * - CSP and security headers generation.
  * - Automatic deployment/reload of system Nginx configuration (if applicable).
  *
