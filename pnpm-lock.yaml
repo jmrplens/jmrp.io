@@ -15,6 +15,12 @@ overrides:
   rimraf: ^6.0.0
   request>uuid: ^3.4.0
   uuid: ^11.0.0
+  boolean: '>=3.2.0'
+  fstream: '>=1.0.12'
+  har-validator: '>=5.1.5'
+  mathjax-full: '>=3.2.2'
+  request: '>=2.88.2'
+  whatwg-encoding: '>=3.1.1'
 
 importers:
 
