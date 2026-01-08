@@ -24,6 +24,7 @@ import * as cheerio from "cheerio";
 
 import { getEntry } from "astro:content";
 import type { SiteConfig } from "@src/types";
+import { getSiteUrl } from "@utils/site";
 
 const siteEntry = await getEntry("site_config", "site");
 const siteData = (siteEntry?.data || {}) as SiteConfig;
@@ -101,28 +102,29 @@ const articleSchema = [
     {
         "@type": "BlogPosting",
         "@id":
-            new URL(`/blog/${post.id}`, import.meta.env.SITE).toString() + "#article",
+            new URL(`/blog/${post.id}`, getSiteUrl()).toString() + "#article",
         headline: post.data.title,
         description: post.data.description,
         datePublished: post.data.publishedDate.toISOString(),
         dateModified: (
             post.data.updatedDate || post.data.publishedDate
         ).toISOString(),
-        author: {
-            "@type": "Person",
-            name: siteData.author,
-            url: import.meta.env.SITE,
-        },
         publisher: {
             "@type": "Person",
-            "@id": `${import.meta.env.SITE}/#person`,
+            "@id": `${getSiteUrl()}/#person`,
             name: siteData.author,
-            url: import.meta.env.SITE,
+            url: getSiteUrl(),
         },
-        image: new URL(jsonLdImage, import.meta.env.SITE).toString(),
+        author: {
+            "@type": "Person",
+            "@id": `${getSiteUrl()}/#person`,
+            name: siteData.author,
+            url: getSiteUrl(),
+        },
+        image: new URL(jsonLdImage, getSiteUrl()).toString(),
         mainEntityOfPage: {
             "@type": "WebPage",
-            "@id": new URL(`/blog/${post.id}`, import.meta.env.SITE).toString(),
+            "@id": new URL(`/blog/${post.id}`, getSiteUrl()).toString(),
         },
     },
 ];

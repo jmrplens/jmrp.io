@@ -18,6 +18,7 @@ import defaultOgImage from "@assets/mehome_landscape.webp";
 
 import { getEntry } from "astro:content";
 import type { SiteConfig } from "@src/types";
+import { getSiteUrl, getAbsoluteUrl } from "@utils/site";
 
 const favicon = await getImage({
     src: faviconSrc,
@@ -48,7 +49,7 @@ interface Props {
     schema?: any; // Custom JSON-LD schema to merge or override
 }
 
-const canonicalURL = new URL(Astro.url.pathname, import.meta.env.SITE);
+const canonicalURL = new URL(Astro.url.pathname, getSiteUrl());
 
 const {
     title,
@@ -85,7 +86,7 @@ if (image) {
             resolvedImage = new URL(image, Astro.url);
         } catch {
             // Relative path or other, try to resolve against site
-            resolvedImage = new URL(image, import.meta.env.SITE);
+            resolvedImage = new URL(image, getSiteUrl());
         }
     } else {
         // It's an imported Image object passed via props
@@ -115,17 +116,15 @@ if (image) {
 // 1. WebSite Schema (Global)
 const websiteSchema = {
     "@type": "WebSite",
-    "@id": `${import.meta.env.SITE}/#website`,
-    url: import.meta.env.SITE,
-    name: "José M. Requena Plens",
+            url: getSiteUrl(),    name: "José M. Requena Plens",
     description: siteData.description,
     inLanguage: siteData.locale,
     publisher: {
         "@type": "Person",
-        "@id": `${import.meta.env.SITE}/#person`,
+        "@id": `${getSiteUrl()}/#person`,
         name: siteData.author,
-        url: import.meta.env.SITE,
-        image: new URL(defaultOgImage.src, import.meta.env.SITE).toString(),
+        url: getSiteUrl(),
+        image: new URL(defaultOgImage.src, getSiteUrl()).toString(),
         sameAs: [
             "https://github.com/jmrplens",
             "https://www.linkedin.com/in/jmrplens",
@@ -139,7 +138,7 @@ const websiteSchema = {
 const navSchema = (siteData.nav || []).map((item) => ({
     "@type": "SiteNavigationElement",
     name: item.label,
-    url: new URL(item.href, import.meta.env.SITE).toString(),
+    url: new URL(item.href, getSiteUrl()).toString(),
 }));
 
 // 3. Breadcrumb Schema (Automatic)
@@ -152,12 +151,12 @@ const breadcrumbList = {
             "@type": "ListItem",
             position: 1,
             name: "Home",
-            item: import.meta.env.SITE,
+            item: getSiteUrl(),
         },
         ...pathSegments.map((segment, index) => {
             const path = `/${pathSegments.slice(0, index + 1).join("/")}/`;
             const isLastSegment = index === pathSegments.length - 1;
-            const absoluteUrl = new URL(path, import.meta.env.SITE).toString();
+            const absoluteUrl = new URL(path, getSiteUrl()).toString();
 
             // Prefer page title for the last segment if available
             const fallbackName = segment

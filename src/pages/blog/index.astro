@@ -8,6 +8,7 @@ import { getCollection } from "astro:content";
 import { getImage } from "astro:assets";
 import PostGrid from "@components/blog/PostGrid.astro";
 import TagCloud from "@components/blog/TagCloud.astro";
+import { getSiteUrl } from "@utils/site";
 
 import "@styles/blog.css";
 
@@ -41,17 +42,17 @@ if (lcpPost && lcpPost.data.coverImage) {
 // Schema.org: CollectionPage with ItemList for Blog Index
 const schema = {
     "@type": "CollectionPage",
-    "@id": new URL(Astro.url.pathname, import.meta.env.SITE).toString() + "#collection",
+    "@id": new URL(Astro.url.pathname, getSiteUrl()).toString() + "#collection",
     name: "Blog - José Manuel Requena Plens",
     description:
         "Thoughts, tutorials, and engineering notes on software development and home lab.",
-    url: new URL(Astro.url.pathname, import.meta.env.SITE).toString(),
+    url: new URL(Astro.url.pathname, getSiteUrl()).toString(),
     mainEntity: {
         "@type": "ItemList",
         itemListElement: posts.map((post, index) => ({
             "@type": "ListItem",
             position: index + 1,
-            url: new URL(`/blog/${post.id}/`, import.meta.env.SITE).toString(),
+            url: new URL(`/blog/${post.id}/`, getSiteUrl()).toString(),
             name: post.data.title,
         })),
     },

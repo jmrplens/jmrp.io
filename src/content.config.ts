@@ -1,6 +1,7 @@
 import { defineCollection } from "astro:content";
 import { glob } from "astro/loaders";
 import { z } from "astro/zod";
+import { stripExtension } from "./utils/content";
 
 /**
  * Configuration for 'posts' content collection.
@@ -10,7 +11,7 @@ const posts = defineCollection({
   loader: glob({
     pattern: "**/[^_]*.{md,mdx}",
     base: "./src/content/posts",
-    generateId: ({ entry }) => entry.replace(/\.mdx?$/, ""),
+    generateId: ({ entry }) => stripExtension(entry),
   }),
   schema: ({ image }) =>
     z.object({
@@ -34,7 +35,7 @@ const site_config = defineCollection({
   loader: glob({
     pattern: "**/*.yaml",
     base: "./src/content/site_config",
-    generateId: ({ entry }) => entry.replace(/\.yaml$/, ""),
+    generateId: ({ entry }) => stripExtension(entry),
   }),
   schema: z.union([
     // Site Config
@@ -170,7 +171,7 @@ const cv = defineCollection({
   loader: glob({
     pattern: "**/*.yaml",
     base: "./src/content/cv",
-    generateId: ({ entry }) => entry.replace(/\.yaml$/, ""),
+    generateId: ({ entry }) => stripExtension(entry),
   }),
   schema: z.array(
     z.union([
@@ -206,7 +207,7 @@ const publications_data = defineCollection({
   loader: glob({
     pattern: "**/*.yaml",
     base: "./src/content/publications_data",
-    generateId: ({ entry }) => entry.replace(/\.yaml$/, ""),
+    generateId: ({ entry }) => stripExtension(entry),
   }),
   schema: z.record(
     z.string(),
