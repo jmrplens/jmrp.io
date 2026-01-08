@@ -17,6 +17,7 @@ import { remarkMermaidBypass } from "./scripts/remark-mermaid-bypass.mjs";
 import { rehypeLinkDisambiguator } from "./scripts/rehype-link-disambiguator.mjs";
 import { ViteImageOptimizer } from "vite-plugin-image-optimizer";
 import postBuildIntegration from "./src/integrations/post-build.ts";
+import preBuildIntegration from "./src/integrations/pre-build.ts";
 
 /**
  * Custom Rehype plugin to split the <picture> output from rehype-mermaid
@@ -109,6 +110,7 @@ export default defineConfig({
 
   // List of integrations to extend Astro functionality
   integrations: [
+    preBuildIntegration(),
     sitemap(),
     mdx({
       // MDX needs to know about remark plugins too if we want it to work in .mdx files
