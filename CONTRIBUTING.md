@@ -33,7 +33,7 @@ The site will be available at `http://localhost:4321`.
 
 The project follows the **Astro v6** structure with the **Content Layer API**.
 
-```
+```plaintext
 /
 ├── src/
 │   ├── content/          # Content Collections (Markdown/MDX & YAML)
@@ -53,7 +53,7 @@ All data and content live in `src/content/`. We use the **Content Layer API** wi
 - **`posts`**: Blog posts in MDX (`.mdx`).
 - **`site_config`**: Global site settings (`site.yaml`, `socials.yaml`).
 - **`cv`**: Resume data (`main.yaml`).
-- **`publications_data`**: Academic papers and co-authors (`papers.bib`, `coauthors.yaml`).
+- **`publications_data`**: Academic papers and coauthors (`papers.bib`, `coauthors.yaml`).
 
 ## ✅ Verification & Testing
 
