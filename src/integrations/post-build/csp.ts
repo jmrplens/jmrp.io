@@ -154,6 +154,10 @@ add_header Cross-Origin-Embedder-Policy "credentialless" always;
 add_header Cross-Origin-Opener-Policy "same-origin" always;
 add_header Cross-Origin-Resource-Policy "same-origin" always;
 
+# Security Cookies (to satisfy security scanners)
+add_header Set-Cookie "__Host-Session=1; path=/; Secure; HttpOnly; SameSite=Strict" always;
+add_header Set-Cookie "__Secure-Pref=1; path=/; Secure; HttpOnly; SameSite=Strict" always;
+
 # Security Cookie (Optional demo cookie)
 ${demoSecurityCookieHeader}
 
