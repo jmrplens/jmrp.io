@@ -101,6 +101,7 @@ Object.entries(groupedByUrl).forEach(([url, runs]) => {
             "interactive",
             "total-blocking-time",
             "image-alt",
+            "errors-in-console",
           ].includes(audit.id)
         ) {
           issues.push(

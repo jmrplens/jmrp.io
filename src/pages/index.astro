@@ -11,6 +11,7 @@ import { Icon } from "astro-icon/components";
 // Config
 import { getEntry } from "astro:content";
 import type { SiteConfig } from "@src/types";
+import { getSiteUrl } from "@utils/site";
 
 const siteEntry = await getEntry("site_config", "site");
 const siteData = (siteEntry?.data || {}) as SiteConfig;
@@ -35,18 +36,34 @@ const optimizedImages = await Promise.all(
 const imageSrcSet = optimizedImages
     .map((img, i) => `${img.src} ${widths[i]}w`)
     .join(", ");
+
+// --- Schema.org Construction ---
+const personSchema = {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    "@id": new URL("#person", getSiteUrl()).toString(),
+    name: "José Manuel Requena Plens",
+    url: getSiteUrl(),
+    image: new URL("/assets/mehome.webp", getSiteUrl()).toString(),
+    sameAs: [
+        "https://github.com/jmrplens",
+        "https://mstdn.jmrp.io/@jmrplens",
+        "https://www.linkedin.com/in/jmrplens",
+    ],
+    jobTitle: "R&D Engineer",
+    worksFor: {
+        "@type": "Organization",
+        name: "Power Electronics",
+    },
+};
 ---
 
-<BaseLayout title={siteData.title} description={siteData.description}>
-    <link
-        slot="head"
-        rel="preload"
-        as="image"
-        imagesrcset={imageSrcSet}
-        imagesizes={sizes}
-        fetchpriority="high"
-    />
-    <section class="hero" aria-label="Hero Section">
+<BaseLayout
+    title="Home"
+    description="Personal website and academic portfolio."
+    schema={personSchema}
+>
+    <section class="hero">
         <div class="container">
             <div class="hero-content">
                 <div class="hero-text">
