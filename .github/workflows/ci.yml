@@ -270,6 +270,8 @@ jobs:
 
       - name: Deploy to Surge
         if: github.event_name == 'pull_request' && env.SURGE_TOKEN != ''
+        env:
+          NODE_OPTIONS: "--no-deprecation"
         run: |
           pnpm exec surge ./a11y-deploy jmrp-a11y-pr-${{ github.event.number }}.surge.sh --token ${{ env.SURGE_TOKEN }}
 
@@ -368,6 +370,8 @@ jobs:
       - name: Deploy HTML Report to Surge
         if: github.event_name == 'pull_request' && env.SURGE_TOKEN != ''
         shell: bash
+        env:
+          NODE_OPTIONS: "--no-deprecation"
         run: |
           mkdir -p html-deploy
           cp html-report.html html-deploy/index.html
@@ -417,6 +421,8 @@ jobs:
       - name: Deploy RSS Preview to Surge
         if: github.event_name == 'pull_request' && env.SURGE_TOKEN != ''
         shell: bash
+        env:
+          NODE_OPTIONS: "--no-deprecation"
         run: |
           mkdir -p preview-deploy
           cp dist/rss-preview.html preview-deploy/index.html
@@ -466,6 +472,8 @@ jobs:
           fi
       - name: Deploy Schema Report to Surge
         if: github.event_name == 'pull_request' && always() && env.SURGE_TOKEN != ''
+        env:
+          NODE_OPTIONS: "--no-deprecation"
         run: |
           if [ -f schema-report.html ]; then
             mkdir -p schema-deploy
@@ -545,6 +553,8 @@ jobs:
       - name: Deploy Image Report to Surge
         if: github.event_name == 'pull_request' && env.SURGE_TOKEN != ''
         shell: bash
+        env:
+          NODE_OPTIONS: "--no-deprecation"
         run: |
           mkdir -p img-deploy
           cp image-report.html img-deploy/index.html
@@ -595,6 +605,8 @@ jobs:
       - name: Deploy Playwright Report to Surge
         if: github.event_name == 'pull_request' && always() && env.SURGE_TOKEN != ''
         shell: bash
+        env:
+          NODE_OPTIONS: "--no-deprecation"
         run: |
           pnpm exec surge ./playwright-report jmrp-functional-pr-${{ github.event.number }}.surge.sh --token ${{ env.SURGE_TOKEN }}
       - name: Post Functional Test Comment
@@ -696,6 +708,8 @@ jobs:
 
       - name: Deploy to Surge
         if: github.event_name == 'pull_request' && env.SURGE_TOKEN != ''
+        env:
+          NODE_OPTIONS: "--no-deprecation"
         run: |
           pnpm exec surge ./lh-deploy jmrp-lh-pr-${{ github.event.number }}.surge.sh --token ${{ env.SURGE_TOKEN }}
 

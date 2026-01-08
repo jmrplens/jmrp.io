@@ -53,6 +53,15 @@ export default function postBuildIntegration(): AstroIntegration {
             process.env.POSTBUILD_NGINX_SNIPPETS_PATH || "";
           const enableCsp = !!systemNginxPath;
 
+          const nginxTestTimeout = parseInt(
+            process.env.POSTBUILD_NGINX_TEST_TIMEOUT || "10000",
+            10,
+          );
+          const nginxReloadTimeout = parseInt(
+            process.env.POSTBUILD_NGINX_RELOAD_TIMEOUT || "30000",
+            10,
+          );
+
           if (enableCsp) {
             // Safety check for Nginx path to prevent arbitrary file overwrites
             if (
@@ -84,6 +93,15 @@ export default function postBuildIntegration(): AstroIntegration {
               fs.existsSync(systemNginxPath) &&
               fs.existsSync(generatedPath)
             ) {
+              // Upfront permission check
+              try {
+                fs.accessSync(systemNginxPath, fs.constants.W_OK);
+              } catch {
+                throw new Error(
+                  `[PostBuild] No write permission for system Nginx path: ${systemNginxPath}. Build must run with appropriate permissions to deploy security headers.`,
+                );
+              }
+
               // Safety: We will validate the configuration after deployment and revert if it fails.
               console.log(`[PostBuild] Validating Nginx configuration...`);
               try {
@@ -93,10 +111,13 @@ export default function postBuildIntegration(): AstroIntegration {
                 fs.copyFileSync(generatedPath, systemNginxPath);
 
                 try {
-                  execSync("nginx -t", { stdio: "inherit", timeout: 10000 });
+                  execSync("nginx -t", {
+                    stdio: "inherit",
+                    timeout: nginxTestTimeout,
+                  });
                   execSync("nginx -s reload", {
                     stdio: "inherit",
-                    timeout: 30000,
+                    timeout: nginxReloadTimeout,
                   });
                   console.log("  ✓ Nginx configuration reloaded successfully.");
                 } catch (validationError) {
@@ -116,7 +137,7 @@ export default function postBuildIntegration(): AstroIntegration {
                     // Final validation to ensure system is left in a stable state
                     execSync("nginx -t", {
                       stdio: "inherit",
-                      timeout: 10000,
+                      timeout: nginxTestTimeout,
                     });
                   } catch (revertError) {
                     const revertErrorMessage =
