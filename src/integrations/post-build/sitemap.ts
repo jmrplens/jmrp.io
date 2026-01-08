@@ -11,13 +11,13 @@ import path from "node:path";
  * @param {string} distDir - The absolute path to the production build output.
  */
 export function setupSitemap(distDir: string) {
-  console.log("[PostBuild] Setting up sitemap...");
-  const sitemapPath = path.join(distDir, "sitemap.xml");
-  const targetPath = path.join(distDir, "sitemap-index.xml");
+  const sourcePath = path.join(distDir, "sitemap-index.xml");
+  const targetPath = path.join(distDir, "sitemap.xml");
 
-  if (fs.existsSync(targetPath)) {
+  if (fs.existsSync(sourcePath)) {
+    console.log("[PostBuild] Setting up sitemap...");
     try {
-      fs.copyFileSync(targetPath, sitemapPath);
+      fs.copyFileSync(sourcePath, targetPath);
       console.log("  ✓ Copied sitemap-index.xml -> sitemap.xml");
     } catch (error) {
       console.error(
@@ -25,7 +25,5 @@ export function setupSitemap(distDir: string) {
         error,
       );
     }
-  } else {
-    console.warn("  ⚠ sitemap-index.xml not found.");
   }
 }

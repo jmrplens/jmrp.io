@@ -206,11 +206,11 @@ export default defineConfig({
         svg: {
           multipass: true,
           plugins: [
-            {
+            /** @type {any} */ ({
               name: "preset-default",
               params: {
                 overrides: {
-                  cleanupNumericValues: false,
+                  cleanupNumericValues: true,
                   removeViewBox: false, // https://github.com/svg/svgo/issues/1128
                 },
                 cleanupIDs: {
@@ -219,14 +219,14 @@ export default defineConfig({
                 },
                 convertPathData: false,
               },
-            },
+            }),
             "sortAttrs",
-            {
+            /** @type {any} */ ({
               name: "addAttributesToSVGElement",
               params: {
                 attributes: [{ xmlns: "http://www.w3.org/2000/svg" }],
               },
-            },
+            }),
           ],
         },
         png: {

@@ -40,8 +40,8 @@ export async function processHtmlFiles(
     console.log("[PostBuild] Hardening cf-beacon.js with local guard...");
     const originalBeacon = fs.readFileSync(beaconPath, "utf-8");
     // Prepend a guard that stops execution on localhost/127.0.0.1/0.0.0.0/::1
-    // We wrap it in a function to allow 'return' at the top level of the logic
-    const hardenedBeacon = `(function(){var h=location.hostname;if(h==='localhost'||h==='127.0.0.1'||h==='0.0.0.0'||h==='::1')return;${originalBeacon}})();`;
+    // Using simple if/else instead of IIFE to avoid potential scope issues with the original script
+    const hardenedBeacon = `var h=location.hostname;if(h==='localhost'||h==='127.0.0.1'||h==='0.0.0.0'||h==='::1'){/*Skip Cloudflare*/}else{${originalBeacon}}`;
     fs.writeFileSync(beaconPath, hardenedBeacon, "utf-8");
     // Force re-calculation of hash for this file
     hashCache.delete(`${beaconPath}:sha512`);
@@ -197,8 +197,9 @@ export async function processHtmlFiles(
           } catch (err) {
             const errorMessage =
               err instanceof Error ? err.message : String(err);
+            const sanitizedSrc = src.split("?")[0] || "unknown";
             console.warn(
-              `[PostBuild] Skipping invalid image URL during CSP collection: ${src}. Error: ${errorMessage}`,
+              `[PostBuild] Skipping invalid image URL during CSP collection: ${sanitizedSrc}. Error: ${errorMessage}`,
             );
           }
         }
@@ -207,13 +208,14 @@ export async function processHtmlFiles(
 
     // 6. Manual Beacon Replace (Cloudflare)
     let finalHtml = $.html();
-    if (finalHtml.includes("__BEACON_INTEGRITY_HASH__")) {
-      const beaconPath = path.join(distDir, "scripts", "cf-beacon.js");
-      if (fs.existsSync(beaconPath)) {
-        const hash = getFileHash(beaconPath, hashCache, "sha512");
-        finalHtml = finalHtml.replaceAll("__BEACON_INTEGRITY_HASH__", hash);
-        isModified = true;
-      }
+    const beaconScriptsPath = path.join(distDir, "scripts", "cf-beacon.js");
+    if (
+      finalHtml.includes("__BEACON_INTEGRITY_HASH__") &&
+      fs.existsSync(beaconScriptsPath)
+    ) {
+      const hash = getFileHash(beaconScriptsPath, hashCache, "sha512");
+      finalHtml = finalHtml.replaceAll("__BEACON_INTEGRITY_HASH__", hash);
+      isModified = true;
     }
 
     if (isModified) {

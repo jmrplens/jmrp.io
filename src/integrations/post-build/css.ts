@@ -81,18 +81,18 @@ export async function extractCssDataUris(distDir: string) {
                     name: "preset-default",
                     params: {
                       overrides: {
-                        cleanupNumericValues: false,
+                        cleanupNumericValues: true,
                         removeViewBox: false,
                       },
                     },
-                  },
+                  } as any,
                   "sortAttrs",
                   {
                     name: "addAttributesToSVGElement",
                     params: {
                       attributes: [{ xmlns: "http://www.w3.org/2000/svg" }],
                     },
-                  },
+                  } as any,
                 ],
               });
 
