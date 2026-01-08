@@ -35,7 +35,7 @@
     "typecheck": "astro check",
     "typecheck:tsc": "tsc --noEmit",
     "test:e2e": "playwright test",
-    "verify": "pnpm typecheck && pnpm lint && pnpm build && pnpm lint:html && pnpm test:e2e"
+    "verify": "pnpm typecheck && pnpm lint && pnpm exec prettier --check . && pnpm build && pnpm lint:html && node scripts/ci/validate-rss.mjs dist/rss.xml && node scripts/ci/validate-schema.mjs dist && typos && lychee --config lychee.toml --root-dir dist dist/**/*.html && pnpm test:e2e"
   },
   "dependencies": {
     "@astrojs/mdx": "^4.3.13",

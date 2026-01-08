@@ -5,10 +5,10 @@ no_progress = true
 
 # Exclude specific domains/URLs
 exclude = [
-    "https://mstdn.jmrp.io",
-    "https://electronica-submarina.com",
-    "https://ies-berlanga.info",
-    "https://www.i3m-detectors.i3m.upv.es",
+    "https://mstdn\\.jmrp\\.io/.*",
+    "https://electronica-submarina\\.com/.*",
+    "https://ies-berlanga\\.info/.*",
+    "https://www\\.i3m-detectors\\.i3m\\.upv\\.es/.*",
     # Ignore Astro/Template variables
     ".*\\$\\{.*",
     ".*\\%7B.*",
