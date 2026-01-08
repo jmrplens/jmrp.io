@@ -138,6 +138,21 @@ export default defineConfig({
         access: "secret",
         optional: true,
       }),
+      PRIVATE_CF_API_TOKEN: envField.string({
+        context: "server",
+        access: "secret",
+        optional: true,
+      }),
+      PRIVATE_CF_EMAIL: envField.string({
+        context: "server",
+        access: "secret",
+        optional: true,
+      }),
+      PRIVATE_CF_ZONE_ID: envField.string({
+        context: "server",
+        access: "secret",
+        optional: true,
+      }),
     },
   },
 

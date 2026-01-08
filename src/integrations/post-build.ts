@@ -12,6 +12,7 @@ import { fileURLToPath } from "node:url";
 
 import type { AstroIntegration, AstroIntegrationLogger } from "astro";
 
+import { purgeCloudflareCache } from "./post-build/cloudflare.js";
 import { finalizeCspConfig } from "./post-build/csp.js";
 import { extractCssDataUris } from "./post-build/css.js";
 import { processHtmlFiles } from "./post-build/html.js";
@@ -65,6 +66,8 @@ export default function postBuildIntegration(): AstroIntegration {
             await finalizeCspConfig(distDir, cspData);
             deploySecurityHeaders(distDir, systemNginxPath, logger);
           }
+
+          await purgeCloudflareCache(logger);
         } catch (error) {
           logger.error("Fatal optimization error:");
           logger.error(
@@ -143,6 +146,9 @@ function deploySecurityHeaders(
       };
 
       execSync("nginx -t", execOptions); // NOSONAR
+
+      // Clear Nginx cache before reload
+      execSync("rm -rf /var/cache/nginx/*", execOptions); // NOSONAR
 
       const reloadOptions = {
         ...execOptions,
