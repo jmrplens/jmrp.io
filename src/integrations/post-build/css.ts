@@ -119,7 +119,7 @@ export async function extractCssDataUris(distDir: string) {
               try {
                 const optimized = optimize(svgString, svgoConfig);
                 fs.writeFileSync(filePath, optimized.data);
-              } catch (optimizeError) {
+              } catch {
                 console.warn(
                   `[PostBuild] SVGO optimization failed for extracted asset, using original: ${filename}`,
                 );
