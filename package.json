@@ -16,6 +16,11 @@
       "glob": "^11.0.0",
       "rimraf": "^6.0.0",
       "uuid": "^11.0.0"
+    },
+    "auditConfig": {
+      "ignoreCves": [
+        "CVE-2023-28155"
+      ]
     }
   },
   "packageManager": "pnpm@10.27.0",
