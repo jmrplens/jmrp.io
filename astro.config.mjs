@@ -205,8 +205,8 @@ export default defineConfig({
         /* pass your config */
         svg: {
           multipass: true,
-          plugins: [
-            /** @type {any} */ ({
+          plugins: /** @type {import('svgo').PluginConfig[]} */ ([
+            {
               name: "preset-default",
               params: {
                 overrides: {
@@ -219,15 +219,15 @@ export default defineConfig({
                 },
                 convertPathData: false,
               },
-            }),
+            },
             "sortAttrs",
-            /** @type {any} */ ({
+            {
               name: "addAttributesToSVGElement",
               params: {
                 attributes: [{ xmlns: "http://www.w3.org/2000/svg" }],
               },
-            }),
-          ],
+            },
+          ]),
         },
         png: {
           // https://sharp.pixelplumbing.com/api-output#png

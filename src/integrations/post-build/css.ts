@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
 import { glob } from "glob";
-import { optimize } from "svgo";
+import { optimize, type Config, type PluginConfig } from "svgo";
 import { getExtensionFromMime } from "./utils.js";
 import { ASSETS_DIR, ASSET_FILENAME_HASH_LENGTH } from "./constants.js";
 
@@ -74,7 +74,7 @@ export async function extractCssDataUris(distDir: string) {
           if (!fs.existsSync(filePath)) {
             if (ext === "svg") {
               const svgString = buffer.toString("utf-8");
-              const optimized = optimize(svgString, {
+              const svgoConfig: Config = {
                 multipass: true,
                 plugins: [
                   {
@@ -85,16 +85,17 @@ export async function extractCssDataUris(distDir: string) {
                         removeViewBox: false,
                       },
                     },
-                  } as any,
+                  },
                   "sortAttrs",
                   {
                     name: "addAttributesToSVGElement",
                     params: {
                       attributes: [{ xmlns: "http://www.w3.org/2000/svg" }],
                     },
-                  } as any,
-                ],
-              });
+                  },
+                ] as PluginConfig[],
+              };
+              const optimized = optimize(svgString, svgoConfig);
 
               if ("error" in optimized) {
                 fs.writeFileSync(filePath, buffer);
