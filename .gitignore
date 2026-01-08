@@ -79,3 +79,14 @@ public/scripts/cf-beacon.js
 .lighthouseci/
 rss-validation.json
 bundle-analysis.json
+
+# LaTeX temporary files
+cv_latex/*.aux
+cv_latex/*.log
+cv_latex/*.out
+cv_latex/*.toc
+cv_latex/*.bbl
+cv_latex/*.blg
+cv_latex/*.run.xml
+cv_latex/*.bcf
+cv_latex/*.pdf
