@@ -34,8 +34,14 @@ compile_latex() {
     fi
     
     # Run xelatex (multiple passes for references/layout)
-    xelatex -interaction=nonstopmode "${filename}.tex" > /dev/null 2>&1
-    xelatex -interaction=nonstopmode "${filename}.tex" > /dev/null 2>&1
+    if ! xelatex -interaction=nonstopmode "${filename}.tex" > /dev/null 2>&1; then
+        echo "  ✗ Error: xelatex second pass failed for ${filename}"
+        return 1
+    fi
+    if ! xelatex -interaction=nonstopmode "${filename}.tex" > /dev/null 2>&1; then
+        echo "  ✗ Error: xelatex third pass failed for ${filename}"
+        return 1
+    fi
     
     # Move to public directory
     if [ -f "${filename}.pdf" ]; then

@@ -65,8 +65,14 @@ export async function setupGithubAvatar() {
     if (fs.existsSync(outputPath)) {
       console.log("  ✓ Using existing github-avatar.png.");
     } else if (fs.existsSync(fallbackPath)) {
-      fs.copyFileSync(fallbackPath, outputPath);
-      console.log("  ✓ Copied local fallback image.");
+      try {
+        fs.copyFileSync(fallbackPath, outputPath);
+        console.log("  ✓ Copied local fallback image.");
+      } catch (copyError) {
+        throw new Error(
+          `Failed to copy fallback: ${copyError instanceof Error ? copyError.message : String(copyError)}`,
+        );
+      }
     } else {
       throw new Error("Critical: No GitHub avatar or fallback image found!");
     }

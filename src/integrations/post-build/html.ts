@@ -96,8 +96,8 @@ export async function processHtmlFiles(
     console.log("[PostBuild] Hardening cf-beacon.js with local guard...");
     const originalBeacon = fs.readFileSync(beaconPath, "utf-8");
     // Prepend a guard that stops execution on localhost/127.0.0.1/0.0.0.0/::1/[::1]
-    // Using simple if/else instead of IIFE to avoid potential scope issues with the original script
-    const hardenedBeacon = `var h=location.hostname;if(h==='localhost'||h==='127.0.0.1'||h==='0.0.0.0'||h==='::1'||h==='[::1]'){/*Skip Cloudflare*/}else{${originalBeacon}}`;
+    // Using an IIFE that returns early to safely wrap the original beacon code
+    const hardenedBeacon = `(function(){var h=location.hostname;if(h==='localhost'||h==='127.0.0.1'||h==='0.0.0.0'||h==='::1'||h==='[::1]')return;${originalBeacon}})();`;
     fs.writeFileSync(beaconPath, hardenedBeacon, "utf-8");
     // Force re-calculation of hash for this file
     hashCache.delete(`${beaconPath}:sha512`);

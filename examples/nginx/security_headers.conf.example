@@ -14,22 +14,19 @@ add_header X-XSS-Protection "1; mode=block" always;
 add_header Referrer-Policy "strict-origin-when-cross-origin" always;
 
 # Cross-Origin Policies (COOP, COEP, CORP)
-add_header Cross-Origin-Embedder-Policy "require-corp" always;
+add_header Cross-Origin-Embedder-Policy "credentialless" always;
 add_header Cross-Origin-Opener-Policy "same-origin" always;
 add_header Cross-Origin-Resource-Policy "same-origin" always;
 
-# Security Cookie (Workaround for security scanners)
-# Note: This dummy cookie is a workaround for security scanners that check for secure
-# cookie flags. Your application (or authentication gateway) should set its own secure
-# session cookies with appropriate flags (Secure, HttpOnly, SameSite, __Host- prefix).
-# Remove this line if your application handles session cookies properly.
-add_header Set-Cookie "__Host-Session=1; path=/; Secure; HttpOnly; SameSite=Strict" always;
+# Security Cookie (Optional demo cookie)
+# Enable via build-time environment variable: DEMO_SECURITY_COOKIE=1
+# add_header Set-Cookie "__Demo-Security-Flags=1; path=/; Secure; HttpOnly; SameSite=Strict" always;
 
 # Content Security Policy (Nonce-based with SHA fallback)
 # - 'nonce-$cspNonce': Injected by Nginx via sub_filter
 # - hashes: Calculated during build for all inline content
 # - 'report-uri': Endpoint for violation reports
-add_header Content-Security-Policy "default-src 'none'; script-src 'self' 'nonce-$cspNonce' $csp_script_1; style-src 'self' 'unsafe-hashes' 'nonce-$cspNonce' $csp_style_1; img-src 'self' data: https://*.jmrp.io; font-src 'self' data:; connect-src 'self' https://api.github.com https://cloudflareinsights.com; media-src 'self'; manifest-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests; report-uri /csp-report" always;
+add_header Content-Security-Policy "default-src 'none'; script-src 'self' 'nonce-$cspNonce' $csp_script_1; style-src 'self' 'nonce-$cspNonce' $csp_style_1; img-src 'self' https://*.jmrp.io; font-src 'self'; connect-src 'self' https://api.github.com https://cloudflareinsights.com https://*.cloudflareinsights.com; media-src 'self'; manifest-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests; report-uri /csp-report" always;
 
 # Permissions Policy
 add_header Permissions-Policy "accelerometer=(), autoplay=(), browsing-topics=(), camera=(), encrypted-media=(), fullscreen=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), midi=(), payment=(), picture-in-picture=(), publickey-credentials-get=(self), sync-xhr=(), usb=(), xr-spatial-tracking=()" always;
