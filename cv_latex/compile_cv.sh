@@ -1,5 +1,6 @@
 #!/bin/bash
 set -euo pipefail
+IFS=$'\n\t'
 
 # Configuration
 LATEX_DIR="/var/www/jmrp.io/cv_latex"

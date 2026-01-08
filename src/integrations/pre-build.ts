@@ -48,7 +48,15 @@ export default function preBuildIntegration(): AstroIntegration {
           const message =
             error instanceof Error ? error.message : String(error);
           console.error(`[\x1b[31mPreBuild\x1b[0m] Fatal error:`, message);
-          process.exit(1);
+
+          // In dev mode, we don't want to crash the whole process for pre-build failures
+          if (command === "dev") {
+            console.warn(
+              "[\x1b[33mPreBuild\x1b[0m] Continuing in dev mode despite errors...",
+            );
+          } else {
+            throw error instanceof Error ? error : new Error(message);
+          }
         }
 
         console.log(

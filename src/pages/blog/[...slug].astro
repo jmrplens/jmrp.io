@@ -42,16 +42,21 @@ const post = Astro.props;
 const { Content, headings } = await post.render();
 
 // --- Reference Collection Logic ---
+// Strip code blocks to avoid false positives from code examples
+const bodyWithoutCode = post.body
+    .replace(/```[\s\S]*?```/g, "")
+    .replace(/`[^`]*?`/g, "");
+
 // Regex to find all markdown links: [text](url)
 const linkRegex = /\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/g;
 const collectedRefsFromMarkdown = [];
 let match;
-while ((match = linkRegex.exec(post.body)) !== null) {
+while ((match = linkRegex.exec(bodyWithoutCode)) !== null) {
     collectedRefsFromMarkdown.push({ text: match[1], url: match[2] });
 }
 
 // Also find raw <a> tags in the body, as MDX allows HTML
-const $ = cheerio.load(post.body);
+const $ = cheerio.load(bodyWithoutCode);
 $('a[href^="http"], a[href^="//"]').each((_, el) => {
     const $el = $(el);
     const url = $el.attr("href");

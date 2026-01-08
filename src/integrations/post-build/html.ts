@@ -212,8 +212,12 @@ export async function processHtmlFiles(
         !$el.attr("nonce") &&
         (type === "script" || rel === "stylesheet" || as === "style")
       ) {
-        $el.attr("nonce", "NGINX_CSP_NONCE");
-        isModified = true;
+        // Only apply nonce to <script> and <style> tags, not <link> tags.
+        // rel="stylesheet" and as="style" are <link> tags.
+        if (type === "script") {
+          $el.attr("nonce", "NGINX_CSP_NONCE");
+          isModified = true;
+        }
       }
     };
 

@@ -124,7 +124,9 @@ export default function postBuildIntegration(): AstroIntegration {
                       "  CRITICAL: Failed to revert Nginx configuration. Manual intervention required.",
                       revertErrorMessage,
                     );
-                    process.exit(1);
+                    throw revertError instanceof Error
+                      ? revertError
+                      : new Error(revertErrorMessage);
                   }
                 }
               } catch (error) {
@@ -134,7 +136,7 @@ export default function postBuildIntegration(): AstroIntegration {
                   "  ⚠ Deployment failed. Check Nginx permissions or syntax.",
                   errorMessage,
                 );
-                process.exit(1);
+                throw error instanceof Error ? error : new Error(errorMessage);
               }
             }
           }
@@ -144,7 +146,7 @@ export default function postBuildIntegration(): AstroIntegration {
             `[\x1b[31mPostBuild\x1b[0m] Fatal error:`,
             errorMessage,
           );
-          process.exit(1);
+          throw e instanceof Error ? e : new Error(errorMessage);
         }
 
         console.log(
