@@ -89,7 +89,7 @@ export async function finalizeCspConfig(distDir: string, cspData: CspData) {
       ? `img-src 'self' ${imgSrc} https://*.jmrp.io`
       : "img-src 'self' https://*.jmrp.io",
     "font-src 'self'",
-    "connect-src 'self' https://api.github.com https://*.cloudflareinsights.com",
+    "connect-src 'self' https://api.github.com https://cloudflareinsights.com https://*.cloudflareinsights.com",
     "media-src 'self'",
     "manifest-src 'self'",
     "frame-src 'none'",
