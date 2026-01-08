@@ -85,8 +85,8 @@ async function runVerify() {
     },
     { name: "Tests: Playwright E2E", command: "pnpm test:e2e" },
     {
-      name: "Tests: Parallel Lighthouse Audit",
-      command: "node scripts/run-lighthouse-parallel.mjs",
+      name: "Tests: Local Lighthouse Audit",
+      command: "pnpm exec lhci autorun --config=./lighthouserc.local.cjs",
     },
     {
       name: "Analyze: Lighthouse Results",

@@ -1,8 +1,8 @@
 /**
- * Local Lighthouse Result Analyzer
+ * Local Lighthouse Result Analyzer (Simplified)
  *
  * Scans the 'lighthouse-results' directory for JSON reports,
- * prints a summary table of scores, and highlights critical issues.
+ * filters for the second run of each URL, and prints a summary.
  */
 
 import fs from "node:fs";
@@ -27,23 +27,38 @@ if (!fs.existsSync(lhDir)) {
   process.exit(0);
 }
 
-const files = fs
-  .readdirSync(lhDir)
-  .filter((f) => f.endsWith(".json") && !f.includes("manifest"));
-
-if (files.length === 0) {
-  console.log(`${colors.yellow}⚠️ No JSON reports found.${colors.reset}`);
+// Read manifest to correctly identify runs
+const manifestPath = path.join(lhDir, "manifest.json");
+if (!fs.existsSync(manifestPath)) {
+  console.log(
+    `${colors.yellow}⚠️ No manifest.json found in ${lhDir}.${colors.reset}`,
+  );
   process.exit(0);
 }
 
+const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+
+// Filter for the 2nd run of each URL
+// LHCI manifest items are ordered by run. We group by URL and pick index 1 (2nd run).
+const groupedByUrl = manifest.reduce((acc, run) => {
+  if (!acc[run.url]) acc[run.url] = [];
+  acc[run.url].push(run);
+  return acc;
+}, {});
+
 console.log(
-  `${colors.cyan}${colors.bold}📊 Lighthouse Audit Analysis (Local Summary)${colors.reset}\n`,
+  `${colors.cyan}${colors.bold}📊 Lighthouse Audit Analysis (Local - 2nd Run Only)${colors.reset}\n`,
 );
 
-files.forEach((file) => {
+Object.entries(groupedByUrl).forEach(([url, runs]) => {
+  // If there's only 1 run, we fallback to it, but the user requested 2 runs and we pick the 2nd.
+  const targetRun = runs.length >= 2 ? runs[1] : runs[0];
+  const runNumber = runs.length >= 2 ? "2nd" : "1st (only)";
+
   try {
-    const report = JSON.parse(fs.readFileSync(path.join(lhDir, file), "utf8"));
-    const url = new URL(report.finalUrl).pathname;
+    const reportPath = path.join(lhDir, path.basename(targetRun.jsonPath));
+    const report = JSON.parse(fs.readFileSync(reportPath, "utf8"));
+    const displayUrl = new URL(url).pathname;
 
     const scores = {
       performance: Math.round(report.categories.performance.score * 100),
@@ -60,7 +75,9 @@ files.forEach((file) => {
       return colors.red;
     };
 
-    console.log(`${colors.bold}Page: ${url}${colors.reset}`);
+    console.log(
+      `${colors.bold}Page: ${displayUrl} [Analyzing ${runNumber} run]${colors.reset}`,
+    );
     console.log(
       `  Perf: ${getScoreColor(scores.performance)}${scores.performance}%${colors.reset} | ` +
         `A11y: ${getScoreColor(scores.accessibility)}${scores.accessibility}%${colors.reset} | ` +
@@ -68,7 +85,7 @@ files.forEach((file) => {
         `SEO:  ${getScoreColor(scores.seo)}${scores.seo}%${colors.reset}`,
     );
 
-    // Highlight critical issues (score < 0.9)
+    // Highlight critical issues
     const issues = [];
     Object.values(report.audits).forEach((audit) => {
       if (
@@ -76,7 +93,6 @@ files.forEach((file) => {
         audit.score < 0.9 &&
         audit.details?.type !== "debugdata"
       ) {
-        // Filter for high impact audits
         if (
           [
             "lcp-lazy-loaded",
@@ -101,7 +117,7 @@ files.forEach((file) => {
     console.log("");
   } catch (e) {
     console.error(
-      `  ${colors.red}Error parsing ${file}: ${e.message}${colors.reset}`,
+      `  ${colors.red}Error parsing report for ${url}: ${e.message}${colors.reset}`,
     );
   }
 });
