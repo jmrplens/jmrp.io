@@ -121,14 +121,14 @@ export default function postBuildIntegration(): AstroIntegration {
                     "✓ Nginx security headers deployed and reloaded.",
                   );
                 } catch (validationError) {
-                  const validationErrorMessage =
-                    validationError instanceof Error
-                      ? validationError.message
-                      : String(validationError);
                   logger.error(
                     "⚠ Nginx validation failed! Reverting to previous configuration.",
                   );
-                  logger.debug(`Internal Error: ${validationErrorMessage}`);
+                  logger.error(
+                    validationError instanceof Error
+                      ? validationError.stack || validationError.message
+                      : String(validationError),
+                  );
                   try {
                     fs.writeFileSync(systemNginxPath, originalContent);
                     logger.info(
@@ -156,20 +156,22 @@ export default function postBuildIntegration(): AstroIntegration {
                   }
                 }
               } catch (error) {
-                const errorMessage =
-                  error instanceof Error ? error.message : String(error);
                 logger.error(
                   "⚠ Deployment failed. Check Nginx permissions or environment state.",
                 );
-                logger.debug(`Deployment error details: ${errorMessage}`);
-                throw error instanceof Error ? error : new Error(errorMessage);
+                logger.error(
+                  error instanceof Error
+                    ? error.stack || error.message
+                    : String(error),
+                );
+                throw error instanceof Error ? error : new Error(String(error));
               }
             }
           }
         } catch (e) {
-          const errorMessage = e instanceof Error ? e.message : String(e);
-          logger.error(`Fatal optimization error: ${errorMessage}`);
-          throw e instanceof Error ? e : new Error(errorMessage);
+          logger.error("Fatal optimization error:");
+          logger.error(e instanceof Error ? e.stack || e.message : String(e));
+          throw e instanceof Error ? e : new Error(String(e));
         }
 
         logger.info(`Optimizations completed successfully.`);
