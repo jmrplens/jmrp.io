@@ -6,6 +6,10 @@ const OUTPUT_DIR = "src/assets";
 const OUTPUT_FILE = "github-avatar.png";
 const API_URL = `https://api.github.com/users/${USERNAME}`;
 
+interface GitHubProfileResponse {
+  avatar_url: string;
+}
+
 /**
  * Fetches and saves the project owner's GitHub avatar.
  * Implements fallbacks to existing or local images if network fails.
@@ -22,13 +26,13 @@ export async function setupGithubAvatar() {
 
   try {
     // 1. Get Profile Data
-    const profile = await fetch(API_URL, {
+    const profile = (await fetch(API_URL, {
       headers: { "User-Agent": "Astro-PreBuild-Integration" },
       signal: AbortSignal.timeout(10000),
     }).then((res) => {
       if (!res.ok) throw new Error(`API error: ${res.status}`);
       return res.json();
-    });
+    })) as GitHubProfileResponse;
 
     if (!profile.avatar_url) throw new Error("No avatar_url found.");
 

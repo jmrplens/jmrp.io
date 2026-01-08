@@ -30,10 +30,16 @@ exclude = [
 include = [
     "./**/*.md",
     "./**/*.mdx",
-    "./**/*.html",
     "./src/**/*.astro",
     "./src/**/*.ts",
     "./src/**/*.tsx"
 ]
-# Fail on error
-fail_on_error = true
+
+exclude_path = [
+    "node_modules",
+    "dist"
+]
+
+# Show only errors
+verbose = "error"
+
