@@ -1,8 +1,8 @@
-# JMRP.io (Astro v5)
+# JMRP.io (Astro v6)
 
 <!-- Project & Status -->
 
-![Astro](https://img.shields.io/badge/astro-5.16.6-orange?style=flat&logo=astro)
+![Astro](https://img.shields.io/badge/astro-6.0.0--alpha.5-orange?style=flat&logo=astro)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 [![Dependabot](https://badgen.net/badge/Dependabot/enabled/green?icon=dependabot)](https://github.com/jmrplens/jmrp.io/pulls)
 
@@ -17,7 +17,7 @@
 ![PageSpeed Desktop](https://img.shields.io/badge/PageSpeed%20Desktop-100-brightgreen)
 ![PageSpeed Mobile](https://img.shields.io/badge/PageSpeed%20Mobile-100-brightgreen)
 
-This is the source code for my personal website, **[jmrp.io](https://jmrp.io)**, built with **Astro 5**. It features a high-performance static architecture, robust security headers (including a strict CSP), and a focus on accessibility and modern web standards.
+This is the source code for my personal website, **[jmrp.io](https://jmrp.io)**, built with **Astro 6 (Aloha)**. It features a high-performance static architecture, robust security headers (including a strict CSP), and a focus on accessibility and modern web standards.
 
 ## 📑 Table of Contents
 
@@ -39,7 +39,7 @@ This is the source code for my personal website, **[jmrp.io](https://jmrp.io)**,
   - **Core Web Vitals**: LCP < 0.8s, CLS < 0.031, FCP < 0.3s.
   - **SSG (Static Site Generation)**: All pages pre-rendered at build time.
   - **Islands Architecture**: Minimal JavaScript with Preact islands.
-  - **Image Optimization**: WebP format with responsive sizing.
+  - **Image Optimization**: WebP format with responsive sizing via `vite-plugin-image-optimizer`.
   - **Font Loading**: Optimized with fallback fonts and metric overrides.
   - **CSS Inlining**: Critical CSS inlined, async loading for non-critical.
 - **Accessibility**:
@@ -49,16 +49,18 @@ This is the source code for my personal website, **[jmrp.io](https://jmrp.io)**,
   - **Inclusive Design**: Keyboard navigation, focus indicators, and unique `aria-labels`.
   - **Motion Sensitivity**: Respects `prefers-reduced-motion` settings.
 - **Content**:
-  - **Blog**: Technical articles with MDX support.
+  - **Content Layer API**: Uses Astro v6 Content Layer with `glob` loaders.
+  - **Blog**: Technical articles with MDX support and Mermaid diagrams.
   - **RSS Feed**: Automatic generation of `rss.xml` for blog posts.
   - **CV Generation**: Automated LaTeX compilation for PDF resumes.
 - **Themeable**: Light/Dark mode with system preference detection.
-- **Configurable**: Centralized configuration via YAML files (`site.yml`, `socials.yml`, `cv.yml`).
+- **Configurable**: Centralized configuration via YAML files in `src/content/`.
 - **SEO Optimized**: Dynamic Schema.org (JSON-LD), Open Graph, and Twitter Cards.
 
 ## 🛠️ Tech Stack
 
-- **Framework**: [Astro](https://astro.build/)
+- **Framework**: [Astro v6 (Aloha)](https://astro.build/)
+- **Runtime**: Node.js v22+
 - **UI Components**: [Preact](https://preactjs.com/)
 - **Styling**: Native CSS (Variables, Nesting) & Astro Scoped Styles
 - **Icons**: [Iconify](https://icon-sets.iconify.design/)
@@ -73,19 +75,19 @@ This is the source code for my personal website, **[jmrp.io](https://jmrp.io)**,
 ```
 /
 ├── src/
-│   ├── components/   # Reusable Astro & Preact components
-│   ├── content/      # Content Collections (Blog posts)
-│   ├── data/         # YAML Data files (Site config, CV, Socials)
-│   ├── layouts/      # Page layouts (Base, etc.)
-│   ├── pages/        # File-based routing
-│   ├── styles/       # Global CSS & Fonts
-│   └── utils/        # Helper functions
-├── public/           # Static assets (images, fonts, robots.txt)
-├── scripts/          # Build & Maintenance scripts
-├── tests/            # Playwright E2E & Accessibility tests
-├── cv_latex/         # LaTeX source files for CV
-├── astro.config.mjs  # Astro configuration
-└── package.json      # Dependencies & Scripts
+│   ├── components/       # Reusable Astro & Preact components
+│   ├── content/          # Content Collections (Blog, CV, Config)
+│   ├── content.config.ts # Collection Definitions (Content Layer)
+│   ├── layouts/          # Page layouts (Base, etc.)
+│   ├── pages/            # File-based routing
+│   ├── styles/           # Global CSS & Fonts
+│   └── utils/            # Helper functions
+├── public/               # Static assets (images, fonts, robots.txt)
+├── scripts/              # Build & Maintenance scripts
+├── tests/                # Playwright E2E & Accessibility tests
+├── cv_latex/             # LaTeX source files for CV
+├── astro.config.mjs      # Astro configuration
+└── package.json          # Dependencies & Scripts
 ```
 
 </details>
@@ -94,8 +96,8 @@ This is the source code for my personal website, **[jmrp.io](https://jmrp.io)**,
 
 ### Prerequisites
 
-- Node.js (v20+): Required to ensure compatibility with the latest LTS features and modern build tooling.
-- pnpm
+- **Node.js (v22+)**: Required for Astro v6.
+- **pnpm** (v10+)
 
 ### Installation
 
@@ -110,7 +112,15 @@ pnpm install
 pnpm run dev
 ```
 
-### Build
+### Build & Verify
+
+To verify the integrity of the project (Linting, Types, Build, Tests):
+
+```bash
+pnpm verify
+```
+
+To build for production only:
 
 ```bash
 pnpm run build
@@ -132,6 +142,8 @@ This command will:
 This project employs a rigorous testing pipeline to ensure quality and compliance.
 
 ### Pipeline Overview
+
+The `pnpm verify` command orchestrates the entire pipeline locally and in CI.
 
 ```mermaid
 graph TD
