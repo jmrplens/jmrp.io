@@ -36,7 +36,7 @@
     "typecheck": "astro check",
     "typecheck:tsc": "tsc --noEmit",
     "test:e2e": "playwright test",
-    "verify": "pnpm typecheck && pnpm lint && pnpm exec prettier --check . && pnpm build && pnpm lint:html && node scripts/ci/validate-rss.mjs dist/rss.xml && node scripts/ci/validate-schema.mjs dist && typos && lychee --config lychee.toml --root-dir dist dist/**/*.html && pnpm test:e2e"
+    "verify": "node scripts/run-verify.mjs"
   },
   "dependencies": {
     "@astrojs/mdx": "^4.3.13",
@@ -107,6 +107,7 @@
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.52.0",
     "unist-util-visit": "^5.0.0",
+    "vite": "^6.4.1",
     "vite-plugin-image-optimizer": "^2.0.3",
     "xml2js": "^0.6.2"
   }

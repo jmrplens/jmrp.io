@@ -9,6 +9,8 @@ exclude = [
     "https://electronica-submarina\\.com/.*",
     "https://ies-berlanga\\.info/.*",
     "https://www\\.i3m-detectors\\.i3m\\.upv\\.es/.*",
+    "https://rua\\.ua\\.es/.*",
+    "http://hdl\\.handle\\.net/.*",
     # Ignore Astro/Template variables
     ".*\\$\\{.*",
     ".*\\%7B.*",
@@ -36,8 +38,7 @@ include = [
 ]
 
 exclude_path = [
-    "node_modules",
-    "dist"
+    "node_modules"
 ]
 
 # Show only errors

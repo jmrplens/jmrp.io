@@ -1,4 +1,5 @@
 import type { AstroIntegration } from "astro";
+import { loadEnv } from "vite";
 import { setupGithubAvatar } from "./pre-build/avatar.js";
 import { setupCfBeacon } from "./pre-build/beacon.js";
 
@@ -13,6 +14,13 @@ export default function preBuildIntegration(): AstroIntegration {
     name: "jmrp-pre-build",
     hooks: {
       "astro:config:setup": async ({ command }) => {
+        // Load environment variables using Vite's helper
+        const env = loadEnv(
+          command === "dev" ? "development" : "production",
+          process.cwd(),
+          "",
+        );
+
         // We run this on both 'dev' and 'build' to ensure assets exist locally
         console.log(
           `\n[\x1b[36mPreBuild\x1b[0m] Initialising environment (${command})...`,
@@ -23,7 +31,7 @@ export default function preBuildIntegration(): AstroIntegration {
 
           // Only fetch beacon if we are building for production
           if (command === "build") {
-            await setupCfBeacon(process.env.PUBLIC_CF_BEACON_TOKEN);
+            await setupCfBeacon(env.PUBLIC_CF_BEACON_TOKEN);
           }
         } catch (error) {
           const message =

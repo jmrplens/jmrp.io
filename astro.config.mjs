@@ -1,5 +1,5 @@
 // @ts-check
-import { defineConfig } from "astro/config";
+import { defineConfig, envField } from "astro/config";
 
 // Adapters and Integrations
 import mdx from "@astrojs/mdx"; // Support for MDX (Markdown with JSX)
@@ -100,6 +100,27 @@ const githubDark = "github-dark-high-contrast";
 
 // https://astro.build/config
 export default defineConfig({
+  // New Environment Variables API (Astro 5)
+  env: {
+    schema: {
+      PUBLIC_SITE_URL: envField.string({
+        context: "client",
+        access: "public",
+        optional: true,
+      }),
+      PUBLIC_CF_BEACON_TOKEN: envField.string({
+        context: "client",
+        access: "public",
+        optional: true,
+      }),
+      POSTBUILD_NGINX_SNIPPETS_PATH: envField.string({
+        context: "server",
+        access: "secret",
+        optional: true,
+      }),
+    },
+  },
+
   // The site URL, used for SEO and sitemap generation
   site: process.env.PUBLIC_SITE_URL || "https://jmrp.io",
 
