@@ -19,10 +19,6 @@
   letter-spacing: -0.02em;
 }
 
-.gradient-text {
-  color: var(--color-primary);
-}
-
 .subtitle {
   font-size: 1.25rem;
   color: var(--color-text-muted);

@@ -210,6 +210,10 @@ h1 {
   font-family: var(--font-mono);
 }
 
+.gradient-text {
+  color: var(--color-primary);
+}
+
 .sr-only {
   position: absolute;
   width: 1px;
