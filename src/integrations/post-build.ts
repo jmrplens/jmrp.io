@@ -101,6 +101,16 @@ function validateNginxPath(systemNginxPath: string) {
       `Invalid Nginx configuration path: ${sanitizedPath}. Must be an absolute path ending in .conf.`,
     );
   }
+
+  // Reject symlinks to avoid redirection risks
+  if (
+    fs.existsSync(systemNginxPath) &&
+    fs.lstatSync(systemNginxPath).isSymbolicLink()
+  ) {
+    throw new Error(
+      `Nginx configuration path cannot be a symbolic link: ${systemNginxPath}`,
+    );
+  }
 }
 
 /**

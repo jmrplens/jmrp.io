@@ -25,17 +25,9 @@ test.describe("Keyboard Navigation Accessibility", () => {
     const focusedClass = await focusedHandle.evaluate((el) => el?.className);
     console.log(`Focused element after 1st Tab: ${focusedTag}.${focusedClass}`);
 
-    // If skip-link is focused (BaseLayout), tab again to enter Header
-    // eslint-disable-next-line playwright/no-conditional-in-test
-    if (focusedClass?.includes("skip-link")) {
-      // eslint-disable-next-line playwright/no-conditional-expect
-      await expect(page.locator(".skip-link")).toBeFocused();
-      await page.keyboard.press("Tab");
-      // eslint-disable-next-line playwright/no-conditional-in-test
-    } else if (focusedTag === "BODY") {
-      // Fallback if initial tab didn't move focus (rare in Playwright unless configured)
-      await page.keyboard.press("Tab");
-    }
+    // Skip-link is unconditionally present in BaseLayout and should be the first focusable element.
+    await expect(page.locator(".skip-link")).toBeFocused();
+    await page.keyboard.press("Tab");
 
     // Now we should be on the Logo (first link in Header)
     await expect(page.locator("header .logo")).toBeFocused();

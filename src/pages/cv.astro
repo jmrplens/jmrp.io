@@ -9,10 +9,9 @@ import SkillGroup from "@components/cv/SkillGroup.astro";
 import BaseLayout from "@layouts/BaseLayout.astro";
 import type { CVSection } from "@src/types";
 import { getCVData } from "@utils/cv";
-import { stripHtml } from "@utils/html";
+import { sanitize,stripHtml } from "@utils/html";
 import { getSiteUrl } from "@utils/site";
 import { Icon } from "astro-icon/components";
-import sanitizeHtml from "sanitize-html";
 
 const cvData = await getCVData();
 
@@ -123,7 +122,7 @@ const personSchema = {
             sortedSections.map((section) => (
                 <section
                     class="cv-section"
-                    id={section.title.toLowerCase().replaceAll(' ', "-")}
+                    id={section.title.toLowerCase().replaceAll(/\s+/g, "-")}
                     aria-label={section.title}
                 >
                     <h2 class="section-title">{section.title}</h2>
@@ -175,7 +174,7 @@ const personSchema = {
                                             <div
                                                 class="institution"
                                                 style="min-height: 1.2em"
-                                                set:html={sanitizeHtml(
+                                                set:html={sanitize(
                                                     item.institution,
                                                 )}
                                             />
@@ -183,7 +182,7 @@ const personSchema = {
                                         {item.department && (
                                             <div
                                                 class="department"
-                                                set:html={sanitizeHtml(
+                                                set:html={sanitize(
                                                     item.department,
                                                 )}
                                             />
@@ -199,7 +198,7 @@ const personSchema = {
                                             <div
                                                 class="description summary"
                                                 style="min-height: 1.5em"
-                                                set:html={sanitizeHtml(
+                                                set:html={sanitize(
                                                     item.summary,
                                                 )}
                                             />
@@ -217,7 +216,7 @@ const personSchema = {
                                                                 return (
                                                                     <li>
                                                                         <div
-                                                                            set:html={sanitizeHtml(
+                                                                            set:html={sanitize(
                                                                                 desc,
                                                                             )}
                                                                         />
@@ -242,7 +241,7 @@ const personSchema = {
                                                                                 ) => (
                                                                                     <li>
                                                                                         <div
-                                                                                            set:html={sanitizeHtml(
+                                                                                            set:html={sanitize(
                                                                                                 sub,
                                                                                             )}
                                                                                         />

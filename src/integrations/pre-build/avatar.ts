@@ -18,16 +18,19 @@ interface GitHubProfileResponse {
 export async function setupGithubAvatar() {
   console.log(`[PreBuild] Fetching GitHub profile for ${USERNAME}...`);
 
-  if (!fs.existsSync(OUTPUT_DIR)) {
-    fs.mkdirSync(OUTPUT_DIR, { recursive: true });
+  const outputDirAbs = path.resolve(process.cwd(), OUTPUT_DIR);
+  if (!fs.existsSync(outputDirAbs)) {
+    fs.mkdirSync(outputDirAbs, { recursive: true });
   }
 
-  const outputPath = path.join(OUTPUT_DIR, OUTPUT_FILE);
-  const fallbackPath = path.join(OUTPUT_DIR, "mehome.jpg");
+  const outputPath = path.join(outputDirAbs, OUTPUT_FILE);
+  const fallbackPath = path.join(outputDirAbs, "mehome.jpg");
 
   try {
     const buffer = await fetchGitHubAvatarBuffer();
-    fs.writeFileSync(outputPath, buffer);
+    const tmpPath = `${outputPath}.tmp`;
+    fs.writeFileSync(tmpPath, buffer);
+    fs.renameSync(tmpPath, outputPath);
     console.log(`  ✓ Avatar saved to ${outputPath}`);
   } catch (error) {
     handleAvatarError(error, outputPath, fallbackPath);

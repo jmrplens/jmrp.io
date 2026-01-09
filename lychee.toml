@@ -5,6 +5,7 @@ no_progress = true
 
 # Exclude specific domains/URLs
 exclude = [
+    "https://profdent\\.es/.*",
     "https://mstdn\\.jmrp\\.io/.*",
     "https://electronica-submarina\\.com/.*",
     "https://ies-berlanga\\.info/.*",

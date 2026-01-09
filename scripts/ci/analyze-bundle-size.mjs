@@ -64,7 +64,9 @@ async function analyze() {
 
     let category = "other";
     switch (ext) {
-      case ".js": {
+      case ".js":
+      case ".mjs":
+      case ".cjs": {
         category = "js";
         break;
       }
@@ -76,11 +78,22 @@ async function analyze() {
         category = "html";
         break;
       }
+      case ".map": {
+        category = "other";
+        break;
+      }
       default: {
         if (
-          [".png", ".jpg", ".jpeg", ".webp", ".gif", ".svg", ".ico"].includes(
-            ext,
-          )
+          [
+            ".png",
+            ".jpg",
+            ".jpeg",
+            ".webp",
+            ".avif",
+            ".gif",
+            ".svg",
+            ".ico",
+          ].includes(ext)
         )
           category = "image";
         else if ([".woff", ".woff2", ".ttf", ".otf", ".eot"].includes(ext))

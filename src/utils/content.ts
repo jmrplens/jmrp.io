@@ -11,5 +11,7 @@
  * @returns The path without the extension (e.g., "my-post", "data")
  */
 export const stripExtension = (entry: string): string => {
-  return entry.replace(/\.[^/.]+$/, "");
+  // Only strip extension if there's content before the dot
+  const match = entry.match(/^(.+)\.[^/.]+$/);
+  return match ? match[1] : entry;
 };

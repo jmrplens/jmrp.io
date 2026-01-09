@@ -5,13 +5,8 @@
  * from the content collection.
  */
 
-import { type CollectionEntry, getEntry } from "astro:content";
-
-/** Type definition for the full CV data structure */
-export type CVData = CollectionEntry<"cv">["data"];
-
-/** Type definition for a generic CV section */
-export type CVSection = CVData[number];
+import type { CVData } from "@src/types";
+import { getEntry } from "astro:content";
 
 /**
  * Reads and parses the CV data from the YAML file.

@@ -11,9 +11,7 @@ import fs from "node:fs";
 /**
  * Posts a comment on the GitHub Pull Request with the bundle size analysis report.
  *
- * @param {object} params - The GitHub Action context parameters.
- * @param {object} params.github - The authenticated Octokit client.
- * @param {object} params.context - The GitHub Action context object.
+ * @param {{ github: { rest: { issues: { createComment: Function } } }, context: { issue: { number: number }, repo: { owner: string, repo: string } } }} params - The GitHub Action context parameters.
  * @returns {Promise<void>} Resolves when the comment is successfully created.
  */
 export default async function postBundleSizeComment({ github, context }) {

@@ -45,8 +45,8 @@ async function calculateCoverage() {
     if (!sourceFile) continue;
 
     ts.forEachChild(sourceFile, (node) => {
-      // Check ALL documentable nodes, regardless of export status
-      if (isDocumentable(node)) {
+      // Check ONLY exported documentable nodes (aligns with ESLint publicOnly: true)
+      if (isExported(node) && isDocumentable(node)) {
         totalExported++;
         if (hasJSDoc(node, sourceFile)) {
           documented++;
@@ -69,7 +69,7 @@ async function calculateCoverage() {
   console.log("\n📊 JSDoc Total Coverage Report");
   console.log("===============================");
   console.log(`Files Scanned: ${files.length}`);
-  console.log(`Total Documentable Symbols: ${totalExported}`);
+  console.log(`Total Exported Documentable Symbols: ${totalExported}`);
   console.log(`Documented: ${documented}`);
   console.log(`Coverage: ${formattedPercentage}%`);
   console.log("===============================\n");
@@ -96,6 +96,26 @@ async function calculateCoverage() {
     );
     process.exit(0);
   }
+}
+
+/**
+ * Checks if a TypeScript node is exported.
+ *
+ * @param node - The TS Node to check.
+ * @returns True if the node has an export modifier or is part of an export statement.
+ */
+function isExported(node) {
+  // 1. Direct export modifier: export function foo() {}
+  if ((ts.getCombinedModifierFlags(node) & ts.ModifierFlags.Export) !== 0) {
+    return true;
+  }
+
+  // 2. Check for default export: export default function() {}
+  if ((ts.getCombinedModifierFlags(node) & ts.ModifierFlags.Default) !== 0) {
+    return true;
+  }
+
+  return false;
 }
 
 /**

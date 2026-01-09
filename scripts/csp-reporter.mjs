@@ -25,25 +25,18 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 /**
- * Loads environment variables from .env file manually
+ * Loads environment variables from .env file
  */
 function loadEnv() {
   const envPath = join(__dirname, "../.env");
-  if (fs.existsSync(envPath)) {
-    const content = fs.readFileSync(envPath, "utf8");
-    for (const line of content.split("\n")) {
-      const envRegex = /^\s*([\w.-]+)\s*=\s*(.*)\s*$/;
-      const match = envRegex.exec(line);
-      if (match) {
-        const key = match[1];
-        let value = match[2] || "";
-        if (value.startsWith('"') && value.endsWith('"'))
-          value = value.slice(1, -1);
-        if (value.startsWith("'") && value.endsWith("'"))
-          value = value.slice(1, -1);
-        process.env[key] = value;
-      }
+  try {
+    if (fs.existsSync(envPath)) {
+      process.loadEnvFile(envPath);
     }
+  } catch (error) {
+    console.warn(
+      `[CSP Reporter] Warning: Failed to load .env file: ${error.message}`,
+    );
   }
 }
 
@@ -120,7 +113,7 @@ const server = http.createServer((req, res) => {
         res.writeHead(204);
         res.end();
       } catch (error) {
-        console.error("Error parsing CSP report JSON:", error.message);
+        console.error("Error parsing CSP report JSON:", error);
         res.writeHead(400);
         res.end("Invalid JSON");
       }

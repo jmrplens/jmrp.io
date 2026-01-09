@@ -1,8 +1,8 @@
 ---
 import CopyButton from "@components/ui/CopyButton.astro";
+import { sanitize } from "@utils/html";
 import { Code } from "astro:components";
 import { Icon } from "astro-icon/components";
-import sanitizeHtml from "sanitize-html";
 
 const { pub } = Astro.props;
 
@@ -40,7 +40,11 @@ const venue =
 const venue_short = pub["container-title-short"] || "";
 
 const url = pub.url || pub.URL || "";
-const doi = pub.doi || pub.DOI || "";
+const rawDoi = pub.doi || pub.DOI || "";
+const doi =
+    rawDoi && !rawDoi.startsWith("http")
+        ? `https://doi.org/${rawDoi}`
+        : rawDoi;
 let pdf = pub.pdf || pub.PDF || "";
 let slides = pub.slides || "";
 let poster = pub.poster || "";
@@ -188,7 +192,7 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
                     </div>
                     <div
                         class="pub-card-content copy-content"
-                        set:html={sanitizeHtml(pub.abstract)}
+                        set:html={sanitize(pub.abstract)}
                     />
                 </div>
             </div>

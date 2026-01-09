@@ -68,6 +68,10 @@ export async function getPublications(): Promise<PublicationGroup[]> {
     /**
      * Helper to manually extract custom fields from the raw BibTeX string.
      * Used for fields like 'slides' or 'poster' which standard parsers might ignore.
+     *
+     * @param id - The publication ID.
+     * @param field - The field name to extract.
+     * @returns The field value or null if not found.
      */
     const extractCustomField = (id: string, field: string): string | null => {
       // Find the specific entry block first to avoid matching fields from subsequent entries
@@ -104,9 +108,9 @@ export async function getPublications(): Promise<PublicationGroup[]> {
     /**
      * Determines if a given name matches any of the provided firstname variations.
      *
-     * @param {string} bibGiven - The given name from the BibTeX entry.
-     * @param {string[]} firstnameVariations - List of possible firstname variations for a co-author.
-     * @returns {boolean} True if a match is found.
+     * @param bibGiven - The given name from the BibTeX entry.
+     * @param firstnameVariations - List of possible firstname variations for a co-author.
+     * @returns True if a match is found.
      */
     const isNameMatch = (
       bibGiven: string,
@@ -119,6 +123,9 @@ export async function getPublications(): Promise<PublicationGroup[]> {
 
     /**
      * Enriches an array of authors with profile URLs from the co-authors map.
+     *
+     * @param authors - Array of author objects.
+     * @returns Enriched array of authors.
      */
     const processAuthors = (
       authors: { family: string; given?: string; url?: string }[] | undefined,
@@ -141,9 +148,13 @@ export async function getPublications(): Promise<PublicationGroup[]> {
     const journalArticles: PublicationItem[] = [];
     const conferencePapers: PublicationItem[] = [];
     const thesisList: PublicationItem[] = [];
+    const otherPublications: PublicationItem[] = [];
 
     /**
      * Extracts the raw BibTeX entry string for a specific publication ID.
+     *
+     * @param id - The publication ID.
+     * @returns The raw BibTeX entry string.
      */
     const extractRawBibtex = (id: string) => {
       const entryRegex = new RegExp(
@@ -157,7 +168,7 @@ export async function getPublications(): Promise<PublicationGroup[]> {
     /**
      * Processes a single publication item, performing filtering, enrichment, and categorization.
      *
-     * @param {PublicationItem} item - The item to process.
+     * @param item - The item to process.
      */
     const processItem = (item: PublicationItem) => {
       // Filter by bibtex_show
@@ -197,7 +208,10 @@ export async function getPublications(): Promise<PublicationGroup[]> {
 
           break;
         }
-        // No default
+        default: {
+          otherPublications.push(item);
+          break;
+        }
       }
     };
 
@@ -207,6 +221,7 @@ export async function getPublications(): Promise<PublicationGroup[]> {
       { title: "Journal articles", items: journalArticles },
       { title: "Conference and workshop papers", items: conferencePapers },
       { title: "Thesis", items: thesisList },
+      { title: "Other", items: otherPublications },
     ].filter((g) => g.items.length > 0);
   } catch (error) {
     console.error("Error fetching publications:", error);

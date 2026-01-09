@@ -33,10 +33,7 @@ export default async function postImageOptimizationComment({
 
   const webpCount = getCount('-name "*.webp"');
   const pngCount = getCount('-name "*.png"');
-  const jpgCount = execSync(
-    String.raw`find dist -type f | grep -iE "\.jpe?g$" | wc -l || echo "0"`,
-    { encoding: "utf8" },
-  ).trim();
+  const jpgCount = getCount(String.raw`| grep -iE "\.jpe?g$"`);
 
   const surgeUrl = process.env.SURGE_URL;
   let largeImagesOutput = "";

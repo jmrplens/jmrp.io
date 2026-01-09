@@ -47,6 +47,8 @@ export async function purgeCloudflareCache(logger: AstroIntegrationLogger) {
       {
         method: "POST",
         headers,
+        // Using purge_everything for consistency in personal portfolio updates.
+        // For larger sites, consider selective purging by URL or Cache-Tag.
         body: JSON.stringify({ purge_everything: true }),
       },
     );

@@ -36,6 +36,14 @@ export default [
       "unicorn/filename-case": "off", // Avoid renaming existing files
       "unicorn/prefer-top-level-await": "off", // Can break in some CJS contexts or older envs
       "unicorn/no-array-reduce": "off", // Reduce is useful and standard
+      "unicorn/no-array-for-each": "off", // forEach is fine
+      "unicorn/no-await-expression-member": "off", // (await foo).bar is fine
+      "unicorn/consistent-function-scoping": "off", // Optimization that hurts readability sometimes
+      "unicorn/prefer-string-slice": "off", // substring is fine
+      "unicorn/import-style": "off", // path imports are fine
+      "unicorn/no-array-callback-reference": "off", // map(fn) is fine
+      "unicorn/no-array-sort": "off", // sort() is standard
+      "unicorn/no-process-exit": "off", // CLI scripts need process.exit (applied globally here for simplicity as we have many scripts)
     },
   },
 
@@ -136,22 +144,6 @@ export default [
         { argsIgnorePattern: "^_" },
       ],
       "no-undef": "off",
-      "unicorn/no-process-exit": "off", // CLI scripts need process.exit
-      "unicorn/prefer-top-level-await": "off",
-      "unicorn/consistent-function-scoping": "off", // Too strict for scripts
-    },
-  },
-
-  // Global Unicorn Overrides (Pragmatism)
-  {
-    rules: {
-      "unicorn/no-array-for-each": "off", // forEach is fine
-      "unicorn/no-await-expression-member": "off", // (await foo).bar is fine
-      "unicorn/consistent-function-scoping": "off", // Optimization that hurts readability sometimes
-      "unicorn/prefer-string-slice": "off", // substring is fine
-      "unicorn/import-style": "off", // path imports are fine
-      "unicorn/no-array-callback-reference": "off", // map(fn) is fine
-      "unicorn/no-array-sort": "off", // sort() is standard
     },
   },
 

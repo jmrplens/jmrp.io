@@ -18,11 +18,30 @@ export function stripHtml(html: string | undefined | null): string {
 
 /**
  * Sanitizes HTML to allow only safe tags (basic formatting).
- * Useful if we ever need to render user content safely, though
- * for static site config we often trust the input.
+ * Explicitly configured with a safe allowlist for better maintainability.
  */
 export function sanitize(html: string): string {
-  return sanitizeHtml(html);
+  return sanitizeHtml(html, {
+    allowedTags: [
+      "b",
+      "i",
+      "em",
+      "strong",
+      "a",
+      "p",
+      "br",
+      "ul",
+      "ol",
+      "li",
+      "code",
+      "span",
+      "cite",
+    ],
+    allowedAttributes: {
+      a: ["href", "name", "target", "rel"],
+      span: ["class"],
+    },
+  });
 }
 
 /**

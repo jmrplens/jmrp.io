@@ -9,22 +9,12 @@ import { execSync } from "node:child_process";
 import fs from "node:fs";
 
 // Load environment variables from .env if present
-if (fs.existsSync(".env")) {
-  const envContent = fs.readFileSync(".env", "utf8");
-  for (const line of envContent.split("\n")) {
-    const trimmedLine = line.trim();
-    if (!trimmedLine || trimmedLine.startsWith("#")) {
-      continue;
-    }
-    const match = trimmedLine.match(/^([^=]+)=(.*)$/);
-    if (match) {
-      const key = match[1].trim();
-      const value = match[2].trim().replaceAll(/^["']|["']$/g, ""); // Remove quotes
-      if (!process.env[key]) {
-        process.env[key] = value;
-      }
-    }
+try {
+  if (fs.existsSync(".env")) {
+    process.loadEnvFile(".env");
   }
+} catch (error) {
+  console.warn(`[Verify] Warning: Failed to load .env file: ${error.message}`);
 }
 
 // ANSI colors for pretty output
