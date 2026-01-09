@@ -12,7 +12,11 @@ import fs from "node:fs";
 if (fs.existsSync(".env")) {
   const envContent = fs.readFileSync(".env", "utf8");
   for (const line of envContent.split("\n")) {
-    const match = line.match(/^([^=]+)=(.*)$/);
+    const trimmedLine = line.trim();
+    if (!trimmedLine || trimmedLine.startsWith("#")) {
+      continue;
+    }
+    const match = trimmedLine.match(/^([^=]+)=(.*)$/);
     if (match) {
       const key = match[1].trim();
       const value = match[2].trim().replaceAll(/^["']|["']$/g, ""); // Remove quotes

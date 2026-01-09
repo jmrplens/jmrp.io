@@ -13,8 +13,6 @@ if (!SONAR_TOKEN) {
   process.exit(0);
 }
 
-const auth = Buffer.from(`${SONAR_TOKEN}:`).toString("base64");
-
 /**
  * Fetches open issues and security hotspots from SonarCloud API
  * and logs them to the console.
@@ -30,7 +28,7 @@ async function fetchIssues() {
     // 1. Fetch Issues
     const issuesUrl = `https://sonarcloud.io/api/issues/search?componentKeys=${PROJECT_KEY}&resolved=false&ps=100`;
     const issuesRes = await fetch(issuesUrl, {
-      headers: { Authorization: `Basic ${auth}` },
+      headers: { Authorization: `Bearer ${SONAR_TOKEN}` },
     });
 
     if (!issuesRes.ok) {
@@ -62,7 +60,7 @@ async function fetchIssues() {
     // 2. Fetch Security Hotspots
     const hotspotsUrl = `https://sonarcloud.io/api/hotspots/search?projectKey=${PROJECT_KEY}&status=TO_REVIEW`;
     const hotspotsRes = await fetch(hotspotsUrl, {
-      headers: { Authorization: `Basic ${auth}` },
+      headers: { Authorization: `Bearer ${SONAR_TOKEN}` },
     });
 
     if (hotspotsRes.ok) {

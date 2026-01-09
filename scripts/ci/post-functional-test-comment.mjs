@@ -20,7 +20,18 @@ export default async function script({ github, context }) {
     return;
   }
 
-  const report = JSON.parse(fs.readFileSync(reportPath, "utf8"));
+  let report;
+  try {
+    report = JSON.parse(fs.readFileSync(reportPath, "utf8"));
+  } catch (error) {
+    console.error("Failed to parse Playwright report:", error.message);
+    return;
+  }
+
+  if (!report?.stats) {
+    console.error("Invalid report structure: missing stats");
+    return;
+  }
   const stats = report.stats;
 
   const total = stats.expected + stats.unexpected + stats.flaky + stats.skipped;
@@ -65,6 +76,10 @@ export default async function script({ github, context }) {
       return failedTests;
     }
 
+    if (!report?.suites) {
+      console.error("Invalid report structure: missing suites");
+      return;
+    }
     const failedTests = findFailedTests({ suites: report.suites });
 
     for (const spec of failedTests) {

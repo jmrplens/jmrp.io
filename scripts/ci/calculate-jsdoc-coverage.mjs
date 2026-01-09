@@ -78,7 +78,7 @@ async function calculateCoverage() {
   if (process.env.GITHUB_OUTPUT) {
     fs.appendFileSync(
       process.env.GITHUB_OUTPUT,
-      `jsdoc_coverage=${formattedPercentage}%\n`,
+      `JSDOC_COVERAGE=${formattedPercentage}\n`,
     );
   }
 

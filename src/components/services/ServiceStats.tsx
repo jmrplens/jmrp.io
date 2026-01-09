@@ -424,7 +424,10 @@ export default function ServiceStats({ type }: Props) {
             break;
           }
           default: {
+            console.error(`Unknown service type: ${type}`);
+            setError(true);
             data = null;
+            break;
           }
         }
         if (data) setStats(data);

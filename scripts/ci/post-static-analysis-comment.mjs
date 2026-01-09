@@ -52,7 +52,7 @@ function generateComment(results) {
 
   // Check if all passed
   const allPassed = tools.every(
-    (t) => t.outcome === "success" || t.outcome === "skipped" || !t.outcome,
+    (t) => t.outcome === "success" || t.outcome === "skipped",
   ); // skipped counts as pass contextually or ignored
 
   let md = `### 🛡️ Static Analysis Report\n\n`;

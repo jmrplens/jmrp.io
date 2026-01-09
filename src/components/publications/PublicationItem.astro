@@ -2,6 +2,7 @@
 import CopyButton from "@components/ui/CopyButton.astro";
 import { Code } from "astro:components";
 import { Icon } from "astro-icon/components";
+import sanitizeHtml from "sanitize-html";
 
 const { pub } = Astro.props;
 
@@ -185,7 +186,10 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
                             content={pub.abstract}
                         />
                     </div>
-                    <div class="pub-card-content copy-content" set:html={pub.abstract} />
+                    <div
+                        class="pub-card-content copy-content"
+                        set:html={sanitizeHtml(pub.abstract)}
+                    />
                 </div>
             </div>
 
