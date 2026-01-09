@@ -84,6 +84,11 @@ export default function postBuildIntegration(): AstroIntegration {
   };
 }
 
+/**
+ * Validates the Nginx snippet path to prevent arbitrary writes.
+ *
+ * @param systemNginxPath - The absolute path to validate.
+ */
 function validateNginxPath(systemNginxPath: string) {
   // Safety check for Nginx path to prevent arbitrary file overwrites
   if (
@@ -98,6 +103,13 @@ function validateNginxPath(systemNginxPath: string) {
   }
 }
 
+/**
+ * Deploys the generated security headers to the system Nginx directory.
+ *
+ * @param distDir - Production build output directory.
+ * @param systemNginxPath - Destination path for the headers snippet.
+ * @param logger - Astro logger instance.
+ */
 function deploySecurityHeaders(
   distDir: string,
   systemNginxPath: string,
@@ -177,6 +189,15 @@ function deploySecurityHeaders(
   }
 }
 
+/**
+ * Handles validation errors after deployment by reverting to the original content.
+ *
+ * @param validationError - The caught validation error.
+ * @param systemNginxPath - Destination path for the headers snippet.
+ * @param originalContent - Buffer of the original configuration content.
+ * @param timeout - Execution timeout for Nginx commands.
+ * @param logger - Astro logger instance.
+ */
 function handleNginxValidationError(
   validationError: unknown,
   systemNginxPath: string,

@@ -30,7 +30,13 @@ if (!fs.existsSync(deployDir)) {
 
 const indexPath = path.join(deployDir, "index.html");
 
-// Helper: Scan for all HTML reports
+/**
+ * Recursively scans a directory for Axe HTML reports.
+ *
+ * @param dir - Directory to scan.
+ * @param fileList - Accumulated list of file paths.
+ * @returns Array of paths to HTML report files.
+ */
 function findReports(dir, fileList = []) {
   const files = fs.readdirSync(dir);
   for (const file of files) {
@@ -72,6 +78,13 @@ for (const r of reports) {
   else grouped.unknown.push(r);
 }
 
+/**
+ * Renders an HTML list of accessibility reports for a specific theme.
+ *
+ * @param theme - The theme name (light, dark, unknown).
+ * @param list - The list of report objects.
+ * @returns HTML string for the theme section.
+ */
 function renderReportList(theme, list) {
   if (list.length === 0) return "";
 
@@ -310,6 +323,13 @@ console.log(`Generated accessibility index at ${indexPath}`);
 
 // --- Aggregation of JSON Summaries ---
 
+/**
+ * Recursively scans a directory for accessibility summary JSON files.
+ *
+ * @param dir - Directory to scan.
+ * @param fileList - Accumulated list of file paths.
+ * @returns Array of paths to summary JSON files.
+ */
 function findSummaries(dir, fileList = []) {
   const files = fs.readdirSync(dir);
   for (const file of files) {

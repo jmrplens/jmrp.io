@@ -18,6 +18,11 @@ import { escapeHtml } from "./utils/html.mjs";
 const RSS_FILE = "dist/rss.xml";
 const OUTPUT_FILE = "dist/rss-preview.html";
 
+/**
+ * Generates an HTML preview from the RSS XML file.
+ *
+ * @returns {Promise<void>} Resolves when the preview is generated.
+ */
 async function generatePreview() {
   if (!fs.existsSync(RSS_FILE)) {
     console.error(`Error: File ${RSS_FILE} not found. Run 'pnpm build' first.`);

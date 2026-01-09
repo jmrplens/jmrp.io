@@ -62,6 +62,12 @@ function runStep(name, command, condition = true) {
   }
 }
 
+/**
+ * Main verification suite orchestrator.
+ * Defines the steps to run and executes them sequentially.
+ *
+ * @returns {Promise<void>} Resolves when all checks pass.
+ */
 async function runVerify() {
   const startTime = Date.now();
   console.log(

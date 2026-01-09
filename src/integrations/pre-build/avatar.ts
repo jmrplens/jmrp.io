@@ -6,6 +6,7 @@ const OUTPUT_DIR = "src/assets";
 const OUTPUT_FILE = "github-avatar.png";
 const API_URL = `https://api.github.com/users/${USERNAME}`;
 
+/** Represents the JSON response from the GitHub user profile API. */
 interface GitHubProfileResponse {
   avatar_url: string;
 }
@@ -33,6 +34,11 @@ export async function setupGithubAvatar() {
   }
 }
 
+/**
+ * Downloads the GitHub avatar and returns it as a Buffer.
+ *
+ * @returns {Promise<Buffer>} The image data.
+ */
 async function fetchGitHubAvatarBuffer(): Promise<Buffer> {
   // 1. Get Profile Data
   const profile = (await fetch(API_URL, {
@@ -56,6 +62,13 @@ async function fetchGitHubAvatarBuffer(): Promise<Buffer> {
   return Buffer.from(await imageRes.arrayBuffer());
 }
 
+/**
+ * Handles errors during avatar fetching by applying fallbacks.
+ *
+ * @param error - The caught error.
+ * @param outputPath - Path to save the final image.
+ * @param fallbackPath - Path to the local fallback image.
+ */
 function handleAvatarError(
   error: unknown,
   outputPath: string,

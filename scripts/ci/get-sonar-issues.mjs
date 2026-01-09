@@ -15,6 +15,12 @@ if (!SONAR_TOKEN) {
 
 const auth = Buffer.from(`${SONAR_TOKEN}:`).toString("base64");
 
+/**
+ * Fetches open issues and security hotspots from SonarCloud API
+ * and logs them to the console.
+ *
+ * @returns {Promise<void>} Resolves when fetching is complete.
+ */
 async function fetchIssues() {
   console.log(
     `\n🔍 Fetching open issues from SonarCloud for [${PROJECT_KEY}]...\n`,

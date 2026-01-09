@@ -8,6 +8,12 @@
 
 import { createMermaidRenderer } from "mermaid-isomorphic";
 
+/**
+ * Executes the Mermaid rendering test.
+ * Initializes the renderer, defines a sample diagram, and attempts to render it.
+ *
+ * @returns {Promise<void>} Resolves when the test is complete.
+ */
 async function test() {
   console.log("Testing Mermaid Render with v3 API...");
   const mermaidRenderer = createMermaidRenderer({

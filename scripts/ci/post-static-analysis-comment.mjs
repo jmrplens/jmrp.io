@@ -28,7 +28,12 @@ const LOGOS = {
     "https://img.shields.io/badge/JSDoc-000000?style=flat&logo=javascript&logoColor=white",
 };
 
-// Main function to generate comment body
+/**
+ * Generates the markdown body for the static analysis PR comment.
+ *
+ * @param results - Object containing outcomes from various tools.
+ * @returns Markdown string for the comment.
+ */
 function generateComment(results) {
   const tools = [
     { id: "astro", name: "Astro Check", outcome: results.astro },

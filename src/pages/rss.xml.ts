@@ -66,7 +66,11 @@ export async function GET(_context: APIContext) {
             customData += `<media:content url="${imgUrl}" medium="image" type="image/jpeg" width="${opt.attributes.width}" height="${opt.attributes.height}" />\n`;
             customData += `<media:thumbnail url="${thumbUrl}" width="${thumb.attributes.width}" height="${thumb.attributes.height}" />\n`;
           } catch (error) {
-            console.warn("[RSS] Cover image process failed:", error);
+            const message =
+              error instanceof Error ? error.message : String(error);
+            console.warn(
+              `[RSS] Cover image process failed for ${post.id}: ${message}`,
+            );
           }
         }
 

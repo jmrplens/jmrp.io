@@ -17,6 +17,12 @@ if (!fs.existsSync(REPORT_FILE)) {
 const data = JSON.parse(fs.readFileSync(REPORT_FILE, "utf8"));
 const { summary, results } = data;
 
+/**
+ * Applies syntax highlighting to a JSON string or object for HTML display.
+ *
+ * @param json - The JSON content to highlight.
+ * @returns HTML string with highlighted JSON.
+ */
 function syntaxHighlight(json) {
   if (typeof json !== "string") {
     json = JSON.stringify(json, undefined, 2);
@@ -46,6 +52,12 @@ function syntaxHighlight(json) {
   });
 }
 
+/**
+ * Renders JSON data into a nested visual HTML structure.
+ *
+ * @param data - The data object to render.
+ * @returns HTML string representing the data visually.
+ */
 function renderVisual(data) {
   if (data === null || data === undefined)
     return '<span class="v-null">null</span>';

@@ -25,6 +25,12 @@ function formatSize(bytes) {
   return (bytes / (1024 * 1024)).toFixed(2) + " MB";
 }
 
+/**
+ * Main execution function for bundle size analysis.
+ * Scans the dist directory and writes the analysis report.
+ *
+ * @returns {Promise<void>} Resolves when analysis is complete.
+ */
 async function analyze() {
   console.log(`📦 Analyzing bundle size in ${DIST_DIR}...`);
 

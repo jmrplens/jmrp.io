@@ -16,6 +16,11 @@ import sharp from "sharp";
 const dir = "src/assets/images/blog";
 const files = ["csp-shield.png", "mtls-auth.png", "virtual-files.png"];
 
+/**
+ * Executes the image optimization process for the blog.
+ *
+ * @returns {Promise<void>} Resolves when all images are optimized.
+ */
 async function optimize() {
   for (const file of files) {
     const inputPath = path.join(dir, file);

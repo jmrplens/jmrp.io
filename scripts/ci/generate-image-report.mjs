@@ -9,6 +9,9 @@
 import { execSync } from "node:child_process";
 import fs from "node:fs";
 
+/**
+ * Scans the 'dist' directory and generates an HTML report of image optimizations.
+ */
 const generateReport = () => {
   const findFiles = (pattern) => {
     try {

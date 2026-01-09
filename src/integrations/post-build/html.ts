@@ -114,6 +114,13 @@ export async function processHtmlFiles(
   console.log(`  ✓ Modified ${modifiedFilesCount} HTML files.`);
 }
 
+/**
+ * Prepends a protection guard to the Cloudflare beacon script.
+ * Prevents the script from executing on local environments (localhost, etc.).
+ *
+ * @param distDir - The absolute path to the production build output.
+ * @param hashCache - Cache map for file integrity hashes.
+ */
 function hardenBeaconScript(distDir: string, hashCache: Map<string, string>) {
   // Special handling for cf-beacon.js to avoid Lighthouse errors while keeping SRI
   const beaconPath = path.join(distDir, "scripts", "cf-beacon.js");
@@ -128,6 +135,17 @@ function hardenBeaconScript(distDir: string, hashCache: Map<string, string>) {
   }
 }
 
+/**
+ * Orchestrates all transformations for a single HTML file.
+ *
+ * @param file - Absolute path to the HTML file.
+ * @param distDir - The absolute path to the production build output.
+ * @param targetDir - The directory where extracted assets should be saved.
+ * @param cspData - Shared object to store collected CSP hashes and domains.
+ * @param hashCache - Cache map for file integrity hashes.
+ * @param enableCsp - Whether to enable CSP-specific features.
+ * @returns An object containing the counts of modifications and updates.
+ */
 function processSingleHtmlFile(
   file: string,
   distDir: string,
@@ -189,6 +207,13 @@ function processSingleHtmlFile(
   return { modified: isModified, updatedSriTags, extractedImages };
 }
 
+/**
+ * Finds and extracts image Data URIs (src and srcset) into physical files.
+ *
+ * @param $ - Cheerio API instance for the current HTML document.
+ * @param targetDir - The directory where extracted assets should be saved.
+ * @returns An object containing the modified status and extracted asset count.
+ */
 function processImages(
   $: cheerio.CheerioAPI,
   targetDir: string,
@@ -246,6 +271,13 @@ function processImages(
   return { modified, extractedCount };
 }
 
+/**
+ * Converts inline style attributes into CSS classes to support strict CSP.
+ *
+ * @param $ - Cheerio API instance for the current HTML document.
+ * @param enableCsp - Whether to add a security nonce to the generated style tag.
+ * @returns True if any styles were processed and modified.
+ */
 function processStyles($: cheerio.CheerioAPI, enableCsp: boolean): boolean {
   let modified = false;
   const styleToClassMap = new Map<string, string>();
@@ -287,6 +319,16 @@ function processStyles($: cheerio.CheerioAPI, enableCsp: boolean): boolean {
   return modified;
 }
 
+/**
+ * Processes script and link tags to add SRI hashes and CSP nonces.
+ *
+ * @param $ - Cheerio API instance for the current HTML document.
+ * @param file - Absolute path to the HTML file.
+ * @param distDir - The absolute path to the production build output.
+ * @param hashCache - Cache map for file integrity hashes.
+ * @param enableCsp - Whether to enable CSP-specific features.
+ * @returns An object containing the modified status and updated tag count.
+ */
 function processScriptsAndLinks(
   $: cheerio.CheerioAPI,
   file: string,
@@ -330,6 +372,18 @@ function processScriptsAndLinks(
   return { modified, updatedTags };
 }
 
+/**
+ * Handles SRI and Nonce logic for a single tag.
+ *
+ * @param $el - Cheerio element representing the tag.
+ * @param attr - The attribute containing the resource URL (src or href).
+ * @param type - The type of tag (script or link).
+ * @param file - Absolute path to the current HTML file.
+ * @param distDir - The absolute path to the production build output.
+ * @param hashCache - Cache map for file integrity hashes.
+ * @param enableCsp - Whether to enable CSP-specific features.
+ * @returns An object containing the modified and updated status.
+ */
 function processTagSri(
   $el: cheerio.Cheerio<Element>,
   attr: string,
@@ -361,6 +415,13 @@ function processTagSri(
   return { modified, updated };
 }
 
+/**
+ * Ensures the 'crossorigin' attribute is present on SRI-eligible tags.
+ *
+ * @param $el - Cheerio element representing the tag.
+ * @param type - The type of tag (script or link).
+ * @returns True if the attribute was added.
+ */
 function ensureCrossorigin(
   $el: cheerio.Cheerio<Element>,
   type: "script" | "link",
@@ -372,6 +433,16 @@ function ensureCrossorigin(
   return false;
 }
 
+/**
+ * Adds the 'integrity' attribute containing the SRI hash to a tag.
+ *
+ * @param $el - Cheerio element representing the tag.
+ * @param url - The URL of the resource.
+ * @param file - Absolute path to the current HTML file.
+ * @param distDir - The absolute path to the production build output.
+ * @param hashCache - Cache map for file integrity hashes.
+ * @returns True if the integrity hash was added.
+ */
 function addIntegrity(
   $el: cheerio.Cheerio<Element>,
   url: string,
@@ -390,6 +461,13 @@ function addIntegrity(
   return false;
 }
 
+/**
+ * Adds a security nonce placeholder to a tag for Nginx processing.
+ *
+ * @param $el - Cheerio element representing the tag.
+ * @param type - The type of tag (script or link).
+ * @returns True if the nonce was added.
+ */
 function addNonce(
   $el: cheerio.Cheerio<Element>,
   type: "script" | "link",
@@ -401,6 +479,13 @@ function addNonce(
   return false;
 }
 
+/**
+ * Determines if a tag is eligible for Subresource Integrity (SRI).
+ *
+ * @param $el - Cheerio element representing the tag.
+ * @param type - The type of tag (script or link).
+ * @returns True if the tag is SRI eligible.
+ */
 function isSriEligible(
   $el: cheerio.Cheerio<Element>,
   type: "script" | "link",
@@ -416,6 +501,13 @@ function isSriEligible(
   );
 }
 
+/**
+ * Determines if a tag is eligible for a CSP nonce.
+ *
+ * @param _el - Cheerio element representing the tag.
+ * @param type - The type of tag (script or link).
+ * @returns True if the tag should have a nonce.
+ */
 function isNonceEligible(
   _el: cheerio.Cheerio<Element>,
   type: "script" | "link",
@@ -425,6 +517,14 @@ function isNonceEligible(
   return type === "script";
 }
 
+/**
+ * Scans inline style and script tags to collect hashes for the CSP policy.
+ *
+ * @param $ - Cheerio API instance for the current HTML document.
+ * @param cspData - Shared object to store collected CSP hashes.
+ * @param enableCsp - Whether CSP collection is enabled.
+ * @returns True if any tags were modified (nonces added).
+ */
 function collectInlineHashes(
   $: cheerio.CheerioAPI,
   cspData: CspData,
@@ -460,6 +560,12 @@ function collectInlineHashes(
   return modified;
 }
 
+/**
+ * Identifies external image hostnames to add to the CSP img-src directive.
+ *
+ * @param $ - Cheerio API instance for the current HTML document.
+ * @param cspData - Shared object to store collected image domains.
+ */
 function collectImageDomains($: cheerio.CheerioAPI, cspData: CspData) {
   $("img[src], source[srcset], img[srcset]").each((_, el) => {
     const $el = $(el);
@@ -483,6 +589,15 @@ function collectImageDomains($: cheerio.CheerioAPI, cspData: CspData) {
   });
 }
 
+/**
+ * Replaces the Cloudflare beacon integrity placeholder with the actual calculated hash.
+ *
+ * @param $ - Cheerio API instance for the current HTML document.
+ * @param distDir - The absolute path to the production build output.
+ * @param file - Absolute path to the current HTML file.
+ * @param hashCache - Cache map for file integrity hashes.
+ * @returns True if the beacon script was modified or removed.
+ */
 function processBeacon(
   $: cheerio.CheerioAPI,
   distDir: string,

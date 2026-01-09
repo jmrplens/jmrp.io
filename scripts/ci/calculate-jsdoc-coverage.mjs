@@ -14,8 +14,13 @@ import { glob } from "glob";
 import ts from "typescript";
 
 const THRESHOLD = 90;
-const SRC_DIR = "src";
 
+/**
+ * Main function to calculate JSDoc coverage across the project.
+ * Scans files, identifies documentable symbols, and checks for JSDoc.
+ *
+ * @returns {Promise<void>} Resolves when the report is complete.
+ */
 async function calculateCoverage() {
   console.log(`🔍 Scanning src and scripts for JSDoc coverage...`);
 
@@ -40,7 +45,8 @@ async function calculateCoverage() {
     if (!sourceFile) continue;
 
     ts.forEachChild(sourceFile, (node) => {
-      if (isExported(node) && isDocumentable(node)) {
+      // Check ALL documentable nodes, regardless of export status
+      if (isDocumentable(node)) {
         totalExported++;
         if (hasJSDoc(node, sourceFile)) {
           documented++;
@@ -60,14 +66,13 @@ async function calculateCoverage() {
     totalExported === 0 ? 100 : (documented / totalExported) * 100;
   const formattedPercentage = percentage.toFixed(1);
 
-  console.log("\n📊 JSDoc Coverage Report");
-  console.log("========================");
+  console.log("\n📊 JSDoc Total Coverage Report");
+  console.log("===============================");
   console.log(`Files Scanned: ${files.length}`);
-  console.log(`Exported Symbols: ${totalExported}`);
+  console.log(`Total Documentable Symbols: ${totalExported}`);
   console.log(`Documented: ${documented}`);
-  console.log(`Coverage: ${formattedPercentage}%
-`);
-  console.log("========================\n");
+  console.log(`Coverage: ${formattedPercentage}%`);
+  console.log("===============================\n");
 
   // Output for CI environment
   if (process.env.GITHUB_OUTPUT) {
@@ -93,13 +98,12 @@ async function calculateCoverage() {
   }
 }
 
-function isExported(node) {
-  return (
-    (ts.getCombinedModifierFlags(node) & ts.ModifierFlags.Export) !== 0 ||
-    (!!node.parent && node.parent.kind === ts.SyntaxKind.SourceFile)
-  );
-}
-
+/**
+ * Determines if a TypeScript node should have JSDoc documentation.
+ *
+ * @param node - The TS Node to check.
+ * @returns True if the node is a function, class, interface, etc.
+ */
 function isDocumentable(node) {
   // Only count things that typically should have docs
   return (
@@ -119,6 +123,13 @@ function isDocumentable(node) {
   );
 }
 
+/**
+ * Checks if a TypeScript node has a JSDoc comment.
+ *
+ * @param node - The TS Node to check.
+ * @param sourceFile - The source file containing the node.
+ * @returns True if a JSDoc comment (starting with /**) is found.
+ */
 function hasJSDoc(node, sourceFile) {
   const comments = ts.getLeadingCommentRanges(sourceFile.text, node.pos);
 

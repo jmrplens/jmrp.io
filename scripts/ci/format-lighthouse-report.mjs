@@ -16,7 +16,13 @@ if (!fs.existsSync(lhDir)) {
   process.exit(0);
 }
 
-// Recursive scan
+/**
+ * Recursively scans a directory for Lighthouse JSON reports.
+ *
+ * @param dir - Directory to scan.
+ * @param fileList - Accumulated list of file paths.
+ * @returns Array of paths to JSON report files.
+ */
 function findReports(dir, fileList = []) {
   const files = fs.readdirSync(dir);
   for (const file of files) {
@@ -85,7 +91,12 @@ for (const filePath of files) {
   }
 }
 
-// Calculate maximums per category and then average those maximums
+/**
+ * Aggregates scores from a list of runs by taking the maximum of each category.
+ *
+ * @param list - Array of score objects.
+ * @returns The average of the maximum category scores.
+ */
 const getAggregatedScore = (list) => {
   if (!list || list.length === 0) return null;
 
@@ -106,6 +117,12 @@ const PAGE_NAMES = {
   "/blog/": "Blog",
 };
 
+/**
+ * Formats a numeric score into a string with a colored emoji badge.
+ *
+ * @param avg - The average score (0-100).
+ * @returns Formatted HTML string.
+ */
 const formatScore = (avg) => {
   if (avg === null) return "—";
   let icon;

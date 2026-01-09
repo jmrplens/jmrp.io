@@ -4,12 +4,6 @@
  * Validates the generated RSS feed (rss.xml) against the RSS 2.0 specification.
  * It uses 'xml2js' for structural integrity and 'rss-parser' to simulate
  * consumption by real-world RSS readers.
- *
- * Checks:
- * - Presence of required RSS elements (<rss>, <channel>, etc.).
- * - Version compatibility.
- * - Date and URL format validity for all posts.
- * - Basic metadata consistency.
  */
 
 import fs from "node:fs";
@@ -18,25 +12,14 @@ import path from "node:path";
 import Parser from "rss-parser";
 import { parseStringPromise } from "xml2js";
 
-const DIST_DIR = path.resolve(
-  process.argv[3] || process.env.DIST_DIR || "dist",
-);
-const RSS_FILE = path.resolve(
-  process.argv[2] || path.join(DIST_DIR, "rss.xml"),
-);
 const OUTPUT_FILE = "rss-validation.json";
 
 /**
- * Validates that a path is safe (not escaping the dist directory)
- */
-function isPathSafe(filePath) {
-  const resolvedPath = path.resolve(filePath);
-  const relative = path.relative(DIST_DIR, resolvedPath);
-  return !relative.startsWith("..");
-}
-
-/**
- * Validates the publication date of an RSS item
+ * Validates the publication date of an RSS item.
+ *
+ * @param item - The RSS item object.
+ * @param idx - Index of the item.
+ * @param results - Accumulated results object.
  */
 function validateItemDate(item, idx, results) {
   if (!item.pubDate) {
@@ -53,7 +36,11 @@ function validateItemDate(item, idx, results) {
 }
 
 /**
- * Validates the URL of an RSS item
+ * Validates the URL of an RSS item.
+ *
+ * @param item - The RSS item object.
+ * @param idx - Index of the item.
+ * @param results - Accumulated results object.
  */
 function validateItemUrl(item, idx, results) {
   if (!item.link) return;
@@ -66,7 +53,11 @@ function validateItemUrl(item, idx, results) {
 }
 
 /**
- * Validates the content of an RSS item for required elements
+ * Validates the content of an RSS item.
+ *
+ * @param item - The RSS item object.
+ * @param idx - Index of the item.
+ * @param results - Accumulated results object.
  */
 function validateItemContent(item, idx, results) {
   const content = item.contentEncoded || item.content || item.description || "";
@@ -83,7 +74,11 @@ function validateItemContent(item, idx, results) {
 }
 
 /**
- * Validates the enclosure (cover image) of an RSS item
+ * Validates the enclosure of an RSS item.
+ *
+ * @param item - The RSS item object.
+ * @param idx - Index of the item.
+ * @param results - Accumulated results object.
  */
 function validateItemEnclosure(item, idx, results) {
   if (!item.enclosure) {
@@ -103,7 +98,11 @@ function validateItemEnclosure(item, idx, results) {
 }
 
 /**
- * Validates a single RSS feed item
+ * Validates a single RSS item by calling all individual checks.
+ *
+ * @param item - The RSS item object.
+ * @param idx - Index of the item.
+ * @param results - Accumulated results object.
  */
 function validateItem(item, idx, results) {
   validateItemDate(item, idx, results);
@@ -113,7 +112,10 @@ function validateItem(item, idx, results) {
 }
 
 /**
- * Validates the RSS structure using xml2js
+ * Validates the XML structure of the RSS feed.
+ *
+ * @param content - Raw XML content string.
+ * @param results - Accumulated results object.
  */
 async function validateStructure(content, results) {
   try {
@@ -147,7 +149,10 @@ async function validateStructure(content, results) {
 }
 
 /**
- * Validates feed content using rss-parser
+ * Validates the parsed feed content.
+ *
+ * @param content - Raw XML content string.
+ * @param results - Accumulated results object.
  */
 async function validateFeedContent(content, results) {
   const parser = new Parser({
@@ -183,12 +188,25 @@ async function validateFeedContent(content, results) {
   }
 }
 
+/**
+ * Main execution function for RSS validation.
+ * Orchestrates structural and content checks.
+ *
+ * @returns {Promise<void>} Resolves when validation is complete.
+ */
 async function validateRSS() {
   console.log("🔍 Validating RSS feed...\n");
 
+  const distDir = path.resolve(
+    process.argv[3] || process.env.DIST_DIR || "dist",
+  );
+  const rssFile = path.resolve(
+    process.argv[2] || path.join(distDir, "rss.xml"),
+  );
+
   const results = {
     valid: false,
-    file: RSS_FILE,
+    file: rssFile,
     size: 0,
     errors: [],
     warnings: [],
@@ -200,22 +218,14 @@ async function validateRSS() {
     },
   };
 
-  if (!fs.existsSync(RSS_FILE)) {
-    results.errors.push(`RSS feed not found: ${RSS_FILE}`);
+  if (!fs.existsSync(rssFile)) {
+    results.errors.push(`RSS feed not found: ${rssFile}`);
     writeResults(results);
     process.exit(1);
   }
 
-  if (!isPathSafe(RSS_FILE)) {
-    console.warn(`Skipping RSS validation due to unsafe path: ${RSS_FILE}`);
-    results.errors.push(`RSS feed has an unsafe path: ${RSS_FILE}`);
-    writeResults(results);
-    process.exit(1);
-  }
-
-  results.size = (fs.statSync(RSS_FILE).size / 1024).toFixed(2);
-  // deepcode ignore PT: RSS_FILE is validated by isPathSafe()
-  const content = fs.readFileSync(RSS_FILE, "utf8");
+  results.size = (fs.statSync(rssFile).size / 1024).toFixed(2);
+  const content = fs.readFileSync(rssFile, "utf8");
 
   await validateStructure(content, results);
   await validateFeedContent(content, results);
@@ -229,13 +239,18 @@ async function validateRSS() {
     console.log(
       `❌ RSS validation failed with ${results.errors.length} errors.`,
     );
-    for (const e of results.errors) console.log(`   - ${e}`);
+    for (const error of results.errors) console.log(`   - ${error}`);
   }
 
   writeResults(results);
   process.exit(results.valid ? 0 : 1);
 }
 
+/**
+ * Writes the validation report to a JSON file.
+ *
+ * @param data - The results data to serialize and save.
+ */
 function writeResults(data) {
   fs.writeFileSync(OUTPUT_FILE, JSON.stringify(data, null, 2));
 }
