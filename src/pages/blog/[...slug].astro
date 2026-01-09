@@ -43,7 +43,7 @@ const { Content, headings } = await render(post);
 
 // --- Reference Collection Logic ---
 // Strip code blocks to avoid false positives from code examples
-const bodyWithoutCode = post.body!
+const bodyWithoutCode = (post.body || "")
     .replaceAll(/```[\s\S]*?```/g, "")
     .replaceAll(/`[^`]*?`/g, "");
 

@@ -17,11 +17,11 @@ const THRESHOLD = 90;
 const SRC_DIR = "src";
 
 async function calculateCoverage() {
-  console.log(`🔍 Scanning ${SRC_DIR} for JSDoc coverage...`);
+  console.log(`🔍 Scanning src and scripts for JSDoc coverage...`);
 
-  // Find all TS/TSX files
-  const files = await glob(`${SRC_DIR}/**/*.{ts,tsx}`, {
-    ignore: ["**/*.d.ts", "**/*.test.ts", "**/*.spec.ts"],
+  // Find all TS/TSX/JS/MJS files
+  const files = await glob(`{src,scripts}/**/*.{ts,tsx,js,mjs,cjs}`, {
+    ignore: ["**/*.d.ts", "**/*.test.ts", "**/*.spec.ts", "**/node_modules/**"],
     absolute: true,
   });
 

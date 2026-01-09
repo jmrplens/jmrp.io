@@ -12,6 +12,7 @@ import { getCVData } from "@utils/cv";
 import { stripHtml } from "@utils/html";
 import { getSiteUrl } from "@utils/site";
 import { Icon } from "astro-icon/components";
+import sanitizeHtml from "sanitize-html";
 
 const cvData = await getCVData();
 
@@ -174,18 +175,16 @@ const personSchema = {
                                             <div
                                                 class="institution"
                                                 style="min-height: 1.2em"
-                                                set:html={item.institution.replaceAll(
-                                                    /&(?!(amp|lt|gt|quot|apos);)/g,
-                                                    "&amp;",
+                                                set:html={sanitizeHtml(
+                                                    item.institution,
                                                 )}
                                             />
                                         )}
                                         {item.department && (
                                             <div
                                                 class="department"
-                                                set:html={item.department.replaceAll(
-                                                    /&(?!(amp|lt|gt|quot|apos);)/g,
-                                                    "&amp;",
+                                                set:html={sanitizeHtml(
+                                                    item.department,
                                                 )}
                                             />
                                         )}
@@ -200,9 +199,8 @@ const personSchema = {
                                             <div
                                                 class="description summary"
                                                 style="min-height: 1.5em"
-                                                set:html={item.summary.replaceAll(
-                                                    /&(?!(amp|lt|gt|quot|apos);)/g,
-                                                    "&amp;",
+                                                set:html={sanitizeHtml(
+                                                    item.summary,
                                                 )}
                                             />
                                         )}
@@ -219,9 +217,8 @@ const personSchema = {
                                                                 return (
                                                                     <li>
                                                                         <div
-                                                                            set:html={desc.replaceAll(
-                                                                                /&(?!(amp|lt|gt|quot|apos);)/g,
-                                                                                "&amp;",
+                                                                            set:html={sanitizeHtml(
+                                                                                desc,
                                                                             )}
                                                                         />
                                                                     </li>
@@ -245,9 +242,8 @@ const personSchema = {
                                                                                 ) => (
                                                                                     <li>
                                                                                         <div
-                                                                                            set:html={sub.replaceAll(
-                                                                                                /&(?!(amp|lt|gt|quot|apos);)/g,
-                                                                                                "&amp;",
+                                                                                            set:html={sanitizeHtml(
+                                                                                                sub,
                                                                                             )}
                                                                                         />
                                                                                     </li>
