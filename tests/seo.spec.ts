@@ -60,4 +60,20 @@ test.describe("SEO & Metadata Checks", () => {
       });
     }
   });
+
+  test("404 page has correct SEO metadata", async ({ page }) => {
+    const response = await page.goto("/non-existent-page-xyz");
+    expect(response?.status()).toBe(404);
+
+    // Verify Title (should contain 404)
+    await expect(page).toHaveTitle(/404/i);
+
+    // Verify Meta Description exists
+    const description = page.locator('meta[name="description"]');
+    await expect(description).toHaveAttribute("content", /.+/);
+
+    // Verify Canonical is present and valid
+    const canonical = page.locator('link[rel="canonical"]');
+    await expect(canonical).toHaveAttribute("href", /^https?:\/\//);
+  });
 });

@@ -2,6 +2,34 @@ import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 
+/** Set of HTML boolean attributes that should not have an empty string value. */
+const BOOLEAN_ATTRIBUTES = new Set([
+  "inert",
+  "download",
+  "disabled",
+  "checked",
+  "readonly",
+  "required",
+  "multiple",
+  "async",
+  "autofocus",
+  "autoplay",
+  "controls",
+  "default",
+  "defer",
+  "formnovalidate",
+  "ismap",
+  "itemscope",
+  "loop",
+  "nomodule",
+  "novalidate",
+  "open",
+  "playsinline",
+  "reversed",
+  "scoped",
+  "selected",
+]);
+
 /**
  * Writes the provided HTML content to a file, cleaning up empty boolean attributes
  * that can cause validation issues (e.g., async="" becomes async).
@@ -10,33 +38,6 @@ import path from "node:path";
  * @param {string} html - HTML content to write.
  */
 export function writeHtml(filePath: string, html: string) {
-  const BOOLEAN_ATTRIBUTES = new Set([
-    "inert",
-    "download",
-    "disabled",
-    "checked",
-    "readonly",
-    "required",
-    "multiple",
-    "async",
-    "autofocus",
-    "autoplay",
-    "controls",
-    "default",
-    "defer",
-    "formnovalidate",
-    "ismap",
-    "itemscope",
-    "loop",
-    "nomodule",
-    "novalidate",
-    "open",
-    "playsinline",
-    "reversed",
-    "scoped",
-    "selected",
-  ]);
-
   // Use a simpler regex and check the set in the callback
   const cleaned = html.replaceAll(
     / ([a-z]+)=""/g,

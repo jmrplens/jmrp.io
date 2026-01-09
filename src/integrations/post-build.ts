@@ -5,7 +5,7 @@
  * It runs after the build is complete (`astro:build:done` hook).
  */
 
-import { execSync } from "node:child_process";
+import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -146,10 +146,16 @@ function deploySecurityHeaders(
     fs.copyFileSync(generatedPath, systemNginxPath);
 
     try {
+      const systemNginxCachePath =
+        process.env.POSTBUILD_NGINX_CACHE_PATH || "/var/cache/nginx";
+
+      // Use a sanitized environment for execSync to avoid PATH injection
+      // We prepend secure paths to the existing PATH to maintain compatibility
       const secureEnv = {
         ...process.env,
-        PATH: "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+        PATH: `/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin${path.delimiter}${process.env.PATH || ""}`,
       };
+
       // Explicitly typed options to satisfy execSync overload if needed, or just standard object
       const execOptions = {
         stdio: "inherit" as const,
@@ -157,21 +163,30 @@ function deploySecurityHeaders(
         env: secureEnv,
       };
 
-      execSync("nginx -t", execOptions); // NOSONAR
+      // prettier-ignore
+      const testResult = spawnSync("nginx", ["-t"], execOptions); // NOSONAR
+      if (testResult.status !== 0) {
+        throw new Error("Nginx configuration test failed.");
+      }
 
-      // Clear Nginx cache before reload
-      execSync("rm -rf /var/cache/nginx/*", execOptions); // NOSONAR
+      // Clear Nginx cache before reload if the directory exists
+      if (fs.existsSync(systemNginxCachePath)) {
+        logger.info(`Clearing Nginx cache in [${systemNginxCachePath}]...`);
+        // We use shell: true here because of the glob '*'
+        // prettier-ignore
+        spawnSync("rm", ["-rf", `${systemNginxCachePath}/*`], { ...execOptions, shell: true }); // NOSONAR
+      }
 
-      const reloadOptions = {
-        ...execOptions,
-        timeout: nginxReloadTimeout,
-      };
-      execSync("nginx -s reload", reloadOptions); // NOSONAR
+      // prettier-ignore
+      const reloadResult = spawnSync("nginx", ["-s", "reload"], { ...execOptions, timeout: nginxReloadTimeout }); // NOSONAR
+      if (reloadResult.status !== 0) {
+        throw new Error("Nginx reload command failed.");
+      }
 
       logger.info("✓ Nginx security headers deployed and reloaded.");
-    } catch (validationError) {
+    } catch (error) {
       handleNginxValidationError(
-        validationError,
+        error,
         systemNginxPath,
         originalContent,
         nginxTestTimeout,
@@ -224,10 +239,14 @@ function handleNginxValidationError(
       timeout: timeout,
       env: {
         ...process.env,
-        PATH: "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+        PATH: `/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin${path.delimiter}${process.env.PATH || ""}`,
       },
     };
-    execSync("nginx -t", execOptions); // NOSONAR
+    // prettier-ignore
+    const finalTestResult = spawnSync("nginx", ["-t"], execOptions); // NOSONAR
+    if (finalTestResult.status !== 0) {
+      throw new Error("Nginx final validation test failed.");
+    }
   } catch (revertError) {
     const revertErrorMessage =
       revertError instanceof Error ? revertError.message : String(revertError);

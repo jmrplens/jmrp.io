@@ -51,6 +51,12 @@ async function fetchGitHubAvatarBuffer(): Promise<Buffer> {
 
   if (!profile.avatar_url) throw new Error("No avatar_url found.");
 
+  // Security: Validate the avatar URL points to a trusted domain
+  const parsedUrl = new URL(profile.avatar_url);
+  if (!parsedUrl.hostname.endsWith(".githubusercontent.com")) {
+    throw new Error(`Untrusted avatar domain: ${parsedUrl.hostname}`);
+  }
+
   // 2. Download Image
   const imageRes = await fetch(profile.avatar_url, {
     headers: { "User-Agent": "Astro-PreBuild-Integration" },
@@ -59,7 +65,26 @@ async function fetchGitHubAvatarBuffer(): Promise<Buffer> {
 
   if (!imageRes.ok) throw new Error(`Image error: ${imageRes.status}`);
 
-  return Buffer.from(await imageRes.arrayBuffer());
+  // Security: Verify Content-Type is actually an image
+  const contentType = imageRes.headers.get("content-type");
+  if (!contentType?.startsWith("image/")) {
+    throw new Error(`Invalid content-type: ${contentType}`);
+  }
+
+  // Security: Prevent DoS by limiting the maximum download size (e.g., 5MB)
+  const MAX_SIZE = 5 * 1024 * 1024;
+  const contentLength = imageRes.headers.get("content-length");
+  if (contentLength && Number.parseInt(contentLength, 10) > MAX_SIZE) {
+    throw new Error(`Image is too large: ${contentLength} bytes`);
+  }
+
+  const buffer = Buffer.from(await imageRes.arrayBuffer());
+
+  if (buffer.length > MAX_SIZE) {
+    throw new Error("Downloaded image data exceeds maximum size limit.");
+  }
+
+  return buffer;
 }
 
 /**
