@@ -14,8 +14,14 @@
   --color-border: #30363d;
 
   /* Typography (Managed by Astro Fonts) */
-  --font-body: var(--font-inter), system-ui, -apple-system, sans-serif;
-  --font-mono: var(--font-jetbrains-mono), monospace;
+
+  --font-body:
+    var(--font-geist-sans), "Geist Sans", -apple-system, BlinkMacSystemFont,
+    "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+
+  --font-mono:
+    var(--font-geist-mono), "Geist Mono", ui-monospace, SFMono-Regular,
+    "SF Mono", Menlo, Monaco, Consolas, monospace;
 
   /* Font Weights */
   --fw-normal: 400;
@@ -67,7 +73,6 @@
     --color-bg-subtle: rgba(0, 0, 0, 0.05);
     --color-text: #24292f;
     --color-text-muted: #57606a;
-    --color-text-heading: #1f2328;
     --color-text-heading: #1f2328;
     --color-primary: #b509ac;
     /* Light mode highlight */

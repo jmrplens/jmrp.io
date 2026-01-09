@@ -100,23 +100,30 @@ const githubDark = "github-dark-high-contrast";
 
 // https://astro.build/config
 export default defineConfig({
+  prefetch: true,
   experimental: {
     fonts: [
       {
-        name: "Inter",
-        provider: fontProviders.google(),
-        cssVariable: "--font-inter",
+        name: "Geist Sans",
+        provider: fontProviders.fontsource(),
+        cssVariable: "--font-geist-sans",
         weights: [400, 700],
         styles: ["normal", "italic"],
         subsets: ["latin"],
+        display: "swap",
+        fallbacks: ["sans-serif"],
+        optimizedFallbacks: true,
       },
       {
-        name: "JetBrains Mono",
-        provider: fontProviders.google(),
-        cssVariable: "--font-jetbrains-mono",
+        name: "Geist Mono",
+        provider: fontProviders.fontsource(),
+        cssVariable: "--font-geist-mono",
         weights: [400, 700],
         styles: ["normal", "italic"],
         subsets: ["latin"],
+        display: "swap",
+        fallbacks: ["monospace"],
+        optimizedFallbacks: true,
       },
     ],
   },

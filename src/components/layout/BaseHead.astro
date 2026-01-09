@@ -200,8 +200,20 @@ const jsonLD = {
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 
 <!-- Font Preloads (Managed by Astro) -->
-<Font cssVariable="--font-inter" />
-<Font cssVariable="--font-jetbrains-mono" />
+<Font
+    cssVariable="--font-geist-sans"
+    preload={[
+        { weight: "400", style: "normal" },
+        { weight: "700", style: "normal" },
+    ]}
+/>
+<Font
+    cssVariable="--font-geist-mono"
+    preload={[
+        { weight: "400", style: "normal" },
+        { weight: "700", style: "normal" },
+    ]}
+/>
 
 <link rel="icon" type="image/webp" href={favicon.src} />
 <link rel="apple-touch-icon" href={appleTouchIcon.src} />

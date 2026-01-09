@@ -13,6 +13,7 @@ export default [
   {
     ignores: [
       "dist/",
+      "dist_new/",
       "node_modules/",
       ".astro/",
       "coverage/",

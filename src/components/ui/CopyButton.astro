@@ -30,60 +30,73 @@ const encodedContent = content ? encodeURIComponent(content) : undefined;
     <Icon name="mdi:check" class="success-icon hidden" aria-hidden="true" />
 </button>
 
-<script is:inline lang="ts">
-    document.querySelectorAll(".copy-button").forEach((button) => {
-        button.addEventListener("click", () => {
-            let text = null;
-            const rawContent = button.getAttribute("data-content");
-            if (rawContent && rawContent !== "undefined") {
-                try {
-                    text = decodeURIComponent(rawContent);
-                } catch (e) {
-                    console.error("Failed to decode data-content", e);
-                }
-            }
+<script>
+    const setupCopyButtons = () => {
+        document.querySelectorAll(".copy-button").forEach((button) => {
+            // Avoid duplicate listeners if script runs multiple times (e.g., view transitions)
+            if (button.getAttribute("data-has-listener")) return;
+            button.setAttribute("data-has-listener", "true");
 
-            if (!text) {
-                const wrapper =
-                    button.closest(".copy-container") || button.parentElement;
-                if (!wrapper) return;
-
-                const codeBlock = wrapper.querySelector("code, .copy-content");
-                text = codeBlock
-                    ? codeBlock.innerText || codeBlock.textContent
-                    : null;
-
-                if (!text && codeBlock) text = codeBlock.textContent;
-            }
-
-            if (!text) {
-                console.warn("CopyButton: No code element found in wrapper.");
-                return;
-            }
-
-            navigator.clipboard.writeText(text).then(
-                () => {
-                    // Visual feedback
-                    const copyIcon = button.querySelector(".copy-icon");
-                    const successIcon = button.querySelector(".success-icon");
-
-                    if (copyIcon && successIcon) {
-                        copyIcon.classList.add("hidden");
-                        successIcon.classList.remove("hidden");
-
-                        setTimeout(() => {
-                            copyIcon.classList.remove("hidden");
-                            successIcon.classList.add("hidden");
-                        }, 1000);
+            button.addEventListener("click", () => {
+                let text = null;
+                const rawContent = button.getAttribute("data-content");
+                if (rawContent && rawContent !== "undefined") {
+                    try {
+                        text = decodeURIComponent(rawContent);
+                    } catch (e) {
+                        console.error("Failed to decode data-content", e);
                     }
-                },
-                (err) => {
-                    console.error("Failed to copy:", err);
-                    button.setAttribute("title", "Failed to copy!");
-                },
-            );
+                }
+
+                if (!text) {
+                    const wrapper =
+                        button.closest(".copy-container") ||
+                        button.parentElement;
+                    if (!wrapper) return;
+
+                    const codeBlock =
+                        wrapper.querySelector("code, .copy-content");
+                    text = codeBlock ? codeBlock.textContent : null;
+
+                    if (!text && codeBlock) text = codeBlock.textContent;
+                }
+
+                if (!text) {
+                    console.warn("CopyButton: No code element found in wrapper.");
+                    return;
+                }
+
+                navigator.clipboard.writeText(text).then(
+                    () => {
+                        // Visual feedback
+                        const copyIcon = button.querySelector(".copy-icon");
+                        const successIcon =
+                            button.querySelector(".success-icon");
+
+                        if (copyIcon && successIcon) {
+                            copyIcon.classList.add("hidden");
+                            successIcon.classList.remove("hidden");
+
+                            setTimeout(() => {
+                                copyIcon.classList.remove("hidden");
+                                successIcon.classList.add("hidden");
+                            }, 1000);
+                        }
+                    },
+                    (err) => {
+                        console.error("Failed to copy:", err);
+                        button.setAttribute("title", "Failed to copy!");
+                    },
+                );
+            });
         });
-    });
+    };
+
+    // Initialize on first load
+    setupCopyButtons();
+
+    // Re-initialize on view transitions if enabled
+    document.addEventListener("astro:after-swap", setupCopyButtons);
 </script>
 
 <style>

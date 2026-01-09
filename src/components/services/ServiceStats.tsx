@@ -20,11 +20,10 @@ interface MastodonStatsData {
 /** Internal Matrix data structure */
 interface MatrixData {
   online?: boolean;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  versions?: any;
+  versions?: {
+    versions?: string[];
+  };
   federationTotal?: number;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  [key: string]: any;
 }
 
 /** Matrix federation data structure */
@@ -60,26 +59,30 @@ async function fetchMastodonStats(setError: (error: boolean) => void) {
 
   try {
     const [resPeers, resTrends, resInstance] = await Promise.all([
-      fetch("/api/proxy/mastodon/peers"),
-      fetch("/api/proxy/mastodon/trends"),
-      fetch("/api/proxy/mastodon/instance"),
+      fetch("/api/proxy/mastodon/peers").catch(() => null),
+      fetch("/api/proxy/mastodon/trends").catch(() => null),
+      fetch("/api/proxy/mastodon/instance").catch(() => null),
     ]);
 
-    if (resPeers.ok) {
+    if (resPeers?.ok) {
       const peersData = (await resPeers.json()) as unknown[];
       peersCount = Array.isArray(peersData) ? peersData.length : 0;
     }
 
-    if (resTrends.ok) {
+    if (resTrends?.ok) {
       mastodonTrends = (await resTrends.json()) as {
         url: string;
         name: string;
       }[];
     }
 
-    if (resInstance.ok) {
+    if (resInstance?.ok) {
       const instanceData = (await resInstance.json()) as { version: string };
       instanceVersion = instanceData.version;
+    }
+
+    if (!resPeers?.ok && !resTrends?.ok && !resInstance?.ok) {
+      setError(true);
     }
   } catch (error) {
     console.error("Error fetching Mastodon stats:", error);
@@ -99,23 +102,30 @@ async function fetchMatrixStats(setError: (error: boolean) => void) {
   let matrixFed: MatrixFed | null = null;
 
   try {
-    const resConfig = await fetch("/api/proxy/matrix/config");
-    if (resConfig.ok) matrixData = (await resConfig.json()) as MatrixData;
+    const [resConfig, resVer, resFed, resDest] = await Promise.all([
+      fetch("/api/proxy/matrix/config").catch(() => null),
+      fetch("/api/proxy/matrix/versions").catch(() => null),
+      fetch("/api/proxy/matrix/federation").catch(() => null),
+      fetch("/api/proxy/matrix/stats").catch(() => null),
+    ]);
 
-    const resVer = await fetch("/api/proxy/matrix/versions");
-    if (resVer.ok) {
+    if (resConfig?.ok) matrixData = (await resConfig.json()) as MatrixData;
+
+    if (resVer?.ok) {
       matrixData.online = true;
-      const verData = (await resVer.json()) as { versions: unknown };
-      matrixData.versions = verData.versions;
+      const verData = (await resVer.json()) as { versions: string[] };
+      matrixData.versions = verData;
     }
 
-    const resFed = await fetch("/api/proxy/matrix/federation");
-    if (resFed.ok) matrixFed = (await resFed.json()) as MatrixFed;
+    if (resFed?.ok) matrixFed = (await resFed.json()) as MatrixFed;
 
-    const resDest = await fetch("/api/proxy/matrix/stats");
-    if (resDest.ok) {
+    if (resDest?.ok) {
       const destData = (await resDest.json()) as { total: number };
       matrixData.federationTotal = destData.total;
+    }
+
+    if (!resConfig?.ok && !resVer?.ok && !resFed?.ok && !resDest?.ok) {
+      setError(true);
     }
   } catch (error) {
     console.error("Error fetching Matrix stats:", error);
@@ -140,16 +150,28 @@ async function fetchMeshtasticStats() {
   let mfNodes = 0;
 
   if (resPotato?.ok) {
-    const data = (await resPotato.json()) as unknown[];
-    potatoNodes = Array.isArray(data) ? data.length : 0;
+    try {
+      const data = (await resPotato.json()) as unknown[];
+      potatoNodes = Array.isArray(data) ? data.length : 0;
+    } catch {
+      /* ignore */
+    }
   }
   if (resLF?.ok) {
-    const data = (await resLF.json()) as { data?: { activeNodes: number } };
-    lfNodes = data.data?.activeNodes ?? 0;
+    try {
+      const data = (await resLF.json()) as { data?: { activeNodes: number } };
+      lfNodes = data.data?.activeNodes ?? 0;
+    } catch {
+      /* ignore */
+    }
   }
   if (resMF?.ok) {
-    const data = (await resMF.json()) as { data?: { activeNodes: number } };
-    mfNodes = data.data?.activeNodes ?? 0;
+    try {
+      const data = (await resMF.json()) as { data?: { activeNodes: number } };
+      mfNodes = data.data?.activeNodes ?? 0;
+    } catch {
+      /* ignore */
+    }
   }
 
   const potatoVersion = await fetchPotatoVersion();

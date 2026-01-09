@@ -12,6 +12,7 @@
  */
 export const stripExtension = (entry: string): string => {
   // Only strip extension if there's content before the dot
-  const match = entry.match(/^(.+)\.[^/.]+$/);
+  const regex = /^(.+)\.[^/.]+$/;
+  const match = regex.exec(entry);
   return match ? match[1] : entry;
 };

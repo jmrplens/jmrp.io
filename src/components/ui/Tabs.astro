@@ -18,7 +18,7 @@ interface Props {
 const { class: className } = Astro.props;
 ---
 
-<script is:inline>
+<script>
     class TabsComponent extends HTMLElement {
         connectedCallback() {
             // Use requestAnimationFrame to ensure the children are fully parsed
@@ -109,7 +109,9 @@ const { class: className } = Astro.props;
         }
     }
 
-    customElements.define("ui-tabs", TabsComponent);
+    if (!customElements.get("ui-tabs")) {
+        customElements.define("ui-tabs", TabsComponent);
+    }
 </script>
 
 <ui-tabs class:list={[className]}>

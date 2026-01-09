@@ -28,27 +28,49 @@ const BOOLEAN_ATTRIBUTES = new Set([
   "reversed",
   "scoped",
   "selected",
+  "crossorigin",
 ]);
 
 /**
  * Writes the provided HTML content to a file, cleaning up empty boolean attributes
- * that can cause validation issues (e.g., async="" becomes async).
+ * that can cause validation issues (e.g., crossorigin="" becomes crossorigin).
+ *
+ * This version is safer as it only targets attributes within tags and avoids
+ * content inside style or script blocks.
  *
  * @param {string} filePath - Absolute path to the destination file.
  * @param {string} html - HTML content to write.
  */
 export function writeHtml(filePath: string, html: string) {
-  // Use a simpler regex and check the set in the callback
+  // Use a more restrictive regex that tries to avoid matching inside tags content
+  // but for simplicity and safety with CSP, we only clean attributes that are likely
+  // to be injected by Cheerio at the tag level.
   const cleaned = html.replaceAll(
-    / ([a-z]+)=""/g,
-    (match: string, attr: string) => {
-      if (BOOLEAN_ATTRIBUTES.has(attr)) {
-        return ` ${attr}`;
+    /(\s)([a-z-]+)=""(?=[^>]*>)/gi,
+    (match: string, space: string, attr: string) => {
+      if (BOOLEAN_ATTRIBUTES.has(attr.toLowerCase())) {
+        return `${space}${attr}`;
       }
       return match;
     },
   );
   fs.writeFileSync(filePath, cleaned, "utf8");
+}
+
+/**
+ * Generates integrity hashes (SHA-256 and SHA-512) for the specified content.
+ *
+ * @param {string} content - The string content to hash.
+ * @returns {string[]} An array of hashes in 'algo-...' format.
+ */
+export function getDualHashes(content: string): string[] {
+  const styles = content.trim();
+  if (!styles) return [];
+
+  const sha256 = crypto.createHash("sha256").update(styles).digest("base64");
+  const sha512 = crypto.createHash("sha512").update(styles).digest("base64");
+
+  return [`'sha256-${sha256}'`, `'sha512-${sha512}'`];
 }
 
 /**

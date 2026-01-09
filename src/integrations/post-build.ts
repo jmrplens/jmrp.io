@@ -13,6 +13,7 @@ import { fileURLToPath } from "node:url";
 import type { AstroIntegration, AstroIntegrationLogger } from "astro";
 
 import { purgeCloudflareCache } from "./post-build/cloudflare.js";
+import { compressAssets } from "./post-build/compression.js";
 import { finalizeCspConfig } from "./post-build/csp.js";
 import { extractCssDataUris } from "./post-build/css.js";
 import { processHtmlFiles } from "./post-build/html.js";
@@ -67,6 +68,7 @@ export default function postBuildIntegration(): AstroIntegration {
             deploySecurityHeaders(distDir, systemNginxPath, logger);
           }
 
+          await compressAssets(distDir);
           await purgeCloudflareCache(logger);
         } catch (error) {
           logger.error("Fatal optimization error:");
@@ -180,12 +182,7 @@ function deploySecurityHeaders(
       }
 
       // Clear Nginx cache before reload if the directory exists
-      if (fs.existsSync(systemNginxCachePath)) {
-        logger.info(`Clearing Nginx cache in [${systemNginxCachePath}]...`);
-        // We use shell: true here because of the glob '*'
-        // prettier-ignore
-        spawnSync("rm", ["-rf", `${systemNginxCachePath}/*`], { ...execOptions, shell: true }); // NOSONAR
-      }
+      clearNginxCache(systemNginxCachePath, logger);
 
       // prettier-ignore
       const reloadResult = spawnSync("nginx", ["-s", "reload"], { ...execOptions, timeout: nginxReloadTimeout }); // NOSONAR
@@ -211,6 +208,34 @@ function deploySecurityHeaders(
       error instanceof Error ? error.stack || error.message : String(error),
     );
     throw error instanceof Error ? error : new Error(String(error));
+  }
+}
+
+/**
+ * Safely clears the Nginx cache directory by removing its contents.
+ *
+ * @param systemNginxCachePath - The path to the Nginx cache directory.
+ * @param logger - Astro logger instance.
+ */
+function clearNginxCache(
+  systemNginxCachePath: string,
+  logger: AstroIntegrationLogger,
+) {
+  if (!fs.existsSync(systemNginxCachePath)) return;
+
+  logger.info(`Clearing Nginx cache in [${systemNginxCachePath}]...`);
+  try {
+    const files = fs.readdirSync(systemNginxCachePath);
+    for (const file of files) {
+      fs.rmSync(path.join(systemNginxCachePath, file), {
+        recursive: true,
+        force: true,
+      });
+    }
+  } catch (error) {
+    logger.warn(
+      `Could not clear Nginx cache: ${error instanceof Error ? error.message : String(error)}`,
+    );
   }
 }
 

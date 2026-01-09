@@ -2,6 +2,8 @@
   "extends": ["html-validate:recommended"],
   "elements": ["html5"],
   "rules": {
+    "attribute-empty-style": "error",
+    "attr-case": "error",
     "no-trailing-whitespace": "off",
     "void-style": "off",
     "element-permitted-content": "off",

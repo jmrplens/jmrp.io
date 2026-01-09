@@ -13,6 +13,7 @@ import {
 } from "./constants.js";
 import type { CspData } from "./types.js";
 import {
+  getDualHashes,
   getExtensionFromMime,
   getFileHash,
   resolveFile,
@@ -185,18 +186,19 @@ function processSingleHtmlFile(
     updatedSriTags += sriResult.updatedTags;
   }
 
-  // 4. Collect Hashes
-  if (collectInlineHashes($, cspData, enableCsp)) {
-    isModified = true;
-  }
-
-  // 5. Collect Image Domains
+  // 4. Collect Image Domains
   if (enableCsp) {
     collectImageDomains($, cspData);
   }
 
-  // 6. Manual Beacon Replace
+  // 5. Manual Beacon Replace
   if (processBeacon($, distDir, file, hashCache)) {
+    isModified = true;
+  }
+
+  // 6. Collect Hashes - CRITICAL: Must be the final step before writing
+  // This ensures hashes match the final serialized output exactly
+  if (collectInlineHashes($, cspData, enableCsp)) {
     isModified = true;
   }
 
@@ -320,7 +322,7 @@ function processStyles($: cheerio.CheerioAPI, enableCsp: boolean): boolean {
 }
 
 /**
- * Processes script and link tags to add SRI hashes and CSP nonces.
+ * Processes script tags to add SRI hashes and CSP nonces.
  *
  * @param $ - Cheerio API instance for the current HTML document.
  * @param file - Absolute path to the HTML file.
@@ -339,27 +341,13 @@ function processScriptsAndLinks(
   let modified = false;
   let updatedTags = 0;
 
+  // ONLY process script tags. Link tags (stylesheets, preloads) are handled
+  // natively by Astro or other specialized logic to avoid validation/console issues.
   $("script[src]").each((_, el) => {
     const res = processTagSri(
       $(el),
       "src",
       "script",
-      file,
-      distDir,
-      hashCache,
-      enableCsp,
-    );
-    if (res.modified) modified = true;
-    if (res.updated) updatedTags++;
-  });
-
-  $(
-    'link[rel="stylesheet"], link[rel="preload"], link[rel="modulepreload"]',
-  ).each((_, el) => {
-    const res = processTagSri(
-      $(el),
-      "href",
-      "link",
       file,
       distDir,
       hashCache,
@@ -399,10 +387,6 @@ function processTagSri(
   const url = $el.attr(attr);
   if (!url) return { modified, updated };
 
-  if (ensureCrossorigin($el, type)) {
-    modified = true;
-  }
-
   if (addIntegrity($el, url, file, distDir, hashCache)) {
     modified = true;
     updated = true;
@@ -416,21 +400,19 @@ function processTagSri(
 }
 
 /**
- * Ensures the 'crossorigin' attribute is present on SRI-eligible tags.
+ * Determines if a tag is eligible for Subresource Integrity (SRI).
  *
- * @param $el - Cheerio element representing the tag.
+ * @param _el - Cheerio element representing the tag.
  * @param type - The type of tag (script or link).
- * @returns True if the attribute was added.
+ * @returns True if the tag is SRI eligible.
  */
-function ensureCrossorigin(
-  $el: cheerio.Cheerio<Element>,
+function isSriEligible(
+  _el: cheerio.Cheerio<Element>,
   type: "script" | "link",
 ): boolean {
-  if (isSriEligible($el, type) && !$el.attr("crossorigin")) {
-    $el.attr("crossorigin", "anonymous");
-    return true;
-  }
-  return false;
+  // Only apply SRI to script tags. Link tags (stylesheets, preloads) trigger
+  // browser warnings or validation issues with automatic integrity.
+  return type === "script";
 }
 
 /**
@@ -450,7 +432,8 @@ function addIntegrity(
   distDir: string,
   hashCache: Map<string, string>,
 ): boolean {
-  if (!$el.attr("integrity")) {
+  // Only add integrity to eligible tags (scripts) and only if not already present
+  if (isSriEligible($el, "script") && !$el.attr("integrity")) {
     const filePath = resolveFile(url, path.dirname(file), distDir);
     if (filePath) {
       const hash = getFileHash(filePath, hashCache);
@@ -472,49 +455,12 @@ function addNonce(
   $el: cheerio.Cheerio<Element>,
   type: "script" | "link",
 ): boolean {
-  if (isNonceEligible($el, type) && !$el.attr("nonce")) {
+  // Only apply nonce to <script> tags for CSP consistency.
+  if (type === "script" && !$el.attr("nonce")) {
     $el.attr("nonce", "NGINX_CSP_NONCE");
     return true;
   }
   return false;
-}
-
-/**
- * Determines if a tag is eligible for Subresource Integrity (SRI).
- *
- * @param $el - Cheerio element representing the tag.
- * @param type - The type of tag (script or link).
- * @returns True if the tag is SRI eligible.
- */
-function isSriEligible(
-  $el: cheerio.Cheerio<Element>,
-  type: "script" | "link",
-): boolean {
-  const rel = $el.attr("rel");
-  const as = $el.attr("as");
-  return (
-    type === "script" ||
-    rel === "stylesheet" ||
-    as === "style" ||
-    as === "script" ||
-    as === "font"
-  );
-}
-
-/**
- * Determines if a tag is eligible for a CSP nonce.
- *
- * @param _el - Cheerio element representing the tag.
- * @param type - The type of tag (script or link).
- * @returns True if the tag should have a nonce.
- */
-function isNonceEligible(
-  _el: cheerio.Cheerio<Element>,
-  type: "script" | "link",
-): boolean {
-  // Only apply nonce to <script> and <style> tags
-  // rel="stylesheet" and as="style" are <link> tags
-  return type === "script";
 }
 
 /**
@@ -533,23 +479,28 @@ function collectInlineHashes(
   if (!enableCsp) return false;
   let modified = false;
 
-  $("style:not([data-generated-style])").each((_, el) => {
+  // Process ALL style tags in the entire document (including those inside SVGs)
+  $("style").each((_, el) => {
     const $el = $(el);
     const styleHtml = $el.html() || "";
-    const h = crypto.createHash("sha512").update(styleHtml).digest("base64");
-    cspData.styleHashes.add(`'sha512-${h}'`);
 
+    // Always collect dual hashes for every style tag
+    getDualHashes(styleHtml).forEach((h) => cspData.styleHashes.add(h));
+
+    // Ensure it also has a nonce for dynamic replacement
     if (!$el.attr("nonce")) {
       $el.attr("nonce", "NGINX_CSP_NONCE");
       modified = true;
     }
   });
 
+  // Process ALL inline script tags
   $("script:not([src])").each((_, el) => {
     const $el = $(el);
     const scriptHtml = $el.html() || "";
-    const h = crypto.createHash("sha512").update(scriptHtml).digest("base64");
-    cspData.scriptHashes.add(`'sha512-${h}'`);
+
+    // Always collect dual hashes
+    getDualHashes(scriptHtml).forEach((h) => cspData.scriptHashes.add(h));
 
     if (!$el.attr("nonce")) {
       $el.attr("nonce", "NGINX_CSP_NONCE");
