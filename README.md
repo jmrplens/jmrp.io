@@ -5,6 +5,7 @@
 ![Astro](https://img.shields.io/badge/astro-6.0.0--alpha.5-orange?style=flat&logo=astro)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 [![Dependabot](https://badgen.net/badge/Dependabot/enabled/green?icon=dependabot)](https://github.com/jmrplens/jmrp.io/pulls)
+[![CI Dashboard](https://img.shields.io/badge/CI_Dashboard-Live_Status-blueviolet?style=for-the-badge&logo=vercel)](https://jmrp-ci-reports.vercel.app)
 
 <!-- Code Quality -->
 

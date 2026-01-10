@@ -582,7 +582,10 @@ const html = `
                         <tr><td>ESLint</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(saOutcomes.eslint)}">${saOutcomes.eslint || "Pending"}</span> <a href="javascript:void(0)" onclick="openLog('eslint')" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Log</a></div></td></tr>
                         <tr><td>Link Checker</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(saOutcomes.lychee)}">${saOutcomes.lychee || "Pending"}</span> ${status.lychee ? '<a href="lychee/" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">View Report</a>' : ""}</div></td></tr>
                         <tr><td>Spell Checker</td><td><span class="status-badge ${getStatusClass(saOutcomes.typos)}">${saOutcomes.typos || "Pending"}</span></td></tr>
-                        <tr><td>Security</td><td><span class="status-badge ${getStatusClass(saOutcomes.snyk || saOutcomes.security)}">${saOutcomes.snyk || saOutcomes.security || "Pending"}</span></td></tr>
+                        <tr><td>Security Audit</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(saOutcomes.security)}">${saOutcomes.security || "Pending"}</span> <a href="javascript:void(0)" onclick="openLog('security-audit')" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Log</a></div></td></tr>
+                        <tr><td>Snyk Security</td><td><span class="status-badge ${getStatusClass(saOutcomes.snyk)}">${saOutcomes.snyk || "Pending"}</span></td></tr>
+                        <tr><td>SonarQube</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(saOutcomes.sonar)}">${saOutcomes.sonar || "Pending"}</span> <a href="https://sonarcloud.io/summary/new_code?id=jmrplens_jmrp.io" target="_blank" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">External</a></div></td></tr>
+                        <tr><td>JSDoc Coverage</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(saOutcomes.jsdoc)}">${saOutcomes.jsdoc || "Pending"}</span> <a href="javascript:void(0)" onclick="openLog('jsdoc-coverage')" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Log</a></div></td></tr>
                       </tbody>
                     </table>
                   </div>
@@ -594,8 +597,10 @@ const html = `
                      <table>
                        <tbody>
                          <tr><td>JS/CSS Size</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><b>${bundleStats?.readableTotalSize || "N/A"}</b> <a href="javascript:void(0)" onclick="openLog('bundle-size')" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Log</a></div></td></tr>
+                         <tr><td>HTML Validation</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(qualityOutcomes.html)}">${qualityOutcomes.html || "Pending"}</span> <a href="javascript:void(0)" onclick="openLog('html-validation')" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Log</a></div></td></tr>
+                         <tr><td>RSS Validation</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(qualityOutcomes.rss)}">${qualityOutcomes.rss || "Pending"}</span> <a href="javascript:void(0)" onclick="openLog('rss-validation')" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Log</a></div></td></tr>
+                         <tr><td>JSON-LD Schema</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(qualityOutcomes.schema)}">${qualityOutcomes.schema || "Pending"}</span> <a href="javascript:void(0)" onclick="openLog('schema-validation')" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Log</a></div></td></tr>
                          <tr><td>Image Check</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(qualityOutcomes.image)}">${qualityOutcomes.image || "Pending"}</span> ${status.images ? '<a href="images/" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">View Report</a>' : ""}</div></td></tr>
-                         <tr><td>JSON-LD Schema</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(qualityOutcomes.schema)}">${qualityOutcomes.schema || "Pending"}</span> ${status.schema ? '<a href="schema/" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">View Report</a>' : ""}</div></td></tr>
                          <tr><td>E2E Tests</td><td><span class="status-badge ${getStatusClass(qualityOutcomes.functional)}">${qualityOutcomes.functional || "Pending"}</span></td></tr>
                        </tbody>
                      </table>
@@ -614,21 +619,37 @@ graph LR
     Build --> SA_ESLint[🔍 ESLint]
     Build --> SA_Audit[🛡️ Audit]
     Build --> SA_Lychee[🔗 Lychee]
+    Build --> SA_JSDoc[📚 JSDoc]
+    Build --> SA_Snyk[🦊 Snyk]
+    Build --> SA_Sonar[🛰️ Sonar]
     
     Build --> Audit_LH[⚡ Lighthouse]
     Build --> Audit_A11y[♿ Accessibility]
+    Build --> QA_HTML[📄 HTML]
+    Build --> QA_RSS[📡 RSS]
+    Build --> QA_Schema[🏷️ Schema]
+    Build --> QA_Image[🖼️ Image]
+    Build --> QA_E2E[🧪 E2E]
     
     SA_Astro --> Dashboard[📊 Dashboard]
     SA_Prettier --> Dashboard
     SA_ESLint --> Dashboard
     SA_Audit --> Dashboard
     SA_Lychee --> Dashboard
+    SA_JSDoc --> Dashboard
+    SA_Snyk --> Dashboard
+    SA_Sonar --> Dashboard
     
     Audit_LH --> LH_Rep[📄 LH Report]
     Audit_A11y --> A11y_Rep[📄 A11y Report]
     
     LH_Rep --> Dashboard
     A11y_Rep --> Dashboard
+    QA_HTML --> Dashboard
+    QA_RSS --> Dashboard
+    QA_Schema --> Dashboard
+    QA_Image --> Dashboard
+    QA_E2E --> Dashboard
     
     classDef success fill:#064e3b,stroke:#059669,color:#fff
     classDef failure fill:#450a0a,stroke:#dc2626,color:#fff
@@ -640,8 +661,16 @@ graph LR
     class SA_ESLint ${getStatusClass(saOutcomes.eslint).replace("status-", "")}
     class SA_Audit ${getStatusClass(saOutcomes.security).replace("status-", "")}
     class SA_Lychee ${getStatusClass(saOutcomes.lychee).replace("status-", "")}
+    class SA_JSDoc ${getStatusClass(saOutcomes.jsdoc).replace("status-", "")}
+    class SA_Snyk ${getStatusClass(saOutcomes.snyk).replace("status-", "")}
+    class SA_Sonar ${getStatusClass(saOutcomes.sonar).replace("status-", "")}
     class Audit_LH ${getStatusClass(qualityOutcomes.lighthouse).replace("status-", "")}
     class Audit_A11y ${getStatusClass(qualityOutcomes.a11y).replace("status-", "")}
+    class QA_HTML ${getStatusClass(qualityOutcomes.html).replace("status-", "")}
+    class QA_RSS ${getStatusClass(qualityOutcomes.rss).replace("status-", "")}
+    class QA_Schema ${getStatusClass(qualityOutcomes.schema).replace("status-", "")}
+    class QA_Image ${getStatusClass(qualityOutcomes.image).replace("status-", "")}
+    class QA_E2E ${getStatusClass(qualityOutcomes.functional).replace("status-", "")}
     class Dashboard success
                 </pre>
             </div>

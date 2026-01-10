@@ -18,7 +18,6 @@ jobs:
   ci-setup:
     name: "🚀 Initialize CI Report"
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
     permissions:
       pull-requests: write
     steps:
@@ -145,7 +144,15 @@ jobs:
           node-version: 22
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile --prefer-offline
-      - run: pnpm audit --audit-level=high
+      - name: Run Security Audit
+        run: pnpm audit --audit-level=high | tee security-audit.log
+      - name: Upload Audit log
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: log-audit
+          path: security-audit.log
+          retention-days: 1
 
   sa-jsdoc:
     name: "SA: JSDoc Coverage"
@@ -165,7 +172,7 @@ jobs:
       - name: Calculate JSDoc Coverage
         id: jsdoc_calc
         run: |
-          OUTPUT=$(node scripts/ci/calculate-jsdoc-coverage.mjs 2>&1)
+          OUTPUT=$(node scripts/ci/calculate-jsdoc-coverage.mjs 2>&1 | tee jsdoc-coverage.log)
           echo "$OUTPUT"
           COVERAGE=$(echo "$OUTPUT" | sed -n 's/.*Coverage: \([0-9.]*\).*/\1/p')
           if [ -z "$COVERAGE" ]; then
@@ -173,6 +180,13 @@ jobs:
             exit 1
           fi
           echo "coverage=${COVERAGE}%" >> $GITHUB_OUTPUT
+      - name: Upload JSDoc log
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: log-jsdoc
+          path: jsdoc-coverage.log
+          retention-days: 1
 
   sa-lychee:
     name: "SA: Link Checker (Dist)"
@@ -306,8 +320,15 @@ jobs:
       - run: pnpm install --frozen-lockfile --prefer-offline
       - name: Validate HTML5
         run: |
-          pnpm exec html-validate -c .htmlvalidate.json --formatter json dist > html-validation.json || true
+          pnpm exec html-validate -c .htmlvalidate.json --formatter json dist | tee html-validation.log || true
           node scripts/ci/generate-html-validation-report.mjs
+      - name: Upload HTML log
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: log-html
+          path: html-validation.log
+          retention-days: 1
 
       - name: Upload HTML validation files
         uses: actions/upload-artifact@v6
@@ -337,9 +358,16 @@ jobs:
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile --prefer-offline
       - name: Validate RSS feed
-        run: node scripts/ci/validate-rss.mjs dist/rss.xml
+        run: node scripts/ci/validate-rss.mjs dist/rss.xml | tee rss-validation.log
       - name: Generate RSS preview
         run: node scripts/preview-rss.mjs
+      - name: Upload RSS log
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: log-rss
+          path: rss-validation.log
+          retention-days: 1
       - name: Upload RSS validation files
         uses: actions/upload-artifact@v6
         with:
@@ -368,13 +396,20 @@ jobs:
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile --prefer-offline
       - name: Validate Schema.org structured data
-        run: node scripts/ci/validate-schema.mjs dist
+        run: node scripts/ci/validate-schema.mjs dist | tee schema-validation.log
       - name: Generate Schema Report
         if: always()
         run: |
           if [ -f schema-report.json ]; then
             node scripts/ci/generate-schema-report.mjs
           fi
+      - name: Upload Schema log
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: log-schema
+          path: schema-validation.log
+          retention-days: 1
       - name: Upload Schema validation files
         uses: actions/upload-artifact@v6
         with:
@@ -567,18 +602,6 @@ jobs:
           script: |
             const { default: script } = await import(`file://${process.env.GITHUB_WORKSPACE}/scripts/ci/update-ci-comment.mjs`)
             await script({github, context, step: 'sa'})
-      - name: Check Failure
-        if: |
-          needs.sa-astro.result == 'failure' ||
-          needs.sa-prettier.result == 'failure' ||
-          needs.sa-eslint.result == 'failure' ||
-          needs.sa-lychee.result == 'failure' ||
-          needs.sa-typos.result == 'failure' ||
-          needs.sa-audit.result == 'failure' ||
-          needs.sa-snyk.result == 'failure' ||
-          needs.sa-sonar.result == 'failure' ||
-          needs.sa-jsdoc.result == 'failure'
-        run: exit 1
 
   accessibility-report:
     name: Accessibility Report
@@ -687,7 +710,7 @@ jobs:
         lighthouse-report,
         functional-tests,
       ]
-    if: always() && github.event_name == 'pull_request'
+    if: always() && (github.event_name == 'pull_request' || github.ref == 'refs/heads/main')
     permissions:
       pull-requests: write
     steps:
@@ -766,7 +789,8 @@ jobs:
         id: deploy
         run: |
           export VERCEL_TOKEN=${{ secrets.VERCEL_TOKEN }}
-          DEPLOY_URL=$(npx vercel deploy ./dist-reports --name jmrp-ci-reports --token=${{ secrets.VERCEL_TOKEN }} --yes --public)
+          IS_PROD=${{ github.ref == 'refs/heads/main' && '--prod' || '' }}
+          DEPLOY_URL=$(npx vercel deploy ./dist-reports --name jmrp-ci-reports --token=${{ secrets.VERCEL_TOKEN }} --yes --public $IS_PROD)
           echo "url=$DEPLOY_URL" >> $GITHUB_OUTPUT
       - name: Update CI Comment (Final Results)
         uses: actions/github-script@v8
