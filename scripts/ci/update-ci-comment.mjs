@@ -66,13 +66,17 @@ function buildExecutiveSummary(saResults, qualityResults, healthScore) {
   let summary = "#### 📝 Executive Summary\n\n";
 
   if (healthScore >= 95) {
-    summary += "✨ **Project is in excellent shape!** All critical quality and security gates have passed with flying colors. Codebase stability and accessibility standards are exceptionally high.\n";
+    summary +=
+      "✨ **Project is in excellent shape!** All critical quality and security gates have passed with flying colors. Codebase stability and accessibility standards are exceptionally high.\n";
   } else if (healthScore >= 80) {
-    summary += "✅ **Project is healthy.** Most checks passed successfully. There are minor improvements suggested, but the overall state is stable for review.\n";
+    summary +=
+      "✅ **Project is healthy.** Most checks passed successfully. There are minor improvements suggested, but the overall state is stable for review.\n";
   } else if (healthScore >= 60) {
-    summary += "⚠️ **Attention Recommended.** The CI has detected several issues or regressions. While not strictly blocking, these points should be addressed to maintain long-term quality.\n";
+    summary +=
+      "⚠️ **Attention Recommended.** The CI has detected several issues or regressions. While not strictly blocking, these points should be addressed to maintain long-term quality.\n";
   } else {
-    summary += "❌ **Critical Status.** Multiple failures detected. The current changes do not meet the project's quality or security standards. Please review the detailed reports below.\n";
+    summary +=
+      "❌ **Critical Status.** Multiple failures detected. The current changes do not meet the project's quality or security standards. Please review the detailed reports below.\n";
   }
 
   // Key Highlights / Insights
@@ -82,39 +86,60 @@ function buildExecutiveSummary(saResults, qualityResults, healthScore) {
 
   try {
     if (fs.existsSync("bundle-analysis.json")) {
-      const bundle = JSON.parse(fs.readFileSync("bundle-analysis.json", "utf-8"));
-      highlights.push(`- 📦 **Asset Size:** Total JavaScript & CSS is **${bundle.readableTotalSize}** across ${bundle.fileCount} optimized assets.`);
+      const bundle = JSON.parse(
+        fs.readFileSync("bundle-analysis.json", "utf-8"),
+      );
+      highlights.push(
+        `- 📦 **Asset Size:** Total JavaScript & CSS is **${bundle.readableTotalSize}** across ${bundle.fileCount} optimized assets.`,
+      );
     }
 
     if (fs.existsSync("accessibility-report.json")) {
-      const a11y = JSON.parse(fs.readFileSync("accessibility-report.json", "utf-8"));
-      const violations = a11y.reduce((acc, r) => acc + (r.violations?.length || 0), 0);
-      highlights.push(violations === 0
-        ? "- ♿ **Accessibility:** Perfect score! No violations detected in any audited pages. ✅"
-        : `- ♿ **Accessibility:** Found ${violations} violations that need attention.`);
+      const a11y = JSON.parse(
+        fs.readFileSync("accessibility-report.json", "utf-8"),
+      );
+      const violations = a11y.reduce(
+        (acc, r) => acc + (r.violations?.length || 0),
+        0,
+      );
+      highlights.push(
+        violations === 0
+          ? "- ♿ **Accessibility:** Perfect score! No violations detected in any audited pages. ✅"
+          : `- ♿ **Accessibility:** Found ${violations} violations that need attention.`,
+      );
     }
 
     if (fs.existsSync("html-validation.json")) {
       const html = JSON.parse(fs.readFileSync("html-validation.json", "utf-8"));
       const errors = html.reduce((acc, f) => acc + (f.errorCount || 0), 0);
-      highlights.push(errors === 0
-        ? "- 📄 **HTML5:** Full valid syntax across all generated pages. ✅"
-        : `- 📄 **HTML5:** ${errors} syntax errors detected in the current build.`);
+      highlights.push(
+        errors === 0
+          ? "- 📄 **HTML5:** Full valid syntax across all generated pages. ✅"
+          : `- 📄 **HTML5:** ${errors} syntax errors detected in the current build.`,
+      );
     }
 
     if (fs.existsSync("rss-validation.json")) {
       const rss = JSON.parse(fs.readFileSync("rss-validation.json", "utf-8"));
-      if (rss.valid) highlights.push(`- 📡 **RSS/Atom:** Feed is syntactically valid and compliant with industry standards.`);
+      if (rss.valid)
+        highlights.push(
+          `- 📡 **RSS/Atom:** Feed is syntactically valid and compliant with industry standards.`,
+        );
     }
 
     if (saResults.lychee === "success") {
-      highlights.push("- 🔗 **Link Integrity:** All external and internal links verified successfully.");
+      highlights.push(
+        "- 🔗 **Link Integrity:** All external and internal links verified successfully.",
+      );
     }
-  } catch (err) {
-    console.warn("Error building highlights:", err.message);
+  } catch (error) {
+    console.warn("⚠️ Could not build detailed summary items:", error.message);
   }
 
-  summary += highlights.length > 0 ? highlights.join("\n") : "- *Detailed insights will appear once analysis is complete.*";
+  summary +=
+    highlights.length > 0
+      ? highlights.join("\n")
+      : "- *Detailed insights will appear once analysis is complete.*";
   summary += "\n";
 
   return summary;
@@ -135,8 +160,13 @@ function calculateHealthScore(saResults, qualityResults) {
 
   try {
     if (fs.existsSync("accessibility-report.json")) {
-      const a11y = JSON.parse(fs.readFileSync("accessibility-report.json", "utf-8"));
-      const totalViolations = a11y.reduce((acc, r) => acc + (r.violations?.length || 0), 0);
+      const a11y = JSON.parse(
+        fs.readFileSync("accessibility-report.json", "utf-8"),
+      );
+      const totalViolations = a11y.reduce(
+        (acc, r) => acc + (r.violations?.length || 0),
+        0,
+      );
       score -= Math.min(20, totalViolations * 2);
     }
     if (fs.existsSync("html-validation.json")) {
@@ -144,7 +174,7 @@ function calculateHealthScore(saResults, qualityResults) {
       const errors = html.reduce((acc, f) => acc + (f.errorCount || 0), 0);
       score -= Math.min(15, errors);
     }
-  } catch (e) { }
+  } catch {}
 
   return Math.max(0, Math.min(100, score));
 }
@@ -187,7 +217,9 @@ export default async function updateCiComment({ github, context, step }) {
   const healthScore = calculateHealthScore(saResults, qualityResults);
 
   // Visualization Header
-  const scoreColor = healthScore >= 90 ? "4E9A06" : healthScore >= 70 ? "C4A000" : "A40000";
+  let scoreColor = "A40000";
+  if (healthScore >= 90) scoreColor = "4E9A06";
+  else if (healthScore >= 70) scoreColor = "C4A000";
 
   let body = `${HEADER}\n\n`;
   body += `<p align="center">\n`;
@@ -197,7 +229,9 @@ export default async function updateCiComment({ github, context, step }) {
   // Centered Dashboard Button
   body += `<p align="center">\n`;
   if (vercelUrl) {
-    const cleanUrl = vercelUrl.startsWith("http") ? vercelUrl : `https://${vercelUrl}`;
+    const cleanUrl = vercelUrl.startsWith("http")
+      ? vercelUrl
+      : `https://${vercelUrl}`;
     body += `  <a href="${cleanUrl}">\n`;
     body += `    <img src="https://img.shields.io/badge/OPEN%20CI%20DASHBOARD-4F46E5?style=for-the-badge&logo=github&logoColor=white" alt="Open CI Dashboard" />\n`;
     body += `  </a>\n`;
