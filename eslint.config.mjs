@@ -14,11 +14,16 @@ export default [
     ignores: [
       "dist/",
       "dist_new/",
+      "dist-reports/",
       "node_modules/",
       ".astro/",
       "coverage/",
       "public/scripts/",
       "**/*.min.js",
+      "test-results/",
+      "playwright-report/",
+      "accessibility-report/",
+      "*.log",
     ],
   },
 
