@@ -83,6 +83,11 @@ for (const r of reports) {
   status[r.id] = success;
 }
 
+// Aliases for template compatibility
+status.htmlReport = status.html;
+status.schemaReport = status.schema;
+status.rssPreview = status.rss;
+
 // 1.5. Move Logs & Graph
 if (fs.existsSync("logs")) {
   copy("logs", path.join(DIST_REPORTS, "logs"));
@@ -144,7 +149,9 @@ const findScore = (manifestPath, p) => {
     const json = JSON.parse(fs.readFileSync(manifestPath, "utf-8"));
     const item = json.find((i) => {
       if (p.name === "Home") {
-        return i.url.endsWith(":40679/") || i.url.endsWith(".io/");
+        // Match localhost:PORT/ (any port) or production domain ending with /
+        const url = new URL(i.url);
+        return url.pathname === "/" || url.pathname === "";
       }
       return i.url.includes(p.pathMatch);
     });
@@ -1075,15 +1082,15 @@ const html = `
                     <table>
                       <thead><tr><th>Tool</th><th>Status</th></tr></thead>
                       <tbody>
-                        <tr><td>Astro Check</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(saOutcomes.astro)}">${saOutcomes.astro || "Pending"}</span> <a href="javascript:void(0)" onclick="openLog('astro-check')" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Log</a></div></td></tr>
+                        <tr><td>Astro Check</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(saOutcomes.astro)}">${saOutcomes.astro || "Pending"}</span> <a href="javascript:void(0)" onclick="openLog('astro-check')" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Log</a> ${runId ? `<a href="${workflowUrl}" target="_blank" style="font-size:0.8rem; color:var(--text-muted); text-decoration:none;">↗</a>` : ""}</div></td></tr>
                         <tr><td>Prettier</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(saOutcomes.prettier)}">${saOutcomes.prettier || "Pending"}</span> <a href="javascript:void(0)" onclick="openLog('prettier')" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Log</a></div></td></tr>
                         <tr><td>ESLint</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(saOutcomes.eslint)}">${saOutcomes.eslint || "Pending"}</span> <a href="javascript:void(0)" onclick="openLog('eslint')" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Log</a></div></td></tr>
                         <tr><td>Stylelint</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(saOutcomes.stylelint)}">${saOutcomes.stylelint || "Pending"}</span> <a href="javascript:void(0)" onclick="openLog('stylelint')" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Log</a></div></td></tr>
-                        <tr><td>Link Checker</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(saOutcomes.lychee)}">${saOutcomes.lychee || "Pending"}</span> ${status.lychee ? '<a href="lychee/" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">View Report</a>' : ""}</div></td></tr>
-                        <tr><td>Spell Checker</td><td><span class="status-badge ${getStatusClass(saOutcomes.typos)}">${saOutcomes.typos || "Pending"}</span></td></tr>
+                        <tr><td>Link Checker</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(saOutcomes.lychee)}">${saOutcomes.lychee || "Pending"}</span> ${status.lychee && saOutcomes.lychee === "success" ? '<a href="lychee/" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Report</a>' : ""} ${runId ? `<a href="${workflowUrl}" target="_blank" style="font-size:0.8rem; color:var(--text-muted); text-decoration:none;">GitHub ↗</a>` : ""}</div></td></tr>
+                        <tr><td>Spell Checker</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(saOutcomes.typos)}">${saOutcomes.typos || "Pending"}</span> ${runId ? `<a href="${workflowUrl}" target="_blank" style="font-size:0.8rem; color:var(--text-muted); text-decoration:none;">GitHub ↗</a>` : ""}</div></td></tr>
                         <tr><td>Security Audit</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(saOutcomes.security)}">${saOutcomes.security || "Pending"}</span> <a href="javascript:void(0)" onclick="openLog('security-audit')" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Log</a></div></td></tr>
-                        <tr><td>Snyk Security</td><td><span class="status-badge ${getStatusClass(saOutcomes.snyk)}">${saOutcomes.snyk || "Pending"}</span></td></tr>
-                        <tr><td>SonarQube</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(saOutcomes.sonar)}">${saOutcomes.sonar || "Pending"}</span> <a href="https://sonarcloud.io/summary/new_code?id=jmrplens_jmrp.io" target="_blank" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">External</a></div></td></tr>
+                        <tr><td>Snyk Security</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(saOutcomes.snyk)}">${saOutcomes.snyk || "Pending"}</span> ${runId ? `<a href="${workflowUrl}" target="_blank" style="font-size:0.8rem; color:var(--text-muted); text-decoration:none;">GitHub ↗</a>` : ""}</div></td></tr>
+                        <tr><td>SonarQube</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(saOutcomes.sonar)}">${saOutcomes.sonar || "Pending"}</span> <a href="https://sonarcloud.io/summary/new_code?id=jmrplens_jmrp.io" target="_blank" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Sonar ↗</a></div></td></tr>
                         <tr><td>JSDoc Coverage</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(saOutcomes.jsdoc)}">${saOutcomes.jsdoc || "Pending"}</span> <a href="javascript:void(0)" onclick="openLog('jsdoc-coverage')" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Log</a></div></td></tr>
                       </tbody>
                     </table>
@@ -1097,11 +1104,12 @@ const html = `
                      <table>
                        <tbody>
                          <tr><td>JS/CSS Size</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><b>${bundleStats?.readableTotalSize || "N/A"}</b> <a href="javascript:void(0)" onclick="openLog('bundle-size')" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Log</a></div></td></tr>
-                         <tr><td>HTML Validation</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(qualityOutcomes.html)}">${qualityOutcomes.html || "Pending"}</span> <a href="javascript:void(0)" onclick="openLog('html-validation')" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Log</a></div></td></tr>
-                         <tr><td>RSS Validation</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(qualityOutcomes.rss)}">${qualityOutcomes.rss || "Pending"}</span> <a href="javascript:void(0)" onclick="openLog('rss-validation')" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Log</a></div></td></tr>
-                         <tr><td>JSON-LD Schema</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(qualityOutcomes.schema)}">${qualityOutcomes.schema || "Pending"}</span> <a href="javascript:void(0)" onclick="openLog('schema-validation')" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Log</a></div></td></tr>
-                         <tr><td>Image Check</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(qualityOutcomes.image)}">${qualityOutcomes.image || "Pending"}</span> ${status.images ? '<a href="images/" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">View Report</a>' : ""}</div></td></tr>
-                         <tr><td>E2E Tests</td><td><span class="status-badge ${getStatusClass(qualityOutcomes.functional)}">${qualityOutcomes.functional || "Pending"}</span></td></tr>
+                         <tr><td>HTML Validation</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(qualityOutcomes.html)}">${qualityOutcomes.html || "Pending"}</span> ${status.htmlReport ? '<a href="html/" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Report</a>' : ""} <a href="javascript:void(0)" onclick="openLog('html-validation')" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Log</a></div></td></tr>
+                         <tr><td>RSS Validation</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(qualityOutcomes.rss)}">${qualityOutcomes.rss || "Pending"}</span> ${status.rssPreview ? '<a href="rss-preview.html" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Preview</a>' : ""} <a href="javascript:void(0)" onclick="openLog('rss-validation')" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Log</a></div></td></tr>
+                         <tr><td>JSON-LD Schema</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(qualityOutcomes.schema)}">${qualityOutcomes.schema || "Pending"}</span> ${status.schemaReport ? '<a href="schema/" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Report</a>' : ""} <a href="javascript:void(0)" onclick="openLog('schema-validation')" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Log</a></div></td></tr>
+                         <tr><td>Image Check</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(qualityOutcomes.image)}">${qualityOutcomes.image || "Pending"}</span> ${status.images ? '<a href="images/" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Report</a>' : ""}</div></td></tr>
+                         <tr><td>E2E Tests</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(qualityOutcomes.functional)}">${qualityOutcomes.functional || "Pending"}</span> ${runId ? `<a href="${workflowUrl}" target="_blank" style="font-size:0.8rem; color:var(--text-muted); text-decoration:none;">GitHub ↗</a>` : ""}</div></td></tr>
+                         <tr><td>A11y Tests</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(qualityOutcomes.a11y)}">${qualityOutcomes.a11y || "Pending"}</span> ${status.a11y ? '<a href="accessibility/" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Report</a>' : ""}</div></td></tr>
                        </tbody>
                      </table>
                    </div>
