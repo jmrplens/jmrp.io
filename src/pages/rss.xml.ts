@@ -31,8 +31,14 @@ export async function GET(_context: APIContext) {
   const siteData = siteEntry?.data as unknown as SiteData;
   const site = getSiteUrl();
 
-  const publishedPosts = posts.filter((p) => (import.meta.env.PROD ? !p.data.draft : true));
-  publishedPosts.sort((a, b) => new Date(b.data.publishedDate).getTime() - new Date(a.data.publishedDate).getTime());
+  const publishedPosts = posts.filter((p) =>
+    import.meta.env.PROD ? !p.data.draft : true,
+  );
+  publishedPosts.sort(
+    (a, b) =>
+      new Date(b.data.publishedDate).getTime() -
+      new Date(a.data.publishedDate).getTime(),
+  );
 
   return rss({
     title: siteData?.title || "José Manuel Requena Plens | Blog",
@@ -50,8 +56,16 @@ export async function GET(_context: APIContext) {
         // Add correct cover image enclosure (compliant with RSS readers)
         if (post.data.coverImage) {
           try {
-            const opt = await getImage({ src: post.data.coverImage, format: "jpeg", width: 1200 });
-            const thumb = await getImage({ src: post.data.coverImage, format: "jpeg", width: 400 });
+            const opt = await getImage({
+              src: post.data.coverImage,
+              format: "jpeg",
+              width: 1200,
+            });
+            const thumb = await getImage({
+              src: post.data.coverImage,
+              format: "jpeg",
+              width: 400,
+            });
             // JPEG chosen over WebP for maximum compatibility with RSS readers
             const imgUrl = new URL(opt.src, site).toString();
             const thumbUrl = new URL(thumb.src, site).toString();
@@ -59,7 +73,8 @@ export async function GET(_context: APIContext) {
             // RSS 2.0 Enclosure (Used by most modern readers for the main image)
             // Estimate file size in bytes from image dimensions (3 bytes per pixel) to provide a non-zero length.
             const estimatedLength =
-              typeof opt.attributes?.width === "number" && typeof opt.attributes?.height === "number"
+              typeof opt.attributes?.width === "number" &&
+              typeof opt.attributes?.height === "number"
                 ? (opt.attributes.width * opt.attributes.height * 3).toString()
                 : "0";
             customData += `<enclosure url="${imgUrl}" length="${estimatedLength}" type="image/jpeg" />\n`;

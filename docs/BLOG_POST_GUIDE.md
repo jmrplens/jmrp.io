@@ -76,7 +76,10 @@ references:
 Highlight important information with colored boxes. **These now span the full width of the content.**
 
 ```mdx
-<Callout type="info" title="Did you know?">
+<Callout
+  type="info"
+  title="Did you know?"
+>
   This is an informational callout with a title.
 </Callout>
 ```
@@ -94,47 +97,37 @@ Highlight important information with colored boxes. **These now span the full wi
 
 Show multiple content blocks in tabs (e.g., code examples):
 
-```mdx
+````mdx
 <Tabs labels={["JavaScript", "Python"]}>
-  <TabPanel index={0}>
-    ```javascript
-    console.log("Hello");
-    ```
-  </TabPanel>
-  <TabPanel index={1}>
-    ```python
-    print("Hello")
-    ```
-  </TabPanel>
+  <TabPanel index={0}>```javascript console.log("Hello"); ```</TabPanel>
+  <TabPanel index={1}>```python print("Hello") ```</TabPanel>
 </Tabs>
-```
+````
 
 ### CompareCode
 
 Display "Bad" vs "Good" code side-by-side. Useful for showing security fixes or refactoring.
 **Note:** The header titles default to "Blocked / Insecure" (Red) and "Allowed / Secure" (Green) but can be overridden.
 
-```mdx
-<CompareCode badTitle="Vulnerable" goodTitle="Secure">
-  <div slot="bad">
-    ```javascript
-    eval(input);
-    ```
-  </div>
-  <div slot="good">
-    ```javascript
-    JSON.parse(input);
-    ```
-  </div>
+````mdx
+<CompareCode
+  badTitle="Vulnerable"
+  goodTitle="Secure"
+>
+  <div slot="bad">```javascript eval(input); ```</div>
+  <div slot="good">```javascript JSON.parse(input); ```</div>
 </CompareCode>
-```
+````
 
 ### YouTube Embed
 
 Embed YouTube videos responsively (centered, max-width 70ch):
 
 ```mdx
-<YouTube id="dQw4w9WgXcQ" title="Video Title" />
+<YouTube
+  id="dQw4w9WgXcQ"
+  title="Video Title"
+/>
 ```
 
 ### References Section

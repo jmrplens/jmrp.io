@@ -651,17 +651,18 @@ const html = `
                 <div class="card-title" style="margin-bottom: 1.5rem;">Dynamic GitHub workflow graph</div>
                 
                 <div id="workflow-container" style="position: relative; width: ${workflowData.width || 800}px; height: ${workflowData.height || 600}px; margin: 0 auto; min-width: min-content;">
-                    ${fs.existsSync(
-  path.join(DIST_REPORTS, "workflow-graph.png"),
-)
-    ? '<img src="workflow-graph.png" style="display: block; width: 100%; height: 100%;" />'
-    : '<div style="padding: 5rem; text-align: center; color: var(--text-muted);">Workflow graph image missing</div>'
-  }
+                    ${
+                      fs.existsSync(
+                        path.join(DIST_REPORTS, "workflow-graph.png"),
+                      )
+                        ? '<img src="workflow-graph.png" style="display: block; width: 100%; height: 100%;" />'
+                        : '<div style="padding: 5rem; text-align: center; color: var(--text-muted);">Workflow graph image missing</div>'
+                    }
                     
                     ${(workflowData.nodes || [])
-    .map((n) => {
-      const logId = labelToLogId[n.label];
-      return `
+                      .map((n) => {
+                        const logId = labelToLogId[n.label];
+                        return `
                         <div 
                           class="job-hit-area" 
                           style="left: ${n.x}px; top: ${n.y}px; width: ${n.width}px; height: ${n.height}px; cursor: ${logId ? "pointer" : "default"};"
@@ -669,8 +670,8 @@ const html = `
                           ${logId ? `onclick="openLog('${logId}')"` : ""}
                         ></div>
                       `;
-    })
-    .join("")}
+                      })
+                      .join("")}
                 </div>
             </div>
         </section>
