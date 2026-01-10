@@ -83,6 +83,11 @@ for (const r of reports) {
   status[r.id] = success;
 }
 
+// 1.5. Move Logs
+if (fs.existsSync("logs")) {
+  copy("logs", path.join(DIST_REPORTS, "logs"));
+}
+
 // 2. Load JSON data for the dashboard summary
 let accessibilityData = [];
 if (fs.existsSync("accessibility-report.json")) {
@@ -209,6 +214,55 @@ const html = `
             --danger: #ef4444;
             --font: 'Inter', system-ui, -apple-system, sans-serif;
         }
+
+        /* Mermaid Overrides */
+        .mermaid { background: transparent !important; }
+        .node rect, .node circle, .node polygon { fill: var(--card-bg) !important; stroke: var(--border) !important; stroke-width: 2px !important; }
+        .edgePath .path { stroke: var(--text-muted) !important; stroke-width: 2px !important; }
+        .label { color: var(--text-main) !important; }
+
+        /* Modal styling */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.8);
+            backdrop-filter: blur(4px);
+        }
+        .modal-content {
+            background-color: #1e293b;
+            margin: 5% auto;
+            padding: 0;
+            border: 1px solid var(--border);
+            width: 80%;
+            max-width: 1000px;
+            border-radius: 12px;
+            height: 80vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .modal-header {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-body {
+            flex: 1;
+            padding: 1.5rem;
+            overflow-y: auto;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            white-space: pre-wrap;
+            color: #e2e8f0;
+        }
+        .close { color: var(--text-muted); cursor: pointer; font-size: 1.5rem; }
+        .close:hover { color: var(--text-main); }
 
         * { box-sizing: border-box; }
         body {
@@ -402,6 +456,27 @@ const html = `
             .health-section { flex-direction: column; text-align: center; gap: 2rem; }
         }
     </style>
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'dark', securityLevel: 'loose' });
+    </script>
+    <script>
+        function openLog(job) {
+            fetch('logs/' + job + '.log')
+                .then(r => r.text())
+                .then(t => {
+                    document.getElementById('logTitle').innerText = job + ' log output';
+                    document.getElementById('logContent').innerText = t;
+                    document.getElementById('logModal').style.display = 'block';
+                })
+                .catch(e => {
+                    alert('Log not found for ' + job);
+                });
+        }
+        function closeLog() {
+            document.getElementById('logModal').style.display = 'none';
+        }
+    </script>
 </head>
 <body>
     <aside>
@@ -502,9 +577,9 @@ const html = `
                     <table>
                       <thead><tr><th>Tool</th><th>Status</th></tr></thead>
                       <tbody>
-                        <tr><td>Astro Check</td><td><span class="status-badge ${getStatusClass(saOutcomes.astro)}">${saOutcomes.astro || "Pending"}</span></td></tr>
-                        <tr><td>Prettier</td><td><span class="status-badge ${getStatusClass(saOutcomes.prettier)}">${saOutcomes.prettier || "Pending"}</span></td></tr>
-                        <tr><td>ESLint</td><td><span class="status-badge ${getStatusClass(saOutcomes.eslint)}">${saOutcomes.eslint || "Pending"}</span></td></tr>
+                        <tr><td>Astro Check</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(saOutcomes.astro)}">${saOutcomes.astro || "Pending"}</span> <a href="javascript:void(0)" onclick="openLog('astro-check')" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Log</a></div></td></tr>
+                        <tr><td>Prettier</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(saOutcomes.prettier)}">${saOutcomes.prettier || "Pending"}</span> <a href="javascript:void(0)" onclick="openLog('prettier')" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Log</a></div></td></tr>
+                        <tr><td>ESLint</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(saOutcomes.eslint)}">${saOutcomes.eslint || "Pending"}</span> <a href="javascript:void(0)" onclick="openLog('eslint')" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Log</a></div></td></tr>
                         <tr><td>Link Checker</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(saOutcomes.lychee)}">${saOutcomes.lychee || "Pending"}</span> ${status.lychee ? '<a href="lychee/" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">View Report</a>' : ""}</div></td></tr>
                         <tr><td>Spell Checker</td><td><span class="status-badge ${getStatusClass(saOutcomes.typos)}">${saOutcomes.typos || "Pending"}</span></td></tr>
                         <tr><td>Security</td><td><span class="status-badge ${getStatusClass(saOutcomes.snyk || saOutcomes.security)}">${saOutcomes.snyk || saOutcomes.security || "Pending"}</span></td></tr>
@@ -512,23 +587,75 @@ const html = `
                     </table>
                   </div>
                </div>
-               
-               <!-- Performance/Quality List -->
-               <div class="card">
-                  <div class="card-title">Assets & Build</div>
-                  <div class="table-wrapper" style="margin-top:1rem;">
-                    <table>
-                      <tbody>
-                        <tr><td>JS/CSS Size</td><td><b>${bundleStats?.readableTotalSize || "N/A"}</b></td></tr>
-                        <tr><td>Image Check</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(qualityOutcomes.image)}">${qualityOutcomes.image || "Pending"}</span> ${status.images ? '<a href="images/" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">View Report</a>' : ""}</div></td></tr>
-                        <tr><td>JSON-LD Schema</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(qualityOutcomes.schema)}">${qualityOutcomes.schema || "Pending"}</span> ${status.schema ? '<a href="schema/" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">View Report</a>' : ""}</div></td></tr>
-                        <tr><td>E2E Tests</td><td><span class="status-badge ${getStatusClass(qualityOutcomes.functional)}">${qualityOutcomes.functional || "Pending"}</span></td></tr>
-                      </tbody>
-                    </table>
-                  </div>
-               </div>
+                              <!-- Performance/Quality List -->
+                <div class="card">
+                   <div class="card-title">Assets & Build</div>
+                   <div class="table-wrapper" style="margin-top:1rem;">
+                     <table>
+                       <tbody>
+                         <tr><td>JS/CSS Size</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><b>${bundleStats?.readableTotalSize || "N/A"}</b> <a href="javascript:void(0)" onclick="openLog('bundle-size')" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Log</a></div></td></tr>
+                         <tr><td>Image Check</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(qualityOutcomes.image)}">${qualityOutcomes.image || "Pending"}</span> ${status.images ? '<a href="images/" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">View Report</a>' : ""}</div></td></tr>
+                         <tr><td>JSON-LD Schema</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(qualityOutcomes.schema)}">${qualityOutcomes.schema || "Pending"}</span> ${status.schema ? '<a href="schema/" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">View Report</a>' : ""}</div></td></tr>
+                         <tr><td>E2E Tests</td><td><span class="status-badge ${getStatusClass(qualityOutcomes.functional)}">${qualityOutcomes.functional || "Pending"}</span></td></tr>
+                       </tbody>
+                     </table>
+                   </div>
+                </div>
             </div>
         </section>
+
+        <section class="details-section">
+            <h2 style="font-size: 1.25rem; margin-bottom: 1.5rem;">Workflow Graph</h2>
+            <div class="card" style="padding: 2rem; overflow-x: auto;">
+                <pre class="mermaid">
+graph LR
+    Build[🏗️ Build] --> SA_Astro[✨ Astro Check]
+    Build --> SA_Prettier[🎨 Prettier]
+    Build --> SA_ESLint[🔍 ESLint]
+    Build --> SA_Audit[🛡️ Audit]
+    Build --> SA_Lychee[🔗 Lychee]
+    
+    Build --> Audit_LH[⚡ Lighthouse]
+    Build --> Audit_A11y[♿ Accessibility]
+    
+    SA_Astro --> Dashboard[📊 Dashboard]
+    SA_Prettier --> Dashboard
+    SA_ESLint --> Dashboard
+    SA_Audit --> Dashboard
+    SA_Lychee --> Dashboard
+    
+    Audit_LH --> LH_Rep[📄 LH Report]
+    Audit_A11y --> A11y_Rep[📄 A11y Report]
+    
+    LH_Rep --> Dashboard
+    A11y_Rep --> Dashboard
+    
+    classDef success fill:#064e3b,stroke:#059669,color:#fff
+    classDef failure fill:#450a0a,stroke:#dc2626,color:#fff
+    classDef pending fill:#2d3748,stroke:#4a5568,color:#94a3b8
+
+    class Build success
+    class SA_Astro ${getStatusClass(saOutcomes.astro).replace("status-", "")}
+    class SA_Prettier ${getStatusClass(saOutcomes.prettier).replace("status-", "")}
+    class SA_ESLint ${getStatusClass(saOutcomes.eslint).replace("status-", "")}
+    class SA_Audit ${getStatusClass(saOutcomes.security).replace("status-", "")}
+    class SA_Lychee ${getStatusClass(saOutcomes.lychee).replace("status-", "")}
+    class Audit_LH ${getStatusClass(qualityOutcomes.lighthouse).replace("status-", "")}
+    class Audit_A11y ${getStatusClass(qualityOutcomes.a11y).replace("status-", "")}
+    class Dashboard success
+                </pre>
+            </div>
+        </section>
+
+        <div id="logModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 id="logTitle" style="margin:0">Job Log</h3>
+                    <span class="close" onclick="closeLog()">&times;</span>
+                </div>
+                <div id="logContent" class="modal-body"></div>
+            </div>
+        </div>
 
         <footer>
              Built with ❤️ for <b>jmrp.io</b> &bull; ${timestamp}

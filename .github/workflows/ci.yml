@@ -76,7 +76,15 @@ jobs:
           node-version: 22
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile --prefer-offline
-      - run: pnpm exec astro check
+      - name: Run Astro Check
+        run: pnpm exec astro check | tee astro-check.log
+      - name: Upload Astro Check log
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: log-astro
+          path: astro-check.log
+          retention-days: 1
 
   sa-prettier:
     name: "SA: Prettier"
@@ -91,7 +99,15 @@ jobs:
           node-version: 22
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile --prefer-offline
-      - run: pnpm exec prettier --check .
+      - name: Run Prettier check
+        run: pnpm exec prettier --check . | tee prettier.log
+      - name: Upload Prettier log
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: log-prettier
+          path: prettier.log
+          retention-days: 1
 
   sa-eslint:
     name: "SA: ESLint"
@@ -106,7 +122,15 @@ jobs:
           node-version: 22
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile --prefer-offline
-      - run: pnpm exec eslint . --max-warnings=0
+      - name: Run ESLint
+        run: pnpm exec eslint . --max-warnings=0 | tee eslint.log
+      - name: Upload ESLint log
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: log-eslint
+          path: eslint.log
+          retention-days: 1
 
   sa-audit:
     name: "SA: Security Audit"
@@ -247,7 +271,14 @@ jobs:
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile --prefer-offline
       - name: Analyze bundle size
-        run: node scripts/ci/analyze-bundle-size.mjs
+        run: node scripts/ci/analyze-bundle-size.mjs | tee bundle-size.log
+      - name: Upload bundle log
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: log-bundle
+          path: bundle-size.log
+          retention-days: 1
       - name: Upload bundle analysis
         uses: actions/upload-artifact@v6
         with:
@@ -701,6 +732,13 @@ jobs:
         with:
           name: lychee-report
           path: .
+      - name: Download Logs
+        uses: actions/download-artifact@v7
+        continue-on-error: true
+        with:
+          pattern: log-*
+          path: logs
+          merge-multiple: true
       - uses: actions/setup-node@v6
         with:
           node-version: 22
