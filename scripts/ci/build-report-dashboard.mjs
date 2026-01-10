@@ -240,6 +240,11 @@ if (healthScore >= 95) {
   conditionText = "fair condition ⚠️";
 }
 
+/**
+ * Maps a CI job outcome to a CSS status class.
+ * @param {string} res - The job outcome (e.g., 'success', 'failure', 'pending').
+ * @returns {string} The corresponding CSS class name.
+ */
 const getStatusClass = (res) => {
   if (res === "success") return "status-success";
   if (res === "failure") return "status-danger";
@@ -256,7 +261,11 @@ if (accessibilityData.some((r) => r.violations?.length > 0)) {
   summaryInsights += ` <br><span style="color:var(--warning); font-size:0.85rem;">♿ Accessibility violations were detected. Review the detailed scan results.</span>`;
 }
 
-// Helper for LH badges
+/**
+ * Generates an HTML badge for a Lighthouse performance score.
+ * @param {number|null} score - Performance score (0-100) or null if unavailable.
+ * @returns {string} HTML string for the score badge with color coding.
+ */
 const getScoreBadge = (score) => {
   if (score === null || score === undefined)
     return '<span class="score-pill" style="background:var(--neutral)"></span>N/A';
@@ -276,7 +285,11 @@ const workflowUrl = runId
   ? `https://github.com/${repository}/actions/runs/${runId}`
   : "#";
 
-// Count job outcomes
+/**
+ * Counts the number of success, failure, and other outcomes in a job set.
+ * @param {Object} outcomes - Map of job names to their outcomes.
+ * @returns {{success: number, failure: number, other: number}} Count of each outcome type.
+ */
 const countOutcomes = (outcomes) => {
   let success = 0,
     failure = 0,

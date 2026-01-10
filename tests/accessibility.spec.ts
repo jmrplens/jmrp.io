@@ -1,3 +1,11 @@
+/**
+ * Accessibility Test Suite
+ *
+ * Automated accessibility testing using Axe-core and Playwright.
+ * Scans all pages discovered from the sitemap and generates reports
+ * for both light and dark themes.
+ */
+
 import * as fs from "node:fs";
 import * as path from "node:path";
 
@@ -9,6 +17,7 @@ import { parseStringPromise } from "xml2js";
 import { escapeHtml } from "../scripts/utils/html.mjs"; // Import shared utility
 // import type { AxeResults } from "axe-core"; // Types are problematic
 
+/** Represents a single DOM node flagged by Axe-core. */
 interface AxeNode {
   html: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -16,6 +25,7 @@ interface AxeNode {
   failureSummary?: string;
 }
 
+/** Represents an Axe-core rule result (violation, pass, incomplete). */
 interface Result {
   id: string;
   impact?: string | null;
@@ -26,16 +36,20 @@ interface Result {
   nodes: AxeNode[];
 }
 
+/** Aggregated result with node count instead of full node details. */
 type AggregatedResult = Omit<Result, "nodes"> & { nodes: number };
 
+/** URL entry from parsed sitemap XML. */
 interface SitemapUrl {
   loc: string[];
 }
 
+/** URL set container from parsed sitemap XML. */
 interface SitemapUrlSet {
   url: SitemapUrl[];
 }
 
+/** Root structure of parsed sitemap XML. */
 interface SitemapResult {
   urlset: SitemapUrlSet;
 }

@@ -14,13 +14,27 @@ import CopyButton from "./CopyButton.astro";
 let lines: string[] = [];
 let rawContent = "";
 
+/**
+ * Slot Rendering Pipeline:
+ * MDX content is rendered to HTML by Astro, so we need to extract
+ * pure text from the HTML output for display and copy functionality.
+ *
+ * Steps:
+ * 1. Render the slot to get HTML output from MDX.
+ * 2. Use cheerio to parse the HTML DOM.
+ * 3. Convert block elements (br, p, div, etc.) to newlines.
+ * 4. Extract pure text content.
+ * 5. Decode HTML entities (e.g., &amp; -> &).
+ * 6. Split into lines for rendering with prompts.
+ */
 if (Astro.slots.has("default")) {
   const htmlContent = await Astro.slots.render("default");
 
-  // Handle MDX/HTML output using cheerio for robust text extraction
+  // Parse rendered HTML using cheerio for robust text extraction
   const $ = cheerio.load(htmlContent);
 
   // Convert common block elements and breaks to newlines
+  // This ensures multi-line commands are properly separated
   $("br").replaceWith("\n");
   $("p, div, li, h1, h2, h3, h4, h5, h6").each((_, el) => {
     $(el).append("\n");
@@ -28,6 +42,7 @@ if (Astro.slots.has("default")) {
 
   let processed = $.text();
 
+  // Decode HTML entities that MDX may have escaped (e.g., &amp;, &lt;)
   processed = decodeHtml(processed);
 
   const trimmed = processed.trim();
@@ -35,6 +50,7 @@ if (Astro.slots.has("default")) {
     lines = trimmed.split(/\r?\n/);
   }
 
+  // Store the clean text for the copy button
   rawContent = lines.join("\n");
 }
 

@@ -116,7 +116,14 @@ const {
         top: 0;
       }
 
-      /* Critical Layout Fixes */
+      /*
+       * Critical Layout Fixes
+       * Prevent horizontal scrollbar caused by wide content (code blocks, tables, images).
+       * Using a combination of hidden, visible, and clip to balance functionality:
+       * - html: hidden to prevent page-level scrollbar
+       * - body: visible to ensure position:sticky works for headers
+       * - main: clip to contain overflow without creating a scroll container
+       */
       html {
         max-width: 100vw;
         overflow-x: hidden;
@@ -124,7 +131,7 @@ const {
 
       body {
         max-width: 100vw;
-        overflow-x: visible; /* Ensure sticky works */
+        overflow-x: visible; /* Required for sticky positioning to work */
       }
 
       main {
@@ -132,7 +139,13 @@ const {
         flex: 1;
         flex-direction: column;
         width: 100%;
-        overflow-x: clip; /* Prevent main from forcing scroll */
+
+        /*
+         * 'clip' vs 'hidden': clip doesn't create a new scroll container,
+         * which allows sticky elements inside main to work correctly.
+         * It simply clips overflow content without enabling scrolling.
+         */
+        overflow-x: clip;
       }
 
       /* Prevent content blowout from wide elements */

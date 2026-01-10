@@ -41,7 +41,10 @@ const site_config = defineCollection({
     generateId: ({ entry }) => stripExtension(entry),
   }),
   schema: z.union([
-    // Site Config
+    /**
+     * Site Config Schema (site.yaml)
+     * Core site metadata: title, description, navigation, hero section.
+     */
     z.object({
       title: z.string(),
       description: z.string(),
@@ -71,7 +74,10 @@ const site_config = defineCollection({
         )
         .optional(),
     }),
-    // Socials Config
+    /**
+     * Socials Config Schema (socials.yaml)
+     * Social media usernames and custom social links.
+     */
     z
       .object({
         github_username: z.string().optional(),

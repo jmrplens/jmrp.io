@@ -1,3 +1,14 @@
+/**
+ * Deep Accessibility & Interaction Tests
+ *
+ * Unlike `accessibility.spec.ts` which uses Axe-core for automated WCAG scanning,
+ * this file tests interactive accessibility behaviors:
+ * - Keyboard navigation and focus management
+ * - ARIA state changes on user interaction
+ * - Skip links and landmark navigation
+ * - Screen reader-friendly patterns (live regions, etc.)
+ */
+
 import { expect, test } from "@playwright/test";
 
 test.describe("Deep Accessibility & Interaction Tests", () => {
