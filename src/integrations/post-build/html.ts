@@ -374,7 +374,10 @@ function processStyles($: cheerio.CheerioAPI, enableCsp: boolean): boolean {
         .replaceAll(">", String.raw`\3e `)
         .replaceAll("{", String.raw`\7b `)
         .replaceAll("}", String.raw`\7d `)
-        .replaceAll("'", String.raw`\27 `);
+        .replaceAll("'", String.raw`\27 `)
+        .replaceAll('"', String.raw`\22 `)
+        .replaceAll("/*", String.raw`\2f \2a `)
+        .replaceAll("*/", String.raw`\2a \2f `);
 
       cssRules += `.${className}{${sanitizedStyle}}`;
     }

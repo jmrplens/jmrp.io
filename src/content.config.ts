@@ -10,6 +10,8 @@ import { stripExtension } from "./utils/content";
  */
 const posts = defineCollection({
   loader: glob({
+    // Note: "**/[^_]*.{md,mdx}" intentionally excludes files starting with "_"
+    // so underscore-prefixed Markdown/MDX files (e.g. partials) are not loaded into this collection.
     pattern: "**/[^_]*.{md,mdx}",
     base: "./src/content/posts",
     generateId: ({ entry }) => stripExtension(entry),

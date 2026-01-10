@@ -8,6 +8,8 @@
 import fs from "node:fs";
 import path from "node:path";
 
+import { calculateHealthScore } from "./utils.mjs";
+
 const DIST_REPORTS = "dist-reports";
 
 // Ensure the target directory exists
@@ -160,7 +162,11 @@ const findScore = (manifestPath, p) => {
       return i.url.includes(p.pathMatch);
     });
     return item ? Math.round(item.summary.performance * 100) : null;
-  } catch {
+  } catch (error) {
+    console.error(
+      `Error parsing Lighthouse manifest ${manifestPath}:`,
+      error.message,
+    );
     return null;
   }
 };
@@ -212,40 +218,7 @@ const qualityOutcomes = {
   functional: process.env.OUTCOME_FUNCTIONAL,
 };
 
-const getHealthScore = () => {
-  let score = 100;
-
-  // Deduction for SA failures (-5 each)
-  for (const key in saOutcomes) {
-    if (saOutcomes[key] === "failure") score -= 5;
-  }
-
-  // Deduction for Quality failures (-10 each)
-  for (const key in qualityOutcomes) {
-    if (qualityOutcomes[key] === "failure") score -= 10;
-  }
-
-  // Finer deductions from JSON data
-  if (accessibilityData.length > 0) {
-    const totalViolations = accessibilityData.reduce(
-      (acc, r) => acc + (r.violations?.length || 0),
-      0,
-    );
-    score -= Math.min(20, totalViolations * 2);
-  }
-
-  if (htmlValidation) {
-    const htmlErrors = htmlValidation.reduce(
-      (acc, f) => acc + f.messages.filter((m) => m.severity === 2).length,
-      0,
-    );
-    score -= Math.min(15, htmlErrors);
-  }
-
-  return Math.max(0, Math.min(100, score));
-};
-
-const healthScore = getHealthScore();
+const healthScore = calculateHealthScore(saOutcomes, qualityOutcomes);
 const timestamp = new Date().toLocaleString("en-US", {
   dateStyle: "full",
   timeStyle: "short",

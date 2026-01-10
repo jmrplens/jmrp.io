@@ -8,6 +8,8 @@
 
 import fs from "node:fs";
 
+import { calculateHealthScore } from "./utils.mjs";
+
 const HEADER = "### 🛡️ CI Security & Quality Report";
 
 const STATUS_ICONS = {
@@ -143,40 +145,6 @@ function buildExecutiveSummary(saResults, qualityResults, healthScore) {
   summary += "\n";
 
   return summary;
-}
-
-/**
- * Calculates health score (Sync with build-report-dashboard.mjs)
- */
-function calculateHealthScore(saResults, qualityResults) {
-  let score = 100;
-
-  for (const k in saResults) {
-    if (saResults[k] === "failure" && k !== "jsdocCoverage") score -= 5;
-  }
-  for (const k in qualityResults) {
-    if (qualityResults[k] === "failure") score -= 10;
-  }
-
-  try {
-    if (fs.existsSync("accessibility-report.json")) {
-      const a11y = JSON.parse(
-        fs.readFileSync("accessibility-report.json", "utf-8"),
-      );
-      const totalViolations = a11y.reduce(
-        (acc, r) => acc + (r.violations?.length || 0),
-        0,
-      );
-      score -= Math.min(20, totalViolations * 2);
-    }
-    if (fs.existsSync("html-validation.json")) {
-      const html = JSON.parse(fs.readFileSync("html-validation.json", "utf-8"));
-      const errors = html.reduce((acc, f) => acc + (f.errorCount || 0), 0);
-      score -= Math.min(15, errors);
-    }
-  } catch {}
-
-  return Math.max(0, Math.min(100, score));
 }
 
 /**

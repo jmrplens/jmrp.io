@@ -122,5 +122,5 @@ export async function getSitemapUrls(): Promise<string[]> {
     urls.push(...extractPathnames(parsed.urlset));
   }
 
-  return [...new Set(urls.filter((u) => u !== ""))];
+  return [...new Set(urls)];
 }

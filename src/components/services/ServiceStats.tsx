@@ -16,7 +16,7 @@ interface MastodonStatsData {
 interface MatrixData {
   online?: boolean;
   versions?: {
-    versions?: string[];
+    list?: string[];
   };
   federationTotal?: number;
 }
@@ -109,7 +109,7 @@ async function fetchMatrixStats(setError: (error: boolean) => void) {
     if (resVer?.ok) {
       matrixData.online = true;
       const verData = (await resVer.json()) as { versions: string[] };
-      matrixData.versions = verData;
+      matrixData.versions = { list: verData.versions };
     }
 
     if (resFed?.ok) matrixFed = (await resFed.json()) as MatrixFed;
