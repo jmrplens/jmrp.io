@@ -96,46 +96,72 @@ This is the source code for my personal website, **[jmrp.io](https://jmrp.io)**,
 
 ### Prerequisites
 
-- **Node.js (v22+)**: Required for Astro v6.
-- **pnpm** (v10+)
+To build and run this project, you need the following tools installed on your system:
+
+- **[Node.js](https://nodejs.org/) (v22.0.0+)**: Required for Astro v6 (Aloha).
+- **[pnpm](https://pnpm.io/) (v10.0.0+)**: The preferred package manager.
+- **[Astro CLI](https://docs.astro.build/en/install-and-setup/)**: Recommended for manual tasks (can be run via `pnpm astro`).
 
 ### Installation
 
 ```bash
-# Clone the repository
+# 1. Clone the repository
 git clone https://github.com/jmrplens/jmrp.io.git
+cd jmrp.io
 
-# Install dependencies
+# 2. Install project dependencies
 pnpm install
 
-# Start development server
+# 3. Install browser binaries for tests (Playwright)
+pnpm exec playwright install --with-deps chromium
+
+# 4. Start development server
 pnpm run dev
 ```
 
 ### Build & Verify
 
-To verify the integrity of the project (Linting, Types, Build, Tests):
+The project uses a unified verification suite to ensure everything is correct before deployment.
 
+#### Full Quality Suite
+To run the complete pipeline (Linting, Type Checking, Build, and Tests):
 ```bash
 pnpm verify
 ```
+> **Note**: This command requires additional system tools like `typos` and `lychee`. See [CONTRIBUTING.md](CONTRIBUTING.md) for installation details.
 
-To build for production only:
-
+#### Production Build
+To just generate the production artifacts:
 ```bash
 pnpm run build
 ```
+This command triggers the full build pipeline:
+1. **GitHub Synchronization**: Automatically downloads the latest assets (e.g., owner avatar).
+2. **Astro Build**: Compiles the site into the `dist/` directory.
+3. **Post-Build Optimizations**:
+   - **CSS Inlining**: Extracts inline styles to optimized classes.
+   - **Asset Relocation**: Converts data URIs to physical files for better caching and CSP compliance.
+   - **Security Hardening**: Generates **SHA-512 hashes** for all scripts, styles, and assets.
+   - **Integrity (SRI)**: Pins all subresources for maximum security.
+4. **Nginx Integration**:
+   - Generates and validates a strict `security_headers.conf`.
+   - Automatically reloads the local Nginx service (if detected on a Linux environment).
 
-This command will:
+### Configuration
 
-1. Fetch latest avatars from GitHub.
-2. Build the Astro site.
-3. Automatically execute post-build optimizations:
-   - Extract inline styles to classes.
-   - Convert CSS/HTML data URIs to physical assets.
-   - Generate SHA-512 hashes for SRI and CSP.
-4. Validate and deploy `security_headers.conf` to Nginx (if on server).
-5. Reload Nginx service automatically.
+The project uses environment variables for build-time and runtime configuration. Copy the example file and fill in the values:
+
+```bash
+cp .env.example .env
+```
+
+Key configuration areas:
+- **Nginx Integration**: Automated deployment of security headers.
+- **Security Reporting**: Telegram bot integration for CSP/SRI violation reports.
+- **Cloudflare**: API tokens for cache purging and web analytics.
+- **CI Tools**: Tokens for Snyk and SonarCloud analysis.
+
+See [.env.example](.env.example) for the full list of available variables.
 
 ## 🧪 Quality Assurance
 
@@ -246,23 +272,20 @@ The project includes advanced Nginx configuration for security headers and asset
 
 ### Security Features
 
-- **Reverse Proxy**: Nginx reverse proxy handles requests to external services (Mastodon, Matrix, Meshtastic), hiding upstreams and preventing CORS issues.
-- **SRI (Subresource Integrity)**: Comprehensive protection for all local resources. A modularized Astro Integration (`src/integrations/post-build/`) calculates hashes for:
-  - All `<script>` and `<link rel="stylesheet">` tags.
-  - `<link rel="preload">` and `<link rel="modulepreload">` (including fonts and Astro dynamic components).
-  - PWA Metadata (Favicons, Icons, and Web Manifest).
-  - Multimedia assets (`<img>`, `<source>`).
-- **CSP (Content Security Policy)**: Uses a robust hybrid strategy of SHA-512 hashes for all inline content and request-specific `nonce` (injected via Nginx `sub_filter`) as a fallback.
-  - **Features**:
-    - **SHA-512 Hashing**: Prioritized for all static inline scripts and styles.
-    - **Nonce Fallback**: Ensures dynamic or third-party generated content (like Mermaid diagrams) works reliably.
-    - **Automatic Splitting**: Splits long CSP header strings into multiple Nginx variables to avoid configuration limits.
-    - **Automatic Deployment**: The build process automatically validates and deploys `security_headers.conf` to the local Nginx installation and reloads the service.
-- **Incident Reporting**: Real-time monitoring of security violations:
-  - **CSP Violations**: Natively reported by the browser.
-  - **SRI Failures**: Tracked via a custom event listener (`SRIEventListener.astro`) that captures integrity validation errors.
-  - **Telegram Integration**: A dedicated backend (`csp-reporter.mjs`) receives these reports and sends instant notifications.
-- **Hardened Headers**: Full suite of modern headers (HSTS, XFO, CORP, COOP, COEP) achieving the maximum score on Mozilla Observatory.
+- **Reverse Proxy**: Nginx handles internal routing to external services, mitigating CORS and hiding infrastructure details.
+- **SRI (Subresource Integrity)**: 
+  - Modularized protection for all local resources.
+  - Automatically calculates hashes for JS, CSS, fonts, and assets.
+  - Includes a custom listener for real-time failure tracking.
+- **CSP (Content Security Policy)**:
+  - **Hybrid Strategy**: Uses strict SHA-512 hashes for static content and `nonce` (injected via Nginx `sub_filter`) for dynamic isolation.
+  - **Astro v6 Compatibility**: Patches client-side prerendering logic to propagate nonces correctly.
+- **Nginx Automation**:
+  - **Auto-Deployment**: The build process verifies and deploys `security_headers.conf` to the system if `POSTBUILD_NGINX_SNIPPETS_PATH` is set.
+  - **Custom Verification**: Supports optional config paths via `POSTBUILD_NGINX_CONFIG_PATH` for complex Nginx setups.
+  - **Atomic Rollback**: If `nginx -t` fails after a deployment, the script automatically reverts to the previous stable configuration.
+- **Incident Reporting**: Real-time Telegram notifications for CSP and SRI violations via a specialized backend.
+- **Hardened Headers**: Full HSTS, XFO, and Cross-Origin isolation achieving the maximum score on Mozilla Observatory.
 
 ## 📄 LaTeX CV Compilation
 

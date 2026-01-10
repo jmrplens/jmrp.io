@@ -14,8 +14,8 @@
 
 4. Build and preview:
    ```bash
-   npm run build
-   npm run preview
+   pnpm run build
+   pnpm run preview
    ```
 
 ## Frontmatter Fields Reference
@@ -259,11 +259,11 @@ publishedDate: 2025-12-17
 
 ```bash
 # Development server
-npm run dev
+pnpm run dev
 
 # Production build
-npm run build
-npm run preview
+pnpm run build
+pnpm run preview
 ```
 
 ### Validation
