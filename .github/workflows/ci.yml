@@ -151,7 +151,7 @@ jobs:
           echo "coverage=${COVERAGE}%" >> $GITHUB_OUTPUT
 
   sa-lychee:
-    name: "SA: Link Checker (Source)"
+    name: "SA: Link Checker (Dist)"
     runs-on: ubuntu-latest
     timeout-minutes: 5
     needs: build
@@ -163,9 +163,14 @@ jobs:
           path: .lycheecache
           key: cache-lychee-source-${{ github.sha }}
           restore-keys: cache-lychee-source-
+      - name: Download build artifact
+        uses: actions/download-artifact@v7
+        with:
+          name: dist-build
+          path: dist
       - uses: lycheeverse/lychee-action@v2.7.0
         with:
-          args: --config lychee.toml ./**/*.md ./**/*.mdx src/**/*.astro src/**/*.ts src/**/*.tsx
+          args: --config lychee.toml ./dist/**/*.html
           fail: true
         env:
           GITHUB_TOKEN: ${{ secrets.TOKEN_GITHUB }}
@@ -493,7 +498,19 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     if: always()
-    needs: [sa-astro, sa-prettier, sa-eslint, sa-audit, sa-jsdoc, sa-lychee, sa-typos, sa-snyk, sa-sonar, ci-setup]
+    needs:
+      [
+        sa-astro,
+        sa-prettier,
+        sa-eslint,
+        sa-audit,
+        sa-jsdoc,
+        sa-lychee,
+        sa-typos,
+        sa-snyk,
+        sa-sonar,
+        ci-setup,
+      ]
     permissions:
       pull-requests: write
     steps:
@@ -614,7 +631,15 @@ jobs:
     needs:
       [
         ci-setup,
-        sa-astro, sa-prettier, sa-eslint, sa-audit, sa-jsdoc, sa-lychee, sa-typos, sa-snyk, sa-sonar,
+        sa-astro,
+        sa-prettier,
+        sa-eslint,
+        sa-audit,
+        sa-jsdoc,
+        sa-lychee,
+        sa-typos,
+        sa-snyk,
+        sa-sonar,
         accessibility-report,
         bundle-size,
         html-validator,

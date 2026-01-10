@@ -127,7 +127,7 @@ export default async function updateCiComment({ github, context, step }) {
   const vercelUrl = process.env.VERCEL_URL;
 
   // Build the full comment body
-  let body = `${HEADER}\n\n`;
+  let body = `${HEADER} (Run #${process.env.GITHUB_RUN_NUMBER || "Local"})\n\n`;
 
   switch (step) {
     case "init": {
@@ -153,7 +153,7 @@ export default async function updateCiComment({ github, context, step }) {
     }
   }
 
-  body += `\n---\n> 📊 [Full Build Logs](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`;
+  body += `\n---\n> 📊 [**View Full Build & Logs**](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`;
 
   // Find and update/create comment
   const { data: comments } = await github.rest.issues.listComments({
