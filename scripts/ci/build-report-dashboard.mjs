@@ -151,7 +151,11 @@ const findScore = (manifestPath, p) => {
       if (p.name === "Home") {
         // Match localhost:PORT/ (any port) or production domain ending with /
         const url = new URL(i.url);
-        return url.pathname === "/" || url.pathname === "";
+        return (
+          url.pathname === "/" ||
+          url.pathname === "" ||
+          url.pathname === "/index.html"
+        );
       }
       return i.url.includes(p.pathMatch);
     });
@@ -303,208 +307,6 @@ const countOutcomes = (outcomes) => {
 
 const saStats = countOutcomes(saOutcomes);
 const qualityStats = countOutcomes(qualityOutcomes);
-
-// Load real workflow jobs data if available
-let workflowJobs = [];
-if (fs.existsSync("workflow-jobs.json")) {
-  try {
-    workflowJobs = JSON.parse(fs.readFileSync("workflow-jobs.json", "utf-8"));
-    console.log(
-      `📊 Loaded ${workflowJobs.length} jobs from workflow-jobs.json`,
-    );
-  } catch (error) {
-    console.warn("⚠️ Could not load workflow-jobs.json:", error.message);
-  }
-}
-
-// Generate workflow visualization based on real GitHub Actions data
-const generateWorkflowSVG = () => {
-  // Map job names from GitHub API to short display names
-  const jobNameMap = {
-    "🚀 Initialize CI Report": { short: "Init", phase: 0 },
-    "Build Artifact": { short: "Build", phase: 1 },
-    // Phase 2: Static Analysis (needs: build)
-    "SA: Astro Check": { short: "Astro", phase: 2 },
-    "SA: Prettier": { short: "Prettier", phase: 2 },
-    "SA: ESLint": { short: "ESLint", phase: 2 },
-    "SA: Stylelint": { short: "Stylelint", phase: 2 },
-    "SA: Link Checker (Dist)": { short: "Links", phase: 2 },
-    "SA: Security Audit": { short: "Security", phase: 2 },
-    "SA: JSDoc Coverage": { short: "JSDoc", phase: 2 },
-    "SA: Spell Checker": { short: "Typos", phase: 2 },
-    "SA: Snyk Security": { short: "Snyk", phase: 2 },
-    "SA: SonarQube": { short: "Sonar", phase: 2 },
-    // Phase 2: Quality checks (needs: build)
-    "Bundle Size Check": { short: "Bundle", phase: 2 },
-    "HTML Validation": { short: "HTML", phase: 2 },
-    "RSS Feed Validation": { short: "RSS", phase: 2 },
-    "Schema.org JSON-LD Validation": { short: "Schema", phase: 2 },
-    "Image Optimization Check": { short: "Images", phase: 2 },
-    "Functional Tests": { short: "E2E", phase: 2 },
-    "Accessibility Tests (light mode)": { short: "A11y☀", phase: 2 },
-    "Accessibility Tests (dark mode)": { short: "A11y🌙", phase: 2 },
-    "LH Audit (light - mobile)": { short: "LH Mob☀", phase: 2 },
-    "LH Audit (light - desktop)": { short: "LH Desk☀", phase: 2 },
-    "LH Audit (dark - mobile)": { short: "LH Mob🌙", phase: 2 },
-    "LH Audit (dark - desktop)": { short: "LH Desk🌙", phase: 2 },
-    // Phase 3: Report aggregation
-    "Static Analysis Report": { short: "SA Report", phase: 3 },
-    "Accessibility Report": { short: "A11y Report", phase: 3 },
-    "Lighthouse Report": { short: "LH Report", phase: 3 },
-    // Phase 4: Deploy
-    "🚀 Deploy CI Dashboard": { short: "Deploy", phase: 4 },
-  };
-
-  // Process real jobs or use fallback
-  let processedJobs = [];
-
-  if (workflowJobs.length > 0) {
-    processedJobs = workflowJobs
-      .filter((job) => jobNameMap[job.name]) // Only jobs we know about
-      .map((job) => ({
-        name: jobNameMap[job.name].short,
-        fullName: job.name,
-        status: job.conclusion || "pending",
-        phase: jobNameMap[job.name].phase,
-      }));
-  } else {
-    // Fallback to environment variables
-    const fallbackJobs = [
-      { name: "Init", status: "success", phase: 0 },
-      { name: "Build", status: "success", phase: 1 },
-      { name: "Astro", status: saOutcomes.astro || "pending", phase: 2 },
-      { name: "Prettier", status: saOutcomes.prettier || "pending", phase: 2 },
-      { name: "ESLint", status: saOutcomes.eslint || "pending", phase: 2 },
-      { name: "Links", status: saOutcomes.lychee || "pending", phase: 2 },
-      { name: "Typos", status: saOutcomes.typos || "pending", phase: 2 },
-      { name: "HTML", status: qualityOutcomes.html || "pending", phase: 2 },
-      { name: "Deploy", status: "success", phase: 4 },
-    ];
-    processedJobs = fallbackJobs;
-  }
-
-  // Group jobs by phase
-  const phases = {};
-  processedJobs.forEach((job) => {
-    if (!phases[job.phase]) phases[job.phase] = [];
-    phases[job.phase].push(job);
-  });
-
-  // Layout configuration
-  const nodeWidth = 75;
-  const nodeHeight = 24;
-  const phaseGap = 120;
-  const rowGap = 30;
-  const padding = 20;
-
-  // Calculate phase positions
-  const phaseKeys = Object.keys(phases)
-    .map(Number)
-    .sort((a, b) => a - b);
-  const maxRows = Math.max(...phaseKeys.map((p) => phases[p].length));
-  const svgHeight = maxRows * rowGap + nodeHeight + padding * 2;
-  const svgWidth = phaseKeys.length * phaseGap + nodeWidth + padding * 2;
-
-  const getColor = (status) => {
-    if (status === "success") return "#10b981";
-    if (status === "failure") return "#ef4444";
-    if (status === "skipped") return "#64748b";
-    return "#f59e0b";
-  };
-
-  const lineColor = "#475569";
-  let connections = [];
-  let nodes = [];
-
-  // Draw nodes for each phase
-  phaseKeys.forEach((phaseNum, phaseIdx) => {
-    const phaseJobs = phases[phaseNum];
-    const phaseX = padding + phaseIdx * phaseGap;
-
-    // Center jobs vertically in this phase
-    const phaseHeight = phaseJobs.length * rowGap;
-    const startY = padding + (svgHeight - padding * 2 - phaseHeight) / 2;
-
-    phaseJobs.forEach((job, jobIdx) => {
-      const x = phaseX;
-      const y = startY + jobIdx * rowGap;
-      const color = getColor(job.status);
-
-      // Store position for connections
-      job.x = x;
-      job.y = y;
-
-      nodes.push(`<g class="workflow-node" title="${job.fullName || job.name}">
-        <rect x="${x}" y="${y}" width="${nodeWidth}" height="${nodeHeight}" rx="4" 
-              fill="${color}22" stroke="${color}" stroke-width="2"/>
-        <text x="${x + nodeWidth / 2}" y="${y + nodeHeight / 2 + 4}" 
-              text-anchor="middle" fill="${color}" font-size="9" font-weight="600">${job.name}</text>
-      </g>`);
-    });
-  });
-
-  // Draw connections between phases
-  for (let i = 0; i < phaseKeys.length - 1; i++) {
-    const currentPhase = phases[phaseKeys[i]];
-    const nextPhase = phases[phaseKeys[i + 1]];
-
-    // Calculate center points
-    const currentCenterY =
-      currentPhase.reduce((acc, j) => acc + j.y + nodeHeight / 2, 0) /
-      currentPhase.length;
-    const nextCenterY =
-      nextPhase.reduce((acc, j) => acc + j.y + nodeHeight / 2, 0) /
-      nextPhase.length;
-
-    const fanOutX = currentPhase[0].x + nodeWidth + 10;
-    const fanInX = nextPhase[0].x - 10;
-
-    // Draw fan-out lines from current phase
-    currentPhase.forEach((job) => {
-      connections.push(
-        `<path d="M${job.x + nodeWidth},${job.y + nodeHeight / 2} L${fanOutX},${job.y + nodeHeight / 2}" stroke="${lineColor}" stroke-width="1" fill="none" opacity="0.5"/>`,
-      );
-    });
-
-    // Vertical connector on right side
-    const currentYMin = Math.min(
-      ...currentPhase.map((j) => j.y + nodeHeight / 2),
-    );
-    const currentYMax = Math.max(
-      ...currentPhase.map((j) => j.y + nodeHeight / 2),
-    );
-    connections.push(
-      `<path d="M${fanOutX},${currentYMin} L${fanOutX},${currentYMax}" stroke="${lineColor}" stroke-width="2" fill="none"/>`,
-      `<path d="M${fanOutX},${currentCenterY} L${fanInX},${nextCenterY}" stroke="${lineColor}" stroke-width="2" fill="none" marker-end="url(#arrow)"/>`,
-    );
-
-    // Vertical connector on left side of next phase
-    const nextYMin = Math.min(...nextPhase.map((j) => j.y + nodeHeight / 2));
-    const nextYMax = Math.max(...nextPhase.map((j) => j.y + nodeHeight / 2));
-    connections.push(
-      `<path d="M${fanInX},${nextYMin} L${fanInX},${nextYMax}" stroke="${lineColor}" stroke-width="2" fill="none"/>`,
-    );
-
-    // Draw fan-in lines to next phase
-    nextPhase.forEach((job) => {
-      connections.push(
-        `<path d="M${fanInX},${job.y + nodeHeight / 2} L${job.x},${job.y + nodeHeight / 2}" stroke="${lineColor}" stroke-width="1" fill="none" opacity="0.5"/>`,
-      );
-    });
-  }
-
-  return `
-    <svg width="100%" viewBox="0 0 ${svgWidth} ${svgHeight}" class="workflow-svg" style="min-width: ${Math.min(svgWidth, 600)}px; max-height: 500px;">
-      <defs>
-        <marker id="arrow" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto" markerUnits="strokeWidth">
-          <path d="M0,0 L0,6 L6,3 z" fill="${lineColor}"/>
-        </marker>
-      </defs>
-      <g class="connections">${connections.join("")}</g>
-      <g class="nodes">${nodes.join("")}</g>
-    </svg>
-  `;
-};
 
 const html = `
 <!DOCTYPE html>
@@ -1075,13 +877,13 @@ const html = `
         <section class="details-section">
             <h2 class="section-title">Detailed Pipeline Status</h2>
             <div class="summary-grid">
-               <!-- SA Status Card -->
-               <div class="card span-2">
-                  <div class="card-title" style="margin-bottom: 1rem;">Static Analysis Results</div>
-                  <div class="table-wrapper">
-                    <table>
-                      <thead><tr><th>Tool</th><th>Status</th></tr></thead>
-                      <tbody>
+                <!-- SA Status Card -->
+                <div class="card span-2">
+                   <div class="card-title" style="margin-bottom: 1rem;">Static Analysis Results</div>
+                   <div class="table-wrapper">
+                     <table>
+                       <thead><tr><th>Tool</th><th>Status</th></tr></thead>
+                       <tbody>
                         <tr><td>Astro Check</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(saOutcomes.astro)}">${saOutcomes.astro || "Pending"}</span> <a href="javascript:void(0)" onclick="openLog('astro-check')" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Log</a> ${runId ? `<a href="${workflowUrl}" target="_blank" style="font-size:0.8rem; color:var(--text-muted); text-decoration:none;">↗</a>` : ""}</div></td></tr>
                         <tr><td>Prettier</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(saOutcomes.prettier)}">${saOutcomes.prettier || "Pending"}</span> <a href="javascript:void(0)" onclick="openLog('prettier')" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Log</a></div></td></tr>
                         <tr><td>ESLint</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(saOutcomes.eslint)}">${saOutcomes.eslint || "Pending"}</span> <a href="javascript:void(0)" onclick="openLog('eslint')" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Log</a></div></td></tr>
@@ -1093,40 +895,27 @@ const html = `
                         <tr><td>SonarQube</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(saOutcomes.sonar)}">${saOutcomes.sonar || "Pending"}</span> <a href="https://sonarcloud.io/summary/new_code?id=jmrplens_jmrp.io" target="_blank" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Sonar ↗</a></div></td></tr>
                         <tr><td>JSDoc Coverage</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(saOutcomes.jsdoc)}">${saOutcomes.jsdoc || "Pending"}</span> <a href="javascript:void(0)" onclick="openLog('jsdoc-coverage')" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Log</a></div></td></tr>
                       </tbody>
-                    </table>
-                  </div>
-               </div>
-               
-               <!-- Builds List -->
-                <div class="card">
-                   <div class="card-title" style="margin-bottom: 1rem;">Assets & Build Quality</div>
-                   <div class="table-wrapper">
-                     <table>
-                       <tbody>
-                         <tr><td>JS/CSS Size</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><b>${bundleStats?.readableTotalSize || "N/A"}</b> <a href="javascript:void(0)" onclick="openLog('bundle-size')" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Log</a></div></td></tr>
-                         <tr><td>HTML Validation</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(qualityOutcomes.html)}">${qualityOutcomes.html || "Pending"}</span> ${status.htmlReport ? '<a href="html/" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Report</a>' : ""} <a href="javascript:void(0)" onclick="openLog('html-validation')" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Log</a></div></td></tr>
-                         <tr><td>RSS Validation</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(qualityOutcomes.rss)}">${qualityOutcomes.rss || "Pending"}</span> ${status.rssPreview ? '<a href="rss-preview.html" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Preview</a>' : ""} <a href="javascript:void(0)" onclick="openLog('rss-validation')" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Log</a></div></td></tr>
-                         <tr><td>JSON-LD Schema</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(qualityOutcomes.schema)}">${qualityOutcomes.schema || "Pending"}</span> ${status.schemaReport ? '<a href="schema/" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Report</a>' : ""} <a href="javascript:void(0)" onclick="openLog('schema-validation')" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Log</a></div></td></tr>
-                         <tr><td>Image Check</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(qualityOutcomes.image)}">${qualityOutcomes.image || "Pending"}</span> ${status.images ? '<a href="images/" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Report</a>' : ""}</div></td></tr>
-                         <tr><td>E2E Tests</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(qualityOutcomes.functional)}">${qualityOutcomes.functional || "Pending"}</span> ${runId ? `<a href="${workflowUrl}" target="_blank" style="font-size:0.8rem; color:var(--text-muted); text-decoration:none;">GitHub ↗</a>` : ""}</div></td></tr>
-                         <tr><td>A11y Tests</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(qualityOutcomes.a11y)}">${qualityOutcomes.a11y || "Pending"}</span> ${status.a11y ? '<a href="accessibility/" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Report</a>' : ""}</div></td></tr>
-                       </tbody>
                      </table>
                    </div>
                 </div>
-            </div>
-        </section>
-
-        <section class="details-section">
-            <h2 class="section-title">Workflow Visualization</h2>
-            <div class="workflow-container">
-                ${generateWorkflowSVG()}
-                <div class="workflow-legend">
-                    <div class="legend-item"><span class="legend-dot" style="background:#10b981;"></span> Success</div>
-                    <div class="legend-item"><span class="legend-dot" style="background:#ef4444;"></span> Failed</div>
-                    <div class="legend-item"><span class="legend-dot" style="background:#f59e0b;"></span> Pending</div>
-                    <div class="legend-item"><span class="legend-dot" style="background:#64748b;"></span> Skipped</div>
-                </div>
+                
+                <!-- Builds List -->
+                 <div class="card">
+                    <div class="card-title" style="margin-bottom: 1rem;">Assets & Build Quality</div>
+                    <div class="table-wrapper">
+                      <table>
+                        <tbody>
+                          <tr><td>JS/CSS Size</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><b>${bundleStats?.readableTotalSize || "N/A"}</b> <a href="javascript:void(0)" onclick="openLog('bundle-size')" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Log</a></div></td></tr>
+                          <tr><td>HTML Validation</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(qualityOutcomes.html)}">${qualityOutcomes.html || "Pending"}</span> ${status.htmlReport ? '<a href="html/" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Report</a>' : ""} <a href="javascript:void(0)" onclick="openLog('html-validation')" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Log</a></div></td></tr>
+                          <tr><td>RSS Validation</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(qualityOutcomes.rss)}">${qualityOutcomes.rss || "Pending"}</span> ${status.rssPreview ? '<a href="rss/" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Preview</a>' : ""} <a href="javascript:void(0)" onclick="openLog('rss-validation')" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Log</a></div></td></tr>
+                          <tr><td>JSON-LD Schema</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(qualityOutcomes.schema)}">${qualityOutcomes.schema || "Pending"}</span> ${status.schemaReport ? '<a href="schema/" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Report</a>' : ""} <a href="javascript:void(0)" onclick="openLog('schema-validation')" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Log</a></div></td></tr>
+                          <tr><td>Image Check</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(qualityOutcomes.image)}">${qualityOutcomes.image || "Pending"}</span> ${status.images ? '<a href="images/" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Report</a>' : ""}</div></td></tr>
+                          <tr><td>E2E Tests</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(qualityOutcomes.functional)}">${qualityOutcomes.functional || "Pending"}</span> ${runId ? `<a href="${workflowUrl}" target="_blank" style="font-size:0.8rem; color:var(--text-muted); text-decoration:none;">GitHub ↗</a>` : ""}</div></td></tr>
+                          <tr><td>A11y Tests</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(qualityOutcomes.a11y)}">${qualityOutcomes.a11y || "Pending"}</span> ${status.a11y ? '<a href="a11y/" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Report</a>' : ""}</div></td></tr>
+                        </tbody>
+                      </table>
+                    </div>
+                 </div>
             </div>
         </section>
 
@@ -1151,75 +940,5 @@ const html = `
 fs.writeFileSync(path.join(DIST_REPORTS, "index.html"), html);
 console.log("✅ Dashboard generated at dist-reports/index.html");
 
-// 4. Generate Lighthouse Index
-const lhIndexHtml = `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Lighthouse Reports</title>
-    <style>
-        body { font-family: system-ui, sans-serif; background: #0f111a; color: #f8fafc; padding: 2rem; }
-        a { color: #b389f5; text-decoration: none; }
-        a:hover { text-decoration: underline; }
-        ul { list-style: none; padding: 0; }
-        li { margin: 0.5rem 0; padding: 1rem; background: rgba(23, 25, 35, 0.7); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; }
-        h2 { border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.5rem; margin-top: 2rem; }
-    </style>
-</head>
-<body>
-    <h1>Lighthouse Reports</h1>
-    <p>Last run: ${timestamp}</p>
-    
-    <h2>Desktop</h2>
-    <ul>
-         ${(() => {
-           const desktopDir = path.join(
-             DIST_REPORTS,
-             "lighthouse",
-             "light",
-             "desktop",
-           );
-           if (!fs.existsSync(desktopDir))
-             return "<li>No desktop reports found</li>";
-           return fs
-             .readdirSync(desktopDir)
-             .filter((f) => f.endsWith(".html"))
-             .map(
-               (f) => `<li><a href="light/desktop/${f}">Desktop: ${f}</a></li>`,
-             )
-             .join("");
-         })()}
-    </ul>
-
-    <h2>Mobile</h2>
-    <ul>
-         ${(() => {
-           const mobileDir = path.join(
-             DIST_REPORTS,
-             "lighthouse",
-             "light",
-             "mobile",
-           );
-           if (!fs.existsSync(mobileDir))
-             return "<li>No mobile reports found</li>";
-           return fs
-             .readdirSync(mobileDir)
-             .filter((f) => f.endsWith(".html"))
-             .map(
-               (f) => `<li><a href="light/mobile/${f}">Mobile: ${f}</a></li>`,
-             )
-             .join("");
-         })()}
-    </ul>
-</body>
-</html>
-`;
-
-if (fs.existsSync(path.join(DIST_REPORTS, "lighthouse"))) {
-  fs.writeFileSync(
-    path.join(DIST_REPORTS, "lighthouse", "index.html"),
-    lhIndexHtml,
-  );
-  console.log("✅ Lighthouse index generated.");
-}
+// Dashboard generation complete.
+console.log("🚀 Dashboard build process finished.");

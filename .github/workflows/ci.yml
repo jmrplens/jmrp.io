@@ -343,7 +343,8 @@ jobs:
       - run: pnpm install --frozen-lockfile --prefer-offline
       - name: Validate HTML5
         run: |
-          pnpm exec html-validate -c .htmlvalidate.json --formatter json dist | tee html-validation.log || true
+          pnpm exec html-validate -c .htmlvalidate.json --formatter json dist > html-validation.json 2>&1 || true
+          cat html-validation.json > html-validation.log
           node scripts/ci/generate-html-validation-report.mjs
       - name: Upload HTML log
         if: always()

@@ -17,6 +17,41 @@ import { escapeHtml } from "./utils/html.mjs";
 
 const RSS_FILE = "dist/rss.xml";
 const OUTPUT_FILE = "dist/rss-preview.html";
+const DIST_DIR = "dist";
+
+/**
+ * Converts an image URL to a base64 data URI.
+ * Reads the image from the local dist folder.
+ *
+ * @param {string} imageUrl - The image URL to convert
+ * @returns {string} The base64 data URI or original URL if conversion fails
+ */
+function embedImage(imageUrl) {
+  try {
+    const url = new URL(imageUrl);
+    const imagePath = url.pathname;
+    const localPath = path.join(DIST_DIR, imagePath);
+
+    if (fs.existsSync(localPath)) {
+      const imageBuffer = fs.readFileSync(localPath);
+      const base64 = imageBuffer.toString("base64");
+      const ext = path.extname(localPath).toLowerCase().slice(1);
+      const mimeTypes = {
+        jpg: "image/jpeg",
+        jpeg: "image/jpeg",
+        png: "image/png",
+        gif: "image/gif",
+        webp: "image/webp",
+        svg: "image/svg+xml",
+      };
+      const mimeType = mimeTypes[ext] || "image/jpeg";
+      return `data:${mimeType};base64,${base64}`;
+    }
+  } catch {
+    // URL parsing failed or other error, return original
+  }
+  return imageUrl;
+}
 
 /**
  * Generates an HTML preview from the RSS XML file.
@@ -120,9 +155,13 @@ async function generatePreview() {
         .map((item) => {
           const content =
             item["content:encoded"] || item.content || item.description || "";
-          const enclosure = item.enclosure
-            ? `<img src="${escapeHtml(item.enclosure.url)}" alt="Cover Image" style="width:100%; max-height: 400px; object-fit: cover; border-radius: 8px; margin-bottom: 20px;">`
-            : "";
+
+          // Embed the enclosure image as base64
+          let enclosure = "";
+          if (item.enclosure?.url) {
+            const embeddedUrl = embedImage(item.enclosure.url);
+            enclosure = `<img src="${escapeHtml(embeddedUrl)}" alt="Cover Image" style="width:100%; max-height: 400px; object-fit: cover; border-radius: 8px; margin-bottom: 20px;">`;
+          }
 
           return `
         <article class="rss-item">
