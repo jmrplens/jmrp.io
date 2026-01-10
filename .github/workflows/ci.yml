@@ -110,12 +110,15 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     needs: build
-    if: secrets.SNYK_TOKEN != ''
+    outputs:
+      outcome: ${{ steps.snyk.outcome }}
     env:
       SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
     steps:
       - uses: actions/checkout@v6
       - uses: snyk/actions/node@master
+        id: snyk
+        if: env.SNYK_TOKEN != ''
         with:
           args: --all-projects --severity-threshold=high
 
@@ -151,8 +154,18 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     if: always()
-
-    needs: [build, sa-astro, sa-prettier, sa-eslint, sa-lychee, sa-typos, sa-audit, sa-snyk, sa-jsdoc]
+    needs:
+      [
+        build,
+        sa-astro,
+        sa-prettier,
+        sa-eslint,
+        sa-lychee,
+        sa-typos,
+        sa-audit,
+        sa-snyk,
+        sa-jsdoc,
+      ]
     permissions:
       pull-requests: write
     steps:
@@ -167,7 +180,7 @@ jobs:
           OUTCOME_LYCHEE: ${{ needs.sa-lychee.result }}
           OUTCOME_TYPOS: ${{ needs.sa-typos.result }}
           OUTCOME_SECURITY: ${{ needs.sa-audit.result }}
-          OUTCOME_SNYK: ${{ needs.sa-snyk.result }}
+          OUTCOME_SNYK: ${{ needs.sa-snyk.outputs.outcome }}
           OUTCOME_JSDOC: ${{ needs.sa-jsdoc.result }}
           JSDOC_COVERAGE: ${{ needs.sa-jsdoc.outputs.coverage }}
         with:

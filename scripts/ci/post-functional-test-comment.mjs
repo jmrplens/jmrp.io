@@ -121,19 +121,17 @@ async function postOrUpdateComment(github, context, body) {
 
   const existingComment = comments.find((c) => c.body?.includes(header));
 
-  if (existingComment) {
-    await github.rest.issues.updateComment({
-      owner: context.repo.owner,
-      repo: context.repo.repo,
-      comment_id: existingComment.id,
-      body: body,
-    });
-  } else {
-    await github.rest.issues.createComment({
-      owner: context.repo.owner,
-      repo: context.repo.repo,
-      issue_number: context.payload.pull_request.number,
-      body: body,
-    });
-  }
+  await (existingComment
+    ? github.rest.issues.updateComment({
+        owner: context.repo.owner,
+        repo: context.repo.repo,
+        comment_id: existingComment.id,
+        body: body,
+      })
+    : github.rest.issues.createComment({
+        owner: context.repo.owner,
+        repo: context.repo.repo,
+        issue_number: context.payload.pull_request.number,
+        body: body,
+      }));
 }
