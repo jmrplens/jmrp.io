@@ -235,6 +235,7 @@ jobs:
     name: Build Artifact
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    needs: ci-setup
     steps:
       - uses: actions/checkout@v6
       - name: Cache Playwright Browsers
@@ -703,6 +704,7 @@ jobs:
         schema-validation,
         image-optimization,
         lighthouse-report,
+        functional-tests,
       ]
     if: always() && github.event_name == 'pull_request'
     permissions:
@@ -749,6 +751,7 @@ jobs:
           OUTCOME_HTML: ${{ needs.html-validator.result }}
           OUTCOME_BUNDLE: ${{ needs.bundle-size.result }}
           OUTCOME_RSS: ${{ needs.rss-validation.result }}
+          OUTCOME_FUNCTIONAL: ${{ needs.functional-tests.result }}
         with:
           script: |
             const { default: script } = await import(`file://${process.env.GITHUB_WORKSPACE}/scripts/ci/update-ci-comment.mjs`)

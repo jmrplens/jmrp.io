@@ -51,6 +51,7 @@ function buildQualityTable(results, vercelUrl) {
   md += `| 📄 HTML5 Validity | ${getIcon(results.html)} | Source scan results |\n`;
   md += `| 📦 Bundle Size | ${getIcon(results.bundle)} | Asset analysis |\n`;
   md += `| 📡 RSS & Metadata | ${getIcon(results.rss)} | Feed validation |\n`;
+  md += `| 🧪 Functional Tests | ${getIcon(results.functional)} | Playwright E2E results |\n`;
   return md;
 }
 
@@ -120,6 +121,7 @@ export default async function updateCiComment({ github, context, step }) {
     html: process.env.OUTCOME_HTML,
     bundle: process.env.OUTCOME_BUNDLE,
     rss: process.env.OUTCOME_RSS,
+    functional: process.env.OUTCOME_FUNCTIONAL,
   };
 
   const vercelUrl = process.env.VERCEL_URL;
