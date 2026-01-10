@@ -47,7 +47,9 @@ function buildQualityTable(results, vercelUrl) {
   let md = "\n#### 📈 Quality & Performance\n\n";
   if (vercelUrl) {
     // Ensure URL doesn't have double protocol
-    const cleanUrl = vercelUrl.startsWith("http") ? vercelUrl : `https://${vercelUrl}`;
+    const cleanUrl = vercelUrl.startsWith("http")
+      ? vercelUrl
+      : `https://${vercelUrl}`;
     md += `> 🌐 [**Open Interactive Dashboard**](${cleanUrl}) 🚀\n\n`;
   } else {
     md += `> ⏳ *Generating detailed reports and dashboard...*\n\n`;
@@ -72,27 +74,55 @@ function calculateHealthScore(saResults, qualityResults) {
   let score = 100;
 
   // Deduction for SA failures (-5 each)
-  const saToCheck = ["astro", "prettier", "eslint", "lychee", "typos", "security", "snyk", "sonar", "jsdoc"];
+  const saToCheck = [
+    "astro",
+    "prettier",
+    "eslint",
+    "lychee",
+    "typos",
+    "security",
+    "snyk",
+    "sonar",
+    "jsdoc",
+  ];
   for (const tool of saToCheck) {
     if (saResults[tool] === "failure") score -= 5;
   }
 
   // Deduction for Quality failures (-10 each)
-  const qualityToCheck = ["a11y", "html", "bundle", "rss", "functional", "schema", "image"];
+  const qualityToCheck = [
+    "a11y",
+    "html",
+    "bundle",
+    "rss",
+    "functional",
+    "schema",
+    "image",
+  ];
   for (const check of qualityToCheck) {
     if (qualityResults[check] === "failure") score -= 10;
   }
 
   // Deductions from specific JSON data if available
   if (fs.existsSync("accessibility-report.json")) {
-    const a11yData = JSON.parse(fs.readFileSync("accessibility-report.json", "utf-8"));
-    const totalViolations = a11yData.reduce((acc, r) => acc + (r.violations?.length || 0), 0);
+    const a11yData = JSON.parse(
+      fs.readFileSync("accessibility-report.json", "utf-8"),
+    );
+    const totalViolations = a11yData.reduce(
+      (acc, r) => acc + (r.violations?.length || 0),
+      0,
+    );
     score -= Math.min(20, totalViolations * 2);
   }
 
   if (fs.existsSync("html-validation.json")) {
-    const htmlData = JSON.parse(fs.readFileSync("html-validation.json", "utf-8"));
-    const htmlErrors = htmlData.reduce((acc, f) => acc + f.messages.filter((m) => m.severity === 2).length, 0);
+    const htmlData = JSON.parse(
+      fs.readFileSync("html-validation.json", "utf-8"),
+    );
+    const htmlErrors = htmlData.reduce(
+      (acc, f) => acc + f.messages.filter((m) => m.severity === 2).length,
+      0,
+    );
     score -= Math.min(15, htmlErrors);
   }
 

@@ -18,166 +18,169 @@ fs.mkdirSync(DIST_REPORTS);
  * Safely copies a file or directory
  */
 function copy(src, dest) {
-    if (!fs.existsSync(src)) {
-        console.warn(`⚠️ Warning: Source not found for copy: ${src}`);
-        return false;
-    }
-    const parent = path.dirname(dest);
-    if (!fs.existsSync(parent)) fs.mkdirSync(parent, { recursive: true });
+  if (!fs.existsSync(src)) {
+    console.warn(`⚠️ Warning: Source not found for copy: ${src}`);
+    return false;
+  }
+  const parent = path.dirname(dest);
+  if (!fs.existsSync(parent)) fs.mkdirSync(parent, { recursive: true });
 
-    if (fs.statSync(src).isDirectory()) {
-        fs.cpSync(src, dest, { recursive: true });
-    } else {
-        fs.copyFileSync(src, dest);
-    }
-    return true;
+  if (fs.statSync(src).isDirectory()) {
+    fs.cpSync(src, dest, { recursive: true });
+  } else {
+    fs.copyFileSync(src, dest);
+  }
+  return true;
 }
 
 // 1. Move Reports to structured folders
 console.log("📂 Consolidating report files...");
 
 const reports = [
-    { id: "a11y", src: "a11y-deploy", dest: "a11y", main: "index.html" },
-    {
-        id: "html",
-        src: "html-report.html",
-        dest: "html/index.html",
-        main: "index.html",
-    },
-    {
-        id: "rss",
-        src: "dist/rss-preview.html",
-        dest: "rss/index.html",
-        main: "index.html",
-    },
-    {
-        id: "schema",
-        src: "schema-report.html",
-        dest: "schema/index.html",
-        main: "index.html",
-    },
-    {
-        id: "images",
-        src: "image-report.html",
-        dest: "images/index.html",
-        main: "index.html",
-    },
-    {
-        id: "lighthouse",
-        src: "lh-deploy",
-        dest: "lighthouse",
-        main: "index.html",
-    },
+  { id: "a11y", src: "a11y-deploy", dest: "a11y", main: "index.html" },
+  {
+    id: "html",
+    src: "html-report.html",
+    dest: "html/index.html",
+    main: "index.html",
+  },
+  {
+    id: "rss",
+    src: "dist/rss-preview.html",
+    dest: "rss/index.html",
+    main: "index.html",
+  },
+  {
+    id: "schema",
+    src: "schema-report.html",
+    dest: "schema/index.html",
+    main: "index.html",
+  },
+  {
+    id: "images",
+    src: "image-report.html",
+    dest: "images/index.html",
+    main: "index.html",
+  },
+  {
+    id: "lighthouse",
+    src: "lh-deploy",
+    dest: "lighthouse",
+    main: "index.html",
+  },
 ];
 
 const status = {};
 
 for (const r of reports) {
-    const success = copy(r.src, path.join(DIST_REPORTS, r.dest));
-    status[r.id] = success;
+  const success = copy(r.src, path.join(DIST_REPORTS, r.dest));
+  status[r.id] = success;
 }
 
 // 2. Load JSON data for the dashboard summary
 let accessibilityData = [];
 if (fs.existsSync("accessibility-report.json")) {
-    accessibilityData = JSON.parse(
-        fs.readFileSync("accessibility-report.json", "utf-8"),
-    );
+  accessibilityData = JSON.parse(
+    fs.readFileSync("accessibility-report.json", "utf-8"),
+  );
 }
 
 let bundleStats = null;
 if (fs.existsSync("bundle-analysis.json")) {
-    bundleStats = JSON.parse(fs.readFileSync("bundle-analysis.json", "utf-8"));
+  bundleStats = JSON.parse(fs.readFileSync("bundle-analysis.json", "utf-8"));
 }
 
 let htmlValidation = null;
 if (fs.existsSync("html-validation.json")) {
-    htmlValidation = JSON.parse(fs.readFileSync("html-validation.json", "utf-8"));
+  htmlValidation = JSON.parse(fs.readFileSync("html-validation.json", "utf-8"));
 }
 
 let rssValidation = null;
 if (fs.existsSync("rss-validation.json")) {
-    rssValidation = JSON.parse(fs.readFileSync("rss-validation.json", "utf-8"));
+  rssValidation = JSON.parse(fs.readFileSync("rss-validation.json", "utf-8"));
 }
 
 // 3. Generate the Dashboard HTML
 // 3. Health Score Calculation (Synchronized with update-ci-comment.mjs)
 const saOutcomes = {
-    astro: process.env.OUTCOME_ASTRO,
-    prettier: process.env.OUTCOME_PRETTIER,
-    eslint: process.env.OUTCOME_ESLINT,
-    lychee: process.env.OUTCOME_LYCHEE,
-    typos: process.env.OUTCOME_TYPOS,
-    security: process.env.OUTCOME_SECURITY,
-    snyk: process.env.OUTCOME_SNYK,
-    sonar: process.env.OUTCOME_SONAR,
-    jsdoc: process.env.OUTCOME_JSDOC,
+  astro: process.env.OUTCOME_ASTRO,
+  prettier: process.env.OUTCOME_PRETTIER,
+  eslint: process.env.OUTCOME_ESLINT,
+  lychee: process.env.OUTCOME_LYCHEE,
+  typos: process.env.OUTCOME_TYPOS,
+  security: process.env.OUTCOME_SECURITY,
+  snyk: process.env.OUTCOME_SNYK,
+  sonar: process.env.OUTCOME_SONAR,
+  jsdoc: process.env.OUTCOME_JSDOC,
 };
 
 const qualityOutcomes = {
-    a11y: process.env.OUTCOME_A11Y,
-    html: process.env.OUTCOME_HTML,
-    bundle: process.env.OUTCOME_BUNDLE,
-    rss: process.env.OUTCOME_RSS,
-    schema: process.env.OUTCOME_SCHEMA,
-    image: process.env.OUTCOME_IMAGE,
-    functional: process.env.OUTCOME_FUNCTIONAL,
+  a11y: process.env.OUTCOME_A11Y,
+  html: process.env.OUTCOME_HTML,
+  bundle: process.env.OUTCOME_BUNDLE,
+  rss: process.env.OUTCOME_RSS,
+  schema: process.env.OUTCOME_SCHEMA,
+  image: process.env.OUTCOME_IMAGE,
+  functional: process.env.OUTCOME_FUNCTIONAL,
 };
 
 const getHealthScore = () => {
-    let score = 100;
+  let score = 100;
 
-    // Deduction for SA failures (-5 each)
-    for (const key in saOutcomes) {
-        if (saOutcomes[key] === "failure") score -= 5;
-    }
+  // Deduction for SA failures (-5 each)
+  for (const key in saOutcomes) {
+    if (saOutcomes[key] === "failure") score -= 5;
+  }
 
-    // Deduction for Quality failures (-10 each)
-    for (const key in qualityOutcomes) {
-        if (qualityOutcomes[key] === "failure") score -= 10;
-    }
+  // Deduction for Quality failures (-10 each)
+  for (const key in qualityOutcomes) {
+    if (qualityOutcomes[key] === "failure") score -= 10;
+  }
 
-    // Finer deductions from JSON data
-    if (accessibilityData.length > 0) {
-        const totalViolations = accessibilityData.reduce((acc, r) => acc + (r.violations?.length || 0), 0);
-        score -= Math.min(20, totalViolations * 2);
-    }
+  // Finer deductions from JSON data
+  if (accessibilityData.length > 0) {
+    const totalViolations = accessibilityData.reduce(
+      (acc, r) => acc + (r.violations?.length || 0),
+      0,
+    );
+    score -= Math.min(20, totalViolations * 2);
+  }
 
-    if (htmlValidation) {
-        const htmlErrors = htmlValidation.reduce(
-            (acc, f) => acc + f.messages.filter((m) => m.severity === 2).length,
-            0,
-        );
-        score -= Math.min(15, htmlErrors);
-    }
+  if (htmlValidation) {
+    const htmlErrors = htmlValidation.reduce(
+      (acc, f) => acc + f.messages.filter((m) => m.severity === 2).length,
+      0,
+    );
+    score -= Math.min(15, htmlErrors);
+  }
 
-    return Math.max(0, Math.min(100, score));
+  return Math.max(0, Math.min(100, score));
 };
 
 const healthScore = getHealthScore();
 const timestamp = new Date().toLocaleString("en-US", {
-    dateStyle: "full",
-    timeStyle: "short",
+  dateStyle: "full",
+  timeStyle: "short",
 });
 
 let scoreColor = "#ef4444";
 if (healthScore > 90) {
-    scoreColor = "#10b981";
+  scoreColor = "#10b981";
 } else if (healthScore > 70) {
-    scoreColor = "#f59e0b";
+  scoreColor = "#f59e0b";
 }
 
 let conditionText = "need of maintenance";
 if (healthScore > 90) {
-    conditionText = "prime condition";
+  conditionText = "prime condition";
 } else if (healthScore > 70) {
-    conditionText = "good shape";
+  conditionText = "good shape";
 }
 
 const getStatusClass = (res) => {
-    if (res === "success") return "status-success";
-    if (res === "failure") return "status-danger";
-    return "status-warning";
+  if (res === "success") return "status-success";
+  if (res === "failure") return "status-danger";
+  return "status-warning";
 };
 
 const html = `
