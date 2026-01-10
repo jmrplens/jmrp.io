@@ -116,7 +116,7 @@ jobs:
         if: env.SNYK_TOKEN != ''
         uses: snyk/actions/node@master
         with:
-          args: --severity-threshold=high
+          args: --all-projects --severity-threshold=high
         continue-on-error: true # Snyk acts as a warning system for now
 
   static-analysis-report:
