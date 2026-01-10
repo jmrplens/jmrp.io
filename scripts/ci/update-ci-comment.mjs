@@ -64,7 +64,7 @@ function buildQualityTable(results) {
 /**
  * Builds a broad summary based on scores and available data
  */
-function buildExecutiveSummary(saResults, qualityResults, healthScore) {
+const buildExecutiveSummary = (saResults, healthScore) => {
   let summary = "#### 📝 Executive Summary\n\n";
 
   if (healthScore >= 95) {
@@ -145,7 +145,7 @@ function buildExecutiveSummary(saResults, qualityResults, healthScore) {
   summary += "\n";
 
   return summary;
-}
+};
 
 /**
  * Main function to update the CI comment in the GitHub PR.

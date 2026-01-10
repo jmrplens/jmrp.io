@@ -279,13 +279,34 @@ const articleSchema = [
           return; // Already handled by component
         }
 
-        // Check if we already added our button
-        if (block.querySelector(".custom-code-copy-btn")) {
+        // Check if we already added our button or wrapper
+        if (
+          block.parentElement?.classList.contains("code-block-wrapper") ||
+          block.querySelector(".custom-code-copy-btn")
+        ) {
           return; // Already processed
         }
 
-        // Create our custom copy button
+        // Get language
+        const lang = block.getAttribute("data-language") || "text";
+
+        // Create wrapper
+        const wrapper = document.createElement("div");
+        wrapper.className = "code-block-wrapper";
+
+        // Create Header
+        const header = document.createElement("div");
+        header.className = "code-block-header";
+
+        // Language Label
+        const label = document.createElement("span");
+        label.className = "code-language-label";
+        label.textContent = lang;
+        header.appendChild(label);
+
+        // Create custom copy button
         const copyButton = document.createElement("button");
+        copyButton.type = "button";
         copyButton.className = "custom-code-copy-btn";
         copyButton.setAttribute("aria-label", "Copy to clipboard");
 
@@ -350,11 +371,13 @@ const articleSchema = [
           );
         });
 
-        if (block instanceof HTMLElement) {
-          block.style.position = "relative";
-        }
+        // Add button to header
+        header.appendChild(copyButton);
 
-        block.appendChild(copyButton);
+        // Assemble DOM
+        block.parentNode?.insertBefore(wrapper, block);
+        wrapper.appendChild(header);
+        wrapper.appendChild(block);
       });
     }
   };
@@ -521,28 +544,63 @@ const articleSchema = [
     }
   }
 
-  /* Custom copy button for standalone code blocks */
+  /* Code Block Wrapper (Card Style) */
+  :global(.code-block-wrapper) {
+    margin: var(--space-md) 0;
+    overflow: hidden;
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+  }
+
+  /* Code Header */
+  :global(.code-block-header) {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-xs) var(--space-md);
+    background-color: var(--color-bg-secondary);
+    border-bottom: var(--border-1);
+  }
+
+  /* Language Label */
+  :global(.code-language-label) {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  /* Override Layout for Pre inside wrapper */
+  :global(.code-block-wrapper pre) {
+    margin: 0 !important;
+    border: none !important;
+    border-top-left-radius: 0 !important;
+    border-top-right-radius: 0 !important;
+  }
+
+  /* Custom copy button */
   :global(.custom-code-copy-btn) {
-    position: absolute;
-    top: 0.5rem;
-    right: 0.5rem;
-    z-index: 10;
+    /* No longer absolute */
     display: flex;
     align-items: center;
     justify-content: center;
-    min-width: 32px;
-    min-height: 32px;
-    padding: 0.3rem 0.5rem;
+    width: 28px;
+    height: 28px;
+    padding: 0;
     cursor: pointer;
-    background-color: var(--color-bg-subtle, rgb(255 255 255 / 10%));
-    border: var(--border-1, 1px solid rgb(255 255 255 / 10%));
-    border-radius: 4px;
-    opacity: 80%;
+    background-color: transparent;
+    border: none;
+    border-radius: var(--radius-sm);
+    opacity: 70%;
     transition: all 0.2s ease;
   }
 
-  :global(.custom-code-copy-btn:hover) {
-    background-color: var(--color-bg-secondary, #222);
+  :global(.custom-code-copy-btn:hover),
+  :global(.custom-code-copy-btn:focus-visible) {
+    outline: 2px solid var(--color-primary);
+    background-color: var(--color-bg-subtle);
     opacity: 100%;
   }
 
@@ -553,16 +611,17 @@ const articleSchema = [
   :global(.custom-code-copy-btn .copy-icon),
   :global(.custom-code-copy-btn .success-icon) {
     display: block;
-    width: 1.2rem;
-    height: 1.2rem;
-    color: var(--color-text-muted, #888);
+    width: 1.1rem;
+    height: 1.1rem;
+    color: var(--color-text-muted);
   }
 
   :global(.custom-code-copy-btn .success-icon) {
-    color: var(--color-success, #2ea043);
+    color: var(--color-success);
   }
 
   :global(.custom-code-copy-btn .hidden) {
     display: none;
   }
 </style>
+```
