@@ -30,39 +30,7 @@ jobs:
             const { default: script } = await import(`file://${process.env.GITHUB_WORKSPACE}/scripts/ci/update-ci-comment.mjs`)
             await script({github, context, step: 'init'})
 
-  build:
-    name: Build Artifact
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    needs: ci-setup
-    steps:
-      - uses: actions/checkout@v6
-      - name: Cache Playwright Browsers
-        id: playwright-cache
-        uses: actions/cache@v5
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-browsers-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 22
-          cache: "pnpm"
-      - run: pnpm install --frozen-lockfile --prefer-offline
-      - name: Install Playwright Browsers
-        if: steps.playwright-cache.outputs.cache-hit != 'true'
-        run: pnpm exec playwright install --with-deps chromium
-      - name: Build Project (Production)
-        run: pnpm run build
-      - name: Upload build artifact
-        uses: actions/upload-artifact@v6
-        with:
-          name: dist-build
-          path: dist/
-          retention-days: 1
-
-  # --- Stage: Quality & Security Checks (Parallel) ---
-
+  # Static Analysis Jobs (Parallel)
   sa-astro:
     name: "SA: Astro Check"
     runs-on: ubuntu-latest
@@ -211,184 +179,71 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  bundle-size:
-    name: Bundle Size Check
+  static-analysis-report:
+    name: Static Analysis Report
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    needs: build
+    if: always()
+    needs:
+      [
+        sa-astro,
+        sa-prettier,
+        sa-eslint,
+        sa-lychee,
+        sa-typos,
+        sa-audit,
+        sa-snyk,
+        sa-sonar,
+        sa-jsdoc,
+        ci-setup,
+      ]
+    permissions:
+      pull-requests: write
     steps:
       - uses: actions/checkout@v6
-      - name: Download build artifact
-        uses: actions/download-artifact@v7
-        with:
-          name: dist-build
-          path: dist
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 22
-          cache: "pnpm"
-      - run: pnpm install --frozen-lockfile --prefer-offline
-      - name: Analyze bundle size
-        run: node scripts/ci/analyze-bundle-size.mjs
-      - name: Upload bundle analysis
-        uses: actions/upload-artifact@v6
-        with:
-          name: bundle-analysis
-          path: bundle-analysis.json
-          retention-days: 1
-
-  html-validator:
-    name: HTML Validation
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    needs: build
-    steps:
-      - uses: actions/checkout@v6
-      - name: Download build artifact
-        uses: actions/download-artifact@v7
-        with:
-          name: dist-build
-          path: dist
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 22
-          cache: "pnpm"
-      - run: pnpm install --frozen-lockfile --prefer-offline
-      - name: Validate HTML5
-        run: |
-          pnpm exec html-validate -c .htmlvalidate.json --formatter json dist > html-validation.json || true
-          node scripts/ci/generate-html-validation-report.mjs
-
-      - name: Link Checker (HTML)
-        id: lychee-dist
-        uses: lycheeverse/lychee-action@v2.7.0
-        with:
-          args: --config lychee.toml ./dist/**/*.html
-          fail: true
+      - name: Update CI Comment (SA Results)
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v8
         env:
-          GITHUB_TOKEN: ${{ secrets.TOKEN_GITHUB }}
-        continue-on-error: true
-      - name: Upload HTML validation files
-        uses: actions/upload-artifact@v6
+          OUTCOME_ASTRO: ${{ needs.sa-astro.result }}
+          OUTCOME_PRETTIER: ${{ needs.sa-prettier.result }}
+          OUTCOME_ESLINT: ${{ needs.sa-eslint.result }}
+          OUTCOME_SECURITY: ${{ needs.sa-audit.result }}
+          OUTCOME_JSDOC: ${{ needs.sa-jsdoc.result }}
+          JSDOC_COVERAGE: ${{ needs.sa-jsdoc.outputs.coverage }}
         with:
-          name: html-validation-report
-          path: |
-            html-validation.json
-            html-report.html
-          retention-days: 1
+          script: |
+            const { default: script } = await import(`file://${process.env.GITHUB_WORKSPACE}/scripts/ci/update-ci-comment.mjs`)
+            await script({github, context, step: 'sa'})
 
-  rss-validation:
-    name: RSS Feed Validation
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    needs: build
-    steps:
-      - uses: actions/checkout@v6
-      - name: Download build artifact
-        uses: actions/download-artifact@v7
-        with:
-          name: dist-build
-          path: dist
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 22
-          cache: "pnpm"
-      - run: pnpm install --frozen-lockfile --prefer-offline
-      - name: Validate RSS feed
-        run: node scripts/ci/validate-rss.mjs dist/rss.xml
-      - name: Generate RSS preview
-        run: node scripts/preview-rss.mjs
-      - name: Upload RSS validation files
-        uses: actions/upload-artifact@v6
-        with:
-          name: rss-validation-report
-          path: |
-            rss-validation.json
-            dist/rss-preview.html
-          retention-days: 1
-
-  schema-validation:
-    name: Schema.org JSON-LD Validation
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    needs: build
-    steps:
-      - uses: actions/checkout@v6
-      - name: Download build artifact
-        uses: actions/download-artifact@v7
-        with:
-          name: dist-build
-          path: dist
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 22
-          cache: "pnpm"
-      - run: pnpm install --frozen-lockfile --prefer-offline
-      - name: Validate Schema.org structured data
-        run: node scripts/ci/validate-schema.mjs dist
-      - name: Generate Schema Report
-        if: always()
+      - name: Check Failure
+        if: |
+          needs.sa-astro.result == 'failure' ||
+          needs.sa-prettier.result == 'failure' ||
+          needs.sa-eslint.result == 'failure' ||
+          needs.sa-lychee.result == 'failure' ||
+          needs.sa-typos.result == 'failure' ||
+          needs.sa-audit.result == 'failure' ||
+          needs.sa-snyk.result == 'failure' ||
+          needs.sa-sonar.result == 'failure' ||
+          needs.sa-jsdoc.result == 'failure'
         run: |
-          if [ -f schema-report.json ]; then
-            node scripts/ci/generate-schema-report.mjs
-          fi
-      - name: Upload Schema validation files
-        uses: actions/upload-artifact@v6
-        with:
-          name: schema-validation-report
-          path: |
-            schema-report.json
-            schema-report.html
-          retention-days: 1
+          echo "::error::One or more static analysis steps failed."
+          exit 1
 
-  image-optimization:
-    name: Image Optimization Check
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    needs: build
-    steps:
-      - uses: actions/checkout@v6
-      - name: Download build artifact
-        uses: actions/download-artifact@v7
-        with:
-          name: dist-build
-          path: dist
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 22
-          cache: "pnpm"
-      - run: pnpm install --frozen-lockfile --prefer-offline
-      - name: Analyze images
-        run: |
-          echo "## 🖼️ Image Optimization Analysis" >> $GITHUB_STEP_SUMMARY
-          WEBP_COUNT=$(find dist -type f -name "*.webp" | wc -l)
-          echo "- WebP images: $WEBP_COUNT ✅" >> $GITHUB_STEP_SUMMARY
-      - name: Generate Image HTML Report
-        run: node scripts/ci/generate-image-report.mjs
-      - name: Upload image report
-        uses: actions/upload-artifact@v6
-        with:
-          name: image-optimization-report
-          path: image-report.html
-          retention-days: 1
-
-  functional-tests:
-    name: Functional Tests
+  build:
+    name: Build Artifact
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    needs: build
+    needs: ci-setup
     steps:
       - uses: actions/checkout@v6
-      - name: Download build artifact
-        uses: actions/download-artifact@v7
+      - name: Cache Playwright Browsers
+        id: playwright-cache
+        uses: actions/cache@v5
         with:
-          name: dist-build
-          path: dist
+          path: ~/.cache/ms-playwright
+          key: playwright-browsers-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
@@ -396,14 +251,15 @@ jobs:
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile --prefer-offline
       - name: Install Playwright Browsers
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: pnpm exec playwright install --with-deps chromium
-      - name: Run Playwright tests
-        run: pnpm exec playwright test --project=functional --project=mobile-functional
-      - name: Upload functional report
+      - name: Build Project (Production)
+        run: pnpm run build
+      - name: Upload build artifact
         uses: actions/upload-artifact@v6
         with:
-          name: functional-report
-          path: playwright-report/
+          name: dist-build
+          path: dist/
           retention-days: 1
 
   accessibility:
@@ -447,6 +303,295 @@ jobs:
           path: accessibility-report/
           retention-days: 7
 
+  accessibility-report:
+    name: Accessibility Report
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: accessibility
+    if: always()
+    permissions:
+      pull-requests: write
+    env:
+      SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: "pnpm"
+      - run: pnpm install --frozen-lockfile --prefer-offline
+
+      # Download artifacts
+      - name: Download Axe Results (Light)
+        uses: actions/download-artifact@v7
+        continue-on-error: true
+        with:
+          name: axe-accessibility-report-light
+          path: a11y-deploy/light
+      - name: Download Axe Results (Dark)
+        uses: actions/download-artifact@v7
+        continue-on-error: true
+        with:
+          name: axe-accessibility-report-dark
+          path: a11y-deploy/dark
+
+      - name: Generate Dashboard
+        run: node scripts/ci/generate-accessibility-index.mjs a11y-deploy
+
+      - name: Deploy to Surge
+        if: github.event_name == 'pull_request' && env.SURGE_TOKEN != ''
+        env:
+          NODE_OPTIONS: "--no-deprecation"
+        run: |
+          pnpm exec surge ./a11y-deploy jmrp-a11y-pr-${{ github.event.number }}.surge.sh --token ${{ env.SURGE_TOKEN }}
+
+      - name: Format Report for Comment
+        run: node scripts/ci/format-accessibility-report.mjs a11y-deploy > accessibility_comment.md
+
+      - name: Upload consolidated assets
+        uses: actions/upload-artifact@v6
+        with:
+          name: a11y-dashboard
+          path: a11y-deploy/
+          retention-days: 1
+
+  bundle-size:
+    name: Bundle Size Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: build
+    permissions:
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v6
+      - name: Download build artifact
+        uses: actions/download-artifact@v7
+        with:
+          name: dist-build
+          path: dist
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: "pnpm"
+      - run: pnpm install --frozen-lockfile --prefer-offline
+      - name: Analyze bundle size
+        run: node scripts/ci/analyze-bundle-size.mjs
+      - name: Upload bundle analysis
+        uses: actions/upload-artifact@v6
+        with:
+          name: bundle-analysis
+          path: bundle-analysis.json
+          retention-days: 1
+
+  html-validator:
+    name: HTML Validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: build
+    permissions:
+      pull-requests: write
+    env:
+      SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
+    steps:
+      - uses: actions/checkout@v6
+      - name: Download build artifact
+        uses: actions/download-artifact@v7
+        with:
+          name: dist-build
+          path: dist
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: "pnpm"
+      - run: pnpm install --frozen-lockfile --prefer-offline
+      - name: Validate HTML5
+        run: |
+          # Generate JSON report for automated processing
+          pnpm exec html-validate -c .htmlvalidate.json --formatter json dist > html-validation.json || true
+
+          # Create the interactive HTML report and exit with error if issues are found
+          node scripts/ci/generate-html-validation-report.mjs
+
+      - name: Link Checker (HTML)
+        id: lychee-dist
+        uses: lycheeverse/lychee-action@v2.7.0
+        with:
+          args: --config lychee.toml ./dist/**/*.html
+          fail: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN_GITHUB }}
+        continue-on-error: true
+      - name: Upload HTML validation files
+        uses: actions/upload-artifact@v6
+        with:
+          name: html-validation-report
+          path: |
+            html-validation.json
+            html-report.html
+          retention-days: 1
+
+  rss-validation:
+    name: RSS Feed Validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: build
+    permissions:
+      pull-requests: write
+    env:
+      SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
+    steps:
+      - uses: actions/checkout@v6
+      - name: Download build artifact
+        uses: actions/download-artifact@v7
+        with:
+          name: dist-build
+          path: dist
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: "pnpm"
+      - run: pnpm install --frozen-lockfile --prefer-offline
+      - name: Validate RSS feed
+        run: node scripts/ci/validate-rss.mjs dist/rss.xml
+      - name: Generate RSS preview
+        run: node scripts/preview-rss.mjs
+      - name: Upload RSS preview artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: rss-preview
+          path: dist/rss-preview.html
+          retention-days: 3
+      - name: Upload RSS validation files
+        uses: actions/upload-artifact@v6
+        with:
+          name: rss-validation-report
+          path: |
+            rss-validation.json
+            dist/rss-preview.html
+          retention-days: 1
+
+  schema-validation:
+    name: Schema.org JSON-LD Validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: build
+    permissions:
+      pull-requests: write
+    env:
+      SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
+    steps:
+      - uses: actions/checkout@v6
+      - name: Download build artifact
+        uses: actions/download-artifact@v7
+        with:
+          name: dist-build
+          path: dist
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: "pnpm"
+      - run: pnpm install --frozen-lockfile --prefer-offline
+      - name: Validate Schema.org structured data
+        run: node scripts/ci/validate-schema.mjs dist
+      - name: Generate Schema Report
+        if: always()
+        run: |
+          if [ -f schema-report.json ]; then
+            echo "schema-report.json found. Generating HTML report..."
+            node scripts/ci/generate-schema-report.mjs
+          else
+            echo "schema-report.json not found. Skipping generation."
+          fi
+      - name: Upload Schema validation files
+        uses: actions/upload-artifact@v6
+        with:
+          name: schema-validation-report
+          path: |
+            schema-report.json
+            schema-report.html
+          retention-days: 1
+
+  image-optimization:
+    name: Image Optimization Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: build
+    permissions:
+      pull-requests: write
+    env:
+      SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
+    steps:
+      - uses: actions/checkout@v6
+      - name: Download build artifact
+        uses: actions/download-artifact@v7
+        with:
+          name: dist-build
+          path: dist
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: "pnpm"
+      - run: pnpm install --frozen-lockfile --prefer-offline
+      - name: Analyze images
+        run: |
+          echo "## 🖼️ Image Optimization Analysis" >> $GITHUB_STEP_SUMMARY
+          WEBP_COUNT=$(find dist -type f -name "*.webp" | wc -l)
+          echo "- WebP images: $WEBP_COUNT ✅" >> $GITHUB_STEP_SUMMARY
+      - name: Generate Image HTML Report
+        run: node scripts/ci/generate-image-report.mjs
+      - name: Upload image report
+        uses: actions/upload-artifact@v6
+        with:
+          name: image-optimization-report
+          path: image-report.html
+          retention-days: 1
+
+  functional-tests:
+    name: Functional Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: build
+    permissions:
+      pull-requests: write
+    env:
+      SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
+    steps:
+      - uses: actions/checkout@v6
+      - name: Download build artifact
+        uses: actions/download-artifact@v7
+        with:
+          name: dist-build
+          path: dist
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: "pnpm"
+      - run: pnpm install --frozen-lockfile --prefer-offline
+      - name: Install Playwright Browsers
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Run Playwright tests
+        run: pnpm exec playwright test --project=functional --project=mobile-functional
+      - name: Upload Results
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: functional-test-report
+          path: playwright-report/
+          retention-days: 7
+      - name: Upload functional report
+        uses: actions/upload-artifact@v6
+        with:
+          name: functional-report
+          path: playwright-report/
+          retention-days: 1
+
   lighthouse-audit:
     name: LH Audit (${{ matrix.theme }} - ${{ matrix.formFactor }})
     runs-on: ubuntu-latest
@@ -486,86 +631,16 @@ jobs:
           path: lighthouse-results/
           retention-days: 1
 
-  # --- Stage: Report Aggregation ---
-
-  static-analysis-report:
-    name: Static Analysis Report
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    if: always()
-    needs: [sa-astro, sa-prettier, sa-eslint, sa-audit, sa-jsdoc, sa-lychee, sa-typos, sa-snyk, sa-sonar, ci-setup]
-    permissions:
-      pull-requests: write
-    steps:
-      - uses: actions/checkout@v6
-      - name: Update CI Comment (SA Results)
-        if: github.event_name == 'pull_request'
-        uses: actions/github-script@v8
-        env:
-          OUTCOME_ASTRO: ${{ needs.sa-astro.result }}
-          OUTCOME_PRETTIER: ${{ needs.sa-prettier.result }}
-          OUTCOME_ESLINT: ${{ needs.sa-eslint.result }}
-          OUTCOME_SECURITY: ${{ needs.sa-audit.result }}
-          OUTCOME_JSDOC: ${{ needs.sa-jsdoc.result }}
-          JSDOC_COVERAGE: ${{ needs.sa-jsdoc.outputs.coverage }}
-        with:
-          script: |
-            const { default: script } = await import(`file://${process.env.GITHUB_WORKSPACE}/scripts/ci/update-ci-comment.mjs`)
-            await script({github, context, step: 'sa'})
-      - name: Check Failure
-        if: |
-          needs.sa-astro.result == 'failure' ||
-          needs.sa-prettier.result == 'failure' ||
-          needs.sa-eslint.result == 'failure' ||
-          needs.sa-lychee.result == 'failure' ||
-          needs.sa-typos.result == 'failure' ||
-          needs.sa-audit.result == 'failure' ||
-          needs.sa-snyk.result == 'failure' ||
-          needs.sa-sonar.result == 'failure' ||
-          needs.sa-jsdoc.result == 'failure'
-        run: exit 1
-
-  accessibility-report:
-    name: Accessibility Report
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    needs: accessibility
-    if: always()
-    steps:
-      - uses: actions/checkout@v6
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 22
-          cache: "pnpm"
-      - run: pnpm install --frozen-lockfile --prefer-offline
-      - name: Download Axe Results (Light)
-        uses: actions/download-artifact@v7
-        continue-on-error: true
-        with:
-          name: axe-accessibility-report-light
-          path: a11y-deploy/light
-      - name: Download Axe Results (Dark)
-        uses: actions/download-artifact@v7
-        continue-on-error: true
-        with:
-          name: axe-accessibility-report-dark
-          path: a11y-deploy/dark
-      - name: Generate Dashboard
-        run: node scripts/ci/generate-accessibility-index.mjs a11y-deploy
-      - name: Upload consolidated assets
-        uses: actions/upload-artifact@v6
-        with:
-          name: a11y-dashboard
-          path: a11y-deploy/
-          retention-days: 1
-
   lighthouse-report:
     name: Lighthouse Report
     runs-on: ubuntu-latest
     timeout-minutes: 5
     needs: lighthouse-audit
     if: always()
+    permissions:
+      pull-requests: write
+    env:
+      SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
     steps:
       - uses: actions/checkout@v6
       - uses: pnpm/action-setup@v4
@@ -574,6 +649,8 @@ jobs:
           node-version: 22
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile --prefer-offline
+
+      # Download artifacts for each combination and place in structure
       - name: Download LH Results (Light - Mobile)
         uses: actions/download-artifact@v7
         continue-on-error: true
@@ -598,6 +675,7 @@ jobs:
         with:
           name: lh-results-dark-desktop
           path: lh-deploy/dark/desktop
+
       - name: Generate Dashboard
         run: node scripts/ci/generate-lighthouse-index.mjs lh-deploy
       - name: Upload LH Dashboard
@@ -614,7 +692,11 @@ jobs:
     needs:
       [
         ci-setup,
-        sa-astro, sa-prettier, sa-eslint, sa-audit, sa-jsdoc, sa-lychee, sa-typos, sa-snyk, sa-sonar,
+        sa-astro,
+        sa-prettier,
+        sa-eslint,
+        sa-audit,
+        sa-jsdoc,
         accessibility-report,
         bundle-size,
         html-validator,
@@ -629,24 +711,32 @@ jobs:
       pull-requests: write
     steps:
       - uses: actions/checkout@v6
+
       - name: Download all artifacts
         uses: actions/download-artifact@v7
         with:
           path: .
           merge-multiple: true
+
       - uses: actions/setup-node@v6
         with:
           node-version: 22
+
       - name: Build Dashboard
         run: node scripts/ci/build-report-dashboard.mjs
         env:
           GITHUB_RUN_NUMBER: ${{ github.run_number }}
+
       - name: Deploy to Vercel
         id: deploy
         run: |
+          # Use npx vercel directly
           export VERCEL_TOKEN=${{ secrets.VERCEL_TOKEN }}
           DEPLOY_URL=$(npx vercel deploy ./dist-reports --name jmrp-ci-reports --token=${{ secrets.VERCEL_TOKEN }} --yes --public)
           echo "url=$DEPLOY_URL" >> $GITHUB_OUTPUT
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+
       - name: Update CI Comment (Final Results)
         uses: actions/github-script@v8
         env:
