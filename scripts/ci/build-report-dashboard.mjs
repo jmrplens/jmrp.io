@@ -45,6 +45,12 @@ const reports = [
     main: "index.html",
   },
   {
+    id: "lychee",
+    src: "lychee-report.html",
+    dest: "lychee/index.html",
+    main: "index.html",
+  },
+  {
     id: "rss",
     src: "dist/rss-preview.html",
     dest: "rss/index.html",
@@ -499,9 +505,9 @@ const html = `
                         <tr><td>Astro Check</td><td><span class="status-badge ${getStatusClass(saOutcomes.astro)}">${saOutcomes.astro || "Pending"}</span></td></tr>
                         <tr><td>Prettier</td><td><span class="status-badge ${getStatusClass(saOutcomes.prettier)}">${saOutcomes.prettier || "Pending"}</span></td></tr>
                         <tr><td>ESLint</td><td><span class="status-badge ${getStatusClass(saOutcomes.eslint)}">${saOutcomes.eslint || "Pending"}</span></td></tr>
-                        <tr><td>Link Checker</td><td><span class="status-badge ${getStatusClass(saOutcomes.lychee)}">${saOutcomes.lychee || "Pending"}</span></td></tr>
+                        <tr><td>Link Checker</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(saOutcomes.lychee)}">${saOutcomes.lychee || "Pending"}</span> ${status.lychee ? '<a href="lychee/" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">View Report</a>' : ""}</div></td></tr>
                         <tr><td>Spell Checker</td><td><span class="status-badge ${getStatusClass(saOutcomes.typos)}">${saOutcomes.typos || "Pending"}</span></td></tr>
-                        <tr><td>Security (Audit/Snyk)</td><td><span class="status-badge ${getStatusClass(saOutcomes.snyk)}">${saOutcomes.snyk || saOutcomes.security || "Pending"}</span></td></tr>
+                        <tr><td>Security</td><td><span class="status-badge ${getStatusClass(saOutcomes.snyk || saOutcomes.security)}">${saOutcomes.snyk || saOutcomes.security || "Pending"}</span></td></tr>
                       </tbody>
                     </table>
                   </div>
@@ -514,8 +520,8 @@ const html = `
                     <table>
                       <tbody>
                         <tr><td>JS/CSS Size</td><td><b>${bundleStats?.readableTotalSize || "N/A"}</b></td></tr>
-                        <tr><td>Image Check</td><td><span class="status-badge ${getStatusClass(qualityOutcomes.image)}">${qualityOutcomes.image || "Pending"}</span></td></tr>
-                        <tr><td>JSON-LD Schema</td><td><span class="status-badge ${getStatusClass(qualityOutcomes.schema)}">${qualityOutcomes.schema || "Pending"}</span></td></tr>
+                        <tr><td>Image Check</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(qualityOutcomes.image)}">${qualityOutcomes.image || "Pending"}</span> ${status.images ? '<a href="images/" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">View Report</a>' : ""}</div></td></tr>
+                        <tr><td>JSON-LD Schema</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(qualityOutcomes.schema)}">${qualityOutcomes.schema || "Pending"}</span> ${status.schema ? '<a href="schema/" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">View Report</a>' : ""}</div></td></tr>
                         <tr><td>E2E Tests</td><td><span class="status-badge ${getStatusClass(qualityOutcomes.functional)}">${qualityOutcomes.functional || "Pending"}</span></td></tr>
                       </tbody>
                     </table>
