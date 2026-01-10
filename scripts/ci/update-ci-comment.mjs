@@ -2,7 +2,8 @@
  * update-ci-comment.mjs
  *
  * Centralized script to manage a single "living" PR comment for CI results.
- * It can be called at different stages of the CI to update specific sections.
+ * It provides a broad executive summary, a health score visualization,
+ * and a centered dashboard link.
  */
 
 import fs from "node:fs";
@@ -42,20 +43,10 @@ function buildSaTable(results) {
 /**
  * Builds the Quality & Performance table
  */
-function buildQualityTable(results, vercelUrl) {
+function buildQualityTable(results) {
   const getIcon = (res) => STATUS_ICONS[res] || STATUS_ICONS.pending;
 
   let md = "\n#### 📈 Quality & Performance\n\n";
-  if (vercelUrl) {
-    // Ensure URL doesn't have double protocol
-    const cleanUrl = vercelUrl.startsWith("http")
-      ? vercelUrl
-      : `https://${vercelUrl}`;
-    md += `> 🌐 [**Open Interactive Dashboard**](${cleanUrl}) 🚀\n\n`;
-  } else {
-    md += `> ⏳ *Generating detailed reports and dashboard...*\n\n`;
-  }
-
   md += "| Check | Status | Note |\n";
   md += "| :--- | :---: | :--- |\n";
   md += `| ♿ Accessibility | ${getIcon(results.a11y)} | Detailed audit in dashboard |\n`;
@@ -69,82 +60,97 @@ function buildQualityTable(results, vercelUrl) {
 }
 
 /**
- * Calculates current health score based on available json reports
+ * Builds a broad summary based on scores and available data
+ */
+function buildExecutiveSummary(saResults, qualityResults, healthScore) {
+  let summary = "#### 📝 Executive Summary\n\n";
+
+  if (healthScore >= 95) {
+    summary += "✨ **Project is in excellent shape!** All critical quality and security gates have passed with flying colors. Codebase stability and accessibility standards are exceptionally high.\n";
+  } else if (healthScore >= 80) {
+    summary += "✅ **Project is healthy.** Most checks passed successfully. There are minor improvements suggested, but the overall state is stable for review.\n";
+  } else if (healthScore >= 60) {
+    summary += "⚠️ **Attention Recommended.** The CI has detected several issues or regressions. While not strictly blocking, these points should be addressed to maintain long-term quality.\n";
+  } else {
+    summary += "❌ **Critical Status.** Multiple failures detected. The current changes do not meet the project's quality or security standards. Please review the detailed reports below.\n";
+  }
+
+  // Key Highlights / Insights
+  summary += "\n**Highlights:**\n";
+
+  let highlights = [];
+
+  try {
+    if (fs.existsSync("bundle-analysis.json")) {
+      const bundle = JSON.parse(fs.readFileSync("bundle-analysis.json", "utf-8"));
+      highlights.push(`- 📦 **Asset Size:** Total JavaScript & CSS is **${bundle.readableTotalSize}** across ${bundle.fileCount} optimized assets.`);
+    }
+
+    if (fs.existsSync("accessibility-report.json")) {
+      const a11y = JSON.parse(fs.readFileSync("accessibility-report.json", "utf-8"));
+      const violations = a11y.reduce((acc, r) => acc + (r.violations?.length || 0), 0);
+      highlights.push(violations === 0
+        ? "- ♿ **Accessibility:** Perfect score! No violations detected in any audited pages. ✅"
+        : `- ♿ **Accessibility:** Found ${violations} violations that need attention.`);
+    }
+
+    if (fs.existsSync("html-validation.json")) {
+      const html = JSON.parse(fs.readFileSync("html-validation.json", "utf-8"));
+      const errors = html.reduce((acc, f) => acc + (f.errorCount || 0), 0);
+      highlights.push(errors === 0
+        ? "- 📄 **HTML5:** Full valid syntax across all generated pages. ✅"
+        : `- 📄 **HTML5:** ${errors} syntax errors detected in the current build.`);
+    }
+
+    if (fs.existsSync("rss-validation.json")) {
+      const rss = JSON.parse(fs.readFileSync("rss-validation.json", "utf-8"));
+      if (rss.valid) highlights.push(`- 📡 **RSS/Atom:** Feed is syntactically valid and compliant with industry standards.`);
+    }
+
+    if (saResults.lychee === "success") {
+      highlights.push("- 🔗 **Link Integrity:** All external and internal links verified successfully.");
+    }
+  } catch (err) {
+    console.warn("Error building highlights:", err.message);
+  }
+
+  summary += highlights.length > 0 ? highlights.join("\n") : "- *Detailed insights will appear once analysis is complete.*";
+  summary += "\n";
+
+  return summary;
+}
+
+/**
+ * Calculates health score (Sync with build-report-dashboard.mjs)
  */
 function calculateHealthScore(saResults, qualityResults) {
   let score = 100;
 
-  // Deduction for SA failures (-5 each)
-  const saToCheck = [
-    "astro",
-    "prettier",
-    "eslint",
-    "lychee",
-    "typos",
-    "stylelint",
-    "security",
-    "snyk",
-    "sonar",
-    "jsdoc",
-  ];
-  for (const tool of saToCheck) {
-    if (saResults[tool] === "failure") score -= 5;
+  for (const k in saResults) {
+    if (saResults[k] === "failure" && k !== "jsdocCoverage") score -= 5;
+  }
+  for (const k in qualityResults) {
+    if (qualityResults[k] === "failure") score -= 10;
   }
 
-  // Deduction for Quality failures (-10 each)
-  const qualityToCheck = [
-    "a11y",
-    "html",
-    "bundle",
-    "rss",
-    "functional",
-    "schema",
-    "image",
-  ];
-  for (const check of qualityToCheck) {
-    if (qualityResults[check] === "failure") score -= 10;
-  }
+  try {
+    if (fs.existsSync("accessibility-report.json")) {
+      const a11y = JSON.parse(fs.readFileSync("accessibility-report.json", "utf-8"));
+      const totalViolations = a11y.reduce((acc, r) => acc + (r.violations?.length || 0), 0);
+      score -= Math.min(20, totalViolations * 2);
+    }
+    if (fs.existsSync("html-validation.json")) {
+      const html = JSON.parse(fs.readFileSync("html-validation.json", "utf-8"));
+      const errors = html.reduce((acc, f) => acc + (f.errorCount || 0), 0);
+      score -= Math.min(15, errors);
+    }
+  } catch (e) { }
 
-  // Deductions from specific JSON data if available
-  if (fs.existsSync("accessibility-report.json")) {
-    const a11yData = JSON.parse(
-      fs.readFileSync("accessibility-report.json", "utf-8"),
-    );
-    const totalViolations = a11yData.reduce(
-      (acc, r) => acc + (r.violations?.length || 0),
-      0,
-    );
-    score -= Math.min(20, totalViolations * 2);
-  }
-
-  if (fs.existsSync("html-validation.json")) {
-    const htmlData = JSON.parse(
-      fs.readFileSync("html-validation.json", "utf-8"),
-    );
-    const htmlErrors = htmlData.reduce(
-      (acc, f) => acc + f.messages.filter((m) => m.severity === 2).length,
-      0,
-    );
-    score -= Math.min(15, htmlErrors);
-  }
-
-  return Math.max(0, score);
-}
-
-/**
- * Gets the health icon based on score
- */
-function getHealthIcon(score) {
-  if (score >= 95) return "💎";
-  if (score >= 80) return "✅";
-  if (score >= 60) return "⚠️";
-  return "❌";
+  return Math.max(0, Math.min(100, score));
 }
 
 /**
  * Main function to update the CI comment in the GitHub PR.
- *
- * @param {object} params - Parameters for the comment update.
  */
 export default async function updateCiComment({ github, context, step }) {
   const prNumber = context.payload.pull_request?.number;
@@ -153,7 +159,6 @@ export default async function updateCiComment({ github, context, step }) {
     return;
   }
 
-  // Prepare current state data
   const saResults = {
     astro: process.env.OUTCOME_ASTRO,
     prettier: process.env.OUTCOME_PRETTIER,
@@ -179,35 +184,47 @@ export default async function updateCiComment({ github, context, step }) {
   };
 
   const vercelUrl = process.env.VERCEL_URL;
+  const healthScore = calculateHealthScore(saResults, qualityResults);
 
-  // Build the full comment body
-  let body = `${HEADER} (Run #${process.env.GITHUB_RUN_NUMBER || "Local"})\n\n`;
+  // Visualization Header
+  const scoreColor = healthScore >= 90 ? "4E9A06" : healthScore >= 70 ? "C4A000" : "A40000";
 
-  switch (step) {
-    case "init": {
-      body += `> 🔄 **CI Analysis in progress...**\n\n`;
-      body += `*The reports are being generated. This message will be updated automatically.* ⚡\n`;
-      body += buildSaTable({});
-      body += buildQualityTable({}, null);
-      break;
-    }
-    case "sa": {
-      body += `> 🔄 **Static Analysis results available. Finalizing build...**\n\n`;
-      body += buildSaTable(saResults);
-      body += buildQualityTable({}, null);
-      break;
-    }
-    case "final": {
-      const healthScore = calculateHealthScore(saResults, qualityResults);
-      const icon = getHealthIcon(healthScore);
-      body += `### ${icon} Project Health Score: ${healthScore}/100\n\n`;
-      body += buildSaTable(saResults);
-      body += buildQualityTable(qualityResults, vercelUrl);
-      break;
-    }
+  let body = `${HEADER}\n\n`;
+  body += `<p align="center">\n`;
+  body += `  <img src="https://img.shields.io/badge/PROJECT%20HEALTH-${healthScore}%2F100-${scoreColor}?style=for-the-badge&logo=heartbeat&logoColor=white" alt="Project Health Score" />\n`;
+  body += `</p>\n\n`;
+
+  // Centered Dashboard Button
+  body += `<p align="center">\n`;
+  if (vercelUrl) {
+    const cleanUrl = vercelUrl.startsWith("http") ? vercelUrl : `https://${vercelUrl}`;
+    body += `  <a href="${cleanUrl}">\n`;
+    body += `    <img src="https://img.shields.io/badge/OPEN%20CI%20DASHBOARD-4F46E5?style=for-the-badge&logo=github&logoColor=white" alt="Open CI Dashboard" />\n`;
+    body += `  </a>\n`;
+  } else {
+    body += `  <img src="https://img.shields.io/badge/DASHBOARD-BUILDING...-lightgrey?style=for-the-badge&logo=github&logoColor=white" alt="Dashboard Building" />\n`;
+  }
+  body += `</p>\n\n`;
+
+  // Status text
+  if (step === "init") {
+    body += `> 🔄 **CI Analysis Initialized.** Starting parallel security and quality audits... ⚡\n\n`;
+  } else if (step === "sa") {
+    body += `> 🔄 **Static Analysis Completed.** Now finalizing assets and functional checks... 🧪\n\n`;
+  } else {
+    body += `> ✨ **Analysis Complete.** All reports are now available for review.\n\n`;
   }
 
-  body += `\n---\n> 📊 [**View Full Build & Logs**](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`;
+  // Summary
+  if (step === "final") {
+    body += buildExecutiveSummary(saResults, qualityResults, healthScore);
+  }
+
+  // Detailed tables
+  body += buildSaTable(saResults);
+  body += buildQualityTable(qualityResults);
+
+  body += `\n---\n<p align="right"><i>Last Update: ${new Date().toUTCString()} &bull; <a href="https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}">Workflow Logs</a></i></p>`;
 
   // Find and update/create comment
   const { data: comments } = await github.rest.issues.listComments({
