@@ -387,6 +387,12 @@ jobs:
             } catch (error) {
               console.error("Failed to post accessibility comment:", error);
             }
+      - name: Upload consolidated assets
+        uses: actions/upload-artifact@v6
+        with:
+          name: a11y-dashboard
+          path: a11y-deploy/
+          retention-days: 1
 
   bundle-size:
     name: Bundle Size Check
@@ -410,13 +416,12 @@ jobs:
       - run: pnpm install --frozen-lockfile --prefer-offline
       - name: Analyze bundle size
         run: node scripts/ci/analyze-bundle-size.mjs
-      - name: Post Bundle Size Comment
-        if: github.event_name == 'pull_request'
-        uses: actions/github-script@v8
+      - name: Upload bundle analysis
+        uses: actions/upload-artifact@v6
         with:
-          script: |
-            const { default: script } = await import(`${process.env.GITHUB_WORKSPACE}/scripts/ci/post-bundle-size-comment.mjs`)
-            await script({github, context})
+          name: bundle-analysis
+          path: bundle-analysis.json
+          retention-days: 1
 
   html-validator:
     name: HTML Validation
@@ -457,24 +462,14 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.TOKEN_GITHUB }}
         continue-on-error: true
-      - name: Deploy HTML Report to Surge
-        if: github.event_name == 'pull_request' && env.SURGE_TOKEN != ''
-        shell: bash
-        env:
-          NODE_OPTIONS: "--no-deprecation"
-        run: |
-          mkdir -p html-deploy
-          cp html-report.html html-deploy/index.html
-          pnpm exec surge ./html-deploy jmrp-html-pr-${{ github.event.number }}.surge.sh --token ${{ env.SURGE_TOKEN }}
-      - name: Post HTML Validation Comment
-        if: github.event_name == 'pull_request'
-        uses: actions/github-script@v8
-        env:
-          SURGE_URL: ${{ secrets.SURGE_TOKEN != '' && format('jmrp-html-pr-{0}.surge.sh', github.event.number) || '' }}
+      - name: Upload HTML validation files
+        uses: actions/upload-artifact@v6
         with:
-          script: |
-            const { default: script } = await import(`file://${process.env.GITHUB_WORKSPACE}/scripts/ci/post-html-validation-comment.mjs`)
-            await script({github, context})
+          name: html-validation-report
+          path: |
+            html-validation.json
+            html-report.html
+          retention-days: 1
 
   rss-validation:
     name: RSS Feed Validation
@@ -508,24 +503,14 @@ jobs:
           name: rss-preview
           path: dist/rss-preview.html
           retention-days: 3
-      - name: Deploy RSS Preview to Surge
-        if: github.event_name == 'pull_request' && env.SURGE_TOKEN != ''
-        shell: bash
-        env:
-          NODE_OPTIONS: "--no-deprecation"
-        run: |
-          mkdir -p preview-deploy
-          cp dist/rss-preview.html preview-deploy/index.html
-          pnpm exec surge ./preview-deploy jmrp-rss-pr-${{ github.event.number }}.surge.sh --token ${{ env.SURGE_TOKEN }}
-      - name: Post RSS Validation Comment
-        if: github.event_name == 'pull_request' && always()
-        uses: actions/github-script@v8
-        env:
-          SURGE_URL: ${{ secrets.SURGE_TOKEN != '' && format('jmrp-rss-pr-{0}.surge.sh', github.event.number) || '' }}
+      - name: Upload RSS validation files
+        uses: actions/upload-artifact@v6
         with:
-          script: |
-            const { default: script } = await import(`file://${process.env.GITHUB_WORKSPACE}/scripts/ci/post-rss-validation-comment.mjs`)
-            await script({github, context})
+          name: rss-validation-report
+          path: |
+            rss-validation.json
+            dist/rss-preview.html
+          retention-days: 1
 
   schema-validation:
     name: Schema.org JSON-LD Validation
@@ -560,78 +545,19 @@ jobs:
           else
             echo "schema-report.json not found. Skipping generation."
           fi
-      - name: Deploy Schema Report to Surge
-        if: github.event_name == 'pull_request' && always() && env.SURGE_TOKEN != ''
-        env:
-          NODE_OPTIONS: "--no-deprecation"
-        run: |
-          if [ -f schema-report.html ]; then
-            mkdir -p schema-deploy
-            cp schema-report.html schema-deploy/index.html
-            pnpm exec surge ./schema-deploy jmrp-schema-pr-${{ github.event.number }}.surge.sh --token ${{ env.SURGE_TOKEN }}
-          fi
-      - name: Format Schema Comment
-        if: github.event_name == 'pull_request' && always()
-        run: |
-          if [ -f schema-report.json ]; then
-            node scripts/ci/format-schema-report.mjs schema-report.json > schema_comment.md
-          fi
-      - name: Post Schema Validation Comment
-        if: github.event_name == 'pull_request' && always()
-        uses: actions/github-script@v8
-        env:
-          SURGE_URL: ${{ secrets.SURGE_TOKEN != '' && format('jmrp-schema-pr-{0}.surge.sh', github.event.number) || '' }}
-        with:
-          script: |
-            const fs = require('fs');
-            const commentFile = 'schema_comment.md';
-
-            try {
-              if (fs.existsSync(commentFile)) {
-                let comment = fs.readFileSync(commentFile, 'utf8');
-                const surgeUrl = process.env.SURGE_URL;
-                
-                if (surgeUrl && /^jmrp-schema-pr-\d+\.surge\.sh$/.test(surgeUrl)) {
-                  comment += `\n\n#### 🌐 Live Report\n> 🚀 [**Open Schema Validation Report**](https://${surgeUrl}) for detailed insights.`;
-                } else if (surgeUrl) {
-                   console.warn('Skipping live report link due to invalid SURGE_URL format:', surgeUrl);
-                }
-
-                const header = "### 🔍 Schema.org Validation";
-                if (!comment.includes(header)) {
-                  comment = `${header}\n\n${comment}`;
-                }
-
-                const { data: comments } = await github.rest.issues.listComments({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  issue_number: context.issue.number,
-                });
-
-                const existingComment = comments.find((c) => c.body.includes(header));
-
-                if (existingComment) {
-                  await github.rest.issues.updateComment({
-                    owner: context.repo.owner,
-                    repo: context.repo.repo,
-                    comment_id: existingComment.id,
-                    body: comment,
-                  });
-                } else {
-                  await github.rest.issues.createComment({
-                    issue_number: context.issue.number,
-                    owner: context.repo.owner,
-                    repo: context.repo.repo,
-                    body: comment,
-                  });
-                }
-              } else {
-                console.log("Comment file not found (validation might have failed completely), posting fallback.");
                 // Optional: Post fallback
               }
             } catch (e) {
               core.setFailed(`Failed to post schema validation comment: ${e.message}`);
             }
+      - name: Upload Schema validation files
+        uses: actions/upload-artifact@v6
+        with:
+          name: schema-validation-report
+          path: |
+            schema-report.json
+            schema-report.html
+          retention-days: 1
 
   image-optimization:
     name: Image Optimization Check
@@ -662,24 +588,12 @@ jobs:
           echo "- WebP images: $WEBP_COUNT ✅" >> $GITHUB_STEP_SUMMARY
       - name: Generate Image HTML Report
         run: node scripts/ci/generate-image-report.mjs
-      - name: Deploy Image Report to Surge
-        if: github.event_name == 'pull_request' && env.SURGE_TOKEN != ''
-        shell: bash
-        env:
-          NODE_OPTIONS: "--no-deprecation"
-        run: |
-          mkdir -p img-deploy
-          cp image-report.html img-deploy/index.html
-          pnpm exec surge ./img-deploy jmrp-img-pr-${{ github.event.number }}.surge.sh --token ${{ env.SURGE_TOKEN }}
-      - name: Post Image Optimization Comment
-        if: github.event_name == 'pull_request'
-        uses: actions/github-script@v8
-        env:
-          SURGE_URL: ${{ secrets.SURGE_TOKEN != '' && format('jmrp-img-pr-{0}.surge.sh', github.event.number) || '' }}
+      - name: Upload image report
+        uses: actions/upload-artifact@v6
         with:
-          script: |
-            const { default: script } = await import(`${process.env.GITHUB_WORKSPACE}/scripts/ci/post-image-optimization-comment.mjs`)
-            await script({github, context})
+          name: image-optimization-report
+          path: image-report.html
+          retention-days: 1
 
   functional-tests:
     name: Functional Tests
@@ -714,22 +628,12 @@ jobs:
           name: functional-test-report
           path: playwright-report/
           retention-days: 7
-      - name: Deploy Playwright Report to Surge
-        if: github.event_name == 'pull_request' && always() && env.SURGE_TOKEN != ''
-        shell: bash
-        env:
-          NODE_OPTIONS: "--no-deprecation"
-        run: |
-          pnpm exec surge ./playwright-report jmrp-functional-pr-${{ github.event.number }}.surge.sh --token ${{ env.SURGE_TOKEN }}
-      - name: Post Functional Test Comment
-        if: github.event_name == 'pull_request' && always()
-        uses: actions/github-script@v8
-        env:
-          SURGE_URL: ${{ secrets.SURGE_TOKEN != '' && format('jmrp-functional-pr-{0}.surge.sh', github.event.number) || '' }}
+      - name: Upload functional report
+        uses: actions/upload-artifact@v6
         with:
-          script: |
-            const { default: script } = await import(`${process.env.GITHUB_WORKSPACE}/scripts/ci/post-functional-test-comment.mjs`)
-            await script({github, context})
+          name: functional-report
+          path: playwright-report/
+          retention-days: 1
 
   lighthouse-audit:
     name: LH Audit (${{ matrix.theme }} - ${{ matrix.formFactor }})
@@ -818,66 +722,60 @@ jobs:
       - name: Generate Dashboard
         run: node scripts/ci/generate-lighthouse-index.mjs lh-deploy
 
-      - name: Deploy to Surge
-        if: github.event_name == 'pull_request' && env.SURGE_TOKEN != ''
-        env:
-          NODE_OPTIONS: "--no-deprecation"
-        run: |
-          pnpm exec surge ./lh-deploy jmrp-lh-pr-${{ github.event.number }}.surge.sh --token ${{ env.SURGE_TOKEN }}
-
-      - name: Format Report for Comment
-        run: |
-          # The format script now scans recursively
-          node scripts/ci/format-lighthouse-report.mjs lh-deploy > lighthouse_comment.md
-
-      - name: Post Comment
-        if: github.event_name == 'pull_request'
-        uses: actions/github-script@v8
-        env:
-          SURGE_URL: ${{ secrets.SURGE_TOKEN != '' && format('jmrp-lh-pr-{0}.surge.sh', github.event.number) || '' }}
-        with:
-          script: |
-            const fs = require('fs');
-            const commentFile = 'lighthouse_comment.md';
-            try {
-              if (fs.existsSync(commentFile)) {
-                let comment = fs.readFileSync(commentFile, 'utf8');
-                const surgeUrl = process.env.SURGE_URL;
-                if (surgeUrl) {
-                  comment += `\n\n#### 🌐 Live Report\n> 🚀 [**Open Lighthouse Reports Dashboard**](https://${surgeUrl}) for detailed insights.`;
-                }
-                const header = "### ⚡ Lighthouse Audit Report";
-                if (!comment.includes(header)) {
-                  comment = `${header}\n\n${comment}`;
-                }
-
-                const { data: comments } = await github.rest.issues.listComments({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  issue_number: context.issue.number,
-                  per_page: 100,
-                });
-
-                const existingComment = comments.find(
-                  (c) => c.user.type === "Bot" && c.body.includes(header)
-                );
-
-                if (existingComment) {
-                  await github.rest.issues.updateComment({
-                    owner: context.repo.owner,
-                    repo: context.repo.repo,
-                    comment_id: existingComment.id,
-                    body: comment,
-                  });
-                } else {
-                  await github.rest.issues.createComment({
-                    issue_number: context.issue.number,
-                    owner: context.repo.owner,
-                    repo: context.repo.repo,
-                    body: comment,
-                  });
                 }
               }
             } catch (error) {
               console.error("Failed to post lighthouse comment:", error);
             }
+      - name: Upload LH Dashboard
+        uses: actions/upload-artifact@v6
+        with:
+          name: lh-dashboard
+          path: lh-deploy/
+          retention-days: 1
+
+  deploy-reports:
+    name: "🚀 Deploy CI Dashboard"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [accessibility-report, bundle-size, html-validator, rss-validation, schema-validation, image-optimization, lighthouse-report]
+    if: always() && github.event_name == 'pull_request'
+    permissions:
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v6
+      
+      - name: Download all artifacts
+        uses: actions/download-artifact@v7
+        with:
+          path: .
+          merge-multiple: true
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Build Dashboard
+        run: node scripts/ci/build-report-dashboard.mjs
+        env:
+          GITHUB_RUN_NUMBER: ${{ github.run_number }}
+
+      - name: Deploy to Vercel
+        id: deploy
+        run: |
+          # Use npx vercel directly
+          export VERCEL_TOKEN=${{ secrets.VERCEL_TOKEN }}
+          DEPLOY_URL=$(npx vercel deploy ./dist-reports --name jmrp-ci-reports --token=${{ secrets.VERCEL_TOKEN }} --yes --public)
+          echo "url=$DEPLOY_URL" >> $GITHUB_OUTPUT
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+
+      - name: Post Consolidated Comment
+        uses: actions/github-script@v8
+        env:
+          VERCEL_URL: ${{ steps.deploy.outputs.url }}
+          JSDOC_COVERAGE: ${{ needs.sa-jsdoc.outputs.coverage }}
+        with:
+          script: |
+            const { default: script } = await import(`file://${process.env.GITHUB_WORKSPACE}/scripts/ci/post-consolidated-report-comment.mjs`)
+            await script({github, context})

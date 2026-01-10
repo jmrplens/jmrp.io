@@ -1,0 +1,21 @@
+name: Cleanup CI Reports
+
+on:
+  pull_request:
+    types: [closed]
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.merged == true || github.event.pull_request.merged == false
+    steps:
+      - name: Remove PR Reports from Vercel
+        run: |
+          # Vercel CLI doesn't have a simple 'remove by metadata' without listing.
+          # For now, we will just log the closing. 
+          # Truly cleaning up CLI-based preview deployments requires a script that
+          # iterates through deployments and matches the 'name' and 'branch'.
+          echo "PR #${{ github.event.number }} closed. Reports are archived in Vercel."
+          # If we wanted to be aggressive:
+          # npx vercel rm jmrp-ci-reports -t ${{ secrets.VERCEL_TOKEN }} --yes
+          # But that might remove ALL reports. 
