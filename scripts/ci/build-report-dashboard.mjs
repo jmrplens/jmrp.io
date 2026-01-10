@@ -94,30 +94,7 @@ if (fs.existsSync("workflow-graph.png")) {
   );
 }
 
-// 1.6. Load Workflow Data
-let workflowData = { nodes: [], links: [] };
-if (fs.existsSync("workflow-data.json")) {
-  try {
-    workflowData = JSON.parse(fs.readFileSync("workflow-data.json", "utf-8"));
-  } catch (error) {
-    console.error("Error loading workflow-data.json:", error);
-  }
-}
-
-// 1.7. Tool label to ID mapping for logs
-const labelToLogId = {
-  "SA: Astro Check": "astro-check",
-  "SA: Prettier": "prettier",
-  "SA: ESLint": "eslint",
-  "SA: Link Checker (Dist)": "lychee",
-  "SA: Security Audit": "security-audit",
-  "SA: JSDoc Coverage": "jsdoc-coverage",
-  "SA: Stylelint": "stylelint",
-  "Bundle Size Check": "bundle-size",
-  "HTML Validation": "html-validation",
-  "RSS Feed Validation": "rss-validation",
-  "Schema.org JSON-LD Validation": "schema-validation",
-};
+// Note: workflow-graph.png is kept for fallback, but we now generate dynamic SVG
 
 // 2. Load JSON data for the dashboard summary
 let accessibilityData = [];
@@ -142,29 +119,34 @@ if (fs.existsSync("rss-validation.json")) {
   rssValidation = JSON.parse(fs.readFileSync("rss-validation.json", "utf-8"));
 }
 
-// 2.1 Load Lighthouse Data
+// 2.1 Load Lighthouse Data - FIXED: Load BOTH light AND dark themes
 let lighthouseData = [];
-const lhBase = path.join("lh-deploy", "light");
-
 const pages = [
-  { name: "Home", urlPart: "localhost:40679/$" },
-  { name: "Blog", urlPart: "/blog/" },
-  { name: "CV", urlPart: "/cv/" },
-  { name: "Publications", urlPart: "/publications/" },
+  { name: "Home", urlPart: "localhost:40679/$", pathMatch: ":40679/" },
+  { name: "Blog", urlPart: "/blog/", pathMatch: "/blog/" },
+  { name: "CV", urlPart: "/cv/", pathMatch: "/cv/" },
+  {
+    name: "Publications",
+    urlPart: "/publications/",
+    pathMatch: "/publications/",
+  },
 ];
 
-const lhManifestDesktop = path.join(lhBase, "desktop", "manifest.json");
-const lhManifestMobile = path.join(lhBase, "mobile", "manifest.json");
-
-// Helper to find score in manifest
+/**
+ * Helper to find performance score in manifest
+ * @param {string} manifestPath - Path to manifest.json
+ * @param {object} p - Page config with name and urlPart
+ * @returns {number|null} Performance score 0-100 or null
+ */
 const findScore = (manifestPath, p) => {
   if (!fs.existsSync(manifestPath)) return null;
   try {
     const json = JSON.parse(fs.readFileSync(manifestPath, "utf-8"));
     const item = json.find((i) => {
-      if (p.name === "Home")
+      if (p.name === "Home") {
         return i.url.endsWith(":40679/") || i.url.endsWith(".io/");
-      return i.url.includes(p.urlPart);
+      }
+      return i.url.includes(p.pathMatch);
     });
     return item ? Math.round(item.summary.performance * 100) : null;
   } catch {
@@ -172,15 +154,29 @@ const findScore = (manifestPath, p) => {
   }
 };
 
+// Build comprehensive Lighthouse data from all 4 combinations
 lighthouseData = pages.map((p) => {
   return {
     page: p.name,
-    mobile: findScore(lhManifestMobile, p),
-    desktop: findScore(lhManifestDesktop, p),
+    mobileLight: findScore(
+      path.join("lh-deploy", "light", "mobile", "manifest.json"),
+      p,
+    ),
+    mobileDark: findScore(
+      path.join("lh-deploy", "dark", "mobile", "manifest.json"),
+      p,
+    ),
+    desktopLight: findScore(
+      path.join("lh-deploy", "light", "desktop", "manifest.json"),
+      p,
+    ),
+    desktopDark: findScore(
+      path.join("lh-deploy", "dark", "desktop", "manifest.json"),
+      p,
+    ),
   };
 });
 
-// 3. Generate the Dashboard HTML
 // 3. Health Score Calculation (Synchronized with update-ci-comment.mjs)
 const saOutcomes = {
   astro: process.env.OUTCOME_ASTRO,
@@ -262,7 +258,7 @@ const getStatusClass = (res) => {
   if (res === "success") return "status-success";
   if (res === "failure") return "status-danger";
   if (res && res !== "pending") return "status-warning";
-  return "status-neutral"; // Default for pending/unknown
+  return "status-neutral";
 };
 
 // Helper for LH badges
@@ -270,12 +266,220 @@ const getScoreBadge = (score) => {
   if (score === null || score === undefined)
     return '<span class="score-pill" style="background:var(--neutral)"></span>N/A';
 
-  // Inline styles for pill colors since we didn't define red/orange classes in CSS properly
   let colorStyle = "var(--success)";
   if (score < 50) colorStyle = "var(--danger)";
   else if (score < 90) colorStyle = "var(--warning)";
 
   return `<span class="score-pill" style="background-color:${colorStyle}; box-shadow: 0 0 8px ${colorStyle}66;"></span>${score}`;
+};
+
+// Workflow metadata from environment
+const runNumber = process.env.GITHUB_RUN_NUMBER || "LOCAL";
+const runId = process.env.GITHUB_RUN_ID || "";
+const repository = process.env.GITHUB_REPOSITORY || "jmrplens/jmrp.io";
+const workflowUrl = runId
+  ? `https://github.com/${repository}/actions/runs/${runId}`
+  : "#";
+
+// Count job outcomes
+const countOutcomes = (outcomes) => {
+  let success = 0,
+    failure = 0,
+    other = 0;
+  for (const key in outcomes) {
+    if (outcomes[key] === "success") success++;
+    else if (outcomes[key] === "failure") failure++;
+    else other++;
+  }
+  return { success, failure, other };
+};
+
+const saStats = countOutcomes(saOutcomes);
+const qualityStats = countOutcomes(qualityOutcomes);
+
+// Load real workflow jobs data if available
+let workflowJobs = [];
+if (fs.existsSync("workflow-jobs.json")) {
+  try {
+    workflowJobs = JSON.parse(fs.readFileSync("workflow-jobs.json", "utf-8"));
+    console.log(`📊 Loaded ${workflowJobs.length} jobs from workflow-jobs.json`);
+  } catch (e) {
+    console.warn("⚠️ Could not load workflow-jobs.json:", e.message);
+  }
+}
+
+// Generate workflow visualization based on real GitHub Actions data
+const generateWorkflowSVG = () => {
+  // Map job names from GitHub API to short display names
+  const jobNameMap = {
+    "🚀 Initialize CI Report": { short: "Init", phase: 0 },
+    "Build Artifact": { short: "Build", phase: 1 },
+    // Phase 2: Static Analysis (needs: build)
+    "SA: Astro Check": { short: "Astro", phase: 2 },
+    "SA: Prettier": { short: "Prettier", phase: 2 },
+    "SA: ESLint": { short: "ESLint", phase: 2 },
+    "SA: Stylelint": { short: "Stylelint", phase: 2 },
+    "SA: Link Checker (Dist)": { short: "Links", phase: 2 },
+    "SA: Security Audit": { short: "Security", phase: 2 },
+    "SA: JSDoc Coverage": { short: "JSDoc", phase: 2 },
+    "SA: Spell Checker": { short: "Typos", phase: 2 },
+    "SA: Snyk Security": { short: "Snyk", phase: 2 },
+    "SA: SonarQube": { short: "Sonar", phase: 2 },
+    // Phase 2: Quality checks (needs: build)
+    "Bundle Size Check": { short: "Bundle", phase: 2 },
+    "HTML Validation": { short: "HTML", phase: 2 },
+    "RSS Feed Validation": { short: "RSS", phase: 2 },
+    "Schema.org JSON-LD Validation": { short: "Schema", phase: 2 },
+    "Image Optimization Check": { short: "Images", phase: 2 },
+    "Functional Tests": { short: "E2E", phase: 2 },
+    "Accessibility Tests (light mode)": { short: "A11y☀", phase: 2 },
+    "Accessibility Tests (dark mode)": { short: "A11y🌙", phase: 2 },
+    "LH Audit (light - mobile)": { short: "LH Mob☀", phase: 2 },
+    "LH Audit (light - desktop)": { short: "LH Desk☀", phase: 2 },
+    "LH Audit (dark - mobile)": { short: "LH Mob🌙", phase: 2 },
+    "LH Audit (dark - desktop)": { short: "LH Desk🌙", phase: 2 },
+    // Phase 3: Report aggregation
+    "Static Analysis Report": { short: "SA Report", phase: 3 },
+    "Accessibility Report": { short: "A11y Report", phase: 3 },
+    "Lighthouse Report": { short: "LH Report", phase: 3 },
+    // Phase 4: Deploy
+    "🚀 Deploy CI Dashboard": { short: "Deploy", phase: 4 },
+  };
+
+  // Process real jobs or use fallback
+  let processedJobs = [];
+
+  if (workflowJobs.length > 0) {
+    processedJobs = workflowJobs
+      .filter(job => jobNameMap[job.name]) // Only jobs we know about
+      .map(job => ({
+        name: jobNameMap[job.name].short,
+        fullName: job.name,
+        status: job.conclusion || "pending",
+        phase: jobNameMap[job.name].phase,
+      }));
+  } else {
+    // Fallback to environment variables
+    const fallbackJobs = [
+      { name: "Init", status: "success", phase: 0 },
+      { name: "Build", status: "success", phase: 1 },
+      { name: "Astro", status: saOutcomes.astro || "pending", phase: 2 },
+      { name: "Prettier", status: saOutcomes.prettier || "pending", phase: 2 },
+      { name: "ESLint", status: saOutcomes.eslint || "pending", phase: 2 },
+      { name: "Links", status: saOutcomes.lychee || "pending", phase: 2 },
+      { name: "Typos", status: saOutcomes.typos || "pending", phase: 2 },
+      { name: "HTML", status: qualityOutcomes.html || "pending", phase: 2 },
+      { name: "Deploy", status: "success", phase: 4 },
+    ];
+    processedJobs = fallbackJobs;
+  }
+
+  // Group jobs by phase
+  const phases = {};
+  processedJobs.forEach(job => {
+    if (!phases[job.phase]) phases[job.phase] = [];
+    phases[job.phase].push(job);
+  });
+
+  // Layout configuration
+  const nodeWidth = 75;
+  const nodeHeight = 24;
+  const phaseGap = 120;
+  const rowGap = 30;
+  const padding = 20;
+
+  // Calculate phase positions
+  const phaseKeys = Object.keys(phases).map(Number).sort((a, b) => a - b);
+  const maxRows = Math.max(...phaseKeys.map(p => phases[p].length));
+  const svgHeight = maxRows * rowGap + nodeHeight + padding * 2;
+  const svgWidth = (phaseKeys.length) * phaseGap + nodeWidth + padding * 2;
+
+  const getColor = (status) => {
+    if (status === "success") return "#10b981";
+    if (status === "failure") return "#ef4444";
+    if (status === "skipped") return "#64748b";
+    return "#f59e0b";
+  };
+
+  const lineColor = "#475569";
+  let connections = [];
+  let nodes = [];
+
+  // Draw nodes for each phase
+  phaseKeys.forEach((phaseNum, phaseIdx) => {
+    const phaseJobs = phases[phaseNum];
+    const phaseX = padding + phaseIdx * phaseGap;
+
+    // Center jobs vertically in this phase
+    const phaseHeight = phaseJobs.length * rowGap;
+    const startY = padding + (svgHeight - padding * 2 - phaseHeight) / 2;
+
+    phaseJobs.forEach((job, jobIdx) => {
+      const x = phaseX;
+      const y = startY + jobIdx * rowGap;
+      const color = getColor(job.status);
+
+      // Store position for connections
+      job.x = x;
+      job.y = y;
+
+      nodes.push(`<g class="workflow-node" title="${job.fullName || job.name}">
+        <rect x="${x}" y="${y}" width="${nodeWidth}" height="${nodeHeight}" rx="4" 
+              fill="${color}22" stroke="${color}" stroke-width="2"/>
+        <text x="${x + nodeWidth / 2}" y="${y + nodeHeight / 2 + 4}" 
+              text-anchor="middle" fill="${color}" font-size="9" font-weight="600">${job.name}</text>
+      </g>`);
+    });
+  });
+
+  // Draw connections between phases
+  for (let i = 0; i < phaseKeys.length - 1; i++) {
+    const currentPhase = phases[phaseKeys[i]];
+    const nextPhase = phases[phaseKeys[i + 1]];
+
+    // Calculate center points
+    const currentCenterY = currentPhase.reduce((acc, j) => acc + j.y + nodeHeight / 2, 0) / currentPhase.length;
+    const nextCenterY = nextPhase.reduce((acc, j) => acc + j.y + nodeHeight / 2, 0) / nextPhase.length;
+
+    const fanOutX = currentPhase[0].x + nodeWidth + 10;
+    const fanInX = nextPhase[0].x - 10;
+
+    // Draw fan-out lines from current phase
+    currentPhase.forEach(job => {
+      connections.push(`<path d="M${job.x + nodeWidth},${job.y + nodeHeight / 2} L${fanOutX},${job.y + nodeHeight / 2}" stroke="${lineColor}" stroke-width="1" fill="none" opacity="0.5"/>`);
+    });
+
+    // Vertical connector on right side
+    const currentYMin = Math.min(...currentPhase.map(j => j.y + nodeHeight / 2));
+    const currentYMax = Math.max(...currentPhase.map(j => j.y + nodeHeight / 2));
+    connections.push(`<path d="M${fanOutX},${currentYMin} L${fanOutX},${currentYMax}" stroke="${lineColor}" stroke-width="2" fill="none"/>`);
+
+    // Horizontal connector between phases
+    const midY = (currentCenterY + nextCenterY) / 2;
+    connections.push(`<path d="M${fanOutX},${currentCenterY} L${fanInX},${nextCenterY}" stroke="${lineColor}" stroke-width="2" fill="none" marker-end="url(#arrow)"/>`);
+
+    // Vertical connector on left side of next phase
+    const nextYMin = Math.min(...nextPhase.map(j => j.y + nodeHeight / 2));
+    const nextYMax = Math.max(...nextPhase.map(j => j.y + nodeHeight / 2));
+    connections.push(`<path d="M${fanInX},${nextYMin} L${fanInX},${nextYMax}" stroke="${lineColor}" stroke-width="2" fill="none"/>`);
+
+    // Draw fan-in lines to next phase
+    nextPhase.forEach(job => {
+      connections.push(`<path d="M${fanInX},${job.y + nodeHeight / 2} L${job.x},${job.y + nodeHeight / 2}" stroke="${lineColor}" stroke-width="1" fill="none" opacity="0.5"/>`);
+    });
+  }
+
+  return `
+    <svg width="100%" viewBox="0 0 ${svgWidth} ${svgHeight}" class="workflow-svg" style="min-width: ${Math.min(svgWidth, 600)}px; max-height: 500px;">
+      <defs>
+        <marker id="arrow" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto" markerUnits="strokeWidth">
+          <path d="M0,0 L0,6 L6,3 z" fill="${lineColor}"/>
+        </marker>
+      </defs>
+      <g class="connections">${connections.join("")}</g>
+      <g class="nodes">${nodes.join("")}</g>
+    </svg>
+  `;
 };
 
 const html = `
@@ -305,19 +509,6 @@ const html = `
         ::-webkit-scrollbar-track { background: var(--bg); }
         ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #475569; }
-
-        /* Job Hit Areas */
-        .job-hit-area {
-            position: absolute;
-            border: 2px solid transparent;
-            border-radius: 6px;
-            transition: all 0.2s;
-            z-index: 10;
-        }
-        .job-hit-area:hover {
-            border-color: var(--primary);
-            background: rgba(179, 137, 245, 0.1);
-        }
 
         /* Modal styling */
         .modal {
@@ -382,6 +573,10 @@ const html = `
             flex-direction: column;
             gap: 2rem;
             flex-shrink: 0;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            overflow-y: auto;
         }
 
         .logo {
@@ -415,6 +610,25 @@ const html = `
             font-weight: 600;
         }
 
+        .sidebar-stats {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            padding: 1rem;
+            background: rgba(255,255,255,0.02);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+        }
+        .stat-label { color: var(--text-muted); }
+        .stat-value { font-weight: 600; }
+        .stat-value.success { color: var(--success); }
+        .stat-value.danger { color: var(--danger); }
+
         /* Main Content */
         main {
             flex: 1;
@@ -422,14 +636,39 @@ const html = `
             max-width: 1400px;
             margin: 0 auto;
             width: 100%;
+            overflow-x: hidden;
         }
 
         header {
             margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 1rem;
         }
-
-        h1 { font-size: 2rem; margin: 0 0 0.5rem 0; letter-spacing: -1px; }
+        .header-left h1 { font-size: 2rem; margin: 0 0 0.5rem 0; letter-spacing: -1px; }
         .subtitle { color: var(--text-muted); }
+        
+        .header-actions {
+            display: flex;
+            gap: 0.75rem;
+        }
+        .header-btn {
+            padding: 0.6rem 1.2rem;
+            background: rgba(179, 137, 245, 0.1);
+            border: 1px solid var(--primary);
+            border-radius: 8px;
+            color: var(--primary);
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .header-btn:hover {
+            background: var(--primary);
+            color: var(--bg);
+        }
 
         /* Summary Grid */
         .summary-grid {
@@ -453,6 +692,7 @@ const html = `
             transform: translateY(-4px); 
             border-color: rgba(179, 137, 245, 0.3);
         }
+        .card.span-2 { grid-column: span 2; }
 
         .card-header {
             display: flex;
@@ -535,18 +775,25 @@ const html = `
             font-weight: 900;
         }
 
+        .health-info { flex: 1; min-width: 250px; }
         .health-info h2 { font-size: 1.5rem; margin: 0 0 0.5rem 0; }
         .health-info p { color: var(--text-muted); line-height: 1.5; font-size: 0.95rem; margin: 0; }
 
         /* Data Tables */
         .details-section { margin-bottom: 3rem; }
+        .section-title {
+            font-size: 1.25rem;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid var(--primary);
+            padding-left: 1rem;
+        }
         .table-wrapper {
             background: var(--card-bg);
             border: 1px solid var(--border);
             border-radius: 20px;
             overflow-x: auto;
         }
-        table { width: 100%; border-collapse: collapse; text-align: left; min-width: 600px; }
+        table { width: 100%; border-collapse: collapse; text-align: left; min-width: 500px; }
         th { background: rgba(255,255,255,0.02); padding: 1rem 1.5rem; font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); letter-spacing: 1px; }
         td { padding: 1rem 1.5rem; border-top: 1px solid var(--border); font-size: 0.9rem; }
         
@@ -559,29 +806,75 @@ const html = `
         .lh-summary-table td:first-child { text-align: left; border-radius: 8px 0 0 8px; font-weight: 600; color: var(--text-main); }
         .lh-summary-table td:last-child { border-radius: 0 8px 8px 0; }
         .score-pill { display: inline-flex; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
-        .score-pill.green { background-color: var(--success); box-shadow: 0 0 8px rgba(16, 185, 129, 0.4); }
+
+        /* Workflow Visualization */
+        .workflow-container {
+            background: #0d1117;
+            border-radius: 16px;
+            padding: 1.5rem;
+            overflow-x: auto;
+            border: 1px solid var(--border);
+        }
+        .workflow-svg { display: block; margin: 0 auto; max-width: 100%; height: auto; }
+        .workflow-node { cursor: pointer; transition: opacity 0.2s; }
+        .workflow-node:hover { opacity: 0.8; }
+        .workflow-legend {
+            display: flex;
+            gap: 1.5rem;
+            justify-content: center;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+        }
 
         footer { text-align: center; padding: 2rem; color: var(--text-muted); font-size: 0.85rem; border-top: 1px solid var(--border); margin-top: 4rem; }
 
-        @media (max-width: 1024px) {
-             .summary-grid { grid-template-columns: repeat(2, 1fr); }
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .card.span-2 { grid-column: span 1; }
         }
 
         @media (max-width: 900px) {
             body { flex-direction: column; }
-            aside { width: 100%; border-right: none; border-bottom: 1px solid var(--border); padding: 1rem 2rem; flex-direction: row; align-items: center; justify-content: space-between; height: 70px; }
+            aside { 
+                width: 100%; 
+                border-right: none; 
+                border-bottom: 1px solid var(--border); 
+                padding: 1rem 2rem; 
+                flex-direction: row; 
+                align-items: center; 
+                justify-content: space-between; 
+                height: auto;
+                position: relative;
+            }
             nav { display: none; }
+            aside .sidebar-stats { display: none; }
             aside .tag { display: none; }
             
             .health-section { flex-direction: column; text-align: center; gap: 1.5rem; padding: 1.5rem; }
             .summary-grid { grid-template-columns: 1fr; }
             
-            .card[style*="grid-column: span 2"] { grid-column: span 1 !important; }
-            
             main { padding: 1.5rem; }
             h1 { font-size: 1.75rem; }
-            
-            #workflow-container { transform: scale(0.6); transform-origin: top left; width: 166% !important; height: auto !important; margin-bottom: -40%; }
+            header { flex-direction: column; }
+            .header-actions { width: 100%; justify-content: center; }
+        }
+
+        @media (max-width: 600px) {
+            .lh-summary-table { font-size: 0.75rem; }
+            .lh-summary-table th, .lh-summary-table td { padding: 0.4rem; }
+            table { min-width: 400px; }
         }
     </style>
     <script>
@@ -618,18 +911,34 @@ const html = `
             JMRP DEVOPS
         </div>
         <nav>
-            <a href="#" class="nav-item active">Overview</a>
-            <a href="lighthouse/" class="nav-item">Performance</a>
-            <a href="a11y/" class="nav-item">Accessibility</a>
-            <a href="html/" class="nav-item">Health Scan</a>
+            <a href="#" class="nav-item active">📊 Overview</a>
+            <a href="lighthouse/" class="nav-item">⚡ Performance</a>
+            <a href="a11y/" class="nav-item">♿ Accessibility</a>
+            <a href="html/" class="nav-item">📄 HTML Validation</a>
+            <a href="lychee/" class="nav-item">🔗 Link Checker</a>
         </nav>
-        <div class="tag" style="margin-top: auto;">BUILD #${process.env.GITHUB_RUN_NUMBER || "LOCAL"}</div>
+        <div class="sidebar-stats">
+            <div class="stat-row">
+                <span class="stat-label">Static Analysis</span>
+                <span class="stat-value ${saStats.failure > 0 ? "danger" : "success"}">${saStats.success}/${Object.keys(saOutcomes).length} ✓</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Quality Checks</span>
+                <span class="stat-value ${qualityStats.failure > 0 ? "danger" : "success"}">${qualityStats.success}/${Object.keys(qualityOutcomes).length} ✓</span>
+            </div>
+        </div>
+        <div class="tag" style="margin-top: auto;">BUILD #${runNumber}</div>
     </aside>
 
     <main>
         <header>
-            <h1>CI Health Dashboard</h1>
-            <div class="subtitle">Last audit performed on <b>${timestamp}</b></div>
+            <div class="header-left">
+                <h1>CI Health Dashboard</h1>
+                <div class="subtitle">Last audit performed on <b>${timestamp}</b></div>
+            </div>
+            <div class="header-actions">
+                <a href="${workflowUrl}" target="_blank" class="header-btn">View on GitHub →</a>
+            </div>
         </header>
 
         <section class="health-section">
@@ -654,13 +963,13 @@ const html = `
         <div class="summary-grid">
             
             <!-- Lighthouse Summary Card -->
-             <div class="card" style="grid-column: span 2; min-height: 340px;">
+             <div class="card span-2" style="min-height: 340px;">
                 <div class="card-header">
                     <div class="card-icon">⚡</div>
                     <span class="status-badge ${status.lighthouse ? "status-success" : "status-warning"}">${status.lighthouse ? "AUDIT READY" : "IN PROGRESS"}</span>
                 </div>
                 <div class="card-title">Performance (Core Web Vitals)</div>
-                <div style="margin-top: 1rem; flex: 1;">
+                <div style="margin-top: 1rem; flex: 1; overflow-x: auto;">
                    <table class="lh-summary-table">
                         <thead>
                             <tr>
@@ -678,18 +987,18 @@ const html = `
                         </thead>
                         <tbody>
                             ${lighthouseData
-                              .map(
-                                (d) => `
+    .map(
+      (d) => `
                             <tr>
                                 <td>${d.page}</td>
-                                <td>${getScoreBadge(d.mobile)}</td>
-                                <td><span class="score-pill" style="background:var(--neutral)"></span>-</td>
-                                <td>${getScoreBadge(d.desktop)}</td>
-                                <td><span class="score-pill" style="background:var(--neutral)"></span>-</td>
+                                <td>${getScoreBadge(d.mobileLight)}</td>
+                                <td>${getScoreBadge(d.mobileDark)}</td>
+                                <td>${getScoreBadge(d.desktopLight)}</td>
+                                <td>${getScoreBadge(d.desktopDark)}</td>
                             </tr>
                             `,
-                              )
-                              .join("")}
+    )
+    .join("")}
                         </tbody>
                    </table>
                 </div>
@@ -740,10 +1049,10 @@ const html = `
         </div>
 
         <section class="details-section">
-            <h2 style="font-size: 1.25rem; margin-bottom: 1.5rem; border-left: 4px solid var(--primary); padding-left: 1rem;">Detailed Pipeline Status</h2>
+            <h2 class="section-title">Detailed Pipeline Status</h2>
             <div class="summary-grid">
                <!-- SA Status Card -->
-               <div class="card" style="grid-column: span 2;">
+               <div class="card span-2">
                   <div class="card-title" style="margin-bottom: 1rem;">Static Analysis Results</div>
                   <div class="table-wrapper">
                     <table>
@@ -784,31 +1093,14 @@ const html = `
         </section>
 
         <section class="details-section">
-            <h2 style="font-size: 1.25rem; margin-bottom: 1.5rem; border-left: 4px solid var(--primary); padding-left: 1rem;">Visual Workflow Status</h2>
-            <div class="card" style="padding: 1.5rem; position: relative; overflow: auto; background: #0d1117; border-radius: 24px; border: 1px solid var(--border);">
-                
-                <div id="workflow-container" style="position: relative; width: ${workflowData.width || 800}px; height: ${workflowData.height || 600}px; margin: 0 auto; min-width: min-content;">
-                    ${
-                      fs.existsSync(
-                        path.join(DIST_REPORTS, "workflow-graph.png"),
-                      )
-                        ? '<img src="workflow-graph.png" style="display: block; width: 100%; height: 100%;" />'
-                        : '<div style="padding: 5rem; text-align: center; color: var(--text-muted);">Workflow graph image missing</div>'
-                    }
-                    
-                    ${(workflowData.nodes || [])
-                      .map((n) => {
-                        const logId = labelToLogId[n.label];
-                        return `
-                        <div 
-                          class="job-hit-area" 
-                          style="left: ${n.x}px; top: ${n.y}px; width: ${n.width}px; height: ${n.height}px; cursor: ${logId ? "pointer" : "default"};"
-                          title="${n.label} - Status: ${n.status}"
-                          ${logId ? `onclick="openLog('${logId}')"` : ""}
-                        ></div>
-                      `;
-                      })
-                      .join("")}
+            <h2 class="section-title">Workflow Visualization</h2>
+            <div class="workflow-container">
+                ${generateWorkflowSVG()}
+                <div class="workflow-legend">
+                    <div class="legend-item"><span class="legend-dot" style="background:#10b981;"></span> Success</div>
+                    <div class="legend-item"><span class="legend-dot" style="background:#ef4444;"></span> Failed</div>
+                    <div class="legend-item"><span class="legend-dot" style="background:#f59e0b;"></span> Pending</div>
+                    <div class="legend-item"><span class="legend-dot" style="background:#64748b;"></span> Skipped</div>
                 </div>
             </div>
         </section>
@@ -856,56 +1148,44 @@ const lhIndexHtml = `
     
     <h2>Desktop</h2>
     <ul>
-        ${lighthouseData
-          .map((d) => {
-            // Find the report filename from manifest logic or we can just list everything found in directory
-            // Since we extracted score, we didn't extract the path in the previous step.
-            // We can re-scan or use the data if we enriched it.
-            // Let's just list links based on the manifest extraction if possible, or scan the dir.
-            // For now, let's just link to the known structure if we can.
-            // Actually, simplest is to just list all files in the directory.
-            return "";
-          })
-          .join("")}
-         <!-- For simplicity, we will just list all .html files found in the directory -->
          ${(() => {
-           const desktopDir = path.join(
-             DIST_REPORTS,
-             "lighthouse",
-             "light",
-             "desktop",
-           );
-           if (!fs.existsSync(desktopDir))
-             return "<li>No desktop reports found</li>";
-           return fs
-             .readdirSync(desktopDir)
-             .filter((f) => f.endsWith(".html"))
-             .map(
-               (f) => `<li><a href="light/desktop/${f}">Desktop: ${f}</a></li>`,
-             )
-             .join("");
-         })()}
+    const desktopDir = path.join(
+      DIST_REPORTS,
+      "lighthouse",
+      "light",
+      "desktop",
+    );
+    if (!fs.existsSync(desktopDir))
+      return "<li>No desktop reports found</li>";
+    return fs
+      .readdirSync(desktopDir)
+      .filter((f) => f.endsWith(".html"))
+      .map(
+        (f) => `<li><a href="light/desktop/${f}">Desktop: ${f}</a></li>`,
+      )
+      .join("");
+  })()}
     </ul>
 
     <h2>Mobile</h2>
     <ul>
          ${(() => {
-           const mobileDir = path.join(
-             DIST_REPORTS,
-             "lighthouse",
-             "light",
-             "mobile",
-           );
-           if (!fs.existsSync(mobileDir))
-             return "<li>No mobile reports found</li>";
-           return fs
-             .readdirSync(mobileDir)
-             .filter((f) => f.endsWith(".html"))
-             .map(
-               (f) => `<li><a href="light/mobile/${f}">Mobile: ${f}</a></li>`,
-             )
-             .join("");
-         })()}
+    const mobileDir = path.join(
+      DIST_REPORTS,
+      "lighthouse",
+      "light",
+      "mobile",
+    );
+    if (!fs.existsSync(mobileDir))
+      return "<li>No mobile reports found</li>";
+    return fs
+      .readdirSync(mobileDir)
+      .filter((f) => f.endsWith(".html"))
+      .map(
+        (f) => `<li><a href="light/mobile/${f}">Mobile: ${f}</a></li>`,
+      )
+      .join("");
+  })()}
     </ul>
 </body>
 </html>
