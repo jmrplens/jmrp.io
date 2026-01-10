@@ -124,7 +124,11 @@ const personSchema = {
       sortedSections.map((section) => (
         <section
           class="cv-section"
-          id={section.title.toLowerCase().replaceAll(/\s+/g, "-")}
+          id={section.title
+            .toLowerCase()
+            .replaceAll(/[^a-z0-9\s-]/g, "")
+            .trim()
+            .replaceAll(/\s+/g, "-")}
           aria-label={section.title}
         >
           <h2 class="section-title">{section.title}</h2>

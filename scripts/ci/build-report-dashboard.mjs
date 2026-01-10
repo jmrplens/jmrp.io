@@ -848,7 +848,7 @@ const html = `
             <h2 class="section-title">Detailed Pipeline Status</h2>
             <div class="summary-grid">
                 <!-- SA Status Card -->
-                <div class="card span-2">
+                <div class="card">
                    <div class="card-title" style="margin-bottom: 1rem;">Static Analysis Results</div>
                    <div class="table-wrapper">
                      <table>

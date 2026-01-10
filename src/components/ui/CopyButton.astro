@@ -62,9 +62,10 @@ const encodedContent = content ? encodeURIComponent(content) : undefined;
           if (!wrapper) return;
 
           const codeBlock = wrapper.querySelector("code, .copy-content");
-          text = codeBlock ? codeBlock.textContent : null;
-
-          if (!text && codeBlock) text = codeBlock.textContent;
+          if (codeBlock) {
+            text =
+              (codeBlock as HTMLElement).innerText ?? codeBlock.textContent;
+          }
         }
 
         if (!text) {

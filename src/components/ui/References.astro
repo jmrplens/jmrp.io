@@ -60,6 +60,7 @@ const iconFiles = import.meta.glob<{ default: ImageMetadata }>(
             console.warn(
               `[References] Invalid URL for reference "${ref.text}": ${ref.url}`,
             );
+            return null;
           }
           if (!urlObj) return null;
 

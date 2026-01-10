@@ -42,7 +42,9 @@ const venue_short = pub["container-title-short"] || "";
 const url = pub.url || pub.URL || "";
 const rawDoi = pub.doi || pub.DOI || "";
 const doi =
-  rawDoi && !rawDoi.startsWith("http") ? `https://doi.org/${rawDoi}` : rawDoi;
+  rawDoi && !rawDoi.startsWith("http")
+    ? `https://doi.org/${rawDoi.replace(/^(doi:|\/)+/, "")}`
+    : rawDoi;
 let pdf = pub.pdf || pub.PDF || "";
 let slides = pub.slides || "";
 let poster = pub.poster || "";

@@ -184,6 +184,13 @@ export default async function updateCiComment({ github, context, step }) {
   const vercelUrl = process.env.VERCEL_URL;
   const healthScore = calculateHealthScore(saResults, qualityResults);
 
+  console.log("DEBUG: SA Results", JSON.stringify(saResults, null, 2));
+  console.log(
+    "DEBUG: Quality Results",
+    JSON.stringify(qualityResults, null, 2),
+  );
+  console.log("DEBUG: Health Score", healthScore);
+
   // Visualization Header
   let scoreColor = "A40000";
   if (healthScore >= 90) scoreColor = "4E9A06";
