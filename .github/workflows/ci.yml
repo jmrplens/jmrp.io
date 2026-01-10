@@ -717,44 +717,58 @@ jobs:
       - uses: actions/checkout@v6
       - name: Download Accessibility Dashboard
         uses: actions/download-artifact@v7
+        continue-on-error: true
         with:
           name: a11y-dashboard
           path: a11y-deploy
       - name: Download Lighthouse Dashboard
         uses: actions/download-artifact@v7
+        continue-on-error: true
         with:
           name: lh-dashboard
           path: lh-deploy
       - name: Download HTML Validation
         uses: actions/download-artifact@v7
+        continue-on-error: true
         with:
           name: html-validation-report
           path: .
       - name: Download RSS Preview
         uses: actions/download-artifact@v7
+        continue-on-error: true
         with:
           name: rss-validation-report
           path: .
       - name: Download Schema Report
         uses: actions/download-artifact@v7
+        continue-on-error: true
         with:
           name: schema-validation-report
           path: .
       - name: Download Image Report
         uses: actions/download-artifact@v7
+        continue-on-error: true
         with:
           name: image-optimization-report
           path: .
       - name: Download Bundle Stats
         uses: actions/download-artifact@v7
+        continue-on-error: true
         with:
           name: bundle-analysis
           path: .
       - name: Download Lychee Report
         uses: actions/download-artifact@v7
+        continue-on-error: true
         with:
           name: lychee-report
           path: .
+      - name: Capture Workflow Graph
+        run: node scripts/ci/capture-workflow-graph.mjs
+        continue-on-error: true
+        env:
+          GITHUB_RUN_ID: ${{ github.run_id }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
       - name: Download Logs
         uses: actions/download-artifact@v7
         continue-on-error: true
@@ -769,6 +783,8 @@ jobs:
         run: node scripts/ci/build-report-dashboard.mjs
         env:
           GITHUB_RUN_NUMBER: ${{ github.run_number }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
           OUTCOME_ASTRO: ${{ needs.sa-astro.result }}
           OUTCOME_PRETTIER: ${{ needs.sa-prettier.result }}
           OUTCOME_ESLINT: ${{ needs.sa-eslint.result }}

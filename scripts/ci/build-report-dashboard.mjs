@@ -83,10 +83,40 @@ for (const r of reports) {
   status[r.id] = success;
 }
 
-// 1.5. Move Logs
+// 1.5. Move Logs & Graph
 if (fs.existsSync("logs")) {
   copy("logs", path.join(DIST_REPORTS, "logs"));
 }
+if (fs.existsSync("workflow-graph.png")) {
+  fs.copyFileSync(
+    "workflow-graph.png",
+    path.join(DIST_REPORTS, "workflow-graph.png"),
+  );
+}
+
+// 1.6. Load Workflow Data
+let workflowData = { nodes: [], links: [] };
+if (fs.existsSync("workflow-data.json")) {
+  try {
+    workflowData = JSON.parse(fs.readFileSync("workflow-data.json", "utf-8"));
+  } catch (error) {
+    console.error("Error loading workflow-data.json:", error);
+  }
+}
+
+// 1.7. Tool label to ID mapping for logs
+const labelToLogId = {
+  "SA: Astro Check": "astro-check",
+  "SA: Prettier": "prettier",
+  "SA: ESLint": "eslint",
+  "SA: Link Checker (Dist)": "lychee",
+  "SA: Security Audit": "security-audit",
+  "SA: JSDoc Coverage": "jsdoc-coverage",
+  "Bundle Size Check": "bundle-size",
+  "HTML Validation": "html-validation",
+  "RSS Feed Validation": "rss-validation",
+  "Schema.org JSON-LD Validation": "schema-validation",
+};
 
 // 2. Load JSON data for the dashboard summary
 let accessibilityData = [];
@@ -610,69 +640,51 @@ const html = `
         </section>
 
         <section class="details-section">
-            <h2 style="font-size: 1.25rem; margin-bottom: 1.5rem;">Workflow Graph</h2>
-            <div class="card" style="padding: 2rem; overflow-x: auto;">
-                <pre class="mermaid">
+            <h2 style="font-size: 1.25rem; margin-bottom: 1.5rem;">Visual Workflow Status</h2>
+            <div class="summary-grid">
+                <div class="card" style="padding: 1.5rem; overflow-x: auto;">
+                    <div class="card-title" style="margin-bottom: 1rem;">Action Graph (Interactive)</div>
+                    <pre class="mermaid">
 graph LR
-    Build[🏗️ Build] --> SA_Astro[✨ Astro Check]
-    Build --> SA_Prettier[🎨 Prettier]
-    Build --> SA_ESLint[🔍 ESLint]
-    Build --> SA_Audit[🛡️ Audit]
-    Build --> SA_Lychee[🔗 Lychee]
-    Build --> SA_JSDoc[📚 JSDoc]
-    Build --> SA_Snyk[🦊 Snyk]
-    Build --> SA_Sonar[🛰️ Sonar]
-    
-    Build --> Audit_LH[⚡ Lighthouse]
-    Build --> Audit_A11y[♿ Accessibility]
-    Build --> QA_HTML[📄 HTML]
-    Build --> QA_RSS[📡 RSS]
-    Build --> QA_Schema[🏷️ Schema]
-    Build --> QA_Image[🖼️ Image]
-    Build --> QA_E2E[🧪 E2E]
-    
-    SA_Astro --> Dashboard[📊 Dashboard]
-    SA_Prettier --> Dashboard
-    SA_ESLint --> Dashboard
-    SA_Audit --> Dashboard
-    SA_Lychee --> Dashboard
-    SA_JSDoc --> Dashboard
-    SA_Snyk --> Dashboard
-    SA_Sonar --> Dashboard
-    
-    Audit_LH --> LH_Rep[📄 LH Report]
-    Audit_A11y --> A11y_Rep[📄 A11y Report]
-    
-    LH_Rep --> Dashboard
-    A11y_Rep --> Dashboard
-    QA_HTML --> Dashboard
-    QA_RSS --> Dashboard
-    QA_Schema --> Dashboard
-    QA_Image --> Dashboard
-    QA_E2E --> Dashboard
-    
-    classDef success fill:#064e3b,stroke:#059669,color:#fff
-    classDef failure fill:#450a0a,stroke:#dc2626,color:#fff
-    classDef pending fill:#2d3748,stroke:#4a5568,color:#94a3b8
-
-    class Build success
-    class SA_Astro ${getStatusClass(saOutcomes.astro).replace("status-", "")}
-    class SA_Prettier ${getStatusClass(saOutcomes.prettier).replace("status-", "")}
-    class SA_ESLint ${getStatusClass(saOutcomes.eslint).replace("status-", "")}
-    class SA_Audit ${getStatusClass(saOutcomes.security).replace("status-", "")}
-    class SA_Lychee ${getStatusClass(saOutcomes.lychee).replace("status-", "")}
-    class SA_JSDoc ${getStatusClass(saOutcomes.jsdoc).replace("status-", "")}
-    class SA_Snyk ${getStatusClass(saOutcomes.snyk).replace("status-", "")}
-    class SA_Sonar ${getStatusClass(saOutcomes.sonar).replace("status-", "")}
-    class Audit_LH ${getStatusClass(qualityOutcomes.lighthouse).replace("status-", "")}
-    class Audit_A11y ${getStatusClass(qualityOutcomes.a11y).replace("status-", "")}
-    class QA_HTML ${getStatusClass(qualityOutcomes.html).replace("status-", "")}
-    class QA_RSS ${getStatusClass(qualityOutcomes.rss).replace("status-", "")}
-    class QA_Schema ${getStatusClass(qualityOutcomes.schema).replace("status-", "")}
-    class QA_Image ${getStatusClass(qualityOutcomes.image).replace("status-", "")}
-    class QA_E2E ${getStatusClass(qualityOutcomes.functional).replace("status-", "")}
-    class Dashboard success
-                </pre>
+${
+  workflowData.nodes.length > 0
+    ? workflowData.nodes.map((n) => `    ${n.id}["${n.label}"]`).join("\n") +
+      "\n" +
+      workflowData.links.map((l) => `    ${l.from} --> ${l.to}`).join("\n") +
+      "\n" +
+      `    classDef success fill:#064e3b,stroke:#059669,color:#fff\n` +
+      `    classDef failure fill:#450a0a,stroke:#dc2626,color:#fff\n` +
+      `    classDef pending fill:#2d3748,stroke:#4a5568,color:#94a3b8\n` +
+      workflowData.nodes
+        .map((n) => `    class ${n.id} ${n.status}`)
+        .join("\n") +
+      "\n" +
+      workflowData.nodes
+        .filter((n) => labelToLogId[n.label])
+        .map(
+          (n) =>
+            `    click ${n.id} "javascript:openLog('${labelToLogId[n.label]}')"`,
+        )
+        .join("\n")
+    : `
+    Build[🏗️ Build] --> SA[Static Analysis]
+    Build --> QA[Quality Assurance]
+    SA --> Dashboard[📊 Dashboard]
+    QA --> Dashboard
+`
+}
+                    </pre>
+                </div>
+                <div class="card" style="padding: 1.5rem;">
+                    <div class="card-title" style="margin-bottom: 1rem;">GitHub Screenshot</div>
+                    ${
+                      fs.existsSync(
+                        path.join(DIST_REPORTS, "workflow-graph.png"),
+                      )
+                        ? '<img src="workflow-graph.png" style="width:100%; border-radius:8px; border:1px solid var(--border);" />'
+                        : '<div style="padding:2rem; text-align:center; color:var(--text-muted);">Screenshot not available</div>'
+                    }
+                </div>
             </div>
         </section>
 
