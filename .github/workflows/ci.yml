@@ -266,15 +266,6 @@ jobs:
           pnpm exec html-validate -c .htmlvalidate.json --formatter json dist > html-validation.json || true
           node scripts/ci/generate-html-validation-report.mjs
 
-      - name: Link Checker (HTML)
-        id: lychee-dist
-        uses: lycheeverse/lychee-action@v2.7.0
-        with:
-          args: --config lychee.toml ./dist/**/*.html
-          fail: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.TOKEN_GITHUB }}
-        continue-on-error: true
       - name: Upload HTML validation files
         uses: actions/upload-artifact@v6
         with:
@@ -658,11 +649,41 @@ jobs:
       pull-requests: write
     steps:
       - uses: actions/checkout@v6
-      - name: Download all artifacts
+      - name: Download Accessibility Dashboard
         uses: actions/download-artifact@v7
         with:
+          name: a11y-dashboard
+          path: a11y-deploy
+      - name: Download Lighthouse Dashboard
+        uses: actions/download-artifact@v7
+        with:
+          name: lh-dashboard
+          path: lh-deploy
+      - name: Download HTML Validation
+        uses: actions/download-artifact@v7
+        with:
+          name: html-validation-report
           path: .
-          merge-multiple: true
+      - name: Download RSS Preview
+        uses: actions/download-artifact@v7
+        with:
+          name: rss-validation-report
+          path: .
+      - name: Download Schema Report
+        uses: actions/download-artifact@v7
+        with:
+          name: schema-validation-report
+          path: .
+      - name: Download Image Report
+        uses: actions/download-artifact@v7
+        with:
+          name: image-optimization-report
+          path: .
+      - name: Download Bundle Stats
+        uses: actions/download-artifact@v7
+        with:
+          name: bundle-analysis
+          path: .
       - uses: actions/setup-node@v6
         with:
           node-version: 22

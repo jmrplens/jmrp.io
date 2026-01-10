@@ -41,6 +41,8 @@ accessibility-report/
 *.log
 *.out
 *.pdf
+!public/pdf/**/*.pdf
+!src/content/**/*.pdf
 *.synctex.gz
 *.bbl
 *.bcf
