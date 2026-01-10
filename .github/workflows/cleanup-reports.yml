@@ -18,4 +18,4 @@ jobs:
           echo "PR #${{ github.event.number }} closed. Reports are archived in Vercel."
           # If we wanted to be aggressive:
           # npx vercel rm jmrp-ci-reports -t ${{ secrets.VERCEL_TOKEN }} --yes
-          # But that might remove ALL reports. 
+          # But that might remove ALL reports.

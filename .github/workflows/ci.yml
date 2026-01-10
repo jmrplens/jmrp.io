@@ -688,13 +688,28 @@ jobs:
     name: "🚀 Deploy CI Dashboard"
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    needs: [ci-setup, sa-astro, sa-prettier, sa-eslint, sa-audit, sa-jsdoc, accessibility-report, bundle-size, html-validator, rss-validation, schema-validation, image-optimization, lighthouse-report]
+    needs:
+      [
+        ci-setup,
+        sa-astro,
+        sa-prettier,
+        sa-eslint,
+        sa-audit,
+        sa-jsdoc,
+        accessibility-report,
+        bundle-size,
+        html-validator,
+        rss-validation,
+        schema-validation,
+        image-optimization,
+        lighthouse-report,
+      ]
     if: always() && github.event_name == 'pull_request'
     permissions:
       pull-requests: write
     steps:
       - uses: actions/checkout@v6
-      
+
       - name: Download all artifacts
         uses: actions/download-artifact@v7
         with:

@@ -1,346 +1,480 @@
-
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>JMRP CI Dashboard</title>
     <style>
-        :root {
-            --bg: #0f111a;
-            --card-bg: rgba(23, 25, 35, 0.7);
-            --border: rgba(255, 255, 255, 0.08);
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --primary: #b389f5;
-            --success: #10b981;
-            --warning: #f59e0b;
-            --danger: #ef4444;
-            --font: 'Inter', system-ui, -apple-system, sans-serif;
-        }
+      :root {
+        --bg: #0f111a;
+        --card-bg: rgba(23, 25, 35, 0.7);
+        --border: rgba(255, 255, 255, 0.08);
+        --text-main: #f8fafc;
+        --text-muted: #94a3b8;
+        --primary: #b389f5;
+        --success: #10b981;
+        --warning: #f59e0b;
+        --danger: #ef4444;
+        --font: "Inter", system-ui, -apple-system, sans-serif;
+      }
 
-        * { box-sizing: border-box; }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        background-color: var(--bg);
+        color: var(--text-main);
+        font-family: var(--font);
+        margin: 0;
+        display: flex;
+        min-height: 100vh;
+      }
+
+      /* Sidebar */
+      aside {
+        width: 260px;
+        background: rgba(15, 17, 26, 0.95);
+        border-right: 1px solid var(--border);
+        padding: 2rem;
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+      }
+
+      .logo {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        font-weight: 800;
+        font-size: 1.25rem;
+        color: var(--primary);
+      }
+
+      nav {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+      .nav-item {
+        padding: 0.75rem 1rem;
+        border-radius: 12px;
+        text-decoration: none;
+        color: var(--text-muted);
+        font-size: 0.95rem;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+      }
+      .nav-item:hover {
+        background: rgba(255, 255, 255, 0.05);
+        color: var(--text-main);
+      }
+      .nav-item.active {
+        background: rgba(179, 137, 245, 0.1);
+        color: var(--primary);
+        font-weight: 600;
+      }
+
+      /* Main Content */
+      main {
+        flex: 1;
+        padding: 3rem;
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      header {
+        margin-bottom: 3rem;
+      }
+
+      h1 {
+        font-size: 2.5rem;
+        margin: 0 0 0.5rem 0;
+        letter-spacing: -1px;
+      }
+      .subtitle {
+        color: var(--text-muted);
+      }
+
+      /* Summary Grid */
+      .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 2rem;
+        margin-bottom: 3rem;
+      }
+
+      .card {
+        background: var(--card-bg);
+        backdrop-filter: blur(12px);
+        border: 1px solid var(--border);
+        border-radius: 24px;
+        padding: 1.5rem;
+        transition:
+          transform 0.2s,
+          border-color 0.2s;
+      }
+      .card:hover {
+        transform: translateY(-4px);
+        border-color: rgba(179, 137, 245, 0.3);
+      }
+
+      .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 1.5rem;
+      }
+      .card-icon {
+        font-size: 1.5rem;
+        background: rgba(255, 255, 255, 0.03);
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 14px;
+      }
+      .status-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 99px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+      .status-success {
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--success);
+      }
+      .status-warning {
+        background: rgba(245, 158, 11, 0.1);
+        color: var(--warning);
+      }
+      .status-danger {
+        background: rgba(239, 68, 68, 0.1);
+        color: var(--danger);
+      }
+
+      .card-title {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+      .card-value {
+        font-size: 2rem;
+        font-weight: 800;
+        margin: 0.5rem 0;
+      }
+
+      .card-action {
+        display: block;
+        margin-top: 1.5rem;
+        text-align: center;
+        padding: 0.75rem;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        text-decoration: none;
+        color: var(--primary);
+        font-size: 0.9rem;
+        font-weight: 600;
+        transition: background 0.2s;
+      }
+      .card-action:hover {
+        background: rgba(179, 137, 245, 0.15);
+      }
+      .card-action.disabled {
+        opacity: 0.4;
+        pointer-events: none;
+        color: var(--text-muted);
+      }
+
+      /* Health Score Section */
+      .health-section {
+        background: linear-gradient(
+          135deg,
+          rgba(179, 137, 245, 0.1),
+          rgba(23, 25, 35, 0.7)
+        );
+        border: 1px solid var(--border);
+        border-radius: 32px;
+        padding: 3rem;
+        display: flex;
+        align-items: center;
+        gap: 4rem;
+        margin-bottom: 3rem;
+      }
+
+      .chart-container {
+        position: relative;
+        width: 160px;
+        height: 160px;
+      }
+      .chart-svg {
+        transform: rotate(-90deg);
+      }
+      .chart-bg {
+        fill: none;
+        stroke: rgba(255, 255, 255, 0.05);
+        stroke-width: 12;
+      }
+      .chart-progress {
+        fill: none;
+        stroke: #10b981;
+        stroke-width: 12;
+        stroke-linecap: round;
+        stroke-dasharray: 440;
+        stroke-dashoffset: 0;
+        transition: stroke-dashoffset 1s ease-out;
+      }
+      .chart-text {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 2.5rem;
+        font-weight: 900;
+      }
+
+      .health-info h2 {
+        font-size: 1.75rem;
+        margin: 0 0 1rem 0;
+      }
+      .health-info p {
+        color: var(--text-muted);
+        line-height: 1.6;
+        max-width: 500px;
+      }
+
+      /* Data Tables */
+      .details-section {
+        margin-bottom: 3rem;
+      }
+      .table-wrapper {
+        background: var(--card-bg);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        overflow: hidden;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: left;
+      }
+      th {
+        background: rgba(255, 255, 255, 0.02);
+        padding: 1.25rem 1.5rem;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        letter-spacing: 1px;
+      }
+      td {
+        padding: 1.25rem 1.5rem;
+        border-top: 1px solid var(--border);
+        font-size: 0.95rem;
+      }
+
+      .tag {
+        padding: 0.2rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.7rem;
+        font-weight: 700;
+        background: rgba(255, 255, 255, 0.05);
+      }
+
+      footer {
+        text-align: center;
+        padding: 2rem;
+        color: var(--text-muted);
+        font-size: 0.85rem;
+      }
+
+      @media (max-width: 900px) {
         body {
-            background-color: var(--bg);
-            color: var(--text-main);
-            font-family: var(--font);
-            margin: 0;
-            display: flex;
-            min-height: 100vh;
+          flex-direction: column;
         }
-
-        /* Sidebar */
         aside {
-            width: 260px;
-            background: rgba(15, 17, 26, 0.95);
-            border-right: 1px solid var(--border);
-            padding: 2rem;
-            display: flex;
-            flex-direction: column;
-            gap: 2rem;
+          width: 100%;
+          border-right: none;
+          border-bottom: 1px solid var(--border);
         }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            font-weight: 800;
-            font-size: 1.25rem;
-            color: var(--primary);
-        }
-
-        nav { display: flex; flex-direction: column; gap: 0.5rem; }
-        .nav-item {
-            padding: 0.75rem 1rem;
-            border-radius: 12px;
-            text-decoration: none;
-            color: var(--text-muted);
-            font-size: 0.95rem;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-        .nav-item:hover {
-            background: rgba(255, 255, 255, 0.05);
-            color: var(--text-main);
-        }
-        .nav-item.active {
-            background: rgba(179, 137, 245, 0.1);
-            color: var(--primary);
-            font-weight: 600;
-        }
-
-        /* Main Content */
-        main {
-            flex: 1;
-            padding: 3rem;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        header {
-            margin-bottom: 3rem;
-        }
-
-        h1 { font-size: 2.5rem; margin: 0 0 0.5rem 0; letter-spacing: -1px; }
-        .subtitle { color: var(--text-muted); }
-
-        /* Summary Grid */
-        .summary-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 2rem;
-            margin-bottom: 3rem;
-        }
-
-        .card {
-            background: var(--card-bg);
-            backdrop-filter: blur(12px);
-            border: 1px solid var(--border);
-            border-radius: 24px;
-            padding: 1.5rem;
-            transition: transform 0.2s, border-color 0.2s;
-        }
-        .card:hover { 
-            transform: translateY(-4px); 
-            border-color: rgba(179, 137, 245, 0.3);
-        }
-
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 1.5rem;
-        }
-        .card-icon {
-            font-size: 1.5rem;
-            background: rgba(255, 255, 255, 0.03);
-            width: 48px;
-            height: 48px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 14px;
-        }
-        .status-badge {
-            padding: 0.25rem 0.75rem;
-            border-radius: 99px;
-            font-size: 0.75rem;
-            font-weight: 700;
-            text-transform: uppercase;
-        }
-        .status-success { background: rgba(16, 185, 129, 0.1); color: var(--success); }
-        .status-warning { background: rgba(245, 158, 11, 0.1); color: var(--warning); }
-        .status-danger { background: rgba(239, 68, 68, 0.1); color: var(--danger); }
-
-        .card-title { font-size: 0.9rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
-        .card-value { font-size: 2rem; font-weight: 800; margin: 0.5rem 0; }
-        
-        .card-action {
-            display: block;
-            margin-top: 1.5rem;
-            text-align: center;
-            padding: 0.75rem;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 12px;
-            text-decoration: none;
-            color: var(--primary);
-            font-size: 0.9rem;
-            font-weight: 600;
-            transition: background 0.2s;
-        }
-        .card-action:hover { background: rgba(179, 137, 245, 0.15); }
-        .card-action.disabled { opacity: 0.4; pointer-events: none; color: var(--text-muted); }
-
-        /* Health Score Section */
         .health-section {
-            background: linear-gradient(135deg, rgba(179, 137, 245, 0.1), rgba(23, 25, 35, 0.7));
-            border: 1px solid var(--border);
-            border-radius: 32px;
-            padding: 3rem;
-            display: flex;
-            align-items: center;
-            gap: 4rem;
-            margin-bottom: 3rem;
+          flex-direction: column;
+          text-align: center;
+          gap: 2rem;
         }
-
-        .chart-container { position: relative; width: 160px; height: 160px; }
-        .chart-svg { transform: rotate(-90deg); }
-        .chart-bg { fill: none; stroke: rgba(255,255,255,0.05); stroke-width: 12; }
-        .chart-progress {
-            fill: none;
-            stroke: #10b981;
-            stroke-width: 12;
-            stroke-linecap: round;
-            stroke-dasharray: 440;
-            stroke-dashoffset: 0;
-            transition: stroke-dashoffset 1s ease-out;
-        }
-        .chart-text {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 2.5rem;
-            font-weight: 900;
-        }
-
-        .health-info h2 { font-size: 1.75rem; margin: 0 0 1rem 0; }
-        .health-info p { color: var(--text-muted); line-height: 1.6; max-width: 500px; }
-
-        /* Data Tables */
-        .details-section { margin-bottom: 3rem; }
-        .table-wrapper {
-            background: var(--card-bg);
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            overflow: hidden;
-        }
-        table { width: 100%; border-collapse: collapse; text-align: left; }
-        th { background: rgba(255,255,255,0.02); padding: 1.25rem 1.5rem; font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted); letter-spacing: 1px; }
-        td { padding: 1.25rem 1.5rem; border-top: 1px solid var(--border); font-size: 0.95rem; }
-        
-        .tag { padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.7rem; font-weight: 700; background: rgba(255,255,255,0.05); }
-
-        footer { text-align: center; padding: 2rem; color: var(--text-muted); font-size: 0.85rem; }
-
-        @media (max-width: 900px) {
-            body { flex-direction: column; }
-            aside { width: 100%; border-right: none; border-bottom: 1px solid var(--border); }
-            .health-section { flex-direction: column; text-align: center; gap: 2rem; }
-        }
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <aside>
-        <div class="logo">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="currentColor"/>
-                <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            JMRP DEVOPS
-        </div>
-        <nav>
-            <a href="#" class="nav-item active">Overview</a>
-            <a href="lighthouse/" class="nav-item">Performance</a>
-            <a href="a11y/" class="nav-item">Accessibility</a>
-            <a href="html/" class="nav-item">Health Scan</a>
-        </nav>
-        <div style="margin-top: auto;">
-             <div class="tag">BUILD #LOCAL</div>
-        </div>
+      <div class="logo">
+        <svg
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="currentColor" />
+          <path
+            d="M2 17L12 22L22 17"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+          <path
+            d="M2 12L12 17L22 12"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+        JMRP DEVOPS
+      </div>
+      <nav>
+        <a href="#" class="nav-item active">Overview</a>
+        <a href="lighthouse/" class="nav-item">Performance</a>
+        <a href="a11y/" class="nav-item">Accessibility</a>
+        <a href="html/" class="nav-item">Health Scan</a>
+      </nav>
+      <div style="margin-top: auto">
+        <div class="tag">BUILD #LOCAL</div>
+      </div>
     </aside>
 
     <main>
-        <header>
-            <h1>CI Health Dashboard</h1>
-            <div class="subtitle">Last audit performed on <b>Saturday, January 10, 2026 at 6:43 AM</b></div>
-        </header>
+      <header>
+        <h1>CI Health Dashboard</h1>
+        <div class="subtitle">
+          Last audit performed on <b>Saturday, January 10, 2026 at 6:43 AM</b>
+        </div>
+      </header>
 
-        <section class="health-section">
-            <div class="chart-container">
-                <svg class="chart-svg" width="160" height="160">
-                    <circle class="chart-bg" cx="80" cy="80" r="70"></circle>
-                    <circle class="chart-progress" cx="80" cy="80" r="70"></circle>
-                </svg>
-                <div class="chart-text">100%</div>
-            </div>
-            <div class="health-info">
-                <h2>Project Health Summary</h2>
-                <p>
-                    Your project is currently in <b>prime condition</b>. 
-                    We've scanned performance, accessibility, and code quality across multiple assets.
-                </p>
-            </div>
-        </section>
+      <section class="health-section">
+        <div class="chart-container">
+          <svg class="chart-svg" width="160" height="160">
+            <circle class="chart-bg" cx="80" cy="80" r="70"></circle>
+            <circle class="chart-progress" cx="80" cy="80" r="70"></circle>
+          </svg>
+          <div class="chart-text">100%</div>
+        </div>
+        <div class="health-info">
+          <h2>Project Health Summary</h2>
+          <p>
+            Your project is currently in <b>prime condition</b>. We've scanned
+            performance, accessibility, and code quality across multiple assets.
+          </p>
+        </div>
+      </section>
 
-        <div class="summary-grid">
-            <!-- Accessibility -->
-            <div class="card">
-                <div class="card-header">
-                    <div class="card-icon">♿</div>
-                    <span class="status-badge status-danger">Failed</span>
-                </div>
-                <div class="card-title">Accessibility</div>
-                <div class="card-value">Passed</div>
-                <a href="a11y/" class="card-action disabled">Open Detailed Report →</a>
-            </div>
-
-            <!-- HTML Validity -->
-            <div class="card">
-                <div class="card-header">
-                    <div class="card-icon">📄</div>
-                    <span class="status-badge status-warning">Skipped</span>
-                </div>
-                <div class="card-title">HTML5 Validation</div>
-                <div class="card-value">N/A</div>
-                <a href="html/" class="card-action disabled">View Source Scan →</a>
-            </div>
-
-            <!-- RSS Status -->
-            <div class="card">
-                <div class="card-header">
-                    <div class="card-icon">📡</div>
-                    <span class="status-badge status-success">Valid</span>
-                </div>
-                <div class="card-title">RSS Feed</div>
-                <div class="card-value">3 Items</div>
-                <a href="rss/" class="card-action disabled">Preview Feed →</a>
-            </div>
-
-            <!-- lighthouse -->
-            <div class="card">
-                <div class="card-header">
-                    <div class="card-icon">⚡</div>
-                    <span class="status-badge status-warning">In Progress</span>
-                </div>
-                <div class="card-title">Performance (LH)</div>
-                <div class="card-value">Core Web Vitals</div>
-                <a href="lighthouse/" class="card-action disabled">Audit Details →</a>
-            </div>
+      <div class="summary-grid">
+        <!-- Accessibility -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon">♿</div>
+            <span class="status-badge status-danger">Failed</span>
+          </div>
+          <div class="card-title">Accessibility</div>
+          <div class="card-value">Passed</div>
+          <a href="a11y/" class="card-action disabled"
+            >Open Detailed Report →</a
+          >
         </div>
 
-        <section class="details-section">
-            <h2 style="font-size: 1.25rem; margin-bottom: 1.5rem;">Build Composition</h2>
-            <div class="table-wrapper">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Category</th>
-                            <th>Status</th>
-                            <th>Asset Count</th>
-                            <th>Total Size</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td><b>Bundle (JS/CSS)</b></td>
-                            <td><span class="status-badge status-success">Optimized</span></td>
-                            <td>—</td>
-                            <td>—</td>
-                        </tr>
-                        <tr>
-                            <td><b>Images</b></td>
-                            <td><span class="status-badge status-success">WebP Active</span></td>
-                            <td>—</td>
-                            <td>—</td>
-                        </tr>
-                        <tr>
-                            <td><b>SEO / Schema</b></td>
-                            <td><span class="status-badge status-success">JSON-LD</span></td>
-                            <td>Valid</td>
-                            <td><a href="schema/" style="color: var(--primary); text-decoration:none;">View Report</a></td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </section>
+        <!-- HTML Validity -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon">📄</div>
+            <span class="status-badge status-warning">Skipped</span>
+          </div>
+          <div class="card-title">HTML5 Validation</div>
+          <div class="card-value">N/A</div>
+          <a href="html/" class="card-action disabled">View Source Scan →</a>
+        </div>
 
-        <footer>
-             Built with ❤️ for <b>jmrp.io</b> &bull; Saturday, January 10, 2026 at 6:43 AM
-        </footer>
+        <!-- RSS Status -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon">📡</div>
+            <span class="status-badge status-success">Valid</span>
+          </div>
+          <div class="card-title">RSS Feed</div>
+          <div class="card-value">3 Items</div>
+          <a href="rss/" class="card-action disabled">Preview Feed →</a>
+        </div>
+
+        <!-- lighthouse -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon">⚡</div>
+            <span class="status-badge status-warning">In Progress</span>
+          </div>
+          <div class="card-title">Performance (LH)</div>
+          <div class="card-value">Core Web Vitals</div>
+          <a href="lighthouse/" class="card-action disabled">Audit Details →</a>
+        </div>
+      </div>
+
+      <section class="details-section">
+        <h2 style="font-size: 1.25rem; margin-bottom: 1.5rem">
+          Build Composition
+        </h2>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Category</th>
+                <th>Status</th>
+                <th>Asset Count</th>
+                <th>Total Size</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><b>Bundle (JS/CSS)</b></td>
+                <td>
+                  <span class="status-badge status-success">Optimized</span>
+                </td>
+                <td>—</td>
+                <td>—</td>
+              </tr>
+              <tr>
+                <td><b>Images</b></td>
+                <td>
+                  <span class="status-badge status-success">WebP Active</span>
+                </td>
+                <td>—</td>
+                <td>—</td>
+              </tr>
+              <tr>
+                <td><b>SEO / Schema</b></td>
+                <td>
+                  <span class="status-badge status-success">JSON-LD</span>
+                </td>
+                <td>Valid</td>
+                <td>
+                  <a
+                    href="schema/"
+                    style="color: var(--primary); text-decoration: none"
+                    >View Report</a
+                  >
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <footer>
+        Built with ❤️ for <b>jmrp.io</b> &bull; Saturday, January 10, 2026 at
+        6:43 AM
+      </footer>
     </main>
-</body>
+  </body>
 </html>

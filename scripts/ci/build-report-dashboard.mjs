@@ -1,14 +1,14 @@
 /**
  * build-report-dashboard.mjs
- * 
- * Consolidates all CI reports into a single folder structure and 
+ *
+ * Consolidates all CI reports into a single folder structure and
  * generates a premium 'index.html' dashboard to navigate them.
  */
 
-import fs from 'node:fs';
-import path from 'node:path';
+import fs from "node:fs";
+import path from "node:path";
 
-const DIST_REPORTS = 'dist-reports';
+const DIST_REPORTS = "dist-reports";
 
 // Ensure the target directory exists
 if (fs.existsSync(DIST_REPORTS)) fs.rmSync(DIST_REPORTS, { recursive: true });
@@ -18,98 +18,131 @@ fs.mkdirSync(DIST_REPORTS);
  * Safely copies a file or directory
  */
 function copy(src, dest) {
-    if (!fs.existsSync(src)) {
-        console.warn(`⚠️ Warning: Source not found for copy: ${src}`);
-        return false;
-    }
-    const parent = path.dirname(dest);
-    if (!fs.existsSync(parent)) fs.mkdirSync(parent, { recursive: true });
+  if (!fs.existsSync(src)) {
+    console.warn(`⚠️ Warning: Source not found for copy: ${src}`);
+    return false;
+  }
+  const parent = path.dirname(dest);
+  if (!fs.existsSync(parent)) fs.mkdirSync(parent, { recursive: true });
 
-    if (fs.statSync(src).isDirectory()) {
-        fs.cpSync(src, dest, { recursive: true });
-    } else {
-        fs.copyFileSync(src, dest);
-    }
-    return true;
+  if (fs.statSync(src).isDirectory()) {
+    fs.cpSync(src, dest, { recursive: true });
+  } else {
+    fs.copyFileSync(src, dest);
+  }
+  return true;
 }
 
 // 1. Move Reports to structured folders
 console.log("📂 Consolidating report files...");
 
 const reports = [
-    { id: 'a11y', src: 'a11y-deploy', dest: 'a11y', main: 'index.html' },
-    { id: 'html', src: 'html-report.html', dest: 'html/index.html', main: 'index.html' },
-    { id: 'rss', src: 'dist/rss-preview.html', dest: 'rss/index.html', main: 'index.html' },
-    { id: 'schema', src: 'schema-report.html', dest: 'schema/index.html', main: 'index.html' },
-    { id: 'images', src: 'image-report.html', dest: 'images/index.html', main: 'index.html' },
-    { id: 'lighthouse', src: 'lh-deploy', dest: 'lighthouse', main: 'index.html' }
+  { id: "a11y", src: "a11y-deploy", dest: "a11y", main: "index.html" },
+  {
+    id: "html",
+    src: "html-report.html",
+    dest: "html/index.html",
+    main: "index.html",
+  },
+  {
+    id: "rss",
+    src: "dist/rss-preview.html",
+    dest: "rss/index.html",
+    main: "index.html",
+  },
+  {
+    id: "schema",
+    src: "schema-report.html",
+    dest: "schema/index.html",
+    main: "index.html",
+  },
+  {
+    id: "images",
+    src: "image-report.html",
+    dest: "images/index.html",
+    main: "index.html",
+  },
+  {
+    id: "lighthouse",
+    src: "lh-deploy",
+    dest: "lighthouse",
+    main: "index.html",
+  },
 ];
 
 const status = {};
 
 for (const r of reports) {
-    const success = copy(r.src, path.join(DIST_REPORTS, r.dest));
-    status[r.id] = success;
+  const success = copy(r.src, path.join(DIST_REPORTS, r.dest));
+  status[r.id] = success;
 }
 
 // 2. Load JSON data for the dashboard summary
 let accessibilityData = [];
-if (fs.existsSync('accessibility-report.json')) {
-    accessibilityData = JSON.parse(fs.readFileSync('accessibility-report.json', 'utf-8'));
+if (fs.existsSync("accessibility-report.json")) {
+  accessibilityData = JSON.parse(
+    fs.readFileSync("accessibility-report.json", "utf-8"),
+  );
 }
 
 let bundleStats = null;
-if (fs.existsSync('bundle-analysis.json')) {
-    bundleStats = JSON.parse(fs.readFileSync('bundle-analysis.json', 'utf-8'));
+if (fs.existsSync("bundle-analysis.json")) {
+  bundleStats = JSON.parse(fs.readFileSync("bundle-analysis.json", "utf-8"));
 }
 
 let htmlValidation = null;
-if (fs.existsSync('html-validation.json')) {
-    htmlValidation = JSON.parse(fs.readFileSync('html-validation.json', 'utf-8'));
+if (fs.existsSync("html-validation.json")) {
+  htmlValidation = JSON.parse(fs.readFileSync("html-validation.json", "utf-8"));
 }
 
 let rssValidation = null;
-if (fs.existsSync('rss-validation.json')) {
-    rssValidation = JSON.parse(fs.readFileSync('rss-validation.json', 'utf-8'));
+if (fs.existsSync("rss-validation.json")) {
+  rssValidation = JSON.parse(fs.readFileSync("rss-validation.json", "utf-8"));
 }
 
 // 3. Generate the Dashboard HTML
-const timestamp = new Date().toLocaleString('en-US', {
-    dateStyle: 'full',
-    timeStyle: 'short'
+const timestamp = new Date().toLocaleString("en-US", {
+  dateStyle: "full",
+  timeStyle: "short",
 });
 
 const getHealthScore = () => {
-    let score = 100;
-    // Deduct for accessibility violations
-    const a11yFailed = accessibilityData.reduce((acc, r) => acc + (r.failed || 0), 0);
-    score -= a11yFailed * 5;
+  let score = 100;
+  // Deduct for accessibility violations
+  const a11yFailed = accessibilityData.reduce(
+    (acc, r) => acc + (r.failed || 0),
+    0,
+  );
+  score -= a11yFailed * 5;
 
-    // Deduct for HTML errors
-    if (htmlValidation) {
-        const htmlErrors = htmlValidation.reduce((acc, f) => acc + f.messages.filter(m => m.severity === 2).length, 0);
-        score -= htmlErrors * 2;
-    }
+  // Deduct for HTML errors
+  if (htmlValidation) {
+    const htmlErrors = htmlValidation.reduce(
+      (acc, f) => acc + f.messages.filter((m) => m.severity === 2).length,
+      0,
+    );
+    score -= htmlErrors * 2;
+  }
 
-    // Deduct for RSS invalidity
-    if (rssValidation && !rssValidation.valid) score -= 10;
+  // Deduct for RSS invalidity
+  if (rssValidation && !rssValidation.valid) score -= 10;
 
-    return Math.max(0, Math.min(100, score));
+  return Math.max(0, Math.min(100, score));
 };
 
 const healthScore = getHealthScore();
-let scoreColor = '#ef4444';
+let scoreColor = "#ef4444";
 if (healthScore > 90) {
-    scoreColor = '#10b981';
+  scoreColor = "#10b981";
 } else if (healthScore > 70) {
-    scoreColor = '#f59e0b';
+  scoreColor = "#f59e0b";
 }
 
-let conditionText = 'need of maintenance';
+let conditionText = "need of maintenance";
 if (healthScore > 90) {
-    conditionText = 'prime condition';
+  conditionText = "prime condition";
 } else if (healthScore > 70) {
-    conditionText = 'good shape';
+  conditionText = "good shape";
 }
 
 const html = `
@@ -343,7 +376,7 @@ const html = `
             <a href="html/" class="nav-item">Health Scan</a>
         </nav>
         <div style="margin-top: auto;">
-             <div class="tag">BUILD #${process.env.GITHUB_RUN_NUMBER || 'LOCAL'}</div>
+             <div class="tag">BUILD #${process.env.GITHUB_RUN_NUMBER || "LOCAL"}</div>
         </div>
     </aside>
 
@@ -364,7 +397,7 @@ const html = `
                 <h2>Project Health Summary</h2>
                 <p>
                     Your project is currently in <b>${conditionText}</b>. 
-                    We've scanned performance, accessibility, and code quality across ${bundleStats?.fileCount || 'multiple'} assets.
+                    We've scanned performance, accessibility, and code quality across ${bundleStats?.fileCount || "multiple"} assets.
                 </p>
             </div>
         </section>
@@ -374,44 +407,44 @@ const html = `
             <div class="card">
                 <div class="card-header">
                     <div class="card-icon">♿</div>
-                    <span class="status-badge ${status.a11y ? 'status-success' : 'status-danger'}">${status.a11y ? 'Audit Run' : 'Failed'}</span>
+                    <span class="status-badge ${status.a11y ? "status-success" : "status-danger"}">${status.a11y ? "Audit Run" : "Failed"}</span>
                 </div>
                 <div class="card-title">Accessibility</div>
-                <div class="card-value">${accessibilityData.reduce((a, r) => a + (r.failed || 0), 0) === 0 ? 'Passed' : 'Issues'}</div>
-                <a href="a11y/" class="card-action ${status.a11y ? '' : 'disabled'}">Open Detailed Report →</a>
+                <div class="card-value">${accessibilityData.reduce((a, r) => a + (r.failed || 0), 0) === 0 ? "Passed" : "Issues"}</div>
+                <a href="a11y/" class="card-action ${status.a11y ? "" : "disabled"}">Open Detailed Report →</a>
             </div>
 
             <!-- HTML Validity -->
             <div class="card">
                 <div class="card-header">
                     <div class="card-icon">📄</div>
-                    <span class="status-badge ${htmlValidation ? 'status-success' : 'status-warning'}">${htmlValidation ? 'Completed' : 'Skipped'}</span>
+                    <span class="status-badge ${htmlValidation ? "status-success" : "status-warning"}">${htmlValidation ? "Completed" : "Skipped"}</span>
                 </div>
                 <div class="card-title">HTML5 Validation</div>
-                <div class="card-value">${htmlValidation ? 'Scan Done' : 'N/A'}</div>
-                <a href="html/" class="card-action ${status.html ? '' : 'disabled'}">View Source Scan →</a>
+                <div class="card-value">${htmlValidation ? "Scan Done" : "N/A"}</div>
+                <a href="html/" class="card-action ${status.html ? "" : "disabled"}">View Source Scan →</a>
             </div>
 
             <!-- RSS Status -->
             <div class="card">
                 <div class="card-header">
                     <div class="card-icon">📡</div>
-                    <span class="status-badge ${rssValidation?.valid ? 'status-success' : 'status-danger'}">${rssValidation?.valid ? 'Valid' : 'Invalid'}</span>
+                    <span class="status-badge ${rssValidation?.valid ? "status-success" : "status-danger"}">${rssValidation?.valid ? "Valid" : "Invalid"}</span>
                 </div>
                 <div class="card-title">RSS Feed</div>
                 <div class="card-value">${rssValidation?.metadata?.items || 0} Items</div>
-                <a href="rss/" class="card-action ${status.rss ? '' : 'disabled'}">Preview Feed →</a>
+                <a href="rss/" class="card-action ${status.rss ? "" : "disabled"}">Preview Feed →</a>
             </div>
 
             <!-- lighthouse -->
             <div class="card">
                 <div class="card-header">
                     <div class="card-icon">⚡</div>
-                    <span class="status-badge ${status.lighthouse ? 'status-success' : 'status-warning'}">${status.lighthouse ? 'Ready' : 'In Progress'}</span>
+                    <span class="status-badge ${status.lighthouse ? "status-success" : "status-warning"}">${status.lighthouse ? "Ready" : "In Progress"}</span>
                 </div>
                 <div class="card-title">Performance (LH)</div>
                 <div class="card-value">Core Web Vitals</div>
-                <a href="lighthouse/" class="card-action ${status.lighthouse ? '' : 'disabled'}">Audit Details →</a>
+                <a href="lighthouse/" class="card-action ${status.lighthouse ? "" : "disabled"}">Audit Details →</a>
             </div>
         </div>
 
@@ -431,14 +464,14 @@ const html = `
                         <tr>
                             <td><b>Bundle (JS/CSS)</b></td>
                             <td><span class="status-badge status-success">Optimized</span></td>
-                            <td>${bundleStats ? bundleStats.categories.js.count + bundleStats.categories.css.count : '—'}</td>
-                            <td>${bundleStats ? bundleStats.readableTotalSize : '—'}</td>
+                            <td>${bundleStats ? bundleStats.categories.js.count + bundleStats.categories.css.count : "—"}</td>
+                            <td>${bundleStats ? bundleStats.readableTotalSize : "—"}</td>
                         </tr>
                         <tr>
                             <td><b>Images</b></td>
                             <td><span class="status-badge status-success">WebP Active</span></td>
-                            <td>${bundleStats?.categories.image.count || '—'}</td>
-                            <td>${bundleStats?.categories.image.readableSize || '—'}</td>
+                            <td>${bundleStats?.categories.image.count || "—"}</td>
+                            <td>${bundleStats?.categories.image.readableSize || "—"}</td>
                         </tr>
                         <tr>
                             <td><b>SEO / Schema</b></td>
@@ -459,5 +492,5 @@ const html = `
 </html>
 `;
 
-fs.writeFileSync(path.join(DIST_REPORTS, 'index.html'), html);
+fs.writeFileSync(path.join(DIST_REPORTS, "index.html"), html);
 console.log("✅ Dashboard generated at dist-reports/index.html");
