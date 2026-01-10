@@ -110,7 +110,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     needs: build
-    if: env.SNYK_TOKEN != ''
+    if: ${{ secrets.SNYK_TOKEN != '' }}
     env:
       SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
     steps:
@@ -151,7 +151,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     if: always()
-    if: always()
+
     needs: [build, sa-astro, sa-prettier, sa-eslint, sa-lychee, sa-typos, sa-audit, sa-snyk, sa-jsdoc]
     permissions:
       pull-requests: write
