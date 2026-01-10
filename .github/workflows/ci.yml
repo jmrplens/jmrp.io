@@ -110,7 +110,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     needs: build
-    if: ${{ secrets.SNYK_TOKEN != '' }}
+    if: secrets.SNYK_TOKEN != ''
     env:
       SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
     steps:
