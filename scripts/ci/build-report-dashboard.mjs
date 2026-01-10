@@ -276,10 +276,10 @@ const getStatusClass = (res) => {
 
 // Summary Text Generation
 let summaryInsights = `Your project is currently in <b>${conditionText}</b>. We've scanned performance, accessibility, and code quality across the entire codebase.`;
-if (bundleStats && (bundleStats.totalSize > 1024 * 1024)) {
+if (bundleStats && bundleStats.totalSize > 1024 * 1024) {
   summaryInsights += ` <br><span style="color:var(--danger); font-size:0.85rem;">⚠️ High bundle size detected: ${bundleStats.readableTotalSize}. Consider further asset optimization.</span>`;
 }
-if (accessibilityData.some(r => r.violations?.length > 0)) {
+if (accessibilityData.some((r) => r.violations?.length > 0)) {
   summaryInsights += ` <br><span style="color:var(--warning); font-size:0.85rem;">♿ Accessibility violations were detected. Review the detailed scan results.</span>`;
 }
 
@@ -810,8 +810,8 @@ const html = `
                         </thead>
                         <tbody>
                             ${lighthouseData
-    .map(
-      (d) => `
+                              .map(
+                                (d) => `
                             <tr>
                                 <td>${d.page}</td>
                                 <td>${getScoreBadge(d.mobileLight)}</td>
@@ -820,8 +820,8 @@ const html = `
                                 <td>${getScoreBadge(d.desktopDark)}</td>
                             </tr>
                             `,
-    )
-    .join("")}
+                              )
+                              .join("")}
                         </tbody>
                    </table>
                 </div>
