@@ -31,6 +31,7 @@ function buildSaTable(results) {
   md += `| ESLint | ${getIcon(results.eslint)} | **${results.eslint || "Pending"}** |\n`;
   md += `| Link Checker | ${getIcon(results.lychee)} | **${results.lychee || "Pending"}** |\n`;
   md += `| Spell Checker | ${getIcon(results.typos)} | **${results.typos || "Pending"}** |\n`;
+  md += `| Stylelint | ${getIcon(results.stylelint)} | **${results.stylelint || "Pending"}** |\n`;
   md += `| Security Audit | ${getIcon(results.security)} | **${results.security || "Pending"}** |\n`;
   md += `| Snyk Security | ${getIcon(results.snyk)} | **${results.snyk || "Pending"}** |\n`;
   md += `| SonarQube | ${getIcon(results.sonar)} | **${results.sonar || "Pending"}** |\n`;
@@ -80,6 +81,7 @@ function calculateHealthScore(saResults, qualityResults) {
     "eslint",
     "lychee",
     "typos",
+    "stylelint",
     "security",
     "snyk",
     "sonar",
@@ -158,6 +160,7 @@ export default async function updateCiComment({ github, context, step }) {
     eslint: process.env.OUTCOME_ESLINT,
     lychee: process.env.OUTCOME_LYCHEE,
     typos: process.env.OUTCOME_TYPOS,
+    stylelint: process.env.OUTCOME_STYLELINT,
     security: process.env.OUTCOME_SECURITY,
     snyk: process.env.OUTCOME_SNYK,
     sonar: process.env.OUTCOME_SONAR,

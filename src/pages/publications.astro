@@ -15,129 +15,128 @@ const publicationGroups = await getPublications();
 const allPublications = publicationGroups.flatMap((group) => group.items);
 
 const collectionSchema = {
-    "@context": "https://schema.org",
-    "@type": "CollectionPage",
-    "@id": new URL(
-        "#collection",
-        new URL(Astro.url.pathname, getSiteUrl()),
-    ).toString(),
-    name: "Publications",
-    description:
-        "Academic publications and research by José Manuel Requena Plens.",
-    url: new URL(Astro.url.pathname, getSiteUrl()).toString(),
-    mainEntity: {
-        "@type": "ItemList",
-        itemListElement: allPublications.map((pub, index) => ({
-            "@type": "ListItem",
-            position: index + 1,
-            item: {
-                "@type": "ScholarlyArticle",
-                headline: pub.title,
-                name: pub.title,
-                datePublished: pub.issued?.["date-parts"]?.[0]?.[0]
-                    ? String(pub.issued["date-parts"][0][0])
-                    : undefined,
-                author:
-                    pub.author?.map(
-                        (a: { family: string; given?: string }) => ({
-                            "@type": "Person",
-                            givenName: a.given || "",
-                            familyName: a.family,
-                            name: a.given ? `${a.given} ${a.family}` : a.family,
-                        }),
-                    ) || [],
-                publication:
-                    pub["container-title"] ||
-                    pub.publisher ||
-                    pub.school ||
-                    pub.institution
-                        ? {
-                              "@type": "Periodical",
-                              name:
-                                  pub["container-title"] ||
-                                  pub.publisher ||
-                                  pub.school ||
-                                  pub.institution,
-                          }
-                        : undefined,
-                abstract: stripHtml(pub.abstract as string | undefined),
-                url: pub.url || pub.doi || undefined,
-                sameAs: pub.doi ? [pub.doi] : [],
-            },
-        })),
-    },
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  "@id": new URL(
+    "#collection",
+    new URL(Astro.url.pathname, getSiteUrl()),
+  ).toString(),
+  name: "Publications",
+  description:
+    "Academic publications and research by José Manuel Requena Plens.",
+  url: new URL(Astro.url.pathname, getSiteUrl()).toString(),
+  mainEntity: {
+    "@type": "ItemList",
+    itemListElement: allPublications.map((pub, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      item: {
+        "@type": "ScholarlyArticle",
+        headline: pub.title,
+        name: pub.title,
+        datePublished: pub.issued?.["date-parts"]?.[0]?.[0]
+          ? String(pub.issued["date-parts"][0][0])
+          : undefined,
+        author:
+          pub.author?.map((a: { family: string; given?: string }) => ({
+            "@type": "Person",
+            givenName: a.given || "",
+            familyName: a.family,
+            name: a.given ? `${a.given} ${a.family}` : a.family,
+          })) || [],
+        publication:
+          pub["container-title"] ||
+          pub.publisher ||
+          pub.school ||
+          pub.institution
+            ? {
+                "@type": "Periodical",
+                name:
+                  pub["container-title"] ||
+                  pub.publisher ||
+                  pub.school ||
+                  pub.institution,
+              }
+            : undefined,
+        abstract: stripHtml(pub.abstract as string | undefined),
+        url: pub.url || pub.doi || undefined,
+        sameAs: pub.doi ? [pub.doi] : [],
+      },
+    })),
+  },
 };
 ---
 
 <BaseLayout
-    title="Publications"
-    description="Academic publications and research."
-    schema={collectionSchema}
+  title="Publications"
+  description="Academic publications and research."
+  schema={collectionSchema}
 >
-    <div class="container">
-        <h1 class="page-title">Publications</h1>
+  <div class="container">
+    <h1 class="page-title">Publications</h1>
 
-        {
-            publicationGroups.map((group) => (
-                <section class="pub-section" aria-label={group.title}>
-                    <h2 class="section-title text-primary border-b border-border pb-2">
-                        {group.title}
-                    </h2>
-                    <div class="publications-list">
-                        {group.items.map((pub) => (
-                            <PublicationItem pub={pub} />
-                        ))}
-                    </div>
-                </section>
-            ))
-        }
-    </div>
+    {
+      publicationGroups.map((group) => (
+        <section
+          class="pub-section"
+          aria-label={group.title}
+        >
+          <h2 class="section-title text-primary border-b border-border pb-2">
+            {group.title}
+          </h2>
+          <div class="publications-list">
+            {group.items.map((pub) => (
+              <PublicationItem pub={pub} />
+            ))}
+          </div>
+        </section>
+      ))
+    }
+  </div>
 </BaseLayout>
 
 <script>
-    function initPublications() {
-        const handleAbstracts = (selector: string, idPrefix: string) => {
-            document.querySelectorAll(selector).forEach((btn) => {
-                (btn as HTMLElement).onclick = (e) => {
-                    e.preventDefault();
-                    const target = e.currentTarget as HTMLElement;
-                    const id = target.dataset.id;
-                    const element = document.getElementById(
-                        `${idPrefix}-${id}`,
-                    );
-                    if (element) {
-                        const isHidden = element.classList.toggle("hidden");
-                        target.setAttribute("aria-expanded", String(!isHidden));
-                    }
-                };
-            });
+  function initPublications() {
+    const handleAbstracts = (selector: string, idPrefix: string) => {
+      document.querySelectorAll(selector).forEach((btn) => {
+        (btn as HTMLElement).onclick = (e) => {
+          e.preventDefault();
+          const target = e.currentTarget as HTMLElement;
+          const id = target.dataset.id;
+          const element = document.getElementById(`${idPrefix}-${id}`);
+          if (element) {
+            const isHidden = element.classList.toggle("hidden");
+            target.setAttribute("aria-expanded", String(!isHidden));
+          }
         };
+      });
+    };
 
-        handleAbstracts(".btn-abstract", "abstract");
-        handleAbstracts(".btn-bibtex-toggle", "bibtex");
-    }
+    handleAbstracts(".btn-abstract", "abstract");
+    handleAbstracts(".btn-bibtex-toggle", "bibtex");
+  }
 
-    document.addEventListener("astro:page-load", initPublications);
-    document.addEventListener("DOMContentLoaded", initPublications);
+  document.addEventListener("astro:page-load", initPublications);
+  document.addEventListener("DOMContentLoaded", initPublications);
 </script>
 
 <style>
-    .pub-section {
-        margin-bottom: var(--space-xl);
-    }
+  .pub-section {
+    margin-bottom: var(--space-xl);
+  }
 
-    .publications-list {
-        display: flex;
-        flex-direction: column;
-        gap: var(--space-lg);
-    }
+  .publications-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+  }
 
-    /* Minimal styles as most logic is now in the component */
-    .section-title {
-        font-size: 1.5rem;
-        font-weight: bold;
-        margin-bottom: var(--space-md);
-        display: inline-block;
-        padding-right: var(--space-lg);
-    }
+  /* Minimal styles as most logic is now in the component */
+  .section-title {
+    display: inline-block;
+    padding-right: var(--space-lg);
+    margin-bottom: var(--space-md);
+    font-size: 1.5rem;
+    font-weight: bold;
+  }
 </style>

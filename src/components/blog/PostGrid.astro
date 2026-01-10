@@ -10,7 +10,10 @@ interface Props {
 const { posts } = Astro.props;
 ---
 
-<section class="posts-grid" aria-label="Blog posts grid">
+<section
+  class="posts-grid"
+  aria-label="Blog posts grid"
+>
   {
     posts.map((post, index) => (
       <PostCard
@@ -29,7 +32,7 @@ const { posts } = Astro.props;
     gap: 2rem;
   }
 
-  @media (max-width: 640px) {
+  @media (width <= 640px) {
     .posts-grid {
       grid-template-columns: 1fr;
     }

@@ -59,7 +59,10 @@ const { post, loading = "lazy", fetchpriority = "auto" } = Astro.props;
       }
     </div>
     <h2>
-      <a href={`/blog/${post.id}/`} class="main-link">
+      <a
+        href={`/blog/${post.id}/`}
+        class="main-link"
+      >
         {post.data.title}
       </a>
     </h2>
@@ -72,21 +75,21 @@ const { post, loading = "lazy", fetchpriority = "auto" } = Astro.props;
 
 <style>
   .post-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
     background: var(--color-bg-secondary);
     border: var(--border-1);
     border-radius: 16px;
     transition: all 0.3s ease;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    position: relative;
   }
 
   .post-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 24px -10px rgba(0, 0, 0, 0.15);
     border-color: var(--color-primary);
+    box-shadow: 0 12px 24px -10px rgb(0 0 0 / 15%);
+    transform: translateY(-4px);
   }
 
   /* Image Card Styles */
@@ -110,51 +113,51 @@ const { post, loading = "lazy", fetchpriority = "auto" } = Astro.props;
 
   /* Standard Card Styles */
   .card-content {
-    padding: 2rem;
-    flex: 1;
     display: flex;
+    flex: 1;
     flex-direction: column;
+    padding: 2rem;
   }
 
   .post-meta {
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    justify-content: space-between;
     margin-bottom: 1rem;
     font-size: 0.875rem;
     color: var(--color-text-muted);
   }
 
   .tags {
+    position: relative;
+    z-index: 2; /* Ensure tags are clickable above the card link */
     display: flex;
     gap: 0.5rem;
     min-height: 1.5em; /* Stabilize for CLS */
-    position: relative;
-    z-index: 2; /* Ensure tags are clickable above the card link */
   }
 
   .tag {
-    background: var(--color-bg-subtle);
     padding: 0.2rem 0.5rem;
-    border-radius: 4px;
     font-size: 0.75rem;
     font-weight: 500;
     color: var(--color-text-body);
     text-decoration: none;
+    background: var(--color-bg-subtle);
+    border-radius: 4px;
     transition: background-color 0.2s ease;
   }
 
   .tag:hover {
-    background: var(--color-bg-tertiary);
     color: var(--color-primary);
+    background: var(--color-bg-tertiary);
   }
 
   .post-card h2 {
+    min-height: 2.6em; /* Reserve 2 lines roughly */
+    margin-bottom: 0.75rem;
     font-size: 1.5rem;
     font-weight: 700;
-    margin-bottom: 0.75rem;
     line-height: 1.3;
-    min-height: 2.6em; /* Reserve 2 lines roughly */
   }
 
   .main-link {
@@ -163,38 +166,35 @@ const { post, loading = "lazy", fetchpriority = "auto" } = Astro.props;
   }
 
   .main-link::after {
-    content: "";
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    inset: 0;
     z-index: 1;
+    content: "";
   }
 
   .post-card p {
-    color: var(--color-text-body);
-    line-height: 1.6;
-    font-size: 1rem;
     display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
     min-height: 4.8rem; /* Reserve space for 3 lines to prevent CLS */
+    overflow: hidden;
+    -webkit-line-clamp: 3;
+    font-size: 1rem;
+    line-height: 1.6;
+    color: var(--color-text-body);
+    -webkit-box-orient: vertical;
   }
 
   .card-footer {
-    padding: 1.5rem 2rem;
-    border-top: var(--border-1);
-    background: var(--color-bg-subtle);
-    min-height: 4.5rem; /* Stabilize for CLS */
     display: flex; /* Ensure alignment */
     align-items: center;
+    min-height: 4.5rem; /* Stabilize for CLS */
+    padding: 1.5rem 2rem;
+    background: var(--color-bg-subtle);
+    border-top: var(--border-1);
   }
 
   .read-more {
+    font-size: 0.9rem;
     font-weight: var(--fw-semibold);
     color: var(--color-primary);
-    font-size: 0.9rem;
   }
 </style>

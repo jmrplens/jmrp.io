@@ -19,7 +19,7 @@ import YouTube from "@components/ui/YouTube.astro";
 import BaseLayout from "@layouts/BaseLayout.astro";
 import type { SiteConfig } from "@src/types";
 import { getSiteUrl } from "@utils/site";
-import { getImage,Image } from "astro:assets";
+import { getImage, Image } from "astro:assets";
 import { type CollectionEntry, getCollection, render } from "astro:content";
 import { getEntry } from "astro:content";
 import { Icon } from "astro-icon/components";
@@ -29,11 +29,11 @@ const siteEntry = await getEntry("site_config", "site");
 const siteData = (siteEntry?.data || {}) as SiteConfig;
 
 export async function getStaticPaths() {
-    const posts = await getCollection("posts");
-    return posts.map((post) => ({
-        params: { slug: post.id },
-        props: post,
-    }));
+  const posts = await getCollection("posts");
+  return posts.map((post) => ({
+    params: { slug: post.id },
+    props: post,
+  }));
 }
 
 type Props = CollectionEntry<"posts">;
@@ -44,26 +44,26 @@ const { Content, headings } = await render(post);
 // --- Reference Collection Logic ---
 // Strip code blocks to avoid false positives from code examples
 const bodyWithoutCode = (post.body || "")
-    .replaceAll(/```[\s\S]*?```/g, "")
-    .replaceAll(/`[^`]*?`/g, "");
+  .replaceAll(/```[\s\S]*?```/g, "")
+  .replaceAll(/`[^`]*?`/g, "");
 
 // Regex to find all markdown links: [text](url)
 const linkRegex = /\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/g;
 const collectedRefsFromMarkdown = [];
 let match;
 while ((match = linkRegex.exec(bodyWithoutCode)) !== null) {
-    collectedRefsFromMarkdown.push({ text: match[1], url: match[2] });
+  collectedRefsFromMarkdown.push({ text: match[1], url: match[2] });
 }
 
 // Also find raw <a> tags in the body, as MDX allows HTML
 const $ = cheerio.load(bodyWithoutCode);
 $('a[href^="http"], a[href^="//"]').each((_, el) => {
-    const $el = $(el);
-    const url = $el.attr("href");
-    const text = $el.text().replaceAll(/\s+/g, " ").trim();
-    if (url && text) {
-        collectedRefsFromMarkdown.push({ text, url });
-    }
+  const $el = $(el);
+  const url = $el.attr("href");
+  const text = $el.text().replaceAll(/\s+/g, " ").trim();
+  if (url && text) {
+    collectedRefsFromMarkdown.push({ text, url });
+  }
 });
 
 // Combine frontmatter references with collected ones and deduplicate
@@ -71,11 +71,11 @@ $('a[href^="http"], a[href^="//"]').each((_, el) => {
 const allPostReferences = [...collectedRefsFromMarkdown];
 const uniqueUrls = new Set<string>();
 const finalReferences = allPostReferences.filter((ref) => {
-    if (!uniqueUrls.has(ref.url)) {
-        uniqueUrls.add(ref.url);
-        return true;
-    }
-    return false;
+  if (!uniqueUrls.has(ref.url)) {
+    uniqueUrls.add(ref.url);
+    return true;
+  }
+  return false;
 });
 // --- End of Reference Logic ---
 
@@ -84,486 +84,485 @@ const finalReferences = allPostReferences.filter((ref) => {
 let jsonLdImage = "/default-blog-cover.webp";
 
 if (post.data.coverImage) {
-    // Optimize for JSON-LD schema
-    const optimizedImage = await getImage({
-        src: post.data.coverImage,
-        format: "webp",
-        width: 1200,
-        height: 675,
-        quality: 60,
-    });
+  // Optimize for JSON-LD schema
+  const optimizedImage = await getImage({
+    src: post.data.coverImage,
+    format: "webp",
+    width: 1200,
+    height: 675,
+    quality: 60,
+  });
 
-    jsonLdImage = optimizedImage.src;
+  jsonLdImage = optimizedImage.src;
 }
 
 const articleSchema = [
-    {
-        "@type": "BlogPosting",
-        "@id": new URL(
-            "#article",
-            new URL(`/blog/${post.id}`, getSiteUrl()),
-        ).toString(),
-        headline: post.data.title,
-        description: post.data.description,
-        datePublished: post.data.publishedDate.toISOString(),
-        dateModified: (
-            post.data.updatedDate || post.data.publishedDate
-        ).toISOString(),
-        publisher: {
-            "@type": "Person",
-            "@id": new URL("#person", getSiteUrl()).toString(),
-            name: siteData.author,
-            url: getSiteUrl(),
-        },
-        author: {
-            "@type": "Person",
-            "@id": new URL("#person", getSiteUrl()).toString(),
-            name: siteData.author,
-            url: getSiteUrl(),
-        },
-        image: new URL(jsonLdImage, getSiteUrl()).toString(),
-        mainEntityOfPage: {
-            "@type": "WebPage",
-            "@id": new URL(`/blog/${post.id}`, getSiteUrl()).toString(),
-        },
+  {
+    "@type": "BlogPosting",
+    "@id": new URL(
+      "#article",
+      new URL(`/blog/${post.id}`, getSiteUrl()),
+    ).toString(),
+    headline: post.data.title,
+    description: post.data.description,
+    datePublished: post.data.publishedDate.toISOString(),
+    dateModified: (
+      post.data.updatedDate || post.data.publishedDate
+    ).toISOString(),
+    publisher: {
+      "@type": "Person",
+      "@id": new URL("#person", getSiteUrl()).toString(),
+      name: siteData.author,
+      url: getSiteUrl(),
     },
+    author: {
+      "@type": "Person",
+      "@id": new URL("#person", getSiteUrl()).toString(),
+      name: siteData.author,
+      url: getSiteUrl(),
+    },
+    image: new URL(jsonLdImage, getSiteUrl()).toString(),
+    mainEntityOfPage: {
+      "@type": "WebPage",
+      "@id": new URL(`/blog/${post.id}`, getSiteUrl()).toString(),
+    },
+  },
 ];
 ---
 
 <BaseLayout
-    title={post.data.title}
-    description={post.data.description}
-    type="article"
-    image={post.data.coverImage?.src}
-    publishDate={post.data.publishedDate}
-    modifiedDate={post.data.updatedDate}
-    tags={post.data.tags}
-    schema={articleSchema}
+  title={post.data.title}
+  description={post.data.description}
+  type="article"
+  image={post.data.coverImage?.src}
+  publishDate={post.data.publishedDate}
+  modifiedDate={post.data.updatedDate}
+  tags={post.data.tags}
+  schema={articleSchema}
 >
-    <article class="post-content">
-        <header class="post-header">
-            <div class="content-wrapper">
-                <div class="header-meta">
-                    <a href="/blog" class="back-link">
-                        <Icon name="mdi:arrow-left" size={20} /> Back to Blog
+  <article class="post-content">
+    <header class="post-header">
+      <div class="content-wrapper">
+        <div class="header-meta">
+          <a
+            href="/blog"
+            class="back-link"
+          >
+            <Icon
+              name="mdi:arrow-left"
+              size={20}
+            /> Back to Blog
+          </a>
+          <div class="meta">
+            <span class="author">
+              {post.data.author || siteData.author}
+            </span>
+            <span class="separator">•</span>
+            <time datetime={post.data.publishedDate.toISOString()}>
+              {
+                post.data.publishedDate.toLocaleDateString("en-US", {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                })
+              }
+            </time>
+            <span class="separator">•</span>
+            {
+              post.data.tags && (
+                <div class="tags">
+                  {post.data.tags.map((tag) => (
+                    <a
+                      href={`/blog/tags/${encodeURIComponent(tag)}`}
+                      class="tag"
+                      aria-label={`View all posts tagged with ${tag}`}
+                    >
+                      #{tag}
                     </a>
-                    <div class="meta">
-                        <span class="author">
-                            {post.data.author || siteData.author}
-                        </span>
-                        <span class="separator">•</span>
-                        <time datetime={post.data.publishedDate.toISOString()}>
-                            {
-                                post.data.publishedDate.toLocaleDateString(
-                                    "en-US",
-                                    {
-                                        year: "numeric",
-                                        month: "long",
-                                        day: "numeric",
-                                    },
-                                )
-                            }
-                        </time>
-                        <span class="separator">•</span>
-                        {
-                            post.data.tags && (
-                                <div class="tags">
-                                    {post.data.tags.map((tag) => (
-                                        <a
-                                            href={`/blog/tags/${encodeURIComponent(tag)}`}
-                                            class="tag"
-                                            aria-label={`View all posts tagged with ${tag}`}
-                                        >
-                                            #{tag}
-                                        </a>
-                                    ))}
-                                </div>
-                            )
-                        }
-                    </div>
+                  ))}
                 </div>
-
-                <div class="header-grid">
-                    <div class="header-content">
-                        <h1>{post.data.title}</h1>
-                        <p class="lead">{post.data.description}</p>
-                    </div>
-                    {
-                        post.data.coverImage && (
-                            <div class="cover-image-container">
-                                <Image
-                                    src={post.data.coverImage}
-                                    alt={`Cover image for ${post.data.title}`}
-                                    class="cover-image"
-                                    width={1200}
-                                    height={675}
-                                    format="webp"
-                                    loading="eager"
-                                    fetchpriority="high"
-                                    widths={[
-                                        360, 480, 540, 600, 720, 840, 960, 1080,
-                                        1200,
-                                    ]}
-                                    sizes="(max-width: 768px) calc(100vw - 2.5rem), (max-width: 1024px) 600px, 480px"
-                                    quality={70}
-                                    style="width: 100%; height: auto; aspect-ratio: 16/9;"
-                                />
-                            </div>
-                        )
-                    }
-                </div>
-            </div>
-        </header>
-
-        <div class="layout-grid content-wrapper">
-            <div class="prose">
-                <Content
-                    components={{ Callout, Tabs, TabPanel, YouTube, Code }}
-                />
-                <References references={finalReferences} />
-            </div>
+              )
+            }
+          </div>
         </div>
-    </article>
 
-    <TableOfContentsDrawer headings={headings} />
+        <div class="header-grid">
+          <div class="header-content">
+            <h1>{post.data.title}</h1>
+            <p class="lead">{post.data.description}</p>
+          </div>
+          {
+            post.data.coverImage && (
+              <div class="cover-image-container">
+                <Image
+                  src={post.data.coverImage}
+                  alt={`Cover image for ${post.data.title}`}
+                  class="cover-image"
+                  width={1200}
+                  height={675}
+                  format="webp"
+                  loading="eager"
+                  fetchpriority="high"
+                  widths={[360, 480, 540, 600, 720, 840, 960, 1080, 1200]}
+                  sizes="(max-width: 768px) calc(100vw - 2.5rem), (max-width: 1024px) 600px, 480px"
+                  quality={70}
+                  style="width: 100%; height: auto; aspect-ratio: 16/9;"
+                />
+              </div>
+            )
+          }
+        </div>
+      </div>
+    </header>
+
+    <div class="layout-grid content-wrapper">
+      <div class="prose">
+        <Content components={{ Callout, Tabs, TabPanel, YouTube, Code }} />
+        <References references={finalReferences} />
+      </div>
+    </div>
+  </article>
+
+  <TableOfContentsDrawer headings={headings} />
 </BaseLayout>
 
 <script>
-    const setupPostInteractions = () => {
-        // Accessibility: Fix duplicate role="region" on code blocks
-        // We use requestIdleCallback to avoid forced reflows during initial layout
-        const rIC =
-            (window as any).requestIdleCallback ||
-            ((cb: any) => setTimeout(cb, 50));
+  const setupPostInteractions = () => {
+    // Accessibility: Fix duplicate role="region" on code blocks
+    // We use requestIdleCallback to avoid forced reflows during initial layout
+    const rIC =
+      (window as any).requestIdleCallback || ((cb: any) => setTimeout(cb, 50));
 
-        const applyLabels = () => {
-            rIC(() => {
-                const codeBlocks = document.querySelectorAll(
-                    'pre[role="region"]:not([aria-label])',
-                );
-                codeBlocks.forEach((block, index) => {
-                    const lang = block.getAttribute("data-language") || "Code";
-                    block.setAttribute(
-                        "aria-label",
-                        `${lang} example ${index + 1}`,
-                    );
-                });
-            });
-        };
-
-        // Run once initially, but slightly deferred
-        setTimeout(applyLabels, 100);
-
-        // Debounced observer for hydration changes
-        const prose = document.querySelector(".prose");
-        if (prose && !(prose as any)._hasObserver) {
-            (prose as any)._hasObserver = true;
-            let timeout: any;
-            const observer = new MutationObserver(() => {
-                clearTimeout(timeout);
-                timeout = setTimeout(applyLabels, 300);
-            });
-            observer.observe(prose, {
-                childList: true,
-                subtree: true,
-                attributes: true,
-                attributeFilter: ["role"],
-            });
-        }
-
-        // Add copy buttons to standalone code blocks
-        if (prose) {
-            const codeBlocks = prose.querySelectorAll(".astro-code");
-
-            codeBlocks.forEach((block) => {
-                // Skip if already inside a special component
-                if (
-                    block.closest(".file-content-wrapper") ||
-                    block.closest(".tab-panel") ||
-                    block.closest(".compare-block")
-                ) {
-                    return; // Already handled by component
-                }
-
-                // Check if we already added our button
-                if (block.querySelector(".custom-code-copy-btn")) {
-                    return; // Already processed
-                }
-
-                // Create our custom copy button
-                const copyButton = document.createElement("button");
-                copyButton.className = "custom-code-copy-btn";
-                copyButton.setAttribute("aria-label", "Copy to clipboard");
-
-                const svgNS = "http://www.w3.org/2000/svg";
-
-                // Create copy icon
-                const copyIcon = document.createElementNS(svgNS, "svg");
-                copyIcon.setAttribute("class", "copy-icon");
-                copyIcon.setAttribute("width", "20");
-                copyIcon.setAttribute("height", "20");
-                copyIcon.setAttribute("viewBox", "0 0 24 24");
-                const copyPath = document.createElementNS(svgNS, "path");
-                copyPath.setAttribute("fill", "currentColor");
-                copyPath.setAttribute(
-                    "d",
-                    "M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z",
-                );
-                copyIcon.appendChild(copyPath);
-
-                // Create success icon
-                const successIcon = document.createElementNS(svgNS, "svg");
-                successIcon.setAttribute("class", "success-icon hidden");
-                successIcon.setAttribute("width", "20");
-                successIcon.setAttribute("height", "20");
-                successIcon.setAttribute("viewBox", "0 0 24 24");
-                const successPath = document.createElementNS(svgNS, "path");
-                successPath.setAttribute("fill", "currentColor");
-                successPath.setAttribute(
-                    "d",
-                    "M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z",
-                );
-                successIcon.appendChild(successPath);
-
-                copyButton.appendChild(copyIcon);
-                copyButton.appendChild(successIcon);
-
-                // Add click handler
-                copyButton.addEventListener("click", () => {
-                    const codeElement = block.querySelector("code");
-                    const text = codeElement
-                        ? codeElement.textContent
-                        : block.textContent;
-
-                    if (!text) {
-                        console.warn("No code element found in block.");
-                        return;
-                    }
-
-                    navigator.clipboard.writeText(text).then(
-                        () => {
-                            copyIcon.classList.add("hidden");
-                            successIcon.classList.remove("hidden");
-
-                            setTimeout(() => {
-                                copyIcon.classList.remove("hidden");
-                                successIcon.classList.add("hidden");
-                            }, 2000);
-                        },
-                        (err) => {
-                            console.error("Failed to copy:", err);
-                        },
-                    );
-                });
-
-                if (block instanceof HTMLElement) {
-                    block.style.position = "relative";
-                }
-
-                block.appendChild(copyButton);
-            });
-        }
+    const applyLabels = () => {
+      rIC(() => {
+        const codeBlocks = document.querySelectorAll(
+          'pre[role="region"]:not([aria-label])',
+        );
+        codeBlocks.forEach((block, index) => {
+          const lang = block.getAttribute("data-language") || "Code";
+          block.setAttribute("aria-label", `${lang} example ${index + 1}`);
+        });
+      });
     };
 
-    // Initialize
-    setupPostInteractions();
-    document.addEventListener("astro:after-swap", setupPostInteractions);
+    // Run once initially, but slightly deferred
+    setTimeout(applyLabels, 100);
+
+    // Debounced observer for hydration changes
+    const prose = document.querySelector(".prose");
+    if (prose && !(prose as any)._hasObserver) {
+      (prose as any)._hasObserver = true;
+      let timeout: any;
+      const observer = new MutationObserver(() => {
+        clearTimeout(timeout);
+        timeout = setTimeout(applyLabels, 300);
+      });
+      observer.observe(prose, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ["role"],
+      });
+    }
+
+    // Add copy buttons to standalone code blocks
+    if (prose) {
+      const codeBlocks = prose.querySelectorAll(".astro-code");
+
+      codeBlocks.forEach((block) => {
+        // Skip if already inside a special component
+        if (
+          block.closest(".file-content-wrapper") ||
+          block.closest(".tab-panel") ||
+          block.closest(".compare-block")
+        ) {
+          return; // Already handled by component
+        }
+
+        // Check if we already added our button
+        if (block.querySelector(".custom-code-copy-btn")) {
+          return; // Already processed
+        }
+
+        // Create our custom copy button
+        const copyButton = document.createElement("button");
+        copyButton.className = "custom-code-copy-btn";
+        copyButton.setAttribute("aria-label", "Copy to clipboard");
+
+        const svgNS = "http://www.w3.org/2000/svg";
+
+        // Create copy icon
+        const copyIcon = document.createElementNS(svgNS, "svg");
+        copyIcon.setAttribute("class", "copy-icon");
+        copyIcon.setAttribute("width", "20");
+        copyIcon.setAttribute("height", "20");
+        copyIcon.setAttribute("viewBox", "0 0 24 24");
+        const copyPath = document.createElementNS(svgNS, "path");
+        copyPath.setAttribute("fill", "currentColor");
+        copyPath.setAttribute(
+          "d",
+          "M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z",
+        );
+        copyIcon.appendChild(copyPath);
+
+        // Create success icon
+        const successIcon = document.createElementNS(svgNS, "svg");
+        successIcon.setAttribute("class", "success-icon hidden");
+        successIcon.setAttribute("width", "20");
+        successIcon.setAttribute("height", "20");
+        successIcon.setAttribute("viewBox", "0 0 24 24");
+        const successPath = document.createElementNS(svgNS, "path");
+        successPath.setAttribute("fill", "currentColor");
+        successPath.setAttribute(
+          "d",
+          "M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z",
+        );
+        successIcon.appendChild(successPath);
+
+        copyButton.appendChild(copyIcon);
+        copyButton.appendChild(successIcon);
+
+        // Add click handler
+        copyButton.addEventListener("click", () => {
+          const codeElement = block.querySelector("code");
+          const text = codeElement
+            ? codeElement.textContent
+            : block.textContent;
+
+          if (!text) {
+            console.warn("No code element found in block.");
+            return;
+          }
+
+          navigator.clipboard.writeText(text).then(
+            () => {
+              copyIcon.classList.add("hidden");
+              successIcon.classList.remove("hidden");
+
+              setTimeout(() => {
+                copyIcon.classList.remove("hidden");
+                successIcon.classList.add("hidden");
+              }, 2000);
+            },
+            (err) => {
+              console.error("Failed to copy:", err);
+            },
+          );
+        });
+
+        if (block instanceof HTMLElement) {
+          block.style.position = "relative";
+        }
+
+        block.appendChild(copyButton);
+      });
+    }
+  };
+
+  // Initialize
+  setupPostInteractions();
+  document.addEventListener("astro:after-swap", setupPostInteractions);
 </script>
 
 <style>
-    .post-header {
-        padding: var(--space-lg) 0;
-        background-color: var(--color-bg-secondary);
-        margin-bottom: var(--space-md-lg);
-        border-bottom: var(--border-1);
-    }
+  .post-header {
+    padding: var(--space-lg) 0;
+    margin-bottom: var(--space-md-lg);
+    background-color: var(--color-bg-secondary);
+    border-bottom: var(--border-1);
+  }
 
-    .content-wrapper {
-        max-width: var(--max-width-container);
-        margin: 0 auto;
-        padding: 0 var(--space-lg);
-        width: 100%;
+  .content-wrapper {
+    width: 100%;
+    max-width: var(--max-width-container);
+    padding: 0 var(--space-lg);
+    margin: 0 auto;
+  }
+
+  .header-grid {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+  }
+
+  /* New container for top metadata */
+  .header-meta {
+    margin-bottom: var(--space-lg);
+  }
+
+  .header-content {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .meta {
+    display: flex;
+
+    /* margin-bottom removed, handled by container */
+    flex-wrap: wrap;
+    gap: var(--space-md);
+    align-items: center;
+    min-height: 1.5em;
+    font-size: 0.9rem;
+    color: var(--color-text-muted);
+  }
+
+  .author {
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-body);
+  }
+
+  .separator {
+    opacity: 50%;
+  }
+
+  h1 {
+    margin-bottom: 1.25rem;
+    font-size: 2.5rem;
+    font-weight: 800;
+    line-height: 1.2;
+    color: var(--color-text-heading);
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+  }
+
+  .lead {
+    font-size: 1.25rem;
+    line-height: 1.6;
+    color: var(--color-text-body);
+    opacity: 90%;
+  }
+
+  .cover-image-container {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    background-color: var(--color-bg-secondary);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .cover-image {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+  }
+
+  /* Desktop Split Layout */
+  @media (width >= 1024px) {
+    .post-header {
+      padding: var(--space-lg-xl) 0;
     }
 
     .header-grid {
-        display: flex;
-        flex-direction: column;
-        gap: var(--space-lg);
-    }
-
-    /* New container for top metadata */
-    .header-meta {
-        margin-bottom: var(--space-lg);
-    }
-
-    .header-content {
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-    }
-
-    .meta {
-        display: flex;
-        align-items: center;
-        gap: var(--space-md);
-        color: var(--color-text-muted);
-        font-size: 0.9rem;
-        /* margin-bottom removed, handled by container */
-        flex-wrap: wrap;
-        min-height: 1.5em;
-    }
-
-    .author {
-        font-weight: var(--fw-semibold);
-        color: var(--color-text-body);
-    }
-
-    .separator {
-        opacity: 0.5;
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: var(--space-xl);
+      align-items: center;
     }
 
     h1 {
-        font-size: 2.5rem;
-        line-height: 1.2;
-        font-weight: 800;
-        color: var(--color-text-heading);
-        margin-bottom: 1.25rem;
-        letter-spacing: -0.02em;
-        text-wrap: balance;
-    }
-
-    .lead {
-        font-size: 1.25rem;
-        color: var(--color-text-body);
-        line-height: 1.6;
-        opacity: 0.9;
+      font-size: 3.5rem;
     }
 
     .cover-image-container {
-        border-radius: var(--radius-lg);
-        overflow: hidden;
-        box-shadow: var(--shadow-lg);
-        background-color: var(--color-bg-secondary);
-        width: 100%;
-        height: auto;
-        aspect-ratio: 16 / 9;
+      max-width: none;
+
+      /* Allow image to take natural height based on aspect ratio */
+      height: auto;
+      max-height: none;
+
+      /* Reset any margins */
+      margin: 0;
+    }
+  }
+
+  /* Tablet/Mobile Adjustments */
+  @media (width <= 1024px) {
+    .cover-image-container {
+      order: 2;
+
+      /* Constrain width so it doesn't become huge when stacked */
+      max-width: 600px;
+      margin-top: var(--space-md-lg);
+      margin-right: auto;
+
+      /* Center the image */
+      margin-left: auto;
+    }
+  }
+
+  @media (width <= 768px) {
+    .post-header {
+      padding: var(--space-lg) 0;
+      text-align: left;
     }
 
-    .cover-image {
-        width: 100%;
-        height: auto;
-        object-fit: cover;
-        display: block;
-        aspect-ratio: 16 / 9;
+    h1 {
+      font-size: 2rem;
     }
 
-    /* Desktop Split Layout */
-    @media (min-width: 1024px) {
-        .post-header {
-            padding: var(--space-lg-xl) 0;
-        }
-
-        .header-grid {
-            display: grid;
-            grid-template-columns: 1.2fr 0.8fr;
-            gap: var(--space-xl);
-            align-items: center;
-        }
-
-        h1 {
-            font-size: 3.5rem;
-        }
-
-        .cover-image-container {
-            /* Reset any margins */
-            margin: 0;
-            /* Allow image to take natural height based on aspect ratio */
-            height: auto;
-            max-height: none;
-            max-width: none;
-        }
+    .lead {
+      font-size: 1.125rem;
     }
 
-    /* Tablet/Mobile Adjustments */
-    @media (max-width: 1024px) {
-        .cover-image-container {
-            margin-top: var(--space-md-lg);
-            order: 2;
-            /* Constrain width so it doesn't become huge when stacked */
-            max-width: 600px;
-            /* Center the image */
-            margin-left: auto;
-            margin-right: auto;
-        }
+    .content-wrapper {
+      padding: 0 1.25rem;
     }
 
-    @media (max-width: 768px) {
-        .post-header {
-            padding: var(--space-lg) 0;
-            text-align: left;
-        }
-
-        h1 {
-            font-size: 2rem;
-        }
-
-        .lead {
-            font-size: 1.125rem;
-        }
-
-        .content-wrapper {
-            padding: 0 1.25rem;
-        }
-
-        .cover-image-container {
-            /* On very small screens, let it be full width again if needed,
+    .cover-image-container {
+      /* On very small screens, let it be full width again if needed,
                but 600px max-width usually covers it nicely. */
-            width: 100%;
-        }
+      width: 100%;
     }
+  }
 
-    /* Custom copy button for standalone code blocks */
-    :global(.custom-code-copy-btn) {
-        position: absolute;
-        top: 0.5rem;
-        right: 0.5rem;
-        background-color: var(--color-bg-subtle, rgba(255, 255, 255, 0.1));
-        border: var(--border-1, 1px solid rgba(255, 255, 255, 0.1));
-        border-radius: 4px;
-        padding: 0.3rem 0.5rem;
-        cursor: pointer;
-        opacity: 0.8;
-        transition: all 0.2s ease;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        min-width: 32px;
-        min-height: 32px;
-        z-index: 10;
-    }
+  /* Custom copy button for standalone code blocks */
+  :global(.custom-code-copy-btn) {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    min-height: 32px;
+    padding: 0.3rem 0.5rem;
+    cursor: pointer;
+    background-color: var(--color-bg-subtle, rgb(255 255 255 / 10%));
+    border: var(--border-1, 1px solid rgb(255 255 255 / 10%));
+    border-radius: 4px;
+    opacity: 80%;
+    transition: all 0.2s ease;
+  }
 
-    :global(.custom-code-copy-btn:hover) {
-        opacity: 1;
-        background-color: var(--color-bg-secondary, #222);
-    }
+  :global(.custom-code-copy-btn:hover) {
+    background-color: var(--color-bg-secondary, #222);
+    opacity: 100%;
+  }
 
-    :global(.custom-code-copy-btn:active) {
-        transform: scale(0.95);
-    }
+  :global(.custom-code-copy-btn:active) {
+    transform: scale(0.95);
+  }
 
-    :global(.custom-code-copy-btn .copy-icon),
-    :global(.custom-code-copy-btn .success-icon) {
-        width: 1.2rem;
-        height: 1.2rem;
-        color: var(--color-text-muted, #888);
-        display: block;
-    }
+  :global(.custom-code-copy-btn .copy-icon),
+  :global(.custom-code-copy-btn .success-icon) {
+    display: block;
+    width: 1.2rem;
+    height: 1.2rem;
+    color: var(--color-text-muted, #888);
+  }
 
-    :global(.custom-code-copy-btn .success-icon) {
-        color: var(--color-success, #2ea043);
-    }
+  :global(.custom-code-copy-btn .success-icon) {
+    color: var(--color-success, #2ea043);
+  }
 
-    :global(.custom-code-copy-btn .hidden) {
-        display: none;
-    }
+  :global(.custom-code-copy-btn .hidden) {
+    display: none;
+  }
 </style>

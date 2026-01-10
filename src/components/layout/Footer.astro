@@ -17,230 +17,233 @@ const siteEntry = await getEntry("site_config", "site");
 const siteConfig = (siteEntry?.data || {}) as SiteConfig;
 
 interface SocialLink {
-    url: string;
-    label: string;
-    icon?: string;
-    icon_name?: string;
-    img_light?: string;
-    img_dark?: string;
-    rel?: string;
+  url: string;
+  label: string;
+  icon?: string;
+  icon_name?: string;
+  img_light?: string;
+  img_dark?: string;
+  rel?: string;
 }
 
 const socialLinks: SocialLink[] = [];
 
 if (socials.github_username) {
-    socialLinks.push({
-        url: `https://github.com/${socials.github_username}`,
-        icon: "fab fa-github",
-        label: "GitHub",
-    });
+  socialLinks.push({
+    url: `https://github.com/${socials.github_username}`,
+    icon: "fab fa-github",
+    label: "GitHub",
+  });
 }
 
 if (socials.linkedin_username) {
-    socialLinks.push({
-        url: `https://linkedin.com/in/${socials.linkedin_username}`,
-        icon: "fab fa-linkedin",
-        label: "LinkedIn",
-    });
+  socialLinks.push({
+    url: `https://linkedin.com/in/${socials.linkedin_username}`,
+    icon: "fab fa-linkedin",
+    label: "LinkedIn",
+  });
 }
 
 if (socials.mastodon_username) {
-    let url = socials.mastodon_username;
-    if (!url.startsWith("http")) {
-        url = `https://${url}`;
-    }
-    socialLinks.push({
-        url: url,
-        icon: "fab fa-mastodon",
-        label: "Mastodon",
-        rel: "me",
-    });
+  let url = socials.mastodon_username;
+  if (!url.startsWith("http")) {
+    url = `https://${url}`;
+  }
+  socialLinks.push({
+    url: url,
+    icon: "fab fa-mastodon",
+    label: "Mastodon",
+    rel: "me",
+  });
 }
 
 if (socials.scholar_userid) {
-    socialLinks.push({
-        url: `https://scholar.google.com/citations?user=${socials.scholar_userid}`,
-        icon: "fas fa-graduation-cap",
-        label: "Google Scholar",
-    });
+  socialLinks.push({
+    url: `https://scholar.google.com/citations?user=${socials.scholar_userid}`,
+    icon: "fas fa-graduation-cap",
+    label: "Google Scholar",
+  });
 }
 
 if (socials.matrix_id) {
-    socialLinks.push({
-        url: `https://matrix.to/#/${socials.matrix_id}`,
-        icon_name: "simple-icons:matrix",
-        label: "Matrix",
-    });
+  socialLinks.push({
+    url: `https://matrix.to/#/${socials.matrix_id}`,
+    icon_name: "simple-icons:matrix",
+    label: "Matrix",
+  });
 }
 
 if (socials.custom_social) {
-    const customs = socials.custom_social;
-    for (const item of customs) {
-        if (item.icon) {
-            socialLinks.push({
-                url: item.url,
-                icon: item.icon,
-                label: item.title,
-            });
-        } else if (item.icon_name) {
-            socialLinks.push({
-                url: item.url,
-                icon_name: item.icon_name,
-                label: item.title,
-            });
-        } else if (item.icon_light && item.icon_dark) {
-            socialLinks.push({
-                url: item.url,
-                img_light: item.icon_light,
-                img_dark: item.icon_dark,
-                label: item.title,
-            });
-        } else {
-            // Generic fallback
-            socialLinks.push({
-                url: item.url,
-                icon: "fas fa-link",
-                label: item.title,
-            });
-        }
+  const customs = socials.custom_social;
+  for (const item of customs) {
+    if (item.icon) {
+      socialLinks.push({
+        url: item.url,
+        icon: item.icon,
+        label: item.title,
+      });
+    } else if (item.icon_name) {
+      socialLinks.push({
+        url: item.url,
+        icon_name: item.icon_name,
+        label: item.title,
+      });
+    } else if (item.icon_light && item.icon_dark) {
+      socialLinks.push({
+        url: item.url,
+        img_light: item.icon_light,
+        img_dark: item.icon_dark,
+        label: item.title,
+      });
+    } else {
+      // Generic fallback
+      socialLinks.push({
+        url: item.url,
+        icon: "fas fa-link",
+        label: item.title,
+      });
     }
+  }
 }
 
 const getIconName = (faClass: string) => {
-    if (!faClass) return "";
-    const parts = faClass.split(" ");
-    const style = parts[0]; // fab, fas
-    const name = parts[1]?.replace("fa-", "") || "";
+  if (!faClass) return "";
+  const parts = faClass.split(" ");
+  const style = parts[0]; // fab, fas
+  const name = parts[1]?.replace("fa-", "") || "";
 
-    if (style === "fab") return `fa-brands:${name}`;
-    // Default to solid for fas or others
-    return `fa-solid:${name}`;
+  if (style === "fab") return `fa-brands:${name}`;
+  // Default to solid for fas or others
+  return `fa-solid:${name}`;
 };
 ---
 
 <footer>
-    <div class="container">
-        <p>
-            &copy; {today.getFullYear()}
-            {siteConfig.author}. All rights reserved.
-        </p>
-        <div class="social-links">
-            {
-                socialLinks.map((link) => (
-                    <a
-                        href={link.url}
-                        target="_blank"
-                        rel={link.rel || "noopener noreferrer"}
-                        aria-label={link.label}
-                        title={link.label}
-                        class="social-btn"
-                    >
-                        {link.icon && (
-                            <Icon
-                                name={getIconName(link.icon)}
-                                class="social-icon-svg"
-                            />
-                        )}
-                        {link.icon_name && (
-                            <Icon
-                                name={link.icon_name}
-                                class="social-icon-svg"
-                            />
-                        )}
-                        {link.img_light && link.img_dark && (
-                            <>
-                                <Image
-                                    src={link.img_light}
-                                    alt={link.label}
-                                    width={28}
-                                    height={28}
-                                    class="social-icon light-icon"
-                                    loading="lazy"
-                                    decoding="async"
-                                />
-                                <Image
-                                    src={link.img_dark}
-                                    alt={link.label}
-                                    width={28}
-                                    height={28}
-                                    class="social-icon dark-icon"
-                                    loading="lazy"
-                                    decoding="async"
-                                />
-                            </>
-                        )}
-                    </a>
-                ))
-            }
-        </div>
+  <div class="container">
+    <p>
+      &copy; {today.getFullYear()}
+      {siteConfig.author}. All rights reserved.
+    </p>
+    <div class="social-links">
+      {
+        socialLinks.map((link) => (
+          <a
+            href={link.url}
+            target="_blank"
+            rel={link.rel || "noopener noreferrer"}
+            aria-label={link.label}
+            title={link.label}
+            class="social-btn"
+          >
+            {link.icon && (
+              <Icon
+                name={getIconName(link.icon)}
+                class="social-icon-svg"
+              />
+            )}
+            {link.icon_name && (
+              <Icon
+                name={link.icon_name}
+                class="social-icon-svg"
+              />
+            )}
+            {link.img_light && link.img_dark && (
+              <>
+                <Image
+                  src={link.img_light}
+                  alt={link.label}
+                  width={28}
+                  height={28}
+                  class="social-icon light-icon"
+                  loading="lazy"
+                  decoding="async"
+                />
+                <Image
+                  src={link.img_dark}
+                  alt={link.label}
+                  width={28}
+                  height={28}
+                  class="social-icon dark-icon"
+                  loading="lazy"
+                  decoding="async"
+                />
+              </>
+            )}
+          </a>
+        ))
+      }
     </div>
+  </div>
 </footer>
 
 <style>
-    footer {
-        padding: var(--space-lg) 0;
-        text-align: center;
-        color: var(--color-text-muted);
-        font-size: 0.9rem;
-        margin-top: auto;
-    }
+  footer {
+    padding: var(--space-lg) 0;
+    margin-top: auto;
+    font-size: 0.9rem;
+    color: var(--color-text-muted);
+    text-align: center;
+  }
 
-    .container {
-        display: flex;
-        flex-direction: column;
-        gap: var(--space-sm);
-    }
+  .container {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+  }
 
-    .social-links {
-        display: flex;
-        justify-content: center;
-        gap: var(--space-md);
-        font-size: 1.5rem;
-    }
+  .social-links {
+    display: flex;
+    gap: var(--space-md);
+    justify-content: center;
+    font-size: 1.5rem;
+  }
 
-    .social-links a {
-        color: var(--color-text-muted);
-    }
+  .social-links a {
+    color: var(--color-text-muted);
+  }
 
-    .social-links a:hover {
-        color: var(--color-primary);
-    }
+  .social-links a:hover {
+    color: var(--color-primary);
+  }
 
-    .social-icon,
-    .social-icon-svg {
-        width: 1.75rem;
-        height: 1.75rem;
-        object-fit: contain;
-    }
+  .social-icon,
+  .social-icon-svg {
+    width: 1.75rem;
+    height: 1.75rem;
+    object-fit: contain;
+  }
 
-    .light-icon {
-        display: block;
-    }
-    .dark-icon {
-        display: none;
-    }
+  .light-icon {
+    display: block;
+  }
 
-    :global(html[data-theme="dark"]) .light-icon {
-        display: none;
-    }
-    :global(html[data-theme="dark"]) .dark-icon {
-        display: block;
-    }
+  .dark-icon {
+    display: none;
+  }
 
-    .social-btn {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        /* Ensure minimum 44x44px touch target */
-        min-width: 44px;
-        min-height: 44px;
-        padding: 0.5rem;
-        border-radius: var(--radius-sm);
-        transition: background-color 0.2s;
-    }
+  :global(html[data-theme="dark"]) .light-icon {
+    display: none;
+  }
 
-    .social-btn:hover,
-    .social-btn:focus {
-        background-color: rgba(179, 137, 245, 0.1);
-    }
+  :global(html[data-theme="dark"]) .dark-icon {
+    display: block;
+  }
+
+  .social-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    /* Ensure minimum 44x44px touch target */
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0.5rem;
+    border-radius: var(--radius-sm);
+    transition: background-color 0.2s;
+  }
+
+  .social-btn:hover,
+  .social-btn:focus {
+    background-color: rgb(179 137 245 / 10%);
+  }
 </style>

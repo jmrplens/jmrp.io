@@ -15,223 +15,211 @@ import { Icon } from "astro-icon/components";
  * </Callout>
  */
 interface Props {
-    type?:
-        | "info"
-        | "warning"
-        | "error"
-        | "success"
-        | "tip"
-        | "note"
-        | "keypoint";
-    title?: string;
-    icon?: string;
+  type?: "info" | "warning" | "error" | "success" | "tip" | "note" | "keypoint";
+  title?: string;
+  icon?: string;
 }
 
 const { type = "info", title, icon } = Astro.props;
 
 /* Map icons but handle colors in CSS */
 const icons = {
-    info: "mdi:information-outline",
-    warning: "mdi:alert-outline",
-    error: "mdi:alert-circle-outline",
-    success: "mdi:check-circle-outline",
-    tip: "mdi:lightbulb-outline",
-    note: "mdi:information-variant-circle-outline",
-    keypoint: "mdi:lightbulb-on-outline",
+  info: "mdi:information-outline",
+  warning: "mdi:alert-outline",
+  error: "mdi:alert-circle-outline",
+  success: "mdi:check-circle-outline",
+  tip: "mdi:lightbulb-outline",
+  note: "mdi:information-variant-circle-outline",
+  keypoint: "mdi:lightbulb-on-outline",
 };
 
 const iconName = icon || icons[type];
 ---
 
 <aside
-    class={`callout callout-${type}`}
-    role="note"
-    aria-label={title || `${type} callout`}
+  class={`callout callout-${type}`}
+  role="note"
+  aria-label={title || `${type} callout`}
 >
-    <div class="icon-wrapper" aria-hidden="true">
-        <Icon name={iconName} size={24} />
+  <div
+    class="icon-wrapper"
+    aria-hidden="true"
+  >
+    <Icon
+      name={iconName}
+      size={24}
+    />
+  </div>
+  <div class="callout-content-wrapper">
+    {title && <strong class="callout-title">{title}</strong>}
+    <div class="content">
+      <slot />
     </div>
-    <div class="callout-content-wrapper">
-        {title && <strong class="callout-title">{title}</strong>}
-        <div class="content">
-            <slot />
-        </div>
-    </div>
+  </div>
 </aside>
 
 <style>
-    .callout {
-        display: flex;
-        gap: 1rem;
-        padding: 0.75rem 1rem;
-        background: var(--callout-bg);
-        border-left: 4px solid var(--callout-color);
-        border-radius: var(--radius-md);
-        margin: 1.5rem 0;
-        position: relative;
-        overflow: hidden;
-    }
+  .callout {
+    position: relative;
+    display: flex;
+    gap: 1rem;
+    padding: 0.75rem 1rem;
+    margin: 1.5rem 0;
+    overflow: hidden;
+    background: var(--callout-bg);
+    border-left: 4px solid var(--callout-color);
+    border-radius: var(--radius-md);
+  }
 
-    /*
+  /*
      * Theme Definitions
      * Uses 700 scale for text in Light Mode (Contrast > 4.5:1)
      * Uses 400/500 scale for text in Dark Mode
      */
 
-    /* Default (Dark Mode) */
-    :root {
-        --color-info-text: var(--color-primary);
-        --color-info-bg: rgba(59, 130, 246, 0.1);
+  /* Default (Dark Mode) */
+  :root {
+    --color-info-text: var(--color-primary);
+    --color-info-bg: rgb(59 130 246 / 10%);
+    --color-warning-text: #fbbf24; /* Amber 400 */
+    --color-warning-bg: rgb(245 158 11 / 10%);
+    --color-error-text: #f87171; /* Red 400 */
+    --color-error-bg: rgb(239 68 68 / 10%);
+    --color-success-text: #34d399; /* Emerald 400 */
+    --color-success-bg: rgb(16 185 129 / 10%);
+    --color-tip-text: #a78bfa; /* Violet 400 */
+    --color-tip-bg: rgb(139 92 246 / 10%);
+    --color-note-text: #9ca3af; /* Gray 400 */
+    --color-note-bg: rgb(107 114 128 / 10%);
+    --color-keypoint-text: var(--color-primary);
+    --color-keypoint-bg: var(--color-bg-subtle);
+  }
 
-        --color-warning-text: #fbbf24; /* Amber 400 */
-        --color-warning-bg: rgba(245, 158, 11, 0.1);
-
-        --color-error-text: #f87171; /* Red 400 */
-        --color-error-bg: rgba(239, 68, 68, 0.1);
-
-        --color-success-text: #34d399; /* Emerald 400 */
-        --color-success-bg: rgba(16, 185, 129, 0.1);
-
-        --color-tip-text: #a78bfa; /* Violet 400 */
-        --color-tip-bg: rgba(139, 92, 246, 0.1);
-
-        --color-note-text: #9ca3af; /* Gray 400 */
-        --color-note-bg: rgba(107, 114, 128, 0.1);
-
-        --color-keypoint-text: var(--color-primary);
-        --color-keypoint-bg: var(--color-bg-subtle);
+  /* Light Mode Overrides */
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      --color-info-text: #1d4ed8; /* Blue 700 */
+      --color-info-bg: rgb(59 130 246 / 10%);
+      --color-warning-text: #b45309; /* Amber 700 */
+      --color-warning-bg: rgb(245 158 11 / 10%);
+      --color-error-text: #dc2626; /* Red 600 */
+      --color-error-bg: rgb(239 68 68 / 10%);
+      --color-success-text: #047857; /* Emerald 700 */
+      --color-success-bg: rgb(16 185 129 / 10%);
+      --color-tip-text: #6d28d9; /* Violet 700 */
+      --color-tip-bg: rgb(139 92 246 / 10%);
+      --color-note-text: #374151; /* Gray 700 */
+      --color-note-bg: rgb(107 114 128 / 10%);
+      --color-keypoint-text: #1d4ed8; /* Blue 700 */
+      --color-keypoint-bg: var(--color-bg-subtle);
     }
+  }
 
-    /* Light Mode Overrides */
-    @media (prefers-color-scheme: light) {
-        :root:not([data-theme="dark"]) {
-            --color-info-text: #1d4ed8; /* Blue 700 */
-            --color-info-bg: rgba(59, 130, 246, 0.1);
+  /* Explicit Light Mode Force */
+  :global(:root[data-theme="light"]) {
+    --color-info-text: #1d4ed8; /* Blue 700 */
+    --color-info-bg: rgb(59 130 246 / 10%);
+    --color-warning-text: #b45309; /* Amber 700 */
+    --color-warning-bg: rgb(245 158 11 / 10%);
+    --color-error-text: #dc2626; /* Red 600 */
+    --color-error-bg: rgb(239 68 68 / 10%);
+    --color-success-text: #047857; /* Emerald 700 */
+    --color-success-bg: rgb(16 185 129 / 10%);
+    --color-tip-text: #6d28d9; /* Violet 700 */
+    --color-tip-bg: rgb(139 92 246 / 10%);
+    --color-note-text: #374151; /* Gray 700 */
+    --color-note-bg: rgb(107 114 128 / 10%);
+    --color-keypoint-text: #1d4ed8; /* Blue 700 */
+    --color-keypoint-bg: var(--color-bg-subtle);
+  }
 
-            --color-warning-text: #b45309; /* Amber 700 */
-            --color-warning-bg: rgba(245, 158, 11, 0.1);
+  /* Assignments */
+  .callout-info {
+    --callout-color: var(--color-info-text);
+    --callout-bg: var(--color-info-bg);
+  }
 
-            --color-error-text: #dc2626; /* Red 600 */
-            --color-error-bg: rgba(239, 68, 68, 0.1);
+  .callout-warning {
+    --callout-color: var(--color-warning-text);
+    --callout-bg: var(--color-warning-bg);
+  }
 
-            --color-success-text: #047857; /* Emerald 700 */
-            --color-success-bg: rgba(16, 185, 129, 0.1);
+  .callout-error {
+    --callout-color: var(--color-error-text);
+    --callout-bg: var(--color-error-bg);
+  }
 
-            --color-tip-text: #6d28d9; /* Violet 700 */
-            --color-tip-bg: rgba(139, 92, 246, 0.1);
+  .callout-success {
+    --callout-color: var(--color-success-text);
+    --callout-bg: var(--color-success-bg);
+  }
 
-            --color-note-text: #374151; /* Gray 700 */
-            --color-note-bg: rgba(107, 114, 128, 0.1);
+  .callout-tip {
+    --callout-color: var(--color-tip-text);
+    --callout-bg: var(--color-tip-bg);
+  }
 
-            --color-keypoint-text: #1d4ed8; /* Blue 700 */
-            --color-keypoint-bg: var(--color-bg-subtle);
-        }
-    }
+  .callout-note {
+    --callout-color: var(--color-note-text);
+    --callout-bg: var(--color-note-bg);
+  }
 
-    /* Explicit Light Mode Force */
-    :global(:root[data-theme="light"]) {
-        --color-info-text: #1d4ed8; /* Blue 700 */
-        --color-info-bg: rgba(59, 130, 246, 0.1);
+  .callout-keypoint {
+    --callout-color: var(--color-keypoint-text);
+    --callout-bg: var(--color-keypoint-bg);
 
-        --color-warning-text: #b45309; /* Amber 700 */
-        --color-warning-bg: rgba(245, 158, 11, 0.1);
+    padding: 1.25rem;
+    border: var(--border-1);
+    border-left: 4px solid var(--callout-color);
+  }
 
-        --color-error-text: #dc2626; /* Red 600 */
-        --color-error-bg: rgba(239, 68, 68, 0.1);
+  .icon-wrapper {
+    display: flex;
+    flex-shrink: 0;
+    align-items: flex-start;
+    margin-top: 0.125rem; /* Precise alignment with text cap-height */
+    color: var(--callout-color);
+  }
 
-        --color-success-text: #047857; /* Emerald 700 */
-        --color-success-bg: rgba(16, 185, 129, 0.1);
+  .callout-content-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    width: 100%;
+    min-width: 0; /* Prevent flex blowout */
+  }
 
-        --color-tip-text: #6d28d9; /* Violet 700 */
-        --color-tip-bg: rgba(139, 92, 246, 0.1);
+  .callout-title {
+    display: block;
+    margin-bottom: 0.25rem;
+    font-size: 1rem;
+    font-weight: var(--fw-bold);
+    color: var(--callout-color);
+  }
 
-        --color-note-text: #374151; /* Gray 700 */
-        --color-note-bg: rgba(107, 114, 128, 0.1);
+  .content {
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: var(--color-text);
+  }
 
-        --color-keypoint-text: #1d4ed8; /* Blue 700 */
-        --color-keypoint-bg: var(--color-bg-subtle);
-    }
+  .content :global(p:last-child) {
+    margin-bottom: 0;
+  }
 
-    /* Assignments */
-    .callout-info {
-        --callout-color: var(--color-info-text);
-        --callout-bg: var(--color-info-bg);
-    }
-    .callout-warning {
-        --callout-color: var(--color-warning-text);
-        --callout-bg: var(--color-warning-bg);
-    }
-    .callout-error {
-        --callout-color: var(--color-error-text);
-        --callout-bg: var(--color-error-bg);
-    }
-    .callout-success {
-        --callout-color: var(--color-success-text);
-        --callout-bg: var(--color-success-bg);
-    }
-    .callout-tip {
-        --callout-color: var(--color-tip-text);
-        --callout-bg: var(--color-tip-bg);
-    }
-    .callout-note {
-        --callout-color: var(--color-note-text);
-        --callout-bg: var(--color-note-bg);
-    }
-    .callout-keypoint {
-        --callout-color: var(--color-keypoint-text);
-        --callout-bg: var(--color-keypoint-bg);
-        border: var(--border-1);
-        border-left: 4px solid var(--callout-color);
-        padding: 1.25rem;
-    }
+  .content :global(p:first-child) {
+    margin-top: 0;
+  }
 
-    .icon-wrapper {
-        color: var(--callout-color);
-        flex-shrink: 0;
-        margin-top: 0.125rem; /* Precise alignment with text cap-height */
-        display: flex;
-        align-items: flex-start;
-    }
+  /* Links inside callout */
+  .content :global(a) {
+    color: var(--color-text);
+    text-decoration: underline;
+    text-decoration-color: var(--callout-color);
+    text-underline-offset: 2px;
+  }
 
-    .callout-content-wrapper {
-        display: flex;
-        flex-direction: column;
-        gap: 0.25rem;
-        width: 100%;
-        min-width: 0; /* Prevent flex blowout */
-    }
-
-    .callout-title {
-        display: block;
-        color: var(--callout-color);
-        font-weight: var(--fw-bold);
-        font-size: 1rem;
-        margin-bottom: 0.25rem;
-    }
-
-    .content {
-        color: var(--color-text);
-        font-size: 0.95rem;
-        line-height: 1.6;
-    }
-
-    .content :global(p:last-child) {
-        margin-bottom: 0;
-    }
-
-    .content :global(p:first-child) {
-        margin-top: 0;
-    }
-
-    /* Links inside callout */
-    .content :global(a) {
-        text-decoration: underline;
-        text-decoration-color: var(--callout-color);
-        text-underline-offset: 2px;
-        color: var(--color-text);
-    }
-
-    .content :global(a:hover) {
-        color: var(--callout-color);
-    }
+  .content :global(a:hover) {
+    color: var(--callout-color);
+  }
 </style>

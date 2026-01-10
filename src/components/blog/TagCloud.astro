@@ -30,32 +30,33 @@ const tags = getUniqueTags(posts);
 <style>
   /* Base/Mobile Styles */
   .tag-cloud {
-    width: 100%;
     position: relative;
+    width: 100%;
+
     /* Ensure we span full width to edges if possible, or just contain nicely */
   }
 
   /* Gradient Fade for Mobile */
   .tag-cloud::after {
-    content: "";
     position: absolute;
     top: 0;
     right: 0;
     bottom: 0;
-    width: 80px;
-    background: linear-gradient(to right, transparent, var(--color-bg));
-    pointer-events: none;
     z-index: 10;
+    width: 80px;
+    pointer-events: none;
+    content: "";
+    background: linear-gradient(to right, transparent, var(--color-bg));
   }
 
   h3 {
+    display: none;
+    margin-bottom: var(--space-md);
     font-size: 0.9rem;
+    font-weight: var(--fw-bold);
+    color: var(--color-text-muted);
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    color: var(--color-text-muted);
-    font-weight: var(--fw-bold);
-    margin-bottom: var(--space-md);
-    display: none;
   }
 
   .tags {
@@ -63,11 +64,11 @@ const tags = getUniqueTags(posts);
     grid-template-rows: repeat(2, auto); /* restore 2-row layout */
     grid-auto-flow: column;
     gap: var(--space-sm);
-    overflow-x: auto;
-    padding-bottom: var(--space-sm);
     padding-right: var(--space-xl); /* Space for gradient */
-    -webkit-overflow-scrolling: touch;
+    padding-bottom: var(--space-sm);
+    overflow-x: auto;
     scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
   }
 
   .tags::-webkit-scrollbar {
@@ -76,35 +77,35 @@ const tags = getUniqueTags(posts);
 
   .tag {
     display: inline-flex;
-    align-items: center;
     gap: var(--space-sm);
-    padding: 0.35rem 0.8rem;
-    background: var(--color-bg-secondary);
-    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
-    border-radius: 9999px;
-    color: var(--color-text-body);
-    text-decoration: none;
-    font-size: 0.85rem;
-    white-space: nowrap;
-    transition: all 0.2s ease;
+    align-items: center;
     width: max-content;
+    padding: 0.35rem 0.8rem;
+    font-size: 0.85rem;
+    color: var(--color-text-body);
+    white-space: nowrap;
+    text-decoration: none;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--border-color, rgb(255 255 255 / 10%));
+    border-radius: 9999px;
+    transition: all 0.2s ease;
   }
 
   .hash {
     color: var(--color-primary);
-    opacity: 0.8;
+    opacity: 80%;
   }
 
   .count {
-    font-size: 0.75rem;
-    background: rgba(0, 0, 0, 0.1);
     padding: 0.1rem var(--space-sm);
+    font-size: 0.75rem;
+    background: rgb(0 0 0 / 10%);
     border-radius: 9999px;
-    opacity: 0.7;
+    opacity: 70%;
   }
 
   /* Desktop Styles (Sidebar List) */
-  @media (min-width: 900px) {
+  @media (width >= 900px) {
     .tag-cloud {
       position: sticky;
       top: var(--space-lg);
@@ -124,9 +125,9 @@ const tags = getUniqueTags(posts);
       display: flex;
       flex-direction: column;
       gap: var(--space-xs);
-      overflow-x: visible;
-      padding-bottom: 0;
       padding-right: 0;
+      padding-bottom: 0;
+      overflow-x: visible;
     }
 
     .tag {
@@ -141,22 +142,22 @@ const tags = getUniqueTags(posts);
     }
 
     .tag:hover {
-      background: var(--color-bg-secondary);
       color: var(--color-text-heading);
+      background: var(--color-bg-secondary);
       transform: translateX(4px);
     }
 
     .tag:hover .hash {
-      opacity: 1;
+      opacity: 100%;
     }
 
     .count {
-      background: var(--color-bg-subtle, rgba(255, 255, 255, 0.05));
+      background: var(--color-bg-subtle, rgb(255 255 255 / 5%));
     }
 
     .tag:hover .count {
-      background: var(--color-bg, #000);
       color: var(--color-text-body);
+      background: var(--color-bg, #000);
     }
   }
 </style>

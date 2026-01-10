@@ -154,6 +154,29 @@ jobs:
           path: security-audit.log
           retention-days: 1
 
+  sa-stylelint:
+    name: "SA: Stylelint"
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: build
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: "pnpm"
+      - run: pnpm install --frozen-lockfile --prefer-offline
+      - name: Run Stylelint
+        run: pnpm exec stylelint "src/**/*.{astro,css}" | tee stylelint.log
+      - name: Upload Stylelint log
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: log-stylelint
+          path: stylelint.log
+          retention-days: 1
+
   sa-jsdoc:
     name: "SA: JSDoc Coverage"
     runs-on: ubuntu-latest
@@ -807,6 +830,7 @@ jobs:
           OUTCOME_SNYK: ${{ needs.sa-snyk.result }}
           OUTCOME_SONAR: ${{ needs.sa-sonar.result }}
           OUTCOME_JSDOC: ${{ needs.sa-jsdoc.result }}
+          OUTCOME_STYLELINT: ${{ needs.sa-stylelint.result }}
           OUTCOME_A11Y: ${{ needs.accessibility-report.result }}
           OUTCOME_HTML: ${{ needs.html-validator.result }}
           OUTCOME_BUNDLE: ${{ needs.bundle-size.result }}
@@ -834,6 +858,7 @@ jobs:
           OUTCOME_SNYK: ${{ needs.sa-snyk.result }}
           OUTCOME_SONAR: ${{ needs.sa-sonar.result }}
           OUTCOME_JSDOC: ${{ needs.sa-jsdoc.result }}
+          OUTCOME_STYLELINT: ${{ needs.sa-stylelint.result }}
           JSDOC_COVERAGE: ${{ needs.sa-jsdoc.outputs.coverage }}
           OUTCOME_A11Y: ${{ needs.accessibility-report.result }}
           OUTCOME_HTML: ${{ needs.html-validator.result }}

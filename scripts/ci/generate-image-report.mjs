@@ -14,7 +14,9 @@ const generateReport = () => {
     try {
       const output = execSync(
         `find dist -type f ${pattern} 2>/dev/null || echo ""`,
-        { encoding: "utf-8" },
+        {
+          encoding: "utf-8",
+        },
       ).trim();
       return output ? output.split("\n") : [];
     } catch {
@@ -26,7 +28,9 @@ const generateReport = () => {
     try {
       const output = execSync(
         `find dist -type f 2>/dev/null | grep -iE "${pattern}" || echo ""`,
-        { encoding: "utf-8" },
+        {
+          encoding: "utf-8",
+        },
       ).trim();
       return output ? output.split("\n") : [];
     } catch {

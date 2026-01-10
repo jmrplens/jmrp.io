@@ -79,6 +79,7 @@ async function runVerify() {
     { name: "Static: Astro Check", command: "pnpm typecheck" },
     { name: "Static: ESLint", command: "pnpm lint" },
     { name: "Static: Prettier", command: "pnpm exec prettier --check ." },
+    { name: "Lint: CSS (Stylelint)", command: "pnpm lint:css" },
     { name: "Build: Production Build", command: "pnpm run build" },
     { name: "Lint: HTML5 Validation", command: "pnpm lint:html" },
     {

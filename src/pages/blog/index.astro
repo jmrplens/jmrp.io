@@ -13,83 +13,85 @@ import { getImage } from "astro:assets";
 import { getCollection } from "astro:content";
 
 const posts = (await getCollection("posts"))
-    .filter((post) => !post.data.draft)
-    .sort(
-        (a, b) =>
-            b.data.publishedDate.valueOf() - a.data.publishedDate.valueOf(),
-    );
+  .filter((post) => !post.data.draft)
+  .sort(
+    (a, b) => b.data.publishedDate.valueOf() - a.data.publishedDate.valueOf(),
+  );
 
 // Optimize LCP image for preload
 const lcpPost = posts[0];
 let lcpImagePreload = null;
 
 if (lcpPost && lcpPost.data.coverImage) {
-    const optimizedLcp = await getImage({
-        src: lcpPost.data.coverImage,
-        format: "webp",
-        width: 400,
-        height: 225,
-        widths: [360, 480, 640, 720, 960, 1200],
-        quality: 60,
-    });
-    lcpImagePreload = {
-        href: optimizedLcp.src,
-        imagesrcset: optimizedLcp.srcSet.attribute,
-        imagesizes: "(max-width: 640px) 100vw, 400px",
-    };
+  const optimizedLcp = await getImage({
+    src: lcpPost.data.coverImage,
+    format: "webp",
+    width: 400,
+    height: 225,
+    widths: [360, 480, 640, 720, 960, 1200],
+    quality: 60,
+  });
+  lcpImagePreload = {
+    href: optimizedLcp.src,
+    imagesrcset: optimizedLcp.srcSet.attribute,
+    imagesizes: "(max-width: 640px) 100vw, 400px",
+  };
 }
 
 // Schema.org: CollectionPage with ItemList for Blog Index
 const schema = {
-    "@type": "CollectionPage",
-    "@id": new URL("#collection", new URL(Astro.url.pathname, getSiteUrl())).toString(),
-    name: "Blog - José Manuel Requena Plens",
-    description:
-        "Thoughts, tutorials, and engineering notes on software development and home lab.",
-    url: new URL(Astro.url.pathname, getSiteUrl()).toString(),
-    mainEntity: {
-        "@type": "ItemList",
-        itemListElement: posts.map((post, index) => ({
-            "@type": "ListItem",
-            position: index + 1,
-            url: new URL(`/blog/${post.id}/`, getSiteUrl()).toString(),
-            name: post.data.title,
-        })),
-    },
+  "@type": "CollectionPage",
+  "@id": new URL(
+    "#collection",
+    new URL(Astro.url.pathname, getSiteUrl()),
+  ).toString(),
+  name: "Blog - José Manuel Requena Plens",
+  description:
+    "Thoughts, tutorials, and engineering notes on software development and home lab.",
+  url: new URL(Astro.url.pathname, getSiteUrl()).toString(),
+  mainEntity: {
+    "@type": "ItemList",
+    itemListElement: posts.map((post, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      url: new URL(`/blog/${post.id}/`, getSiteUrl()).toString(),
+      name: post.data.title,
+    })),
+  },
 };
 ---
 
 <BaseLayout
-    title="Blog"
-    description="Writing about software development, home lab, and engineering."
-    schema={schema}
+  title="Blog"
+  description="Writing about software development, home lab, and engineering."
+  schema={schema}
 >
-    {
-        lcpImagePreload && (
-            <link
-                slot="head"
-                rel="preload"
-                as="image"
-                href={lcpImagePreload.href}
-                imagesrcset={lcpImagePreload.imagesrcset}
-                imagesizes={lcpImagePreload.imagesizes}
-                fetchpriority="high"
-            />
-        )
-    }
-    <div class="content-wrapper">
-        <header class="page-header">
-            <h1 class="text-primary">Blog</h1>
-            <p class="subtitle">Thoughts, tutorials, and engineering notes.</p>
-        </header>
+  {
+    lcpImagePreload && (
+      <link
+        slot="head"
+        rel="preload"
+        as="image"
+        href={lcpImagePreload.href}
+        imagesrcset={lcpImagePreload.imagesrcset}
+        imagesizes={lcpImagePreload.imagesizes}
+        fetchpriority="high"
+      />
+    )
+  }
+  <div class="content-wrapper">
+    <header class="page-header">
+      <h1 class="text-primary">Blog</h1>
+      <p class="subtitle">Thoughts, tutorials, and engineering notes.</p>
+    </header>
 
-        <div class="blog-layout">
-            <div class="posts-container">
-                <PostGrid posts={posts} />
-            </div>
-            <aside>
-                <TagCloud />
-            </aside>
-        </div>
+    <div class="blog-layout">
+      <div class="posts-container">
+        <PostGrid posts={posts} />
+      </div>
+      <aside>
+        <TagCloud />
+      </aside>
     </div>
+  </div>
 </BaseLayout>

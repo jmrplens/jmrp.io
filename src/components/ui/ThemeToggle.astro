@@ -10,115 +10,114 @@ import { Icon } from "astro-icon/components";
 ---
 
 <button
-    id="theme-toggle"
-    type="button"
-    class="theme-toggle"
-    aria-label="Toggle Dark Mode"
+  id="theme-toggle"
+  type="button"
+  class="theme-toggle"
+  aria-label="Toggle Dark Mode"
 >
-    <span class="icon-sun"><Icon name="fa-solid:sun" /></span>
-    <span class="icon-moon"><Icon name="fa-solid:moon" /></span>
+  <span class="icon-sun"><Icon name="fa-solid:sun" /></span>
+  <span class="icon-moon"><Icon name="fa-solid:moon" /></span>
 </button>
 
 <style>
-    .theme-toggle {
-        background: none;
-        border: none;
-        cursor: pointer;
-        color: var(--color-text);
-        padding: 0.5rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: color 0.2s;
-        font-size: 1.2rem;
-    }
+  .theme-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem;
+    font-size: 1.2rem;
+    color: var(--color-text);
+    cursor: pointer;
+    background: none;
+    border: none;
+    transition: color 0.2s;
+  }
 
-    .theme-toggle:hover {
-        color: var(--color-primary);
-    }
+  .theme-toggle:hover {
+    color: var(--color-primary);
+  }
 
-    /* Icon display logic based on data-theme */
-    .icon-sun {
-        display: block;
-    }
-    .icon-moon {
-        display: none;
-    }
+  /* Icon display logic based on data-theme */
+  .icon-sun {
+    display: block;
+  }
 
-    :global(html[data-theme="light"]) .icon-sun {
-        display: none;
-    }
-    :global(html[data-theme="light"]) .icon-moon {
-        display: block;
-    }
+  .icon-moon {
+    display: none;
+  }
 
-    :global(html[data-theme="dark"]) .icon-sun {
-        display: block;
-    }
-    :global(html[data-theme="dark"]) .icon-moon {
-        display: none;
-    }
+  :global(html[data-theme="light"]) .icon-sun {
+    display: none;
+  }
+
+  :global(html[data-theme="light"]) .icon-moon {
+    display: block;
+  }
+
+  :global(html[data-theme="dark"]) .icon-sun {
+    display: block;
+  }
+
+  :global(html[data-theme="dark"]) .icon-moon {
+    display: none;
+  }
 </style>
 
 <script>
-    const initThemeToggle = () => {
-        const toggle = document.getElementById("theme-toggle");
+  const initThemeToggle = () => {
+    const toggle = document.getElementById("theme-toggle");
 
-        const getTheme = () => {
-            if (
-                typeof localStorage !== "undefined" &&
-                localStorage.getItem("theme")
-            ) {
-                return localStorage.getItem("theme");
-            }
-            if (
-                globalThis.matchMedia("(prefers-color-scheme: light)").matches
-            ) {
-                return "light";
-            }
-            return "dark"; // Default
-        };
-
-        const setTheme = (theme: string) => {
-            document.documentElement.dataset.theme = theme;
-            localStorage.setItem("theme", theme);
-
-            // Also toggle global class for older css usage if any
-            if (theme === "light") {
-                document.documentElement.classList.add("light-mode");
-                document.documentElement.classList.remove("dark-mode");
-            } else {
-                document.documentElement.classList.add("dark-mode");
-                document.documentElement.classList.remove("light-mode");
-            }
-
-            // Update aria-label
-            if (toggle) {
-                const label =
-                    theme === "dark"
-                        ? "Switch to Light Mode"
-                        : "Switch to Dark Mode";
-                toggle.setAttribute("aria-label", label);
-            }
-        };
-
-        // Initialize state based on current theme
-        if (toggle) {
-            const currentTheme = getTheme() || "dark"; // Default fallback
-            const label =
-                currentTheme === "dark"
-                    ? "Switch to Light Mode"
-                    : "Switch to Dark Mode";
-            toggle.setAttribute("aria-label", label);
-
-            toggle.onclick = () => {
-                const currentTheme = getTheme();
-                const newTheme = currentTheme === "dark" ? "light" : "dark";
-                setTheme(newTheme);
-            };
-        }
+    const getTheme = () => {
+      if (
+        typeof localStorage !== "undefined" &&
+        localStorage.getItem("theme")
+      ) {
+        return localStorage.getItem("theme");
+      }
+      if (globalThis.matchMedia("(prefers-color-scheme: light)").matches) {
+        return "light";
+      }
+      return "dark"; // Default
     };
 
-    document.addEventListener("DOMContentLoaded", initThemeToggle);
-    document.addEventListener("astro:after-swap", initThemeToggle);
+    const setTheme = (theme: string) => {
+      document.documentElement.dataset.theme = theme;
+      localStorage.setItem("theme", theme);
+
+      // Also toggle global class for older css usage if any
+      if (theme === "light") {
+        document.documentElement.classList.add("light-mode");
+        document.documentElement.classList.remove("dark-mode");
+      } else {
+        document.documentElement.classList.add("dark-mode");
+        document.documentElement.classList.remove("light-mode");
+      }
+
+      // Update aria-label
+      if (toggle) {
+        const label =
+          theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode";
+        toggle.setAttribute("aria-label", label);
+      }
+    };
+
+    // Initialize state based on current theme
+    if (toggle) {
+      const currentTheme = getTheme() || "dark"; // Default fallback
+      const label =
+        currentTheme === "dark"
+          ? "Switch to Light Mode"
+          : "Switch to Dark Mode";
+      toggle.setAttribute("aria-label", label);
+
+      toggle.onclick = () => {
+        const currentTheme = getTheme();
+        const newTheme = currentTheme === "dark" ? "light" : "dark";
+        setTheme(newTheme);
+      };
+    }
+  };
+
+  document.addEventListener("DOMContentLoaded", initThemeToggle);
+  document.addEventListener("astro:after-swap", initThemeToggle);
 </script>

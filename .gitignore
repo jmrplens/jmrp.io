@@ -96,3 +96,4 @@ cv_latex/*.pdf
 .scannerwork/
 workflow-graph.png
 workflow-data.json
+dist-reports/

@@ -112,6 +112,7 @@ const labelToLogId = {
   "SA: Link Checker (Dist)": "lychee",
   "SA: Security Audit": "security-audit",
   "SA: JSDoc Coverage": "jsdoc-coverage",
+  "SA: Stylelint": "stylelint",
   "Bundle Size Check": "bundle-size",
   "HTML Validation": "html-validation",
   "RSS Feed Validation": "rss-validation",
@@ -153,6 +154,7 @@ const saOutcomes = {
   snyk: process.env.OUTCOME_SNYK,
   sonar: process.env.OUTCOME_SONAR,
   jsdoc: process.env.OUTCOME_JSDOC,
+  stylelint: process.env.OUTCOME_STYLELINT,
 };
 
 const qualityOutcomes = {
@@ -245,11 +247,18 @@ const html = `
             --font: 'Inter', system-ui, -apple-system, sans-serif;
         }
 
-        /* Mermaid Overrides */
-        .mermaid { background: transparent !important; }
-        .node rect, .node circle, .node polygon { fill: var(--card-bg) !important; stroke: var(--border) !important; stroke-width: 2px !important; }
-        .edgePath .path { stroke: var(--text-muted) !important; stroke-width: 2px !important; }
-        .label { color: var(--text-main) !important; }
+        /* Job Hit Areas */
+        .job-hit-area {
+            position: absolute;
+            border: 2px solid transparent;
+            border-radius: 6px;
+            transition: all 0.2s;
+            z-index: 10;
+        }
+        .job-hit-area:hover {
+            border-color: var(--primary);
+            background: rgba(179, 137, 245, 0.1);
+        }
 
         /* Modal styling */
         .modal {
@@ -486,10 +495,6 @@ const html = `
             .health-section { flex-direction: column; text-align: center; gap: 2rem; }
         }
     </style>
-    <script type="module">
-        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
-        mermaid.initialize({ startOnLoad: true, theme: 'dark', securityLevel: 'loose' });
-    </script>
     <script>
         function openLog(job) {
             fetch('logs/' + job + '.log')
@@ -610,6 +615,7 @@ const html = `
                         <tr><td>Astro Check</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(saOutcomes.astro)}">${saOutcomes.astro || "Pending"}</span> <a href="javascript:void(0)" onclick="openLog('astro-check')" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Log</a></div></td></tr>
                         <tr><td>Prettier</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(saOutcomes.prettier)}">${saOutcomes.prettier || "Pending"}</span> <a href="javascript:void(0)" onclick="openLog('prettier')" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Log</a></div></td></tr>
                         <tr><td>ESLint</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(saOutcomes.eslint)}">${saOutcomes.eslint || "Pending"}</span> <a href="javascript:void(0)" onclick="openLog('eslint')" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Log</a></div></td></tr>
+                        <tr><td>Stylelint</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(saOutcomes.stylelint)}">${saOutcomes.stylelint || "Pending"}</span> <a href="javascript:void(0)" onclick="openLog('stylelint')" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Log</a></div></td></tr>
                         <tr><td>Link Checker</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(saOutcomes.lychee)}">${saOutcomes.lychee || "Pending"}</span> ${status.lychee ? '<a href="lychee/" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">View Report</a>' : ""}</div></td></tr>
                         <tr><td>Spell Checker</td><td><span class="status-badge ${getStatusClass(saOutcomes.typos)}">${saOutcomes.typos || "Pending"}</span></td></tr>
                         <tr><td>Security Audit</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(saOutcomes.security)}">${saOutcomes.security || "Pending"}</span> <a href="javascript:void(0)" onclick="openLog('security-audit')" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Log</a></div></td></tr>
@@ -641,49 +647,30 @@ const html = `
 
         <section class="details-section">
             <h2 style="font-size: 1.25rem; margin-bottom: 1.5rem;">Visual Workflow Status</h2>
-            <div class="summary-grid">
-                <div class="card" style="padding: 1.5rem; overflow-x: auto;">
-                    <div class="card-title" style="margin-bottom: 1rem;">Action Graph (Interactive)</div>
-                    <pre class="mermaid">
-graph LR
-${
-  workflowData.nodes.length > 0
-    ? workflowData.nodes.map((n) => `    ${n.id}["${n.label}"]`).join("\n") +
-      "\n" +
-      workflowData.links.map((l) => `    ${l.from} --> ${l.to}`).join("\n") +
-      "\n" +
-      `    classDef success fill:#064e3b,stroke:#059669,color:#fff\n` +
-      `    classDef failure fill:#450a0a,stroke:#dc2626,color:#fff\n` +
-      `    classDef pending fill:#2d3748,stroke:#4a5568,color:#94a3b8\n` +
-      workflowData.nodes
-        .map((n) => `    class ${n.id} ${n.status}`)
-        .join("\n") +
-      "\n" +
-      workflowData.nodes
-        .filter((n) => labelToLogId[n.label])
-        .map(
-          (n) =>
-            `    click ${n.id} "javascript:openLog('${labelToLogId[n.label]}')"`,
-        )
-        .join("\n")
-    : `
-    Build[🏗️ Build] --> SA[Static Analysis]
-    Build --> QA[Quality Assurance]
-    SA --> Dashboard[📊 Dashboard]
-    QA --> Dashboard
-`
-}
-                    </pre>
-                </div>
-                <div class="card" style="padding: 1.5rem;">
-                    <div class="card-title" style="margin-bottom: 1rem;">GitHub Screenshot</div>
-                    ${
-                      fs.existsSync(
-                        path.join(DIST_REPORTS, "workflow-graph.png"),
-                      )
-                        ? '<img src="workflow-graph.png" style="width:100%; border-radius:8px; border:1px solid var(--border);" />'
-                        : '<div style="padding:2rem; text-align:center; color:var(--text-muted);">Screenshot not available</div>'
-                    }
+            <div class="card" style="padding: 1.5rem; position: relative; overflow: auto; background: #0d1117; border-radius: 24px; border: 1px solid var(--border);">
+                <div class="card-title" style="margin-bottom: 1.5rem;">Dynamic GitHub workflow graph</div>
+                
+                <div id="workflow-container" style="position: relative; width: ${workflowData.width || 800}px; height: ${workflowData.height || 400}px; margin: 0 auto; min-width: min-content;">
+                    ${fs.existsSync(
+  path.join(DIST_REPORTS, "workflow-graph.png"),
+)
+    ? '<img src="workflow-graph.png" style="display: block; width: 100%; height: 100%;" />'
+    : '<div style="padding: 5rem; text-align: center; color: var(--text-muted);">Workflow graph image missing</div>'
+  }
+                    
+                    ${(workflowData.nodes || [])
+    .map((n) => {
+      const logId = labelToLogId[n.label];
+      return `
+                        <div 
+                          class="job-hit-area" 
+                          style="left: ${n.x}px; top: ${n.y}px; width: ${n.width}px; height: ${n.height}px; cursor: ${logId ? "pointer" : "default"};"
+                          title="${n.label} - Status: ${n.status}"
+                          ${logId ? `onclick="openLog('${logId}')"` : ""}
+                        ></div>
+                      `;
+    })
+    .join("")}
                 </div>
             </div>
         </section>

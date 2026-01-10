@@ -13,132 +13,136 @@ import { Icon } from "astro-icon/components";
 import CopyButton from "./CopyButton.astro";
 
 interface Props {
-    filename: string;
-    icon?: string; // e.g., 'mdi:file-document-outline'
+  filename: string;
+  icon?: string; // e.g., 'mdi:file-document-outline'
 }
 
 const { filename, icon } = Astro.props;
 
 // Infer icon from filename
 const getIconForFile = (name: string) => {
-    if (name.includes("nginx")) return "devicon:nginx";
-    if (name.includes(".conf")) return "mdi:file-cog-outline";
-    if (name.endsWith(".txt")) return "mdi:file-document-outline";
-    if (name.endsWith(".json")) return "mdi:code-json";
-    if (name.endsWith(".yml") || name.endsWith(".yaml"))
-        return "mdi:file-settings-outline";
-    if (name.endsWith(".xml")) return "mdi:file-xml-box";
-    return "mdi:file-outline";
+  if (name.includes("nginx")) return "devicon:nginx";
+  if (name.includes(".conf")) return "mdi:file-cog-outline";
+  if (name.endsWith(".txt")) return "mdi:file-document-outline";
+  if (name.endsWith(".json")) return "mdi:code-json";
+  if (name.endsWith(".yml") || name.endsWith(".yaml"))
+    return "mdi:file-settings-outline";
+  if (name.endsWith(".xml")) return "mdi:file-xml-box";
+  return "mdi:file-outline";
 };
 
 const finalIcon = icon || getIconForFile(filename);
 ---
 
 <div
-    class="file-content-wrapper copy-container"
-    role="group"
-    aria-label={`Content of file: ${filename}`}
+  class="file-content-wrapper copy-container"
+  role="group"
+  aria-label={`Content of file: ${filename}`}
 >
-    <div class="file-header">
-        <div class="file-info">
-            <Icon name={finalIcon} class="file-icon" />
-            <span class="file-name">{filename}</span>
-        </div>
-        <!-- Copy Button integrated into header -->
-        <CopyButton class="file-header-copy-btn" />
+  <div class="file-header">
+    <div class="file-info">
+      <Icon
+        name={finalIcon}
+        class="file-icon"
+      />
+      <span class="file-name">{filename}</span>
     </div>
-    <div class="file-body">
-        <slot />
-    </div>
+    <!-- Copy Button integrated into header -->
+    <CopyButton class="file-header-copy-btn" />
+  </div>
+  <div class="file-body">
+    <slot />
+  </div>
 </div>
 
 <style>
-    .file-content-wrapper {
-        border: var(--border-1);
-        border-radius: var(--radius-md);
-        margin: 1.5rem 0;
-        overflow: hidden; /* Keep children within rounded corners */
-        background-color: var(--color-bg-secondary);
-    }
+  .file-content-wrapper {
+    margin: 1.5rem 0;
+    overflow: hidden; /* Keep children within rounded corners */
+    background-color: var(--color-bg-secondary);
+    border: var(--border-1);
+    border-radius: var(--radius-md);
+  }
 
-    .file-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between; /* Push copy button to the right */
-        gap: 0.5rem;
-        padding: 0.5rem 1rem;
-        background-color: var(--color-bg-subtle);
-        border-bottom: var(--border-1);
-        font-family: var(--font-mono);
-        font-size: 0.85rem;
-        color: var(--color-text-muted);
-        min-height: 48px; /* Ensure good alignment height */
-    }
+  .file-header {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    justify-content: space-between; /* Push copy button to the right */
+    min-height: 48px; /* Ensure good alignment height */
+    padding: 0.5rem 1rem;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+    background-color: var(--color-bg-subtle);
+    border-bottom: var(--border-1);
+  }
 
-    .file-info {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
+  .file-info {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+  }
 
-    .file-icon {
-        font-size: 1.3rem;
-    }
-    .file-name {
-        font-weight: 500;
-    }
+  .file-icon {
+    font-size: 1.3rem;
+  }
 
-    .file-body {
-        padding: 0;
-        overflow: hidden;
-    }
+  .file-name {
+    font-weight: 500;
+  }
 
-    /* Style the <pre> element that comes from the slot */
-    .file-body :global(pre),
-    .file-body :global(.astro-code) {
-        margin: 0 !important;
-        padding: 1.25rem 1.5rem !important; /* Generous padding like other components */
-        border-radius: 0 !important;
-        border: none !important;
-        box-shadow: none !important;
-        overflow-x: auto;
-    }
+  .file-body {
+    padding: 0;
+    overflow: hidden;
+  }
 
-    /* Accessibility: Boost contrast in light mode */
-    :root:not([data-theme="dark"]) .file-content-wrapper {
-        background-color: #ffffff; /* pure white for maximum contrast */
-        border-color: var(--color-border);
-    }
+  /* Style the <pre> element that comes from the slot */
+  .file-body :global(pre),
+  .file-body :global(.astro-code) {
+    padding: 1.25rem 1.5rem !important; /* Generous padding like other components */
+    margin: 0 !important;
+    overflow-x: auto;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
 
-    :root:not([data-theme="dark"]) .file-header {
-        background-color: #f6f8fa; /* standard light gray header */
-    }
+  /* Accessibility: Boost contrast in light mode */
+  :root:not([data-theme="dark"]) .file-content-wrapper {
+    background-color: #fff; /* pure white for maximum contrast */
+    border-color: var(--color-border);
+  }
 
-    :root:not([data-theme="dark"]) .file-body :global(pre),
-    :root:not([data-theme="dark"]) .file-body :global(.astro-code) {
-        background-color: #ffffff !important;
-    }
+  :root:not([data-theme="dark"]) .file-header {
+    background-color: #f6f8fa; /* standard light gray header */
+  }
 
-    /* Dark mode adjustments */
-    :root[data-theme="dark"] .file-content-wrapper {
-        background-color: var(--color-bg-secondary);
-    }
+  :root:not([data-theme="dark"]) .file-body :global(pre),
+  :root:not([data-theme="dark"]) .file-body :global(.astro-code) {
+    background-color: #fff !important;
+  }
 
-    :root[data-theme="dark"] .file-body :global(pre) {
-        background-color: transparent !important;
-    }
+  /* Dark mode adjustments */
+  :root[data-theme="dark"] .file-content-wrapper {
+    background-color: var(--color-bg-secondary);
+  }
 
-    /* Override copy button positioning for header integration */
-    :global(.file-header-copy-btn) {
-        position: static !important;
-        background-color: transparent !important;
-        border: 1px solid var(--color-border) !important;
-        opacity: 0.8;
-    }
+  :root[data-theme="dark"] .file-body :global(pre) {
+    background-color: transparent !important;
+  }
 
-    :global(.file-header-copy-btn:hover) {
-        opacity: 1;
-        background-color: var(--color-bg-secondary) !important;
-        border-color: var(--color-text-muted) !important;
-    }
+  /* Override copy button positioning for header integration */
+  :global(.file-header-copy-btn) {
+    position: static !important;
+    background-color: transparent !important;
+    border: 1px solid var(--color-border) !important;
+    opacity: 80%;
+  }
+
+  :global(.file-header-copy-btn:hover) {
+    background-color: var(--color-bg-secondary) !important;
+    border-color: var(--color-text-muted) !important;
+    opacity: 100%;
+  }
 </style>

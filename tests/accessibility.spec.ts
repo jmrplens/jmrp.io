@@ -224,9 +224,7 @@ test.describe("Accessibility Tests (Axe-core WCAG 2.1 AA)", () => {
         </style>
       </head>
       <body>
-        <h1>Accessibility Reports (${
-          theme === "dark" ? "Dark" : "Light"
-        } Mode)</h1>
+        <h1>Accessibility Reports (${theme === "dark" ? "Dark" : "Light"} Mode)</h1>
         
         <div class="summary">
           <div class="card ${summary.failed === 0 ? "passed" : ""}">
@@ -254,9 +252,7 @@ test.describe("Accessibility Tests (Axe-core WCAG 2.1 AA)", () => {
                 <div class="details">
                   <span class="page-name">${escapeHtml(r.page.split("(")[0].trim())}</span>
                   <div style="margin-top: 4px;">
-                    <span class="page-url">${escapeHtml(
-                      /\((.*?)\)/.exec(r.page)?.[1] || "",
-                    )}</span>
+                    <span class="page-url">${escapeHtml(/\((.*?)\)/.exec(r.page)?.[1] || "")}</span>
                   </div>
                   ${
                     r.violations > 0

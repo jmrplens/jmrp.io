@@ -1,10 +1,10 @@
 /* Shared styles for Blog Index and Tag Pages */
 
 .content-wrapper {
-  max-width: var(--max-width-container);
-  margin: 0 auto;
-  padding: var(--space-lg) var(--space-lg);
   width: 100%;
+  max-width: var(--max-width-container);
+  padding: var(--space-lg) var(--space-lg);
+  margin: 0 auto;
 }
 
 .page-header {
@@ -13,9 +13,9 @@
 }
 
 .page-header h1 {
+  margin-bottom: var(--space-sm);
   font-size: 3.5rem;
   font-weight: 800;
-  margin-bottom: var(--space-sm);
   letter-spacing: -0.02em;
 }
 
@@ -33,15 +33,15 @@
 
 .tags {
   display: flex;
-  gap: var(--space-sm);
   flex-wrap: wrap;
+  gap: var(--space-sm);
   min-height: 1.5em;
 }
 
 .tag {
-  color: var(--color-primary);
-  font-weight: var(--fw-semibold);
   font-size: 0.85rem;
+  font-weight: var(--fw-semibold);
+  color: var(--color-primary);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   text-decoration: none;
@@ -49,19 +49,19 @@
 }
 
 .tag:hover {
-  opacity: 0.8;
   text-decoration: underline;
+  opacity: 80%;
 }
 
 .back-link {
   display: inline-flex;
-  align-items: center;
   gap: var(--space-sm);
+  align-items: center;
+  margin-bottom: var(--space-md);
+  font-size: 0.9rem;
   color: var(--color-text-muted);
   text-decoration: none;
-  font-size: 0.9rem;
   transition: color 0.2s;
-  margin-bottom: var(--space-md);
 }
 
 .back-link:hover {
@@ -74,28 +74,28 @@
 }
 
 /* Mobile responsive adjustments */
-@media (max-width: 900px) {
+@media (width <= 900px) {
   .page-header {
     margin-bottom: var(--space-md);
   }
 
   .blog-layout {
-    grid-template-columns: 1fr;
     display: flex;
     flex-direction: column;
+    grid-template-columns: 1fr;
     gap: var(--space-md);
   }
 
   aside {
-    order: -1;
-    width: 100%;
     position: sticky;
     top: 0;
     z-index: 10;
+    order: -1;
+    width: 100%;
   }
 }
 
-@media (max-width: 640px) {
+@media (width <= 640px) {
   .content-wrapper {
     padding: var(--space-lg) var(--space-md);
   }

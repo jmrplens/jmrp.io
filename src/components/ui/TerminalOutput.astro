@@ -14,84 +14,89 @@
 import { Icon } from "astro-icon/components";
 
 interface Props {
-    title?: string;
+  title?: string;
 }
 
 const { title } = Astro.props;
 ---
 
 <div
-    class="terminal-output-wrapper"
-    role="group"
-    aria-live="polite"
-    aria-label={title ? `Terminal Output: ${title}` : "Terminal Output"}
+  class="terminal-output-wrapper"
+  role="group"
+  aria-live="polite"
+  aria-label={title ? `Terminal Output: ${title}` : "Terminal Output"}
 >
-    {
-        title && (
-            <div class="output-header" aria-hidden="true">
-                <Icon
-                    name="mdi:chevron-right-box-outline"
-                    class="output-icon"
-                />
-                <span class="output-title">{title}</span>
-            </div>
-        )
-    }
-    <div class="output-body">
-        <div class="terminal-content"><slot /></div>
-    </div>
+  {
+    title && (
+      <div
+        class="output-header"
+        aria-hidden="true"
+      >
+        <Icon
+          name="mdi:chevron-right-box-outline"
+          class="output-icon"
+        />
+        <span class="output-title">{title}</span>
+      </div>
+    )
+  }
+  <div class="output-body">
+    <div class="terminal-content"><slot /></div>
+  </div>
 </div>
 <style>
-    .terminal-content {
-        white-space: pre-wrap;
-        word-break: break-all;
-    }
-    .terminal-output-wrapper {
-        border: var(--border-1);
-        border-radius: var(--radius-md);
-        margin: 1.5rem 0;
-        background-color: var(--color-bg-secondary);
-        overflow: hidden;
-    }
+  .terminal-content {
+    word-break: break-all;
+    white-space: pre-wrap;
+  }
 
-    .output-header {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        padding: 0.6rem 1rem;
-        border-bottom: var(--border-1);
-        font-family: var(--font-mono);
-        font-size: 0.85rem;
-        color: var(--color-text-muted);
-    }
-    .output-icon {
-        font-size: 1.1rem;
-    }
+  .terminal-output-wrapper {
+    margin: 1.5rem 0;
+    overflow: hidden;
+    background-color: var(--color-bg-secondary);
+    border: var(--border-1);
+    border-radius: var(--radius-md);
+  }
 
-    .output-body {
-        padding: 1rem;
-        font-family: var(--font-mono);
-        font-size: 0.85em;
-        color: var(--color-text-muted);
-        overflow-x: auto;
-    }
+  .output-header {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    padding: 0.6rem 1rem;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+    border-bottom: var(--border-1);
+  }
 
-    .output-body :global(.custom-code-copy-btn) {
-        display: none !important;
-    }
+  .output-icon {
+    font-size: 1.1rem;
+  }
 
-    .output-body :global(pre) {
-        margin: 0 !important;
-        padding: 0 !important;
-        background: none !important;
-        border: none !important;
-        font-size: inherit !important;
-        color: inherit !important;
-    }
+  .output-body {
+    padding: 1rem;
+    overflow-x: auto;
+    font-family: var(--font-mono);
+    font-size: 0.85em;
+    color: var(--color-text-muted);
+  }
 
-    .output-body :global(code) {
-        font-size: inherit !important;
-        color: inherit !important;
-        background-color: transparent !important;
-    }
+  .output-body :global(.custom-code-copy-btn) {
+    display: none !important;
+  }
+
+  .output-body :global(pre) {
+    padding: 0 !important;
+    margin: 0 !important;
+    font-size: inherit !important;
+    color: inherit !important;
+    background: none !important;
+    border: none !important;
+  }
+
+  .output-body :global(code) {
+    font-size: inherit !important;
+    color: inherit !important;
+    background-color: transparent !important;
+  }
 </style>

@@ -3,156 +3,156 @@ import type { CVCertificateGroup } from "@src/types";
 import { Icon } from "astro-icon/components";
 
 interface Props {
-    group: CVCertificateGroup;
+  group: CVCertificateGroup;
 }
 
 const { group } = Astro.props;
 ---
 
 <div class="group-category">
-    <h3>
-        {group.icon && <Icon name={group.icon} />}
-        {group.category}
-    </h3>
-    <div class="certificate-list">
-        {
-            group.items.map((item) => (
-                <div class="certificate-item">
-                    <div class="cert-main">
-                        <span class="cert-name">{item.name}</span>
-                        <div class="cert-meta">
-                            {item.school && (
-                                <span class="cert-school">
-                                    <Icon
-                                        name="fa-solid:university"
-                                        class="meta-icon"
-                                    />
-                                    {item.school}
-                                </span>
-                            )}
-                            {item.time && (
-                                <span class="cert-time">
-                                    <Icon
-                                        name="fa-solid:clock"
-                                        class="meta-icon"
-                                    />
-                                    {item.time}
-                                </span>
-                            )}
-                        </div>
-                    </div>
+  <h3>
+    {group.icon && <Icon name={group.icon} />}
+    {group.category}
+  </h3>
+  <div class="certificate-list">
+    {
+      group.items.map((item) => (
+        <div class="certificate-item">
+          <div class="cert-main">
+            <span class="cert-name">{item.name}</span>
+            <div class="cert-meta">
+              {item.school && (
+                <span class="cert-school">
+                  <Icon
+                    name="fa-solid:university"
+                    class="meta-icon"
+                  />
+                  {item.school}
+                </span>
+              )}
+              {item.time && (
+                <span class="cert-time">
+                  <Icon
+                    name="fa-solid:clock"
+                    class="meta-icon"
+                  />
+                  {item.time}
+                </span>
+              )}
+            </div>
+          </div>
 
-                    {item.link && (
-                        <a
-                            href={item.link}
-                            class="btn-download"
-                            download
-                            aria-label={`Download certificate: ${item.name}`}
-                        >
-                            <Icon name="fa-solid:download" />
-                            {item.linkname || "Download"}
-                        </a>
-                    )}
-                </div>
-            ))
-        }
-    </div>
+          {item.link && (
+            <a
+              href={item.link}
+              class="btn-download"
+              download
+              aria-label={`Download certificate: ${item.name}`}
+            >
+              <Icon name="fa-solid:download" />
+              {item.linkname || "Download"}
+            </a>
+          )}
+        </div>
+      ))
+    }
+  </div>
 </div>
 
 <style>
-    .group-category {
-        break-inside: avoid;
-    }
+  .group-category {
+    break-inside: avoid;
+  }
 
-    .group-category h3 {
-        display: flex;
-        align-items: center;
-        gap: var(--space-sm);
-        border-bottom: var(--border-2);
-        padding-bottom: var(--space-xs);
-        margin-bottom: var(--space-md);
-        color: var(--color-text);
-    }
+  .group-category h3 {
+    display: flex;
+    gap: var(--space-sm);
+    align-items: center;
+    padding-bottom: var(--space-xs);
+    margin-bottom: var(--space-md);
+    color: var(--color-text);
+    border-bottom: var(--border-2);
+  }
 
-    .certificate-list {
-        display: flex;
-        flex-direction: column;
-        gap: var(--space-sm);
-    }
+  .certificate-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+  }
 
+  .certificate-item {
+    display: flex;
+    gap: var(--space-md);
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-sm);
+    background-color: var(--color-bg-secondary);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+  }
+
+  .cert-main {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+
+  .cert-name {
+    font-size: 1rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text);
+  }
+
+  .cert-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-md);
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+  }
+
+  .cert-meta span {
+    display: flex;
+    gap: 0.4rem;
+    align-items: center;
+  }
+
+  .meta-icon {
+    font-size: 0.8em;
+    opacity: 80%;
+  }
+
+  .btn-download {
+    display: inline-flex;
+    flex-shrink: 0;
+    gap: 0.5rem;
+    align-items: center;
+    padding: 0.4rem 0.8rem;
+    font-size: 0.85rem;
+    font-weight: var(--fw-medium);
+    color: var(--color-on-primary);
+    white-space: nowrap;
+    text-decoration: none;
+    background-color: var(--color-primary);
+    border-radius: var(--radius-sm);
+    transition: background-color 0.2s;
+  }
+
+  .btn-download:hover {
+    text-decoration: none;
+    background-color: var(--color-primary-hover);
+  }
+
+  @media (width <= 600px) {
     .certificate-item {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: var(--space-sm);
-        border: var(--border-1);
-        border-radius: var(--radius-sm);
-        background-color: var(--color-bg-secondary);
-        gap: var(--space-md);
-    }
-
-    .cert-main {
-        display: flex;
-        flex-direction: column;
-        gap: 0.2rem;
-    }
-
-    .cert-name {
-        font-weight: var(--fw-semibold);
-        color: var(--color-text);
-        font-size: 1rem;
-    }
-
-    .cert-meta {
-        display: flex;
-        gap: var(--space-md);
-        font-size: 0.85rem;
-        color: var(--color-text-muted);
-        flex-wrap: wrap;
-    }
-
-    .cert-meta span {
-        display: flex;
-        align-items: center;
-        gap: 0.4rem;
-    }
-
-    .meta-icon {
-        font-size: 0.8em;
-        opacity: 0.8;
+      flex-direction: column;
+      gap: var(--space-sm);
+      align-items: flex-start;
     }
 
     .btn-download {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-        padding: 0.4rem 0.8rem;
-        background-color: var(--color-primary);
-        color: var(--color-on-primary);
-        text-decoration: none;
-        border-radius: var(--radius-sm);
-        font-size: 0.85rem;
-        font-weight: var(--fw-medium);
-        transition: background-color 0.2s;
-        white-space: nowrap;
-        flex-shrink: 0;
+      justify-content: center;
+      width: 100%;
     }
-
-    .btn-download:hover {
-        background-color: var(--color-primary-hover);
-        text-decoration: none;
-    }
-
-    @media (max-width: 600px) {
-        .certificate-item {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: var(--space-sm);
-        }
-
-        .btn-download {
-            width: 100%;
-            justify-content: center;
-        }
-    }
+  }
 </style>

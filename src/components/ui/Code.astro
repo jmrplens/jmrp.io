@@ -14,66 +14,66 @@
 import CopyButton from "./CopyButton.astro";
 
 interface Props {
-    lang?: string; // Language for syntax highlighting (e.g., 'nginx', 'javascript')
-    class?: string;
+  lang?: string; // Language for syntax highlighting (e.g., 'nginx', 'javascript')
+  class?: string;
 }
 
 const { lang = "text", class: className } = Astro.props;
 ---
 
 <div class:list={["code-wrapper", "copy-container", className]}>
-    <pre><span class={`code-content language-${lang}`}><slot /></span></pre>
-    <CopyButton class="code-copy-button" />
+  <pre><span class={`code-content language-${lang}`}><slot /></span></pre>
+  <CopyButton class="code-copy-button" />
 </div>
 
 <style>
-    .code-content {
-        display: block; /* Ensure it behaves like a block for multi-line */
-        font-family: var(--font-mono);
-        font-size: 0.9rem;
-        line-height: 1.6;
-        color: var(--color-text);
-    }
+  .code-content {
+    display: block; /* Ensure it behaves like a block for multi-line */
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: var(--color-text);
+  }
 
-    .code-wrapper {
-        position: relative;
-        margin: 1.5rem 0;
-        border-radius: var(--radius-md);
-        overflow: hidden;
-    }
+  .code-wrapper {
+    position: relative;
+    margin: 1.5rem 0;
+    overflow: hidden;
+    border-radius: var(--radius-md);
+  }
 
-    .code-wrapper :global(.code-copy-button) {
-        position: absolute;
-        top: 0.5rem;
-        right: 0.5rem;
-        z-index: 10;
-    }
+  .code-wrapper :global(.code-copy-button) {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    z-index: 10;
+  }
 
-    pre {
-        margin: 0;
-        padding: 0.75rem 1rem; /* Reduced vertical padding from 1rem */
-        padding-right: 3rem; /* Space for copy button */
-        overflow-x: auto;
-        background-color: var(--color-bg-secondary);
-        border: var(--border-1);
-        border-radius: var(--radius-md);
-    }
+  pre {
+    padding: 0.75rem 1rem; /* Reduced vertical padding from 1rem */
+    padding-right: 3rem; /* Space for copy button */
+    margin: 0;
+    overflow-x: auto;
+    background-color: var(--color-bg-secondary);
+    border: var(--border-1);
+    border-radius: var(--radius-md);
+  }
 
-    code {
-        font-family: var(--font-mono);
-        font-size: 0.9rem;
-        line-height: 1.6;
-        color: var(--color-text);
-    }
+  code {
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: var(--color-text);
+  }
 
-    code :global(p) {
-        margin: 0;
-        display: inline;
-    }
+  code :global(p) {
+    display: inline;
+    margin: 0;
+  }
 
-    code.language-nginx,
-    code.language-bash,
-    code.language-shell {
-        color: var(--color-text);
-    }
+  code.language-nginx,
+  code.language-bash,
+  code.language-shell {
+    color: var(--color-text);
+  }
 </style>
