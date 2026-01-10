@@ -10,6 +10,10 @@ concurrency:
   group: ${{ github.workflow }} - ${{ github.ref }}
   cancel-in-progress: true
 
+# Suppress deprecation warnings from upstream GitHub Actions dependencies
+env:
+  NODE_OPTIONS: "--no-deprecation"
+
 jobs:
   # --- Parallel Static Analysis Jobs ---
 
@@ -56,7 +60,7 @@ jobs:
       - run: pnpm exec eslint . --max-warnings=0
 
   link-checker:
-    name: Link Checker
+    name: Link Checker (Source)
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -69,7 +73,8 @@ jobs:
           restore-keys: cache-lychee-
       - uses: lycheeverse/lychee-action@v2.7.0
         with:
-          args: --config lychee.toml ./**/*.md ./**/*.mdx ./**/*.html src/**/*.astro src/**/*.ts src/**/*.tsx
+          # Check source files only (no .html - those are only in dist/ after build)
+          args: --config lychee.toml ./**/*.md ./**/*.mdx src/**/*.astro src/**/*.ts src/**/*.tsx
           fail: true
         env:
           GITHUB_TOKEN: ${{ secrets.TOKEN_GITHUB }}
@@ -190,6 +195,32 @@ jobs:
           name: dist-build
           path: dist/
           retention-days: 1
+
+  link-checker-html:
+    name: Link Checker (HTML)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: build
+    steps:
+      - uses: actions/checkout@v6
+      - name: Download build artifact
+        uses: actions/download-artifact@v7
+        with:
+          name: dist-build
+          path: dist
+      - name: Restore lychee cache
+        uses: actions/cache@v5
+        with:
+          path: .lycheecache
+          key: cache-lychee-html-${{ github.sha }}
+          restore-keys: cache-lychee-html-
+      - uses: lycheeverse/lychee-action@v2.7.0
+        with:
+          # Check generated HTML files in dist/
+          args: --config lychee.toml ./dist/**/*.html
+          fail: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN_GITHUB }}
 
   accessibility:
     name: Accessibility Tests (${{ matrix.theme }} mode)
