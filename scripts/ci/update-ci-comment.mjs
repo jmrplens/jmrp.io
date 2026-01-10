@@ -29,8 +29,12 @@ function buildSaTable(results) {
   md += `| Astro Check | ${getIcon(results.astro)} | **${results.astro || "Pending"}** |\n`;
   md += `| Prettier | ${getIcon(results.prettier)} | **${results.prettier || "Pending"}** |\n`;
   md += `| ESLint | ${getIcon(results.eslint)} | **${results.eslint || "Pending"}** |\n`;
+  md += `| Link Checker | ${getIcon(results.lychee)} | **${results.lychee || "Pending"}** |\n`;
+  md += `| Spell Checker | ${getIcon(results.typos)} | **${results.typos || "Pending"}** |\n`;
   md += `| Security Audit | ${getIcon(results.security)} | **${results.security || "Pending"}** |\n`;
-  md += `| JSDoc Coverage | ${getIcon(results.jsdoc)} | **${results.jsdocCoverage || "Pending"}** |\n`;
+  md += `| Snyk Security | ${getIcon(results.snyk)} | **${results.snyk || "Pending"}** |\n`;
+  md += `| SonarQube | ${getIcon(results.sonar)} | **${results.sonar || "Pending"}** |\n`;
+  md += `| JSDoc Coverage | ${getIcon(results.jsdoc)} | **${results.jsdocCoverage || "0%"}** |\n`;
   return md;
 }
 
@@ -41,9 +45,13 @@ function buildQualityTable(results, vercelUrl) {
   const getIcon = (res) => STATUS_ICONS[res] || STATUS_ICONS.pending;
 
   let md = "\n#### 📈 Quality & Performance\n\n";
-  md += vercelUrl
-    ? `> 🌐 [**Open Interactive Dashboard**](https://${vercelUrl}) 🚀\n\n`
-    : `> ⏳ *Generating detailed reports and dashboard...*\n\n`;
+  if (vercelUrl) {
+    // Ensure URL doesn't have double protocol
+    const cleanUrl = vercelUrl.startsWith("http") ? vercelUrl : `https://${vercelUrl}`;
+    md += `> 🌐 [**Open Interactive Dashboard**](${cleanUrl}) 🚀\n\n`;
+  } else {
+    md += `> ⏳ *Generating detailed reports and dashboard...*\n\n`;
+  }
 
   md += "| Check | Status | Note |\n";
   md += "| :--- | :---: | :--- |\n";
@@ -51,6 +59,8 @@ function buildQualityTable(results, vercelUrl) {
   md += `| 📄 HTML5 Validity | ${getIcon(results.html)} | Source scan results |\n`;
   md += `| 📦 Bundle Size | ${getIcon(results.bundle)} | Asset analysis |\n`;
   md += `| 📡 RSS & Metadata | ${getIcon(results.rss)} | Feed validation |\n`;
+  md += `| 🏷️ Schema.org | ${getIcon(results.schema)} | Structured data audit |\n`;
+  md += `| 🖼️ Images | ${getIcon(results.image)} | Performance check |\n`;
   md += `| 🧪 Functional Tests | ${getIcon(results.functional)} | Playwright E2E results |\n`;
   return md;
 }
@@ -58,29 +68,34 @@ function buildQualityTable(results, vercelUrl) {
 /**
  * Calculates current health score based on available json reports
  */
-function calculateHealthScore() {
+function calculateHealthScore(saResults, qualityResults) {
   let score = 100;
+
+  // Deduction for SA failures (-5 each)
+  const saToCheck = ["astro", "prettier", "eslint", "lychee", "typos", "security", "snyk", "sonar", "jsdoc"];
+  for (const tool of saToCheck) {
+    if (saResults[tool] === "failure") score -= 5;
+  }
+
+  // Deduction for Quality failures (-10 each)
+  const qualityToCheck = ["a11y", "html", "bundle", "rss", "functional", "schema", "image"];
+  for (const check of qualityToCheck) {
+    if (qualityResults[check] === "failure") score -= 10;
+  }
+
+  // Deductions from specific JSON data if available
   if (fs.existsSync("accessibility-report.json")) {
-    const a11yData = JSON.parse(
-      fs.readFileSync("accessibility-report.json", "utf-8"),
-    );
-    const failed = a11yData.reduce((acc, r) => acc + (r.failed || 0), 0);
-    score -= failed * 5;
+    const a11yData = JSON.parse(fs.readFileSync("accessibility-report.json", "utf-8"));
+    const totalViolations = a11yData.reduce((acc, r) => acc + (r.violations?.length || 0), 0);
+    score -= Math.min(20, totalViolations * 2);
   }
+
   if (fs.existsSync("html-validation.json")) {
-    const htmlData = JSON.parse(
-      fs.readFileSync("html-validation.json", "utf-8"),
-    );
-    const htmlErrors = htmlData.reduce(
-      (acc, f) => acc + f.messages.filter((m) => m.severity === 2).length,
-      0,
-    );
-    score -= htmlErrors * 2;
+    const htmlData = JSON.parse(fs.readFileSync("html-validation.json", "utf-8"));
+    const htmlErrors = htmlData.reduce((acc, f) => acc + f.messages.filter((m) => m.severity === 2).length, 0);
+    score -= Math.min(15, htmlErrors);
   }
-  if (fs.existsSync("rss-validation.json")) {
-    const rssData = JSON.parse(fs.readFileSync("rss-validation.json", "utf-8"));
-    if (rssData && !rssData.valid) score -= 10;
-  }
+
   return Math.max(0, score);
 }
 
@@ -111,7 +126,11 @@ export default async function updateCiComment({ github, context, step }) {
     astro: process.env.OUTCOME_ASTRO,
     prettier: process.env.OUTCOME_PRETTIER,
     eslint: process.env.OUTCOME_ESLINT,
+    lychee: process.env.OUTCOME_LYCHEE,
+    typos: process.env.OUTCOME_TYPOS,
     security: process.env.OUTCOME_SECURITY,
+    snyk: process.env.OUTCOME_SNYK,
+    sonar: process.env.OUTCOME_SONAR,
     jsdoc: process.env.OUTCOME_JSDOC,
     jsdocCoverage: process.env.JSDOC_COVERAGE,
   };
@@ -121,6 +140,8 @@ export default async function updateCiComment({ github, context, step }) {
     html: process.env.OUTCOME_HTML,
     bundle: process.env.OUTCOME_BUNDLE,
     rss: process.env.OUTCOME_RSS,
+    schema: process.env.OUTCOME_SCHEMA,
+    image: process.env.OUTCOME_IMAGE,
     functional: process.env.OUTCOME_FUNCTIONAL,
   };
 
@@ -144,7 +165,7 @@ export default async function updateCiComment({ github, context, step }) {
       break;
     }
     case "final": {
-      const healthScore = calculateHealthScore();
+      const healthScore = calculateHealthScore(saResults, qualityResults);
       const icon = getHealthIcon(healthScore);
       body += `### ${icon} Project Health Score: ${healthScore}/100\n\n`;
       body += buildSaTable(saResults);
