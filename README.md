@@ -17,7 +17,7 @@
 ![PageSpeed Desktop](https://img.shields.io/badge/PageSpeed%20Desktop-100-brightgreen)
 ![PageSpeed Mobile](https://img.shields.io/badge/PageSpeed%20Mobile-100-brightgreen)
 
-This is the source code for my personal website, **[jmrp.io](https://jmrp.io)**, built with **Astro 6 (Aloha)**. It features a high-performance static architecture, robust security headers (including a strict CSP), and a focus on accessibility and modern web standards.
+This is the source code for my personal website, **[jmrp.io](https://jmrp.io)**, built with **Astro 6**. It features a high-performance static architecture, robust security headers (including a strict CSP), and a focus on accessibility and modern web standards.
 
 ## 📑 Table of Contents
 
@@ -49,7 +49,7 @@ This is the source code for my personal website, **[jmrp.io](https://jmrp.io)**,
   - **Inclusive Design**: Keyboard navigation, focus indicators, and unique `aria-labels`.
   - **Motion Sensitivity**: Respects `prefers-reduced-motion` settings.
 - **Content**:
-  - **Content Layer API**: Uses Astro v6 Content Layer with `glob` loaders.
+  - **Content Layer API**: Uses Content Layer API (stable since Astro v5, mandatory in v6).
   - **Blog**: Technical articles with MDX support and Mermaid diagrams.
   - **RSS Feed**: Automatic generation of `rss.xml` for blog posts.
   - **CV Generation**: Automated LaTeX compilation for PDF resumes.
@@ -59,7 +59,7 @@ This is the source code for my personal website, **[jmrp.io](https://jmrp.io)**,
 
 ## 🛠️ Tech Stack
 
-- **Framework**: [Astro v6 (Aloha)](https://astro.build/)
+- **Framework**: [Astro v6](https://astro.build/)
 - **Runtime**: Node.js v22+
 - **UI Components**: [Preact](https://preactjs.com/)
 - **Styling**: Native CSS (Variables, Nesting) & Astro Scoped Styles
@@ -98,7 +98,7 @@ This is the source code for my personal website, **[jmrp.io](https://jmrp.io)**,
 
 To build and run this project, you need the following tools installed on your system:
 
-- **[Node.js](https://nodejs.org/) (v22.0.0+)**: Required for Astro v6 (Aloha).
+- **[Node.js](https://nodejs.org/) (v22.0.0+)**: Required for Astro v6.
 - **[pnpm](https://pnpm.io/) (v10.0.0+)**: The preferred package manager.
 - **[Astro CLI](https://docs.astro.build/en/install-and-setup/)**: Recommended for manual tasks (can be run via `pnpm astro`).
 

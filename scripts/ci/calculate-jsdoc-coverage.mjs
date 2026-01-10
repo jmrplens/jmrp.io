@@ -166,7 +166,13 @@ function getExportedNodes(sourceFile, checker) {
         // If it's a VariableDeclaration, we want to track its parent VariableStatement
         // as well, since that's what we see during top-level source file iteration.
         if (ts.isVariableDeclaration(decl)) {
-          exportedNodes.add(decl.parent.parent);
+          const varList = decl.parent;
+          if (varList && ts.isVariableDeclarationList(varList)) {
+            const varStatement = varList.parent;
+            if (varStatement && ts.isVariableStatement(varStatement)) {
+              exportedNodes.add(varStatement);
+            }
+          }
         }
       }
     }

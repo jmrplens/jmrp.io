@@ -15,7 +15,7 @@ import { execSync } from "node:child_process";
  * @param {object} params - The GitHub Action context parameters.
  * @param {object} params.github - The authenticated Octokit client.
  * @param {object} params.context - The GitHub Action context object.
- * @returns {Promise<void>} Resolves when the comment is successfully created.
+ * @returns {Promise<void>} Resolves when the comment is successfully created or updated.
  */
 export default async function postImageOptimizationComment({
   github,
@@ -93,21 +93,24 @@ export default async function postImageOptimizationComment({
     owner: context.repo.owner,
     repo: context.repo.repo,
     issue_number: context.issue.number,
+    per_page: 100,
   });
 
-  const existingComment = comments.find((c) => c.body?.includes(header));
+  const existingComment = comments.find(
+    (c) => c.user?.type === "Bot" && c.body?.includes(header),
+  );
 
   await (existingComment
     ? github.rest.issues.updateComment({
-      owner: context.repo.owner,
-      repo: context.repo.repo,
-      comment_id: existingComment.id,
-      body: comment,
-    })
+        owner: context.repo.owner,
+        repo: context.repo.repo,
+        comment_id: existingComment.id,
+        body: comment,
+      })
     : github.rest.issues.createComment({
-      issue_number: context.issue.number,
-      owner: context.repo.owner,
-      repo: context.repo.repo,
-      body: comment,
-    }));
+        issue_number: context.issue.number,
+        owner: context.repo.owner,
+        repo: context.repo.repo,
+        body: comment,
+      }));
 }

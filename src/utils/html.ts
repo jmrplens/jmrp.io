@@ -87,9 +87,16 @@ export function decodeHtml(str: string | undefined | null): string {
 /**
  * Safely stringifies an object for use in a <script type="application/ld+json"> tag.
  * Prevents XSS by escaping the < and > characters.
+ * @throws {TypeError} If data contains circular references
  */
 export function safeJsonLd(data: unknown): string {
-  return JSON.stringify(data)
+  const json = JSON.stringify(data);
+  if (json === undefined) {
+    return "null";
+  }
+  return json
     .replaceAll("<", String.raw`\u003c`)
-    .replaceAll(">", String.raw`\u003e`);
+    .replaceAll(">", String.raw`\u003e`)
+    .replaceAll("\u2028", String.raw`\u2028`)
+    .replaceAll("\u2029", String.raw`\u2029`);
 }

@@ -8,7 +8,7 @@ test.describe("Keyboard Navigation Accessibility", () => {
     // Ensure we are in a clean state (start at body)
     await page.focus("body");
 
-    // 1. Tab to "Skip to content" (if it exists) or Logo
+    // 1. Tab to "Skip to content" then Logo
     // Ensure the page is hydrated/ready
     await page.waitForLoadState("domcontentloaded");
     await page.keyboard.press("Tab");
@@ -16,9 +16,8 @@ test.describe("Keyboard Navigation Accessibility", () => {
     // Assert that the skip link received focus and is visible
     const skipLink = page.locator(".skip-link");
     await expect(skipLink).toBeFocused();
-    // Playwright's toBeVisible() considers elements with positive area visible.
-    // Our skip-link moves from top:-9999px to top:0 on focus.
     await expect(skipLink).toBeVisible();
+    await expect(skipLink).toBeInViewport();
 
     await page.keyboard.press("Tab");
 

@@ -8,6 +8,8 @@
 
 import fs from "node:fs";
 
+const HEADER = "### 📡 RSS Feed Validation";
+
 /**
  * Builds the summary table for the RSS report
  */
@@ -60,7 +62,7 @@ function buildCommentFromReport(report, surgeUrl) {
   const icon = report.valid ? "✅" : "❌";
   const status = report.valid ? "**Passed!**" : "**Validation failed**";
 
-  let comment = `### 📡 RSS Feed Validation\n\n${icon} ${status}\n\n`;
+  let comment = `${HEADER}\n\n${icon} ${status}\n\n`;
   comment += buildSummaryTable(report, surgeUrl);
   comment += buildIssuesSection(report);
   comment += "---\n";
@@ -74,7 +76,7 @@ function buildCommentFromReport(report, surgeUrl) {
  * @param {object} params - The GitHub Action context parameters.
  * @param {object} params.github - The authenticated Octokit client.
  * @param {object} params.context - The GitHub Action context object.
- * @returns {Promise<void>} Resolves when the comment is successfully created.
+ * @returns {Promise<void>} Resolves when the comment is successfully created or updated.
  */
 export default async function postRssValidationComment({ github, context }) {
   let comment;
@@ -87,34 +89,32 @@ export default async function postRssValidationComment({ github, context }) {
       const surgeUrl = process.env.SURGE_URL;
       comment = buildCommentFromReport(report, surgeUrl);
     } else {
-      comment =
-        "### 📡 RSS Validation\n\n⚠️ **Report file not found.**\n\n> Please check the build logs for details.";
+      comment = `${HEADER}\n\n⚠️ **Report file not found.**\n\n> Please check the build logs for details.`;
     }
   } catch (error) {
-    comment = "### 📡 RSS Validation\n\n❌ **Error processing report.**";
+    comment = `${HEADER}\n\n❌ **Error processing report.**`;
     console.error("RSS validation comment error:", error);
   }
 
-  const header = "### 📡 RSS Feed Validation";
   const { data: comments } = await github.rest.issues.listComments({
     owner: context.repo.owner,
     repo: context.repo.repo,
     issue_number: context.issue.number,
   });
 
-  const existingComment = comments.find((c) => c.body?.includes(header));
+  const existingComment = comments.find((c) => c.body?.includes(HEADER));
 
   await (existingComment
     ? github.rest.issues.updateComment({
-      owner: context.repo.owner,
-      repo: context.repo.repo,
-      comment_id: existingComment.id,
-      body: comment,
-    })
+        owner: context.repo.owner,
+        repo: context.repo.repo,
+        comment_id: existingComment.id,
+        body: comment,
+      })
     : github.rest.issues.createComment({
-      issue_number: context.issue.number,
-      owner: context.repo.owner,
-      repo: context.repo.repo,
-      body: comment,
-    }));
+        issue_number: context.issue.number,
+        owner: context.repo.owner,
+        repo: context.repo.repo,
+        body: comment,
+      }));
 }

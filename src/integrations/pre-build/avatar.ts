@@ -88,7 +88,11 @@ async function fetchGitHubAvatarBuffer(): Promise<Buffer> {
 
   const chunks: Uint8Array[] = [];
   let receivedLength = 0;
-  const reader = imageRes.body!.getReader();
+
+  if (!imageRes.body) {
+    throw new Error("Response body is null");
+  }
+  const reader = imageRes.body.getReader();
 
   while (true) {
     const { done, value } = await reader.read();

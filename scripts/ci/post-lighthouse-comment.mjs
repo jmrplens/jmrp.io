@@ -14,7 +14,7 @@ import fs from "node:fs";
  * @param {object} params - The GitHub Action context parameters.
  * @param {object} params.github - The authenticated Octokit client.
  * @param {object} params.context - The GitHub Action context object.
- * @returns {Promise<void>} Resolves when the comment is successfully created.
+ * @returns {Promise<void>} Resolves when the comment is successfully created or updated.
  */
 export default async function postLighthouseComment({ github, context }) {
   const theme = process.env.THEME;
@@ -29,27 +29,33 @@ export default async function postLighthouseComment({ github, context }) {
     }
 
     const header = "### ⚡ Lighthouse Audit Report";
+    if (!comment.includes(header)) {
+      comment = `${header}\n\n${comment}`;
+    }
     const { data: comments } = await github.rest.issues.listComments({
       owner: context.repo.owner,
       repo: context.repo.repo,
       issue_number: context.issue.number,
+      per_page: 100,
     });
 
-    const existingComment = comments.find((c) => c.body?.includes(header));
+    const existingComment = comments.find(
+      (c) => c.user?.type === "Bot" && c.body?.includes(header),
+    );
 
     await (existingComment
       ? github.rest.issues.updateComment({
-        owner: context.repo.owner,
-        repo: context.repo.repo,
-        comment_id: existingComment.id,
-        body: comment,
-      })
+          owner: context.repo.owner,
+          repo: context.repo.repo,
+          comment_id: existingComment.id,
+          body: comment,
+        })
       : github.rest.issues.createComment({
-        issue_number: context.issue.number,
-        owner: context.repo.owner,
-        repo: context.repo.repo,
-        body: comment,
-      }));
+          issue_number: context.issue.number,
+          owner: context.repo.owner,
+          repo: context.repo.repo,
+          body: comment,
+        }));
   } else {
     console.log(`Comment file not found: ${commentFile}`);
   }

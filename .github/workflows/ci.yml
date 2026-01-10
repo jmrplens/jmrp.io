@@ -144,7 +144,15 @@ jobs:
 
       - name: Check Failure
         if: |
-          needs.static-analysis.result == 'failure' || contains(needs.static-analysis.outputs.*, 'failure')
+          needs.static-analysis.result == 'failure' ||
+          needs.static-analysis.outputs.astro == 'failure' ||
+          needs.static-analysis.outputs.prettier == 'failure' ||
+          needs.static-analysis.outputs.eslint == 'failure' ||
+          needs.static-analysis.outputs.lychee == 'failure' ||
+          needs.static-analysis.outputs.typos == 'failure' ||
+          needs.static-analysis.outputs.security == 'failure' ||
+          needs.static-analysis.outputs.snyk == 'failure' ||
+          needs.static-analysis.outputs.jsdoc == 'failure'
         run: |
           echo "::error::One or more static analysis steps failed."
           exit 1
@@ -179,7 +187,6 @@ jobs:
           path: dist/
           retention-days: 1
 
-  # Removed as it's now part of the unified static-analysis job
   accessibility:
     name: Accessibility Tests (${{ matrix.theme }} mode)
     runs-on: ubuntu-latest
@@ -768,13 +775,20 @@ jobs:
                   comment += `\n\n#### 🌐 Live Report\n> 🚀 [**Open Lighthouse Reports Dashboard**](https://${surgeUrl}) for detailed insights.`;
                 }
                 const header = "### ⚡ Lighthouse Audit Report";
+                if (!comment.includes(header)) {
+                  comment = `${header}\n\n${comment}`;
+                }
+
                 const { data: comments } = await github.rest.issues.listComments({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
                   issue_number: context.issue.number,
+                  per_page: 100,
                 });
 
-                const existingComment = comments.find((c) => c.body.includes(header));
+                const existingComment = comments.find(
+                  (c) => c.user.type === "Bot" && c.body.includes(header)
+                );
 
                 if (existingComment) {
                   await github.rest.issues.updateComment({

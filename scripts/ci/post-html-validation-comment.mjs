@@ -85,7 +85,7 @@ function buildCommentFromReport(report, surgeUrl) {
  * @param {object} params - The GitHub Action context parameters.
  * @param {object} params.github - The authenticated Octokit client.
  * @param {object} params.context - The GitHub Action context object.
- * @returns {Promise<void>} Resolves when the comment is successfully created.
+ * @returns {Promise<void>} Resolves when the comment is successfully created or updated.
  */
 export default async function postHtmlValidationComment({ github, context }) {
   let comment;
@@ -119,26 +119,29 @@ export default async function postHtmlValidationComment({ github, context }) {
     console.error("HTML validation comment error:", error);
   }
 
-  const header = "### HTML5 Validation";
+  /* Intentionally strictly matching the text without "###" to handle variable icons (✅/❌/⚠️) */
+  const header = "HTML5 Validation";
   const { data: comments } = await github.rest.issues.listComments({
     owner: context.repo.owner,
     repo: context.repo.repo,
     issue_number: context.issue.number,
   });
 
-  const existingComment = comments.find((c) => c.body?.includes(header));
+  const existingComment = comments.find(
+    (c) => c.user?.type === "Bot" && c.body?.includes(header),
+  );
 
   await (existingComment
     ? github.rest.issues.updateComment({
-      owner: context.repo.owner,
-      repo: context.repo.repo,
-      comment_id: existingComment.id,
-      body: comment,
-    })
+        owner: context.repo.owner,
+        repo: context.repo.repo,
+        comment_id: existingComment.id,
+        body: comment,
+      })
     : github.rest.issues.createComment({
-      issue_number: context.issue.number,
-      owner: context.repo.owner,
-      repo: context.repo.repo,
-      body: comment,
-    }));
+        issue_number: context.issue.number,
+        owner: context.repo.owner,
+        repo: context.repo.repo,
+        body: comment,
+      }));
 }

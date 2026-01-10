@@ -14,7 +14,8 @@ try {
     process.loadEnvFile(".env");
   }
 } catch (error) {
-  console.warn(`[Verify] Warning: Failed to load .env file: ${error.message}`);
+  const message = error instanceof Error ? error.message : String(error);
+  console.warn(`[Verify] Warning: Failed to load .env file: ${message}`);
 }
 
 // ANSI colors for pretty output
@@ -167,7 +168,9 @@ try {
   console.warn(`[Verify] Warning: Pre-run cleanup failed: ${message}`);
 }
 
-runVerify().catch((error) => {
+try {
+  await runVerify();
+} catch (error) {
   console.error(error);
   process.exit(1);
-});
+}

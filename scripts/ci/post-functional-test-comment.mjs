@@ -102,7 +102,7 @@ export default async function script({ github, context }) {
       issue_number: context.payload.pull_request.number,
     });
 
-    const existingComment = comments.find((c) => c.body.includes(header));
+    const existingComment = comments.find((c) => c.body?.includes(header));
 
     await (existingComment
       ? github.rest.issues.updateComment({

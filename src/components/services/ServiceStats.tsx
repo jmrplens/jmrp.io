@@ -2,12 +2,7 @@ import { useEffect, useState } from "preact/hooks";
 
 /** Component props for ServiceStats */
 interface Props {
-  readonly type:
-    | "mastodon"
-    | "matrix"
-    | "meshmonitor-lf"
-    | "meshmonitor-mf"
-    | "meshtastic-combined";
+  readonly type: "mastodon" | "matrix" | "meshtastic-combined";
 }
 
 /** Data structure for Mastodon statistics */
@@ -446,7 +441,7 @@ export default function ServiceStats({ type }: Props) {
             break;
           }
           default: {
-            console.error(`Unknown service type: ${type}`);
+            console.error(`Unknown service type: ${type as string}`);
             setError(true);
             data = null;
             break;
