@@ -180,8 +180,12 @@ function deploySecurityHeaders(
         env: secureEnv,
       };
 
+      // Allow optional custom nginx config path via environment variable
+      const nginxConfigPath = process.env.POSTBUILD_NGINX_CONFIG_PATH;
+      const testArgs = nginxConfigPath ? ["-t", "-c", nginxConfigPath] : ["-t"];
+
       // prettier-ignore
-      const testResult = spawnSync("nginx", ["-t"], execOptions); // NOSONAR
+      const testResult = spawnSync("nginx", testArgs, execOptions); // NOSONAR
       if (testResult.error) {
         throw testResult.error;
       }
@@ -298,6 +302,9 @@ function handleNginxValidationError(
     };
     // prettier-ignore
     const finalTestResult = spawnSync("nginx", ["-t"], execOptions); // NOSONAR
+    if (finalTestResult.error) {
+      throw finalTestResult.error;
+    }
     if (finalTestResult.status !== 0) {
       throw new Error("Nginx final validation test failed.");
     }

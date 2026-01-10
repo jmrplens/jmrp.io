@@ -18,16 +18,21 @@ export async function purgeCloudflareCache(logger: AstroIntegrationLogger) {
   const email = process.env.PRIVATE_CF_EMAIL;
   const zoneId = process.env.PRIVATE_CF_ZONE_ID;
 
-  if (!token || !zoneId) {
+  // Determine authentication method:
+  // - API Token: token only (no email) - recommended by Cloudflare
+  // - Global API Key: token + email (legacy but still supported)
+  const useApiToken = token && !email;
+  const useGlobalKey = token && email;
+
+  if (!zoneId || !(useApiToken || useGlobalKey)) {
     logger.info(
-      "Skipping Cloudflare cache purge (PRIVATE_CF_API_TOKEN or PRIVATE_CF_ZONE_ID not set).",
+      "Skipping Cloudflare cache purge (missing PRIVATE_CF_ZONE_ID and/or PRIVATE_CF_API_TOKEN).",
     );
     return;
   }
 
-  const isGlobalKey = !!email;
   logger.info(
-    `Purging Cloudflare cache (Purge Everything) using ${isGlobalKey ? "Global API Key" : "API Token"}...`,
+    `Purging Cloudflare cache (Purge Everything) using ${useGlobalKey ? "Global API Key" : "API Token"}...`,
   );
 
   try {
@@ -35,7 +40,7 @@ export async function purgeCloudflareCache(logger: AstroIntegrationLogger) {
       "Content-Type": "application/json",
     };
 
-    if (isGlobalKey) {
+    if (useGlobalKey) {
       headers["X-Auth-Email"] = email;
       headers["X-Auth-Key"] = token;
     } else {
@@ -46,19 +51,22 @@ export async function purgeCloudflareCache(logger: AstroIntegrationLogger) {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 15_000); // 15 seconds
 
-    const response = await fetch(
-      `https://api.cloudflare.com/client/v4/zones/${zoneId}/purge_cache`,
-      {
-        method: "POST",
-        headers,
-        // Using purge_everything for consistency in personal portfolio updates.
-        // For larger sites, consider selective purging by URL or Cache-Tag.
-        body: JSON.stringify({ purge_everything: true }),
-        signal: controller.signal,
-      },
-    );
-
-    clearTimeout(timeoutId);
+    let response: Response;
+    try {
+      response = await fetch(
+        `https://api.cloudflare.com/client/v4/zones/${zoneId}/purge_cache`,
+        {
+          method: "POST",
+          headers,
+          // Using purge_everything for consistency in personal portfolio updates.
+          // For larger sites, consider selective purging by URL or Cache-Tag.
+          body: JSON.stringify({ purge_everything: true }),
+          signal: controller.signal,
+        },
+      );
+    } finally {
+      clearTimeout(timeoutId);
+    }
 
     if (!response.ok) {
       const errorText = await response.text();

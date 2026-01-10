@@ -9,10 +9,8 @@ import path from "node:path";
  * with a link to the Surge deployment.
  */
 export default async function script({ github, context }) {
-  const reportPath = path.join(
-    process.env.GITHUB_WORKSPACE,
-    "playwright-report/results.json",
-  );
+  const workspace = process.env.GITHUB_WORKSPACE ?? process.cwd();
+  const reportPath = path.join(workspace, "playwright-report/results.json");
   const surgeUrl = process.env.SURGE_URL;
 
   if (!fs.existsSync(reportPath)) {
@@ -24,7 +22,11 @@ export default async function script({ github, context }) {
   try {
     report = JSON.parse(fs.readFileSync(reportPath, "utf-8"));
   } catch (error) {
-    console.error("Failed to parse Playwright report:", error.message);
+    const message = error instanceof Error ? error.message : String(error);
+    console.error(
+      `Failed to parse Playwright report (${path.relative(workspace, reportPath)}):`,
+      message,
+    );
     return;
   }
 
@@ -34,11 +36,12 @@ export default async function script({ github, context }) {
   }
   const stats = report.stats;
 
-  const total = stats.expected + stats.unexpected + stats.flaky + stats.skipped;
-  const passed = stats.expected;
-  const failed = stats.unexpected;
-  const flaky = stats.flaky;
-  const skipped = stats.skipped;
+  // Defensive: ensure all fields are numbers, defaulting to 0 if missing
+  const passed = Number(stats.expected ?? 0);
+  const failed = Number(stats.unexpected ?? 0);
+  const flaky = Number(stats.flaky ?? 0);
+  const skipped = Number(stats.skipped ?? 0);
+  const total = passed + failed + flaky + skipped;
 
   const isSuccess = failed === 0;
   const icon = isSuccess ? "✅" : "🔴";
@@ -90,13 +93,29 @@ export default async function script({ github, context }) {
     body += "> All functional tests passed! ✨\n";
   }
 
-  // Post the comment
+  // Post or update the comment
   if (context.payload.pull_request) {
-    await github.rest.issues.createComment({
+    const header = "### 🎭 Functional Tests";
+    const { data: comments } = await github.rest.issues.listComments({
       owner: context.repo.owner,
       repo: context.repo.repo,
       issue_number: context.payload.pull_request.number,
-      body: body,
     });
+
+    const existingComment = comments.find((c) => c.body.includes(header));
+
+    await (existingComment
+      ? github.rest.issues.updateComment({
+          owner: context.repo.owner,
+          repo: context.repo.repo,
+          comment_id: existingComment.id,
+          body: body,
+        })
+      : github.rest.issues.createComment({
+          owner: context.repo.owner,
+          repo: context.repo.repo,
+          issue_number: context.payload.pull_request.number,
+          body: body,
+        }));
   }
 }

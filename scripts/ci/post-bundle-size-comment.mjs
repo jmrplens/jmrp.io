@@ -67,22 +67,55 @@ export default async function postBundleSizeComment({ github, context }) {
 
     commentBody += "</details>\n";
 
-    await github.rest.issues.createComment({
-      issue_number: context.issue.number,
+    const header = "### 📦 Bundle Size Analysis";
+    const { data: comments } = await github.rest.issues.listComments({
       owner: context.repo.owner,
       repo: context.repo.repo,
-      body: commentBody,
+      issue_number: context.issue.number,
     });
+
+    const existingComment = comments.find((c) => c.body.includes(header));
+
+    await (existingComment
+      ? github.rest.issues.updateComment({
+          owner: context.repo.owner,
+          repo: context.repo.repo,
+          comment_id: existingComment.id,
+          body: commentBody,
+        })
+      : github.rest.issues.createComment({
+          issue_number: context.issue.number,
+          owner: context.repo.owner,
+          repo: context.repo.repo,
+          body: commentBody,
+        }));
   } catch (error) {
     console.error(error);
-    const errorBody =
-      "### 📦 Bundle Size Analysis\n\n⚠️ **Analysis failed**\n\n> " +
-      error.message;
-    await github.rest.issues.createComment({
-      issue_number: context.issue.number,
-      owner: context.repo.owner,
-      repo: context.repo.repo,
-      body: errorBody,
-    });
+    const header = "### 📦 Bundle Size Analysis";
+    const errorBody = `${header}\n\n⚠️ **Analysis failed**\n\n> ${error instanceof Error ? error.message : String(error)}`;
+
+    const { data: comments } = await github.rest.issues
+      .listComments({
+        owner: context.repo.owner,
+        repo: context.repo.repo,
+        issue_number: context.issue.number,
+      })
+      .catch(() => ({ data: [] }));
+
+    const existingComment = comments.find((c) => c.body.includes(header));
+
+    await (existingComment
+      ? github.rest.issues.updateComment({
+          owner: context.repo.owner,
+          repo: context.repo.repo,
+          comment_id: existingComment.id,
+          body: errorBody,
+        })
+      : github.rest.issues.createComment({
+          issue_number: context.issue.number,
+          owner: context.repo.owner,
+          repo: context.repo.repo,
+          body: errorBody,
+        }));
   }
 }

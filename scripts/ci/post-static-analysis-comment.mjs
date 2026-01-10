@@ -7,7 +7,10 @@
 
 // Helper to get status icon
 const getStatusIcon = (outcome) => {
-  return outcome === "success" ? "✅" : "❌";
+  if (outcome === "success") return "✅";
+  if (outcome === "skipped") return "⏭️";
+  if (!outcome) return "ℹ️";
+  return "❌";
 };
 
 // SVG Logos for tools
@@ -52,8 +55,8 @@ function generateComment(results) {
     },
   ];
 
-  // Check if all passed
-  const allPassed = tools.every(
+  const toolsWithData = tools.filter((t) => t.outcome || t.value);
+  const allPassed = toolsWithData.every(
     (t) => t.outcome === "success" || t.outcome === "skipped",
   ); // skipped counts as pass contextually or ignored
 
@@ -72,7 +75,9 @@ function generateComment(results) {
     const badge = `![${tool.name}](${LOGOS[tool.id]})`;
     // Format outcome to be capitalized or show value
     let outcomeText =
-      tool.outcome === "success" || tool.outcome === "failure"
+      tool.outcome === "success" ||
+      tool.outcome === "failure" ||
+      tool.outcome === "skipped"
         ? tool.outcome.charAt(0).toUpperCase() + tool.outcome.slice(1)
         : tool.outcome || "Unknown";
 
@@ -115,32 +120,59 @@ export default async function postStaticAnalysisComment({ github, context }) {
     return;
   }
 
-  const commentBody = generateComment(results);
-
-  // Post or update comment
-  // We identify our comment by a hidden marker or header
   const header = "### 🛡️ Static Analysis Report";
+  let commentBody;
 
-  const { data: comments } = await github.rest.issues.listComments({
-    owner: context.repo.owner,
-    repo: context.repo.repo,
-    issue_number: context.issue.number,
-  });
+  try {
+    commentBody = generateComment(results);
 
-  const existingComment = comments.find((c) => c.body.includes(header));
-
-  if (existingComment) {
-    await github.rest.issues.deleteComment({
+    const { data: comments } = await github.rest.issues.listComments({
       owner: context.repo.owner,
       repo: context.repo.repo,
-      comment_id: existingComment.id,
+      issue_number: context.issue.number,
     });
-  }
 
-  await github.rest.issues.createComment({
-    owner: context.repo.owner,
-    repo: context.repo.repo,
-    issue_number: context.issue.number,
-    body: commentBody,
-  });
+    const existingComment = comments.find((c) => c.body.includes(header));
+
+    await (existingComment
+      ? github.rest.issues.updateComment({
+          owner: context.repo.owner,
+          repo: context.repo.repo,
+          comment_id: existingComment.id,
+          body: commentBody,
+        })
+      : github.rest.issues.createComment({
+          owner: context.repo.owner,
+          repo: context.repo.repo,
+          issue_number: context.issue.number,
+          body: commentBody,
+        }));
+  } catch (error) {
+    console.error(error);
+    const errorBody = `${header}\n\n⚠️ **Analysis failed**\n\n> ${error instanceof Error ? error.message : String(error)}`;
+
+    const { data: comments } = await github.rest.issues
+      .listComments({
+        owner: context.repo.owner,
+        repo: context.repo.repo,
+        issue_number: context.issue.number,
+      })
+      .catch(() => ({ data: [] }));
+
+    const existingComment = comments.find((c) => c.body.includes(header));
+
+    await (existingComment
+      ? github.rest.issues.updateComment({
+          owner: context.repo.owner,
+          repo: context.repo.repo,
+          comment_id: existingComment.id,
+          body: errorBody,
+        })
+      : github.rest.issues.createComment({
+          owner: context.repo.owner,
+          repo: context.repo.repo,
+          issue_number: context.issue.number,
+          body: errorBody,
+        }));
+  }
 }

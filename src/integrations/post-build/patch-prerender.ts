@@ -33,28 +33,35 @@ export async function patchClientPrerenderNonce(distDir: string) {
       continue;
     }
 
-    // Pattern to match the exact minified code:
-    // n.type="speculationrules",n.textContent=JSON.stringify({prerender:[{source:"list",urls:[e],eagerness:t}],prefetch:[{source:"list",urls:[e],eagerness:t}]}),document.head.append(n)
+    // Pattern to match the structure of the code, not exact minified variable names.
+    // Group 1: variable name for script element (e.g., 'n', 'a', etc.)
+    // Group 2: urls variable name (e.g., 'e')
+    // Group 3: eagerness variable name (e.g., 't')
+    // Uses backreference \1 to ensure same variable is used throughout
+    // This is more robust against minifier changes in future Astro versions.
     const originalPattern =
-      /n\.type="speculationrules",n\.textContent=JSON\.stringify\(\{prerender:\[\{source:"list",urls:\[e\],eagerness:t\}\],prefetch:\[\{source:"list",urls:\[e\],eagerness:t\}\]\}\),document\.head\.append\(n\)/;
+      /(\w+)\.type="speculationrules",\1\.textContent=JSON\.stringify\(\{prerender:\[\{source:"list",urls:\[(\w+)\],eagerness:(\w+)\}\],prefetch:\[\{source:"list",urls:\[\2\],eagerness:\3\}\]\}\),document\.head\.append\(\1\)/g; // NOSONAR
 
     if (!originalPattern.test(content)) {
-      console.warn(
-        `  ⚠ Speculation rules pattern not found in ${path.basename(file)}`,
+      throw new Error(
+        `Speculation rules found in ${path.basename(file)} but patch pattern mismatch. ` +
+          "Astro/Vite minification likely changed. Update the patch pattern to maintain CSP compliance.",
       );
-      continue;
     }
+
+    // Reset lastIndex because of /g flag used in .test()
+    originalPattern.lastIndex = 0;
 
     // Patch: Add nonce attribute before appending to head
     // We extract the nonce from the first script with a nonce attribute in the document
+    // Uses backreferences: $1=script var, $2=urls var, $3=eagerness var
     const patchedCode = content.replace(
       originalPattern,
-      'n.type="speculationrules",n.textContent=JSON.stringify({prerender:[{source:"list",urls:[e],eagerness:t}],prefetch:[{source:"list",urls:[e],eagerness:t}]}),(() => { const nonce = document.querySelector("script[nonce]")?.nonce; if (nonce) n.nonce = nonce; })(),document.head.append(n)',
+      '$1.type="speculationrules",$1.textContent=JSON.stringify({prerender:[{source:"list",urls:[$2],eagerness:$3}],prefetch:[{source:"list",urls:[$2],eagerness:$3}]}),(() => { const nonce = document.querySelector("script[nonce]")?.nonce; if (nonce) $1.nonce = nonce; })(),document.head.append($1)',
     );
 
     if (patchedCode === content) {
-      console.warn(`  ⚠ Failed to patch ${path.basename(file)}`);
-      continue;
+      throw new Error(`Failed to apply patch in ${path.basename(file)}`);
     }
 
     fs.writeFileSync(file, patchedCode, "utf-8");

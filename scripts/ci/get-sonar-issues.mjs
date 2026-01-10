@@ -33,7 +33,7 @@ async function fetchWithPagination(baseUrl, dataKey) {
     });
 
     if (!res.ok) {
-      throw new Error(`Sonar API failed: ${res.statusText}`);
+      throw new Error(`Sonar API failed: ${res.status} ${res.statusText}`);
     }
 
     const data = await res.json();
@@ -85,7 +85,7 @@ async function fetchIssues() {
       }
     }
 
-    // 2. Fetch Security Hotspots
+    // 2. Fetch Security Hotspots (TO_REVIEW)
     const hotspots = await fetchWithPagination(
       `https://sonarcloud.io/api/hotspots/search?projectKey=${PROJECT_KEY}&status=TO_REVIEW`,
       "hotspots",
@@ -99,6 +99,13 @@ async function fetchIssues() {
         );
         console.log(`    📍 ${h.component} (Line ${h.line || "N/A"})`);
       }
+    }
+
+    if (issues.length > 0 || hotspots.length > 0) {
+      console.log(
+        "\n❌ Static analysis failed: Open issues or hotspots detected.",
+      );
+      process.exit(1);
     }
   } catch (error) {
     console.error("❌ Failed to fetch SonarCloud reports:", error.message);

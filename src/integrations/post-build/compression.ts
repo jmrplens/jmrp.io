@@ -9,7 +9,7 @@ const brotli = promisify(zlib.brotliCompress);
 
 /**
  * Compresses static assets in the distribution directory using Gzip and Brotli.
- * Target extensions: .html, .js, .css, .svg, .json, .xml, .txt
+ * Target extensions: .js, .css, .svg, .json, .xml, .txt
  *
  * @param distDir - Absolute path to the build output directory.
  */

@@ -186,11 +186,20 @@ function validateSchema(schema) {
     return { errors, warnings };
   }
 
-  if (!schema["@context"]) {
+  const context = schema["@context"];
+  const hasSchemaOrg = (ctx) => {
+    if (typeof ctx === "string") return ctx.includes("schema.org");
+    if (Array.isArray(ctx)) return ctx.some(hasSchemaOrg);
+    if (ctx && typeof ctx === "object")
+      return JSON.stringify(ctx).includes("schema.org");
+    return false;
+  };
+
+  if (!context) {
     errors.push("Missing @context property");
-  } else if (!schema["@context"].includes("schema.org")) {
+  } else if (!hasSchemaOrg(context)) {
     errors.push(
-      `@context should reference schema.org, found: ${schema["@context"]}`,
+      `@context should reference schema.org, found: ${JSON.stringify(context)}`,
     );
   }
 

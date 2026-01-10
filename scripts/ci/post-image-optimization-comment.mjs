@@ -31,17 +31,20 @@ export default async function postImageOptimizationComment({
     }
   };
 
-  const webpCount = getCount('-name "*.webp"');
-  const pngCount = getCount('-name "*.png"');
-  const jpgCount = getCount(String.raw`| grep -iE "\.jpe?g$"`);
+  const webpCount = getCount("-iname '*.webp'");
+  const pngCount = getCount("-iname '*.png'");
+  const jpgCount = getCount(
+    String.raw`\( -iname "*.jpg" -o -iname "*.jpeg" \)`,
+  );
 
   const surgeUrl = process.env.SURGE_URL;
   let largeImagesOutput = "";
   let hasLargeImages = false;
 
   try {
+    const findFilter = String.raw`\( -iname "*.webp" -o -iname "*.png" -o -iname "*.jpg" -o -iname "*.jpeg" \)`;
     const largeImagesRaw = execSync(
-      String.raw`find dist -type f -size +500k 2>/dev/null | grep -iE "\.(webp|png|jpe?g)$" || echo ""`,
+      `find dist -type f -size +500k ${findFilter} 2>/dev/null || echo ""`,
       { encoding: "utf-8" },
     ).trim();
 
@@ -85,10 +88,26 @@ export default async function postImageOptimizationComment({
   comment += largeImagesOutput;
   comment += `\n> 📊 [View Build Logs](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`;
 
-  await github.rest.issues.createComment({
-    issue_number: context.issue.number,
+  const header = "### 🖼️ Image Optimization Analysis";
+  const { data: comments } = await github.rest.issues.listComments({
     owner: context.repo.owner,
     repo: context.repo.repo,
-    body: comment,
+    issue_number: context.issue.number,
   });
+
+  const existingComment = comments.find((c) => c.body.includes(header));
+
+  await (existingComment
+    ? github.rest.issues.updateComment({
+        owner: context.repo.owner,
+        repo: context.repo.repo,
+        comment_id: existingComment.id,
+        body: comment,
+      })
+    : github.rest.issues.createComment({
+        issue_number: context.issue.number,
+        owner: context.repo.owner,
+        repo: context.repo.repo,
+        body: comment,
+      }));
 }

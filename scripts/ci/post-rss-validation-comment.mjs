@@ -95,10 +95,26 @@ export default async function postRssValidationComment({ github, context }) {
     console.error("RSS validation comment error:", error);
   }
 
-  await github.rest.issues.createComment({
-    issue_number: context.issue.number,
+  const header = "### 📡 RSS Feed Validation";
+  const { data: comments } = await github.rest.issues.listComments({
     owner: context.repo.owner,
     repo: context.repo.repo,
-    body: comment,
+    issue_number: context.issue.number,
   });
+
+  const existingComment = comments.find((c) => c.body.includes(header));
+
+  await (existingComment
+    ? github.rest.issues.updateComment({
+        owner: context.repo.owner,
+        repo: context.repo.repo,
+        comment_id: existingComment.id,
+        body: comment,
+      })
+    : github.rest.issues.createComment({
+        issue_number: context.issue.number,
+        owner: context.repo.owner,
+        repo: context.repo.repo,
+        body: comment,
+      }));
 }

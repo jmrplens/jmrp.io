@@ -26,7 +26,7 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
-          node-version: 25
+          node-version: 22
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile --prefer-offline
       - run: pnpm exec astro check
@@ -40,7 +40,7 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
-          node-version: 25
+          node-version: 22
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile --prefer-offline
       - run: pnpm exec prettier --check .
@@ -54,7 +54,7 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
-          node-version: 25
+          node-version: 22
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile --prefer-offline
       - run: pnpm exec eslint . --max-warnings=0
@@ -96,7 +96,7 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
-          node-version: 25
+          node-version: 22
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile --prefer-offline
       - run: pnpm audit --audit-level=high
@@ -113,7 +113,7 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
-          node-version: 25
+          node-version: 22
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile --prefer-offline
         if: env.SNYK_TOKEN != ''
@@ -128,12 +128,14 @@ jobs:
     name: JSDoc Coverage
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    outputs:
+      coverage: ${{ steps.jsdoc.outputs.coverage }}
     steps:
       - uses: actions/checkout@v6
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
-          node-version: 25
+          node-version: 22
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile --prefer-offline
       - name: Calculate JSDoc Coverage
@@ -142,6 +144,10 @@ jobs:
           OUTPUT=$(node scripts/ci/calculate-jsdoc-coverage.mjs 2>&1)
           echo "$OUTPUT"
           COVERAGE=$(echo "$OUTPUT" | grep -oP 'Coverage: \K[0-9.]+')
+          if [ -z "$COVERAGE" ]; then
+            echo "::error::Failed to parse JSDoc coverage from output."
+            exit 1
+          fi
           echo "coverage=${COVERAGE}%" >> $GITHUB_OUTPUT
 
   static-analysis-report:
@@ -176,6 +182,7 @@ jobs:
           OUTCOME_SECURITY: ${{ needs.security-audit.result }}
           OUTCOME_SNYK: ${{ needs.snyk-security.result }}
           OUTCOME_JSDOC: ${{ needs.jsdoc-coverage.result }}
+          JSDOC_COVERAGE: ${{ needs.jsdoc-coverage.outputs.coverage }}
         with:
           script: |
             const { default: script } = await import(`file://${process.env.GITHUB_WORKSPACE}/scripts/ci/post-static-analysis-comment.mjs`)
@@ -203,7 +210,7 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
-          node-version: 25
+          node-version: 22
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile --prefer-offline
       - name: Install Playwright Browsers
@@ -263,7 +270,7 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
-          node-version: 25
+          node-version: 22
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile --prefer-offline
       - name: Cache Playwright Browsers
@@ -300,7 +307,7 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
-          node-version: 25
+          node-version: 22
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile --prefer-offline
 
@@ -348,12 +355,34 @@ jobs:
                 if (surgeUrl) {
                   comment += `\n\n#### 🌐 Live Report\n> 🚀 [**Open Accessibility Reports Dashboard**](https://${surgeUrl}) for detailed insights.`;
                 }
-                await github.rest.issues.createComment({
-                  issue_number: context.issue.number,
+                const header = "### ♿ Accessibility Audit";
+                if (!comment.includes(header)) {
+                  comment = `${header}\n\n${comment}`;
+                }
+
+                const { data: comments } = await github.rest.issues.listComments({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
-                  body: comment,
+                  issue_number: context.issue.number,
                 });
+
+                const existingComment = comments.find((c) => c.body.includes(header));
+
+                if (existingComment) {
+                  await github.rest.issues.updateComment({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    comment_id: existingComment.id,
+                    body: comment,
+                  });
+                } else {
+                  await github.rest.issues.createComment({
+                    issue_number: context.issue.number,
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    body: comment,
+                  });
+                }
               } else {
                 console.log("Comment file not found, skipping.");
               }
@@ -378,7 +407,7 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
-          node-version: 25
+          node-version: 22
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile --prefer-offline
       - name: Analyze bundle size
@@ -410,7 +439,7 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
-          node-version: 25
+          node-version: 22
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile --prefer-offline
       - name: Validate HTML5
@@ -458,7 +487,7 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
-          node-version: 25
+          node-version: 22
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile --prefer-offline
       - name: Validate RSS feed
@@ -509,7 +538,7 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
-          node-version: 25
+          node-version: 22
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile --prefer-offline
       - name: Validate Schema.org structured data
@@ -560,12 +589,34 @@ jobs:
                    console.warn('Skipping live report link due to invalid SURGE_URL format:', surgeUrl);
                 }
 
-                await github.rest.issues.createComment({
-                  issue_number: context.issue.number,
+                const header = "### 🔍 Schema.org Validation";
+                if (!comment.includes(header)) {
+                  comment = `${header}\n\n${comment}`;
+                }
+
+                const { data: comments } = await github.rest.issues.listComments({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
-                  body: comment,
+                  issue_number: context.issue.number,
                 });
+
+                const existingComment = comments.find((c) => c.body.includes(header));
+
+                if (existingComment) {
+                  await github.rest.issues.updateComment({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    comment_id: existingComment.id,
+                    body: comment,
+                  });
+                } else {
+                  await github.rest.issues.createComment({
+                    issue_number: context.issue.number,
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    body: comment,
+                  });
+                }
               } else {
                 console.log("Comment file not found (validation might have failed completely), posting fallback.");
                 // Optional: Post fallback
@@ -593,7 +644,7 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
-          node-version: 25
+          node-version: 22
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile --prefer-offline
       - name: Analyze images
@@ -641,7 +692,7 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
-          node-version: 25
+          node-version: 22
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile --prefer-offline
       - name: Install Playwright Browsers
@@ -692,7 +743,7 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
-          node-version: 25
+          node-version: 22
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile --prefer-offline
       - name: Run Lighthouse CI
@@ -726,7 +777,7 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
-          node-version: 25
+          node-version: 22
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile --prefer-offline
 
@@ -780,16 +831,38 @@ jobs:
           script: |
             const fs = require('fs');
             const commentFile = 'lighthouse_comment.md';
-            if (fs.existsSync(commentFile)) {
-              let comment = fs.readFileSync(commentFile, 'utf8');
-              const surgeUrl = process.env.SURGE_URL;
-              if (surgeUrl) {
-                comment += `\n\n#### 🌐 Live Report\n> 🚀 [**Open Lighthouse Reports Dashboard**](https://${surgeUrl}) for detailed insights.`;
+            try {
+              if (fs.existsSync(commentFile)) {
+                let comment = fs.readFileSync(commentFile, 'utf8');
+                const surgeUrl = process.env.SURGE_URL;
+                if (surgeUrl) {
+                  comment += `\n\n#### 🌐 Live Report\n> 🚀 [**Open Lighthouse Reports Dashboard**](https://${surgeUrl}) for detailed insights.`;
+                }
+                const header = "### ⚡ Lighthouse Audit Report";
+                const { data: comments } = await github.rest.issues.listComments({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: context.issue.number,
+                });
+
+                const existingComment = comments.find((c) => c.body.includes(header));
+
+                if (existingComment) {
+                  await github.rest.issues.updateComment({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    comment_id: existingComment.id,
+                    body: comment,
+                  });
+                } else {
+                  await github.rest.issues.createComment({
+                    issue_number: context.issue.number,
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    body: comment,
+                  });
+                }
               }
-              await github.rest.issues.createComment({
-                issue_number: context.issue.number,
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                body: comment,
-              });
+            } catch (error) {
+              console.error("Failed to post lighthouse comment:", error);
             }

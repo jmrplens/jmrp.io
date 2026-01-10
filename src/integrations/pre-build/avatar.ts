@@ -74,18 +74,31 @@ async function fetchGitHubAvatarBuffer(): Promise<Buffer> {
     throw new Error(`Invalid content-type: ${contentType}`);
   }
 
-  // Security: Prevent DoS by limiting the maximum download size (e.g., 5MB)
+  // Security: Stream the response to enforce size limit during download
+  // This prevents DoS from large responses without content-length header
   const MAX_SIZE = 5 * 1024 * 1024;
   const contentLength = imageRes.headers.get("content-length");
   if (contentLength && Number.parseInt(contentLength, 10) > MAX_SIZE) {
     throw new Error(`Image is too large: ${contentLength} bytes`);
   }
 
-  const buffer = Buffer.from(await imageRes.arrayBuffer());
+  const chunks: Uint8Array[] = [];
+  let receivedLength = 0;
+  const reader = imageRes.body!.getReader();
 
-  if (buffer.length > MAX_SIZE) {
-    throw new Error("Downloaded image data exceeds maximum size limit.");
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    receivedLength += value.length;
+    if (receivedLength > MAX_SIZE) {
+      await reader.cancel();
+      throw new Error("Downloaded image data exceeds maximum size limit.");
+    }
+    chunks.push(value);
   }
+
+  const buffer = Buffer.concat(chunks);
 
   return buffer;
 }

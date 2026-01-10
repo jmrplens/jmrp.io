@@ -38,9 +38,20 @@ function extractDataUri(
     const isBase64 = metadata.includes(";base64");
     const mime = metadata.split(";")[0] || "application/octet-stream";
 
-    const buffer = isBase64
-      ? Buffer.from(data, "base64")
-      : Buffer.from(decodeURIComponent(data.trim()));
+    // Handle data decoding - decodeURIComponent can throw URIError on malformed data
+    let buffer: Buffer;
+    if (isBase64) {
+      buffer = Buffer.from(data, "base64");
+    } else {
+      try {
+        buffer = Buffer.from(decodeURIComponent(data.trim()));
+      } catch (decodeError) {
+        console.warn(
+          `[PostBuild] Skipping malformed data URI: ${decodeError instanceof Error ? decodeError.message : String(decodeError)}`,
+        );
+        return null;
+      }
+    }
 
     const ext = getExtensionFromMime(mime);
     const hash = crypto
@@ -322,7 +333,7 @@ function processStyles($: cheerio.CheerioAPI, enableCsp: boolean): boolean {
 }
 
 /**
- * Processes script tags to add SRI hashes and CSP nonces.
+ * Processes script and link tags to add SRI hashes. Also adds CSP nonces to scripts.
  *
  * @param $ - Cheerio API instance for the current HTML document.
  * @param file - Absolute path to the HTML file.
@@ -341,8 +352,7 @@ function processScriptsAndLinks(
   let modified = false;
   let updatedTags = 0;
 
-  // ONLY process script tags. Link tags (stylesheets, preloads) are handled
-  // natively by Astro or other specialized logic to avoid validation/console issues.
+  // Process script tags for SRI and nonces
   $("script[src]").each((_, el) => {
     const res = processTagSri(
       $(el),
@@ -352,6 +362,30 @@ function processScriptsAndLinks(
       distDir,
       hashCache,
       enableCsp,
+    );
+    if (res.modified) modified = true;
+    if (res.updated) updatedTags++;
+  });
+
+  // Process link[rel=stylesheet] tags for SRI
+  // Note: preload/modulepreload for fonts, images, etc. don't support SRI in browsers
+  // (see Chrome bug https://crbug.com/981419) and cause console warnings, so we skip them.
+  $("link[href][rel='stylesheet']").each((_, el) => {
+    const $el = $(el);
+
+    // Ensure crossorigin is set for SRI to work on cross-origin resources
+    if (!$el.attr("crossorigin")) {
+      $el.attr("crossorigin", "anonymous");
+    }
+
+    const res = processTagSri(
+      $el,
+      "href",
+      "link",
+      file,
+      distDir,
+      hashCache,
+      false, // Don't add nonces to link tags
     );
     if (res.modified) modified = true;
     if (res.updated) updatedTags++;

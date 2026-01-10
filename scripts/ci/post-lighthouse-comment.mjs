@@ -28,12 +28,28 @@ export default async function postLighthouseComment({ github, context }) {
       comment += `\n\n#### 🌐 Live Report\n> 🚀 [**Open Lighthouse Reports Dashboard**](https://${surgeUrl}) for detailed insights.`;
     }
 
-    await github.rest.issues.createComment({
-      issue_number: context.issue.number,
+    const header = "### ⚡ Lighthouse Audit Report";
+    const { data: comments } = await github.rest.issues.listComments({
       owner: context.repo.owner,
       repo: context.repo.repo,
-      body: comment,
+      issue_number: context.issue.number,
     });
+
+    const existingComment = comments.find((c) => c.body.includes(header));
+
+    await (existingComment
+      ? github.rest.issues.updateComment({
+          owner: context.repo.owner,
+          repo: context.repo.repo,
+          comment_id: existingComment.id,
+          body: comment,
+        })
+      : github.rest.issues.createComment({
+          issue_number: context.issue.number,
+          owner: context.repo.owner,
+          repo: context.repo.repo,
+          body: comment,
+        }));
   } else {
     console.log(`Comment file not found: ${commentFile}`);
   }
