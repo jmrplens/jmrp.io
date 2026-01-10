@@ -56,6 +56,38 @@ function buildQualityTable(results, vercelUrl) {
     return md;
 }
 
+/**
+ * Calculates current health score based on available json reports
+ */
+function calculateHealthScore() {
+    let score = 100;
+    if (fs.existsSync('accessibility-report.json')) {
+        const a11yData = JSON.parse(fs.readFileSync('accessibility-report.json', 'utf8'));
+        const failed = a11yData.reduce((acc, r) => acc + (r.failed || 0), 0);
+        score -= failed * 5;
+    }
+    if (fs.existsSync('html-validation.json')) {
+        const htmlData = JSON.parse(fs.readFileSync('html-validation.json', 'utf8'));
+        const htmlErrors = htmlData.reduce((acc, f) => acc + f.messages.filter(m => m.severity === 2).length, 0);
+        score -= htmlErrors * 2;
+    }
+    if (fs.existsSync('rss-validation.json')) {
+        const rssData = JSON.parse(fs.readFileSync('rss-validation.json', 'utf8'));
+        if (rssData && !rssData.valid) score -= 10;
+    }
+    return Math.max(0, score);
+}
+
+/**
+ * Gets the health icon based on score
+ */
+function getHealthIcon(score) {
+    if (score >= 95) return "💎";
+    if (score >= 80) return "✅";
+    if (score >= 60) return "⚠️";
+    return "❌";
+}
+
 export default async function updateCiComment({ github, context, step }) {
     const prNumber = context.payload.pull_request?.number;
     if (!prNumber) {
@@ -63,18 +95,7 @@ export default async function updateCiComment({ github, context, step }) {
         return;
     }
 
-    // Find existing comment
-    const { data: comments } = await github.rest.issues.listComments({
-        owner: context.repo.owner,
-        repo: context.repo.repo,
-        issue_number: prNumber,
-    });
-
-    const existingComment = comments.find(c => c.body?.includes(HEADER) && c.user?.type === 'Bot');
-
     // Prepare current state data
-    let healthScore = 100;
-
     const saResults = {
         astro: process.env.OUTCOME_ASTRO,
         prettier: process.env.OUTCOME_PRETTIER,
@@ -91,25 +112,6 @@ export default async function updateCiComment({ github, context, step }) {
         rss: process.env.OUTCOME_RSS
     };
 
-    // Load actual data for health score if we are in the final phase
-    if (step === 'final') {
-        if (fs.existsSync('accessibility-report.json')) {
-            const a11yData = JSON.parse(fs.readFileSync('accessibility-report.json', 'utf8'));
-            const failed = a11yData.reduce((acc, r) => acc + (r.failed || 0), 0);
-            healthScore -= failed * 5;
-        }
-        if (fs.existsSync('html-validation.json')) {
-            const htmlData = JSON.parse(fs.readFileSync('html-validation.json', 'utf8'));
-            const htmlErrors = htmlData.reduce((acc, f) => acc + f.messages.filter(m => m.severity === 2).length, 0);
-            healthScore -= htmlErrors * 2;
-        }
-        if (fs.existsSync('rss-validation.json')) {
-            const rssData = JSON.parse(fs.readFileSync('rss-validation.json', 'utf8'));
-            if (rssData && !rssData.valid) healthScore -= 10;
-        }
-        healthScore = Math.max(0, healthScore);
-    }
-
     const vercelUrl = process.env.VERCEL_URL;
 
     // Build the full comment body
@@ -125,7 +127,8 @@ export default async function updateCiComment({ github, context, step }) {
         body += buildSaTable(saResults);
         body += buildQualityTable({}, null);
     } else if (step === 'final') {
-        const icon = healthScore >= 95 ? "💎" : healthScore >= 80 ? "✅" : healthScore >= 60 ? "⚠️" : "❌";
+        const healthScore = calculateHealthScore();
+        const icon = getHealthIcon(healthScore);
         body += `### ${icon} Project Health Score: ${healthScore}/100\n\n`;
         body += buildSaTable(saResults);
         body += buildQualityTable(qualityResults, vercelUrl);
@@ -133,11 +136,16 @@ export default async function updateCiComment({ github, context, step }) {
 
     body += `\n---\n> 📊 [Full Build Logs](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`;
 
-    if (existingComment) {
-        // If it's a 'sa' or 'final' step, we want to try to preserve parts if they were already 'success'
-        // but for simplicity in this centralized version, the step themselves provide all they know.
-        // aggregator jobs (static-analysis-report and deploy-reports) have all their children's data.
+    // Find and update/create comment
+    const { data: comments } = await github.rest.issues.listComments({
+        owner: context.repo.owner,
+        repo: context.repo.repo,
+        issue_number: prNumber,
+    });
 
+    const existingComment = comments.find(c => c.body?.includes(HEADER) && c.user?.type === 'Bot');
+
+    if (existingComment) {
         await github.rest.issues.updateComment({
             owner: context.repo.owner,
             repo: context.repo.repo,

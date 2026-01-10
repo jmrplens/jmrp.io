@@ -105,7 +105,12 @@ if (healthScore > 90) {
     scoreColor = '#f59e0b';
 }
 
-const conditionText = healthScore > 90 ? 'prime condition' : healthScore > 70 ? 'good shape' : 'need of maintenance';
+let conditionText = 'need of maintenance';
+if (healthScore > 90) {
+    conditionText = 'prime condition';
+} else if (healthScore > 70) {
+    conditionText = 'good shape';
+}
 
 const html = `
 <!DOCTYPE html>
