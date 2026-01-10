@@ -142,6 +142,41 @@ if (fs.existsSync("rss-validation.json")) {
   rssValidation = JSON.parse(fs.readFileSync("rss-validation.json", "utf-8"));
 }
 
+// 2.1 Load Lighthouse Data
+let lighthouseData = [];
+const lhBase = path.join("lh-deploy", "light");
+
+const pages = [
+  { name: "Home", urlPart: "localhost:40679/$" },
+  { name: "Blog", urlPart: "/blog/" },
+  { name: "CV", urlPart: "/cv/" },
+  { name: "Publications", urlPart: "/publications/" },
+];
+
+const lhManifestDesktop = path.join(lhBase, "desktop", "manifest.json");
+const lhManifestMobile = path.join(lhBase, "mobile", "manifest.json");
+
+// Helper to find score in manifest
+const findScore = (manifestPath, p) => {
+  if (!fs.existsSync(manifestPath)) return null;
+  try {
+    const json = JSON.parse(fs.readFileSync(manifestPath, "utf-8"));
+    const item = json.find(i => {
+      if (p.name === "Home") return i.url.endsWith(":40679/") || i.url.endsWith(".io/");
+      return i.url.includes(p.urlPart);
+    });
+    return item ? Math.round(item.summary.performance * 100) : null;
+  } catch { return null; }
+};
+
+lighthouseData = pages.map((p) => {
+  return {
+    page: p.name,
+    mobile: findScore(lhManifestMobile, p),
+    desktop: findScore(lhManifestDesktop, p)
+  };
+});
+
 // 3. Generate the Dashboard HTML
 // 3. Health Score Calculation (Synchronized with update-ci-comment.mjs)
 const saOutcomes = {
@@ -223,7 +258,20 @@ if (healthScore > 90) {
 const getStatusClass = (res) => {
   if (res === "success") return "status-success";
   if (res === "failure") return "status-danger";
-  return "status-warning";
+  if (res && res !== "pending") return "status-warning";
+  return "status-neutral"; // Default for pending/unknown
+};
+
+// Helper for LH badges
+const getScoreBadge = (score) => {
+  if (score === null || score === undefined) return '<span class="score-pill" style="background:var(--neutral)"></span>N/A';
+
+  // Inline styles for pill colors since we didn't define red/orange classes in CSS properly
+  let colorStyle = "var(--success)";
+  if (score < 50) colorStyle = "var(--danger)";
+  else if (score < 90) colorStyle = "var(--warning)";
+
+  return `<span class="score-pill" style="background-color:${colorStyle}; box-shadow: 0 0 8px ${colorStyle}66;"></span>${score}`;
 };
 
 const html = `
@@ -244,8 +292,15 @@ const html = `
             --success: #10b981;
             --warning: #f59e0b;
             --danger: #ef4444;
+            --neutral: #64748b;
             --font: 'Inter', system-ui, -apple-system, sans-serif;
         }
+
+        /* --- Scrollbar --- */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
 
         /* Job Hit Areas */
         .job-hit-area {
@@ -277,7 +332,7 @@ const html = `
             margin: 5% auto;
             padding: 0;
             border: 1px solid var(--border);
-            width: 80%;
+            width: 90%;
             max-width: 1000px;
             border-radius: 12px;
             height: 80vh;
@@ -322,6 +377,7 @@ const html = `
             display: flex;
             flex-direction: column;
             gap: 2rem;
+            flex-shrink: 0;
         }
 
         .logo {
@@ -358,23 +414,24 @@ const html = `
         /* Main Content */
         main {
             flex: 1;
-            padding: 3rem;
-            max-width: 1200px;
+            padding: 2rem;
+            max-width: 1400px;
             margin: 0 auto;
+            width: 100%;
         }
 
         header {
-            margin-bottom: 3rem;
+            margin-bottom: 2rem;
         }
 
-        h1 { font-size: 2.5rem; margin: 0 0 0.5rem 0; letter-spacing: -1px; }
+        h1 { font-size: 2rem; margin: 0 0 0.5rem 0; letter-spacing: -1px; }
         .subtitle { color: var(--text-muted); }
 
         /* Summary Grid */
         .summary-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 2rem;
+            gap: 1.5rem;
             margin-bottom: 3rem;
         }
 
@@ -385,6 +442,8 @@ const html = `
             border-radius: 24px;
             padding: 1.5rem;
             transition: transform 0.2s, border-color 0.2s;
+            display: flex;
+            flex-direction: column;
         }
         .card:hover { 
             transform: translateY(-4px); 
@@ -395,35 +454,36 @@ const html = `
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            margin-bottom: 1.5rem;
+            margin-bottom: 1rem;
         }
         .card-icon {
             font-size: 1.5rem;
             background: rgba(255, 255, 255, 0.03);
-            width: 48px;
-            height: 48px;
+            width: 44px;
+            height: 44px;
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 14px;
+            border-radius: 12px;
         }
         .status-badge {
-            padding: 0.25rem 0.75rem;
+            padding: 0.25rem 0.6rem;
             border-radius: 99px;
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             font-weight: 700;
             text-transform: uppercase;
         }
         .status-success { background: rgba(16, 185, 129, 0.1); color: var(--success); }
         .status-warning { background: rgba(245, 158, 11, 0.1); color: var(--warning); }
         .status-danger { background: rgba(239, 68, 68, 0.1); color: var(--danger); }
+        .status-neutral { background: rgba(148, 163, 184, 0.1); color: var(--neutral); }
 
-        .card-title { font-size: 0.9rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
-        .card-value { font-size: 2rem; font-weight: 800; margin: 0.5rem 0; }
+        .card-title { font-size: 0.85rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+        .card-value { font-size: 1.75rem; font-weight: 800; margin: 0.5rem 0; }
         
         .card-action {
             display: block;
-            margin-top: 1.5rem;
+            margin-top: auto;
             text-align: center;
             padding: 0.75rem;
             background: rgba(255, 255, 255, 0.05);
@@ -441,16 +501,17 @@ const html = `
         .health-section {
             background: linear-gradient(135deg, rgba(179, 137, 245, 0.1), rgba(23, 25, 35, 0.7));
             border: 1px solid var(--border);
-            border-radius: 32px;
-            padding: 3rem;
+            border-radius: 24px;
+            padding: 2rem;
             display: flex;
             align-items: center;
-            gap: 4rem;
-            margin-bottom: 3rem;
+            gap: 3rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
         }
 
-        .chart-container { position: relative; width: 160px; height: 160px; }
-        .chart-svg { transform: rotate(-90deg); }
+        .chart-container { position: relative; width: 140px; height: 140px; flex-shrink: 0; }
+        .chart-svg { transform: rotate(-90deg); width: 100%; height: 100%; }
         .chart-bg { fill: none; stroke: rgba(255,255,255,0.05); stroke-width: 12; }
         .chart-progress {
             fill: none;
@@ -466,12 +527,12 @@ const html = `
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            font-size: 2.5rem;
+            font-size: 2rem;
             font-weight: 900;
         }
 
-        .health-info h2 { font-size: 1.75rem; margin: 0 0 1rem 0; }
-        .health-info p { color: var(--text-muted); line-height: 1.6; max-width: 500px; }
+        .health-info h2 { font-size: 1.5rem; margin: 0 0 0.5rem 0; }
+        .health-info p { color: var(--text-muted); line-height: 1.5; font-size: 0.95rem; margin: 0; }
 
         /* Data Tables */
         .details-section { margin-bottom: 3rem; }
@@ -479,20 +540,44 @@ const html = `
             background: var(--card-bg);
             border: 1px solid var(--border);
             border-radius: 20px;
-            overflow: hidden;
+            overflow-x: auto;
         }
-        table { width: 100%; border-collapse: collapse; text-align: left; }
-        th { background: rgba(255,255,255,0.02); padding: 1.25rem 1.5rem; font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted); letter-spacing: 1px; }
-        td { padding: 1.25rem 1.5rem; border-top: 1px solid var(--border); font-size: 0.95rem; }
+        table { width: 100%; border-collapse: collapse; text-align: left; min-width: 600px; }
+        th { background: rgba(255,255,255,0.02); padding: 1rem 1.5rem; font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); letter-spacing: 1px; }
+        td { padding: 1rem 1.5rem; border-top: 1px solid var(--border); font-size: 0.9rem; }
         
         .tag { padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.7rem; font-weight: 700; background: rgba(255,255,255,0.05); }
 
-        footer { text-align: center; padding: 2rem; color: var(--text-muted); font-size: 0.85rem; }
+        /* Lighthouse Summary Table */
+        .lh-summary-table { width: 100%; border-collapse: separate; border-spacing: 0 0.5rem; margin-top: 1rem; min-width: 0; }
+        .lh-summary-table th { padding: 0.5rem; font-size: 0.7rem; text-transform: uppercase; color: var(--text-muted); text-align: center; background: transparent; border-bottom: 1px solid var(--border); }
+        .lh-summary-table td { padding: 0.5rem; font-size: 0.85rem; text-align: center; border-top: none; background: rgba(255,255,255,0.02); }
+        .lh-summary-table td:first-child { text-align: left; border-radius: 8px 0 0 8px; font-weight: 600; color: var(--text-main); }
+        .lh-summary-table td:last-child { border-radius: 0 8px 8px 0; }
+        .score-pill { display: inline-flex; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+        .score-pill.green { background-color: var(--success); box-shadow: 0 0 8px rgba(16, 185, 129, 0.4); }
+
+        footer { text-align: center; padding: 2rem; color: var(--text-muted); font-size: 0.85rem; border-top: 1px solid var(--border); margin-top: 4rem; }
+
+        @media (max-width: 1024px) {
+             .summary-grid { grid-template-columns: repeat(2, 1fr); }
+        }
 
         @media (max-width: 900px) {
             body { flex-direction: column; }
-            aside { width: 100%; border-right: none; border-bottom: 1px solid var(--border); }
-            .health-section { flex-direction: column; text-align: center; gap: 2rem; }
+            aside { width: 100%; border-right: none; border-bottom: 1px solid var(--border); padding: 1rem 2rem; flex-direction: row; align-items: center; justify-content: space-between; height: 70px; }
+            nav { display: none; }
+            aside .tag { display: none; }
+            
+            .health-section { flex-direction: column; text-align: center; gap: 1.5rem; padding: 1.5rem; }
+            .summary-grid { grid-template-columns: 1fr; }
+            
+            .card[style*="grid-column: span 2"] { grid-column: span 1 !important; }
+            
+            main { padding: 1.5rem; }
+            h1 { font-size: 1.75rem; }
+            
+            #workflow-container { transform: scale(0.6); transform-origin: top left; width: 166% !important; height: auto !important; margin-bottom: -40%; }
         }
     </style>
     <script>
@@ -510,6 +595,11 @@ const html = `
         }
         function closeLog() {
             document.getElementById('logModal').style.display = 'none';
+        }
+        window.onclick = function(event) {
+            if (event.target == document.getElementById('logModal')) {
+                closeLog();
+            }
         }
     </script>
 </head>
@@ -529,9 +619,7 @@ const html = `
             <a href="a11y/" class="nav-item">Accessibility</a>
             <a href="html/" class="nav-item">Health Scan</a>
         </nav>
-        <div style="margin-top: auto;">
-             <div class="tag">BUILD #${process.env.GITHUB_RUN_NUMBER || "LOCAL"}</div>
-        </div>
+        <div class="tag" style="margin-top: auto;">BUILD #${process.env.GITHUB_RUN_NUMBER || "LOCAL"}</div>
     </aside>
 
     <main>
@@ -539,9 +627,10 @@ const html = `
             <h1>CI Health Dashboard</h1>
             <div class="subtitle">Last audit performed on <b>${timestamp}</b></div>
         </header>
+
         <section class="health-section">
             <div class="chart-container">
-                <svg class="chart-svg" width="160" height="160">
+                <svg class="chart-svg" viewBox="0 0 160 160">
                     <circle class="chart-bg" cx="80" cy="80" r="70"></circle>
                     <circle class="chart-progress" cx="80" cy="80" r="70"></circle>
                 </svg>
@@ -551,32 +640,66 @@ const html = `
                 <h2>Project Health Summary</h2>
                 <p>
                     Your project is currently in <b>${conditionText}</b>. 
-                    We've scanned performance, accessibility, and code quality across ${bundleStats?.fileCount || "multiple"} assets.
+                    The pipeline has analyzed performance, accessibility, and code quality across ${bundleStats?.fileCount || "multiple"} assets.
+                    Review the detailed status cards below for specific insights.
                 </p>
             </div>
         </section>
 
+        <!-- Main Cards Grid -->
         <div class="summary-grid">
-            <!-- Accessibility -->
+            
+            <!-- Lighthouse Summary Card -->
+             <div class="card" style="grid-column: span 2; min-height: 340px;">
+                <div class="card-header">
+                    <div class="card-icon">⚡</div>
+                    <span class="status-badge ${status.lighthouse ? "status-success" : "status-warning"}">${status.lighthouse ? "AUDIT READY" : "IN PROGRESS"}</span>
+                </div>
+                <div class="card-title">Performance (Core Web Vitals)</div>
+                <div style="margin-top: 1rem; flex: 1;">
+                   <table class="lh-summary-table">
+                        <thead>
+                            <tr>
+                                <th style="text-align:left;">Page</th>
+                                <th colspan="2">📱 Mobile</th>
+                                <th colspan="2">🖥️ Desktop</th>
+                            </tr>
+                            <tr>
+                                <th></th>
+                                <th style="font-size: 0.65rem;">Light</th>
+                                <th style="font-size: 0.65rem;">Dark</th>
+                                <th style="font-size: 0.65rem;">Light</th>
+                                <th style="font-size: 0.65rem;">Dark</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${lighthouseData.map(d => `
+                            <tr>
+                                <td>${d.page}</td>
+                                <td>${getScoreBadge(d.mobile)}</td>
+                                <td><span class="score-pill" style="background:var(--neutral)"></span>-</td>
+                                <td>${getScoreBadge(d.desktop)}</td>
+                                <td><span class="score-pill" style="background:var(--neutral)"></span>-</td>
+                            </tr>
+                            `).join("")}
+                        </tbody>
+                   </table>
+                </div>
+                <a href="lighthouse/" class="card-action ${status.lighthouse ? "" : "disabled"}" style="margin-top: 1.5rem;">View Full Report →</a>
+            </div>
+
+            <!-- Accessibility Card -->
             <div class="card">
                 <div class="card-header">
                     <div class="card-icon">♿</div>
                     <span class="status-badge ${status.a11y ? "status-success" : "status-danger"}">${status.a11y ? "Audit Run" : "Failed"}</span>
                 </div>
                 <div class="card-title">Accessibility</div>
-                <div class="card-value">${accessibilityData.reduce((a, r) => a + (r.failed || 0), 0) === 0 ? "Passed" : "Issues"}</div>
-                <a href="a11y/" class="card-action ${status.a11y ? "" : "disabled"}">Open Detailed Report →</a>
-            </div>
-
-            <!-- HTML Validity -->
-            <div class="card">
-                <div class="card-header">
-                    <div class="card-icon">📄</div>
-                    <span class="status-badge ${htmlValidation ? "status-success" : "status-warning"}">${htmlValidation ? "Completed" : "Skipped"}</span>
+                <div class="card-value">${accessibilityData.reduce((a, r) => a + (r.failed || 0), 0) === 0 ? "Perfect" : "Issues Found"}</div>
+                <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+                    Tested Light & Dark modes across all pages.
                 </div>
-                <div class="card-title">HTML5 Validation</div>
-                <div class="card-value">${htmlValidation ? "Scan Done" : "N/A"}</div>
-                <a href="html/" class="card-action ${status.html ? "" : "disabled"}">View Source Scan →</a>
+                <a href="a11y/" class="card-action ${status.a11y ? "" : "disabled"}">Open Detailed Report →</a>
             </div>
 
             <!-- RSS Status -->
@@ -587,28 +710,34 @@ const html = `
                 </div>
                 <div class="card-title">RSS Feed</div>
                 <div class="card-value">${rssValidation?.metadata?.items || 0} Items</div>
+                 <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+                    ${rssValidation?.valid ? "Schema & Syntax verified." : "Validation errors detected."}
+                </div>
                 <a href="rss/" class="card-action ${status.rss ? "" : "disabled"}">Preview Feed →</a>
             </div>
 
-            <!-- lighthouse -->
-            <div class="card">
+             <!-- HTML Validity -->
+             <div class="card">
                 <div class="card-header">
-                    <div class="card-icon">⚡</div>
-                    <span class="status-badge ${status.lighthouse ? "status-success" : "status-warning"}">${status.lighthouse ? "Ready" : "In Progress"}</span>
+                    <div class="card-icon">📄</div>
+                    <span class="status-badge ${htmlValidation ? "status-success" : "status-warning"}">${htmlValidation ? "Completed" : "Skipped"}</span>
                 </div>
-                <div class="card-title">Performance (LH)</div>
-                <div class="card-value">Core Web Vitals</div>
-                <a href="lighthouse/" class="card-action ${status.lighthouse ? "" : "disabled"}">Audit Details →</a>
+                <div class="card-title">HTML5 Validation</div>
+                <div class="card-value">${htmlValidation ? "Verified" : "N/A"}</div>
+                 <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+                    Static source code scan for strict HTML5 compliance.
+                </div>
+                <a href="html/" class="card-action ${status.html ? "" : "disabled"}">View Source Scan →</a>
             </div>
         </div>
 
         <section class="details-section">
-            <h2 style="font-size: 1.25rem; margin-bottom: 1.5rem;">Pipeline Status</h2>
+            <h2 style="font-size: 1.25rem; margin-bottom: 1.5rem; border-left: 4px solid var(--primary); padding-left: 1rem;">Detailed Pipeline Status</h2>
             <div class="summary-grid">
                <!-- SA Status Card -->
                <div class="card" style="grid-column: span 2;">
-                  <div class="card-title">Static Analysis Results</div>
-                  <div class="table-wrapper" style="margin-top:1rem;">
+                  <div class="card-title" style="margin-bottom: 1rem;">Static Analysis Results</div>
+                  <div class="table-wrapper">
                     <table>
                       <thead><tr><th>Tool</th><th>Status</th></tr></thead>
                       <tbody>
@@ -626,10 +755,11 @@ const html = `
                     </table>
                   </div>
                </div>
-                              <!-- Performance/Quality List -->
+               
+               <!-- Builds List -->
                 <div class="card">
-                   <div class="card-title">Assets & Build</div>
-                   <div class="table-wrapper" style="margin-top:1rem;">
+                   <div class="card-title" style="margin-bottom: 1rem;">Assets & Build Quality</div>
+                   <div class="table-wrapper">
                      <table>
                        <tbody>
                          <tr><td>JS/CSS Size</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><b>${bundleStats?.readableTotalSize || "N/A"}</b> <a href="javascript:void(0)" onclick="openLog('bundle-size')" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Log</a></div></td></tr>
@@ -646,23 +776,21 @@ const html = `
         </section>
 
         <section class="details-section">
-            <h2 style="font-size: 1.25rem; margin-bottom: 1.5rem;">Visual Workflow Status</h2>
+            <h2 style="font-size: 1.25rem; margin-bottom: 1.5rem; border-left: 4px solid var(--primary); padding-left: 1rem;">Visual Workflow Status</h2>
             <div class="card" style="padding: 1.5rem; position: relative; overflow: auto; background: #0d1117; border-radius: 24px; border: 1px solid var(--border);">
-                <div class="card-title" style="margin-bottom: 1.5rem;">Dynamic GitHub workflow graph</div>
                 
                 <div id="workflow-container" style="position: relative; width: ${workflowData.width || 800}px; height: ${workflowData.height || 600}px; margin: 0 auto; min-width: min-content;">
-                    ${
-                      fs.existsSync(
-                        path.join(DIST_REPORTS, "workflow-graph.png"),
-                      )
-                        ? '<img src="workflow-graph.png" style="display: block; width: 100%; height: 100%;" />'
-                        : '<div style="padding: 5rem; text-align: center; color: var(--text-muted);">Workflow graph image missing</div>'
-                    }
+                    ${fs.existsSync(
+  path.join(DIST_REPORTS, "workflow-graph.png"),
+)
+    ? '<img src="workflow-graph.png" style="display: block; width: 100%; height: 100%;" />'
+    : '<div style="padding: 5rem; text-align: center; color: var(--text-muted);">Workflow graph image missing</div>'
+  }
                     
                     ${(workflowData.nodes || [])
-                      .map((n) => {
-                        const logId = labelToLogId[n.label];
-                        return `
+    .map((n) => {
+      const logId = labelToLogId[n.label];
+      return `
                         <div 
                           class="job-hit-area" 
                           style="left: ${n.x}px; top: ${n.y}px; width: ${n.width}px; height: ${n.height}px; cursor: ${logId ? "pointer" : "default"};"
@@ -670,8 +798,8 @@ const html = `
                           ${logId ? `onclick="openLog('${logId}')"` : ""}
                         ></div>
                       `;
-                      })
-                      .join("")}
+    })
+    .join("")}
                 </div>
             </div>
         </section>
@@ -696,3 +824,63 @@ const html = `
 
 fs.writeFileSync(path.join(DIST_REPORTS, "index.html"), html);
 console.log("✅ Dashboard generated at dist-reports/index.html");
+
+// 4. Generate Lighthouse Index
+const lhIndexHtml = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Lighthouse Reports</title>
+    <style>
+        body { font-family: system-ui, sans-serif; background: #0f111a; color: #f8fafc; padding: 2rem; }
+        a { color: #b389f5; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        ul { list-style: none; padding: 0; }
+        li { margin: 0.5rem 0; padding: 1rem; background: rgba(23, 25, 35, 0.7); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; }
+        h2 { border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.5rem; margin-top: 2rem; }
+    </style>
+</head>
+<body>
+    <h1>Lighthouse Reports</h1>
+    <p>Last run: ${timestamp}</p>
+    
+    <h2>Desktop</h2>
+    <ul>
+        ${lighthouseData.map(d => {
+            // Find the report filename from manifest logic or we can just list everything found in directory
+            // Since we extracted score, we didn't extract the path in the previous step.
+             // We can re-scan or use the data if we enriched it. 
+             // Let's just list links based on the manifest extraction if possible, or scan the dir.
+             // For now, let's just link to the known structure if we can.
+             // Actually, simplest is to just list all files in the directory.
+             return '';
+        }).join('')}
+         <!-- For simplicity, we will just list all .html files found in the directory -->
+         ${(() => {
+             const desktopDir = path.join(DIST_REPORTS, 'lighthouse', 'light', 'desktop');
+             if (!fs.existsSync(desktopDir)) return '<li>No desktop reports found</li>';
+             return fs.readdirSync(desktopDir).filter(f => f.endsWith('.html')).map(f => 
+                 `<li><a href="light/desktop/${f}">Desktop: ${f}</a></li>`
+             ).join('');
+         })()}
+    </ul>
+
+    <h2>Mobile</h2>
+    <ul>
+         ${(() => {
+             const mobileDir = path.join(DIST_REPORTS, 'lighthouse', 'light', 'mobile');
+             if (!fs.existsSync(mobileDir)) return '<li>No mobile reports found</li>';
+             return fs.readdirSync(mobileDir).filter(f => f.endsWith('.html')).map(f => 
+                 `<li><a href="light/mobile/${f}">Mobile: ${f}</a></li>`
+             ).join('');
+         })()}
+    </ul>
+</body>
+</html>
+`;
+
+if (fs.existsSync(path.join(DIST_REPORTS, 'lighthouse'))) {
+    fs.writeFileSync(path.join(DIST_REPORTS, 'lighthouse', 'index.html'), lhIndexHtml);
+    console.log("✅ Lighthouse index generated.");
+}

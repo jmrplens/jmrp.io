@@ -105,3 +105,5 @@ PROJECT_KNOWLEDGE.md
 GEMINI.md
 # Vendored scripts (downloaded during build)
 public/scripts/cf-beacon.js
+temp_lh/
+temp_workflow/
