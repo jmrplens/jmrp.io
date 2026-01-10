@@ -73,6 +73,12 @@ const encodedContent = content ? encodeURIComponent(content) : undefined;
           return;
         }
 
+        if (!navigator.clipboard) {
+          console.error("Clipboard API not available");
+          button.setAttribute("title", "Clipboard API unavailable");
+          return;
+        }
+
         navigator.clipboard.writeText(text).then(
           () => {
             // Visual feedback

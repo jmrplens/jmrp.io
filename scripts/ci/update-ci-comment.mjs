@@ -105,7 +105,7 @@ function getExecutiveHighlights(saResults) {
         fs.readFileSync("bundle-analysis.json", "utf-8"),
       );
       highlights.push(
-        `- 📦 **Asset Size:** Total JavaScript & CSS is **${bundle.readableTotalSize}** across ${bundle.fileCount} optimized assets.`,
+        `- 📦 **Bundle Size:** Code: **${bundle.readableCodeSize}** | Assets: **${bundle.readableAssetSize}**`,
       );
     }
 

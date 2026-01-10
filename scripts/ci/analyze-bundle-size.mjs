@@ -111,14 +111,35 @@ async function analyze() {
     delete stats.categories[cat].files;
   }
 
+  // Calculate aggregated sizes
+  stats.codeSize =
+    stats.categories.js.size +
+    stats.categories.css.size +
+    stats.categories.html.size;
+
+  stats.assetSize =
+    stats.categories.image.size +
+    stats.categories.font.size +
+    stats.categories.pdf.size +
+    stats.categories.other.size;
+
   stats.readableTotalSize = formatSize(stats.totalSize);
+  stats.readableCodeSize = formatSize(stats.codeSize);
+  stats.readableAssetSize = formatSize(stats.assetSize);
+
   for (const cat in stats.categories) {
     stats.categories[cat].readableSize = formatSize(stats.categories[cat].size);
   }
 
+  // Define warning threshold for CODE only (e.g., 5MB is generous for a static site, but safe)
+  // Assets (images/PDFs) should not trigger code-bloat warnings.
+  stats.isHighCodeSize = stats.codeSize > 5 * 1024 * 1024; // 5MB limit for code
+
   fs.writeFileSync(OUTPUT_FILE, JSON.stringify(stats, null, 2));
   console.log(`✅ Analysis complete! Report saved to ${OUTPUT_FILE}`);
   console.log(`Total Size: ${stats.readableTotalSize}`);
+  console.log(`Code Size:  ${stats.readableCodeSize}`);
+  console.log(`Asset Size: ${stats.readableAssetSize}`);
 }
 
 try {

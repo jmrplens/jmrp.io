@@ -249,8 +249,8 @@ const getStatusClass = (res) => {
 
 // Summary Text Generation
 let summaryInsights = `Your project is currently in <b>${conditionText}</b>. We've scanned performance, accessibility, and code quality across the entire codebase.`;
-if (bundleStats && bundleStats.totalSize > 1024 * 1024) {
-  summaryInsights += ` <br><span style="color:var(--danger); font-size:0.85rem;">⚠️ High bundle size detected: ${bundleStats.readableTotalSize}. Consider further asset optimization.</span>`;
+if (bundleStats && bundleStats.isHighCodeSize) {
+  summaryInsights += ` <br><span style="color:var(--danger); font-size:0.85rem;">⚠️ High CODE bundle size detected: ${bundleStats.readableCodeSize}. Consider splitting chunks or removing dependencies.</span>`;
 }
 if (accessibilityData.some((r) => r.violations?.length > 0)) {
   summaryInsights += ` <br><span style="color:var(--warning); font-size:0.85rem;">♿ Accessibility violations were detected. Review the detailed scan results.</span>`;
