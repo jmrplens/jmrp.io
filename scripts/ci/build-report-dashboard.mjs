@@ -292,6 +292,15 @@ const countOutcomes = (outcomes) => {
 const saStats = countOutcomes(saOutcomes);
 const qualityStats = countOutcomes(qualityOutcomes);
 
+/* Logic for Accessibility Badge */
+const isA11yClean = accessibilityData.every((r) => !r.failed);
+const a11yClass =
+  status.a11y && isA11yClean ? "status-success" : "status-danger";
+let a11yText = "Failed";
+if (status.a11y) {
+  a11yText = isA11yClean ? "Perfect" : "Issues";
+}
+
 const html = `
 <!DOCTYPE html>
 <html lang="en">
@@ -802,14 +811,6 @@ const html = `
             </div>
 
             <!-- Accessibility Card -->
-            <%
-                const isA11yClean = accessibilityData.every(r => !r.failed);
-                const a11yClass = status.a11y && isA11yClean ? "status-success" : "status-danger";
-                let a11yText = "Failed";
-                if (status.a11y) {
-                    a11yText = isA11yClean ? "Perfect" : "Issues";
-                }
-            %>
             <div class="card">
                 <div class="card-header">
                     <div class="card-icon">♿</div>
