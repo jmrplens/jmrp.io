@@ -15,6 +15,21 @@ env:
   NODE_OPTIONS: "--no-deprecation"
 
 jobs:
+  ci-setup:
+    name: "🚀 Initialize CI Report"
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    permissions:
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v6
+      - name: Post Initial Comment
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const { default: script } = await import(`file://${process.env.GITHUB_WORKSPACE}/scripts/ci/update-ci-comment.mjs`)
+            await script({github, context, step: 'init'})
+
   # Static Analysis Jobs (Parallel)
   sa-astro:
     name: "SA: Astro Check"
@@ -180,29 +195,26 @@ jobs:
         sa-snyk,
         sa-sonar,
         sa-jsdoc,
+        ci-setup,
       ]
     permissions:
       pull-requests: write
     steps:
       - uses: actions/checkout@v6
-      - name: Post Static Analysis Comment
+      - name: Update CI Comment (SA Results)
         if: github.event_name == 'pull_request'
         uses: actions/github-script@v8
         env:
           OUTCOME_ASTRO: ${{ needs.sa-astro.result }}
           OUTCOME_PRETTIER: ${{ needs.sa-prettier.result }}
           OUTCOME_ESLINT: ${{ needs.sa-eslint.result }}
-          OUTCOME_LYCHEE: ${{ needs.sa-lychee.result }}
-          OUTCOME_TYPOS: ${{ needs.sa-typos.result }}
           OUTCOME_SECURITY: ${{ needs.sa-audit.result }}
-          OUTCOME_SNYK: ${{ needs.sa-snyk.outputs.outcome }}
-          OUTCOME_SONAR: ${{ needs.sa-sonar.result }}
           OUTCOME_JSDOC: ${{ needs.sa-jsdoc.result }}
           JSDOC_COVERAGE: ${{ needs.sa-jsdoc.outputs.coverage }}
         with:
           script: |
-            const { default: script } = await import(`file://${process.env.GITHUB_WORKSPACE}/scripts/ci/post-static-analysis-comment.mjs`)
-            await script({github, context})
+            const { default: script } = await import(`file://${process.env.GITHUB_WORKSPACE}/scripts/ci/update-ci-comment.mjs`)
+            await script({github, context, step: 'sa'})
 
       - name: Check Failure
         if: |
@@ -336,57 +348,6 @@ jobs:
       - name: Format Report for Comment
         run: node scripts/ci/format-accessibility-report.mjs a11y-deploy > accessibility_comment.md
 
-      - name: Post Comment
-        if: github.event_name == 'pull_request'
-        uses: actions/github-script@v8
-        env:
-          SURGE_URL: ${{ secrets.SURGE_TOKEN != '' && format('jmrp-a11y-pr-{0}.surge.sh', github.event.number) || '' }}
-        with:
-          script: |
-            const fs = require('fs');
-            const commentFile = 'accessibility_comment.md';
-
-            try {
-              if (fs.existsSync(commentFile)) {
-                let comment = fs.readFileSync(commentFile, 'utf8');
-                const surgeUrl = process.env.SURGE_URL;
-                if (surgeUrl) {
-                  comment += `\n\n#### 🌐 Live Report\n> 🚀 [**Open Accessibility Reports Dashboard**](https://${surgeUrl}) for detailed insights.`;
-                }
-                const header = "### ♿ Accessibility Audit";
-                if (!comment.includes(header)) {
-                  comment = `${header}\n\n${comment}`;
-                }
-
-                const { data: comments } = await github.rest.issues.listComments({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  issue_number: context.issue.number,
-                });
-
-                const existingComment = comments.find((c) => c.body.includes(header));
-
-                if (existingComment) {
-                  await github.rest.issues.updateComment({
-                    owner: context.repo.owner,
-                    repo: context.repo.repo,
-                    comment_id: existingComment.id,
-                    body: comment,
-                  });
-                } else {
-                  await github.rest.issues.createComment({
-                    issue_number: context.issue.number,
-                    owner: context.repo.owner,
-                    repo: context.repo.repo,
-                    body: comment,
-                  });
-                }
-              } else {
-                console.log("Comment file not found, skipping.");
-              }
-            } catch (error) {
-              console.error("Failed to post accessibility comment:", error);
-            }
       - name: Upload consolidated assets
         uses: actions/upload-artifact@v6
         with:
@@ -545,11 +506,6 @@ jobs:
           else
             echo "schema-report.json not found. Skipping generation."
           fi
-                // Optional: Post fallback
-              }
-            } catch (e) {
-              core.setFailed(`Failed to post schema validation comment: ${e.message}`);
-            }
       - name: Upload Schema validation files
         uses: actions/upload-artifact@v6
         with:
@@ -721,12 +677,6 @@ jobs:
 
       - name: Generate Dashboard
         run: node scripts/ci/generate-lighthouse-index.mjs lh-deploy
-
-                }
-              }
-            } catch (error) {
-              console.error("Failed to post lighthouse comment:", error);
-            }
       - name: Upload LH Dashboard
         uses: actions/upload-artifact@v6
         with:
@@ -738,7 +688,7 @@ jobs:
     name: "🚀 Deploy CI Dashboard"
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    needs: [accessibility-report, bundle-size, html-validator, rss-validation, schema-validation, image-optimization, lighthouse-report]
+    needs: [ci-setup, sa-jsdoc, accessibility-report, bundle-size, html-validator, rss-validation, schema-validation, image-optimization, lighthouse-report]
     if: always() && github.event_name == 'pull_request'
     permissions:
       pull-requests: write
@@ -770,12 +720,21 @@ jobs:
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
 
-      - name: Post Consolidated Comment
+      - name: Update CI Comment (Final Results)
         uses: actions/github-script@v8
         env:
           VERCEL_URL: ${{ steps.deploy.outputs.url }}
+          OUTCOME_ASTRO: ${{ needs.sa-astro.result }}
+          OUTCOME_PRETTIER: ${{ needs.sa-prettier.result }}
+          OUTCOME_ESLINT: ${{ needs.sa-eslint.result }}
+          OUTCOME_SECURITY: ${{ needs.sa-audit.result }}
+          OUTCOME_JSDOC: ${{ needs.sa-jsdoc.result }}
           JSDOC_COVERAGE: ${{ needs.sa-jsdoc.outputs.coverage }}
+          OUTCOME_A11Y: ${{ needs.accessibility-report.result }}
+          OUTCOME_HTML: ${{ needs.html-validator.result }}
+          OUTCOME_BUNDLE: ${{ needs.bundle-size.result }}
+          OUTCOME_RSS: ${{ needs.rss-validation.result }}
         with:
           script: |
-            const { default: script } = await import(`file://${process.env.GITHUB_WORKSPACE}/scripts/ci/post-consolidated-report-comment.mjs`)
-            await script({github, context})
+            const { default: script } = await import(`file://${process.env.GITHUB_WORKSPACE}/scripts/ci/update-ci-comment.mjs`)
+            await script({github, context, step: 'final'})

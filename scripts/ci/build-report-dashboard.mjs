@@ -98,7 +98,14 @@ const getHealthScore = () => {
 };
 
 const healthScore = getHealthScore();
-const scoreColor = healthScore > 90 ? '#10b981' : healthScore > 70 ? '#f59e0b' : '#ef4444';
+let scoreColor = '#ef4444';
+if (healthScore > 90) {
+    scoreColor = '#10b981';
+} else if (healthScore > 70) {
+    scoreColor = '#f59e0b';
+}
+
+const conditionText = healthScore > 90 ? 'prime condition' : healthScore > 70 ? 'good shape' : 'need of maintenance';
 
 const html = `
 <!DOCTYPE html>
@@ -340,7 +347,6 @@ const html = `
             <h1>CI Health Dashboard</h1>
             <div class="subtitle">Last audit performed on <b>${timestamp}</b></div>
         </header>
-
         <section class="health-section">
             <div class="chart-container">
                 <svg class="chart-svg" width="160" height="160">
@@ -352,7 +358,7 @@ const html = `
             <div class="health-info">
                 <h2>Project Health Summary</h2>
                 <p>
-                    Your project is currently in <b>${healthScore > 90 ? 'prime condition' : healthScore > 70 ? 'good shape' : 'need of maintenance'}</b>. 
+                    Your project is currently in <b>${conditionText}</b>. 
                     We've scanned performance, accessibility, and code quality across ${bundleStats?.fileCount || 'multiple'} assets.
                 </p>
             </div>
