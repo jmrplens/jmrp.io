@@ -231,7 +231,8 @@ jobs:
           path: dist
       - uses: lycheeverse/lychee-action@v2.7.0
         with:
-          args: --config lychee.toml --root-dir ${{ github.workspace }}/dist --format markdown --output lychee-report.md ./dist/**/*.html
+          args: --config lychee.toml --root-dir ${{ github.workspace }}/dist --format markdown ./dist/**/*.html
+          output: lychee-report.md
           fail: true
         env:
           GITHUB_TOKEN: ${{ secrets.TOKEN_GITHUB }}
