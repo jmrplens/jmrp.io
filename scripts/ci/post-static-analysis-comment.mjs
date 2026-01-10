@@ -28,6 +28,8 @@ const LOGOS = {
   security:
     "https://img.shields.io/badge/NPM_Audit-CB3837?style=flat&logo=npm&logoColor=white",
   snyk: "https://img.shields.io/badge/Snyk-4C4A73?style=flat&logo=snyk&logoColor=white",
+  sonar:
+    "https://img.shields.io/badge/SonarQube-4E9BCD?style=flat&logo=sonarqube&logoColor=white",
   jsdoc:
     "https://img.shields.io/badge/JSDoc-000000?style=flat&logo=javascript&logoColor=white",
 };
@@ -47,6 +49,7 @@ function generateComment(results) {
     { id: "typos", name: "Spell Checker", outcome: results.typos },
     { id: "security", name: "Security Audit", outcome: results.security },
     { id: "snyk", name: "Snyk Security", outcome: results.snyk },
+    { id: "sonar", name: "SonarQube", outcome: results.sonar },
     {
       id: "jsdoc",
       name: "JSDoc Coverage",
@@ -111,6 +114,7 @@ export default async function postStaticAnalysisComment({ github, context }) {
     typos: process.env.OUTCOME_TYPOS,
     security: process.env.OUTCOME_SECURITY,
     snyk: process.env.OUTCOME_SNYK,
+    sonar: process.env.OUTCOME_SONAR,
     jsdoc: process.env.OUTCOME_JSDOC,
     jsdocCoverage: process.env.JSDOC_COVERAGE,
   };

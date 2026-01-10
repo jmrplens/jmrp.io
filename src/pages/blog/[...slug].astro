@@ -100,7 +100,10 @@ if (post.data.coverImage) {
 const articleSchema = [
     {
         "@type": "BlogPosting",
-        "@id": new URL("#article", new URL(`/blog/${post.id}`, getSiteUrl())).toString(),
+        "@id": new URL(
+            "#article",
+            new URL(`/blog/${post.id}`, getSiteUrl()),
+        ).toString(),
         headline: post.data.title,
         description: post.data.description,
         datePublished: post.data.publishedDate.toISOString(),
@@ -231,7 +234,8 @@ const articleSchema = [
         // Accessibility: Fix duplicate role="region" on code blocks
         // We use requestIdleCallback to avoid forced reflows during initial layout
         const rIC =
-            (window as any).requestIdleCallback || ((cb: any) => setTimeout(cb, 50));
+            (window as any).requestIdleCallback ||
+            ((cb: any) => setTimeout(cb, 50));
 
         const applyLabels = () => {
             rIC(() => {

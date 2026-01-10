@@ -35,11 +35,16 @@ function decodeData(
   }
   try {
     return Buffer.from(decodeURIComponent(data.trim()));
-  } catch (decodeError) {
-    const errStr =
-      decodeError instanceof Error ? decodeError.message : String(decodeError);
-    logger.warn("Skipping malformed data URI" + suffix + ": " + errStr);
-    return null;
+  } catch {
+    try {
+      // Fallback for malformed URI components. decodeURI is less strict.
+      return Buffer.from(decodeURI(data.trim()));
+    } catch (finalError) {
+      const errStr =
+        finalError instanceof Error ? finalError.message : String(finalError);
+      logger.warn("Skipping malformed data URI" + suffix + ": " + errStr);
+      return null;
+    }
   }
 }
 
@@ -367,7 +372,8 @@ function processStyles($: cheerio.CheerioAPI, enableCsp: boolean): boolean {
         .replaceAll("<", String.raw`\3c `)
         .replaceAll(">", String.raw`\3e `)
         .replaceAll("{", String.raw`\7b `)
-        .replaceAll("}", String.raw`\7d `);
+        .replaceAll("}", String.raw`\7d `)
+        .replaceAll("'", String.raw`\27 `);
 
       cssRules += `.${className}{${sanitizedStyle}}`;
     }

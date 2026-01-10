@@ -19,8 +19,10 @@ export function stripHtml(html: string | undefined | null): string {
 /**
  * Sanitizes HTML to allow only safe tags (basic formatting).
  * Explicitly configured with a safe allowlist for better maintainability.
+ * Handles null/undefined inputs gracefully.
  */
-export function sanitize(html: string): string {
+export function sanitize(html: string | undefined | null): string {
+  if (!html) return "";
   return sanitizeHtml(html, {
     allowedTags: [
       "b",
@@ -36,10 +38,14 @@ export function sanitize(html: string): string {
       "code",
       "span",
       "cite",
+      "sub",
+      "sup",
+      "small",
     ],
     allowedAttributes: {
-      a: ["href", "name", "target", "rel"],
-      span: ["class"],
+      a: ["href", "name", "target", "rel", "title"],
+      span: ["class", "title"],
+      cite: ["title"],
     },
     // Ensure only safe protocols are used
     allowedSchemes: ["http", "https", "mailto", "tel"],
@@ -97,6 +103,7 @@ export function safeJsonLd(data: unknown): string {
   return json
     .replaceAll("<", String.raw`\u003c`)
     .replaceAll(">", String.raw`\u003e`)
+    .replaceAll("&", String.raw`\u0026`)
     .replaceAll("\u2028", String.raw`\u2028`)
     .replaceAll("\u2029", String.raw`\u2029`);
 }

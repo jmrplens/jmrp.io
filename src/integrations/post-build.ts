@@ -257,7 +257,16 @@ function clearNginxCache(
   try {
     const files = fs.readdirSync(systemNginxCachePath);
     for (const file of files) {
-      fs.rmSync(path.join(systemNginxCachePath, file), {
+      const fullPath = path.join(systemNginxCachePath, file);
+      // Security: Resolve the real path and verify it's within the cache directory
+      const realPath = fs.realpathSync(fullPath);
+      if (!realPath.startsWith(fs.realpathSync(systemNginxCachePath))) {
+        logger.warn(
+          `Skipping deletion of path outside cache directory: ${realPath}`,
+        );
+        continue;
+      }
+      fs.rmSync(fullPath, {
         recursive: true,
         force: true,
       });

@@ -1,6 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
 
+import { postOrUpdateComment } from "./utils/github.mjs";
+
 /**
  * GitHub Comment Poster: Functional Tests
  *
@@ -12,6 +14,7 @@ export default async function script({ github, context }) {
   const workspace = process.env.GITHUB_WORKSPACE ?? process.cwd();
   const reportPath = path.join(workspace, "playwright-report/results.json");
   const surgeUrl = process.env.SURGE_URL;
+  const HEADER = "### 🎭 Functional Tests";
 
   if (!fs.existsSync(reportPath)) {
     console.log("Playwright JSON report not found.");
@@ -21,10 +24,10 @@ export default async function script({ github, context }) {
   const report = loadReport(reportPath, workspace);
   if (!report) return;
 
-  const body = buildCommentBody(report, surgeUrl);
+  const body = buildCommentBody(report, surgeUrl, HEADER);
   if (!body) return;
 
-  await postOrUpdateComment(github, context, body);
+  await postOrUpdateComment(github, context, HEADER, body);
 }
 
 function loadReport(reportPath, workspace) {
@@ -46,7 +49,7 @@ function loadReport(reportPath, workspace) {
   }
 }
 
-function buildCommentBody(report, surgeUrl) {
+function buildCommentBody(report, surgeUrl, header) {
   const stats = report.stats;
   const passed = Number(stats.expected ?? 0);
   const failed = Number(stats.unexpected ?? 0);
@@ -58,7 +61,7 @@ function buildCommentBody(report, surgeUrl) {
   const icon = isSuccess ? "✅" : "🔴";
   const status = isSuccess ? "**Passed!**" : "**Failures detected**";
 
-  let body = `### 🎭 Functional Tests\n\n${icon} ${status}\n\n`;
+  let body = `${header}\n\n${icon} ${status}\n\n`;
   body += buildStatsTable(total, passed, failed, flaky, skipped, surgeUrl);
   body += "\n";
   body += buildFailureDetails(report, failed);
@@ -107,31 +110,4 @@ function findFailedTests(suite) {
     failedTests = [...failedTests, ...findFailedTests(child)];
   }
   return failedTests;
-}
-
-async function postOrUpdateComment(github, context, body) {
-  if (!context.payload.pull_request) return;
-
-  const header = "### 🎭 Functional Tests";
-  const { data: comments } = await github.rest.issues.listComments({
-    owner: context.repo.owner,
-    repo: context.repo.repo,
-    issue_number: context.payload.pull_request.number,
-  });
-
-  const existingComment = comments.find((c) => c.body?.includes(header));
-
-  await (existingComment
-    ? github.rest.issues.updateComment({
-        owner: context.repo.owner,
-        repo: context.repo.repo,
-        comment_id: existingComment.id,
-        body: body,
-      })
-    : github.rest.issues.createComment({
-        owner: context.repo.owner,
-        repo: context.repo.repo,
-        issue_number: context.payload.pull_request.number,
-        body: body,
-      }));
 }

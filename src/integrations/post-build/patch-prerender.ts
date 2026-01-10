@@ -63,7 +63,7 @@ export async function patchClientPrerenderNonce(
     // Uses backreferences: $1=script var, $2=urls var, $3=eagerness var
     const patchedCode = content.replace(
       originalPattern,
-      '$1.type="speculationrules",$1.textContent=JSON.stringify({prerender:[{source:"list",urls:[$2],eagerness:$3}],prefetch:[{source:"list",urls:[$2],eagerness:$3}]}),(() => { const nonce = document.querySelector("script[nonce]")?.nonce; if (nonce) $1.nonce = nonce; })(),document.head.append($1)',
+      '$1.type="speculationrules",$1.textContent=JSON.stringify({prerender:[{source:"list",urls:[$2],eagerness:$3}],prefetch:[{source:"list",urls:[$2],eagerness:$3}]}),(() => { const nonce = document.querySelector("head > script[nonce], body > script[nonce]")?.nonce; if (nonce) $1.nonce = nonce; })(),document.head.append($1)',
     );
 
     if (patchedCode === content) {

@@ -122,6 +122,21 @@ jobs:
         with:
           args: --all-projects --severity-threshold=high
 
+  sa-sonar:
+    name: "SA: SonarQube"
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: build
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@v6
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   sa-jsdoc:
     name: "SA: JSDoc Coverage"
     runs-on: ubuntu-latest
@@ -163,6 +178,7 @@ jobs:
         sa-typos,
         sa-audit,
         sa-snyk,
+        sa-sonar,
         sa-jsdoc,
       ]
     permissions:
@@ -180,6 +196,7 @@ jobs:
           OUTCOME_TYPOS: ${{ needs.sa-typos.result }}
           OUTCOME_SECURITY: ${{ needs.sa-audit.result }}
           OUTCOME_SNYK: ${{ needs.sa-snyk.outputs.outcome }}
+          OUTCOME_SONAR: ${{ needs.sa-sonar.result }}
           OUTCOME_JSDOC: ${{ needs.sa-jsdoc.result }}
           JSDOC_COVERAGE: ${{ needs.sa-jsdoc.outputs.coverage }}
         with:
@@ -196,6 +213,7 @@ jobs:
           needs.sa-typos.result == 'failure' ||
           needs.sa-audit.result == 'failure' ||
           needs.sa-snyk.result == 'failure' ||
+          needs.sa-sonar.result == 'failure' ||
           needs.sa-jsdoc.result == 'failure'
         run: |
           echo "::error::One or more static analysis steps failed."

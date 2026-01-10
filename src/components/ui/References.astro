@@ -37,14 +37,25 @@ const iconFiles = import.meta.glob<{ default: ImageMetadata }>(
             </div>
             <div class="references-grid">
                 {references.map((ref) => {
-                    const urlObj = new URL(ref.url);
-                    const hostname = urlObj.hostname;
-                    // Match filename logic: hostname with special chars replaced by underscore
-                    const iconName = hostname.replaceAll(/[^a-z0-9]/gi, "_");
+                    let urlObj: URL | null = null;
+                    let hostname = "";
+                    let iconModule: { default: ImageMetadata } | undefined;
 
-                    // Try to find the matching icon
-                    const iconPath = `/src/assets/icons/${iconName}.webp`;
-                    const iconModule = iconFiles[iconPath];
+                    try {
+                        urlObj = new URL(ref.url);
+                        hostname = urlObj.hostname;
+                        const iconName = hostname.replaceAll(
+                            /[^a-z0-9]/gi,
+                            "_",
+                        );
+                        const iconPath = `/src/assets/icons/${iconName}.webp`;
+                        iconModule = iconFiles[iconPath];
+                    } catch {
+                        console.warn(
+                            `[References] Invalid URL for reference "${ref.text}": ${ref.url}`,
+                        );
+                    }
+                    if (!urlObj) return null;
 
                     return (
                         <a
