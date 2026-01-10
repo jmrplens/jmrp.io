@@ -19,7 +19,9 @@ jobs:
     name: Static Analysis
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # needs: build # Removed to allow parallel execution
     outputs:
       astro: ${{ steps.astro.outcome }}
       prettier: ${{ steps.prettier.outcome }}
@@ -70,8 +72,8 @@ jobs:
         id: lychee
         uses: lycheeverse/lychee-action@v2.7.0
         with:
-          # Check both source and generated HTML
-          args: --config lychee.toml ./**/*.md ./**/*.mdx src/**/*.astro src/**/*.ts src/**/*.tsx ./dist/**/*.html
+          # Check source files only (parallel to build)
+          args: --config lychee.toml ./**/*.md ./**/*.mdx src/**/*.astro src/**/*.ts src/**/*.tsx
           fail: true
         env:
           GITHUB_TOKEN: ${{ secrets.TOKEN_GITHUB }}
@@ -385,6 +387,16 @@ jobs:
 
           # Create the interactive HTML report and exit with error if issues are found
           node scripts/ci/generate-html-validation-report.mjs
+
+      - name: Link Checker (HTML)
+        id: lychee-dist
+        uses: lycheeverse/lychee-action@v2.7.0
+        with:
+          args: --config lychee.toml ./dist/**/*.html
+          fail: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN_GITHUB }}
+        continue-on-error: true
       - name: Deploy HTML Report to Surge
         if: github.event_name == 'pull_request' && env.SURGE_TOKEN != ''
         shell: bash
