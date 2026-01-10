@@ -11,6 +11,7 @@ exclude = [
     "https://ies-berlanga\\.info/.*",
     "https://www\\.i3m-detectors\\.i3m\\.upv\\.es/.*",
     "https://rua\\.ua\\.es/.*",
+    "https://www\\.upv\\.es/index-en\\.html",
     "http://hdl\\.handle\\.net/.*",
     # Ignore Astro/Template variables
     ".*\\$\\{.*",

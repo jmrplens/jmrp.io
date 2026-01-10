@@ -61,6 +61,69 @@ function syntaxHighlight(json) {
 }
 
 /**
+ * Renders an array into a visual HTML list structure.
+ *
+ * @param data - The array to render.
+ * @returns HTML string for the array list.
+ */
+function renderArray(data) {
+  if (data.length === 0) return '<span class="v-empty">[]</span>';
+
+  const listItems = data
+    .map((item) => `<div class="v-list-item">${renderVisual(item)}</div>`)
+    .join("");
+  return `<div class="v-list">${listItems}</div>`;
+}
+
+/**
+ * Renders an object into a visual HTML structure with properties.
+ *
+ * @param data - The object to render.
+ * @returns HTML string for the object.
+ */
+function renderObject(data) {
+  const type = data["@type"];
+  let html = '<div class="v-object">';
+
+  if (type) {
+    html += `<div class="v-type-badge">${escapeHtml(type)}</div>`;
+  }
+
+  const keys = Object.keys(data).filter(
+    (k) => k !== "@context" && k !== "@type",
+  );
+  if (keys.length === 0) return html + "</div>";
+
+  html += '<div class="v-props">';
+  for (const key of keys) {
+    html += `
+                <div class="v-row">
+                    <div class="v-key">${escapeHtml(key)}:</div>
+                    <div class="v-val">${renderVisual(data[key])}</div>
+                </div>`;
+  }
+  html += "</div></div>";
+  return html;
+}
+
+/**
+ * Renders a string, handling links and images specifically.
+ *
+ * @param data - The string to render.
+ * @returns HTML string for the string value.
+ */
+function renderString(data) {
+  if (data.startsWith("http")) {
+    const escapedUrl = escapeHtml(data);
+    if (/\.(jpg|jpeg|png|webp|gif|svg)$/i.test(data)) {
+      return `<a href="${escapedUrl}" target="_blank"><img src="${escapedUrl}" class="v-img" loading="lazy" /></a>`;
+    }
+    return `<a href="${escapedUrl}" target="_blank" class="v-link">${escapedUrl}</a>`;
+  }
+  return `<span class="v-string">"${escapeHtml(data)}"</span>`;
+}
+
+/**
  * Renders JSON data into a nested visual HTML structure.
  *
  * @param data - The data object to render.
@@ -70,51 +133,11 @@ function renderVisual(data) {
   if (data === null || data === undefined)
     return '<span class="v-null">null</span>';
 
-  if (Array.isArray(data)) {
-    if (data.length === 0) return '<span class="v-empty">[]</span>';
+  if (Array.isArray(data)) return renderArray(data);
 
-    const listItems = data
-      .map((item) => `<div class="v-list-item">${renderVisual(item)}</div>`)
-      .join("");
-    return `<div class="v-list">${listItems}</div>`;
-  }
+  if (typeof data === "object") return renderObject(data);
 
-  if (typeof data === "object") {
-    const type = data["@type"];
-    let html = '<div class="v-object">';
-
-    if (type) {
-      html += `<div class="v-type-badge">${escapeHtml(type)}</div>`;
-    }
-
-    const keys = Object.keys(data).filter(
-      (k) => k !== "@context" && k !== "@type",
-    );
-    if (keys.length === 0) return html + "</div>";
-
-    html += '<div class="v-props">';
-    for (const key of keys) {
-      html += `
-                <div class="v-row">
-                    <div class="v-key">${escapeHtml(key)}:</div>
-                    <div class="v-val">${renderVisual(data[key])}</div>
-                </div>`;
-    }
-    html += "</div></div>";
-    return html;
-  }
-
-  // Primitive values
-  if (typeof data === "string") {
-    if (data.startsWith("http")) {
-      const escapedUrl = escapeHtml(data);
-      if (/\.(jpg|jpeg|png|webp|gif|svg)$/i.test(data)) {
-        return `<a href="${escapedUrl}" target="_blank"><img src="${escapedUrl}" class="v-img" loading="lazy" /></a>`;
-      }
-      return `<a href="${escapedUrl}" target="_blank" class="v-link">${escapedUrl}</a>`;
-    }
-    return `<span class="v-string">"${escapeHtml(data)}"</span>`;
-  }
+  if (typeof data === "string") return renderString(data);
 
   return `<span class="v-prim">${escapeHtml(String(data))}</span>`;
 }

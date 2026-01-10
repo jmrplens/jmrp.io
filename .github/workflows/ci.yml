@@ -170,7 +170,7 @@ jobs:
           path: dist
       - uses: lycheeverse/lychee-action@v2.7.0
         with:
-          args: --config lychee.toml ./dist/**/*.html
+          args: --config lychee.toml --root-dir dist ./dist/**/*.html
           fail: true
         env:
           GITHUB_TOKEN: ${{ secrets.TOKEN_GITHUB }}

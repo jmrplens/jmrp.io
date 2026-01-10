@@ -77,10 +77,6 @@ async function analyze() {
         category = "html";
         break;
       }
-      case ".map": {
-        category = "other";
-        break;
-      }
       default: {
         if (
           [
