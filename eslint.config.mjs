@@ -24,6 +24,9 @@ export default [
       "playwright-report/",
       "accessibility-report/",
       "*.log",
+      "temp_lh/",
+      "temp_workflow/",
+      "lh-deploy/",
     ],
   },
 

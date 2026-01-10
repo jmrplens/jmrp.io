@@ -161,19 +161,22 @@ const findScore = (manifestPath, p) => {
   if (!fs.existsSync(manifestPath)) return null;
   try {
     const json = JSON.parse(fs.readFileSync(manifestPath, "utf-8"));
-    const item = json.find(i => {
-      if (p.name === "Home") return i.url.endsWith(":40679/") || i.url.endsWith(".io/");
+    const item = json.find((i) => {
+      if (p.name === "Home")
+        return i.url.endsWith(":40679/") || i.url.endsWith(".io/");
       return i.url.includes(p.urlPart);
     });
     return item ? Math.round(item.summary.performance * 100) : null;
-  } catch { return null; }
+  } catch {
+    return null;
+  }
 };
 
 lighthouseData = pages.map((p) => {
   return {
     page: p.name,
     mobile: findScore(lhManifestMobile, p),
-    desktop: findScore(lhManifestDesktop, p)
+    desktop: findScore(lhManifestDesktop, p),
   };
 });
 
@@ -264,7 +267,8 @@ const getStatusClass = (res) => {
 
 // Helper for LH badges
 const getScoreBadge = (score) => {
-  if (score === null || score === undefined) return '<span class="score-pill" style="background:var(--neutral)"></span>N/A';
+  if (score === null || score === undefined)
+    return '<span class="score-pill" style="background:var(--neutral)"></span>N/A';
 
   // Inline styles for pill colors since we didn't define red/orange classes in CSS properly
   let colorStyle = "var(--success)";
@@ -673,7 +677,9 @@ const html = `
                             </tr>
                         </thead>
                         <tbody>
-                            ${lighthouseData.map(d => `
+                            ${lighthouseData
+                              .map(
+                                (d) => `
                             <tr>
                                 <td>${d.page}</td>
                                 <td>${getScoreBadge(d.mobile)}</td>
@@ -681,7 +687,9 @@ const html = `
                                 <td>${getScoreBadge(d.desktop)}</td>
                                 <td><span class="score-pill" style="background:var(--neutral)"></span>-</td>
                             </tr>
-                            `).join("")}
+                            `,
+                              )
+                              .join("")}
                         </tbody>
                    </table>
                 </div>
@@ -780,17 +788,18 @@ const html = `
             <div class="card" style="padding: 1.5rem; position: relative; overflow: auto; background: #0d1117; border-radius: 24px; border: 1px solid var(--border);">
                 
                 <div id="workflow-container" style="position: relative; width: ${workflowData.width || 800}px; height: ${workflowData.height || 600}px; margin: 0 auto; min-width: min-content;">
-                    ${fs.existsSync(
-  path.join(DIST_REPORTS, "workflow-graph.png"),
-)
-    ? '<img src="workflow-graph.png" style="display: block; width: 100%; height: 100%;" />'
-    : '<div style="padding: 5rem; text-align: center; color: var(--text-muted);">Workflow graph image missing</div>'
-  }
+                    ${
+                      fs.existsSync(
+                        path.join(DIST_REPORTS, "workflow-graph.png"),
+                      )
+                        ? '<img src="workflow-graph.png" style="display: block; width: 100%; height: 100%;" />'
+                        : '<div style="padding: 5rem; text-align: center; color: var(--text-muted);">Workflow graph image missing</div>'
+                    }
                     
                     ${(workflowData.nodes || [])
-    .map((n) => {
-      const logId = labelToLogId[n.label];
-      return `
+                      .map((n) => {
+                        const logId = labelToLogId[n.label];
+                        return `
                         <div 
                           class="job-hit-area" 
                           style="left: ${n.x}px; top: ${n.y}px; width: ${n.width}px; height: ${n.height}px; cursor: ${logId ? "pointer" : "default"};"
@@ -798,8 +807,8 @@ const html = `
                           ${logId ? `onclick="openLog('${logId}')"` : ""}
                         ></div>
                       `;
-    })
-    .join("")}
+                      })
+                      .join("")}
                 </div>
             </div>
         </section>
@@ -847,40 +856,65 @@ const lhIndexHtml = `
     
     <h2>Desktop</h2>
     <ul>
-        ${lighthouseData.map(d => {
+        ${lighthouseData
+          .map((d) => {
             // Find the report filename from manifest logic or we can just list everything found in directory
             // Since we extracted score, we didn't extract the path in the previous step.
-             // We can re-scan or use the data if we enriched it. 
-             // Let's just list links based on the manifest extraction if possible, or scan the dir.
-             // For now, let's just link to the known structure if we can.
-             // Actually, simplest is to just list all files in the directory.
-             return '';
-        }).join('')}
+            // We can re-scan or use the data if we enriched it.
+            // Let's just list links based on the manifest extraction if possible, or scan the dir.
+            // For now, let's just link to the known structure if we can.
+            // Actually, simplest is to just list all files in the directory.
+            return "";
+          })
+          .join("")}
          <!-- For simplicity, we will just list all .html files found in the directory -->
          ${(() => {
-             const desktopDir = path.join(DIST_REPORTS, 'lighthouse', 'light', 'desktop');
-             if (!fs.existsSync(desktopDir)) return '<li>No desktop reports found</li>';
-             return fs.readdirSync(desktopDir).filter(f => f.endsWith('.html')).map(f => 
-                 `<li><a href="light/desktop/${f}">Desktop: ${f}</a></li>`
-             ).join('');
+           const desktopDir = path.join(
+             DIST_REPORTS,
+             "lighthouse",
+             "light",
+             "desktop",
+           );
+           if (!fs.existsSync(desktopDir))
+             return "<li>No desktop reports found</li>";
+           return fs
+             .readdirSync(desktopDir)
+             .filter((f) => f.endsWith(".html"))
+             .map(
+               (f) => `<li><a href="light/desktop/${f}">Desktop: ${f}</a></li>`,
+             )
+             .join("");
          })()}
     </ul>
 
     <h2>Mobile</h2>
     <ul>
          ${(() => {
-             const mobileDir = path.join(DIST_REPORTS, 'lighthouse', 'light', 'mobile');
-             if (!fs.existsSync(mobileDir)) return '<li>No mobile reports found</li>';
-             return fs.readdirSync(mobileDir).filter(f => f.endsWith('.html')).map(f => 
-                 `<li><a href="light/mobile/${f}">Mobile: ${f}</a></li>`
-             ).join('');
+           const mobileDir = path.join(
+             DIST_REPORTS,
+             "lighthouse",
+             "light",
+             "mobile",
+           );
+           if (!fs.existsSync(mobileDir))
+             return "<li>No mobile reports found</li>";
+           return fs
+             .readdirSync(mobileDir)
+             .filter((f) => f.endsWith(".html"))
+             .map(
+               (f) => `<li><a href="light/mobile/${f}">Mobile: ${f}</a></li>`,
+             )
+             .join("");
          })()}
     </ul>
 </body>
 </html>
 `;
 
-if (fs.existsSync(path.join(DIST_REPORTS, 'lighthouse'))) {
-    fs.writeFileSync(path.join(DIST_REPORTS, 'lighthouse', 'index.html'), lhIndexHtml);
-    console.log("✅ Lighthouse index generated.");
+if (fs.existsSync(path.join(DIST_REPORTS, "lighthouse"))) {
+  fs.writeFileSync(
+    path.join(DIST_REPORTS, "lighthouse", "index.html"),
+    lhIndexHtml,
+  );
+  console.log("✅ Lighthouse index generated.");
 }

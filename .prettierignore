@@ -23,6 +23,9 @@ accessibility-report/
 playwright-report/
 test-results/
 *.json
+temp_lh/
+temp_workflow/
+lh-deploy/
 !package.json
 !tsconfig.json
 !.prettierrc
