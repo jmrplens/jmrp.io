@@ -258,11 +258,13 @@ if (healthScore > 90) {
   scoreColor = "#f59e0b";
 }
 
-let conditionText = "need of maintenance";
-if (healthScore > 90) {
-  conditionText = "prime condition";
-} else if (healthScore > 70) {
-  conditionText = "good shape";
+let conditionText = "critical condition";
+if (healthScore >= 95) {
+  conditionText = "prime condition 💎";
+} else if (healthScore >= 80) {
+  conditionText = "good shape ✅";
+} else if (healthScore >= 60) {
+  conditionText = "fair condition ⚠️";
 }
 
 const getStatusClass = (res) => {
@@ -271,6 +273,15 @@ const getStatusClass = (res) => {
   if (res && res !== "pending") return "status-warning";
   return "status-neutral";
 };
+
+// Summary Text Generation
+let summaryInsights = `Your project is currently in <b>${conditionText}</b>. We've scanned performance, accessibility, and code quality across the entire codebase.`;
+if (bundleStats && (bundleStats.totalSize > 1024 * 1024)) {
+  summaryInsights += ` <br><span style="color:var(--danger); font-size:0.85rem;">⚠️ High bundle size detected: ${bundleStats.readableTotalSize}. Consider further asset optimization.</span>`;
+}
+if (accessibilityData.some(r => r.violations?.length > 0)) {
+  summaryInsights += ` <br><span style="color:var(--warning); font-size:0.85rem;">♿ Accessibility violations were detected. Review the detailed scan results.</span>`;
+}
 
 // Helper for LH badges
 const getScoreBadge = (score) => {
@@ -758,44 +769,30 @@ const html = `
 
     <main>
         <header>
-            <div class="header-left">
-                <h1>CI Health Dashboard</h1>
-                <div class="subtitle">Last audit performed on <b>${timestamp}</b></div>
-            </div>
-            <div class="header-actions">
-                <a href="${workflowUrl}" target="_blank" class="header-btn">View on GitHub →</a>
-            </div>
+            <h1>CI Health Dashboard</h1>
+            <div class="subtitle">Last audit performed on <b>${timestamp}</b></div>
         </header>
-
         <section class="health-section">
             <div class="chart-container">
                 <svg class="chart-svg" viewBox="0 0 160 160">
                     <circle class="chart-bg" cx="80" cy="80" r="70"></circle>
-                    <circle class="chart-progress" cx="80" cy="80" r="70"></circle>
+                    <circle class="chart-progress" cx="80" cy="80" r="70" style="stroke-dashoffset: ${440 - (440 * healthScore) / 100}; stroke: ${scoreColor};"></circle>
                 </svg>
-                <div class="chart-text">${healthScore}%</div>
+                <div class="chart-text" style="color: ${scoreColor}">${healthScore}%</div>
             </div>
             <div class="health-info">
                 <h2>Project Health Summary</h2>
                 <p>
-                    Your project is currently in <b>${conditionText}</b>. 
-                    The pipeline has analyzed performance, accessibility, and code quality across ${bundleStats?.fileCount || "multiple"} assets.
-                    Review the detailed status cards below for specific insights.
+                    ${summaryInsights}
                 </p>
             </div>
         </section>
 
-        <!-- Main Cards Grid -->
         <div class="summary-grid">
-            
-            <!-- Lighthouse Summary Card -->
-             <div class="card span-2" style="min-height: 340px;">
-                <div class="card-header">
-                    <div class="card-icon">⚡</div>
-                    <span class="status-badge ${status.lighthouse ? "status-success" : "status-warning"}">${status.lighthouse ? "AUDIT READY" : "IN PROGRESS"}</span>
-                </div>
-                <div class="card-title">Performance (Core Web Vitals)</div>
-                <div style="margin-top: 1rem; flex: 1; overflow-x: auto;">
+            <!-- Performance (Lighthouse) -->
+            <div class="card span-2">
+                <div class="card-title">Lighthouse Audit Summary</div>
+                <div class="table-wrapper" style="margin-top:1rem; border:none; background:transparent;">
                    <table class="lh-summary-table">
                         <thead>
                             <tr>
@@ -813,8 +810,8 @@ const html = `
                         </thead>
                         <tbody>
                             ${lighthouseData
-                              .map(
-                                (d) => `
+    .map(
+      (d) => `
                             <tr>
                                 <td>${d.page}</td>
                                 <td>${getScoreBadge(d.mobileLight)}</td>
@@ -823,8 +820,8 @@ const html = `
                                 <td>${getScoreBadge(d.desktopDark)}</td>
                             </tr>
                             `,
-                              )
-                              .join("")}
+    )
+    .join("")}
                         </tbody>
                    </table>
                 </div>
@@ -835,12 +832,12 @@ const html = `
             <div class="card">
                 <div class="card-header">
                     <div class="card-icon">♿</div>
-                    <span class="status-badge ${status.a11y ? "status-success" : "status-danger"}">${status.a11y ? "Audit Run" : "Failed"}</span>
+                    <span class="status-badge ${status.a11y && accessibilityData.every((r) => !r.failed) ? "status-success" : "status-danger"}">${status.a11y ? (accessibilityData.every((r) => !r.failed) ? "Perfect" : "Issues") : "Failed"}</span>
                 </div>
                 <div class="card-title">Accessibility</div>
-                <div class="card-value">${accessibilityData.reduce((a, r) => a + (r.failed || 0), 0) === 0 ? "Perfect" : "Issues Found"}</div>
+                <div class="card-value">${accessibilityData.reduce((a, r) => a + (r.violations?.length || 0), 0) === 0 ? "Compliant" : "Violations"}</div>
                 <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
-                    Tested Light & Dark modes across all pages.
+                    WCAG 2.1 AA validation across all pages and themes.
                 </div>
                 <a href="a11y/" class="card-action ${status.a11y ? "" : "disabled"}">Open Detailed Report →</a>
             </div>
