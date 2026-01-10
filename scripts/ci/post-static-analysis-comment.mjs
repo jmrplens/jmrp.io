@@ -24,6 +24,7 @@ const LOGOS = {
     "https://img.shields.io/badge/Typos-grey?style=flat&logo=microsoftexcel&logoColor=white", // Placeholder or generic text icon
   security:
     "https://img.shields.io/badge/NPM_Audit-CB3837?style=flat&logo=npm&logoColor=white",
+  snyk: "https://img.shields.io/badge/Snyk-4C4A73?style=flat&logo=snyk&logoColor=white",
   jsdoc:
     "https://img.shields.io/badge/JSDoc-000000?style=flat&logo=javascript&logoColor=white",
 };
@@ -41,13 +42,14 @@ function generateComment(results) {
     { id: "eslint", name: "ESLint", outcome: results.eslint },
     { id: "lychee", name: "Link Checker", outcome: results.lychee },
     { id: "typos", name: "Spell Checker", outcome: results.typos },
+    { id: "security", name: "Security Audit", outcome: results.security },
+    { id: "snyk", name: "Snyk Security", outcome: results.snyk },
     {
       id: "jsdoc",
       name: "JSDoc Coverage",
       outcome: results.jsdoc,
       value: results.jsdocCoverage,
     },
-    { id: "security", name: "Security Audit", outcome: results.security },
   ];
 
   // Check if all passed
@@ -103,6 +105,7 @@ export default async function postStaticAnalysisComment({ github, context }) {
     lychee: process.env.OUTCOME_LYCHEE,
     typos: process.env.OUTCOME_TYPOS,
     security: process.env.OUTCOME_SECURITY,
+    snyk: process.env.OUTCOME_SNYK,
     jsdoc: process.env.OUTCOME_JSDOC,
     jsdocCoverage: process.env.JSDOC_COVERAGE,
   };
