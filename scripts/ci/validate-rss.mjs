@@ -225,7 +225,7 @@ async function validateRSS() {
   }
 
   results.size = (fs.statSync(rssFile).size / 1024).toFixed(2);
-  const content = fs.readFileSync(rssFile, "utf8");
+  const content = fs.readFileSync(rssFile, "utf-8");
 
   await validateStructure(content, results);
   await validateFeedContent(content, results);

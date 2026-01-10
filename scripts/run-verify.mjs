@@ -47,7 +47,7 @@ function runStep(name, command, condition = true) {
   console.log(`${colors.reset}   ${command}`);
 
   try {
-    execSync(command, { stdio: "inherit", encoding: "utf8" });
+    execSync(command, { stdio: "inherit", encoding: "utf-8" });
     console.log(`${colors.green}✅ ${name} passed!${colors.reset}\n`);
     return true;
   } catch {

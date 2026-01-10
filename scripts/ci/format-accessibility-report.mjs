@@ -22,7 +22,9 @@ function getStatusText(result) {
   return result.failed === 0 ? "✅ Passed" : "❌ Failed";
 }
 
-const report = JSON.parse(fs.readFileSync("accessibility-report.json", "utf8"));
+const report = JSON.parse(
+  fs.readFileSync("accessibility-report.json", "utf-8"),
+);
 const results = {
   light: report.find((r) => r.theme === "light"),
   dark: report.find((r) => r.theme === "dark"),

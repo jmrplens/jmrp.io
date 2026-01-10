@@ -50,7 +50,7 @@ const reports = [];
 
 for (const filePath of jsonFiles) {
   try {
-    const content = fs.readFileSync(filePath, "utf8");
+    const content = fs.readFileSync(filePath, "utf-8");
     const json = JSON.parse(content);
 
     const lowerPath = filePath.toLowerCase();

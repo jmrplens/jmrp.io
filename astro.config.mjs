@@ -48,7 +48,7 @@ const rehypeMermaidSplitter = () => (/** @type {any} */ tree) => {
               return Buffer.from(
                 dataUri.split(";base64,")[1],
                 "base64",
-              ).toString("utf8");
+              ).toString("utf-8");
             }
             return decodeURIComponent(dataUri.split(",")[1]);
           };
@@ -96,12 +96,16 @@ const rehypeMermaidSplitter = () => (/** @type {any} */ tree) => {
 const githubLight = "github-light-high-contrast";
 const githubDark = "github-dark-high-contrast";
 
-// No manual overrides needed for high contrast themes
-
 // https://astro.build/config
 export default defineConfig({
-  prefetch: true,
+  prefetch: {
+    prefetchAll: true,
+    defaultStrategy: "viewport",
+  },
   experimental: {
+    clientPrerender: true,
+    contentIntellisense: true,
+    chromeDevtoolsWorkspace: true,
     fonts: [
       {
         name: "Geist Sans",

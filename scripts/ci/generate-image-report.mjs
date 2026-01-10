@@ -17,7 +17,7 @@ const generateReport = () => {
     try {
       const output = execSync(
         `find dist -type f ${pattern} 2>/dev/null || echo ""`,
-        { encoding: "utf8" },
+        { encoding: "utf-8" },
       ).trim();
       return output ? output.split("\n") : [];
     } catch {
@@ -29,7 +29,7 @@ const generateReport = () => {
     try {
       const output = execSync(
         `find dist -type f 2>/dev/null | grep -iE "${pattern}" || echo ""`,
-        { encoding: "utf8" },
+        { encoding: "utf-8" },
       ).trim();
       return output ? output.split("\n") : [];
     } catch {
@@ -45,7 +45,7 @@ const generateReport = () => {
     return list.map((img) => {
       try {
         const size = execSync(`ls -lh "${img}" | awk '{print $5}'`, {
-          encoding: "utf8",
+          encoding: "utf-8",
         }).trim();
         return { path: img.replace("dist/", ""), size };
       } catch {
@@ -69,7 +69,7 @@ const generateReport = () => {
   <!DOCTYPE html>
   <html lang="en">
   <head>
-    <meta charset="utf8">
+    <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Image Optimization Report</title>
     <style>

@@ -55,7 +55,7 @@ export async function finalizeCspConfig(distDir: string, cspData: CspData) {
       const separator = current ? " " : "";
       const candidate = current + separator + h;
       if (
-        Buffer.byteLength(candidate, "utf8") > NGINX_VARIABLE_SIZE_LIMIT &&
+        Buffer.byteLength(candidate, "utf-8") > NGINX_VARIABLE_SIZE_LIMIT &&
         current
       ) {
         chunks.push(current);

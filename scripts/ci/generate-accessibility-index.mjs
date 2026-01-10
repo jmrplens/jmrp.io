@@ -352,7 +352,7 @@ if (summaryFiles.length > 0) {
   const aggregatedReport = summaryFiles
     .map((file) => {
       try {
-        return JSON.parse(fs.readFileSync(file, "utf8"));
+        return JSON.parse(fs.readFileSync(file, "utf-8"));
       } catch (error) {
         console.error(`Error parsing summary ${file}:`, error);
         return null;

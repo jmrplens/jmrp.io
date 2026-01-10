@@ -81,7 +81,9 @@ export default async function postRssValidationComment({ github, context }) {
 
   try {
     if (fs.existsSync("rss-validation.json")) {
-      const report = JSON.parse(fs.readFileSync("rss-validation.json", "utf8"));
+      const report = JSON.parse(
+        fs.readFileSync("rss-validation.json", "utf-8"),
+      );
       const surgeUrl = process.env.SURGE_URL;
       comment = buildCommentFromReport(report, surgeUrl);
     } else {

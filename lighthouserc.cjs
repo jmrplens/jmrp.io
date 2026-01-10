@@ -16,7 +16,7 @@ const getUrls = () => {
       ];
     }
 
-    const content = fs.readFileSync(sitemapPath, "utf8");
+    const content = fs.readFileSync(sitemapPath, "utf-8");
     let urls = [];
     const regex = /<loc>(.*?)<\/loc>/g;
     let match;

@@ -22,7 +22,7 @@ export default async function postBundleSizeComment({ github, context }) {
       throw new Error("Bundle analysis report not found");
     }
 
-    const stats = JSON.parse(fs.readFileSync(reportPath, "utf8"));
+    const stats = JSON.parse(fs.readFileSync(reportPath, "utf-8"));
 
     let commentBody = "### 📦 Bundle Size Analysis\n\n";
 

@@ -224,7 +224,7 @@ async function validateAllPages() {
       continue;
     }
     // deepcode ignore PT: file is validated by isPathSafe()
-    const html = fs.readFileSync(file, "utf8");
+    const html = fs.readFileSync(file, "utf-8");
     const schemas = extractJsonLd(html);
     if (schemas.length === 0) continue;
 

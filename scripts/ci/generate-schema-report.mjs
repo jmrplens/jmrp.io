@@ -14,7 +14,7 @@ if (!fs.existsSync(REPORT_FILE)) {
   process.exit(1);
 }
 
-const data = JSON.parse(fs.readFileSync(REPORT_FILE, "utf8"));
+const data = JSON.parse(fs.readFileSync(REPORT_FILE, "utf-8"));
 const { summary, results } = data;
 
 /**

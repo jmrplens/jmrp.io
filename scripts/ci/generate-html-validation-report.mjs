@@ -56,7 +56,7 @@ function getActiveRules() {
     const configJson = execFileSync(
       "pnpm",
       ["exec", "html-validate", "-c", CONFIG_FILE, "--print-config", firstHtml],
-      { encoding: "utf8" },
+      { encoding: "utf-8" },
     );
     const config = JSON.parse(configJson);
     return config.rules || {};
@@ -76,7 +76,7 @@ function loadAndParseReport() {
   }
 
   try {
-    const content = fs.readFileSync(JSON_REPORT, "utf8");
+    const content = fs.readFileSync(JSON_REPORT, "utf-8");
     if (!content.trim()) {
       console.warn(
         "⚠️ HTML validation JSON report is empty. Assuming no issues found.",

@@ -59,7 +59,7 @@ export async function getPublications(): Promise<PublicationGroup[]> {
       process.cwd(),
       "src/content/publications_data/papers.bib",
     );
-    const fileContents = fs.readFileSync(filePath, "utf8");
+    const fileContents = fs.readFileSync(filePath, "utf-8");
 
     // Load coauthors
     const coauthorsEntry = await getEntry("publications_data", "coauthors");

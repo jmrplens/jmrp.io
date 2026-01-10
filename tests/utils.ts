@@ -37,7 +37,7 @@ export async function getSitemapUrls(): Promise<string[]> {
     return ["/", "/blog/", "/cv/", "/publications/", "/services/"];
   }
 
-  const sitemapContent = fs.readFileSync(SITEMAP_PATH, "utf8");
+  const sitemapContent = fs.readFileSync(SITEMAP_PATH, "utf-8");
 
   const parsed = (await parseStringPromise(sitemapContent)) as SitemapResult;
   const urls: string[] = parsed.urlset.url.map((u) => {

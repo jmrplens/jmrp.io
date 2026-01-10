@@ -42,6 +42,10 @@ export async function purgeCloudflareCache(logger: AstroIntegrationLogger) {
       headers["Authorization"] = `Bearer ${token}`;
     }
 
+    // Use AbortController for timeout to prevent infinite hang
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15_000); // 15 seconds
+
     const response = await fetch(
       `https://api.cloudflare.com/client/v4/zones/${zoneId}/purge_cache`,
       {
@@ -50,8 +54,11 @@ export async function purgeCloudflareCache(logger: AstroIntegrationLogger) {
         // Using purge_everything for consistency in personal portfolio updates.
         // For larger sites, consider selective purging by URL or Cache-Tag.
         body: JSON.stringify({ purge_everything: true }),
+        signal: controller.signal,
       },
     );
+
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
       const errorText = await response.text();

@@ -35,7 +35,7 @@ async function generatePreview() {
     },
   });
 
-  const xml = fs.readFileSync(RSS_FILE, "utf8");
+  const xml = fs.readFileSync(RSS_FILE, "utf-8");
   const feed = await parser.parseString(xml);
 
   const htmlContent = `

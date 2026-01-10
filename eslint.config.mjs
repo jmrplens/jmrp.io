@@ -45,6 +45,8 @@ export default [
       "unicorn/no-array-callback-reference": "off", // map(fn) is fine
       "unicorn/no-array-sort": "off", // sort() is standard
       "unicorn/no-process-exit": "off", // CLI scripts need process.exit (applied globally here for simplicity as we have many scripts)
+      // Use utf-8 (with dash) as per official WHATWG/Unicode standard
+      "unicorn/text-encoding-identifier-case": ["error", { withDash: true }],
     },
   },
 
@@ -159,13 +161,13 @@ export default [
     },
   },
 
-  // 7. Playwright (E2E Testing)
+  // 8. Playwright (E2E Testing)
   {
     ...playwright.configs["flat/recommended"],
     files: ["tests/**"],
   },
 
-  // 8. React Hooks (Stability for Preact)
+  // 9. React Hooks (Stability for Preact)
   {
     files: ["**/*.tsx", "**/*.jsx"],
     plugins: {
@@ -176,7 +178,7 @@ export default [
     },
   },
 
-  // 9. Specific overrides
+  // 10. Specific overrides
   {
     files: ["src/env.d.ts"],
     plugins: {
@@ -186,7 +188,7 @@ export default [
       "@typescript-eslint/triple-slash-reference": "off",
     },
   },
-  // 10. Content Config Override (virtual modules cause strict type errors)
+  // 11. Content Config Override (virtual modules cause strict type errors)
   {
     files: [
       "src/content.config.ts",

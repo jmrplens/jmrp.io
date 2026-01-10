@@ -28,21 +28,27 @@ export async function compressAssets(distDir: string) {
     // Skip already compressed files
     if (file.endsWith(".gz") || file.endsWith(".br")) continue;
 
-    const content = fs.readFileSync(file);
+    try {
+      const content = fs.readFileSync(file);
 
-    // Gzip
-    const gzipped = await gzip(content, { level: 9 });
-    fs.writeFileSync(`${file}.gz`, gzipped);
+      // Gzip
+      const gzipped = await gzip(content, { level: 9 });
+      fs.writeFileSync(`${file}.gz`, gzipped);
 
-    // Brotli
-    const brotlied = await brotli(content, {
-      params: {
-        [zlib.constants.BROTLI_PARAM_QUALITY]: 11,
-      },
-    });
-    fs.writeFileSync(`${file}.br`, brotlied);
+      // Brotli
+      const brotlied = await brotli(content, {
+        params: {
+          [zlib.constants.BROTLI_PARAM_QUALITY]: 11,
+        },
+      });
+      fs.writeFileSync(`${file}.br`, brotlied);
 
-    compressedCount++;
+      compressedCount++;
+    } catch (error) {
+      console.warn(
+        `  ⚠ Failed to compress ${file}: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
   }
 
   console.log(`  ✓ Compressed ${compressedCount} assets.`);

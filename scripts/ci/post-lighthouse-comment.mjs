@@ -22,7 +22,7 @@ export default async function postLighthouseComment({ github, context }) {
   const commentFile = `lighthouse_comment_${theme}.md`;
 
   if (fs.existsSync(commentFile)) {
-    let comment = fs.readFileSync(commentFile, "utf8");
+    let comment = fs.readFileSync(commentFile, "utf-8");
 
     if (surgeUrl) {
       comment += `\n\n#### 🌐 Live Report\n> 🚀 [**Open Lighthouse Reports Dashboard**](https://${surgeUrl}) for detailed insights.`;

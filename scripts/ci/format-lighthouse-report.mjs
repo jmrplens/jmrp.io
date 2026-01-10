@@ -46,7 +46,7 @@ const results = {};
 
 for (const filePath of files) {
   try {
-    const content = fs.readFileSync(filePath, "utf8");
+    const content = fs.readFileSync(filePath, "utf-8");
     const json = JSON.parse(content);
 
     if (!json.finalUrl) continue;

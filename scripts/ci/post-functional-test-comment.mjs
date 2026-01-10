@@ -22,7 +22,7 @@ export default async function script({ github, context }) {
 
   let report;
   try {
-    report = JSON.parse(fs.readFileSync(reportPath, "utf8"));
+    report = JSON.parse(fs.readFileSync(reportPath, "utf-8"));
   } catch (error) {
     console.error("Failed to parse Playwright report:", error.message);
     return;

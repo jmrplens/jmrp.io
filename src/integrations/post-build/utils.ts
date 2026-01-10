@@ -2,7 +2,12 @@ import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 
-/** Set of HTML boolean attributes that should not have an empty string value. */
+/**
+ * Set of HTML boolean attributes that should not have an empty string value.
+ * Note: crossorigin is technically an enumerated attribute, but per HTML5 spec,
+ * crossorigin="" is equivalent to crossorigin="anonymous", and HTML validators
+ * prefer the attribute-only form (crossorigin vs crossorigin="").
+ */
 const BOOLEAN_ATTRIBUTES = new Set([
   "inert",
   "download",
@@ -54,7 +59,7 @@ export function writeHtml(filePath: string, html: string) {
       return match;
     },
   );
-  fs.writeFileSync(filePath, cleaned, "utf8");
+  fs.writeFileSync(filePath, cleaned, "utf-8");
 }
 
 /**

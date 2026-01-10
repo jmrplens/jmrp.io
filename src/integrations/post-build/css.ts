@@ -74,7 +74,7 @@ export async function extractCssDataUris(distDir: string) {
 
           if (!fs.existsSync(filePath)) {
             if (ext === "svg") {
-              const svgString = buffer.toString("utf8");
+              const svgString = buffer.toString("utf-8");
               const svgoConfig: Config = {
                 multipass: true,
                 plugins: [
@@ -148,16 +148,16 @@ export async function extractCssDataUris(distDir: string) {
 
   // Process standalone CSS files
   for (const file of cssFiles) {
-    const content = fs.readFileSync(file, "utf8");
+    const content = fs.readFileSync(file, "utf-8");
     const newContent = processCssContent(content, file);
     if (newContent !== content) {
-      fs.writeFileSync(file, newContent, "utf8");
+      fs.writeFileSync(file, newContent, "utf-8");
     }
   }
 
   // Process HTML files using cheerio for precision
   for (const file of htmlFiles) {
-    const content = fs.readFileSync(file, "utf8");
+    const content = fs.readFileSync(file, "utf-8");
     const $ = cheerio.load(content);
     let isModified = false;
 

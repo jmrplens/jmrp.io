@@ -24,7 +24,7 @@ export default async function postImageOptimizationComment({
   const getCount = (pattern) => {
     try {
       return execSync(`find dist -type f ${pattern} 2>/dev/null | wc -l`, {
-        encoding: "utf8",
+        encoding: "utf-8",
       }).trim();
     } catch {
       return "0";
@@ -42,7 +42,7 @@ export default async function postImageOptimizationComment({
   try {
     const largeImagesRaw = execSync(
       String.raw`find dist -type f -size +500k 2>/dev/null | grep -iE "\.(webp|png|jpe?g)$" || echo ""`,
-      { encoding: "utf8" },
+      { encoding: "utf-8" },
     ).trim();
 
     if (largeImagesRaw) {
@@ -54,7 +54,7 @@ export default async function postImageOptimizationComment({
 
         const imageDetails = lines.map((img) => {
           const size = execSync(`ls -lh "${img}" | awk '{print $5}'`, {
-            encoding: "utf8",
+            encoding: "utf-8",
           }).trim();
           return "| `" + img.replace("dist/", "") + "` | **" + size + "** |";
         });

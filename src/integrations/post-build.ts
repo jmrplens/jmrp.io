@@ -17,6 +17,7 @@ import { compressAssets } from "./post-build/compression.js";
 import { finalizeCspConfig } from "./post-build/csp.js";
 import { extractCssDataUris } from "./post-build/css.js";
 import { processHtmlFiles } from "./post-build/html.js";
+import { patchClientPrerenderNonce } from "./post-build/patch-prerender.js";
 import type { CspData } from "./post-build/types.js";
 
 /**
@@ -48,6 +49,10 @@ export default function postBuildIntegration(): AstroIntegration {
 
         try {
           await extractCssDataUris(distDir);
+
+          // Patch Astro's client-prerender code BEFORE processing HTML
+          // This ensures SRI hashes are calculated on the patched JS files
+          await patchClientPrerenderNonce(distDir);
 
           const systemNginxPath =
             process.env.POSTBUILD_NGINX_SNIPPETS_PATH || "";
@@ -177,18 +182,24 @@ function deploySecurityHeaders(
 
       // prettier-ignore
       const testResult = spawnSync("nginx", ["-t"], execOptions); // NOSONAR
+      if (testResult.error) {
+        throw testResult.error;
+      }
       if (testResult.status !== 0) {
         throw new Error("Nginx configuration test failed.");
       }
 
-      // Clear Nginx cache before reload if the directory exists
-      clearNginxCache(systemNginxCachePath, logger);
-
       // prettier-ignore
       const reloadResult = spawnSync("nginx", ["-s", "reload"], { ...execOptions, timeout: nginxReloadTimeout }); // NOSONAR
+      if (reloadResult.error) {
+        throw reloadResult.error;
+      }
       if (reloadResult.status !== 0) {
         throw new Error("Nginx reload command failed.");
       }
+
+      // Clear Nginx cache only AFTER a successful reload to prevent race conditions
+      clearNginxCache(systemNginxCachePath, logger);
 
       logger.info("✓ Nginx security headers deployed and reloaded.");
     } catch (error) {
@@ -221,6 +232,14 @@ function clearNginxCache(
   systemNginxCachePath: string,
   logger: AstroIntegrationLogger,
 ) {
+  // Validate path to prevent accidental deletion of important directories
+  if (
+    !path.isAbsolute(systemNginxCachePath) ||
+    systemNginxCachePath === path.parse(systemNginxCachePath).root
+  ) {
+    logger.warn(`Refusing to clear unsafe cache path: ${systemNginxCachePath}`);
+    return;
+  }
   if (!fs.existsSync(systemNginxCachePath)) return;
 
   logger.info(`Clearing Nginx cache in [${systemNginxCachePath}]...`);

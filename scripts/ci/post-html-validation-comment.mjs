@@ -93,7 +93,9 @@ export default async function postHtmlValidationComment({ github, context }) {
 
   try {
     if (fs.existsSync("html-validation.json")) {
-      const rawContent = fs.readFileSync("html-validation.json", "utf8").trim();
+      const rawContent = fs
+        .readFileSync("html-validation.json", "utf-8")
+        .trim();
 
       if (!rawContent || rawContent === "undefined") {
         comment =

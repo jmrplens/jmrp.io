@@ -127,10 +127,10 @@ function hardenBeaconScript(distDir: string, hashCache: Map<string, string>) {
   const beaconPath = path.join(distDir, "scripts", "cf-beacon.js");
   if (fs.existsSync(beaconPath)) {
     console.log("[PostBuild] Hardening cf-beacon.js with local guard...");
-    const originalBeacon = fs.readFileSync(beaconPath, "utf8");
+    const originalBeacon = fs.readFileSync(beaconPath, "utf-8");
     // Prepend a guard that stops execution on localhost/127.0.0.1/0.0.0.0/::1/[::1]
     const hardenedBeacon = `(function(){var h=location.hostname;if(h==='localhost'||h==='127.0.0.1'||h==='0.0.0.0'||h==='::1'||h==='[::1]')return;${originalBeacon}})();`;
-    fs.writeFileSync(beaconPath, hardenedBeacon, "utf8");
+    fs.writeFileSync(beaconPath, hardenedBeacon, "utf-8");
     // Force re-calculation of hash for this file
     hashCache.delete(`${beaconPath}:sha512`);
   }
@@ -155,7 +155,7 @@ function processSingleHtmlFile(
   hashCache: Map<string, string>,
   enableCsp: boolean,
 ): { modified: boolean; updatedSriTags: number; extractedImages: number } {
-  const content = fs.readFileSync(file, "utf8");
+  const content = fs.readFileSync(file, "utf-8");
   const $ = cheerio.load(content);
   let isModified = false;
   let updatedSriTags = 0;

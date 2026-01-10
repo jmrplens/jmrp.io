@@ -64,7 +64,7 @@ async function getPagesFromSitemap(): Promise<
   console.log(`🔍 Using sitemap at: ${sitemapPath}`);
 
   try {
-    const sitemapContent = fs.readFileSync(sitemapPath, "utf8");
+    const sitemapContent = fs.readFileSync(sitemapPath, "utf-8");
     const sitemap = (await parseStringPromise(sitemapContent)) as SitemapResult;
 
     let urls = sitemap.urlset.url.map((entry) => {

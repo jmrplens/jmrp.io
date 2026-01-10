@@ -56,7 +56,6 @@ PROJECT_KNOWLEDGE.md
 .agent/
 
 # Large CV files
-CV_RequenaPlensJoseManuel_*.pdf
 html-validation.json
 html-report.html
 html-errors.log

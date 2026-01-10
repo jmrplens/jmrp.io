@@ -153,24 +153,24 @@ async function fetchMeshtasticStats() {
     try {
       const data = (await resPotato.json()) as unknown[];
       potatoNodes = Array.isArray(data) ? data.length : 0;
-    } catch {
-      /* ignore */
+    } catch (error_) {
+      console.error("Failed to parse PotatoMesh nodes response:", error_);
     }
   }
   if (resLF?.ok) {
     try {
       const data = (await resLF.json()) as { data?: { activeNodes: number } };
       lfNodes = data.data?.activeNodes ?? 0;
-    } catch {
-      /* ignore */
+    } catch (error_) {
+      console.error("Failed to parse MeshMonitor LF response:", error_);
     }
   }
   if (resMF?.ok) {
     try {
       const data = (await resMF.json()) as { data?: { activeNodes: number } };
       mfNodes = data.data?.activeNodes ?? 0;
-    } catch {
-      /* ignore */
+    } catch (error_) {
+      console.error("Failed to parse MeshMonitor MF response:", error_);
     }
   }
 

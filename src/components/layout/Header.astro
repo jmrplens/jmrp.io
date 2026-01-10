@@ -38,7 +38,9 @@ const logoText = siteData.logo_text || "<JMRP />";
                 {
                     navItems.map((item) => (
                         <li>
-                            <a href={item.href}>{item.label}</a>
+                            <a href={item.href} data-astro-prefetch>
+                                {item.label}
+                            </a>
                         </li>
                     ))
                 }
