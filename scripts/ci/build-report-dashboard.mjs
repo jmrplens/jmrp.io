@@ -302,9 +302,11 @@ let workflowJobs = [];
 if (fs.existsSync("workflow-jobs.json")) {
   try {
     workflowJobs = JSON.parse(fs.readFileSync("workflow-jobs.json", "utf-8"));
-    console.log(`📊 Loaded ${workflowJobs.length} jobs from workflow-jobs.json`);
-  } catch (e) {
-    console.warn("⚠️ Could not load workflow-jobs.json:", e.message);
+    console.log(
+      `📊 Loaded ${workflowJobs.length} jobs from workflow-jobs.json`,
+    );
+  } catch (error) {
+    console.warn("⚠️ Could not load workflow-jobs.json:", error.message);
   }
 }
 
@@ -351,8 +353,8 @@ const generateWorkflowSVG = () => {
 
   if (workflowJobs.length > 0) {
     processedJobs = workflowJobs
-      .filter(job => jobNameMap[job.name]) // Only jobs we know about
-      .map(job => ({
+      .filter((job) => jobNameMap[job.name]) // Only jobs we know about
+      .map((job) => ({
         name: jobNameMap[job.name].short,
         fullName: job.name,
         status: job.conclusion || "pending",
@@ -376,7 +378,7 @@ const generateWorkflowSVG = () => {
 
   // Group jobs by phase
   const phases = {};
-  processedJobs.forEach(job => {
+  processedJobs.forEach((job) => {
     if (!phases[job.phase]) phases[job.phase] = [];
     phases[job.phase].push(job);
   });
@@ -389,10 +391,12 @@ const generateWorkflowSVG = () => {
   const padding = 20;
 
   // Calculate phase positions
-  const phaseKeys = Object.keys(phases).map(Number).sort((a, b) => a - b);
-  const maxRows = Math.max(...phaseKeys.map(p => phases[p].length));
+  const phaseKeys = Object.keys(phases)
+    .map(Number)
+    .sort((a, b) => a - b);
+  const maxRows = Math.max(...phaseKeys.map((p) => phases[p].length));
   const svgHeight = maxRows * rowGap + nodeHeight + padding * 2;
-  const svgWidth = (phaseKeys.length) * phaseGap + nodeWidth + padding * 2;
+  const svgWidth = phaseKeys.length * phaseGap + nodeWidth + padding * 2;
 
   const getColor = (status) => {
     if (status === "success") return "#10b981";
@@ -438,34 +442,47 @@ const generateWorkflowSVG = () => {
     const nextPhase = phases[phaseKeys[i + 1]];
 
     // Calculate center points
-    const currentCenterY = currentPhase.reduce((acc, j) => acc + j.y + nodeHeight / 2, 0) / currentPhase.length;
-    const nextCenterY = nextPhase.reduce((acc, j) => acc + j.y + nodeHeight / 2, 0) / nextPhase.length;
+    const currentCenterY =
+      currentPhase.reduce((acc, j) => acc + j.y + nodeHeight / 2, 0) /
+      currentPhase.length;
+    const nextCenterY =
+      nextPhase.reduce((acc, j) => acc + j.y + nodeHeight / 2, 0) /
+      nextPhase.length;
 
     const fanOutX = currentPhase[0].x + nodeWidth + 10;
     const fanInX = nextPhase[0].x - 10;
 
     // Draw fan-out lines from current phase
-    currentPhase.forEach(job => {
-      connections.push(`<path d="M${job.x + nodeWidth},${job.y + nodeHeight / 2} L${fanOutX},${job.y + nodeHeight / 2}" stroke="${lineColor}" stroke-width="1" fill="none" opacity="0.5"/>`);
+    currentPhase.forEach((job) => {
+      connections.push(
+        `<path d="M${job.x + nodeWidth},${job.y + nodeHeight / 2} L${fanOutX},${job.y + nodeHeight / 2}" stroke="${lineColor}" stroke-width="1" fill="none" opacity="0.5"/>`,
+      );
     });
 
     // Vertical connector on right side
-    const currentYMin = Math.min(...currentPhase.map(j => j.y + nodeHeight / 2));
-    const currentYMax = Math.max(...currentPhase.map(j => j.y + nodeHeight / 2));
-    connections.push(`<path d="M${fanOutX},${currentYMin} L${fanOutX},${currentYMax}" stroke="${lineColor}" stroke-width="2" fill="none"/>`);
-
-    // Horizontal connector between phases
-    const midY = (currentCenterY + nextCenterY) / 2;
-    connections.push(`<path d="M${fanOutX},${currentCenterY} L${fanInX},${nextCenterY}" stroke="${lineColor}" stroke-width="2" fill="none" marker-end="url(#arrow)"/>`);
+    const currentYMin = Math.min(
+      ...currentPhase.map((j) => j.y + nodeHeight / 2),
+    );
+    const currentYMax = Math.max(
+      ...currentPhase.map((j) => j.y + nodeHeight / 2),
+    );
+    connections.push(
+      `<path d="M${fanOutX},${currentYMin} L${fanOutX},${currentYMax}" stroke="${lineColor}" stroke-width="2" fill="none"/>`,
+      `<path d="M${fanOutX},${currentCenterY} L${fanInX},${nextCenterY}" stroke="${lineColor}" stroke-width="2" fill="none" marker-end="url(#arrow)"/>`,
+    );
 
     // Vertical connector on left side of next phase
-    const nextYMin = Math.min(...nextPhase.map(j => j.y + nodeHeight / 2));
-    const nextYMax = Math.max(...nextPhase.map(j => j.y + nodeHeight / 2));
-    connections.push(`<path d="M${fanInX},${nextYMin} L${fanInX},${nextYMax}" stroke="${lineColor}" stroke-width="2" fill="none"/>`);
+    const nextYMin = Math.min(...nextPhase.map((j) => j.y + nodeHeight / 2));
+    const nextYMax = Math.max(...nextPhase.map((j) => j.y + nodeHeight / 2));
+    connections.push(
+      `<path d="M${fanInX},${nextYMin} L${fanInX},${nextYMax}" stroke="${lineColor}" stroke-width="2" fill="none"/>`,
+    );
 
     // Draw fan-in lines to next phase
-    nextPhase.forEach(job => {
-      connections.push(`<path d="M${fanInX},${job.y + nodeHeight / 2} L${job.x},${job.y + nodeHeight / 2}" stroke="${lineColor}" stroke-width="1" fill="none" opacity="0.5"/>`);
+    nextPhase.forEach((job) => {
+      connections.push(
+        `<path d="M${fanInX},${job.y + nodeHeight / 2} L${job.x},${job.y + nodeHeight / 2}" stroke="${lineColor}" stroke-width="1" fill="none" opacity="0.5"/>`,
+      );
     });
   }
 
@@ -987,8 +1004,8 @@ const html = `
                         </thead>
                         <tbody>
                             ${lighthouseData
-    .map(
-      (d) => `
+                              .map(
+                                (d) => `
                             <tr>
                                 <td>${d.page}</td>
                                 <td>${getScoreBadge(d.mobileLight)}</td>
@@ -997,8 +1014,8 @@ const html = `
                                 <td>${getScoreBadge(d.desktopDark)}</td>
                             </tr>
                             `,
-    )
-    .join("")}
+                              )
+                              .join("")}
                         </tbody>
                    </table>
                 </div>
@@ -1149,43 +1166,43 @@ const lhIndexHtml = `
     <h2>Desktop</h2>
     <ul>
          ${(() => {
-    const desktopDir = path.join(
-      DIST_REPORTS,
-      "lighthouse",
-      "light",
-      "desktop",
-    );
-    if (!fs.existsSync(desktopDir))
-      return "<li>No desktop reports found</li>";
-    return fs
-      .readdirSync(desktopDir)
-      .filter((f) => f.endsWith(".html"))
-      .map(
-        (f) => `<li><a href="light/desktop/${f}">Desktop: ${f}</a></li>`,
-      )
-      .join("");
-  })()}
+           const desktopDir = path.join(
+             DIST_REPORTS,
+             "lighthouse",
+             "light",
+             "desktop",
+           );
+           if (!fs.existsSync(desktopDir))
+             return "<li>No desktop reports found</li>";
+           return fs
+             .readdirSync(desktopDir)
+             .filter((f) => f.endsWith(".html"))
+             .map(
+               (f) => `<li><a href="light/desktop/${f}">Desktop: ${f}</a></li>`,
+             )
+             .join("");
+         })()}
     </ul>
 
     <h2>Mobile</h2>
     <ul>
          ${(() => {
-    const mobileDir = path.join(
-      DIST_REPORTS,
-      "lighthouse",
-      "light",
-      "mobile",
-    );
-    if (!fs.existsSync(mobileDir))
-      return "<li>No mobile reports found</li>";
-    return fs
-      .readdirSync(mobileDir)
-      .filter((f) => f.endsWith(".html"))
-      .map(
-        (f) => `<li><a href="light/mobile/${f}">Mobile: ${f}</a></li>`,
-      )
-      .join("");
-  })()}
+           const mobileDir = path.join(
+             DIST_REPORTS,
+             "lighthouse",
+             "light",
+             "mobile",
+           );
+           if (!fs.existsSync(mobileDir))
+             return "<li>No mobile reports found</li>";
+           return fs
+             .readdirSync(mobileDir)
+             .filter((f) => f.endsWith(".html"))
+             .map(
+               (f) => `<li><a href="light/mobile/${f}">Mobile: ${f}</a></li>`,
+             )
+             .join("");
+         })()}
     </ul>
 </body>
 </html>
