@@ -252,7 +252,9 @@ function hasJSDoc(node, sourceFile) {
   });
 }
 
-calculateCoverage().catch((error) => {
+try {
+  await calculateCoverage();
+} catch (error) {
   logger.error(`Fatal error: ${error.message || String(error)}`);
   process.exit(1);
-});
+}
