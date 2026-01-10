@@ -6,14 +6,13 @@
  */
 
 import fs from "node:fs";
-import path from "node:path";
 
 const MD_PATH = "lychee-report.md";
 const HTML_PATH = "lychee-report.html";
 
 if (!fs.existsSync(MD_PATH)) {
-    console.log("No Lychee report found, creating empty success report.");
-    fs.writeFileSync(MD_PATH, "No issues found by Lychee.");
+  console.log("No Lychee report found, creating empty success report.");
+  fs.writeFileSync(MD_PATH, "No issues found by Lychee.");
 }
 
 const mdContent = fs.readFileSync(MD_PATH, "utf-8");
@@ -24,25 +23,25 @@ const lines = mdContent.split("\n");
 
 let currentFile = "";
 for (const line of lines) {
-    if (line.startsWith("## ")) {
-        currentFile = line.replace("## ", "").trim();
-    } else if (line.startsWith("* ")) {
-        const parts = line.split("|");
-        if (parts.length >= 2) {
-            const linkMatch = parts[0].match(/\[(.*?)\]\((.*?)\)/);
-            const linkName = linkMatch ? linkMatch[1] : parts[0].replace("* ", "");
-            const linkUrl = linkMatch ? linkMatch[2] : "";
-            const error = parts[1].trim();
+  if (line.startsWith("## ")) {
+    currentFile = line.replace("## ", "").trim();
+  } else if (line.startsWith("* ")) {
+    const parts = line.split("|");
+    if (parts.length >= 2) {
+      const linkMatch = parts[0].match(/\[(.*?)\]\((.*?)\)/);
+      const linkName = linkMatch ? linkMatch[1] : parts[0].replace("* ", "");
+      const linkUrl = linkMatch ? linkMatch[2] : "";
+      const error = parts[1].trim();
 
-            htmlRows += `
+      htmlRows += `
         <tr>
           <td><code class="file-path">${currentFile}</code></td>
           <td><a href="${linkUrl}" target="_blank" class="broken-link">${linkName}</a></td>
           <td><span class="error-badge">${error}</span></td>
         </tr>
       `;
-        }
     }
+  }
 }
 
 const hasErrors = htmlRows !== "";
@@ -180,7 +179,9 @@ const html = `
         </div>
 
         <div class="report-card">
-            ${hasErrors ? `
+            ${
+              hasErrors
+                ? `
                 <table>
                     <thead>
                         <tr>
@@ -193,13 +194,15 @@ const html = `
                         ${htmlRows}
                     </tbody>
                 </table>
-            ` : `
+            `
+                : `
                 <div class="empty-state">
                     <div class="empty-icon">✅</div>
                     <h2>No Broken Links Found</h2>
                     <p>All links in the production build are functional!</p>
                 </div>
-            `}
+            `
+            }
         </div>
         
         <footer style="margin-top: 2rem; text-align: center; color: var(--text-muted); font-size: 0.875rem;">
