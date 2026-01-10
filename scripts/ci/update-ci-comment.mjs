@@ -81,10 +81,23 @@ const buildExecutiveSummary = (saResults, healthScore) => {
       "❌ **Critical Status.** Multiple failures detected. The current changes do not meet the project's quality or security standards. Please review the detailed reports below.\n";
   }
 
-  // Key Highlights / Insights
   summary += "\n**Highlights:**\n";
+  const highlights = getExecutiveHighlights(saResults);
 
-  let highlights = [];
+  summary +=
+    highlights.length > 0
+      ? highlights.join("\n")
+      : "- *Detailed insights will appear once analysis is complete.*";
+  summary += "\n";
+
+  return summary;
+};
+
+/**
+ * Generates the list of highlights for the executive summary.
+ */
+function getExecutiveHighlights(saResults) {
+  const highlights = [];
 
   try {
     if (fs.existsSync("bundle-analysis.json")) {
@@ -138,14 +151,8 @@ const buildExecutiveSummary = (saResults, healthScore) => {
     console.warn("⚠️ Could not build detailed summary items:", error.message);
   }
 
-  summary +=
-    highlights.length > 0
-      ? highlights.join("\n")
-      : "- *Detailed insights will appear once analysis is complete.*";
-  summary += "\n";
-
-  return summary;
-};
+  return highlights;
+}
 
 /**
  * Main function to update the CI comment in the GitHub PR.

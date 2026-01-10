@@ -802,10 +802,18 @@ const html = `
             </div>
 
             <!-- Accessibility Card -->
+            <%
+                const isA11yClean = accessibilityData.every(r => !r.failed);
+                const a11yClass = status.a11y && isA11yClean ? "status-success" : "status-danger";
+                let a11yText = "Failed";
+                if (status.a11y) {
+                    a11yText = isA11yClean ? "Perfect" : "Issues";
+                }
+            %>
             <div class="card">
                 <div class="card-header">
                     <div class="card-icon">♿</div>
-                    <span class="status-badge ${status.a11y && accessibilityData.every((r) => !r.failed) ? "status-success" : "status-danger"}">${status.a11y ? (accessibilityData.every((r) => !r.failed) ? "Perfect" : "Issues") : "Failed"}</span>
+                    <span class="status-badge ${a11yClass}">${a11yText}</span>
                 </div>
                 <div class="card-title">Accessibility</div>
                 <div class="card-value">${accessibilityData.reduce((a, r) => a + (r.violations?.length || 0), 0) === 0 ? "Compliant" : "Violations"}</div>
