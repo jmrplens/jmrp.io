@@ -226,7 +226,7 @@ export default async function updateCiComment({ github, context, step }) {
 
   // Summary
   if (step === "final") {
-    body += buildExecutiveSummary(saResults, qualityResults, healthScore);
+    body += buildExecutiveSummary(saResults, healthScore);
   }
 
   // Detailed tables

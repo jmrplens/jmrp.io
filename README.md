@@ -185,6 +185,8 @@ graph TD
     Trigger[Push / PR] --> Phase1[Analysis & Build]
     Phase1 --> Phase2[Deep Testing]
     Phase2 --> Phase3[Reporting]
+    Phase3 --> Dashboard[Live Dashboard]
+    Phase3 --> Comment[PR Comment]
 ```
 
 ### Phase 1: Parallel Analysis & Build
@@ -233,12 +235,12 @@ graph LR
 
     subgraph Rep [Reporting Pipelines]
         direction TB
-        A11yAgg[A11y Dashboard] --> A11yCom[PR Comment]
-        LHAgg[LH Dashboard] --> LHCom[PR Comment]
+        DashboardGen[Build Dashboard]
+        CommentUpd[Update PR Comment]
     end
 
-    A11y --> A11yAgg
-    LH --> LHAgg
+    TM --> Rep
+    CV --> Rep
 ```
 
 ### Accessibility Testing
@@ -300,16 +302,4 @@ The project includes advanced Nginx configuration for security headers and asset
 ## 📄 LaTeX CV Compilation
 
 The project includes LaTeX source files to generate professional PDF CVs.
-
-**Prerequisites:**
-
-- TeX Live (Full distribution)
-- `latexmk`
-- `lualatex`
-
-**Compilation:**
-
-```bash
-cd cv_latex
-latexmk -lualatex -interaction=nonstopmode CV_RequenaPlensJoseManuel_ENG.tex CV_RequenaPlensJoseManuel_SPA.tex
-```
+For detailed instructions on compilation and prerequisites, please refer to the [CV LaTeX Documentation](cv_latex/README.md).
