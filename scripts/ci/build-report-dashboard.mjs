@@ -650,7 +650,7 @@ const html = `
             <div class="card" style="padding: 1.5rem; position: relative; overflow: auto; background: #0d1117; border-radius: 24px; border: 1px solid var(--border);">
                 <div class="card-title" style="margin-bottom: 1.5rem;">Dynamic GitHub workflow graph</div>
                 
-                <div id="workflow-container" style="position: relative; width: ${workflowData.width || 800}px; height: ${workflowData.height || 400}px; margin: 0 auto; min-width: min-content;">
+                <div id="workflow-container" style="position: relative; width: ${workflowData.width || 800}px; height: ${workflowData.height || 600}px; margin: 0 auto; min-width: min-content;">
                     ${fs.existsSync(
   path.join(DIST_REPORTS, "workflow-graph.png"),
 )

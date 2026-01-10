@@ -601,6 +601,7 @@ jobs:
         sa-typos,
         sa-snyk,
         sa-sonar,
+        sa-stylelint,
         ci-setup,
       ]
     permissions:
@@ -616,6 +617,7 @@ jobs:
           OUTCOME_ESLINT: ${{ needs.sa-eslint.result }}
           OUTCOME_LYCHEE: ${{ needs.sa-lychee.result }}
           OUTCOME_TYPOS: ${{ needs.sa-typos.result }}
+          OUTCOME_STYLELINT: ${{ needs.sa-stylelint.result }}
           OUTCOME_SECURITY: ${{ needs.sa-audit.result }}
           OUTCOME_SNYK: ${{ needs.sa-snyk.result }}
           OUTCOME_SONAR: ${{ needs.sa-sonar.result }}
@@ -724,6 +726,7 @@ jobs:
         sa-typos,
         sa-snyk,
         sa-sonar,
+        sa-stylelint,
         accessibility-report,
         bundle-size,
         html-validator,
