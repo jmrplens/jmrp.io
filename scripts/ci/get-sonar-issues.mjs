@@ -8,8 +8,14 @@
 const PROJECT_KEY = process.env.SONAR_PROJECT_KEY || "jmrplens_jmrp.io";
 const SONAR_TOKEN = process.env.SONAR_TOKEN;
 
+const logger = {
+  info: (msg) => console.log(msg),
+  warn: (msg) => console.warn(msg),
+  error: (msg) => console.error(msg),
+};
+
 if (!SONAR_TOKEN) {
-  console.log("⏭ Skipping SonarCloud analysis (SONAR_TOKEN not set)");
+  logger.info("⏭ Skipping SonarCloud analysis (SONAR_TOKEN not set)");
   process.exit(0);
 }
 
@@ -54,64 +60,55 @@ async function fetchWithPagination(baseUrl, dataKey) {
  *
  * @returns {Promise<void>} Resolves when fetching is complete.
  */
-async function fetchIssues() {
-  console.log(
+try {
+  logger.info(
     `\n🔍 Fetching open issues from SonarCloud for [${PROJECT_KEY}]...\n`,
   );
 
-  try {
-    // 1. Fetch Issues
-    const issues = await fetchWithPagination(
+  const [issues, hotspots] = await Promise.all([
+    fetchWithPagination(
       `https://sonarcloud.io/api/issues/search?componentKeys=${PROJECT_KEY}&resolved=false`,
       "issues",
-    );
-
-    if (issues.length === 0) {
-      console.log("✅ No open issues found in SonarCloud.");
-    } else {
-      console.log(`⚠️ Found ${issues.length} open issues:`);
-      for (const [index, issue] of issues.entries()) {
-        const severityColor =
-          issue.severity === "CRITICAL" || issue.severity === "BLOCKER"
-            ? "\u001B[31m"
-            : "\u001B[33m";
-        console.log(
-          `\n  ${index + 1}. [${severityColor}${issue.severity}\u001B[0m] ${issue.message}`,
-        );
-        console.log(`     📍 ${issue.component} (Line ${issue.line || "N/A"})`);
-        console.log(
-          `     🔗 https://sonarcloud.io/project/issues?id=${PROJECT_KEY}&open=${issue.key}`,
-        );
-      }
-    }
-
-    // 2. Fetch Security Hotspots (TO_REVIEW)
-    const hotspots = await fetchWithPagination(
+    ),
+    fetchWithPagination(
       `https://sonarcloud.io/api/hotspots/search?projectKey=${PROJECT_KEY}&status=TO_REVIEW`,
       "hotspots",
+    ),
+  ]);
+
+  logger.info("".padEnd(80, "="));
+  logger.info(`📊 SONARCLOUD REPORT for ${PROJECT_KEY}`);
+  logger.info("".padEnd(80, "="));
+
+  if (issues.length === 0) {
+    logger.info("\n✅ No open issues found.");
+  } else {
+    logger.info(`\n❌ Found ${issues.length} open issues:`);
+    for (const issue of issues) {
+      logger.info(`  - [${issue.severity}] ${issue.message}`);
+      logger.info(`    📍 ${issue.component} (Line ${issue.line || "N/A"})`);
+    }
+  }
+
+  if (hotspots.length === 0) {
+    logger.info("\n✅ No security hotspots to review.");
+  } else {
+    logger.info(`\n🚨 Found ${hotspots.length} security hotspots:`);
+    for (const h of hotspots) {
+      logger.info(`  - ${h.message}`);
+      logger.info(`    📍 ${h.component} (Line ${h.line || "N/A"})`);
+    }
+  }
+
+  if (issues.length > 0 || hotspots.length > 0) {
+    logger.info(
+      "\n❌ Static analysis failed: Open issues or hotspots detected.",
     );
-
-    if (hotspots.length > 0) {
-      console.log(`\n🔥 Found ${hotspots.length} security hotspots to review:`);
-      for (const [index, h] of hotspots.entries()) {
-        console.log(
-          `  - ${index + 1}. [${h.vulnerabilityProbability}] ${h.message}`,
-        );
-        console.log(`    📍 ${h.component} (Line ${h.line || "N/A"})`);
-      }
-    }
-
-    if (issues.length > 0 || hotspots.length > 0) {
-      console.log(
-        "\n❌ Static analysis failed: Open issues or hotspots detected.",
-      );
-      process.exit(1);
-    }
-  } catch (error) {
-    console.error("❌ Failed to fetch SonarCloud reports:", error.message);
     process.exit(1);
   }
-  console.log("\n" + "".padEnd(80, "=") + "\n");
+} catch (error) {
+  const message = error instanceof Error ? error.message : String(error);
+  logger.error(`❌ Failed to fetch SonarCloud reports: ${message}`);
+  process.exit(1);
 }
-
-fetchIssues();
+logger.info("\n" + "".padEnd(80, "=") + "\n");

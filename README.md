@@ -124,18 +124,25 @@ pnpm run dev
 The project uses a unified verification suite to ensure everything is correct before deployment.
 
 #### Full Quality Suite
+
 To run the complete pipeline (Linting, Type Checking, Build, and Tests):
+
 ```bash
 pnpm verify
 ```
+
 > **Note**: This command requires additional system tools like `typos` and `lychee`. See [CONTRIBUTING.md](CONTRIBUTING.md) for installation details.
 
 #### Production Build
+
 To just generate the production artifacts:
+
 ```bash
 pnpm run build
 ```
+
 This command triggers the full build pipeline:
+
 1. **GitHub Synchronization**: Automatically downloads the latest assets (e.g., owner avatar).
 2. **Astro Build**: Compiles the site into the `dist/` directory.
 3. **Post-Build Optimizations**:
@@ -156,6 +163,7 @@ cp .env.example .env
 ```
 
 Key configuration areas:
+
 - **Nginx Integration**: Automated deployment of security headers.
 - **Security Reporting**: Telegram bot integration for CSP/SRI violation reports.
 - **Cloudflare**: API tokens for cache purging and web analytics.
@@ -273,7 +281,7 @@ The project includes advanced Nginx configuration for security headers and asset
 ### Security Features
 
 - **Reverse Proxy**: Nginx handles internal routing to external services, mitigating CORS and hiding infrastructure details.
-- **SRI (Subresource Integrity)**: 
+- **SRI (Subresource Integrity)**:
   - Modularized protection for all local resources.
   - Automatically calculates hashes for JS, CSS, fonts, and assets.
   - Includes a custom listener for real-time failure tracking.

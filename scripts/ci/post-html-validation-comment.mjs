@@ -126,19 +126,19 @@ export default async function postHtmlValidationComment({ github, context }) {
     issue_number: context.issue.number,
   });
 
-  const existingComment = comments.find((c) => c.body.includes(header));
+  const existingComment = comments.find((c) => c.body?.includes(header));
 
   await (existingComment
     ? github.rest.issues.updateComment({
-        owner: context.repo.owner,
-        repo: context.repo.repo,
-        comment_id: existingComment.id,
-        body: comment,
-      })
+      owner: context.repo.owner,
+      repo: context.repo.repo,
+      comment_id: existingComment.id,
+      body: comment,
+    })
     : github.rest.issues.createComment({
-        issue_number: context.issue.number,
-        owner: context.repo.owner,
-        repo: context.repo.repo,
-        body: comment,
-      }));
+      issue_number: context.issue.number,
+      owner: context.repo.owner,
+      repo: context.repo.repo,
+      body: comment,
+    }));
 }

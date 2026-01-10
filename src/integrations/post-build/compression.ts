@@ -2,6 +2,7 @@ import fs from "node:fs";
 import { promisify } from "node:util";
 import zlib from "node:zlib";
 
+import { type AstroIntegrationLogger } from "astro";
 import { glob } from "glob";
 
 const gzip = promisify(zlib.gzip);
@@ -12,44 +13,48 @@ const brotli = promisify(zlib.brotliCompress);
  * Target extensions: .js, .css, .svg, .json, .xml, .txt
  *
  * @param distDir - Absolute path to the build output directory.
+ * @param logger - The Astro logger instance.
  */
-export async function compressAssets(distDir: string) {
-  console.log("[PostBuild] Compressing assets (Gzip & Brotli)...");
+export async function compressAssets(
+  distDir: string,
+  logger: AstroIntegrationLogger,
+) {
+  logger.info("Compressing assets (Gzip & Brotli)...");
 
   const files = await glob("**/*.{js,css,svg,json,xml,txt}", {
     cwd: distDir,
     absolute: true,
     nodir: true,
+    ignore: ["**/*.gz", "**/*.br"],
   });
 
-  let compressedCount = 0;
+  const compressionResults = await Promise.all(
+    files.map(async (file) => {
+      try {
+        const content = await fs.promises.readFile(file);
 
-  for (const file of files) {
-    // Skip already compressed files
-    if (file.endsWith(".gz") || file.endsWith(".br")) continue;
+        // Gzip compression
+        const gzipped = await gzip(content, { level: 9 });
+        await fs.promises.writeFile(`${file}.gz`, gzipped);
 
-    try {
-      const content = fs.readFileSync(file);
+        // Brotli compression
+        const brotlied = await brotli(content, {
+          params: {
+            [zlib.constants.BROTLI_PARAM_QUALITY]: 11,
+          },
+        });
+        await fs.promises.writeFile(`${file}.br`, brotlied);
 
-      // Gzip
-      const gzipped = await gzip(content, { level: 9 });
-      fs.writeFileSync(`${file}.gz`, gzipped);
+        return true;
+      } catch (error) {
+        logger.warn(
+          `Failed to compress ${file}: ${error instanceof Error ? error.message : String(error)}`,
+        );
+        return false;
+      }
+    }),
+  );
 
-      // Brotli
-      const brotlied = await brotli(content, {
-        params: {
-          [zlib.constants.BROTLI_PARAM_QUALITY]: 11,
-        },
-      });
-      fs.writeFileSync(`${file}.br`, brotlied);
-
-      compressedCount++;
-    } catch (error) {
-      console.warn(
-        `  ⚠ Failed to compress ${file}: ${error instanceof Error ? error.message : String(error)}`,
-      );
-    }
-  }
-
-  console.log(`  ✓ Compressed ${compressedCount} assets.`);
+  const compressedCount = compressionResults.filter(Boolean).length;
+  logger.info(`  ✓ Compressed ${compressedCount} assets.`);
 }

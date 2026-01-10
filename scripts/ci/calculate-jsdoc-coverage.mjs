@@ -16,13 +16,22 @@ import ts from "typescript";
 const THRESHOLD = 90;
 
 /**
+ * Simple logger that mimics Astro's integration logger for consistency across the CI scripts.
+ */
+const logger = {
+  info: (msg) => console.log(msg),
+  warn: (msg) => console.warn(msg),
+  error: (msg) => console.error(msg),
+};
+
+/**
  * Main function to calculate JSDoc coverage across the project.
  * Scans files, identifies documentable symbols, and checks for JSDoc.
  *
  * @returns {Promise<void>} Resolves when the report is complete.
  */
 async function calculateCoverage() {
-  console.log(`🔍 Scanning src and scripts for JSDoc coverage...`);
+  logger.info(`🔍 Scanning src and scripts for JSDoc coverage...`);
 
   // Find all TS/TSX/JS/MJS files
   const files = await glob(`{src,scripts}/**/*.{ts,tsx,js,mjs,cjs}`, {
@@ -37,6 +46,7 @@ async function calculateCoverage() {
     target: ts.ScriptTarget.ESNext,
   });
 
+  const checker = program.getTypeChecker();
   let totalExported = 0;
   let documented = 0;
 
@@ -44,9 +54,30 @@ async function calculateCoverage() {
     const sourceFile = program.getSourceFile(file);
     if (!sourceFile) continue;
 
-    ts.forEachChild(sourceFile, (node) => {
-      // Check ONLY exported documentable nodes (aligns with ESLint publicOnly: true)
-      if (isExported(node) && isDocumentable(node)) {
+    // Get nodes that are explicitly or implicitly exported at the module level
+    const exportedNodes = getExportedNodes(sourceFile, checker);
+
+    /**
+     * Recursive visitor to find documentable symbols in public API.
+     * @param {ts.Node} node - Current node.
+     * @param {boolean} isParentPublic - Whether the parent is public.
+     */
+    const visit = (node, isParentPublic = false) => {
+      // Logic for determining if this specific node is "publicly accessible"
+      let isPublic = isParentPublic || exportedNodes.has(node);
+
+      // In classes/interfaces/enums, check visibility modifiers
+      if (isParentPublic) {
+        const flags = ts.getCombinedModifierFlags(node);
+        if (
+          (flags & ts.ModifierFlags.Private) !== 0 ||
+          (flags & ts.ModifierFlags.Protected) !== 0
+        ) {
+          isPublic = false;
+        }
+      }
+
+      if (isPublic && isDocumentable(node)) {
         totalExported++;
         if (hasJSDoc(node, sourceFile)) {
           documented++;
@@ -54,25 +85,36 @@ async function calculateCoverage() {
           const { line, character } = sourceFile.getLineAndCharacterOfPosition(
             node.getStart(sourceFile),
           );
-          console.warn(
+          logger.warn(
             `  ⚠️ Missing JSDoc: ${file}:${line + 1}:${character + 1}`,
           );
         }
       }
-    });
+
+      // Determine if children should be considered public by default
+      const nextParentPublic =
+        isPublic &&
+        (ts.isClassDeclaration(node) ||
+          ts.isInterfaceDeclaration(node) ||
+          ts.isEnumDeclaration(node));
+
+      ts.forEachChild(node, (n) => visit(n, nextParentPublic));
+    };
+
+    ts.forEachChild(sourceFile, (n) => visit(n, false));
   }
 
   const percentage =
     totalExported === 0 ? 100 : (documented / totalExported) * 100;
   const formattedPercentage = percentage.toFixed(1);
 
-  console.log("\n📊 JSDoc Total Coverage Report");
-  console.log("===============================");
-  console.log(`Files Scanned: ${files.length}`);
-  console.log(`Total Exported Documentable Symbols: ${totalExported}`);
-  console.log(`Documented: ${documented}`);
-  console.log(`Coverage: ${formattedPercentage}%`);
-  console.log("===============================\n");
+  logger.info("\n📊 JSDoc Total Coverage Report");
+  logger.info("===============================");
+  logger.info(`Files Scanned: ${files.length}`);
+  logger.info(`Total Exported Documentable Symbols: ${totalExported}`);
+  logger.info(`Documented: ${documented}`);
+  logger.info(`Coverage: ${formattedPercentage}%`);
+  logger.info("===============================\n");
 
   // Output for CI environment
   if (process.env.GITHUB_OUTPUT) {
@@ -83,15 +125,19 @@ async function calculateCoverage() {
   }
 
   // Also write to a temp file for other scripts to pick up if needed
-  fs.writeFileSync(".jsdoc-coverage", `${formattedPercentage}%`);
+  try {
+    fs.writeFileSync(".jsdoc-coverage", `${formattedPercentage}%`);
+  } catch (error) {
+    logger.warn(`Failed to write .jsdoc-coverage file: ${error.message}`);
+  }
 
   if (percentage < THRESHOLD) {
-    console.error(
+    logger.error(
       `❌ Coverage (${formattedPercentage}%) is below the threshold of ${THRESHOLD}%.`,
     );
     process.exit(1);
   } else {
-    console.log(
+    logger.info(
       `✅ Coverage (${formattedPercentage}%) meets the threshold of ${THRESHOLD}%.`,
     );
     process.exit(0);
@@ -99,23 +145,34 @@ async function calculateCoverage() {
 }
 
 /**
- * Checks if a TypeScript node is exported.
+ * Identifies all nodes that are exported from a source file using the Type Checker.
+ * This handles both inline exports (export function ...) and separate
+ * export statements (export { foo }).
  *
- * @param node - The TS Node to check.
- * @returns True if the node has an export modifier or is part of an export statement.
+ * @param sourceFile - The TS SourceFile to analyze.
+ * @param checker - The TS TypeChecker instance.
+ * @returns A Set of nodes that are part of the module's public API.
  */
-function isExported(node) {
-  // 1. Direct export modifier: export function foo() {}
-  if ((ts.getCombinedModifierFlags(node) & ts.ModifierFlags.Export) !== 0) {
-    return true;
+function getExportedNodes(sourceFile, checker) {
+  const exportedNodes = new Set();
+  const moduleSymbol = checker.getSymbolAtLocation(sourceFile);
+  const exports = moduleSymbol ? checker.getExportsOfModule(moduleSymbol) : [];
+
+  for (const exp of exports) {
+    const declarations = exp.getDeclarations();
+    if (declarations) {
+      for (const decl of declarations) {
+        exportedNodes.add(decl);
+        // If it's a VariableDeclaration, we want to track its parent VariableStatement
+        // as well, since that's what we see during top-level source file iteration.
+        if (ts.isVariableDeclaration(decl)) {
+          exportedNodes.add(decl.parent.parent);
+        }
+      }
+    }
   }
 
-  // 2. Check for default export: export default function() {}
-  if ((ts.getCombinedModifierFlags(node) & ts.ModifierFlags.Default) !== 0) {
-    return true;
-  }
-
-  return false;
+  return exportedNodes;
 }
 
 /**
@@ -125,21 +182,29 @@ function isExported(node) {
  * @returns True if the node is a function, class, interface, etc.
  */
 function isDocumentable(node) {
-  // Only count things that typically should have docs
-  return (
+  // Common documentable nodes
+  const isBaseDocumentable =
     ts.isFunctionDeclaration(node) ||
     ts.isClassDeclaration(node) ||
     ts.isInterfaceDeclaration(node) ||
     ts.isTypeAliasDeclaration(node) ||
     ts.isEnumDeclaration(node) ||
-    // Exported const functions (arrow functions)
-    (ts.isVariableStatement(node) &&
-      node.declarationList.declarations.some(
-        (d) =>
-          d.initializer &&
-          (ts.isArrowFunction(d.initializer) ||
-            ts.isFunctionExpression(d.initializer)),
-      ))
+    ts.isMethodDeclaration(node) ||
+    ts.isPropertyDeclaration(node) ||
+    ts.isEnumMember(node) ||
+    ts.isAccessor(node);
+
+  if (isBaseDocumentable) return true;
+
+  // Exported const functions (arrow functions) in VariableStatements
+  return (
+    ts.isVariableStatement(node) &&
+    node.declarationList.declarations.some(
+      (d) =>
+        d.initializer &&
+        (ts.isArrowFunction(d.initializer) ||
+          ts.isFunctionExpression(d.initializer)),
+    )
   );
 }
 
@@ -163,6 +228,6 @@ function hasJSDoc(node, sourceFile) {
 }
 
 calculateCoverage().catch((error) => {
-  console.error("Fatal error:", error);
+  logger.error(`Fatal error: ${error.message || String(error)}`);
   process.exit(1);
 });

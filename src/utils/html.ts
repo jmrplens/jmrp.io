@@ -41,6 +41,28 @@ export function sanitize(html: string): string {
       a: ["href", "name", "target", "rel"],
       span: ["class"],
     },
+    // Ensure only safe protocols are used
+    allowedSchemes: ["http", "https", "mailto", "tel"],
+    // Automatically add security attributes to links
+    transformTags: {
+      a: (tagName, attribs) => {
+        const isExternal =
+          attribs.href &&
+          (attribs.href.startsWith("http") || attribs.href.startsWith("//"));
+
+        if (isExternal) {
+          return {
+            tagName,
+            attribs: {
+              ...attribs,
+              target: "_blank",
+              rel: "noopener noreferrer",
+            },
+          };
+        }
+        return { tagName, attribs };
+      },
+    },
   });
 }
 
@@ -60,4 +82,14 @@ export function escapeHtml(str: string | undefined | null): string {
 export function decodeHtml(str: string | undefined | null): string {
   if (typeof str !== "string") return "";
   return he.decode(str);
+}
+
+/**
+ * Safely stringifies an object for use in a <script type="application/ld+json"> tag.
+ * Prevents XSS by escaping the < and > characters.
+ */
+export function safeJsonLd(data: unknown): string {
+  return JSON.stringify(data)
+    .replaceAll("<", String.raw`\u003c`)
+    .replaceAll(">", String.raw`\u003e`);
 }

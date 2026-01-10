@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 
+import { type AstroIntegrationLogger } from "astro";
 import { glob } from "glob";
 
 import { NGINX_VARIABLE_SIZE_LIMIT } from "./constants.js";
@@ -19,9 +20,14 @@ import type { CspData } from "./types.js";
  *
  * @param {string} distDir - The absolute path to the production build output.
  * @param {CspData} cspData - The data object containing hashes and domains collected during HTML processing.
+ * @param {AstroIntegrationLogger} logger - The Astro logger instance.
  */
-export async function finalizeCspConfig(distDir: string, cspData: CspData) {
-  console.log("[PostBuild] Finalizing CSP and Security Headers...");
+export async function finalizeCspConfig(
+  distDir: string,
+  cspData: CspData,
+  logger: AstroIntegrationLogger,
+) {
+  logger.info("Finalizing CSP and Security Headers...");
 
   // Hash standalone JS files
   const standaloneScriptHashes = new Set<string>();

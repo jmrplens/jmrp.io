@@ -34,14 +34,14 @@ export default function preBuildIntegration(): AstroIntegration {
             !fs.existsSync(avatarPath);
 
           if (shouldRunGithubAvatar) {
-            await setupGithubAvatar();
+            await setupGithubAvatar(logger);
           } else {
             logger.info("GitHub avatar exists locally. Skipping fetch.");
           }
 
           // Only fetch beacon if we are building for production
           if (command === "build") {
-            await setupCfBeacon(env.PUBLIC_CF_BEACON_TOKEN);
+            await setupCfBeacon(env.PUBLIC_CF_BEACON_TOKEN, logger);
           }
         } catch (error) {
           const message =

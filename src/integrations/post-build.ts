@@ -48,11 +48,10 @@ export default function postBuildIntegration(): AstroIntegration {
         };
 
         try {
-          await extractCssDataUris(distDir);
+          await extractCssDataUris(distDir, logger);
 
-          // Patch Astro's client-prerender code BEFORE processing HTML
           // This ensures SRI hashes are calculated on the patched JS files
-          await patchClientPrerenderNonce(distDir);
+          await patchClientPrerenderNonce(distDir, logger);
 
           const systemNginxPath =
             process.env.POSTBUILD_NGINX_SNIPPETS_PATH || "";
@@ -66,14 +65,14 @@ export default function postBuildIntegration(): AstroIntegration {
             );
           }
 
-          await processHtmlFiles(distDir, cspData, enableCsp);
+          await processHtmlFiles(distDir, cspData, enableCsp, logger);
 
           if (enableCsp) {
-            await finalizeCspConfig(distDir, cspData);
+            await finalizeCspConfig(distDir, cspData, logger);
             deploySecurityHeaders(distDir, systemNginxPath, logger);
           }
 
-          await compressAssets(distDir);
+          await compressAssets(distDir, logger);
           await purgeCloudflareCache(logger);
         } catch (error) {
           logger.error("Fatal optimization error:");
@@ -245,6 +244,14 @@ function clearNginxCache(
     return;
   }
   if (!fs.existsSync(systemNginxCachePath)) return;
+
+  // Security: Prevent TOCTOU race conditions with symbolic links
+  if (fs.lstatSync(systemNginxCachePath).isSymbolicLink()) {
+    logger.warn(
+      `Refusing to clear cache path as it is a symbolic link: ${systemNginxCachePath}`,
+    );
+    return;
+  }
 
   logger.info(`Clearing Nginx cache in [${systemNginxCachePath}]...`);
   try {

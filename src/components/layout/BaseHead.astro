@@ -14,6 +14,7 @@ import appleTouchIconSrc from "@assets/apple-touch-icon.png";
 import faviconSrc from "@assets/favicon.png";
 import defaultOgImage from "@assets/mehome_landscape.webp";
 import type { SiteConfig } from "@src/types";
+import { safeJsonLd } from "@utils/html";
 import { getSiteUrl } from "@utils/site";
 // Variable Fonts (managed by Astro Experimental Fonts)
 import { Font, getImage } from "astro:assets";
@@ -161,7 +162,7 @@ const breadcrumbList = {
 
             // Prefer page title for the last segment if available
             const fallbackName = segment
-                .replaceAll('-', " ")
+                .replaceAll("-", " ")
                 .replaceAll(/\b\w/g, (l) => l.toUpperCase());
             const name =
                 isLastSegment && title && title !== siteData.title
@@ -297,7 +298,9 @@ const jsonLD = {
             is:inline
             defer
             src="/scripts/cf-beacon.js"
-            data-cf-beacon={JSON.stringify({ token: import.meta.env.PUBLIC_CF_BEACON_TOKEN })}
+            data-cf-beacon={JSON.stringify({
+                token: import.meta.env.PUBLIC_CF_BEACON_TOKEN,
+            })}
             integrity="__BEACON_INTEGRITY_HASH__"
             crossorigin="anonymous"
         />
@@ -305,8 +308,4 @@ const jsonLD = {
 }
 
 <!-- JSON-LD -->
-<script
-    is:inline
-    type="application/ld+json"
-    set:html={JSON.stringify(jsonLD)}
-/>
+<script is:inline type="application/ld+json" set:html={safeJsonLd(jsonLD)} />

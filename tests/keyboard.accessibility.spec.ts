@@ -13,20 +13,13 @@ test.describe("Keyboard Navigation Accessibility", () => {
     await page.waitForLoadState("domcontentloaded");
     await page.keyboard.press("Tab");
 
-    // Check if the focused element is the logo or skip link
-    // Assuming the logo is the first interactive element or close to it
-    // const logo = page.locator(".logo");
+    // Assert that the skip link received focus and is visible
+    const skipLink = page.locator(".skip-link");
+    await expect(skipLink).toBeFocused();
+    // Playwright's toBeVisible() considers elements with positive area visible.
+    // Our skip-link moves from top:-9999px to top:0 on focus.
+    await expect(skipLink).toBeVisible();
 
-    // Check what is focused
-    const focusedHandle = await page.evaluateHandle(
-      () => document.activeElement,
-    );
-    const focusedTag = await focusedHandle.evaluate((el) => el?.tagName);
-    const focusedClass = await focusedHandle.evaluate((el) => el?.className);
-    console.log(`Focused element after 1st Tab: ${focusedTag}.${focusedClass}`);
-
-    // Skip-link is unconditionally present in BaseLayout and should be the first focusable element.
-    await expect(page.locator(".skip-link")).toBeFocused();
     await page.keyboard.press("Tab");
 
     // Now we should be on the Logo (first link in Header)
@@ -58,10 +51,9 @@ test.describe("Keyboard Navigation Accessibility", () => {
     // 1. Tab to Skip Link
     await page.keyboard.press("Tab");
     const skipLink = page.locator(".skip-link");
-
-    // Verify it is focused (might need to check if it's the first element)
-    // Based on previous logs: Focused element after 1st Tab: A.skip-link
+    // Verify it is focused and becomes visible
     await expect(skipLink).toBeFocused();
+    await expect(skipLink).toBeVisible();
 
     // 2. Activate it
     await page.keyboard.press("Enter");

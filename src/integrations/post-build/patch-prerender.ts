@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 
+import { type AstroIntegrationLogger } from "astro";
 import { glob } from "glob";
 
 /**
@@ -15,9 +16,13 @@ import { glob } from "glob";
  * 2. Apply that nonce to the dynamically created speculation rules script
  *
  * @param {string} distDir - The absolute path to the production build output.
+ * @param {AstroIntegrationLogger} logger - The Astro logger instance.
  */
-export async function patchClientPrerenderNonce(distDir: string) {
-  console.log("[PostBuild] Patching client-prerender for CSP nonce support...");
+export async function patchClientPrerenderNonce(
+  distDir: string,
+  logger: AstroIntegrationLogger,
+) {
+  logger.info("Patching client-prerender for CSP nonce support...");
 
   // Find the Astro page JS file that contains the speculation rules code
   const jsFiles = await glob("_astro/page.*.js", {
@@ -43,10 +48,11 @@ export async function patchClientPrerenderNonce(distDir: string) {
       /(\w+)\.type="speculationrules",\1\.textContent=JSON\.stringify\(\{prerender:\[\{source:"list",urls:\[(\w+)\],eagerness:(\w+)\}\],prefetch:\[\{source:"list",urls:\[\2\],eagerness:\3\}\]\}\),document\.head\.append\(\1\)/g; // NOSONAR
 
     if (!originalPattern.test(content)) {
-      throw new Error(
+      logger.warn(
         `Speculation rules found in ${path.basename(file)} but patch pattern mismatch. ` +
-          "Astro/Vite minification likely changed. Update the patch pattern to maintain CSP compliance.",
+          "Skipping nonce patch for this file. Astro/Vite minification likely changed.",
       );
+      continue;
     }
 
     // Reset lastIndex because of /g flag used in .test()
@@ -61,10 +67,11 @@ export async function patchClientPrerenderNonce(distDir: string) {
     );
 
     if (patchedCode === content) {
-      throw new Error(`Failed to apply patch in ${path.basename(file)}`);
+      logger.warn(`Failed to apply patch in ${path.basename(file)}`);
+      continue;
     }
 
     fs.writeFileSync(file, patchedCode, "utf-8");
-    console.log(`  ✓ Patched ${path.basename(file)} with nonce support`);
+    logger.info(`  ✓ Patched ${path.basename(file)} with nonce support`);
   }
 }

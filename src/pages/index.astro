@@ -7,6 +7,7 @@
 import mehomeImg from "@assets/mehome.webp";
 import BaseLayout from "@layouts/BaseLayout.astro";
 import type { SiteConfig } from "@src/types";
+import { sanitize } from "@utils/html";
 import { getSiteUrl } from "@utils/site";
 import { Image } from "astro:assets";
 // Config
@@ -49,16 +50,11 @@ const personSchema = {
             <div class="hero-content">
                 <div class="hero-text">
                     <h1>{hero.title}</h1>
-                    <p
-                        class="subtitle"
-                        set:html={hero.subtitle}
-                    />
+                    <p class="subtitle" set:html={sanitize(hero.subtitle)} />
                     <div class="bio">
                         {
                             hero.bio.map((paragraph: string) => (
-                                <p
-                                    set:html={paragraph}
-                                />
+                                <p set:html={sanitize(paragraph)} />
                             ))
                         }
                     </div>

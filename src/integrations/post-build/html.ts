@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 
+import type { AstroIntegrationLogger } from "astro";
 import * as cheerio from "cheerio";
 import type { Element } from "domhandler";
 import { glob } from "glob";
@@ -21,13 +22,52 @@ import {
 } from "./utils.js";
 
 /**
+ * Decodes Data URI data part based on encoding.
+ */
+function decodeData(
+  data: string,
+  isBase64: boolean,
+  logger: AstroIntegrationLogger,
+  suffix: string,
+): Buffer | null {
+  if (isBase64) {
+    return Buffer.from(data, "base64");
+  }
+  try {
+    return Buffer.from(decodeURIComponent(data.trim()));
+  } catch (decodeError) {
+    const errStr =
+      decodeError instanceof Error ? decodeError.message : String(decodeError);
+    logger.warn("Skipping malformed data URI" + suffix + ": " + errStr);
+    return null;
+  }
+}
+
+/**
+ * Generates a stable filename for an asset based on its content hash.
+ */
+function getAssetFilename(buffer: Buffer, mime: string): string {
+  const ext = getExtensionFromMime(mime);
+  const hash = crypto
+    .createHash("sha256")
+    .update(buffer)
+    .digest("hex")
+    .slice(0, Math.max(0, ASSET_FILENAME_HASH_LENGTH));
+  return hash + "." + ext;
+}
+
+/**
  * Helper to extract a data URI to a physical file and return the new relative URL.
  */
 function extractDataUri(
   rawDataUri: string,
   targetDir: string,
+  logger: AstroIntegrationLogger,
+  context?: string,
 ): { url: string; extracted: boolean } | null {
   if (!rawDataUri?.startsWith("data:")) return null;
+
+  const suffix = context ? " in " + context : "";
 
   try {
     const commaIndex = rawDataUri.indexOf(",");
@@ -38,39 +78,21 @@ function extractDataUri(
     const isBase64 = metadata.includes(";base64");
     const mime = metadata.split(";")[0] || "application/octet-stream";
 
-    // Handle data decoding - decodeURIComponent can throw URIError on malformed data
-    let buffer: Buffer;
-    if (isBase64) {
-      buffer = Buffer.from(data, "base64");
-    } else {
-      try {
-        buffer = Buffer.from(decodeURIComponent(data.trim()));
-      } catch (decodeError) {
-        console.warn(
-          `[PostBuild] Skipping malformed data URI: ${decodeError instanceof Error ? decodeError.message : String(decodeError)}`,
-        );
-        return null;
-      }
-    }
+    const buffer = decodeData(data, isBase64, logger, suffix);
+    if (!buffer) return null;
 
-    const ext = getExtensionFromMime(mime);
-    const hash = crypto
-      .createHash("sha256")
-      .update(buffer)
-      .digest("hex")
-      .slice(0, Math.max(0, ASSET_FILENAME_HASH_LENGTH));
-    const filename = `${hash}.${ext}`;
+    const filename = getAssetFilename(buffer, mime);
     const filePath = path.join(targetDir, filename);
 
     if (!fs.existsSync(filePath)) {
       fs.writeFileSync(filePath, buffer);
-      return { url: `/${ASSETS_DIR}/${filename}`, extracted: true };
+      return { url: "/" + ASSETS_DIR + "/" + filename, extracted: true };
     }
 
-    return { url: `/${ASSETS_DIR}/${filename}`, extracted: false };
+    return { url: "/" + ASSETS_DIR + "/" + filename, extracted: false };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    console.error(`[PostBuild] Error extracting data URI: ${message}`);
+    logger.error("Error extracting data URI" + suffix + ": " + message);
     return null;
   }
 }
@@ -89,19 +111,21 @@ function extractDataUri(
  * @param {string} distDir - The absolute path to the production build output.
  * @param {CspData} cspData - Shared object to store collected CSP hashes and domains.
  * @param {boolean} enableCsp - Whether to enable CSP-specific features (nonces, hashes, style conversion).
+ * @param {AstroIntegrationLogger} logger - The Astro logger instance.
  */
 export async function processHtmlFiles(
   distDir: string,
   cspData: CspData,
   enableCsp: boolean,
+  logger: AstroIntegrationLogger,
 ) {
-  console.log("[PostBuild] Processing HTML files (consolidated pass)...");
+  logger.info("Processing HTML files (consolidated pass)...");
   const htmlFiles = await glob("**/*.html", { cwd: distDir, absolute: true });
   const hashCache = new Map<string, string>();
   const targetDir = path.join(distDir, ASSETS_DIR);
   if (!fs.existsSync(targetDir)) fs.mkdirSync(targetDir, { recursive: true });
 
-  hardenBeaconScript(distDir, hashCache);
+  hardenBeaconScript(distDir, hashCache, logger);
 
   let modifiedFilesCount = 0;
   let updatedSriTags = 0;
@@ -115,15 +139,16 @@ export async function processHtmlFiles(
       cspData,
       hashCache,
       enableCsp,
+      logger,
     );
     if (result.modified) modifiedFilesCount++;
     updatedSriTags += result.updatedSriTags;
     extractedImages += result.extractedImages;
   }
 
-  console.log(`  ✓ Updated ${updatedSriTags} tags with SRI.`);
-  console.log(`  ✓ Extracted ${extractedImages} images from HTML.`);
-  console.log(`  ✓ Modified ${modifiedFilesCount} HTML files.`);
+  logger.info(`  ✓ Updated ${updatedSriTags} tags with SRI.`);
+  logger.info(`  ✓ Extracted ${extractedImages} images from HTML.`);
+  logger.info(`  ✓ Modified ${modifiedFilesCount} HTML files.`);
 }
 
 /**
@@ -132,12 +157,17 @@ export async function processHtmlFiles(
  *
  * @param distDir - The absolute path to the production build output.
  * @param hashCache - Cache map for file integrity hashes.
+ * @param logger - The Astro logger instance.
  */
-function hardenBeaconScript(distDir: string, hashCache: Map<string, string>) {
+function hardenBeaconScript(
+  distDir: string,
+  hashCache: Map<string, string>,
+  logger: AstroIntegrationLogger,
+) {
   // Special handling for cf-beacon.js to avoid Lighthouse errors while keeping SRI
   const beaconPath = path.join(distDir, "scripts", "cf-beacon.js");
   if (fs.existsSync(beaconPath)) {
-    console.log("[PostBuild] Hardening cf-beacon.js with local guard...");
+    logger.info("Hardening cf-beacon.js with local guard...");
     const originalBeacon = fs.readFileSync(beaconPath, "utf-8");
     // Prepend a guard that stops execution on localhost/127.0.0.1/0.0.0.0/::1/[::1]
     const hardenedBeacon = `(function(){var h=location.hostname;if(h==='localhost'||h==='127.0.0.1'||h==='0.0.0.0'||h==='::1'||h==='[::1]')return;${originalBeacon}})();`;
@@ -156,6 +186,7 @@ function hardenBeaconScript(distDir: string, hashCache: Map<string, string>) {
  * @param cspData - Shared object to store collected CSP hashes and domains.
  * @param hashCache - Cache map for file integrity hashes.
  * @param enableCsp - Whether to enable CSP-specific features.
+ * @param logger - The Astro logger instance.
  * @returns An object containing the counts of modifications and updates.
  */
 function processSingleHtmlFile(
@@ -165,6 +196,7 @@ function processSingleHtmlFile(
   cspData: CspData,
   hashCache: Map<string, string>,
   enableCsp: boolean,
+  logger: AstroIntegrationLogger,
 ): { modified: boolean; updatedSriTags: number; extractedImages: number } {
   const content = fs.readFileSync(file, "utf-8");
   const $ = cheerio.load(content);
@@ -173,7 +205,7 @@ function processSingleHtmlFile(
   let extractedImages = 0;
 
   // 1. Process Images
-  const imgResult = processImages($, targetDir);
+  const imgResult = processImages($, targetDir, logger, file);
   if (imgResult.modified) {
     isModified = true;
     extractedImages += imgResult.extractedCount;
@@ -203,7 +235,7 @@ function processSingleHtmlFile(
   }
 
   // 5. Manual Beacon Replace
-  if (processBeacon($, distDir, file, hashCache)) {
+  if (processBeacon($, distDir, file, hashCache, logger)) {
     isModified = true;
   }
 
@@ -225,63 +257,74 @@ function processSingleHtmlFile(
  *
  * @param $ - Cheerio API instance for the current HTML document.
  * @param targetDir - The directory where extracted assets should be saved.
+ * @param logger - The Astro logger instance.
+ * @param file - The name of the file being processed for context.
  * @returns An object containing the modified status and extracted asset count.
  */
 function processImages(
   $: cheerio.CheerioAPI,
   targetDir: string,
+  logger: AstroIntegrationLogger,
+  file?: string,
 ): { modified: boolean; extractedCount: number } {
-  let modified = false;
+  const extractedCount = findAndExtractDataUris($, targetDir, logger, file);
+  return { modified: extractedCount > 0, extractedCount };
+}
+
+/**
+ * Helper to find and extract data URIs from src and srcset attributes.
+ */
+function findAndExtractDataUris(
+  $: cheerio.CheerioAPI,
+  targetDir: string,
+  logger: AstroIntegrationLogger,
+  file?: string,
+): number {
   let extractedCount = 0;
+  const fileName = file ? path.basename(file) : undefined;
 
-  $('img[src^="data:"], source[src^="data:"]').each((_, el) => {
+  // Process both <img> src and <source> srcset
+  $("[src^='data:'], [srcset*='data:']").each((_, el) => {
     const $el = $(el);
-    const dataUri = $el.attr("src");
-    if (!dataUri) return;
 
-    const result = extractDataUri(dataUri, targetDir);
-    if (!result) return;
+    // Handle 'src' attribute
+    const src = $el.attr("src");
+    if (src?.startsWith("data:")) {
+      const extracted = extractDataUri(src, targetDir, logger, fileName);
+      if (extracted) {
+        $el.attr("src", extracted.url);
+        if (extracted.extracted) extractedCount++;
+      }
+    }
 
-    $el.attr("src", result.url);
-    if (result.extracted) extractedCount++;
-    modified = true;
-  });
-
-  $('img[srcset*="data:"], source[srcset*="data:"]').each((_, el) => {
-    const $el = $(el);
+    // Handle 'srcset' attribute (basic comma-separated parsing)
     const srcset = $el.attr("srcset");
-    if (!srcset) return;
+    if (srcset?.includes("data:")) {
+      let modifiedSrcset = false;
+      const parts = srcset.split(",");
+      const newParts = parts.map((part) => {
+        const trimmed = part.trim();
+        const [url, descriptor] = trimmed.split(/\s+/);
+        if (url?.startsWith("data:")) {
+          const extracted = extractDataUri(url, targetDir, logger, fileName);
+          if (extracted) {
+            modifiedSrcset = true;
+            if (extracted.extracted) extractedCount++;
+            return descriptor
+              ? `${extracted.url} ${descriptor}`
+              : extracted.url;
+          }
+        }
+        return trimmed;
+      });
 
-    let modifiedSrcset = false;
-
-    const newCandidates = srcset
-      .split(",")
-      .map((rawCandidate) => {
-        const candidate = rawCandidate.trim();
-        if (!candidate) return "";
-
-        const [url, ...descriptorParts] = candidate.split(/\s+/);
-        // url is guaranteed to be a string here because candidate is not empty and split returns [string, ...]
-        if (!url?.startsWith("data:")) return candidate;
-
-        const result = extractDataUri(url, targetDir);
-        if (!result) return candidate;
-
-        modifiedSrcset = true;
-        modified = true;
-        if (result.extracted) extractedCount++;
-
-        const descriptor = descriptorParts.join(" ");
-        return descriptor ? `${result.url} ${descriptor}` : result.url;
-      })
-      .filter(Boolean);
-
-    if (modifiedSrcset) {
-      $el.attr("srcset", newCandidates.join(", "));
+      if (modifiedSrcset) {
+        $el.attr("srcset", newParts.join(", "));
+      }
     }
   });
 
-  return { modified, extractedCount };
+  return extractedCount;
 }
 
 /**
@@ -315,13 +358,18 @@ function processStyles($: cheerio.CheerioAPI, enableCsp: boolean): boolean {
   if (styleToClassMap.size > 0) {
     let cssRules = "";
     for (const [styleDef, className] of styleToClassMap.entries()) {
-      if (
-        (styleDef.match(/{/g) || []).length !==
-        (styleDef.match(/}/g) || []).length
-      ) {
-        continue;
-      }
-      cssRules += `.${className}{${styleDef}}`;
+      // Sanitize style content to prevent:
+      // 1. HTML tag breakout: </style>
+      // 2. CSS rule breakout: { or }
+      // We use CSS character escapes (\hex) for these characters.
+      // Note: The space after the hex code is important as it terminates the escape sequence.
+      const sanitizedStyle = styleDef
+        .replaceAll("<", String.raw`\3c `)
+        .replaceAll(">", String.raw`\3e `)
+        .replaceAll("{", String.raw`\7b `)
+        .replaceAll("}", String.raw`\7d `);
+
+      cssRules += `.${className}{${sanitizedStyle}}`;
     }
     const styleNonce = enableCsp ? ' nonce="NGINX_CSP_NONCE"' : "";
     $("head").append(
@@ -373,11 +421,6 @@ function processScriptsAndLinks(
   $("link[href][rel='stylesheet']").each((_, el) => {
     const $el = $(el);
 
-    // Ensure crossorigin is set for SRI to work on cross-origin resources
-    if (!$el.attr("crossorigin")) {
-      $el.attr("crossorigin", "anonymous");
-    }
-
     const res = processTagSri(
       $el,
       "href",
@@ -421,7 +464,11 @@ function processTagSri(
   const url = $el.attr(attr);
   if (!url) return { modified, updated };
 
-  if (addIntegrity($el, url, file, distDir, hashCache)) {
+  if (addIntegrity($el, url, type, file, distDir, hashCache)) {
+    // Ensure crossorigin is set for SRI to work correctly
+    if (!$el.attr("crossorigin")) {
+      $el.attr("crossorigin", "anonymous");
+    }
     modified = true;
     updated = true;
   }
@@ -436,17 +483,21 @@ function processTagSri(
 /**
  * Determines if a tag is eligible for Subresource Integrity (SRI).
  *
- * @param _el - Cheerio element representing the tag.
+ * @param $el - Cheerio element representing the tag.
  * @param type - The type of tag (script or link).
  * @returns True if the tag is SRI eligible.
  */
 function isSriEligible(
-  _el: cheerio.Cheerio<Element>,
+  $el: cheerio.Cheerio<Element>,
   type: "script" | "link",
 ): boolean {
-  // Only apply SRI to script tags. Link tags (stylesheets, preloads) trigger
-  // browser warnings or validation issues with automatic integrity.
-  return type === "script";
+  if (type === "script") return true;
+  if (type === "link") {
+    // Only apply SRI to stylesheets. preloads/modulepreloads can cause
+    // validation issues or redundant browser warnings with SRI.
+    return $el.attr("rel") === "stylesheet";
+  }
+  return false;
 }
 
 /**
@@ -454,6 +505,7 @@ function isSriEligible(
  *
  * @param $el - Cheerio element representing the tag.
  * @param url - The URL of the resource.
+ * @param type - The type of tag (script or link).
  * @param file - Absolute path to the current HTML file.
  * @param distDir - The absolute path to the production build output.
  * @param hashCache - Cache map for file integrity hashes.
@@ -462,12 +514,13 @@ function isSriEligible(
 function addIntegrity(
   $el: cheerio.Cheerio<Element>,
   url: string,
+  type: "script" | "link",
   file: string,
   distDir: string,
   hashCache: Map<string, string>,
 ): boolean {
-  // Only add integrity to eligible tags (scripts) and only if not already present
-  if (isSriEligible($el, "script") && !$el.attr("integrity")) {
+  // Only add integrity to eligible tags and only if not already present
+  if (isSriEligible($el, type) && !$el.attr("integrity")) {
     const filePath = resolveFile(url, path.dirname(file), distDir);
     if (filePath) {
       const hash = getFileHash(filePath, hashCache);
@@ -581,6 +634,7 @@ function collectImageDomains($: cheerio.CheerioAPI, cspData: CspData) {
  * @param distDir - The absolute path to the production build output.
  * @param file - Absolute path to the current HTML file.
  * @param hashCache - Cache map for file integrity hashes.
+ * @param logger - The Astro logger instance.
  * @returns True if the beacon script was modified or removed.
  */
 function processBeacon(
@@ -588,6 +642,7 @@ function processBeacon(
   distDir: string,
   file: string,
   hashCache: Map<string, string>,
+  logger: AstroIntegrationLogger,
 ): boolean {
   let modified = false;
   const beaconScriptsPath = path.join(distDir, "scripts", "cf-beacon.js");
@@ -599,9 +654,7 @@ function processBeacon(
       });
       modified = true;
     } else {
-      console.warn(
-        `[PostBuild] Beacon file missing. Removing script tag from ${file}`,
-      );
+      logger.warn(`Beacon file missing. Removing script tag from ${file}`);
       $('script[integrity="__BEACON_INTEGRITY_HASH__"]').remove();
       modified = true;
     }

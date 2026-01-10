@@ -1,6 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
 
+import { type AstroIntegrationLogger } from "astro";
+
 const USERNAME = "jmrplens";
 const OUTPUT_DIR = "src/assets";
 const OUTPUT_FILE = "github-avatar.png";
@@ -14,9 +16,11 @@ interface GitHubProfileResponse {
 /**
  * Fetches and saves the project owner's GitHub avatar.
  * Implements fallbacks to existing or local images if network fails.
+ *
+ * @param {AstroIntegrationLogger} logger - The Astro logger instance.
  */
-export async function setupGithubAvatar() {
-  console.log(`[PreBuild] Fetching GitHub profile for ${USERNAME}...`);
+export async function setupGithubAvatar(logger: AstroIntegrationLogger) {
+  logger.info(`Fetching GitHub profile for ${USERNAME}...`);
 
   const outputDirAbs = path.resolve(process.cwd(), OUTPUT_DIR);
   if (!fs.existsSync(outputDirAbs)) {
@@ -31,9 +35,9 @@ export async function setupGithubAvatar() {
     const tmpPath = `${outputPath}.tmp`;
     fs.writeFileSync(tmpPath, buffer);
     fs.renameSync(tmpPath, outputPath);
-    console.log(`  ✓ Avatar saved to ${outputPath}`);
+    logger.info(`  ✓ Avatar saved to ${outputPath}`);
   } catch (error) {
-    handleAvatarError(error, outputPath, fallbackPath);
+    handleAvatarError(error, outputPath, fallbackPath, logger);
   }
 }
 
@@ -109,16 +113,16 @@ async function fetchGitHubAvatarBuffer(): Promise<Buffer> {
  * @param error - The caught error.
  * @param outputPath - Path to save the final image.
  * @param fallbackPath - Path to the local fallback image.
+ * @param logger - The Astro logger instance.
  */
 function handleAvatarError(
   error: unknown,
   outputPath: string,
   fallbackPath: string,
+  logger: AstroIntegrationLogger,
 ) {
   const message = error instanceof Error ? error.message : String(error);
-  console.warn(
-    `  ⚠ Could not download GitHub avatar (${message}). Using fallback.`,
-  );
+  logger.warn(`Could not download GitHub avatar (${message}). Using fallback.`);
 
   // Clean up partial write if any (unlikely with sync write but good practice)
   if (
@@ -133,11 +137,11 @@ function handleAvatarError(
   }
 
   if (fs.existsSync(outputPath) && fs.statSync(outputPath).size > 0) {
-    console.log("  ✓ Using existing github-avatar.png.");
+    logger.info("Using existing github-avatar.png.");
   } else if (fs.existsSync(fallbackPath)) {
     try {
       fs.copyFileSync(fallbackPath, outputPath);
-      console.log("  ✓ Copied local fallback image.");
+      logger.info("✓ Copied local fallback image.");
     } catch (copyError) {
       throw new Error(
         `Failed to copy fallback: ${copyError instanceof Error ? copyError.message : String(copyError)}`,

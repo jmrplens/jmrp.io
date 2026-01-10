@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 
+import { type AstroIntegrationLogger } from "astro";
 import * as cheerio from "cheerio";
 import { glob } from "glob";
 import { type Config, optimize, type PluginConfig } from "svgo";
@@ -19,9 +20,13 @@ import { getExtensionFromMime, writeHtml } from "./utils.js";
  * 4. Automatically optimizes extracted SVG assets using SVGO.
  *
  * @param {string} distDir - The absolute path to the production build output.
+ * @param {AstroIntegrationLogger} logger - The Astro logger instance.
  */
-export async function extractCssDataUris(distDir: string) {
-  console.log("[PostBuild] Extracting CSS Data URIs...");
+export async function extractCssDataUris(
+  distDir: string,
+  logger: AstroIntegrationLogger,
+) {
+  logger.info("Extracting CSS Data URIs...");
   const targetDir = path.join(distDir, ASSETS_DIR);
   if (!fs.existsSync(targetDir)) fs.mkdirSync(targetDir, { recursive: true });
 
@@ -120,8 +125,8 @@ export async function extractCssDataUris(distDir: string) {
                 const optimized = optimize(svgString, svgoConfig);
                 fs.writeFileSync(filePath, optimized.data);
               } catch {
-                console.warn(
-                  `[PostBuild] SVGO optimization failed for extracted asset, using original: ${filename}`,
+                logger.warn(
+                  `SVGO optimization failed for extracted asset, using original: ${filename}`,
                 );
                 fs.writeFileSync(filePath, buffer);
               }
@@ -137,8 +142,8 @@ export async function extractCssDataUris(distDir: string) {
         } catch (error) {
           const errorMessage =
             error instanceof Error ? error.message : String(error);
-          console.error(
-            `[PostBuild] Error extracting CSS data URI in file: ${file} - ${errorMessage}`,
+          logger.error(
+            `Error extracting CSS data URI in file: ${file} - ${errorMessage}`,
           );
           return fullMatch;
         }
@@ -192,5 +197,5 @@ export async function extractCssDataUris(distDir: string) {
     }
   }
 
-  console.log(`  ✓ Extracted ${extracted} assets from CSS/HTML.`);
+  logger.info(`  ✓ Extracted ${extracted} assets from CSS/HTML.`);
 }
