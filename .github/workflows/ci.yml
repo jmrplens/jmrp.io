@@ -763,6 +763,14 @@ jobs:
         with:
           name: lychee-report
           path: .
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: "pnpm"
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --prefer-offline
+      - name: Install Playwright Browsers
+        run: pnpm exec playwright install --with-deps chromium
       - name: Capture Workflow Graph
         run: node scripts/ci/capture-workflow-graph.mjs
         continue-on-error: true
@@ -776,9 +784,6 @@ jobs:
           pattern: log-*
           path: logs
           merge-multiple: true
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 22
       - name: Build Dashboard
         run: node scripts/ci/build-report-dashboard.mjs
         env:
