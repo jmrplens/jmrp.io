@@ -48,4 +48,3 @@ export type CVCertificateGroup = Extract<
   CVSection,
   { type: "certificate_list" }
 >["contents"][number];
-// Helper to extract specific section types if needed, but union handling in templates is usually enough

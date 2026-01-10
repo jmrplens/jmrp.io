@@ -9,13 +9,12 @@ import SkillGroup from "@components/cv/SkillGroup.astro";
 import BaseLayout from "@layouts/BaseLayout.astro";
 import type { CVSection } from "@src/types";
 import { getCVData } from "@utils/cv";
-import { sanitize,stripHtml } from "@utils/html";
+import { sanitize, stripHtml } from "@utils/html";
 import { getSiteUrl } from "@utils/site";
 import { Icon } from "astro-icon/components";
 
 const cvData = await getCVData();
 
-// Define custom order and filter
 const sortedSections = [
     cvData.find((s) => s.title === "General Information"),
     cvData.find((s) => s.title === "Experience"),
@@ -24,7 +23,6 @@ const sortedSections = [
     cvData.find((s) => s.title === "Certificates"),
 ].filter((s): s is CVSection => !!s);
 
-// Construct Schema.org Data
 const technicalSkills = sortedSections.find(
     (s) => s.title === "Technical Skills",
 );
@@ -37,7 +35,10 @@ const certificates = sortedSections.find((s) => s.title === "Certificates");
 const personSchema = {
     "@context": "https://schema.org",
     "@type": "ProfilePage",
-    "@id": new URL("#profile", new URL(Astro.url.pathname, getSiteUrl())).toString(),
+    "@id": new URL(
+        "#profile",
+        new URL(Astro.url.pathname, getSiteUrl()),
+    ).toString(),
     mainEntity: {
         "@type": "Person",
         name: "José Manuel Requena Plens",
@@ -139,7 +140,10 @@ const personSchema = {
                                                 <a
                                                     href={link.link}
                                                     class="btn-sm"
-                                                    download={link.download || undefined}
+                                                    download={
+                                                        link.download ||
+                                                        undefined
+                                                    }
                                                 >
                                                     {link.name}
                                                 </a>

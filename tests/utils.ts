@@ -65,7 +65,15 @@ export async function getSitemapUrls(): Promise<string[]> {
     for (const sm of parsed.sitemapindex.sitemap) {
       const loc = sm.loc[0];
       if (!loc) continue;
-      const filename = path.basename(new URL(loc).pathname);
+
+      let filename;
+      try {
+        filename = path.basename(new URL(loc).pathname);
+      } catch {
+        console.warn(`Skipping invalid sitemap URL in index: ${loc}`);
+        continue;
+      }
+
       const childPath = path.resolve("dist", filename);
 
       if (fs.existsSync(childPath)) {
@@ -77,7 +85,11 @@ export async function getSitemapUrls(): Promise<string[]> {
           urls.push(
             ...childParsed.urlset.url.map((u) => {
               const urlLoc = u.loc[0];
-              return urlLoc ? new URL(urlLoc).pathname : "";
+              try {
+                return urlLoc ? new URL(urlLoc).pathname : "";
+              } catch {
+                return "";
+              }
             }),
           );
         }

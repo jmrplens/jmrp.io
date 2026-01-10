@@ -25,8 +25,7 @@ const logger = {
 };
 
 /**
- * Main function to calculate JSDoc coverage across the project.
- * Scans files, identifies documentable symbols, and checks for JSDoc.
+ * Calculates JSDoc coverage across the project by scanning exported symbols.
  *
  * @returns {Promise<void>} Resolves when the report is complete.
  */
@@ -141,7 +140,7 @@ async function calculateCoverage() {
 }
 
 /**
- * Helper to determine if children should inherit public status.
+ * Determines if children should inherit public status based on parent node type.
  * @param {ts.Node} node
  * @param {boolean} isPublic
  * @returns {boolean}

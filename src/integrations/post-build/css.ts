@@ -41,7 +41,7 @@ export async function extractCssDataUris(
   let extracted = 0;
 
   /**
-   * Helper to process CSS content and replace data URIs
+   * Processes CSS content to find and replace data URIs with physical assets.
    */
   const processCssContent = (content: string, file: string): string => {
     return content.replaceAll(

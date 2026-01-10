@@ -29,17 +29,19 @@ export async function GET(_context: APIContext) {
   const posts = await getCollection("posts");
   const siteEntry = await getEntry("site_config", "site");
   const siteData = siteEntry?.data as unknown as SiteData;
+  const site = getSiteUrl();
+
   const publishedPosts = posts.filter((p) => (import.meta.env.PROD ? !p.data.draft : true));
   publishedPosts.sort((a, b) => new Date(b.data.publishedDate).getTime() - new Date(a.data.publishedDate).getTime());
 
   return rss({
     title: siteData?.title || "José Manuel Requena Plens | Blog",
     description: siteData?.description || "Technical blog",
-    site: getSiteUrl(),
+    site: site,
     items: await Promise.all(
       publishedPosts.map(async (post) => {
         const link = `/blog/${post.id}/`;
-        const fullLink = new URL(link, getSiteUrl()).toString();
+        const fullLink = new URL(link, site).toString();
         let customData = "";
         const description =
           post.data.description ||
@@ -51,8 +53,8 @@ export async function GET(_context: APIContext) {
             const opt = await getImage({ src: post.data.coverImage, format: "jpeg", width: 1200 });
             const thumb = await getImage({ src: post.data.coverImage, format: "jpeg", width: 400 });
             // JPEG chosen over WebP for maximum compatibility with RSS readers
-            const imgUrl = new URL(opt.src, getSiteUrl()).toString();
-            const thumbUrl = new URL(thumb.src, getSiteUrl()).toString();
+            const imgUrl = new URL(opt.src, site).toString();
+            const thumbUrl = new URL(thumb.src, site).toString();
 
             // RSS 2.0 Enclosure (Used by most modern readers for the main image)
             // Estimate file size in bytes from image dimensions (3 bytes per pixel) to provide a non-zero length.
@@ -94,7 +96,7 @@ export async function GET(_context: APIContext) {
     customData: `<language>${siteData?.locale?.replaceAll("_", "-").toLowerCase() || "en-us"}</language>
 <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>
 <generator>Astro RSS Generator</generator>
-<atom:link href="${new URL("rss.xml", getSiteUrl()).toString()}" rel="self" type="application/rss+xml" />`,
+<atom:link href="${new URL("rss.xml", site).toString()}" rel="self" type="application/rss+xml" />`,
     xmlns: {
       atom: "http://www.w3.org/2005/Atom",
       content: "http://purl.org/rss/1.0/modules/content/",

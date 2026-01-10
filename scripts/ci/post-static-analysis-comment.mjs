@@ -5,7 +5,6 @@
  * and posts a unified summary table to the GitHub Pull Request.
  */
 
-// Helper to get status icon
 const getStatusIcon = (outcome) => {
   if (outcome === "success") return "✅";
   if (outcome === "skipped") return "⏭️";
@@ -94,15 +93,13 @@ function generateComment(results) {
   return md;
 }
 
-// GitHub Script Entry Point
 /**
- * Main execution function for the static analysis comment script.
- * Aggregates results from multiple tools and updates the PR comment.
+ * Posts a summary table of static analysis results to the GitHub Pull Request.
  *
- * @param {object} params - The GitHub Action context parameters.
- * @param {object} params.github - The authenticated Octokit client.
- * @param {object} params.context - The GitHub Action context object.
- * @returns {Promise<void>} Resolves when the comment is posted or updated.
+ * @param { object } params - The GitHub Action context parameters.
+ * @param { object } params.github - The authenticated Octokit client.
+ * @param { object } params.context - The GitHub Action context object.
+ * @returns { Promise < void>} Resolves when the comment is posted or updated.
  */
 export default async function postStaticAnalysisComment({ github, context }) {
   // Read step outcomes from environment variables set in the workflow
@@ -136,7 +133,7 @@ export default async function postStaticAnalysisComment({ github, context }) {
       issue_number: context.issue.number,
     });
 
-    const existingComment = comments.find((c) => c.body.includes(header));
+    const existingComment = comments.find((c) => c.body?.includes(header));
 
     await (existingComment
       ? github.rest.issues.updateComment({
@@ -163,7 +160,7 @@ export default async function postStaticAnalysisComment({ github, context }) {
       })
       .catch(() => ({ data: [] }));
 
-    const existingComment = comments.find((c) => c.body.includes(header));
+    const existingComment = comments.find((c) => c.body?.includes(header));
 
     await (existingComment
       ? github.rest.issues.updateComment({

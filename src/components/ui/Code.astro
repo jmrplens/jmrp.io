@@ -66,13 +66,11 @@ const { lang = "text", class: className } = Astro.props;
         color: var(--color-text);
     }
 
-    /* Remove margin from MDX-generated p tags */
     code :global(p) {
         margin: 0;
         display: inline;
     }
 
-    /* Basic syntax highlighting fallback */
     code.language-nginx,
     code.language-bash,
     code.language-shell {

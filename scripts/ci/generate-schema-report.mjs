@@ -18,7 +18,9 @@ let data;
 try {
   data = JSON.parse(fs.readFileSync(REPORT_FILE, "utf-8"));
 } catch (error) {
-  console.error(`Failed to parse schema report JSON: ${error.message}`);
+  console.error(
+    `Failed to parse schema report JSON: ${error instanceof Error ? error.message : String(error)}`,
+  );
   process.exit(1);
 }
 const { summary, results } = data;

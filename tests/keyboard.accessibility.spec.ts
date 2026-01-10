@@ -90,7 +90,7 @@ test.describe("Keyboard Navigation Accessibility", () => {
 
     // 3. Check for focus trap or focus management
     // Ideally, focus should move to the first element in the menu or the close button
-    // Let's just Tab and see where we are.
+    // Navigate via Tab keys to check focus sequence
     // Good practice: Focus should be inside the menu.
     await page.keyboard.press("Tab");
 
@@ -105,12 +105,12 @@ test.describe("Keyboard Navigation Accessibility", () => {
     // const firstLink = mobileLinks.first();
 
     // If focus didn't move automatically (common issue), we might still be on the toggle or next element.
-    // Let's assert that we can reach the links.
+    // Assert that we can reach the links.
 
     // Note: If the menu doesn't trap focus or move it, this test might fail or behave unexpectedly.
     // This is a "functional a11y test" - we are testing if it works for keyboard users.
 
-    // Let's snapshot the open menu state with Axe
+    // Snapshot the open menu state with Axe
     const results = await new AxeBuilder({ page })
       .include("#nav-links")
       .analyze();

@@ -9,9 +9,6 @@
 import { execSync } from "node:child_process";
 import fs from "node:fs";
 
-/**
- * Scans the 'dist' directory and generates an HTML report of image optimizations.
- */
 const generateReport = () => {
   const findFiles = (pattern) => {
     try {
@@ -206,13 +203,21 @@ const generateReport = () => {
                   ...data.png.map((i) => ({ ...i, f: "PNG" })),
                   ...data.jpg.map((i) => ({ ...i, f: "JPG" })),
                 ]
-                  .sort((_, b) => (b.size.includes("M") ? 1 : -1))
+                  .sort((a, b) => {
+                    const getBytes = (s) => {
+                      const num = Number.parseFloat(s);
+                      if (s.includes("M")) return num * 1024 * 1024;
+                      if (s.includes("K")) return num * 1024;
+                      return num;
+                    };
+                    return getBytes(b.size) - getBytes(a.size);
+                  })
                   .map(
                     (img) => `
                   <tr>
                     <td class="path-cell">${img.path}</td>
                     <td><span class="badge ${img.f === "WebP" ? "badge-webp" : "badge-legacy"}">${img.f}</span></td>
-                    <td class="size-cell ${img.size.includes("K") && Number.parseInt(img.size) > 500 ? "size-large" : ""}"> ${img.size}</td>
+                    <td class="size-cell ${img.size.includes("M") || (img.size.includes("K") && Number.parseInt(img.size) > 500) ? "size-large" : ""}"> ${img.size}</td>
                   </tr>
                 `,
                   )

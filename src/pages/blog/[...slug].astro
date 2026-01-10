@@ -19,7 +19,7 @@ import YouTube from "@components/ui/YouTube.astro";
 import BaseLayout from "@layouts/BaseLayout.astro";
 import type { SiteConfig } from "@src/types";
 import { getSiteUrl } from "@utils/site";
-import { Image } from "astro:assets";
+import { getImage,Image } from "astro:assets";
 import { type CollectionEntry, getCollection, render } from "astro:content";
 import { getEntry } from "astro:content";
 import { Icon } from "astro-icon/components";
@@ -80,7 +80,6 @@ const finalReferences = allPostReferences.filter((ref) => {
 // --- End of Reference Logic ---
 
 // --- Image Optimization (JSON-LD) ---
-import { getImage } from "astro:assets";
 
 let jsonLdImage = "/default-blog-cover.webp";
 

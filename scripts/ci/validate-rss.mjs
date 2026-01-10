@@ -189,8 +189,7 @@ async function validateFeedContent(content, results) {
 }
 
 /**
- * Main execution function for RSS validation.
- * Orchestrates structural and content checks.
+ * Validates the RSS feed structural integrity and content.
  *
  * @returns {Promise<void>} Resolves when validation is complete.
  */

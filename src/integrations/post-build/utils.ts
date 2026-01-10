@@ -132,7 +132,7 @@ export function resolveFile(
   if (cleanUrl.startsWith("http") || cleanUrl.startsWith("//")) return null;
 
   const filePath = cleanUrl.startsWith("/")
-    ? path.join(distDir, cleanUrl)
+    ? path.join(distDir, cleanUrl.slice(1))
     : path.resolve(baseDir, cleanUrl);
 
   const rel = path.relative(distDir, filePath);

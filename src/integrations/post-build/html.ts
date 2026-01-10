@@ -62,7 +62,7 @@ function getAssetFilename(buffer: Buffer, mime: string): string {
 }
 
 /**
- * Helper to extract a data URI to a physical file and return the new relative URL.
+ * Extracts a data URI to a physical file and returns the new relative URL.
  */
 function extractDataUri(
   rawDataUri: string,
@@ -105,13 +105,13 @@ function extractDataUri(
 /**
  * Performs a consolidated pass over all HTML files in the distribution directory.
  *
- * This function handles several critical post-build tasks:
- * 1. Converts inline style attributes to scoped classes (to support strict CSP).
- * 2. Injects security nonces into all inline script and style tags.
- * 3. Generates Subresource Integrity (SRI) hashes for all local linked resources.
- * 4. Collects hashes for the final CSP configuration.
- * 5. Identifies external image domains used on the site.
- * 6. Hardens the Cloudflare Insights beacon script with local environment guards.
+ * Orchestrates post-build refinements and security hardening for all HTML files:
+ * - Converts inline styles to scoped classes for CSP compliance.
+ * - Injects security nonces into script and style tags.
+ * - Generates SRI hashes for local resources.
+ * - Collects domains for final CSP configuration.
+ * - Identifies external image domains.
+ * - Hardens the Cloudflare Insights beacon script.
  *
  * @param {string} distDir - The absolute path to the production build output.
  * @param {CspData} cspData - Shared object to store collected CSP hashes and domains.
@@ -277,7 +277,7 @@ function processImages(
 }
 
 /**
- * Helper to find and extract data URIs from src and srcset attributes.
+ * Finds and extracts data URIs from src and srcset attributes.
  */
 function findAndExtractDataUris(
   $: cheerio.CheerioAPI,
@@ -369,6 +369,7 @@ function processStyles($: cheerio.CheerioAPI, enableCsp: boolean): boolean {
       // We use CSS character escapes (\hex) for these characters.
       // Note: The space after the hex code is important as it terminates the escape sequence.
       const sanitizedStyle = styleDef
+        .replaceAll("\\", String.raw`\5c `)
         .replaceAll("<", String.raw`\3c `)
         .replaceAll(">", String.raw`\3e `)
         .replaceAll("{", String.raw`\7b `)

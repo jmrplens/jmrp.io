@@ -224,7 +224,7 @@ Before publishing your post:
 - [ ] All images have alt text
 - [ ] Code examples have language specified
 - [ ] External links open in new tab (automatic)
-- [ ] Test locally with `npm run build && npm run preview`
+- [ ] Test locally with `pnpm run build && pnpm run preview`
 - [ ] Check mobile responsiveness
 
 ## File Naming and Ordering

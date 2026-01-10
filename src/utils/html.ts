@@ -53,8 +53,10 @@ export function sanitize(html: string | undefined | null): string {
     transformTags: {
       a: (tagName, attribs) => {
         const isExternal =
-          attribs.href &&
-          (attribs.href.startsWith("http") || attribs.href.startsWith("//"));
+          (attribs.href &&
+            (attribs.href.startsWith("http") ||
+              attribs.href.startsWith("//"))) ||
+          attribs.target === "_blank";
 
         if (isExternal) {
           return {

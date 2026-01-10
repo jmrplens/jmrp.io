@@ -31,7 +31,7 @@ if (!fs.existsSync(deployDir)) {
 const indexPath = path.join(deployDir, "index.html");
 
 /**
- * Recursively scans a directory for Axe HTML reports.
+ * Scans a directory for Axe HTML reports.
  *
  * @param dir - Directory to scan.
  * @param fileList - Accumulated list of file paths.
@@ -79,7 +79,7 @@ for (const r of reports) {
 }
 
 /**
- * Renders an HTML list of accessibility reports for a specific theme.
+ * Renders a theme-specific list of accessibility reports.
  *
  * @param theme - The theme name (light, dark, unknown).
  * @param list - The list of report objects.
@@ -98,7 +98,6 @@ function renderReportList(theme, list) {
   }
   const title = theme.charAt(0).toUpperCase() + theme.slice(1);
 
-  // Sort logic could be added here if filenames contain timestamps
   const items = list
     .map(
       (r) => `
@@ -321,15 +320,6 @@ const htmlContent = `
 fs.writeFileSync(indexPath, htmlContent);
 console.log(`Generated accessibility index at ${indexPath}`);
 
-// --- Aggregation of JSON Summaries ---
-
-/**
- * Recursively scans a directory for accessibility summary JSON files.
- *
- * @param dir - Directory to scan.
- * @param fileList - Accumulated list of file paths.
- * @returns Array of paths to summary JSON files.
- */
 function findSummaries(dir, fileList = []) {
   const files = fs.readdirSync(dir);
   for (const file of files) {
@@ -360,27 +350,18 @@ if (summaryFiles.length > 0) {
     })
     .filter(Boolean);
 
-  // Write the aggregated report to the root, as format-accessibility-report.mjs expects it there
-  fs.writeFileSync(
-    "accessibility-report.json",
-    JSON.stringify(aggregatedReport, null, 2),
-  );
-  console.log("Generated aggregated accessibility-report.json");
-
-  // Also rename keys to match format-accessibility-report.mjs expectation if needed
-  // The formatter looks for: violations, incomplete (arrays)
-  // Our updated spec produces: violations, incompleteList (arrays)
-  // We should map incompleteList -> incomplete for compatibility
-
+  // Map incompleteList -> incomplete for compatibility with format-accessibility-report.mjs
   const compatibilityReport = aggregatedReport.map((report) => ({
     ...report,
     incompleteCount: report.incomplete, // Preserve count as separate property
     incomplete: report.incompleteList, // Map incompleteList to incomplete for the formatter
   }));
+
   fs.writeFileSync(
     "accessibility-report.json",
     JSON.stringify(compatibilityReport, null, 2),
   );
+  console.log("Generated aggregated accessibility-report.json");
 } else {
   console.warn(
     "No accessibility-summary-*.json files found. Comment generation might fail.",

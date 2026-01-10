@@ -9,10 +9,9 @@ import githubAvatar from "@assets/github-avatar.png";
 import GitHubSearch from "@components/github/GitHubSearch.astro";
 import BaseLayout from "@layouts/BaseLayout.astro";
 import { fetchGitHubProfile, fetchTopRepositories } from "@utils/github";
-import { getImage,Image } from "astro:assets";
+import { getImage, Image } from "astro:assets";
 import { Icon } from "astro-icon/components";
 
-// Fetch data at build time (SSG)
 const profile = await fetchGitHubProfile();
 const repos = await fetchTopRepositories(12); // Top 12 most recently updated
 
@@ -50,7 +49,6 @@ const avatarSrcSetString = await avatarSrcSet;
     <div class="container github-page">
         <h1 class="page-title">GitHub Repositories</h1>
 
-        <!-- Profile Section - NOW STATIC SSG -->
         <div class="profile-header">
             <div class="profile-avatar">
                 <Image
@@ -100,7 +98,6 @@ const avatarSrcSetString = await avatarSrcSet;
             </div>
         </div>
 
-        <!-- Search and Repos Component - Progressive Enhancement -->
         <GitHubSearch initialRepos={repos} />
     </div>
 </BaseLayout>

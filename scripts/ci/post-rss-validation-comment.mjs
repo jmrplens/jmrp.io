@@ -96,13 +96,15 @@ export default async function postRssValidationComment({ github, context }) {
     console.error("RSS validation comment error:", error);
   }
 
-  const { data: comments } = await github.rest.issues.listComments({
+  const comments = await github.paginate(github.rest.issues.listComments, {
     owner: context.repo.owner,
     repo: context.repo.repo,
     issue_number: context.issue.number,
   });
 
-  const existingComment = comments.find((c) => c.body?.includes(HEADER));
+  const existingComment = comments.find(
+    (c) => c.body?.includes(HEADER) && c.user?.type === "Bot",
+  );
 
   await (existingComment
     ? github.rest.issues.updateComment({

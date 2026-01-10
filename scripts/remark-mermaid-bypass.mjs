@@ -23,7 +23,6 @@ export function remarkMermaidBypass() {
       if (node.lang === "mermaid-render") {
         const newNode = {
           type: "code",
-          value: node.value,
           data: {
             hName: "pre",
             hProperties: {

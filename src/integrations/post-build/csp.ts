@@ -46,8 +46,8 @@ export async function finalizeCspConfig(
   const allStyleHashes = cspData.styleHashes;
 
   /**
-   * Helper to chunk a large set of CSP hashes into multiple Nginx variables.
-   * This avoids exceeding the ~4KB limit for individual variables in Nginx.
+   * Chunks a large set of CSP hashes into multiple Nginx variables to avoid
+   * exceeding the ~4KB individual variable limit.
    */
   const chunkHashes = (
     hashes: Set<string>,
@@ -175,5 +175,5 @@ add_header Permissions-Policy "${permissionsPolicy}" always;
 `;
 
   fs.writeFileSync(path.join(distDir, "security_headers.conf"), content);
-  console.log("  ✓ Generated security_headers.conf");
+  logger.info("  ✓ Generated security_headers.conf");
 }

@@ -26,8 +26,7 @@ function formatSize(bytes) {
 }
 
 /**
- * Main execution function for bundle size analysis.
- * Scans the dist directory and writes the analysis report.
+ * Analyzes bundle size in the dist directory and categorizes files by type.
  *
  * @returns {Promise<void>} Resolves when analysis is complete.
  */
@@ -107,14 +106,13 @@ async function analyze() {
     stats.categories[category].files.push({ path: relativePath, size });
   }
 
-  // Sort by size and keep only Top 5 for the report
   for (const cat in stats.categories) {
     stats.categories[cat].files.sort((a, b) => b.size - a.size);
     stats.categories[cat].largestFiles = stats.categories[cat].files.slice(
       0,
       5,
     );
-    delete stats.categories[cat].files; // Drop full list to keep report small
+    delete stats.categories[cat].files;
   }
 
   stats.readableTotalSize = formatSize(stats.totalSize);

@@ -44,12 +44,12 @@ interface CoauthorMap {
  * File location: src/data/publications/bibliography/papers.bib
  *
  * Process involves:
- * 1. Reading the .bib file.
- * 2. Parsing entries using citation-js.
- * 3. Sorting by year (descending).
- * 4. Matching authors with the coauthors.yml file to add profile links.
- * 5. Extracting custom fields (slides, poster) that citation-js might miss.
- * 6. Grouping into categories: Journal, Conference, Thesis, Others.
+ * - Reading the .bib file.
+ * - Parsing entries using citation-js.
+ * - Sorting by year (descending).
+ * - Matching authors with the coauthors.yml file to add profile links.
+ * - Extracting custom fields (slides, poster) that citation-js might miss.
+ * - Grouping into categories: Journal, Conference, Thesis, Others.
  *
  * @returns {Promise<PublicationGroup[]>} Structured list of publication groups.
  */
@@ -61,7 +61,6 @@ export async function getPublications(): Promise<PublicationGroup[]> {
     );
     const fileContents = fs.readFileSync(filePath, "utf-8");
 
-    // Load coauthors
     const coauthorsEntry = await getEntry("publications_data", "coauthors");
     const coauthors = (coauthorsEntry?.data || {}) as CoauthorMap;
 
@@ -98,7 +97,6 @@ export async function getPublications(): Promise<PublicationGroup[]> {
     const citations = new Cite(fileContents);
     const data: PublicationItem[] = citations.data;
 
-    // Sort all by year desc first
     data.sort((a, b) => {
       const yearA = a.issued?.["date-parts"]?.[0]?.[0] || 0;
       const yearB = b.issued?.["date-parts"]?.[0]?.[0] || 0;
@@ -144,7 +142,6 @@ export async function getPublications(): Promise<PublicationGroup[]> {
       });
     };
 
-    // Grouping containers
     const journalArticles: PublicationItem[] = [];
     const conferencePapers: PublicationItem[] = [];
     const thesisList: PublicationItem[] = [];
@@ -225,6 +222,6 @@ export async function getPublications(): Promise<PublicationGroup[]> {
     ].filter((g) => g.items.length > 0);
   } catch (error) {
     console.error("Error fetching publications:", error);
-    return []; // Return an empty array or rethrow the error, depending on desired error handling
+    return [];
   }
 }

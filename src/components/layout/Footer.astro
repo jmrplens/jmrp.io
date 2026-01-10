@@ -10,8 +10,6 @@ import { getEntry } from "astro:content";
 import { Icon } from "astro-icon/components";
 
 const today = new Date();
-
-// Load socials
 const socialsEntry = await getEntry("site_config", "socials");
 const socials = (socialsEntry?.data || {}) as SocialsConfig;
 
@@ -75,7 +73,6 @@ if (socials.matrix_id) {
     });
 }
 
-// Custom Socials
 if (socials.custom_social) {
     const customs = socials.custom_social;
     for (const item of customs) {
@@ -109,7 +106,6 @@ if (socials.custom_social) {
     }
 }
 
-// Helper to map FontAwesome classes to Iconify names
 const getIconName = (faClass: string) => {
     if (!faClass) return "";
     const parts = faClass.split(" ");

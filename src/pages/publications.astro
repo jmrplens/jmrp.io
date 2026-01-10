@@ -12,13 +12,15 @@ import { getSiteUrl } from "@utils/site";
 
 const publicationGroups = await getPublications();
 
-// Flatten all publications for Schema
 const allPublications = publicationGroups.flatMap((group) => group.items);
 
 const collectionSchema = {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
-    "@id": new URL("#collection", new URL(Astro.url.pathname, getSiteUrl())).toString(),
+    "@id": new URL(
+        "#collection",
+        new URL(Astro.url.pathname, getSiteUrl()),
+    ).toString(),
     name: "Publications",
     description:
         "Academic publications and research by José Manuel Requena Plens.",

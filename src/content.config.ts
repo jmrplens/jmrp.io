@@ -16,15 +16,15 @@ const posts = defineCollection({
   }),
   schema: ({ image }) =>
     z.object({
-      title: z.string(), // Post title (required)
-      publishedDate: z.coerce.date(), // Publication date
-      updatedDate: z.coerce.date().optional(), // Last updated date
-      draft: z.boolean().default(false), // Draft status, defaults to false
-      description: z.string().optional(), // SEO description
-      author: z.string().optional(), // Author name (defaults to site author)
-      authorEmail: z.email().optional(), // Author email for RSS feed
-      coverImage: image().optional(), // Cover image URL or path
-      tags: z.array(z.string()).optional(), // List of tags/categories
+      title: z.string(),
+      publishedDate: z.coerce.date(),
+      updatedDate: z.coerce.date().optional(),
+      draft: z.boolean().default(false),
+      description: z.string().optional(),
+      author: z.string().optional(),
+      authorEmail: z.email().optional(),
+      coverImage: image().optional(),
+      tags: z.array(z.string()).optional(),
     }),
 });
 
@@ -221,5 +221,4 @@ const publications_data = defineCollection({
   ),
 });
 
-// Export collections variable to register them with Astro
 export const collections = { posts, site_config, cv, publications_data };

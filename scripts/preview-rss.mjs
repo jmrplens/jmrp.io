@@ -121,7 +121,7 @@ async function generatePreview() {
           const content =
             item["content:encoded"] || item.content || item.description || "";
           const enclosure = item.enclosure
-            ? `<img src="${item.enclosure.url}" alt="Cover Image" style="width:100%; max-height: 400px; object-fit: cover; border-radius: 8px; margin-bottom: 20px;">`
+            ? `<img src="${escapeHtml(item.enclosure.url)}" alt="Cover Image" style="width:100%; max-height: 400px; object-fit: cover; border-radius: 8px; margin-bottom: 20px;">`
             : "";
 
           return `

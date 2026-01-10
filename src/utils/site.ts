@@ -8,7 +8,11 @@
  * Safe to use in both SSG and SSR contexts where `import.meta.env.SITE` is available.
  */
 export const getSiteUrl = (): string => {
-  return import.meta.env.SITE;
+  const site = import.meta.env.SITE;
+  if (!site) {
+    throw new Error("SITE environment variable is not defined.");
+  }
+  return site;
 };
 
 /**

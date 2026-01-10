@@ -18,7 +18,6 @@ interface Props {
 
 const { references = [] } = Astro.props;
 
-// Import all png files from icons folder eagerly so we can use them in the map
 const iconFiles = import.meta.glob<{ default: ImageMetadata }>(
     "/src/assets/icons/*.webp",
     { eager: true },
@@ -43,6 +42,16 @@ const iconFiles = import.meta.glob<{ default: ImageMetadata }>(
 
                     try {
                         urlObj = new URL(ref.url);
+                        const allowedProtocols = ["http:", "https:"];
+                        if (
+                            !allowedProtocols.includes(urlObj.protocol) &&
+                            urlObj.protocol !== "mailto:" &&
+                            urlObj.protocol !== "tel:"
+                        ) {
+                            throw new Error(
+                                `Invalid protocol: ${urlObj.protocol}`,
+                            );
+                        }
                         hostname = urlObj.hostname;
                         const iconName = hostname.replaceAll(
                             /[^a-z0-9]/gi,
