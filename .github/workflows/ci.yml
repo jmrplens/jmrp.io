@@ -17,7 +17,7 @@ env:
 jobs:
   # Static Analysis Jobs (Parallel)
   sa-astro:
-    name: SA: Astro Check
+    name: "SA: Astro Check"
     runs-on: ubuntu-latest
     timeout-minutes: 5
     needs: build
@@ -32,7 +32,7 @@ jobs:
       - run: pnpm exec astro check
 
   sa-prettier:
-    name: SA: Prettier
+    name: "SA: Prettier"
     runs-on: ubuntu-latest
     timeout-minutes: 5
     needs: build
@@ -47,7 +47,7 @@ jobs:
       - run: pnpm exec prettier --check .
 
   sa-eslint:
-    name: SA: ESLint
+    name: "SA: ESLint"
     runs-on: ubuntu-latest
     timeout-minutes: 5
     needs: build
@@ -62,7 +62,7 @@ jobs:
       - run: pnpm exec eslint . --max-warnings=0
 
   sa-lychee:
-    name: SA: Link Checker (Source)
+    name: "SA: Link Checker (Source)"
     runs-on: ubuntu-latest
     timeout-minutes: 5
     needs: build
@@ -82,7 +82,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.TOKEN_GITHUB }}
 
   sa-typos:
-    name: SA: Spell Checker
+    name: "SA: Spell Checker"
     runs-on: ubuntu-latest
     timeout-minutes: 5
     needs: build
@@ -91,7 +91,7 @@ jobs:
       - uses: crate-ci/typos@master
 
   sa-audit:
-    name: SA: Security Audit
+    name: "SA: Security Audit"
     runs-on: ubuntu-latest
     timeout-minutes: 5
     needs: build
@@ -106,7 +106,7 @@ jobs:
       - run: pnpm audit --audit-level=high
 
   sa-snyk:
-    name: SA: Snyk Security
+    name: "SA: Snyk Security"
     runs-on: ubuntu-latest
     timeout-minutes: 5
     needs: build
@@ -120,7 +120,7 @@ jobs:
           args: --all-projects --severity-threshold=high
 
   sa-jsdoc:
-    name: SA: JSDoc Coverage
+    name: "SA: JSDoc Coverage"
     runs-on: ubuntu-latest
     timeout-minutes: 5
     needs: build
