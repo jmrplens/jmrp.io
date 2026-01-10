@@ -15,92 +15,127 @@ env:
   NODE_OPTIONS: "--no-deprecation"
 
 jobs:
-  static-analysis:
-    name: Static Analysis
+  # Static Analysis Jobs (Parallel)
+  sa-astro:
+    name: SA: Astro Check
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    # needs: build # Removed to allow parallel execution
-    outputs:
-      astro: ${{ steps.astro.outcome }}
-      prettier: ${{ steps.prettier.outcome }}
-      eslint: ${{ steps.eslint.outcome }}
-      lychee: ${{ steps.lychee.outcome }}
-      typos: ${{ steps.typos.outcome }}
-      security: ${{ steps.security.outcome }}
-      snyk: ${{ steps.snyk.outcome }}
-      jsdoc: ${{ steps.jsdoc.outcome }}
-      jsdocCoverage: ${{ steps.jsdoc_calc.outputs.coverage }}
+    timeout-minutes: 5
+    needs: build
     steps:
       - uses: actions/checkout@v6
-      - name: Download build artifact
-        uses: actions/download-artifact@v7
-        with:
-          name: dist-build
-          path: dist
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile --prefer-offline
+      - run: pnpm exec astro check
 
-      - name: Astro Check
-        id: astro
-        run: pnpm exec astro check
-        continue-on-error: true
+  sa-prettier:
+    name: SA: Prettier
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: build
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: "pnpm"
+      - run: pnpm install --frozen-lockfile --prefer-offline
+      - run: pnpm exec prettier --check .
 
-      - name: Prettier Check
-        id: prettier
-        run: pnpm exec prettier --check .
-        continue-on-error: true
+  sa-eslint:
+    name: SA: ESLint
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: build
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: "pnpm"
+      - run: pnpm install --frozen-lockfile --prefer-offline
+      - run: pnpm exec eslint . --max-warnings=0
 
-      - name: ESLint Check
-        id: eslint
-        run: pnpm exec eslint . --max-warnings=0
-        continue-on-error: true
-
+  sa-lychee:
+    name: SA: Link Checker (Source)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: build
+    steps:
+      - uses: actions/checkout@v6
       - name: Restore lychee cache
         uses: actions/cache@v5
         with:
           path: .lycheecache
-          key: cache-lychee-unified-${{ github.sha }}
-          restore-keys: cache-lychee-unified-
-
-      - name: Link Checker (Source & HTML)
-        id: lychee
-        uses: lycheeverse/lychee-action@v2.7.0
+          key: cache-lychee-source-${{ github.sha }}
+          restore-keys: cache-lychee-source-
+      - uses: lycheeverse/lychee-action@v2.7.0
         with:
-          # Check source files only (parallel to build)
           args: --config lychee.toml ./**/*.md ./**/*.mdx src/**/*.astro src/**/*.ts src/**/*.tsx
           fail: true
         env:
           GITHUB_TOKEN: ${{ secrets.TOKEN_GITHUB }}
-        continue-on-error: true
 
-      - name: Spell Checker
-        id: typos
-        uses: crate-ci/typos@master
-        continue-on-error: true
+  sa-typos:
+    name: SA: Spell Checker
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: build
+    steps:
+      - uses: actions/checkout@v6
+      - uses: crate-ci/typos@master
 
-      - name: Security Audit
-        id: security
-        run: pnpm audit --audit-level=high
-        continue-on-error: true
+  sa-audit:
+    name: SA: Security Audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: build
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: "pnpm"
+      - run: pnpm install --frozen-lockfile --prefer-offline
+      - run: pnpm audit --audit-level=high
 
-      - name: Snyk Security
-        id: snyk
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        if: env.SNYK_TOKEN != ''
-        uses: snyk/actions/node@master
+  sa-snyk:
+    name: SA: Snyk Security
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: build
+    if: env.SNYK_TOKEN != ''
+    env:
+      SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: snyk/actions/node@master
         with:
           args: --all-projects --severity-threshold=high
-        continue-on-error: true
 
-      - name: JSDoc Coverage
-        id: jsdoc
+  sa-jsdoc:
+    name: SA: JSDoc Coverage
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: build
+    outputs:
+      coverage: ${{ steps.jsdoc_calc.outputs.coverage }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: "pnpm"
+      - run: pnpm install --frozen-lockfile --prefer-offline
+      - name: Calculate JSDoc Coverage
+        id: jsdoc_calc
         run: |
           OUTPUT=$(node scripts/ci/calculate-jsdoc-coverage.mjs 2>&1)
           echo "$OUTPUT"
@@ -110,18 +145,14 @@ jobs:
             exit 1
           fi
           echo "coverage=${COVERAGE}%" >> $GITHUB_OUTPUT
-        continue-on-error: true
-      - name: Mark JSDoc Success
-        id: jsdoc_calc
-        if: always()
-        run: echo "coverage=${{ steps.jsdoc.outputs.coverage }}" >> $GITHUB_OUTPUT
 
   static-analysis-report:
     name: Static Analysis Report
     runs-on: ubuntu-latest
     timeout-minutes: 5
     if: always()
-    needs: [build, static-analysis]
+    if: always()
+    needs: [build, sa-astro, sa-prettier, sa-eslint, sa-lychee, sa-typos, sa-audit, sa-snyk, sa-jsdoc]
     permissions:
       pull-requests: write
     steps:
@@ -130,15 +161,15 @@ jobs:
         if: github.event_name == 'pull_request'
         uses: actions/github-script@v8
         env:
-          OUTCOME_ASTRO: ${{ needs.static-analysis.outputs.astro }}
-          OUTCOME_PRETTIER: ${{ needs.static-analysis.outputs.prettier }}
-          OUTCOME_ESLINT: ${{ needs.static-analysis.outputs.eslint }}
-          OUTCOME_LYCHEE: ${{ needs.static-analysis.outputs.lychee }}
-          OUTCOME_TYPOS: ${{ needs.static-analysis.outputs.typos }}
-          OUTCOME_SECURITY: ${{ needs.static-analysis.outputs.security }}
-          OUTCOME_SNYK: ${{ needs.static-analysis.outputs.snyk }}
-          OUTCOME_JSDOC: ${{ needs.static-analysis.outputs.jsdoc }}
-          JSDOC_COVERAGE: ${{ needs.static-analysis.outputs.jsdocCoverage }}
+          OUTCOME_ASTRO: ${{ needs.sa-astro.result }}
+          OUTCOME_PRETTIER: ${{ needs.sa-prettier.result }}
+          OUTCOME_ESLINT: ${{ needs.sa-eslint.result }}
+          OUTCOME_LYCHEE: ${{ needs.sa-lychee.result }}
+          OUTCOME_TYPOS: ${{ needs.sa-typos.result }}
+          OUTCOME_SECURITY: ${{ needs.sa-audit.result }}
+          OUTCOME_SNYK: ${{ needs.sa-snyk.result }}
+          OUTCOME_JSDOC: ${{ needs.sa-jsdoc.result }}
+          JSDOC_COVERAGE: ${{ needs.sa-jsdoc.outputs.coverage }}
         with:
           script: |
             const { default: script } = await import(`file://${process.env.GITHUB_WORKSPACE}/scripts/ci/post-static-analysis-comment.mjs`)
@@ -146,15 +177,14 @@ jobs:
 
       - name: Check Failure
         if: |
-          needs.static-analysis.result == 'failure' ||
-          needs.static-analysis.outputs.astro == 'failure' ||
-          needs.static-analysis.outputs.prettier == 'failure' ||
-          needs.static-analysis.outputs.eslint == 'failure' ||
-          needs.static-analysis.outputs.lychee == 'failure' ||
-          needs.static-analysis.outputs.typos == 'failure' ||
-          needs.static-analysis.outputs.security == 'failure' ||
-          needs.static-analysis.outputs.snyk == 'failure' ||
-          needs.static-analysis.outputs.jsdoc == 'failure'
+          needs.sa-astro.result == 'failure' ||
+          needs.sa-prettier.result == 'failure' ||
+          needs.sa-eslint.result == 'failure' ||
+          needs.sa-lychee.result == 'failure' ||
+          needs.sa-typos.result == 'failure' ||
+          needs.sa-audit.result == 'failure' ||
+          needs.sa-snyk.result == 'failure' ||
+          needs.sa-jsdoc.result == 'failure'
         run: |
           echo "::error::One or more static analysis steps failed."
           exit 1

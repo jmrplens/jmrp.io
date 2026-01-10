@@ -18,25 +18,36 @@ export default async function script({ github, context }) {
     return;
   }
 
-  let report;
+  const report = loadReport(reportPath, workspace);
+  if (!report) return;
+
+  const body = buildCommentBody(report, surgeUrl);
+  if (!body) return;
+
+  await postOrUpdateComment(github, context, body);
+}
+
+function loadReport(reportPath, workspace) {
   try {
-    report = JSON.parse(fs.readFileSync(reportPath, "utf-8"));
+    const content = fs.readFileSync(reportPath, "utf-8");
+    const report = JSON.parse(content);
+    if (!report?.stats) {
+      console.error("Invalid report structure: missing stats");
+      return null;
+    }
+    return report;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     console.error(
       `Failed to parse Playwright report (${path.relative(workspace, reportPath)}):`,
       message,
     );
-    return;
+    return null;
   }
+}
 
-  if (!report?.stats) {
-    console.error("Invalid report structure: missing stats");
-    return;
-  }
+function buildCommentBody(report, surgeUrl) {
   const stats = report.stats;
-
-  // Defensive: ensure all fields are numbers, defaulting to 0 if missing
   const passed = Number(stats.expected ?? 0);
   const failed = Number(stats.unexpected ?? 0);
   const flaky = Number(stats.flaky ?? 0);
@@ -48,74 +59,81 @@ export default async function script({ github, context }) {
   const status = isSuccess ? "**Passed!**" : "**Failures detected**";
 
   let body = `### 🎭 Functional Tests\n\n${icon} ${status}\n\n`;
-
-  body += "| Metric | Value |\n";
-  body += "| :--- | :--- |\n";
-  body += `| 🧪 Total Tests | **${total}** |\n`;
-  body += `| ✅ Passed | **${passed}** |\n`;
-  body += `| ❌ Failed | **${failed}** |\n`;
-  if (flaky > 0) body += `| 🟠 Flaky | **${flaky}** |\n`;
-  if (skipped > 0) body += `| ⏩ Skipped | **${skipped}** |\n`;
-
-  if (surgeUrl) {
-    body += `| 🌐 Full Report | [**Open Interactive Report**](https://${surgeUrl}) 🚀 |\n`;
-  }
+  body += buildStatsTable(total, passed, failed, flaky, skipped, surgeUrl);
   body += "\n";
+  body += buildFailureDetails(report, failed);
 
-  if (failed > 0) {
-    body += "<details>\n<summary><b>🔍 View Failed Tests</b></summary>\n\n";
+  return body;
+}
 
-    // Helper to traverse suites and find failed tests
-    function findFailedTests(suite) {
-      let failedTests = [];
-      for (const spec of suite.specs || []) {
-        if (spec.ok === false) {
-          failedTests.push(spec);
-        }
-      }
-      for (const child of suite.suites || []) {
-        failedTests = [...failedTests, ...findFailedTests(child)];
-      }
-      return failedTests;
-    }
+function buildStatsTable(total, passed, failed, flaky, skipped, surgeUrl) {
+  let table = "| Metric | Value |\n| :--- | :--- |\n";
+  table += `| 🧪 Total Tests | **${total}** |\n`;
+  table += `| ✅ Passed | **${passed}** |\n`;
+  table += `| ❌ Failed | **${failed}** |\n`;
+  if (flaky > 0) table += `| 🟠 Flaky | **${flaky}** |\n`;
+  if (skipped > 0) table += `| ⏩ Skipped | **${skipped}** |\n`;
+  if (surgeUrl) {
+    table += `| 🌐 Full Report | [**Open Interactive Report**](https://${surgeUrl}) 🚀 |\n`;
+  }
+  return table;
+}
 
-    if (!report?.suites) {
-      console.error("Invalid report structure: missing suites");
-      return;
-    }
-    const failedTests = findFailedTests({ suites: report.suites });
-
-    for (const spec of failedTests) {
-      body += `- **${spec.title}** (${spec.file})\n`;
-    }
-    body += "</details>\n\n";
-  } else {
-    body += "> All functional tests passed! ✨\n";
+function buildFailureDetails(report, failed) {
+  if (failed === 0) {
+    return "> All functional tests passed! ✨\n";
   }
 
-  // Post or update the comment
-  if (context.payload.pull_request) {
-    const header = "### 🎭 Functional Tests";
-    const { data: comments } = await github.rest.issues.listComments({
+  let details = "<details>\n<summary><b>🔍 View Failed Tests</b></summary>\n\n";
+  const failedTests = findFailedTests({ suites: report.suites });
+
+  for (const spec of failedTests) {
+    details += `- **${spec.title}** (${spec.file})\n`;
+  }
+  details += "</details>\n\n";
+  return details;
+}
+
+function findFailedTests(suite) {
+  let failedTests = [];
+  if (!suite) return failedTests;
+
+  for (const spec of suite.specs || []) {
+    if (spec.ok === false) {
+      failedTests.push(spec);
+    }
+  }
+  for (const child of suite.suites || []) {
+    failedTests = [...failedTests, ...findFailedTests(child)];
+  }
+  return failedTests;
+}
+
+async function postOrUpdateComment(github, context, body) {
+  if (!context.payload.pull_request) return;
+
+  const header = "### 🎭 Functional Tests";
+  const { data: comments } = await github.rest.issues.listComments({
+    owner: context.repo.owner,
+    repo: context.repo.repo,
+    issue_number: context.payload.pull_request.number,
+  });
+
+  const existingComment = comments.find((c) => c.body?.includes(header));
+
+  if (existingComment) {
+    await github.rest.issues.updateComment({
+      owner: context.repo.owner,
+      repo: context.repo.repo,
+      comment_id: existingComment.id,
+      body: body,
+    });
+  } else {
+    await github.rest.issues.createComment({
       owner: context.repo.owner,
       repo: context.repo.repo,
       issue_number: context.payload.pull_request.number,
+      body: body,
     });
-
-    const existingComment = comments.find((c) => c.body?.includes(header));
-
-    await (existingComment
-      ? github.rest.issues.updateComment({
-          owner: context.repo.owner,
-          repo: context.repo.repo,
-          comment_id: existingComment.id,
-          body: body,
-        })
-      : github.rest.issues.createComment({
-          owner: context.repo.owner,
-          repo: context.repo.repo,
-          issue_number: context.payload.pull_request.number,
-          body: body,
-        }));
   }
 }

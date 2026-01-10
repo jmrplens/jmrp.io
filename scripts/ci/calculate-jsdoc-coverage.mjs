@@ -92,11 +92,7 @@ async function calculateCoverage() {
       }
 
       // Determine if children should be considered public by default
-      const nextParentPublic =
-        isPublic &&
-        (ts.isClassDeclaration(node) ||
-          ts.isInterfaceDeclaration(node) ||
-          ts.isEnumDeclaration(node));
+      const nextParentPublic = checkParentPublic(node, isPublic);
 
       ts.forEachChild(node, (n) => visit(n, nextParentPublic));
     };
@@ -145,6 +141,21 @@ async function calculateCoverage() {
 }
 
 /**
+ * Helper to determine if children should inherit public status.
+ * @param {ts.Node} node
+ * @param {boolean} isPublic
+ * @returns {boolean}
+ */
+function checkParentPublic(node, isPublic) {
+  return (
+    isPublic &&
+    (ts.isClassDeclaration(node) ||
+      ts.isInterfaceDeclaration(node) ||
+      ts.isEnumDeclaration(node))
+  );
+}
+
+/**
  * Identifies all nodes that are exported from a source file using the Type Checker.
  * This handles both inline exports (export function ...) and separate
  * export statements (export { foo }).
@@ -162,23 +173,32 @@ function getExportedNodes(sourceFile, checker) {
     const declarations = exp.getDeclarations();
     if (declarations) {
       for (const decl of declarations) {
-        exportedNodes.add(decl);
-        // If it's a VariableDeclaration, we want to track its parent VariableStatement
-        // as well, since that's what we see during top-level source file iteration.
-        if (ts.isVariableDeclaration(decl)) {
-          const varList = decl.parent;
-          if (varList && ts.isVariableDeclarationList(varList)) {
-            const varStatement = varList.parent;
-            if (varStatement && ts.isVariableStatement(varStatement)) {
-              exportedNodes.add(varStatement);
-            }
-          }
-        }
+        addDeclarationToExported(decl, exportedNodes);
       }
     }
   }
 
   return exportedNodes;
+}
+
+/**
+ * Adds a declaration and potentially its parent VariableStatement to the set of exported nodes.
+ * @param {ts.Declaration} decl
+ * @param {Set<ts.Node>} exportedNodes
+ */
+function addDeclarationToExported(decl, exportedNodes) {
+  exportedNodes.add(decl);
+  // If it's a VariableDeclaration, we want to track its parent VariableStatement
+  // as well, since that's what we see during top-level source file iteration.
+  if (ts.isVariableDeclaration(decl)) {
+    const varList = decl.parent;
+    if (varList && ts.isVariableDeclarationList(varList)) {
+      const varStatement = varList.parent;
+      if (varStatement && ts.isVariableStatement(varStatement)) {
+        exportedNodes.add(varStatement);
+      }
+    }
+  }
 }
 
 /**
