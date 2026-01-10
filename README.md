@@ -247,12 +247,12 @@ We perform comprehensive accessibility checks:
 
 - **Axe-core (via Playwright)**: Scans every page against **WCAG 2.1/2.2 AA** and **Best Practice** rules.
   - **Dual-Theme Matrix**: Tests run in parallel for both **Light** and **Dark** modes to ensure contrast compliance in all contexts.
-  - **Unified Dashboard**: Aggregates results into an interactive HTML dashboard deployed to Surge, providing a single point of review for both themes.
+  - **Unified Dashboard**: Aggregates results into an interactive HTML dashboard deployed to Vercel, providing a single point of review for both themes.
   - **Global SVG Exclusion**: Prevents false positives in diagrams (Mermaid, etc.).
   - Fails the build on any violation.
 - **Lighthouse CI**: Runs Lighthouse audits on all pages, enforcing high scores for Accessibility, Performance, and SEO.
   - **Parallel Matrix Execution**: Runs 4 parallel jobs covering **Mobile** & **Desktop** form factors across both **Light** & **Dark** themes.
-  - **Unified Dashboard**: Aggregates all results into a single, interactive HTML dashboard deployed to Surge for easy review.
+  - **Unified Dashboard**: Aggregates all results into a single, interactive HTML dashboard deployed to Vercel for easy review.
 - **Manual Checks**: The pipeline flags "incomplete" checks (e.g., complex color contrast) for manual review.
 
 ### Content Validation
@@ -264,6 +264,7 @@ We perform comprehensive accessibility checks:
 ## 🚀 Deployment
 
 The site is built as a static folder (`dist/`) and can be deployed to any static host. I use **Docker** with **Nginx**.
+The CI reports dashboard is automatically deployed to **Vercel** with a permanent link for the `main` branch at [jmrp-ci-reports.vercel.app](https://jmrp-ci-reports.vercel.app).
 
 ### Docker
 
