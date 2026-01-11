@@ -254,7 +254,7 @@ const getStatusClass = (res) => {
 
 // Summary Text Generation
 let summaryInsights = `Your project is currently in <b>${conditionText}</b>. We've scanned performance, accessibility, and code quality across the entire codebase.`;
-if (bundleStats && bundleStats.isHighCodeSize) {
+if (bundleStats?.isHighCodeSize) {
   summaryInsights += ` <br><span style="color:var(--danger); font-size:0.85rem;">⚠️ High CODE bundle size detected: ${bundleStats.readableCodeSize}. Consider splitting chunks or removing dependencies.</span>`;
 }
 if (accessibilityData.some((r) => r.violations?.length > 0)) {
@@ -267,7 +267,7 @@ if (accessibilityData.some((r) => r.violations?.length > 0)) {
  * @returns {string} HTML string for the score badge with color coding.
  */
 const getScoreBadge = (score) => {
-  if (score === null || score === undefined)
+  if (score == null)
     return '<span class="score-pill" style="background:var(--neutral)"></span>N/A';
 
   let colorStyle = "var(--success)";
