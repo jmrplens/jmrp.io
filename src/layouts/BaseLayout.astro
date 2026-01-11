@@ -69,7 +69,6 @@ const {
       authors={authors}
       tags={tags}
     />
-    <slot name="head" />
     <script is:inline>
       // Critical: Execute immediately to prevent FOUC
       (function () {
@@ -107,7 +106,6 @@ const {
       tabindex="-1"
     >
       <slot />
-      {type === "article" && <slot name="references" />}
     </main>
     <Footer />
 
