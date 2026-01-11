@@ -56,8 +56,6 @@ const finalIcon = icon || getIconForFile(filename);
 </div>
 
 <style>
-  @import url("@styles/components/code-shared.css");
-
   .file-content-wrapper {
     margin: 1.5rem 0;
     overflow: hidden; /* Keep children within rounded corners */
@@ -102,14 +100,26 @@ const finalIcon = icon || getIconForFile(filename);
   /* Style the <pre> element that comes from the slot */
   .file-body :global(pre),
   .file-body :global(.astro-code) {
-    /* Inherit shared container styles */
-    @apply shared-code-container;
-
+    display: block; /* Simpler block layout to avoid flex-related boosting */
+    width: 100%; /* Explicit width constraint */
+    min-width: 0;
+    max-width: 100%; /* Ensure it doesn't overflow parent calculation */
     padding: 1.25rem 1.5rem !important; /* Generous padding like other components */
     margin: 0 !important;
+    overflow-x: auto;
+
+    /* Typography */
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    line-height: 1.6;
     border: none !important;
     border-radius: 0 !important;
     box-shadow: none !important;
+
+    /* Mobile Fix: Prevent font inflation */
+    /* stylelint-disable-next-line property-no-vendor-prefix */
+    -webkit-text-size-adjust: none;
+    text-size-adjust: none;
   }
 
   /* Accessibility: Boost contrast in light mode */

@@ -100,8 +100,6 @@ const uuid = randomUUID().slice(0, 8);
 </div>
 
 <style>
-  @import url("@styles/components/code-shared.css");
-
   .terminal-command-wrapper {
     position: relative;
     display: flex;
@@ -148,21 +146,40 @@ const uuid = randomUUID().slice(0, 8);
   }
 
   .terminal-window {
-    /* Inherit shared styles */
-    @apply shared-code-container;
-
+    display: block; /* Simpler block layout to avoid flex-related boosting */
     flex-grow: 1;
+    width: 100%; /* Explicit width constraint */
+    min-width: 0;
+    max-width: 100%; /* Ensure it doesn't overflow parent calculation */
     padding: 0.75rem 1rem;
     margin: 0; /* Reset pre default margin */
+    overflow-x: auto;
+
+    /* Typography */
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    line-height: 1.6;
+
+    /* Mobile Fix: Prevent font inflation */
+    /* stylelint-disable-next-line property-no-vendor-prefix */
+    -webkit-text-size-adjust: none;
+    text-size-adjust: none;
   }
 
   .command-line {
-    /* Inherit shared content styles */
-    @apply shared-code-content;
-
     display: flex;
     align-items: baseline;
     min-height: 1.6em;
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: var(--color-text);
+    white-space: pre;
+
+    /* Mobile Fix: Prevent font inflation */
+    /* stylelint-disable-next-line property-no-vendor-prefix */
+    -webkit-text-size-adjust: none;
+    text-size-adjust: none;
   }
 
   .prompt {

@@ -52,8 +52,6 @@ const { badTitle = "Blocked / Insecure", goodTitle = "Allowed / Secure" } =
 </div>
 
 <style>
-  @import url("@styles/components/code-shared.css");
-
   .compare-code-wrapper {
     display: grid;
     grid-template-columns: 1fr;
@@ -140,21 +138,40 @@ const { badTitle = "Blocked / Insecure", goodTitle = "Allowed / Secure" } =
 
   /* Force Code Block Styles */
   .content :global(pre) {
-    /* Inherit shared container styles */
-    @apply shared-code-container;
-
+    display: block; /* Simpler block layout to avoid flex-related boosting */
+    width: 100%; /* Explicit width constraint */
+    min-width: 0;
+    max-width: 100%; /* Ensure it doesn't overflow parent calculation */
     padding: 1rem !important;
     margin: 0 !important;
+    overflow-x: auto;
+
+    /* Typography */
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    line-height: 1.6;
     background: transparent !important; /* Let container bg show through */
     border: none !important;
     border-radius: 0 !important;
+
+    /* Mobile Fix: Prevent font inflation */
+    /* stylelint-disable-next-line property-no-vendor-prefix */
+    -webkit-text-size-adjust: none;
+    text-size-adjust: none;
   }
 
   /* Ensure code text is visible */
   .content :global(code) {
-    /* Inherit shared content styles */
-    @apply shared-code-content;
-
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: var(--color-text);
+    white-space: pre;
     background-color: transparent !important;
+
+    /* Mobile Fix: Prevent font inflation */
+    /* stylelint-disable-next-line property-no-vendor-prefix */
+    -webkit-text-size-adjust: none;
+    text-size-adjust: none;
   }
 </style>
