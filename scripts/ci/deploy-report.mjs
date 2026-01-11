@@ -19,8 +19,13 @@ if (!dir || !projectName) {
 }
 
 // Input sanitization to prevent command injection
-if (!/^[a-zA-Z0-9_.\-/]+$/.test(dir) || !/^[a-zA-Z0-9_.\-/]+$/.test(projectName)) {
-  console.error("Invalid directory or project name: contains unsafe characters");
+if (
+  !/^[a-zA-Z0-9_.\-/]+$/.test(dir) ||
+  !/^[a-zA-Z0-9_.\-/]+$/.test(projectName)
+) {
+  console.error(
+    "Invalid directory or project name: contains unsafe characters",
+  );
   process.exit(1);
 }
 
@@ -43,7 +48,7 @@ try {
   const output = execSync(cmd, {
     encoding: "utf-8",
     env: { ...process.env, VERCEL_TOKEN: token },
-    timeout: 300000, // 5 minutes timeout
+    timeout: 300_000, // 5 minutes timeout
   });
 
   // Vercel CLI outputs the URL as the only thing in stdout if it's a successful deploy in some versions,
