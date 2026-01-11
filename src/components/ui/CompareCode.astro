@@ -24,6 +24,9 @@ const { badTitle = "Blocked / Insecure", goodTitle = "Allowed / Secure" } =
   Astro.props;
 const badUuid = randomUUID().slice(0, 8);
 const goodUuid = randomUUID().slice(0, 8);
+
+const badContent = (await Astro.slots.render("bad")).trim();
+const goodContent = (await Astro.slots.render("good")).trim();
 ---
 
 <div class="compare-code-wrapper">
@@ -39,9 +42,10 @@ const goodUuid = randomUUID().slice(0, 8);
       <span>{badTitle}</span>
       <CopyButton class="compare-copy-button" />
     </div>
-    <div class="content">
-      <slot name="bad" />
-    </div>
+    <div
+      class="content"
+      set:html={badContent}
+    />
   </section>
   <section
     class="compare-block good copy-container"
@@ -55,9 +59,10 @@ const goodUuid = randomUUID().slice(0, 8);
       <span>{goodTitle}</span>
       <CopyButton class="compare-copy-button" />
     </div>
-    <div class="content">
-      <slot name="good" />
-    </div>
+    <div
+      class="content"
+      set:html={goodContent}
+    />
   </section>
 </div>
 

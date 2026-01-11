@@ -17,9 +17,10 @@ import CopyButton from "./CopyButton.astro";
 interface Props {
   filename: string;
   icon?: string; // e.g., 'mdi:file-document-outline'
+  collapsible?: boolean;
 }
 
-const { filename, icon } = Astro.props;
+const { filename, icon, collapsible = false } = Astro.props;
 const uuid = randomUUID().slice(0, 8);
 
 // Infer icon from filename
@@ -35,13 +36,19 @@ const getIconForFile = (name: string) => {
 };
 
 const finalIcon = icon || getIconForFile(filename);
+
+const Container = collapsible ? "details" : "section";
+const Header = collapsible ? "summary" : "div";
+
+const slotContent = await Astro.slots.render("default");
+const trimmedContent = slotContent.trim();
 ---
 
-<section
-  class="file-content-wrapper copy-container"
+<Container
+  class:list={["file-content-wrapper copy-container", { collapsible }]}
   aria-label={`Content of file: ${filename} ${uuid}`}
 >
-  <div class="file-header">
+  <Header class="file-header">
     <div class="file-info">
       <Icon
         name={finalIcon}
@@ -49,18 +56,42 @@ const finalIcon = icon || getIconForFile(filename);
       />
       <span class="file-name">{filename}</span>
     </div>
-    <!-- Copy Button integrated into header -->
-    <CopyButton class="file-header-copy-btn" />
-  </div>
+    <div class="header-actions">
+      <!-- Copy Button integrated into header -->
+      <CopyButton class="file-header-copy-btn" />
+      {
+        collapsible && (
+          <span
+            class="chevron-wrapper"
+            aria-hidden="true"
+          >
+            <svg
+              class="chevron-icon"
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          </span>
+        )
+      }
+    </div>
+  </Header>
   <div class="file-body">
     <div
       tabindex="0"
       aria-label={`Code content for ${filename}`}
-    >
-      <slot />
-    </div>
+      set:html={trimmedContent}
+    />
   </div>
-</section>
+</Container>
 
 <style>
   .file-content-wrapper {
@@ -75,19 +106,45 @@ const finalIcon = icon || getIconForFile(filename);
     display: flex;
     gap: 0.5rem;
     align-items: center;
-    justify-content: space-between; /* Push copy button to the right */
-    min-height: 48px; /* Ensure good alignment height */
+    justify-content: space-between; /* Push actions to the right */
+    min-height: 48px;
     padding: 0.5rem 1rem;
     font-family: var(--font-mono);
     font-size: 0.85rem;
     color: var(--color-text-muted);
     background-color: var(--color-bg-subtle);
     border-bottom: var(--border-1);
+    transition: background-color 0.2s;
+  }
+
+  .file-content-wrapper.collapsible .file-header {
+    cursor: pointer;
+    list-style: none; /* Remove default marker */
+  }
+
+  .file-content-wrapper.collapsible .file-header::-webkit-details-marker {
+    display: none; /* Remove default marker for Safari */
+  }
+
+  .file-content-wrapper.collapsible .file-header:hover {
+    background-color: var(--color-bg-secondary);
+    color: var(--color-text);
+  }
+
+  .file-content-wrapper[open] .file-header {
+    background-color: var(--color-bg-secondary);
+    color: var(--color-text);
   }
 
   .file-info {
     display: flex;
     gap: 0.5rem;
+    align-items: center;
+  }
+
+  .header-actions {
+    display: flex;
+    gap: 0.75rem;
     align-items: center;
   }
 
@@ -99,20 +156,39 @@ const finalIcon = icon || getIconForFile(filename);
     font-weight: 500;
   }
 
+  .chevron-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-text-muted);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .file-content-wrapper[open] .chevron-wrapper {
+    transform: rotate(180deg);
+  }
+
   .file-body {
     padding: 0;
     overflow: hidden;
+  }
+
+  .file-body > div {
+    padding: 0.75rem 1.25rem;
+    white-space: pre-wrap; /* Preserve line breaks from MDX */
+    font-family: var(--font-mono);
+    font-size: var(--font-size-sm);
+    line-height: 1.6;
+    outline: none;
   }
 
   /* Style the <pre> element that comes from the slot */
   .file-body :global(pre),
   .file-body :global(.astro-code) {
     display: block; /* Simpler block layout to avoid flex-related boosting */
-    width: 100%; /* Explicit width constraint */
-    min-width: 0;
-    max-width: 100%; /* Ensure it doesn't overflow parent calculation */
-    padding: 1.25rem 1.5rem !important; /* Generous padding like other components */
-    margin: 0 !important;
+    width: calc(100% + 2.5rem) !important; /* Offset negative margins */
+    margin: -0.75rem -1.25rem !important; /* Pull it back to the edges of .file-body > div */
+    padding: 1rem 1.25rem !important; /* Internal padding remains for content */
     overflow-x: auto;
 
     /* Typography */
@@ -156,14 +232,20 @@ const finalIcon = icon || getIconForFile(filename);
   /* Override copy button positioning for header integration */
   :global(.file-header-copy-btn) {
     position: static !important;
-    background-color: transparent !important;
+    background-color: var(--color-bg-secondary) !important;
     border: 1px solid var(--color-border) !important;
-    opacity: 80%;
+    opacity: 0.7;
+    transition:
+      opacity 0.2s,
+      border-color 0.2s;
+  }
+
+  .file-header:hover :global(.file-header-copy-btn) {
+    opacity: 1;
   }
 
   :global(.file-header-copy-btn:hover) {
     background-color: var(--color-bg-secondary) !important;
     border-color: var(--color-text-muted) !important;
-    opacity: 100%;
   }
 </style>

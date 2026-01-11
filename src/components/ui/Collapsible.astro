@@ -94,7 +94,12 @@ const { summary } = Astro.props;
     border-top: var(--border-1);
   }
 
-  .collapsible-wrapper[open] .collapsible-content {
-    border-top: none;
+  /* Handle nested margins gracefully */
+  .collapsible-content > :first-child {
+    margin-top: 0 !important;
+  }
+
+  .collapsible-content > :last-child {
+    margin-bottom: 0 !important;
   }
 </style>

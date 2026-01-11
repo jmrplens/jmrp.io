@@ -22,13 +22,16 @@ interface Props {
 
 const { lang = "text", class: className } = Astro.props;
 const uuid = randomUUID().slice(0, 8);
+
+const slotContent = await Astro.slots.render("default");
+const trimmedContent = slotContent.trim();
 ---
 
 <section
   class:list={["code-wrapper", "copy-container", className]}
   aria-label={`${lang} code snippet ${uuid}`}
 >
-  <pre><span class={`code-content language-${lang}`}><slot /></span></pre>
+  <pre><span class={`code-content language-${lang}`} set:html={trimmedContent} /></pre>
   <CopyButton class="code-copy-button" />
 </section>
 
@@ -66,7 +69,7 @@ const uuid = randomUUID().slice(0, 8);
     width: 100%; /* Explicit width constraint */
     min-width: 0;
     max-width: 100%; /* Ensure it doesn't overflow parent calculation */
-    padding: 0.75rem 1rem; /* Reduced vertical padding from 1rem */
+    padding: 0.4rem 1rem;
     padding-right: 3rem; /* Space for copy button */
     margin: 0;
     overflow-x: auto;

@@ -18,6 +18,9 @@ interface Props {
 }
 
 const { title } = Astro.props;
+
+const slotContent = await Astro.slots.render("default");
+const trimmedContent = slotContent.trim();
 ---
 
 <section
@@ -41,7 +44,10 @@ const { title } = Astro.props;
     )
   }
   <div class="output-body">
-    <div class="terminal-content"><slot /></div>
+    <div
+      class="terminal-content"
+      set:html={trimmedContent}
+    />
   </div>
 </section>
 

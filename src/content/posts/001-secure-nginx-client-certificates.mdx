@@ -132,17 +132,14 @@ Now generate the root CA, which consists of a private key (`ca.key`) and a publi
   openssl req -new -x509 -nodes -days 3650 -out ca.crt -keyout ca.key -config openssl.cnf
 </TerminalCommand>
 
-<Collapsible summary="Example ca.key content">
-<FileContent filename="ca.key" icon="mdi:key-variant">
+<FileContent filename="ca.key" icon="mdi:key-variant" collapsible>
 -----BEGIN PRIVATE KEY-----
 (Your unique, long, private key text will be here)
 ...
 -----END PRIVATE KEY-----
 </FileContent>
-</Collapsible>
 
-<Collapsible summary="Example ca.crt content">
-<FileContent filename="ca.crt" icon="mdi:certificate-outline">
+<FileContent filename="ca.crt" icon="mdi:certificate-outline" collapsible>
 -----BEGIN CERTIFICATE-----
 MIIDqTCCApGgAwIBAgIUGXK4wXR7k/+3vuH7tS7NsTS13OUwDQYJKoZIhvcNAQEL
 BQAwfTELMAkGA1UEBhMCRVMxETAPBgNVBAgMCFZhbGVuY2lhMREwDwYDVQQHDAhW
@@ -166,7 +163,6 @@ QOa0k/ZXcjFqpTopvlAb8AA8XsxVDcmAHfSItB8qNxwL8FnIIvlj/Yg9OGxraArJ
 2fXleID8q60zmJik0fcTyVoBdEg6KWVAykEia+E=
 -----END CERTIFICATE-----
 </FileContent>
-</Collapsible>
 
 
 You will be asked for details like Country, State, etc. Fill these out for your organization. The "Common Name" (CN) is important—set it to something like `jmrp.io-CA`.
@@ -238,24 +234,20 @@ Database updated
 
 This process creates `user.key` and `user.crt`.
 
-<Collapsible summary="Example user.key content">
-<FileContent filename="user.key" icon="mdi:key-variant">
+<FileContent filename="user.key" icon="mdi:key-variant" collapsible>
 -----BEGIN PRIVATE KEY-----
 (A different unique, long, private key text will be here)
 ...
 -----END PRIVATE KEY-----
 </FileContent>
-</Collapsible>
 
-<Collapsible summary="Example user.crt content">
-<FileContent filename="user.crt" icon="mdi:certificate-outline">
+<FileContent filename="user.crt" icon="mdi:certificate-outline" collapsible>
 -----BEGIN CERTIFICATE-----
 (The text for the user's certificate will be here. It will be
 signed by your "JMRP-IO-LAB Root CA".)
 ...
 -----END CERTIFICATE-----
 </FileContent>
-</Collapsible>
 
 
 ### 3. Convert to PKCS#12 (.p12)
