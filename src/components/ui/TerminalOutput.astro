@@ -1,5 +1,4 @@
 ---
-/* eslint-disable jsx-a11y/no-noninteractive-tabindex */
 /**
  * TerminalOutput Component
  * Displays the output of a shell command in a distinct visual style.
@@ -12,8 +11,6 @@
  *   Package installed successfully.
  * </TerminalOutput>
  */
-import { randomUUID } from "node:crypto";
-
 import { Icon } from "astro-icon/components";
 
 interface Props {
@@ -21,14 +18,13 @@ interface Props {
 }
 
 const { title } = Astro.props;
-const uuid = randomUUID().slice(0, 8);
 ---
 
 <section
   class="terminal-output-wrapper"
   tabindex="0"
   aria-live="polite"
-  aria-label={title ? `Terminal Output: ${title}` : `Terminal Output ${uuid}`}
+  aria-label={title ? `Terminal Output: ${title}` : "Terminal Output"}
 >
   {
     title && (
@@ -48,6 +44,7 @@ const uuid = randomUUID().slice(0, 8);
     <div class="terminal-content"><slot /></div>
   </div>
 </section>
+
 <style>
   .terminal-content {
     word-break: break-all;

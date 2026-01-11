@@ -215,4 +215,16 @@ export default [
       "@typescript-eslint/no-unsafe-argument": "off",
     },
   },
+  // 12. Accessibility Overrides for Code Blocks
+  // Allow non-interactive elements to be keyboard focusable if they are scrollable code regions
+  {
+    files: [
+      "src/components/ui/TerminalCommand.astro",
+      "src/components/ui/TerminalOutput.astro",
+      "src/components/ui/FileContent.astro",
+    ],
+    rules: {
+      "jsx-a11y/no-noninteractive-tabindex": "off",
+    },
+  },
 ];

@@ -1,5 +1,4 @@
 ---
-/* eslint-disable jsx-a11y/no-noninteractive-tabindex */
 /**
  * FileContent Component
  * Displays code content inside a file-like window frame with a filename header.
@@ -56,8 +55,7 @@ const finalIcon = icon || getIconForFile(filename);
   <div class="file-body">
     <div
       tabindex="0"
-      aria-label="Code content"
-      style="display: contents;"
+      aria-label={`Code content for ${filename}`}
     >
       <slot />
     </div>
