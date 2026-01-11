@@ -1,12 +1,19 @@
+/**
+ * Functional Test Suite
+ *
+ * Site-wide functionality and quality checks:
+ * - Page load verification (200 status, no console errors)
+ * - Core layout elements (header, footer present)
+ * - Interactive features (theme toggle)
+ * - External link security (rel="noopener noreferrer")
+ * - Image accessibility (alt attributes)
+ *
+ * Dynamically tests all pages discovered from the sitemap.
+ */
+
 import { expect, test } from "@playwright/test";
 
 import { getSitemapUrls, shouldIgnoreError } from "./utils";
-
-/**
- * Functional Tests
- * Dynamically generated from the production sitemap.
- * Ensures all pages are accessible and have core layout elements.
- */
 
 test.describe("Site-wide Functional Checks", () => {
   let urls: string[] = [];
@@ -85,5 +92,72 @@ test.describe("Interactive Features", () => {
     await toggle.click();
     await expect(html).toHaveAttribute("data-theme", "light");
     await expect(html).toHaveClass(/light-mode/);
+  });
+});
+
+test.describe("Security & Best Practices", () => {
+  test("external links with target=_blank have secure rel attributes", async ({
+    page,
+  }) => {
+    const urls = await getSitemapUrls();
+    const issues: string[] = [];
+
+    for (const url of urls) {
+      await test.step(`Checking external links: ${url}`, async () => {
+        await page.goto(url);
+
+        // Find all external links with target="_blank"
+        const externalBlankLinks = page.locator(
+          'a[target="_blank"][href^="http"]:not([href*="jmrp.io"]):not([href*="localhost"])',
+        );
+        const count = await externalBlankLinks.count();
+
+        for (let i = 0; i < count; i++) {
+          const link = externalBlankLinks.nth(i);
+          const href = await link.getAttribute("href");
+          const rel = await link.getAttribute("rel");
+
+          // If rel is missing or doesn't contain noopener, track the issue
+          // eslint-disable-next-line playwright/no-conditional-in-test
+          if (!rel || !rel.includes("noopener")) {
+            issues.push(`${url}: ${href} is missing rel="noopener"`);
+          }
+        }
+      });
+    }
+
+    // Report all issues at the end
+    expect(
+      issues,
+      "External links with target=_blank should have rel=noopener",
+    ).toEqual([]);
+  });
+
+  test("images have alt attributes", async ({ page }) => {
+    const urls = await getSitemapUrls();
+
+    for (const url of urls) {
+      await test.step(`Checking image alt text: ${url}`, async () => {
+        await page.goto(url);
+
+        // Find all images (excluding decorative icons in buttons)
+        const images = page.locator(
+          'img:not([role="presentation"]):not([alt=""])',
+        );
+        const count = await images.count();
+
+        for (let i = 0; i < count; i++) {
+          const img = images.nth(i);
+          const alt = await img.getAttribute("alt");
+          const src = await img.getAttribute("src");
+
+          // Images should have alt attribute (can be empty for decorative)
+          expect(
+            alt !== null,
+            `Image ${src} should have an alt attribute`,
+          ).toBe(true);
+        }
+      });
+    }
   });
 });

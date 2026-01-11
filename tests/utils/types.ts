@@ -1,7 +1,11 @@
 /**
  * Shared Type Definitions for Playwright Tests
  *
- * Common interfaces used across multiple test files.
+ * Centralized interfaces used across multiple test files:
+ * - Axe-core types for accessibility testing
+ * - Speculation rules types for prerender testing
+ * - Sitemap parsing types
+ * - Common page info structures
  */
 
 // ============================================================================

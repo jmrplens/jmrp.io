@@ -1,3 +1,16 @@
+/**
+ * Keyboard Navigation Accessibility Tests
+ *
+ * Tests keyboard-only navigation and interaction patterns:
+ * - Tab order through navigation elements
+ * - Skip link functionality
+ * - Mobile menu keyboard interaction (open/close with Enter/Escape)
+ * - Theme toggle keyboard activation
+ * - Focus management and return
+ *
+ * Uses Axe-core to validate focused states for WCAG compliance.
+ */
+
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 

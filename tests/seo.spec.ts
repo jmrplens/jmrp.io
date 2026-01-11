@@ -1,3 +1,18 @@
+/**
+ * SEO & Metadata Test Suite
+ *
+ * Validates search engine optimization and social sharing requirements:
+ * - Technical SEO files (robots.txt, sitemap)
+ * - Page titles (length, uniqueness)
+ * - Canonical URLs
+ * - Meta descriptions
+ * - Open Graph tags (og:title, og:description, og:image, og:url)
+ * - Twitter Card meta tags
+ * - Structured data (JSON-LD)
+ * - Language attributes
+ * - 404 page metadata
+ */
+
 import { expect, test } from "@playwright/test";
 
 import { getSitemapUrls } from "./utils";
@@ -75,5 +90,93 @@ test.describe("SEO & Metadata Checks", () => {
     // Verify Canonical is present and valid
     const canonical = page.locator('link[rel="canonical"]');
     await expect(canonical).toHaveAttribute("href", /^https?:\/\//);
+  });
+
+  test("Twitter Card meta tags (if present)", async ({ page }) => {
+    for (const url of urls) {
+      await test.step(`Checking Twitter Cards: ${url}`, async () => {
+        await page.goto(url);
+
+        // Twitter Card is optional - only validate if present
+        const twitterCard = page.locator('meta[name="twitter:card"]');
+        const hasTwitterCard = (await twitterCard.count()) > 0;
+
+        // eslint-disable-next-line playwright/no-conditional-in-test
+        if (hasTwitterCard) {
+          // Twitter Card type (summary, summary_large_image, etc.)
+          // eslint-disable-next-line playwright/no-conditional-expect
+          await expect(twitterCard).toHaveAttribute(
+            "content",
+            /summary|summary_large_image|player|app/,
+          );
+        }
+
+        // Twitter/OG title and description should always exist (falls back to OG)
+        const socialTitle = page.locator(
+          'meta[name="twitter:title"], meta[property="og:title"]',
+        );
+        await expect(socialTitle.first()).toHaveAttribute("content", /.+/);
+
+        const socialDesc = page.locator(
+          'meta[name="twitter:description"], meta[property="og:description"]',
+        );
+        await expect(socialDesc.first()).toHaveAttribute("content", /.+/);
+      });
+    }
+  });
+
+  test("HTML language attribute is set", async ({ page }) => {
+    for (const url of urls) {
+      await test.step(`Checking lang attribute: ${url}`, async () => {
+        await page.goto(url);
+
+        // HTML element should have lang attribute
+        const html = page.locator("html");
+        await expect(html).toHaveAttribute("lang", /^[a-z]{2}(-[A-Z]{2})?$/);
+      });
+    }
+  });
+
+  test("Structured data (JSON-LD) is present on key pages", async ({
+    page,
+  }) => {
+    // Check homepage for Organization/Person schema
+    await page.goto("/");
+    const homepageJsonLd = await page
+      .locator('script[type="application/ld+json"]')
+      .count();
+    expect(homepageJsonLd).toBeGreaterThan(0);
+
+    // Check a blog post for Article schema
+    await page.goto("/blog");
+    const blogArticles = page.locator("article a[href*='/blog/']");
+    const articleCount = await blogArticles.count();
+
+    // eslint-disable-next-line playwright/no-conditional-in-test
+    if (articleCount > 0) {
+      const firstPostHref = await blogArticles.first().getAttribute("href");
+      // eslint-disable-next-line playwright/no-conditional-in-test
+      if (firstPostHref) {
+        await page.goto(firstPostHref);
+        const postJsonLd = await page
+          .locator('script[type="application/ld+json"]')
+          .count();
+        // eslint-disable-next-line playwright/no-conditional-expect
+        expect(postJsonLd).toBeGreaterThan(0);
+
+        // Validate JSON-LD is valid JSON
+        const jsonLdContent = await page
+          .locator('script[type="application/ld+json"]')
+          .first()
+          .textContent();
+        // eslint-disable-next-line playwright/no-conditional-in-test
+        if (jsonLdContent) {
+          // eslint-disable-next-line playwright/no-conditional-expect
+          expect(() => {
+            JSON.parse(jsonLdContent);
+          }).not.toThrow();
+        }
+      }
+    }
   });
 });

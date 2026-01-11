@@ -1,3 +1,13 @@
+/**
+ * Integration Test Suite
+ *
+ * Tests user flows and page interactions across the site:
+ * - Navigation flows (Home → Blog → Post)
+ * - Page content verification (CV sections, Services)
+ * - Component rendering (GitHub repos, Publications)
+ * - Cross-page functionality
+ */
+
 import { expect, test } from "@playwright/test";
 
 test.describe("Integration Flows", () => {
@@ -45,5 +55,89 @@ test.describe("Integration Flows", () => {
   test("Services page loads", async ({ page }) => {
     await page.goto("/services");
     await expect(page.locator("h1")).toContainText("Services");
+  });
+
+  test("GitHub page renders repository cards", async ({ page }) => {
+    await page.goto("/github");
+
+    // Verify page title
+    await expect(page.locator("h1")).toBeVisible();
+
+    // Wait for GitHub repos to load
+    await page.waitForLoadState("domcontentloaded");
+
+    // Check that repo cards are rendered
+    const repoCards = page.locator(".repo-card");
+    const cardCount = await repoCards.count();
+    expect(cardCount).toBeGreaterThan(0);
+
+    // Verify first card has expected structure
+    const firstCard = repoCards.first();
+    await expect(firstCard.locator("h3, h4")).toBeVisible(); // Repo name
+    await expect(firstCard.locator("a")).toHaveAttribute("href", /.+/); // Link to repo
+
+    // Verify search input exists
+    const searchInput = page.getByRole("textbox", {
+      name: /search/i,
+    });
+    await expect(searchInput).toBeVisible();
+  });
+
+  test("Publications page renders publication cards", async ({ page }) => {
+    await page.goto("/publications");
+
+    // Verify page title
+    await expect(page.locator("h1")).toBeVisible();
+
+    // Check that publication items exist
+    const publications = page.locator(
+      "article, .publication-item, [itemtype*='Article']",
+    );
+    const pubCount = await publications.count();
+    expect(pubCount).toBeGreaterThan(0);
+
+    // Check for BibTeX toggle functionality
+    const bibtexToggle = page.locator(".btn-bibtex-toggle").first();
+    // eslint-disable-next-line playwright/no-conditional-in-test
+    if ((await bibtexToggle.count()) > 0) {
+      // eslint-disable-next-line playwright/no-conditional-expect
+      await expect(bibtexToggle).toBeVisible();
+
+      // Verify ARIA attributes for accordion
+      // eslint-disable-next-line playwright/no-conditional-expect
+      await expect(bibtexToggle).toHaveAttribute("aria-expanded", /.*/);
+      // eslint-disable-next-line playwright/no-conditional-expect
+      await expect(bibtexToggle).toHaveAttribute("aria-controls", /.+/);
+    }
+  });
+
+  test("Blog post opens and displays content", async ({ page }) => {
+    // Navigate to blog index
+    await page.goto("/blog");
+
+    // Find first blog post link (the title link inside article)
+    const postLinks = page
+      .locator("article a[href*='/blog/'][href$='/']")
+      .or(page.locator("article h2 a, article h3 a"));
+    const postCount = await postLinks.count();
+    expect(postCount).toBeGreaterThan(0);
+
+    // Verify link has href and click to navigate
+    await expect(postLinks.first()).toHaveAttribute("href", /.+/);
+    await postLinks.first().click();
+
+    // Verify we're on the post page
+    await expect(page).toHaveURL(/\/blog\/.+/);
+
+    // Verify post has expected structure
+    await expect(page.locator("h1")).toBeVisible(); // Post title
+    await expect(page.locator("main").first()).toBeVisible(); // Main content
+
+    // Verify reading time or date is shown (common blog elements)
+    const metadata = page.locator(
+      "[class*='date'], [class*='reading'], time, .post-meta",
+    );
+    const hasMetadata = (await metadata.count()) > 0;
+    expect(hasMetadata).toBe(true);
   });
 });
