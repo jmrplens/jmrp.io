@@ -244,7 +244,12 @@ function processSingleHtmlFile(
     isModified = true;
   }
 
-  // 6. Collect Hashes - CRITICAL: Must be the final step before writing
+  // 6. Process Code Blocks for accessibility and HTML validation
+  if (processCodeBlocks($)) {
+    isModified = true;
+  }
+
+  // 7. Collect Hashes - CRITICAL: Must be the final step before writing
   // This ensures hashes match the final serialized output exactly
   if (collectInlineHashes($, cspData, enableCsp)) {
     isModified = true;
@@ -669,5 +674,49 @@ function processBeacon(
       modified = true;
     }
   }
+  return modified;
+}
+
+/**
+ * Processes code blocks to ensure they are accessible and valid HTML5.
+ * - Wraps standalone <pre> tags in <section> if they act as landmarks.
+ * - Ensures unique aria-labels for all code regions.
+ *
+ * @param $ - Cheerio API instance.
+ * @returns True if any code blocks were modified.
+ */
+function processCodeBlocks($: cheerio.CheerioAPI): boolean {
+  let modified = false;
+  let regionCount = 0;
+
+  // 1. Fix standalone Shiki code blocks (<pre> with tabindex or role)
+  $("pre[tabindex='0'], pre[role='region']").each((_, el) => {
+    const $el = $(el);
+
+    // Skip if already inside a section landmark (e.g. from our components)
+    if ($el.closest("section[aria-label]").length > 0) {
+      // Just ensure no redundant role
+      if ($el.attr("role") === "region") {
+        $el.removeAttr("role");
+        modified = true;
+      }
+      return;
+    }
+
+    regionCount++;
+    const lang = $el.attr("data-language") || "code";
+    const uniqueLabel = `${lang.charAt(0).toUpperCase() + lang.slice(1)} snippet ${regionCount}`;
+
+    // Create section wrapper
+    const wrapper = $("<section></section>")
+      .attr("aria-label", uniqueLabel)
+      .addClass("code-section-wrapper");
+
+    // Wrap the pre
+    $el.wrap(wrapper);
+    $el.removeAttr("role"); // Landmark is now the section
+    modified = true;
+  });
+
   return modified;
 }

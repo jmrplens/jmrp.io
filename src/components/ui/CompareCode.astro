@@ -9,6 +9,8 @@
  *   <div slot="good">...code...</div>
  * </CompareCode>
  */
+import { randomUUID } from "node:crypto";
+
 import { Icon } from "astro-icon/components";
 
 import CopyButton from "./CopyButton.astro";
@@ -20,10 +22,14 @@ interface Props {
 
 const { badTitle = "Blocked / Insecure", goodTitle = "Allowed / Secure" } =
   Astro.props;
+const uuid = randomUUID().slice(0, 8);
 ---
 
 <div class="compare-code-wrapper">
-  <div class="compare-block bad copy-container">
+  <section
+    class="compare-block bad copy-container"
+    aria-label={`Comparison: ${badTitle} ${uuid}`}
+  >
     <div class="header">
       <Icon
         name="mdi:close-circle-outline"
@@ -35,8 +41,11 @@ const { badTitle = "Blocked / Insecure", goodTitle = "Allowed / Secure" } =
     <div class="content">
       <slot name="bad" />
     </div>
-  </div>
-  <div class="compare-block good copy-container">
+  </section>
+  <section
+    class="compare-block good copy-container"
+    aria-label={`Comparison: ${goodTitle} ${uuid}`}
+  >
     <div class="header">
       <Icon
         name="mdi:check-circle-outline"
@@ -48,7 +57,7 @@ const { badTitle = "Blocked / Insecure", goodTitle = "Allowed / Secure" } =
     <div class="content">
       <slot name="good" />
     </div>
-  </div>
+  </section>
 </div>
 
 <style>

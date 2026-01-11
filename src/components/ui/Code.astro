@@ -11,6 +11,8 @@
  *   console.log('Hello');
  * </Code>
  */
+import { randomUUID } from "node:crypto";
+
 import CopyButton from "./CopyButton.astro";
 
 interface Props {
@@ -19,12 +21,16 @@ interface Props {
 }
 
 const { lang = "text", class: className } = Astro.props;
+const uuid = randomUUID().slice(0, 8);
 ---
 
-<div class:list={["code-wrapper", "copy-container", className]}>
+<section
+  class:list={["code-wrapper", "copy-container", className]}
+  aria-label={`${lang} code snippet ${uuid}`}
+>
   <pre><span class={`code-content language-${lang}`}><slot /></span></pre>
   <CopyButton class="code-copy-button" />
-</div>
+</section>
 
 <style>
   .code-content {

@@ -1,4 +1,5 @@
 ---
+/* eslint-disable jsx-a11y/no-noninteractive-tabindex */
 /**
  * FileContent Component
  * Displays code content inside a file-like window frame with a filename header.
@@ -8,6 +9,8 @@
  *   ...code...
  * </FileContent>
  */
+import { randomUUID } from "node:crypto";
+
 import { Icon } from "astro-icon/components";
 
 import CopyButton from "./CopyButton.astro";
@@ -18,6 +21,7 @@ interface Props {
 }
 
 const { filename, icon } = Astro.props;
+const uuid = randomUUID().slice(0, 8);
 
 // Infer icon from filename
 const getIconForFile = (name: string) => {
@@ -34,10 +38,9 @@ const getIconForFile = (name: string) => {
 const finalIcon = icon || getIconForFile(filename);
 ---
 
-<div
+<section
   class="file-content-wrapper copy-container"
-  role="group"
-  aria-label={`Content of file: ${filename}`}
+  aria-label={`Content of file: ${filename} ${uuid}`}
 >
   <div class="file-header">
     <div class="file-info">
@@ -51,9 +54,15 @@ const finalIcon = icon || getIconForFile(filename);
     <CopyButton class="file-header-copy-btn" />
   </div>
   <div class="file-body">
-    <slot />
+    <div
+      tabindex="0"
+      aria-label="Code content"
+      style="display: contents;"
+    >
+      <slot />
+    </div>
   </div>
-</div>
+</section>
 
 <style>
   .file-content-wrapper {
