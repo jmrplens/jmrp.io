@@ -18,6 +18,12 @@ if (!dir || !projectName) {
   process.exit(1);
 }
 
+// Input sanitization to prevent command injection
+if (!/^[a-zA-Z0-9_.\-/]+$/.test(dir) || !/^[a-zA-Z0-9_.\-/]+$/.test(projectName)) {
+  console.error("Invalid directory or project name: contains unsafe characters");
+  process.exit(1);
+}
+
 if (!token) {
   console.error("VERCEL_TOKEN environment variable is required.");
   process.exit(1);
@@ -31,9 +37,14 @@ try {
   // --production is used here to get a 'stable' subdomain if possible,
   // though for PRs we usually want preview.
   // Actually, Vercel gives a unique URL for every deploy.
-  const cmd = `npx vercel deploy ${dir} --token=${token} --name=${projectName} --yes --public`;
+  // Pass token via env to avoid exposure in process list/logs
+  const cmd = `npx vercel deploy ${dir} --name=${projectName} --yes --public`;
 
-  const output = execSync(cmd, { encoding: "utf-8" });
+  const output = execSync(cmd, {
+    encoding: "utf-8",
+    env: { ...process.env, VERCEL_TOKEN: token },
+    timeout: 300000, // 5 minutes timeout
+  });
 
   // Vercel CLI outputs the URL as the only thing in stdout if it's a successful deploy in some versions,
   // but usually it prints progress. We need to extract the URL.

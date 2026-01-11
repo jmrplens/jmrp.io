@@ -99,8 +99,8 @@ This is the source code for my personal website, **[jmrp.io](https://jmrp.io)**,
 
 To build and run this project, you need the following tools installed on your system:
 
-- **[Node.js](https://nodejs.org/) (v22.0.0+)**: Required for Astro v6.
-- **[pnpm](https://pnpm.io/) (v10.0.0+)**: The preferred package manager.
+- **[Node.js](https://nodejs.org/) (v22.12.0+)**: Required for Astro v6.
+- **[pnpm](https://pnpm.io/) (v10.0.0+)**: Required package manager.
 - **[Astro CLI](https://docs.astro.build/en/install-and-setup/)**: Recommended for manual tasks (can be run via `pnpm astro`).
 
 ### Installation
@@ -149,7 +149,7 @@ This command triggers the full build pipeline:
 3. **Post-Build Optimizations**:
    - **CSS Inlining**: Extracts inline styles to optimized classes.
    - **Asset Relocation**: Converts data URIs to physical files for better caching and CSP compliance.
-   - **Security Hardening**: Generates **SHA-512 hashes** for all scripts, styles, and assets.
+   - **Security Hardening**: Generates **SHA-512 hashes** for inline CSP content and **SHA-256 hashes** for SRI resources.
    - **Integrity (SRI)**: Pins all subresources for maximum security.
 4. **Nginx Integration**:
    - Generates and validates a strict `security_headers.conf`.

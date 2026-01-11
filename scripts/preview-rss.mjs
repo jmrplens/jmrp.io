@@ -28,9 +28,20 @@ const DIST_DIR = "dist";
  */
 function embedImage(imageUrl) {
   try {
-    const url = new URL(imageUrl);
-    const imagePath = url.pathname;
-    const localPath = path.join(DIST_DIR, imagePath);
+    // Support absolute URLs and root-relative paths
+    const pathname = imageUrl.startsWith("/")
+      ? imageUrl
+      : new URL(imageUrl).pathname;
+
+    // Normalize and prevent traversal out of DIST_DIR
+    // Remove leading slashes/dots to make it a clean relative path
+    const safeRel = path.normalize(pathname).replace(/^(\.\.[\/\\])+/, "").replace(/^[\/\\]+/, "");
+    const localPath = path.resolve(DIST_DIR, safeRel);
+
+    // Ensure we are still inside the dist directory
+    if (!localPath.startsWith(path.resolve(DIST_DIR))) {
+      return imageUrl;
+    }
 
     if (fs.existsSync(localPath)) {
       const imageBuffer = fs.readFileSync(localPath);
