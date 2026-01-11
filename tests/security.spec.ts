@@ -119,7 +119,6 @@ test.describe("CSP and SRI Security Checks", () => {
 
   test("inline scripts have nonce for CSP compliance", async ({ page }) => {
     const urls = await getSitemapUrls();
-    const issues: string[] = [];
 
     for (const url of urls) {
       await test.step(`Checking inline script nonces: ${url}`, async () => {
@@ -127,40 +126,32 @@ test.describe("CSP and SRI Security Checks", () => {
 
         // Find all inline scripts (scripts without src attribute)
         // This includes regular inline scripts, module scripts, and JSON-LD
+        // Filter for inline scripts that aren't empty (only whitespace)
+        // Note: we check both attribute and property because browsers often hide the attribute
         const inlineScripts = page.locator("script:not([src])");
         const count = await inlineScripts.count();
 
         for (let i = 0; i < count; i++) {
           const script = inlineScripts.nth(i);
-
-          // Check both attribute and property (browsers often hide the attribute for security)
-          const [attrNonce, propNonce] = await Promise.all([
+          const [attrNonce, propNonce, content, type] = await Promise.all([
             script.getAttribute("nonce"),
             script.evaluate((node) => (node as HTMLScriptElement).nonce),
+            script.textContent(),
+            script.getAttribute("type"),
           ]);
+
           const nonce = attrNonce || propNonce;
+          const hasContent = content && content.trim().length > 0;
 
-          const type = await script.getAttribute("type");
-          const content = await script.textContent();
-
-          // All inline scripts with content should have a nonce
+          // Assertion: if it has content, it MUST have a nonce
           // eslint-disable-next-line playwright/no-conditional-in-test
-          if (content && content.trim() && !nonce) {
-            const scriptType = type || "inline";
-            const preview = content.slice(0, 40).replace(/\n/g, " ");
-            issues.push(
-              `${url}: ${scriptType} script missing nonce: "${preview}..."`,
-            );
-          }
+          expect(
+            hasContent && !nonce ? "missing" : "ok",
+            `${url}: ${type || "inline"} script missing nonce. Preview: "${(content || "").slice(0, 40).replace(/\n/g, " ")}..."`,
+          ).toBe("ok");
         }
       });
     }
-
-    // All inline scripts must have nonces for CSP compliance
-    expect(
-      issues,
-      "All inline scripts should have nonce attribute for CSP compliance",
-    ).toEqual([]);
   });
 
   test("no elements have inline style attributes (CSP compliance)", async ({
@@ -173,43 +164,24 @@ test.describe("CSP and SRI Security Checks", () => {
       await test.step(`Checking inline styles: ${url}`, async () => {
         await page.goto(url);
 
-        // Find all elements with a style attribute
-        const styleAttrElements = page.locator("[style]");
-        const count = await styleAttrElements.count();
+        // Find all elements with a style attribute, excluding known dynamic visibility toggles
+        // and pre-build hosts that are safe/necessary.
+        const locator = page.locator(
+          '[style]:not([style*="display: block"]):not([style*="display: none"]):not([id="preact-border-shadow-host"])',
+        );
 
+        const count = await locator.count();
         for (let i = 0; i < count; i++) {
-          const el = styleAttrElements.nth(i);
-          const tagName = await el.evaluate((node) =>
-            node.tagName.toLowerCase(),
-          );
-          const style = await el.getAttribute("style");
-
-          // Skip dynamic styles known to be added by JS (visibility toggles)
-          // These are safe as they are managed by nonced scripts and aren't in SSR HTML
-          // eslint-disable-next-line playwright/no-conditional-in-test
-          if (
-            style &&
-            (style.includes("display: block") ||
-              style.includes("display: none"))
-          ) {
-            continue;
-          }
-
-          // Skip internal browser/tooling styles if any
-          // eslint-disable-next-line playwright/no-conditional-in-test
-          if (
-            await el.evaluate((node) => node.id === "preact-border-shadow-host")
-          ) {
-            continue;
-          }
-
+          const el = locator.nth(i);
+          const [tagName, style] = await Promise.all([
+            el.evaluate((node) => node.tagName.toLowerCase()),
+            el.getAttribute("style"),
+          ]);
           elementsWithStyle.push(`${url}: <${tagName} style="${style}">`);
         }
       });
     }
 
-    // No elements should have inline style attributes (except visual toggles)
-    // as they should be converted to classes by the post-build integration
     expect(
       elementsWithStyle,
       "Found unexpected inline style attributes (should have been converted to classes by post-build integration)",

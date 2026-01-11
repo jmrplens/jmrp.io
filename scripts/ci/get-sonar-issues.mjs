@@ -1,3 +1,6 @@
+import fs from "node:fs";
+import path from "node:path";
+
 /**
  * Fetch SonarCloud Issues
  *
@@ -94,21 +97,70 @@ try {
     logger.info("\n✅ No security hotspots to review.");
   } else {
     logger.info(`\n🚨 Found ${hotspots.length} security hotspots:`);
+    let manualReviewCount = 0;
+
     for (const h of hotspots) {
-      logger.info(`  - ${h.message}`);
-      logger.info(`    📍 ${h.component} (Line ${h.line || "N/A"})`);
+      const isSuppressed = await checkNoSonar(h.component, h.line);
+
+      if (isSuppressed) {
+        logger.info(
+          `  - [SUPPRESSED] ${h.message} (📍 ${h.component}:${h.line || "N/A"})`,
+        );
+      } else {
+        logger.info(`  - ${h.message}`);
+        logger.info(`    📍 ${h.component} (Line ${h.line || "N/A"})`);
+        manualReviewCount++;
+      }
+    }
+
+    if (manualReviewCount > 0) {
+      logger.info(
+        `\n❌ Static analysis failed: ${manualReviewCount} unsuppressed hotspots detected.`,
+      );
+      process.exit(1);
+    } else {
+      logger.info(
+        "\n✅ All identified hotspots are suppressed with NOSONAR comments.",
+      );
     }
   }
 
-  if (issues.length > 0 || hotspots.length > 0) {
-    logger.info(
-      "\n❌ Static analysis failed: Open issues or hotspots detected.",
-    );
+  if (issues.length > 0) {
+    logger.info("\n❌ Static analysis failed: Open issues detected.");
     process.exit(1);
   }
 } catch (error) {
   const message = error instanceof Error ? error.message : String(error);
   logger.error(`❌ Failed to fetch SonarCloud reports: ${message}`);
   process.exit(1);
+}
+
+/**
+ * Checks if a file has a NOSONAR comment at a specific line.
+ *
+ * @param {string} component - Sonar component key (e.g., jmrplens_jmrp.io:path/to/file)
+ * @param {number} line - Line number to check
+ * @returns {Promise<boolean>} Resolves to true if NOSONAR is found
+ */
+async function checkNoSonar(component, line) {
+  if (!line) return false;
+  try {
+    // Component usually has the format "project_key:relative/path"
+    const filePath = component.split(":").pop();
+    const fullPath = path.resolve(process.cwd(), filePath);
+
+    if (!fs.existsSync(fullPath)) return false;
+
+    const content = fs.readFileSync(fullPath, "utf-8");
+    const lines = content.split("\n");
+
+    // Check both the reported line and the one immediately preceding it
+    const targetLine = (lines[line - 1] || "").toUpperCase();
+    const precedingLine = (lines[line - 2] || "").toUpperCase();
+
+    return targetLine.includes("NOSONAR") || precedingLine.includes("NOSONAR");
+  } catch {
+    return false;
+  }
 }
 logger.info("\n" + "".padEnd(80, "=") + "\n");

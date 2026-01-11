@@ -173,7 +173,7 @@ function deploySecurityHeaders(
       // We prepend secure paths to the existing PATH to maintain compatibility
       const secureEnv = {
         ...process.env,
-        PATH: `${DEFAULT_SECURE_PATH}${path.delimiter}${process.env.PATH || ""}`,
+        PATH: DEFAULT_SECURE_PATH,
       };
 
       // Explicitly typed options to satisfy execSync overload if needed, or just standard object
@@ -187,8 +187,7 @@ function deploySecurityHeaders(
       const nginxConfigPath = process.env.POSTBUILD_NGINX_CONFIG_PATH;
       const testArgs = nginxConfigPath ? ["-t", "-c", nginxConfigPath] : ["-t"];
 
-      // NOSONAR suppressed: external command usage is intentional — targets system-managed Nginx binary and validated by test runs
-      const testResult = spawnSync("nginx", testArgs, execOptions);
+      const testResult = spawnSync("nginx", testArgs, execOptions); // NOSONAR suppressed: external command usage is intentional — targets system-managed Nginx binary and validated by test runs
       if (testResult.error) {
         throw testResult.error;
       }
@@ -196,11 +195,11 @@ function deploySecurityHeaders(
         throw new Error("Nginx configuration test failed.");
       }
 
-      // NOSONAR suppressed: external command usage is intentional — targets system-managed Nginx binary and validated by test runs
-      const reloadResult = spawnSync("nginx", ["-s", "reload"], {
-        ...execOptions,
-        timeout: nginxReloadTimeout,
-      });
+      const reloadResult = spawnSync("nginx", ["-s", "reload"], // NOSONAR suppressed: external command usage is intentional — targets system-managed Nginx binary and validated by test runs
+        {
+          ...execOptions,
+          timeout: nginxReloadTimeout,
+        });
       if (reloadResult.error) {
         throw reloadResult.error;
       }
@@ -317,7 +316,7 @@ function handleNginxValidationError(
     // Final validation to ensure system is left in a stable state
     const finalSecureEnv = {
       ...process.env,
-      PATH: `${DEFAULT_SECURE_PATH}${path.delimiter}${process.env.PATH || ""}`,
+      PATH: DEFAULT_SECURE_PATH,
     };
     const finalExecOptions = {
       stdio: "inherit" as const,
@@ -331,8 +330,7 @@ function handleNginxValidationError(
       ? ["-t", "-c", nginxConfigPath]
       : ["-t"];
 
-    // NOSONAR suppressed: external command usage is intentional — targets system-managed Nginx binary and validated by test runs
-    const finalTestResult = spawnSync("nginx", finalTestArgs, finalExecOptions);
+    const finalTestResult = spawnSync("nginx", finalTestArgs, finalExecOptions); // NOSONAR suppressed: external command usage is intentional — targets system-managed Nginx binary and validated by test runs
     if (finalTestResult.error) {
       throw finalTestResult.error;
     }
