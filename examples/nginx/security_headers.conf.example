@@ -19,8 +19,11 @@ add_header Cross-Origin-Opener-Policy "same-origin" always;
 add_header Cross-Origin-Resource-Policy "same-origin" always;
 
 # Security Cookie (Optional demo cookie)
+# NOTE: Your application or authentication gateway should set its own secure session cookies.
+# Avoid using `add_header Set-Cookie` for real sessions, as it bypasses Nginx's cookie handling
+# and resets the cookie on every response, which may interfere with session persistence.
 # Enable via build-time environment variable: DEMO_SECURITY_COOKIE=1
-# add_header Set-Cookie "__Demo-Security-Flags=1; path=/; Secure; HttpOnly; SameSite=Strict" always;
+# add_header Set-Cookie "__Host-Session=1; path=/; Secure; HttpOnly; SameSite=Strict" always;
 
 # Content Security Policy (Nonce-based with SHA fallback)
 # - 'nonce-$cspNonce': Injected by Nginx via sub_filter

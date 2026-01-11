@@ -20,6 +20,13 @@ import { processHtmlFiles } from "./post-build/html.js";
 import type { CspData } from "./post-build/types.js";
 
 /**
+ * Default secure PATH for executing system commands.
+ * Prioritizes standard system directories to mitigate PATH injection risks.
+ */
+const DEFAULT_SECURE_PATH =
+  "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin";
+
+/**
  * Creates the jmrp-post-build Astro integration.
  *
  * This integration performs several critical optimizations and security hardening
@@ -166,7 +173,7 @@ function deploySecurityHeaders(
       // We prepend secure paths to the existing PATH to maintain compatibility
       const secureEnv = {
         ...process.env,
-        PATH: `/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin${path.delimiter}${process.env.PATH || ""}`,
+        PATH: `${DEFAULT_SECURE_PATH}${path.delimiter}${process.env.PATH || ""}`,
       };
 
       // Explicitly typed options to satisfy execSync overload if needed, or just standard object
@@ -180,8 +187,8 @@ function deploySecurityHeaders(
       const nginxConfigPath = process.env.POSTBUILD_NGINX_CONFIG_PATH;
       const testArgs = nginxConfigPath ? ["-t", "-c", nginxConfigPath] : ["-t"];
 
-      // prettier-ignore
-      const testResult = spawnSync("nginx", testArgs, execOptions); // NOSONAR
+      // NOSONAR suppressed: external command usage is intentional — targets system-managed Nginx binary and validated by test runs
+      const testResult = spawnSync("nginx", testArgs, execOptions);
       if (testResult.error) {
         throw testResult.error;
       }
@@ -189,8 +196,11 @@ function deploySecurityHeaders(
         throw new Error("Nginx configuration test failed.");
       }
 
-      // prettier-ignore
-      const reloadResult = spawnSync("nginx", ["-s", "reload"], { ...execOptions, timeout: nginxReloadTimeout }); // NOSONAR
+      // NOSONAR suppressed: external command usage is intentional — targets system-managed Nginx binary and validated by test runs
+      const reloadResult = spawnSync("nginx", ["-s", "reload"], {
+        ...execOptions,
+        timeout: nginxReloadTimeout,
+      });
       if (reloadResult.error) {
         throw reloadResult.error;
       }
@@ -305,16 +315,24 @@ function handleNginxValidationError(
       "✓ Successfully reverted to the previous stable configuration.",
     );
     // Final validation to ensure system is left in a stable state
-    const execOptions = {
+    const finalSecureEnv = {
+      ...process.env,
+      PATH: `${DEFAULT_SECURE_PATH}${path.delimiter}${process.env.PATH || ""}`,
+    };
+    const finalExecOptions = {
       stdio: "inherit" as const,
       timeout: timeout,
-      env: {
-        ...process.env,
-        PATH: `/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin${path.delimiter}${process.env.PATH || ""}`,
-      },
+      env: finalSecureEnv,
     };
-    // prettier-ignore
-    const finalTestResult = spawnSync("nginx", ["-t"], execOptions); // NOSONAR
+
+    // Use the same config path as the primary test for consistency during rollback
+    const nginxConfigPath = process.env.POSTBUILD_NGINX_CONFIG_PATH;
+    const finalTestArgs = nginxConfigPath
+      ? ["-t", "-c", nginxConfigPath]
+      : ["-t"];
+
+    // NOSONAR suppressed: external command usage is intentional — targets system-managed Nginx binary and validated by test runs
+    const finalTestResult = spawnSync("nginx", finalTestArgs, finalExecOptions);
     if (finalTestResult.error) {
       throw finalTestResult.error;
     }

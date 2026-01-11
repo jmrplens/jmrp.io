@@ -61,7 +61,7 @@ This is the source code for my personal website, **[jmrp.io](https://jmrp.io)**,
 ## 🛠️ Tech Stack
 
 - **Framework**: [Astro v6](https://astro.build/)
-- **Runtime**: Node.js v22+
+- **Runtime**: Node.js v22.12.0+ (Project requirement)
 - **UI Components**: [Preact](https://preactjs.com/)
 - **Styling**: Native CSS (Variables, Nesting) & Astro Scoped Styles
 - **Icons**: [Iconify](https://icon-sets.iconify.design/)
@@ -99,7 +99,7 @@ This is the source code for my personal website, **[jmrp.io](https://jmrp.io)**,
 
 To build and run this project, you need the following tools installed on your system:
 
-- **[Node.js](https://nodejs.org/) (v22.12.0+)**: Required for Astro v6.
+- **[Node.js](https://nodejs.org/) (v22.12.0+)**: While Astro v6 supports Node.js 18.20.8+, this project requires **v22.12.0+** to support advanced build features and CI compatibility.
 - **[pnpm](https://pnpm.io/) (v10.0.0+)**: Required package manager.
 - **[Astro CLI](https://docs.astro.build/en/install-and-setup/)**: Recommended for manual tasks (can be run via `pnpm astro`).
 
