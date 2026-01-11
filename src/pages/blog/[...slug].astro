@@ -83,6 +83,9 @@ const finalReferences = allPostReferences.filter((ref) => {
 
 let jsonLdImage = "/default-blog-cover.webp";
 
+// Generate preload URL for LCP optimization (mobile-first: 540px width)
+let preloadImageUrl: string | undefined;
+
 if (post.data.coverImage) {
   // Optimize for JSON-LD schema
   const optimizedImage = await getImage({
@@ -94,6 +97,16 @@ if (post.data.coverImage) {
   });
 
   jsonLdImage = optimizedImage.src;
+
+  // Generate preload image for LCP (use a mid-size for mobile-first)
+  const preloadImage = await getImage({
+    src: post.data.coverImage,
+    format: "webp",
+    width: 540,
+    height: 304,
+    quality: 70,
+  });
+  preloadImageUrl = preloadImage.src;
 }
 
 const articleSchema = [
@@ -135,6 +148,7 @@ const articleSchema = [
   description={post.data.description}
   type="article"
   image={post.data.coverImage?.src}
+  preloadImage={preloadImageUrl}
   publishDate={post.data.publishedDate}
   modifiedDate={post.data.updatedDate}
   tags={post.data.tags}
@@ -266,124 +280,133 @@ const articleSchema = [
     }
 
     // Add copy buttons to standalone code blocks
+    // Deferred via requestIdleCallback to avoid forced reflow during initial paint
     if (prose) {
       const codeBlocks = prose.querySelectorAll(".astro-code");
 
-      codeBlocks.forEach((block) => {
-        // Skip if already inside a special component
-        if (
-          block.closest(".file-content-wrapper") ||
-          block.closest(".tab-panel") ||
-          block.closest(".compare-block")
-        ) {
-          return; // Already handled by component
-        }
-
-        // Check if we already added our button or wrapper
-        if (
-          block.parentElement?.classList.contains("code-block-wrapper") ||
-          block.querySelector(".custom-code-copy-btn")
-        ) {
-          return; // Already processed
-        }
-
-        // Get language
-        const lang = block.getAttribute("data-language") || "text";
-
-        // Create wrapper
-        const wrapper = document.createElement("div");
-        wrapper.className = "code-block-wrapper";
-
-        // Create Header
-        const header = document.createElement("div");
-        header.className = "code-block-header";
-
-        // Language Label
-        const label = document.createElement("span");
-        label.className = "code-language-label";
-        label.textContent = lang;
-        header.appendChild(label);
-
-        // Create custom copy button
-        const copyButton = document.createElement("button");
-        copyButton.type = "button";
-        copyButton.className = "custom-code-copy-btn";
-        copyButton.setAttribute("aria-label", "Copy to clipboard");
-
-        const svgNS = "http://www.w3.org/2000/svg";
-
-        // Create copy icon
-        const copyIcon = document.createElementNS(svgNS, "svg");
-        copyIcon.setAttribute("class", "copy-icon");
-        copyIcon.setAttribute("width", "20");
-        copyIcon.setAttribute("height", "20");
-        copyIcon.setAttribute("viewBox", "0 0 24 24");
-        const copyPath = document.createElementNS(svgNS, "path");
-        copyPath.setAttribute("fill", "currentColor");
-        copyPath.setAttribute(
-          "d",
-          "M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z",
-        );
-        copyIcon.appendChild(copyPath);
-
-        // Create success icon
-        const successIcon = document.createElementNS(svgNS, "svg");
-        successIcon.setAttribute("class", "success-icon hidden");
-        successIcon.setAttribute("width", "20");
-        successIcon.setAttribute("height", "20");
-        successIcon.setAttribute("viewBox", "0 0 24 24");
-        const successPath = document.createElementNS(svgNS, "path");
-        successPath.setAttribute("fill", "currentColor");
-        successPath.setAttribute(
-          "d",
-          "M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z",
-        );
-        successIcon.appendChild(successPath);
-
-        copyButton.appendChild(copyIcon);
-        copyButton.appendChild(successIcon);
-
-        // Add click handler
-        copyButton.addEventListener("click", () => {
-          const codeElement = block.querySelector("code");
-          const text = codeElement
-            ? codeElement.textContent
-            : block.textContent;
-
-          if (!text) {
-            console.warn("No code element found in block.");
-            return;
+      const processCodeBlocks = () => {
+        codeBlocks.forEach((block) => {
+          // Skip if already inside a special component
+          if (
+            block.closest(".file-content-wrapper") ||
+            block.closest(".tab-panel") ||
+            block.closest(".compare-block")
+          ) {
+            return; // Already handled by component
           }
 
-          if (!navigator.clipboard) {
-            console.warn("Clipboard API not available");
-            return;
+          // Check if we already added our button or wrapper
+          if (
+            block.parentElement?.classList.contains("code-block-wrapper") ||
+            block.querySelector(".custom-code-copy-btn")
+          ) {
+            return; // Already processed
           }
 
-          navigator.clipboard.writeText(text).then(
-            () => {
-              copyIcon.classList.add("hidden");
-              successIcon.classList.remove("hidden");
+          // Get language
+          const lang = block.getAttribute("data-language") || "text";
 
-              setTimeout(() => {
-                copyIcon.classList.remove("hidden");
-                successIcon.classList.add("hidden");
-              }, 2000);
-            },
-            (err) => {
-              console.error("Failed to copy:", err);
-            },
+          // Create wrapper
+          const wrapper = document.createElement("div");
+          wrapper.className = "code-block-wrapper";
+
+          // Create Header
+          const header = document.createElement("div");
+          header.className = "code-block-header";
+
+          // Language Label
+          const label = document.createElement("span");
+          label.className = "code-language-label";
+          label.textContent = lang;
+          header.appendChild(label);
+
+          // Create custom copy button
+          const copyButton = document.createElement("button");
+          copyButton.type = "button";
+          copyButton.className = "custom-code-copy-btn";
+          copyButton.setAttribute("aria-label", "Copy to clipboard");
+
+          const svgNS = "http://www.w3.org/2000/svg";
+
+          // Create copy icon
+          const copyIcon = document.createElementNS(svgNS, "svg");
+          copyIcon.setAttribute("class", "copy-icon");
+          copyIcon.setAttribute("width", "20");
+          copyIcon.setAttribute("height", "20");
+          copyIcon.setAttribute("viewBox", "0 0 24 24");
+          const copyPath = document.createElementNS(svgNS, "path");
+          copyPath.setAttribute("fill", "currentColor");
+          copyPath.setAttribute(
+            "d",
+            "M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z",
           );
+          copyIcon.appendChild(copyPath);
+
+          // Create success icon
+          const successIcon = document.createElementNS(svgNS, "svg");
+          successIcon.setAttribute("class", "success-icon hidden");
+          successIcon.setAttribute("width", "20");
+          successIcon.setAttribute("height", "20");
+          successIcon.setAttribute("viewBox", "0 0 24 24");
+          const successPath = document.createElementNS(svgNS, "path");
+          successPath.setAttribute("fill", "currentColor");
+          successPath.setAttribute(
+            "d",
+            "M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z",
+          );
+          successIcon.appendChild(successPath);
+
+          copyButton.appendChild(copyIcon);
+          copyButton.appendChild(successIcon);
+
+          // Add click handler
+          copyButton.addEventListener("click", () => {
+            const codeElement = block.querySelector("code");
+            const text = codeElement
+              ? codeElement.textContent
+              : block.textContent;
+
+            if (!text) {
+              console.warn("No code element found in block.");
+              return;
+            }
+
+            if (!navigator.clipboard) {
+              console.warn("Clipboard API not available");
+              return;
+            }
+
+            navigator.clipboard.writeText(text).then(
+              () => {
+                copyIcon.classList.add("hidden");
+                successIcon.classList.remove("hidden");
+
+                setTimeout(() => {
+                  copyIcon.classList.remove("hidden");
+                  successIcon.classList.add("hidden");
+                }, 2000);
+              },
+              (err) => {
+                console.error("Failed to copy:", err);
+              },
+            );
+          });
+
+          // Add button to header
+          header.appendChild(copyButton);
+
+          // Assemble DOM
+          block.parentNode?.insertBefore(wrapper, block);
+          wrapper.appendChild(header);
+          wrapper.appendChild(block);
         });
+      };
 
-        // Add button to header
-        header.appendChild(copyButton);
-
-        // Assemble DOM
-        block.parentNode?.insertBefore(wrapper, block);
-        wrapper.appendChild(header);
-        wrapper.appendChild(block);
-      });
+      // Use requestIdleCallback (or fallback) to avoid forced reflow
+      const rIC =
+        (window as any).requestIdleCallback ||
+        ((cb: any) => setTimeout(cb, 50));
+      rIC(processCodeBlocks);
     }
   };
 
