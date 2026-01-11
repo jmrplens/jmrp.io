@@ -7,25 +7,7 @@
 
 import { expect, test } from "@playwright/test";
 
-/**
- * Interface representing a speculation rule script's properties.
- */
-interface SpeculationRuleInfo {
-  /** The JSON content of the speculation rules */
-  content: SpeculationRule | null;
-  /** The nonce attribute value, if present */
-  nonce: string;
-  /** Whether the script has a nonce attribute */
-  hasNonce: boolean;
-}
-
-/**
- * Interface for the speculation rule structure.
- */
-interface SpeculationRule {
-  prerender?: Array<{ source: string; urls: string[]; eagerness: string }>;
-  prefetch?: Array<{ source: string; urls: string[]; eagerness: string }>;
-}
+import type { SpeculationRule, SpeculationRuleInfo } from "./utils";
 
 test.describe("Speculation Rules / Prerender", () => {
   test("speculation rules are injected on homepage", async ({ page }) => {

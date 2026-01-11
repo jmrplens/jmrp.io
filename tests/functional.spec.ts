@@ -1,30 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { getSitemapUrls } from "./utils";
-
-function isCloudflareInsightsError(text: string): boolean {
-  // Extract potential URLs from the console message and check their hostnames.
-  const urlPattern = /\bhttps?:\/\/[^\s"']+/g;
-  const matches = text.match(urlPattern);
-  if (!matches) {
-    return false;
-  }
-  for (const candidate of matches) {
-    try {
-      const url = new URL(candidate);
-      const host = url.hostname.toLowerCase();
-      if (
-        host === "cloudflareinsights.com" ||
-        host.endsWith(".cloudflareinsights.com")
-      ) {
-        return true;
-      }
-    } catch {
-      // Ignore parse errors and continue checking other candidates.
-    }
-  }
-  return false;
-}
+import { getSitemapUrls, shouldIgnoreError } from "./utils";
 
 /**
  * Functional Tests
@@ -50,15 +26,10 @@ test.describe("Site-wide Functional Checks", () => {
     page.on("console", (msg) => {
       if (msg.type() === "error") {
         const text = msg.text();
-        // Ignore known CORS/network errors from Cloudflare Analytics
-        if (
-          isCloudflareInsightsError(text) ||
-          text.includes("Access-Control-Allow-Origin") ||
-          text.includes("net::ERR_FAILED")
-        ) {
-          return;
+        // Use shared filter to ignore known errors
+        if (!shouldIgnoreError(text)) {
+          consoleErrors.push(`[${msg.type()}] ${text}`);
         }
-        consoleErrors.push(`[${msg.type()}] ${text}`);
       }
     });
 
