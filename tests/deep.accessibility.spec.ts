@@ -63,16 +63,20 @@ test.describe("Deep Accessibility & Interaction Tests", () => {
     await page.goto("/blog/001-secure-nginx-client-certificates");
     await page.waitForLoadState("domcontentloaded");
 
-    // Wait for the script to inject buttons
-    // We expect buttons to be injected. If not, the test should fail here rather than skip conditionally.
-    await expect(page.locator(".custom-code-copy-btn").first()).toBeAttached({
+    // Wait for the script to inject buttons OR for components to render their buttons
+    // We expect buttons to be present.
+    await expect(
+      page.locator(".custom-code-copy-btn, .copy-button").first(),
+    ).toBeAttached({
       timeout: 5000,
     });
 
     // Debugging: Log counts
-    const totalBtns = await page.locator(".custom-code-copy-btn").count();
+    const totalBtns = await page
+      .locator(".custom-code-copy-btn, .copy-button")
+      .count();
     const visibleBtns = await page
-      .locator(".custom-code-copy-btn:visible")
+      .locator(".custom-code-copy-btn:visible, .copy-button:visible")
       .count();
     console.log(
       `Page: ${page.url()} - Total buttons: ${totalBtns}, Visible buttons: ${visibleBtns}`,
@@ -85,7 +89,7 @@ test.describe("Deep Accessibility & Interaction Tests", () => {
     ).toBeGreaterThan(0);
 
     // Find FIRST code block copy button (may be invisible/opacity 0 initially)
-    const copyBtn = page.locator(".custom-code-copy-btn").first();
+    const copyBtn = page.locator(".custom-code-copy-btn, .copy-button").first();
 
     // Debugging: Log initial visibility info
     await copyBtn.waitFor({ state: "attached" });

@@ -134,8 +134,10 @@ html {
   color: var(--color-text);
   background-color: var(--color-bg);
 
-  /* Prevent font scaling in landscape on iOS */
-  text-size-adjust: 100%;
+  /* Prevent font scaling in landscape on iOS and Android font boosting */
+  /* stylelint-disable-next-line property-no-vendor-prefix */
+  -webkit-text-size-adjust: none;
+  text-size-adjust: none;
 }
 
 body {

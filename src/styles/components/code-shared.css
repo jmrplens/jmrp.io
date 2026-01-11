@@ -1,0 +1,47 @@
+/* Shared styles for code blocks and terminal components */
+
+/* This file should be imported in Astro components that render code */
+
+:root {
+  --code-font-family: var(--font-mono);
+  --code-font-size: 0.9rem;
+  --code-line-height: 1.6;
+}
+
+/* Base class for code containers (pre, terminal window) */
+
+.shared-code-container {
+  display: block; /* Simpler block layout to avoid flex-related boosting */
+  width: 100%; /* Explicit width constraint */
+  min-width: 0;
+  max-width: 100%; /* Ensure it doesn't overflow parent calculation */
+  overflow-x: auto;
+
+  /* Typography */
+
+  font-family: var(--code-font-family);
+  font-size: var(--code-font-size);
+  line-height: var(--code-line-height);
+
+  /* Mobile Fix: Prevent font inflation */
+
+  /* stylelint-disable-next-line property-no-vendor-prefix */
+  -webkit-text-size-adjust: none;
+  text-size-adjust: none;
+}
+
+/* Base class for code lines/content */
+
+.shared-code-content {
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  color: var(--color-text);
+  white-space: pre; /* Default, can be overridden to pre-wrap if needed */
+
+  /* Reinforce mobile fix on content elements */
+
+  /* stylelint-disable-next-line property-no-vendor-prefix */
+  -webkit-text-size-adjust: none;
+  text-size-adjust: none;
+}

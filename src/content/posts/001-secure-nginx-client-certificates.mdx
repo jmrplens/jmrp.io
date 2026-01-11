@@ -134,18 +134,15 @@ Now generate the root CA, which consists of a private key (`ca.key`) and a publi
 
 <Collapsible summary="Example ca.key content">
 <FileContent filename="ca.key" icon="mdi:key-variant">
-```text
 -----BEGIN PRIVATE KEY-----
 (Your unique, long, private key text will be here)
 ...
 -----END PRIVATE KEY-----
-```
 </FileContent>
 </Collapsible>
 
 <Collapsible summary="Example ca.crt content">
 <FileContent filename="ca.crt" icon="mdi:certificate-outline">
-```text
 -----BEGIN CERTIFICATE-----
 MIIDqTCCApGgAwIBAgIUGXK4wXR7k/+3vuH7tS7NsTS13OUwDQYJKoZIhvcNAQEL
 BQAwfTELMAkGA1UEBhMCRVMxETAPBgNVBAgMCFZhbGVuY2lhMREwDwYDVQQHDAhW
@@ -168,7 +165,6 @@ emZW46QBbiohOw1znFmDaI+NHZoMzIYQLs1zP8td+xl1TTxbDekqp+jS9GYwBqHa
 QOa0k/ZXcjFqpTopvlAb8AA8XsxVDcmAHfSItB8qNxwL8FnIIvlj/Yg9OGxraArJ
 2fXleID8q60zmJik0fcTyVoBdEg6KWVAykEia+E=
 -----END CERTIFICATE-----
-```
 </FileContent>
 </Collapsible>
 
@@ -180,7 +176,6 @@ To verify your new CA certificate:
   openssl x509 -in ca.crt -text -noout
 </TerminalCommand>
 <TerminalOutput title="Decoded CA Certificate">
-```text
 Certificate:
     Data:
         Version: 3 (0x2)
@@ -210,7 +205,6 @@ Certificate:
     Signature Value:
         9c:38:37:51:d7:22:a8:d9:a7:57:d4:88:04:40:16:33:3f:52:
         ...
-```
 </TerminalOutput>
 
 ---
@@ -231,7 +225,6 @@ Now let's create a certificate for a specific user.
   openssl ca -config openssl.cnf -batch -in user.csr -out user.crt
 </TerminalCommand>
 <TerminalOutput title="Example 'openssl ca' Output">
-```text
 Using configuration from openssl.cnf
 Check that the request matches the signature
 Signature ok
@@ -241,31 +234,26 @@ Certificate is to be certified until Dec 18 00:59:34 2026 GMT (365 days)
 
 Write out database with 1 new entries
 Database updated
-```
 </TerminalOutput>
 
 This process creates `user.key` and `user.crt`.
 
 <Collapsible summary="Example user.key content">
 <FileContent filename="user.key" icon="mdi:key-variant">
-```text
 -----BEGIN PRIVATE KEY-----
 (A different unique, long, private key text will be here)
 ...
 -----END PRIVATE KEY-----
-```
 </FileContent>
 </Collapsible>
 
 <Collapsible summary="Example user.crt content">
 <FileContent filename="user.crt" icon="mdi:certificate-outline">
-```text
 -----BEGIN CERTIFICATE-----
 (The text for the user's certificate will be here. It will be
 signed by your "JMRP-IO-LAB Root CA".)
 ...
 -----END CERTIFICATE-----
-```
 </FileContent>
 </Collapsible>
 
@@ -381,11 +369,9 @@ Let's say `user.crt` (from the lost phone) needs to be revoked.
   openssl ca -config openssl.cnf -revoke user.crt
 </TerminalCommand>
 <TerminalOutput title="Example 'openssl ca -revoke' Output">
-```text
 Using configuration from openssl.cnf
 Revoking Certificate 1000.
 Data Base Updated
-```
 </TerminalOutput>
 
 ### 2. Generate the CRL File

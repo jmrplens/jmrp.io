@@ -52,6 +52,8 @@ const { badTitle = "Blocked / Insecure", goodTitle = "Allowed / Secure" } =
 </div>
 
 <style>
+  @import url("@styles/components/code-shared.css");
+
   .compare-code-wrapper {
     display: grid;
     grid-template-columns: 1fr;
@@ -138,9 +140,11 @@ const { badTitle = "Blocked / Insecure", goodTitle = "Allowed / Secure" } =
 
   /* Force Code Block Styles */
   .content :global(pre) {
+    /* Inherit shared container styles */
+    @apply shared-code-container;
+
     padding: 1rem !important;
     margin: 0 !important;
-    overflow-x: auto;
     background: transparent !important; /* Let container bg show through */
     border: none !important;
     border-radius: 0 !important;
@@ -148,6 +152,9 @@ const { badTitle = "Blocked / Insecure", goodTitle = "Allowed / Secure" } =
 
   /* Ensure code text is visible */
   .content :global(code) {
+    /* Inherit shared content styles */
+    @apply shared-code-content;
+
     background-color: transparent !important;
   }
 </style>

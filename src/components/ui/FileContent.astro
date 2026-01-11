@@ -56,6 +56,8 @@ const finalIcon = icon || getIconForFile(filename);
 </div>
 
 <style>
+  @import url("@styles/components/code-shared.css");
+
   .file-content-wrapper {
     margin: 1.5rem 0;
     overflow: hidden; /* Keep children within rounded corners */
@@ -100,9 +102,11 @@ const finalIcon = icon || getIconForFile(filename);
   /* Style the <pre> element that comes from the slot */
   .file-body :global(pre),
   .file-body :global(.astro-code) {
+    /* Inherit shared container styles */
+    @apply shared-code-container;
+
     padding: 1.25rem 1.5rem !important; /* Generous padding like other components */
     margin: 0 !important;
-    overflow-x: auto;
     border: none !important;
     border-radius: 0 !important;
     box-shadow: none !important;

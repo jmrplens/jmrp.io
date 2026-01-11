@@ -27,12 +27,13 @@ const { lang = "text", class: className } = Astro.props;
 </div>
 
 <style>
+  @import url("@styles/components/code-shared.css");
+
   .code-content {
+    /* Inherit shared content styles */
+    @apply shared-code-content;
+
     display: block; /* Ensure it behaves like a block for multi-line */
-    font-family: var(--font-mono);
-    font-size: 0.9rem;
-    line-height: 1.6;
-    color: var(--color-text);
   }
 
   .code-wrapper {
@@ -50,20 +51,20 @@ const { lang = "text", class: className } = Astro.props;
   }
 
   pre {
+    /* Inherit shared container styles */
+    @apply shared-code-container;
+
     padding: 0.75rem 1rem; /* Reduced vertical padding from 1rem */
     padding-right: 3rem; /* Space for copy button */
     margin: 0;
-    overflow-x: auto;
     background-color: var(--color-bg-secondary);
     border: var(--border-1);
     border-radius: var(--radius-md);
   }
 
   code {
-    font-family: var(--font-mono);
-    font-size: 0.9rem;
-    line-height: 1.6;
-    color: var(--color-text);
+    /* Inherit shared content styles */
+    @apply shared-code-content;
   }
 
   code :global(p) {
