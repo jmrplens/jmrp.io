@@ -195,11 +195,11 @@ function deploySecurityHeaders(
         throw new Error("Nginx configuration test failed.");
       }
 
-      const reloadResult = spawnSync("nginx", ["-s", "reload"], // NOSONAR suppressed: external command usage is intentional — targets system-managed Nginx binary and validated by test runs
-        {
-          ...execOptions,
-          timeout: nginxReloadTimeout,
-        });
+      const reloadResult = spawnSync("nginx", ["-s", "reload"], {
+        // NOSONAR suppressed: external command usage is intentional
+        ...execOptions,
+        timeout: nginxReloadTimeout,
+      });
       if (reloadResult.error) {
         throw reloadResult.error;
       }

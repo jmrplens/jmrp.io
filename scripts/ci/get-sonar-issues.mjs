@@ -154,12 +154,29 @@ async function checkNoSonar(component, line) {
     const content = fs.readFileSync(fullPath, "utf-8");
     const lines = content.split("\n");
 
-    // Check both the reported line and the one immediately preceding it
-    const targetLine = (lines[line - 1] || "").toUpperCase();
-    const precedingLine = (lines[line - 2] || "").toUpperCase();
+    // Check a window around the reported line to handle multi-line statements and formatting
+    const window = [
+      lines[line - 3], // 2 lines before
+      lines[line - 2], // 1 line before
+      lines[line - 1], // target line
+      lines[line], // 1 line after
+    ];
 
-    return targetLine.includes("NOSONAR") || precedingLine.includes("NOSONAR");
-  } catch {
+    const isSuppressed = window.some((l) =>
+      (l || "").toUpperCase().includes("NOSONAR"),
+    );
+
+    if (!isSuppressed) {
+      logger.warn(
+        `   ⚠️  No NOSONAR found in window around line ${line} of ${filePath}`,
+      );
+    }
+
+    return isSuppressed;
+  } catch (err) {
+    logger.error(
+      `   ❌ Error checking NOSONAR in ${component}: ${err.message}`,
+    );
     return false;
   }
 }
