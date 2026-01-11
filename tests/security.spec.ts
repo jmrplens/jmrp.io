@@ -132,12 +132,18 @@ test.describe("CSP and SRI Security Checks", () => {
 
         for (let i = 0; i < count; i++) {
           const script = inlineScripts.nth(i);
-          const nonce = await script.getAttribute("nonce");
+
+          // Check both attribute and property (browsers often hide the attribute for security)
+          const [attrNonce, propNonce] = await Promise.all([
+            script.getAttribute("nonce"),
+            script.evaluate((node) => (node as HTMLScriptElement).nonce),
+          ]);
+          const nonce = attrNonce || propNonce;
+
           const type = await script.getAttribute("type");
           const content = await script.textContent();
 
           // All inline scripts with content should have a nonce
-          // (JSON-LD scripts also need nonce for strict CSP)
           // eslint-disable-next-line playwright/no-conditional-in-test
           if (content && content.trim() && !nonce) {
             const scriptType = type || "inline";

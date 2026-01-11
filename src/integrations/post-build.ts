@@ -51,21 +51,22 @@ export default function postBuildIntegration(): AstroIntegration {
 
           const systemNginxPath =
             process.env.POSTBUILD_NGINX_SNIPPETS_PATH || "";
-          const enableCsp = !!systemNginxPath;
 
-          if (enableCsp) {
-            validateNginxPath(systemNginxPath);
-          } else {
-            logger.info(
-              "Skipping CSP generation and Nginx deployment (environment variable POSTBUILD_NGINX_SNIPPETS_PATH is not set).",
-            );
-          }
+          // We always enable CSP artifact generation (nonces, hashes, .conf file)
+          // during the build phase so tests can verify them, regardless of
+          // whether we deploy them to a system Nginx later.
+          const enableCsp = true;
 
           await processHtmlFiles(distDir, cspData, enableCsp, logger);
+          await finalizeCspConfig(distDir, cspData, logger);
 
-          if (enableCsp) {
-            await finalizeCspConfig(distDir, cspData, logger);
+          if (systemNginxPath) {
+            validateNginxPath(systemNginxPath);
             deploySecurityHeaders(distDir, systemNginxPath, logger);
+          } else {
+            logger.info(
+              "Skipping Nginx deployment (POSTBUILD_NGINX_SNIPPETS_PATH not set).",
+            );
           }
 
           await compressAssets(distDir, logger);
