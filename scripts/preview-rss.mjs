@@ -58,8 +58,9 @@ function embedImage(imageUrl) {
       const mimeType = mimeTypes[ext] || "image/jpeg";
       return `data:${mimeType};base64,${base64}`;
     }
-  } catch {
+  } catch (error) {
     // URL parsing failed or other error, return original
+    console.warn(`Failed to embed image ${imageUrl}:`, error.message);
   }
   return imageUrl;
 }

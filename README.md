@@ -114,6 +114,7 @@ cd jmrp.io
 pnpm install
 
 # 3. Install browser binaries for tests (Playwright)
+# Note: CI and local tests are optimized for Chromium.
 pnpm exec playwright install --with-deps chromium
 
 # 4. Start development server
