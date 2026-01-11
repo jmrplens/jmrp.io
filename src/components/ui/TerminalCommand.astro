@@ -82,13 +82,11 @@ const uuid = randomUUID().slice(0, 8);
   {
     /* Accessible scrollable container: Using <pre> implies preformatted text/code, which is semantically correct and allows tabindex */
   }
-  {/* eslint-disable jsx-a11y/no-noninteractive-tabindex */}
   <pre
     class="terminal-window"
     tabindex="0"
-    role="group"
+    role="region"
     aria-label={`Terminal command ${uuid}`}>{renderedLines.map((line) => (<span class="command-line"><span class="prompt" aria-hidden="true">{!line.isEmpty && !line.isComment ? "$" : "\u00A0"}</span><span class:list={["line-content", {"is-comment": line.isComment}]}>{line.text}</span></span>))}</pre>
-  {/* eslint-enable jsx-a11y/no-noninteractive-tabindex */}
 
   {/* Hidden element for CopyButton to grab clean text without prompts */}
   <div

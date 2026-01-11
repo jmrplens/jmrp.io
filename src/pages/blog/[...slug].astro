@@ -355,6 +355,11 @@ const articleSchema = [
             return;
           }
 
+          if (!navigator.clipboard) {
+            console.warn("Clipboard API not available");
+            return;
+          }
+
           navigator.clipboard.writeText(text).then(
             () => {
               copyIcon.classList.add("hidden");
@@ -384,7 +389,10 @@ const articleSchema = [
 
   // Initialize
   setupPostInteractions();
-  document.addEventListener("astro:after-swap", setupPostInteractions);
+  if (!document.documentElement.hasAttribute("data-blog-listener-init")) {
+    document.documentElement.setAttribute("data-blog-listener-init", "true");
+    document.addEventListener("astro:after-swap", setupPostInteractions);
+  }
 </script>
 
 <style>

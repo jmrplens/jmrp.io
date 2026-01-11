@@ -181,7 +181,10 @@ const { headings } = Astro.props;
   }
 
   document.addEventListener("DOMContentLoaded", setupMobileTOC);
-  document.addEventListener("astro:after-swap", setupMobileTOC);
+  if (!document.documentElement.hasAttribute("data-toc-listener-init")) {
+    document.documentElement.setAttribute("data-toc-listener-init", "true");
+    document.addEventListener("astro:after-swap", setupMobileTOC);
+  }
 </script>
 
 <style>

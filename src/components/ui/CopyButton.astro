@@ -108,7 +108,10 @@ const encodedContent = content ? encodeURIComponent(content) : undefined;
   setupCopyButtons();
 
   // Re-initialize on view transitions if enabled
-  document.addEventListener("astro:after-swap", setupCopyButtons);
+  if (!document.documentElement.hasAttribute("data-copy-listener-init")) {
+    document.documentElement.setAttribute("data-copy-listener-init", "true");
+    document.addEventListener("astro:after-swap", setupCopyButtons);
+  }
 </script>
 
 <style>

@@ -142,7 +142,10 @@ const logoText = siteData.logo_text || "<JMRP />";
   }
 
   document.addEventListener("DOMContentLoaded", setupMobileMenu);
-  document.addEventListener("astro:after-swap", setupMobileMenu);
+  if (!document.documentElement.hasAttribute("data-menu-listener-init")) {
+    document.documentElement.setAttribute("data-menu-listener-init", "true");
+    document.addEventListener("astro:after-swap", setupMobileMenu);
+  }
 </script>
 
 <style>

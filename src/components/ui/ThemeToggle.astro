@@ -119,5 +119,8 @@ import { Icon } from "astro-icon/components";
   };
 
   document.addEventListener("DOMContentLoaded", initThemeToggle);
-  document.addEventListener("astro:after-swap", initThemeToggle);
+  if (!document.documentElement.hasAttribute("data-theme-listener-init")) {
+    document.documentElement.setAttribute("data-theme-listener-init", "true");
+    document.addEventListener("astro:after-swap", initThemeToggle);
+  }
 </script>
