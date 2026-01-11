@@ -40,6 +40,7 @@ test.describe("Speculation Rules / Prerender", () => {
     });
 
     // Skip test if browser doesn't support speculation rules
+    // eslint-disable-next-line playwright/no-skipped-test -- Intentional: skip for unsupported browsers
     test.skip(
       !browserSupportsSpecRules,
       "Browser does not support speculation rules",
@@ -99,7 +100,7 @@ test.describe("Speculation Rules / Prerender", () => {
       // Log that no speculation rules were found (not necessarily a failure)
       console.log(
         "Note: No speculation rules found. " +
-          "This is expected if clientPrerender experimental flag is not enabled.",
+        "This is expected if clientPrerender experimental flag is not enabled.",
       );
     }
   });
