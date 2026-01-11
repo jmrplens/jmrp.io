@@ -100,7 +100,7 @@ test.describe("Speculation Rules / Prerender", () => {
       // Log that no speculation rules were found (not necessarily a failure)
       console.log(
         "Note: No speculation rules found. " +
-        "This is expected if clientPrerender experimental flag is not enabled.",
+          "This is expected if clientPrerender experimental flag is not enabled.",
       );
     }
   });
