@@ -52,7 +52,6 @@ export default [
       "unicorn/import-style": "off", // path imports are fine
       "unicorn/no-array-callback-reference": "off", // map(fn) is fine
       "unicorn/no-array-sort": "off", // sort() is standard
-      "unicorn/no-process-exit": "off", // CLI scripts need process.exit (applied globally here for simplicity as we have many scripts)
       // Use utf-8 (with dash) as per official WHATWG/Unicode standard
       "unicorn/text-encoding-identifier-case": ["error", { withDash: true }],
     },
@@ -155,6 +154,7 @@ export default [
         { argsIgnorePattern: "^_" },
       ],
       "no-undef": "off",
+      "unicorn/no-process-exit": "off", // CLI scripts need process.exit
     },
   },
 
