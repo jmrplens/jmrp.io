@@ -48,6 +48,56 @@ function validateIntegrity(
   return null;
 }
 
+interface ResourceData {
+  url: string | null;
+  integrity: string | null;
+}
+
+/**
+ * Gathers data for external resources (scripts/stylesheets) at a given index.
+ */
+async function getResourceData(
+  locator: import("@playwright/test").Locator,
+  index: number,
+  type: "src" | "href",
+): Promise<ResourceData> {
+  const el = locator.nth(index);
+  return {
+    url: await el.getAttribute(type),
+    integrity: await el.getAttribute("integrity"),
+  };
+}
+
+interface InlineScriptData {
+  nonce: string | null;
+  hasContent: boolean;
+  content: string;
+  type: string;
+}
+
+/**
+ * Gathers data for an inline script at a given index.
+ */
+async function getInlineScriptData(
+  locator: import("@playwright/test").Locator,
+  index: number,
+): Promise<InlineScriptData> {
+  const script = locator.nth(index);
+  const [attrNonce, propNonce, content, type] = await Promise.all([
+    script.getAttribute("nonce"),
+    script.evaluate((node) => (node as HTMLScriptElement).nonce),
+    script.textContent(),
+    script.getAttribute("type"),
+  ]);
+
+  return {
+    nonce: attrNonce || propNonce || null,
+    hasContent: !!(content && content.trim().length > 0),
+    content: (content || "").slice(0, 40).replaceAll("\n", " "),
+    type: type || "inline",
+  };
+}
+
 test.describe("CSP and SRI Security Checks", () => {
   test("scripts have nonce placeholders for CSP", async ({ page }) => {
     const urls = await getSitemapUrls();
@@ -81,36 +131,28 @@ test.describe("CSP and SRI Security Checks", () => {
         const scripts = page.locator("script[src]");
         const scriptCount = await scripts.count();
         const scriptUrls = await Promise.all(
-          Array.from({ length: scriptCount }).map(async (_, i) => {
-            const script = scripts.nth(i);
-            return {
-              src: await script.getAttribute("src"),
-              integrity: await script.getAttribute("integrity"),
-            };
-          }),
+          Array.from({ length: scriptCount }).map((_, i) =>
+            getResourceData(scripts, i, "src"),
+          ),
         );
 
         // Gather stylesheets data
         const stylesheets = page.locator("link[rel='stylesheet'][href]");
         const styleCount = await stylesheets.count();
         const styleUrls = await Promise.all(
-          Array.from({ length: styleCount }).map(async (_, i) => {
-            const link = stylesheets.nth(i);
-            return {
-              href: await link.getAttribute("href"),
-              integrity: await link.getAttribute("integrity"),
-            };
-          }),
+          Array.from({ length: styleCount }).map((_, i) =>
+            getResourceData(stylesheets, i, "href"),
+          ),
         );
 
         // Validate and archive issues functionally to satisfy Playwright lint
         const scriptErrors = scriptUrls
-          .map((s) => validateIntegrity(url, s.src, s.integrity, "Script"))
+          .map((s) => validateIntegrity(url, s.url, s.integrity, "Script"))
           .filter((e): e is string => e !== null);
         issues.push(...scriptErrors);
 
         const styleErrors = styleUrls
-          .map((s) => validateIntegrity(url, s.href, s.integrity, "Stylesheet"))
+          .map((s) => validateIntegrity(url, s.url, s.integrity, "Stylesheet"))
           .filter((e): e is string => e !== null);
         issues.push(...styleErrors);
       });
@@ -135,23 +177,11 @@ test.describe("CSP and SRI Security Checks", () => {
         const inlineScripts = page.locator("script:not([src])");
         const count = await inlineScripts.count();
 
-        // Gather data first to avoid conditional assertions
+        // Gather data first to avoid recursion/nesting depth issues
         const scriptData = await Promise.all(
-          Array.from({ length: count }).map(async (_, i) => {
-            const script = inlineScripts.nth(i);
-            const [attrNonce, propNonce, content, type] = await Promise.all([
-              script.getAttribute("nonce"),
-              script.evaluate((node) => (node as HTMLScriptElement).nonce),
-              script.textContent(),
-              script.getAttribute("type"),
-            ]);
-            return {
-              nonce: attrNonce || propNonce,
-              hasContent: content && content.trim().length > 0,
-              content: (content || "").slice(0, 40).replaceAll("\n", " "),
-              type: type || "inline",
-            };
-          }),
+          Array.from({ length: count }).map((_, i) =>
+            getInlineScriptData(inlineScripts, i),
+          ),
         );
 
         for (const data of scriptData) {
