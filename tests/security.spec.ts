@@ -118,43 +118,107 @@ test.describe("CSP and SRI Security Checks", () => {
 
   test("inline scripts have nonce for CSP compliance", async ({ page }) => {
     const urls = await getSitemapUrls();
-    const inlineScriptsWithoutNonce: string[] = [];
+    const issues: string[] = [];
 
     for (const url of urls) {
       await test.step(`Checking inline script nonces: ${url}`, async () => {
         await page.goto(url);
 
-        // Find inline scripts (no src attribute)
-        const inlineScripts = page.locator("script:not([src]):not([type])");
+        // Find all inline scripts (scripts without src attribute)
+        // This includes regular inline scripts, module scripts, and JSON-LD
+        const inlineScripts = page.locator("script:not([src])");
         const count = await inlineScripts.count();
 
         for (let i = 0; i < count; i++) {
           const script = inlineScripts.nth(i);
           const nonce = await script.getAttribute("nonce");
+          const type = await script.getAttribute("type");
           const content = await script.textContent();
 
-          // Inline scripts need nonce for CSP (unless they're empty or JSON)
+          // All inline scripts with content should have a nonce
+          // (JSON-LD scripts also need nonce for strict CSP)
           // eslint-disable-next-line playwright/no-conditional-in-test
           if (content && content.trim() && !nonce) {
-            const preview = content.slice(0, 50).replace(/\n/g, " ");
-            inlineScriptsWithoutNonce.push(`${url}: "${preview}..."`);
+            const scriptType = type || "inline";
+            const preview = content.slice(0, 40).replace(/\n/g, " ");
+            issues.push(`${url}: ${scriptType} script missing nonce: "${preview}..."`);
           }
         }
       });
     }
 
-    // This might have some false positives for JSON-LD or module preloads
-    // Log issues and assert we found some scripts to validate
-    // eslint-disable-next-line playwright/no-conditional-in-test
-    if (inlineScriptsWithoutNonce.length > 0) {
-      console.warn(
-        "⚠️ Inline scripts without nonce (may need review):",
-        inlineScriptsWithoutNonce,
-      );
+    // All inline scripts must have nonces for CSP compliance
+    expect(
+      issues,
+      "All inline scripts should have nonce attribute for CSP compliance",
+    ).toEqual([]);
+  });
+
+  test("no elements have inline style attributes (CSP compliance)", async ({
+    page,
+  }) => {
+    const urls = await getSitemapUrls();
+    const elementsWithStyle: string[] = [];
+
+    for (const url of urls) {
+      await test.step(`Checking inline styles: ${url}`, async () => {
+        await page.goto(url);
+
+        // Find all elements with a style attribute
+        const styleAttrElements = page.locator("[style]");
+        const count = await styleAttrElements.count();
+
+        for (let i = 0; i < count; i++) {
+          const el = styleAttrElements.nth(i);
+          const tagName = await el.evaluate((node) => node.tagName.toLowerCase());
+          const style = await el.getAttribute("style");
+
+          // Skip dynamic styles known to be added by JS (visibility toggles)
+          // These are safe as they are managed by nonced scripts and aren't in SSR HTML
+          // eslint-disable-next-line playwright/no-conditional-in-test
+          if (style && (style.includes("display: block") || style.includes("display: none"))) {
+            continue;
+          }
+
+          // Skip internal browser/tooling styles if any
+          // eslint-disable-next-line playwright/no-conditional-in-test
+          if (await el.evaluate((node) => node.id === "preact-border-shadow-host")) {
+            continue;
+          }
+
+          elementsWithStyle.push(`${url}: <${tagName} style="${style}">`);
+        }
+      });
     }
 
-    // At minimum, verify we successfully scanned all pages
-    expect(urls.length).toBeGreaterThan(0);
+    // No elements should have inline style attributes (except visual toggles)
+    // as they should be converted to classes by the post-build integration
+    expect(
+      elementsWithStyle,
+      "Found unexpected inline style attributes (should have been converted to classes by post-build integration)",
+    ).toEqual([]);
+  });
+
+  test("all style tags have nonce for CSP", async ({ page }) => {
+    const urls = await getSitemapUrls();
+
+    for (const url of urls) {
+      await test.step(`Checking style nonces: ${url}`, async () => {
+        await page.goto(url);
+
+        const styleTags = page.locator("style");
+        const count = await styleTags.count();
+
+        for (let i = 0; i < count; i++) {
+          const style = styleTags.nth(i);
+          // Check for nonce attribute
+          await expect(
+            style,
+            `Style tag at ${url} should have a nonce attribute`,
+          ).toHaveAttribute("nonce", /.+/);
+        }
+      });
+    }
   });
 });
 
