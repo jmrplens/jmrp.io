@@ -18,6 +18,7 @@ import { rehypeLinkDisambiguator } from "./scripts/rehype-link-disambiguator.mjs
 import { remarkMermaidBypass } from "./scripts/remark-mermaid-bypass.mjs";
 import postBuildIntegration from "./src/integrations/post-build.ts";
 import preBuildIntegration from "./src/integrations/pre-build.ts";
+import { vitePrefetchNoncePlugin } from "./src/integrations/vite-plugin-prefetch-nonce.ts";
 
 /**
  * Custom Rehype plugin to split the <picture> output from rehype-mermaid
@@ -278,6 +279,7 @@ export default defineConfig({
   // Vite configuration (underlying bundler)
   vite: {
     plugins: [
+      vitePrefetchNoncePlugin(),
       ViteImageOptimizer({
         /* pass your config */
         svg: {

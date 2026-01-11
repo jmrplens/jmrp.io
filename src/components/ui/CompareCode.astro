@@ -22,13 +22,14 @@ interface Props {
 
 const { badTitle = "Blocked / Insecure", goodTitle = "Allowed / Secure" } =
   Astro.props;
-const uuid = randomUUID().slice(0, 8);
+const badUuid = randomUUID().slice(0, 8);
+const goodUuid = randomUUID().slice(0, 8);
 ---
 
 <div class="compare-code-wrapper">
   <section
     class="compare-block bad copy-container"
-    aria-label={`Comparison: ${badTitle} ${uuid}`}
+    aria-label={`Comparison: ${badTitle} ${badUuid}`}
   >
     <div class="header">
       <Icon
@@ -44,7 +45,7 @@ const uuid = randomUUID().slice(0, 8);
   </section>
   <section
     class="compare-block good copy-container"
-    aria-label={`Comparison: ${goodTitle} ${uuid}`}
+    aria-label={`Comparison: ${goodTitle} ${goodUuid}`}
   >
     <div class="header">
       <Icon

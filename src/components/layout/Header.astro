@@ -315,7 +315,7 @@ const logoText = siteData.logo_text || "<JMRP />";
     position: fixed;
     top: 0;
     left: 0;
-    z-index: 990; /* Below Header (1000) */
+    z-index: calc(var(--z-header) - 10); /* Below Header (1000) */
     visibility: hidden;
     width: 100vw;
     height: 100vh;

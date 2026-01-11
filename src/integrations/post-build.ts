@@ -17,7 +17,6 @@ import { compressAssets } from "./post-build/compression.js";
 import { finalizeCspConfig } from "./post-build/csp.js";
 import { extractCssDataUris } from "./post-build/css.js";
 import { processHtmlFiles } from "./post-build/html.js";
-import { patchClientPrerenderNonce } from "./post-build/patch-prerender.js";
 import type { CspData } from "./post-build/types.js";
 
 /**
@@ -49,9 +48,6 @@ export default function postBuildIntegration(): AstroIntegration {
 
         try {
           await extractCssDataUris(distDir, logger);
-
-          // This ensures SRI hashes are calculated on the patched JS files
-          await patchClientPrerenderNonce(distDir, logger);
 
           const systemNginxPath =
             process.env.POSTBUILD_NGINX_SNIPPETS_PATH || "";
