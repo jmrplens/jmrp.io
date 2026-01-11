@@ -1,8 +1,9 @@
 /**
- * Test Utilities
+ * Playwright Test Utilities Index
  *
- * Central export for all Playwright test utilities.
- * Import from this file for convenient access to all utilities.
+ * Central barrel export for all test utilities and shared types.
+ * Provides a clean API for test scripts to import necessary helpers
+ * from a single consolidated entry point.
  */
 
 // Types

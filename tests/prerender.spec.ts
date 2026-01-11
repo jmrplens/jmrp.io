@@ -1,8 +1,13 @@
 /**
  * Prerender / Speculation Rules Tests
  *
- * Validates that Astro's clientPrerender feature is working correctly
- * and that speculation rules are properly injected with CSP nonce support.
+ * Validates Astro's `clientPrerender` feature (Speculation Rules API).
+ *
+ * This suite ensures that:
+ * 1. Speculation rules are correctly injected into the HTML.
+ * 2. Prerender rules contain expected properties (source, action, urls).
+ * 3. Projected prerender URLs are strictly internal to the site.
+ * 4. Speculation rules scripts do not trigger CSP violations.
  */
 
 import { expect, test } from "@playwright/test";

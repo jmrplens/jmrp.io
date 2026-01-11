@@ -1,12 +1,13 @@
 /**
  * Deep Accessibility & Interaction Tests
  *
- * Unlike `accessibility.spec.ts` which uses Axe-core for automated WCAG scanning,
- * this file tests interactive accessibility behaviors:
- * - Keyboard navigation and focus management
- * - ARIA state changes on user interaction
- * - Skip links and landmark navigation
- * - Screen reader-friendly patterns (live regions, etc.)
+ * Unlike the broad automated scans in `accessibility.spec.ts`, this suite
+ * focuses on deep, manual-style interaction tests to verify complex behaviors:
+ *
+ * 1. Semantic Structure: Validating landmarks (nav, main, footer) and heading hierarchy.
+ * 2. Interactive Components: Testing keyboard accessibility for search and tab systems.
+ * 3. Focus Management: Ensuring focus is trapped in modals or logical tab orders.
+ * 4. Advanced A11y: Checking ARIA-live regions, skip links, and ARIA state changes.
  */
 
 import { expect, test } from "@playwright/test";

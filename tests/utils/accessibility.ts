@@ -1,7 +1,8 @@
 /**
  * Accessibility Test Utilities
  *
- * Helper functions for generating accessibility reports and aggregating results.
+ * Provides helper functions for processing Axe-core results, generating
+ * summarized reports, and creating HTML accessibility dashboards.
  */
 
 import { escapeHtml } from "../../scripts/utils/html.mjs";

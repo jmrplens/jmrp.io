@@ -1,7 +1,9 @@
 /**
  * Error Filtering Utilities for Playwright Tests
  *
- * Functions to filter out known/expected errors from test results.
+ * Provides functions to distinguish between real application errors and
+ * expected/benign network errors (e.g., CORS errors from Cloudflare Insights
+ * on localhost) to prevent false negative test results.
  */
 
 /**

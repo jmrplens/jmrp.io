@@ -1,11 +1,12 @@
 /**
  * Security Test Suite (CSP, SRI, Headers)
  *
- * Verifies Content Security Policy and Subresource Integrity implementation:
- * - Scripts have nonce attributes (for CSP compliance)
- * - Scripts and stylesheets have integrity attributes (SRI)
- * - CSP header structure is correct (in production builds)
- * - Security headers file is generated during build
+ * Verifies the implementation of security best practices:
+ * 1. Content Security Policy (CSP): Ensuring all scripts and styles have nonces.
+ * 2. Subresource Integrity (SRI): Validating hashes for local external resources.
+ * 3. Security Headers: Verifying the generation of `security_headers.conf` with
+ *    HSTS, X-Frame-Options, and robust CSP directives.
+ * 4. Inline Compliance: Checking that inline styles are converted to classes.
  *
  * Note: Nonces are placeholders ("NGINX_CSP_NONCE") in static builds,
  * replaced at runtime by Nginx with unique per-request values.
@@ -141,7 +142,9 @@ test.describe("CSP and SRI Security Checks", () => {
           if (content && content.trim() && !nonce) {
             const scriptType = type || "inline";
             const preview = content.slice(0, 40).replace(/\n/g, " ");
-            issues.push(`${url}: ${scriptType} script missing nonce: "${preview}..."`);
+            issues.push(
+              `${url}: ${scriptType} script missing nonce: "${preview}..."`,
+            );
           }
         }
       });
@@ -170,19 +173,27 @@ test.describe("CSP and SRI Security Checks", () => {
 
         for (let i = 0; i < count; i++) {
           const el = styleAttrElements.nth(i);
-          const tagName = await el.evaluate((node) => node.tagName.toLowerCase());
+          const tagName = await el.evaluate((node) =>
+            node.tagName.toLowerCase(),
+          );
           const style = await el.getAttribute("style");
 
           // Skip dynamic styles known to be added by JS (visibility toggles)
           // These are safe as they are managed by nonced scripts and aren't in SSR HTML
           // eslint-disable-next-line playwright/no-conditional-in-test
-          if (style && (style.includes("display: block") || style.includes("display: none"))) {
+          if (
+            style &&
+            (style.includes("display: block") ||
+              style.includes("display: none"))
+          ) {
             continue;
           }
 
           // Skip internal browser/tooling styles if any
           // eslint-disable-next-line playwright/no-conditional-in-test
-          if (await el.evaluate((node) => node.id === "preact-border-shadow-host")) {
+          if (
+            await el.evaluate((node) => node.id === "preact-border-shadow-host")
+          ) {
             continue;
           }
 

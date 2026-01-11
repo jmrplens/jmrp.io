@@ -1,7 +1,9 @@
 /**
  * Sitemap Utilities for Playwright Tests
  *
- * Functions to parse sitemaps and discover pages for testing.
+ * Provides functions to parse `sitemap.xml` and `sitemap-index.xml` files from
+ * the distribution directory. These are used to dynamically discover pages
+ * for broad test coverage (SEO, Accessibility, Functional).
  */
 
 import fs from "node:fs";

@@ -1,9 +1,16 @@
 /**
- * Accessibility Test Suite
+ * Accessibility Test Suite (Main Axe-core Scan)
  *
- * Automated accessibility testing using Axe-core and Playwright.
- * Scans all pages discovered from the sitemap and generates reports
- * for both light and dark themes.
+ * This test suite performs automated accessibility scanning using Axe-core.
+ * It iterates through all pages discovered in the site's sitemap and verifies
+ * compliance with WCAG 2.1 Level AA standards.
+ *
+ * The suite executes twice:
+ * 1. Using a light theme (via browser local storage)
+ * 2. Using a dark theme
+ *
+ * Detailed HTML reports and a summary JSON are generated in the
+ * `accessibility-report/` directory after execution.
  */
 
 import * as fs from "node:fs";
