@@ -41,7 +41,8 @@ for (const line of lines) {
       const linkMatch = /\[(.*?)\]\((.*?)\)/.exec(parts[0]);
       const linkName = linkMatch ? linkMatch[1] : parts[0].replace("* ", "");
       const linkUrl = linkMatch ? linkMatch[2] : null;
-      const error = parts[1].trim();
+      // Join all segments after the first to preserve | in error messages
+      const error = parts.slice(1).join("|").trim();
 
       const safeFile = escapeHtml(currentFile);
       const safeName = escapeHtml(linkName);

@@ -97,6 +97,14 @@ const encodedContent = content ? encodeURIComponent(content) : undefined;
               const status = button.querySelector(".copy-status");
               if (status) status.textContent = "Copied!";
 
+              // Clear any existing timeout to prevent flickering
+              const existingTimeout = (
+                button as HTMLButtonElement & {
+                  _copyTimeout?: ReturnType<typeof setTimeout>;
+                }
+              )._copyTimeout;
+              if (existingTimeout) clearTimeout(existingTimeout);
+
               setTimeout(() => {
                 copyIcon.classList.remove("hidden");
                 successIcon.classList.add("hidden");

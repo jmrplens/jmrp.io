@@ -76,7 +76,6 @@ export interface SpeculationRule {
 // ============================================================================
 
 /** URL entry from parsed sitemap XML. */
-/** URL entry from parsed sitemap XML. */
 export interface SitemapUrl {
   /**
    * Location URL.

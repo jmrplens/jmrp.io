@@ -23,7 +23,6 @@ const STATUS_ICONS = {
 const getIcon = (res) => STATUS_ICONS[res] || STATUS_ICONS.pending;
 
 /**
-/**
  * Builds the Static Analysis table
  */
 function buildSaTable(results) {
@@ -39,7 +38,7 @@ function buildSaTable(results) {
   md += `| Security Audit | ${getIcon(results.security)} | **${results.security || "Pending"}** |\n`;
   md += `| Snyk Security | ${getIcon(results.snyk)} | **${results.snyk || "Pending"}** |\n`;
   md += `| SonarQube | ${getIcon(results.sonar)} | **${results.sonar || "Pending"}** |\n`;
-  md += `| JSDoc Coverage | ${getIcon(results.jsdoc)} | **${results.jsdocCoverage || "0%"}** (Icon: Status, Value: Coverage) |\n`;
+  md += `| JSDoc Coverage | ${getIcon(results.jsdoc)} | **${results.jsdocCoverage || "0%"}** |\n`;
   return md;
 }
 
@@ -93,83 +92,69 @@ const buildExecutiveSummary = (saResults, healthScore) => {
 };
 
 /**
+ * Safely reads and parses a JSON file, logging a warning on failure.
+ * @param {string} filePath - Path to the JSON file.
+ * @returns {object|null} Parsed JSON or null on error.
+ */
+function safeReadJson(filePath) {
+  try {
+    if (fs.existsSync(filePath)) {
+      return JSON.parse(fs.readFileSync(filePath, "utf-8"));
+    }
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    console.warn(`⚠️ Failed to read ${filePath}:`, msg);
+  }
+  return null;
+}
+
+/**
  * Generates the list of highlights for the executive summary.
  */
 function getExecutiveHighlights(saResults) {
   const highlights = [];
 
-  try {
-    try {
-      if (fs.existsSync("bundle-analysis.json")) {
-        const bundle = JSON.parse(
-          fs.readFileSync("bundle-analysis.json", "utf-8"),
-        );
-        highlights.push(
-          `- 📦 **Bundle Size:** Code: **${bundle.readableCodeSize}** | Assets: **${bundle.readableAssetSize}**`,
-        );
-      }
-    } catch (error) {
-      console.warn("⚠️ Failed to read bundle-analysis.json:", error.message);
-    }
+  const bundle = safeReadJson("bundle-analysis.json");
+  if (bundle) {
+    highlights.push(
+      `- 📦 **Bundle Size:** Code: **${bundle.readableCodeSize}** | Assets: **${bundle.readableAssetSize}**`,
+    );
+  }
 
-    try {
-      if (fs.existsSync("accessibility-report.json")) {
-        const a11y = JSON.parse(
-          fs.readFileSync("accessibility-report.json", "utf-8"),
-        );
-        const violations = a11y.reduce(
-          (acc, r) => acc + (r.violations?.length || 0),
-          0,
-        );
-        highlights.push(
-          violations === 0
-            ? "- ♿ **Accessibility:** Perfect score! No violations detected in any audited pages. ✅"
-            : `- ♿ **Accessibility:** Found ${violations} violations that need attention.`,
-        );
-      }
-    } catch (error) {
-      console.warn(
-        "⚠️ Failed to read accessibility-report.json:",
-        error.message,
-      );
-    }
+  const a11y = safeReadJson("accessibility-report.json");
+  if (a11y) {
+    const violations = a11y.reduce(
+      (acc, r) => acc + (r.violations?.length || 0),
+      0,
+    );
+    highlights.push(
+      violations === 0
+        ? "- ♿ **Accessibility:** Perfect score! No violations detected in any audited pages. ✅"
+        : `- ♿ **Accessibility:** Found ${violations} violations that need attention.`,
+    );
+  }
 
-    try {
-      if (fs.existsSync("html-validation.json")) {
-        const html = JSON.parse(
-          fs.readFileSync("html-validation.json", "utf-8"),
-        );
-        const errors = html.reduce((acc, f) => acc + (f.errorCount || 0), 0);
-        highlights.push(
-          errors === 0
-            ? "- 📄 **HTML5:** Full valid syntax across all generated pages. ✅"
-            : `- 📄 **HTML5:** ${errors} syntax errors detected in the current build.`,
-        );
-      }
-    } catch (error) {
-      console.warn("⚠️ Failed to read html-validation.json:", error.message);
-    }
+  const html = safeReadJson("html-validation.json");
+  if (html) {
+    const errors = html.reduce((acc, f) => acc + (f.errorCount || 0), 0);
+    highlights.push(
+      errors === 0
+        ? "- 📄 **HTML5:** Full valid syntax across all generated pages. ✅"
+        : `- 📄 **HTML5:** ${errors} syntax errors detected in the current build.`,
+    );
+  }
 
-    try {
-      if (fs.existsSync("rss-validation.json")) {
-        const rss = JSON.parse(fs.readFileSync("rss-validation.json", "utf-8"));
-        if (rss.valid)
-          highlights.push(
-            `- 📡 **RSS/Atom:** Feed is syntactically valid and compliant with industry standards.`,
-          );
-      }
-    } catch (error) {
-      console.warn("⚠️ Failed to read rss-validation.json:", error.message);
-    }
+  const rss = safeReadJson("rss-validation.json");
+  if (rss?.valid) {
+    highlights.push(
+      `- 📡 **RSS/Atom:** Feed is syntactically valid and compliant with industry standards.`,
+    );
+  }
 
-    if (saResults.lychee === "success") {
-      highlights.push(
-        "- 🔗 **Link Integrity:** All external and internal links verified successfully.",
-      );
-    }
-  } catch (error) {
-    // Catch-all for other unhandled errors in highlights generation
-    console.warn("⚠️ Unexpected error building summary items:", error.message);
+  if (saResults.lychee === "success") {
+    highlights.push(
+      "- 🔗 **Link Integrity:** All external and internal links verified successfully.",
+    );
   }
 
   return highlights;

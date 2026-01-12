@@ -181,20 +181,14 @@ const { headings } = Astro.props;
         const drawer = document.getElementById("toc-drawer");
         const backdrop = document.getElementById("toc-backdrop");
         const closeBtn = document.getElementById("toc-close-btn");
-        const btns = document.querySelectorAll(".toc-trigger");
+        // const btns = document.querySelectorAll(".toc-trigger"); // Removed to fix lint hint
 
         if (drawer && drawer.classList.contains("open")) {
-          // Re-implement close logic here since we can't easily access the internal closeTOC
-          // Or simpler: simulate click on backdrop or close button if available
-          if (backdrop) backdrop.click();
-          else if (closeBtn) closeBtn.click();
-          else {
-            // Manual cleanup if needed
-            drawer.classList.remove("open");
-            drawer.setAttribute("aria-hidden", "true");
-            drawer.setAttribute("inert", "");
-            document.body.style.overflow = "";
-            btns.forEach((btn) => btn.setAttribute("aria-expanded", "false"));
+          // Delegate to closeBtn or backdrop to ensure closeTOC cleanup is executed
+          if (closeBtn) {
+            closeBtn.click();
+          } else if (backdrop) {
+            backdrop.click();
           }
         }
       }

@@ -52,7 +52,13 @@ const iconFiles = import.meta.glob<{ default: ImageMetadata }>(
             ) {
               throw new Error(`Invalid protocol: ${urlObj.protocol}`);
             }
-            hostname = urlObj.hostname;
+
+            // Handle mailto: and tel: protocols specially
+            hostname =
+              urlObj.protocol === "mailto:" || urlObj.protocol === "tel:"
+                ? urlObj.pathname || ref.url.replace(/^(mailto:|tel:)/, "")
+                : urlObj.hostname;
+
             const iconName = hostname.replaceAll(/[^a-z0-9]/gi, "_");
             const iconPath = `/src/assets/icons/${iconName}.webp`;
             iconModule = iconFiles[iconPath];
@@ -63,13 +69,20 @@ const iconFiles = import.meta.glob<{ default: ImageMetadata }>(
             return null;
           }
 
+          // Determine if this is an external link (http/https)
+          const isExternalLink =
+            urlObj?.protocol === "http:" || urlObj?.protocol === "https:";
+          const pathname = urlObj?.pathname ?? "";
+
           return (
             <a
               href={ref.url}
-              target="_blank"
-              rel="noopener noreferrer"
+              {...(isExternalLink && {
+                target: "_blank",
+                rel: "noopener noreferrer",
+              })}
               class="reference-card"
-              aria-label={`${ref.text} (${hostname}${urlObj.pathname === "/" ? "" : urlObj.pathname})`}
+              aria-label={`${ref.text} (${hostname}${pathname === "/" ? "" : pathname})`}
             >
               <div class="card-icon">
                 {iconModule ? (

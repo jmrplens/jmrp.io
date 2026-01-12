@@ -71,7 +71,7 @@ export function writeHtml(filePath: string, html: string) {
  * @returns {string[]} An array of hashes in 'algo-...' format.
  */
 export function getDualHashes(content: string): string[] {
-  if (!content?.trim()) return [];
+  if (!content.trim()) return [];
 
   const sha256 = crypto.createHash("sha256").update(content).digest("base64");
   const sha512 = crypto.createHash("sha512").update(content).digest("base64");

@@ -71,8 +71,11 @@ const renderedLines = lines.map((line) => {
 const { ariaLabel } = Astro.props;
 
 // Generate a content-based test ID for uniqueness
+// Add extra entropy for empty or identical content to ensure unique IDs per instance
+const hashInput =
+  rawContent || `empty-${Math.random().toString(36).slice(2, 7)}`;
 const contentHash = createHash("sha256")
-  .update(rawContent)
+  .update(hashInput)
   .digest("hex")
   .slice(0, 8);
 

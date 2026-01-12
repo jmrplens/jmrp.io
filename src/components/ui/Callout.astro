@@ -115,9 +115,8 @@ const iconName = icon || icons[type];
     }
   }
 
-  /* Explicit Light Mode Force - Shared with above to reduce drift */
-  :global(:root[data-theme="light"]),
-  :root:not([data-theme="dark"]) {
+  /* Explicit Light Mode Force */
+  :global(:root[data-theme="light"]) {
     --color-info-text: #1d4ed8;
     --color-info-bg: rgb(59 130 246 / 10%);
     --color-warning-text: #b45309;

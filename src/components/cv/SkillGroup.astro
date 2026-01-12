@@ -64,9 +64,9 @@ import "@styles/skills.css";
               {item.level != null && (
                 <div
                   class="skill-meta"
-                  role={showDots ? "meter" : "group"}
-                  aria-valuemin={showDots ? "0" : undefined}
-                  aria-valuemax={showDots ? "5" : undefined}
+                  role={showDots ? "meter" : "status"}
+                  aria-valuemin={showDots ? 0 : undefined}
+                  aria-valuemax={showDots ? 5 : undefined}
                   aria-valuenow={showDots ? score : undefined}
                   aria-label={`${item.name} level: ${levelLabel}`}
                 >

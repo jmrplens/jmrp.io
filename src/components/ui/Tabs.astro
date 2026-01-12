@@ -20,12 +20,27 @@ const { class: className } = Astro.props;
 
 <script>
   class TabsComponent extends HTMLElement {
+    private _tabListeners: Array<{
+      button: HTMLButtonElement;
+      clickHandler: () => void;
+      keydownHandler: (e: KeyboardEvent) => void;
+    }> = [];
+
     connectedCallback() {
       // Use requestAnimationFrame to ensure the children are fully parsed
       // connectedCallback fires before child elements are available
       requestAnimationFrame(() => {
         this.initializeTabs();
       });
+    }
+
+    disconnectedCallback() {
+      // Cleanup listeners to avoid memory leaks
+      this._tabListeners.forEach(({ button, clickHandler, keydownHandler }) => {
+        button.removeEventListener("click", clickHandler);
+        button.removeEventListener("keydown", keydownHandler);
+      });
+      this._tabListeners = [];
     }
 
     initializeTabs() {
@@ -56,7 +71,7 @@ const { class: className } = Astro.props;
         button.setAttribute("aria-selected", index === 0 ? "true" : "false");
         button.setAttribute("tabindex", index === 0 ? "0" : "-1");
 
-        button.addEventListener("click", () => {
+        const clickHandler = () => {
           // Deactivate all
           headers.querySelectorAll("button").forEach((b) => {
             b.setAttribute("aria-selected", "false");
@@ -72,10 +87,9 @@ const { class: className } = Astro.props;
 
           // Show corresponding panel
           if (panel instanceof HTMLElement) panel.style.display = "block";
-        });
+        };
 
-        // Keyboard navigation
-        button.addEventListener("keydown", (e) => {
+        const keydownHandler = (e: KeyboardEvent) => {
           const allButtons = Array.from(headers.querySelectorAll("button"));
           const firstButton = allButtons[0];
           const lastButton = allButtons[allButtons.length - 1];
@@ -109,7 +123,13 @@ const { class: className } = Astro.props;
               lastButton.focus();
             }
           }
-        });
+        };
+
+        button.addEventListener("click", clickHandler);
+        button.addEventListener("keydown", keydownHandler);
+
+        // Store references for cleanup
+        this._tabListeners.push({ button, clickHandler, keydownHandler });
 
         headers.appendChild(button);
 

@@ -59,8 +59,18 @@ const collectionSchema = {
               }
             : undefined,
         abstract: stripHtml(pub.abstract as string | undefined),
-        url: pub.url || pub.doi || undefined,
-        sameAs: pub.doi ? [pub.doi] : [],
+        // Normalize DOI to full URL
+        ...(() => {
+          const doi = typeof pub.doi === "string" ? pub.doi : undefined;
+          let doiUrl: string | undefined;
+          if (doi) {
+            doiUrl = doi.startsWith("http") ? doi : `https://doi.org/${doi}`;
+          }
+          return {
+            url: pub.url || doiUrl || undefined,
+            sameAs: doiUrl ? [doiUrl] : [],
+          };
+        })(),
       },
     })),
   },

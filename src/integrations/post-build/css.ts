@@ -82,75 +82,94 @@ export async function extractCssDataUris(
   let extracted = 0;
 
   /**
+   * Helper to optimize (if SVG) and save an asset to disk.
+   */
+  const saveAsset = (
+    filePath: string,
+    buffer: Buffer,
+    ext: string,
+    filename: string,
+  ) => {
+    if (ext === "svg") {
+      const svgString = buffer.toString("utf-8");
+      try {
+        const optimized = optimize(svgString, svgoConfig);
+        fs.writeFileSync(filePath, optimized.data);
+      } catch (svgoError) {
+        const svgoErrorMsg =
+          svgoError instanceof Error ? svgoError.message : String(svgoError);
+        logger.warn(
+          `SVGO optimization failed for extracted asset ${filename}: ${svgoErrorMsg}`,
+        );
+        fs.writeFileSync(filePath, buffer);
+      }
+    } else {
+      fs.writeFileSync(filePath, buffer);
+    }
+    extracted++;
+  };
+
+  /**
+   * Helper to extract a single asset from a Data URI and save it to disk.
+   * Returns a URL pointing to the new asset or the original match if failed.
+   */
+  const extractAssetFromDataUri = (
+    fullMatch: string,
+    quote: string | undefined,
+    quotedData: string | undefined,
+    unquotedData: string | undefined,
+    file: string,
+  ): string => {
+    const rawDataUri = quotedData || unquotedData;
+    if (!rawDataUri?.startsWith("data:")) return fullMatch;
+
+    try {
+      const commaIndex = rawDataUri.indexOf(",");
+      if (commaIndex === -1) return fullMatch;
+
+      const metadata = rawDataUri.substring(5, commaIndex);
+      const data = rawDataUri.slice(commaIndex + 1);
+      const isBase64 = metadata.includes(";base64");
+      const mime = metadata.split(";")[0] || "application/octet-stream";
+
+      const buffer = isBase64
+        ? Buffer.from(data, "base64")
+        : Buffer.from(decodeURIComponent(data.trim()));
+
+      const ext = getExtensionFromMime(mime);
+      const hash = crypto
+        .createHash("sha256")
+        .update(buffer)
+        .digest("hex")
+        .slice(0, ASSET_FILENAME_HASH_LENGTH);
+      const filename = `${hash}.${ext}`;
+      const filePath = path.join(targetDir, filename);
+
+      if (!fs.existsSync(filePath)) {
+        saveAsset(filePath, buffer, ext, filename);
+      }
+
+      const newUrl = `/${ASSETS_DIR}/${filename}`;
+      const q = quote || '"';
+      return `url(${q}${newUrl}${q})`;
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      logger.error(
+        `Error extracting CSS data URI in file: ${file} - ${errorMessage}`,
+      );
+      return fullMatch;
+    }
+  };
+
+  /**
    * Processes CSS content to find and replace data URIs with physical assets.
    */
   const processCssContent = (content: string, file: string): string => {
     return content.replaceAll(
       DATA_URI_REGEX,
-      (
-        fullMatch: string,
-        quote: string,
-        quotedData: string,
-        unquotedData: string,
-      ) => {
-        const rawDataUri = quotedData || unquotedData;
-        if (!rawDataUri?.startsWith("data:")) return fullMatch;
-
-        try {
-          const commaIndex = rawDataUri.indexOf(",");
-          if (commaIndex === -1) return fullMatch;
-
-          const metadata = rawDataUri.substring(5, commaIndex);
-          // Redundant Math.max(0, ...) removed since commaIndex != -1 checked above
-          const data = rawDataUri.slice(commaIndex + 1);
-          const isBase64 = metadata.includes(";base64");
-          const mime = metadata.split(";")[0] || "application/octet-stream";
-
-          const buffer = isBase64
-            ? Buffer.from(data, "base64")
-            : Buffer.from(decodeURIComponent(data.trim()));
-
-          const ext = getExtensionFromMime(mime);
-          const hash = crypto
-            .createHash("sha256")
-            .update(buffer)
-            .digest("hex")
-            .slice(0, ASSET_FILENAME_HASH_LENGTH);
-          const filename = `${hash}.${ext}`;
-          const filePath = path.join(targetDir, filename);
-
-          if (!fs.existsSync(filePath)) {
-            if (ext === "svg") {
-              const svgString = buffer.toString("utf-8");
-
-              try {
-                // Use hoisted svgoConfig
-                const optimized = optimize(svgString, svgoConfig);
-                fs.writeFileSync(filePath, optimized.data);
-              } catch {
-                logger.warn(
-                  `SVGO optimization failed for extracted asset, using original: ${filename}`,
-                );
-                fs.writeFileSync(filePath, buffer);
-              }
-            } else {
-              fs.writeFileSync(filePath, buffer);
-            }
-            extracted++;
-          }
-
-          const newUrl = `/${ASSETS_DIR}/${filename}`;
-          const q = quote || '"';
-          return `url(${q}${newUrl}${q})`;
-        } catch (error) {
-          const errorMessage =
-            error instanceof Error ? error.message : String(error);
-          logger.error(
-            `Error extracting CSS data URI in file: ${file} - ${errorMessage}`,
-          );
-          return fullMatch;
-        }
-      },
+      (fm: string, q?: string, qd?: string, uqd?: string) =>
+        extractAssetFromDataUri(fm, q, qd, uqd, file),
     );
   };
 

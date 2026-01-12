@@ -142,7 +142,6 @@ test.describe("Integration Flows", () => {
     await expect(page.locator("main").first()).toBeVisible(); // Main content
 
     // Verify reading time or date is shown (common blog elements)
-    // Verify reading time or date is shown (common blog elements)
     const metadata = page.locator(
       "[class*='date'], [class*='reading'], time, .post-meta",
     );

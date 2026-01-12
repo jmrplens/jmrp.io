@@ -201,9 +201,9 @@ const findScore = (manifestPath, p) => {
       ? Math.round(item.summary.performance * 100)
       : null;
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     console.error(
-      `Error parsing Lighthouse manifest ${manifestPath}:`,
-      error.message,
+      `Error parsing Lighthouse manifest ${manifestPath}: ${errorMessage}`,
     );
     return null;
   }
@@ -257,7 +257,7 @@ const qualityOutcomes = {
 };
 
 const healthScore = calculateHealthScore(saOutcomes, qualityOutcomes);
-// Use deterministic UTC timestamp for consistent CI output
+// Current UTC timestamp for display purposes (not deterministic across runs)
 const timestamp = new Date().toISOString();
 
 let scoreColor = "#ef4444";

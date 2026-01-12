@@ -22,6 +22,8 @@ const files = ["csp-shield.png", "mtls-auth.png", "virtual-files.png"];
  * @returns {Promise<void>} Resolves when all images are optimized.
  */
 async function optimize() {
+  let failed = 0;
+
   for (const file of files) {
     const inputPath = path.join(dir, file);
     const outputPath = path.join(dir, file.replace(".png", ".webp"));
@@ -46,8 +48,14 @@ async function optimize() {
       await fs.promises.unlink(inputPath);
     } catch (error) {
       console.error(`Error optimizing ${file}:`, error);
+      failed++;
       // Continue to next file instead of crashing whole process
     }
+  }
+
+  if (failed > 0) {
+    console.error(`Optimization completed with ${failed} failure(s).`);
+    process.exit(1);
   }
 
   console.log("Optimization completed successfully.");

@@ -49,6 +49,7 @@ async function analyze() {
       image: { size: 0, count: 0, files: [] },
       font: { size: 0, count: 0, files: [] },
       pdf: { size: 0, count: 0, files: [] },
+      sourcemap: { size: 0, count: 0, files: [] },
       other: { size: 0, count: 0, files: [] },
     },
   };
@@ -94,7 +95,7 @@ async function analyze() {
         else if ([".woff", ".woff2", ".ttf", ".otf", ".eot"].includes(ext))
           category = "font";
         else if (ext === ".pdf") category = "pdf";
-        else if (ext === ".map") category = "js"; // Group source maps with user code or strict distinct? The request said "add .map to the JS category or creating a dedicated". I will add to JS.
+        else if (ext === ".map") category = "sourcemap"; // Exclude source maps from code size
       }
     }
 

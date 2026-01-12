@@ -92,7 +92,7 @@ if (image) {
       width: 1200,
       height: 630,
     });
-    resolvedImage = new URL(optimizedImage.src, Astro.url);
+    resolvedImage = new URL(optimizedImage.src, getSiteUrl());
   }
 } else {
   // Fallback to default site image (imported)
@@ -103,7 +103,7 @@ if (image) {
     width: 1200,
     height: 630,
   });
-  resolvedImage = new URL(optimizedDefault.src, Astro.url);
+  resolvedImage = new URL(optimizedDefault.src, getSiteUrl());
 }
 
 // --- Schema.org Construction ---

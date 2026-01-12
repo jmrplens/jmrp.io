@@ -49,11 +49,12 @@ const uuid = createHash("sha256")
 let plainText = "";
 if (!ariaLabel) {
   // FAST PATH: Use regex for simple content to avoid Cheerio overhead
-  plainText =
+  const fullText =
     !slotContent.includes("<") || !slotContent.includes(">")
-      ? slotContent.trim().slice(0, 50)
-      : decodeHtml(slotContent.replaceAll(/<[^>]+>/g, "").trim()).slice(0, 50);
-  if (plainText.length === 50) plainText += "...";
+      ? slotContent.trim()
+      : decodeHtml(slotContent.replaceAll(/<[^>]+>/g, "").trim());
+  // Only truncate and add ellipsis if content exceeds 50 characters
+  plainText = fullText.length > 50 ? fullText.slice(0, 50) + "..." : fullText;
 }
 
 const finalAriaLabel =
