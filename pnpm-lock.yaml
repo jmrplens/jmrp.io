@@ -145,9 +145,6 @@ importers:
       axe-html-reporter:
         specifier: '>=2.2.11'
         version: 2.2.11(axe-core@4.11.1)
-      baseline-browser-mapping:
-        specifier: ^2.9.14
-        version: 2.9.14
       cheerio:
         specifier: '>=1.1.2'
         version: 1.1.2
@@ -221,7 +218,7 @@ importers:
         specifier: '>=1.1301.2'
         version: 1.1301.2
       sonar-scanner:
-        specifier: '>=3.1.0'
+        specifier: ^3.1.0
         version: 3.1.0
       stylelint:
         specifier: ^16.26.1

@@ -3,7 +3,7 @@ max_cache_age = "1d"
 
 no_progress = true
 
-# Exclude specific domains/URLs
+# Exclude specific domains/URLs (Timeouts prevent checking)
 exclude = [
     "https://profdent\\.es/.*",
     "https://mstdn\\.jmrp\\.io/.*",
