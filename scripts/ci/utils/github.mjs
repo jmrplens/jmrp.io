@@ -16,11 +16,11 @@ export async function postOrUpdateComment(github, context, header, body) {
     return;
   }
 
-  const { data: comments } = await github.rest.issues.listComments({
+  const comments = await github.paginate(github.rest.issues.listComments, {
     owner: context.repo.owner,
     repo: context.repo.repo,
     issue_number: context.payload.pull_request.number,
-    per_page: 100, // Fetch more to ensure we find ours
+    per_page: 100,
   });
 
   const existingComment = comments.find((c) => c.body?.includes(header));

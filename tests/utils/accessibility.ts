@@ -73,7 +73,7 @@ export function generateAccessibilityIndexHtml(
     <head>
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Accessibility Report Index (${theme})</title>
+      <title>Accessibility Report Index (${escapeHtml(theme)})</title>
       <style>
         body { font-family: system-ui, -apple-system, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; color: #333; }
         h1 { border-bottom: 2px solid #eee; padding-bottom: 10px; }

@@ -217,7 +217,9 @@ function isDocumentable(node) {
     ts.isMethodDeclaration(node) ||
     ts.isPropertyDeclaration(node) ||
     ts.isEnumMember(node) ||
-    ts.isAccessor(node);
+    ts.isAccessor(node) ||
+    ts.isMethodSignature(node) ||
+    ts.isPropertySignature(node);
 
   if (isBaseDocumentable) return true;
 

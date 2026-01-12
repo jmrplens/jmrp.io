@@ -116,7 +116,7 @@ const uuid = randomUUID().slice(0, 8);
     justify-content: space-between;
     min-height: 36px;
     padding: 0.5rem 0.75rem;
-    background-color: var(--color-bg-subtle);
+    background-color: var(--color-bg-header);
     border-bottom: var(--border-1);
   }
 
@@ -208,14 +208,5 @@ const uuid = randomUUID().slice(0, 8);
 
   :global(.terminal-command-wrapper .copy-button) {
     position: static !important;
-    background-color: transparent !important;
-    border: 1px solid var(--color-border) !important;
-    opacity: 80%;
-  }
-
-  :global(.terminal-command-wrapper .copy-button:hover) {
-    background-color: var(--color-bg-secondary) !important;
-    border-color: var(--color-text-muted) !important;
-    opacity: 100%;
   }
 </style>

@@ -273,6 +273,11 @@ test.describe("Build Output Verification", () => {
     const distDir = path.resolve("dist");
     const headersPath = path.join(distDir, "security_headers.conf");
 
+    expect(
+      fs.existsSync(headersPath),
+      `security_headers.conf should exist at ${headersPath}`,
+    ).toBe(true);
+
     const content = fs.readFileSync(headersPath, "utf-8");
 
     // Extract the CSP line using optimized RegExp.exec()

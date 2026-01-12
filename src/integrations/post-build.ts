@@ -138,6 +138,12 @@ function deploySecurityHeaders(
   const generatedPath = path.join(distDir, "security_headers.conf");
 
   if (!fs.existsSync(systemNginxPath) || !fs.existsSync(generatedPath)) {
+    if (!fs.existsSync(systemNginxPath)) {
+      logger.warn(`System Nginx path missing: ${systemNginxPath}`);
+    }
+    if (!fs.existsSync(generatedPath)) {
+      logger.warn(`Generated security headers missing: ${generatedPath}`);
+    }
     return;
   }
 
@@ -150,14 +156,21 @@ function deploySecurityHeaders(
     );
   }
 
-  const nginxTestTimeout = Number.parseInt(
+  let nginxTestTimeout = Number.parseInt(
     process.env.POSTBUILD_NGINX_TEST_TIMEOUT || "10000",
     10,
   );
-  const nginxReloadTimeout = Number.parseInt(
+  if (!Number.isFinite(nginxTestTimeout) || nginxTestTimeout <= 0) {
+    nginxTestTimeout = 10000;
+  }
+
+  let nginxReloadTimeout = Number.parseInt(
     process.env.POSTBUILD_NGINX_RELOAD_TIMEOUT || "30000",
     10,
   );
+  if (!Number.isFinite(nginxReloadTimeout) || nginxReloadTimeout <= 0) {
+    nginxReloadTimeout = 30000;
+  }
 
   // Safety: We will validate the configuration after deployment and revert if it fails.
   logger.info(`Deploying security headers to system Nginx...`);
@@ -169,46 +182,12 @@ function deploySecurityHeaders(
       const systemNginxCachePath =
         process.env.POSTBUILD_NGINX_CACHE_PATH || "/var/cache/nginx";
 
-      // Use a sanitized environment for execSync to avoid PATH injection
-      // We prepend secure paths to the existing PATH to maintain compatibility
-      const secureEnv = {
-        ...process.env,
-        PATH: DEFAULT_SECURE_PATH,
-      };
-
-      // Explicitly typed options to satisfy execSync overload if needed, or just standard object
-      const execOptions = {
-        stdio: "inherit" as const,
-        timeout: nginxTestTimeout,
-        env: secureEnv,
-      };
-
-      // Allow optional custom nginx config path via environment variable
-      const nginxConfigPath = process.env.POSTBUILD_NGINX_CONFIG_PATH;
-      const testArgs = nginxConfigPath ? ["-t", "-c", nginxConfigPath] : ["-t"];
-
-      const testResult = spawnSync("nginx", testArgs, execOptions); // NOSONAR suppressed: external command usage is intentional — targets system-managed Nginx binary and validated by test runs
-      if (testResult.error) {
-        throw testResult.error;
-      }
-      if (testResult.status !== 0) {
-        throw new Error("Nginx configuration test failed.");
-      }
-
-      const reloadResult = spawnSync("nginx", ["-s", "reload"], {
-        // NOSONAR suppressed: external command usage is intentional
-        ...execOptions,
-        timeout: nginxReloadTimeout,
-      });
-      if (reloadResult.error) {
-        throw reloadResult.error;
-      }
-      if (reloadResult.status !== 0) {
-        throw new Error("Nginx reload command failed.");
-      }
-
-      // Clear Nginx cache only AFTER a successful reload to prevent race conditions
-      clearNginxCache(systemNginxCachePath, logger);
+      executeNginxReload(
+        nginxTestTimeout,
+        nginxReloadTimeout,
+        systemNginxCachePath,
+        logger,
+      );
 
       logger.info("✓ Nginx security headers deployed and reloaded.");
     } catch (error) {
@@ -229,6 +208,62 @@ function deploySecurityHeaders(
     );
     throw error instanceof Error ? error : new Error(String(error));
   }
+}
+
+/**
+ * Executes the Nginx test and reload commands safely.
+ *
+ * @param testTimeout - Timeout for the configuration test command.
+ * @param reloadTimeout - Timeout for the reload command.
+ * @param systemNginxCachePath - Path to the Nginx cache directory to clear.
+ * @param logger - Astro logger instance.
+ */
+function executeNginxReload(
+  testTimeout: number,
+  reloadTimeout: number,
+  systemNginxCachePath: string,
+  logger: AstroIntegrationLogger,
+) {
+  // Use a sanitized environment for execSync to avoid PATH injection
+  // We prepend secure paths to the existing PATH to maintain compatibility
+  const secureEnv = {
+    ...process.env,
+    PATH: DEFAULT_SECURE_PATH,
+  };
+
+  // Explicitly typed options just standard object
+  const execOptions = {
+    stdio: "inherit" as const,
+    timeout: testTimeout,
+    env: secureEnv,
+  };
+
+  // Allow optional custom nginx config path via environment variable
+  const nginxConfigPath = process.env.POSTBUILD_NGINX_CONFIG_PATH;
+  const testArgs = nginxConfigPath ? ["-t", "-c", nginxConfigPath] : ["-t"];
+
+  const testResult = spawnSync("nginx", testArgs, execOptions); // NOSONAR suppressed: external command usage is intentional
+  if (testResult.error) {
+    throw testResult.error;
+  }
+  if (testResult.status !== 0) {
+    throw new Error("Nginx configuration test failed.");
+  }
+
+  const reloadResult = spawnSync("nginx", ["-s", "reload"], {
+    // NOSONAR suppressed: external command usage is intentional
+    ...execOptions,
+    timeout: reloadTimeout,
+  });
+  if (reloadResult.error) {
+    throw reloadResult.error;
+  }
+  if (reloadResult.status !== 0) {
+    throw new Error("Nginx reload command failed.");
+  }
+
+  // Clear Nginx cache only AFTER a successful reload to prevent race conditions
+  clearNginxCache(systemNginxCachePath, logger);
 }
 
 /**
@@ -337,6 +372,11 @@ function handleNginxValidationError(
     if (finalTestResult.status !== 0) {
       throw new Error("Nginx final validation test failed.");
     }
+
+    // Re-throw the original error to inform the caller that the new configuration was rejected
+    throw validationError instanceof Error
+      ? validationError
+      : new Error(String(validationError));
   } catch (revertError) {
     const revertErrorMessage =
       revertError instanceof Error ? revertError.message : String(revertError);

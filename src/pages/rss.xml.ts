@@ -46,7 +46,7 @@ export async function GET(_context: APIContext) {
     site: site,
     items: await Promise.all(
       publishedPosts.map(async (post) => {
-        const link = `/blog/${post.id}/`;
+        const link = `/blog/${post.data.slug}/`;
         const fullLink = new URL(link, site).toString();
         let customData = "";
         const description =
@@ -80,8 +80,19 @@ export async function GET(_context: APIContext) {
             customData += `<enclosure url="${imgUrl}" length="${estimatedLength}" type="image/jpeg" />\n`;
 
             // Media RSS extensions (Common in Feedly, etc)
-            customData += `<media:content url="${imgUrl}" medium="image" type="image/jpeg" width="${opt.attributes.width}" height="${opt.attributes.height}" />\n`;
-            customData += `<media:thumbnail url="${thumbUrl}" width="${thumb.attributes.width}" height="${thumb.attributes.height}" />\n`;
+            if (
+              typeof opt.attributes?.width === "number" &&
+              typeof opt.attributes?.height === "number"
+            ) {
+              customData += `<media:content url="${imgUrl}" medium="image" type="image/jpeg" width="${opt.attributes.width}" height="${opt.attributes.height}" />\n`;
+            }
+
+            if (
+              typeof thumb.attributes?.width === "number" &&
+              typeof thumb.attributes?.height === "number"
+            ) {
+              customData += `<media:thumbnail url="${thumbUrl}" width="${thumb.attributes.width}" height="${thumb.attributes.height}" />\n`;
+            }
           } catch (error) {
             const message =
               error instanceof Error ? error.message : String(error);

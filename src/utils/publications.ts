@@ -8,11 +8,17 @@ import Cite from "citation-js"; // Library to parse BibTeX files
  * Represents a single publication entry with its metadata.
  */
 export interface PublicationItem {
+  /** Unique ID of the publication (citation key). */
   id: string;
+  /** Type of publication (e.g., 'article-journal', 'paper-conference'). */
   type: string;
+  /** Title of the publication. */
   title: string;
+  /** List of authors. */
   author?: { family: string; given?: string; url?: string }[];
+  /** Date information, typically including year. */
   issued?: { "date-parts": number[][] };
+  /** Allow arbitrary additional properties from CSL JSON. */
   [key: string]: unknown;
 }
 
@@ -20,7 +26,9 @@ export interface PublicationItem {
  * Represents a group of publications categorized by type (e.g., Journals, Conferences).
  */
 export interface PublicationGroup {
+  /** Title of the group (e.g. "Journal Articles"). */
   title: string;
+  /** List of publications in this group. */
   items: PublicationItem[];
 }
 
@@ -28,7 +36,9 @@ export interface PublicationGroup {
  * Metadata for a co-author, including their name variations and profile link.
  */
 interface Coauthor {
+  /** List of first names or initials to match against. */
   firstname: string[];
+  /** URL to the co-author's profile. */
   url: string;
 }
 
@@ -36,6 +46,7 @@ interface Coauthor {
  * Map of co-author family names to their respective details.
  */
 interface CoauthorMap {
+  /** Mapping of family name to co-author details. */
   [family: string]: Coauthor[];
 }
 

@@ -65,7 +65,9 @@ const runUrl = `https://github.com/${repo}/actions/runs/${runId}`;
     }
   } catch (error) {
     console.error("❌ Error:", error);
+    process.exitCode = 1;
   } finally {
     await browser.close();
+    if (process.exitCode === 1) process.exit(1);
   }
 })();

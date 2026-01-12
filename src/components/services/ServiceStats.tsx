@@ -351,7 +351,7 @@ function MeshtasticStats({ stats }: { readonly stats: MeshtasticStatsData }) {
           href="https://potatomesh.jmrp.io"
           target="_blank"
           rel="noopener noreferrer"
-          class="btn btn-outline btn-xs"
+          class="btn btn-sm"
           aria-label="View PotatoMesh Map"
         >
           View Map
@@ -370,7 +370,7 @@ function MeshtasticStats({ stats }: { readonly stats: MeshtasticStatsData }) {
           href="https://mesh_lf.jmrp.io/meshmonitor"
           target="_blank"
           rel="noopener noreferrer"
-          class="btn btn-outline btn-xs"
+          class="btn btn-sm"
           aria-label="View MeshMonitor LF"
         >
           View Monitor
@@ -389,7 +389,7 @@ function MeshtasticStats({ stats }: { readonly stats: MeshtasticStatsData }) {
           href="https://mesh_mf.jmrp.io/meshmonitor"
           target="_blank"
           rel="noopener noreferrer"
-          class="btn btn-outline btn-xs"
+          class="btn btn-sm"
           aria-label="View MeshMonitor MF"
         >
           View Monitor

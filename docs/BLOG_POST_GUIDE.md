@@ -99,8 +99,20 @@ Show multiple content blocks in tabs (e.g., code examples):
 
 ````mdx
 <Tabs labels={["JavaScript", "Python"]}>
-  <TabPanel index={0}>```javascript console.log("Hello"); ```</TabPanel>
-  <TabPanel index={1}>```python print("Hello") ```</TabPanel>
+  <TabPanel index={0}>
+
+```javascript
+console.log("Hello");
+```
+
+  </TabPanel>
+  <TabPanel index={1}>
+
+```python
+print("Hello")
+```
+
+  </TabPanel>
 </Tabs>
 ````
 
@@ -114,8 +126,20 @@ Display "Bad" vs "Good" code side-by-side. Useful for showing security fixes or 
   badTitle="Vulnerable"
   goodTitle="Secure"
 >
-  <div slot="bad">```javascript eval(input); ```</div>
-  <div slot="good">```javascript JSON.parse(input); ```</div>
+  <div slot="bad">
+
+```javascript
+eval(input);
+```
+
+  </div>
+  <div slot="good">
+
+```javascript
+JSON.parse(input);
+```
+
+  </div>
 </CompareCode>
 ````
 

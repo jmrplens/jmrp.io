@@ -74,7 +74,6 @@ const personSchema = {
             "@type": "Occupation",
             name: job.title,
             description: stripHtml(job.summary),
-            skills: [], // Could map description items here if structured
           }))
         : [],
     hasCredential:
@@ -102,10 +101,8 @@ const personSchema = {
   type="profile"
   schema={personSchema}
 >
-  <div class="cv-container container">
-    <div class="cv-header">
-      <h1>Curriculum Vitae</h1>
-    </div>
+  <div class="container">
+    <h1 class="page-title cv-title">Curriculum Vitae</h1>
 
     <nav
       class="cv-toc"
@@ -131,20 +128,22 @@ const personSchema = {
             .replaceAll(/\s+/g, "-")}
           aria-label={section.title}
         >
-          <h2 class="section-title">{section.title}</h2>
+          <div class="section-header">
+            <h2>{section.title}</h2>
+          </div>
 
           {section.type === "map" && (
             <div class="cv-map">
               {section.contents.map((item) => (
                 <div class="map-item">
-                  <strong>{item.name}:</strong>
-                  {item.value && <span>{item.value}</span>}
+                  <span class="map-key">{item.name}:</span>
+                  {item.value && <span class="map-value">{item.value}</span>}
                   {item.links && (
-                    <div class="links">
+                    <div class="map-links">
                       {item.links.map((link) => (
                         <a
                           href={link.link}
-                          class="btn-sm"
+                          class="btn btn-sm btn-outline"
                           download={link.download || undefined}
                           target="_blank"
                           rel="noopener noreferrer"
@@ -162,49 +161,44 @@ const personSchema = {
           {section.type === "time_table" && (
             <div class="timeline">
               {section.contents.map((item) => (
-                <div class="timeline-item">
+                <article class="timeline-item">
                   <div
-                    class="timeline-dot"
+                    class="timeline-marker"
                     aria-hidden="true"
                   />
-                  <div class="timeline-card">
-                    <div
-                      class="timeline-arrow"
-                      aria-hidden="true"
-                    />
-                    <div class="item-header">
-                      <h3>{item.title}</h3>
-                      <span class="year">{item.year}</span>
-                    </div>
+                  <div class="timeline-content">
+                    <header class="timeline-header">
+                      <h3 class="item-title">{item.title}</h3>
+                      <span class="item-year">{item.year}</span>
+                    </header>
+
                     {item.institution && (
                       <div
-                        class="institution"
-                        style="min-height: 1.2em"
+                        class="item-institution"
                         set:html={sanitize(item.institution)}
                       />
                     )}
                     {item.department && (
                       <div
-                        class="department"
+                        class="item-department"
                         set:html={sanitize(item.department)}
                       />
                     )}
                     {item.location && (
-                      <div class="location">
+                      <div class="item-location">
                         <Icon name="fa-solid:map-marker-alt" /> {item.location}
                       </div>
                     )}
 
                     {item.summary && (
                       <div
-                        class="description summary"
-                        style="min-height: 1.5em"
+                        class="item-summary"
                         set:html={sanitize(item.summary)}
                       />
                     )}
 
                     {item.description && Array.isArray(item.description) && (
-                      <ul class="task-list">
+                      <ul class="item-description-list">
                         {item.description.map((desc) => {
                           if (typeof desc === "string")
                             return (
@@ -233,11 +227,11 @@ const personSchema = {
                     )}
 
                     {item.linkitems && (
-                      <div class="timeline-links">
+                      <div class="item-links">
                         {item.linkitems.map((link) => (
                           <a
                             href={link.link}
-                            class="btn-sm"
+                            class="btn btn-sm"
                             target="_blank"
                             rel="noopener noreferrer"
                             aria-label={link.ariaLabel}
@@ -249,13 +243,13 @@ const personSchema = {
                       </div>
                     )}
                   </div>
-                </div>
+                </article>
               ))}
             </div>
           )}
 
           {section.type === "list_groups" && (
-            <div class="list-groups-compact">
+            <div class="grid-layout">
               {section.contents.map((group) => (
                 <SkillGroup group={group} />
               ))}
@@ -263,7 +257,7 @@ const personSchema = {
           )}
 
           {section.type === "certificate_list" && (
-            <div class="list-groups-compact">
+            <div class="grid-layout">
               {section.contents.map((group) => (
                 <CertificateGroup group={group} />
               ))}
@@ -272,212 +266,244 @@ const personSchema = {
         </section>
       ))
     }
+  </div>
+</BaseLayout>
 
-    <style>
-      .cv-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding-bottom: var(--space-md);
-        margin-bottom: var(--space-md);
-        border-bottom: var(--border-2);
-      }
+<style>
+  .cv-title {
+    margin-bottom: var(--space-md);
+  }
 
-      .cv-toc {
-        /* Safari support */
-        position: sticky;
-        top: calc(var(--header-height) + 6px); /* Header + small gap */
-        z-index: 10;
-        padding: var(--space-sm) 0;
-        margin-bottom: var(--space-lg);
-        background: var(--color-bg);
-        border-bottom: var(--border-1);
-      }
+  /* Table of Contents */
+  .cv-toc {
+    /* Safari support */
+    position: sticky;
+    top: calc(var(--header-height) + 1rem);
+    z-index: 100;
+    width: fit-content;
+    padding: var(--space-sm) var(--space-md);
+    margin-bottom: var(--space-2xl);
+    background: var(--color-bg-secondary);
+    border: var(--border-1);
+    border-radius: var(--radius-full);
+    backdrop-filter: blur(8px);
+  }
 
-      .cv-toc ul {
-        display: flex;
-        gap: var(--space-md);
-        padding: 0;
-        margin: 0;
-        overflow-x: auto;
-        list-style: none;
-      }
+  .cv-toc ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-md);
+    padding: 0;
+    margin: 0;
+    list-style: none;
+  }
 
-      .cv-toc a {
-        font-size: 0.95rem;
-        font-weight: var(--fw-semibold);
-        color: var(--color-text-muted);
-        white-space: nowrap;
-        text-decoration: none;
-      }
+  .cv-toc a {
+    font-size: 0.9rem;
+    font-weight: var(--fw-medium);
+    color: var(--color-text);
+    text-decoration: none;
+  }
 
-      .cv-toc a:hover {
-        color: var(--color-primary);
-      }
+  .cv-toc a:hover {
+    color: var(--color-primary);
+  }
 
-      .cv-section {
-        margin-bottom: var(--space-lg);
-      }
+  /* Section Styling */
+  .cv-section {
+    margin-bottom: var(--space-3xl);
+    scroll-margin-top: 140px; /* Offset for sticky header/toc */
+  }
 
-      .section-title {
-        padding-left: 0;
-        border-bottom: var(--border-1);
+  .section-header {
+    margin-bottom: var(--space-lg);
+    border-bottom: 2px solid var(--color-border);
+  }
 
-        /* Overriding global default to match CV preference (border-bottom) */
-        border-left: none;
-      }
+  .cv-section h2 {
+    display: inline-block;
+    padding-bottom: var(--space-sm);
+    margin-bottom: -2px; /* Overlap border */
+    border-bottom: 2px solid var(--color-primary);
+  }
 
-      /* Map Type */
-      .cv-map {
-        display: flex;
-        flex-direction: column;
-        gap: var(--space-sm);
-      }
+  /* Map Type */
+  .cv-map {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+  }
 
-      .map-item {
-        font-size: 1.1rem;
-      }
+  .map-item {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs) var(--space-sm);
+    align-items: baseline;
+    font-size: 1.05rem;
+  }
 
-      .links {
-        display: inline-flex;
-        gap: var(--space-sm);
-        margin-left: var(--space-sm);
-      }
+  .map-key {
+    font-weight: var(--fw-bold);
+    color: var(--color-text);
+  }
 
-      /* Time Table */
-      .timeline {
-        padding-left: var(--space-lg);
-        border-left: var(--border-2);
-      }
+  .map-value {
+    color: var(--color-text-offset);
+  }
 
-      .timeline-item {
-        position: relative;
-        margin-bottom: var(--space-lg);
-      }
+  .map-links {
+    display: inline-flex;
+    gap: var(--space-sm);
+  }
 
-      .timeline-dot {
-        position: absolute;
-        top: 24px; /* Align with card top/header roughly */
-        left: calc(-1 * var(--space-lg) - 5px);
-        z-index: 1;
-        width: 10px;
-        height: 10px;
-        background-color: var(--color-primary);
-        border-radius: 50%;
-      }
+  /* Time Table (Timeline) */
+  .timeline {
+    position: relative;
+    padding-left: var(--space-lg);
+    border-left: 2px solid var(--color-border);
+  }
 
-      .timeline-card {
-        position: relative;
-        padding: var(--space-lg);
-        background-color: var(--color-bg-secondary);
-        border: var(--border-1);
-        border-radius: var(--radius-md);
-        transition:
-          transform 0.2s,
-          border-color 0.2s;
-      }
+  .timeline-item {
+    position: relative;
+    margin-bottom: var(--space-xl);
+  }
 
-      .timeline-card:hover {
-        border-color: var(--color-primary);
-        transform: translateY(-2px);
-      }
+  .timeline-item:last-child {
+    margin-bottom: 0;
+  }
 
-      /* Arrow pointing to timeline */
-      .timeline-arrow {
-        position: absolute;
-        top: 20px;
-        left: -8px;
-        width: 16px;
-        height: 16px;
-        content: "";
-        background-color: var(--color-bg-secondary);
-        border-bottom: var(--border-1);
-        border-left: var(--border-1);
-        transform: rotate(45deg);
-      }
+  .timeline-marker {
+    position: absolute;
+    top: 24px; /* Align with card top content */
+    left: calc(-1 * var(--space-lg) - 7px);
+    z-index: 10;
+    width: 12px;
+    height: 12px;
+    background-color: var(--color-bg);
+    border: 2px solid var(--color-primary);
+    border-radius: 50%;
+  }
 
-      .timeline-card:hover .timeline-arrow {
-        border-color: var(--color-primary); /* Match hover border */
-      }
+  .timeline-content {
+    position: relative;
+    padding: var(--space-lg);
+    background-color: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    transition:
+      transform 0.2s,
+      border-color 0.2s,
+      box-shadow 0.2s;
+  }
 
-      .item-header {
-        display: flex;
-        align-items: baseline;
-        justify-content: space-between;
-        margin-bottom: var(--space-xs);
-      }
+  .timeline-content:hover {
+    border-color: var(--color-primary);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+  }
 
-      .year {
-        font-family: var(--font-mono);
-        font-weight: bold;
-        color: var(--color-accent);
-      }
+  /* Arrow logic */
+  .timeline-content::before {
+    position: absolute;
+    top: 22px;
+    left: -6px;
+    width: 12px;
+    height: 12px;
+    content: "";
+    background-color: var(--color-bg-secondary);
+    border-bottom: 1px solid var(--color-border);
+    border-left: 1px solid var(--color-border);
+    transform: rotate(45deg);
+    transition: border-color 0.2s;
+  }
 
-      .institution,
-      .department {
-        font-size: 1.1rem;
-        font-weight: var(--fw-medium);
-        color: var(--color-text-muted);
-      }
+  .timeline-content:hover::before {
+    border-bottom-color: var(--color-primary);
+    border-left-color: var(--color-primary);
+  }
 
-      .location {
-        margin-bottom: var(--space-md);
-        font-size: 0.9rem;
-        font-style: italic;
-        color: var(--color-text-muted);
-      }
+  .timeline-header {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+    margin-bottom: var(--space-sm);
+  }
 
-      .main-desc {
-        margin-bottom: var(--space-md);
-      }
+  .item-title {
+    margin: 0;
+    font-size: 1.25rem;
+    color: var(--color-text);
+  }
 
-      .task-list {
-        padding-left: var(--space-lg);
-      }
+  .item-year {
+    font-family: var(--font-mono);
+    font-size: 0.95rem;
+    font-weight: var(--fw-medium);
+    color: var(--color-primary);
+  }
 
-      .task-list li {
-        margin-bottom: var(--space-xs);
-      }
+  .item-institution,
+  .item-department {
+    font-size: 1rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-muted);
+  }
 
-      .group-category {
-        break-inside: avoid;
-      }
+  .item-location {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    margin-top: var(--space-xs);
+    font-size: 0.9rem;
+    font-style: italic;
+    color: var(--color-text-muted);
+  }
 
-      .list-groups-compact {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        gap: var(--space-lg);
-        align-items: start;
-        margin-top: var(--space-md);
-      }
+  .item-summary {
+    margin-top: var(--space-md);
+    line-height: 1.6;
+    color: var(--color-text-offset);
+  }
 
-      .timeline-links {
-        display: flex;
-        flex-wrap: wrap;
-        gap: var(--space-sm);
-        padding-top: var(--space-sm);
-        margin-top: var(--space-md);
-        border-top: var(--border-1);
-      }
+  .item-description-list {
+    padding-left: var(--space-lg);
+    margin-top: var(--space-sm);
+    color: var(--color-text-offset);
+  }
 
-      .timeline-links a {
-        display: inline-flex;
-        gap: 6px;
-        align-items: center;
-        font-weight: var(--fw-semibold);
-      }
+  .item-description-list li {
+    margin-bottom: var(--space-xs);
+  }
 
-      /* Accessibility: Distinguish links by weight
-               Using :global() because these links are injected via set:html */
-      .timeline-card :global(a),
-      .map-item :global(a:not(.btn-sm)) {
-        font-weight: var(--fw-semibold);
-      }
+  .item-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+    margin-top: var(--space-md);
+  }
 
-      /* Ensure button links also have sufficient weight if they are text-like */
-      .map-item :global(.btn-sm) {
-        font-weight: var(--fw-semibold);
-      }
-    </style>
-  </div></BaseLayout
->
+  /* Grid Layouts for Skills/Certs */
+  .grid-layout {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--space-xl);
+    align-items: start;
+  }
+
+  /* Responsive */
+  @media (width <= 768px) {
+    .cv-toc {
+      width: 100%;
+      overflow-x: auto;
+    }
+
+    .cv-toc ul {
+      flex-wrap: nowrap;
+    }
+
+    .timeline-header {
+      flex-direction: column;
+      gap: 0;
+    }
+  }
+</style>

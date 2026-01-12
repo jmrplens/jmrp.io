@@ -52,7 +52,7 @@ function extractPathnames(urlset: SitemapUrlSet): string[] {
   if (!urlset?.url) return [];
   return urlset.url
     .map((u) => {
-      const loc = u.loc[0];
+      const loc = u.loc?.[0] ?? "";
       try {
         return loc ? new URL(loc).pathname : "";
       } catch {
@@ -83,6 +83,7 @@ export async function getSitemapUrls(): Promise<string[]> {
 
   if (sitemap.isIndex && "sitemapindex" in parsed) {
     for (const sm of parsed.sitemapindex.sitemap) {
+      if (!sm.loc || sm.loc.length === 0) continue;
       const loc = sm.loc[0];
       if (!loc) continue;
 
@@ -146,29 +147,64 @@ export async function getPagesFromSitemap(): Promise<PageInfo[]> {
 
   try {
     const sitemapContent = fs.readFileSync(sitemapPath, "utf-8");
-    const sitemap = (await parseStringPromise(sitemapContent)) as SitemapResult;
+    const sitemap = (await parseStringPromise(sitemapContent)) as
+      | SitemapResult
+      | SitemapIndexResult;
 
-    let urls = sitemap.urlset.url.map((entry) => {
-      const fullUrl = entry.loc[0];
-      const urlPath = fullUrl.replace("https://jmrp.io", "");
+    let urls: PageInfo[] = [];
 
-      // Generate friendly name from path
-      const name =
-        urlPath === "/"
-          ? "Home"
-          : urlPath
-              .split("/")
-              .filter(Boolean)
-              .map((s: string) =>
-                s
-                  .split("-")
-                  .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1))
-                  .join(" "),
-              )
-              .join(" - ");
+    // Handle sitemap index vs standard sitemap
+    if ("sitemapindex" in sitemap) {
+      // For now, just return empty or minimal list if it's an index,
+      // or implement similar recursion if needed.
+      // The user instruction said "either extracting nested... or returning an empty list".
+      // We will return empty list to avoid crash, as this function seems to want a flat list efficiently.
+      console.warn(
+        "getPagesFromSitemap encountered a sitemap index. Returning empty list to prevent crash.",
+      );
+      return [];
+    }
 
-      return { name, url: urlPath };
-    });
+    if (sitemap.urlset && Array.isArray(sitemap.urlset.url)) {
+      urls = sitemap.urlset.url
+        .filter(
+          (entry) =>
+            entry.loc &&
+            Array.isArray(entry.loc) &&
+            typeof entry.loc[0] === "string",
+        )
+        .map((entry) => {
+          const fullUrl = entry.loc[0];
+          let urlPath = "";
+          try {
+            urlPath = new URL(fullUrl).pathname;
+          } catch {
+            urlPath = ""; // Handle valid URL requirement
+          }
+
+          if (urlPath === "") return { name: "", url: "" };
+
+          // Generate friendly name from path
+          const name =
+            urlPath === "/"
+              ? "Home"
+              : urlPath
+                  .split("/")
+                  .filter(Boolean)
+                  .map((s: string) =>
+                    s
+                      .split("-")
+                      .map(
+                        (w: string) => w.charAt(0).toUpperCase() + w.slice(1),
+                      )
+                      .join(" "),
+                  )
+                  .join(" - ");
+
+          return { name, url: urlPath };
+        })
+        .filter((p) => p.url !== "");
+    }
 
     // Optimization: Only include the first tag page encountered
     let tagFound = false;

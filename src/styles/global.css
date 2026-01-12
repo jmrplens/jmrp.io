@@ -13,6 +13,7 @@
   /* Dark text on light primary for contrast */
   --color-accent: #b389f5;
   --color-border: #30363d;
+  --color-bg-header: rgb(255 255 255 / 3%);
 
   /* Typography (Managed by Astro Fonts) */
 
@@ -81,6 +82,7 @@
     --color-on-primary: #fff;
     --color-accent: #b509ac;
     --color-border: #d0d7de;
+    --color-bg-header: #eaeff2;
   }
 }
 
@@ -98,6 +100,7 @@
   --color-on-primary: #fff;
   --color-accent: #b509ac;
   --color-border: #d0d7de;
+  --color-bg-header: #eaeff2;
 }
 
 :root[data-theme="dark"] {
@@ -113,6 +116,7 @@
   --color-on-primary: #000;
   --color-accent: #b389f5;
   --color-border: #30363d;
+  --color-bg-header: rgb(255 255 255 / 3%);
 }
 
 /* Force Shiki to use dark theme variables when data-theme is dark */
@@ -170,9 +174,12 @@ pre {
 }
 
 a {
+  font-weight: var(--fw-semibold);
   color: var(--color-accent);
-  text-decoration: none;
-  transition: color 0.2s ease;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-decoration-color: var(--color-accent);
+  text-underline-offset: 3px;
 }
 
 a:hover {

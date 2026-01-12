@@ -2,13 +2,21 @@
  * Represents a simplified GitHub repository object.
  */
 export interface GitHubRepo {
+  /** Unique identifier for the repository. */
   id: number;
+  /** Name of the repository. */
   name: string;
+  /** Repository description, if any. */
   description: string | null;
+  /** URL to the repository on GitHub. */
   html_url: string;
+  /** Primary programming language used. */
   language: string | null;
+  /** Number of stars (stargazers). */
   stargazers_count: number;
+  /** Number of forks. */
   forks_count: number;
+  /** ISO 8601 timestamp of the last update. */
   updated_at: string;
 }
 
@@ -16,14 +24,23 @@ export interface GitHubRepo {
  * Represents a simplified GitHub user profile.
  */
 export interface GitHubProfile {
+  /** User's full name. */
   name: string;
+  /** User's username (handle). */
   login: string;
+  /** User's biography, if any. */
   bio: string | null;
+  /** URL to the user's profile on GitHub. */
   html_url: string;
+  /** URL to the user's avatar image. */
   avatar_url: string;
+  /** User's geographic location. */
   location: string | null;
+  /** Number of public repositories. */
   public_repos: number;
+  /** Number of followers. */
   followers: number;
+  /** Number of users following. */
   following: number;
 }
 

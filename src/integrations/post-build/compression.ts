@@ -47,6 +47,17 @@ export async function compressAssets(
 
         return true;
       } catch (error) {
+        // Cleanup orphaned .gz file if it exists but the process failed (e.g. at Brotli stage)
+        try {
+          if (fs.existsSync(`${file}.gz`)) {
+            await fs.promises.unlink(`${file}.gz`);
+          }
+        } catch (unlinkError) {
+          logger.warn(
+            `Failed to cleanup orphaned .gz file for ${file}: ${unlinkError instanceof Error ? unlinkError.message : String(unlinkError)}`,
+          );
+        }
+
         logger.warn(
           `Failed to compress ${file}: ${error instanceof Error ? error.message : String(error)}`,
         );

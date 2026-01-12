@@ -7,6 +7,7 @@ no_progress = true
 exclude = [
     "https://profdent\\.es/.*",
     "https://mstdn\\.jmrp\\.io/.*",
+    "https://mesh\\.jmrp\\.io/.*",
     "https://electronica-submarina\\.com/.*",
     "https://ies-berlanga\\.info/.*",
     "https://www\\.i3m-detectors\\.i3m\\.upv\\.es/.*",

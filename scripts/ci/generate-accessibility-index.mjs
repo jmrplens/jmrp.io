@@ -353,8 +353,8 @@ if (summaryFiles.length > 0) {
   // Map incompleteList -> incomplete for compatibility with format-accessibility-report.mjs
   const compatibilityReport = aggregatedReport.map((report) => ({
     ...report,
-    incompleteCount: report.incomplete, // Preserve count as separate property
-    incomplete: report.incompleteList, // Map incompleteList to incomplete for the formatter
+    incompleteCount: report.incomplete ?? 0, // Preserve count as separate property, default to 0
+    incomplete: report.incompleteList || [], // Map incompleteList to incomplete for the formatter, default to empty
   }));
 
   fs.writeFileSync(

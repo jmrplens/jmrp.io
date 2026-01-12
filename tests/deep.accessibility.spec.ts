@@ -44,8 +44,8 @@ test.describe("Deep Accessibility & Interaction Tests", () => {
     await page.keyboard.type("portfolio");
 
     // 3. Verify filtering happened (visual check logic via code)
-    // We expect repos *not* matching "astro" to be hidden.
-    // This assumes there's at least one repo that doesn't match "astro"
+    // We expect repos *not* matching "portfolio" to be hidden.
+    // This assumes there's at least one repo that doesn't match "portfolio"
     const visibleCards = page.locator(".repo-card:visible");
     const count = await visibleCards.count();
     expect(count).toBeGreaterThan(0); // Should still show something
@@ -190,35 +190,34 @@ test.describe("Deep Accessibility & Interaction Tests", () => {
 
     expect(errors).toEqual([]);
   });
-});
+  test("Publications Copy Button Keyboard Interaction", async ({ page }) => {
+    await page.goto("/publications");
 
-test("Publications Copy Button Keyboard Interaction", async ({ page }) => {
-  await page.goto("/publications");
+    // 1. Find a BibTeX toggle button (e.g., first one)
+    const bibtexToggle = page.locator(".btn-bibtex-toggle").first();
+    await expect(bibtexToggle).toBeVisible();
 
-  // 1. Find a BibTeX toggle button (e.g., first one)
-  const bibtexToggle = page.locator(".btn-bibtex-toggle").first();
-  await expect(bibtexToggle).toBeVisible();
+    // 2. Open the BibTeX section
+    await bibtexToggle.click();
 
-  // 2. Open the BibTeX section
-  await bibtexToggle.click();
+    // 3. Find the copy button inside the now-visible BibTeX container
+    // The container ID is in aria-controls of the toggle
+    const controlsId = await bibtexToggle.getAttribute("aria-controls");
+    const container = page.locator(`#${controlsId}`);
+    await expect(container).toBeVisible();
 
-  // 3. Find the copy button inside the now-visible BibTeX container
-  // The container ID is in aria-controls of the toggle
-  const controlsId = await bibtexToggle.getAttribute("aria-controls");
-  const container = page.locator(`#${controlsId}`);
-  await expect(container).toBeVisible();
+    const copyBtn = container.locator(".copy-button"); // Uses .copy-button class from CopyButton.astro
+    await expect(copyBtn).toBeVisible();
 
-  const copyBtn = container.locator(".copy-button"); // Uses .copy-button class from CopyButton.astro
-  await expect(copyBtn).toBeVisible();
+    // 4. Focus and Activate
+    await copyBtn.focus();
+    await expect(copyBtn).toBeFocused();
 
-  // 4. Focus and Activate
-  await copyBtn.focus();
-  await expect(copyBtn).toBeFocused();
+    // 5. Activate with Enter
+    await page.keyboard.press("Enter");
 
-  // 5. Activate with Enter
-  await page.keyboard.press("Enter");
-
-  // 6. Verify Success Icon
-  const successIcon = copyBtn.locator(".success-icon");
-  await expect(successIcon).not.toHaveClass(/hidden/);
+    // 6. Verify Success Icon
+    const successIcon = copyBtn.locator(".success-icon");
+    await expect(successIcon).not.toHaveClass(/hidden/);
+  });
 });

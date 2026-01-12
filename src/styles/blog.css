@@ -74,7 +74,7 @@
 }
 
 /* Mobile responsive adjustments */
-@media (width <= 900px) {
+@media (width <=900px) {
   .page-header {
     margin-bottom: var(--space-md);
   }
@@ -82,7 +82,6 @@
   .blog-layout {
     display: flex;
     flex-direction: column;
-    grid-template-columns: 1fr;
     gap: var(--space-md);
   }
 
@@ -95,7 +94,7 @@
   }
 }
 
-@media (width <= 640px) {
+@media (width <=640px) {
   .content-wrapper {
     padding: var(--space-lg) var(--space-md);
   }
