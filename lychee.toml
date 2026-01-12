@@ -13,6 +13,7 @@ exclude = [
     "https://www\\.i3m-detectors\\.i3m\\.upv\\.es/.*",
     "https://rua\\.ua\\.es/.*",
     "https://www\\.upv\\.es/index-en\\.html",
+    "https://www\\.upv\\.es/entidades/epsg/en/home/",
     "http://hdl\\.handle\\.net/.*",
     # Ignore Astro/Template variables
     ".*\\$\\{.*",
