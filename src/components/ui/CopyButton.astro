@@ -125,6 +125,15 @@ const encodedContent = content ? encodeURIComponent(content) : undefined;
 
 <style>
   .copy-button {
+    /*
+     * CSS custom properties for theming in different contexts.
+     * Parent components can override these for better contrast.
+     */
+    --copy-btn-bg: var(--color-bg-subtle, rgb(255 255 255 / 10%));
+    --copy-btn-bg-hover: var(--color-bg-secondary, #222);
+    --copy-btn-border: var(--border-1, 1px solid rgb(255 255 255 / 10%));
+    --copy-btn-icon-color: var(--color-text-muted, #888);
+
     position: absolute;
     top: 0.5rem;
     right: 0.5rem;
@@ -136,16 +145,23 @@ const encodedContent = content ? encodeURIComponent(content) : undefined;
     min-height: 32px;
     padding: 0.3rem 0.5rem;
     cursor: pointer;
-    background-color: var(--color-bg-subtle, rgb(255 255 255 / 10%));
-    border: var(--border-1, 1px solid rgb(255 255 255 / 10%));
-    border-radius: 4px; /* Use variable if available, fallback for reuse */
+    background-color: var(--copy-btn-bg);
+    border: var(--copy-btn-border);
+    border-radius: 4px;
     opacity: 80%;
     transition: all 0.2s ease;
   }
 
-  .copy-button:hover {
-    background-color: var(--color-bg-secondary, #222);
+  .copy-button:hover,
+  .copy-button:focus-visible {
+    outline: none;
+    background-color: var(--copy-btn-bg-hover);
     opacity: 100%;
+  }
+
+  .copy-button:focus-visible {
+    outline: 2px solid var(--color-primary, #8b5cf6);
+    outline-offset: 2px;
   }
 
   .copy-button:active {
@@ -159,7 +175,7 @@ const encodedContent = content ? encodeURIComponent(content) : undefined;
     width: 1.2rem;
     height: 1.2rem;
     font-size: 1.2rem;
-    color: var(--color-text-muted, #888);
+    color: var(--copy-btn-icon-color);
   }
 
   .success-icon {
