@@ -104,6 +104,7 @@ import { Icon } from "astro-icon/components";
     // Initialize state based on current theme
     if (toggle) {
       const currentTheme = getTheme() || "dark"; // Default fallback
+      setTheme(currentTheme); // Apply immediately to prevent flash
       const label =
         currentTheme === "dark"
           ? "Switch to Light Mode"

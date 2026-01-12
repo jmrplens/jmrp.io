@@ -18,6 +18,16 @@ if (!fs.existsSync(MD_PATH)) {
 const mdContent = fs.readFileSync(MD_PATH, "utf-8");
 
 // Basic Markdown to HTML conversion for Lychee's specific output
+const escapeHtml = (str) => {
+  if (!str) return "";
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+};
+
 let htmlRows = "";
 const lines = mdContent.split("\n");
 
@@ -30,14 +40,22 @@ for (const line of lines) {
     if (parts.length >= 2) {
       const linkMatch = parts[0].match(/\[(.*?)\]\((.*?)\)/);
       const linkName = linkMatch ? linkMatch[1] : parts[0].replace("* ", "");
-      const linkUrl = linkMatch ? linkMatch[2] : "";
+      const linkUrl = linkMatch ? linkMatch[2] : null;
       const error = parts[1].trim();
+
+      const safeFile = escapeHtml(currentFile);
+      const safeName = escapeHtml(linkName);
+      const safeError = escapeHtml(error);
+
+      const linkHtml = linkUrl
+        ? `<a href="${escapeHtml(linkUrl)}" target="_blank" class="broken-link">${safeName}</a>`
+        : `<span class="broken-link">${safeName}</span>`;
 
       htmlRows += `
         <tr>
-          <td><code class="file-path">${currentFile}</code></td>
-          <td><a href="${linkUrl}" target="_blank" class="broken-link">${linkName}</a></td>
-          <td><span class="error-badge">${error}</span></td>
+          <td><code class="file-path">${safeFile}</code></td>
+          <td>${linkHtml}</td>
+          <td><span class="error-badge">${safeError}</span></td>
         </tr>
       `;
     }

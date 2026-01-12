@@ -46,7 +46,7 @@ const levelTextMap: Record<number, string> = {
                 <span class="compact-name">{item.name}</span>
                 {item.desc && <span class="skill-desc">{item.desc}</span>}
               </div>
-              {item.level && (
+              {item.level != null && (
                 <div
                   class="skill-meta"
                   role="meter"

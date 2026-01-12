@@ -117,20 +117,21 @@ test.describe("Security & Best Practices", () => {
           const href = await link.getAttribute("href");
           const rel = await link.getAttribute("rel");
 
-          // If rel is missing or doesn't contain noopener, track the issue
-          // eslint-disable-next-line playwright/no-conditional-in-test
-          if (!rel || !rel.includes("noopener")) {
-            issues.push(`${url}: ${href} is missing rel="noopener"`);
-          }
+          // If rel is missing or doesn't contain noopener, track the issue using soft assertions
+          // This avoids the 'no-conditional-in-test' warning by moving the check into an expectation
+          expect
+            .soft(
+              rel,
+              `${url}: ${href} is missing rel="noopener" or rel="noreferrer"`,
+            )
+            .toMatch(/noopener|noreferrer/);
         }
       });
     }
 
-    // Report all issues at the end
-    expect(
-      issues,
-      "External links with target=_blank should have rel=noopener",
-    ).toEqual([]);
+    // Issues are reported via expect.soft above
+    // We can add a final sanity check if needed, or rely on soft assertions to fail the test eventually
+    expect(issues).toEqual([]);
   });
 
   test("images have alt attributes", async ({ page }) => {

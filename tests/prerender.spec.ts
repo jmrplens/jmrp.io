@@ -104,50 +104,45 @@ test.describe("Speculation Rules / Prerender", () => {
       await page.waitForFunction(() => document.readyState === "complete");
     }
 
-    const speculationRules = await page.evaluate((): SpeculationRule[] => {
-      const scripts = document.querySelectorAll(
-        'script[type="speculationrules"]',
-      );
-      return [...scripts].map((script) => {
-        try {
-          return JSON.parse(script.textContent || "{}") as SpeculationRule;
-        } catch {
-          return {};
-        }
-      });
-    });
+    const speculationRules = await page.evaluate(
+      (): (SpeculationRule | null)[] => {
+        const scripts = document.querySelectorAll(
+          'script[type="speculationrules"]',
+        );
+        return [...scripts].map((script) => {
+          try {
+            return JSON.parse(script.textContent || "{}") as SpeculationRule;
+          } catch {
+            return null;
+          }
+        });
+      },
+    );
 
     // Validate structure of each speculation rule
-    for (const rule of speculationRules) {
-      // eslint-disable-next-line playwright/no-conditional-in-test -- Only validate if rule exists
-      if (rule) {
-        // Check prerender configuration
-        // eslint-disable-next-line playwright/no-conditional-expect -- Conditional validation of prerender
-        expect(rule.prerender).toBeInstanceOf(Array);
-        // eslint-disable-next-line playwright/no-conditional-in-test -- Check if prerender has items
-        if (rule.prerender && rule.prerender.length > 0) {
-          const prerenderRule = rule.prerender[0];
-          // eslint-disable-next-line playwright/no-conditional-expect -- Validate prerender structure
-          expect(prerenderRule).toHaveProperty("source", "list");
-          // eslint-disable-next-line playwright/no-conditional-expect -- Validate prerender structure
-          expect(prerenderRule).toHaveProperty("urls");
-          // eslint-disable-next-line playwright/no-conditional-expect -- Validate prerender structure
-          expect(prerenderRule).toHaveProperty("eagerness");
-        }
+    // Validate structure of each speculation rule
+    // Filter out nulls first to avoid conditionals inside the loop
+    const validRules = speculationRules.filter(
+      (rule): rule is SpeculationRule => rule !== null,
+    );
 
-        // Check prefetch configuration
-        // eslint-disable-next-line playwright/no-conditional-expect -- Conditional validation of prefetch
-        expect(rule.prefetch).toBeInstanceOf(Array);
-        // eslint-disable-next-line playwright/no-conditional-in-test -- Check if prefetch has items
-        if (rule.prefetch && rule.prefetch.length > 0) {
-          const prefetchRule = rule.prefetch[0];
-          // eslint-disable-next-line playwright/no-conditional-expect -- Validate prefetch structure
-          expect(prefetchRule).toHaveProperty("source", "list");
-          // eslint-disable-next-line playwright/no-conditional-expect -- Validate prefetch structure
-          expect(prefetchRule).toHaveProperty("urls");
-          // eslint-disable-next-line playwright/no-conditional-expect -- Validate prefetch structure
-          expect(prefetchRule).toHaveProperty("eagerness");
-        }
+    for (const rule of validRules) {
+      // Check prerender configuration
+      // eslint-disable-next-line playwright/no-conditional-in-test -- Default to empty array to allow iteration
+      const prerenderRules = rule.prerender || [];
+      for (const prerenderRule of prerenderRules) {
+        expect(prerenderRule).toHaveProperty("source", "list");
+        expect(prerenderRule).toHaveProperty("urls");
+        expect(prerenderRule).toHaveProperty("eagerness");
+      }
+
+      // Check prefetch configuration
+      // eslint-disable-next-line playwright/no-conditional-in-test -- Default to empty array to allow iteration
+      const prefetchRules = rule.prefetch || [];
+      for (const prefetchRule of prefetchRules) {
+        expect(prefetchRule).toHaveProperty("source", "list");
+        expect(prefetchRule).toHaveProperty("urls");
+        expect(prefetchRule).toHaveProperty("eagerness");
       }
     }
   });
@@ -174,9 +169,15 @@ test.describe("Speculation Rules / Prerender", () => {
         try {
           const rule = JSON.parse(script.textContent || "{}") as {
             prerender?: Array<{ urls?: string[] }>;
+            prefetch?: Array<{ urls?: string[] }>;
           };
           if (rule.prerender) {
             for (const p of rule.prerender) {
+              if (p.urls) allUrls.push(...p.urls);
+            }
+          }
+          if (rule.prefetch) {
+            for (const p of rule.prefetch) {
               if (p.urls) allUrls.push(...p.urls);
             }
           }

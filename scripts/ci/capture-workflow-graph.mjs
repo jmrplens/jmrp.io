@@ -19,6 +19,7 @@ const runUrl = `https://github.com/${repo}/actions/runs/${runId}`;
     // Extract nodes and links
     const data = await page.evaluate(() => {
       const graph = document.querySelector(".WorkflowGraph");
+      if (!graph) return null;
       const graphRect = graph.getBoundingClientRect();
 
       const nodes = [
@@ -55,8 +56,12 @@ const runUrl = `https://github.com/${repo}/actions/runs/${runId}`;
       };
     });
 
-    fs.writeFileSync("workflow-data.json", JSON.stringify(data, null, 2));
-    console.log("✅ Workflow data saved to workflow-data.json");
+    if (data) {
+      fs.writeFileSync("workflow-data.json", JSON.stringify(data, null, 2));
+      console.log("✅ Workflow data saved to workflow-data.json");
+    } else {
+      console.warn("⚠️ Workflow graph not found in DOM.");
+    }
 
     // Also take the screenshot just in case
     const element = await page.$(".WorkflowGraph");

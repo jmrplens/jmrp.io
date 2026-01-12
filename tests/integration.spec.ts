@@ -63,11 +63,11 @@ test.describe("Integration Flows", () => {
     // Verify page title
     await expect(page.locator("h1")).toBeVisible();
 
-    // Wait for GitHub repos to load
-    await page.waitForLoadState("domcontentloaded");
-
     // Check that repo cards are rendered
     const repoCards = page.locator(".repo-card");
+    // Wait for the first card to appear (auto-retrying) to avoid race conditions with JS fetch
+    await repoCards.first().waitFor({ state: "visible" });
+
     const cardCount = await repoCards.count();
     expect(cardCount).toBeGreaterThan(0);
 

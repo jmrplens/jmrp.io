@@ -188,7 +188,9 @@ const findScore = (manifestPath, p) => {
       }
       return i.url.includes(p.pathMatch);
     });
-    return item ? Math.round(item.summary.performance * 100) : null;
+    return item && item.summary && typeof item.summary.performance === "number"
+      ? Math.round(item.summary.performance * 100)
+      : null;
   } catch (error) {
     console.error(
       `Error parsing Lighthouse manifest ${manifestPath}:`,
@@ -252,9 +254,9 @@ const timestamp = new Date().toLocaleString("en-US", {
 });
 
 let scoreColor = "#ef4444";
-if (healthScore > 90) {
+if (healthScore >= 80) {
   scoreColor = "#10b981";
-} else if (healthScore > 70) {
+} else if (healthScore >= 60) {
   scoreColor = "#f59e0b";
 }
 

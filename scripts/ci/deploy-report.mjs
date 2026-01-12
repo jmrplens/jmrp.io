@@ -21,7 +21,9 @@ if (!dir || !projectName) {
 // Input sanitization to prevent command injection
 if (
   !/^[a-zA-Z0-9_.\-/]+$/.test(dir) ||
-  !/^[a-zA-Z0-9_.\-/]+$/.test(projectName)
+  !/^[a-zA-Z0-9_.\-/]+$/.test(projectName) ||
+  dir.includes("..") ||
+  projectName.includes("..")
 ) {
   console.error(
     "Invalid directory or project name: contains unsafe characters",

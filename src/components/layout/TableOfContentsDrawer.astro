@@ -170,11 +170,32 @@ const { headings } = Astro.props;
       });
     }
 
-    // Close on Escape
+    // Close on Escape - managed by a global listener outside setupMobileTOC to avoid duplication
+  }
+
+  // Global Escape key listener (only added once)
+  if (!document.documentElement.hasAttribute("data-toc-key-listener")) {
+    document.documentElement.setAttribute("data-toc-key-listener", "true");
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape") {
-        if (drawer.classList.contains("open")) {
-          closeTOC();
+        const drawer = document.getElementById("toc-drawer");
+        const backdrop = document.getElementById("toc-backdrop");
+        const closeBtn = document.getElementById("toc-close-btn");
+        const btns = document.querySelectorAll(".toc-trigger");
+
+        if (drawer && drawer.classList.contains("open")) {
+          // Re-implement close logic here since we can't easily access the internal closeTOC
+          // Or simpler: simulate click on backdrop or close button if available
+          if (backdrop) backdrop.click();
+          else if (closeBtn) closeBtn.click();
+          else {
+            // Manual cleanup if needed
+            drawer.classList.remove("open");
+            drawer.setAttribute("aria-hidden", "true");
+            drawer.setAttribute("inert", "");
+            document.body.style.overflow = "";
+            btns.forEach((btn) => btn.setAttribute("aria-expanded", "false"));
+          }
         }
       }
     });

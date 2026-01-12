@@ -408,8 +408,11 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
   /* Theme logic: Show Dark by default or if data-theme='dark' */
   :global([data-theme="dark"]) .code-block-dark,
   :global(:root:not([data-theme])) .code-block-light {
-    /* Fallback logic mostly handled by JS script, but assuming light default? 
-           Actually user site seems to use data-theme attribute. */
+    /* 
+       Logic:
+       - If data-theme="dark", show dark block.
+       - If no data-theme (assumed light default for system pref fallback without JS), show light block.
+    */
     display: block;
   }
 

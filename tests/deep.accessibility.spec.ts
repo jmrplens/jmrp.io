@@ -46,16 +46,29 @@ test.describe("Deep Accessibility & Interaction Tests", () => {
     // 3. Verify filtering happened (visual check logic via code)
     // We expect repos *not* matching "portfolio" to be hidden.
     // This assumes there's at least one repo that doesn't match "portfolio"
-    const visibleCards = page.locator(".repo-card:visible");
-    const count = await visibleCards.count();
-    expect(count).toBeGreaterThan(0); // Should still show something
+    // 3. Verify filtering happened (visual check logic via code)
+    // We expect repos *not* matching "portfolio" to be hidden.
+    // This assumes there's at least one repo that doesn't match "portfolio"
+    const visibleCards = page.locator(".repo-card");
+    const visibleIndices = await visibleCards.evaluateAll((cards) =>
+      cards
+        .map((c, i) => {
+          const style = window.getComputedStyle(c);
+          return style.display !== "none" && style.visibility !== "hidden"
+            ? i
+            : -1;
+        })
+        .filter((i) => i !== -1),
+    );
+    expect(visibleIndices.length).toBeGreaterThan(0); // Should still show something
+    const firstVisibleIndex = visibleIndices[0];
 
     // 4. Verify we can tab from search to the first result
     await page.keyboard.press("Tab");
 
     // The logic depends on DOM order. GitHubSearch puts grid after input.
     // First focusable element in grid is the link in h3 inside repo-card.
-    const firstRepoLink = visibleCards.first().locator("a");
+    const firstRepoLink = visibleCards.nth(firstVisibleIndex).locator("a");
     await expect(firstRepoLink).toBeFocused();
   });
 
@@ -77,8 +90,18 @@ test.describe("Deep Accessibility & Interaction Tests", () => {
       .locator(".custom-code-copy-btn, .copy-button")
       .count();
     const visibleBtns = await page
-      .locator(".custom-code-copy-btn:visible, .copy-button:visible")
-      .count();
+      .locator(".custom-code-copy-btn, .copy-button")
+      .evaluateAll(
+        (btns) =>
+          btns.filter((b) => {
+            const style = window.getComputedStyle(b);
+            return (
+              style.display !== "none" &&
+              style.visibility !== "hidden" &&
+              b.getBoundingClientRect().width > 0
+            );
+          }).length,
+      );
     console.log(
       `Page: ${page.url()} - Total buttons: ${totalBtns}, Visible buttons: ${visibleBtns}`,
     );
@@ -202,8 +225,16 @@ test.describe("Deep Accessibility & Interaction Tests", () => {
 
     // 3. Find the copy button inside the now-visible BibTeX container
     // The container ID is in aria-controls of the toggle
+    // 3. Find the copy button inside the now-visible BibTeX container
+    // The container ID is in aria-controls of the toggle
     const controlsId = await bibtexToggle.getAttribute("aria-controls");
-    const container = page.locator(`#${controlsId}`);
+    expect(
+      controlsId,
+      `BibTeX toggle missing aria-controls attribute. Toggle: ${await bibtexToggle.innerHTML()}`,
+    ).not.toBeNull();
+
+    // Force non-null assertion as expect above guarantees it, needed for TS
+    const container = page.locator(`#${controlsId!}`);
     await expect(container).toBeVisible();
 
     const copyBtn = container.locator(".copy-button"); // Uses .copy-button class from CopyButton.astro

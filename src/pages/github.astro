@@ -53,7 +53,7 @@ const avatarSrcSetString = await avatarSrcSet;
       <div class="profile-avatar">
         <Image
           src={githubAvatar}
-          alt={profile.name}
+          alt={profile.name ?? "GitHub avatar"}
           width="120"
           height="120"
           widths={[60, 120, 240]}

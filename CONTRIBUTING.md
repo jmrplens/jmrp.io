@@ -71,14 +71,15 @@ pnpm verify
 This master script (`scripts/run-verify.mjs`) orchestrates the entire QA pipeline in order:
 
 1.  **Static Analysis**: `astro check` (Types), `eslint`, `prettier`.
-2.  **Build**: `astro build` (Production build with optimizations).
-3.  **Content Validation**: HTML validation, RSS feed check, Schema.org check.
-4.  **Documentation**: JSDoc comment coverage tracking.
-5.  **Security**: Snyk audit (dependencies) and SonarCloud analysis (code quality).
-6.  **External Audits**:
+2.  **Linting**: `stylelint` (CSS).
+3.  **Build**: `pnpm run build` (Production build).
+4.  **Content Validation**: HTML validation, RSS feed check, Schema.org check.
+5.  **Documentation**: JSDoc comment coverage tracking.
+6.  **Security**: Snyk audit (dependencies) and SonarCloud analysis (code quality).
+7.  **External Audits**:
     - **Spelling**: `typos` for codebase spell checking.
     - **Links**: `lychee` for dead link verification in generated HTML.
-7.  **E2E Testing**: Playwright tests (Functional & Accessibility matrices).
+8.  **E2E Testing**: Playwright tests (Functional & Accessibility matrices).
 
 **Automatic PR Updates:**
 Our CI/CD pipeline is designed to be helpful and non-intrusive. Instead of creating new comments for every push, the CI scripts will **update existing PR comments** when results change. This keeps the PR timeline clean and preserves history.

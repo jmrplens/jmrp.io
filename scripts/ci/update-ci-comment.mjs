@@ -243,7 +243,7 @@ export default async function updateCiComment({ github, context, step }) {
   body += `\n---\n<p align="right"><i>Last Update: ${new Date().toUTCString()} &bull; <a href="https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}">Workflow Logs</a></i></p>`;
 
   // Find and update/create comment
-  const { data: comments } = await github.rest.issues.listComments({
+  const comments = await github.paginate(github.rest.issues.listComments, {
     owner: context.repo.owner,
     repo: context.repo.repo,
     issue_number: prNumber,

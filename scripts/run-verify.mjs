@@ -126,6 +126,7 @@ async function runVerify() {
       // to fetch and display the issues so the user knows what went wrong.
       // We don't mark the whole suite as failed yet; the next step will decide.
       if (step.name === "Security: SonarCloud Analysis") {
+        failedSteps.push(step.name);
         continue;
       }
       failedSteps.push(step.name);

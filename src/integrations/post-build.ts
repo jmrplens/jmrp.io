@@ -118,7 +118,7 @@ function validateNginxPath(systemNginxPath: string) {
     fs.lstatSync(systemNginxPath).isSymbolicLink()
   ) {
     throw new Error(
-      `Nginx configuration path cannot be a symbolic link: ${systemNginxPath}`,
+      `Nginx configuration path cannot be a symbolic link: ${path.basename(systemNginxPath)}`,
     );
   }
 }
@@ -225,7 +225,7 @@ function executeNginxReload(
   logger: AstroIntegrationLogger,
 ) {
   // Use a sanitized environment for execSync to avoid PATH injection
-  // We prepend secure paths to the existing PATH to maintain compatibility
+  // We replace the PATH with a secure default to mitigate risks, ignoring the existing PATH
   const secureEnv = {
     ...process.env,
     PATH: DEFAULT_SECURE_PATH,
@@ -296,12 +296,19 @@ function clearNginxCache(
 
   logger.info(`Clearing Nginx cache in [${systemNginxCachePath}]...`);
   try {
+    const realRoot = fs.realpathSync(systemNginxCachePath);
     const files = fs.readdirSync(systemNginxCachePath);
     for (const file of files) {
       const fullPath = path.join(systemNginxCachePath, file);
       // Security: Resolve the real path and verify it's within the cache directory
       const realPath = fs.realpathSync(fullPath);
-      if (!realPath.startsWith(fs.realpathSync(systemNginxCachePath))) {
+      const relative = path.relative(realRoot, realPath);
+
+      if (
+        relative.startsWith("..") ||
+        relative === "" ||
+        relative.startsWith(path.sep)
+      ) {
         logger.warn(
           `Skipping deletion of path outside cache directory: ${realPath}`,
         );
@@ -372,11 +379,6 @@ function handleNginxValidationError(
     if (finalTestResult.status !== 0) {
       throw new Error("Nginx final validation test failed.");
     }
-
-    // Re-throw the original error to inform the caller that the new configuration was rejected
-    throw validationError instanceof Error
-      ? validationError
-      : new Error(String(validationError));
   } catch (revertError) {
     const revertErrorMessage =
       revertError instanceof Error ? revertError.message : String(revertError);
@@ -388,4 +390,9 @@ function handleNginxValidationError(
       ? revertError
       : new Error(revertErrorMessage);
   }
+
+  // If revert was successful, re-throw the original error to inform the implementation that the new config was rejected
+  throw validationError instanceof Error
+    ? validationError
+    : new Error(String(validationError));
 }

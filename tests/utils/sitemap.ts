@@ -73,7 +73,7 @@ export async function getSitemapUrls(): Promise<string[]> {
 
   if (!sitemap) {
     console.warn("No sitemap found in dist/. Defaulting to core pages.");
-    return ["/", "/blog/", "/cv/", "/publications/", "/services/"];
+    return ["/", "/blog", "/cv", "/publications", "/services"];
   }
 
   const parsed = (await parseStringPromise(sitemap.content)) as
@@ -162,7 +162,7 @@ export async function getPagesFromSitemap(): Promise<PageInfo[]> {
       console.warn(
         "getPagesFromSitemap encountered a sitemap index. Returning empty list to prevent crash.",
       );
-      return [];
+      return FALLBACK_PAGES;
     }
 
     if (sitemap.urlset && Array.isArray(sitemap.urlset.url)) {

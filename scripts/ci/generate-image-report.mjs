@@ -209,7 +209,9 @@ const generateReport = () => {
                 ]
                   .sort((a, b) => {
                     const getBytes = (s) => {
+                      if (!s || s === "N/A") return 0;
                       const num = Number.parseFloat(s);
+                      if (Number.isNaN(num)) return 0;
                       if (s.includes("M")) return num * 1024 * 1024;
                       if (s.includes("K")) return num * 1024;
                       return num;
