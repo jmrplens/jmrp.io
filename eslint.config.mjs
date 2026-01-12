@@ -27,6 +27,7 @@ export default [
       "**/temp_lh/**",
       "**/temp_workflow/**",
       "**/lh-deploy/**",
+      "**/.scannerwork/**",
     ],
   },
 

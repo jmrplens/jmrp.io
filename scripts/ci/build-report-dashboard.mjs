@@ -846,8 +846,8 @@ const html = `
                         </thead>
                         <tbody>
                             ${lighthouseData
-    .map(
-      (d) => `
+                              .map(
+                                (d) => `
                             <tr>
                                 <td>${d.page}</td>
                                 <td>${getScoreBadge(d.mobileLight)}</td>
@@ -856,8 +856,8 @@ const html = `
                                 <td>${getScoreBadge(d.desktopDark)}</td>
                             </tr>
                             `,
-    )
-    .join("")}
+                              )
+                              .join("")}
                         </tbody>
                    </table>
                 </div>
@@ -896,17 +896,20 @@ const html = `
              <div class="card">
                 <div class="card-header">
                     <div class="card-icon">📄</div>
-                    <span class="status-badge ${htmlValidation?.every((f) => (f.errorCount || 0) === 0)
-    ? "status-success"
-    : "status-warning"
-  }">${htmlValidation?.every((f) => (f.errorCount || 0) === 0)
-    ? "Passed"
-    : "Failed"
-  }</span>
+                    <span class="status-badge ${
+                      htmlValidation?.every((f) => (f.errorCount || 0) === 0)
+                        ? "status-success"
+                        : "status-warning"
+                    }">${
+                      htmlValidation?.every((f) => (f.errorCount || 0) === 0)
+                        ? "Passed"
+                        : "Failed"
+                    }</span>
                 </div>
                 <div class="card-title">HTML5 Validation</div>
-                <div class="card-value">${htmlValidation ? "Verified" : "N/A"
-  }</div>
+                <div class="card-value">${
+                  htmlValidation ? "Verified" : "N/A"
+                }</div>
                  <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
                     Static source code scan for strict HTML5 compliance.
                 </div>
