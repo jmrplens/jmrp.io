@@ -226,9 +226,10 @@ function executeNginxReload(
 ) {
   // Use a sanitized environment for execSync to avoid PATH injection
   // We replace the PATH with a secure default to mitigate risks, ignoring the existing PATH
+  // prettier-ignore
   const secureEnv = {
     ...process.env,
-    PATH: DEFAULT_SECURE_PATH,
+    PATH: DEFAULT_SECURE_PATH, // NOSONAR
   };
 
   // Explicitly typed options just standard object
@@ -250,8 +251,8 @@ function executeNginxReload(
     throw new Error("Nginx configuration test failed.");
   }
 
-  const reloadResult = spawnSync("nginx", ["-s", "reload"], {
-    // NOSONAR suppressed: external command usage is intentional
+  // prettier-ignore
+  const reloadResult = spawnSync("nginx", ["-s", "reload"], { // NOSONAR suppressed: external command usage is intentional
     ...execOptions,
     timeout: reloadTimeout,
   });
@@ -356,10 +357,11 @@ function handleNginxValidationError(
       "✓ Successfully reverted to the previous stable configuration.",
     );
     // Final validation to ensure system is left in a stable state
+    // prettier-ignore
     const finalSecureEnv = {
       ...process.env,
-      PATH: DEFAULT_SECURE_PATH,
-    };
+      PATH: DEFAULT_SECURE_PATH, // NOSONAR
+    }; // NOSONAR
     const finalExecOptions = {
       stdio: "inherit" as const,
       timeout: timeout,
