@@ -42,7 +42,8 @@ function embedImage(imageUrl) {
     const localPath = path.resolve(DIST_DIR, safeRel);
 
     // Ensure we are still inside the dist directory
-    if (!localPath.startsWith(path.resolve(DIST_DIR))) {
+    const distPath = path.resolve(DIST_DIR);
+    if (!localPath.startsWith(distPath + path.sep) && localPath !== distPath) {
       return imageUrl;
     }
 

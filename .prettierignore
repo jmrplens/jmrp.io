@@ -6,6 +6,9 @@
 dist/
 node_modules/
 .astro/
+src/assets/
+public/assets/
+public/pdf
 
 # --- Config & Lock Files (Optional, but often preferred to keep as is) ---
 pnpm-lock.yaml

@@ -161,7 +161,7 @@ function deploySecurityHeaders(
     10,
   );
   if (!Number.isFinite(nginxTestTimeout) || nginxTestTimeout <= 0) {
-    nginxTestTimeout = 10000;
+    nginxTestTimeout = 10_000;
   }
 
   let nginxReloadTimeout = Number.parseInt(
@@ -169,7 +169,7 @@ function deploySecurityHeaders(
     10,
   );
   if (!Number.isFinite(nginxReloadTimeout) || nginxReloadTimeout <= 0) {
-    nginxReloadTimeout = 30000;
+    nginxReloadTimeout = 30_000;
   }
 
   // Safety: We will validate the configuration after deployment and revert if it fails.

@@ -4,12 +4,16 @@
  * Displays a shell command in a simulated terminal window.
  */
 
-import { randomUUID } from "node:crypto";
+import { createHash } from "node:crypto";
 
 import { decodeHtml } from "@utils/html";
 import * as cheerio from "cheerio";
 
 import CopyButton from "./CopyButton.astro";
+
+interface Props {
+  ariaLabel?: string;
+}
 
 let lines: string[] = [];
 let rawContent = "";
@@ -64,10 +68,19 @@ const renderedLines = lines.map((line) => {
   };
 });
 
-const uuid = randomUUID().slice(0, 8);
+const { ariaLabel } = Astro.props;
+
+const uuid = createHash("sha256").update(rawContent).digest("hex").slice(0, 8);
+
+const finalAriaLabel =
+  ariaLabel ||
+  `Terminal command: ${rawContent.slice(0, 50)}${rawContent.length > 50 ? "..." : ""}`;
 ---
 
-<div class="terminal-command-wrapper copy-container">
+<div
+  class="terminal-command-wrapper copy-container"
+  data-testid={uuid}
+>
   <div class="terminal-header">
     <div class="terminal-controls">
       <span class="dot red"></span>
@@ -86,7 +99,7 @@ const uuid = randomUUID().slice(0, 8);
     <pre
       class="terminal-window"
       tabindex="0"
-      aria-label={`Terminal command ${uuid}`}>{renderedLines.map((line) => (<span class="command-line"><span class="prompt" aria-hidden="true">{!line.isEmpty && !line.isComment ? "$" : "\u00A0"}</span><span class:list={["line-content", {"is-comment": line.isComment}]}>{line.text}</span></span>))}</pre>
+      aria-label={finalAriaLabel}>{renderedLines.map((line) => (<span class="command-line"><span class="prompt" aria-hidden="true">{!line.isEmpty && !line.isComment ? "$" : "\u00A0"}</span><span class:list={["line-content", {"is-comment": line.isComment}]}>{line.text}</span></span>))}</pre>
   </section>
 
   {/* Hidden element for CopyButton to grab clean text without prompts */}

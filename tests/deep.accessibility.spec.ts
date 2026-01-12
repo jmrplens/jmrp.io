@@ -53,7 +53,7 @@ test.describe("Deep Accessibility & Interaction Tests", () => {
     const visibleIndices = await visibleCards.evaluateAll((cards) =>
       cards
         .map((c, i) => {
-          const style = window.getComputedStyle(c);
+          const style = globalThis.getComputedStyle(c);
           return style.display !== "none" && style.visibility !== "hidden"
             ? i
             : -1;
@@ -94,7 +94,7 @@ test.describe("Deep Accessibility & Interaction Tests", () => {
       .evaluateAll(
         (btns) =>
           btns.filter((b) => {
-            const style = window.getComputedStyle(b);
+            const style = globalThis.getComputedStyle(b);
             return (
               style.display !== "none" &&
               style.visibility !== "hidden" &&

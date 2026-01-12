@@ -259,7 +259,7 @@ jobs:
       - name: Install Typos via Cargo (cached if possible) or download
         # Use a pre-built binary for speed vs compiling
         run: |
-          curl -LsSf https://github.com/crate-ci/typos/releases/download/v1.16.23/typos-v1.16.23-x86_64-unknown-linux-musl.tar.gz | tar xz -C /usr/local/bin
+          curl -LsSf https://github.com/crate-ci/typos/releases/download/v1.42.0/typos-v1.42.0-x86_64-unknown-linux-musl.tar.gz | tar xz -C /usr/local/bin
           chmod +x /usr/local/bin/typos
       - name: Run Spell Checker
         run: typos . | tee typos.log
@@ -820,12 +820,7 @@ jobs:
       - name: Install Playwright Browsers
         if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: pnpm exec playwright install --with-deps chromium
-      - name: Capture Workflow Graph
-        run: node scripts/ci/capture-workflow-graph.mjs
-        continue-on-error: true
-        env:
-          GITHUB_RUN_ID: ${{ github.run_id }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
+
       - name: Download Logs
         uses: actions/download-artifact@v7
         continue-on-error: true

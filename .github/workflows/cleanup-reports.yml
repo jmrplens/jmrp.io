@@ -7,7 +7,7 @@ on:
 jobs:
   cleanup:
     runs-on: ubuntu-latest
-    if: github.event.pull_request.merged == true || github.event.pull_request.merged == false
+
     steps:
       - name: Remove PR Reports from Vercel
         run: |

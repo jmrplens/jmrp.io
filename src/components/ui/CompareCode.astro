@@ -9,30 +9,59 @@
  *   <div slot="good">...code...</div>
  * </CompareCode>
  */
-import { randomUUID } from "node:crypto";
+import { createHash } from "node:crypto";
 
+import { decodeHtml } from "@utils/html";
 import { Icon } from "astro-icon/components";
+import * as cheerio from "cheerio";
 
 import CopyButton from "./CopyButton.astro";
 
 interface Props {
   badTitle?: string;
   goodTitle?: string;
+  ariaLabelBad?: string;
+  ariaLabelGood?: string;
 }
 
-const { badTitle = "Blocked / Insecure", goodTitle = "Allowed / Secure" } =
-  Astro.props;
-const badUuid = randomUUID().slice(0, 8);
-const goodUuid = randomUUID().slice(0, 8);
+const {
+  badTitle = "Blocked / Insecure",
+  goodTitle = "Allowed / Secure",
+  ariaLabelBad,
+  ariaLabelGood,
+} = Astro.props;
 
 const badContent = (await Astro.slots.render("bad")).trim();
 const goodContent = (await Astro.slots.render("good")).trim();
+
+const badUuid = createHash("sha256")
+  .update(badContent)
+  .digest("hex")
+  .slice(0, 8);
+const goodUuid = createHash("sha256")
+  .update(goodContent)
+  .digest("hex")
+  .slice(0, 8);
+
+// Helper to extract text snippet
+const getSnippet = (html: string) => {
+  const $ = cheerio.load(html);
+  let text = decodeHtml($.text().trim()).slice(0, 50);
+  if (text.length === 50) text += "...";
+  return text;
+};
+
+const finalAriaLabelBad =
+  ariaLabelBad || `Comparison: ${badTitle} - ${getSnippet(badContent)}`;
+const finalAriaLabelGood =
+  ariaLabelGood || `Comparison: ${goodTitle} - ${getSnippet(goodContent)}`;
 ---
 
 <div class="compare-code-wrapper">
   <section
     class="compare-block bad copy-container"
-    aria-label={`Comparison: ${badTitle} ${badUuid}`}
+    aria-label={finalAriaLabelBad}
+    data-testid={badUuid}
   >
     <div class="header">
       <Icon
@@ -49,7 +78,8 @@ const goodContent = (await Astro.slots.render("good")).trim();
   </section>
   <section
     class="compare-block good copy-container"
-    aria-label={`Comparison: ${goodTitle} ${goodUuid}`}
+    aria-label={finalAriaLabelGood}
+    data-testid={goodUuid}
   >
     <div class="header">
       <Icon

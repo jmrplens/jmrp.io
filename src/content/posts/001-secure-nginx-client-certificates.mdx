@@ -264,7 +264,7 @@ You will be asked to create an **export password**. This protects the file itsel
 With the certificates generated, we need to tell Server Block to trust any client signed by our CA. All the directives used here are part of the [Nginx SSL Module](https://nginx.org/en/docs/http/ngx_http_ssl_module.html).
 
 Edit your site configuration:
-<FileContent filename="/etc/nginx/sites-available/secure.example.com.conf" icon="devicon:nginx">
+<FileContent filename="/etc/nginx/sites-available/secure.example.com.conf" icon="devicon:nginx" ariaLabel="Nginx Config: Client Certificate Verification">
 ```nginx
 server {
     server_name secure.example.com;
@@ -328,7 +328,7 @@ map $ssl_client_s_dn $ssl_access_allowed {
 </FileContent>
 
 Then, inside your `server` block:
-<FileContent filename="/etc/nginx/sites-available/secure.example.com.conf" icon="devicon:nginx">
+<FileContent filename="/etc/nginx/sites-available/secure.example.com.conf" icon="devicon:nginx" ariaLabel="Nginx Config: Advanced Access Control">
 ```nginx
 server {
     # ... ssl configuration ...
@@ -375,7 +375,7 @@ After revoking, you must generate the list itself so Nginx can read it:
 
 ### 3. Configure Nginx to Check the CRL
 Update your Nginx server block to check this list:
-<FileContent filename="/etc/nginx/sites-available/secure.example.com.conf" icon="devicon:nginx">
+<FileContent filename="/etc/nginx/sites-available/secure.example.com.conf" icon="devicon:nginx" ariaLabel="Nginx Config: CRL Revocation">
 ```nginx
 # inside server block
 ssl_crl /etc/nginx/client-certs/crl.pem;

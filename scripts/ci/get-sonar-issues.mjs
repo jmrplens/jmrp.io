@@ -117,6 +117,7 @@ try {
       logger.info(
         `\n❌ Static analysis failed: ${manualReviewCount} unsuppressed hotspots detected.`,
       );
+      logger.info("\n" + "".padEnd(80, "=") + "\n");
       process.exit(1);
     } else {
       logger.info(
@@ -127,6 +128,7 @@ try {
 
   if (issues.length > 0) {
     logger.info("\n❌ Static analysis failed: Open issues detected.");
+    logger.info("\n" + "".padEnd(80, "=") + "\n");
     process.exit(1);
   }
 } catch (error) {
@@ -173,9 +175,9 @@ async function checkNoSonar(component, line) {
     }
 
     return isSuppressed;
-  } catch (err) {
+  } catch (error) {
     logger.error(
-      `   ❌ Error checking NOSONAR in ${component}: ${err.message}`,
+      `   ❌ Error checking NOSONAR in ${component}: ${error.message}`,
     );
     return false;
   }

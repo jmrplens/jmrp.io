@@ -11,25 +11,43 @@
  *   console.log('Hello');
  * </Code>
  */
-import { randomUUID } from "node:crypto";
+import { createHash } from "node:crypto";
+
+import { decodeHtml } from "@utils/html";
+import * as cheerio from "cheerio";
 
 import CopyButton from "./CopyButton.astro";
 
 interface Props {
   lang?: string; // Language for syntax highlighting (e.g., 'nginx', 'javascript')
   class?: string;
+  ariaLabel?: string;
 }
 
-const { lang = "text", class: className } = Astro.props;
-const uuid = randomUUID().slice(0, 8);
+const { lang = "text", class: className, ariaLabel } = Astro.props;
 
 const slotContent = await Astro.slots.render("default");
 const trimmedContent = slotContent.trim();
+const uuid = createHash("sha256")
+  .update(trimmedContent)
+  .digest("hex")
+  .slice(0, 8);
+
+// Extract plain text for accessibility label if no custom label provided
+let plainText = "";
+if (!ariaLabel) {
+  const $ = cheerio.load(slotContent);
+  plainText = decodeHtml($.text().trim()).slice(0, 50);
+  if (plainText.length === 50) plainText += "...";
+}
+
+const finalAriaLabel = ariaLabel || `Code snippet: ${lang} - ${plainText}`;
 ---
 
 <section
   class:list={["code-wrapper", "copy-container", className]}
-  aria-label={`${lang} code snippet ${uuid}`}
+  aria-label={finalAriaLabel}
+  data-testid={uuid}
 >
   <pre><span class={`code-content language-${lang}`} set:html={trimmedContent} /></pre>
   <CopyButton class="code-copy-button" />

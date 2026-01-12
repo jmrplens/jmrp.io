@@ -39,6 +39,7 @@ export default [
   {
     ...eslintPluginUnicorn.configs.recommended,
     rules: {
+      ...eslintPluginUnicorn.configs.recommended.rules,
       "unicorn/prevent-abbreviations": "off", // Too strict (props, env, args, etc.)
       "unicorn/no-null": "off", // null is standard in many APIs
       "unicorn/filename-case": "off", // Avoid renaming existing files

@@ -57,7 +57,7 @@ First, create your `robots.txt` file:
 
 Now, configure your Nginx server block to intercept requests for `/robots.txt` and serve your custom file.
 
-<FileContent filename="Nginx Site Configuration" icon="devicon:nginx">
+<FileContent filename="Nginx Site Configuration" icon="devicon:nginx" ariaLabel="Nginx Config: Serve robots.txt via alias">
 ```nginx
 server {
     server_name www.example.com;
@@ -85,7 +85,7 @@ server {
 
 If your `robots.txt` is very simple and you don't want to manage another file, you can embed its content directly in the Nginx configuration. This is fantastic for container-based deployments where you want the entire configuration to be self-contained.
 
-<FileContent filename="Nginx Site Configuration" icon="devicon:nginx">
+<FileContent filename="Nginx Site Configuration" icon="devicon:nginx" ariaLabel="Nginx Config: Serve robots.txt via return">
 ```nginx
 server {
     server_name www.example.com;
@@ -118,7 +118,7 @@ The `security.txt` file is a standard proposed by the [security.txt project](htt
 
 Let's create the file content. Note the use of `\n` for line breaks.
 
-<FileContent filename="Nginx Site Configuration" icon="devicon:nginx">
+<FileContent filename="Nginx Site Configuration" icon="devicon:nginx" ariaLabel="Nginx Config: Serve security.txt">
 ```nginx
 server {
     # ... server config ...
@@ -160,7 +160,7 @@ The <a href="https://humanstxt.org/" target="_blank" rel="noopener noreferrer" a
 ````
 
 </FileContent>
-<FileContent filename="Nginx Site Configuration" icon="devicon:nginx">
+<FileContent filename="Nginx Site Configuration" icon="devicon:nginx" ariaLabel="Nginx Config: Serve humans.txt via alias">
 ```nginx
 location = /humans.txt {
     alias /etc/nginx/assets/humans.txt;
@@ -171,7 +171,7 @@ location = /humans.txt {
 
 ### Method B: Using `return`
 
-<FileContent filename="Nginx Site Configuration" icon="devicon:nginx">
+<FileContent filename="Nginx Site Configuration" icon="devicon:nginx" ariaLabel="Nginx Config: Serve humans.txt via return">
 ```nginx
 location = /humans.txt {
     return 200 "# TEAM\nLead Developer: Jane Doe\nContact: jane[at]example.com\n\n# SITE\nLast update: 2025-12-18\n";
@@ -186,7 +186,7 @@ location = /humans.txt {
 
 Sometimes you need a simple health check endpoint that returns a JSON response, like `{"status": "ok"}`. This is often used by load balancers or monitoring tools. Generating this with Nginx is far more efficient than waking up a full application instance just to respond.
 
-<FileContent filename="Nginx Site Configuration" icon="devicon:nginx">
+<FileContent filename="Nginx Site Configuration" icon="devicon:nginx" ariaLabel="Nginx Config: Health Check Endpoint">
 ```nginx
 server {
     # ...
@@ -225,7 +225,7 @@ A very common and practical use case is handling validation for SSL certificates
 
 The solution is to have Nginx intercept these requests and serve them from a common, shared directory that your ACME client (like `certbot`) can write to.
 
-<FileContent filename="Nginx Site Configuration" icon="devicon:nginx">
+<FileContent filename="Nginx Site Configuration" icon="devicon:nginx" ariaLabel="Nginx Config: Let's Encrypt Challenge">
 ```nginx
 server {
     # ...
@@ -254,7 +254,7 @@ To create seamless links between your website and your mobile app ([Android App 
 
 Nginx can serve both. The iOS file is particularly interesting because it **must** be served with the `application/json` content type.
 
-<FileContent filename="Nginx Site Configuration" icon="devicon:nginx">
+<FileContent filename="Nginx Site Configuration" icon="devicon:nginx" ariaLabel="Nginx Config: Mobile App Associations">
 ```nginx
 server {
     # ...

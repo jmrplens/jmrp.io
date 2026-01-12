@@ -94,17 +94,11 @@ status.rssPreview = status.rss;
 if (fs.existsSync("logs")) {
   copy("logs", path.join(DIST_REPORTS, "logs"));
 }
-if (fs.existsSync("workflow-graph.png")) {
-  fs.copyFileSync(
-    "workflow-graph.png",
-    path.join(DIST_REPORTS, "workflow-graph.png"),
-  );
-}
 
 // Note: workflow-graph.png is kept for fallback, but we now generate dynamic SVG
 
 // 2. Load JSON data for the dashboard summary
-// 2. Load JSON data for the dashboard summary
+
 let accessibilityData = [];
 if (fs.existsSync("accessibility-report.json")) {
   try {
@@ -179,12 +173,16 @@ const findScore = (manifestPath, p) => {
     const item = json.find((i) => {
       if (p.name === "Home") {
         // Match localhost:PORT/ (any port) or production domain ending with /
-        const url = new URL(i.url);
-        return (
-          url.pathname === "/" ||
-          url.pathname === "" ||
-          url.pathname === "/index.html"
-        );
+        try {
+          const url = new URL(i.url);
+          return (
+            url.pathname === "/" ||
+            url.pathname === "" ||
+            url.pathname === "/index.html"
+          );
+        } catch {
+          return false;
+        }
       }
       return i.url.includes(p.pathMatch);
     });

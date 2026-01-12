@@ -8,9 +8,11 @@
  *   ...code...
  * </FileContent>
  */
-import { randomUUID } from "node:crypto";
+import { createHash } from "node:crypto";
 
+import { decodeHtml } from "@utils/html";
 import { Icon } from "astro-icon/components";
+import * as cheerio from "cheerio";
 
 import CopyButton from "./CopyButton.astro";
 
@@ -18,10 +20,10 @@ interface Props {
   filename: string;
   icon?: string; // e.g., 'mdi:file-document-outline'
   collapsible?: boolean;
+  ariaLabel?: string;
 }
 
-const { filename, icon, collapsible = false } = Astro.props;
-const uuid = randomUUID().slice(0, 8);
+const { filename, icon, collapsible = false, ariaLabel } = Astro.props;
 
 // Infer icon from filename
 const getIconForFile = (name: string) => {
@@ -39,16 +41,34 @@ const finalIcon = icon || getIconForFile(filename);
 
 const slotContent = await Astro.slots.render("default");
 const trimmedContent = slotContent.trim();
+const uuid = createHash("sha256")
+  .update(trimmedContent)
+  .digest("hex")
+  .slice(0, 8);
+
+// Extract plain text for accessibility label if no custom label provided
+let plainText = "";
+if (!ariaLabel) {
+  const $ = cheerio.load(slotContent);
+  plainText = decodeHtml($.text().trim()).slice(0, 50);
+  if (plainText.length === 50) plainText += "...";
+}
+
+const finalAriaLabel =
+  ariaLabel || `Content of file: ${filename} - ${plainText}`;
 ---
 
 {
   collapsible ? (
-    <div class="file-content-wrapper copy-container collapsible">
+    <div
+      class="file-content-wrapper copy-container collapsible"
+      data-testid={uuid}
+    >
       {/* Copy Button outside details to be always visible and avoid nested interactive violation */}
       <CopyButton class="file-header-copy-btn absolute-header" />
       <details
         class="file-details"
-        aria-label={`Content of file: ${filename} ${uuid}`}
+        aria-label={finalAriaLabel}
       >
         <summary class="file-header">
           <div class="file-info">
@@ -92,7 +112,8 @@ const trimmedContent = slotContent.trim();
   ) : (
     <section
       class="file-content-wrapper copy-container"
-      aria-label={`Content of file: ${filename} ${uuid}`}
+      aria-label={finalAriaLabel}
+      data-testid={uuid}
     >
       <div class="file-header">
         <div class="file-info">
