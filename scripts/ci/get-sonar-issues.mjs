@@ -8,7 +8,7 @@ import path from "node:path";
  * and prints them to the terminal for developer action.
  */
 
-const PROJECT_KEY = process.env.SONAR_PROJECT_KEY || "jmrplens_jmrp.io";
+const PROJECT_KEY = process.env.SONAR_PROJECT_KEY;
 const SONAR_TOKEN = process.env.SONAR_TOKEN;
 
 const logger = {
@@ -20,6 +20,11 @@ const logger = {
 if (!SONAR_TOKEN) {
   logger.info("⏭ Skipping SonarCloud analysis (SONAR_TOKEN not set)");
   process.exit(0);
+}
+
+if (!PROJECT_KEY) {
+  logger.error("❌ SONAR_PROJECT_KEY is not set.");
+  process.exit(1);
 }
 
 /**
@@ -37,21 +42,31 @@ async function fetchWithPagination(baseUrl, dataKey) {
   while (hasMore) {
     const separator = baseUrl.includes("?") ? "&" : "?";
     const url = `${baseUrl}${separator}ps=100&p=${page}`;
-    const res = await fetch(url, {
-      headers: { Authorization: `Bearer ${SONAR_TOKEN}` },
-    });
 
-    if (!res.ok) {
-      throw new Error(`Sonar API failed: ${res.status} ${res.statusText}`);
+    // Add timeout to prevent hanging requests
+    try {
+      const res = await fetch(url, {
+        headers: { Authorization: `Bearer ${SONAR_TOKEN}` },
+        signal: AbortSignal.timeout(30_000), // 30s timeout
+      });
+
+      if (!res.ok) {
+        throw new Error(`Sonar API failed: ${res.status} ${res.statusText}`);
+      }
+
+      const data = await res.json();
+      const items = data[dataKey] || [];
+      allItems.push(...items);
+
+      // Sonar API typically returns 100 items per page by default with ps=100
+      hasMore = items.length === 100;
+      page++;
+    } catch (error) {
+      if (error.name === "AbortError" || error.name === "TimeoutError") {
+        throw new Error("Sonar API request timed out");
+      }
+      throw error;
     }
-
-    const data = await res.json();
-    const items = data[dataKey] || [];
-    allItems.push(...items);
-
-    // Sonar API typically returns 100 items per page by default with ps=100
-    hasMore = items.length === 100;
-    page++;
   }
 
   return allItems;
@@ -99,8 +114,13 @@ try {
     logger.info(`\n🚨 Found ${hotspots.length} security hotspots:`);
     let manualReviewCount = 0;
 
-    for (const h of hotspots) {
-      const isSuppressed = await checkNoSonar(h.component, h.line);
+    // Check suppressions in parallel
+    const suppressionResults = await Promise.all(
+      hotspots.map((h) => checkNoSonar(h.component, h.line)),
+    );
+
+    for (const [i, h] of hotspots.entries()) {
+      const isSuppressed = suppressionResults[i];
 
       if (isSuppressed) {
         logger.info(

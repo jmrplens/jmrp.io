@@ -24,15 +24,22 @@ function copy(src, dest) {
     console.warn(`⚠️ Warning: Source not found for copy: ${src}`);
     return false;
   }
-  const parent = path.dirname(dest);
-  if (!fs.existsSync(parent)) fs.mkdirSync(parent, { recursive: true });
+  try {
+    const parent = path.dirname(dest);
+    if (!fs.existsSync(parent)) fs.mkdirSync(parent, { recursive: true });
 
-  if (fs.statSync(src).isDirectory()) {
-    fs.cpSync(src, dest, { recursive: true });
-  } else {
-    fs.copyFileSync(src, dest);
+    if (fs.statSync(src).isDirectory()) {
+      fs.cpSync(src, dest, { recursive: true });
+    } else {
+      fs.copyFileSync(src, dest);
+    }
+    return true;
+  } catch (error) {
+    console.error(
+      `❌ Error copying ${src} to ${dest}: ${error instanceof Error ? error.message : String(error)}`,
+    );
+    return false;
   }
-  return true;
 }
 
 // 1. Move Reports to structured folders
@@ -180,13 +187,17 @@ const findScore = (manifestPath, p) => {
             url.pathname === "" ||
             url.pathname === "/index.html"
           );
-        } catch {
+        } catch (parseError) {
+          console.debug(
+            `Failed to parse URL "${i.url}": ${parseError instanceof Error ? parseError.message : String(parseError)}`,
+          );
           return false;
         }
       }
       return i.url.includes(p.pathMatch);
     });
-    return item && item.summary && typeof item.summary.performance === "number"
+    return item?.summary?.performance &&
+      typeof item.summary.performance === "number"
       ? Math.round(item.summary.performance * 100)
       : null;
   } catch (error) {
@@ -246,10 +257,8 @@ const qualityOutcomes = {
 };
 
 const healthScore = calculateHealthScore(saOutcomes, qualityOutcomes);
-const timestamp = new Date().toLocaleString("en-US", {
-  dateStyle: "full",
-  timeStyle: "short",
-});
+// Use deterministic UTC timestamp for consistent CI output
+const timestamp = new Date().toISOString();
 
 let scoreColor = "#ef4444";
 if (healthScore >= 80) {
@@ -882,10 +891,20 @@ const html = `
              <div class="card">
                 <div class="card-header">
                     <div class="card-icon">📄</div>
-                    <span class="status-badge ${htmlValidation ? "status-success" : "status-warning"}">${htmlValidation ? "Completed" : "Skipped"}</span>
+                    <span class="status-badge ${
+                      htmlValidation?.every((f) => (f.errorCount || 0) === 0)
+                        ? "status-success"
+                        : "status-warning"
+                    }">${
+                      htmlValidation?.every((f) => (f.errorCount || 0) === 0)
+                        ? "Passed"
+                        : "Failed"
+                    }</span>
                 </div>
                 <div class="card-title">HTML5 Validation</div>
-                <div class="card-value">${htmlValidation ? "Verified" : "N/A"}</div>
+                <div class="card-value">${
+                  htmlValidation ? "Verified" : "N/A"
+                }</div>
                  <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
                     Static source code scan for strict HTML5 compliance.
                 </div>

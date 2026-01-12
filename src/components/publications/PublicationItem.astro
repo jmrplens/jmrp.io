@@ -45,9 +45,9 @@ const doi =
   rawDoi && !rawDoi.startsWith("http")
     ? `https://doi.org/${rawDoi.replace(/^(doi:|\/)+/, "")}`
     : rawDoi;
-let pdf = pub.pdf || pub.PDF || "";
-let slides = pub.slides || "";
-let poster = pub.poster || "";
+const pdf = pub.pdf || pub.PDF || "";
+const slides = pub.slides || "";
+const poster = pub.poster || "";
 
 // Generate IDs for toggles
 const abstractId = `abstract-${pub.id}`;
@@ -186,7 +186,7 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
             <div class="pub-card-title">Abstract</div>
             <CopyButton
               class="pub-copy-btn"
-              content={pub.abstract}
+              content={sanitize(pub.abstract)}
             />
           </div>
           <div
@@ -404,6 +404,18 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
   .code-block-light {
     display: none;
   }
+
+  /*
+   * Theme Precedence for Code Blocks:
+   * 1. Explicit data-theme="dark" or data-theme="light" takes priority.
+   * 2. If no data-theme and prefers-color-scheme: dark, show dark block.
+   * 3. If no data-theme and no dark system preference, default to light block.
+   *
+   * Selectors involved:
+   * - :global([data-theme="dark"]) / :global([data-theme="light"]) for explicit
+   * - :global(:root:not([data-theme])) for system preference fallback
+   * - @media (prefers-color-scheme: dark) for dark system preference
+   */
 
   /* Theme logic: Show Dark by default or if data-theme='dark' */
   :global([data-theme="dark"]) .code-block-dark,

@@ -33,7 +33,7 @@ export async function finalizeCspConfig(
   const standaloneScriptHashes = new Set<string>();
   const jsFiles = await glob("**/*.js", { cwd: distDir, absolute: true });
   for (const file of jsFiles) {
-    const c = fs.readFileSync(file);
+    const c = await fs.promises.readFile(file);
     const h = crypto.createHash("sha512").update(c).digest("base64");
     standaloneScriptHashes.add(`'sha512-${h}'`);
   }
@@ -150,7 +150,8 @@ add_header X-Content-Type-Options "nosniff" always;
 add_header X-Frame-Options "DENY" always;
 
 # XSS Protection
-add_header X-XSS-Protection "1; mode=block" always;
+# Deprecated: modern browsers use Content Security Policy
+# add_header X-XSS-Protection "1; mode=block" always;
 
 # Referrer Policy
 add_header Referrer-Policy "strict-origin-when-cross-origin" always;

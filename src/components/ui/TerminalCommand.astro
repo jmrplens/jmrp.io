@@ -70,7 +70,11 @@ const renderedLines = lines.map((line) => {
 
 const { ariaLabel } = Astro.props;
 
-const uuid = createHash("sha256").update(rawContent).digest("hex").slice(0, 8);
+// Generate a content-based test ID for uniqueness
+const contentHash = createHash("sha256")
+  .update(rawContent)
+  .digest("hex")
+  .slice(0, 8);
 
 const finalAriaLabel =
   ariaLabel ||
@@ -79,7 +83,7 @@ const finalAriaLabel =
 
 <div
   class="terminal-command-wrapper copy-container"
-  data-testid={uuid}
+  data-testid={`terminal-${contentHash}`}
 >
   <div class="terminal-header">
     <div class="terminal-controls">
@@ -157,8 +161,18 @@ const finalAriaLabel =
     background-color: #27c93f;
   }
 
+  /*
+   * Use display: contents to remove the section from layout flow while
+   * keeping it in the accessibility tree. Wrap in @supports for older browsers.
+   */
   .terminal-window-container {
-    display: contents; /* Ensure the section doesn't break the flex layout of its parent */
+    display: block; /* Fallback for unsupported browsers */
+  }
+
+  @supports (display: contents) {
+    .terminal-window-container {
+      display: contents;
+    }
   }
 
   .terminal-window {

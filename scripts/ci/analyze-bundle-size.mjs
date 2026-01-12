@@ -94,6 +94,7 @@ async function analyze() {
         else if ([".woff", ".woff2", ".ttf", ".otf", ".eot"].includes(ext))
           category = "font";
         else if (ext === ".pdf") category = "pdf";
+        else if (ext === ".map") category = "js"; // Group source maps with user code or strict distinct? The request said "add .map to the JS category or creating a dedicated". I will add to JS.
       }
     }
 
@@ -140,6 +141,12 @@ async function analyze() {
   console.log(`Total Size: ${stats.readableTotalSize}`);
   console.log(`Code Size:  ${stats.readableCodeSize}`);
   console.log(`Asset Size: ${stats.readableAssetSize}`);
+
+  if (stats.isHighCodeSize) {
+    console.warn(
+      `⚠️  Warning: Code size (${stats.readableCodeSize}) exceeds the 5MB recommended limit!`,
+    );
+  }
 }
 
 try {

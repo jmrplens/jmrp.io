@@ -1,0 +1,6 @@
+/* Shared Skill Item Styles */
+.skill-item {
+  display: flex;
+  gap: var(--space-sm);
+  align-items: center;
+}

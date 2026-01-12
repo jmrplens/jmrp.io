@@ -37,6 +37,15 @@ export async function setupGithubAvatar(logger: AstroIntegrationLogger) {
     fs.renameSync(tmpPath, outputPath);
     logger.info(`  ✓ Avatar saved to ${outputPath}`);
   } catch (error) {
+    // Clean up temp file if it exists
+    const tmpPath = `${outputPath}.tmp`;
+    if (fs.existsSync(tmpPath)) {
+      try {
+        fs.rmSync(tmpPath);
+      } catch {
+        /* ignore */
+      }
+    }
     handleAvatarError(error, outputPath, fallbackPath, logger);
   }
 }

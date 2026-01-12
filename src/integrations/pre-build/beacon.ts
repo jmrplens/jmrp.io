@@ -19,7 +19,7 @@ export async function setupCfBeacon(
   logger: AstroIntegrationLogger,
 ) {
   if (!token) {
-    logger.info("No Cloudflare token found. Skipping beacon download.");
+    logger.info("Cloudflare beacon token not configured. Skipping download.");
     return;
   }
 

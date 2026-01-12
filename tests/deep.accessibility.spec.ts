@@ -46,9 +46,7 @@ test.describe("Deep Accessibility & Interaction Tests", () => {
     // 3. Verify filtering happened (visual check logic via code)
     // We expect repos *not* matching "portfolio" to be hidden.
     // This assumes there's at least one repo that doesn't match "portfolio"
-    // 3. Verify filtering happened (visual check logic via code)
-    // We expect repos *not* matching "portfolio" to be hidden.
-    // This assumes there's at least one repo that doesn't match "portfolio"
+
     const visibleCards = page.locator(".repo-card");
     const visibleIndices = await visibleCards.evaluateAll((cards) =>
       cards
@@ -89,22 +87,6 @@ test.describe("Deep Accessibility & Interaction Tests", () => {
     const totalBtns = await page
       .locator(".custom-code-copy-btn, .copy-button")
       .count();
-    const visibleBtns = await page
-      .locator(".custom-code-copy-btn, .copy-button")
-      .evaluateAll(
-        (btns) =>
-          btns.filter((b) => {
-            const style = globalThis.getComputedStyle(b);
-            return (
-              style.display !== "none" &&
-              style.visibility !== "hidden" &&
-              b.getBoundingClientRect().width > 0
-            );
-          }).length,
-      );
-    console.log(
-      `Page: ${page.url()} - Total buttons: ${totalBtns}, Visible buttons: ${visibleBtns}`,
-    );
 
     // Expect at least one button to prevent silent failures on pages without code
     expect(
@@ -126,12 +108,6 @@ test.describe("Deep Accessibility & Interaction Tests", () => {
     // eslint-disable-next-line playwright/no-wait-for-timeout
     await page.waitForTimeout(200);
 
-    const box = await copyBtn.boundingBox();
-    const isVisible = await copyBtn.isVisible();
-    console.log(
-      `Copy Button - Visible: ${isVisible}, Box: ${JSON.stringify(box)}`,
-    );
-
     // Skip strict visibility check as opacity transition in headless is flaky.
     // We rely on functional interaction (click -> success icon) below.
 
@@ -150,17 +126,27 @@ test.describe("Deep Accessibility & Interaction Tests", () => {
     await expect(successIcon).not.toHaveClass(/hidden/);
 
     // 4. Check for clipboard content (requires permissions)
+    /* eslint-disable playwright/no-conditional-in-test */
     try {
       const clipboardText = await page.evaluate(() =>
         navigator.clipboard.readText(),
       );
       expect(clipboardText.length).toBeGreaterThan(0);
     } catch (error) {
-      console.warn(
-        "Clipboard reading failed (expected in some CI envs):",
-        error,
-      );
+      if (
+        error instanceof Error &&
+        (error.message.includes("NotAllowedError") ||
+          error.message.includes("Clipboard") ||
+          error.message.includes("permission"))
+      ) {
+        console.warn(
+          "Clipboard reading suppression: Permission denial or clipboard access issue (expected in incomplete CI envs).",
+        );
+      } else {
+        throw error;
+      }
     }
+    /* eslint-enable playwright/no-conditional-in-test */
   });
 
   test("Skip to Content works on complex pages", async ({ page }) => {
@@ -225,8 +211,7 @@ test.describe("Deep Accessibility & Interaction Tests", () => {
 
     // 3. Find the copy button inside the now-visible BibTeX container
     // The container ID is in aria-controls of the toggle
-    // 3. Find the copy button inside the now-visible BibTeX container
-    // The container ID is in aria-controls of the toggle
+
     const controlsId = await bibtexToggle.getAttribute("aria-controls");
     expect(
       controlsId,
@@ -234,7 +219,9 @@ test.describe("Deep Accessibility & Interaction Tests", () => {
     ).not.toBeNull();
 
     // Force non-null assertion as expect above guarantees it, needed for TS
-    const container = page.locator(`#${controlsId!}`);
+    // eslint-disable-next-line playwright/no-conditional-in-test
+    if (!controlsId) throw new Error("controlsId is null despite expectation");
+    const container = page.locator(`#${controlsId}`);
     await expect(container).toBeVisible();
 
     const copyBtn = container.locator(".copy-button"); // Uses .copy-button class from CopyButton.astro

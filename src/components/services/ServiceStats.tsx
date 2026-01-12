@@ -60,20 +60,35 @@ async function fetchMastodonStats(setError: (error: boolean) => void) {
     ]);
 
     if (resPeers?.ok) {
-      const peersData = (await resPeers.json()) as unknown[];
-      peersCount = Array.isArray(peersData) ? peersData.length : 0;
+      try {
+        const peersData = (await resPeers.json()) as unknown[];
+        peersCount = Array.isArray(peersData) ? peersData.length : 0;
+      } catch (parseError) {
+        console.error("Failed to parse Mastodon peers response:", parseError);
+      }
     }
 
     if (resTrends?.ok) {
-      mastodonTrends = (await resTrends.json()) as {
-        url: string;
-        name: string;
-      }[];
+      try {
+        mastodonTrends = (await resTrends.json()) as {
+          url: string;
+          name: string;
+        }[];
+      } catch (parseError) {
+        console.error("Failed to parse Mastodon trends response:", parseError);
+      }
     }
 
     if (resInstance?.ok) {
-      const instanceData = (await resInstance.json()) as { version: string };
-      instanceVersion = instanceData.version;
+      try {
+        const instanceData = (await resInstance.json()) as { version: string };
+        instanceVersion = instanceData.version;
+      } catch (parseError) {
+        console.error(
+          "Failed to parse Mastodon instance response:",
+          parseError,
+        );
+      }
     }
 
     if (!resPeers?.ok && !resTrends?.ok && !resInstance?.ok) {
@@ -104,19 +119,42 @@ async function fetchMatrixStats(setError: (error: boolean) => void) {
       fetch("/api/proxy/matrix/stats").catch(() => null),
     ]);
 
-    if (resConfig?.ok) matrixData = (await resConfig.json()) as MatrixData;
-
-    if (resVer?.ok) {
-      matrixData.online = true;
-      const verData = (await resVer.json()) as { versions: string[] };
-      matrixData.versions = { list: verData.versions };
+    if (resConfig?.ok) {
+      try {
+        matrixData = (await resConfig.json()) as MatrixData;
+      } catch (parseError) {
+        console.error("Failed to parse Matrix config response:", parseError);
+      }
     }
 
-    if (resFed?.ok) matrixFed = (await resFed.json()) as MatrixFed;
+    if (resVer?.ok) {
+      try {
+        matrixData.online = true;
+        const verData = (await resVer.json()) as { versions: string[] };
+        matrixData.versions = { list: verData.versions };
+      } catch (parseError) {
+        console.error("Failed to parse Matrix versions response:", parseError);
+      }
+    }
+
+    if (resFed?.ok) {
+      try {
+        matrixFed = (await resFed.json()) as MatrixFed;
+      } catch (parseError) {
+        console.error(
+          "Failed to parse Matrix federation response:",
+          parseError,
+        );
+      }
+    }
 
     if (resDest?.ok) {
-      const destData = (await resDest.json()) as { total: number };
-      matrixData.federationTotal = destData.total;
+      try {
+        const destData = (await resDest.json()) as { total: number };
+        matrixData.federationTotal = destData.total;
+      } catch (parseError) {
+        console.error("Failed to parse Matrix stats response:", parseError);
+      }
     }
 
     if (!resConfig?.ok && !resVer?.ok && !resFed?.ok && !resDest?.ok) {
@@ -132,8 +170,12 @@ async function fetchMatrixStats(setError: (error: boolean) => void) {
 
 /**
  * Fetch Meshtastic combined service statistics
+ *
+ * @param setError - Callback to signal an error state.
  */
-async function fetchMeshtasticStats() {
+async function fetchMeshtasticStats(
+  setError: (error: boolean) => void,
+): Promise<MeshtasticStatsData> {
   const [resPotato, resLF, resMF] = await Promise.all([
     fetch("/api/proxy/potato/nodes").catch(() => null),
     fetch("/api/proxy/mesh/lf").catch(() => null),
@@ -167,6 +209,11 @@ async function fetchMeshtasticStats() {
     } catch (error_) {
       console.error("Failed to parse MeshMonitor MF response:", error_);
     }
+  }
+
+  // Signal error if all three fetches failed
+  if (!resPotato?.ok && !resLF?.ok && !resMF?.ok) {
+    setError(true);
   }
 
   const potatoVersion = await fetchPotatoVersion();
@@ -437,7 +484,7 @@ export default function ServiceStats({ type }: Props) {
             break;
           }
           case "meshtastic-combined": {
-            data = await fetchMeshtasticStats();
+            data = await fetchMeshtasticStats(setError);
             break;
           }
           default: {

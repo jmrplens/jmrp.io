@@ -1,8 +1,9 @@
 name: Cleanup CI Reports
 
 on:
-  pull_request:
-    types: [closed]
+  workflow_dispatch:
+  # pull_request:
+  #   types: [closed]
 
 jobs:
   cleanup:
@@ -15,7 +16,6 @@ jobs:
           # For now, we will just log the closing. 
           # Truly cleaning up CLI-based preview deployments requires a script that
           # iterates through deployments and matches the 'name' and 'branch'.
-          echo "PR #${{ github.event.number }} closed. Reports are archived in Vercel."
           # If we wanted to be aggressive:
           # npx vercel rm jmrp-ci-reports -t ${{ secrets.VERCEL_TOKEN }} --yes
           # But that might remove ALL reports.

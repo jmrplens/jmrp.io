@@ -13,12 +13,13 @@ import fs from "node:fs";
  * @param {Object} qualityOutcomes - Quality/Performance job results
  * @returns {number} Health score from 0 to 100
  */
-export function calculateHealthScore(saOutcomes, qualityOutcomes) {
+export function calculateHealthScore(saOutcomes = {}, qualityOutcomes = {}) {
   let score = 100;
 
   // Deduction for SA failures (-5 each)
-  for (const key in saOutcomes) {
-    if (saOutcomes[key] === "failure" && key !== "jsdocCoverage") {
+  for (const [key, value] of Object.entries(saOutcomes)) {
+    // jsdocCoverage is currently experimental/informational
+    if (value === "failure" && key !== "jsdocCoverage") {
       score -= 5;
     }
   }
@@ -36,12 +37,15 @@ export function calculateHealthScore(saOutcomes, qualityOutcomes) {
       const accessibilityData = JSON.parse(
         fs.readFileSync("accessibility-report.json", "utf-8"),
       );
-      const totalViolations = accessibilityData.reduce(
-        (acc, r) => acc + (r.violations?.length || 0),
-        0,
-      );
-      // Cap deduction at 20 points
-      score -= Math.min(20, totalViolations * 2);
+
+      if (Array.isArray(accessibilityData)) {
+        const totalViolations = accessibilityData.reduce(
+          (acc, r) => acc + (r.violations?.length || 0),
+          0,
+        );
+        // Cap deduction at 20 points
+        score -= Math.min(20, totalViolations * 2);
+      }
     }
   } catch (error) {
     console.error("Error reading accessibility-report.json:", error.message);
@@ -52,16 +56,19 @@ export function calculateHealthScore(saOutcomes, qualityOutcomes) {
       const htmlValidation = JSON.parse(
         fs.readFileSync("html-validation.json", "utf-8"),
       );
-      const htmlErrors = htmlValidation.reduce((acc, f) => {
-        // Support both standard html-validate format and simplified report format
-        const count =
-          f.errorCount === undefined
-            ? f.messages?.filter((m) => m.severity === 2).length || 0
-            : f.errorCount;
-        return acc + count;
-      }, 0);
-      // Cap deduction at 15 points
-      score -= Math.min(15, htmlErrors);
+
+      if (Array.isArray(htmlValidation)) {
+        const htmlErrors = htmlValidation.reduce((acc, f) => {
+          // Support both standard html-validate format and simplified report format
+          const count =
+            f.errorCount === undefined
+              ? f.messages?.filter((m) => m.severity === 2).length || 0
+              : f.errorCount;
+          return acc + count;
+        }, 0);
+        // Cap deduction at 15 points
+        score -= Math.min(15, htmlErrors);
+      }
     }
   } catch (error) {
     console.error("Error reading html-validation.json:", error.message);

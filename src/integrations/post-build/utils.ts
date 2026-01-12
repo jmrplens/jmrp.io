@@ -34,6 +34,8 @@ const BOOLEAN_ATTRIBUTES = new Set([
   "scoped",
   "selected",
   "crossorigin",
+  "hidden",
+  "muted",
 ]);
 
 /**

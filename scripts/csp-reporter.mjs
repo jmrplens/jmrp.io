@@ -94,11 +94,16 @@ const server = http.createServer((req, res) => {
       .trim();
     const userAgent = (req.headers["user-agent"] || "Unknown").trim();
 
+    let responded = false;
+
     req.on("data", (chunk) => {
+      if (responded) return;
+
       body += chunk.toString();
       // Enforce maximum body size
       if (body.length > MAX_BODY_SIZE) {
         console.warn(`Request body exceeded limit from IP: ${clientIp}`);
+        responded = true;
         res.writeHead(413, { "Content-Type": "text/plain" });
         res.end("Payload Too Large");
         req.destroy();
@@ -106,7 +111,8 @@ const server = http.createServer((req, res) => {
     });
 
     req.on("end", () => {
-      if (res.writableEnded) return;
+      if (responded || res.writableEnded) return;
+      responded = true;
       try {
         const report = JSON.parse(body);
         processReport(report, clientIp, userAgent);

@@ -38,7 +38,7 @@ for (const line of lines) {
   } else if (line.startsWith("* ")) {
     const parts = line.split("|");
     if (parts.length >= 2) {
-      const linkMatch = parts[0].match(/\[(.*?)\]\((.*?)\)/);
+      const linkMatch = /\[(.*?)\]\((.*?)\)/.exec(parts[0]);
       const linkName = linkMatch ? linkMatch[1] : parts[0].replace("* ", "");
       const linkUrl = linkMatch ? linkMatch[2] : null;
       const error = parts[1].trim();
@@ -47,8 +47,25 @@ for (const line of lines) {
       const safeName = escapeHtml(linkName);
       const safeError = escapeHtml(error);
 
-      const linkHtml = linkUrl
-        ? `<a href="${escapeHtml(linkUrl)}" target="_blank" class="broken-link">${safeName}</a>`
+      const allowedProtocols = ["http:", "https:", "mailto:", "tel:"];
+      let safeLinkUrl = null;
+
+      if (linkUrl) {
+        try {
+          // Check if it's a relative URL or absolute with allowed protocol
+          if (
+            !linkUrl.includes(":") ||
+            allowedProtocols.some((p) => linkUrl.startsWith(p))
+          ) {
+            safeLinkUrl = escapeHtml(linkUrl);
+          }
+        } catch {
+          safeLinkUrl = null;
+        }
+      }
+
+      const linkHtml = safeLinkUrl
+        ? `<a href="${safeLinkUrl}" target="_blank" rel="noopener noreferrer" class="broken-link">${safeName}</a>`
         : `<span class="broken-link">${safeName}</span>`;
 
       htmlRows += `
@@ -93,6 +110,10 @@ const html = `
                 --text: #f8fafc;
                 --text-muted: #94a3b8;
                 --border: #334155;
+                --bg-danger: #7f1d1d;
+                --text-danger: #fca5a5;
+                --bg-success: #14532d;
+                --text-success: #86efac;
             }
         }
 
@@ -124,8 +145,14 @@ const html = `
             text-transform: uppercase;
         }
 
-        .status-danger { background: #fee2e2; color: #991b1b; }
-        .status-success { background: #dcfce7; color: #166534; }
+        .status-danger {
+            background: var(--bg-danger, #fee2e2);
+            color: var(--text-danger, #991b1b);
+        }
+        .status-success {
+            background: var(--bg-success, #dcfce7);
+            color: var(--text-success, #166534);
+        }
 
         .report-card {
             background: var(--card-bg);
@@ -224,7 +251,15 @@ const html = `
         </div>
         
         <footer style="margin-top: 2rem; text-align: center; color: var(--text-muted); font-size: 0.875rem;">
-            Generated on ${new Date().toLocaleString()}
+            Generated on ${new Date().toLocaleString("en-US", {
+              timeZone: "UTC",
+              year: "numeric",
+              month: "2-digit",
+              day: "2-digit",
+              hour: "2-digit",
+              minute: "2-digit",
+              second: "2-digit",
+            })}
         </footer>
     </div>
 </body>

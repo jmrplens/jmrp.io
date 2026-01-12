@@ -41,12 +41,13 @@ const site_config = defineCollection({
     base: "./src/content/site_config",
     generateId: ({ entry }) => stripExtension(entry),
   }),
-  schema: z.union([
+  schema: z.discriminatedUnion("type", [
     /**
      * Site Config Schema (site.yaml)
      * Core site metadata: title, description, navigation, hero section.
      */
     z.object({
+      type: z.literal("site"),
       title: z.string(),
       description: z.string(),
       author: z.string(),
@@ -54,7 +55,21 @@ const site_config = defineCollection({
       keywords: z.string(),
       fediverse_creator: z.string(),
       locale: z.string(),
-      type: z.string(),
+      name: z.string().optional(),
+      jobTitle: z.string().optional(),
+      social: z
+        .array(
+          z.object({
+            link: z.string(),
+            icon: z.string().optional(),
+            label: z.string().optional(),
+          }),
+        )
+        .optional(),
+      // 'type' is now the discriminator, removing the generic string field if it was meant for something else,
+      // but based on context 'type: "site"' is what we want.
+      // If the original 'type' field held other data, we'd need to rename the discriminator,
+      // but usually 'type' works well. The original file had `type: z.string()` in the first object.
       theme_color: z.string(),
       background_color: z.string().optional(),
       twitter_creator: z.string(),
@@ -79,28 +94,27 @@ const site_config = defineCollection({
      * Socials Config Schema (socials.yaml)
      * Social media usernames and custom social links.
      */
-    z
-      .object({
-        github_username: z.string().optional(),
-        linkedin_username: z.string().optional(),
-        mastodon_username: z.string().optional(),
-        scholar_userid: z.string().optional(),
-        matrix_id: z.string().optional(),
-        work_url: z.string().optional(),
-        custom_social: z
-          .array(
-            z.object({
-              title: z.string(),
-              url: z.string(),
-              icon: z.string().optional(),
-              icon_name: z.string().optional(),
-              icon_light: z.string().optional(),
-              icon_dark: z.string().optional(),
-            }),
-          )
-          .optional(),
-      })
-      .catchall(z.any()),
+    z.object({
+      type: z.literal("socials"),
+      github_username: z.string().optional(),
+      linkedin_username: z.string().optional(),
+      mastodon_username: z.string().optional(),
+      scholar_userid: z.string().optional(),
+      matrix_id: z.string().optional(),
+      work_url: z.string().optional(),
+      custom_social: z
+        .array(
+          z.object({
+            title: z.string(),
+            url: z.string(),
+            icon: z.string().optional(),
+            icon_name: z.string().optional(),
+            icon_light: z.string().optional(),
+            icon_dark: z.string().optional(),
+          }),
+        )
+        .optional(),
+    }),
   ]),
 });
 

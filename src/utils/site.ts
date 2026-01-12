@@ -18,6 +18,7 @@ export const getSiteUrl = (): string => {
 /**
  * Constructs an absolute URL by appending a path to the base site URL.
  * Handles leading/trailing slashes to ensure a valid URL.
+ * If the path is already an absolute URL, it is returned as-is (ignoring the site base).
  *
  * @param path - The path to append (e.g., "/blog", "assets/image.png")
  * @returns The full absolute URL string

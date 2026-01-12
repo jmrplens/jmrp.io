@@ -197,10 +197,10 @@ async function validateRSS() {
   console.log("🔍 Validating RSS feed...\n");
 
   const distDir = path.resolve(
-    process.argv[3] || process.env.DIST_DIR || "dist",
+    process.argv[2] || process.env.DIST_DIR || "dist",
   );
   const rssFile = path.resolve(
-    process.argv[2] || path.join(distDir, "rss.xml"),
+    process.argv[3] || path.join(distDir, "rss.xml"),
   );
 
   const results = {

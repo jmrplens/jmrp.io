@@ -107,6 +107,14 @@ const logoText = siteData.logo_text || "<JMRP />";
           navLinks.classList.add("open");
           backdrop!.classList.add("open");
           document.body.classList.add("menu-open");
+
+          // Move focus to the first link or the menu itself
+          const firstLink = navLinks.querySelector("a");
+          if (firstLink) {
+            firstLink.focus();
+          } else {
+            navLinks.focus();
+          }
         }
       };
 
@@ -235,7 +243,10 @@ const logoText = siteData.logo_text || "<JMRP />";
     border-radius: var(--radius-sm);
     transition:
       background-color 0.2s,
-      color 0.2s;
+      color 0.2s,
+      border-color 0.2s,
+      box-shadow 0.2s,
+      transform 0.2s;
   }
 
   .nav-links a:hover,
@@ -336,5 +347,11 @@ const logoText = siteData.logo_text || "<JMRP />";
     height: 100vh; /* Lock height to viewport */
     overflow: hidden;
     touch-action: none; /* Prevent touch scrolling */
+  }
+
+  /* Ensure fallback for browsers without :has() */
+  :global(body.menu-open) {
+    height: 100vh;
+    overflow: hidden;
   }
 </style>

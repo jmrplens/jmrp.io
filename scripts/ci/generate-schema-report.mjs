@@ -113,12 +113,17 @@ function renderObject(data) {
  * @returns HTML string for the string value.
  */
 function renderString(data) {
-  if (data.startsWith("http")) {
-    const escapedUrl = escapeHtml(data);
-    if (/\.(jpg|jpeg|png|webp|gif|svg)$/i.test(data)) {
-      return `<a href="${escapedUrl}" target="_blank"><img src="${escapedUrl}" class="v-img" loading="lazy" /></a>`;
+  try {
+    const url = new URL(data);
+    if (url.protocol === "http:" || url.protocol === "https:") {
+      const escapedUrl = escapeHtml(data);
+      if (/\.(jpg|jpeg|png|webp|gif|svg)$/i.test(url.pathname)) {
+        return `<a href="${escapedUrl}" target="_blank"><img src="${escapedUrl}" class="v-img" loading="lazy" /></a>`;
+      }
+      return `<a href="${escapedUrl}" target="_blank" class="v-link">${escapedUrl}</a>`;
     }
-    return `<a href="${escapedUrl}" target="_blank" class="v-link">${escapedUrl}</a>`;
+  } catch {
+    // Not a valid URL, render as string
   }
   return `<span class="v-string">"${escapeHtml(data)}"</span>`;
 }

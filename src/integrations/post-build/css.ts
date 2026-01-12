@@ -10,6 +10,47 @@ import { type Config, optimize, type PluginConfig } from "svgo";
 import { ASSET_FILENAME_HASH_LENGTH, ASSETS_DIR } from "./constants.js";
 import { getExtensionFromMime, writeHtml } from "./utils.js";
 
+const svgoConfig: Config = {
+  multipass: true,
+  plugins: [
+    {
+      name: "preset-default",
+      params: {
+        overrides: {
+          cleanupNumericValues: {
+            floatPrecision: 1,
+          },
+          removeViewBox: false,
+          removeTitle: true,
+          removeDesc: true,
+          removeUselessDefs: true,
+          collapseGroups: true,
+          cleanupIDs: true,
+          removeEmptyContainers: true,
+          removeEmptyAttrs: true,
+          cleanupAttrs: true,
+          removeStyleElement: true,
+          removeDimensions: true,
+          removeRasterImages: true,
+        },
+      },
+    },
+    "sortAttrs",
+    {
+      name: "removeAttrs",
+      params: {
+        attrs: "(class|id|data-name)",
+      },
+    },
+    {
+      name: "addAttributesToSVGElement",
+      params: {
+        attributes: [{ xmlns: "http://www.w3.org/2000/svg" }],
+      },
+    },
+  ] as PluginConfig[],
+};
+
 /**
  * Extracts embedded Data URIs from CSS and HTML files into standalone physical assets.
  *
@@ -60,7 +101,8 @@ export async function extractCssDataUris(
           if (commaIndex === -1) return fullMatch;
 
           const metadata = rawDataUri.substring(5, commaIndex);
-          const data = rawDataUri.slice(Math.max(0, commaIndex + 1));
+          // Redundant Math.max(0, ...) removed since commaIndex != -1 checked above
+          const data = rawDataUri.slice(commaIndex + 1);
           const isBase64 = metadata.includes(";base64");
           const mime = metadata.split(";")[0] || "application/octet-stream";
 
@@ -73,55 +115,16 @@ export async function extractCssDataUris(
             .createHash("sha256")
             .update(buffer)
             .digest("hex")
-            .slice(0, Math.max(0, ASSET_FILENAME_HASH_LENGTH));
+            .slice(0, ASSET_FILENAME_HASH_LENGTH);
           const filename = `${hash}.${ext}`;
           const filePath = path.join(targetDir, filename);
 
           if (!fs.existsSync(filePath)) {
             if (ext === "svg") {
               const svgString = buffer.toString("utf-8");
-              const svgoConfig: Config = {
-                multipass: true,
-                plugins: [
-                  {
-                    name: "preset-default",
-                    params: {
-                      overrides: {
-                        cleanupNumericValues: {
-                          floatPrecision: 1,
-                        },
-                        removeViewBox: false,
-                        removeTitle: true,
-                        removeDesc: true,
-                        removeUselessDefs: true,
-                        collapseGroups: true,
-                        cleanupIDs: true,
-                        removeEmptyContainers: true,
-                        removeEmptyAttrs: true,
-                        cleanupAttrs: true,
-                        removeStyleElement: true,
-                        removeDimensions: true,
-                        removeRasterImages: true,
-                      },
-                    },
-                  },
-                  "sortAttrs",
-                  {
-                    name: "removeAttrs",
-                    params: {
-                      attrs: "(class|id|data-name)",
-                    },
-                  },
-                  {
-                    name: "addAttributesToSVGElement",
-                    params: {
-                      attributes: [{ xmlns: "http://www.w3.org/2000/svg" }],
-                    },
-                  },
-                ] as PluginConfig[],
-              };
 
               try {
+                // Use hoisted svgoConfig
                 const optimized = optimize(svgString, svgoConfig);
                 fs.writeFileSync(filePath, optimized.data);
               } catch {

@@ -26,21 +26,31 @@ async function optimize() {
     const inputPath = path.join(dir, file);
     const outputPath = path.join(dir, file.replace(".png", ".webp"));
 
-    if (!fs.existsSync(inputPath)) {
+    // Check existence asynchronously
+    try {
+      await fs.promises.access(inputPath);
+    } catch {
       console.log(`Skipping ${inputPath} (already removed or not found)`);
       continue;
     }
 
     console.log(`Optimizing ${inputPath} -> ${outputPath}`);
 
-    await sharp(inputPath)
-      .resize(1200) // Standard width for hero/blog images
-      .webp({ quality: 80 })
-      .toFile(outputPath);
+    try {
+      await sharp(inputPath)
+        .resize(1200) // Standard width for hero/blog images
+        .webp({ quality: 80 })
+        .toFile(outputPath);
 
-    // Remove original PNG to save space and prevent deployment of unoptimized assets
-    fs.unlinkSync(inputPath);
+      // Remove original PNG to save space and prevent deployment of unoptimized assets
+      await fs.promises.unlink(inputPath);
+    } catch (error) {
+      console.error(`Error optimizing ${file}:`, error);
+      // Continue to next file instead of crashing whole process
+    }
   }
+
+  console.log("Optimization completed successfully.");
 }
 
 try {

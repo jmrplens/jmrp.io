@@ -7,7 +7,7 @@ on:
     branches: ["main"]
 
 concurrency:
-  group: ${{ github.workflow }} - ${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 # Suppress deprecation warnings from upstream GitHub Actions dependencies
@@ -197,7 +197,7 @@ jobs:
         run: |
           OUTPUT=$(node scripts/ci/calculate-jsdoc-coverage.mjs 2>&1 | tee jsdoc-coverage.log)
           echo "$OUTPUT"
-          COVERAGE=$(echo "$OUTPUT" | sed -n 's/.*Coverage: \([0-9.]*\).*/\1/p')
+          COVERAGE=$(echo "$OUTPUT" | sed -nE 's/.*Coverage: ([0-9.]+).*/\1/p')
           if [ -z "$COVERAGE" ]; then
             echo "::error::Failed to parse JSDoc coverage from output."
             exit 1
@@ -259,8 +259,11 @@ jobs:
       - name: Install Typos via Cargo (cached if possible) or download
         # Use a pre-built binary for speed vs compiling
         run: |
-          curl -LsSf https://github.com/crate-ci/typos/releases/download/v1.42.0/typos-v1.42.0-x86_64-unknown-linux-musl.tar.gz | tar xz -C /usr/local/bin
+          curl -LsSf https://github.com/crate-ci/typos/releases/download/v1.42.0/typos-v1.42.0-x86_64-unknown-linux-musl.tar.gz -o typos.tar.gz
+          echo "202ffa8dcb8f27c57c1fd22a5248f4f54e53115c7cf0665ecec252427b282c29 typos.tar.gz" | sha256sum -c -
+          tar xz -f typos.tar.gz -C /usr/local/bin
           chmod +x /usr/local/bin/typos
+          rm typos.tar.gz
       - name: Run Spell Checker
         run: typos . | tee typos.log
       - name: Upload Typos log
@@ -282,7 +285,7 @@ jobs:
       SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
     steps:
       - uses: actions/checkout@v6
-      - uses: snyk/actions/node@master
+      - uses: snyk/actions/node@9adf32b1121593767fc3c057af55b55db032dc04
         id: snyk
         if: env.SNYK_TOKEN != ''
         with:
@@ -298,6 +301,8 @@ jobs:
         with:
           fetch-depth: 0
       - name: SonarQube Scan
+        # Only run when SONAR_TOKEN is configured
+        if: env.SONAR_TOKEN != ''
         uses: SonarSource/sonarqube-scan-action@v6
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -356,6 +361,9 @@ jobs:
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile --prefer-offline
       - name: Validate HTML5
+        # Two html-validate runs:
+        # 1. JSON formatter with || true: Always produce a best-effort JSON report for dashboard
+        # 2. Stylish formatter (no || true): This run determines workflow pass/fail
         run: |
           pnpm exec html-validate -c .htmlvalidate.json --formatter json dist > html-validation.json 2>&1 || true
           pnpm exec html-validate -c .htmlvalidate.json --formatter stylish dist | tee html-validation.log
@@ -507,7 +515,14 @@ jobs:
           node-version: 22
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile --prefer-offline
+      - name: Cache Playwright Browsers
+        id: playwright-cache
+        uses: actions/cache@v5
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-browsers-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
       - name: Install Playwright Browsers
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: pnpm exec playwright install --with-deps chromium
       - name: Run Playwright tests
         run: pnpm exec playwright test --project=functional --project=mobile-functional

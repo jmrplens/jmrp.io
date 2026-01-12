@@ -231,9 +231,15 @@ const { headings } = Astro.props;
       background-color 0.2s;
   }
 
-  .toc-fab:hover {
+  .toc-fab:hover,
+  .toc-fab:focus-visible {
     background-color: var(--color-primary-hover);
     transform: scale(1.05);
+  }
+
+  .toc-fab:focus-visible {
+    outline: 3px solid var(--color-primary);
+    outline-offset: 2px;
   }
 
   .toc-icon {

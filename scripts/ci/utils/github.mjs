@@ -23,7 +23,12 @@ export async function postOrUpdateComment(github, context, header, body) {
     per_page: 100,
   });
 
-  const existingComment = comments.find((c) => c.body?.includes(header));
+  const existingComment = comments.find(
+    (c) =>
+      c.body?.includes(header) &&
+      c.user?.type === "Bot" &&
+      c.user?.login === "github-actions[bot]",
+  );
   // Find the bot's own comments to be safe?
   // For now, header match is standard across this repo.
 

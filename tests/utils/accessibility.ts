@@ -25,10 +25,8 @@ export function aggregateAxeResults(
       if (!uniqueMap.has(item.id)) {
         uniqueMap.set(item.id, { ...item, nodes: 0 });
       }
-      const existing = uniqueMap.get(item.id);
-      if (existing) {
-        existing.nodes += item.nodes.length;
-      }
+      const existing = uniqueMap.get(item.id)!;
+      existing.nodes += item.nodes.length;
     }
   }
 
@@ -54,9 +52,9 @@ export function generateAccessibilityIndexHtml(
           <a href="${escapeHtml(r.reportPath)}" class="page-link">
             <span class="status">${r.violations === 0 ? "✅" : "❌"}</span>
             <div class="details">
-              <span class="page-name">${escapeHtml(r.page.split("(")[0].trim())}</span>
+              <span class="page-name">${escapeHtml(`${r.name || r.page || ""}`)}</span>
               <div style="margin-top: 4px;">
-                <span class="page-url">${escapeHtml(/\((.*?)\)/.exec(r.page)?.[1] || "")}</span>
+                <span class="page-url">${escapeHtml(`${r.url || ""}`)}</span>
               </div>
               ${r.violations > 0 ? `<div class="violations">⚠️ ${r.violations} violations found</div>` : ""}
             </div>

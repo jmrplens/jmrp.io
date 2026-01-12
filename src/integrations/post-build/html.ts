@@ -661,16 +661,19 @@ function processBeacon(
 ): boolean {
   let modified = false;
   const beaconScriptsPath = path.join(distDir, "scripts", "cf-beacon.js");
-  if ($.html().includes("__BEACON_INTEGRITY_HASH__")) {
+
+  // Use selector-based check instead of serializing entire document
+  const beaconPlaceholders = $('script[integrity="__BEACON_INTEGRITY_HASH__"]');
+  if (beaconPlaceholders.length > 0) {
     if (fs.existsSync(beaconScriptsPath)) {
       const hash = getFileHash(beaconScriptsPath, hashCache, "sha512");
-      $('script[integrity="__BEACON_INTEGRITY_HASH__"]').each((_, el) => {
+      beaconPlaceholders.each((_, el) => {
         $(el).attr("integrity", hash);
       });
       modified = true;
     } else {
       logger.warn(`Beacon file missing. Removing script tag from ${file}`);
-      $('script[integrity="__BEACON_INTEGRITY_HASH__"]').remove();
+      beaconPlaceholders.remove();
       modified = true;
     }
   }

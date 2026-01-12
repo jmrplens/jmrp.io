@@ -93,6 +93,8 @@ test.describe("Integration Flows", () => {
     const publications = page.locator(
       "article, .publication-item, [itemtype*='Article']",
     );
+    // Wait for content to load
+    await publications.first().waitFor({ state: "visible" });
     const pubCount = await publications.count();
     expect(pubCount).toBeGreaterThan(0);
 
@@ -105,7 +107,10 @@ test.describe("Integration Flows", () => {
 
       // Verify ARIA attributes for accordion
       // eslint-disable-next-line playwright/no-conditional-expect
-      await expect(bibtexToggle).toHaveAttribute("aria-expanded", /.*/);
+      await expect(bibtexToggle).toHaveAttribute(
+        "aria-expanded",
+        /^(true|false)$/,
+      );
       // eslint-disable-next-line playwright/no-conditional-expect
       await expect(bibtexToggle).toHaveAttribute("aria-controls", /.+/);
     }
@@ -119,6 +124,9 @@ test.describe("Integration Flows", () => {
     const postLinks = page
       .locator("article a[href*='/blog/'][href$='/']")
       .or(page.locator("article h2 a, article h3 a"));
+
+    // Wait for content to load
+    await postLinks.first().waitFor();
     const postCount = await postLinks.count();
     expect(postCount).toBeGreaterThan(0);
 
@@ -134,10 +142,10 @@ test.describe("Integration Flows", () => {
     await expect(page.locator("main").first()).toBeVisible(); // Main content
 
     // Verify reading time or date is shown (common blog elements)
+    // Verify reading time or date is shown (common blog elements)
     const metadata = page.locator(
       "[class*='date'], [class*='reading'], time, .post-meta",
     );
-    const hasMetadata = (await metadata.count()) > 0;
-    expect(hasMetadata).toBe(true);
+    await expect(metadata.first()).toBeVisible();
   });
 });

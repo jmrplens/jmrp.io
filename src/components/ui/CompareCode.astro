@@ -9,8 +9,6 @@
  *   <div slot="good">...code...</div>
  * </CompareCode>
  */
-import { createHash } from "node:crypto";
-
 import { decodeHtml } from "@utils/html";
 import { Icon } from "astro-icon/components";
 import * as cheerio from "cheerio";
@@ -22,6 +20,10 @@ interface Props {
   goodTitle?: string;
   ariaLabelBad?: string;
   ariaLabelGood?: string;
+  /** Optional stable test ID for the "bad" block (defaults to "compare-block-bad") */
+  testIdBad?: string;
+  /** Optional stable test ID for the "good" block (defaults to "compare-block-good") */
+  testIdGood?: string;
 }
 
 const {
@@ -29,25 +31,19 @@ const {
   goodTitle = "Allowed / Secure",
   ariaLabelBad,
   ariaLabelGood,
+  testIdBad = "compare-block-bad",
+  testIdGood = "compare-block-good",
 } = Astro.props;
 
 const badContent = (await Astro.slots.render("bad")).trim();
 const goodContent = (await Astro.slots.render("good")).trim();
 
-const badUuid = createHash("sha256")
-  .update(badContent)
-  .digest("hex")
-  .slice(0, 8);
-const goodUuid = createHash("sha256")
-  .update(goodContent)
-  .digest("hex")
-  .slice(0, 8);
-
 // Helper to extract text snippet
 const getSnippet = (html: string) => {
   const $ = cheerio.load(html);
-  let text = decodeHtml($.text().trim()).slice(0, 50);
-  if (text.length === 50) text += "...";
+  const fullText = decodeHtml($.text().trim());
+  let text = fullText.slice(0, 50);
+  if (fullText.length > 50) text += "...";
   return text;
 };
 
@@ -61,7 +57,7 @@ const finalAriaLabelGood =
   <section
     class="compare-block bad copy-container"
     aria-label={finalAriaLabelBad}
-    data-testid={badUuid}
+    data-testid={testIdBad}
   >
     <div class="header">
       <Icon
@@ -79,7 +75,7 @@ const finalAriaLabelGood =
   <section
     class="compare-block good copy-container"
     aria-label={finalAriaLabelGood}
-    data-testid={goodUuid}
+    data-testid={testIdGood}
   >
     <div class="header">
       <Icon
@@ -122,13 +118,13 @@ const finalAriaLabelGood =
   .compare-block.bad {
     --compare-border-color: var(--color-border-bad);
     --compare-header-bg: var(--color-bg-bad-header);
-    --compare-header-text: #fff;
+    --compare-header-text: var(--color-on-primary, #fff);
   }
 
   .compare-block.good {
     --compare-border-color: var(--color-border-good);
     --compare-header-bg: var(--color-bg-good-header);
-    --compare-header-text: #fff;
+    --compare-header-text: var(--color-on-primary, #fff);
   }
 
   /* Theme Tokens */

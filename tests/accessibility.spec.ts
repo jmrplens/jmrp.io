@@ -87,7 +87,8 @@ test.describe("Accessibility Tests (Axe-core WCAG 2.1 AA)", () => {
 
     for (const pageInfo of pages) {
       await browserPage.goto(pageInfo.url);
-      await browserPage.waitForLoadState("domcontentloaded");
+      // eslint-disable-next-line playwright/no-networkidle
+      await browserPage.waitForLoadState("networkidle");
 
       // Verify theme application
       await browserPage.evaluate((t) => {

@@ -13,7 +13,10 @@ import { type AstroIntegrationLogger } from "astro";
  * @param logger - The Astro logger instance.
  * @returns Resolves when the operation is complete (success or skipped).
  */
-export async function purgeCloudflareCache(logger: AstroIntegrationLogger) {
+export async function purgeCloudflareCache(
+  logger: AstroIntegrationLogger,
+  throwOnError = false,
+) {
   const token = process.env.PRIVATE_CF_API_TOKEN;
   const email = process.env.PRIVATE_CF_EMAIL;
   const zoneId = process.env.PRIVATE_CF_ZONE_ID;
@@ -21,8 +24,8 @@ export async function purgeCloudflareCache(logger: AstroIntegrationLogger) {
   // Determine authentication method:
   // - API Token: token only (no email) - recommended by Cloudflare
   // - Global API Key: token + email (legacy but still supported)
-  const useApiToken = token && !email;
-  const useGlobalKey = token && email;
+  const useApiToken = !!(token && !email);
+  const useGlobalKey = !!(token && email);
 
   if (!zoneId || !(useApiToken || useGlobalKey)) {
     logger.info(
@@ -40,10 +43,10 @@ export async function purgeCloudflareCache(logger: AstroIntegrationLogger) {
       "Content-Type": "application/json",
     };
 
-    if (useGlobalKey) {
+    if (useGlobalKey && email && token) {
       headers["X-Auth-Email"] = email;
       headers["X-Auth-Key"] = token;
-    } else {
+    } else if (token) {
       headers["Authorization"] = `Bearer ${token}`;
     }
 
@@ -89,6 +92,10 @@ export async function purgeCloudflareCache(logger: AstroIntegrationLogger) {
     logger.info("✓ Cloudflare cache purged successfully.");
   } catch (error) {
     logger.error("⚠ Failed to purge Cloudflare cache.");
-    logger.error(error instanceof Error ? error.message : String(error));
+    const message = error instanceof Error ? error.message : String(error);
+    logger.error(message);
+    if (throwOnError) {
+      throw error;
+    }
   }
 }

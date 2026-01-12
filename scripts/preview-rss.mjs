@@ -37,8 +37,8 @@ function embedImage(imageUrl) {
     // Remove leading slashes/dots to make it a clean relative path
     const safeRel = path
       .normalize(pathname)
-      .replace(/^(\.\.[\/\\])+/, "")
-      .replace(/^[\/\\]+/, "");
+      .replace(/^(\.\.[/\\])+/, "")
+      .replace(/^[/\\]+/, "");
     const localPath = path.resolve(DIST_DIR, safeRel);
 
     // Ensure we are still inside the dist directory

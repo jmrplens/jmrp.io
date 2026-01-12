@@ -67,6 +67,7 @@
   box-sizing: border-box;
 }
 
+/* Light Mode Overrides (System Preference + Explicit) */
 @media (prefers-color-scheme: light) {
   :root:not([data-theme="dark"]) {
     --color-bg: #fff;
@@ -76,8 +77,6 @@
     --color-text-muted: #57606a;
     --color-text-heading: #1f2328;
     --color-primary: #b509ac;
-
-    /* Light mode highlight */
     --color-primary-hover: #d11cd1;
     --color-on-primary: #fff;
     --color-accent: #b509ac;
@@ -86,6 +85,7 @@
   }
 }
 
+/* Explicit light mode force - uses same values as above */
 :root[data-theme="light"] {
   --color-bg: #fff;
   --color-bg-secondary: #f6f8fa;
@@ -94,8 +94,6 @@
   --color-text-muted: #57606a;
   --color-text-heading: #1f2328;
   --color-primary: #b509ac;
-
-  /* Light mode highlight */
   --color-primary-hover: #d11cd1;
   --color-on-primary: #fff;
   --color-accent: #b509ac;
@@ -131,9 +129,9 @@
 
 html {
   font-family: var(--font-body);
-  font-size: 100%;
 
   /* Ensure standard 16px */
+  font-size: 100%;
   line-height: 1.6;
   color: var(--color-text);
   background-color: var(--color-bg);
@@ -147,16 +145,16 @@ html {
 body {
   display: flex;
   flex-direction: column;
-
-  /* Prevent horizontal scroll globally */
   width: 100%;
   min-height: 100vh;
   padding: 0;
   margin: 0;
+
+  /* Prevent horizontal scroll globally */
   overflow-x: hidden;
-  overflow-wrap: break-word;
 
   /* Prevent long words from breaking layout */
+  overflow-wrap: break-word;
 }
 
 img,
@@ -183,7 +181,7 @@ a {
 }
 
 a:hover {
-  text-decoration: underline;
+  text-decoration-thickness: 2px;
 }
 
 :focus-visible {
@@ -332,7 +330,7 @@ h1 {
 .btn-sm:hover {
   color: var(--color-primary);
   text-decoration: none;
-  background: rgb(179 137 245 / 10%);
+  background: color-mix(in srgb, var(--color-primary) 10%, transparent);
   border-color: var(--color-primary);
 }
 

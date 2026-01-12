@@ -81,9 +81,13 @@ for (const themeResult of [results.light, results.dark]) {
 
     if (themeResult.incomplete.length > 0) {
       console.log("#### ⚠️ Incomplete");
-      for (const i of themeResult.incomplete) {
-        console.log(`- **${i.id}**: ${i.description}`);
-        console.log(`  - Manual review needed: ${i.nodes} node(s)`);
+      for (const incompleteItem of themeResult.incomplete) {
+        console.log(
+          `- **${incompleteItem.id}**: ${incompleteItem.description}`,
+        );
+        console.log(
+          `  - Manual review needed: ${incompleteItem.nodes} node(s)`,
+        );
       }
     }
 

@@ -205,7 +205,7 @@ test.describe("CSP and SRI Security Checks", () => {
         await page.goto(url);
 
         const locator = page.locator(
-          '[style]:not([style*="display: block"]):not([style*="display: none"]):not([id="preact-border-shadow-host"])',
+          '[style]:not([style*="display: block"]):not([style*="display:block"]):not([style*="display: none"]):not([style*="display:none"]):not([id="preact-border-shadow-host"])',
         );
 
         const count = await locator.count();

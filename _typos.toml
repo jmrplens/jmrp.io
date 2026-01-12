@@ -7,11 +7,12 @@ extend-exclude = [
     "pnpm-lock.yaml",
     "package-lock.json",
     "schema-report.json",
+    "schema-report.html",
     "html-validation.json",
     "accessibility-report.json"
 ]
 
 [default]
 extend-ignore-re = [
-    "(?m)^[a-zA-Z0-9+/]{20,}$"
+    "(?m)^[a-zA-Z0-9+/=]{20,}$"
 ]

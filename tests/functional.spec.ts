@@ -15,11 +15,18 @@ import { expect, test } from "@playwright/test";
 
 import { getSitemapUrls, shouldIgnoreError } from "./utils";
 
+let cachedSitemapUrls: string[] | null = null;
+
+async function getCachedSitemapUrls() {
+  cachedSitemapUrls ??= await getSitemapUrls();
+  return cachedSitemapUrls;
+}
+
 test.describe("Site-wide Functional Checks", () => {
   let urls: string[] = [];
 
   test.beforeAll(async () => {
-    urls = await getSitemapUrls();
+    urls = await getCachedSitemapUrls();
   });
 
   // Dynamic tests for every page in the sitemap
@@ -99,8 +106,7 @@ test.describe("Security & Best Practices", () => {
   test("external links with target=_blank have secure rel attributes", async ({
     page,
   }) => {
-    const urls = await getSitemapUrls();
-    const issues: string[] = [];
+    const urls = await getCachedSitemapUrls();
 
     for (const url of urls) {
       await test.step(`Checking external links: ${url}`, async () => {
@@ -131,20 +137,19 @@ test.describe("Security & Best Practices", () => {
 
     // Issues are reported via expect.soft above
     // We can add a final sanity check if needed, or rely on soft assertions to fail the test eventually
-    expect(issues).toEqual([]);
+    // Issues are reported via expect.soft above
   });
 
   test("images have alt attributes", async ({ page }) => {
-    const urls = await getSitemapUrls();
+    const urls = await getCachedSitemapUrls();
 
     for (const url of urls) {
       await test.step(`Checking image alt text: ${url}`, async () => {
         await page.goto(url);
 
         // Find all images (excluding decorative icons in buttons)
-        const images = page.locator(
-          'img:not([role="presentation"]):not([alt=""])',
-        );
+        // Find all images (excluding decorative icons in buttons)
+        const images = page.locator('img:not([role="presentation"])');
         const count = await images.count();
 
         for (let i = 0; i < count; i++) {

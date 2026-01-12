@@ -26,6 +26,10 @@ const encodedContent = content ? encodeURIComponent(content) : undefined;
   aria-label="Copy to clipboard"
   data-content={encodedContent}
 >
+  <span
+    class="sr-only copy-status"
+    aria-live="polite"
+  ></span>
   <Icon
     name="mdi:clipboard-outline"
     class="copy-icon"
@@ -89,9 +93,14 @@ const encodedContent = content ? encodeURIComponent(content) : undefined;
               copyIcon.classList.add("hidden");
               successIcon.classList.remove("hidden");
 
+              // Screen reader feedback
+              const status = button.querySelector(".copy-status");
+              if (status) status.textContent = "Copied!";
+
               setTimeout(() => {
                 copyIcon.classList.remove("hidden");
                 successIcon.classList.add("hidden");
+                if (status) status.textContent = "";
               }, 1000);
             }
           },

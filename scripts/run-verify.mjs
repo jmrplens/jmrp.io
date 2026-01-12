@@ -61,7 +61,7 @@ function runStep(name, command, condition = true) {
  * Main verification suite orchestrator.
  * Defines the steps to run and executes them sequentially.
  *
- * @returns {Promise<void>} Resolves when all checks pass.
+ * @returns {Promise<boolean>} Resolves to true if all checks pass, false otherwise.
  */
 async function runVerify() {
   const startTime = Date.now();
@@ -76,15 +76,18 @@ async function runVerify() {
   );
 
   const steps = [
-    { name: "Static: Astro Check", command: "pnpm typecheck" },
-    { name: "Static: ESLint", command: "pnpm lint" },
+    {
+      name: "Static: Astro Check",
+      command: "pnpm typecheck --minimumFailingSeverity warning",
+    },
+    { name: "Static: ESLint", command: "pnpm lint --max-warnings=0" },
     { name: "Static: Prettier", command: "pnpm exec prettier --check ." },
     { name: "Lint: CSS (Stylelint)", command: "pnpm lint:css" },
     { name: "Build: Production Build", command: "pnpm run build" },
     { name: "Lint: HTML5 Validation", command: "pnpm lint:html" },
     {
       name: "Lint: RSS Feed",
-      command: "node scripts/ci/validate-rss.mjs dist/rss.xml",
+      command: "node scripts/ci/validate-rss.mjs dist",
     },
     {
       name: "Lint: Schema.org JSON-LD",
@@ -112,7 +115,8 @@ async function runVerify() {
     {
       name: "Analyze: SonarCloud Issues",
       command: "node scripts/ci/get-sonar-issues.mjs",
-      condition: () => !!process.env.SONAR_TOKEN,
+      condition: () =>
+        !!process.env.SONAR_TOKEN && !!process.env.SONAR_PROJECT_KEY,
     },
     { name: "Tests: Playwright E2E", command: "pnpm test:e2e" },
   ];
@@ -144,7 +148,7 @@ async function runVerify() {
     console.log(
       `${colors.green}${colors.bright}✨ ALL CHECKS PASSED SUCCESSFULLY! (${duration}s)${colors.reset}`,
     );
-    process.exit(0);
+    return true;
   } else {
     console.error(
       `${colors.red}${colors.bright}💥 VERIFICATION FAILED! (${duration}s)${colors.reset}`,
@@ -152,7 +156,7 @@ async function runVerify() {
     console.error(
       `${colors.red}   Failed step: ${failedSteps[0]}${colors.reset}`,
     );
-    process.exit(1);
+    return false;
   }
 }
 
@@ -172,7 +176,8 @@ try {
 }
 
 try {
-  await runVerify();
+  const success = await runVerify();
+  process.exit(success ? 0 : 1);
 } catch (error) {
   console.error(error);
   process.exit(1);

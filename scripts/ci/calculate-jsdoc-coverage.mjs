@@ -32,8 +32,8 @@ const logger = {
 async function calculateCoverage() {
   logger.info(`🔍 Scanning src and scripts for JSDoc coverage...`);
 
-  // Find all TS/TSX/JS/MJS files
-  const files = await glob(`{src,scripts}/**/*.{ts,tsx,js,mjs,cjs}`, {
+  // Find all TS/TSX/JS/JSX/MJS/CJS files
+  const files = await glob(`{src,scripts}/**/*.{ts,tsx,js,jsx,mjs,cjs}`, {
     ignore: ["**/*.d.ts", "**/*.test.ts", "**/*.spec.ts", "**/node_modules/**"],
     absolute: true,
   });
@@ -216,6 +216,7 @@ function isDocumentable(node) {
     ts.isEnumDeclaration(node) ||
     ts.isMethodDeclaration(node) ||
     ts.isPropertyDeclaration(node) ||
+    ts.isConstructorDeclaration(node) ||
     ts.isEnumMember(node) ||
     ts.isAccessor(node) ||
     ts.isMethodSignature(node) ||

@@ -25,6 +25,7 @@ const { title, icon, description, link, linkText, id } = Astro.props;
     <Icon
       name={icon}
       class="service-icon"
+      aria-hidden="true"
     />
     <h2>{title}</h2>
   </div>
@@ -47,6 +48,7 @@ const { title, icon, description, link, linkText, id } = Astro.props;
         target="_blank"
         rel="noopener noreferrer"
         class="btn btn-primary btn-sm service-link"
+        aria-label={`${linkText} (opens in new tab)`}
       >
         {linkText}
       </a>
@@ -104,9 +106,11 @@ const { title, icon, description, link, linkText, id } = Astro.props;
   }
 
   .stats-wrapper {
-    flex-grow: 1; /* Pushes button to bottom if content is short? No, actions do that. */
+    flex-grow: 1;
     width: 100%; /* Important for stats container */
     margin-bottom: var(--space-md);
+
+    /* Allows stats to grow; together with .service-link { margin-top: auto } this pushes the action button to the bottom. */
   }
 
   .service-link {

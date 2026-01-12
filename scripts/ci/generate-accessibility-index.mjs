@@ -31,24 +31,47 @@ if (!fs.existsSync(deployDir)) {
 const indexPath = path.join(deployDir, "index.html");
 
 /**
- * Scans a directory for Axe HTML reports.
+ * Recursively scans a directory for files matching a predicate.
+ * Skips symbolic links.
  *
  * @param dir - Directory to scan.
+ * @param predicate - Function that returns true if file should be included.
  * @param fileList - Accumulated list of file paths.
- * @returns Array of paths to HTML report files.
+ * @returns Array of matching file paths.
  */
-function findReports(dir, fileList = []) {
-  const files = fs.readdirSync(dir);
-  for (const file of files) {
-    const filePath = path.join(dir, file);
-    const stat = fs.statSync(filePath);
-    if (stat.isDirectory()) {
-      findReports(filePath, fileList);
-    } else if (file.endsWith(".html") && file !== "index.html") {
-      fileList.push(filePath);
+function findFiles(dir, predicate, fileList = []) {
+  try {
+    const files = fs.readdirSync(dir);
+    for (const file of files) {
+      const filePath = path.join(dir, file);
+      try {
+        const stat = fs.lstatSync(filePath); // Use lstat to detect symlinks
+        if (stat.isSymbolicLink()) {
+          continue; // Skip symlinks
+        }
+        if (stat.isDirectory()) {
+          findFiles(filePath, predicate, fileList);
+        } else if (predicate(file)) {
+          fileList.push(filePath);
+        }
+      } catch (error) {
+        console.warn(
+          `⚠️ Error processing file ${file} in ${dir}:`,
+          error.message,
+        );
+      }
     }
+  } catch (error) {
+    console.warn(`⚠️ Error reading directory ${dir}:`, error.message);
   }
   return fileList;
+}
+
+function findReports(dir) {
+  return findFiles(
+    dir,
+    (file) => file.endsWith(".html") && file !== "index.html",
+  );
 }
 
 const htmlFiles = findReports(deployDir);
@@ -320,21 +343,12 @@ const htmlContent = `
 fs.writeFileSync(indexPath, htmlContent);
 console.log(`Generated accessibility index at ${indexPath}`);
 
-function findSummaries(dir, fileList = []) {
-  const files = fs.readdirSync(dir);
-  for (const file of files) {
-    const filePath = path.join(dir, file);
-    const stat = fs.statSync(filePath);
-    if (stat.isDirectory()) {
-      findSummaries(filePath, fileList);
-    } else if (
-      file.startsWith("accessibility-summary-") &&
-      file.endsWith(".json")
-    ) {
-      fileList.push(filePath);
-    }
-  }
-  return fileList;
+function findSummaries(dir) {
+  return findFiles(
+    dir,
+    (file) =>
+      file.startsWith("accessibility-summary-") && file.endsWith(".json"),
+  );
 }
 
 const summaryFiles = findSummaries(deployDir);

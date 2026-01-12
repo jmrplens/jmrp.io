@@ -1,6 +1,6 @@
 # CV Compilation (LaTeX)
 
-This directory contains the source code for generating the Curriculum Vitae in both English and Spanish using LaTeX (LuaLaTeX/XeLaTeX).
+This directory contains the source code for generating the Curriculum Vitae in both English and Spanish using LaTeX. **XeLaTeX is the recommended engine** due to better font handling. LuaLaTeX is also supported but may require additional font configuration.
 
 ## Prerequisites
 
@@ -40,15 +40,17 @@ If you need to compile manually (useful for debugging):
 ```bash
 cd cv_latex
 
-# 1. First pass (generates auxiliary files)
+# Using XeLaTeX (recommended):
 xelatex -interaction=nonstopmode CV_RequenaPlensJoseManuel_SPA.tex
-
-# 2. Process bibliography
 biber CV_RequenaPlensJoseManuel_SPA
+xelatex -interaction=nonstopmode CV_RequenaPlensJoseManuel_SPA.tex
+xelatex -interaction=nonstopmode CV_RequenaPlensJoseManuel_SPA.tex
 
-# 3. Second & Third pass (resolves references and layout)
-xelatex -interaction=nonstopmode CV_RequenaPlensJoseManuel_SPA.tex
-xelatex -interaction=nonstopmode CV_RequenaPlensJoseManuel_SPA.tex
+# Alternative: Using LuaLaTeX (if preferred):
+# lualatex -interaction=nonstopmode CV_RequenaPlensJoseManuel_SPA.tex
+# biber CV_RequenaPlensJoseManuel_SPA
+# lualatex -interaction=nonstopmode CV_RequenaPlensJoseManuel_SPA.tex
+# lualatex -interaction=nonstopmode CV_RequenaPlensJoseManuel_SPA.tex
 ```
 
 ## Directory Structure

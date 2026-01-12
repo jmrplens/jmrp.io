@@ -8,7 +8,7 @@
 import type { CollectionEntry } from "astro:content";
 
 /**
- * Configuration structure for the main site properties (title, descriptions).
+ * Configuration structure for the main site properties (title).
  */
 export type SiteConfig = Extract<
   CollectionEntry<"site_config">["data"],

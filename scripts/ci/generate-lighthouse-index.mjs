@@ -28,19 +28,30 @@ if (!fs.existsSync(deployDir)) {
  * @returns Array of paths to JSON report files.
  */
 function findReports(dir, fileList = []) {
-  const files = fs.readdirSync(dir);
-  for (const file of files) {
-    const filePath = path.join(dir, file);
-    const stat = fs.statSync(filePath);
-    if (stat.isDirectory()) {
-      findReports(filePath, fileList);
-    } else if (
-      file.endsWith(".json") &&
-      !file.includes("manifest") &&
-      !file.includes("links")
-    ) {
-      fileList.push(filePath);
+  try {
+    const files = fs.readdirSync(dir);
+    for (const file of files) {
+      try {
+        const filePath = path.join(dir, file);
+        const stat = fs.statSync(filePath);
+        if (stat.isDirectory()) {
+          findReports(filePath, fileList);
+        } else if (
+          file.endsWith(".json") &&
+          !file.includes("manifest") &&
+          !file.includes("links")
+        ) {
+          fileList.push(filePath);
+        }
+      } catch (error) {
+        console.warn(
+          `⚠️ Error processing file ${file} in ${dir}:`,
+          error.message,
+        );
+      }
     }
+  } catch (error) {
+    console.warn(`⚠️ Error reading directory ${dir}:`, error.message);
   }
   return fileList;
 }
@@ -55,10 +66,11 @@ for (const filePath of jsonFiles) {
 
     const lowerPath = filePath.toLowerCase();
     let theme = "unknown";
-    if (lowerPath.includes("/light/") || lowerPath.includes("\\light\\"))
+    if (lowerPath.includes("/light/") || lowerPath.includes("\\light\\")) {
       theme = "light";
-    if (lowerPath.includes("/dark/") || lowerPath.includes("\\dark\\"))
+    } else if (lowerPath.includes("/dark/") || lowerPath.includes("\\dark\\")) {
       theme = "dark";
+    }
 
     if (json.lighthouseVersion && json.finalUrl) {
       let finalUrl = json.finalUrl;
@@ -178,7 +190,7 @@ function renderSubList(title, runs, cats) {
         )
         .join("");
       return `
-              <a href="${run.relativePath}" class="run-item">
+              <a href="${escapeHtml(run.relativePath)}" class="run-item">
                   <span class="run-name">Run ${idx + 1}</span>
                   <div class="run-scores">${badges}</div>
                   <span class="run-arrow">→</span>
@@ -188,13 +200,13 @@ function renderSubList(title, runs, cats) {
     .join("");
 
   return `
-          <div class="theme-group">
-              <h5 class="theme-title">${title}</h5>
-              <div class="runs-list">
-                  ${runRows}
-              </div>
-          </div>
-      `;
+            <div class="theme-group">
+                <h5 class="theme-title">${escapeHtml(title)}</h5>
+                <div class="runs-list">
+                    ${runRows}
+                </div>
+            </div>
+        `;
 }
 
 const listItems = Object.entries(grouped)
@@ -371,7 +383,7 @@ const htmlContent = `
     <div class="container">
         <h1>🔭 Lighthouse Reports Dashboard</h1>
         <p style="text-align: center; color: var(--text-muted); margin-top: -1.5rem; margin-bottom: 3rem;">
-            Generated on ${new Date().toLocaleString()} <br/>
+            Generated on ${new Date().toISOString()} <br/>
             <small>Scores represent the <strong>maximum value</strong> obtained across runs.</small>
         </p>
         

@@ -20,8 +20,12 @@ import BaseLayout from "@layouts/BaseLayout.astro";
 import type { SiteConfig } from "@src/types";
 import { getSiteUrl } from "@utils/site";
 import { getImage, Image } from "astro:assets";
-import { type CollectionEntry, getCollection, render } from "astro:content";
-import { getEntry } from "astro:content";
+import {
+  type CollectionEntry,
+  getCollection,
+  getEntry,
+  render,
+} from "astro:content";
 import { Icon } from "astro-icon/components";
 import * as cheerio from "cheerio";
 
@@ -87,25 +91,27 @@ let jsonLdImage = "/default-blog-cover.webp";
 let preloadImageUrl: string | undefined;
 
 if (post.data.coverImage) {
-  // Optimize for JSON-LD schema
-  const optimizedImage = await getImage({
-    src: post.data.coverImage,
-    format: "webp",
-    width: 1200,
-    height: 675,
-    quality: 60,
-  });
+  // Optimize images in parallel for build performance
+  const [optimizedImage, preloadImage] = await Promise.all([
+    // JSON-LD schema image (standard OG size)
+    getImage({
+      src: post.data.coverImage,
+      format: "webp",
+      width: 1200,
+      height: 675,
+      quality: 60,
+    }),
+    // LCP preload image (mobile-first mid-size)
+    getImage({
+      src: post.data.coverImage,
+      format: "webp",
+      width: 540,
+      height: 304,
+      quality: 70,
+    }),
+  ]);
 
   jsonLdImage = optimizedImage.src;
-
-  // Generate preload image for LCP (use a mid-size for mobile-first)
-  const preloadImage = await getImage({
-    src: post.data.coverImage,
-    format: "webp",
-    width: 540,
-    height: 304,
-    quality: 70,
-  });
   preloadImageUrl = preloadImage.src;
 }
 
@@ -371,8 +377,14 @@ const articleSchema = [
               return;
             }
 
+            // Check Clipboard API availability and provide UI feedback
             if (!navigator.clipboard) {
               console.warn("Clipboard API not available");
+              copyButton.disabled = true;
+              copyButton.setAttribute("aria-disabled", "true");
+              copyButton.title = "Copying is not supported in this browser";
+              copyButton.style.opacity = "0.5";
+              copyButton.style.cursor = "not-allowed";
               return;
             }
 
@@ -402,10 +414,7 @@ const articleSchema = [
         });
       };
 
-      // Use requestIdleCallback (or fallback) to avoid forced reflow
-      const rIC =
-        (window as any).requestIdleCallback ||
-        ((cb: any) => setTimeout(cb, 50));
+      // Schedule via the rIC defined at function scope
       rIC(processCodeBlocks);
     }
   };

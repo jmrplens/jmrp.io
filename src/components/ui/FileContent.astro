@@ -12,7 +12,6 @@ import { createHash } from "node:crypto";
 
 import { decodeHtml } from "@utils/html";
 import { Icon } from "astro-icon/components";
-import * as cheerio from "cheerio";
 
 import CopyButton from "./CopyButton.astro";
 
@@ -42,15 +41,18 @@ const finalIcon = icon || getIconForFile(filename);
 const slotContent = await Astro.slots.render("default");
 const trimmedContent = slotContent.trim();
 const uuid = createHash("sha256")
-  .update(trimmedContent)
+  .update(`${filename}-${trimmedContent}`)
   .digest("hex")
   .slice(0, 8);
 
 // Extract plain text for accessibility label if no custom label provided
 let plainText = "";
 if (!ariaLabel) {
-  const $ = cheerio.load(slotContent);
-  plainText = decodeHtml($.text().trim()).slice(0, 50);
+  // FAST PATH: Use regex for simple content to avoid Cheerio overhead
+  plainText =
+    !slotContent.includes("<") || !slotContent.includes(">")
+      ? slotContent.trim().slice(0, 50)
+      : decodeHtml(slotContent.replaceAll(/<[^>]+>/g, "").trim()).slice(0, 50);
   if (plainText.length === 50) plainText += "...";
 }
 
@@ -66,11 +68,12 @@ const finalAriaLabel =
     >
       {/* Copy Button outside details to be always visible and avoid nested interactive violation */}
       <CopyButton class="file-header-copy-btn absolute-header" />
-      <details
-        class="file-details"
-        aria-label={finalAriaLabel}
-      >
-        <summary class="file-header">
+      <details class="file-details">
+        {/* ARIA label moved to summary for better support */}
+        <summary
+          class="file-header"
+          aria-label={finalAriaLabel}
+        >
           <div class="file-info">
             <Icon
               name={finalIcon}
@@ -237,6 +240,8 @@ const finalAriaLabel =
   .file-body :global(pre),
   .file-body :global(.astro-code) {
     display: block; /* Simpler block layout to avoid flex-related boosting */
+
+    /* !important used to override Astro's default code block styles which use specific margins */
     width: calc(100% + 2.5rem) !important; /* Offset negative margins */
     padding: 1rem 1.25rem !important; /* Internal padding remains for content */
     margin: -0.75rem -1.25rem !important; /* Pull it back to the edges of .file-body > div */

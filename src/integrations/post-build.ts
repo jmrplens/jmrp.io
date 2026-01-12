@@ -147,14 +147,8 @@ function deploySecurityHeaders(
     return;
   }
 
-  // Upfront permission check
-  try {
-    fs.accessSync(systemNginxPath, fs.constants.W_OK);
-  } catch {
-    throw new Error(
-      `No write permission for system Nginx configuration. Build must run with appropriate permissions.`,
-    );
-  }
+  // Permissions are checked implicitly during copy/reload operations
+  // We let standard fs errors bubble up if permissions are missing
 
   let nginxTestTimeout = Number.parseInt(
     process.env.POSTBUILD_NGINX_TEST_TIMEOUT || "10000",
@@ -211,6 +205,27 @@ function deploySecurityHeaders(
 }
 
 /**
+ * Creates secure execution options with a sanitized PATH.
+ *
+ * @param timeout - Execution timeout in milliseconds.
+ */
+function createSecureExecOptions(timeout: number) {
+  // Use a sanitized environment for execSync to avoid PATH injection
+  // We replace the PATH with a secure default to mitigate risks, ignoring the existing PATH
+  // prettier-ignore
+  const secureEnv = {
+    ...process.env,
+    PATH: DEFAULT_SECURE_PATH, // NOSONAR
+  };
+
+  return {
+    stdio: "inherit" as const,
+    timeout,
+    env: secureEnv,
+  };
+}
+
+/**
  * Executes the Nginx test and reload commands safely.
  *
  * @param testTimeout - Timeout for the configuration test command.
@@ -224,23 +239,13 @@ function executeNginxReload(
   systemNginxCachePath: string,
   logger: AstroIntegrationLogger,
 ) {
-  // Use a sanitized environment for execSync to avoid PATH injection
-  // We replace the PATH with a secure default to mitigate risks, ignoring the existing PATH
-  // prettier-ignore
-  const secureEnv = {
-    ...process.env,
-    PATH: DEFAULT_SECURE_PATH, // NOSONAR
-  };
-
-  // Explicitly typed options just standard object
-  const execOptions = {
-    stdio: "inherit" as const,
-    timeout: testTimeout,
-    env: secureEnv,
-  };
+  const execOptions = createSecureExecOptions(testTimeout);
 
   // Allow optional custom nginx config path via environment variable
   const nginxConfigPath = process.env.POSTBUILD_NGINX_CONFIG_PATH;
+  if (nginxConfigPath) {
+    validateNginxPath(nginxConfigPath);
+  }
   const testArgs = nginxConfigPath ? ["-t", "-c", nginxConfigPath] : ["-t"];
 
   const testResult = spawnSync("nginx", testArgs, execOptions); // NOSONAR suppressed: external command usage is intentional
@@ -357,16 +362,7 @@ function handleNginxValidationError(
       "✓ Successfully reverted to the previous stable configuration.",
     );
     // Final validation to ensure system is left in a stable state
-    // prettier-ignore
-    const finalSecureEnv = {
-      ...process.env,
-      PATH: DEFAULT_SECURE_PATH, // NOSONAR
-    }; // NOSONAR
-    const finalExecOptions = {
-      stdio: "inherit" as const,
-      timeout: timeout,
-      env: finalSecureEnv,
-    };
+    const finalExecOptions = createSecureExecOptions(timeout);
 
     // Use the same config path as the primary test for consistency during rollback
     const nginxConfigPath = process.env.POSTBUILD_NGINX_CONFIG_PATH;

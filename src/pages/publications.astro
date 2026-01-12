@@ -40,7 +40,7 @@ const collectionSchema = {
         author:
           pub.author?.map((a: { family: string; given?: string }) => ({
             "@type": "Person",
-            givenName: a.given || "",
+            ...(a.given && { givenName: a.given }),
             familyName: a.family,
             name: a.given ? `${a.given} ${a.family}` : a.family,
           })) || [],
@@ -141,8 +141,8 @@ const collectionSchema = {
     display: inline-block;
     padding-bottom: var(--space-sm);
     margin-bottom: -2px; /* Overlap border */
-    border-bottom: 2px solid var(--color-primary);
     font-size: 1.5rem;
     font-weight: bold;
+    border-bottom: 2px solid var(--color-primary);
   }
 </style>

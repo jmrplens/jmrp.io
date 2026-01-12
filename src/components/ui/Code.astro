@@ -14,7 +14,6 @@
 import { createHash } from "node:crypto";
 
 import { decodeHtml } from "@utils/html";
-import * as cheerio from "cheerio";
 
 import CopyButton from "./CopyButton.astro";
 
@@ -36,9 +35,12 @@ const uuid = createHash("sha256")
 // Extract plain text for accessibility label if no custom label provided
 let plainText = "";
 if (!ariaLabel) {
-  const $ = cheerio.load(slotContent);
-  plainText = decodeHtml($.text().trim()).slice(0, 50);
-  if (plainText.length === 50) plainText += "...";
+  // Simple regex strip tags (lighter than cheerio)
+  // eslint-disable-next-line unicorn/prefer-string-replace-all
+  const stripped = slotContent.replace(/<[^>]*>/g, "");
+  const fullText = decodeHtml(stripped.trim());
+  plainText = fullText.slice(0, 50);
+  if (fullText.length > 50) plainText += "...";
 }
 
 const finalAriaLabel = ariaLabel || `Code snippet: ${lang} - ${plainText}`;
@@ -106,6 +108,7 @@ const finalAriaLabel = ariaLabel || `Code snippet: ${lang} - ${plainText}`;
     text-size-adjust: none;
   }
 
+  /* Global code style - verified as needed for syntax highlighting consistency */
   code {
     font-family: var(--font-mono);
     font-size: 0.9rem;
@@ -119,7 +122,7 @@ const finalAriaLabel = ariaLabel || `Code snippet: ${lang} - ${plainText}`;
     text-size-adjust: none;
   }
 
-  code :global(p) {
+  .code-content :global(p) {
     display: inline;
     margin: 0;
   }

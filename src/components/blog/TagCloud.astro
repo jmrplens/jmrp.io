@@ -68,7 +68,6 @@ const tags = getUniqueTags(posts);
     padding-bottom: var(--space-sm);
     overflow-x: auto;
     scrollbar-width: none;
-    -webkit-overflow-scrolling: touch;
   }
 
   .tags::-webkit-scrollbar {
@@ -157,7 +156,7 @@ const tags = getUniqueTags(posts);
 
     .tag:hover .count {
       color: var(--color-text-body);
-      background: var(--color-bg, #000);
+      background: var(--color-bg, transparent);
     }
   }
 </style>

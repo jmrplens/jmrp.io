@@ -4,6 +4,8 @@
  * Displays curriculum vitae data loaded from `src/content/cv/main.yaml`.
  * Renders sections dynamically using specific components (SkillGroup, CertificateGroup) or generic map/timeline layouts.
  */
+import "@styles/skills.css";
+
 import CertificateGroup from "@components/cv/CertificateGroup.astro";
 import SkillGroup from "@components/cv/SkillGroup.astro";
 import BaseLayout from "@layouts/BaseLayout.astro";
@@ -15,22 +17,30 @@ import { Icon } from "astro-icon/components";
 
 const cvData = await getCVData();
 
-const sortedSections = [
-  cvData.find((s) => s.title === "General Information"),
-  cvData.find((s) => s.title === "Experience"),
-  cvData.find((s) => s.title === "Technical Skills"),
-  cvData.find((s) => s.title === "Formal education"),
-  cvData.find((s) => s.title === "Certificates"),
-].filter((s): s is CVSection => !!s);
+// Define the section order
+const sectionOrder = [
+  "General Information",
+  "Experience",
+  "Technical Skills",
+  "Formal education",
+  "Certificates",
+];
 
-const technicalSkills = sortedSections.find(
-  (s) => s.title === "Technical Skills",
+// Build a lookup Map from cvData to avoid multiple .find() calls
+const sectionLookup = new Map<string, CVSection>(
+  cvData.map((s) => [s.title, s]),
 );
-const formalEducation = sortedSections.find(
-  (s) => s.title === "Formal education",
-);
-const experience = sortedSections.find((s) => s.title === "Experience");
-const certificates = sortedSections.find((s) => s.title === "Certificates");
+
+// Get sorted sections in defined order
+const sortedSections = sectionOrder
+  .map((title) => sectionLookup.get(title))
+  .filter((s): s is CVSection => !!s);
+
+// Extract specific sections from the lookup (single pass, no redundant .find())
+const technicalSkills = sectionLookup.get("Technical Skills");
+const formalEducation = sectionLookup.get("Formal education");
+const experience = sectionLookup.get("Experience");
+const certificates = sectionLookup.get("Certificates");
 
 const personSchema = {
   "@context": "https://schema.org",

@@ -81,19 +81,23 @@ const { initialRepos } = Astro.props;
   document.addEventListener("DOMContentLoaded", () => {
     const searchInput = document.getElementById("repo-search");
     const container = document.getElementById("repos-container");
+    let debounceTimer: ReturnType<typeof setTimeout>;
 
     if (searchInput && container) {
       searchInput.addEventListener("input", (e) => {
-        const term = (e.target as HTMLInputElement).value.toLowerCase();
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+          const term = (e.target as HTMLInputElement).value.toLowerCase();
 
-        const cards = container.querySelectorAll(".repo-card");
-        cards.forEach((card) => {
-          const name = card.getAttribute("data-name") || "";
-          const desc = card.getAttribute("data-desc") || "";
-          const matches = name.includes(term) || desc.includes(term);
+          const cards = container.querySelectorAll(".repo-card");
+          cards.forEach((card) => {
+            const name = card.getAttribute("data-name") || "";
+            const desc = card.getAttribute("data-desc") || "";
+            const matches = name.includes(term) || desc.includes(term);
 
-          (card as HTMLElement).style.display = matches ? "" : "none";
-        });
+            (card as HTMLElement).style.display = matches ? "" : "none";
+          });
+        }, 150);
       });
     }
   });
@@ -118,6 +122,7 @@ const { initialRepos } = Astro.props;
   #repo-search:focus {
     outline: none;
     border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px rgb(var(--color-primary-rgb, 37 99 235) / 20%);
   }
 
   .repos-grid {

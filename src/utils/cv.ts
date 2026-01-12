@@ -5,8 +5,11 @@
  * from the content collection.
  */
 
-import type { CVData } from "@src/types";
+import type { CollectionEntry } from "astro:content";
 import { getEntry } from "astro:content";
+
+/** Type alias for the data returned by the CV content collection. */
+export type CVData = CollectionEntry<"cv">["data"];
 
 /**
  * Reads and parses the CV data from the YAML file.

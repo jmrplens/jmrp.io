@@ -34,7 +34,7 @@ The site will be available at `http://localhost:4321`.
 
 ### Project Structure
 
-The project follows the **Astro v6** structure with the **Content Layer API**.
+The project follows the **Astro v6 (alpha/experimental)** structure with the **Content Layer API**.
 
 ```plaintext
 /

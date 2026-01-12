@@ -105,11 +105,7 @@ import { Icon } from "astro-icon/components";
     if (toggle) {
       const currentTheme = getTheme() || "dark"; // Default fallback
       setTheme(currentTheme); // Apply immediately to prevent flash
-      const label =
-        currentTheme === "dark"
-          ? "Switch to Light Mode"
-          : "Switch to Dark Mode";
-      toggle.setAttribute("aria-label", label);
+      // Note: aria-label is already updated by setTheme
 
       toggle.onclick = () => {
         const currentTheme = getTheme();

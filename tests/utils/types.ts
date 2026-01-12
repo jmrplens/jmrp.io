@@ -43,6 +43,8 @@ export interface PageAccessibilityResult {
   reportPath: string;
   detailedViolations: AxeResult[];
   detailedIncomplete: AxeResult[];
+  name?: string;
+  url?: string;
 }
 
 // ============================================================================
@@ -56,10 +58,17 @@ export interface SpeculationRuleInfo {
   hasNonce: boolean;
 }
 
+/** Interface for a single speculation rule entry. */
+export interface SpeculationRuleItem {
+  source: string;
+  urls: string[];
+  eagerness: string;
+}
+
 /** Interface for the speculation rule structure. */
 export interface SpeculationRule {
-  prerender?: Array<{ source: string; urls: string[]; eagerness: string }>;
-  prefetch?: Array<{ source: string; urls: string[]; eagerness: string }>;
+  prerender?: SpeculationRuleItem[];
+  prefetch?: SpeculationRuleItem[];
 }
 
 // ============================================================================
@@ -67,7 +76,12 @@ export interface SpeculationRule {
 // ============================================================================
 
 /** URL entry from parsed sitemap XML. */
+/** URL entry from parsed sitemap XML. */
 export interface SitemapUrl {
+  /**
+   * Location URL.
+   * Note: xml2js parses text nodes as arrays. Access [0] for the value.
+   */
   loc: string[];
 }
 

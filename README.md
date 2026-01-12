@@ -292,7 +292,13 @@ The project includes advanced Nginx configuration for security headers and asset
   - Includes a custom listener for real-time failure tracking.
 - **CSP (Content Security Policy)**:
   - **Hybrid Strategy**: Uses strict SHA-512 hashes for static content and `nonce` (injected via Nginx `sub_filter`) for dynamic isolation.
-  - **Astro v6 Compatibility**: Patches client-side prerendering logic to propagate nonces correctly.
+  - **Astro v6 Compatibility**: Patches client-side prerendering to propagate nonces correctly.
+    - **Implementation**: [`src/integrations/vite-plugin-prefetch-nonce.ts`](src/integrations/vite-plugin-prefetch-nonce.ts) - Vite plugin that intercepts Astro's prefetch module and injects nonce extraction logic.
+    - **What it does**: Modifies `document.head.append()` calls to copy nonces from existing scripts before appending new speculation rules.
+    - **Maintenance**: On Astro upgrades, verify the following:
+      1. Check if `@astrojs/prefetch` module structure has changed (the plugin targets `appendSpeculationRules`).
+      2. Test CSP compliance in browser devtools (no `script-src` violations).
+      3. Monitor Astro release notes for official CSP nonce support (which would make this patch obsolete).
 - **Nginx Automation**:
   - **Auto-Deployment**: The build process verifies and deploys `security_headers.conf` to the system if `POSTBUILD_NGINX_SNIPPETS_PATH` is set.
   - **Custom Verification**: Supports optional config paths via `POSTBUILD_NGINX_CONFIG_PATH` for complex Nginx setups.

@@ -19,7 +19,8 @@ test.describe("Speculation Rules / Prerender", () => {
     await page.goto("/", { waitUntil: "load" });
 
     // Wait for prefetch scripts to initialize
-    await page.waitForFunction(() => document.readyState === "complete");
+    // page.goto({ waitUntil: 'load' }) is sufficient for initial load
+    // await page.waitForFunction(() => document.readyState === "complete");
 
     // Check if the browser supports speculation rules
     const browserSupportsSpecRules = await page.evaluate(() => {
@@ -38,12 +39,22 @@ test.describe("Speculation Rules / Prerender", () => {
     const internalLinks = page.locator('a[href^="/"]');
     const linkCount = await internalLinks.count();
 
-    // Hover over at least one link to trigger prefetch (if there are any)
-    // eslint-disable-next-line playwright/no-conditional-in-test -- Conditional hover based on link availability
-    if (linkCount > 0) {
-      await internalLinks.first().hover();
-      // Give prefetch scripts time to execute after hover
-      await page.waitForFunction(() => document.readyState === "complete");
+    // Verify we have internal links to test with
+    expect(linkCount).toBeGreaterThan(0);
+
+    // Hover over the first link to trigger prefetch
+    await internalLinks.first().hover();
+
+    // Give prefetch scripts time to execute after hover using a deterministic wait
+    // Speculation rules are injected as script tags
+    try {
+      // eslint-disable-next-line playwright/no-wait-for-selector -- Intentional wait for speculation rules script
+      await page.waitForSelector('script[type="speculationrules"]', {
+        state: "attached",
+        timeout: 2000,
+      });
+    } catch {
+      // Fallback or ignore if not found (assertions will catch it later)
     }
 
     // Check for speculation rules scripts
@@ -69,57 +80,68 @@ test.describe("Speculation Rules / Prerender", () => {
     // Note: Astro's clientPrerender experimental feature may not inject speculation
     // rules in all environments (the __EXPERIMENTAL_CLIENT_PRERENDER__ flag must be
     // defined at build time). If no rules are found, the test validates gracefully.
-    // eslint-disable-next-line playwright/no-conditional-in-test -- Graceful handling when feature is disabled
+
+    // Allow speculationRules to be empty if the feature is disabled, but if present, validate contents
+    // eslint-disable-next-line playwright/no-conditional-in-test
     if (speculationRules.length > 0) {
       // Each speculation rule should have valid content
       for (const rule of speculationRules) {
         // eslint-disable-next-line playwright/no-conditional-expect -- Conditional check for prerender/prefetch
         expect(rule.content).toBeTruthy();
-        // Speculation rules should have either prerender or prefetch
 
         const hasPrerender = rule.content?.prerender !== undefined;
-
         const hasPrefetch = rule.content?.prefetch !== undefined;
         // eslint-disable-next-line playwright/no-conditional-expect -- Validate at least one rule type exists
         expect(hasPrerender || hasPrefetch).toBe(true);
       }
     } else {
-      // Log that no speculation rules were found (not necessarily a failure)
       console.log(
-        "Note: No speculation rules found. " +
-          "This is expected if clientPrerender experimental flag is not enabled.",
+        "Note: No speculation rules found. Expected if clientPrerender is disabled.",
       );
     }
   });
 
-  test("speculation rules contain expected properties", async ({ page }) => {
+  /**
+   * Helper to get speculation rules from the page.
+   * Handles navigation, hovering, and parsing.
+   */
+  async function getSpeculationRules(
+    page: import("@playwright/test").Page,
+  ): Promise<(SpeculationRule | null)[]> {
     await page.goto("/", { waitUntil: "load" });
-    await page.waitForFunction(() => document.readyState === "complete");
 
     // Trigger prefetch by hovering over internal link
     const internalLinks = page.locator('a[href^="/"]');
-    // eslint-disable-next-line playwright/no-conditional-in-test -- Conditional hover based on link availability
-    if ((await internalLinks.count()) > 0) {
-      await internalLinks.first().hover();
-      await page.waitForFunction(() => document.readyState === "complete");
+
+    // Verify links exist
+    expect(await internalLinks.count()).toBeGreaterThan(0);
+
+    await internalLinks.first().hover();
+    try {
+      // eslint-disable-next-line playwright/no-wait-for-selector
+      await page.waitForSelector('script[type="speculationrules"]', {
+        timeout: 1000,
+      });
+    } catch {
+      // ignore
     }
 
-    const speculationRules = await page.evaluate(
-      (): (SpeculationRule | null)[] => {
-        const scripts = document.querySelectorAll(
-          'script[type="speculationrules"]',
-        );
-        return [...scripts].map((script) => {
-          try {
-            return JSON.parse(script.textContent || "{}") as SpeculationRule;
-          } catch {
-            return null;
-          }
-        });
-      },
-    );
+    return page.evaluate((): (SpeculationRule | null)[] => {
+      const scripts = document.querySelectorAll(
+        'script[type="speculationrules"]',
+      );
+      return [...scripts].map((script) => {
+        try {
+          return JSON.parse(script.textContent || "{}") as SpeculationRule;
+        } catch {
+          return null;
+        }
+      });
+    });
+  }
 
-    // Validate structure of each speculation rule
+  test("speculation rules contain expected properties", async ({ page }) => {
+    const speculationRules = await getSpeculationRules(page);
     // Validate structure of each speculation rule
     // Filter out nulls first to avoid conditionals inside the loop
     const validRules = speculationRules.filter(
@@ -200,16 +222,17 @@ test.describe("Speculation Rules / Prerender", () => {
     const cspViolations: string[] = [];
 
     // Listen for console errors related to CSP
-    page.on("console", (msg) => {
-      if (msg.type() === "error") {
-        const text = msg.text();
-        if (
-          text.includes("Content Security Policy") ||
-          text.includes("speculationrules")
-        ) {
-          cspViolations.push(text);
-        }
-      }
+    // Listen for security policy violation events
+    await page.addInitScript(() => {
+      document.addEventListener("securitypolicyviolation", (e) => {
+        (
+          globalThis as unknown as { reportCspViolation: (uri: string) => void }
+        ).reportCspViolation(e.blockedURI);
+      });
+    });
+
+    await page.exposeFunction("reportCspViolation", (uri: string) => {
+      cspViolations.push(uri);
     });
 
     await page.goto("/", { waitUntil: "load" });

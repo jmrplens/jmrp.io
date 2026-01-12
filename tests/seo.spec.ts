@@ -44,7 +44,6 @@ test.describe("SEO & Metadata Checks", () => {
 
         // 1. Title
         const title = await page.title();
-        expect(title).toBeTruthy();
         expect(title.length).toBeGreaterThan(0);
         expect(title.length).toBeLessThan(70); // Google truncates ~60-70 chars
 
@@ -132,7 +131,10 @@ test.describe("SEO & Metadata Checks", () => {
 
         // HTML element should have lang attribute
         const html = page.locator("html");
-        await expect(html).toHaveAttribute("lang", /^[a-z]{2}(-[A-Z]{2})?$/);
+        await expect(html).toHaveAttribute(
+          "lang",
+          /^[a-z]{2,3}(?:-[a-z0-9]+)*$/i,
+        );
       });
     }
   });
@@ -142,10 +144,23 @@ test.describe("SEO & Metadata Checks", () => {
   }) => {
     // Check homepage for Organization/Person schema
     await page.goto("/");
-    const homepageJsonLd = await page
-      .locator('script[type="application/ld+json"]')
-      .count();
-    expect(homepageJsonLd).toBeGreaterThan(0);
+    const homepageJsonLdScripts = page.locator(
+      'script[type="application/ld+json"]',
+    );
+    const homepageJsonLdCount = await homepageJsonLdScripts.count();
+    expect(homepageJsonLdCount).toBeGreaterThan(0);
+
+    // Validate each JSON-LD script is parseable
+    for (let i = 0; i < homepageJsonLdCount; i++) {
+      const jsonLdContent = await homepageJsonLdScripts.nth(i).textContent();
+      // eslint-disable-next-line playwright/no-conditional-in-test
+      if (jsonLdContent) {
+        // eslint-disable-next-line playwright/no-conditional-expect
+        expect(() => {
+          JSON.parse(jsonLdContent);
+        }).not.toThrow();
+      }
+    }
 
     // Check a blog post for Article schema
     await page.goto("/blog");

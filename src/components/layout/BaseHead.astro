@@ -22,7 +22,7 @@ import { getEntry } from "astro:content";
 
 const favicon = await getImage({
   src: faviconSrc,
-  format: "webp",
+  format: "png",
   width: 32,
   height: 32,
 });
@@ -46,7 +46,7 @@ interface Props {
   modifiedDate?: Date;
   authors?: string[]; // Defaults to siteData.author
   tags?: string[];
-  schema?: any; // Custom JSON-LD schema to merge or override
+  schema?: Record<string, unknown>; // Custom JSON-LD schema to merge or override
 }
 
 const canonicalURL = new URL(Astro.url.pathname, getSiteUrl());
@@ -81,13 +81,8 @@ let resolvedImage;
 if (image) {
   // If props provide an image
   if (typeof image === "string") {
-    // External URL or legacy path (though we shouldn't have legacy paths now)
-    try {
-      resolvedImage = new URL(image, Astro.url);
-    } catch {
-      // Relative path or other, try to resolve against site
-      resolvedImage = new URL(image, getSiteUrl());
-    }
+    // Resolve image URL against the site URL for consistent absolute URLs
+    resolvedImage = new URL(image, getSiteUrl());
   } else {
     // It's an imported Image object passed via props
     // Optimize it for OG/Twitter (Standard 1200x630, WebP for efficiency)
@@ -118,7 +113,7 @@ const websiteSchema = {
   "@type": "WebSite",
   "@id": new URL("#website", getSiteUrl()).toString(),
   url: getSiteUrl(),
-  name: "José M. Requena Plens",
+  name: siteData.author,
   description: siteData.description,
   inLanguage: siteData.locale,
   publisher: {
@@ -184,10 +179,14 @@ const breadcrumbList = {
 let schemaGraph = [websiteSchema, ...navSchema, breadcrumbList];
 
 if (schema) {
+  // Use type assertion to bypass strict checking since schema is externally provided
   if (Array.isArray(schema)) {
-    schemaGraph = [...schemaGraph, ...schema];
+    schemaGraph = [
+      ...schemaGraph,
+      ...(schema as unknown as (typeof schemaGraph)[number][]),
+    ];
   } else {
-    schemaGraph.push(schema);
+    schemaGraph.push(schema as unknown as (typeof schemaGraph)[number]);
   }
 }
 
@@ -221,7 +220,7 @@ const jsonLD = {
 
 <link
   rel="icon"
-  type="image/webp"
+  type="image/png"
   href={favicon.src}
 />
 <link

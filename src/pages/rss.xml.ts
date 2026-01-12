@@ -1,6 +1,5 @@
 import rss from "@astrojs/rss";
 import { getSiteUrl } from "@utils/site";
-import type { APIContext } from "astro";
 import { getImage } from "astro:assets";
 import { getCollection, getEntry } from "astro:content";
 
@@ -25,7 +24,7 @@ interface SiteData {
  * - Proper escaping and "Continue Reading" links for better reader compatibility.
  * - Automatic filtering of draft posts in production.
  */
-export async function GET(_context: APIContext) {
+export async function GET() {
   const posts = await getCollection("posts");
   const siteEntry = await getEntry("site_config", "site");
   const siteData = siteEntry?.data as unknown as SiteData;

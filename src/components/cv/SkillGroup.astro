@@ -8,13 +8,16 @@ interface Props {
 
 const { group } = Astro.props;
 
-const levelTextMap: Record<number, string> = {
+const levelTextMap: Record<number | string, string> = {
+  0: "None",
   1: "Elementary",
   2: "Basic",
   3: "Intermediate",
   4: "Advanced",
   5: "Expert",
 };
+
+import "@styles/skills.css";
 ---
 
 <div class="group-category">
@@ -25,11 +28,23 @@ const levelTextMap: Record<number, string> = {
   <div class="compact-list">
     {
       group.items.map((item) => {
-        const score = typeof item.level === "number" ? item.level : 0;
-        const levelLabel =
-          (typeof item.level === "number"
-            ? levelTextMap[item.level]
-            : item.level) || item.level;
+        // Handle numeric and string levels
+        // If numeric, use directly. If string, map if possible or default to 0 for score
+        // For aria-valuenow, we only want a number.
+
+        let score = 0;
+        let levelLabel: string | number = item.level ?? 0; // Explicitly allow both, default to 0
+
+        if (typeof item.level === "number") {
+          score = item.level;
+          levelLabel = levelTextMap[item.level] || String(item.level);
+        } else if (typeof item.level === "string") {
+          // Try to find if the string matches a known level name
+          score = 0;
+          levelLabel = item.level;
+        }
+
+        const showDots = typeof item.level === "number";
 
         return (
           <div class="compact-item skill-item">
@@ -49,20 +64,22 @@ const levelTextMap: Record<number, string> = {
               {item.level != null && (
                 <div
                   class="skill-meta"
-                  role="meter"
-                  aria-valuemin="0"
-                  aria-valuemax="5"
-                  aria-valuenow={score}
+                  role={showDots ? "meter" : "group"}
+                  aria-valuemin={showDots ? "0" : undefined}
+                  aria-valuemax={showDots ? "5" : undefined}
+                  aria-valuenow={showDots ? score : undefined}
                   aria-label={`${item.name} level: ${levelLabel}`}
                 >
-                  <div
-                    class="level-dots"
-                    aria-hidden="true"
-                  >
-                    {[1, 2, 3, 4, 5].map((i) => (
-                      <div class={`dot ${i <= score ? "filled" : ""}`} />
-                    ))}
-                  </div>
+                  {showDots && (
+                    <div
+                      class="level-dots"
+                      aria-hidden="true"
+                    >
+                      {[1, 2, 3, 4, 5].map((i) => (
+                        <div class={`dot ${i <= score ? "filled" : ""}`} />
+                      ))}
+                    </div>
+                  )}
                   <span
                     class="level-text"
                     aria-hidden="true"
@@ -100,11 +117,8 @@ const levelTextMap: Record<number, string> = {
   }
 
   /* Skill Item Styles duplicate from cv.astro to ensure self-contained style or inherit from global */
-  .skill-item {
-    display: flex;
-    gap: var(--space-sm);
-    align-items: center; /* Center vertically */
-  }
+
+  /* .skill-item is now imported from @styles/skills.css */
 
   .skill-icon-wrapper {
     display: flex;
@@ -168,13 +182,5 @@ const levelTextMap: Record<number, string> = {
     color: var(--color-text-offset);
     text-transform: uppercase;
     letter-spacing: 0.5px;
-  }
-
-  .compact-time {
-    margin-left: auto; /* Push to right if flex */
-    font-family: var(--font-mono);
-    font-size: 0.85rem;
-    color: var(--color-text-muted);
-    white-space: nowrap;
   }
 </style>

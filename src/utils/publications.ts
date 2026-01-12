@@ -70,7 +70,7 @@ export async function getPublications(): Promise<PublicationGroup[]> {
       process.cwd(),
       "src/content/publications_data/papers.bib",
     );
-    const fileContents = fs.readFileSync(filePath, "utf-8");
+    const fileContents = await fs.promises.readFile(filePath, "utf-8");
 
     const coauthorsEntry = await getEntry("publications_data", "coauthors");
     const coauthors = (coauthorsEntry?.data || {}) as CoauthorMap;
@@ -84,9 +84,14 @@ export async function getPublications(): Promise<PublicationGroup[]> {
      * @returns The field value or null if not found.
      */
     const extractCustomField = (id: string, field: string): string | null => {
+      const escapeRegExp = (string: string) => {
+        return string.replaceAll(/[.*+?^${}()|[\]\\]/g, "\\$&"); // eslint-disable-line
+      };
+
       // Find the specific entry block first to avoid matching fields from subsequent entries
+      const escapedId = escapeRegExp(id);
       const entryRegex = new RegExp(
-        String.raw`@.*?\{${id},([\s\S]*?)(?=\n@|$)`,
+        String.raw`@.*?\{${escapedId},([\s\S]*?)(?=\n@|$)`,
         "i",
       );
       const entryMatch = entryRegex.exec(fileContents);
@@ -94,9 +99,10 @@ export async function getPublications(): Promise<PublicationGroup[]> {
       if (!entryMatch) return null;
 
       const entryBody = entryMatch[1];
+      const escapedField = escapeRegExp(field);
       // Match braced content {value} or unbraced value (e.g. true, 2021) up to comma or end of line
       const fieldRegex = new RegExp(
-        String.raw`${field}\s*=\s*(?:\{(.*?)\}|([^{},]+))`,
+        String.raw`${escapedField}\s*=\s*(?:\{(.*?)\}|([^{},]+))`,
         "i",
       );
       const fieldMatch = fieldRegex.exec(entryBody);
@@ -125,6 +131,19 @@ export async function getPublications(): Promise<PublicationGroup[]> {
       bibGiven: string,
       firstnameVariations: string[],
     ): boolean => {
+      // Treat single-character bibGiven (initial) strictly
+      if (bibGiven.length === 1) {
+        const initial = bibGiven.toLowerCase();
+        return firstnameVariations.some((variation) => {
+          const v = variation.toLowerCase();
+          // Match if variation is also just that initial, or if it starts with that initial (and is longer)
+          // Generally, we want to match correct expansions.
+          // e.g. "J" matches "Jose" or "J."
+          return v === initial || v === initial + "." || v.startsWith(initial);
+        });
+      }
+
+      // Existing loose matching for longer names
       return firstnameVariations.some(
         (n) => n === bibGiven || n.includes(bibGiven) || bibGiven.includes(n),
       );
@@ -165,8 +184,12 @@ export async function getPublications(): Promise<PublicationGroup[]> {
      * @returns The raw BibTeX entry string.
      */
     const extractRawBibtex = (id: string) => {
+      const escapeRegExp = (string: string) => {
+        return string.replaceAll(/[.*+?^${}()|[\]\\]/g, "\\$&"); // eslint-disable-line
+      };
+      const escapedId = escapeRegExp(id);
       const entryRegex = new RegExp(
-        String.raw`@.*?\{${id},[\s\S]*?(?=\n@|$)`,
+        String.raw`@.*?\{${escapedId},[\s\S]*?(?=\n@|$)`,
         "i",
       );
       const match = entryRegex.exec(fileContents);

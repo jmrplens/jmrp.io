@@ -19,9 +19,14 @@ if (!dir || !projectName) {
 }
 
 // Input sanitization to prevent command injection
+// - dir: allows paths with slashes, dots, hyphens, underscores
+// - projectName: stricter, only alphanumeric, hyphens, underscores (Vercel-compatible)
+const dirPattern = /^[a-zA-Z0-9_.\-/]+$/;
+const projectNamePattern = /^[a-zA-Z0-9_-]+$/;
+
 if (
-  !/^[a-zA-Z0-9_.\-/]+$/.test(dir) ||
-  !/^[a-zA-Z0-9_.\-/]+$/.test(projectName) ||
+  !dirPattern.test(dir) ||
+  !projectNamePattern.test(projectName) ||
   dir.includes("..") ||
   projectName.includes("..")
 ) {
@@ -39,11 +44,10 @@ if (!token) {
 try {
   console.log(`🚀 Deploying ${dir} to Vercel as ${projectName}...`);
 
-  // --yes skip prompts
-  // --public is required for some accounts/plans
-  // --production is used here to get a 'stable' subdomain if possible,
-  // though for PRs we usually want preview.
-  // Actually, Vercel gives a unique URL for every deploy.
+  // --yes: skip prompts
+  // --public: required for some accounts/plans
+  // Note: We do NOT pass --production, so this creates a preview deploy.
+  // Vercel allocates a unique URL for every deploy regardless.
   // Pass token via env to avoid exposure in process list/logs
   const cmd = `npx vercel deploy ${dir} --name=${projectName} --yes --public`;
 
@@ -55,8 +59,8 @@ try {
 
   // Vercel CLI outputs the URL as the only thing in stdout if it's a successful deploy in some versions,
   // but usually it prints progress. We need to extract the URL.
-  const lines = output.split("\n");
-  const previewUrl = lines.find((line) => line.includes(".vercel.app"))?.trim();
+  const match = /https?:\/\/[^)\s'"]+\.vercel\.app\S*/.exec(output);
+  const previewUrl = match ? match[0] : null;
 
   if (previewUrl) {
     console.log(`✅ Deployment successful!`);
@@ -69,6 +73,6 @@ try {
   }
 } catch (error) {
   console.error("❌ Vercel deployment failed.");
-  console.error(error.stdout || error.message);
+  console.error(error.stderr || error.stdout || error.message);
   process.exit(1);
 }

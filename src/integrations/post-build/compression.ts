@@ -28,9 +28,17 @@ export async function compressAssets(
     ignore: ["**/*.gz", "**/*.br"],
   });
 
-  const compressionResults = await Promise.all(
-    files.map((file) => compressFile(file, logger)),
-  );
+  // Concurrency limit (Batching)
+  const BATCH_SIZE = 10;
+  const compressionResults: boolean[] = [];
+
+  for (let i = 0; i < files.length; i += BATCH_SIZE) {
+    const batch = files.slice(i, i + BATCH_SIZE);
+    const results = await Promise.all(
+      batch.map((file) => compressFile(file, logger)),
+    );
+    compressionResults.push(...results);
+  }
 
   const compressedCount = compressionResults.filter(Boolean).length;
   logger.info(`  ✓ Compressed ${compressedCount} assets.`);
@@ -82,25 +90,19 @@ async function cleanupOrphanedFiles(
   file: string,
   logger: AstroIntegrationLogger,
 ) {
-  // Cleanup orphaned .gz file
-  try {
-    if (fs.existsSync(`${file}.gz`)) {
-      await fs.promises.unlink(`${file}.gz`);
+  const cleanup = async (path: string) => {
+    try {
+      await fs.promises.unlink(path);
+    } catch (error) {
+      // Ignore ENOENT (file not found), warn on other errors
+      if ((error as NodeJS.ErrnoException).code !== "ENOENT") {
+        logger.warn(
+          `Failed to cleanup orphaned file ${path}: ${error instanceof Error ? error.message : String(error)}`,
+        );
+      }
     }
-  } catch (unlinkError) {
-    logger.warn(
-      `Failed to cleanup orphaned .gz file for ${file}: ${unlinkError instanceof Error ? unlinkError.message : String(unlinkError)}`,
-    );
-  }
+  };
 
-  // Cleanup orphaned .br file
-  try {
-    if (fs.existsSync(`${file}.br`)) {
-      await fs.promises.unlink(`${file}.br`);
-    }
-  } catch (unlinkError) {
-    logger.warn(
-      `Failed to cleanup orphaned .br file for ${file}: ${unlinkError instanceof Error ? unlinkError.message : String(unlinkError)}`,
-    );
-  }
+  await cleanup(`${file}.gz`);
+  await cleanup(`${file}.br`);
 }

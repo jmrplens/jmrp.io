@@ -76,20 +76,37 @@ const { class: className } = Astro.props;
 
         // Keyboard navigation
         button.addEventListener("keydown", (e) => {
+          const allButtons = Array.from(headers.querySelectorAll("button"));
+          const firstButton = allButtons[0];
+          const lastButton = allButtons[allButtons.length - 1];
+
           if (e.key === "ArrowRight") {
             e.preventDefault();
-            const next = button.nextElementSibling;
-            if (next instanceof HTMLElement) {
+            const next =
+              (button.nextElementSibling as HTMLElement) || firstButton;
+            if (next) {
               next.click();
               next.focus();
             }
-          }
-          if (e.key === "ArrowLeft") {
+          } else if (e.key === "ArrowLeft") {
             e.preventDefault();
-            const prev = button.previousElementSibling;
-            if (prev instanceof HTMLElement) {
+            const prev =
+              (button.previousElementSibling as HTMLElement) || lastButton;
+            if (prev) {
               prev.click();
               prev.focus();
+            }
+          } else if (e.key === "Home") {
+            e.preventDefault();
+            if (firstButton instanceof HTMLElement) {
+              firstButton.click();
+              firstButton.focus();
+            }
+          } else if (e.key === "End") {
+            e.preventDefault();
+            if (lastButton instanceof HTMLElement) {
+              lastButton.click();
+              lastButton.focus();
             }
           }
         });
@@ -157,7 +174,10 @@ const { class: className } = Astro.props;
     border: none;
     border-right: var(--border-1);
     border-bottom: 2px solid transparent;
-    transition: all 0.2s;
+    transition:
+      color 0.2s,
+      background-color 0.2s,
+      border-color 0.2s;
   }
 
   ui-tabs .tab-headers button:hover {
@@ -178,14 +198,14 @@ const { class: className } = Astro.props;
     padding: 0;
   }
 
-  .tab-panel {
+  ui-tabs .tab-panel {
     padding: 1.5rem;
 
     /* No animation - content should appear instantly */
   }
 
   /* For code-only tabs (no padding needed) */
-  .tab-panel.no-padding {
+  ui-tabs .tab-panel.no-padding {
     padding: 0;
   }
 

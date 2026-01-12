@@ -21,9 +21,14 @@
             const resourceUrl = target.src || target.href;
 
             // Avoid spam: do not report the same resource more than once per session
-            const storageKey = "sri_fail_" + btoa(resourceUrl).substring(0, 16);
-            if (sessionStorage.getItem(storageKey)) return;
-            sessionStorage.setItem(storageKey, "1");
+            try {
+              const storageKey =
+                "sri_fail_" + btoa(resourceUrl).substring(0, 16);
+              if (sessionStorage.getItem(storageKey)) return;
+              sessionStorage.setItem(storageKey, "1");
+            } catch (e) {
+              // Ignore storage errors (e.g. checked mode, quota exceeded) or btoa failures
+            }
 
             console.error("[SRI] Integrity validation failed:", resourceUrl);
 

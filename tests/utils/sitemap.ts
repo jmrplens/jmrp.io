@@ -73,7 +73,7 @@ export async function getSitemapUrls(): Promise<string[]> {
 
   if (!sitemap) {
     console.warn("No sitemap found in dist/. Defaulting to core pages.");
-    return ["/", "/blog", "/cv", "/publications", "/services"];
+    return FALLBACK_PAGES.map((p) => p.url);
   }
 
   const parsed = (await parseStringPromise(sitemap.content)) as
@@ -82,28 +82,40 @@ export async function getSitemapUrls(): Promise<string[]> {
   const urls: string[] = [];
 
   if (sitemap.isIndex && "sitemapindex" in parsed) {
-    for (const sm of parsed.sitemapindex.sitemap) {
-      if (!sm.loc || sm.loc.length === 0) continue;
-      const loc = sm.loc[0];
-      if (!loc) continue;
-
-      try {
-        const filename = path.basename(new URL(loc).pathname);
-        const childPath = path.resolve("dist", filename);
-
-        if (fs.existsSync(childPath)) {
-          const childContent = fs.readFileSync(childPath, "utf-8");
-          const childParsed = (await parseStringPromise(
-            childContent,
-          )) as SitemapResult;
-          urls.push(...extractPathnames(childParsed.urlset));
-        }
-      } catch {
-        console.warn(`Skipping invalid or missing sitemap in index: ${loc}`);
-      }
-    }
-  } else if ("urlset" in parsed) {
+    await processSitemapIndex(parsed.sitemapindex, urls);
+  } else if (parsed && "urlset" in parsed) {
     urls.push(...extractPathnames(parsed.urlset));
+  }
+
+  return [...new Set(urls)];
+}
+
+/**
+ * Processes a sitemap index and extracts URLs from child sitemaps.
+ */
+async function processSitemapIndex(
+  index: { sitemap: Array<{ loc: string[] }> },
+  urls: string[],
+) {
+  for (const sm of index.sitemap) {
+    if (!sm.loc || sm.loc.length === 0) continue;
+    const loc = sm.loc[0];
+    if (!loc) continue;
+
+    try {
+      const filename = path.basename(new URL(loc).pathname);
+      const childPath = path.resolve("dist", filename);
+
+      if (fs.existsSync(childPath)) {
+        const childContent = fs.readFileSync(childPath, "utf-8");
+        const childParsed = (await parseStringPromise(
+          childContent,
+        )) as SitemapResult;
+        urls.push(...extractPathnames(childParsed.urlset));
+      }
+    } catch {
+      console.warn(`Skipping invalid or missing sitemap in index: ${loc}`);
+    }
   }
 
   return [...new Set(urls)];
@@ -127,46 +139,48 @@ const FALLBACK_PAGES: PageInfo[] = [
  */
 export async function getPagesFromSitemap(): Promise<PageInfo[]> {
   console.log(`📂 Current directory: ${process.cwd()}`);
-  const sitemapFiles = ["sitemap-0.xml", "sitemap.xml", "sitemap-index.xml"];
-  let sitemapPath = "";
 
-  for (const file of sitemapFiles) {
-    const testPath = path.join(process.cwd(), "dist", file);
-    if (fs.existsSync(testPath)) {
-      sitemapPath = testPath;
-      break;
-    }
-  }
+  // Reuse the unified sitemap discovery logic from findSitemap()
+  const sitemap = findSitemap();
 
-  if (!sitemapPath) {
+  if (!sitemap) {
     console.warn("⚠️  Sitemap not found in dist/, using manual page list");
     return FALLBACK_PAGES;
   }
 
-  console.log(`🔍 Using sitemap at: ${sitemapPath}`);
+  console.log(`🔍 Found sitemap (isIndex: ${sitemap.isIndex})`);
 
   try {
-    const sitemapContent = fs.readFileSync(sitemapPath, "utf-8");
-    const sitemap = (await parseStringPromise(sitemapContent)) as
+    const parsed = (await parseStringPromise(sitemap.content)) as
       | SitemapResult
       | SitemapIndexResult;
 
     let urls: PageInfo[] = [];
 
     // Handle sitemap index vs standard sitemap
-    if ("sitemapindex" in sitemap) {
-      // For now, just return empty or minimal list if it's an index,
-      // or implement similar recursion if needed.
-      // The user instruction said "either extracting nested... or returning an empty list".
-      // We will return empty list to avoid crash, as this function seems to want a flat list efficiently.
-      console.warn(
-        "getPagesFromSitemap encountered a sitemap index. Returning empty list to prevent crash.",
-      );
-      return FALLBACK_PAGES;
-    }
-
-    if (sitemap.urlset && Array.isArray(sitemap.urlset.url)) {
-      urls = sitemap.urlset.url
+    if (sitemap.isIndex && "sitemapindex" in parsed) {
+      // Recursively resolve sitemap index using the shared processSitemapIndex
+      // The 'in' check narrows the type to SitemapIndexResult
+      const resolvedUrls: string[] = [];
+      await processSitemapIndex(parsed.sitemapindex, resolvedUrls);
+      urls = [...new Set(resolvedUrls)].map((urlPath) => {
+        const name =
+          urlPath === "/"
+            ? "Home"
+            : urlPath
+                .split("/")
+                .filter(Boolean)
+                .map((s: string) =>
+                  s
+                    .split("-")
+                    .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1))
+                    .join(" "),
+                )
+                .join(" - ");
+        return { name, url: urlPath };
+      });
+    } else if ("urlset" in parsed && Array.isArray(parsed.urlset.url)) {
+      urls = parsed.urlset.url
         .filter(
           (entry) =>
             entry.loc &&
@@ -206,7 +220,8 @@ export async function getPagesFromSitemap(): Promise<PageInfo[]> {
         .filter((p) => p.url !== "");
     }
 
-    // Optimization: Only include the first tag page encountered
+    // Optimization: Only include the first tag page encountered.
+    // Avoids redundant tests for similar tag pages — only the first tag page is needed.
     let tagFound = false;
     urls = urls.filter((page) => {
       if (page.url.includes("/blog/tags/")) {

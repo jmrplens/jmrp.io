@@ -62,7 +62,6 @@ const iconFiles = import.meta.glob<{ default: ImageMetadata }>(
             );
             return null;
           }
-          if (!urlObj) return null;
 
           return (
             <a
@@ -188,10 +187,6 @@ const iconFiles = import.meta.glob<{ default: ImageMetadata }>(
     height: 100%;
     font-size: 1.5rem;
     color: var(--color-text-muted);
-  }
-
-  .hidden {
-    display: none !important;
   }
 
   .card-content {

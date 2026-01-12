@@ -57,6 +57,7 @@ accessibility-summary.json
 accessibility-summary-*.json
 bundle-analysis.json
 schema-report.json
+schema-report.html
 rss-validation.json
 image-report.html
 jsdoc-coverage/
@@ -70,6 +71,7 @@ accessibility-report/
 test-report.html
 test-report.json
 test_output.txt
+test.html
 validation_*.txt
 
 # --- 7. LATEX ARTIFACTS (CV Generation) ---
@@ -88,14 +90,6 @@ validation_*.txt
 *.xdv
 
 # Project-specific LaTeX paths
-cv_latex/*.aux
-cv_latex/*.log
-cv_latex/*.out
-cv_latex/*.toc
-cv_latex/*.bbl
-cv_latex/*.blg
-cv_latex/*.run.xml
-cv_latex/*.bcf
 cv_latex/*.pdf
 
 # --- 8. PROJECT SPECIFIC & MISC ---

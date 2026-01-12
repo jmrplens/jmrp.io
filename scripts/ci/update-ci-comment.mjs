@@ -20,12 +20,13 @@ const STATUS_ICONS = {
   running: "🔄",
 };
 
+const getIcon = (res) => STATUS_ICONS[res] || STATUS_ICONS.pending;
+
+/**
 /**
  * Builds the Static Analysis table
  */
 function buildSaTable(results) {
-  const getIcon = (res) => STATUS_ICONS[res] || STATUS_ICONS.pending;
-
   let md = "\n#### 🔍 Static Analysis\n\n";
   md += "| Tool | Status | Outcome |\n";
   md += "| :--- | :---: | :---: |\n";
@@ -38,7 +39,7 @@ function buildSaTable(results) {
   md += `| Security Audit | ${getIcon(results.security)} | **${results.security || "Pending"}** |\n`;
   md += `| Snyk Security | ${getIcon(results.snyk)} | **${results.snyk || "Pending"}** |\n`;
   md += `| SonarQube | ${getIcon(results.sonar)} | **${results.sonar || "Pending"}** |\n`;
-  md += `| JSDoc Coverage | ${getIcon(results.jsdoc)} | **${results.jsdocCoverage || "0%"}** |\n`;
+  md += `| JSDoc Coverage | ${getIcon(results.jsdoc)} | **${results.jsdocCoverage || "0%"}** (Icon: Status, Value: Coverage) |\n`;
   return md;
 }
 
@@ -46,8 +47,6 @@ function buildSaTable(results) {
  * Builds the Quality & Performance table
  */
 function buildQualityTable(results) {
-  const getIcon = (res) => STATUS_ICONS[res] || STATUS_ICONS.pending;
-
   let md = "\n#### 📈 Quality & Performance\n\n";
   md += "| Check | Status | Note |\n";
   md += "| :--- | :---: | :--- |\n";
@@ -100,46 +99,67 @@ function getExecutiveHighlights(saResults) {
   const highlights = [];
 
   try {
-    if (fs.existsSync("bundle-analysis.json")) {
-      const bundle = JSON.parse(
-        fs.readFileSync("bundle-analysis.json", "utf-8"),
-      );
-      highlights.push(
-        `- 📦 **Bundle Size:** Code: **${bundle.readableCodeSize}** | Assets: **${bundle.readableAssetSize}**`,
-      );
-    }
-
-    if (fs.existsSync("accessibility-report.json")) {
-      const a11y = JSON.parse(
-        fs.readFileSync("accessibility-report.json", "utf-8"),
-      );
-      const violations = a11y.reduce(
-        (acc, r) => acc + (r.violations?.length || 0),
-        0,
-      );
-      highlights.push(
-        violations === 0
-          ? "- ♿ **Accessibility:** Perfect score! No violations detected in any audited pages. ✅"
-          : `- ♿ **Accessibility:** Found ${violations} violations that need attention.`,
-      );
-    }
-
-    if (fs.existsSync("html-validation.json")) {
-      const html = JSON.parse(fs.readFileSync("html-validation.json", "utf-8"));
-      const errors = html.reduce((acc, f) => acc + (f.errorCount || 0), 0);
-      highlights.push(
-        errors === 0
-          ? "- 📄 **HTML5:** Full valid syntax across all generated pages. ✅"
-          : `- 📄 **HTML5:** ${errors} syntax errors detected in the current build.`,
-      );
-    }
-
-    if (fs.existsSync("rss-validation.json")) {
-      const rss = JSON.parse(fs.readFileSync("rss-validation.json", "utf-8"));
-      if (rss.valid)
-        highlights.push(
-          `- 📡 **RSS/Atom:** Feed is syntactically valid and compliant with industry standards.`,
+    try {
+      if (fs.existsSync("bundle-analysis.json")) {
+        const bundle = JSON.parse(
+          fs.readFileSync("bundle-analysis.json", "utf-8"),
         );
+        highlights.push(
+          `- 📦 **Bundle Size:** Code: **${bundle.readableCodeSize}** | Assets: **${bundle.readableAssetSize}**`,
+        );
+      }
+    } catch (error) {
+      console.warn("⚠️ Failed to read bundle-analysis.json:", error.message);
+    }
+
+    try {
+      if (fs.existsSync("accessibility-report.json")) {
+        const a11y = JSON.parse(
+          fs.readFileSync("accessibility-report.json", "utf-8"),
+        );
+        const violations = a11y.reduce(
+          (acc, r) => acc + (r.violations?.length || 0),
+          0,
+        );
+        highlights.push(
+          violations === 0
+            ? "- ♿ **Accessibility:** Perfect score! No violations detected in any audited pages. ✅"
+            : `- ♿ **Accessibility:** Found ${violations} violations that need attention.`,
+        );
+      }
+    } catch (error) {
+      console.warn(
+        "⚠️ Failed to read accessibility-report.json:",
+        error.message,
+      );
+    }
+
+    try {
+      if (fs.existsSync("html-validation.json")) {
+        const html = JSON.parse(
+          fs.readFileSync("html-validation.json", "utf-8"),
+        );
+        const errors = html.reduce((acc, f) => acc + (f.errorCount || 0), 0);
+        highlights.push(
+          errors === 0
+            ? "- 📄 **HTML5:** Full valid syntax across all generated pages. ✅"
+            : `- 📄 **HTML5:** ${errors} syntax errors detected in the current build.`,
+        );
+      }
+    } catch (error) {
+      console.warn("⚠️ Failed to read html-validation.json:", error.message);
+    }
+
+    try {
+      if (fs.existsSync("rss-validation.json")) {
+        const rss = JSON.parse(fs.readFileSync("rss-validation.json", "utf-8"));
+        if (rss.valid)
+          highlights.push(
+            `- 📡 **RSS/Atom:** Feed is syntactically valid and compliant with industry standards.`,
+          );
+      }
+    } catch (error) {
+      console.warn("⚠️ Failed to read rss-validation.json:", error.message);
     }
 
     if (saResults.lychee === "success") {
@@ -148,7 +168,8 @@ function getExecutiveHighlights(saResults) {
       );
     }
   } catch (error) {
-    console.warn("⚠️ Could not build detailed summary items:", error.message);
+    // Catch-all for other unhandled errors in highlights generation
+    console.warn("⚠️ Unexpected error building summary items:", error.message);
   }
 
   return highlights;
@@ -191,12 +212,14 @@ export default async function updateCiComment({ github, context, step }) {
   const vercelUrl = process.env.VERCEL_URL;
   const healthScore = calculateHealthScore(saResults, qualityResults);
 
-  console.log("DEBUG: SA Results", JSON.stringify(saResults, null, 2));
-  console.log(
-    "DEBUG: Quality Results",
-    JSON.stringify(qualityResults, null, 2),
-  );
-  console.log("DEBUG: Health Score", healthScore);
+  if (process.env.DEBUG) {
+    console.log("DEBUG: SA Results", JSON.stringify(saResults, null, 2));
+    console.log(
+      "DEBUG: Quality Results",
+      JSON.stringify(qualityResults, null, 2),
+    );
+    console.log("DEBUG: Health Score", healthScore);
+  }
 
   // Visualization Header
   let scoreColor = "A40000";

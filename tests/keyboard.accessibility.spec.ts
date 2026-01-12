@@ -22,8 +22,9 @@ test.describe("Keyboard Navigation Accessibility", () => {
     await page.focus("body");
 
     // 1. Tab to "Skip to content" then Logo
-    // Ensure the page is hydrated/ready
-    await page.waitForLoadState("domcontentloaded");
+    // Ensure the page is hydrated/ready by waiting for a key element
+    // eslint-disable-next-line playwright/no-wait-for-selector
+    await page.waitForSelector(".skip-link");
     await page.keyboard.press("Tab");
 
     // Assert that the skip link received focus and is visible
@@ -48,7 +49,8 @@ test.describe("Keyboard Navigation Accessibility", () => {
     }
 
     // 3. Run Axe on the focused state of the last link to ensure focus indicators are valid
-    // (Note: Axe might not fully catch focus styles, but it checks contrast)
+    // Note: Axe cannot reliably detect missing or insufficient :focus styles or focus-visible behavior.
+    // Manual verification or visual regression tests are recommended.
     const results = await new AxeBuilder({ page }).include("header").analyze();
 
     expect(results.violations).toEqual([]);
@@ -147,9 +149,18 @@ test.describe("Keyboard Navigation Accessibility", () => {
     await themeToggle.focus();
     await expect(themeToggle).toBeFocused();
 
+    // Capture initial state
+    const html = page.locator("html");
+    // eslint-disable-next-line playwright/no-conditional-in-test
+    const initialClass = (await html.getAttribute("class")) || "";
+
     // Toggle
     await page.keyboard.press("Enter");
-    await expect(page.locator("html")).toHaveClass(/dark-mode|light-mode/); // Just checking a change occurred basically
+
+    // Assert change
+
+    await expect(html).not.toHaveClass(initialClass);
+    await expect(html).toHaveClass(/dark-mode|light-mode/);
 
     // Check a11y of the toggle itself
     const results = await new AxeBuilder({ page })
