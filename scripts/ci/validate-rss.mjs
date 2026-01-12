@@ -160,7 +160,6 @@ async function validateFeedContent(content, results) {
       item: [
         ["media:content", "mediaContent"],
         ["media:thumbnail", "mediaThumbnail"],
-        ["enclosure", "enclosure"],
         ["content:encoded", "contentEncoded"],
       ],
     },
@@ -199,9 +198,16 @@ async function validateRSS() {
   const distDir = path.resolve(
     process.argv[2] || process.env.DIST_DIR || "dist",
   );
-  const rssFile = path.resolve(
-    process.argv[3] || path.join(distDir, "rss.xml"),
-  );
+
+  // If the argument is already a path to a file, use it.
+  // Otherwise, assume it's a directory and look for rss.xml inside.
+  let rssFile;
+  const argFile = process.argv[3] || process.argv[2];
+  if (argFile && fs.existsSync(argFile) && fs.statSync(argFile).isFile() && argFile.endsWith('.xml')) {
+    rssFile = path.resolve(argFile);
+  } else {
+    rssFile = path.resolve(path.join(distDir, "rss.xml"));
+  }
 
   const results = {
     valid: false,

@@ -238,7 +238,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.TOKEN_GITHUB }}
       - name: Generate Lychee HTML Report
         if: always()
-        run: node scripts/ci/generate-lychee-report.mjs
+        run: |
+          set -e -o pipefail
+          node scripts/ci/generate-lychee-report.mjs
       - name: Upload Lychee reports
         if: always()
         uses: actions/upload-artifact@v6
@@ -404,9 +406,13 @@ jobs:
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile --prefer-offline
       - name: Validate RSS feed
-        run: node scripts/ci/validate-rss.mjs dist/rss.xml | tee rss-validation.log
+        run: |
+          set -e -o pipefail
+          node scripts/ci/validate-rss.mjs dist | tee rss-validation.log
       - name: Generate RSS preview
-        run: node scripts/preview-rss.mjs
+        run: |
+          set -e -o pipefail
+          node scripts/preview-rss.mjs
       - name: Upload RSS log
         if: always()
         uses: actions/upload-artifact@v6
