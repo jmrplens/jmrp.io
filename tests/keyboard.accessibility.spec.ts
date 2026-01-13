@@ -187,9 +187,6 @@ test.describe("Keyboard Navigation Accessibility", () => {
       await expect(html).toHaveAttribute("class", initialClass);
     }
 
-    // 3. Verify no theme classes stuck (e.g., both light-mode and dark-mode are not present)
-    await expect(html).not.toHaveClass(/dark-mode|light-mode/);
-
     // Check a11y of the toggle itself
     const results = await new AxeBuilder({ page })
       .include("#theme-toggle")

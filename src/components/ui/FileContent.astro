@@ -11,6 +11,7 @@
 import { createHash } from "node:crypto";
 
 import { decodeHtml } from "@utils/html";
+import { getIconForFile } from "@utils/icons";
 import { Icon } from "astro-icon/components";
 
 import CopyButton from "./CopyButton.astro";
@@ -25,17 +26,6 @@ interface Props {
 const { filename, icon, collapsible = false, ariaLabel } = Astro.props;
 
 // Infer icon from filename
-const getIconForFile = (name: string) => {
-  if (name.includes("nginx")) return "devicon:nginx";
-  if (name.includes(".conf")) return "mdi:file-cog-outline";
-  if (name.endsWith(".txt")) return "mdi:file-document-outline";
-  if (name.endsWith(".json")) return "mdi:code-json";
-  if (name.endsWith(".yml") || name.endsWith(".yaml"))
-    return "mdi:file-settings-outline";
-  if (name.endsWith(".xml")) return "mdi:file-xml-box";
-  return "mdi:file-outline";
-};
-
 const finalIcon = icon || getIconForFile(filename);
 
 const slotContent = await Astro.slots.render("default");

@@ -17,12 +17,15 @@
 import { createHash } from "node:crypto";
 
 import { decodeHtml } from "@utils/html";
+import { getIconForLang } from "@utils/icons";
+import { Code as AstroCode } from "astro/components";
 import { Icon } from "astro-icon/components";
+import type { BuiltinLanguage, SpecialLanguage } from "shiki";
 
 import CopyButton from "./CopyButton.astro";
 
 interface Props {
-  lang?: string;
+  lang?: BuiltinLanguage | SpecialLanguage;
   "aria-label"?: string;
   title?: string; // Optional title for the code block
   class?: string;
@@ -42,20 +45,40 @@ const trimmedContent = slotContent.trim();
 // Check if content is already rendered HTML (starts with a tag, likely from markdown)
 const isHtml = trimmedContent.startsWith("<");
 
+// Extract raw code for highlighting
+let rawCode = trimmedContent;
+
+if (isHtml) {
+  // If it matches a generic MDX code block <pre><code>...</code></pre>, unwrap it
+  // This allows <Code lang="js"> ``` ... ``` </Code> to work by extracting the inner text
+  const match = trimmedContent.match(
+    /^<pre[^>]*><code[^>]*>([\s\S]*?)<\/code><\/pre>$/,
+  );
+  if (match) {
+    const innerContent = match[1];
+    const stripped = innerContent.replaceAll(/<[^>]*>/g, "");
+    rawCode = decodeHtml(stripped);
+  } else {
+    // Fallback: decode everything to be safe for re-highlighting
+    const stripped = trimmedContent.replaceAll(/<[^>]*>/g, "");
+    rawCode = decodeHtml(stripped);
+  }
+} else {
+  // If it's just text, we still need to decode potentially escaped chars
+  rawCode = decodeHtml(trimmedContent);
+}
+
 // Generate unique ID for testing
 const uuid = createHash("sha256")
-  .update(`${lang}-${trimmedContent}`)
+  .update(`${lang}-${rawCode}`)
   .digest("hex")
   .slice(0, 8);
 
 // Extract plain text for automatic aria-label
 let plainText = "";
 if (!ariaLabel) {
-  // Simple regex to strip tags
-  const stripped = trimmedContent.replaceAll(/<[^>]*>/g, "");
-  const fullText = decodeHtml(stripped.trim());
-  plainText = fullText.slice(0, 50);
-  if (fullText.length > 50) plainText += "...";
+  plainText = rawCode.slice(0, 50);
+  if (rawCode.length > 50) plainText += "...";
 }
 
 // Final aria-label: custom > title-based > auto-generated (with fallback)
@@ -67,38 +90,6 @@ const finalAriaLabel =
 
 // Language display name (uppercase)
 const langDisplay = lang.toUpperCase();
-
-// Get appropriate icon for language
-const getIconForLang = (language: string): string => {
-  const iconMap: Record<string, string> = {
-    nginx: "devicon:nginx",
-    javascript: "devicon:javascript",
-    js: "devicon:javascript",
-    typescript: "devicon:typescript",
-    ts: "devicon:typescript",
-    python: "devicon:python",
-    bash: "devicon:bash",
-    sh: "devicon:bash",
-    shell: "devicon:bash",
-    html: "devicon:html5",
-    css: "devicon:css3",
-    json: "mdi:code-json",
-    yaml: "mdi:file-settings-outline",
-    yml: "mdi:file-settings-outline",
-    dockerfile: "devicon:docker",
-    docker: "devicon:docker",
-    sql: "mdi:database",
-    go: "devicon:go",
-    rust: "devicon:rust",
-    java: "devicon:java",
-    php: "devicon:php",
-    ruby: "devicon:ruby",
-    c: "devicon:c",
-    cpp: "devicon:cplusplus",
-    csharp: "devicon:csharp",
-  };
-  return iconMap[language.toLowerCase()] || "mdi:code-tags";
-};
 
 const langIcon = getIconForLang(lang);
 ---
@@ -121,18 +112,14 @@ const langIcon = getIconForLang(lang);
     <CopyButton class="code-header-copy-btn" />
   </div>
   <div class="code-body">
-    {
-      isHtml ? (
-        <Fragment set:html={trimmedContent} />
-      ) : (
-        <pre>
-          <code
-            class={`language-${lang}`}
-            set:html={trimmedContent}
-          />
-        </pre>
-      )
-    }
+    <AstroCode
+      code={rawCode}
+      lang={lang}
+      themes={{
+        light: "github-light-high-contrast",
+        dark: "github-dark-high-contrast",
+      }}
+    />
   </div>
 </section>
 
