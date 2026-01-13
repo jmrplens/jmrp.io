@@ -95,12 +95,36 @@ const logoText = siteData.logo_text || "<JMRP />";
     }
 
     if (menuToggle && navLinks && backdrop) {
+      // iOS-compatible scroll lock: save scroll position
+      // Using position:fixed instead of overflow:hidden to avoid iOS Safari scroll-to-top bug
+      let savedScrollY = 0;
+
+      const lockScroll = () => {
+        savedScrollY = window.scrollY;
+        document.body.style.position = "fixed";
+        document.body.style.top = `-${savedScrollY}px`;
+        document.body.style.left = "0";
+        document.body.style.right = "0";
+        document.body.style.width = "100%"; // Prevent layout shift
+        document.body.classList.add("menu-open");
+      };
+
+      const unlockScroll = () => {
+        document.body.style.position = "";
+        document.body.style.top = "";
+        document.body.style.left = "";
+        document.body.style.right = "";
+        document.body.style.width = "";
+        document.body.classList.remove("menu-open");
+        window.scrollTo({ top: savedScrollY, behavior: "instant" });
+      };
+
       const closeMenu = () => {
         menuToggle.setAttribute("aria-expanded", "false");
         navLinks.classList.remove("open");
         backdrop.classList.remove("open");
-        document.body.classList.remove("menu-open");
-        menuToggle.focus(); // Restore focus
+        unlockScroll();
+        menuToggle.focus({ preventScroll: true }); // Restore focus
       };
 
       const toggleMenu = () => {
@@ -111,14 +135,12 @@ const logoText = siteData.logo_text || "<JMRP />";
           menuToggle.setAttribute("aria-expanded", "true");
           navLinks.classList.add("open");
           backdrop.classList.add("open");
-          document.body.classList.add("menu-open");
+          lockScroll();
 
-          // Move focus to the first link or the menu itself
+          // Move focus to the first link for accessibility
           const firstLink = navLinks.querySelector("a");
           if (firstLink) {
-            firstLink.focus();
-          } else {
-            navLinks.focus();
+            firstLink.focus({ preventScroll: true });
           }
         }
       };
@@ -346,17 +368,10 @@ const logoText = siteData.logo_text || "<JMRP />";
     opacity: 100%;
   }
 
-  /* Prevent scrolling when menu is open */
-  :global(body.menu-open),
-  :global(html:has(body.menu-open)) {
-    height: 100vh; /* Lock height to viewport */
-    overflow: hidden;
-    touch-action: none; /* Prevent touch scrolling */
-  }
-
-  /* Ensure fallback for browsers without :has() */
-  :global(body.menu-open) {
-    height: 100vh;
-    overflow: hidden;
-  }
+  /*
+   * Note: Scroll locking is handled via JavaScript (position: fixed)
+   * to be compatible with iOS Safari which has issues with
+   * overflow: hidden causing scroll-to-top behavior.
+   * The body.menu-open class is used as a marker for the JS logic.
+   */
 </style>

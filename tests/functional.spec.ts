@@ -100,6 +100,50 @@ test.describe("Interactive Features", () => {
     await expect(html).toHaveAttribute("data-theme", "light");
     await expect(html).toHaveClass(/light-mode/);
   });
+
+  test("mobile menu preserves scroll position on open/close", async ({
+    page,
+  }) => {
+    // Set mobile viewport
+    await page.setViewportSize({ width: 375, height: 667 });
+
+    // Use a long page (blog post) to test scroll behavior
+    await page.goto("/blog/003-implementing-content-security-policy-nginx/");
+
+    // Scroll down to a specific position
+    const targetScrollY = 500;
+    await page.evaluate((y) => window.scrollTo(0, y), targetScrollY);
+
+    // Wait for scroll to complete and verify position
+    await page.waitForFunction(
+      (y) => Math.abs(window.scrollY - y) < 10,
+      targetScrollY,
+    );
+
+    const scrollBeforeOpen = await page.evaluate(() => window.scrollY);
+    expect(scrollBeforeOpen).toBeGreaterThan(400);
+
+    // Open the mobile menu
+    const menuToggle = page.locator("#menu-toggle");
+    await menuToggle.click();
+    await expect(page.locator("#nav-links")).toHaveClass(/open/);
+    await expect(page.locator("body")).toHaveClass(/menu-open/);
+
+    // Verify body has position:fixed (scroll lock active)
+    const bodyPosition = await page.evaluate(() =>
+      getComputedStyle(document.body).getPropertyValue("position"),
+    );
+    expect(bodyPosition).toBe("fixed");
+
+    // Close the menu
+    await page.keyboard.press("Escape");
+    await expect(page.locator("#nav-links")).not.toHaveClass(/open/);
+    await expect(page.locator("body")).not.toHaveClass(/menu-open/);
+
+    // Verify scroll position is restored (within tolerance for sub-pixel differences)
+    const scrollAfterClose = await page.evaluate(() => window.scrollY);
+    expect(Math.abs(scrollAfterClose - scrollBeforeOpen)).toBeLessThan(10);
+  });
 });
 
 test.describe("Security & Best Practices", () => {
