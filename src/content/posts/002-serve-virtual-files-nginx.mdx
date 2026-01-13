@@ -44,10 +44,10 @@ Nginx evaluates location blocks in a specific order. The first match **by priori
 <Table title="Location Block Priority (Highest to Lowest)">
   <thead>
     <tr>
-      <th>Priority</th>
-      <th>Modifier</th>
-      <th>Type</th>
-      <th>Example</th>
+      <th scope="col">Priority</th>
+      <th scope="col">Modifier</th>
+      <th scope="col">Type</th>
+      <th scope="col">Example</th>
     </tr>
   </thead>
   <tbody>
@@ -129,9 +129,9 @@ These three directives determine _where_ Nginx looks for files. Understanding th
 <Table title="root vs alias vs try_files">
   <thead>
     <tr>
-      <th>Directive</th>
-      <th>Behavior</th>
-      <th>Best For</th>
+      <th scope="col">Directive</th>
+      <th scope="col">Behavior</th>
+      <th scope="col">Best For</th>
     </tr>
   </thead>
   <tbody>
@@ -218,9 +218,9 @@ For small, simple content, the `return` directive is more efficient than creatin
 <Table title="return Directive Patterns">
   <thead>
     <tr>
-      <th>Pattern</th>
-      <th>Description</th>
-      <th>Example</th>
+      <th scope="col">Pattern</th>
+      <th scope="col">Description</th>
+      <th scope="col">Example</th>
     </tr>
   </thead>
   <tbody>
@@ -418,14 +418,14 @@ location = /humans.txt {
 
 ### ads.txt & app-ads.txt
 
-For advertising transparency and fraud prevention:
+For advertising transparency and fraud prevention. The [IAB Tech Lab Specification](https://iabtechlab.com/ads-txt/) requires a specific CSV format: `Domain, Publisher ID, Account Type, Certification Authority ID`.
 
 <FileContent filename="ads.txt location" icon="devicon:nginx">
 ```nginx
 # Desktop ads.txt
 location = /ads.txt {
-    alias /etc/nginx/assets/ads.txt;
     default_type text/plain;
+    return 200 "google.com, pub-0000000000000000, DIRECT, f08c47fec0942fa0\n";
 }
 
 # Mobile app-ads.txt
@@ -438,7 +438,7 @@ location = /app-ads.txt {
 
 ### favicon.ico
 
-Prevent 404s for missing favicons:
+While modern browsers prefer SVG or PNG, `favicon.ico` is still requested by legacy tools and crawlers. A single `.ico` file typically bundles 16x16, 32x32, and 48x48 sizes.
 
 <FileContent filename="favicon handling" icon="devicon:nginx">
 ```nginx
@@ -453,6 +453,45 @@ location = /favicon.ico {
 location = /favicon.ico {
     return 204;
     access_log off;
+}
+```
+</FileContent>
+
+> **Reference:** [How to Favicon: A comprehensive guide](https://evilmartians.com/chronicles/how-to-favicon-in-2021-six-files-that-fit-most-needs)
+
+### Mobile & Touch Icons
+
+Modern web applications need icons for mobile home screens and progressive web app (PWA) features.
+
+#### Apple Touch Icon
+iOS uses this when a website is added to the home screen. The standard is a **180x180 PNG** file without transparency.
+
+#### Android & Web App Manifest
+Android Chrome uses `site.webmanifest` to identify app icons (standard sizes are 192x192 and 512x512).
+
+<FileContent filename="mobile-icons.conf" icon="devicon:nginx">
+```nginx
+# Apple Touch Icon
+location = /apple-touch-icon.png {
+    alias /var/www/assets/apple-touch-icon.png;
+    access_log off;
+    expires 1y;
+}
+
+# Web App Manifest
+location = /site.webmanifest {
+    default_type application/manifest+json;
+    return 200 '{
+        "name": "My App",
+        "short_name": "App",
+        "icons": [
+            { "src": "/icon-192.png", "type": "image/png", "sizes": "192x192" },
+            { "src": "/icon-512.png", "type": "image/png", "sizes": "512x512" }
+        ],
+        "theme_color": "#ffffff",
+        "background_color": "#ffffff",
+        "display": "standalone"
+    }';
 }
 ```
 </FileContent>
@@ -525,9 +564,9 @@ location = /.well-known/apple-app-site-association {
 <Table title="Common .well-known URIs">
   <thead>
     <tr>
-      <th>Path</th>
-      <th>Purpose</th>
-      <th>Content-Type</th>
+      <th scope="col">Path</th>
+      <th scope="col">Purpose</th>
+      <th scope="col">Content-Type</th>
     </tr>
   </thead>
   <tbody>
@@ -553,6 +592,59 @@ location = /.well-known/apple-app-site-association {
     </tr>
   </tbody>
 </Table>
+
+---
+
+## Dynamic Content with Nginx JavaScript (njs)
+
+For complex scenarios, the standard for serving virtual files with logic (conditional content, dynamic JSON) is **njs** (Nginx JavaScript). Unlike `return`, which only serves static strings, `njs` allows full programmatic control.
+
+### Setup
+
+First, ensure the module is loaded in `nginx.conf`:
+
+```nginx
+load_module modules/ngx_http_js_module.so;
+```
+
+### Example: Dynamic Robots.txt
+
+Serve different `robots.txt` rules based on the request (e.g., blocking AI bots dynamically):
+
+<FileContent filename="/etc/nginx/njs/virtual.js" icon="mdi:language-javascript">
+```javascript
+function robots(r) {
+    var ua = r.headersIn['User-Agent'] || "";
+    
+    // Block specific bots dynamically
+    if (ua.includes("GPTBot") || ua.includes("CCBot")) {
+        r.return(200, "User-agent: *\nDisallow: /\n");
+    } else {
+        r.return(200, "User-agent: *\nAllow: /\n");
+    }
+}
+
+export default { robots };
+```
+</FileContent>
+
+<FileContent filename="njs-location.conf" icon="devicon:nginx">
+```nginx
+http {
+    js_import /etc/nginx/njs/virtual.js;
+
+    server {
+        location = /robots.txt {
+            js_content virtual.robots;
+        }
+    }
+}
+```
+</FileContent>
+
+<Callout type="info" icon="mdi:speedometer">
+  **Performance Note:** `njs` is very fast, but `return` is faster. Use `return` for static content and `njs` only when you need logic.
+</Callout>
 
 ---
 
@@ -623,6 +715,10 @@ server accepts handled requests
  12345 12345 98765
 Reading: 0 Writing: 3 Waiting: 39
 </TerminalOutput>
+
+<Callout type="tip" icon="mdi:monitor-dashboard">
+  **Modern Dashboard:** If you prefer a visual interface, **[Nginx-UI](https://nginxui.com/)** is a powerful open-source tool that leverages the `stub_status` module to provide real-time monitoring graphs, configuration editing, and SSL management in a clean web dashboard.
+</Callout>
 
 ---
 
@@ -919,9 +1015,9 @@ tail -f /var/log/nginx/error.log
 <Table title="Common Issues">
   <thead>
     <tr>
-      <th>Issue</th>
-      <th>Cause</th>
-      <th>Solution</th>
+      <th scope="col">Issue</th>
+      <th scope="col">Cause</th>
+      <th scope="col">Solution</th>
     </tr>
   </thead>
   <tbody>
@@ -944,6 +1040,43 @@ tail -f /var/log/nginx/error.log
       <td>alias path issues</td>
       <td>Missing trailing slash</td>
       <td>Ensure both location and alias have trailing <code>/</code></td>
+    </tr>
+  </tbody>
+</Table>
+
+---
+
+## Beyond Static Files: Scripting Modules
+
+Sometimes you need more than just static strings. Here is how the main scripting options compare for 2025:
+
+<Table title="Nginx Scripting Options Comparison">
+  <thead>
+    <tr>
+      <th scope="col">Language</th>
+      <th scope="col">Performance</th>
+      <th scope="col">Use Case</th>
+      <th scope="col">Recommendation</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>njs (JavaScript)</strong></td>
+      <td>High</td>
+      <td>Dynamic content, header manipulation, complex routing.</td>
+      <td><strong>Recommended</strong> for most users. Native integration.</td>
+    </tr>
+    <tr>
+      <td><strong>Lua (OpenResty)</strong></td>
+      <td>Very High (JIT)</td>
+      <td>High-load API gateways, complex business logic, caching.</td>
+      <td>Best for heavy-duty apps. Requires OpenResty build.</td>
+    </tr>
+    <tr>
+      <td><strong>Perl</strong></td>
+      <td>Medium</td>
+      <td>Legacy integration, text processing.</td>
+      <td><strong>Avoid</strong> unless maintaining legacy systems.</td>
     </tr>
   </tbody>
 </Table>
