@@ -8,7 +8,7 @@
  *    HSTS, X-Frame-Options, and robust CSP directives.
  * 4. Inline Compliance: Checking that inline styles are converted to classes.
  *
- * Note: Nonces are placeholders ("NGINX_CSP_NONCE") in static builds,
+ * Note: Nonces are placeholders ("nonce-$cspNonce") in static builds,
  * replaced at runtime by Nginx with unique per-request values.
  */
 
@@ -33,7 +33,15 @@ function validateIntegrity(
   integrity: string | null,
   type: "Script" | "Stylesheet",
 ): string | null {
-  if (!resourceUrl || resourceUrl.startsWith("http")) {
+  // Skip external URLs (various forms)
+  if (
+    !resourceUrl ||
+    resourceUrl.startsWith("http://") ||
+    resourceUrl.startsWith("https://") ||
+    resourceUrl.startsWith("//") ||
+    resourceUrl.startsWith("data:") ||
+    resourceUrl.startsWith("blob:")
+  ) {
     return null;
   }
 
@@ -41,8 +49,16 @@ function validateIntegrity(
     return `${url}: ${type} ${resourceUrl} missing integrity attribute`;
   }
 
-  if (!/^sha(256|384|512)-/.test(integrity)) {
-    return `${url}: ${type} ${resourceUrl} has invalid integrity format: ${integrity}`;
+  // Validate SRI format: one or more space-separated hashes
+  const sriPattern = /^sha(256|384|512)-[A-Za-z0-9+/]+=*$/;
+  const tokens = integrity.split(/\s+/).filter((t) => t.length > 0);
+  if (tokens.length === 0) {
+    return `${url}: ${type} ${resourceUrl} has empty integrity attribute`;
+  }
+  for (const token of tokens) {
+    if (!sriPattern.test(token)) {
+      return `${url}: ${type} ${resourceUrl} has invalid SRI token: ${token}`;
+    }
   }
 
   return null;
@@ -297,6 +313,15 @@ test.describe("Build Output Verification", () => {
 
     const cspPolicy = cspMatch![1];
 
+    // Parse CSP into discrete directive names to avoid false substring matches
+    const directiveSegments = cspPolicy
+      .split(";")
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0);
+    const directiveNames = new Set(
+      directiveSegments.map((seg) => seg.split(/\s+/)[0]),
+    );
+
     const requiredDirectives = [
       "default-src",
       "script-src",
@@ -312,9 +337,10 @@ test.describe("Build Output Verification", () => {
     ];
 
     for (const directive of requiredDirectives) {
-      expect(cspPolicy, `CSP should contain ${directive} directive`).toContain(
-        directive,
-      );
+      expect(
+        directiveNames.has(directive),
+        `CSP should contain ${directive} directive`,
+      ).toBe(true);
     }
 
     expect(cspPolicy).toContain("default-src 'none'");

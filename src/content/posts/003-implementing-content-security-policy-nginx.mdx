@@ -822,9 +822,9 @@ Review your violation reports and fix issues:
 Deploy enforcing CSP to a subset of traffic first:
 
 ```nginx
-# Use map to enable for 10% of traffic
+# Use map to enable for ~12.5% of traffic (hex digits 0-1)
 map $request_id $csp_mode {
-    ~^[0-9a] "enforce";   # ~10% of requests
+    ~^[01] "enforce";   # 2/16 hex digits = ~12.5% of requests
     default "report-only";
 }
 
@@ -946,6 +946,12 @@ server {
 }
 ```
 </FileContent>
+
+<Callout type="warning" icon="mdi:alert">
+  **Important:** When you use `add_header` in a nested `location` block (like the static assets block above), **Nginx replaces all parent-level `add_header` directives**—including your security headers! To fix this, either:
+  1. Repeat all security headers in the nested location, or
+  2. Use `include /etc/nginx/snippets/security-headers.conf;` to share headers across locations
+</Callout>
 
 ---
 

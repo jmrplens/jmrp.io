@@ -122,16 +122,17 @@ test.describe("Speculation Rules / Prerender", () => {
       });
     });
 
-    // eslint-disable-next-line playwright/no-conditional-in-test
-    if (speculationRules.length > 0) {
-      for (const rule of speculationRules) {
-        // eslint-disable-next-line playwright/no-conditional-expect
-        expect(rule.content).toBeTruthy();
-        const hasPrerender = rule.content?.prerender !== undefined;
-        const hasPrefetch = rule.content?.prefetch !== undefined;
-        // eslint-disable-next-line playwright/no-conditional-expect
-        expect(hasPrerender || hasPrefetch).toBe(true);
-      }
+    // Guard: Ensure speculation rules are present (not just an empty array)
+    expect(
+      speculationRules.length,
+      "Expected speculation rules to be injected",
+    ).toBeGreaterThan(0);
+
+    for (const rule of speculationRules) {
+      expect(rule.content).toBeTruthy();
+      const hasPrerender = rule.content?.prerender !== undefined;
+      const hasPrefetch = rule.content?.prefetch !== undefined;
+      expect(hasPrerender || hasPrefetch).toBe(true);
     }
   });
 
@@ -140,6 +141,12 @@ test.describe("Speculation Rules / Prerender", () => {
     const validRules = speculationRules.filter(
       (rule): rule is SpeculationRule => rule !== null,
     );
+
+    // Guard: Fail test if no valid rules parsed
+    expect(
+      validRules.length,
+      "Expected at least one valid speculation rule",
+    ).toBeGreaterThan(0);
 
     for (const rule of validRules) {
       // eslint-disable-next-line playwright/no-conditional-in-test
@@ -163,6 +170,13 @@ test.describe("Speculation Rules / Prerender", () => {
   test("speculation rules URLs are internal links", async ({ page }) => {
     const rules = await getSpeculationRules(page);
     const urls = getUrlsFromRules(rules);
+
+    // Guard: Fail if no URLs found in speculation rules
+    expect(
+      urls.length,
+      "Expected speculation rules to contain URLs",
+    ).toBeGreaterThan(0);
+
     const origin = await page.evaluate(() => globalThis.location.origin);
 
     for (const url of urls) {

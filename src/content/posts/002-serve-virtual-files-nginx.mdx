@@ -339,17 +339,27 @@ location /protected-files/ {
     alias /var/secure/files/;
 }
 
+# Option A: Direct internal redirect with try_files
 location /download {
-    # Authenticate, then redirect internally
     auth_request /auth;
     error_page 401 = @unauthorized;
     
-    # X-Accel-Redirect to internal location
-    add_header X-Accel-Redirect /protected-files/$arg_file;
-    return 204;
+    # Perform the internal redirect directly
+    try_files /protected-files/$arg_file =404;
+}
+
+# Option B: Backend sets X-Accel-Redirect header
+location /download-via-backend {
+    # Backend (e.g., Node.js/Python) validates auth and returns:
+    # X-Accel-Redirect: /protected-files/myfile.pdf
+    proxy_pass http://backend:3000;
 }
 ```
 </FileContent>
+
+<Callout type="info" icon="mdi:information">
+  **Note:** The `X-Accel-Redirect` header must be set by an upstream response (e.g., from a backend application), not via `add_header` in Nginx. Use `try_files` or `rewrite` for direct internal redirects within Nginx itself.
+</Callout>
 
 ---
 
@@ -775,10 +785,13 @@ server {
     }
     
     # Health & Monitoring
+    # Note: Nginx variables like $date_gmt are NOT interpolated in return body.
+    # For dynamic values, use add_header or a backend.
     location = /health {
         access_log off;
         default_type application/json;
-        return 200 '{"status":"healthy","timestamp":"$date_gmt"}';
+        add_header X-Timestamp $date_gmt always;
+        return 200 '{"status":"healthy"}';
     }
     
     location = /nginx_status {

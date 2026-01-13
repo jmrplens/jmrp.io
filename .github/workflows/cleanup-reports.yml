@@ -2,6 +2,11 @@ name: Cleanup CI Reports
 
 on:
   workflow_dispatch:
+    inputs:
+      pr_number:
+        description: "PR number to cleanup (for manual triggers)"
+        required: false
+        type: string
   pull_request:
     types: [closed]
 
@@ -21,4 +26,4 @@ jobs:
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: |
-          node scripts/ci/cleanup-deployments.mjs ${{ github.event.pull_request.number }}
+          node scripts/ci/cleanup-deployments.mjs ${{ github.event.pull_request.number || inputs.pr_number }}

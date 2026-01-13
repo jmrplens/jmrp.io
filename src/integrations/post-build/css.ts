@@ -125,7 +125,19 @@ export async function extractCssDataUris(
       const svgString = buffer.toString("utf-8");
       try {
         const optimized = optimize(svgString, svgoConfig);
-        fs.writeFileSync(filePath, optimized.data);
+        // Check for error field before using data
+        if ("error" in optimized && optimized.error) {
+          const errorMsg =
+            typeof optimized.error === "string"
+              ? optimized.error
+              : JSON.stringify(optimized.error);
+          logger.warn(
+            `SVGO optimization returned error for ${filename}: ${errorMsg}`,
+          );
+          fs.writeFileSync(filePath, buffer);
+        } else {
+          fs.writeFileSync(filePath, optimized.data);
+        }
       } catch (svgoError) {
         const svgoErrorMsg =
           svgoError instanceof Error ? svgoError.message : String(svgoError);

@@ -32,8 +32,8 @@ const logger = {
 async function calculateCoverage() {
   logger.info(`🔍 Scanning src and scripts for JSDoc coverage...`);
 
-  // Find all TS/TSX/JS/JSX/MJS/CJS files
-  const files = await glob(`{src,scripts}/**/*.{ts,tsx,js,jsx,mjs,cjs}`, {
+  // Find all TS/TSX/JS/JSX/MJS/MTS/CJS files
+  const files = await glob(`{src,scripts}/**/*.{ts,tsx,js,jsx,mjs,mts,cjs}`, {
     ignore: ["**/*.d.ts", "**/*.test.ts", "**/*.spec.ts", "**/node_modules/**"],
     absolute: true,
   });

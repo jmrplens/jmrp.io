@@ -136,10 +136,9 @@ export async function getPublications(): Promise<PublicationGroup[]> {
         const initial = bibGiven.toLowerCase();
         return firstnameVariations.some((variation) => {
           const v = variation.toLowerCase();
-          // Match if variation is also just that initial, or if it starts with that initial (and is longer)
-          // Generally, we want to match correct expansions.
-          // e.g. "J" matches "Jose" or "J."
-          return v === initial || v === initial + "." || v.startsWith(initial);
+          // Match only exact initial forms (e.g., "J" or "J.")
+          // Don't match full names starting with the initial
+          return v === initial || v === initial + ".";
         });
       }
 

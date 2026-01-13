@@ -47,10 +47,15 @@ const getSnippet = (html: string) => {
   return text;
 };
 
+const snippetBad = getSnippet(badContent);
+const snippetGood = getSnippet(goodContent);
+
 const finalAriaLabelBad =
-  ariaLabelBad || `Comparison: ${badTitle} - ${getSnippet(badContent)}`;
+  ariaLabelBad ||
+  `Comparison: ${badTitle}${snippetBad ? ` - ${snippetBad}` : ""}`;
 const finalAriaLabelGood =
-  ariaLabelGood || `Comparison: ${goodTitle} - ${getSnippet(goodContent)}`;
+  ariaLabelGood ||
+  `Comparison: ${goodTitle}${snippetGood ? ` - ${snippetGood}` : ""}`;
 ---
 
 <div class="compare-code-wrapper">

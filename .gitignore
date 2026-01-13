@@ -41,6 +41,7 @@ html-errors.log
 # --- 5. CI, REPORTS & ARTIFACTS ---
 # Deployment artifacts and dashboard data
 dist-reports/
+# Deployment staging directories (a11y-deploy, lh-deploy, etc. created during CI)
 *-deploy/
 .lighthouseci/
 .scannerwork/

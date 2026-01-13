@@ -151,16 +151,23 @@ test.describe("Keyboard Navigation Accessibility", () => {
 
     // Capture initial state
     const html = page.locator("html");
-    // eslint-disable-next-line playwright/no-conditional-in-test
-    const initialClass = (await html.getAttribute("class")) || "";
+    const initialClass = await html.getAttribute("class");
 
     // Toggle
     await page.keyboard.press("Enter");
 
-    // Assert change
+    // Assert change - compare class attributes before/after toggle
+    // Use web-first assertions for reliable waiting
+    await expect(html).not.toHaveAttribute("class", initialClass ?? "");
 
-    await expect(html).not.toHaveClass(initialClass);
-    await expect(html).toHaveClass(/dark-mode|light-mode/);
+    // Verify exactly one theme class is present
+    const updatedClass = await html.getAttribute("class");
+    const hasLightMode = updatedClass?.includes("light-mode") ?? false;
+    const hasDarkMode = updatedClass?.includes("dark-mode") ?? false;
+    expect(
+      hasLightMode !== hasDarkMode,
+      "Expected exactly one theme mode class",
+    ).toBe(true);
 
     // Check a11y of the toggle itself
     const results = await new AxeBuilder({ page })

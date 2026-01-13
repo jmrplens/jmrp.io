@@ -200,4 +200,13 @@ const encodedContent = content ? encodeURIComponent(content) : undefined;
   .hidden {
     display: none;
   }
+
+  /* Reset absolute positioning when used in header contexts */
+  .copy-button:where(
+    .code-header-copy-btn,
+    .compare-copy-button,
+    .terminal-header-copy-btn
+  ) {
+    position: static;
+  }
 </style>

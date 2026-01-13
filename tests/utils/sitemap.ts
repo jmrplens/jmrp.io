@@ -96,7 +96,7 @@ export async function getSitemapUrls(): Promise<string[]> {
 async function processSitemapIndex(
   index: { sitemap: Array<{ loc: string[] }> },
   urls: string[],
-) {
+): Promise<void> {
   for (const sm of index.sitemap) {
     if (!sm.loc || sm.loc.length === 0) continue;
     const loc = sm.loc[0];
@@ -111,14 +111,15 @@ async function processSitemapIndex(
         const childParsed = (await parseStringPromise(
           childContent,
         )) as SitemapResult;
-        urls.push(...extractPathnames(childParsed.urlset));
+        // Guard against malformed child sitemaps
+        if (childParsed?.urlset && Array.isArray(childParsed.urlset.url)) {
+          urls.push(...extractPathnames(childParsed.urlset));
+        }
       }
     } catch {
       console.warn(`Skipping invalid or missing sitemap in index: ${loc}`);
     }
   }
-
-  return [...new Set(urls)];
 }
 
 /** Default fallback pages when sitemap is unavailable. */

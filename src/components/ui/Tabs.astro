@@ -49,6 +49,10 @@ const { class: className } = Astro.props;
 
       if (!headers || panels.length === 0) return;
 
+      // Guard against duplicate initialization
+      if (headers.hasAttribute("data-initialized")) return;
+      headers.setAttribute("data-initialized", "true");
+
       // Generate unique IDs for ARIA
       const uniqueId = Math.random().toString(36).substring(2, 9);
 

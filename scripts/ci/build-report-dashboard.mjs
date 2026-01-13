@@ -897,13 +897,19 @@ const html = `
                 <div class="card-header">
                     <div class="card-icon">📄</div>
                     <span class="status-badge ${
-                      htmlValidation?.every((f) => (f.errorCount || 0) === 0)
-                        ? "status-success"
-                        : "status-warning"
+                      // prettier-ignore
+                      htmlValidation
+    ? (htmlValidation.every((f) => (f.errorCount || 0) === 0)
+      ? "status-success"
+      : "status-warning")
+    : "status-neutral"
                     }">${
-                      htmlValidation?.every((f) => (f.errorCount || 0) === 0)
-                        ? "Passed"
-                        : "Failed"
+                      // prettier-ignore
+                      htmlValidation
+    ? (htmlValidation.every((f) => (f.errorCount || 0) === 0)
+      ? "Passed"
+      : "Failed")
+    : "N/A"
                     }</span>
                 </div>
                 <div class="card-title">HTML5 Validation</div>

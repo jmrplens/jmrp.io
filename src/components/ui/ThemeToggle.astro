@@ -13,7 +13,7 @@ import { Icon } from "astro-icon/components";
   id="theme-toggle"
   type="button"
   class="theme-toggle"
-  aria-label="Toggle Dark Mode"
+  aria-label="Switch to Light Mode"
 >
   <span
     class="icon-sun"
@@ -153,7 +153,8 @@ import { Icon } from "astro-icon/components";
       setTheme(currentTheme);
 
       toggle.onclick = () => {
-        const current = getTheme();
+        // Read from dataset first (set by setTheme), fall back to getTheme()
+        const current = document.documentElement.dataset.theme || getTheme();
         const newTheme = current === "dark" ? "light" : "dark";
         setTheme(newTheme);
       };
