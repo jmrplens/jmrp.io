@@ -51,8 +51,8 @@ const bodyWithoutCode = (post.body || "")
   .replaceAll(/```[\s\S]*?```/g, "")
   .replaceAll(/`[^`]*?`/g, "");
 
-// Regex to find all markdown links: [text](url)
-const linkRegex = /\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/g;
+// Regex to find all markdown links: [text](url) - supports one level of nested parentheses
+const linkRegex = /\[([^\]]+)\]\(([^)]+(?:\([^)]+\)[^)]*)*)\)/g;
 const collectedRefsFromMarkdown = [];
 let match;
 while ((match = linkRegex.exec(bodyWithoutCode)) !== null) {

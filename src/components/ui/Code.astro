@@ -39,6 +39,9 @@ const {
 const slotContent = await Astro.slots.render("default");
 const trimmedContent = slotContent.trim();
 
+// Check if content is already rendered HTML (starts with a tag, likely from markdown)
+const isHtml = trimmedContent.startsWith("<");
+
 // Generate unique ID for testing
 const uuid = createHash("sha256")
   .update(`${lang}-${trimmedContent}`)
@@ -118,7 +121,18 @@ const langIcon = getIconForLang(lang);
     <CopyButton class="code-header-copy-btn" />
   </div>
   <div class="code-body">
-    <pre><code class={`language-${lang}`} set:html={trimmedContent} /></pre>
+    {
+      isHtml ? (
+        <Fragment set:html={trimmedContent} />
+      ) : (
+        <pre>
+          <code
+            class={`language-${lang}`}
+            set:html={trimmedContent}
+          />
+        </pre>
+      )
+    }
   </div>
 </section>
 
@@ -177,17 +191,19 @@ const langIcon = getIconForLang(lang);
     overflow-x: auto;
   }
 
-  .code-body pre {
-    padding: 1rem 1.25rem;
-    margin: 0;
+  /* Style both raw and rendered pre tags */
+  .code-body pre,
+  .code-body :global(pre.astro-code) {
+    padding: 1rem 1.25rem !important;
+    margin: 0 !important;
     overflow-x: auto;
     font-family: var(--font-mono);
     font-size: 0.9rem;
     line-height: 1.6;
     color: var(--color-text);
-    background-color: transparent;
-    border: none;
-    border-radius: 0;
+    background-color: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
 
     /* Mobile Fix: Prevent font inflation */
     /* stylelint-disable-next-line property-no-vendor-prefix */

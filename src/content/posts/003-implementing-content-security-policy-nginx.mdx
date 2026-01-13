@@ -17,6 +17,7 @@ import FileContent from "@components/ui/FileContent.astro";
 import Table from "@components/ui/Table.astro";
 import TerminalOutput from "@components/ui/TerminalOutput.astro";
 import Mermaid from "@components/ui/Mermaid.astro";
+import Code from "@components/ui/Code.astro";
 
 In the modern web, security cannot be an afterthought. **Cross-Site Scripting (XSS)** remains one of the most prevalent and dangerous vulnerabilities, allowing attackers to inject and execute malicious code in your users' browsers. **[Content Security Policy (CSP)](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CSP)** is the most effective countermeasure against these attacks, acting as a whitelist that tells the browser exactly which resources are allowed to load and execute.
 
@@ -94,10 +95,12 @@ There are two fundamental approaches to implementing CSP, and **choosing the rig
 
 The traditional approach involves whitelisting specific domains:
 
-```nginx
+<Code lang="nginx" aria-label="Allowlist-based CSP example to avoid">
+```
 # [BAD] AVOID: Allowlist-based CSP
 script-src 'self' https://www.google-analytics.com https://cdn.example.com;
 ```
+</Code>
 
 <Callout type="warning" icon="mdi:alert">
   **Why Allowlists Are Problematic:**
@@ -112,12 +115,14 @@ script-src 'self' https://www.google-analytics.com https://cdn.example.com;
 
 Modern security best practices recommend a **strict CSP** based on nonces or hashes, not domain allowlists:
 
-```nginx
+<Code lang="nginx" aria-label="Recommended strict nonce-based CSP">
+```
 # [OK] RECOMMENDED: Strict nonce-based CSP
 script-src 'nonce-{RANDOM}' 'strict-dynamic';
 object-src 'none';
 base-uri 'none';
 ```
+</Code>
 
 <Callout type="keypoint" icon="mdi:check-decagram">
   **What Makes a CSP "Strict":**
@@ -324,9 +329,11 @@ Let's break down each component of a production-ready strict CSP policy.
 
 This is one of the most powerful and misunderstood CSP features:
 
-```nginx
+<Code lang="nginx" aria-label="strict-dynamic CSP directive example">
+```
 script-src 'nonce-$cspNonce' 'strict-dynamic';
 ```
+</Code>
 
 <Callout type="keypoint" icon="mdi:lightbulb">
   **How `'strict-dynamic'` Works:**
@@ -341,7 +348,8 @@ script-src 'nonce-$cspNonce' 'strict-dynamic';
 
 **Example:**
 
-```html
+<Code lang="html" aria-label="Example of script trust propagation with strict-dynamic">
+```
 <!-- This script has a valid nonce, so it runs -->
 <script nonce="abc123">
   // This dynamically created script ALSO runs
@@ -351,6 +359,7 @@ script-src 'nonce-$cspNonce' 'strict-dynamic';
   document.head.appendChild(s);
 </script>
 ```
+</Code>
 
 <Callout type="warning">
   **Important:** When `'strict-dynamic'` is present, allowlist sources like `'self'` or `https://example.com` are **ignored** for script loading. Only nonces/hashes grant trust.
@@ -399,13 +408,15 @@ script-src 'nonce-$cspNonce' 'strict-dynamic';
 
 Use hashes when you have **completely static** inline scripts that never change:
 
-```nginx
+<Code lang="nginx" aria-label="Hash-based strict CSP for static sites">
+```
 # Hash-based strict CSP for static sites
 Content-Security-Policy: 
     script-src 'sha256-abc123...' 'sha256-def456...' 'strict-dynamic';
     object-src 'none';
     base-uri 'none';
 ```
+</Code>
 
 <Callout type="tip">
   **Getting Hash Values:**
@@ -673,16 +684,19 @@ CSP reporting is essential for:
 
 ### The report-uri Directive (Legacy but Widely Supported)
 
-```nginx
+<Code lang="nginx" aria-label="CSP report-uri directive example">
+```
 Content-Security-Policy: 
     script-src 'nonce-$cspNonce' 'strict-dynamic';
     ...
     report-uri /csp-reports;
 ```
+</Code>
 
 ### The report-to Directive (Modern Approach)
 
-```nginx
+<Code lang="nginx" aria-label="CSP report-to directive with Reporting API configuration">
+```
 # CSP header with report-to
 Content-Security-Policy: 
     script-src 'nonce-$cspNonce' 'strict-dynamic';
@@ -692,14 +706,17 @@ Content-Security-Policy:
 # Reporting API configuration
 Report-To: {"group":"csp-endpoint","max_age":10886400,"endpoints":[{"url":"https://jmrp.io/csp-reports"}]}
 ```
+</Code>
 
 <Callout type="tip">
   **Best Practice:** Use both directives for maximum compatibility:
   
-  ```nginx
-  report-uri /csp-reports;
-  report-to csp-endpoint;
-  ```
+  <Code lang="nginx" aria-label="Dual CSP reporting best practice">
+```
+report-uri /csp-reports;
+report-to csp-endpoint;
+```
+</Code>
   
   Modern browsers use `report-to`, older browsers fall back to `report-uri`.
 </Callout>
@@ -787,7 +804,8 @@ Never deploy a strict CSP directly to production. Follow this migration strategy
 
 Use `Content-Security-Policy-Report-Only` to collect violations without blocking anything:
 
-```nginx
+<Code lang="nginx" aria-label="Phase 1: CSP Report-Only mode configuration">
+```
 # Start with report-only mode
 add_header Content-Security-Policy-Report-Only "
     default-src 'none';
@@ -803,6 +821,7 @@ add_header Content-Security-Policy-Report-Only "
     report-uri /csp-reports;
 " always;
 ```
+</Code>
 
 <Callout type="info">
   The `Content-Security-Policy-Report-Only` header works exactly like the enforcement header, but only logs violations—nothing is blocked. Your site works normally while you collect data.
@@ -821,7 +840,8 @@ Review your violation reports and fix issues:
 
 Deploy enforcing CSP to a subset of traffic first:
 
-```nginx
+<Code lang="nginx" aria-label="Phase 3: Gradual CSP enforcement with Nginx map">
+```
 # IMPORTANT: This map block MUST be placed in http { } context, NOT inside server { }
 # map $request_id $csp_mode {
 #     ~^[01] "enforce";   # 2/16 hex digits = ~12.5% of requests
@@ -851,18 +871,21 @@ if ($csp_report_only_value != "") {
     add_header Content-Security-Policy-Report-Only $csp_report_only_value always;
 }
 ```
+</Code>
 
 ### Phase 4: Full Enforcement
 
 Once violation reports are minimal and expected, enable full enforcement:
 
-```nginx
+<Code lang="nginx" aria-label="Phase 4: Full CSP enforcement">
+```
 # Full enforcement
 add_header Content-Security-Policy "..." always;
 
 # Keep report-only for stricter future policy testing
 add_header Content-Security-Policy-Report-Only "...stricter-policy..." always;
 ```
+</Code>
 
 ---
 
@@ -1060,16 +1083,19 @@ After implementing this strict CSP on `jmrp.io`:
 
 ### Pitfall 2: Allowing `https:` in script-src
 
-```nginx
+<Code lang="nginx" aria-label="Dangerous CSP allowing all HTTPS sources">
+```
 # [BAD] DANGEROUS: Trusts the entire internet!
 script-src 'self' https:;
 ```
+</Code>
 
 This allows scripts from ANY HTTPS URL, including `https://malicious-site.com/evil.js`.
 
 ### Pitfall 3: Forgetting `object-src` and `base-uri`
 
-```nginx
+<Code lang="nginx" aria-label="Comparing incomplete vs complete strict CSP">
+```
 # [BAD] Missing critical directives
 script-src 'nonce-$cspNonce' 'strict-dynamic';
 
@@ -1078,27 +1104,32 @@ script-src 'nonce-$cspNonce' 'strict-dynamic';
 object-src 'none';
 base-uri 'none';
 ```
+</Code>
 
 ### Pitfall 4: Not Using `'strict-dynamic'`
 
 Without `'strict-dynamic'`, dynamically loaded scripts are blocked:
 
-```javascript
+<Code lang="javascript" aria-label="Dynamic script loading blocked without strict-dynamic">
+```
 // Without 'strict-dynamic', this fails even though parent has nonce
 const script = document.createElement('script');
 script.src = 'https://cdn.example.com/lib.js';
 document.head.appendChild(script); // BLOCKED!
 ```
+</Code>
 
 ### Pitfall 5: Forgetting `always` in Nginx
 
-```nginx
+<Code lang="nginx" aria-label="Importance of 'always' parameter in Nginx add_header">
+```
 # [BAD] Only applies to 2xx responses
 add_header Content-Security-Policy "...";
 
 # [OK] Applies to ALL responses (including errors)
 add_header Content-Security-Policy "..." always;
 ```
+</Code>
 
 ---
 

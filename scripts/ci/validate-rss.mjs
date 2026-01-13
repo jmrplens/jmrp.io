@@ -202,13 +202,23 @@ async function validateRSS() {
   // If the argument is already a path to a file, use it.
   // Otherwise, assume it's a directory and look for rss.xml inside.
   const argFile = process.argv[3] || process.argv[2];
-  const rssFile =
+
+  // If valid arg is provided, check if it's a file path or directory
+  let rssFile;
+  if (argFile?.endsWith(".xml")) {
+    // If it looks like an XML file, use it directly (resolve path)
+    rssFile = path.resolve(argFile);
+  } else if (
     argFile &&
     fs.existsSync(argFile) &&
-    fs.statSync(argFile).isFile() &&
-    argFile.endsWith(".xml")
-      ? path.resolve(argFile)
-      : path.resolve(path.join(distDir, "rss.xml"));
+    fs.statSync(argFile).isFile()
+  ) {
+    // If existing file, use it
+    rssFile = path.resolve(argFile);
+  } else {
+    // Default: generated rss.xml in distDir
+    rssFile = path.resolve(path.join(distDir, "rss.xml"));
+  }
 
   const results = {
     valid: false,

@@ -31,7 +31,9 @@ export function vitePrefetchNoncePlugin(): Plugin {
       }
 
       // Match document.head.append(anyExpression) - use non-greedy capture for any expression
-      const appendPattern = /document\.head\.append\(([^)]+?)\)/g;
+      // Improved regex to handle nested parentheses (up to one level deep for common cases)
+      const appendPattern =
+        /document\.head\.append\(([^()]*(?:\([^()]*\)[^()]*)*)\)/g;
 
       if (!appendPattern.test(code)) {
         return null;

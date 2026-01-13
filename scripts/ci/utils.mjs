@@ -60,10 +60,10 @@ export function calculateHealthScore(saOutcomes = {}, qualityOutcomes = {}) {
       if (Array.isArray(htmlValidation)) {
         const htmlErrors = htmlValidation.reduce((acc, f) => {
           // Support both standard html-validate format and simplified report format
-          // Use Number() to prevent string concatenation
+          // Use empty array fallback for messages
           const count =
             f.errorCount === undefined
-              ? Number(f.messages?.filter((m) => m.severity === 2).length) || 0
+              ? (f.messages ?? []).filter((m) => m.severity === 2).length
               : Number(f.errorCount) || 0;
           return acc + count;
         }, 0);

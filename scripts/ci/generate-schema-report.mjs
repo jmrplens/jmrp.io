@@ -245,6 +245,7 @@ const html = `
         .v-link:hover { text-decoration: underline; }
         .v-img { max-width: 100px; max-height: 100px; border-radius: 4px; border: 1px solid var(--v-border); display: block; margin-top: 0.25rem; }
         .v-prim { color: var(--v-prim); font-weight: 500; }
+        .v-empty { color: var(--text-muted); font-style: italic; }
 
         /* Syntax Highlighting */
         .string { color: #22863a; }

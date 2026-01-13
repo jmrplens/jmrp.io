@@ -113,10 +113,16 @@ async function calculateCoverage() {
 
   // Output for CI environment
   if (process.env.GITHUB_OUTPUT) {
-    fs.appendFileSync(
-      process.env.GITHUB_OUTPUT,
-      `JSDOC_COVERAGE=${formattedPercentage}\n`,
-    );
+    try {
+      fs.appendFileSync(
+        process.env.GITHUB_OUTPUT,
+        `JSDOC_COVERAGE=${formattedPercentage}\n`,
+      );
+    } catch (error) {
+      logger.error(
+        `Failed to write to GITHUB_OUTPUT: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
   }
 
   // Also write to a temp file for other scripts to pick up if needed

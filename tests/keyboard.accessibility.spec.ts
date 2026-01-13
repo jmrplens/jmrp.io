@@ -153,7 +153,7 @@ test.describe("Keyboard Navigation Accessibility", () => {
     const html = page.locator("html");
     const initialClass = await html.getAttribute("class");
 
-    // Toggle
+    // 1. Toggle
     await page.keyboard.press("Enter");
 
     // Assert change - compare class attributes before/after toggle
@@ -166,8 +166,29 @@ test.describe("Keyboard Navigation Accessibility", () => {
     const hasDarkMode = updatedClass?.includes("dark-mode") ?? false;
     expect(
       hasLightMode !== hasDarkMode,
-      "Expected exactly one theme mode class",
+      "Expected exactly one theme mode class after first toggle",
     ).toBe(true);
+
+    // 2. Toggle back
+    await themeToggle.press("Enter");
+
+    // Assert that the class attribute is back to its initial state
+    // eslint-disable-next-line playwright/no-conditional-in-test, unicorn/prefer-ternary
+    if (initialClass === null) {
+      // If initialClass was null (no class attribute), expect no class attribute after toggling back
+      // eslint-disable-next-line playwright/no-conditional-expect
+      await expect(html).not.toHaveAttribute(
+        "class",
+        expect.stringMatching(/./),
+      );
+    } else {
+      // Otherwise, expect the class attribute to be exactly the initialClass
+      // eslint-disable-next-line playwright/no-conditional-expect
+      await expect(html).toHaveAttribute("class", initialClass);
+    }
+
+    // 3. Verify no theme classes stuck (e.g., both light-mode and dark-mode are not present)
+    await expect(html).not.toHaveClass(/dark-mode|light-mode/);
 
     // Check a11y of the toggle itself
     const results = await new AxeBuilder({ page })

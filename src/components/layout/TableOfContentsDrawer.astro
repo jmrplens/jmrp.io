@@ -202,7 +202,12 @@ const { headings } = Astro.props;
     });
   }
 
-  document.addEventListener("DOMContentLoaded", setupMobileTOC);
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", setupMobileTOC);
+  } else {
+    setupMobileTOC();
+  }
+
   if (!document.documentElement.hasAttribute("data-toc-listener-init")) {
     document.documentElement.setAttribute("data-toc-listener-init", "true");
     document.addEventListener("astro:after-swap", setupMobileTOC);

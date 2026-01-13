@@ -125,9 +125,12 @@ async function analyze() {
     stats.categories.pdf.size +
     stats.categories.other.size;
 
+  stats.sourcemapSize = stats.categories.sourcemap.size;
+
   stats.readableTotalSize = formatSize(stats.totalSize);
   stats.readableCodeSize = formatSize(stats.codeSize);
   stats.readableAssetSize = formatSize(stats.assetSize);
+  stats.readableSourcemapSize = formatSize(stats.sourcemapSize);
 
   for (const cat in stats.categories) {
     stats.categories[cat].readableSize = formatSize(stats.categories[cat].size);

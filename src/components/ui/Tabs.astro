@@ -46,6 +46,8 @@ const { class: className } = Astro.props;
       const headers = this.querySelector(".tab-headers");
       if (headers) {
         headers.removeAttribute("data-initialized");
+        // Remove dynamically added buttons to avoid duplicates on reconnect
+        headers.innerHTML = "";
       }
     }
 

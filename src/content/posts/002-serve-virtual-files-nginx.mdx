@@ -339,13 +339,26 @@ location /protected-files/ {
     alias /var/secure/files/;
 }
 
-# Option A: Direct internal redirect with try_files
+# Option A: Direct internal redirect with secure link and error_page
 location /download {
-    auth_request /auth;
-    error_page 401 = @unauthorized;
+    internal;
+    alias /var/secure/files;
     
-    # Perform the internal redirect directly
-    try_files /protected-files/$arg_file =404;
+    # Secure link check
+    secure_link $arg_md5,$arg_expires;
+    secure_link_md5 "$secure_link_expires$uri$remote_addr secret";
+
+    if ($secure_link = "") { return 403; }
+    if ($secure_link = "0") { return 410; }
+
+    # Forward to named location to serve file
+    error_page 418 = @serve_file;
+    return 418;
+}
+
+location @serve_file {
+    internal;
+    alias /var/secure/files/$arg_file;
 }
 
 # Option B: Backend sets X-Accel-Redirect header
