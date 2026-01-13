@@ -76,18 +76,30 @@ export async function getSitemapUrls(): Promise<string[]> {
     return FALLBACK_PAGES.map((p) => p.url);
   }
 
-  const parsed = (await parseStringPromise(sitemap.content)) as
-    | SitemapResult
-    | SitemapIndexResult;
-  const urls: string[] = [];
+  try {
+    const parsed = (await parseStringPromise(sitemap.content)) as
+      | SitemapResult
+      | SitemapIndexResult;
+    const urls: string[] = [];
 
-  if (sitemap.isIndex && "sitemapindex" in parsed) {
-    await processSitemapIndex(parsed.sitemapindex, urls);
-  } else if (parsed && "urlset" in parsed) {
-    urls.push(...extractPathnames(parsed.urlset));
+    if (sitemap.isIndex && "sitemapindex" in parsed) {
+      await processSitemapIndex(parsed.sitemapindex, urls);
+    } else if (parsed && "urlset" in parsed) {
+      urls.push(...extractPathnames(parsed.urlset));
+    }
+
+    // Return fallback if no URLs found
+    if (urls.length === 0) {
+      console.warn("Sitemap parsed but no URLs found. Using fallback pages.");
+      return FALLBACK_PAGES.map((p) => p.url);
+    }
+
+    return [...new Set(urls)];
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    console.warn(`Failed to parse sitemap: ${msg}. Using fallback pages.`);
+    return FALLBACK_PAGES.map((p) => p.url);
   }
-
-  return [...new Set(urls)];
 }
 
 /**

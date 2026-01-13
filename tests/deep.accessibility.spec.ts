@@ -5,9 +5,8 @@
  * focuses on deep, manual-style interaction tests to verify complex behaviors:
  *
  * 1. Semantic Structure: Validating landmarks (nav, main, footer) and heading hierarchy.
- * 2. Interactive Components: Testing keyboard accessibility for search and tab systems.
- * 3. Focus Management: Ensuring focus is trapped in modals or logical tab orders.
- * 4. Advanced A11y: Checking ARIA-live regions, skip links, and ARIA state changes.
+ * 2. Interactive Components: Testing keyboard accessibility for search, tabs, and copy buttons.
+ * 3. Skip Links: Verifying skip-to-content functionality.
  */
 
 import { expect, test } from "@playwright/test";

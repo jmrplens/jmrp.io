@@ -33,6 +33,7 @@ const logoText = siteData.logo_text || "<JMRP />";
         id="menu-toggle"
         type="button"
         aria-label="Toggle Navigation"
+        aria-controls="nav-links"
         aria-expanded="false"
         class="menu-toggle"
       >
@@ -40,10 +41,12 @@ const logoText = siteData.logo_text || "<JMRP />";
           <Icon
             name="fa-solid:bars"
             class="icon-bars"
+            aria-hidden="true"
           />
           <Icon
             name="fa-solid:times"
             class="icon-times"
+            aria-hidden="true"
           />
         </span>
       </button>
@@ -70,8 +73,9 @@ const logoText = siteData.logo_text || "<JMRP />";
   </nav>
 </header>
 
-<script>
-  let mobileMenuAbortController: AbortController | null = null;
+<script is:inline>
+  /** @type {AbortController | null} */
+  let mobileMenuAbortController = null;
 
   function setupMobileMenu() {
     // Prevent listener accumulation across transitions
@@ -94,7 +98,7 @@ const logoText = siteData.logo_text || "<JMRP />";
       const closeMenu = () => {
         menuToggle.setAttribute("aria-expanded", "false");
         navLinks.classList.remove("open");
-        backdrop!.classList.remove("open");
+        backdrop.classList.remove("open");
         document.body.classList.remove("menu-open");
         menuToggle.focus(); // Restore focus
       };
@@ -106,7 +110,7 @@ const logoText = siteData.logo_text || "<JMRP />";
         } else {
           menuToggle.setAttribute("aria-expanded", "true");
           navLinks.classList.add("open");
-          backdrop!.classList.add("open");
+          backdrop.classList.add("open");
           document.body.classList.add("menu-open");
 
           // Move focus to the first link or the menu itself

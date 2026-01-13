@@ -74,8 +74,8 @@ const personSchema = {
       formalEducation?.type === "time_table"
         ? formalEducation.contents.map((edu) => ({
             "@type": "EducationalOrganization",
-            name: stripHtml(edu.institution),
-            department: stripHtml(edu.department),
+            name: edu.institution ? stripHtml(edu.institution) : undefined,
+            department: edu.department ? stripHtml(edu.department) : undefined,
           }))
         : [],
     hasOccupation:
@@ -83,7 +83,7 @@ const personSchema = {
         ? experience.contents.map((job) => ({
             "@type": "Occupation",
             name: job.title,
-            description: stripHtml(job.summary),
+            description: job.summary ? stripHtml(job.summary) : undefined,
           }))
         : [],
     hasCredential:
@@ -216,7 +216,7 @@ const personSchema = {
                                 <div set:html={sanitize(desc)} />
                               </li>
                             );
-                          if (desc.title && desc.contents) {
+                          if (desc.title && Array.isArray(desc.contents)) {
                             // Nested contents in description
                             return (
                               <li>

@@ -53,7 +53,9 @@ function decodeData(
  * Validates hash length to ensure unique filenames.
  */
 function getAssetFilename(buffer: Buffer, mime: string): string {
-  const ext = getExtensionFromMime(mime);
+  // Normalize extension: strip leading dots and fallback to "bin" for invalid/empty
+  const rawExt = getExtensionFromMime(mime);
+  const ext = rawExt.replace(/^\.+/, "") || "bin";
   // Ensure at least 1 character for hash to prevent filename collisions
   const validatedLength = Math.max(1, ASSET_FILENAME_HASH_LENGTH);
   const hash = crypto
@@ -699,7 +701,7 @@ function processBeacon(
 
 /**
  * Sanitizes a language name for safe use in aria-labels.
- * Restricts to alphanumeric characters and hyphens only.
+ * Restricts to alphanumeric characters, hyphens, and underscores only.
  */
 function sanitizeLanguage(lang: string): string {
   // Allow only alphanumeric, hyphens, and underscores; default to "code" if empty

@@ -81,7 +81,7 @@ const { initialRepos } = Astro.props;
   document.addEventListener("DOMContentLoaded", () => {
     const searchInput = document.getElementById("repo-search");
     const container = document.getElementById("repos-container");
-    let debounceTimer: ReturnType<typeof setTimeout>;
+    let debounceTimer: ReturnType<typeof setTimeout> | undefined;
 
     if (searchInput && container) {
       searchInput.addEventListener("input", (e) => {

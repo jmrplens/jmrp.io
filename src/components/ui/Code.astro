@@ -55,10 +55,12 @@ if (!ariaLabel) {
   if (fullText.length > 50) plainText += "...";
 }
 
-// Final aria-label: custom > title-based > auto-generated
+// Final aria-label: custom > title-based > auto-generated (with fallback)
 const finalAriaLabel =
   ariaLabel ||
-  (title ? `${lang} code: ${title}` : `${lang} snippet: ${plainText}`);
+  (title
+    ? `${lang} code: ${title}`
+    : `${lang} snippet: ${plainText || "code snippet"}`);
 
 // Language display name (uppercase)
 const langDisplay = lang.toUpperCase();

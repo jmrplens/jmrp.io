@@ -168,7 +168,10 @@ function renderScoreBadge(label, score) {
  */
 function calculateMax(runList, category) {
   if (!runList || runList.length === 0) return 0;
-  return Math.max(...runList.map((r) => r.scores[category]));
+  const scores = runList
+    .map((r) => r.scores[category])
+    .filter((s) => Number.isFinite(s));
+  return scores.length > 0 ? Math.max(...scores) : 0;
 }
 
 /**

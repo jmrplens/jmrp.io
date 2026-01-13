@@ -90,26 +90,34 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
       </div>
 
       <div class="pub-actions">
-        <button
-          class="btn-sm btn-abstract"
-          type="button"
-          data-id={pub.id}
-          aria-label={`Toggle Abstract for ${pub.title}`}
-          aria-expanded="false"
-          aria-controls={abstractId}
-        >
-          <Icon name="fa-solid:align-left" /> Abstract
-        </button>
-        <button
-          class="btn-sm btn-bibtex-toggle"
-          type="button"
-          data-id={pub.id}
-          aria-label={`Toggle BibTeX for ${pub.title}`}
-          aria-expanded="false"
-          aria-controls={bibtexId}
-        >
-          <Icon name="fa-solid:code" /> BibTeX
-        </button>
+        {
+          pub.abstract && (
+            <button
+              class="btn-sm btn-abstract"
+              type="button"
+              data-id={pub.id}
+              aria-label={`Toggle Abstract for ${pub.title}`}
+              aria-expanded="false"
+              aria-controls={abstractId}
+            >
+              <Icon name="fa-solid:align-left" /> Abstract
+            </button>
+          )
+        }
+        {
+          cleanedBibtex && (
+            <button
+              class="btn-sm btn-bibtex-toggle"
+              type="button"
+              data-id={pub.id}
+              aria-label={`Toggle BibTeX for ${pub.title}`}
+              aria-expanded="false"
+              aria-controls={bibtexId}
+            >
+              <Icon name="fa-solid:code" /> BibTeX
+            </button>
+          )
+        }
         {
           pdf && (
             <a

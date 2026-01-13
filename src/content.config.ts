@@ -25,9 +25,9 @@ const posts = defineCollection({
       draft: z.boolean().default(false),
       description: z.string().optional(),
       author: z.string().optional(),
-      authorEmail: z.string().email().optional(),
+      authorEmail: z.email().optional(),
       coverImage: image().optional(),
-      tags: z.array(z.string()).optional(),
+      tags: z.array(z.string()).default([]),
     }),
 });
 
@@ -174,10 +174,10 @@ const CVSkillGroup = z.object({
 /** Schema for a certificate or award. */
 const CVCertificateItem = z.object({
   name: z.string(),
-  school: z.string(),
-  time: z.string(),
-  link: z.string(),
-  linkname: z.string(),
+  school: z.string().optional(),
+  time: z.string().optional(),
+  link: z.string().optional(),
+  linkname: z.string().optional(),
 });
 
 /** Schema for a grouped collection of certificates. */

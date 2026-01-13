@@ -11,8 +11,10 @@ const MD_PATH = "lychee-report.md";
 const HTML_PATH = "lychee-report.html";
 
 if (!fs.existsSync(MD_PATH)) {
-  console.log("No Lychee report found, creating empty success report.");
-  fs.writeFileSync(MD_PATH, "No issues found by Lychee.");
+  console.error(
+    "❌ REPORT MISSING: Lychee did not produce lychee-report.md. Check if lychee ran correctly.",
+  );
+  process.exit(1);
 }
 
 const mdContent = fs.readFileSync(MD_PATH, "utf-8");
@@ -267,5 +269,5 @@ const html = `
 </html>
 `;
 
-fs.writeFileSync(HTML_PATH, html);
+fs.writeFileSync(HTML_PATH, html, "utf-8");
 console.log(`✅ Lychee HTML report generated at ${HTML_PATH}`);

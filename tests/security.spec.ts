@@ -114,6 +114,26 @@ async function getInlineScriptData(
   };
 }
 
+interface StyleElementData {
+  tagName: string;
+  style: string | null;
+}
+
+/**
+ * Gathers tag name and style attribute for an element at a given index.
+ */
+async function getStyleElementData(
+  locator: import("@playwright/test").Locator,
+  index: number,
+): Promise<StyleElementData> {
+  const el = locator.nth(index);
+  const [tagName, style] = await Promise.all([
+    el.evaluate((node) => node.tagName.toLowerCase()),
+    el.getAttribute("style"),
+  ]);
+  return { tagName, style };
+}
+
 test.describe("CSP and SRI Security Checks", () => {
   test("scripts have nonce placeholders for CSP", async ({ page }) => {
     const urls = await getSitemapUrls();
@@ -227,14 +247,9 @@ test.describe("CSP and SRI Security Checks", () => {
 
         const count = await locator.count();
         const elementData = await Promise.all(
-          Array.from({ length: count }).map(async (_, i) => {
-            const el = locator.nth(i);
-            const [tagName, style] = await Promise.all([
-              el.evaluate((node) => node.tagName.toLowerCase()),
-              el.getAttribute("style"),
-            ]);
-            return { tagName, style };
-          }),
+          Array.from({ length: count }).map((_, i) =>
+            getStyleElementData(locator, i),
+          ),
         );
 
         // Filter out empty styles and add violations

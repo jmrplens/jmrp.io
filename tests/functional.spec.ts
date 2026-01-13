@@ -148,7 +148,6 @@ test.describe("Security & Best Practices", () => {
         await page.goto(url);
 
         // Find all images (excluding decorative icons in buttons)
-        // Find all images (excluding decorative icons in buttons)
         const images = page.locator('img:not([role="presentation"])');
         const count = await images.count();
 
@@ -158,10 +157,9 @@ test.describe("Security & Best Practices", () => {
           const src = await img.getAttribute("src");
 
           // Images should have alt attribute (can be empty for decorative)
-          expect(
-            alt !== null,
-            `Image ${src} should have an alt attribute`,
-          ).toBe(true);
+          expect
+            .soft(alt !== null, `Image ${src} should have an alt attribute`)
+            .toBe(true);
         }
       });
     }

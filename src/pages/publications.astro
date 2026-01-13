@@ -58,7 +58,10 @@ const collectionSchema = {
                   pub.institution,
               }
             : undefined,
-        abstract: stripHtml(pub.abstract as string | undefined),
+        abstract:
+          typeof pub.abstract === "string"
+            ? stripHtml(pub.abstract)
+            : undefined,
         // Normalize DOI to full URL
         ...(() => {
           const doi = typeof pub.doi === "string" ? pub.doi : undefined;

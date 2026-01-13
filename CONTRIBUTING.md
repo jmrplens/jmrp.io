@@ -91,6 +91,15 @@ Our CI/CD pipeline is designed to be helpful and non-intrusive. Instead of creat
 - `pnpm build`: Build for production.
 - `pnpm test:e2e`: Run Playwright tests only.
 
+### Troubleshooting
+
+If `pnpm verify` fails:
+
+1. **View logs**: Check output above the failure line for details. In CI, expand the failed job step.
+2. **Type errors**: Run `pnpm typecheck` to isolate.
+3. **Lint/format issues**: Run `pnpm lint` and `pnpm exec prettier --write .`.
+4. **Build failures**: Run `pnpm build` standalone to see full error output.
+
 ## 🎨 Code Style
 
 - **Formatting**: We use **Prettier**. Run `pnpm exec prettier --write .` to format.

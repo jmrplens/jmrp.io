@@ -12,9 +12,9 @@ import { calculateHealthScore } from "./utils.mjs";
 
 const DIST_REPORTS = "dist-reports";
 
-// Ensure the target directory exists
-if (fs.existsSync(DIST_REPORTS)) fs.rmSync(DIST_REPORTS, { recursive: true });
-fs.mkdirSync(DIST_REPORTS);
+// Ensure the target directory exists (idempotent cleanup)
+fs.rmSync(DIST_REPORTS, { recursive: true, force: true });
+fs.mkdirSync(DIST_REPORTS, { recursive: true });
 
 /**
  * Safely copies a file or directory
@@ -40,6 +40,28 @@ function copy(src, dest) {
     );
     return false;
   }
+}
+
+/**
+ * Gets the CSS status class for HTML validation result.
+ * @param {Array<{errorCount?: number}>|null} htmlValidation - Validation results array
+ * @returns {string} CSS class name
+ */
+function getHtmlValidationStatusClass(htmlValidation) {
+  if (!htmlValidation) return "status-neutral";
+  const allPassed = htmlValidation.every((f) => (f.errorCount || 0) === 0);
+  return allPassed ? "status-success" : "status-warning";
+}
+
+/**
+ * Gets the status text for HTML validation result.
+ * @param {Array<{errorCount?: number}>|null} htmlValidation - Validation results array
+ * @returns {string} Status text
+ */
+function getHtmlValidationStatusText(htmlValidation) {
+  if (!htmlValidation) return "N/A";
+  const allPassed = htmlValidation.every((f) => (f.errorCount || 0) === 0);
+  return allPassed ? "Passed" : "Failed";
 }
 
 // 1. Move Reports to structured folders
@@ -114,7 +136,7 @@ if (fs.existsSync("accessibility-report.json")) {
     );
   } catch (error) {
     console.warn(
-      `⚠️ Warning: Failed to parse accessibility-report.json: ${error.message}`,
+      `⚠️ Warning: Failed to parse accessibility-report.json: ${error instanceof Error ? error.message : String(error)}`,
     );
   }
 }
@@ -125,7 +147,7 @@ if (fs.existsSync("bundle-analysis.json")) {
     bundleStats = JSON.parse(fs.readFileSync("bundle-analysis.json", "utf-8"));
   } catch (error) {
     console.warn(
-      `⚠️ Warning: Failed to parse bundle-analysis.json: ${error.message}`,
+      `⚠️ Warning: Failed to parse bundle-analysis.json: ${error instanceof Error ? error.message : String(error)}`,
     );
   }
 }
@@ -138,7 +160,7 @@ if (fs.existsSync("html-validation.json")) {
     );
   } catch (error) {
     console.warn(
-      `⚠️ Warning: Failed to parse html-validation.json: ${error.message}`,
+      `⚠️ Warning: Failed to parse html-validation.json: ${error instanceof Error ? error.message : String(error)}`,
     );
   }
 }
@@ -152,10 +174,9 @@ if (fs.existsSync("rss-validation.json")) {
   try {
     rssValidation = JSON.parse(fs.readFileSync("rss-validation.json", "utf-8"));
   } catch (error) {
-    console.warn(
-      `⚠️ Warning: Failed to parse rss-validation.json: ${error.message}`,
-    );
-    rssValidation.errors = [`Parse error: ${error.message}`];
+    const errMsg = error instanceof Error ? error.message : String(error);
+    console.warn(`⚠️ Warning: Failed to parse rss-validation.json: ${errMsg}`);
+    rssValidation.errors = [`Parse error: ${errMsg}`];
   }
 }
 
@@ -896,21 +917,7 @@ const html = `
              <div class="card">
                 <div class="card-header">
                     <div class="card-icon">📄</div>
-                    <span class="status-badge ${
-                      // prettier-ignore
-                      htmlValidation
-    ? (htmlValidation.every((f) => (f.errorCount || 0) === 0)
-      ? "status-success"
-      : "status-warning")
-    : "status-neutral"
-                    }">${
-                      // prettier-ignore
-                      htmlValidation
-    ? (htmlValidation.every((f) => (f.errorCount || 0) === 0)
-      ? "Passed"
-      : "Failed")
-    : "N/A"
-                    }</span>
+                    <span class="status-badge ${getHtmlValidationStatusClass(htmlValidation)}">${getHtmlValidationStatusText(htmlValidation)}</span>
                 </div>
                 <div class="card-title">HTML5 Validation</div>
                 <div class="card-value">${

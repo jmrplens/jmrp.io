@@ -1,6 +1,7 @@
 /* Shared styles for Blog Index and Tag Pages */
 
 .content-wrapper {
+  box-sizing: border-box;
   width: 100%;
   max-width: var(--max-width-container);
   padding: var(--space-lg) var(--space-lg);

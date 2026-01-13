@@ -22,7 +22,8 @@ export function remarkMermaidBypass() {
     visit(tree, "code", (node, index, parent) => {
       if (node.lang === "mermaid-render") {
         const newNode = {
-          type: "code",
+          value: node.value,
+          position: node.position,
           data: {
             hName: "pre",
             hProperties: {

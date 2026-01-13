@@ -3,7 +3,7 @@
  *
  * Validates search engine optimization and social sharing requirements:
  * - Technical SEO files (robots.txt, sitemap)
- * - Page titles (length, uniqueness)
+ * - Page titles (length)
  * - Canonical URLs
  * - Meta descriptions
  * - Open Graph tags (og:title, og:description, og:image, og:url)

@@ -67,7 +67,8 @@ const encodedContent = content ? encodeURIComponent(content) : undefined;
 
           const codeBlock = wrapper.querySelector("code, .copy-content");
           if (codeBlock && codeBlock instanceof HTMLElement) {
-            text = codeBlock.innerText ?? codeBlock.textContent;
+            // Prefer textContent (no layout) over innerText (forces layout)
+            text = codeBlock.textContent?.trim() || codeBlock.innerText;
           }
         }
 

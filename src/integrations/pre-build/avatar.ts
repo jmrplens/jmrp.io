@@ -34,6 +34,10 @@ export async function setupGithubAvatar(logger: AstroIntegrationLogger) {
     const buffer = await fetchGitHubAvatarBuffer();
     const tmpPath = `${outputPath}.tmp`;
     fs.writeFileSync(tmpPath, buffer);
+    // Remove existing file before rename (Windows compatibility)
+    if (fs.existsSync(outputPath)) {
+      fs.rmSync(outputPath);
+    }
     fs.renameSync(tmpPath, outputPath);
     logger.info(`  ✓ Avatar saved to ${outputPath}`);
   } catch (error) {
@@ -106,6 +110,8 @@ async function fetchGitHubAvatarBuffer(): Promise<Buffer> {
   while (true) {
     const { done, value } = await reader.read();
     if (done) break;
+    // Guard against undefined value
+    if (!value) continue;
 
     receivedLength += value.length;
     if (receivedLength > MAX_SIZE) {

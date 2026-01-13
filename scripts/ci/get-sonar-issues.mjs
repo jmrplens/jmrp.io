@@ -83,13 +83,15 @@ try {
     `\n🔍 Fetching open issues from SonarCloud for [${PROJECT_KEY}]...\n`,
   );
 
+  const encodedProjectKey = encodeURIComponent(PROJECT_KEY);
+
   const [issues, hotspots] = await Promise.all([
     fetchWithPagination(
-      `https://sonarcloud.io/api/issues/search?componentKeys=${PROJECT_KEY}&resolved=false`,
+      `https://sonarcloud.io/api/issues/search?componentKeys=${encodedProjectKey}&resolved=false`,
       "issues",
     ),
     fetchWithPagination(
-      `https://sonarcloud.io/api/hotspots/search?projectKey=${PROJECT_KEY}&status=TO_REVIEW`,
+      `https://sonarcloud.io/api/hotspots/search?projectKey=${encodedProjectKey}&status=TO_REVIEW`,
       "hotspots",
     ),
   ]);
@@ -166,10 +168,27 @@ try {
  */
 async function checkNoSonar(component, line) {
   if (!line) return false;
+
+  // Capture repo root once
+  const repoRoot = process.cwd();
+
   try {
     // Component usually has the format "project_key:relative/path"
     const filePath = component.split(":").pop();
-    const fullPath = path.resolve(process.cwd(), filePath);
+
+    // Reject absolute paths
+    if (path.isAbsolute(filePath)) {
+      logger.warn(`   ⚠️  Skipping absolute path: ${filePath}`);
+      return false;
+    }
+
+    const fullPath = path.resolve(repoRoot, filePath);
+
+    // Validate path is within repo root (prevent traversal)
+    if (!fullPath.startsWith(repoRoot + path.sep) && fullPath !== repoRoot) {
+      logger.warn(`   ⚠️  Path escapes repo root: ${filePath}`);
+      return false;
+    }
 
     if (!fs.existsSync(fullPath)) return false;
 
@@ -196,9 +215,8 @@ async function checkNoSonar(component, line) {
 
     return isSuppressed;
   } catch (error) {
-    logger.error(
-      `   ❌ Error checking NOSONAR in ${component}: ${error.message}`,
-    );
+    const errMsg = error?.message || String(error);
+    logger.error(`   ❌ Error checking NOSONAR in ${component}: ${errMsg}`);
     return false;
   }
 }

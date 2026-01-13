@@ -25,8 +25,8 @@ export function calculateHealthScore(saOutcomes = {}, qualityOutcomes = {}) {
   }
 
   // Deduction for Quality failures (-10 each)
-  for (const key in qualityOutcomes) {
-    if (qualityOutcomes[key] === "failure") {
+  for (const [, outcome] of Object.entries(qualityOutcomes)) {
+    if (outcome === "failure") {
       score -= 10;
     }
   }
@@ -60,10 +60,11 @@ export function calculateHealthScore(saOutcomes = {}, qualityOutcomes = {}) {
       if (Array.isArray(htmlValidation)) {
         const htmlErrors = htmlValidation.reduce((acc, f) => {
           // Support both standard html-validate format and simplified report format
+          // Use Number() to prevent string concatenation
           const count =
             f.errorCount === undefined
-              ? f.messages?.filter((m) => m.severity === 2).length || 0
-              : f.errorCount;
+              ? Number(f.messages?.filter((m) => m.severity === 2).length) || 0
+              : Number(f.errorCount) || 0;
           return acc + count;
         }, 0);
         // Cap deduction at 15 points

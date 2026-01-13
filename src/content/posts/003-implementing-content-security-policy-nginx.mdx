@@ -822,19 +822,34 @@ Review your violation reports and fix issues:
 Deploy enforcing CSP to a subset of traffic first:
 
 ```nginx
-# Use map to enable for ~12.5% of traffic (hex digits 0-1)
-map $request_id $csp_mode {
-    ~^[01] "enforce";   # 2/16 hex digits = ~12.5% of requests
-    default "report-only";
+# IMPORTANT: This map block MUST be placed in http { } context, NOT inside server { }
+# map $request_id $csp_mode {
+#     ~^[01] "enforce";   # 2/16 hex digits = ~12.5% of requests
+#     default "report-only";
+# }
+
+# In http { } context - define two variables for the header values
+map $request_id $csp_enforce_value {
+    ~^[01] "default-src 'none'; script-src 'nonce-$request_id' 'strict-dynamic'; ...";
+    default "";  # Empty = don't add this header
 }
 
-# Apply based on mode
-set $csp_header_name "Content-Security-Policy";
-if ($csp_mode = "report-only") {
-    set $csp_header_name "Content-Security-Policy-Report-Only";
+map $request_id $csp_report_only_value {
+    ~^[01] "";   # Empty when enforcing
+    default "default-src 'none'; script-src 'nonce-$request_id' 'strict-dynamic'; ...";
 }
 
-add_header $csp_header_name "..." always;
+# In server { } context - use explicit header names (add_header cannot use variable header name)
+# Only add headers when values are non-empty
+set $csp_nonce $request_id;
+
+# Workaround: Use if to conditionally add the appropriate header
+if ($csp_enforce_value != "") {
+    add_header Content-Security-Policy $csp_enforce_value always;
+}
+if ($csp_report_only_value != "") {
+    add_header Content-Security-Policy-Report-Only $csp_report_only_value always;
+}
 ```
 
 ### Phase 4: Full Enforcement

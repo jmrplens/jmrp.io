@@ -122,7 +122,7 @@ function getExecutiveHighlights(saResults) {
   }
 
   const a11y = safeReadJson("accessibility-report.json");
-  if (a11y) {
+  if (a11y && Array.isArray(a11y)) {
     const violations = a11y.reduce(
       (acc, r) => acc + (r.violations?.length || 0),
       0,
@@ -135,8 +135,11 @@ function getExecutiveHighlights(saResults) {
   }
 
   const html = safeReadJson("html-validation.json");
-  if (html) {
-    const errors = html.reduce((acc, f) => acc + (f.errorCount || 0), 0);
+  if (html && Array.isArray(html)) {
+    const errors = html.reduce(
+      (acc, f) => acc + (Number(f.errorCount) || 0),
+      0,
+    );
     highlights.push(
       errors === 0
         ? "- 📄 **HTML5:** Full valid syntax across all generated pages. ✅"

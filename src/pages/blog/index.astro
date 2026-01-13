@@ -54,7 +54,7 @@ const schema = {
     itemListElement: posts.map((post, index) => ({
       "@type": "ListItem",
       position: index + 1,
-      url: new URL(`/blog/${post.id}/`, getSiteUrl()).toString(),
+      url: new URL(`/blog/${post.data.slug}/`, getSiteUrl()).toString(),
       name: post.data.title,
     })),
   },

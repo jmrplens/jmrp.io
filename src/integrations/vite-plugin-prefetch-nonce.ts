@@ -44,12 +44,12 @@ export function vitePrefetchNoncePlugin(): Plugin {
       // Using an IIFE with a temp variable to avoid duplicating the expression
       const patchedCode = code.replace(
         appendPattern,
-        `(() => {
+        `;(() => {
           const __vitePrefetchEl = $1;
           const existingScript = document.querySelector("head > script[nonce], body > script[nonce]");
           if (existingScript?.nonce) __vitePrefetchEl.nonce = existingScript.nonce;
           document.head.append(__vitePrefetchEl);
-        })()`,
+        })();`,
       );
 
       if (patchedCode === code) {

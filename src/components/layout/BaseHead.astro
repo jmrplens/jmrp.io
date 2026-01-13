@@ -17,6 +17,7 @@ import type { SiteConfig } from "@src/types";
 import { safeJsonLd } from "@utils/html";
 import { getSiteUrl } from "@utils/site";
 // Variable Fonts (managed by Astro Experimental Fonts)
+import type { ImageMetadata } from "astro";
 import { Font, getImage } from "astro:assets";
 import { getEntry } from "astro:content";
 
@@ -39,7 +40,7 @@ const siteData = (siteEntry?.data || {}) as SiteConfig;
 interface Props {
   title: string;
   description?: string;
-  image?: string;
+  image?: string | ImageMetadata;
   type?: string;
   // Article specific props
   publishDate?: Date;

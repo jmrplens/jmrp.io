@@ -95,8 +95,15 @@ const { headings } = Astro.props;
       const focusables = drawer.querySelectorAll(
         'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
       );
+
+      // Guard against empty focusables
+      if (focusables.length === 0) return;
+
       const firstElement = focusables[0] as HTMLElement;
       const lastElement = focusables[focusables.length - 1] as HTMLElement;
+
+      // Extra guard for safety
+      if (!firstElement || !lastElement) return;
 
       if (e.shiftKey) {
         if (document.activeElement === firstElement) {

@@ -77,10 +77,9 @@ const iconFiles = import.meta.glob<{ default: ImageMetadata }>(
           return (
             <a
               href={ref.url}
-              {...(isExternalLink && {
-                target: "_blank",
-                rel: "noopener noreferrer",
-              })}
+              {...(isExternalLink
+                ? { target: "_blank", rel: "noopener noreferrer" }
+                : {})}
               class="reference-card"
               aria-label={`${ref.text} (${hostname}${pathname === "/" ? "" : pathname})`}
             >
@@ -229,6 +228,21 @@ const iconFiles = import.meta.glob<{ default: ImageMetadata }>(
   }
 
   .reference-card:hover .card-arrow {
+    opacity: 100%;
+    transform: translateX(0);
+  }
+
+  /* Focus-visible styles for keyboard navigation */
+  .reference-card:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+    background: var(--color-card-bg, rgb(125 125 125 / 10%));
+    border-color: var(--color-primary);
+    box-shadow: 0 4px 12px rgb(0 0 0 / 5%);
+    transform: translateY(-3px);
+  }
+
+  .reference-card:focus-visible .card-arrow {
     opacity: 100%;
     transform: translateX(0);
   }

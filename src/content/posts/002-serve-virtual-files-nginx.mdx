@@ -181,7 +181,7 @@ These three directives determine _where_ Nginx looks for files. Understanding th
 </CompareCode>
 
 <Callout type="warning" icon="mdi:alert">
-  **Common Mistake:** When using `alias`, always include a trailing slash on both the location and the alias path. Missing slashes cause path resolution errors.
+  **Common Mistake:** For prefix directory aliases (e.g., `location /images/`), include a trailing slash on both the location and the alias path. For exact-match aliases (e.g., `location = /robots.txt`), trailing slashes are not applicable.
 </Callout>
 
 ### try_files for Fallback Chains
@@ -273,7 +273,7 @@ server {
 </FileContent>
 
 <Callout type="info" icon="mdi:information">
-  **Note:** Use `default_type` instead of `add_header Content-Type` with `return`. The `add_header` directive may not work as expected in all contexts with `return`.
+  **Note:** Use `default_type` to set Content-Type for inline `return` bodies. The `add_header` directive can add other headers but only applies to certain response codes (200, 201, 204, 206, 301, 302, 303, 304, 307, 308) unless the `always` flag is used.
 </Callout>
 
 ---
@@ -753,7 +753,7 @@ A production-ready configuration combining all techniques:
 
 <FileContent filename="/etc/nginx/sites-available/example.com.conf" icon="devicon:nginx">
 ```nginx
-# Rate limiting zone
+# Rate limiting zone (MUST be placed in http { } context, not inside server { } or location { })
 limit_req_zone $binary_remote_addr zone=general:10m rate=10r/s;
 
 server {

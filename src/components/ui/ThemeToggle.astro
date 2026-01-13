@@ -86,9 +86,8 @@ import { Icon } from "astro-icon/components";
   /**
    * Gets the current theme from localStorage or system preference.
    * Falls back to "dark" if no valid theme is found.
-   * @returns {"light" | "dark"} The current theme
    */
-  const getTheme = () => {
+  const getTheme = (): "light" | "dark" => {
     try {
       if (typeof localStorage !== "undefined") {
         const stored = localStorage.getItem("theme");

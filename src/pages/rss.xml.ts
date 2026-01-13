@@ -118,7 +118,7 @@ export async function GET() {
         };
       }),
     ),
-    customData: `<language>${siteData?.locale?.replaceAll("_", "-").toLowerCase() || "en-us"}</language>
+    customData: `<language>${siteData?.locale ? siteData.locale.replaceAll("_", "-").toLowerCase() : "en-us"}</language>
 <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>
 <generator>Astro RSS Generator</generator>
 <atom:link href="${new URL("rss.xml", site).toString()}" rel="self" type="application/rss+xml" />`,

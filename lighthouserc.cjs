@@ -56,7 +56,9 @@ module.exports = {
       numberOfRuns: 3,
       outputDir: "lighthouse-results",
       settings: {
-        chromeFlags: "--no-sandbox --headless=new",
+        chromeFlags: process.env.CI
+          ? ["--headless", "--no-sandbox"]
+          : ["--headless"],
         formFactor: process.env.FORM_FACTOR || "mobile",
         throttlingMethod: "simulate",
         throttling: {

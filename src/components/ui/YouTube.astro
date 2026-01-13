@@ -16,11 +16,12 @@ const { id, title = "YouTube Video" } = Astro.props;
 
 <div class="youtube-embed">
   <iframe
-    src={`https://www.youtube.com/embed/${id}`}
+    src={`https://www.youtube-nocookie.com/embed/${id}`}
     title={title}
-    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
     loading="lazy"
-    sandbox="allow-scripts allow-same-origin allow-presentation allow-fullscreen"
+    sandbox="allow-scripts allow-same-origin allow-presentation"
+    referrerpolicy="strict-origin-when-cross-origin"
     allowfullscreen
   ></iframe>
 </div>

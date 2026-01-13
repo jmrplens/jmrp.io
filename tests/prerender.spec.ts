@@ -149,20 +149,36 @@ test.describe("Speculation Rules / Prerender", () => {
     ).toBeGreaterThan(0);
 
     for (const rule of validRules) {
-      // eslint-disable-next-line playwright/no-conditional-in-test
+      // Ensure at least one of prerender or prefetch has non-empty urls
+      /* eslint-disable playwright/no-conditional-in-test -- Fallback assignments for optional arrays */
       const prerenderRules = rule.prerender || [];
+      const prefetchRules = rule.prefetch || [];
+      /* eslint-enable playwright/no-conditional-in-test */
+      expect(
+        prerenderRules.length > 0 || prefetchRules.length > 0,
+        "Expected rule to have prerender or prefetch entries",
+      ).toBe(true);
+
       for (const prerenderRule of prerenderRules) {
         expect(prerenderRule).toHaveProperty("source", "list");
         expect(prerenderRule).toHaveProperty("urls");
         expect(prerenderRule).toHaveProperty("eagerness");
+        // Validate urls array is non-empty
+        expect(
+          Array.isArray(prerenderRule.urls) && prerenderRule.urls.length > 0,
+          "Expected prerender rule to have non-empty urls array",
+        ).toBe(true);
       }
 
-      // eslint-disable-next-line playwright/no-conditional-in-test
-      const prefetchRules = rule.prefetch || [];
       for (const prefetchRule of prefetchRules) {
         expect(prefetchRule).toHaveProperty("source", "list");
         expect(prefetchRule).toHaveProperty("urls");
         expect(prefetchRule).toHaveProperty("eagerness");
+        // Validate urls array is non-empty
+        expect(
+          Array.isArray(prefetchRule.urls) && prefetchRule.urls.length > 0,
+          "Expected prefetch rule to have non-empty urls array",
+        ).toBe(true);
       }
     }
   });
@@ -208,6 +224,10 @@ test.describe("Speculation Rules / Prerender", () => {
     if ((await internalLinks.count()) > 0) {
       await internalLinks.first().hover();
     }
+
+    // Wait for any async violation handlers to fire
+    // eslint-disable-next-line playwright/no-wait-for-timeout
+    await page.waitForTimeout(150);
 
     expect(cspViolations).toEqual([]);
   });

@@ -67,6 +67,12 @@ const { summary } = Astro.props;
     transition: background-color 0.2s;
   }
 
+  summary:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: -2px;
+    border-radius: var(--radius-md);
+  }
+
   summary::-webkit-details-marker {
     display: none; /* Remove default marker for Safari */
   }
