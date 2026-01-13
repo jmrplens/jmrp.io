@@ -25,7 +25,7 @@ const posts = defineCollection({
       draft: z.boolean().default(false),
       description: z.string().optional(),
       author: z.string().optional(),
-      authorEmail: z.email().optional(),
+      authorEmail: z.string().email().optional(),
       coverImage: image().optional(),
       tags: z.array(z.string()).optional(),
     }),

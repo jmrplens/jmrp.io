@@ -15,8 +15,16 @@ import { Icon } from "astro-icon/components";
   class="theme-toggle"
   aria-label="Toggle Dark Mode"
 >
-  <span class="icon-sun"><Icon name="fa-solid:sun" /></span>
-  <span class="icon-moon"><Icon name="fa-solid:moon" /></span>
+  <span
+    class="icon-sun"
+    aria-hidden="true"
+    ><Icon name="fa-solid:sun" /></span
+  >
+  <span
+    class="icon-moon"
+    aria-hidden="true"
+    ><Icon name="fa-solid:moon" /></span
+  >
 </button>
 
 <style>
@@ -64,58 +72,102 @@ import { Icon } from "astro-icon/components";
 </style>
 
 <script>
+  /**
+   * Normalizes a theme value to a valid theme ("light" or "dark").
+   * Returns null if the value is not a valid theme.
+   */
+  const normalizeTheme = (value: unknown): "light" | "dark" | null => {
+    if (value === "light" || value === "dark") {
+      return value;
+    }
+    return null;
+  };
+
+  /**
+   * Gets the current theme from localStorage or system preference.
+   * Falls back to "dark" if no valid theme is found.
+   * @returns {"light" | "dark"} The current theme
+   */
+  const getTheme = () => {
+    try {
+      if (typeof localStorage !== "undefined") {
+        const stored = localStorage.getItem("theme");
+        const normalized = normalizeTheme(stored);
+        if (normalized) {
+          return normalized;
+        }
+      }
+    } catch {
+      // localStorage may be blocked (e.g., private browsing); ignore
+    }
+    // Fall back to system preference
+    if (globalThis.matchMedia("(prefers-color-scheme: light)").matches) {
+      return "light";
+    }
+    return "dark";
+  };
+
+  /**
+   * Sets the theme on the document and persists to localStorage.
+   * Only writes if the theme is a valid normalized value.
+   */
+  const setTheme = (theme: string): void => {
+    const normalized = normalizeTheme(theme);
+    if (!normalized) {
+      return; // Invalid theme, do nothing
+    }
+
+    document.documentElement.dataset.theme = normalized;
+
+    try {
+      localStorage.setItem("theme", normalized);
+    } catch {
+      // localStorage may be blocked; silently ignore
+    }
+
+    // Also toggle global class for older css usage if any
+    if (normalized === "light") {
+      document.documentElement.classList.add("light-mode");
+      document.documentElement.classList.remove("dark-mode");
+    } else {
+      document.documentElement.classList.add("dark-mode");
+      document.documentElement.classList.remove("light-mode");
+    }
+
+    // Update aria-label on toggle button
+    const toggle = document.getElementById("theme-toggle");
+    if (toggle) {
+      const label =
+        normalized === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode";
+      toggle.setAttribute("aria-label", label);
+    }
+  };
+
+  /** Initializes the theme toggle component */
   const initThemeToggle = () => {
     const toggle = document.getElementById("theme-toggle");
 
-    const getTheme = () => {
-      if (
-        typeof localStorage !== "undefined" &&
-        localStorage.getItem("theme")
-      ) {
-        return localStorage.getItem("theme");
-      }
-      if (globalThis.matchMedia("(prefers-color-scheme: light)").matches) {
-        return "light";
-      }
-      return "dark"; // Default
-    };
-
-    const setTheme = (theme: string) => {
-      document.documentElement.dataset.theme = theme;
-      localStorage.setItem("theme", theme);
-
-      // Also toggle global class for older css usage if any
-      if (theme === "light") {
-        document.documentElement.classList.add("light-mode");
-        document.documentElement.classList.remove("dark-mode");
-      } else {
-        document.documentElement.classList.add("dark-mode");
-        document.documentElement.classList.remove("light-mode");
-      }
-
-      // Update aria-label
-      if (toggle) {
-        const label =
-          theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode";
-        toggle.setAttribute("aria-label", label);
-      }
-    };
-
     // Initialize state based on current theme
     if (toggle) {
-      const currentTheme = getTheme() || "dark"; // Default fallback
-      setTheme(currentTheme); // Apply immediately to prevent flash
-      // Note: aria-label is already updated by setTheme
+      const currentTheme = getTheme();
+      setTheme(currentTheme);
 
       toggle.onclick = () => {
-        const currentTheme = getTheme();
-        const newTheme = currentTheme === "dark" ? "light" : "dark";
+        const current = getTheme();
+        const newTheme = current === "dark" ? "light" : "dark";
         setTheme(newTheme);
       };
     }
   };
 
-  document.addEventListener("DOMContentLoaded", initThemeToggle);
+  // Run immediately if DOM is ready, otherwise wait for DOMContentLoaded
+  if (document.readyState !== "loading") {
+    initThemeToggle();
+  } else {
+    document.addEventListener("DOMContentLoaded", initThemeToggle);
+  }
+
+  // Register astro:after-swap listener only once
   if (!document.documentElement.hasAttribute("data-theme-listener-init")) {
     document.documentElement.setAttribute("data-theme-listener-init", "true");
     document.addEventListener("astro:after-swap", initThemeToggle);

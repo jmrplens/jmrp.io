@@ -11,7 +11,14 @@ const { group } = Astro.props;
 
 <div class="group-category">
   <h3>
-    {group.icon && <Icon name={group.icon} />}
+    {
+      group.icon && (
+        <Icon
+          name={group.icon}
+          aria-hidden="true"
+        />
+      )
+    }
     {group.category}
   </h3>
   <div class="certificate-list">
@@ -26,6 +33,7 @@ const { group } = Astro.props;
                   <Icon
                     name="fa-solid:university"
                     class="meta-icon"
+                    aria-hidden="true"
                   />
                   {item.school}
                 </span>
@@ -35,6 +43,7 @@ const { group } = Astro.props;
                   <Icon
                     name="fa-solid:clock"
                     class="meta-icon"
+                    aria-hidden="true"
                   />
                   {item.time}
                 </span>
@@ -47,9 +56,12 @@ const { group } = Astro.props;
               href={item.link}
               class="btn btn-sm"
               download
-              aria-label={`Download certificate: ${item.name}`}
+              aria-label={`Download certificate: ${item.linkname || item.name}`}
             >
-              <Icon name="fa-solid:download" />
+              <Icon
+                name="fa-solid:download"
+                aria-hidden="true"
+              />
               {item.linkname || "Download"}
             </a>
           )}

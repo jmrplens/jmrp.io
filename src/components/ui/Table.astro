@@ -1,0 +1,337 @@
+---
+/**
+ * Table Component
+ * A reusable, styled table component for displaying structured data.
+ *
+ * ## Semantic Cell Attributes
+ * Use `data-status` on `<td>` elements for colored status cells:
+ *
+ * ```html
+ * <td data-status="success">Active</td>
+ * <td data-status="error">Inactive</td>
+ * <td data-status="warning">Pending</td>
+ * <td data-status="info">Note</td>
+ * ```
+ *
+ * ## Row Status
+ * Use `data-status` on `<tr>` elements to highlight entire rows:
+ *
+ * ```html
+ * <tr data-status="success">...</tr>
+ * ```
+ *
+ * ## Usage Examples
+ * ```astro
+ * <Table title="Comparison">
+ *   <thead>
+ *     <tr><th>Feature</th><th>Support</th></tr>
+ *   </thead>
+ *   <tbody>
+ *     <tr>
+ *       <td>Feature A</td>
+ *       <td data-status="success">Yes</td>
+ *     </tr>
+ *     <tr>
+ *       <td>Feature B</td>
+ *       <td data-status="error">No</td>
+ *     </tr>
+ *   </tbody>
+ * </Table>
+ * ```
+ */
+import { createHash } from "node:crypto";
+
+interface Props {
+  title?: string;
+  striped?: boolean;
+  compact?: boolean;
+  highlight?: boolean;
+  bordered?: boolean;
+  ariaLabel?: string;
+  class?: string;
+}
+
+const {
+  title,
+  striped = true,
+  compact = false,
+  highlight = true,
+  bordered = false,
+  ariaLabel,
+  class: className,
+} = Astro.props;
+
+const slotContent = await Astro.slots.render("default");
+const uuid = createHash("sha256")
+  .update(`table-${title || ""}-${slotContent.slice(0, 100)}`)
+  .digest("hex")
+  .slice(0, 8);
+
+const finalAriaLabel = ariaLabel || (title ? `Table: ${title}` : "Data table");
+
+const wrapperClasses = [
+  "table-wrapper",
+  striped && "striped",
+  compact && "compact",
+  highlight && "highlight",
+  bordered && "bordered",
+  className,
+]
+  .filter(Boolean)
+  .join(" ");
+---
+
+<div
+  class={wrapperClasses}
+  data-testid={uuid}
+>
+  {title && <div class="table-title">{title}</div>}
+  <div class="table-container">
+    <table aria-label={finalAriaLabel}>
+      <Fragment set:html={slotContent} />
+    </table>
+  </div>
+</div>
+
+<style>
+  /* ===========================================
+     CSS CUSTOM PROPERTIES (Tokens)
+     =========================================== */
+  .table-wrapper {
+    /* Light mode defaults */
+    --table-bg: var(--color-bg-secondary, #f6f8fa);
+    --table-header-bg: var(--color-bg-header, #eaeff2);
+    --table-header-text: var(--color-text-heading, #1f2328);
+    --table-row-odd: transparent;
+    --table-row-even: rgb(0 0 0 / 2.5%);
+    --table-row-hover: rgb(0 0 0 / 5%);
+    --table-border: var(--color-border, #d0d7de);
+    --table-text: var(--color-text, #24292f);
+
+    /* Status colors - Light mode */
+    --status-success-bg: #dcfce7;
+    --status-success-text: #166534;
+    --status-success-border: #86efac;
+    --status-error-bg: #fee2e2;
+    --status-error-text: #991b1b;
+    --status-error-border: #fca5a5;
+    --status-warning-bg: #fef3c7;
+    --status-warning-text: #92400e;
+    --status-warning-border: #fcd34d;
+    --status-info-bg: #dbeafe;
+    --status-info-text: #1e40af;
+    --status-info-border: #93c5fd;
+
+    /* Base styles */
+    margin: 1.5rem 0;
+    overflow: hidden;
+    background-color: var(--table-bg);
+    border: 1px solid var(--table-border);
+    border-radius: var(--radius-md, 8px);
+  }
+
+  /* Dark mode overrides */
+  :root[data-theme="dark"] .table-wrapper {
+    --table-bg: var(--color-bg-secondary, #0d1117);
+    --table-header-bg: rgb(255 255 255 / 5%);
+    --table-header-text: var(--color-text-heading, #fff);
+    --table-row-odd: transparent;
+    --table-row-even: rgb(255 255 255 / 3%);
+    --table-row-hover: rgb(255 255 255 / 6%);
+    --table-border: var(--color-border, #30363d);
+    --table-text: var(--color-text, #c9d1d9);
+
+    /* Status colors - Dark mode */
+    --status-success-bg: rgb(34 197 94 / 20%);
+    --status-success-text: #86efac;
+    --status-success-border: rgb(34 197 94 / 40%);
+    --status-error-bg: rgb(239 68 68 / 20%);
+    --status-error-text: #fca5a5;
+    --status-error-border: rgb(239 68 68 / 40%);
+    --status-warning-bg: rgb(234 179 8 / 20%);
+    --status-warning-text: #fde047;
+    --status-warning-border: rgb(234 179 8 / 40%);
+    --status-info-bg: rgb(59 130 246 / 20%);
+    --status-info-text: #93c5fd;
+    --status-info-border: rgb(59 130 246 / 40%);
+  }
+
+  .table-title {
+    padding: 0.75rem 1rem;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--table-header-text);
+    background-color: var(--table-header-bg);
+    border-bottom: 1px solid var(--table-border);
+  }
+
+  .table-container {
+    overflow-x: auto;
+  }
+
+  /* ===========================================
+     TABLE BASE STYLES
+     =========================================== */
+  table {
+    width: 100%;
+    min-width: 400px;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: var(--table-text);
+    border-collapse: collapse;
+  }
+
+  :global(.table-wrapper th),
+  :global(.table-wrapper td) {
+    padding: 0.875rem 1rem;
+    vertical-align: middle;
+    text-align: left;
+  }
+
+  .compact :global(th),
+  .compact :global(td) {
+    padding: 0.5rem 0.75rem;
+  }
+
+  /* ===========================================
+     HEADER STYLES
+     =========================================== */
+  :global(.table-wrapper thead) {
+    border-bottom: 2px solid var(--table-border);
+  }
+
+  :global(.table-wrapper thead th) {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--table-header-text);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    background-color: var(--table-header-bg);
+  }
+
+  /* ===========================================
+     ROW STYLES - Better differentiation
+     =========================================== */
+  :global(.table-wrapper tbody tr) {
+    background-color: var(--table-row-odd);
+    border-bottom: 1px solid var(--table-border);
+    transition: background-color 0.15s ease;
+  }
+
+  :global(.table-wrapper tbody tr:last-child) {
+    border-bottom: none;
+  }
+
+  /* Striped rows - Alternating backgrounds */
+  .striped :global(tbody tr:nth-child(even)) {
+    background-color: var(--table-row-even);
+  }
+
+  /* Row highlight on hover */
+  .highlight :global(tbody tr:hover) {
+    background-color: var(--table-row-hover);
+  }
+
+  /* Bordered variant */
+  .bordered :global(th),
+  .bordered :global(td) {
+    border: 1px solid var(--table-border);
+  }
+
+  /* ===========================================
+     SEMANTIC STATUS CELLS (data-status)
+     Pill/badge style for clear indication
+     =========================================== */
+
+  /* Success status */
+  :global(.table-wrapper td[data-status="success"]),
+  :global(.table-wrapper td[data-status="ok"]),
+  :global(.table-wrapper td[data-status="yes"]) {
+    font-weight: 500;
+    color: var(--status-success-text);
+    background-color: var(--status-success-bg);
+  }
+
+  /* Error status */
+  :global(.table-wrapper td[data-status="error"]),
+  :global(.table-wrapper td[data-status="no"]),
+  :global(.table-wrapper td[data-status="bad"]) {
+    font-weight: 500;
+    color: var(--status-error-text);
+    background-color: var(--status-error-bg);
+  }
+
+  /* Warning status */
+  :global(.table-wrapper td[data-status="warning"]),
+  :global(.table-wrapper td[data-status="caution"]),
+  :global(.table-wrapper td[data-status="partial"]) {
+    font-weight: 500;
+    color: var(--status-warning-text);
+    background-color: var(--status-warning-bg);
+  }
+
+  /* Info status */
+  :global(.table-wrapper td[data-status="info"]),
+  :global(.table-wrapper td[data-status="note"]) {
+    font-weight: 500;
+    color: var(--status-info-text);
+    background-color: var(--status-info-bg);
+  }
+
+  /* Row-level status */
+  :global(.table-wrapper tbody tr[data-status="success"]) {
+    background-color: var(--status-success-bg) !important;
+  }
+
+  :global(.table-wrapper tbody tr[data-status="error"]) {
+    background-color: var(--status-error-bg) !important;
+  }
+
+  :global(.table-wrapper tbody tr[data-status="warning"]) {
+    background-color: var(--status-warning-bg) !important;
+  }
+
+  /* ===========================================
+     CONTENT STYLING
+     =========================================== */
+
+  /* First column emphasis */
+  :global(.table-wrapper tbody td:first-child) {
+    font-weight: 500;
+    color: var(--table-header-text);
+  }
+
+  /* Code in tables */
+  :global(.table-wrapper code) {
+    padding: 0.15rem 0.4rem;
+    font-family: var(--font-mono);
+    font-size: 0.85em;
+    background-color: rgb(128 128 128 / 10%);
+    border-radius: var(--radius-sm, 4px);
+  }
+
+  /* Strong text in tables */
+  :global(.table-wrapper strong) {
+    font-weight: 600;
+    color: var(--table-header-text);
+  }
+
+  /* ===========================================
+     RESPONSIVE
+     =========================================== */
+  @media (width <= 600px) {
+    table {
+      font-size: 0.8rem;
+    }
+
+    :global(.table-wrapper th),
+    :global(.table-wrapper td) {
+      padding: 0.6rem 0.75rem;
+    }
+
+    :global(.table-wrapper thead th) {
+      font-size: 0.7rem;
+    }
+  }
+</style>

@@ -78,14 +78,14 @@ test.describe("Deep Accessibility & Interaction Tests", () => {
     // Wait for the script to inject buttons OR for components to render their buttons
     // We expect buttons to be present.
     await expect(
-      page.locator(".custom-code-copy-btn, .copy-button").first(),
+      page.locator(".code-header-copy-btn, .copy-button").first(),
     ).toBeAttached({
       timeout: 5000,
     });
 
     // Debugging: Log counts
     const totalBtns = await page
-      .locator(".custom-code-copy-btn, .copy-button")
+      .locator(".code-header-copy-btn, .copy-button")
       .count();
 
     // Expect at least one button to prevent silent failures on pages without code
@@ -95,7 +95,7 @@ test.describe("Deep Accessibility & Interaction Tests", () => {
     ).toBeGreaterThan(0);
 
     // Find FIRST code block copy button (may be invisible/opacity 0 initially)
-    const copyBtn = page.locator(".custom-code-copy-btn, .copy-button").first();
+    const copyBtn = page.locator(".code-header-copy-btn, .copy-button").first();
 
     // Debugging: Log initial visibility info
     await copyBtn.waitFor({ state: "attached" });

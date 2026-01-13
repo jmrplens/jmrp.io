@@ -50,14 +50,17 @@ function decodeData(
 
 /**
  * Generates a stable filename for an asset based on its content hash.
+ * Validates hash length to ensure unique filenames.
  */
 function getAssetFilename(buffer: Buffer, mime: string): string {
   const ext = getExtensionFromMime(mime);
+  // Ensure at least 1 character for hash to prevent filename collisions
+  const validatedLength = Math.max(1, ASSET_FILENAME_HASH_LENGTH);
   const hash = crypto
     .createHash("sha256")
     .update(buffer)
     .digest("hex")
-    .slice(0, Math.max(0, ASSET_FILENAME_HASH_LENGTH));
+    .slice(0, validatedLength);
   return hash + "." + ext;
 }
 
@@ -164,6 +167,9 @@ export async function processHtmlFiles(
  * @param hashCache - Cache map for file integrity hashes.
  * @param logger - The Astro logger instance.
  */
+/** Sentinel marker to detect if beacon has already been hardened */
+const BEACON_HARDENED_SENTINEL = "/* jmrp-beacon-hardened */";
+
 function hardenBeaconScript(
   distDir: string,
   hashCache: Map<string, string>,
@@ -172,10 +178,17 @@ function hardenBeaconScript(
   // Special handling for cf-beacon.js to avoid Lighthouse errors while keeping SRI
   const beaconPath = path.join(distDir, "scripts", "cf-beacon.js");
   if (fs.existsSync(beaconPath)) {
-    logger.info("Hardening cf-beacon.js with local guard...");
     const originalBeacon = fs.readFileSync(beaconPath, "utf-8");
-    // Prepend a guard that stops execution on localhost/127.0.0.1/0.0.0.0/::1/[::1]
-    const hardenedBeacon = `(function(){var h=location.hostname;if(h==='localhost'||h==='127.0.0.1'||h==='0.0.0.0'||h==='::1'||h==='[::1]')return;${originalBeacon}})();`;
+
+    // Check if already hardened (idempotent operation)
+    if (originalBeacon.startsWith(BEACON_HARDENED_SENTINEL)) {
+      logger.info("cf-beacon.js already hardened, skipping.");
+      return;
+    }
+
+    logger.info("Hardening cf-beacon.js with local guard...");
+    // Prepend sentinel and guard that stops execution on localhost/127.0.0.1/0.0.0.0/::1/[::1]
+    const hardenedBeacon = `${BEACON_HARDENED_SENTINEL}(function(){var h=location.hostname;if(h==='localhost'||h==='127.0.0.1'||h==='0.0.0.0'||h==='::1'||h==='[::1]')return;${originalBeacon}})();`;
     fs.writeFileSync(beaconPath, hardenedBeacon, "utf-8");
     // Force re-calculation of hash for this file
     hashCache.delete(`${beaconPath}:sha512`);
@@ -283,6 +296,7 @@ function processImages(
 
 /**
  * Finds and extracts data URIs from src and srcset attributes.
+ * Only processes img and source elements to avoid affecting other data URIs.
  */
 function findAndExtractDataUris(
   $: cheerio.CheerioAPI,
@@ -293,8 +307,11 @@ function findAndExtractDataUris(
   let extractedCount = 0;
   const fileName = file ? path.basename(file) : undefined;
 
-  // Process both <img> src and <source> srcset
-  $("[src^='data:'], [srcset*='data:']").each((_, el) => {
+  // Process only <img> and <source> elements with data URIs
+  // Restricted selector prevents rewriting data: URIs on non-image elements
+  $(
+    "img[src^='data:'], img[srcset*='data:'], source[src^='data:'], source[srcset*='data:']",
+  ).each((_, el) => {
     const $el = $(el);
 
     // Handle 'src' attribute
@@ -681,6 +698,16 @@ function processBeacon(
 }
 
 /**
+ * Sanitizes a language name for safe use in aria-labels.
+ * Restricts to alphanumeric characters and hyphens only.
+ */
+function sanitizeLanguage(lang: string): string {
+  // Allow only alphanumeric, hyphens, and underscores; default to "code" if empty
+  const sanitized = lang.replaceAll(/[^a-zA-Z0-9_-]/g, "").toLowerCase();
+  return sanitized || "code";
+}
+
+/**
  * Processes code blocks to ensure they are accessible and valid HTML5.
  * - Wraps standalone <pre> tags in <section> if they act as landmarks.
  * - Ensures unique aria-labels for all code regions.
@@ -707,16 +734,17 @@ function processCodeBlocks($: cheerio.CheerioAPI): boolean {
     }
 
     regionCount++;
-    const lang = $el.attr("data-language") || "code";
-    const uniqueLabel = `${lang.charAt(0).toUpperCase() + lang.slice(1)} snippet ${regionCount}`;
+    // Sanitize data-language to prevent injection of unsafe characters
+    const rawLang = $el.attr("data-language") || "code";
+    const safeLang = sanitizeLanguage(rawLang);
+    const displayLang = safeLang.charAt(0).toUpperCase() + safeLang.slice(1);
+    const uniqueLabel = `${displayLang} snippet ${regionCount}`;
 
-    // Create section wrapper
-    const wrapper = $("<section></section>")
-      .attr("aria-label", uniqueLabel)
-      .addClass("code-section-wrapper");
+    // Build wrapper as HTML string for consistent behavior
+    const wrapperHtml = `<section aria-label="${uniqueLabel}" class="code-section-wrapper"></section>`;
 
-    // Wrap the pre
-    $el.wrap(wrapper);
+    // Wrap the pre element
+    $el.wrap(wrapperHtml);
     $el.removeAttr("role"); // Landmark is now the section
     modified = true;
   });

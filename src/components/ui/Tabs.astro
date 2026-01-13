@@ -20,11 +20,11 @@ const { class: className } = Astro.props;
 
 <script>
   class TabsComponent extends HTMLElement {
-    private _tabListeners: Array<{
+    _tabListeners: {
       button: HTMLButtonElement;
       clickHandler: () => void;
       keydownHandler: (e: KeyboardEvent) => void;
-    }> = [];
+    }[] = [];
 
     connectedCallback() {
       // Use requestAnimationFrame to ensure the children are fully parsed
@@ -230,8 +230,8 @@ const { class: className } = Astro.props;
   }
 
   /* Responsive overflow handling */
-  ui-tabs :global(pre),
-  ui-tabs :global(.mermaid) {
+  ui-tabs pre,
+  ui-tabs .mermaid {
     max-width: 100% !important;
     overflow-x: auto !important;
   }

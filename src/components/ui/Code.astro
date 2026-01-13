@@ -1,119 +1,191 @@
 ---
 /**
  * Code Component
- * Displays a code block with support for syntax highlighting and a copy button.
- *
- * NOTE: We use a <span> with 'display: block' instead of a <code> tag because
- * MDX often injects <p> tags inside code slots, which is invalid inside <code>.
+ * Displays a code block with a header showing language, icon, and copy button.
+ * Built at compile-time for static sites.
  *
  * Usage:
- * <Code lang="javascript">
- *   console.log('Hello');
+ * <Code lang="nginx">
+ *   server { listen 80; }
+ * </Code>
+ *
+ * With custom aria-label:
+ * <Code lang="bash" aria-label="Install dependencies">
+ *   npm install
  * </Code>
  */
 import { createHash } from "node:crypto";
 
 import { decodeHtml } from "@utils/html";
+import { Icon } from "astro-icon/components";
 
 import CopyButton from "./CopyButton.astro";
 
 interface Props {
-  lang?: string; // Language for syntax highlighting (e.g., 'nginx', 'javascript')
+  lang?: string;
+  "aria-label"?: string;
+  title?: string; // Optional title for the code block
   class?: string;
-  ariaLabel?: string;
 }
 
-const { lang = "text", class: className, ariaLabel } = Astro.props;
+const {
+  lang = "text",
+  "aria-label": ariaLabel,
+  title,
+  class: className,
+} = Astro.props;
 
+// Render slot content
 const slotContent = await Astro.slots.render("default");
 const trimmedContent = slotContent.trim();
+
+// Generate unique ID for testing
 const uuid = createHash("sha256")
-  .update(trimmedContent)
+  .update(`${lang}-${trimmedContent}`)
   .digest("hex")
   .slice(0, 8);
 
-// Extract plain text for accessibility label if no custom label provided
+// Extract plain text for automatic aria-label
 let plainText = "";
 if (!ariaLabel) {
-  // Simple regex strip tags (lighter than cheerio)
-  // eslint-disable-next-line unicorn/prefer-string-replace-all
-  const stripped = slotContent.replace(/<[^>]*>/g, "");
+  // Simple regex to strip tags
+  const stripped = trimmedContent.replaceAll(/<[^>]*>/g, "");
   const fullText = decodeHtml(stripped.trim());
   plainText = fullText.slice(0, 50);
   if (fullText.length > 50) plainText += "...";
 }
 
-const finalAriaLabel = ariaLabel || `Code snippet: ${lang} - ${plainText}`;
+// Final aria-label: custom > title-based > auto-generated
+const finalAriaLabel =
+  ariaLabel ||
+  (title ? `${lang} code: ${title}` : `${lang} snippet: ${plainText}`);
+
+// Language display name (uppercase)
+const langDisplay = lang.toUpperCase();
+
+// Get appropriate icon for language
+const getIconForLang = (language: string): string => {
+  const iconMap: Record<string, string> = {
+    nginx: "devicon:nginx",
+    javascript: "devicon:javascript",
+    js: "devicon:javascript",
+    typescript: "devicon:typescript",
+    ts: "devicon:typescript",
+    python: "devicon:python",
+    bash: "devicon:bash",
+    sh: "devicon:bash",
+    shell: "devicon:bash",
+    html: "devicon:html5",
+    css: "devicon:css3",
+    json: "mdi:code-json",
+    yaml: "mdi:file-settings-outline",
+    yml: "mdi:file-settings-outline",
+    dockerfile: "devicon:docker",
+    docker: "devicon:docker",
+    sql: "mdi:database",
+    go: "devicon:go",
+    rust: "devicon:rust",
+    java: "devicon:java",
+    php: "devicon:php",
+    ruby: "devicon:ruby",
+    c: "devicon:c",
+    cpp: "devicon:cplusplus",
+    csharp: "devicon:csharp",
+  };
+  return iconMap[language.toLowerCase()] || "mdi:code-tags";
+};
+
+const langIcon = getIconForLang(lang);
 ---
 
 <section
-  class:list={["code-wrapper", "copy-container", className]}
+  class:list={["code-block-wrapper", "copy-container", className]}
   aria-label={finalAriaLabel}
   data-testid={uuid}
 >
-  <pre><span class={`code-content language-${lang}`} set:html={trimmedContent} /></pre>
-  <CopyButton class="code-copy-button" />
+  <div class="code-block-header">
+    <div class="code-lang-info">
+      <Icon
+        name={langIcon}
+        class="code-type-icon"
+        aria-hidden="true"
+      />
+      <span class="code-language-label">{langDisplay}</span>
+      {title && <span class="code-title">{title}</span>}
+    </div>
+    <CopyButton class="code-header-copy-btn" />
+  </div>
+  <div class="code-body">
+    <pre><code class={`language-${lang}`} set:html={trimmedContent} /></pre>
+  </div>
 </section>
 
 <style>
-  .code-content {
-    display: block; /* Ensure it behaves like a block for multi-line */
-    font-family: var(--font-mono);
-    font-size: 0.9rem;
-    line-height: 1.6;
-    color: var(--color-text);
-    white-space: pre;
-
-    /* Mobile Fix: Prevent font inflation */
-    /* stylelint-disable-next-line property-no-vendor-prefix */
-    -webkit-text-size-adjust: none;
-    text-size-adjust: none;
-  }
-
-  .code-wrapper {
+  .code-block-wrapper {
     position: relative;
     margin: 1.5rem 0;
     overflow: hidden;
-    border-radius: var(--radius-md);
-  }
-
-  .code-wrapper :global(.code-copy-button) {
-    position: absolute;
-    top: 0.5rem;
-    right: 0.5rem;
-    z-index: 10;
-  }
-
-  pre {
-    display: block; /* Simpler block layout to avoid flex-related boosting */
-    width: 100%; /* Explicit width constraint */
-    min-width: 0;
-    max-width: 100%; /* Ensure it doesn't overflow parent calculation */
-    padding: 0.4rem 3rem 1rem 1rem;
-    margin: 0;
-    overflow-x: auto;
-
-    /* Typography */
-    font-family: var(--font-mono);
-    font-size: 0.9rem;
-    line-height: 1.6;
     background-color: var(--color-bg-secondary);
     border: var(--border-1);
     border-radius: var(--radius-md);
-
-    /* Mobile Fix: Prevent font inflation */
-    /* stylelint-disable-next-line property-no-vendor-prefix */
-    -webkit-text-size-adjust: none;
-    text-size-adjust: none;
   }
 
-  /* Global code style - verified as needed for syntax highlighting consistency */
-  code {
+  .code-block-header {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 40px;
+    padding: 0.5rem 1rem;
+    font-family: var(--font-mono);
+    background-color: var(--color-bg-header);
+    border-bottom: var(--border-1);
+  }
+
+  .code-lang-info {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+  }
+
+  .code-type-icon {
+    width: 1.1rem;
+    height: 1.1rem;
+    color: var(--color-text-muted);
+  }
+
+  .code-language-label {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .code-title {
+    padding-left: 0.5rem;
+    margin-left: 0.5rem;
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+    border-left: 1px solid var(--color-border);
+  }
+
+  .code-body {
+    overflow-x: auto;
+  }
+
+  .code-body pre {
+    padding: 1rem 1.25rem;
+    margin: 0;
+    overflow-x: auto;
     font-family: var(--font-mono);
     font-size: 0.9rem;
     line-height: 1.6;
     color: var(--color-text);
-    white-space: pre;
+    background-color: transparent;
+    border: none;
+    border-radius: 0;
 
     /* Mobile Fix: Prevent font inflation */
     /* stylelint-disable-next-line property-no-vendor-prefix */
@@ -121,14 +193,28 @@ const finalAriaLabel = ariaLabel || `Code snippet: ${lang} - ${plainText}`;
     text-size-adjust: none;
   }
 
-  .code-content :global(p) {
-    display: inline;
-    margin: 0;
+  .code-body code {
+    font-family: inherit;
+    font-size: inherit;
+    line-height: inherit;
+    color: inherit;
+    white-space: pre;
+    background: none;
   }
 
-  .code-content.language-nginx,
-  .code-content.language-bash,
-  .code-content.language-shell {
-    color: var(--color-text);
+  /* Copy button positioning */
+  :global(.code-header-copy-btn) {
+    position: static !important;
+    min-width: 32px;
+    min-height: 32px;
+    background-color: transparent;
+    border: none;
+    opacity: 80%;
+  }
+
+  :global(.code-header-copy-btn:hover),
+  :global(.code-header-copy-btn:focus-visible) {
+    background-color: var(--color-bg-subtle);
+    opacity: 100%;
   }
 </style>

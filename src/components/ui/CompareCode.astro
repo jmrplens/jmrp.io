@@ -35,8 +35,8 @@ const {
   testIdGood = "compare-block-good",
 } = Astro.props;
 
-const badContent = (await Astro.slots.render("bad")).trim();
-const goodContent = (await Astro.slots.render("good")).trim();
+const badContent = ((await Astro.slots.render("bad")) || "").trim();
+const goodContent = ((await Astro.slots.render("good")) || "").trim();
 
 // Helper to extract text snippet
 const getSnippet = (html: string) => {

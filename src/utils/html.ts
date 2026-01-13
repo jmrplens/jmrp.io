@@ -49,9 +49,12 @@ export function sanitize(html: string | undefined | null): string {
     },
     // Ensure only safe protocols are used
     allowedSchemes: ["http", "https", "mailto", "tel"],
+    // Enable protocol-relative URLs (//example.com)
+    allowProtocolRelative: true,
     // Automatically add security attributes to links
     transformTags: {
       a: (tagName, attribs) => {
+        // Check for external links including protocol-relative URLs
         const isExternal =
           (attribs.href &&
             (attribs.href.startsWith("http") ||
@@ -59,12 +62,21 @@ export function sanitize(html: string | undefined | null): string {
           attribs.target === "_blank";
 
         if (isExternal) {
+          // Merge rel tokens instead of overwriting
+          const existingRel = attribs.rel || "";
+          const relTokens = new Set(
+            existingRel.split(/\s+/).filter((t) => t.length > 0),
+          );
+          relTokens.add("noopener");
+          relTokens.add("noreferrer");
+          const mergedRel = [...relTokens].join(" ");
+
           return {
             tagName,
             attribs: {
               ...attribs,
               target: "_blank",
-              rel: "noopener noreferrer",
+              rel: mergedRel,
             },
           };
         }

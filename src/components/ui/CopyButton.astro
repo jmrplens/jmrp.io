@@ -66,9 +66,8 @@ const encodedContent = content ? encodeURIComponent(content) : undefined;
           if (!wrapper) return;
 
           const codeBlock = wrapper.querySelector("code, .copy-content");
-          if (codeBlock) {
-            text =
-              (codeBlock as HTMLElement).innerText ?? codeBlock.textContent;
+          if (codeBlock && codeBlock instanceof HTMLElement) {
+            text = codeBlock.innerText ?? codeBlock.textContent;
           }
         }
 
@@ -79,7 +78,9 @@ const encodedContent = content ? encodeURIComponent(content) : undefined;
 
         if (!navigator.clipboard) {
           console.error("Clipboard API not available");
-          button.setAttribute("title", "Clipboard API unavailable");
+          if (button instanceof HTMLElement) {
+            button.setAttribute("title", "Clipboard API unavailable");
+          }
           return;
         }
 
@@ -98,23 +99,29 @@ const encodedContent = content ? encodeURIComponent(content) : undefined;
               if (status) status.textContent = "Copied!";
 
               // Clear any existing timeout to prevent flickering
-              const existingTimeout = (
-                button as HTMLButtonElement & {
-                  _copyTimeout?: ReturnType<typeof setTimeout>;
-                }
-              )._copyTimeout;
-              if (existingTimeout) clearTimeout(existingTimeout);
+              // Use a data attribute to store the timeout ID for cross-browser safety
+              const existingTimeoutId =
+                button.getAttribute("data-copy-timeout");
+              if (existingTimeoutId) {
+                clearTimeout(Number(existingTimeoutId));
+              }
 
-              setTimeout(() => {
+              // Store new timeout ID back to the button
+              const timeoutId = setTimeout(() => {
                 copyIcon.classList.remove("hidden");
                 successIcon.classList.add("hidden");
                 if (status) status.textContent = "";
+                button.removeAttribute("data-copy-timeout");
               }, 1000);
+
+              button.setAttribute("data-copy-timeout", String(timeoutId));
             }
           },
           (err) => {
             console.error("Failed to copy:", err);
-            button.setAttribute("title", "Failed to copy!");
+            if (button instanceof HTMLElement) {
+              button.setAttribute("title", "Failed to copy!");
+            }
           },
         );
       });

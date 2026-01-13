@@ -16,19 +16,15 @@ interface Props {
 }
 
 const { label, noPadding = false } = Astro.props;
-
-const slotContent = await Astro.slots.render("default");
-const trimmedContent = slotContent.trim();
 ---
 
 <div
   class:list={["tab-panel", "copy-container", { "no-padding": noPadding }]}
   data-label={label}
 >
-  <div
-    class="panel-content"
-    set:html={trimmedContent}
-  />
+  <div class="panel-content">
+    <slot />
+  </div>
   {noPadding && <CopyButton class="panel-copy-button" />}
 </div>
 

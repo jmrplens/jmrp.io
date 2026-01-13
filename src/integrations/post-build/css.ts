@@ -8,7 +8,38 @@ import { glob } from "glob";
 import { type Config, optimize, type PluginConfig } from "svgo";
 
 import { ASSET_FILENAME_HASH_LENGTH, ASSETS_DIR } from "./constants.js";
-import { getExtensionFromMime, writeHtml } from "./utils.js";
+import { writeHtml } from "./utils.js";
+
+/**
+ * Gets the file extension from a MIME type with sanitization.
+ * Maps known complex types and ensures safe output.
+ */
+function getExtensionFromMime(mime: string): string {
+  const mimeMap: Record<string, string> = {
+    "image/png": "png",
+    "image/jpeg": "jpg",
+    "image/gif": "gif",
+    "image/webp": "webp",
+    "image/svg+xml": "svg",
+    "font/woff": "woff",
+    "font/woff2": "woff2",
+    "application/font-woff": "woff",
+    "application/font-woff2": "woff2",
+  };
+
+  const normalizedMime = mime.toLowerCase().trim();
+  if (mimeMap[normalizedMime]) {
+    return mimeMap[normalizedMime];
+  }
+
+  // Extract subtype and sanitize
+  const subtype = normalizedMime.split("/")[1] || "";
+  // Remove +suffix (e.g., svg+xml -> svg)
+  const basetype = subtype.split("+")[0];
+  // Strip non-alphanumeric and limit length
+  const sanitized = basetype.replaceAll(/[^a-z0-9]/gi, "").slice(0, 10);
+  return sanitized || "bin";
+}
 
 const svgoConfig: Config = {
   multipass: true,
@@ -133,7 +164,7 @@ export async function extractCssDataUris(
       const mime = metadata.split(";")[0] || "application/octet-stream";
 
       const buffer = isBase64
-        ? Buffer.from(data, "base64")
+        ? Buffer.from(data.trim(), "base64")
         : Buffer.from(decodeURIComponent(data.trim()));
 
       const ext = getExtensionFromMime(mime);

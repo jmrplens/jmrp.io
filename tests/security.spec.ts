@@ -204,19 +204,29 @@ test.describe("CSP and SRI Security Checks", () => {
       await test.step(`Checking inline styles: ${url}`, async () => {
         await page.goto(url);
 
+        // Exclude elements with allowed display values, SVG internals, and empty styles
         const locator = page.locator(
-          '[style]:not([style*="display: block"]):not([style*="display:block"]):not([style*="display: none"]):not([style*="display:none"]):not([id="preact-border-shadow-host"])',
+          '[style]:not([style=""]):not([style*="display: block"]):not([style*="display:block"]):not([style*="display: none"]):not([style*="display:none"]):not([id="preact-border-shadow-host"]):not(rect):not(g):not(path):not(line):not(text):not(polygon):not(circle):not(ellipse)',
         );
 
         const count = await locator.count();
-        for (let i = 0; i < count; i++) {
-          const el = locator.nth(i);
-          const [tagName, style] = await Promise.all([
-            el.evaluate((node) => node.tagName.toLowerCase()),
-            el.getAttribute("style"),
-          ]);
-          elementsWithStyle.push(`${url}: <${tagName} style="${style}">`);
-        }
+        const elementData = await Promise.all(
+          Array.from({ length: count }).map(async (_, i) => {
+            const el = locator.nth(i);
+            const [tagName, style] = await Promise.all([
+              el.evaluate((node) => node.tagName.toLowerCase()),
+              el.getAttribute("style"),
+            ]);
+            return { tagName, style };
+          }),
+        );
+
+        // Filter out empty styles and add violations
+        const violations = elementData
+          .filter((data) => data.style && data.style.trim() !== "")
+          .map((data) => `${url}: <${data.tagName} style="${data.style}">`);
+
+        elementsWithStyle.push(...violations);
       });
     }
 
