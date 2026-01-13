@@ -39,11 +39,11 @@ mTLS is a cornerstone of Zero Trust architecture because it provides **mutual au
 <Table title="mTLS vs Other Authentication Methods">
   <thead>
     <tr>
-      <th>Method</th>
-      <th>Phishable?</th>
-      <th>Credential Storage</th>
-      <th>Automation</th>
-      <th>Zero Trust</th>
+      <th scope="col">Method</th>
+      <th scope="col">Phishable?</th>
+      <th scope="col">Credential Storage</th>
+      <th scope="col">Automation</th>
+      <th scope="col">Zero Trust</th>
     </tr>
   </thead>
   <tbody>
@@ -100,9 +100,9 @@ Understanding the difference is fundamental:
 <Table title="One-Way TLS vs Mutual TLS">
   <thead>
     <tr>
-      <th>Aspect</th>
-      <th>One-Way TLS (Standard HTTPS)</th>
-      <th>Mutual TLS (mTLS)</th>
+      <th scope="col">Aspect</th>
+      <th scope="col">One-Way TLS (Standard HTTPS)</th>
+      <th scope="col">Mutual TLS (mTLS)</th>
     </tr>
   </thead>
   <tbody>
@@ -237,9 +237,9 @@ Before generating, decide on these parameters:
 <Table title="CA Configuration Choices">
   <thead>
     <tr>
-      <th>Parameter</th>
-      <th>Recommendation</th>
-      <th>Rationale</th>
+      <th scope="col">Parameter</th>
+      <th scope="col">Recommendation</th>
+      <th scope="col">Rationale</th>
     </tr>
   </thead>
   <tbody>
@@ -347,6 +347,170 @@ extendedKeyUsage        = clientAuth
 ```
 </FileContent>
 
+### Configuration Breakdown
+
+Let's dissect the `openssl.cnf` file to understand what each section controls.
+
+#### 1. CA Global Settings (`[ ca ]` & `[ CA_default ]`)
+
+This section tells OpenSSL where to find your files and how to sign certificates.
+
+<Table title="CA Default Settings">
+  <thead>
+    <tr>
+      <th scope="col">Directive</th>
+      <th scope="col">Value/Type</th>
+      <th scope="col">Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>dir</code></td>
+      <td>Path (String)</td>
+      <td>Base directory for your PKI (e.g., <code>/etc/nginx/pki</code>).</td>
+    </tr>
+    <tr>
+      <td><code>database</code></td>
+      <td>File Path</td>
+      <td>Text file (<code>index.txt</code>) tracking all issued and revoked certificates.</td>
+    </tr>
+    <tr>
+      <td><code>new_certs_dir</code></td>
+      <td>Directory Path</td>
+      <td>Where copies of every issued certificate are archived by serial number.</td>
+    </tr>
+    <tr>
+      <td><code>certificate</code></td>
+      <td>File Path</td>
+      <td>The CA's own public certificate used to sign others.</td>
+    </tr>
+    <tr>
+      <td><code>private_key</code></td>
+      <td>File Path</td>
+      <td>The CA's private key. <strong>Must be protected.</strong></td>
+    </tr>
+    <tr>
+      <td><code>default_days</code></td>
+      <td>Integer (Days)</td>
+      <td>Default validity period for issued certificates (e.g., 365).</td>
+    </tr>
+    <tr>
+      <td><code>policy</code></td>
+      <td>Section Name</td>
+      <td>Which policy section to enforce for matching DN fields (e.g., <code>policy_loose</code>).</td>
+    </tr>
+    <tr>
+      <td><code>copy_extensions</code></td>
+      <td><code>copy</code> | <code>none</code></td>
+      <td><strong>Crucial:</strong> Copies SANs (Subject Alternative Names) from the CSR to the final certificate.</td>
+    </tr>
+  </tbody>
+</Table>
+
+#### 2. Validation Policies (`[ policy_loose ]`)
+
+Controls which fields in the Certificate Signing Request (CSR) must match the CA's own fields.
+
+<Table title="Policy Rules">
+  <thead>
+    <tr>
+      <th scope="col">Field</th>
+      <th scope="col">Rule</th>
+      <th scope="col">Meaning</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>countryName</code></td>
+      <td><code>optional</code></td>
+      <td>The client doesn't need to specify a country.</td>
+    </tr>
+    <tr>
+      <td><code>commonName</code></td>
+      <td><code>supplied</code></td>
+      <td><strong>Required.</strong> The client must provide a Common Name (used for identification).</td>
+    </tr>
+    <tr>
+      <td><code>organizationName</code></td>
+      <td><code>optional</code></td>
+      <td>Can be left empty.</td>
+    </tr>
+  </tbody>
+</Table>
+
+#### 3. Request Settings (`[ req ]`)
+
+Defaults used when you run `openssl req` to generate keys or CSRs.
+
+<Table title="Request Defaults">
+  <thead>
+    <tr>
+      <th scope="col">Directive</th>
+      <th scope="col">Value</th>
+      <th scope="col">Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>default_bits</code></td>
+      <td>Integer (e.g., 4096)</td>
+      <td>Default key size if not specified.</td>
+    </tr>
+    <tr>
+      <td><code>distinguished_name</code></td>
+      <td>Section Name</td>
+      <td>Points to the section defining default DN values (<code>[ req_distinguished_name ]</code>).</td>
+    </tr>
+    <tr>
+      <td><code>x509_extensions</code></td>
+      <td>Section Name</td>
+      <td>Extensions to add when creating a <strong>self-signed</strong> root certificate (e.g., <code>v3_ca</code>).</td>
+    </tr>
+  </tbody>
+</Table>
+
+#### 4. Certificate Extensions (`[ v3_* ]`)
+
+These sections define the "capabilities" of the certificates you issue. This is the security core.
+
+<Table title="Extension Profiles">
+  <thead>
+    <tr>
+      <th scope="col">Profile/Directive</th>
+      <th scope="col">Value</th>
+      <th scope="col">Effect</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td colspan="3"><strong>[ v3_ca ] - For the Root CA</strong></td>
+    </tr>
+    <tr>
+      <td><code>basicConstraints</code></td>
+      <td><code>critical, CA:TRUE</code></td>
+      <td><strong>Identity:</strong> Marks this cert as a Certificate Authority that can sign others.</td>
+    </tr>
+    <tr>
+      <td><code>keyUsage</code></td>
+      <td><code>keyCertSign, cRLSign</code></td>
+      <td><strong>Permissions:</strong> Allowed to sign certificates and CRLs.</td>
+    </tr>
+    <tr>
+      <td colspan="3"><strong>[ v3_client ] - For User Devices</strong></td>
+    </tr>
+    <tr>
+      <td><code>basicConstraints</code></td>
+      <td><code>critical, CA:FALSE</code></td>
+      <td><strong>Restriction:</strong> This certificate <strong>cannot</strong> be used to sign other certificates.</td>
+    </tr>
+    <tr>
+      <td><code>extendedKeyUsage</code></td>
+      <td><code>clientAuth</code></td>
+      <td><strong>Purpose:</strong> Valid <strong>only</strong> for authenticating a client to a server (mTLS).</td>
+    </tr>
+  </tbody>
+</Table>
+
 ### Generate the CA Key and Certificate
 
 <TerminalCommand>
@@ -371,7 +535,9 @@ sudo openssl req -new -x509 -days 3650 \
 ### Verify Your CA Certificate
 
 <TerminalCommand>
-  openssl x509 -in ca/ca.crt -text -noout | head -30
+```bash
+openssl x509 -in ca/ca.crt -text -noout | head -30
+```
 </TerminalCommand>
 
 <TerminalOutput title="CA Certificate Details">
@@ -379,20 +545,23 @@ Certificate:
     Data:
         Version: 3 (0x2)
         Serial Number:
-            1a:c9:b8:c1:74:7b:93:ff:b7:be:e1:fb:b5:2e:cd:b1
+            1f:23:94:bf:00:2d:11:f7:c5:14:ac:c6:24:a9:d1:ff:b3:4e:cc:3a
         Signature Algorithm: sha256WithRSAEncryption
-        Issuer: C = ES, ST = Valencia, L = Valencia, O = JMRP-IO-LAB, OU = Infrastructure Security, CN = JMRP-IO-LAB Root CA
+        Issuer: C=ES, ST=Valencia, L=Valencia, O=JMRP-IO-LAB, OU=Infrastructure Security, CN=JMRP-IO-LAB Root CA
         Validity
-            Not Before: Jan 12 12:00:00 2026 GMT
-            Not After : Jan 10 12:00:00 2036 GMT
-        Subject: C = ES, ST = Valencia, L = Valencia, O = JMRP-IO-LAB, OU = Infrastructure Security, CN = JMRP-IO-LAB Root CA
-        X509v3 extensions:
-            X509v3 Subject Key Identifier: 
-                C4:CD:09:55:A1:CB:27:C1:00:B6:17:E3:AE:B5:65:1B
-            X509v3 Basic Constraints: critical
-                CA:TRUE
-            X509v3 Key Usage: critical
-                Digital Signature, Certificate Sign, CRL Sign
+            Not Before: Jan 13 18:21:21 2026 GMT
+            Not After : Jan 11 18:21:21 2036 GMT
+        Subject: C=ES, ST=Valencia, L=Valencia, O=JMRP-IO-LAB, OU=Infrastructure Security, CN=JMRP-IO-LAB Root CA
+        Subject Public Key Info:
+            Public Key Algorithm: rsaEncryption
+                Public-Key: (4096 bit)
+            X509v3 extensions:
+                X509v3 Subject Key Identifier: 
+                    ...
+                X509v3 Basic Constraints: critical
+                    CA:TRUE
+                X509v3 Key Usage: critical
+                    Digital Signature, Certificate Sign, CRL Sign
 </TerminalOutput>
 
 ---
@@ -406,9 +575,9 @@ Each client (device, user, or service) needs its own certificate signed by your 
 <Table title="Subject Alternative Name (SAN) vs Common Name (CN)">
   <thead>
     <tr>
-      <th>Aspect</th>
-      <th>Common Name (CN)</th>
-      <th>Subject Alternative Name (SAN)</th>
+      <th scope="col">Aspect</th>
+      <th scope="col">Common Name (CN)</th>
+      <th scope="col">Subject Alternative Name (SAN)</th>
     </tr>
   </thead>
   <tbody>
@@ -465,7 +634,7 @@ Check that the request matches the signature
 Signature ok
 The Subject's Distinguished Name is as follows
 commonName            :ASN.1 12:'iphone-jmrp'
-Certificate is to be certified until Jan 12 12:00:00 2027 GMT (365 days)
+Certificate is to be certified until Jan 13 18:21:36 2027 GMT (365 days)
 
 Write out database with 1 new entries
 Database updated
@@ -476,10 +645,10 @@ Database updated
 <Table title="Certificate Format Comparison">
   <thead>
     <tr>
-      <th>Format</th>
-      <th>Contains</th>
-      <th>Best For</th>
-      <th>Password Protected</th>
+      <th scope="col">Format</th>
+      <th scope="col">Contains</th>
+      <th scope="col">Best For</th>
+      <th scope="col">Password Protected</th>
     </tr>
   </thead>
   <tbody>
@@ -532,9 +701,9 @@ The `ssl_verify_client` directive controls how Nginx handles client certificates
 <Table title="ssl_verify_client Options">
   <thead>
     <tr>
-      <th>Value</th>
-      <th>Behavior</th>
-      <th>Use Case</th>
+      <th scope="col">Value</th>
+      <th scope="col">Behavior</th>
+      <th scope="col">Use Case</th>
     </tr>
   </thead>
   <tbody>
@@ -641,12 +810,64 @@ sudo systemctl reload nginx
 ```
 </TerminalCommand>
 
-Now, accessing `https://secure.example.com` without a valid client certificate will return:
+Now, let's verify the connections using `curl`.
 
-<TerminalOutput title="Access Denied Without Certificate">
-400 Bad Request
-No required SSL certificate was sent
+**1. Access Denied (No Certificate):**
+
+<Collapsible summary="Show curl output (400 Bad Request)">
+<TerminalOutput title="curl -v https://secure.example.com">
+```text
+> GET / HTTP/1.1
+> Host: secure.example.com
+> User-Agent: curl/8.14.1
+> Accept: */*
+> 
+< HTTP/1.1 400 Bad Request
+< Server: nginx
+< Content-Type: text/html
+< Content-Length: 230
+< Connection: close
+< 
+<html>
+<head><title>400 No required SSL certificate was sent</title></head>
+<body>
+<center><h1>400 Bad Request</h1></center>
+<center>No required SSL certificate was sent</center>
+<hr><center>nginx</center>
+</body>
+</html>
+```
 </TerminalOutput>
+</Collapsible>
+
+**2. Access Granted (With Valid Certificate):**
+
+<Collapsible summary="Show curl output (200 OK)">
+<TerminalOutput title="curl -v --cert client.crt --key client.key https://secure.example.com">
+```text
+* TLSv1.3 (IN), TLS handshake, Request CERT (13):
+{ [210 bytes data]
+* TLSv1.3 (OUT), TLS handshake, Certificate (11):
+} [812 bytes data]
+* TLSv1.3 (OUT), TLS handshake, CERT verify (15):
+} [264 bytes data]
+* TLSv1.3 (IN), TLS handshake, Finished (20):
+{ [52 bytes data]
+* SSL connection using TLSv1.3 / TLS_AES_256_GCM_SHA384
+* Server certificate:
+*  subject: CN=secure.example.com
+*  issuer: CN=secure.example.com
+> GET / HTTP/1.1
+> Host: secure.example.com
+> User-Agent: curl/8.14.1
+> 
+< HTTP/1.1 200 OK
+< Server: nginx
+< Content-Type: text/plain
+mTLS Authentication Successful! Client DN: CN=iphone-jmrp
+```
+</TerminalOutput>
+</Collapsible>
 
 ---
 
@@ -659,9 +880,9 @@ Proper TLS configuration is critical for security. Here's what each setting does
 <Table title="TLS Protocol Versions">
   <thead>
     <tr>
-      <th>Version</th>
-      <th>Status</th>
-      <th>Security</th>
+      <th scope="col">Version</th>
+      <th scope="col">Status</th>
+      <th scope="col">Security</th>
     </tr>
   </thead>
   <tbody>
@@ -731,9 +952,9 @@ Nginx exposes these variables for client certificate information:
 <Table title="Nginx mTLS Variables">
   <thead>
     <tr>
-      <th>Variable</th>
-      <th>Content</th>
-      <th>Example</th>
+      <th scope="col">Variable</th>
+      <th scope="col">Content</th>
+      <th scope="col">Example</th>
     </tr>
   </thead>
   <tbody>
@@ -817,9 +1038,9 @@ What happens when a device is lost or compromised? You need to **revoke** its ce
 <Table title="CRL vs OCSP Comparison">
   <thead>
     <tr>
-      <th>Aspect</th>
-      <th>CRL (Certificate Revocation List)</th>
-      <th>OCSP (Online Certificate Status)</th>
+      <th scope="col">Aspect</th>
+      <th scope="col">CRL (Certificate Revocation List)</th>
+      <th scope="col">OCSP (Online Certificate Status)</th>
     </tr>
   </thead>
   <tbody>
@@ -867,8 +1088,8 @@ sudo openssl ca -config openssl.cnf \
 
 <TerminalOutput title="Revocation Output">
 Using configuration from openssl.cnf
-Revoking Certificate 1001.
-Data Base Updated
+Revoking Certificate 1000.
+Database updated
 </TerminalOutput>
 
 #### Step 2: Generate the CRL File
@@ -894,12 +1115,39 @@ ssl_crl /etc/nginx/pki/crl/ca.crl;
 </FileContent>
 
 <TerminalCommand>
-  sudo nginx -t && sudo systemctl reload nginx
+```bash
+sudo nginx -t && sudo systemctl reload nginx
+```
 </TerminalCommand>
 
 <Callout type="warning" icon="mdi:refresh">
   **Important:** You must regenerate the CRL and reload Nginx **every time** you revoke a certificate. Consider automating this with a cron job.
 </Callout>
+
+### Verify Revocation
+
+Accessing the site with the revoked certificate should now fail:
+
+<Collapsible summary="Show curl output (Revoked - 400 Bad Request)">
+<TerminalOutput title="curl -v --cert revoked.crt ...">
+```text
+< HTTP/1.1 400 Bad Request
+< Server: nginx
+< Content-Type: text/html
+< Content-Length: 208
+< Connection: close
+< 
+<html>
+<head><title>400 The SSL certificate error</title></head>
+<body>
+<center><h1>400 Bad Request</h1></center>
+<center>The SSL certificate error</center>
+<hr><center>nginx</center>
+</body>
+</html>
+```
+</TerminalOutput>
+</Collapsible>
 
 ### Method 2: OCSP (For Larger Deployments)
 
@@ -931,33 +1179,171 @@ flowchart LR
 ```
 </Mermaid>
 
-### Automated Renewal Script
+## Automation Scripts
 
-Create a script to generate new certificates before expiration:
+Managing certificates manually is error-prone. Here are two essential scripts to automate the lifecycle.
 
-<FileContent filename="/usr/local/bin/mtls-renew.sh" icon="mdi:bash">
+### 1. Client Certificate Generator
+
+This script automates the entire creation process: generating the key, CSR, signing it, and exporting the PKCS#12 bundle.
+
+<FileContent filename="/usr/local/bin/mtls-add-client.sh" icon="mdi:bash" collapsible={true}>
+```bash
+#!/bin/bash
+set -e
+
+# Configuration
+PKI_DIR="/etc/nginx/pki"
+DAYS_VALID=365
+CLIENT_NAME=$1
+EXPORT_PASS=$2
+
+if [ -z "$CLIENT_NAME" ]; then
+    echo "Usage: $0 <client-name> [export-password]"
+    exit 1
+fi
+
+if [ -z "$EXPORT_PASS" ]; then
+    echo "No password provided. Generating a random one..."
+    EXPORT_PASS=$(openssl rand -base64 12)
+    echo "Generated Password: $EXPORT_PASS"
+fi
+
+cd $PKI_DIR
+
+echo "1. Generating private key for $CLIENT_NAME..."
+openssl genrsa -out private/${CLIENT_NAME}.key 2048
+
+echo "2. Creating CSR..."
+openssl req -new -key private/${CLIENT_NAME}.key \
+    -out certs/${CLIENT_NAME}.csr \
+    -subj "/CN=${CLIENT_NAME}"
+
+echo "3. Signing certificate..."
+openssl ca -config openssl.cnf \
+    -extensions v3_client \
+    -days $DAYS_VALID \
+    -batch \
+    -in certs/${CLIENT_NAME}.csr \
+    -out certs/${CLIENT_NAME}.crt
+
+echo "4. Exporting to PKCS12 (.p12)..."
+openssl pkcs12 -export \
+    -out certs/${CLIENT_NAME}.p12 \
+    -inkey private/${CLIENT_NAME}.key \
+    -in certs/${CLIENT_NAME}.crt \
+    -certfile ca/ca.crt \
+    -name "${CLIENT_NAME}" \
+    -passout pass:$EXPORT_PASS
+
+echo "----------------------------------------"
+echo "✅ Certificate created successfully!"
+echo "Files:"
+echo " - Key: $PKI_DIR/private/${CLIENT_NAME}.key"
+echo " - Cert: $PKI_DIR/certs/${CLIENT_NAME}.crt"
+echo " - Bundle: $PKI_DIR/certs/${CLIENT_NAME}.p12"
+echo "----------------------------------------"
+echo "⚠️  Export Password: $EXPORT_PASS"
+echo "Transfer the .p12 file securely to the client device."
+```
+</FileContent>
+
+<TerminalCommand>
+```bash
+# Usage example: Generate certificate for a new device
+sudo /usr/local/bin/mtls-add-client.sh my-iphone securepassword
+```
+</TerminalCommand>
+
+### 2. Auto-Renewal Script
+
+This script checks for expiring certificates, revokes them, re-signs the original CSR, and generates a new `.p12` bundle.
+
+<FileContent filename="/usr/local/bin/mtls-renew.sh" icon="mdi:bash" collapsible={true}>
 ```bash
 #!/bin/bash
 # mTLS Certificate Renewal Script
+set -e
 
 PKI_DIR="/etc/nginx/pki"
 DAYS_BEFORE_EXPIRY=30
+RENEW_DAYS=365
 
-# Find certificates expiring soon
+echo "Checking for expiring certificates in $PKI_DIR/certs..."
+
 find "$PKI_DIR/certs" -name "*.crt" -type f | while read cert; do
+    # Extract expiration date
     end_date=$(openssl x509 -enddate -noout -in "$cert" | cut -d= -f2)
     end_epoch=$(date -d "$end_date" +%s)
     now_epoch=$(date +%s)
     days_left=$(( (end_epoch - now_epoch) / 86400 ))
     
+    # Extract Common Name for filenames (handle CN=Name or CN = Name)
+    CN=$(openssl x509 -subject -noout -in "$cert" | sed -n "s/^.*CN *= *//p")
+    
     if [ "$days_left" -lt "$DAYS_BEFORE_EXPIRY" ]; then
-        CN=$(openssl x509 -subject -noout -in "$cert" | sed 's/.*CN = //')
-        echo "Certificate for $CN expires in $days_left days. Renewing..."
+        echo "--------------------------------------------------"
+        echo "⚠️  Certificate for \"$CN\" expires in $days_left days."
+        echo "   (File: $cert)"
+        echo "   Renewing now..."
         
-        # Generate new certificate (implement your renewal logic)
-        # openssl ca -config $PKI_DIR/openssl.cnf ...
+        # 1. Archive old cert
+        cp "$cert" "$cert.old.$(date +%F)"
+        
+        # 2. Re-sign the existing CSR
+        # We assume CSR exists in certs/ directory as $CN.csr
+        CSR="$PKI_DIR/certs/$CN.csr"
+        if [ ! -f "$CSR" ]; then
+            echo "   ❌ CSR not found at $CSR. Cannot renew automatically."
+            continue
+        fi
+        
+        # Revoke old cert (to clear DB index and maintain CRL)
+        openssl ca -config $PKI_DIR/openssl.cnf \
+            -revoke "$cert"
+        
+        # Re-sign
+        openssl ca -config $PKI_DIR/openssl.cnf \
+            -extensions v3_client \
+            -days $RENEW_DAYS \
+            -batch \
+            -in "$CSR" \
+            -out "$cert"
+            
+        echo "   ✅ Certificate re-signed. New validity: $RENEW_DAYS days."
+        
+        # 3. Generate new P12
+        NEW_PASS=$(openssl rand -base64 12)
+        P12="$PKI_DIR/certs/$CN.p12"
+        KEY="$PKI_DIR/private/$CN.key"
+        
+        if [ -f "$KEY" ]; then
+            openssl pkcs12 -export \
+                -out "$P12" \
+                -inkey "$KEY" \
+                -in "$cert" \
+                -certfile $PKI_DIR/ca/ca.crt \
+                -name "$CN" \
+                -passout pass:$NEW_PASS
+                
+            echo "   📦 New PKCS#12 bundle created: $P12"
+            echo "   🔑 New Export Password: $NEW_PASS"
+        else
+            echo "   ⚠️ Private key not found. Skipped P12 generation."
+        fi
+        echo "--------------------------------------------------"
+    else
+        echo "✅ $CN: $days_left days remaining."
     fi
 done
+```
+</FileContent>
+
+Schedule this in crontab to run daily:
+
+<FileContent filename="crontab -e" icon="mdi:calendar-clock">
+```text
+0 3 * * * /usr/local/bin/mtls-renew.sh >> /var/log/mtls-renew.log 2>&1
 ```
 </FileContent>
 
@@ -1042,9 +1428,9 @@ Transfer the `.p12` file securely (AirDrop, USB, encrypted cloud) and install on
 <Table title="mTLS Error Diagnosis">
   <thead>
     <tr>
-      <th>Error</th>
-      <th>Cause</th>
-      <th>Solution</th>
+      <th scope="col">Error</th>
+      <th scope="col">Cause</th>
+      <th scope="col">Solution</th>
     </tr>
   </thead>
   <tbody>
