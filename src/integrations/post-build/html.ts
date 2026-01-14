@@ -6,6 +6,7 @@ import type { AstroIntegrationLogger } from "astro";
 import * as cheerio from "cheerio";
 import type { Element } from "domhandler";
 import { glob } from "glob";
+import { minify } from "html-minifier-terser";
 
 import {
   ASSET_FILENAME_HASH_LENGTH,
@@ -142,7 +143,7 @@ export async function processHtmlFiles(
   let extractedImages = 0;
 
   for (const file of htmlFiles) {
-    const result = processSingleHtmlFile(
+    const result = await processSingleHtmlFile(
       file,
       distDir,
       targetDir,
@@ -209,7 +210,7 @@ function hardenBeaconScript(
  * @param logger - The Astro logger instance.
  * @returns An object containing the counts of modifications and updates.
  */
-function processSingleHtmlFile(
+async function processSingleHtmlFile(
   file: string,
   distDir: string,
   targetDir: string,
@@ -217,7 +218,11 @@ function processSingleHtmlFile(
   hashCache: Map<string, string>,
   enableCsp: boolean,
   logger: AstroIntegrationLogger,
-): { modified: boolean; updatedSriTags: number; extractedImages: number } {
+): Promise<{
+  modified: boolean;
+  updatedSriTags: number;
+  extractedImages: number;
+}> {
   const content = fs.readFileSync(file, "utf-8");
   const $ = cheerio.load(content);
   let isModified = false;
@@ -264,15 +269,35 @@ function processSingleHtmlFile(
     isModified = true;
   }
 
-  // 7. Collect Hashes - CRITICAL: Must be the final step before writing
+  // 7. Minify HTML - MUST happen before hash collection to match served content
+  // We reload Cheerio with minified content to ensure hashes are calculated on the final output
+  const rawHtml = $.html();
+  const minifiedHtml = await minify(rawHtml, {
+    removeComments: true,
+    collapseWhitespace: true,
+    minifyCSS: true,
+    minifyJS: true,
+    ignoreCustomComments: [
+      /^ jmrp-beacon-hardened /, // Preserve our security guard comment
+      /^!/, // Preserve license comments usually
+    ],
+    sortAttributes: true,
+    sortClassName: true,
+  });
+
+  // Reload cheerio with minified content for accurate hash collection
+  const $minified = cheerio.load(minifiedHtml);
+
+  // 8. Collect Hashes - CRITICAL: Must be the final step before writing
   // This ensures hashes match the final serialized output exactly
-  if (collectInlineHashes($, cspData, enableCsp)) {
+  if (collectInlineHashes($minified, cspData, enableCsp)) {
     isModified = true;
   }
 
-  if (isModified) {
-    writeHtml(file, $.html());
-  }
+  // Always write if we minified (which we did), or if there were other mods
+  // Since we force minification, we can consider isModified = true implicitly,
+  // but to be safe we just write the minified content.
+  writeHtml(file, $minified.html());
 
   return { modified: isModified, updatedSriTags, extractedImages };
 }
