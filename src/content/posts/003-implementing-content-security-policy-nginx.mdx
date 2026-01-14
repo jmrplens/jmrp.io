@@ -448,53 +448,68 @@ These control where resources can be loaded from:
   </thead>
   <tbody>
     <tr>
-      <td><code>default-src</code></td>
+      <td><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/default-src" target="_blank" rel="noopener noreferrer"><code>default-src</code></a></td>
       <td>Fallback for all unspecified fetch directives</td>
       <td><code>'none'</code> (be explicit)</td>
     </tr>
     <tr>
-      <td><code>script-src</code></td>
+      <td><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/script-src" target="_blank" rel="noopener noreferrer"><code>script-src</code></a></td>
       <td>JavaScript sources and inline scripts</td>
-      <td><code>'nonce-...' 'strict-dynamic'</code></td>
+      <td><code>'nonce-...' 'strict-dynamic' 'wasm-unsafe-eval'</code></td>
     </tr>
     <tr>
-      <td><code>style-src</code></td>
+      <td><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/style-src" target="_blank" rel="noopener noreferrer"><code>style-src</code></a></td>
       <td>CSS stylesheets and inline styles</td>
       <td><code>'self'</code> + hashes if needed</td>
     </tr>
     <tr>
-      <td><code>img-src</code></td>
+      <td><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/img-src" target="_blank" rel="noopener noreferrer"><code>img-src</code></a></td>
       <td>Image sources</td>
       <td><code>'self' data:</code></td>
     </tr>
     <tr>
-      <td><code>font-src</code></td>
+      <td><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/font-src" target="_blank" rel="noopener noreferrer"><code>font-src</code></a></td>
       <td>Web font sources</td>
       <td><code>'self'</code> or CDN domain</td>
     </tr>
     <tr>
-      <td><code>connect-src</code></td>
+      <td><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/connect-src" target="_blank" rel="noopener noreferrer"><code>connect-src</code></a></td>
       <td>XHR, Fetch, WebSocket, EventSource</td>
       <td><code>'self'</code> + API domains</td>
     </tr>
     <tr>
-      <td><code>media-src</code></td>
+      <td><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/media-src" target="_blank" rel="noopener noreferrer"><code>media-src</code></a></td>
       <td>Audio/video sources</td>
       <td><code>'self'</code> or <code>'none'</code></td>
     </tr>
     <tr>
-      <td><code>object-src</code></td>
+      <td><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/object-src" target="_blank" rel="noopener noreferrer"><code>object-src</code></a></td>
       <td>Plugins (Flash, Java, etc.)</td>
       <td><code>'none'</code> (critical!)</td>
     </tr>
     <tr>
-      <td><code>child-src</code></td>
+      <td><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/child-src" target="_blank" rel="noopener noreferrer"><code>child-src</code></a></td>
       <td>Web workers and nested contexts</td>
       <td><code>'self'</code> or <code>'none'</code></td>
     </tr>
     <tr>
-      <td><code>worker-src</code></td>
+      <td><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/frame-src" target="_blank" rel="noopener noreferrer"><code>frame-src</code></a></td>
+      <td>Nested browsing contexts (iframes)</td>
+      <td><code>'none'</code> or trusted sources</td>
+    </tr>
+    <tr>
+      <td><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/worker-src" target="_blank" rel="noopener noreferrer"><code>worker-src</code></a></td>
       <td>Worker, SharedWorker, ServiceWorker</td>
+      <td><code>'self'</code></td>
+    </tr>
+    <tr>
+      <td><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/manifest-src" target="_blank" rel="noopener noreferrer"><code>manifest-src</code></a></td>
+      <td>Web App Manifests</td>
+      <td><code>'self'</code></td>
+    </tr>
+    <tr>
+      <td><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/prefetch-src" target="_blank" rel="noopener noreferrer"><code>prefetch-src</code></a></td>
+      <td>Prefetched resources</td>
       <td><code>'self'</code></td>
     </tr>
   </tbody>
@@ -514,14 +529,24 @@ These control document-level behavior:
   </thead>
   <tbody>
     <tr>
-      <td><code>base-uri</code></td>
+      <td><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/base-uri" target="_blank" rel="noopener noreferrer"><code>base-uri</code></a></td>
       <td>Restricts URLs in <code>&lt;base&gt;</code> element</td>
       <td><code>'none'</code> (prevents injection attacks)</td>
     </tr>
     <tr>
-      <td><code>sandbox</code></td>
+      <td><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/sandbox" target="_blank" rel="noopener noreferrer"><code>sandbox</code></a></td>
       <td>Applies sandbox restrictions (like iframe)</td>
       <td>Rarely needed for main document</td>
+    </tr>
+    <tr>
+      <td><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/require-trusted-types-for" target="_blank" rel="noopener noreferrer"><code>require-trusted-types-for</code></a></td>
+      <td>Enforces Trusted Types for DOM sinks</td>
+      <td><code>'script'</code></td>
+    </tr>
+    <tr>
+      <td><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/trusted-types" target="_blank" rel="noopener noreferrer"><code>trusted-types</code></a></td>
+      <td>Allowlist of Trusted Type policies</td>
+      <td><code>default</code></td>
     </tr>
   </tbody>
 </Table>
@@ -540,19 +565,45 @@ These control where the document can navigate:
   </thead>
   <tbody>
     <tr>
-      <td><code>form-action</code></td>
+      <td><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/form-action" target="_blank" rel="noopener noreferrer"><code>form-action</code></a></td>
       <td>URLs that can be used as form submission targets</td>
       <td><code>'self'</code> (anti-phishing)</td>
     </tr>
     <tr>
-      <td><code>frame-ancestors</code></td>
+      <td><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/frame-ancestors" target="_blank" rel="noopener noreferrer"><code>frame-ancestors</code></a></td>
       <td>Valid parents that may embed the page</td>
       <td><code>'none'</code> (anti-clickjacking)</td>
     </tr>
     <tr>
-      <td><code>navigate-to</code></td>
+      <td><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/navigate-to" target="_blank" rel="noopener noreferrer"><code>navigate-to</code></a></td>
       <td>URLs the document may navigate to (experimental)</td>
       <td>Not widely supported yet</td>
+    </tr>
+  </tbody>
+</Table>
+
+### Other Directives
+
+These directives don't fit into the other categories but are important for security:
+
+<Table title="Other Directives Reference">
+  <thead>
+    <tr>
+      <th scope="col">Directive</th>
+      <th scope="col">Purpose</th>
+      <th scope="col">Recommended Value</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/upgrade-insecure-requests" target="_blank" rel="noopener noreferrer"><code>upgrade-insecure-requests</code></a></td>
+      <td>Instructs the browser to upgrade insecure HTTP requests to HTTPS</td>
+      <td>(Present)</td>
+    </tr>
+    <tr>
+      <td><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/block-all-mixed-content" target="_blank" rel="noopener noreferrer"><code>block-all-mixed-content</code></a></td>
+      <td>Prevents loading of any mixed content (Deprecated, use upgrade-insecure-requests)</td>
+      <td>(Avoid)</td>
     </tr>
   </tbody>
 </Table>
@@ -675,6 +726,49 @@ function loadWithPreload(src) {
 
 ---
 
+---
+
+## The Future: Trusted Types (DOM XSS Protection)
+
+While standard CSP controls *where* scripts can load from, **Trusted Types** controls *what* scripts can do to the DOM. It locks down dangerous sinks like `innerHTML` and `document.write`.
+
+<Callout type="info" icon="mdi:shield-lock">
+  **Why do we need this?**
+  Even with a strict CSP, if you allow a trusted script (via nonce), and that script contains a vulnerability (like passing URL parameters to `innerHTML`), you are still vulnerable to DOM XSS. Trusted Types prevents this.
+</Callout>
+
+### Enabling Trusted Types
+
+<Code lang="nginx" aria-label="Enabling Trusted Types in Nginx">
+```
+# Add to your CSP header
+require-trusted-types-for 'script';
+```
+</Code>
+
+This forces all DOM updates to use "Typed" values (created via a policy) instead of raw strings.
+
+### Example Policy (JavaScript)
+
+<FileContent filename="trusted-types.js" icon="mdi:language-javascript">
+```javascript
+// Create a policy named 'default'
+if (window.trustedTypes && window.trustedTypes.createPolicy) {
+  window.trustedTypes.createPolicy('default', {
+    createHTML: (string) => DOMPurify.sanitize(string),
+    createScript: (string) => string, // Be careful!
+    createScriptURL: (string) => string
+  });
+}
+
+// Now this works (uses policy):
+document.body.innerHTML = '<img src=x>'; // Sanitized!
+
+// This throws an error (blocked raw string):
+// document.body.innerHTML = 'Raw string bypass attempt'; 
+```
+</FileContent>
+
 ## CSP Reporting: Monitoring Violations
 
 CSP reporting is essential for:
@@ -682,7 +776,7 @@ CSP reporting is essential for:
 - **Finding bugs** in your policy
 - **Monitoring** third-party scripts behaving unexpectedly
 
-### The report-uri Directive (Legacy but Widely Supported)
+### The report-uri Directive (Deprecated)
 
 <Code lang="nginx" aria-label="CSP report-uri directive example">
 ```
@@ -693,7 +787,7 @@ Content-Security-Policy:
 ```
 </Code>
 
-### The report-to Directive (Modern Approach)
+### The report-to Directive (The Future)
 
 <Code lang="nginx" aria-label="CSP report-to directive with Reporting API configuration">
 ```
@@ -709,7 +803,7 @@ Report-To: {"group":"csp-endpoint","max_age":10886400,"endpoints":[{"url":"https
 </Code>
 
 <Callout type="tip">
-  **Best Practice:** Use both directives for maximum compatibility:
+  **Best Practice:** Use both directives for maximum compatibility. Browsers that support `report-to` will ignore `report-uri`, while older browsers will fall back to it.
   
   <Code lang="nginx" aria-label="Dual CSP reporting best practice">
 ```
@@ -717,8 +811,6 @@ report-uri /csp-reports;
 report-to csp-endpoint;
 ```
 </Code>
-  
-  Modern browsers use `report-to`, older browsers fall back to `report-uri`.
 </Callout>
 
 ### Violation Report Format
