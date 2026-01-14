@@ -69,7 +69,10 @@ const finalAriaLabelGood =
         class="icon"
       />
       <span>{badTitle}</span>
-      <CopyButton class="compare-copy-button" />
+      <CopyButton
+        class="compare-copy-button"
+        ariaLabel={`Copy ${badTitle} example`}
+      />
     </div>
     <div
       class="content"
@@ -87,7 +90,10 @@ const finalAriaLabelGood =
         class="icon"
       />
       <span>{goodTitle}</span>
-      <CopyButton class="compare-copy-button" />
+      <CopyButton
+        class="compare-copy-button"
+        ariaLabel={`Copy ${goodTitle} example`}
+      />
     </div>
     <div
       class="content"

@@ -116,7 +116,10 @@ const langIcon = getIconForLang(lang);
       <span class="code-language-label">{langDisplay}</span>
       {title && <span class="code-title">{title}</span>}
     </div>
-    <CopyButton class="code-header-copy-btn" />
+    <CopyButton
+      class="code-header-copy-btn"
+      ariaLabel={title ? `Copy ${lang} code: ${title}` : `Copy ${lang} snippet`}
+    />
   </div>
   <div class="code-body">
     <AstroCode

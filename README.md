@@ -257,6 +257,11 @@ We perform comprehensive accessibility checks:
   - **Parallel Matrix Execution**: Runs 4 parallel jobs covering **Mobile** & **Desktop** form factors across both **Light** & **Dark** themes.
   - **Unified Dashboard**: Aggregates all results into a single, interactive HTML dashboard deployed to Vercel for easy review.
 - **Manual Checks**: The pipeline flags "incomplete" checks (e.g., complex color contrast) for manual review.
+- **Audit Script**: A custom script `scripts/audit-aria-labels.mjs` generates a detailed report of all ARIA labels, roles, and accessible names in a generated HTML file.
+  ```bash
+  # Analyze a specific build file
+  node scripts/audit-aria-labels.mjs dist/index.html
+  ```
 
 ### Content Validation
 

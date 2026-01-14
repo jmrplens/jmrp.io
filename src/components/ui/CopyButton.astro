@@ -14,16 +14,17 @@ import { Icon } from "astro-icon/components";
 interface Props {
   class?: string;
   content?: string;
+  ariaLabel?: string;
 }
 
-const { class: className, content } = Astro.props;
+const { class: className, content, ariaLabel } = Astro.props;
 const encodedContent = content ? encodeURIComponent(content) : undefined;
 ---
 
 <button
   class:list={["copy-button", className]}
   type="button"
-  aria-label="Copy to clipboard"
+  aria-label={ariaLabel || "Copy to clipboard"}
   data-content={encodedContent}
 >
   <span

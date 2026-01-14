@@ -60,7 +60,10 @@ const finalAriaLabel =
       data-testid={uuid}
     >
       {/* Copy Button outside details to be always visible and avoid nested interactive violation */}
-      <CopyButton class="file-header-copy-btn absolute-header" />
+      <CopyButton
+        class="file-header-copy-btn absolute-header"
+        ariaLabel={`Copy content of ${filename}`}
+      />
       <details class="file-details">
         {/* ARIA label moved to summary for better support */}
         <summary
@@ -120,7 +123,10 @@ const finalAriaLabel =
           <span class="file-name">{filename}</span>
         </div>
         <div class="header-actions">
-          <CopyButton class="file-header-copy-btn" />
+          <CopyButton
+            class="file-header-copy-btn"
+            ariaLabel={`Copy content of ${filename}`}
+          />
         </div>
       </div>
       <div class="file-body">
