@@ -71,12 +71,6 @@ const iconName = icon || icons[type];
     border-radius: var(--radius-md);
   }
 
-  /*
-     * Theme Definitions
-     * Uses 700 scale for text in Light Mode (Contrast > 4.5:1)
-     * Uses 400/500 scale for text in Dark Mode
-     */
-
   /* Default (Dark Mode) */
   :root {
     --color-info-text: var(--color-primary);
@@ -116,7 +110,7 @@ const iconName = icon || icons[type];
   }
 
   /* Explicit Light Mode Force */
-  :global(:root[data-theme="light"]) {
+  :root[data-theme="light"] {
     --color-info-text: #1d4ed8;
     --color-info-bg: rgb(59 130 246 / 10%);
     --color-warning-text: #b45309;
@@ -132,8 +126,6 @@ const iconName = icon || icons[type];
     --color-keypoint-text: #1d4ed8;
     --color-keypoint-bg: var(--color-bg-subtle);
   }
-
-  /* Explicit Light Mode Force */
 
   /* Assignments */
   .callout-info {

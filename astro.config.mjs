@@ -54,8 +54,8 @@ const rehypeMermaidSplitter = () => (/** @type {any} */ tree) => {
             return decodeURIComponent(dataUri.split(",")[1]);
           };
 
-          const darkSvgStr = decodeSvg(source.properties?.srcset);
           const lightSvgStr = decodeSvg(img.properties?.src);
+          const darkSvgStr = decodeSvg(source.properties?.srcset);
 
           if (lightSvgStr && darkSvgStr) {
             const lightSvgHAST = fromHtmlIsomorphic(lightSvgStr, {
@@ -217,45 +217,160 @@ export default defineConfig({
         {
           strategy: "img-svg",
           mermaidConfig: {
-            theme: "neutral",
+            theme: "base",
+            themeVariables: {
+              // --- LIGHT MODE (GitHub Light Style) ---
+              // General
+              textColor: "#000000",
+              primaryColor: "#ffffff",
+              primaryTextColor: "#000000",
+              primaryBorderColor: "#d0d7de",
+              lineColor: "#000000",
+              secondaryColor: "#f6f8fa",
+              tertiaryColor: "#ffffff",
+              mainBkg: "#ffffff",
+
+              // Nodes/Flowchart
+              nodeBkg: "#ffffff",
+              nodeBorder: "#d0d7de",
+              nodeTextColor: "#000000",
+              clusterBkg: "#f6f8fa",
+              clusterBorder: "#d0d7de",
+              titleColor: "#000000",
+              edgeLabelBackground: "#ffffff",
+              defaultLinkColor: "#000000",
+              arrowheadColor: "#000000",
+
+              // Sequence Diagram Specifics
+              actorBkg: "#eaeef2",
+              actorBorder: "#d0d7de",
+              actorTextColor: "#000000",
+              actorLineColor: "#000000",
+              signalColor: "#000000",
+              signalTextColor: "#000000",
+              labelBoxBkgColor: "#f6f8fa",
+              labelBoxBorderColor: "#d0d7de",
+              labelTextColor: "#000000",
+              loopTextColor: "#000000",
+              noteBkgColor: "#fff9c4",
+              noteTextColor: "#000000",
+              noteBorderColor: "#d4a72c",
+              messageTextColor: "#000000",
+              messageLineColor: "#000000",
+              sequenceNumberColor: "#000000",
+
+              // Groupings/Loops
+              loopBkgColor: "#f6f8fa",
+              loopBorderColor: "#d0d7de",
+              activationBkgColor: "#eaeef2",
+              activationBorderColor: "#d0d7de",
+
+              // State Diagram
+              stateBkg: "#ffffff",
+              stateLabelColor: "#000000",
+              stateBorder: "#d0d7de",
+              altBackground: "#f6f8fa",
+
+              // Class Diagram
+              classText: "#000000",
+              classBkg: "#ffffff",
+              classBorder: "#d0d7de",
+
+              // Pie Chart (GitHub Light Palette)
+              pie1: "#0969da",
+              pie2: "#1a7f37",
+              pie3: "#8250df",
+              pie4: "#cf222e",
+              pie5: "#bf8700",
+              pie6: "#6e7781",
+              pieTitleTextSize: "20px",
+              pieTitleTextColor: "#000000",
+              pieSectionTextColor: "#ffffff",
+              pieLegendTextColor: "#000000",
+              pieStrokeColor: "#ffffff",
+              pieStrokeWidth: "2px",
+              pieOuterStrokeWidth: "2px",
+              pieOpacity: "1",
+            },
           },
           dark: {
             theme: "base",
+            mermaidConfig: {
+              darkMode: true,
+            },
             themeVariables: {
+              // --- DARK MODE (GitHub Dark Style) ---
               // General
-              primaryColor: "#1f2937",
-              primaryTextColor: "#f3f4f6",
-              primaryBorderColor: "#4b5563",
-              lineColor: "#f3f4f6",
-              secondaryColor: "#374151",
-              tertiaryColor: "#111827",
-              mainBkg: "#1f2937",
+              textColor: "#ffffff",
+              primaryColor: "#0d1117",
+              primaryTextColor: "#ffffff",
+              primaryBorderColor: "#30363d",
+              lineColor: "#ffffff",
+              secondaryColor: "#161b22",
+              tertiaryColor: "#0d1117",
+              mainBkg: "#0d1117",
 
               // Nodes/Flowchart
-              nodeBkg: "#111827",
-              nodeBorder: "#4b5563",
-              clusterBkg: "#111827",
-              titleColor: "#f3f4f6",
-              edgeLabelBackground: "#374151",
-              defaultLinkColor: "#f3f4f6",
+              nodeBkg: "#0d1117",
+              nodeBorder: "#30363d",
+              nodeTextColor: "#ffffff",
+              clusterBkg: "#161b22",
+              clusterBorder: "#30363d",
+              titleColor: "#ffffff",
+              edgeLabelBackground: "#161b22",
+              defaultLinkColor: "#ffffff",
+              arrowheadColor: "#ffffff",
 
               // Sequence Diagram Specifics
-              actorBkg: "#111827",
-              actorBorder: "#4b5563",
-              actorTextColor: "#f3f4f6",
-              actorLineColor: "#f3f4f6",
-              signalColor: "#f3f4f6",
-              signalTextColor: "#f3f4f6",
-              labelBoxBkgColor: "#111827",
-              labelBoxBorderColor: "#4b5563",
-              labelTextColor: "#f3f4f6",
-              loopTextColor: "#f3f4f6",
-              noteBkgColor: "#374151",
-              noteTextColor: "#f3f4f6",
-              noteBorderColor: "#4b5563",
-              messageTextColor: "#f3f4f6",
-              messageLineColor: "#f3f4f6",
-              sequenceNumberColor: "#111827",
+              actorBkg: "#1f2937",
+              actorBorder: "#30363d",
+              actorTextColor: "#ffffff",
+              actorLineColor: "#ffffff",
+              signalColor: "#ffffff",
+              signalTextColor: "#ffffff",
+              labelBoxBkgColor: "#161b22",
+              labelBoxBorderColor: "#30363d",
+              labelTextColor: "#ffffff",
+              loopTextColor: "#ffffff",
+              noteBkgColor: "#2d2606",
+              noteTextColor: "#ffffff",
+              noteBorderColor: "#d4a72c",
+              messageTextColor: "#ffffff",
+              messageLineColor: "#ffffff",
+              sequenceNumberColor: "#ffffff",
+
+              // Groupings/Loops
+              loopBkgColor: "#161b22",
+              loopBorderColor: "#30363d",
+              activationBkgColor: "#1f2937",
+              activationBorderColor: "#30363d",
+
+              // State Diagram
+              stateBkg: "#0d1117",
+              stateLabelColor: "#ffffff",
+              stateBorder: "#30363d",
+              altBackground: "#161b22",
+
+              // Class Diagram
+              classText: "#ffffff",
+              classBkg: "#0d1117",
+              classBorder: "#30363d",
+
+              // Pie Chart (GitHub Dark Palette)
+              pie1: "#2f81f7",
+              pie2: "#3fb950",
+              pie3: "#a371f7",
+              pie4: "#d2a8ff", // Highlight
+              pie5: "#e3b341",
+              pie6: "#8b949e",
+              pieTitleTextSize: "20px",
+              pieTitleTextColor: "#ffffff",
+              pieSectionTextColor: "#ffffff",
+              pieLegendTextColor: "#ffffff",
+              pieStrokeColor: "#0d1117",
+              pieStrokeWidth: "2px",
+              pieOuterStrokeWidth: "2px",
+              pieOpacity: "1",
             },
           },
           launchOptions: {
@@ -295,9 +410,9 @@ export default defineConfig({
                   removeViewBox: false, // https://github.com/svg/svgo/issues/1128
                   removeTitle: true,
                   removeDesc: true,
-                  removeUselessDefs: true,
+                  removeUselessDefs: false, // KEEP definitions (markers for arrows)
                   collapseGroups: true,
-                  cleanupIDs: true,
+                  cleanupIDs: false, // KEEP IDs (crucial for marker references)
                   removeEmptyContainers: true,
                   removeEmptyAttrs: true,
                   cleanupAttrs: true,
@@ -311,7 +426,7 @@ export default defineConfig({
             {
               name: "removeAttrs",
               params: {
-                attrs: "(class|id|data-name)",
+                attrs: "(data-name)", // Only remove data-name, KEEP class and id
               },
             },
             {
