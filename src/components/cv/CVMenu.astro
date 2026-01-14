@@ -1,0 +1,372 @@
+---
+/**
+ * CVMenu.astro
+ * A floating action button (FAB) that opens a navigation drawer for the CV page.
+ * Displays sections and their subsections (e.g., specific jobs, skill categories).
+ */
+import { Icon } from "astro-icon/components";
+
+export interface MenuSection {
+  title: string;
+  slug: string;
+  items?: {
+    title: string;
+    slug: string;
+  }[];
+}
+
+interface Props {
+  sections: MenuSection[];
+}
+
+const { sections } = Astro.props;
+---
+
+<nav aria-label="CV Navigation">
+  <button
+    id="cv-menu-trigger"
+    type="button"
+    class="cv-fab"
+    aria-label="Open CV Menu"
+    aria-haspopup="true"
+    aria-expanded="false"
+  >
+    <Icon
+      name="mdi:format-list-bulleted"
+      class="cv-fab-icon"
+    />
+  </button>
+
+  <div
+    id="cv-drawer"
+    class="cv-drawer"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="cv-menu-title"
+    aria-hidden="true"
+    inert
+  >
+    <div class="cv-drawer-header">
+      <h2 id="cv-menu-title">Curriculum Vitae</h2>
+      <button
+        id="cv-menu-close"
+        type="button"
+        class="cv-close-btn"
+        aria-label="Close Menu"
+      >
+        <Icon name="mdi:close" />
+      </button>
+    </div>
+
+    <div class="cv-drawer-content">
+      <ul class="cv-menu-list">
+        {
+          sections.map((section) => (
+            <li class="cv-menu-section">
+              <a
+                href={`#${section.slug}`}
+                class="cv-section-link"
+              >
+                {section.title}
+              </a>
+              {section.items && section.items.length > 0 && (
+                <ul class="cv-submenu-list">
+                  {section.items.map((item) => (
+                    <li>
+                      <a
+                        href={`#${item.slug}`}
+                        class="cv-item-link"
+                      >
+                        {item.title}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </div>
+
+  <div
+    id="cv-backdrop"
+    class="cv-backdrop"
+  >
+  </div>
+</nav>
+
+<script>
+  function setupCVMenu() {
+    const triggerBtn = document.getElementById("cv-menu-trigger");
+    const closeBtn = document.getElementById("cv-menu-close");
+    const drawer = document.getElementById("cv-drawer");
+    const backdrop = document.getElementById("cv-backdrop");
+    const links = drawer?.querySelectorAll("a");
+
+    if (!triggerBtn || !drawer || !backdrop) return;
+
+    let lastFocusedElement: HTMLElement | null = null;
+
+    const openMenu = () => {
+      lastFocusedElement = document.activeElement as HTMLElement;
+      drawer.classList.add("open");
+      backdrop.classList.add("open");
+      triggerBtn.setAttribute("aria-expanded", "true");
+      drawer.setAttribute("aria-hidden", "false");
+      drawer.removeAttribute("inert");
+
+      // Focus close button initially
+      closeBtn?.focus();
+
+      // Lock body scroll on mobile
+      if (window.innerWidth < 1024) {
+        document.body.style.overflow = "hidden";
+      }
+    };
+
+    const closeMenu = () => {
+      drawer.classList.remove("open");
+      backdrop.classList.remove("open");
+      triggerBtn.setAttribute("aria-expanded", "false");
+      drawer.setAttribute("aria-hidden", "true");
+      drawer.setAttribute("inert", "");
+      document.body.style.overflow = "";
+
+      // Restore focus
+      if (lastFocusedElement) {
+        lastFocusedElement.focus();
+      } else {
+        triggerBtn.focus();
+      }
+    };
+
+    // Event Listeners
+    triggerBtn.addEventListener("click", openMenu);
+    closeBtn?.addEventListener("click", closeMenu);
+    backdrop.addEventListener("click", closeMenu);
+
+    // Close on link click
+    links?.forEach((link) => {
+      link.addEventListener("click", closeMenu);
+    });
+
+    // Close on Escape
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && drawer.classList.contains("open")) {
+        closeMenu();
+      }
+    });
+
+    // Focus Trap (Basic implementation)
+    drawer.addEventListener("keydown", (e) => {
+      if (e.key === "Tab") {
+        const focusables = drawer.querySelectorAll(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+        );
+        const first = focusables[0] as HTMLElement;
+        const last = focusables[focusables.length - 1] as HTMLElement;
+
+        if (e.shiftKey) {
+          if (document.activeElement === first) {
+            last.focus();
+            e.preventDefault();
+          }
+        } else {
+          if (document.activeElement === last) {
+            first.focus();
+            e.preventDefault();
+          }
+        }
+      }
+    });
+  }
+
+  // Init on load and after Astro swaps
+  document.addEventListener("DOMContentLoaded", setupCVMenu);
+  document.addEventListener("astro:after-swap", setupCVMenu);
+</script>
+
+<style>
+  /* Floating Action Button */
+  .cv-fab {
+    position: fixed;
+    right: 1.5rem;
+    bottom: 2rem;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 3.5rem;
+    height: 3.5rem;
+    color: white;
+    cursor: pointer;
+    background-color: var(--color-primary);
+    border: none;
+    border-radius: 50%;
+    box-shadow: var(--shadow-lg);
+    transition:
+      transform 0.2s,
+      background-color 0.2s;
+  }
+
+  .cv-fab:hover,
+  .cv-fab:focus-visible {
+    background-color: var(--color-primary-hover);
+    transform: scale(1.05);
+  }
+
+  .cv-fab-icon {
+    font-size: 1.5rem;
+  }
+
+  /* Drawer */
+  .cv-drawer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    z-index: 101;
+    display: flex;
+    visibility: hidden;
+    flex-direction: column;
+    width: 100%;
+    max-height: 85vh;
+    background-color: var(--color-bg);
+    border-top-left-radius: var(--radius-xl);
+    border-top-right-radius: var(--radius-xl);
+    box-shadow: var(--shadow-xl);
+    transform: translateY(100%);
+    transition:
+      transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+      visibility 0s 0.3s;
+  }
+
+  .cv-drawer.open {
+    visibility: visible;
+    transform: translateY(0);
+    transition:
+      transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+      visibility 0s;
+  }
+
+  .cv-drawer-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .cv-drawer-header h2 {
+    margin: 0;
+    font-size: 1.25rem;
+    color: var(--color-text-heading);
+  }
+
+  .cv-close-btn {
+    display: flex;
+    padding: 0.5rem;
+    font-size: 1.5rem;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    background: none;
+    border: none;
+    border-radius: var(--radius-full);
+  }
+
+  .cv-close-btn:hover {
+    color: var(--color-text);
+    background-color: var(--color-bg-secondary);
+  }
+
+  .cv-drawer-content {
+    padding: 1.5rem;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  /* Menu List Styles */
+  .cv-menu-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+  }
+
+  .cv-section-link {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-size: 1.1rem;
+    font-weight: var(--fw-bold);
+    color: var(--color-text-heading);
+    text-decoration: none;
+  }
+
+  .cv-section-link:hover {
+    color: var(--color-primary);
+  }
+
+  /* Submenu Styles */
+  .cv-submenu-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0 0 0 1rem;
+    margin: 0;
+    list-style: none;
+    border-left: 2px solid var(--color-border);
+  }
+
+  .cv-item-link {
+    display: block;
+    font-size: 0.95rem;
+    color: var(--color-text-muted);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .cv-item-link:hover {
+    color: var(--color-text);
+  }
+
+  /* Backdrop */
+  .cv-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 100;
+    visibility: hidden;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgb(0 0 0 / 50%);
+    opacity: 0%;
+    backdrop-filter: blur(2px);
+    transition: opacity 0.3s;
+  }
+
+  .cv-backdrop.open {
+    visibility: visible;
+    opacity: 100%;
+  }
+
+  /* Desktop Styles */
+  @media (width >= 1024px) {
+    .cv-drawer {
+      /* Side drawer on desktop */
+      inset: 0 0 0 auto;
+      width: 320px;
+      max-width: 400px;
+      max-height: none;
+      border-radius: 0;
+      box-shadow: -5px 0 20px rgb(0 0 0 / 10%);
+      transform: translateX(100%);
+    }
+
+    .cv-drawer.open {
+      transform: translateX(0);
+    }
+  }
+</style>

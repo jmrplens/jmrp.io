@@ -10,6 +10,7 @@
  */
 import { createHash } from "node:crypto";
 
+import { getNextIndex } from "@utils/counters";
 import { decodeHtml } from "@utils/html";
 import { getIconForFile } from "@utils/icons";
 import { Icon } from "astro-icon/components";
@@ -47,8 +48,9 @@ if (!ariaLabel) {
   plainText = fullText.length > 50 ? fullText.slice(0, 50) + "..." : fullText;
 }
 
+const index = getNextIndex("file");
 const finalAriaLabel =
-  ariaLabel || `Content of file: ${filename} - ${plainText}`;
+  ariaLabel || `Content of file ${index}: ${filename} - ${plainText}`;
 ---
 
 {
@@ -215,27 +217,28 @@ const finalAriaLabel =
 
   .file-body {
     padding: 0;
-    overflow: hidden;
+
+    /* Removed overflow: hidden to allow child scrollbars to be fully visible/interactive */
   }
 
   .file-body > div {
-    padding: 0.75rem 1.25rem;
+    /* Removed padding to let pre element fill the space naturally */
+    padding: 0;
     font-family: var(--font-mono);
     font-size: var(--font-size-sm);
     line-height: 1.6;
-    white-space: pre-wrap; /* Preserve line breaks from MDX */
+
+    /* Removed white-space: pre-wrap; as it conflicts with pre's own handling */
     outline: none;
   }
 
   /* Style the <pre> element that comes from the slot */
   .file-body :global(pre),
   .file-body :global(.astro-code) {
-    display: block; /* Simpler block layout to avoid flex-related boosting */
-
-    /* !important used to override Astro's default code block styles which use specific margins */
-    width: calc(100% + 2.5rem) !important; /* Offset negative margins */
-    padding: 1rem 1.25rem !important; /* Internal padding remains for content */
-    margin: -0.75rem -1.25rem !important; /* Pull it back to the edges of .file-body > div */
+    display: block;
+    width: 100%;
+    padding: 1rem 1.25rem !important;
+    margin: 0 !important;
     overflow-x: auto;
 
     /* Typography */
@@ -247,8 +250,6 @@ const finalAriaLabel =
     box-shadow: none !important;
 
     /* Mobile Fix: Prevent font inflation */
-    /* stylelint-disable-next-line property-no-vendor-prefix */
-    -webkit-text-size-adjust: none;
     text-size-adjust: none;
   }
 

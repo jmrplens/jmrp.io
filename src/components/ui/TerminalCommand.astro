@@ -6,6 +6,7 @@
 
 import { createHash } from "node:crypto";
 
+import { getNextIndex } from "@utils/counters";
 import { decodeHtml } from "@utils/html";
 import * as cheerio from "cheerio";
 
@@ -83,10 +84,11 @@ const contentHash = createHash("sha256")
 
 // Fallback to meaningful label when rawContent is empty or whitespace-only
 const trimmedRaw = rawContent.trim();
+const index = getNextIndex("terminal");
 const finalAriaLabel =
   ariaLabel ||
   (trimmedRaw
-    ? `Terminal command: ${trimmedRaw.slice(0, 50)}${trimmedRaw.length > 50 ? "..." : ""}`
+    ? `Terminal command ${index}: ${trimmedRaw.slice(0, 50)}${trimmedRaw.length > 50 ? "..." : ""}`
     : "Terminal: no command");
 ---
 
@@ -199,8 +201,6 @@ const finalAriaLabel =
     line-height: 1.6;
 
     /* Mobile Fix: Prevent font inflation */
-    /* stylelint-disable-next-line property-no-vendor-prefix */
-    -webkit-text-size-adjust: none;
     text-size-adjust: none;
   }
 
@@ -215,8 +215,6 @@ const finalAriaLabel =
     white-space: pre;
 
     /* Mobile Fix: Prevent font inflation */
-    /* stylelint-disable-next-line property-no-vendor-prefix */
-    -webkit-text-size-adjust: none;
     text-size-adjust: none;
   }
 

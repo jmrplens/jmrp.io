@@ -11,23 +11,30 @@
  *   Package installed successfully.
  * </TerminalOutput>
  */
+import { getNextIndex } from "@utils/counters";
 import { Icon } from "astro-icon/components";
 
 interface Props {
   title?: string;
+  ariaLabel?: string;
 }
 
-const { title } = Astro.props;
+const { title, ariaLabel } = Astro.props;
 
 const slotContent = await Astro.slots.render("default");
 const trimmedContent = slotContent.trim();
+
+const index = getNextIndex("output");
+const finalAriaLabel =
+  ariaLabel ||
+  (title ? `Terminal Output: ${title}` : `Terminal Output ${index}`);
 ---
 
 <section
   class="terminal-output-wrapper"
   tabindex="0"
   aria-live="polite"
-  aria-label={title ? `Terminal Output: ${title}` : "Terminal Output"}
+  aria-label={finalAriaLabel}
 >
   {
     title && (

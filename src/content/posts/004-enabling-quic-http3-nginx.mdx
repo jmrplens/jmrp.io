@@ -273,34 +273,61 @@ QUIC uses two packet types:
 
 QUIC streams are lightweight, multiplexed channels within a connection:
 
-<FileContent filename="QUIC Stream Types" icon="mdi:chart-timeline-variant">
-```text
-┌─────────────────────────────────────────────────────────────┐
-│                     QUIC Connection                         │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐         │
-│  │  Stream 0   │  │  Stream 4   │  │  Stream 8   │  ...    │
-│  │ (Bidi, C→S) │  │ (Bidi, C→S) │  │ (Bidi, C→S) │         │
-│  └─────────────┘  └─────────────┘  └─────────────┘         │
-│                                                             │
-│  ┌─────────────┐  ┌─────────────┐                          │
-│  │  Stream 2   │  │  Stream 6   │  Unidirectional (C→S)    │
-│  └─────────────┘  └─────────────┘                          │
-│                                                             │
-│  ┌─────────────┐  ┌─────────────┐                          │
-│  │  Stream 1   │  │  Stream 3   │  Server-initiated        │
-│  └─────────────┘  └─────────────┘                          │
-│                                                             │
-│  Flow Control: Per-stream + Connection-level               │
-│  MAX_STREAM_DATA / MAX_DATA frames                         │
-└─────────────────────────────────────────────────────────────┘
+<Mermaid caption="QUIC Stream Processing Logic" maxWidth="700px">
+```mermaid-render
+flowchart TD
+    Packet[Incoming Stream Frame]
+    
+    %% Connection Level Flow Control
+    CheckConn{Connection MAX_DATA Limit OK?}
+    Packet --> CheckConn
 
-Stream ID Encoding:
-- Bits 0-1: Type (00=Bidi/Client, 01=Bidi/Server, 10=Uni/Client, 11=Uni/Server)
-- Remaining bits: Sequence number
+    CheckConn -- No --> BlockConn[Connection Blocked]
+    CheckConn -- Yes --> DecodeID[Decode Stream ID]
+
+    %% Stream ID Logic
+    DecodeID --> CheckInitiator{Last Bit: Initiator?}
+    
+    CheckInitiator -- "0 (Even)" --> Client[Client-Initiated]
+    CheckInitiator -- "1 (Odd)" --> Server[Server-Initiated]
+
+    Client --> CheckDirC{2nd Last Bit: Direction?}
+    Server --> CheckDirS{2nd Last Bit: Direction?}
+
+    CheckDirC -- "0 (Bidi)" --> Stream0[Type 0x0: Client Bidi]
+    CheckDirC -- "1 (Uni)" --> Stream2[Type 0x2: Client Uni]
+
+    CheckDirS -- "0 (Bidi)" --> Stream1[Type 0x1: Server Bidi]
+    CheckDirS -- "1 (Uni)" --> Stream3[Type 0x3: Server Uni]
+
+    %% Stream Level Flow Control
+    Stream0 --> CheckStreamFC{Stream MAX_STREAM_DATA Limit OK?}
+    Stream1 --> CheckStreamFC
+    Stream2 --> CheckStreamFC
+    Stream3 --> CheckStreamFC
+
+    CheckStreamFC -- No --> BlockStream[Stream Blocked]
+    CheckStreamFC -- Yes --> Buffer[Receive Buffer]
 ```
-</FileContent>
+</Mermaid>
+
+**Stream ID Decoding:**
+The Stream ID is a 62-bit integer where the **least significant 2 bits** function as a type header:
+
+- **Bit 0 (Initiator)**: `0` = Client, `1` = Server
+- **Bit 1 (Direction)**: `0` = Bidirectional, `1` = Unidirectional
+
+This creates 4 distinct address spaces:
+- **...00**: Client Request/Response
+- **...01**: Server Push (Deprecated)
+- **...10**: Client Control Stream
+- **...11**: Server Control Stream (QPACK)
+
+**Dual-Layer Flow Control:**
+For a packet to be processed, it must pass **two** independent checks:
+1. **Connection-Level**: Is there `MAX_DATA` credit for the entire connection?
+2. **Stream-Level**: Is there `MAX_STREAM_DATA` credit for this specific stream?
+If *either* is exhausted, transmission blocks until a `WINDOW_UPDATE` frame arrives.
 
 ---
 
@@ -383,25 +410,25 @@ QUIC's security is not optional—it's built into the protocol from the ground u
       <td><strong>Initial</strong></td>
       <td>Destination Connection ID</td>
       <td>First packets, version negotiation</td>
-      <td>❌ No</td>
+      <td data-status="error">No</td>
     </tr>
     <tr>
       <td><strong>0-RTT</strong></td>
       <td>Pre-shared key (PSK)</td>
       <td>Early application data</td>
-      <td>❌ No</td>
+      <td data-status="error">No</td>
     </tr>
     <tr>
       <td><strong>Handshake</strong></td>
       <td>TLS handshake secrets</td>
       <td>Handshake completion</td>
-      <td>✅ Partial</td>
+      <td data-status="warning">Partial</td>
     </tr>
     <tr>
       <td><strong>Application (1-RTT)</strong></td>
       <td>TLS traffic secrets</td>
       <td>All post-handshake data</td>
-      <td>✅ Full (ECDHE)</td>
+      <td data-status="success">Full (ECDHE)</td>
     </tr>
   </tbody>
 </Table>
@@ -410,26 +437,47 @@ QUIC's security is not optional—it's built into the protocol from the ground u
 
 Every QUIC packet (except Initial) is protected with **AEAD encryption**:
 
-<Code lang="text" aria-label="QUIC Packet Protection Structure">
-```
-┌────────────────────────────────────────────────────────────┐
-│                    QUIC Packet                             │
-├────────────────────────────────────────────────────────────┤
-│  Header (partially encrypted)                              │
-│  ├── Flags (protected)                                     │
-│  ├── Connection ID (cleartext for routing)                 │
-│  └── Packet Number (encrypted)                             │
-├────────────────────────────────────────────────────────────┤
-│  Payload (fully encrypted)                                 │
-│  └── AEAD ciphertext (AES-128-GCM, ChaCha20-Poly1305)     │
-├────────────────────────────────────────────────────────────┤
-│  Authentication Tag (16 bytes)                             │
-└────────────────────────────────────────────────────────────┘
+<Table title="QUIC Packet Layout & Protection">
+  <thead>
+    <tr>
+      <th scope="col">Packet Section</th>
+      <th scope="col">Component</th>
+      <th scope="col">Protection Level</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td rowspan="3"><strong>Header</strong></td>
+      <td>Flags</td>
+      <td data-status="warning">Protected (Header Protection)</td>
+    </tr>
+    <tr>
+      <td>Connection ID</td>
+      <td data-status="error">Cleartext (for routing)</td>
+    </tr>
+    <tr>
+      <td>Packet Number</td>
+      <td data-status="success">Encrypted (Header Protection)</td>
+    </tr>
+    <tr>
+      <td><strong>Payload</strong></td>
+      <td>Application Data</td>
+      <td data-status="success">Fully Encrypted (AEAD)</td>
+    </tr>
+    <tr>
+      <td><strong>Footer</strong></td>
+      <td>Authentication Tag</td>
+      <td data-status="success">16-byte Integrity MAC</td>
+    </tr>
+  </tbody>
+</Table>
 
-Key derivation: HKDF from TLS 1.3 traffic secrets
-Nonce: IV XOR packet number (prevents nonce reuse)
-```
-</Code>
+<Callout type="info" title="Encryption Mechanisms" icon="mdi:shield-lock">
+  **Protection Details:**
+  - **Key Derivation**: HKDF from TLS 1.3 traffic secrets.
+  - **Nonce**: IV XORed with the packet number to prevent nonce reuse across the connection.
+  - **Header Protection**: Separate encryption for flags and packet numbers to mask network traffic patterns.
+</Callout>
 
 ### Connection ID and Privacy
 
@@ -491,8 +539,8 @@ HTTP/3 is the mapping of HTTP semantics onto QUIC transport. It replaces HTTP/2'
     </tr>
     <tr>
       <td><strong>Connection Migration</strong></td>
-      <td>❌ No</td>
-      <td>✅ Yes</td>
+      <td data-status="error">No</td>
+      <td data-status="success">Yes</td>
     </tr>
   </tbody>
 </Table>
@@ -513,22 +561,22 @@ As of 2026, HTTP/3 adoption is significant and growing:
     <tr>
       <td><strong>Websites using HTTP/3</strong></td>
       <td>36.6%</td>
-      <td>W3Techs (2026)</td>
+      <td><a href="https://w3techs.com/technologies/details/ce-http3" target="_blank" rel="noopener noreferrer">W3Techs (2026)</a></td>
     </tr>
     <tr>
       <td><strong>Chrome QUIC usage (subsequent)</strong></td>
-      <td>87.9%</td>
-      <td>APNIC Research</td>
+      <td>40%</td>
+      <td><a href="https://blog.apnic.net/2023/10/09/measuring-http-3-real-world-performance/" target="_blank" rel="noopener noreferrer">APNIC Labs</a></td>
     </tr>
     <tr>
       <td><strong>Page load improvement (global)</strong></td>
-      <td>8%</td>
-      <td>Industry benchmarks</td>
+      <td>12.4%</td>
+      <td><a href="https://blog.cloudflare.com/http-3-vs-http-2/" target="_blank" rel="noopener noreferrer">Cloudflare Benchmarks</a></td>
     </tr>
     <tr>
       <td><strong>High-latency region improvement</strong></td>
-      <td>13%</td>
-      <td>Industry benchmarks</td>
+      <td>13.8%</td>
+      <td><a href="https://www.debugbear.com/blog/http3-vs-http2-performance" target="_blank" rel="noopener noreferrer">DebugBear</a></td>
     </tr>
   </tbody>
 </Table>
@@ -554,21 +602,37 @@ Now let's implement HTTP/3 on Nginx. This section covers everything from prerequ
 
 Verify your Nginx installation:
 
-<TerminalCommand>
+<TerminalCommand ariaLabel="Command to verify Nginx version and modules">
 ```bash
 nginx -V 2>&1 | grep -E 'version|http_v3_module|OpenSSL|BoringSSL'
 ```
 </TerminalCommand>
 
-<TerminalOutput>
-nginx version: nginx/1.25.3
-built with OpenSSL 3.5.1 10 Jan 2026
+<TerminalOutput title="Nginx version output">
+nginx version: nginx/1.28.0
+built with OpenSSL 3.5.0 8 Apr 2025 (running with OpenSSL 3.5.4 30 Sep 2025)
 configure arguments: ... --with-http_v3_module ...
 </TerminalOutput>
 
 <Collapsible summary="How to install Nginx with HTTP/3 support">
 
 <Tabs>
+  <TabPanel label="Ondřej Surý Repository (Recommended)">
+    This repository (widely used for PHP and Nginx) provides the latest mainline versions with HTTP/3 support and many additional modules for Debian and Ubuntu.
+
+    ```bash
+    # For Debian:
+    sudo apt install curl gpg
+    curl -fsSL https://packages.sury.org/nginx/README.txt | sudo bash -x
+    
+    # For Ubuntu:
+    sudo add-apt-repository ppa:ondrej/nginx-mainline
+    sudo apt update
+    
+    # Install Nginx:
+    sudo apt install nginx
+    ```
+  </TabPanel>
   <TabPanel label="Ubuntu/Debian (Official Repo)">
     ```bash
     # Add official Nginx mainline repository
@@ -838,55 +902,55 @@ server {
   </thead>
   <tbody>
     <tr>
-      <td><code>http3</code></td>
+      <td><a href="https://nginx.org/en/docs/http/ngx_http_v3_module.html#http3" target="_blank" rel="noopener noreferrer"><code>http3</code></a></td>
       <td><code>on</code></td>
       <td>http, server</td>
       <td>Enables HTTP/3 protocol negotiation</td>
     </tr>
     <tr>
-      <td><code>http3_hq</code></td>
+      <td><a href="https://nginx.org/en/docs/http/ngx_http_v3_module.html#http3_hq" target="_blank" rel="noopener noreferrer"><code>http3_hq</code></a></td>
       <td><code>off</code></td>
       <td>http, server</td>
       <td>Enables HTTP/0.9 over QUIC (testing only)</td>
     </tr>
     <tr>
-      <td><code>http3_max_concurrent_streams</code></td>
+      <td><a href="https://nginx.org/en/docs/http/ngx_http_v3_module.html#http3_max_concurrent_streams" target="_blank" rel="noopener noreferrer"><code>http3_max_concurrent_streams</code></a></td>
       <td><code>128</code></td>
       <td>http, server</td>
       <td>Maximum concurrent streams per connection</td>
     </tr>
     <tr>
-      <td><code>http3_stream_buffer_size</code></td>
+      <td><a href="https://nginx.org/en/docs/http/ngx_http_v3_module.html#http3_stream_buffer_size" target="_blank" rel="noopener noreferrer"><code>http3_stream_buffer_size</code></a></td>
       <td><code>64k</code></td>
       <td>http, server</td>
       <td>Buffer size for reading/writing streams</td>
     </tr>
     <tr>
-      <td><code>quic_active_connection_id_limit</code></td>
+      <td><a href="https://nginx.org/en/docs/http/ngx_http_v3_module.html#quic_active_connection_id_limit" target="_blank" rel="noopener noreferrer"><code>quic_active_connection_id_limit</code></a></td>
       <td><code>2</code></td>
       <td>http, server</td>
       <td>Max connection IDs stored per connection</td>
     </tr>
     <tr>
-      <td><code>quic_bpf</code></td>
+      <td><a href="https://nginx.org/en/docs/http/ngx_http_v3_module.html#quic_bpf" target="_blank" rel="noopener noreferrer"><code>quic_bpf</code></a></td>
       <td><code>off</code></td>
       <td>main</td>
       <td>eBPF routing for connection migration (Linux 5.7+)</td>
     </tr>
     <tr>
-      <td><code>quic_gso</code></td>
+      <td><a href="https://nginx.org/en/docs/http/ngx_http_v3_module.html#quic_gso" target="_blank" rel="noopener noreferrer"><code>quic_gso</code></a></td>
       <td><code>off</code></td>
       <td>http, server</td>
       <td>Generic Segmentation Offload (Linux 4.18+)</td>
     </tr>
     <tr>
-      <td><code>quic_host_key</code></td>
+      <td><a href="https://nginx.org/en/docs/http/ngx_http_v3_module.html#quic_host_key" target="_blank" rel="noopener noreferrer"><code>quic_host_key</code></a></td>
       <td>-</td>
       <td>http, server</td>
       <td>File with secret key for address validation tokens</td>
     </tr>
     <tr>
-      <td><code>quic_retry</code></td>
+      <td><a href="https://nginx.org/en/docs/http/ngx_http_v3_module.html#quic_retry" target="_blank" rel="noopener noreferrer"><code>quic_retry</code></a></td>
       <td><code>off</code></td>
       <td>http, server</td>
       <td>Enables address validation via Retry packets</td>
@@ -971,7 +1035,7 @@ net.ipv4.ip_local_port_range = 1024 65535
 
 Apply the settings:
 
-<TerminalCommand>
+<TerminalCommand ariaLabel="Command to apply kernel UDP settings">
 ```bash
 sudo sysctl --system
 ```
@@ -987,20 +1051,20 @@ After configuration, verify HTTP/3 is working correctly.
 
 Modern curl (7.66+ with HTTP/3 support) can test directly:
 
-<TerminalCommand>
+<TerminalCommand ariaLabel="Curl commands to test HTTP/3 connection">
 ```bash
 # Test HTTP/3 specifically
-curl -I --http3-only https://example.com
+curl -I --http3-only https://jmrp.io
 
 # Or allow fallback
-curl -I --http3 https://example.com
+curl -I --http3 https://jmrp.io
 ```
 </TerminalCommand>
 
-<TerminalOutput>
+<TerminalOutput title="Curl HTTP/3 response output">
 HTTP/3 200 
-server: nginx/1.25.3
-date: Tue, 14 Jan 2026 12:00:00 GMT
+server: jmrp.io
+date: Wed, 14 Jan 2026 20:02:32 GMT
 content-type: text/html; charset=utf-8
 alt-svc: h3=":443"; ma=86400
 strict-transport-security: max-age=63072000; includeSubDomains; preload
@@ -1061,15 +1125,15 @@ strict-transport-security: max-age=63072000; includeSubDomains; preload
 
 Use the custom log format to verify HTTP/3 traffic:
 
-<TerminalCommand>
+<TerminalCommand ariaLabel="Grep command to check Nginx access logs">
 ```bash
 # Check for HTTP/3 connections
-grep 'quic="h3"' /var/log/nginx/example.com.access.log | tail -5
+grep 'quic="h3"' /var/log/nginx/access.log | tail -5
 ```
 </TerminalCommand>
 
-<TerminalOutput>
-192.168.1.100 - - [14/Jan/2026:12:00:00 +0000] "GET / HTTP/3" 200 15234 "-" "Mozilla/5.0..." proto="HTTP/3" quic="h3"
+<TerminalOutput title="Log output showing HTTP/3 traffic">
+192.168.1.100 - - [14/Jan/2026:20:02:32 +0000] "GET / HTTP/3" 200 15234 "-" "Mozilla/5.0..." proto="HTTP/3" quic="h3"
 </TerminalOutput>
 
 ---
@@ -1140,6 +1204,14 @@ Check for QUIC-specific messages:
 grep -i quic /var/log/nginx/error.log | tail -20
 ```
 </TerminalCommand>
+
+<TerminalOutput title="Nginx debug log (simulated failure)">
+2026/01/14 10:42:15 [debug] 12345#0: *1 quic handle packet: fd:16, addr:192.0.2.1:54321
+2026/01/14 10:42:15 [debug] 12345#0: *1 quic packet rx dcid len:8 87654321
+2026/01/14 10:42:15 [debug] 12345#0: *1 quic packet rx scid len:8 12345678
+2026/01/14 10:42:15 [info] 12345#0: *1 quic SSL_do_handshake() failed: SSL_ERROR_SSL: error:14094416:SSL routines:ssl3_read_bytes:sslv3 alert certificate unknown
+2026/01/14 10:42:15 [debug] 12345#0: *1 quic close connection: 0:
+</TerminalOutput>
 
 ---
 

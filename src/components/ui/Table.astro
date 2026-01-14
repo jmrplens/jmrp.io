@@ -41,6 +41,8 @@
  */
 import { createHash } from "node:crypto";
 
+import { getNextIndex } from "@utils/counters";
+
 interface Props {
   title?: string;
   id?: string; // Optional id for stable data-testid
@@ -73,7 +75,9 @@ const uuid =
     .digest("hex")
     .slice(0, 8);
 
-const finalAriaLabel = ariaLabel || (title ? `Table: ${title}` : "Data table");
+const index = getNextIndex("table");
+const finalAriaLabel =
+  ariaLabel || (title ? `Table: ${title}` : `Data table ${index}`);
 
 const wrapperClasses = [
   "table-wrapper",

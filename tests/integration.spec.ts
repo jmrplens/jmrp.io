@@ -37,10 +37,21 @@ test.describe("Integration Flows", () => {
     // Check key sections from cv.astro
     await expect(page.locator("h1")).toHaveText("Curriculum Vitae");
 
-    // Check Table of Contents
-    const toc = page.locator(".cv-toc");
-    await expect(toc).toBeVisible();
-    await expect(toc.getByRole("link", { name: "Experience" })).toBeVisible();
+    // Check CV Menu (Floating Action Button)
+    const menuTrigger = page.locator("#cv-menu-trigger");
+    await expect(menuTrigger).toBeVisible();
+
+    // Open Menu and check for links
+    await menuTrigger.click();
+    const drawer = page.locator("#cv-drawer");
+    await expect(drawer).toBeVisible();
+    await expect(
+      drawer.getByRole("link", { name: "Experience", exact: true }),
+    ).toBeVisible();
+
+    // Close menu to reset state (optional but good practice)
+    await page.keyboard.press("Escape");
+    await expect(drawer).toBeHidden();
 
     // Check Experience Section
     const experienceSection = page.locator("#experience");

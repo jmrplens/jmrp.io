@@ -1,4 +1,5 @@
 ---
+import { getNextIndex } from "@utils/counters";
 import { Icon } from "astro-icon/components";
 
 /**
@@ -17,10 +18,11 @@ import { Icon } from "astro-icon/components";
 interface Props {
   type?: "info" | "warning" | "error" | "success" | "tip" | "note" | "keypoint";
   title?: string;
+  ariaLabel?: string;
   icon?: string;
 }
 
-const { type = "info", title, icon } = Astro.props;
+const { type = "info", title, ariaLabel, icon } = Astro.props;
 
 /* Map icons but handle colors in CSS */
 const icons = {
@@ -34,12 +36,15 @@ const icons = {
 };
 
 const iconName = icon || icons[type];
+
+const index = getNextIndex(`callout-${type}`);
+const finalAriaLabel = ariaLabel || title || `${type} callout ${index}`;
 ---
 
 <aside
   class={`callout callout-${type}`}
   role="note"
-  aria-label={title || `${type} callout`}
+  aria-label={finalAriaLabel}
 >
   <div
     class="icon-wrapper"
@@ -70,6 +75,12 @@ const iconName = icon || icons[type];
     border-left: 4px solid var(--callout-color);
     border-radius: var(--radius-md);
   }
+
+  /*
+     * Theme Definitions
+     * Uses 700 scale for text in Light Mode (Contrast > 4.5:1)
+     * Uses 400/500 scale for text in Dark Mode
+     */
 
   /* Default (Dark Mode) */
   :root {

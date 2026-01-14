@@ -206,6 +206,15 @@ a:hover {
 }
 
 /* Global Styles */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  scroll-margin-top: calc(var(--header-height) + 1rem);
+}
+
 h1 {
   font-size: 1.75em;
   line-height: 1.2;

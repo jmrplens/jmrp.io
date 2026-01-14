@@ -4,14 +4,20 @@
  * Wraps the diagram in a figure with optional caption and size controls.
  */
 
+import { getNextIndex } from "@utils/counters";
+
 interface Props {
   caption?: string;
   title?: string;
+  ariaLabel?: string;
   maxWidth?: string;
   maxHeight?: string;
 }
 
-const { caption, title, maxWidth, maxHeight } = Astro.props;
+const { caption, title, ariaLabel, maxWidth, maxHeight } = Astro.props;
+
+const index = getNextIndex("mermaid");
+const finalAriaLabel = ariaLabel || title || `Mermaid Diagram ${index}`;
 
 const captionId = caption
   ? `mermaid-caption-${Math.random().toString(36).slice(2, 10)}`
@@ -21,7 +27,7 @@ const captionId = caption
 <figure
   class="mermaid-figure"
   aria-labelledby={captionId}
-  aria-label={caption ? undefined : title || "Mermaid Diagram"}
+  aria-label={caption ? undefined : finalAriaLabel}
 >
   <div
     class="mermaid-content"

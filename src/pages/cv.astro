@@ -7,6 +7,7 @@
 import "@styles/skills.css";
 
 import CertificateGroup from "@components/cv/CertificateGroup.astro";
+import CVMenu, { type MenuSection } from "@components/cv/CVMenu.astro";
 import SkillGroup from "@components/cv/SkillGroup.astro";
 import BaseLayout from "@layouts/BaseLayout.astro";
 import type { CVSection } from "@src/types";
@@ -35,6 +36,53 @@ const sectionLookup = new Map<string, CVSection>(
 const sortedSections = sectionOrder
   .map((title) => sectionLookup.get(title))
   .filter((s): s is CVSection => !!s);
+
+// Helper to generate slugs
+const generateSlug = (text: string) =>
+  text
+    .toLowerCase()
+    .replaceAll(/[^a-z0-9\s-]/g, "")
+    .trim()
+    .replaceAll(/\s+/g, "-");
+
+// Prepare menu structure with subsections
+const menuSections: MenuSection[] = sortedSections.map((section) => {
+  const sectionSlug = generateSlug(section.title);
+  let items: { title: string; slug: string }[] = [];
+
+  switch (section.type) {
+    case "time_table": {
+      // Experience & Education: Use job title or institution
+      items = section.contents.map((item, index) => ({
+        title: item.title,
+        slug: generateSlug(`${section.title}-${item.title}-${index}`),
+      }));
+      break;
+    }
+    case "list_groups": {
+      // Skills: Use skill categories
+      items = section.contents.map((group, index) => ({
+        title: group.category,
+        slug: generateSlug(`${section.title}-${group.category}-${index}`),
+      }));
+      break;
+    }
+    case "certificate_list": {
+      // Certificates: Use certificate categories
+      items = section.contents.map((group, index) => ({
+        title: group.category,
+        slug: generateSlug(`${section.title}-${group.category}-${index}`),
+      }));
+      break;
+    }
+  }
+
+  return {
+    title: section.title,
+    slug: sectionSlug,
+    items,
+  };
+});
 
 // Extract specific sections from the lookup (single pass, no redundant .find())
 const technicalSkills = sectionLookup.get("Technical Skills");
@@ -114,41 +162,11 @@ const personSchema = {
   <div class="container">
     <h1 class="page-title cv-title">Curriculum Vitae</h1>
 
-    <nav
-      class="cv-toc"
-      aria-label="Table of Contents"
-    >
-      <ul>
-        {
-          sortedSections.map((section) => {
-            // Use the same slugging logic as the section id generation
-            const slug = section.title
-              .toLowerCase()
-              .replaceAll(/[^a-z0-9\s-]/g, "")
-              .trim()
-              .replaceAll(/\s+/g, "-");
-            // Use shorter label for display (first word only for long titles)
-            const words = section.title.split(" ");
-            const label = words.length > 2 ? words[0] : section.title;
-            return (
-              <li>
-                <a href={`#${slug}`}>{label}</a>
-              </li>
-            );
-          })
-        }
-      </ul>
-    </nav>
-
     {
       sortedSections.map((section) => (
         <section
           class="cv-section"
-          id={section.title
-            .toLowerCase()
-            .replaceAll(/[^a-z0-9\s-]/g, "")
-            .trim()
-            .replaceAll(/\s+/g, "-")}
+          id={generateSlug(section.title)}
           aria-label={section.title}
         >
           <div class="section-header">
@@ -183,8 +201,11 @@ const personSchema = {
 
           {section.type === "time_table" && (
             <div class="timeline">
-              {section.contents.map((item) => (
-                <article class="timeline-item">
+              {section.contents.map((item, index) => (
+                <article
+                  class="timeline-item"
+                  id={generateSlug(`${section.title}-${item.title}-${index}`)}
+                >
                   <div
                     class="timeline-marker"
                     aria-hidden="true"
@@ -273,16 +294,30 @@ const personSchema = {
 
           {section.type === "list_groups" && (
             <div class="grid-layout">
-              {section.contents.map((group) => (
-                <SkillGroup group={group} />
+              {section.contents.map((group, index) => (
+                <div
+                  class="skill-group-wrapper"
+                  id={generateSlug(
+                    `${section.title}-${group.category}-${index}`,
+                  )}
+                >
+                  <SkillGroup group={group} />
+                </div>
               ))}
             </div>
           )}
 
           {section.type === "certificate_list" && (
             <div class="grid-layout">
-              {section.contents.map((group) => (
-                <CertificateGroup group={group} />
+              {section.contents.map((group, index) => (
+                <div
+                  class="cert-group-wrapper"
+                  id={generateSlug(
+                    `${section.title}-${group.category}-${index}`,
+                  )}
+                >
+                  <CertificateGroup group={group} />
+                </div>
               ))}
             </div>
           )}
@@ -290,6 +325,8 @@ const personSchema = {
       ))
     }
   </div>
+
+  <CVMenu sections={menuSections} />
 </BaseLayout>
 
 <style>
@@ -297,45 +334,10 @@ const personSchema = {
     margin-bottom: var(--space-md);
   }
 
-  /* Table of Contents */
-  .cv-toc {
-    /* Safari support */
-    position: sticky;
-    top: calc(var(--header-height) + 1rem);
-    z-index: 100;
-    width: fit-content;
-    padding: var(--space-sm) var(--space-md);
-    margin-bottom: var(--space-2xl);
-    background: var(--color-bg-secondary);
-    border: var(--border-1);
-    border-radius: var(--radius-full);
-    backdrop-filter: blur(8px);
-  }
-
-  .cv-toc ul {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-md);
-    padding: 0;
-    margin: 0;
-    list-style: none;
-  }
-
-  .cv-toc a {
-    font-size: 0.9rem;
-    font-weight: var(--fw-medium);
-    color: var(--color-text);
-    text-decoration: none;
-  }
-
-  .cv-toc a:hover {
-    color: var(--color-primary);
-  }
-
   /* Section Styling */
   .cv-section {
     margin-bottom: var(--space-3xl);
-    scroll-margin-top: 140px; /* Offset for sticky header/toc */
+    scroll-margin-top: var(--header-height);
   }
 
   .section-header {
@@ -348,6 +350,13 @@ const personSchema = {
     padding-bottom: var(--space-sm);
     margin-bottom: -2px; /* Overlap border */
     border-bottom: 2px solid var(--color-primary);
+  }
+
+  /* Scroll margin for inner items to clear header */
+  .timeline-item,
+  .skill-group-wrapper,
+  .cert-group-wrapper {
+    scroll-margin-top: calc(var(--header-height) + 1rem);
   }
 
   /* Map Type */
@@ -515,15 +524,6 @@ const personSchema = {
 
   /* Responsive */
   @media (width <= 768px) {
-    .cv-toc {
-      width: 100%;
-      overflow-x: auto;
-    }
-
-    .cv-toc ul {
-      flex-wrap: nowrap;
-    }
-
     .timeline-header {
       flex-direction: column;
       gap: 0;
