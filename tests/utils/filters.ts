@@ -48,10 +48,8 @@ export function shouldIgnoreError(text: string): boolean {
   return (
     isCloudflareInsightsError(text) ||
     text.includes("Access-Control-Allow-Origin") ||
-    // Only ignore generic failures if likely related to localhost/CORS or third-party blocks
+    // Only ignore generic failures if likely related to localhost/CORS
     (text.includes("net::ERR_FAILED") &&
-      (text.includes("127.0.0.1") ||
-        text.includes("localhost") ||
-        isCloudflareInsightsError(text)))
+      (text.includes("127.0.0.1") || text.includes("localhost")))
   );
 }

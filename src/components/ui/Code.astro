@@ -45,6 +45,13 @@ const trimmedContent = slotContent.trim();
 // Check if content is already rendered HTML (starts with a tag, likely from markdown)
 const isHtml = trimmedContent.startsWith("<");
 
+// Guard: Handle empty or whitespace-only content
+if (!trimmedContent) {
+  console.warn(
+    "Code component received empty content - this may indicate a build issue",
+  );
+}
+
 // Extract raw code for highlighting
 let rawCode = trimmedContent;
 
@@ -178,7 +185,14 @@ const langIcon = getIconForLang(lang);
     overflow-x: auto;
   }
 
-  /* Style both raw and rendered pre tags */
+  /*
+   * Shiki Override Styles
+   * ----------------------
+   * Multiple !important declarations are required to override Shiki's inline styles
+   * which have higher specificity. These overrides target padding, margin, background-color,
+   * border, and border-radius to ensure consistent visual appearance within our component.
+   * Do not remove without verifying Shiki styling behavior.
+   */
   .code-body pre,
   .code-body :global(pre.astro-code) {
     padding: 1rem 1.25rem !important;

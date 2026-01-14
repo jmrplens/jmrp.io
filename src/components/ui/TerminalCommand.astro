@@ -18,6 +18,9 @@ interface Props {
 let lines: string[] = [];
 let rawContent = "";
 
+// Module-scoped counter for deterministic empty content IDs (avoids SSR flakiness)
+let emptyContentCounter = 0;
+
 /**
  * Slot Rendering Pipeline:
  * MDX content is rendered to HTML by Astro, so we need to extract
@@ -71,17 +74,20 @@ const renderedLines = lines.map((line) => {
 const { ariaLabel } = Astro.props;
 
 // Generate a content-based test ID for uniqueness
-// Add extra entropy for empty or identical content to ensure unique IDs per instance
-const hashInput =
-  rawContent || `empty-${Math.random().toString(36).slice(2, 7)}`;
+// Use deterministic counter for empty content to ensure stable SSR renders
+const hashInput = rawContent || `empty-${++emptyContentCounter}`;
 const contentHash = createHash("sha256")
   .update(hashInput)
   .digest("hex")
   .slice(0, 8);
 
+// Fallback to meaningful label when rawContent is empty or whitespace-only
+const trimmedRaw = rawContent.trim();
 const finalAriaLabel =
   ariaLabel ||
-  `Terminal command: ${rawContent.slice(0, 50)}${rawContent.length > 50 ? "..." : ""}`;
+  (trimmedRaw
+    ? `Terminal command: ${trimmedRaw.slice(0, 50)}${trimmedRaw.length > 50 ? "..." : ""}`
+    : "Terminal: no command");
 ---
 
 <div

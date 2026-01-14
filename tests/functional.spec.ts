@@ -85,20 +85,16 @@ test.describe("Interactive Features", () => {
     // Force Light Mode
     await page.evaluate(() => {
       document.documentElement.dataset.theme = "light";
-      document.documentElement.classList.add("light-mode");
-      document.documentElement.classList.remove("dark-mode");
     });
     await expect(html).toHaveAttribute("data-theme", "light");
 
     // Click to Dark Mode
     await toggle.click();
     await expect(html).toHaveAttribute("data-theme", "dark");
-    await expect(html).toHaveClass(/dark-mode/);
 
     // Click back to Light Mode
     await toggle.click();
     await expect(html).toHaveAttribute("data-theme", "light");
-    await expect(html).toHaveClass(/light-mode/);
   });
 
   test("mobile menu preserves scroll position on open/close", async ({

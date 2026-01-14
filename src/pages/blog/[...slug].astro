@@ -180,6 +180,7 @@ const articleSchema = [
             <span class="separator">•</span>
             <time datetime={post.data.publishedDate.toISOString()}>
               {
+                // TODO: Extract locale to site config for i18n support (e.g., siteConfig.locale)
                 post.data.publishedDate.toLocaleDateString("en-US", {
                   year: "numeric",
                   month: "long",
@@ -247,11 +248,21 @@ const articleSchema = [
 </BaseLayout>
 
 <script>
+  // WeakSet to track observed elements without mutating DOM properties
+  const observedElements = new WeakSet<Element>();
+
   const setupPostInteractions = () => {
     // Accessibility: Fix duplicate role="region" on code blocks
     // We use requestIdleCallback to avoid forced reflows during initial layout
-    const rIC =
-      (window as any).requestIdleCallback || ((cb: any) => setTimeout(cb, 50));
+    // Properly typed: uses IdleRequestCallback signature, falls back to setTimeout returning number
+    const rIC: (callback: IdleRequestCallback) => number =
+      window.requestIdleCallback?.bind(window) ??
+      ((cb) =>
+        window.setTimeout(
+          () =>
+            cb({ didTimeout: false, timeRemaining: () => 50 } as IdleDeadline),
+          50,
+        ));
 
     const applyLabels = () => {
       rIC(() => {
@@ -270,9 +281,9 @@ const articleSchema = [
 
     // Debounced observer for hydration changes
     const prose = document.querySelector(".prose");
-    if (prose && !(prose as any)._hasObserver) {
-      (prose as any)._hasObserver = true;
-      let timeout: any;
+    if (prose && !observedElements.has(prose)) {
+      observedElements.add(prose);
+      let timeout: ReturnType<typeof setTimeout>;
       const observer = new MutationObserver(() => {
         clearTimeout(timeout);
         timeout = setTimeout(applyLabels, 300);

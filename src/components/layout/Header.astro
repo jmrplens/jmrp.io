@@ -5,15 +5,19 @@
  * Responsive design with a hamburger menu for mobile.
  */
 import ThemeToggle from "@components/ui/ThemeToggle.astro";
-import type { SiteConfig } from "@src/types";
 import { getEntry } from "astro:content";
 import { Icon } from "astro-icon/components";
 
 const siteEntry = await getEntry("site_config", "site");
-const siteData = (siteEntry?.data || {}) as SiteConfig;
+// Type guard: siteEntry may be undefined, and data is a union type.
+// We extract properties with safe fallbacks since we know "site" entry has these fields.
+const siteData = siteEntry?.data;
 
-const navItems = siteData.nav || [];
-const logoText = siteData.logo_text || "<JMRP />";
+const navItems =
+  (siteData && "nav" in siteData ? siteData.nav : undefined) ?? [];
+const logoText =
+  (siteData && "logo_text" in siteData ? siteData.logo_text : undefined) ??
+  "<JMRP />";
 ---
 
 <header>

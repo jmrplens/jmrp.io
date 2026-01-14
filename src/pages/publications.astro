@@ -109,7 +109,14 @@ const collectionSchema = {
 </BaseLayout>
 
 <script>
+  // Guard to prevent double initialization
+  let publicationsInitialized = false;
+
   function initPublications() {
+    // Idempotency guard: skip if already initialized on this page
+    if (publicationsInitialized) return;
+    publicationsInitialized = true;
+
     const handleAbstracts = (selector: string, idPrefix: string) => {
       document.querySelectorAll(selector).forEach((btn) => {
         (btn as HTMLElement).onclick = (e) => {
@@ -129,6 +136,13 @@ const collectionSchema = {
     handleAbstracts(".btn-bibtex-toggle", "bibtex");
   }
 
+  // Reset guard on page navigation (for View Transitions)
+  document.addEventListener("astro:before-swap", () => {
+    publicationsInitialized = false;
+  });
+
+  // astro:page-load fires on initial load AND after View Transitions
+  // DOMContentLoaded is fallback for environments without View Transitions
   document.addEventListener("astro:page-load", initPublications);
   document.addEventListener("DOMContentLoaded", initPublications);
 </script>

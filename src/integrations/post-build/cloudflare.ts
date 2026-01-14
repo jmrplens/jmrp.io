@@ -11,6 +11,9 @@ import { type AstroIntegrationLogger } from "astro";
  * Purges the entire cache for the configured Cloudflare zone.
  *
  * @param logger - The Astro logger instance.
+ * @param throwOnError - Boolean (default: false). When true, the function rethrows
+ *   errors instead of logging and swallowing them. When false, errors are logged
+ *   and the promise resolves without throwing.
  * @returns Resolves when the operation is complete (success or skipped).
  */
 export async function purgeCloudflareCache(

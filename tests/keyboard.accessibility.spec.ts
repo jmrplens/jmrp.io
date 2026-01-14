@@ -151,41 +151,22 @@ test.describe("Keyboard Navigation Accessibility", () => {
 
     // Capture initial state
     const html = page.locator("html");
-    const initialClass = await html.getAttribute("class");
+    // eslint-disable-next-line playwright/no-conditional-in-test
+    const initialTheme = (await html.getAttribute("data-theme")) || "dark";
+    // eslint-disable-next-line playwright/no-conditional-in-test
+    const expectedNewTheme = initialTheme === "light" ? "dark" : "light";
 
     // 1. Toggle
     await page.keyboard.press("Enter");
 
-    // Assert change - compare class attributes before/after toggle
-    // Use web-first assertions for reliable waiting
-    await expect(html).not.toHaveAttribute("class", initialClass ?? "");
-
-    // Verify exactly one theme class is present
-    const updatedClass = await html.getAttribute("class");
-    const hasLightMode = updatedClass?.includes("light-mode") ?? false;
-    const hasDarkMode = updatedClass?.includes("dark-mode") ?? false;
-    expect(
-      hasLightMode !== hasDarkMode,
-      "Expected exactly one theme mode class after first toggle",
-    ).toBe(true);
+    // Assert change - verify data-theme updated
+    await expect(html).toHaveAttribute("data-theme", expectedNewTheme);
 
     // 2. Toggle back
     await themeToggle.press("Enter");
 
-    // Assert that the class attribute is back to its initial state
-    // eslint-disable-next-line playwright/no-conditional-in-test, unicorn/prefer-ternary
-    if (initialClass === null) {
-      // If initialClass was null (no class attribute), expect no class attribute after toggling back
-      // eslint-disable-next-line playwright/no-conditional-expect
-      await expect(html).not.toHaveAttribute(
-        "class",
-        expect.stringMatching(/./),
-      );
-    } else {
-      // Otherwise, expect the class attribute to be exactly the initialClass
-      // eslint-disable-next-line playwright/no-conditional-expect
-      await expect(html).toHaveAttribute("class", initialClass);
-    }
+    // Assert that the theme is back to initial state
+    await expect(html).toHaveAttribute("data-theme", initialTheme);
 
     // Check a11y of the toggle itself
     const results = await new AxeBuilder({ page })

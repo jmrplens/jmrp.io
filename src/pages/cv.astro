@@ -119,11 +119,24 @@ const personSchema = {
       aria-label="Table of Contents"
     >
       <ul>
-        <li><a href="#general-information">General</a></li>
-        <li><a href="#experience">Experience</a></li>
-        <li><a href="#technical-skills">Skills</a></li>
-        <li><a href="#formal-education">Education</a></li>
-        <li><a href="#certificates">Certificates</a></li>
+        {
+          sortedSections.map((section) => {
+            // Use the same slugging logic as the section id generation
+            const slug = section.title
+              .toLowerCase()
+              .replaceAll(/[^a-z0-9\s-]/g, "")
+              .trim()
+              .replaceAll(/\s+/g, "-");
+            // Use shorter label for display (first word only for long titles)
+            const words = section.title.split(" ");
+            const label = words.length > 2 ? words[0] : section.title;
+            return (
+              <li>
+                <a href={`#${slug}`}>{label}</a>
+              </li>
+            );
+          })
+        }
       </ul>
     </nav>
 

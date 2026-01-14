@@ -15,11 +15,13 @@ sudo apt-get install texlive-xetex texlive-luatex texlive-science texlive-latex-
 # Bibliography management
 sudo apt-get install biber
 
-# **CRITICAL**: Language packs for hyphenation and localization
+# Language packs for hyphenation and localization
+# - texlive-lang-spanish: REQUIRED to avoid babel errors when compiling Spanish CVs
+# - texlive-lang-english: Usually pre-installed in most TeX distributions, but included for completeness
 sudo apt-get install texlive-lang-spanish texlive-lang-english
 ```
 
-**Note**: The lack of `texlive-lang-spanish` will cause `babel` errors during the Spanish CV compilation.
+**Note**: Missing `texlive-lang-spanish` will cause `babel` errors during Spanish CV compilation. The English language pack is typically included by default but is listed here to ensure complete installation.
 
 ## How to Compile
 
@@ -52,6 +54,8 @@ xelatex -interaction=nonstopmode CV_RequenaPlensJoseManuel_SPA.tex
 # lualatex -interaction=nonstopmode CV_RequenaPlensJoseManuel_SPA.tex
 # lualatex -interaction=nonstopmode CV_RequenaPlensJoseManuel_SPA.tex
 ```
+
+**Why multiple LaTeX runs?** LaTeX requires multiple passes to resolve cross-references, table of contents, and bibliography entries. The first run identifies references, Biber processes the bibliography, and subsequent runs incorporate the resolved data.
 
 ## Directory Structure
 

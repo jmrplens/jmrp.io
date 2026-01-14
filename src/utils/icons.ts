@@ -128,7 +128,11 @@ export const getIconForFile = (filename: string): string => {
   // 3. Fallbacks based on partial matches or categories
   if (lowerName.endsWith(".conf") || lowerName.endsWith(".config"))
     return "mdi:file-cog-outline";
-  if (lowerName.includes("rc")) return "mdi:file-cog-outline"; // .bashrc, .eslintrc
+  // Match rc-style files: dotfiles ending with "rc" (e.g., .bashrc, .eslintrc)
+  // or filenames with at least 3 chars before "rc" suffix (e.g., "npmrc")
+  // Avoids false positives like "src", "source.js", "service.ts"
+  if (/^\.[\w-]*rc$/.test(lowerName) || /^[\w-]{3,}rc$/.test(lowerName))
+    return "mdi:file-cog-outline";
 
   // Default generic file icon
   return "mdi:file-outline";

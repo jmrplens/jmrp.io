@@ -208,6 +208,9 @@ test.describe("Deep Accessibility & Interaction Tests", () => {
     // 2. Open the BibTeX section
     await bibtexToggle.click();
 
+    // Verify interaction occurred (JS handled the click)
+    await expect(bibtexToggle).toHaveAttribute("aria-expanded", "true");
+
     // 3. Find the copy button inside the now-visible BibTeX container
     // The container ID is in aria-controls of the toggle
 
@@ -220,7 +223,8 @@ test.describe("Deep Accessibility & Interaction Tests", () => {
     // Force non-null assertion as expect above guarantees it, needed for TS
     // eslint-disable-next-line playwright/no-conditional-in-test
     if (!controlsId) throw new Error("controlsId is null despite expectation");
-    const container = page.locator(`#${controlsId}`);
+    // Use attribute selector to safely handle special CSS characters in IDs
+    const container = page.locator(`[id="${controlsId}"]`);
     await expect(container).toBeVisible();
 
     const copyBtn = container.locator(".copy-button"); // Uses .copy-button class from CopyButton.astro

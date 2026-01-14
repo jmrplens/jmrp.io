@@ -1339,6 +1339,10 @@ done
 ```
 </FileContent>
 
+<Callout type="warning" icon="mdi:linux">
+  **Platform Note:** This script uses GNU `date -d` which is Linux-specific. On macOS/BSD, you'll need to modify the `end_epoch` calculation using `date -j -f` or use a cross-platform tool like Python's `datetime` module.
+</Callout>
+
 Schedule this in crontab to run daily:
 
 <FileContent filename="crontab -e" icon="mdi:calendar-clock">

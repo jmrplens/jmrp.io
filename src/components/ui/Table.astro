@@ -43,6 +43,7 @@ import { createHash } from "node:crypto";
 
 interface Props {
   title?: string;
+  id?: string; // Optional id for stable data-testid
   striped?: boolean;
   compact?: boolean;
   highlight?: boolean;
@@ -53,6 +54,7 @@ interface Props {
 
 const {
   title,
+  id,
   striped = true,
   compact = false,
   highlight = true,
@@ -62,10 +64,14 @@ const {
 } = Astro.props;
 
 const slotContent = await Astro.slots.render("default");
-const uuid = createHash("sha256")
-  .update(`table-${title || ""}-${slotContent.slice(0, 100)}`)
-  .digest("hex")
-  .slice(0, 8);
+
+// Use id prop if provided, otherwise generate from content hash
+const uuid =
+  id ||
+  createHash("sha256")
+    .update(`table-${title || ""}-${slotContent.slice(0, 100)}`)
+    .digest("hex")
+    .slice(0, 8);
 
 const finalAriaLabel = ariaLabel || (title ? `Table: ${title}` : "Data table");
 
@@ -85,9 +91,9 @@ const wrapperClasses = [
   class={wrapperClasses}
   data-testid={uuid}
 >
-  {title && <div class="table-title">{title}</div>}
   <div class="table-container">
     <table aria-label={finalAriaLabel}>
+      {title && <caption class="table-title">{title}</caption>}
       <Fragment set:html={slotContent} />
     </table>
   </div>
@@ -156,12 +162,15 @@ const wrapperClasses = [
     --status-info-border: rgb(59 130 246 / 40%);
   }
 
-  .table-title {
+  /* Table caption (semantic title inside table element) */
+  :global(.table-wrapper caption.table-title) {
     padding: 0.75rem 1rem;
     font-family: var(--font-mono);
     font-size: 0.85rem;
     font-weight: 600;
     color: var(--table-header-text);
+    text-align: left;
+    caption-side: top;
     background-color: var(--table-header-bg);
     border-bottom: 1px solid var(--table-border);
   }

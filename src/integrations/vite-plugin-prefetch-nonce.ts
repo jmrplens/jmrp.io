@@ -44,14 +44,15 @@ export function vitePrefetchNoncePlugin(): Plugin {
 
       // Generate replacement that evaluates the expression only once
       // Using an IIFE with a temp variable to avoid duplicating the expression
+      // No leading semicolon to avoid breaking expression contexts
       const patchedCode = code.replace(
         appendPattern,
-        `;(() => {
+        `(() => {
           const __vitePrefetchEl = $1;
           const existingScript = document.querySelector("head > script[nonce], body > script[nonce]");
           if (existingScript?.nonce) __vitePrefetchEl.nonce = existingScript.nonce;
-          document.head.append(__vitePrefetchEl);
-        })();`,
+          return document.head.append(__vitePrefetchEl);
+        })()`,
       );
 
       if (patchedCode === code) {

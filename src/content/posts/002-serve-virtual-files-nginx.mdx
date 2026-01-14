@@ -411,7 +411,8 @@ Give credit to your team with [humans.txt](https://humanstxt.org/):
 ```nginx
 location = /humans.txt {
     default_type text/plain;
-    return 200 "/* TEAM */\nLead: Jane Doe\nContact: jane@example.com\n\n/* SITE */\nPowered by: Nginx, Astro\nLast update: 2026-01-12\n";
+    # Note: Update the "Last update" date when deploying changes
+    return 200 "/* TEAM */\nLead: Jane Doe\nContact: jane@example.com\n\n/* SITE */\nPowered by: Nginx, Astro\nLast update: YYYY-MM-DD\n";
 }
 ```
 </FileContent>
@@ -526,16 +527,18 @@ Handle certificate validation across multiple services:
 
 <FileContent filename="acme-challenge.conf" icon="devicon:nginx">
 ```nginx
-# All ACME challenges go to shared directory
+# ACME Challenges - Choose only ONE of the following two location blocks:
+
+# Option A: Serve from shared directory (for certbot standalone/webroot mode)
 location ^~ /.well-known/acme-challenge/ {
     root /var/www/certbot;
     default_type text/plain;
 }
 
-# Alternative: proxy to certbot container
-location ^~ /.well-known/acme-challenge/ {
-    proxy_pass http://certbot:80;
-}
+# Option B: Proxy to certbot container (for Docker setups - comment out Option A if using this)
+# location ^~ /.well-known/acme-challenge/ {
+#     proxy_pass http://certbot:80;
+# }
 ```
 </FileContent>
 
@@ -614,7 +617,7 @@ Serve different `robots.txt` rules based on the request (e.g., blocking AI bots 
 <FileContent filename="/etc/nginx/njs/virtual.js" icon="mdi:language-javascript">
 ```javascript
 function robots(r) {
-    var ua = r.headersIn['User-Agent'] || "";
+    const ua = r.headersIn['User-Agent'] || "";
     
     // Block specific bots dynamically
     if (ua.includes("GPTBot") || ua.includes("CCBot")) {

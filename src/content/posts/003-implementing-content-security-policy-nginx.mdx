@@ -248,7 +248,8 @@ server {
     # Requires: ngx_http_sub_module (included in most Nginx builds)
     
     sub_filter_once off;              # Replace ALL occurrences, not just first
-    sub_filter_types *;               # Apply to all content types (HTML, JS, etc.)
+    # Apply only to text-based content types (not images/fonts/binary files)
+    sub_filter_types text/html text/css application/javascript application/json text/xml application/xml;
     sub_filter NGINX_NONCE_CSP $cspNonce;  # The actual replacement
 
     # ========================================
@@ -509,8 +510,8 @@ These control where resources can be loaded from:
     </tr>
     <tr>
       <td><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/prefetch-src" target="_blank" rel="noopener noreferrer"><code>prefetch-src</code></a></td>
-      <td>Prefetched resources</td>
-      <td><code>'self'</code></td>
+      <td><em>⚠️ Removed from CSP Level 3 — not supported by browsers. Use <code>default-src</code> or <code>script-src</code> instead.</em></td>
+      <td><code>N/A</code></td>
     </tr>
   </tbody>
 </Table>
@@ -723,8 +724,6 @@ function loadWithPreload(src) {
 }
 ```
 </FileContent>
-
----
 
 ---
 
@@ -1061,9 +1060,16 @@ server {
     }
     
     # Cache static assets
+    # Note: Re-apply security headers since Nginx drops parent headers when add_header is used
     location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2)$ {
         expires 1y;
-        add_header Cache-Control "public, immutable";
+        add_header Cache-Control "public, immutable" always;
+        
+        # Re-apply security headers (Nginx drops parent headers when add_header is used)
+        add_header Content-Security-Policy $csp always;
+        add_header X-Content-Type-Options "nosniff" always;
+        add_header X-Frame-Options "DENY" always;
+        add_header Referrer-Policy "strict-origin-when-cross-origin" always;
     }
 }
 
