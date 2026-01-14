@@ -230,7 +230,8 @@ Configure Nginx to:
 <FileContent filename="/etc/nginx/sites-available/jmrp.io.conf" icon="devicon:nginx">
 ```nginx
 server {
-    listen 443 ssl http2;
+    listen 443 ssl;
+    http2 on;
     server_name jmrp.io;
     
     # ========================================
@@ -755,8 +756,12 @@ This forces all DOM updates to use "Typed" values (created via a policy) instead
 if (window.trustedTypes && window.trustedTypes.createPolicy) {
   window.trustedTypes.createPolicy('default', {
     createHTML: (string) => DOMPurify.sanitize(string),
-    createScript: (string) => string, // Be careful!
-    createScriptURL: (string) => string
+    // WARNING: The following handlers return input unchanged (no-op).
+    // In production, implement proper validation:
+    // - createScript: validate against an allowlist or reject entirely
+    // - createScriptURL: validate URL origin against allowed domains
+    createScript: (string) => string, // ⚠️ Insecure placeholder!
+    createScriptURL: (string) => string // ⚠️ Insecure placeholder!
   });
 }
 
@@ -987,8 +992,9 @@ Here's the complete Nginx configuration used on `jmrp.io`:
 <FileContent filename="/etc/nginx/sites-available/jmrp.io.conf" icon="devicon:nginx">
 ```nginx
 server {
-    listen 443 ssl http2;
-    listen [::]:443 ssl http2;
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    http2 on;
     server_name jmrp.io www.jmrp.io;
     
     # SSL Configuration (abbreviated)
@@ -1007,8 +1013,9 @@ server {
     set $cspNonce $request_id;
     
     # Replace placeholders with actual nonce
+    # IMPORTANT: Use explicit MIME types, NOT wildcard (*), to avoid corrupting binary files
     sub_filter_once off;
-    sub_filter_types *;
+    sub_filter_types text/html text/css application/javascript application/xml text/plain;
     sub_filter NGINX_NONCE_CSP $cspNonce;
 
     # ============================================

@@ -370,6 +370,15 @@ location /download-via-backend {
 ```
 </FileContent>
 
+<Callout type="warning" icon="mdi:shield-alert">
+  **Security Warning:** The `alias /var/secure/files/$arg_file;` pattern is vulnerable to path traversal attacks if `$arg_file` is not validated. An attacker could request `?file=../../../etc/passwd` to access files outside the intended directory.
+  
+  **Mitigations:**
+  - Ensure `secure_link_md5` includes `$arg_file` in the hash computation
+  - Validate filenames with a `map` directive (e.g., reject patterns containing `..`)
+  - Use a backend application to validate and generate `X-Accel-Redirect` headers
+</Callout>
+
 <Callout type="info" icon="mdi:information">
   **Note:** The `X-Accel-Redirect` header must be set by an upstream response (e.g., from a backend application), not via `add_header` in Nginx. Use `try_files` or `rewrite` for direct internal redirects within Nginx itself.
 </Callout>
@@ -497,6 +506,10 @@ location = /site.webmanifest {
 ```
 </FileContent>
 
+<Callout type="tip" icon="mdi:lightbulb">
+  **Production Tip:** While inline JSON is convenient for examples, serving manifest files from the filesystem is more maintainable. Create a real `site.webmanifest` file and serve it with `alias` to avoid syntax errors and simplify updates.
+</Callout>
+
 ---
 
 ## The .well-known Directory
@@ -511,7 +524,7 @@ Allow security researchers to report vulnerabilities:
 ```nginx
 location = /.well-known/security.txt {
     default_type text/plain;
-    return 200 "Contact: mailto:security@example.com\nExpires: 2027-01-01T00:00:00.000Z\nPreferred-Languages: en, es\nCanonical: https://example.com/.well-known/security.txt\n";
+    return 200 "Contact: mailto:security@example.com\nExpires: 2027-12-31T23:59:59.000Z\nPreferred-Languages: en, es\nCanonical: https://example.com/.well-known/security.txt\n";
 }
 
 # Also serve at root for compatibility
@@ -869,7 +882,8 @@ A production-ready configuration combining all techniques:
 limit_req_zone $binary_remote_addr zone=general:10m rate=10r/s;
 
 server {
-    listen 443 ssl http2;
+    listen 443 ssl;
+    http2 on;
     server_name example.com;
     
     # SSL configuration

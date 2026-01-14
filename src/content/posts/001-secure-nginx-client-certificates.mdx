@@ -739,8 +739,9 @@ The `ssl_verify_client` directive controls how Nginx handles client certificates
 <FileContent filename="/etc/nginx/sites-available/secure.example.com.conf" icon="devicon:nginx">
 ```nginx
 server {
-    listen 443 ssl http2;
-    listen [::]:443 ssl http2;
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    http2 on;
     server_name secure.example.com;
     
     # =================================================
