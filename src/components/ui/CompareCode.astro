@@ -9,7 +9,6 @@
  *   <div slot="good">...code...</div>
  * </CompareCode>
  */
-import { decodeHtml } from "@utils/html";
 import { Icon } from "astro-icon/components";
 import * as cheerio from "cheerio";
 
@@ -38,10 +37,10 @@ const {
 const badContent = ((await Astro.slots.render("bad")) || "").trim();
 const goodContent = ((await Astro.slots.render("good")) || "").trim();
 
-// Helper to extract text snippet
+// Helper to extract text snippet (cheerio's $.text() already decodes HTML entities)
 const getSnippet = (html: string) => {
   const $ = cheerio.load(html);
-  const fullText = decodeHtml($.text().trim());
+  const fullText = $.text().trim();
   let text = fullText.slice(0, 50);
   if (fullText.length > 50) text += "...";
   return text;

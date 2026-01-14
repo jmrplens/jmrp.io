@@ -139,10 +139,15 @@ function deploySecurityHeaders(
 
   if (!fs.existsSync(systemNginxPath) || !fs.existsSync(generatedPath)) {
     if (!fs.existsSync(systemNginxPath)) {
-      logger.warn(`System Nginx path missing: ${systemNginxPath}`);
+      // Log only basename to avoid exposing full system paths
+      logger.warn(
+        `System Nginx path missing: ${path.basename(systemNginxPath)}`,
+      );
     }
     if (!fs.existsSync(generatedPath)) {
-      logger.warn(`Generated security headers missing: ${generatedPath}`);
+      logger.warn(
+        `Generated security headers missing: ${path.basename(generatedPath)}`,
+      );
     }
     return;
   }

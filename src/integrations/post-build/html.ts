@@ -580,6 +580,9 @@ function addIntegrity(
 ): boolean {
   // Only add integrity to eligible tags and only if not already present
   if (isSriEligible($el, type) && !$el.attr("integrity")) {
+    // Skip cf-beacon.js to avoid integrity failures (caching/updates)
+    if (url.endsWith("cf-beacon.js")) return false;
+
     const filePath = resolveFile(url, path.dirname(file), distDir);
     if (filePath) {
       const hash = getFileHash(filePath, hashCache);

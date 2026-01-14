@@ -346,7 +346,8 @@ location /download {
     
     # Secure link check
     secure_link $arg_md5,$arg_expires;
-    secure_link_md5 "$secure_link_expires$uri$remote_addr secret";
+    # IMPORTANT: Include $arg_file in hash to prevent path manipulation
+    secure_link_md5 "$secure_link_expires$uri$arg_file$remote_addr secret";
 
     if ($secure_link = "") { return 403; }
     if ($secure_link = "0") { return 410; }
@@ -853,8 +854,8 @@ server {
         return 200 "User-agent: *\nDisallow: /api/internal/\n";
     }
     
-    # ACME for cert-manager
-    location /.well-known/acme-challenge/ {
+    # ACME for cert-manager (^~ prevents regex override)
+    location ^~ /.well-known/acme-challenge/ {
         root /var/www/certbot;
     }
     

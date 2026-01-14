@@ -249,8 +249,8 @@ server {
     # Requires: ngx_http_sub_module (included in most Nginx builds)
     
     sub_filter_once off;              # Replace ALL occurrences, not just first
-    # Apply only to text-based content types (not images/fonts/binary files)
-    sub_filter_types text/html text/css application/javascript application/json text/xml application/xml;
+    # Apply only to text-based content (exclude JSON to avoid corrupting API responses)
+    sub_filter_types text/html text/css application/javascript text/xml application/xml;
     sub_filter NGINX_NONCE_CSP $cspNonce;  # The actual replacement
 
     # ========================================
@@ -756,22 +756,31 @@ This forces all DOM updates to use "Typed" values (created via a policy) instead
 if (window.trustedTypes && window.trustedTypes.createPolicy) {
   window.trustedTypes.createPolicy('default', {
     createHTML: (string) => DOMPurify.sanitize(string),
-    // WARNING: The following handlers return input unchanged (no-op).
-    // In production, implement proper validation:
-    // - createScript: validate against an allowlist or reject entirely
-    // - createScriptURL: validate URL origin against allowed domains
-    createScript: (string) => string, // ⚠️ Insecure placeholder!
-    createScriptURL: (string) => string // ⚠️ Insecure placeholder!
+    // Fail-closed: reject script creation to prevent unsafe use
+    createScript: () => { 
+      throw new Error('createScript is disallowed by Trusted Types policy'); 
+    },
+    createScriptURL: (url) => { 
+      // Production: validate against allowlist of trusted origins
+      // Example: const allowed = ['https://cdn.example.com'];
+      // if (allowed.some(origin => url.startsWith(origin))) return url;
+      throw new Error('createScriptURL blocked: ' + url); 
+    }
   });
 }
 
 // Now this works (uses policy):
-document.body.innerHTML = '<img src=x>'; // Sanitized!
+document.body.innerHTML = '<img src=x>'; // Sanitized by DOMPurify!
 
-// This throws an error (blocked raw string):
-// document.body.innerHTML = 'Raw string bypass attempt'; 
+// Script injection attempts throw errors:
+// eval('...') → blocked by createScript
+// new Worker('unsafe.js') → blocked by createScriptURL
 ```
 </FileContent>
+
+<Callout type="warning" icon="mdi:shield-alert">
+  **Security Note:** The `createScript` and `createScriptURL` handlers above intentionally throw errors to demonstrate fail-closed behavior. In production, you may need to implement validation (e.g., allowlist of trusted CDN origins for `createScriptURL`). Never use no-op handlers (`(s) => s`) as they defeat the purpose of Trusted Types.
+</Callout>
 
 ## CSP Reporting: Monitoring Violations
 

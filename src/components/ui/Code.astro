@@ -81,10 +81,10 @@ const uuid = createHash("sha256")
   .digest("hex")
   .slice(0, 8);
 
-// Extract plain text for automatic aria-label
+// Extract plain text for automatic aria-label (normalize whitespace for screen readers)
 let plainText = "";
 if (!ariaLabel) {
-  plainText = rawCode.slice(0, 50);
+  plainText = rawCode.slice(0, 50).replaceAll(/\s+/g, " ").trim();
   if (rawCode.length > 50) plainText += "...";
 }
 

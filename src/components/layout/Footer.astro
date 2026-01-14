@@ -116,6 +116,16 @@ const getIconName = (faClass: string) => {
   // Default to solid for fas or others
   return `fa-solid:${name}`;
 };
+
+// Helper to determine icon type for each link to avoid nested ternaries
+const getIconType = (
+  link: SocialLink,
+): "image" | "icon" | "icon_name" | null => {
+  if (link.img_light && link.img_dark) return "image";
+  if (link.icon) return "icon";
+  if (link.icon_name) return "icon_name";
+  return null;
+};
 ---
 
 <footer>
@@ -135,22 +145,11 @@ const getIconName = (faClass: string) => {
             title={link.label}
             class="social-btn"
           >
-            {link.icon && (
-              <Icon
-                name={getIconName(link.icon)}
-                class="social-icon-svg"
-              />
-            )}
-            {link.icon_name && (
-              <Icon
-                name={link.icon_name}
-                class="social-icon-svg"
-              />
-            )}
-            {link.img_light && link.img_dark && (
+            {/* Render icons using helper to avoid nested ternaries */}
+            {getIconType(link) === "image" && (
               <>
                 <Image
-                  src={link.img_light}
+                  src={link.img_light!}
                   alt={link.label}
                   width={28}
                   height={28}
@@ -159,7 +158,7 @@ const getIconName = (faClass: string) => {
                   decoding="async"
                 />
                 <Image
-                  src={link.img_dark}
+                  src={link.img_dark!}
                   alt={link.label}
                   width={28}
                   height={28}
@@ -168,6 +167,18 @@ const getIconName = (faClass: string) => {
                   decoding="async"
                 />
               </>
+            )}
+            {getIconType(link) === "icon" && (
+              <Icon
+                name={getIconName(link.icon!)}
+                class="social-icon-svg"
+              />
+            )}
+            {getIconType(link) === "icon_name" && (
+              <Icon
+                name={link.icon_name!}
+                class="social-icon-svg"
+              />
             )}
           </a>
         ))

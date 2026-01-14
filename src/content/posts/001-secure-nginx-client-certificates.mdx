@@ -14,7 +14,6 @@ tags: ["nginx", "security", "linux", "certificates", "mTLS", "zero-trust"]
 import Callout from "@components/ui/Callout.astro";
 import Tabs from "@components/ui/Tabs.astro";
 import TabPanel from "@components/ui/TabPanel.astro";
-import CompareCode from "@components/ui/CompareCode.astro";
 import TerminalCommand from "@components/ui/TerminalCommand.astro";
 import FileContent from "@components/ui/FileContent.astro";
 import TerminalOutput from "@components/ui/TerminalOutput.astro";
@@ -246,7 +245,7 @@ Before generating, decide on these parameters:
     <tr>
       <td><strong>Key Size</strong></td>
       <td>4096-bit RSA or P-384 ECDSA</td>
-      <td>Future-proof, quantum-resistant concerns</td>
+      <td>Stronger security margin against classical attacks</td>
     </tr>
     <tr>
       <td><strong>Validity</strong></td>
@@ -789,6 +788,9 @@ server {
     # =================================================
     location / {
         # Example: Pass client info to backend
+        # WARNING: Clear/overwrite these headers from any upstream proxy
+        # to prevent spoofing. Backend should only trust these when
+        # requests originate directly from this Nginx instance.
         proxy_set_header X-Client-DN $ssl_client_s_dn;
         proxy_set_header X-Client-Verify $ssl_client_verify;
         proxy_set_header X-Client-Fingerprint $ssl_client_fingerprint;
@@ -798,6 +800,13 @@ server {
 }
 ```
 </FileContent>
+
+<Callout type="warning" icon="mdi:shield-alert">
+  **Trust Boundary Warning:** The `X-Client-DN`, `X-Client-Verify`, and `X-Client-Fingerprint` headers can be spoofed by malicious clients if upstream proxies don't clear them. Ensure:
+  - Any load balancer or reverse proxy in front of Nginx strips these headers before forwarding
+  - Backend applications only trust these headers when requests come directly from Nginx (validate source IP or use mTLS between Nginx and backend)
+  - Consider using an internal-only network interface for the Nginx-to-backend connection
+</Callout>
 
 ### Test and Reload
 
@@ -1229,13 +1238,14 @@ openssl ca -config openssl.cnf \
     -out certs/${CLIENT_NAME}.crt
 
 echo "4. Exporting to PKCS12 (.p12)..."
-openssl pkcs12 -export \
+# Use stdin for password to avoid exposure in process list
+echo "$EXPORT_PASS" | openssl pkcs12 -export \
     -out certs/${CLIENT_NAME}.p12 \
     -inkey private/${CLIENT_NAME}.key \
     -in certs/${CLIENT_NAME}.crt \
     -certfile ca/ca.crt \
     -name "${CLIENT_NAME}" \
-    -passout pass:$EXPORT_PASS
+    -passout stdin
 
 echo "----------------------------------------"
 echo "✅ Certificate created successfully!"
@@ -1279,8 +1289,9 @@ find "$PKI_DIR/certs" -name "*.crt" -type f | while read cert; do
     now_epoch=$(date +%s)
     days_left=$(( (end_epoch - now_epoch) / 86400 ))
     
-    # Extract Common Name for filenames (handle CN=Name or CN = Name)
-    CN=$(openssl x509 -subject -noout -in "$cert" | sed -n "s/^.*CN *= *//p")
+    # Extract Common Name robustly (handles "CN=Name", "CN = Name", and trailing DN fields)
+    CN=$(openssl x509 -subject -noout -nameopt RFC2253 -in "$cert" | \
+         sed -n 's/.*CN=\([^,/]*\).*/\1/p' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
     
     if [ "$days_left" -lt "$DAYS_BEFORE_EXPIRY" ]; then
         echo "--------------------------------------------------"
@@ -1319,13 +1330,14 @@ find "$PKI_DIR/certs" -name "*.crt" -type f | while read cert; do
         KEY="$PKI_DIR/private/$CN.key"
         
         if [ -f "$KEY" ]; then
-            openssl pkcs12 -export \
+            # Use stdin for password to avoid exposure in process list
+            echo "$NEW_PASS" | openssl pkcs12 -export \
                 -out "$P12" \
                 -inkey "$KEY" \
                 -in "$cert" \
                 -certfile $PKI_DIR/ca/ca.crt \
                 -name "$CN" \
-                -passout pass:$NEW_PASS
+                -passout stdin
                 
             echo "   📦 New PKCS#12 bundle created: $P12"
             echo "   🔑 New Export Password: $NEW_PASS"

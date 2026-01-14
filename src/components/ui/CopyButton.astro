@@ -95,6 +95,9 @@ const encodedContent = content ? encodeURIComponent(content) : undefined;
               copyIcon.classList.add("hidden");
               successIcon.classList.remove("hidden");
 
+              // Clear any stale title from previous clipboard unavailable state
+              button.removeAttribute("title");
+
               // Screen reader feedback
               const status = button.querySelector(".copy-status");
               if (status) status.textContent = "Copied!";

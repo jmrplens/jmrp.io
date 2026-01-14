@@ -217,7 +217,7 @@ test.describe("Speculation Rules / Prerender", () => {
     });
 
     await page.goto("/", { waitUntil: "load" });
-    await page.waitForFunction(() => document.readyState === "complete");
+    // Note: waitUntil: "load" already waits for document.readyState === "complete"
 
     const internalLinks = page.locator('a[href^="/"]');
     // eslint-disable-next-line playwright/no-conditional-in-test
