@@ -278,9 +278,11 @@ const finalAriaLabel =
   }
 
   :global(.file-header-copy-btn.absolute-header) {
+    --file-header-copy-offset: 2.8rem;
+
     position: absolute !important;
     top: 0.5rem;
-    right: 2.8rem;
+    right: var(--file-header-copy-offset);
     z-index: 10;
   }
 </style>

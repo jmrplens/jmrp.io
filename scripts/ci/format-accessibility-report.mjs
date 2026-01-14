@@ -72,9 +72,11 @@ for (const themeResult of [results.light, results.dark]) {
 
     if (themeResult.violations.length > 0) {
       console.log("#### ❌ Violations");
-      for (const v of themeResult.violations) {
-        console.log(`- **${v.id}**: ${v.impact} - ${v.description}`);
-        console.log(`  - Affected: ${v.nodes} node(s)`);
+      for (const violation of themeResult.violations) {
+        console.log(
+          `- **${violation.id}**: ${violation.impact} - ${violation.description}`,
+        );
+        console.log(`  - Affected: ${violation.nodes} node(s)`);
       }
       console.log("");
     }

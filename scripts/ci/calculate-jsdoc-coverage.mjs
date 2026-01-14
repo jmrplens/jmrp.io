@@ -129,7 +129,8 @@ async function calculateCoverage() {
   try {
     fs.writeFileSync(".jsdoc-coverage", `${formattedPercentage}%`);
   } catch (error) {
-    logger.warn(`Failed to write .jsdoc-coverage file: ${error.message}`);
+    const msg = error instanceof Error ? error.message : String(error);
+    logger.warn(`Failed to write .jsdoc-coverage file: ${msg}`);
   }
 
   if (percentage < THRESHOLD) {

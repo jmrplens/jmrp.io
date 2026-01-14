@@ -306,7 +306,8 @@ const logoText =
       justify-content: flex-start; /* Align items to top */
       width: 300px; /* Fixed width side drawer */
       max-width: 80vw; /* Responsive constraint */
-      height: 100vh;
+      height: 100vh; /* Fallback for older browsers */
+      height: 100dvh; /* Dynamic viewport height for mobile */
       padding: 5rem 2rem 2rem; /* Top padding for close button/logo area */
       background-color: var(--color-bg-secondary);
       border-left: var(--border-1);

@@ -254,11 +254,18 @@ export default async function updateCiComment({ github, context, step }) {
   body += `\n---\n<p align="right"><i>Last Update: ${new Date().toUTCString()} &bull; <a href="https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}">Workflow Logs</a></i></p>`;
 
   // Find and update/create comment
-  const comments = await github.paginate(github.rest.issues.listComments, {
-    owner: context.repo.owner,
-    repo: context.repo.repo,
-    issue_number: prNumber,
-  });
+  let comments = [];
+  try {
+    comments = await github.paginate(github.rest.issues.listComments, {
+      owner: context.repo.owner,
+      repo: context.repo.repo,
+      issue_number: prNumber,
+    });
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    console.error(`Failed to list PR comments: ${msg}`);
+    // Continue without existing comment - will create a new one
+  }
 
   const existingComment = comments.find(
     (c) => c.body?.includes(HEADER) && c.user?.type === "Bot",
@@ -277,5 +284,13 @@ export default async function updateCiComment({ github, context, step }) {
     commentParams.issue_number = prNumber;
   }
 
-  await github.rest.issues[commentMethod](commentParams);
+  try {
+    await github.rest.issues[commentMethod](commentParams);
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    console.error(
+      `Failed to ${commentMethod === "updateComment" ? "update" : "create"} PR comment: ${msg}`,
+    );
+    throw error; // Re-throw to fail the CI step
+  }
 }

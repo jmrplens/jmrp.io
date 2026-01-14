@@ -19,11 +19,20 @@ interface Props {
 }
 
 const { caption, title, maxWidth, maxHeight } = Astro.props;
+
+// Generate a stable ID for aria-labelledby when caption exists
+const captionId = caption
+  ? `mermaid-caption-${Math.random().toString(36).slice(2, 10)}`
+  : undefined;
 ---
 
+{
+  /* When caption exists, use aria-labelledby pointing to figcaption; otherwise use aria-label */
+}
 <figure
   class="mermaid-figure"
-  aria-label={title || caption || "Mermaid Diagram"}
+  aria-labelledby={captionId}
+  aria-label={caption ? undefined : title || "Mermaid Diagram"}
 >
   <div
     class="mermaid-content"
@@ -31,7 +40,16 @@ const { caption, title, maxWidth, maxHeight } = Astro.props;
   >
     <slot />
   </div>
-  {caption && <figcaption class="mermaid-caption">{caption}</figcaption>}
+  {
+    caption && (
+      <figcaption
+        id={captionId}
+        class="mermaid-caption"
+      >
+        {caption}
+      </figcaption>
+    )
+  }
 </figure>
 
 <style>

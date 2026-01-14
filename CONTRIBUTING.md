@@ -8,8 +8,8 @@ Thank you for your interest in contributing to **jmrp.io**! This document outlin
 
 - **Node.js**: v22.0.0 or higher.
 - **pnpm**: v10+ (managed via `corepack` or `npm i -g pnpm`).
-- **[typos](https://github.com/crate-ci/typos)**: A fast batch spell checker (required for `pnpm verify`).
-- **[lychee](https://github.com/lycheeverse/lychee)**: A fast, async link checker (required for `pnpm verify`).
+- **[typos](https://github.com/crate-ci/typos)**: A fast batch spell checker (required for `pnpm verify`). Install via `cargo install typos-cli` or download from [releases](https://github.com/crate-ci/typos/releases).
+- **[lychee](https://github.com/lycheeverse/lychee)**: A fast, async link checker (required for `pnpm verify`). Install via `cargo install lychee` or download from [releases](https://github.com/lycheeverse/lychee/releases).
 - **[Playwright Browsers](https://playwright.dev/docs/browsers)**: Run `pnpm exec playwright install` after installation.
 
 ### Installation

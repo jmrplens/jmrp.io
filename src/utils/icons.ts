@@ -7,7 +7,7 @@
 const iconMap: Record<string, string> = {
   // Languages
   nginx: "devicon:nginx",
-  conf: "devicon:nginx",
+  conf: "mdi:file-cog-outline",
   javascript: "devicon:javascript",
   js: "devicon:javascript",
   mjs: "devicon:javascript",
@@ -113,8 +113,9 @@ export const getIconForFile = (filename: string): string => {
   const lowerName = filename.toLowerCase();
 
   // 1. Check for exact extension match in our map
-  // Extract extension (e.g., 'config.json' -> 'json')
-  const ext = lowerName.split(".").pop();
+  // Extract extension safely: only if there's a dot that's not at the start (avoiding dotfiles)
+  const lastDotIndex = lowerName.lastIndexOf(".");
+  const ext = lastDotIndex > 0 ? lowerName.slice(lastDotIndex + 1) : "";
   if (ext && iconMap[ext]) {
     return iconMap[ext];
   }
