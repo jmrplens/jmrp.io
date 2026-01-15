@@ -27,7 +27,13 @@ interface SiteData {
 export async function GET() {
   const posts = await getCollection("posts");
   const siteEntry = await getEntry("site_config", "site");
-  const siteData = siteEntry?.data as unknown as SiteData;
+
+  // Type-safe site data extraction with validation
+  if (!siteEntry?.data) {
+    throw new Error("Site configuration not found");
+  }
+
+  const siteData = siteEntry.data as SiteData;
   const site = getSiteUrl();
 
   const publishedPosts = posts.filter((p) =>
@@ -73,7 +79,7 @@ export async function GET() {
             // Estimate file size in bytes from image dimensions (3 bytes per pixel) to provide a non-zero length.
             const estimatedLength =
               typeof opt.attributes?.width === "number" &&
-              typeof opt.attributes?.height === "number"
+                typeof opt.attributes?.height === "number"
                 ? (opt.attributes.width * opt.attributes.height * 3).toString()
                 : "0";
             customData += `<enclosure url="${imgUrl}" length="${estimatedLength}" type="image/jpeg" />\n`;

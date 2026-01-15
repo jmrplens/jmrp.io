@@ -78,7 +78,7 @@ async function calculateCoverage() {
 
       if (isPublic && isDocumentable(node)) {
         totalExported++;
-        if (hasJSDoc(node, sourceFile)) {
+        if (hasDocComment(node, sourceFile)) {
           documented++;
         } else {
           const { line, character } = sourceFile.getLineAndCharacterOfPosition(
@@ -87,6 +87,27 @@ async function calculateCoverage() {
           logger.warn(
             `  ⚠️ Missing JSDoc: ${file}:${line + 1}:${character + 1}`,
           );
+        }
+      }
+
+      // Handle VariableStatements with function declarations separately
+      if (isPublic && ts.isVariableStatement(node)) {
+        for (const decl of node.declarationList.declarations) {
+          if (isDocumentableDeclaration(decl)) {
+            totalExported++;
+            // Check if the VariableStatement (parent) has JSDoc
+            if (hasDocComment(node, sourceFile)) {
+              documented++;
+            } else {
+              const { line, character } =
+                sourceFile.getLineAndCharacterOfPosition(
+                  node.getStart(sourceFile),
+                );
+              logger.warn(
+                `  ⚠️ Missing JSDoc: ${file}:${line + 1}:${character + 1}`,
+              );
+            }
+          }
         }
       }
 
@@ -232,14 +253,23 @@ function isDocumentable(node) {
   if (isBaseDocumentable) return true;
 
   // Exported const functions (arrow functions) in VariableStatements
+  // Note: We return false here because each declaration should be counted separately
+  // via isDocumentableDeclaration() to avoid multi-declaration miscounts
+  return false;
+}
+
+/**
+ * Checks if a single VariableDeclaration represents a documentable function.
+ * Used to properly count each declaration in multi-declaration statements.
+ *
+ * @param decl - The VariableDeclaration to check.
+ * @returns True if the declaration is a function-like declaration.
+ */
+function isDocumentableDeclaration(decl) {
   return (
-    ts.isVariableStatement(node) &&
-    node.declarationList.declarations.some(
-      (d) =>
-        d.initializer &&
-        (ts.isArrowFunction(d.initializer) ||
-          ts.isFunctionExpression(d.initializer)),
-    )
+    decl.initializer &&
+    (ts.isArrowFunction(decl.initializer) ||
+      ts.isFunctionExpression(decl.initializer))
   );
 }
 
