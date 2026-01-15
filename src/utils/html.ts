@@ -43,8 +43,17 @@ export function sanitize(html: string | undefined | null): string {
       "small",
     ],
     allowedAttributes: {
-      a: ["href", "name", "target", "rel", "title"],
-      span: ["class", "title"],
+      a: [
+        "href",
+        "name",
+        "target",
+        "rel",
+        "title",
+        "aria-label",
+        "aria-hidden",
+        "aria-labelledby",
+      ],
+      span: ["class", "title", "aria-label"],
       cite: ["title"],
     },
     // Ensure only safe protocols are used

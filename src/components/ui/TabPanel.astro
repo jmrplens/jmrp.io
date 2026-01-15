@@ -25,7 +25,14 @@ const { label, noPadding = false } = Astro.props;
   <div class="panel-content">
     <slot />
   </div>
-  {noPadding && <CopyButton class="panel-copy-button" />}
+  {
+    noPadding && (
+      <CopyButton
+        class="panel-copy-button"
+        ariaLabel={`Copy content from ${label}`}
+      />
+    )
+  }
 </div>
 
 <style>

@@ -49,7 +49,7 @@ const { post, loading = "lazy", fetchpriority = "auto" } = Astro.props;
               <a
                 href={`/blog/tags/${encodeURIComponent(tag)}`}
                 class="tag"
-                aria-label={`View all posts tagged with ${tag}`}
+                aria-label={`View all posts tagged with ${tag} from article: ${post.data.title}`}
               >
                 #{tag}
               </a>

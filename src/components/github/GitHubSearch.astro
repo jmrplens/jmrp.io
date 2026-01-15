@@ -39,6 +39,7 @@ const { initialRepos } = Astro.props;
                 href={repo.html_url}
                 target="_blank"
                 rel="noopener noreferrer"
+                aria-label={`View repository ${repo.name} on GitHub`}
               >
                 {repo.name}
               </a>

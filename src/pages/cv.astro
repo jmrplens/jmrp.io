@@ -52,9 +52,9 @@ const menuSections: MenuSection[] = sortedSections.map((section) => {
 
   switch (section.type) {
     case "time_table": {
-      // Experience & Education: Use job title or institution
+      // Experience & Education: Use job title and year
       items = section.contents.map((item, index) => ({
-        title: item.title,
+        title: item.year ? `${item.title} (${item.year})` : item.title,
         slug: generateSlug(`${section.title}-${item.title}-${index}`),
       }));
       break;

@@ -103,7 +103,10 @@ const finalAriaLabel =
       <span class="dot green"></span>
     </div>
     <div class="action-area">
-      <CopyButton content={rawContent} />
+      <CopyButton
+        content={rawContent}
+        ariaLabel={`Copy ${finalAriaLabel}`}
+      />
     </div>
   </div>
 

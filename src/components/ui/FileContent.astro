@@ -62,7 +62,7 @@ const finalAriaLabel =
       {/* Copy Button outside details to be always visible and avoid nested interactive violation */}
       <CopyButton
         class="file-header-copy-btn absolute-header"
-        ariaLabel={`Copy content of ${filename}`}
+        ariaLabel={`Copy content of file ${index}: ${filename}`}
       />
       <details class="file-details">
         {/* ARIA label moved to summary for better support */}
@@ -125,7 +125,7 @@ const finalAriaLabel =
         <div class="header-actions">
           <CopyButton
             class="file-header-copy-btn"
-            ariaLabel={`Copy content of ${filename}`}
+            ariaLabel={`Copy content of file ${index}: ${filename}`}
           />
         </div>
       </div>

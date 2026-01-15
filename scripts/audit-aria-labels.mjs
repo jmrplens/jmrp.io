@@ -14,15 +14,28 @@ const C = {
 };
 
 const args = process.argv.slice(2);
-if (args.length === 0) {
-  console.error(
-    `${C.red}Error: You must specify the HTML file to analyze.${C.reset}`,
+const help = args.includes("--help") || args.includes("-h");
+const showRepeatedOnly = args.includes("--repeated");
+const showErrorsOnly = args.includes("--errors");
+const htmlFiles = args.filter((a) => !a.startsWith("-"));
+
+if (help || htmlFiles.length === 0) {
+  console.log(`${C.bright}Aria Label Audit Tool${C.reset}`);
+  console.log(
+    `Usage: node scripts/audit-aria-labels.mjs <file.html> [options]`,
   );
-  console.log(`Usage: node scripts/audit-aria-labels.mjs dist/index.html`);
-  process.exit(1);
+  console.log(`\nOptions:`);
+  console.log(
+    `  --repeated    Show only elements with non-unique accessible names`,
+  );
+  console.log(
+    `  --errors      Show only elements with missing accessible names`,
+  );
+  console.log(`  --help, -h    Show this help message`);
+  process.exit(0);
 }
 
-const filePath = args[0];
+const filePath = htmlFiles[0];
 
 if (!fs.existsSync(filePath)) {
   console.error(`${C.red}Error: File ${filePath} does not exist.${C.reset}`);
@@ -33,25 +46,29 @@ const html = fs.readFileSync(filePath, "utf-8");
 const $ = cheerio.load(html);
 
 console.log(
-  `${C.bright}🔍 Analyzing ARIA and Accessibility in: ${C.cyan}${filePath}${C.reset}\n`,
+  `${C.bright}🔍 Analyzing ARIA and Accessibility in: ${C.cyan}${filePath}${C.reset}`,
 );
+if (showRepeatedOnly)
+  console.log(`${C.yellow}Filtering: Showing only REPEATED names${C.reset}`);
+if (showErrorsOnly)
+  console.log(`${C.red}Filtering: Showing only ERRORS${C.reset}`);
+console.log("");
 
 const findings = [];
+const nameFrequency = new Map();
 
-// Stats counters
 const stats = {
   total: 0,
   ok: 0,
   missing: 0,
   redundant: 0,
+  repeated: 0,
 };
 
-// Select all elements and filter those with relevant attributes
+// First pass: collect all and count frequencies
 $("*").each((_, el) => {
   const $el = $(el);
   const tagName = el.tagName;
-
-  // Attributes of interest
   const ariaLabel = $el.attr("aria-label");
   const ariaLabelledBy = $el.attr("aria-labelledby");
   const role = $el.attr("role");
@@ -59,7 +76,6 @@ $("*").each((_, el) => {
   const title = $el.attr("title");
   const ariaHidden = $el.attr("aria-hidden");
 
-  // Refined filtering logic:
   const isInteractive = [
     "a",
     "button",
@@ -78,7 +94,6 @@ $("*").each((_, el) => {
     !isImg &&
     !isMeaningfulSvg;
 
-  // Final filter: If aria-hidden="true", generally ignore unless interactive
   if (ariaHidden === "true" && !isInteractive) return;
 
   if (isInteractive || isImg || isMeaningfulSvg || hasExplicitAria) {
@@ -87,22 +102,25 @@ $("*").each((_, el) => {
       .substring(0, 50)
       .replaceAll("\n", " ");
 
-    const hasName = !!(
-      ariaLabel ||
-      ariaLabelledBy ||
-      title ||
-      alt ||
-      rawVisibleText
-    );
+    let accessibleName = ariaLabel || title || alt || rawVisibleText;
+    if (ariaLabelledBy) {
+      accessibleName =
+        $(`#${ariaLabelledBy}`).text().trim() || `(ID: ${ariaLabelledBy})`;
+    }
 
-    // Better redundancy check: compare against full untruncated text
+    const hasName = !!accessibleName;
     const isRedundant = !!(
       ariaLabel &&
       rawVisibleText &&
       ariaLabel.trim().toLowerCase() === rawVisibleText.toLowerCase()
     );
 
-    const context = {
+    if (isInteractive && accessibleName) {
+      const count = nameFrequency.get(accessibleName) || 0;
+      nameFrequency.set(accessibleName, count + 1);
+    }
+
+    findings.push({
       tag: tagName,
       id: $el.attr("id"),
       class: $el.attr("class"),
@@ -115,10 +133,10 @@ $("*").each((_, el) => {
       title,
       hasName,
       isRedundant,
-    };
-    findings.push(context);
+      accessibleName,
+      isInteractive,
+    });
 
-    // Update stats
     stats.total++;
     if (hasName) stats.ok++;
     if (isInteractive && !hasName) stats.missing++;
@@ -126,19 +144,29 @@ $("*").each((_, el) => {
   }
 });
 
-// Print report
+// Second pass: Filter and print
+let displayedCount = 0;
 findings.forEach((f, idx) => {
+  const nameCount = nameFrequency.get(f.accessibleName) || 0;
+  const isRepeated = nameCount > 1;
+  const isError = !f.hasName && f.isInteractive;
+
+  if (isRepeated) stats.repeated++;
+
+  // Apply filters
+  if (showRepeatedOnly && !isRepeated) return;
+  if (showErrorsOnly && !isError) return;
+
+  displayedCount++;
   const idStr = f.id ? `#${f.id}` : "";
   const classStr = f.class ? `.${f.class.split(" ").join(".")}` : "";
   const parentStr = f.parent
     ? `${C.dim}(parent: <${f.parent}>)${C.reset} `
     : "";
-
   const identifier = `${parentStr}${C.bright}${f.tag}${C.dim}${idStr}${classStr}${C.reset}`;
 
   console.log(`${C.dim}[${idx + 1}]${C.reset} ${identifier}`);
 
-  // Show found values
   if (f.ariaLabel)
     console.log(`    ${C.green}aria-label:${C.reset} "${f.ariaLabel}"`);
   if (f.ariaLabelledBy)
@@ -148,29 +176,36 @@ findings.forEach((f, idx) => {
     console.log(`    ${C.green}alt:${C.reset} "${f.alt}"`);
   if (f.title) console.log(`    ${C.yellow}title:${C.reset} "${f.title}"`);
 
-  // Always show visible text if it exists to help audit redundancy
   if (f.text) {
     console.log(
-      `    ${C.dim}Visible text:${C.reset} "${f.text}${f.text.length >= 50 ? "..." : ""}"`,
+      `    ${C.dim}Visible text:${C.reset} "${f.text}${f.text.length >= 50 ? "..." : ""}" `,
     );
   }
 
-  // Redundancy Warning
+  if (isRepeated) {
+    console.log(
+      `    ${C.red}✖ REPEATED NAME:${C.reset} This accessible name is used by ${nameCount} elements.`,
+    );
+  }
+
   if (f.isRedundant) {
     console.log(
       `    ${C.yellow}💡 REDUNDANT: aria-label matches visible text exactly.${C.reset}`,
     );
   }
 
-  // Error Check
   if (!f.hasName) {
     console.log(
       `    ${C.red}⚠️  ERROR: Element without accessible name (empty and no label).${C.reset}`,
     );
   }
 
-  console.log(""); // Separator
+  console.log("");
 });
+
+if (displayedCount === 0) {
+  console.log(`${C.green}No elements matched the current filters.${C.reset}\n`);
+}
 
 // Final Summary
 console.log(
@@ -183,6 +218,9 @@ console.log(
 console.log(`${C.green}✅ OK (with accessible name):${C.reset}  ${stats.ok}`);
 console.log(
   `${C.red}❌ Missing accessible name:${C.reset}    ${stats.missing}`,
+);
+console.log(
+  `${C.red}✖ Non-unique names (repeated):${C.reset}  ${stats.repeated}`,
 );
 console.log(
   `${C.yellow}💡 Redundant aria-labels:${C.reset}      ${stats.redundant}`,

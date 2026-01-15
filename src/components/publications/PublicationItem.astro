@@ -71,6 +71,7 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
                   href={author.url}
                   target="_blank"
                   rel="noopener noreferrer"
+                  aria-label={`View publications by ${author.given} ${author.family}`}
                 >
                   {author.given} {author.family}
                 </a>
@@ -195,6 +196,7 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
             <CopyButton
               class="pub-copy-btn"
               content={sanitize(pub.abstract)}
+              ariaLabel={`Copy abstract for ${pub.title}`}
             />
           </div>
           <div
@@ -214,6 +216,7 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
             <CopyButton
               class="pub-copy-btn"
               content={cleanedBibtex}
+              ariaLabel={`Copy BibTeX for ${pub.title}`}
             />
           </div>
           <div class="pub-card-content">
