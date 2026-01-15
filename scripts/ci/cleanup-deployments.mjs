@@ -11,14 +11,15 @@ import { execSync } from "node:child_process";
 const prId = process.argv[2];
 const token = process.env.VERCEL_TOKEN;
 
-// Validate prId to prevent command injection (must be numeric)
-if (prId && !/^\d+$/.test(prId)) {
-  console.error("Error: PR ID must be numeric.");
+// Check presence first to give accurate error
+if (!prId) {
+  console.error("Usage: node cleanup-deployments.mjs <pr-id>");
   process.exit(1);
 }
 
-if (!prId) {
-  console.error("Usage: node cleanup-deployments.mjs <pr-id>");
+// Then validate format (must be numeric)
+if (!/^\d+$/.test(prId)) {
+  console.error("Error: PR ID must be numeric.");
   process.exit(1);
 }
 

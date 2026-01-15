@@ -86,7 +86,13 @@ function renderObject(data) {
   let html = '<div class="v-object">';
 
   if (type) {
-    html += `<div class="v-type-badge">${escapeHtml(type)}</div>`;
+    // Handle @type as array or string
+    if (Array.isArray(type)) {
+      const escapedTypes = type.map((t) => escapeHtml(String(t))).join(", ");
+      html += `<div class="v-type-badge">${escapedTypes}</div>`;
+    } else {
+      html += `<div class="v-type-badge">${escapeHtml(String(type))}</div>`;
+    }
   }
 
   const keys = Object.keys(data).filter(
@@ -297,52 +303,52 @@ const html = `
 
         <div class="results-list">
             ${results
-              .map((r, idx) => {
-                let status = "warn";
-                if (r.valid && r.warnings.length === 0) {
-                  status = "pass";
-                } else if (r.errors.length > 0) {
-                  status = "fail";
-                }
+    .map((r, idx) => {
+      let status = "warn";
+      if (r.valid && r.warnings.length === 0) {
+        status = "pass";
+      } else if (r.errors.length > 0) {
+        status = "fail";
+      }
 
-                let label = "Warning";
-                if (status === "pass") {
-                  label = "Valid";
-                } else if (status === "fail") {
-                  label = "Invalid";
-                }
+      let label = "Warning";
+      if (status === "pass") {
+        label = "Valid";
+      } else if (status === "fail") {
+        label = "Invalid";
+      }
 
-                const badgeClass = `status-${status}`;
-                const uniqueId = `schema-${idx}`;
+      const badgeClass = `status-${status}`;
+      const uniqueId = `schema-${idx}`;
 
-                let detailsHtml = "";
+      let detailsHtml = "";
 
-                // Issues Section
-                if (status !== "pass") {
-                  detailsHtml += '<div class="issues-section">';
-                  for (const e of r.errors) {
-                    detailsHtml += `
+      // Issues Section
+      if (status !== "pass") {
+        detailsHtml += '<div class="issues-section">';
+        for (const e of r.errors) {
+          detailsHtml += `
                             <div class="issue issue-error">
                                 <div class="issue-type">❌ Error (Schema ${e.index + 1}: ${escapeHtml(e.type || "Unknown")})</div>
                                 ${e.errors.map((msg) => `<div class="issue-msg">${escapeHtml(msg)}</div>`).join("")}
                             </div>`;
-                  }
-                  for (const w of r.warnings) {
-                    detailsHtml += `
+        }
+        for (const w of r.warnings) {
+          detailsHtml += `
                             <div class="issue issue-warning">
                                 <div class="issue-type">⚠️ Warning (Schema ${w.index + 1}: ${escapeHtml(w.type || "Unknown")})</div>
                                 ${w.warnings.map((msg) => `<div class="issue-msg">${escapeHtml(msg)}</div>`).join("")}
                             </div>`;
-                  }
-                  detailsHtml += "</div>";
-                }
+        }
+        detailsHtml += "</div>";
+      }
 
-                // Schemas View
-                if (r.schemas && r.schemas.length > 0) {
-                  detailsHtml += '<div class="schema-container">';
-                  for (const [i, schema] of r.schemas.entries()) {
-                    const schemaId = uniqueId + "-" + i;
-                    detailsHtml += `
+      // Schemas View
+      if (r.schemas && r.schemas.length > 0) {
+        detailsHtml += '<div class="schema-container">';
+        for (const [i, schema] of r.schemas.entries()) {
+          const schemaId = uniqueId + "-" + i;
+          detailsHtml += `
                             <div class="schema-block" style="margin-bottom: 2rem;">
                                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
                                     <div style="font-weight:700; color:var(--text-muted);">Schema ${i + 1}: ${escapeHtml(schema["@type"] || "Unknown")}</div>
@@ -360,11 +366,11 @@ const html = `
                                 </div>
                             </div>
                         `;
-                  }
-                  detailsHtml += "</div>";
-                }
+        }
+        detailsHtml += "</div>";
+      }
 
-                return `
+      return `
                     <details class="result-item">
                         <summary class="result-header">
                             <span class="page-name">${escapeHtml(r.file)}</span>
@@ -373,8 +379,8 @@ const html = `
                         <div class="details">${detailsHtml}</div>
                     </details>
                 `;
-              })
-              .join("")}
+    })
+    .join("")}
         </div>
     </div>
 </body>

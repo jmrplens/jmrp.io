@@ -21,9 +21,10 @@ export function remarkMermaidBypass() {
   return (tree) => {
     visit(tree, "code", (node, index, parent) => {
       if (node.lang === "mermaid-render") {
+        // Use proper hast node structure instead of type: "html"
+        // This ensures content is properly handled by the processor
         const newNode = {
-          type: "html",
-          value: node.value,
+          type: "paragraph", // Use paragraph as container type
           position: node.position,
           data: {
             hName: "pre",
@@ -33,7 +34,7 @@ export function remarkMermaidBypass() {
             hChildren: [
               {
                 type: "text",
-                value: node.value,
+                value: node.value, // Text nodes are auto-escaped by hast
               },
             ],
           },
