@@ -100,7 +100,7 @@ importers:
         specifier: ^3.21.0
         version: 3.21.0
       vite:
-        specifier: ^7.3.1
+        specifier: '>=7.3.1'
         version: 7.3.1(@types/node@22.19.6)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.2)
     devDependencies:
       '@astrojs/check':
@@ -179,7 +179,7 @@ importers:
         specifier: ^62.0.0
         version: 62.0.0(eslint@9.39.2)
       glob:
-        specifier: ^13.0.0
+        specifier: '>=13.0.0'
         version: 13.0.0
       hast-util-from-html-isomorphic:
         specifier: ^2.0.0
