@@ -42,11 +42,13 @@ export async function postOrUpdateComment(github, context, header, body) {
     });
   } else {
     console.log("Creating new comment...");
+    // Ensure header is included in body to allow future identification
+    const finalBody = body.includes(header) ? body : `${header}\n\n${body}`;
     await github.rest.issues.createComment({
       owner: context.repo.owner,
       repo: context.repo.repo,
       issue_number: context.payload.pull_request.number,
-      body,
+      body: finalBody,
     });
   }
 }

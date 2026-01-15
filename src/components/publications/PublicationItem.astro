@@ -186,57 +186,65 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
         }
       </div>
 
-      <div
-        id={abstractId}
-        class="pub-abstract hidden"
-      >
-        <div class="pub-card-wrapper copy-container">
-          <div class="pub-card-header">
-            <div class="pub-card-title">Abstract</div>
-            <CopyButton
-              class="pub-copy-btn"
-              content={sanitize(pub.abstract)}
-              ariaLabel={`Copy abstract for ${pub.title}`}
-            />
-          </div>
+      {
+        pub.abstract && (
           <div
-            class="pub-card-content copy-content"
-            set:html={sanitize(pub.abstract)}
-          />
-        </div>
-      </div>
+            id={abstractId}
+            class="pub-abstract hidden"
+          >
+            <div class="pub-card-wrapper copy-container">
+              <div class="pub-card-header">
+                <div class="pub-card-title">Abstract</div>
+                <CopyButton
+                  class="pub-copy-btn"
+                  content={sanitize(pub.abstract)}
+                  ariaLabel={`Copy abstract for ${pub.title}`}
+                />
+              </div>
+              <div
+                class="pub-card-content copy-content"
+                set:html={sanitize(pub.abstract)}
+              />
+            </div>
+          </div>
+        )
+      }
 
-      <div
-        id={bibtexId}
-        class="pub-bibtex hidden"
-      >
-        <div class="pub-card-wrapper copy-container">
-          <div class="pub-card-header">
-            <div class="pub-card-title">BibTeX</div>
-            <CopyButton
-              class="pub-copy-btn"
-              content={cleanedBibtex}
-              ariaLabel={`Copy BibTeX for ${pub.title}`}
-            />
-          </div>
-          <div class="pub-card-content">
-            <div class="code-block-dark">
-              <Code
-                code={cleanedBibtex}
-                lang="bibtex"
-                theme="github-dark"
-              />
+      {
+        cleanedBibtex && (
+          <div
+            id={bibtexId}
+            class="pub-bibtex hidden"
+          >
+            <div class="pub-card-wrapper copy-container">
+              <div class="pub-card-header">
+                <div class="pub-card-title">BibTeX</div>
+                <CopyButton
+                  class="pub-copy-btn"
+                  content={cleanedBibtex}
+                  ariaLabel={`Copy BibTeX for ${pub.title}`}
+                />
+              </div>
+              <div class="pub-card-content">
+                <div class="code-block-dark">
+                  <Code
+                    code={cleanedBibtex}
+                    lang="bibtex"
+                    theme="github-dark"
+                  />
+                </div>
+                <div class="code-block-light">
+                  <Code
+                    code={cleanedBibtex}
+                    lang="bibtex"
+                    theme="github-light"
+                  />
+                </div>
+              </div>
             </div>
-            <div class="code-block-light">
-              <Code
-                code={cleanedBibtex}
-                lang="bibtex"
-                theme="github-light"
-              />
-            </div>
           </div>
-        </div>
-      </div>
+        )
+      }
     </div>
   </div>
 </div>

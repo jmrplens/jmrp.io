@@ -217,7 +217,7 @@ const { sections } = Astro.props;
     position: fixed;
     right: 1.5rem;
     bottom: 2rem;
-    z-index: 100;
+    z-index: 99; /* Below backdrop (100) to avoid ordering issues */
     display: flex;
     align-items: center;
     justify-content: center;
@@ -231,7 +231,17 @@ const { sections } = Astro.props;
     box-shadow: var(--shadow-lg);
     transition:
       transform 0.2s,
-      background-color 0.2s;
+      background-color 0.2s,
+      opacity 0.2s,
+      visibility 0.2s;
+  }
+
+  /* Hide FAB when drawer is open to prevent interaction conflicts */
+  .cv-drawer.open ~ .cv-backdrop ~ .cv-fab,
+  nav:has(.cv-drawer.open) .cv-fab {
+    visibility: hidden;
+    pointer-events: none;
+    opacity: 0%;
   }
 
   .cv-fab:hover,

@@ -19,9 +19,7 @@ const { caption, title, ariaLabel, maxWidth, maxHeight } = Astro.props;
 const index = getNextIndex("mermaid");
 const finalAriaLabel = ariaLabel || title || `Mermaid Diagram ${index}`;
 
-const captionId = caption
-  ? `mermaid-caption-${Math.random().toString(36).slice(2, 10)}`
-  : undefined;
+const captionId = caption ? `mermaid-caption-${index}` : undefined;
 ---
 
 <figure

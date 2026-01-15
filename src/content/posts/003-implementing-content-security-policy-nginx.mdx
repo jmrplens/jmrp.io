@@ -459,7 +459,7 @@ These control where resources can be loaded from:
     <tr>
       <td><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/script-src" target="_blank" rel="noopener noreferrer"><code>script-src</code></a></td>
       <td>JavaScript sources and inline scripts</td>
-      <td><code>'nonce-...' 'strict-dynamic' 'wasm-unsafe-eval'</code></td>
+      <td><code>'nonce-...' 'strict-dynamic' 'wasm-unsafe-eval'</code> <em>(include 'wasm-unsafe-eval' only if using WebAssembly)</em></td>
     </tr>
     <tr>
       <td><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/style-src" target="_blank" rel="noopener noreferrer"><code>style-src</code></a></td>
@@ -990,6 +990,17 @@ if ($csp_report_only_value != "") {
 ```
 </Code>
 
+<Callout type="warning" icon="mdi:alert">
+  **Important Nginx Limitation:** Using `if` blocks with `add_header` (as shown with `$csp_enforce_value` and `$csp_report_only_value`) can produce inconsistent results because `add_header` in an `if` block may not interact correctly with other `add_header` directives outside that block. 
+  
+  **Safer alternatives include:**
+  - Using separate `server` or `location` blocks for each configuration path
+  - Using the `ngx_http_lua_module` for complex conditional logic
+  - Pre-computing the full header value in a single `map` directive
+  
+  Test thoroughly in a staging environment before deploying this pattern to production.
+</Callout>
+
 ### Phase 4: Full Enforcement
 
 Once violation reports are minimal and expected, enable full enforcement:
@@ -1098,6 +1109,8 @@ server {
         add_header X-Content-Type-Options "nosniff" always;
         add_header X-Frame-Options "DENY" always;
         add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+        add_header Permissions-Policy "camera=(), microphone=(), geolocation=()" always;
+        add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
     }
 }
 

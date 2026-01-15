@@ -34,7 +34,11 @@ async function calculateCoverage() {
 
   // Find all TS/TSX/JS/JSX/MJS/MTS/CJS files
   const files = await glob(`{src,scripts}/**/*.{ts,tsx,js,jsx,mjs,mts,cjs}`, {
-    ignore: ["**/*.d.ts", "**/*.test.ts", "**/*.spec.ts", "**/node_modules/**"],
+    ignore: [
+      "**/*.d.ts",
+      "**/*.{test,spec}.{ts,tsx,js,jsx,mjs,mts,cjs}",
+      "**/node_modules/**",
+    ],
     absolute: true,
   });
 
@@ -57,56 +61,63 @@ async function calculateCoverage() {
     const exportedNodes = getExportedNodes(sourceFile, checker);
 
     /**
+     * Checks if a node has private or protected visibility modifiers.
+     * @param {ts.Node} node - Current node.
+     * @returns {boolean} True if node is private or protected.
+     */
+    const isPrivateOrProtected = (node) => {
+      const flags = ts.getCombinedModifierFlags(node);
+      return (
+        (flags & ts.ModifierFlags.Private) !== 0 ||
+        (flags & ts.ModifierFlags.Protected) !== 0
+      );
+    };
+
+    /**
+     * Logs a missing JSDoc warning for a node.
+     * @param {ts.Node} node - The node missing documentation.
+     */
+    const logMissingJSDoc = (node) => {
+      const { line, character } = sourceFile.getLineAndCharacterOfPosition(
+        node.getStart(sourceFile),
+      );
+      logger.warn(`  ⚠️ Missing JSDoc: ${file}:${line + 1}:${character + 1}`);
+    };
+
+    /**
+     * Processes a documentable node, counting it and checking for JSDoc.
+     * @param {ts.Node} node - The node to process.
+     */
+    const processDocumentableNode = (node) => {
+      totalExported++;
+      if (hasDocComment(node, sourceFile)) {
+        documented++;
+      } else {
+        logMissingJSDoc(node);
+      }
+    };
+
+    /**
      * Recursive visitor to find documentable symbols in public API.
      * @param {ts.Node} node - Current node.
      * @param {boolean} isParentPublic - Whether the parent is public.
      */
     const visit = (node, isParentPublic = false) => {
-      // Logic for determining if this specific node is "publicly accessible"
-      let isPublic = isParentPublic || exportedNodes.has(node);
+      // Determine if this node is publicly accessible
+      const isExported = exportedNodes.has(node);
+      const isPrivate = isParentPublic && isPrivateOrProtected(node);
+      const isPublic = (isParentPublic || isExported) && !isPrivate;
 
-      // In classes/interfaces/enums, check visibility modifiers
-      if (isParentPublic) {
-        const flags = ts.getCombinedModifierFlags(node);
-        if (
-          (flags & ts.ModifierFlags.Private) !== 0 ||
-          (flags & ts.ModifierFlags.Protected) !== 0
-        ) {
-          isPublic = false;
-        }
-      }
-
+      // Process documentable nodes
       if (isPublic && isDocumentable(node)) {
-        totalExported++;
-        if (hasDocComment(node, sourceFile)) {
-          documented++;
-        } else {
-          const { line, character } = sourceFile.getLineAndCharacterOfPosition(
-            node.getStart(sourceFile),
-          );
-          logger.warn(
-            `  ⚠️ Missing JSDoc: ${file}:${line + 1}:${character + 1}`,
-          );
-        }
+        processDocumentableNode(node);
       }
 
       // Handle VariableStatements with function declarations separately
       if (isPublic && ts.isVariableStatement(node)) {
         for (const decl of node.declarationList.declarations) {
           if (isDocumentableDeclaration(decl)) {
-            totalExported++;
-            // Check if the VariableStatement (parent) has JSDoc
-            if (hasDocComment(node, sourceFile)) {
-              documented++;
-            } else {
-              const { line, character } =
-                sourceFile.getLineAndCharacterOfPosition(
-                  node.getStart(sourceFile),
-                );
-              logger.warn(
-                `  ⚠️ Missing JSDoc: ${file}:${line + 1}:${character + 1}`,
-              );
-            }
+            processDocumentableNode(node);
           }
         }
       }
@@ -236,7 +247,9 @@ function addDeclarationToExported(decl, exportedNodes) {
  */
 function isDocumentable(node) {
   // Common documentable nodes
-  const isBaseDocumentable =
+  // Note: We return false for VariableStatements because each declaration
+  // should be counted separately via isDocumentableDeclaration()
+  return (
     ts.isFunctionDeclaration(node) ||
     ts.isClassDeclaration(node) ||
     ts.isInterfaceDeclaration(node) ||
@@ -248,14 +261,8 @@ function isDocumentable(node) {
     ts.isEnumMember(node) ||
     ts.isAccessor(node) ||
     ts.isMethodSignature(node) ||
-    ts.isPropertySignature(node);
-
-  if (isBaseDocumentable) return true;
-
-  // Exported const functions (arrow functions) in VariableStatements
-  // Note: We return false here because each declaration should be counted separately
-  // via isDocumentableDeclaration() to avoid multi-declaration miscounts
-  return false;
+    ts.isPropertySignature(node)
+  );
 }
 
 /**

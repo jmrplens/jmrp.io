@@ -104,8 +104,19 @@ $("*").each((_, el) => {
 
     let accessibleName = ariaLabel || title || alt || rawVisibleText;
     if (ariaLabelledBy) {
+      // Handle multiple space-separated IDs in aria-labelledby
+      const ids = ariaLabelledBy.split(/\s+/).filter(Boolean);
+      const resolvedTexts = ids
+        .map((id) => {
+          // Use safe ID selector to avoid issues with special characters
+          const el = $(`[id="${id.replaceAll('"', String.raw`\"`)}"]`);
+          return el.length > 0 ? el.text().trim() : "";
+        })
+        .filter(Boolean);
       accessibleName =
-        $(`#${ariaLabelledBy}`).text().trim() || `(ID: ${ariaLabelledBy})`;
+        resolvedTexts.length > 0
+          ? resolvedTexts.join(" ")
+          : `(ID: ${ariaLabelledBy})`;
     }
 
     const hasName = !!accessibleName;

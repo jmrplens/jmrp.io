@@ -422,7 +422,7 @@ Give credit to your team with [humans.txt](https://humanstxt.org/):
 location = /humans.txt {
     default_type text/plain;
     # Note: Update the "Last update" date when deploying changes
-    return 200 "/* TEAM */\nLead: Jane Doe\nContact: jane@example.com\n\n/* SITE */\nPowered by: Nginx, Astro\nLast update: YYYY-MM-DD\n";
+    return 200 "/* TEAM */\nLead: Jane Doe\nContact: jane@example.com\n\n/* SITE */\nPowered by: Nginx, Astro\nLast update: 2025-12-18\n";
 }
 ```
 </FileContent>
@@ -658,6 +658,10 @@ http {
 }
 ```
 </FileContent>
+
+<Callout type="warning" icon="mdi:alert">
+  **Note:** Serving different `robots.txt` content based on User-Agent is shown here for illustrative purposes only. In practice, crawlers expect a consistent `robots.txt` and may not re-fetch it with different User-Agents. For real-world bot blocking, consider using `robots.txt` with specific User-Agent rules, or server-side blocking based on IP/User-Agent patterns.
+</Callout>
 
 <Callout type="info" icon="mdi:speedometer">
   **Performance Note:** `njs` is very fast, but `return` is faster. Use `return` for static content and `njs` only when you need logic.

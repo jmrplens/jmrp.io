@@ -122,7 +122,12 @@ for (const r of reports) {
     );
   }
 
-  if (grouped[r.url]?.[r.formFactor]?.[r.theme]) {
+  // Warn about unexpected formFactor values that would be dropped
+  if (grouped[r.url] && !grouped[r.url][r.formFactor]) {
+    console.warn(
+      `⚠️ Unexpected formFactor "${r.formFactor}" for ${r.url}. Expected "mobile" or "desktop". Skipping report.`,
+    );
+  } else if (grouped[r.url]?.[r.formFactor]?.[r.theme]) {
     grouped[r.url][r.formFactor][r.theme].push(r);
   }
 }

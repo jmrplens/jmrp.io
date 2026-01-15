@@ -296,6 +296,10 @@ default_md        = sha256       # Use SHA-256
 preserve          = no
 policy            = policy_loose
 copy_extensions   = copy         # Copy SANs from CSR
+# SECURITY WARNING: copy_extensions=copy copies ALL extensions from the CSR.
+# This is safe only when you trust the CSR generator. A malicious CSR could
+# include basicConstraints: CA:TRUE to create a subordinate CA.
+# Use copy_extensions=none or explicitly filter extensions for untrusted CSRs.
 
 [ policy_loose ]
 countryName             = optional
@@ -787,10 +791,13 @@ server {
     # Application
     # =================================================
     location / {
-        # Example: Pass client info to backend
-        # WARNING: Clear/overwrite these headers from any upstream proxy
-        # to prevent spoofing. Backend should only trust these when
-        # requests originate directly from this Nginx instance.
+        # First, clear any client-provided values to prevent spoofing
+        proxy_set_header X-Client-DN "";
+        proxy_set_header X-Client-Verify "";
+        proxy_set_header X-Client-Fingerprint "";
+        
+        # Then set authenticated values from Nginx's SSL module
+        # Backend should only trust these when requests come directly from Nginx
         proxy_set_header X-Client-DN $ssl_client_s_dn;
         proxy_set_header X-Client-Verify $ssl_client_verify;
         proxy_set_header X-Client-Fingerprint $ssl_client_fingerprint;
