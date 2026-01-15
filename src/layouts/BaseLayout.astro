@@ -17,7 +17,7 @@ interface Props {
   title: string;
   description?: string;
   type?: string;
-  schema?: any; // JSON-LD schema defaults or overrides
+  schema?: Record<string, unknown> | Record<string, unknown>[]; // JSON-LD schema defaults or overrides
   image?: string;
   /** Preload URL for LCP image optimization */
   preloadImage?: string;

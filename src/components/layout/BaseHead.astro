@@ -47,7 +47,7 @@ interface Props {
   modifiedDate?: Date;
   authors?: string[]; // Defaults to siteData.author
   tags?: string[];
-  schema?: Record<string, unknown>; // Custom JSON-LD schema to merge or override
+  schema?: Record<string, unknown> | Record<string, unknown>[]; // Custom JSON-LD schema to merge or override
 }
 
 const canonicalURL = new URL(Astro.url.pathname, getSiteUrl());
@@ -295,7 +295,7 @@ const jsonLD = {
 />
 <meta
   property="og:url"
-  content={Astro.url}
+  content={canonicalURL}
 />
 <meta
   property="og:title"
@@ -373,7 +373,7 @@ const jsonLD = {
 />
 <meta
   name="twitter:url"
-  content={Astro.url}
+  content={canonicalURL}
 />
 <meta
   name="twitter:title"
