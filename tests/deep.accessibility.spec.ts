@@ -198,6 +198,7 @@ test.describe("Deep Accessibility & Interaction Tests", () => {
 
     expect(errors).toEqual([]);
   });
+
   test("Publications Copy Button Keyboard Interaction", async ({ page }) => {
     await page.goto("/publications");
 
