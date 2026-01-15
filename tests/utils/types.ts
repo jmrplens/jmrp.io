@@ -61,8 +61,10 @@ export interface SpeculationRuleInfo {
 
 /** Interface for a single speculation rule entry. */
 export interface SpeculationRuleItem {
+  /** Source type for the speculation rule. Expected: "list" or "document" */
   source: string;
   urls: string[];
+  /** Eagerness level. Expected: "immediate", "eager", "moderate", or "conservative" */
   eagerness: string;
 }
 

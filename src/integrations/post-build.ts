@@ -388,7 +388,7 @@ function handleNginxValidationError(
     logger.error(
       `CRITICAL: Failed to revert Nginx configuration. Manual intervention required.`,
     );
-    logger.debug(`Revert failure details: ${revertErrorMessage}`);
+    logger.warn(`Revert failure details: ${revertErrorMessage}`);
     throw revertError instanceof Error
       ? revertError
       : new Error(revertErrorMessage);

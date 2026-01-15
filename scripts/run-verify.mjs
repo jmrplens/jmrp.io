@@ -126,10 +126,12 @@ async function runVerify() {
   for (const step of steps) {
     const success = runStep(step.name, step.command, step.condition ?? true);
     if (!success) {
-      // If SonarCloud Analysis failed (likely Quality Gate), continue to the next step
-      // to fetch and display the issues so the user knows what went wrong.
-      // We don't mark the whole suite as failed yet; the next step will decide.
-      if (step.name === "Security: SonarCloud Analysis") {
+      // SonarCloud steps should not block subsequent independent steps (like E2E tests)
+      // Allow both analysis and issues steps to fail without breaking the loop
+      if (
+        step.name === "Security: SonarCloud Analysis" ||
+        step.name === "Analyze: SonarCloud Issues"
+      ) {
         failedSteps.push(step.name);
         continue;
       }

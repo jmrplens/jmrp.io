@@ -25,16 +25,24 @@ const { class: className } = Astro.props;
       clickHandler: () => void;
       keydownHandler: (e: KeyboardEvent) => void;
     }[] = [];
+    _rafId: number | null = null;
 
     connectedCallback() {
       // Use requestAnimationFrame to ensure the children are fully parsed
       // connectedCallback fires before child elements are available
-      requestAnimationFrame(() => {
+      this._rafId = requestAnimationFrame(() => {
+        this._rafId = null;
         this.initializeTabs();
       });
     }
 
     disconnectedCallback() {
+      // Cancel pending rAF to prevent stale callback on disconnected element
+      if (this._rafId !== null) {
+        cancelAnimationFrame(this._rafId);
+        this._rafId = null;
+      }
+
       // Cleanup listeners to avoid memory leaks
       this._tabListeners.forEach(({ button, clickHandler, keydownHandler }) => {
         button.removeEventListener("click", clickHandler);

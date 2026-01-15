@@ -203,6 +203,10 @@ const findScore = (manifestPath, p) => {
   if (!fs.existsSync(manifestPath)) return null;
   try {
     const json = JSON.parse(fs.readFileSync(manifestPath, "utf-8"));
+    if (!Array.isArray(json)) {
+      console.warn(`⚠️ Lighthouse manifest is not an array: ${manifestPath}`);
+      return null;
+    }
     const item = json.find((i) => {
       if (p.name === "Home") {
         // Match localhost:PORT/ (any port) or production domain ending with /
@@ -772,6 +776,9 @@ const html = `
         }
     </style>
     <script>
+        function onModalKeyDown(e) {
+            if (e.key === 'Escape') closeLog();
+        }
         function openLog(job) {
             fetch('logs/' + job + '.log')
                 .then(r => r.text())
@@ -779,6 +786,7 @@ const html = `
                     document.getElementById('logTitle').innerText = job + ' log output';
                     document.getElementById('logContent').innerText = t;
                     document.getElementById('logModal').style.display = 'block';
+                    document.addEventListener('keydown', onModalKeyDown);
                 })
                 .catch(e => {
                     alert('Log not found for ' + job);
@@ -786,6 +794,7 @@ const html = `
         }
         function closeLog() {
             document.getElementById('logModal').style.display = 'none';
+            document.removeEventListener('keydown', onModalKeyDown);
         }
         window.onclick = function(event) {
             if (event.target == document.getElementById('logModal')) {

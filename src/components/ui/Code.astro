@@ -42,8 +42,9 @@ const {
 const slotContent = await Astro.slots.render("default");
 const trimmedContent = slotContent.trim();
 
-// Check if content is already rendered HTML (starts with a tag, likely from markdown)
-const isHtml = trimmedContent.startsWith("<");
+// Check if content is already rendered HTML (matches pre/code wrapper tags from markdown)
+// Using stricter detection to avoid misclassifying code snippets that start with '<'
+const isHtml = /^<(?:pre|code)\b/i.test(trimmedContent);
 
 // Guard: Handle empty or whitespace-only content
 if (!trimmedContent) {

@@ -32,18 +32,19 @@ export async function postOrUpdateComment(github, context, header, body) {
   // Find the bot's own comments to be safe?
   // For now, header match is standard across this repo.
 
+  // Ensure header is always included for future identification
+  const finalBody = body.includes(header) ? body : `${header}\n\n${body}`;
+
   if (existingComment) {
     console.log(`Updating existing comment ${existingComment.id}...`);
     await github.rest.issues.updateComment({
       owner: context.repo.owner,
       repo: context.repo.repo,
       comment_id: existingComment.id,
-      body,
+      body: finalBody,
     });
   } else {
     console.log("Creating new comment...");
-    // Ensure header is included in body to allow future identification
-    const finalBody = body.includes(header) ? body : `${header}\n\n${body}`;
     await github.rest.issues.createComment({
       owner: context.repo.owner,
       repo: context.repo.repo,

@@ -114,11 +114,13 @@ async function calculateCoverage() {
       }
 
       // Handle VariableStatements with function declarations separately
+      // Only count once if any declaration is documentable (avoid inflation)
       if (isPublic && ts.isVariableStatement(node)) {
-        for (const decl of node.declarationList.declarations) {
-          if (isDocumentableDeclaration(decl)) {
-            processDocumentableNode(node);
-          }
+        const hasDocumentableDecl = node.declarationList.declarations.some(
+          (decl) => isDocumentableDeclaration(decl),
+        );
+        if (hasDocumentableDecl) {
+          processDocumentableNode(node);
         }
       }
 

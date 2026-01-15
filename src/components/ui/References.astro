@@ -73,6 +73,8 @@ const iconFiles = import.meta.glob<{ default: ImageMetadata }>(
           const isExternalLink =
             urlObj?.protocol === "http:" || urlObj?.protocol === "https:";
           const pathname = urlObj?.pathname ?? "";
+          // Only append pathname for http(s) links where it's meaningful (not "/" alone)
+          const pathSuffix = isExternalLink && pathname !== "/" ? pathname : "";
 
           return (
             <a
@@ -81,7 +83,7 @@ const iconFiles = import.meta.glob<{ default: ImageMetadata }>(
                 ? { target: "_blank", rel: "noopener noreferrer" }
                 : {})}
               class="reference-card"
-              aria-label={`${ref.text} (${hostname}${pathname === "/" ? "" : pathname})`}
+              aria-label={`${ref.text} (${hostname}${pathSuffix})`}
             >
               <div class="card-icon">
                 {iconModule ? (

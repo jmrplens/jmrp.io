@@ -75,9 +75,10 @@ const uuid =
     .digest("hex")
     .slice(0, 8);
 
-const index = getNextIndex("table");
+// Use ariaLabel if provided, else title-based, else auto-generate with counter
 const finalAriaLabel =
-  ariaLabel || (title ? `Table: ${title}` : `Data table ${index}`);
+  ariaLabel ||
+  (title ? `Table: ${title}` : `Data table ${getNextIndex("table")}`);
 
 const wrapperClasses = [
   "table-wrapper",

@@ -70,6 +70,7 @@ const { summary } = Astro.props;
 
   summary:focus-visible {
     /* Use box-shadow instead of outline to create rounded focus ring that follows border-radius */
+    outline: none;
     border-radius: var(--radius-md);
     box-shadow: 0 0 0 2px var(--color-primary);
   }

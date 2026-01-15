@@ -131,9 +131,12 @@ export async function getPublications(): Promise<PublicationGroup[]> {
       bibGiven: string,
       firstnameVariations: string[],
     ): boolean => {
-      // Treat single-character bibGiven (initial) strictly
-      if (bibGiven.length === 1) {
-        const initial = bibGiven.toLowerCase();
+      // Normalize: strip trailing dot if present, e.g., "J." -> "J"
+      const normalized = bibGiven.replace(/\.$/, "");
+
+      // Treat single-character normalized bibGiven (initial) strictly
+      if (normalized.length === 1) {
+        const initial = normalized.toLowerCase();
         return firstnameVariations.some((variation) => {
           const v = variation.toLowerCase();
           // Match only exact initial forms (e.g., "J" or "J.")

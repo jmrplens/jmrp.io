@@ -53,6 +53,7 @@ async function test() {
     }
   } catch (error) {
     console.error("Caught error:", error);
+    throw error;
   } finally {
     // Explicitly close the renderer to free up resources
     if (mermaidRenderer.close) {

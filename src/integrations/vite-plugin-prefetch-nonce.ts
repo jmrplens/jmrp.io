@@ -49,8 +49,8 @@ export function vitePrefetchNoncePlugin(): Plugin {
         appendPattern,
         `(() => {
           const __vitePrefetchEl = $1;
-          const existingScript = document.querySelector("head > script[nonce], body > script[nonce]");
-          if (existingScript?.nonce) __vitePrefetchEl.nonce = existingScript.nonce;
+          const nonce = document.currentScript?.nonce || document.querySelector("head > script[nonce], body > script[nonce]")?.nonce;
+          if (nonce) __vitePrefetchEl.nonce = nonce;
           return document.head.append(__vitePrefetchEl);
         })()`,
       );

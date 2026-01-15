@@ -173,7 +173,7 @@ export default [
   // 8. Playwright (E2E Testing)
   {
     ...playwright.configs["flat/recommended"],
-    files: ["tests/**"],
+    files: ["tests/**/*.{ts,tsx,js,jsx,mjs}"],
   },
 
   // 9. React Hooks (Stability for Preact)
