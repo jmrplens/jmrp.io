@@ -164,6 +164,92 @@ function getExecutiveHighlights(saResults) {
 }
 
 /**
+ * Gets the score color based on health score threshold.
+ * @param {number} healthScore
+ * @returns {string} Color code for the badge
+ */
+function getScoreColor(healthScore) {
+  if (healthScore >= 90) return "4E9A06";
+  if (healthScore >= 70) return "C4A000";
+  return "A40000";
+}
+
+/**
+ * Builds the dashboard badge HTML.
+ * @param {string|undefined} vercelUrl
+ * @returns {string} Badge HTML
+ */
+function buildDashboardBadge(vercelUrl) {
+  if (vercelUrl) {
+    const cleanUrl = vercelUrl.startsWith("http")
+      ? vercelUrl
+      : `https://${vercelUrl}`;
+    return `  <a href="${cleanUrl}">\n    <img src="https://img.shields.io/badge/OPEN%20CI%20DASHBOARD-4F46E5?style=for-the-badge&logo=github&logoColor=white" alt="Open CI Dashboard" />\n  </a>`;
+  }
+  return `  <img src="https://img.shields.io/badge/DASHBOARD-BUILDING...-lightgrey?style=for-the-badge&logo=github&logoColor=white" alt="Dashboard Building" />`;
+}
+
+/**
+ * Gets the status text based on current step.
+ * @param {string} step
+ * @returns {string} Status message
+ */
+function getStatusText(step) {
+  if (step === "init") {
+    return `> 🔄 **CI Analysis Initialized.** Starting parallel security and quality audits... ⚡\n\n`;
+  }
+  if (step === "sa") {
+    return `> 🔄 **Static Analysis Completed.** Now finalizing assets and functional checks... 🧪\n\n`;
+  }
+  return `> ✨ **Analysis Complete.** All reports are now available for review.\n\n`;
+}
+
+/**
+ * Fetches existing PR comments.
+ * @param {object} github
+ * @param {object} context
+ * @param {number} prNumber
+ * @returns {Promise<Array>} Array of comments
+ */
+async function fetchPrComments(github, context, prNumber) {
+  try {
+    return await github.paginate(github.rest.issues.listComments, {
+      owner: context.repo.owner,
+      repo: context.repo.repo,
+      issue_number: prNumber,
+    });
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    console.error(`Failed to list PR comments: ${msg}`);
+    return [];
+  }
+}
+
+/**
+ * Posts or updates a PR comment.
+ * @param {object} github
+ * @param {object} params
+ * @param {object|null} existingComment
+ */
+async function postComment(github, params, existingComment) {
+  const method = existingComment ? "updateComment" : "createComment";
+  const commentParams = { ...params };
+
+  if (existingComment) {
+    commentParams.comment_id = existingComment.id;
+  }
+
+  try {
+    await github.rest.issues[method](commentParams);
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    const action = method === "updateComment" ? "update" : "create";
+    console.error(`Failed to ${action} PR comment: ${msg}`);
+    throw error;
+  }
+}
+
+/**
  * Main function to update the CI comment in the GitHub PR.
  */
 export default async function updateCiComment({ github, context, step }) {
@@ -209,38 +295,18 @@ export default async function updateCiComment({ github, context, step }) {
     console.log("DEBUG: Health Score", healthScore);
   }
 
-  // Visualization Header
-  let scoreColor = "A40000";
-  if (healthScore >= 90) scoreColor = "4E9A06";
-  else if (healthScore >= 70) scoreColor = "C4A000";
-
+  // Build comment body
+  const scoreColor = getScoreColor(healthScore);
   let body = `${HEADER}\n\n`;
   body += `<p align="center">\n`;
   body += `  <img src="https://img.shields.io/badge/PROJECT%20HEALTH-${healthScore}%2F100-${scoreColor}?style=for-the-badge&logo=heartbeat&logoColor=white" alt="Project Health Score" />\n`;
   body += `</p>\n\n`;
 
-  // Centered Dashboard Button
   body += `<p align="center">\n`;
-  if (vercelUrl) {
-    const cleanUrl = vercelUrl.startsWith("http")
-      ? vercelUrl
-      : `https://${vercelUrl}`;
-    body += `  <a href="${cleanUrl}">\n`;
-    body += `    <img src="https://img.shields.io/badge/OPEN%20CI%20DASHBOARD-4F46E5?style=for-the-badge&logo=github&logoColor=white" alt="Open CI Dashboard" />\n`;
-    body += `  </a>\n`;
-  } else {
-    body += `  <img src="https://img.shields.io/badge/DASHBOARD-BUILDING...-lightgrey?style=for-the-badge&logo=github&logoColor=white" alt="Dashboard Building" />\n`;
-  }
-  body += `</p>\n\n`;
+  body += buildDashboardBadge(vercelUrl);
+  body += `\n</p>\n\n`;
 
-  // Status text
-  if (step === "init") {
-    body += `> 🔄 **CI Analysis Initialized.** Starting parallel security and quality audits... ⚡\n\n`;
-  } else if (step === "sa") {
-    body += `> 🔄 **Static Analysis Completed.** Now finalizing assets and functional checks... 🧪\n\n`;
-  } else {
-    body += `> ✨ **Analysis Complete.** All reports are now available for review.\n\n`;
-  }
+  body += getStatusText(step);
 
   // Summary
   if (step === "final") {
@@ -254,43 +320,19 @@ export default async function updateCiComment({ github, context, step }) {
   body += `\n---\n<p align="right"><i>Last Update: ${new Date().toUTCString()} &bull; <a href="https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}">Workflow Logs</a></i></p>`;
 
   // Find and update/create comment
-  let comments = [];
-  try {
-    comments = await github.paginate(github.rest.issues.listComments, {
-      owner: context.repo.owner,
-      repo: context.repo.repo,
-      issue_number: prNumber,
-    });
-  } catch (error) {
-    const msg = error instanceof Error ? error.message : String(error);
-    console.error(`Failed to list PR comments: ${msg}`);
-    // Continue without existing comment - will create a new one
-  }
-
+  const comments = await fetchPrComments(github, context, prNumber);
   const existingComment = comments.find(
     (c) => c.body?.includes(HEADER) && c.user?.type === "Bot",
   );
 
-  const commentMethod = existingComment ? "updateComment" : "createComment";
-  const commentParams = {
-    owner: context.repo.owner,
-    repo: context.repo.repo,
-    body: body,
-  };
-
-  if (existingComment) {
-    commentParams.comment_id = existingComment.id;
-  } else {
-    commentParams.issue_number = prNumber;
-  }
-
-  try {
-    await github.rest.issues[commentMethod](commentParams);
-  } catch (error) {
-    const msg = error instanceof Error ? error.message : String(error);
-    console.error(
-      `Failed to ${commentMethod === "updateComment" ? "update" : "create"} PR comment: ${msg}`,
-    );
-    throw error; // Re-throw to fail the CI step
-  }
+  await postComment(
+    github,
+    {
+      owner: context.repo.owner,
+      repo: context.repo.repo,
+      issue_number: prNumber,
+      body: body,
+    },
+    existingComment,
+  );
 }
