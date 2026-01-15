@@ -46,7 +46,8 @@ const { summary } = Astro.props;
 <style>
   .collapsible-wrapper {
     margin: 1.5rem 0;
-    overflow: hidden; /* Clip summary background to follow parent's rounded corners */
+    overflow: clip; /* Use clip instead of hidden to allow focus ring */
+    overflow-clip-margin: 4px; /* Allow focus ring to render outside */
     background-color: var(--color-bg-secondary);
     border: var(--border-1);
     border-radius: var(--radius-md);
@@ -69,10 +70,12 @@ const { summary } = Astro.props;
   }
 
   summary:focus-visible {
-    /* Use box-shadow instead of outline to create rounded focus ring that follows border-radius */
+    /* Use inset box-shadow for focus ring that respects border-radius */
     outline: none;
     border-radius: var(--radius-md);
-    box-shadow: 0 0 0 2px var(--color-primary);
+    box-shadow:
+      inset 0 0 0 2px var(--color-primary),
+      0 0 0 2px var(--color-primary);
   }
 
   summary::-webkit-details-marker {

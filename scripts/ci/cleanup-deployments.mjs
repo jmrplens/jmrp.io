@@ -2,18 +2,21 @@
  * cleanup-deployments.mjs
  *
  * Deletes Vercel deployments for a specific PR based on metadata.
+ * PR number is read from the PR_NUMBER environment variable for security.
  *
- * Usage: node cleanup-deployments.mjs <pr-id>
+ * Usage: PR_NUMBER=123 node cleanup-deployments.mjs
  */
 
 import { execSync } from "node:child_process";
 
-const prId = process.argv[2];
+// Read PR number from environment variable (secure, no shell interpolation)
+const prId = process.env.PR_NUMBER;
 const token = process.env.VERCEL_TOKEN;
 
 // Check presence first to give accurate error
 if (!prId) {
-  console.error("Usage: node cleanup-deployments.mjs <pr-id>");
+  console.error("Error: PR_NUMBER environment variable is required.");
+  console.error("Usage: PR_NUMBER=123 node cleanup-deployments.mjs");
   process.exit(1);
 }
 

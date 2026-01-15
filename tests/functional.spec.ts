@@ -163,14 +163,11 @@ test.describe("Security & Best Practices", () => {
           const href = await link.getAttribute("href");
           const rel = await link.getAttribute("rel");
 
-          // If rel is missing or doesn't contain noopener, track the issue using soft assertions
-          // This avoids the 'no-conditional-in-test' warning by moving the check into an expectation
+          // If rel is missing or doesn't contain both noopener and noreferrer, track the issue using soft assertions
+          // Using regex with positive lookaheads to require both tokens in any order
           expect
-            .soft(
-              rel,
-              `${url}: ${href} is missing rel="noopener" or rel="noreferrer"`,
-            )
-            .toMatch(/noopener|noreferrer/);
+            .soft(rel, `${url}: ${href} is missing rel="noopener noreferrer"`)
+            .toMatch(/(?=.*noopener)(?=.*noreferrer)/);
         }
       });
     }

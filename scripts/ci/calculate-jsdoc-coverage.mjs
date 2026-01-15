@@ -9,6 +9,8 @@
  */
 
 import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
 
 import { glob } from "glob";
 import ts from "typescript";
@@ -160,8 +162,10 @@ async function calculateCoverage() {
   }
 
   // Also write to a temp file for other scripts to pick up if needed
+  const tempCoveragePath = path.join(os.tmpdir(), ".jsdoc-coverage");
   try {
-    fs.writeFileSync(".jsdoc-coverage", `${formattedPercentage}%`);
+    fs.writeFileSync(tempCoveragePath, `${formattedPercentage}%`);
+    logger.info(`  Coverage data written to: ${tempCoveragePath}`);
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
     logger.warn(`Failed to write .jsdoc-coverage file: ${msg}`);

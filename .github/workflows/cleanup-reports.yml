@@ -25,5 +25,5 @@ jobs:
       - name: Remove PR Reports from Vercel
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-        run: |
-          node scripts/ci/cleanup-deployments.mjs ${{ github.event.pull_request.number || inputs.pr_number }}
+          PR_NUMBER: ${{ github.event.pull_request.number || inputs.pr_number }}
+        run: node scripts/ci/cleanup-deployments.mjs

@@ -76,9 +76,20 @@ const uuid =
     .slice(0, 8);
 
 // Use ariaLabel if provided, else title-based, else auto-generate with counter
-const finalAriaLabel =
-  ariaLabel ||
-  (title ? `Table: ${title}` : `Data table ${getNextIndex("table")}`);
+// Emit build-time warning when neither ariaLabel nor title is provided
+if (!ariaLabel && !title) {
+  console.warn(
+    `[Table] Warning: No 'ariaLabel' or 'title' prop provided. ` +
+      `Using auto-generated label "Data table ${getNextIndex("table")}". ` +
+      `For stable accessibility tests, provide an explicit 'ariaLabel' or 'title' prop.`,
+  );
+}
+
+// When title is present, caption provides accessible name - don't duplicate with aria-label
+// Only use aria-label when there's no caption (title)
+const finalAriaLabel = title
+  ? undefined
+  : ariaLabel || `Data table ${getNextIndex("table")}`;
 
 const wrapperClasses = [
   "table-wrapper",

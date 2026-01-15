@@ -250,8 +250,18 @@ const articleSchema = [
 <script>
   // WeakSet to track observed elements without mutating DOM properties
   const observedElements = new WeakSet<Element>();
+  // Map to store observers for cleanup on navigation
+  const observerMap = new Map<Element, MutationObserver>();
+
+  const cleanupObservers = () => {
+    observerMap.forEach((observer) => observer.disconnect());
+    observerMap.clear();
+  };
 
   const setupPostInteractions = () => {
+    // Cleanup any existing observers before setting up new ones
+    cleanupObservers();
+
     // Accessibility: Fix duplicate role="region" on code blocks
     // We use requestIdleCallback to avoid forced reflows during initial layout
     // Properly typed: uses IdleRequestCallback signature, falls back to setTimeout returning number
@@ -294,6 +304,8 @@ const articleSchema = [
         attributes: true,
         attributeFilter: ["role"],
       });
+      // Store observer for cleanup
+      observerMap.set(prose, observer);
     }
   };
 

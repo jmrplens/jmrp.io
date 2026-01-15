@@ -776,16 +776,20 @@ const html = `
         }
     </style>
     <script>
+        var lastFocusedElement = null;
         function onModalKeyDown(e) {
             if (e.key === 'Escape') closeLog();
         }
         function openLog(job) {
+            lastFocusedElement = document.activeElement;
             fetch('logs/' + job + '.log')
                 .then(r => r.text())
                 .then(t => {
                     document.getElementById('logTitle').innerText = job + ' log output';
                     document.getElementById('logContent').innerText = t;
-                    document.getElementById('logModal').style.display = 'block';
+                    var modal = document.getElementById('logModal');
+                    modal.style.display = 'block';
+                    modal.focus();
                     document.addEventListener('keydown', onModalKeyDown);
                 })
                 .catch(e => {
@@ -795,6 +799,10 @@ const html = `
         function closeLog() {
             document.getElementById('logModal').style.display = 'none';
             document.removeEventListener('keydown', onModalKeyDown);
+            if (lastFocusedElement) {
+                lastFocusedElement.focus();
+                lastFocusedElement = null;
+            }
         }
         window.onclick = function(event) {
             if (event.target == document.getElementById('logModal')) {
@@ -984,11 +992,11 @@ const html = `
             </div>
         </section>
 
-        <div id="logModal" class="modal">
+        <div id="logModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="logTitle" aria-describedby="logContent" tabindex="-1">
             <div class="modal-content">
                 <div class="modal-header">
                     <h3 id="logTitle" style="margin:0">Job Log</h3>
-                    <span class="close" onclick="closeLog()">&times;</span>
+                    <button type="button" class="close" onclick="closeLog()" aria-label="Close log dialog">&times;</button>
                 </div>
                 <div id="logContent" class="modal-body"></div>
             </div>
