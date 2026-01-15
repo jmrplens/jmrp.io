@@ -7,9 +7,7 @@ const counters: Record<string, number> = {};
  * Increments and returns a formatted counter (e.g., "0001")
  */
 export function getNextIndex(key: string): string {
-  if (!counters[key]) {
-    counters[key] = 0;
-  }
-  counters[key]++;
+  // Use nullish coalescing to handle legitimate zero values
+  counters[key] = (counters[key] ?? 0) + 1;
   return counters[key].toString().padStart(4, "0");
 }

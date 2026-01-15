@@ -365,7 +365,7 @@ const { sections } = Astro.props;
     width: 100vw;
     height: 100vh;
     background-color: rgb(0 0 0 / 50%);
-    opacity: 0%;
+    opacity: 0;
     backdrop-filter: blur(2px);
     transition:
       opacity 0.3s,
@@ -374,7 +374,7 @@ const { sections } = Astro.props;
 
   .cv-backdrop.open {
     visibility: visible;
-    opacity: 100%;
+    opacity: 1;
     transition-delay: 0s;
   }
 

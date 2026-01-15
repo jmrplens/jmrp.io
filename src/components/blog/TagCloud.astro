@@ -14,7 +14,7 @@ const tags = getUniqueTags(posts);
         <a
           href={`/blog/tags/${encodeURIComponent(tag)}`}
           class="tag"
-          aria-label={`Topics sidebar: View all posts tagged with ${tag}`}
+          aria-label={`View posts tagged ${tag}`}
         >
           <span class="tag-name">
             <span class="hash">#</span>
@@ -92,7 +92,7 @@ const tags = getUniqueTags(posts);
 
   .hash {
     color: var(--color-primary);
-    opacity: 80%;
+    opacity: 0.8;
   }
 
   .count {
@@ -100,7 +100,7 @@ const tags = getUniqueTags(posts);
     font-size: 0.75rem;
     background: rgb(0 0 0 / 10%);
     border-radius: 9999px;
-    opacity: 70%;
+    opacity: 0.7;
   }
 
   /* Desktop Styles (Sidebar List) */
