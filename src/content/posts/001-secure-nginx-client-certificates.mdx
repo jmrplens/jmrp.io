@@ -769,7 +769,7 @@ server {
     # TLS Protocol Configuration
     # =================================================
     ssl_protocols TLSv1.2 TLSv1.3;
-    ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384;
+    ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305;
     ssl_prefer_server_ciphers on;
     
     # Performance: SSL Session Caching
@@ -1279,6 +1279,7 @@ set -e
 PKI_DIR="/etc/nginx/pki"
 DAYS_BEFORE_EXPIRY=30
 RENEW_DAYS=365
+RENEWED=false
 
 echo "Checking for expiring certificates in $PKI_DIR/certs..."
 
@@ -1314,6 +1315,10 @@ find "$PKI_DIR/certs" -name "*.crt" -type f | while read cert; do
         openssl ca -config $PKI_DIR/openssl.cnf \
             -revoke "$cert"
         
+        # Regenerate CRL immediately after revocation
+        openssl ca -config $PKI_DIR/openssl.cnf \
+            -gencrl -out $PKI_DIR/crl/ca.crl
+        
         # Re-sign
         openssl ca -config $PKI_DIR/openssl.cnf \
             -extensions v3_client \
@@ -1323,6 +1328,7 @@ find "$PKI_DIR/certs" -name "*.crt" -type f | while read cert; do
             -out "$cert"
             
         echo "   ✅ Certificate re-signed. New validity: $RENEW_DAYS days."
+        echo "   ✅ CRL regenerated."
         
         # 3. Generate new P12
         NEW_PASS=$(openssl rand -base64 12)
@@ -1344,11 +1350,31 @@ find "$PKI_DIR/certs" -name "*.crt" -type f | while read cert; do
         else
             echo "   ⚠️ Private key not found. Skipped P12 generation."
         fi
+        
+        # Mark that we renewed at least one certificate
+        RENEWED=true
         echo "--------------------------------------------------"
     else
         echo "✅ $CN: $days_left days remaining."
     fi
 done
+
+# Reload Nginx if any certificates were renewed
+if [ "$RENEWED" = "true" ]; then
+    echo ""
+    echo "========================================"
+    echo "🔄 Reloading Nginx to apply updated CRL..."
+    echo "========================================"
+    
+    # Test configuration first
+    if nginx -t 2>&1; then
+        systemctl reload nginx
+        echo "✅ Nginx reloaded successfully."
+    else
+        echo "❌ Nginx configuration test failed. Skipping reload."
+        exit 1
+    fi
+fi
 ```
 </FileContent>
 

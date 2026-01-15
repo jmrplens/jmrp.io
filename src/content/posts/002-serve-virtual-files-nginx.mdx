@@ -785,7 +785,7 @@ location = /robots.txt {
 
 # Health endpoints - never cache
 location = /health {
-    add_header Cache-Control "no-store";
+    add_header Cache-Control "no-store" always;
     return 200 '{"status":"ok"}';
 }
 ```

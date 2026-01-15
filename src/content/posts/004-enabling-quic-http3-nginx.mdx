@@ -20,7 +20,6 @@ import TerminalOutput from "@components/ui/TerminalOutput.astro";
 import Collapsible from "@components/ui/Collapsible.astro";
 import Mermaid from "@components/ui/Mermaid.astro";
 import Table from "@components/ui/Table.astro";
-import CompareCode from "@components/ui/CompareCode.astro";
 import Code from "@components/ui/Code.astro";
 
 
@@ -638,10 +637,16 @@ configure arguments: ... --with-http_v3_module ...
     # Add official Nginx mainline repository
     sudo apt install curl gnupg2 ca-certificates lsb-release
     
-    echo "deb http://nginx.org/packages/mainline/ubuntu $(lsb_release -cs) nginx" \
-        | sudo tee /etc/apt/sources.list.d/nginx.list
+    # Create keyring directory if it doesn't exist
+    sudo mkdir -p /etc/apt/keyrings
     
-    curl -fsSL https://nginx.org/keys/nginx_signing.key | sudo apt-key add -
+    # Download and add the Nginx signing key (modern approach)
+    curl -fsSL https://nginx.org/keys/nginx_signing.key \
+        | sudo gpg --dearmor -o /etc/apt/keyrings/nginx.gpg
+    
+    # Add repository with signed-by keyring
+    echo "deb [signed-by=/etc/apt/keyrings/nginx.gpg] http://nginx.org/packages/mainline/ubuntu $(lsb_release -cs) nginx" \
+        | sudo tee /etc/apt/sources.list.d/nginx.list
     
     sudo apt update
     sudo apt install nginx
@@ -734,6 +739,8 @@ server {
   **Why `reuseport`?**
   
   UDP is connectionless—without `reuseport`, all QUIC packets would be handled by a single Nginx worker, creating a bottleneck. The `reuseport` kernel feature distributes incoming packets across all workers.
+  
+  **⚠️ Important:** The `reuseport` flag must appear on **exactly one** `listen` directive per address:port globally. If you have multiple server blocks listening on port 443 QUIC, only the first one should have `reuseport`. Using it multiple times will cause Nginx to fail to start with "address already in use" errors.
 </Callout>
 
 ### Complete Production Configuration
@@ -876,6 +883,11 @@ server {
         expires 1y;
         add_header Cache-Control "public, immutable" always;
         add_header Alt-Svc 'h3=":443"; ma=86400' always;
+        
+        # Security headers (inherited from server block may not apply with add_header in location)
+        add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
+        add_header X-Content-Type-Options "nosniff" always;
+        add_header X-Frame-Options "DENY" always;
     }
 }
 

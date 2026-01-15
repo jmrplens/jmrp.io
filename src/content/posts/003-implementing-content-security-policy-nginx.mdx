@@ -250,6 +250,8 @@ server {
     
     sub_filter_once off;              # Replace ALL occurrences, not just first
     # Apply only to text-based content (exclude JSON to avoid corrupting API responses)
+    # WARNING: Including text/plain may unintentionally replace placeholders in plain text responses
+    # such as logs or API text outputs. Scope to specific content types if this is a concern.
     sub_filter_types text/html text/css application/javascript text/xml application/xml;
     sub_filter NGINX_NONCE_CSP $cspNonce;  # The actual replacement
 
@@ -752,6 +754,10 @@ This forces all DOM updates to use "Typed" values (created via a policy) instead
 
 <FileContent filename="trusted-types.js" icon="mdi:language-javascript">
 ```javascript
+// DOMPurify is an external dependency for HTML sanitization
+// Install it first: npm install dompurify
+// For browser usage: import DOMPurify from 'dompurify';
+
 // Create a policy named 'default'
 if (window.trustedTypes && window.trustedTypes.createPolicy) {
   window.trustedTypes.createPolicy('default', {
@@ -856,11 +862,17 @@ When a violation occurs, browsers send a JSON report:
 <Tabs>
   <TabPanel label="Nginx (Proxy to Logger)">
     ```nginx
+    # Option A: Forward to backend logging service
     location /csp-reports {
-        # Proxy to your logging service
         proxy_pass http://localhost:3001/log;
-        
-        # Or log directly to file
+        proxy_set_header Content-Type application/csp-report;
+    }
+    ```
+  </TabPanel>
+  <TabPanel label="Nginx (Local Log + 204)">
+    ```nginx
+    # Option B: Log locally and return 204 immediately
+    location /csp-reports {
         access_log /var/log/nginx/csp-reports.log;
         return 204;
     }
