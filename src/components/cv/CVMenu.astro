@@ -98,7 +98,14 @@ const { sections } = Astro.props;
 </nav>
 
 <script>
+  let cleanupFn: (() => void) | null = null;
+
   function setupCVMenu() {
+    // Cleanup previous listeners
+    if (cleanupFn) {
+      cleanupFn();
+    }
+
     const triggerBtn = document.getElementById("cv-menu-trigger");
     const closeBtn = document.getElementById("cv-menu-close");
     const drawer = document.getElementById("cv-drawer");
@@ -142,25 +149,13 @@ const { sections } = Astro.props;
       }
     };
 
-    // Event Listeners
-    triggerBtn.addEventListener("click", openMenu);
-    closeBtn?.addEventListener("click", closeMenu);
-    backdrop.addEventListener("click", closeMenu);
-
-    // Close on link click
-    links?.forEach((link) => {
-      link.addEventListener("click", closeMenu);
-    });
-
-    // Close on Escape
-    document.addEventListener("keydown", (e) => {
+    const handleEscape = (e: KeyboardEvent) => {
       if (e.key === "Escape" && drawer.classList.contains("open")) {
         closeMenu();
       }
-    });
+    };
 
-    // Focus Trap (Basic implementation)
-    drawer.addEventListener("keydown", (e) => {
+    const handleFocusTrap = (e: KeyboardEvent) => {
       if (e.key === "Tab") {
         const focusables = drawer.querySelectorAll(
           'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
@@ -180,7 +175,31 @@ const { sections } = Astro.props;
           }
         }
       }
+    };
+
+    // Event Listeners
+    triggerBtn.addEventListener("click", openMenu);
+    closeBtn?.addEventListener("click", closeMenu);
+    backdrop.addEventListener("click", closeMenu);
+
+    links?.forEach((link) => {
+      link.addEventListener("click", closeMenu);
     });
+
+    document.addEventListener("keydown", handleEscape);
+    drawer.addEventListener("keydown", handleFocusTrap);
+
+    // Store cleanup function
+    cleanupFn = () => {
+      triggerBtn.removeEventListener("click", openMenu);
+      closeBtn?.removeEventListener("click", closeMenu);
+      backdrop.removeEventListener("click", closeMenu);
+      links?.forEach((link) => {
+        link.removeEventListener("click", closeMenu);
+      });
+      document.removeEventListener("keydown", handleEscape);
+      drawer.removeEventListener("keydown", handleFocusTrap);
+    };
   }
 
   // Init on load and after Astro swaps
@@ -344,12 +363,15 @@ const { sections } = Astro.props;
     background-color: rgb(0 0 0 / 50%);
     opacity: 0%;
     backdrop-filter: blur(2px);
-    transition: opacity 0.3s;
+    transition:
+      opacity 0.3s,
+      visibility 0s linear 0.3s;
   }
 
   .cv-backdrop.open {
     visibility: visible;
     opacity: 100%;
+    transition-delay: 0s;
   }
 
   /* Desktop Styles */

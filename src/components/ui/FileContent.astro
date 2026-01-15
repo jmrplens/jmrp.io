@@ -41,7 +41,7 @@ let plainText = "";
 if (!ariaLabel) {
   // FAST PATH: Use regex for simple content to avoid Cheerio overhead
   const fullText =
-    !slotContent.includes("<") || !slotContent.includes(">")
+    !slotContent.includes("<") && !slotContent.includes(">")
       ? slotContent.trim()
       : decodeHtml(slotContent.replaceAll(/<[^>]+>/g, "").trim());
   // Only truncate and add ellipsis if content exceeds 50 characters

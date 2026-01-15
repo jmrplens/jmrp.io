@@ -84,12 +84,19 @@ const contentHash = createHash("sha256")
 
 // Fallback to meaningful label when rawContent is empty or whitespace-only
 const trimmedRaw = rawContent.trim();
-const index = getNextIndex("terminal");
-const finalAriaLabel =
-  ariaLabel ||
-  (trimmedRaw
-    ? `Terminal command ${index}: ${trimmedRaw.slice(0, 50)}${trimmedRaw.length > 50 ? "..." : ""}`
-    : "Terminal: no command");
+
+// Only call getNextIndex when we actually need it for aria-label generation
+let finalAriaLabel: string;
+if (ariaLabel) {
+  finalAriaLabel = ariaLabel;
+} else if (trimmedRaw) {
+  const index = getNextIndex("terminal");
+  const snippet = trimmedRaw.slice(0, 50);
+  const suffix = trimmedRaw.length > 50 ? "..." : "";
+  finalAriaLabel = `Terminal command ${index}: ${snippet}${suffix}`;
+} else {
+  finalAriaLabel = "Terminal: no command";
+}
 ---
 
 <div

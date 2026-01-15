@@ -176,8 +176,6 @@ test.describe("Security & Best Practices", () => {
     }
 
     // Issues are reported via expect.soft above
-    // We can add a final sanity check if needed, or rely on soft assertions to fail the test eventually
-    // Issues are reported via expect.soft above
   });
 
   test("images have alt attributes", async ({ page }) => {

@@ -111,9 +111,16 @@ const grouped = {};
 for (const r of reports) {
   if (!grouped[r.url])
     grouped[r.url] = {
-      mobile: { light: [], dark: [] },
-      desktop: { light: [], dark: [] },
+      mobile: { light: [], dark: [], unknown: [] },
+      desktop: { light: [], dark: [], unknown: [] },
     };
+
+  // Warn if theme is unknown
+  if (r.theme === "unknown") {
+    console.warn(
+      `⚠️ Theme could not be determined for ${r.url} (${r.formFactor}). Please ensure directory structure includes '/light/' or '/dark/'.`,
+    );
+  }
 
   if (grouped[r.url]?.[r.formFactor]?.[r.theme]) {
     grouped[r.url][r.formFactor][r.theme].push(r);

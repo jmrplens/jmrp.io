@@ -82,9 +82,16 @@ for (const filePath of files) {
 
     if (!results[url]) results[url] = {};
     if (!results[url][theme]) results[url][theme] = { mobile: [], desktop: [] };
-    if (results[url][theme][formFactor]) {
-      results[url][theme][formFactor].push(scores);
+
+    // Initialize formFactor array if it doesn't exist (for unexpected values)
+    if (!results[url][theme][formFactor]) {
+      console.warn(
+        `Unexpected formFactor "${formFactor}" for ${url} (${theme}). Initializing empty array.`,
+      );
+      results[url][theme][formFactor] = [];
     }
+
+    results[url][theme][formFactor].push(scores);
   } catch (error) {
     // Skip invalid files
     console.warn(`Failed to process ${filePath}:`, error.message);
