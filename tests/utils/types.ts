@@ -8,6 +8,8 @@
  * - Common page info structures
  */
 
+import type { NodeResult } from "axe-core";
+
 // ============================================================================
 // Axe-core Types (for accessibility testing)
 // ============================================================================
@@ -15,8 +17,7 @@
 /** Represents a single DOM node flagged by Axe-core. */
 export interface AxeNode {
   html: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  target: any; // Axe-core uses complex selectors (UnlabelledFrameSelector)
+  target: NodeResult["target"]; // Use axe-core's native target type
   failureSummary?: string;
 }
 

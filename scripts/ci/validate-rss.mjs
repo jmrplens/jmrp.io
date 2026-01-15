@@ -195,29 +195,39 @@ async function validateFeedContent(content, results) {
 async function validateRSS() {
   console.log("🔍 Validating RSS feed...\n");
 
-  const distDir = path.resolve(
-    process.argv[2] || process.env.DIST_DIR || "dist",
-  );
+  // Parse CLI arguments safely
+  const arg1 = process.argv[2];
+  const arg2 = process.argv[3];
 
-  // If the argument is already a path to a file, use it.
-  // Otherwise, assume it's a directory and look for rss.xml inside.
-  const argFile = process.argv[3] || process.argv[2];
-
-  // If valid arg is provided, check if it's a file path or directory
+  let distDir;
   let rssFile;
-  if (argFile?.endsWith(".xml")) {
-    // If it looks like an XML file, use it directly (resolve path)
-    rssFile = path.resolve(argFile);
-  } else if (
-    argFile &&
-    fs.existsSync(argFile) &&
-    fs.statSync(argFile).isFile()
-  ) {
-    // If existing file, use it
-    rssFile = path.resolve(argFile);
+
+  // If only one argument provided, detect if it's a file or directory
+  if (arg1 && !arg2) {
+    try {
+      const stats = fs.existsSync(arg1) ? fs.statSync(arg1) : null;
+      if (stats?.isFile() || arg1.endsWith('.xml')) {
+        // Single argument is a file
+        rssFile = path.resolve(arg1);
+        distDir = path.dirname(rssFile);
+      } else {
+        // Single argument is a directory
+        distDir = path.resolve(arg1);
+        rssFile = path.join(distDir, 'rss.xml');
+      }
+    } catch {
+      // Fallback: treat as directory
+      distDir = path.resolve(arg1);
+      rssFile = path.join(distDir, 'rss.xml');
+    }
+  } else if (arg1 && arg2) {
+    // Two arguments: distDir and rssFile
+    distDir = path.resolve(arg1);
+    rssFile = path.resolve(arg2);
   } else {
-    // Default: generated rss.xml in distDir
-    rssFile = path.resolve(path.join(distDir, "rss.xml"));
+    // No arguments: use defaults
+    distDir = path.resolve(process.env.DIST_DIR || "dist");
+    rssFile = path.join(distDir, 'rss.xml');
   }
 
   const results = {
