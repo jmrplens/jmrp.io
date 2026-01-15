@@ -1213,6 +1213,20 @@ if [ -z "$CLIENT_NAME" ]; then
     exit 1
 fi
 
+# Validate CLIENT_NAME: only allow alphanumerics, dots, underscores, hyphens
+# Reject path traversal sequences, leading dots, slashes, and other unsafe chars
+if ! echo "$CLIENT_NAME" | grep -qE '^[A-Za-z0-9._-]+$'; then
+    echo "❌ Error: CLIENT_NAME contains invalid characters."
+    echo "   Only alphanumerics, dots, underscores, and hyphens are allowed."
+    exit 1
+fi
+
+# Additional check to prevent path traversal patterns
+if echo "$CLIENT_NAME" | grep -qE '(\.\.|^\.)|/'; then
+    echo "❌ Error: CLIENT_NAME contains path traversal sequences or slashes."
+    exit 1
+fi
+
 if [ -z "$EXPORT_PASS" ]; then
     echo "No password provided. Generating a random one..."
     EXPORT_PASS=$(openssl rand -base64 12)
@@ -1283,7 +1297,7 @@ RENEWED=false
 
 echo "Checking for expiring certificates in $PKI_DIR/certs..."
 
-find "$PKI_DIR/certs" -name "*.crt" -type f | while read cert; do
+while read -r cert; do
     # Extract expiration date
     end_date=$(openssl x509 -enddate -noout -in "$cert" | cut -d= -f2)
     end_epoch=$(date -d "$end_date" +%s)
@@ -1357,7 +1371,7 @@ find "$PKI_DIR/certs" -name "*.crt" -type f | while read cert; do
     else
         echo "✅ $CN: $days_left days remaining."
     fi
-done
+done < <(find "$PKI_DIR/certs" -name "*.crt" -type f)
 
 # Reload Nginx if any certificates were renewed
 if [ "$RENEWED" = "true" ]; then

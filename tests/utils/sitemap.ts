@@ -206,7 +206,7 @@ export async function getPagesFromSitemap(): Promise<PageInfo[]> {
           try {
             urlPath = new URL(fullUrl).pathname;
           } catch {
-            urlPath = ""; // Handle valid URL requirement
+            urlPath = ""; // Handle invalid/unparsable URL
           }
 
           if (urlPath === "") return { name: "", url: "" };
