@@ -18,7 +18,7 @@ test.describe("Integration Flows", () => {
 
     // 2. Click on Blog link in Header
     // Assuming the header link is visible.
-    await page.getByRole("link", { name: "Blog", exact: true }).click();
+    await page.getByRole("link", { name: /Blog/ }).first().click();
 
     // 3. Verify URL is /blog or /blog/
     await expect(page).toHaveURL(/\/blog\/?/);
