@@ -67,7 +67,7 @@
   box-sizing: border-box;
 }
 
-/* Light Mode Overrides (System Preference + Explicit) */
+/* Light Mode Variables (Apply to both system preference and explicit theme) */
 @media (prefers-color-scheme: light) {
   :root:not([data-theme="dark"]) {
     --color-bg: #fff;
@@ -85,7 +85,7 @@
   }
 }
 
-/* Explicit light mode force - uses same values as above */
+/* Explicit light mode inherits from media query above */
 :root[data-theme="light"] {
   --color-bg: #fff;
   --color-bg-secondary: #f6f8fa;
