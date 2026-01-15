@@ -51,7 +51,7 @@ const site_config = defineCollection({
       title: z.string(),
       description: z.string(),
       author: z.string(),
-      url: z.string().url(),
+      url: z.url(),
       keywords: z.string(),
       fediverse_creator: z.string(),
       locale: z.string(),
@@ -101,12 +101,12 @@ const site_config = defineCollection({
       mastodon_username: z.string().optional(),
       scholar_userid: z.string().optional(),
       matrix_id: z.string().optional(),
-      work_url: z.string().url().optional(),
+      work_url: z.url().optional(),
       custom_social: z
         .array(
           z.object({
             title: z.string(),
-            url: z.string().url(),
+            url: z.url(),
             icon: z.string().optional(),
             icon_name: z.string().optional(),
             icon_light: z.string().optional(),
@@ -238,7 +238,7 @@ const publications_data = defineCollection({
     z.array(
       z.object({
         firstname: z.array(z.string()),
-        url: z.string().url(),
+        url: z.url(),
       }),
     ),
   ),

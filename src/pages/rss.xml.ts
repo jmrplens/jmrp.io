@@ -1,9 +1,6 @@
 import rss from "@astrojs/rss";
-import { getSiteUrl } from "@utils/site";
 import { getImage } from "astro:assets";
 import { getCollection, getEntry } from "astro:content";
-
-import { escapeHtml } from "../../scripts/utils/html.mjs";
 
 /**
  * Represents basic site metadata used for RSS feed generation.
@@ -24,7 +21,7 @@ interface SiteData {
  * - Proper escaping and "Continue Reading" links for better reader compatibility.
  * - Automatic filtering of draft posts in production.
  */
-export async function GET() {
+export async function GET(context: { site: URL }) {
   const posts = await getCollection("posts");
   const siteEntry = await getEntry("site_config", "site");
 
@@ -34,7 +31,7 @@ export async function GET() {
   }
 
   const siteData = siteEntry.data as SiteData;
-  const site = getSiteUrl();
+  const site = context.site.origin; // Use origin to avoid trailing slash issues if any
 
   const publishedPosts = posts.filter((p) =>
     import.meta.env.PROD ? !p.data.draft : true,
@@ -79,7 +76,7 @@ export async function GET() {
             // Estimate file size in bytes from image dimensions (3 bytes per pixel) to provide a non-zero length.
             const estimatedLength =
               typeof opt.attributes?.width === "number" &&
-                typeof opt.attributes?.height === "number"
+              typeof opt.attributes?.height === "number"
                 ? (opt.attributes.width * opt.attributes.height * 3).toString()
                 : "0";
             customData += `<enclosure url="${imgUrl}" length="${estimatedLength}" type="image/jpeg" />\n`;
@@ -110,7 +107,7 @@ export async function GET() {
         // Add "Continue Reading" link to description/content
         // Some readers prefer 'content:encoded', others 'description'. We can populate both with the same summary + link.
         const continueLink = `<br/><br/><a href="${fullLink}">Continue reading on jmrp.io &rarr;</a>`;
-        const finalContent = escapeHtml(description) + continueLink;
+        const finalContent = description + continueLink;
 
         return {
           title: post.data.title,
@@ -124,10 +121,10 @@ export async function GET() {
         };
       }),
     ),
-    customData: `<language>${siteData?.locale ? siteData.locale.replaceAll("_", "-").toLowerCase() : "en-us"}</language>
+    customData: `<atom:link href="${new URL("rss.xml", site).toString()}" rel="self" type="application/rss+xml" />
+<language>${siteData?.locale ? siteData.locale.replaceAll("_", "-").toLowerCase() : "en-us"}</language>
 <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>
-<generator>Astro RSS Generator</generator>
-<atom:link href="${new URL("rss.xml", site).toString()}" rel="self" type="application/rss+xml" />`,
+<generator>Astro RSS Generator</generator>`,
     xmlns: {
       atom: "http://www.w3.org/2005/Atom",
       content: "http://purl.org/rss/1.0/modules/content/",

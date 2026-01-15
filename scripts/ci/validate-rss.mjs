@@ -206,19 +206,19 @@ async function validateRSS() {
   if (arg1 && !arg2) {
     try {
       const stats = fs.existsSync(arg1) ? fs.statSync(arg1) : null;
-      if (stats?.isFile() || arg1.endsWith('.xml')) {
+      if (stats?.isFile() || arg1.endsWith(".xml")) {
         // Single argument is a file
         rssFile = path.resolve(arg1);
         distDir = path.dirname(rssFile);
       } else {
         // Single argument is a directory
         distDir = path.resolve(arg1);
-        rssFile = path.join(distDir, 'rss.xml');
+        rssFile = path.join(distDir, "rss.xml");
       }
     } catch {
       // Fallback: treat as directory
       distDir = path.resolve(arg1);
-      rssFile = path.join(distDir, 'rss.xml');
+      rssFile = path.join(distDir, "rss.xml");
     }
   } else if (arg1 && arg2) {
     // Two arguments: distDir and rssFile
@@ -227,7 +227,7 @@ async function validateRSS() {
   } else {
     // No arguments: use defaults
     distDir = path.resolve(process.env.DIST_DIR || "dist");
-    rssFile = path.join(distDir, 'rss.xml');
+    rssFile = path.join(distDir, "rss.xml");
   }
 
   const results = {

@@ -100,10 +100,10 @@ for (const themeResult of [results.light, results.dark]) {
 
 console.log("---");
 
-const totalPassed = (results.light?.passed || 0) + (results.dark?.passed || 0);
-const totalFailed = (results.light?.failed || 0) + (results.dark?.failed || 0);
+const totalPassed = (results.light?.passed ?? 0) + (results.dark?.passed ?? 0);
+const totalFailed = (results.light?.failed ?? 0) + (results.dark?.failed ?? 0);
 const totalIncomplete =
-  (results.light?.incompleteCount || 0) + (results.dark?.incompleteCount || 0);
+  (results.light?.incompleteCount ?? 0) + (results.dark?.incompleteCount ?? 0);
 
 console.log(
   `**Total**: ${totalPassed} passed, ${totalFailed} failed, ${totalIncomplete} incomplete`,

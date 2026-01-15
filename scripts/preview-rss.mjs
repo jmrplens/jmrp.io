@@ -169,18 +169,18 @@ async function generatePreview() {
       </div>
 
       ${feed.items
-      .map((item) => {
-        const content =
-          item["content:encoded"] || item.content || item.description || "";
+        .map((item) => {
+          const content =
+            item["content:encoded"] || item.content || item.description || "";
 
-        // Embed the enclosure image as base64
-        let enclosure = "";
-        if (item.enclosure?.url) {
-          const embeddedUrl = embedImage(item.enclosure.url);
-          enclosure = `<img src="${escapeHtml(embeddedUrl)}" alt="Cover Image" style="width:100%; max-height: 400px; object-fit: cover; border-radius: 8px; margin-bottom: 20px;">`;
-        }
+          // Embed the enclosure image as base64
+          let enclosure = "";
+          if (item.enclosure?.url) {
+            const embeddedUrl = embedImage(item.enclosure.url);
+            enclosure = `<img src="${escapeHtml(embeddedUrl)}" alt="Cover Image" style="width:100%; max-height: 400px; object-fit: cover; border-radius: 8px; margin-bottom: 20px;">`;
+          }
 
-        return `
+          return `
         <article class="rss-item">
           <div class="meta">
             <h2>${escapeHtml(item.title)}</h2>
@@ -196,8 +196,8 @@ async function generatePreview() {
           </div>
         </article>
         `;
-      })
-      .join("")}
+        })
+        .join("")}
     </div>
   </body>
   </html>

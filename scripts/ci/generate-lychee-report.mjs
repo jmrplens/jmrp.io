@@ -57,15 +57,18 @@ for (const line of lines) {
         // Reject protocol-relative URLs (//evil.com)
         if (linkUrl.startsWith("//")) {
           safeLinkUrl = null;
-        } else if (!linkUrl.includes(":")) {
-          // Relative path (no protocol)
-          safeLinkUrl = escapeHtml(linkUrl);
-        } else {
+        } else if (linkUrl.includes(":")) {
           // Absolute URL - validate protocol
           const protocolMatch = /^([a-zA-Z][a-zA-Z0-9+.-]*):/.exec(linkUrl);
-          if (protocolMatch && allowedProtocols.includes(protocolMatch[1] + ":")) {
+          if (
+            protocolMatch &&
+            allowedProtocols.includes(protocolMatch[1] + ":")
+          ) {
             safeLinkUrl = escapeHtml(linkUrl);
           }
+        } else {
+          // Relative path (no protocol)
+          safeLinkUrl = escapeHtml(linkUrl);
         }
       }
 
@@ -229,8 +232,9 @@ const html = `
         </div>
 
         <div class="report-card">
-            ${hasErrors
-    ? `
+            ${
+              hasErrors
+                ? `
                 <table>
                     <thead>
                         <tr>
@@ -244,26 +248,26 @@ const html = `
                     </tbody>
                 </table>
             `
-    : `
+                : `
                 <div class="empty-state">
                     <div class="empty-icon">✅</div>
                     <h2>No Broken Links Found</h2>
                     <p>All links in the production build are functional!</p>
                 </div>
             `
-  }
+            }
         </div>
         
         <footer style="margin-top: 2rem; text-align: center; color: var(--text-muted); font-size: 0.875rem;">
             Generated on ${new Date().toLocaleString("en-US", {
-    timeZone: "UTC",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-  })}
+              timeZone: "UTC",
+              year: "numeric",
+              month: "2-digit",
+              day: "2-digit",
+              hour: "2-digit",
+              minute: "2-digit",
+              second: "2-digit",
+            })}
         </footer>
     </div>
 </body>

@@ -280,7 +280,7 @@ function isDocumentableDeclaration(decl) {
  * @param sourceFile - The source file containing the node.
  * @returns True if a JSDoc comment (starting with /**) is found.
  */
-function hasJSDoc(node, sourceFile) {
+function hasDocComment(node, sourceFile) {
   const comments = ts.getLeadingCommentRanges(sourceFile.text, node.pos);
 
   if (!comments) return false;
