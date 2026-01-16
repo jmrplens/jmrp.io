@@ -96,7 +96,7 @@
     "js-yaml": "^4.1.1",
     "mermaid-isomorphic": "^3.0.4",
     "playwright": "^1.57.0",
-    "prettier": "^3.7.4",
+    "prettier": "^3.8.0",
     "puppeteer": "^24.34.0",
     "rehype-mermaid": "^3.0.0",
     "rss-parser": "^3.13.0",
