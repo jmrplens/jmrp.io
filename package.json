@@ -81,7 +81,7 @@
     "@types/sanitize-html": "^2.16.0",
     "@types/xml2js": "^0.4.14",
     "@typescript-eslint/eslint-plugin": "^8.52.0",
-    "@typescript-eslint/parser": "^8.52.0",
+    "@typescript-eslint/parser": "^8.53.0",
     "astro-eslint-parser": "^1.2.2",
     "axe-html-reporter": "^2.2.11",
     "cheerio": "^1.1.2",
