@@ -26,7 +26,7 @@
                 "sri_fail_" + btoa(resourceUrl).substring(0, 16);
               if (sessionStorage.getItem(storageKey)) return;
               sessionStorage.setItem(storageKey, "1");
-            } catch (e) {
+            } catch (_storageErr) {
               // Ignore storage errors (e.g. checked mode, quota exceeded) or btoa failures
             }
 

@@ -61,11 +61,11 @@ export interface SpeculationRuleInfo {
 
 /** Interface for a single speculation rule entry. */
 export interface SpeculationRuleItem {
-  /** Source type for the speculation rule. Expected: "list" or "document" */
-  source: string;
+  /** Source type for the speculation rule. */
+  source: "list" | "document";
   urls: string[];
-  /** Eagerness level. Expected: "immediate", "eager", "moderate", or "conservative" */
-  eagerness: string;
+  /** Eagerness level. */
+  eagerness: "immediate" | "eager" | "moderate" | "conservative";
 }
 
 /** Interface for the speculation rule structure. */
@@ -99,7 +99,7 @@ export interface SitemapResult {
 
 /** Sitemap index entry. */
 export interface SitemapIndex {
-  sitemap: { loc: string[] }[];
+  sitemap: SitemapUrl[];
 }
 
 /** Root structure of parsed sitemap index XML. */

@@ -46,7 +46,7 @@ if (socials.linkedin_username) {
 
 if (socials.mastodon_username) {
   let url = socials.mastodon_username;
-  if (!url.startsWith("http")) {
+  if (!url.startsWith("http://") && !url.startsWith("https://")) {
     url = `https://${url}`;
   }
   socialLinks.push({
@@ -108,9 +108,17 @@ if (socials.custom_social) {
 
 const getIconName = (faClass: string) => {
   if (!faClass) return "";
-  const parts = faClass.split(" ");
+  const trimmed = faClass.trim();
+  if (!trimmed) return "";
+
+  const parts = trimmed.split(" ");
+  if (parts.length < 2) return "";
+
   const style = parts[0]; // fab, fas
-  const name = parts[1]?.replace("fa-", "") || "";
+  const iconPart = parts[1];
+  const name = iconPart?.replace("fa-", "") || "";
+
+  if (!name) return "";
 
   if (style === "fab") return `fa-brands:${name}`;
   // Default to solid for fas or others
@@ -126,6 +134,12 @@ const getIconType = (
   if (link.icon_name) return "icon_name";
   return null;
 };
+
+// Pre-compute icon types for all social links to avoid repeated calls
+const socialLinksWithType = socialLinks.map((link) => ({
+  ...link,
+  iconType: getIconType(link),
+}));
 ---
 
 <footer>
@@ -136,7 +150,7 @@ const getIconType = (
     </p>
     <div class="social-links">
       {
-        socialLinks.map((link) => (
+        socialLinksWithType.map((link) => (
           <a
             href={link.url}
             target="_blank"
@@ -145,8 +159,8 @@ const getIconType = (
             title={link.label}
             class="social-btn"
           >
-            {/* Render icons using helper to avoid nested ternaries */}
-            {getIconType(link) === "image" && (
+            {/* Render icons using pre-computed iconType */}
+            {link.iconType === "image" && (
               <>
                 <Image
                   src={link.img_light!}
@@ -168,13 +182,13 @@ const getIconType = (
                 />
               </>
             )}
-            {getIconType(link) === "icon" && (
+            {link.iconType === "icon" && (
               <Icon
                 name={getIconName(link.icon!)}
                 class="social-icon-svg"
               />
             )}
-            {getIconType(link) === "icon_name" && (
+            {link.iconType === "icon_name" && (
               <Icon
                 name={link.icon_name!}
                 class="social-icon-svg"

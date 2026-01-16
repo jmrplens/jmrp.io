@@ -41,7 +41,7 @@ export function aggregateAxeResults(
  * @returns Complete HTML string for the index page
  */
 export function generateAccessibilityIndexHtml(
-  theme: string,
+  theme: "light" | "dark",
   summary: { passed: number; failed: number; totalPages: number },
   pageResults: PageAccessibilityResult[],
 ): string {

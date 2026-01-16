@@ -66,6 +66,28 @@ const site_config = defineCollection({
           }),
         )
         .optional(),
+      // Person schema defaults for JSON-LD
+      person: z
+        .object({
+          name: z.string(),
+          jobTitle: z.string(),
+          worksFor: z.object({
+            name: z.string(),
+            url: z.url().optional(),
+          }),
+        })
+        .optional(),
+      // Social links for JSON-LD sameAs and dynamic rendering
+      social_links: z
+        .array(
+          z.object({
+            name: z.string(),
+            url: z.url(),
+            icon: z.string().optional(),
+            rel: z.string().optional(),
+          }),
+        )
+        .optional(),
       // 'type' is now the discriminator, removing the generic string field if it was meant for something else,
       // but based on context 'type: "site"' is what we want.
       // If the original 'type' field held other data, we'd need to rename the discriminator,

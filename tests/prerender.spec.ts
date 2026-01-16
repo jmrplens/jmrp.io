@@ -56,8 +56,10 @@ async function getSpeculationRules(
       'script[type="speculationrules"]',
     );
     return [...scripts].map((script) => {
+      const content = script.textContent;
+      if (!content?.trim()) return null;
       try {
-        return JSON.parse(script.textContent || "{}") as SpeculationRule;
+        return JSON.parse(content) as SpeculationRule;
       } catch {
         return null;
       }
@@ -109,10 +111,13 @@ test.describe("Speculation Rules / Prerender", () => {
       );
       return [...scripts].map((script) => {
         let content: SpeculationRule | null = null;
-        try {
-          content = JSON.parse(script.textContent || "{}") as SpeculationRule;
-        } catch {
-          content = null;
+        const textContent = script.textContent;
+        if (textContent?.trim()) {
+          try {
+            content = JSON.parse(textContent) as SpeculationRule;
+          } catch {
+            content = null;
+          }
         }
         return {
           content,

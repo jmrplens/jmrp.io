@@ -59,8 +59,13 @@ try {
 
   // Vercel CLI outputs the URL as the only thing in stdout if it's a successful deploy in some versions,
   // but usually it prints progress. We need to extract the URL.
-  const match = /https?:\/\/[^)\s'"]+\.vercel\.app\S*/.exec(output);
-  const previewUrl = match ? match[0] : null;
+  // Regex excludes common trailing punctuation that might be captured
+  const match = /https?:\/\/[^\s'">\]]+\.vercel\.app[^\s'">\].,;:!?)]*/.exec(
+    output,
+  );
+  // Post-process to remove any remaining trailing punctuation
+  const rawUrl = match ? match[0] : null;
+  const previewUrl = rawUrl ? rawUrl.replace(/[.,;:!?)>\]]+$/, "") : null;
 
   if (previewUrl) {
     console.log(`✅ Deployment successful!`);

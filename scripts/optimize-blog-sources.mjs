@@ -31,8 +31,12 @@ async function optimize() {
     // Check existence asynchronously
     try {
       await fs.promises.access(inputPath);
-    } catch {
-      console.log(`Skipping ${inputPath} (already removed or not found)`);
+    } catch (error) {
+      if (error.code === "ENOENT") {
+        console.log(`Skipping ${inputPath} (already removed or not found)`);
+      } else {
+        console.error(`Access error for ${inputPath}: ${error.message}`);
+      }
       continue;
     }
 

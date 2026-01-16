@@ -11,6 +11,28 @@ theme_color: "#B509AC"
 background_color: "#000000"
 twitter_creator: "@jmrplens"
 
+# Person Schema defaults for JSON-LD
+person:
+  name: "José Manuel Requena Plens"
+  jobTitle: "R&D Engineer"
+  worksFor:
+    name: "Power Electronics"
+    url: "https://power-electronics.com/"
+
+# Social links for JSON-LD sameAs and dynamic rendering
+# These are canonical URLs used across the site
+social_links:
+  - name: "GitHub"
+    url: "https://github.com/jmrplens"
+    icon: "fa-brands:github"
+  - name: "LinkedIn"
+    url: "https://www.linkedin.com/in/jmrplens"
+    icon: "fa-brands:linkedin"
+  - name: "Mastodon"
+    url: "https://mstdn.jmrp.io/@jmrplens"
+    icon: "fa-brands:mastodon"
+    rel: "me noopener noreferrer"
+
 shortcuts:
   - name: "Blog"
     url: "/blog"

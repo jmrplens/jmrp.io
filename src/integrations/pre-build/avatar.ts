@@ -8,10 +8,16 @@ const OUTPUT_DIR = "src/assets";
 const OUTPUT_FILE = "github-avatar.png";
 const API_URL = `https://api.github.com/users/${USERNAME}`;
 
+/** Path to the GitHub avatar file relative to project root */
+export const GITHUB_AVATAR_PATH = `${OUTPUT_DIR}/${OUTPUT_FILE}`;
+
 /** Represents the JSON response from the GitHub user profile API. */
 interface GitHubProfileResponse {
   avatar_url: string;
 }
+
+/** Maximum allowed avatar file size in bytes (5 MB) */
+const MAX_AVATAR_SIZE = 5 * 1024 * 1024;
 
 /**
  * Fetches and saves the project owner's GitHub avatar.
@@ -71,6 +77,13 @@ async function fetchGitHubAvatarBuffer(): Promise<Buffer> {
 
   if (!profile.avatar_url) throw new Error("No avatar_url found.");
 
+  // Runtime validation: verify avatar_url is a non-empty string
+  if (typeof profile.avatar_url !== "string" || !profile.avatar_url.trim()) {
+    throw new Error(
+      `Invalid avatar_url type or value: ${JSON.stringify(profile.avatar_url)}`,
+    );
+  }
+
   // Security: Validate the avatar URL points to a trusted domain
   const parsedUrl = new URL(profile.avatar_url);
   if (!parsedUrl.hostname.endsWith(".githubusercontent.com")) {
@@ -93,9 +106,8 @@ async function fetchGitHubAvatarBuffer(): Promise<Buffer> {
 
   // Security: Stream the response to enforce size limit during download
   // This prevents DoS from large responses without content-length header
-  const MAX_SIZE = 5 * 1024 * 1024;
   const contentLength = imageRes.headers.get("content-length");
-  if (contentLength && Number.parseInt(contentLength, 10) > MAX_SIZE) {
+  if (contentLength && Number.parseInt(contentLength, 10) > MAX_AVATAR_SIZE) {
     throw new Error(`Image is too large: ${contentLength} bytes`);
   }
 
@@ -114,7 +126,7 @@ async function fetchGitHubAvatarBuffer(): Promise<Buffer> {
     if (!value) continue;
 
     receivedLength += value.length;
-    if (receivedLength > MAX_SIZE) {
+    if (receivedLength > MAX_AVATAR_SIZE) {
       await reader.cancel();
       throw new Error("Downloaded image data exceeds maximum size limit.");
     }

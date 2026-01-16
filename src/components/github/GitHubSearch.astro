@@ -14,7 +14,7 @@ const { initialRepos } = Astro.props;
   <!-- Search Bar -->
   <div class="search-container">
     <input
-      type="text"
+      type="search"
       id="repo-search"
       placeholder="Find a repository..."
       aria-label="Search repositories"
@@ -74,6 +74,12 @@ const { initialRepos } = Astro.props;
         </div>
       ))
     }
+    <p
+      class="no-results"
+      style="display: none;"
+    >
+      No repositories found.
+    </p>
   </div>
 </div>
 
@@ -91,13 +97,22 @@ const { initialRepos } = Astro.props;
           const term = (e.target as HTMLInputElement).value.toLowerCase();
 
           const cards = container.querySelectorAll(".repo-card");
+          const noResults = container.querySelector(".no-results");
+          let matchCount = 0;
+
           cards.forEach((card) => {
             const name = card.getAttribute("data-name") || "";
             const desc = card.getAttribute("data-desc") || "";
             const matches = name.includes(term) || desc.includes(term);
 
             (card as HTMLElement).style.display = matches ? "" : "none";
+            if (matches) matchCount++;
           });
+
+          if (noResults) {
+            (noResults as HTMLElement).style.display =
+              matchCount === 0 && term.length > 0 ? "" : "none";
+          }
         }, 150);
       });
     }
@@ -173,6 +188,21 @@ const { initialRepos } = Astro.props;
 
   :global(.repo-header a:hover) {
     text-decoration: underline;
+  }
+
+  :global(.repo-header a:focus-visible) {
+    text-decoration: underline;
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  .no-results {
+    grid-column: 1 / -1;
+    padding: var(--space-lg);
+    font-size: 0.95rem;
+    color: var(--color-text-muted);
+    text-align: center;
   }
 
   :global(.repo-desc) {

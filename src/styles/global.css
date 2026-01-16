@@ -178,10 +178,16 @@ body {
 img,
 video,
 iframe,
-svg {
+svg:not(.inline-icon) {
   display: block;
   max-width: 100%;
   height: auto;
+}
+
+/* Inline SVG icons for text/buttons - preserves inline layout */
+svg.inline-icon {
+  display: inline-block;
+  vertical-align: middle;
 }
 
 pre {

@@ -169,7 +169,9 @@ const encodedContent = content ? encodeURIComponent(content) : undefined;
     border: var(--copy-btn-border);
     border-radius: 4px;
     opacity: 80%;
-    transition: all 0.2s ease;
+    transition:
+      opacity 0.2s ease,
+      background-color 0.2s ease;
   }
 
   .copy-button:hover,

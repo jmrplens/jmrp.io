@@ -245,10 +245,17 @@ test.describe("CSP and SRI Security Checks", () => {
       await test.step(`Checking inline styles: ${url}`, async () => {
         await page.goto(url);
 
-        // Exclude elements with allowed display values, SVG internals, and empty styles
-        const locator = page.locator(
-          '[style]:not([style=""]):not([style*="display: block"]):not([style*="display:block"]):not([style*="display: none"]):not([style*="display:none"]):not([id="preact-border-shadow-host"]):not(rect):not(g):not(path):not(line):not(text):not(polygon):not(circle):not(ellipse)',
-        );
+        /**
+         * Exclusion selector for inline style checking.
+         * Excludes:
+         * - Empty style attributes: [style=""]
+         * - Allowed display values: display: block, display: none (used by legitimate UI toggles)
+         * - Preact shadow host: #preact-border-shadow-host (Preact debugging)
+         * - SVG internals: rect, g, path, line, text, polygon, circle, ellipse
+         */
+        const STYLE_EXCLUSION_SELECTOR = `[style]:not([style=""]):not([style*="display: block"]):not([style*="display:block"]):not([style*="display: none"]):not([style*="display:none"]):not([id="preact-border-shadow-host"]):not(rect):not(g):not(path):not(line):not(text):not(polygon):not(circle):not(ellipse)`;
+
+        const locator = page.locator(STYLE_EXCLUSION_SELECTOR);
 
         const count = await locator.count();
         const elementData = await Promise.all(

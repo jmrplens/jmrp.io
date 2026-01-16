@@ -3,7 +3,7 @@ import fs from "node:fs";
 import type { AstroIntegration } from "astro";
 import { loadEnv } from "vite";
 
-import { setupGithubAvatar } from "./pre-build/avatar.js";
+import { GITHUB_AVATAR_PATH, setupGithubAvatar } from "./pre-build/avatar.js";
 import { setupCfBeacon } from "./pre-build/beacon.js";
 
 /**
@@ -27,11 +27,10 @@ export default function preBuildIntegration(): AstroIntegration {
         logger.info(`Environment initialization: [${command}]`);
 
         try {
-          const avatarPath = "src/assets/github-avatar.png";
           const shouldRunGithubAvatar =
             command === "build" ||
             env.PREBUILD_RUN_ON_DEV === "true" ||
-            !fs.existsSync(avatarPath);
+            !fs.existsSync(GITHUB_AVATAR_PATH);
 
           if (shouldRunGithubAvatar) {
             await setupGithubAvatar(logger);

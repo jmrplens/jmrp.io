@@ -175,7 +175,6 @@ const servicesSchema = {
     padding: 0;
     margin-top: 0;
     font-size: 0.85rem;
-    word-break: break-all;
     overflow-wrap: break-word;
     background: transparent;
     border: none;
@@ -184,6 +183,12 @@ const servicesSchema = {
 </style>
 
 <style is:global>
+  /* CSS Variable for status color */
+  :root {
+    --color-status-online: #10b981;
+    --color-status-online-10: rgb(16 185 129 / 10%);
+  }
+
   /* Styling for React ServiceStats component */
   .stats-wrapper-col {
     display: flex;
@@ -210,15 +215,15 @@ const servicesSchema = {
     gap: 0.4rem;
     align-items: center;
     padding: 2px 8px;
-    color: #10b981;
-    background: rgb(16 185 129 / 10%);
+    color: var(--color-status-online);
+    background: var(--color-status-online-10);
     border-radius: 12px;
   }
 
   .status-dot {
     width: 6px;
     height: 6px;
-    background: #10b981;
+    background: var(--color-status-online);
     border-radius: 50%;
   }
 
@@ -338,7 +343,7 @@ const servicesSchema = {
     width: 8px;
     height: 8px;
     margin-right: 6px;
-    background: #10b981;
+    background: var(--color-status-online);
     border-radius: 50%;
   }
 

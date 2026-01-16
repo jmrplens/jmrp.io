@@ -54,14 +54,22 @@ function embedImage(imageUrl) {
       const mimeTypes = {
         jpg: "image/jpeg",
         jpeg: "image/jpeg",
+        jfif: "image/jpeg",
         png: "image/png",
         gif: "image/gif",
         webp: "image/webp",
         svg: "image/svg+xml",
         avif: "image/avif",
+        ico: "image/x-icon",
+        bmp: "image/bmp",
       };
-      const mimeType = mimeTypes[ext] || "image/jpeg";
-      return `data:${mimeType};base64,${base64}`;
+      const mimeType = mimeTypes[ext];
+      if (!mimeType) {
+        console.warn(
+          `Unknown image extension "${ext}" for ${imageUrl}, using fallback image/jpeg`,
+        );
+      }
+      return `data:${mimeType || "image/jpeg"};base64,${base64}`;
     }
   } catch (error) {
     // URL parsing failed or other error, return original

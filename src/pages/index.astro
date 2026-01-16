@@ -19,20 +19,34 @@ const siteData = (siteEntry?.data || {}) as SiteConfig;
 
 const { hero = { title: "", subtitle: "", bio: [] } } = siteData;
 
+// Use centralized person config with fallbacks
+const person = siteData.person || {
+  name: siteData.author || "José Manuel Requena Plens",
+  jobTitle: "R&D Engineer",
+  worksFor: { name: "Power Electronics" },
+};
+
 const personSchema = {
   "@context": "https://schema.org",
   "@type": "Person",
   "@id": new URL("#person", getSiteUrl()).toString(),
-  name: siteData.name || "José Manuel Requena Plens",
+  name: person.name,
   url: getSiteUrl(),
   image: new URL(mehomeImg.src, getSiteUrl()).toString(),
-  sameAs: siteData.social?.map((s) => s.link) || [],
-  jobTitle: siteData.jobTitle || "R&D Engineer",
+  sameAs: siteData.social_links?.map((s) => s.url) || [],
+  jobTitle: person.jobTitle,
   worksFor: {
     "@type": "Organization",
-    name: "Power Electronics",
+    name: person.worksFor.name,
+    ...(person.worksFor.url && { url: person.worksFor.url }),
   },
 };
+
+// Filter social links for hero section (GitHub and Mastodon)
+const heroSocialLinks =
+  siteData.social_links?.filter(
+    (link) => link.name === "GitHub" || link.name === "Mastodon",
+  ) || [];
 ---
 
 <BaseLayout
@@ -81,22 +95,20 @@ const personSchema = {
           aria-label="View my professional curriculum vitae"
           >View CV</a
         >
-        <a
-          href="https://github.com/jmrplens"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="btn btn-outline"
-          aria-label="View my GitHub profile and projects"
-          ><Icon name="fa-brands:github" /> GitHub</a
-        >
-        <a
-          href="https://mstdn.jmrp.io/@jmrplens"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="btn btn-outline"
-          aria-label="View my Mastodon profile and posts"
-          ><Icon name="fa-brands:mastodon" /> Mastodon</a
-        >
+        {
+          heroSocialLinks.map((link) => (
+            <a
+              href={link.url}
+              target="_blank"
+              rel={link.rel || "noopener noreferrer"}
+              class="btn btn-outline"
+              aria-label={`View my ${link.name} profile`}
+            >
+              {link.icon && <Icon name={link.icon} />}
+              {link.name}
+            </a>
+          ))
+        }
         <a
           href="/services"
           class="btn btn-outline"
@@ -126,8 +138,9 @@ const personSchema = {
     display: flex;
     flex-wrap: wrap;
     gap: var(--space-md);
+    align-items: center;
     justify-content: flex-start;
-    min-height: 44px; /* Stabilize row height */
+    min-height: 44px; /* Stabilize row height for single line */
     margin-top: var(--space-lg);
   }
 
@@ -236,7 +249,7 @@ const personSchema = {
 
     .social-links-row {
       justify-content: center;
-      min-height: 100px; /* Account for wrapping buttons in mobile */
+      min-height: auto; /* Let content determine height */
     }
 
     .bio {
@@ -244,7 +257,7 @@ const personSchema = {
     }
 
     .hero-text {
-      min-height: 450px; /* Reserve enough space for wrapped text in mobile */
+      min-height: auto; /* Let content determine height */
       text-align: center;
     }
   }

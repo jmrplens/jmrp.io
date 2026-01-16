@@ -56,7 +56,7 @@ async function test() {
     throw error;
   } finally {
     // Explicitly close the renderer to free up resources
-    if (mermaidRenderer.close) {
+    if (typeof mermaidRenderer.close === "function") {
       await mermaidRenderer.close();
     }
   }

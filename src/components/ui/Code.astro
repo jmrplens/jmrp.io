@@ -53,6 +53,9 @@ if (!trimmedContent) {
   );
 }
 
+// Early return if empty to avoid rendering an empty code block
+const isEmpty = !trimmedContent;
+
 // Extract raw code for highlighting
 let rawCode = trimmedContent;
 
@@ -102,37 +105,43 @@ const langDisplay = lang.toUpperCase();
 const langIcon = getIconForLang(lang);
 ---
 
-<section
-  class:list={["code-block-wrapper", "copy-container", className]}
-  aria-label={finalAriaLabel}
-  data-testid={uuid}
->
-  <div class="code-block-header">
-    <div class="code-lang-info">
-      <Icon
-        name={langIcon}
-        class="code-type-icon"
-        aria-hidden="true"
-      />
-      <span class="code-language-label">{langDisplay}</span>
-      {title && <span class="code-title">{title}</span>}
-    </div>
-    <CopyButton
-      class="code-header-copy-btn"
-      ariaLabel={`Copy ${finalAriaLabel}`}
-    />
-  </div>
-  <div class="code-body">
-    <AstroCode
-      code={rawCode}
-      lang={lang}
-      themes={{
-        light: "github-light-high-contrast",
-        dark: "github-dark-high-contrast",
-      }}
-    />
-  </div>
-</section>
+{
+  isEmpty ? (
+    <Fragment set:html="<!-- Empty code block skipped -->" />
+  ) : (
+    <section
+      class:list={["code-block-wrapper", "copy-container", className]}
+      aria-label={finalAriaLabel}
+      data-testid={uuid}
+    >
+      <div class="code-block-header">
+        <div class="code-lang-info">
+          <Icon
+            name={langIcon}
+            class="code-type-icon"
+            aria-hidden="true"
+          />
+          <span class="code-language-label">{langDisplay}</span>
+          {title && <span class="code-title">{title}</span>}
+        </div>
+        <CopyButton
+          class="code-header-copy-btn"
+          ariaLabel={`Copy ${finalAriaLabel}`}
+        />
+      </div>
+      <div class="code-body">
+        <AstroCode
+          code={rawCode}
+          lang={lang}
+          themes={{
+            light: "github-light-high-contrast",
+            dark: "github-dark-high-contrast",
+          }}
+        />
+      </div>
+    </section>
+  )
+}
 
 <style>
   .code-block-wrapper {

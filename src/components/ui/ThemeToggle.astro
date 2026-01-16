@@ -46,6 +46,8 @@ import { Icon } from "astro-icon/components";
   }
 
   /* Icon display logic based on data-theme */
+
+  /* Default: dark theme shows sun icon (to switch to light) */
   .icon-sun {
     display: block;
   }
@@ -54,20 +56,13 @@ import { Icon } from "astro-icon/components";
     display: none;
   }
 
+  /* Light theme: show moon icon (to switch to dark) */
   :global(html[data-theme="light"]) .icon-sun {
     display: none;
   }
 
   :global(html[data-theme="light"]) .icon-moon {
     display: block;
-  }
-
-  :global(html[data-theme="dark"]) .icon-sun {
-    display: block;
-  }
-
-  :global(html[data-theme="dark"]) .icon-moon {
-    display: none;
   }
 </style>
 

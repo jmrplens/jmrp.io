@@ -29,14 +29,14 @@ export async function finalizeCspConfig(
 ) {
   logger.info("Finalizing CSP and Security Headers...");
 
-  // Hash standalone JS files
-  const standaloneScriptHashes = new Set<string>();
+  // Hash standalone JS files in parallel
   const jsFiles = await glob("**/*.js", { cwd: distDir, absolute: true });
-  for (const file of jsFiles) {
-    const c = await fs.promises.readFile(file);
-    const h = crypto.createHash("sha512").update(c).digest("base64");
-    standaloneScriptHashes.add(`'sha512-${h}'`);
-  }
+  const jsHashPromises = jsFiles.map(async (file) => {
+    const content = await fs.promises.readFile(file);
+    const hash = crypto.createHash("sha512").update(content).digest("base64");
+    return `'sha512-${hash}'`;
+  });
+  const standaloneScriptHashes = new Set(await Promise.all(jsHashPromises));
 
   // Combine collected hashes
   const allScriptHashes = new Set([
@@ -87,10 +87,22 @@ export async function finalizeCspConfig(
   const imgSrc = [...cspData.imageDomains].map((d) => `https://${d}`).join(" ");
 
   // Modern and Strict CSP
+  // Build directives, filtering empty usage to avoid trailing spaces
+  const scriptSrcParts = [
+    "'self'",
+    "'nonce-$cspNonce'",
+    scriptChunks.usage,
+  ].filter(Boolean);
+  const styleSrcParts = [
+    "'self'",
+    "'nonce-$cspNonce'",
+    styleChunks.usage,
+  ].filter(Boolean);
+
   const cspHeader = [
     "default-src 'none'",
-    `script-src 'self' 'nonce-$cspNonce' ${scriptChunks.usage}`,
-    `style-src 'self' 'nonce-$cspNonce' ${styleChunks.usage}`,
+    `script-src ${scriptSrcParts.join(" ")}`,
+    `style-src ${styleSrcParts.join(" ")}`,
     imgSrc
       ? `img-src 'self' ${imgSrc} https://*.jmrp.io`
       : "img-src 'self' https://*.jmrp.io",
@@ -175,6 +187,9 @@ add_header Content-Security-Policy "${cspHeader}" always;
 add_header Permissions-Policy "${permissionsPolicy}" always;
 `;
 
-  fs.writeFileSync(path.join(distDir, "security_headers.conf"), content);
+  await fs.promises.writeFile(
+    path.join(distDir, "security_headers.conf"),
+    content,
+  );
   logger.info("  ✓ Generated security_headers.conf");
 }

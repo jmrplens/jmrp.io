@@ -45,9 +45,17 @@ export function isCloudflareInsightsError(text: string): boolean {
  * @returns true if the error should be ignored
  */
 export function shouldIgnoreError(text: string): boolean {
+  // CORS errors are only ignored if they mention expected domains/contexts
+  const isExpectedCorsError =
+    text.includes("Access-Control-Allow-Origin") &&
+    (text.includes("127.0.0.1") ||
+      text.includes("localhost") ||
+      text.includes("cloudflare") ||
+      text.includes("cloudflareinsights"));
+
   return (
     isCloudflareInsightsError(text) ||
-    text.includes("Access-Control-Allow-Origin") ||
+    isExpectedCorsError ||
     // Only ignore generic failures if likely related to localhost/CORS
     (text.includes("net::ERR_FAILED") &&
       (text.includes("127.0.0.1") || text.includes("localhost")))

@@ -123,12 +123,7 @@ const websiteSchema = {
     name: siteData.author,
     url: getSiteUrl(),
     image: new URL(defaultOgImage.src, getSiteUrl()).toString(),
-    sameAs: [
-      "https://github.com/jmrplens",
-      "https://www.linkedin.com/in/jmrplens",
-      "https://mstdn.jmrp.io/@jmrplens",
-      `https://twitter.com/${siteData.twitter_creator.replace("@", "")}`,
-    ],
+    sameAs: siteData.social_links?.map((link) => link.url) || [],
   },
 };
 

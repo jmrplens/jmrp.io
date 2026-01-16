@@ -100,13 +100,16 @@ export default function postBuildIntegration(): AstroIntegration {
  * @param systemNginxPath - The absolute path to validate.
  */
 function validateNginxPath(systemNginxPath: string) {
+  // Normalize path to handle ".." segments
+  const normalizedPath = path.normalize(systemNginxPath);
+
   // Safety check for Nginx path to prevent arbitrary file overwrites
   if (
-    !path.isAbsolute(systemNginxPath) ||
-    !systemNginxPath.endsWith(".conf") ||
-    systemNginxPath.includes("..")
+    !path.isAbsolute(normalizedPath) ||
+    !normalizedPath.endsWith(".conf") ||
+    normalizedPath.includes("..")
   ) {
-    const sanitizedPath = path.basename(systemNginxPath);
+    const sanitizedPath = path.basename(normalizedPath);
     throw new Error(
       `Invalid Nginx configuration path: ${sanitizedPath}. Must be an absolute path ending in .conf.`,
     );
@@ -114,11 +117,11 @@ function validateNginxPath(systemNginxPath: string) {
 
   // Reject symlinks to avoid redirection risks
   if (
-    fs.existsSync(systemNginxPath) &&
-    fs.lstatSync(systemNginxPath).isSymbolicLink()
+    fs.existsSync(normalizedPath) &&
+    fs.lstatSync(normalizedPath).isSymbolicLink()
   ) {
     throw new Error(
-      `Nginx configuration path cannot be a symbolic link: ${path.basename(systemNginxPath)}`,
+      `Nginx configuration path cannot be a symbolic link: ${path.basename(normalizedPath)}`,
     );
   }
 }

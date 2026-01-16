@@ -17,15 +17,25 @@ interface Props {
 const { caption, title, ariaLabel, maxWidth, maxHeight } = Astro.props;
 
 const index = getNextIndex("mermaid");
-const finalAriaLabel = ariaLabel || title || `Mermaid Diagram ${index}`;
+const fallbackAriaLabel = ariaLabel || title || `Mermaid Diagram ${index}`;
 
 const captionId = caption ? `mermaid-caption-${index}` : undefined;
+
+// Compute ARIA attributes based on priority:
+// 1. If ariaLabel provided: use it as aria-label, and if caption exists, reference it via aria-describedby
+// 2. If only caption: use aria-labelledby to reference caption
+// 3. If neither: use fallback auto-generated label
+const computedAriaLabelledby = caption && !ariaLabel ? captionId : undefined;
+const computedAriaDescribedby = caption && ariaLabel ? captionId : undefined;
+const computedAriaLabel =
+  ariaLabel || (caption ? undefined : fallbackAriaLabel);
 ---
 
 <figure
   class="mermaid-figure"
-  aria-labelledby={captionId}
-  aria-label={caption ? undefined : finalAriaLabel}
+  aria-labelledby={computedAriaLabelledby}
+  aria-describedby={computedAriaDescribedby}
+  aria-label={computedAriaLabel}
 >
   <div
     class="mermaid-content"

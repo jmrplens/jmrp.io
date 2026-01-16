@@ -83,7 +83,9 @@ code {
     ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono",
     monospace;
   font-size: 85%;
-  background-color: #eff1f3; /* Hex equivalent of light grey */
+  background-color: #eff1f3;
+
+  /* Hex equivalent of light grey */
 }
 
 pre code {
@@ -139,7 +141,7 @@ details {
 summary {
   padding: 0.5em;
   margin: -0.5em -0.5em 0;
-  font-weight: bold;
+  font-weight: 700;
   cursor: pointer;
   background-color: #f6f8fa;
   border-bottom: 1px solid #d0d7de;

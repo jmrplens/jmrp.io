@@ -209,24 +209,33 @@ const generateReport = () => {
                 ]
                   .sort((a, b) => {
                     const getBytes = (s) => {
-                      if (!s || s === "N/A") return 0;
-                      const num = Number.parseFloat(s);
+                      if (!s) return 0;
+                      const trimmed = s.trim();
+                      if (trimmed === "N/A") return 0;
+                      const num = Number.parseFloat(trimmed);
                       if (Number.isNaN(num)) return 0;
-                      if (s.includes("M")) return num * 1024 * 1024;
-                      if (s.includes("K")) return num * 1024;
+                      const upper = trimmed.toUpperCase();
+                      if (upper.includes("G")) return num * 1024 * 1024 * 1024;
+                      if (upper.includes("M")) return num * 1024 * 1024;
+                      if (upper.includes("K")) return num * 1024;
                       return num;
                     };
                     return getBytes(b.size) - getBytes(a.size);
                   })
-                  .map(
-                    (img) => `
+                  .map((img) => {
+                    const sizeUpper = img.size.toUpperCase();
+                    const isLarge =
+                      sizeUpper.includes("G") ||
+                      sizeUpper.includes("M") ||
+                      (sizeUpper.includes("K") &&
+                        Number.parseInt(img.size) > 500);
+                    return `
                   <tr>
                     <td class="path-cell">${img.path}</td>
                     <td><span class="badge ${img.f === "WebP" ? "badge-webp" : "badge-legacy"}">${img.f}</span></td>
-                    <td class="size-cell ${img.size.includes("M") || (img.size.includes("K") && Number.parseInt(img.size) > 500) ? "size-large" : ""}"> ${img.size}</td>
-                  </tr>
-                `,
-                  )
+                    <td class="size-cell ${isLarge ? "size-large" : ""}"> ${img.size}</td>
+                  </tr>`;
+                  })
                   .join("")}
                 ${totalImages === 0 ? '<tr><td colspan="3" style="text-align:center; padding: 2rem;">No images found in dist/</td></tr>' : ""}
             </tbody>

@@ -36,6 +36,8 @@ The site will be available at `http://localhost:4321`.
 
 The project follows the **Astro v6.0.0-alpha.5** (experimental) structure with the **Content Layer API**. This alpha version is required for Content Layer support. Contributors should be aware of potential breaking changes between alpha releases. The exact version is pinned in `package.json`.
 
+> **Alpha Release Note**: Report alpha-specific issues to [Astro's GitHub](https://github.com/withastro/astro/issues). Subscribe to [Astro release notes](https://github.com/withastro/astro/releases) to track updates. Keep the pinned version in `package.json` in sync and review changelogs for breaking changes.
+
 ```plaintext
 /
 ├── src/
@@ -88,8 +90,13 @@ Our CI/CD pipeline is designed to be helpful and non-intrusive. Instead of creat
 
 - `pnpm typecheck`: Run TypeScript/Astro checks.
 - `pnpm lint`: Run ESLint.
+- `pnpm lint:css`: Run Stylelint for CSS files.
 - `pnpm build`: Build for production.
-- `pnpm test:e2e`: Run Playwright tests only.
+- `pnpm test:e2e`: Run all Playwright tests.
+- `pnpm test:e2e --grep "specific-test"`: Run specific Playwright test.
+- `pnpm exec playwright test --ui`: Run Playwright in interactive UI mode.
+- `pnpm exec typos`: Run spell checking.
+- `pnpm exec lychee dist/**/*.html`: Run link checking on built HTML.
 
 ### Troubleshooting
 
@@ -99,16 +106,25 @@ If `pnpm verify` fails:
 2. **Type errors**: Run `pnpm typecheck` to isolate.
 3. **Lint/format issues**: Run `pnpm lint` and `pnpm exec prettier --write .`.
 4. **Build failures**: Run `pnpm build` standalone to see full error output.
+5. **E2E test failures**: Run `pnpm test:e2e` or `pnpm exec playwright test --ui` to debug interactively.
+6. **Spelling issues**: Run `pnpm exec typos` and add false positives to `.typos.toml`.
+7. **Broken links**: Run `pnpm exec lychee dist/**/*.html` and update/remove dead URLs.
+8. **Security vulnerabilities**: Review Snyk/SonarCloud CI reports and remediate or pin/update dependencies accordingly.
 
 ## 🎨 Code Style
 
 - **Formatting**: We use **Prettier**. Run `pnpm exec prettier --write .` to format.
 - **Linting**: We use **ESLint** with Astro and TypeScript plugins.
-- **Commits**: Follow conventional commit messages (e.g., `feat: ...`, `fix: ...`, `chore: ...`).
+- **Commits**: Follow [Conventional Commits](https://www.conventionalcommits.org/) format:
+  - `feat: add dark mode toggle` (new feature)
+  - `fix: resolve mobile menu clipping` (bug fix)
+  - `chore: update dependencies` (maintenance)
 
 ## 🔒 Security
 
-- **Secrets**: Never commit `.env` files.
+- **Secrets**: Never commit `.env` files or API keys. Add sensitive files to `.gitignore`.
+- **Pre-commit protection**: Consider using tools like `git-secrets` or Snyk to prevent accidental commits of secrets.
+- **Secret remediation**: If secrets are accidentally committed, immediately rotate them and use [BFG Repo-Cleaner](https://rtyley.github.io/bfg-repo-cleaner/) or `git filter-repo` to remove them from history.
 - **Dependencies**: Use `pnpm audit` or rely on the `pnpm verify` Snyk check.
 - **Headers**: Security headers are generated in `post-build.ts`. Do not manually edit `dist/security_headers.conf`.
 

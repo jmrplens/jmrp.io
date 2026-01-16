@@ -30,7 +30,7 @@ test.describe("Deep Accessibility & Interaction Tests", () => {
   test("GitHub Search Keyboard Interaction", async ({ page }) => {
     await page.goto("/github");
 
-    const searchInput = page.getByRole("textbox", {
+    const searchInput = page.getByRole("searchbox", {
       name: "Search repositories",
     });
     await expect(searchInput).toBeVisible();

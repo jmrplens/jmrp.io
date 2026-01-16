@@ -21,7 +21,7 @@ export async function compressAssets(
 ) {
   logger.info("Compressing assets (Gzip & Brotli)...");
 
-  const files = await glob("**/*.{js,css,svg,json,xml,txt}", {
+  const files = await glob("**/*.{html,js,css,svg,json,xml,txt}", {
     cwd: distDir,
     absolute: true,
     nodir: true,
@@ -58,17 +58,21 @@ async function compressFile(
   try {
     const content = await fs.promises.readFile(file);
 
-    // Gzip compression
-    const gzipped = await gzip(content, { level: 9 });
-    await fs.promises.writeFile(`${file}.gz`, gzipped);
+    // Run both compressions in parallel
+    const [gzipped, brotlied] = await Promise.all([
+      gzip(content, { level: 9 }),
+      brotli(content, {
+        params: {
+          [zlib.constants.BROTLI_PARAM_QUALITY]: 11,
+        },
+      }),
+    ]);
 
-    // Brotli compression
-    const brotlied = await brotli(content, {
-      params: {
-        [zlib.constants.BROTLI_PARAM_QUALITY]: 11,
-      },
-    });
-    await fs.promises.writeFile(`${file}.br`, brotlied);
+    // Write both compressed files in parallel
+    await Promise.all([
+      fs.promises.writeFile(`${file}.gz`, gzipped),
+      fs.promises.writeFile(`${file}.br`, brotlied),
+    ]);
 
     return true;
   } catch (error) {

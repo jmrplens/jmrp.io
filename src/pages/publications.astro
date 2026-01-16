@@ -71,7 +71,7 @@ const collectionSchema = {
           }
           return {
             url: pub.url || doiUrl || undefined,
-            sameAs: doiUrl ? [doiUrl] : [],
+            ...(doiUrl && { sameAs: [doiUrl] }),
           };
         })(),
       },

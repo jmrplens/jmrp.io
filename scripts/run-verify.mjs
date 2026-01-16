@@ -48,7 +48,7 @@ function runStep(name, command, condition = true) {
   console.log(`${colors.reset}   ${command}`);
 
   try {
-    execSync(command, { stdio: "inherit", encoding: "utf-8" });
+    execSync(command, { stdio: "inherit" });
     console.log(`${colors.green}✅ ${name} passed!${colors.reset}\n`);
     return true;
   } catch {
@@ -61,9 +61,9 @@ function runStep(name, command, condition = true) {
  * Main verification suite orchestrator.
  * Defines the steps to run and executes them sequentially.
  *
- * @returns {Promise<boolean>} Resolves to true if all checks pass, false otherwise.
+ * @returns {boolean} Returns true if all checks pass, false otherwise.
  */
-async function runVerify() {
+function runVerify() {
   const startTime = Date.now();
   console.log(
     `\n${colors.magenta}${colors.bright}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${colors.reset}`,
@@ -178,7 +178,7 @@ try {
 }
 
 try {
-  const success = await runVerify();
+  const success = runVerify();
   process.exit(success ? 0 : 1);
 } catch (error) {
   console.error(error);

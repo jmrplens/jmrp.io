@@ -112,19 +112,19 @@ export const getIconForFile = (filename: string): string => {
 
   const lowerName = filename.toLowerCase();
 
-  // 1. Check for exact extension match in our map
+  // 1. Specific file overrides (check before extension)
+  if (lowerName === "dockerfile") return iconMap.docker;
+  if (lowerName === "makefile") return iconMap.makefile;
+  if (lowerName.includes("nginx")) return iconMap.nginx;
+  if (lowerName.startsWith(".env")) return iconMap.env;
+
+  // 2. Check for exact extension match in our map
   // Extract extension safely: only if there's a dot that's not at the start (avoiding dotfiles)
   const lastDotIndex = lowerName.lastIndexOf(".");
   const ext = lastDotIndex > 0 ? lowerName.slice(lastDotIndex + 1) : "";
   if (ext && iconMap[ext]) {
     return iconMap[ext];
   }
-
-  // 2. Specific file overrides
-  if (lowerName === "dockerfile") return iconMap.docker;
-  if (lowerName === "makefile") return iconMap.makefile;
-  if (lowerName.includes("nginx")) return iconMap.nginx;
-  if (lowerName.startsWith(".env")) return iconMap.env;
 
   // 3. Fallbacks based on partial matches or categories
   if (lowerName.endsWith(".conf") || lowerName.endsWith(".config"))

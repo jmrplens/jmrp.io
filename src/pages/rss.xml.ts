@@ -73,13 +73,9 @@ export async function GET(context: { site: URL }) {
             const thumbUrl = new URL(thumb.src, site).toString();
 
             // RSS 2.0 Enclosure (Used by most modern readers for the main image)
-            // Estimate file size in bytes from image dimensions (3 bytes per pixel) to provide a non-zero length.
-            const estimatedLength =
-              typeof opt.attributes?.width === "number" &&
-              typeof opt.attributes?.height === "number"
-                ? (opt.attributes.width * opt.attributes.height * 3).toString()
-                : "0";
-            customData += `<enclosure url="${imgUrl}" length="${estimatedLength}" type="image/jpeg" />\n`;
+            // Use "0" as a safe default for file size since we can't accurately determine
+            // the final JPEG file size from image dimensions alone.
+            customData += `<enclosure url="${imgUrl}" length="0" type="image/jpeg" />\n`;
 
             // Media RSS extensions (Common in Feedly, etc)
             if (

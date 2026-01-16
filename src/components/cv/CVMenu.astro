@@ -237,7 +237,6 @@ const { sections } = Astro.props;
   }
 
   /* Hide FAB when drawer is open to prevent interaction conflicts */
-  .cv-drawer.open ~ .cv-backdrop ~ .cv-fab,
   nav:has(.cv-drawer.open) .cv-fab {
     visibility: hidden;
     pointer-events: none;

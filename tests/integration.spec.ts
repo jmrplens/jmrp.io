@@ -88,7 +88,7 @@ test.describe("Integration Flows", () => {
     await expect(firstCard.locator("a")).toHaveAttribute("href", /.+/); // Link to repo
 
     // Verify search input exists
-    const searchInput = page.getByRole("textbox", {
+    const searchInput = page.getByRole("searchbox", {
       name: /search/i,
     });
     await expect(searchInput).toBeVisible();
@@ -109,22 +109,19 @@ test.describe("Integration Flows", () => {
     const pubCount = await publications.count();
     expect(pubCount).toBeGreaterThan(0);
 
-    // Check for BibTeX toggle functionality
+    // Check for BibTeX toggle functionality (if present)
     const bibtexToggle = page.locator(".btn-bibtex-toggle").first();
-    // eslint-disable-next-line playwright/no-conditional-in-test
-    if ((await bibtexToggle.count()) > 0) {
-      // eslint-disable-next-line playwright/no-conditional-expect
-      await expect(bibtexToggle).toBeVisible();
-
+    const bibtexVisible = await bibtexToggle.isVisible();
+    /* eslint-disable playwright/no-conditional-in-test, playwright/no-conditional-expect */
+    if (bibtexVisible) {
       // Verify ARIA attributes for accordion
-      // eslint-disable-next-line playwright/no-conditional-expect
       await expect(bibtexToggle).toHaveAttribute(
         "aria-expanded",
         /^(true|false)$/,
       );
-      // eslint-disable-next-line playwright/no-conditional-expect
       await expect(bibtexToggle).toHaveAttribute("aria-controls", /.+/);
     }
+    /* eslint-enable playwright/no-conditional-in-test, playwright/no-conditional-expect */
   });
 
   test("Blog post opens and displays content", async ({ page }) => {
@@ -136,8 +133,8 @@ test.describe("Integration Flows", () => {
       .locator("article a[href*='/blog/'][href$='/']")
       .or(page.locator("article h2 a, article h3 a"));
 
-    // Wait for content to load
-    await postLinks.first().waitFor();
+    // Wait for content to load with explicit state
+    await postLinks.first().waitFor({ state: "visible" });
     const postCount = await postLinks.count();
     expect(postCount).toBeGreaterThan(0);
 

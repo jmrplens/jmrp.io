@@ -39,6 +39,13 @@ const iconName = icon || icons[type];
 
 const index = getNextIndex(`callout-${type}`);
 const finalAriaLabel = ariaLabel || title || `${type} callout ${index}`;
+
+// Development warning: encourage meaningful labels for accessibility
+if (import.meta.env.DEV && !ariaLabel && !title) {
+  console.warn(
+    `[Callout] Auto-generated aria-label "${finalAriaLabel}" used. Consider adding 'ariaLabel' or 'title' prop for better accessibility.`,
+  );
+}
 ---
 
 <aside
