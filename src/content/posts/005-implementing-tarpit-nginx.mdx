@@ -246,11 +246,11 @@ location ~* ^/(config|admin|administrator|login|cgi-bin|scripts|shell|cmd|consol
     return 418;
 }
 
-# Catch-all for remaining dotfiles
+# Catch-all for remaining dotfiles (also tarpitted for consistency)
 location ~ /\. {
-    deny all;
     access_log /var/log/nginx/access.tarpit combined;
     log_not_found off;
+    return 418;
 }
 ```
 </FileContent>
@@ -360,6 +360,8 @@ onsuccess: next_stage
 statics:
   - meta: service
     value: http
+  - meta: log_type
+    value: tarpit
   - meta: source_ip
     expression: "evt.Parsed.remote_addr"
   - meta: http_path
@@ -370,6 +372,17 @@ nodes:
       apply_on: message
 ```
 </FileContent>
+
+<Callout type="tip" title="Acquisition Configuration">
+Ensure your CrowdSec acquisition config (`/etc/crowdsec/acquis.yaml`) sets the program label:
+
+```yaml
+filenames:
+  - /var/log/nginx/access.tarpit
+labels:
+  program: nginx-tarpit
+```
+</Callout>
 
 ### Create a Scenario
 
@@ -443,27 +456,47 @@ Create a script to automatically report tarpit captures:
 # Report IPs from tarpit log to AbuseIPDB
 # Usage: Run via cron every hour
 
-ABUSEIPDB_KEY="your-api-key-here"
+set -euo pipefail
+
+ABUSEIPDB_KEY="${ABUSEIPDB_KEY:-}"
 LOGFILE="/var/log/nginx/access.tarpit"
-REPORTED="/var/log/nginx/reported-ips.txt"
+REPORTED="/var/log/nginx/reported_ips.txt"
+REPORT_LOG="/var/log/nginx/abuseipdb_reports.log"
+
+# Validate API key
+if [[ -z "$ABUSEIPDB_KEY" ]]; then
+  echo "[$(date -Iseconds)] ERROR: ABUSEIPDB_KEY not set" >> "$REPORT_LOG"
+  exit 1
+fi
+
+# Ensure files exist
+touch "$REPORTED" "$REPORT_LOG"
 
 # Get unique IPs from last hour
 awk -v d1="$(date --date='-1 hour' '+%d/%b/%Y:%H')" \
-  '$4 ~ d1 {print $1}' "$LOGFILE" | sort -u | while read ip; do
+  '$4 ~ d1 {print $1}' "$LOGFILE" | sort -u | while read -r ip; do
   
   # Skip if already reported today
   grep -q "$ip" "$REPORTED" 2>/dev/null && continue
   
-  # Report to AbuseIPDB
-  curl -s "https://api.abuseipdb.com/api/v2/report" \
+  # Report to AbuseIPDB with error handling
+  response=$(curl -s -w "\n%{http_code}" "https://api.abuseipdb.com/api/v2/report" \
     -H "Key: $ABUSEIPDB_KEY" \
     -H "Accept: application/json" \
     --data-urlencode "ip=$ip" \
     --data-urlencode "categories=21,15" \
-    --data-urlencode "comment=Vulnerability scanner trapped in HTTP tarpit. Probing for sensitive files." \
-    > /dev/null
+    --data-urlencode "comment=Vulnerability scanner trapped in HTTP tarpit." \
+    2>&1) || true
   
-  echo "$ip $(date +%Y-%m-%d)" >> "$REPORTED"
+  http_code=$(echo "$response" | tail -n1)
+  body=$(echo "$response" | sed '$d')
+  
+  if [[ "$http_code" == "200" ]]; then
+    echo "$ip $(date +%Y-%m-%d)" >> "$REPORTED"
+    echo "[$(date -Iseconds)] OK: Reported $ip" >> "$REPORT_LOG"
+  else
+    echo "[$(date -Iseconds)] FAIL: $ip (HTTP $http_code) $body" >> "$REPORT_LOG"
+  fi
 done
 ```
 </FileContent>
