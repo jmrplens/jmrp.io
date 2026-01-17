@@ -7,24 +7,38 @@
  * <FileContent filename="nginx.conf">
  *   ...code...
  * </FileContent>
+ *
+ * With explicit language for syntax highlighting:
+ * <FileContent filename="config.txt" language="nginx">
+ *   ...nginx config...
+ * </FileContent>
  */
 import { createHash } from "node:crypto";
 
 import { getNextIndex } from "@utils/counters";
 import { decodeHtml } from "@utils/html";
 import { getIconForFile } from "@utils/icons";
+import { Code as AstroCode } from "astro/components";
 import { Icon } from "astro-icon/components";
+import type { BuiltinLanguage, SpecialLanguage } from "shiki";
 
 import CopyButton from "./CopyButton.astro";
 
 interface Props {
   filename: string;
   icon?: string; // e.g., 'mdi:file-document-outline'
+  language?: BuiltinLanguage | SpecialLanguage; // Override syntax highlighting language
   collapsible?: boolean;
   ariaLabel?: string;
 }
 
-const { filename, icon, collapsible = false, ariaLabel } = Astro.props;
+const {
+  filename,
+  icon,
+  language,
+  collapsible = false,
+  ariaLabel,
+} = Astro.props;
 
 // Infer icon from filename
 const finalIcon = icon || getIconForFile(filename);
@@ -51,6 +65,28 @@ if (!ariaLabel) {
 const index = getNextIndex("file");
 const finalAriaLabel =
   ariaLabel || `Content of file ${index}: ${filename} - ${plainText}`;
+
+// If language is specified, extract raw code for Shiki re-rendering
+let rawCode = "";
+let useCustomHighlighting = false;
+
+if (language) {
+  useCustomHighlighting = true;
+  // Extract raw code from the rendered content
+  // Content may be wrapped in <pre><code>...</code></pre> from markdown
+  const preCodeMatch = trimmedContent.match(
+    /<pre[^>]*><code[^>]*>([\s\S]*?)<\/code><\/pre>/,
+  );
+  if (preCodeMatch) {
+    // Remove any remaining HTML tags and decode entities
+    const stripped = preCodeMatch[1].replaceAll(/<[^>]*>/g, "");
+    rawCode = decodeHtml(stripped);
+  } else {
+    // Fallback: strip all tags and decode
+    const stripped = trimmedContent.replaceAll(/<[^>]*>/g, "");
+    rawCode = decodeHtml(stripped);
+  }
+}
 ---
 
 {
@@ -100,11 +136,22 @@ const finalAriaLabel =
           </div>
         </summary>
         <div class="file-body">
-          <div
-            tabindex="0"
-            aria-label={`Code content for ${filename}`}
-            set:html={trimmedContent}
-          />
+          {useCustomHighlighting ? (
+            <AstroCode
+              code={rawCode}
+              lang={language}
+              themes={{
+                light: "github-light-high-contrast",
+                dark: "github-dark-high-contrast",
+              }}
+            />
+          ) : (
+            <div
+              tabindex="0"
+              aria-label={`Code content for ${filename}`}
+              set:html={trimmedContent}
+            />
+          )}
         </div>
       </details>
     </div>
@@ -130,11 +177,22 @@ const finalAriaLabel =
         </div>
       </div>
       <div class="file-body">
-        <div
-          tabindex="0"
-          aria-label={`Code content for ${filename}`}
-          set:html={trimmedContent}
-        />
+        {useCustomHighlighting ? (
+          <AstroCode
+            code={rawCode}
+            lang={language}
+            themes={{
+              light: "github-light-high-contrast",
+              dark: "github-dark-high-contrast",
+            }}
+          />
+        ) : (
+          <div
+            tabindex="0"
+            aria-label={`Code content for ${filename}`}
+            set:html={trimmedContent}
+          />
+        )}
       </div>
     </section>
   )
