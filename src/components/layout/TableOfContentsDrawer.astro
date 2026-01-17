@@ -375,12 +375,21 @@ const { headings } = Astro.props;
     background-color: rgb(0 0 0 / 50%);
     opacity: 0%;
     backdrop-filter: blur(2px);
-    transition: opacity 0.3s;
+
+    /* Transition visibility with delay so it becomes hidden after opacity fades */
+    transition:
+      opacity 0.3s,
+      visibility 0s 0.3s;
   }
 
   .toc-backdrop.open {
     visibility: visible;
     opacity: 100%;
+
+    /* No delay when opening - show immediately */
+    transition:
+      opacity 0.3s,
+      visibility 0s;
   }
 
   /* Desktop Styles */

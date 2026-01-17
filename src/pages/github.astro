@@ -71,15 +71,15 @@ const avatarSrcSetString = avatarSrcSetResolves.join(", ");
         <p class="bio">{profile.bio || "Open Source Enthusiast"}</p>
         <div class="profile-stats">
           <div class="stat">
-            <strong>{profile.public_repos.toLocaleString()}</strong>
+            <strong>{(profile.public_repos ?? 0).toLocaleString()}</strong>
             <span> Repositories</span>
           </div>
           <div class="stat">
-            <strong>{profile.followers.toLocaleString()}</strong>
+            <strong>{(profile.followers ?? 0).toLocaleString()}</strong>
             <span> Followers</span>
           </div>
           <div class="stat">
-            <strong>{profile.following.toLocaleString()}</strong>
+            <strong>{(profile.following ?? 0).toLocaleString()}</strong>
             <span> Following</span>
           </div>
         </div>

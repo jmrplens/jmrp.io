@@ -12,6 +12,11 @@ const brotli = promisify(zlib.brotliCompress);
  * Compresses static assets in the distribution directory using Gzip and Brotli.
  * Target extensions: .js, .css, .svg, .json, .xml, .txt
  *
+ * Note: HTML files are intentionally excluded because Nginx's sub_filter directive
+ * for CSP nonce replacement requires uncompressed content. Pre-compressing HTML
+ * would require Nginx to decompress it first (via gunzip), negating any benefit.
+ * Nginx's on-the-fly gzip compression handles HTML efficiently after sub_filter.
+ *
  * @param distDir - Absolute path to the build output directory.
  * @param logger - The Astro logger instance.
  */
@@ -21,7 +26,7 @@ export async function compressAssets(
 ) {
   logger.info("Compressing assets (Gzip & Brotli)...");
 
-  const files = await glob("**/*.{html,js,css,svg,json,xml,txt}", {
+  const files = await glob("**/*.{js,css,svg,json,xml,txt}", {
     cwd: distDir,
     absolute: true,
     nodir: true,

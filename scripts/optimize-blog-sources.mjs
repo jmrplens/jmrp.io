@@ -36,6 +36,7 @@ async function optimize() {
         console.log(`Skipping ${inputPath} (already removed or not found)`);
       } else {
         console.error(`Access error for ${inputPath}: ${error.message}`);
+        failed++;
       }
       continue;
     }

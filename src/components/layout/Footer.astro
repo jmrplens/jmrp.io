@@ -135,11 +135,18 @@ const getIconType = (
   return null;
 };
 
-// Pre-compute icon types for all social links to avoid repeated calls
-const socialLinksWithType = socialLinks.map((link) => ({
-  ...link,
-  iconType: getIconType(link),
-}));
+// Pre-compute icon types and resolved names for all social links to avoid repeated calls
+const socialLinksWithType = socialLinks.map((link) => {
+  const iconType = getIconType(link);
+  // Pre-resolve icon name for 'icon' type to validate it's not empty
+  const resolvedIconName =
+    iconType === "icon" && link.icon ? getIconName(link.icon) : null;
+  return {
+    ...link,
+    iconType,
+    resolvedIconName,
+  };
+});
 ---
 
 <footer>
@@ -182,9 +189,9 @@ const socialLinksWithType = socialLinks.map((link) => ({
                 />
               </>
             )}
-            {link.iconType === "icon" && (
+            {link.iconType === "icon" && link.resolvedIconName && (
               <Icon
-                name={getIconName(link.icon!)}
+                name={link.resolvedIconName}
                 class="social-icon-svg"
               />
             )}

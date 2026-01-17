@@ -223,12 +223,16 @@ const generateReport = () => {
                     return getBytes(b.size) - getBytes(a.size);
                   })
                   .map((img) => {
-                    const sizeUpper = img.size.toUpperCase();
+                    const sizeStr =
+                      img.size !== undefined && img.size !== ""
+                        ? img.size
+                        : "N/A";
+                    const sizeUpper = sizeStr.toUpperCase();
                     const isLarge =
                       sizeUpper.includes("G") ||
                       sizeUpper.includes("M") ||
                       (sizeUpper.includes("K") &&
-                        Number.parseInt(img.size) > 500);
+                        Number.parseInt(sizeStr) > 500);
                     return `
                   <tr>
                     <td class="path-cell">${img.path}</td>
