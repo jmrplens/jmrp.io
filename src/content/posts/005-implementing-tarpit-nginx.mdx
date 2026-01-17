@@ -8,29 +8,6 @@ authorEmail: "mail@jmrp.io"
 draft: false
 coverImage: "@assets/tarpit-nginx.png"
 tags: ["nginx", "security", "tarpit", "crowdsec", "defense"]
-references:
-  - text: "Wikipedia: Tarpit (networking)"
-    url: "https://en.wikipedia.org/wiki/Tarpit_(networking)"
-  - text: "LaBrea: The Original Tarpit"
-    url: "https://labrea.sourceforge.net/"
-  - text: "GIAC: LaBrea Approach to Securing Networks"
-    url: "https://www.giac.org/paper/gsec/1895/labrea-approach-securing-networks/103112"
-  - text: "Wikipedia: Code Red (computer worm)"
-    url: "https://en.wikipedia.org/wiki/Code_Red_(computer_worm)"
-  - text: "Nginx: ngx_http_core_module (limit_rate)"
-    url: "https://nginx.org/en/docs/http/ngx_http_core_module.html#limit_rate"
-  - text: "Nginx: Rate Limiting"
-    url: "https://blog.nginx.org/blog/rate-limiting-nginx"
-  - text: "CrowdSec Documentation"
-    url: "https://docs.crowdsec.net/"
-  - text: "Fail2Ban: Ban Hosts that Cause Multiple Auth Errors"
-    url: "https://www.fail2ban.org/"
-  - text: "IETF RFC 2324: Hyper Text Coffee Pot Control Protocol"
-    url: "https://datatracker.ietf.org/doc/html/rfc2324"
-  - text: "Hedgehog Security: What are Tarpits?"
-    url: "https://www.hedgehogsecurity.co.uk/blog/what-are-tarpits"
-  - text: "Endlessh: SSH Tarpit"
-    url: "https://github.com/skeeto/endlessh"
 ---
 
 import Callout from "@components/ui/Callout.astro";
@@ -40,6 +17,7 @@ import TerminalCommand from "@components/ui/TerminalCommand.astro";
 import TerminalOutput from "@components/ui/TerminalOutput.astro";
 import Table from "@components/ui/Table.astro";
 import Code from "@components/ui/Code.astro";
+import Collapsible from "@components/ui/Collapsible.astro";
 
 If you've ever looked at your server logs, you've likely seen countless attempts to access files like `/.env`, `/wp-login.php`, `/.git/config`, or `/admin`. These are automated scanners probing your server for vulnerabilities. While simply blocking them with a 403 or 404 response works, there's a more *satisfying* approach: **trapping them in a tarpit**.
 
@@ -47,7 +25,7 @@ If you've ever looked at your server logs, you've likely seen countless attempts
 
 A **[tarpit](https://en.wikipedia.org/wiki/Tarpit_(networking))** (also known as a "tar pit" or "sticky honeypot") is a network security mechanism designed to **slow down attackers** by deliberately responding to their requests at an extremely slow rate. The name comes from the natural phenomenon of tar pits—geological formations where animals become trapped in viscous tar and cannot escape.
 
-In cybersecurity, a tarpit does the same thing digitally: it accepts incoming connections from malicious actors but **drip-feeds data so slowly** that the attacker's tools become stuck, wasting their time and resources while they wait for a response that never fully arrives.
+In cybersecurity, a tarpit does the same thing digitally: it accepts incoming connections from malicious actors but **drip-feeds data so slowly** that the attacker's tools become stuck, wasting their time and resources while they wait for a response that never fully arrives. For more background, see [Hedgehog Security's excellent overview](https://www.hedgehogsecurity.co.uk/blog/what-are-tarpits).
 
 <Callout type="info" title="The Philosophy">
 Unlike traditional blocking (which immediately rejects requests), a tarpit *pretends* to be cooperative. This wastes the attacker's resources, prevents them from quickly moving to the next target, and can even crash poorly-written scanning tools.
@@ -60,6 +38,20 @@ Unlike traditional blocking (which immediately rejects requests), a tarpit *pret
 The concept of tarpits in cybersecurity emerged in the late 1990s and early 2000s during a period when network worms and automated scanning tools began proliferating. The most famous early tarpit was **[LaBrea](https://labrea.sourceforge.net/)**, created by [Tom Liston](https://www.giac.org/paper/gsec/1895/labrea-approach-securing-networks/103112) around 2001.
 
 LaBrea worked at the network layer, responding to TCP SYN packets for unused IP addresses and creating "virtual sticky machines" that would trap worm scanners. When the [Code Red](https://en.wikipedia.org/wiki/Code_Red_(computer_worm)) and [Nimda](https://en.wikipedia.org/wiki/Nimda) worms were spreading rapidly, LaBrea proved remarkably effective at slowing their propagation.
+
+### Evolution of Tarpits
+
+The tarpit concept has evolved beyond network-layer implementations:
+
+<Collapsible summary="Notable Tarpit Implementations">
+
+**[OpenBSD spamd](https://man.openbsd.org/spamd)** (2003) - The email tarpit that introduced greylisting. When a blacklisted sender connects, spamd deliberately slows down the SMTP conversation, sending one byte at a time. Legitimate mail servers retry; spammers give up. This approach inspired many modern tarpit implementations.
+
+**[Endlessh](https://github.com/skeeto/endlessh)** (2019) - Created by [Chris Wellons](https://nullprogram.com/blog/2019/03/22/), this SSH tarpit exploits RFC 4253: before the SSH version exchange, servers can send "other lines of data." Endlessh continuously sends random data at ~10-second intervals, trapping SSH scanners indefinitely. Some connections have lasted **weeks**!
+
+**HTTP Tarpits (this guide)** - Application-layer tarpits that use web server features like `limit_rate` to slowly drip-feed data to malicious HTTP requests. Perfect for trapping vulnerability scanners probing for sensitive files.
+
+</Collapsible>
 
 <Mermaid caption="Normal Server vs Tarpit Response" maxWidth="700px">
 ```mermaid-render
@@ -130,7 +122,7 @@ Tarpits do consume server resources (connections, memory). On a high-traffic ser
 Let's implement a complete tarpit solution in [Nginx](https://nginx.org/). The strategy involves three components:
 
 1. **Generate slow content**: Create a large random payload
-2. **Throttle delivery**: Use [`limit_rate`](https://nginx.org/en/docs/http/ngx_http_core_module.html#limit_rate) to control bandwidth
+2. **Throttle delivery**: Use [`limit_rate`](https://nginx.org/en/docs/http/ngx_http_core_module.html#limit_rate) to control bandwidth (see also [Nginx's rate limiting guide](https://blog.nginx.org/blog/rate-limiting-nginx))
 3. **Log for analysis**: Send logs to a dedicated file for [CrowdSec](https://docs.crowdsec.net/)/[Fail2Ban](https://www.fail2ban.org/)
 
 ### Step 1: Generate Slow Content
@@ -359,7 +351,7 @@ While the tarpit wastes attacker time, we can go further by **automatically bann
 
 CrowdSec can read the `/var/log/nginx/access.tarpit` file to identify malicious IPs:
 
-<FileContent filename="/etc/crowdsec/parsers/s02-enrich/nginx-tarpit.yaml" icon="mdi:file-cog" ariaLabel="CrowdSec parser for tarpit logs">
+<FileContent filename="/etc/crowdsec/parsers/s02-enrich/nginx_tarpit.yaml" icon="mdi:file-cog" ariaLabel="CrowdSec parser for tarpit logs">
 ```yaml
 name: crowdsec/nginx-tarpit
 description: "Parse Nginx tarpit access logs"
@@ -383,7 +375,7 @@ nodes:
 
 Define when to ban an IP (e.g., after 3 tarpit hits in 5 minutes):
 
-<FileContent filename="/etc/crowdsec/scenarios/nginx-tarpit-scan.yaml" icon="mdi:file-cog" ariaLabel="CrowdSec scenario for tarpit detection">
+<FileContent filename="/etc/crowdsec/scenarios/nginx_tarpit_scan.yaml" icon="mdi:file-cog" ariaLabel="CrowdSec scenario for tarpit detection">
 ```yaml
 type: leaky
 name: crowdsec/nginx-tarpit-scan
@@ -406,13 +398,122 @@ If you don't want to create custom parsers, you can use [Fail2Ban](https://www.f
 
 ---
 
+## Reporting Malicious IPs: Contributing to Collective Defense
+
+One of the most powerful aspects of running a tarpit is the **intelligence you gather**. Every trapped connection reveals an attacker's IP, their target paths, and timing patterns. But this data becomes exponentially more valuable when **shared with the security community**.
+
+### Why Report Malicious IPs?
+
+<Callout type="info" title="The Power of Collective Defense">
+When you report a malicious IP, you're not just protecting yourself—you're protecting **everyone**. Threat intelligence platforms aggregate reports from thousands of contributors, creating real-time blocklists that can preemptively block attackers before they reach your server.
+</Callout>
+
+Benefits of reporting include:
+
+1. **Early Detection**: Other organizations can block threats you've identified before being targeted
+2. **Pattern Recognition**: Aggregated data reveals coordinated attacks, botnets, and malware campaigns
+3. **Reduced Attack Surface**: Reported IPs are often blocked by ISPs and security tools globally
+4. **Community Reciprocity**: Contributors receive access to larger, more comprehensive blocklists
+
+### AbuseIPDB Integration
+
+[AbuseIPDB](https://www.abuseipdb.com/) is a community-driven threat intelligence platform with over 100,000 contributors. You can both check IP reputation and report malicious IPs via their API.
+
+#### Check IP Reputation
+
+Before blocking, verify the threat level:
+
+<TerminalCommand>
+```bash
+curl -G "https://api.abuseipdb.com/api/v2/check" \
+  --data-urlencode "ipAddress=185.234.xx.xx" \
+  -d maxAgeInDays=90 \
+  -H "Key: YOUR_API_KEY" \
+  -H "Accept: application/json"
+```
+</TerminalCommand>
+
+#### Report Malicious IPs from Tarpit Logs
+
+Create a script to automatically report tarpit captures:
+
+<FileContent filename="/usr/local/bin/report_tarpit_ips.sh" icon="mdi:file-code" ariaLabel="Script to report tarpit IPs to AbuseIPDB">
+```bash
+#!/bin/bash
+# Report IPs from tarpit log to AbuseIPDB
+# Usage: Run via cron every hour
+
+ABUSEIPDB_KEY="your-api-key-here"
+LOGFILE="/var/log/nginx/access.tarpit"
+REPORTED="/var/log/nginx/reported-ips.txt"
+
+# Get unique IPs from last hour
+awk -v d1="$(date --date='-1 hour' '+%d/%b/%Y:%H')" \
+  '$4 ~ d1 {print $1}' "$LOGFILE" | sort -u | while read ip; do
+  
+  # Skip if already reported today
+  grep -q "$ip" "$REPORTED" 2>/dev/null && continue
+  
+  # Report to AbuseIPDB
+  curl -s "https://api.abuseipdb.com/api/v2/report" \
+    -H "Key: $ABUSEIPDB_KEY" \
+    -H "Accept: application/json" \
+    --data-urlencode "ip=$ip" \
+    --data-urlencode "categories=21,15" \
+    --data-urlencode "comment=Vulnerability scanner trapped in HTTP tarpit. Probing for sensitive files." \
+    > /dev/null
+  
+  echo "$ip $(date +%Y-%m-%d)" >> "$REPORTED"
+done
+```
+</FileContent>
+
+<Callout type="warning" title="API Rate Limits">
+Free AbuseIPDB accounts have daily rate limits. For high-volume servers, consider their paid plans or batch your reports. Always strip personally identifiable information (PII) from report comments.
+</Callout>
+
+### CrowdSec Community Blocklists
+
+Unlike AbuseIPDB (which is passive lookup), [CrowdSec](https://www.crowdsec.net/) operates as a **"massively multiplayer firewall"**. When your Security Engine detects a threat, it shares the signal with the network, and you receive blocklist updates containing threats detected by other users.
+
+<Table title="CrowdSec Blocklist Tiers">
+  <thead>
+    <tr>
+      <th scope="col">Tier</th>
+      <th scope="col">Size</th>
+      <th scope="col">Requirement</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Lite</strong></td>
+      <td>3,000 IPs</td>
+      <td>Free account, no contribution</td>
+    </tr>
+    <tr>
+      <td><strong>Community</strong></td>
+      <td data-status="success">~15,000 IPs</td>
+      <td>Regular signal contribution</td>
+    </tr>
+    <tr>
+      <td><strong>Premium</strong></td>
+      <td data-status="success">Unlimited</td>
+      <td>Paid subscription</td>
+    </tr>
+  </tbody>
+</Table>
+
+The Community Blocklist updates in real-time and is tailored to your stack—if you run WordPress, you'll receive WordPress-specific threat IPs automatically.
+
+---
+
 ## Advanced Techniques
 
 ### Dynamic Tarpit Intensity
 
 You can vary the throttle speed based on how suspicious the request is:
 
-<FileContent filename="/etc/nginx/snippets/advanced-tarpit.conf" icon="devicon:nginx" ariaLabel="Advanced tarpit with variable throttling">
+<FileContent filename="/etc/nginx/snippets/advanced_tarpit.conf" icon="devicon:nginx" ariaLabel="Advanced tarpit with variable throttling">
 ```nginx
 # Map suspicious paths to throttle speeds
 map $request_uri $tarpit_speed {
@@ -488,10 +589,6 @@ netstat -an | grep ESTABLISHED | grep :443 | wc -l
 ```
 </TerminalCommand>
 
-<TerminalOutput>
-47
-</TerminalOutput>
-
 ### Analyze Tarpit Logs
 
 See which paths are being scanned most frequently:
@@ -503,6 +600,7 @@ awk '{print $7}' /var/log/nginx/access.tarpit | sort | uniq -c | sort -rn | head
 </TerminalCommand>
 
 <TerminalOutput title="Top scanned paths">
+```
   847 /.env
   312 /wp-login.php
   201 /.git/config
@@ -513,6 +611,7 @@ awk '{print $7}' /var/log/nginx/access.tarpit | sort | uniq -c | sort -rn | head
    43 /backup.sql
    38 /shell.php
    29 /xmlrpc.php
+```
 </TerminalOutput>
 
 ### Top Offending IPs
@@ -526,11 +625,13 @@ awk '{print $1}' /var/log/nginx/access.tarpit | sort | uniq -c | sort -rn | head
 </TerminalCommand>
 
 <TerminalOutput title="Top offending IPs">
+```
   423 185.234.xx.xx
   287 45.148.xx.xx
   156 194.169.xx.xx
    98 23.94.xx.xx
    67 89.248.xx.xx
+```
 </TerminalOutput>
 
 ---
@@ -560,5 +661,3 @@ A tarpit is a creative and effective addition to your security toolkit. While it
 4. **A psychological deterrent** for attackers
 
 The implementation is straightforward in Nginx using just a few directives (`limit_rate`, `error_page`, and location blocks). Combined with logging and a security tool like CrowdSec, you create a layered defense that not only blocks attackers but makes them *pay* for their intrusion attempts.
-
-Happy trapping! 🕸️

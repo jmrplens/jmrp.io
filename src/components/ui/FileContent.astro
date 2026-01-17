@@ -43,6 +43,10 @@ const {
 // Infer icon from filename
 const finalIcon = icon || getIconForFile(filename);
 
+// Format filename to allow line breaks after path separators
+// Insert zero-width space (&#8203;) after slashes for smart wrapping
+const filenameFormatted = filename.replaceAll("/", "/&#8203;");
+
 const slotContent = await Astro.slots.render("default");
 const trimmedContent = slotContent.trim();
 const uuid = createHash("sha256")
@@ -111,7 +115,10 @@ if (language) {
               name={finalIcon}
               class="file-icon"
             />
-            <span class="file-name">{filename}</span>
+            <span
+              class="file-name"
+              set:html={filenameFormatted}
+            />
           </div>
           <div class="header-actions">
             <span
@@ -167,7 +174,10 @@ if (language) {
             name={finalIcon}
             class="file-icon"
           />
-          <span class="file-name">{filename}</span>
+          <span
+            class="file-name"
+            set:html={filenameFormatted}
+          />
         </div>
         <div class="header-actions">
           <CopyButton
@@ -249,22 +259,32 @@ if (language) {
 
   .file-info {
     display: flex;
+    flex: 1;
     gap: 0.5rem;
     align-items: center;
+    min-width: 0; /* Enable text truncation for flex children */
+  }
+
+  /* Reserve space for copy button + chevron in collapsible mode */
+  .file-content-wrapper.collapsible .file-info {
+    padding-right: 2.5rem; /* Space for copy button positioned absolutely */
+  }
+
+  .file-name {
+    font-weight: 500;
+    overflow-wrap: anywhere;
   }
 
   .header-actions {
     display: flex;
+    flex-shrink: 0;
     gap: 0.75rem;
     align-items: center;
   }
 
   .file-icon {
+    flex-shrink: 0;
     font-size: 1.3rem;
-  }
-
-  .file-name {
-    font-weight: 500;
   }
 
   .chevron-wrapper {
