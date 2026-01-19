@@ -68,7 +68,7 @@ if (!ariaLabel) {
 
 const index = getNextIndex("file");
 const finalAriaLabel =
-  ariaLabel || `Content of file ${index}: ${filename} - ${plainText}`;
+  ariaLabel || `${filename} - ${plainText} (file ${index})`;
 
 // If language is specified, extract raw code for Shiki re-rendering
 let rawCode = "";

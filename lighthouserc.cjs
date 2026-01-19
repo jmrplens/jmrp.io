@@ -56,9 +56,16 @@ module.exports = {
       numberOfRuns: 3,
       outputDir: "lighthouse-results",
       settings: {
-        chromeFlags: process.env.CI
-          ? ["--headless", "--no-sandbox"]
-          : ["--headless"],
+        chromeFlags:
+          process.env.CI || (process.getuid && process.getuid() === 0)
+            ? [
+                "--headless",
+                "--no-sandbox",
+                "--disable-setuid-sandbox",
+                "--disable-dev-shm-usage",
+                "--disable-gpu",
+              ]
+            : ["--headless"],
         formFactor: process.env.FORM_FACTOR || "mobile",
         throttlingMethod: "simulate",
         throttling: {
