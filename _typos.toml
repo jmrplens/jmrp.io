@@ -9,7 +9,8 @@ extend-exclude = [
     "schema-report.json",
     "schema-report.html",
     "html-validation.json",
-    "accessibility-report.json"
+    "accessibility-report.json",
+    "lighthouse-results/**"
 ]
 
 [default]

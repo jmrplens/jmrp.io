@@ -1,4 +1,4 @@
-import { execSync, spawn } from "node:child_process";
+import { execSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -33,7 +33,9 @@ const getUrls = () => {
 };
 
 const runAudit = async () => {
-  console.log(`\n🛠️ Starting MOBILE Lighthouse Audit on ${isProd ? "PRODUCTION" : "LOCAL"}...`);
+  console.log(
+    `\n🛠️ Starting MOBILE Lighthouse Audit on ${isProd ? "PRODUCTION" : "LOCAL"}...`,
+  );
   console.log(`📍 Base URL: ${BASE_URL}\n`);
 
   if (!fs.existsSync(RESULTS_DIR)) fs.mkdirSync(RESULTS_DIR);
@@ -49,17 +51,17 @@ const runAudit = async () => {
   for (const combo of combinations) {
     console.log(`\n🔵 TESTING: ${combo.name}`);
     for (const url of urls) {
-      const fileName = `${url.replace(/https?:\/\/.*?\//, "").replace(/\//g, "-") || "index"}-${combo.theme}-${combo.factor}`;
+      const fileName = `${url.replace(/https?:\/\/.*?\//, "").replaceAll("/", "-") || "index"}-${combo.theme}-${combo.factor}`;
       const reportPath = path.join(RESULTS_DIR, `${fileName}.json`);
 
       try {
         // Force color scheme via chrome flags
         const chromeFlags = `--no-sandbox --headless --disable-gpu --force-color-profile=srgb --force-prefers-color-scheme=${combo.theme}`;
-        
+
         // Mobile is the default, so we don't provide --preset (which defaults to mobile)
         execSync(
           `npx lighthouse ${url} --quiet --chrome-flags="${chromeFlags}" --output=json --output-path=${reportPath} --throttling-method=simulate`,
-          { stdio: "inherit" }
+          { stdio: "inherit" },
         );
 
         const report = JSON.parse(fs.readFileSync(reportPath, "utf-8"));
@@ -73,15 +75,20 @@ const runAudit = async () => {
             seo: report.categories.seo.score,
           },
         });
-        
+
         // Immediate feedback
         const s = report.categories;
-        if (s.performance.score < TARGET_SCORE || s.accessibility.score < TARGET_SCORE) {
-           console.log(`❌ ${url} (${combo.name}): P:${(s.performance.score*100).toFixed(0)}% A:${(s.accessibility.score*100).toFixed(0)}%`);
+        if (
+          s.performance.score < TARGET_SCORE ||
+          s.accessibility.score < TARGET_SCORE
+        ) {
+          console.log(
+            `❌ ${url} (${combo.name}): P:${(s.performance.score * 100).toFixed(0)}% A:${(s.accessibility.score * 100).toFixed(0)}%`,
+          );
         } else {
-           console.log(`✅ ${url} (${combo.name}): 100%`);
+          console.log(`✅ ${url} (${combo.name}): 100%`);
         }
-      } catch (error) {
+      } catch {
         console.error(`⚠️ Failed ${url} (${combo.name})`);
       }
     }
@@ -89,11 +96,15 @@ const runAudit = async () => {
 
   console.log("\n📊 --- FINAL MOBILE REPORT ---");
   let totalIssues = 0;
-  reports.forEach(r => {
-    const issues = Object.entries(r.summary).filter(([_, score]) => score < TARGET_SCORE);
+  reports.forEach((r) => {
+    const issues = Object.entries(r.summary).filter(
+      ([_, score]) => score < TARGET_SCORE,
+    );
     if (issues.length > 0) {
       totalIssues++;
-      console.log(`❌ ${r.url} [${r.combo}]: ${issues.map(([k, v]) => `${k}: ${(v*100).toFixed(0)}%`).join(", ")}`);
+      console.log(
+        `❌ ${r.url} [${r.combo}]: ${issues.map(([k, v]) => `${k}: ${(v * 100).toFixed(0)}%`).join(", ")}`,
+      );
     }
   });
 
