@@ -19,3 +19,8 @@ extend-ignore-re = [
 
 [default.extend-words]
 routeros = "routeros"
+
+[default.extend-identifiers]
+# Technical protocol/standard names
+BACnet = "BACnet"
+UPnP = "UPnP"

@@ -52,6 +52,8 @@ const cssEscape = (str) => {
 };
 
 // Process all HTML files, not just the first one
+let globalMissingCount = 0;
+
 for (const filePath of htmlFiles) {
   if (!fs.existsSync(filePath)) {
     console.error(`${C.red}Error: File ${filePath} does not exist.${C.reset}`);
@@ -280,10 +282,12 @@ for (const filePath of htmlFiles) {
   console.log(
     `${C.bright}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${C.reset}\n`,
   );
+
+  globalMissingCount += stats.missing;
 } // End of file loop
 
 // CI-friendly exit code: fail if there are missing accessible names
-if (stats.missing > 0) {
+if (globalMissingCount > 0) {
   process.exit(1);
 }
 process.exit(0);

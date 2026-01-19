@@ -1,5 +1,5 @@
 ---
-title: "Turn Your MikroTik Router into a Honeypot: Trap & Block Port Scanners"
+title: "MikroTik Honeypot: Trap & Auto-Block Port Scanners"
 slug: "implementing-mikrotik-honeypot"
 publishedDate: 2026-01-19
 description: "Learn how to configure your MikroTik router as a low-interaction honeypot to detect port scanners, log malicious activity, and automatically block attackers using firewall address lists and the RAW table."
@@ -14,8 +14,10 @@ import Callout from "@components/ui/Callout.astro";
 import FileContent from "@components/ui/FileContent.astro";
 import Mermaid from "@components/ui/Mermaid.astro";
 import TerminalCommand from "@components/ui/TerminalCommand.astro";
+import TerminalOutput from "@components/ui/TerminalOutput.astro";
 import Table from "@components/ui/Table.astro";
 import Code from "@components/ui/Code.astro";
+import BarChart from "@components/ui/BarChart.astro";
 
 Every router connected to the internet faces a relentless barrage of automated scans. Bots systematically probe the entire IPv4 address space—and increasingly IPv6—searching for vulnerable services: SSH servers with weak passwords, exposed databases, outdated RDP endpoints, or misconfigured IoT devices.
 
@@ -31,7 +33,7 @@ This guide walks you through implementing a production-ready honeypot on RouterO
 
 ## What is a Honeypot?
 
-A **honeypot** is a security mechanism that creates a decoy system designed to attract and detect attackers. According to [Fortinet](https://www.fortinet.com/resources/cyberglossary/what-is-honeypot), honeypots are intentionally vulnerable systems that lure adversaries away from legitimate targets while gathering intelligence about their methods.
+A **honeypot** is a security mechanism that creates a decoy system designed to attract and detect attackers. According to [Fortinet](https://www.fortinet.com/resources/cyberglossary/what-is-honeypot), honeypots are intentionally vulnerable systems that lure adversaries away from legitimate targets while gathering intelligence about their methods. [NIST SP 800-53](https://csf.tools/reference/nist-sp-800-53/r5/sc/sc-26/) includes honeypots as a formal security control (SC-26) for detecting and analyzing such attacks.
 
 There are two main types of honeypots:
 
@@ -52,7 +54,7 @@ There are two main types of honeypots:
     <tr>
       <td>**High-Interaction**</td>
       <td>Complex, full OS/applications</td>
-      <td>Engages sophisticated attackers to study advanced TTPs (Tactics, Techniques, Procedures).</td>
+      <td>Engages sophisticated attackers to study advanced [TTPs](https://attack.mitre.org/) (Tactics, Techniques, Procedures).</td>
     </tr>
   </tbody>
 </Table>
@@ -135,21 +137,22 @@ If your honeypot rules matched `established` connections, you would block legiti
 
 Our honeypot strategy has three phases:
 
-<Mermaid caption="Honeypot Detection Flow" maxWidth="700px">
+<Mermaid caption="Honeypot Detection Flow" maxWidth="400px">
 ```mermaid-render
 flowchart TD
+    classDef warning fill:#e6a700,color:#000
+    classDef danger fill:#c53030,color:#fff
+    classDef success fill:#2d7d32,color:#fff
+    
     A[Internet Scanner] -->|SYN Packet| B{Is port trapped?}
-    B -->|No: Port 80/443| C["✅ Allow (Web Server)"]
-    B -->|Yes: Port 22/3389/etc.| D["🍯 Honeypot Triggered"]
+    B -->|No: Port 80/443| C["Allow - Web Server"]:::success
+    B -->|Yes: Port 22/3389/etc.| D["Honeypot Triggered"]:::warning
     
-    D --> E["📝 Log with prefix"]
-    D --> F["📋 Add IP to BlackList"]
+    D --> E["Log with prefix"]
+    D --> F["Add IP to BlackList"]
     
-    F --> G["🛡️ RAW Table Rule"]
-    G -->|All future packets| H["❌ DROP instantly"]
-    
-    style D fill:#ffd700
-    style H fill:#ff6b6b
+    F --> G["RAW Table Rule"]
+    G -->|All future packets| H["DROP instantly"]:::danger
 ```
 </Mermaid>
 
@@ -158,14 +161,14 @@ flowchart TD
 We perform **detection** in the **Filter table** (Input chain), but we enforce **blocking** in the **Raw table** (Prerouting chain).
 
 <Callout type="tip" title="Performance Advantage">
-The **Raw table** processes packets *before* Connection Tracking (conntrack). By blocking attackers here, the router doesn't allocate memory or CPU cycles to track their connections. On routers handling thousands of attacks daily, this can significantly reduce resource usage.
+The **[Raw table](https://help.mikrotik.com/docs/display/ROS/Firewall)** processes packets *before* [Connection Tracking](https://help.mikrotik.com/docs/display/ROS/Connection+tracking). By blocking attackers here, the router doesn't allocate memory or CPU cycles to track their connections. On routers handling thousands of attacks daily, this can significantly reduce resource usage.
 </Callout>
 
 ---
 
 ## Trap Port Reference
 
-The following tables list ports commonly targeted by attackers. These are ideal candidates for honeypot traps because legitimate internet users should *never* need to access them on your router.
+The following tables list ports commonly targeted by attackers, based on the [IANA Service Name and Port Number Registry](https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.xhtml). These are ideal candidates for honeypot traps because legitimate internet users should *never* need to access them on your router.
 
 <Callout type="important" title="Customize for Your Environment">
 Before implementing, review which services you actually expose. If you run a public SSH server on port 22, don't trap that port! The examples below assume you run web servers on ports 80/443 only.
@@ -193,7 +196,7 @@ Before implementing, review which services you actually expose. If you run a pub
     <tr><td>137-139</td><td>NetBIOS</td><td>Windows</td><td>SMB relay attacks, network enumeration</td></tr>
     <tr><td>143</td><td>IMAP</td><td>Mail</td><td>Credential theft, unencrypted mail access</td></tr>
     <tr><td>389</td><td>LDAP</td><td>Windows</td><td>Active Directory enumeration</td></tr>
-    <tr><td>445</td><td>SMB</td><td>Windows</td><td>EternalBlue, WannaCry ransomware</td></tr>
+    <tr><td>445</td><td>SMB</td><td>Windows</td><td>[EternalBlue (CVE-2017-0144)](https://nvd.nist.gov/vuln/detail/CVE-2017-0144), WannaCry ransomware</td></tr>
     <tr><td>502</td><td>Modbus</td><td>Industrial</td><td>ICS/SCADA system attacks</td></tr>
     <tr><td>512-514</td><td>R-services</td><td>Legacy</td><td>Remote execution without authentication</td></tr>
     <tr><td>593</td><td>RPC/HTTP</td><td>Windows</td><td>Exchange server exploits</td></tr>
@@ -203,13 +206,13 @@ Before implementing, review which services you actually expose. If you run a pub
     <tr><td>1883, 8883</td><td>MQTT</td><td>IoT</td><td>Unauthorized message interception</td></tr>
     <tr><td>3128</td><td>Squid Proxy</td><td>Proxy</td><td>Open proxy abuse for anonymization</td></tr>
     <tr><td>3306</td><td>MySQL</td><td>Database</td><td>SQL injection, weak authentication</td></tr>
-    <tr><td>3389</td><td>RDP</td><td>Remote Access</td><td>BlueKeep, ransomware delivery</td></tr>
+    <tr><td>3389</td><td>RDP</td><td>Remote Access</td><td>[BlueKeep (CVE-2019-0708)](https://www.cisa.gov/news-events/cybersecurity-advisories/aa19-168a), ransomware delivery</td></tr>
     <tr><td>5432</td><td>PostgreSQL</td><td>Database</td><td>Database exploits, data theft</td></tr>
     <tr><td>5900-5903</td><td>VNC</td><td>Remote Access</td><td>Screen control, often weak/no password</td></tr>
     <tr><td>6000-6009</td><td>X11</td><td>Remote Access</td><td>Display hijacking on Unix</td></tr>
     <tr><td>6379</td><td>Redis</td><td>Database</td><td>Unauthenticated access, RCE via EVAL</td></tr>
     <tr><td>8080, 8443, 8888</td><td>HTTP Alt</td><td>Web/Admin</td><td>Admin panels, development servers</td></tr>
-    <tr><td>8291</td><td>Winbox</td><td>MikroTik</td><td>Router takeover via known CVEs</td></tr>
+    <tr><td>8291</td><td>Winbox</td><td>MikroTik</td><td>Router takeover via [known CVEs](https://mikrotik.com/security)</td></tr>
     <tr><td>10000</td><td>Webmin</td><td>Admin</td><td>Web management interface RCE</td></tr>
     <tr><td>27017-27018</td><td>MongoDB</td><td>Database</td><td>Unauthenticated access, ransomware</td></tr>
     <tr><td>47808</td><td>BACnet</td><td>Industrial</td><td>Building automation system attacks</td></tr>
@@ -218,7 +221,7 @@ Before implementing, review which services you actually expose. If you run a pub
 
 ### UDP Trap Ports
 
-UDP ports are particularly valuable for honeypots because many are exploited in **amplification attacks**—where attackers use your server to multiply attack traffic against third parties.
+UDP ports are particularly valuable for honeypots because many are exploited in **[amplification attacks](https://www.cloudflare.com/learning/ddos/drdos-ddos-attack/)**—where attackers use your server to multiply attack traffic against third parties.
 
 <Table title="UDP Ports for Honeypot Detection">
   <thead>
@@ -232,14 +235,14 @@ UDP ports are particularly valuable for honeypots because many are exploited in 
   <tbody>
     <tr><td>53</td><td>DNS</td><td>Amplification</td><td>100x+ amplification for DDoS attacks</td></tr>
     <tr><td>69</td><td>TFTP</td><td>Legacy</td><td>Configuration file theft (no auth)</td></tr>
-    <tr><td>123</td><td>NTP</td><td>Amplification</td><td>500x+ amplification via monlist command</td></tr>
+    <tr><td>123</td><td>NTP</td><td>Amplification</td><td>[500x+ amplification](https://www.cisa.gov/news-events/alerts/2014/01/13/ntp-amplification-attacks-using-cve-2013-5211) via monlist command</td></tr>
     <tr><td>137-139</td><td>NetBIOS</td><td>Windows</td><td>Network share enumeration</td></tr>
     <tr><td>161</td><td>SNMP</td><td>Amplification</td><td>650x amplification, device info leakage</td></tr>
     <tr><td>520</td><td>RIP</td><td>Routing</td><td>Route injection attacks</td></tr>
     <tr><td>1900</td><td>SSDP</td><td>Amplification</td><td>30x amplification via UPnP discovery</td></tr>
     <tr><td>5060</td><td>SIP</td><td>VoIP</td><td>Toll fraud, call interception</td></tr>
     <tr><td>5683</td><td>CoAP</td><td>IoT</td><td>IoT device exploitation</td></tr>
-    <tr><td>11211</td><td>Memcached</td><td>Amplification</td><td>**52,000x amplification!** Record-breaking DDoS vector</td></tr>
+    <tr><td>11211</td><td>Memcached</td><td>Amplification</td><td>**52,000x amplification!** [Record-breaking DDoS vector](https://github.blog/2018-03-01-ddos-incident-report/)</td></tr>
     <tr><td>47808</td><td>BACnet</td><td>Industrial</td><td>Building automation systems</td></tr>
   </tbody>
 </Table>
@@ -310,6 +313,10 @@ add list=WhiteList address=2001:db8:2::100 comment="Office IPv6 Address"
 ## Step 2: IPv4 Honeypot Configuration
 
 This configuration includes all honeypot detection rules for IPv4, organized by service category. At the end of the Filter section, we add a **DROP rule** to immediately block any source that has been added to the blacklist before they can attempt other attacks in the same session.
+
+<Callout type="warning" title="Customize for Your Setup">
+The rules below use `in-interface-list=WAN` to identify external traffic. If your router uses a different interface list name (e.g., `internet`, `external`, or a specific interface like `ether1`), update this value accordingly. Check your configuration with `/interface list print`.
+</Callout>
 
 <FileContent 
   filename="honeypot-ipv4.rsc" 
@@ -626,9 +633,13 @@ Let's examine the key parameters that make this honeypot effective:
 
 The `log=yes` parameter generates entries that can be forwarded to external security systems. By configuring MikroTik to send logs to a remote syslog server, you can:
 
-1. **Feed CrowdSec** — Contribute detected attackers to the community blocklist and receive protection from attacks seen globally.
-2. **Report to AbuseIPDB** — Share threat intelligence and help others block known malicious IPs.
+1. **Feed [CrowdSec](https://www.crowdsec.net/)** — Contribute detected attackers to the community blocklist and receive protection from attacks seen globally.
+2. **Report to [AbuseIPDB](https://www.abuseipdb.com/)** — Share threat intelligence and help others block known malicious IPs.
 3. **Build dashboards** — Visualize attack patterns, source countries, and targeted ports.
+
+<Callout type="warning" title="Customize IP Addresses">
+Replace `192.168.0.100` with the IP address of your syslog server (the machine running CrowdSec), and `192.168.0.1` with your router's LAN IP address.
+</Callout>
 
 <Code lang="routeros" title="Remote Syslog Configuration">
 ```routeros
@@ -637,14 +648,203 @@ The `log=yes` parameter generates entries that can be forwarded to external secu
 
 # Send firewall logs (including honeypot) to remote server
 /system logging add action=remote topics=firewall prefix="[FIREWALL]"
-
-# Optionally send warning-level logs (includes honeypot detections)
-/system logging add action=remote topics=firewall,warning
 ```
 </Code>
 
-<Callout type="tip" title="Coming Soon">
-In a future post, we'll cover how to integrate these logs with **CrowdSec** to automatically contribute to community blocklists and receive real-time threat intelligence—turning your local honeypot into part of a global defense network.
+### Integrating with CrowdSec
+
+Below is a working configuration to parse MikroTik honeypot logs with [CrowdSec](https://www.crowdsec.net/). This setup captures the `[HONEYPOT TCP/UDP]` prefixes we configured earlier and extracts attacker IPs for automatic blocking.
+
+#### Step 1: Receive Logs via rsyslog
+
+On your Linux server running CrowdSec, configure rsyslog to receive UDP syslog from MikroTik and write it to a dedicated file:
+
+<FileContent 
+  filename="/etc/rsyslog.d/10-mikrotik.conf" 
+  language="bash" 
+  title="rsyslog MikroTik Configuration"
+>
+```bash
+# Load UDP input module
+module(load="imudp")
+input(type="imudp" port="514")
+
+# Write all UDP syslog to MikroTik log file
+if ($inputname == "imudp") then {
+    action(type="omfile" file="/var/log/mikrotik.log")
+    stop
+}
+```
+</FileContent>
+
+After creating this file, restart rsyslog:
+
+<TerminalCommand ariaLabel="Command to restart rsyslog">
+```bash
+sudo systemctl restart rsyslog
+```
+</TerminalCommand>
+
+You can verify that logs are arriving by checking the file:
+
+<TerminalOutput title="tail -f /var/log/mikrotik.log">
+```
+2026-01-19T10:37:39.291+01:00 mikrotik firewall,info [FIREWALL]: [HONEYPOT TCP] input: in:PPPoE_DIGI out:(unknown 0), connection-state:new proto TCP (SYN), 167.94.138.144:33601->YOUR_WAN_IP:389, len 60
+2026-01-19T10:38:50.781+01:00 mikrotik firewall,info [FIREWALL]: [HONEYPOT TCP] input: in:PPPoE_DIGI out:(unknown 0), connection-state:new proto TCP (SYN), 109.227.42.233:48036->YOUR_WAN_IP:23, len 60
+2026-01-19T10:44:01.360+01:00 mikrotik firewall,info [FIREWALL]: [HONEYPOT TCP] input: in:PPPoE_DIGI out:(unknown 0), connection-state:new proto TCP (SYN), 102.156.174.56:61901->YOUR_WAN_IP:445, len 52
+```
+</TerminalOutput>
+
+#### Step 2: Configure CrowdSec Acquisition
+
+Tell CrowdSec to read the MikroTik log file. Create an acquisition file:
+
+<FileContent 
+  filename="/etc/crowdsec/acquis.d/mikrotik.yaml" 
+  language="yaml" 
+  title="CrowdSec MikroTik Acquisition"
+>
+```yaml
+filenames:
+  - /var/log/mikrotik.log
+labels:
+  type: mikrotik-logs
+source: file
+```
+</FileContent>
+
+#### Step 3: Install the MikroTik Parser
+
+Install the community MikroTik parser from CrowdSec Hub:
+
+<TerminalCommand ariaLabel="Command to install MikroTik parser">
+```bash
+sudo cscli parsers install a1ad/mikrotik-logs
+```
+</TerminalCommand>
+
+#### Step 4: Custom Parser for Honeypot Logs (Optional)
+
+For advanced parsing that specifically captures our `[HONEYPOT TCP/UDP]` prefixes, create a custom parser:
+
+<FileContent 
+  filename="/etc/crowdsec/parsers/s01-parse/mikrotik-honeypot.yaml" 
+  language="yaml" 
+  title="Custom Honeypot Parser"
+  collapsible={true}
+>
+```yaml
+onsuccess: next_stage
+name: local/mikrotik-honeypot
+description: "Parser for MikroTik honeypot firewall logs"
+filter: "evt.Line.Raw contains '[HONEYPOT'"
+
+pattern_syntax:
+  # Pattern for honeypot detections with [HONEYPOT TCP] or [HONEYPOT UDP] prefix
+  MIKROTIK_HONEYPOT: '^%{TIMESTAMP_ISO8601:timestamp} %{HOSTNAME} firewall,.*? \[HONEYPOT %{WORD:hp_proto}\]\s+%{WORD:chain}: in:%{DATA:if_in} out:%{DATA:if_out},.*?proto %{WORD:proto}.*?, %{IP:source_ip}:%{INT:src_port}->%{IP:dst_ip}:%{INT:dst_port}.*len %{INT:length}'
+
+nodes:
+  - grok:
+      pattern: "%{MIKROTIK_HONEYPOT}"
+      apply_on: Line.Raw
+    statics:
+      - meta: service
+        value: mikrotik_honeypot
+      - meta: log_type
+        value: honeypot_detection
+      - meta: dst_port
+        expression: "evt.Parsed.dst_port"
+      - meta: proto
+        expression: "evt.Parsed.proto"
+
+statics:
+  - meta: source_ip
+    expression: "evt.Parsed.source_ip"
+  - target: evt.StrTime
+    expression: "evt.Parsed.timestamp"
+```
+</FileContent>
+
+#### Step 5: Reload CrowdSec
+
+After adding the parser and acquisition config, reload CrowdSec:
+
+<TerminalCommand ariaLabel="Command to reload CrowdSec">
+```bash
+sudo systemctl reload crowdsec
+```
+</TerminalCommand>
+
+Verify the acquisition is working:
+
+<TerminalCommand ariaLabel="Command to verify CrowdSec metrics">
+```bash
+sudo cscli metrics
+```
+</TerminalCommand>
+
+You should see `/var/log/mikrotik.log` in the acquisition sources with parsed lines increasing as honeypot events occur.
+
+#### Real-World Results
+
+To give you an idea of what to expect, here are actual statistics from my home network—a MikroTik RB5009 behind a standard FTTH connection in Spain:
+
+<BarChart
+  title="Attack Distribution by Port"
+  data={[
+    { label: "Telnet (23)", value: 535 },
+    { label: "SSH (22)", value: 216 },
+    { label: "SMB (445)", value: 172 },
+    { label: "HTTP Alt (8080)", value: 106 },
+    { label: "RDP (3389)", value: 80 },
+    { label: "MSSQL (1433)", value: 63 },
+    { label: "HTTPS Alt (8443)", value: 51 },
+    { label: "MySQL (3306)", value: 49 },
+  ]}
+  showPercentage={true}
+  showValue={true}
+  colorScheme="gradient"
+  caption="Data collected from all time alerts on my home connection"
+  ariaLabel="Bar chart showing distribution of port scan attempts"
+/>
+
+<BarChart
+  title="Top Attacking Countries"
+  data={[
+    { label: "United States (US)", value: 484 },
+    { label: "Netherlands (NL)", value: 194 },
+    { label: "China (CN)", value: 127 },
+    { label: "Brazil (BR)", value: 81 },
+    { label: "Russia (RU)", value: 59 },
+    { label: "Bulgaria (BG)", value: 58 },
+    { label: "Germany (DE)", value: 50 },
+    { label: "India (IN)", value: 44 },
+  ]}
+  showPercentage={true}
+  showValue={true}
+  colorScheme="monochrome"
+  caption="Source countries of blocked IPs"
+  ariaLabel="Bar chart showing top attacking countries"
+/>
+
+<BarChart
+  title="Top Attacking Organizations (ASNs)"
+  data={[
+    { label: "DigitalOcean", value: 180 },
+    { label: "Google Cloud", value: 108 },
+    { label: "Microsoft", value: 83 },
+    { label: "Hurricane Electric", value: 80 },
+    { label: "Chinanet", value: 57 },
+  ]}
+  showPercentage={true}
+  showValue={true}
+  colorScheme="gradient"
+  caption="Top 5 networks originating attacks"
+  ariaLabel="Bar chart showing top attacking organizations"
+/>
+
+<Callout type="success" title="Every Scanner Blocked on First Attempt">
+Over **1,000 unique IPs** were detected and blocked in the last 24 hours. Each was immediately added to the MikroTik blacklist and registered in CrowdSec. The RAW table rule ensures these scanners cannot probe any other services—their very first reconnaissance packet is their last.
 </Callout>
 
 ---
@@ -656,43 +856,52 @@ Before considering your honeypot production-ready, verify it works correctly:
 ### Test Procedure
 
 1. **Add your test IP to watch** (optional):
-   ```
-   /log print follow where message~"HONEYPOT"
-   ```
+
+<Code lang="routeros" title="Watch honeypot logs">
+```routeros
+/log print follow where message~"HONEYPOT"
+```
+</Code>
 
 2. **From an IP NOT on your whitelist** (e.g., mobile data):
    - Try connecting to a trapped port: `telnet YOUR_WAN_IP 23`
    - Or attempt SSH: `ssh root@YOUR_WAN_IP`
 
 3. **Check the address list**:
-   ```
-   /ip firewall address-list print where list~"BlackList"
-   ```
-   Your test IP should appear with the timeout countdown.
+
+<Code lang="routeros" title="Check blacklisted IPs">
+```routeros
+/ip firewall address-list print where list~"BlackList"
+```
+</Code>
+
+Your test IP should appear with the timeout countdown.
 
 4. **Verify blocking works**:
    - Try to ping the router from the same IP
    - It should timeout (the RAW rule drops all traffic)
 
 5. **Clean up** (remove test IP):
-   ```
-   /ip firewall address-list remove [find address=YOUR_TEST_IP]
-   ```
+
+<Code lang="routeros" title="Remove test IP from blacklist">
+```routeros
+/ip firewall address-list remove [find address=YOUR_TEST_IP]
+```
+</Code>
 
 ---
 
 ## What's Next?
 
 You now have a self-defending router that:
-- ✅ Detects reconnaissance attempts in real-time
-- ✅ Logs attacker IPs with structured prefixes
-- ✅ Blocks attackers at the earliest possible point (RAW table)
-- ✅ Protects both IPv4 and IPv6
+- Detects reconnaissance attempts in real-time
+- Logs attacker IPs with structured prefixes
+- Blocks attackers at the earliest possible point (RAW table)
+- Protects both IPv4 and IPv6
+- Integrates with CrowdSec for community threat intelligence
 
-But this is just the beginning. Those logs contain valuable threat intelligence. In our upcoming guide, we'll explore how to **integrate with CrowdSec** to:
+Consider extending this setup by:
 
-1. Automatically contribute detections to the global community blocklist
-2. Receive proactive protection from attacks seen on other networks
-3. Visualize attacks on a real-time dashboard
-
-Stay tuned!
+1. **Reporting to [AbuseIPDB](https://www.abuseipdb.com/)** — Share threat intelligence with the broader security community
+2. **Building Grafana dashboards** — Visualize attack patterns, source countries, and targeted ports
+3. **Setting up alerts** — Get notified when specific ports are targeted or attack volume increases
