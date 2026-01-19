@@ -137,22 +137,25 @@ If your honeypot rules matched `established` connections, you would block legiti
 
 Our honeypot strategy has three phases:
 
-<Mermaid caption="Honeypot Detection Flow" maxWidth="400px">
+<Mermaid caption="Honeypot Detection Flow" maxWidth="550px">
 ```mermaid-render
 flowchart TD
     classDef warning fill:#e6a700,color:#000
     classDef danger fill:#c53030,color:#fff
     classDef success fill:#2d7d32,color:#fff
     
-    A[Internet Scanner] -->|SYN Packet| B{Is port trapped?}
-    B -->|No: Port 80/443| C["Allow - Web Server"]:::success
-    B -->|Yes: Port 22/3389/etc.| D["Honeypot Triggered"]:::warning
+    A[Internet Scanner] --> B{IP in Blacklist?}
+    B -->|Yes: RAW Table| C["DROP instantly"]:::danger
+    B -->|No| D{Is port trapped?}
     
-    D --> E["Log with prefix"]
-    D --> F["Add IP to BlackList"]
+    D -->|No: Port 80/443| E["Allow - Web Server"]:::success
+    D -->|Yes: Port 22/3389/etc.| F["Honeypot Triggered"]:::warning
     
-    F --> G["RAW Table Rule"]
-    G -->|All future packets| H["DROP instantly"]:::danger
+    F --> G["Log with prefix"]
+    G -.-> G2["Remote Syslog"]
+    
+    F --> H["Add IP to BlackList"]
+    H --> I["Drop current packet (Filter)"]:::danger
 ```
 </Mermaid>
 
