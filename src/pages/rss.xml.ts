@@ -1,6 +1,5 @@
 import { getImage } from "astro:assets";
 import { type CollectionEntry, getCollection, getEntry } from "astro:content";
-import { marked } from "marked";
 
 /**
  * Represents basic site metadata used for RSS feed generation.
@@ -33,50 +32,6 @@ const escapeXml = (unsafe: string) => {
     }
     return c;
   });
-};
-
-const renderContent = (post: CollectionEntry<"posts">, site: string) => {
-  let body = post.body ?? "";
-
-  // 1. Remove MDX imports/exports
-  body = body.replaceAll(/^import .*$/gm, "").replaceAll(/^export .*$/gm, "");
-
-  // 2. Simple component replacements for better RSS readability
-  // Callout -> Blockquote
-  body = body
-    .replaceAll(/<Callout[^>]*>/g, "<blockquote>")
-    .replaceAll("</Callout>", "</blockquote>");
-  // TerminalCommand -> Pre/Code (simplify)
-  body = body
-    .replaceAll(/<TerminalCommand[^>]*>/g, "")
-    .replaceAll("</TerminalCommand>", "");
-  // FileContent -> Div with label
-  body = body
-    .replaceAll(
-      /<FileContent[^>]*filename="([^"]*)"[^>]*>/g,
-      '<div style="margin-bottom:8px;"><strong>File: $1</strong></div>',
-    )
-    .replaceAll("</FileContent>", "");
-  // Remove other common UI components wrappers to let content show
-  body = body
-    .replaceAll(/<(Tabs|TabPanel|Collapsible|Mermaid|Table)[^>]*>/g, "")
-    .replaceAll(/<\/(Tabs|TabPanel|Collapsible|Mermaid|Table)>/g, "");
-
-  // 3. Render Markdown
-  // marked.parse is synchronous by default but returns Promise if async options are used.
-  // We use simple synchronous parsing here.
-  const html = marked.parse(body, { async: false });
-
-  // 4. Convert relative URLs to absolute
-  // Matches href="/..." or src="/..."
-  const absoluteHtml = html.replaceAll(
-    /(href|src)="(\/[^"]*)"/g,
-    (_, attr, url) => {
-      return `${attr}="${new URL(url, site).toString()}"`;
-    },
-  );
-
-  return absoluteHtml;
 };
 
 const generateRssItem = async (
@@ -137,8 +92,7 @@ const generateRssItem = async (
   // Add "Continue Reading" link to description/content
   // Some readers prefer 'content:encoded', others 'description'. We can populate both with the same summary + link.
   const continueLink = `<br/><br/><a href="${escapeXml(fullLink)}">Continue reading on jmrp.io &rarr;</a>`;
-  const renderedHtml = renderContent(post, site);
-  const finalContent = renderedHtml + continueLink;
+  const finalContent = escapeXml(description) + continueLink;
 
   return `
     <item>
