@@ -334,7 +334,9 @@ function getBarColor(index: number, item: BarData): string {
     color: var(--bar-value-color);
     white-space: nowrap;
     text-shadow: var(--bar-text-shadow);
-    background-color: rgb(0 0 0 / 40%);
+    /* Ensure contrast with a semi-transparent dark background box */
+    background-color: rgb(0 0 0 / 70%);
+    padding: 0.15rem 0.5rem;
     border-radius: 4px;
     opacity: 100%;
     transition: opacity 0.2s ease;
