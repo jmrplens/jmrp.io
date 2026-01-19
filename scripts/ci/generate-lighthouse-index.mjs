@@ -9,6 +9,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
+
 import { escapeHtml } from "../utils/html.mjs";
 
 const deployDir = process.argv[2] || "lh-deploy";
@@ -19,39 +20,57 @@ if (!fs.existsSync(deployDir)) {
   process.exit(1);
 }
 
-// Helper: Scan for all JSON reports
+/**
+ * Recursively scans a directory for Lighthouse JSON reports.
+ *
+ * @param dir - Directory to scan.
+ * @param fileList - Accumulated list of file paths.
+ * @returns Array of paths to JSON report files.
+ */
 function findReports(dir, fileList = []) {
-  const files = fs.readdirSync(dir);
-  files.forEach((file) => {
-    const filePath = path.join(dir, file);
-    const stat = fs.statSync(filePath);
-    if (stat.isDirectory()) {
-      findReports(filePath, fileList);
-    } else if (
-      file.endsWith(".json") &&
-      !file.includes("manifest") &&
-      !file.includes("links")
-    ) {
-      fileList.push(filePath);
+  try {
+    const files = fs.readdirSync(dir);
+    for (const file of files) {
+      try {
+        const filePath = path.join(dir, file);
+        const stat = fs.statSync(filePath);
+        if (stat.isDirectory()) {
+          findReports(filePath, fileList);
+        } else if (
+          file.endsWith(".json") &&
+          !file.includes("manifest") &&
+          !file.includes("links")
+        ) {
+          fileList.push(filePath);
+        }
+      } catch (error) {
+        console.warn(
+          `⚠️ Error processing file ${file} in ${dir}:`,
+          error.message,
+        );
+      }
     }
-  });
+  } catch (error) {
+    console.warn(`⚠️ Error reading directory ${dir}:`, error.message);
+  }
   return fileList;
 }
 
 const jsonFiles = findReports(deployDir);
 const reports = [];
 
-jsonFiles.forEach((filePath) => {
+for (const filePath of jsonFiles) {
   try {
-    const content = fs.readFileSync(filePath, "utf8");
+    const content = fs.readFileSync(filePath, "utf-8");
     const json = JSON.parse(content);
 
     const lowerPath = filePath.toLowerCase();
     let theme = "unknown";
-    if (lowerPath.includes("/light/") || lowerPath.includes("\\light\\"))
+    if (lowerPath.includes("/light/") || lowerPath.includes("\\light\\")) {
       theme = "light";
-    if (lowerPath.includes("/dark/") || lowerPath.includes("\\dark\\"))
+    } else if (lowerPath.includes("/dark/") || lowerPath.includes("\\dark\\")) {
       theme = "dark";
+    }
 
     if (json.lighthouseVersion && json.finalUrl) {
       let finalUrl = json.finalUrl;
@@ -60,8 +79,8 @@ jsonFiles.forEach((filePath) => {
         if (parsed.hostname === "localhost") {
           finalUrl = parsed.pathname;
         }
-      } catch (e) {
-        console.warn(`URL parsing failed for ${filePath}:`, e.message);
+      } catch (error) {
+        console.warn(`URL parsing failed for ${filePath}:`, error.message);
       }
 
       reports.push({
@@ -81,36 +100,67 @@ jsonFiles.forEach((filePath) => {
         },
       });
     }
-  } catch (e) {
-    console.warn(`Skipping: ${filePath} - ${e.message}`);
+  } catch (error) {
+    console.warn(`Skipping: ${filePath} - ${error.message}`);
   }
-});
+}
 
 // Grouping: URL -> FormFactor -> Theme -> Runs
 const grouped = {};
 
-reports.forEach((r) => {
+for (const r of reports) {
   if (!grouped[r.url])
     grouped[r.url] = {
-      mobile: { light: [], dark: [] },
-      desktop: { light: [], dark: [] },
+      mobile: { light: [], dark: [], unknown: [] },
+      desktop: { light: [], dark: [], unknown: [] },
     };
 
-  if (grouped[r.url]?.[r.formFactor]?.[r.theme]) {
+  // Warn if theme is unknown
+  if (r.theme === "unknown") {
+    console.warn(
+      `⚠️ Theme could not be determined for ${r.url} (${r.formFactor}). Please ensure directory structure includes '/light/' or '/dark/'.`,
+    );
+  }
+
+  // Warn about unexpected formFactor values that would be dropped
+  if (grouped[r.url] && !grouped[r.url][r.formFactor]) {
+    console.warn(
+      `⚠️ Unexpected formFactor "${r.formFactor}" for ${r.url}. Expected "mobile" or "desktop". Skipping report.`,
+    );
+  } else if (grouped[r.url]?.[r.formFactor]?.[r.theme]) {
     grouped[r.url][r.formFactor][r.theme].push(r);
   }
-});
+}
 
+/**
+ * Maps a numeric score to a CSS status class.
+ *
+ * @param score - Value from 0 to 1.
+ * @returns 'pass', 'avg', or 'fail'.
+ */
 function getScoreClass(score) {
   if (score >= 0.9) return "pass";
   if (score >= 0.5) return "avg";
   return "fail";
 }
 
+/**
+ * Formats a 0-1 score as a 0-100 percentage integer.
+ *
+ * @param score - Value from 0 to 1.
+ * @returns Integer from 0 to 100.
+ */
 function formatScore(score) {
   return Math.round(score * 100);
 }
 
+/**
+ * Renders a circular score badge HTML element.
+ *
+ * @param label - Category label (e.g. Perf).
+ * @param score - Value from 0 to 1.
+ * @returns HTML string for the badge.
+ */
 function renderScoreBadge(label, score) {
   const cls = getScoreClass(score);
   return `
@@ -121,11 +171,29 @@ function renderScoreBadge(label, score) {
   `;
 }
 
+/**
+ * Calculates the maximum score for a specific category across multiple runs.
+ *
+ * @param runList - List of run objects with scores.
+ * @param category - The category to extract (e.g. performance).
+ * @returns The maximum score found.
+ */
 function calculateMax(runList, category) {
   if (!runList || runList.length === 0) return 0;
-  return Math.max(...runList.map((r) => r.scores[category]));
+  const scores = runList
+    .map((r) => r.scores[category])
+    .filter((s) => Number.isFinite(s));
+  return scores.length > 0 ? Math.max(...scores) : 0;
 }
 
+/**
+ * Renders a list of individual test runs for a theme.
+ *
+ * @param title - Section title (e.g. Light Mode).
+ * @param runs - List of run objects.
+ * @param cats - Categories to display.
+ * @returns HTML string for the run list.
+ */
 function renderSubList(title, runs, cats) {
   if (runs.length === 0) return "";
   const runRows = runs
@@ -137,7 +205,7 @@ function renderSubList(title, runs, cats) {
         )
         .join("");
       return `
-              <a href="${run.relativePath}" class="run-item">
+              <a href="${escapeHtml(run.relativePath)}" class="run-item">
                   <span class="run-name">Run ${idx + 1}</span>
                   <div class="run-scores">${badges}</div>
                   <span class="run-arrow">→</span>
@@ -147,13 +215,13 @@ function renderSubList(title, runs, cats) {
     .join("");
 
   return `
-          <div class="theme-group">
-              <h5 class="theme-title">${title}</h5>
-              <div class="runs-list">
-                  ${runRows}
-              </div>
-          </div>
-      `;
+            <div class="theme-group">
+                <h5 class="theme-title">${escapeHtml(title)}</h5>
+                <div class="runs-list">
+                    ${runRows}
+                </div>
+            </div>
+        `;
 }
 
 const listItems = Object.entries(grouped)
@@ -175,7 +243,7 @@ const listItems = Object.entries(grouped)
 
       // Top-level max scores (Combined)
       const maxScores = {};
-      cats.forEach((c) => (maxScores[c] = calculateMax(allRuns, c)));
+      for (const c of cats) maxScores[c] = calculateMax(allRuns, c);
 
       return `
             <div class="device-card">
@@ -275,160 +343,62 @@ const htmlContent = `
         }
 
         .card-header {
-            padding: 1.25rem 1.5rem;
-            border-bottom: 1px solid var(--border-color);
-            background-color: var(--hover-bg);
-            display: flex;
-            flex-direction: column;
+            padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border-color);
+            background-color: var(--hover-bg); display: flex; flex-direction: column;
         }
 
         .url-path { font-size: 1.4rem; font-weight: 700; color: var(--primary); }
-        .url-full { font-size: 0.85rem; color: var(--text-muted); font-family: monospace; opacity: 0.8; }
-
         .devices-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 1px;
-            background-color: var(--border-color);
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1px; background-color: var(--border-color);
         }
 
-        .device-card {
-            background-color: var(--bg-card);
-        }
-
-        details > summary {
-            list-style: none;
-            cursor: pointer;
-            padding: 1.5rem;
-            transition: background 0.2s;
-            position: relative;
-        }
+        .device-card { background-color: var(--bg-card); }
+        details > summary { list-style: none; cursor: pointer; padding: 1.5rem; transition: background 0.2s; position: relative; }
         details > summary::-webkit-details-marker { display: none; }
         details > summary:hover { background-color: var(--hover-bg); }
 
-        .device-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-        }
-
-        .device-title {
-            font-size: 1.1rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: var(--text-main);
-        }
-
-        .device-summary {
-            display: flex;
-            justify-content: center;
-            gap: 1.5rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .device-hint {
-            text-align: center;
-            font-size: 0.75rem;
-            color: var(--primary);
-            font-weight: 500;
-            margin-top: 1rem;
-            opacity: 0;
-            transition: opacity 0.2s;
-        }
+        .device-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+        .device-title { font-size: 1.1rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-main); }
+        .device-summary { display: flex; justify-content: center; gap: 1.5rem; margin-bottom: 0.5rem; }
+        .device-hint { text-align: center; font-size: 0.75rem; color: var(--primary); font-weight: 500; margin-top: 1rem; opacity: 0; transition: opacity 0.2s; }
         details > summary:hover .device-hint { opacity: 1; }
 
-        /* Badges */
-        .score-badge {
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            width: 60px; height: 60px; border-radius: 50%;
-            border: 4px solid transparent; font-weight: bold;
-        }
+        .score-badge { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 60px; height: 60px; border-radius: 50%; border: 4px solid transparent; font-weight: bold; }
         .score-badge.pass { border-color: var(--score-pass); color: var(--score-pass); }
         .score-badge.avg { border-color: var(--score-avg); color: var(--score-avg); }
         .score-badge.fail { border-color: var(--score-fail); color: var(--score-fail); }
         .score-value { font-size: 1.3rem; line-height: 1; }
         .score-label { font-size: 0.6rem; text-transform: uppercase; margin-top: 3px; color: var(--text-muted); }
 
-        .toggle-icon {
-            font-size: 0.8rem;
-            color: var(--text-muted);
-            transition: transform 0.2s;
-        }
+        .toggle-icon { font-size: 0.8rem; color: var(--text-muted); transition: transform 0.2s; }
         details[open] .toggle-icon { transform: rotate(180deg); }
         details[open] .device-hint { display: none; }
 
-        /* Expanded Content */
-        .device-details-content {
-            padding: 0 1.5rem 1.5rem;
-            border-top: 1px solid var(--border-color);
-            background-color: var(--hover-bg);
-            animation: slideDown 0.2s ease-out;
-        }
-
+        .device-details-content { padding: 0 1.5rem 1.5rem; border-top: 1px solid var(--border-color); background-color: var(--hover-bg); animation: slideDown 0.2s ease-out; }
         @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 
         .theme-group { margin-top: 1.5rem; }
-        .theme-title {
-            font-size: 0.85rem;
-            font-weight: 700;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin: 0 0 0.75rem;
-            padding-bottom: 0.25rem;
-            border-bottom: 2px solid var(--border-color);
-            display: inline-block;
-        }
-
+        .theme-title { font-size: 0.85rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin: 0 0 0.75rem; padding-bottom: 0.25rem; border-bottom: 2px solid var(--border-color); display: inline-block; }
         .runs-list { display: flex; flex-direction: column; gap: 0.5rem; }
-
-        .run-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0.75rem 1rem;
-            background: var(--bg-card);
-            border-radius: 8px;
-            text-decoration: none;
-            color: inherit;
-            border: 1px solid var(--border-color);
-            transition: all 0.1s;
-        }
-        .run-item:hover {
-            transform: translateX(4px);
-            border-color: var(--primary);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        }
-
+        .run-item { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 1rem; background: var(--bg-card); border-radius: 8px; text-decoration: none; color: inherit; border: 1px solid var(--border-color); transition: all 0.1s; }
+        .run-item:hover { transform: translateX(4px); border-color: var(--primary); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         .run-name { font-size: 0.85rem; font-weight: 600; color: var(--text-muted); width: 60px; }
         .run-scores { display: flex; gap: 0.75rem; flex: 1; justify-content: center; }
-        
-        .mini-score {
-            display: inline-flex; align-items: center; justify-content: center;
-            width: 32px; height: 32px; border-radius: 50%;
-            font-size: 0.8rem; font-weight: 700;
-        }
+        .mini-score { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; font-size: 0.8rem; font-weight: 700; }
         .mini-score.pass { background-color: var(--score-pass); color: #fff; }
         .mini-score.avg { background-color: var(--score-avg); color: #fff; }
         .mini-score.fail { background-color: var(--score-fail); color: #fff; }
-
         .run-arrow { color: var(--primary); font-weight: bold; }
 
-        @media (max-width: 650px) {
-            .devices-grid { grid-template-columns: 1fr; }
-            .url-path { font-size: 1.2rem; }
-            .run-item { padding: 0.5rem; }
-            .mini-score { width: 28px; height: 28px; font-size: 0.75rem; }
-        }
+        @media (max-width: 650px) { .devices-grid { grid-template-columns: 1fr; } .url-path { font-size: 1.2rem; } .run-item { padding: 0.5rem; } .mini-score { width: 28px; height: 28px; font-size: 0.75rem; } }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>🔭 Lighthouse Reports Dashboard</h1>
         <p style="text-align: center; color: var(--text-muted); margin-top: -1.5rem; margin-bottom: 3rem;">
-            Generated on ${new Date().toLocaleString()} <br/>
+            Generated on ${new Date().toISOString()} <br/>
             <small>Scores represent the <strong>maximum value</strong> obtained across runs.</small>
         </p>
         

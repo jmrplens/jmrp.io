@@ -6,15 +6,17 @@
  * to help maintain a lightweight and high-performance site.
  */
 
-import fs from "node:fs";
 import { execSync } from "node:child_process";
+import fs from "node:fs";
 
 const generateReport = () => {
   const findFiles = (pattern) => {
     try {
       const output = execSync(
         `find dist -type f ${pattern} 2>/dev/null || echo ""`,
-        { encoding: "utf-8" },
+        {
+          encoding: "utf-8",
+        },
       ).trim();
       return output ? output.split("\n") : [];
     } catch {
@@ -26,7 +28,9 @@ const generateReport = () => {
     try {
       const output = execSync(
         `find dist -type f 2>/dev/null | grep -iE "${pattern}" || echo ""`,
-        { encoding: "utf-8" },
+        {
+          encoding: "utf-8",
+        },
       ).trim();
       return output ? output.split("\n") : [];
     } catch {
@@ -203,16 +207,39 @@ const generateReport = () => {
                   ...data.png.map((i) => ({ ...i, f: "PNG" })),
                   ...data.jpg.map((i) => ({ ...i, f: "JPG" })),
                 ]
-                  .sort((_, b) => (b.size.includes("M") ? 1 : -1))
-                  .map(
-                    (img) => `
+                  .sort((a, b) => {
+                    const getBytes = (s) => {
+                      if (!s) return 0;
+                      const trimmed = s.trim();
+                      if (trimmed === "N/A") return 0;
+                      const num = Number.parseFloat(trimmed);
+                      if (Number.isNaN(num)) return 0;
+                      const upper = trimmed.toUpperCase();
+                      if (upper.includes("G")) return num * 1024 * 1024 * 1024;
+                      if (upper.includes("M")) return num * 1024 * 1024;
+                      if (upper.includes("K")) return num * 1024;
+                      return num;
+                    };
+                    return getBytes(b.size) - getBytes(a.size);
+                  })
+                  .map((img) => {
+                    const sizeStr =
+                      img.size !== undefined && img.size !== ""
+                        ? img.size
+                        : "N/A";
+                    const sizeUpper = sizeStr.toUpperCase();
+                    const isLarge =
+                      sizeUpper.includes("G") ||
+                      sizeUpper.includes("M") ||
+                      (sizeUpper.includes("K") &&
+                        Number.parseInt(sizeStr) > 500);
+                    return `
                   <tr>
                     <td class="path-cell">${img.path}</td>
                     <td><span class="badge ${img.f === "WebP" ? "badge-webp" : "badge-legacy"}">${img.f}</span></td>
-                    <td class="size-cell ${img.size.includes("K") && Number.parseInt(img.size) > 500 ? "size-large" : ""}"> ${img.size}</td>
-                  </tr>
-                `,
-                  )
+                    <td class="size-cell ${isLarge ? "size-large" : ""}"> ${img.size}</td>
+                  </tr>`;
+                  })
                   .join("")}
                 ${totalImages === 0 ? '<tr><td colspan="3" style="text-align:center; padding: 2rem;">No images found in dist/</td></tr>' : ""}
             </tbody>

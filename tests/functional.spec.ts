@@ -1,41 +1,32 @@
-import { test, expect } from "@playwright/test";
-import { getSitemapUrls } from "./utils";
-
-function isCloudflareInsightsError(text: string): boolean {
-  // Extract potential URLs from the console message and check their hostnames.
-  const urlPattern = /\bhttps?:\/\/[^\s"']+/g;
-  const matches = text.match(urlPattern);
-  if (!matches) {
-    return false;
-  }
-  for (const candidate of matches) {
-    try {
-      const url = new URL(candidate);
-      const host = url.hostname.toLowerCase();
-      if (
-        host === "cloudflareinsights.com" ||
-        host.endsWith(".cloudflareinsights.com")
-      ) {
-        return true;
-      }
-    } catch {
-      // Ignore parse errors and continue checking other candidates.
-    }
-  }
-  return false;
-}
-
 /**
- * Functional Tests
- * Dynamically generated from the production sitemap.
- * Ensures all pages are accessible and have core layout elements.
+ * Functional Test Suite
+ *
+ * Site-wide functionality and quality checks:
+ * - Page load verification (200 status, no console errors)
+ * - Core layout elements (header, footer present)
+ * - Interactive features (theme toggle)
+ * - External link security (rel="noopener noreferrer")
+ * - Image accessibility (alt attributes)
+ *
+ * Dynamically tests all pages discovered from the sitemap.
  */
+
+import { expect, test } from "@playwright/test";
+
+import { getSitemapUrls, shouldIgnoreError } from "./utils";
+
+let cachedSitemapUrls: string[] | null = null;
+
+async function getCachedSitemapUrls() {
+  cachedSitemapUrls ??= await getSitemapUrls();
+  return cachedSitemapUrls;
+}
 
 test.describe("Site-wide Functional Checks", () => {
   let urls: string[] = [];
 
   test.beforeAll(async () => {
-    urls = await getSitemapUrls();
+    urls = await getCachedSitemapUrls();
   });
 
   // Dynamic tests for every page in the sitemap
@@ -49,15 +40,10 @@ test.describe("Site-wide Functional Checks", () => {
     page.on("console", (msg) => {
       if (msg.type() === "error") {
         const text = msg.text();
-        // Ignore known CORS/network errors from Cloudflare Analytics
-        if (
-          isCloudflareInsightsError(text) ||
-          text.includes("Access-Control-Allow-Origin") ||
-          text.includes("net::ERR_FAILED")
-        ) {
-          return;
+        // Use shared filter to ignore known errors
+        if (!shouldIgnoreError(text)) {
+          consoleErrors.push(`[${msg.type()}] ${text}`);
         }
-        consoleErrors.push(`[${msg.type()}] ${text}`);
       }
     });
 
@@ -99,19 +85,118 @@ test.describe("Interactive Features", () => {
     // Force Light Mode
     await page.evaluate(() => {
       document.documentElement.dataset.theme = "light";
-      document.documentElement.classList.add("light-mode");
-      document.documentElement.classList.remove("dark-mode");
     });
     await expect(html).toHaveAttribute("data-theme", "light");
 
     // Click to Dark Mode
     await toggle.click();
     await expect(html).toHaveAttribute("data-theme", "dark");
-    await expect(html).toHaveClass(/dark-mode/);
 
     // Click back to Light Mode
     await toggle.click();
     await expect(html).toHaveAttribute("data-theme", "light");
-    await expect(html).toHaveClass(/light-mode/);
+  });
+
+  test("mobile menu preserves scroll position on open/close", async ({
+    page,
+  }) => {
+    // Set mobile viewport
+    await page.setViewportSize({ width: 375, height: 667 });
+
+    // Use a long page (blog post) to test scroll behavior
+    await page.goto("/blog/003-implementing-content-security-policy-nginx/");
+
+    // Scroll down to a specific position
+    const targetScrollY = 500;
+    await page.evaluate((y) => window.scrollTo(0, y), targetScrollY);
+
+    // Wait for scroll to complete and verify position
+    await page.waitForFunction(
+      (y) => Math.abs(window.scrollY - y) < 10,
+      targetScrollY,
+    );
+
+    const scrollBeforeOpen = await page.evaluate(() => window.scrollY);
+    expect(scrollBeforeOpen).toBeGreaterThan(400);
+
+    // Open the mobile menu
+    const menuToggle = page.locator("#menu-toggle");
+    await menuToggle.click();
+    await expect(page.locator("#nav-links")).toHaveClass(/open/);
+    await expect(page.locator("body")).toHaveClass(/menu-open/);
+
+    // Verify body has position:fixed (scroll lock active)
+    const bodyPosition = await page.evaluate(() =>
+      getComputedStyle(document.body).getPropertyValue("position"),
+    );
+    expect(bodyPosition).toBe("fixed");
+
+    // Close the menu
+    await page.keyboard.press("Escape");
+    await expect(page.locator("#nav-links")).not.toHaveClass(/open/);
+    await expect(page.locator("body")).not.toHaveClass(/menu-open/);
+
+    // Verify scroll position is restored (within tolerance for sub-pixel differences)
+    const scrollAfterClose = await page.evaluate(() => window.scrollY);
+    expect(Math.abs(scrollAfterClose - scrollBeforeOpen)).toBeLessThan(10);
+  });
+});
+
+test.describe("Security & Best Practices", () => {
+  test("external links with target=_blank have secure rel attributes", async ({
+    page,
+  }) => {
+    const urls = await getCachedSitemapUrls();
+
+    for (const url of urls) {
+      await test.step(`Checking external links: ${url}`, async () => {
+        await page.goto(url);
+
+        // Find all external links with target="_blank"
+        const externalBlankLinks = page.locator(
+          'a[target="_blank"][href^="http"]:not([href*="jmrp.io"]):not([href*="localhost"])',
+        );
+        const count = await externalBlankLinks.count();
+
+        for (let i = 0; i < count; i++) {
+          const link = externalBlankLinks.nth(i);
+          const href = await link.getAttribute("href");
+          const rel = await link.getAttribute("rel");
+
+          // If rel is missing or doesn't contain both noopener and noreferrer, track the issue using soft assertions
+          // Using regex with positive lookaheads to require both tokens in any order
+          expect
+            .soft(rel, `${url}: ${href} is missing rel="noopener noreferrer"`)
+            .toMatch(/(?=.*noopener)(?=.*noreferrer)/);
+        }
+      });
+    }
+
+    // Issues are reported via expect.soft above
+  });
+
+  test("images have alt attributes", async ({ page }) => {
+    const urls = await getCachedSitemapUrls();
+
+    for (const url of urls) {
+      await test.step(`Checking image alt text: ${url}`, async () => {
+        await page.goto(url);
+
+        // Find all images (excluding decorative icons in buttons)
+        const images = page.locator('img:not([role="presentation"])');
+        const count = await images.count();
+
+        for (let i = 0; i < count; i++) {
+          const img = images.nth(i);
+          const alt = await img.getAttribute("alt");
+          const src = await img.getAttribute("src");
+
+          // Images should have alt attribute (can be empty for decorative)
+          expect
+            .soft(alt !== null, `Image ${src} should have an alt attribute`)
+            .toBe(true);
+        }
+      });
+    }
   });
 });

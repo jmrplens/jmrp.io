@@ -1,22 +1,33 @@
-import { defineCollection, z } from "astro:content";
+import { glob } from "astro/loaders";
+import { z } from "astro/zod";
+import { defineCollection } from "astro:content";
+
+import { stripExtension } from "./utils/content";
 
 /**
  * Configuration for 'posts' content collection.
  * Defines the schema for blog posts (MDX files).
  */
 const posts = defineCollection({
-  type: "content",
+  loader: glob({
+    // Note: "**/[^_]*.{md,mdx}" intentionally excludes files starting with "_"
+    // so underscore-prefixed Markdown/MDX files (e.g. partials) are not loaded into this collection.
+    pattern: "**/[^_]*.{md,mdx}",
+    base: "./src/content/posts",
+    generateId: ({ entry }) => stripExtension(entry),
+  }),
   schema: ({ image }) =>
     z.object({
-      title: z.string(), // Post title (required)
-      publishedDate: z.coerce.date(), // Publication date
-      updatedDate: z.coerce.date().optional(), // Last updated date
-      draft: z.boolean().default(false), // Draft status, defaults to false
-      description: z.string().optional(), // SEO description
-      author: z.string().optional(), // Author name (defaults to site author)
-      authorEmail: z.string().email().optional(), // Author email for RSS feed
-      coverImage: image().optional(), // Cover image URL or path
-      tags: z.array(z.string()).optional(), // List of tags/categories
+      title: z.string(),
+      slug: z.string(),
+      publishedDate: z.coerce.date(),
+      updatedDate: z.coerce.date().optional(),
+      draft: z.boolean().default(false),
+      description: z.string().optional(),
+      author: z.string().optional(),
+      authorEmail: z.email().optional(),
+      coverImage: image().optional(),
+      tags: z.array(z.string()).default([]),
     }),
 });
 
@@ -25,18 +36,62 @@ const posts = defineCollection({
  * Includes general site settings and social media information.
  */
 const site_config = defineCollection({
-  type: "data",
-  schema: z.union([
-    // Site Config
+  loader: glob({
+    pattern: "**/*.yaml",
+    base: "./src/content/site_config",
+    generateId: ({ entry }) => stripExtension(entry),
+  }),
+  schema: z.discriminatedUnion("type", [
+    /**
+     * Site Config Schema (site.yaml)
+     * Core site metadata: title, description, navigation, hero section.
+     */
     z.object({
+      type: z.literal("site"),
       title: z.string(),
       description: z.string(),
       author: z.string(),
-      url: z.string(),
+      url: z.url(),
       keywords: z.string(),
       fediverse_creator: z.string(),
       locale: z.string(),
-      type: z.string(),
+      name: z.string().optional(),
+      jobTitle: z.string().optional(),
+      social: z
+        .array(
+          z.object({
+            link: z.string(),
+            icon: z.string().optional(),
+            label: z.string().optional(),
+          }),
+        )
+        .optional(),
+      // Person schema defaults for JSON-LD
+      person: z
+        .object({
+          name: z.string(),
+          jobTitle: z.string(),
+          worksFor: z.object({
+            name: z.string(),
+            url: z.url().optional(),
+          }),
+        })
+        .optional(),
+      // Social links for JSON-LD sameAs and dynamic rendering
+      social_links: z
+        .array(
+          z.object({
+            name: z.string(),
+            url: z.url(),
+            icon: z.string().optional(),
+            rel: z.string().optional(),
+          }),
+        )
+        .optional(),
+      // 'type' is now the discriminator, removing the generic string field if it was meant for something else,
+      // but based on context 'type: "site"' is what we want.
+      // If the original 'type' field held other data, we'd need to rename the discriminator,
+      // but usually 'type' works well. The original file had `type: z.string()` in the first object.
       theme_color: z.string(),
       background_color: z.string().optional(),
       twitter_creator: z.string(),
@@ -57,29 +112,31 @@ const site_config = defineCollection({
         )
         .optional(),
     }),
-    // Socials Config
-    z
-      .object({
-        github_username: z.string().optional(),
-        linkedin_username: z.string().optional(),
-        mastodon_username: z.string().optional(),
-        scholar_userid: z.string().optional(),
-        matrix_id: z.string().optional(),
-        work_url: z.string().optional(),
-        custom_social: z
-          .array(
-            z.object({
-              title: z.string(),
-              url: z.string(),
-              icon: z.string().optional(),
-              icon_name: z.string().optional(),
-              icon_light: z.string().optional(),
-              icon_dark: z.string().optional(),
-            }),
-          )
-          .optional(),
-      })
-      .catchall(z.any()),
+    /**
+     * Socials Config Schema (socials.yaml)
+     * Social media usernames and custom social links.
+     */
+    z.object({
+      type: z.literal("socials"),
+      github_username: z.string().optional(),
+      linkedin_username: z.string().optional(),
+      mastodon_username: z.string().optional(),
+      scholar_userid: z.string().optional(),
+      matrix_id: z.string().optional(),
+      work_url: z.url().optional(),
+      custom_social: z
+        .array(
+          z.object({
+            title: z.string(),
+            url: z.url(),
+            icon: z.string().optional(),
+            icon_name: z.string().optional(),
+            icon_light: z.string().optional(),
+            icon_dark: z.string().optional(),
+          }),
+        )
+        .optional(),
+    }),
   ]),
 });
 
@@ -139,10 +196,10 @@ const CVSkillGroup = z.object({
 /** Schema for a certificate or award. */
 const CVCertificateItem = z.object({
   name: z.string(),
-  school: z.string(),
-  time: z.string(),
-  link: z.string(),
-  linkname: z.string(),
+  school: z.string().optional(),
+  time: z.string().optional(),
+  link: z.string().optional(),
+  linkname: z.string().optional(),
 });
 
 /** Schema for a grouped collection of certificates. */
@@ -157,9 +214,13 @@ const CVCertificateGroup = z.object({
  * Defines the complex structure for the multi-section resume.
  */
 const cv = defineCollection({
-  type: "data",
+  loader: glob({
+    pattern: "**/*.yaml",
+    base: "./src/content/cv",
+    generateId: ({ entry }) => stripExtension(entry),
+  }),
   schema: z.array(
-    z.union([
+    z.discriminatedUnion("type", [
       z.object({
         title: z.string(),
         type: z.literal("map"),
@@ -189,17 +250,20 @@ const cv = defineCollection({
  * Stores co-author mapping and other publication-related metadata.
  */
 const publications_data = defineCollection({
-  type: "data",
+  loader: glob({
+    pattern: "**/*.yaml",
+    base: "./src/content/publications_data",
+    generateId: ({ entry }) => stripExtension(entry),
+  }),
   schema: z.record(
     z.string(),
     z.array(
       z.object({
         firstname: z.array(z.string()),
-        url: z.string(),
+        url: z.url(),
       }),
     ),
   ),
 });
 
-// Export collections variable to register them with Astro
 export const collections = { posts, site_config, cv, publications_data };

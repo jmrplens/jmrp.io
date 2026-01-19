@@ -1,7 +1,15 @@
-import { getEntry, type CollectionEntry } from "astro:content";
+/**
+ * CV Data Utilities
+ *
+ * Functions for retrieving and typing the Curriculum Vitae data
+ * from the content collection.
+ */
 
+import type { CollectionEntry } from "astro:content";
+import { getEntry } from "astro:content";
+
+/** Type alias for the data returned by the CV content collection. */
 export type CVData = CollectionEntry<"cv">["data"];
-export type CVSection = CVData[number];
 
 /**
  * Reads and parses the CV data from the YAML file.

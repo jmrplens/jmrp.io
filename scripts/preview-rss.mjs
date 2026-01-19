@@ -8,14 +8,81 @@
  * Usage: node scripts/preview-rss.mjs (requires dist/rss.xml to exist)
  */
 
-import Parser from "rss-parser";
 import fs from "node:fs";
 import path from "node:path";
+
+import Parser from "rss-parser";
+
 import { escapeHtml } from "./utils/html.mjs";
 
 const RSS_FILE = "dist/rss.xml";
 const OUTPUT_FILE = "dist/rss-preview.html";
+const DIST_DIR = "dist";
 
+/**
+ * Converts an image URL to a base64 data URI.
+ * Reads the image from the local dist folder.
+ *
+ * @param {string} imageUrl - The image URL to convert
+ * @returns {string} The base64 data URI or original URL if conversion fails
+ */
+function embedImage(imageUrl) {
+  try {
+    // Support absolute URLs and root-relative paths
+    const pathname = imageUrl.startsWith("/")
+      ? imageUrl
+      : new URL(imageUrl).pathname;
+
+    // Normalize and prevent traversal out of DIST_DIR
+    // Remove leading slashes/dots to make it a clean relative path
+    const safeRel = path
+      .normalize(pathname)
+      .replace(/^(\.\.[/\\])+/, "")
+      .replace(/^[/\\]+/, "");
+    const localPath = path.resolve(DIST_DIR, safeRel);
+
+    // Ensure we are still inside the dist directory
+    const distPath = path.resolve(DIST_DIR);
+    if (!localPath.startsWith(distPath + path.sep) && localPath !== distPath) {
+      return imageUrl;
+    }
+
+    if (fs.existsSync(localPath)) {
+      const imageBuffer = fs.readFileSync(localPath);
+      const base64 = imageBuffer.toString("base64");
+      const ext = path.extname(localPath).toLowerCase().slice(1);
+      const mimeTypes = {
+        jpg: "image/jpeg",
+        jpeg: "image/jpeg",
+        jfif: "image/jpeg",
+        png: "image/png",
+        gif: "image/gif",
+        webp: "image/webp",
+        svg: "image/svg+xml",
+        avif: "image/avif",
+        ico: "image/x-icon",
+        bmp: "image/bmp",
+      };
+      const mimeType = mimeTypes[ext];
+      if (!mimeType) {
+        console.warn(
+          `Unknown image extension "${ext}" for ${imageUrl}, using fallback image/jpeg`,
+        );
+      }
+      return `data:${mimeType || "image/jpeg"};base64,${base64}`;
+    }
+  } catch (error) {
+    // URL parsing failed or other error, return original
+    console.warn(`Failed to embed image ${imageUrl}:`, error.message);
+  }
+  return imageUrl;
+}
+
+/**
+ * Generates an HTML preview from the RSS XML file.
+ *
+ * @returns {Promise<void>} Resolves when the preview is generated.
+ */
 async function generatePreview() {
   if (!fs.existsSync(RSS_FILE)) {
     console.error(`Error: File ${RSS_FILE} not found. Run 'pnpm build' first.`);
@@ -113,9 +180,13 @@ async function generatePreview() {
         .map((item) => {
           const content =
             item["content:encoded"] || item.content || item.description || "";
-          const enclosure = item.enclosure
-            ? `<img src="${item.enclosure.url}" alt="Cover Image" style="width:100%; max-height: 400px; object-fit: cover; border-radius: 8px; margin-bottom: 20px;">`
-            : "";
+
+          // Embed the enclosure image as base64
+          let enclosure = "";
+          if (item.enclosure?.url) {
+            const embeddedUrl = embedImage(item.enclosure.url);
+            enclosure = `<img src="${escapeHtml(embeddedUrl)}" alt="Cover Image" style="width:100%; max-height: 400px; object-fit: cover; border-radius: 8px; margin-bottom: 20px;">`;
+          }
 
           return `
         <article class="rss-item">
@@ -146,7 +217,7 @@ async function generatePreview() {
 
 try {
   await generatePreview();
-} catch (err) {
-  console.error(err);
+} catch (error) {
+  console.error(error);
   process.exit(1);
 }

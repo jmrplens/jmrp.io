@@ -16,10 +16,16 @@ if (!fs.existsSync(lhDir)) {
   process.exit(0);
 }
 
-// Recursive scan
+/**
+ * Recursively scans a directory for Lighthouse JSON reports.
+ *
+ * @param dir - Directory to scan.
+ * @param fileList - Accumulated list of file paths.
+ * @returns Array of paths to JSON report files.
+ */
 function findReports(dir, fileList = []) {
   const files = fs.readdirSync(dir);
-  files.forEach((file) => {
+  for (const file of files) {
     const filePath = path.join(dir, file);
     const stat = fs.statSync(filePath);
     if (stat.isDirectory()) {
@@ -31,19 +37,19 @@ function findReports(dir, fileList = []) {
     ) {
       fileList.push(filePath);
     }
-  });
+  }
   return fileList;
 }
 
 const files = findReports(lhDir);
 const results = {};
 
-files.forEach((filePath) => {
+for (const filePath of files) {
   try {
-    const content = fs.readFileSync(filePath, "utf8");
+    const content = fs.readFileSync(filePath, "utf-8");
     const json = JSON.parse(content);
 
-    if (!json.finalUrl) return;
+    if (!json.finalUrl) continue;
 
     // Normalize URL
     let url = json.finalUrl;
@@ -52,9 +58,9 @@ files.forEach((filePath) => {
       if (parsed.hostname === "localhost") {
         url = parsed.pathname || "/";
       }
-    } catch (e) {
+    } catch (error) {
       // Fallback to original URL if parsing fails
-      console.warn(`URL parsing failed for ${filePath}:`, e.message);
+      console.warn(`URL parsing failed for ${filePath}:`, error.message);
     }
 
     const formFactor = json.configSettings?.formFactor || "mobile";
@@ -76,16 +82,28 @@ files.forEach((filePath) => {
 
     if (!results[url]) results[url] = {};
     if (!results[url][theme]) results[url][theme] = { mobile: [], desktop: [] };
-    if (results[url][theme][formFactor]) {
-      results[url][theme][formFactor].push(scores);
-    }
-  } catch (e) {
-    // Skip invalid files
-    console.warn(`Failed to process ${filePath}:`, e.message);
-  }
-});
 
-// Calculate maximums per category and then average those maximums
+    // Initialize formFactor array if it doesn't exist (for unexpected values)
+    if (!results[url][theme][formFactor]) {
+      console.warn(
+        `Unexpected formFactor "${formFactor}" for ${url} (${theme}). Initializing empty array.`,
+      );
+      results[url][theme][formFactor] = [];
+    }
+
+    results[url][theme][formFactor].push(scores);
+  } catch (error) {
+    // Skip invalid files
+    console.warn(`Failed to process ${filePath}:`, error.message);
+  }
+}
+
+/**
+ * Aggregates scores from a list of runs by taking the maximum of each category.
+ *
+ * @param list - Array of score objects.
+ * @returns The average of the maximum category scores.
+ */
 const getAggregatedScore = (list) => {
   if (!list || list.length === 0) return null;
 
@@ -106,6 +124,12 @@ const PAGE_NAMES = {
   "/blog/": "Blog",
 };
 
+/**
+ * Formats a numeric score into a string with a colored emoji badge.
+ *
+ * @param avg - The average score (0-100).
+ * @returns Formatted HTML string.
+ */
 const formatScore = (avg) => {
   if (avg === null) return "—";
   let icon;

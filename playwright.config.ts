@@ -17,13 +17,15 @@ export default defineConfig({
     baseURL: "http://localhost:4321",
     trace: "on-first-retry",
     screenshot: "only-on-failure",
+    permissions: ["clipboard-read", "clipboard-write"],
   },
 
   projects: [
     {
       name: "functional",
       use: { ...devices["Desktop Chrome"] },
-      testMatch: /functional\.spec\.ts|integration\.spec\.ts|seo\.spec\.ts/,
+      testMatch:
+        /functional\.spec\.ts|integration\.spec\.ts|seo\.spec\.ts|prerender\.spec\.ts|security\.spec\.ts/,
     },
     {
       name: "mobile-functional",
@@ -34,7 +36,7 @@ export default defineConfig({
       name: "accessibility",
       use: { ...devices["Desktop Chrome"] },
       testMatch: /accessibility\.spec\.ts/,
-      timeout: 60000, // 60 seconds per test for accessibility scanning
+      timeout: 60_000, // 60 seconds per test for accessibility scanning
     },
   ],
 

@@ -16,7 +16,7 @@ const getUrls = () => {
       ];
     }
 
-    const content = fs.readFileSync(sitemapPath, "utf8");
+    const content = fs.readFileSync(sitemapPath, "utf-8");
     let urls = [];
     const regex = /<loc>(.*?)<\/loc>/g;
     let match;
@@ -42,8 +42,8 @@ const getUrls = () => {
       `📄 Found ${urls.length} optimized pages in sitemap for Lighthouse analysis.`,
     );
     return urls;
-  } catch (e) {
-    console.error("❌ Error parsing sitemap for URLs:", e);
+  } catch (error) {
+    console.error("❌ Error parsing sitemap for URLs:", error);
     return ["http://localhost/"];
   }
 };
@@ -56,6 +56,9 @@ module.exports = {
       numberOfRuns: 3,
       outputDir: "lighthouse-results",
       settings: {
+        chromeFlags: process.env.CI
+          ? ["--headless", "--no-sandbox"]
+          : ["--headless"],
         formFactor: process.env.FORM_FACTOR || "mobile",
         throttlingMethod: "simulate",
         throttling: {

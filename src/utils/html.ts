@@ -1,5 +1,5 @@
-import sanitizeHtml from "sanitize-html";
 import he from "he";
+import sanitizeHtml from "sanitize-html";
 
 /**
  * Strips all HTML tags from a string to produce plain text.
@@ -18,11 +18,81 @@ export function stripHtml(html: string | undefined | null): string {
 
 /**
  * Sanitizes HTML to allow only safe tags (basic formatting).
- * Useful if we ever need to render user content safely, though
- * for static site config we often trust the input.
+ * Explicitly configured with a safe allowlist for better maintainability.
+ * Handles null/undefined inputs gracefully.
  */
-export function sanitize(html: string): string {
-  return sanitizeHtml(html);
+export function sanitize(html: string | undefined | null): string {
+  if (!html) return "";
+  return sanitizeHtml(html, {
+    allowedTags: [
+      "b",
+      "i",
+      "em",
+      "strong",
+      "a",
+      "p",
+      "br",
+      "ul",
+      "ol",
+      "li",
+      "code",
+      "span",
+      "cite",
+      "sub",
+      "sup",
+      "small",
+    ],
+    allowedAttributes: {
+      a: [
+        "href",
+        "name",
+        "target",
+        "rel",
+        "title",
+        "aria-label",
+        "aria-hidden",
+        "aria-labelledby",
+      ],
+      span: ["class", "title", "aria-label"],
+      cite: ["title"],
+    },
+    // Ensure only safe protocols are used
+    allowedSchemes: ["http", "https", "mailto", "tel"],
+    // Enable protocol-relative URLs (//example.com)
+    allowProtocolRelative: true,
+    // Automatically add security attributes to links
+    transformTags: {
+      a: (tagName, attribs) => {
+        // Check for external links including protocol-relative URLs
+        const isExternal =
+          (attribs.href &&
+            (attribs.href.startsWith("http") ||
+              attribs.href.startsWith("//"))) ||
+          attribs.target === "_blank";
+
+        if (isExternal) {
+          // Merge rel tokens instead of overwriting
+          const existingRel = attribs.rel || "";
+          const relTokens = new Set(
+            existingRel.split(/\s+/).filter((t) => t.length > 0),
+          );
+          relTokens.add("noopener");
+          relTokens.add("noreferrer");
+          const mergedRel = [...relTokens].join(" ");
+
+          return {
+            tagName,
+            attribs: {
+              ...attribs,
+              target: "_blank",
+              rel: mergedRel,
+            },
+          };
+        }
+        return { tagName, attribs };
+      },
+    },
+  });
 }
 
 /**
@@ -41,4 +111,22 @@ export function escapeHtml(str: string | undefined | null): string {
 export function decodeHtml(str: string | undefined | null): string {
   if (typeof str !== "string") return "";
   return he.decode(str);
+}
+
+/**
+ * Safely stringifies an object for use in a <script type="application/ld+json"> tag.
+ * Prevents XSS by escaping the < and > characters.
+ * @throws {TypeError} If data contains circular references
+ */
+export function safeJsonLd(data: unknown): string {
+  const json = JSON.stringify(data);
+  if (json === undefined) {
+    return "null";
+  }
+  return json
+    .replaceAll("<", String.raw`\u003c`)
+    .replaceAll(">", String.raw`\u003e`)
+    .replaceAll("&", String.raw`\u0026`)
+    .replaceAll("\u2028", String.raw`\u2028`)
+    .replaceAll("\u2029", String.raw`\u2029`);
 }

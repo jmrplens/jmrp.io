@@ -1,81 +1,265 @@
 ---
 /**
  * Code Component
- * Displays a code block with support for syntax highlighting and a copy button.
- *
- * NOTE: We use a <span> with 'display: block' instead of a <code> tag because
- * MDX often injects <p> tags inside code slots, which is invalid inside <code>.
+ * Displays a code block with a header showing language, icon, and copy button.
+ * Built at compile-time for static sites.
  *
  * Usage:
- * <Code lang="javascript">
- *   console.log('Hello');
+ * <Code lang="nginx">
+ *   server { listen 80; }
+ * </Code>
+ *
+ * With custom aria-label:
+ * <Code lang="bash" aria-label="Install dependencies">
+ *   npm install
  * </Code>
  */
+import { createHash } from "node:crypto";
+
+// Custom language grammars not bundled with Shiki
+import routerosGrammar from "@languages/routeros.tmLanguage.json";
+import { decodeHtml } from "@utils/html";
+import { getIconForLang } from "@utils/icons";
+import { Code as AstroCode } from "astro/components";
+import { Icon } from "astro-icon/components";
+import type {
+  BuiltinLanguage,
+  LanguageRegistration,
+  SpecialLanguage,
+} from "shiki";
+
 import CopyButton from "./CopyButton.astro";
 
+// Map of custom language names to their grammar definitions
+const customLanguages: Record<string, LanguageRegistration> = {
+  routeros: routerosGrammar as unknown as LanguageRegistration,
+  mikrotik: routerosGrammar as unknown as LanguageRegistration,
+  rsc: routerosGrammar as unknown as LanguageRegistration,
+};
+
+// Custom language names (type-safe union)
+type CustomLanguage = keyof typeof customLanguages;
+
 interface Props {
-    lang?: string; // Language for syntax highlighting (e.g., 'nginx', 'javascript')
-    class?: string;
+  lang?: BuiltinLanguage | SpecialLanguage | CustomLanguage;
+  "aria-label"?: string;
+  title?: string; // Optional title for the code block
+  class?: string;
 }
 
-const { lang = "text", class: className } = Astro.props;
+const {
+  lang = "text",
+  "aria-label": ariaLabel,
+  title,
+  class: className,
+} = Astro.props;
+
+// Render slot content
+const slotContent = await Astro.slots.render("default");
+const trimmedContent = slotContent.trim();
+
+// Check if content is already rendered HTML (matches pre/code wrapper tags from markdown)
+// Using stricter detection to avoid misclassifying code snippets that start with '<'
+const isHtml = /^<(?:pre|code)\b/i.test(trimmedContent);
+
+// Guard: Handle empty or whitespace-only content
+if (!trimmedContent) {
+  console.warn(
+    "Code component received empty content - this may indicate a build issue",
+  );
+}
+
+// Early return if empty to avoid rendering an empty code block
+const isEmpty = !trimmedContent;
+
+// Extract raw code for highlighting
+let rawCode = trimmedContent;
+
+if (isHtml) {
+  // If it matches a generic MDX code block <pre><code>...</code></pre>, unwrap it
+  // This allows <Code lang="js"> ``` ... ``` </Code> to work by extracting the inner text
+  const match = trimmedContent.match(
+    /^<pre[^>]*><code[^>]*>([\s\S]*?)<\/code><\/pre>$/,
+  );
+  if (match) {
+    const innerContent = match[1];
+    const stripped = innerContent.replaceAll(/<[^>]*>/g, "");
+    rawCode = decodeHtml(stripped);
+  } else {
+    // Fallback: decode everything to be safe for re-highlighting
+    const stripped = trimmedContent.replaceAll(/<[^>]*>/g, "");
+    rawCode = decodeHtml(stripped);
+  }
+} else {
+  // If it's just text, we still need to decode potentially escaped chars
+  rawCode = decodeHtml(trimmedContent);
+}
+
+// Generate unique ID for testing
+const uuid = createHash("sha256")
+  .update(`${lang}-${rawCode}`)
+  .digest("hex")
+  .slice(0, 8);
+
+// Extract plain text for automatic aria-label (normalize whitespace for screen readers)
+let plainText = "";
+if (!ariaLabel) {
+  plainText = rawCode.slice(0, 50).replaceAll(/\s+/g, " ").trim();
+  if (rawCode.length > 50) plainText += "...";
+}
+
+// Final aria-label: custom > title-based > auto-generated (with fallback)
+const finalAriaLabel =
+  ariaLabel ||
+  (title
+    ? `${lang} code: ${title}`
+    : `${lang} snippet: ${plainText || "code snippet"}`);
+
+// Language display name (uppercase)
+const langDisplay = lang.toUpperCase();
+
+const langIcon = getIconForLang(lang);
 ---
 
-<div class:list={["code-wrapper", "copy-container", className]}>
-    <pre><span class={`code-content language-${lang}`}><slot /></span></pre>
-    <CopyButton class="code-copy-button" />
-</div>
+{
+  isEmpty ? (
+    <Fragment set:html="<!-- Empty code block skipped -->" />
+  ) : (
+    <section
+      class:list={["code-block-wrapper", "copy-container", className]}
+      aria-label={finalAriaLabel}
+      data-testid={uuid}
+    >
+      <div class="code-block-header">
+        <div class="code-lang-info">
+          <Icon
+            name={langIcon}
+            class="code-type-icon"
+            aria-hidden="true"
+          />
+          <span class="code-language-label">{langDisplay}</span>
+          {title && <span class="code-title">{title}</span>}
+        </div>
+        <CopyButton
+          class="code-header-copy-btn"
+          ariaLabel={`Copy ${finalAriaLabel}`}
+        />
+      </div>
+      <div class="code-body">
+        <AstroCode
+          code={rawCode}
+          lang={customLanguages[lang] ?? lang}
+          themes={{
+            light: "github-light-high-contrast",
+            dark: "github-dark-high-contrast",
+          }}
+        />
+      </div>
+    </section>
+  )
+}
 
 <style>
-    .code-content {
-        display: block; /* Ensure it behaves like a block for multi-line */
-        font-family: var(--font-mono);
-        font-size: 0.9rem;
-        line-height: 1.6;
-        color: var(--color-text);
-    }
+  .code-block-wrapper {
+    position: relative;
+    margin: 1.5rem 0;
+    overflow: hidden;
+    background-color: var(--color-bg-secondary);
+    border: var(--border-1);
+    border-radius: var(--radius-md);
+  }
 
-    .code-wrapper {
-        position: relative;
-        margin: 1.5rem 0;
-        border-radius: var(--radius-md);
-        overflow: hidden;
-    }
+  .code-block-header {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 40px;
+    padding: 0.5rem 1rem;
+    font-family: var(--font-mono);
+    background-color: var(--color-bg-header);
+    border-bottom: var(--border-1);
+  }
 
-    .code-wrapper :global(.code-copy-button) {
-        position: absolute;
-        top: 0.5rem;
-        right: 0.5rem;
-        z-index: 10;
-    }
+  .code-lang-info {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+  }
 
-    pre {
-        margin: 0;
-        padding: 0.75rem 1rem; /* Reduced vertical padding from 1rem */
-        padding-right: 3rem; /* Space for copy button */
-        overflow-x: auto;
-        background-color: var(--color-bg-secondary);
-        border: var(--border-1);
-        border-radius: var(--radius-md);
-    }
+  .code-type-icon {
+    width: 1.1rem;
+    height: 1.1rem;
+    color: var(--color-text-muted);
+  }
 
-    code {
-        font-family: var(--font-mono);
-        font-size: 0.9rem;
-        line-height: 1.6;
-        color: var(--color-text);
-    }
+  .code-language-label {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
 
-    /* Remove margin from MDX-generated p tags */
-    code :global(p) {
-        margin: 0;
-        display: inline;
-    }
+  .code-title {
+    padding-left: 0.5rem;
+    margin-left: 0.5rem;
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+    border-left: 1px solid var(--color-border);
+  }
 
-    /* Basic syntax highlighting fallback */
-    code.language-nginx,
-    code.language-bash,
-    code.language-shell {
-        color: var(--color-text);
-    }
+  .code-body {
+    overflow-x: auto;
+  }
+
+  /*
+   * Shiki Override Styles
+   * ----------------------
+   * Multiple !important declarations are required to override Shiki's inline styles
+   * which have higher specificity. These overrides target padding, margin, background-color,
+   * border, and border-radius to ensure consistent visual appearance within our component.
+   * Do not remove without verifying Shiki styling behavior.
+   */
+  .code-body pre,
+  .code-body :global(pre.astro-code) {
+    padding: 1rem 1.25rem !important;
+    margin: 0 !important;
+    overflow-x: auto;
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: var(--color-text);
+    background-color: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+
+    /* Mobile Fix: Prevent font inflation */
+    text-size-adjust: none;
+  }
+
+  .code-body code {
+    font-family: inherit;
+    font-size: inherit;
+    line-height: inherit;
+    color: inherit;
+    white-space: pre;
+    background: none;
+  }
+
+  /* Copy button positioning - static in header context */
+  :global(.code-header-copy-btn) {
+    min-width: 32px;
+    min-height: 32px;
+    background-color: transparent;
+    border: none;
+    opacity: 80%;
+  }
+
+  :global(.code-header-copy-btn:hover),
+  :global(.code-header-copy-btn:focus-visible) {
+    background-color: var(--color-bg-subtle);
+    opacity: 100%;
+  }
 </style>

@@ -7,349 +7,412 @@
 import { Icon } from "astro-icon/components";
 
 interface Props {
-    headings: {
-        slug: string;
-        text: string;
-        depth: number;
-    }[];
+  headings: {
+    slug: string;
+    text: string;
+    depth: number;
+  }[];
 }
 
 const { headings } = Astro.props;
 ---
 
 {
-    headings.length > 0 && (
-        <>
-            <button
-                id="toc-toggle-btn"
-                type="button"
-                class="toc-fab toc-trigger"
-                aria-label="Table of Contents"
-                aria-haspopup="true"
-                aria-expanded="false"
-            >
-                <Icon name="mdi:format-list-bulleted" class="toc-icon" />
-            </button>
+  headings.length > 0 && (
+    <>
+      <button
+        id="toc-toggle-btn"
+        type="button"
+        class="toc-fab toc-trigger"
+        aria-label="Table of Contents"
+        aria-haspopup="true"
+        aria-expanded="false"
+      >
+        <Icon
+          name="mdi:format-list-bulleted"
+          class="toc-icon"
+        />
+      </button>
 
-            <div
-                id="toc-drawer"
-                class="toc-drawer"
-                role="dialog"
-                aria-modal="true"
-                aria-labelledby="toc-title"
-                aria-hidden="true"
-                inert
-            >
-                <div class="toc-header">
-                    <h2 id="toc-title">Table of Contents</h2>
-                    <button
-                        id="toc-close-btn"
-                        type="button"
-                        class="toc-close"
-                        aria-label="Close"
-                    >
-                        <Icon name="mdi:close" />
-                    </button>
-                </div>
-                <nav class="toc-content" aria-label="Table of Contents Drawer">
-                    <ul>
-                        {headings.map((heading) => (
-                            <li class={`toc-depth-${heading.depth}`}>
-                                <a href={`#${heading.slug}`}>{heading.text}</a>
-                            </li>
-                        ))}
-                    </ul>
-                </nav>
-            </div>
+      <div
+        id="toc-drawer"
+        class="toc-drawer"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="toc-title"
+        aria-hidden="true"
+        inert
+      >
+        <div class="toc-header">
+          <h2 id="toc-title">Table of Contents</h2>
+          <button
+            id="toc-close-btn"
+            type="button"
+            class="toc-close"
+            aria-label="Close"
+          >
+            <Icon name="mdi:close" />
+          </button>
+        </div>
+        <nav
+          class="toc-content"
+          aria-label="Table of Contents Drawer"
+        >
+          <ul>
+            {headings.map((heading) => (
+              <li class={`toc-depth-${heading.depth}`}>
+                <a href={`#${heading.slug}`}>{heading.text}</a>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      </div>
 
-            <div id="toc-backdrop" class="toc-backdrop" />
-        </>
-    )
+      <div
+        id="toc-backdrop"
+        class="toc-backdrop"
+      />
+    </>
+  )
 }
 
 <script>
-    function setupMobileTOC() {
-        const btns = document.querySelectorAll(".toc-trigger");
-        const drawer = document.getElementById("toc-drawer");
-        const closeBtn = document.getElementById("toc-close-btn");
-        const backdrop = document.getElementById("toc-backdrop");
-        const links = drawer?.querySelectorAll("a");
+  function setupMobileTOC() {
+    const btns = document.querySelectorAll(".toc-trigger");
+    const drawer = document.getElementById("toc-drawer");
+    const closeBtn = document.getElementById("toc-close-btn");
+    const backdrop = document.getElementById("toc-backdrop");
+    const links = drawer?.querySelectorAll("a");
 
-        if (!btns.length || !drawer || !backdrop) return;
+    if (!btns.length || !drawer || !backdrop) return;
 
-        let lastFocusedElement: HTMLElement | null = null;
+    let lastFocusedElement: HTMLElement | null = null;
 
-        // Focus Trap Logic
-        const handleFocusTrap = (e: KeyboardEvent) => {
-            if (e.key !== "Tab") return;
+    // Focus Trap Logic
+    const handleFocusTrap = (e: KeyboardEvent) => {
+      if (e.key !== "Tab") return;
 
-            const focusables = drawer.querySelectorAll(
-                'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
-            );
-            const firstElement = focusables[0] as HTMLElement;
-            const lastElement = focusables[
-                focusables.length - 1
-            ] as HTMLElement;
+      // More robust focusable selector that excludes disabled/hidden/aria-hidden elements
+      const focusables = drawer.querySelectorAll(
+        'button:not([disabled]):not([hidden]):not([aria-hidden="true"]), ' +
+          '[href]:not([disabled]):not([hidden]):not([aria-hidden="true"]), ' +
+          'input:not([disabled]):not([hidden]):not([aria-hidden="true"]), ' +
+          'select:not([disabled]):not([hidden]):not([aria-hidden="true"]), ' +
+          'textarea:not([disabled]):not([hidden]):not([aria-hidden="true"]), ' +
+          '[tabindex]:not([tabindex="-1"]):not([disabled]):not([hidden]):not([aria-hidden="true"])',
+      );
 
-            if (e.shiftKey) {
-                if (document.activeElement === firstElement) {
-                    lastElement.focus();
-                    e.preventDefault();
-                }
-            } else {
-                if (document.activeElement === lastElement) {
-                    firstElement.focus();
-                    e.preventDefault();
-                }
-            }
-        };
+      // Guard against empty focusables
+      if (focusables.length === 0) return;
 
-        const openTOC = () => {
-            lastFocusedElement = document.activeElement as HTMLElement;
-            drawer.classList.add("open");
-            backdrop.classList.add("open");
-            btns.forEach((btn) => btn.setAttribute("aria-expanded", "true"));
-            drawer.setAttribute("aria-hidden", "false");
-            drawer.removeAttribute("inert");
+      const firstElement = focusables[0] as HTMLElement;
+      const lastElement = focusables[focusables.length - 1] as HTMLElement;
 
-            document.addEventListener("keydown", handleFocusTrap);
+      // Extra guard for safety
+      if (!firstElement || !lastElement) return;
 
-            // Focus on close button or first link
-            if (closeBtn) {
-                closeBtn.focus();
-            }
-
-            // Lock scroll only on mobile to prevent breaking sticky header on desktop
-            if (window.innerWidth < 1024) {
-                document.body.style.overflow = "hidden";
-            }
-        };
-
-        const closeTOC = () => {
-            document.removeEventListener("keydown", handleFocusTrap);
-
-            // Restore focus BEFORE hiding to avoid aria-hidden violation
-            if (lastFocusedElement) {
-                lastFocusedElement.focus();
-            } else if (btns.length > 0) {
-                // Fallback to the FAButton if we lost track
-                (btns[0] as HTMLElement).focus();
-            } else {
-                // Absolute fallback: blur so focusing is not on hidden element
-                if (document.activeElement instanceof HTMLElement) {
-                    document.activeElement.blur();
-                }
-            }
-
-            drawer.classList.remove("open");
-            backdrop.classList.remove("open");
-            btns.forEach((btn) => btn.setAttribute("aria-expanded", "false"));
-            drawer.setAttribute("aria-hidden", "true");
-            drawer.setAttribute("inert", "");
-            document.body.style.overflow = ""; // Unlock scroll
-        };
-
-        btns.forEach((btn) => btn.addEventListener("click", openTOC));
-        if (closeBtn) {
-            closeBtn.addEventListener("click", closeTOC);
+      if (e.shiftKey) {
+        if (document.activeElement === firstElement) {
+          lastElement.focus();
+          e.preventDefault();
         }
-        backdrop.addEventListener("click", closeTOC);
-
-        if (links) {
-            links.forEach((link) => {
-                link.addEventListener("click", () => {
-                    closeTOC();
-                });
-            });
+      } else {
+        if (document.activeElement === lastElement) {
+          firstElement.focus();
+          e.preventDefault();
         }
+      }
+    };
 
-        // Close on Escape
-        document.addEventListener("keydown", (e) => {
-            if (e.key === "Escape") {
-                if (drawer.classList.contains("open")) {
-                    closeTOC();
-                }
-            }
+    const openTOC = () => {
+      lastFocusedElement = document.activeElement as HTMLElement;
+      drawer.classList.add("open");
+      backdrop.classList.add("open");
+      btns.forEach((btn) => btn.setAttribute("aria-expanded", "true"));
+      drawer.setAttribute("aria-hidden", "false");
+      drawer.removeAttribute("inert");
+
+      document.addEventListener("keydown", handleFocusTrap);
+
+      // Focus on close button or first link
+      if (closeBtn) {
+        closeBtn.focus();
+      }
+
+      // Lock scroll only on mobile to prevent breaking sticky header on desktop
+      if (window.innerWidth < 1024) {
+        document.body.style.overflow = "hidden";
+      }
+    };
+
+    const closeTOC = () => {
+      document.removeEventListener("keydown", handleFocusTrap);
+
+      // Restore focus BEFORE hiding to avoid aria-hidden violation
+      if (lastFocusedElement) {
+        lastFocusedElement.focus();
+      } else if (btns.length > 0) {
+        // Fallback to the FAButton if we lost track
+        (btns[0] as HTMLElement).focus();
+      } else {
+        // Absolute fallback: blur so focusing is not on hidden element
+        if (document.activeElement instanceof HTMLElement) {
+          document.activeElement.blur();
+        }
+      }
+
+      drawer.classList.remove("open");
+      backdrop.classList.remove("open");
+      btns.forEach((btn) => btn.setAttribute("aria-expanded", "false"));
+      drawer.setAttribute("aria-hidden", "true");
+      drawer.setAttribute("inert", "");
+      document.body.style.overflow = ""; // Unlock scroll
+    };
+
+    btns.forEach((btn) => btn.addEventListener("click", openTOC));
+    if (closeBtn) {
+      closeBtn.addEventListener("click", closeTOC);
+    }
+    backdrop.addEventListener("click", closeTOC);
+
+    if (links) {
+      links.forEach((link) => {
+        link.addEventListener("click", () => {
+          closeTOC();
         });
+      });
     }
 
+    // Close on Escape - managed by a global listener outside setupMobileTOC to avoid duplication
+  }
+
+  // Global Escape key listener (only added once)
+  if (!document.documentElement.hasAttribute("data-toc-key-listener")) {
+    document.documentElement.setAttribute("data-toc-key-listener", "true");
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        const drawer = document.getElementById("toc-drawer");
+        const backdrop = document.getElementById("toc-backdrop");
+        const closeBtn = document.getElementById("toc-close-btn");
+        // const btns = document.querySelectorAll(".toc-trigger"); // Removed to fix lint hint
+
+        if (drawer && drawer.classList.contains("open")) {
+          // Delegate to closeBtn or backdrop to ensure closeTOC cleanup is executed
+          if (closeBtn) {
+            closeBtn.click();
+          } else if (backdrop) {
+            backdrop.click();
+          }
+        }
+      }
+    });
+  }
+
+  if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", setupMobileTOC);
+  } else {
+    setupMobileTOC();
+  }
+
+  if (!document.documentElement.hasAttribute("data-toc-listener-init")) {
+    document.documentElement.setAttribute("data-toc-listener-init", "true");
     document.addEventListener("astro:after-swap", setupMobileTOC);
+  }
 </script>
 
 <style>
-    /* Floating Action Button */
-    .toc-fab {
-        position: fixed;
-        bottom: 2rem;
-        right: 1.5rem;
-        background-color: var(--color-primary);
-        color: white;
-        border: none;
-        border-radius: 50%;
-        width: 3.5rem;
-        height: 3.5rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-        z-index: var(--z-fab); /* Below Header but above content */
-        cursor: pointer;
-        transition:
-            transform 0.2s,
-            background-color 0.2s;
-    }
+  /* Floating Action Button */
+  .toc-fab {
+    position: fixed;
+    right: 1.5rem;
+    bottom: 2rem;
+    z-index: var(--z-fab); /* Below Header but above content */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 3.5rem;
+    height: 3.5rem;
+    color: white;
+    cursor: pointer;
+    background-color: var(--color-primary);
+    border: none;
+    border-radius: 50%;
+    box-shadow: 0 4px 12px rgb(0 0 0 / 30%);
+    transition:
+      transform 0.2s,
+      background-color 0.2s;
+  }
 
-    .toc-fab:hover {
-        transform: scale(1.05);
-        background-color: var(--color-primary-hover);
-    }
+  .toc-fab:hover,
+  .toc-fab:focus-visible {
+    background-color: var(--color-primary-hover);
+    transform: scale(1.05);
+  }
 
-    .toc-icon {
-        font-size: 1.5rem;
-    }
+  .toc-fab:focus-visible {
+    outline: 3px solid var(--color-primary);
+    outline-offset: 2px;
+  }
 
-    /* Bottom Sheet Drawer */
+  .toc-icon {
+    font-size: 1.5rem;
+  }
+
+  /* Bottom Sheet Drawer */
+  .toc-drawer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    z-index: var(--z-drawer); /* Above Header */
+    display: flex;
+
+    /* Hide visibility after transform finishes */
+    visibility: hidden;
+    flex-direction: column;
+    width: 100%;
+    max-height: 80vh;
+    background-color: var(--color-bg-secondary);
+    border-top-left-radius: var(--radius-lg);
+    border-top-right-radius: var(--radius-lg);
+    box-shadow: 0 -5px 20px rgb(0 0 0 / 20%);
+    transform: translateY(100%);
+    transition:
+      transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+      visibility 0s 0.3s;
+  }
+
+  .toc-drawer.open {
+    visibility: visible;
+    transform: translateY(0);
+
+    /* Show visibility immediately when opening */
+    transition:
+      transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+      visibility 0s;
+  }
+
+  .toc-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.5rem;
+    border-bottom: var(--border-1);
+  }
+
+  .toc-header h2 {
+    margin: 0;
+    font-size: 1.25rem;
+    color: var(--color-text-heading);
+  }
+
+  .toc-close {
+    display: flex;
+    padding: 0.5rem;
+    font-size: 1.5rem;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    background: none;
+    border: none;
+  }
+
+  .toc-content {
+    padding: 1.5rem;
+    overflow-y: auto;
+
+    /* Overscroll behavior for nicer feel on iOS */
+    overscroll-behavior: contain;
+  }
+
+  .toc-content ul {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+  }
+
+  .toc-content a {
+    display: block;
+    padding: 0.5rem;
+    line-height: 1.4;
+    color: var(--color-text);
+    text-decoration: none;
+    border-radius: var(--radius-sm);
+    transition:
+      background-color 0.2s,
+      color 0.2s;
+  }
+
+  .toc-content a:hover,
+  .toc-content a:focus {
+    color: var(--color-primary);
+    background-color: rgb(179 137 245 / 10%);
+  }
+
+  /* Indentation */
+  .toc-depth-3 a {
+    padding-left: 1.5rem;
+    font-size: 0.95em;
+    color: var(--color-text-muted);
+  }
+
+  .toc-depth-4 a {
+    padding-left: 2.5rem;
+    font-size: 0.9em;
+    color: var(--color-text-muted);
+  }
+
+  /* Backdrop */
+  .toc-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: var(--z-backdrop); /* Above Header to ensure blur covers it */
+    visibility: hidden;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgb(0 0 0 / 50%);
+    opacity: 0%;
+    backdrop-filter: blur(2px);
+
+    /* Transition visibility with delay so it becomes hidden after opacity fades */
+    transition:
+      opacity 0.3s,
+      visibility 0s 0.3s;
+  }
+
+  .toc-backdrop.open {
+    visibility: visible;
+    opacity: 100%;
+
+    /* No delay when opening - show immediately */
+    transition:
+      opacity 0.3s,
+      visibility 0s;
+  }
+
+  /* Desktop Styles */
+  @media (width >= 1024px) {
+    /* On desktop, we still use the FAB and drawer, but maybe style the drawer as a side panel */
+
+    /* The existing CSS for .toc-drawer is mostly fine, we just need to ensure it's not hidden by media queries */
+
     .toc-drawer {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        max-height: 80vh;
-        background-color: var(--color-bg-secondary);
-        border-top-left-radius: var(--radius-lg);
-        border-top-right-radius: var(--radius-lg);
-        z-index: var(--z-drawer); /* Above Header */
-        transform: translateY(100%);
-        /* Hide visibility after transform finishes */
-        visibility: hidden;
-        transition:
-            transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-            visibility 0s 0.3s;
-        display: flex;
-        flex-direction: column;
-        box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.2);
+      /* Ensure it acts as a side drawer on desktop */
+      top: 0;
+      bottom: 0; /* Full height */
+      left: 0;
+      width: 320px; /* Fixed width */
+      max-width: 400px;
+      max-height: none;
+      border-right: var(--border-1);
+      border-radius: 0;
+      transform: translateX(-100%); /* Slide from left */
     }
 
     .toc-drawer.open {
-        transform: translateY(0);
-        visibility: visible;
-        /* Show visibility immediately when opening */
-        transition:
-            transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-            visibility 0s;
+      transform: translateX(0);
     }
-
-    .toc-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 1rem 1.5rem;
-        border-bottom: var(--border-1);
-    }
-
-    .toc-header h2 {
-        margin: 0;
-        font-size: 1.25rem;
-        color: var(--color-text-heading);
-    }
-
-    .toc-close {
-        background: none;
-        border: none;
-        color: var(--color-text-muted);
-        font-size: 1.5rem;
-        cursor: pointer;
-        padding: 0.5rem;
-        display: flex;
-    }
-
-    .toc-content {
-        padding: 1.5rem;
-        overflow-y: auto;
-        /* Overscroll behavior for nicer feel on iOS */
-        overscroll-behavior: contain;
-    }
-
-    .toc-content ul {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-        display: flex;
-        flex-direction: column;
-        gap: 0.75rem;
-    }
-
-    .toc-content a {
-        text-decoration: none;
-        color: var(--color-text);
-        display: block;
-        padding: 0.5rem;
-        border-radius: var(--radius-sm);
-        transition:
-            background-color 0.2s,
-            color 0.2s;
-        line-height: 1.4;
-    }
-
-    .toc-content a:hover,
-    .toc-content a:focus {
-        background-color: rgba(179, 137, 245, 0.1);
-        color: var(--color-primary);
-    }
-
-    /* Indentation */
-    .toc-depth-3 a {
-        padding-left: 1.5rem;
-        font-size: 0.95em;
-        color: var(--color-text-muted);
-    }
-    .toc-depth-4 a {
-        padding-left: 2.5rem;
-        font-size: 0.9em;
-        color: var(--color-text-muted);
-    }
-
-    /* Backdrop */
-    .toc-backdrop {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        background-color: rgba(0, 0, 0, 0.5);
-        z-index: var(--z-backdrop); /* Above Header to ensure blur covers it */
-        opacity: 0;
-        visibility: hidden;
-        transition: opacity 0.3s;
-        backdrop-filter: blur(2px);
-    }
-
-    .toc-backdrop.open {
-        opacity: 1;
-        visibility: visible;
-    }
-
-    /* Desktop Styles */
-    @media (min-width: 1024px) {
-        /* On desktop, we still use the FAB and drawer, but maybe style the drawer as a side panel */
-        /* The existing CSS for .toc-drawer is mostly fine, we just need to ensure it's not hidden by media queries */
-
-        .toc-drawer {
-            /* Ensure it acts as a side drawer on desktop */
-            top: 0;
-            left: 0;
-            bottom: 0; /* Full height */
-            width: 320px; /* Fixed width */
-            max-width: 400px;
-            max-height: none;
-            border-radius: 0;
-            transform: translateX(-100%); /* Slide from left */
-            border-right: var(--border-1);
-        }
-
-        .toc-drawer.open {
-            transform: translateX(0);
-        }
-    }
+  }
 </style>

@@ -7,137 +7,367 @@
  * <FileContent filename="nginx.conf">
  *   ...code...
  * </FileContent>
+ *
+ * With explicit language for syntax highlighting:
+ * <FileContent filename="config.txt" language="nginx">
+ *   ...nginx config...
+ * </FileContent>
  */
+import { createHash } from "node:crypto";
+
+import { getNextIndex } from "@utils/counters";
+import { decodeHtml } from "@utils/html";
+import { getIconForFile } from "@utils/icons";
+import { Code as AstroCode } from "astro/components";
 import { Icon } from "astro-icon/components";
+import type { BuiltinLanguage, SpecialLanguage } from "shiki";
+
 import CopyButton from "./CopyButton.astro";
 
 interface Props {
-    filename: string;
-    icon?: string; // e.g., 'mdi:file-document-outline'
+  filename: string;
+  icon?: string; // e.g., 'mdi:file-document-outline'
+  language?: BuiltinLanguage | SpecialLanguage; // Override syntax highlighting language
+  collapsible?: boolean;
+  ariaLabel?: string;
 }
 
-const { filename, icon } = Astro.props;
+const {
+  filename,
+  icon,
+  language,
+  collapsible = false,
+  ariaLabel,
+} = Astro.props;
 
 // Infer icon from filename
-const getIconForFile = (name: string) => {
-    if (name.includes("nginx")) return "devicon:nginx";
-    if (name.includes(".conf")) return "mdi:file-cog-outline";
-    if (name.endsWith(".txt")) return "mdi:file-document-outline";
-    if (name.endsWith(".json")) return "mdi:code-json";
-    if (name.endsWith(".yml") || name.endsWith(".yaml"))
-        return "mdi:file-settings-outline";
-    if (name.endsWith(".xml")) return "mdi:file-xml-box";
-    return "mdi:file-outline";
-};
-
 const finalIcon = icon || getIconForFile(filename);
+
+// Format filename to allow line breaks after path separators
+// Insert zero-width space (&#8203;) after slashes for smart wrapping
+const filenameFormatted = filename.replaceAll("/", "/&#8203;");
+
+const slotContent = await Astro.slots.render("default");
+const trimmedContent = slotContent.trim();
+const uuid = createHash("sha256")
+  .update(`${filename}-${trimmedContent}`)
+  .digest("hex")
+  .slice(0, 8);
+
+// Extract plain text for accessibility label if no custom label provided
+let plainText = "";
+if (!ariaLabel) {
+  // FAST PATH: Use regex for simple content to avoid Cheerio overhead
+  const fullText =
+    !slotContent.includes("<") && !slotContent.includes(">")
+      ? slotContent.trim()
+      : decodeHtml(slotContent.replaceAll(/<[^>]+>/g, "").trim());
+  // Only truncate and add ellipsis if content exceeds 50 characters
+  plainText = fullText.length > 50 ? fullText.slice(0, 50) + "..." : fullText;
+}
+
+const index = getNextIndex("file");
+const finalAriaLabel =
+  ariaLabel || `Content of file ${index}: ${filename} - ${plainText}`;
+
+// If language is specified, extract raw code for Shiki re-rendering
+let rawCode = "";
+let useCustomHighlighting = false;
+
+if (language) {
+  useCustomHighlighting = true;
+  // Extract raw code from the rendered content
+  // Content may be wrapped in <pre><code>...</code></pre> from markdown
+  const preCodeMatch = trimmedContent.match(
+    /<pre[^>]*><code[^>]*>([\s\S]*?)<\/code><\/pre>/,
+  );
+  if (preCodeMatch) {
+    // Remove any remaining HTML tags and decode entities
+    const stripped = preCodeMatch[1].replaceAll(/<[^>]*>/g, "");
+    rawCode = decodeHtml(stripped);
+  } else {
+    // Fallback: strip all tags and decode
+    const stripped = trimmedContent.replaceAll(/<[^>]*>/g, "");
+    rawCode = decodeHtml(stripped);
+  }
+}
 ---
 
-<div
-    class="file-content-wrapper copy-container"
-    role="group"
-    aria-label={`Content of file: ${filename}`}
->
-    <div class="file-header">
-        <div class="file-info">
-            <Icon name={finalIcon} class="file-icon" />
-            <span class="file-name">{filename}</span>
+{
+  collapsible ? (
+    <div
+      class="file-content-wrapper copy-container collapsible"
+      data-testid={uuid}
+    >
+      {/* Copy Button outside details to be always visible and avoid nested interactive violation */}
+      <CopyButton
+        class="file-header-copy-btn absolute-header"
+        ariaLabel={`Copy content of file ${index}: ${filename}`}
+      />
+      <details class="file-details">
+        {/* ARIA label moved to summary for better support */}
+        <summary
+          class="file-header"
+          aria-label={finalAriaLabel}
+        >
+          <div class="file-info">
+            <Icon
+              name={finalIcon}
+              class="file-icon"
+            />
+            <span
+              class="file-name"
+              set:html={filenameFormatted}
+            />
+          </div>
+          <div class="header-actions">
+            <span
+              class="chevron-wrapper"
+              aria-hidden="true"
+            >
+              <svg
+                class="chevron-icon"
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </span>
+          </div>
+        </summary>
+        <div class="file-body">
+          {useCustomHighlighting ? (
+            <AstroCode
+              code={rawCode}
+              lang={language}
+              themes={{
+                light: "github-light-high-contrast",
+                dark: "github-dark-high-contrast",
+              }}
+            />
+          ) : (
+            <div
+              tabindex="0"
+              aria-label={`Code content for ${filename}`}
+              set:html={trimmedContent}
+            />
+          )}
         </div>
-        <!-- Copy Button integrated into header -->
-        <CopyButton class="file-header-copy-btn" />
+      </details>
     </div>
-    <div class="file-body">
-        <slot />
-    </div>
-</div>
+  ) : (
+    <section
+      class="file-content-wrapper copy-container"
+      aria-label={finalAriaLabel}
+      data-testid={uuid}
+    >
+      <div class="file-header">
+        <div class="file-info">
+          <Icon
+            name={finalIcon}
+            class="file-icon"
+          />
+          <span
+            class="file-name"
+            set:html={filenameFormatted}
+          />
+        </div>
+        <div class="header-actions">
+          <CopyButton
+            class="file-header-copy-btn"
+            ariaLabel={`Copy content of file ${index}: ${filename}`}
+          />
+        </div>
+      </div>
+      <div class="file-body">
+        {useCustomHighlighting ? (
+          <AstroCode
+            code={rawCode}
+            lang={language}
+            themes={{
+              light: "github-light-high-contrast",
+              dark: "github-dark-high-contrast",
+            }}
+          />
+        ) : (
+          <div
+            tabindex="0"
+            aria-label={`Code content for ${filename}`}
+            set:html={trimmedContent}
+          />
+        )}
+      </div>
+    </section>
+  )
+}
 
 <style>
-    .file-content-wrapper {
-        border: var(--border-1);
-        border-radius: var(--radius-md);
-        margin: 1.5rem 0;
-        overflow: hidden; /* Keep children within rounded corners */
-        background-color: var(--color-bg-secondary);
-    }
+  .file-content-wrapper {
+    position: relative;
+    margin: 1.5rem 0;
+    overflow: hidden; /* Keep children within rounded corners */
+    background-color: var(--color-bg-secondary);
+    border: var(--border-1);
+    border-radius: var(--radius-md);
+  }
 
-    .file-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between; /* Push copy button to the right */
-        gap: 0.5rem;
-        padding: 0.5rem 1rem;
-        background-color: var(--color-bg-subtle);
-        border-bottom: var(--border-1);
-        font-family: var(--font-mono);
-        font-size: 0.85rem;
-        color: var(--color-text-muted);
-        min-height: 48px; /* Ensure good alignment height */
-    }
+  .file-details {
+    display: block;
+    width: 100%;
+  }
 
-    .file-info {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
+  .file-header {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    justify-content: space-between; /* Push actions to the right */
+    min-height: 48px;
+    padding: 0.5rem 1rem;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+    background-color: var(--color-bg-header);
+    border-bottom: var(--border-1);
+    transition: background-color 0.2s;
+  }
 
-    .file-icon {
-        font-size: 1.3rem;
-    }
-    .file-name {
-        font-weight: 500;
-    }
+  .file-content-wrapper.collapsible .file-header {
+    cursor: pointer;
+    list-style: none; /* Remove default marker */
+  }
 
-    .file-body {
-        padding: 0;
-        overflow: hidden;
-    }
+  .file-content-wrapper.collapsible .file-header::-webkit-details-marker {
+    display: none; /* Remove default marker for Safari */
+  }
 
-    /* Style the <pre> element that comes from the slot */
-    .file-body :global(pre),
-    .file-body :global(.astro-code) {
-        margin: 0 !important;
-        padding: 1.25rem 1.5rem !important; /* Generous padding like other components */
-        border-radius: 0 !important;
-        border: none !important;
-        box-shadow: none !important;
-        overflow-x: auto;
-    }
+  .file-content-wrapper.collapsible .file-header:hover {
+    color: var(--color-text);
+    background-color: var(--color-bg-secondary);
+  }
 
-    /* Accessibility: Boost contrast in light mode */
-    :root:not([data-theme="dark"]) .file-content-wrapper {
-        background-color: #ffffff; /* pure white for maximum contrast */
-        border-color: var(--color-border);
-    }
+  .file-details[open] .file-header {
+    color: var(--color-text);
+    background-color: var(--color-bg-secondary);
+  }
 
-    :root:not([data-theme="dark"]) .file-header {
-        background-color: #f6f8fa; /* standard light gray header */
-    }
+  .file-info {
+    display: flex;
+    flex: 1;
+    gap: 0.5rem;
+    align-items: center;
+    min-width: 0; /* Enable text truncation for flex children */
+  }
 
-    :root:not([data-theme="dark"]) .file-body :global(pre),
-    :root:not([data-theme="dark"]) .file-body :global(.astro-code) {
-        background-color: #ffffff !important;
-    }
+  /* Reserve space for copy button + chevron in collapsible mode */
+  .file-content-wrapper.collapsible .file-info {
+    padding-right: 2.5rem; /* Space for copy button positioned absolutely */
+  }
 
-    /* Dark mode adjustments */
-    :root[data-theme="dark"] .file-content-wrapper {
-        background-color: var(--color-bg-secondary);
-    }
+  .file-name {
+    font-weight: 500;
+    overflow-wrap: anywhere;
+  }
 
-    :root[data-theme="dark"] .file-body :global(pre) {
-        background-color: transparent !important;
-    }
+  .header-actions {
+    display: flex;
+    flex-shrink: 0;
+    gap: 0.75rem;
+    align-items: center;
+  }
 
-    /* Override copy button positioning for header integration */
-    :global(.file-header-copy-btn) {
-        position: static !important;
-        background-color: transparent !important;
-        border: 1px solid var(--color-border) !important;
-        opacity: 0.8;
-    }
+  .file-icon {
+    flex-shrink: 0;
+    font-size: 1.3rem;
+  }
 
-    :global(.file-header-copy-btn:hover) {
-        opacity: 1;
-        background-color: var(--color-bg-secondary) !important;
-        border-color: var(--color-text-muted) !important;
-    }
+  .chevron-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-text-muted);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .file-details[open] .chevron-wrapper {
+    transform: rotate(180deg);
+  }
+
+  .file-body {
+    padding: 0;
+
+    /* Removed overflow: hidden to allow child scrollbars to be fully visible/interactive */
+  }
+
+  .file-body > div {
+    /* Removed padding to let pre element fill the space naturally */
+    padding: 0;
+    font-family: var(--font-mono);
+    font-size: var(--font-size-sm);
+    line-height: 1.6;
+
+    /* Removed white-space: pre-wrap; as it conflicts with pre's own handling */
+    outline: none;
+  }
+
+  /* Style the <pre> element that comes from the slot */
+  .file-body :global(pre),
+  .file-body :global(.astro-code) {
+    display: block;
+    width: 100%;
+    padding: 1rem 1.25rem !important;
+    margin: 0 !important;
+    overflow-x: auto;
+
+    /* Typography */
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    line-height: 1.6;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+
+    /* Mobile Fix: Prevent font inflation */
+    text-size-adjust: none;
+  }
+
+  /* Accessibility: Boost contrast in light mode */
+  :root:not([data-theme="dark"]) .file-content-wrapper {
+    background-color: var(--color-bg-secondary);
+    border-color: var(--color-border);
+  }
+
+  :root:not([data-theme="dark"]) .file-body :global(pre),
+  :root:not([data-theme="dark"]) .file-body :global(.astro-code) {
+    background-color: var(--color-bg-secondary) !important;
+  }
+
+  /* Dark mode adjustments */
+  :root[data-theme="dark"] .file-content-wrapper {
+    background-color: var(--color-bg-secondary);
+  }
+
+  :root[data-theme="dark"] .file-body :global(pre) {
+    background-color: transparent !important;
+  }
+
+  /* Override copy button positioning for header integration */
+  :global(.file-header-copy-btn) {
+    position: static !important;
+  }
+
+  :global(.file-header-copy-btn.absolute-header) {
+    --file-header-copy-offset: 2.8rem;
+
+    position: absolute !important;
+    top: 0.5rem;
+    right: var(--file-header-copy-offset);
+    z-index: 10;
+  }
 </style>

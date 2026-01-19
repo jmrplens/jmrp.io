@@ -3,12 +3,24 @@ extend-exclude = [
     "cv_latex/**",
     "public/pdf/**",
     "src/content/publications_data/papers.bib",
-    "src/content/posts/001-secure-nginx-client-certificates.mdx",
     "src/pages/rss.xml.ts",
     "pnpm-lock.yaml",
     "package-lock.json",
     "schema-report.json",
+    "schema-report.html",
     "html-validation.json",
     "accessibility-report.json"
 ]
-    
+
+[default]
+extend-ignore-re = [
+    "(?m)^[a-zA-Z0-9+/=]{20,}$"
+]
+
+[default.extend-words]
+routeros = "routeros"
+
+[default.extend-identifiers]
+# Technical protocol/standard names
+BACnet = "BACnet"
+UPnP = "UPnP"

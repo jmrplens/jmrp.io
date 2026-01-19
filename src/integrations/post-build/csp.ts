@@ -1,9 +1,12 @@
+import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
-import crypto from "node:crypto";
+
+import { type AstroIntegrationLogger } from "astro";
 import { glob } from "glob";
-import type { CspData } from "./types.js";
+
 import { NGINX_VARIABLE_SIZE_LIMIT } from "./constants.js";
+import type { CspData } from "./types.js";
 
 /**
  * Generates the final Nginx security headers configuration file.
@@ -17,18 +20,23 @@ import { NGINX_VARIABLE_SIZE_LIMIT } from "./constants.js";
  *
  * @param {string} distDir - The absolute path to the production build output.
  * @param {CspData} cspData - The data object containing hashes and domains collected during HTML processing.
+ * @param {AstroIntegrationLogger} logger - The Astro logger instance.
  */
-export async function finalizeCspConfig(distDir: string, cspData: CspData) {
-  console.log("[PostBuild] Finalizing CSP and Security Headers...");
+export async function finalizeCspConfig(
+  distDir: string,
+  cspData: CspData,
+  logger: AstroIntegrationLogger,
+) {
+  logger.info("Finalizing CSP and Security Headers...");
 
-  // Hash standalone JS files
-  const standaloneScriptHashes = new Set<string>();
+  // Hash standalone JS files in parallel
   const jsFiles = await glob("**/*.js", { cwd: distDir, absolute: true });
-  for (const file of jsFiles) {
-    const c = fs.readFileSync(file);
-    const h = crypto.createHash("sha512").update(c).digest("base64");
-    standaloneScriptHashes.add(`'sha512-${h}'`);
-  }
+  const jsHashPromises = jsFiles.map(async (file) => {
+    const content = await fs.promises.readFile(file);
+    const hash = crypto.createHash("sha512").update(content).digest("base64");
+    return `'sha512-${hash}'`;
+  });
+  const standaloneScriptHashes = new Set(await Promise.all(jsHashPromises));
 
   // Combine collected hashes
   const allScriptHashes = new Set([
@@ -38,14 +46,14 @@ export async function finalizeCspConfig(distDir: string, cspData: CspData) {
   const allStyleHashes = cspData.styleHashes;
 
   /**
-   * Helper to chunk a large set of CSP hashes into multiple Nginx variables.
-   * This avoids exceeding the ~4KB limit for individual variables in Nginx.
+   * Chunks a large set of CSP hashes into multiple Nginx variables to avoid
+   * exceeding the ~4KB individual variable limit.
    */
   const chunkHashes = (
     hashes: Set<string>,
     prefix: string,
   ): { vars: string; usage: string } => {
-    const list = Array.from(hashes);
+    const list = [...hashes];
     const chunks: string[] = [];
     let current = "";
 
@@ -53,7 +61,7 @@ export async function finalizeCspConfig(distDir: string, cspData: CspData) {
       const separator = current ? " " : "";
       const candidate = current + separator + h;
       if (
-        Buffer.byteLength(candidate, "utf8") > NGINX_VARIABLE_SIZE_LIMIT &&
+        Buffer.byteLength(candidate, "utf-8") > NGINX_VARIABLE_SIZE_LIMIT &&
         current
       ) {
         chunks.push(current);
@@ -76,15 +84,25 @@ export async function finalizeCspConfig(distDir: string, cspData: CspData) {
   const scriptChunks = chunkHashes(allScriptHashes, "csp_script");
   const styleChunks = chunkHashes(allStyleHashes, "csp_style");
 
-  const imgSrc = Array.from(cspData.imageDomains)
-    .map((d) => `https://${d}`)
-    .join(" ");
+  const imgSrc = [...cspData.imageDomains].map((d) => `https://${d}`).join(" ");
 
   // Modern and Strict CSP
+  // Build directives, filtering empty usage to avoid trailing spaces
+  const scriptSrcParts = [
+    "'self'",
+    "'nonce-$cspNonce'",
+    scriptChunks.usage,
+  ].filter(Boolean);
+  const styleSrcParts = [
+    "'self'",
+    "'nonce-$cspNonce'",
+    styleChunks.usage,
+  ].filter(Boolean);
+
   const cspHeader = [
     "default-src 'none'",
-    `script-src 'self' 'nonce-$cspNonce' ${scriptChunks.usage}`,
-    `style-src 'self' 'nonce-$cspNonce' ${styleChunks.usage}`,
+    `script-src ${scriptSrcParts.join(" ")}`,
+    `style-src ${styleSrcParts.join(" ")}`,
     imgSrc
       ? `img-src 'self' ${imgSrc} https://*.jmrp.io`
       : "img-src 'self' https://*.jmrp.io",
@@ -144,7 +162,8 @@ add_header X-Content-Type-Options "nosniff" always;
 add_header X-Frame-Options "DENY" always;
 
 # XSS Protection
-add_header X-XSS-Protection "1; mode=block" always;
+# Deprecated: modern browsers use Content Security Policy
+# add_header X-XSS-Protection "1; mode=block" always;
 
 # Referrer Policy
 add_header Referrer-Policy "strict-origin-when-cross-origin" always;
@@ -168,6 +187,9 @@ add_header Content-Security-Policy "${cspHeader}" always;
 add_header Permissions-Policy "${permissionsPolicy}" always;
 `;
 
-  fs.writeFileSync(path.join(distDir, "security_headers.conf"), content);
-  console.log("  ✓ Generated security_headers.conf");
+  await fs.promises.writeFile(
+    path.join(distDir, "security_headers.conf"),
+    content,
+  );
+  logger.info("  ✓ Generated security_headers.conf");
 }

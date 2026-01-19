@@ -27,19 +27,19 @@ console.log("");
 if (summary.totalErrors > 0 || summary.totalWarnings > 0) {
   console.log("| Page | Errors | Warnings |");
   console.log("| :--- | :---: | :---: |");
-  results
-    .filter((r) => r.errors.length > 0 || r.warnings.length > 0)
-    .forEach((r) => {
-      const errorCount = r.errors.reduce((acc, s) => acc + s.errors.length, 0);
-      const warningCount = r.warnings.reduce(
-        (acc, s) => acc + s.warnings.length,
-        0,
-      );
+  for (const r of results.filter(
+    (r) => r.errors.length > 0 || r.warnings.length > 0,
+  )) {
+    const errorCount = r.errors.reduce((acc, s) => acc + s.errors.length, 0);
+    const warningCount = r.warnings.reduce(
+      (acc, s) => acc + s.warnings.length,
+      0,
+    );
 
-      const errorsCol = errorCount > 0 ? `🔴 ${errorCount}` : "-";
-      const warningsCol = warningCount > 0 ? `⚠️ ${warningCount}` : "-";
-      console.log(`| \`${r.file}\` | ${errorsCol} | ${warningsCol} |`);
-    });
+    const errorsCol = errorCount > 0 ? `🔴 ${errorCount}` : "-";
+    const warningsCol = warningCount > 0 ? `⚠️ ${warningCount}` : "-";
+    console.log(`| \`${r.file}\` | ${errorsCol} | ${warningsCol} |`);
+  }
 } else {
   console.log("> All pages have valid structured data.");
 }

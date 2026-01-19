@@ -13,6 +13,7 @@
       "@utils/*": ["src/utils/*"],
       "@styles/*": ["src/styles/*"],
       "@data/*": ["src/data/*"],
+      "@languages/*": ["src/languages/*"],
       "@src/*": ["src/*"]
     }
   }

@@ -14,8 +14,8 @@
 
 4. Build and preview:
    ```bash
-   npm run build
-   npm run preview
+   pnpm run build
+   pnpm run preview
    ```
 
 ## Frontmatter Fields Reference
@@ -76,7 +76,10 @@ references:
 Highlight important information with colored boxes. **These now span the full width of the content.**
 
 ```mdx
-<Callout type="info" title="Did you know?">
+<Callout
+  type="info"
+  title="Did you know?"
+>
   This is an informational callout with a title.
 </Callout>
 ```
@@ -94,47 +97,61 @@ Highlight important information with colored boxes. **These now span the full wi
 
 Show multiple content blocks in tabs (e.g., code examples):
 
-```mdx
+````mdx
 <Tabs labels={["JavaScript", "Python"]}>
   <TabPanel index={0}>
-    ```javascript
-    console.log("Hello");
-    ```
+
+```javascript
+console.log("Hello");
+```
+
   </TabPanel>
   <TabPanel index={1}>
-    ```python
-    print("Hello")
-    ```
+
+```python
+print("Hello")
+```
+
   </TabPanel>
 </Tabs>
-```
+````
 
 ### CompareCode
 
 Display "Bad" vs "Good" code side-by-side. Useful for showing security fixes or refactoring.
 **Note:** The header titles default to "Blocked / Insecure" (Red) and "Allowed / Secure" (Green) but can be overridden.
 
-```mdx
-<CompareCode badTitle="Vulnerable" goodTitle="Secure">
+````mdx
+<CompareCode
+  badTitle="Vulnerable"
+  goodTitle="Secure"
+>
   <div slot="bad">
-    ```javascript
-    eval(input);
-    ```
+
+```javascript
+eval(input);
+```
+
   </div>
   <div slot="good">
-    ```javascript
-    JSON.parse(input);
-    ```
+
+```javascript
+JSON.parse(input);
+```
+
   </div>
 </CompareCode>
-```
+````
 
 ### YouTube Embed
 
 Embed YouTube videos responsively (centered, max-width 70ch):
 
 ```mdx
-<YouTube id="dQw4w9WgXcQ" title="Video Title" />
+<YouTube
+  id="dQw4w9WgXcQ"
+  title="Video Title"
+/>
 ```
 
 ### References Section
@@ -224,7 +241,7 @@ Before publishing your post:
 - [ ] All images have alt text
 - [ ] Code examples have language specified
 - [ ] External links open in new tab (automatic)
-- [ ] Test locally with `npm run build && npm run preview`
+- [ ] Test locally with `pnpm run build && pnpm run preview`
 - [ ] Check mobile responsiveness
 
 ## File Naming and Ordering
@@ -259,11 +276,11 @@ publishedDate: 2025-12-17
 
 ```bash
 # Development server
-npm run dev
+pnpm run dev
 
 # Production build
-npm run build
-npm run preview
+pnpm run build
+pnpm run preview
 ```
 
 ### Validation

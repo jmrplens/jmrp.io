@@ -3,192 +3,249 @@
  * References component (Simple).
  * Renders a grid of external reference cards from a given prop.
  */
-import { Icon } from "astro-icon/components";
-import { Image } from "astro:assets";
 import type { ImageMetadata } from "astro";
+import { Image } from "astro:assets";
+import { Icon } from "astro-icon/components";
 
 interface Reference {
-    text: string;
-    url: string;
+  text: string;
+  url: string;
 }
 
 interface Props {
-    references?: Reference[];
+  references?: Reference[];
 }
 
 const { references = [] } = Astro.props;
 
-// Import all png files from icons folder eagerly so we can use them in the map
 const iconFiles = import.meta.glob<{ default: ImageMetadata }>(
-    "/src/assets/icons/*.webp",
-    { eager: true },
+  "/src/assets/icons/*.webp",
+  {
+    eager: true,
+  },
 );
 ---
 
 {
-    references.length > 0 && (
-        <div class="references-section">
-            <div class="header">
-                <Icon
-                    name="mdi:book-open-page-variant-outline"
-                    class="header-icon"
-                />
-                <h3>Further Reading &amp; Resources</h3>
-            </div>
-            <div class="references-grid">
-                {references.map((ref) => {
-                    const urlObj = new URL(ref.url);
-                    const hostname = urlObj.hostname;
-                    // Match filename logic: hostname with special chars replaced by underscore
-                    const iconName = hostname.replace(/[^a-z0-9]/gi, "_");
+  references.length > 0 && (
+    <div class="references-section">
+      <div class="header">
+        <Icon
+          name="mdi:book-open-page-variant-outline"
+          class="header-icon"
+        />
+        <h3>Further Reading &amp; Resources</h3>
+      </div>
+      <div class="references-grid">
+        {references.map((ref) => {
+          let urlObj: URL | null = null;
+          let hostname = "";
+          let iconModule: { default: ImageMetadata } | undefined;
 
-                    // Try to find the matching icon
-                    const iconPath = `/src/assets/icons/${iconName}.webp`;
-                    const iconModule = iconFiles[iconPath];
+          try {
+            urlObj = new URL(ref.url);
+            const allowedProtocols = ["http:", "https:"];
+            if (
+              !allowedProtocols.includes(urlObj.protocol) &&
+              urlObj.protocol !== "mailto:" &&
+              urlObj.protocol !== "tel:"
+            ) {
+              throw new Error(`Invalid protocol: ${urlObj.protocol}`);
+            }
 
-                    return (
-                        <a
-                            href={ref.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            class="reference-card"
-                            aria-label={`${ref.text} (${hostname}${urlObj.pathname !== "/" ? urlObj.pathname : ""})`}
-                        >
-                            <div class="card-icon">
-                                {iconModule ? (
-                                    <Image
-                                        src={iconModule.default}
-                                        alt={`${hostname} icon`}
-                                        width={40}
-                                        height={40}
-                                        format="webp"
-                                        widths={[40, 80, 120]}
-                                        class="ref-favicon"
-                                        loading="lazy"
-                                    />
-                                ) : (
-                                    <div class="fallback-icon">
-                                        <Icon name="mdi:web" />
-                                    </div>
-                                )}
-                            </div>
-                            <div class="card-content">
-                                <span class="ref-text">{ref.text}</span>
-                                <span class="ref-url">{hostname}</span>
-                            </div>
-                            <div class="card-arrow">
-                                <Icon name="mdi:arrow-top-right" />
-                            </div>
-                        </a>
-                    );
-                })}
-            </div>
-        </div>
-    )
+            // Handle mailto: and tel: protocols specially
+            hostname =
+              urlObj.protocol === "mailto:" || urlObj.protocol === "tel:"
+                ? urlObj.pathname || ref.url.replace(/^(mailto:|tel:)/, "")
+                : urlObj.hostname;
+
+            const iconName = hostname.replaceAll(/[^a-z0-9]/gi, "_");
+            const iconPath = `/src/assets/icons/${iconName}.webp`;
+            iconModule = iconFiles[iconPath];
+          } catch {
+            console.warn(
+              `[References] Invalid URL for reference "${ref.text}": ${ref.url}`,
+            );
+            return null;
+          }
+
+          // Determine if this is an external link (http/https)
+          const isExternalLink =
+            urlObj?.protocol === "http:" || urlObj?.protocol === "https:";
+          const pathname = urlObj?.pathname ?? "";
+          // Only append pathname for http(s) links where it's meaningful (not "/" alone)
+          const pathSuffix = isExternalLink && pathname !== "/" ? pathname : "";
+
+          return (
+            <a
+              href={ref.url}
+              {...(isExternalLink
+                ? { target: "_blank", rel: "noopener noreferrer" }
+                : {})}
+              class="reference-card"
+              aria-label={`${ref.text} (${hostname}${pathSuffix})`}
+            >
+              <div class="card-icon">
+                {iconModule ? (
+                  <Image
+                    src={iconModule.default}
+                    alt={`${hostname} icon`}
+                    width={40}
+                    height={40}
+                    format="webp"
+                    widths={[40, 80, 120]}
+                    class="ref-favicon"
+                    loading="lazy"
+                  />
+                ) : (
+                  <div class="fallback-icon">
+                    <Icon name="mdi:web" />
+                  </div>
+                )}
+              </div>
+              <div class="card-content">
+                <span class="ref-text">{ref.text}</span>
+                <span class="ref-url">{hostname}</span>
+              </div>
+              <div class="card-arrow">
+                <Icon name="mdi:arrow-top-right" />
+              </div>
+            </a>
+          );
+        })}
+      </div>
+    </div>
+  )
 }
 
 <style>
-    .references-section {
-        margin-top: 4rem;
-        padding-top: 2rem;
-        border-top: 1px dashed var(--color-border);
-    }
-    .header {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        margin-bottom: 1.5rem;
-        color: var(--color-heading);
-        flex-wrap: wrap;
-    }
-    .header-icon {
-        font-size: 1.5rem;
-        color: var(--color-primary);
-    }
-    .header h3 {
-        font-size: 1.25rem;
-        margin: 0;
-    }
-    .references-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
-        gap: 1rem;
-    }
-    .reference-card {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-        padding: 1rem;
-        background: var(--color-subtle-bg, rgba(125, 125, 125, 0.05));
-        border: var(--border-1);
-        border-radius: 12px;
-        text-decoration: none;
-        color: var(--color-text-body);
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        position: relative;
-        overflow: hidden;
-    }
-    .reference-card:hover {
-        transform: translateY(-3px);
-        background: var(--color-card-bg, rgba(125, 125, 125, 0.1));
-        border-color: var(--color-primary);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-    }
-    .card-icon {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 40px;
-        height: 40px;
-        border-radius: 10px;
-        flex-shrink: 0;
-        overflow: hidden;
-        position: relative;
-    }
-    .ref-favicon {
-        width: 100%;
-        height: 100%;
-        object-fit: contain;
-    }
-    .fallback-icon {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.5rem;
-        color: var(--color-text-muted);
-    }
-    .hidden {
-        display: none !important;
-    }
-    .card-content {
-        display: flex;
-        flex-direction: column;
-        flex: 1;
-        gap: 0.15rem;
-    }
-    .ref-text {
-        font-weight: 500;
-        font-size: 0.95rem;
-        line-height: 1.3;
-    }
-    .ref-url {
-        font-size: 0.75rem;
-        opacity: 0.7;
-        font-family: var(--font-mono, monospace);
-    }
-    .card-arrow {
-        opacity: 0;
-        transform: translateX(-10px);
-        transition: all 0.3s ease;
-        color: var(--color-primary);
-    }
-    .reference-card:hover .card-arrow {
-        opacity: 1;
-        transform: translateX(0);
-    }
+  .references-section {
+    padding-top: 2rem;
+    margin-top: 4rem;
+    border-top: 1px dashed var(--color-border);
+  }
+
+  .header {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    color: var(--color-heading);
+  }
+
+  .header-icon {
+    font-size: 1.5rem;
+    color: var(--color-primary);
+  }
+
+  .header h3 {
+    margin: 0;
+    font-size: 1.25rem;
+  }
+
+  .references-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+    gap: 1rem;
+  }
+
+  .reference-card {
+    position: relative;
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    padding: 1rem;
+    overflow: hidden;
+    color: var(--color-text-body);
+    text-decoration: none;
+    background: var(--color-subtle-bg, rgb(125 125 125 / 5%));
+    border: var(--border-1);
+    border-radius: 12px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .reference-card:hover {
+    background: var(--color-card-bg, rgb(125 125 125 / 10%));
+    border-color: var(--color-primary);
+    box-shadow: 0 4px 12px rgb(0 0 0 / 5%);
+    transform: translateY(-3px);
+  }
+
+  .card-icon {
+    position: relative;
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    overflow: hidden;
+    border-radius: 10px;
+  }
+
+  .ref-favicon {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
+  .fallback-icon {
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    font-size: 1.5rem;
+    color: var(--color-text-muted);
+  }
+
+  .card-content {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+
+  .ref-text {
+    font-size: 0.95rem;
+    font-weight: 500;
+    line-height: 1.3;
+  }
+
+  .ref-url {
+    font-family: var(--font-mono, monospace);
+    font-size: 0.75rem;
+    opacity: 70%;
+  }
+
+  .card-arrow {
+    color: var(--color-primary);
+    opacity: 0%;
+    transform: translateX(-10px);
+    transition: all 0.3s ease;
+  }
+
+  .reference-card:hover .card-arrow {
+    opacity: 100%;
+    transform: translateX(0);
+  }
+
+  /* Focus-visible styles for keyboard navigation */
+  .reference-card:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+    background: var(--color-card-bg, rgb(125 125 125 / 10%));
+    border-color: var(--color-primary);
+    box-shadow: 0 4px 12px rgb(0 0 0 / 5%);
+    transform: translateY(-3px);
+  }
+
+  .reference-card:focus-visible .card-arrow {
+    opacity: 100%;
+    transform: translateX(0);
+  }
 </style>

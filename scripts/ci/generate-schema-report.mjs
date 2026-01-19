@@ -3,6 +3,7 @@
  */
 
 import fs from "node:fs";
+
 import { escapeHtml } from "../utils/html.mjs";
 
 const REPORT_FILE = "schema-report.json";
@@ -13,9 +14,23 @@ if (!fs.existsSync(REPORT_FILE)) {
   process.exit(1);
 }
 
-const data = JSON.parse(fs.readFileSync(REPORT_FILE, "utf-8"));
+let data;
+try {
+  data = JSON.parse(fs.readFileSync(REPORT_FILE, "utf-8"));
+} catch (error) {
+  console.error(
+    `Failed to parse schema report JSON: ${error instanceof Error ? error.message : String(error)}`,
+  );
+  process.exit(1);
+}
 const { summary, results } = data;
 
+/**
+ * Applies syntax highlighting to a JSON string or object for HTML display.
+ *
+ * @param json - The JSON content to highlight.
+ * @returns HTML string with highlighted JSON.
+ */
 function syntaxHighlight(json) {
   if (typeof json !== "string") {
     json = JSON.stringify(json, undefined, 2);
@@ -35,11 +50,7 @@ function syntaxHighlight(json) {
   return json.replaceAll(jsonTokenRegex, function (match) {
     let cls = "number";
     if (match.startsWith('"')) {
-      if (match.endsWith(":")) {
-        cls = "key";
-      } else {
-        cls = "string";
-      }
+      cls = match.endsWith(":") ? "key" : "string";
     } else if (/true|false/.test(match)) {
       cls = "boolean";
     } else if (/null/.test(match)) {
@@ -49,55 +60,95 @@ function syntaxHighlight(json) {
   });
 }
 
-function renderVisual(data) {
-  if (data === null || data === undefined)
-    return '<span class="v-null">null</span>';
+/**
+ * Renders an array into a visual HTML list structure.
+ *
+ * @param data - The array to render.
+ * @returns HTML string for the array list.
+ */
+function renderArray(data) {
+  if (data.length === 0) return '<span class="v-empty">[]</span>';
 
-  if (Array.isArray(data)) {
-    if (data.length === 0) return '<span class="v-empty">[]</span>';
+  const listItems = data
+    .map((item) => `<div class="v-list-item">${renderVisual(item)}</div>`)
+    .join("");
+  return `<div class="v-list">${listItems}</div>`;
+}
 
-    const listItems = data
-      .map((item) => `<div class="v-list-item">${renderVisual(item)}</div>`)
-      .join("");
-    return `<div class="v-list">${listItems}</div>`;
+/**
+ * Renders an object into a visual HTML structure with properties.
+ *
+ * @param data - The object to render.
+ * @returns HTML string for the object.
+ */
+function renderObject(data) {
+  const type = data["@type"];
+  let html = '<div class="v-object">';
+
+  if (type) {
+    // Handle @type as array or string
+    if (Array.isArray(type)) {
+      const escapedTypes = type.map((t) => escapeHtml(String(t))).join(", ");
+      html += `<div class="v-type-badge">${escapedTypes}</div>`;
+    } else {
+      html += `<div class="v-type-badge">${escapeHtml(String(type))}</div>`;
+    }
   }
 
-  if (typeof data === "object") {
-    const type = data["@type"];
-    let html = '<div class="v-object">';
+  const keys = Object.keys(data).filter(
+    (k) => k !== "@context" && k !== "@type",
+  );
+  if (keys.length === 0) return html + "</div>";
 
-    if (type) {
-      html += `<div class="v-type-badge">${escapeHtml(type)}</div>`;
-    }
-
-    const keys = Object.keys(data).filter(
-      (k) => k !== "@context" && k !== "@type",
-    );
-    if (keys.length === 0) return html + "</div>";
-
-    html += '<div class="v-props">';
-    keys.forEach((key) => {
-      html += `
+  html += '<div class="v-props">';
+  for (const key of keys) {
+    html += `
                 <div class="v-row">
                     <div class="v-key">${escapeHtml(key)}:</div>
                     <div class="v-val">${renderVisual(data[key])}</div>
                 </div>`;
-    });
-    html += "</div></div>";
-    return html;
   }
+  html += "</div></div>";
+  return html;
+}
 
-  // Primitive values
-  if (typeof data === "string") {
-    if (data.startsWith("http")) {
+/**
+ * Renders a string, handling links and images specifically.
+ *
+ * @param data - The string to render.
+ * @returns HTML string for the string value.
+ */
+function renderString(data) {
+  try {
+    const url = new URL(data);
+    if (url.protocol === "http:" || url.protocol === "https:") {
       const escapedUrl = escapeHtml(data);
-      if (/\.(jpg|jpeg|png|webp|gif|svg)$/i.exec(data)) {
+      if (/\.(jpg|jpeg|png|webp|gif|svg)$/i.test(url.pathname)) {
         return `<a href="${escapedUrl}" target="_blank"><img src="${escapedUrl}" class="v-img" loading="lazy" /></a>`;
       }
       return `<a href="${escapedUrl}" target="_blank" class="v-link">${escapedUrl}</a>`;
     }
-    return `<span class="v-string">"${escapeHtml(data)}"</span>`;
+  } catch {
+    // Not a valid URL, render as string
   }
+  return `<span class="v-string">"${escapeHtml(data)}"</span>`;
+}
+
+/**
+ * Renders JSON data into a nested visual HTML structure.
+ *
+ * @param data - The data object to render.
+ * @returns HTML string representing the data visually.
+ */
+function renderVisual(data) {
+  if (data === null || data === undefined)
+    return '<span class="v-null">null</span>';
+
+  if (Array.isArray(data)) return renderArray(data);
+
+  if (typeof data === "object") return renderObject(data);
+
+  if (typeof data === "string") return renderString(data);
 
   return `<span class="v-prim">${escapeHtml(String(data))}</span>`;
 }
@@ -200,6 +251,7 @@ const html = `
         .v-link:hover { text-decoration: underline; }
         .v-img { max-width: 100px; max-height: 100px; border-radius: 4px; border: 1px solid var(--v-border); display: block; margin-top: 0.25rem; }
         .v-prim { color: var(--v-prim); font-weight: 500; }
+        .v-empty { color: var(--text-muted); font-style: italic; }
 
         /* Syntax Highlighting */
         .string { color: #22863a; }
@@ -274,27 +326,27 @@ const html = `
                 // Issues Section
                 if (status !== "pass") {
                   detailsHtml += '<div class="issues-section">';
-                  r.errors.forEach((e) => {
+                  for (const e of r.errors) {
                     detailsHtml += `
                             <div class="issue issue-error">
                                 <div class="issue-type">❌ Error (Schema ${e.index + 1}: ${escapeHtml(e.type || "Unknown")})</div>
                                 ${e.errors.map((msg) => `<div class="issue-msg">${escapeHtml(msg)}</div>`).join("")}
                             </div>`;
-                  });
-                  r.warnings.forEach((w) => {
+                  }
+                  for (const w of r.warnings) {
                     detailsHtml += `
                             <div class="issue issue-warning">
                                 <div class="issue-type">⚠️ Warning (Schema ${w.index + 1}: ${escapeHtml(w.type || "Unknown")})</div>
                                 ${w.warnings.map((msg) => `<div class="issue-msg">${escapeHtml(msg)}</div>`).join("")}
                             </div>`;
-                  });
+                  }
                   detailsHtml += "</div>";
                 }
 
                 // Schemas View
                 if (r.schemas && r.schemas.length > 0) {
                   detailsHtml += '<div class="schema-container">';
-                  r.schemas.forEach((schema, i) => {
+                  for (const [i, schema] of r.schemas.entries()) {
                     const schemaId = uniqueId + "-" + i;
                     detailsHtml += `
                             <div class="schema-block" style="margin-bottom: 2rem;">
@@ -314,7 +366,7 @@ const html = `
                                 </div>
                             </div>
                         `;
-                  });
+                  }
                   detailsHtml += "</div>";
                 }
 

@@ -4,203 +4,242 @@ import { langColors } from "@utils/github";
 import { Icon } from "astro-icon/components";
 
 interface Props {
-    initialRepos: GitHubRepo[];
+  initialRepos: GitHubRepo[];
 }
 
 const { initialRepos } = Astro.props;
 ---
 
 <div class="github-repos-wrapper">
-    <!-- Search Bar -->
-    <div class="search-container">
-        <input
-            type="text"
-            id="repo-search"
-            placeholder="Find a repository..."
-            aria-label="Search repositories"
-        />
-    </div>
+  <!-- Search Bar -->
+  <div class="search-container">
+    <input
+      type="search"
+      id="repo-search"
+      placeholder="Find a repository..."
+      aria-label="Search repositories"
+    />
+  </div>
 
-    <!-- Repos Grid - STATIC INITIAL CONTENT -->
-    <div id="repos-container" class="repos-grid">
-        {
-            initialRepos.map((repo) => (
-                <div
-                    class="repo-card"
-                    data-name={repo.name.toLowerCase()}
-                    data-desc={(repo.description || "").toLowerCase()}
-                >
-                    <div class="repo-header">
-                        <h3>
-                            <a
-                                href={repo.html_url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                            >
-                                {repo.name}
-                            </a>
-                        </h3>
-                    </div>
-                    <p class="repo-desc">
-                        {repo.description || "No description provided."}
-                    </p>
-                    <div class="repo-meta">
-                        {repo.language && (
-                            <div class="meta-item">
-                                <span
-                                    class="lang-dot"
-                                    style={`background-color: ${langColors[repo.language] || "#ccc"}`}
-                                />
-                                {repo.language}
-                            </div>
-                        )}
-                        {repo.stargazers_count > 0 && (
-                            <div class="meta-item">
-                                <Icon name="fa-solid:star" />
-                                {repo.stargazers_count}
-                            </div>
-                        )}
-                        {repo.forks_count > 0 && (
-                            <div class="meta-item">
-                                <Icon name="fa-solid:code-branch" />
-                                {repo.forks_count}
-                            </div>
-                        )}
-                    </div>
-                </div>
-            ))
-        }
-    </div>
+  <!-- Repos Grid - STATIC INITIAL CONTENT -->
+  <div
+    id="repos-container"
+    class="repos-grid"
+  >
+    {
+      initialRepos.map((repo) => (
+        <div
+          class="repo-card"
+          data-name={repo.name.toLowerCase()}
+          data-desc={(repo.description || "").toLowerCase()}
+        >
+          <div class="repo-header">
+            <h3>
+              <a
+                href={repo.html_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`View repository ${repo.name} on GitHub`}
+              >
+                {repo.name}
+              </a>
+            </h3>
+          </div>
+          <p class="repo-desc">
+            {repo.description || "No description provided."}
+          </p>
+          <div class="repo-meta">
+            {repo.language && (
+              <div class="meta-item">
+                <span
+                  class="lang-dot"
+                  style={`background-color: ${langColors[repo.language] || "#ccc"}`}
+                />
+                {repo.language}
+              </div>
+            )}
+            {repo.stargazers_count > 0 && (
+              <div class="meta-item">
+                <Icon name="fa-solid:star" />
+                {repo.stargazers_count}
+              </div>
+            )}
+            {repo.forks_count > 0 && (
+              <div class="meta-item">
+                <Icon name="fa-solid:code-branch" />
+                {repo.forks_count}
+              </div>
+            )}
+          </div>
+        </div>
+      ))
+    }
+    <p
+      class="no-results"
+      style="display: none;"
+    >
+      No repositories found.
+    </p>
+  </div>
 </div>
 
 <script>
-    // Lightweight client-side search - NO API calls, NO hydration needed
-    document.addEventListener("DOMContentLoaded", () => {
-        const searchInput = document.getElementById("repo-search");
-        const container = document.getElementById("repos-container");
+  // Lightweight client-side search - NO API calls, NO hydration needed
+  document.addEventListener("DOMContentLoaded", () => {
+    const searchInput = document.getElementById("repo-search");
+    const container = document.getElementById("repos-container");
+    let debounceTimer: ReturnType<typeof setTimeout> | undefined;
 
-        if (searchInput && container) {
-            searchInput.addEventListener("input", (e) => {
-                const term = (e.target as HTMLInputElement).value.toLowerCase();
+    if (searchInput && container) {
+      searchInput.addEventListener("input", (e) => {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+          const term = (e.target as HTMLInputElement).value.toLowerCase();
 
-                const cards = container.querySelectorAll(".repo-card");
-                cards.forEach((card) => {
-                    const name = card.getAttribute("data-name") || "";
-                    const desc = card.getAttribute("data-desc") || "";
-                    const matches = name.includes(term) || desc.includes(term);
+          const cards = container.querySelectorAll(".repo-card");
+          const noResults = container.querySelector(".no-results");
+          let matchCount = 0;
 
-                    (card as HTMLElement).style.display = matches ? "" : "none";
-                });
-            });
-        }
-    });
+          cards.forEach((card) => {
+            const name = card.getAttribute("data-name") || "";
+            const desc = card.getAttribute("data-desc") || "";
+            const matches = name.includes(term) || desc.includes(term);
+
+            (card as HTMLElement).style.display = matches ? "" : "none";
+            if (matches) matchCount++;
+          });
+
+          if (noResults) {
+            (noResults as HTMLElement).style.display =
+              matchCount === 0 && term.length > 0 ? "" : "none";
+          }
+        }, 150);
+      });
+    }
+  });
 </script>
 
 <style>
-    .search-container {
-        margin-bottom: var(--space-lg);
-    }
+  .search-container {
+    margin-bottom: var(--space-lg);
+  }
 
-    #repo-search {
-        width: 100%;
-        padding: var(--space-sm) var(--space-md);
-        font-size: 1rem;
-        background-color: var(--color-bg);
-        border: var(--border-1);
-        border-radius: var(--radius-md);
-        color: var(--color-text);
-        transition: border-color 0.2s;
-    }
+  #repo-search {
+    width: 100%;
+    padding: var(--space-sm) var(--space-md);
+    font-size: 1rem;
+    color: var(--color-text);
+    background-color: var(--color-bg);
+    border: var(--border-1);
+    border-radius: var(--radius-md);
+    transition: border-color 0.2s;
+  }
 
-    #repo-search:focus {
-        border-color: var(--color-primary);
-        outline: none;
-    }
+  #repo-search:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px rgb(var(--color-primary-rgb, 37 99 235) / 20%);
+  }
 
-    .repos-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-        gap: var(--space-lg);
-    }
+  .repos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: var(--space-lg);
+  }
 
-    :global(.repo-card) {
-        background-color: var(--color-bg-secondary);
-        border: var(--border-1);
-        border-radius: var(--radius-md);
-        padding: var(--space-md);
-        display: flex;
-        flex-direction: column;
-        transition:
-            transform 0.2s,
-            box-shadow 0.2s,
-            border-color 0.2s;
-        height: 100%;
-        min-width: 0;
-    }
+  :global(.repo-card) {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    height: 100%;
+    padding: var(--space-md);
+    background-color: var(--color-bg-secondary);
+    border: var(--border-1);
+    border-radius: var(--radius-md);
+    transition:
+      transform 0.2s,
+      box-shadow 0.2s,
+      border-color 0.2s;
+  }
 
-    :global(.repo-card:hover) {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-        border-color: var(--color-primary);
-    }
+  :global(.repo-card:hover) {
+    border-color: var(--color-primary);
+    box-shadow: 0 4px 12px rgb(0 0 0 / 20%);
+    transform: translateY(-2px);
+  }
 
-    :global(.repo-header) {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        margin-bottom: var(--space-sm);
-    }
+  :global(.repo-header) {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: var(--space-sm);
+  }
 
-    :global(.repo-header h3) {
-        margin: 0;
-        font-size: 1.1rem;
-        font-weight: var(--fw-semibold);
-    }
+  :global(.repo-header h3) {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: var(--fw-semibold);
+  }
 
-    :global(.repo-header a) {
-        color: var(--color-primary);
-        text-decoration: none;
-    }
+  :global(.repo-header a) {
+    color: var(--color-primary);
+    text-decoration: none;
+  }
 
-    :global(.repo-header a:hover) {
-        text-decoration: underline;
-    }
+  :global(.repo-header a:hover) {
+    text-decoration: underline;
+  }
 
-    :global(.repo-desc) {
-        color: var(--color-text-muted);
-        font-size: 0.9rem;
-        flex-grow: 1;
-        margin-bottom: var(--space-md);
-        line-height: 1.5;
-        overflow-wrap: anywhere;
-        min-height: 3em; /* Reserve 2 lines approx */
-    }
+  :global(.repo-header a:focus-visible) {
+    text-decoration: underline;
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
 
-    :global(.repo-card *) {
-        max-width: 100%;
-    }
+  .no-results {
+    grid-column: 1 / -1;
+    padding: var(--space-lg);
+    font-size: 0.95rem;
+    color: var(--color-text-muted);
+    text-align: center;
+  }
 
-    :global(.repo-meta) {
-        display: flex;
-        align-items: center;
-        gap: var(--space-md);
-        font-size: 0.85rem;
-        color: var(--color-text-muted);
-        border-top: var(--border-1);
-        padding-top: var(--space-sm);
-        margin-top: auto;
-    }
+  :global(.repo-desc) {
+    flex-grow: 1;
+    min-height: 3em; /* Reserve 2 lines approx */
+    margin-bottom: var(--space-md);
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: var(--color-text-muted);
+    overflow-wrap: anywhere;
+  }
 
-    :global(.meta-item) {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-    }
+  :global(.repo-card *) {
+    max-width: 100%;
+  }
 
-    :global(.lang-dot) {
-        width: 10px;
-        height: 10px;
-        border-radius: 50%;
-        display: inline-block;
-    }
+  :global(.repo-meta) {
+    display: flex;
+    gap: var(--space-md);
+    align-items: center;
+    padding-top: var(--space-sm);
+    margin-top: auto;
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+    border-top: var(--border-1);
+  }
+
+  :global(.meta-item) {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+  }
+
+  :global(.lang-dot) {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+  }
 </style>

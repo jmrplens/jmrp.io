@@ -1,7 +1,7 @@
 import { visit } from "unist-util-visit";
 
 /**
- * Helper to recursively extract all text content from a HAST node.
+ * Extracts all text content from a HAST node recursively.
  *
  * @param {object} node - The HAST node to process.
  * @returns {string} The concatenated text content of the node and its children.

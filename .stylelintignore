@@ -1,0 +1,15 @@
+###############################################################################
+# JMRP.IO - STYLELINT IGNORE
+###############################################################################
+
+dist/
+dist-reports/
+node_modules/
+.astro/
+public/
+test-results/
+playwright-report/
+accessibility-report/
+temp_lh/
+temp_workflow/
+lh-deploy/

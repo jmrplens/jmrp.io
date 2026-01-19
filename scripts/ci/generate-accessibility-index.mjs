@@ -9,6 +9,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
+
 import { escapeHtml } from "../utils/html.mjs";
 
 const inputDir = process.argv[2] || "a11y-deploy";
@@ -29,25 +30,54 @@ if (!fs.existsSync(deployDir)) {
 
 const indexPath = path.join(deployDir, "index.html");
 
-// Helper: Scan for all HTML reports
-function findReports(dir, fileList = []) {
-  const files = fs.readdirSync(dir);
-  files.forEach((file) => {
-    const filePath = path.join(dir, file);
-    const stat = fs.statSync(filePath);
-    if (stat.isDirectory()) {
-      findReports(filePath, fileList);
-    } else if (file.endsWith(".html") && file !== "index.html") {
-      fileList.push(filePath);
+/**
+ * Recursively scans a directory for files matching a predicate.
+ * Skips symbolic links.
+ *
+ * @param dir - Directory to scan.
+ * @param predicate - Function that returns true if file should be included.
+ * @param fileList - Accumulated list of file paths.
+ * @returns Array of matching file paths.
+ */
+function findFiles(dir, predicate, fileList = []) {
+  try {
+    const files = fs.readdirSync(dir);
+    for (const file of files) {
+      const filePath = path.join(dir, file);
+      try {
+        const stat = fs.lstatSync(filePath); // Use lstat to detect symlinks
+        if (stat.isSymbolicLink()) {
+          continue; // Skip symlinks
+        }
+        if (stat.isDirectory()) {
+          findFiles(filePath, predicate, fileList);
+        } else if (predicate(file)) {
+          fileList.push(filePath);
+        }
+      } catch (error) {
+        console.warn(
+          `⚠️ Error processing file ${file} in ${dir}:`,
+          error.message,
+        );
+      }
     }
-  });
+  } catch (error) {
+    console.warn(`⚠️ Error reading directory ${dir}:`, error.message);
+  }
   return fileList;
+}
+
+function findReports(dir) {
+  return findFiles(
+    dir,
+    (file) => file.endsWith(".html") && file !== "index.html",
+  );
 }
 
 const htmlFiles = findReports(deployDir);
 const reports = [];
 
-htmlFiles.forEach((filePath) => {
+for (const filePath of htmlFiles) {
   const lowerPath = filePath.toLowerCase();
   let theme = "unknown";
 
@@ -63,14 +93,21 @@ htmlFiles.forEach((filePath) => {
     relativePath: path.relative(deployDir, filePath),
     theme: theme,
   });
-});
+}
 
 const grouped = { light: [], dark: [], unknown: [] };
-reports.forEach((r) => {
+for (const r of reports) {
   if (grouped[r.theme]) grouped[r.theme].push(r);
   else grouped.unknown.push(r);
-});
+}
 
+/**
+ * Renders a theme-specific list of accessibility reports.
+ *
+ * @param theme - The theme name (light, dark, unknown).
+ * @param list - The list of report objects.
+ * @returns HTML string for the theme section.
+ */
 function renderReportList(theme, list) {
   if (list.length === 0) return "";
 
@@ -84,7 +121,6 @@ function renderReportList(theme, list) {
   }
   const title = theme.charAt(0).toUpperCase() + theme.slice(1);
 
-  // Sort logic could be added here if filenames contain timestamps
   const items = list
     .map(
       (r) => `
@@ -307,23 +343,12 @@ const htmlContent = `
 fs.writeFileSync(indexPath, htmlContent);
 console.log(`Generated accessibility index at ${indexPath}`);
 
-// --- Aggregation of JSON Summaries ---
-
-function findSummaries(dir, fileList = []) {
-  const files = fs.readdirSync(dir);
-  files.forEach((file) => {
-    const filePath = path.join(dir, file);
-    const stat = fs.statSync(filePath);
-    if (stat.isDirectory()) {
-      findSummaries(filePath, fileList);
-    } else if (
-      file.startsWith("accessibility-summary-") &&
-      file.endsWith(".json")
-    ) {
-      fileList.push(filePath);
-    }
-  });
-  return fileList;
+function findSummaries(dir) {
+  return findFiles(
+    dir,
+    (file) =>
+      file.startsWith("accessibility-summary-") && file.endsWith(".json"),
+  );
 }
 
 const summaryFiles = findSummaries(deployDir);
@@ -332,34 +357,25 @@ if (summaryFiles.length > 0) {
     .map((file) => {
       try {
         return JSON.parse(fs.readFileSync(file, "utf-8"));
-      } catch (e) {
-        console.error(`Error parsing summary ${file}:`, e);
+      } catch (error) {
+        console.error(`Error parsing summary ${file}:`, error);
         return null;
       }
     })
     .filter(Boolean);
 
-  // Write the aggregated report to the root, as format-accessibility-report.mjs expects it there
-  fs.writeFileSync(
-    "accessibility-report.json",
-    JSON.stringify(aggregatedReport, null, 2),
-  );
-  console.log("Generated aggregated accessibility-report.json");
-
-  // Also rename keys to match format-accessibility-report.mjs expectation if needed
-  // The formatter looks for: violations, incomplete (arrays)
-  // Our updated spec produces: violations, incompleteList (arrays)
-  // We should map incompleteList -> incomplete for compatibility
-
+  // Map incompleteList -> incomplete for compatibility with format-accessibility-report.mjs
   const compatibilityReport = aggregatedReport.map((report) => ({
     ...report,
-    incompleteCount: report.incomplete, // Preserve count as separate property
-    incomplete: report.incompleteList, // Map incompleteList to incomplete for the formatter
+    incompleteCount: report.incomplete ?? 0, // Preserve count as separate property, default to 0
+    incomplete: report.incompleteList || [], // Map incompleteList to incomplete for the formatter, default to empty
   }));
+
   fs.writeFileSync(
     "accessibility-report.json",
     JSON.stringify(compatibilityReport, null, 2),
   );
+  console.log("Generated aggregated accessibility-report.json");
 } else {
   console.warn(
     "No accessibility-summary-*.json files found. Comment generation might fail.",

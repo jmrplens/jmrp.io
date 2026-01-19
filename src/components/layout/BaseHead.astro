@@ -10,180 +10,164 @@
  */
 import "@styles/global.css";
 
-// Variable Fonts (automatically injects @font-face)
-import "@fontsource-variable/inter";
-import "@fontsource-variable/jetbrains-mono";
-
-import interVariable from "@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url";
-import jetbrainsVariable from "@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2?url";
-
-// ... other imports
-
-import { getImage } from "astro:assets";
-import faviconSrc from "@assets/favicon.png";
 import appleTouchIconSrc from "@assets/apple-touch-icon.png";
+import faviconSrc from "@assets/favicon.png";
 import defaultOgImage from "@assets/mehome_landscape.webp";
-
-import { getEntry } from "astro:content";
 import type { SiteConfig } from "@src/types";
+import { safeJsonLd } from "@utils/html";
+import { getSiteUrl } from "@utils/site";
+// Variable Fonts (managed by Astro Experimental Fonts)
+import type { ImageMetadata } from "astro";
+import { Font, getImage } from "astro:assets";
+import { getEntry } from "astro:content";
 
 const favicon = await getImage({
-    src: faviconSrc,
-    format: "webp",
-    width: 32,
-    height: 32,
+  src: faviconSrc,
+  format: "png",
+  width: 32,
+  height: 32,
 });
 const appleTouchIcon = await getImage({
-    src: appleTouchIconSrc,
-    format: "png",
-    width: 180,
-    height: 180,
+  src: appleTouchIconSrc,
+  format: "png",
+  width: 180,
+  height: 180,
 });
 
 const siteEntry = await getEntry("site_config", "site");
 const siteData = (siteEntry?.data || {}) as SiteConfig;
 
 interface Props {
-    title: string;
-    description?: string;
-    image?: string;
-    type?: string;
-    // Article specific props
-    publishDate?: Date;
-    modifiedDate?: Date;
-    authors?: string[]; // Defaults to siteData.author
-    tags?: string[];
-    schema?: any; // Custom JSON-LD schema to merge or override
+  title: string;
+  description?: string;
+  image?: string | ImageMetadata;
+  type?: string;
+  // Article specific props
+  publishDate?: Date;
+  modifiedDate?: Date;
+  authors?: string[]; // Defaults to siteData.author
+  tags?: string[];
+  schema?: Record<string, unknown> | Record<string, unknown>[]; // Custom JSON-LD schema to merge or override
 }
 
-const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+const canonicalURL = new URL(Astro.url.pathname, getSiteUrl());
 
 const {
-    title,
-    description = siteData.description,
-    image,
-    type = "website",
-    publishDate,
-    modifiedDate,
-    authors = [siteData.author],
-    tags = [],
-    schema,
+  title,
+  description = siteData.description,
+  image,
+  type = "website",
+  publishDate,
+  modifiedDate,
+  authors = [siteData.author],
+  tags = [],
+  schema,
 } = Astro.props;
 
 const fullTitle = (() => {
-    if (title === siteData.title) return title;
-    const suffix = siteData.author;
-    const shortSuffix = "JMRP";
+  if (title === siteData.title) return title;
+  const suffix = siteData.author;
+  const shortSuffix = "JMRP";
 
-    if (`${title} | ${suffix}`.length <= 65) {
-        return `${title} | ${suffix}`;
-    } else if (`${title} | ${shortSuffix}`.length <= 65) {
-        return `${title} | ${shortSuffix}`;
-    }
-    return title;
+  if (`${title} | ${suffix}`.length <= 65) {
+    return `${title} | ${suffix}`;
+  } else if (`${title} | ${shortSuffix}`.length <= 65) {
+    return `${title} | ${shortSuffix}`;
+  }
+  return title;
 })();
 
 // Image resolution logic
 let resolvedImage;
 if (image) {
-    // If props provide an image
-    if (typeof image === "string") {
-        // External URL or legacy path (though we shouldn't have legacy paths now)
-        try {
-            resolvedImage = new URL(image, Astro.url);
-        } catch {
-            // Relative path or other, try to resolve against site
-            resolvedImage = new URL(image, Astro.site);
-        }
-    } else {
-        // It's an imported Image object passed via props
-        // Optimize it for OG/Twitter (Standard 1200x630, WebP for efficiency)
-        const optimizedImage = await getImage({
-            src: image,
-            format: "webp",
-            width: 1200,
-            height: 630,
-        });
-        resolvedImage = new URL(optimizedImage.src, Astro.url);
-    }
-} else {
-    // Fallback to default site image (imported)
-    // We strictly use the imported asset for the default to ensure optimization
-    const optimizedDefault = await getImage({
-        src: defaultOgImage,
-        format: "webp",
-        width: 1200,
-        height: 630,
+  // If props provide an image
+  if (typeof image === "string") {
+    // Resolve image URL against the site URL for consistent absolute URLs
+    resolvedImage = new URL(image, getSiteUrl());
+  } else {
+    // It's an imported Image object passed via props
+    // Optimize it for OG/Twitter (Standard 1200x630, WebP for efficiency)
+    const optimizedImage = await getImage({
+      src: image,
+      format: "webp",
+      width: 1200,
+      height: 630,
     });
-    resolvedImage = new URL(optimizedDefault.src, Astro.url);
+    resolvedImage = new URL(optimizedImage.src, getSiteUrl());
+  }
+} else {
+  // Fallback to default site image (imported)
+  // We strictly use the imported asset for the default to ensure optimization
+  const optimizedDefault = await getImage({
+    src: defaultOgImage,
+    format: "webp",
+    width: 1200,
+    height: 630,
+  });
+  resolvedImage = new URL(optimizedDefault.src, getSiteUrl());
 }
 
 // --- Schema.org Construction ---
 
 // 1. WebSite Schema (Global)
 const websiteSchema = {
-    "@type": "WebSite",
-    "@id": `${Astro.site}/#website`,
-    url: Astro.site,
-    name: "José M. Requena Plens",
-    description: siteData.description,
-    inLanguage: siteData.locale,
-    publisher: {
-        "@type": "Person",
-        "@id": `${Astro.site}/#person`,
-        name: siteData.author,
-        url: Astro.site,
-        image: new URL(defaultOgImage.src, Astro.site).toString(),
-        sameAs: [
-            "https://github.com/jmrplens",
-            "https://www.linkedin.com/in/jmrplens",
-            "https://mstdn.jmrp.io/@jmrplens",
-            `https://twitter.com/${siteData.twitter_creator.replace("@", "")}`,
-        ],
-    },
+  "@type": "WebSite",
+  "@id": new URL("#website", getSiteUrl()).toString(),
+  url: getSiteUrl(),
+  name: siteData.author,
+  description: siteData.description,
+  inLanguage: siteData.locale,
+  publisher: {
+    "@type": "Person",
+    "@id": new URL("#person", getSiteUrl()).toString(),
+    name: siteData.author,
+    url: getSiteUrl(),
+    image: new URL(defaultOgImage.src, getSiteUrl()).toString(),
+    sameAs: siteData.social_links?.map((link) => link.url) || [],
+  },
 };
 
 // 2. Navigation Schema
 const navSchema = (siteData.nav || []).map((item) => ({
-    "@type": "SiteNavigationElement",
-    name: item.label,
-    url: new URL(item.href, Astro.site).toString(),
+  "@type": "SiteNavigationElement",
+  name: item.label,
+  url: new URL(item.href, getSiteUrl()).toString(),
 }));
 
 // 3. Breadcrumb Schema (Automatic)
-const pathSegments = Astro.url.pathname.split("/").filter((s) => s);
+const pathSegments = Astro.url.pathname.split("/").filter(Boolean);
 const breadcrumbList = {
-    "@type": "BreadcrumbList",
-    "@id": `${Astro.url.toString()}#breadcrumb`,
-    itemListElement: [
-        {
-            "@type": "ListItem",
-            position: 1,
-            name: "Home",
-            item: Astro.site,
-        },
-        ...pathSegments.map((segment, index) => {
-            const path = `/${pathSegments.slice(0, index + 1).join("/")}/`;
-            const isLastSegment = index === pathSegments.length - 1;
-            const absoluteUrl = new URL(path, Astro.site).toString();
+  "@type": "BreadcrumbList",
+  "@id": `${getSiteUrl()}#breadcrumb`,
+  itemListElement: [
+    {
+      "@type": "ListItem",
+      position: 1,
+      name: "Home",
+      item: getSiteUrl(),
+    },
+    ...pathSegments.map((segment, index) => {
+      const path = `/${pathSegments.slice(0, index + 1).join("/")}/`;
+      const isLastSegment = index === pathSegments.length - 1;
+      const absoluteUrl = new URL(path, getSiteUrl()).toString();
 
-            // Prefer page title for the last segment if available
-            const fallbackName = segment
-                .replace(/-/g, " ")
-                .replace(/\b\w/g, (l) => l.toUpperCase());
-            const name =
-                isLastSegment && title && title !== siteData.title
-                    ? title
-                    : fallbackName;
+      // Prefer page title for the last segment if available
+      const fallbackName = segment
+        .replaceAll("-", " ")
+        .replaceAll(/\b\w/g, (l) => l.toUpperCase());
+      const name =
+        isLastSegment && title && title !== siteData.title
+          ? title
+          : fallbackName;
 
-            return {
-                "@type": "ListItem",
-                position: index + 2,
-                name: name,
-                item: absoluteUrl,
-            };
-        }),
-    ],
+      return {
+        "@type": "ListItem",
+        position: index + 2,
+        name: name,
+        item: absoluteUrl,
+      };
+    }),
+  ],
 };
 
 // 4. Merge Logic
@@ -191,132 +175,232 @@ const breadcrumbList = {
 let schemaGraph = [websiteSchema, ...navSchema, breadcrumbList];
 
 if (schema) {
-    if (Array.isArray(schema)) {
-        schemaGraph = [...schemaGraph, ...schema];
-    } else {
-        schemaGraph.push(schema);
-    }
+  // Use type assertion to bypass strict checking since schema is externally provided
+  if (Array.isArray(schema)) {
+    schemaGraph = [
+      ...schemaGraph,
+      ...(schema as unknown as (typeof schemaGraph)[number][]),
+    ];
+  } else {
+    schemaGraph.push(schema as unknown as (typeof schemaGraph)[number]);
+  }
 }
 
 const jsonLD = {
-    "@context": "https://schema.org",
-    "@graph": schemaGraph,
+  "@context": "https://schema.org",
+  "@graph": schemaGraph,
 };
 ---
 
 <!-- Global Metadata -->
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-
-<!-- Font Preloads (Critical for LCP/CLS) -->
-<link
-    rel="preload"
-    href={interVariable}
-    as="font"
-    type="font/woff2"
-    crossorigin="anonymous"
-    fetchpriority="high"
-/>
-<link
-    rel="preload"
-    href={jetbrainsVariable}
-    as="font"
-    type="font/woff2"
-    crossorigin="anonymous"
-    fetchpriority="high"
+<meta
+  name="viewport"
+  content="width=device-width,initial-scale=1"
 />
 
-<link rel="icon" type="image/webp" href={favicon.src} />
-<link rel="apple-touch-icon" href={appleTouchIcon.src} />
+<!-- Font Preloads (Managed by Astro) -->
+<Font
+  cssVariable="--font-geist-sans"
+  preload={[
+    { weight: "400", style: "normal" },
+    { weight: "700", style: "normal" },
+  ]}
+/>
+<Font
+  cssVariable="--font-geist-mono"
+  preload={[
+    { weight: "400", style: "normal" },
+    { weight: "700", style: "normal" },
+  ]}
+/>
+
+<link
+  rel="icon"
+  type="image/png"
+  href={favicon.src}
+/>
+<link
+  rel="apple-touch-icon"
+  href={appleTouchIcon.src}
+/>
 
 <!-- DNS Prefetch for external resources -->
 
-<link rel="manifest" href="/site.webmanifest" />
-<link rel="sitemap" href="/sitemap.xml" />
 <link
-    rel="alternate"
-    type="application/rss+xml"
-    title="JMRP Blog RSS Feed"
-    href="/rss.xml"
+  rel="manifest"
+  href="/site.webmanifest"
 />
-<meta name="generator" content={Astro.generator} />
-<meta name="theme-color" content={siteData.theme_color} />
-<meta name="robots" content="index, follow" />
+<link
+  rel="sitemap"
+  href="/sitemap-index.xml"
+/>
+<link
+  rel="alternate"
+  type="application/rss+xml"
+  title="JMRP Blog RSS Feed"
+  href="/rss.xml"
+/>
+<meta
+  name="generator"
+  content={Astro.generator}
+/>
+<meta
+  name="theme-color"
+  content={siteData.theme_color}
+/>
+<meta
+  name="robots"
+  content="index, follow"
+/>
 
 <!-- SEO -->
-<meta name="keywords" content={siteData.keywords} />
-<meta name="author" content={siteData.author} />
-<meta name="fediverse:creator" content={siteData.fediverse_creator} />
+<meta
+  name="keywords"
+  content={siteData.keywords}
+/>
+<meta
+  name="author"
+  content={siteData.author}
+/>
+<meta
+  name="fediverse:creator"
+  content={siteData.fediverse_creator}
+/>
 
-<link rel="canonical" href={canonicalURL} />
+<link
+  rel="canonical"
+  href={canonicalURL}
+/>
 
 <!-- Primary Meta Tags -->
 <title>{fullTitle}</title>
-<meta name="title" content={title} />
-<meta name="description" content={description} />
+<meta
+  name="title"
+  content={title}
+/>
+<meta
+  name="description"
+  content={description}
+/>
 
 <!-- Open Graph / Facebook -->
-<meta property="og:type" content={type} />
-<meta property="og:url" content={Astro.url} />
-<meta property="og:title" content={title} />
-<meta property="og:description" content={description} />
-<meta property="og:image" content={resolvedImage} />
-<meta property="og:image:width" content="1200" />
-<meta property="og:image:height" content="630" />
-<meta property="og:locale" content={siteData.locale} />
-<meta property="og:site_name" content={siteData.author} />
+<meta
+  property="og:type"
+  content={type}
+/>
+<meta
+  property="og:url"
+  content={canonicalURL}
+/>
+<meta
+  property="og:title"
+  content={title}
+/>
+<meta
+  property="og:description"
+  content={description}
+/>
+<meta
+  property="og:image"
+  content={resolvedImage}
+/>
+<meta
+  property="og:image:width"
+  content="1200"
+/>
+<meta
+  property="og:image:height"
+  content="630"
+/>
+<meta
+  property="og:locale"
+  content={siteData.locale}
+/>
+<meta
+  property="og:site_name"
+  content={siteData.author}
+/>
 
 <!-- Article Specific OG Tags -->
 {
-    type === "article" && (
-        <>
-            {publishDate && (
-                <meta
-                    property="article:published_time"
-                    content={publishDate.toISOString()}
-                />
-            )}
-            {modifiedDate && (
-                <meta
-                    property="article:modified_time"
-                    content={modifiedDate.toISOString()}
-                />
-            )}
-            {authors.map((author) => (
-                <meta property="article:author" content={author} />
-            ))}
-            {tags.map((tag) => (
-                <meta property="article:tag" content={tag} />
-            ))}
-        </>
-    )
+  type === "article" && (
+    <>
+      {publishDate && (
+        <meta
+          property="article:published_time"
+          content={publishDate.toISOString()}
+        />
+      )}
+      {modifiedDate && (
+        <meta
+          property="article:modified_time"
+          content={modifiedDate.toISOString()}
+        />
+      )}
+      {authors.map((author) => (
+        <meta
+          property="article:author"
+          content={author}
+        />
+      ))}
+      {tags.map((tag) => (
+        <meta
+          property="article:tag"
+          content={tag}
+        />
+      ))}
+    </>
+  )
 }
 
 <!-- Twitter -->
-<meta property="twitter:card" content="summary_large_image" />
-<meta property="twitter:site" content={siteData.twitter_creator} />
-<meta property="twitter:creator" content={siteData.twitter_creator} />
-<meta property="twitter:url" content={Astro.url} />
-<meta property="twitter:title" content={title} />
-<meta property="twitter:description" content={description} />
-<meta property="twitter:image" content={resolvedImage} />
+<meta
+  name="twitter:card"
+  content="summary_large_image"
+/>
+<meta
+  name="twitter:site"
+  content={siteData.twitter_creator}
+/>
+<meta
+  name="twitter:creator"
+  content={siteData.twitter_creator}
+/>
+<meta
+  name="twitter:url"
+  content={canonicalURL}
+/>
+<meta
+  name="twitter:title"
+  content={title}
+/>
+<meta
+  name="twitter:description"
+  content={description}
+/>
+<meta
+  name="twitter:image"
+  content={resolvedImage}
+/>
 
 <!-- Cloudflare Web Analytics (Static with SRI) -->
 {
-    import.meta.env.PROD && import.meta.env.PUBLIC_CF_BEACON_TOKEN && (
-        <script
-            is:inline
-            defer
-            src="/scripts/cf-beacon.js"
-            data-cf-beacon={JSON.stringify({ token: import.meta.env.PUBLIC_CF_BEACON_TOKEN })}
-            integrity="__BEACON_INTEGRITY_HASH__"
-            crossorigin="anonymous"
-        />
-    )
+  import.meta.env.PROD && import.meta.env.PUBLIC_CF_BEACON_TOKEN && (
+    <script
+      is:inline
+      defer
+      src="/scripts/cf-beacon.js"
+      data-cf-beacon={JSON.stringify({
+        token: import.meta.env.PUBLIC_CF_BEACON_TOKEN,
+      })}
+      crossorigin="anonymous"
+    />
+  )
 }
 
 <!-- JSON-LD -->
 <script
-    is:inline
-    type="application/ld+json"
-    set:html={JSON.stringify(jsonLD)}
+  is:inline
+  type="application/ld+json"
+  set:html={safeJsonLd(jsonLD)}
 />

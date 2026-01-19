@@ -1,7 +1,9 @@
+import fs from "node:fs";
+
 import type { AstroIntegration } from "astro";
 import { loadEnv } from "vite";
-import fs from "node:fs";
-import { setupGithubAvatar } from "./pre-build/avatar.js";
+
+import { GITHUB_AVATAR_PATH, setupGithubAvatar } from "./pre-build/avatar.js";
 import { setupCfBeacon } from "./pre-build/beacon.js";
 
 /**
@@ -14,7 +16,7 @@ export default function preBuildIntegration(): AstroIntegration {
   return {
     name: "jmrp-pre-build",
     hooks: {
-      "astro:config:setup": async ({ command }) => {
+      "astro:config:setup": async ({ command, logger }) => {
         // Load environment variables using Vite's helper
         const env = loadEnv(
           command === "dev" ? "development" : "production",
@@ -22,47 +24,39 @@ export default function preBuildIntegration(): AstroIntegration {
           "",
         );
 
-        // We run this on both 'dev' and 'build' to ensure assets exist locally
-        console.log(
-          `\n[\x1b[36mPreBuild\x1b[0m] Initialising environment (${command})...`,
-        );
+        logger.info(`Environment initialization: [${command}]`);
 
         try {
-          const avatarPath = "src/assets/github-avatar.png";
           const shouldRunGithubAvatar =
             command === "build" ||
             env.PREBUILD_RUN_ON_DEV === "true" ||
-            !fs.existsSync(avatarPath);
+            !fs.existsSync(GITHUB_AVATAR_PATH);
 
           if (shouldRunGithubAvatar) {
-            await setupGithubAvatar();
+            await setupGithubAvatar(logger);
           } else {
-            console.log("  ✓ Skipping GitHub avatar fetch (already exists).");
+            logger.info("GitHub avatar exists locally. Skipping fetch.");
           }
 
           // Only fetch beacon if we are building for production
           if (command === "build") {
-            await setupCfBeacon(env.PUBLIC_CF_BEACON_TOKEN);
+            await setupCfBeacon(env.PUBLIC_CF_BEACON_TOKEN, logger);
           }
         } catch (error) {
           const message =
             error instanceof Error ? error.message : String(error);
-          console.error(`[\x1b[31mPreBuild\x1b[0m] Fatal error:`, message);
+          logger.error(`Initialization failure: ${message}`);
 
           // In dev mode, we don't want to crash the whole process for pre-build failures
           if (command === "dev") {
-            console.warn(
-              "[\x1b[33mPreBuild\x1b[0m] Continuing in dev mode despite errors...",
-            );
+            logger.warn("Continuing in development mode despite errors...");
             return;
           } else {
             throw error instanceof Error ? error : new Error(message);
           }
         }
 
-        console.log(
-          `[\x1b[36mPreBuild\x1b[0m] \x1b[32mCompleted successfully.\x1b[0m\n`,
-        );
+        logger.info("Initialization completed.");
       },
     },
   };

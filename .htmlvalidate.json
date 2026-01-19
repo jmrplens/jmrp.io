@@ -2,10 +2,22 @@
   "extends": ["html-validate:recommended"],
   "elements": ["html5"],
   "rules": {
+    "attribute-empty-style": "error",
+    "attr-case": [
+      "error",
+      {
+        "style": "lowercase"
+      }
+    ],
     "no-trailing-whitespace": "off",
     "void-style": "off",
     "element-permitted-content": "off",
-    "valid-id": ["error", { "relaxed": true }],
+    "valid-id": [
+      "error",
+      {
+        "relaxed": true
+      }
+    ],
     "no-raw-characters": "error",
     "no-implicit-button-type": "error",
     "no-inline-style": "error",

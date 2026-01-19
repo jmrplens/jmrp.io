@@ -1,45 +1,87 @@
-# build output
+###############################################################################
+# JMRP.IO - MAIN GITIGNORE
+# Grouped and documented ignores for build, development, and CI environments.
+###############################################################################
+
+# --- 1. CORE & BUILD ---
+# Main Astro build output
 dist/
 dist_new/
-# generated types
+# Astro generated types and runtime cache
 .astro/
+# Package manager dependencies
+node_modules/
 
+# --- 2. IDE & OS SPECIFIC ---
+# macOS system files
+.DS_Store
+# JetBrains IDEs (WebStorm, IntelliJ)
+.idea/
+# AI/Editor Specific
 .claude/
 .qodo/
 
-# dependencies
-node_modules/
-
-# logs
+# --- 3. LOGS ---
+# Standard package manager logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+# Project custom logs
 logs/*.log
+html-errors.log
 
-# test results
+# --- 4. SECURITY & ENVIRONMENT ---
+# Local environment variables (NEVER COMMIT)
+.env
+.env.production
+.env.local
+.env.*.local
+
+# --- 5. CI, REPORTS & ARTIFACTS ---
+# Deployment artifacts and dashboard data
+dist-reports/
+# Deployment staging directories (a11y-deploy, lh-deploy, etc. created during CI)
+*-deploy/
+.lighthouseci/
+.scannerwork/
+.lycheecache
+
+# Generated CI workflow data
+workflow-graph.png
+workflow-data.json
+
+# Static Analysis & Validation reports (JSON/HTML)
+html-validation.json
+html-report.html
+accessibility-summary.json
+accessibility-summary-*.json
+bundle-analysis.json
+schema-report.json
+schema-report.html
+rss-validation.json
+image-report.html
+jsdoc-coverage/
+.jsdoc-coverage
+
+# --- 6. TESTING ---
+# Playwright test results and reports
 test-results/
 playwright-report/
 accessibility-report/
+test-report.html
+test-report.json
+test_output.txt
+test.html
+validation_*.txt
 
-
-# environment variables
-.env
-.env.production
-
-# macOS-specific files
-.DS_Store
-
-# jetbrains setting folder
-.idea/
-
-# LaTeX build artifacts
+# --- 7. LATEX ARTIFACTS (CV Generation) ---
+# Global LaTeX temporary files
 *.aux
 *.fdb_latexmk
 *.fls
 *.log
 *.out
-*.pdf
 *.synctex.gz
 *.bbl
 *.bcf
@@ -48,46 +90,15 @@ accessibility-report/
 *.toc
 *.xdv
 
-
-# Local Knowledge
-PROJECT_KNOWLEDGE.md
-
-# Agent
-.agent/
-
-# Large CV files
-CV_RequenaPlensJoseManuel_*.pdf
-html-validation.json
-html-report.html
-html-errors.log
-accessibility-summary.json
-bundle-analysis.json
-test-report.html
-test-report.json
-test_output.txt
-validation_*.txt
-schema-report.json
-GEMINI.md
-
-# CI deployment temporary folders
-*-deploy/
-
-# Vendored scripts (downloaded at build time)
-public/scripts/cf-beacon.js
-
-# Lighthouse CI
-.lighthouseci/
-rss-validation.json
-bundle-analysis.json
-.lycheecache
-
-# LaTeX temporary files
-cv_latex/*.aux
-cv_latex/*.log
-cv_latex/*.out
-cv_latex/*.toc
-cv_latex/*.bbl
-cv_latex/*.blg
-cv_latex/*.run.xml
-cv_latex/*.bcf
+# Project-specific LaTeX paths
 cv_latex/*.pdf
+
+# --- 8. PROJECT SPECIFIC & MISC ---
+# Agentic workflows and local knowledge
+.agent/
+PROJECT_KNOWLEDGE.md
+GEMINI.md
+# Vendored scripts (downloaded during build)
+public/scripts/cf-beacon.js
+temp_lh/
+temp_workflow/

@@ -8,15 +8,25 @@
 import { execSync } from "node:child_process";
 import fs from "node:fs";
 
+// Load environment variables from .env if present
+try {
+  if (fs.existsSync(".env")) {
+    process.loadEnvFile(".env");
+  }
+} catch (error) {
+  const message = error instanceof Error ? error.message : String(error);
+  console.warn(`[Verify] Warning: Failed to load .env file: ${message}`);
+}
+
 // ANSI colors for pretty output
 const colors = {
-  reset: "\x1b[0m",
-  bright: "\x1b[1m",
-  green: "\x1b[32m",
-  yellow: "\x1b[33m",
-  red: "\x1b[31m",
-  cyan: "\x1b[36m",
-  magenta: "\x1b[35m",
+  reset: "\u001B[0m",
+  bright: "\u001B[1m",
+  green: "\u001B[32m",
+  yellow: "\u001B[33m",
+  red: "\u001B[31m",
+  cyan: "\u001B[36m",
+  magenta: "\u001B[35m",
 };
 
 /**
@@ -38,7 +48,7 @@ function runStep(name, command, condition = true) {
   console.log(`${colors.reset}   ${command}`);
 
   try {
-    execSync(command, { stdio: "inherit", encoding: "utf8" });
+    execSync(command, { stdio: "inherit" });
     console.log(`${colors.green}✅ ${name} passed!${colors.reset}\n`);
     return true;
   } catch {
@@ -47,7 +57,13 @@ function runStep(name, command, condition = true) {
   }
 }
 
-async function runVerify() {
+/**
+ * Main verification suite orchestrator.
+ * Defines the steps to run and executes them sequentially.
+ *
+ * @returns {boolean} Returns true if all checks pass, false otherwise.
+ */
+function runVerify() {
   const startTime = Date.now();
   console.log(
     `\n${colors.magenta}${colors.bright}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${colors.reset}`,
@@ -60,14 +76,18 @@ async function runVerify() {
   );
 
   const steps = [
-    { name: "Static: Astro Check", command: "pnpm typecheck" },
-    { name: "Static: ESLint", command: "pnpm lint" },
+    {
+      name: "Static: Astro Check",
+      command: "pnpm typecheck --minimumFailingSeverity warning",
+    },
+    { name: "Static: ESLint", command: "pnpm lint --max-warnings=0" },
     { name: "Static: Prettier", command: "pnpm exec prettier --check ." },
+    { name: "Lint: CSS (Stylelint)", command: "pnpm lint:css" },
     { name: "Build: Production Build", command: "pnpm run build" },
     { name: "Lint: HTML5 Validation", command: "pnpm lint:html" },
     {
       name: "Lint: RSS Feed",
-      command: "node scripts/ci/validate-rss.mjs dist/rss.xml",
+      command: "node scripts/ci/validate-rss.mjs dist",
     },
     {
       name: "Lint: Schema.org JSON-LD",
@@ -79,9 +99,24 @@ async function runVerify() {
       command: "lychee --config lychee.toml --root-dir dist dist/**/*.html",
     },
     {
+      name: "Lint: JSDoc Coverage",
+      command: "node scripts/ci/calculate-jsdoc-coverage.mjs",
+    },
+    {
       name: "Security: Snyk Audit",
       command: "pnpm exec snyk test --all-projects --severity-threshold=high",
       condition: () => !!process.env.SNYK_TOKEN,
+    },
+    {
+      name: "Security: SonarCloud Analysis",
+      command: "pnpm exec sonar-scanner",
+      condition: () => !!process.env.SONAR_TOKEN,
+    },
+    {
+      name: "Analyze: SonarCloud Issues",
+      command: "node scripts/ci/get-sonar-issues.mjs",
+      condition: () =>
+        !!process.env.SONAR_TOKEN && !!process.env.SONAR_PROJECT_KEY,
     },
     { name: "Tests: Playwright E2E", command: "pnpm test:e2e" },
   ];
@@ -91,8 +126,17 @@ async function runVerify() {
   for (const step of steps) {
     const success = runStep(step.name, step.command, step.condition ?? true);
     if (!success) {
+      // SonarCloud steps should not block subsequent independent steps (like E2E tests)
+      // Allow both analysis and issues steps to fail without breaking the loop
+      if (
+        step.name === "Security: SonarCloud Analysis" ||
+        step.name === "Analyze: SonarCloud Issues"
+      ) {
+        failedSteps.push(step.name);
+        continue;
+      }
       failedSteps.push(step.name);
-      // In verify, we want to fail fast to save time
+      // For other steps, fail fast
       break;
     }
   }
@@ -106,7 +150,7 @@ async function runVerify() {
     console.log(
       `${colors.green}${colors.bright}✨ ALL CHECKS PASSED SUCCESSFULLY! (${duration}s)${colors.reset}`,
     );
-    process.exit(0);
+    return true;
   } else {
     console.error(
       `${colors.red}${colors.bright}💥 VERIFICATION FAILED! (${duration}s)${colors.reset}`,
@@ -114,7 +158,7 @@ async function runVerify() {
     console.error(
       `${colors.red}   Failed step: ${failedSteps[0]}${colors.reset}`,
     );
-    process.exit(1);
+    return false;
   }
 }
 
@@ -125,15 +169,18 @@ try {
     "html-validation.json",
     "rss-validation.json",
   ];
-  reportFiles.forEach((f) => {
+  for (const f of reportFiles) {
     if (fs.existsSync(f)) fs.unlinkSync(f);
-  });
-} catch (err) {
-  const message = err instanceof Error ? err.message : String(err);
+  }
+} catch (error) {
+  const message = error instanceof Error ? error.message : String(error);
   console.warn(`[Verify] Warning: Pre-run cleanup failed: ${message}`);
 }
 
-runVerify().catch((err) => {
-  console.error(err);
+try {
+  const success = runVerify();
+  process.exit(success ? 0 : 1);
+} catch (error) {
+  console.error(error);
   process.exit(1);
-});
+}

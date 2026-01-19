@@ -1,0 +1,67 @@
+---
+import BaseLayout from "@layouts/BaseLayout.astro";
+---
+
+<BaseLayout
+  title="404: Not Found"
+  description="Page not found"
+>
+  <div class="content-wrapper">
+    <div class="error-container">
+      <h1 class="text-primary">404</h1>
+      <p class="subtitle">Page Not Found</p>
+      <p class="description">
+        Sorry, the page you are looking for does not exist or has been moved.
+      </p>
+      <a
+        href="/"
+        class="btn btn-primary"
+        >Go Home</a
+      >
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .content-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 60vh;
+    text-align: center;
+  }
+
+  .error-container {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    align-items: center;
+  }
+
+  h1 {
+    margin: 0;
+    font-size: 6rem;
+    font-weight: 800;
+    line-height: 1;
+  }
+
+  @media (width <= 640px) {
+    h1 {
+      font-size: 4rem;
+    }
+  }
+
+  .subtitle {
+    margin: 0;
+    font-size: 2rem;
+    font-weight: 600;
+    color: var(--color-text-heading);
+  }
+
+  .description {
+    max-width: 400px;
+    margin-bottom: var(--space-lg);
+    font-size: 1.1rem;
+    color: var(--color-text-muted);
+  }
+</style>
