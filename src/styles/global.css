@@ -249,7 +249,7 @@ h1 {
 }
 
 /* Accessibility: Improve touch target size for links in content on mobile */
-@media (max-width: 900px) {
+@media (width <= 900px) {
   .prose a {
     position: relative;
     display: inline-block;
@@ -305,7 +305,7 @@ h1 {
 }
 
 /* Mobile Optimizations - Reinforced */
-@media (max-width: 900px) {
+@media (width <= 900px) {
   :root {
     /* Tighter spacing for mobile */
     --space-md: 0.75rem !important;
