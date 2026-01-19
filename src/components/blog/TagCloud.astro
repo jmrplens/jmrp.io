@@ -1,6 +1,6 @@
 ---
-import { getCollection } from "astro:content";
 import { getUniqueTags } from "@utils/blog";
+import { getCollection } from "astro:content";
 
 const posts = (await getCollection("posts")).filter((post) => !post.data.draft);
 const tags = getUniqueTags(posts);
@@ -14,7 +14,7 @@ const tags = getUniqueTags(posts);
         <a
           href={`/blog/tags/${encodeURIComponent(tag)}`}
           class="tag"
-          aria-label={`View all posts tagged with ${tag}`}
+          aria-label={`View posts tagged ${tag}`}
         >
           <span class="tag-name">
             <span class="hash">#</span>
@@ -30,32 +30,43 @@ const tags = getUniqueTags(posts);
 <style>
   /* Base/Mobile Styles */
   .tag-cloud {
-    width: 100%;
     position: relative;
+    width: 100%;
+
     /* Ensure we span full width to edges if possible, or just contain nicely */
   }
 
   /* Gradient Fade for Mobile */
   .tag-cloud::after {
-    content: "";
     position: absolute;
     top: 0;
     right: 0;
     bottom: 0;
-    width: 80px;
-    background: linear-gradient(to right, transparent, var(--color-bg));
-    pointer-events: none;
     z-index: 10;
+    width: 80px;
+    pointer-events: none;
+    content: "";
+    background: linear-gradient(to right, transparent, var(--color-bg));
   }
 
   h3 {
+    /* Visually hidden on mobile but accessible to screen readers */
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+
+    /* Text styles (applied when visible on desktop) */
     font-size: 0.9rem;
+    font-weight: var(--fw-bold);
+    color: var(--color-text-muted);
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    color: var(--color-text-muted);
-    font-weight: var(--fw-bold);
-    margin-bottom: var(--space-md);
-    display: none;
+    white-space: nowrap;
+    border: 0;
+    clip-path: inset(50%);
   }
 
   .tags {
@@ -63,10 +74,9 @@ const tags = getUniqueTags(posts);
     grid-template-rows: repeat(2, auto); /* restore 2-row layout */
     grid-auto-flow: column;
     gap: var(--space-sm);
-    overflow-x: auto;
-    padding-bottom: var(--space-sm);
     padding-right: var(--space-xl); /* Space for gradient */
-    -webkit-overflow-scrolling: touch;
+    padding-bottom: var(--space-sm);
+    overflow-x: auto;
     scrollbar-width: none;
   }
 
@@ -76,35 +86,35 @@ const tags = getUniqueTags(posts);
 
   .tag {
     display: inline-flex;
-    align-items: center;
     gap: var(--space-sm);
-    padding: 0.35rem 0.8rem;
-    background: var(--color-bg-secondary);
-    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
-    border-radius: 9999px;
-    color: var(--color-text-body);
-    text-decoration: none;
-    font-size: 0.85rem;
-    white-space: nowrap;
-    transition: all 0.2s ease;
+    align-items: center;
     width: max-content;
+    padding: 0.35rem 0.8rem;
+    font-size: 0.85rem;
+    color: var(--color-text-body);
+    white-space: nowrap;
+    text-decoration: none;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--border-color, rgb(255 255 255 / 10%));
+    border-radius: 9999px;
+    transition: all 0.2s ease;
   }
 
   .hash {
     color: var(--color-primary);
-    opacity: 0.8;
+    opacity: 80%;
   }
 
   .count {
-    font-size: 0.75rem;
-    background: rgba(0, 0, 0, 0.1);
     padding: 0.1rem var(--space-sm);
+    font-size: 0.75rem;
+    background: rgb(0 0 0 / 10%);
     border-radius: 9999px;
-    opacity: 0.7;
+    opacity: 70%;
   }
 
   /* Desktop Styles (Sidebar List) */
-  @media (min-width: 900px) {
+  @media (width >= 900px) {
     .tag-cloud {
       position: sticky;
       top: var(--space-lg);
@@ -116,17 +126,24 @@ const tags = getUniqueTags(posts);
     }
 
     h3 {
-      display: block;
-      padding-left: 0.75rem;
+      /* Reset visually-hidden styles */
+      position: static;
+      width: auto;
+      height: auto;
+      padding: 0 0 0 0.75rem;
+      margin: 0 0 var(--space-md) 0;
+      overflow: visible;
+      white-space: normal;
+      clip-path: none;
     }
 
     .tags {
       display: flex;
       flex-direction: column;
       gap: var(--space-xs);
-      overflow-x: visible;
-      padding-bottom: 0;
       padding-right: 0;
+      padding-bottom: 0;
+      overflow-x: visible;
     }
 
     .tag {
@@ -141,22 +158,22 @@ const tags = getUniqueTags(posts);
     }
 
     .tag:hover {
-      background: var(--color-bg-secondary);
       color: var(--color-text-heading);
+      background: var(--color-bg-secondary);
       transform: translateX(4px);
     }
 
     .tag:hover .hash {
-      opacity: 1;
+      opacity: 100%;
     }
 
     .count {
-      background: var(--color-bg-subtle, rgba(255, 255, 255, 0.05));
+      background: var(--color-bg-subtle, rgb(255 255 255 / 5%));
     }
 
     .tag:hover .count {
-      background: var(--color-bg, #000);
       color: var(--color-text-body);
+      background: var(--color-bg, transparent);
     }
   }
 </style>

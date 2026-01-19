@@ -3,7 +3,7 @@
  * TerminalOutput Component
  * Displays the output of a shell command in a distinct visual style.
  *
- * NOTE: We use a <div> with 'white-space: pre-wrap' instead of a <pre> tag
+ * NOTE: We use a <section> wrapper with 'white-space: pre-wrap' instead of a <pre> tag
  * to avoid nested <pre> tags when the slot contains code blocks.
  *
  * Usage:
@@ -11,88 +11,113 @@
  *   Package installed successfully.
  * </TerminalOutput>
  */
+import { getNextIndex } from "@utils/counters";
 import { Icon } from "astro-icon/components";
 
 interface Props {
-    title?: string;
+  title?: string;
+  ariaLabel?: string;
 }
 
-const { title } = Astro.props;
+const { title, ariaLabel } = Astro.props;
+
+const slotContent = await Astro.slots.render("default");
+const trimmedContent = slotContent.trim();
+
+const index = getNextIndex("output");
+const finalAriaLabel =
+  ariaLabel ||
+  (title ? `Terminal Output: ${title}` : `Terminal Output ${index}`);
 ---
 
-<div
-    class="terminal-output-wrapper"
-    role="group"
-    aria-live="polite"
-    aria-label={title ? `Terminal Output: ${title}` : "Terminal Output"}
+<section
+  class="terminal-output-wrapper"
+  role="log"
+  tabindex="0"
+  aria-live="polite"
+  aria-label={finalAriaLabel}
 >
-    {
-        title && (
-            <div class="output-header" aria-hidden="true">
-                <Icon
-                    name="mdi:chevron-right-box-outline"
-                    class="output-icon"
-                />
-                <span class="output-title">{title}</span>
-            </div>
-        )
-    }
-    <div class="output-body">
-        <div class="terminal-content"><slot /></div>
-    </div>
-</div>
+  {
+    title && (
+      <div
+        class="output-header"
+        aria-hidden="true"
+      >
+        <Icon
+          name="mdi:chevron-right-box-outline"
+          class="output-icon"
+        />
+        <span class="output-title">{title}</span>
+      </div>
+    )
+  }
+  <div class="output-body">
+    <div
+      class="terminal-content"
+      set:html={trimmedContent}
+    />
+  </div>
+</section>
+
 <style>
-    .terminal-content {
-        white-space: pre-wrap;
-        word-break: break-all;
-    }
-    .terminal-output-wrapper {
-        border: var(--border-1);
-        border-radius: var(--radius-md);
-        margin: 1.5rem 0;
-        background-color: var(--color-bg-secondary);
-        overflow: hidden;
-    }
+  .terminal-content {
+    word-break: normal;
+    overflow-wrap: break-word;
+    white-space: pre-wrap;
+  }
 
-    .output-header {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        padding: 0.6rem 1rem;
-        border-bottom: var(--border-1);
-        font-family: var(--font-mono);
-        font-size: 0.85rem;
-        color: var(--color-text-muted);
-    }
-    .output-icon {
-        font-size: 1.1rem;
-    }
+  .terminal-output-wrapper {
+    margin: 1.5rem 0;
+    overflow: hidden;
+    background-color: var(--color-bg-secondary);
+    border: var(--border-1);
+    border-radius: var(--radius-md);
+  }
 
-    .output-body {
-        padding: 1rem;
-        font-family: var(--font-mono);
-        font-size: 0.85em;
-        color: var(--color-text-muted);
-        overflow-x: auto;
-    }
+  .terminal-output-wrapper:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
 
-    /* Hide our custom copy button for terminal output */
-    .output-body :global(.custom-code-copy-btn) {
-        display: none !important;
-    }
+  .output-header {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    padding: 0.6rem 1rem;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+    border-bottom: var(--border-1);
+  }
 
-    .output-body :global(pre) {
-        margin: 0 !important;
-        padding: 0 !important;
-        background: none !important;
-        border: none !important;
-        font-size: inherit !important;
-        color: inherit !important;
-    }
+  .output-icon {
+    font-size: 1.1rem;
+  }
 
-    .output-body :global(code) {
-        font-size: inherit !important;
-        color: inherit !important;
-        background-color: transparent !important;
-    }
+  .output-body {
+    padding: 1rem;
+    overflow-x: auto;
+    font-family: var(--font-mono);
+    font-size: 0.85em;
+    color: var(--color-text-muted);
+  }
+
+  .output-body :global(.custom-code-copy-btn) {
+    display: none !important;
+  }
+
+  .output-body :global(pre) {
+    padding: 0 !important;
+    margin: 0 !important;
+    font-size: inherit !important;
+    color: inherit !important;
+    background: none !important;
+    border: none !important;
+  }
+
+  .output-body :global(code) {
+    font-size: inherit !important;
+    color: inherit !important;
+    background-color: transparent !important;
+  }
 </style>

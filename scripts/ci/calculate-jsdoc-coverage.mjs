@@ -1,0 +1,315 @@
+/**
+ * JSDoc Coverage Calculator
+ *
+ * Scans the source code using the TypeScript compiler API to calculate
+ * the percentage of exported symbols (functions, classes, interfaces, types)
+ * that have JSDoc documentation.
+ *
+ * Exits with code 1 if coverage is below the threshold (90%).
+ */
+
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+
+import { glob } from "glob";
+import ts from "typescript";
+
+const THRESHOLD = 90;
+
+/**
+ * Simple logger that mimics Astro's integration logger for consistency across the CI scripts.
+ */
+const logger = {
+  info: (msg) => console.log(msg),
+  warn: (msg) => console.warn(msg),
+  error: (msg) => console.error(msg),
+};
+
+/**
+ * Calculates JSDoc coverage across the project by scanning exported symbols.
+ *
+ * @returns {Promise<void>} Resolves when the report is complete.
+ */
+async function calculateCoverage() {
+  logger.info(`🔍 Scanning src and scripts for JSDoc coverage...`);
+
+  // Find all TS/TSX/JS/JSX/MJS/MTS/CJS files
+  const files = await glob(`{src,scripts}/**/*.{ts,tsx,js,jsx,mjs,mts,cjs}`, {
+    ignore: [
+      "**/*.d.ts",
+      "**/*.{test,spec}.{ts,tsx,js,jsx,mjs,mts,cjs}",
+      "**/node_modules/**",
+    ],
+    absolute: true,
+  });
+
+  const program = ts.createProgram(files, {
+    allowJs: true,
+    checkJs: true,
+    noEmit: true,
+    target: ts.ScriptTarget.ESNext,
+  });
+
+  const checker = program.getTypeChecker();
+  let totalExported = 0;
+  let documented = 0;
+
+  for (const file of files) {
+    const sourceFile = program.getSourceFile(file);
+    if (!sourceFile) continue;
+
+    // Get nodes that are explicitly or implicitly exported at the module level
+    const exportedNodes = getExportedNodes(sourceFile, checker);
+
+    /**
+     * Checks if a node has private or protected visibility modifiers.
+     * @param {ts.Node} node - Current node.
+     * @returns {boolean} True if node is private or protected.
+     */
+    const isPrivateOrProtected = (node) => {
+      const flags = ts.getCombinedModifierFlags(node);
+      return (
+        (flags & ts.ModifierFlags.Private) !== 0 ||
+        (flags & ts.ModifierFlags.Protected) !== 0
+      );
+    };
+
+    /**
+     * Logs a missing JSDoc warning for a node.
+     * @param {ts.Node} node - The node missing documentation.
+     */
+    const logMissingJSDoc = (node) => {
+      const { line, character } = sourceFile.getLineAndCharacterOfPosition(
+        node.getStart(sourceFile),
+      );
+      logger.warn(`  ⚠️ Missing JSDoc: ${file}:${line + 1}:${character + 1}`);
+    };
+
+    /**
+     * Processes a documentable node, counting it and checking for JSDoc.
+     * @param {ts.Node} node - The node to process.
+     */
+    const processDocumentableNode = (node) => {
+      totalExported++;
+      if (hasDocComment(node, sourceFile)) {
+        documented++;
+      } else {
+        logMissingJSDoc(node);
+      }
+    };
+
+    /**
+     * Recursive visitor to find documentable symbols in public API.
+     * @param {ts.Node} node - Current node.
+     * @param {boolean} isParentPublic - Whether the parent is public.
+     */
+    const visit = (node, isParentPublic = false) => {
+      // Determine if this node is publicly accessible
+      const isExported = exportedNodes.has(node);
+      const isPrivate = isParentPublic && isPrivateOrProtected(node);
+      const isPublic = (isParentPublic || isExported) && !isPrivate;
+
+      // Process documentable nodes
+      if (isPublic && isDocumentable(node)) {
+        processDocumentableNode(node);
+      }
+
+      // Handle VariableStatements with function declarations separately
+      // Only count once if any declaration is documentable (avoid inflation)
+      if (isPublic && ts.isVariableStatement(node)) {
+        const hasDocumentableDecl = node.declarationList.declarations.some(
+          (decl) => isDocumentableDeclaration(decl),
+        );
+        if (hasDocumentableDecl) {
+          processDocumentableNode(node);
+        }
+      }
+
+      // Determine if children should be considered public by default
+      const nextParentPublic = checkParentPublic(node, isPublic);
+
+      ts.forEachChild(node, (n) => visit(n, nextParentPublic));
+    };
+
+    ts.forEachChild(sourceFile, (n) => visit(n, false));
+  }
+
+  const percentage =
+    totalExported === 0 ? 100 : (documented / totalExported) * 100;
+  const formattedPercentage = percentage.toFixed(1);
+
+  logger.info("\n📊 JSDoc Total Coverage Report");
+  logger.info("===============================");
+  logger.info(`Files Scanned: ${files.length}`);
+  logger.info(`Total Exported Documentable Symbols: ${totalExported}`);
+  logger.info(`Documented: ${documented}`);
+  logger.info(`Coverage: ${formattedPercentage}%`);
+  logger.info("===============================\n");
+
+  // Output for CI environment
+  if (process.env.GITHUB_OUTPUT) {
+    try {
+      fs.appendFileSync(
+        process.env.GITHUB_OUTPUT,
+        `JSDOC_COVERAGE=${formattedPercentage}\n`,
+      );
+    } catch (error) {
+      logger.error(
+        `Failed to write to GITHUB_OUTPUT: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+  }
+
+  // Also write to a temp file for other scripts to pick up if needed
+  const tempCoveragePath = path.join(os.tmpdir(), ".jsdoc-coverage");
+  try {
+    fs.writeFileSync(tempCoveragePath, `${formattedPercentage}%`);
+    logger.info(`  Coverage data written to: ${tempCoveragePath}`);
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    logger.warn(`Failed to write .jsdoc-coverage file: ${msg}`);
+  }
+
+  if (percentage < THRESHOLD) {
+    logger.error(
+      `❌ Coverage (${formattedPercentage}%) is below the threshold of ${THRESHOLD}%.`,
+    );
+    process.exit(1);
+  } else {
+    logger.info(
+      `✅ Coverage (${formattedPercentage}%) meets the threshold of ${THRESHOLD}%.`,
+    );
+    process.exit(0);
+  }
+}
+
+/**
+ * Determines if children should inherit public status based on parent node type.
+ * @param {ts.Node} node
+ * @param {boolean} isPublic
+ * @returns {boolean}
+ */
+function checkParentPublic(node, isPublic) {
+  return (
+    isPublic &&
+    (ts.isClassDeclaration(node) ||
+      ts.isInterfaceDeclaration(node) ||
+      ts.isEnumDeclaration(node))
+  );
+}
+
+/**
+ * Identifies all nodes that are exported from a source file using the Type Checker.
+ * This handles both inline exports (export function ...) and separate
+ * export statements (export { foo }).
+ *
+ * @param sourceFile - The TS SourceFile to analyze.
+ * @param checker - The TS TypeChecker instance.
+ * @returns A Set of nodes that are part of the module's public API.
+ */
+function getExportedNodes(sourceFile, checker) {
+  const exportedNodes = new Set();
+  const moduleSymbol = checker.getSymbolAtLocation(sourceFile);
+  const exports = moduleSymbol ? checker.getExportsOfModule(moduleSymbol) : [];
+
+  for (const exp of exports) {
+    const declarations = exp.getDeclarations();
+    if (declarations) {
+      for (const decl of declarations) {
+        addDeclarationToExported(decl, exportedNodes);
+      }
+    }
+  }
+
+  return exportedNodes;
+}
+
+/**
+ * Adds a declaration and potentially its parent VariableStatement to the set of exported nodes.
+ * @param {ts.Declaration} decl
+ * @param {Set<ts.Node>} exportedNodes
+ */
+function addDeclarationToExported(decl, exportedNodes) {
+  exportedNodes.add(decl);
+  // If it's a VariableDeclaration, we want to track its parent VariableStatement
+  // as well, since that's what we see during top-level source file iteration.
+  if (ts.isVariableDeclaration(decl)) {
+    const varList = decl.parent;
+    if (varList && ts.isVariableDeclarationList(varList)) {
+      const varStatement = varList.parent;
+      if (varStatement && ts.isVariableStatement(varStatement)) {
+        exportedNodes.add(varStatement);
+      }
+    }
+  }
+}
+
+/**
+ * Determines if a TypeScript node should have JSDoc documentation.
+ *
+ * @param node - The TS Node to check.
+ * @returns True if the node is a function, class, interface, etc.
+ */
+function isDocumentable(node) {
+  // Common documentable nodes
+  // Note: We return false for VariableStatements because each declaration
+  // should be counted separately via isDocumentableDeclaration()
+  return (
+    ts.isFunctionDeclaration(node) ||
+    ts.isClassDeclaration(node) ||
+    ts.isInterfaceDeclaration(node) ||
+    ts.isTypeAliasDeclaration(node) ||
+    ts.isEnumDeclaration(node) ||
+    ts.isMethodDeclaration(node) ||
+    ts.isPropertyDeclaration(node) ||
+    ts.isConstructorDeclaration(node) ||
+    ts.isEnumMember(node) ||
+    ts.isAccessor(node) ||
+    ts.isMethodSignature(node) ||
+    ts.isPropertySignature(node)
+  );
+}
+
+/**
+ * Checks if a single VariableDeclaration represents a documentable function.
+ * Used to properly count each declaration in multi-declaration statements.
+ *
+ * @param decl - The VariableDeclaration to check.
+ * @returns True if the declaration is a function-like declaration.
+ */
+function isDocumentableDeclaration(decl) {
+  return (
+    decl.initializer &&
+    (ts.isArrowFunction(decl.initializer) ||
+      ts.isFunctionExpression(decl.initializer))
+  );
+}
+
+/**
+ * Checks if a TypeScript node has a JSDoc comment.
+ *
+ * @param node - The TS Node to check.
+ * @param sourceFile - The source file containing the node.
+ * @returns True if a JSDoc comment (starting with /**) is found.
+ */
+function hasDocComment(node, sourceFile) {
+  const comments = ts.getLeadingCommentRanges(sourceFile.text, node.pos);
+
+  if (!comments) return false;
+
+  // Check if any comment is a JSDoc comment (starts with /**)
+  return comments.some((comment) => {
+    const commentText = sourceFile.text.substring(comment.pos, comment.end);
+    return commentText.startsWith("/**");
+  });
+}
+
+try {
+  await calculateCoverage();
+} catch (error) {
+  logger.error(
+    `Fatal error: ${error instanceof Error ? error.message : String(error)}`,
+  );
+  process.exit(1);
+}

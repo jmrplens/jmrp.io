@@ -4,181 +4,252 @@
  * Displays a shell command in a simulated terminal window.
  */
 
-import CopyButton from "./CopyButton.astro";
+import { createHash } from "node:crypto";
+
+import { getNextIndex } from "@utils/counters";
 import { decodeHtml } from "@utils/html";
-import { randomUUID } from "node:crypto";
 import * as cheerio from "cheerio";
+
+import CopyButton from "./CopyButton.astro";
+
+interface Props {
+  ariaLabel?: string;
+}
 
 let lines: string[] = [];
 let rawContent = "";
 
+// Module-scoped counter for deterministic empty content IDs (avoids SSR flakiness)
+let emptyContentCounter = 0;
+
+/**
+ * Slot Rendering Pipeline:
+ * MDX content is rendered to HTML by Astro, so we need to extract
+ * pure text from the HTML output for display and copy functionality.
+ *
+ * Steps:
+ * 1. Render the slot to get HTML output from MDX.
+ * 2. Use cheerio to parse the HTML DOM.
+ * 3. Convert block elements (br, p, div, etc.) to newlines.
+ * 4. Extract pure text content.
+ * 5. Decode HTML entities (e.g., &amp; -> &).
+ * 6. Split into lines for rendering with prompts.
+ */
 if (Astro.slots.has("default")) {
-    const htmlContent = await Astro.slots.render("default");
+  const htmlContent = await Astro.slots.render("default");
 
-    // Handle MDX/HTML output using cheerio for robust text extraction
-    const $ = cheerio.load(htmlContent);
+  // Parse rendered HTML using cheerio for robust text extraction
+  const $ = cheerio.load(htmlContent);
 
-    // Convert common block elements and breaks to newlines
-    $("br").replaceWith("\n");
-    $("p, div, li, h1, h2, h3, h4, h5, h6").each((_, el) => {
-        $(el).append("\n");
-    });
+  // Convert common block elements and breaks to newlines
+  // This ensures multi-line commands are properly separated
+  $("br").replaceWith("\n");
+  $("p, div, li, h1, h2, h3, h4, h5, h6").each((_, el) => {
+    $(el).append("\n");
+  });
 
-    let processed = $.text();
+  let processed = $.text();
 
-    processed = decodeHtml(processed);
+  // Decode HTML entities that MDX may have escaped (e.g., &amp;, &lt;)
+  processed = decodeHtml(processed);
 
-    const trimmed = processed.trim();
-    if (trimmed) {
-        lines = trimmed.split(/\r?\n/);
-    }
+  const trimmed = processed.trim();
+  if (trimmed) {
+    lines = trimmed.split(/\r?\n/);
+  }
 
-    rawContent = lines.join("\n");
+  // Store the clean text for the copy button
+  rawContent = lines.join("\n");
 }
 
 // Pre-calculate line properties
 const renderedLines = lines.map((line) => {
-    const trimmedLine = line.trim();
-    return {
-        text: trimmedLine || " ",
-        isComment: trimmedLine.startsWith("#"),
-        isEmpty: !trimmedLine,
-    };
+  const trimmedLine = line.trim();
+  return {
+    text: trimmedLine || " ",
+    isComment: trimmedLine.startsWith("#"),
+    isEmpty: !trimmedLine,
+  };
 });
 
-const uuid = randomUUID().substring(0, 8);
+const { ariaLabel } = Astro.props;
+
+// Generate a content-based test ID for uniqueness
+// Use deterministic counter for empty content to ensure stable SSR renders
+const hashInput = rawContent || `empty-${++emptyContentCounter}`;
+const contentHash = createHash("sha256")
+  .update(hashInput)
+  .digest("hex")
+  .slice(0, 8);
+
+// Fallback to meaningful label when rawContent is empty or whitespace-only
+const trimmedRaw = rawContent.trim();
+
+// Only call getNextIndex when we actually need it for aria-label generation
+let finalAriaLabel: string;
+if (ariaLabel) {
+  finalAriaLabel = ariaLabel;
+} else if (trimmedRaw) {
+  const index = getNextIndex("terminal");
+  const snippet = trimmedRaw.slice(0, 50);
+  const suffix = trimmedRaw.length > 50 ? "..." : "";
+  finalAriaLabel = `Terminal command ${index}: ${snippet}${suffix}`;
+} else {
+  finalAriaLabel = "Terminal: no command";
+}
 ---
 
-<div class="terminal-command-wrapper copy-container">
-    <div class="terminal-header">
-        <div class="terminal-controls">
-            <span class="dot red"></span>
-            <span class="dot yellow"></span>
-            <span class="dot green"></span>
-        </div>
-        <div class="action-area">
-            <CopyButton content={rawContent} />
-        </div>
+<div
+  class="terminal-command-wrapper copy-container"
+  data-testid={`terminal-${contentHash}`}
+>
+  <div class="terminal-header">
+    <div class="terminal-controls">
+      <span class="dot red"></span>
+      <span class="dot yellow"></span>
+      <span class="dot green"></span>
     </div>
+    <div class="action-area">
+      <CopyButton
+        content={rawContent}
+        ariaLabel={`Copy ${finalAriaLabel}`}
+      />
+    </div>
+  </div>
 
-    {
-        /* Accessible scrollable container: Using <pre> implies preformatted text/code, which is semantically correct and allows tabindex */
-    }
-    {/* eslint-disable jsx-a11y/no-noninteractive-tabindex */}
+  {
+    /* Accessible scrollable container: Using <pre> implies preformatted text/code, which is semantically correct and allows tabindex */
+  }
+  <section class="terminal-window-container">
     <pre
-        class="terminal-window"
-        tabindex="0"
-        role="group"
-        aria-label={`Terminal command ${uuid}`}>{renderedLines.map((line) => (<span class="command-line"><span class="prompt" aria-hidden="true">{!line.isEmpty && !line.isComment ? "$" : "\u00A0"}</span><span class:list={["line-content", {"is-comment": line.isComment}]}>{line.text}</span></span>))}</pre>
-    {/* eslint-enable jsx-a11y/no-noninteractive-tabindex */}
+      class="terminal-window"
+      tabindex="0"
+      aria-label={finalAriaLabel}>{renderedLines.map((line) => (<span class="command-line"><span class="prompt" aria-hidden="true">{!line.isEmpty && !line.isComment ? "$" : "\u00A0"}</span><span class:list={["line-content", {"is-comment": line.isComment}]}>{line.text}</span></span>))}</pre>
+  </section>
 
-    {/* Hidden element for CopyButton to grab clean text without prompts */}
-    <div
-        class="copy-content"
-        style="display: none;"
-        aria-hidden="true"
-        set:text={rawContent}
-    />
+  {/* Hidden element for CopyButton to grab clean text without prompts */}
+  <div
+    class="copy-content"
+    style="display: none;"
+    aria-hidden="true"
+    set:text={rawContent}
+  />
 </div>
 
 <style>
-    .terminal-command-wrapper {
-        position: relative;
-        background-color: var(--color-bg-secondary);
-        border-radius: var(--radius-md);
-        margin: 1.5rem 0;
-        border: var(--border-1);
-        overflow: hidden;
-        display: flex;
-        flex-direction: column;
-    }
+  .terminal-command-wrapper {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    margin: 1.5rem 0;
+    overflow: hidden;
+    background-color: var(--color-bg-secondary);
+    border: var(--border-1);
+    border-radius: var(--radius-md);
+  }
 
-    .terminal-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 0.5rem 0.75rem;
-        background-color: var(--color-bg-subtle);
-        border-bottom: var(--border-1);
-        min-height: 36px;
-    }
+  .terminal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 36px;
+    padding: 0.5rem 0.75rem;
+    background-color: var(--color-bg-header);
+    border-bottom: var(--border-1);
+  }
 
-    .terminal-controls {
-        display: flex;
-        gap: 6px;
-    }
+  .terminal-controls {
+    display: flex;
+    gap: 6px;
+  }
 
-    .dot {
-        width: 10px;
-        height: 10px;
-        border-radius: 50%;
-        background-color: var(--color-border);
-    }
-    .dot.red {
-        background-color: #ff5f56;
-    }
-    .dot.yellow {
-        background-color: #ffbd2e;
-    }
-    .dot.green {
-        background-color: #27c93f;
-    }
+  .dot {
+    width: 10px;
+    height: 10px;
+    background-color: var(--color-border);
+    border-radius: 50%;
+  }
 
-    .terminal-window {
-        display: flex;
-        flex-direction: column;
-        flex-grow: 1;
-        overflow-x: auto;
-        -ms-overflow-style: none;
-        scrollbar-width: none;
-        min-width: 0;
-        padding: 0.75rem 1rem;
-        margin: 0; /* Reset pre default margin */
-    }
-    .terminal-window::-webkit-scrollbar {
-        display: none;
-    }
+  .dot.red {
+    background-color: #ff5f56;
+  }
 
-    .command-line {
-        display: flex;
-        align-items: baseline;
-        font-family: var(--font-mono);
-        font-size: 0.85em;
-        line-height: 1.6;
-        white-space: pre;
-        min-height: 1.6em;
-    }
+  .dot.yellow {
+    background-color: #ffbd2e;
+  }
 
-    .prompt {
-        color: var(--color-primary);
-        margin-right: 0.75rem;
-        user-select: none;
-        flex-shrink: 0;
-        font-family: inherit;
-        font-weight: bold;
-        opacity: 0.8;
-    }
+  .dot.green {
+    background-color: #27c93f;
+  }
 
-    .line-content {
-        color: var(--color-text);
-        flex-grow: 1;
-        font-family: inherit;
-    }
+  /*
+   * Use display: contents to remove the section from layout flow while
+   * keeping it in the accessibility tree. Wrap in @supports for older browsers.
+   */
+  .terminal-window-container {
+    display: block; /* Fallback for unsupported browsers */
+  }
 
-    .line-content.is-comment {
-        color: var(--color-text-muted);
-        font-style: italic;
+  @supports (display: contents) {
+    .terminal-window-container {
+      display: contents;
     }
+  }
 
-    :global(.terminal-command-wrapper .copy-button) {
-        position: static !important;
-        background-color: transparent !important;
-        border: 1px solid var(--color-border) !important;
-        opacity: 0.8;
-    }
-    :global(.terminal-command-wrapper .copy-button:hover) {
-        opacity: 1;
-        background-color: var(--color-bg-secondary) !important;
-        border-color: var(--color-text-muted) !important;
-    }
+  .terminal-window {
+    display: block; /* Simpler block layout to avoid flex-related boosting */
+    width: 100%; /* Explicit width constraint */
+    min-width: 0;
+    max-width: 100%; /* Ensure it doesn't overflow parent calculation */
+    padding: 0.75rem 1rem;
+    margin: 0; /* Reset pre default margin */
+    overflow-x: auto;
+
+    /* Typography */
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    line-height: 1.6;
+
+    /* Mobile Fix: Prevent font inflation */
+    text-size-adjust: none;
+  }
+
+  .command-line {
+    display: flex;
+    align-items: baseline;
+    min-height: 1.6em;
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: var(--color-text);
+    white-space: pre;
+
+    /* Mobile Fix: Prevent font inflation */
+    text-size-adjust: none;
+  }
+
+  .prompt {
+    flex-shrink: 0;
+    margin-right: 0.75rem;
+    font-family: inherit;
+    font-weight: bold;
+    color: var(--color-primary);
+    user-select: none;
+    opacity: 80%;
+  }
+
+  .line-content {
+    flex-grow: 1;
+    font-family: inherit;
+    color: var(--color-text);
+  }
+
+  .line-content.is-comment {
+    font-style: italic;
+    color: var(--color-text-muted);
+  }
+
+  :global(.terminal-command-wrapper .copy-button) {
+    position: static !important;
+  }
 </style>

@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+
 import { getEntry } from "astro:content";
 import Cite from "citation-js"; // Library to parse BibTeX files
 
@@ -7,11 +8,17 @@ import Cite from "citation-js"; // Library to parse BibTeX files
  * Represents a single publication entry with its metadata.
  */
 export interface PublicationItem {
+  /** Unique ID of the publication (citation key). */
   id: string;
+  /** Type of publication (e.g., 'article-journal', 'paper-conference'). */
   type: string;
+  /** Title of the publication. */
   title: string;
+  /** List of authors. */
   author?: { family: string; given?: string; url?: string }[];
+  /** Date information, typically including year. */
   issued?: { "date-parts": number[][] };
+  /** Allow arbitrary additional properties from CSL JSON. */
   [key: string]: unknown;
 }
 
@@ -19,7 +26,9 @@ export interface PublicationItem {
  * Represents a group of publications categorized by type (e.g., Journals, Conferences).
  */
 export interface PublicationGroup {
+  /** Title of the group (e.g. "Journal Articles"). */
   title: string;
+  /** List of publications in this group. */
   items: PublicationItem[];
 }
 
@@ -27,7 +36,9 @@ export interface PublicationGroup {
  * Metadata for a co-author, including their name variations and profile link.
  */
 interface Coauthor {
+  /** List of first names or initials to match against. */
   firstname: string[];
+  /** URL to the co-author's profile. */
   url: string;
 }
 
@@ -35,6 +46,7 @@ interface Coauthor {
  * Map of co-author family names to their respective details.
  */
 interface CoauthorMap {
+  /** Mapping of family name to co-author details. */
   [family: string]: Coauthor[];
 }
 
@@ -43,12 +55,12 @@ interface CoauthorMap {
  * File location: src/data/publications/bibliography/papers.bib
  *
  * Process involves:
- * 1. Reading the .bib file.
- * 2. Parsing entries using citation-js.
- * 3. Sorting by year (descending).
- * 4. Matching authors with the coauthors.yml file to add profile links.
- * 5. Extracting custom fields (slides, poster) that citation-js might miss.
- * 6. Grouping into categories: Journal, Conference, Thesis, Others.
+ * - Reading the .bib file.
+ * - Parsing entries using citation-js.
+ * - Sorting by year (descending).
+ * - Matching authors with the coauthors.yml file to add profile links.
+ * - Extracting custom fields (slides, poster) that citation-js might miss.
+ * - Grouping into categories: Journal, Conference, Thesis, Others.
  *
  * @returns {Promise<PublicationGroup[]>} Structured list of publication groups.
  */
@@ -58,20 +70,28 @@ export async function getPublications(): Promise<PublicationGroup[]> {
       process.cwd(),
       "src/content/publications_data/papers.bib",
     );
-    const fileContents = fs.readFileSync(filePath, "utf8");
+    const fileContents = await fs.promises.readFile(filePath, "utf-8");
 
-    // Load coauthors
     const coauthorsEntry = await getEntry("publications_data", "coauthors");
     const coauthors = (coauthorsEntry?.data || {}) as CoauthorMap;
 
     /**
      * Helper to manually extract custom fields from the raw BibTeX string.
      * Used for fields like 'slides' or 'poster' which standard parsers might ignore.
+     *
+     * @param id - The publication ID.
+     * @param field - The field name to extract.
+     * @returns The field value or null if not found.
      */
     const extractCustomField = (id: string, field: string): string | null => {
+      const escapeRegExp = (string: string) => {
+        return string.replaceAll(/[.*+?^${}()|[\]\\]/g, "\\$&"); // eslint-disable-line
+      };
+
       // Find the specific entry block first to avoid matching fields from subsequent entries
+      const escapedId = escapeRegExp(id);
       const entryRegex = new RegExp(
-        String.raw`@.*?\{${id},([\s\S]*?)(?=\n@|$)`,
+        String.raw`@.*?\{${escapedId},([\s\S]*?)(?=\n@|$)`,
         "i",
       );
       const entryMatch = entryRegex.exec(fileContents);
@@ -79,9 +99,10 @@ export async function getPublications(): Promise<PublicationGroup[]> {
       if (!entryMatch) return null;
 
       const entryBody = entryMatch[1];
+      const escapedField = escapeRegExp(field);
       // Match braced content {value} or unbraced value (e.g. true, 2021) up to comma or end of line
       const fieldRegex = new RegExp(
-        String.raw`${field}\s*=\s*(?:\{(.*?)\}|([^{},]+))`,
+        String.raw`${escapedField}\s*=\s*(?:\{(.*?)\}|([^{},]+))`,
         "i",
       );
       const fieldMatch = fieldRegex.exec(entryBody);
@@ -93,7 +114,6 @@ export async function getPublications(): Promise<PublicationGroup[]> {
     const citations = new Cite(fileContents);
     const data: PublicationItem[] = citations.data;
 
-    // Sort all by year desc first
     data.sort((a, b) => {
       const yearA = a.issued?.["date-parts"]?.[0]?.[0] || 0;
       const yearB = b.issued?.["date-parts"]?.[0]?.[0] || 0;
@@ -103,14 +123,29 @@ export async function getPublications(): Promise<PublicationGroup[]> {
     /**
      * Determines if a given name matches any of the provided firstname variations.
      *
-     * @param {string} bibGiven - The given name from the BibTeX entry.
-     * @param {string[]} firstnameVariations - List of possible firstname variations for a co-author.
-     * @returns {boolean} True if a match is found.
+     * @param bibGiven - The given name from the BibTeX entry.
+     * @param firstnameVariations - List of possible firstname variations for a co-author.
+     * @returns True if a match is found.
      */
     const isNameMatch = (
       bibGiven: string,
       firstnameVariations: string[],
     ): boolean => {
+      // Normalize: strip trailing dot if present, e.g., "J." -> "J"
+      const normalized = bibGiven.replace(/\.$/, "");
+
+      // Treat single-character normalized bibGiven (initial) strictly
+      if (normalized.length === 1) {
+        const initial = normalized.toLowerCase();
+        return firstnameVariations.some((variation) => {
+          const v = variation.toLowerCase();
+          // Match only exact initial forms (e.g., "J" or "J.")
+          // Don't match full names starting with the initial
+          return v === initial || v === initial + ".";
+        });
+      }
+
+      // Existing loose matching for longer names
       return firstnameVariations.some(
         (n) => n === bibGiven || n.includes(bibGiven) || bibGiven.includes(n),
       );
@@ -118,6 +153,9 @@ export async function getPublications(): Promise<PublicationGroup[]> {
 
     /**
      * Enriches an array of authors with profile URLs from the co-authors map.
+     *
+     * @param authors - Array of author objects.
+     * @returns Enriched array of authors.
      */
     const processAuthors = (
       authors: { family: string; given?: string; url?: string }[] | undefined,
@@ -136,17 +174,24 @@ export async function getPublications(): Promise<PublicationGroup[]> {
       });
     };
 
-    // Grouping containers
     const journalArticles: PublicationItem[] = [];
     const conferencePapers: PublicationItem[] = [];
     const thesisList: PublicationItem[] = [];
+    const otherPublications: PublicationItem[] = [];
 
     /**
      * Extracts the raw BibTeX entry string for a specific publication ID.
+     *
+     * @param id - The publication ID.
+     * @returns The raw BibTeX entry string.
      */
     const extractRawBibtex = (id: string) => {
+      const escapeRegExp = (string: string) => {
+        return string.replaceAll(/[.*+?^${}()|[\]\\]/g, "\\$&"); // eslint-disable-line
+      };
+      const escapedId = escapeRegExp(id);
       const entryRegex = new RegExp(
-        String.raw`@.*?\{${id},[\s\S]*?(?=\n@|$)`,
+        String.raw`@.*?\{${escapedId},[\s\S]*?(?=\n@|$)`,
         "i",
       );
       const match = entryRegex.exec(fileContents);
@@ -156,7 +201,7 @@ export async function getPublications(): Promise<PublicationGroup[]> {
     /**
      * Processes a single publication item, performing filtering, enrichment, and categorization.
      *
-     * @param {PublicationItem} item - The item to process.
+     * @param item - The item to process.
      */
     const processItem = (item: PublicationItem) => {
       // Filter by bibtex_show
@@ -178,12 +223,28 @@ export async function getPublications(): Promise<PublicationGroup[]> {
       // Enrich authors with links
       item.author = processAuthors(item.author);
 
-      if (type === "article-journal") {
-        journalArticles.push(item);
-      } else if (type === "paper-conference" || type === "chapter") {
-        conferencePapers.push(item);
-      } else if (type === "thesis" || type === "report") {
-        thesisList.push(item);
+      switch (type) {
+        case "article-journal": {
+          journalArticles.push(item);
+
+          break;
+        }
+        case "paper-conference":
+        case "chapter": {
+          conferencePapers.push(item);
+
+          break;
+        }
+        case "thesis":
+        case "report": {
+          thesisList.push(item);
+
+          break;
+        }
+        default: {
+          otherPublications.push(item);
+          break;
+        }
       }
     };
 
@@ -193,9 +254,10 @@ export async function getPublications(): Promise<PublicationGroup[]> {
       { title: "Journal articles", items: journalArticles },
       { title: "Conference and workshop papers", items: conferencePapers },
       { title: "Thesis", items: thesisList },
+      { title: "Other", items: otherPublications },
     ].filter((g) => g.items.length > 0);
   } catch (error) {
     console.error("Error fetching publications:", error);
-    return []; // Return an empty array or rethrow the error, depending on desired error handling
+    return [];
   }
 }

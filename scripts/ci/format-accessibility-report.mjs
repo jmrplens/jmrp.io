@@ -56,8 +56,8 @@ if (results.dark) {
 console.log("");
 
 // Details for each theme
-[results.light, results.dark].forEach((themeResult) => {
-  if (!themeResult) return;
+for (const themeResult of [results.light, results.dark]) {
+  if (!themeResult) continue;
 
   const emoji = themeResult.theme === "light" ? "☀️" : "🌙";
   const themeName =
@@ -72,32 +72,38 @@ console.log("");
 
     if (themeResult.violations.length > 0) {
       console.log("#### ❌ Violations");
-      themeResult.violations.forEach((v) => {
-        console.log(`- **${v.id}**: ${v.impact} - ${v.description}`);
-        console.log(`  - Affected: ${v.nodes} node(s)`);
-      });
+      for (const violation of themeResult.violations) {
+        console.log(
+          `- **${violation.id}**: ${violation.impact} - ${violation.description}`,
+        );
+        console.log(`  - Affected: ${violation.nodes} node(s)`);
+      }
       console.log("");
     }
 
     if (themeResult.incomplete.length > 0) {
       console.log("#### ⚠️ Incomplete");
-      themeResult.incomplete.forEach((i) => {
-        console.log(`- **${i.id}**: ${i.description}`);
-        console.log(`  - Manual review needed: ${i.nodes} node(s)`);
-      });
+      for (const incompleteItem of themeResult.incomplete) {
+        console.log(
+          `- **${incompleteItem.id}**: ${incompleteItem.description}`,
+        );
+        console.log(
+          `  - Manual review needed: ${incompleteItem.nodes} node(s)`,
+        );
+      }
     }
 
     console.log("</details>");
     console.log("");
   }
-});
+}
 
 console.log("---");
 
-const totalPassed = (results.light?.passed || 0) + (results.dark?.passed || 0);
-const totalFailed = (results.light?.failed || 0) + (results.dark?.failed || 0);
+const totalPassed = (results.light?.passed ?? 0) + (results.dark?.passed ?? 0);
+const totalFailed = (results.light?.failed ?? 0) + (results.dark?.failed ?? 0);
 const totalIncomplete =
-  (results.light?.incompleteCount || 0) + (results.dark?.incompleteCount || 0);
+  (results.light?.incompleteCount ?? 0) + (results.dark?.incompleteCount ?? 0);
 
 console.log(
   `**Total**: ${totalPassed} passed, ${totalFailed} failed, ${totalIncomplete} incomplete`,

@@ -13,43 +13,37 @@
  * Requires TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID in environment variables or .env file.
  */
 
+import fs from "node:fs";
 import http from "node:http";
 import https from "node:https";
-import fs from "node:fs";
-import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+
 import { escapeHtml } from "./utils/html.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 /**
- * Loads environment variables from .env file manually
+ * Loads environment variables from .env file
  */
 function loadEnv() {
   const envPath = join(__dirname, "../.env");
-  if (fs.existsSync(envPath)) {
-    const content = fs.readFileSync(envPath, "utf8");
-    content.split("\n").forEach((line) => {
-      const envRegex = /^\s*([\w.-]+)\s*=\s*(.*)\s*$/;
-      const match = envRegex.exec(line);
-      if (match) {
-        const key = match[1];
-        let value = match[2] || "";
-        if (value.startsWith('"') && value.endsWith('"'))
-          value = value.slice(1, -1);
-        if (value.startsWith("'") && value.endsWith("'"))
-          value = value.slice(1, -1);
-        process.env[key] = value;
-      }
-    });
+  try {
+    if (fs.existsSync(envPath)) {
+      process.loadEnvFile(envPath);
+    }
+  } catch (error) {
+    console.warn(
+      `[CSP Reporter] Warning: Failed to load .env file: ${error.message}`,
+    );
   }
 }
 
 loadEnv();
 
 // Port for the CSP reporter; can be overridden via the CSP_REPORTER_PORT environment variable.
-const DEFAULT_PORT = 58291;
+const DEFAULT_PORT = 58_291;
 const PORT = (() => {
   const envPort = process.env.CSP_REPORTER_PORT;
   if (!envPort) return DEFAULT_PORT;
@@ -100,11 +94,16 @@ const server = http.createServer((req, res) => {
       .trim();
     const userAgent = (req.headers["user-agent"] || "Unknown").trim();
 
+    let responded = false;
+
     req.on("data", (chunk) => {
+      if (responded) return;
+
       body += chunk.toString();
       // Enforce maximum body size
       if (body.length > MAX_BODY_SIZE) {
         console.warn(`Request body exceeded limit from IP: ${clientIp}`);
+        responded = true;
         res.writeHead(413, { "Content-Type": "text/plain" });
         res.end("Payload Too Large");
         req.destroy();
@@ -112,14 +111,15 @@ const server = http.createServer((req, res) => {
     });
 
     req.on("end", () => {
-      if (res.writableEnded) return;
+      if (responded || res.writableEnded) return;
+      responded = true;
       try {
         const report = JSON.parse(body);
         processReport(report, clientIp, userAgent);
         res.writeHead(204);
         res.end();
-      } catch (e) {
-        console.error("Error parsing CSP report JSON:", e.message);
+      } catch (error) {
+        console.error("Error parsing CSP report JSON:", error);
         res.writeHead(400);
         res.end("Invalid JSON");
       }
@@ -182,7 +182,7 @@ function sendToTelegram(report, ip, ua) {
   });
 
   let sample = (r["script-sample"] || "N/A").replaceAll("\n", " ").trim();
-  if (sample.length > 100) sample = sample.substring(0, 97) + "...";
+  if (sample.length > 100) sample = sample.slice(0, 97) + "...";
 
   // Safely handle document-uri
   const rawDocUri = r["document-uri"] || "";
@@ -206,7 +206,7 @@ function sendToTelegram(report, ip, ua) {
     `🚫 <b>Blocked:</b> <code>${escapeHtml(r["blocked-uri"] || "inline/eval")}</code>`,
     `🛠️ <b>Directive:</b> <code>${escapeHtml(r["violated-directive"])}</code>`,
     `🔍 <b>Sample:</b> <code>${escapeHtml(sample)}</code>`,
-    `📱 <b>UA:</b> <code>${escapeHtml(ua.substring(0, 80))}</code>`,
+    `📱 <b>UA:</b> <code>${escapeHtml(ua.slice(0, 80))}</code>`,
   ];
 
   const caption = lines.join("\n");
@@ -216,7 +216,7 @@ function sendToTelegram(report, ip, ua) {
     2,
   );
   const boundary =
-    "----WebKitFormBoundary" + Math.random().toString(36).substring(2);
+    "----WebKitFormBoundary" + Math.random().toString(36).slice(2);
 
   const payload = Buffer.concat([
     Buffer.from(

@@ -1,0 +1,29 @@
+name: Cleanup CI Reports
+
+on:
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: "PR number to cleanup (for manual triggers)"
+        required: false
+        type: string
+  pull_request:
+    types: [closed]
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    if: github.repository == 'jmrplens/jmrp.io'
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: "pnpm"
+      - run: pnpm install --frozen-lockfile --prefer-offline
+      - name: Remove PR Reports from Vercel
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number || inputs.pr_number }}
+        run: node scripts/ci/cleanup-deployments.mjs

@@ -1,40 +1,40 @@
-import { useState, useEffect } from "preact/hooks";
+import { useEffect, useState } from "preact/hooks";
 
+/** Component props for ServiceStats */
 interface Props {
-  readonly type:
-    | "mastodon"
-    | "matrix"
-    | "meshmonitor-lf"
-    | "meshmonitor-mf"
-    | "meshtastic-combined";
+  readonly type: "mastodon" | "matrix" | "meshtastic-combined";
 }
 
+/** Data structure for Mastodon statistics */
 interface MastodonStatsData {
   peersCount: number;
   mastodonTrends: { url: string; name: string }[];
   instanceVersion: string;
 }
 
+/** Internal Matrix data structure */
 interface MatrixData {
   online?: boolean;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  versions?: any; // Keep specific any if structure is unknown/complex or refine later
+  versions?: {
+    list?: string[];
+  };
   federationTotal?: number;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  [key: string]: any; // Allow loose structure for now
 }
 
+/** Matrix federation data structure */
 interface MatrixFed {
   server?: {
     version?: string;
   };
 }
 
+/** Aggregated Matrix statistics data */
 interface MatrixStatsData {
   matrixData: MatrixData;
   matrixFed: MatrixFed | null;
 }
 
+/** Combined Meshtastic network statistics data */
 interface MeshtasticStatsData {
   potatoNodes: number;
   lfNodes: number;
@@ -44,6 +44,8 @@ interface MeshtasticStatsData {
 
 /**
  * Fetch Mastodon service statistics
+ *
+ * @param setError - Callback to signal an error state.
  */
 async function fetchMastodonStats(setError: (error: boolean) => void) {
   let peersCount = 0;
@@ -52,29 +54,48 @@ async function fetchMastodonStats(setError: (error: boolean) => void) {
 
   try {
     const [resPeers, resTrends, resInstance] = await Promise.all([
-      fetch("/api/proxy/mastodon/peers"),
-      fetch("/api/proxy/mastodon/trends"),
-      fetch("/api/proxy/mastodon/instance"),
+      fetch("/api/proxy/mastodon/peers").catch(() => null),
+      fetch("/api/proxy/mastodon/trends").catch(() => null),
+      fetch("/api/proxy/mastodon/instance").catch(() => null),
     ]);
 
-    if (resPeers.ok) {
-      const peersData = (await resPeers.json()) as unknown[];
-      peersCount = Array.isArray(peersData) ? peersData.length : 0;
+    if (resPeers?.ok) {
+      try {
+        const peersData = (await resPeers.json()) as unknown[];
+        peersCount = Array.isArray(peersData) ? peersData.length : 0;
+      } catch (parseError) {
+        console.error("Failed to parse Mastodon peers response:", parseError);
+      }
     }
 
-    if (resTrends.ok) {
-      mastodonTrends = (await resTrends.json()) as {
-        url: string;
-        name: string;
-      }[];
+    if (resTrends?.ok) {
+      try {
+        mastodonTrends = (await resTrends.json()) as {
+          url: string;
+          name: string;
+        }[];
+      } catch (parseError) {
+        console.error("Failed to parse Mastodon trends response:", parseError);
+      }
     }
 
-    if (resInstance.ok) {
-      const instanceData = (await resInstance.json()) as { version: string };
-      instanceVersion = instanceData.version;
+    if (resInstance?.ok) {
+      try {
+        const instanceData = (await resInstance.json()) as { version: string };
+        instanceVersion = instanceData.version;
+      } catch (parseError) {
+        console.error(
+          "Failed to parse Mastodon instance response:",
+          parseError,
+        );
+      }
     }
-  } catch (e) {
-    console.error("Error fetching Mastodon stats:", e);
+
+    if (!resPeers?.ok && !resTrends?.ok && !resInstance?.ok) {
+      setError(true);
+    }
+  } catch (error) {
+    console.error("Error fetching Mastodon stats:", error);
     setError(true);
   }
 
@@ -83,32 +104,64 @@ async function fetchMastodonStats(setError: (error: boolean) => void) {
 
 /**
  * Fetch Matrix service statistics
+ *
+ * @param setError - Callback to signal an error state.
  */
 async function fetchMatrixStats(setError: (error: boolean) => void) {
   let matrixData: MatrixData = {};
   let matrixFed: MatrixFed | null = null;
 
   try {
-    const resConfig = await fetch("/api/proxy/matrix/config");
-    if (resConfig.ok) matrixData = (await resConfig.json()) as MatrixData;
+    const [resConfig, resVer, resFed, resDest] = await Promise.all([
+      fetch("/api/proxy/matrix/config").catch(() => null),
+      fetch("/api/proxy/matrix/versions").catch(() => null),
+      fetch("/api/proxy/matrix/federation").catch(() => null),
+      fetch("/api/proxy/matrix/stats").catch(() => null),
+    ]);
 
-    const resVer = await fetch("/api/proxy/matrix/versions");
-    if (resVer.ok) {
-      matrixData.online = true;
-      const verData = (await resVer.json()) as { versions: unknown };
-      matrixData.versions = verData.versions;
+    if (resConfig?.ok) {
+      try {
+        matrixData = (await resConfig.json()) as MatrixData;
+      } catch (parseError) {
+        console.error("Failed to parse Matrix config response:", parseError);
+      }
     }
 
-    const resFed = await fetch("/api/proxy/matrix/federation");
-    if (resFed.ok) matrixFed = (await resFed.json()) as MatrixFed;
-
-    const resDest = await fetch("/api/proxy/matrix/stats");
-    if (resDest.ok) {
-      const destData = (await resDest.json()) as { total: number };
-      matrixData.federationTotal = destData.total;
+    if (resVer?.ok) {
+      try {
+        matrixData.online = true;
+        const verData = (await resVer.json()) as { versions: string[] };
+        matrixData.versions = { list: verData.versions };
+      } catch (parseError) {
+        console.error("Failed to parse Matrix versions response:", parseError);
+      }
     }
-  } catch (e) {
-    console.error("Error fetching Matrix stats:", e);
+
+    if (resFed?.ok) {
+      try {
+        matrixFed = (await resFed.json()) as MatrixFed;
+      } catch (parseError) {
+        console.error(
+          "Failed to parse Matrix federation response:",
+          parseError,
+        );
+      }
+    }
+
+    if (resDest?.ok) {
+      try {
+        const destData = (await resDest.json()) as { total: number };
+        matrixData.federationTotal = destData.total;
+      } catch (parseError) {
+        console.error("Failed to parse Matrix stats response:", parseError);
+      }
+    }
+
+    if (!resConfig?.ok && !resVer?.ok && !resFed?.ok && !resDest?.ok) {
+      setError(true);
+    }
+  } catch (error) {
+    console.error("Error fetching Matrix stats:", error);
     setError(true);
   }
 
@@ -117,8 +170,12 @@ async function fetchMatrixStats(setError: (error: boolean) => void) {
 
 /**
  * Fetch Meshtastic combined service statistics
+ *
+ * @param setError - Callback to signal an error state.
  */
-async function fetchMeshtasticStats() {
+async function fetchMeshtasticStats(
+  setError: (error: boolean) => void,
+): Promise<MeshtasticStatsData> {
   const [resPotato, resLF, resMF] = await Promise.all([
     fetch("/api/proxy/potato/nodes").catch(() => null),
     fetch("/api/proxy/mesh/lf").catch(() => null),
@@ -130,16 +187,33 @@ async function fetchMeshtasticStats() {
   let mfNodes = 0;
 
   if (resPotato?.ok) {
-    const data = (await resPotato.json()) as unknown[];
-    potatoNodes = Array.isArray(data) ? data.length : 0;
+    try {
+      const data = (await resPotato.json()) as unknown[];
+      potatoNodes = Array.isArray(data) ? data.length : 0;
+    } catch (error_) {
+      console.error("Failed to parse PotatoMesh nodes response:", error_);
+    }
   }
   if (resLF?.ok) {
-    const data = (await resLF.json()) as { data?: { activeNodes: number } };
-    lfNodes = data.data?.activeNodes ?? 0;
+    try {
+      const data = (await resLF.json()) as { data?: { activeNodes: number } };
+      lfNodes = data.data?.activeNodes ?? 0;
+    } catch (error_) {
+      console.error("Failed to parse MeshMonitor LF response:", error_);
+    }
   }
   if (resMF?.ok) {
-    const data = (await resMF.json()) as { data?: { activeNodes: number } };
-    mfNodes = data.data?.activeNodes ?? 0;
+    try {
+      const data = (await resMF.json()) as { data?: { activeNodes: number } };
+      mfNodes = data.data?.activeNodes ?? 0;
+    } catch (error_) {
+      console.error("Failed to parse MeshMonitor MF response:", error_);
+    }
+  }
+
+  // Signal error if all three fetches failed
+  if (!resPotato?.ok && !resLF?.ok && !resMF?.ok) {
+    setError(true);
   }
 
   const potatoVersion = await fetchPotatoVersion();
@@ -155,7 +229,6 @@ async function fetchPotatoVersion(): Promise<string> {
   try {
     const resVer = await fetch("/api/proxy/potato/version");
     if (resVer.ok) {
-      // The API Proxy handles parsing or wrapping text in { version: "..." }
       const contentType = resVer.headers.get("content-type");
       if (contentType?.includes("application/json")) {
         try {
@@ -163,28 +236,29 @@ async function fetchPotatoVersion(): Promise<string> {
           const ver = verJson.version;
           potatoVersion = ver || "";
         } catch {
-          // Fallback to text if JSON parse fails
+          // Fallback
         }
       } else {
-        // Upstream likely returned plain text if not JSON
         potatoVersion = await resVer.text();
       }
     }
-  } catch (e) {
-    console.error("Error fetching PotatoMesh version:", e);
+  } catch (error) {
+    console.error("Error fetching PotatoMesh version:", error);
   }
   return potatoVersion;
 }
 
 /**
  * Mastodon Stats Component
+ *
+ * @param props - Component properties.
+ * @param props.stats - The data to display.
  */
 function MastodonStats({ stats }: { readonly stats: MastodonStatsData }) {
   const { peersCount, mastodonTrends, instanceVersion } = stats;
 
   return (
     <div class="stats-wrapper-col">
-      {/* Header: Status & Network */}
       <div class="status-header">
         <div class="status-badge">
           <span class="status-dot"></span>
@@ -198,7 +272,6 @@ function MastodonStats({ stats }: { readonly stats: MastodonStatsData }) {
         </div>
       </div>
 
-      {/* Instance Version (Dynamic) */}
       <div class="server-grid">
         <div class="component-row">
           <span class="component-icon brand-mastodon">
@@ -221,7 +294,6 @@ function MastodonStats({ stats }: { readonly stats: MastodonStatsData }) {
         </div>
       </div>
 
-      {/* Trending Tags (Filled Buttons) */}
       {mastodonTrends && mastodonTrends.length > 0 && (
         <div>
           <h5 class="trending-header">Trending Now</h5>
@@ -245,6 +317,9 @@ function MastodonStats({ stats }: { readonly stats: MastodonStatsData }) {
 
 /**
  * Matrix Stats Component
+ *
+ * @param props - Component properties.
+ * @param props.stats - The data to display.
  */
 function MatrixStats({ stats }: { readonly stats: MatrixStatsData }) {
   const { matrixData, matrixFed } = stats;
@@ -252,7 +327,6 @@ function MatrixStats({ stats }: { readonly stats: MatrixStatsData }) {
 
   return (
     <div class="stats-wrapper-col">
-      {/* Header: Status & Network */}
       <div class="status-header">
         <div class="status-badge">
           <span class="status-dot"></span>
@@ -268,12 +342,9 @@ function MatrixStats({ stats }: { readonly stats: MatrixStatsData }) {
         )}
       </div>
 
-      {/* Internal Server Grid (Dynamic Synapse Version Only) */}
       <div class="server-grid">
-        {/* Synapse */}
         <div class="component-row">
           <span class="component-icon brand-matrix">
-            {/* Simple Matrix SVG Icon */}
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
@@ -296,17 +367,20 @@ function MatrixStats({ stats }: { readonly stats: MatrixStatsData }) {
   );
 }
 
+/** Internal helper for rendering a status dot */
+const StatusDot = () => <span class="status-dot-inline"></span>;
+
 /**
  * Meshtastic Combined Stats Component
+ *
+ * @param props - Component properties.
+ * @param props.stats - The data to display.
  */
 function MeshtasticStats({ stats }: { readonly stats: MeshtasticStatsData }) {
   const { potatoNodes, lfNodes, mfNodes, potatoVersion } = stats;
 
-  const StatusDot = () => <span class="status-dot-inline"></span>;
-
   return (
     <div class="stats-wrapper-small-gap">
-      {/* 1. PotatoMesh Row */}
       <div class="meshtastic-row">
         <div class="meshtastic-left">
           <StatusDot />
@@ -324,14 +398,13 @@ function MeshtasticStats({ stats }: { readonly stats: MeshtasticStatsData }) {
           href="https://potatomesh.jmrp.io"
           target="_blank"
           rel="noopener noreferrer"
-          class="btn btn-outline btn-xs"
+          class="btn btn-sm"
           aria-label="View PotatoMesh Map"
         >
           View Map
         </a>
       </div>
 
-      {/* 2. MeshMonitor LF Row */}
       <div class="meshtastic-row">
         <div class="meshtastic-left">
           <StatusDot />
@@ -344,14 +417,13 @@ function MeshtasticStats({ stats }: { readonly stats: MeshtasticStatsData }) {
           href="https://mesh_lf.jmrp.io/meshmonitor"
           target="_blank"
           rel="noopener noreferrer"
-          class="btn btn-outline btn-xs"
+          class="btn btn-sm"
           aria-label="View MeshMonitor LF"
         >
           View Monitor
         </a>
       </div>
 
-      {/* 3. MeshMonitor MF Row */}
       <div class="meshtastic-row">
         <div class="meshtastic-left">
           <StatusDot />
@@ -364,7 +436,7 @@ function MeshtasticStats({ stats }: { readonly stats: MeshtasticStatsData }) {
           href="https://mesh_mf.jmrp.io/meshmonitor"
           target="_blank"
           rel="noopener noreferrer"
-          class="btn btn-outline btn-xs"
+          class="btn btn-sm"
           aria-label="View MeshMonitor MF"
         >
           View Monitor
@@ -374,6 +446,14 @@ function MeshtasticStats({ stats }: { readonly stats: MeshtasticStatsData }) {
   );
 }
 
+/**
+ * Displays live statistics for a specific service (Mastodon, Matrix, or Meshtastic).
+ * Fetches data on the client side and renders the appropriate sub-component.
+ *
+ * @param props - Component properties.
+ * @param props.type - The service type to display stats for.
+ * @returns The rendered stats component.
+ */
 export default function ServiceStats({ type }: Props) {
   const [stats, setStats] = useState<
     MastodonStatsData | MatrixStatsData | MeshtasticStatsData | null
@@ -394,16 +474,29 @@ export default function ServiceStats({ type }: Props) {
 
       try {
         let data;
-        if (type === "mastodon") {
-          data = await fetchMastodonStats(setError);
-        } else if (type === "matrix") {
-          data = await fetchMatrixStats(setError);
-        } else if (type === "meshtastic-combined") {
-          data = await fetchMeshtasticStats();
+        switch (type) {
+          case "mastodon": {
+            data = await fetchMastodonStats(setError);
+            break;
+          }
+          case "matrix": {
+            data = await fetchMatrixStats(setError);
+            break;
+          }
+          case "meshtastic-combined": {
+            data = await fetchMeshtasticStats(setError);
+            break;
+          }
+          default: {
+            console.error(`Unknown service type: ${type as string}`);
+            setError(true);
+            data = null;
+            break;
+          }
         }
         if (data) setStats(data);
-      } catch (err) {
-        console.error("Error fetching service stats:", err);
+      } catch (error_) {
+        console.error("Error fetching service stats:", error_);
         setError(true);
       } finally {
         setLoading(false);
@@ -422,17 +515,18 @@ export default function ServiceStats({ type }: Props) {
   }
 
   // Route to appropriate component based on type
-  if (type === "mastodon") {
-    return <MastodonStats stats={stats as MastodonStatsData} />;
+  switch (type) {
+    case "mastodon": {
+      return <MastodonStats stats={stats as MastodonStatsData} />;
+    }
+    case "matrix": {
+      return <MatrixStats stats={stats as MatrixStatsData} />;
+    }
+    case "meshtastic-combined": {
+      return <MeshtasticStats stats={stats as MeshtasticStatsData} />;
+    }
+    default: {
+      return null;
+    }
   }
-
-  if (type === "matrix") {
-    return <MatrixStats stats={stats as MatrixStatsData} />;
-  }
-
-  if (type === "meshtastic-combined") {
-    return <MeshtasticStats stats={stats as MeshtasticStatsData} />;
-  }
-
-  return null;
 }

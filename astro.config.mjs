@@ -1,23 +1,25 @@
 // @ts-check
-import { defineConfig, envField } from "astro/config";
-
 // Adapters and Integrations
 import mdx from "@astrojs/mdx"; // Support for MDX (Markdown with JSX)
-import sitemap from "@astrojs/sitemap"; // Generates a sitemap.xml
-import remarkMath from "remark-math"; // Remark plugin to support math equations
-import rehypeMathjax from "rehype-mathjax"; // Rehype plugin to render math with MathJax
-import rehypeExternalLinks from "rehype-external-links"; // Adds target="_blank" to external links
-import icon from "astro-icon"; // Icon support
 import preact from "@astrojs/preact"; // Preact integration (lighter alternative to React)
+import sitemap from "@astrojs/sitemap"; // Generates a sitemap.xml
+import { defineConfig, envField, fontProviders } from "astro/config";
+import icon from "astro-icon"; // Icon support
 import { fromHtmlIsomorphic } from "hast-util-from-html-isomorphic";
-import { visit } from "unist-util-visit";
-import rehypeRaw from "rehype-raw";
+import rehypeExternalLinks from "rehype-external-links"; // Adds target="_blank" to external links
+import rehypeMathjax from "rehype-mathjax"; // Rehype plugin to render math with MathJax
 import rehypeMermaid from "rehype-mermaid";
-import { remarkMermaidBypass } from "./scripts/remark-mermaid-bypass.mjs";
-import { rehypeLinkDisambiguator } from "./scripts/rehype-link-disambiguator.mjs";
+import rehypeRaw from "rehype-raw";
+import remarkMath from "remark-math"; // Remark plugin to support math equations
+import { visit } from "unist-util-visit";
 import { ViteImageOptimizer } from "vite-plugin-image-optimizer";
+
+import { rehypeLinkDisambiguator } from "./scripts/rehype-link-disambiguator.mjs";
+import { remarkMermaidBypass } from "./scripts/remark-mermaid-bypass.mjs";
 import postBuildIntegration from "./src/integrations/post-build.ts";
 import preBuildIntegration from "./src/integrations/pre-build.ts";
+import { vitePrefetchNoncePlugin } from "./src/integrations/vite-plugin-prefetch-nonce.ts";
+import routerosGrammar from "./src/languages/routeros.tmLanguage.json";
 
 /**
  * Custom Rehype plugin to split the <picture> output from rehype-mermaid
@@ -53,8 +55,8 @@ const rehypeMermaidSplitter = () => (/** @type {any} */ tree) => {
             return decodeURIComponent(dataUri.split(",")[1]);
           };
 
-          const darkSvgStr = decodeSvg(source.properties?.srcset);
           const lightSvgStr = decodeSvg(img.properties?.src);
+          const darkSvgStr = decodeSvg(source.properties?.srcset);
 
           if (lightSvgStr && darkSvgStr) {
             const lightSvgHAST = fromHtmlIsomorphic(lightSvgStr, {
@@ -96,10 +98,41 @@ const rehypeMermaidSplitter = () => (/** @type {any} */ tree) => {
 const githubLight = "github-light-high-contrast";
 const githubDark = "github-dark-high-contrast";
 
-// No manual overrides needed for high contrast themes
-
 // https://astro.build/config
 export default defineConfig({
+  prefetch: {
+    prefetchAll: true,
+    defaultStrategy: "viewport",
+  },
+  experimental: {
+    clientPrerender: true,
+    contentIntellisense: true,
+    chromeDevtoolsWorkspace: true,
+    fonts: [
+      {
+        name: "Geist Sans",
+        provider: fontProviders.fontsource(),
+        cssVariable: "--font-geist-sans",
+        weights: [400, 700],
+        styles: ["normal", "italic"],
+        subsets: ["latin"],
+        display: "swap",
+        fallbacks: ["sans-serif"],
+        optimizedFallbacks: true,
+      },
+      {
+        name: "Geist Mono",
+        provider: fontProviders.fontsource(),
+        cssVariable: "--font-geist-mono",
+        weights: [400, 700],
+        styles: ["normal", "italic"],
+        subsets: ["latin"],
+        display: "swap",
+        fallbacks: ["monospace"],
+        optimizedFallbacks: true,
+      },
+    ],
+  },
   // New Environment Variables API (Astro 5)
   env: {
     schema: {
@@ -118,15 +151,34 @@ export default defineConfig({
         access: "secret",
         optional: true,
       }),
+      PRIVATE_CF_API_TOKEN: envField.string({
+        context: "server",
+        access: "secret",
+        optional: true,
+      }),
+      PRIVATE_CF_EMAIL: envField.string({
+        context: "server",
+        access: "secret",
+        optional: true,
+      }),
+      PRIVATE_CF_ZONE_ID: envField.string({
+        context: "server",
+        access: "secret",
+        optional: true,
+      }),
     },
   },
 
   // The site URL, used for SEO and sitemap generation
   site: process.env.PUBLIC_SITE_URL || "https://jmrp.io",
 
+  // Build behavior for prerendering conflicts
+  prerenderConflictBehavior: "error",
+
   // Image optimization configuration
   image: {
     domains: ["www.google.com"],
+    responsiveStyles: true,
   },
 
   // List of integrations to extend Astro functionality
@@ -136,11 +188,15 @@ export default defineConfig({
     mdx({
       // MDX needs to know about remark plugins too if we want it to work in .mdx files
       remarkPlugins: [remarkMermaidBypass],
+      optimize: true,
     }),
     icon({
       iconDir: "src/assets/icons",
     }),
-    preact({ include: ["**/src/**/*.{jsx,tsx}"] }),
+    preact({
+      include: ["**/src/**/*.{jsx,tsx}"],
+      devtools: true,
+    }),
     postBuildIntegration(),
   ].filter(Boolean),
 
@@ -151,6 +207,7 @@ export default defineConfig({
         light: githubLight,
         dark: githubDark,
       },
+      langs: [routerosGrammar],
     },
     // Remark plugins: transformation before HTML compilation
     remarkPlugins: [remarkMath, remarkMermaidBypass],
@@ -162,45 +219,160 @@ export default defineConfig({
         {
           strategy: "img-svg",
           mermaidConfig: {
-            theme: "neutral",
+            theme: "base",
+            themeVariables: {
+              // --- LIGHT MODE (GitHub Light Style) ---
+              // General
+              textColor: "#000000",
+              primaryColor: "#ffffff",
+              primaryTextColor: "#000000",
+              primaryBorderColor: "#d0d7de",
+              lineColor: "#000000",
+              secondaryColor: "#f6f8fa",
+              tertiaryColor: "#ffffff",
+              mainBkg: "#ffffff",
+
+              // Nodes/Flowchart
+              nodeBkg: "#ffffff",
+              nodeBorder: "#d0d7de",
+              nodeTextColor: "#000000",
+              clusterBkg: "#f6f8fa",
+              clusterBorder: "#d0d7de",
+              titleColor: "#000000",
+              edgeLabelBackground: "#ffffff",
+              defaultLinkColor: "#000000",
+              arrowheadColor: "#000000",
+
+              // Sequence Diagram Specifics
+              actorBkg: "#eaeef2",
+              actorBorder: "#d0d7de",
+              actorTextColor: "#000000",
+              actorLineColor: "#000000",
+              signalColor: "#000000",
+              signalTextColor: "#000000",
+              labelBoxBkgColor: "#f6f8fa",
+              labelBoxBorderColor: "#d0d7de",
+              labelTextColor: "#000000",
+              loopTextColor: "#000000",
+              noteBkgColor: "#fff9c4",
+              noteTextColor: "#000000",
+              noteBorderColor: "#d4a72c",
+              messageTextColor: "#000000",
+              messageLineColor: "#000000",
+              sequenceNumberColor: "#000000",
+
+              // Groupings/Loops
+              loopBkgColor: "#f6f8fa",
+              loopBorderColor: "#d0d7de",
+              activationBkgColor: "#eaeef2",
+              activationBorderColor: "#d0d7de",
+
+              // State Diagram
+              stateBkg: "#ffffff",
+              stateLabelColor: "#000000",
+              stateBorder: "#d0d7de",
+              altBackground: "#f6f8fa",
+
+              // Class Diagram
+              classText: "#000000",
+              classBkg: "#ffffff",
+              classBorder: "#d0d7de",
+
+              // Pie Chart (GitHub Light Palette)
+              pie1: "#0969da",
+              pie2: "#1a7f37",
+              pie3: "#8250df",
+              pie4: "#cf222e",
+              pie5: "#bf8700",
+              pie6: "#6e7781",
+              pieTitleTextSize: "20px",
+              pieTitleTextColor: "#000000",
+              pieSectionTextColor: "#ffffff",
+              pieLegendTextColor: "#000000",
+              pieStrokeColor: "#ffffff",
+              pieStrokeWidth: "2px",
+              pieOuterStrokeWidth: "2px",
+              pieOpacity: "1",
+            },
           },
           dark: {
             theme: "base",
+            mermaidConfig: {
+              darkMode: true,
+            },
             themeVariables: {
+              // --- DARK MODE (GitHub Dark Style) ---
               // General
-              primaryColor: "#1f2937",
-              primaryTextColor: "#f3f4f6",
-              primaryBorderColor: "#4b5563",
-              lineColor: "#f3f4f6",
-              secondaryColor: "#374151",
-              tertiaryColor: "#111827",
-              mainBkg: "#1f2937",
+              textColor: "#ffffff",
+              primaryColor: "#0d1117",
+              primaryTextColor: "#ffffff",
+              primaryBorderColor: "#30363d",
+              lineColor: "#ffffff",
+              secondaryColor: "#161b22",
+              tertiaryColor: "#0d1117",
+              mainBkg: "#0d1117",
 
               // Nodes/Flowchart
-              nodeBkg: "#111827",
-              nodeBorder: "#4b5563",
-              clusterBkg: "#111827",
-              titleColor: "#f3f4f6",
-              edgeLabelBackground: "#374151",
-              defaultLinkColor: "#f3f4f6",
+              nodeBkg: "#0d1117",
+              nodeBorder: "#30363d",
+              nodeTextColor: "#ffffff",
+              clusterBkg: "#161b22",
+              clusterBorder: "#30363d",
+              titleColor: "#ffffff",
+              edgeLabelBackground: "#161b22",
+              defaultLinkColor: "#ffffff",
+              arrowheadColor: "#ffffff",
 
               // Sequence Diagram Specifics
-              actorBkg: "#111827",
-              actorBorder: "#4b5563",
-              actorTextColor: "#f3f4f6",
-              actorLineColor: "#f3f4f6",
-              signalColor: "#f3f4f6",
-              signalTextColor: "#f3f4f6",
-              labelBoxBkgColor: "#111827",
-              labelBoxBorderColor: "#4b5563",
-              labelTextColor: "#f3f4f6",
-              loopTextColor: "#f3f4f6",
-              noteBkgColor: "#374151",
-              noteTextColor: "#f3f4f6",
-              noteBorderColor: "#4b5563",
-              messageTextColor: "#f3f4f6",
-              messageLineColor: "#f3f4f6",
-              sequenceNumberColor: "#111827",
+              actorBkg: "#1f2937",
+              actorBorder: "#30363d",
+              actorTextColor: "#ffffff",
+              actorLineColor: "#ffffff",
+              signalColor: "#ffffff",
+              signalTextColor: "#ffffff",
+              labelBoxBkgColor: "#161b22",
+              labelBoxBorderColor: "#30363d",
+              labelTextColor: "#ffffff",
+              loopTextColor: "#ffffff",
+              noteBkgColor: "#2d2606",
+              noteTextColor: "#ffffff",
+              noteBorderColor: "#d4a72c",
+              messageTextColor: "#ffffff",
+              messageLineColor: "#ffffff",
+              sequenceNumberColor: "#ffffff",
+
+              // Groupings/Loops
+              loopBkgColor: "#161b22",
+              loopBorderColor: "#30363d",
+              activationBkgColor: "#1f2937",
+              activationBorderColor: "#30363d",
+
+              // State Diagram
+              stateBkg: "#0d1117",
+              stateLabelColor: "#ffffff",
+              stateBorder: "#30363d",
+              altBackground: "#161b22",
+
+              // Class Diagram
+              classText: "#ffffff",
+              classBkg: "#0d1117",
+              classBorder: "#30363d",
+
+              // Pie Chart (GitHub Dark Palette)
+              pie1: "#2f81f7",
+              pie2: "#3fb950",
+              pie3: "#a371f7",
+              pie4: "#d2a8ff", // Highlight
+              pie5: "#e3b341",
+              pie6: "#8b949e",
+              pieTitleTextSize: "20px",
+              pieTitleTextColor: "#ffffff",
+              pieSectionTextColor: "#ffffff",
+              pieLegendTextColor: "#ffffff",
+              pieStrokeColor: "#0d1117",
+              pieStrokeWidth: "2px",
+              pieOuterStrokeWidth: "2px",
+              pieOpacity: "1",
             },
           },
           launchOptions: {
@@ -213,7 +385,7 @@ export default defineConfig({
       [
         rehypeExternalLinks,
         {
-          rel: ["external", "noopener"],
+          rel: ["external", "noopener", "noreferrer"],
           target: "_blank",
         },
       ],
@@ -224,6 +396,7 @@ export default defineConfig({
   // Vite configuration (underlying bundler)
   vite: {
     plugins: [
+      vitePrefetchNoncePlugin(),
       ViteImageOptimizer({
         /* pass your config */
         svg: {
@@ -239,9 +412,9 @@ export default defineConfig({
                   removeViewBox: false, // https://github.com/svg/svgo/issues/1128
                   removeTitle: true,
                   removeDesc: true,
-                  removeUselessDefs: true,
+                  removeUselessDefs: false, // KEEP definitions (markers for arrows)
                   collapseGroups: true,
-                  cleanupIDs: true,
+                  cleanupIDs: false, // KEEP IDs (crucial for marker references)
                   removeEmptyContainers: true,
                   removeEmptyAttrs: true,
                   cleanupAttrs: true,
@@ -255,7 +428,7 @@ export default defineConfig({
             {
               name: "removeAttrs",
               params: {
-                attrs: "(class|id|data-name)",
+                attrs: "(data-name)", // Only remove data-name, KEEP class and id
               },
             },
             {

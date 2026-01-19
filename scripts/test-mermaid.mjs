@@ -8,6 +8,12 @@
 
 import { createMermaidRenderer } from "mermaid-isomorphic";
 
+/**
+ * Executes the Mermaid rendering test.
+ * Initializes the renderer, defines a sample diagram, and attempts to render it.
+ *
+ * @returns {Promise<void>} Resolves when the test is complete.
+ */
 async function test() {
   console.log("Testing Mermaid Render with v3 API...");
   const mermaidRenderer = createMermaidRenderer({
@@ -36,7 +42,7 @@ async function test() {
     });
 
     console.log("Results received. Count:", results.length);
-    results.forEach((res, i) => {
+    for (const [i, res] of results.entries()) {
       if (res.status === "fulfilled") {
         console.log(
           `Result ${i}: Success (SVG length: ${res.value.svg.length})`,
@@ -44,12 +50,13 @@ async function test() {
       } else {
         console.log(`Result ${i}: Failed - ${res.reason}`);
       }
-    });
-  } catch (e) {
-    console.error("Caught error:", e);
+    }
+  } catch (error) {
+    console.error("Caught error:", error);
+    throw error;
   } finally {
     // Explicitly close the renderer to free up resources
-    if (mermaidRenderer.close) {
+    if (typeof mermaidRenderer.close === "function") {
       await mermaidRenderer.close();
     }
   }

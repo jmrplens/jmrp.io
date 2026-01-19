@@ -1,0 +1,122 @@
+/**
+ * Accessibility Test Utilities
+ *
+ * Provides helper functions for processing Axe-core results, generating
+ * summarized reports, and creating HTML accessibility dashboards.
+ */
+
+import { escapeHtml } from "../../scripts/utils/html.mjs";
+import type { AggregatedAxeResult, PageAccessibilityResult } from "./types";
+
+/**
+ * Aggregates Axe-core results across all pages into unique rule counts.
+ * @param pageResults - Array of page scan results
+ * @param field - Field name to aggregate ('detailedViolations' or 'detailedIncomplete')
+ * @returns Map of unique rule IDs to aggregated results
+ */
+export function aggregateAxeResults(
+  pageResults: PageAccessibilityResult[],
+  field: "detailedViolations" | "detailedIncomplete",
+): Map<string, AggregatedAxeResult> {
+  const uniqueMap = new Map<string, AggregatedAxeResult>();
+
+  for (const pageResult of pageResults) {
+    for (const item of pageResult[field]) {
+      if (!uniqueMap.has(item.id)) {
+        uniqueMap.set(item.id, { ...item, nodes: 0 });
+      }
+      const existing = uniqueMap.get(item.id)!;
+      existing.nodes += item.nodes.length;
+    }
+  }
+
+  return uniqueMap;
+}
+
+/**
+ * Generates the accessibility report index HTML page.
+ * @param theme - Current theme ('light' or 'dark')
+ * @param summary - Summary statistics object
+ * @param pageResults - Array of page scan results
+ * @returns Complete HTML string for the index page
+ */
+export function generateAccessibilityIndexHtml(
+  theme: "light" | "dark",
+  summary: { passed: number; failed: number; totalPages: number },
+  pageResults: PageAccessibilityResult[],
+): string {
+  const pageListHtml = pageResults
+    .map(
+      (r) => `
+        <li class="page-item">
+          <a href="${escapeHtml(r.reportPath)}" class="page-link">
+            <span class="status">${r.violations === 0 ? "✅" : "❌"}</span>
+            <div class="details">
+              <span class="page-name">${escapeHtml(`${r.name || r.page || ""}`)}</span>
+              <div style="margin-top: 4px;">
+                <span class="page-url">${escapeHtml(`${r.url || ""}`)}</span>
+              </div>
+              ${r.violations > 0 ? `<div class="violations">⚠️ ${r.violations} violations found</div>` : ""}
+            </div>
+            <div style="color: #999;">&rarr;</div>
+          </a>
+        </li>
+      `,
+    )
+    .join("");
+
+  return `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Accessibility Report Index (${escapeHtml(theme)})</title>
+      <style>
+        body { font-family: system-ui, -apple-system, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; color: #333; }
+        h1 { border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        .summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 30px; }
+        .card { padding: 15px; border-radius: 8px; background: #f5f5f5; text-align: center; border: 1px solid #ddd; }
+        .card.failed { background: #ffebee; color: #c62828; border-color: #ef9a9a; }
+        .card.passed { background: #e8f5e9; color: #2e7d32; border-color: #a5d6a7; }
+        .card h2 { margin: 0; font-size: 2em; }
+        .card p { margin: 5px 0 0; color: inherit; font-size: 0.9em; opacity: 0.9; }
+        .page-list { list-style: none; padding: 0; border: 1px solid #eee; border-radius: 8px; overflow: hidden; }
+        .page-item { border-bottom: 1px solid #eee; }
+        .page-item:last-child { border-bottom: none; }
+        .page-item:hover { background: #f9f9f9; }
+        .page-link { display: flex; align-items: center; padding: 15px; text-decoration: none; color: inherit; }
+        .status { margin-right: 15px; font-size: 1.5em; }
+        .details { flex-grow: 1; }
+        .page-name { font-weight: bold; display: block; font-size: 1.1em; }
+        .page-url { color: #666; font-size: 0.85em; font-family: monospace; background: #eee; padding: 2px 5px; border-radius: 4px; }
+        .violations { color: #c62828; font-size: 0.9em; margin-top: 5px; font-weight: bold; }
+      </style>
+    </head>
+    <body>
+      <h1>Accessibility Reports (${theme === "dark" ? "Dark" : "Light"} Mode)</h1>
+      
+      <div class="summary">
+        <div class="card ${summary.failed === 0 ? "passed" : ""}">
+          <h2>${summary.passed}</h2>
+          <p>Passed</p>
+        </div>
+        <div class="card ${summary.failed > 0 ? "failed" : ""}">
+          <h2>${summary.failed}</h2>
+          <p>Failed</p>
+        </div>
+        <div class="card">
+          <h2>${summary.totalPages}</h2>
+          <p>Total Pages</p>
+        </div>
+      </div>
+
+      <h3>Page Reports</h3>
+      <ul class="page-list">
+        ${pageListHtml}
+      </ul>
+      <p style="text-align: center; margin-top: 30px; color: #999; font-size: 0.8em;">Generated by Playwright & Axe-core</p>
+    </body>
+    </html>
+  `;
+}

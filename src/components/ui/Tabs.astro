@@ -12,198 +12,257 @@
  */
 
 interface Props {
-    class?: string;
+  class?: string;
 }
 
 const { class: className } = Astro.props;
 ---
 
-<script is:inline>
-    class TabsComponent extends HTMLElement {
-        connectedCallback() {
-            // Use requestAnimationFrame to ensure the children are fully parsed
-            // connectedCallback fires before child elements are available
-            requestAnimationFrame(() => {
-                this.initializeTabs();
-            });
-        }
+<script>
+  class TabsComponent extends HTMLElement {
+    _tabListeners: {
+      button: HTMLButtonElement;
+      clickHandler: () => void;
+      keydownHandler: (e: KeyboardEvent) => void;
+    }[] = [];
+    _rafId: number | null = null;
 
-        initializeTabs() {
-            const headers = this.querySelector(".tab-headers");
-            const panels = this.querySelectorAll(".tab-panel");
-
-            if (!headers || panels.length === 0) return;
-
-            // Generate unique IDs for ARIA
-            const uniqueId = Math.random().toString(36).substring(2, 9);
-
-            panels.forEach((panel, index) => {
-                const title =
-                    panel.getAttribute("data-label") || `Tab ${index + 1}`;
-                const panelId = `panel-${uniqueId}-${index}`;
-                const tabId = `tab-${uniqueId}-${index}`;
-
-                // Setup Panel ARIA
-                panel.setAttribute("id", panelId);
-                panel.setAttribute("role", "tabpanel");
-                panel.setAttribute("aria-labelledby", tabId);
-
-                // Create Tab Button
-                const button = document.createElement("button");
-                button.textContent = title;
-                button.id = tabId;
-                button.role = "tab";
-                button.setAttribute("aria-controls", panelId);
-                button.setAttribute(
-                    "aria-selected",
-                    index === 0 ? "true" : "false",
-                );
-                button.setAttribute("tabindex", index === 0 ? "0" : "-1");
-
-                button.addEventListener("click", () => {
-                    // Deactivate all
-                    headers.querySelectorAll("button").forEach((b) => {
-                        b.setAttribute("aria-selected", "false");
-                        b.setAttribute("tabindex", "-1");
-                    });
-                    panels.forEach((p) => {
-                        if (p instanceof HTMLElement) p.style.display = "none";
-                    });
-
-                    // Activate clicked
-                    button.setAttribute("aria-selected", "true");
-                    button.setAttribute("tabindex", "0");
-
-                    // Show corresponding panel
-                    if (panel instanceof HTMLElement)
-                        panel.style.display = "block";
-                });
-
-                // Keyboard navigation
-                button.addEventListener("keydown", (e) => {
-                    if (e.key === "ArrowRight") {
-                        e.preventDefault();
-                        const next = button.nextElementSibling;
-                        if (next instanceof HTMLElement) {
-                            next.click();
-                            next.focus();
-                        }
-                    }
-                    if (e.key === "ArrowLeft") {
-                        e.preventDefault();
-                        const prev = button.previousElementSibling;
-                        if (prev instanceof HTMLElement) {
-                            prev.click();
-                            prev.focus();
-                        }
-                    }
-                });
-
-                headers.appendChild(button);
-
-                // Initial state - hide all except first
-                if (panel instanceof HTMLElement) {
-                    panel.style.display = index === 0 ? "block" : "none";
-                }
-            });
-        }
+    connectedCallback() {
+      // Use requestAnimationFrame to ensure the children are fully parsed
+      // connectedCallback fires before child elements are available
+      this._rafId = requestAnimationFrame(() => {
+        this._rafId = null;
+        this.initializeTabs();
+      });
     }
 
+    disconnectedCallback() {
+      // Cancel pending rAF to prevent stale callback on disconnected element
+      if (this._rafId !== null) {
+        cancelAnimationFrame(this._rafId);
+        this._rafId = null;
+      }
+
+      // Cleanup listeners to avoid memory leaks
+      this._tabListeners.forEach(({ button, clickHandler, keydownHandler }) => {
+        button.removeEventListener("click", clickHandler);
+        button.removeEventListener("keydown", keydownHandler);
+      });
+      this._tabListeners = [];
+
+      // Clear initialized marker to allow re-initialization on reconnect
+      const headers = this.querySelector(".tab-headers");
+      if (headers) {
+        headers.removeAttribute("data-initialized");
+        // Remove dynamically added buttons to avoid duplicates on reconnect
+        headers.innerHTML = "";
+      }
+    }
+
+    initializeTabs() {
+      const headers = this.querySelector(".tab-headers");
+      const panels = this.querySelectorAll(".tab-panel");
+
+      if (!headers || panels.length === 0) return;
+
+      // Guard against duplicate initialization
+      if (headers.hasAttribute("data-initialized")) return;
+      headers.setAttribute("data-initialized", "true");
+
+      // Generate unique IDs for ARIA
+      const uniqueId = Math.random().toString(36).substring(2, 9);
+
+      panels.forEach((panel, index) => {
+        const title = panel.getAttribute("data-label") || `Tab ${index + 1}`;
+        const panelId = `panel-${uniqueId}-${index}`;
+        const tabId = `tab-${uniqueId}-${index}`;
+
+        // Setup Panel ARIA
+        panel.setAttribute("id", panelId);
+        panel.setAttribute("role", "tabpanel");
+        panel.setAttribute("aria-labelledby", tabId);
+
+        // Create Tab Button
+        const button = document.createElement("button");
+        button.textContent = title;
+        button.id = tabId;
+        button.role = "tab";
+        button.setAttribute("aria-controls", panelId);
+        button.setAttribute("aria-selected", index === 0 ? "true" : "false");
+        button.setAttribute("tabindex", index === 0 ? "0" : "-1");
+
+        const clickHandler = () => {
+          // Deactivate all
+          headers.querySelectorAll("button").forEach((b) => {
+            b.setAttribute("aria-selected", "false");
+            b.setAttribute("tabindex", "-1");
+          });
+          panels.forEach((p) => {
+            if (p instanceof HTMLElement) {
+              p.hidden = true;
+            }
+          });
+
+          // Activate clicked
+          button.setAttribute("aria-selected", "true");
+          button.setAttribute("tabindex", "0");
+
+          // Show corresponding panel
+          if (panel instanceof HTMLElement) {
+            panel.hidden = false;
+          }
+        };
+
+        const keydownHandler = (e: KeyboardEvent) => {
+          const allButtons = Array.from(headers.querySelectorAll("button"));
+          const firstButton = allButtons[0];
+          const lastButton = allButtons[allButtons.length - 1];
+
+          if (e.key === "ArrowRight") {
+            e.preventDefault();
+            const next =
+              (button.nextElementSibling as HTMLElement) || firstButton;
+            if (next) {
+              next.click();
+              next.focus();
+            }
+          } else if (e.key === "ArrowLeft") {
+            e.preventDefault();
+            const prev =
+              (button.previousElementSibling as HTMLElement) || lastButton;
+            if (prev) {
+              prev.click();
+              prev.focus();
+            }
+          } else if (e.key === "Home") {
+            e.preventDefault();
+            if (firstButton instanceof HTMLElement) {
+              firstButton.click();
+              firstButton.focus();
+            }
+          } else if (e.key === "End") {
+            e.preventDefault();
+            if (lastButton instanceof HTMLElement) {
+              lastButton.click();
+              lastButton.focus();
+            }
+          }
+        };
+
+        button.addEventListener("click", clickHandler);
+        button.addEventListener("keydown", keydownHandler);
+
+        // Store references for cleanup
+        this._tabListeners.push({ button, clickHandler, keydownHandler });
+
+        headers.appendChild(button);
+
+        // Initial state - hide all except first
+        if (panel instanceof HTMLElement) {
+          panel.hidden = index !== 0;
+        }
+      });
+    }
+  }
+
+  if (!customElements.get("ui-tabs")) {
     customElements.define("ui-tabs", TabsComponent);
+  }
 </script>
 
 <ui-tabs class:list={[className]}>
-    <div class="tab-headers" role="tablist" aria-label="Tabbed Content"></div>
-    <div class="tab-content">
-        <slot />
-    </div>
+  <div
+    class="tab-headers"
+    role="tablist"
+    aria-label="Tabbed Content"
+  >
+  </div>
+  <div class="tab-content">
+    <slot />
+  </div>
 </ui-tabs>
 
 <style is:global>
-    ui-tabs {
-        display: block;
-        margin: 1.5rem 0;
-        background: var(--color-bg-subtle);
-        border: var(--border-1);
-        border-radius: var(--radius-md);
-        overflow: hidden;
-        position: relative;
-    }
+  ui-tabs {
+    position: relative;
+    display: block;
+    margin: 1.5rem 0;
+    overflow: hidden;
+    background: var(--color-bg-secondary);
+    border: var(--border-1);
+    border-radius: var(--radius-md);
+  }
 
-    ui-tabs .tab-headers {
-        display: flex;
-        background: var(--color-bg-secondary);
-        border-bottom: var(--border-1);
-        overflow-x: auto;
-        overflow-y: hidden;
-        scrollbar-width: thin;
-    }
+  ui-tabs .tab-headers {
+    display: flex;
+    overflow: auto hidden;
+    scrollbar-width: thin;
+    background: var(--color-bg-header);
+    border-bottom: var(--border-1);
+  }
 
-    ui-tabs .tab-headers::-webkit-scrollbar {
-        height: 4px;
-    }
+  ui-tabs .tab-headers::-webkit-scrollbar {
+    height: 4px;
+  }
 
-    ui-tabs .tab-headers button {
-        appearance: none;
-        background: transparent;
-        border: none;
-        padding: 0.75rem 1.25rem;
-        color: var(--color-text-muted);
-        font-size: 0.9rem;
-        font-weight: var(--fw-medium);
-        cursor: pointer;
-        transition: all 0.2s;
-        border-bottom: 2px solid transparent;
-        white-space: nowrap;
-        flex-shrink: 0;
-        border-right: var(--border-1);
-    }
+  ui-tabs .tab-headers button {
+    flex-shrink: 0;
+    padding: 0.75rem 1.25rem;
+    font-size: 0.9rem;
+    font-weight: var(--fw-medium);
+    color: var(--color-text-muted);
+    white-space: nowrap;
+    appearance: none;
+    cursor: pointer;
+    background: transparent;
+    border: none;
+    border-right: var(--border-1);
+    border-bottom: 2px solid transparent;
+    transition:
+      color 0.2s,
+      background-color 0.2s,
+      border-color 0.2s;
+  }
 
-    ui-tabs .tab-headers button:hover {
-        color: var(--color-text-body);
-        background: rgba(255, 255, 255, 0.02);
-    }
+  ui-tabs .tab-headers button:hover {
+    color: var(--color-text-body);
+    background: rgb(255 255 255 / 2%);
+  }
 
-    ui-tabs .tab-headers button[aria-selected="true"] {
-        color: var(--color-primary);
-        border-bottom-color: var(--color-primary);
-        background: var(--color-bg-subtle);
-        margin-bottom: -1px;
-    }
+  ui-tabs .tab-headers button[aria-selected="true"] {
+    margin-bottom: -1px;
+    color: var(--color-primary);
+    background: var(--color-bg-secondary);
+    border-bottom-color: var(--color-primary);
+  }
 
-    ui-tabs .tab-content {
-        padding: 0;
-        max-width: 100%;
-        position: relative;
-    }
+  ui-tabs .tab-content {
+    position: relative;
+    max-width: 100%;
+    padding: 0;
+  }
 
-    .tab-panel {
-        padding: 1.5rem;
-        /* No animation - content should appear instantly */
-    }
+  ui-tabs .tab-panel {
+    padding: 1.5rem;
 
-    /* For code-only tabs (no padding needed) */
-    .tab-panel.no-padding {
-        padding: 0;
-    }
+    /* No animation - content should appear instantly */
+  }
 
-    /* Responsive overflow handling */
-    ui-tabs :global(pre),
-    ui-tabs :global(.mermaid) {
-        max-width: 100% !important;
-        overflow-x: auto !important;
-    }
+  /* For code-only tabs (no padding needed) */
+  ui-tabs .tab-panel.no-padding {
+    padding: 0;
+  }
 
-    ui-tabs img,
-    ui-tabs svg {
-        max-width: 100%;
-        height: auto;
-    }
+  /* Responsive overflow handling */
+  ui-tabs pre,
+  ui-tabs .mermaid {
+    max-width: 100% !important;
+    overflow-x: auto !important;
+  }
 
-    /* Fix for code blocks inside tabs having mismatched background in light mode */
-    /* REMOVED to fix accessibility contrast issues. Code blocks will now have their own background (card style) */
-    /* ui-tabs .astro-code,
-    ui-tabs .astro-code span {
-        background-color: transparent !important;
-    } */
+  ui-tabs img,
+  ui-tabs svg {
+    max-width: 100%;
+    height: auto;
+  }
 </style>

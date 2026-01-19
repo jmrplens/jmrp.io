@@ -8,9 +8,10 @@
  * It is used in the CI pipeline to provide visual feedback on HTML quality.
  */
 
+import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
-import { execFileSync } from "node:child_process";
+
 import { escapeHtml } from "../utils/html.mjs";
 
 const JSON_REPORT = "html-validation.json";
@@ -28,7 +29,7 @@ function getAllHtmlFiles(dir, fileList = []) {
   if (!fs.existsSync(dir)) return fileList;
 
   const files = fs.readdirSync(dir);
-  files.forEach((file) => {
+  for (const file of files) {
     const name = path.join(dir, file);
     if (fs.statSync(name).isDirectory()) {
       getAllHtmlFiles(name, fileList);
@@ -36,7 +37,7 @@ function getAllHtmlFiles(dir, fileList = []) {
       // Use relative paths for consistency across environments
       fileList.push(path.relative(process.cwd(), name));
     }
-  });
+  }
   return fileList;
 }
 
@@ -59,8 +60,8 @@ function getActiveRules() {
     );
     const config = JSON.parse(configJson);
     return config.rules || {};
-  } catch (e) {
-    console.warn("⚠️ Could not retrieve active rules list:", e.message);
+  } catch (error) {
+    console.warn("⚠️ Could not retrieve active rules list:", error.message);
     return {};
   }
 }
@@ -86,8 +87,8 @@ function loadAndParseReport() {
     return Array.isArray(report)
       ? report
       : report.results || report.files || [];
-  } catch (e) {
-    console.error("❌ Error parsing JSON report:", e.message);
+  } catch (error) {
+    console.error("❌ Error parsing JSON report:", error.message);
     process.exit(1);
   }
 }
@@ -97,10 +98,10 @@ function loadAndParseReport() {
  */
 function processValidationData(results, allFiles) {
   const resultMap = new Map();
-  results.forEach((res) => {
+  for (const res of results) {
     const relPath = path.relative(process.cwd(), res.filePath);
     resultMap.set(relPath, res);
-  });
+  }
 
   return allFiles.map((filePath) => {
     const res = resultMap.get(filePath);
@@ -118,17 +119,15 @@ function processValidationData(results, allFiles) {
  */
 function calculateRuleCounts(files) {
   const ruleCounts = new Map();
-  files.forEach((file) => {
-    (file.messages || []).forEach((msg) => {
-      if (!msg.ruleId) return;
+  for (const file of files) {
+    for (const msg of file.messages || []) {
+      if (!msg.ruleId) continue;
       const count = ruleCounts.get(msg.ruleId) || 0;
       ruleCounts.set(msg.ruleId, count + 1);
-    });
-  });
+    }
+  }
 
-  return Array.from(ruleCounts.entries())
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 5);
+  return [...ruleCounts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5);
 }
 
 /**

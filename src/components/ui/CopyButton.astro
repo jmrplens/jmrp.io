@@ -12,124 +12,208 @@
 import { Icon } from "astro-icon/components";
 
 interface Props {
-    class?: string;
-    content?: string;
+  class?: string;
+  content?: string;
+  ariaLabel?: string;
 }
 
-const { class: className, content } = Astro.props;
+const { class: className, content, ariaLabel } = Astro.props;
 const encodedContent = content ? encodeURIComponent(content) : undefined;
 ---
 
 <button
-    class:list={["copy-button", className]}
-    type="button"
-    aria-label="Copy to clipboard"
-    data-content={encodedContent}
+  class:list={["copy-button", className]}
+  type="button"
+  aria-label={ariaLabel || "Copy to clipboard"}
+  data-content={encodedContent}
 >
-    <Icon name="mdi:clipboard-outline" class="copy-icon" aria-hidden="true" />
-    <Icon name="mdi:check" class="success-icon hidden" aria-hidden="true" />
+  <span
+    class="sr-only copy-status"
+    aria-live="polite"
+  ></span>
+  <Icon
+    name="mdi:clipboard-outline"
+    class="copy-icon"
+    aria-hidden="true"
+  />
+  <Icon
+    name="mdi:check"
+    class="success-icon hidden"
+    aria-hidden="true"
+  />
 </button>
 
-<script is:inline lang="ts">
+<script>
+  const setupCopyButtons = () => {
     document.querySelectorAll(".copy-button").forEach((button) => {
-        button.addEventListener("click", () => {
-            let text = null;
-            const rawContent = button.getAttribute("data-content");
-            if (rawContent && rawContent !== "undefined") {
-                try {
-                    text = decodeURIComponent(rawContent);
-                } catch (e) {
-                    console.error("Failed to decode data-content", e);
-                }
+      // Avoid duplicate listeners if script runs multiple times (e.g., view transitions)
+      if (button.getAttribute("data-has-listener")) return;
+      button.setAttribute("data-has-listener", "true");
+
+      button.addEventListener("click", () => {
+        let text = null;
+        const rawContent = button.getAttribute("data-content");
+        if (rawContent) {
+          try {
+            text = decodeURIComponent(rawContent);
+          } catch (e) {
+            console.error("Failed to decode data-content", e);
+          }
+        }
+
+        if (!text) {
+          const wrapper =
+            button.closest(".copy-container") || button.parentElement;
+          if (!wrapper) return;
+
+          const codeBlock = wrapper.querySelector("code, .copy-content");
+          if (codeBlock && codeBlock instanceof HTMLElement) {
+            // Prefer textContent (no layout) over innerText (forces layout)
+            text = codeBlock.textContent?.trim() || codeBlock.innerText;
+          }
+        }
+
+        if (!text) {
+          console.warn("CopyButton: No code element found in wrapper.");
+          return;
+        }
+
+        if (!navigator.clipboard) {
+          console.error("Clipboard API not available");
+          if (button instanceof HTMLElement) {
+            button.setAttribute("title", "Clipboard API unavailable");
+          }
+          return;
+        }
+
+        navigator.clipboard.writeText(text).then(
+          () => {
+            // Visual feedback
+            const copyIcon = button.querySelector(".copy-icon");
+            const successIcon = button.querySelector(".success-icon");
+
+            if (copyIcon && successIcon) {
+              copyIcon.classList.add("hidden");
+              successIcon.classList.remove("hidden");
+
+              // Clear any stale title from previous clipboard unavailable state
+              button.removeAttribute("title");
+
+              // Screen reader feedback
+              const status = button.querySelector(".copy-status");
+              if (status) status.textContent = "Copied!";
+
+              // Clear any existing timeout to prevent flickering
+              // Use a data attribute to store the timeout ID for cross-browser safety
+              const existingTimeoutId =
+                button.getAttribute("data-copy-timeout");
+              if (existingTimeoutId) {
+                clearTimeout(Number(existingTimeoutId));
+              }
+
+              // Store new timeout ID back to the button
+              const timeoutId = setTimeout(() => {
+                copyIcon.classList.remove("hidden");
+                successIcon.classList.add("hidden");
+                if (status) status.textContent = "";
+                button.removeAttribute("data-copy-timeout");
+              }, 3000);
+
+              button.setAttribute("data-copy-timeout", String(timeoutId));
             }
-
-            if (!text) {
-                const wrapper =
-                    button.closest(".copy-container") || button.parentElement;
-                if (!wrapper) return;
-
-                const codeBlock = wrapper.querySelector("code, .copy-content");
-                text = codeBlock
-                    ? codeBlock.innerText || codeBlock.textContent
-                    : null;
-
-                if (!text && codeBlock) text = codeBlock.textContent;
+          },
+          (err) => {
+            console.error("Failed to copy:", err);
+            if (button instanceof HTMLElement) {
+              button.setAttribute("title", "Failed to copy!");
             }
-
-            if (!text) {
-                console.warn("CopyButton: No code element found in wrapper.");
-                return;
-            }
-
-            navigator.clipboard.writeText(text).then(
-                () => {
-                    // Visual feedback
-                    const copyIcon = button.querySelector(".copy-icon");
-                    const successIcon = button.querySelector(".success-icon");
-
-                    if (copyIcon && successIcon) {
-                        copyIcon.classList.add("hidden");
-                        successIcon.classList.remove("hidden");
-
-                        setTimeout(() => {
-                            copyIcon.classList.remove("hidden");
-                            successIcon.classList.add("hidden");
-                        }, 1000);
-                    }
-                },
-                (err) => {
-                    console.error("Failed to copy:", err);
-                    button.setAttribute("title", "Failed to copy!");
-                },
-            );
-        });
+          },
+        );
+      });
     });
+  };
+
+  // Initialize on first load
+  setupCopyButtons();
+
+  // Re-initialize on view transitions if enabled
+  if (!document.documentElement.hasAttribute("data-copy-listener-init")) {
+    document.documentElement.setAttribute("data-copy-listener-init", "true");
+    document.addEventListener("astro:after-swap", setupCopyButtons);
+  }
 </script>
 
 <style>
-    .copy-button {
-        position: absolute;
-        top: 0.5rem;
-        right: 0.5rem;
-        background-color: var(--color-bg-subtle, rgba(255, 255, 255, 0.1));
-        border: var(--border-1, 1px solid rgba(255, 255, 255, 0.1));
-        border-radius: 4px; /* Use variable if available, fallback for reuse */
-        padding: 0.3rem 0.5rem;
-        cursor: pointer;
-        opacity: 0.8;
-        transition: all 0.2s ease;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        min-width: 32px;
-        min-height: 32px;
-        z-index: 10; /* Ensure it stays above content/headers */
-    }
+  .copy-button {
+    /*
+     * CSS custom properties for theming in different contexts.
+     * Parent components can override these for better contrast.
+     */
+    --copy-btn-bg: var(--color-bg-subtle, rgb(255 255 255 / 10%));
+    --copy-btn-bg-hover: var(--color-bg-secondary, #222);
+    --copy-btn-border: var(--border-1, 1px solid rgb(255 255 255 / 10%));
+    --copy-btn-icon-color: var(--color-text-muted, #888);
 
-    .copy-button:hover {
-        opacity: 1;
-        background-color: var(--color-bg-secondary, #222);
-    }
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    z-index: 10; /* Ensure it stays above content/headers */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    min-height: 32px;
+    padding: 0.3rem 0.5rem;
+    cursor: pointer;
+    background-color: var(--copy-btn-bg);
+    border: var(--copy-btn-border);
+    border-radius: 4px;
+    opacity: 80%;
+    transition:
+      opacity 0.2s ease,
+      background-color 0.2s ease;
+  }
 
-    .copy-button:active {
-        transform: scale(0.95);
-    }
+  .copy-button:hover,
+  .copy-button:focus-visible {
+    outline: none;
+    background-color: var(--copy-btn-bg-hover);
+    opacity: 100%;
+  }
 
-    /* Icons */
-    .copy-icon,
-    .success-icon {
-        font-size: 1.2rem;
-        width: 1.2rem;
-        height: 1.2rem;
-        color: var(--color-text-muted, #888);
-        display: block;
-    }
+  .copy-button:focus-visible {
+    outline: 2px solid var(--color-primary, #8b5cf6);
+    outline-offset: 2px;
+  }
 
-    .success-icon {
-        color: var(--color-success, #2ea043);
-    }
+  .copy-button:active {
+    transform: scale(0.95);
+  }
 
-    .hidden {
-        display: none;
-    }
+  /* Icons */
+  .copy-icon,
+  .success-icon {
+    display: block;
+    width: 1.2rem;
+    height: 1.2rem;
+    font-size: 1.2rem;
+    color: var(--copy-btn-icon-color);
+  }
+
+  .success-icon {
+    color: var(--color-success, #2ea043);
+  }
+
+  .hidden {
+    display: none;
+  }
+
+  /* Reset absolute positioning when used in header contexts */
+  .copy-button:where(
+    .code-header-copy-btn,
+    .compare-copy-button,
+    .terminal-header-copy-btn
+  ) {
+    position: static;
+  }
 </style>

@@ -11,31 +11,40 @@
 import CopyButton from "./CopyButton.astro";
 
 interface Props {
-    label: string; // The text to display in the tab button
-    noPadding?: boolean; // Set to true for code blocks that don't need padding
+  label: string; // The text to display in the tab button
+  noPadding?: boolean; // Set to true for code blocks that don't need padding
 }
 
 const { label, noPadding = false } = Astro.props;
 ---
 
 <div
-    class:list={["tab-panel", "copy-container", { "no-padding": noPadding }]}
-    data-label={label}
+  class:list={["tab-panel", "copy-container", { "no-padding": noPadding }]}
+  data-label={label}
 >
+  <div class="panel-content">
     <slot />
-    {noPadding && <CopyButton class="panel-copy-button" />}
+  </div>
+  {
+    noPadding && (
+      <CopyButton
+        class="panel-copy-button"
+        ariaLabel={`Copy content from ${label}`}
+      />
+    )
+  }
 </div>
 
 <style>
-    /* Position copy button in the panel */
-    .tab-panel {
-        position: relative;
-    }
+  /* Position copy button in the panel */
+  .tab-panel {
+    position: relative;
+  }
 
-    .tab-panel :global(.panel-copy-button) {
-        position: absolute;
-        top: 0.5rem;
-        right: 0.5rem;
-        z-index: 10;
-    }
+  .tab-panel :global(.panel-copy-button) {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    z-index: 10;
+  }
 </style>

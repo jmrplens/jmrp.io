@@ -10,6 +10,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
+
 import { glob } from "glob";
 
 const DIST_DIR = "dist";
@@ -24,6 +25,11 @@ function formatSize(bytes) {
   return (bytes / (1024 * 1024)).toFixed(2) + " MB";
 }
 
+/**
+ * Analyzes bundle size in the dist directory and categorizes files by type.
+ *
+ * @returns {Promise<void>} Resolves when analysis is complete.
+ */
 async function analyze() {
   console.log(`📦 Analyzing bundle size in ${DIST_DIR}...`);
 
@@ -43,6 +49,7 @@ async function analyze() {
       image: { size: 0, count: 0, files: [] },
       font: { size: 0, count: 0, files: [] },
       pdf: { size: 0, count: 0, files: [] },
+      sourcemap: { size: 0, count: 0, files: [] },
       other: { size: 0, count: 0, files: [] },
     },
   };
@@ -56,45 +63,99 @@ async function analyze() {
     stats.fileCount++;
 
     let category = "other";
-    if (ext === ".js") category = "js";
-    else if (ext === ".css") category = "css";
-    else if (ext === ".html") category = "html";
-    else if (
-      [".png", ".jpg", ".jpeg", ".webp", ".gif", ".svg", ".ico"].includes(ext)
-    )
-      category = "image";
-    else if ([".woff", ".woff2", ".ttf", ".otf", ".eot"].includes(ext))
-      category = "font";
-    else if (ext === ".pdf") category = "pdf";
+    switch (ext) {
+      case ".js":
+      case ".mjs":
+      case ".cjs": {
+        category = "js";
+        break;
+      }
+      case ".css": {
+        category = "css";
+        break;
+      }
+      case ".html": {
+        category = "html";
+        break;
+      }
+      default: {
+        if (
+          [
+            ".png",
+            ".jpg",
+            ".jpeg",
+            ".webp",
+            ".avif",
+            ".gif",
+            ".svg",
+            ".ico",
+          ].includes(ext)
+        )
+          category = "image";
+        else if ([".woff", ".woff2", ".ttf", ".otf", ".eot"].includes(ext))
+          category = "font";
+        else if (ext === ".pdf") category = "pdf";
+        else if (ext === ".map") category = "sourcemap"; // Exclude source maps from code size
+      }
+    }
 
     stats.categories[category].size += size;
     stats.categories[category].count++;
     stats.categories[category].files.push({ path: relativePath, size });
   }
 
-  // Sort by size and keep only Top 5 for the report
   for (const cat in stats.categories) {
     stats.categories[cat].files.sort((a, b) => b.size - a.size);
     stats.categories[cat].largestFiles = stats.categories[cat].files.slice(
       0,
       5,
     );
-    delete stats.categories[cat].files; // Drop full list to keep report small
+    delete stats.categories[cat].files;
   }
 
+  // Calculate aggregated sizes
+  stats.codeSize =
+    stats.categories.js.size +
+    stats.categories.css.size +
+    stats.categories.html.size;
+
+  stats.assetSize =
+    stats.categories.image.size +
+    stats.categories.font.size +
+    stats.categories.pdf.size +
+    stats.categories.other.size;
+
+  stats.sourcemapSize = stats.categories.sourcemap.size;
+
   stats.readableTotalSize = formatSize(stats.totalSize);
+  stats.readableCodeSize = formatSize(stats.codeSize);
+  stats.readableAssetSize = formatSize(stats.assetSize);
+  stats.readableSourcemapSize = formatSize(stats.sourcemapSize);
+
   for (const cat in stats.categories) {
     stats.categories[cat].readableSize = formatSize(stats.categories[cat].size);
   }
 
+  // Define warning threshold for CODE only (e.g., 5MB is generous for a static site, but safe)
+  // Assets (images/PDFs) should not trigger code-bloat warnings.
+  stats.isHighCodeSize = stats.codeSize > 5 * 1024 * 1024; // 5MB limit for code
+
   fs.writeFileSync(OUTPUT_FILE, JSON.stringify(stats, null, 2));
   console.log(`✅ Analysis complete! Report saved to ${OUTPUT_FILE}`);
   console.log(`Total Size: ${stats.readableTotalSize}`);
+  console.log(`Code Size:  ${stats.readableCodeSize}`);
+  console.log(`Asset Size: ${stats.readableAssetSize}`);
+
+  if (stats.isHighCodeSize) {
+    console.warn(
+      `⚠️  Warning: Code size (${stats.readableCodeSize}) exceeds the 5MB recommended limit!`,
+    );
+  }
 }
 
 try {
   await analyze();
-} catch (err) {
-  console.error(err);
+} catch (error) {
+  console.error(error);
   process.exit(1);
 }

@@ -9,87 +9,107 @@
  * </Collapsible>
  */
 interface Props {
-    summary: string;
+  summary: string;
 }
 
 const { summary } = Astro.props;
 ---
 
 <details class="collapsible-wrapper">
-    <summary>
-        <span class="summary-text">{summary}</span>
-        <span class="icon-wrapper" aria-hidden="true">
-            <svg
-                class="chevron"
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-            >
-                <polyline points="6 9 12 15 18 9"></polyline>
-            </svg>
-        </span>
-    </summary>
-    <div class="collapsible-content">
-        <slot />
-    </div>
+  <summary>
+    <span class="summary-text">{summary}</span>
+    <span
+      class="icon-wrapper"
+      aria-hidden="true"
+    >
+      <svg
+        class="chevron"
+        xmlns="http://www.w3.org/2000/svg"
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <polyline points="6 9 12 15 18 9"></polyline>
+      </svg>
+    </span>
+  </summary>
+  <div class="collapsible-content">
+    <slot />
+  </div>
 </details>
 
 <style>
-    .collapsible-wrapper {
-        border: var(--border-1);
-        border-radius: var(--radius-md);
-        margin: 1.5rem 0;
-        background-color: var(--color-bg-secondary);
-    }
-    .collapsible-wrapper[open] {
-        border-color: var(--color-primary);
-    }
+  .collapsible-wrapper {
+    margin: 1.5rem 0;
+    overflow: clip; /* Use clip instead of hidden to allow focus ring */
+    overflow-clip-margin: 4px; /* Allow focus ring to render outside */
+    background-color: var(--color-bg-secondary);
+    border: var(--border-1);
+    border-radius: var(--radius-md);
+  }
 
-    summary {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 0.8rem 1rem;
-        cursor: pointer;
-        font-weight: 500;
-        list-style: none; /* Remove default marker */
-        color: var(--color-text);
-        transition: background-color 0.2s;
-    }
-    summary::-webkit-details-marker {
-        display: none; /* Remove default marker for Safari */
-    }
+  .collapsible-wrapper[open] {
+    border-color: var(--color-primary);
+  }
 
-    .collapsible-wrapper[open] > summary {
-        border-bottom: var(--border-1);
-        background-color: var(--color-bg-subtle);
-    }
+  summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.8rem 1rem;
+    font-weight: 500;
+    color: var(--color-text);
+    cursor: pointer;
+    list-style: none; /* Remove default marker */
+    transition: background-color 0.2s;
+  }
 
-    .summary-text {
-        font-family: var(--font-mono);
-        font-size: 0.9rem;
-    }
+  summary:focus-visible {
+    /* Use inset box-shadow for focus ring that respects border-radius */
+    outline: none;
+    border-radius: var(--radius-md);
+    box-shadow:
+      inset 0 0 0 2px var(--color-primary),
+      0 0 0 2px var(--color-primary);
+  }
 
-    .icon-wrapper {
-        transition: transform 0.2s ease-in-out;
-    }
+  summary::-webkit-details-marker {
+    display: none; /* Remove default marker for Safari */
+  }
 
-    .collapsible-wrapper[open] > summary .icon-wrapper {
-        transform: rotate(180deg);
-    }
+  .collapsible-wrapper[open] > summary {
+    background-color: var(--color-bg-header);
+    border-bottom: var(--border-1);
+  }
 
-    .collapsible-content {
-        padding: 1rem;
-        border-top: var(--border-1);
-    }
+  .summary-text {
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+  }
 
-    .collapsible-wrapper[open] .collapsible-content {
-        border-top: none;
-    }
+  .icon-wrapper {
+    transition: transform 0.2s ease-in-out;
+  }
+
+  .collapsible-wrapper[open] > summary .icon-wrapper {
+    transform: rotate(180deg);
+  }
+
+  .collapsible-content {
+    padding: 1rem;
+  }
+
+  /* Handle nested margins gracefully */
+  .collapsible-content > :first-child {
+    margin-top: 0 !important;
+  }
+
+  .collapsible-content > :last-child {
+    margin-bottom: 0 !important;
+  }
 </style>

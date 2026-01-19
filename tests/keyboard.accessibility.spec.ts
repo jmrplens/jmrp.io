@@ -1,5 +1,18 @@
-import { test, expect } from "@playwright/test";
+/**
+ * Keyboard Navigation Accessibility Tests
+ *
+ * Tests keyboard-only navigation and interaction patterns:
+ * - Tab order through navigation elements
+ * - Skip link functionality
+ * - Mobile menu keyboard interaction (open/close with Enter/Escape)
+ * - Theme toggle keyboard activation
+ * - Focus management and return
+ *
+ * Uses Axe-core to validate focused states for WCAG compliance.
+ */
+
 import AxeBuilder from "@axe-core/playwright";
+import { expect, test } from "@playwright/test";
 
 test.describe("Keyboard Navigation Accessibility", () => {
   test("Navigate Main Menu with Keyboard", async ({ page }) => {
@@ -8,31 +21,19 @@ test.describe("Keyboard Navigation Accessibility", () => {
     // Ensure we are in a clean state (start at body)
     await page.focus("body");
 
-    // 1. Tab to "Skip to content" (if it exists) or Logo
-    // Ensure the page is hydrated/ready
-    await page.waitForTimeout(500);
+    // 1. Tab to "Skip to content" then Logo
+    // Ensure the page is hydrated/ready by waiting for a key element
+    // eslint-disable-next-line playwright/no-wait-for-selector
+    await page.waitForSelector(".skip-link");
     await page.keyboard.press("Tab");
 
-    // Check if the focused element is the logo or skip link
-    // Assuming the logo is the first interactive element or close to it
-    // const logo = page.locator(".logo");
+    // Assert that the skip link received focus and is visible
+    const skipLink = page.locator(".skip-link");
+    await expect(skipLink).toBeFocused();
+    await expect(skipLink).toBeVisible();
+    await expect(skipLink).toBeInViewport();
 
-    // Check what is focused
-    const focusedHandle = await page.evaluateHandle(
-      () => document.activeElement,
-    );
-    const focusedTag = await focusedHandle.evaluate((el) => el?.tagName);
-    const focusedClass = await focusedHandle.evaluate((el) => el?.className);
-    console.log(`Focused element after 1st Tab: ${focusedTag}.${focusedClass}`);
-
-    // If skip-link is focused (BaseLayout), tab again to enter Header
-    if (focusedClass?.includes("skip-link")) {
-      await expect(page.locator(".skip-link")).toBeFocused();
-      await page.keyboard.press("Tab");
-    } else if (focusedTag === "BODY") {
-      // Fallback if initial tab didn't move focus (rare in Playwright unless configured)
-      await page.keyboard.press("Tab");
-    }
+    await page.keyboard.press("Tab");
 
     // Now we should be on the Logo (first link in Header)
     await expect(page.locator("header .logo")).toBeFocused();
@@ -48,7 +49,8 @@ test.describe("Keyboard Navigation Accessibility", () => {
     }
 
     // 3. Run Axe on the focused state of the last link to ensure focus indicators are valid
-    // (Note: Axe might not fully catch focus styles, but it checks contrast)
+    // Note: Axe cannot reliably detect missing or insufficient :focus styles or focus-visible behavior.
+    // Manual verification or visual regression tests are recommended.
     const results = await new AxeBuilder({ page }).include("header").analyze();
 
     expect(results.violations).toEqual([]);
@@ -63,10 +65,9 @@ test.describe("Keyboard Navigation Accessibility", () => {
     // 1. Tab to Skip Link
     await page.keyboard.press("Tab");
     const skipLink = page.locator(".skip-link");
-
-    // Verify it is focused (might need to check if it's the first element)
-    // Based on previous logs: Focused element after 1st Tab: A.skip-link
+    // Verify it is focused and becomes visible
     await expect(skipLink).toBeFocused();
+    await expect(skipLink).toBeVisible();
 
     // 2. Activate it
     await page.keyboard.press("Enter");
@@ -104,7 +105,7 @@ test.describe("Keyboard Navigation Accessibility", () => {
 
     // 3. Check for focus trap or focus management
     // Ideally, focus should move to the first element in the menu or the close button
-    // Let's just Tab and see where we are.
+    // Navigate via Tab keys to check focus sequence
     // Good practice: Focus should be inside the menu.
     await page.keyboard.press("Tab");
 
@@ -119,12 +120,12 @@ test.describe("Keyboard Navigation Accessibility", () => {
     // const firstLink = mobileLinks.first();
 
     // If focus didn't move automatically (common issue), we might still be on the toggle or next element.
-    // Let's assert that we can reach the links.
+    // Assert that we can reach the links.
 
     // Note: If the menu doesn't trap focus or move it, this test might fail or behave unexpectedly.
     // This is a "functional a11y test" - we are testing if it works for keyboard users.
 
-    // Let's snapshot the open menu state with Axe
+    // Snapshot the open menu state with Axe
     const results = await new AxeBuilder({ page })
       .include("#nav-links")
       .analyze();
@@ -134,9 +135,6 @@ test.describe("Keyboard Navigation Accessibility", () => {
     // 4. Close menu with Escape
     await page.keyboard.press("Escape");
     await expect(navLinksContainer).not.toHaveClass(/open/);
-
-    // Allow small tick for JS to execute focus()
-    await page.waitForTimeout(100);
 
     // 5. Verify focus returns to toggle (Best Practice)
     await expect(menuToggle).toBeFocused();
@@ -151,9 +149,24 @@ test.describe("Keyboard Navigation Accessibility", () => {
     await themeToggle.focus();
     await expect(themeToggle).toBeFocused();
 
-    // Toggle
+    // Capture initial state
+    const html = page.locator("html");
+    // eslint-disable-next-line playwright/no-conditional-in-test
+    const initialTheme = (await html.getAttribute("data-theme")) || "dark";
+    // eslint-disable-next-line playwright/no-conditional-in-test
+    const expectedNewTheme = initialTheme === "light" ? "dark" : "light";
+
+    // 1. Toggle
     await page.keyboard.press("Enter");
-    await expect(page.locator("html")).toHaveClass(/dark-mode|light-mode/); // Just checking a change occurred basically
+
+    // Assert change - verify data-theme updated
+    await expect(html).toHaveAttribute("data-theme", expectedNewTheme);
+
+    // 2. Toggle back
+    await themeToggle.press("Enter");
+
+    // Assert that the theme is back to initial state
+    await expect(html).toHaveAttribute("data-theme", initialTheme);
 
     // Check a11y of the toggle itself
     const results = await new AxeBuilder({ page })

@@ -1,20 +1,27 @@
 ---
-import BaseLayout from "@layouts/BaseLayout.astro";
-import PostGrid from "@components/blog/PostGrid.astro";
-import TagCloud from "@components/blog/TagCloud.astro";
-import { getCollection } from "astro:content";
-import { getUniqueTags } from "@utils/blog";
 import "@styles/blog.css";
 
+import PostGrid from "@components/blog/PostGrid.astro";
+import TagCloud from "@components/blog/TagCloud.astro";
+import BaseLayout from "@layouts/BaseLayout.astro";
+import { getUniqueTags } from "@utils/blog";
+import { getSiteUrl } from "@utils/site";
+import { getCollection } from "astro:content";
+
 export async function getStaticPaths() {
-  const posts = (await getCollection("posts")).filter((post) => !post.data.draft);
+  const posts = (await getCollection("posts")).filter(
+    (post) => !post.data.draft,
+  );
   const tags = getUniqueTags(posts);
 
   return tags.map(({ tag }) => {
     const filteredPosts = posts
       .filter((post) => post.data.tags?.includes(tag))
-      .sort((a, b) => b.data.publishedDate.valueOf() - a.data.publishedDate.valueOf());
-      
+      .sort(
+        (a, b) =>
+          b.data.publishedDate.valueOf() - a.data.publishedDate.valueOf(),
+      );
+
     return {
       params: { tag },
       props: { posts: filteredPosts },
@@ -28,16 +35,19 @@ const { posts } = Astro.props;
 // Schema.org: CollectionPage with ItemList
 const schema = {
   "@type": "CollectionPage",
-  "@id": new URL(Astro.url.pathname, Astro.site).toString() + "#collection",
+  "@id": new URL(
+    "#collection",
+    new URL(Astro.url.pathname, getSiteUrl()),
+  ).toString(),
   name: `Blog posts tagged with #${tag}`,
   description: `Browse ${posts.length} articles about ${tag}.`,
-  url: new URL(Astro.url.pathname, Astro.site).toString(),
+  url: new URL(Astro.url.pathname, getSiteUrl()).toString(),
   mainEntity: {
     "@type": "ItemList",
     itemListElement: posts.map((post, index) => ({
       "@type": "ListItem",
       position: index + 1,
-      url: new URL(`/blog/${post.slug}/`, Astro.site).toString(),
+      url: new URL(`/blog/${post.data.slug}/`, getSiteUrl()).toString(),
       name: post.data.title,
     })),
   },
@@ -51,10 +61,13 @@ const schema = {
 >
   <div class="content-wrapper">
     <header class="page-header">
-      <h1 class="gradient-text">#{tag}</h1>
-      <p class="subtitle">{posts.length} {posts.length === 1 ? 'post' : 'posts'} about this topic</p>
+      <h1 class="text-primary">#{tag}</h1>
+      <p class="subtitle">
+        {posts.length}
+        {posts.length === 1 ? "post" : "posts"} about this topic
+      </p>
       <div class="back-link">
-          <a href="/blog">&larr; Back to all posts</a>
+        <a href="/blog">&larr; Back to all posts</a>
       </div>
     </header>
 
@@ -63,7 +76,7 @@ const schema = {
         <PostGrid posts={posts} />
       </div>
       <aside>
-          <TagCloud />
+        <TagCloud />
       </aside>
     </div>
   </div>

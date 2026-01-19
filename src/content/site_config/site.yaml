@@ -1,15 +1,37 @@
-title: "José Manuel Requena Plens | R&amp;D Engineer"
+title: "José Manuel Requena Plens | R&D Engineer"
 description: "Academic and R&D Portfolio of José Manuel Requena Plens. Specializing in Embedded Systems, Acoustics, and Industrial Software Development."
 author: "José Manuel Requena Plens"
 url: "https://jmrp.io"
 keywords: "R&D, Embedded Systems, Acoustics, Software Engineer, Portfolio, CV, Metamaterials, Research"
 fediverse_creator: "@jmrplens@mstdn.jmrp.io"
 locale: "en_US"
-type: "website"
+type: "site"
 # image: "/img/mehome_landscape.jpeg" # Deprecated: Handled in BaseHead.astro
 theme_color: "#B509AC"
 background_color: "#000000"
 twitter_creator: "@jmrplens"
+
+# Person Schema defaults for JSON-LD
+person:
+  name: "José Manuel Requena Plens"
+  jobTitle: "R&D Engineer"
+  worksFor:
+    name: "Power Electronics"
+    url: "https://power-electronics.com/"
+
+# Social links for JSON-LD sameAs and dynamic rendering
+# These are canonical URLs used across the site
+social_links:
+  - name: "GitHub"
+    url: "https://github.com/jmrplens"
+    icon: "fa-brands:github"
+  - name: "LinkedIn"
+    url: "https://www.linkedin.com/in/jmrplens"
+    icon: "fa-brands:linkedin"
+  - name: "Mastodon"
+    url: "https://mstdn.jmrp.io/@jmrplens"
+    icon: "fa-brands:mastodon"
+    rel: "me noopener noreferrer"
 
 shortcuts:
   - name: "Blog"
@@ -40,7 +62,7 @@ nav:
 
 hero:
   title: "Hi, I'm José Manuel."
-  subtitle: "R&amp;D Engineer specializing in Embedded Systems &amp; Acoustics. <br> Software Engineer @ Power Electronics."
+  subtitle: "R&D Engineer specializing in Embedded Systems & Acoustics. <br> Software Engineer @ Power Electronics."
   bio:
-    - "I am a Multidisciplinary R&amp;D Engineer with a deep passion for the intersection of hardware and software. Currently working at <strong>Power Electronics</strong>, I specialize in Embedded Systems, Acoustics, and Industrial Software Development."
+    - "I am a Multidisciplinary R&D Engineer with a deep passion for the intersection of hardware and software. Currently working at <strong>Power Electronics</strong>, I specialize in Embedded Systems, Acoustics, and Industrial Software Development."
     - "My journey has been defined by a constant drive to learn and adapt, moving from fundamental acoustic research to building robust industrial systems."

@@ -1,20 +1,82 @@
+import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
-import crypto from "node:crypto";
+
+/**
+ * Set of HTML boolean attributes that should not have an empty string value.
+ * Note: crossorigin is technically an enumerated attribute, but per HTML5 spec,
+ * crossorigin="" is equivalent to crossorigin="anonymous", and HTML validators
+ * prefer the attribute-only form (crossorigin vs crossorigin="").
+ */
+const BOOLEAN_ATTRIBUTES = new Set([
+  "inert",
+  "download",
+  "disabled",
+  "checked",
+  "readonly",
+  "required",
+  "multiple",
+  "async",
+  "autofocus",
+  "autoplay",
+  "controls",
+  "default",
+  "defer",
+  "formnovalidate",
+  "ismap",
+  "itemscope",
+  "loop",
+  "nomodule",
+  "novalidate",
+  "open",
+  "playsinline",
+  "reversed",
+  "scoped",
+  "selected",
+  "crossorigin",
+  "hidden",
+  "muted",
+]);
 
 /**
  * Writes the provided HTML content to a file, cleaning up empty boolean attributes
- * that can cause validation issues (e.g., async="" becomes async).
+ * that can cause validation issues (e.g., crossorigin="" becomes crossorigin).
+ *
+ * This version is safer as it only targets attributes within tags and avoids
+ * content inside style or script blocks.
  *
  * @param {string} filePath - Absolute path to the destination file.
  * @param {string} html - HTML content to write.
  */
 export function writeHtml(filePath: string, html: string) {
-  const cleaned = html.replace(
-    / (inert|download|disabled|checked|readonly|required|multiple|async|autofocus|autoplay|controls|default|defer|formnovalidate|ismap|itemscope|loop|nomodule|novalidate|open|playsinline|reversed|scoped|selected)=""/g,
-    " $1",
+  // Use a more restrictive regex that tries to avoid matching inside tags content
+  // but for simplicity and safety with CSP, we only clean attributes that are likely
+  // to be injected by Cheerio at the tag level.
+  const cleaned = html.replaceAll(
+    /(\s)([a-z-]+)=""(?=[^>]*>)/gi,
+    (match: string, space: string, attr: string) => {
+      if (BOOLEAN_ATTRIBUTES.has(attr.toLowerCase())) {
+        return `${space}${attr}`;
+      }
+      return match;
+    },
   );
   fs.writeFileSync(filePath, cleaned, "utf-8");
+}
+
+/**
+ * Generates integrity hashes (SHA-256 and SHA-512) for the specified content.
+ *
+ * @param {string} content - The string content to hash.
+ * @returns {string[]} An array of hashes in 'algo-...' format.
+ */
+export function getDualHashes(content: string): string[] {
+  if (!content.trim()) return [];
+
+  const sha256 = crypto.createHash("sha256").update(content).digest("base64");
+  const sha512 = crypto.createHash("sha512").update(content).digest("base64");
+
+  return [`'sha256-${sha256}'`, `'sha512-${sha512}'`];
 }
 
 /**
@@ -71,12 +133,9 @@ export function resolveFile(
   const cleanUrl = url.split("?")[0].split("#")[0];
   if (cleanUrl.startsWith("http") || cleanUrl.startsWith("//")) return null;
 
-  let filePath;
-  if (cleanUrl.startsWith("/")) {
-    filePath = path.join(distDir, cleanUrl);
-  } else {
-    filePath = path.resolve(baseDir, cleanUrl);
-  }
+  const filePath = cleanUrl.startsWith("/")
+    ? path.join(distDir, cleanUrl.slice(1))
+    : path.resolve(baseDir, cleanUrl);
 
   const rel = path.relative(distDir, filePath);
   if (rel.startsWith("..")) return null;
