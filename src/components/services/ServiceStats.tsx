@@ -63,8 +63,10 @@ async function fetchMastodonStats(setError: (error: boolean) => void) {
       try {
         const peersData = (await resPeers.json()) as unknown[];
         peersCount = Array.isArray(peersData) ? peersData.length : 0;
-      } catch {
-        // Silent
+      } catch (e) {
+        if (import.meta.env.DEV) {
+          console.error("Failed to parse Mastodon peers response", e);
+        }
       }
     }
 
@@ -74,8 +76,10 @@ async function fetchMastodonStats(setError: (error: boolean) => void) {
           url: string;
           name: string;
         }[];
-      } catch {
-        // Silent
+      } catch (e) {
+        if (import.meta.env.DEV) {
+          console.error("Failed to parse Mastodon trends response", e);
+        }
       }
     }
 
@@ -83,8 +87,10 @@ async function fetchMastodonStats(setError: (error: boolean) => void) {
       try {
         const instanceData = (await resInstance.json()) as { version: string };
         instanceVersion = instanceData.version;
-      } catch {
-        // Silent
+      } catch (e) {
+        if (import.meta.env.DEV) {
+          console.error("Failed to parse Mastodon instance response", e);
+        }
       }
     }
 
@@ -118,8 +124,10 @@ async function fetchMatrixStats(setError: (error: boolean) => void) {
     if (resConfig?.ok) {
       try {
         matrixData = (await resConfig.json()) as MatrixData;
-      } catch {
-        // Silent
+      } catch (e) {
+        if (import.meta.env.DEV) {
+          console.error("Failed to parse Matrix config response", e);
+        }
       }
     }
 
@@ -128,16 +136,20 @@ async function fetchMatrixStats(setError: (error: boolean) => void) {
         matrixData.online = true;
         const verData = (await resVer.json()) as { versions: string[] };
         matrixData.versions = { list: verData.versions };
-      } catch {
-        // Silent
+      } catch (e) {
+        if (import.meta.env.DEV) {
+          console.error("Failed to parse Matrix versions response", e);
+        }
       }
     }
 
     if (resFed?.ok) {
       try {
         matrixFed = (await resFed.json()) as MatrixFed;
-      } catch {
-        // Silent
+      } catch (e) {
+        if (import.meta.env.DEV) {
+          console.error("Failed to parse Matrix federation response", e);
+        }
       }
     }
 
@@ -145,8 +157,10 @@ async function fetchMatrixStats(setError: (error: boolean) => void) {
       try {
         const destData = (await resDest.json()) as { total: number };
         matrixData.federationTotal = destData.total;
-      } catch {
-        // Silent
+      } catch (e) {
+        if (import.meta.env.DEV) {
+          console.error("Failed to parse Matrix stats response", e);
+        }
       }
     }
 
@@ -182,24 +196,30 @@ async function fetchMeshtasticStats(
     try {
       const data = (await resPotato.json()) as unknown[];
       potatoNodes = Array.isArray(data) ? data.length : 0;
-    } catch {
-      // Silent
+    } catch (e) {
+      if (import.meta.env.DEV) {
+        console.error("Failed to parse Meshtastic Potato response", e);
+      }
     }
   }
   if (resLF?.ok) {
     try {
       const data = (await resLF.json()) as { data?: { activeNodes: number } };
       lfNodes = data.data?.activeNodes ?? 0;
-    } catch {
-      // Silent
+    } catch (e) {
+      if (import.meta.env.DEV) {
+        console.error("Failed to parse Meshtastic LF response", e);
+      }
     }
   }
   if (resMF?.ok) {
     try {
       const data = (await resMF.json()) as { data?: { activeNodes: number } };
       mfNodes = data.data?.activeNodes ?? 0;
-    } catch {
-      // Silent
+    } catch (e) {
+      if (import.meta.env.DEV) {
+        console.error("Failed to parse Meshtastic MF response", e);
+      }
     }
   }
 
@@ -227,15 +247,19 @@ async function fetchPotatoVersion(): Promise<string> {
           const verJson = (await resVer.json()) as { version: string };
           const ver = verJson.version;
           potatoVersion = ver || "";
-        } catch {
-          // Fallback
+        } catch (e) {
+          if (import.meta.env.DEV) {
+            console.error("Failed to parse Potato version response", e);
+          }
         }
       } else {
         potatoVersion = await resVer.text();
       }
     }
-  } catch {
-    // Silent
+  } catch (e) {
+    if (import.meta.env.DEV) {
+      console.error("Failed to fetch Potato version", e);
+    }
   }
   return potatoVersion;
 }
@@ -275,7 +299,7 @@ function MastodonStats({ stats }: { readonly stats: MastodonStatsData }) {
             >
               <path
                 fill="currentColor"
-                d="M23.268 5.313c-.35-2.578-2.617-4.61-5.304-5.004C17.51.242 15.792 0 11.813 0h-.03c-3.98 0-4.835.242-5.288.309C3.882.692 1.496 2.518.917 5.127C.64 6.412.61 7.837.661 9.143c.074 1.874.088 3.745.26 5.611c.118 1.24.325 2.47.62 3.68c.55 2.237 2.777 4.098 4.96 4.857c2.336.792 4.849.923 7.256.38q.398-.092.786-.213c.585-.184 1.27-.39 1.774-.753a.06.06 0 0 0 .023-.043v-1.809a.05.05 0 0 0-.02-.041a.05.05 0 0 0-.046-.01a20.3 20.3 0 0 1-4.709.545c-2.73 0-3.463-1.284-3.674-1.818a5.6 5.6 0 0 1-3.19-1.433a.053.053 0 0 1 .066-.054c1.517.363 3.072.546 4.632.546c.376 0 .75 0 1.125-.01c1.57-.044 3.224-.124 4.768-.422q.059-.011.11-.024c2.435-.464 4.753-1.92 4.989-5.604c.008-.145.03-1.52.03-1.67c.002-.512.167-3.63-.024-5.545m-3.748 9.195h-2.561V8.29c0-1.309-.55-1.976-1.67-1.976c-1.23 0-1.846.79-1.846 2.35v3.403h-2.546V8.663c0-1.56-.617-2.35-1.848-2.35c-1.112 0-1.668.668-1.67 1.977v6.218H4.822V8.102q0-1.965 1.011-3.12c.696-.77 1.608-1.164 2.74-1.164c1.311 0 2.302.5 2.962 1.498l.638 1.06l.638-1.06c.66-.999 1.65-1.498 2.96-1.498c1.13 0 2.043.395 2.74 1.164q1.012 1.155 1.012 3.12z"
+                d="M23.268 5.313c-.35-2.578-2.617-4.61-5.304-5.004C17.51.242 15.792 0 11.813 0h-.03c-3.98 0-4.835.242-5.288.309C3.882.692 1.496 2.518.917 5.127C.64 6.412.61 7.837.661 9.143c.074 1.874.088 3.745.26 5.611c.118 1.24.325 2.47.62 3.68c.55 2.237 2.777 4.098 4.96 4.857c2.336.792 4.849.923 7.256.38q.398-.092.786-.213c.585-.184 1.27-.39 1.774-.753a.06.06 0 0 0 .023-.043v-1.809a.05.05 0 0 0-.02-.041a.05.05 0 0 0-.046-.01a20.3 20.3 0 0 1-4.709.545c-2.73 0-3.463-1.284-3.674-1.818a5.6 5.6 0 0 1-.319-1.433a.053.053 0 0 1 .066-.054c1.517.363 3.072.546 4.632.546c.376 0 .75 0 1.125-.01c1.57-.044 3.224-.124 4.768-.422q.059-.011.11-.024c2.435-.464 4.753-1.92 4.989-5.604c.008-.145.03-1.52.03-1.67c.002-.512.167-3.63-.024-5.545m-3.748 9.195h-2.561V8.29c0-1.309-.55-1.976-1.67-1.976c-1.23 0-1.846.79-1.846 2.35v3.403h-2.546V8.663c0-1.56-.617-2.35-1.848-2.35c-1.112 0-1.668.668-1.67 1.977v6.218H4.822V8.102q0-1.965 1.011-3.12c.696-.77 1.608-1.164 2.74-1.164c1.311 0 2.302.5 2.962 1.498l.638 1.06l.638-1.06c.66-.999 1.65-1.498 2.96-1.498c1.13 0 2.043.395 2.74 1.164q1.012 1.155 1.012 3.12z"
               />
             </svg>
           </span>

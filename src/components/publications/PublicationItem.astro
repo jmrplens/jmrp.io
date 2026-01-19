@@ -225,7 +225,10 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
                 />
               </div>
               <div class="pub-card-content">
-                <pre class="bibtex-raw">{cleanedBibtex}</pre>
+                <pre
+                  class="bibtex-raw"
+                  set:html={sanitize(cleanedBibtex)}
+                />
               </div>
             </div>
           </div>
@@ -408,7 +411,4 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
     background-color: var(--color-bg-secondary) !important;
     border-radius: 0 0 var(--radius-sm) var(--radius-sm) !important;
   }
-
-  /* Accessibility: Distinguish author links by weight
-       Similar to CV page solution for link visibility */
 </style>

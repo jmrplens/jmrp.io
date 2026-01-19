@@ -1,4 +1,4 @@
-import { execSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -51,7 +51,9 @@ const runAudit = async () => {
   for (const combo of combinations) {
     console.log(`\n🔵 TESTING: ${combo.name}`);
     for (const url of urls) {
-      const fileName = `${url.replace(/https?:\/\/.*?\//, "").replaceAll("/", "-") || "index"}-${combo.theme}-${combo.factor}`;
+      const { pathname } = new URL(url);
+      const baseName = pathname.slice(1).replaceAll("/", "-") || "index";
+      const fileName = `${baseName}-${combo.theme}-${combo.factor}`;
       const reportPath = path.join(RESULTS_DIR, `${fileName}.json`);
 
       try {
@@ -59,8 +61,18 @@ const runAudit = async () => {
         const chromeFlags = `--no-sandbox --headless --disable-gpu --force-color-profile=srgb --force-prefers-color-scheme=${combo.theme}`;
 
         // Mobile is the default, so we don't provide --preset (which defaults to mobile)
-        execSync(
-          `npx lighthouse ${url} --quiet --chrome-flags="${chromeFlags}" --output=json --output-path=${reportPath} --throttling-method=simulate`,
+        execFileSync(
+          "npx",
+          [
+            "lighthouse",
+            url,
+            "--quiet",
+            "--chrome-flags",
+            chromeFlags,
+            "--output=json",
+            `--output-path=${reportPath}`,
+            "--throttling-method=simulate",
+          ],
           { stdio: "inherit" },
         );
 
@@ -88,8 +100,21 @@ const runAudit = async () => {
         } else {
           console.log(`✅ ${url} (${combo.name}): 100%`);
         }
-      } catch {
-        console.error(`⚠️ Failed ${url} (${combo.name})`);
+      } catch (error) {
+        console.error(`⚠️ Failed ${url} (${combo.name}):`, error);
+
+        // Record a failure so the FINAL MOBILE REPORT surfaces this URL/combo.
+        reports.push({
+          url,
+          combo: combo.name,
+          summary: {
+            performance: 0,
+            accessibility: 0,
+            bestPractices: 0,
+            seo: 0,
+            failed: true,
+          },
+        });
       }
     }
   }
