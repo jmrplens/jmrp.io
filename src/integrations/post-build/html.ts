@@ -395,7 +395,13 @@ function processStyles($: cheerio.CheerioAPI, enableCsp: boolean): boolean {
   $("[style]").each((_, el) => {
     const $el = $(el);
     const styleContent = $el.attr("style");
-    if (!styleContent) return;
+
+    // Remove empty style attributes (e.g., from Mermaid SVGs) to avoid CSP violations
+    if (!styleContent || styleContent.trim() === "") {
+      $el.removeAttr("style");
+      modified = true;
+      return;
+    }
 
     const hash = crypto
       .createHash("shake256", { outputLength: STYLE_CLASS_HASH_LENGTH })

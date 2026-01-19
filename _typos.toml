@@ -16,3 +16,6 @@ extend-exclude = [
 extend-ignore-re = [
     "(?m)^[a-zA-Z0-9+/=]{20,}$"
 ]
+
+[default.extend-words]
+routeros = "routeros"

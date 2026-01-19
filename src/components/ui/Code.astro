@@ -16,16 +16,32 @@
  */
 import { createHash } from "node:crypto";
 
+// Custom language grammars not bundled with Shiki
+import routerosGrammar from "@languages/routeros.tmLanguage.json";
 import { decodeHtml } from "@utils/html";
 import { getIconForLang } from "@utils/icons";
 import { Code as AstroCode } from "astro/components";
 import { Icon } from "astro-icon/components";
-import type { BuiltinLanguage, SpecialLanguage } from "shiki";
+import type {
+  BuiltinLanguage,
+  LanguageRegistration,
+  SpecialLanguage,
+} from "shiki";
 
 import CopyButton from "./CopyButton.astro";
 
+// Map of custom language names to their grammar definitions
+const customLanguages: Record<string, LanguageRegistration> = {
+  routeros: routerosGrammar as unknown as LanguageRegistration,
+  mikrotik: routerosGrammar as unknown as LanguageRegistration,
+  rsc: routerosGrammar as unknown as LanguageRegistration,
+};
+
+// Custom language names (type-safe union)
+type CustomLanguage = keyof typeof customLanguages;
+
 interface Props {
-  lang?: BuiltinLanguage | SpecialLanguage;
+  lang?: BuiltinLanguage | SpecialLanguage | CustomLanguage;
   "aria-label"?: string;
   title?: string; // Optional title for the code block
   class?: string;
@@ -132,7 +148,7 @@ const langIcon = getIconForLang(lang);
       <div class="code-body">
         <AstroCode
           code={rawCode}
-          lang={lang}
+          lang={customLanguages[lang] ?? lang}
           themes={{
             light: "github-light-high-contrast",
             dark: "github-dark-high-contrast",

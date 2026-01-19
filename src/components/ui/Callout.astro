@@ -16,7 +16,15 @@ import { Icon } from "astro-icon/components";
  * </Callout>
  */
 interface Props {
-  type?: "info" | "warning" | "error" | "success" | "tip" | "note" | "keypoint";
+  type?:
+    | "info"
+    | "warning"
+    | "error"
+    | "success"
+    | "tip"
+    | "note"
+    | "keypoint"
+    | "important";
   title?: string;
   ariaLabel?: string;
   icon?: string;
@@ -33,6 +41,7 @@ const icons = {
   tip: "mdi:lightbulb-outline",
   note: "mdi:information-variant-circle-outline",
   keypoint: "mdi:lightbulb-on-outline",
+  important: "mdi:alert-decagram-outline",
 };
 
 const iconName = icon || icons[type];
@@ -105,6 +114,8 @@ if (import.meta.env.DEV && !ariaLabel && !title) {
     --color-note-bg: rgb(107 114 128 / 10%);
     --color-keypoint-text: var(--color-primary);
     --color-keypoint-bg: var(--color-bg-subtle);
+    --color-important-text: #a78bfa; /* Purple 400 */
+    --color-important-bg: rgb(167 139 250 / 10%);
   }
 
   /* Light Mode Overrides */
@@ -124,6 +135,8 @@ if (import.meta.env.DEV && !ariaLabel && !title) {
       --color-note-bg: rgb(107 114 128 / 10%);
       --color-keypoint-text: #1d4ed8; /* Blue 700 */
       --color-keypoint-bg: var(--color-bg-subtle);
+      --color-important-text: #7c3aed; /* Purple 600 */
+      --color-important-bg: rgb(124 58 237 / 10%);
     }
   }
 
@@ -143,6 +156,8 @@ if (import.meta.env.DEV && !ariaLabel && !title) {
     --color-note-bg: rgb(107 114 128 / 10%);
     --color-keypoint-text: #1d4ed8;
     --color-keypoint-bg: var(--color-bg-subtle);
+    --color-important-text: #7c3aed;
+    --color-important-bg: rgb(124 58 237 / 10%);
   }
 
   /* Assignments */
@@ -174,6 +189,11 @@ if (import.meta.env.DEV && !ariaLabel && !title) {
   .callout-note {
     --callout-color: var(--color-note-text);
     --callout-bg: var(--color-note-bg);
+  }
+
+  .callout-important {
+    --callout-color: var(--color-important-text);
+    --callout-bg: var(--color-important-bg);
   }
 
   .callout-keypoint {

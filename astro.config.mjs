@@ -19,6 +19,7 @@ import { remarkMermaidBypass } from "./scripts/remark-mermaid-bypass.mjs";
 import postBuildIntegration from "./src/integrations/post-build.ts";
 import preBuildIntegration from "./src/integrations/pre-build.ts";
 import { vitePrefetchNoncePlugin } from "./src/integrations/vite-plugin-prefetch-nonce.ts";
+import routerosGrammar from "./src/languages/routeros.tmLanguage.json";
 
 /**
  * Custom Rehype plugin to split the <picture> output from rehype-mermaid
@@ -206,6 +207,7 @@ export default defineConfig({
         light: githubLight,
         dark: githubDark,
       },
+      langs: [routerosGrammar],
     },
     // Remark plugins: transformation before HTML compilation
     remarkPlugins: [remarkMath, remarkMermaidBypass],
