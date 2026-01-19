@@ -335,11 +335,10 @@ function getBarColor(index: number, item: BarData): string {
     white-space: nowrap;
     text-shadow: var(--bar-text-shadow);
     /* Ensure contrast with a semi-transparent dark background box */
-    background-color: rgb(0 0 0 / 70%);
+    background-color: rgb(0 0 0 / 85%);
     padding: 0.15rem 0.5rem;
     border-radius: 4px;
-    opacity: 100%;
-    transition: opacity 0.2s ease;
+    margin-right: -0.25rem; /* Offset padding to align visually */
   }
 
   /* For small bars (under 20%), show value outside the bar */
@@ -352,10 +351,12 @@ function getBarColor(index: number, item: BarData): string {
   .bar-fill.bar-small .bar-value-inside {
     position: absolute;
     left: 100%;
-    padding: 0;
     margin-left: 0.625rem; /* Space between bar and text */
+    padding: 0;
     color: var(--bar-chart-text-muted);
     text-shadow: none;
+
+    /* Remove background box when text is outside */
     background-color: transparent;
   }
 
@@ -365,17 +366,14 @@ function getBarColor(index: number, item: BarData): string {
 
   .bar-value-inside .unit {
     font-weight: 500;
-    opacity: 80%;
   }
 
   .bar-value-inside .separator {
     margin: 0 0.35rem;
-    opacity: 60%;
   }
 
   .bar-value-inside .percentage {
     font-weight: 500;
-    opacity: 90%;
   }
 
   .bar-chart-caption {
