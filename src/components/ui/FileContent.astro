@@ -18,6 +18,7 @@ import { createHash } from "node:crypto";
 import { getNextIndex } from "@utils/counters";
 import { decodeHtml } from "@utils/html";
 import { getIconForFile } from "@utils/icons";
+import { resolveShikiLanguage } from "@utils/shiki";
 import { Code as AstroCode } from "astro/components";
 import { Icon } from "astro-icon/components";
 import type { BuiltinLanguage, SpecialLanguage } from "shiki";
@@ -27,7 +28,7 @@ import CopyButton from "./CopyButton.astro";
 interface Props {
   filename: string;
   icon?: string; // e.g., 'mdi:file-document-outline'
-  language?: BuiltinLanguage | SpecialLanguage; // Override syntax highlighting language
+  language?: BuiltinLanguage | SpecialLanguage | string; // Override syntax highlighting language
   collapsible?: boolean;
   ariaLabel?: string;
 }
@@ -146,7 +147,7 @@ if (language) {
           {useCustomHighlighting ? (
             <AstroCode
               code={rawCode}
-              lang={language}
+              lang={resolveShikiLanguage(language as string)}
               themes={{
                 light: "github-light-high-contrast",
                 dark: "github-dark-high-contrast",
@@ -190,7 +191,7 @@ if (language) {
         {useCustomHighlighting ? (
           <AstroCode
             code={rawCode}
-            lang={language}
+            lang={resolveShikiLanguage(language as string)}
             themes={{
               light: "github-light-high-contrast",
               dark: "github-dark-high-contrast",
