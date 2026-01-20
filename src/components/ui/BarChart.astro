@@ -39,8 +39,21 @@ interface Props {
   valueUnit?: string;
   /** Maximum value for scaling (auto-calculated if not provided) */
   maxValue?: number;
-  /** Color scheme: 'primary', 'gradient', 'semantic', 'monochrome', or custom hex color */
-  colorScheme?: "primary" | "gradient" | "semantic" | "monochrome" | string;
+  /** Color scheme: qualitative (okabe-ito, tol, colorbrewer), sequential gradients (gradient-*), monochrome, primary, semantic, or custom hex */
+  colorScheme?:
+    | "okabe-ito"
+    | "tol"
+    | "colorbrewer"
+    | "gradient-temperature"
+    | "gradient-viridis"
+    | "gradient-blue"
+    | "gradient-red"
+    | "gradient-green"
+    | "gradient-purple"
+    | "primary"
+    | "semantic"
+    | "monochrome"
+    | string;
   /** For semantic colors, map of label patterns to colors */
   semanticColors?: Record<string, string>;
   /** Aria label for accessibility */
@@ -56,7 +69,7 @@ const {
   showValue = true,
   valueUnit = "",
   maxValue: providedMax,
-  colorScheme = "gradient",
+  colorScheme = "okabe-ito",
   semanticColors = {},
   ariaLabel,
   caption,
@@ -66,7 +79,19 @@ const {
 const maxValue = providedMax ?? Math.max(...data.map((d) => d.value));
 const totalValue = data.reduce((sum, d) => sum + d.value, 0);
 
-// Generate bar colors based on scheme - uses CSS variable index
+/**
+ * Determines the color for a bar based on the current color scheme.
+ * Supports qualitative palettes (for unordered categories), sequential gradients
+ * (for ordered data), and custom colors.
+ *
+ * @param {number} index - Zero-based index of the bar in the data array
+ * @param {BarData} item - The bar data item containing label, value, and optional color
+ * @returns {string} CSS color value (either a CSS variable reference or hex color)
+ *
+ * @example
+ * getBarColor(0, { label: "SSH", value: 100 })
+ * // Returns: "var(--bar-okabe-1)" (if using default okabe-ito scheme)
+ */
 function getBarColor(index: number, item: BarData): string {
   if (item.color) return item.color;
 
@@ -81,9 +106,41 @@ function getBarColor(index: number, item: BarData): string {
     case "primary": {
       return "var(--bar-chart-primary)";
     }
-    case "gradient": {
-      // Use CSS variables for theme-aware colors (cycles through 10 colors)
-      return `var(--bar-color-${(index % 10) + 1})`;
+    case "okabe-ito": {
+      // Okabe-Ito: Scientific standard for colorblind accessibility
+      return `var(--bar-okabe-${(index % 10) + 1})`;
+    }
+    case "tol": {
+      // Paul Tol's Bright: Perceptually uniform alternative
+      return `var(--bar-tol-${(index % 10) + 1})`;
+    }
+    case "colorbrewer": {
+      // ColorBrewer Set1: Cartographic quality
+      return `var(--bar-brewer-${(index % 10) + 1})`;
+    }
+    case "gradient-temperature": {
+      // Temperature: Blue (cool/low) to Red (warm/high)
+      return `var(--bar-temp-${(index % 10) + 1})`;
+    }
+    case "gradient-viridis": {
+      // Viridis: Perceptually uniform sequential, colorblind-safe
+      return `var(--bar-viridis-${(index % 10) + 1})`;
+    }
+    case "gradient-blue": {
+      // Blue: Light to deep blue saturation
+      return `var(--bar-grad-blue-${(index % 10) + 1})`;
+    }
+    case "gradient-red": {
+      // Red: Light to deep red saturation
+      return `var(--bar-grad-red-${(index % 10) + 1})`;
+    }
+    case "gradient-green": {
+      // Green: Light to deep green saturation
+      return `var(--bar-grad-green-${(index % 10) + 1})`;
+    }
+    case "gradient-purple": {
+      // Purple: Light to deep purple saturation
+      return `var(--bar-grad-purple-${(index % 10) + 1})`;
     }
     case "monochrome": {
       // Grayscale gradient: High values (low index) are intense, fading out
@@ -104,7 +161,12 @@ function getBarColor(index: number, item: BarData): string {
 
 <figure
   class="bar-chart-container"
-  aria-label={ariaLabel || title || "Bar chart"}
+  role="img"
+  aria-label={ariaLabel ||
+    (title
+      ? `Bar chart: ${title}. Showing ${data.length} items.`
+      : `Bar chart showing ${data.length} items`)}
+  data-animated="false"
 >
   {title && <figcaption class="bar-chart-title">{title}</figcaption>}
 
@@ -115,30 +177,53 @@ function getBarColor(index: number, item: BarData): string {
         const totalPercentage =
           totalValue > 0 ? (item.value / totalValue) * 100 : 0;
         const barColor = getBarColor(index, item);
+        const labelId = `bar-label-${index}-${Math.random().toString(36).slice(2, 11)}`;
 
         return (
           <li class="bar-row">
-            <span class="bar-label">{item.label}</span>
+            <span
+              class="bar-label"
+              id={labelId}
+            >
+              {item.label}
+            </span>
             <div class="bar-track">
               <div
                 class={`bar-fill ${percentage < 20 ? "bar-small" : ""}`}
-                style={`width: ${percentage}%; background-color: ${barColor};`}
+                style={`--bar-width: ${percentage}%; background-color: ${barColor};`}
+                role="meter"
+                aria-labelledby={labelId}
+                aria-valuenow={item.value}
+                aria-valuemin={0}
+                aria-valuemax={maxValue}
+                aria-valuetext={`${item.value.toLocaleString()}${valueUnit ? ` ${valueUnit}` : ""} (${totalPercentage.toFixed(1)}% of total)`}
                 data-value={item.value}
                 data-max={maxValue}
                 title={`${item.label}: ${item.value}${valueUnit ? ` ${valueUnit}` : ""}`}
               >
                 <span class="bar-value-inside">
                   {showValue && (
-                    <span class="value">
+                    <span
+                      class="value"
+                      aria-hidden="true"
+                    >
                       {item.value.toLocaleString()}
                       {valueUnit && <span class="unit"> {valueUnit}</span>}
                     </span>
                   )}
                   {showPercentage && showValue && (
-                    <span class="separator"> · </span>
+                    <span
+                      class="separator"
+                      aria-hidden="true"
+                    >
+                      ·{" "}
+                    </span>
                   )}
                   {showPercentage && (
-                    <span class="percentage">
+                    <span
+                      class="percentage"
+                      aria-hidden="true"
+                    >
                       {totalPercentage.toFixed(1)}%
                     </span>
                   )}
@@ -151,8 +236,79 @@ function getBarColor(index: number, item: BarData): string {
     }
   </ul>
 
+  <!-- Visually-hidden data table for screen readers -->
+  <table
+    class="sr-only"
+    aria-label={`${title || "Chart"} data table`}
+  >
+    <caption>{title || "Chart data"}</caption>
+    <thead>
+      <tr>
+        <th scope="col">Category</th>
+        <th scope="col">Value{valueUnit && ` (${valueUnit})`}</th>
+        <th scope="col">Percentage</th>
+      </tr>
+    </thead>
+    <tbody>
+      {
+        data.map((item) => {
+          const totalPercentage =
+            totalValue > 0 ? (item.value / totalValue) * 100 : 0;
+          return (
+            <tr>
+              <td>{item.label}</td>
+              <td>{item.value.toLocaleString()}</td>
+              <td>{totalPercentage.toFixed(1)}%</td>
+            </tr>
+          );
+        })
+      }
+    </tbody>
+  </table>
+
   {caption && <p class="bar-chart-caption">{caption}</p>}
 </figure>
+
+<script>
+  // Animate bars only when they become visible in the viewport
+  function initBarChartAnimations() {
+    const charts = document.querySelectorAll<HTMLElement>(
+      ".bar-chart-container[data-animated='false']",
+    );
+
+    if (!charts.length) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const chart = entry.target as HTMLElement;
+            // Mark as animated to prevent re-animation
+            chart.dataset.animated = "true";
+            // Trigger the animation by adding the class
+            chart.classList.add("animate");
+            // Stop observing this chart
+            observer.unobserve(chart);
+          }
+        });
+      },
+      {
+        // Trigger when 20% of the chart is visible
+        threshold: 0.2,
+        // Start observing slightly before it enters viewport
+        rootMargin: "50px",
+      },
+    );
+
+    charts.forEach((chart) => observer.observe(chart));
+  }
+
+  // Run on initial page load
+  initBarChartAnimations();
+
+  // Re-run after view transitions (for Astro's View Transitions API)
+  document.addEventListener("astro:page-load", initBarChartAnimations);
+</script>
 
 <style>
   /* CSS Variables for theming */
@@ -166,19 +322,115 @@ function getBarColor(index: number, item: BarData): string {
     --bar-radius: 0.375rem;
     --label-width: 8rem;
 
-    /* 10 unique colors for dark mode (with transparency) */
-    --bar-color-1: rgb(59 130 246 / 85%); /* Blue */
-    --bar-color-2: rgb(139 92 246 / 85%); /* Violet */
-    --bar-color-3: rgb(236 72 153 / 85%); /* Pink */
-    --bar-color-4: rgb(249 115 22 / 85%); /* Orange */
-    --bar-color-5: rgb(234 179 8 / 85%); /* Yellow */
-    --bar-color-6: rgb(34 197 94 / 85%); /* Green */
-    --bar-color-7: rgb(20 184 166 / 85%); /* Teal */
-    --bar-color-8: rgb(6 182 212 / 85%); /* Cyan */
-    --bar-color-9: rgb(168 85 247 / 85%); /* Purple */
-    --bar-color-10: rgb(244 63 94 / 85%); /* Rose */
+    /* Okabe-Ito palette (default) - Scientific standard for colorblind accessibility */
+    --bar-okabe-1: rgb(230 159 0); /* Orange */
+    --bar-okabe-2: rgb(86 180 233); /* Sky Blue */
+    --bar-okabe-3: rgb(0 158 115); /* Bluish Green */
+    --bar-okabe-4: rgb(240 228 66); /* Yellow */
+    --bar-okabe-5: rgb(0 114 178); /* Blue */
+    --bar-okabe-6: rgb(213 94 0); /* Vermilion */
+    --bar-okabe-7: rgb(204 121 167); /* Reddish Purple */
+    --bar-okabe-8: rgb(117 112 179); /* Purple */
+    --bar-okabe-9: rgb(102 194 165); /* Teal */
+    --bar-okabe-10: rgb(252 141 98); /* Coral */
 
-    /* Monochrome scale for dark mode (Bright -> Darker) */
+    /* Paul Tol Bright (Alternative 1) - Perceptually uniform */
+    --bar-tol-1: rgb(68 119 170); /* Blue */
+    --bar-tol-2: rgb(238 102 119); /* Red */
+    --bar-tol-3: rgb(204 187 68); /* Yellow */
+    --bar-tol-4: rgb(34 136 51); /* Green */
+    --bar-tol-5: rgb(170 51 119); /* Purple */
+    --bar-tol-6: rgb(102 170 238); /* Cyan */
+    --bar-tol-7: rgb(238 153 170); /* Pink */
+    --bar-tol-8: rgb(187 187 187); /* Grey */
+    --bar-tol-9: rgb(153 221 255); /* Light Blue */
+    --bar-tol-10: rgb(221 204 119); /* Light Yellow */
+
+    /* ColorBrewer Set1 (Alternative 2) - Cartographic quality */
+    --bar-brewer-1: rgb(228 26 28); /* Red */
+    --bar-brewer-2: rgb(55 126 184); /* Blue */
+    --bar-brewer-3: rgb(77 175 74); /* Green */
+    --bar-brewer-4: rgb(152 78 163); /* Purple */
+    --bar-brewer-5: rgb(255 127 0); /* Orange */
+    --bar-brewer-6: rgb(255 255 51); /* Yellow */
+    --bar-brewer-7: rgb(166 86 40); /* Brown */
+    --bar-brewer-8: rgb(247 129 191); /* Pink */
+    --bar-brewer-9: rgb(153 153 153); /* Grey */
+    --bar-brewer-10: rgb(77 190 238); /* Cyan */
+
+    /* Sequential Gradients - Temperature (Blue → Red) */
+    --bar-temp-1: rgb(215 48 39);
+    --bar-temp-2: rgb(239 59 44);
+    --bar-temp-3: rgb(251 106 74);
+    --bar-temp-4: rgb(253 174 97);
+    --bar-temp-5: rgb(254 224 144);
+    --bar-temp-6: rgb(250 245 145);
+    --bar-temp-7: rgb(199 233 180);
+    --bar-temp-8: rgb(144 215 181);
+    --bar-temp-9: rgb(103 191 207);
+    --bar-temp-10: rgb(103 169 207);
+
+    /* Sequential Gradients - Viridis */
+    --bar-viridis-1: rgb(253 231 37);
+    --bar-viridis-2: rgb(180 222 44);
+    --bar-viridis-3: rgb(109 205 89);
+    --bar-viridis-4: rgb(53 183 121);
+    --bar-viridis-5: rgb(31 158 137);
+    --bar-viridis-6: rgb(38 130 142);
+    --bar-viridis-7: rgb(49 104 142);
+    --bar-viridis-8: rgb(62 74 137);
+    --bar-viridis-9: rgb(72 40 120);
+    --bar-viridis-10: rgb(68 1 84);
+
+    /* Sequential Gradients - Single Color: Blue */
+    --bar-grad-blue-1: rgb(3 19 43);
+    --bar-grad-blue-2: rgb(6 31 77);
+    --bar-grad-blue-3: rgb(8 48 107);
+    --bar-grad-blue-4: rgb(8 69 148);
+    --bar-grad-blue-5: rgb(8 81 156);
+    --bar-grad-blue-6: rgb(33 113 181);
+    --bar-grad-blue-7: rgb(66 146 198);
+    --bar-grad-blue-8: rgb(107 174 214);
+    --bar-grad-blue-9: rgb(158 202 225);
+    --bar-grad-blue-10: rgb(198 219 239);
+
+    /* Sequential Gradients - Single Color: Red */
+    --bar-grad-red-1: rgb(103 0 13);
+    --bar-grad-red-2: rgb(127 12 17);
+    --bar-grad-red-3: rgb(165 15 21);
+    --bar-grad-red-4: rgb(187 21 26);
+    --bar-grad-red-5: rgb(203 24 29);
+    --bar-grad-red-6: rgb(239 59 44);
+    --bar-grad-red-7: rgb(251 106 74);
+    --bar-grad-red-8: rgb(252 146 114);
+    --bar-grad-red-9: rgb(252 187 161);
+    --bar-grad-red-10: rgb(254 224 210);
+
+    /* Sequential Gradients - Single Color: Green */
+    --bar-grad-green-1: rgb(0 40 18);
+    --bar-grad-green-2: rgb(10 64 31);
+    --bar-grad-green-3: rgb(15 88 43);
+    --bar-grad-green-4: rgb(25 116 57);
+    --bar-grad-green-5: rgb(35 139 69);
+    --bar-grad-green-6: rgb(65 171 93);
+    --bar-grad-green-7: rgb(116 196 118);
+    --bar-grad-green-8: rgb(161 217 155);
+    --bar-grad-green-9: rgb(199 233 192);
+    --bar-grad-green-10: rgb(229 245 224);
+
+    /* Sequential Gradients - Single Color: Purple */
+    --bar-grad-purple-1: rgb(50 0 100);
+    --bar-grad-purple-2: rgb(63 0 125);
+    --bar-grad-purple-3: rgb(74 20 134);
+    --bar-grad-purple-4: rgb(91 58 147);
+    --bar-grad-purple-5: rgb(106 81 163);
+    --bar-grad-purple-6: rgb(128 125 186);
+    --bar-grad-purple-7: rgb(158 154 200);
+    --bar-grad-purple-8: rgb(188 189 220);
+    --bar-grad-purple-9: rgb(218 218 235);
+    --bar-grad-purple-10: rgb(242 240 247);
+
+    /* Monochrome scale for dark mode (Bright → Darker) */
     --bar-mono-1: rgb(249 250 251); /* Gray 50 */
     --bar-mono-2: rgb(243 244 246); /* Gray 100 */
     --bar-mono-3: rgb(229 231 235); /* Gray 200 */
@@ -206,19 +458,115 @@ function getBarColor(index: number, item: BarData): string {
     --bar-text-shadow: none;
     --bar-value-color: white;
 
-    /* 10 unique colors for light mode (deeper, more saturated for visibility) */
-    --bar-color-1: rgb(29 78 216); /* Blue-700 */
-    --bar-color-2: rgb(109 40 217); /* Violet-700 */
-    --bar-color-3: rgb(190 24 93); /* Pink-700 */
-    --bar-color-4: rgb(194 65 12); /* Orange-700 */
-    --bar-color-5: rgb(161 98 7); /* Yellow-700 */
-    --bar-color-6: rgb(21 128 61); /* Green-700 */
-    --bar-color-7: rgb(15 118 110); /* Teal-700 */
-    --bar-color-8: rgb(14 116 144); /* Cyan-700 */
-    --bar-color-9: rgb(126 34 206); /* Purple-700 */
-    --bar-color-10: rgb(190 18 60); /* Rose-700 */
+    /* Okabe-Ito palette (light mode) - Darker variants for light backgrounds */
+    --bar-okabe-1: rgb(204 121 0); /* Orange (darker) */
+    --bar-okabe-2: rgb(0 114 178); /* Blue */
+    --bar-okabe-3: rgb(0 128 92); /* Bluish Green (darker) */
+    --bar-okabe-4: rgb(190 173 0); /* Yellow (darker) */
+    --bar-okabe-5: rgb(0 92 142); /* Blue (darker) */
+    --bar-okabe-6: rgb(178 68 0); /* Vermilion (darker) */
+    --bar-okabe-7: rgb(170 51 119); /* Reddish Purple (darker) */
+    --bar-okabe-8: rgb(93 82 143); /* Purple (darker) */
+    --bar-okabe-9: rgb(51 160 122); /* Teal (darker) */
+    --bar-okabe-10: rgb(215 90 49); /* Coral (darker) */
 
-    /* Monochrome scale for light mode (Dark -> Lighter) */
+    /* Paul Tol Bright (light mode) */
+    --bar-tol-1: rgb(51 90 128); /* Blue (darker) */
+    --bar-tol-2: rgb(205 52 61); /* Red (darker) */
+    --bar-tol-3: rgb(161 135 34); /* Yellow (darker) */
+    --bar-tol-4: rgb(17 102 26); /* Green (darker) */
+    --bar-tol-5: rgb(136 26 85); /* Purple (darker) */
+    --bar-tol-6: rgb(51 136 205); /* Cyan (darker) */
+    --bar-tol-7: rgb(205 92 119); /* Pink (darker) */
+    --bar-tol-8: rgb(119 119 119); /* Grey (darker) */
+    --bar-tol-9: rgb(68 170 221); /* Light Blue (darker) */
+    --bar-tol-10: rgb(187 153 68); /* Light Yellow (darker) */
+
+    /* ColorBrewer Set1 (light mode) */
+    --bar-brewer-1: rgb(190 18 20); /* Red (darker) */
+    --bar-brewer-2: rgb(35 100 147); /* Blue (darker) */
+    --bar-brewer-3: rgb(52 140 49); /* Green (darker) */
+    --bar-brewer-4: rgb(120 52 130); /* Purple (darker) */
+    --bar-brewer-5: rgb(215 95 0); /* Orange (darker) */
+    --bar-brewer-6: rgb(205 205 0); /* Yellow (darker) */
+    --bar-brewer-7: rgb(132 58 25); /* Brown (darker) */
+    --bar-brewer-8: rgb(215 85 153); /* Pink (darker) */
+    --bar-brewer-9: rgb(102 102 102); /* Grey (darker) */
+    --bar-brewer-10: rgb(41 153 205); /* Cyan (darker) */
+
+    /* Sequential Gradients - Temperature (light mode) */
+    --bar-temp-1: rgb(178 24 43);
+    --bar-temp-2: rgb(215 48 39);
+    --bar-temp-3: rgb(239 59 44);
+    --bar-temp-4: rgb(252 141 89);
+    --bar-temp-5: rgb(253 219 109);
+    --bar-temp-6: rgb(239 237 97);
+    --bar-temp-7: rgb(171 221 164);
+    --bar-temp-8: rgb(107 194 163);
+    --bar-temp-9: rgb(49 163 189);
+    --bar-temp-10: rgb(49 130 189);
+
+    /* Sequential Gradients - Viridis (light mode) */
+    --bar-viridis-1: rgb(253 231 37);
+    --bar-viridis-2: rgb(180 222 44);
+    --bar-viridis-3: rgb(109 205 89);
+    --bar-viridis-4: rgb(53 183 121);
+    --bar-viridis-5: rgb(31 158 137);
+    --bar-viridis-6: rgb(38 130 142);
+    --bar-viridis-7: rgb(49 104 142);
+    --bar-viridis-8: rgb(62 74 137);
+    --bar-viridis-9: rgb(72 40 120);
+    --bar-viridis-10: rgb(68 1 84);
+
+    /* Sequential Gradients - Blue (light mode) */
+    --bar-grad-blue-1: rgb(3 19 43);
+    --bar-grad-blue-2: rgb(8 48 107);
+    --bar-grad-blue-3: rgb(8 69 148);
+    --bar-grad-blue-4: rgb(8 81 156);
+    --bar-grad-blue-5: rgb(33 113 181);
+    --bar-grad-blue-6: rgb(66 146 198);
+    --bar-grad-blue-7: rgb(107 174 214);
+    --bar-grad-blue-8: rgb(158 202 225);
+    --bar-grad-blue-9: rgb(198 219 239);
+    --bar-grad-blue-10: rgb(239 243 255);
+
+    /* Sequential Gradients - Red (light mode) */
+    --bar-grad-red-1: rgb(103 0 13);
+    --bar-grad-red-2: rgb(165 15 21);
+    --bar-grad-red-3: rgb(187 21 26);
+    --bar-grad-red-4: rgb(203 24 29);
+    --bar-grad-red-5: rgb(239 59 44);
+    --bar-grad-red-6: rgb(251 106 74);
+    --bar-grad-red-7: rgb(252 146 114);
+    --bar-grad-red-8: rgb(252 187 161);
+    --bar-grad-red-9: rgb(254 224 210);
+    --bar-grad-red-10: rgb(255 245 240);
+
+    /* Sequential Gradients - Green (light mode) */
+    --bar-grad-green-1: rgb(0 40 18);
+    --bar-grad-green-2: rgb(15 88 43);
+    --bar-grad-green-3: rgb(25 116 57);
+    --bar-grad-green-4: rgb(35 139 69);
+    --bar-grad-green-5: rgb(65 171 93);
+    --bar-grad-green-6: rgb(116 196 118);
+    --bar-grad-green-7: rgb(161 217 155);
+    --bar-grad-green-8: rgb(199 233 192);
+    --bar-grad-green-9: rgb(229 245 224);
+    --bar-grad-green-10: rgb(247 252 245);
+
+    /* Sequential Gradients - Purple (light mode) */
+    --bar-grad-purple-1: rgb(50 0 100);
+    --bar-grad-purple-2: rgb(74 20 134);
+    --bar-grad-purple-3: rgb(91 58 147);
+    --bar-grad-purple-4: rgb(106 81 163);
+    --bar-grad-purple-5: rgb(128 125 186);
+    --bar-grad-purple-6: rgb(158 154 200);
+    --bar-grad-purple-7: rgb(188 189 220);
+    --bar-grad-purple-8: rgb(218 218 235);
+    --bar-grad-purple-9: rgb(242 240 247);
+    --bar-grad-purple-10: rgb(252 251 253);
+
+    /* Monochrome scale for light mode (Dark → Lighter) */
     --bar-mono-1: rgb(3 7 18); /* Gray 950 */
     --bar-mono-2: rgb(17 24 39); /* Gray 900 */
     --bar-mono-3: rgb(31 41 55); /* Gray 800 */
@@ -231,6 +579,19 @@ function getBarColor(index: number, item: BarData): string {
     --bar-mono-10: rgb(243 244 246); /* Gray 100 */
   }
 
+  /* Screen reader only - visually hidden but accessible */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    white-space: nowrap;
+    border-width: 0;
+    clip-path: inset(50%);
+  }
+
   @media (prefers-color-scheme: light) {
     :global(:root:not([data-theme])) .bar-chart-container {
       --bar-chart-track-bg: rgb(0 0 0 / 8%);
@@ -239,17 +600,41 @@ function getBarColor(index: number, item: BarData): string {
       --bar-text-shadow: none;
       --bar-value-color: white;
 
-      /* 10 unique colors for light mode */
-      --bar-color-1: rgb(29 78 216);
-      --bar-color-2: rgb(109 40 217);
-      --bar-color-3: rgb(190 24 93);
-      --bar-color-4: rgb(194 65 12);
-      --bar-color-5: rgb(161 98 7);
-      --bar-color-6: rgb(21 128 61);
-      --bar-color-7: rgb(15 118 110);
-      --bar-color-8: rgb(14 116 144);
-      --bar-color-9: rgb(126 34 206);
-      --bar-color-10: rgb(190 18 60);
+      /* Okabe-Ito palette (light mode) */
+      --bar-okabe-1: rgb(204 121 0);
+      --bar-okabe-2: rgb(0 114 178);
+      --bar-okabe-3: rgb(0 128 92);
+      --bar-okabe-4: rgb(190 173 0);
+      --bar-okabe-5: rgb(0 92 142);
+      --bar-okabe-6: rgb(178 68 0);
+      --bar-okabe-7: rgb(170 51 119);
+      --bar-okabe-8: rgb(93 82 143);
+      --bar-okabe-9: rgb(51 160 122);
+      --bar-okabe-10: rgb(215 90 49);
+
+      /* Paul Tol Bright (light mode) */
+      --bar-tol-1: rgb(51 90 128);
+      --bar-tol-2: rgb(205 52 61);
+      --bar-tol-3: rgb(161 135 34);
+      --bar-tol-4: rgb(17 102 26);
+      --bar-tol-5: rgb(136 26 85);
+      --bar-tol-6: rgb(51 136 205);
+      --bar-tol-7: rgb(205 92 119);
+      --bar-tol-8: rgb(119 119 119);
+      --bar-tol-9: rgb(68 170 221);
+      --bar-tol-10: rgb(187 153 68);
+
+      /* ColorBrewer Set1 (light mode) */
+      --bar-brewer-1: rgb(190 18 20);
+      --bar-brewer-2: rgb(35 100 147);
+      --bar-brewer-3: rgb(52 140 49);
+      --bar-brewer-4: rgb(120 52 130);
+      --bar-brewer-5: rgb(215 95 0);
+      --bar-brewer-6: rgb(205 205 0);
+      --bar-brewer-7: rgb(132 58 25);
+      --bar-brewer-8: rgb(215 85 153);
+      --bar-brewer-9: rgb(102 102 102);
+      --bar-brewer-10: rgb(41 153 205);
 
       /* Monochrome scale for light mode */
       --bar-mono-1: rgb(3 7 18);
@@ -316,11 +701,18 @@ function getBarColor(index: number, item: BarData): string {
     display: flex;
     align-items: center;
     justify-content: flex-end;
+
+    /* Start with width 0, will be set by CSS variable */
+    width: 0;
     min-width: 0;
     height: 100%;
     padding-right: 0.5rem;
     border-radius: var(--bar-radius);
     transition: width 0.5s ease-out;
+  }
+
+  /* Only animate when the chart becomes visible */
+  .bar-chart-container.animate .bar-fill {
     animation: bar-grow 0.8s ease-out forwards;
   }
 
@@ -402,10 +794,14 @@ function getBarColor(index: number, item: BarData): string {
     }
   }
 
-  /* Animation on load */
+  /* Animation when visible */
   @keyframes bar-grow {
     from {
       width: 0;
+    }
+
+    to {
+      width: var(--bar-width);
     }
   }
 

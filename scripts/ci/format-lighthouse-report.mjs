@@ -80,11 +80,13 @@ for (const filePath of files) {
       s: Math.round((json.categories.seo?.score || 0) * 100),
     };
 
-    if (!results[url]) results[url] = {};
-    if (!results[url][theme]) results[url][theme] = { mobile: [], desktop: [] };
+    // Prevent prototype pollution - validate properties before access
+    if (!Object.hasOwn(results, url)) results[url] = {};
+    if (!Object.hasOwn(results[url], theme))
+      results[url][theme] = { mobile: [], desktop: [] };
 
     // Initialize formFactor array if it doesn't exist (for unexpected values)
-    if (!results[url][theme][formFactor]) {
+    if (!Object.hasOwn(results[url][theme], formFactor)) {
       console.warn(
         `Unexpected formFactor "${formFactor}" for ${url} (${theme}). Initializing empty array.`,
       );
