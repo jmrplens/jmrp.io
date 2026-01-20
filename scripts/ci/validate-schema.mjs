@@ -216,6 +216,109 @@ function validateSchema(schema) {
 }
 
 /**
+ * Processes a single HTML file and validates its schemas
+ */
+function processFile(file, html) {
+  const schemas = extractJsonLd(html);
+  if (schemas.length === 0) return null;
+
+  const relativePath = path.relative(DIST_DIR, file);
+  const fileErrors = [];
+  const fileWarnings = [];
+  let errorCount = 0;
+  let warningCount = 0;
+
+  for (const [index, schema] of schemas.entries()) {
+    const { errors, warnings } = validateSchema(schema);
+    if (errors.length > 0) {
+      fileErrors.push({ index, type: schema["@type"], errors });
+      errorCount += errors.length;
+    }
+    if (warnings.length > 0) {
+      fileWarnings.push({ index, type: schema["@type"], warnings });
+      warningCount += warnings.length;
+    }
+  }
+
+  return {
+    file: relativePath,
+    schemasCount: schemas.length,
+    errors: fileErrors,
+    warnings: fileWarnings,
+    valid: fileErrors.length === 0,
+    schemas,
+    errorCount,
+    warningCount,
+  };
+}
+
+/**
+ * Writes the validation report to disk
+ */
+function writeReport(fileResults, totalSchemas, totalErrors, totalWarnings) {
+  const report = {
+    summary: {
+      totalSchemas,
+      totalErrors,
+      totalWarnings,
+      totalPages: fileResults.length,
+    },
+    results: fileResults,
+    timestamp: new Date().toISOString(),
+  };
+
+  fs.writeFileSync("schema-report.json", JSON.stringify(report, null, 2));
+  console.log("✅ Written schema-report.json");
+}
+
+/**
+ * Prints the summary statistics
+ */
+function printSummary(totalSchemas, totalErrors, totalWarnings) {
+  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+  console.log(
+    `\n📊 Schema.org Summary:\n   Total schemas found: ${totalSchemas}\n   Errors: ${totalErrors}\n   Warnings: ${totalWarnings}\n`,
+  );
+}
+
+/**
+ * Prints detailed results for files with issues
+ */
+function printDetailedResults(fileResults) {
+  const hasIssues = fileResults.some((r) => !r.valid || r.warnings.length > 0);
+  if (!hasIssues) return;
+
+  for (const result of fileResults) {
+    if (result.errors.length === 0 && result.warnings.length === 0) continue;
+
+    console.log(`\n📄 ${result.file} (${result.schemasCount} schemas)`);
+    for (const { index, type, errors } of result.errors) {
+      console.log(`   ❌ Schema ${index + 1} (${type}):`);
+      for (const err of errors) console.log(`      • ${err}`);
+    }
+    for (const { index, type, warnings } of result.warnings) {
+      console.log(`   ⚠️ Schema ${index + 1} (${type}):`);
+      for (const warn of warnings) console.log(`      • ${warn}`);
+    }
+  }
+}
+
+/**
+ * Determines and executes the appropriate exit code
+ */
+function handleExitCode(totalSchemas, totalErrors) {
+  if (totalErrors === 0 && totalSchemas > 0) {
+    console.log("\n✅ All Schema.org structured data is valid!\n");
+    process.exit(0);
+  } else if (totalSchemas === 0) {
+    console.log("\n⚠️ No Schema.org JSON-LD found.\n");
+    process.exit(0);
+  } else {
+    process.exit(1);
+  }
+}
+
+/**
  * Scans all pages and performs validation
  */
 async function validateAllPages() {
@@ -234,79 +337,20 @@ async function validateAllPages() {
     }
     // deepcode ignore PT: file is validated by isPathSafe()
     const html = fs.readFileSync(file, "utf-8");
-    const schemas = extractJsonLd(html);
-    if (schemas.length === 0) continue;
+    const result = processFile(file, html);
 
-    const relativePath = path.relative(DIST_DIR, file);
-    const fileErrors = [];
-    const fileWarnings = [];
-
-    for (const [index, schema] of schemas.entries()) {
-      const { errors, warnings } = validateSchema(schema);
-      if (errors.length > 0)
-        fileErrors.push({ index, type: schema["@type"], errors });
-      if (warnings.length > 0)
-        fileWarnings.push({ index, type: schema["@type"], warnings });
-      totalErrors += errors.length;
-      totalWarnings += warnings.length;
-    }
-
-    totalSchemas += schemas.length;
-    // Always push if schemas exist, so we can show "Valid" pages too
-    fileResults.push({
-      file: relativePath,
-      schemasCount: schemas.length,
-      errors: fileErrors,
-      warnings: fileWarnings,
-      valid: fileErrors.length === 0,
-      schemas: schemas, // Include raw schemas for display
-    });
-  }
-
-  const report = {
-    summary: {
-      totalSchemas,
-      totalErrors,
-      totalWarnings,
-      totalPages: fileResults.length,
-    },
-    results: fileResults,
-    timestamp: new Date().toISOString(),
-  };
-
-  fs.writeFileSync("schema-report.json", JSON.stringify(report, null, 2));
-  console.log("✅ Written schema-report.json");
-
-  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-  console.log(
-    `\n📊 Schema.org Summary:\n   Total schemas found: ${totalSchemas}\n   Errors: ${totalErrors}\n   Warnings: ${totalWarnings}\n`,
-  );
-
-  if (fileResults.some((r) => !r.valid || r.warnings.length > 0)) {
-    for (const result of fileResults) {
-      if (result.errors.length > 0 || result.warnings.length > 0) {
-        console.log(`\n📄 ${result.file} (${result.schemasCount} schemas)`);
-        for (const { index, type, errors } of result.errors) {
-          console.log(`   ❌ Schema ${index + 1} (${type}):`);
-          for (const err of errors) console.log(`      • ${err}`);
-        }
-        for (const { index, type, warnings } of result.warnings) {
-          console.log(`   ⚠️ Schema ${index + 1} (${type}):`);
-          for (const warn of warnings) console.log(`      • ${warn}`);
-        }
-      }
+    if (result) {
+      totalSchemas += result.schemasCount;
+      totalErrors += result.errorCount;
+      totalWarnings += result.warningCount;
+      fileResults.push(result);
     }
   }
 
-  if (totalErrors === 0 && totalSchemas > 0) {
-    console.log("\n✅ All Schema.org structured data is valid!\n");
-    process.exit(0);
-  } else if (totalSchemas === 0) {
-    console.log("\n⚠️ No Schema.org JSON-LD found.\n");
-    process.exit(0);
-  } else {
-    process.exit(1);
-  }
+  writeReport(fileResults, totalSchemas, totalErrors, totalWarnings);
+  printSummary(totalSchemas, totalErrors, totalWarnings);
+  printDetailedResults(fileResults);
+  handleExitCode(totalSchemas, totalErrors);
 }
 
 try {

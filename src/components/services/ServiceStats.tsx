@@ -338,10 +338,10 @@ function MatrixStats({ stats }: { readonly stats: MatrixStatsData }) {
           <span class="status-dot"></span>
           <strong>Online</strong>
         </div>
-        {matrixData?.federationTotal && (
+        {Boolean(matrixData?.federationTotal) && (
           <div class="status-text-muted">
             <strong class="status-text">
-              {matrixData.federationTotal.toLocaleString()}
+              {matrixData.federationTotal?.toLocaleString()}
             </strong>{" "}
             Known Servers
           </div>
