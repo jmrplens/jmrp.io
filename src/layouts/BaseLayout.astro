@@ -205,44 +205,6 @@ const {
         max-width: 100% !important;
         height: auto !important;
       }
-
-      /* System preference defaults (when no theme is set) */
-      @media (prefers-color-scheme: light) {
-        :root:not([data-theme="dark"]) .mermaid-dark {
-          display: none;
-        }
-
-        :root:not([data-theme="dark"]) .mermaid-light {
-          display: block;
-        }
-      }
-
-      @media (prefers-color-scheme: dark) {
-        :root:not([data-theme="light"]) .mermaid-light {
-          display: none;
-        }
-
-        :root:not([data-theme="light"]) .mermaid-dark {
-          display: block;
-        }
-      }
-
-      /* Explicit theme overrides */
-      [data-theme="light"] .mermaid-dark {
-        display: none;
-      }
-
-      [data-theme="light"] .mermaid-light {
-        display: block;
-      }
-
-      [data-theme="dark"] .mermaid-light {
-        display: none;
-      }
-
-      [data-theme="dark"] .mermaid-dark {
-        display: block;
-      }
     </style>
   </body>
 </html>
