@@ -40,7 +40,7 @@ try {
   // We try to get output as a list of URLs/IDs.
   // Note: 'vercel list' doesn't always support --json in every env,
   // but it usually outputs a table where we can extract URLs.
-  const cmd = `npx vercel ls ${projectName} -m prid=${prId}`;
+  const cmd = `npx vercel ls ${projectName} -m prid=${prId} --token ${token}`;
   const output = execSync(cmd, {
     encoding: "utf-8",
     env: { ...process.env, VERCEL_TOKEN: token },
@@ -73,7 +73,7 @@ try {
   for (const url of urls) {
     console.log(`  - Deleting ${url}...`);
     try {
-      execSync(`npx vercel rm ${url} --yes`, {
+      execSync(`npx vercel rm ${url} --yes --token ${token}`, {
         stdio: "inherit",
         env: { ...process.env, VERCEL_TOKEN: token },
       });

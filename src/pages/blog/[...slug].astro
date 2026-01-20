@@ -70,11 +70,9 @@ $('a[href^="http"], a[href^="//"]').each((_, el) => {
   }
 });
 
-// Combine frontmatter references with collected ones and deduplicate
 // Combine collected references and deduplicate
-const allPostReferences = [...collectedRefsFromMarkdown];
 const uniqueUrls = new Set<string>();
-const finalReferences = allPostReferences.filter((ref) => {
+const finalReferences = collectedRefsFromMarkdown.filter((ref) => {
   if (!uniqueUrls.has(ref.url)) {
     uniqueUrls.add(ref.url);
     return true;
@@ -96,9 +94,10 @@ const coverImageSizes =
   "(max-width: 768px) calc(100vw - 2.5rem), (max-width: 1024px) 600px, 460px";
 
 if (post.data.coverImage) {
+  const coverImage = post.data.coverImage;
   // 1. Generate JSON-LD Schema Image (Standard OG size)
   const schemaImage = await getImage({
-    src: post.data.coverImage,
+    src: coverImage,
     format: "webp",
     width: 1200,
     height: 675,
@@ -111,7 +110,7 @@ if (post.data.coverImage) {
   const responsiveImages = await Promise.all(
     coverImageWidths.map((width) =>
       getImage({
-        src: post.data.coverImage!,
+        src: coverImage,
         format: "webp",
         width: width,
         quality: 70, // Must match Image component quality
@@ -123,7 +122,7 @@ if (post.data.coverImage) {
     .map((img, i) => `${img.src} ${coverImageWidths[i]}w`)
     .join(", ");
   preloadSizes = coverImageSizes;
-  preloadImage = responsiveImages.at(-1)!.src; // Fallback
+  preloadImage = responsiveImages.at(-1)?.src; // Fallback
 }
 
 const articleSchema = [
