@@ -186,7 +186,20 @@ const servicesSchema = {
   /* CSS Variable for status color */
   :root {
     --color-status-online: #10b981;
-    --color-status-online-10: rgb(16 185 129 / 10%);
+    --color-status-online-bg: rgb(16 185 129 / 10%);
+  }
+
+  /* Accessibility: Higher contrast for light mode */
+  :root[data-theme="light"] {
+    --color-status-online: #065f46;
+    --color-status-online-bg: #dcfce7;
+  }
+
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme]) {
+      --color-status-online: #065f46;
+      --color-status-online-bg: #dcfce7;
+    }
   }
 
   /* Styling for React ServiceStats component */
@@ -216,7 +229,7 @@ const servicesSchema = {
     align-items: center;
     padding: 2px 8px;
     color: var(--color-status-online);
-    background: var(--color-status-online-10);
+    background: var(--color-status-online-bg);
     border-radius: 12px;
   }
 

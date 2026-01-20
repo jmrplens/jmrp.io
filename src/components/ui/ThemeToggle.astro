@@ -92,12 +92,18 @@ import { Icon } from "astro-icon/components";
         }
       }
     } catch {
-      // localStorage may be blocked (e.g., private browsing); ignore
+      // localStorage may be blocked; ignore
     }
-    // Fall back to system preference
+
+    // Respect system preference
     if (globalThis.matchMedia("(prefers-color-scheme: light)").matches) {
       return "light";
     }
+    if (globalThis.matchMedia("(prefers-color-scheme: dark)").matches) {
+      return "dark";
+    }
+
+    // Fallback if no preference is indicated or supported
     return "dark";
   };
 
