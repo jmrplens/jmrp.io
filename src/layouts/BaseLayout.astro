@@ -80,15 +80,22 @@ const {
           try {
             if (typeof localStorage !== "undefined") {
               const saved = localStorage.getItem("theme");
-              // Validate saved value is exactly "light" or "dark"
               if (saved === "light" || saved === "dark") return saved;
             }
           } catch {
-            // localStorage may be blocked (private browsing); ignore
+            // localStorage may be blocked; ignore
           }
-          return window.matchMedia("(prefers-color-scheme: light)").matches
-            ? "light"
-            : "dark";
+
+          // Respect system preference if available
+          if (window.matchMedia("(prefers-color-scheme: light)").matches) {
+            return "light";
+          }
+          if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+            return "dark";
+          }
+
+          // Fallback if no preference is indicated or supported
+          return "dark";
         };
         const theme = getTheme();
         document.documentElement.dataset.theme = theme;
