@@ -15,6 +15,7 @@ exclude = [
     'https://www\.upv\.es/index-en\.html',
     'https://www\.upv\.es/entidades/epsg/en/home/',
     'http://hdl\.handle\.net/.*',
+    'http://www\.upv\.es/ficha-personal/fracasra',
     # Ignore Astro/Template variables
     '.*\$\{.*',
     '.*\%7B.*',
