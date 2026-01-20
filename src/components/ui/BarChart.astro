@@ -709,6 +709,7 @@ function getBarColor(index: number, item: BarData): string {
     padding-right: 0.5rem;
     border-radius: var(--bar-radius);
     transition: width 0.5s ease-out;
+    will-change: width;
   }
 
   /* Only animate when the chart becomes visible */

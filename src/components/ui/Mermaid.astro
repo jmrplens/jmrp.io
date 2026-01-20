@@ -56,6 +56,93 @@ const computedAriaLabel =
 </figure>
 
 <style>
+  /* --- Mermaid Diagram Variables (Single SVG Strategy) --- */
+  :global(:root) {
+    /* GitHub Light Palette */
+    --mermaid-text: #000000;
+    --mermaid-bg: #f6f8fa; /* Subtle gray fill for visible nodes in light mode */
+    --mermaid-border: #d0d7de;
+    --mermaid-line: #000000;
+    --mermaid-secondary-bg: #f6f8fa;
+    /* Cluster/Loop background */
+    --mermaid-tertiary-bg: #eaeef2;
+    /* Actor background */
+
+    --mermaid-note-bg: #fff9c4;
+    --mermaid-note-border: #d4a72c;
+    --mermaid-note-text: #000000;
+
+    /* Semantic Colors (Light) */
+    --mermaid-warning-fill: #fbbf24;
+    --mermaid-warning-stroke: #d97706;
+    --mermaid-warning-text: #1f2937;
+    --mermaid-danger-fill: #ef4444;
+    --mermaid-danger-stroke: #b91c1c;
+    --mermaid-danger-text: #ffffff;
+    --mermaid-success-fill: #22c55e;
+    --mermaid-success-stroke: #15803d;
+    --mermaid-success-text: #ffffff;
+    --mermaid-info-fill: #38bdf8;
+    --mermaid-info-stroke: #0284c7;
+    --mermaid-info-text: #ffffff;
+    --mermaid-highlight-fill: #a78bfa;
+    --mermaid-highlight-stroke: #7c3aed;
+    --mermaid-highlight-text: #ffffff;
+    --mermaid-muted-fill: #d1d5db;
+    --mermaid-muted-stroke: #9ca3af;
+    --mermaid-muted-text: #374151;
+
+    /* Pie Chart Colors */
+    --mermaid-pie-1: #0969da;
+    --mermaid-pie-2: #1a7f37;
+    --mermaid-pie-3: #8250df;
+    --mermaid-pie-4: #cf222e;
+    --mermaid-pie-5: #bf8700;
+    --mermaid-pie-6: #6e7781;
+  }
+
+  :global(:root[data-theme="dark"]) {
+    /* GitHub Dark Palette */
+    --mermaid-text: #ffffff;
+    --mermaid-bg: #0d1117;
+    --mermaid-border: #30363d;
+    --mermaid-line: #ffffff;
+    --mermaid-secondary-bg: #161b22;
+    --mermaid-tertiary-bg: #1f2937;
+
+    --mermaid-note-bg: #2d2606;
+    --mermaid-note-border: #d4a72c;
+    --mermaid-note-text: #ffffff;
+
+    /* Semantic Colors (Dark) */
+    --mermaid-warning-fill: #9a6700;
+    --mermaid-warning-stroke: #d29922;
+    --mermaid-warning-text: #ffffff;
+    --mermaid-danger-fill: #8b1a1a;
+    --mermaid-danger-stroke: #da3633;
+    --mermaid-danger-text: #ffffff;
+    --mermaid-success-fill: #1a5d1a;
+    --mermaid-success-stroke: #2ea043;
+    --mermaid-success-text: #ffffff;
+    --mermaid-info-fill: #0c4a6e;
+    --mermaid-info-stroke: #1d8ad8;
+    --mermaid-info-text: #ffffff;
+    --mermaid-highlight-fill: #5b21b6;
+    --mermaid-highlight-stroke: #a78bfa;
+    --mermaid-highlight-text: #ffffff;
+    --mermaid-muted-fill: #484f58;
+    --mermaid-muted-stroke: #6e7681;
+    --mermaid-muted-text: #c9d1d9;
+
+    /* Pie Chart Colors */
+    --mermaid-pie-1: #2f81f7;
+    --mermaid-pie-2: #3fb950;
+    --mermaid-pie-3: #a371f7;
+    --mermaid-pie-4: #d2a8ff;
+    --mermaid-pie-5: #e3b341;
+    --mermaid-pie-6: #8b949e;
+  }
+
   .mermaid-figure {
     display: flex;
     flex-direction: column;
@@ -71,16 +158,13 @@ const computedAriaLabel =
     overflow-x: auto;
   }
 
-  /* Structural wrappers width control */
-  .mermaid-content :global(.mermaid-split-wrap),
-  .mermaid-content :global(.mermaid-light-wrap),
-  .mermaid-content :global(.mermaid-dark-wrap),
+  /* Target the SVG directly */
   .mermaid-content :global(svg) {
     display: block;
-    width: 100%;
     max-width: 100%;
     height: auto;
     margin: 0 auto;
+    background-color: transparent !important;
   }
 
   .mermaid-caption {
@@ -92,397 +176,202 @@ const computedAriaLabel =
   }
 
   /* --- Global Mermaid Text & Visibility Fixes --- */
-
-  /* Ensure sharp text and theme-compliant colors without overriding typography */
+  /* Only override colors, NOT font-family - Mermaid calculates node sizes based on its default fonts */
   .mermaid-content :global(svg text),
   .mermaid-content :global(g.actor text),
   .mermaid-content :global(text.actor),
-  .mermaid-content :global(#actor text) {
-    fill: var(--color-text-heading) !important;
-    stroke: none !important;
+  .mermaid-content :global(#actor text),
+  .mermaid-content :global(span.label),
+  .mermaid-content :global(.nodeLabel) {
+    fill: var(--mermaid-text) !important;
+    color: var(--mermaid-text) !important; /* For HTML labels */
+    stroke: none !important; /* Remove unwanted text outlines */
   }
 
-  /* Specific: Loop/Group Labels color */
-  .mermaid-content :global(span.label) {
-    color: var(--color-text-heading) !important;
-  }
-</style>
-
-<style is:global>
-  /* Mermaid Semantic Node Colors (Dark Mode Defaults) */
-  :root {
-    --mermaid-default-fill: #21262d;
-    --mermaid-default-stroke: #484f58;
-    --mermaid-default-text: #c9d1d9;
-    --mermaid-warning-fill: #9a6700;
-    --mermaid-warning-stroke: #d29922;
-    --mermaid-warning-text: #fff;
-    --mermaid-danger-fill: #8b1a1a;
-    --mermaid-danger-stroke: #da3633;
-    --mermaid-danger-text: #fff;
-    --mermaid-success-fill: #1a5d1a;
-    --mermaid-success-stroke: #2ea043;
-    --mermaid-success-text: #fff;
-    --mermaid-info-fill: #0c4a6e;
-    --mermaid-info-stroke: #1d8ad8;
-    --mermaid-info-text: #fff;
-    --mermaid-highlight-fill: #5b21b6;
-    --mermaid-highlight-stroke: #a78bfa;
-    --mermaid-highlight-text: #fff;
-    --mermaid-muted-fill: #484f58;
-    --mermaid-muted-stroke: #6e7681;
-    --mermaid-muted-text: #c9d1d9;
-  }
-
-  /* Light Mode Variables (Apply to both system preference and explicit theme) */
-  @media (prefers-color-scheme: light) {
-    :root:not([data-theme="dark"]) {
-      /* Mermaid Semantic Node Colors (Light Mode via system preference) */
-      --mermaid-default-fill: #f3f4f6;
-      --mermaid-default-stroke: #9ca3af;
-      --mermaid-default-text: #1f2937;
-      --mermaid-warning-fill: #fbbf24;
-      --mermaid-warning-stroke: #d97706;
-      --mermaid-warning-text: #1f2937;
-      --mermaid-danger-fill: #ef4444;
-      --mermaid-danger-stroke: #b91c1c;
-      --mermaid-danger-text: #fff;
-      --mermaid-success-fill: #22c55e;
-      --mermaid-success-stroke: #15803d;
-      --mermaid-success-text: #fff;
-      --mermaid-info-fill: #38bdf8;
-      --mermaid-info-stroke: #0284c7;
-      --mermaid-info-text: #fff;
-      --mermaid-highlight-fill: #a78bfa;
-      --mermaid-highlight-stroke: #7c3aed;
-      --mermaid-highlight-text: #fff;
-      --mermaid-muted-fill: #d1d5db;
-      --mermaid-muted-stroke: #9ca3af;
-      --mermaid-muted-text: #374151;
-    }
-  }
-
-  /* Explicit light mode inherits from media query above */
-  :root[data-theme="light"] {
-    /* Mermaid Semantic Node Colors (Light Mode) */
-    --mermaid-default-fill: #f3f4f6;
-    --mermaid-default-stroke: #9ca3af;
-    --mermaid-default-text: #1f2937;
-    --mermaid-warning-fill: #fbbf24;
-    --mermaid-warning-stroke: #d97706;
-    --mermaid-warning-text: #1f2937;
-    --mermaid-danger-fill: #ef4444;
-    --mermaid-danger-stroke: #b91c1c;
-    --mermaid-danger-text: #fff;
-    --mermaid-success-fill: #22c55e;
-    --mermaid-success-stroke: #15803d;
-    --mermaid-success-text: #fff;
-    --mermaid-info-fill: #38bdf8;
-    --mermaid-info-stroke: #0284c7;
-    --mermaid-info-text: #fff;
-    --mermaid-highlight-fill: #a78bfa;
-    --mermaid-highlight-stroke: #7c3aed;
-    --mermaid-highlight-text: #fff;
-    --mermaid-muted-fill: #d1d5db;
-    --mermaid-muted-stroke: #9ca3af;
-    --mermaid-muted-text: #374151;
-  }
-
-  /* Dual Theme Mermaid Handling */
-
-  /*
-   * IMPORTANT: We use opacity:0 instead of display:none or visibility:hidden.
-   * Reason: SVG markers inside display:none or visibility:hidden elements cannot
-   * be referenced by url(#id) from visible elements. Using opacity:0 keeps the
-   * markers fully rendered (just transparent), allowing other SVGs to use them.
-   */
-
-  /* Base: hide dark wrap, show light wrap */
-  .mermaid-dark-wrap {
-    position: absolute !important;
-    width: 0 !important;
-    height: 0 !important;
-    overflow: hidden !important;
-    pointer-events: none !important;
-    opacity: 0% !important;
-  }
-
-  .mermaid-light-wrap {
-    display: block !important;
-    opacity: 100% !important;
-  }
-
-  /* Dark mode: show dark wrap, hide light wrap */
-  [data-theme="dark"] .mermaid-dark-wrap {
-    position: static !important;
-    width: auto !important;
-    height: auto !important;
-    overflow: visible !important;
-    pointer-events: auto !important;
-    opacity: 100% !important;
-  }
-
-  [data-theme="dark"] .mermaid-light-wrap {
-    position: absolute !important;
-    width: 0 !important;
-    height: 0 !important;
-    overflow: hidden !important;
-    pointer-events: none !important;
-    opacity: 0% !important;
-  }
-
-  /* Mermaid Diagram Theme Alignment */
-  .mermaid,
-  svg[id^="mermaid-"] {
-    display: block;
-    margin: 0 auto;
-    overflow-x: auto;
-    background-color: transparent !important;
-  }
-
+  /* General Node Styling (Flowchart) */
+  .mermaid .node rect,
+  .mermaid .node circle,
+  .mermaid .node polygon,
+  .mermaid .node path,
   .mermaid svg,
   svg[id^="mermaid-"] {
-    max-width: 100% !important;
-    height: auto !important;
+    fill: var(--mermaid-bg);
+    stroke: var(--mermaid-border);
+  }
+
+  /* Flowchart Edges/Lines */
+  .mermaid-content :global(.edgePath path),
+  .mermaid-content :global(.flowchart-link) {
+    stroke: var(--mermaid-line) !important;
+  }
+
+  /* Flowchart Edge Labels - Fix for dark mode visibility */
+  .mermaid-content :global(.edgeLabel) {
+    background-color: var(--mermaid-bg) !important;
+    color: var(--mermaid-text) !important;
+  }
+  .mermaid-content :global(.edgeLabel span) {
+    background-color: var(--mermaid-bg) !important;
+    color: var(--mermaid-text) !important;
+  }
+  .mermaid-content :global(.edgeLabel rect) {
+    fill: var(--mermaid-bg) !important;
+  }
+  /* Fix foreignObject labels (HTML-based) which Mermaid uses for edge labels */
+  .mermaid-content :global(.edgeLabel foreignObject) {
+    overflow: visible;
+  }
+  .mermaid-content :global(.edgeLabel foreignObject div) {
+    background-color: var(--mermaid-bg) !important;
+    color: var(--mermaid-text) !important;
+    /* Floating label style - distinct from nodes */
+    border: none !important;
+    border-radius: 12px !important;
+    padding: 3px 8px !important;
+    box-shadow: 0 1px 4px rgb(0 0 0 / 15%) !important;
+    font-size: 0.9em !important;
+  }
+  /* Fix p tags inside edgeLabel - Mermaid adds inline styles with white bg/text */
+  .mermaid-content :global(.edgeLabel p),
+  .mermaid-content :global(.edgeLabel foreignObject p),
+  .mermaid-content :global(.edgeLabel foreignObject div p) {
+    background-color: var(--mermaid-bg) !important;
+    color: var(--mermaid-text) !important;
+    margin: 0 !important;
+  }
+  /* Catch-all for any nested text elements in edge labels */
+  .mermaid-content :global(.edgeLabel *) {
+    background-color: var(--mermaid-bg) !important;
+    color: var(--mermaid-text) !important;
+  }
+
+  /* --- Sequence Diagram Specifics --- */
+
+  /* Actors */
+  .mermaid-content :global(rect.actor) {
+    fill: var(--mermaid-tertiary-bg) !important;
+    stroke: var(--mermaid-border) !important;
+  }
+
+  .mermaid-content :global(line.actor-line) {
+    stroke: var(--mermaid-line) !important;
+  }
+
+  /* Notes */
+  .mermaid-content :global(g.note rect),
+  .mermaid-content :global(rect.note) {
+    fill: var(--mermaid-note-bg) !important;
+    stroke: var(--mermaid-note-border) !important;
+  }
+
+  .mermaid-content :global(g.note text),
+  .mermaid-content :global(text.noteText) {
+    fill: var(--mermaid-note-text) !important;
+  }
+
+  /* Messages/Signals */
+  .mermaid-content :global(.messageLine0),
+  .mermaid-content :global(.messageLine1) {
+    stroke: var(--mermaid-line) !important;
+  }
+
+  /* Loop Labels */
+  .mermaid-content :global(.labelBox) {
+    fill: var(--mermaid-secondary-bg) !important;
+    stroke: var(--mermaid-border) !important;
+  }
+  .mermaid-content :global(.labelText) {
+    fill: var(--mermaid-text) !important;
+  }
+  .mermaid-content :global(.loopLine) {
+    stroke: var(--mermaid-border) !important;
   }
 
   /* Mermaid Arrowhead/Marker Visibility Fix */
-
-  /*
-   * IMPORTANT: Sequence diagrams use generic marker IDs (#arrowhead, #crosshead, etc.)
-   * Since both light-wrap and dark-wrap SVGs exist in the DOM, url(#arrowhead) may
-   * reference the WRONG one due to duplicate IDs. The browser uses the first match.
-   *
-   * Solution: In dark mode, color ALL markers white (both wraps).
-   *           In light mode, color ALL markers black (both wraps).
-   */
-
-  /* Default/Light mode: ALL markers black */
-  .mermaid-light-wrap marker path,
-  .mermaid-light-wrap marker circle,
-  .mermaid-dark-wrap marker path,
-  .mermaid-dark-wrap marker circle {
-    fill: #000 !important;
-    stroke: #000 !important;
+  /* Ensure markers adapt to theme colors */
+  .mermaid-content :global(marker path),
+  .mermaid-content :global(marker circle) {
+    fill: var(--mermaid-line) !important;
+    stroke: var(--mermaid-line) !important;
   }
 
-  /* Dark mode: ALL markers white (override for both wraps) */
-  [data-theme="dark"] .mermaid-light-wrap marker path,
-  [data-theme="dark"] .mermaid-light-wrap marker circle,
-  [data-theme="dark"] .mermaid-dark-wrap marker path,
-  [data-theme="dark"] .mermaid-dark-wrap marker circle {
-    fill: #fff !important;
-    stroke: #fff !important;
+  /* --- Mermaid Semantic Node Classes (Theme-Aware) --- */
+  /* Overrides for custom classDefs in Markdown */
+
+  /* Default Node */
+  .mermaid-content :global(.node.default > rect),
+  .mermaid-content :global(.node.default > polygon),
+  .mermaid-content :global(.node.default > circle) {
+    fill: var(--mermaid-bg) !important;
+    stroke: var(--mermaid-border) !important;
+  }
+  .mermaid-content :global(.node.default .nodeLabel) {
+    color: var(--mermaid-text) !important;
   }
 
-  /* stylelint-disable selector-class-pattern -- Mermaid library class names */
-
-  /* Edge paths for flowcharts */
-  .mermaid-light-wrap .edgePath path.path {
-    stroke: #000 !important;
-  }
-
-  .mermaid-dark-wrap .edgePath path.path {
-    stroke: #fff !important;
-  }
-
-  /* Sequence Diagram Message Lines - override inline stroke:none */
-  .mermaid-light-wrap line[class*="messageLine"] {
-    stroke: #000 !important;
-  }
-
-  .mermaid-dark-wrap line[class*="messageLine"] {
-    stroke: #fff !important;
-  }
-
-  /* ========================================================
-     Mermaid Semantic Node Classes (Theme-Aware)
-     ========================================================
-     Usage in diagrams:
-     classDef default fill:#f3f4f6,stroke:#9ca3af
-     classDef warning fill:#fbbf24,stroke:#d97706
-     classDef danger fill:#ef4444,stroke:#b91c1c
-     classDef success fill:#22c55e,stroke:#15803d
-     classDef info fill:#38bdf8,stroke:#0284c7
-     classDef highlight fill:#a78bfa,stroke:#7c3aed
-     classDef muted fill:#d1d5db,stroke:#9ca3af
-     
-     D["Honeypot Triggered"]:::warning
-     H["DROP instantly"]:::danger
-     C["Allow"]:::success
-     
-     CSS below overrides classDef with theme-appropriate colors.
-     ======================================================== */
-
-  /* Shared styling for all semantic nodes */
-  .mermaid-light-wrap .node > rect,
-  .mermaid-light-wrap .node > polygon,
-  .mermaid-light-wrap .node > circle,
-  .mermaid-dark-wrap .node > rect,
-  .mermaid-dark-wrap .node > polygon,
-  .mermaid-dark-wrap .node > circle {
-    stroke-width: 2px !important;
-  }
-
-  /* Default: Standard nodes with subtle styling */
-  .mermaid-light-wrap .node.default > rect,
-  .mermaid-light-wrap .node.default > polygon,
-  .mermaid-light-wrap .node.default > circle {
-    fill: var(--mermaid-default-fill) !important;
-    stroke: var(--mermaid-default-stroke) !important;
-  }
-
-  .mermaid-light-wrap .node.default .nodeLabel {
-    color: var(--mermaid-default-text) !important;
-  }
-
-  .mermaid-dark-wrap .node.default > rect,
-  .mermaid-dark-wrap .node.default > polygon,
-  .mermaid-dark-wrap .node.default > circle {
-    fill: var(--mermaid-default-fill) !important;
-    stroke: var(--mermaid-default-stroke) !important;
-  }
-
-  .mermaid-dark-wrap .node.default .nodeLabel {
-    color: var(--mermaid-default-text) !important;
-  }
-
-  /* Warning: Caution states, honeypot triggers, attention needed */
-  .mermaid-light-wrap .node.warning > rect,
-  .mermaid-light-wrap .node.warning > polygon,
-  .mermaid-light-wrap .node.warning > circle {
+  /* Warning Node */
+  .mermaid-content :global(.node.warning > rect),
+  .mermaid-content :global(.node.warning > polygon),
+  .mermaid-content :global(.node.warning > circle) {
     fill: var(--mermaid-warning-fill) !important;
     stroke: var(--mermaid-warning-stroke) !important;
   }
-
-  .mermaid-light-wrap .node.warning .nodeLabel {
+  .mermaid-content :global(.node.warning .nodeLabel) {
     color: var(--mermaid-warning-text) !important;
   }
 
-  .mermaid-dark-wrap .node.warning > rect,
-  .mermaid-dark-wrap .node.warning > polygon,
-  .mermaid-dark-wrap .node.warning > circle {
-    fill: var(--mermaid-warning-fill) !important;
-    stroke: var(--mermaid-warning-stroke) !important;
-  }
-
-  .mermaid-dark-wrap .node.warning .nodeLabel {
-    color: var(--mermaid-warning-text) !important;
-  }
-
-  /* Danger: Errors, drops, blocks, failures, critical */
-  .mermaid-light-wrap .node.danger > rect,
-  .mermaid-light-wrap .node.danger > polygon,
-  .mermaid-light-wrap .node.danger > circle {
+  /* Danger Node */
+  .mermaid-content :global(.node.danger > rect),
+  .mermaid-content :global(.node.danger > polygon),
+  .mermaid-content :global(.node.danger > circle) {
     fill: var(--mermaid-danger-fill) !important;
     stroke: var(--mermaid-danger-stroke) !important;
   }
-
-  .mermaid-light-wrap .node.danger .nodeLabel {
+  .mermaid-content :global(.node.danger .nodeLabel) {
     color: var(--mermaid-danger-text) !important;
   }
 
-  .mermaid-dark-wrap .node.danger > rect,
-  .mermaid-dark-wrap .node.danger > polygon,
-  .mermaid-dark-wrap .node.danger > circle {
-    fill: var(--mermaid-danger-fill) !important;
-    stroke: var(--mermaid-danger-stroke) !important;
-  }
-
-  .mermaid-dark-wrap .node.danger .nodeLabel {
-    color: var(--mermaid-danger-text) !important;
-  }
-
-  /* Success: Allowed, completed, passed, approved */
-  .mermaid-light-wrap .node.success > rect,
-  .mermaid-light-wrap .node.success > polygon,
-  .mermaid-light-wrap .node.success > circle {
+  /* Success Node */
+  .mermaid-content :global(.node.success > rect),
+  .mermaid-content :global(.node.success > polygon),
+  .mermaid-content :global(.node.success > circle) {
     fill: var(--mermaid-success-fill) !important;
     stroke: var(--mermaid-success-stroke) !important;
   }
-
-  .mermaid-light-wrap .node.success .nodeLabel {
+  .mermaid-content :global(.node.success .nodeLabel) {
     color: var(--mermaid-success-text) !important;
   }
 
-  .mermaid-dark-wrap .node.success > rect,
-  .mermaid-dark-wrap .node.success > polygon,
-  .mermaid-dark-wrap .node.success > circle {
-    fill: var(--mermaid-success-fill) !important;
-    stroke: var(--mermaid-success-stroke) !important;
-  }
-
-  .mermaid-dark-wrap .node.success .nodeLabel {
-    color: var(--mermaid-success-text) !important;
-  }
-
-  /* Info: Informational, neutral emphasis, process steps */
-  .mermaid-light-wrap .node.info > rect,
-  .mermaid-light-wrap .node.info > polygon,
-  .mermaid-light-wrap .node.info > circle {
+  /* Info Node */
+  .mermaid-content :global(.node.info > rect),
+  .mermaid-content :global(.node.info > polygon),
+  .mermaid-content :global(.node.info > circle) {
     fill: var(--mermaid-info-fill) !important;
     stroke: var(--mermaid-info-stroke) !important;
   }
-
-  .mermaid-light-wrap .node.info .nodeLabel {
+  .mermaid-content :global(.node.info .nodeLabel) {
     color: var(--mermaid-info-text) !important;
   }
 
-  .mermaid-dark-wrap .node.info > rect,
-  .mermaid-dark-wrap .node.info > polygon,
-  .mermaid-dark-wrap .node.info > circle {
-    fill: var(--mermaid-info-fill) !important;
-    stroke: var(--mermaid-info-stroke) !important;
-  }
-
-  .mermaid-dark-wrap .node.info .nodeLabel {
-    color: var(--mermaid-info-text) !important;
-  }
-
-  /* Highlight: Key focus, important nodes, emphasis */
-  .mermaid-light-wrap .node.highlight > rect,
-  .mermaid-light-wrap .node.highlight > polygon,
-  .mermaid-light-wrap .node.highlight > circle {
+  /* Highlight Node */
+  .mermaid-content :global(.node.highlight > rect),
+  .mermaid-content :global(.node.highlight > polygon),
+  .mermaid-content :global(.node.highlight > circle) {
     fill: var(--mermaid-highlight-fill) !important;
     stroke: var(--mermaid-highlight-stroke) !important;
   }
-
-  .mermaid-light-wrap .node.highlight .nodeLabel {
+  .mermaid-content :global(.node.highlight .nodeLabel) {
     color: var(--mermaid-highlight-text) !important;
   }
 
-  .mermaid-dark-wrap .node.highlight > rect,
-  .mermaid-dark-wrap .node.highlight > polygon,
-  .mermaid-dark-wrap .node.highlight > circle {
-    fill: var(--mermaid-highlight-fill) !important;
-    stroke: var(--mermaid-highlight-stroke) !important;
-  }
-
-  .mermaid-dark-wrap .node.highlight .nodeLabel {
-    color: var(--mermaid-highlight-text) !important;
-  }
-
-  /* Muted: Background, inactive, secondary, disabled */
-  .mermaid-light-wrap .node.muted > rect,
-  .mermaid-light-wrap .node.muted > polygon,
-  .mermaid-light-wrap .node.muted > circle {
+  /* Muted Node */
+  .mermaid-content :global(.node.muted > rect),
+  .mermaid-content :global(.node.muted > polygon),
+  .mermaid-content :global(.node.muted > circle) {
     fill: var(--mermaid-muted-fill) !important;
     stroke: var(--mermaid-muted-stroke) !important;
   }
-
-  .mermaid-light-wrap .node.muted .nodeLabel {
+  .mermaid-content :global(.node.muted .nodeLabel) {
     color: var(--mermaid-muted-text) !important;
   }
-
-  .mermaid-dark-wrap .node.muted > rect,
-  .mermaid-dark-wrap .node.muted > polygon,
-  .mermaid-dark-wrap .node.muted > circle {
-    fill: var(--mermaid-muted-fill) !important;
-    stroke: var(--mermaid-muted-stroke) !important;
-  }
-
-  .mermaid-dark-wrap .node.muted .nodeLabel {
-    color: var(--mermaid-muted-text) !important;
-  }
-  /* stylelint-enable selector-class-pattern */
 </style>

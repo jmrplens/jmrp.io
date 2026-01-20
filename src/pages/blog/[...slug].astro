@@ -83,36 +83,47 @@ const finalReferences = allPostReferences.filter((ref) => {
 });
 // --- End of Reference Logic ---
 
-// --- Image Optimization (JSON-LD) ---
+// --- Image Optimization (JSON-LD & Preload) ---
 
 let jsonLdImage = "/default-blog-cover.webp";
+let preloadSrcset: string | undefined;
+let preloadSizes: string | undefined;
+let preloadImage: string | undefined;
 
-// Generate preload URL for LCP optimization (mobile-first: 540px width)
-let preloadImageUrl: string | undefined;
+// Shared constants for image optimization to ensure Preload matches Img tag exactly
+const coverImageWidths = [400, 450, 540, 600, 720, 800, 1080, 1200];
+const coverImageSizes =
+  "(max-width: 768px) calc(100vw - 2.5rem), (max-width: 1024px) 600px, 460px";
 
 if (post.data.coverImage) {
-  // Optimize images in parallel for build performance
-  const [optimizedImage, preloadImage] = await Promise.all([
-    // JSON-LD schema image (standard OG size)
-    getImage({
-      src: post.data.coverImage,
-      format: "webp",
-      width: 1200,
-      height: 675,
-      quality: 60,
-    }),
-    // LCP preload image (mobile-first mid-size)
-    getImage({
-      src: post.data.coverImage,
-      format: "webp",
-      width: 540,
-      height: 304,
-      quality: 70,
-    }),
-  ]);
+  // 1. Generate JSON-LD Schema Image (Standard OG size)
+  const schemaImage = await getImage({
+    src: post.data.coverImage,
+    format: "webp",
+    width: 1200,
+    height: 675,
+    quality: 60,
+  });
+  jsonLdImage = schemaImage.src;
 
-  jsonLdImage = optimizedImage.src;
-  preloadImageUrl = preloadImage.src;
+  // 2. Generate Responsive Preload Srcset
+  // This ensures the browser preloads exactly the same resource it will request for the <img> tag
+  const responsiveImages = await Promise.all(
+    coverImageWidths.map((width) =>
+      getImage({
+        src: post.data.coverImage,
+        format: "webp",
+        width: width,
+        quality: 70, // Must match Image component quality
+      }),
+    ),
+  );
+
+  preloadSrcset = responsiveImages
+    .map((img, i) => `${img.src} ${coverImageWidths[i]}w`)
+    .join(", ");
+  preloadSizes = coverImageSizes;
+  preloadImage = responsiveImages[responsiveImages.length - 1].src; // Fallback
 }
 
 const articleSchema = [
@@ -154,7 +165,9 @@ const articleSchema = [
   description={post.data.description}
   type="article"
   image={post.data.coverImage?.src}
-  preloadImage={preloadImageUrl}
+  preloadImage={preloadImage}
+  preloadSrcset={preloadSrcset}
+  preloadSizes={preloadSizes}
   publishDate={post.data.publishedDate}
   modifiedDate={post.data.updatedDate}
   tags={post.data.tags}
@@ -223,9 +236,10 @@ const articleSchema = [
                   height={675}
                   format="webp"
                   loading="eager"
+                  decoding="sync"
                   fetchpriority="high"
-                  widths={[400, 600, 800, 1200]}
-                  sizes="(max-width: 768px) 100vw, (max-width: 1024px) 600px, 500px"
+                  widths={coverImageWidths}
+                  sizes={coverImageSizes}
                   quality={70}
                   style="width: 100%; height: auto; aspect-ratio: 16/9;"
                 />
@@ -351,12 +365,19 @@ const articleSchema = [
 
   .meta {
     display: flex;
-
-    /* margin-bottom removed, handled by container */
     flex-wrap: wrap;
     gap: var(--space-md);
     align-items: center;
     min-height: 1.5em;
+    font-family:
+      system-ui,
+      -apple-system,
+      blinkmacsystemfont,
+      "Segoe UI",
+      roboto,
+      helvetica,
+      arial,
+      sans-serif;
     font-size: 0.9rem;
     color: var(--color-text-muted);
   }
@@ -367,7 +388,25 @@ const articleSchema = [
   }
 
   .separator {
+    display: inline-block;
+    width: 1ch;
+    text-align: center;
     opacity: 50%;
+  }
+
+  .tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+  }
+
+  .tag {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--color-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    text-decoration: none;
   }
 
   h1 {

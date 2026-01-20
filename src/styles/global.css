@@ -236,6 +236,12 @@ h1 {
   font-size: 1.75em;
 }
 
+/* Optimization: Skip layout for off-screen content */
+.prose {
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 5000px;
+}
+
 /* Accessibility: Links in text blocks must have non-color indicator */
 .prose a {
   text-decoration: underline;
@@ -249,7 +255,7 @@ h1 {
 }
 
 /* Accessibility: Improve touch target size for links in content on mobile */
-@media (width <= 900px) {
+@media (width <=900px) {
   .prose a {
     position: relative;
     display: inline-block;
@@ -305,7 +311,7 @@ h1 {
 }
 
 /* Mobile Optimizations - Reinforced */
-@media (width <= 900px) {
+@media (width <=900px) {
   :root {
     /* Tighter spacing for mobile */
     --space-md: 0.75rem !important;
@@ -419,5 +425,3 @@ h1 {
   border-bottom: var(--border-1);
   border-left: none;
 }
-
-/* Dual Theme Mermaid Handling removed - moved to Mermaid.astro */

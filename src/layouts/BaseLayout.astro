@@ -21,6 +21,10 @@ interface Props {
   image?: string;
   /** Preload URL for LCP image optimization */
   preloadImage?: string;
+  /** Preload Srcset for responsive LCP image optimization */
+  preloadSrcset?: string;
+  /** Preload Sizes for responsive LCP image optimization */
+  preloadSizes?: string;
   // Article specific
   publishDate?: Date;
   modifiedDate?: Date;
@@ -35,6 +39,8 @@ const {
   schema,
   image,
   preloadImage,
+  preloadSrcset,
+  preloadSizes,
   publishDate,
   modifiedDate,
   authors,
@@ -57,6 +63,8 @@ const {
           rel="preload"
           as="image"
           href={preloadImage}
+          imagesrcset={preloadSrcset}
+          imagesizes={preloadSizes}
           fetchpriority="high"
         />
       )
