@@ -100,11 +100,13 @@ const totalValue = data.reduce((sum, d) => sum + d.value, 0);
 function getBarColor(index: number, item: BarData): string {
   if (item.color) return item.color;
 
-  // Check semantic colors
-  for (const [pattern, color] of Object.entries(semanticColors)) {
-    if (item.label.toLowerCase().includes(pattern.toLowerCase())) {
-      return color;
-    }
+  // Check semantic colors using find for better performance and readability
+  const semanticMatch = Object.entries(semanticColors).find(([pattern]) =>
+    item.label.toLowerCase().includes(pattern.toLowerCase()),
+  );
+
+  if (semanticMatch) {
+    return semanticMatch[1];
   }
 
   switch (colorScheme) {
