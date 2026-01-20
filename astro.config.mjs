@@ -5,13 +5,11 @@ import preact from "@astrojs/preact"; // Preact integration (lighter alternative
 import sitemap from "@astrojs/sitemap"; // Generates a sitemap.xml
 import { defineConfig, envField, fontProviders } from "astro/config";
 import icon from "astro-icon"; // Icon support
-import { fromHtmlIsomorphic } from "hast-util-from-html-isomorphic";
 import rehypeExternalLinks from "rehype-external-links"; // Adds target="_blank" to external links
 import rehypeMathjax from "rehype-mathjax"; // Rehype plugin to render math with MathJax
 import rehypeMermaid from "rehype-mermaid";
 import rehypeRaw from "rehype-raw";
 import remarkMath from "remark-math"; // Remark plugin to support math equations
-import { visit } from "unist-util-visit";
 import { ViteImageOptimizer } from "vite-plugin-image-optimizer";
 
 import { rehypeLinkDisambiguator } from "./scripts/rehype-link-disambiguator.mjs";
@@ -20,79 +18,6 @@ import postBuildIntegration from "./src/integrations/post-build.ts";
 import preBuildIntegration from "./src/integrations/pre-build.ts";
 import { vitePrefetchNoncePlugin } from "./src/integrations/vite-plugin-prefetch-nonce.ts";
 import routerosGrammar from "./src/languages/routeros.tmLanguage.json";
-
-/**
- * Custom Rehype plugin to split the <picture> output from rehype-mermaid
- * and inline the SVGs into theme-specific wrappers.
- */
-const rehypeMermaidSplitter = () => (/** @type {any} */ tree) => {
-  visit(
-    tree,
-    "element",
-    (
-      /** @type {any} */ node,
-      /** @type {any} */ index,
-      /** @type {any} */ parent,
-    ) => {
-      if (node.tagName === "picture") {
-        const source = node.children.find(
-          (/** @type {any} */ c) => c.tagName === "source",
-        );
-        const img = node.children.find(
-          (/** @type {any} */ c) => c.tagName === "img",
-        );
-
-        if (source && img) {
-          // Extract SVGs from DataURIs
-          const decodeSvg = (/** @type {any} */ dataUri) => {
-            if (!dataUri) return "";
-            if (dataUri.includes(";base64,")) {
-              return Buffer.from(
-                dataUri.split(";base64,")[1],
-                "base64",
-              ).toString("utf-8");
-            }
-            return decodeURIComponent(dataUri.split(",")[1]);
-          };
-
-          const lightSvgStr = decodeSvg(img.properties?.src);
-          const darkSvgStr = decodeSvg(source.properties?.srcset);
-
-          if (lightSvgStr && darkSvgStr) {
-            const lightSvgHAST = fromHtmlIsomorphic(lightSvgStr, {
-              fragment: true,
-            }).children[0];
-            const darkSvgHAST = fromHtmlIsomorphic(darkSvgStr, {
-              fragment: true,
-            }).children[0];
-
-            const splitBlock = {
-              type: "element",
-              tagName: "div",
-              properties: { className: ["mermaid-split-wrap"] },
-              children: [
-                {
-                  type: "element",
-                  tagName: "div",
-                  properties: { className: ["mermaid-light-wrap"] },
-                  children: [lightSvgHAST],
-                },
-                {
-                  type: "element",
-                  tagName: "div",
-                  properties: { className: ["mermaid-dark-wrap"] },
-                  children: [darkSvgHAST],
-                },
-              ],
-            };
-
-            parent.children.splice(index, 1, splitBlock);
-          }
-        }
-      }
-    },
-  );
-};
 
 // Setup Shiki themes
 const githubLight = "github-light-high-contrast";
@@ -217,11 +142,14 @@ export default defineConfig({
       [
         rehypeMermaid,
         {
-          strategy: "img-svg",
+          strategy: "inline-svg",
           mermaidConfig: {
             theme: "base",
             themeVariables: {
-              // --- LIGHT MODE (GitHub Light Style) ---
+              // --- LIGHT MODE Defaults (GitHub Light Style) ---
+              // These serve as the base for the SVG generation.
+              // CSS Variables in Mermaid.astro will override these at runtime for Dark Mode.
+
               // General
               textColor: "#000000",
               primaryColor: "#ffffff",
@@ -243,7 +171,7 @@ export default defineConfig({
               defaultLinkColor: "#000000",
               arrowheadColor: "#000000",
 
-              // Sequence Diagram Specifics
+              // Sequence Diagram
               actorBkg: "#eaeef2",
               actorBorder: "#d0d7de",
               actorTextColor: "#000000",
@@ -278,7 +206,7 @@ export default defineConfig({
               classBkg: "#ffffff",
               classBorder: "#d0d7de",
 
-              // Pie Chart (GitHub Light Palette)
+              // Pie Chart
               pie1: "#0969da",
               pie2: "#1a7f37",
               pie3: "#8250df",
@@ -295,92 +223,11 @@ export default defineConfig({
               pieOpacity: "1",
             },
           },
-          dark: {
-            theme: "base",
-            mermaidConfig: {
-              darkMode: true,
-            },
-            themeVariables: {
-              // --- DARK MODE (GitHub Dark Style) ---
-              // General
-              textColor: "#ffffff",
-              primaryColor: "#0d1117",
-              primaryTextColor: "#ffffff",
-              primaryBorderColor: "#30363d",
-              lineColor: "#ffffff",
-              secondaryColor: "#161b22",
-              tertiaryColor: "#0d1117",
-              mainBkg: "#0d1117",
-
-              // Nodes/Flowchart
-              nodeBkg: "#0d1117",
-              nodeBorder: "#30363d",
-              nodeTextColor: "#ffffff",
-              clusterBkg: "#161b22",
-              clusterBorder: "#30363d",
-              titleColor: "#ffffff",
-              edgeLabelBackground: "#161b22",
-              defaultLinkColor: "#ffffff",
-              arrowheadColor: "#ffffff",
-
-              // Sequence Diagram Specifics
-              actorBkg: "#1f2937",
-              actorBorder: "#30363d",
-              actorTextColor: "#ffffff",
-              actorLineColor: "#ffffff",
-              signalColor: "#ffffff",
-              signalTextColor: "#ffffff",
-              labelBoxBkgColor: "#161b22",
-              labelBoxBorderColor: "#30363d",
-              labelTextColor: "#ffffff",
-              loopTextColor: "#ffffff",
-              noteBkgColor: "#2d2606",
-              noteTextColor: "#ffffff",
-              noteBorderColor: "#d4a72c",
-              messageTextColor: "#ffffff",
-              messageLineColor: "#ffffff",
-              sequenceNumberColor: "#ffffff",
-
-              // Groupings/Loops
-              loopBkgColor: "#161b22",
-              loopBorderColor: "#30363d",
-              activationBkgColor: "#1f2937",
-              activationBorderColor: "#30363d",
-
-              // State Diagram
-              stateBkg: "#0d1117",
-              stateLabelColor: "#ffffff",
-              stateBorder: "#30363d",
-              altBackground: "#161b22",
-
-              // Class Diagram
-              classText: "#ffffff",
-              classBkg: "#0d1117",
-              classBorder: "#30363d",
-
-              // Pie Chart (GitHub Dark Palette)
-              pie1: "#2f81f7",
-              pie2: "#3fb950",
-              pie3: "#a371f7",
-              pie4: "#d2a8ff", // Highlight
-              pie5: "#e3b341",
-              pie6: "#8b949e",
-              pieTitleTextSize: "20px",
-              pieTitleTextColor: "#ffffff",
-              pieSectionTextColor: "#ffffff",
-              pieLegendTextColor: "#ffffff",
-              pieStrokeColor: "#0d1117",
-              pieStrokeWidth: "2px",
-              pieOuterStrokeWidth: "2px",
-              pieOpacity: "1",
-            },
-          },
           launchOptions: {
             args: ["--no-sandbox", "--disable-setuid-sandbox"],
           },
         },
       ],
-      rehypeMermaidSplitter,
       rehypeRaw,
       [
         rehypeExternalLinks,

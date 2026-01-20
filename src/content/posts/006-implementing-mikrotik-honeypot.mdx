@@ -790,7 +790,7 @@ You should see `/var/log/mikrotik.log` in the acquisition sources with parsed li
 
 #### Real-World Results
 
-To give you an idea of what to expect, here are actual statistics from my home network—a MikroTik RB5009 behind a standard FTTH connection in Spain:
+To give you an idea of what to expect, here are actual statistics from my home network over a **24-hour period**—a MikroTik RB5009 behind a standard FTTH connection in Spain:
 
 <BarChart
   title="Attack Distribution by Port"
@@ -806,7 +806,6 @@ To give you an idea of what to expect, here are actual statistics from my home n
   ]}
   showPercentage={true}
   showValue={true}
-  colorScheme="gradient"
   caption="Data collected from all time alerts on my home connection"
   ariaLabel="Bar chart showing distribution of port scan attempts"
 />
@@ -841,7 +840,7 @@ To give you an idea of what to expect, here are actual statistics from my home n
   ]}
   showPercentage={true}
   showValue={true}
-  colorScheme="gradient"
+  colorScheme="colorbrewer"
   caption="Top 5 networks originating attacks"
   ariaLabel="Bar chart showing top attacking organizations"
 />

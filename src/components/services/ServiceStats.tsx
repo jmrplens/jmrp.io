@@ -43,15 +43,35 @@ interface MeshtasticStatsData {
 }
 
 /**
+ * Safely fetch and parse JSON from a response.
+ *
+ * @param res - The response object to parse.
+ * @param errorMessage - Message to log on parsing error (dev only).
+ * @param defaultValue - Value to return if parsing fails or response is not ok.
+ * @returns The parsed data or the default value.
+ */
+async function safeFetchJson<T>(
+  res: Response | null | undefined,
+  errorMessage: string,
+  defaultValue: T,
+): Promise<T> {
+  if (!res?.ok) return defaultValue;
+  try {
+    return (await res.json()) as T;
+  } catch (error) {
+    if (import.meta.env.DEV) {
+      console.error(errorMessage, error);
+    }
+    return defaultValue;
+  }
+}
+
+/**
  * Fetch Mastodon service statistics
  *
  * @param setError - Callback to signal an error state.
  */
 async function fetchMastodonStats(setError: (error: boolean) => void) {
-  let peersCount = 0;
-  let mastodonTrends = [] as { url: string; name: string }[];
-  let instanceVersion = "Unknown";
-
   try {
     const [resPeers, resTrends, resInstance] = await Promise.all([
       fetch("/api/proxy/mastodon/peers").catch(() => null),
@@ -59,47 +79,38 @@ async function fetchMastodonStats(setError: (error: boolean) => void) {
       fetch("/api/proxy/mastodon/instance").catch(() => null),
     ]);
 
-    if (resPeers?.ok) {
-      try {
-        const peersData = (await resPeers.json()) as unknown[];
-        peersCount = Array.isArray(peersData) ? peersData.length : 0;
-      } catch (parseError) {
-        console.error("Failed to parse Mastodon peers response:", parseError);
-      }
-    }
+    const peersData = await safeFetchJson<unknown[]>(
+      resPeers,
+      "Failed to parse Mastodon peers response",
+      [],
+    );
+    const peersCount = Array.isArray(peersData) ? peersData.length : 0;
 
-    if (resTrends?.ok) {
-      try {
-        mastodonTrends = (await resTrends.json()) as {
-          url: string;
-          name: string;
-        }[];
-      } catch (parseError) {
-        console.error("Failed to parse Mastodon trends response:", parseError);
-      }
-    }
+    const mastodonTrends = await safeFetchJson<{ url: string; name: string }[]>(
+      resTrends,
+      "Failed to parse Mastodon trends response",
+      [],
+    );
 
-    if (resInstance?.ok) {
-      try {
-        const instanceData = (await resInstance.json()) as { version: string };
-        instanceVersion = instanceData.version;
-      } catch (parseError) {
-        console.error(
-          "Failed to parse Mastodon instance response:",
-          parseError,
-        );
-      }
-    }
+    const instanceData = await safeFetchJson<{ version: string } | null>(
+      resInstance,
+      "Failed to parse Mastodon instance response",
+      null,
+    );
+    const instanceVersion = instanceData?.version || "Unknown";
 
     if (!resPeers?.ok && !resTrends?.ok && !resInstance?.ok) {
       setError(true);
     }
-  } catch (error) {
-    console.error("Error fetching Mastodon stats:", error);
-    setError(true);
-  }
 
-  return { peersCount, mastodonTrends, instanceVersion };
+    return { peersCount, mastodonTrends, instanceVersion };
+  } catch (error) {
+    if (import.meta.env.DEV) {
+      console.error("Failed to fetch Mastodon stats", error);
+    }
+    setError(true);
+    return { peersCount: 0, mastodonTrends: [], instanceVersion: "Unknown" };
+  }
 }
 
 /**
@@ -108,9 +119,6 @@ async function fetchMastodonStats(setError: (error: boolean) => void) {
  * @param setError - Callback to signal an error state.
  */
 async function fetchMatrixStats(setError: (error: boolean) => void) {
-  let matrixData: MatrixData = {};
-  let matrixFed: MatrixFed | null = null;
-
   try {
     const [resConfig, resVer, resFed, resDest] = await Promise.all([
       fetch("/api/proxy/matrix/config").catch(() => null),
@@ -119,53 +127,51 @@ async function fetchMatrixStats(setError: (error: boolean) => void) {
       fetch("/api/proxy/matrix/stats").catch(() => null),
     ]);
 
-    if (resConfig?.ok) {
-      try {
-        matrixData = (await resConfig.json()) as MatrixData;
-      } catch (parseError) {
-        console.error("Failed to parse Matrix config response:", parseError);
-      }
-    }
+    const matrixData = await safeFetchJson<MatrixData>(
+      resConfig,
+      "Failed to parse Matrix config response",
+      {},
+    );
 
     if (resVer?.ok) {
-      try {
-        matrixData.online = true;
-        const verData = (await resVer.json()) as { versions: string[] };
+      matrixData.online = true;
+      const verData = await safeFetchJson<{ versions: string[] } | null>(
+        resVer,
+        "Failed to parse Matrix versions response",
+        null,
+      );
+      if (verData) {
         matrixData.versions = { list: verData.versions };
-      } catch (parseError) {
-        console.error("Failed to parse Matrix versions response:", parseError);
       }
     }
 
-    if (resFed?.ok) {
-      try {
-        matrixFed = (await resFed.json()) as MatrixFed;
-      } catch (parseError) {
-        console.error(
-          "Failed to parse Matrix federation response:",
-          parseError,
-        );
-      }
-    }
+    const matrixFed = await safeFetchJson<MatrixFed | null>(
+      resFed,
+      "Failed to parse Matrix federation response",
+      null,
+    );
 
-    if (resDest?.ok) {
-      try {
-        const destData = (await resDest.json()) as { total: number };
-        matrixData.federationTotal = destData.total;
-      } catch (parseError) {
-        console.error("Failed to parse Matrix stats response:", parseError);
-      }
+    const destData = await safeFetchJson<{ total: number } | null>(
+      resDest,
+      "Failed to parse Matrix stats response",
+      null,
+    );
+    if (destData) {
+      matrixData.federationTotal = destData.total;
     }
 
     if (!resConfig?.ok && !resVer?.ok && !resFed?.ok && !resDest?.ok) {
       setError(true);
     }
-  } catch (error) {
-    console.error("Error fetching Matrix stats:", error);
-    setError(true);
-  }
 
-  return { matrixData, matrixFed };
+    return { matrixData, matrixFed };
+  } catch (error) {
+    if (import.meta.env.DEV) {
+      console.error("Failed to fetch Matrix stats", error);
+    }
+    setError(true);
+    return { matrixData: {}, matrixFed: null };
+  }
 }
 
 /**
@@ -176,49 +182,45 @@ async function fetchMatrixStats(setError: (error: boolean) => void) {
 async function fetchMeshtasticStats(
   setError: (error: boolean) => void,
 ): Promise<MeshtasticStatsData> {
-  const [resPotato, resLF, resMF] = await Promise.all([
-    fetch("/api/proxy/potato/nodes").catch(() => null),
-    fetch("/api/proxy/mesh/lf").catch(() => null),
-    fetch("/api/proxy/mesh/mf").catch(() => null),
-  ]);
+  try {
+    const [resPotato, resLF, resMF] = await Promise.all([
+      fetch("/api/proxy/potato/nodes").catch(() => null),
+      fetch("/api/proxy/mesh/lf").catch(() => null),
+      fetch("/api/proxy/mesh/mf").catch(() => null),
+    ]);
 
-  let potatoNodes = 0;
-  let lfNodes = 0;
-  let mfNodes = 0;
+    const potatoData = await safeFetchJson<unknown[]>(
+      resPotato,
+      "Failed to parse Meshtastic Potato response",
+      [],
+    );
+    const potatoNodes = Array.isArray(potatoData) ? potatoData.length : 0;
 
-  if (resPotato?.ok) {
-    try {
-      const data = (await resPotato.json()) as unknown[];
-      potatoNodes = Array.isArray(data) ? data.length : 0;
-    } catch (error_) {
-      console.error("Failed to parse PotatoMesh nodes response:", error_);
-    }
-  }
-  if (resLF?.ok) {
-    try {
-      const data = (await resLF.json()) as { data?: { activeNodes: number } };
-      lfNodes = data.data?.activeNodes ?? 0;
-    } catch (error_) {
-      console.error("Failed to parse MeshMonitor LF response:", error_);
-    }
-  }
-  if (resMF?.ok) {
-    try {
-      const data = (await resMF.json()) as { data?: { activeNodes: number } };
-      mfNodes = data.data?.activeNodes ?? 0;
-    } catch (error_) {
-      console.error("Failed to parse MeshMonitor MF response:", error_);
-    }
-  }
+    const lfData = await safeFetchJson<{
+      data?: { activeNodes: number };
+    } | null>(resLF, "Failed to parse Meshtastic LF response", null);
+    const lfNodes = lfData?.data?.activeNodes ?? 0;
 
-  // Signal error if all three fetches failed
-  if (!resPotato?.ok && !resLF?.ok && !resMF?.ok) {
+    const mfData = await safeFetchJson<{
+      data?: { activeNodes: number };
+    } | null>(resMF, "Failed to parse Meshtastic MF response", null);
+    const mfNodes = mfData?.data?.activeNodes ?? 0;
+
+    // Signal error if all three fetches failed
+    if (!resPotato?.ok && !resLF?.ok && !resMF?.ok) {
+      setError(true);
+    }
+
+    const potatoVersion = await fetchPotatoVersion();
+
+    return { potatoNodes, lfNodes, mfNodes, potatoVersion };
+  } catch (error) {
+    if (import.meta.env.DEV) {
+      console.error("Failed to fetch Meshtastic stats", error);
+    }
     setError(true);
+    return { potatoNodes: 0, lfNodes: 0, mfNodes: 0, potatoVersion: "" };
   }
-
-  const potatoVersion = await fetchPotatoVersion();
-
-  return { potatoNodes, lfNodes, mfNodes, potatoVersion };
 }
 
 /**
@@ -235,15 +237,19 @@ async function fetchPotatoVersion(): Promise<string> {
           const verJson = (await resVer.json()) as { version: string };
           const ver = verJson.version;
           potatoVersion = ver || "";
-        } catch {
-          // Fallback
+        } catch (error) {
+          if (import.meta.env.DEV) {
+            console.error("Failed to parse Potato version response", error);
+          }
         }
       } else {
         potatoVersion = await resVer.text();
       }
     }
   } catch (error) {
-    console.error("Error fetching PotatoMesh version:", error);
+    if (import.meta.env.DEV) {
+      console.error("Failed to fetch Potato version", error);
+    }
   }
   return potatoVersion;
 }
@@ -296,7 +302,7 @@ function MastodonStats({ stats }: { readonly stats: MastodonStatsData }) {
 
       {mastodonTrends && mastodonTrends.length > 0 && (
         <div>
-          <h5 class="trending-header">Trending Now</h5>
+          <div class="trending-header">Trending Now</div>
           <div class="trending-grid">
             {mastodonTrends.map((tag: { url: string; name: string }) => (
               <a
@@ -399,7 +405,7 @@ function MeshtasticStats({ stats }: { readonly stats: MeshtasticStatsData }) {
           target="_blank"
           rel="noopener noreferrer"
           class="btn btn-sm"
-          aria-label="View PotatoMesh Map"
+          aria-label="View Map on PotatoMesh"
         >
           View Map
         </a>
@@ -418,7 +424,7 @@ function MeshtasticStats({ stats }: { readonly stats: MeshtasticStatsData }) {
           target="_blank"
           rel="noopener noreferrer"
           class="btn btn-sm"
-          aria-label="View MeshMonitor LF"
+          aria-label="View Monitor on MeshMonitor LF"
         >
           View Monitor
         </a>
@@ -437,7 +443,7 @@ function MeshtasticStats({ stats }: { readonly stats: MeshtasticStatsData }) {
           target="_blank"
           rel="noopener noreferrer"
           class="btn btn-sm"
-          aria-label="View MeshMonitor MF"
+          aria-label="View Monitor on MeshMonitor MF"
         >
           View Monitor
         </a>
@@ -495,8 +501,7 @@ export default function ServiceStats({ type }: Props) {
           }
         }
         if (data) setStats(data);
-      } catch (error_) {
-        console.error("Error fetching service stats:", error_);
+      } catch {
         setError(true);
       } finally {
         setLoading(false);

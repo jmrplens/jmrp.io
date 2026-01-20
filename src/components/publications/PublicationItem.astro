@@ -1,7 +1,6 @@
 ---
 import CopyButton from "@components/ui/CopyButton.astro";
 import { sanitize } from "@utils/html";
-import { Code } from "astro:components";
 import { Icon } from "astro-icon/components";
 
 const { pub } = Astro.props;
@@ -226,20 +225,10 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
                 />
               </div>
               <div class="pub-card-content">
-                <div class="code-block-dark">
-                  <Code
-                    code={cleanedBibtex}
-                    lang="bibtex"
-                    theme="github-dark"
-                  />
-                </div>
-                <div class="code-block-light">
-                  <Code
-                    code={cleanedBibtex}
-                    lang="bibtex"
-                    theme="github-light"
-                  />
-                </div>
+                <pre
+                  class="bibtex-raw"
+                  set:html={sanitize(cleanedBibtex)}
+                />
               </div>
             </div>
           </div>
@@ -410,65 +399,16 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
   }
 
   /* Code component overrides (Zero-JS Theme Switching) */
-  .pub-card-content :global(pre) {
+  .pub-card-content :global(pre),
+  .bibtex-raw {
     padding: var(--space-md) !important;
     margin: 0 !important;
     overflow-x: auto;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    line-height: 1.4;
+    color: var(--color-text);
     background-color: var(--color-bg-secondary) !important;
     border-radius: 0 0 var(--radius-sm) var(--radius-sm) !important;
-  }
-
-  /* Default (Hidden) */
-  .code-block-dark,
-  .code-block-light {
-    display: none;
-  }
-
-  /*
-   * Theme Precedence for Code Blocks:
-   * 1. Explicit data-theme="dark" or data-theme="light" takes priority.
-   * 2. If no data-theme and prefers-color-scheme: dark, show dark block.
-   * 3. If no data-theme and no dark system preference, default to light block.
-   *
-   * Selectors involved:
-   * - :global([data-theme="dark"]) / :global([data-theme="light"]) for explicit
-   * - :global(:root:not([data-theme])) for system preference fallback
-   * - @media (prefers-color-scheme: dark) for dark system preference
-   */
-
-  /* Theme logic: Show Dark by default or if data-theme='dark' */
-  :global([data-theme="dark"]) .code-block-dark,
-  :global(:root:not([data-theme])) .code-block-light {
-    /* 
-       Logic:
-       - If data-theme="dark", show dark block.
-       - If no data-theme (assumed light default for system pref fallback without JS), show light block.
-    */
-    display: block;
-  }
-
-  /* If specifically light */
-  :global([data-theme="light"]) .code-block-light {
-    display: block;
-  }
-
-  /* If specifically dark (override potential defaults) */
-  :global([data-theme="dark"]) .code-block-light {
-    display: none;
-  }
-
-  :global([data-theme="light"]) .code-block-dark {
-    display: none;
-  }
-
-  /* System preference handling if no data-theme present (optional, generally managed by the theme script) */
-  @media (prefers-color-scheme: dark) {
-    :global(:root:not([data-theme])) .code-block-dark {
-      display: block;
-    }
-
-    :global(:root:not([data-theme])) .code-block-light {
-      display: none;
-    }
   }
 </style>

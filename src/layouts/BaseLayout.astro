@@ -19,8 +19,18 @@ interface Props {
   type?: string;
   schema?: Record<string, unknown> | Record<string, unknown>[]; // JSON-LD schema defaults or overrides
   image?: string;
-  /** Preload URL for LCP image optimization */
+  /** Preload URL for LCP image optimization (fallback href) */
   preloadImage?: string;
+  /**
+   * Preload Srcset for responsive LCP image optimization.
+   * IMPORTANT: Must be accompanied by preloadSizes for correct browser selection.
+   */
+  preloadSrcset?: string;
+  /**
+   * Preload Sizes for responsive LCP image optimization.
+   * Required when using preloadSrcset.
+   */
+  preloadSizes?: string;
   // Article specific
   publishDate?: Date;
   modifiedDate?: Date;
@@ -35,11 +45,22 @@ const {
   schema,
   image,
   preloadImage,
+  preloadSrcset,
+  preloadSizes,
   publishDate,
   modifiedDate,
   authors,
   tags,
 } = Astro.props;
+
+// Validate srcset/sizes relationship
+if (preloadSrcset && !preloadSizes) {
+  console.warn(
+    "[BaseLayout] preloadSrcset provided without preloadSizes. " +
+      "Browsers require sizes attribute to select the correct image from srcset. " +
+      "Add preloadSizes for optimal LCP performance.",
+  );
+}
 ---
 
 <!doctype html>
@@ -57,6 +78,8 @@ const {
           rel="preload"
           as="image"
           href={preloadImage}
+          imagesrcset={preloadSrcset}
+          imagesizes={preloadSizes}
           fetchpriority="high"
         />
       )
@@ -80,15 +103,22 @@ const {
           try {
             if (typeof localStorage !== "undefined") {
               const saved = localStorage.getItem("theme");
-              // Validate saved value is exactly "light" or "dark"
               if (saved === "light" || saved === "dark") return saved;
             }
           } catch {
-            // localStorage may be blocked (private browsing); ignore
+            // localStorage may be blocked; ignore
           }
-          return window.matchMedia("(prefers-color-scheme: light)").matches
-            ? "light"
-            : "dark";
+
+          // Respect system preference if available
+          if (window.matchMedia("(prefers-color-scheme: light)").matches) {
+            return "light";
+          }
+          if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+            return "dark";
+          }
+
+          // Fallback if no preference is indicated or supported
+          return "dark";
         };
         const theme = getTheme();
         document.documentElement.dataset.theme = theme;
@@ -189,44 +219,6 @@ const {
       .mermaid svg {
         max-width: 100% !important;
         height: auto !important;
-      }
-
-      /* System preference defaults (when no theme is set) */
-      @media (prefers-color-scheme: light) {
-        :root:not([data-theme="dark"]) .mermaid-dark {
-          display: none;
-        }
-
-        :root:not([data-theme="dark"]) .mermaid-light {
-          display: block;
-        }
-      }
-
-      @media (prefers-color-scheme: dark) {
-        :root:not([data-theme="light"]) .mermaid-light {
-          display: none;
-        }
-
-        :root:not([data-theme="light"]) .mermaid-dark {
-          display: block;
-        }
-      }
-
-      /* Explicit theme overrides */
-      [data-theme="light"] .mermaid-dark {
-        display: none;
-      }
-
-      [data-theme="light"] .mermaid-light {
-        display: block;
-      }
-
-      [data-theme="dark"] .mermaid-light {
-        display: none;
-      }
-
-      [data-theme="dark"] .mermaid-dark {
-        display: block;
       }
     </style>
   </body>
