@@ -42,8 +42,8 @@
     "verify": "node scripts/run-verify.mjs"
   },
   "dependencies": {
-    "@astrojs/mdx": "5.0.0-alpha.0",
-    "@astrojs/preact": "5.0.0-alpha.0",
+    "@astrojs/mdx": "5.0.0-beta.1",
+    "@astrojs/preact": "5.0.0-beta.1",
     "@astrojs/sitemap": "3.7.0",
     "@iconify-json/carbon": "^1.2.18",
     "@iconify-json/fa-brands": "^1.2.2",
@@ -53,7 +53,7 @@
     "@iconify-json/mdi": "^1.2.3",
     "@iconify-json/simple-icons": "^1.2.67",
     "@iconify-json/vscode-icons": "^1.2.40",
-    "astro": "6.0.0-alpha.5",
+    "astro": "6.0.0-beta.1",
     "astro-icon": "^1.1.5",
     "citation-js": "^0.7.22",
     "marked": "^17.0.1",
