@@ -238,8 +238,8 @@ h1 {
 
 /* Optimization: Skip layout for off-screen content */
 .prose {
-  content-visibility: auto;
   contain-intrinsic-size: 1px 5000px;
+  content-visibility: auto;
 }
 
 /* Accessibility: Links in text blocks must have non-color indicator */

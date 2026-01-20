@@ -17,6 +17,8 @@
  * />
  */
 
+import { getNextIndex } from "@utils/counters";
+
 interface BarData {
   /** Label for the bar (displayed on the left) */
   label: string;
@@ -74,6 +76,9 @@ const {
   ariaLabel,
   caption,
 } = Astro.props;
+
+// Generate unique ID for this chart instance to avoid duplicate IDs on page
+const chartId = getNextIndex("barchart");
 
 // Calculate max value for percentage scaling
 const maxValue = providedMax ?? Math.max(...data.map((d) => d.value));
@@ -177,7 +182,7 @@ function getBarColor(index: number, item: BarData): string {
         const totalPercentage =
           totalValue > 0 ? (item.value / totalValue) * 100 : 0;
         const barColor = getBarColor(index, item);
-        const labelId = `bar-label-${index}-${Math.random().toString(36).slice(2, 11)}`;
+        const labelId = `bar-label-${chartId}-${index}`;
 
         return (
           <li class="bar-row">
@@ -190,7 +195,7 @@ function getBarColor(index: number, item: BarData): string {
             <div class="bar-track">
               <div
                 class={`bar-fill ${percentage < 20 ? "bar-small" : ""}`}
-                style={`--bar-width: ${percentage}%; background-color: ${barColor};`}
+                style={`--bar-width: ${percentage}%; --bar-index: ${index}; background-color: ${barColor};`}
                 role="meter"
                 aria-labelledby={labelId}
                 aria-valuenow={item.value}
@@ -237,10 +242,7 @@ function getBarColor(index: number, item: BarData): string {
   </ul>
 
   <!-- Visually-hidden data table for screen readers -->
-  <table
-    class="sr-only"
-    aria-label={`${title || "Chart"} data table`}
-  >
+  <table class="sr-only">
     <caption>{title || "Chart data"}</caption>
     <thead>
       <tr>
@@ -712,9 +714,10 @@ function getBarColor(index: number, item: BarData): string {
     will-change: width;
   }
 
-  /* Only animate when the chart becomes visible */
+  /* Only animate when the chart becomes visible - delay is staggered via CSS variable */
   .bar-chart-container.animate .bar-fill {
     animation: bar-grow 0.8s ease-out forwards;
+    animation-delay: calc(var(--bar-index, 0) * 50ms);
   }
 
   .bar-value-inside {
@@ -804,46 +807,5 @@ function getBarColor(index: number, item: BarData): string {
     to {
       width: var(--bar-width);
     }
-  }
-
-  /* Stagger animation for each bar */
-  .bar-row:nth-child(1) .bar-fill {
-    animation-delay: 0ms;
-  }
-
-  .bar-row:nth-child(2) .bar-fill {
-    animation-delay: 50ms;
-  }
-
-  .bar-row:nth-child(3) .bar-fill {
-    animation-delay: 100ms;
-  }
-
-  .bar-row:nth-child(4) .bar-fill {
-    animation-delay: 150ms;
-  }
-
-  .bar-row:nth-child(5) .bar-fill {
-    animation-delay: 200ms;
-  }
-
-  .bar-row:nth-child(6) .bar-fill {
-    animation-delay: 250ms;
-  }
-
-  .bar-row:nth-child(7) .bar-fill {
-    animation-delay: 300ms;
-  }
-
-  .bar-row:nth-child(8) .bar-fill {
-    animation-delay: 350ms;
-  }
-
-  .bar-row:nth-child(9) .bar-fill {
-    animation-delay: 400ms;
-  }
-
-  .bar-row:nth-child(10) .bar-fill {
-    animation-delay: 450ms;
   }
 </style>

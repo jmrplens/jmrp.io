@@ -111,7 +111,7 @@ if (post.data.coverImage) {
   const responsiveImages = await Promise.all(
     coverImageWidths.map((width) =>
       getImage({
-        src: post.data.coverImage,
+        src: post.data.coverImage!,
         format: "webp",
         width: width,
         quality: 70, // Must match Image component quality
@@ -123,7 +123,7 @@ if (post.data.coverImage) {
     .map((img, i) => `${img.src} ${coverImageWidths[i]}w`)
     .join(", ");
   preloadSizes = coverImageSizes;
-  preloadImage = responsiveImages[responsiveImages.length - 1].src; // Fallback
+  preloadImage = responsiveImages.at(-1)!.src; // Fallback
 }
 
 const articleSchema = [
@@ -407,6 +407,20 @@ const articleSchema = [
     text-transform: uppercase;
     letter-spacing: 0.05em;
     text-decoration: none;
+    transition:
+      color 0.2s ease,
+      text-decoration 0.2s ease;
+  }
+
+  .tag:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .tag:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+    border-radius: 2px;
   }
 
   h1 {

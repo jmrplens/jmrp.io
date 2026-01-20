@@ -56,19 +56,20 @@ const computedAriaLabel =
 </figure>
 
 <style>
+  /* stylelint-disable selector-class-pattern -- Mermaid library uses camelCase class names */
+
   /* --- Mermaid CSS Variables (Theme-Aware) --- */
   :global(:root) {
     /* GitHub Light Palette */
-    --mermaid-text: #000000;
+    --mermaid-text: #000;
     --mermaid-bg: #f6f8fa; /* Subtle gray fill for visible nodes in light mode */
     --mermaid-border: #d0d7de;
-    --mermaid-line: #000000;
+    --mermaid-line: #000;
     --mermaid-secondary-bg: #f6f8fa; /* Cluster/Loop backgrounds */
     --mermaid-tertiary-bg: #eaeef2; /* Actor backgrounds */
-
     --mermaid-note-bg: #fff9c4;
     --mermaid-note-border: #d4a72c;
-    --mermaid-note-text: #000000;
+    --mermaid-note-text: #000;
 
     /* Semantic Colors (Light) */
     --mermaid-warning-fill: #fbbf24;
@@ -76,16 +77,16 @@ const computedAriaLabel =
     --mermaid-warning-text: #1f2937;
     --mermaid-danger-fill: #ef4444;
     --mermaid-danger-stroke: #b91c1c;
-    --mermaid-danger-text: #ffffff;
+    --mermaid-danger-text: #fff;
     --mermaid-success-fill: #22c55e;
     --mermaid-success-stroke: #15803d;
-    --mermaid-success-text: #ffffff;
+    --mermaid-success-text: #fff;
     --mermaid-info-fill: #38bdf8;
     --mermaid-info-stroke: #0284c7;
-    --mermaid-info-text: #ffffff;
+    --mermaid-info-text: #fff;
     --mermaid-highlight-fill: #a78bfa;
     --mermaid-highlight-stroke: #7c3aed;
-    --mermaid-highlight-text: #ffffff;
+    --mermaid-highlight-text: #fff;
     --mermaid-muted-fill: #d1d5db;
     --mermaid-muted-stroke: #9ca3af;
     --mermaid-muted-text: #374151;
@@ -101,33 +102,32 @@ const computedAriaLabel =
 
   :global(:root[data-theme="dark"]) {
     /* GitHub Dark Palette */
-    --mermaid-text: #ffffff;
+    --mermaid-text: #fff;
     --mermaid-bg: #0d1117;
     --mermaid-border: #30363d;
-    --mermaid-line: #ffffff;
+    --mermaid-line: #fff;
     --mermaid-secondary-bg: #161b22;
     --mermaid-tertiary-bg: #1f2937;
-
     --mermaid-note-bg: #2d2606;
     --mermaid-note-border: #d4a72c;
-    --mermaid-note-text: #ffffff;
+    --mermaid-note-text: #fff;
 
     /* Semantic Colors (Dark) */
     --mermaid-warning-fill: #9a6700;
     --mermaid-warning-stroke: #d29922;
-    --mermaid-warning-text: #ffffff;
+    --mermaid-warning-text: #fff;
     --mermaid-danger-fill: #8b1a1a;
     --mermaid-danger-stroke: #da3633;
-    --mermaid-danger-text: #ffffff;
+    --mermaid-danger-text: #fff;
     --mermaid-success-fill: #1a5d1a;
     --mermaid-success-stroke: #2ea043;
-    --mermaid-success-text: #ffffff;
+    --mermaid-success-text: #fff;
     --mermaid-info-fill: #0c4a6e;
     --mermaid-info-stroke: #1d8ad8;
-    --mermaid-info-text: #ffffff;
+    --mermaid-info-text: #fff;
     --mermaid-highlight-fill: #5b21b6;
     --mermaid-highlight-stroke: #a78bfa;
-    --mermaid-highlight-text: #ffffff;
+    --mermaid-highlight-text: #fff;
     --mermaid-muted-fill: #484f58;
     --mermaid-muted-stroke: #6e7681;
     --mermaid-muted-text: #c9d1d9;
@@ -174,6 +174,7 @@ const computedAriaLabel =
   }
 
   /* --- Global Mermaid Text & Visibility Fixes --- */
+
   /* Only override colors, NOT font-family - Mermaid calculates node sizes based on its default fonts */
   .mermaid-content :global(svg text),
   .mermaid-content :global(g.actor text),
@@ -181,20 +182,18 @@ const computedAriaLabel =
   .mermaid-content :global(#actor text),
   .mermaid-content :global(span.label),
   .mermaid-content :global(.nodeLabel) {
-    fill: var(--mermaid-text) !important;
     color: var(--mermaid-text) !important; /* For HTML labels */
+    fill: var(--mermaid-text) !important;
     stroke: none !important; /* Remove unwanted text outlines */
   }
 
   /* General Node Styling (Flowchart) */
-  .mermaid .node rect,
-  .mermaid .node circle,
-  .mermaid .node polygon,
-  .mermaid .node path,
-  .mermaid svg,
-  svg[id^="mermaid-"] {
-    fill: var(--mermaid-bg);
-    stroke: var(--mermaid-border);
+  .mermaid-content :global(.node rect),
+  .mermaid-content :global(.node circle),
+  .mermaid-content :global(.node polygon),
+  .mermaid-content :global(.node path) {
+    fill: var(--mermaid-bg) !important;
+    stroke: var(--mermaid-border) !important;
   }
 
   /* Flowchart Edges/Lines */
@@ -205,42 +204,49 @@ const computedAriaLabel =
 
   /* Flowchart Edge Labels - Fix for dark mode visibility */
   .mermaid-content :global(.edgeLabel) {
-    background-color: var(--mermaid-bg) !important;
     color: var(--mermaid-text) !important;
+    background-color: var(--mermaid-bg) !important;
   }
+
   .mermaid-content :global(.edgeLabel span) {
-    background-color: var(--mermaid-bg) !important;
     color: var(--mermaid-text) !important;
+    background-color: var(--mermaid-bg) !important;
   }
+
   .mermaid-content :global(.edgeLabel rect) {
     fill: var(--mermaid-bg) !important;
   }
+
   /* Fix foreignObject labels (HTML-based) which Mermaid uses for edge labels */
   .mermaid-content :global(.edgeLabel foreignObject) {
     overflow: visible;
   }
+
   .mermaid-content :global(.edgeLabel foreignObject div) {
-    background-color: var(--mermaid-bg) !important;
+    padding: 3px 8px !important;
+    font-size: 0.9em !important;
     color: var(--mermaid-text) !important;
+    background-color: var(--mermaid-bg) !important;
+
     /* Floating label style - distinct from nodes */
     border: none !important;
     border-radius: 12px !important;
-    padding: 3px 8px !important;
     box-shadow: 0 1px 4px rgb(0 0 0 / 15%) !important;
-    font-size: 0.9em !important;
   }
+
   /* Fix p tags inside edgeLabel - Mermaid adds inline styles with white bg/text */
   .mermaid-content :global(.edgeLabel p),
   .mermaid-content :global(.edgeLabel foreignObject p),
   .mermaid-content :global(.edgeLabel foreignObject div p) {
-    background-color: var(--mermaid-bg) !important;
-    color: var(--mermaid-text) !important;
     margin: 0 !important;
+    color: var(--mermaid-text) !important;
+    background-color: var(--mermaid-bg) !important;
   }
+
   /* Catch-all for any nested text elements in edge labels */
   .mermaid-content :global(.edgeLabel *) {
-    background-color: var(--mermaid-bg) !important;
     color: var(--mermaid-text) !important;
+    background-color: var(--mermaid-bg) !important;
   }
 
   /* --- Sequence Diagram Specifics --- */
@@ -278,14 +284,17 @@ const computedAriaLabel =
     fill: var(--mermaid-secondary-bg) !important;
     stroke: var(--mermaid-border) !important;
   }
+
   .mermaid-content :global(.labelText) {
     fill: var(--mermaid-text) !important;
   }
+
   .mermaid-content :global(.loopLine) {
     stroke: var(--mermaid-border) !important;
   }
 
   /* Mermaid Arrowhead/Marker Visibility Fix */
+
   /* Ensure markers adapt to theme colors */
   .mermaid-content :global(marker path),
   .mermaid-content :global(marker circle) {
@@ -294,6 +303,7 @@ const computedAriaLabel =
   }
 
   /* --- Mermaid Semantic Node Classes (Theme-Aware) --- */
+
   /* Overrides for custom classDefs in Markdown */
 
   /* Default Node */
@@ -303,6 +313,7 @@ const computedAriaLabel =
     fill: var(--mermaid-bg) !important;
     stroke: var(--mermaid-border) !important;
   }
+
   .mermaid-content :global(.node.default .nodeLabel) {
     color: var(--mermaid-text) !important;
   }
@@ -314,6 +325,7 @@ const computedAriaLabel =
     fill: var(--mermaid-warning-fill) !important;
     stroke: var(--mermaid-warning-stroke) !important;
   }
+
   .mermaid-content :global(.node.warning .nodeLabel) {
     color: var(--mermaid-warning-text) !important;
   }
@@ -325,6 +337,7 @@ const computedAriaLabel =
     fill: var(--mermaid-danger-fill) !important;
     stroke: var(--mermaid-danger-stroke) !important;
   }
+
   .mermaid-content :global(.node.danger .nodeLabel) {
     color: var(--mermaid-danger-text) !important;
   }
@@ -336,6 +349,7 @@ const computedAriaLabel =
     fill: var(--mermaid-success-fill) !important;
     stroke: var(--mermaid-success-stroke) !important;
   }
+
   .mermaid-content :global(.node.success .nodeLabel) {
     color: var(--mermaid-success-text) !important;
   }
@@ -347,6 +361,7 @@ const computedAriaLabel =
     fill: var(--mermaid-info-fill) !important;
     stroke: var(--mermaid-info-stroke) !important;
   }
+
   .mermaid-content :global(.node.info .nodeLabel) {
     color: var(--mermaid-info-text) !important;
   }
@@ -358,6 +373,7 @@ const computedAriaLabel =
     fill: var(--mermaid-highlight-fill) !important;
     stroke: var(--mermaid-highlight-stroke) !important;
   }
+
   .mermaid-content :global(.node.highlight .nodeLabel) {
     color: var(--mermaid-highlight-text) !important;
   }
@@ -369,6 +385,7 @@ const computedAriaLabel =
     fill: var(--mermaid-muted-fill) !important;
     stroke: var(--mermaid-muted-stroke) !important;
   }
+
   .mermaid-content :global(.node.muted .nodeLabel) {
     color: var(--mermaid-muted-text) !important;
   }

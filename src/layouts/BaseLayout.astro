@@ -19,11 +19,17 @@ interface Props {
   type?: string;
   schema?: Record<string, unknown> | Record<string, unknown>[]; // JSON-LD schema defaults or overrides
   image?: string;
-  /** Preload URL for LCP image optimization */
+  /** Preload URL for LCP image optimization (fallback href) */
   preloadImage?: string;
-  /** Preload Srcset for responsive LCP image optimization */
+  /**
+   * Preload Srcset for responsive LCP image optimization.
+   * IMPORTANT: Must be accompanied by preloadSizes for correct browser selection.
+   */
   preloadSrcset?: string;
-  /** Preload Sizes for responsive LCP image optimization */
+  /**
+   * Preload Sizes for responsive LCP image optimization.
+   * Required when using preloadSrcset.
+   */
   preloadSizes?: string;
   // Article specific
   publishDate?: Date;
@@ -46,6 +52,15 @@ const {
   authors,
   tags,
 } = Astro.props;
+
+// Validate srcset/sizes relationship
+if (preloadSrcset && !preloadSizes) {
+  console.warn(
+    "[BaseLayout] preloadSrcset provided without preloadSizes. " +
+      "Browsers require sizes attribute to select the correct image from srcset. " +
+      "Add preloadSizes for optimal LCP performance.",
+  );
+}
 ---
 
 <!doctype html>
