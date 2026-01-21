@@ -245,7 +245,9 @@ export default defineConfig({
     plugins: [
       vitePrefetchNoncePlugin(),
       ViteImageOptimizer({
-        /* pass your config */
+        // Enable caching to maintain consistent asset hashes between builds
+        cache: true,
+        cacheLocation: ".cache/optimized-images",
         svg: {
           multipass: true,
           plugins: /** @type {import('svgo').PluginConfig[]} */ ([
