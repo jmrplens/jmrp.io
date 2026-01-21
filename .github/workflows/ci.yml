@@ -46,7 +46,7 @@ jobs:
         uses: actions/cache@v5
         with:
           path: .cache/optimized-images
-          key: optimized-images-${{ runner.os }}-${{ hashFiles('src/**/*.{png,jpg,jpeg,webp,avif,gif,svg}', 'public/**/*.{png,jpg,jpeg,webp,avif,gif,svg}') }}
+          key: optimized-images-${{ runner.os }}-${{ hashFiles('astro.config.mjs', 'pnpm-lock.yaml', 'src/**/*.{png,jpg,jpeg,webp,avif,gif,svg}', 'public/**/*.{png,jpg,jpeg,webp,avif,gif,svg}') }}
           restore-keys: |
             optimized-images-${{ runner.os }}-
       - uses: pnpm/action-setup@v4
