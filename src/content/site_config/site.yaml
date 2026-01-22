@@ -35,13 +35,13 @@ social_links:
 
 shortcuts:
   - name: "Blog"
-    url: "/blog"
+    url: "/blog/"
     description: "Read the latest thoughts and tutorials"
   - name: "CV"
-    url: "/cv"
+    url: "/cv/"
     description: "View professional experience and skills"
   - name: "Publications"
-    url: "/publications"
+    url: "/publications/"
     description: "Research papers and co-authors"
 
 logo_text: "<JMRP />"
@@ -50,15 +50,15 @@ nav:
   - label: "Home"
     href: "/"
   - label: "CV"
-    href: "/cv"
+    href: "/cv/"
   - label: "Publications"
-    href: "/publications"
+    href: "/publications/"
   - label: "Repositories"
-    href: "/github"
+    href: "/github/"
   - label: "Blog"
-    href: "/blog"
+    href: "/blog/"
   - label: "Services"
-    href: "/services"
+    href: "/services/"
 
 hero:
   title: "Hi, I'm José Manuel."
