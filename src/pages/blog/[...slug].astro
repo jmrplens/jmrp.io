@@ -177,7 +177,7 @@ const articleSchema = [
       <div class="content-wrapper">
         <div class="header-meta">
           <a
-            href="/blog"
+            href="/blog/"
             class="back-link"
           >
             <Icon
@@ -206,7 +206,7 @@ const articleSchema = [
                 <div class="tags">
                   {post.data.tags.map((tag) => (
                     <a
-                      href={`/blog/tags/${encodeURIComponent(tag)}`}
+                      href={`/blog/tags/${encodeURIComponent(tag)}/`}
                       class="tag"
                       aria-label={`View all posts tagged with ${tag}`}
                     >
