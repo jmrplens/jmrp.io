@@ -105,7 +105,7 @@
     "playwright": "^1.57.0",
     "prettier": "^3.8.0",
     "prettier-plugin-astro": "^0.14.1",
-    "puppeteer": "^24.35.0",
+    "puppeteer": "^24.36.0",
     "rehype-mermaid": "^3.0.0",
     "rss-parser": "^3.13.0",
     "sharp": "^0.34.5",
