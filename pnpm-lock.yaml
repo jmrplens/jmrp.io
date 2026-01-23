@@ -224,8 +224,8 @@ importers:
         specifier: ^0.34.5
         version: 0.34.5
       snyk:
-        specifier: ^1.1302.0
-        version: 1.1302.0
+        specifier: ^1.1302.1
+        version: 1.1302.1
       sonar-scanner:
         specifier: ^3.1.0
         version: 3.1.0
@@ -6081,8 +6081,8 @@ packages:
     resolution: {integrity: sha512-4zemZi0HvTnYwLfrpk/CF9LOd9Lt87kAt50GnqhMpyF9U3poDAP2+iukq2bZsO/ufegbYehBkqINbsWxj4l4cw==}
     engines: {node: '>= 18'}
 
-  snyk@1.1302.0:
-    resolution: {integrity: sha512-H2VH8SnWoneuyJgpImvaEY0nViggP4K8h73mjZWcMkBzuMELZcQHfDc4PWg4Tm+p+CVlndmCbDMTPRaCkOWEnQ==}
+  snyk@1.1302.1:
+    resolution: {integrity: sha512-RT85Pz4N36xma7Mcob0Jno5TXu22VbVoT+7mWHk2TVkBHqsMZ8sKW55X+r+LMaT8GwlC5+cYjzw2iuv1VcPZOg==}
     engines: {node: '>=12'}
     hasBin: true
 
@@ -14295,7 +14295,7 @@ snapshots:
 
   smol-toml@1.6.0: {}
 
-  snyk@1.1302.0:
+  snyk@1.1302.1:
     dependencies:
       '@sentry/node': 7.120.4
       global-agent: 3.0.0
