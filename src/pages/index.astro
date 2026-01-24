@@ -11,8 +11,11 @@ import { sanitize } from "@utils/html";
 import { getSiteUrl } from "@utils/site";
 import { Image } from "astro:assets";
 // Config
-import { getEntry } from "astro:content";
+import { getEntry, getCollection } from "astro:content";
 import { Icon } from "astro-icon/components";
+import PostCard from "@components/blog/PostCard.astro";
+import RepoCard from "@components/github/RepoCard.astro";
+import { fetchRepositoriesByName } from "@utils/github";
 
 const siteEntry = await getEntry("site_config", "site");
 const siteData = (siteEntry?.data || {}) as SiteConfig;
@@ -25,6 +28,19 @@ const person = siteData.person || {
   jobTitle: "R&D Engineer",
   worksFor: { name: "Power Electronics" },
 };
+
+// Fetch latest posts
+const latestPosts = (await getCollection("posts"))
+  .filter((p) => !p.data.draft)
+  .sort(
+    (a, b) => b.data.publishedDate.valueOf() - a.data.publishedDate.valueOf(),
+  )
+  .slice(0, 3);
+
+// Fetch featured projects
+const featuredProjects = await fetchRepositoriesByName(
+  siteData.featured_projects || [],
+);
 
 const personSchema = {
   "@context": "https://schema.org",
@@ -118,6 +134,52 @@ const heroSocialLinks =
       </div>
     </div>
   </section>
+
+  {
+    latestPosts.length > 0 && (
+      <section class="latest-posts">
+        <div class="container">
+          <div class="section-header">
+            <h2>Latest from the Blog</h2>
+            <a
+              href="/blog/"
+              class="btn btn-link"
+            >
+              View all posts &rarr;
+            </a>
+          </div>
+          <div class="grid-layout">
+            {latestPosts.map((post) => (
+              <PostCard post={post} />
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  {
+    featuredProjects.length > 0 && (
+      <section class="featured-projects">
+        <div class="container">
+          <div class="section-header">
+            <h2>Featured Projects</h2>
+            <a
+              href="/github/"
+              class="btn btn-link"
+            >
+              View all repositories &rarr;
+            </a>
+          </div>
+          <div class="grid-layout">
+            {featuredProjects.map((repo) => (
+              <RepoCard repo={repo} />
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  }
 </BaseLayout>
 
 <style>
@@ -230,6 +292,38 @@ const heroSocialLinks =
     content: "";
     background-color: var(--color-primary);
     border-radius: 2px;
+  }
+
+  /* Latest Posts Section */
+  .latest-posts {
+    padding: var(--space-xl) 0;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--space-xl);
+  }
+
+  .section-header h2 {
+    margin-bottom: 0;
+  }
+
+  .grid-layout {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--space-lg);
+  }
+
+  .btn-link {
+    font-weight: var(--fw-semibold);
+    color: var(--color-primary);
+    text-decoration: none;
+  }
+
+  .btn-link:hover {
+    text-decoration: underline;
   }
 
   @media (width <= 768px) {

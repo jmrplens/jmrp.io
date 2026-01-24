@@ -102,6 +102,7 @@ const site_config = defineCollection({
         subtitle: z.string(),
         bio: z.array(z.string()),
       }),
+      featured_projects: z.array(z.string()).optional(),
       shortcuts: z
         .array(
           z.object({

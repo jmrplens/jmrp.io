@@ -112,6 +112,42 @@ export async function fetchTopRepositories(limit = 12): Promise<GitHubRepo[]> {
 }
 
 /**
+ * Fetches specific repositories by name for the configured user.
+ */
+export async function fetchRepositoriesByName(
+  repoNames: string[],
+): Promise<GitHubRepo[]> {
+  const headers: HeadersInit = {};
+  if (GITHUB_TOKEN) {
+    headers.Authorization = `token ${GITHUB_TOKEN}`;
+  }
+
+  try {
+    const promises = repoNames.map(async (name) => {
+      try {
+        const res = await fetch(`https://api.github.com/repos/${USERNAME}/${name}`, {
+          headers,
+        });
+        if (!res.ok) {
+           console.warn(`Failed to fetch repo ${name}: ${res.status}`);
+           return null;
+        }
+        return (await res.json()) as GitHubRepo;
+      } catch (e) {
+        console.warn(`Error fetching repo ${name}:`, e);
+        return null;
+      }
+    });
+
+    const results = await Promise.all(promises);
+    return results.filter((r): r is GitHubRepo => r !== null);
+  } catch (error) {
+    console.warn("Failed to fetch GitHub repos by name:", error);
+    return [];
+  }
+}
+
+/**
  * Map of programming languages to their representative Hex colors.
  */
 export const langColors: Record<string, string> = {
