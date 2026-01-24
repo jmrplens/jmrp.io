@@ -125,16 +125,19 @@ export async function fetchRepositoriesByName(
   try {
     const promises = repoNames.map(async (name) => {
       try {
-        const res = await fetch(`https://api.github.com/repos/${USERNAME}/${name}`, {
-          headers,
-        });
+        const res = await fetch(
+          `https://api.github.com/repos/${USERNAME}/${name}`,
+          {
+            headers,
+          },
+        );
         if (!res.ok) {
-           console.warn(`Failed to fetch repo ${name}: ${res.status}`);
-           return null;
+          console.warn(`Failed to fetch repo ${name}: ${res.status}`);
+          return null;
         }
         return (await res.json()) as GitHubRepo;
-      } catch (e) {
-        console.warn(`Error fetching repo ${name}:`, e);
+      } catch (error) {
+        console.warn(`Error fetching repo ${name}:`, error);
         return null;
       }
     });

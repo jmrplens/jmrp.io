@@ -119,14 +119,14 @@ const { post, loading = "lazy", fetchpriority = "auto" } = Astro.props;
     display: flex;
     flex: 1;
     flex-direction: column;
-    padding: 2rem;
+    padding: 1.25rem 1.5rem 0.75rem;
   }
 
   .post-meta {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 1rem;
+    margin-bottom: 0.4rem;
     font-size: 0.875rem;
     color: var(--color-text-muted);
   }
@@ -136,12 +136,12 @@ const { post, loading = "lazy", fetchpriority = "auto" } = Astro.props;
     z-index: 2; /* Ensure tags are clickable above the card link */
     display: flex;
     gap: 0.5rem;
-    min-height: 1.5em; /* Stabilize for CLS */
+    min-height: 1.2em; /* Stabilize for CLS */
   }
 
   .tag {
-    padding: 0.2rem 0.5rem;
-    font-size: 0.75rem;
+    padding: 0.15rem 0.4rem;
+    font-size: 0.7rem;
     font-weight: 500;
     color: var(--color-text-body);
     text-decoration: none;
@@ -156,9 +156,9 @@ const { post, loading = "lazy", fetchpriority = "auto" } = Astro.props;
   }
 
   .post-card h2 {
-    min-height: 2.6em; /* Reserve 2 lines roughly */
-    margin-bottom: 0.75rem;
-    font-size: 1.5rem;
+    min-height: auto; /* Remove fixed height constraint */
+    margin-bottom: 0.25rem;
+    font-size: 1.25rem;
     font-weight: 700;
     line-height: 1.3;
   }
@@ -180,11 +180,11 @@ const { post, loading = "lazy", fetchpriority = "auto" } = Astro.props;
     display: -webkit-box;
 
     /* Layout and sizing */
-    min-height: 4.8rem; /* Reserve space for 3 lines to prevent CLS */
+    min-height: auto; /* Remove fixed height constraint */
     overflow: hidden;
-    -webkit-line-clamp: 3;
-    font-size: 1rem;
-    line-height: 1.6;
+    -webkit-line-clamp: 2; /* Show only 2 lines instead of 3 */
+    font-size: 0.95rem;
+    line-height: 1.5;
     color: var(--color-text-body);
     -webkit-box-orient: vertical;
   }
@@ -192,16 +192,71 @@ const { post, loading = "lazy", fetchpriority = "auto" } = Astro.props;
   .card-footer {
     display: flex; /* Ensure alignment */
     align-items: center;
-    min-height: 4.5rem; /* Stabilize for CLS */
-    padding: 1.5rem 2rem;
+    min-height: auto; /* Remove fixed height constraint */
+    padding: 0.75rem 1.5rem;
     background: var(--color-bg-subtle);
     border-top: var(--border-1);
   }
 
   .read-more {
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     font-weight: var(--fw-semibold);
     color: var(--color-primary);
+  }
+
+  @media (width <= 640px) {
+    .post-card {
+      flex-direction: row; /* Horizontal layout on mobile */
+      height: auto; /* Allow growing */
+      max-height: none; /* Remove height constraint */
+    }
+
+    .image-container {
+      flex-shrink: 0;
+      width: 130px; /* Fixed width for image */
+      height: auto; /* Cover full height */
+      aspect-ratio: unset; /* Override default aspect ratio */
+    }
+
+    .card-image {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%; /* Stretch to cover container height */
+    }
+
+    .card-content {
+      padding: 0.75rem 1rem;
+    }
+
+    .post-card h2 {
+      /* Show full title */
+      display: block;
+      margin-bottom: 0.15rem;
+      overflow: visible;
+      -webkit-line-clamp: unset;
+      font-size: 1.1rem;
+    }
+
+    .post-card p {
+      /* Show description, capped at ~4 lines */
+      display: -webkit-box;
+      -webkit-line-clamp: 4;
+      font-size: 0.85rem;
+      -webkit-box-orient: vertical;
+    }
+
+    .card-footer {
+      display: none; /* Hide footer on mobile to save space */
+    }
+
+    .post-meta {
+      margin-bottom: 0.25rem;
+    }
+
+    .tags {
+      display: none; /* Keep tags hidden to avoid clutter */
+    }
   }
 
   /* Keyboard focus styles for main-link */
