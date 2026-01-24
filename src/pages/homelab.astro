@@ -4,6 +4,7 @@
  * Displays self-hosted services status and details.
  * Uses <ServiceStats> (React) to fetch and display live status.
  */
+import InfrastructureInsights from "@components/services/InfrastructureInsights";
 import ServiceCard from "@components/services/ServiceCard.astro";
 import ServiceStats from "@components/services/ServiceStats";
 import BaseLayout from "@layouts/BaseLayout.astro";
@@ -130,6 +131,11 @@ const servicesSchema = {
           ))
         }
       </div>
+
+      <div class="infrastructure-insights">
+        <h2 class="section-subtitle">Edge Node Security & Analytics</h2>
+        <InfrastructureInsights client:visible />
+      </div>
     </div>
   </section>
 </BaseLayout>
@@ -146,6 +152,13 @@ const servicesSchema = {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
     gap: var(--space-lg);
+  }
+
+  .section-subtitle {
+    margin: var(--space-xl) 0 var(--space-lg);
+    font-size: 1.5rem;
+    font-weight: var(--fw-bold);
+    color: var(--color-text-heading);
   }
 
   /* Content Styling for Slots */
@@ -415,5 +428,159 @@ const servicesSchema = {
     color: var(--color-text-muted);
     text-transform: uppercase;
     letter-spacing: 0.5px;
+  }
+
+  /* Infrastructure Insights Grid */
+  .insights-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: var(--space-md);
+    margin-bottom: var(--space-xl);
+  }
+
+  .insight-card {
+    display: flex;
+    flex-direction: column;
+    padding: var(--space-md);
+    background: var(--color-bg-secondary);
+    border: var(--border-1);
+    border-radius: var(--radius-md);
+    transition: transform 0.2s ease;
+  }
+
+  .insight-card:hover {
+    transform: translateY(-2px);
+  }
+
+  .insight-label {
+    font-size: 0.7rem;
+    font-weight: var(--fw-bold); /* Increased weight for contrast */
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  :root[data-theme="light"] .insight-label {
+    color: var(--color-text-body); /* Darker color in light mode */
+  }
+
+  .insight-value {
+    margin: 4px 0 12px;
+    font-size: 1.6rem;
+    font-weight: var(--fw-bold);
+    color: var(--color-primary);
+  }
+
+  :root[data-theme="light"] .insight-value {
+    color: #000; /* Maximum contrast for the main value */
+  }
+
+  .insight-value small {
+    font-size: 0.9rem;
+    font-weight: var(--fw-semibold); /* Increased weight for contrast */
+    color: var(--color-text-muted);
+    opacity: 100%; /* Reset opacity for better contrast */
+  }
+
+  :root[data-theme="light"] .insight-value small {
+    color: #374151; /* Dark grey for better contrast */
+  }
+
+  .insight-details {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding-top: 12px;
+    margin-top: auto;
+    border-top: 1px solid var(--color-border);
+  }
+
+  .detail-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    color: var(--color-text-body);
+  }
+
+  .detail-row span {
+    font-weight: 500;
+    color: var(--color-text-muted);
+  }
+
+  :root[data-theme="light"] .detail-row span {
+    color: #374151;
+  }
+
+  .detail-row strong {
+    font-weight: var(--fw-bold);
+    color: var(--color-text-body);
+  }
+
+  :root[data-theme="light"] .detail-row strong {
+    color: #000;
+  }
+
+  .country-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    justify-content: flex-end;
+  }
+
+  .country-badge {
+    padding: 1px 4px;
+    font-size: 0.7rem;
+    font-weight: var(--fw-bold);
+    color: var(--color-primary);
+    background: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border);
+    border-radius: 3px;
+  }
+
+  :root[data-theme="light"] .country-badge {
+    color: #fff;
+    background: #374151; /* High contrast badge */
+    border-color: #1f2937;
+  }
+
+  .insight-card.security .insight-value {
+    color: var(--color-accent);
+  }
+
+  :root[data-theme="light"] .insight-card.security .insight-value {
+    color: #b91c1c; /* High contrast red */
+  }
+
+  .color-warning {
+    color: #f59e0b !important;
+  }
+
+  :root[data-theme="light"] .color-warning {
+    color: #92400e !important;
+  }
+
+  .color-danger {
+    color: #ef4444 !important;
+  }
+
+  :root[data-theme="light"] .color-danger {
+    color: #991b1b !important;
+  }
+
+  .color-info {
+    color: #3b82f6 !important;
+  }
+
+  :root[data-theme="light"] .color-info {
+    color: #1e40af !important;
+  }
+
+  .color-success {
+    color: #10b981 !important;
+  }
+
+  :root[data-theme="light"] .color-success {
+    color: #065f46 !important;
   }
 </style>

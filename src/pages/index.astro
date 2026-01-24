@@ -57,12 +57,6 @@ const personSchema = {
     ...(person.worksFor.url && { url: person.worksFor.url }),
   },
 };
-
-// Filter social links for hero section (GitHub and Mastodon)
-const heroSocialLinks =
-  siteData.social_links?.filter(
-    (link) => link.name === "GitHub" || link.name === "Mastodon",
-  ) || [];
 ---
 
 <BaseLayout
