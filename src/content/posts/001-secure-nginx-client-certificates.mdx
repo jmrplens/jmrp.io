@@ -1072,6 +1072,11 @@ http {
     limit_req_zone $limit_req_whitelist zone=req_limit_per_ip:10m rate=5r/s;
 
     server {
+        # IMPORTANT: To allow unauthenticated clients to reach this logic,
+        # you must set 'ssl_verify_client optional' instead of 'on'.
+        # If set to 'on', Nginx rejects the handshake before the rate limiter runs.
+        ssl_verify_client optional;
+
         # 3. Apply the limit
         limit_req zone=req_limit_per_ip burst=10 nodelay;
         

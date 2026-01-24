@@ -231,7 +231,6 @@ location ~* ^/(config|admin|administrator|login|cgi-bin|scripts|shell|cmd|consol
 
 # Catch-all for dotfiles (excluding .well-known)
 location ~ /\.(?!well-known) {
-    deny all;
     return 418;
 }
 ```

@@ -9,6 +9,64 @@ import ServiceStats from "@components/services/ServiceStats";
 import BaseLayout from "@layouts/BaseLayout.astro";
 import { getSiteUrl } from "@utils/site";
 
+const services: {
+  id: string;
+  name: string;
+  title: string;
+  icon: string;
+  description: string;
+  url: string;
+  linkText: string;
+  statsType: "mastodon" | "matrix" | "meshtastic-combined";
+  provider: { "@type": string; name: string };
+}[] = [
+  {
+    id: "mastodon",
+    name: "Mastodon Instance",
+    title: "Mastodon",
+    icon: "fa-brands:mastodon",
+    description:
+      "A decentralized social network server. Part of the Fediverse.",
+    url: "https://mstdn.jmrp.io/",
+    linkText: "Visit mstdn.jmrp.io",
+    statsType: "mastodon",
+    provider: {
+      "@type": "Person",
+      name: "José Manuel Requena Plens",
+    },
+  },
+  {
+    id: "matrix",
+    name: "Matrix Homeserver",
+    title: "Matrix",
+    icon: "simple-icons:matrix",
+    description:
+      "Secure, decentralized communication. My Server: matrix.jmrp.io",
+    url: "https://matrix.to/#/@jmrplens:matrix.jmrp.io",
+    linkText: "Chat on Matrix",
+    statsType: "matrix",
+    provider: {
+      "@type": "Person",
+      name: "José Manuel Requena Plens",
+    },
+  },
+  {
+    id: "meshtastic",
+    name: "Meshtastic Infrastructure",
+    title: "Meshtastic",
+    icon: "fa-solid:broadcast-tower",
+    description:
+      "Infrastructure for the Meshtastic mesh network. Includes Map, Node Database, and Network Monitors.",
+    url: "https://mesh.jmrp.io",
+    linkText: "Open Mesh Hub",
+    statsType: "meshtastic-combined",
+    provider: {
+      "@type": "Person",
+      name: "José Manuel Requena Plens",
+    },
+  },
+];
+
 const servicesSchema = {
   "@context": "https://schema.org",
   "@type": "CollectionPage",
@@ -17,40 +75,13 @@ const servicesSchema = {
     new URL(Astro.url.pathname, getSiteUrl()),
   ).toString(),
   name: "Homelab Infrastructure",
-  hasPart: [
-    {
-      "@type": "Service",
-      name: "Mastodon Instance",
-      description:
-        "A decentralized social network server. Part of the Fediverse.",
-      url: "https://mstdn.jmrp.io/",
-      provider: {
-        "@type": "Person",
-        name: "José Manuel Requena Plens",
-      },
-    },
-    {
-      "@type": "Service",
-      name: "Matrix Homeserver",
-      description: "Secure, decentralized communication.",
-      url: "https://matrix.to/#/@jmrplens:matrix.jmrp.io",
-      provider: {
-        "@type": "Person",
-        name: "José Manuel Requena Plens",
-      },
-    },
-    {
-      "@type": "Service",
-      name: "Meshtastic Infrastructure",
-      description:
-        "Infrastructure for the Meshtastic mesh network. Includes Map, Node Database, and Network Monitors.",
-      url: "https://mesh.jmrp.io",
-      provider: {
-        "@type": "Person",
-        name: "José Manuel Requena Plens",
-      },
-    },
-  ],
+  hasPart: services.map((service) => ({
+    "@type": "Service",
+    name: service.name,
+    description: service.description,
+    url: service.url,
+    provider: service.provider,
+  })),
 };
 ---
 
@@ -69,65 +100,35 @@ const servicesSchema = {
       </p>
 
       <div class="services-grid">
-        <ServiceCard
-          title="Mastodon"
-          icon="fa-brands:mastodon"
-          description="A decentralized social network server. Part of the Fediverse."
-          link="https://mstdn.jmrp.io/"
-          linkText="Visit mstdn.jmrp.io"
-        >
-          <div
-            id="mastodon-stats"
-            class="stats-container"
-          >
-            <ServiceStats
-              client:visible
-              type="mastodon"
-            />
-          </div>
-        </ServiceCard>
-
-        <ServiceCard
-          title="Matrix"
-          icon="simple-icons:matrix"
-          description="Secure, decentralized communication. My Server: matrix.jmrp.io"
-          link="https://matrix.to/#/@jmrplens:matrix.jmrp.io"
-          linkText="Chat on Matrix"
-        >
-          <div
-            slot="extra"
-            class="user-info"
-          >
-            User: <code>@jmrplens:matrix.jmrp.io</code>
-          </div>
-          <div
-            id="matrix-stats"
-            class="stats-container"
-          >
-            <ServiceStats
-              client:visible
-              type="matrix"
-            />
-          </div>
-        </ServiceCard>
-
-        <ServiceCard
-          title="Meshtastic"
-          icon="fa-solid:broadcast-tower"
-          description="Infrastructure for the Meshtastic mesh network. Includes Map, Node Database, and Network Monitors."
-          link="https://mesh.jmrp.io"
-          linkText="Open Mesh Hub"
-        >
-          <div
-            id="meshtastic-stats"
-            class="stats-container"
-          >
-            <ServiceStats
-              client:visible
-              type="meshtastic-combined"
-            />
-          </div>
-        </ServiceCard>
+        {
+          services.map((service) => (
+            <ServiceCard
+              title={service.title}
+              icon={service.icon}
+              description={service.description}
+              link={service.url}
+              linkText={service.linkText}
+            >
+              {service.id === "matrix" && (
+                <div
+                  slot="extra"
+                  class="user-info"
+                >
+                  User: <code>@jmrplens:matrix.jmrp.io</code>
+                </div>
+              )}
+              <div
+                id={`${service.id}-stats`}
+                class="stats-container"
+              >
+                <ServiceStats
+                  client:visible
+                  type={service.statsType}
+                />
+              </div>
+            </ServiceCard>
+          ))
+        }
       </div>
     </div>
   </section>
@@ -280,8 +281,8 @@ const servicesSchema = {
 
   .brand-matrix {
     padding: 2px;
-    color: #000;
-    background: white;
+    color: var(--color-text, #000);
+    background: var(--color-bg, #fff);
     border-radius: 50%;
   }
 

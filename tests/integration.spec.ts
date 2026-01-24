@@ -3,7 +3,7 @@
  *
  * Tests user flows and page interactions across the site:
  * - Navigation flows (Home → Blog → Post)
- * - Page content verification (CV sections, Services)
+ * - Page content verification (CV sections, Homelab)
  * - Component rendering (GitHub repos, Publications)
  * - Cross-page functionality
  */

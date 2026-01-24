@@ -44,16 +44,30 @@ const { repo } = Astro.props;
     }
     {
       repo.stargazers_count > 0 && (
-        <div class="meta-item">
-          <Icon name="fa-solid:star" />
+        <div
+          class="meta-item"
+          role="img"
+          aria-label={`${repo.stargazers_count} stars`}
+        >
+          <Icon
+            name="fa-solid:star"
+            aria-hidden="true"
+          />
           {repo.stargazers_count}
         </div>
       )
     }
     {
       repo.forks_count > 0 && (
-        <div class="meta-item">
-          <Icon name="fa-solid:code-branch" />
+        <div
+          class="meta-item"
+          role="img"
+          aria-label={`${repo.forks_count} forks`}
+        >
+          <Icon
+            name="fa-solid:code-branch"
+            aria-hidden="true"
+          />
           {repo.forks_count}
         </div>
       )

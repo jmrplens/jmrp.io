@@ -945,6 +945,16 @@ const RATE_LIMIT_WINDOW = 10 * 60 * 1000; // 10 minutes
 // In-memory cache for rate limiting: { "ip:blocked-uri": last_timestamp }
 const reportCache = new Map();
 
+// Periodic cleanup of reportCache
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, timestamp] of reportCache.entries()) {
+    if (now - timestamp > RATE_LIMIT_WINDOW) {
+      reportCache.delete(key);
+    }
+  }
+}, RATE_LIMIT_WINDOW);
+
 const server = http.createServer((req, res) => {
   if (req.method === "POST" && req.url === "/") {
     let body = "";
@@ -979,7 +989,9 @@ function processReport(report, req) {
   
   // 1. Log to file
   const logEntry = JSON.stringify({ timestamp: new Date(), ip, report }) + "\n";
-  fs.appendFile(LOG_FILE, logEntry, () => {});
+  fs.appendFile(LOG_FILE, logEntry, (err) => {
+    if (err) console.error("Failed to write to log file:", err);
+  });
 
   // 2. Check Rate Limit
   const cacheKey = `${ip}:${blockedUri}`;
@@ -993,15 +1005,24 @@ function processReport(report, req) {
   sendToTelegram(report, ip);
 }
 
+function escapeHtml(unsafe) {
+  return (unsafe || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 function sendToTelegram(report, ip) {
   if (!TELEGRAM_BOT_TOKEN) return;
   
   const r = report["csp-report"] || report;
   const caption = `🛡️ <b>CSP Violation</b>\n` +
-    `🌐 IP: <code>${ip}</code>\n` +
-    `🚫 Blocked: <code>${r["blocked-uri"]}</code>\n` +
-    `📄 Doc: <code>${r["document-uri"]}</code>\n` +
-    `🛠️ Directive: <code>${r["violated-directive"]}</code>`;
+    `🌐 IP: <code>${escapeHtml(ip)}</code>\n` +
+    `🚫 Blocked: <code>${escapeHtml(r["blocked-uri"])}</code>\n` +
+    `📄 Doc: <code>${escapeHtml(r["document-uri"])}</code>\n` +
+    `🛠️ Directive: <code>${escapeHtml(r["violated-directive"])}</code>`;
 
   const boundary = "----WebKitFormBoundary" + Math.random().toString(36).slice(2);
   const jsonReport = JSON.stringify(report, null, 2);
@@ -1023,6 +1044,17 @@ function sendToTelegram(report, ip) {
         "Content-Length": payload.length
     }
   });
+
+  req.on('error', (e) => {
+    console.error(`Problem sending to Telegram: ${e.message}`);
+  });
+
+  req.on('response', (res) => {
+    if (res.statusCode < 200 || res.statusCode >= 300) {
+      console.error(`Telegram API responded with status: ${res.statusCode}`);
+    }
+  });
+
   req.write(payload);
   req.end();
 }
@@ -1046,9 +1078,11 @@ Type=simple
 User=www-data
 ExecStart=/usr/bin/node /opt/scripts/csp-reporter.mjs
 Restart=always
-# Environment variables for Telegram
-Environment="TELEGRAM_BOT_TOKEN=123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11"
-Environment="TELEGRAM_CHAT_ID=987654321"
+# Store secrets in a separate file with restricted permissions (chmod 600, owned by root)
+# Content of /etc/csp-reporter/secrets.env:
+# TELEGRAM_BOT_TOKEN=123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11
+# TELEGRAM_CHAT_ID=987654321
+EnvironmentFile=/etc/csp-reporter/secrets.env
 
 [Install]
 WantedBy=multi-user.target

@@ -49,15 +49,20 @@ const GITHUB_TOKEN: string | undefined = import.meta.env.GITHUB_TOKEN as
   | string
   | undefined; // Optional, for rate limits
 
+function getGitHubHeaders(): HeadersInit {
+  const headers: HeadersInit = {};
+  if (GITHUB_TOKEN) {
+    headers.Authorization = `token ${GITHUB_TOKEN}`;
+  }
+  return headers;
+}
+
 /**
  * Fetches the public GitHub profile data for the configured user.
  * Implements a fallback to local data if the API is unreachable or rate-limited.
  */
 export async function fetchGitHubProfile(): Promise<GitHubProfile> {
-  const headers: HeadersInit = {};
-  if (GITHUB_TOKEN) {
-    headers.Authorization = `token ${GITHUB_TOKEN}`;
-  }
+  const headers = getGitHubHeaders();
 
   try {
     const res = await fetch(`https://api.github.com/users/${USERNAME}`, {
@@ -89,10 +94,7 @@ export async function fetchGitHubProfile(): Promise<GitHubProfile> {
  * Fetches the top repositories for the configured user, sorted by last update.
  */
 export async function fetchTopRepositories(limit = 12): Promise<GitHubRepo[]> {
-  const headers: HeadersInit = {};
-  if (GITHUB_TOKEN) {
-    headers.Authorization = `token ${GITHUB_TOKEN}`;
-  }
+  const headers = getGitHubHeaders();
 
   try {
     const res = await fetch(
@@ -117,37 +119,29 @@ export async function fetchTopRepositories(limit = 12): Promise<GitHubRepo[]> {
 export async function fetchRepositoriesByName(
   repoNames: string[],
 ): Promise<GitHubRepo[]> {
-  const headers: HeadersInit = {};
-  if (GITHUB_TOKEN) {
-    headers.Authorization = `token ${GITHUB_TOKEN}`;
-  }
+  const headers = getGitHubHeaders();
 
-  try {
-    const promises = repoNames.map(async (name) => {
-      try {
-        const res = await fetch(
-          `https://api.github.com/repos/${USERNAME}/${name}`,
-          {
-            headers,
-          },
-        );
-        if (!res.ok) {
-          console.warn(`Failed to fetch repo ${name}: ${res.status}`);
-          return null;
-        }
-        return (await res.json()) as GitHubRepo;
-      } catch (error) {
-        console.warn(`Error fetching repo ${name}:`, error);
+  const promises = repoNames.map(async (name) => {
+    try {
+      const res = await fetch(
+        `https://api.github.com/repos/${USERNAME}/${name}`,
+        {
+          headers,
+        },
+      );
+      if (!res.ok) {
+        console.warn(`Failed to fetch repo ${name}: ${res.status}`);
         return null;
       }
-    });
+      return (await res.json()) as GitHubRepo;
+    } catch (error) {
+      console.warn(`Error fetching repo ${name}:`, error);
+      return null;
+    }
+  });
 
-    const results = await Promise.all(promises);
-    return results.filter((r): r is GitHubRepo => r !== null);
-  } catch (error) {
-    console.warn("Failed to fetch GitHub repos by name:", error);
-    return [];
-  }
+  const results = await Promise.all(promises);
+  return results.filter((r): r is GitHubRepo => r !== null);
 }
 
 /**

@@ -109,28 +109,30 @@ const heroSocialLinks =
           href="/cv/"
           class="btn btn-primary"
           aria-label="View my professional curriculum vitae"
-          >View CV</a
         >
-        {
-          heroSocialLinks.map((link) => (
-            <a
-              href={link.url}
-              target="_blank"
-              rel={link.rel || "noopener noreferrer"}
-              class="btn btn-outline"
-              aria-label={`View my ${link.name} profile`}
-            >
-              {link.icon && <Icon name={link.icon} />}
-              {link.name}
-            </a>
-          ))
-        }
+          <Icon name="fa-solid:file-pdf" /> View CV
+        </a>
         <a
-          href="/services/"
+          href="/blog/"
           class="btn btn-outline"
-          aria-label="View the services I offer"
-          ><Icon name="fa-solid:server" /> Services</a
+          aria-label="Read my blog posts"
         >
+          <Icon name="fa-solid:pen-nib" /> Read Blog
+        </a>
+        <a
+          href="/github/"
+          class="btn btn-outline"
+          aria-label="View my projects on GitHub"
+        >
+          <Icon name="fa-brands:github" /> Projects
+        </a>
+        <a
+          href="/homelab/"
+          class="btn btn-outline"
+          aria-label="View my homelab infrastructure and status"
+        >
+          <Icon name="fa-solid:server" /> Homelab
+        </a>
       </div>
     </div>
   </section>
@@ -312,7 +314,7 @@ const heroSocialLinks =
 
   .grid-layout {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
     gap: var(--space-lg);
   }
 
@@ -320,10 +322,17 @@ const heroSocialLinks =
     font-weight: var(--fw-semibold);
     color: var(--color-primary);
     text-decoration: none;
+    border-radius: 4px;
   }
 
   .btn-link:hover {
     text-decoration: underline;
+  }
+
+  .btn-link:focus-visible {
+    text-decoration: underline;
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
   }
 
   @media (width <= 768px) {

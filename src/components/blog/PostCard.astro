@@ -96,9 +96,12 @@ const { post, loading = "lazy", fetchpriority = "auto" } = Astro.props;
   }
 
   /* Image Card Styles */
+
+  /* Height is supplied by the flex parent's default align-items: stretch */
   .image-container {
     position: relative;
     width: 100%;
+    min-height: 120px; /* Prevent collapse when content is minimal */
     aspect-ratio: 16 / 9;
     overflow: hidden;
   }
@@ -234,7 +237,6 @@ const { post, loading = "lazy", fetchpriority = "auto" } = Astro.props;
       display: block;
       margin-bottom: 0.15rem;
       overflow: visible;
-      -webkit-line-clamp: unset;
       font-size: 1.1rem;
     }
 
