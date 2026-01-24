@@ -15,6 +15,7 @@ import TabPanel from "@components/ui/TabPanel.astro";
 import CompareCode from "@components/ui/CompareCode.astro";
 import FileContent from "@components/ui/FileContent.astro";
 import Table from "@components/ui/Table.astro";
+import TerminalCommand from "@components/ui/TerminalCommand.astro";
 import TerminalOutput from "@components/ui/TerminalOutput.astro";
 import Mermaid from "@components/ui/Mermaid.astro";
 import Code from "@components/ui/Code.astro";
@@ -910,6 +911,185 @@ When a violation occurs, browsers send a JSON report:
     ```
   </TabPanel>
 </Tabs>
+
+### Advanced Reporting: Custom Node.js Service (Pro Tip)
+
+For maximum control and privacy, I use a custom **Node.js microservice** running locally on the server. This setup avoids sending sensitive report data to third parties and allows for real-time alerts via Telegram.
+
+**The Architecture:**
+1. **Nginx** receives the `POST` request at `/csp-report`
+2. **Nginx** proxies it to `http://127.0.0.1:58291` (local Node app)
+3. **Node.js App** validates the JSON, logs it to a file, and sends a formatted alert to a Telegram bot.
+
+#### Step 1: The Reporter Script
+
+Create a lightweight script `csp-reporter.mjs`. This script listens for POST requests, logs them to a file, and uses the Telegram API to send alerts with rate limiting (to avoid spamming you during an attack).
+
+<FileContent filename="/opt/scripts/csp-reporter.mjs" icon="mdi:nodejs" collapsible={true}>
+```javascript
+import fs from "node:fs";
+import http from "node:http";
+import https from "node:https";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
+// Configuration
+const PORT = 58291;
+const LOG_FILE = join(__dirname, "../logs/csp-violations.log");
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
+const RATE_LIMIT_WINDOW = 10 * 60 * 1000; // 10 minutes
+
+// In-memory cache for rate limiting: { "ip:blocked-uri": last_timestamp }
+const reportCache = new Map();
+
+const server = http.createServer((req, res) => {
+  if (req.method === "POST" && req.url === "/") {
+    let body = "";
+    req.on("data", chunk => {
+      // Limit body size to 10KB to prevent DoS
+      if (body.length + chunk.length > 10240) {
+        res.writeHead(413); res.end("Payload Too Large");
+        req.destroy();
+        return;
+      }
+      body += chunk;
+    });
+
+    req.on("end", () => {
+      try {
+        const report = JSON.parse(body);
+        processReport(report, req);
+        res.writeHead(204); res.end();
+      } catch (e) {
+        res.writeHead(400); res.end("Invalid JSON");
+      }
+    });
+  } else {
+    res.writeHead(404); res.end();
+  }
+});
+
+function processReport(report, req) {
+  const r = report["csp-report"] || report;
+  const ip = req.headers["x-real-ip"] || req.socket.remoteAddress;
+  const blockedUri = r["blocked-uri"] || "unknown";
+  
+  // 1. Log to file
+  const logEntry = JSON.stringify({ timestamp: new Date(), ip, report }) + "\n";
+  fs.appendFile(LOG_FILE, logEntry, () => {});
+
+  // 2. Check Rate Limit
+  const cacheKey = `${ip}:${blockedUri}`;
+  const now = Date.now();
+  if (reportCache.get(cacheKey) && (now - reportCache.get(cacheKey) < RATE_LIMIT_WINDOW)) {
+    return; // Skip notification
+  }
+  reportCache.set(cacheKey, now);
+
+  // 3. Send to Telegram
+  sendToTelegram(report, ip);
+}
+
+function sendToTelegram(report, ip) {
+  if (!TELEGRAM_BOT_TOKEN) return;
+  
+  const r = report["csp-report"] || report;
+  const caption = `🛡️ <b>CSP Violation</b>\n` +
+    `🌐 IP: <code>${ip}</code>\n` +
+    `🚫 Blocked: <code>${r["blocked-uri"]}</code>\n` +
+    `📄 Doc: <code>${r["document-uri"]}</code>\n` +
+    `🛠️ Directive: <code>${r["violated-directive"]}</code>`;
+
+  const boundary = "----WebKitFormBoundary" + Math.random().toString(36).slice(2);
+  const jsonReport = JSON.stringify(report, null, 2);
+
+  const payload = Buffer.concat([
+    Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="chat_id"\r\n\r\n${TELEGRAM_CHAT_ID}\r\n`),
+    Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="caption"\r\n\r\n${caption}\r\n`),
+    Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="parse_mode"\r\n\r\nHTML\r\n`),
+    Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="document"; filename="csp-report.json"\r\nContent-Type: application/json\r\n\r\n${jsonReport}\r\n`),
+    Buffer.from(`--${boundary}--\r\n`),
+  ]);
+
+  const req = https.request({
+    hostname: "api.telegram.org",
+    path: `/bot${TELEGRAM_BOT_TOKEN}/sendDocument`,
+    method: "POST",
+    headers: { 
+        "Content-Type": `multipart/form-data; boundary=${boundary}`,
+        "Content-Length": payload.length
+    }
+  });
+  req.write(payload);
+  req.end();
+}
+
+server.listen(PORT, "127.0.0.1", () => console.log(`Reporter listening on ${PORT}`));
+```
+</FileContent>
+
+#### Step 2: Systemd Service
+
+Run it as a background service using Systemd.
+
+<FileContent filename="/etc/systemd/system/csp-reporter.service" icon="mdi:cog">
+```ini
+[Unit]
+Description=CSP Violation Reporter
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+ExecStart=/usr/bin/node /opt/scripts/csp-reporter.mjs
+Restart=always
+# Environment variables for Telegram
+Environment="TELEGRAM_BOT_TOKEN=123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11"
+Environment="TELEGRAM_CHAT_ID=987654321"
+
+[Install]
+WantedBy=multi-user.target
+```
+</FileContent>
+
+Enable and start the service:
+
+<TerminalCommand>
+```bash
+sudo systemctl enable --now csp-reporter
+```
+</TerminalCommand>
+
+#### Step 3: Nginx Proxy Configuration
+
+Finally, tell Nginx to forward reports to your local service.
+
+<FileContent filename="/etc/nginx/sites-available/example.com" icon="devicon:nginx">
+```nginx
+location /csp-report {
+    # Forward the POST request to the local Node.js app
+    proxy_pass http://127.0.0.1:58291/;
+    
+    # Pass client IP so the reporter sees the real attacker
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header Host $host;
+    
+    # Don't log these in Nginx access log (the Node app logs them)
+    access_log off;
+}
+```
+</FileContent>
+
+Now, update your CSP header to point to this relative path:
+
+<Code lang="nginx" aria-label="Updating CSP header with report-uri">
+```
+add_header Content-Security-Policy "... report-uri /csp-report;" always;
+```
+</Code>
 
 ---
 

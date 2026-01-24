@@ -63,9 +63,9 @@ test.describe("Integration Flows", () => {
     await expect(skillsSection).toBeVisible();
   });
 
-  test("Services page loads", async ({ page }) => {
-    await page.goto("/services");
-    await expect(page.locator("h1")).toContainText("Services");
+  test("Homelab page loads", async ({ page }) => {
+    await page.goto("/homelab");
+    await expect(page.locator("h1")).toContainText("Homelab");
   });
 
   test("GitHub page renders repository cards", async ({ page }) => {

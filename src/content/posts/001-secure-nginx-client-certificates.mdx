@@ -1048,6 +1048,45 @@ server {
 
 ---
 
+## Advanced Use Case: Rate Limit Bypass
+
+One often overlooked benefit of mTLS is the ability to trust authenticated clients at the network level. For example, you might want to apply strict **DDoS protection** and **Rate Limiting** to the public internet, but allow your own devices (authenticated via mTLS) to have unlimited access.
+
+You can achieve this in Nginx using a `map` directive to whitelist verified clients.
+
+### Configuration Example
+
+<FileContent filename="/etc/nginx/nginx.conf" icon="devicon:nginx">
+```nginx
+http {
+    # ...
+    
+    # 1. Map the verification status to a rate-limit key
+    map $ssl_client_verify $limit_req_whitelist {
+        "SUCCESS" "";                  # If verified, key is empty (no limit)
+        default   $binary_remote_addr; # Otherwise, limit by IP
+    }
+
+    # 2. Define the zone using the map variable
+    # If $limit_req_whitelist is empty, the request is not counted!
+    limit_req_zone $limit_req_whitelist zone=req_limit_per_ip:10m rate=5r/s;
+
+    server {
+        # 3. Apply the limit
+        limit_req zone=req_limit_per_ip burst=10 nodelay;
+        
+        # ...
+    }
+}
+```
+</FileContent>
+
+<Callout type="keypoint" icon="mdi:speedometer">
+  **How it works:** Nginx `limit_req_zone` ignores any request where the key variable is empty. By mapping `SUCCESS` to an empty string, mTLS-authenticated clients completely bypass the rate limiter, while everyone else is tracked by their IP address.
+</Callout>
+
+---
+
 ## Certificate Revocation: CRL vs OCSP
 
 What happens when a device is lost or compromised? You need to **revoke** its certificate. There are two methods:
