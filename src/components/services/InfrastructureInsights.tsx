@@ -1,4 +1,4 @@
-import { useEffect, useState } from "preact/hooks";
+import { useEffect, useRef, useState } from "preact/hooks";
 
 interface Country {
   code: string;
@@ -20,16 +20,98 @@ interface HomelabStats {
 }
 
 /**
+ * Validates the HomelabStats object.
+ */
+function isValidHomelabStats(data: unknown): data is HomelabStats {
+  if (!data || typeof data !== "object") return false;
+  const d = data as Record<string, unknown>;
+  const requiredNumericFields = [
+    "requests_received_24h",
+    "responses_sent_24h",
+    "upstream_sent_24h",
+    "bandwidth_bytes_1h",
+    "tarpit_hits_24h",
+    "nginx_bans_24h",
+    "mikrotik_scans_total",
+    "rate_limited_503_24h",
+    "cpu_usage_avg",
+    "mem_used_percent",
+  ];
+
+  return (
+    requiredNumericFields.every((field) => typeof d[field] === "number") &&
+    Array.isArray(d.top_security_countries) &&
+    d.top_security_countries.every(
+      (c: unknown) =>
+        c &&
+        typeof c === "object" &&
+        typeof (c as Record<string, unknown>).code === "string" &&
+        typeof (c as Record<string, unknown>).count === "number",
+    )
+  );
+}
+
+/**
  * Formats bytes to a human-readable string.
  * @param bytes - The number of bytes.
  */
 function formatBytes(bytes: number | string) {
   const numBytes = typeof bytes === "string" ? Number.parseFloat(bytes) : bytes;
-  if (!numBytes || numBytes === 0) return "0 B";
+  if (!Number.isFinite(numBytes) || numBytes <= 0) return "0 B";
   const k = 1024;
   const sizes = ["B", "KB", "MB", "GB", "TB"];
   const i = Math.floor(Math.log(numBytes) / Math.log(k));
-  return `${Number.parseFloat((numBytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
+  const clampedI = Math.max(0, Math.min(i, sizes.length - 1));
+  return `${Number.parseFloat((numBytes / Math.pow(k, clampedI)).toFixed(2))} ${sizes[clampedI]}`;
+}
+
+/**
+ * Formats a number as a percentage string.
+ */
+function formatPercent(v: number | string) {
+  const num = typeof v === "string" ? Number.parseFloat(v) : v;
+  return Number.isFinite(num) ? num.toFixed(1) : "...";
+}
+
+type StatusLevel =
+  | "Critical"
+  | "High"
+  | "Elevated"
+  | "Optimal"
+  | "Healthy"
+  | "Unknown";
+
+/**
+ * Returns a status label based on CPU and Memory usage thresholds.
+ */
+function getStatus(
+  cpu: number | undefined,
+  mem: number | undefined,
+  labels: { high: StatusLevel; medium: StatusLevel; normal: StatusLevel },
+): StatusLevel {
+  if (cpu === undefined || mem === undefined) return "Unknown";
+  if (cpu > 90 || mem > 90) return labels.high;
+  if (cpu > 70 || mem > 70) return labels.medium;
+  return labels.normal;
+}
+
+function getStatusColor(status: StatusLevel) {
+  switch (status) {
+    case "Critical": {
+      return "color-danger";
+    }
+    case "Elevated":
+    case "High": {
+      return "color-warning";
+    }
+    case "Healthy":
+    case "Optimal": {
+      return "color-success";
+    }
+    default: {
+      return "";
+    }
+  }
 }
 
 /**
@@ -38,9 +120,17 @@ function formatBytes(bytes: number | string) {
  */
 export default function InfrastructureInsights() {
   const [stats, setStats] = useState<HomelabStats | null>(null);
+  const [error, setError] = useState(false);
+  const isFetchingRef = useRef(false);
 
   useEffect(() => {
+    const controller = new AbortController();
+    // Refresh interval in milliseconds (30 seconds)
+    const REFRESH_INTERVAL = 30_000;
+
     const fetchStats = async () => {
+      if (isFetchingRef.current) return;
+
       if (
         globalThis.window !== undefined &&
         (globalThis.window.location.hostname === "localhost" ||
@@ -49,22 +139,50 @@ export default function InfrastructureInsights() {
         return;
       }
 
+      isFetchingRef.current = true;
       try {
-        const res = await fetch("/api/homelab/stats");
+        const res = await fetch("/api/homelab/stats", {
+          signal: controller.signal,
+        });
         if (res.ok) {
-          const data = (await res.json()) as HomelabStats;
-          setStats(data);
+          const data = (await res.json()) as unknown;
+          if (isValidHomelabStats(data)) {
+            setStats(data);
+            setError(false);
+          } else {
+            console.error("Malformed infrastructure stats received", data);
+            setError(true);
+          }
+        } else {
+          setError(true);
         }
       } catch (error: unknown) {
+        if (error instanceof DOMException && error.name === "AbortError") {
+          return;
+        }
         console.error("Failed to fetch infrastructure stats", error);
+        setError(true);
+      } finally {
+        isFetchingRef.current = false;
       }
     };
 
+    // Initial fetch
     void fetchStats();
+
+    // Set up periodic refresh
+    const intervalId = setInterval(() => {
+      void fetchStats();
+    }, REFRESH_INTERVAL);
+
+    return () => {
+      clearInterval(intervalId);
+      controller.abort();
+    };
   }, []);
 
   const displayVal = (
-    val: number | string | undefined,
+    val: number | undefined,
     formatter?: (v: number | string) => string,
   ) => {
     if (val === undefined || val === null) return "...";
@@ -73,35 +191,70 @@ export default function InfrastructureInsights() {
 
   const countries = stats?.top_security_countries || [];
 
+  const totalSecurityBlocks = stats
+    ? (stats.nginx_bans_24h || 0) +
+      (stats.tarpit_hits_24h || 0) +
+      (stats.mikrotik_scans_total || 0)
+    : null;
+
+  const systemStatus = getStatus(
+    stats?.cpu_usage_avg,
+    stats?.mem_used_percent,
+    {
+      high: "Critical",
+      medium: "Elevated",
+      normal: "Healthy",
+    },
+  );
+
+  const loadStatus = getStatus(stats?.cpu_usage_avg, stats?.mem_used_percent, {
+    high: "Critical",
+    medium: "High",
+    normal: "Optimal",
+  });
+
+  if (error) {
+    return (
+      <section
+        className="infrastructure-section"
+        aria-label="Edge node real-time statistics"
+      >
+        <div className="stats-error">
+          Unable to load infrastructure statistics.
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section
-      class="infrastructure-section"
+      className="infrastructure-section"
       aria-label="Edge node real-time statistics"
     >
-      <div class="insights-grid">
+      <div className="insights-grid">
         <article
-          class="insight-card"
+          className="insight-card"
           aria-labelledby="label-traffic"
         >
           <span
-            class="insight-label"
+            className="insight-label"
             id="label-traffic"
           >
             Requests Received (24h)
           </span>
-          <div class="insight-value">
-            <span class="visually-hidden">
+          <div className="insight-value">
+            <span className="sr-only">
               {displayVal(stats?.requests_received_24h)} requests received
             </span>
             <span aria-hidden="true">
               {displayVal(stats?.requests_received_24h)} <small>handled</small>
             </span>
           </div>
-          <div class="insight-details">
-            <div class="detail-row">
+          <div className="insight-details">
+            <div className="detail-row">
               <span>Responses Sent</span>
               <strong>
-                <span class="visually-hidden">
+                <span className="sr-only">
                   {displayVal(stats?.responses_sent_24h)} responses sent
                 </span>
                 <span aria-hidden="true">
@@ -109,10 +262,10 @@ export default function InfrastructureInsights() {
                 </span>
               </strong>
             </div>
-            <div class="detail-row">
+            <div className="detail-row">
               <span>Upstream (Forwarded)</span>
               <strong>
-                <span class="visually-hidden">
+                <span className="sr-only">
                   {displayVal(stats?.upstream_sent_24h)} requests forwarded
                 </span>
                 <span aria-hidden="true">
@@ -120,10 +273,10 @@ export default function InfrastructureInsights() {
                 </span>
               </strong>
             </div>
-            <div class="detail-row">
+            <div className="detail-row">
               <span>Bandwidth (1h)</span>
               <strong>
-                <span class="visually-hidden">
+                <span className="sr-only">
                   Bandwidth:{" "}
                   {displayVal(stats?.bandwidth_bytes_1h, formatBytes)}
                 </span>
@@ -136,58 +289,46 @@ export default function InfrastructureInsights() {
         </article>
 
         <article
-          class="insight-card security"
+          className="insight-card security"
           aria-labelledby="label-security"
         >
           <span
-            class="insight-label"
+            className="insight-label"
             id="label-security"
           >
             Security & Blocks (24h)
           </span>
-          <div class="insight-value">
-            <span class="visually-hidden">
-              {stats
-                ? (
-                    (stats.nginx_bans_24h || 0) +
-                    (stats.tarpit_hits_24h || 0) +
-                    (stats.mikrotik_scans_total || 0)
-                  ).toLocaleString()
-                : "..."}{" "}
-              total security blocks
+          <div className="insight-value">
+            <span className="sr-only">
+              {totalSecurityBlocks?.toLocaleString() ?? "..."} total security
+              blocks
             </span>
             <span aria-hidden="true">
-              {stats
-                ? (
-                    (stats.nginx_bans_24h || 0) +
-                    (stats.tarpit_hits_24h || 0) +
-                    (stats.mikrotik_scans_total || 0)
-                  ).toLocaleString()
-                : "..."}{" "}
+              {totalSecurityBlocks?.toLocaleString() ?? "..."}{" "}
               <small>blocks</small>
             </span>
           </div>
-          <div class="insight-details">
-            <div class="detail-row">
+          <div className="insight-details">
+            <div className="detail-row">
               <span>Nginx Bans</span>
               <strong>{displayVal(stats?.nginx_bans_24h)}</strong>
             </div>
-            <div class="detail-row">
+            <div className="detail-row">
               <span>Tarpit Hits</span>
               <strong>{displayVal(stats?.tarpit_hits_24h)}</strong>
             </div>
-            <div class="detail-row">
+            <div className="detail-row">
               <span>Port Scanners</span>
               <strong>{displayVal(stats?.mikrotik_scans_total)}</strong>
             </div>
-            <div class="detail-row">
-              <span id="label-attack-regions">Attack Regions</span>
-              <ul class="country-list">
+            <div className="detail-row">
+              <span aria-hidden="true">Attack Regions</span>
+              <ul className="country-list">
                 {countries.length > 0 ? (
                   countries.map((c) => (
                     <li
                       key={c.code}
-                      class="country-badge"
+                      className="country-badge"
                       aria-label={`Region ${c.code} with ${c.count} hits`}
                       title={`${c.count} hits`}
                     >
@@ -195,7 +336,10 @@ export default function InfrastructureInsights() {
                     </li>
                   ))
                 ) : (
-                  <li aria-hidden="true">{stats ? "-" : "..."}</li>
+                  <li>
+                    <span aria-hidden="true">{stats ? "-" : "..."}</span>
+                    <span className="sr-only">No attack regions recorded</span>
+                  </li>
                 )}
               </ul>
             </div>
@@ -203,17 +347,17 @@ export default function InfrastructureInsights() {
         </article>
 
         <article
-          class="insight-card errors"
+          className="insight-card errors"
           aria-labelledby="label-availability"
         >
           <span
-            class="insight-label"
+            className="insight-label"
             id="label-availability"
           >
             Availability (24h)
           </span>
-          <div class="insight-value">
-            <span class="visually-hidden">
+          <div className="insight-value">
+            <span className="sr-only">
               {displayVal(stats?.rate_limited_503_24h)} rate limits
             </span>
             <span aria-hidden="true">
@@ -221,54 +365,53 @@ export default function InfrastructureInsights() {
               <small>rate limits</small>
             </span>
           </div>
-          <div class="insight-details">
-            <div class="detail-row">
-              <span>Rate Limited (503)</span>
-              <strong class="color-info">
-                {displayVal(stats?.rate_limited_503_24h)}
-              </strong>
-            </div>
-            <div class="detail-row">
+          <div className="insight-details">
+            <div className="detail-row">
               <span>System Status</span>
-              <strong class="color-success">Healthy</strong>
+              <strong className={getStatusColor(systemStatus)}>
+                {systemStatus}
+              </strong>
             </div>
           </div>
         </article>
 
         <article
-          class="insight-card hardware"
+          className="insight-card hardware"
           aria-labelledby="label-hardware"
         >
           <span
-            class="insight-label"
+            className="insight-label"
             id="label-hardware"
           >
             Node Resource Load
           </span>
-          <div class="insight-value">
-            <span class="visually-hidden">
-              CPU usage: {stats ? stats.cpu_usage_avg.toFixed(1) : "..."} %
+          <div className="insight-value">
+            <span className="sr-only">
+              CPU usage: {displayVal(stats?.cpu_usage_avg, formatPercent)} %
             </span>
             <span aria-hidden="true">
-              {stats ? stats.cpu_usage_avg.toFixed(1) : "..."}{" "}
+              {displayVal(stats?.cpu_usage_avg, formatPercent)}{" "}
               <small>% CPU</small>
             </span>
           </div>
-          <div class="insight-details">
-            <div class="detail-row">
+          <div className="insight-details">
+            <div className="detail-row">
               <span>Memory Usage</span>
               <strong>
-                <span class="visually-hidden">
-                  Memory: {stats ? stats.mem_used_percent.toFixed(1) : "..."} %
+                <span className="sr-only">
+                  Memory: {displayVal(stats?.mem_used_percent, formatPercent)} %
                 </span>
                 <span aria-hidden="true">
-                  {stats ? stats.mem_used_percent.toFixed(1) : "..."}%
+                  {displayVal(stats?.mem_used_percent, formatPercent)}{" "}
+                  <small>% RAM</small>
                 </span>
               </strong>
             </div>
-            <div class="detail-row">
+            <div className="detail-row">
               <span>Load Status</span>
-              <strong>Optimal</strong>
+              <strong className={getStatusColor(loadStatus)}>
+                {loadStatus}
+              </strong>
             </div>
           </div>
         </article>

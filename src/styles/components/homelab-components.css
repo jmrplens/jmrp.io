@@ -1,0 +1,235 @@
+/* Homelab Global Variables */
+:root {
+  --color-status-online: #10b981;
+  --color-status-online-bg: rgb(16 185 129 / 10%);
+  --color-status-offline: #6b7280;
+  --color-status-offline-bg: rgb(107 114 128 / 10%);
+  --color-status-warning: #f59e0b;
+  --color-status-warning-bg: rgb(245 158 11 / 10%);
+  --color-status-error: #ef4444;
+  --color-status-error-bg: rgb(239 68 68 / 10%);
+  --color-status-unknown: #9ca3af;
+  --color-status-unknown-bg: rgb(156 163 175 / 10%);
+}
+
+/* Light theme overrides */
+:root[data-theme="light"] {
+  --color-status-online: #065f46;
+  --color-status-online-bg: #dcfce7;
+  --color-status-offline: #374151;
+  --color-status-offline-bg: #f3f4f6;
+  --color-status-warning: #92400e;
+  --color-status-warning-bg: #fef3c7;
+  --color-status-error: #991b1b;
+  --color-status-error-bg: #fee2e2;
+  --color-status-unknown: #4b5563;
+  --color-status-unknown-bg: rgb(75 85 99 / 10%);
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --color-status-online: #065f46;
+    --color-status-online-bg: #dcfce7;
+    --color-status-offline: #374151;
+    --color-status-offline-bg: #f3f4f6;
+    --color-status-warning: #92400e;
+    --color-status-warning-bg: #fef3c7;
+    --color-status-error: #991b1b;
+    --color-status-error-bg: #fee2e2;
+    --color-status-unknown: #4b5563;
+    --color-status-unknown-bg: rgb(75 85 99 / 10%);
+  }
+}
+
+/* Infrastructure Insights Grid */
+.insights-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--space-md);
+  margin-bottom: var(--space-xl);
+}
+
+.insight-card {
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-md);
+  background: var(--color-bg-secondary);
+  border: var(--border-1);
+  border-radius: var(--radius-md);
+  transition: transform 0.2s ease;
+}
+
+.insight-card:hover {
+  transform: translateY(-2px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .insight-card {
+    transition: none;
+  }
+
+  .insight-card:hover {
+    transform: none;
+  }
+}
+
+.insight-label {
+  font-size: 0.75rem;
+  font-weight: var(--fw-bold);
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+:root[data-theme="light"] .insight-label {
+  color: var(--color-text-body);
+}
+
+.insight-value {
+  margin: var(--space-xs) 0 var(--space-md);
+  font-size: 1.6rem;
+  font-weight: var(--fw-bold);
+  color: var(--color-primary);
+}
+
+:root[data-theme="light"] .insight-value {
+  color: #000;
+}
+
+.insight-value small {
+  font-size: 0.9rem;
+  font-weight: var(--fw-semibold);
+  color: var(--color-text-muted);
+  opacity: 100%;
+}
+
+:root[data-theme="light"] .insight-value small {
+  color: #374151;
+}
+
+.insight-details {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 12px;
+  margin-top: auto;
+  border-top: 1px solid var(--color-border);
+}
+
+.detail-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: var(--color-text-body);
+}
+
+.detail-row span {
+  font-weight: var(--fw-medium);
+  color: var(--color-text-muted);
+}
+
+:root[data-theme="light"] .detail-row span {
+  color: #374151;
+}
+
+.detail-row strong {
+  font-weight: var(--fw-bold);
+  color: var(--color-text-body);
+}
+
+:root[data-theme="light"] .detail-row strong {
+  color: #000;
+}
+
+.country-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  justify-content: flex-end;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.country-badge {
+  padding: 1px 4px;
+  font-size: 0.7rem;
+  font-weight: var(--fw-bold);
+  color: var(--color-primary);
+  background: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border);
+  border-radius: 3px;
+}
+
+:root[data-theme="light"] .country-badge {
+  color: #fff;
+  background: #374151;
+  border-color: #1f2937;
+}
+
+.insight-card.security .insight-value {
+  color: var(--color-accent);
+}
+
+:root[data-theme="light"] .insight-card.security .insight-value {
+  color: #b91c1c;
+}
+
+/* Color utility classes - using variables only */
+.color-warning {
+  color: var(--color-status-warning);
+}
+
+.color-danger {
+  color: var(--color-status-error);
+}
+
+.color-info {
+  color: #3b82f6; /* Fallback for blue info */
+}
+
+:root[data-theme="light"] .color-info {
+  color: #1e40af;
+}
+
+.color-success {
+  color: var(--color-status-online);
+}
+
+/* Consolidated Light Mode Overrides for System Preference */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) .insight-label {
+    color: var(--color-text-body);
+  }
+
+  :root:not([data-theme="dark"]) .insight-value {
+    color: #000;
+  }
+
+  :root:not([data-theme="dark"]) .insight-value small {
+    color: #374151;
+  }
+
+  :root:not([data-theme="dark"]) .detail-row span {
+    color: #374151;
+  }
+
+  :root:not([data-theme="dark"]) .detail-row strong {
+    color: #000;
+  }
+
+  :root:not([data-theme="dark"]) .country-badge {
+    color: #fff;
+    background: #374151;
+    border-color: #1f2937;
+  }
+
+  :root:not([data-theme="dark"]) .insight-card.security .insight-value {
+    color: var(--color-status-error);
+  }
+
+  :root:not([data-theme="dark"]) .color-info {
+    color: #1e40af;
+  }
+}

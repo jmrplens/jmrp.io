@@ -37,6 +37,7 @@ const { repo } = Astro.props;
           <span
             class="lang-dot"
             style={`background-color: ${langColors[repo.language] || "#ccc"}`}
+            aria-hidden="true"
           />
           {repo.language}
         </div>
@@ -44,31 +45,30 @@ const { repo } = Astro.props;
     }
     {
       repo.stargazers_count > 0 && (
-        <div
-          class="meta-item"
-          role="img"
-          aria-label={`${repo.stargazers_count} stars`}
-        >
+        <div class="meta-item">
+          <span class="sr-only">
+            {repo.stargazers_count}{" "}
+            {repo.stargazers_count === 1 ? "star" : "stars"}
+          </span>
           <Icon
             name="fa-solid:star"
             aria-hidden="true"
           />
-          {repo.stargazers_count}
+          <span aria-hidden="true">{repo.stargazers_count}</span>
         </div>
       )
     }
     {
       repo.forks_count > 0 && (
-        <div
-          class="meta-item"
-          role="img"
-          aria-label={`${repo.forks_count} forks`}
-        >
+        <div class="meta-item">
+          <span class="sr-only">
+            {repo.forks_count} {repo.forks_count === 1 ? "fork" : "forks"}
+          </span>
           <Icon
             name="fa-solid:code-branch"
             aria-hidden="true"
           />
-          {repo.forks_count}
+          <span aria-hidden="true">{repo.forks_count}</span>
         </div>
       )
     }
@@ -76,6 +76,30 @@ const { repo } = Astro.props;
 </div>
 
 <style>
+  /* Accessibility: Screen reader only class with focus override */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    white-space: nowrap;
+    border-width: 0;
+    clip-path: inset(50%);
+  }
+
+  .sr-only:focus,
+  .sr-only:active {
+    position: static;
+    width: auto;
+    height: auto;
+    margin: 0;
+    overflow: visible;
+    white-space: normal;
+    clip-path: none;
+  }
+
   .repo-card {
     display: flex;
     flex-direction: column;

@@ -29,18 +29,22 @@ const person = siteData.person || {
   worksFor: { name: "Power Electronics" },
 };
 
-// Fetch latest posts
-const latestPosts = (await getCollection("posts"))
+// Fetch data concurrently with error handling for external API
+const [allPosts, featuredProjects] = await Promise.all([
+  getCollection("posts"),
+  fetchRepositoriesByName(siteData.featured_projects || []).catch((error) => {
+    console.error("Failed to fetch featured projects:", error);
+    return [];
+  }),
+]);
+
+// Process posts
+const latestPosts = allPosts
   .filter((p) => !p.data.draft)
   .sort(
     (a, b) => b.data.publishedDate.valueOf() - a.data.publishedDate.valueOf(),
   )
   .slice(0, 3);
-
-// Fetch featured projects
-const featuredProjects = await fetchRepositoriesByName(
-  siteData.featured_projects || [],
-);
 
 const personSchema = {
   "@context": "https://schema.org",
@@ -290,8 +294,9 @@ const personSchema = {
     border-radius: 2px;
   }
 
-  /* Latest Posts Section */
-  .latest-posts {
+  /* Latest Posts & Featured Projects Section */
+  .latest-posts,
+  .featured-projects {
     padding: var(--space-xl) 0;
   }
 

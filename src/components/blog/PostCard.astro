@@ -139,7 +139,7 @@ const { post, loading = "lazy", fetchpriority = "auto" } = Astro.props;
     z-index: 2; /* Ensure tags are clickable above the card link */
     display: flex;
     gap: 0.5rem;
-    min-height: 1.2em; /* Stabilize for CLS */
+    min-height: 1.25rem; /* Stabilize for CLS (approx 20px) */
   }
 
   .tag {
@@ -159,11 +159,16 @@ const { post, loading = "lazy", fetchpriority = "auto" } = Astro.props;
   }
 
   .post-card h2 {
+    display: -webkit-box;
     min-height: auto; /* Remove fixed height constraint */
     margin-bottom: 0.25rem;
+    overflow: hidden;
+    -webkit-line-clamp: 3;
     font-size: 1.25rem;
     font-weight: 700;
     line-height: 1.3;
+    overflow-wrap: break-word;
+    -webkit-box-orient: vertical;
   }
 
   .main-link {
@@ -217,14 +222,11 @@ const { post, loading = "lazy", fetchpriority = "auto" } = Astro.props;
     .image-container {
       flex-shrink: 0;
       width: 130px; /* Fixed width for image */
-      height: auto; /* Cover full height */
+      height: auto; /* Let flex stretch handle vertical sizing */
       aspect-ratio: unset; /* Override default aspect ratio */
     }
 
     .card-image {
-      position: absolute;
-      top: 0;
-      left: 0;
       height: 100%; /* Stretch to cover container height */
     }
 
@@ -233,10 +235,9 @@ const { post, loading = "lazy", fetchpriority = "auto" } = Astro.props;
     }
 
     .post-card h2 {
+      -webkit-line-clamp: 3;
+
       /* Show full title */
-      display: block;
-      margin-bottom: 0.15rem;
-      overflow: visible;
       font-size: 1.1rem;
     }
 
@@ -248,16 +249,23 @@ const { post, loading = "lazy", fetchpriority = "auto" } = Astro.props;
       -webkit-box-orient: vertical;
     }
 
+    /* Keep footer visible for accessibility and interaction */
     .card-footer {
-      display: none; /* Hide footer on mobile to save space */
+      display: none; /* Hidden visually to save space in horizontal layout */
+    }
+
+    /* Make main link focusable and labelled correctly */
+    .main-link {
+      outline-offset: 2px;
     }
 
     .post-meta {
       margin-bottom: 0.25rem;
     }
 
+    /* Hide tags to save space, but content remains in DOM for readers if needed (or reconsider showing 1) */
     .tags {
-      display: none; /* Keep tags hidden to avoid clutter */
+      display: none;
     }
   }
 

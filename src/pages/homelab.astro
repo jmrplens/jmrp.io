@@ -4,13 +4,16 @@
  * Displays self-hosted services status and details.
  * Uses <ServiceStats> (React) to fetch and display live status.
  */
+import "@styles/components/service-stats.css";
+import "@styles/components/homelab-components.css";
+
 import InfrastructureInsights from "@components/services/InfrastructureInsights";
 import ServiceCard from "@components/services/ServiceCard.astro";
 import ServiceStats from "@components/services/ServiceStats";
 import BaseLayout from "@layouts/BaseLayout.astro";
 import { getSiteUrl } from "@utils/site";
 
-const services: {
+interface Service {
   id: string;
   name: string;
   title: string;
@@ -20,7 +23,15 @@ const services: {
   linkText: string;
   statsType: "mastodon" | "matrix" | "meshtastic-combined";
   provider: { "@type": string; name: string };
-}[] = [
+  userInfo?: string;
+}
+
+const defaultProvider = {
+  "@type": "Person",
+  name: "José Manuel Requena Plens",
+};
+
+const services: Service[] = [
   {
     id: "mastodon",
     name: "Mastodon Instance",
@@ -31,10 +42,7 @@ const services: {
     url: "https://mstdn.jmrp.io/",
     linkText: "Visit mstdn.jmrp.io",
     statsType: "mastodon",
-    provider: {
-      "@type": "Person",
-      name: "José Manuel Requena Plens",
-    },
+    provider: defaultProvider,
   },
   {
     id: "matrix",
@@ -46,10 +54,8 @@ const services: {
     url: "https://matrix.to/#/@jmrplens:matrix.jmrp.io",
     linkText: "Chat on Matrix",
     statsType: "matrix",
-    provider: {
-      "@type": "Person",
-      name: "José Manuel Requena Plens",
-    },
+    provider: defaultProvider,
+    userInfo: "@jmrplens:matrix.jmrp.io",
   },
   {
     id: "meshtastic",
@@ -61,10 +67,7 @@ const services: {
     url: "https://mesh.jmrp.io",
     linkText: "Open Mesh Hub",
     statsType: "meshtastic-combined",
-    provider: {
-      "@type": "Person",
-      name: "José Manuel Requena Plens",
-    },
+    provider: defaultProvider,
   },
 ];
 
@@ -110,12 +113,12 @@ const servicesSchema = {
               link={service.url}
               linkText={service.linkText}
             >
-              {service.id === "matrix" && (
+              {service.userInfo && (
                 <div
                   slot="extra"
                   class="user-info"
                 >
-                  User: <code>@jmrplens:matrix.jmrp.io</code>
+                  User: <code>{service.userInfo}</code>
                 </div>
               )}
               <div
@@ -133,7 +136,12 @@ const servicesSchema = {
       </div>
 
       <div class="infrastructure-insights">
-        <h2 class="section-subtitle">Edge Node Security & Analytics</h2>
+        <h2
+          class="section-subtitle"
+          id="edge-node-security-analytics"
+        >
+          Edge Node Security & Analytics
+        </h2>
         <InfrastructureInsights client:visible />
       </div>
     </div>
@@ -193,394 +201,5 @@ const servicesSchema = {
     background: transparent;
     border: none;
     border-radius: var(--radius-sm);
-  }
-</style>
-
-<style is:global>
-  /* CSS Variable for status color */
-  :root {
-    --color-status-online: #10b981;
-    --color-status-online-bg: rgb(16 185 129 / 10%);
-  }
-
-  /* Accessibility: Higher contrast for light mode */
-  :root[data-theme="light"] {
-    --color-status-online: #065f46;
-    --color-status-online-bg: #dcfce7;
-  }
-
-  @media (prefers-color-scheme: light) {
-    :root:not([data-theme]) {
-      --color-status-online: #065f46;
-      --color-status-online-bg: #dcfce7;
-    }
-  }
-
-  /* Styling for React ServiceStats component */
-  .stats-wrapper-col {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-  }
-
-  .stats-wrapper-small-gap {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-  }
-
-  /* Status Header */
-  .status-header {
-    display: flex;
-    gap: 1rem;
-    align-items: center;
-    font-size: 0.9em;
-  }
-
-  .status-badge {
-    display: flex;
-    gap: 0.4rem;
-    align-items: center;
-    padding: 2px 8px;
-    color: var(--color-status-online);
-    background: var(--color-status-online-bg);
-    border-radius: 12px;
-  }
-
-  .status-dot {
-    width: 6px;
-    height: 6px;
-    background: var(--color-status-online);
-    border-radius: 50%;
-  }
-
-  .status-text-muted {
-    color: var(--color-text-muted);
-  }
-
-  .status-text {
-    color: var(--color-text);
-  }
-
-  /* Grids */
-  .server-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-    gap: 0.5rem;
-    width: 100%;
-  }
-
-  .component-row {
-    display: flex;
-    gap: 0.5rem;
-    align-items: center;
-    padding: 0.4rem 0.6rem;
-    background: var(--color-bg);
-    border: var(--border-1);
-    border-radius: 6px;
-  }
-
-  .component-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 20px;
-    height: 20px;
-  }
-
-  .brand-mastodon {
-    color: #6364ff;
-  }
-
-  .brand-matrix {
-    padding: 2px;
-    color: var(--color-text, #000);
-    background: var(--color-bg, #fff);
-    border-radius: 50%;
-  }
-
-  .component-info {
-    display: flex;
-    flex-direction: column;
-    line-height: 1.1;
-  }
-
-  .component-name {
-    font-size: 0.75em;
-    font-weight: 500;
-    color: var(--color-text-muted);
-  }
-
-  .component-version {
-    font-size: 0.85em;
-    font-weight: bold;
-    color: var(--color-text);
-  }
-
-  /* Trends */
-  .trending-header {
-    margin: 0 0 0.5rem;
-    font-size: 0.8em;
-    color: var(--color-text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-
-  .trending-grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-  }
-
-  .stat-btn-filled {
-    display: inline-flex;
-    gap: 0.25rem;
-    align-items: center;
-    padding: 0.25rem 0.5rem;
-    font-size: 0.8em;
-    color: var(--color-text);
-    background: var(--color-bg-secondary);
-    border: var(--border-1);
-    border-radius: var(--radius-md);
-  }
-
-  .stat-btn-filled:hover {
-    text-decoration: none;
-    background: var(--color-border);
-  }
-
-  .opacity-60 {
-    opacity: 60%;
-  }
-
-  /* Meshtastic Rows */
-  .meshtastic-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-
-  .meshtastic-left {
-    display: flex;
-    align-items: center;
-  }
-
-  .status-dot-inline {
-    display: inline-block;
-    width: 8px;
-    height: 8px;
-    margin-right: 6px;
-    background: var(--color-status-online);
-    border-radius: 50%;
-  }
-
-  .meshtastic-title {
-    display: block;
-    font-size: 0.95em;
-    line-height: 1.2;
-  }
-
-  .meshtastic-sub {
-    font-size: 0.85em;
-    color: var(--color-text-muted);
-  }
-
-  .meshtastic-ver {
-    margin-left: 4px;
-    opacity: 70%;
-  }
-
-  .stats-error,
-  .stats-loading {
-    width: 100%;
-    padding: 1rem;
-    font-style: italic;
-    color: var(--color-text-muted);
-    text-align: center;
-  }
-
-  .stats-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 0.5rem;
-    width: 100%;
-  }
-
-  .stat-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 0.5rem;
-    text-align: center;
-    background: var(--color-bg);
-    border: var(--border-1);
-    border-radius: 4px;
-  }
-
-  .stat-value {
-    font-size: 1.1em;
-    font-weight: 700;
-    color: var(--color-primary);
-  }
-
-  .stat-label {
-    font-size: 0.75em;
-    color: var(--color-text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-
-  /* Infrastructure Insights Grid */
-  .insights-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: var(--space-md);
-    margin-bottom: var(--space-xl);
-  }
-
-  .insight-card {
-    display: flex;
-    flex-direction: column;
-    padding: var(--space-md);
-    background: var(--color-bg-secondary);
-    border: var(--border-1);
-    border-radius: var(--radius-md);
-    transition: transform 0.2s ease;
-  }
-
-  .insight-card:hover {
-    transform: translateY(-2px);
-  }
-
-  .insight-label {
-    font-size: 0.7rem;
-    font-weight: var(--fw-bold); /* Increased weight for contrast */
-    color: var(--color-text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-
-  :root[data-theme="light"] .insight-label {
-    color: var(--color-text-body); /* Darker color in light mode */
-  }
-
-  .insight-value {
-    margin: 4px 0 12px;
-    font-size: 1.6rem;
-    font-weight: var(--fw-bold);
-    color: var(--color-primary);
-  }
-
-  :root[data-theme="light"] .insight-value {
-    color: #000; /* Maximum contrast for the main value */
-  }
-
-  .insight-value small {
-    font-size: 0.9rem;
-    font-weight: var(--fw-semibold); /* Increased weight for contrast */
-    color: var(--color-text-muted);
-    opacity: 100%; /* Reset opacity for better contrast */
-  }
-
-  :root[data-theme="light"] .insight-value small {
-    color: #374151; /* Dark grey for better contrast */
-  }
-
-  .insight-details {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    padding-top: 12px;
-    margin-top: auto;
-    border-top: 1px solid var(--color-border);
-  }
-
-  .detail-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    font-size: 0.85rem;
-    color: var(--color-text-body);
-  }
-
-  .detail-row span {
-    font-weight: 500;
-    color: var(--color-text-muted);
-  }
-
-  :root[data-theme="light"] .detail-row span {
-    color: #374151;
-  }
-
-  .detail-row strong {
-    font-weight: var(--fw-bold);
-    color: var(--color-text-body);
-  }
-
-  :root[data-theme="light"] .detail-row strong {
-    color: #000;
-  }
-
-  .country-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-    justify-content: flex-end;
-  }
-
-  .country-badge {
-    padding: 1px 4px;
-    font-size: 0.7rem;
-    font-weight: var(--fw-bold);
-    color: var(--color-primary);
-    background: var(--color-bg-tertiary);
-    border: 1px solid var(--color-border);
-    border-radius: 3px;
-  }
-
-  :root[data-theme="light"] .country-badge {
-    color: #fff;
-    background: #374151; /* High contrast badge */
-    border-color: #1f2937;
-  }
-
-  .insight-card.security .insight-value {
-    color: var(--color-accent);
-  }
-
-  :root[data-theme="light"] .insight-card.security .insight-value {
-    color: #b91c1c; /* High contrast red */
-  }
-
-  .color-warning {
-    color: #f59e0b !important;
-  }
-
-  :root[data-theme="light"] .color-warning {
-    color: #92400e !important;
-  }
-
-  .color-danger {
-    color: #ef4444 !important;
-  }
-
-  :root[data-theme="light"] .color-danger {
-    color: #991b1b !important;
-  }
-
-  .color-info {
-    color: #3b82f6 !important;
-  }
-
-  :root[data-theme="light"] .color-info {
-    color: #1e40af !important;
-  }
-
-  .color-success {
-    color: #10b981 !important;
-  }
-
-  :root[data-theme="light"] .color-success {
-    color: #065f46 !important;
   }
 </style>

@@ -50,9 +50,11 @@ const GITHUB_TOKEN: string | undefined = import.meta.env.GITHUB_TOKEN as
   | undefined; // Optional, for rate limits
 
 function getGitHubHeaders(): HeadersInit {
-  const headers: HeadersInit = {};
+  const headers: Record<string, string> = {
+    Accept: "application/vnd.github+json",
+  };
   if (GITHUB_TOKEN) {
-    headers.Authorization = `token ${GITHUB_TOKEN}`;
+    headers.Authorization = `Bearer ${GITHUB_TOKEN}`;
   }
   return headers;
 }
@@ -115,33 +117,41 @@ export async function fetchTopRepositories(limit = 12): Promise<GitHubRepo[]> {
 
 /**
  * Fetches specific repositories by name for the configured user.
+ * Deduplicates names and batches requests to be respectful of API limits.
  */
 export async function fetchRepositoriesByName(
   repoNames: string[],
 ): Promise<GitHubRepo[]> {
   const headers = getGitHubHeaders();
+  const uniqueNames = [...new Set(repoNames)];
+  const results: GitHubRepo[] = [];
+  const BATCH_SIZE = 5;
 
-  const promises = repoNames.map(async (name) => {
-    try {
-      const res = await fetch(
-        `https://api.github.com/repos/${USERNAME}/${name}`,
-        {
-          headers,
-        },
-      );
-      if (!res.ok) {
-        console.warn(`Failed to fetch repo ${name}: ${res.status}`);
+  for (let i = 0; i < uniqueNames.length; i += BATCH_SIZE) {
+    const batch = uniqueNames.slice(i, i + BATCH_SIZE);
+
+    const batchPromises = batch.map(async (name) => {
+      try {
+        const res = await fetch(
+          `https://api.github.com/repos/${USERNAME}/${name}`,
+          { headers },
+        );
+        if (!res.ok) {
+          console.warn(`Failed to fetch repo ${name}: ${res.status}`);
+          return null;
+        }
+        return (await res.json()) as GitHubRepo;
+      } catch (error) {
+        console.warn(`Error fetching repo ${name}:`, error);
         return null;
       }
-      return (await res.json()) as GitHubRepo;
-    } catch (error) {
-      console.warn(`Error fetching repo ${name}:`, error);
-      return null;
-    }
-  });
+    });
 
-  const results = await Promise.all(promises);
-  return results.filter((r): r is GitHubRepo => r !== null);
+    const batchResults = await Promise.all(batchPromises);
+    results.push(...(batchResults.filter(Boolean) as GitHubRepo[]));
+  }
+
+  return results;
 }
 
 /**
