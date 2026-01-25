@@ -235,9 +235,8 @@ const { post, loading = "lazy", fetchpriority = "auto" } = Astro.props;
     }
 
     .post-card h2 {
+      /* Clamp title to 3 lines */
       -webkit-line-clamp: 3;
-
-      /* Show full title */
       font-size: 1.1rem;
     }
 
@@ -249,9 +248,17 @@ const { post, loading = "lazy", fetchpriority = "auto" } = Astro.props;
       -webkit-box-orient: vertical;
     }
 
-    /* Keep footer visible for accessibility and interaction */
+    /* Hide footer visually to save space, but keep it accessible to screen readers */
     .card-footer {
-      display: none; /* Hidden visually to save space in horizontal layout */
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      white-space: nowrap;
+      border: 0;
+      clip-path: inset(50%);
     }
 
     /* Make main link focusable and labelled correctly */
@@ -263,9 +270,17 @@ const { post, loading = "lazy", fetchpriority = "auto" } = Astro.props;
       margin-bottom: 0.25rem;
     }
 
-    /* Hide tags to save space, but content remains in DOM for readers if needed (or reconsider showing 1) */
+    /* Hide tags visually but keep in accessibility tree */
     .tags {
-      display: none;
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      white-space: nowrap;
+      border: 0;
+      clip-path: inset(50%);
     }
   }
 

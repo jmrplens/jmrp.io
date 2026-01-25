@@ -7,11 +7,16 @@
 import "@styles/components/service-stats.css";
 import "@styles/components/homelab-components.css";
 
-import InfrastructureInsights from "@components/services/InfrastructureInsights";
-import ServiceCard from "@components/services/ServiceCard.astro";
-import ServiceStats from "@components/services/ServiceStats";
+import InfrastructureInsights from "@components/homelab/InfrastructureInsights";
+import ServiceCard from "@components/homelab/ServiceCard.astro";
+import ServiceStats from "@components/homelab/ServiceStats";
 import BaseLayout from "@layouts/BaseLayout.astro";
 import { getSiteUrl } from "@utils/site";
+
+interface Provider {
+  "@type": string;
+  name: string;
+}
 
 interface Service {
   id: string;
@@ -22,11 +27,11 @@ interface Service {
   url: string;
   linkText: string;
   statsType: "mastodon" | "matrix" | "meshtastic-combined";
-  provider: { "@type": string; name: string };
+  provider: Provider;
   userInfo?: string;
 }
 
-const defaultProvider = {
+const defaultProvider: Provider = {
   "@type": "Person",
   name: "José Manuel Requena Plens",
 };
@@ -135,15 +140,18 @@ const servicesSchema = {
         }
       </div>
 
-      <div class="infrastructure-insights">
+      <section
+        class="infrastructure-insights"
+        aria-labelledby="nginx-edge-security-analytics"
+      >
         <h2
           class="section-subtitle"
-          id="edge-node-security-analytics"
+          id="nginx-edge-security-analytics"
         >
-          Edge Node Security & Analytics
+          NGINX Edge Security & Analytics
         </h2>
         <InfrastructureInsights client:visible />
-      </div>
+      </section>
     </div>
   </section>
 </BaseLayout>

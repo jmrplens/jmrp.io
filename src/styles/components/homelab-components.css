@@ -10,6 +10,7 @@
   --color-status-error-bg: rgb(239 68 68 / 10%);
   --color-status-unknown: #9ca3af;
   --color-status-unknown-bg: rgb(156 163 175 / 10%);
+  --color-status-info: #3b82f6;
 }
 
 /* Light theme overrides */
@@ -24,6 +25,7 @@
   --color-status-error-bg: #fee2e2;
   --color-status-unknown: #4b5563;
   --color-status-unknown-bg: rgb(75 85 99 / 10%);
+  --color-status-info: #1e40af;
 }
 
 @media (prefers-color-scheme: light) {
@@ -38,6 +40,7 @@
     --color-status-error-bg: #fee2e2;
     --color-status-unknown: #4b5563;
     --color-status-unknown-bg: rgb(75 85 99 / 10%);
+    --color-status-info: #1e40af;
   }
 }
 
@@ -100,7 +103,6 @@
   font-size: 0.9rem;
   font-weight: var(--fw-semibold);
   color: var(--color-text-muted);
-  opacity: 100%;
 }
 
 :root[data-theme="light"] .insight-value small {
@@ -110,8 +112,8 @@
 .insight-details {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding-top: 12px;
+  gap: var(--space-sm);
+  padding-top: var(--space-md);
   margin-top: auto;
   border-top: 1px solid var(--color-border);
 }
@@ -173,7 +175,7 @@
 }
 
 :root[data-theme="light"] .insight-card.security .insight-value {
-  color: #b91c1c;
+  color: var(--color-status-error);
 }
 
 /* Color utility classes - using variables only */
@@ -186,11 +188,7 @@
 }
 
 .color-info {
-  color: #3b82f6; /* Fallback for blue info */
-}
-
-:root[data-theme="light"] .color-info {
-  color: #1e40af;
+  color: var(--color-status-info);
 }
 
 .color-success {

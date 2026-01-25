@@ -237,9 +237,10 @@ const personSchema = {
   }
 
   .bio {
-    content-visibility: visible;
-
-    /* Prevent layout shifts and render delays */
+    /*
+     * Prevents layout shifts (CLS) and render delays (LCP) during initial load.
+     * This override ensures text is visible immediately without waiting for animations.
+     */
     font-size: 1.1rem;
     line-height: 1.6;
     color: var(--color-text-body);

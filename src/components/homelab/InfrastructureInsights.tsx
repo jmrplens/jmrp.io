@@ -322,6 +322,7 @@ export default function InfrastructureInsights() {
               <strong>{displayVal(stats?.mikrotik_scans_total)}</strong>
             </div>
             <div className="detail-row">
+              <span className="sr-only">Attack Regions:</span>
               <span aria-hidden="true">Attack Regions</span>
               <ul className="country-list">
                 {countries.length > 0 ? (

@@ -271,12 +271,25 @@ const computedAriaLabel =
   .mermaid-content :global(g.note text),
   .mermaid-content :global(text.noteText) {
     fill: var(--mermaid-note-text) !important;
+    stroke: var(--mermaid-note-bg) !important;
+    stroke-width: 3px !important;
+    stroke-linejoin: round !important;
+    paint-order: stroke !important;
   }
 
   /* Messages/Signals */
   .mermaid-content :global(.messageLine0),
   .mermaid-content :global(.messageLine1) {
     stroke: var(--mermaid-line) !important;
+  }
+
+  .mermaid-content :global(.messageText) {
+    fill: var(--mermaid-text) !important;
+    stroke: var(--mermaid-bg) !important;
+    stroke-width: 4px !important;
+    stroke-linecap: round !important;
+    stroke-linejoin: round !important;
+    paint-order: stroke !important;
   }
 
   /* Loop Labels */
@@ -287,6 +300,10 @@ const computedAriaLabel =
 
   .mermaid-content :global(.labelText) {
     fill: var(--mermaid-text) !important;
+    stroke: var(--mermaid-secondary-bg) !important;
+    stroke-width: 3px !important;
+    stroke-linejoin: round !important;
+    paint-order: stroke !important;
   }
 
   .mermaid-content :global(.loopLine) {

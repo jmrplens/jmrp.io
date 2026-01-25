@@ -277,10 +277,8 @@ function MastodonStats({
           <strong>Online</strong>
         </div>
         <div class="status-text-muted">
-          <strong class="status-text">
-            {peersCount ?? "..."}
-          </strong>{" "}
-          Known Instances
+          <strong class="status-text">{peersCount ?? "..."}</strong> Known
+          Instances
         </div>
       </div>
 
@@ -312,6 +310,7 @@ function MastodonStats({
           {mastodonTrends.length > 0
             ? mastodonTrends.map((tag: { url: string; name: string }) => (
                 <a
+                  key={tag.name}
                   href={tag.url}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -535,13 +534,13 @@ export default function ServiceStats({ type }: Props) {
   // Note: We render even if stats is null (loading) to provide a static layout
   switch (type) {
     case "mastodon": {
-      return <MastodonStats stats={stats as MastodonStatsData} />;
+      return <MastodonStats stats={stats as MastodonStatsData | null} />;
     }
     case "matrix": {
-      return <MatrixStats stats={stats as MatrixStatsData} />;
+      return <MatrixStats stats={stats as MatrixStatsData | null} />;
     }
     case "meshtastic-combined": {
-      return <MeshtasticStats stats={stats as MeshtasticStatsData} />;
+      return <MeshtasticStats stats={stats as MeshtasticStatsData | null} />;
     }
     default: {
       return null;

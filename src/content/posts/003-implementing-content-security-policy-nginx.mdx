@@ -926,10 +926,21 @@ For maximum control and privacy, I use a custom **Node.js microservice** running
 Create a lightweight script `csp-reporter.mjs`. This script listens for POST requests, logs them to a file, and uses the Telegram API to send alerts with rate limiting (to avoid spamming you during an attack).
 
 <Callout type="warning" title="Important: Setup and Permissions">
-Before running the script, ensure you create the logs directory and set appropriate permissions (e.g. `www-data:www-data` ownership with `600` or `root:www-data` with `640` for secrets file):
+Before running the script, ensure you create the necessary directories and set appropriate permissions:
 <TerminalCommand>
 ```bash
+# 1. Create logs directory
 sudo mkdir -p /opt/logs && sudo chown www-data:www-data /opt/logs
+
+# 2. Create and secure secrets directory
+sudo mkdir -p /etc/csp-reporter
+sudo chown root:www-data /etc/csp-reporter
+sudo chmod 750 /etc/csp-reporter
+
+# 3. Create secrets file (add your tokens inside)
+sudo touch /etc/csp-reporter/secrets.env
+sudo chown root:www-data /etc/csp-reporter/secrets.env
+sudo chmod 640 /etc/csp-reporter/secrets.env
 ```
 </TerminalCommand>
 </Callout>
