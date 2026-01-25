@@ -180,19 +180,19 @@
 
 /* Color utility classes - using variables only */
 .color-warning {
-  color: var(--color-status-warning);
+  color: var(--color-status-warning) !important;
 }
 
 .color-danger {
-  color: var(--color-status-error);
+  color: var(--color-status-error) !important;
 }
 
 .color-info {
-  color: var(--color-status-info);
+  color: var(--color-status-info) !important;
 }
 
 .color-success {
-  color: var(--color-status-online);
+  color: var(--color-status-online) !important;
 }
 
 /* Consolidated Light Mode Overrides for System Preference */
