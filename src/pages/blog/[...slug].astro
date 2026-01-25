@@ -81,21 +81,18 @@ const finalReferences = collectedRefsFromMarkdown.filter((ref) => {
 });
 // --- End of Reference Logic ---
 
-// --- Image Optimization (JSON-LD & Preload) ---
+// --- Image Optimization (JSON-LD) ---
 
 let jsonLdImage = "/default-blog-cover.webp";
-let preloadSrcset: string | undefined;
-let preloadSizes: string | undefined;
-let preloadImage: string | undefined;
 
-// Shared constants for image optimization to ensure Preload matches Img tag exactly
+// Shared constants for image optimization
 const coverImageWidths = [400, 450, 540, 600, 720, 800, 1080, 1200];
 const coverImageSizes =
   "(max-width: 768px) calc(100vw - 2.5rem), (max-width: 1024px) 600px, 460px";
 
 if (post.data.coverImage) {
   const coverImage = post.data.coverImage;
-  // 1. Generate JSON-LD Schema Image (Standard OG size)
+  // Generate JSON-LD Schema Image (Standard OG size)
   const schemaImage = await getImage({
     src: coverImage,
     format: "webp",
@@ -104,25 +101,6 @@ if (post.data.coverImage) {
     quality: 60,
   });
   jsonLdImage = schemaImage.src;
-
-  // 2. Generate Responsive Preload Srcset
-  // This ensures the browser preloads exactly the same resource it will request for the <img> tag
-  const responsiveImages = await Promise.all(
-    coverImageWidths.map((width) =>
-      getImage({
-        src: coverImage,
-        format: "webp",
-        width: width,
-        quality: 70, // Must match Image component quality
-      }),
-    ),
-  );
-
-  preloadSrcset = responsiveImages
-    .map((img, i) => `${img.src} ${coverImageWidths[i]}w`)
-    .join(", ");
-  preloadSizes = coverImageSizes;
-  preloadImage = responsiveImages.at(-1)?.src; // Fallback
 }
 
 const articleSchema = [
@@ -164,9 +142,6 @@ const articleSchema = [
   description={post.data.description}
   type="article"
   image={post.data.coverImage?.src}
-  preloadImage={preloadImage}
-  preloadSrcset={preloadSrcset}
-  preloadSizes={preloadSizes}
   publishDate={post.data.publishedDate}
   modifiedDate={post.data.updatedDate}
   tags={post.data.tags}
@@ -177,7 +152,7 @@ const articleSchema = [
       <div class="content-wrapper">
         <div class="header-meta">
           <a
-            href="/blog"
+            href="/blog/"
             class="back-link"
           >
             <Icon
@@ -192,7 +167,6 @@ const articleSchema = [
             <span class="separator">•</span>
             <time datetime={post.data.publishedDate.toISOString()}>
               {
-                // TODO: Extract locale to site config for i18n support (e.g., siteConfig.locale)
                 post.data.publishedDate.toLocaleDateString("en-US", {
                   year: "numeric",
                   month: "long",
@@ -206,7 +180,7 @@ const articleSchema = [
                 <div class="tags">
                   {post.data.tags.map((tag) => (
                     <a
-                      href={`/blog/tags/${encodeURIComponent(tag)}`}
+                      href={`/blog/tags/${encodeURIComponent(tag.toLowerCase())}/`}
                       class="tag"
                       aria-label={`View all posts tagged with ${tag}`}
                     >
@@ -383,14 +357,13 @@ const articleSchema = [
 
   .author {
     font-weight: var(--fw-semibold);
-    color: var(--color-text-body);
+    color: var(--color-text);
   }
 
   .separator {
     display: inline-block;
     width: 1ch;
     text-align: center;
-    opacity: 50%;
   }
 
   .tags {
@@ -435,8 +408,7 @@ const articleSchema = [
   .lead {
     font-size: 1.25rem;
     line-height: 1.6;
-    color: var(--color-text-body);
-    opacity: 90%;
+    color: var(--color-text);
   }
 
   .cover-image-container {

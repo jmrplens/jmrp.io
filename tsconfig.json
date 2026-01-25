@@ -1,7 +1,12 @@
 {
   "extends": "astro/tsconfigs/strict",
   "include": [".astro/types.d.ts", "**/*"],
-  "exclude": ["dist", "public/scripts/cf-beacon.js"],
+  "exclude": [
+    "dist",
+    "dist_new",
+    "node_modules",
+    "public/scripts/cf-beacon.js"
+  ],
   "compilerOptions": {
     "jsx": "react-jsx",
     "jsxImportSource": "preact",

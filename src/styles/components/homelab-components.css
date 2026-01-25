@@ -1,0 +1,185 @@
+/* Homelab Global Variables */
+:root {
+  --color-status-online: #10b981;
+  --color-status-online-bg: rgb(16 185 129 / 10%);
+  --color-status-offline: #6b7280;
+  --color-status-offline-bg: rgb(107 114 128 / 10%);
+  --color-status-warning: #f59e0b;
+  --color-status-warning-bg: rgb(245 158 11 / 10%);
+  --color-status-error: #ef4444;
+  --color-status-error-bg: rgb(239 68 68 / 10%);
+  --color-status-unknown: #9ca3af;
+  --color-status-unknown-bg: rgb(156 163 175 / 10%);
+  --color-status-info: #3b82f6;
+}
+
+/* Light theme overrides for status variables */
+:root[data-theme="light"] {
+  --color-status-online: #065f46;
+  --color-status-online-bg: #dcfce7;
+  --color-status-offline: #374151;
+  --color-status-offline-bg: #f3f4f6;
+  --color-status-warning: #92400e;
+  --color-status-warning-bg: #fef3c7;
+  --color-status-error: #991b1b;
+  --color-status-error-bg: #fee2e2;
+  --color-status-unknown: #4b5563;
+  --color-status-unknown-bg: rgb(75 85 99 / 10%);
+  --color-status-info: #1e40af;
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --color-status-online: #065f46;
+    --color-status-online-bg: #dcfce7;
+    --color-status-offline: #374151;
+    --color-status-offline-bg: #f3f4f6;
+    --color-status-warning: #92400e;
+    --color-status-warning-bg: #fef3c7;
+    --color-status-error: #991b1b;
+    --color-status-error-bg: #fee2e2;
+    --color-status-unknown: #4b5563;
+    --color-status-unknown-bg: rgb(75 85 99 / 10%);
+    --color-status-info: #1e40af;
+  }
+}
+
+/* Infrastructure Insights Grid */
+.insights-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--space-md);
+  margin-bottom: var(--space-xl);
+}
+
+.insight-card {
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-md);
+  background: var(--color-bg-secondary);
+  border: var(--border-1);
+  border-radius: var(--radius-md);
+  transition: transform 0.2s ease;
+}
+
+.insight-card:hover {
+  transform: translateY(-2px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .insight-card {
+    transition: none;
+  }
+
+  .insight-card:hover {
+    transform: none;
+  }
+}
+
+.insight-label {
+  font-size: 0.75rem;
+  font-weight: var(--fw-bold);
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.insight-value {
+  margin: var(--space-xs) 0 var(--space-md);
+  font-size: 1.6rem;
+  font-weight: var(--fw-bold);
+  color: var(--color-primary);
+}
+
+.insight-value output {
+  font-weight: inherit;
+}
+
+.insight-value small {
+  font-size: 0.9rem;
+  font-weight: var(--fw-semibold);
+  color: var(--color-text-muted);
+}
+
+.insight-details {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  padding-top: var(--space-md);
+  margin-top: auto;
+  border-top: 1px solid var(--color-border);
+}
+
+.detail-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.85rem;
+}
+
+.detail-row span {
+  font-weight: var(--fw-medium);
+  color: var(--color-text-muted);
+}
+
+.insight-link {
+  font-weight: var(--fw-medium);
+  color: var(--color-text-muted);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-decoration-color: var(--color-primary);
+  text-underline-offset: 4px;
+  transition:
+    color 0.2s ease,
+    text-decoration-color 0.2s ease;
+}
+
+.insight-link:hover {
+  color: var(--color-accent);
+  text-decoration-color: var(--color-accent);
+}
+
+.detail-row output {
+  font-weight: var(--fw-bold);
+}
+
+.country-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  justify-content: flex-end;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.country-badge {
+  padding: 1px 4px;
+  font-size: 0.7rem;
+  font-weight: var(--fw-bold);
+  color: var(--color-primary);
+  background: var(--color-bg-subtle);
+  border: 1px solid var(--color-border);
+  border-radius: 3px;
+}
+
+.insight-card.security .insight-value {
+  color: var(--color-accent);
+}
+
+/* Color utility classes - using variables only */
+.color-warning {
+  color: var(--color-status-warning);
+}
+
+.color-danger {
+  color: var(--color-status-error);
+}
+
+.color-info {
+  color: var(--color-status-info);
+}
+
+.color-success {
+  color: var(--color-status-online);
+}

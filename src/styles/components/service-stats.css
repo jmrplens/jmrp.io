@@ -1,0 +1,270 @@
+:root {
+  --color-brand-mastodon: #6364ff;
+}
+
+/* Styling for React ServiceStats component */
+.stats-wrapper-col {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.stats-wrapper-small-gap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* Status Header */
+.status-header {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  font-size: 0.9em;
+}
+
+.status-badge {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+  padding: 2px 8px;
+  color: var(--color-status-online, #10b981);
+  background: var(--color-status-online-bg, rgb(16 185 129 / 10%));
+  border-radius: 12px;
+}
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+  background: var(--color-status-online, #10b981);
+  border-radius: 50%;
+}
+
+:root[data-theme="light"] .status-text-muted {
+  color: #374151;
+}
+
+.status-text {
+  color: var(--color-text, #c9d1d9);
+}
+
+:root[data-theme="light"] .status-text {
+  color: #000;
+}
+
+/* Grids */
+.server-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.component-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.4rem 0.6rem;
+  background: var(--color-bg, #fff);
+  border: var(--border-1, 1px solid #30363d);
+  border-radius: 6px;
+}
+
+.component-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+}
+
+.brand-mastodon {
+  color: var(--color-brand-mastodon);
+}
+
+.brand-matrix {
+  padding: 2px;
+  color: var(--color-text, #000);
+  background: var(--color-bg, #fff);
+  border-radius: 50%;
+}
+
+.component-info {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+
+.component-name {
+  font-size: 0.75em;
+  font-weight: 500;
+  color: var(--color-text-muted);
+}
+
+.component-version {
+  font-size: 0.85em;
+  font-weight: bold;
+  color: var(--color-text, #000);
+}
+
+/* Trends */
+.trending-header {
+  margin: 0 0 0.5rem;
+  font-size: 0.8em;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.trending-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.stat-btn-filled {
+  display: inline-flex;
+  gap: 0.25rem;
+  align-items: center;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.8em;
+  color: var(--color-text);
+  background: var(--color-bg-secondary);
+  border: var(--border-1);
+  border-radius: var(--radius-md);
+}
+
+.stat-btn-filled:hover,
+.stat-btn-filled:focus,
+.stat-btn-filled:focus-visible {
+  text-decoration: none;
+  background: var(--color-border);
+}
+
+.stat-btn-filled:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.opacity-60 {
+  opacity: 60%;
+}
+
+/* Meshtastic Rows */
+.meshtastic-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.meshtastic-left {
+  display: flex;
+  align-items: center;
+}
+
+.status-dot-inline {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 6px;
+  background: var(--color-status-online);
+  border-radius: 50%;
+}
+
+.meshtastic-title {
+  display: block;
+  font-size: 0.95em;
+  line-height: 1.2;
+}
+
+.meshtastic-sub {
+  font-size: 0.85em;
+}
+
+:root[data-theme="light"] .meshtastic-sub {
+  color: #374151;
+}
+
+.meshtastic-ver {
+  margin-left: 4px;
+}
+
+:root[data-theme="light"] .meshtastic-ver {
+  color: #374151;
+}
+
+.stats-error,
+.stats-loading {
+  width: 100%;
+  padding: 1rem;
+  font-style: italic;
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.5rem;
+  text-align: center;
+  background: var(--color-bg);
+  border: var(--border-1);
+  border-radius: 4px;
+}
+
+.stat-value {
+  font-size: 1.1em;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.stat-label {
+  font-size: 0.75em;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Skeleton Loading */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  color: transparent !important;
+  pointer-events: none;
+  user-select: none;
+  background-color: var(--color-bg-secondary, #161b22);
+  border-color: transparent !important;
+}
+
+.skeleton::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgb(255 255 255 / 5%),
+    transparent
+  );
+  transform: translateX(-100%);
+  animation: skeleton-shimmer 2s infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton::after {
+    animation: none;
+  }
+}
+
+@keyframes skeleton-shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}

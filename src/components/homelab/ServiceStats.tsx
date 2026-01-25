@@ -183,10 +183,11 @@ async function fetchMeshtasticStats(
   setError: (error: boolean) => void,
 ): Promise<MeshtasticStatsData> {
   try {
-    const [resPotato, resLF, resMF] = await Promise.all([
+    const [resPotato, resLF, resMF, potatoVersion] = await Promise.all([
       fetch("/api/proxy/potato/nodes").catch(() => null),
       fetch("/api/proxy/mesh/lf").catch(() => null),
       fetch("/api/proxy/mesh/mf").catch(() => null),
+      fetchPotatoVersion(),
     ]);
 
     const potatoData = await safeFetchJson<unknown[]>(
@@ -206,12 +207,10 @@ async function fetchMeshtasticStats(
     } | null>(resMF, "Failed to parse Meshtastic MF response", null);
     const mfNodes = mfData?.data?.activeNodes ?? 0;
 
-    // Signal error if all three fetches failed
+    // Signal error if all three main data fetches failed
     if (!resPotato?.ok && !resLF?.ok && !resMF?.ok) {
       setError(true);
     }
-
-    const potatoVersion = await fetchPotatoVersion();
 
     return { potatoNodes, lfNodes, mfNodes, potatoVersion };
   } catch (error) {
@@ -260,8 +259,14 @@ async function fetchPotatoVersion(): Promise<string> {
  * @param props - Component properties.
  * @param props.stats - The data to display.
  */
-function MastodonStats({ stats }: { readonly stats: MastodonStatsData }) {
-  const { peersCount, mastodonTrends, instanceVersion } = stats;
+function MastodonStats({
+  stats,
+}: {
+  readonly stats: MastodonStatsData | null;
+}) {
+  const peersCount = stats?.peersCount;
+  const mastodonTrends = stats?.mastodonTrends || [];
+  const instanceVersion = stats?.instanceVersion || "...";
 
   return (
     <div class="stats-wrapper-col">
@@ -271,10 +276,8 @@ function MastodonStats({ stats }: { readonly stats: MastodonStatsData }) {
           <strong>Online</strong>
         </div>
         <div class="status-text-muted">
-          <strong class="status-text">
-            {peersCount?.toLocaleString() || "?"}
-          </strong>{" "}
-          Known Instances
+          <strong class="status-text">{peersCount ?? "..."}</strong> Known
+          Instances
         </div>
       </div>
 
@@ -300,23 +303,33 @@ function MastodonStats({ stats }: { readonly stats: MastodonStatsData }) {
         </div>
       </div>
 
-      {mastodonTrends && mastodonTrends.length > 0 && (
-        <div>
-          <div class="trending-header">Trending Now</div>
-          <div class="trending-grid">
-            {mastodonTrends.map((tag: { url: string; name: string }) => (
-              <a
-                href={tag.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                class="stat-btn-filled"
-              >
-                <span class="opacity-60">#</span> {tag.name}
-              </a>
-            ))}
-          </div>
+      <div>
+        <div class="trending-header">Trending Now</div>
+        <div class="trending-grid">
+          {mastodonTrends.length > 0
+            ? mastodonTrends.map((tag: { url: string; name: string }) => (
+                <a
+                  key={tag.name}
+                  href={tag.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="stat-btn-filled"
+                >
+                  <span class="opacity-60">#</span> {tag.name}
+                </a>
+              ))
+            : // Skeletons to reserve space
+              [1, 2, 3].map((i) => (
+                <div
+                  key={i}
+                  className="stat-btn-filled skeleton"
+                  aria-hidden="true"
+                >
+                  # {".".repeat(i * 3 + 4)}
+                </div>
+              ))}
         </div>
-      )}
+      </div>
     </div>
   );
 }
@@ -327,9 +340,10 @@ function MastodonStats({ stats }: { readonly stats: MastodonStatsData }) {
  * @param props - Component properties.
  * @param props.stats - The data to display.
  */
-function MatrixStats({ stats }: { readonly stats: MatrixStatsData }) {
-  const { matrixData, matrixFed } = stats;
-  const synapseVersion = matrixFed?.server?.version || "Unknown";
+function MatrixStats({ stats }: { readonly stats: MatrixStatsData | null }) {
+  const matrixData = stats?.matrixData;
+  const matrixFed = stats?.matrixFed;
+  const synapseVersion = matrixFed?.server?.version || "...";
 
   return (
     <div class="stats-wrapper-col">
@@ -338,14 +352,12 @@ function MatrixStats({ stats }: { readonly stats: MatrixStatsData }) {
           <span class="status-dot"></span>
           <strong>Online</strong>
         </div>
-        {Boolean(matrixData?.federationTotal) && (
-          <div class="status-text-muted">
-            <strong class="status-text">
-              {matrixData.federationTotal?.toLocaleString()}
-            </strong>{" "}
-            Known Servers
-          </div>
-        )}
+        <div class="status-text-muted">
+          <strong class="status-text">
+            {matrixData?.federationTotal ?? "..."}
+          </strong>{" "}
+          Known Servers
+        </div>
       </div>
 
       <div class="server-grid">
@@ -382,8 +394,15 @@ const StatusDot = () => <span class="status-dot-inline"></span>;
  * @param props - Component properties.
  * @param props.stats - The data to display.
  */
-function MeshtasticStats({ stats }: { readonly stats: MeshtasticStatsData }) {
-  const { potatoNodes, lfNodes, mfNodes, potatoVersion } = stats;
+function MeshtasticStats({
+  stats,
+}: {
+  readonly stats: MeshtasticStatsData | null;
+}) {
+  const potatoNodes = stats?.potatoNodes;
+  const lfNodes = stats?.lfNodes;
+  const mfNodes = stats?.mfNodes;
+  const potatoVersion = stats?.potatoVersion;
 
   return (
     <div class="stats-wrapper-small-gap">
@@ -393,7 +412,7 @@ function MeshtasticStats({ stats }: { readonly stats: MeshtasticStatsData }) {
           <div>
             <strong class="meshtastic-title">PotatoMesh</strong>
             <div class="meshtastic-sub">
-              {potatoNodes} Nodes
+              {potatoNodes ?? "..."} Nodes
               {potatoVersion && (
                 <span class="meshtastic-ver">• {potatoVersion}</span>
               )}
@@ -416,7 +435,7 @@ function MeshtasticStats({ stats }: { readonly stats: MeshtasticStatsData }) {
           <StatusDot />
           <div>
             <strong class="meshtastic-title">MeshMonitor LF</strong>
-            <div class="meshtastic-sub">{lfNodes} Nodes</div>
+            <div class="meshtastic-sub">{lfNodes ?? "..."} Nodes</div>
           </div>
         </div>
         <a
@@ -435,7 +454,7 @@ function MeshtasticStats({ stats }: { readonly stats: MeshtasticStatsData }) {
           <StatusDot />
           <div>
             <strong class="meshtastic-title">MeshMonitor MF</strong>
-            <div class="meshtastic-sub">{mfNodes} Nodes</div>
+            <div class="meshtastic-sub">{mfNodes ?? "..."} Nodes</div>
           </div>
         </div>
         <a
@@ -464,17 +483,19 @@ export default function ServiceStats({ type }: Props) {
   const [stats, setStats] = useState<
     MastodonStatsData | MatrixStatsData | MeshtasticStatsData | null
   >(null);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
   useEffect(() => {
+    // Reset state immediately when type changes to avoid stale data
+    setStats(null);
+    setError(false);
+
     const fetchData = async () => {
       // Avoid fetching in CI/Localhost to prevent CORS errors in Lighthouse
       if (
         typeof globalThis !== "undefined" &&
         globalThis.location?.hostname === "localhost"
       ) {
-        setLoading(false);
         return;
       }
 
@@ -503,32 +524,27 @@ export default function ServiceStats({ type }: Props) {
         if (data) setStats(data);
       } catch {
         setError(true);
-      } finally {
-        setLoading(false);
       }
     };
 
     void fetchData();
   }, [type]);
 
-  if (loading) {
-    return <div class="stats-loading">Loading stats...</div>;
-  }
-
-  if (error || !stats) {
+  if (error) {
     return <div class="stats-error">Service Unavailable</div>;
   }
 
   // Route to appropriate component based on type
+  // Note: We render even if stats is null (loading) to provide a static layout
   switch (type) {
     case "mastodon": {
-      return <MastodonStats stats={stats as MastodonStatsData} />;
+      return <MastodonStats stats={stats as MastodonStatsData | null} />;
     }
     case "matrix": {
-      return <MatrixStats stats={stats as MatrixStatsData} />;
+      return <MatrixStats stats={stats as MatrixStatsData | null} />;
     }
     case "meshtastic-combined": {
-      return <MeshtasticStats stats={stats as MeshtasticStatsData} />;
+      return <MeshtasticStats stats={stats as MeshtasticStatsData | null} />;
     }
     default: {
       return null;

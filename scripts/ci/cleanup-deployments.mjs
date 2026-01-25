@@ -1,91 +1,116 @@
 /**
  * cleanup-deployments.mjs
  *
- * Deletes Vercel deployments for a specific PR based on metadata.
- * PR number is read from the PR_NUMBER environment variable for security.
- *
- * Usage: PR_NUMBER=123 node cleanup-deployments.mjs
+ * Removes Vercel deployments associated with a specific Pull Request.
+ * Uses the 'prid' metadata attached during deployment to identify targets.
  */
 
 import { execSync } from "node:child_process";
 
-// Read PR number from environment variable (secure, no shell interpolation)
-const prId = process.env.PR_NUMBER;
-const token = process.env.VERCEL_TOKEN;
+const PROJECT_NAME = "jmrp-ci-reports";
+const TOKEN = process.env.VERCEL_TOKEN;
+const PR_NUMBER = process.env.PR_NUMBER;
 
-// Check presence first to give accurate error
-if (!prId) {
-  console.error("Error: PR_NUMBER environment variable is required.");
-  console.error("Usage: PR_NUMBER=123 node cleanup-deployments.mjs");
+if (!TOKEN) {
+  console.error("❌ VERCEL_TOKEN environment variable is required.");
   process.exit(1);
 }
 
-// Then validate format (must be numeric)
-if (!/^\d+$/.test(prId)) {
-  console.error("Error: PR ID must be numeric.");
+if (!PR_NUMBER) {
+  console.error("❌ PR_NUMBER environment variable is required.");
   process.exit(1);
 }
 
-if (!token) {
-  console.error("VERCEL_TOKEN environment variable is required.");
-  process.exit(1);
-}
-
-const projectName = "jmrp-ci-reports";
-
-try {
-  console.log(`🔍 Searching for deployments for PR #${prId}...`);
-
-  // We use -m prid=<prId> to filter deployments.
-  // We try to get output as a list of URLs/IDs.
-  // Note: 'vercel list' doesn't always support --json in every env,
-  // but it usually outputs a table where we can extract URLs.
-  const cmd = `npx vercel ls ${projectName} -m prid=${prId} --token ${token}`;
-  const output = execSync(cmd, {
+/**
+ * Executes a shell command and returns the output.
+ */
+function run(cmd) {
+  // Suppress stdout to reduce noise, but show stderr if needed
+  return execSync(cmd, {
     encoding: "utf-8",
-    env: { ...process.env, VERCEL_TOKEN: token },
+    env: { ...process.env },
+    stdio: ["ignore", "pipe", "inherit"],
   });
-
-  // Extract URLs from the output table.
-  // Vercel output usually looks like:
-  // project-id  url  status  age
-  // ...
-  const lines = output.split("\n");
-  const urls = [];
-
-  // Simple regex to find .vercel.app URLs
-  const urlRegex = /https?:\/\/[a-zA-Z0-9-]+\.vercel\.app/;
-
-  for (const line of lines) {
-    const match = urlRegex.exec(line);
-    if (match) {
-      urls.push(match[0]);
-    }
-  }
-
-  if (urls.length === 0) {
-    console.log(`✅ No deployments found for PR #${prId}. Nothing to cleanup.`);
-    process.exit(0);
-  }
-
-  console.log(`🗑️ Found ${urls.length} deployment(s). Deleting...`);
-
-  for (const url of urls) {
-    console.log(`  - Deleting ${url}...`);
-    try {
-      execSync(`npx vercel rm ${url} --yes --token ${token}`, {
-        stdio: "inherit",
-        env: { ...process.env, VERCEL_TOKEN: token },
-      });
-      console.log(`    ✅ Deleted.`);
-    } catch (rmError) {
-      console.error(`    ❌ Failed to delete ${url}: ${rmError.message}`);
-    }
-  }
-
-  console.log("🎊 Cleanup complete.");
-} catch (error) {
-  console.error("❌ Failed to cleanup deployments.");
-  console.error(error.message);
-  process.exit(1);
 }
+
+/**
+ * Fetches a page of deployments from Vercel.
+ */
+function getDeployments(next = "") {
+  try {
+    // We fetch all deployments and filter client-side because Vercel CLI 'ls'
+    // filtering capabilities are limited for custom metadata in some versions.
+    // 'meta-prid' filter might work in API but CLI support varies.
+    // We'll fetch listing and filter manually to be safe.
+    const cmd = `npx vercel ls ${PROJECT_NAME} --token=${TOKEN} --format json ${next ? `--next ${next}` : ""}`;
+    const output = run(cmd);
+    return JSON.parse(output);
+  } catch (error) {
+    console.error("⚠ Failed to list deployments:", error.message);
+    return null;
+  }
+}
+
+async function cleanup() {
+  console.log(
+    `🧹 Starting cleanup for PR #${PR_NUMBER} in project: ${PROJECT_NAME}`,
+  );
+
+  let hasMore = true;
+  let next = "";
+  let deletedCount = 0;
+  let scannedCount = 0;
+
+  while (hasMore) {
+    const data = getDeployments(next);
+
+    if (!data || !data.deployments || data.deployments.length === 0) {
+      break;
+    }
+
+    scannedCount += data.deployments.length;
+
+    // Filter deployments matching the PR ID
+    const targetDeployments = data.deployments.filter((d) => {
+      // Check metadata for prid
+      // Note: Vercel JSON output puts metadata in 'meta' object
+      return d.meta && d.meta.prid === String(PR_NUMBER);
+    });
+
+    if (targetDeployments.length > 0) {
+      console.log(
+        `   Found ${targetDeployments.length} deployments for PR #${PR_NUMBER} in this batch.`,
+      );
+
+      for (const dep of targetDeployments) {
+        try {
+          process.stdout.write(`   🗑️ Deleting ${dep.url}... `);
+          // Use 'url' or 'uid' for removal. 'url' is safer as it's visible.
+          run(`npx vercel rm ${dep.url} --token=${TOKEN} --yes`);
+          console.log("✅");
+          deletedCount++;
+        } catch (error) {
+          console.log("❌");
+          console.error(`   Failed to remove ${dep.url}:`, error.message);
+        }
+      }
+    }
+
+    // Pagination
+    if (data.pagination && data.pagination.next) {
+      next = data.pagination.next;
+    } else {
+      hasMore = false;
+    }
+  }
+
+  console.log(`
+✨ Cleanup complete!`);
+  console.log(`   - Scanned: ${scannedCount} deployments`);
+  console.log(`   - Deleted: ${deletedCount} deployments for PR #${PR_NUMBER}`);
+}
+
+cleanup().catch((error) => {
+  console.error("Fatal error during cleanup:", error);
+  process.exit(1);
+});

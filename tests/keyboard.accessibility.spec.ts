@@ -110,14 +110,11 @@ test.describe("Keyboard Navigation Accessibility", () => {
     await page.keyboard.press("Tab");
 
     // Verify focus is within the nav links container
-    // const focused = page.locator("*:focus");
     // Check if the focused element's ancestor is the nav-links container
     // This is a loose check; strict focus trapping is hard to implement perfectly without a library,
     // but we want to ensure we are at least navigating the menu items.
 
     // For this test, let's verify we can tab through the mobile links
-    // const mobileLinks = page.locator("#nav-links a");
-    // const firstLink = mobileLinks.first();
 
     // If focus didn't move automatically (common issue), we might still be on the toggle or next element.
     // Assert that we can reach the links.
@@ -171,6 +168,77 @@ test.describe("Keyboard Navigation Accessibility", () => {
     // Check a11y of the toggle itself
     const results = await new AxeBuilder({ page })
       .include("#theme-toggle")
+      .analyze();
+
+    expect(results.violations).toEqual([]);
+  });
+
+  test("Homelab Infrastructure Keyboard Navigation", async ({ page }) => {
+    // Mock the API response to ensure the component renders the links
+    await page.route("**/api/homelab/stats", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          requests_received_24h: 1000,
+          responses_sent_24h: 900,
+          upstream_sent_24h: 800,
+          bandwidth_bytes_1h: 1024 * 1024,
+          tarpit_hits_24h: 50,
+          nginx_bans_24h: 10,
+          mikrotik_scans_total: 500,
+          rate_limited_503_24h: 5,
+          cpu_usage_avg: 15.5,
+          mem_used_percent: 45.2,
+          top_security_countries: [{ code: "US", count: 100 }],
+        }),
+      });
+    });
+
+    await page.goto("/homelab/");
+
+    // 1. Find the infrastructure section
+    const section = page.locator(".infrastructure-section");
+    await expect(section).toBeVisible();
+
+    // Ensure component hydration triggers (client:visible)
+    await section.scrollIntoViewIfNeeded();
+
+    // Wait for data to load (ensures hydration is complete)
+    await expect(section).toContainText("500", { timeout: 10_000 });
+
+    // 2. Verify Tab navigation through links
+    // First link: Tarpit Hits
+    const tarpitLink = section.locator('a[href*="implementing-tarpit-nginx"]');
+    // Second link: Port Scanners
+    const honeypotLink = section.locator('a[href*="mikrotik-honeypot"]');
+
+    // Wait for data to load and links to be visible
+    await expect(tarpitLink).toBeVisible({ timeout: 10_000 });
+    await expect(honeypotLink).toBeVisible({ timeout: 10_000 });
+
+    // Start navigation
+    await tarpitLink.focus();
+    await expect(tarpitLink).toBeFocused();
+    await expect(tarpitLink).toHaveAttribute(
+      "aria-label",
+      /Read blog post about implementing Nginx Tarpit/i,
+    );
+
+    // Tab to next link
+    await page.keyboard.press("Tab");
+
+    // Re-locate to handle potential hydration re-renders
+    const freshHoneypotLink = section.locator('a[href*="mikrotik-honeypot"]');
+    await expect(freshHoneypotLink).toBeFocused();
+    await expect(freshHoneypotLink).toHaveAttribute(
+      "aria-label",
+      /Read blog post about MikroTik Port Scanner Honeypot/i,
+    );
+
+    // 3. Run Axe on the section
+    const results = await new AxeBuilder({ page })
+      .include(".infrastructure-section")
       .analyze();
 
     expect(results.violations).toEqual([]);

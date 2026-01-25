@@ -5,7 +5,7 @@ publishedDate: 2025-12-19
 updatedDate: 2025-12-19
 description: "A comprehensive guide to implementing a strict Content Security Policy (CSP) on Nginx for both static and dynamic sites. Covers nonces, hashes, strict-dynamic, CSP reporting, migration strategies, and security best practices."
 coverImage: "../../assets/images/blog/csp-shield.webp"
-tags: ["nginx", "security", "csp", "webdev", "astro"]
+tags: ["Nginx", "Security", "CSP"]
 draft: false
 ---
 
@@ -15,6 +15,7 @@ import TabPanel from "@components/ui/TabPanel.astro";
 import CompareCode from "@components/ui/CompareCode.astro";
 import FileContent from "@components/ui/FileContent.astro";
 import Table from "@components/ui/Table.astro";
+import TerminalCommand from "@components/ui/TerminalCommand.astro";
 import TerminalOutput from "@components/ui/TerminalOutput.astro";
 import Mermaid from "@components/ui/Mermaid.astro";
 import Code from "@components/ui/Code.astro";
@@ -96,7 +97,7 @@ There are two fundamental approaches to implementing CSP, and **choosing the rig
 The traditional approach involves whitelisting specific domains:
 
 <Code lang="nginx" aria-label="Allowlist-based CSP example to avoid">
-```
+```nginx
 # [BAD] AVOID: Allowlist-based CSP
 script-src 'self' https://www.google-analytics.com https://cdn.example.com;
 ```
@@ -116,7 +117,7 @@ script-src 'self' https://www.google-analytics.com https://cdn.example.com;
 Modern security best practices recommend a **strict CSP** based on nonces or hashes, not domain allowlists:
 
 <Code lang="nginx" aria-label="Recommended strict nonce-based CSP">
-```
+```nginx
 # [OK] RECOMMENDED: Strict nonce-based CSP
 script-src 'nonce-{RANDOM}' 'strict-dynamic';
 object-src 'none';
@@ -334,7 +335,7 @@ Let's break down each component of a production-ready strict CSP policy.
 This is one of the most powerful and misunderstood CSP features:
 
 <Code lang="nginx" aria-label="strict-dynamic CSP directive example">
-```
+```nginx
 script-src 'nonce-$cspNonce' 'strict-dynamic';
 ```
 </Code>
@@ -353,7 +354,7 @@ script-src 'nonce-$cspNonce' 'strict-dynamic';
 **Example:**
 
 <Code lang="html" aria-label="Example of script trust propagation with strict-dynamic">
-```
+```html
 <!-- This script has a valid nonce, so it runs -->
 <script nonce="abc123">
   // This dynamically created script ALSO runs
@@ -413,7 +414,7 @@ script-src 'nonce-$cspNonce' 'strict-dynamic';
 Use hashes when you have **completely static** inline scripts that never change:
 
 <Code lang="nginx" aria-label="Hash-based strict CSP for static sites">
-```
+```nginx
 # Hash-based strict CSP for static sites
 Content-Security-Policy: 
     script-src 'sha256-abc123...' 'sha256-def456...' 'strict-dynamic';
@@ -742,7 +743,7 @@ While standard CSP controls *where* scripts can load from, **Trusted Types** con
 ### Enabling Trusted Types
 
 <Code lang="nginx" aria-label="Enabling Trusted Types in Nginx">
-```
+```nginx
 # Add to your CSP header
 require-trusted-types-for 'script';
 ```
@@ -798,7 +799,7 @@ CSP reporting is essential for:
 ### The report-uri Directive (Deprecated)
 
 <Code lang="nginx" aria-label="CSP report-uri directive example">
-```
+```nginx
 Content-Security-Policy: 
     script-src 'nonce-$cspNonce' 'strict-dynamic';
     ...
@@ -809,7 +810,7 @@ Content-Security-Policy:
 ### The report-to Directive (The Future)
 
 <Code lang="nginx" aria-label="CSP report-to directive with Reporting API configuration">
-```
+```nginx
 # CSP header with report-to
 Content-Security-Policy: 
     script-src 'nonce-$cspNonce' 'strict-dynamic';
@@ -825,7 +826,7 @@ Report-To: {"group":"csp-endpoint","max_age":10886400,"endpoints":[{"url":"https
   **Best Practice:** Use both directives for maximum compatibility. Browsers that support `report-to` will ignore `report-uri`, while older browsers will fall back to it.
   
   <Code lang="nginx" aria-label="Dual CSP reporting best practice">
-```
+```nginx
 report-uri /csp-reports;
 report-to csp-endpoint;
 ```
@@ -911,6 +912,256 @@ When a violation occurs, browsers send a JSON report:
   </TabPanel>
 </Tabs>
 
+### Advanced Reporting: Custom Node.js Service (Pro Tip)
+
+For maximum control and privacy, I use a custom **Node.js microservice** running locally on the server. This setup avoids sending sensitive report data to third parties and allows for real-time alerts via Telegram.
+
+**The Architecture:**
+1. **Nginx** receives the `POST` request at `/csp-reports`
+2. **Nginx** proxies it to `http://127.0.0.1:58291` (local Node app)
+3. **Node.js App** validates the JSON, logs it to a file, and sends a formatted alert to a Telegram bot.
+
+#### Step 1: The Reporter Script
+
+Create a lightweight script `csp-reporter.mjs`. This script listens for POST requests, logs them to a file, and uses the Telegram API to send alerts with rate limiting (to avoid spamming you during an attack).
+
+<Callout type="warning" title="Important: Setup and Permissions">
+Before running the script, ensure you create the necessary directories and set appropriate permissions:
+<TerminalCommand>
+```bash
+# 1. Create logs directory
+sudo mkdir -p /opt/logs && sudo chown www-data:www-data /opt/logs
+
+# 2. Create and secure secrets directory
+sudo mkdir -p /etc/csp-reporter
+sudo chown root:www-data /etc/csp-reporter
+sudo chmod 750 /etc/csp-reporter
+
+# 3. Create secrets file (add your tokens inside)
+sudo touch /etc/csp-reporter/secrets.env
+sudo chown root:www-data /etc/csp-reporter/secrets.env
+sudo chmod 640 /etc/csp-reporter/secrets.env
+```
+</TerminalCommand>
+</Callout>
+
+<FileContent filename="/opt/scripts/csp-reporter.mjs" icon="mdi:nodejs" collapsible={true}>
+```javascript
+import fs from "node:fs";
+import http from "node:http";
+import https from "node:https";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
+// Configuration
+const PORT = 58291;
+const LOG_FILE = join(__dirname, "../logs/csp-violations.log");
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
+const RATE_LIMIT_WINDOW = 10 * 60 * 1000; // 10 minutes
+
+// In-memory cache for rate limiting: { "ip:blocked-uri": last_timestamp }
+const reportCache = new Map();
+
+// Periodic cleanup of reportCache
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, timestamp] of reportCache.entries()) {
+    if (now - timestamp > RATE_LIMIT_WINDOW) {
+      reportCache.delete(key);
+    }
+  }
+}, RATE_LIMIT_WINDOW);
+
+const server = http.createServer((req, res) => {
+  if (req.method === "POST" && req.url === "/") {
+    let body = "";
+    let bodyBytes = 0;
+    let aborted = false;
+    req.on("data", chunk => {
+      if (aborted) return;
+      // Limit body size to 32KB to prevent DoS
+      bodyBytes += chunk.length;
+      if (bodyBytes > 32 * 1024) {
+        aborted = true;
+        res.writeHead(413); res.end("Payload Too Large");
+        req.destroy();
+        return;
+      }
+      body += chunk;
+    });
+
+    req.on("end", () => {
+      if (aborted) return;
+      try {
+        const report = JSON.parse(body);
+        processReport(report, req);
+        res.writeHead(204); res.end();
+      } catch (e) {
+        res.writeHead(400); res.end("Invalid JSON");
+      }
+    });
+  } else {
+    res.writeHead(404); res.end();
+  }
+});
+
+function processReport(report, req) {
+  const r = report["csp-report"] || report;
+  const ip = req.headers["x-real-ip"] || req.socket.remoteAddress;
+  const blockedUri = r["blocked-uri"] || "unknown";
+  
+  // 1. Log to file
+  const logEntry = JSON.stringify({ timestamp: new Date(), ip, report }) + "\n";
+  fs.appendFile(LOG_FILE, logEntry, (err) => {
+    if (err) console.error("Failed to write to log file:", err);
+  });
+
+  // 2. Check Rate Limit
+  const cacheKey = `${ip}:${blockedUri}`;
+  const now = Date.now();
+  if (reportCache.get(cacheKey) && (now - reportCache.get(cacheKey) < RATE_LIMIT_WINDOW)) {
+    return; // Skip notification
+  }
+  reportCache.set(cacheKey, now);
+
+  // 3. Send to Telegram
+  sendToTelegram(report, ip);
+}
+
+function escapeHtml(unsafe) {
+  return (unsafe || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function sendToTelegram(report, ip) {
+  if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
+    if (!TELEGRAM_BOT_TOKEN) console.error("TELEGRAM_BOT_TOKEN is missing");
+    if (!TELEGRAM_CHAT_ID) console.error("TELEGRAM_CHAT_ID is missing");
+    return; 
+  }
+  
+  const r = report["csp-report"] || report;
+  const caption = `🛡️ <b>CSP Violation</b>\n` +
+    `🌐 IP: <code>${escapeHtml(ip)}</code>\n` +
+    `🚫 Blocked: <code>${escapeHtml(r["blocked-uri"])}</code>\n` +
+    `📄 Doc: <code>${escapeHtml(r["document-uri"])}</code>\n` +
+    `🛠️ Directive: <code>${escapeHtml(r["violated-directive"])}</code>`;
+
+  const boundary = "----WebKitFormBoundary" + Math.random().toString(36).slice(2);
+  const jsonReport = JSON.stringify(report, null, 2);
+
+  const payload = Buffer.concat([
+    Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="chat_id"\r\n\r\n${TELEGRAM_CHAT_ID}\r\n`),
+    Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="caption"\r\n\r\n${caption}\r\n`),
+    Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="parse_mode"\r\n\r\nHTML\r\n`),
+    Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="document"; filename="csp-report.json"\r\nContent-Type: application/json\r\n\r\n${jsonReport}\r\n`),
+    Buffer.from(`--${boundary}--\r\n`),
+  ]);
+
+  const req = https.request({
+    hostname: "api.telegram.org",
+    path: `/bot${TELEGRAM_BOT_TOKEN}/sendDocument`,
+    method: "POST",
+    headers: { 
+        "Content-Type": `multipart/form-data; boundary=${boundary}`,
+        "Content-Length": payload.length
+    }
+  });
+
+  // Set timeout to 10s to prevent hanging
+  req.setTimeout(10000, () => {
+    req.destroy(new Error("Request timed out"));
+  });
+
+  req.on('error', (e) => {
+    console.error(`Problem sending to Telegram: ${e.message}`);
+  });
+
+  req.on('response', (res) => {
+    if (res.statusCode < 200 || res.statusCode >= 300) {
+      console.error(`Telegram API responded with status: ${res.statusCode}`);
+    }
+    // Consume response to free up memory
+    res.resume();
+  });
+
+  req.write(payload);
+  req.end();
+}
+
+server.listen(PORT, "127.0.0.1", () => console.log(`Reporter listening on ${PORT}`));
+```
+</FileContent>
+
+#### Step 2: Systemd Service
+
+Run it as a background service using Systemd.
+
+<FileContent filename="/etc/systemd/system/csp-reporter.service" icon="mdi:cog">
+```ini
+[Unit]
+Description=CSP Violation Reporter
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+ExecStart=/usr/bin/node /opt/scripts/csp-reporter.mjs
+Restart=always
+# Store secrets in a separate file with restricted permissions (chmod 640, owned by root:www-data)
+# Content of /etc/csp-reporter/secrets.env:
+# TELEGRAM_BOT_TOKEN=123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11
+# TELEGRAM_CHAT_ID=987654321
+EnvironmentFile=/etc/csp-reporter/secrets.env
+
+[Install]
+WantedBy=multi-user.target
+```
+</FileContent>
+
+Enable and start the service:
+
+<TerminalCommand>
+```bash
+sudo systemctl enable --now csp-reporter
+```
+</TerminalCommand>
+
+#### Step 3: Nginx Proxy Configuration
+
+Finally, tell Nginx to forward reports to your local service.
+
+<FileContent filename="/etc/nginx/sites-available/example.com" icon="devicon:nginx">
+```nginx
+location /csp-reports {
+    # Forward the POST request to the local Node.js app
+    proxy_pass http://127.0.0.1:58291/;
+    
+    # Pass client IP so the reporter sees the real attacker
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header Host $host;
+    
+    # Don't log these in Nginx access log (the Node app logs them)
+    access_log off;
+}
+```
+</FileContent>
+
+Now, update your CSP header to point to this relative path:
+
+<Code lang="nginx" aria-label="Updating CSP header with report-uri">
+```nginx
+add_header Content-Security-Policy "... report-uri /csp-reports;" always;
+```
+</Code>
+
 ---
 
 ## Migration Strategy: Report-Only to Enforcing
@@ -922,7 +1173,7 @@ Never deploy a strict CSP directly to production. Follow this migration strategy
 Use `Content-Security-Policy-Report-Only` to collect violations without blocking anything:
 
 <Code lang="nginx" aria-label="Phase 1: CSP Report-Only mode configuration">
-```
+```nginx
 # Start with report-only mode
 add_header Content-Security-Policy-Report-Only "
     default-src 'none';
@@ -958,7 +1209,7 @@ Review your violation reports and fix issues:
 Deploy enforcing CSP to a subset of traffic first:
 
 <Code lang="nginx" aria-label="Phase 3: Gradual CSP enforcement with Nginx map">
-```
+```nginx
 # IMPORTANT: This map block MUST be placed in http { } context, NOT inside server { }
 # map $request_id $csp_mode {
 #     ~^[01] "enforce";   # 2/16 hex digits = ~12.5% of requests
@@ -1006,7 +1257,7 @@ if ($csp_report_only_value != "") {
 Once violation reports are minimal and expected, enable full enforcement:
 
 <Code lang="nginx" aria-label="Phase 4: Full CSP enforcement">
-```
+```nginx
 # Full enforcement
 add_header Content-Security-Policy "..." always;
 
@@ -1223,7 +1474,7 @@ After implementing this strict CSP on `jmrp.io`:
 ### Pitfall 2: Allowing `https:` in script-src
 
 <Code lang="nginx" aria-label="Dangerous CSP allowing all HTTPS sources">
-```
+```nginx
 # [BAD] DANGEROUS: Trusts the entire internet!
 script-src 'self' https:;
 ```
@@ -1234,7 +1485,7 @@ This allows scripts from ANY HTTPS URL, including `https://malicious-site.com/ev
 ### Pitfall 3: Forgetting `object-src` and `base-uri`
 
 <Code lang="nginx" aria-label="Comparing incomplete vs complete strict CSP">
-```
+```nginx
 # [BAD] Missing critical directives
 script-src 'nonce-$cspNonce' 'strict-dynamic';
 
@@ -1250,7 +1501,7 @@ base-uri 'none';
 Without `'strict-dynamic'`, dynamically loaded scripts are blocked:
 
 <Code lang="javascript" aria-label="Dynamic script loading blocked without strict-dynamic">
-```
+```javascript
 // Without 'strict-dynamic', this fails even though parent has nonce
 const script = document.createElement('script');
 script.src = 'https://cdn.example.com/lib.js';
@@ -1261,7 +1512,7 @@ document.head.appendChild(script); // BLOCKED!
 ### Pitfall 5: Forgetting `always` in Nginx
 
 <Code lang="nginx" aria-label="Importance of 'always' parameter in Nginx add_header">
-```
+```nginx
 # [BAD] Only applies to 2xx responses
 add_header Content-Security-Policy "...";
 
