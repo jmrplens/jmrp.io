@@ -118,10 +118,12 @@ Used for diagrams and charts.
 Used for visualizing data.
 
 **Required:**
+
 - `data` array.
 - `title` OR `ariaLabel`.
 
 **Best Practice:**
+
 - If `title` or `ariaLabel` is missing, the component will fall back to a generic label like "Bar chart showing X items", but this is less descriptive. Always provide a title.
 
 ```jsx
@@ -129,7 +131,7 @@ Used for visualizing data.
   title="Server Response Times"
   data={[
     { label: "US-East", value: 120 },
-    { label: "EU-West", value: 85 }
+    { label: "EU-West", value: 85 },
   ]}
 />
 ```

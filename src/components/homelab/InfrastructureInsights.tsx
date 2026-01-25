@@ -121,20 +121,9 @@ function getStatusColor(status: StatusLevel) {
 export default function InfrastructureInsights() {
   const [stats, setStats] = useState<HomelabStats | null>(null);
   const [error, setError] = useState(false);
-  const [isLocalDev, setIsLocalDev] = useState(false);
   const isFetchingRef = useRef(false);
 
   useEffect(() => {
-    if (
-      globalThis.window !== undefined &&
-      (globalThis.window.location.hostname === "localhost" ||
-        globalThis.window.location.hostname === "127.0.0.1")
-    ) {
-      console.info("InfrastructureInsights: Data fetch disabled on localhost");
-      setIsLocalDev(true);
-      return;
-    }
-
     const controller = new AbortController();
     // Refresh interval in milliseconds (30 seconds)
     const REFRESH_INTERVAL = 30_000;
@@ -215,19 +204,6 @@ export default function InfrastructureInsights() {
     medium: "High",
     normal: "Optimal",
   });
-
-  if (isLocalDev) {
-    return (
-      <section
-        className="infrastructure-section"
-        aria-label="Edge node real-time statistics"
-      >
-        <div className="stats-loading">
-          Local development mode: data fetch disabled
-        </div>
-      </section>
-    );
-  }
 
   if (error) {
     return (

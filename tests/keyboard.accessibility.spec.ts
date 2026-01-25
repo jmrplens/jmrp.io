@@ -201,6 +201,12 @@ test.describe("Keyboard Navigation Accessibility", () => {
     const section = page.locator(".infrastructure-section");
     await expect(section).toBeVisible();
 
+    // Ensure component hydration triggers (client:visible)
+    await section.scrollIntoViewIfNeeded();
+
+    // Wait for data to load (ensures hydration is complete)
+    await expect(section).toContainText("500", { timeout: 10_000 });
+
     // 2. Verify Tab navigation through links
     // First link: Tarpit Hits
     const tarpitLink = section.locator('a[href*="implementing-tarpit-nginx"]');

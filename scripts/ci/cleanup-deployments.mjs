@@ -45,14 +45,16 @@ function getDeployments(next = "") {
     const cmd = `npx vercel ls ${PROJECT_NAME} --token=${TOKEN} --format json ${next ? `--next ${next}` : ""}`;
     const output = run(cmd);
     return JSON.parse(output);
-  } catch (e) {
-    console.error("⚠ Failed to list deployments:", e.message);
+  } catch (error) {
+    console.error("⚠ Failed to list deployments:", error.message);
     return null;
   }
 }
 
 async function cleanup() {
-  console.log(`🧹 Starting cleanup for PR #${PR_NUMBER} in project: ${PROJECT_NAME}`);
+  console.log(
+    `🧹 Starting cleanup for PR #${PR_NUMBER} in project: ${PROJECT_NAME}`,
+  );
 
   let hasMore = true;
   let next = "";
@@ -76,7 +78,9 @@ async function cleanup() {
     });
 
     if (targetDeployments.length > 0) {
-      console.log(`   Found ${targetDeployments.length} deployments for PR #${PR_NUMBER} in this batch.`);
+      console.log(
+        `   Found ${targetDeployments.length} deployments for PR #${PR_NUMBER} in this batch.`,
+      );
 
       for (const dep of targetDeployments) {
         try {
@@ -85,9 +89,9 @@ async function cleanup() {
           run(`npx vercel rm ${dep.url} --token=${TOKEN} --yes`);
           console.log("✅");
           deletedCount++;
-        } catch (e) {
+        } catch (error) {
           console.log("❌");
-          console.error(`   Failed to remove ${dep.url}:`, e.message);
+          console.error(`   Failed to remove ${dep.url}:`, error.message);
         }
       }
     }
@@ -106,7 +110,7 @@ async function cleanup() {
   console.log(`   - Deleted: ${deletedCount} deployments for PR #${PR_NUMBER}`);
 }
 
-cleanup().catch((err) => {
-  console.error("Fatal error during cleanup:", err);
+cleanup().catch((error) => {
+  console.error("Fatal error during cleanup:", error);
   process.exit(1);
 });
