@@ -183,10 +183,11 @@ async function fetchMeshtasticStats(
   setError: (error: boolean) => void,
 ): Promise<MeshtasticStatsData> {
   try {
-    const [resPotato, resLF, resMF] = await Promise.all([
+    const [resPotato, resLF, resMF, potatoVersion] = await Promise.all([
       fetch("/api/proxy/potato/nodes").catch(() => null),
       fetch("/api/proxy/mesh/lf").catch(() => null),
       fetch("/api/proxy/mesh/mf").catch(() => null),
+      fetchPotatoVersion(),
     ]);
 
     const potatoData = await safeFetchJson<unknown[]>(
@@ -206,12 +207,10 @@ async function fetchMeshtasticStats(
     } | null>(resMF, "Failed to parse Meshtastic MF response", null);
     const mfNodes = mfData?.data?.activeNodes ?? 0;
 
-    // Signal error if all three fetches failed
+    // Signal error if all three main data fetches failed
     if (!resPotato?.ok && !resLF?.ok && !resMF?.ok) {
       setError(true);
     }
-
-    const potatoVersion = await fetchPotatoVersion();
 
     return { potatoNodes, lfNodes, mfNodes, potatoVersion };
   } catch (error) {
@@ -486,6 +485,10 @@ export default function ServiceStats({ type }: Props) {
   const [error, setError] = useState(false);
 
   useEffect(() => {
+    // Reset state immediately when type changes to avoid stale data
+    setStats(null);
+    setError(false);
+
     const fetchData = async () => {
       // Avoid fetching in CI/Localhost to prevent CORS errors in Lighthouse
       if (

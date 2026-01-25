@@ -121,6 +121,7 @@ function getStatusColor(status: StatusLevel) {
 export default function InfrastructureInsights() {
   const [stats, setStats] = useState<HomelabStats | null>(null);
   const [error, setError] = useState(false);
+  const [isLocalDev, setIsLocalDev] = useState(false);
   const isFetchingRef = useRef(false);
 
   useEffect(() => {
@@ -136,6 +137,10 @@ export default function InfrastructureInsights() {
         (globalThis.window.location.hostname === "localhost" ||
           globalThis.window.location.hostname === "127.0.0.1")
       ) {
+        console.info(
+          "InfrastructureInsights: Data fetch disabled on localhost",
+        );
+        setIsLocalDev(true);
         return;
       }
 
@@ -182,7 +187,7 @@ export default function InfrastructureInsights() {
   }, []);
 
   const displayVal = (
-    val: number | undefined,
+    val: number | null | undefined,
     formatter?: (v: number | string) => string,
   ) => {
     if (val === undefined || val === null) return "...";
@@ -212,6 +217,19 @@ export default function InfrastructureInsights() {
     medium: "High",
     normal: "Optimal",
   });
+
+  if (isLocalDev) {
+    return (
+      <section
+        className="infrastructure-section"
+        aria-label="Edge node real-time statistics"
+      >
+        <div className="stats-loading">
+          Local development mode: data fetch disabled
+        </div>
+      </section>
+    );
+  }
 
   if (error) {
     return (
@@ -247,7 +265,8 @@ export default function InfrastructureInsights() {
               {displayVal(stats?.requests_received_24h)} requests received
             </span>
             <span aria-hidden="true">
-              {displayVal(stats?.requests_received_24h)} <small>handled</small>
+              <strong>{displayVal(stats?.requests_received_24h)}</strong>{" "}
+              <small>handled</small>
             </span>
           </div>
           <div className="insight-details">
@@ -391,7 +410,7 @@ export default function InfrastructureInsights() {
               CPU usage: {displayVal(stats?.cpu_usage_avg, formatPercent)} %
             </span>
             <span aria-hidden="true">
-              {displayVal(stats?.cpu_usage_avg, formatPercent)}{" "}
+              <strong>{displayVal(stats?.cpu_usage_avg, formatPercent)}</strong>{" "}
               <small>% CPU</small>
             </span>
           </div>
@@ -403,7 +422,9 @@ export default function InfrastructureInsights() {
                   Memory: {displayVal(stats?.mem_used_percent, formatPercent)} %
                 </span>
                 <span aria-hidden="true">
-                  {displayVal(stats?.mem_used_percent, formatPercent)}{" "}
+                  <strong>
+                    {displayVal(stats?.mem_used_percent, formatPercent)}
+                  </strong>{" "}
                   <small>% RAM</small>
                 </span>
               </strong>
