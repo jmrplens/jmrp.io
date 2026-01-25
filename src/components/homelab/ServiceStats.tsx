@@ -322,7 +322,8 @@ function MastodonStats({
               [1, 2, 3].map((i) => (
                 <div
                   key={i}
-                  class="stat-btn-filled skeleton"
+                  className="stat-btn-filled skeleton"
+                  aria-hidden="true"
                 >
                   # {".".repeat(i * 3 + 4)}
                 </div>

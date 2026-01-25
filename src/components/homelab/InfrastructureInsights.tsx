@@ -125,24 +125,22 @@ export default function InfrastructureInsights() {
   const isFetchingRef = useRef(false);
 
   useEffect(() => {
+    if (
+      globalThis.window !== undefined &&
+      (globalThis.window.location.hostname === "localhost" ||
+        globalThis.window.location.hostname === "127.0.0.1")
+    ) {
+      console.info("InfrastructureInsights: Data fetch disabled on localhost");
+      setIsLocalDev(true);
+      return;
+    }
+
     const controller = new AbortController();
     // Refresh interval in milliseconds (30 seconds)
     const REFRESH_INTERVAL = 30_000;
 
     const fetchStats = async () => {
       if (isFetchingRef.current) return;
-
-      if (
-        globalThis.window !== undefined &&
-        (globalThis.window.location.hostname === "localhost" ||
-          globalThis.window.location.hostname === "127.0.0.1")
-      ) {
-        console.info(
-          "InfrastructureInsights: Data fetch disabled on localhost",
-        );
-        setIsLocalDev(true);
-        return;
-      }
 
       isFetchingRef.current = true;
       try {
@@ -197,9 +195,7 @@ export default function InfrastructureInsights() {
   const countries = stats?.top_security_countries || [];
 
   const totalSecurityBlocks = stats
-    ? (stats.nginx_bans_24h || 0) +
-      (stats.tarpit_hits_24h || 0) +
-      (stats.mikrotik_scans_total || 0)
+    ? (stats.nginx_bans_24h || 0) + (stats.tarpit_hits_24h || 0)
     : null;
 
   const systemStatus = getStatus(
@@ -320,7 +316,7 @@ export default function InfrastructureInsights() {
             </div>
             <div className="detail-row">
               <a
-                href="/blog/005-implementing-tarpit-nginx"
+                href="/blog/005-implementing-tarpit-nginx/"
                 className="insight-link"
                 aria-label="Read blog post about implementing Nginx Tarpit"
               >
@@ -334,7 +330,7 @@ export default function InfrastructureInsights() {
             </div>
             <div className="detail-row">
               <a
-                href="/blog/006-implementing-mikrotik-honeypot"
+                href="/blog/006-implementing-mikrotik-honeypot/"
                 className="insight-link"
                 aria-label="Read blog post about MikroTik Port Scanner Honeypot"
               >

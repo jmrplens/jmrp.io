@@ -981,8 +981,8 @@ const server = http.createServer((req, res) => {
     let aborted = false;
     req.on("data", chunk => {
       if (aborted) return;
-      // Limit body size to 10KB to prevent DoS
-      if (body.length + chunk.length > 10240) {
+      // Limit body size to 32KB to prevent DoS
+      if (body.length + chunk.length > 32 * 1024) {
         aborted = true;
         res.writeHead(413); res.end("Payload Too Large");
         req.destroy();

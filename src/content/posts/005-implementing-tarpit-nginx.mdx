@@ -150,6 +150,12 @@ http {
         0 10;
     }
 
+    # 2b. Only log tarpitted requests (avoid trusted IPs)
+    map $is_trusted_ip $tarpit_loggable {
+        1 0;
+        0 1;
+    }
+
     # 3. Special Log Format for Tarpit
     # We force the status code to 418 in the log, even though we return 200 to the client.
     # This allows CrowdSec to easily identify tarpit hits without complex parsing.
@@ -178,8 +184,8 @@ Create a reusable snippet that handles the throttling and logging.
 
 <FileContent filename="/etc/nginx/snippets/tarpit.conf" icon="devicon:nginx" ariaLabel="Nginx tarpit snippet configuration">
 ```nginx
-# Log to dedicated tarpit log using our fixed 418 format
-access_log /var/log/nginx/tarpit_access.log tarpit_418_fixed;
+# Log to dedicated tarpit log only for tarpitted requests
+access_log /var/log/nginx/tarpit_access.log tarpit_418_fixed if=$tarpit_loggable;
 
 # Dynamic bandwidth throttling (0 for trusted, 10 for others)
 limit_rate $tarpit_rate;
