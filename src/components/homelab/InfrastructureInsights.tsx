@@ -265,44 +265,28 @@ export default function InfrastructureInsights() {
               {displayVal(stats?.requests_received_24h)} requests received
             </span>
             <span aria-hidden="true">
-              <strong>{displayVal(stats?.requests_received_24h)}</strong>{" "}
+              <output>{displayVal(stats?.requests_received_24h)}</output>{" "}
               <small>handled</small>
             </span>
           </div>
           <div className="insight-details">
             <div className="detail-row">
-              <span>Responses Sent</span>
-              <strong>
-                <span className="sr-only">
-                  {displayVal(stats?.responses_sent_24h)} responses sent
-                </span>
-                <span aria-hidden="true">
-                  {displayVal(stats?.responses_sent_24h)}
-                </span>
-              </strong>
+              <span id="label-responses">Responses Sent</span>
+              <output aria-labelledby="label-responses">
+                {displayVal(stats?.responses_sent_24h)}
+              </output>
             </div>
             <div className="detail-row">
-              <span>Upstream (Forwarded)</span>
-              <strong>
-                <span className="sr-only">
-                  {displayVal(stats?.upstream_sent_24h)} requests forwarded
-                </span>
-                <span aria-hidden="true">
-                  {displayVal(stats?.upstream_sent_24h)}
-                </span>
-              </strong>
+              <span id="label-upstream">Upstream (Forwarded)</span>
+              <output aria-labelledby="label-upstream">
+                {displayVal(stats?.upstream_sent_24h)}
+              </output>
             </div>
             <div className="detail-row">
-              <span>Bandwidth (1h)</span>
-              <strong>
-                <span className="sr-only">
-                  Bandwidth:{" "}
-                  {displayVal(stats?.bandwidth_bytes_1h, formatBytes)}
-                </span>
-                <span aria-hidden="true">
-                  {displayVal(stats?.bandwidth_bytes_1h, formatBytes)}
-                </span>
-              </strong>
+              <span id="label-bandwidth">Bandwidth (1h)</span>
+              <output aria-labelledby="label-bandwidth">
+                {displayVal(stats?.bandwidth_bytes_1h, formatBytes)}
+              </output>
             </div>
           </div>
         </article>
@@ -319,8 +303,8 @@ export default function InfrastructureInsights() {
           </span>
           <div className="insight-value">
             <span className="sr-only">
-              {totalSecurityBlocks?.toLocaleString() ?? "..."} total security
-              blocks
+              {totalSecurityBlocks?.toLocaleString() ?? "Loading"} total
+              security blocks
             </span>
             <span aria-hidden="true">
               {totalSecurityBlocks?.toLocaleString() ?? "..."}{" "}
@@ -329,21 +313,44 @@ export default function InfrastructureInsights() {
           </div>
           <div className="insight-details">
             <div className="detail-row">
-              <span>Nginx Bans</span>
-              <strong>{displayVal(stats?.nginx_bans_24h)}</strong>
+              <span id="label-nginx-bans">Nginx Bans</span>
+              <output aria-labelledby="label-nginx-bans">
+                {displayVal(stats?.nginx_bans_24h)}
+              </output>
             </div>
             <div className="detail-row">
-              <span>Tarpit Hits</span>
-              <strong>{displayVal(stats?.tarpit_hits_24h)}</strong>
+              <a
+                href="/blog/005-implementing-tarpit-nginx"
+                className="insight-link"
+                aria-label="Read blog post about implementing Nginx Tarpit"
+              >
+                Tarpit Hits
+              </a>
+              <output
+                aria-label={`${displayVal(stats?.tarpit_hits_24h)} tarpit hits`}
+              >
+                {displayVal(stats?.tarpit_hits_24h)}
+              </output>
             </div>
             <div className="detail-row">
-              <span>Port Scanners</span>
-              <strong>{displayVal(stats?.mikrotik_scans_total)}</strong>
+              <a
+                href="/blog/006-implementing-mikrotik-honeypot"
+                className="insight-link"
+                aria-label="Read blog post about MikroTik Port Scanner Honeypot"
+              >
+                Port Scanners
+              </a>
+              <output
+                aria-label={`${displayVal(stats?.mikrotik_scans_total)} port scanners detected`}
+              >
+                {displayVal(stats?.mikrotik_scans_total)}
+              </output>
             </div>
             <div className="detail-row">
               <span className="sr-only">Attack Regions:</span>
               <span aria-hidden="true">Attack Regions</span>
               <ul className="country-list">
+                <li className="sr-only">List of attack regions:</li>
                 {countries.length > 0 ? (
                   countries.map((c) => (
                     <li
@@ -387,10 +394,13 @@ export default function InfrastructureInsights() {
           </div>
           <div className="insight-details">
             <div className="detail-row">
-              <span>System Status</span>
-              <strong className={getStatusColor(systemStatus)}>
+              <span id="label-system-status">System Status</span>
+              <output
+                className={getStatusColor(systemStatus)}
+                aria-labelledby="label-system-status"
+              >
                 {systemStatus}
-              </strong>
+              </output>
             </div>
           </div>
         </article>
@@ -410,30 +420,26 @@ export default function InfrastructureInsights() {
               CPU usage: {displayVal(stats?.cpu_usage_avg, formatPercent)} %
             </span>
             <span aria-hidden="true">
-              <strong>{displayVal(stats?.cpu_usage_avg, formatPercent)}</strong>{" "}
+              <output>{displayVal(stats?.cpu_usage_avg, formatPercent)}</output>{" "}
               <small>% CPU</small>
             </span>
           </div>
           <div className="insight-details">
             <div className="detail-row">
-              <span>Memory Usage</span>
-              <strong>
-                <span className="sr-only">
-                  Memory: {displayVal(stats?.mem_used_percent, formatPercent)} %
-                </span>
-                <span aria-hidden="true">
-                  <strong>
-                    {displayVal(stats?.mem_used_percent, formatPercent)}
-                  </strong>{" "}
-                  <small>% RAM</small>
-                </span>
-              </strong>
+              <span id="label-memory">Memory Usage</span>
+              <output aria-labelledby="label-memory">
+                {displayVal(stats?.mem_used_percent, formatPercent)}
+                <small aria-hidden="true"> % RAM</small>
+              </output>
             </div>
             <div className="detail-row">
-              <span>Load Status</span>
-              <strong className={getStatusColor(loadStatus)}>
+              <span id="label-load-status">Load Status</span>
+              <output
+                className={getStatusColor(loadStatus)}
+                aria-labelledby="label-load-status"
+              >
                 {loadStatus}
-              </strong>
+              </output>
             </div>
           </div>
         </article>

@@ -40,10 +40,6 @@
   border-radius: 50%;
 }
 
-.status-text-muted {
-  color: var(--color-text-body, #8b949e);
-}
-
 :root[data-theme="light"] .status-text-muted {
   color: #374151;
 }
@@ -115,7 +111,6 @@
 .trending-header {
   margin: 0 0 0.5rem;
   font-size: 0.8em;
-  color: var(--color-text-body);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -183,7 +178,6 @@
 
 .meshtastic-sub {
   font-size: 0.85em;
-  color: var(--color-text-body);
 }
 
 :root[data-theme="light"] .meshtastic-sub {
@@ -192,7 +186,6 @@
 
 .meshtastic-ver {
   margin-left: 4px;
-  color: var(--color-text-body);
 }
 
 :root[data-theme="light"] .meshtastic-ver {

@@ -55,7 +55,7 @@ const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 const LOG_FILE = join(__dirname, "../logs/csp-violations.log");
 const RATE_LIMIT_WINDOW = 10 * 60 * 1000; // 10 minutes window for repeated reports
-const MAX_BODY_SIZE = 10 * 1024; // 10KB limit for CSP reports
+const MAX_BODY_SIZE = 100 * 1024; // 100KB limit for CSP reports
 
 // In-memory cache for rate limiting: { "ip:blocked-uri": last_timestamp }
 const reportCache = new Map();
@@ -243,6 +243,18 @@ function sendToTelegram(report, ip, ua) {
       "Content-Type": `multipart/form-data; boundary=${boundary}`,
       "Content-Length": payload.length,
     },
+  });
+
+  req.on("response", (res) => {
+    let resBody = "";
+    res.on("data", (chunk) => (resBody += chunk));
+    res.on("end", () => {
+      if (res.statusCode === 200) {
+        console.log("CSP report sent to Telegram successfully");
+      } else {
+        console.error(`Telegram API Error (${res.statusCode}):`, resBody);
+      }
+    });
   });
 
   req.on("error", (e) => {

@@ -13,7 +13,7 @@
   --color-status-info: #3b82f6;
 }
 
-/* Light theme overrides */
+/* Light theme overrides for status variables */
 :root[data-theme="light"] {
   --color-status-online: #065f46;
   --color-status-online-bg: #dcfce7;
@@ -84,10 +84,6 @@
   letter-spacing: 0.05em;
 }
 
-:root[data-theme="light"] .insight-label {
-  color: var(--color-text-body);
-}
-
 .insight-value {
   margin: var(--space-xs) 0 var(--space-md);
   font-size: 1.6rem;
@@ -95,18 +91,14 @@
   color: var(--color-primary);
 }
 
-:root[data-theme="light"] .insight-value {
-  color: #000;
+.insight-value output {
+  font-weight: inherit;
 }
 
 .insight-value small {
   font-size: 0.9rem;
   font-weight: var(--fw-semibold);
   color: var(--color-text-muted);
-}
-
-:root[data-theme="light"] .insight-value small {
-  color: #374151;
 }
 
 .insight-details {
@@ -123,7 +115,6 @@
   align-items: center;
   justify-content: space-between;
   font-size: 0.85rem;
-  color: var(--color-text-body);
 }
 
 .detail-row span {
@@ -131,17 +122,25 @@
   color: var(--color-text-muted);
 }
 
-:root[data-theme="light"] .detail-row span {
-  color: #374151;
+.insight-link {
+  font-weight: var(--fw-medium);
+  color: var(--color-text-muted);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-decoration-color: var(--color-primary);
+  text-underline-offset: 4px;
+  transition:
+    color 0.2s ease,
+    text-decoration-color 0.2s ease;
 }
 
-.detail-row strong {
+.insight-link:hover {
+  color: var(--color-accent);
+  text-decoration-color: var(--color-accent);
+}
+
+.detail-row output {
   font-weight: var(--fw-bold);
-  color: var(--color-text-body);
-}
-
-:root[data-theme="light"] .detail-row strong {
-  color: #000;
 }
 
 .country-list {
@@ -159,23 +158,13 @@
   font-size: 0.7rem;
   font-weight: var(--fw-bold);
   color: var(--color-primary);
-  background: var(--color-bg-tertiary);
+  background: var(--color-bg-subtle);
   border: 1px solid var(--color-border);
   border-radius: 3px;
 }
 
-:root[data-theme="light"] .country-badge {
-  color: #fff;
-  background: #374151;
-  border-color: #1f2937;
-}
-
 .insight-card.security .insight-value {
   color: var(--color-accent);
-}
-
-:root[data-theme="light"] .insight-card.security .insight-value {
-  color: var(--color-status-error);
 }
 
 /* Color utility classes - using variables only */
@@ -193,41 +182,4 @@
 
 .color-success {
   color: var(--color-status-online);
-}
-
-/* Consolidated Light Mode Overrides for System Preference */
-@media (prefers-color-scheme: light) {
-  :root:not([data-theme="dark"]) .insight-label {
-    color: var(--color-text-body);
-  }
-
-  :root:not([data-theme="dark"]) .insight-value {
-    color: #000;
-  }
-
-  :root:not([data-theme="dark"]) .insight-value small {
-    color: #374151;
-  }
-
-  :root:not([data-theme="dark"]) .detail-row span {
-    color: #374151;
-  }
-
-  :root:not([data-theme="dark"]) .detail-row strong {
-    color: #000;
-  }
-
-  :root:not([data-theme="dark"]) .country-badge {
-    color: #fff;
-    background: #374151;
-    border-color: #1f2937;
-  }
-
-  :root:not([data-theme="dark"]) .insight-card.security .insight-value {
-    color: var(--color-status-error);
-  }
-
-  :root:not([data-theme="dark"]) .color-info {
-    color: #1e40af;
-  }
 }
