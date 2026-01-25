@@ -95,13 +95,15 @@ const server = http.createServer((req, res) => {
     const userAgent = (req.headers["user-agent"] || "Unknown").trim();
 
     let responded = false;
+    let bodyBytes = 0;
 
     req.on("data", (chunk) => {
       if (responded) return;
 
       body += chunk.toString();
+      bodyBytes += chunk.length;
       // Enforce maximum body size
-      if (body.length > MAX_BODY_SIZE) {
+      if (bodyBytes > MAX_BODY_SIZE) {
         console.warn(`Request body exceeded limit from IP: ${clientIp}`);
         responded = true;
         res.writeHead(413, { "Content-Type": "text/plain" });

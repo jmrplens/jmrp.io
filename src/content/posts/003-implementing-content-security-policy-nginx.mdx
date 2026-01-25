@@ -978,11 +978,13 @@ setInterval(() => {
 const server = http.createServer((req, res) => {
   if (req.method === "POST" && req.url === "/") {
     let body = "";
+    let bodyBytes = 0;
     let aborted = false;
     req.on("data", chunk => {
       if (aborted) return;
       // Limit body size to 32KB to prevent DoS
-      if (body.length + chunk.length > 32 * 1024) {
+      bodyBytes += chunk.length;
+      if (bodyBytes > 32 * 1024) {
         aborted = true;
         res.writeHead(413); res.end("Payload Too Large");
         req.destroy();
