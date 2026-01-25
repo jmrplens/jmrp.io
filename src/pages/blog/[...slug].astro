@@ -81,21 +81,18 @@ const finalReferences = collectedRefsFromMarkdown.filter((ref) => {
 });
 // --- End of Reference Logic ---
 
-// --- Image Optimization (JSON-LD & Preload) ---
+// --- Image Optimization (JSON-LD) ---
 
 let jsonLdImage = "/default-blog-cover.webp";
-let preloadSrcset: string | undefined;
-let preloadSizes: string | undefined;
-let preloadImage: string | undefined;
 
-// Shared constants for image optimization to ensure Preload matches Img tag exactly
+// Shared constants for image optimization
 const coverImageWidths = [400, 450, 540, 600, 720, 800, 1080, 1200];
 const coverImageSizes =
   "(max-width: 768px) calc(100vw - 2.5rem), (max-width: 1024px) 600px, 460px";
 
 if (post.data.coverImage) {
   const coverImage = post.data.coverImage;
-  // 1. Generate JSON-LD Schema Image (Standard OG size)
+  // Generate JSON-LD Schema Image (Standard OG size)
   const schemaImage = await getImage({
     src: coverImage,
     format: "webp",
@@ -104,25 +101,6 @@ if (post.data.coverImage) {
     quality: 60,
   });
   jsonLdImage = schemaImage.src;
-
-  // 2. Generate Responsive Preload Srcset
-  // This ensures the browser preloads exactly the same resource it will request for the <img> tag
-  const responsiveImages = await Promise.all(
-    coverImageWidths.map((width) =>
-      getImage({
-        src: coverImage,
-        format: "webp",
-        width: width,
-        quality: 70, // Must match Image component quality
-      }),
-    ),
-  );
-
-  preloadSrcset = responsiveImages
-    .map((img, i) => `${img.src} ${coverImageWidths[i]}w`)
-    .join(", ");
-  preloadSizes = coverImageSizes;
-  preloadImage = responsiveImages.at(-1)?.src; // Fallback
 }
 
 const articleSchema = [
@@ -164,9 +142,6 @@ const articleSchema = [
   description={post.data.description}
   type="article"
   image={post.data.coverImage?.src}
-  preloadImage={preloadImage}
-  preloadSrcset={preloadSrcset}
-  preloadSizes={preloadSizes}
   publishDate={post.data.publishedDate}
   modifiedDate={post.data.updatedDate}
   tags={post.data.tags}
