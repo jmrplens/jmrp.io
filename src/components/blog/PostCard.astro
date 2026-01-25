@@ -282,6 +282,17 @@ const { post, loading = "lazy", fetchpriority = "auto" } = Astro.props;
       border: 0;
       clip-path: inset(50%);
     }
+
+    /* Restore visibility when focused (keyboard navigation) */
+    .tags:focus-within {
+      position: relative;
+      width: auto;
+      height: auto;
+      margin: 0;
+      overflow: visible;
+      white-space: normal;
+      clip-path: none;
+    }
   }
 
   /* Keyboard focus styles for main-link */

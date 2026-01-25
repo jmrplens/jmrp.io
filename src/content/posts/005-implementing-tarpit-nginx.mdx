@@ -187,14 +187,14 @@ Create a reusable snippet that handles the throttling and logging.
 # Log to dedicated tarpit log only for tarpitted requests
 access_log /var/log/nginx/tarpit_access.log tarpit_418_fixed if=$tarpit_loggable;
 
-# Dynamic bandwidth throttling (0 for trusted, 10 for others)
-limit_rate $tarpit_rate;
-
 # Bypass for Trusted IPs - Return standard 403 instead of Tarpit
 # This saves you from waiting 2 hours if you accidentally hit a protected path!
 if ($is_trusted_ip) {
     return 403;
 }
+
+# Dynamic bandwidth throttling (0 for trusted, 10 for others)
+limit_rate $tarpit_rate;
 
 # Start throttling after the first byte
 limit_rate_after 1;

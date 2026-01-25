@@ -242,6 +242,10 @@ async function processSingleHtmlFile(
   if (bodyStyles.length > 0) {
     bodyStyles.each((_, el) => {
       const $style = $(el);
+      // Skip styles inside SVG, template, or noscript as they might be scoped/inert
+      if ($style.parents("svg, template, noscript").length > 0) {
+        return;
+      }
       $("head").append($style.clone());
       $style.remove();
     });

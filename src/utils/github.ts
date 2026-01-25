@@ -77,7 +77,10 @@ export async function fetchGitHubProfile(): Promise<GitHubProfile> {
 
     return (await res.json()) as GitHubProfile;
   } catch (error) {
-    console.warn("Failed to fetch GitHub profile, using fallback data:", error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.warn(
+      `Failed to fetch GitHub profile, using fallback data: ${errorMessage}`,
+    );
     return {
       name: "José Manuel Requena Plens",
       login: USERNAME,
@@ -110,7 +113,10 @@ export async function fetchTopRepositories(limit = 12): Promise<GitHubRepo[]> {
 
     return (await res.json()) as GitHubRepo[];
   } catch (error) {
-    console.warn("Failed to fetch GitHub repos, using empty list:", error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.warn(
+      `Failed to fetch GitHub repos, using empty list: ${errorMessage}`,
+    );
     return [];
   }
 }
@@ -132,8 +138,9 @@ export async function fetchRepositoriesByName(
 
     const batchPromises = batch.map(async (name) => {
       try {
+        const safeName = encodeURIComponent(name);
         const res = await fetch(
-          `https://api.github.com/repos/${USERNAME}/${name}`,
+          `https://api.github.com/repos/${USERNAME}/${safeName}`,
           { headers },
         );
         if (!res.ok) {
@@ -142,7 +149,9 @@ export async function fetchRepositoriesByName(
         }
         return (await res.json()) as GitHubRepo;
       } catch (error) {
-        console.warn(`Error fetching repo ${name}:`, error);
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
+        console.warn(`Error fetching repo ${name}: ${errorMessage}`);
         return null;
       }
     });
