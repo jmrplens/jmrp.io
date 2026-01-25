@@ -194,7 +194,6 @@ const { headings } = Astro.props;
         const drawer = document.getElementById("toc-drawer");
         const backdrop = document.getElementById("toc-backdrop");
         const closeBtn = document.getElementById("toc-close-btn");
-        // const btns = document.querySelectorAll(".toc-trigger"); // Removed to fix lint hint
 
         if (drawer && drawer.classList.contains("open")) {
           // Delegate to closeBtn or backdrop to ensure closeTOC cleanup is executed

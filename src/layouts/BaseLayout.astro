@@ -71,6 +71,17 @@ if (preloadSrcset && !preloadSizes) {
       name="format-detection"
       content="telephone=no"
     />
+    <BaseHead
+      title={title}
+      description={description}
+      type={type}
+      schema={schema}
+      image={image}
+      publishDate={publishDate}
+      modifiedDate={modifiedDate}
+      authors={authors}
+      tags={tags}
+    />
     {/* LCP Image Preload - must be early in head for maximum effect */}
     {
       preloadImage && (
@@ -85,17 +96,6 @@ if (preloadSrcset && !preloadSizes) {
       )
     }
     <SRIEventListener />
-    <BaseHead
-      title={title}
-      description={description}
-      type={type}
-      schema={schema}
-      image={image}
-      publishDate={publishDate}
-      modifiedDate={modifiedDate}
-      authors={authors}
-      tags={tags}
-    />
     <script is:inline>
       // Critical: Execute immediately to prevent FOUC
       (function () {

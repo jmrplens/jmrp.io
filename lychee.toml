@@ -8,6 +8,8 @@ exclude = [
     'https://profdent\.es/.*',
     'https://mstdn\.jmrp\.io/.*',
     'https://mesh\.jmrp\.io/.*',
+    'https://mesh_lf\.jmrp\.io/.*',
+    'https://mesh_mf\.jmrp\.io/.*',
     'https://electronica-submarina\.com/.*',
     'https://ies-berlanga\.info/.*',
     'https://www\.i3m-detectors\.i3m\.upv\.es/.*',

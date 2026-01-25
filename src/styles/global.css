@@ -226,9 +226,8 @@ h6 {
 h1 {
   font-size: 1.75em;
   line-height: 1.2;
-  text-wrap: balance;
 
-  /* Slightly smaller than 2em for better hierarchy */
+  /* Removed text-wrap balance to improve LCP/rendering speed */
 }
 
 /* Safety: ensure any h1 inside .prose matches the global h1 size */

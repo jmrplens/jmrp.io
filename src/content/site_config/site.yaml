@@ -1,12 +1,11 @@
 title: "José Manuel Requena Plens | R&D Engineer"
-description: "Academic and R&D Portfolio of José Manuel Requena Plens. Specializing in Embedded Systems, Acoustics, and Industrial Software Development."
+description: "Portfolio of José Manuel Requena Plens. Specializing in Embedded Systems, Acoustics, and Industrial Software Development."
 author: "José Manuel Requena Plens"
 url: "https://jmrp.io"
 keywords: "R&D, Embedded Systems, Acoustics, Software Engineer, Portfolio, CV, Metamaterials, Research"
 fediverse_creator: "@jmrplens@mstdn.jmrp.io"
 locale: "en_US"
 type: "site"
-# image: "/img/mehome_landscape.jpeg" # Deprecated: Handled in BaseHead.astro
 theme_color: "#B509AC"
 background_color: "#000000"
 twitter_creator: "@jmrplens"

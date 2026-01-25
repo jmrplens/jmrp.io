@@ -192,7 +192,6 @@ const articleSchema = [
             <span class="separator">•</span>
             <time datetime={post.data.publishedDate.toISOString()}>
               {
-                // TODO: Extract locale to site config for i18n support (e.g., siteConfig.locale)
                 post.data.publishedDate.toLocaleDateString("en-US", {
                   year: "numeric",
                   month: "long",

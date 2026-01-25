@@ -110,14 +110,11 @@ test.describe("Keyboard Navigation Accessibility", () => {
     await page.keyboard.press("Tab");
 
     // Verify focus is within the nav links container
-    // const focused = page.locator("*:focus");
     // Check if the focused element's ancestor is the nav-links container
     // This is a loose check; strict focus trapping is hard to implement perfectly without a library,
     // but we want to ensure we are at least navigating the menu items.
 
     // For this test, let's verify we can tab through the mobile links
-    // const mobileLinks = page.locator("#nav-links a");
-    // const firstLink = mobileLinks.first();
 
     // If focus didn't move automatically (common issue), we might still be on the toggle or next element.
     // Assert that we can reach the links.
