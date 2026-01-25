@@ -16,7 +16,9 @@ export async function getStaticPaths() {
 
   return tags.map(({ tag }) => {
     const filteredPosts = posts
-      .filter((post) => post.data.tags?.includes(tag))
+      .filter((post) =>
+        post.data.tags?.some((t) => t.toLowerCase() === tag.toLowerCase()),
+      )
       .sort(
         (a, b) =>
           b.data.publishedDate.valueOf() - a.data.publishedDate.valueOf(),
@@ -67,7 +69,7 @@ const schema = {
         {posts.length === 1 ? "post" : "posts"} about this topic
       </p>
       <div class="back-link">
-        <a href="/blog">&larr; Back to all posts</a>
+        <a href="/blog/">&larr; Back to all posts</a>
       </div>
     </header>
 

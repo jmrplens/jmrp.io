@@ -49,15 +49,22 @@ const GITHUB_TOKEN: string | undefined = import.meta.env.GITHUB_TOKEN as
   | string
   | undefined; // Optional, for rate limits
 
+function getGitHubHeaders(): HeadersInit {
+  const headers: Record<string, string> = {
+    Accept: "application/vnd.github+json",
+  };
+  if (GITHUB_TOKEN) {
+    headers.Authorization = `Bearer ${GITHUB_TOKEN}`;
+  }
+  return headers;
+}
+
 /**
  * Fetches the public GitHub profile data for the configured user.
  * Implements a fallback to local data if the API is unreachable or rate-limited.
  */
 export async function fetchGitHubProfile(): Promise<GitHubProfile> {
-  const headers: HeadersInit = {};
-  if (GITHUB_TOKEN) {
-    headers.Authorization = `token ${GITHUB_TOKEN}`;
-  }
+  const headers = getGitHubHeaders();
 
   try {
     const res = await fetch(`https://api.github.com/users/${USERNAME}`, {
@@ -70,7 +77,10 @@ export async function fetchGitHubProfile(): Promise<GitHubProfile> {
 
     return (await res.json()) as GitHubProfile;
   } catch (error) {
-    console.warn("Failed to fetch GitHub profile, using fallback data:", error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.warn(
+      `Failed to fetch GitHub profile, using fallback data: ${errorMessage}`,
+    );
     return {
       name: "José Manuel Requena Plens",
       login: USERNAME,
@@ -89,10 +99,7 @@ export async function fetchGitHubProfile(): Promise<GitHubProfile> {
  * Fetches the top repositories for the configured user, sorted by last update.
  */
 export async function fetchTopRepositories(limit = 12): Promise<GitHubRepo[]> {
-  const headers: HeadersInit = {};
-  if (GITHUB_TOKEN) {
-    headers.Authorization = `token ${GITHUB_TOKEN}`;
-  }
+  const headers = getGitHubHeaders();
 
   try {
     const res = await fetch(
@@ -106,9 +113,54 @@ export async function fetchTopRepositories(limit = 12): Promise<GitHubRepo[]> {
 
     return (await res.json()) as GitHubRepo[];
   } catch (error) {
-    console.warn("Failed to fetch GitHub repos, using empty list:", error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.warn(
+      `Failed to fetch GitHub repos, using empty list: ${errorMessage}`,
+    );
     return [];
   }
+}
+
+/**
+ * Fetches specific repositories by name for the configured user.
+ * Deduplicates names and batches requests to be respectful of API limits.
+ */
+export async function fetchRepositoriesByName(
+  repoNames: string[],
+): Promise<GitHubRepo[]> {
+  const headers = getGitHubHeaders();
+  const uniqueNames = [...new Set(repoNames)];
+  const results: GitHubRepo[] = [];
+  const BATCH_SIZE = 5;
+
+  for (let i = 0; i < uniqueNames.length; i += BATCH_SIZE) {
+    const batch = uniqueNames.slice(i, i + BATCH_SIZE);
+
+    const batchPromises = batch.map(async (name) => {
+      try {
+        const safeName = encodeURIComponent(name);
+        const res = await fetch(
+          `https://api.github.com/repos/${USERNAME}/${safeName}`,
+          { headers },
+        );
+        if (!res.ok) {
+          console.warn(`Failed to fetch repo ${name}: ${res.status}`);
+          return null;
+        }
+        return (await res.json()) as GitHubRepo;
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
+        console.warn(`Error fetching repo ${name}: ${errorMessage}`);
+        return null;
+      }
+    });
+
+    const batchResults = await Promise.all(batchPromises);
+    results.push(...(batchResults.filter(Boolean) as GitHubRepo[]));
+  }
+
+  return results;
 }
 
 /**

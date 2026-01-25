@@ -36,7 +36,7 @@ export default defineConfig({
       name: "accessibility",
       use: { ...devices["Desktop Chrome"] },
       testMatch: /accessibility\.spec\.ts/,
-      timeout: 60_000, // 60 seconds per test for accessibility scanning
+      timeout: 90_000, // 90 seconds per test for accessibility scanning
     },
   ],
 

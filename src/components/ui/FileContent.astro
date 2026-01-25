@@ -15,7 +15,6 @@
  */
 import { createHash } from "node:crypto";
 
-import { getNextIndex } from "@utils/counters";
 import { decodeHtml } from "@utils/html";
 import { getIconForFile } from "@utils/icons";
 import { resolveShikiLanguage } from "@utils/shiki";
@@ -67,9 +66,7 @@ if (!ariaLabel) {
   plainText = fullText.length > 50 ? fullText.slice(0, 50) + "..." : fullText;
 }
 
-const index = getNextIndex("file");
-const finalAriaLabel =
-  ariaLabel || `${filename} - ${plainText} (file ${index})`;
+const finalAriaLabel = ariaLabel || `${filename} - ${plainText}`;
 
 // If language is specified, extract raw code for Shiki re-rendering
 let rawCode = "";
@@ -103,7 +100,7 @@ if (language) {
       {/* Copy Button outside details to be always visible and avoid nested interactive violation */}
       <CopyButton
         class="file-header-copy-btn absolute-header"
-        ariaLabel={`Copy content of file ${index}: ${filename}`}
+        ariaLabel={`Copy content of ${filename}`}
       />
       <details class="file-details">
         {/* ARIA label moved to summary for better support */}
@@ -111,7 +108,7 @@ if (language) {
           class="file-header"
           aria-label={finalAriaLabel}
         >
-          <div class="file-info">
+          <span class="file-info">
             <Icon
               name={finalIcon}
               class="file-icon"
@@ -120,8 +117,8 @@ if (language) {
               class="file-name"
               set:html={filenameFormatted}
             />
-          </div>
-          <div class="header-actions">
+          </span>
+          <span class="header-actions">
             <span
               class="chevron-wrapper"
               aria-hidden="true"
@@ -141,7 +138,7 @@ if (language) {
                 <polyline points="6 9 12 15 18 9" />
               </svg>
             </span>
-          </div>
+          </span>
         </summary>
         <div class="file-body">
           {useCustomHighlighting ? (
@@ -183,7 +180,7 @@ if (language) {
         <div class="header-actions">
           <CopyButton
             class="file-header-copy-btn"
-            ariaLabel={`Copy content of file ${index}: ${filename}`}
+            ariaLabel={`Copy content of ${filename}`}
           />
         </div>
       </div>

@@ -23,6 +23,9 @@ import routerosGrammar from "./src/languages/routeros.tmLanguage.json";
 const githubLight = "github-light-high-contrast";
 const githubDark = "github-dark-high-contrast";
 
+// Image optimizer cache location (also referenced in .gitignore and CI)
+const OPTIMIZED_IMAGES_CACHE_DIR = ".cache/optimized-images";
+
 // https://astro.build/config
 export default defineConfig({
   prefetch: {
@@ -245,7 +248,9 @@ export default defineConfig({
     plugins: [
       vitePrefetchNoncePlugin(),
       ViteImageOptimizer({
-        /* pass your config */
+        // Enable caching to maintain consistent asset hashes between builds
+        cache: true,
+        cacheLocation: OPTIMIZED_IMAGES_CACHE_DIR,
         svg: {
           multipass: true,
           plugins: /** @type {import('svgo').PluginConfig[]} */ ([

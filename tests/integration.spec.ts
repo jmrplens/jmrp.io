@@ -3,7 +3,7 @@
  *
  * Tests user flows and page interactions across the site:
  * - Navigation flows (Home → Blog → Post)
- * - Page content verification (CV sections, Services)
+ * - Page content verification (CV sections, Homelab)
  * - Component rendering (GitHub repos, Publications)
  * - Cross-page functionality
  */
@@ -63,9 +63,11 @@ test.describe("Integration Flows", () => {
     await expect(skillsSection).toBeVisible();
   });
 
-  test("Services page loads", async ({ page }) => {
-    await page.goto("/services");
-    await expect(page.locator("h1")).toContainText("Services");
+  test("Homelab page loads", async ({ page }) => {
+    await page.goto("/homelab");
+    await expect(page.locator("h1")).toContainText("Homelab");
+    // Verify Homelab-specific content is present
+    await expect(page.locator(".infrastructure-section")).toBeVisible();
   });
 
   test("GitHub page renders repository cards", async ({ page }) => {

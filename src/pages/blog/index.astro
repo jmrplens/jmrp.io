@@ -81,6 +81,10 @@ const schema = {
     <header class="page-header">
       <h1 class="text-primary">Blog</h1>
       <p class="subtitle">Thoughts, tutorials, and engineering notes.</p>
+      <p class="ai-disclaimer">
+        Real projects, AI-assisted drafting. I document my actual experiments
+        and code, using AI tools to structure and polish the final write-ups.
+      </p>
     </header>
 
     <div class="blog-layout">
@@ -93,3 +97,15 @@ const schema = {
     </div>
   </div>
 </BaseLayout>
+
+<style>
+  .ai-disclaimer {
+    max-width: 600px;
+    margin-inline: auto;
+    margin-top: var(--space-xs);
+    font-size: 0.95rem;
+    font-style: italic;
+    line-height: 1.5;
+    color: var(--color-text-muted);
+  }
+</style>

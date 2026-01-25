@@ -9,6 +9,8 @@ dist/
 dist_new/
 # Astro generated types and runtime cache
 .astro/
+# Optimized images cache (speeds up builds)
+.cache/
 # Package manager dependencies
 node_modules/
 

@@ -1,5 +1,4 @@
 ---
-import { getNextIndex } from "@utils/counters";
 import { Icon } from "astro-icon/components";
 
 /**
@@ -46,13 +45,15 @@ const icons = {
 
 const iconName = icon || icons[type];
 
-const index = getNextIndex(`callout-${type}`);
-const finalAriaLabel = ariaLabel || title || `${type} callout ${index}`;
+const finalAriaLabel =
+  ariaLabel ||
+  title ||
+  `${type.charAt(0).toUpperCase() + type.slice(1)} callout`;
 
 // Development warning: encourage meaningful labels for accessibility
 if (import.meta.env.DEV && !ariaLabel && !title) {
   console.warn(
-    `[Callout] Auto-generated aria-label "${finalAriaLabel}" used. Consider adding 'ariaLabel' or 'title' prop for better accessibility.`,
+    `[Callout] Generic aria-label "${finalAriaLabel}" used. Consider adding 'ariaLabel' or 'title' prop for better accessibility.`,
   );
 }
 ---

@@ -77,82 +77,81 @@ test.describe("Accessibility Tests (Axe-core WCAG 2.1 AA)", () => {
   });
 
   // Dynamically generate tests for all discovered pages
-  test(`should have no accessibility violations on all pages (${theme} mode)`, async ({
-    page: browserPage,
-  }) => {
+  test(`Accessibility Scan (${theme} mode)`, async ({ page: browserPage }) => {
     // Force color scheme based on env var
     await browserPage.emulateMedia({
       colorScheme: theme === "dark" ? "dark" : "light",
     });
 
     for (const pageInfo of pages) {
-      await browserPage.goto(pageInfo.url);
-      // eslint-disable-next-line playwright/no-networkidle
-      await browserPage.waitForLoadState("networkidle");
+      await test.step(`Scan ${pageInfo.name} (${pageInfo.url})`, async () => {
+        await browserPage.goto(pageInfo.url);
+        // eslint-disable-next-line playwright/no-networkidle
+        await browserPage.waitForLoadState("networkidle");
 
-      // Verify theme application
-      await browserPage.evaluate((t) => {
-        document.documentElement.dataset.theme = t;
-        document.documentElement.classList.toggle("dark", t === "dark");
-      }, theme);
+        // Verify theme application
+        await browserPage.evaluate((t) => {
+          document.documentElement.dataset.theme = t;
+          document.documentElement.classList.toggle("dark", t === "dark");
+        }, theme);
 
-      await browserPage.evaluate(() => document.fonts.ready);
+        await browserPage.evaluate(() => document.fonts.ready);
 
-      const accessibilityScanResults = await new AxeBuilder({
-        page: browserPage,
-      })
-        .exclude(["svg"])
-        .withTags([
-          "wcag2a",
-          "wcag2aa",
-          "wcag21aa",
-          "wcag22aa",
-          "best-practice",
-        ])
-        .options({ iframes: true })
-        .analyze();
+        const accessibilityScanResults = await new AxeBuilder({
+          page: browserPage,
+        })
+          .exclude(["svg"])
+          .withTags([
+            "wcag2a",
+            "wcag2aa",
+            "wcag21aa",
+            "wcag22aa",
+            "best-practice",
+          ])
+          .options({ iframes: true })
+          .analyze();
 
-      const safeName = pageInfo.name
-        .replaceAll(/[^a-z0-9]/gi, "_")
-        .toLowerCase()
-        .replaceAll(/(^_+)|(_+$)/g, "");
-      const reportFileName = `${safeName}-${theme}.html`;
+        const safeName = pageInfo.name
+          .replaceAll(/[^a-z0-9]/gi, "_")
+          .toLowerCase()
+          .replaceAll(/(^_+)|(_+$)/g, "");
+        const reportFileName = `${safeName}-${theme}.html`;
 
-      createHtmlReport({
-        results: accessibilityScanResults,
-        options: {
-          projectKey: `JMRP.io (${theme})`,
-          outputDir: "accessibility-report",
-          reportFileName: reportFileName,
-        },
-      });
-
-      // eslint-disable-next-line playwright/no-conditional-in-test
-      if (accessibilityScanResults.violations.length > 0) {
-        await browserPage.screenshot({
-          path: `accessibility-report/${safeName}-${theme}-failure.png`,
-          fullPage: true,
+        createHtmlReport({
+          results: accessibilityScanResults,
+          options: {
+            projectKey: `JMRP.io (${theme})`,
+            outputDir: "accessibility-report",
+            reportFileName: reportFileName,
+          },
         });
-      }
 
-      results.push({
-        page: `${pageInfo.name} (${pageInfo.url})`,
-        violations: accessibilityScanResults.violations.length,
-        incomplete: accessibilityScanResults.incomplete.length,
-        violationIds: accessibilityScanResults.violations.map((v) => v.id),
-        reportPath: reportFileName,
-        detailedViolations: accessibilityScanResults.violations as AxeResult[],
-        detailedIncomplete: accessibilityScanResults.incomplete as AxeResult[],
+        // eslint-disable-next-line playwright/no-conditional-in-test
+        if (accessibilityScanResults.violations.length > 0) {
+          await browserPage.screenshot({
+            path: `accessibility-report/${safeName}-${theme}-failure.png`,
+            fullPage: true,
+          });
+        }
+
+        results.push({
+          page: `${pageInfo.name} (${pageInfo.url})`,
+          violations: accessibilityScanResults.violations.length,
+          incomplete: accessibilityScanResults.incomplete.length,
+          violationIds: accessibilityScanResults.violations.map((v) => v.id),
+          reportPath: reportFileName,
+          detailedViolations:
+            accessibilityScanResults.violations as AxeResult[],
+          detailedIncomplete:
+            accessibilityScanResults.incomplete as AxeResult[],
+        });
+
+        // Fail the step if violations exist
+        expect(
+          accessibilityScanResults.violations,
+          `${pageInfo.name} has ${accessibilityScanResults.violations.length} accessibility violations`,
+        ).toEqual([]);
       });
-    }
-
-    // Assert after generating reports
-    const failedPages = results.filter((r) => r.violations > 0);
-    for (const failedPage of failedPages) {
-      expect(
-        [],
-        `${failedPage.page} [${theme}] has ${failedPage.violations} violations: ${failedPage.violationIds?.join(", ")}`,
-      ).toEqual(failedPage.violationIds);
     }
   });
 });

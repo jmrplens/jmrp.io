@@ -19,18 +19,6 @@ interface Props {
   type?: string;
   schema?: Record<string, unknown> | Record<string, unknown>[]; // JSON-LD schema defaults or overrides
   image?: string;
-  /** Preload URL for LCP image optimization (fallback href) */
-  preloadImage?: string;
-  /**
-   * Preload Srcset for responsive LCP image optimization.
-   * IMPORTANT: Must be accompanied by preloadSizes for correct browser selection.
-   */
-  preloadSrcset?: string;
-  /**
-   * Preload Sizes for responsive LCP image optimization.
-   * Required when using preloadSrcset.
-   */
-  preloadSizes?: string;
   // Article specific
   publishDate?: Date;
   modifiedDate?: Date;
@@ -44,23 +32,11 @@ const {
   type,
   schema,
   image,
-  preloadImage,
-  preloadSrcset,
-  preloadSizes,
   publishDate,
   modifiedDate,
   authors,
   tags,
 } = Astro.props;
-
-// Validate srcset/sizes relationship
-if (preloadSrcset && !preloadSizes) {
-  console.warn(
-    "[BaseLayout] preloadSrcset provided without preloadSizes. " +
-      "Browsers require sizes attribute to select the correct image from srcset. " +
-      "Add preloadSizes for optimal LCP performance.",
-  );
-}
 ---
 
 <!doctype html>
@@ -71,20 +47,6 @@ if (preloadSrcset && !preloadSizes) {
       name="format-detection"
       content="telephone=no"
     />
-    {/* LCP Image Preload - must be early in head for maximum effect */}
-    {
-      preloadImage && (
-        <link
-          rel="preload"
-          as="image"
-          href={preloadImage}
-          imagesrcset={preloadSrcset}
-          imagesizes={preloadSizes}
-          fetchpriority="high"
-        />
-      )
-    }
-    <SRIEventListener />
     <BaseHead
       title={title}
       description={description}
@@ -96,6 +58,7 @@ if (preloadSrcset && !preloadSizes) {
       authors={authors}
       tags={tags}
     />
+    <SRIEventListener />
     <script is:inline>
       // Critical: Execute immediately to prevent FOUC
       (function () {

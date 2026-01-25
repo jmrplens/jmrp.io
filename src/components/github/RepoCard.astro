@@ -1,0 +1,190 @@
+---
+import type { GitHubRepo } from "@utils/github";
+import { langColors } from "@utils/github";
+import { Icon } from "astro-icon/components";
+
+interface Props {
+  repo: GitHubRepo;
+}
+
+const { repo } = Astro.props;
+---
+
+<div
+  class="repo-card"
+  data-name={repo.name.toLowerCase()}
+  data-desc={(repo.description || "").toLowerCase()}
+>
+  <div class="repo-header">
+    <h3>
+      <a
+        href={repo.html_url}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label={`View repository ${repo.name} on GitHub`}
+      >
+        {repo.name}
+      </a>
+    </h3>
+  </div>
+  <p class="repo-desc">
+    {repo.description || "No description provided."}
+  </p>
+  <div class="repo-meta">
+    {
+      repo.language && (
+        <div class="meta-item">
+          <span
+            class="lang-dot"
+            style={`background-color: ${langColors[repo.language] || "#ccc"}`}
+            aria-hidden="true"
+          />
+          {repo.language}
+        </div>
+      )
+    }
+    {
+      repo.stargazers_count > 0 && (
+        <div class="meta-item">
+          <span class="sr-only">
+            {repo.stargazers_count}{" "}
+            {repo.stargazers_count === 1 ? "star" : "stars"}
+          </span>
+          <Icon
+            name="fa-solid:star"
+            aria-hidden="true"
+          />
+          <span aria-hidden="true">{repo.stargazers_count}</span>
+        </div>
+      )
+    }
+    {
+      repo.forks_count > 0 && (
+        <div class="meta-item">
+          <span class="sr-only">
+            {repo.forks_count} {repo.forks_count === 1 ? "fork" : "forks"}
+          </span>
+          <Icon
+            name="fa-solid:code-branch"
+            aria-hidden="true"
+          />
+          <span aria-hidden="true">{repo.forks_count}</span>
+        </div>
+      )
+    }
+  </div>
+</div>
+
+<style>
+  /* Accessibility: Screen reader only class with focus override */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    white-space: nowrap;
+    border-width: 0;
+    clip-path: inset(50%);
+  }
+
+  .sr-only:focus,
+  .sr-only:active {
+    position: static;
+    width: auto;
+    height: auto;
+    margin: 0;
+    overflow: visible;
+    white-space: normal;
+    clip-path: none;
+  }
+
+  .repo-card {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    height: 100%;
+    padding: var(--space-md);
+    background-color: var(--color-bg-secondary);
+    border: var(--border-1);
+    border-radius: var(--radius-md);
+    transition:
+      transform 0.2s,
+      box-shadow 0.2s,
+      border-color 0.2s;
+  }
+
+  .repo-card:hover {
+    border-color: var(--color-primary);
+    box-shadow: 0 4px 12px rgb(0 0 0 / 20%);
+    transform: translateY(-2px);
+  }
+
+  .repo-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: var(--space-sm);
+  }
+
+  .repo-header h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: var(--fw-semibold);
+  }
+
+  .repo-header a {
+    color: var(--color-primary);
+    text-decoration: none;
+  }
+
+  .repo-header a:hover {
+    text-decoration: underline;
+  }
+
+  .repo-header a:focus-visible {
+    text-decoration: underline;
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  .repo-desc {
+    flex-grow: 1;
+    min-height: 3em; /* Reserve 2 lines approx */
+    margin-bottom: var(--space-md);
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: var(--color-text-muted);
+    overflow-wrap: anywhere;
+  }
+
+  .repo-card * {
+    max-width: 100%;
+  }
+
+  .repo-meta {
+    display: flex;
+    gap: var(--space-md);
+    align-items: center;
+    padding-top: var(--space-sm);
+    margin-top: auto;
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+    border-top: var(--border-1);
+  }
+
+  .meta-item {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+  }
+
+  .lang-dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+  }
+</style>
