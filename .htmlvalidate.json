@@ -11,7 +11,7 @@
     ],
     "no-trailing-whitespace": "off",
     "void-style": "off",
-    "element-permitted-content": "off",
+    "element-permitted-content": "error",
     "valid-id": [
       "error",
       {
@@ -21,6 +21,22 @@
     "no-raw-characters": "error",
     "no-implicit-button-type": "error",
     "no-inline-style": "error",
-    "long-title": "error"
+    "long-title": "error",
+    "doctype-html": "error",
+    "missing-doctype": "error",
+    "heading-level": "error",
+    "input-missing-label": "error",
+    "unique-landmark": "error",
+    "wcag/h30": "error",
+    "wcag/h37": "error",
+    "wcag/h67": "error",
+    "no-redundant-role": "error",
+    "script-type": "error",
+    "input-attributes": "error",
+    "prefer-native-element": "error",
+    "no-dup-class": "error",
+    "text-content": "error",
+    "empty-heading": "error",
+    "meta-refresh": "error"
   }
 }

@@ -236,7 +236,19 @@ async function processSingleHtmlFile(
     extractedImages += imgResult.extractedCount;
   }
 
-  // 2. Process Styles
+  // 2. Fix Style Locations: Move <style> tags from body to head
+  // This is critical for HTML5 compliance as Astro sometimes injects styles in body
+  const bodyStyles = $("body style");
+  if (bodyStyles.length > 0) {
+    bodyStyles.each((_, el) => {
+      const $style = $(el);
+      $("head").append($style.clone());
+      $style.remove();
+    });
+    isModified = true;
+  }
+
+  // 3. Process Styles (Data URI extraction and style-to-class conversion)
   if (processStyles($, enableCsp)) {
     isModified = true;
   }

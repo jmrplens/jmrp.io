@@ -17,7 +17,7 @@
  * />
  */
 
-import { getNextIndex } from "@utils/counters";
+import { createHash } from "node:crypto";
 
 interface BarData {
   /** Label for the bar (displayed on the left) */
@@ -77,8 +77,11 @@ const {
   caption,
 } = Astro.props;
 
-// Generate unique ID for this chart instance to avoid duplicate IDs on page
-const chartId = getNextIndex("barchart");
+// Generate unique ID for this chart instance based on content hash
+const chartId = createHash("sha256")
+  .update(`${title || ""}-${JSON.stringify(data)}`)
+  .digest("hex")
+  .slice(0, 8);
 
 // Calculate max value for percentage scaling
 const maxValue = providedMax ?? Math.max(...data.map((d) => d.value));

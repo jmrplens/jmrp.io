@@ -6,7 +6,6 @@
 
 import { createHash } from "node:crypto";
 
-import { getNextIndex } from "@utils/counters";
 import { decodeHtml } from "@utils/html";
 import * as cheerio from "cheerio";
 
@@ -18,9 +17,6 @@ interface Props {
 
 let lines: string[] = [];
 let rawContent = "";
-
-// Module-scoped counter for deterministic empty content IDs (avoids SSR flakiness)
-let emptyContentCounter = 0;
 
 /**
  * Slot Rendering Pipeline:
@@ -75,8 +71,8 @@ const renderedLines = lines.map((line) => {
 const { ariaLabel } = Astro.props;
 
 // Generate a content-based test ID for uniqueness
-// Use deterministic counter for empty content to ensure stable SSR renders
-const hashInput = rawContent || `empty-${++emptyContentCounter}`;
+// Use a fixed fallback hash for empty content to ensure deterministic output
+const hashInput = rawContent || "empty-terminal-content";
 const contentHash = createHash("sha256")
   .update(hashInput)
   .digest("hex")
@@ -85,15 +81,13 @@ const contentHash = createHash("sha256")
 // Fallback to meaningful label when rawContent is empty or whitespace-only
 const trimmedRaw = rawContent.trim();
 
-// Only call getNextIndex when we actually need it for aria-label generation
 let finalAriaLabel: string;
 if (ariaLabel) {
   finalAriaLabel = ariaLabel;
 } else if (trimmedRaw) {
-  const index = getNextIndex("terminal");
   const snippet = trimmedRaw.slice(0, 50);
   const suffix = trimmedRaw.length > 50 ? "..." : "";
-  finalAriaLabel = `Terminal command ${index}: ${snippet}${suffix}`;
+  finalAriaLabel = `Terminal command: ${snippet}${suffix}`;
 } else {
   finalAriaLabel = "Terminal: no command";
 }

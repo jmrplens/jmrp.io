@@ -4,7 +4,7 @@
  * Wraps the diagram in a figure with optional caption and size controls.
  */
 
-import { getNextIndex } from "@utils/counters";
+import { createHash } from "node:crypto";
 
 interface Props {
   caption?: string;
@@ -16,10 +16,12 @@ interface Props {
 
 const { caption, title, ariaLabel, maxWidth, maxHeight } = Astro.props;
 
-const index = getNextIndex("mermaid");
-const fallbackAriaLabel = ariaLabel || title || `Mermaid Diagram ${index}`;
+const fallbackAriaLabel = ariaLabel || title || "Mermaid Diagram";
 
-const captionId = caption ? `mermaid-caption-${index}` : undefined;
+// Generate a deterministic ID based on the caption content
+const captionId = caption
+  ? `mermaid-caption-${createHash("sha256").update(caption).digest("hex").slice(0, 8)}`
+  : undefined;
 
 // Compute ARIA attributes based on priority:
 // 1. If ariaLabel provided: use it as aria-label, and if caption exists, reference it via aria-describedby

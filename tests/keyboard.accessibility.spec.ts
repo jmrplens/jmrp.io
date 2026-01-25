@@ -221,8 +221,11 @@ test.describe("Keyboard Navigation Accessibility", () => {
 
     // Tab to next link
     await page.keyboard.press("Tab");
-    await expect(honeypotLink).toBeFocused();
-    await expect(honeypotLink).toHaveAttribute(
+
+    // Re-locate to handle potential hydration re-renders
+    const freshHoneypotLink = section.locator('a[href*="mikrotik-honeypot"]');
+    await expect(freshHoneypotLink).toBeFocused();
+    await expect(freshHoneypotLink).toHaveAttribute(
       "aria-label",
       /Read blog post about MikroTik Port Scanner Honeypot/i,
     );

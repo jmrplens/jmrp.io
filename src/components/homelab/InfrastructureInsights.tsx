@@ -195,7 +195,9 @@ export default function InfrastructureInsights() {
   const countries = stats?.top_security_countries || [];
 
   const totalSecurityBlocks = stats
-    ? (stats.nginx_bans_24h || 0) + (stats.tarpit_hits_24h || 0)
+    ? (stats.nginx_bans_24h || 0) +
+      (stats.tarpit_hits_24h || 0) +
+      (stats.mikrotik_scans_total || 0)
     : null;
 
   const systemStatus = getStatus(
