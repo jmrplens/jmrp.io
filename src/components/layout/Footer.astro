@@ -7,7 +7,6 @@
 import type { SiteConfig, SocialsConfig } from "@src/types";
 import { Image } from "astro:assets";
 import { getEntry } from "astro:content";
-import { Icon } from "astro-icon/components";
 
 const today = new Date();
 const socialsEntry = await getEntry("site_config", "socials");
@@ -141,10 +140,24 @@ const socialLinksWithType = socialLinks.map((link) => {
   // Pre-resolve icon name for 'icon' type to validate it's not empty
   const resolvedIconName =
     iconType === "icon" && link.icon ? getIconName(link.icon) : null;
+
+  // Pre-calculate full class name for icons
+  let fullIconClass = "";
+  if (iconType === "icon" && resolvedIconName) {
+    fullIconClass = resolvedIconName.startsWith("i-")
+      ? resolvedIconName
+      : `i-${resolvedIconName}`;
+  } else if (iconType === "icon_name" && link.icon_name) {
+    fullIconClass = link.icon_name.startsWith("i-")
+      ? link.icon_name
+      : `i-${link.icon_name}`;
+  }
+
   return {
     ...link,
     iconType,
     resolvedIconName,
+    fullIconClass,
   };
 });
 ---
@@ -189,17 +202,8 @@ const socialLinksWithType = socialLinks.map((link) => {
                 />
               </>
             )}
-            {link.iconType === "icon" && link.resolvedIconName && (
-              <Icon
-                name={link.resolvedIconName}
-                class="social-icon-svg"
-              />
-            )}
-            {link.iconType === "icon_name" && (
-              <Icon
-                name={link.icon_name!}
-                class="social-icon-svg"
-              />
+            {link.fullIconClass && (
+              <span class={`${link.fullIconClass} social-icon-svg`} />
             )}
           </a>
         ))

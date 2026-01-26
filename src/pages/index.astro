@@ -15,7 +15,6 @@ import { getSiteUrl } from "@utils/site";
 import { Image } from "astro:assets";
 // Config
 import { getCollection, getEntry } from "astro:content";
-import { Icon } from "astro-icon/components";
 
 const siteEntry = await getEntry("site_config", "site");
 const siteData = (siteEntry?.data || {}) as SiteConfig;
@@ -110,28 +109,28 @@ const personSchema = {
           class="btn btn-primary"
           aria-label="View my professional curriculum vitae"
         >
-          <Icon name="fa-solid:file-pdf" /> View CV
+          <span class="i-fa-solid:file-pdf"></span> View CV
         </a>
         <a
           href="/blog/"
           class="btn btn-outline"
           aria-label="Read my blog posts"
         >
-          <Icon name="fa-solid:pen-nib" /> Read Blog
+          <span class="i-fa-solid:pen-nib"></span> Read Blog
         </a>
         <a
           href="/github/"
           class="btn btn-outline"
           aria-label="View my projects on GitHub"
         >
-          <Icon name="fa-brands:github" /> Projects
+          <span class="i-fa-brands:github"></span> Projects
         </a>
         <a
           href="/homelab/"
           class="btn btn-outline"
           aria-label="View my homelab infrastructure and status"
         >
-          <Icon name="fa-solid:server" /> Homelab
+          <span class="i-fa-solid:server"></span> Homelab
         </a>
       </div>
     </div>

@@ -1,4 +1,5 @@
 import preact from "@gorazdo/eslint-plugin-preact";
+import unocss from "@unocss/eslint-plugin";
 import eslintPluginAstro from "eslint-plugin-astro";
 import jsdoc from "eslint-plugin-jsdoc";
 import noSecrets from "eslint-plugin-no-secrets";
@@ -210,7 +211,18 @@ export default [
     },
   },
 
-  // 12. Specific overrides
+  // 12. UnoCSS Configuration (Icons & Utility class order)
+  {
+    plugins: {
+      "@unocss": unocss,
+    },
+    rules: {
+      "@unocss/order": "warn",
+      "@unocss/order-attributify": "warn",
+    },
+  },
+
+  // 13. Specific overrides
   {
     files: ["src/env.d.ts"],
     plugins: {

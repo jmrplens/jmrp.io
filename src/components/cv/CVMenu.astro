@@ -4,7 +4,6 @@
  * A floating action button (FAB) that opens a navigation drawer for the CV page.
  * Displays sections and their subsections (e.g., specific jobs, skill categories).
  */
-import { Icon } from "astro-icon/components";
 
 export interface MenuSection {
   title: string;
@@ -31,10 +30,7 @@ const { sections } = Astro.props;
     aria-haspopup="true"
     aria-expanded="false"
   >
-    <Icon
-      name="mdi:format-list-bulleted"
-      class="cv-fab-icon"
-    />
+    <span class="i-mdi:format-list-bulleted cv-fab-icon"></span>
   </button>
 
   <div
@@ -54,7 +50,7 @@ const { sections } = Astro.props;
         class="cv-close-btn"
         aria-label="Close Menu"
       >
-        <Icon name="mdi:close" />
+        <span class="i-mdi:close"></span>
       </button>
     </div>
 

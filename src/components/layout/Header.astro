@@ -6,7 +6,6 @@
  */
 import ThemeToggle from "@components/ui/ThemeToggle.astro";
 import { getEntry } from "astro:content";
-import { Icon } from "astro-icon/components";
 
 const siteEntry = await getEntry("site_config", "site");
 // Type guard: siteEntry may be undefined, and data is a union type.
@@ -42,16 +41,14 @@ const logoText =
         class="menu-toggle"
       >
         <span class="icon-container">
-          <Icon
-            name="fa-solid:bars"
-            class="icon-bars"
+          <span
+            class="i-fa-solid:bars icon-bars"
             aria-hidden="true"
-          />
-          <Icon
-            name="fa-solid:times"
-            class="icon-times"
+          ></span>
+          <span
+            class="i-fa-solid:times icon-times"
             aria-hidden="true"
-          />
+          ></span>
         </span>
       </button>
       <ul

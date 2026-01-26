@@ -1,6 +1,5 @@
 ---
 import type { CVSkillGroup } from "@src/types";
-import { Icon } from "astro-icon/components";
 
 interface Props {
   group: CVSkillGroup;
@@ -22,7 +21,7 @@ import "@styles/skills.css";
 
 <div class="group-category">
   <h3>
-    {group.icon && <Icon name={group.icon} />}
+    {group.icon && <span class={`i-${group.icon}`} />}
     {group.category}
   </h3>
   <div class="compact-list">
@@ -50,10 +49,7 @@ import "@styles/skills.css";
           <div class="compact-item skill-item">
             {item.icon && (
               <div class="skill-icon-wrapper">
-                <Icon
-                  name={item.icon}
-                  class="skill-icon"
-                />
+                <span class={`i-${item.icon} skill-icon`} />
               </div>
             )}
             <div class="skill-content">

@@ -14,7 +14,6 @@ import type { CVSection } from "@src/types";
 import { getCVData } from "@utils/cv";
 import { sanitize, stripHtml } from "@utils/html";
 import { getSiteUrl } from "@utils/site";
-import { Icon } from "astro-icon/components";
 
 const cvData = await getCVData();
 
@@ -223,7 +222,8 @@ const personSchema = {
                     )}
                     {item.location && (
                       <div class="item-location">
-                        <Icon name="fa-solid:map-marker-alt" /> {item.location}
+                        <span class="i-fa-solid:map-marker-alt" />{" "}
+                        {item.location}
                       </div>
                     )}
 
@@ -273,7 +273,7 @@ const personSchema = {
                             rel="noopener noreferrer"
                             aria-label={link.ariaLabel}
                           >
-                            <Icon name="fa-solid:file-pdf" />
+                            <span class="i-fa-solid:file-pdf" />
                             {link.linkname}
                           </a>
                         ))}

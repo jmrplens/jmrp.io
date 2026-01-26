@@ -19,6 +19,12 @@
         "target": "crossorigin",
         "exclude": ["/scripts/cf-beacon.js"]
       }
+    ],
+    "element-required-content": [
+      "error",
+      {
+        "exclude": ["span"]
+      }
     ]
   }
 }

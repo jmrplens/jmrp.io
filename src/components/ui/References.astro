@@ -5,7 +5,6 @@
  */
 import type { ImageMetadata } from "astro";
 import { Image } from "astro:assets";
-import { Icon } from "astro-icon/components";
 
 interface Reference {
   text: string;
@@ -30,10 +29,7 @@ const iconFiles = import.meta.glob<{ default: ImageMetadata }>(
   references.length > 0 && (
     <div class="references-section">
       <div class="header">
-        <Icon
-          name="mdi:book-open-page-variant-outline"
-          class="header-icon"
-        />
+        <span class="i-mdi:book-open-page-variant-outline header-icon" />
         <h3>Further Reading &amp; Resources</h3>
       </div>
       <div class="references-grid">
@@ -94,9 +90,10 @@ const iconFiles = import.meta.glob<{ default: ImageMetadata }>(
                     loading="lazy"
                   />
                 ) : (
-                  <div class="fallback-icon">
-                    <Icon name="mdi:web" />
-                  </div>
+                  <span
+                    class="i-mdi:web fallback-icon"
+                    aria-hidden="true"
+                  />
                 )}
               </div>
               <div class="card-content">
@@ -104,7 +101,7 @@ const iconFiles = import.meta.glob<{ default: ImageMetadata }>(
                 <span class="ref-url">{hostname}</span>
               </div>
               <div class="card-arrow">
-                <Icon name="mdi:arrow-top-right" />
+                <span class="i-mdi:arrow-top-right" />
               </div>
             </a>
           );

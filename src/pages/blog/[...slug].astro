@@ -26,7 +26,6 @@ import {
   getEntry,
   render,
 } from "astro:content";
-import { Icon } from "astro-icon/components";
 import * as cheerio from "cheerio";
 
 const siteEntry = await getEntry("site_config", "site");
@@ -155,10 +154,10 @@ const articleSchema = [
             href="/blog/"
             class="back-link"
           >
-            <Icon
-              name="mdi:arrow-left"
-              size={20}
-            /> Back to Blog
+            <span
+              class="i-mdi:arrow-left"
+              style="width: 20px; height: 20px;"
+            ></span> Back to Blog
           </a>
           <div class="meta">
             <span class="author">

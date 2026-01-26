@@ -9,7 +9,6 @@
  *   <div slot="good">...code...</div>
  * </CompareCode>
  */
-import { Icon } from "astro-icon/components";
 import * as cheerio from "cheerio";
 
 import CopyButton from "./CopyButton.astro";
@@ -65,10 +64,7 @@ const finalAriaLabelGood =
     data-testid={testIdBad}
   >
     <div class="header">
-      <Icon
-        name="mdi:close-circle-outline"
-        class="icon"
-      />
+      <span class="i-mdi:close-circle-outline icon"></span>
       <span>{badTitle}</span>
       <CopyButton
         class="compare-copy-button"
@@ -86,10 +82,7 @@ const finalAriaLabelGood =
     data-testid={testIdGood}
   >
     <div class="header">
-      <Icon
-        name="mdi:check-circle-outline"
-        class="icon"
-      />
+      <span class="i-mdi:check-circle-outline icon"></span>
       <span>{goodTitle}</span>
       <CopyButton
         class="compare-copy-button"

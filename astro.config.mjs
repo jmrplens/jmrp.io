@@ -3,8 +3,8 @@
 import mdx from "@astrojs/mdx";
 import preact from "@astrojs/preact";
 import sitemap from "@astrojs/sitemap";
+import UnoCSS from "@unocss/astro";
 import { defineConfig, envField, fontProviders } from "astro/config";
-import icon from "astro-icon";
 import rehypeExternalLinks from "rehype-external-links";
 import rehypeMathjax from "rehype-mathjax";
 import rehypeMermaid from "rehype-mermaid";
@@ -109,9 +109,6 @@ export default defineConfig({
   // Build behavior for prerendering conflicts
   prerenderConflictBehavior: "error",
 
-  // Scoped style strategy to reduce specificity
-  scopedStyleStrategy: "where",
-
   // Image optimization configuration
   image: {
     remotePatterns: [
@@ -126,6 +123,7 @@ export default defineConfig({
 
   // List of integrations to extend Astro functionality
   integrations: [
+    UnoCSS(),
     preBuildIntegration(),
     sitemap({
       i18n: {
@@ -140,9 +138,6 @@ export default defineConfig({
       // MDX needs to know about remark plugins too if we want it to work in .mdx files
       remarkPlugins: [remarkMermaidBypass],
       optimize: true,
-    }),
-    icon({
-      iconDir: "src/assets/icons",
     }),
     preact({
       include: ["**/src/**/*.{jsx,tsx}"],

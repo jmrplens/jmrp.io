@@ -1,18 +1,7 @@
 ---
-import { Icon } from "astro-icon/components";
-
 /**
  * Callout Component
  * Renders a colored alert box with an icon to highlight information.
- *
- * Usage:
- * <Callout type="info" title="Did you know?">
- *   This is an informational callout.
- * </Callout>
- *
- * <Callout type="keypoint" icon="mdi:rocket">
- *   This is a keypoint with a custom icon.
- * </Callout>
  */
 interface Props {
   type?:
@@ -63,15 +52,11 @@ if (import.meta.env.DEV && !ariaLabel && !title) {
   role="note"
   aria-label={finalAriaLabel}
 >
-  <div
-    class="icon-wrapper"
+  <span
+    class={`i-${iconName} icon-wrapper`}
     aria-hidden="true"
-  >
-    <Icon
-      name={iconName}
-      size={24}
-    />
-  </div>
+    style="width: 24px; height: 24px;"
+  ></span>
   <div class="callout-content-wrapper">
     {title && <strong class="callout-title">{title}</strong>}
     <div class="content">

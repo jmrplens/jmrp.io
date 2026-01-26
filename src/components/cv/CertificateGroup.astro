@@ -1,6 +1,5 @@
 ---
 import type { CVCertificateGroup } from "@src/types";
-import { Icon } from "astro-icon/components";
 
 interface Props {
   group: CVCertificateGroup;
@@ -13,8 +12,8 @@ const { group } = Astro.props;
   <h3>
     {
       group.icon && (
-        <Icon
-          name={group.icon}
+        <span
+          class={`i-${group.icon}`}
           aria-hidden="true"
         />
       )
@@ -30,9 +29,8 @@ const { group } = Astro.props;
             <div class="cert-meta">
               {item.school && (
                 <span class="cert-school">
-                  <Icon
-                    name="fa-solid:university"
-                    class="meta-icon"
+                  <span
+                    class="i-fa-solid:university meta-icon"
                     aria-hidden="true"
                   />
                   {item.school}
@@ -40,9 +38,8 @@ const { group } = Astro.props;
               )}
               {item.time && (
                 <span class="cert-time">
-                  <Icon
-                    name="fa-solid:clock"
-                    class="meta-icon"
+                  <span
+                    class="i-fa-solid:clock meta-icon"
                     aria-hidden="true"
                   />
                   {item.time}
@@ -58,8 +55,8 @@ const { group } = Astro.props;
               download
               aria-label={`Download certificate: ${item.name}`}
             >
-              <Icon
-                name="fa-solid:download"
+              <span
+                class="i-fa-solid:download"
                 aria-hidden="true"
               />
               {item.linkname || "Certificate"}

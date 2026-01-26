@@ -1,6 +1,4 @@
 ---
-import { Icon } from "astro-icon/components";
-
 /**
  * ServiceCard component.
  * Displays a card for a service or skill area, with optional slots for extra content.
@@ -22,11 +20,10 @@ const { title, icon, description, link, linkText, id } = Astro.props;
   id={id}
 >
   <div class="service-header">
-    <Icon
-      name={icon}
-      class="service-icon"
+    <span
+      class={`i-${icon} service-icon`}
       aria-hidden="true"
-    />
+    ></span>
     <h2>{title}</h2>
   </div>
   <p class="service-description">

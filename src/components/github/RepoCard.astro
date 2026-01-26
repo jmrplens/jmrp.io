@@ -1,7 +1,6 @@
 ---
 import type { GitHubRepo } from "@utils/github";
 import { langColors } from "@utils/github";
-import { Icon } from "astro-icon/components";
 
 interface Props {
   repo: GitHubRepo;
@@ -50,8 +49,8 @@ const { repo } = Astro.props;
             {repo.stargazers_count}{" "}
             {repo.stargazers_count === 1 ? "star" : "stars"}
           </span>
-          <Icon
-            name="fa-solid:star"
+          <span
+            class="i-fa-solid:star"
             aria-hidden="true"
           />
           <span aria-hidden="true">{repo.stargazers_count}</span>
@@ -64,8 +63,8 @@ const { repo } = Astro.props;
           <span class="sr-only">
             {repo.forks_count} {repo.forks_count === 1 ? "fork" : "forks"}
           </span>
-          <Icon
-            name="fa-solid:code-branch"
+          <span
+            class="i-fa-solid:code-branch"
             aria-hidden="true"
           />
           <span aria-hidden="true">{repo.forks_count}</span>
