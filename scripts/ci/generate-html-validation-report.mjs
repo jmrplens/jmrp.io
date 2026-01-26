@@ -1,51 +1,39 @@
 /**
- * HTML Validation Report Generator
+ * generate-html-validation-report.mjs
  *
- * This script parses the JSON output from html-validate and generates a
- * user-friendly, modern HTML report. It provides high-level statistics,
- * aggregates common issue types, and lists detailed errors per file.
- *
- * It is used in the CI pipeline to provide visual feedback on HTML quality.
+ * Converts the html-validate JSON report into a premium HTML dashboard
+ * for inclusion in the CI dashboard.
  */
 
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 
-import { escapeHtml } from "../utils/html.mjs";
-
-const JSON_REPORT = "html-validation.json";
-const OUTPUT_FILE = "html-report.html";
 const DIST_DIR = "dist";
+const REPORT_FILE = "html-validation.json";
+const OUTPUT_FILE = "html-validation-report.html";
 const CONFIG_FILE = ".htmlvalidate.json";
 
 /**
- * Recursively find all HTML files in a directory to ensure 100% coverage reporting.
- * @param {string} dir - Directory to scan.
- * @param {string[]} fileList - Accumulated list of files.
- * @returns {string[]} List of relative paths to HTML files.
+ * Recursively find all HTML files in a directory
  */
-function getAllHtmlFiles(dir, fileList = []) {
-  if (!fs.existsSync(dir)) return fileList;
-
+const getAllHtmlFiles = (dir, fileList = []) => {
   const files = fs.readdirSync(dir);
-  for (const file of files) {
-    const name = path.join(dir, file);
-    if (fs.statSync(name).isDirectory()) {
-      getAllHtmlFiles(name, fileList);
-    } else if (name.endsWith(".html")) {
-      // Use relative paths for consistency across environments
-      fileList.push(path.relative(process.cwd(), name));
+  files.forEach((file) => {
+    const filePath = path.join(dir, file);
+    if (fs.statSync(filePath).isDirectory()) {
+      getAllHtmlFiles(filePath, fileList);
+    } else if (file.endsWith(".html")) {
+      fileList.push(filePath);
     }
-  }
+  });
   return fileList;
-}
+};
 
 /**
- * Retrieves the active rules from html-validate for documentation in the report.
- * @returns {Object} Map of active rules and their configurations.
+ * Gets the active rules from html-validate configuration
  */
-function getActiveRules() {
+const getActiveRules = () => {
   try {
     const allFiles = getAllHtmlFiles(DIST_DIR);
     const firstHtml = allFiles[0];
@@ -57,456 +45,317 @@ function getActiveRules() {
       "pnpm",
       ["exec", "html-validate", "-c", CONFIG_FILE, "--print-config", firstHtml],
       { encoding: "utf-8" },
-    );
+    ); // NOSONAR
     const config = JSON.parse(configJson);
     return config.rules || {};
   } catch (error) {
     console.warn("⚠️ Could not retrieve active rules list:", error.message);
     return {};
   }
-}
+};
 
 /**
  * Loads and parses the validation report JSON
  */
-function loadAndParseReport() {
-  if (!fs.existsSync(JSON_REPORT)) {
-    console.error(`❌ Error: ${JSON_REPORT} not found!`);
-    process.exit(1);
+const loadReport = () => {
+  if (!fs.existsSync(REPORT_FILE)) {
+    return null;
   }
-
   try {
-    const content = fs.readFileSync(JSON_REPORT, "utf-8");
-    if (!content.trim()) {
-      console.warn(
-        "⚠️ HTML validation JSON report is empty. Assuming no issues found.",
-      );
-      return [];
-    }
-    const report = JSON.parse(content);
-    return Array.isArray(report)
-      ? report
-      : report.results || report.files || [];
+    return JSON.parse(fs.readFileSync(REPORT_FILE, "utf-8"));
   } catch (error) {
-    console.error("❌ Error parsing JSON report:", error.message);
-    process.exit(1);
+    console.error("❌ Error reading report:", error.message);
+    return null;
   }
-}
+};
 
 /**
- * Processes validation data and merges with all HTML files
+ * Renders the HTML report
  */
-function processValidationData(results, allFiles) {
-  const resultMap = new Map();
-  for (const res of results) {
-    const relPath = path.relative(process.cwd(), res.filePath);
-    resultMap.set(relPath, res);
-  }
+const generateHtml = (results, activeRules) => {
+  const totalFiles = results.length;
+  const invalidFiles = results.filter((r) => !r.valid).length;
+  const totalErrors = results.reduce((acc, r) => acc + r.errorCount, 0);
+  const totalWarnings = results.reduce((acc, r) => acc + r.warningCount, 0);
 
-  return allFiles.map((filePath) => {
-    const res = resultMap.get(filePath);
-    return {
-      filePath,
-      messages: res?.messages || [],
-      errorCount: res?.errorCount || 0,
-      warningCount: res?.warningCount || 0,
-    };
+  const statusClass = invalidFiles === 0 ? "status-success" : "status-danger";
+  const statusText = invalidFiles === 0 ? "PASSED" : "FAILED";
+
+  // Group errors by rule
+  const ruleStats = {};
+  results.forEach((r) => {
+    r.messages.forEach((m) => {
+      ruleStats[m.ruleId] = (ruleStats[m.ruleId] || 0) + 1;
+    });
   });
-}
 
-/**
- * Aggregates rule violation counts across all files
- */
-function calculateRuleCounts(files) {
-  const ruleCounts = new Map();
-  for (const file of files) {
-    for (const msg of file.messages || []) {
-      if (!msg.ruleId) continue;
-      const count = ruleCounts.get(msg.ruleId) || 0;
-      ruleCounts.set(msg.ruleId, count + 1);
-    }
-  }
+  const sortedRules = Object.entries(ruleStats).sort((a, b) => b[1] - a[1]);
 
-  return [...ruleCounts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5);
-}
-
-/**
- * Determines validation status based on error/warning counts
- */
-function determineStatus(totalErrors, totalWarnings) {
-  if (totalErrors > 0) {
-    return { class: "failed", emoji: "❌", text: "Failed" };
-  }
-  if (totalWarnings > 0) {
-    return { class: "warning", emoji: "⚠️", text: "Warnings" };
-  }
-  return { class: "passed", emoji: "✅", text: "Passed" };
-}
-
-/**
- * Renders the context of a validation message
- */
-function renderContext(context) {
-  if (!context) return "";
-  if (typeof context === "object") {
-    return Object.entries(context)
-      .map(
-        ([k, v]) => `
-          <div class="context-row"><span class="context-key">${escapeHtml(k)}:</span> <code>${escapeHtml(String(v))}</code></div>
-        `,
-      )
-      .join("");
-  }
-  return escapeHtml(context);
-}
-
-/**
- * Main function to generate the HTML report.
- */
-function generateReport() {
-  const results = loadAndParseReport();
-  const allFiles = getAllHtmlFiles(DIST_DIR);
-  const activeRules = getActiveRules();
-  const ruleCount = Object.keys(activeRules).length;
-
-  const files = processValidationData(results, allFiles);
-
-  const totalErrors = files.reduce((acc, f) => acc + (f.errorCount ?? 0), 0);
-  const totalWarnings = files.reduce(
-    (acc, f) => acc + (f.warningCount ?? 0),
-    0,
-  );
-
-  const sortedRules = calculateRuleCounts(files);
-  const status = determineStatus(totalErrors, totalWarnings);
-
-  const html = `
+  return `
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>HTML Validation Report</title>
-  <style>
-    :root {
-      --primary: #4f46e5;
-      --bg: #f3f4f6;
-      --card-bg: #ffffff;
-      --text: #1f2937;
-      --text-muted: #6b7280;
-      --border: #e5e7eb;
-      --success: #059669;
-      --success-bg: #ecfdf5;
-      --error: #dc2626;
-      --error-bg: #fef2f2;
-      --warning: #d97706;
-      --warning-bg: #fffbeb;
-      --info: #2563eb;
-      --info-bg: #eff6ff;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTML5 Validation Report</title>
+    <style>
+        :root {
+            --bg: #f8f9fa;
+            --card-bg: #ffffff;
+            --text: #1a1a1a;
+            --text-muted: #666;
+            --primary: #2563eb;
+            --danger: #dc2626;
+            --warning: #d97706;
+            --success: #16a34a;
+            --border: #e5e7eb;
+            --font: system-ui, -apple-system, sans-serif;
+        }
 
-    body { 
-      font-family: system-ui, -apple-system, sans-serif; 
-      line-height: 1.5;
-      margin: 0; 
-      padding: 0; 
-      background: var(--bg); 
-      color: var(--text); 
-    }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #0f172a;
+                --card-bg: #1e293b;
+                --text: #f8fafc;
+                --text-muted: #94a3b8;
+                --border: #334155;
+            }
+        }
 
-    .container {
-      max-width: 1000px;
-      margin: 0 auto;
-      padding: 40px 20px;
-    }
+        body {
+            font-family: var(--font);
+            background: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 2rem;
+            line-height: 1.5;
+        }
 
-    header { 
-      background: var(--card-bg); 
-      padding: 40px 0; 
-      border-bottom: 1px solid var(--border);
-      text-align: center;
-    }
+        .container { max-width: 1200px; margin: 0 auto; }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--border);
+        }
 
-    .status-banner {
-      display: inline-flex;
-      align-items: center;
-      gap: 12px;
-      padding: 12px 32px;
-      border-radius: 9999px;
-      font-weight: 800;
-      font-size: 1.25rem;
-      margin-bottom: 24px;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-    .status-banner.passed { color: var(--success); background: var(--success-bg); border: 2px solid #10b981; }
-    .status-banner.failed { color: var(--error); background: var(--error-bg); border: 2px solid #ef4444; }
-    .status-banner.warning { color: var(--warning); background: var(--warning-bg); border: 2px solid #f59e0b; }
+        .status-badge {
+            padding: 0.5rem 1.5rem;
+            border-radius: 9999px;
+            font-weight: 800;
+            letter-spacing: 0.05em;
+        }
 
-    h1 { margin: 0; font-size: 2.25rem; font-weight: 900; color: #111827; }
-    .subtitle { color: var(--text-muted); margin-top: 8px; font-size: 1.1rem; }
+        .status-danger { background: #fee2e2; color: #991b1b; }
+        .status-success { background: #dcfce7; color: #166534; }
 
-    .summary-cards {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 20px;
-      margin: 40px 0;
-    }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
 
-    .card {
-      background: var(--card-bg);
-      padding: 24px;
-      border-radius: 12px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-      border: 1px solid var(--border);
-      text-align: center;
-    }
-    .card .value { display: block; font-size: 2.5rem; font-weight: 800; line-height: 1; margin-bottom: 8px; }
-    .card .label { color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.05em; }
-    
-    .card.failed .value { color: var(--error); }
-    .card.warning .value { color: var(--warning); }
-    .card.passed .value { color: var(--success); }
+        .stat-card {
+            background: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            text-align: center;
+        }
 
-    .section-title { font-size: 1.5rem; font-weight: 800; margin: 40px 0 20px; color: #111827; display: flex; align-items: center; gap: 12px; }
-    .section-title::after { content: ""; flex: 1; height: 1px; background: var(--border); }
+        .stat-value { font-size: 2rem; font-weight: 800; display: block; }
+        .stat-label { color: var(--text-muted); font-size: 0.875rem; text-transform: uppercase; font-weight: 600; }
 
-    .analysis-info {
-      background: #fff;
-      padding: 24px;
-      border-radius: 12px;
-      border: 1px solid var(--border);
-      margin-bottom: 40px;
-    }
-    .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 30px; }
-    .info-item h4 { margin: 0 0 12px 0; font-size: 0.9rem; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.05em; }
-    .rule-list { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; padding: 0; margin: 0; }
-    .rule-tag { background: #f3f4f6; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-family: ui-monospace, monospace; font-weight: 600; color: #4b5563; border: 1px solid var(--border); }
+        .grid-main {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 2rem;
+        }
 
-    .file-item {
-      background: var(--card-bg);
-      border-radius: 12px;
-      margin-bottom: 16px;
-      border: 1px solid var(--border);
-      overflow: hidden;
-    }
-    .file-header {
-      padding: 16px 24px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      cursor: pointer;
-      user-select: none;
-      transition: background 0.2s;
-    }
-    .file-header:hover { background: #f9fafb; }
-    .file-name { font-weight: 700; font-family: ui-monospace, monospace; font-size: 0.95rem; display: flex; align-items: center; gap: 12px; }
-    .file-status-icon { font-size: 1.2rem; }
-    .file-badges { display: flex; gap: 8px; }
-    .badge-mini { padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 700; }
-    .badge-mini.err { background: var(--error-bg); color: var(--error); }
-    .badge-mini.warn { background: var(--warning-bg); color: var(--warning); }
-    .badge-mini.ok { background: var(--success-bg); color: var(--success); }
+        @media (max-width: 1000px) {
+            .grid-main { grid-template-columns: 1fr; }
+        }
 
-    .issue-list { list-style: none; padding: 0; margin: 0; background: #fff; }
-    .issue-item { padding: 24px; border-top: 1px solid var(--border); display: flex; gap: 20px; }
-    .issue-severity { flex-shrink: 0; }
-    .severity-pill { padding: 4px 12px; border-radius: 6px; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; }
-    .severity-pill.error { background: var(--error-bg); color: var(--error); border: 1px solid #fecaca; }
-    .severity-pill.warning { background: var(--warning-bg); color: var(--warning); border: 1px solid #fde68a; }
+        .section-title {
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
 
-    .issue-content { flex: 1; min-width: 0; }
-    .issue-meta { display: flex; gap: 16px; font-family: ui-monospace, monospace; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 8px; align-items: center; flex-wrap: wrap; }
-    .issue-selector { color: var(--primary); font-weight: 700; background: #eef2ff; padding: 2px 6px; border-radius: 4px; }
-    .issue-message { font-size: 1.1rem; font-weight: 700; display: block; margin-bottom: 12px; color: #111827; }
-    .issue-rule { display: inline-flex; align-items: center; gap: 6px; color: var(--text-muted); text-decoration: none; font-size: 0.8rem; font-weight: 600; padding: 4px 8px; background: #f9fafb; border-radius: 6px; border: 1px solid var(--border); transition: all 0.2s; }
-    .issue-rule:hover { border-color: var(--primary); color: var(--primary); background: #f5f3ff; }
-    
-    .issue-context { margin-top: 16px; background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 12px; font-size: 0.85rem; }
-    .context-row { margin-bottom: 4px; }
-    .context-key { font-weight: 700; color: var(--text-muted); margin-right: 8px; }
-    .code-extract { margin-top: 16px; background: #1e293b; color: #f1f5f9; padding: 16px; border-radius: 8px; font-family: ui-monospace, monospace; font-size: 0.85rem; overflow-x: auto; border-left: 4px solid var(--primary); }
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+        }
 
-    details > summary { list-style: none; }
-    details > summary::-webkit-details-marker { display: none; }
-    
-    footer { text-align: center; padding: 60px 0; color: var(--text-muted); font-size: 0.9rem; border-top: 1px solid var(--border); background: #fff; margin-top: 60px; }
-    
-    @media (max-width: 640px) {
-      .summary-cards { grid-template-columns: 1fr 1fr; }
-      .issue-item { flex-direction: column; gap: 12px; }
-    }
-  </style>
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th { background: rgba(0,0,0,0.02); padding: 1rem; font-size: 0.875rem; color: var(--text-muted); border-bottom: 1px solid var(--border); }
+        td { padding: 1rem; border-bottom: 1px solid var(--border); font-size: 0.875rem; }
+
+        .file-link { color: var(--primary); text-decoration: none; font-weight: 500; }
+        .file-link:hover { text-decoration: underline; }
+
+        .count-badge {
+            padding: 0.2rem 0.5rem;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 0.75rem;
+        }
+        .count-error { background: #fee2e2; color: #991b1b; }
+        .count-warning { background: #fef3c7; color: #92400e; }
+        .count-zero { background: #f3f4f6; color: #4b5563; }
+
+        .rule-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+        .rule-item:last-child { border-bottom: none; }
+        .rule-name { font-family: monospace; font-size: 0.85rem; }
+        .rule-count { font-weight: 700; color: var(--danger); }
+
+        .active-rules-list {
+            padding: 1rem;
+            font-size: 0.75rem;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .active-rule {
+            display: inline-block;
+            margin: 0.2rem;
+            padding: 0.2rem 0.4rem;
+            background: rgba(0,0,0,0.05);
+            border-radius: 4px;
+            color: var(--text-muted);
+        }
+    </style>
 </head>
 <body>
-  <header>
     <div class="container">
-      <div class="status-banner ${status.class}">${status.emoji} Validation ${status.text}</div>
-      <h1>HTML Validation Report</h1>
-      <p class="subtitle">Generated for project <strong>jmrp.io</strong> on ${new Date().toUTCString()}</p>
-    </div>
-  </header>
-
-  <div class="container">
-    <div class="summary-cards">
-      <div class="card ${totalErrors > 0 ? "failed" : "passed"}">
-        <span class="value">${totalErrors}</span>
-        <span class="label">Errors</span>
-      </div>
-      <div class="card ${totalWarnings > 0 ? "warning" : "passed"}">
-        <span class="value">${totalWarnings}</span>
-        <span class="label">Warnings</span>
-      </div>
-      <div class="card">
-        <span class="value">${files.length}</span>
-        <span class="label">Files Checked</span>
-      </div>
-      <div class="card">
-        <span class="value">${ruleCount}</span>
-        <span class="label">Rules Active</span>
-      </div>
-    </div>
-
-    <h2 class="section-title">📊 Analysis Overview</h2>
-    <div class="analysis-info">
-      <div class="info-grid">
-        <div class="info-item">
-          <h4>Top Issue Types</h4>
-          ${
-            sortedRules.length > 0
-              ? `
-            <div style="display: flex; flex-direction: column; gap: 8px;">
-              ${sortedRules
-                .map(
-                  ([rule, count]) => `
-                <div style="display: flex; justify-content: space-between; font-size: 0.9rem;">
-                  <code style="font-weight: 600;">${escapeHtml(rule)}</code>
-                  <span style="font-weight: 800; color: var(--error);">${count}</span>
-                </div>
-              `,
-                )
-                .join("")}
+        <div class="header">
+            <div>
+                <h1 style="margin:0">🏗️ HTML5 Validation Report</h1>
+                <p style="margin:0.5rem 0 0; color:var(--text-muted)">Project-wide structural and accessibility standards audit</p>
             </div>
-          `
-              : '<p style="margin:0; color: var(--success); font-weight: 600;">No issues found!</p>'
-          }
+            <div class="status-badge ${statusClass}">${statusText}</div>
         </div>
-        <div class="info-item">
-          <h4>Rules Analyzed</h4>
-          <ul class="rule-list">
-            ${Object.keys(activeRules)
-              .map((rule) => `<li class="rule-tag">${escapeHtml(rule)}</li>`)
-              .join("")}
-          </ul>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <span class="stat-value">${totalFiles}</span>
+                <span class="stat-label">Files Scanned</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-value" style="color: ${invalidFiles > 0 ? "var(--danger)" : "var(--success)"}">${invalidFiles}</span>
+                <span class="stat-label">Invalid Files</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-value" style="color: var(--danger)">${totalErrors}</span>
+                <span class="stat-label">Total Errors</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-value" style="color: var(--warning)">${totalWarnings}</span>
+                <span class="stat-label">Total Warnings</span>
+            </div>
         </div>
-      </div>
-    </div>
 
-    <h2 class="section-title">📂 Detailed Results</h2>
-    <div class="file-list">
-      ${files
-        .map((file) => {
-          const isClean = !file.messages || file.messages.length === 0;
-          let fileEmoji;
-          if ((file.errorCount ?? 0) > 0) {
-            fileEmoji = "🔴";
-          } else if ((file.warningCount ?? 0) > 0) {
-            fileEmoji = "⚠️";
-          } else {
-            fileEmoji = "✅";
-          }
+        <div class="grid-main">
+            <div class="results-area">
+                <h2 class="section-title">📄 File Details</h2>
+                <div class="card">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>File Path</th>
+                                <th>Status</th>
+                                <th>Errors</th>
+                                <th>Warnings</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${results
+                              .map(
+                                (r) => `
+                                <tr>
+                                    <td><a href="#" class="file-link">${r.filePath.replace(DIST_DIR + "/", "")}</a></td>
+                                    <td>${r.valid ? "✅ Valid" : "❌ Invalid"}</td>
+                                    <td><span class="count-badge ${r.errorCount > 0 ? "count-error" : "count-zero"}">${r.errorCount}</span></td>
+                                    <td><span class="count-badge ${r.warningCount > 0 ? "count-warning" : "count-zero"}">${r.warningCount}</span></td>
+                                </tr>
+                            `,
+                              )
+                              .join("")}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
 
-          return `
-          <details class="file-item" ${isClean ? "" : "open"}>
-            <summary class="file-header">
-              <span class="file-name">
-                <span class="file-status-icon">${fileEmoji}</span>
-                ${escapeHtml(file.filePath)}
-              </span>
-              <div class="file-badges">
-                ${file.errorCount > 0 ? `<span class="badge-mini err">${file.errorCount} E</span>` : ""}
-                ${file.warningCount > 0 ? `<span class="badge-mini warn">${file.warningCount} W</span>` : ""}
-                ${isClean ? `<span class="badge-mini ok">PASSED</span>` : ""}
-              </div>
-            </summary>
-            
-            ${
-              isClean
-                ? `
-              <div style="padding: 24px; text-align: center; color: var(--success); font-weight: 600; background: var(--success-bg);">
-                ✨ No validation issues found in this file.
-              </div>
-            `
-                : `
-              <ul class="issue-list">
-                ${(file.messages || [])
-                  .map((msg) => {
-                    const severityLabel =
-                      msg.severity === 2 ? "Error" : "Warning";
-                    const severityClass =
-                      msg.severity === 2 ? "error" : "warning";
-
-                    return `
-                    <li class="issue-item">
-                      <div class="issue-severity">
-                        <span class="severity-pill ${severityClass}">${severityLabel}</span>
-                      </div>
-                      <div class="issue-content">
-                        <div class="issue-meta">
-                          <span>Line ${msg.line ?? "?"}, Col ${msg.column ?? "?"}</span>
-                          ${msg.selector ? `<span>Selector: <span class="issue-selector">${escapeHtml(msg.selector)}</span></span>` : ""}
+            <div class="sidebar">
+                <h2 class="section-title">🚨 Top Issues</h2>
+                <div class="card" style="margin-bottom: 2rem;">
+                    ${
+                      sortedRules.length > 0
+                        ? sortedRules
+                            .map(
+                              ([rule, count]) => `
+                        <div class="rule-item">
+                            <span class="rule-name">${rule}</span>
+                            <span class="rule-count">${count}</span>
                         </div>
-                        <strong class="issue-message">${escapeHtml(msg.message)}</strong>
-                        
-                        <div style="margin-top: 12px;">
-                          <a href="${msg.ruleUrl || `https://html-validate.org/rules/${escapeHtml(msg.ruleId)}.html`}" target="_blank" class="issue-rule">
-                            <span>Rule: <strong>${escapeHtml(msg.ruleId)}</strong></span>
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
-                          </a>
-                        </div>
+                    `,
+                            )
+                            .join("")
+                        : '<div style="padding: 2rem; text-align: center; color: var(--text-muted);">No issues found!</div>'
+                    }
+                </div>
 
-                        ${
-                          msg.context
-                            ? `
-                          <div class="issue-context">
-                            ${renderContext(msg.context)}
-                          </div>
-                        `
-                            : ""
-                        }
+                <h2 class="section-title">⚙️ Active Rules</h2>
+                <div class="card">
+                    <div class="active-rules-list">
+                        ${Object.keys(activeRules)
+                          .map(
+                            (rule) => `
+                            <span class="active-rule">${rule}</span>
+                        `,
+                          )
+                          .join("")}
+                    </div>
+                </div>
+            </div>
+        </div>
 
-                        ${msg.extract ? `<div class="code-extract">${escapeHtml(msg.extract)}</div>` : ""}
-                      </div>
-                    </li>
-                  `;
-                  })
-                  .join("")}
-              </ul>
-            `
-            }
-          </details>
-        `;
-        })
-        .join("")}
+        <footer style="margin-top: 3rem; text-align: center; color: var(--text-muted); font-size: 0.875rem; border-top: 1px solid var(--border); padding-top: 1rem;">
+            Generated on ${new Date().toLocaleString("en-US", { timeZone: "UTC" })} UTC | html-validate engine
+        </footer>
     </div>
-  </div>
-
-  <footer>
-    <div class="container">
-      <p>Report generated by <code>html-validate</code> CI script.</p>
-      <p>&copy; 2025 José Manuel Requena Plens</p>
-    </div>
-  </footer>
 </body>
 </html>
   `;
+};
 
-  fs.writeFileSync(OUTPUT_FILE, html);
-  console.log(`✅ HTML Report generated at: ${OUTPUT_FILE}`);
+const main = () => {
+  console.log("📊 Generating HTML Validation Report...");
 
-  if (totalErrors > 0) {
+  const report = loadReport();
+  if (!report) {
+    console.error("❌ No validation results found. Run html-validate first.");
     process.exit(1);
   }
-}
 
-generateReport();
+  const activeRules = getActiveRules();
+  const html = generateHtml(report.results, activeRules);
+
+  fs.writeFileSync(OUTPUT_FILE, html, "utf-8");
+  console.log(`✅ HTML report generated at ${OUTPUT_FILE}`);
+};
+
+main();

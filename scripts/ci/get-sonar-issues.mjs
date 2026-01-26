@@ -29,10 +29,6 @@ if (!PROJECT_KEY) {
 
 /**
  * Fetches data from SonarCloud API with pagination support.
- *
- * @param {string} baseUrl - The base URL for the API request.
- * @param {string} dataKey - The key in the response object containing the items.
- * @returns {Promise<Array>} Resolves with the full list of items.
  */
 async function fetchWithPagination(baseUrl, dataKey) {
   const allItems = [];
@@ -43,42 +39,85 @@ async function fetchWithPagination(baseUrl, dataKey) {
     const separator = baseUrl.includes("?") ? "&" : "?";
     const url = `${baseUrl}${separator}ps=100&p=${page}`;
 
-    // Add timeout to prevent hanging requests
-    try {
-      const res = await fetch(url, {
-        headers: { Authorization: `Bearer ${SONAR_TOKEN}` },
-        signal: AbortSignal.timeout(30_000), // 30s timeout
-      });
+    const res = await fetch(url, {
+      headers: { Authorization: `Bearer ${SONAR_TOKEN}` },
+      signal: AbortSignal.timeout(30_000),
+    });
 
-      if (!res.ok) {
-        throw new Error(`Sonar API failed: ${res.status} ${res.statusText}`);
-      }
-
-      const data = await res.json();
-      const items = data[dataKey] || [];
-      allItems.push(...items);
-
-      // Sonar API typically returns 100 items per page by default with ps=100
-      hasMore = items.length === 100;
-      page++;
-    } catch (error) {
-      if (error.name === "AbortError" || error.name === "TimeoutError") {
-        throw new Error("Sonar API request timed out");
-      }
-      throw error;
+    if (!res.ok) {
+      throw new Error(`Sonar API failed: ${res.status} ${res.statusText}`);
     }
+
+    const data = await res.json();
+    const items = data[dataKey] || [];
+    allItems.push(...items);
+
+    hasMore = items.length === 100;
+    page++;
   }
 
   return allItems;
 }
 
 /**
- * Fetches open issues and security hotspots from SonarCloud API
- * and logs them to the console.
- *
- * @returns {Promise<void>} Resolves when fetching is complete.
+ * Checks if a file has a NOSONAR comment at a specific line.
+ */
+async function checkNoSonar(component, line) {
+  if (!line) return false;
+
+  const repoRoot = process.cwd();
+
+  try {
+    // Sonar component keys can be tricky. Format: "project_key:relative/path"
+    // Extract path after the colon
+    const parts = component.split(":");
+    let filePath = parts.length > 1 ? parts.slice(1).join(":") : component;
+
+    // Remove any leading project key prefix if it leaked into the path
+    if (filePath.startsWith(PROJECT_KEY + ":")) {
+      filePath = filePath.replace(PROJECT_KEY + ":", "");
+    }
+
+    const possiblePaths = [
+      path.resolve(repoRoot, filePath),
+      path.resolve(repoRoot, filePath.replace(/^src\//, "")),
+      path.resolve(repoRoot, filePath.replace(/^scripts\//, "")),
+    ];
+
+    let fullPath = null;
+    for (const p of possiblePaths) {
+      if (fs.existsSync(p) && fs.statSync(p).isFile()) {
+        fullPath = p;
+        break;
+      }
+    }
+
+    if (!fullPath) {
+      return false;
+    }
+
+    const content = fs.readFileSync(fullPath, "utf-8");
+    const lines = content.split("\n");
+
+    // Very wide window to be safe against any formatting (Prettier, line breaks)
+    const start = Math.max(0, line - 5);
+    const end = Math.min(lines.length, line + 5);
+    const windowLines = lines.slice(start, end);
+
+    return windowLines.some((l) => (l || "").toUpperCase().includes("NOSONAR"));
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Main execution
  */
 try {
+  // Give SonarCloud a few seconds to process the new analysis
+  logger.info("⏳ Waiting for SonarCloud to process analysis...");
+  await new Promise((resolve) => setTimeout(resolve, 5000));
+
   logger.info(
     `\n🔍 Fetching open issues from SonarCloud for [${PROJECT_KEY}]...\n`,
   );
@@ -116,15 +155,12 @@ try {
     logger.info(`\n🚨 Found ${hotspots.length} security hotspots:`);
     let manualReviewCount = 0;
 
-    // Check suppressions in parallel
     const suppressionResults = await Promise.all(
       hotspots.map((h) => checkNoSonar(h.component, h.line)),
     );
 
     for (const [i, h] of hotspots.entries()) {
-      const isSuppressed = suppressionResults[i];
-
-      if (isSuppressed) {
+      if (suppressionResults[i]) {
         logger.info(
           `  - [SUPPRESSED] ${h.message} (📍 ${h.component}:${h.line || "N/A"})`,
         );
@@ -139,7 +175,6 @@ try {
       logger.info(
         `\n❌ Static analysis failed: ${manualReviewCount} unsuppressed hotspots detected.`,
       );
-      logger.info("\n" + "".padEnd(80, "=") + "\n");
       process.exit(1);
     } else {
       logger.info(
@@ -150,74 +185,11 @@ try {
 
   if (issues.length > 0) {
     logger.info("\n❌ Static analysis failed: Open issues detected.");
-    logger.info("\n" + "".padEnd(80, "=") + "\n");
     process.exit(1);
   }
 } catch (error) {
-  const message = error instanceof Error ? error.message : String(error);
-  logger.error(`❌ Failed to fetch SonarCloud reports: ${message}`);
+  logger.error(`❌ Failed to fetch SonarCloud reports: ${error.message}`);
   process.exit(1);
 }
 
-/**
- * Checks if a file has a NOSONAR comment at a specific line.
- *
- * @param {string} component - Sonar component key (e.g., jmrplens_jmrp.io:path/to/file)
- * @param {number} line - Line number to check
- * @returns {Promise<boolean>} Resolves to true if NOSONAR is found
- */
-async function checkNoSonar(component, line) {
-  if (!line) return false;
-
-  // Capture repo root once
-  const repoRoot = process.cwd();
-
-  try {
-    // Component usually has the format "project_key:relative/path"
-    const filePath = component.split(":").pop();
-
-    // Reject absolute paths
-    if (path.isAbsolute(filePath)) {
-      logger.warn(`   ⚠️  Skipping absolute path: ${filePath}`);
-      return false;
-    }
-
-    const fullPath = path.resolve(repoRoot, filePath);
-
-    // Validate path is within repo root (prevent traversal)
-    if (!fullPath.startsWith(repoRoot + path.sep) && fullPath !== repoRoot) {
-      logger.warn(`   ⚠️  Path escapes repo root: ${filePath}`);
-      return false;
-    }
-
-    if (!fs.existsSync(fullPath)) return false;
-
-    const content = fs.readFileSync(fullPath, "utf-8");
-    const lines = content.split("\n");
-
-    // Check a window around the reported line to handle multi-line statements and formatting
-    const window = [
-      lines[line - 3], // 2 lines before
-      lines[line - 2], // 1 line before
-      lines[line - 1], // target line
-      lines[line], // 1 line after
-    ];
-
-    const isSuppressed = window.some((l) =>
-      (l || "").toUpperCase().includes("NOSONAR"),
-    );
-
-    if (!isSuppressed) {
-      logger.warn(
-        `   ⚠️  No NOSONAR found in window around line ${line} of ${filePath}`,
-      );
-    }
-
-    return isSuppressed;
-  } catch (error) {
-    const errMsg = error?.message || String(error);
-    logger.error(`   ❌ Error checking NOSONAR in ${component}: ${errMsg}`);
-    return false;
-  }
-}
 logger.info("\n" + "".padEnd(80, "=") + "\n");

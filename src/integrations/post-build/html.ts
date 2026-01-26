@@ -239,6 +239,7 @@ async function processSingleHtmlFile(
   // Ensure <style> tags are in <head> for HTML5 compliance
   const bodyStyles = $("body style");
   if (bodyStyles.length > 0) {
+    let movedCount = 0;
     bodyStyles.each((_, el) => {
       const $style = $(el);
       // Skip styles inside SVG, template, or noscript as they might be scoped/inert
@@ -247,8 +248,9 @@ async function processSingleHtmlFile(
       }
       $("head").append($style.clone());
       $style.remove();
+      movedCount++;
     });
-    isModified = true;
+    if (movedCount > 0) isModified = true;
   }
 
   // Handle styles (Data URI extraction and CSP class conversion)
@@ -292,7 +294,7 @@ async function processSingleHtmlFile(
     minifyCSS: true,
     minifyJS: true,
     ignoreCustomComments: [
-      /^ jmrp-beacon-hardened /, // Preserve security guard
+      /^\* jmrp-beacon-hardened \*/, // Preserve security guard
       /^!/, // Preserve license comments
     ],
     sortAttributes: true,

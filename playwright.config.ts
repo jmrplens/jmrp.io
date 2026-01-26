@@ -6,11 +6,13 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
-  reporter: [
-    ["html", { open: "never" }],
-    ["list"],
-    ["json", { outputFile: "playwright-report/results.json" }],
-  ],
+  reporter: process.env.CI
+    ? [
+        ["html", { open: "never" }],
+        ["list"],
+        ["json", { outputFile: "playwright-report/results.json" }],
+      ]
+    : [["list"], ["html", { open: "never" }]],
 
   use: {
     baseURL: "http://localhost:4321",

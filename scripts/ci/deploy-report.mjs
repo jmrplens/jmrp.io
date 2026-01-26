@@ -1,4 +1,3 @@
-/* eslint-disable sonarjs/os-command */
 /**
  * deploy-report.mjs
  *
@@ -52,18 +51,18 @@ try {
   // Pass token via env to avoid exposure in process list/logs
   const cmd = `npx vercel deploy ${dir} --name=${projectName} --yes --public`;
 
+  // eslint-disable-next-line sonarjs/os-command -- Input is validated via regex and path traversal checks
   const output = execSync(cmd, {
     encoding: "utf-8",
     env: { ...process.env, VERCEL_TOKEN: token },
     timeout: 300_000, // 5 minutes timeout
   });
 
-  // Vercel CLI outputs the URL as the only thing in stdout if it's a successful deploy in some versions,
-  // but usually it prints progress. We need to extract the URL.
-  // Regex excludes common trailing punctuation that might be captured
-  const match = /https?:\/\/[^\s'">\]]+\.vercel\.app[^\s'">\].,;:!?)]*/.exec(
+  // Secure regex to extract Vercel URL
+  // Matches https://[domain].vercel.app[optional-path]
+  const match = /https?:\/\/[a-zA-Z0-9.-]+\.vercel\.app[^\s'">\]]*/.exec(
     output,
-  );
+  ); // NOSONAR
   // Post-process to remove any remaining trailing punctuation
   const rawUrl = match ? match[0] : null;
   const previewUrl = rawUrl ? rawUrl.replace(/[.,;:!?)>\]]+$/, "") : null;

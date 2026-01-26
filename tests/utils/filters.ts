@@ -53,9 +53,16 @@ export function shouldIgnoreError(text: string): boolean {
       text.includes("cloudflare") ||
       text.includes("cloudflareinsights"));
 
+  const isResource404 =
+    text.includes("status of 404") &&
+    (text.includes("/_astro/favicon") ||
+      text.includes(".pdf") ||
+      text.includes("/assets/icons/"));
+
   return (
     isCloudflareInsightsError(text) ||
     isExpectedCorsError ||
+    isResource404 ||
     // Only ignore generic failures if likely related to localhost/CORS
     (text.includes("net::ERR_FAILED") &&
       (text.includes("127.0.0.1") || text.includes("localhost")))

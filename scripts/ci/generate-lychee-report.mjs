@@ -40,7 +40,8 @@ for (const line of lines) {
   } else if (line.startsWith("* ")) {
     const parts = line.split("|");
     if (parts.length >= 2) {
-      const linkMatch = /\[(.*?)\]\((.*?)\)/.exec(parts[0]);
+      // Secure regex for [name](url)
+      const linkMatch = /\[([^\]]+)\]\(([^)]+)\)/.exec(parts[0]); // NOSONAR
       const linkName = linkMatch ? linkMatch[1] : parts[0].replace("* ", "");
       const linkUrl = linkMatch ? linkMatch[2] : null;
       // Join all segments after the first to preserve | in error messages

@@ -178,6 +178,7 @@ export default [
   // 9. SonarJS Configuration (Quality & Security)
   sonarjs.configs.recommended,
   {
+    files: ["**/*.astro", "src/integrations/post-build/*.ts"],
     rules: {
       "sonarjs/slow-regex": "off", // Many false positives in Astro/HTML processing
     },
@@ -269,10 +270,21 @@ export default [
 
   // 15. SonarJS Overrides for specific files
   {
-    files: ["src/integrations/post-build.ts", "scripts/**/*.mjs"],
+    files: [
+      "src/integrations/post-build.ts",
+      "scripts/**/*.mjs",
+      "tests/**/*.ts",
+    ],
     rules: {
       "sonarjs/no-os-command-from-path": "off",
       "sonarjs/no-nested-template-literals": "off",
+      "sonarjs/slow-regex": "off",
+    },
+  },
+  {
+    files: ["scripts/audit-aria-labels.mjs"],
+    rules: {
+      "sonarjs/no-control-regex": "off",
     },
   },
   {

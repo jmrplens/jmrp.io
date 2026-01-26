@@ -1,4 +1,3 @@
-/* eslint-disable sonarjs/pseudo-random */
 /**
  * CSP Violation Reporter Server
  *
@@ -219,7 +218,9 @@ function sendToTelegram(report, ip, ua) {
     2,
   );
   const boundary =
-    "----WebKitFormBoundary" + Math.random().toString(36).slice(2);
+    "----WebKitFormBoundary" +
+    // eslint-disable-next-line sonarjs/pseudo-random -- boundary delimiter, not security-sensitive
+    Math.random().toString(36).slice(2);
 
   const payload = Buffer.concat([
     Buffer.from(

@@ -1,7 +1,28 @@
 {
-  "name": "jmrp.io_astro",
+  "name": "jmrp.io",
   "type": "module",
-  "version": "0.0.1",
+  "version": "1.0.0",
+  "description": "Personal portfolio and technical blog of José Manuel Requena Plens - R&D Engineer",
+  "author": "José Manuel Requena Plens <jmrplens@gmail.com> (https://jmrp.io)",
+  "license": "MIT",
+  "homepage": "https://jmrp.io",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jmrplens/jmrp.io.git"
+  },
+  "bugs": {
+    "url": "https://github.com/jmrplens/jmrp.io/issues"
+  },
+  "keywords": [
+    "astro",
+    "portfolio",
+    "blog",
+    "cv",
+    "engineer",
+    "embedded-systems",
+    "acoustics",
+    "typescript"
+  ],
   "engines": {
     "node": ">=22.12.0",
     "pnpm": ">=10"

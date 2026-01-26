@@ -6,7 +6,7 @@ import type { CollectionEntry } from "astro:content";
 export function getUniqueTags(posts: CollectionEntry<"posts">[]) {
   const tags = posts
     .flatMap((post) => post.data.tags)
-    .filter(Boolean)
+    .filter((tag): tag is string => typeof tag === "string")
     .map((tag) => tag.toLowerCase());
 
   const tagCounts = tags.reduce(

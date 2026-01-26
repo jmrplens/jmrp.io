@@ -26,6 +26,12 @@ const githubDark = "github-dark-high-contrast";
 // Image optimizer cache location (also referenced in .gitignore and CI)
 const OPTIMIZED_IMAGES_CACHE_DIR = ".cache/optimized-images";
 
+// Internationalization (i18n) configuration
+const i18nConfig = {
+  defaultLocale: "en",
+  locales: ["en", "es"],
+};
+
 // https://astro.build/config
 export default defineConfig({
   prefetch: {
@@ -101,10 +107,7 @@ export default defineConfig({
   site: process.env.PUBLIC_SITE_URL || "https://jmrp.io",
 
   // Internationalization (i18n) configuration
-  i18n: {
-    defaultLocale: "en",
-    locales: ["en", "es"],
-  },
+  i18n: i18nConfig,
 
   // Build behavior for prerendering conflicts
   prerenderConflictBehavior: "error",
@@ -127,11 +130,8 @@ export default defineConfig({
     preBuildIntegration(),
     sitemap({
       i18n: {
-        defaultLocale: "en",
-        locales: {
-          en: "en",
-          es: "es",
-        },
+        defaultLocale: i18nConfig.defaultLocale,
+        locales: Object.fromEntries(i18nConfig.locales.map((l) => [l, l])),
       },
     }),
     mdx({
@@ -341,11 +341,7 @@ export default defineConfig({
     css: {
       devSourcemap: true,
     },
-    json: {
-      stringify: true,
-    },
     build: {
-      target: "esnext",
       cssCodeSplit: true,
       chunkSizeWarningLimit: 1000,
     },
