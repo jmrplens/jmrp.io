@@ -72,11 +72,11 @@ module.exports = {
           process.env.FORM_FACTOR === "desktop"
             ? {
                 rttMs: 40,
-                throughputKbps: 10240,
+                throughputKbps: 10_240,
                 cpuSlowdownMultiplier: 1,
                 requestLatencyMs: 0,
-                downloadThroughputKbps: 10240,
-                uploadThroughputKbps: 10240,
+                downloadThroughputKbps: 10_240,
+                uploadThroughputKbps: 10_240,
               }
             : {
                 rttMs: 150,
