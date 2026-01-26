@@ -248,8 +248,11 @@
         - "After nearly completing the doctoral program, I made the strategic decision to redirect my career toward industrial software development. This transition allowed me to apply my solid foundation in data analysis, programming, and analytical thinking to the software sector, where I found a more direct alignment between my technical skills and my long-term professional goals."
       linkitems:
         - link: /pdf/degree/PhDExpEng.pdf
-          linkname: "Academic record"
-          ariaLabel: "Academic record (PhD)"
+          linkname: "Academic record (ENG)"
+          ariaLabel: "Academic record (PhD - English)"
+        - link: /pdf/degree/PhDExpCas.pdf
+          linkname: "Academic record (SPA)"
+          ariaLabel: "Academic record (PhD - Spanish)"
     - title: Master's Degree in Acoustical Engineering
       institution: Polytechnic University of Valencia (<a href="https://www.upv.es/index-en.html" aria-label="Polytechnic University of Valencia (UPV) - Master">UPV</a>)
       department: Higher Polytechnic School of Gandia (<a href="https://www.upv.es/entidades/epsg/en/home/" aria-label="EPSG Gandia Campus (Master)">EPSG</a>)

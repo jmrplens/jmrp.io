@@ -21,7 +21,7 @@ import Collapsible from "@components/ui/Collapsible.astro";
 
 If you've ever looked at your server logs, you've likely seen countless attempts to access files like `/.env`, `/wp-login.php`, `/.git/config`, or `/admin`. These are automated scanners probing your server for vulnerabilities. While simply blocking them with a 403 or 404 response works, there's a more *satisfying* approach: **trapping them in a tarpit**.
 
-## What is a Tarpit?
+## What is a tarpit?
 
 A **[tarpit](https://en.wikipedia.org/wiki/Tarpit_(networking))** (also known as a "tar pit" or "sticky honeypot") is a network security mechanism designed to **slow down attackers** by deliberately responding to their requests at an extremely slow rate. The name comes from the natural phenomenon of tar pits—geological formations where animals become trapped in viscous tar and cannot escape.
 
@@ -33,13 +33,13 @@ Unlike traditional blocking (which immediately rejects requests), a tarpit *pret
 
 ---
 
-## History and Origins
+## History and origins
 
 The concept of tarpits in cybersecurity emerged in the late 1990s and early 2000s during a period when network worms and automated scanning tools began proliferating. The most famous early tarpit was **[LaBrea](https://labrea.sourceforge.net/)**, created by [Tom Liston](https://www.giac.org/paper/gsec/1895/labrea-approach-securing-networks/103112) around 2001.
 
 LaBrea worked at the network layer, responding to TCP SYN packets for unused IP addresses and creating "virtual sticky machines" that would trap worm scanners. When the [Code Red](https://en.wikipedia.org/wiki/Code_Red_(computer_worm)) and [Nimda](https://en.wikipedia.org/wiki/Nimda) worms were spreading rapidly, LaBrea proved remarkably effective at slowing their propagation.
 
-### Evolution of Tarpits
+### Evolution of tarpits
 
 The tarpit concept has evolved beyond network-layer implementations:
 
@@ -75,7 +75,7 @@ sequenceDiagram
 
 ---
 
-## Why Use a Tarpit Instead of Blocking?
+## Why use a tarpit instead of blocking?
 
 <Table title="Tarpit vs Other Defense Strategies">
   <thead>
@@ -125,7 +125,7 @@ Let's implement a complete, production-grade tarpit solution in [Nginx](https://
 2. **Throttle delivery**: Use `limit_rate` to control bandwidth
 3. **Log for analysis**: Use a specialized log format that forces the status code to 418 (even when we return 200) so parsers like CrowdSec can easily detect it.
 
-### Step 1: Prepare Nginx (http block)
+### Step 1: prepare Nginx (http block)
 
 We need to define our log formats and map variables in the main `nginx.conf`. This setup allows us to **whitelist trusted IPs** (like your home IP or VPN) so you don't tarpit yourself!
 
@@ -178,7 +178,7 @@ http {
 To keep the attacker connected, we must send a `200 OK` status. However, for our log parser (CrowdSec/Fail2Ban), we want to explicitly mark these requests as "tarpitted". By hardcoding `418` in the `log_format`, we get the best of both worlds: the attacker sees a successful connection, but our logs see a clear error/ban signal.
 </Callout>
 
-### Step 2: Create the Tarpit Snippet
+### Step 2: create the tarpit snippet
 
 Create a reusable snippet that handles the throttling and logging.
 
@@ -207,7 +207,7 @@ return 200 $slow_content;
 ```
 </FileContent>
 
-### Step 3: Define Sensitive Paths (The "Traps")
+### Step 3: define sensitive paths (the "traps")
 
 Instead of adding logging logic to every location (which is messy), we simply **return 418** for any sensitive path. We will handle this error code globally in the server block.
 
@@ -242,7 +242,7 @@ location ~ /\.(?!well-known) {
 ```
 </FileContent>
 
-### Step 4: Configure the Server Block
+### Step 4: configure the server block
 
 Now we tie it all together using `error_page 418`. This is the "magic glue" that makes the architecture clean.
 
@@ -280,7 +280,7 @@ server {
 ```
 </FileContent>
 
-### Step 5: Test the Configuration
+### Step 5: test the configuration
 
 Validate and reload Nginx:
 
@@ -323,7 +323,7 @@ The connection was established, received 50 bytes (5 seconds × 10 bytes/second)
 
 While the tarpit wastes attacker time, we can go further by **automatically banning** repeat offenders. [CrowdSec](https://www.crowdsec.net/) can parse the tarpit log and create firewall rules.
 
-### Create a CrowdSec Parser
+### Create a CrowdSec parser
 
 CrowdSec can read the `/var/log/nginx/access.tarpit` file to identify malicious IPs:
 
@@ -360,7 +360,7 @@ labels:
 ```
 </Callout>
 
-### Create a Scenario
+### Create a scenario
 
 Define when to ban an IP (e.g., after 3 tarpit hits in 5 minutes):
 
@@ -387,11 +387,11 @@ If you don't want to create custom parsers, you can use [Fail2Ban](https://www.f
 
 ---
 
-## Reporting Malicious IPs: Contributing to Collective Defense
+## Reporting malicious IPs: contributing to collective defense
 
 One of the most powerful aspects of running a tarpit is the **intelligence you gather**. Every trapped connection reveals an attacker's IP, their target paths, and timing patterns. But this data becomes exponentially more valuable when **shared with the security community**.
 
-### Why Report Malicious IPs?
+### Why report malicious IPs?
 
 <Callout type="info" title="The Power of Collective Defense">
 When you report a malicious IP, you're not just protecting yourself—you're protecting **everyone**. Threat intelligence platforms aggregate reports from thousands of contributors, creating real-time blocklists that can preemptively block attackers before they reach your server.
@@ -404,11 +404,11 @@ Benefits of reporting include:
 3. **Reduced Attack Surface**: Reported IPs are often blocked by ISPs and security tools globally
 4. **Community Reciprocity**: Contributors receive access to larger, more comprehensive blocklists
 
-### AbuseIPDB Integration
+### AbuseIPDB integration
 
 [AbuseIPDB](https://www.abuseipdb.com/) is a community-driven threat intelligence platform with over 100,000 contributors. You can both check IP reputation and report malicious IPs via their API.
 
-#### Check IP Reputation
+#### Check IP reputation
 
 Before blocking, verify the threat level:
 
@@ -422,7 +422,7 @@ curl -G "https://api.abuseipdb.com/api/v2/check" \
 ```
 </TerminalCommand>
 
-#### Report Malicious IPs from Tarpit Logs
+#### Report malicious IPs from tarpit logs
 
 Create a script to automatically report tarpit captures:
 
@@ -481,7 +481,7 @@ done
 Free AbuseIPDB accounts have daily rate limits. For high-volume servers, consider their paid plans or batch your reports. Always strip personally identifiable information (PII) from report comments.
 </Callout>
 
-### CrowdSec Community Blocklists
+### CrowdSec community blocklists
 
 Unlike AbuseIPDB (which is passive lookup), [CrowdSec](https://www.crowdsec.net/) operates as a **"massively multiplayer firewall"**. When your Security Engine detects a threat, it shares the signal with the network, and you receive blocklist updates containing threats detected by other users.
 
@@ -516,9 +516,9 @@ The Community Blocklist updates in real-time and is tailored to your stack—if 
 
 ---
 
-## Advanced Techniques
+## Advanced techniques
 
-### Combining with Rate Limiting
+### Combining with rate limiting
 
 For extra protection, combine tarpit with rate limiting to prevent overwhelming your server:
 
@@ -535,7 +535,7 @@ location @tarpit {
 ```
 </Code>
 
-### Tarpit for Specific User-Agents
+### Tarpit for specific user-agents
 
 Target known malicious scanners by user-agent. Common scanners include [sqlmap](https://sqlmap.org/) (SQL injection), [Nikto](https://cirt.net/Nikto2) (web vulnerability scanner), [Nmap](https://nmap.org/) (network scanner), [masscan](https://github.com/robertdavidgraham/masscan) (port scanner), and [ZGrab](https://github.com/zmap/zgrab2) (banner grabber):
 
@@ -561,9 +561,9 @@ server {
 
 ---
 
-## Monitoring Your Tarpit
+## Monitoring your tarpit
 
-### Analyze Tarpit Logs
+### Analyze tarpit logs
 
 Since we force the status code to **418** in our `tarpit_418_fixed` log format, filtering for attacks is incredibly simple, even if mixed with other logs:
 
@@ -588,7 +588,7 @@ grep " 418 " /var/log/nginx/tarpit_access.log | awk '{print $7}' | sort | uniq -
 ```
 </TerminalOutput>
 
-### Top Offending IPs
+### Top offending IPs
 
 Identify the most persistent scanners:
 
@@ -610,7 +610,7 @@ awk '{print $1}' /var/log/nginx/tarpit_access.log | sort | uniq -c | sort -rn | 
 
 ---
 
-## Real-World Results
+## Real-world results
 
 Implementing the **production-grade architecture** with forced 418 logging has significantly improved visibility:
 

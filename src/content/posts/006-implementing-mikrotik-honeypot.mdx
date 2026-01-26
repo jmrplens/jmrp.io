@@ -31,7 +31,7 @@ This guide walks you through implementing a production-ready honeypot on RouterO
 
 ---
 
-## What is a Honeypot?
+## What is a honeypot?
 
 A **honeypot** is a security mechanism that creates a decoy system designed to attract and detect attackers. According to [Fortinet](https://www.fortinet.com/resources/cyberglossary/what-is-honeypot), honeypots are intentionally vulnerable systems that lure adversaries away from legitimate targets while gathering intelligence about their methods. [NIST SP 800-53](https://csf.tools/reference/nist-sp-800-53/r5/sc/sc-26/) includes honeypots as a formal security control (SC-26) for detecting and analyzing such attacks.
 
@@ -67,7 +67,7 @@ This approach is lightweight, requires no additional hardware, and provides imme
 
 ---
 
-## Understanding TCP Connection States
+## Understanding TCP connection states
 
 Before configuring our honeypot, it's essential to understand how stateful firewalls like MikroTik classify network traffic. Every packet is assigned a **connection state**:
 
@@ -103,7 +103,7 @@ Before configuring our honeypot, it's essential to understand how stateful firew
   </tbody>
 </Table>
 
-### Why We Only Monitor "New" Connections
+### Why we only monitor "new" connections
 
 Our honeypot rules specifically target `connection-state=new`. Here's why this is critical:
 
@@ -133,7 +133,7 @@ If your honeypot rules matched `established` connections, you would block legiti
 
 ---
 
-## The Strategy: Detect, Log, and Block
+## The strategy: detect, log, and block
 
 Our honeypot strategy has three phases:
 
@@ -159,7 +159,7 @@ flowchart TD
 ```
 </Mermaid>
 
-### Why Use the RAW Table for Blocking?
+### Why use the RAW table for blocking?
 
 We perform **detection** in the **Filter table** (Input chain), but we enforce **blocking** in the **Raw table** (Prerouting chain).
 
@@ -169,7 +169,7 @@ The **[Raw table](https://help.mikrotik.com/docs/display/ROS/Firewall)** process
 
 ---
 
-## Trap Port Reference
+## Trap port reference
 
 The following tables list ports commonly targeted by attackers, based on the [IANA Service Name and Port Number Registry](https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.xhtml). These are ideal candidates for honeypot traps because legitimate internet users should *never* need to access them on your router.
 
@@ -177,7 +177,7 @@ The following tables list ports commonly targeted by attackers, based on the [IA
 Before implementing, review which services you actually expose. If you run a public SSH server on port 22, don't trap that port! The examples below assume you run web servers on ports 80/443 only.
 </Callout>
 
-### TCP Trap Ports
+### TCP trap ports
 
 <Table title="TCP Ports for Honeypot Detection">
   <thead>
@@ -222,7 +222,7 @@ Before implementing, review which services you actually expose. If you run a pub
   </tbody>
 </Table>
 
-### UDP Trap Ports
+### UDP trap ports
 
 UDP ports are particularly valuable for honeypots because many are exploited in **[amplification attacks](https://www.cloudflare.com/learning/ddos/drdos-ddos-attack/)**—where attackers use your server to multiply attack traffic against third parties.
 
@@ -252,11 +252,11 @@ UDP ports are particularly valuable for honeypots because many are exploited in 
 
 ---
 
-## Step 1: Create the Whitelist
+## Step 1: create the whitelist
 
 Before deploying any blocking rules, you **must** create a whitelist. This prevents accidentally blocking yourself, your VPN, monitoring systems, or legitimate services that need to access specific ports.
 
-### When to Use a Whitelist
+### When to use a whitelist
 
 Consider adding IPs to your whitelist for:
 
@@ -270,7 +270,7 @@ Consider adding IPs to your whitelist for:
 Add your current IP to the whitelist *before* enabling any honeypot rules. If you lock yourself out, you'll need physical access to the router to recover.
 </Callout>
 
-### IPv4 Whitelist
+### IPv4 whitelist
 
 <Code lang="routeros" title="Creating the IPv4 Whitelist">
 ```routeros
@@ -292,7 +292,7 @@ add list=WhiteList address=192.0.2.20 comment="Vulnerability Scanner"
 ```
 </Code>
 
-### IPv6 Whitelist
+### IPv6 whitelist
 
 <Code lang="routeros" title="Creating the IPv6 Whitelist">
 ```routeros
@@ -313,7 +313,7 @@ add list=WhiteList address=2001:db8:2::100 comment="Office IPv6 Address"
 
 ---
 
-## Step 2: IPv4 Honeypot Configuration
+## Step 2: IPv4 honeypot configuration
 
 This configuration includes all honeypot detection rules for IPv4, organized by service category. At the end of the Filter section, we add a **DROP rule** to immediately block any source that has been added to the blacklist before they can attempt other attacks in the same session.
 
@@ -449,7 +449,7 @@ The rules below use `in-interface-list=WAN` to identify external traffic. If you
 
 ---
 
-## Step 3: IPv6 Honeypot Configuration
+## Step 3: IPv6 honeypot configuration
 
 IPv6 scanning is rapidly increasing as more networks adopt dual-stack configurations. The structure mirrors IPv4, using a separate address list for IPv6 scanners.
 
@@ -579,7 +579,7 @@ IPv6 scanning is rapidly increasing as more networks adopt dual-stack configurat
 
 ---
 
-## Understanding the Configuration
+## Understanding the configuration
 
 Let's examine the key parameters that make this honeypot effective:
 
@@ -632,7 +632,7 @@ Let's examine the key parameters that make this honeypot effective:
 
 ---
 
-## Leveraging Logs for Threat Intelligence
+## Leveraging logs for threat intelligence
 
 The `log=yes` parameter generates entries that can be forwarded to external security systems. By configuring MikroTik to send logs to a remote syslog server, you can:
 
@@ -658,7 +658,7 @@ Replace `192.168.0.100` with the IP address of your syslog server (the machine r
 
 Below is a working configuration to parse MikroTik honeypot logs with [CrowdSec](https://www.crowdsec.net/). This setup captures the `[HONEYPOT TCP/UDP]` prefixes we configured earlier and extracts attacker IPs for automatic blocking.
 
-#### Step 1: Receive Logs via rsyslog
+#### Step 1: receive logs via rsyslog
 
 On your Linux server running CrowdSec, configure rsyslog to receive UDP syslog from MikroTik and write it to a dedicated file:
 
@@ -698,7 +698,7 @@ You can verify that logs are arriving by checking the file:
 ```
 </TerminalOutput>
 
-#### Step 2: Configure CrowdSec Acquisition
+#### Step 2: configure CrowdSec acquisition
 
 Tell CrowdSec to read the MikroTik log file. Create an acquisition file:
 
@@ -716,7 +716,7 @@ source: file
 ```
 </FileContent>
 
-#### Step 3: Install the MikroTik Parser
+#### Step 3: install the MikroTik parser
 
 Install the community MikroTik parser from CrowdSec Hub:
 
@@ -726,7 +726,7 @@ sudo cscli parsers install a1ad/mikrotik-logs
 ```
 </TerminalCommand>
 
-#### Step 4: Custom Parser for Honeypot Logs (Optional)
+#### Step 4: custom parser for honeypot logs (optional)
 
 For advanced parsing that specifically captures our `[HONEYPOT TCP/UDP]` prefixes, create a custom parser:
 
@@ -768,7 +768,7 @@ statics:
 ```
 </FileContent>
 
-#### Step 5: Reload CrowdSec
+#### Step 5: reload CrowdSec
 
 After adding the parser and acquisition config, reload CrowdSec:
 
@@ -788,7 +788,7 @@ sudo cscli metrics
 
 You should see `/var/log/mikrotik.log` in the acquisition sources with parsed lines increasing as honeypot events occur.
 
-#### Real-World Results
+#### Real-world results
 
 To give you an idea of what to expect, here are actual statistics from my home network over a **24-hour period**—a MikroTik RB5009 behind a standard FTTH connection in Spain:
 
@@ -851,11 +851,11 @@ Over **1,000 unique IPs** were detected and blocked in the last 24 hours. Each w
 
 ---
 
-## Testing Your Honeypot
+## Testing your honeypot
 
 Before considering your honeypot production-ready, verify it works correctly:
 
-### Test Procedure
+### Test procedure
 
 1. **Add your test IP to watch** (optional):
 
@@ -893,7 +893,7 @@ Your test IP should appear with the timeout countdown.
 
 ---
 
-## What's Next?
+## What's next?
 
 You now have a self-defending router that:
 - Detects reconnaissance attempts in real-time

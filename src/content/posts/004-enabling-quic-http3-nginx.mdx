@@ -29,7 +29,7 @@ In this comprehensive guide, we'll explore the history and architecture of QUIC,
 
 ---
 
-## A Brief History: From Google to IETF Standard
+## A brief history: from Google to IETF standard
 
 The QUIC protocol has an interesting evolution from a proprietary Google experiment to a full IETF standard.
 
@@ -84,7 +84,7 @@ The QUIC protocol has an interesting evolution from a proprietary Google experim
   The original "gQUIC" (Google QUIC) used custom cryptography. The IETF version mandates **TLS 1.3** integration, making it a general-purpose transport protocol suitable for any application—not just HTTP.
 </Callout>
 
-### The QUIC RFC Family
+### The QUIC RFC family
 
 The complete QUIC specification spans multiple RFCs:
 
@@ -127,11 +127,11 @@ The complete QUIC specification spans multiple RFCs:
 
 ---
 
-## Why QUIC? Understanding TCP's Limitations
+## Why QUIC? Understanding TCP's limitations
 
 To appreciate QUIC, we must understand why TCP—the backbone of the internet since 1974—struggles with modern web demands.
 
-### The Head-of-Line (HOL) Blocking Problem
+### The head-of-line (HOL) blocking problem
 
 This is the fundamental issue that QUIC solves. Imagine a highway with a single lane (TCP connection). If one car breaks down (packet loss), **everyone behind must stop and wait**, even if they're going to different destinations.
 
@@ -176,7 +176,7 @@ sequenceDiagram
   QUIC implements streams **at the transport layer**, so each stream has independent delivery. Lost packets only affect their own stream.
 </Callout>
 
-### The Handshake Latency Problem
+### The handshake latency problem
 
 Establishing a secure TCP connection requires **multiple round trips**:
 
@@ -211,7 +211,7 @@ Establishing a secure TCP connection requires **multiple round trips**:
   </tbody>
 </Table>
 
-### The Connection Migration Problem
+### The connection migration problem
 
 TCP connections are identified by a 4-tuple: `(source IP, source port, destination IP, destination port)`. When you switch from Wi-Fi to mobile data, your IP changes—and your TCP connection breaks.
 
@@ -223,9 +223,9 @@ TCP connections are identified by a 4-tuple: `(source IP, source port, destinati
 
 ---
 
-## QUIC Architecture Deep Dive
+## QUIC architecture deep dive
 
-### Transport Over UDP
+### Transport over UDP
 
 QUIC is built on **UDP** rather than creating a new IP protocol. This was a pragmatic choice:
 
@@ -239,7 +239,7 @@ QUIC is built on **UDP** rather than creating a new IP protocol. This was a prag
   QUIC implements its own reliability, ordering, and flow control. UDP is merely the delivery mechanism. Think of UDP as the "envelope" and QUIC as the complete postal system inside.
 </Callout>
 
-### Packet Structure
+### Packet structure
 
 QUIC uses two packet types:
 
@@ -268,7 +268,7 @@ QUIC uses two packet types:
   </tbody>
 </Table>
 
-### Streams and Flow Control
+### Streams and flow control
 
 QUIC streams are lightweight, multiplexed channels within a connection:
 
@@ -330,11 +330,11 @@ If *either* is exhausted, transmission blocks until a `WINDOW_UPDATE` frame arri
 
 ---
 
-## The QUIC Handshake: Speed Meets Security
+## The QUIC handshake: speed meets security
 
 QUIC combines transport and cryptographic handshakes into a single exchange, dramatically reducing latency.
 
-### 1-RTT Handshake (First Connection)
+### 1-RTT handshake (first connection)
 
 <Mermaid caption="QUIC 1-RTT Handshake" maxWidth="700px">
 ```mermaid-render
@@ -356,7 +356,7 @@ sequenceDiagram
 ```
 </Mermaid>
 
-### 0-RTT Handshake (Resumed Connection)
+### 0-RTT handshake (resumed connection)
 
 For clients that have connected before, QUIC allows sending encrypted data **in the very first packet**:
 
@@ -389,11 +389,11 @@ sequenceDiagram
 
 ---
 
-## Security Architecture
+## Security architecture
 
 QUIC's security is not optional—it's built into the protocol from the ground up.
 
-### Four Encryption Levels
+### Four encryption levels
 
 <Table title="QUIC Encryption Levels">
   <thead>
@@ -432,7 +432,7 @@ QUIC's security is not optional—it's built into the protocol from the ground u
   </tbody>
 </Table>
 
-### Packet Protection
+### Packet protection
 
 Every QUIC packet (except Initial) is protected with **AEAD encryption**:
 
@@ -478,7 +478,7 @@ Every QUIC packet (except Initial) is protected with **AEAD encryption**:
   - **Header Protection**: Separate encryption for flags and packet numbers to mask network traffic patterns.
 </Callout>
 
-### Connection ID and Privacy
+### Connection ID and privacy
 
 <Callout type="keypoint" icon="mdi:incognito">
   **Anti-Tracking Design**
@@ -488,7 +488,7 @@ Every QUIC packet (except Initial) is protected with **AEAD encryption**:
   Combined with encrypted packet numbers and headers, QUIC significantly improves privacy compared to TCP.
 </Callout>
 
-### DoS Protection Mechanisms
+### DoS protection mechanisms
 
 QUIC includes several anti-amplification and anti-spoofing measures:
 
@@ -498,7 +498,7 @@ QUIC includes several anti-amplification and anti-spoofing measures:
 
 ---
 
-## HTTP/3: HTTP Over QUIC
+## HTTP/3: HTTP over QUIC
 
 HTTP/3 is the mapping of HTTP semantics onto QUIC transport. It replaces HTTP/2's binary framing with QUIC streams.
 
@@ -544,7 +544,7 @@ HTTP/3 is the mapping of HTTP semantics onto QUIC transport. It replaces HTTP/2'
   </tbody>
 </Table>
 
-### Current Adoption
+### Current adoption
 
 As of 2026, HTTP/3 adoption is significant and growing:
 
@@ -582,7 +582,7 @@ As of 2026, HTTP/3 adoption is significant and growing:
 
 ---
 
-## Nginx Configuration: Complete Guide
+## Nginx configuration: complete guide
 
 Now let's implement HTTP/3 on Nginx. This section covers everything from prerequisites to production deployment.
 
@@ -683,7 +683,7 @@ configure arguments: ... --with-http_v3_module ...
 
 </Collapsible>
 
-### Basic Configuration
+### Basic configuration
 
 Here's the minimal configuration to enable HTTP/3:
 
@@ -743,7 +743,7 @@ server {
   **⚠️ Important:** The `reuseport` flag must appear on **exactly one** `listen` directive per address:port globally. If you have multiple server blocks listening on port 443 QUIC, only the first one should have `reuseport`. Using it multiple times will cause Nginx to fail to start with "address already in use" errors.
 </Callout>
 
-### Complete Production Configuration
+### Complete production configuration
 
 Here's a comprehensive configuration with all optimizations. The configuration is split into two files: the main `nginx.conf` for global settings and a site-specific configuration file.
 
@@ -905,7 +905,7 @@ server {
 ```
 </FileContent>
 
-### All QUIC Directives Reference
+### All QUIC directives reference
 
 <Table title="Nginx QUIC Directives">
   <thead>
@@ -976,7 +976,7 @@ server {
 
 ---
 
-## Firewall Configuration
+## Firewall configuration
 
 **Critical**: HTTP/3 uses **UDP** on port 443, not TCP. If your firewall only allows TCP/443, QUIC will fail silently and clients will fall back to HTTP/2.
 
@@ -1027,7 +1027,7 @@ server {
   </TabPanel>
 </Tabs>
 
-### Kernel Tuning for High Traffic
+### Kernel tuning for high traffic
 
 For high-traffic servers, increase UDP buffer sizes:
 
@@ -1059,7 +1059,7 @@ sudo sysctl --system
 
 ---
 
-## Verification and Testing
+## Verification and testing
 
 After configuration, verify HTTP/3 is working correctly.
 
@@ -1093,7 +1093,7 @@ strict-transport-security: max-age=63072000; includeSubDomains; preload
   On Ubuntu: Build from source with `--with-ngtcp2` or use the snap package
 </Callout>
 
-### Method 2: Browser DevTools
+### Method 2: browser DevTools
 
 1. Open Chrome or Firefox
 2. Navigate to your site
@@ -1108,7 +1108,7 @@ strict-transport-security: max-age=63072000; includeSubDomains; preload
   On the first visit, browsers use HTTP/2 to discover the `Alt-Svc` header. On subsequent requests (or after reload), they switch to HTTP/3. This is normal behavior.
 </Callout>
 
-### Method 3: Online Tools
+### Method 3: online tools
 
 <Table title="HTTP/3 Testing Tools">
   <thead>
@@ -1137,7 +1137,7 @@ strict-transport-security: max-age=63072000; includeSubDomains; preload
   </tbody>
 </Table>
 
-### Method 4: Check Nginx Logs
+### Method 4: check Nginx logs
 
 Use the custom log format to verify HTTP/3 traffic:
 
@@ -1154,7 +1154,7 @@ grep 'quic="h3"' /var/log/nginx/access.log | tail -5
 
 ---
 
-## Troubleshooting Guide
+## Troubleshooting guide
 
 <Table title="Common HTTP/3 Issues and Solutions">
   <thead>
@@ -1203,7 +1203,7 @@ grep 'quic="h3"' /var/log/nginx/access.log | tail -5
   </tbody>
 </Table>
 
-### Debug Mode
+### Debug mode
 
 Enable debug logging temporarily:
 
@@ -1231,7 +1231,7 @@ grep -i quic /var/log/nginx/error.log | tail -20
 
 ---
 
-## Production Deployment Checklist
+## Production deployment checklist
 
 Before deploying HTTP/3 to production, verify:
 
@@ -1299,7 +1299,7 @@ Before deploying HTTP/3 to production, verify:
 
 ---
 
-## When NOT to Use QUIC
+## When not to use QUIC
 
 While QUIC offers significant benefits, there are scenarios where TCP may be preferable:
 
