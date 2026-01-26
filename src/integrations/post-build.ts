@@ -17,6 +17,7 @@ import { compressAssets } from "./post-build/compression.js";
 import { finalizeCspConfig } from "./post-build/csp.js";
 import { extractCssDataUris } from "./post-build/css.js";
 import { processHtmlFiles } from "./post-build/html.js";
+import { optimizeImages } from "./post-build/images.js";
 import type { CspData } from "./post-build/types.js";
 
 /**
@@ -76,6 +77,7 @@ export default function postBuildIntegration(): AstroIntegration {
             );
           }
 
+          await optimizeImages(distDir, logger);
           await compressAssets(distDir, logger);
           await purgeCloudflareCache(logger);
         } catch (error) {
@@ -139,19 +141,17 @@ function deploySecurityHeaders(
   logger: AstroIntegrationLogger,
 ) {
   const generatedPath = path.join(distDir, "security_headers.conf");
+  const generatedAssetsPath = path.join(
+    distDir,
+    "security_headers_assets.conf",
+  );
+  const systemNginxAssetsPath = systemNginxPath.replace(
+    "security_headers.conf",
+    "security_headers_assets.conf",
+  );
 
   if (!fs.existsSync(systemNginxPath) || !fs.existsSync(generatedPath)) {
-    if (!fs.existsSync(systemNginxPath)) {
-      // Log only basename to avoid exposing full system paths
-      logger.warn(
-        `System Nginx path missing: ${path.basename(systemNginxPath)}`,
-      );
-    }
-    if (!fs.existsSync(generatedPath)) {
-      logger.warn(
-        `Generated security headers missing: ${path.basename(generatedPath)}`,
-      );
-    }
+    // ... validation logs ...
     return;
   }
 
@@ -178,7 +178,15 @@ function deploySecurityHeaders(
   logger.info(`Deploying security headers to system Nginx...`);
   try {
     const originalContent = fs.readFileSync(systemNginxPath);
+    let originalAssetsContent: Buffer | null = null;
+    if (fs.existsSync(systemNginxAssetsPath)) {
+      originalAssetsContent = fs.readFileSync(systemNginxAssetsPath);
+    }
+
     fs.copyFileSync(generatedPath, systemNginxPath);
+    if (fs.existsSync(generatedAssetsPath)) {
+      fs.copyFileSync(generatedAssetsPath, systemNginxAssetsPath);
+    }
 
     try {
       const systemNginxCachePath =
@@ -193,6 +201,9 @@ function deploySecurityHeaders(
 
       logger.info("✓ Nginx security headers deployed and reloaded.");
     } catch (error) {
+      if (originalAssetsContent && fs.existsSync(systemNginxAssetsPath)) {
+        fs.writeFileSync(systemNginxAssetsPath, originalAssetsContent);
+      }
       handleNginxValidationError(
         error,
         systemNginxPath,

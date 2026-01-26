@@ -312,6 +312,8 @@ export default defineConfig({
         png: {
           // https://sharp.pixelplumbing.com/api-output#png
           quality: 80,
+          palette: true,
+          compressionLevel: 9,
         },
         jpeg: {
           // https://sharp.pixelplumbing.com/api-output#jpeg
