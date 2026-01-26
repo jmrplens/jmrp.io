@@ -29,36 +29,47 @@ function walkDir(dir: string, callback: (path: string) => void) {
 }
 
 /**
+ * Parses an icon string into UnoCSS format.
+ * @param {string} icon - Icon string to parse.
+ * @returns {string | null} - Parsed icon or null.
+ */
+function parseIcon(icon: string): string | null {
+  const trimmed = icon.trim();
+  if (trimmed.includes(":")) {
+    return `i-${trimmed}`;
+  }
+
+  // Handle legacy FontAwesome classes (e.g. "fas fa-graduation-cap")
+  const parts = trimmed.split(" ");
+  if (parts.length >= 2) {
+    const style = parts[0];
+    const name = parts[1].replace("fa-", "");
+    const collection = style === "fab" ? "fa-brands" : "fa-solid";
+    return `i-${collection}:${name}`;
+  }
+
+  return null;
+}
+
+/**
  * Extracts icon strings from an object (e.g. parsed YAML).
  * @param {unknown} obj - Object to scan.
  */
 function extractIconsFromObject(obj: unknown) {
-  if (!obj) return;
+  if (!obj || typeof obj !== "object") return;
+
   if (Array.isArray(obj)) {
-    for (const item of obj) {
-      extractIconsFromObject(item);
-    }
-  } else if (typeof obj === "object") {
-    const o = obj as Record<string, unknown>;
-    if (typeof o.icon === "string") {
-      const icon = o.icon.trim();
-      if (icon.includes(":")) {
-        safelistSet.add(`i-${icon}`);
-      } else {
-        // Handle legacy FontAwesome classes (e.g. "fas fa-graduation-cap")
-        const parts = icon.split(" ");
-        if (parts.length >= 2) {
-          const style = parts[0];
-          const name = parts[1].replace("fa-", "");
-          const collection = style === "fab" ? "fa-brands" : "fa-solid";
-          safelistSet.add(`i-${collection}:${name}`);
-        }
-      }
-    }
-    for (const val of Object.values(o)) {
-      extractIconsFromObject(val);
-    }
+    obj.forEach((item) => extractIconsFromObject(item));
+    return;
   }
+
+  const o = obj as Record<string, unknown>;
+  if (typeof o.icon === "string") {
+    const icon = parseIcon(o.icon);
+    if (icon) safelistSet.add(icon);
+  }
+
+  Object.values(o).forEach((val) => extractIconsFromObject(val));
 }
 
 /**

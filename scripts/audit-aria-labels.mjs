@@ -124,10 +124,9 @@ function audit(path, options) {
     ) {
       const accName = getAccName($, $el, attrs);
       const hasName = !!accName;
-      const isRedundant = !!(
-        attrs.ariaLabel &&
-        attrs.ariaLabel.trim().toLowerCase() === $el.text().trim().toLowerCase()
-      );
+      const isRedundant =
+        attrs.ariaLabel?.trim().toLowerCase() ===
+        $el.text().trim().toLowerCase();
 
       if (interest.isInteractive && accName)
         freq.set(accName, (freq.get(accName) || 0) + 1);
