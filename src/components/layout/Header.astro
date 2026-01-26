@@ -40,16 +40,14 @@ const logoText =
         aria-expanded="false"
         class="menu-toggle"
       >
-        <span class="icon-container">
-          <span
-            class="i-fa-solid:bars icon-bars"
-            aria-hidden="true"
-          ></span>
-          <span
-            class="i-fa-solid:times icon-times"
-            aria-hidden="true"
-          ></span>
-        </span>
+        <span
+          class="i-fa-solid:bars icon-bars"
+          aria-hidden="true"
+        ></span>
+        <span
+          class="i-fa-solid:times icon-times"
+          aria-hidden="true"
+        ></span>
       </button>
       <ul
         id="nav-links"
@@ -227,18 +225,14 @@ const logoText =
   /* Desktop Styles (Default) */
   .menu-toggle {
     display: none; /* Hidden by default */
+    align-items: center;
+    justify-content: center;
     padding: 0.5rem;
     font-size: 1.5rem;
     color: var(--color-text);
     cursor: pointer;
     background: none;
     border: none;
-  }
-
-  .icon-container {
-    display: flex;
-    align-items: center;
-    justify-content: center;
   }
 
   /* Icon toggling logic */

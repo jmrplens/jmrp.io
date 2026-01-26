@@ -48,9 +48,10 @@ import "@styles/skills.css";
         return (
           <div class="compact-item skill-item">
             {item.icon && (
-              <div class="skill-icon-wrapper">
-                <span class={`i-${item.icon} skill-icon`} />
-              </div>
+              <span
+                class={`i-${item.icon} skill-icon`}
+                aria-hidden="true"
+              />
             )}
             <div class="skill-content">
               <div class="skill-header">
@@ -116,14 +117,11 @@ import "@styles/skills.css";
 
   /* .skill-item is now imported from @styles/skills.css */
 
-  .skill-icon-wrapper {
+  .skill-icon {
     display: flex;
     align-items: center;
     justify-content: center;
     min-width: 24px;
-  }
-
-  .skill-icon {
     width: 1.5rem;
     height: 1.5rem;
   }

@@ -41,7 +41,19 @@ function extractIconsFromObject(obj: unknown) {
   } else if (typeof obj === "object") {
     const o = obj as Record<string, unknown>;
     if (typeof o.icon === "string") {
-      safelistSet.add(`i-${o.icon}`);
+      const icon = o.icon.trim();
+      if (icon.includes(":")) {
+        safelistSet.add(`i-${icon}`);
+      } else {
+        // Handle legacy FontAwesome classes (e.g. "fas fa-graduation-cap")
+        const parts = icon.split(" ");
+        if (parts.length >= 2) {
+          const style = parts[0];
+          const name = parts[1].replace("fa-", "");
+          const collection = style === "fab" ? "fa-brands" : "fa-solid";
+          safelistSet.add(`i-${collection}:${name}`);
+        }
+      }
     }
     for (const val of Object.values(o)) {
       extractIconsFromObject(val);

@@ -104,8 +104,8 @@ export async function finalizeCspConfig(
     `script-src ${scriptSrcParts.join(" ")}`,
     `style-src ${styleSrcParts.join(" ")}`,
     imgSrc
-      ? `img-src 'self' ${imgSrc} https://*.jmrp.io`
-      : "img-src 'self' https://*.jmrp.io",
+      ? `img-src 'self' data: ${imgSrc} https://*.jmrp.io`
+      : "img-src 'self' data: https://*.jmrp.io",
     "font-src 'self'",
     "connect-src 'self' https://api.github.com https://cloudflareinsights.com https://*.cloudflareinsights.com",
     "media-src 'self'",
@@ -195,8 +195,8 @@ add_header Permissions-Policy "${permissionsPolicy}" always;
     "script-src 'none'",
     "style-src 'none'",
     imgSrc
-      ? `img-src 'self' ${imgSrc} https://*.jmrp.io`
-      : "img-src 'self' https://*.jmrp.io",
+      ? `img-src 'self' data: ${imgSrc} https://*.jmrp.io`
+      : "img-src 'self' data: https://*.jmrp.io",
     "font-src 'self'",
     "connect-src 'self' https://api.github.com https://cloudflareinsights.com https://*.cloudflareinsights.com",
     "media-src 'self'",
