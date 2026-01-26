@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/cognitive-complexity */
 /**
  * RSS Feed Validator
  *
@@ -222,7 +223,6 @@ async function validateRSS() {
     }
   } else if (arg1 && arg2) {
     // Two arguments: distDir and rssFile
-    distDir = path.resolve(arg1);
     rssFile = path.resolve(arg2);
   } else {
     // No arguments: use defaults

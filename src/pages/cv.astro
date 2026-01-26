@@ -59,16 +59,9 @@ const menuSections: MenuSection[] = sortedSections.map((section) => {
       }));
       break;
     }
-    case "list_groups": {
-      // Skills: Use skill categories
-      items = section.contents.map((group, index) => ({
-        title: group.category,
-        slug: generateSlug(`${section.title}-${group.category}-${index}`),
-      }));
-      break;
-    }
+    case "list_groups":
     case "certificate_list": {
-      // Certificates: Use certificate categories
+      // Skills & Certificates: Use group/category name
       items = section.contents.map((group, index) => ({
         title: group.category,
         slug: generateSlug(`${section.title}-${group.category}-${index}`),

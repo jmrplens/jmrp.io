@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/cognitive-complexity, sonarjs/no-control-regex */
 import fs from "node:fs";
 
 import * as cheerio from "cheerio";

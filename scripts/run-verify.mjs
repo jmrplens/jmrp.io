@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/os-command */
 /**
  * Quality Assurance Orchestrator (Verify)
  *

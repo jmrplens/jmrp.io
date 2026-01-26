@@ -229,15 +229,14 @@ async function processSingleHtmlFile(
   let updatedSriTags = 0;
   let extractedImages = 0;
 
-  // 1. Process Images
+  // Image processing (Data URI extraction)
   const imgResult = processImages($, targetDir, logger, file);
   if (imgResult.modified) {
     isModified = true;
     extractedImages += imgResult.extractedCount;
   }
 
-  // 2. Fix Style Locations: Move <style> tags from body to head
-  // This is critical for HTML5 compliance as Astro sometimes injects styles in body
+  // Ensure <style> tags are in <head> for HTML5 compliance
   const bodyStyles = $("body style");
   if (bodyStyles.length > 0) {
     bodyStyles.each((_, el) => {
@@ -252,12 +251,12 @@ async function processSingleHtmlFile(
     isModified = true;
   }
 
-  // 3. Process Styles (Data URI extraction and style-to-class conversion)
+  // Handle styles (Data URI extraction and CSP class conversion)
   if (processStyles($, enableCsp)) {
     isModified = true;
   }
 
-  // 3. Process SRI and Nonces
+  // Security hardening: SRI hashes and CSP Nonces
   const sriResult = processScriptsAndLinks(
     $,
     file,
@@ -270,23 +269,22 @@ async function processSingleHtmlFile(
     updatedSriTags += sriResult.updatedTags;
   }
 
-  // 4. Collect Image Domains
+  // Discover domains for CSP img-src
   if (enableCsp) {
     collectImageDomains($, cspData);
   }
 
-  // 5. Manual Beacon Replace
+  // Integrity hash for Cloudflare beacon
   if (processBeacon($, distDir, file, hashCache, logger)) {
     isModified = true;
   }
 
-  // 6. Process Code Blocks for accessibility and HTML validation
+  // Accessibility: Enhance code block landmarks
   if (processCodeBlocks($)) {
     isModified = true;
   }
 
-  // 7. Minify HTML - MUST happen before hash collection to match served content
-  // We reload Cheerio with minified content to ensure hashes are calculated on the final output
+  // Minify HTML before calculating inline hashes to ensure exact matches
   const rawHtml = $.html();
   const minifiedHtml = await minify(rawHtml, {
     removeComments: true,
@@ -294,18 +292,17 @@ async function processSingleHtmlFile(
     minifyCSS: true,
     minifyJS: true,
     ignoreCustomComments: [
-      /^ jmrp-beacon-hardened /, // Preserve our security guard comment
-      /^!/, // Preserve license comments usually
+      /^ jmrp-beacon-hardened /, // Preserve security guard
+      /^!/, // Preserve license comments
     ],
     sortAttributes: true,
     sortClassName: true,
   });
 
-  // Reload cheerio with minified content for accurate hash collection
+  // Reload minified content for final hash collection
   const $minified = cheerio.load(minifiedHtml);
 
-  // 8. Collect Hashes - CRITICAL: Must be the final step before writing
-  // This ensures hashes match the final serialized output exactly
+  // Collect final CSP hashes from minified content
   if (collectInlineHashes($minified, cspData, enableCsp)) {
     isModified = true;
   }

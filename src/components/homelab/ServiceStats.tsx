@@ -269,21 +269,21 @@ function MastodonStats({
   const instanceVersion = stats?.instanceVersion || "...";
 
   return (
-    <div class="stats-wrapper-col">
-      <div class="status-header">
-        <div class="status-badge">
-          <span class="status-dot"></span>
+    <div className="stats-wrapper-col">
+      <div className="status-header">
+        <div className="status-badge">
+          <span className="status-dot"></span>
           <strong>Online</strong>
         </div>
-        <div class="status-text-muted">
-          <strong class="status-text">{peersCount ?? "..."}</strong> Known
+        <div className="status-text-muted">
+          <strong className="status-text">{peersCount ?? "..."}</strong> Known
           Instances
         </div>
       </div>
 
-      <div class="server-grid">
-        <div class="component-row">
-          <span class="component-icon brand-mastodon">
+      <div className="server-grid">
+        <div className="component-row">
+          <span className="component-icon brand-mastodon">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
@@ -296,16 +296,16 @@ function MastodonStats({
               />
             </svg>
           </span>
-          <div class="component-info">
-            <span class="component-name">Mastodon</span>
-            <span class="component-version">{instanceVersion}</span>
+          <div className="component-info">
+            <span className="component-name">Mastodon</span>
+            <span className="component-version">{instanceVersion}</span>
           </div>
         </div>
       </div>
 
       <div>
-        <div class="trending-header">Trending Now</div>
-        <div class="trending-grid">
+        <div className="trending-header">Trending Now</div>
+        <div className="trending-grid">
           {mastodonTrends.length > 0
             ? mastodonTrends.map((tag: { url: string; name: string }) => (
                 <a
@@ -313,9 +313,9 @@ function MastodonStats({
                   href={tag.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  class="stat-btn-filled"
+                  className="stat-btn-filled"
                 >
-                  <span class="opacity-60">#</span> {tag.name}
+                  <span className="opacity-60">#</span> {tag.name}
                 </a>
               ))
             : // Skeletons to reserve space
@@ -346,23 +346,23 @@ function MatrixStats({ stats }: { readonly stats: MatrixStatsData | null }) {
   const synapseVersion = matrixFed?.server?.version || "...";
 
   return (
-    <div class="stats-wrapper-col">
-      <div class="status-header">
-        <div class="status-badge">
-          <span class="status-dot"></span>
+    <div className="stats-wrapper-col">
+      <div className="status-header">
+        <div className="status-badge">
+          <span className="status-dot"></span>
           <strong>Online</strong>
         </div>
-        <div class="status-text-muted">
-          <strong class="status-text">
+        <div className="status-text-muted">
+          <strong className="status-text">
             {matrixData?.federationTotal ?? "..."}
           </strong>{" "}
           Known Servers
         </div>
       </div>
 
-      <div class="server-grid">
-        <div class="component-row">
-          <span class="component-icon brand-matrix">
+      <div className="server-grid">
+        <div className="component-row">
+          <span className="component-icon brand-matrix">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
@@ -375,9 +375,9 @@ function MatrixStats({ stats }: { readonly stats: MatrixStatsData | null }) {
               />
             </svg>
           </span>
-          <div class="component-info">
-            <span class="component-name">Synapse</span>
-            <span class="component-version">{synapseVersion}</span>
+          <div className="component-info">
+            <span className="component-name">Synapse</span>
+            <span className="component-version">{synapseVersion}</span>
           </div>
         </div>
       </div>
@@ -386,7 +386,7 @@ function MatrixStats({ stats }: { readonly stats: MatrixStatsData | null }) {
 }
 
 /** Internal helper for rendering a status dot */
-const StatusDot = () => <span class="status-dot-inline"></span>;
+const StatusDot = () => <span className="status-dot-inline"></span>;
 
 /**
  * Meshtastic Combined Stats Component
@@ -405,16 +405,16 @@ function MeshtasticStats({
   const potatoVersion = stats?.potatoVersion;
 
   return (
-    <div class="stats-wrapper-small-gap">
-      <div class="meshtastic-row">
-        <div class="meshtastic-left">
+    <div className="stats-wrapper-small-gap">
+      <div className="meshtastic-row">
+        <div className="meshtastic-left">
           <StatusDot />
           <div>
-            <strong class="meshtastic-title">PotatoMesh</strong>
-            <div class="meshtastic-sub">
+            <strong className="meshtastic-title">PotatoMesh</strong>
+            <div className="meshtastic-sub">
               {potatoNodes ?? "..."} Nodes
               {potatoVersion && (
-                <span class="meshtastic-ver">• {potatoVersion}</span>
+                <span className="meshtastic-ver">• {potatoVersion}</span>
               )}
             </div>
           </div>
@@ -423,45 +423,45 @@ function MeshtasticStats({
           href="https://potatomesh.jmrp.io"
           target="_blank"
           rel="noopener noreferrer"
-          class="btn btn-sm"
+          className="btn btn-sm"
           aria-label="View Map on PotatoMesh"
         >
           View Map
         </a>
       </div>
 
-      <div class="meshtastic-row">
-        <div class="meshtastic-left">
+      <div className="meshtastic-row">
+        <div className="meshtastic-left">
           <StatusDot />
           <div>
-            <strong class="meshtastic-title">MeshMonitor LF</strong>
-            <div class="meshtastic-sub">{lfNodes ?? "..."} Nodes</div>
+            <strong className="meshtastic-title">MeshMonitor LF</strong>
+            <div className="meshtastic-sub">{lfNodes ?? "..."} Nodes</div>
           </div>
         </div>
         <a
           href="https://mesh_lf.jmrp.io/meshmonitor"
           target="_blank"
           rel="noopener noreferrer"
-          class="btn btn-sm"
+          className="btn btn-sm"
           aria-label="View Monitor on MeshMonitor LF"
         >
           View Monitor
         </a>
       </div>
 
-      <div class="meshtastic-row">
-        <div class="meshtastic-left">
+      <div className="meshtastic-row">
+        <div className="meshtastic-left">
           <StatusDot />
           <div>
-            <strong class="meshtastic-title">MeshMonitor MF</strong>
-            <div class="meshtastic-sub">{mfNodes ?? "..."} Nodes</div>
+            <strong className="meshtastic-title">MeshMonitor MF</strong>
+            <div className="meshtastic-sub">{mfNodes ?? "..."} Nodes</div>
           </div>
         </div>
         <a
           href="https://mesh_mf.jmrp.io/meshmonitor"
           target="_blank"
           rel="noopener noreferrer"
-          class="btn btn-sm"
+          className="btn btn-sm"
           aria-label="View Monitor on MeshMonitor MF"
         >
           View Monitor
@@ -491,14 +491,6 @@ export default function ServiceStats({ type }: Props) {
     setError(false);
 
     const fetchData = async () => {
-      // Avoid fetching in CI/Localhost to prevent CORS errors in Lighthouse
-      if (
-        typeof globalThis !== "undefined" &&
-        globalThis.location?.hostname === "localhost"
-      ) {
-        return;
-      }
-
       try {
         let data;
         switch (type) {
@@ -531,7 +523,7 @@ export default function ServiceStats({ type }: Props) {
   }, [type]);
 
   if (error) {
-    return <div class="stats-error">Service Unavailable</div>;
+    return <div className="stats-error">Service Unavailable</div>;
   }
 
   // Route to appropriate component based on type

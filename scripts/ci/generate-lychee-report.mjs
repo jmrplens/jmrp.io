@@ -56,7 +56,7 @@ for (const line of lines) {
       if (linkUrl) {
         // Reject protocol-relative URLs (//evil.com)
         if (linkUrl.startsWith("//")) {
-          safeLinkUrl = null;
+          // Keep null
         } else if (linkUrl.includes(":")) {
           // Absolute URL - validate protocol
           const protocolMatch = /^([a-zA-Z][a-zA-Z0-9+.-]*):/.exec(linkUrl);

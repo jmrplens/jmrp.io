@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/pseudo-random */
 /**
  * CSP Violation Reporter Server
  *

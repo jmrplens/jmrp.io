@@ -120,7 +120,7 @@ export function decodeHtml(str: string | undefined | null): string {
  */
 export function safeJsonLd(data: unknown): string {
   const json = JSON.stringify(data);
-  if (json === undefined) {
+  if (!json) {
     return "null";
   }
   return json

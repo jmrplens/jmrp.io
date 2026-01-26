@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/os-command, sonarjs/cognitive-complexity */
 /**
  * cleanup-deployments.mjs
  *

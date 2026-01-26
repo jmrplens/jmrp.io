@@ -1,9 +1,11 @@
+import preact from "@gorazdo/eslint-plugin-preact";
 import eslintPluginAstro from "eslint-plugin-astro";
 import jsdoc from "eslint-plugin-jsdoc";
-import jsxA11y from "eslint-plugin-jsx-a11y";
+import noSecrets from "eslint-plugin-no-secrets";
 import playwright from "eslint-plugin-playwright";
 import reactHooks from "eslint-plugin-react-hooks";
 import simpleImportSort from "eslint-plugin-simple-import-sort";
+import sonarjs from "eslint-plugin-sonarjs";
 import eslintPluginUnicorn from "eslint-plugin-unicorn";
 import tseslint from "typescript-eslint";
 
@@ -34,6 +36,7 @@ export default [
   // 1. Astro Configuration
   // This automatically configures the parser for .astro files
   ...eslintPluginAstro.configs.recommended,
+  ...eslintPluginAstro.configs["jsx-a11y-recommended"],
 
   // 2. Unicorn Configuration (Modern Best Practices)
   // Must be placed early to allow overrides
@@ -81,23 +84,7 @@ export default [
     },
   },
 
-  // 4. JSX A11y Configuration
-  {
-    files: ["**/*.astro", "**/*.tsx", "**/*.jsx"],
-    ...jsxA11y.flatConfigs.recommended,
-    rules: {
-      // Allow scrollable regions (like code blocks) to be focusable for keyboard accessibility
-      "jsx-a11y/no-noninteractive-tabindex": [
-        "error",
-        {
-          tags: [],
-          roles: ["region"],
-        },
-      ],
-    },
-  },
-
-  // 5. JSDoc Configuration (Documentation Enforcement)
+  // 4. JSDoc Configuration (Documentation Enforcement)
   {
     files: ["**/*.ts", "**/*.tsx", "**/*.mjs", "scripts/**/*.js"],
     plugins: {
@@ -134,7 +121,7 @@ export default [
     },
   },
 
-  // 6. Node Scripts Configuration
+  // 5. Node Scripts Configuration
   {
     files: ["scripts/**/*.mjs", "scripts/**/*.js", "**/*.cjs", "*.mjs"],
     // Explicitly include the plugin so we can turn off its rules
@@ -159,7 +146,7 @@ export default [
     },
   },
 
-  // 7. Import Sorting (Organization)
+  // 6. Import Sorting (Organization)
   {
     plugins: {
       "simple-import-sort": simpleImportSort,
@@ -170,13 +157,13 @@ export default [
     },
   },
 
-  // 8. Playwright (E2E Testing)
+  // 7. Playwright (E2E Testing)
   {
     ...playwright.configs["flat/recommended"],
     files: ["tests/**/*.{ts,tsx,js,jsx,mjs}"],
   },
 
-  // 9. React Hooks (Stability for Preact)
+  // 8. React Hooks (Stability for Preact)
   {
     files: ["**/*.tsx", "**/*.jsx"],
     plugins: {
@@ -187,7 +174,43 @@ export default [
     },
   },
 
-  // 10. Specific overrides
+  // 9. SonarJS Configuration (Quality & Security)
+  sonarjs.configs.recommended,
+  {
+    rules: {
+      "sonarjs/slow-regex": "off", // Many false positives in Astro/HTML processing
+    },
+  },
+
+  // 10. No Secrets Configuration (Security)
+  {
+    plugins: {
+      "no-secrets": noSecrets,
+    },
+    rules: {
+      "no-secrets/no-secrets": ["error", { tolerance: 5 }],
+    },
+  },
+  {
+    files: ["scripts/ci/update-ci-comment.mjs"],
+    rules: {
+      "no-secrets/no-secrets": "off", // False positives on GitHub badges
+    },
+  },
+
+  // 11. Preact Configuration
+  {
+    files: ["**/*.tsx", "**/*.jsx"],
+    plugins: {
+      preact,
+    },
+    rules: {
+      "preact/prefer-classname": "error",
+      "preact/forbid-render-arguments": "error",
+    },
+  },
+
+  // 12. Specific overrides
   {
     files: ["src/env.d.ts"],
     plugins: {
@@ -197,7 +220,8 @@ export default [
       "@typescript-eslint/triple-slash-reference": "off",
     },
   },
-  // 11. Content Config Override (virtual modules cause strict type errors)
+
+  // 13. Content Config Override (virtual modules cause strict type errors)
   {
     files: [
       "src/content.config.ts",
@@ -216,7 +240,8 @@ export default [
       "@typescript-eslint/no-unsafe-argument": "off",
     },
   },
-  // 12. Accessibility Overrides for Code Blocks
+
+  // 14. Accessibility Overrides for Code Blocks
   // Allow non-interactive elements to be keyboard focusable if they are scrollable code regions
   {
     files: [
@@ -226,6 +251,22 @@ export default [
     ],
     rules: {
       "jsx-a11y/no-noninteractive-tabindex": "off",
+      "astro/jsx-a11y/no-noninteractive-tabindex": "off",
+    },
+  },
+
+  // 15. SonarJS Overrides for specific files
+  {
+    files: ["src/integrations/post-build.ts", "scripts/**/*.mjs"],
+    rules: {
+      "sonarjs/no-os-command-from-path": "off",
+      "sonarjs/no-nested-template-literals": "off",
+    },
+  },
+  {
+    files: ["src/components/ui/*.astro"],
+    rules: {
+      "sonarjs/no-nested-template-literals": "off",
     },
   },
 ];

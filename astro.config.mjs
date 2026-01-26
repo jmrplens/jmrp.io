@@ -1,15 +1,15 @@
 // @ts-check
 // Adapters and Integrations
-import mdx from "@astrojs/mdx"; // Support for MDX (Markdown with JSX)
-import preact from "@astrojs/preact"; // Preact integration (lighter alternative to React)
-import sitemap from "@astrojs/sitemap"; // Generates a sitemap.xml
+import mdx from "@astrojs/mdx";
+import preact from "@astrojs/preact";
+import sitemap from "@astrojs/sitemap";
 import { defineConfig, envField, fontProviders } from "astro/config";
-import icon from "astro-icon"; // Icon support
-import rehypeExternalLinks from "rehype-external-links"; // Adds target="_blank" to external links
-import rehypeMathjax from "rehype-mathjax"; // Rehype plugin to render math with MathJax
+import icon from "astro-icon";
+import rehypeExternalLinks from "rehype-external-links";
+import rehypeMathjax from "rehype-mathjax";
 import rehypeMermaid from "rehype-mermaid";
 import rehypeRaw from "rehype-raw";
-import remarkMath from "remark-math"; // Remark plugin to support math equations
+import remarkMath from "remark-math";
 import { ViteImageOptimizer } from "vite-plugin-image-optimizer";
 
 import { rehypeLinkDisambiguator } from "./scripts/rehype-link-disambiguator.mjs";
@@ -61,7 +61,7 @@ export default defineConfig({
       },
     ],
   },
-  // New Environment Variables API (Astro 5)
+
   env: {
     schema: {
       PUBLIC_SITE_URL: envField.string({
@@ -100,19 +100,42 @@ export default defineConfig({
   // The site URL, used for SEO and sitemap generation
   site: process.env.PUBLIC_SITE_URL || "https://jmrp.io",
 
+  // Internationalization (i18n) configuration
+  i18n: {
+    defaultLocale: "en",
+    locales: ["en", "es"],
+  },
+
   // Build behavior for prerendering conflicts
   prerenderConflictBehavior: "error",
 
+  // Scoped style strategy to reduce specificity
+  scopedStyleStrategy: "where",
+
   // Image optimization configuration
   image: {
-    domains: ["www.google.com"],
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "www.google.com",
+        pathname: "/s2/favicons",
+      },
+    ],
     responsiveStyles: true,
   },
 
   // List of integrations to extend Astro functionality
   integrations: [
     preBuildIntegration(),
-    sitemap(),
+    sitemap({
+      i18n: {
+        defaultLocale: "en",
+        locales: {
+          en: "en",
+          es: "es",
+        },
+      },
+    }),
     mdx({
       // MDX needs to know about remark plugins too if we want it to work in .mdx files
       remarkPlugins: [remarkMermaidBypass],
@@ -320,6 +343,17 @@ export default defineConfig({
         },
       }),
     ],
+    css: {
+      devSourcemap: true,
+    },
+    json: {
+      stringify: true,
+    },
+    build: {
+      target: "esnext",
+      cssCodeSplit: true,
+      chunkSizeWarningLimit: 1000,
+    },
     server: {},
     ssr: {
       // Force externalization of citation-js for SSR to avoid bundling issues
@@ -332,4 +366,7 @@ export default defineConfig({
     // Inline critical CSS to improve performance
     inlineStylesheets: "always",
   },
+
+  // Production minification
+  compressHTML: true,
 });
