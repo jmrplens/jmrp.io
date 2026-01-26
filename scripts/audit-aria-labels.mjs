@@ -73,7 +73,9 @@ function printFinding(f, idx, frequency) {
   const count = frequency.get(f.accName) || 0;
   const isRepeated = count > 1;
   const idStr = f.id ? `#${f.id}` : "";
-  const classStr = f.class ? `.${f.class.split(" ").join(".")}` : "";
+  const classStr = f.class
+    ? `.${f.class.trim().split(/\s+/).filter(Boolean).join(".")}`
+    : "";
 
   console.log(
     `${C.dim}[${idx + 1}]${C.reset} ${C.bright}${f.tag}${C.dim}${idStr}${classStr}${C.reset}`,
@@ -148,12 +150,17 @@ function audit(path, options) {
 
   stats.repeated = [...freq.values()].filter((c) => c > 1).length;
   findings.forEach((f, i) => {
-    const err = !f.hasName && f.isInteractive;
-    if (
-      (options.rep && (freq.get(f.accName) || 0) <= 1) ||
-      (options.err && !err)
-    )
-      return;
+    const isRepeated = (freq.get(f.accName) || 0) > 1;
+    const isMissingError = !f.hasName && f.isInteractive;
+
+    // Filter logic: show if it matches ANY of the requested criteria
+    // If no specific filters are requested, show everything.
+    const showAll = !options.rep && !options.err;
+    const matchesRep = options.rep && isRepeated;
+    const matchesErr = options.err && isMissingError;
+
+    if (!showAll && !matchesRep && !matchesErr) return;
+
     printFinding(f, i, freq);
   });
 
@@ -167,17 +174,33 @@ function audit(path, options) {
 function main() {
   const args = process.argv.slice(2);
   const htmlFiles = args.filter((a) => !a.startsWith("-"));
-  if (htmlFiles.length === 0) process.exit(0);
+
+  if (htmlFiles.length === 0) {
+    console.warn(`${C.yellow}⚠️  No HTML files provided for audit.${C.reset}`);
+    process.exit(0);
+  }
 
   let totalErrors = 0;
+  let filesProcessed = 0;
   const opts = {
     rep: args.includes("--repeated"),
     err: args.includes("--errors"),
   };
 
   for (const file of htmlFiles) {
-    if (fs.existsSync(file)) totalErrors += audit(file, opts);
+    if (fs.existsSync(file)) {
+      totalErrors += audit(file, opts);
+      filesProcessed++;
+    } else {
+      console.warn(`${C.red}⚠️  File not found: ${file}${C.reset}`);
+    }
   }
+
+  if (filesProcessed === 0) {
+    console.error(`${C.red}❌ No existing files were processed.${C.reset}`);
+    process.exit(1);
+  }
+
   process.exit(totalErrors > 0 ? 1 : 0);
 }
 

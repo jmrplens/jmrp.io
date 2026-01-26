@@ -56,7 +56,7 @@ export function shouldIgnoreError(text: string): boolean {
   const isResource404 =
     text.includes("status of 404") &&
     (text.includes("/_astro/favicon") ||
-      text.includes(".pdf") ||
+      (text.includes("/assets/") && text.includes(".pdf")) ||
       text.includes("/assets/icons/"));
 
   return (

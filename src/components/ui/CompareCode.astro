@@ -64,7 +64,10 @@ const finalAriaLabelGood =
     data-testid={testIdBad}
   >
     <div class="header">
-      <span class="i-mdi:close-circle-outline icon"></span>
+      <span
+        class="i-mdi:close-circle-outline icon"
+        aria-hidden="true"
+      ></span>
       <span>{badTitle}</span>
       <CopyButton
         class="compare-copy-button"
@@ -82,7 +85,10 @@ const finalAriaLabelGood =
     data-testid={testIdGood}
   >
     <div class="header">
-      <span class="i-mdi:check-circle-outline icon"></span>
+      <span
+        class="i-mdi:check-circle-outline icon"
+        aria-hidden="true"
+      ></span>
       <span>{goodTitle}</span>
       <CopyButton
         class="compare-copy-button"

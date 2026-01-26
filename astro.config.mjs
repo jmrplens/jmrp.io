@@ -345,6 +345,8 @@ export default defineConfig({
     },
     build: {
       cssCodeSplit: true,
+      // Increased threshold to accommodate large math (mathjax) and rendering (mermaid) chunks.
+      // Optimization is handled via ViteImageOptimizer and CSS extraction in post-build.
       chunkSizeWarningLimit: 1000,
     },
     server: {},

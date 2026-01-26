@@ -25,7 +25,7 @@ import CopyButton from "./CopyButton.astro";
 
 interface Props {
   filename: string;
-  icon?: string; // e.g., 'mdi:file-document-outline'
+  icon?: string; // e.g., 'mdi-file-document-outline' (prepends 'i-' internally)
   language?: BuiltinLanguage | SpecialLanguage | string; // Override syntax highlighting language
   collapsible?: boolean;
   ariaLabel?: string;

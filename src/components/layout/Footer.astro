@@ -105,6 +105,16 @@ if (socials.custom_social) {
   }
 }
 
+/**
+ * Resolves an icon name from a potentially legacy FontAwesome class string.
+ *
+ * This function provides backward compatibility for 'custom_social' entries
+ * that use FontAwesome classes (e.g., "fab fa-twitter"). New social links
+ * should preferably use the Iconify format (e.g., "fa-brands:twitter").
+ *
+ * @param faClass - The class string to resolve.
+ * @returns The resolved icon name in Iconify format.
+ */
 const getIconName = (faClass: string) => {
   if (!faClass) return "";
   const trimmed = faClass.trim();

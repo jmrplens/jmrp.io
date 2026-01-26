@@ -26,13 +26,15 @@ export async function optimizeImages(
   let optimizedCount = 0;
   let totalSaved = 0;
 
-  for (const file of pngFiles) {
+  const CONCURRENCY = 4;
+
+  const processFile = async (file: string) => {
     try {
-      const stats = fs.statSync(file);
+      const stats = await fs.promises.stat(file);
       const originalSize = stats.size;
 
       // Skip very small files or files already optimized
-      if (originalSize < 1024) continue;
+      if (originalSize < 1024) return { optimized: false, saved: 0 };
 
       const buffer = await fs.promises.readFile(file);
       const optimizedBuffer = await sharp(buffer)
@@ -41,13 +43,25 @@ export async function optimizeImages(
 
       if (optimizedBuffer.length < originalSize) {
         await fs.promises.writeFile(file, optimizedBuffer);
-        optimizedCount++;
-        totalSaved += originalSize - optimizedBuffer.length;
+        return { optimized: true, saved: originalSize - optimizedBuffer.length };
       }
     } catch (error) {
       logger.warn(
         `Failed to optimize image ${file}: ${error instanceof Error ? error.message : String(error)}`,
       );
+    }
+    return { optimized: false, saved: 0 };
+  };
+
+  for (let i = 0; i < pngFiles.length; i += CONCURRENCY) {
+    const batch = pngFiles.slice(i, i + CONCURRENCY);
+    const results = await Promise.all(batch.map((f) => processFile(f)));
+
+    for (const res of results) {
+      if (res.optimized) {
+        optimizedCount++;
+        totalSaved += res.saved;
+      }
     }
   }
 

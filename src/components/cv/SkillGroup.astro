@@ -7,7 +7,7 @@ interface Props {
 
 const { group } = Astro.props;
 
-const levelTextMap: Record<number | string, string> = {
+const levelTextMap: Record<number, string> = {
   0: "None",
   1: "Elementary",
   2: "Basic",
@@ -21,7 +21,14 @@ import "@styles/skills.css";
 
 <div class="group-category">
   <h3>
-    {group.icon && <span class={`i-${group.icon}`} />}
+    {
+      group.icon && (
+        <span
+          class={`i-${group.icon}`}
+          aria-hidden="true"
+        />
+      )
+    }
     {group.category}
   </h3>
   <div class="compact-list">
@@ -32,15 +39,16 @@ import "@styles/skills.css";
         // For aria-valuenow, we only want a number.
 
         let score = 0;
-        let levelLabel: string | number = item.level ?? 0; // Explicitly allow both, default to 0
+        let levelLabel: string | number = "Unknown";
 
         if (typeof item.level === "number") {
           score = item.level;
           levelLabel = levelTextMap[item.level] || String(item.level);
         } else if (typeof item.level === "string") {
           // Try to find if the string matches a known level name
-          score = 0;
           levelLabel = item.level;
+        } else if (item.level == null) {
+          levelLabel = 0;
         }
 
         const showDots = typeof item.level === "number";
@@ -122,7 +130,7 @@ import "@styles/skills.css";
     align-items: center;
     justify-content: center;
     width: 1.5rem;
-    min-width: 24px;
+    min-width: 1.5rem;
     height: 1.5rem;
   }
 
@@ -163,7 +171,9 @@ import "@styles/skills.css";
     background-color: transparent;
     border: 1.5px solid var(--color-border);
     border-radius: 50%;
-    transition: all 0.2s ease;
+    transition:
+      background-color 0.2s ease,
+      border-color 0.2s ease;
   }
 
   .dot.filled {

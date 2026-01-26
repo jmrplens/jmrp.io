@@ -86,6 +86,24 @@ export async function finalizeCspConfig(
 
   const imgSrc = [...cspData.imageDomains].map((d) => `https://${d}`).join(" ");
 
+  // Common CSP directives used across HTML and assets
+  const commonCspDirectives = [
+    imgSrc
+      ? `img-src 'self' data: ${imgSrc} https://*.jmrp.io`
+      : "img-src 'self' data: https://*.jmrp.io",
+    "font-src 'self'",
+    "connect-src 'self' https://api.github.com https://cloudflareinsights.com https://*.cloudflareinsights.com",
+    "media-src 'self'",
+    "manifest-src 'self'",
+    "frame-src 'none'",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "frame-ancestors 'none'",
+    "upgrade-insecure-requests",
+    "report-uri /csp-report",
+  ];
+
   // Modern and Strict CSP
   // Build directives, filtering empty usage to avoid trailing spaces
   const scriptSrcParts = [
@@ -103,20 +121,7 @@ export async function finalizeCspConfig(
     "default-src 'none'",
     `script-src ${scriptSrcParts.join(" ")}`,
     `style-src ${styleSrcParts.join(" ")}`,
-    imgSrc
-      ? `img-src 'self' data: ${imgSrc} https://*.jmrp.io`
-      : "img-src 'self' data: https://*.jmrp.io",
-    "font-src 'self'",
-    "connect-src 'self' https://api.github.com https://cloudflareinsights.com https://*.cloudflareinsights.com",
-    "media-src 'self'",
-    "manifest-src 'self'",
-    "frame-src 'none'",
-    "object-src 'none'",
-    "base-uri 'self'",
-    "form-action 'self'",
-    "frame-ancestors 'none'",
-    "upgrade-insecure-requests",
-    "report-uri /csp-report",
+    ...commonCspDirectives,
   ]
     .map((s) => s.trim())
     .join("; ");
@@ -194,20 +199,7 @@ add_header Permissions-Policy "${permissionsPolicy}" always;
     "default-src 'none'",
     "script-src 'none'",
     "style-src 'none'",
-    imgSrc
-      ? `img-src 'self' data: ${imgSrc} https://*.jmrp.io`
-      : "img-src 'self' data: https://*.jmrp.io",
-    "font-src 'self'",
-    "connect-src 'self' https://api.github.com https://cloudflareinsights.com https://*.cloudflareinsights.com",
-    "media-src 'self'",
-    "manifest-src 'self'",
-    "frame-src 'none'",
-    "object-src 'none'",
-    "base-uri 'self'",
-    "form-action 'self'",
-    "frame-ancestors 'none'",
-    "upgrade-insecure-requests",
-    "report-uri /csp-report",
+    ...commonCspDirectives,
   ]
     .map((s) => s.trim())
     .join("; ");

@@ -222,7 +222,10 @@ const personSchema = {
                     )}
                     {item.location && (
                       <div class="item-location">
-                        <span class="i-fa-solid:map-marker-alt" />{" "}
+                        <span
+                          class="i-fa-solid:map-marker-alt"
+                          aria-hidden="true"
+                        />{" "}
                         {item.location}
                       </div>
                     )}
@@ -273,7 +276,10 @@ const personSchema = {
                             rel="noopener noreferrer"
                             aria-label={link.ariaLabel}
                           >
-                            <span class="i-fa-solid:file-pdf" />
+                            <span
+                              class="i-fa-solid:file-pdf"
+                              aria-hidden="true"
+                            />
                             {link.linkname}
                           </a>
                         ))}

@@ -109,6 +109,8 @@ const run = async () => {
 try {
   await run();
 } catch (error) {
-  console.error("Fatal error:", error);
+  const message = error instanceof Error ? error.message : String(error);
+  const stack = error instanceof Error ? `\n${error.stack}` : "";
+  console.error(`Fatal error: ${message}${stack}`);
   process.exit(1);
 }

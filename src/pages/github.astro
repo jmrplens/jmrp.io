@@ -85,7 +85,11 @@ const avatarSrcSetString = avatarSrcSetResolves.join(", ");
         {
           profile.location && (
             <p class="location">
-              <span class="i-fa-solid:map-marker-alt" /> {profile.location}
+              <span
+                class="i-fa-solid:map-marker-alt"
+                aria-hidden="true"
+              />{" "}
+              {profile.location}
             </p>
           )
         }

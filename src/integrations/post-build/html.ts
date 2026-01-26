@@ -148,8 +148,24 @@ export async function processHtmlFiles(
   logger.info(`  ✓ Extracted ${extractedImages} images from HTML.`);
   logger.info(`  ✓ Modified ${modifiedFilesCount} HTML files.`);
 }
-/**Sentinel marker to detect if beacon has already been hardened */
+
+/** Sentinel marker to detect if beacon has already been hardened */
 const BEACON_HARDENED_SENTINEL = "/* jmrp-beacon-hardened */";
+
+/** Extensions of files that should not be prefetched */
+const BINARY_EXTENSIONS = [
+  ".pdf",
+  ".zip",
+  ".rar",
+  ".7z",
+  ".pptx",
+  ".docx",
+  ".xlsx",
+  ".mp4",
+  ".mp3",
+  ".iso",
+  ".tar.gz",
+];
 
 function hardenBeaconScript(
   distDir: string,
@@ -574,24 +590,11 @@ function processCodeBlocks($: cheerio.CheerioAPI): boolean {
 
 function processLinks($: cheerio.CheerioAPI): boolean {
   let modified = false;
-  const binaryExtensions = [
-    ".pdf",
-    ".zip",
-    ".rar",
-    ".7z",
-    ".pptx",
-    ".docx",
-    ".xlsx",
-    ".mp4",
-    ".mp3",
-    ".iso",
-    ".tar.gz",
-  ];
   $("a[href]").each((_, el) => {
     const $el = $(el);
     const href = $el.attr("href")?.toLowerCase() || "";
     if (
-      binaryExtensions.some((ext) => href.endsWith(ext)) &&
+      BINARY_EXTENSIONS.some((ext) => href.endsWith(ext)) &&
       $el.attr("data-astro-prefetch") !== "false"
     ) {
       $el.attr("data-astro-prefetch", "false");

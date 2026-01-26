@@ -15,12 +15,12 @@ const safelistSet = new Set<string>();
 function walkDir(dir: string, callback: (path: string) => void) {
   try {
     for (const f of readdirSync(dir)) {
-      const dirPath = join(dir, f);
-      const isDirectory = statSync(dirPath).isDirectory();
+      const entryPath = join(dir, f);
+      const isDirectory = statSync(entryPath).isDirectory();
       if (isDirectory) {
-        walkDir(dirPath, callback);
+        walkDir(entryPath, callback);
       } else {
-        callback(join(dir, f));
+        callback(entryPath);
       }
     }
   } catch {

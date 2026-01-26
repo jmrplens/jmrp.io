@@ -29,7 +29,10 @@ const iconFiles = import.meta.glob<{ default: ImageMetadata }>(
   references.length > 0 && (
     <div class="references-section">
       <div class="header">
-        <span class="i-mdi:book-open-page-variant-outline header-icon" />
+        <span
+          class="i-mdi:book-open-page-variant-outline header-icon"
+          aria-hidden="true"
+        />
         <h3>Further Reading &amp; Resources</h3>
       </div>
       <div class="references-grid">
@@ -101,7 +104,10 @@ const iconFiles = import.meta.glob<{ default: ImageMetadata }>(
                 <span class="ref-url">{hostname}</span>
               </div>
               <div class="card-arrow">
-                <span class="i-mdi:arrow-top-right" />
+                <span
+                  class="i-mdi:arrow-top-right"
+                  aria-hidden="true"
+                />
               </div>
             </a>
           );

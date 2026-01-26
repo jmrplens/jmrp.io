@@ -55,7 +55,6 @@ if (import.meta.env.DEV && !ariaLabel && !title) {
   <span
     class={`i-${iconName} icon-wrapper`}
     aria-hidden="true"
-    style="width: 24px; height: 24px;"
   ></span>
   <div class="callout-content-wrapper">
     {title && <strong class="callout-title">{title}</strong>}
@@ -195,6 +194,8 @@ if (import.meta.env.DEV && !ariaLabel && !title) {
     display: flex;
     flex-shrink: 0;
     align-items: flex-start;
+    width: 24px;
+    height: 24px;
     margin-top: 0.125rem; /* Precise alignment with text cap-height */
     color: var(--callout-color);
   }

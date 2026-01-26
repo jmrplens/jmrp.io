@@ -145,14 +145,31 @@ function deploySecurityHeaders(
     distDir,
     "security_headers_assets.conf",
   );
-  const systemNginxAssetsPath = systemNginxPath.replace(
-    "security_headers.conf",
+  const systemNginxAssetsPath = path.join(
+    path.dirname(systemNginxPath),
     "security_headers_assets.conf",
   );
 
+  if (!fs.existsSync(systemNginxPath)) {
+    logger.info(
+      `Skipping deployment: system Nginx path does not exist [${systemNginxPath}]`,
+    );
+  }
+  if (!fs.existsSync(generatedPath)) {
+    logger.info(
+      `Skipping deployment: generated security headers not found [${generatedPath}]`,
+    );
+  }
+
   if (!fs.existsSync(systemNginxPath) || !fs.existsSync(generatedPath)) {
-    // ... validation logs ...
     return;
+  }
+
+  validateNginxPath(systemNginxAssetsPath);
+  if (path.resolve(systemNginxPath) === path.resolve(systemNginxAssetsPath)) {
+    throw new Error(
+      "Main Nginx path and assets path resolve to the same file.",
+    );
   }
 
   // Permissions are checked implicitly during copy/reload operations
@@ -179,12 +196,16 @@ function deploySecurityHeaders(
   try {
     const originalContent = fs.readFileSync(systemNginxPath);
     let originalAssetsContent: Buffer | null = null;
+    let assetsCreated = false;
     if (fs.existsSync(systemNginxAssetsPath)) {
       originalAssetsContent = fs.readFileSync(systemNginxAssetsPath);
     }
 
     fs.copyFileSync(generatedPath, systemNginxPath);
     if (fs.existsSync(generatedAssetsPath)) {
+      if (!fs.existsSync(systemNginxAssetsPath)) {
+        assetsCreated = true;
+      }
       fs.copyFileSync(generatedAssetsPath, systemNginxAssetsPath);
     }
 
@@ -201,15 +222,17 @@ function deploySecurityHeaders(
 
       logger.info("✓ Nginx security headers deployed and reloaded.");
     } catch (error) {
-      if (originalAssetsContent && fs.existsSync(systemNginxAssetsPath)) {
-        fs.writeFileSync(systemNginxAssetsPath, originalAssetsContent);
-      }
       handleNginxValidationError(
         error,
         systemNginxPath,
         originalContent,
         nginxTestTimeout,
         logger,
+        {
+          path: systemNginxAssetsPath,
+          originalContent: originalAssetsContent,
+          created: assetsCreated,
+        },
       );
     }
   } catch (error) {
@@ -359,6 +382,7 @@ function clearNginxCache(
  * @param originalContent - Buffer of the original configuration content.
  * @param timeout - Execution timeout for Nginx commands.
  * @param logger - Astro logger instance.
+ * @param assetsRollback - Optional asset rollback information.
  */
 function handleNginxValidationError(
   validationError: unknown,
@@ -366,6 +390,11 @@ function handleNginxValidationError(
   originalContent: Buffer,
   timeout: number,
   logger: AstroIntegrationLogger,
+  assetsRollback?: {
+    path: string;
+    originalContent: Buffer | null;
+    created: boolean;
+  },
 ) {
   logger.error(
     "⚠ Nginx validation failed! Reverting to previous configuration.",
@@ -377,6 +406,21 @@ function handleNginxValidationError(
   );
   try {
     fs.writeFileSync(systemNginxPath, originalContent);
+
+    if (assetsRollback) {
+      if (assetsRollback.created && fs.existsSync(assetsRollback.path)) {
+        fs.unlinkSync(assetsRollback.path);
+      } else if (
+        assetsRollback.originalContent !== null &&
+        fs.existsSync(assetsRollback.path)
+      ) {
+        fs.writeFileSync(
+          assetsRollback.path,
+          assetsRollback.originalContent,
+        );
+      }
+    }
+
     logger.info(
       "✓ Successfully reverted to the previous stable configuration.",
     );

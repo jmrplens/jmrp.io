@@ -189,16 +189,14 @@ async function validateFeedContent(content, results) {
 }
 
 /**
- * Validates the RSS feed structural integrity and content.
+ * Parses CLI arguments into a configuration object.
  *
- * @returns {Promise<void>} Resolves when validation is complete.
+ * @param argv - process.argv slice.
+ * @returns Parsed configuration object.
  */
-async function validateRSS() {
-  console.log("🔍 Validating RSS feed...\n");
-
-  // Parse CLI arguments safely
-  const arg1 = process.argv[2];
-  const arg2 = process.argv[3];
+function parseCliArgs(argv) {
+  const arg1 = argv[0];
+  const arg2 = argv[1];
 
   let distDir;
   let rssFile;
@@ -224,11 +222,25 @@ async function validateRSS() {
   } else if (arg1 && arg2) {
     // Two arguments: distDir and rssFile
     rssFile = path.resolve(arg2);
+    distDir = path.resolve(arg1);
   } else {
     // No arguments: use defaults
     distDir = path.resolve(process.env.DIST_DIR || "dist");
     rssFile = path.join(distDir, "rss.xml");
   }
+
+  return { distDir, rssFile };
+}
+
+/**
+ * Validates the RSS feed structural integrity and content.
+ *
+ * @returns {Promise<void>} Resolves when validation is complete.
+ */
+async function validateRSS() {
+  console.log("🔍 Validating RSS feed...\n");
+
+  const { rssFile } = parseCliArgs(process.argv.slice(2));
 
   const results = {
     valid: false,

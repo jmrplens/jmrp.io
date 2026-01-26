@@ -388,6 +388,48 @@ function MatrixStats({ stats }: { readonly stats: MatrixStatsData | null }) {
 /** Internal helper for rendering a status dot */
 const StatusDot = () => <span className="status-dot-inline"></span>;
 
+/** Props for MeshRow component */
+interface MeshRowProps {
+  readonly title: string;
+  readonly nodes: number | undefined;
+  readonly version?: string;
+  readonly linkHref: string;
+  readonly linkLabel: string;
+  readonly linkText: string;
+}
+
+/** Component for a single Meshtastic service row */
+const MeshRow = ({
+  title,
+  nodes,
+  version,
+  linkHref,
+  linkLabel,
+  linkText,
+}: MeshRowProps) => (
+  <div className="meshtastic-row">
+    <div className="meshtastic-left">
+      <StatusDot />
+      <div>
+        <strong className="meshtastic-title">{title}</strong>
+        <div className="meshtastic-sub">
+          {nodes ?? "..."} Nodes
+          {version && <span className="meshtastic-ver">• {version}</span>}
+        </div>
+      </div>
+    </div>
+    <a
+      href={linkHref}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="btn btn-sm"
+      aria-label={linkLabel}
+    >
+      {linkText}
+    </a>
+  </div>
+);
+
 /**
  * Meshtastic Combined Stats Component
  *
@@ -406,67 +448,30 @@ function MeshtasticStats({
 
   return (
     <div className="stats-wrapper-small-gap">
-      <div className="meshtastic-row">
-        <div className="meshtastic-left">
-          <StatusDot />
-          <div>
-            <strong className="meshtastic-title">PotatoMesh</strong>
-            <div className="meshtastic-sub">
-              {potatoNodes ?? "..."} Nodes
-              {potatoVersion && (
-                <span className="meshtastic-ver">• {potatoVersion}</span>
-              )}
-            </div>
-          </div>
-        </div>
-        <a
-          href="https://potatomesh.jmrp.io"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="btn btn-sm"
-          aria-label="View Map on PotatoMesh"
-        >
-          View Map
-        </a>
-      </div>
+      <MeshRow
+        title="PotatoMesh"
+        nodes={potatoNodes}
+        version={potatoVersion}
+        linkHref="https://potatomesh.jmrp.io"
+        linkLabel="View Map on PotatoMesh"
+        linkText="View Map"
+      />
 
-      <div className="meshtastic-row">
-        <div className="meshtastic-left">
-          <StatusDot />
-          <div>
-            <strong className="meshtastic-title">MeshMonitor LF</strong>
-            <div className="meshtastic-sub">{lfNodes ?? "..."} Nodes</div>
-          </div>
-        </div>
-        <a
-          href="https://mesh_lf.jmrp.io/meshmonitor"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="btn btn-sm"
-          aria-label="View Monitor on MeshMonitor LF"
-        >
-          View Monitor
-        </a>
-      </div>
+      <MeshRow
+        title="MeshMonitor LF"
+        nodes={lfNodes}
+        linkHref="https://mesh_lf.jmrp.io/meshmonitor"
+        linkLabel="View Monitor on MeshMonitor LF"
+        linkText="View Monitor"
+      />
 
-      <div className="meshtastic-row">
-        <div className="meshtastic-left">
-          <StatusDot />
-          <div>
-            <strong className="meshtastic-title">MeshMonitor MF</strong>
-            <div className="meshtastic-sub">{mfNodes ?? "..."} Nodes</div>
-          </div>
-        </div>
-        <a
-          href="https://mesh_mf.jmrp.io/meshmonitor"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="btn btn-sm"
-          aria-label="View Monitor on MeshMonitor MF"
-        >
-          View Monitor
-        </a>
-      </div>
+      <MeshRow
+        title="MeshMonitor MF"
+        nodes={mfNodes}
+        linkHref="https://mesh_mf.jmrp.io/meshmonitor"
+        linkLabel="View Monitor on MeshMonitor MF"
+        linkText="View Monitor"
+      />
     </div>
   );
 }

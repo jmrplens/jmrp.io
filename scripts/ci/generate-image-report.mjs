@@ -13,6 +13,12 @@ const DIST_DIR = "dist";
 const OUTPUT_FILE = "image-report.html";
 
 /**
+ * Escapes HTML special characters.
+ */
+const escapeHtml = (str) =>
+  str.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
+
+/**
  * Recursively find all files in a directory matching specific extensions
  */
 const findFiles = (dir, extensions, fileList = []) => {
@@ -28,11 +34,16 @@ const findFiles = (dir, extensions, fileList = []) => {
     } else {
       const ext = path.extname(file).toLowerCase();
       if (extensions.includes(ext)) {
+        const sizeHuman =
+          stat.size > 500 * 1024
+            ? (stat.size / (1024 * 1024)).toFixed(2) + " MB"
+            : (stat.size / 1024).toFixed(2) + " KB";
+
         fileList.push({
           fullPath: filePath,
           relativePath: path.relative(DIST_DIR, filePath),
           sizeInBytes: stat.size,
-          sizeHuman: (stat.size / 1024).toFixed(2) + " KB",
+          sizeHuman,
         });
       }
     }
@@ -159,7 +170,7 @@ const generateReport = () => {
     <div class="container">
         <header>
             <h1>🖼️ Image Optimization Report</h1>
-            <div class="subtitle">Generated on ${new Date().toLocaleString()}</div>
+            <div class="subtitle">Generated on ${new Date().toISOString()}</div>
         </header>
 
         <div class="summary-grid">
@@ -199,7 +210,7 @@ const generateReport = () => {
                     const isLarge = img.sizeInBytes > 500 * 1024;
                     return `
                   <tr>
-                    <td class="path-cell">${img.relativePath}</td>
+                    <td class="path-cell">${escapeHtml(img.relativePath)}</td>
                     <td><span class="badge ${img.f === "WebP" ? "badge-webp" : "badge-legacy"}">${img.f}</span></td>
                     <td class="size-cell ${isLarge ? "size-large" : ""}"> ${img.sizeHuman}</td>
                   </tr>`;

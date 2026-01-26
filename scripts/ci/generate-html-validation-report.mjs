@@ -15,6 +15,17 @@ const OUTPUT_FILE = "html-validation-report.html";
 const CONFIG_FILE = ".htmlvalidate.json";
 
 /**
+ * Escapes HTML special characters.
+ */
+const escapeHtml = (str) =>
+  str
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+
+/**
  * Recursively find all HTML files in a directory
  */
 const getAllHtmlFiles = (dir, fileList = []) => {
@@ -286,7 +297,7 @@ const generateHtml = (results, activeRules) => {
                               .map(
                                 (r) => `
                                 <tr>
-                                    <td><a href="#" class="file-link">${r.filePath.replace(DIST_DIR + "/", "")}</a></td>
+                                    <td><a href="#" class="file-link">${escapeHtml(r.filePath.replace(DIST_DIR + "/", ""))}</a></td>
                                     <td>${r.valid ? "✅ Valid" : "❌ Invalid"}</td>
                                     <td><span class="count-badge ${r.errorCount > 0 ? "count-error" : "count-zero"}">${r.errorCount}</span></td>
                                     <td><span class="count-badge ${r.warningCount > 0 ? "count-warning" : "count-zero"}">${r.warningCount}</span></td>
@@ -308,7 +319,7 @@ const generateHtml = (results, activeRules) => {
                             .map(
                               ([rule, count]) => `
                         <div class="rule-item">
-                            <span class="rule-name">${rule}</span>
+                            <span class="rule-name">${escapeHtml(rule)}</span>
                             <span class="rule-count">${count}</span>
                         </div>
                     `,
@@ -324,7 +335,7 @@ const generateHtml = (results, activeRules) => {
                         ${Object.keys(activeRules)
                           .map(
                             (rule) => `
-                            <span class="active-rule">${rule}</span>
+                            <span class="active-rule">${escapeHtml(rule)}</span>
                         `,
                           )
                           .join("")}

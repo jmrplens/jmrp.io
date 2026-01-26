@@ -130,7 +130,7 @@ function runVerify() {
       // Security: SonarCloud Analysis is just the upload phase now.
       // The actual failure logic is handled by "Analyze: SonarCloud Issues".
       if (step.name === "Security: SonarCloud Analysis") {
-        logger.warn(`⚠️ ${step.name} finished with warnings, continuing...`);
+        console.warn(`⚠️ ${step.name} finished with warnings, continuing...`);
         continue;
       }
 
