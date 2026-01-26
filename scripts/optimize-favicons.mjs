@@ -43,7 +43,6 @@ const collectHostnames = () => {
 
   for (const file of files) {
     const content = fs.readFileSync(path.join(POSTS_DIR, file), "utf-8");
-    // Secure regex for links to avoid ReDoS (no nested quantifiers)
     const links = content.match(/https?:\/\/[^\s)\]'"`]+/g) || []; // NOSONAR
     for (const link of links) {
       // Clean link (remove trailing punctuation common in sentences)

@@ -41,17 +41,12 @@ const getAllHtmlFiles = (dir, fileList = []) => {
   return fileList;
 };
 
-/**
- * Gets the active rules from html-validate configuration
- */
 const getActiveRules = () => {
   try {
     const allFiles = getAllHtmlFiles(DIST_DIR);
     const firstHtml = allFiles[0];
     if (!firstHtml) return {};
 
-    // Print the effective config for the first file found
-    // Using execFileSync with arguments array prevents shell injection
     const configJson = execFileSync(
       "pnpm",
       ["exec", "html-validate", "-c", CONFIG_FILE, "--print-config", firstHtml],

@@ -144,10 +144,10 @@ sequenceDiagram
     
     rect rgba(255, 0, 0, 0.1)
         note over S,C: **HTTP/2 over TCP: HOL Blocking**
-        S->>N: Stream A: Packet 1 ✓
-        S->>N: Stream B: Packet 1 ✓
-        S->>N: Stream A: Packet 2 ✗ (LOST)
-        S->>N: Stream C: Packet 1 ✓
+        S->>N: Stream A: Packet 1
+        S->>N: Stream B: Packet 1
+        S->>N: Stream A: Packet 2 (LOST)
+        S->>N: Stream C: Packet 1
         N->>C: Stream A: Packet 1
         N->>C: Stream B: Packet 1 (BLOCKED!)
         N->>C: (Waiting for Stream A: Packet 2...)
@@ -156,13 +156,13 @@ sequenceDiagram
     
     rect rgba(0, 255, 0, 0.1)
         note over S,C: **HTTP/3 over QUIC: Independent Streams**
-        S->>N: Stream A: Packet 1 ✓
-        S->>N: Stream B: Packet 1 ✓
-        S->>N: Stream A: Packet 2 ✗ (LOST)
-        S->>N: Stream C: Packet 1 ✓
+        S->>N: Stream A: Packet 1
+        S->>N: Stream B: Packet 1
+        S->>N: Stream A: Packet 2 (LOST)
+        S->>N: Stream C: Packet 1
         N->>C: Stream A: Packet 1
-        N->>C: Stream B: Packet 1 ✓ (Delivered!)
-        N->>C: Stream C: Packet 1 ✓ (Delivered!)
+        N->>C: Stream B: Packet 1 (Delivered!)
+        N->>C: Stream C: Packet 1 (Delivered!)
         note right of C: Only Stream A waits<br/>B and C continue!
     end
 ```

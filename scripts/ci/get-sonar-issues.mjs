@@ -114,80 +114,95 @@ async function checkNoSonar(component, line) {
 }
 
 /**
- * Main execution
+ * Prints open issues found in SonarCloud.
  */
-try {
-  // Give SonarCloud a few seconds to process the new analysis
-  logger.info("⏳ Waiting for SonarCloud to process analysis...");
-  await new Promise((resolve) => setTimeout(resolve, 5000));
-
-  logger.info(
-    `\n🔍 Fetching open issues from SonarCloud for [${PROJECT_KEY}]...\n`,
-  );
-
-  const encodedProjectKey = encodeURIComponent(PROJECT_KEY);
-
-  const [issues, hotspots] = await Promise.all([
-    fetchWithPagination(
-      `https://sonarcloud.io/api/issues/search?componentKeys=${encodedProjectKey}&resolved=false`,
-      "issues",
-    ),
-    fetchWithPagination(
-      `https://sonarcloud.io/api/hotspots/search?projectKey=${encodedProjectKey}&status=TO_REVIEW`,
-      "hotspots",
-    ),
-  ]);
-
-  logger.info("".padEnd(80, "="));
-  logger.info(`📊 SONARCLOUD REPORT for ${PROJECT_KEY}`);
-  logger.info("".padEnd(80, "="));
-
+function reportIssues(issues) {
   if (issues.length === 0) {
     logger.info("\n✅ No open issues found.");
-  } else {
-    logger.info(`\n❌ Found ${issues.length} open issues:`);
-    for (const issue of issues) {
-      logger.info(`  - [${issue.severity}] ${issue.message}`);
-      logger.info(`    📍 ${issue.component} (Line ${issue.line || "N/A"})`);
-    }
+    return;
   }
+  logger.info(`\n❌ Found ${issues.length} open issues:`);
+  for (const issue of issues) {
+    logger.info(`  - [${issue.severity}] ${issue.message}`);
+    logger.info(`    📍 ${issue.component} (Line ${issue.line || "N/A"})`);
+  }
+}
 
+/**
+ * Prints security hotspots found in SonarCloud.
+ */
+async function reportHotspots(hotspots) {
   if (hotspots.length === 0) {
     logger.info("\n✅ No security hotspots to review.");
-  } else {
-    logger.info(`\n🚨 Found ${hotspots.length} security hotspots:`);
-    let manualReviewCount = 0;
+    return 0;
+  }
 
-    const suppressionResults = await Promise.all(
-      hotspots.map((h) => checkNoSonar(h.component, h.line)),
-    );
+  logger.info(`\n🚨 Found ${hotspots.length} security hotspots:`);
+  let unsuppressedCount = 0;
 
-    for (const [i, h] of hotspots.entries()) {
-      if (suppressionResults[i]) {
-        logger.info(
-          `  - [SUPPRESSED] ${h.message} (📍 ${h.component}:${h.line || "N/A"})`,
-        );
-      } else {
-        logger.info(`  - ${h.message}`);
-        logger.info(`    📍 ${h.component} (Line ${h.line || "N/A"})`);
-        manualReviewCount++;
-      }
-    }
+  const suppressionResults = await Promise.all(
+    hotspots.map((h) => checkNoSonar(h.component, h.line)),
+  );
 
-    if (manualReviewCount > 0) {
+  for (const [i, h] of hotspots.entries()) {
+    if (suppressionResults[i]) {
       logger.info(
-        `\n❌ Static analysis failed: ${manualReviewCount} unsuppressed hotspots detected.`,
+        `  - [SUPPRESSED] ${h.message} (📍 ${h.component}:${h.line || "N/A"})`,
       );
-      process.exit(1);
     } else {
-      logger.info(
-        "\n✅ All identified hotspots are suppressed with NOSONAR comments.",
-      );
+      logger.info(`  - ${h.message}`);
+      logger.info(`    📍 ${h.component} (Line ${h.line || "N/A"})`);
+      unsuppressedCount++;
     }
   }
 
-    if (issues.length > 0) {
-      logger.info("\n❌ Static analysis failed: Open issues detected.");
+  if (unsuppressedCount > 0) {
+    logger.info(
+      `\n❌ Static analysis failed: ${unsuppressedCount} unsuppressed hotspots detected.`,
+    );
+  } else {
+    logger.info(
+      "\n✅ All identified hotspots are suppressed with NOSONAR comments.",
+    );
+  }
+  return unsuppressedCount;
+}
+
+/**
+ * Main execution
+ */
+async function main() {
+  try {
+    // Give SonarCloud a few seconds to process the new analysis
+    logger.info("⏳ Waiting for SonarCloud to process analysis...");
+    await new Promise((resolve) => setTimeout(resolve, 5000));
+
+    logger.info(
+      `\n🔍 Fetching open issues from SonarCloud for [${PROJECT_KEY}]...\n`,
+    );
+
+    const encodedProjectKey = encodeURIComponent(PROJECT_KEY);
+
+    const [issues, hotspots] = await Promise.all([
+      fetchWithPagination(
+        `https://sonarcloud.io/api/issues/search?componentKeys=${encodedProjectKey}&resolved=false`,
+        "issues",
+      ),
+      fetchWithPagination(
+        `https://sonarcloud.io/api/hotspots/search?projectKey=${encodedProjectKey}&status=TO_REVIEW`,
+        "hotspots",
+      ),
+    ]);
+
+    logger.info("".padEnd(80, "="));
+    logger.info(`📊 SONARCLOUD REPORT for ${PROJECT_KEY}`);
+    logger.info("".padEnd(80, "="));
+
+    reportIssues(issues);
+    const unsuppressedHotspots = await reportHotspots(hotspots);
+
+    if (unsuppressedHotspots > 0 || issues.length > 0) {
+      logger.info("\n❌ Static analysis failed.");
       process.exit(1);
     }
   } catch (error) {

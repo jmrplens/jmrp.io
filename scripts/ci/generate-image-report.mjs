@@ -16,7 +16,11 @@ const OUTPUT_FILE = "image-report.html";
  * Escapes HTML special characters.
  */
 const escapeHtml = (str) =>
-  str.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
+  str
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
 
 /**
  * Recursively find all files in a directory matching specific extensions

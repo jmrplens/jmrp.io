@@ -111,8 +111,9 @@ export async function getPublications(): Promise<PublicationGroup[]> {
       return (fieldMatch[1] || fieldMatch[2] || "").trim();
     };
 
-    const citations = new Cite(fileContents);
-    const data: PublicationItem[] = citations.data;
+    type CiteStatic = new (content: string) => { data: PublicationItem[] };
+    const citations = new (Cite as unknown as CiteStatic)(fileContents);
+    const data = citations.data;
 
     data.sort((a, b) => {
       const yearA = a.issued?.["date-parts"]?.[0]?.[0] || 0;

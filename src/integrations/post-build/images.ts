@@ -43,7 +43,10 @@ export async function optimizeImages(
 
       if (optimizedBuffer.length < originalSize) {
         await fs.promises.writeFile(file, optimizedBuffer);
-        return { optimized: true, saved: originalSize - optimizedBuffer.length };
+        return {
+          optimized: true,
+          saved: originalSize - optimizedBuffer.length,
+        };
       }
     } catch (error) {
       logger.warn(

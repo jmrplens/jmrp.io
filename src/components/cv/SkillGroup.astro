@@ -47,8 +47,6 @@ import "@styles/skills.css";
         } else if (typeof item.level === "string") {
           // Try to find if the string matches a known level name
           levelLabel = item.level;
-        } else if (item.level == null) {
-          levelLabel = 0;
         }
 
         const showDots = typeof item.level === "number";

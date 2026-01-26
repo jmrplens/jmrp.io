@@ -171,6 +171,8 @@ const socialLinksWithType = socialLinks.map((link) => {
     iconType,
     resolvedIconName,
     fullIconClass,
+    imgLight: iconType === "image" ? link.img_light : null,
+    imgDark: iconType === "image" ? link.img_dark : null,
   };
 });
 ---
@@ -193,10 +195,10 @@ const socialLinksWithType = socialLinks.map((link) => {
             class="social-btn"
           >
             {/* Render icons using pre-computed iconType */}
-            {link.iconType === "image" && (
+            {link.iconType === "image" && link.imgLight && link.imgDark && (
               <>
                 <Image
-                  src={link.img_light!}
+                  src={link.imgLight}
                   alt={link.label}
                   width={28}
                   height={28}
@@ -205,7 +207,7 @@ const socialLinksWithType = socialLinks.map((link) => {
                   decoding="async"
                 />
                 <Image
-                  src={link.img_dark!}
+                  src={link.imgDark}
                   alt={link.label}
                   width={28}
                   height={28}

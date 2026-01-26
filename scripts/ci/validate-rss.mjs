@@ -1,4 +1,3 @@
-/* eslint-disable sonarjs/cognitive-complexity */
 /**
  * RSS Feed Validator
  *
@@ -240,7 +239,7 @@ function parseCliArgs(argv) {
 async function validateRSS() {
   console.log("🔍 Validating RSS feed...\n");
 
-  const { rssFile } = parseCliArgs(process.argv.slice(2));
+  const { distDir, rssFile } = parseCliArgs(process.argv.slice(2));
 
   const results = {
     valid: false,
@@ -258,7 +257,7 @@ async function validateRSS() {
 
   if (!fs.existsSync(rssFile)) {
     results.errors.push(`RSS feed not found: ${rssFile}`);
-    writeResults(results);
+    writeResults(results, path.join(distDir, OUTPUT_FILE));
     process.exit(1);
   }
 
@@ -281,7 +280,7 @@ async function validateRSS() {
     for (const error of results.errors) console.log(`   - ${error}`);
   }
 
-  writeResults(results);
+  writeResults(results, path.join(distDir, OUTPUT_FILE));
   process.exit(results.valid ? 0 : 1);
 }
 
@@ -289,9 +288,10 @@ async function validateRSS() {
  * Writes the validation report to a JSON file.
  *
  * @param data - The results data to serialize and save.
+ * @param filePath - Destination path for the report.
  */
-function writeResults(data) {
-  fs.writeFileSync(OUTPUT_FILE, JSON.stringify(data, null, 2));
+function writeResults(data, filePath) {
+  fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
 }
 
 try {
