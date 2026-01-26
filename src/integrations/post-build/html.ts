@@ -110,19 +110,6 @@ function extractDataUri(
 
 /**
  * Performs a consolidated pass over all HTML files in the distribution directory.
- *
- * Orchestrates post-build refinements and security hardening for all HTML files:
- * - Converts inline styles to scoped classes for CSP compliance.
- * - Injects security nonces into script and style tags.
- * - Generates SRI hashes for local resources.
- * - Collects domains for final CSP configuration.
- * - Identifies external image domains.
- * - Hardens the Cloudflare Insights beacon script.
- *
- * @param {string} distDir - The absolute path to the production build output.
- * @param {CspData} cspData - Shared object to store collected CSP hashes and domains.
- * @param {boolean} enableCsp - Whether to enable CSP-specific features (nonces, hashes, style conversion).
- * @param {AstroIntegrationLogger} logger - The Astro logger instance.
  */
 export async function processHtmlFiles(
   distDir: string,
@@ -161,16 +148,7 @@ export async function processHtmlFiles(
   logger.info(`  ✓ Extracted ${extractedImages} images from HTML.`);
   logger.info(`  ✓ Modified ${modifiedFilesCount} HTML files.`);
 }
-
-/**
- * Prepends a protection guard to the Cloudflare beacon script.
- * Prevents the script from executing on local environments (localhost, etc.).
- *
- * @param distDir - The absolute path to the production build output.
- * @param hashCache - Cache map for file integrity hashes.
- * @param logger - The Astro logger instance.
- */
-/** Sentinel marker to detect if beacon has already been hardened */
+/**Sentinel marker to detect if beacon has already been hardened */
 const BEACON_HARDENED_SENTINEL = "/* jmrp-beacon-hardened */";
 
 function hardenBeaconScript(
@@ -178,37 +156,24 @@ function hardenBeaconScript(
   hashCache: Map<string, string>,
   logger: AstroIntegrationLogger,
 ) {
-  // Special handling for cf-beacon.js to avoid Lighthouse errors while keeping SRI
   const beaconPath = path.join(distDir, "scripts", "cf-beacon.js");
   if (fs.existsSync(beaconPath)) {
     const originalBeacon = fs.readFileSync(beaconPath, "utf-8");
 
-    // Check if already hardened (idempotent operation)
     if (originalBeacon.startsWith(BEACON_HARDENED_SENTINEL)) {
       logger.info("cf-beacon.js already hardened, skipping.");
       return;
     }
 
     logger.info("Hardening cf-beacon.js with local guard...");
-    // Prepend sentinel and guard that stops execution on localhost/127.0.0.1/0.0.0.0/::1/[::1]
     const hardenedBeacon = `${BEACON_HARDENED_SENTINEL}(function(){var h=location.hostname;if(h==='localhost'||h==='127.0.0.1'||h==='0.0.0.0'||h==='::1'||h==='[::1]')return;${originalBeacon}})();`;
     fs.writeFileSync(beaconPath, hardenedBeacon, "utf-8");
-    // Force re-calculation of hash for this file
     hashCache.delete(`${beaconPath}:sha512`);
   }
 }
 
 /**
  * Orchestrates all transformations for a single HTML file.
- *
- * @param file - Absolute path to the HTML file.
- * @param distDir - The absolute path to the production build output.
- * @param targetDir - The directory where extracted assets should be saved.
- * @param cspData - Shared object to store collected CSP hashes and domains.
- * @param hashCache - Cache map for file integrity hashes.
- * @param enableCsp - Whether to enable CSP-specific features.
- * @param logger - The Astro logger instance.
- * @returns An object containing the counts of modifications and updates.
  */
 async function processSingleHtmlFile(
   file: string,
@@ -229,23 +194,20 @@ async function processSingleHtmlFile(
   let updatedSriTags = 0;
   let extractedImages = 0;
 
-  // Image processing (Data URI extraction)
+  // Image processing
   const imgResult = processImages($, targetDir, logger, file);
   if (imgResult.modified) {
     isModified = true;
     extractedImages += imgResult.extractedCount;
   }
 
-  // Ensure <style> tags are in <head> for HTML5 compliance
+  // Fix style locations
   const bodyStyles = $("body style");
   if (bodyStyles.length > 0) {
     let movedCount = 0;
     bodyStyles.each((_, el) => {
       const $style = $(el);
-      // Skip styles inside SVG, template, or noscript as they might be scoped/inert
-      if ($style.parents("svg, template, noscript").length > 0) {
-        return;
-      }
+      if ($style.parents("svg, template, noscript").length > 0) return;
       $("head").append($style.clone());
       $style.remove();
       movedCount++;
@@ -253,12 +215,10 @@ async function processSingleHtmlFile(
     if (movedCount > 0) isModified = true;
   }
 
-  // Handle styles (Data URI extraction and CSP class conversion)
-  if (processStyles($, enableCsp)) {
-    isModified = true;
-  }
+  // Handle styles
+  if (processStyles($, enableCsp)) isModified = true;
 
-  // Security hardening: SRI hashes and CSP Nonces
+  // Process SRI and Nonces
   const sriResult = processScriptsAndLinks(
     $,
     file,
@@ -271,61 +231,37 @@ async function processSingleHtmlFile(
     updatedSriTags += sriResult.updatedTags;
   }
 
-  // Discover domains for CSP img-src
-  if (enableCsp) {
-    collectImageDomains($, cspData);
-  }
+  // Collect domains for CSP
+  if (enableCsp) collectImageDomains($, cspData);
 
-  // Integrity hash for Cloudflare beacon
-  if (processBeacon($, distDir, file, hashCache, logger)) {
-    isModified = true;
-  }
+  // Integrity for beacon
+  if (processBeacon($, distDir, file, hashCache, logger)) isModified = true;
 
-  // Accessibility: Enhance code block landmarks
-  if (processCodeBlocks($)) {
-    isModified = true;
-  }
+  // Accessibility: Code blocks
+  if (processCodeBlocks($)) isModified = true;
 
-  // Minify HTML before calculating inline hashes to ensure exact matches
+  // Performance: Block prefetch for binary files
+  if (processLinks($)) isModified = true;
+
+  // Minify HTML
   const rawHtml = $.html();
   const minifiedHtml = await minify(rawHtml, {
     removeComments: true,
     collapseWhitespace: true,
     minifyCSS: true,
     minifyJS: true,
-    ignoreCustomComments: [
-      /^\* jmrp-beacon-hardened \*/, // Preserve security guard
-      /^!/, // Preserve license comments
-    ],
+    ignoreCustomComments: [/^\* jmrp-beacon-hardened \*/, /^!/],
     sortAttributes: true,
     sortClassName: true,
   });
 
-  // Reload minified content for final hash collection
   const $minified = cheerio.load(minifiedHtml);
+  if (collectInlineHashes($minified, cspData, enableCsp)) isModified = true;
 
-  // Collect final CSP hashes from minified content
-  if (collectInlineHashes($minified, cspData, enableCsp)) {
-    isModified = true;
-  }
-
-  // Always write if we minified (which we did), or if there were other mods
-  // Since we force minification, we can consider isModified = true implicitly,
-  // but to be safe we just write the minified content.
   writeHtml(file, $minified.html());
-
   return { modified: isModified, updatedSriTags, extractedImages };
 }
 
-/**
- * Finds and extracts image Data URIs (src and srcset) into physical files.
- *
- * @param $ - Cheerio API instance for the current HTML document.
- * @param targetDir - The directory where extracted assets should be saved.
- * @param logger - The Astro logger instance.
- * @param file - The name of the file being processed for context.
- * @returns An object containing the modified status and extracted asset count.
- */
 function processImages(
   $: cheerio.CheerioAPI,
   targetDir: string,
@@ -336,10 +272,6 @@ function processImages(
   return { modified: extractedCount > 0, extractedCount };
 }
 
-/**
- * Finds and extracts data URIs from src and srcset attributes.
- * Only processes img and source elements to avoid affecting other data URIs.
- */
 function findAndExtractDataUris(
   $: cheerio.CheerioAPI,
   targetDir: string,
@@ -349,14 +281,10 @@ function findAndExtractDataUris(
   let extractedCount = 0;
   const fileName = file ? path.basename(file) : undefined;
 
-  // Process only <img> and <source> elements with data URIs
-  // Restricted selector prevents rewriting data: URIs on non-image elements
   $(
     "img[src^='data:'], img[srcset*='data:'], source[src^='data:'], source[srcset*='data:']",
   ).each((_, el) => {
     const $el = $(el);
-
-    // Handle 'src' attribute
     const src = $el.attr("src");
     if (src?.startsWith("data:")) {
       const extracted = extractDataUri(src, targetDir, logger, fileName);
@@ -366,7 +294,6 @@ function findAndExtractDataUris(
       }
     }
 
-    // Handle 'srcset' attribute (basic comma-separated parsing)
     const srcset = $el.attr("srcset");
     if (srcset?.includes("data:")) {
       let modifiedSrcset = false;
@@ -386,23 +313,12 @@ function findAndExtractDataUris(
         }
         return trimmed;
       });
-
-      if (modifiedSrcset) {
-        $el.attr("srcset", newParts.join(", "));
-      }
+      if (modifiedSrcset) $el.attr("srcset", newParts.join(", "));
     }
   });
-
   return extractedCount;
 }
 
-/**
- * Converts inline style attributes into CSS classes to support strict CSP.
- *
- * @param $ - Cheerio API instance for the current HTML document.
- * @param enableCsp - Whether to add a security nonce to the generated style tag.
- * @returns True if any styles were processed and modified.
- */
 function processStyles($: cheerio.CheerioAPI, enableCsp: boolean): boolean {
   let modified = false;
   const styleToClassMap = new Map<string, string>();
@@ -410,8 +326,6 @@ function processStyles($: cheerio.CheerioAPI, enableCsp: boolean): boolean {
   $("[style]").each((_, el) => {
     const $el = $(el);
     const styleContent = $el.attr("style");
-
-    // Remove empty style attributes (e.g., from Mermaid SVGs) to avoid CSP violations
     if (!styleContent || styleContent.trim() === "") {
       $el.removeAttr("style");
       modified = true;
@@ -424,7 +338,6 @@ function processStyles($: cheerio.CheerioAPI, enableCsp: boolean): boolean {
       .digest("hex");
     const className = `sh-${hash}`;
     styleToClassMap.set(styleContent, className);
-
     $el.removeAttr("style");
     $el.addClass(className);
     modified = true;
@@ -433,11 +346,6 @@ function processStyles($: cheerio.CheerioAPI, enableCsp: boolean): boolean {
   if (styleToClassMap.size > 0) {
     let cssRules = "";
     for (const [styleDef, className] of styleToClassMap.entries()) {
-      // Sanitize style content to prevent:
-      // 1. HTML tag breakout: </style>
-      // 2. CSS rule breakout: { or }
-      // We use CSS character escapes (\hex) for these characters.
-      // Note: The space after the hex code is important as it terminates the escape sequence.
       const sanitizedStyle = styleDef
         .replaceAll("\\", String.raw`\5c `)
         .replaceAll("<", String.raw`\3c `)
@@ -448,7 +356,6 @@ function processStyles($: cheerio.CheerioAPI, enableCsp: boolean): boolean {
         .replaceAll('"', String.raw`\22 `)
         .replaceAll("/*", String.raw`\2f \2a `)
         .replaceAll("*/", String.raw`\2a \2f `);
-
       cssRules += `.${className}{${sanitizedStyle}}`;
     }
     const styleNonce = enableCsp ? ' nonce="NGINX_CSP_NONCE"' : "";
@@ -460,16 +367,6 @@ function processStyles($: cheerio.CheerioAPI, enableCsp: boolean): boolean {
   return modified;
 }
 
-/**
- * Processes script and link tags to add SRI hashes. Also adds CSP nonces to scripts.
- *
- * @param $ - Cheerio API instance for the current HTML document.
- * @param file - Absolute path to the HTML file.
- * @param distDir - The absolute path to the production build output.
- * @param hashCache - Cache map for file integrity hashes.
- * @param enableCsp - Whether to enable CSP-specific features.
- * @returns An object containing the modified status and updated tag count.
- */
 function processScriptsAndLinks(
   $: cheerio.CheerioAPI,
   file: string,
@@ -480,7 +377,6 @@ function processScriptsAndLinks(
   let modified = false;
   let updatedTags = 0;
 
-  // Process script tags for SRI and nonces
   $("script[src]").each((_, el) => {
     const res = processTagSri(
       $(el),
@@ -495,20 +391,15 @@ function processScriptsAndLinks(
     if (res.updated) updatedTags++;
   });
 
-  // Process link[rel=stylesheet] tags for SRI
-  // Note: preload/modulepreload for fonts, images, etc. don't support SRI in browsers
-  // (see Chrome bug https://crbug.com/981419) and cause console warnings, so we skip them.
   $("link[href][rel='stylesheet']").each((_, el) => {
-    const $el = $(el);
-
     const res = processTagSri(
-      $el,
+      $(el),
       "href",
       "link",
       file,
       distDir,
       hashCache,
-      false, // Don't add nonces to link tags
+      false,
     );
     if (res.modified) modified = true;
     if (res.updated) updatedTags++;
@@ -517,18 +408,6 @@ function processScriptsAndLinks(
   return { modified, updatedTags };
 }
 
-/**
- * Handles SRI and Nonce logic for a single tag.
- *
- * @param $el - Cheerio element representing the tag.
- * @param attr - The attribute containing the resource URL (src or href).
- * @param type - The type of tag (script or link).
- * @param file - Absolute path to the current HTML file.
- * @param distDir - The absolute path to the production build output.
- * @param hashCache - Cache map for file integrity hashes.
- * @param enableCsp - Whether to enable CSP-specific features.
- * @returns An object containing the modified and updated status.
- */
 function processTagSri(
   $el: cheerio.Cheerio<Element>,
   attr: string,
@@ -540,57 +419,27 @@ function processTagSri(
 ): { modified: boolean; updated: boolean } {
   let modified = false;
   let updated = false;
-
   const url = $el.attr(attr);
   if (!url) return { modified, updated };
 
   if (addIntegrity($el, url, type, file, distDir, hashCache)) {
-    // Ensure crossorigin is set for SRI to work correctly
-    if (!$el.attr("crossorigin")) {
-      $el.attr("crossorigin", "anonymous");
-    }
+    if (!$el.attr("crossorigin")) $el.attr("crossorigin", "anonymous");
     modified = true;
     updated = true;
   }
-
-  if (enableCsp && addNonce($el, type)) {
-    modified = true;
-  }
-
+  if (enableCsp && addNonce($el, type)) modified = true;
   return { modified, updated };
 }
 
-/**
- * Determines if a tag is eligible for Subresource Integrity (SRI).
- *
- * @param $el - Cheerio element representing the tag.
- * @param type - The type of tag (script or link).
- * @returns True if the tag is SRI eligible.
- */
 function isSriEligible(
   $el: cheerio.Cheerio<Element>,
   type: "script" | "link",
 ): boolean {
   if (type === "script") return true;
-  if (type === "link") {
-    // Only apply SRI to stylesheets. preloads/modulepreloads can cause
-    // validation issues or redundant browser warnings with SRI.
-    return $el.attr("rel") === "stylesheet";
-  }
+  if (type === "link") return $el.attr("rel") === "stylesheet";
   return false;
 }
 
-/**
- * Adds the 'integrity' attribute containing the SRI hash to a tag.
- *
- * @param $el - Cheerio element representing the tag.
- * @param url - The URL of the resource.
- * @param type - The type of tag (script or link).
- * @param file - Absolute path to the current HTML file.
- * @param distDir - The absolute path to the production build output.
- * @param hashCache - Cache map for file integrity hashes.
- * @returns True if the integrity hash was added.
- */
 function addIntegrity(
   $el: cheerio.Cheerio<Element>,
   url: string,
@@ -599,11 +448,8 @@ function addIntegrity(
   distDir: string,
   hashCache: Map<string, string>,
 ): boolean {
-  // Only add integrity to eligible tags and only if not already present
   if (isSriEligible($el, type) && !$el.attr("integrity")) {
-    // Skip cf-beacon.js to avoid integrity failures (caching/updates)
     if (url.endsWith("cf-beacon.js")) return false;
-
     const filePath = resolveFile(url, path.dirname(file), distDir);
     if (filePath) {
       const hash = getFileHash(filePath, hashCache);
@@ -614,18 +460,10 @@ function addIntegrity(
   return false;
 }
 
-/**
- * Adds a security nonce placeholder to a tag for Nginx processing.
- *
- * @param $el - Cheerio element representing the tag.
- * @param type - The type of tag (script or link).
- * @returns True if the nonce was added.
- */
 function addNonce(
   $el: cheerio.Cheerio<Element>,
   type: "script" | "link",
 ): boolean {
-  // Only apply nonce to <script> tags for CSP consistency.
   if (type === "script" && !$el.attr("nonce")) {
     $el.attr("nonce", "NGINX_CSP_NONCE");
     return true;
@@ -633,14 +471,6 @@ function addNonce(
   return false;
 }
 
-/**
- * Scans inline style and script tags to collect hashes for the CSP policy.
- *
- * @param $ - Cheerio API instance for the current HTML document.
- * @param cspData - Shared object to store collected CSP hashes.
- * @param enableCsp - Whether CSP collection is enabled.
- * @returns True if any tags were modified (nonces added).
- */
 function collectInlineHashes(
   $: cheerio.CheerioAPI,
   cspData: CspData,
@@ -649,49 +479,30 @@ function collectInlineHashes(
   if (!enableCsp) return false;
   let modified = false;
 
-  // Process ALL style tags in the entire document (including those inside SVGs)
   $("style").each((_, el) => {
     const $el = $(el);
-    const styleHtml = $el.html() || "";
-
-    // Always collect dual hashes for every style tag
-    getDualHashes(styleHtml).forEach((h) => cspData.styleHashes.add(h));
-
-    // Ensure it also has a nonce for dynamic replacement
+    getDualHashes($el.html() || "").forEach((h) => cspData.styleHashes.add(h));
     if (!$el.attr("nonce")) {
       $el.attr("nonce", "NGINX_CSP_NONCE");
       modified = true;
     }
   });
 
-  // Process ALL inline script tags
   $("script:not([src])").each((_, el) => {
     const $el = $(el);
-    const scriptHtml = $el.html() || "";
-
-    // Always collect dual hashes
-    getDualHashes(scriptHtml).forEach((h) => cspData.scriptHashes.add(h));
-
+    getDualHashes($el.html() || "").forEach((h) => cspData.scriptHashes.add(h));
     if (!$el.attr("nonce")) {
       $el.attr("nonce", "NGINX_CSP_NONCE");
       modified = true;
     }
   });
-
   return modified;
 }
 
-/**
- * Identifies external image hostnames to add to the CSP img-src directive.
- *
- * @param $ - Cheerio API instance for the current HTML document.
- * @param cspData - Shared object to store collected image domains.
- */
 function collectImageDomains($: cheerio.CheerioAPI, cspData: CspData) {
   $("img[src], source[srcset], img[srcset]").each((_, el) => {
     const $el = $(el);
     const sources = ($el.attr("src") || "") + " " + ($el.attr("srcset") || "");
-
     for (const srcCandidate of sources.split(/,?\s+/)) {
       const src = srcCandidate.trim().split(" ")[0];
       if (src && (src.startsWith("http") || src.startsWith("//"))) {
@@ -699,27 +510,15 @@ function collectImageDomains($: cheerio.CheerioAPI, cspData: CspData) {
           const url = src.startsWith("//")
             ? new URL(`https:${src}`)
             : new URL(src);
-          if (url.hostname) {
-            cspData.imageDomains.add(url.hostname);
-          }
+          if (url.hostname) cspData.imageDomains.add(url.hostname);
         } catch {
-          // Ignore invalid URLs
+          /* ignore */
         }
       }
     }
   });
 }
 
-/**
- * Replaces the Cloudflare beacon integrity placeholder with the actual calculated hash.
- *
- * @param $ - Cheerio API instance for the current HTML document.
- * @param distDir - The absolute path to the production build output.
- * @param file - Absolute path to the current HTML file.
- * @param hashCache - Cache map for file integrity hashes.
- * @param logger - The Astro logger instance.
- * @returns True if the beacon script was modified or removed.
- */
 function processBeacon(
   $: cheerio.CheerioAPI,
   distDir: string,
@@ -728,13 +527,11 @@ function processBeacon(
   logger: AstroIntegrationLogger,
 ): boolean {
   let modified = false;
-  const beaconScriptsPath = path.join(distDir, "scripts", "cf-beacon.js");
-
-  // Use selector-based check instead of serializing entire document
-  const beaconPlaceholders = $('script[integrity="__BEACON_INTEGRITY_HASH__"]');
+  const beaconPath = path.join(distDir, "scripts", "cf-beacon.js");
+  const beaconPlaceholders = $("script[integrity='__BEACON_INTEGRITY_HASH__']");
   if (beaconPlaceholders.length > 0) {
-    if (fs.existsSync(beaconScriptsPath)) {
-      const hash = getFileHash(beaconScriptsPath, hashCache, "sha512");
+    if (fs.existsSync(beaconPath)) {
+      const hash = getFileHash(beaconPath, hashCache, "sha512");
       beaconPlaceholders.each((_, el) => {
         $(el).attr("integrity", hash);
       });
@@ -748,57 +545,58 @@ function processBeacon(
   return modified;
 }
 
-/**
- * Sanitizes a language name for safe use in aria-labels.
- * Restricts to alphanumeric characters, hyphens, and underscores only.
- */
 function sanitizeLanguage(lang: string): string {
-  // Allow only alphanumeric, hyphens, and underscores; default to "code" if empty
-  const sanitized = lang.replaceAll(/[^a-zA-Z0-9_-]/g, "").toLowerCase();
-  return sanitized || "code";
+  return lang.replaceAll(/[^a-zA-Z0-9_-]/g, "").toLowerCase() || "code";
 }
 
-/**
- * Processes code blocks to ensure they are accessible and valid HTML5.
- * - Wraps standalone <pre> tags in <section> if they act as landmarks.
- * - Ensures unique aria-labels for all code regions.
- *
- * @param $ - Cheerio API instance.
- * @returns True if any code blocks were modified.
- */
 function processCodeBlocks($: cheerio.CheerioAPI): boolean {
   let modified = false;
   let regionCount = 0;
-
-  // 1. Fix standalone Shiki code blocks (<pre> with tabindex or role)
   $("pre[tabindex='0'], pre[role='region']").each((_, el) => {
     const $el = $(el);
-
-    // Skip if already inside a section landmark (e.g. from our components)
     if ($el.closest("section[aria-label]").length > 0) {
-      // Just ensure no redundant role
       if ($el.attr("role") === "region") {
         $el.removeAttr("role");
         modified = true;
       }
       return;
     }
-
     regionCount++;
-    // Sanitize data-language to prevent injection of unsafe characters
-    const rawLang = $el.attr("data-language") || "code";
-    const safeLang = sanitizeLanguage(rawLang);
+    const safeLang = sanitizeLanguage($el.attr("data-language") || "code");
     const displayLang = safeLang.charAt(0).toUpperCase() + safeLang.slice(1);
-    const uniqueLabel = `${displayLang} snippet ${regionCount}`;
-
-    // Build wrapper as HTML string for consistent behavior
-    const wrapperHtml = `<section aria-label="${uniqueLabel}" class="code-section-wrapper"></section>`;
-
-    // Wrap the pre element
+    const wrapperHtml = `<section aria-label="${displayLang} snippet ${regionCount}" class="code-section-wrapper"></section>`;
     $el.wrap(wrapperHtml);
-    $el.removeAttr("role"); // Landmark is now the section
+    $el.removeAttr("role");
     modified = true;
   });
+  return modified;
+}
 
+function processLinks($: cheerio.CheerioAPI): boolean {
+  let modified = false;
+  const binaryExtensions = [
+    ".pdf",
+    ".zip",
+    ".rar",
+    ".7z",
+    ".pptx",
+    ".docx",
+    ".xlsx",
+    ".mp4",
+    ".mp3",
+    ".iso",
+    ".tar.gz",
+  ];
+  $("a[href]").each((_, el) => {
+    const $el = $(el);
+    const href = $el.attr("href")?.toLowerCase() || "";
+    if (
+      binaryExtensions.some((ext) => href.endsWith(ext)) &&
+      $el.attr("data-astro-prefetch") !== "false"
+    ) {
+      $el.attr("data-astro-prefetch", "false");
+      modified = true;
+    }
+  });
   return modified;
 }
