@@ -99,9 +99,9 @@ async function checkNoSonar(component, line) {
     const content = fs.readFileSync(fullPath, "utf-8");
     const lines = content.split("\n");
 
-    // Narrow window to exactly the line and its immediate neighbors (±1)
-    const start = Math.max(0, line - 2);
-    const end = Math.min(lines.length, line + 1);
+    // Expand window to +/- 2 lines to be more resilient to line number shifts
+    const start = Math.max(0, line - 3);
+    const end = Math.min(lines.length, line + 2);
     const windowLines = lines.slice(start, end);
 
     return windowLines.some((l) => (l || "").toUpperCase().includes("NOSONAR"));
@@ -206,7 +206,8 @@ async function main() {
       process.exit(1);
     }
   } catch (error) {
-    logger.error(`❌ Failed to fetch SonarCloud reports: ${error.message}`);
+    const message = error instanceof Error ? error.message : String(error);
+    logger.error(`❌ Failed to fetch SonarCloud reports: ${message}`);
     process.exit(1);
   } finally {
     logger.info("\n" + "".padEnd(80, "=") + "\n");

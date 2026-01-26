@@ -37,8 +37,15 @@ export async function optimizeImages(
       if (originalSize < 1024) return { optimized: false, saved: 0 };
 
       const buffer = await fs.promises.readFile(file);
+      const isSmallIcon =
+        originalSize < 51_200 || file.toLowerCase().includes("icon");
+
       const optimizedBuffer = await sharp(buffer)
-        .png({ palette: true, compressionLevel: 9, quality: 80 })
+        .png({
+          palette: isSmallIcon,
+          compressionLevel: 9,
+          quality: 80,
+        })
         .toBuffer();
 
       if (optimizedBuffer.length < originalSize) {

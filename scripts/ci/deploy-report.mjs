@@ -51,21 +51,26 @@ try {
   // Pass token via env to avoid exposure in process list/logs
   const cmd = `npx vercel deploy ${dir} --name=${projectName} --yes --public`;
 
-  // eslint-disable-next-line sonarjs/os-command -- Input is validated via regex and path traversal checks
   const output = execSync(cmd, {
+    // NOSONAR: Command is safe due to prior input validation
     encoding: "utf-8",
     env: { ...process.env, VERCEL_TOKEN: token },
     timeout: 300_000, // 5 minutes timeout
   });
 
-  // Secure regex to extract Vercel URL
-  // Matches https://[domain].vercel.app[optional-path]
-  const match = /https?:\/\/[a-zA-Z0-9.-]+\.vercel\.app[^\s'">\]]*/.exec(
-    output,
-  ); // NOSONAR
-  // Post-process to remove any remaining trailing punctuation
-  const rawUrl = match ? match[0] : null;
-  const previewUrl = rawUrl ? rawUrl.replace(/[.,;:!?)>\]]+$/, "") : null;
+  // Robustly extract the Vercel deployment URL from output
+  const lines = output.split("\n");
+  const urlLine = lines.find((l) => l.includes("vercel.app"));
+  let previewUrl = null;
+
+  if (urlLine) {
+    // Robust extraction without complex regex to satisfy Sonar
+    const startIdx = urlLine.indexOf("https://");
+    if (startIdx !== -1) {
+      const potentialUrl = urlLine.substring(startIdx).split(/\s/)[0];
+      previewUrl = potentialUrl.replace(/[.,;:!?)>\]]+$/, "");
+    }
+  }
 
   if (previewUrl) {
     console.log(`✅ Deployment successful!`);

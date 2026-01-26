@@ -61,7 +61,7 @@ function getAccName($, $el, attrs) {
         return el.length > 0 ? el.text().trim() : "";
       })
       .filter(Boolean);
-    return texts.length > 0 ? texts.join(" ") : `(ID: ${attrs.ariaLabelledBy})`;
+    return texts.length > 0 ? texts.join(" ") : "";
   }
   return attrs.ariaLabel || attrs.title || attrs.alt || $el.text().trim();
 }

@@ -23,8 +23,10 @@ function walkDir(dir: string, callback: (path: string) => void) {
         callback(entryPath);
       }
     }
-  } catch {
-    // Ignore missing directories
+  } catch (error) {
+    const err = error as NodeJS.ErrnoException;
+    if (err?.code === "ENOENT") return;
+    console.warn(`Failed to read directory [${dir}]:`, error);
   }
 }
 
@@ -35,6 +37,9 @@ function walkDir(dir: string, callback: (path: string) => void) {
  */
 function parseIcon(icon: string): string | null {
   const trimmed = icon.trim();
+  if (trimmed.startsWith("i-")) {
+    return trimmed;
+  }
   if (trimmed.includes(":")) {
     return `i-${trimmed}`;
   }
@@ -91,7 +96,8 @@ function extractIconsFromContent(content: string) {
       collection !== "tel" &&
       collection !== "data"
     ) {
-      safelistSet.add(`i-${full}`);
+      const iconClass = full.startsWith("i-") ? full : `i-${full}`;
+      safelistSet.add(iconClass);
     }
   }
 }

@@ -48,10 +48,18 @@ const getActiveRules = () => {
     if (!firstHtml) return {};
 
     const configJson = execFileSync(
+      // NOSONAR: Restricted PATH for security
+
       "pnpm",
+
       ["exec", "html-validate", "-c", CONFIG_FILE, "--print-config", firstHtml],
-      { encoding: "utf-8" },
-    ); // NOSONAR
+
+      {
+        encoding: "utf-8",
+
+        env: { ...process.env, PATH: "/usr/local/bin:/usr/bin:/bin" },
+      },
+    );
     const config = JSON.parse(configJson);
     return config.rules || {};
   } catch (error) {
@@ -340,7 +348,7 @@ const generateHtml = (results, activeRules) => {
         </div>
 
         <footer style="margin-top: 3rem; text-align: center; color: var(--text-muted); font-size: 0.875rem; border-top: 1px solid var(--border); padding-top: 1rem;">
-            Generated on ${new Date().toLocaleString("en-US", { timeZone: "UTC" })} UTC | html-validate engine
+            Generated on ${new Date().toISOString()} | html-validate engine
         </footer>
     </div>
 </body>
@@ -357,8 +365,21 @@ const main = () => {
     process.exit(1);
   }
 
+  // Support both array-shaped reports and { results: [...] } objects
+  let results;
+  if (Array.isArray(report)) {
+    results = report;
+  } else if (Array.isArray(report.results)) {
+    results = report.results;
+  } else {
+    console.error(
+      "❌ Invalid validation report format. Expected an array or an object with a 'results' array.",
+    );
+    process.exit(1);
+  }
+
   const activeRules = getActiveRules();
-  const html = generateHtml(report.results, activeRules);
+  const html = generateHtml(results, activeRules);
 
   fs.writeFileSync(OUTPUT_FILE, html, "utf-8");
   console.log(`✅ HTML report generated at ${OUTPUT_FILE}`);

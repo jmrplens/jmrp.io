@@ -278,6 +278,7 @@ export default [
       "sonarjs/no-os-command-from-path": "off",
       "sonarjs/no-nested-template-literals": "off",
       "sonarjs/slow-regex": "off",
+      "sonarjs/os-command": "off", // CI scripts need to execute OS commands
     },
   },
   {

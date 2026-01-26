@@ -1,4 +1,3 @@
-/* eslint-disable sonarjs/os-command */
 /**
  * Quality Assurance Orchestrator (Verify)
  *
@@ -49,7 +48,10 @@ function runStep(name, command, condition = true) {
   console.log(`${colors.reset}   ${command}`);
 
   try {
-    execSync(command, { stdio: "inherit" });
+    execSync(command, {
+      // NOSONAR: Internal verification script executes known safe commands
+      stdio: "inherit",
+    });
     console.log(`${colors.green}✅ ${name} passed!${colors.reset}\n`);
     return true;
   } catch {

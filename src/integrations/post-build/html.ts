@@ -592,7 +592,9 @@ function processLinks($: cheerio.CheerioAPI): boolean {
   let modified = false;
   $("a[href]").each((_, el) => {
     const $el = $(el);
-    const href = $el.attr("href")?.toLowerCase() || "";
+    const rawHref = $el.attr("href") || "";
+    // Strip query string and fragment before checking extension
+    const href = rawHref.split(/[?#]/)[0].toLowerCase();
     if (
       BINARY_EXTENSIONS.some((ext) => href.endsWith(ext)) &&
       $el.attr("data-astro-prefetch") !== "false"

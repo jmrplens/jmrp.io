@@ -155,12 +155,12 @@ function deploySecurityHeaders(
 
   if (!systemNginxExists) {
     logger.info(
-      `Skipping deployment: system Nginx path does not exist [${systemNginxPath}]`,
+      `Skipping deployment: system Nginx path does not exist [${path.basename(systemNginxPath)}]`,
     );
   }
   if (!generatedExists) {
     logger.info(
-      `Skipping deployment: generated security headers not found [${generatedPath}]`,
+      `Skipping deployment: generated security headers not found [${path.basename(generatedPath)}]`,
     );
   }
 
