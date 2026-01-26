@@ -68,11 +68,24 @@ module.exports = {
             : ["--headless"],
         formFactor: process.env.FORM_FACTOR || "mobile",
         throttlingMethod: "simulate",
-        throttling: {
-          // Compensate for slow GitHub Action runners.
-          // Default mobile is 4x, we use 2x. Default desktop is 1x.
-          cpuSlowdownMultiplier: process.env.FORM_FACTOR === "desktop" ? 1 : 2,
-        },
+        throttling:
+          process.env.FORM_FACTOR === "desktop"
+            ? {
+                rttMs: 40,
+                throughputKbps: 10240,
+                cpuSlowdownMultiplier: 1,
+                requestLatencyMs: 0,
+                downloadThroughputKbps: 10240,
+                uploadThroughputKbps: 10240,
+              }
+            : {
+                rttMs: 150,
+                throughputKbps: 1638.4,
+                cpuSlowdownMultiplier: 2,
+                requestLatencyMs: 0,
+                downloadThroughputKbps: 1638.4,
+                uploadThroughputKbps: 600,
+              },
         screenEmulation:
           process.env.FORM_FACTOR === "desktop"
             ? {
