@@ -276,4 +276,93 @@ if (language) {
     gap: 0.75rem;
     align-items: center;
   }
+
+  .file-icon {
+    flex-shrink: 0;
+    font-size: 1.3rem;
+  }
+
+  .chevron-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-text-muted);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .file-details[open] .chevron-wrapper {
+    transform: rotate(180deg);
+  }
+
+  .file-body {
+    padding: 0;
+
+    /* Removed overflow: hidden to allow child scrollbars to be fully visible/interactive */
+  }
+
+  .file-body > div {
+    /* Removed padding to let pre element fill the space naturally */
+    padding: 0;
+    font-family: var(--font-mono);
+    font-size: var(--font-size-sm);
+    line-height: 1.6;
+
+    /* Removed white-space: pre-wrap; as it conflicts with pre's own handling */
+    outline: none;
+  }
+
+  /* Style the <pre> element that comes from the slot */
+  .file-body :global(pre),
+  .file-body :global(.astro-code) {
+    display: block;
+    width: 100%;
+    padding: 1rem 1.25rem !important;
+    margin: 0 !important;
+    overflow-x: auto;
+
+    /* Typography */
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    line-height: 1.6;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+
+    /* Mobile Fix: Prevent font inflation */
+    text-size-adjust: none;
+  }
+
+  /* Accessibility: Boost contrast in light mode */
+  :root:not([data-theme="dark"]) .file-content-wrapper {
+    background-color: var(--color-bg-secondary);
+    border-color: var(--color-border);
+  }
+
+  :root:not([data-theme="dark"]) .file-body :global(pre),
+  :root:not([data-theme="dark"]) .file-body :global(.astro-code) {
+    background-color: var(--color-bg-secondary) !important;
+  }
+
+  /* Dark mode adjustments */
+  :root[data-theme="dark"] .file-content-wrapper {
+    background-color: var(--color-bg-secondary);
+  }
+
+  :root[data-theme="dark"] .file-body :global(pre) {
+    background-color: transparent !important;
+  }
+
+  /* Override copy button positioning for header integration */
+  :global(.file-header-copy-btn) {
+    position: static !important;
+  }
+
+  :global(.file-header-copy-btn.absolute-header) {
+    --file-header-copy-offset: 2.8rem;
+
+    position: absolute !important;
+    top: 0.5rem;
+    right: var(--file-header-copy-offset);
+    z-index: 10;
+  }
 </style>

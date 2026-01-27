@@ -17,8 +17,12 @@
 
   /* Typography (Managed by Astro Fonts) */
 
-  --font-body: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-body:
+    var(--font-geist-sans), "Geist Sans", -apple-system, blinkmacsystemfont,
+    "Segoe UI", roboto, helvetica, arial, sans-serif;
+  --font-mono:
+    var(--font-geist-mono), "Geist Mono", ui-monospace, sfmono-regular,
+    "SF Mono", menlo, monaco, consolas, monospace;
 
   /* Font Weights */
   --fw-normal: 400;
@@ -217,24 +221,74 @@ h4,
 h5,
 h6 {
   scroll-margin-top: calc(var(--header-height) + 1rem);
+  font-weight: var(--fw-bold);
+  color: var(--color-text-heading);
+  line-height: 1.3;
 }
 
 h1 {
   font-size: 1.75em;
-  line-height: 1.2;
-
-  /* Removed text-wrap balance to improve LCP/rendering speed */
 }
 
-/* Safety: ensure any h1 inside .prose matches the global h1 size */
+h2 {
+  font-size: 1.5em;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+}
+
+h3 {
+  font-size: 1.25em;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+h4 {
+  font-size: 1.1em;
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+
+/* Safety: ensure headers inside .prose match the intended sizes */
 .prose h1 {
   font-size: 1.75em;
+}
+
+.prose h2 {
+  font-size: 1.5em;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+}
+
+.prose h3 {
+  font-size: 1.25em;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.prose h4 {
+  font-size: 1.1em;
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
 }
 
 /* Optimization: Skip layout for off-screen content */
 .prose {
   contain-intrinsic-size: 1px 5000px;
   content-visibility: auto;
+}
+
+.prose p {
+  margin-bottom: 1.25rem;
+}
+
+.prose ul,
+.prose ol {
+  padding-left: 1.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.prose li {
+  margin-bottom: 0.5rem;
 }
 
 /* Accessibility: Links in text blocks must have non-color indicator */
