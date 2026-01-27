@@ -69,6 +69,7 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
                   href={author.url}
                   target="_blank"
                   rel="noopener noreferrer"
+                  data-astro-prefetch="false"
                   aria-label={`View publications by ${author.given} ${author.family} (from: ${pub.title})`}
                 >
                   {author.given} {author.family}
@@ -124,6 +125,7 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
               class="btn-sm"
               target="_blank"
               rel="noopener noreferrer"
+              data-astro-prefetch="false"
               aria-label={`Download PDF for ${pub.title}`}
             >
               <span class="i-fa-solid:file-pdf" /> PDF
@@ -137,6 +139,7 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
               class="btn-sm"
               target="_blank"
               rel="noopener noreferrer"
+              data-astro-prefetch="false"
               aria-label={`View DOI for ${pub.title}`}
             >
               <span class="i-fa-solid:external-link-alt" /> DOI
@@ -150,6 +153,7 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
               class="btn-sm"
               target="_blank"
               rel="noopener noreferrer"
+              data-astro-prefetch="false"
               aria-label={`View URL for ${pub.title}`}
             >
               <span class="i-fa-solid:link" /> URL
@@ -163,6 +167,7 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
               class="btn-sm"
               target="_blank"
               rel="noopener noreferrer"
+              data-astro-prefetch="false"
               aria-label={`View Slides for ${pub.title}`}
             >
               <span class="i-fa-solid:chalkboard-teacher" /> Slides
@@ -176,6 +181,7 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
               class="btn-sm"
               target="_blank"
               rel="noopener noreferrer"
+              data-astro-prefetch="false"
               aria-label={`View Poster for ${pub.title}`}
             >
               <span class="i-fa-solid:image" /> Poster

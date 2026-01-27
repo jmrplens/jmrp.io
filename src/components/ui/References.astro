@@ -78,6 +78,7 @@ const iconFiles = import.meta.glob<{ default: ImageMetadata }>(
               {...(isExternalLink
                 ? { target: "_blank", rel: "noopener noreferrer" }
                 : {})}
+              data-astro-prefetch="false"
               class="reference-card"
             >
               <div class="card-icon">
