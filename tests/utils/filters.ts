@@ -58,7 +58,8 @@ export function shouldIgnoreError(text: string): boolean {
     (text.includes("/_astro/favicon") ||
       ((text.includes("/assets/") || text.includes("/pdf/")) &&
         text.includes(".pdf")) ||
-      text.includes("/assets/icons/"));
+      text.includes("/assets/icons/") ||
+      text.includes("/api/proxy/"));
 
   return (
     isCloudflareInsightsError(text) ||

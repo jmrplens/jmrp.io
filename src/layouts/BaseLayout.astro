@@ -60,37 +60,65 @@ const {
     />
     <SRIEventListener />
     <script is:inline>
-      // Critical: Execute immediately to prevent FOUC
+      // Nuclear Theme Managed - Persistent & Prefetch-proof
       (function () {
-        const getTheme = () => {
-          try {
-            if (typeof localStorage !== "undefined") {
-              const saved = localStorage.getItem("theme");
-              if (saved === "light" || saved === "dark") return saved;
-            }
-          } catch {
-            // localStorage may be blocked; ignore
+        const THEME_KEY = "theme";
+        const getStored = () => {
+          if (typeof localStorage !== "undefined") {
+            const saved = localStorage.getItem(THEME_KEY);
+            if (saved === "light" || saved === "dark") return saved;
           }
-
-          // Respect system preference if available
-          if (window.matchMedia("(prefers-color-scheme: light)").matches) {
-            return "light";
-          }
-          if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
-            return "dark";
-          }
-
-          // Fallback if no preference is indicated or supported
-          return "dark";
+          return window.matchMedia("(prefers-color-scheme: light)").matches
+            ? "light"
+            : "dark";
         };
-        const theme = getTheme();
-        document.documentElement.dataset.theme = theme;
-        if (theme === "light") {
-          document.documentElement.classList.add("light-mode");
-          document.documentElement.classList.remove("dark-mode");
-        } else {
-          document.documentElement.classList.add("dark-mode");
-          document.documentElement.classList.remove("light-mode");
+
+        const apply = (doc = document) => {
+          const theme = getStored();
+          const el = doc.documentElement;
+          if (el.dataset.theme !== theme) {
+            el.dataset.theme = theme;
+            el.classList.remove("light-mode", "dark-mode");
+            el.classList.add(`${theme}-mode`);
+          }
+        };
+
+        // 1. Initial immediate apply
+        apply();
+
+        // 2. Global API
+        window.toggleTheme = () => {
+          const next = getStored() === "dark" ? "light" : "dark";
+          try {
+            localStorage.setItem(THEME_KEY, next);
+          } catch (e) {}
+          apply();
+          window.dispatchEvent(
+            new CustomEvent("theme-changed", { detail: { theme: next } }),
+          );
+        };
+
+        // 3. Robust Transition Handling
+        if (!window.themeHandlersSet) {
+          // Sync new document BEFORE it's swapped
+          document.addEventListener("astro:before-swap", (ev) =>
+            apply(ev.newDocument),
+          );
+          // Re-sync after swap just in case
+          document.addEventListener("astro:after-swap", () => apply());
+
+          // 4. NUCLEAR OPTION: Mutation Observer
+          // If Astro's swap logic or prefetch merges stale attributes, we force them back
+          const observer = new MutationObserver(() => {
+            const theme = getStored();
+            if (document.documentElement.dataset.theme !== theme) apply();
+          });
+          observer.observe(document.documentElement, {
+            attributes: true,
+            attributeFilter: ["data-theme"],
+          });
+
+          window.themeHandlersSet = true;
         }
       })();
     </script>
