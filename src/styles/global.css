@@ -451,6 +451,7 @@ h4 {
 /* Page & Section Titles */
 .page-title {
   padding-bottom: var(--space-md);
+  margin-top: var(--space-lg);
   margin-bottom: var(--space-xl);
   font-size: 2rem;
   border-bottom: var(--border-2);
