@@ -38,11 +38,8 @@ function run(cmd) {
  */
 function getDeployments(next = "") {
   try {
-    // We fetch all deployments and filter client-side because Vercel CLI 'ls'
-    // filtering capabilities are limited for custom metadata in some versions.
-    // 'meta-prid' filter might work in API but CLI support varies.
-    // We'll fetch listing and filter manually to be safe.
-    const cmd = `npx vercel ls ${PROJECT_NAME} --token=${TOKEN} --format json ${next ? `--next ${next}` : ""}`;
+    const nextParam = next ? `--next ${next}` : "";
+    const cmd = `npx vercel ls ${PROJECT_NAME} --token=${TOKEN} --format json ${nextParam}`;
     const output = run(cmd);
     return JSON.parse(output);
   } catch (error) {
@@ -51,7 +48,7 @@ function getDeployments(next = "") {
   }
 }
 
-async function cleanup() {
+function cleanup() {
   console.log(
     `🧹 Starting cleanup for PR #${PR_NUMBER} in project: ${PROJECT_NAME}`,
   );
@@ -64,7 +61,7 @@ async function cleanup() {
   while (hasMore) {
     const data = getDeployments(next);
 
-    if (!data || !data.deployments || data.deployments.length === 0) {
+    if (!data?.deployments || data.deployments.length === 0) {
       break;
     }
 
@@ -73,8 +70,7 @@ async function cleanup() {
     // Filter deployments matching the PR ID
     const targetDeployments = data.deployments.filter((d) => {
       // Check metadata for prid
-      // Note: Vercel JSON output puts metadata in 'meta' object
-      return d.meta && d.meta.prid === String(PR_NUMBER);
+      return d.meta?.prid === String(PR_NUMBER);
     });
 
     if (targetDeployments.length > 0) {
@@ -85,7 +81,6 @@ async function cleanup() {
       for (const dep of targetDeployments) {
         try {
           process.stdout.write(`   🗑️ Deleting ${dep.url}... `);
-          // Use 'url' or 'uid' for removal. 'url' is safer as it's visible.
           run(`npx vercel rm ${dep.url} --token=${TOKEN} --yes`);
           console.log("✅");
           deletedCount++;
@@ -97,20 +92,21 @@ async function cleanup() {
     }
 
     // Pagination
-    if (data.pagination && data.pagination.next) {
+    if (data.pagination?.next) {
       next = data.pagination.next;
     } else {
       hasMore = false;
     }
   }
 
-  console.log(`
-✨ Cleanup complete!`);
+  console.log("\n✨ Cleanup complete!");
   console.log(`   - Scanned: ${scannedCount} deployments`);
   console.log(`   - Deleted: ${deletedCount} deployments for PR #${PR_NUMBER}`);
 }
 
-cleanup().catch((error) => {
+try {
+  cleanup();
+} catch (error) {
   console.error("Fatal error during cleanup:", error);
   process.exit(1);
-});
+}

@@ -6,65 +6,72 @@
  * to help maintain a lightweight and high-performance site.
  */
 
-import { execSync } from "node:child_process";
 import fs from "node:fs";
+import path from "node:path";
+
+const DIST_DIR = "dist";
+const OUTPUT_FILE = "image-report.html";
+
+/**
+ * Escapes HTML special characters.
+ */
+const escapeHtml = (str) =>
+  str
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
+
+/**
+ * Recursively find all files in a directory matching specific extensions
+ */
+const findFiles = (dir, extensions, fileList = []) => {
+  if (!fs.existsSync(dir)) return [];
+
+  const files = fs.readdirSync(dir);
+  for (const file of files) {
+    const filePath = path.join(dir, file);
+    const stat = fs.statSync(filePath);
+
+    if (stat.isDirectory()) {
+      findFiles(filePath, extensions, fileList);
+    } else {
+      const ext = path.extname(file).toLowerCase();
+      if (extensions.includes(ext)) {
+        const sizeHuman =
+          stat.size > 500 * 1024
+            ? (stat.size / (1024 * 1024)).toFixed(2) + " MB"
+            : (stat.size / 1024).toFixed(2) + " KB";
+
+        fileList.push({
+          fullPath: filePath,
+          relativePath: path.relative(DIST_DIR, filePath),
+          sizeInBytes: stat.size,
+          sizeHuman,
+        });
+      }
+    }
+  }
+  return fileList;
+};
 
 const generateReport = () => {
-  const findFiles = (pattern) => {
-    try {
-      const output = execSync(
-        `find dist -type f ${pattern} 2>/dev/null || echo ""`,
-        {
-          encoding: "utf-8",
-        },
-      ).trim();
-      return output ? output.split("\n") : [];
-    } catch {
-      return [];
-    }
-  };
+  console.log("📊 Scanning dist for images...");
 
-  const findWithGrep = (pattern) => {
-    try {
-      const output = execSync(
-        `find dist -type f 2>/dev/null | grep -iE "${pattern}" || echo ""`,
-        {
-          encoding: "utf-8",
-        },
-      ).trim();
-      return output ? output.split("\n") : [];
-    } catch {
-      return [];
-    }
-  };
+  const webpFiles = findFiles(DIST_DIR, [".webp"]);
+  const pngFiles = findFiles(DIST_DIR, [".png"]);
+  const jpgFiles = findFiles(DIST_DIR, [".jpg", ".jpeg"]);
 
-  const webp = findFiles('-name "*.webp"');
-  const png = findFiles('-name "*.png"');
-  const jpg = findWithGrep(".jpe?g$");
-
-  const getDetails = (list) => {
-    return list.map((img) => {
-      try {
-        const size = execSync(`ls -lh "${img}" | awk '{print $5}'`, {
-          encoding: "utf-8",
-        }).trim();
-        return { path: img.replace("dist/", ""), size };
-      } catch {
-        return { path: img.replace("dist/", ""), size: "N/A" };
-      }
-    });
-  };
-
-  const data = {
-    webp: getDetails(webp),
-    png: getDetails(png),
-    jpg: getDetails(jpg),
-  };
-
-  const totalImages = webp.length + png.length + jpg.length;
-  const legacyImages = png.length + jpg.length;
+  const totalImages = webpFiles.length + pngFiles.length + jpgFiles.length;
+  const legacyImages = pngFiles.length + jpgFiles.length;
   const optimizationScore =
-    totalImages > 0 ? Math.round((webp.length / totalImages) * 100) : 100;
+    totalImages > 0 ? Math.round((webpFiles.length / totalImages) * 100) : 100;
+
+  const allImageData = [
+    ...webpFiles.map((i) => ({ ...i, f: "WebP" })),
+    ...pngFiles.map((i) => ({ ...i, f: "PNG" })),
+    ...jpgFiles.map((i) => ({ ...i, f: "JPG" })),
+  ].sort((a, b) => b.sizeInBytes - a.sizeInBytes);
 
   const html = `
   <!DOCTYPE html>
@@ -167,7 +174,7 @@ const generateReport = () => {
     <div class="container">
         <header>
             <h1>🖼️ Image Optimization Report</h1>
-            <div class="subtitle">Generated on ${new Date().toLocaleString()}</div>
+            <div class="subtitle">Generated on ${new Date().toISOString()}</div>
         </header>
 
         <div class="summary-grid">
@@ -180,7 +187,7 @@ const generateReport = () => {
             </div>
             <div class="card">
                 <div class="card-label">WebP Images</div>
-                <div class="card-value">${webp.length}</div>
+                <div class="card-value">${webpFiles.length}</div>
                 <div class="card-footer bg-success-soft">Optimized Format</div>
             </div>
             <div class="card">
@@ -202,42 +209,14 @@ const generateReport = () => {
                 </tr>
             </thead>
             <tbody>
-                ${[
-                  ...data.webp.map((i) => ({ ...i, f: "WebP" })),
-                  ...data.png.map((i) => ({ ...i, f: "PNG" })),
-                  ...data.jpg.map((i) => ({ ...i, f: "JPG" })),
-                ]
-                  .sort((a, b) => {
-                    const getBytes = (s) => {
-                      if (!s) return 0;
-                      const trimmed = s.trim();
-                      if (trimmed === "N/A") return 0;
-                      const num = Number.parseFloat(trimmed);
-                      if (Number.isNaN(num)) return 0;
-                      const upper = trimmed.toUpperCase();
-                      if (upper.includes("G")) return num * 1024 * 1024 * 1024;
-                      if (upper.includes("M")) return num * 1024 * 1024;
-                      if (upper.includes("K")) return num * 1024;
-                      return num;
-                    };
-                    return getBytes(b.size) - getBytes(a.size);
-                  })
+                ${allImageData
                   .map((img) => {
-                    const sizeStr =
-                      img.size !== undefined && img.size !== ""
-                        ? img.size
-                        : "N/A";
-                    const sizeUpper = sizeStr.toUpperCase();
-                    const isLarge =
-                      sizeUpper.includes("G") ||
-                      sizeUpper.includes("M") ||
-                      (sizeUpper.includes("K") &&
-                        Number.parseInt(sizeStr) > 500);
+                    const isLarge = img.sizeInBytes > 500 * 1024;
                     return `
                   <tr>
-                    <td class="path-cell">${img.path}</td>
+                    <td class="path-cell">${escapeHtml(img.relativePath)}</td>
                     <td><span class="badge ${img.f === "WebP" ? "badge-webp" : "badge-legacy"}">${img.f}</span></td>
-                    <td class="size-cell ${isLarge ? "size-large" : ""}"> ${img.size}</td>
+                    <td class="size-cell ${isLarge ? "size-large" : ""}"> ${img.sizeHuman}</td>
                   </tr>`;
                   })
                   .join("")}
@@ -249,8 +228,8 @@ const generateReport = () => {
   </html>
   `;
 
-  fs.writeFileSync("image-report.html", html);
-  console.log("✅ Image report generated at image-report.html");
+  fs.writeFileSync(OUTPUT_FILE, html);
+  console.log(`✅ Image report generated at ${OUTPUT_FILE}`);
 };
 
 generateReport();

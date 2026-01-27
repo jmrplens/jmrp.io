@@ -1,42 +1,30 @@
 {
-  "extends": ["html-validate:recommended"],
+  "extends": [
+    "html-validate:recommended",
+    "html-validate:document"
+  ],
   "elements": ["html5"],
   "rules": {
-    "attribute-empty-style": "error",
-    "attr-case": [
-      "error",
-      {
-        "style": "lowercase"
-      }
-    ],
     "no-trailing-whitespace": "off",
     "void-style": "off",
-    "element-permitted-content": "error",
     "valid-id": [
       "error",
       {
         "relaxed": true
       }
     ],
-    "no-raw-characters": "error",
-    "no-implicit-button-type": "error",
-    "no-inline-style": "error",
-    "long-title": "error",
-    "doctype-html": "error",
-    "missing-doctype": "error",
-    "heading-level": "error",
-    "input-missing-label": "error",
-    "unique-landmark": "error",
-    "wcag/h30": "error",
-    "wcag/h37": "error",
-    "wcag/h67": "error",
-    "no-redundant-role": "error",
-    "script-type": "error",
-    "input-attributes": "error",
-    "prefer-native-element": "error",
-    "no-dup-class": "error",
-    "text-content": "error",
-    "empty-heading": "error",
-    "meta-refresh": "error"
+    "require-sri": [
+      "error",
+      {
+        "target": "crossorigin",
+        "exclude": ["/scripts/cf-beacon.js"]
+      }
+    ],
+    "element-required-content": [
+      "error",
+      {
+        "exclude": ["span"]
+      }
+    ]
   }
 }

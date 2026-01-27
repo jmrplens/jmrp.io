@@ -77,7 +77,7 @@ mTLS is a cornerstone of Zero Trust architecture because it provides **mutual au
   </tbody>
 </Table>
 
-### Why mTLS Cannot Be Phished
+### Why mTLS cannot be phished
 
 Unlike passwords, client certificates:
 
@@ -128,19 +128,31 @@ Understanding the difference is fundamental:
   </tbody>
 </Table>
 
-### The Standard HTTPS Model
+### The standard HTTPS model
 
-In regular HTTPS, only the server presents a certificate. The client (browser) verifies it, but the server has no way to verify _who_ the client is—it just knows the connection is encrypted.
 
-### The mTLS Enhancement
 
-mTLS adds a second step: after verifying the server, the **server requests a certificate from the client**. Only clients presenting a valid certificate signed by a trusted CA are allowed to continue.
+In regular HTTPS, only the server presents a certificate.
+
+ The client (browser) verifies it, but the server has no way to verify _who_ the client is—it just knows the connection is encrypted.
+
+### The mTLS enhancement
+
+
+
+mTLS adds a second step: after verifying the server, the **server requests a certificate from the client**.
+
+ Only clients presenting a valid certificate signed by a trusted CA are allowed to continue.
 
 ---
 
-## The mTLS Handshake Flow
+## The mTLS handshake flow
 
-Understanding the handshake helps with debugging. Here's the complete flow:
+
+
+Understanding the handshake helps with debugging.
+
+ Here's the complete flow:
 
 <Mermaid caption="Nginx mTLS Handshake Flow" maxWidth="550px">
 ```mermaid-render
@@ -174,7 +186,7 @@ sequenceDiagram
 ```
 </Mermaid>
 
-### Key Steps Explained
+### Key steps explained
 
 1. **ClientHello**: Client initiates TLS, proposing cipher suites
 2. **ServerHello**: Server responds with its certificate
@@ -185,7 +197,7 @@ sequenceDiagram
 
 ---
 
-## Prerequisites & Directory Setup
+## Prerequisites and directory setup
 
 Before starting, ensure you have:
 
@@ -193,7 +205,7 @@ Before starting, ensure you have:
 - [OpenSSL](https://docs.openssl.org/) (minimum version 1.1.1, check with `openssl version`, recommended 3.5.0+)
 - Root or sudo access
 
-### Create Your PKI Directory
+### Create your PKI directory
 
 A well-organized directory structure is essential for managing certificates:
 
@@ -225,11 +237,15 @@ echo 1000 | sudo tee crlnumber > /dev/null
 
 ---
 
-## Creating Your Certificate Authority
+## Creating your certificate authority
 
-A CA is the root of trust in your PKI. All client certificates must be signed by this CA for Nginx to accept them.
 
-### CA Design Decisions
+
+A CA is the root of trust in your PKI.
+
+ All client certificates must be signed by this CA for Nginx to accept them.
+
+### CA design decisions
 
 Before generating, decide on these parameters:
 
@@ -265,7 +281,7 @@ Before generating, decide on these parameters:
   </tbody>
 </Table>
 
-### Create the OpenSSL Configuration
+### Create the OpenSSL configuration
 
 Create a comprehensive OpenSSL configuration file:
 
@@ -350,7 +366,7 @@ extendedKeyUsage        = clientAuth
 ```
 </FileContent>
 
-### Configuration Breakdown
+### Configuration breakdown
 
 Let's dissect the `openssl.cnf` file to understand what each section controls.
 
@@ -514,7 +530,7 @@ These sections define the "capabilities" of the certificates you issue. This is 
   </tbody>
 </Table>
 
-### Generate the CA Key and Certificate
+### Generate the CA key and certificate
 
 <TerminalCommand>
 ```bash
@@ -535,7 +551,7 @@ sudo openssl req -new -x509 -days 3650 \
 ```
 </TerminalCommand>
 
-### Verify Your CA Certificate
+### Verify your CA certificate
 
 <TerminalCommand>
 ```bash
@@ -569,11 +585,11 @@ Certificate:
 
 ---
 
-## Generating Client Certificates
+## Generating client certificates
 
 Each client (device, user, or service) needs its own certificate signed by your CA.
 
-### SAN vs CN: Which to Use?
+### SAN vs CN: which to use?
 
 <Table title="Subject Alternative Name (SAN) vs Common Name (CN)">
   <thead>
@@ -604,7 +620,7 @@ Each client (device, user, or service) needs its own certificate signed by your 
 
 For simple user identification (like we're doing), CN is sufficient. For service-to-service authentication, use SANs.
 
-### Generate a Client Certificate
+### Generate a client certificate
 
 <TerminalCommand>
 ```bash
@@ -643,7 +659,7 @@ Write out database with 1 new entries
 Database updated
 </TerminalOutput>
 
-### PKCS12 vs PEM: Export Formats
+### PKCS12 vs PEM: export formats
 
 <Table title="Certificate Format Comparison">
   <thead>
@@ -670,7 +686,7 @@ Database updated
   </tbody>
 </Table>
 
-### Create PKCS12 Bundle for Clients
+### Create PKCS12 bundle for clients
 
 <TerminalCommand>
 ```bash
@@ -697,7 +713,7 @@ sudo openssl pkcs12 -export \
 
 Now configure Nginx to require and validate client certificates.
 
-### Understanding ssl_verify_client Options
+### Understanding ssl_verify_client options
 
 The `ssl_verify_client` directive controls how Nginx handles client certificates:
 
@@ -737,7 +753,7 @@ The `ssl_verify_client` directive controls how Nginx handles client certificates
   **Never use `optional_no_ca` in production!** It accepts _any_ certificate without validating the CA chain, defeating the purpose of mTLS.
 </Callout>
 
-### Complete Nginx Configuration
+### Complete Nginx configuration
 
 <FileContent filename="/etc/nginx/sites-available/secure.example.com.conf" icon="devicon:nginx">
 ```nginx
@@ -815,7 +831,7 @@ server {
   - Consider using an internal-only network interface for the Nginx-to-backend connection
 </Callout>
 
-### Test and Reload
+### Test and reload
 
 <TerminalCommand>
 ```bash
@@ -888,11 +904,15 @@ mTLS Authentication Successful! Client DN: CN=iphone-jmrp
 
 ---
 
-## TLS Protocol & Cipher Configuration
+## TLS protocol and cipher configuration
 
-Proper TLS configuration is critical for security. Here's what each setting does:
 
-### Protocol Version Selection
+
+Proper TLS configuration is critical for security.
+
+ Here's what each setting does:
+
+### Protocol version selection
 
 <Table title="TLS Protocol Versions">
   <thead>
@@ -926,7 +946,7 @@ Proper TLS configuration is critical for security. Here's what each setting does
   </tbody>
 </Table>
 
-### Recommended Configuration
+### Recommended configuration
 
 <FileContent filename="TLS Security Settings" icon="mdi:lock">
 ```nginx
@@ -958,11 +978,15 @@ ssl_dhparam /etc/nginx/dhparam.pem;
 
 ---
 
-## Advanced Access Control
+## Advanced access control
 
-By default, _any_ client with a valid certificate signed by your CA can access the site. You can add granular controls using Nginx variables.
 
-### Useful mTLS Variables
+
+By default, _any_ client with a valid certificate signed by your CA can access the site.
+
+ You can add granular controls using Nginx variables.
+
+### Useful mTLS variables
 
 Nginx exposes these variables for client certificate information:
 
@@ -1003,7 +1027,7 @@ Nginx exposes these variables for client certificate information:
   </tbody>
 </Table>
 
-### CN-Based Authorization with Map
+### CN-based authorization with map
 
 Use the `map` directive to create an allowlist:
 
@@ -1048,13 +1072,17 @@ server {
 
 ---
 
-## Advanced Use Case: Rate Limit Bypass
+## Advanced use case: rate limit bypass
 
-One often overlooked benefit of mTLS is the ability to trust authenticated clients at the network level. For example, you might want to apply strict **DDoS protection** and **Rate Limiting** to the public internet, but allow your own devices (authenticated via mTLS) to have unlimited access.
+
+
+One often overlooked benefit of mTLS is the ability to trust authenticated clients at the network level.
+
+ For example, you might want to apply strict **DDoS protection** and **Rate Limiting** to the public internet, but allow your own devices (authenticated via mTLS) to have unlimited access.
 
 You can achieve this in Nginx using a `map` directive to whitelist verified clients.
 
-### Configuration Example
+### Configuration example
 
 <FileContent filename="/etc/nginx/nginx.conf" icon="devicon:nginx">
 ```nginx
@@ -1092,9 +1120,13 @@ http {
 
 ---
 
-## Certificate Revocation: CRL vs OCSP
+## Certificate revocation: CRL vs OCSP
 
-What happens when a device is lost or compromised? You need to **revoke** its certificate. There are two methods:
+
+
+What happens when a device is lost or compromised?
+
+ You need to **revoke** its certificate. There are two methods:
 
 <Table title="CRL vs OCSP Comparison">
   <thead>
@@ -1133,9 +1165,9 @@ What happens when a device is lost or compromised? You need to **revoke** its ce
   </tbody>
 </Table>
 
-### Method 1: CRL (Recommended for Small Deployments)
+### Method 1: CRL (recommended for small deployments)
 
-#### Step 1: Revoke a Certificate
+#### Step 1: revoke a certificate
 
 <TerminalCommand>
 ```bash
@@ -1153,7 +1185,7 @@ Revoking Certificate 1000.
 Database updated
 </TerminalOutput>
 
-#### Step 2: Generate the CRL File
+#### Step 2: generate the CRL file
 
 <TerminalCommand>
 ```bash
@@ -1166,7 +1198,7 @@ openssl crl -in crl/ca.crl -text -noout
 ```
 </TerminalCommand>
 
-#### Step 3: Configure Nginx
+#### Step 3: configure Nginx
 
 <FileContent filename="Add to server block" icon="devicon:nginx">
 ```nginx
@@ -1185,7 +1217,7 @@ sudo nginx -t && sudo systemctl reload nginx
   **Important:** You must regenerate the CRL and reload Nginx **every time** you revoke a certificate. Consider automating this with a cron job.
 </Callout>
 
-### Verify Revocation
+### Verify revocation
 
 Accessing the site with the revoked certificate should now fail:
 
@@ -1210,17 +1242,21 @@ Accessing the site with the revoked certificate should now fail:
 </TerminalOutput>
 </Collapsible>
 
-### Method 2: OCSP (For Larger Deployments)
+### Method 2: OCSP (for larger deployments)
 
-For enterprises with many certificates, OCSP is more efficient. This requires running an OCSP responder (beyond the scope of this guide, but tools like [step-ca](https://smallstep.com/docs/step-ca) provide this).
+
+
+For enterprises with many certificates, OCSP is more efficient.
+
+ This requires running an OCSP responder (beyond the scope of this guide, but tools like [step-ca](https://smallstep.com/docs/step-ca) provide this).
 
 ---
 
-## Certificate Lifecycle Management
+## Certificate lifecycle management
 
 A complete lifecycle includes creation, distribution, monitoring, renewal, and revocation.
 
-### The Certificate Lifecycle
+### The certificate lifecycle
 
 <Mermaid caption="Certificate Lifecycle Flow" maxWidth="100%">
 ```mermaid-render
@@ -1240,13 +1276,21 @@ flowchart LR
 ```
 </Mermaid>
 
-## Automation Scripts
+## Automation scripts
 
-Managing certificates manually is error-prone. Here are two essential scripts to automate the lifecycle.
 
-### 1. Client Certificate Generator
 
-This script automates the entire creation process: generating the key, CSR, signing it, and exporting the PKCS#12 bundle.
+Managing certificates manually is error-prone.
+
+ Here are two essential scripts to automate the lifecycle.
+
+### 1. Client certificate generator
+
+
+
+This script automates the entire creation process
+
+: generating the key, CSR, signing it, and exporting the PKCS#12 bundle.
 
 <FileContent filename="/usr/local/bin/mtls-add-client.sh" icon="mdi:bash" collapsible={true}>
 ```bash
@@ -1331,9 +1375,13 @@ sudo /usr/local/bin/mtls-add-client.sh my-iphone securepassword
 ```
 </TerminalCommand>
 
-### 2. Auto-Renewal Script
+### 2. Auto-renewal script
 
-This script checks for expiring certificates, revokes them, re-signs the original CSR, and generates a new `.p12` bundle.
+
+
+This script checks for expiring certificates
+
+, revokes them, re-signs the original CSR, and generates a new `.p12` bundle.
 
 <FileContent filename="/usr/local/bin/mtls-renew.sh" icon="mdi:bash" collapsible={true}>
 ```bash
@@ -1457,9 +1505,13 @@ Schedule this in crontab to run daily:
 
 ---
 
-## Installing Certificates on Clients
+## Installing certificates on clients
 
-Transfer the `.p12` file securely (AirDrop, USB, encrypted cloud) and install on each device.
+
+
+Transfer the `.p12` file securely
+
+ (AirDrop, USB, encrypted cloud) and install on each device.
 
 <Tabs>
   <TabPanel label="iOS (iPhone/iPad)">
@@ -1529,9 +1581,9 @@ Transfer the `.p12` file securely (AirDrop, USB, encrypted cloud) and install on
 
 ---
 
-## Troubleshooting Guide
+## Troubleshooting guide
 
-### Common Errors and Solutions
+### Common errors and solutions
 
 <Table title="mTLS Error Diagnosis">
   <thead>
@@ -1570,9 +1622,9 @@ Transfer the `.p12` file securely (AirDrop, USB, encrypted cloud) and install on
   </tbody>
 </Table>
 
-### Debugging Commands
+### Debugging commands
 
-#### Verify Certificate Against CA
+#### Verify certificate against CA
 
 <TerminalCommand>
 ```bash
@@ -1582,7 +1634,7 @@ openssl verify -CAfile /etc/nginx/pki/ca/ca.crt \
 ```
 </TerminalCommand>
 
-#### Test mTLS Connection with curl
+#### Test mTLS connection with curl
 
 <TerminalCommand>
 ```bash
@@ -1596,7 +1648,7 @@ curl -v --cert-type P12 --cert client.p12:password \
 ```
 </TerminalCommand>
 
-#### Check Nginx Error Logs
+#### Check Nginx error logs
 
 <TerminalCommand>
 ```bash
@@ -1611,9 +1663,9 @@ tail -f /var/log/nginx/error.log | grep ssl
 
 ---
 
-## Security Best Practices
+## Security best practices
 
-### Key Management
+### Key management
 
 <Callout type="warning" icon="mdi:key-alert">
   **Critical:** Your CA private key (`ca.key`) is the crown jewel. If compromised, an attacker can issue valid certificates. Protect it with:

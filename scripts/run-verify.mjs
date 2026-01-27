@@ -48,7 +48,9 @@ function runStep(name, command, condition = true) {
   console.log(`${colors.reset}   ${command}`);
 
   try {
-    execSync(command, { stdio: "inherit" });
+    execSync(command, {
+      stdio: "inherit",
+    });
     console.log(`${colors.green}✅ ${name} passed!${colors.reset}\n`);
     return true;
   } catch {
@@ -126,15 +128,22 @@ function runVerify() {
   for (const step of steps) {
     const success = runStep(step.name, step.command, step.condition ?? true);
     if (!success) {
-      // SonarCloud steps should not block subsequent independent steps (like E2E tests)
-      // Allow both analysis and issues steps to fail without breaking the loop
-      if (
-        step.name === "Security: SonarCloud Analysis" ||
-        step.name === "Analyze: SonarCloud Issues"
-      ) {
+      // Security: SonarCloud Analysis is just the upload phase now.
+      // The actual failure logic is handled by "Analyze: SonarCloud Issues".
+      if (step.name === "Security: SonarCloud Analysis") {
+        console.warn(
+          `${colors.yellow}⚠️ ${step.name} finished with warnings, continuing...${colors.reset}`,
+        );
+        continue;
+      }
+
+      // Sonar issues step should not block subsequent steps like E2E tests,
+      // but it will be recorded as a failure at the end.
+      if (step.name === "Analyze: SonarCloud Issues") {
         failedSteps.push(step.name);
         continue;
       }
+
       failedSteps.push(step.name);
       // For other steps, fail fast
       break;

@@ -4,8 +4,6 @@
  * A drawer component that shows the Table of Contents.
  * Acts as a bottom sheet on mobile and side drawer on desktop.
  */
-import { Icon } from "astro-icon/components";
-
 interface Props {
   headings: {
     slug: string;
@@ -28,9 +26,9 @@ const { headings } = Astro.props;
         aria-haspopup="true"
         aria-expanded="false"
       >
-        <Icon
-          name="mdi:format-list-bulleted"
-          class="toc-icon"
+        <span
+          class="i-mdi:format-list-bulleted toc-icon"
+          aria-hidden="true"
         />
       </button>
 
@@ -51,7 +49,10 @@ const { headings } = Astro.props;
             class="toc-close"
             aria-label="Close"
           >
-            <Icon name="mdi:close" />
+            <span
+              class="i-mdi:close"
+              aria-hidden="true"
+            />
           </button>
         </div>
         <nav
@@ -231,7 +232,7 @@ const { headings } = Astro.props;
     justify-content: center;
     width: 3.5rem;
     height: 3.5rem;
-    color: white;
+    color: #fff;
     cursor: pointer;
     background-color: var(--color-primary);
     border: none;

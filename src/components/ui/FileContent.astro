@@ -19,14 +19,13 @@ import { decodeHtml } from "@utils/html";
 import { getIconForFile } from "@utils/icons";
 import { resolveShikiLanguage } from "@utils/shiki";
 import { Code as AstroCode } from "astro/components";
-import { Icon } from "astro-icon/components";
 import type { BuiltinLanguage, SpecialLanguage } from "shiki";
 
 import CopyButton from "./CopyButton.astro";
 
 interface Props {
   filename: string;
-  icon?: string; // e.g., 'mdi:file-document-outline'
+  icon?: string; // e.g., 'mdi-file-document-outline' (prepends 'i-' internally)
   language?: BuiltinLanguage | SpecialLanguage | string; // Override syntax highlighting language
   collapsible?: boolean;
   ariaLabel?: string;
@@ -109,9 +108,8 @@ if (language) {
           aria-label={finalAriaLabel}
         >
           <span class="file-info">
-            <Icon
-              name={finalIcon}
-              class="file-icon"
+            <span
+              class={`${finalIcon.startsWith("i-") ? finalIcon : `i-${finalIcon}`} file-icon`}
             />
             <span
               class="file-name"
@@ -168,9 +166,8 @@ if (language) {
     >
       <div class="file-header">
         <div class="file-info">
-          <Icon
-            name={finalIcon}
-            class="file-icon"
+          <span
+            class={`${finalIcon.startsWith("i-") ? finalIcon : `i-${finalIcon}`} file-icon`}
           />
           <span
             class="file-name"

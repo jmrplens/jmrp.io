@@ -17,12 +17,8 @@
 
   /* Typography (Managed by Astro Fonts) */
 
-  --font-body:
-    var(--font-geist-sans), "Geist Sans", -apple-system, blinkmacsystemfont,
-    "Segoe UI", roboto, helvetica, arial, sans-serif;
-  --font-mono:
-    var(--font-geist-mono), "Geist Mono", ui-monospace, sfmono-regular,
-    "SF Mono", menlo, monaco, consolas, monospace;
+  --font-body: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
 
   /* Font Weights */
   --fw-normal: 400;

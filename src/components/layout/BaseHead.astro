@@ -27,6 +27,12 @@ const favicon = await getImage({
   width: 32,
   height: 32,
 });
+const faviconWebp = await getImage({
+  src: faviconSrc,
+  format: "webp",
+  width: 32,
+  height: 32,
+});
 const appleTouchIcon = await getImage({
   src: appleTouchIconSrc,
   format: "png",
@@ -214,6 +220,11 @@ const jsonLD = {
   ]}
 />
 
+<link
+  rel="icon"
+  type="image/webp"
+  href={faviconWebp.src}
+/>
 <link
   rel="icon"
   type="image/png"

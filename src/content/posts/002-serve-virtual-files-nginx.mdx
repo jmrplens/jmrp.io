@@ -33,11 +33,11 @@ In this comprehensive guide, we'll explore Nginx's powerful directives for servi
 
 ---
 
-## Understanding Location Matching
+## Understanding location matching
 
 Before serving virtual files, you must understand how Nginx selects which `location` block handles a request. This is **the most important concept** for effective Nginx configuration.
 
-### Location Matching Priority
+### Location matching priority
 
 Nginx evaluates location blocks in a specific order. The first match **by priority** wins, not the first in the config file:
 
@@ -84,7 +84,7 @@ Nginx evaluates location blocks in a specific order. The first match **by priori
   </tbody>
 </Table>
 
-### Practical Example
+### Practical example
 
 Consider this configuration:
 
@@ -120,11 +120,15 @@ server {
 
 ---
 
-## Core Directives: root, alias, try_files
+## Core directives: root, alias, try_files
 
-These three directives determine _where_ Nginx looks for files. Understanding the difference is crucial.
 
-### The Difference Explained
+
+These three directives determine _where_ Nginx looks for files.
+
+ Understanding the difference is crucial.
+
+### The difference explained
 
 <Table title="root vs alias vs try_files">
   <thead>
@@ -153,7 +157,7 @@ These three directives determine _where_ Nginx looks for files. Understanding th
   </tbody>
 </Table>
 
-### Visual Comparison
+### Visual comparison
 
 <CompareCode badTitle="root (appends URI)" goodTitle="alias (replaces prefix)">
   <div slot="bad">
@@ -184,7 +188,7 @@ These three directives determine _where_ Nginx looks for files. Understanding th
   **Common Mistake:** For prefix directory aliases (e.g., `location /images/`), include a trailing slash on both the location and the alias path. For exact-match aliases (e.g., `location = /robots.txt`), trailing slashes are not applicable.
 </Callout>
 
-### try_files for Fallback Chains
+### try_files for fallback chains
 
 The `try_files` directive is incredibly powerful for virtual files:
 
@@ -209,11 +213,11 @@ The order of checking is:
 
 ---
 
-## The return Directive
+## The return directive
 
 For small, simple content, the `return` directive is more efficient than creating physical files.
 
-### Syntax Variations
+### Syntax variations
 
 <Table title="return Directive Patterns">
   <thead>
@@ -242,7 +246,7 @@ For small, simple content, the `return` directive is more efficient than creatin
   </tbody>
 </Table>
 
-### Inline Content Example
+### Inline content example
 
 <FileContent filename="return examples" icon="devicon:nginx">
 ```nginx
@@ -278,11 +282,11 @@ server {
 
 ---
 
-## Named Locations & Fallbacks
+## Named locations and fallbacks
 
 Named locations (prefixed with `@`) enable sophisticated fallback patterns without URL rewriting.
 
-### The @fallback Pattern
+### The @fallback pattern
 
 <FileContent filename="named-location.conf" icon="devicon:nginx">
 ```nginx
@@ -304,7 +308,7 @@ server {
 ```
 </FileContent>
 
-### SPA (Single Page Application) Pattern
+### SPA (Single Page Application) pattern
 
 For React, Vue, Angular apps that use client-side routing:
 
@@ -328,7 +332,7 @@ server {
 ```
 </FileContent>
 
-### Internal Locations
+### Internal locations
 
 Use the `internal` directive to prevent direct access:
 
@@ -386,7 +390,7 @@ location /download-via-backend {
 
 ---
 
-## Standard Web Files
+## Standard web files
 
 These virtual files are fundamental for SEO, security, and compliance.
 
@@ -470,7 +474,7 @@ location = /favicon.ico {
 
 > **Reference:** [How to Favicon: A comprehensive guide](https://evilmartians.com/chronicles/how-to-favicon-in-2021-six-files-that-fit-most-needs)
 
-### Mobile & Touch Icons
+### Mobile and touch icons
 
 Modern web applications need icons for mobile home screens and progressive web app (PWA) features.
 
@@ -513,7 +517,7 @@ location = /site.webmanifest {
 
 ---
 
-## The .well-known Directory
+## The .well-known directory
 
 The [.well-known](https://www.iana.org/assignments/well-known-uris/well-known-uris.xhtml) directory is a standard location for site-wide metadata.
 
@@ -556,7 +560,7 @@ location ^~ /.well-known/acme-challenge/ {
 ```
 </FileContent>
 
-### Mobile App Associations
+### Mobile app associations
 
 Link your website to mobile apps:
 
@@ -576,7 +580,7 @@ location = /.well-known/apple-app-site-association {
 ```
 </FileContent>
 
-### Other .well-known Files
+### Other .well-known files
 
 <Table title="Common .well-known URIs">
   <thead>
@@ -612,7 +616,7 @@ location = /.well-known/apple-app-site-association {
 
 ---
 
-## Dynamic Content with Nginx JavaScript (njs)
+## Dynamic content with Nginx JavaScript (njs)
 
 For complex scenarios, the standard for serving virtual files with logic (conditional content, dynamic JSON) is **njs** (Nginx JavaScript). Unlike `return`, which only serves static strings, `njs` allows full programmatic control.
 
@@ -624,7 +628,7 @@ First, ensure the module is loaded in `nginx.conf`:
 load_module modules/ngx_http_js_module.so;
 ```
 
-### Example: Dynamic Robots.txt
+### Example: dynamic robots.txt
 
 Serve different `robots.txt` rules based on the request (e.g., blocking AI bots dynamically):
 
@@ -669,11 +673,11 @@ http {
 
 ---
 
-## Health & Monitoring Endpoints
+## Health and monitoring endpoints
 
 Critical for container orchestration and observability.
 
-### Basic Health Check
+### Basic health check
 
 <FileContent filename="health-endpoint.conf" icon="devicon:nginx">
 ```nginx
@@ -710,9 +714,13 @@ location = /startup {
 ```
 </FileContent>
 
-### stub_status Monitoring
+### stub_status monitoring
 
-Expose Nginx internal metrics (requires `ngx_http_stub_status_module`):
+
+
+Expose Nginx internal metrics
+
+ (requires `ngx_http_stub_status_module`):
 
 <FileContent filename="stub_status.conf" icon="devicon:nginx">
 ```nginx
@@ -743,11 +751,11 @@ Reading: 0 Writing: 3 Waiting: 39
 
 ---
 
-## Performance Optimization
+## Performance optimization
 
 Maximize efficiency when serving virtual files.
 
-### File Serving Optimization
+### File serving optimization
 
 <FileContent filename="performance.conf" icon="devicon:nginx">
 ```nginx
@@ -770,7 +778,7 @@ http {
 ```
 </FileContent>
 
-### Caching Headers
+### Caching headers
 
 <FileContent filename="caching.conf" icon="devicon:nginx">
 ```nginx
@@ -797,11 +805,11 @@ location = /health {
 
 ---
 
-## Deployment Patterns
+## Deployment patterns
 
 Real-world configurations for modern infrastructure.
 
-### Docker Container Pattern
+### Docker container pattern
 
 <FileContent filename="docker-nginx.conf" icon="devicon:nginx">
 ```nginx
@@ -841,7 +849,7 @@ server {
 ```
 </FileContent>
 
-### Kubernetes Ingress Pattern
+### Kubernetes ingress pattern
 
 <FileContent filename="k8s-ingress-nginx.conf" icon="devicon:nginx">
 ```nginx
@@ -877,7 +885,7 @@ server {
 
 ---
 
-## Complete Example Configuration
+## Complete example configuration
 
 A production-ready configuration combining all techniques:
 
@@ -1004,7 +1012,7 @@ server {
 
 ## Troubleshooting
 
-### Testing Virtual Files
+### Testing virtual files
 
 <TerminalCommand>
 ```bash
@@ -1019,7 +1027,7 @@ curl -L https://example.com/old-page
 ```
 </TerminalCommand>
 
-### Validate Configuration
+### Validate configuration
 
 <TerminalCommand>
 ```bash
@@ -1068,7 +1076,9 @@ tail -f /var/log/nginx/error.log
 
 ---
 
-## Beyond Static Files: Scripting Modules
+## Beyond static files: scripting modules
+
+
 
 Sometimes you need more than just static strings. Here is how the main scripting options compare for 2025:
 

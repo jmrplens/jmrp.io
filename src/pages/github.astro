@@ -10,7 +10,6 @@ import GitHubSearch from "@components/github/GitHubSearch.astro";
 import BaseLayout from "@layouts/BaseLayout.astro";
 import { fetchGitHubProfile, fetchTopRepositories } from "@utils/github";
 import { getImage, Image } from "astro:assets";
-import { Icon } from "astro-icon/components";
 
 const profile = await fetchGitHubProfile();
 const repos = await fetchTopRepositories(12); // Top 12 most recently updated
@@ -86,7 +85,11 @@ const avatarSrcSetString = avatarSrcSetResolves.join(", ");
         {
           profile.location && (
             <p class="location">
-              <Icon name="fa-solid:map-marker-alt" /> {profile.location}
+              <span
+                class="i-fa-solid:map-marker-alt"
+                aria-hidden="true"
+              />{" "}
+              {profile.location}
             </p>
           )
         }

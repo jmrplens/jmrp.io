@@ -6,7 +6,6 @@
  */
 import ThemeToggle from "@components/ui/ThemeToggle.astro";
 import { getEntry } from "astro:content";
-import { Icon } from "astro-icon/components";
 
 const siteEntry = await getEntry("site_config", "site");
 // Type guard: siteEntry may be undefined, and data is a union type.
@@ -41,18 +40,14 @@ const logoText =
         aria-expanded="false"
         class="menu-toggle"
       >
-        <span class="icon-container">
-          <Icon
-            name="fa-solid:bars"
-            class="icon-bars"
-            aria-hidden="true"
-          />
-          <Icon
-            name="fa-solid:times"
-            class="icon-times"
-            aria-hidden="true"
-          />
-        </span>
+        <span
+          class="i-fa-solid:bars icon-bars"
+          aria-hidden="true"
+        ></span>
+        <span
+          class="i-fa-solid:times icon-times"
+          aria-hidden="true"
+        ></span>
       </button>
       <ul
         id="nav-links"
@@ -230,6 +225,8 @@ const logoText =
   /* Desktop Styles (Default) */
   .menu-toggle {
     display: none; /* Hidden by default */
+    align-items: center;
+    justify-content: center;
     padding: 0.5rem;
     font-size: 1.5rem;
     color: var(--color-text);
@@ -238,14 +235,8 @@ const logoText =
     border: none;
   }
 
-  .icon-container {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
   /* Icon toggling logic */
-  .icon-times {
+  .menu-toggle .icon-times {
     display: none;
   }
 

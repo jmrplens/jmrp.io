@@ -9,13 +9,15 @@ export default defineConfig({
   reporter: process.env.CI
     ? [
         ["html", { open: "never" }],
+        ["list"],
         ["json", { outputFile: "playwright-report/results.json" }],
       ]
-    : "list",
+    : [["list"], ["html", { open: "never" }]],
 
   use: {
     baseURL: "http://localhost:4321",
     trace: "on-first-retry",
+    video: "on-first-retry",
     screenshot: "only-on-failure",
     permissions: ["clipboard-read", "clipboard-write"],
   },
@@ -30,13 +32,13 @@ export default defineConfig({
     {
       name: "mobile-functional",
       use: { ...devices["Pixel 5"] },
-      testMatch: /functional\.spec\.ts/, // Integration tests might need specific mobile adjustments, starting with functional
+      testMatch: /functional\.spec\.ts/,
     },
     {
       name: "accessibility",
       use: { ...devices["Desktop Chrome"] },
       testMatch: /accessibility\.spec\.ts/,
-      timeout: 90_000, // 90 seconds per test for accessibility scanning
+      timeout: 90_000,
     },
   ],
 

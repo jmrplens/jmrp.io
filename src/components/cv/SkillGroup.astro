@@ -1,6 +1,5 @@
 ---
 import type { CVSkillGroup } from "@src/types";
-import { Icon } from "astro-icon/components";
 
 interface Props {
   group: CVSkillGroup;
@@ -8,7 +7,7 @@ interface Props {
 
 const { group } = Astro.props;
 
-const levelTextMap: Record<number | string, string> = {
+const levelTextMap: Record<number, string> = {
   0: "None",
   1: "Elementary",
   2: "Basic",
@@ -22,7 +21,14 @@ import "@styles/skills.css";
 
 <div class="group-category">
   <h3>
-    {group.icon && <Icon name={group.icon} />}
+    {
+      group.icon && (
+        <span
+          class={`i-${group.icon}`}
+          aria-hidden="true"
+        />
+      )
+    }
     {group.category}
   </h3>
   <div class="compact-list">
@@ -33,14 +39,13 @@ import "@styles/skills.css";
         // For aria-valuenow, we only want a number.
 
         let score = 0;
-        let levelLabel: string | number = item.level ?? 0; // Explicitly allow both, default to 0
+        let levelLabel: string | number = "Unknown";
 
         if (typeof item.level === "number") {
           score = item.level;
           levelLabel = levelTextMap[item.level] || String(item.level);
         } else if (typeof item.level === "string") {
           // Try to find if the string matches a known level name
-          score = 0;
           levelLabel = item.level;
         }
 
@@ -49,12 +54,10 @@ import "@styles/skills.css";
         return (
           <div class="compact-item skill-item">
             {item.icon && (
-              <div class="skill-icon-wrapper">
-                <Icon
-                  name={item.icon}
-                  class="skill-icon"
-                />
-              </div>
+              <span
+                class={`i-${item.icon} skill-icon`}
+                aria-hidden="true"
+              />
             )}
             <div class="skill-content">
               <div class="skill-header">
@@ -120,15 +123,12 @@ import "@styles/skills.css";
 
   /* .skill-item is now imported from @styles/skills.css */
 
-  .skill-icon-wrapper {
+  .skill-icon {
     display: flex;
     align-items: center;
     justify-content: center;
-    min-width: 24px;
-  }
-
-  .skill-icon {
     width: 1.5rem;
+    min-width: 1.5rem;
     height: 1.5rem;
   }
 
@@ -169,7 +169,9 @@ import "@styles/skills.css";
     background-color: transparent;
     border: 1.5px solid var(--color-border);
     border-radius: 50%;
-    transition: all 0.2s ease;
+    transition:
+      background-color 0.2s ease,
+      border-color 0.2s ease;
   }
 
   .dot.filled {

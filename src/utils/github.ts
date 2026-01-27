@@ -49,7 +49,7 @@ const GITHUB_TOKEN: string | undefined = import.meta.env.GITHUB_TOKEN as
   | string
   | undefined; // Optional, for rate limits
 
-function getGitHubHeaders(): HeadersInit {
+function getGitHubHeaders(): Record<string, string> {
   const headers: Record<string, string> = {
     Accept: "application/vnd.github+json",
   };
@@ -75,13 +75,14 @@ export async function fetchGitHubProfile(): Promise<GitHubProfile> {
       throw new Error(`GitHub API error: ${res.status}`);
     }
 
-    return (await res.json()) as GitHubProfile;
+    const data = (await res.json()) as GitHubProfile;
+    return data;
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     console.warn(
       `Failed to fetch GitHub profile, using fallback data: ${errorMessage}`,
     );
-    return {
+    const fallback: GitHubProfile = {
       name: "José Manuel Requena Plens",
       login: USERNAME,
       bio: "R&D Engineer | Embedded Systems & Acoustics | Software Engineer",
@@ -92,6 +93,7 @@ export async function fetchGitHubProfile(): Promise<GitHubProfile> {
       followers: 0,
       following: 0,
     };
+    return fallback;
   }
 }
 

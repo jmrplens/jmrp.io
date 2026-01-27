@@ -36,9 +36,21 @@ export const GET: APIRoute = async () => {
     width: 192,
     height: 192,
   });
+  const icon192Webp = await getImage({
+    src: icon192Src,
+    format: "webp",
+    width: 192,
+    height: 192,
+  });
   const icon512 = await getImage({
     src: icon512Src,
     format: "png",
+    width: 512,
+    height: 512,
+  });
+  const icon512Webp = await getImage({
+    src: icon512Src,
+    format: "webp",
     width: 512,
     height: 512,
   });
@@ -54,10 +66,22 @@ export const GET: APIRoute = async () => {
     orientation: "portrait-primary",
     icons: [
       {
+        src: icon192Webp.src,
+        sizes: "192x192",
+        type: "image/webp",
+        purpose: "any",
+      },
+      {
         src: icon192.src,
         sizes: "192x192",
         type: "image/png",
         purpose: "any",
+      },
+      {
+        src: icon192Webp.src,
+        sizes: "192x192",
+        type: "image/webp",
+        purpose: "maskable",
       },
       {
         src: icon192.src,
@@ -66,10 +90,22 @@ export const GET: APIRoute = async () => {
         purpose: "maskable",
       },
       {
+        src: icon512Webp.src,
+        sizes: "512x512",
+        type: "image/webp",
+        purpose: "any",
+      },
+      {
         src: icon512.src,
         sizes: "512x512",
         type: "image/png",
         purpose: "any",
+      },
+      {
+        src: icon512Webp.src,
+        sizes: "512x512",
+        type: "image/webp",
+        purpose: "maskable",
       },
       {
         src: icon512.src,

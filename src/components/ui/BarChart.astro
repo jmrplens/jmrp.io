@@ -188,6 +188,7 @@ function getBarColor(index: number, item: BarData): string {
           totalValue > 0 ? (item.value / totalValue) * 100 : 0;
         const barColor = getBarColor(index, item);
         const labelId = `bar-label-${chartId}-${index}`;
+        const barStyle = `--bar-width: ${percentage}%; --bar-index: ${index}; background-color: ${barColor};`;
 
         return (
           <li class="bar-row">
@@ -200,7 +201,7 @@ function getBarColor(index: number, item: BarData): string {
             <div class="bar-track">
               <div
                 class={`bar-fill ${percentage < 20 ? "bar-small" : ""}`}
-                style={`--bar-width: ${percentage}%; --bar-index: ${index}; background-color: ${barColor};`}
+                style={barStyle}
                 role="meter"
                 aria-labelledby={labelId}
                 aria-valuenow={item.value}
@@ -452,7 +453,7 @@ function getBarColor(index: number, item: BarData): string {
     padding: 0;
 
     --bar-text-shadow: 0 1px 2px rgb(0 0 0 / 30%);
-    --bar-value-color: white;
+    --bar-value-color: #fff;
 
     margin: 1.5rem 0;
   }
@@ -463,7 +464,7 @@ function getBarColor(index: number, item: BarData): string {
     --bar-chart-text: #1f2937;
     --bar-chart-text-muted: #4b5563;
     --bar-text-shadow: none;
-    --bar-value-color: white;
+    --bar-value-color: #fff;
 
     /* Okabe-Ito palette (light mode) - Darker variants for light backgrounds */
     --bar-okabe-1: rgb(204 121 0); /* Orange (darker) */
@@ -605,7 +606,7 @@ function getBarColor(index: number, item: BarData): string {
       --bar-chart-text: #1f2937;
       --bar-chart-text-muted: #4b5563;
       --bar-text-shadow: none;
-      --bar-value-color: white;
+      --bar-value-color: #fff;
 
       /* Okabe-Ito palette (light mode) */
       --bar-okabe-1: rgb(204 121 0);
