@@ -23,13 +23,13 @@ person:
 social_links:
   - name: "GitHub"
     url: "https://github.com/jmrplens"
-    icon: "fa-brands:github"
+    icon: "i-fa-brands:github"
   - name: "LinkedIn"
     url: "https://www.linkedin.com/in/jmrplens"
-    icon: "fa-brands:linkedin"
+    icon: "i-fa-brands:linkedin"
   - name: "Mastodon"
     url: "https://mstdn.jmrp.io/@jmrplens"
-    icon: "fa-brands:mastodon"
+    icon: "i-fa-brands:mastodon"
     rel: "me noopener noreferrer"
 
 shortcuts:

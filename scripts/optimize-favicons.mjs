@@ -43,10 +43,14 @@ const collectHostnames = () => {
 
   for (const file of files) {
     const content = fs.readFileSync(path.join(POSTS_DIR, file), "utf-8");
-    const tokens = content.split(/[\s()[\]'"`<>]+/);
+    // Simple split by whitespace only to avoid ReDoS
+    const tokens = content.split(/\s+/);
     for (const token of tokens) {
       if (token.includes("://")) {
-        const cleanLink = token.replace(/[.,;]+$/, "");
+        // Strip common punctuation and delimiters
+        const cleanLink = token
+          .replace(/^[([<]+/, "")
+          .replace(/[\])>.,;:"']+$/, "");
         const hostname = getHostname(cleanLink);
         if (hostname) hostnames.add(hostname);
       }

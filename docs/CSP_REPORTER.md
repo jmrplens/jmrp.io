@@ -35,7 +35,7 @@ After=network.target
 [Service]
 Type=simple
 User=root
-WorkingDirectory=/var/www/jmrp.io_astro
+WorkingDirectory=/var/www/jmrp.io
 ExecStart=/usr/bin/node scripts/csp-reporter.mjs
 Restart=on-failure
 Environment=NODE_ENV=production

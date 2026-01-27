@@ -38,6 +38,7 @@ const iconMap: Record<string, string> = {
   perl: "devicon:perl",
   r: "devicon:r",
   dart: "devicon:dart",
+  routeros: "simple-icons:mikrotik" /* i-simple-icons:mikrotik */,
 
   // Web Tech & Frameworks
   html: "devicon:html5",

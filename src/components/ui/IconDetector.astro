@@ -1,0 +1,32 @@
+---
+/**
+ * IconDetector Component
+ *
+ * This component is used to "hint" UnoCSS about icons used in dynamic content.
+ * It renders a hidden div with the icon classes so the UnoCSS extractor can find them
+ * during the build process of a specific page.
+ */
+interface Props {
+  icons: string[];
+}
+
+const { icons } = Astro.props;
+
+// Ensure all icons have the 'i-' prefix for UnoCSS detection
+const classes = icons.map((icon) =>
+  icon.startsWith("i-") ? icon : `i-${icon}`,
+);
+---
+
+{
+  classes.length > 0 && (
+    <div
+      class="hidden"
+      aria-hidden="true"
+    >
+      {classes.map((cls) => (
+        <span class={cls} />
+      ))}
+    </div>
+  )
+}
