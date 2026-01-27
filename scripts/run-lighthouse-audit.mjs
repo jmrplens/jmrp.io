@@ -73,7 +73,7 @@ const runAudit = async () => {
             `--output-path=${reportPath}`,
             "--throttling-method=simulate",
           ],
-          { stdio: "inherit" },
+          { stdio: "inherit", env: { ...process.env, PATH: "/usr/bin:/bin" } },
         );
 
         const report = JSON.parse(fs.readFileSync(reportPath, "utf-8"));

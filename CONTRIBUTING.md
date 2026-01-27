@@ -22,30 +22,21 @@ pnpm install
 
 ## 🛠️ Development Workflow
 
-### Local Development
-
-Start the Astro development server:
-
-```bash
-pnpm dev
-```
-
-The site will be available at `http://localhost:4321`.
-
 ### Project Structure
 
-The project follows the **Astro v6.0.0-alpha.5** (experimental) structure with the **Content Layer API**. This alpha version is required for Content Layer support. Contributors should be aware of potential breaking changes between alpha releases. The exact version is pinned in `package.json`.
+The project follows the **Astro 6** structure with the **Content Layer API**. This version is required for Content Layer support. The exact version is pinned in `package.json`.
 
-> **Alpha Release Note**: Report alpha-specific issues to [Astro's GitHub](https://github.com/withastro/astro/issues). Subscribe to [Astro release notes](https://github.com/withastro/astro/releases) to track updates. Keep the pinned version in `package.json` in sync and review changelogs for breaking changes.
+> **Release Note**: We use Astro 6 (stable) to leverage the latest performance and content management features.
 
 ```plaintext
 /
 ├── src/
 │   ├── content/          # Content Collections (Markdown/MDX & YAML)
-│   ├── content.config.ts # Collection Definitions (Glob Loader)
+│   ├── content.config.ts # Collection Definitions (Loader API)
 │   ├── components/       # Astro & Preact components
 │   ├── layouts/          # Page layouts
 │   ├── pages/            # File-based routing
+│   ├── utils/            # Shared utilities (Icons, HTML, etc)
 │   └── integrations/     # Custom Astro integrations (Pre/Post build)
 ├── public/               # Static assets
 └── scripts/              # CI/CD and verification scripts
@@ -76,12 +67,13 @@ This master script (`scripts/run-verify.mjs`) orchestrates the entire QA pipelin
 2.  **Linting**: `stylelint` (CSS).
 3.  **Build**: `pnpm run build` (Production build).
 4.  **Content Validation**: HTML validation, RSS feed check, Schema.org check.
-5.  **Documentation**: JSDoc comment coverage tracking.
-6.  **Security**: Snyk audit (dependencies) and SonarCloud analysis (code quality).
-7.  **External Audits**:
+5.  **Icon Consistency**: `pnpm verify-icons` (Custom script to ensure all icons have CSS rules).
+6.  **Documentation**: JSDoc comment coverage tracking.
+7.  **Security**: Snyk audit (dependencies) and SonarCloud analysis (code quality).
+8.  **External Audits**:
     - **Spelling**: `typos` for codebase spell checking.
     - **Links**: `lychee` for dead link verification in generated HTML.
-8.  **E2E Testing**: Playwright tests (Functional & Accessibility matrices).
+9.  **E2E Testing**: Playwright tests (Functional & Accessibility matrices).
 
 **Automatic PR Updates:**
 Our CI/CD pipeline is designed to be helpful and non-intrusive. Instead of creating new comments for every push, the CI scripts will **update existing PR comments** when results change. This keeps the PR timeline clean and preserves history.
@@ -92,6 +84,7 @@ Our CI/CD pipeline is designed to be helpful and non-intrusive. Instead of creat
 - `pnpm lint`: Run ESLint.
 - `pnpm lint:css`: Run Stylelint for CSS files.
 - `pnpm build`: Build for production.
+- `pnpm verify-icons`: Run icon consistency check.
 - `pnpm test:e2e`: Run all Playwright tests.
 - `pnpm test:e2e --grep "specific-test"`: Run specific Playwright test.
 - `pnpm exec playwright test --ui`: Run Playwright in interactive UI mode.

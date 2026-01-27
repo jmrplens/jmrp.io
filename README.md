@@ -41,7 +41,8 @@ This is the source code for my personal website, **[jmrp.io](https://jmrp.io)**,
   - **SSG (Static Site Generation)**: All pages pre-rendered at build time.
   - **Islands Architecture**: Minimal JavaScript with Preact islands.
   - **Image Optimization**: WebP format with responsive sizing via `vite-plugin-image-optimizer`.
-  - **UnoCSS**: Atomic CSS engine for minimal and ultra-fast styles.
+  - **UnoCSS**: Atomic CSS engine with `presetWind4` for minimal and ultra-fast styles.
+  - **Icon Consistency**: Custom verification engine ensuring 1:1 mapping between icons and CSS rules.
   - **CSS Inlining**: Critical CSS inlined for sub-second FCP.
 - **Accessibility**:
   - **WCAG 2.1 AA Compliance**: Automated testing via Playwright + Axe-core.

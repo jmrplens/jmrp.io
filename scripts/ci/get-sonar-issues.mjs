@@ -147,10 +147,10 @@ async function reportHotspots(hotspots) {
   for (const [i, h] of hotspots.entries()) {
     if (suppressionResults[i]) {
       logger.info(
-        `  - [SUPPRESSED] ${h.message} (📍 ${h.component}:${h.line || "N/A"})`,
+        `  - [SUPPRESSED] ${h.message} (Rule: ${h.ruleKey}) (📍 ${h.component}:${h.line || "N/A"})`,
       );
     } else {
-      logger.info(`  - ${h.message}`);
+      logger.info(`  - ${h.message} (Rule: ${h.ruleKey})`);
       logger.info(`    📍 ${h.component} (Line ${h.line || "N/A"})`);
       unsuppressedCount++;
     }

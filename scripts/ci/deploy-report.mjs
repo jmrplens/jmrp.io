@@ -67,7 +67,12 @@ try {
     const startIdx = urlLine.indexOf("https://");
     if (startIdx !== -1) {
       const potentialUrl = urlLine.substring(startIdx).split(/\s/)[0];
-      previewUrl = potentialUrl.replace(/[.,;:!?)>\]]+$/, "");
+      // Manual trim of common trailing punctuation to avoid ReDoS
+      let endIdx = potentialUrl.length;
+      while (endIdx > 0 && ".,;:!?)>]".includes(potentialUrl[endIdx - 1])) {
+        endIdx--;
+      }
+      previewUrl = potentialUrl.substring(0, endIdx);
     }
   }
 
