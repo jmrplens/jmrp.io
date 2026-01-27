@@ -52,7 +52,6 @@ try {
   const cmd = `npx vercel deploy ${dir} --name=${projectName} --yes --public`;
 
   const output = execSync(cmd, {
-    // NOSONAR: Command is safe due to prior input validation
     encoding: "utf-8",
     env: { ...process.env, VERCEL_TOKEN: token },
     timeout: 300_000, // 5 minutes timeout

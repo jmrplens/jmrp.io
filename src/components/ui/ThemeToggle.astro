@@ -75,34 +75,8 @@
     return null;
   };
 
-  /**
-   * Gets the current theme from localStorage or system preference.
-   * Falls back to "dark" if no valid theme is found.
-   */
-  const getTheme = (): "light" | "dark" => {
-    try {
-      if (typeof localStorage !== "undefined") {
-        const stored = localStorage.getItem("theme");
-        const normalized = normalizeTheme(stored);
-        if (normalized) {
-          return normalized;
-        }
-      }
-    } catch {
-      // localStorage may be blocked; ignore
-    }
-
-    // Respect system preference
-    if (globalThis.matchMedia("(prefers-color-scheme: light)").matches) {
-      return "light";
-    }
-    if (globalThis.matchMedia("(prefers-color-scheme: dark)").matches) {
-      return "dark";
-    }
-
-    // Fallback if no preference is indicated or supported
-    return "dark";
-  };
+  // Note: Theme is read from localStorage by BaseLayout's inline script (FOUC prevention)
+  // This component only handles the toggle interaction, not initial theme detection
 
   /**
    * Sets the theme on the document and persists to localStorage.
@@ -135,19 +109,25 @@
   /** Initializes the theme toggle component */
   const initThemeToggle = () => {
     const toggle = document.getElementById("theme-toggle");
+    if (!toggle) return;
 
-    // Initialize state based on current theme
-    if (toggle) {
-      const currentTheme = getTheme();
-      setTheme(currentTheme);
+    // Read current theme from data-theme attribute (already set by BaseLayout inline script)
+    // Do NOT call setTheme(getTheme()) here - that would re-read from storage/system
+    // and could overwrite the user's selection due to timing issues
+    const currentTheme = document.documentElement.dataset.theme || "dark";
 
-      toggle.onclick = () => {
-        // Read from dataset first (set by setTheme), fall back to getTheme()
-        const current = document.documentElement.dataset.theme || getTheme();
-        const newTheme = current === "dark" ? "light" : "dark";
-        setTheme(newTheme);
-      };
-    }
+    // Update aria-label to match current theme
+    toggle.setAttribute(
+      "aria-label",
+      currentTheme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode",
+    );
+
+    // Set up click handler
+    toggle.onclick = () => {
+      const current = document.documentElement.dataset.theme || "dark";
+      const newTheme = current === "dark" ? "light" : "dark";
+      setTheme(newTheme);
+    };
   };
 
   // Run immediately if DOM is ready, otherwise wait for DOMContentLoaded

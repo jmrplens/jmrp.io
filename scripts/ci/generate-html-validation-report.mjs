@@ -48,15 +48,10 @@ const getActiveRules = () => {
     if (!firstHtml) return {};
 
     const configJson = execFileSync(
-      // NOSONAR: Restricted PATH for security
-
       "pnpm",
-
       ["exec", "html-validate", "-c", CONFIG_FILE, "--print-config", firstHtml],
-
       {
         encoding: "utf-8",
-
         env: { ...process.env, PATH: "/usr/local/bin:/usr/bin:/bin" },
       },
     );

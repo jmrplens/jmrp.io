@@ -62,7 +62,6 @@ const runAudit = async () => {
 
         // Mobile is the default, so we don't provide --preset (which defaults to mobile)
         execFileSync(
-          // NOSONAR
           "npx",
           [
             "lighthouse",

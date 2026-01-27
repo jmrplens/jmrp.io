@@ -49,7 +49,6 @@ function runStep(name, command, condition = true) {
 
   try {
     execSync(command, {
-      // NOSONAR: Internal verification script executes known safe commands
       stdio: "inherit",
     });
     console.log(`${colors.green}✅ ${name} passed!${colors.reset}\n`);

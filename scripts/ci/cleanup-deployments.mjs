@@ -27,7 +27,6 @@ if (!PR_NUMBER) {
 function run(cmd) {
   // Suppress stdout to reduce noise, but show stderr if needed
   return execSync(cmd, {
-    // NOSONAR: Command is safe as it uses validated PR context
     encoding: "utf-8",
     env: { ...process.env },
     stdio: ["ignore", "pipe", "inherit"],
