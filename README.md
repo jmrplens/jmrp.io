@@ -2,7 +2,7 @@
 
 <!-- Project & Status -->
 
-![Astro](https://img.shields.io/badge/astro-6.0.0--alpha.5-orange?style=flat&logo=astro)
+![Astro](https://img.shields.io/badge/astro-6.0.0--beta.3-orange?style=flat&logo=astro)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 [![Dependabot](https://badgen.net/badge/Dependabot/enabled/green?icon=dependabot)](https://github.com/jmrplens/jmrp.io/pulls)
 [![CI Dashboard](https://img.shields.io/badge/CI_Dashboard-Live_Status-blueviolet?style=for-the-badge&logo=vercel)](https://jmrp-ci-reports.vercel.app)
@@ -41,32 +41,31 @@ This is the source code for my personal website, **[jmrp.io](https://jmrp.io)**,
   - **SSG (Static Site Generation)**: All pages pre-rendered at build time.
   - **Islands Architecture**: Minimal JavaScript with Preact islands.
   - **Image Optimization**: WebP format with responsive sizing via `vite-plugin-image-optimizer`.
-  - **Font Loading**: Optimized with fallback fonts and metric overrides.
-  - **CSS Inlining**: Critical CSS inlined, async loading for non-critical.
+  - **UnoCSS**: Atomic CSS engine for minimal and ultra-fast styles.
+  - **CSS Inlining**: Critical CSS inlined for sub-second FCP.
 - **Accessibility**:
-  - **Axe-core Testing**: Automated WCAG 2.1 AA validation via Playwright for all pages.
+  - **WCAG 2.1 AA Compliance**: Automated testing via Playwright + Axe-core.
   - **HTML5 Compliance**: Strict HTML validation (`html-validate`).
-  - **Lighthouse CI**: Accessibility auditing on every commit.
-  - **Inclusive Design**: Keyboard navigation, focus indicators, and unique `aria-labels`.
   - **Motion Sensitivity**: Respects `prefers-reduced-motion` settings.
 - **Content**:
-  - **Content Layer API**: Uses Content Layer API (stable since Astro v5, mandatory in v6).
-  - **Blog**: Technical articles with MDX support and Mermaid diagrams.
-  - **RSS Feed**: Automatic generation of `rss.xml` for blog posts.
-  - **CV Generation**: Automated LaTeX compilation for PDF resumes.
-- **Themeable**: Light/Dark mode with system preference detection.
-- **Configurable**: Centralized configuration via YAML files in `src/content/`.
-- **SEO Optimized**: Dynamic Schema.org (JSON-LD), Open Graph, and Twitter Cards.
+  - **Content Layer API**: Advanced content management (Standard in Astro v6).
+  - **Technical Blog**: Support for MDX, LaTeX (Mathjax), and Mermaid diagrams (SSR rendered).
+  - **Unified CV**: Dynamic CV generation with automated LaTeX-to-PDF compilation.
+- **DevOps & QA**:
+  - **CI Health Dashboard**: Premium unified report interface hosted on Vercel.
+  - **Living PR Comments**: Real-time CI status updates directly in GitHub Pull Requests.
+  - **Deep Security**: Automated Snyk and SonarCloud analysis on every commit.
 
 ## 🛠️ Tech Stack
 
-- **Framework**: [Astro v6](https://astro.build/)
-- **Runtime**: Node.js v22.12.0+ (Project requirement)
+- **Framework**: [Astro v6 (Beta)](https://astro.build/)
 - **UI Components**: [Preact](https://preactjs.com/)
-- **Styling**: Native CSS (Variables, Nesting) & Astro Scoped Styles
+- **Styling**: [UnoCSS](https://unocss.dev/) & Native CSS
+- **Content**: [MDX](https://mdxjs.com/), [Mermaid](https://mermaid.js.org/), [MathJax](https://www.mathjax.org/)
 - **Icons**: [Iconify](https://icon-sets.iconify.design/)
-- **Testing**: [Playwright](https://playwright.dev/) & [Lighthouse](https://developers.google.com/web/tools/lighthouse)
-- **CI/CD**: GitHub Actions
+- **Testing**: [Playwright](https://playwright.dev/), [Axe-core](https://www.deque.com/axe/), [Lighthouse](https://developers.google.com/web/tools/lighthouse)
+- **Security**: [Snyk](https://snyk.io/), [SonarCloud](https://sonarcloud.io/)
+- **CI/CD**: GitHub Actions & Vercel (Reports)
 
 ## 📂 Project Structure
 
@@ -84,10 +83,11 @@ This is the source code for my personal website, **[jmrp.io](https://jmrp.io)**,
 │   ├── styles/           # Global CSS & Fonts
 │   └── utils/            # Helper functions
 ├── public/               # Static assets (images, fonts, robots.txt)
-├── scripts/              # Build & Maintenance scripts
+├── scripts/              # Build, QA & maintenance scripts
 ├── tests/                # Playwright E2E & Accessibility tests
 ├── cv_latex/             # LaTeX source files for CV
 ├── astro.config.mjs      # Astro configuration
+├── uno.config.ts         # UnoCSS configuration
 └── package.json          # Dependencies & Scripts
 ```
 
@@ -97,221 +97,67 @@ This is the source code for my personal website, **[jmrp.io](https://jmrp.io)**,
 
 ### Prerequisites
 
-To build and run this project, you need the following tools installed on your system:
-
-- **[Node.js](https://nodejs.org/) (v22.12.0+)**: While Astro v6 supports Node.js 18.20.8+, this project requires **v22.12.0+** to support advanced build features and CI compatibility.
-- **[pnpm](https://pnpm.io/) (v10.0.0+)**: Required package manager.
-- **[Astro CLI](https://docs.astro.build/en/install-and-setup/)**: Recommended for manual tasks (can be run via `pnpm astro`).
+- **Node.js (v22.12.0+)**: Required for advanced build and CI features.
+- **pnpm (v10.0.0+)**: Required package manager.
 
 ### Installation
 
 ```bash
-# 1. Clone the repository
+# 1. Clone & Install
 git clone https://github.com/jmrplens/jmrp.io.git
-cd jmrp.io
+cd jmrp.io && pnpm install
 
-# 2. Install project dependencies
-pnpm install
-
-# 3. Install browser binaries for tests (Playwright)
-# Note: CI and local tests are optimized for Chromium.
+# 2. Install Playwright Browsers
 pnpm exec playwright install --with-deps chromium
 
-# 4. Start development server
+# 3. Start development
 pnpm run dev
 ```
 
 ### Build & Verify
 
-The project uses a unified verification suite to ensure everything is correct before deployment.
-
-#### Full Quality Suite
-
-To run the complete pipeline (Linting, Type Checking, Build, and Tests):
+The project uses a unified verification suite to ensure everything is correct.
 
 ```bash
+# Full Quality Suite (Lint, Build, A11y, E2E)
 pnpm verify
-```
 
-> **Note**: This command requires additional system tools like `typos` and `lychee`. See [CONTRIBUTING.md](CONTRIBUTING.md) for installation details.
-
-#### Production Build
-
-To just generate the production artifacts:
-
-```bash
+# Production Build only
 pnpm run build
 ```
 
-This command triggers the full build pipeline:
-
-1. **GitHub Synchronization**: Automatically downloads the latest assets (e.g., owner avatar).
-2. **Astro Build**: Compiles the site into the `dist/` directory.
-3. **Post-Build Optimizations**:
-   - **CSS Inlining**: Extracts inline styles to optimized classes.
-   - **Asset Relocation**: Converts data URIs to physical files for better caching and CSP compliance.
-   - **Security Hardening**: Generates **SHA-512 hashes** for inline CSP content and **SHA-256 hashes** for SRI resources.
-   - **Integrity (SRI)**: Pins all subresources for maximum security.
-4. **Nginx Integration**:
-   - Generates and validates a strict `security_headers.conf`.
-   - Automatically reloads the local Nginx service (if detected on a Linux environment).
-
-### Configuration
-
-The project uses environment variables for build-time and runtime configuration. Copy the example file and fill in the values:
-
-```bash
-cp .env.example .env
-```
-
-Key configuration areas:
-
-- **Nginx Integration**: Automated deployment of security headers.
-- **Security Reporting**: Telegram bot integration for CSP/SRI violation reports.
-- **Cloudflare**: API tokens for cache purging and web analytics.
-- **CI Tools**: Tokens for Snyk and SonarCloud analysis.
-
-See [.env.example](.env.example) for the full list of available variables.
-
 ## 🧪 Quality Assurance
 
-This project employs a rigorous testing pipeline to ensure quality and compliance.
+This project employs a rigorous testing pipeline culminating in a **CI Health Dashboard**.
 
-### Pipeline Overview
+### Unified Reporting Architecture
 
-The `pnpm verify` command orchestrates the entire pipeline locally and in CI.
+The CI pipeline aggregates all analysis and testing results into a single interactive dashboard.
 
 ```mermaid
 graph TD
     Trigger[Push / PR] --> Phase1[Analysis & Build]
     Phase1 --> Phase2[Deep Testing]
-    Phase2 --> Phase3[Reporting]
-    Phase3 --> Dashboard[Live Dashboard]
-    Phase3 --> Comment[PR Comment]
+    Phase2 --> Phase3[Aggregation]
+    Phase3 --> Dashboard[Vercel Dashboard]
+    Phase3 --> Comment[GitHub PR Comment]
 ```
 
-### Phase 1: Parallel Analysis & Build
-
-Static analysis tools run in parallel with the production build to provide fast feedback.
-
-```mermaid
-graph TD
-    Trigger[Push / PR] --> SA[Static Analysis]
-    Trigger --> Build[Build Artifact]
-
-    subgraph SA [Static Analysis]
-        direction LR
-        Lint[Lint & Type Check]
-        Links[Link Checker]
-        Spell[Spell Checker]
-        CodeQL
-        Sonar[SonarCloud]
-        Snyk[Snyk Security]
-    end
-```
-
-### Phase 2: Deep Testing & Reporting
-
-Once the build is ready, we execute comprehensive testing matrices and generate unified reports.
-
-```mermaid
-graph LR
-    Build[Build Artifact] --> TM
-    Build --> CV
-
-    subgraph TM [Testing Matrices]
-        direction TB
-        A11y[Accessibility Tests]
-        LH[Lighthouse Audit]
-        Func[Functional Tests]
-    end
-
-    subgraph CV [Content Validations]
-        direction LR
-        HTML[HTML5]
-        RSS
-        Schema
-        Img[Images]
-    end
-
-    subgraph Rep [Reporting Pipelines]
-        direction TB
-        DashboardGen[Build Dashboard]
-        CommentUpd[Update PR Comment]
-    end
-
-    TM --> Rep
-    CV --> Rep
-```
-
-### Accessibility Testing
-
-We perform comprehensive accessibility checks:
-
-- **Axe-core (via Playwright)**: Scans every page against **WCAG 2.1/2.2 AA** and **Best Practice** rules.
-  - **Dual-Theme Matrix**: Tests run in parallel for both **Light** and **Dark** modes to ensure contrast compliance in all contexts.
-  - **Unified Dashboard**: Aggregates results into an interactive HTML dashboard deployed to Vercel, providing a single point of review for both themes.
-  - **Global SVG Exclusion**: Prevents false positives in diagrams (Mermaid, etc.).
-  - Fails the build on any violation.
-- **Lighthouse CI**: Runs Lighthouse audits on all pages, enforcing high scores for Accessibility, Performance, and SEO.
-  - **Parallel Matrix Execution**: Runs 4 parallel jobs covering **Mobile** & **Desktop** form factors across both **Light** & **Dark** themes.
-  - **Unified Dashboard**: Aggregates all results into a single, interactive HTML dashboard deployed to Vercel for easy review.
-- **Manual Checks**: The pipeline flags "incomplete" checks (e.g., complex color contrast) for manual review.
-- **Audit Script**: A custom script `scripts/audit-aria-labels.mjs` generates a detailed report of all ARIA labels, roles, and accessible names in a generated HTML file.
-  ```bash
-  # Analyze a specific build file
-  node scripts/audit-aria-labels.mjs dist/index.html
-  ```
-
-### Content Validation
-
-- **HTML Validation**: `html-validate` checks generated HTML for standard compliance and semantic correctness.
-- **RSS Validation**: `validate-rss.mjs` ensures the generated `rss.xml` strictly follows RSS 2.0 specifications.
-- **Schema.org**: `validate-schema.mjs` verifies the structure of JSON-LD data for SEO.
-
-## 🚀 Deployment
-
-The site is built as a static folder (`dist/`) and can be deployed to any static host. I use **Docker** with **Nginx**.
-The CI reports dashboard is automatically deployed to **Vercel** with a permanent link for the `main` branch at [jmrp-ci-reports.vercel.app](https://jmrp-ci-reports.vercel.app).
-
-### Docker
-
-```bash
-docker build -t jmrp-io .
-docker run -p 8080:80 jmrp-io
-```
+- **Executive Summary**: High-level overview of project health and critical highlights.
+- **Bundle Analysis**: Tracks JS/CSS size with a generous **8MB threshold** for heavy technical content.
+- **Accessibility Matrix**: Parallel tests for Light/Dark themes and Mobile/Desktop form factors.
+- **Static Analysis**: Real-time feedback from ESLint, Stylelint, Prettier, Typos, and JSDoc.
+- **Security Audit**: Integrated Snyk, SonarCloud, and `npm audit` monitoring.
 
 ## 🔒 Security & Nginx
 
-The project includes advanced Nginx configuration for security headers and asset delivery.
+Advanced Nginx configuration for high-security environments.
 
-- [Main Nginx Configuration Example](examples/nginx/nginx.conf.example)
-- [Security Headers Example](examples/nginx/security_headers.conf.example)
-
-### Security Features
-
-- **Reverse Proxy**: Nginx handles internal routing to external services, mitigating CORS and hiding infrastructure details.
-- **SRI (Subresource Integrity)**:
-  - Modularized protection for all local resources.
-  - Automatically calculates hashes for JS, CSS, fonts, and assets.
-  - Includes a custom listener for real-time failure tracking.
-- **CSP (Content Security Policy)**:
-  - **Hybrid Strategy**: Uses strict SHA-512 hashes for static content and `nonce` (injected via Nginx `sub_filter`) for dynamic isolation.
-  - **Astro v6 Compatibility**: Patches client-side prerendering to propagate nonces correctly.
-    - **Implementation**: [`src/integrations/vite-plugin-prefetch-nonce.ts`](src/integrations/vite-plugin-prefetch-nonce.ts) - Vite plugin that intercepts Astro's prefetch module and injects nonce extraction logic.
-    - **What it does**: Modifies `document.head.append()` calls to copy nonces from existing scripts before appending new speculation rules.
-    - **Maintenance**: On Astro upgrades, verify the following:
-      1. Check if `@astrojs/prefetch` module structure has changed (the plugin targets `appendSpeculationRules`).
-      2. Test CSP compliance in browser devtools (no `script-src` violations).
-      3. Monitor Astro release notes for official CSP nonce support (which would make this patch obsolete).
-- **Nginx Automation**:
-  - **Auto-Deployment**: The build process verifies and deploys `security_headers.conf` to the system if `POSTBUILD_NGINX_SNIPPETS_PATH` is set.
-  - **Custom Verification**: Supports optional config paths via `POSTBUILD_NGINX_CONFIG_PATH` for complex Nginx setups.
-  - **Atomic Rollback**: If `nginx -t` fails after a deployment, the script automatically reverts to the previous stable configuration.
-- **Incident Reporting**: Real-time Telegram notifications for CSP and SRI violations via a specialized backend.
-- **Hardened Headers**: Full HSTS, XFO, and Cross-Origin isolation achieving the maximum score on Mozilla Observatory.
+- **CSP (Content Security Policy)**: Hybrid strategy with SHA-512 hashes and dynamic nonces.
+- **SRI (Subresource Integrity)**: Automated hash generation for all local resources.
+- **Astro v6 Nonce Patch**: custom Vite plugin to ensure CSP compliance with Astro's prefetch system.
+- **Automated Deployment**: Post-build script verifies Nginx config and deploys security snippets atomically.
 
 ## 📄 LaTeX CV Compilation
 
-The project includes LaTeX source files to generate professional PDF CVs.
-For detailed instructions on compilation and prerequisites, please refer to the [CV LaTeX Documentation](cv_latex/README.md).
+Automated LaTeX compilation for professional PDF resumes. See [CV LaTeX Documentation](cv_latex/README.md) for details.
