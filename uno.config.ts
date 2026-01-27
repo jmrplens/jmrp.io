@@ -67,8 +67,8 @@ function extractIconsFromContent(): string[] {
     }
   }
 
-  // Scan YAML content files
-  walkDir("./src/content", [".yaml", ".yml"]);
+  // Scan YAML and MDX content files
+  walkDir("./src/content", [".yaml", ".yml", ".mdx"]);
   // Scan sources for dynamic icon assignments (icon: "mdi:school")
   walkDir("./src/components", [".astro", ".ts", ".tsx"]);
   walkDir("./src/pages", [".astro"]);
