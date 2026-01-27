@@ -52,7 +52,7 @@ const getActiveRules = () => {
       ["exec", "html-validate", "-c", CONFIG_FILE, "--print-config", firstHtml],
       {
         encoding: "utf-8",
-        env: { ...process.env, PATH: "/usr/bin:/bin" },
+        env: { ...process.env, PATH: "/usr/local/bin:/usr/bin:/bin" }, // NOSONAR
       },
     );
     const config = JSON.parse(configJson);

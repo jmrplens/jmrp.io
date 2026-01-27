@@ -246,7 +246,11 @@ const personSchema = {
                                 <div set:html={sanitize(desc)} />
                               </li>
                             );
-                          if (desc.title && Array.isArray(desc.contents)) {
+                          if (
+                            typeof desc === "object" &&
+                            desc.title &&
+                            Array.isArray(desc.contents)
+                          ) {
                             // Nested contents in description
                             return (
                               <li>
@@ -369,7 +373,7 @@ const personSchema = {
 
   /* Section Styling */
   .cv-section {
-    margin-bottom: var(--space-3xl);
+    margin-bottom: var(--space-lg-xl);
     scroll-margin-top: var(--header-height);
   }
 
