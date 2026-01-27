@@ -60,6 +60,7 @@
     "typecheck": "astro check",
     "typecheck:tsc": "tsc --noEmit",
     "test:e2e": "playwright test",
+    "verify-icons": "node scripts/verify-icons.mjs",
     "verify": "node scripts/run-verify.mjs"
   },
   "dependencies": {

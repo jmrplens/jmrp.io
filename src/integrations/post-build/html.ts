@@ -253,6 +253,9 @@ async function processSingleHtmlFile(
   // Integrity for beacon
   if (processBeacon($, distDir, file, hashCache, logger)) isModified = true;
 
+  // UnoCSS Icon Purge: Remove CSS rules for icons that are not present as classes in the HTML
+  if (purgeUnusedIcons($)) isModified = true;
+
   // Accessibility: Code blocks
   if (processCodeBlocks($)) isModified = true;
 
@@ -361,9 +364,10 @@ function processStyles($: cheerio.CheerioAPI, enableCsp: boolean): boolean {
 
   if (styleToClassMap.size > 0) {
     let cssRules = "";
+    const bs = "\\";
     for (const [styleDef, className] of styleToClassMap.entries()) {
       const sanitizedStyle = styleDef
-        .replaceAll("\\", String.raw`\5c `)
+        .replaceAll(bs, String.raw`\5c `)
         .replaceAll("<", String.raw`\3c `)
         .replaceAll(">", String.raw`\3e `)
         .replaceAll("{", String.raw`\7b `)
@@ -603,5 +607,57 @@ function processLinks($: cheerio.CheerioAPI): boolean {
       modified = true;
     }
   });
+  return modified;
+}
+
+/**
+ * Purges unused UnoCSS icon rules from inline styles in the HTML.
+ * Robustly detects icon classes regardless of order or surrounding content.
+ */
+function purgeUnusedIcons($: cheerio.CheerioAPI): boolean {
+  let modified = false;
+  const htmlContent = $.html();
+
+  // Find all used icon classes (e.g., i-mdi:school)
+  const iconPattern = /i-([a-z0-9-]+):([a-z0-9-]+)/gi;
+  const usedIconClasses = new Set<string>();
+  let match: RegExpExecArray | null;
+  while ((match = iconPattern.exec(htmlContent)) !== null) {
+    usedIconClasses.add(
+      `i-${match[1].toLowerCase()}:${match[2].toLowerCase()}`,
+    );
+  }
+
+  if (usedIconClasses.size === 0) return false;
+
+  // Process style blocks
+  $("style").each((_, el) => {
+    const $style = $(el);
+    let css = $style.html() || "";
+    if (!css.includes(".i-")) return;
+
+    const originalCss = css;
+
+    // Match rules like .i-mdi\:school{...} or .i-logos\:mikrotik{...}
+    // and handle complex escapes.
+    const iconRuleRegex = /\.i-([a-z0-9-]+)\\:([a-z0-9-]+)\s*\{[^}]*\}/gi;
+
+    css = css.replaceAll(
+      iconRuleRegex,
+      (rule: string, collection: string, name: string) => {
+        const fullIconClass = `i-${collection.toLowerCase()}:${name.toLowerCase()}`;
+        if (usedIconClasses.has(fullIconClass)) {
+          return rule;
+        }
+        return "";
+      },
+    );
+
+    if (css !== originalCss) {
+      $style.html(css);
+      modified = true;
+    }
+  });
+
   return modified;
 }

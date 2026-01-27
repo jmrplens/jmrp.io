@@ -280,7 +280,7 @@ async function validateRSS() {
     for (const error of results.errors) console.log(`   - ${error}`);
   }
 
-  writeResults(results, path.join(distDir, OUTPUT_FILE));
+  writeResults(results, OUTPUT_FILE);
   process.exit(results.valid ? 0 : 1);
 }
 

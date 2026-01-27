@@ -5,10 +5,10 @@
 1. Copy the template file:
 
    ```bash
-   cp src/content/posts/_template.mdx src/content/posts/my-new-post.mdx
+   cp src/content/posts/_template.mdx src/content/posts/000-my-new-post.mdx
    ```
 
-2. Edit the frontmatter with your post details
+2. Edit the frontmatter with your post details. **Replace `000` with the next available number.**
 
 3. Write your content using Markdown/MDX
 

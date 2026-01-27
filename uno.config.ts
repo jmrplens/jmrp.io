@@ -1,19 +1,11 @@
 /**
  * UnoCSS Configuration
  *
- * Uses presetIcons for pure-CSS icons with automatic per-page extraction.
- * Custom extractors handle both formats:
- * - `i-fa-solid:icon` (used in Astro/TSX files)
- * - `fa-solid:icon` (used in YAML content files)
- *
- * @see https://unocss.dev/presets/icons
+ * Scans all source and content files for icon patterns.
+ * Custom extractor ensures icons in YAML/MDX/TS are detected even without 'i-' prefix.
  */
-import { readdirSync, readFileSync, statSync } from "node:fs";
-import { join } from "node:path";
+import { defineConfig, presetIcons, presetWind4 } from "unocss";
 
-import { defineConfig, presetIcons } from "unocss";
-
-// List of known icon collections for extraction
 const iconCollections = [
   "fa-solid",
   "fa-brands",
@@ -29,64 +21,50 @@ const iconCollections = [
   "lucide",
 ];
 
-/**
- * Extract icons from content files to safelist them.
- * This is needed because dynamic icon strings in JS (e.g., icon: "mdi:school")
- * aren't detected by UnoCSS's default class extractor.
- */
-function extractIconsFromContent(): string[] {
-  const icons = new Set<string>();
-  const collectionsPattern = iconCollections.join("|");
-  const regex = new RegExp(`(${collectionsPattern}):([a-z0-9-]+)`, "gi");
-
-  function scanFile(filePath: string) {
-    try {
-      const content = readFileSync(filePath, "utf8");
-      let match;
-      while ((match = regex.exec(content)) !== null) {
-        icons.add(`i-${match[1]}:${match[2]}`);
-      }
-      regex.lastIndex = 0; // Reset for next file
-    } catch {
-      // Ignore read errors
-    }
-  }
-
-  function walkDir(dir: string, extensions: string[]) {
-    try {
-      for (const f of readdirSync(dir)) {
-        const entryPath = join(dir, f);
-        if (statSync(entryPath).isDirectory()) {
-          walkDir(entryPath, extensions);
-        } else if (extensions.some((ext) => f.endsWith(ext))) {
-          scanFile(entryPath);
-        }
-      }
-    } catch {
-      // Ignore directory errors
-    }
-  }
-
-  // Scan YAML and MDX content files
-  walkDir("./src/content", [".yaml", ".yml", ".mdx"]);
-  // Scan sources for dynamic icon assignments (icon: "mdi:school")
-  walkDir("./src/components", [".astro", ".ts", ".tsx"]);
-  walkDir("./src/pages", [".astro"]);
-
-  return [...icons];
-}
-
-const safelistIcons = extractIconsFromContent();
-
 export default defineConfig({
-  // Safelist icons from content files (not auto-extracted by UnoCSS)
-  safelist: safelistIcons,
-  // Content sources for icon extraction from code files
   content: {
-    filesystem: ["src/**/*.astro", "src/**/*.{ts,tsx}", "src/**/*.mdx"],
+    filesystem: [
+      "src/**/*.{astro,html,js,jsx,md,mdx,svelte,ts,tsx,vue,yaml,yml}",
+    ],
   },
+  extractors: [
+    {
+      name: "icon-extractor",
+      extract(context) {
+        const content = context.code;
+        const icons = new Set<string>();
+        const collectionsPattern = iconCollections.join("|");
+        // Regex to find "collection:name" or i-collection:name
+        const regex = new RegExp(
+          String.raw`\b(${collectionsPattern}):([a-z0-9-]+)\b`,
+          "gi",
+        );
+
+        let match;
+        while ((match = regex.exec(content)) !== null) {
+          icons.add(`i-${match[1].toLowerCase()}:${match[2].toLowerCase()}`);
+        }
+        return icons;
+      },
+    },
+  ],
+  safelist: [
+    "i-devicon:html5",
+    "i-devicon:javascript",
+    "i-simple-icons:mikrotik",
+    "i-mdi:file-outline",
+    "i-mdi:file-cog-outline",
+    "i-mdi:file-settings-outline",
+    "i-mdi:code-json",
+    "i-mdi:xml",
+    "i-mdi:database",
+    "i-devicon:mongodb",
+    "i-devicon:graphql",
+  ],
   presets: [
+    presetWind4(),
     presetIcons({
+      prefix: "i-",
       extraProperties: {
         display: "inline-block",
         "vertical-align": "middle",

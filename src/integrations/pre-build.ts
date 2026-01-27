@@ -42,6 +42,8 @@ export default function preBuildIntegration(): AstroIntegration {
           if (command === "build") {
             await setupCfBeacon(env.PUBLIC_CF_BEACON_TOKEN, logger);
           }
+
+          // Always setup icons detection to ensure UnoCSS finds them
         } catch (error) {
           const message =
             error instanceof Error ? error.message : String(error);
