@@ -97,6 +97,42 @@ test.describe("Interactive Features", () => {
     await expect(html).toHaveAttribute("data-theme", "light");
   });
 
+  test("theme persists across page navigation", async ({ page }) => {
+    await page.goto("/");
+
+    const html = page.locator("html");
+    const toggle = page.locator("#theme-toggle");
+
+    // Start with a known state: set to dark via localStorage and reload
+    await page.evaluate(() => {
+      localStorage.setItem("theme", "dark");
+    });
+    await page.reload();
+    await expect(html).toHaveAttribute("data-theme", "dark");
+
+    // Click to switch to light mode
+    await toggle.click();
+    await expect(html).toHaveAttribute("data-theme", "light");
+
+    // Verify localStorage was updated
+    const storedTheme = await page.evaluate(() =>
+      localStorage.getItem("theme"),
+    );
+    expect(storedTheme).toBe("light");
+
+    // Navigate to another page - theme should persist
+    await page.goto("/cv/");
+    await expect(html).toHaveAttribute("data-theme", "light");
+
+    // Navigate to blog - theme should still persist
+    await page.goto("/blog/");
+    await expect(html).toHaveAttribute("data-theme", "light");
+
+    // Navigate back to homepage - should still be light
+    await page.goto("/");
+    await expect(html).toHaveAttribute("data-theme", "light");
+  });
+
   test("mobile menu preserves scroll position on open/close", async ({
     page,
   }) => {

@@ -1,7 +1,6 @@
 ---
 import CopyButton from "@components/ui/CopyButton.astro";
 import { sanitize } from "@utils/html";
-import { Icon } from "astro-icon/components";
 
 const { pub } = Astro.props;
 
@@ -100,7 +99,7 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
               aria-expanded="false"
               aria-controls={abstractId}
             >
-              <Icon name="fa-solid:align-left" /> Abstract
+              <span class="i-fa-solid:align-left" /> Abstract
             </button>
           )
         }
@@ -114,7 +113,7 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
               aria-expanded="false"
               aria-controls={bibtexId}
             >
-              <Icon name="fa-solid:code" /> BibTeX
+              <span class="i-fa-solid:code" /> BibTeX
             </button>
           )
         }
@@ -127,7 +126,7 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
               rel="noopener noreferrer"
               aria-label={`Download PDF for ${pub.title}`}
             >
-              <Icon name="fa-solid:file-pdf" /> PDF
+              <span class="i-fa-solid:file-pdf" /> PDF
             </a>
           )
         }
@@ -140,7 +139,7 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
               rel="noopener noreferrer"
               aria-label={`View DOI for ${pub.title}`}
             >
-              <Icon name="fa-solid:external-link-alt" /> DOI
+              <span class="i-fa-solid:external-link-alt" /> DOI
             </a>
           )
         }
@@ -153,7 +152,7 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
               rel="noopener noreferrer"
               aria-label={`View URL for ${pub.title}`}
             >
-              <Icon name="fa-solid:link" /> URL
+              <span class="i-fa-solid:link" /> URL
             </a>
           )
         }
@@ -166,7 +165,7 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
               rel="noopener noreferrer"
               aria-label={`View Slides for ${pub.title}`}
             >
-              <Icon name="fa-solid:chalkboard-teacher" /> Slides
+              <span class="i-fa-solid:chalkboard-teacher" /> Slides
             </a>
           )
         }
@@ -179,7 +178,7 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
               rel="noopener noreferrer"
               aria-label={`View Poster for ${pub.title}`}
             >
-              <Icon name="fa-solid:image" /> Poster
+              <span class="i-fa-solid:image" /> Poster
             </a>
           )
         }

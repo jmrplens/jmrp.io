@@ -1,7 +1,28 @@
 {
-  "name": "jmrp.io_astro",
+  "name": "jmrp.io",
   "type": "module",
-  "version": "0.0.1",
+  "version": "1.0.0",
+  "description": "Personal portfolio and technical blog of José Manuel Requena Plens - R&D Engineer",
+  "author": "José Manuel Requena Plens <jmrplens@gmail.com> (https://jmrp.io)",
+  "license": "MIT",
+  "homepage": "https://jmrp.io",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jmrplens/jmrp.io.git"
+  },
+  "bugs": {
+    "url": "https://github.com/jmrplens/jmrp.io/issues"
+  },
+  "keywords": [
+    "astro",
+    "portfolio",
+    "blog",
+    "cv",
+    "engineer",
+    "embedded-systems",
+    "acoustics",
+    "typescript"
+  ],
   "engines": {
     "node": ">=22.12.0",
     "pnpm": ">=10"
@@ -53,8 +74,8 @@
     "@iconify-json/mdi": "^1.2.3",
     "@iconify-json/simple-icons": "^1.2.67",
     "@iconify-json/vscode-icons": "^1.2.40",
+    "@unocss/astro": "^66.6.0",
     "astro": "6.0.0-beta.3",
-    "astro-icon": "^1.1.5",
     "citation-js": "^0.7.22",
     "marked": "^17.0.1",
     "mermaid": "^11.12.2",
@@ -65,11 +86,13 @@
     "remark-math": "^6.0.0",
     "sanitize-html": "^2.17.0",
     "shiki": "^3.21.0",
+    "unocss": "^66.6.0",
     "vite": "^7.3.1"
   },
   "devDependencies": {
     "@astrojs/check": "0.9.6",
     "@axe-core/playwright": "^4.11.0",
+    "@gorazdo/eslint-plugin-preact": "^1.0.7",
     "@iconify-json/devicon": "^1.2.57",
     "@lhci/cli": "^0.15.1",
     "@playwright/test": "^1.58.0",
@@ -81,6 +104,7 @@
     "@types/xml2js": "^0.4.14",
     "@typescript-eslint/eslint-plugin": "^8.53.1",
     "@typescript-eslint/parser": "^8.53.1",
+    "@unocss/eslint-plugin": "^66.6.0",
     "astro-eslint-parser": "^1.2.2",
     "axe-core": "^4.11.1",
     "axe-html-reporter": "^2.2.11",
@@ -90,9 +114,11 @@
     "eslint-plugin-astro": "^1.5.0",
     "eslint-plugin-jsdoc": "^62.4.1",
     "eslint-plugin-jsx-a11y": "^6.10.2",
+    "eslint-plugin-no-secrets": "^2.2.1",
     "eslint-plugin-playwright": "^2.5.0",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-simple-import-sort": "^12.1.1",
+    "eslint-plugin-sonarjs": "^3.0.5",
     "eslint-plugin-unicorn": "^62.0.0",
     "glob": "^13.0.0",
     "hast-util-from-html-isomorphic": "^2.0.0",

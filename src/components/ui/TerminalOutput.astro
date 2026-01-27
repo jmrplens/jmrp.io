@@ -11,8 +11,6 @@
  *   Package installed successfully.
  * </TerminalOutput>
  */
-import { Icon } from "astro-icon/components";
-
 interface Props {
   title?: string;
   ariaLabel?: string;
@@ -40,10 +38,7 @@ const finalAriaLabel =
         class="output-header"
         aria-hidden="true"
       >
-        <Icon
-          name="mdi:chevron-right-box-outline"
-          class="output-icon"
-        />
+        <span class="i-mdi:chevron-right-box-outline output-icon" />
         <span class="output-title">{title}</span>
       </div>
     )

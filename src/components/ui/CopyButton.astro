@@ -9,8 +9,6 @@
  *   <CopyButton />
  * </div>
  */
-import { Icon } from "astro-icon/components";
-
 interface Props {
   class?: string;
   content?: string;
@@ -31,16 +29,14 @@ const encodedContent = content ? encodeURIComponent(content) : undefined;
     class="sr-only copy-status"
     aria-live="polite"
   ></span>
-  <Icon
-    name="mdi:clipboard-outline"
-    class="copy-icon"
+  <span
+    class="i-mdi:clipboard-outline copy-icon"
     aria-hidden="true"
-  />
-  <Icon
-    name="mdi:check"
-    class="success-icon hidden"
+  ></span>
+  <span
+    class="i-mdi:check success-icon hidden"
     aria-hidden="true"
-  />
+  ></span>
 </button>
 
 <script>

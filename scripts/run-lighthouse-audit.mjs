@@ -127,9 +127,13 @@ const runAudit = async () => {
     );
     if (issues.length > 0) {
       totalIssues++;
-      console.log(
-        `❌ ${r.url} [${r.combo}]: ${issues.map(([k, v]) => `${k}: ${(v * 100).toFixed(0)}%`).join(", ")}`,
-      );
+      const issueDetails = issues
+        .map(([k, v]) => {
+          const percentage = (v * 100).toFixed(0);
+          return `${k}: ${percentage}%`;
+        })
+        .join(", ");
+      console.log(`❌ ${r.url} [${r.combo}]: ${issueDetails}`);
     }
   });
 

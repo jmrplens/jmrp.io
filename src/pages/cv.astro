@@ -14,7 +14,6 @@ import type { CVSection } from "@src/types";
 import { getCVData } from "@utils/cv";
 import { sanitize, stripHtml } from "@utils/html";
 import { getSiteUrl } from "@utils/site";
-import { Icon } from "astro-icon/components";
 
 const cvData = await getCVData();
 
@@ -59,16 +58,9 @@ const menuSections: MenuSection[] = sortedSections.map((section) => {
       }));
       break;
     }
-    case "list_groups": {
-      // Skills: Use skill categories
-      items = section.contents.map((group, index) => ({
-        title: group.category,
-        slug: generateSlug(`${section.title}-${group.category}-${index}`),
-      }));
-      break;
-    }
+    case "list_groups":
     case "certificate_list": {
-      // Certificates: Use certificate categories
+      // Skills & Certificates: Use group/category name
       items = section.contents.map((group, index) => ({
         title: group.category,
         slug: generateSlug(`${section.title}-${group.category}-${index}`),
@@ -230,7 +222,11 @@ const personSchema = {
                     )}
                     {item.location && (
                       <div class="item-location">
-                        <Icon name="fa-solid:map-marker-alt" /> {item.location}
+                        <span
+                          class="i-fa-solid:map-marker-alt"
+                          aria-hidden="true"
+                        />{" "}
+                        {item.location}
                       </div>
                     )}
 
@@ -280,7 +276,10 @@ const personSchema = {
                             rel="noopener noreferrer"
                             aria-label={link.ariaLabel}
                           >
-                            <Icon name="fa-solid:file-pdf" />
+                            <span
+                              class="i-fa-solid:file-pdf"
+                              aria-hidden="true"
+                            />
                             {link.linkname}
                           </a>
                         ))}

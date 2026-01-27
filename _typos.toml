@@ -20,6 +20,8 @@ extend-ignore-re = [
 
 [default.extend-words]
 routeros = "routeros"
+PNGs = "PNGs"
+PN = "PN"
 
 [default.extend-identifiers]
 # Technical protocol/standard names

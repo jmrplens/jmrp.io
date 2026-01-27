@@ -57,15 +57,19 @@ try {
     timeout: 300_000, // 5 minutes timeout
   });
 
-  // Vercel CLI outputs the URL as the only thing in stdout if it's a successful deploy in some versions,
-  // but usually it prints progress. We need to extract the URL.
-  // Regex excludes common trailing punctuation that might be captured
-  const match = /https?:\/\/[^\s'">\]]+\.vercel\.app[^\s'">\].,;:!?)]*/.exec(
-    output,
-  );
-  // Post-process to remove any remaining trailing punctuation
-  const rawUrl = match ? match[0] : null;
-  const previewUrl = rawUrl ? rawUrl.replace(/[.,;:!?)>\]]+$/, "") : null;
+  // Robustly extract the Vercel deployment URL from output
+  const lines = output.split("\n");
+  const urlLine = lines.find((l) => l.includes("vercel.app"));
+  let previewUrl = null;
+
+  if (urlLine) {
+    // Robust extraction without complex regex to satisfy Sonar
+    const startIdx = urlLine.indexOf("https://");
+    if (startIdx !== -1) {
+      const potentialUrl = urlLine.substring(startIdx).split(/\s/)[0];
+      previewUrl = potentialUrl.replace(/[.,;:!?)>\]]+$/, "");
+    }
+  }
 
   if (previewUrl) {
     console.log(`✅ Deployment successful!`);

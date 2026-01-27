@@ -20,7 +20,6 @@ import { decodeHtml } from "@utils/html";
 import { getIconForLang } from "@utils/icons";
 import { resolveShikiLanguage } from "@utils/shiki";
 import { Code as AstroCode } from "astro/components";
-import { Icon } from "astro-icon/components";
 import type { BuiltinLanguage, SpecialLanguage } from "shiki";
 
 import CopyButton from "./CopyButton.astro";
@@ -117,9 +116,11 @@ const langIcon = getIconForLang(lang);
     >
       <div class="code-block-header">
         <div class="code-lang-info">
-          <Icon
-            name={langIcon}
-            class="code-type-icon"
+          <span
+            class:list={[
+              langIcon.startsWith("i-") ? langIcon : `i-${langIcon}`,
+              "code-type-icon",
+            ]}
             aria-hidden="true"
           />
           <span class="code-language-label">{langDisplay}</span>

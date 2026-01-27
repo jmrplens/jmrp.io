@@ -17,6 +17,7 @@ import { compressAssets } from "./post-build/compression.js";
 import { finalizeCspConfig } from "./post-build/csp.js";
 import { extractCssDataUris } from "./post-build/css.js";
 import { processHtmlFiles } from "./post-build/html.js";
+import { optimizeImages } from "./post-build/images.js";
 import type { CspData } from "./post-build/types.js";
 
 /**
@@ -76,6 +77,7 @@ export default function postBuildIntegration(): AstroIntegration {
             );
           }
 
+          await optimizeImages(distDir, logger);
           await compressAssets(distDir, logger);
           await purgeCloudflareCache(logger);
         } catch (error) {
@@ -139,25 +141,59 @@ function deploySecurityHeaders(
   logger: AstroIntegrationLogger,
 ) {
   const generatedPath = path.join(distDir, "security_headers.conf");
+  const generatedAssetsPath = path.join(
+    distDir,
+    "security_headers_assets.conf",
+  );
+  const systemNginxAssetsPath = path.join(
+    path.dirname(systemNginxPath),
+    "security_headers_assets.conf",
+  );
 
-  if (!fs.existsSync(systemNginxPath) || !fs.existsSync(generatedPath)) {
-    if (!fs.existsSync(systemNginxPath)) {
-      // Log only basename to avoid exposing full system paths
-      logger.warn(
-        `System Nginx path missing: ${path.basename(systemNginxPath)}`,
-      );
-    }
-    if (!fs.existsSync(generatedPath)) {
-      logger.warn(
-        `Generated security headers missing: ${path.basename(generatedPath)}`,
-      );
-    }
+  const systemNginxExists = fs.existsSync(systemNginxPath);
+  const generatedExists = fs.existsSync(generatedPath);
+
+  if (!systemNginxExists) {
+    logger.info(
+      `Skipping deployment: system Nginx path does not exist [${path.basename(systemNginxPath)}]`,
+    );
+  }
+  if (!generatedExists) {
+    logger.info(
+      `Skipping deployment: generated security headers not found [${path.basename(generatedPath)}]`,
+    );
+  }
+
+  if (!systemNginxExists || !generatedExists) {
     return;
   }
 
-  // Permissions are checked implicitly during copy/reload operations
-  // We let standard fs errors bubble up if permissions are missing
+  validateNginxPath(systemNginxAssetsPath);
+  if (path.resolve(systemNginxPath) === path.resolve(systemNginxAssetsPath)) {
+    throw new Error(
+      "Main Nginx path and assets path resolve to the same file.",
+    );
+  }
 
+  performNginxDeployment(
+    systemNginxPath,
+    generatedPath,
+    systemNginxAssetsPath,
+    generatedAssetsPath,
+    logger,
+  );
+}
+
+/**
+ * Performs the actual file copy and reload operations.
+ */
+function performNginxDeployment(
+  systemNginxPath: string,
+  generatedPath: string,
+  systemNginxAssetsPath: string,
+  generatedAssetsPath: string,
+  logger: AstroIntegrationLogger,
+) {
   let nginxTestTimeout = Number.parseInt(
     process.env.POSTBUILD_NGINX_TEST_TIMEOUT || "10000",
     10,
@@ -178,7 +214,21 @@ function deploySecurityHeaders(
   logger.info(`Deploying security headers to system Nginx...`);
   try {
     const originalContent = fs.readFileSync(systemNginxPath);
+    let originalAssetsContent: Buffer | null = null;
+    let assetsCreated = false;
+    const systemAssetsExists = fs.existsSync(systemNginxAssetsPath);
+
+    if (systemAssetsExists) {
+      originalAssetsContent = fs.readFileSync(systemNginxAssetsPath);
+    }
+
     fs.copyFileSync(generatedPath, systemNginxPath);
+    if (fs.existsSync(generatedAssetsPath)) {
+      if (!systemAssetsExists) {
+        assetsCreated = true;
+      }
+      fs.copyFileSync(generatedAssetsPath, systemNginxAssetsPath);
+    }
 
     try {
       const systemNginxCachePath =
@@ -199,6 +249,11 @@ function deploySecurityHeaders(
         originalContent,
         nginxTestTimeout,
         logger,
+        {
+          path: systemNginxAssetsPath,
+          originalContent: originalAssetsContent,
+          created: assetsCreated,
+        },
       );
     }
   } catch (error) {
@@ -348,6 +403,7 @@ function clearNginxCache(
  * @param originalContent - Buffer of the original configuration content.
  * @param timeout - Execution timeout for Nginx commands.
  * @param logger - Astro logger instance.
+ * @param assetsRollback - Optional asset rollback information.
  */
 function handleNginxValidationError(
   validationError: unknown,
@@ -355,6 +411,11 @@ function handleNginxValidationError(
   originalContent: Buffer,
   timeout: number,
   logger: AstroIntegrationLogger,
+  assetsRollback?: {
+    path: string;
+    originalContent: Buffer | null;
+    created: boolean;
+  },
 ) {
   logger.error(
     "⚠ Nginx validation failed! Reverting to previous configuration.",
@@ -364,27 +425,16 @@ function handleNginxValidationError(
       ? validationError.stack || validationError.message
       : String(validationError),
   );
+
   try {
-    fs.writeFileSync(systemNginxPath, originalContent);
+    performRollback(systemNginxPath, originalContent, assetsRollback);
     logger.info(
       "✓ Successfully reverted to the previous stable configuration.",
     );
+
     // Final validation to ensure system is left in a stable state
     const finalExecOptions = createSecureExecOptions(timeout);
-
-    // Use the same config path as the primary test for consistency during rollback
-    const nginxConfigPath = process.env.POSTBUILD_NGINX_CONFIG_PATH;
-    const finalTestArgs = nginxConfigPath
-      ? ["-t", "-c", nginxConfigPath]
-      : ["-t"];
-
-    const finalTestResult = spawnSync("nginx", finalTestArgs, finalExecOptions); // NOSONAR suppressed: external command usage is intentional — targets system-managed Nginx binary and validated by test runs
-    if (finalTestResult.error) {
-      throw finalTestResult.error;
-    }
-    if (finalTestResult.status !== 0) {
-      throw new Error("Nginx final validation test failed.");
-    }
+    verifyRollbackState(finalExecOptions);
   } catch (revertError) {
     const revertErrorMessage =
       revertError instanceof Error ? revertError.message : String(revertError);
@@ -401,4 +451,52 @@ function handleNginxValidationError(
   throw validationError instanceof Error
     ? validationError
     : new Error(String(validationError));
+}
+
+/**
+ * Performs the file rollback for both main and assets config.
+ */
+function performRollback(
+  systemNginxPath: string,
+  originalContent: Buffer,
+  assetsRollback?: {
+    path: string;
+    originalContent: Buffer | null;
+    created: boolean;
+  },
+) {
+  fs.writeFileSync(systemNginxPath, originalContent);
+
+  if (!assetsRollback) return;
+
+  if (assetsRollback.created && fs.existsSync(assetsRollback.path)) {
+    fs.unlinkSync(assetsRollback.path);
+  } else if (
+    assetsRollback.originalContent !== null &&
+    fs.existsSync(assetsRollback.path)
+  ) {
+    fs.writeFileSync(assetsRollback.path, assetsRollback.originalContent);
+  }
+}
+
+/**
+ * Verifies that Nginx is in a stable state after rollback.
+ */
+function verifyRollbackState(execOptions: {
+  stdio: "inherit";
+  timeout: number;
+  env: NodeJS.ProcessEnv;
+}) {
+  const nginxConfigPath = process.env.POSTBUILD_NGINX_CONFIG_PATH;
+  const finalTestArgs = nginxConfigPath
+    ? ["-t", "-c", nginxConfigPath]
+    : ["-t"];
+
+  const finalTestResult = spawnSync("nginx", finalTestArgs, execOptions); // NOSONAR suppressed: external command usage is intentional
+  if (finalTestResult.error) {
+    throw finalTestResult.error;
+  }
+  if (finalTestResult.status !== 0) {
+    throw new Error("Nginx final validation test failed.");
+  }
 }

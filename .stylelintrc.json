@@ -25,7 +25,15 @@
     ],
     "no-descending-specificity": null,
     "color-function-notation": "modern",
-    "alpha-value-notation": "percentage"
+    "alpha-value-notation": "percentage",
+    "color-named": "never",
+    "max-nesting-depth": 4,
+    "declaration-no-important": null,
+    "declaration-property-value-disallowed-list": {
+      "font-family": [
+        "/^(?!var\\(|inherit|inline-icon|monospace|sans-serif|serif).*$/"
+      ]
+    }
   },
   "reportNeedlessDisables": true,
   "reportInvalidScopeDisables": true

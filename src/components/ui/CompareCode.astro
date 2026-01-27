@@ -9,7 +9,6 @@
  *   <div slot="good">...code...</div>
  * </CompareCode>
  */
-import { Icon } from "astro-icon/components";
 import * as cheerio from "cheerio";
 
 import CopyButton from "./CopyButton.astro";
@@ -49,12 +48,13 @@ const getSnippet = (html: string) => {
 const snippetBad = getSnippet(badContent);
 const snippetGood = getSnippet(goodContent);
 
+const badContext = snippetBad ? ` - ${snippetBad}` : "";
+const goodContext = snippetGood ? ` - ${snippetGood}` : "";
+
 const finalAriaLabelBad =
-  ariaLabelBad ||
-  `Comparison: ${badTitle}${snippetBad ? ` - ${snippetBad}` : ""}`;
+  ariaLabelBad || `Comparison: ${badTitle}${badContext}`;
 const finalAriaLabelGood =
-  ariaLabelGood ||
-  `Comparison: ${goodTitle}${snippetGood ? ` - ${snippetGood}` : ""}`;
+  ariaLabelGood || `Comparison: ${goodTitle}${goodContext}`;
 ---
 
 <div class="compare-code-wrapper">
@@ -64,10 +64,10 @@ const finalAriaLabelGood =
     data-testid={testIdBad}
   >
     <div class="header">
-      <Icon
-        name="mdi:close-circle-outline"
-        class="icon"
-      />
+      <span
+        class="i-mdi:close-circle-outline icon"
+        aria-hidden="true"
+      ></span>
       <span>{badTitle}</span>
       <CopyButton
         class="compare-copy-button"
@@ -85,10 +85,10 @@ const finalAriaLabelGood =
     data-testid={testIdGood}
   >
     <div class="header">
-      <Icon
-        name="mdi:check-circle-outline"
-        class="icon"
-      />
+      <span
+        class="i-mdi:check-circle-outline icon"
+        aria-hidden="true"
+      ></span>
       <span>{goodTitle}</span>
       <CopyButton
         class="compare-copy-button"
@@ -160,7 +160,7 @@ const finalAriaLabelGood =
     padding: 0.5rem 1rem;
     font-size: 0.9rem;
     font-weight: bold;
-    color: var(--compare-header-text, white);
+    color: var(--compare-header-text, #fff);
     background-color: var(--compare-header-bg);
   }
 
@@ -175,7 +175,7 @@ const finalAriaLabelGood =
     --copy-btn-bg: rgb(0 0 0 / 25%);
     --copy-btn-bg-hover: rgb(0 0 0 / 40%);
     --copy-btn-border: 1px solid rgb(255 255 255 / 20%);
-    --copy-btn-icon-color: white;
+    --copy-btn-icon-color: #fff;
 
     position: static;
     margin-left: auto;

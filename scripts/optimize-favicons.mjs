@@ -41,17 +41,17 @@ const collectHostnames = () => {
     .readdirSync(POSTS_DIR)
     .filter((f) => f.endsWith(".mdx") || f.endsWith(".md"));
 
-  files.forEach((file) => {
+  for (const file of files) {
     const content = fs.readFileSync(path.join(POSTS_DIR, file), "utf-8");
-    // Match markdown links and raw <a> tags, avoiding common markdown noise
-    const links = content.match(/https?:\/\/[^\s)\]'"`]+/g) || [];
-    links.forEach((link) => {
-      // Clean link (remove trailing punctuation common in sentences)
-      const cleanLink = link.replace(/[.,;]+$/, "");
-      const hostname = getHostname(cleanLink);
-      if (hostname) hostnames.add(hostname);
-    });
-  });
+    const tokens = content.split(/[\s()[\]'"`<>]+/);
+    for (const token of tokens) {
+      if (token.includes("://")) {
+        const cleanLink = token.replace(/[.,;]+$/, "");
+        const hostname = getHostname(cleanLink);
+        if (hostname) hostnames.add(hostname);
+      }
+    }
+  }
 
   return [...hostnames];
 };
@@ -86,7 +86,8 @@ const processFavicon = async (hostname) => {
       .webp({ quality: 90 })
       .toFile(outputPath);
   } catch (error) {
-    console.error(`  x Error for ${hostname}: ${error.message}`);
+    const message = error instanceof Error ? error.message : String(error);
+    console.error(`  x Error for ${hostname}: ${message}`);
   }
 };
 
@@ -105,7 +106,11 @@ const run = async () => {
   console.log("✨ Done!");
 };
 
-run().catch((error) => {
-  console.error("Fatal error:", error);
+try {
+  await run();
+} catch (error) {
+  const message = error instanceof Error ? error.message : String(error);
+  const stack = error instanceof Error ? `\n${error.stack}` : "";
+  console.error(`Fatal error: ${message}${stack}`);
   process.exit(1);
-});
+}

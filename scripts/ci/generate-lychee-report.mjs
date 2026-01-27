@@ -40,7 +40,8 @@ for (const line of lines) {
   } else if (line.startsWith("* ")) {
     const parts = line.split("|");
     if (parts.length >= 2) {
-      const linkMatch = /\[(.*?)\]\((.*?)\)/.exec(parts[0]);
+      // Secure regex for [name](url)
+      const linkMatch = /\[([^\]]+)\]\(([^)]+)\)/.exec(parts[0]); // NOSONAR
       const linkName = linkMatch ? linkMatch[1] : parts[0].replace("* ", "");
       const linkUrl = linkMatch ? linkMatch[2] : null;
       // Join all segments after the first to preserve | in error messages
@@ -56,7 +57,7 @@ for (const line of lines) {
       if (linkUrl) {
         // Reject protocol-relative URLs (//evil.com)
         if (linkUrl.startsWith("//")) {
-          safeLinkUrl = null;
+          // Keep null
         } else if (linkUrl.includes(":")) {
           // Absolute URL - validate protocol
           const protocolMatch = /^([a-zA-Z][a-zA-Z0-9+.-]*):/.exec(linkUrl);

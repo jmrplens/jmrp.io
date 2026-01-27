@@ -1,15 +1,15 @@
 // @ts-check
 // Adapters and Integrations
-import mdx from "@astrojs/mdx"; // Support for MDX (Markdown with JSX)
-import preact from "@astrojs/preact"; // Preact integration (lighter alternative to React)
-import sitemap from "@astrojs/sitemap"; // Generates a sitemap.xml
+import mdx from "@astrojs/mdx";
+import preact from "@astrojs/preact";
+import sitemap from "@astrojs/sitemap";
+import UnoCSS from "@unocss/astro";
 import { defineConfig, envField, fontProviders } from "astro/config";
-import icon from "astro-icon"; // Icon support
-import rehypeExternalLinks from "rehype-external-links"; // Adds target="_blank" to external links
-import rehypeMathjax from "rehype-mathjax"; // Rehype plugin to render math with MathJax
+import rehypeExternalLinks from "rehype-external-links";
+import rehypeMathjax from "rehype-mathjax";
 import rehypeMermaid from "rehype-mermaid";
 import rehypeRaw from "rehype-raw";
-import remarkMath from "remark-math"; // Remark plugin to support math equations
+import remarkMath from "remark-math";
 import { ViteImageOptimizer } from "vite-plugin-image-optimizer";
 
 import { rehypeLinkDisambiguator } from "./scripts/rehype-link-disambiguator.mjs";
@@ -25,6 +25,12 @@ const githubDark = "github-dark-high-contrast";
 
 // Image optimizer cache location (also referenced in .gitignore and CI)
 const OPTIMIZED_IMAGES_CACHE_DIR = ".cache/optimized-images";
+
+// Internationalization (i18n) configuration
+const i18nConfig = {
+  defaultLocale: "en",
+  locales: ["en", "es"],
+};
 
 // https://astro.build/config
 export default defineConfig({
@@ -61,7 +67,7 @@ export default defineConfig({
       },
     ],
   },
-  // New Environment Variables API (Astro 5)
+
   env: {
     schema: {
       PUBLIC_SITE_URL: envField.string({
@@ -100,26 +106,38 @@ export default defineConfig({
   // The site URL, used for SEO and sitemap generation
   site: process.env.PUBLIC_SITE_URL || "https://jmrp.io",
 
+  // Internationalization (i18n) configuration
+  i18n: i18nConfig,
+
   // Build behavior for prerendering conflicts
   prerenderConflictBehavior: "error",
 
   // Image optimization configuration
   image: {
-    domains: ["www.google.com"],
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "www.google.com",
+        pathname: "/s2/favicons",
+      },
+    ],
     responsiveStyles: true,
   },
 
   // List of integrations to extend Astro functionality
   integrations: [
+    UnoCSS(),
     preBuildIntegration(),
-    sitemap(),
+    sitemap({
+      i18n: {
+        defaultLocale: i18nConfig.defaultLocale,
+        locales: Object.fromEntries(i18nConfig.locales.map((l) => [l, l])),
+      },
+    }),
     mdx({
       // MDX needs to know about remark plugins too if we want it to work in .mdx files
       remarkPlugins: [remarkMermaidBypass],
       optimize: true,
-    }),
-    icon({
-      iconDir: "src/assets/icons",
     }),
     preact({
       include: ["**/src/**/*.{jsx,tsx}"],
@@ -294,6 +312,7 @@ export default defineConfig({
         png: {
           // https://sharp.pixelplumbing.com/api-output#png
           quality: 80,
+          compressionLevel: 9,
         },
         jpeg: {
           // https://sharp.pixelplumbing.com/api-output#jpeg
@@ -320,6 +339,15 @@ export default defineConfig({
         },
       }),
     ],
+    css: {
+      devSourcemap: true,
+    },
+    build: {
+      cssCodeSplit: true,
+      // Increased threshold to accommodate large math (mathjax) and rendering (mermaid) chunks.
+      // Optimization is handled via ViteImageOptimizer and CSS extraction in post-build.
+      chunkSizeWarningLimit: 1000,
+    },
     server: {},
     ssr: {
       // Force externalization of citation-js for SSR to avoid bundling issues
@@ -332,4 +360,7 @@ export default defineConfig({
     // Inline critical CSS to improve performance
     inlineStylesheets: "always",
   },
+
+  // Production minification
+  compressHTML: true,
 });

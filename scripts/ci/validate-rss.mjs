@@ -188,16 +188,14 @@ async function validateFeedContent(content, results) {
 }
 
 /**
- * Validates the RSS feed structural integrity and content.
+ * Parses CLI arguments into a configuration object.
  *
- * @returns {Promise<void>} Resolves when validation is complete.
+ * @param argv - process.argv slice.
+ * @returns Parsed configuration object.
  */
-async function validateRSS() {
-  console.log("🔍 Validating RSS feed...\n");
-
-  // Parse CLI arguments safely
-  const arg1 = process.argv[2];
-  const arg2 = process.argv[3];
+function parseCliArgs(argv) {
+  const arg1 = argv[0];
+  const arg2 = argv[1];
 
   let distDir;
   let rssFile;
@@ -222,13 +220,26 @@ async function validateRSS() {
     }
   } else if (arg1 && arg2) {
     // Two arguments: distDir and rssFile
-    distDir = path.resolve(arg1);
     rssFile = path.resolve(arg2);
+    distDir = path.resolve(arg1);
   } else {
     // No arguments: use defaults
     distDir = path.resolve(process.env.DIST_DIR || "dist");
     rssFile = path.join(distDir, "rss.xml");
   }
+
+  return { distDir, rssFile };
+}
+
+/**
+ * Validates the RSS feed structural integrity and content.
+ *
+ * @returns {Promise<void>} Resolves when validation is complete.
+ */
+async function validateRSS() {
+  console.log("🔍 Validating RSS feed...\n");
+
+  const { distDir, rssFile } = parseCliArgs(process.argv.slice(2));
 
   const results = {
     valid: false,
@@ -246,7 +257,7 @@ async function validateRSS() {
 
   if (!fs.existsSync(rssFile)) {
     results.errors.push(`RSS feed not found: ${rssFile}`);
-    writeResults(results);
+    writeResults(results, path.join(distDir, OUTPUT_FILE));
     process.exit(1);
   }
 
@@ -269,7 +280,7 @@ async function validateRSS() {
     for (const error of results.errors) console.log(`   - ${error}`);
   }
 
-  writeResults(results);
+  writeResults(results, path.join(distDir, OUTPUT_FILE));
   process.exit(results.valid ? 0 : 1);
 }
 
@@ -277,9 +288,10 @@ async function validateRSS() {
  * Writes the validation report to a JSON file.
  *
  * @param data - The results data to serialize and save.
+ * @param filePath - Destination path for the report.
  */
-function writeResults(data) {
-  fs.writeFileSync(OUTPUT_FILE, JSON.stringify(data, null, 2));
+function writeResults(data, filePath) {
+  fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
 }
 
 try {
