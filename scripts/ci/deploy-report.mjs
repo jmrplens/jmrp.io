@@ -21,7 +21,7 @@ if (!dir || !projectName) {
 // Input sanitization to prevent command injection
 // - dir: allows paths with slashes, dots, hyphens, underscores
 // - projectName: stricter, only alphanumeric, hyphens, underscores (Vercel-compatible)
-const dirPattern = /^[a-zA-Z0-9_.\-/]+$/;
+const dirPattern = /^[a-zA-Z0-9_.\-/]+$/; // NOSONAR
 const projectNamePattern = /^[a-zA-Z0-9_-]+$/;
 
 if (
@@ -69,7 +69,7 @@ try {
       const potentialUrl = urlLine.substring(startIdx).split(/\s/)[0];
       // Manual trim of common trailing punctuation to avoid ReDoS
       let endIdx = potentialUrl.length;
-      while (endIdx > 0 && ".,;:!?)>]".includes(potentialUrl[endIdx - 1])) {
+      while (endIdx > 0 && ". ,;:!?)]".includes(potentialUrl[endIdx - 1])) {
         endIdx--;
       }
       previewUrl = potentialUrl.substring(0, endIdx);

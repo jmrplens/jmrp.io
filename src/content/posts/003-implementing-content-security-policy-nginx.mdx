@@ -208,10 +208,8 @@ In your source code (Astro, React, plain HTML), use a known, static string as a 
   <head>
     <!-- Critical inline scripts use the placeholder -->
     <script is:inline nonce="NGINX_NONCE_CSP">
-      // Theme detection to prevent flash of wrong theme
-      const theme = localStorage.getItem('theme') || 
-        (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-      document.documentElement.dataset.theme = theme;
+      // (Theme initialization logic moved to a centralized system in BaseLayout)
+      console.log('Site initialized');
     </script>
   </head>
   <body>
