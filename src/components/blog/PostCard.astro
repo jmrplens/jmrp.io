@@ -44,7 +44,11 @@ const { post, loading = "lazy", fetchpriority = "auto" } = Astro.props;
       </time>
       {
         post.data.tags && (
-          <div class="tags">
+          <div
+            class="tags"
+            role="list"
+            aria-label="Post tags"
+          >
             {post.data.tags.slice(0, 3).map((tag) => (
               <a
                 href={`/blog/tags/${encodeURIComponent(tag.toLowerCase())}/`}
@@ -62,13 +66,17 @@ const { post, loading = "lazy", fetchpriority = "auto" } = Astro.props;
       <a
         href={`/blog/${post.id}/`}
         class="main-link"
+        aria-label={`Read article: ${post.data.title}`}
       >
         {post.data.title}
       </a>
     </h2>
     <p>{post.data.description}</p>
   </div>
-  <div class="card-footer">
+  <div
+    class="card-footer"
+    aria-hidden="true"
+  >
     <span class="read-more">Read article &rarr;</span>
   </div>
 </article>
@@ -127,22 +135,36 @@ const { post, loading = "lazy", fetchpriority = "auto" } = Astro.props;
 
   .post-meta {
     display: flex;
+    flex-wrap: nowrap; /* Force single line */
+    gap: 0.5rem;
     align-items: center;
     justify-content: space-between;
+    height: 1.5rem; /* Fixed single-line height */
     margin-bottom: 0.4rem;
+    overflow: hidden; /* Hide content that doesn't fit */
     font-size: 0.875rem;
     color: var(--color-text-muted);
+  }
+
+  .post-meta time {
+    flex-shrink: 0; /* Never shrink the date */
+    white-space: nowrap; /* Never wrap the date */
   }
 
   .tags {
     position: relative;
     z-index: 2; /* Ensure tags are clickable above the card link */
     display: flex;
+    flex-grow: 1; /* Take remaining space after date */
+    flex-shrink: 1; /* Allow shrinking */
+    flex-wrap: wrap; /* Tags that don't fit wrap to next line */
     gap: 0.5rem;
-    min-height: 1.25rem; /* Stabilize for CLS (approx 20px) */
+    height: 1.25rem; /* Fixed height for single line of tags */
+    overflow: hidden; /* Hide wrapped tags completely */
   }
 
   .tag {
+    flex-shrink: 0; /* Never shrink - hide if doesn't fit */
     padding: 0.15rem 0.4rem;
     font-size: 0.7rem;
     font-weight: 500;
@@ -160,10 +182,11 @@ const { post, loading = "lazy", fetchpriority = "auto" } = Astro.props;
 
   .post-card h2 {
     display: -webkit-box;
-    min-height: auto; /* Remove fixed height constraint */
-    margin-bottom: 0.25rem;
+    flex-shrink: 0; /* Don't shrink the title */
+    margin-top: 0; /* Remove browser default margin */
+    margin-bottom: 0.5rem;
     overflow: hidden;
-    -webkit-line-clamp: 3;
+    -webkit-line-clamp: 3; /* Max 3 lines */
     font-size: 1.25rem;
     font-weight: 700;
     line-height: 1.3;
@@ -187,10 +210,11 @@ const { post, loading = "lazy", fetchpriority = "auto" } = Astro.props;
     /* Webkit line clamp for text truncation */
     display: -webkit-box;
 
-    /* Layout and sizing */
-    min-height: auto; /* Remove fixed height constraint */
+    /* Grow to fill available space */
+    flex-grow: 1; /* Fill remaining space after title */
+    margin: 0; /* Reset margin */
     overflow: hidden;
-    -webkit-line-clamp: 2; /* Show only 2 lines instead of 3 */
+    -webkit-line-clamp: 4; /* Allow up to 4 lines when space permits */
     font-size: 0.95rem;
     line-height: 1.5;
     color: var(--color-text);
@@ -235,15 +259,16 @@ const { post, loading = "lazy", fetchpriority = "auto" } = Astro.props;
     }
 
     .post-card h2 {
-      /* Clamp title to 3 lines */
+      /* Clamp title to 3 lines, no fixed height */
       -webkit-line-clamp: 3;
       font-size: 1.1rem;
     }
 
     .post-card p {
-      /* Show description, capped at ~4 lines */
+      /* Description grows to fill space, capped at 5 lines on mobile */
       display: -webkit-box;
-      -webkit-line-clamp: 4;
+      flex-grow: 1;
+      -webkit-line-clamp: 5;
       font-size: 0.85rem;
       -webkit-box-orient: vertical;
     }
