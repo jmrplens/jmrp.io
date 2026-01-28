@@ -222,12 +222,28 @@ function performNginxDeployment(
       originalAssetsContent = fs.readFileSync(systemNginxAssetsPath);
     }
 
-    fs.copyFileSync(generatedPath, systemNginxPath);
+    // Use sudo to copy files since Nginx path usually requires root privileges
+    const copyResult = spawnSync(
+      "sudo",
+      ["cp", generatedPath, systemNginxPath],
+      { stdio: "inherit" },
+    );
+    if (copyResult.status !== 0)
+      throw new Error(`Failed to copy ${generatedPath} to ${systemNginxPath}`);
+
     if (fs.existsSync(generatedAssetsPath)) {
       if (!systemAssetsExists) {
         assetsCreated = true;
       }
-      fs.copyFileSync(generatedAssetsPath, systemNginxAssetsPath);
+      const copyAssetsResult = spawnSync(
+        "sudo",
+        ["cp", generatedAssetsPath, systemNginxAssetsPath],
+        { stdio: "inherit" },
+      );
+      if (copyAssetsResult.status !== 0)
+        throw new Error(
+          `Failed to copy ${generatedAssetsPath} to ${systemNginxAssetsPath}`,
+        );
     }
 
     try {
@@ -311,7 +327,7 @@ function executeNginxReload(
   }
   const testArgs = nginxConfigPath ? ["-t", "-c", nginxConfigPath] : ["-t"];
 
-  const testResult = spawnSync("nginx", testArgs, execOptions); // NOSONAR suppressed: external command usage is intentional
+  const testResult = spawnSync("sudo", ["nginx", ...testArgs], execOptions); // NOSONAR suppressed: external command usage is intentional
   if (testResult.error) {
     throw testResult.error;
   }
@@ -320,7 +336,7 @@ function executeNginxReload(
   }
 
   // prettier-ignore
-  const reloadResult = spawnSync("nginx", ["-s", "reload"], { // NOSONAR suppressed: external command usage is intentional
+  const reloadResult = spawnSync("sudo", ["nginx", "-s", "reload"], { // NOSONAR suppressed: external command usage is intentional
     ...execOptions,
     timeout: reloadTimeout,
   });
@@ -364,34 +380,18 @@ function clearNginxCache(
   }
 
   logger.info(`Clearing Nginx cache in [${systemNginxCachePath}]...`);
-  try {
-    const realRoot = fs.realpathSync(systemNginxCachePath);
-    const files = fs.readdirSync(systemNginxCachePath);
-    for (const file of files) {
-      const fullPath = path.join(systemNginxCachePath, file);
-      // Security: Resolve the real path and verify it's within the cache directory
-      const realPath = fs.realpathSync(fullPath);
-      const relative = path.relative(realRoot, realPath);
-
-      if (
-        relative.startsWith("..") ||
-        relative === "" ||
-        relative.startsWith(path.sep)
-      ) {
-        logger.warn(
-          `Skipping deletion of path outside cache directory: ${realPath}`,
-        );
-        continue;
-      }
-      fs.rmSync(fullPath, {
-        recursive: true,
-        force: true,
-      });
-    }
-  } catch (error) {
-    logger.warn(
-      `Could not clear Nginx cache: ${error instanceof Error ? error.message : String(error)}`,
-    );
+  // Use sudo to clear the cache contents while keeping the zone directories
+  // find -mindepth 2 ensures we delete contents of subfolders (like generic_cache/*)
+  // but keep the subfolders themselves which Nginx expects to exist.
+  const clearResult = spawnSync(
+    "sudo",
+    ["find", systemNginxCachePath, "-mindepth", "2", "-delete"],
+    {
+      stdio: "inherit",
+    },
+  );
+  if (clearResult.status !== 0) {
+    logger.warn(`Failed to clear Nginx cache at ${systemNginxCachePath}`);
   }
 }
 
@@ -454,7 +454,7 @@ function handleNginxValidationError(
 }
 
 /**
- * Performs the file rollback for both main and assets config.
+ * Performs the file rollback for both main and assets config using sudo.
  */
 function performRollback(
   systemNginxPath: string,
@@ -465,17 +465,19 @@ function performRollback(
     created: boolean;
   },
 ) {
-  fs.writeFileSync(systemNginxPath, originalContent);
+  // Temporary file to write original content then move with sudo
+  const tempPath = systemNginxPath + ".bak";
+  fs.writeFileSync(tempPath, originalContent);
+  spawnSync("sudo", ["mv", tempPath, systemNginxPath]);
 
   if (!assetsRollback) return;
 
-  if (assetsRollback.created && fs.existsSync(assetsRollback.path)) {
-    fs.unlinkSync(assetsRollback.path);
-  } else if (
-    assetsRollback.originalContent !== null &&
-    fs.existsSync(assetsRollback.path)
-  ) {
-    fs.writeFileSync(assetsRollback.path, assetsRollback.originalContent);
+  if (assetsRollback.created) {
+    spawnSync("sudo", ["rm", "-f", assetsRollback.path]);
+  } else if (assetsRollback.originalContent !== null) {
+    const tempAssetsPath = assetsRollback.path + ".bak";
+    fs.writeFileSync(tempAssetsPath, assetsRollback.originalContent);
+    spawnSync("sudo", ["mv", tempAssetsPath, assetsRollback.path]);
   }
 }
 

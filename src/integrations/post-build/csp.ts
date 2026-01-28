@@ -198,7 +198,7 @@ add_header Permissions-Policy "${permissionsPolicy}" always;
   const assetsCspHeader = [
     "default-src 'none'",
     "script-src 'none'",
-    "style-src 'none'",
+    "style-src 'unsafe-inline'",
     ...commonCspDirectives,
   ]
     .map((s) => s.trim())
@@ -222,7 +222,7 @@ add_header Referrer-Policy "strict-origin-when-cross-origin" always;
 # Cross-Origin Policies
 add_header Cross-Origin-Embedder-Policy "credentialless" always;
 add_header Cross-Origin-Opener-Policy "same-origin" always;
-add_header Cross-Origin-Resource-Policy "same-origin" always;
+add_header Cross-Origin-Resource-Policy "cross-origin" always;
 
 # Content Security Policy (Optimized for Assets)
 add_header Content-Security-Policy "${assetsCspHeader}" always;
