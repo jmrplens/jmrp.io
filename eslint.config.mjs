@@ -258,7 +258,6 @@ export default [
   // Allow non-interactive elements to be keyboard focusable if they are scrollable code regions
   {
     files: [
-      "src/components/ui/TerminalCommand.astro",
       "src/components/ui/TerminalOutput.astro",
       "src/components/ui/FileContent.astro",
     ],

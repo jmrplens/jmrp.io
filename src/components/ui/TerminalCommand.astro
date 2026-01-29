@@ -115,10 +115,13 @@ if (ariaLabel) {
     /* Accessible scrollable container: Using <pre> implies preformatted text/code, which is semantically correct and allows tabindex */
   }
   <section class="terminal-window-container">
-    <pre
+    <div
       class="terminal-window"
+      role="textbox"
+      aria-readonly="true"
+      aria-multiline="true"
       tabindex="0"
-      aria-label={finalAriaLabel}>{renderedLines.map((line) => (<span class="command-line"><span class="prompt" aria-hidden="true">{!line.isEmpty && !line.isComment ? "$" : "\u00A0"}</span><span class:list={["line-content", {"is-comment": line.isComment}]}>{line.text}</span></span>))}</pre>
+      aria-label={finalAriaLabel}>{renderedLines.map((line) => (<span class="command-line"><span class="prompt" aria-hidden="true">{!line.isEmpty && !line.isComment ? "$" : "\u00A0"}</span><span class:list={["line-content", {"is-comment": line.isComment}]}>{line.text}</span></span>))}</div>
   </section>
 
   {/* Hidden element for CopyButton to grab clean text without prompts */}
