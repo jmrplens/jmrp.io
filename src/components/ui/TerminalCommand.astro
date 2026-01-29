@@ -121,7 +121,28 @@ if (ariaLabel) {
       aria-readonly="true"
       aria-multiline="true"
       tabindex="0"
-      aria-label={finalAriaLabel}>{renderedLines.map((line) => (<span class="command-line"><span class="prompt" aria-hidden="true">{!line.isEmpty && !line.isComment ? "$" : "\u00A0"}</span><span class:list={["line-content", {"is-comment": line.isComment}]}>{line.text}</span></span>))}</div>
+      aria-label={finalAriaLabel}
+    >
+      {
+        renderedLines.map((line) => (
+          <span class="command-line">
+            <>
+              <span
+                class="prompt"
+                aria-hidden="true"
+              >
+                {!line.isEmpty && !line.isComment ? "$" : "\u00A0"}
+              </span>
+              <span
+                class:list={["line-content", { "is-comment": line.isComment }]}
+              >
+                {line.text}
+              </span>
+            </>
+          </span>
+        ))
+      }
+    </div>
   </section>
 
   {/* Hidden element for CopyButton to grab clean text without prompts */}

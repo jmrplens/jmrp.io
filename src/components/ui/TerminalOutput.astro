@@ -28,7 +28,6 @@ const finalAriaLabel =
 <section
   class="terminal-output-wrapper"
   role="log"
-  tabindex="0"
   aria-live="polite"
   aria-label={finalAriaLabel}
 >
@@ -43,7 +42,14 @@ const finalAriaLabel =
       </div>
     )
   }
-  <div class="output-body">
+  <div
+    class="output-body"
+    role="textbox"
+    aria-readonly="true"
+    aria-multiline="true"
+    tabindex="0"
+    aria-label={finalAriaLabel}
+  >
     <div
       class="terminal-content"
       set:html={trimmedContent}
