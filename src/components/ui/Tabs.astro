@@ -195,6 +195,7 @@ const { class: className } = Astro.props;
 
   ui-tabs .tab-headers {
     display: flex;
+    min-height: 2.75rem; /* Reserve space for buttons before JS loads */
     overflow: auto hidden;
     scrollbar-width: thin;
     background: var(--color-bg-header);
@@ -243,11 +244,55 @@ const { class: className } = Astro.props;
 
   ui-tabs .tab-panel {
     padding: 1.5rem;
-
-    /* No animation - content should appear instantly */
   }
 
-  /* For code-only tabs (no padding needed) */
+  /* 
+   * Hide non-first panels by default (before JS initializes) to prevent CLS.
+   * Once JS runs, it adds [hidden] attribute which takes over control.
+   */
+  ui-tabs .tab-panel:not(:first-child):not([hidden]) {
+    display: none;
+  }
+
+  /* JS uses hidden attribute for visibility control after initialization */
+  ui-tabs .tab-panel[hidden] {
+    display: none;
+  }
+
+  /* Auto-remove padding when tab contains only a code block */
+  ui-tabs .tab-panel:has(> .panel-content > pre:only-child),
+  ui-tabs .tab-panel:has(> .panel-content > .code-section-wrapper:only-child),
+  ui-tabs
+    .tab-panel:has(> .panel-content > section:only-child > pre:only-child) {
+    padding: 0;
+  }
+
+  /* Code blocks inside tab panels - match Code.astro styling */
+  ui-tabs .tab-panel pre,
+  ui-tabs .tab-panel pre.astro-code {
+    padding: 1rem 1.25rem !important;
+    margin: 0 !important;
+    overflow-x: auto;
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: var(--color-text);
+    background-color: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    text-size-adjust: none;
+  }
+
+  ui-tabs .tab-panel code {
+    font-family: var(--font-mono);
+    font-size: inherit;
+    line-height: inherit;
+    color: inherit;
+    white-space: pre;
+    background: none;
+  }
+
+  /* For code-only tabs (manual override) */
   ui-tabs .tab-panel.no-padding {
     padding: 0;
   }
