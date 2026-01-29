@@ -55,7 +55,7 @@ This is the source code for my personal website, **[jmrp.io](https://jmrp.io)**,
 - **DevOps & QA**:
   - **CI Health Dashboard**: Premium unified report interface hosted on Vercel.
   - **Living PR Comments**: Real-time CI status updates directly in GitHub Pull Requests.
-  - **Deep Security**: Automated Snyk and SonarCloud analysis on every commit.
+  - **Deep Security**: Automated SonarCloud analysis and `npm audit` on every commit.
 
 ## 🛠️ Tech Stack
 
@@ -65,7 +65,7 @@ This is the source code for my personal website, **[jmrp.io](https://jmrp.io)**,
 - **Content**: [MDX](https://mdxjs.com/), [Mermaid](https://mermaid.js.org/), [MathJax](https://www.mathjax.org/)
 - **Icons**: [Iconify](https://icon-sets.iconify.design/)
 - **Testing**: [Playwright](https://playwright.dev/), [Axe-core](https://www.deque.com/axe/), [Lighthouse](https://developers.google.com/web/tools/lighthouse)
-- **Security**: [Snyk](https://snyk.io/), [SonarCloud](https://sonarcloud.io/)
+- **Security**: [SonarCloud](https://sonarcloud.io/)
 - **CI/CD**: GitHub Actions & Vercel (Reports)
 
 ## 📂 Project Structure
@@ -148,7 +148,7 @@ graph TD
 - **Bundle Analysis**: Tracks JS/CSS size with a generous **8MB threshold** for heavy technical content.
 - **Accessibility Matrix**: Parallel tests for Light/Dark themes and Mobile/Desktop form factors.
 - **Static Analysis**: Real-time feedback from ESLint, Stylelint, Prettier, Typos, and JSDoc.
-- **Security Audit**: Integrated Snyk, SonarCloud, and `npm audit` monitoring.
+- **Security Audit**: Integrated SonarCloud and `npm audit` monitoring.
 
 ## 🔒 Security & Nginx
 

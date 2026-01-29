@@ -11,7 +11,6 @@ test.describe("Tabs & Code Block Accessibility", () => {
     await expect(tabsContainer).toBeVisible();
 
     // Locate the labels (which act as tabs) and inputs
-    const tabLabels = tabsContainer.locator(".tab-label");
     const inputs = tabsContainer.locator("input[type='radio']");
     const panels = tabsContainer.locator(".tab-panel");
 
@@ -27,12 +26,12 @@ test.describe("Tabs & Code Block Accessibility", () => {
     // Wait, standard keyboard nav goes to the INPUT.
     // If input is visually hidden but not display:none, it receives focus.
     // Our CSS: .tab-radio { clip-path: inset(100%); ... } -> It IS focusable.
-    
+
     // Force focus to the start of the tabs section to begin tabbing
     await tabsContainer.scrollIntoViewIfNeeded();
     // Click before the tabs to reset focus context or focus body
     await page.focus("body");
-    
+
     // We can't easily "Tab until we hit it" reliably in generic test without flakiness.
     // So we'll focus the first input directly to simulate reaching it.
     await inputs.nth(0).focus();
@@ -40,10 +39,10 @@ test.describe("Tabs & Code Block Accessibility", () => {
 
     // 3. Arrow Right -> Selects Next Tab (Standard Radio behavior)
     await page.keyboard.press("ArrowRight");
-    
+
     // Verify 2nd input is checked
     await expect(inputs.nth(1)).toBeChecked();
-    
+
     // Verify 2nd panel is visible, 1st is hidden
     await expect(panels.nth(1)).toBeVisible();
     await expect(panels.nth(0)).toBeHidden();
@@ -57,7 +56,7 @@ test.describe("Tabs & Code Block Accessibility", () => {
   test("FileContent Focus Navigation (No Ghost Focus)", async ({ page }) => {
     // Navigate to a post with FileContent
     await page.goto("/blog/001-secure-nginx-client-certificates");
-    
+
     // Find a FileContent block
     const fileContent = page.locator(".file-content-wrapper").first();
     await expect(fileContent).toBeVisible();
@@ -75,19 +74,22 @@ test.describe("Tabs & Code Block Accessibility", () => {
 
     // 3. Tab -> Should leave the component (Next element)
     await page.keyboard.press("Tab");
-    
+
     // Verify we are NOT focused on the code container anymore
     await expect(codeContainer).not.toBeFocused();
     // And NOT focused on the copy button
     await expect(copyBtn).not.toBeFocused();
-    
+
     // Verify we didn't land on some internal ghost element
-    // The next element should be distinct. 
+    // The next element should be distinct.
     // We can check that the active element is NOT inside the fileContent wrapper
     const focusMovedOut = await fileContent.evaluate((wrapper) => {
-        return !wrapper.contains(document.activeElement);
+      return !wrapper.contains(document.activeElement);
     });
 
-    expect(focusMovedOut, "Focus should have moved out of FileContent wrapper").toBe(true);
+    expect(
+      focusMovedOut,
+      "Focus should have moved out of FileContent wrapper",
+    ).toBe(true);
   });
 });

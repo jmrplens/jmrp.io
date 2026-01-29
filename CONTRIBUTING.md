@@ -69,7 +69,7 @@ This master script (`scripts/run-verify.mjs`) orchestrates the entire QA pipelin
 4.  **Content Validation**: HTML validation, RSS feed check, Schema.org check.
 5.  **Icon Consistency**: `pnpm verify-icons` (Custom script to ensure all icons have CSS rules).
 6.  **Documentation**: JSDoc comment coverage tracking.
-7.  **Security**: Snyk audit (dependencies) and SonarCloud analysis (code quality).
+7.  **Security**: `npm audit` (dependencies) and SonarCloud analysis (code quality).
 8.  **External Audits**:
     - **Spelling**: `typos` for codebase spell checking.
     - **Links**: `lychee` for dead link verification in generated HTML.
@@ -102,7 +102,7 @@ If `pnpm verify` fails:
 5. **E2E test failures**: Run `pnpm test:e2e` or `pnpm exec playwright test --ui` to debug interactively.
 6. **Spelling issues**: Run `pnpm exec typos` and add false positives to `.typos.toml`.
 7. **Broken links**: Run `pnpm exec lychee dist/**/*.html` and update/remove dead URLs.
-8. **Security vulnerabilities**: Review Snyk/SonarCloud CI reports and remediate or pin/update dependencies accordingly.
+8. **Security vulnerabilities**: Review SonarCloud CI reports and remediate or pin/update dependencies accordingly.
 
 ## 🎨 Code Style
 
@@ -116,9 +116,9 @@ If `pnpm verify` fails:
 ## 🔒 Security
 
 - **Secrets**: Never commit `.env` files or API keys. Add sensitive files to `.gitignore`.
-- **Pre-commit protection**: Consider using tools like `git-secrets` or Snyk to prevent accidental commits of secrets.
+- **Pre-commit protection**: Consider using tools like `git-secrets` to prevent accidental commits of secrets.
 - **Secret remediation**: If secrets are accidentally committed, immediately rotate them and use [BFG Repo-Cleaner](https://rtyley.github.io/bfg-repo-cleaner/) or `git filter-repo` to remove them from history.
-- **Dependencies**: Use `pnpm audit` or rely on the `pnpm verify` Snyk check.
+- **Dependencies**: Use `pnpm audit` or rely on the `pnpm verify` checks.
 - **Headers**: Security headers are generated in `post-build.ts`. Do not manually edit `dist/security_headers.conf`.
 
 Thank you for helping improve the site!

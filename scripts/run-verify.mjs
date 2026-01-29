@@ -105,11 +105,6 @@ function runVerify() {
       command: "node scripts/ci/calculate-jsdoc-coverage.mjs",
     },
     {
-      name: "Security: Snyk Audit",
-      command: "pnpm exec snyk test --all-projects --severity-threshold=high",
-      condition: () => !!process.env.SNYK_TOKEN,
-    },
-    {
       name: "Security: SonarCloud Analysis",
       command: "pnpm exec sonar-scanner",
       condition: () => !!process.env.SONAR_TOKEN,
