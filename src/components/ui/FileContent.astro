@@ -47,7 +47,10 @@ const finalIcon = icon || getIconForFile(filename);
 const filenameFormatted = filename.replaceAll("/", "/&#8203;");
 
 const slotContent = await Astro.slots.render("default");
-const trimmedContent = slotContent.trim();
+// Remove tabindex from inner content to prevent double focus (wrapper handles it)
+const trimmedContent = slotContent
+  .trim()
+  .replaceAll(/tabindex=["']?0["']?/g, "");
 const uuid = createHash("sha256")
   .update(`${filename}-${trimmedContent}`)
   .digest("hex")
@@ -147,20 +150,18 @@ if (language) {
             aria-label={`Code content for ${filename}`}
             class="file-code-container"
           >
-            {
-              useCustomHighlighting ? (
-                <AstroCode
-                  code={rawCode}
-                  lang={resolveShikiLanguage(language as string)}
-                  themes={{
-                    light: "github-light-high-contrast",
-                    dark: "github-dark-high-contrast",
-                  }}
-                />
-              ) : (
-                <div set:html={trimmedContent} />
-              )
-            }
+            {useCustomHighlighting ? (
+              <AstroCode
+                code={rawCode}
+                lang={resolveShikiLanguage(language as string)}
+                themes={{
+                  light: "github-light-high-contrast",
+                  dark: "github-dark-high-contrast",
+                }}
+              />
+            ) : (
+              <div set:html={trimmedContent} />
+            )}
           </div>
         </div>
       </details>
@@ -197,20 +198,18 @@ if (language) {
           aria-label={`Code content for ${filename}`}
           class="file-code-container"
         >
-          {
-            useCustomHighlighting ? (
-              <AstroCode
-                code={rawCode}
-                lang={resolveShikiLanguage(language as string)}
-                themes={{
-                  light: "github-light-high-contrast",
-                  dark: "github-dark-high-contrast",
-                }}
-              />
-            ) : (
-              <div set:html={trimmedContent} />
-            )
-          }
+          {useCustomHighlighting ? (
+            <AstroCode
+              code={rawCode}
+              lang={resolveShikiLanguage(language as string)}
+              themes={{
+                light: "github-light-high-contrast",
+                dark: "github-dark-high-contrast",
+              }}
+            />
+          ) : (
+            <div set:html={trimmedContent} />
+          )}
         </div>
       </div>
     </section>
