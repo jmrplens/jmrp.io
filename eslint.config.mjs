@@ -254,16 +254,6 @@ export default [
     },
   },
 
-  // 14. Accessibility Overrides for Code Blocks
-  // Allow non-interactive elements to be keyboard focusable if they are scrollable code regions
-  {
-    files: ["src/components/ui/FileContent.astro"],
-    rules: {
-      "jsx-a11y/no-noninteractive-tabindex": "off",
-      "astro/jsx-a11y/no-noninteractive-tabindex": "off",
-    },
-  },
-
   // 15. SonarJS Overrides for specific files
   {
     files: [

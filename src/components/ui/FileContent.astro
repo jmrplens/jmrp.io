@@ -139,22 +139,29 @@ if (language) {
           </span>
         </summary>
         <div class="file-body">
-          {useCustomHighlighting ? (
-            <AstroCode
-              code={rawCode}
-              lang={resolveShikiLanguage(language as string)}
-              themes={{
-                light: "github-light-high-contrast",
-                dark: "github-dark-high-contrast",
-              }}
-            />
-          ) : (
-            <div
-              tabindex="0"
-              aria-label={`Code content for ${filename}`}
-              set:html={trimmedContent}
-            />
-          )}
+          <div
+            role="textbox"
+            aria-readonly="true"
+            aria-multiline="true"
+            tabindex="0"
+            aria-label={`Code content for ${filename}`}
+            class="file-code-container"
+          >
+            {
+              useCustomHighlighting ? (
+                <AstroCode
+                  code={rawCode}
+                  lang={resolveShikiLanguage(language as string)}
+                  themes={{
+                    light: "github-light-high-contrast",
+                    dark: "github-dark-high-contrast",
+                  }}
+                />
+              ) : (
+                <div set:html={trimmedContent} />
+              )
+            }
+          </div>
         </div>
       </details>
     </div>
@@ -182,22 +189,29 @@ if (language) {
         </div>
       </div>
       <div class="file-body">
-        {useCustomHighlighting ? (
-          <AstroCode
-            code={rawCode}
-            lang={resolveShikiLanguage(language as string)}
-            themes={{
-              light: "github-light-high-contrast",
-              dark: "github-dark-high-contrast",
-            }}
-          />
-        ) : (
-          <div
-            tabindex="0"
-            aria-label={`Code content for ${filename}`}
-            set:html={trimmedContent}
-          />
-        )}
+        <div
+          role="textbox"
+          aria-readonly="true"
+          aria-multiline="true"
+          tabindex="0"
+          aria-label={`Code content for ${filename}`}
+          class="file-code-container"
+        >
+          {
+            useCustomHighlighting ? (
+              <AstroCode
+                code={rawCode}
+                lang={resolveShikiLanguage(language as string)}
+                themes={{
+                  light: "github-light-high-contrast",
+                  dark: "github-dark-high-contrast",
+                }}
+              />
+            ) : (
+              <div set:html={trimmedContent} />
+            )
+          }
+        </div>
       </div>
     </section>
   )
@@ -311,6 +325,16 @@ if (language) {
     outline: none;
   }
 
+  .file-code-container {
+    overflow-x: auto;
+    outline: none;
+  }
+
+  .file-code-container:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: -2px;
+  }
+
   /* Style the <pre> element that comes from the slot */
   .file-body :global(pre),
   .file-body :global(.astro-code) {
@@ -318,7 +342,7 @@ if (language) {
     width: 100%;
     padding: 1rem 1.25rem !important;
     margin: 0 !important;
-    overflow-x: auto;
+    overflow-x: visible !important; /* Managed by parent container for a11y */
 
     /* Typography */
     font-family: var(--font-mono);
