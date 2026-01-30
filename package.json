@@ -145,7 +145,7 @@
     "stylelint-order": "^7.0.1",
     "svgo": "^4.0.0",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.53.1",
+    "typescript-eslint": "^8.54.0",
     "unist-util-visit": "^5.1.0",
     "vercel": "^50.5.0",
     "vite-plugin-compression2": "^2.4.0",
