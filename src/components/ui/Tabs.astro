@@ -12,6 +12,8 @@
  * </Tabs>
  */
 
+import * as cheerio from "cheerio";
+
 interface Props {
   class?: string;
 }
@@ -21,45 +23,83 @@ const { class: className } = Astro.props;
 // Render slot content to extract labels from TabPanel children
 const slotContent = await Astro.slots.render("default");
 
-// Parse labels from data-label attributes on tab-panel divs
-const labelMatches = slotContent.matchAll(
-  /class="[^"]*tab-panel[^"]*"[^>]*data-label="([^"]+)"/g,
-);
+// Use Cheerio to parse the HTML content for robust attribute extraction
+const $ = cheerio.load(slotContent, { xmlMode: false });
+
 const labels: string[] = [];
-for (const match of labelMatches) {
-  labels.push(match[1]);
-}
+
+// Select elements that have the tab-panel class
+$(".tab-panel").each((_, el) => {
+  const label = $(el).attr("data-label");
+
+  if (label) {
+    labels.push(label);
+  }
+});
 
 // Fallback if no labels found (shouldn't happen with proper TabPanel usage)
 if (labels.length === 0) {
-  // Try alternative pattern where data-label comes before class
-  const altMatches = slotContent.matchAll(
-    /data-label="([^"]+)"[^>]*class="[^"]*tab-panel/g,
+  console.warn(
+    `[Tabs] No TabPanel labels found in slot content. Ensure <TabPanel> components are used with a "label" prop.\nPreview: ${slotContent.slice(0, 100)}...`,
   );
-  for (const match of altMatches) {
-    labels.push(match[1]);
-  }
 }
 
-// Generate deterministic unique ID
-const uniqueId =
+// Generate deterministic unique ID with entropy
+const entropy = crypto.getRandomValues(new Uint32Array(1))[0].toString(36);
+
+const labelSlug =
   labels
     .join("-")
     .replaceAll(/[^a-zA-Z0-9]/g, "")
     .slice(0, 12) || "tabs";
 
+const uniqueId = `${labelSlug}-${entropy}`;
+
 // Inject IDs and ARIA attributes into each tab-panel for accessibility
-let panelIndex = 0;
-const processedSlotContent = slotContent.replaceAll(
-  /<div([^>]*class="[^"]*tab-panel[^"]*")/g,
-  (_match, attrs) => {
-    const id = `panel-${uniqueId}-${panelIndex}`;
-    const labelId = `label-${uniqueId}-${panelIndex}`;
-    panelIndex++;
-    // Use role="tabpanel" (valid for radio-controlled panels) to avoid <section> requirement of role="region"
-    return `<div id="${id}" role="tabpanel" aria-labelledby="${labelId}"${attrs}`;
-  },
-);
+$(".tab-panel").each((index, el) => {
+  const $el = $(el);
+  const id = `panel-${uniqueId}-${index}`;
+  const labelId = `label-${uniqueId}-${index}`;
+
+  // Only set ID if not already present
+  if (!$el.attr("id")) {
+    $el.attr("id", id);
+  }
+
+  $el.attr("role", "tabpanel");
+  $el.attr("aria-labelledby", labelId);
+});
+
+const processedSlotContent = $.html();
+
+// Generate consolidated CSS for this instance
+const instanceCss = labels
+  .map(
+    (_, index) => `
+        .tabs-container[data-tabs-id="${uniqueId}"] #tab-${uniqueId}-${index}:checked ~ .tab-content > .tab-panel:nth-child(${index + 1}) {
+          display: block;
+        }
+
+        .tabs-container[data-tabs-id="${uniqueId}"] #tab-${uniqueId}-${index}:checked ~ .tab-content > .tab-panel:not(:nth-child(${index + 1})) {
+          display: none;
+        }
+
+        .tabs-container[data-tabs-id="${uniqueId}"] #tab-${uniqueId}-${index}:checked ~ .tab-headers > .tab-label:nth-child(${index + 1}) {
+          color: var(--color-primary);
+          background: var(--color-bg-secondary);
+          border-bottom-color: var(--color-primary);
+          margin-bottom: -1px;
+        }
+
+        /* Focus styles for accessibility - highlight label when hidden radio is focused */
+        .tabs-container[data-tabs-id="${uniqueId}"] #tab-${uniqueId}-${index}:focus ~ .tab-headers > .tab-label:nth-child(${index + 1}) {
+          outline: 2px solid var(--color-primary);
+          outline-offset: -2px;
+          background: rgb(255 255 255 / 2%);
+        }
+      `,
+  )
+  .join("\n");
 ---
 
 <div
@@ -104,33 +144,14 @@ const processedSlotContent = slotContent.replaceAll(
   />
 </div>
 
-{/* Generate unique selectors for each panel */}
+{/* Generate unique selectors for each panel (consolidated) */}
 {
-  labels.map((_, index) => (
+  instanceCss && (
     <style
       is:inline
-      set:html={`
-        .tabs-container[data-tabs-id="${uniqueId}"] #tab-${uniqueId}-${index}:checked ~ .tab-content > .tab-panel:nth-child(${index + 1}) {
-          display: block;
-        }
-        .tabs-container[data-tabs-id="${uniqueId}"] #tab-${uniqueId}-${index}:checked ~ .tab-content > .tab-panel:not(:nth-child(${index + 1})) {
-          display: none;
-        }
-        .tabs-container[data-tabs-id="${uniqueId}"] #tab-${uniqueId}-${index}:checked ~ .tab-headers > .tab-label:nth-child(${index + 1}) {
-          color: var(--color-primary);
-          background: var(--color-bg-secondary);
-          border-bottom-color: var(--color-primary);
-          margin-bottom: -1px;
-        }
-        /* Focus styles for accessibility - highlight label when hidden radio is focused */
-        .tabs-container[data-tabs-id="${uniqueId}"] #tab-${uniqueId}-${index}:focus ~ .tab-headers > .tab-label:nth-child(${index + 1}) {
-          outline: 2px solid var(--color-primary);
-          outline-offset: -2px;
-          background: rgb(255 255 255 / 2%);
-        }
-      `}
+      set:html={instanceCss}
     />
-  ))
+  )
 }
 
 <style is:global>
@@ -215,19 +236,19 @@ const processedSlotContent = slotContent.replaceAll(
     padding: 0;
   }
 
-  /* Code blocks inside tab panels */
+  /* Code blocks inside tab panels - Increased specificity to avoid !important */
   .tabs-container .tab-panel pre,
   .tabs-container .tab-panel pre.astro-code {
-    padding: 1rem 1.25rem !important;
-    margin: 0 !important;
+    padding: 1rem 1.25rem;
+    margin: 0;
     overflow-x: auto;
     font-family: var(--font-mono);
     font-size: 0.9rem;
     line-height: 1.6;
     color: var(--color-text);
-    background-color: transparent !important;
-    border: none !important;
-    border-radius: 0 !important;
+    background-color: transparent;
+    border: none;
+    border-radius: 0;
     text-size-adjust: none;
   }
 

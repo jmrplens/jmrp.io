@@ -155,10 +155,8 @@ test.describe("Speculation Rules / Prerender", () => {
 
     for (const rule of validRules) {
       // Ensure at least one of prerender or prefetch has non-empty urls
-      /* eslint-disable playwright/no-conditional-in-test -- Fallback assignments for optional arrays */
       const prerenderRules = rule.prerender || [];
       const prefetchRules = rule.prefetch || [];
-      /* eslint-enable playwright/no-conditional-in-test */
       expect(
         prerenderRules.length > 0 || prefetchRules.length > 0,
         "Expected rule to have prerender or prefetch entries",

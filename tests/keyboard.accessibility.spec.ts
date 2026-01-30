@@ -148,7 +148,6 @@ test.describe("Keyboard Navigation Accessibility", () => {
 
     // Capture initial state
     const html = page.locator("html");
-    // eslint-disable-next-line playwright/no-conditional-in-test
     const initialTheme = (await html.getAttribute("data-theme")) || "dark";
     // eslint-disable-next-line playwright/no-conditional-in-test
     const expectedNewTheme = initialTheme === "light" ? "dark" : "light";

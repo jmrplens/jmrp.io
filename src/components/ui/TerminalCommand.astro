@@ -126,19 +126,17 @@ if (ariaLabel) {
       {
         renderedLines.map((line) => (
           <span class="command-line">
-            <>
-              <span
-                class="prompt"
-                aria-hidden="true"
-              >
-                {!line.isEmpty && !line.isComment ? "$" : "\u00A0"}
-              </span>
-              <span
-                class:list={["line-content", { "is-comment": line.isComment }]}
-              >
-                {line.text}
-              </span>
-            </>
+            <span
+              class="prompt"
+              aria-hidden="true"
+            >
+              {!line.isEmpty && !line.isComment ? "$" : "\u00A0"}
+            </span>
+            <span
+              class:list={["line-content", { "is-comment": line.isComment }]}
+            >
+              {line.text}
+            </span>
           </span>
         ))
       }

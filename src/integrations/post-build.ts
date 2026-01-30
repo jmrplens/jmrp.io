@@ -467,17 +467,49 @@ function performRollback(
 ) {
   // Temporary file to write original content then move with sudo
   const tempPath = systemNginxPath + ".bak";
-  fs.writeFileSync(tempPath, originalContent);
-  spawnSync("sudo", ["mv", tempPath, systemNginxPath]); // NOSONAR
+  try {
+    fs.writeFileSync(tempPath, originalContent);
+  } catch (error) {
+    throw new Error(
+      `Rollback failed: Could not write backup file ${tempPath}. Error: ${String(error)}`,
+    );
+  }
+
+  const mvResult = spawnSync("sudo", ["mv", tempPath, systemNginxPath]); // NOSONAR
+  if (mvResult.status !== 0 || mvResult.error) {
+    throw new Error(
+      `Rollback failed: Could not restore ${systemNginxPath}. Stderr: ${mvResult.stderr?.toString()}`,
+    );
+  }
 
   if (!assetsRollback) return;
 
   if (assetsRollback.created) {
-    spawnSync("sudo", ["rm", "-f", assetsRollback.path]); // NOSONAR
+    const rmResult = spawnSync("sudo", ["rm", "-f", assetsRollback.path]); // NOSONAR
+    if (rmResult.status !== 0 || rmResult.error) {
+      throw new Error(
+        `Rollback failed: Could not remove created assets file ${assetsRollback.path}. Stderr: ${rmResult.stderr?.toString()}`,
+      );
+    }
   } else if (assetsRollback.originalContent !== null) {
     const tempAssetsPath = assetsRollback.path + ".bak";
-    fs.writeFileSync(tempAssetsPath, assetsRollback.originalContent);
-    spawnSync("sudo", ["mv", tempAssetsPath, assetsRollback.path]); // NOSONAR
+    try {
+      fs.writeFileSync(tempAssetsPath, assetsRollback.originalContent);
+    } catch (error) {
+      throw new Error(
+        `Rollback failed: Could not write assets backup file ${tempAssetsPath}. Error: ${String(error)}`,
+      );
+    }
+    const mvAssetsResult = spawnSync("sudo", [
+      "mv",
+      tempAssetsPath,
+      assetsRollback.path,
+    ]); // NOSONAR
+    if (mvAssetsResult.status !== 0 || mvAssetsResult.error) {
+      throw new Error(
+        `Rollback failed: Could not restore assets file ${assetsRollback.path}. Stderr: ${mvAssetsResult.stderr?.toString()}`,
+      );
+    }
   }
 }
 

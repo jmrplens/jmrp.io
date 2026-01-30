@@ -69,7 +69,7 @@ This master script (`scripts/run-verify.mjs`) orchestrates the entire QA pipelin
 4.  **Content Validation**: HTML validation, RSS feed check, Schema.org check.
 5.  **Icon Consistency**: `pnpm verify-icons` (Custom script to ensure all icons have CSS rules).
 6.  **Documentation**: JSDoc comment coverage tracking.
-7.  **Security**: `npm audit` (dependencies) and SonarCloud analysis (code quality).
+7.  **Security**: `pnpm audit` (dependencies) and SonarCloud analysis (code quality).
 8.  **External Audits**:
     - **Spelling**: `typos` for codebase spell checking.
     - **Links**: `lychee` for dead link verification in generated HTML.

@@ -4,10 +4,9 @@ test.describe("Tabs & Code Block Accessibility", () => {
   test("Tabs (Zero-JS Radio Group) Keyboard Navigation", async ({ page }) => {
     // Navigate to a post with Tabs (001 has tabs for OS selection)
     await page.goto("/blog/001-secure-nginx-client-certificates");
-    await page.waitForLoadState("domcontentloaded");
-
-    // Locate the Tabs container
+    // Ensure styles/scripts are loaded by waiting for the component
     const tabsContainer = page.locator(".tabs-container").first();
+    await tabsContainer.waitFor({ state: "visible" });
     await expect(tabsContainer).toBeVisible();
 
     // Locate the labels (which act as tabs) and inputs
@@ -20,20 +19,8 @@ test.describe("Tabs & Code Block Accessibility", () => {
     await expect(panels.nth(1)).toBeHidden();
 
     // 2. Focus the first label (the group)
-    // In a radio group, tabbing into it focuses the checked input.
-    // However, our inputs are hidden (.tab-radio { position: absolute; ... })
-    // The label is connected via 'for'.
-    // Wait, standard keyboard nav goes to the INPUT.
-    // If input is visually hidden but not display:none, it receives focus.
-    // Our CSS: .tab-radio { clip-path: inset(100%); ... } -> It IS focusable.
-
-    // Force focus to the start of the tabs section to begin tabbing
-    await tabsContainer.scrollIntoViewIfNeeded();
-    // Click before the tabs to reset focus context or focus body
-    await page.focus("body");
-
-    // We can't easily "Tab until we hit it" reliably in generic test without flakiness.
-    // So we'll focus the first input directly to simulate reaching it.
+    // The radio input is visually hidden (via clip-path) but remains focusable.
+    // Keyboard navigation focuses the input, not the label, so we focus it directly here.
     await inputs.nth(0).focus();
     await expect(inputs.nth(0)).toBeFocused();
 
@@ -56,6 +43,7 @@ test.describe("Tabs & Code Block Accessibility", () => {
   test("FileContent Focus Navigation (No Ghost Focus)", async ({ page }) => {
     // Navigate to a post with FileContent
     await page.goto("/blog/001-secure-nginx-client-certificates");
+    await page.waitForLoadState("domcontentloaded");
 
     // Find a FileContent block
     const fileContent = page.locator(".file-content-wrapper").first();

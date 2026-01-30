@@ -165,7 +165,7 @@ const { post, loading = "lazy", fetchpriority = "auto" } = Astro.props;
   }
 
   .tags li {
-    display: contents; /* Makes li transparent to flexbox */
+    display: flex; /* Preserves list semantics */
   }
 
   .tag {
@@ -278,7 +278,7 @@ const { post, loading = "lazy", fetchpriority = "auto" } = Astro.props;
       -webkit-box-orient: vertical;
     }
 
-    /* Hide footer visually to save space, but keep it accessible to screen readers */
+    /* Hide footer visually to save space. It is also hidden from screen readers via aria-hidden="true" */
     .card-footer {
       position: absolute;
       width: 1px;
