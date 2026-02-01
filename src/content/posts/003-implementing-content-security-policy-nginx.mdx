@@ -80,16 +80,16 @@ CSP works by defining **what's allowed**, not what's blocked. Think of it as a g
 ```mermaid-render
 flowchart LR
     subgraph Browser["Browser"]
-        CSP["CSP Policy"]
+        CSP["CSP Policy"]:::cspPolicy
     end
     
-    A["Your scripts"]:::success --> CSP
+    A["Your scripts"]:::cspTrusted --> CSP
     B["CDN scripts"] --> CSP
     C["Inline scripts"] --> CSP
-    D["Malicious scripts"]:::danger --> CSP
+    D["Malicious scripts"]:::attacker --> CSP
     
-    CSP -->|"Allowed"| E["Execute"]:::success
-    CSP -->|"Blocked"| F["Reject"]:::danger
+    CSP -->|"Allowed"| E["Execute"]:::cspTrusted
+    CSP -->|"Blocked"| F["Reject"]:::cspBlocked
 ```
 </Mermaid>
 
@@ -814,26 +814,26 @@ When a script with a valid nonce dynamically loads another script, the loaded sc
 flowchart TB
     subgraph CSP["How strict-dynamic Works"]
         direction TB
-        N["Nonce in CSP header<br/>nonce-abc123"]
+        N["Nonce in CSP header<br/>nonce-abc123"]:::nonce
     end
     
     subgraph Trusted["Trusted Execution Chain"]
         direction LR
-        A["Script tag with<br/>nonce=abc123"]:::success
-        B["createElement script<br/>(no nonce needed)"]:::success
-        C["Loaded library<br/>(inherits trust)"]:::success
+        A["Script tag with<br/>nonce=abc123"]:::cspTrusted
+        B["createElement script<br/>(no nonce needed)"]:::cspTrusted
+        C["Loaded library<br/>(inherits trust)"]:::cspTrusted
         A -->|"Creates"| B
         B -->|"Loads"| C
     end
     
     subgraph Blocked["Blocked by CSP"]
         direction LR
-        D["Injected inline<br/>script tag"]:::danger
-        E["Event handler<br/>onclick=..."]:::danger
+        D["Injected inline<br/>script tag"]:::attacker
+        E["Event handler<br/>onclick=..."]:::attacker
     end
     
     N -->|"Validates"| A
-    D -->|"No match"| X["Blocked"]:::danger
+    D -->|"No match"| X["Blocked"]:::cspBlocked
     E -->|"No match"| X
 ```
 </Mermaid>
@@ -1066,10 +1066,18 @@ When CSP blocks something, browsers can send a report. This helps you:
 - Find bugs in your policy
 - Monitor third-party scripts
 
-### Option 1: Simple Nginx logging
+<Callout type="warning" icon="mdi:alert-decagram">
+  **`report-uri` is deprecated** in favor of `report-to` (Reporting API). For maximum browser compatibility, use **both directives** in your CSP.
+  
+  - Chrome 70+ uses `report-to` and ignores `report-uri` when both are present
+  - Firefox and Safari still rely on `report-uri`
+</Callout>
+
+### Option 1: Simple Nginx logging (legacy + modern)
 
 <FileContent filename="/etc/nginx/sites-available/example.com" icon="devicon:nginx">
 ```nginx
+# Reporting endpoint for CSP violations
 location /csp-reports {
     access_log /var/log/nginx/csp-reports.log;
     return 204;
@@ -1077,13 +1085,23 @@ location /csp-reports {
 ```
 </FileContent>
 
-Add to your CSP:
+Configure both `report-uri` and `report-to` in your CSP:
 
-<Code lang="nginx" aria-label="report-uri directive">
+<FileContent filename="/etc/nginx/snippets/security_headers.conf" icon="devicon:nginx">
 ```nginx
-report-uri /csp-reports;
+# Modern Reporting API endpoint (CSP Level 3)
+add_header Reporting-Endpoints 'csp-endpoint="/csp-reports"' always;
+
+# CSP with both legacy and modern reporting
+add_header Content-Security-Policy "
+    default-src 'none';
+    script-src 'self' 'nonce-$cspNonce' 'strict-dynamic';
+    ...
+    report-uri /csp-reports;
+    report-to csp-endpoint;
+" always;
 ```
-</Code>
+</FileContent>
 
 ### Option 2: Third-party service
 
@@ -1092,6 +1110,7 @@ Services like [Report URI](https://report-uri.com/) provide dashboards and analy
 <Code lang="nginx" aria-label="Third-party reporting">
 ```nginx
 report-uri https://your-subdomain.report-uri.com/r/d/csp/enforce;
+report-to csp-endpoint;
 ```
 </Code>
 
