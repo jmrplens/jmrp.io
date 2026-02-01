@@ -395,6 +395,111 @@ upgrade-insecure-requests;
 ```
 </Code>
 
+### CSP Directives Reference
+
+For complete documentation, refer to the official MDN references. Below are the key directive categories:
+
+#### Fetch directives
+
+These control where resources can be loaded from:
+
+<Table title="Fetch Directives Reference">
+  <thead>
+    <tr>
+      <th>Directive</th>
+      <th>Controls</th>
+      <th>Recommended Value</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/default-src" target="_blank" rel="noopener noreferrer"><code>default-src</code></a></td>
+      <td>Fallback for all unspecified fetch directives</td>
+      <td><code>'none'</code> (be explicit)</td>
+    </tr>
+    <tr>
+      <td><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/script-src" target="_blank" rel="noopener noreferrer"><code>script-src</code></a></td>
+      <td>JavaScript sources and inline scripts</td>
+      <td><code>'nonce-...' 'strict-dynamic'</code></td>
+    </tr>
+    <tr>
+      <td><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/style-src" target="_blank" rel="noopener noreferrer"><code>style-src</code></a></td>
+      <td>CSS stylesheets and inline styles</td>
+      <td><code>'self'</code> + hashes if needed</td>
+    </tr>
+    <tr>
+      <td><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/img-src" target="_blank" rel="noopener noreferrer"><code>img-src</code></a></td>
+      <td>Image sources</td>
+      <td><code>'self' data:</code></td>
+    </tr>
+    <tr>
+      <td><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/font-src" target="_blank" rel="noopener noreferrer"><code>font-src</code></a></td>
+      <td>Web font sources</td>
+      <td><code>'self'</code> or CDN domain</td>
+    </tr>
+    <tr>
+      <td><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/connect-src" target="_blank" rel="noopener noreferrer"><code>connect-src</code></a></td>
+      <td>XHR, Fetch, WebSocket, EventSource</td>
+      <td><code>'self'</code> + API domains</td>
+    </tr>
+    <tr>
+      <td><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/media-src" target="_blank" rel="noopener noreferrer"><code>media-src</code></a></td>
+      <td>Audio/video sources</td>
+      <td><code>'self'</code> or <code>'none'</code></td>
+    </tr>
+    <tr>
+      <td><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/object-src" target="_blank" rel="noopener noreferrer"><code>object-src</code></a></td>
+      <td>Plugins (Flash, Java, etc.)</td>
+      <td><code>'none'</code> (critical!)</td>
+    </tr>
+    <tr>
+      <td><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/frame-src" target="_blank" rel="noopener noreferrer"><code>frame-src</code></a></td>
+      <td>Sources for iframes</td>
+      <td><code>'none'</code> or trusted sources</td>
+    </tr>
+    <tr>
+      <td><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/worker-src" target="_blank" rel="noopener noreferrer"><code>worker-src</code></a></td>
+      <td>Worker, SharedWorker, ServiceWorker</td>
+      <td><code>'self'</code></td>
+    </tr>
+  </tbody>
+</Table>
+
+#### Document and navigation directives
+
+These control document behavior and navigation:
+
+<Table title="Document & Navigation Directives Reference">
+  <thead>
+    <tr>
+      <th>Directive</th>
+      <th>Purpose</th>
+      <th>Recommended Value</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/base-uri" target="_blank" rel="noopener noreferrer"><code>base-uri</code></a></td>
+      <td>Restricts URLs in <code>&lt;base&gt;</code> element</td>
+      <td><code>'none'</code> (prevents injection)</td>
+    </tr>
+    <tr>
+      <td><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/form-action" target="_blank" rel="noopener noreferrer"><code>form-action</code></a></td>
+      <td>URLs that can be form submission targets</td>
+      <td><code>'self'</code> (anti-phishing)</td>
+    </tr>
+    <tr>
+      <td><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/frame-ancestors" target="_blank" rel="noopener noreferrer"><code>frame-ancestors</code></a></td>
+      <td>Who can embed this page</td>
+      <td><code>'none'</code> (anti-clickjacking)</td>
+    </tr>
+    <tr>
+      <td><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/upgrade-insecure-requests" target="_blank" rel="noopener noreferrer"><code>upgrade-insecure-requests</code></a></td>
+      <td>Auto-upgrade HTTP to HTTPS</td>
+      <td>(Present on HTTPS sites)</td>
+    </tr>
+  </tbody>
+</Table>
 
 ---
 
@@ -594,7 +699,7 @@ In your templates, use a known placeholder for the nonce:
 <html>
   <head>
     <!-- Use placeholder that Nginx will replace -->
-    <script is:inline nonce="NGINX_CSP_NONCE">
+    <script is:inline nonce="CSP_NONCE_NGINX">
       // Critical inline script (theme detection, etc.)
       const theme = localStorage.getItem('theme') || 'system';
       document.documentElement.dataset.theme = theme;
@@ -626,7 +731,7 @@ server {
     # ========================================
     sub_filter_once off;  # Replace ALL occurrences
     sub_filter_types text/html text/css application/javascript;
-    sub_filter NGINX_CSP_NONCE $cspNonce;
+    sub_filter CSP_NONCE_NGINX $cspNonce;
 
     # ========================================
     # STEP 3: Set CSP header with the same nonce
@@ -667,7 +772,7 @@ server {
   <TabPanel label="1. Stored on Disk">
     ```html
     <!-- /var/www/example.com/index.html -->
-    <script nonce="NGINX_CSP_NONCE">
+    <script nonce="CSP_NONCE_NGINX">
       const theme = localStorage.getItem('theme');
     </script>
     ```
@@ -934,7 +1039,7 @@ Review your violation reports and fix issues:
 
 1. **Inline event handlers** → Convert to `addEventListener()`
 2. **`eval()` usage** → Replace with `JSON.parse()` or refactor
-3. **Missing nonces** → Add `nonce="NGINX_CSP_NONCE"` to inline scripts
+3. **Missing nonces** → Add `nonce="CSP_NONCE_NGINX"` to inline scripts
 4. **Third-party scripts** → Verify `'strict-dynamic'` covers them
 
 ### Phase 3: Enable enforcement
@@ -1029,7 +1134,7 @@ Some common patterns are incompatible with strict CSP. Here's how to fix them:
     <button id="submitBtn">Submit</button>
     <a href="#" id="actionLink">Click</a>
     
-    <script nonce="NGINX_CSP_NONCE">
+    <script nonce="CSP_NONCE_NGINX">
       document.getElementById('submitBtn')
         .addEventListener('click', submitForm);
       document.getElementById('actionLink')
@@ -1209,7 +1314,7 @@ server {
     set $cspNonce $request_id;
     sub_filter_once off;
     sub_filter_types text/html text/css application/javascript;
-    sub_filter NGINX_CSP_NONCE $cspNonce;
+    sub_filter CSP_NONCE_NGINX $cspNonce;
     
     # Build CSP header
     set $csp "default-src 'none'; ";

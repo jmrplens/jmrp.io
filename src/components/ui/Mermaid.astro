@@ -439,4 +439,95 @@ const computedAriaLabel =
   .mermaid-content :global(.node.muted .nodeLabel) {
     color: var(--mermaid-muted-text) !important;
   }
+
+  /* Primary Node (brand/accent color) */
+  .mermaid-content :global(.node.primary > rect),
+  .mermaid-content :global(.node.primary > polygon),
+  .mermaid-content :global(.node.primary > circle) {
+    fill: var(--mermaid-highlight-fill) !important;
+    stroke: var(--mermaid-highlight-stroke) !important;
+  }
+
+  .mermaid-content :global(.node.primary .nodeLabel) {
+    color: var(--mermaid-highlight-text) !important;
+  }
+
+  /* Secondary Node (subtle/muted) */
+  .mermaid-content :global(.node.secondary > rect),
+  .mermaid-content :global(.node.secondary > polygon),
+  .mermaid-content :global(.node.secondary > circle) {
+    fill: var(--mermaid-tertiary-bg) !important;
+    stroke: var(--mermaid-border) !important;
+  }
+
+  .mermaid-content :global(.node.secondary .nodeLabel) {
+    color: var(--mermaid-text) !important;
+  }
+
+  /* CSP Policy Node (represents the CSP header/rules) */
+  .mermaid-content :global(.node.cspPolicy > rect),
+  .mermaid-content :global(.node.cspPolicy > polygon),
+  .mermaid-content :global(.node.cspPolicy > circle) {
+    fill: var(--mermaid-info-fill) !important;
+    stroke: var(--mermaid-info-stroke) !important;
+    stroke-width: 2px !important;
+  }
+
+  .mermaid-content :global(.node.cspPolicy .nodeLabel) {
+    color: var(--mermaid-info-text) !important;
+    font-weight: bold !important;
+  }
+
+  /* CSP Trusted Node (for allowed/trusted scripts) - uses success */
+  .mermaid-content :global(.node.cspTrusted > rect),
+  .mermaid-content :global(.node.cspTrusted > polygon),
+  .mermaid-content :global(.node.cspTrusted > circle) {
+    fill: var(--mermaid-success-fill) !important;
+    stroke: var(--mermaid-success-stroke) !important;
+  }
+
+  .mermaid-content :global(.node.cspTrusted .nodeLabel) {
+    color: var(--mermaid-success-text) !important;
+  }
+
+  /* CSP Blocked Node (for blocked/rejected scripts) - uses danger */
+  .mermaid-content :global(.node.cspBlocked > rect),
+  .mermaid-content :global(.node.cspBlocked > polygon),
+  .mermaid-content :global(.node.cspBlocked > circle) {
+    fill: var(--mermaid-danger-fill) !important;
+    stroke: var(--mermaid-danger-stroke) !important;
+  }
+
+  .mermaid-content :global(.node.cspBlocked .nodeLabel) {
+    color: var(--mermaid-danger-text) !important;
+  }
+
+  /* Attacker Node (special styling for malicious actors) */
+  .mermaid-content :global(.node.attacker > rect),
+  .mermaid-content :global(.node.attacker > polygon),
+  .mermaid-content :global(.node.attacker > circle) {
+    fill: #450a0a !important;
+    stroke: #ef4444 !important;
+    stroke-width: 2px !important;
+    stroke-dasharray: 5 3 !important;
+  }
+
+  .mermaid-content :global(.node.attacker .nodeLabel) {
+    color: #fca5a5 !important;
+  }
+
+  /* Nonce Node (special styling for nonce values) */
+  .mermaid-content :global(.node.nonce > rect),
+  .mermaid-content :global(.node.nonce > polygon),
+  .mermaid-content :global(.node.nonce > circle) {
+    fill: var(--mermaid-secondary-bg) !important;
+    stroke: var(--mermaid-highlight-stroke) !important;
+    stroke-width: 2px !important;
+    stroke-dasharray: 8 4 !important;
+  }
+
+  .mermaid-content :global(.node.nonce .nodeLabel) {
+    color: var(--mermaid-highlight-stroke) !important;
+    font-family: var(--font-mono) !important;
+  }
 </style>
