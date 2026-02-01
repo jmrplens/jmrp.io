@@ -68,7 +68,8 @@ if (!ariaLabel) {
   plainText = fullText.length > 50 ? fullText.slice(0, 50) + "..." : fullText;
 }
 
-const finalAriaLabel = ariaLabel || `${filename} - ${plainText}`;
+// Include uuid to ensure uniqueness when same file appears multiple times
+const finalAriaLabel = ariaLabel || `${filename} (${uuid}) - ${plainText}`;
 
 // If language is specified, extract raw code for Shiki re-rendering
 let rawCode = "";

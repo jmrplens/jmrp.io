@@ -1,0 +1,208 @@
+---
+/**
+ * APIEndpoint Component
+ * Renders documentation for a REST API endpoint.
+ */
+interface Props {
+  method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+  path: string;
+  description?: string;
+  auth?: boolean;
+}
+
+const { method, path, description, auth = false } = Astro.props;
+
+const methodColors: Record<string, string> = {
+  GET: "method-get",
+  POST: "method-post",
+  PUT: "method-put",
+  PATCH: "method-patch",
+  DELETE: "method-delete",
+};
+---
+
+<div class="api-endpoint">
+  <div class="ae-header">
+    <span class={`ae-method ${methodColors[method]}`}>{method}</span>
+    <code class="ae-path">{path}</code>
+    {
+      auth && (
+        <span class="ae-auth">
+          <span
+            class="i-mdi:lock ae-auth-icon"
+            aria-hidden="true"
+          />
+          Auth
+        </span>
+      )
+    }
+  </div>
+
+  {description && <p class="ae-description">{description}</p>}
+
+  <div class="ae-content">
+    <slot />
+  </div>
+</div>
+
+<style>
+  .api-endpoint {
+    margin: 1.5rem 0;
+    overflow: hidden;
+    background: var(--color-bg-secondary);
+    border: var(--border-1);
+    border-radius: var(--radius-md);
+  }
+
+  .ae-header {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    background: var(--color-bg-subtle);
+    border-bottom: var(--border-1);
+  }
+
+  .ae-method {
+    padding: 0.25rem 0.625rem;
+    font-size: 0.75rem;
+    font-weight: var(--fw-bold);
+    text-transform: uppercase;
+    border-radius: var(--radius-sm);
+  }
+
+  .method-get {
+    color: #10b981;
+    background: rgb(16 185 129 / 15%);
+  }
+
+  .method-post {
+    color: #3b82f6;
+    background: rgb(59 130 246 / 15%);
+  }
+
+  .method-put {
+    color: #f59e0b;
+    background: rgb(245 158 11 / 15%);
+  }
+
+  .method-patch {
+    color: #8b5cf6;
+    background: rgb(139 92 246 / 15%);
+  }
+
+  .method-delete {
+    color: #ef4444;
+    background: rgb(239 68 68 / 15%);
+  }
+
+  .ae-path {
+    flex: 1;
+    padding: 0;
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    color: var(--color-text);
+    background: transparent;
+  }
+
+  .ae-auth {
+    display: inline-flex;
+    gap: 0.25rem;
+    align-items: center;
+    padding: 0.125rem 0.5rem;
+    font-size: 0.75rem;
+    color: #f59e0b;
+    background: rgb(245 158 11 / 15%);
+    border-radius: 9999px;
+  }
+
+  .ae-auth-icon {
+    width: 12px;
+    height: 12px;
+  }
+
+  .ae-description {
+    padding: 0.875rem 1rem;
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: var(--color-text-muted);
+    border-bottom: var(--border-1);
+  }
+
+  .ae-content:empty {
+    display: none;
+  }
+
+  .ae-content {
+    padding: 1rem;
+  }
+
+  .ae-content :global(h4),
+  .ae-content :global(h5) {
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.85rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .ae-content :global(h4:first-child),
+  .ae-content :global(h5:first-child) {
+    margin-top: 0;
+  }
+
+  /* Light mode adjustments for WCAG AA contrast */
+  :root[data-theme="light"] .method-get {
+    color: #065f46; /* emerald-800 */
+  }
+
+  :root[data-theme="light"] .method-post {
+    color: #1e40af; /* blue-800 */
+  }
+
+  :root[data-theme="light"] .method-put {
+    color: #92400e; /* amber-800 */
+  }
+
+  :root[data-theme="light"] .method-patch {
+    color: #5b21b6; /* violet-800 */
+  }
+
+  :root[data-theme="light"] .method-delete {
+    color: #991b1b; /* red-800 */
+  }
+
+  :root[data-theme="light"] .ae-auth {
+    color: #92400e; /* amber-800 */
+  }
+
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) .method-get {
+      color: #065f46;
+    }
+
+    :root:not([data-theme="dark"]) .method-post {
+      color: #1e40af;
+    }
+
+    :root:not([data-theme="dark"]) .method-put {
+      color: #92400e;
+    }
+
+    :root:not([data-theme="dark"]) .method-patch {
+      color: #5b21b6;
+    }
+
+    :root:not([data-theme="dark"]) .method-delete {
+      color: #991b1b;
+    }
+
+    :root:not([data-theme="dark"]) .ae-auth {
+      color: #92400e;
+    }
+  }
+</style>

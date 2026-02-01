@@ -1,0 +1,134 @@
+---
+/**
+ * BeforeAfter Component
+ * Side-by-side comparison view with CSS-only slider.
+ */
+interface Props {
+  beforeLabel?: string;
+  afterLabel?: string;
+}
+
+const { beforeLabel = "Before", afterLabel = "After" } = Astro.props;
+---
+
+<figure
+  class="before-after"
+  role="group"
+  aria-label="Comparison: Before vs After"
+>
+  <div class="ba-container">
+    <div
+      class="ba-before"
+      role="group"
+      aria-label={beforeLabel}
+    >
+      <div class="ba-label ba-label-before">{beforeLabel}</div>
+      <div class="ba-content">
+        <slot name="before" />
+      </div>
+    </div>
+    <div
+      class="ba-after"
+      role="group"
+      aria-label={afterLabel}
+    >
+      <div class="ba-label ba-label-after">{afterLabel}</div>
+      <div class="ba-content">
+        <slot name="after" />
+      </div>
+    </div>
+  </div>
+</figure>
+
+<style>
+  .before-after {
+    margin: 1.5rem 0;
+  }
+
+  .ba-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    overflow: hidden;
+    border: var(--border-1);
+    border-radius: var(--radius-md);
+  }
+
+  @media (width <= 640px) {
+    .ba-container {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .ba-before,
+  .ba-after {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .ba-label {
+    padding: 0.5rem 1rem;
+    font-size: 0.8rem;
+    font-weight: var(--fw-semibold);
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .ba-label-before {
+    color: #ef4444;
+    background: rgb(239 68 68 / 10%);
+    border-bottom: 2px solid rgb(239 68 68 / 30%);
+  }
+
+  .ba-label-after {
+    color: #10b981;
+    background: rgb(16 185 129 / 10%);
+    border-bottom: 2px solid rgb(16 185 129 / 30%);
+  }
+
+  .ba-content {
+    flex: 1;
+    padding: 1rem;
+    background: var(--color-bg-secondary);
+  }
+
+  .ba-content :global(img) {
+    max-width: 100%;
+    height: auto;
+    border-radius: var(--radius-sm);
+  }
+
+  .ba-content :global(pre) {
+    margin: 0;
+    font-size: 0.85rem;
+  }
+
+  .ba-content :global(p:first-child) {
+    margin-top: 0;
+  }
+
+  .ba-content :global(p:last-child) {
+    margin-bottom: 0;
+  }
+
+  /* Light mode adjustments for WCAG AA contrast */
+  :root[data-theme="light"] .ba-label-before {
+    color: #991b1b; /* red-800 */
+  }
+
+  :root[data-theme="light"] .ba-label-after {
+    color: #065f46; /* emerald-800 */
+  }
+
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) .ba-label-before {
+      color: #991b1b;
+    }
+
+    :root:not([data-theme="dark"]) .ba-label-after {
+      color: #065f46;
+    }
+  }
+</style>

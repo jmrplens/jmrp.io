@@ -1,0 +1,239 @@
+---
+/**
+ * StateNotice Component (formerly DeprecatedNotice)
+ * Banner for state notices with multiple types: deprecated, mandatory, experimental, preview, etc.
+ */
+interface Props {
+  type?:
+    | "deprecated"
+    | "mandatory"
+    | "experimental"
+    | "preview"
+    | "breaking"
+    | "security";
+  feature?: string;
+  alternative?: string;
+  alternativeUrl?: string;
+  removalDate?: string;
+  title?: string;
+}
+
+const {
+  type = "deprecated",
+  feature,
+  alternative,
+  alternativeUrl,
+  removalDate,
+  title,
+} = Astro.props;
+
+const config: Record<
+  string,
+  {
+    icon: string;
+    label: string;
+    color: string;
+    bgColor: string;
+    textColor: string;
+  }
+> = {
+  deprecated: {
+    icon: "mdi:alert-octagon",
+    label: "Deprecated",
+    color: "#ef4444",
+    bgColor: "239 68 68",
+    textColor: "#991b1b", // red-800 for WCAG AA (~5.8:1)
+  },
+  mandatory: {
+    icon: "mdi:check-decagram",
+    label: "Mandatory",
+    color: "#10b981",
+    bgColor: "16 185 129",
+    textColor: "#065f46", // emerald-800 for WCAG AA (~6.5:1)
+  },
+  experimental: {
+    icon: "mdi:flask",
+    label: "Experimental",
+    color: "#f59e0b",
+    bgColor: "245 158 11",
+    textColor: "#92400e", // amber-800 for WCAG AA (~6.3:1)
+  },
+  preview: {
+    icon: "mdi:eye",
+    label: "Preview",
+    color: "#3b82f6",
+    bgColor: "59 130 246",
+    textColor: "#1e40af", // blue-800 for WCAG AA (~6.1:1)
+  },
+  breaking: {
+    icon: "mdi:alert-box",
+    label: "Breaking Change",
+    color: "#dc2626",
+    bgColor: "220 38 38",
+    textColor: "#7f1d1d", // red-900 for WCAG AA (~7.8:1)
+  },
+  security: {
+    icon: "mdi:shield-alert",
+    label: "Security",
+    color: "#f97316",
+    bgColor: "249 115 22",
+    textColor: "#9a3412", // orange-800 for WCAG AA (~5.9:1)
+  },
+};
+
+const current = config[type];
+const displayTitle = title || current.label;
+---
+
+<div
+  class="state-notice"
+  role="alert"
+  aria-label={displayTitle}
+  style={`--sn-color: ${current.color}; --sn-bg-color: ${current.bgColor}; --sn-text-color: ${current.textColor};`}
+>
+  <div class="sn-header">
+    <span
+      class={`i-${current.icon} sn-icon`}
+      aria-hidden="true"
+    ></span>
+    <span class="sn-title">{displayTitle}</span>
+  </div>
+  <div class="sn-content">
+    {
+      feature && (
+        <p class="sn-message">
+          <code class="sn-feature">{feature}</code>
+          {type === "deprecated" && " is deprecated"}
+          {type === "mandatory" && " is required"}
+          {type === "experimental" && " is experimental"}
+          {type === "preview" && " is in preview"}
+          {type === "breaking" && " introduces breaking changes"}
+          {type === "security" && " has security implications"}
+          {removalDate && (
+            <span class="sn-date"> and will be removed in {removalDate}</span>
+          )}
+          .
+        </p>
+      )
+    }
+    {
+      alternative && (
+        <p class="sn-alternative">
+          <span class="sn-label">
+            {type === "deprecated" ? "Use instead:" : "Recommended:"}
+          </span>
+          {alternativeUrl ? (
+            <a
+              href={alternativeUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <code class="sn-alt-code">{alternative}</code>
+            </a>
+          ) : (
+            <code class="sn-alt-code">{alternative}</code>
+          )}
+        </p>
+      )
+    }
+    <slot />
+  </div>
+</div>
+
+<style>
+  .state-notice {
+    margin: 1.5rem 0;
+    overflow: hidden;
+    background: rgb(var(--sn-bg-color) / 8%);
+    border: 1px solid rgb(var(--sn-bg-color) / 30%);
+    border-radius: var(--radius-md);
+  }
+
+  .sn-header {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    padding: 0.625rem 1rem;
+    background: rgb(var(--sn-bg-color) / 15%);
+    border-bottom: 1px solid rgb(var(--sn-bg-color) / 20%);
+  }
+
+  .sn-icon {
+    width: 18px;
+    height: 18px;
+    color: var(--sn-color);
+  }
+
+  .sn-title {
+    font-size: 0.8rem;
+    font-weight: var(--fw-bold);
+    color: var(--sn-text-color);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .sn-content {
+    padding: 0.875rem 1rem;
+  }
+
+  .sn-content:empty {
+    display: none;
+  }
+
+  .sn-message {
+    margin: 0 0 0.5rem;
+    font-size: 0.9rem;
+    color: var(--color-text);
+  }
+
+  .sn-feature {
+    padding: 0.125rem 0.375rem;
+    color: var(--sn-text-color);
+    background: rgb(var(--sn-bg-color) / 15%);
+    border-radius: var(--radius-sm);
+  }
+
+  .sn-date {
+    color: var(--color-text-muted);
+  }
+
+  .sn-alternative {
+    display: flex;
+    gap: 0.5rem;
+    align-items: baseline;
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--color-text);
+  }
+
+  .sn-label {
+    font-size: 0.8rem;
+    font-weight: var(--fw-medium);
+    color: var(--color-text-muted);
+  }
+
+  .sn-alt-code {
+    padding: 0.125rem 0.375rem;
+    color: #065f46; /* emerald-800 for WCAG AA (~6.5:1) */
+    background: rgb(16 185 129 / 15%);
+    border-radius: var(--radius-sm);
+  }
+
+  .sn-alternative a {
+    text-decoration: none;
+  }
+
+  .sn-alternative a:hover .sn-alt-code {
+    text-decoration: underline;
+  }
+
+  .sn-content :global(p) {
+    margin: 0.5rem 0 0;
+    font-size: 0.9rem;
+    color: var(--color-text-muted);
+  }
+
+  .sn-content :global(p:first-child) {
+    margin-top: 0;
+  }
+</style>

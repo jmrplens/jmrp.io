@@ -68,6 +68,10 @@ export default function postBuildIntegration(): AstroIntegration {
           await processHtmlFiles(distDir, cspData, enableCsp, logger);
           await finalizeCspConfig(distDir, cspData, logger);
 
+          await optimizeImages(distDir, logger);
+          await compressAssets(distDir, logger);
+          fixPermissions(distDir, logger);
+
           if (systemNginxPath) {
             validateNginxPath(systemNginxPath);
             deploySecurityHeaders(distDir, systemNginxPath, logger);
@@ -77,8 +81,6 @@ export default function postBuildIntegration(): AstroIntegration {
             );
           }
 
-          await optimizeImages(distDir, logger);
-          await compressAssets(distDir, logger);
           await purgeCloudflareCache(logger);
         } catch (error) {
           logger.error("Fatal optimization error:");
@@ -125,6 +127,40 @@ function validateNginxPath(systemNginxPath: string) {
     throw new Error(
       `Nginx configuration path cannot be a symbolic link: ${path.basename(normalizedPath)}`,
     );
+  }
+}
+
+/**
+ * Fixes permissions for the distribution directory to ensure Nginx (www-data) can read it.
+ *
+ * @param distDir - The distribution directory path.
+ * @param logger - Astro logger instance.
+ */
+function fixPermissions(distDir: string, logger: AstroIntegrationLogger) {
+  logger.info(`Fixing permissions for [${distDir}]...`);
+  try {
+    // Set ownership to www-data:www-data
+    spawnSync("sudo", ["chown", "-R", "www-data:www-data", distDir], {
+      stdio: "inherit",
+    });
+
+    // Set directory permissions to 755
+    spawnSync(
+      "sudo",
+      ["find", distDir, "-type", "d", "-exec", "chmod", "755", "{}", "+"],
+      { stdio: "inherit" },
+    );
+
+    // Set file permissions to 644
+    spawnSync(
+      "sudo",
+      ["find", distDir, "-type", "f", "-exec", "chmod", "644", "{}", "+"],
+      { stdio: "inherit" },
+    );
+    logger.info("✓ Permissions fixed (www-data:www-data, 755/644).");
+  } catch (error) {
+    logger.warn("⚠ Failed to fix permissions.");
+    logger.warn(error instanceof Error ? error.message : String(error));
   }
 }
 
@@ -379,20 +415,38 @@ function clearNginxCache(
     return;
   }
 
-  logger.info(`Clearing Nginx cache in [${systemNginxCachePath}]...`);
-  // Use sudo to clear the cache contents while keeping the zone directories
-  // find -mindepth 2 ensures we delete contents of subfolders (like generic_cache/*)
-  // but keep the subfolders themselves which Nginx expects to exist.
-  const clearResult = spawnSync(
+  // Optimize: Only clear the 'jmrp_cache' dedicated to jmrp.io
+  // instead of wiping the entire nginx cache or sharing generic_cache.
+  const targetCachePath = path.join(systemNginxCachePath, "jmrp_cache");
+
+  if (fs.existsSync(targetCachePath)) {
+    logger.info(`Clearing specific Nginx cache: [${targetCachePath}]...`);
+
+    // We use -mindepth 1 to delete everything INSIDE generic_cache, but keep the folder itself
+    const clearResult = spawnSync(
+      "sudo",
+      ["find", targetCachePath, "-mindepth", "1", "-delete"],
+      {
+        stdio: "inherit",
+      },
+    ); // NOSONAR
+
+    if (clearResult.status !== 0) {
+      logger.warn(`Failed to clear Nginx cache at ${targetCachePath}`);
+    }
+  } else {
+    logger.info(`Cache folder ${targetCachePath} not found, skipping clear.`);
+  }
+
+  // FORCE permissions on the main cache directory to ensure www-data can write
+  logger.info(`Ensuring ownership of cache path: ${systemNginxCachePath}`);
+  spawnSync(
     "sudo",
-    ["find", systemNginxCachePath, "-mindepth", "2", "-delete"],
+    ["chown", "-R", "www-data:www-data", systemNginxCachePath],
     {
       stdio: "inherit",
     },
-  ); // NOSONAR
-  if (clearResult.status !== 0) {
-    logger.warn(`Failed to clear Nginx cache at ${systemNginxCachePath}`);
-  }
+  );
 }
 
 /**

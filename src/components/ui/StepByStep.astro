@@ -1,0 +1,128 @@
+---
+/**
+ * StepByStep Component
+ * Renders a step-by-step guide with numbered steps and visual connectors.
+ * Uses padding-based layout with absolute positioned circle to avoid grid issues.
+ */
+interface Props {
+  title?: string;
+}
+
+const { title } = Astro.props;
+---
+
+<nav
+  class="step-by-step"
+  aria-label={title || "Step-by-step guide"}
+>
+  {
+    title && (
+      <div
+        class="sbs-title"
+        id="sbs-title"
+      >
+        {title}
+      </div>
+    )
+  }
+  <ol class="sbs-steps">
+    <slot />
+  </ol>
+</nav>
+
+<style is:global>
+  .step-by-step {
+    margin: 1.5rem 0;
+  }
+
+  .step-by-step .sbs-title {
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-heading);
+  }
+
+  .step-by-step .sbs-steps {
+    padding: 0;
+    margin: 0;
+    list-style: none;
+    counter-reset: step;
+  }
+
+  .step-by-step .sbs-steps li {
+    position: relative;
+    display: block !important;
+    padding: 0 0 1.5rem 56px !important;
+    margin: 0 !important;
+    counter-increment: step;
+  }
+
+  .step-by-step .sbs-steps li:last-child {
+    padding-bottom: 0 !important;
+  }
+
+  /* Step number circle */
+  .step-by-step .sbs-steps li::before {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    font-size: 1rem;
+    font-weight: var(--fw-bold);
+    color: var(--color-bg);
+    content: counter(step);
+    background: var(--color-primary);
+    border-radius: 50%;
+  }
+
+  /* Connector line between steps */
+  .step-by-step .sbs-steps li::after {
+    position: absolute;
+    top: 44px;
+    left: 19px;
+    z-index: 0;
+    width: 2px;
+    height: calc(100% - 44px);
+    content: "";
+    background: var(--color-border);
+  }
+
+  .step-by-step .sbs-steps li:last-child::after {
+    display: none;
+  }
+
+  /* First paragraph - title styling */
+  .step-by-step .sbs-steps li > p:first-of-type {
+    padding-top: 0.5rem;
+    margin: 0 !important;
+  }
+
+  .step-by-step .sbs-steps li > p:first-of-type strong:first-child {
+    display: block;
+    margin-bottom: 0.25rem;
+    font-size: 1rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-heading);
+  }
+
+  /* All paragraphs inside steps */
+  .step-by-step .sbs-steps li > p {
+    margin: 0.25rem 0 0 !important;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: var(--color-text-muted);
+  }
+
+  /* Code blocks inside steps */
+  .step-by-step .sbs-steps li code {
+    padding: 0.125rem 0.375rem;
+    font-size: 0.85rem;
+    background: var(--color-bg-secondary);
+    border-radius: var(--radius-sm);
+  }
+</style>

@@ -18,10 +18,27 @@ import TerminalCommand from "@components/ui/TerminalCommand.astro";
 import TerminalOutput from "@components/ui/TerminalOutput.astro";
 import Mermaid from "@components/ui/Mermaid.astro";
 import Code from "@components/ui/Code.astro";
+import TLDRSummary from "@components/ui/TLDRSummary.astro";
+import CheckList from "@components/ui/CheckList.astro";
+import StateNotice from "@components/ui/StateNotice.astro";
+import BrowserSupport from "@components/ui/BrowserSupport.astro";
+import StepByStep from "@components/ui/StepByStep.astro";
+import Prerequisite from "@components/ui/Prerequisite.astro";
 
-**Cross-Site Scripting (XSS)** is one of the most dangerous web vulnerabilities. Attackers inject malicious scripts that steal cookies, redirect users, or perform actions on their behalf. **Content Security Policy (CSP)** is your best defense—a whitelist that tells the browser exactly which resources are allowed to load and execute.
+**Cross-Site Scripting (XSS)** remains one of the most prevalent and dangerous web vulnerabilities, consistently ranking in OWASP's Top 10. According to recent security research, XSS vulnerabilities account for approximately 40% of all reported web application security issues. Attackers exploit these vulnerabilities to inject malicious scripts that can steal cookies, hijack user sessions, redirect visitors to malicious sites, or perform unauthorized actions on behalf of authenticated users.
 
-In this guide, you'll learn CSP from the ground up. We'll start with a one-line policy, then progressively build toward a strict, A+ rated configuration. By the end, you'll understand not just *how* to implement CSP, but *why* each directive matters.
+**Content Security Policy (CSP)** is your best defense against these attacks. Think of it as a whitelist or "guest list" for your website—you explicitly tell the browser which resources (scripts, styles, images, etc.) are allowed to load and execute. Anything not on the list gets blocked, even if an attacker manages to inject malicious code into your page.
+
+In this guide, you'll learn CSP from the ground up. We'll start with a one-line policy, then progressively build toward a strict, A+ rated configuration. By the end, you'll understand not just *how* to implement CSP, but *why* each directive matters and how they work together to protect your users.
+
+<TLDRSummary title="Key Takeaways">
+  - **Start simple**: Begin with `default-src 'self'` and add directives progressively
+  - **Use nonces over allowlists**: 94% of allowlist CSPs can be bypassed; nonces are much stronger
+  - **Static sites can use nonces**: Nginx's `sub_filter` replaces placeholders with real nonces at request time
+  - **Go strict with `'strict-dynamic'`**: Trust propagates from nonced scripts to dynamically loaded ones
+  - **Migration path**: Always deploy in report-only mode first, then gradually enforce
+  - **Essential directives**: `object-src 'none'` and `base-uri 'none'` are required for strict CSP
+</TLDRSummary>
 
 ---
 
@@ -136,6 +153,8 @@ sequenceDiagram
 </Callout>
 
 ### Attack vectors CSP prevents
+
+CSP isn't just about stopping script injection—it's a comprehensive security layer that addresses multiple attack categories. The table below shows how different CSP directives work together to create defense-in-depth. Notice how each threat type maps to a specific directive, which is why a complete CSP policy includes more than just `script-src`.
 
 <Table title="Common Threats Mitigated by CSP">
   <thead>
@@ -397,11 +416,13 @@ upgrade-insecure-requests;
 
 ### CSP Directives Reference
 
-For complete documentation, refer to the official MDN references. Below are the key directive categories:
+Now that you understand the most important directives through hands-on examples, here's a complete reference for when you need to look up specific functionality. These tables are organized by category and link directly to MDN documentation for deeper reading.
+
+Remember: you don't need to memorize all of these. Most sites only need a handful of directives. The key is understanding which category each resource falls into, then consulting this reference when you encounter new requirements.
 
 #### Fetch directives
 
-These control where resources can be loaded from:
+Fetch directives are the workhorses of CSP—they control where specific types of resources can be loaded from. When a resource doesn't have its own directive defined, it falls back to `default-src`. This is why setting `default-src 'none'` and then explicitly allowing what you need is the safest approach.
 
 <Table title="Fetch Directives Reference">
   <thead>
@@ -467,7 +488,7 @@ These control where resources can be loaded from:
 
 #### Document and navigation directives
 
-These control document behavior and navigation:
+While fetch directives control *what* can load, document and navigation directives control *how* your page behaves and *where* it can go. These are often overlooked but are critical for comprehensive protection. A common mistake is focusing only on script-src while leaving these directives undefined, which can create security gaps.
 
 <Table title="Document & Navigation Directives Reference">
   <thead>
@@ -505,7 +526,9 @@ These control document behavior and navigation:
 
 ## Building your CSP layer by layer
 
-Let's construct a complete CSP progressively. Each level adds more protection.
+Rather than trying to write a perfect CSP in one go (which often leads to frustration and broken functionality), let's build one progressively. This layered approach lets you understand what each addition accomplishes and makes troubleshooting much easier.
+
+Think of it like building a house: you start with the foundation, add the walls, then the roof. Each layer adds more protection, and you can stop at any level based on your site's requirements and your comfort level with the complexity.
 
 <Table title="CSP Security Levels">
   <thead>
@@ -577,7 +600,9 @@ add_header Content-Security-Policy "
 </FileContent>
 
 <Callout type="success">
-  **Checkpoint:** This CSP protects against most attacks. But there's one problem—inline scripts are blocked. If your site uses any inline JavaScript, it won't work. Let's fix that.
+  **Checkpoint:** This CSP protects against most common attacks. It blocks external scripts, limits where data can be sent, prevents clickjacking, and closes plugin-based attack vectors.
+  
+  However, there's one significant limitation—**inline scripts are blocked**. If your site uses any inline JavaScript (which most modern sites do for things like theme detection, analytics initialization, or hydration), it won't work. The next section addresses this challenge with three different solutions.
 </Callout>
 
 ---
@@ -661,12 +686,19 @@ Add a random token to both the CSP header and your script tags:
 
 ## Nonces for static sites: the Nginx trick
 
-Here's the challenge: Static Site Generators (Astro, Next.js, Hugo) build HTML at **build time**. They can't know the random nonce that should be generated at **request time**.
+Here's the challenge that stops many developers: Static Site Generators (SSGs) like Astro, Next.js, Hugo, or Eleventy build HTML at **build time**. The files are generated once and then served statically. But nonces must be unique for every **request**—that's their entire security value. If a nonce is static and predictable, it's no better than having no nonce at all.
+
+So how do we square this circle? How can a static HTML file contain a nonce that's different for every visitor?
 
 ### The solution: placeholder substitution
 
-1. At build time, use a placeholder string
-2. At request time, Nginx replaces the placeholder with a real nonce
+The answer lies in your web server. Instead of generating nonces at build time, we:
+
+1. At build time, embed a **placeholder string** where the nonce should go
+2. At request time, configure the web server (Nginx in our case) to replace that placeholder with a real cryptographically random nonce
+3. The same nonce gets injected into both the HTML `<script>` tags AND the CSP header
+
+This means every request gets a unique nonce, even though the source HTML file is static. The browser never sees the placeholder—it only sees the final nonce value.
 
 <Mermaid caption="Nginx nonce injection for static sites" maxWidth="600px">
 ```mermaid-render
@@ -897,16 +929,30 @@ flowchart TB
 
 ## The strict CSP formula
 
-Based on [Google's research](https://web.dev/articles/strict-csp), a "strict CSP" requires:
+Up until now, we've been building toward what the security community calls a "strict CSP." This isn't just marketing terminology—it's a specific configuration pattern that Google's security team has validated through extensive research. Their analysis of millions of websites found that traditional allowlist-based CSPs have a 94.72% bypass rate, while strict CSPs with nonces remain effective against modern attacks.
 
-<Callout type="keypoint" icon="mdi:check-decagram">
-  **What makes a CSP "strict":**
-  
-  1. Uses **nonces** or **hashes** instead of domain allowlists
-  2. Includes **`'strict-dynamic'`** for dynamic script loading
-  3. Sets **`object-src 'none'`** to block plugins
-  4. Sets **`base-uri 'none'`** to prevent base tag injection
-</Callout>
+Based on [Google's research](https://web.dev/articles/strict-csp), a "strict CSP" requires these four elements:
+
+<CheckList title="Strict CSP Requirements">
+  <li data-check="check">Uses **nonces** or **hashes** instead of domain allowlists</li>
+  <li data-check="check">Includes **`'strict-dynamic'`** for dynamic script loading</li>
+  <li data-check="check">Sets **`object-src 'none'`** to block plugins</li>
+  <li data-check="check">Sets **`base-uri 'none'`** to prevent base tag injection</li>
+</CheckList>
+
+All major browsers now support the key directives required for strict CSP. Safari was the last holdout for `'strict-dynamic'` support, adding it in version 15.4 (2022). This means you can confidently deploy strict CSP today without worrying about browser compatibility for the vast majority of users.
+
+<BrowserSupport
+  title="strict-dynamic Browser Support"
+  browsers={[
+    { browser: "chrome", version: "52", support: "full" },
+    { browser: "firefox", version: "52", support: "full" },
+    { browser: "safari", version: "15.4", support: "full", note: "Added in 2022" },
+    { browser: "edge", version: "79", support: "full" },
+  ]}
+/>
+
+Here's the minimal template for a strict CSP. These three directives form the critical core:
 
 <Code lang="nginx" aria-label="Strict CSP template">
 ```nginx
@@ -934,14 +980,23 @@ Traditional allowlist CSPs like `script-src 'self' https://cdn.example.com` are 
 
 ## Advanced: per-endpoint CSP
 
-You don't need the same CSP everywhere. A common pattern is:
+So far we've applied a single CSP to our entire site. But in practice, different parts of your site may have different security requirements. A one-size-fits-all approach can be either too restrictive (breaking functionality) or too permissive (weakening security).
 
-- **Strict CSP** for HTML pages (maximum protection)
-- **Relaxed CSP** for static assets (allow crawlers to access images)
+Consider these scenarios where per-endpoint CSP makes sense:
+
+- **Admin panels** vs **public pages**: Admin areas might need stricter CSP than content pages
+- **API endpoints**: JSON APIs don't need CSP at all (browsers don't execute JS from JSON responses)
+- **Static assets**: Images and fonts have different requirements than HTML documents
+- **Embedded widgets**: Pages designed to be iframed may need `frame-ancestors` configured differently
+
+The most common pattern is splitting CSP between HTML pages and static assets:
+
+- **Strict CSP** for HTML pages (maximum protection where scripts execute)
+- **Relaxed CSP** for static assets (allow external tools to access images)
 
 ### Why relax CSP for assets?
 
-Social media crawlers and link preview tools need to access your images. If your CSP is too strict on asset endpoints, platforms like Twitter, Facebook, or Slack won't be able to show preview images.
+Social media crawlers and link preview tools need to access your images. When you share a link on Twitter, LinkedIn, or Slack, their servers fetch your page's Open Graph images. If your CSP includes `Cross-Origin-Resource-Policy: same-origin` on everything, these platforms won't be able to show preview images—users will just see a blank or broken preview.
 
 ### Implementation with Nginx
 
@@ -1007,9 +1062,26 @@ server {
 
 ## Migration: report-only to enforcement
 
-Never deploy a strict CSP directly to production. Use this gradual approach:
+Deploying CSP is not like deploying a typical code change. A misconfigured CSP can break critical site functionality—imagine accidentally blocking your checkout flow or login system. This is why production CSP deployment requires a careful, phased approach.
 
-### Phase 1: Report-only mode (1-2 weeks)
+The golden rule: **never deploy a strict CSP directly to production**. Instead, use a gradual "observe, fix, then enforce" methodology:
+
+<StepByStep title="Safe Migration Process">
+  <li>
+    **Deploy in report-only mode (1-2 weeks)**
+    <br/>Use `Content-Security-Policy-Report-Only` to log violations without blocking anything.
+  </li>
+  <li>
+    **Analyze and fix violations**
+    <br/>Review reports and address: inline event handlers → `addEventListener()`, `eval()` → `JSON.parse()`, missing nonces, third-party script issues.
+  </li>
+  <li>
+    **Enable enforcement gradually**
+    <br/>Switch from `Report-Only` to `Content-Security-Policy`. Keep report-only for testing stricter policies.
+  </li>
+</StepByStep>
+
+### Phase 1: Report-only mode
 
 Use `Content-Security-Policy-Report-Only` to log violations without blocking:
 
@@ -1037,10 +1109,12 @@ add_header Content-Security-Policy-Report-Only "
 
 Review your violation reports and fix issues:
 
-1. **Inline event handlers** → Convert to `addEventListener()`
-2. **`eval()` usage** → Replace with `JSON.parse()` or refactor
-3. **Missing nonces** → Add `nonce="CSP_NONCE_NGINX"` to inline scripts
-4. **Third-party scripts** → Verify `'strict-dynamic'` covers them
+<CheckList title="Common Issues to Fix">
+  <li data-check="warning">**Inline event handlers** → Convert to `addEventListener()`</li>
+  <li data-check="warning">**`eval()` usage** → Replace with `JSON.parse()` or refactor</li>
+  <li data-check="warning">**Missing nonces** → Add `nonce="CSP_NONCE_NGINX"` to inline scripts</li>
+  <li data-check="warning">**Third-party scripts** → Verify `'strict-dynamic'` covers them</li>
+</CheckList>
 
 ### Phase 3: Enable enforcement
 
@@ -1060,15 +1134,25 @@ add_header Content-Security-Policy-Report-Only "...stricter-policy..." always;
 
 ## Setting up CSP reporting
 
-When CSP blocks something, browsers can send a report. This helps you:
+One of CSP's most powerful features is its built-in reporting mechanism. When a browser blocks a resource due to CSP, it can automatically send a detailed report to an endpoint you specify. This creates a feedback loop that serves multiple purposes:
 
-- Detect real attacks
-- Find bugs in your policy
-- Monitor third-party scripts
+- **Detect real attacks**: If someone tries to inject scripts into your site, you'll know immediately
+- **Find policy bugs**: Discover if your CSP is blocking legitimate resources before users complain
+- **Monitor third-party scripts**: Track when analytics or ad scripts load unexpected dependencies
+- **Audit compliance**: Maintain a log of security events for compliance requirements
 
-<Callout type="warning" icon="mdi:alert-decagram">
-  **`report-uri` is deprecated** in favor of `report-to` (Reporting API). For maximum browser compatibility, use **both directives** in your CSP.
-  
+Reports contain rich information including the violated directive, the blocked URL, the page where it occurred, and even a sample of the offending code. This makes them invaluable for both development and security monitoring.
+
+<StateNotice
+  type="deprecated"
+  feature="report-uri"
+  title="report-uri is deprecated"
+  alternative="report-to"
+  alternativeUrl="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/report-to"
+/>
+
+<Callout type="info">
+  **For maximum browser compatibility, use both `report-uri` and `report-to`:**
   - Chrome 70+ uses `report-to` and ignores `report-uri` when both are present
   - Firefox and Safari still rely on `report-uri`
 </Callout>

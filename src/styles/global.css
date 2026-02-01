@@ -297,26 +297,26 @@ h4 {
 
 .prose li {
   position: relative;
-  margin-bottom: 0.5rem;
   padding-left: 0.25rem;
+  margin-bottom: 0.5rem;
 }
 
 /* Ensure list markers are visible */
 .prose ul > li::marker {
-  color: var(--color-accent);
   font-size: 1.1em;
+  color: var(--color-accent);
 }
 
 .prose ol > li::marker {
-  color: var(--color-accent);
   font-weight: var(--fw-semibold);
+  color: var(--color-accent);
 }
 
 /* Nested lists */
 .prose ul ul,
 .prose ol ul {
-  list-style-type: circle;
   margin-top: 0.5rem;
+  list-style-type: circle;
 }
 
 .prose ul ul ul,
@@ -326,8 +326,8 @@ h4 {
 
 .prose ol ol,
 .prose ul ol {
-  list-style-type: lower-alpha;
   margin-top: 0.5rem;
+  list-style-type: lower-alpha;
 }
 
 /* Accessibility: Links in text blocks must have non-color indicator */

@@ -14,11 +14,10 @@ interface Props {
     | "keypoint"
     | "important";
   title?: string;
-  ariaLabel?: string;
   icon?: string;
 }
 
-const { type = "info", title, ariaLabel, icon } = Astro.props;
+const { type = "info", title, icon } = Astro.props;
 
 /* Map icons but handle colors in CSS */
 const icons = {
@@ -33,24 +32,11 @@ const icons = {
 };
 
 const iconName = icon || icons[type];
-
-const finalAriaLabel =
-  ariaLabel ||
-  title ||
-  `${type.charAt(0).toUpperCase() + type.slice(1)} callout`;
-
-// Development warning: encourage meaningful labels for accessibility
-if (import.meta.env.DEV && !ariaLabel && !title) {
-  console.warn(
-    `[Callout] Generic aria-label "${finalAriaLabel}" used. Consider adding 'ariaLabel' or 'title' prop for better accessibility.`,
-  );
-}
 ---
 
 <aside
   class={`callout callout-${type}`}
   role="note"
-  aria-label={finalAriaLabel}
 >
   <span
     class={`i-${iconName} icon-wrapper`}

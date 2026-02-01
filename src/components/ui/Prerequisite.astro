@@ -1,0 +1,123 @@
+---
+/**
+ * Prerequisite Component
+ * Box with structured prerequisites for tutorials.
+ */
+interface Props {
+  title?: string;
+}
+
+const { title = "Prerequisites" } = Astro.props;
+---
+
+<aside
+  class="prerequisite"
+  aria-label={title}
+>
+  <div class="prereq-header">
+    <span
+      class="i-mdi:clipboard-check-outline prereq-icon"
+      aria-hidden="true"
+    ></span>
+    <span class="prereq-title">{title}</span>
+  </div>
+  <div class="prereq-content">
+    <slot />
+  </div>
+</aside>
+
+<style>
+  .prerequisite {
+    margin: 1.5rem 0;
+    overflow: hidden;
+    background: var(--color-bg-subtle);
+    border: var(--border-1);
+    border-radius: var(--radius-md);
+  }
+
+  .prereq-header {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    background: var(--color-bg-secondary);
+    border-bottom: var(--border-1);
+  }
+
+  .prereq-icon {
+    width: 20px;
+    height: 20px;
+    color: var(--color-primary);
+  }
+
+  .prereq-title {
+    font-size: 0.9rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-heading);
+  }
+
+  .prereq-content {
+    padding: 1rem;
+  }
+
+  /* Style for skill/tool lists */
+  .prereq-content :global(ul),
+  .prereq-content :global(ol) {
+    padding: 0;
+    margin: 0;
+    list-style: none;
+  }
+
+  .prereq-content :global(li) {
+    display: flex;
+    gap: 0.5rem;
+    align-items: flex-start;
+    padding: 0.125rem 0;
+    font-size: 0.875rem;
+    color: var(--color-text);
+  }
+
+  .prereq-content :global(li::before) {
+    flex-shrink: 0;
+    font-weight: var(--fw-bold);
+    color: var(--color-primary);
+    content: "•";
+  }
+
+  .prereq-content :global(li strong) {
+    color: var(--color-text-heading);
+  }
+
+  .prereq-content :global(code) {
+    padding: 0.0625rem 0.3rem;
+    font-size: 0.8rem;
+    background: var(--color-bg-secondary);
+    border-radius: var(--radius-sm);
+  }
+
+  /* Sections within prerequisites */
+  .prereq-content :global(h4),
+  .prereq-content :global(h5) {
+    margin: 0.75rem 0 0.375rem;
+    font-size: 0.75rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .prereq-content :global(h4:first-child),
+  .prereq-content :global(h5:first-child) {
+    margin-top: 0;
+  }
+
+  .prereq-content :global(p) {
+    margin: 0.5rem 0;
+    font-size: 0.9rem;
+    color: var(--color-text-muted);
+  }
+
+  .prereq-content :global(p:first-child) {
+    margin-top: 0;
+  }
+</style>

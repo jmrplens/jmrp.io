@@ -1,0 +1,111 @@
+---
+/**
+ * TLDRSummary Component
+ * Renders a collapsible/expandible executive summary with key points.
+ */
+interface Props {
+  title?: string;
+  collapsed?: boolean;
+}
+
+const { title = "TL;DR", collapsed = false } = Astro.props;
+---
+
+<details
+  class="tldr-summary"
+  open={!collapsed}
+>
+  <summary class="tldr-header">
+    <span
+      class="i-mdi:lightning-bolt tldr-icon"
+      aria-hidden="true"
+    ></span>
+    <span class="tldr-title">{title}</span>
+    <span
+      class="i-mdi:chevron-down tldr-chevron"
+      aria-hidden="true"
+    ></span>
+  </summary>
+  <div class="tldr-content">
+    <slot />
+  </div>
+</details>
+
+<style>
+  .tldr-summary {
+    margin: 1.5rem 0;
+    overflow: hidden;
+    background: linear-gradient(135deg, var(--color-bg-subtle), transparent);
+    border: var(--border-1);
+    border-radius: var(--radius-md);
+  }
+
+  .tldr-header {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    padding: 0.875rem 1rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-primary);
+    cursor: pointer;
+    user-select: none;
+    list-style: none;
+    transition: background-color 0.2s ease;
+  }
+
+  .tldr-header::-webkit-details-marker {
+    display: none;
+  }
+
+  .tldr-header:hover {
+    background: var(--color-bg-subtle);
+  }
+
+  .tldr-icon {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+  }
+
+  .tldr-title {
+    flex: 1;
+  }
+
+  .tldr-chevron {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    transition: transform 0.2s ease;
+  }
+
+  .tldr-summary[open] .tldr-chevron {
+    transform: rotate(180deg);
+  }
+
+  .tldr-content {
+    padding: 0 1rem 1rem;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: var(--color-text);
+  }
+
+  .tldr-content :global(ul),
+  .tldr-content :global(ol) {
+    padding-left: 1.25rem;
+    margin: 0;
+  }
+
+  .tldr-content :global(li) {
+    margin-bottom: 0.5rem;
+  }
+
+  .tldr-content :global(li::marker) {
+    color: var(--color-primary);
+  }
+
+  .tldr-content :global(p:last-child),
+  .tldr-content :global(ul:last-child),
+  .tldr-content :global(ol:last-child) {
+    margin-bottom: 0;
+  }
+</style>

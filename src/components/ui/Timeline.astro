@@ -1,0 +1,141 @@
+---
+/**
+ * Timeline Component
+ * Vertical timeline with events, dates, and descriptions.
+ */
+interface TimelineEvent {
+  date: string;
+  title: string;
+  description?: string;
+  icon?: string;
+  type?: "default" | "success" | "warning" | "milestone";
+}
+
+interface Props {
+  events: TimelineEvent[];
+}
+
+const { events } = Astro.props;
+
+const typeConfig: Record<string, { icon: string; class: string }> = {
+  default: { icon: "mdi:circle-medium", class: "tl-default" },
+  success: { icon: "mdi:check-circle", class: "tl-success" },
+  warning: { icon: "mdi:alert-circle", class: "tl-warning" },
+  milestone: { icon: "mdi:star", class: "tl-milestone" },
+};
+---
+
+<ol class="timeline">
+  {
+    events.map((event, index) => {
+      const config = typeConfig[event.type || "default"];
+      const iconName = event.icon || config.icon;
+      return (
+        <li class={`tl-event ${config.class}`}>
+          <div class="tl-marker">
+            <span
+              class={`i-${iconName} tl-icon`}
+              aria-hidden="true"
+            />
+            {index < events.length - 1 && <div class="tl-line" />}
+          </div>
+          <div class="tl-content">
+            <span class="tl-date">{event.date}</span>
+            <h4 class="tl-title">{event.title}</h4>
+            {event.description && (
+              <p class="tl-description">{event.description}</p>
+            )}
+          </div>
+        </li>
+      );
+    })
+  }
+</ol>
+
+<style>
+  .timeline {
+    padding: 0;
+    margin: 1.5rem 0;
+    list-style: none;
+  }
+
+  .tl-event {
+    display: grid;
+    grid-template-columns: 24px 1fr;
+    gap: 1rem;
+    padding-bottom: 1.5rem;
+  }
+
+  .tl-event:last-child {
+    padding-bottom: 0;
+  }
+
+  .tl-marker {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .tl-icon {
+    z-index: 1;
+    flex-shrink: 0;
+    width: 24px;
+    height: 24px;
+    color: var(--tl-color, var(--color-text-muted));
+  }
+
+  .tl-line {
+    flex: 1;
+    width: 2px;
+    margin-top: 0.5rem;
+    background: var(--color-border);
+  }
+
+  .tl-content {
+    padding-top: 0.125rem;
+  }
+
+  .tl-date {
+    display: block;
+    margin-bottom: 0.25rem;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+  }
+
+  .tl-title {
+    margin: 0 0 0.25rem;
+    font-size: 1rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-heading);
+  }
+
+  .tl-description {
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: var(--color-text-muted);
+  }
+
+  /* Type variants */
+  .tl-default {
+    --tl-color: var(--color-text-muted);
+  }
+
+  .tl-success {
+    --tl-color: #10b981;
+  }
+
+  .tl-warning {
+    --tl-color: #f59e0b;
+  }
+
+  .tl-milestone {
+    --tl-color: var(--color-primary);
+  }
+
+  .tl-milestone .tl-icon {
+    background: var(--color-bg);
+    border-radius: 50%;
+  }
+</style>
