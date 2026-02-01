@@ -219,6 +219,37 @@ const computedAriaLabel =
     fill: var(--mermaid-bg) !important;
   }
 
+  /* --- Flowchart Subgraphs/Clusters --- */
+
+  /* Cluster/Subgraph backgrounds - need high specificity to override Mermaid defaults */
+  .mermaid-content :global(svg .cluster rect),
+  .mermaid-content :global(svg .cluster-alt rect),
+  .mermaid-content :global(svg g.cluster > rect),
+  .mermaid-content :global(svg [class*="cluster"] > rect) {
+    fill: var(--mermaid-secondary-bg) !important;
+    stroke: var(--mermaid-border) !important;
+  }
+
+  /* Subgraph title text elements */
+  .mermaid-content :global(svg .cluster-label text),
+  .mermaid-content :global(svg .cluster-label tspan),
+  .mermaid-content :global(svg g.cluster-label text) {
+    fill: var(--mermaid-text) !important;
+  }
+
+  /* Subgraph title foreignObject (HTML labels) */
+  .mermaid-content :global(.cluster-label foreignObject) {
+    overflow: visible;
+  }
+
+  .mermaid-content :global(.cluster-label foreignObject div),
+  .mermaid-content :global(.cluster-label foreignObject span),
+  .mermaid-content :global(.cluster-label foreignObject p),
+  .mermaid-content :global(.cluster-label .nodeLabel) {
+    color: var(--mermaid-text) !important;
+    background-color: transparent !important;
+  }
+
   /* Fix foreignObject labels (HTML-based) which Mermaid uses for edge labels */
   .mermaid-content :global(.edgeLabel foreignObject) {
     overflow: visible;
