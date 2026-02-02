@@ -4,11 +4,19 @@
  * Renders a step-by-step guide with numbered steps and visual connectors.
  * Uses padding-based layout with absolute positioned circle to avoid grid issues.
  */
+import { createHash } from "node:crypto";
+
 interface Props {
   title?: string;
 }
 
 const { title } = Astro.props;
+
+// Generate unique ID to avoid duplicates when multiple instances are rendered
+const uniqueId = createHash("sha256")
+  .update(`sbs-${title || "untitled"}-${Date.now()}`)
+  .digest("hex")
+  .slice(0, 8);
 ---
 
 <nav
@@ -19,7 +27,7 @@ const { title } = Astro.props;
     title && (
       <div
         class="sbs-title"
-        id="sbs-title"
+        id={`sbs-title-${uniqueId}`}
       >
         {title}
       </div>

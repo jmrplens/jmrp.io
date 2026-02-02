@@ -140,23 +140,41 @@ function fixPermissions(distDir: string, logger: AstroIntegrationLogger) {
   logger.info(`Fixing permissions for [${distDir}]...`);
   try {
     // Set ownership to www-data:www-data
-    spawnSync("sudo", ["chown", "-R", "www-data:www-data", distDir], {
-      stdio: "inherit",
-    });
+    const chownResult = spawnSync(
+      "sudo",
+      ["chown", "-R", "www-data:www-data", distDir],
+      { stdio: "inherit" },
+    );
+    if (chownResult.error || chownResult.status !== 0) {
+      const errorMsg =
+        chownResult.error?.message || `exit code ${chownResult.status}`;
+      throw new Error(`chown failed: ${errorMsg}`);
+    }
 
     // Set directory permissions to 755
-    spawnSync(
+    const chmodDirResult = spawnSync(
       "sudo",
       ["find", distDir, "-type", "d", "-exec", "chmod", "755", "{}", "+"],
       { stdio: "inherit" },
     );
+    if (chmodDirResult.error || chmodDirResult.status !== 0) {
+      const errorMsg =
+        chmodDirResult.error?.message || `exit code ${chmodDirResult.status}`;
+      throw new Error(`chmod directories failed: ${errorMsg}`);
+    }
 
     // Set file permissions to 644
-    spawnSync(
+    const chmodFileResult = spawnSync(
       "sudo",
       ["find", distDir, "-type", "f", "-exec", "chmod", "644", "{}", "+"],
       { stdio: "inherit" },
     );
+    if (chmodFileResult.error || chmodFileResult.status !== 0) {
+      const errorMsg =
+        chmodFileResult.error?.message || `exit code ${chmodFileResult.status}`;
+      throw new Error(`chmod files failed: ${errorMsg}`);
+    }
+
     logger.info("✓ Permissions fixed (www-data:www-data, 755/644).");
   } catch (error) {
     logger.warn("⚠ Failed to fix permissions.");
@@ -440,13 +458,16 @@ function clearNginxCache(
 
   // FORCE permissions on the main cache directory to ensure www-data can write
   logger.info(`Ensuring ownership of cache path: ${systemNginxCachePath}`);
-  spawnSync(
+  const chownResult = spawnSync(
     "sudo",
     ["chown", "-R", "www-data:www-data", systemNginxCachePath],
-    {
-      stdio: "inherit",
-    },
+    { stdio: "inherit" },
   );
+  if (chownResult.error || chownResult.status !== 0) {
+    const errorMsg =
+      chownResult.error?.message || `exit code ${chownResult.status}`;
+    logger.warn(`Failed to set ownership on cache path: ${errorMsg}`);
+  }
 }
 
 /**

@@ -110,7 +110,16 @@ const displayTitle = title || current.label;
           {type === "breaking" && " introduces breaking changes"}
           {type === "security" && " has security implications"}
           {removalDate && (
-            <span class="sn-date"> and will be removed in {removalDate}</span>
+            <span class="sn-date">
+              {type === "deprecated" &&
+                ` and will be removed in ${removalDate}`}
+              {(type === "breaking" || type === "mandatory") &&
+                ` effective from ${removalDate}`}
+              {type === "security" &&
+                ` — mitigation required by ${removalDate}`}
+              {(type === "experimental" || type === "preview") &&
+                ` — target: ${removalDate}`}
+            </span>
           )}
           .
         </p>

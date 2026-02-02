@@ -92,12 +92,12 @@ if (!ariaLabel) {
   if (rawCode.length > 50) plainText += "...";
 }
 
-// Final aria-label: custom > title-based > auto-generated (with uuid for uniqueness)
+// Final aria-label: custom > title-based > auto-generated (descriptive only)
 const finalAriaLabel =
   ariaLabel ||
   (title
     ? `${lang} code: ${title}`
-    : `${lang} snippet (${uuid}): ${plainText || "code snippet"}`);
+    : `${lang} snippet: ${plainText || "code snippet"}`);
 
 // Language display name (uppercase)
 const langDisplay = lang.toUpperCase();

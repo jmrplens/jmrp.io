@@ -1431,8 +1431,11 @@ server {
     set $csp "${csp}frame-ancestors 'none'; ";
     set $csp "${csp}form-action 'self'; ";
     set $csp "${csp}upgrade-insecure-requests; ";
-    set $csp "${csp}report-uri /csp-reports";
+    set $csp "${csp}report-uri /csp-reports; ";
+    set $csp "${csp}report-to csp-endpoint";
     
+    # Reporting API endpoint (for modern browsers)
+    add_header Reporting-Endpoints 'csp-endpoint="/csp-reports"' always;
     add_header Content-Security-Policy $csp always;
     add_header X-Content-Type-Options "nosniff" always;
     add_header X-Frame-Options "DENY" always;
