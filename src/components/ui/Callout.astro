@@ -38,6 +38,7 @@ const iconName = icon || icons[type];
   class={`callout callout-${type}`}
   role="note"
 >
+  <span class="sr-only">{type.charAt(0).toUpperCase() + type.slice(1)}:</span>
   <span
     class={`i-${iconName} icon-wrapper`}
     aria-hidden="true"

@@ -12,7 +12,7 @@ interface Props {
 
 const { method, path, description, auth = false } = Astro.props;
 
-const methodColors: Record<string, string> = {
+const methodColors: Record<Props["method"], string> = {
   GET: "method-get",
   POST: "method-post",
   PUT: "method-put",

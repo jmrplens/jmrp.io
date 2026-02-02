@@ -82,6 +82,12 @@ const { title = "TL;DR", collapsed = false } = Astro.props;
     transform: rotate(180deg);
   }
 
+  @media (prefers-reduced-motion: reduce) {
+    .tldr-chevron {
+      transition: none;
+    }
+  }
+
   .tldr-content {
     padding: 0 1rem 1rem;
     font-size: 0.95rem;

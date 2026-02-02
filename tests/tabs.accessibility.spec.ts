@@ -7,7 +7,6 @@ test.describe("Tabs & Code Block Accessibility", () => {
     // Ensure styles/scripts are loaded by waiting for the component
     const tabsContainer = page.locator(".tabs-container").first();
     await tabsContainer.waitFor({ state: "visible" });
-    await expect(tabsContainer).toBeVisible();
 
     // Locate the labels (which act as tabs) and inputs
     const inputs = tabsContainer.locator("input[type='radio']");

@@ -17,7 +17,8 @@ interface Props {
 
 const { events } = Astro.props;
 
-const typeConfig: Record<string, { icon: string; class: string }> = {
+type EventType = NonNullable<TimelineEvent["type"]>;
+const typeConfig: Record<EventType, { icon: string; class: string }> = {
   default: { icon: "mdi:circle-medium", class: "tl-default" },
   success: { icon: "mdi:check-circle", class: "tl-success" },
   warning: { icon: "mdi:alert-circle", class: "tl-warning" },

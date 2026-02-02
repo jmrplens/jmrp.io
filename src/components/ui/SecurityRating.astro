@@ -11,15 +11,16 @@ interface Props {
 
 const { rating, title, description } = Astro.props;
 
-const ratingConfig: Record<string, { class: string; label: string }> = {
-  "A+": { class: "rating-aplus", label: "Excellent" },
-  A: { class: "rating-a", label: "Very Good" },
-  B: { class: "rating-b", label: "Good" },
-  C: { class: "rating-c", label: "Acceptable" },
-  D: { class: "rating-d", label: "Needs Improvement" },
-  E: { class: "rating-e", label: "Poor" },
-  F: { class: "rating-f", label: "Critical" },
-};
+const ratingConfig: Record<Props["rating"], { class: string; label: string }> =
+  {
+    "A+": { class: "rating-aplus", label: "Excellent" },
+    A: { class: "rating-a", label: "Very Good" },
+    B: { class: "rating-b", label: "Good" },
+    C: { class: "rating-c", label: "Acceptable" },
+    D: { class: "rating-d", label: "Needs Improvement" },
+    E: { class: "rating-e", label: "Poor" },
+    F: { class: "rating-f", label: "Critical" },
+  };
 
 const config = ratingConfig[rating];
 ---

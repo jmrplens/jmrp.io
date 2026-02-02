@@ -27,8 +27,9 @@ const {
   title,
 } = Astro.props;
 
+type NoticeType = NonNullable<Props["type"]>;
 const config: Record<
-  string,
+  NoticeType,
   {
     icon: string;
     label: string;

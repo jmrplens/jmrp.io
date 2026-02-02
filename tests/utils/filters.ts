@@ -61,10 +61,28 @@ export function shouldIgnoreError(text: string): boolean {
       text.includes("/assets/icons/") ||
       text.includes("/api/proxy/"));
 
+  // Ignore 404 for external resources (e.g., author profile pages at universities)
+  // These are not app bugs - the external sites may be temporarily unavailable
+  // Note: Browser often shows generic message without URL for external resource failures
+  const isExternalResource404 =
+    text.includes("status of 404") &&
+    (text.includes("http://") || text.includes("https://")) &&
+    !text.includes("localhost") &&
+    !text.includes("127.0.0.1") &&
+    !text.includes("jmrp.io");
+
+  // Generic "Failed to load resource" errors with 404 status
+  // These come from external links (author pages, etc.) - not app bugs
+  const isGeneric404 =
+    text ===
+    "Failed to load resource: the server responded with a status of 404 (Not Found)";
+
   return (
     isCloudflareInsightsError(text) ||
     isExpectedCorsError ||
     isResource404 ||
+    isExternalResource404 ||
+    isGeneric404 ||
     // Only ignore generic failures if likely related to localhost/CORS
     (text.includes("net::ERR_FAILED") &&
       (text.includes("127.0.0.1") || text.includes("localhost")))

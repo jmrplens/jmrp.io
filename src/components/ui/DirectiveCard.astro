@@ -26,6 +26,7 @@ const { name, syntax, description, mdnUrl, defaultValue, since } = Astro.props;
           target="_blank"
           rel="noopener noreferrer"
           class="dc-mdn"
+          aria-label={`MDN documentation for ${name}`}
         >
           <span
             class="i-simple-icons:mdnwebdocs dc-mdn-icon"

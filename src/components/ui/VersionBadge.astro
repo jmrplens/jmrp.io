@@ -10,15 +10,18 @@ interface Props {
 
 const { type = "version", value } = Astro.props;
 
-const config: Record<string, { icon: string; class: string; prefix?: string }> =
-  {
-    version: { icon: "mdi:code-tags", class: "badge-version" },
-    level: { icon: "mdi:layers-triple", class: "badge-level", prefix: "Level" },
-    deprecated: { icon: "mdi:alert-circle", class: "badge-deprecated" },
-    new: { icon: "mdi:new-box", class: "badge-new" },
-    experimental: { icon: "mdi:flask", class: "badge-experimental" },
-    stable: { icon: "mdi:check-decagram", class: "badge-stable" },
-  };
+type BadgeType = NonNullable<Props["type"]>;
+const config: Record<
+  BadgeType,
+  { icon: string; class: string; prefix?: string }
+> = {
+  version: { icon: "mdi:code-tags", class: "badge-version" },
+  level: { icon: "mdi:layers-triple", class: "badge-level", prefix: "Level" },
+  deprecated: { icon: "mdi:alert-circle", class: "badge-deprecated" },
+  new: { icon: "mdi:new-box", class: "badge-new" },
+  experimental: { icon: "mdi:flask", class: "badge-experimental" },
+  stable: { icon: "mdi:check-decagram", class: "badge-stable" },
+};
 
 const { icon, class: badgeClass, prefix } = config[type];
 const displayValue = value || type.charAt(0).toUpperCase() + type.slice(1);

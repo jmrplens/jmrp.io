@@ -100,6 +100,7 @@ test.describe("Accessibility Tests (Axe-core WCAG 2.1 AA)", () => {
         const accessibilityScanResults = await new AxeBuilder({
           page: browserPage,
         })
+          // Exclude: svg (role issues are false positives), vite-error-overlay (dev-time artifact)
           .exclude(["svg", "vite-error-overlay"])
           .withTags([
             "wcag2a",
