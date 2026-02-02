@@ -62,7 +62,12 @@ export default defineConfig({
     "i-devicon:graphql",
   ],
   presets: [
-    presetWind4(),
+    presetWind4({
+      // Disable built-in reset styles that override our custom typography in global.css
+      preflights: {
+        reset: false,
+      },
+    }),
     presetIcons({
       prefix: "i-",
       extraProperties: {

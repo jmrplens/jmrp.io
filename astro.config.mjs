@@ -350,8 +350,8 @@ export default defineConfig({
     },
     server: {},
     ssr: {
-      // Force externalization of citation-js for SSR to avoid bundling issues
-      noExternal: ["citation-js"],
+      // Externalize citation-js for SSR so Node.js handles the CommonJS require()
+      external: ["citation-js"],
     },
   },
 

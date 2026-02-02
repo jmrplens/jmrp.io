@@ -105,12 +105,10 @@ const instanceCss = labels
 <div
   class:list={["tabs-container", className]}
   data-tabs-id={uniqueId}
-  role="radiogroup"
-  aria-label="Tabbed Content"
 >
   {/* Hidden radio inputs for CSS state management */}
   {
-    labels.map((_, index) => (
+    labels.map((label, index) => (
       <input
         type="radio"
         name={`tabs-${uniqueId}`}
@@ -118,12 +116,16 @@ const instanceCss = labels
         class="tab-radio"
         checked={index === 0}
         aria-controls={`panel-${uniqueId}-${index}`}
+        aria-label={`Show ${label} tab`}
       />
     ))
   }
 
   {/* Tab headers as labels - auto-generated from TabPanel children */}
-  <div class="tab-headers">
+  <div
+    class="tab-headers"
+    aria-label="Tabbed content options"
+  >
     {
       labels.map((label, index) => (
         <label
