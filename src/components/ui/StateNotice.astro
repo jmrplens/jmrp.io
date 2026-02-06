@@ -87,7 +87,7 @@ const displayTitle = title || current.label;
 ---
 
 <div
-  class="state-notice"
+  class={`state-notice state-notice--${type}`}
   role="alert"
   aria-label={displayTitle}
   style={`--sn-color: ${current.color}; --sn-bg-color: ${current.bgColor}; --sn-text-color: ${current.textColor};`}
@@ -240,10 +240,35 @@ const displayTitle = title || current.label;
   .sn-content :global(p) {
     margin: 0.5rem 0 0;
     font-size: 0.9rem;
-    color: var(--color-text-muted);
+    color: var(--color-text);
   }
 
   .sn-content :global(p:first-child) {
     margin-top: 0;
+  }
+
+  /* Dark mode: use lighter text colors for WCAG AA contrast (≥4.5:1) */
+  :root[data-theme="dark"] .state-notice--deprecated {
+    --sn-text-color: #f87171; /* red-400, ~5.5:1 contrast */
+  }
+
+  :root[data-theme="dark"] .state-notice--mandatory {
+    --sn-text-color: #34d399; /* emerald-400, ~7.2:1 contrast */
+  }
+
+  :root[data-theme="dark"] .state-notice--experimental {
+    --sn-text-color: #fb6d16; /* orange-500, ~5.28:1 contrast */
+  }
+
+  :root[data-theme="dark"] .state-notice--preview {
+    --sn-text-color: #60a5fa; /* blue-400, ~5.1:1 contrast */
+  }
+
+  :root[data-theme="dark"] .state-notice--breaking {
+    --sn-text-color: #f87171; /* red-400, ~5.5:1 contrast */
+  }
+
+  :root[data-theme="dark"] .state-notice--security {
+    --sn-text-color: #fb923c; /* orange-400, ~6.4:1 contrast */
   }
 </style>
