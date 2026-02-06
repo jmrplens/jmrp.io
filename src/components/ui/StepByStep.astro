@@ -57,7 +57,8 @@ const uniqueId = createHash("sha256")
     counter-reset: step;
   }
 
-  .step-by-step .sbs-steps li {
+  /* Only direct children get step styling */
+  .step-by-step .sbs-steps > li {
     position: relative;
     display: block !important;
     padding: 0 0 1.5rem 56px !important;
@@ -65,12 +66,12 @@ const uniqueId = createHash("sha256")
     counter-increment: step;
   }
 
-  .step-by-step .sbs-steps li:last-child {
+  .step-by-step .sbs-steps > li:last-child {
     padding-bottom: 0 !important;
   }
 
-  /* Step number circle */
-  .step-by-step .sbs-steps li::before {
+  /* Step number circle - only direct children */
+  .step-by-step .sbs-steps > li::before {
     position: absolute;
     top: 0;
     left: 0;
@@ -88,8 +89,8 @@ const uniqueId = createHash("sha256")
     border-radius: 50%;
   }
 
-  /* Connector line between steps */
-  .step-by-step .sbs-steps li::after {
+  /* Connector line between steps - only direct children */
+  .step-by-step .sbs-steps > li::after {
     position: absolute;
     top: 44px;
     left: 19px;
@@ -100,17 +101,17 @@ const uniqueId = createHash("sha256")
     background: var(--color-border);
   }
 
-  .step-by-step .sbs-steps li:last-child::after {
+  .step-by-step .sbs-steps > li:last-child::after {
     display: none;
   }
 
   /* First paragraph - title styling */
-  .step-by-step .sbs-steps li > p:first-of-type {
+  .step-by-step .sbs-steps > li > p:first-of-type {
     padding-top: 0.5rem;
     margin: 0 !important;
   }
 
-  .step-by-step .sbs-steps li > p:first-of-type strong:first-child {
+  .step-by-step .sbs-steps > li > p:first-of-type strong:first-child {
     display: block;
     margin-bottom: 0.25rem;
     font-size: 1rem;
@@ -119,7 +120,7 @@ const uniqueId = createHash("sha256")
   }
 
   /* All paragraphs inside steps */
-  .step-by-step .sbs-steps li > p {
+  .step-by-step .sbs-steps > li > p {
     margin: 0.25rem 0 0 !important;
     font-size: 0.9rem;
     line-height: 1.6;
@@ -127,10 +128,35 @@ const uniqueId = createHash("sha256")
   }
 
   /* Code blocks inside steps */
-  .step-by-step .sbs-steps li code {
+  .step-by-step .sbs-steps > li code {
     padding: 0.125rem 0.375rem;
     font-size: 0.85rem;
     background: var(--color-bg-secondary);
     border-radius: var(--radius-sm);
+  }
+
+  /* Nested lists inside steps - restore normal list styling */
+  .step-by-step .sbs-steps > li ul,
+  .step-by-step .sbs-steps > li ol {
+    padding-left: 1.25rem;
+    margin: 0.5rem 0 0;
+  }
+
+  .step-by-step .sbs-steps > li ul li,
+  .step-by-step .sbs-steps > li ol li {
+    padding: 0.125rem 0 !important;
+    margin: 0 !important;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: var(--color-text-muted);
+    list-style: disc;
+  }
+
+  .step-by-step .sbs-steps > li ul li::before,
+  .step-by-step .sbs-steps > li ul li::after,
+  .step-by-step .sbs-steps > li ol li::before,
+  .step-by-step .sbs-steps > li ol li::after {
+    display: none;
+    content: none;
   }
 </style>
