@@ -17,6 +17,78 @@ import { expect, test } from "@playwright/test";
 
 import { getSitemapUrls } from "./utils";
 
+/** JSON-LD schema structure for validation */
+interface JsonLdSchema {
+  "@type"?: string | string[];
+  "@context"?: string;
+  "@graph"?: JsonLdSchema[];
+  [key: string]: unknown;
+}
+
+/** Valid Schema.org types for this site */
+const VALID_SCHEMA_TYPES = [
+  "Organization",
+  "Person",
+  "Article",
+  "BlogPosting",
+  "WebSite",
+  "WebPage",
+  "BreadcrumbList",
+  "ImageObject",
+  "TechArticle",
+  "HowTo",
+  "FAQPage",
+  "ItemList",
+  "SiteNavigationElement",
+  "ListItem",
+  "CollectionPage",
+] as const;
+
+/**
+ * Validates a JSON-LD script content is parseable and has a valid @type
+ * @param jsonLdContent - The text content of a JSON-LD script
+ * @param validTypes - Array of valid Schema.org types to check against
+ */
+function validateJsonLd(
+  jsonLdContent: string,
+  validTypes: readonly string[],
+): void {
+  // Validate it's parseable JSON
+  expect(() => {
+    JSON.parse(jsonLdContent);
+  }).not.toThrow();
+
+  // Validate Schema.org structure
+  const schema = JSON.parse(jsonLdContent) as JsonLdSchema;
+
+  // Handle @graph container (multiple schemas in one script)
+  if (schema["@graph"] && Array.isArray(schema["@graph"])) {
+    // Validate each schema in the graph has a valid @type
+    for (const graphItem of schema["@graph"]) {
+      if (graphItem["@type"]) {
+        const schemaType = Array.isArray(graphItem["@type"])
+          ? graphItem["@type"][0]
+          : graphItem["@type"];
+        expect(validTypes, `Unknown Schema.org type: ${schemaType}`).toContain(
+          schemaType,
+        );
+      }
+    }
+    return;
+  }
+
+  // Standard single schema - must have @type
+  expect(schema["@type"], "JSON-LD should have @type").toBeDefined();
+
+  // Validate @type is a known Schema.org type
+  const schemaType = Array.isArray(schema["@type"])
+    ? schema["@type"][0]
+    : schema["@type"];
+  expect(validTypes, `Unknown Schema.org type: ${schemaType}`).toContain(
+    schemaType,
+  );
+}
+
 test.describe("SEO & Metadata Checks", () => {
   let urls: string[] = [];
 
@@ -150,15 +222,12 @@ test.describe("SEO & Metadata Checks", () => {
     const homepageJsonLdCount = await homepageJsonLdScripts.count();
     expect(homepageJsonLdCount).toBeGreaterThan(0);
 
-    // Validate each JSON-LD script is parseable
+    // Validate each JSON-LD script is parseable and has valid @type
     for (let i = 0; i < homepageJsonLdCount; i++) {
       const jsonLdContent = await homepageJsonLdScripts.nth(i).textContent();
       // eslint-disable-next-line playwright/no-conditional-in-test
       if (jsonLdContent) {
-        // eslint-disable-next-line playwright/no-conditional-expect
-        expect(() => {
-          JSON.parse(jsonLdContent);
-        }).not.toThrow();
+        validateJsonLd(jsonLdContent, VALID_SCHEMA_TYPES);
       }
     }
 
@@ -179,17 +248,15 @@ test.describe("SEO & Metadata Checks", () => {
         // eslint-disable-next-line playwright/no-conditional-expect
         expect(postJsonLd).toBeGreaterThan(0);
 
-        // Validate JSON-LD is valid JSON
+        // Validate JSON-LD is valid JSON with proper @type
         const jsonLdContent = await page
           .locator('script[type="application/ld+json"]')
           .first()
           .textContent();
         // eslint-disable-next-line playwright/no-conditional-in-test
         if (jsonLdContent) {
-          // eslint-disable-next-line playwright/no-conditional-expect
-          expect(() => {
-            JSON.parse(jsonLdContent);
-          }).not.toThrow();
+          // Use VALID_SCHEMA_TYPES because blog posts use @graph with multiple types
+          validateJsonLd(jsonLdContent, VALID_SCHEMA_TYPES);
         }
       }
     }

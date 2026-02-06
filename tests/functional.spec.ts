@@ -189,8 +189,9 @@ test.describe("Security & Best Practices", () => {
         await page.goto(url);
 
         // Find all external links with target="_blank"
+        // Exclude: jmrp.io (own domain), localhost (dev), Astro Dev Toolbar links (astro.build, withastro)
         const externalBlankLinks = page.locator(
-          'a[target="_blank"][href^="http"]:not([href*="jmrp.io"]):not([href*="localhost"])',
+          'a[target="_blank"][href^="http"]:not([href*="jmrp.io"]):not([href*="localhost"]):not([href*="astro.build"]):not([href*="withastro"]):not([href*="docs.astro.build"])',
         );
         const count = await externalBlankLinks.count();
 
@@ -208,7 +209,11 @@ test.describe("Security & Best Practices", () => {
       });
     }
 
-    // Issues are reported via expect.soft above
+    // Fail test if any soft assertions failed
+    expect(
+      test.info().errors,
+      "Some external links are missing secure rel attributes",
+    ).toHaveLength(0);
   });
 
   test("images have alt attributes", async ({ page }) => {
@@ -226,13 +231,41 @@ test.describe("Security & Best Practices", () => {
           const img = images.nth(i);
           const alt = await img.getAttribute("alt");
           const src = await img.getAttribute("src");
+          const ariaHidden = await img.getAttribute("aria-hidden");
+          const role = await img.getAttribute("role");
 
-          // Images should have alt attribute (can be empty for decorative)
+          // Skip purely decorative images (aria-hidden or role="none")
+          const isDecorative = ariaHidden === "true" || role === "none";
+
+          // Images should have alt attribute
           expect
             .soft(alt !== null, `Image ${src} should have an alt attribute`)
             .toBe(true);
+
+          // Non-decorative images should have meaningful alt (not just filename patterns)
+          // eslint-disable-next-line playwright/no-conditional-in-test -- Required for decorative image check
+          if (!isDecorative && alt !== null && alt !== "") {
+            // Check for common placeholder patterns that indicate missing alt text
+            const isPlaceholder =
+              /^(image|img|photo|picture|untitled|dsc_?\d+|img_?\d+)\.?/i.test(
+                alt,
+              );
+            // eslint-disable-next-line playwright/no-conditional-expect -- Inside required conditional
+            expect
+              .soft(
+                !isPlaceholder,
+                `Image ${src} has placeholder alt text: "${alt}"`,
+              )
+              .toBe(true);
+          }
         }
       });
     }
+
+    // Fail test if any soft assertions failed
+    expect(
+      test.info().errors,
+      "Some images have missing or placeholder alt attributes",
+    ).toHaveLength(0);
   });
 });
