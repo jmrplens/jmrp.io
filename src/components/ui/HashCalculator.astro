@@ -406,11 +406,11 @@ const uniqueId = `hash-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
   }
 
   .hash-example-code :global(.hl-tag) {
-    color: #e06c75;
+    color: #b84c4c; /* WCAG AA: ~5.2:1 contrast on white */
   }
 
   :global(.dark) .hash-example-code :global(.hl-tag) {
-    color: #f07178;
+    color: #f07178; /* WCAG AA: ~5.3:1 contrast on dark */
   }
 
   /* Explanation */
