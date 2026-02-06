@@ -325,6 +325,23 @@ TabPanel Props: `label: string`
 
 ## References & Media
 
+### CSPBuilder
+**Use**: Interactive CSP policy builder with checkboxes.
+```mdx
+<CSPBuilder title="Build Your CSP" />
+```
+Props: `title?: string`, `showCategories?: boolean`
+
+### HashCalculator
+**Use**: SHA-256 hash calculator for CSP inline scripts.
+```mdx
+<HashCalculator
+  title="CSP Hash Calculator"
+  defaultCode="console.log('hello');"
+/>
+```
+Props: `title?: string`, `defaultCode?: string`, `showExplanation?: boolean`
+
 ### References
 **Use**: External links section.
 ```mdx

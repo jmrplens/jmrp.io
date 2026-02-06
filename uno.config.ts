@@ -60,6 +60,11 @@ export default defineConfig({
     "i-mdi:database",
     "i-devicon:mongodb",
     "i-devicon:graphql",
+    // Timeline component icons (dynamically generated)
+    "i-mdi:circle-medium",
+    "i-mdi:check-circle",
+    "i-mdi:alert-circle",
+    "i-mdi:star",
   ],
   presets: [
     presetWind4({

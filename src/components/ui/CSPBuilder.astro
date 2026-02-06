@@ -1,0 +1,638 @@
+---
+/**
+ * CSPBuilder Component
+ * Interactive CSP policy builder with checkboxes for directives.
+ * Generates a preview of the resulting policy in real-time (CSS-only).
+ *
+ * Usage:
+ * <CSPBuilder
+ *   title="Build Your CSP"
+ *   defaultDirectives={['default-src', 'script-src']}
+ * />
+ */
+
+interface Directive {
+  name: string;
+  value: string;
+  description: string;
+  category: "essential" | "security" | "resources" | "advanced";
+  defaultChecked?: boolean;
+}
+
+interface Props {
+  title?: string;
+  showCategories?: boolean;
+}
+
+const { title = "CSP Policy Builder", showCategories = true } = Astro.props;
+
+// Generate unique ID for this instance
+const uniqueId = `csp-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
+
+const directives: Directive[] = [
+  // Essential / Core
+  {
+    name: "default-src",
+    value: "'none'",
+    description: "Block all resources by default (deny-by-default approach)",
+    category: "essential",
+    defaultChecked: true,
+  },
+  {
+    name: "script-src",
+    value: "'self' 'nonce-{RANDOM}'",
+    description: "Allow scripts from same origin with nonce",
+    category: "essential",
+    defaultChecked: true,
+  },
+  {
+    name: "style-src",
+    value: "'self' 'unsafe-inline'",
+    description: "Allow styles from same origin + inline styles",
+    category: "essential",
+    defaultChecked: true,
+  },
+
+  // Security Hardening
+  {
+    name: "object-src",
+    value: "'none'",
+    description: "Block plugins (Flash, Java) - Required for strict CSP",
+    category: "security",
+    defaultChecked: true,
+  },
+  {
+    name: "base-uri",
+    value: "'none'",
+    description: "Prevent base tag injection attacks",
+    category: "security",
+    defaultChecked: true,
+  },
+  {
+    name: "frame-ancestors",
+    value: "'none'",
+    description: "Prevent clickjacking (replaces X-Frame-Options)",
+    category: "security",
+    defaultChecked: true,
+  },
+  {
+    name: "form-action",
+    value: "'self'",
+    description: "Restrict form submissions to same origin",
+    category: "security",
+    defaultChecked: false,
+  },
+
+  // Resource Loading
+  {
+    name: "img-src",
+    value: "'self' data:",
+    description: "Allow images from same origin + data URIs",
+    category: "resources",
+    defaultChecked: true,
+  },
+  {
+    name: "font-src",
+    value: "'self'",
+    description: "Allow fonts from same origin",
+    category: "resources",
+    defaultChecked: true,
+  },
+  {
+    name: "connect-src",
+    value: "'self'",
+    description: "Restrict XHR/Fetch/WebSocket connections",
+    category: "resources",
+    defaultChecked: true,
+  },
+  {
+    name: "media-src",
+    value: "'self'",
+    description: "Allow audio/video from same origin",
+    category: "resources",
+    defaultChecked: false,
+  },
+  {
+    name: "worker-src",
+    value: "'self'",
+    description: "Allow Web Workers from same origin",
+    category: "resources",
+    defaultChecked: false,
+  },
+
+  // Advanced
+  {
+    name: "strict-dynamic",
+    value: "",
+    description: "Trust scripts loaded by trusted scripts (add to script-src)",
+    category: "advanced",
+    defaultChecked: false,
+  },
+  {
+    name: "upgrade-insecure-requests",
+    value: "",
+    description: "Auto-upgrade HTTP to HTTPS",
+    category: "advanced",
+    defaultChecked: true,
+  },
+  {
+    name: "report-uri",
+    value: "/csp-reports",
+    description:
+      "Endpoint for violation reports (deprecated but widely supported)",
+    category: "advanced",
+    defaultChecked: false,
+  },
+];
+
+const categories = [
+  { id: "essential", label: "Core Directives", icon: "⚡" },
+  { id: "security", label: "Security Hardening", icon: "🛡️" },
+  { id: "resources", label: "Resource Control", icon: "📦" },
+  { id: "advanced", label: "Advanced Options", icon: "⚙️" },
+];
+
+// Group directives by category
+const groupedDirectives = categories.map((cat) => ({
+  ...cat,
+  directives: directives.filter((d) => d.category === cat.id),
+}));
+---
+
+<div
+  class="csp-builder"
+  data-csp-id={uniqueId}
+>
+  {title && <div class="csp-title">{title}</div>}
+
+  <div class="csp-layout">
+    {/* Directive Selection */}
+    <div class="csp-directives">
+      {
+        groupedDirectives.map((group) => (
+          <div class="csp-category">
+            {showCategories && (
+              <div class="csp-category-header">
+                <span class="csp-category-icon">{group.icon}</span>
+                <span class="csp-category-label">{group.label}</span>
+              </div>
+            )}
+            <div class="csp-items">
+              {group.directives.map((directive) => {
+                const inputId = `${uniqueId}-${directive.name}`;
+                return (
+                  <label
+                    class="csp-item"
+                    aria-label={`${directive.name}: ${directive.description}`}
+                  >
+                    <input
+                      type="checkbox"
+                      id={inputId}
+                      class="csp-checkbox"
+                      checked={directive.defaultChecked}
+                      data-directive={directive.name}
+                      data-value={directive.value}
+                    />
+                    <span class="csp-item-check">
+                      <span class="csp-check-icon">✓</span>
+                    </span>
+                    <span class="csp-item-content">
+                      <code class="csp-directive-name">{directive.name}</code>
+                      <span class="csp-directive-desc">
+                        {directive.description}
+                      </span>
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+        ))
+      }
+    </div>
+
+    {/* Live Preview */}
+    <div class="csp-preview">
+      <div class="csp-preview-header">
+        <span class="i-mdi:code-braces csp-preview-icon"></span>
+        <span>Generated Policy</span>
+        <button
+          class="csp-copy-btn"
+          type="button"
+          aria-label="Copy CSP policy"
+        >
+          <span class="i-mdi:content-copy"></span>
+        </button>
+      </div>
+      <pre
+        class="csp-output"><code id={`${uniqueId}-output`}>Content-Security-Policy: ...</code></pre>
+      <div class="csp-rating">
+        <span class="csp-rating-label">Security Level:</span>
+        <span
+          class="csp-rating-badge"
+          id={`${uniqueId}-rating`}
+          >...</span
+        >
+      </div>
+    </div>
+  </div>
+</div>
+
+<script is:inline define:vars={{ uniqueId, directives }}>
+  // CSP Builder interactive functionality
+  const container = document.querySelector(`[data-csp-id="${uniqueId}"]`);
+  if (container) {
+    const checkboxes = container.querySelectorAll(".csp-checkbox");
+    const output = document.getElementById(`${uniqueId}-output`);
+    const rating = document.getElementById(`${uniqueId}-rating`);
+    const copyBtn = container.querySelector(".csp-copy-btn");
+
+    function updatePolicy() {
+      const parts = [];
+      let score = 0;
+      let hasNonce = false;
+      let hasStrictDynamic = false;
+
+      checkboxes.forEach((cb) => {
+        if (cb.checked) {
+          const name = cb.dataset.directive;
+          const value = cb.dataset.value;
+
+          // Handle strict-dynamic specially (adds to script-src)
+          if (name === "strict-dynamic") {
+            hasStrictDynamic = true;
+            return;
+          }
+
+          // Track nonce usage
+          if (name === "script-src" && value.includes("nonce")) {
+            hasNonce = true;
+          }
+
+          if (value) {
+            parts.push(`${name} ${value}`);
+          } else {
+            parts.push(name);
+          }
+
+          // Calculate score
+          if (name === "default-src" && value === "'none'") score += 15;
+          if (name === "script-src" && value.includes("nonce")) score += 20;
+          if (name === "object-src" && value === "'none'") score += 15;
+          if (name === "base-uri" && value === "'none'") score += 10;
+          if (name === "frame-ancestors") score += 10;
+          if (name === "form-action") score += 5;
+          if (name === "upgrade-insecure-requests") score += 5;
+          if (name === "connect-src") score += 5;
+          if (name === "img-src") score += 3;
+          if (name === "font-src") score += 3;
+          if (name === "style-src") score += 3;
+        }
+      });
+
+      // Add strict-dynamic to script-src if both are checked
+      if (hasStrictDynamic && hasNonce) {
+        const scriptIdx = parts.findIndex((p) => p.startsWith("script-src"));
+        if (scriptIdx !== -1) {
+          parts[scriptIdx] = parts[scriptIdx].replace(
+            "'nonce-{RANDOM}'",
+            "'nonce-{RANDOM}' 'strict-dynamic'",
+          );
+          score += 15;
+        }
+      }
+
+      // Generate output
+      const policy =
+        parts.length > 0 ? parts.join("; ") : "(No directives selected)";
+
+      output.textContent = `Content-Security-Policy: ${policy}`;
+
+      // Determine rating
+      let ratingText, ratingClass;
+      if (score >= 85) {
+        ratingText = "A+ Strict";
+        ratingClass = "rating-a-plus";
+      } else if (score >= 70) {
+        ratingText = "A Excellent";
+        ratingClass = "rating-a";
+      } else if (score >= 50) {
+        ratingText = "B Good";
+        ratingClass = "rating-b";
+      } else if (score >= 30) {
+        ratingText = "C Basic";
+        ratingClass = "rating-c";
+      } else {
+        ratingText = "D Weak";
+        ratingClass = "rating-d";
+      }
+
+      rating.textContent = ratingText;
+      rating.className = `csp-rating-badge ${ratingClass}`;
+    }
+
+    // Copy functionality
+    if (copyBtn) {
+      copyBtn.addEventListener("click", () => {
+        const text = output.textContent;
+        navigator.clipboard.writeText(text).then(() => {
+          copyBtn.classList.add("copied");
+          setTimeout(() => copyBtn.classList.remove("copied"), 2000);
+        });
+      });
+    }
+
+    // Add listeners
+    checkboxes.forEach((cb) => cb.addEventListener("change", updatePolicy));
+
+    // Initial update
+    updatePolicy();
+  }
+</script>
+
+<style>
+  .csp-builder {
+    margin: 1.5rem 0;
+    overflow: hidden;
+    background: var(--color-bg-subtle);
+    border: var(--border-1);
+    border-radius: var(--radius-md);
+  }
+
+  .csp-title {
+    padding: 1rem 1.25rem;
+    font-size: 1.1rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-heading);
+    background: var(--color-bg-secondary);
+    border-bottom: var(--border-1);
+  }
+
+  .csp-layout {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    padding: 1.25rem;
+  }
+
+  @media (width >= 900px) {
+    .csp-layout {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  .csp-directives {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .csp-category-header {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    margin-bottom: 0.5rem;
+    font-size: 0.85rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .csp-category-icon {
+    font-size: 1rem;
+  }
+
+  .csp-items {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .csp-item {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+    padding: 0.625rem 0.75rem;
+    cursor: pointer;
+    background: var(--color-bg-secondary);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+    transition:
+      background 0.15s,
+      border-color 0.15s;
+  }
+
+  .csp-item:hover {
+    background: var(--color-bg);
+    border-color: var(--color-border-hover);
+  }
+
+  .csp-checkbox {
+    position: absolute;
+    pointer-events: none;
+    opacity: 0%;
+  }
+
+  .csp-item-check {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    margin-top: 2px;
+    color: transparent;
+    background: var(--color-bg);
+    border: 2px solid var(--color-border);
+    border-radius: 4px;
+    transition: all 0.15s;
+  }
+
+  .csp-checkbox:checked + .csp-item-check {
+    color: #fff;
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+  }
+
+  .csp-check-icon {
+    font-size: 12px;
+    font-weight: var(--fw-bold);
+  }
+
+  .csp-checkbox:focus-visible + .csp-item-check {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  .csp-item-content {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 0.125rem;
+    min-width: 0;
+  }
+
+  .csp-directive-name {
+    font-family: var(--ff-mono);
+    font-size: 0.875rem;
+    font-weight: var(--fw-medium);
+    color: var(--color-primary);
+  }
+
+  .csp-directive-desc {
+    font-size: 0.8rem;
+    line-height: 1.4;
+    color: var(--color-text-muted);
+  }
+
+  /* Preview Panel */
+  .csp-preview {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    height: fit-content;
+    padding: 1rem;
+    background: var(--color-bg-secondary);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+  }
+
+  @media (width >= 900px) {
+    .csp-preview {
+      position: sticky;
+      top: 1rem;
+    }
+  }
+
+  .csp-preview-header {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    font-size: 0.85rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .csp-preview-icon {
+    width: 18px;
+    height: 18px;
+  }
+
+  .csp-copy-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    margin-left: auto;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    background: transparent;
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+    transition: all 0.15s;
+  }
+
+  .csp-copy-btn:hover {
+    color: var(--color-primary);
+    background: var(--color-bg);
+    border-color: var(--color-primary);
+  }
+
+  .csp-copy-btn.copied {
+    color: #10b981;
+    border-color: #10b981;
+  }
+
+  .csp-output {
+    padding: 1rem;
+    margin: 0;
+    overflow-x: auto;
+    font-family: var(--ff-mono);
+    font-size: 0.8rem;
+    line-height: 1.6;
+    word-break: break-all;
+    white-space: pre-wrap;
+    background: var(--color-bg);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+  }
+
+  .csp-output code {
+    color: var(--color-text);
+  }
+
+  .csp-rating {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 0.75rem;
+    border-top: var(--border-1);
+  }
+
+  .csp-rating-label {
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+  }
+
+  .csp-rating-badge {
+    padding: 0.25rem 0.75rem;
+    font-size: 0.8rem;
+    font-weight: var(--fw-semibold);
+    border-radius: 9999px;
+  }
+
+  .csp-rating-badge.rating-a-plus {
+    color: #065f46;
+    background: #d1fae5;
+  }
+
+  :global(.dark) .csp-rating-badge.rating-a-plus {
+    color: #6ee7b7;
+    background: rgb(6 95 70 / 40%);
+  }
+
+  .csp-rating-badge.rating-a {
+    color: #047857;
+    background: #a7f3d0;
+  }
+
+  :global(.dark) .csp-rating-badge.rating-a {
+    color: #6ee7b7;
+    background: rgb(4 120 87 / 40%);
+  }
+
+  .csp-rating-badge.rating-b {
+    color: #92400e;
+    background: #fef3c7;
+  }
+
+  :global(.dark) .csp-rating-badge.rating-b {
+    color: #fcd34d;
+    background: rgb(146 64 14 / 40%);
+  }
+
+  .csp-rating-badge.rating-c {
+    color: #9a3412;
+    background: #fed7aa;
+  }
+
+  :global(.dark) .csp-rating-badge.rating-c {
+    color: #fdba74;
+    background: rgb(154 52 18 / 40%);
+  }
+
+  .csp-rating-badge.rating-d {
+    color: #991b1b;
+    background: #fecaca;
+  }
+
+  :global(.dark) .csp-rating-badge.rating-d {
+    color: #fca5a5;
+    background: rgb(153 27 27 / 40%);
+  }
+</style>

@@ -42,7 +42,7 @@ const typeConfig: Record<EventType, { icon: string; class: string }> = {
           </div>
           <div class="tl-content">
             <span class="tl-date">{event.date}</span>
-            <h4 class="tl-title">{event.title}</h4>
+            <p class="tl-title">{event.title}</p>
             {event.description && (
               <p class="tl-description">{event.description}</p>
             )}
@@ -136,7 +136,8 @@ const typeConfig: Record<EventType, { icon: string; class: string }> = {
   }
 
   .tl-milestone .tl-icon {
-    background: var(--color-bg);
+    /* Use box-shadow instead of background to avoid overriding icon mask */
     border-radius: 50%;
+    box-shadow: 0 0 0 4px var(--color-bg);
   }
 </style>

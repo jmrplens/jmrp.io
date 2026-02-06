@@ -1,0 +1,450 @@
+---
+/**
+ * HashCalculator Component
+ * Interactive SHA-256 hash calculator for CSP inline scripts.
+ * Shows how to generate hashes for Content-Security-Policy.
+ *
+ * Usage:
+ * <HashCalculator
+ *   defaultCode="console.log('hello');"
+ * />
+ */
+
+interface Props {
+  title?: string;
+  defaultCode?: string;
+  showExplanation?: boolean;
+}
+
+const {
+  title = "CSP Hash Calculator",
+  defaultCode = "const theme = localStorage.getItem('theme');\ndocument.documentElement.dataset.theme = theme;",
+  showExplanation = true,
+} = Astro.props;
+
+// Generate unique ID for this instance
+const uniqueId = `hash-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
+---
+
+<div
+  class="hash-calculator"
+  data-hash-id={uniqueId}
+>
+  {title && <div class="hash-title">{title}</div>}
+
+  <div class="hash-layout">
+    {/* Input Section */}
+    <div class="hash-input-section">
+      <label
+        class="hash-label"
+        for={`${uniqueId}-input`}
+      >
+        <span class="i-mdi:code-tags hash-label-icon"></span>
+        Script Content (without &lt;script&gt; tags)
+      </label>
+      <textarea
+        id={`${uniqueId}-input`}
+        class="hash-textarea"
+        rows="5"
+        placeholder="Enter your inline script content here..."
+        spellcheck="false"
+        autocomplete="off"
+        >{defaultCode}</textarea
+      >
+    </div>
+
+    {/* Output Section */}
+    <div class="hash-output-section">
+      <div class="hash-output-header">
+        <span class="i-mdi:shield-key hash-output-icon"></span>
+        <span>Generated Hash</span>
+      </div>
+
+      <div class="hash-results">
+        {/* SHA-256 Hash */}
+        <div class="hash-result-item">
+          <div class="hash-result-label">SHA-256 (Recommended)</div>
+          <div class="hash-result-value">
+            <code id={`${uniqueId}-sha256`}>Calculating...</code>
+            <button
+              class="hash-copy-btn"
+              type="button"
+              data-target={`${uniqueId}-sha256`}
+              aria-label="Copy SHA-256 hash"
+            >
+              <span class="i-mdi:content-copy"></span>
+            </button>
+          </div>
+        </div>
+
+        {/* CSP Directive */}
+        <div class="hash-result-item">
+          <div class="hash-result-label">CSP Directive</div>
+          <div class="hash-result-value hash-result-directive">
+            <code id={`${uniqueId}-directive`}>Calculating...</code>
+            <button
+              class="hash-copy-btn"
+              type="button"
+              data-target={`${uniqueId}-directive`}
+              aria-label="Copy CSP directive"
+            >
+              <span class="i-mdi:content-copy"></span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* HTML Example */}
+      <div class="hash-example">
+        <div class="hash-example-label">HTML with matching script:</div>
+        <pre
+          class="hash-example-code"><code id={`${uniqueId}-html`}>...</code></pre>
+      </div>
+    </div>
+  </div>
+
+  {
+    showExplanation && (
+      <div class="hash-explanation">
+        <div class="hash-explanation-icon">
+          <span class="i-mdi:information" />
+        </div>
+        <div class="hash-explanation-text">
+          <strong>How it works:</strong> The browser calculates the SHA-256 hash
+          of your inline script content (excluding the{" "}
+          <code>&lt;script&gt;</code> tags) and compares it against the hash in
+          your CSP header. If they match, the script executes. Any change to the
+          script content—even whitespace—will change the hash.
+        </div>
+      </div>
+    )
+  }
+</div>
+
+<script is:inline define:vars={{ uniqueId, defaultCode }}>
+  // Hash Calculator functionality
+  const container = document.querySelector(`[data-hash-id="${uniqueId}"]`);
+  if (container) {
+    const textarea = document.getElementById(`${uniqueId}-input`);
+    const sha256Output = document.getElementById(`${uniqueId}-sha256`);
+    const directiveOutput = document.getElementById(`${uniqueId}-directive`);
+    const htmlOutput = document.getElementById(`${uniqueId}-html`);
+    const copyBtns = container.querySelectorAll(".hash-copy-btn");
+
+    // Calculate SHA-256 hash using Web Crypto API
+    async function calculateHash(content) {
+      const encoder = new TextEncoder();
+      const data = encoder.encode(content);
+      const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      const hashBase64 = btoa(String.fromCharCode.apply(null, hashArray));
+      return hashBase64;
+    }
+
+    // Update all outputs
+    async function updateOutputs() {
+      const content = textarea.value;
+
+      if (!content.trim()) {
+        sha256Output.textContent = "(Enter script content above)";
+        directiveOutput.textContent = "(Enter script content above)";
+        htmlOutput.textContent = "(Enter script content above)";
+        return;
+      }
+
+      try {
+        const hash = await calculateHash(content);
+
+        sha256Output.textContent = `sha256-${hash}`;
+        directiveOutput.textContent = `script-src 'sha256-${hash}';`;
+
+        // Generate HTML example (escape content for display)
+        const escapedContent = content
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;");
+
+        htmlOutput.innerHTML = `<span class="hl-tag">&lt;script&gt;</span>\n${escapedContent}\n<span class="hl-tag">&lt;/script&gt;</span>`;
+      } catch (error) {
+        sha256Output.textContent = "Error calculating hash";
+        directiveOutput.textContent = "Error";
+        htmlOutput.textContent = "Error";
+      }
+    }
+
+    // Copy functionality
+    copyBtns.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const targetId = btn.dataset.target;
+        const targetEl = document.getElementById(targetId);
+        if (targetEl) {
+          navigator.clipboard.writeText(targetEl.textContent).then(() => {
+            btn.classList.add("copied");
+            setTimeout(() => btn.classList.remove("copied"), 2000);
+          });
+        }
+      });
+    });
+
+    // Debounce function
+    let timeout;
+    function debounce(fn, delay) {
+      return function (...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => fn.apply(this, args), delay);
+      };
+    }
+
+    // Add listener with debounce
+    textarea.addEventListener("input", debounce(updateOutputs, 150));
+
+    // Initial calculation
+    updateOutputs();
+  }
+</script>
+
+<style>
+  .hash-calculator {
+    margin: 1.5rem 0;
+    overflow: hidden;
+    background: var(--color-bg-subtle);
+    border: var(--border-1);
+    border-radius: var(--radius-md);
+  }
+
+  .hash-title {
+    padding: 1rem 1.25rem;
+    font-size: 1.1rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-heading);
+    background: var(--color-bg-secondary);
+    border-bottom: var(--border-1);
+  }
+
+  .hash-layout {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+    padding: 1.25rem;
+  }
+
+  @media (width >= 768px) {
+    .hash-layout {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  /* Input Section */
+  .hash-input-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .hash-label {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    font-size: 0.85rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .hash-label-icon {
+    width: 18px;
+    height: 18px;
+  }
+
+  .hash-textarea {
+    width: 100%;
+    min-height: 140px;
+    padding: 0.875rem;
+    font-family: var(--ff-mono);
+    font-size: 0.85rem;
+    line-height: 1.5;
+    color: var(--color-text);
+    resize: vertical;
+    background: var(--color-bg);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+    transition:
+      border-color 0.15s,
+      box-shadow 0.15s;
+  }
+
+  .hash-textarea:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgb(var(--color-primary-rgb) / 15%);
+  }
+
+  .hash-textarea::placeholder {
+    color: var(--color-text-muted);
+    opacity: 60%;
+  }
+
+  /* Output Section */
+  .hash-output-section {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .hash-output-header {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    font-size: 0.85rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .hash-output-icon {
+    width: 18px;
+    height: 18px;
+  }
+
+  .hash-results {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .hash-result-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .hash-result-label {
+    font-size: 0.75rem;
+    font-weight: var(--fw-medium);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .hash-result-value {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    padding: 0.5rem 0.75rem;
+    background: var(--color-bg);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+  }
+
+  .hash-result-value code {
+    flex: 1;
+    overflow-x: auto;
+    font-family: var(--ff-mono);
+    font-size: 0.8rem;
+    word-break: break-all;
+    white-space: nowrap;
+  }
+
+  .hash-result-directive code {
+    color: var(--color-primary);
+  }
+
+  .hash-copy-btn {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    background: transparent;
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+    transition: all 0.15s;
+  }
+
+  .hash-copy-btn:hover {
+    color: var(--color-primary);
+    background: var(--color-bg-subtle);
+    border-color: var(--color-primary);
+  }
+
+  .hash-copy-btn.copied {
+    color: #10b981;
+    border-color: #10b981;
+  }
+
+  /* HTML Example */
+  .hash-example {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+    margin-top: 0.5rem;
+  }
+
+  .hash-example-label {
+    font-size: 0.75rem;
+    font-weight: var(--fw-medium);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .hash-example-code {
+    padding: 0.75rem;
+    margin: 0;
+    overflow-x: auto;
+    font-family: var(--ff-mono);
+    font-size: 0.8rem;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    background: var(--color-bg);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+  }
+
+  .hash-example-code :global(.hl-tag) {
+    color: #e06c75;
+  }
+
+  :global(.dark) .hash-example-code :global(.hl-tag) {
+    color: #f07178;
+  }
+
+  /* Explanation */
+  .hash-explanation {
+    display: flex;
+    gap: 0.75rem;
+    padding: 1rem 1.25rem;
+    background: var(--color-bg-secondary);
+    border-top: var(--border-1);
+  }
+
+  .hash-explanation-icon {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    color: var(--color-primary);
+  }
+
+  .hash-explanation-text {
+    font-size: 0.875rem;
+    line-height: 1.6;
+    color: var(--color-text-muted);
+  }
+
+  .hash-explanation-text strong {
+    color: var(--color-text);
+  }
+
+  .hash-explanation-text code {
+    padding: 0.125rem 0.375rem;
+    font-family: var(--ff-mono);
+    font-size: 0.8em;
+    background: var(--color-bg);
+    border-radius: 3px;
+  }
+</style>
