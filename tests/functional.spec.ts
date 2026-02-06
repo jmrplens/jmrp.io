@@ -246,8 +246,9 @@ test.describe("Security & Best Practices", () => {
           // eslint-disable-next-line playwright/no-conditional-in-test -- Required for decorative image check
           if (!isDecorative && alt !== null && alt !== "") {
             // Check for common placeholder patterns that indicate missing alt text
+            // Must match entire alt text or be a clear filename pattern
             const isPlaceholder =
-              /^(image|img|photo|picture|untitled|dsc_?\d+|img_?\d+)\.?/i.test(
+              /^(image|img|photo|picture|untitled|dsc_?\d+|img_?\d+)(\.[a-z]+)?$/i.test(
                 alt,
               );
             // eslint-disable-next-line playwright/no-conditional-expect -- Inside required conditional

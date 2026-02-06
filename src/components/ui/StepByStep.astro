@@ -105,6 +105,8 @@ const uniqueId = createHash("sha256")
   /* First paragraph - title styling with step number */
   .step-by-step .sbs-steps > li > p:first-of-type {
     margin: 0 !important;
+    font-size: 0.9rem;
+    line-height: 1.6;
   }
 
   /* Title styling - works for both p>strong and direct strong */
@@ -128,6 +130,7 @@ const uniqueId = createHash("sha256")
     margin-right: 0.5rem;
     font-size: 0.75rem;
     font-weight: var(--fw-bold);
+    vertical-align: baseline;
     color: var(--color-primary);
     content: counter(step);
     background: var(
@@ -135,20 +138,12 @@ const uniqueId = createHash("sha256")
       color-mix(in srgb, var(--color-primary) 12%, transparent)
     );
     border-radius: var(--radius-sm);
-    vertical-align: baseline;
-  }
-
-  /* First paragraph (title) - no extra padding */
-  .step-by-step .sbs-steps > li > p:first-of-type {
-    margin: 0 !important;
-    font-size: 0.9rem;
-    line-height: 1.6;
   }
 
   /* Subsequent paragraphs - aligned with title text */
   .step-by-step .sbs-steps > li > p:not(:first-of-type) {
-    margin: 0.25rem 0 0 !important;
     padding-left: 1.75rem; /* aligns with title (badge width + margin) */
+    margin: 0.25rem 0 0 !important;
     font-size: 0.9rem;
     line-height: 1.6;
     color: var(--color-text);
@@ -169,14 +164,22 @@ const uniqueId = createHash("sha256")
     margin: 0.5rem 0 0;
   }
 
-  .step-by-step .sbs-steps > li ul li,
+  .step-by-step .sbs-steps > li ul li {
+    padding: 0.125rem 0 !important;
+    margin: 0 !important;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: var(--color-text);
+    list-style-type: disc;
+  }
+
   .step-by-step .sbs-steps > li ol li {
     padding: 0.125rem 0 !important;
     margin: 0 !important;
     font-size: 0.9rem;
     line-height: 1.5;
     color: var(--color-text);
-    list-style: disc;
+    list-style-type: decimal;
   }
 
   .step-by-step .sbs-steps > li ul li::before,

@@ -45,6 +45,7 @@ test.describe("Performance Optimizations", () => {
 
     // LCP should be under 2500ms for "Good" score
     // Using 4000ms as threshold for test environment (CI can be slower)
+    expect(lcp, "LCP should be recorded").toBeGreaterThan(0);
     expect(lcp, "LCP should be under 4000ms").toBeLessThan(4000);
   });
 

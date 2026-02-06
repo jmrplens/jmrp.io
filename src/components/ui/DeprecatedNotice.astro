@@ -11,6 +11,13 @@ interface Props {
 }
 
 const { feature, alternative, alternativeUrl, removalDate } = Astro.props;
+
+// Warn if alternativeUrl is provided without alternative (the URL would be ignored)
+if (import.meta.env.DEV && alternativeUrl && !alternative) {
+  console.warn(
+    `[DeprecatedNotice] alternativeUrl provided without alternative for "${feature}". The URL will be ignored.`,
+  );
+}
 ---
 
 <aside

@@ -45,6 +45,22 @@ const VALID_SCHEMA_TYPES = [
 ] as const;
 
 /**
+ * Validates that all schema types are in the valid types list.
+ *
+ * @param schemaType - Single type or array of types from @type
+ * @param validTypes - Array of valid Schema.org types
+ */
+function validateSchemaTypes(
+  schemaType: string | string[],
+  validTypes: readonly string[],
+): void {
+  const types = Array.isArray(schemaType) ? schemaType : [schemaType];
+  for (const type of types) {
+    expect(validTypes, `Unknown Schema.org type: ${type}`).toContain(type);
+  }
+}
+
+/**
  * Validates a JSON-LD script content is parseable and has a valid @type
  * @param jsonLdContent - The text content of a JSON-LD script
  * @param validTypes - Array of valid Schema.org types to check against
@@ -63,15 +79,9 @@ function validateJsonLd(
 
   // Handle @graph container (multiple schemas in one script)
   if (schema["@graph"] && Array.isArray(schema["@graph"])) {
-    // Validate each schema in the graph has a valid @type
     for (const graphItem of schema["@graph"]) {
       if (graphItem["@type"]) {
-        const schemaType = Array.isArray(graphItem["@type"])
-          ? graphItem["@type"][0]
-          : graphItem["@type"];
-        expect(validTypes, `Unknown Schema.org type: ${schemaType}`).toContain(
-          schemaType,
-        );
+        validateSchemaTypes(graphItem["@type"], validTypes);
       }
     }
     return;
@@ -79,14 +89,7 @@ function validateJsonLd(
 
   // Standard single schema - must have @type
   expect(schema["@type"], "JSON-LD should have @type").toBeDefined();
-
-  // Validate @type is a known Schema.org type
-  const schemaType = Array.isArray(schema["@type"])
-    ? schema["@type"][0]
-    : schema["@type"];
-  expect(validTypes, `Unknown Schema.org type: ${schemaType}`).toContain(
-    schemaType,
-  );
+  validateSchemaTypes(schema["@type"]!, validTypes);
 }
 
 test.describe("SEO & Metadata Checks", () => {

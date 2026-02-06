@@ -282,8 +282,13 @@ function performNginxDeployment(
       ["cp", generatedPath, systemNginxPath],
       { stdio: "inherit" },
     );
-    if (copyResult.status !== 0)
-      throw new Error(`Failed to copy ${generatedPath} to ${systemNginxPath}`);
+    if (copyResult.error || copyResult.status !== 0) {
+      const errorMsg =
+        copyResult.error?.message || `exit code ${copyResult.status}`;
+      throw new Error(
+        `Failed to copy ${generatedPath} to ${systemNginxPath}: ${errorMsg}`,
+      );
+    }
 
     if (fs.existsSync(generatedAssetsPath)) {
       if (!systemAssetsExists) {
@@ -294,10 +299,14 @@ function performNginxDeployment(
         ["cp", generatedAssetsPath, systemNginxAssetsPath],
         { stdio: "inherit" },
       );
-      if (copyAssetsResult.status !== 0)
+      if (copyAssetsResult.error || copyAssetsResult.status !== 0) {
+        const errorMsg =
+          copyAssetsResult.error?.message ||
+          `exit code ${copyAssetsResult.status}`;
         throw new Error(
-          `Failed to copy ${generatedAssetsPath} to ${systemNginxAssetsPath}`,
+          `Failed to copy ${generatedAssetsPath} to ${systemNginxAssetsPath}: ${errorMsg}`,
         );
+      }
     }
 
     try {
@@ -438,6 +447,13 @@ function clearNginxCache(
   const targetCachePath = path.join(systemNginxCachePath, "jmrp_cache");
 
   if (fs.existsSync(targetCachePath)) {
+    // Security: Prevent TOCTOU race by checking if targetCachePath is a symlink
+    if (fs.lstatSync(targetCachePath).isSymbolicLink()) {
+      logger.warn(
+        `Refusing to clear cache path as it is a symbolic link: ${targetCachePath}`,
+      );
+      return;
+    }
     logger.info(`Clearing specific Nginx cache: [${targetCachePath}]...`);
 
     // We use -mindepth 1 to delete everything INSIDE jmrp_cache, but keep the folder itself

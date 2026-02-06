@@ -73,9 +73,19 @@ export function shouldIgnoreError(text: string): boolean {
 
   // Generic "Failed to load resource" errors with 404 status
   // These come from external links (author pages, etc.) - not app bugs
+  // Only suppress if likely external (no localhost/app URLs in context)
   const isGeneric404 =
     text ===
-    "Failed to load resource: the server responded with a status of 404 (Not Found)";
+      "Failed to load resource: the server responded with a status of 404 (Not Found)" &&
+    isExternalResource404;
+
+  if (
+    text ===
+      "Failed to load resource: the server responded with a status of 404 (Not Found)" &&
+    !isExternalResource404
+  ) {
+    console.warn("[Test Filter] Suppressed generic 404 - may be app resource");
+  }
 
   return (
     isCloudflareInsightsError(text) ||

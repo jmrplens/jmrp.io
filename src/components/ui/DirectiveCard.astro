@@ -13,6 +13,7 @@ interface Props {
 }
 
 const { name, syntax, description, mdnUrl, defaultValue, since } = Astro.props;
+const hasContent = Astro.slots.has("default");
 ---
 
 <div class="directive-card">
@@ -60,9 +61,13 @@ const { name, syntax, description, mdnUrl, defaultValue, since } = Astro.props;
     {description && <p class="dc-description">{description}</p>}
   </div>
 
-  <div class="dc-content">
-    <slot />
-  </div>
+  {
+    hasContent && (
+      <div class="dc-content">
+        <slot />
+      </div>
+    )
+  }
 </div>
 
 <style>
@@ -159,10 +164,6 @@ const { name, syntax, description, mdnUrl, defaultValue, since } = Astro.props;
     font-size: 0.9rem;
     line-height: 1.6;
     color: var(--color-text-muted);
-  }
-
-  .dc-content:empty {
-    display: none;
   }
 
   .dc-content {

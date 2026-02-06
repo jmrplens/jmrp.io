@@ -141,7 +141,7 @@ const { post, loading = "lazy", fetchpriority = "auto" } = Astro.props;
     gap: 0.5rem;
     align-items: center;
     justify-content: space-between;
-    height: 1.5rem; /* Fixed single-line height */
+    max-height: 1.5rem; /* Max single-line height, allows expansion */
     margin-bottom: 0.4rem;
     overflow: hidden; /* Hide content that doesn't fit */
     font-size: 0.875rem;
@@ -161,7 +161,7 @@ const { post, loading = "lazy", fetchpriority = "auto" } = Astro.props;
     flex-shrink: 1; /* Allow shrinking */
     flex-wrap: wrap; /* Tags that don't fit wrap to next line */
     gap: 0.5rem;
-    height: 1.25rem; /* Fixed height for single line of tags */
+    max-height: 1.25rem; /* Max height for single line of tags */
     padding: 0;
     margin: 0;
     overflow: hidden; /* Hide wrapped tags completely */

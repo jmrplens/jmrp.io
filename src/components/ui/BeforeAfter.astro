@@ -1,7 +1,7 @@
 ---
 /**
  * BeforeAfter Component
- * Side-by-side comparison view with CSS-only slider.
+ * Side-by-side comparison view using CSS grid layout.
  */
 interface Props {
   beforeLabel?: string;
@@ -14,7 +14,7 @@ const { beforeLabel = "Before", afterLabel = "After" } = Astro.props;
 <figure
   class="before-after"
   role="group"
-  aria-label="Comparison: Before vs After"
+  aria-label={`Comparison: ${beforeLabel} vs ${afterLabel}`}
 >
   <div class="ba-container">
     <div

@@ -15,12 +15,12 @@ const config: Record<
   BadgeType,
   { icon: string; class: string; prefix?: string }
 > = {
-  version: { icon: "mdi:code-tags", class: "badge-version" },
-  level: { icon: "mdi:layers-triple", class: "badge-level", prefix: "Level" },
-  deprecated: { icon: "mdi:alert-circle", class: "badge-deprecated" },
-  new: { icon: "mdi:new-box", class: "badge-new" },
-  experimental: { icon: "mdi:flask", class: "badge-experimental" },
-  stable: { icon: "mdi:check-decagram", class: "badge-stable" },
+  version: { icon: "mdi-code-tags", class: "badge-version" },
+  level: { icon: "mdi-layers-triple", class: "badge-level", prefix: "Level" },
+  deprecated: { icon: "mdi-alert-circle", class: "badge-deprecated" },
+  new: { icon: "mdi-new-box", class: "badge-new" },
+  experimental: { icon: "mdi-flask", class: "badge-experimental" },
+  stable: { icon: "mdi-check-decagram", class: "badge-stable" },
 };
 
 const { icon, class: badgeClass, prefix } = config[type];

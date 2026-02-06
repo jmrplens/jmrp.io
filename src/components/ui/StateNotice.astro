@@ -88,7 +88,7 @@ const displayTitle = title || current.label;
 
 <div
   class={`state-notice state-notice--${type}`}
-  role="alert"
+  role="note"
   aria-label={displayTitle}
   style={`--sn-color: ${current.color}; --sn-bg-color: ${current.bgColor}; --sn-text-color: ${current.textColor};`}
 >
@@ -184,10 +184,6 @@ const displayTitle = title || current.label;
 
   .sn-content {
     padding: 0.875rem 1rem;
-  }
-
-  .sn-content:empty {
-    display: none;
   }
 
   .sn-message {

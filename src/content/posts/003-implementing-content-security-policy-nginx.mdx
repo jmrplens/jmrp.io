@@ -49,7 +49,7 @@ This guide takes you from zero to a production-ready, **A+ rated** CSP configura
 </TLDRSummary>
 
 <Prerequisite title="Before You Start">
-  - A web server running **Nginx 1.19+** (for `$request_id` nonce support)
+  - A web server running **Nginx 1.11+** (for `$request_id` nonce support)
   - Basic understanding of HTTP headers
   - Access to your Nginx configuration files
   - A website to protect (static or dynamic)
@@ -64,10 +64,10 @@ Content Security Policy has evolved significantly since its introduction. Unders
 <Timeline events={[
   { date: "2010", title: "X-Content-Security-Policy", description: "Mozilla introduces the first CSP implementation as an experimental header", type: "default" },
   { date: "2012", title: "CSP Level 1", description: "W3C standardizes CSP with basic fetch directives (script-src, style-src, etc.)", type: "milestone" },
-  { date: "2015", title: "CSP Level 2", description: "Introduces nonces, hashes, and frame-ancestors. 'unsafe-inline' can be overridden by nonces", type: "milestone" },
+  { date: "2016", title: "CSP Level 2", description: "Introduces nonces, hashes, and frame-ancestors. 'unsafe-inline' can be overridden by nonces", type: "milestone" },
   { date: "2016", title: "Google Research", description: "Google publishes 'CSP Is Dead, Long Live CSP' showing 94.72% of allowlist CSPs are bypassable", type: "warning" },
   { date: "2018", title: "strict-dynamic", description: "New keyword allows trusted scripts to load dependencies without explicit allowlisting", type: "success" },
-  { date: "2023", title: "CSP Level 3", description: "Introduces Trusted Types, report-to, and improved WebAssembly support", type: "milestone" },
+  { date: "2023+", title: "CSP Level 3 (Working Draft)", description: "Introduces Trusted Types, report-to, and improved WebAssembly support", type: "milestone" },
   { date: "2024+", title: "Trusted Types Adoption", description: "Browser support matures; enterprises begin adopting for DOM-XSS prevention", type: "success" },
 ]} />
 
@@ -686,7 +686,7 @@ Add a random token to both the CSP header and your script tags:
 **Critical:** The nonce must be:
 - **Cryptographically random** (at least 128 bits / 16 bytes)
 - **Unique per request** (never reuse nonces)
-- **Base64 encoded**
+- **Encoded** (base64 or hex — Nginx's `$request_id` uses hex, which is valid per CSP spec)
 
 ---
 
@@ -1465,17 +1465,18 @@ Some common patterns are incompatible with strict CSP. Here's how to fix them:
 
 ### Inline Styles in JS → CSS Custom Properties
 
-<CompareCode badTitle="Dynamic inline styles" goodTitle="CSS Custom Properties">
+<CompareCode badTitle="Using setAttribute (can be blocked)" goodTitle="CSS Custom Properties">
   <div slot="bad">
     ```javascript
-    // May be blocked depending on style-src
-    element.style.backgroundColor = userColor;
+    // setAttribute('style', ...) can be blocked by style-src
     element.setAttribute('style', 'color:' + color);
+    // Note: element.style.property = value is NOT blocked by CSP,
+    // but using CSS custom properties is more maintainable
     ```
   </div>
   <div slot="good">
     ```javascript
-    // Works with strict CSP
+    // Works with strict CSP and is more maintainable
     element.style.setProperty('--user-color', userColor);
     element.classList.add('highlighted');
     ```
@@ -1673,6 +1674,8 @@ server {
     add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
     add_header Permissions-Policy "camera=(), microphone=(), geolocation=()" always;
     add_header Cross-Origin-Opener-Policy "same-origin" always;
+    # Note: require-corp is strict - external resources (fonts, CDNs) must provide
+    # CORP/CORS headers. Use "credentialless" for broader compatibility.
     add_header Cross-Origin-Embedder-Policy "require-corp" always;
     add_header Cross-Origin-Resource-Policy "same-origin" always;
     
@@ -1690,10 +1693,15 @@ server {
     }
     
     # Static assets with relaxed CORP for social media
+    # Note: add_header in location blocks overrides parent-level headers,
+    # so we must re-include essential security headers here
     location /assets/ {
         expires 1y;
         add_header Cache-Control "public, immutable" always;
         add_header Cross-Origin-Resource-Policy "cross-origin" always;
+        # Re-include essential security headers
+        add_header X-Content-Type-Options "nosniff" always;
+        add_header Referrer-Policy "strict-origin-when-cross-origin" always;
     }
 }
 ```

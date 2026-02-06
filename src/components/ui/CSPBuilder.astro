@@ -2,12 +2,12 @@
 /**
  * CSPBuilder Component
  * Interactive CSP policy builder with checkboxes for directives.
- * Generates a preview of the resulting policy in real-time (CSS-only).
+ * Uses an inline script for interactivity to update policy preview.
  *
  * Usage:
  * <CSPBuilder
  *   title="Build Your CSP"
- *   defaultDirectives={['default-src', 'script-src']}
+ *   showCategories={true}
  * />
  */
 
@@ -247,6 +247,12 @@ const groupedDirectives = categories.map((cat) => ({
     const rating = document.getElementById(`${uniqueId}-rating`);
     const copyBtn = container.querySelector(".csp-copy-btn");
 
+    // Guard against missing elements
+    if (!output || !rating) {
+      console.error("[CSPBuilder] Missing output or rating element");
+      return;
+    }
+
     function updatePolicy() {
       const parts = [];
       let score = 0;
@@ -335,10 +341,19 @@ const groupedDirectives = categories.map((cat) => ({
     if (copyBtn) {
       copyBtn.addEventListener("click", () => {
         const text = output.textContent;
-        navigator.clipboard.writeText(text).then(() => {
-          copyBtn.classList.add("copied");
-          setTimeout(() => copyBtn.classList.remove("copied"), 2000);
-        });
+        if (navigator.clipboard && text) {
+          navigator.clipboard
+            .writeText(text)
+            .then(() => {
+              copyBtn.classList.add("copied");
+              setTimeout(() => copyBtn.classList.remove("copied"), 2000);
+            })
+            .catch((err) => {
+              console.error("[CSPBuilder] Clipboard write failed:", err);
+              copyBtn.classList.add("error");
+              setTimeout(() => copyBtn.classList.remove("error"), 2000);
+            });
+        }
       });
     }
 
@@ -410,6 +425,7 @@ const groupedDirectives = categories.map((cat) => ({
   }
 
   .csp-item {
+    position: relative;
     display: flex;
     gap: 0.75rem;
     align-items: flex-start;

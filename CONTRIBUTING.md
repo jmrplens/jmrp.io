@@ -102,7 +102,7 @@ If `pnpm verify` fails:
 5. **E2E test failures**: Run `pnpm test:e2e` or `pnpm exec playwright test --ui` to debug interactively.
 6. **Spelling issues**: Run `pnpm exec typos` and add false positives to `.typos.toml`.
 7. **Broken links**: Run `pnpm exec lychee dist/**/*.html` and update/remove dead URLs.
-8. **Security vulnerabilities**: Review SonarCloud CI reports and remediate or pin/update dependencies accordingly.
+8. **Security vulnerabilities**: Run `pnpm audit` locally to check for vulnerable packages, and review SonarCloud CI reports. Remediate issues by updating, pinning, or patching dependencies as needed.
 
 ## 🎨 Code Style
 

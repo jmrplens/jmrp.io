@@ -11,6 +11,7 @@ interface Props {
 }
 
 const { method, path, description, auth = false } = Astro.props;
+const hasContent = Astro.slots.has("default");
 
 const methodColors: Record<Props["method"], string> = {
   GET: "method-get",
@@ -40,9 +41,13 @@ const methodColors: Record<Props["method"], string> = {
 
   {description && <p class="ae-description">{description}</p>}
 
-  <div class="ae-content">
-    <slot />
-  </div>
+  {
+    hasContent && (
+      <div class="ae-content">
+        <slot />
+      </div>
+    )
+  }
 </div>
 
 <style>
@@ -129,10 +134,6 @@ const methodColors: Record<Props["method"], string> = {
     line-height: 1.5;
     color: var(--color-text-muted);
     border-bottom: var(--border-1);
-  }
-
-  .ae-content:empty {
-    display: none;
   }
 
   .ae-content {

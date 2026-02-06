@@ -863,7 +863,7 @@ import YouTube from "@/components/ui/YouTube.astro";
 
 ## Internal/Utility Components
 
-These components are primarily use internally or for specific purposes:
+These components are primarily used internally or for specific purposes:
 
 - **CopyButton** - Copy-to-clipboard button (used by code components)
 - **IconDetector** - Icon rendering helper

@@ -37,6 +37,7 @@ test.describe("Tabs & Code Block Accessibility", () => {
     await page.keyboard.press("ArrowLeft");
     await expect(inputs.nth(0)).toBeChecked();
     await expect(panels.nth(0)).toBeVisible();
+    await expect(panels.nth(1)).toBeHidden();
   });
 
   test("FileContent Focus Navigation (No Ghost Focus)", async ({ page }) => {

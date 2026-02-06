@@ -68,7 +68,8 @@ if (!ariaLabel) {
   plainText = fullText.length > 50 ? fullText.slice(0, 50) + "..." : fullText;
 }
 
-// Include uuid to ensure uniqueness when same file appears multiple times
+// Include short uuid suffix in aria-label to ensure landmark uniqueness
+// when same file with similar content appears multiple times on a page
 const finalAriaLabel = ariaLabel || `${filename} (${uuid}) - ${plainText}`;
 
 // If language is specified, extract raw code for Shiki re-rendering
@@ -148,7 +149,7 @@ if (language) {
             aria-readonly="true"
             aria-multiline="true"
             tabindex="0"
-            aria-label={`Code content for ${filename}`}
+            aria-label={`Code content for ${filename} (${uuid})`}
             class="file-code-container"
           >
             {useCustomHighlighting ? (
