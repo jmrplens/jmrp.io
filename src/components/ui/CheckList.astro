@@ -98,30 +98,46 @@ const { title } = Astro.props;
   }
 
   /* Light mode adjustments for WCAG AA contrast */
-  :root[data-theme="light"] .checklist-items :global(li[data-check="check"]::before),
-  :root[data-theme="light"] .checklist-items :global(li:not([data-check])::before) {
+  :root[data-theme="light"]
+    .checklist-items
+    :global(li[data-check="check"]::before),
+  :root[data-theme="light"]
+    .checklist-items
+    :global(li:not([data-check])::before) {
     color: #065f46; /* emerald-800 */
   }
 
-  :root[data-theme="light"] .checklist-items :global(li[data-check="cross"]::before) {
+  :root[data-theme="light"]
+    .checklist-items
+    :global(li[data-check="cross"]::before) {
     color: #991b1b; /* red-800 */
   }
 
-  :root[data-theme="light"] .checklist-items :global(li[data-check="warning"]::before) {
+  :root[data-theme="light"]
+    .checklist-items
+    :global(li[data-check="warning"]::before) {
     color: #92400e; /* amber-800 */
   }
 
   @media (prefers-color-scheme: light) {
-    :root:not([data-theme="dark"]) .checklist-items :global(li[data-check="check"]::before),
-    :root:not([data-theme="dark"]) .checklist-items :global(li:not([data-check])::before) {
+    :root:not([data-theme="dark"])
+      .checklist-items
+      :global(li[data-check="check"]::before),
+    :root:not([data-theme="dark"])
+      .checklist-items
+      :global(li:not([data-check])::before) {
       color: #065f46;
     }
 
-    :root:not([data-theme="dark"]) .checklist-items :global(li[data-check="cross"]::before) {
+    :root:not([data-theme="dark"])
+      .checklist-items
+      :global(li[data-check="cross"]::before) {
       color: #991b1b;
     }
 
-    :root:not([data-theme="dark"]) .checklist-items :global(li[data-check="warning"]::before) {
+    :root:not([data-theme="dark"])
+      .checklist-items
+      :global(li[data-check="warning"]::before) {
       color: #92400e;
     }
   }
