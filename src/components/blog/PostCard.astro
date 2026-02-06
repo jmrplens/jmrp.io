@@ -44,7 +44,11 @@ const { post, loading = "lazy", fetchpriority = "auto" } = Astro.props;
       </time>
       {
         post.data.tags && (
-          <ul class="tags">
+          /* eslint-disable-next-line astro/jsx-a11y/no-redundant-roles -- Safari VoiceOver needs role=list when list-style:none */
+          <ul
+            class="tags"
+            role="list"
+          >
             {post.data.tags.slice(0, 3).map((tag) => (
               <li>
                 <a

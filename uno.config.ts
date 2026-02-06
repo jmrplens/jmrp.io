@@ -64,7 +64,15 @@ export default defineConfig({
     "i-mdi:circle-medium",
     "i-mdi:check-circle",
     "i-mdi:alert-circle",
+    "i-mdi:close-circle",
+    "i-mdi:help-circle",
     "i-mdi:star",
+    // BrowserSupport component icons
+    "i-logos:chrome",
+    "i-logos:firefox",
+    "i-logos:safari",
+    "i-logos:microsoft-edge",
+    "i-logos:opera",
   ],
   presets: [
     presetWind4({

@@ -95,7 +95,6 @@ export async function finalizeCspConfig(
     "connect-src 'self' https://api.github.com https://cloudflareinsights.com https://*.cloudflareinsights.com",
     "media-src 'self'",
     "manifest-src 'self'",
-    "prefetch-src 'self'",
     "frame-src 'none'",
     "object-src 'none'",
     "base-uri 'self'",

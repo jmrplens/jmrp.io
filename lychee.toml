@@ -27,6 +27,7 @@ exclude = [
     # Blocked bots or auth required
     'linkedin\.com',
     'cloudflare\.com',
+    'trevorcox\.me',
     'scholar\.google\.com',
     'scholar\.google\.es',
     'youtube\.com/embed/',

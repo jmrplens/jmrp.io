@@ -21,7 +21,7 @@ interface Props {
 const { class: className } = Astro.props;
 
 // Render slot content to extract labels from TabPanel children
-const slotContent = await Astro.slots.render("default");
+const slotContent = (await Astro.slots.render("default")) || "";
 
 // Use Cheerio to parse the HTML content for robust attribute extraction
 const $ = cheerio.load(slotContent, { xmlMode: false });
@@ -70,7 +70,7 @@ $(".tab-panel").each((index, el) => {
   $el.attr("aria-labelledby", labelId);
 });
 
-const processedSlotContent = $.html();
+const processedSlotContent = $("body").html() || "";
 
 // Generate consolidated CSS for this instance
 const instanceCss = labels
@@ -92,7 +92,7 @@ const instanceCss = labels
         }
 
         /* Focus styles for accessibility - highlight label when hidden radio is focused */
-        .tabs-container[data-tabs-id="${uniqueId}"] #tab-${uniqueId}-${index}:focus ~ .tab-headers > .tab-label:nth-child(${index + 1}) {
+        .tabs-container[data-tabs-id="${uniqueId}"] #tab-${uniqueId}-${index}:focus-visible ~ .tab-headers > .tab-label:nth-child(${index + 1}) {
           outline: 2px solid var(--color-primary);
           outline-offset: -2px;
           background: rgb(255 255 255 / 2%);

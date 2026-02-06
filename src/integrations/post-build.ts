@@ -434,13 +434,13 @@ function clearNginxCache(
   }
 
   // Optimize: Only clear the 'jmrp_cache' dedicated to jmrp.io
-  // instead of wiping the entire nginx cache or sharing generic_cache.
+  // instead of wiping the entire nginx cache.
   const targetCachePath = path.join(systemNginxCachePath, "jmrp_cache");
 
   if (fs.existsSync(targetCachePath)) {
     logger.info(`Clearing specific Nginx cache: [${targetCachePath}]...`);
 
-    // We use -mindepth 1 to delete everything INSIDE generic_cache, but keep the folder itself
+    // We use -mindepth 1 to delete everything INSIDE jmrp_cache, but keep the folder itself
     const clearResult = spawnSync(
       "sudo",
       ["find", targetCachePath, "-mindepth", "1", "-delete"],

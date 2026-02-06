@@ -58,12 +58,18 @@ const supportConfig: Record<
     label: "Unknown",
   },
 };
+
+// Generate unique ID for accessibility
+const uniqueId = `bs-${crypto.randomUUID().slice(0, 8)}`;
 ---
 
-<section class="browser-support">
+<section
+  class="browser-support"
+  aria-labelledby={uniqueId}
+>
   <div
     class="bs-title"
-    id="bs-title"
+    id={uniqueId}
   >
     {title}
   </div>
