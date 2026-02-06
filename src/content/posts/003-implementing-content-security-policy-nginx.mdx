@@ -1110,14 +1110,14 @@ eval(userInput);                         // Remote code execution
 
 ### How Trusted Types Work
 
-<Mermaid caption="Trusted Types enforce sanitization at DOM sinks" maxWidth="750px">
+<Mermaid caption="Trusted Types enforce sanitization at DOM sinks" maxWidth="100%">
 ```mermaid-render
 flowchart LR
     %% Without Trusted Types (top row)
-    A1["🚫 User Input"] --> B1["innerHTML"]:::danger --> C1["XSS Executed"]:::danger
+    A1["User Input"] --> B1["innerHTML"]:::danger --> C1["XSS Executed"]:::danger
     
     %% With Trusted Types (bottom row)  
-    A2["✅ User Input"] --> D2["Sanitizer Policy"]:::cspTrusted --> E2["TrustedHTML"]:::cspTrusted --> B2["innerHTML"]:::success --> C2["Safe"]:::success
+    A2["User Input"] --> D2["Sanitizer Policy"]:::cspTrusted --> E2["TrustedHTML"]:::cspTrusted --> B2["innerHTML"]:::success --> C2["Safe"]:::success
 ```
 </Mermaid>
 
