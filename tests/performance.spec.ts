@@ -143,9 +143,9 @@ test.describe("Performance Optimizations", () => {
         const style = getComputedStyle(el);
         const animationName = style.animationName;
         const animationDuration = style.animationDuration;
-        const transitionDuration = style.transitionDuration;
 
         // Check if element has animation that's not disabled
+        // Long transitions are acceptable as they naturally occur with CSS toggle effects
         if (
           animationName !== "none" &&
           animationDuration !== "0s" &&
@@ -154,16 +154,6 @@ test.describe("Performance Optimizations", () => {
           animatedWithMotion.push(
             `${el.tagName}.${el.className}: animation=${animationName} duration=${animationDuration}`,
           );
-        }
-
-        // Check if element has long transitions
-        // Allow very short transitions as they're usually acceptable
-        // Only flag animations > 300ms
-        if (
-          transitionDuration !== "0s" &&
-          Number.parseFloat(transitionDuration) > 0.3
-        ) {
-          // This is informational only - captured in animatedWithMotion
         }
       });
 

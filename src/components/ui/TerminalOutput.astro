@@ -11,7 +11,7 @@
  *   Package installed successfully.
  * </TerminalOutput>
  */
-import { createHash } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 
 interface Props {
   title?: string;
@@ -23,15 +23,16 @@ const { title, ariaLabel } = Astro.props;
 const slotContent = await Astro.slots.render("default");
 const trimmedContent = slotContent.trim();
 
-// Generate unique ID from content hash for deterministic SSR
+// Generate unique ID with random entropy to avoid collisions with identical content
+const entropy = randomBytes(4).toString("hex");
 const uuid = createHash("sha256")
-  .update(`terminal-${title || ""}-${trimmedContent}`)
+  .update(`terminal-${title || ""}-${trimmedContent}-${entropy}`)
   .digest("hex")
   .slice(0, 8);
 
+// Use descriptive fallback without uuid (uuid is not meaningful to screen readers)
 const finalAriaLabel =
-  ariaLabel ||
-  (title ? `Terminal Output: ${title}` : `Terminal Output (${uuid})`);
+  ariaLabel || (title ? `Terminal Output: ${title}` : "Terminal Output");
 ---
 
 <section

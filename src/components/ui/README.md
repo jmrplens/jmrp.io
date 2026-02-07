@@ -46,8 +46,9 @@ Collapsible executive summary box for quick takeaways at the start of long secti
 import TLDRSummary from "@/components/ui/TLDRSummary.astro";
 
 <TLDRSummary title="Key Points">
-  - CSP helps prevent XSS attacks - Start with
-  `Content-Security-Policy-Report-Only` - Use nonces for inline scripts
+  - CSP helps prevent XSS attacks
+  - Start with `Content-Security-Policy-Report-Only`
+  - Use nonces for inline scripts
 </TLDRSummary>
 ```
 

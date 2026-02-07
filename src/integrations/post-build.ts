@@ -6,7 +6,9 @@
  */
 
 import { spawnSync } from "node:child_process";
+import crypto from "node:crypto";
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -138,12 +140,13 @@ function validateNginxPath(systemNginxPath: string) {
  */
 function fixPermissions(distDir: string, logger: AstroIntegrationLogger) {
   logger.info(`Fixing permissions for [${distDir}]...`);
+  const secureOpts = createSecureSpawnOptions();
   try {
     // Set ownership to www-data:www-data
     const chownResult = spawnSync(
       "sudo",
       ["chown", "-R", "www-data:www-data", distDir],
-      { stdio: "inherit" },
+      secureOpts,
     );
     if (chownResult.error || chownResult.status !== 0) {
       const errorMsg =
@@ -155,7 +158,7 @@ function fixPermissions(distDir: string, logger: AstroIntegrationLogger) {
     const chmodDirResult = spawnSync(
       "sudo",
       ["find", distDir, "-type", "d", "-exec", "chmod", "755", "{}", "+"],
-      { stdio: "inherit" },
+      secureOpts,
     );
     if (chmodDirResult.error || chmodDirResult.status !== 0) {
       const errorMsg =
@@ -167,7 +170,7 @@ function fixPermissions(distDir: string, logger: AstroIntegrationLogger) {
     const chmodFileResult = spawnSync(
       "sudo",
       ["find", distDir, "-type", "f", "-exec", "chmod", "644", "{}", "+"],
-      { stdio: "inherit" },
+      secureOpts,
     );
     if (chmodFileResult.error || chmodFileResult.status !== 0) {
       const errorMsg =
@@ -177,8 +180,9 @@ function fixPermissions(distDir: string, logger: AstroIntegrationLogger) {
 
     logger.info("✓ Permissions fixed (www-data:www-data, 755/644).");
   } catch (error) {
-    logger.warn("⚠ Failed to fix permissions.");
-    logger.warn(error instanceof Error ? error.message : String(error));
+    // Permission failures should fail the build, not just warn
+    logger.error("Failed to fix permissions.");
+    throw error instanceof Error ? error : new Error(String(error));
   }
 }
 
@@ -276,11 +280,13 @@ function performNginxDeployment(
       originalAssetsContent = fs.readFileSync(systemNginxAssetsPath);
     }
 
+    const secureOpts = createSecureSpawnOptions();
+
     // Use sudo to copy files since Nginx path usually requires root privileges
     const copyResult = spawnSync(
       "sudo",
       ["cp", generatedPath, systemNginxPath],
-      { stdio: "inherit" },
+      secureOpts,
     );
     if (copyResult.error || copyResult.status !== 0) {
       const errorMsg =
@@ -297,7 +303,7 @@ function performNginxDeployment(
       const copyAssetsResult = spawnSync(
         "sudo",
         ["cp", generatedAssetsPath, systemNginxAssetsPath],
-        { stdio: "inherit" },
+        secureOpts,
       );
       if (copyAssetsResult.error || copyAssetsResult.status !== 0) {
         const errorMsg =
@@ -364,6 +370,20 @@ function createSecureExecOptions(timeout: number) {
     stdio: "inherit" as const,
     timeout,
     env: secureEnv,
+  };
+}
+
+/**
+ * Creates secure spawn options without timeout for simple operations.
+ * Uses sanitized PATH to mitigate PATH injection risks.
+ */
+function createSecureSpawnOptions() {
+  return {
+    stdio: "inherit" as const,
+    env: {
+      ...process.env,
+      PATH: DEFAULT_SECURE_PATH,
+    },
   };
 }
 
@@ -456,13 +476,13 @@ function clearNginxCache(
     }
     logger.info(`Clearing specific Nginx cache: [${targetCachePath}]...`);
 
+    const secureOpts = createSecureSpawnOptions();
+
     // We use -mindepth 1 to delete everything INSIDE jmrp_cache, but keep the folder itself
     const clearResult = spawnSync(
       "sudo",
       ["find", targetCachePath, "-mindepth", "1", "-delete"],
-      {
-        stdio: "inherit",
-      },
+      secureOpts,
     ); // NOSONAR
 
     if (clearResult.error || clearResult.status !== 0) {
@@ -481,7 +501,7 @@ function clearNginxCache(
   const chownResult = spawnSync(
     "sudo",
     ["chown", "-R", "www-data:www-data", systemNginxCachePath],
-    { stdio: "inherit" },
+    createSecureSpawnOptions(),
   );
   if (chownResult.error || chownResult.status !== 0) {
     const errorMsg =
@@ -550,6 +570,7 @@ function handleNginxValidationError(
 
 /**
  * Performs the file rollback for both main and assets config using sudo.
+ * Uses cryptographically random temp filenames and secure spawn options.
  */
 function performRollback(
   systemNginxPath: string,
@@ -560,8 +581,13 @@ function performRollback(
     created: boolean;
   },
 ) {
-  // Write to temp directory first, then sudo mv to privileged path
-  const tempPath = `/tmp/nginx-rollback-${Date.now()}.bak`;
+  const secureOpts = createSecureSpawnOptions();
+
+  // Use OS temp dir with cryptographically random suffix
+  const tempPath = path.join(
+    os.tmpdir(),
+    `nginx-rollback-${crypto.randomUUID()}.bak`,
+  );
   try {
     fs.writeFileSync(tempPath, originalContent);
   } catch (error) {
@@ -570,7 +596,11 @@ function performRollback(
     );
   }
 
-  const mvResult = spawnSync("sudo", ["mv", tempPath, systemNginxPath]); // NOSONAR
+  const mvResult = spawnSync(
+    "sudo",
+    ["mv", tempPath, systemNginxPath],
+    secureOpts,
+  ); // NOSONAR
   if (mvResult.status !== 0 || mvResult.error) {
     throw new Error(
       `Rollback failed: Could not restore ${systemNginxPath}. Stderr: ${mvResult.stderr?.toString()}`,
@@ -580,14 +610,21 @@ function performRollback(
   if (!assetsRollback) return;
 
   if (assetsRollback.created) {
-    const rmResult = spawnSync("sudo", ["rm", "-f", assetsRollback.path]); // NOSONAR
+    const rmResult = spawnSync(
+      "sudo",
+      ["rm", "-f", assetsRollback.path],
+      secureOpts,
+    ); // NOSONAR
     if (rmResult.status !== 0 || rmResult.error) {
       throw new Error(
         `Rollback failed: Could not remove created assets file ${assetsRollback.path}. Stderr: ${rmResult.stderr?.toString()}`,
       );
     }
   } else if (assetsRollback.originalContent !== null) {
-    const tempAssetsPath = `/tmp/nginx-assets-rollback-${Date.now()}.bak`;
+    const tempAssetsPath = path.join(
+      os.tmpdir(),
+      `nginx-assets-rollback-${crypto.randomUUID()}.bak`,
+    );
     try {
       fs.writeFileSync(tempAssetsPath, assetsRollback.originalContent);
     } catch (error) {
@@ -595,11 +632,11 @@ function performRollback(
         `Rollback failed: Could not write assets backup file ${tempAssetsPath}. Error: ${String(error)}`,
       );
     }
-    const mvAssetsResult = spawnSync("sudo", [
-      "mv",
-      tempAssetsPath,
-      assetsRollback.path,
-    ]); // NOSONAR
+    const mvAssetsResult = spawnSync(
+      "sudo",
+      ["mv", tempAssetsPath, assetsRollback.path],
+      secureOpts,
+    ); // NOSONAR
     if (mvAssetsResult.status !== 0 || mvAssetsResult.error) {
       throw new Error(
         `Rollback failed: Could not restore assets file ${assetsRollback.path}. Stderr: ${mvAssetsResult.stderr?.toString()}`,

@@ -273,7 +273,7 @@ const groupedDirectives = categories.map((cat) => ({
           }
 
           // Track nonce usage
-          if (name === "script-src" && value.includes("nonce")) {
+          if (name === "script-src" && value?.includes("nonce")) {
             hasNonce = true;
           }
 
@@ -563,6 +563,11 @@ const groupedDirectives = categories.map((cat) => ({
   .csp-copy-btn.copied {
     color: #10b981;
     border-color: #10b981;
+  }
+
+  .csp-copy-btn.error {
+    color: #ef4444;
+    border-color: #ef4444;
   }
 
   .csp-output {

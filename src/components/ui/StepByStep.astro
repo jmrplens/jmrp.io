@@ -4,7 +4,7 @@
  * Renders a step-by-step guide with numbered steps and visual connectors.
  * Uses padding-based layout with absolute positioned circle to avoid grid issues.
  */
-import { createHash } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 
 interface Props {
   title?: string;
@@ -12,9 +12,10 @@ interface Props {
 
 const { title } = Astro.props;
 
-// Generate unique ID based on title for deterministic SSR output
+// Generate unique ID with random entropy to avoid collisions when same title appears multiple times
+const entropy = randomBytes(4).toString("hex");
 const uniqueId = createHash("sha256")
-  .update(`sbs-${title || "untitled"}`)
+  .update(`sbs-${title || "untitled"}-${entropy}`)
   .digest("hex")
   .slice(0, 8);
 ---

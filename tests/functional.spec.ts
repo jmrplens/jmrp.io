@@ -237,10 +237,14 @@ test.describe("Security & Best Practices", () => {
           // Skip purely decorative images (aria-hidden or role="none")
           const isDecorative = ariaHidden === "true" || role === "none";
 
-          // Images should have alt attribute
-          expect
-            .soft(alt !== null, `Image ${src} should have an alt attribute`)
-            .toBe(true);
+          // Decorative images may have empty or missing alt - only require alt for non-decorative
+          // eslint-disable-next-line playwright/no-conditional-in-test -- Required for decorative image check
+          if (!isDecorative) {
+            // eslint-disable-next-line playwright/no-conditional-expect -- Decorative image exclusion
+            expect
+              .soft(alt !== null, `Image ${src} should have an alt attribute`)
+              .toBe(true);
+          }
 
           // Non-decorative images should have meaningful alt (not just filename patterns)
           // eslint-disable-next-line playwright/no-conditional-in-test -- Required for decorative image check

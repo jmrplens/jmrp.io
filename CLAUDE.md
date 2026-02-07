@@ -25,7 +25,7 @@
 
 ## Tech Stack
 
-> **Last verified**: January 2025 — Run `pnpm outdated` to check for updates.
+> **Last verified**: February 2026 — Run `pnpm outdated` to check for updates.
 
 | Layer           | Technology              | Version        |
 | --------------- | ----------------------- | -------------- |
