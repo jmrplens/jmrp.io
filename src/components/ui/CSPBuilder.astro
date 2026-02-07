@@ -238,10 +238,12 @@ const groupedDirectives = categories.map((cat) => ({
   </div>
 </div>
 
-<script is:inline define:vars={{ uniqueId, directives }}>
+<script is:inline define:vars={{ uniqueId }}>
   // CSP Builder interactive functionality
-  const container = document.querySelector(`[data-csp-id="${uniqueId}"]`);
-  if (container) {
+  (function () {
+    const container = document.querySelector(`[data-csp-id="${uniqueId}"]`);
+    if (!container) return;
+
     const checkboxes = container.querySelectorAll(".csp-checkbox");
     const output = document.getElementById(`${uniqueId}-output`);
     const rating = document.getElementById(`${uniqueId}-rating`);
@@ -362,7 +364,7 @@ const groupedDirectives = categories.map((cat) => ({
 
     // Initial update
     updatePolicy();
-  }
+  })();
 </script>
 
 <style>

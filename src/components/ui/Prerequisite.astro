@@ -61,11 +61,17 @@ const { title = "Prerequisites" } = Astro.props;
   }
 
   /* Style for skill/tool lists */
-  .prereq-content :global(ul),
+  .prereq-content :global(ul) {
+    padding: 0;
+    margin: 0;
+    list-style: none;
+  }
+
   .prereq-content :global(ol) {
     padding: 0;
     margin: 0;
     list-style: none;
+    counter-reset: prereq-counter;
   }
 
   .prereq-content :global(li) {
@@ -77,11 +83,19 @@ const { title = "Prerequisites" } = Astro.props;
     color: var(--color-text);
   }
 
-  .prereq-content :global(li::before) {
+  .prereq-content :global(ul li::before) {
     flex-shrink: 0;
     font-weight: var(--fw-bold);
     color: var(--color-primary);
     content: "•";
+  }
+
+  .prereq-content :global(ol li::before) {
+    flex-shrink: 0;
+    font-weight: var(--fw-bold);
+    color: var(--color-primary);
+    content: counter(prereq-counter) ".";
+    counter-increment: prereq-counter;
   }
 
   .prereq-content :global(li strong) {

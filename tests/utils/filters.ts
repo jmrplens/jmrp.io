@@ -73,17 +73,13 @@ export function shouldIgnoreError(text: string): boolean {
 
   // Generic "Failed to load resource" errors with 404 status
   // These come from external links (author pages, etc.) - not app bugs
-  // Only suppress if likely external (no localhost/app URLs in context)
+  // This exact message appears without URL context, so we can only suppress
+  // if we already detected it's an external resource 404
   const isGeneric404 =
     text ===
-      "Failed to load resource: the server responded with a status of 404 (Not Found)" &&
-    isExternalResource404;
+    "Failed to load resource: the server responded with a status of 404 (Not Found)";
 
-  if (
-    text ===
-      "Failed to load resource: the server responded with a status of 404 (Not Found)" &&
-    !isExternalResource404
-  ) {
+  if (isGeneric404 && !isExternalResource404) {
     console.warn("[Test Filter] Suppressed generic 404 - may be app resource");
   }
 
@@ -92,7 +88,8 @@ export function shouldIgnoreError(text: string): boolean {
     isExpectedCorsError ||
     isResource404 ||
     isExternalResource404 ||
-    isGeneric404 ||
+    // Suppress generic 404 only when we have external resource context
+    (isGeneric404 && isExternalResource404) ||
     // Only ignore generic failures if likely related to localhost/CORS
     (text.includes("net::ERR_FAILED") &&
       (text.includes("127.0.0.1") || text.includes("localhost")))

@@ -220,8 +220,8 @@ const displayTitle = title || current.label;
 
   .sn-alt-code {
     padding: 0.125rem 0.375rem;
-    color: #065f46; /* emerald-800 for WCAG AA (~6.5:1) */
-    background: rgb(16 185 129 / 15%);
+    color: var(--sn-text-color, #065f46);
+    background: rgb(var(--sn-bg-color, 16 185 129) / 15%);
     border-radius: var(--radius-sm);
   }
 

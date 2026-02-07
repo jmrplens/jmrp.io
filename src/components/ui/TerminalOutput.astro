@@ -11,6 +11,8 @@
  *   Package installed successfully.
  * </TerminalOutput>
  */
+import { createHash } from "node:crypto";
+
 interface Props {
   title?: string;
   ariaLabel?: string;
@@ -21,8 +23,15 @@ const { title, ariaLabel } = Astro.props;
 const slotContent = await Astro.slots.render("default");
 const trimmedContent = slotContent.trim();
 
+// Generate unique ID from content hash for deterministic SSR
+const uuid = createHash("sha256")
+  .update(`terminal-${title || ""}-${trimmedContent}`)
+  .digest("hex")
+  .slice(0, 8);
+
 const finalAriaLabel =
-  ariaLabel || (title ? `Terminal Output: ${title}` : "Terminal Output");
+  ariaLabel ||
+  (title ? `Terminal Output: ${title}` : `Terminal Output (${uuid})`);
 ---
 
 <section
@@ -49,7 +58,9 @@ const finalAriaLabel =
     class="output-body"
     role="group"
     tabindex="0"
-    aria-label="Scrollable terminal output"
+    aria-label={title
+      ? `Scrollable terminal output for ${title}`
+      : `Scrollable terminal output (${uuid})`}
   >
     {/* eslint-enable astro/jsx-a11y/no-noninteractive-tabindex */}
     <div

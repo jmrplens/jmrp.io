@@ -465,8 +465,12 @@ function clearNginxCache(
       },
     ); // NOSONAR
 
-    if (clearResult.status !== 0) {
-      logger.warn(`Failed to clear Nginx cache at ${targetCachePath}`);
+    if (clearResult.error || clearResult.status !== 0) {
+      const errorMsg =
+        clearResult.error?.message || `exit code ${clearResult.status}`;
+      logger.warn(
+        `Failed to clear Nginx cache at ${targetCachePath}: ${errorMsg}`,
+      );
     }
   } else {
     logger.info(`Cache folder ${targetCachePath} not found, skipping clear.`);
@@ -556,8 +560,8 @@ function performRollback(
     created: boolean;
   },
 ) {
-  // Temporary file to write original content then move with sudo
-  const tempPath = systemNginxPath + ".bak";
+  // Write to temp directory first, then sudo mv to privileged path
+  const tempPath = `/tmp/nginx-rollback-${Date.now()}.bak`;
   try {
     fs.writeFileSync(tempPath, originalContent);
   } catch (error) {
@@ -583,7 +587,7 @@ function performRollback(
       );
     }
   } else if (assetsRollback.originalContent !== null) {
-    const tempAssetsPath = assetsRollback.path + ".bak";
+    const tempAssetsPath = `/tmp/nginx-assets-rollback-${Date.now()}.bak`;
     try {
       fs.writeFileSync(tempAssetsPath, assetsRollback.originalContent);
     } catch (error) {

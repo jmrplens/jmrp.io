@@ -25,6 +25,8 @@
 
 ## Tech Stack
 
+> **Last verified**: January 2025 — Run `pnpm outdated` to check for updates.
+
 | Layer           | Technology              | Version        |
 | --------------- | ----------------------- | -------------- |
 | Framework       | Astro                   | 6.0.0-beta.5   |

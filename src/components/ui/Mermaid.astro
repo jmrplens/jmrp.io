@@ -94,6 +94,11 @@ const computedAriaLabel =
     --mermaid-muted-stroke: #9ca3af;
     --mermaid-muted-text: #374151;
 
+    /* Attacker Node Colors */
+    --mermaid-attacker-fill: #450a0a;
+    --mermaid-attacker-stroke: #ef4444;
+    --mermaid-attacker-text: #fca5a5;
+
     /* Pie Chart Colors */
     --mermaid-pie-1: #0969da;
     --mermaid-pie-2: #1a7f37;
@@ -134,6 +139,11 @@ const computedAriaLabel =
     --mermaid-muted-fill: #484f58;
     --mermaid-muted-stroke: #6e7681;
     --mermaid-muted-text: #c9d1d9;
+
+    /* Attacker Node Colors (Dark) */
+    --mermaid-attacker-fill: #7f1d1d;
+    --mermaid-attacker-stroke: #f87171;
+    --mermaid-attacker-text: #fee2e2;
 
     /* Pie Chart Colors */
     --mermaid-pie-1: #2f81f7;
@@ -507,14 +517,14 @@ const computedAriaLabel =
   .mermaid-content :global(.node.attacker > rect),
   .mermaid-content :global(.node.attacker > polygon),
   .mermaid-content :global(.node.attacker > circle) {
-    fill: #450a0a !important;
-    stroke: #ef4444 !important;
+    fill: var(--mermaid-attacker-fill) !important;
+    stroke: var(--mermaid-attacker-stroke) !important;
     stroke-width: 2px !important;
     stroke-dasharray: 5 3 !important;
   }
 
   .mermaid-content :global(.node.attacker .nodeLabel) {
-    color: #fca5a5 !important;
+    color: var(--mermaid-attacker-text) !important;
   }
 
   /* Nonce Node (special styling for nonce values) */

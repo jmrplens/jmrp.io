@@ -12,14 +12,14 @@ interface Props {
 
 const { title } = Astro.props;
 
-// Generate unique ID to avoid duplicates when multiple instances are rendered
+// Generate unique ID based on title for deterministic SSR output
 const uniqueId = createHash("sha256")
-  .update(`sbs-${title || "untitled"}-${Date.now()}`)
+  .update(`sbs-${title || "untitled"}`)
   .digest("hex")
   .slice(0, 8);
 ---
 
-<nav
+<section
   class="step-by-step"
   aria-label={title || "Step-by-step guide"}
 >
@@ -36,7 +36,7 @@ const uniqueId = createHash("sha256")
   <ol class="sbs-steps">
     <slot />
   </ol>
-</nav>
+</section>
 
 <style is:global>
   .step-by-step {

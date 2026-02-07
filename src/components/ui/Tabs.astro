@@ -40,11 +40,11 @@ $(".tab-panel").each((_, el) => {
 // Fallback if no labels found (shouldn't happen with proper TabPanel usage)
 if (labels.length === 0) {
   console.warn(
-    `[Tabs] No TabPanel labels found in slot content. Ensure <TabPanel> components are used with a "label" prop.\nPreview: ${slotContent.slice(0, 100)}...`,
+    `[Tabs] No TabPanel labels found in slot content. Ensure <TabPanel> components are used with a "label" prop.`,
   );
 }
 
-// Generate deterministic unique ID with entropy
+// Generate unique ID with random entropy for collision avoidance
 const entropy = crypto.getRandomValues(new Uint32Array(1))[0].toString(36);
 
 const labelSlug =

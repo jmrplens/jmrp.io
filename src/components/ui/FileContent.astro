@@ -47,10 +47,11 @@ const finalIcon = icon || getIconForFile(filename);
 const filenameFormatted = filename.replaceAll("/", "/&#8203;");
 
 const slotContent = await Astro.slots.render("default");
-// Remove tabindex from inner content to prevent double focus (wrapper handles it)
+// Remove tabindex from wrapper-level elements to prevent double focus (wrapper handles it)
+// Only target HTML tags, not code samples that might contain tabindex examples
 const trimmedContent = slotContent
   .trim()
-  .replaceAll(/tabindex=["']?0["']?/g, "");
+  .replaceAll(/(<[^>]+)\s+tabindex=["']?0["']?/g, "$1");
 const uuid = createHash("sha256")
   .update(`${filename}-${trimmedContent}`)
   .digest("hex")
@@ -197,7 +198,7 @@ if (language) {
           aria-readonly="true"
           aria-multiline="true"
           tabindex="0"
-          aria-label={`Code content for ${filename}`}
+          aria-label={`Code content for ${filename} (${uuid})`}
           class="file-code-container"
         >
           {useCustomHighlighting ? (
