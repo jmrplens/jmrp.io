@@ -364,7 +364,13 @@ test.describe("Resource Loading", () => {
         getComputedStyle(el).getPropertyValue("aspect-ratio"),
       );
 
+      // Responsive images (width:100%, height:auto) are valid if they have
+      // width/height HTML attributes - browser calculates aspect ratio from those
+      const isResponsiveWithAttributes =
+        width && height && computedWidth?.includes("%");
+
       const hasComputedDimensions =
+        isResponsiveWithAttributes ||
         (computedWidth !== "auto" &&
           computedWidth !== "0px" &&
           computedHeight !== "auto" &&

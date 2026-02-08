@@ -55,6 +55,7 @@
 │   │   └── site_config/   # Site settings (YAML)
 │   ├── content.config.ts  # Collection schemas (Zod)
 │   ├── components/
+│   │   ├── apps/          # Interactive applications (CSPBuilder, HashCalculator)
 │   │   ├── ui/            # 37+ reusable UI components
 │   │   ├── common/        # Shared components
 │   │   └── sections/      # Page sections

@@ -1044,10 +1044,16 @@ const groupedDirectives = categories.map((cat) => ({
 
       value = value.trim();
 
-      // Validate: should be a domain or scheme
-      if (!value.match(/^(https?:\/\/)?[\w.-]+(\.\w+)?(\/\*)?$|^'[\w-]+'$/)) {
-        // Allow 'keyword' patterns and domains
-        if (!value.startsWith("'") && !value.includes("://")) {
+      // CSP values that should NOT be prefixed with https://
+      const isQuotedKeyword = value.startsWith("'") && value.endsWith("'"); // 'self', 'unsafe-inline', 'nonce-xxx'
+      const isSchemeSource = /^[a-z][-a-z0-9+.]*:$/i.test(value); // data:, blob:, https:
+      const hasScheme = value.includes("://"); // https://example.com
+      const isWildcard = value.startsWith("*."); // *.example.com
+
+      // Only prefix plain hostnames without scheme
+      if (!isQuotedKeyword && !isSchemeSource && !hasScheme && !isWildcard) {
+        // Looks like a bare hostname (e.g., "example.com" or "cdn.example.org")
+        if (/^[\w.-]+\.\w+$/.test(value)) {
           value = `https://${value}`;
         }
       }

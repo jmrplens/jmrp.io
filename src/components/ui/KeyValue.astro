@@ -6,10 +6,10 @@
  */
 interface Props {
   title?: string;
-  items: Array<{ key: string; value: string; description?: string }>;
+  items?: Array<{ key: string; value: string; description?: string }>;
 }
 
-const { title, items } = Astro.props;
+const { title, items = [] } = Astro.props;
 ---
 
 <div class="key-value">

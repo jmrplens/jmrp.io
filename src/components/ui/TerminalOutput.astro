@@ -11,7 +11,6 @@
  *   Package installed successfully.
  * </TerminalOutput>
  */
-import { createHash, randomBytes } from "node:crypto";
 
 interface Props {
   title?: string;
@@ -23,14 +22,7 @@ const { title, ariaLabel } = Astro.props;
 const slotContent = await Astro.slots.render("default");
 const trimmedContent = slotContent.trim();
 
-// Generate unique ID with random entropy to avoid collisions with identical content
-const entropy = randomBytes(4).toString("hex");
-const uuid = createHash("sha256")
-  .update(`terminal-${title || ""}-${trimmedContent}-${entropy}`)
-  .digest("hex")
-  .slice(0, 8);
-
-// Use descriptive fallback without uuid (uuid is not meaningful to screen readers)
+// Use descriptive fallback (avoid non-meaningful IDs for screen readers)
 const finalAriaLabel =
   ariaLabel || (title ? `Terminal Output: ${title}` : "Terminal Output");
 ---
@@ -61,7 +53,7 @@ const finalAriaLabel =
     tabindex="0"
     aria-label={title
       ? `Scrollable terminal output for ${title}`
-      : `Scrollable terminal output (${uuid})`}
+      : "Scrollable terminal output"}
   >
     {/* eslint-enable astro/jsx-a11y/no-noninteractive-tabindex */}
     <div

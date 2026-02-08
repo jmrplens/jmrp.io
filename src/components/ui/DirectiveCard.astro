@@ -118,8 +118,16 @@ const hasContent = Astro.slots.has("default");
     transition: color 0.2s;
   }
 
-  .dc-mdn:hover {
+  .dc-mdn:hover,
+  .dc-mdn:focus,
+  .dc-mdn:focus-visible {
     color: var(--color-primary);
+  }
+
+  .dc-mdn:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
   }
 
   .dc-mdn-icon {
