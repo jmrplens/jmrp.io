@@ -1315,6 +1315,30 @@ const groupedDirectives = categories.map((cat) => ({
     // Add listeners
     checkboxes.forEach((cb) => cb.addEventListener("change", updatePolicy));
 
+    // Add click handler for csp-item to toggle checkboxes (needed for mobile touch events)
+    const cspItems = container.querySelectorAll(".csp-item");
+    cspItems.forEach((item) => {
+      item.addEventListener("click", (e) => {
+        // Don't toggle if user clicked on a button or input inside the item
+        if (
+          e.target.closest("button") ||
+          e.target.closest("input") ||
+          e.target.tagName === "BUTTON" ||
+          e.target.tagName === "INPUT"
+        ) {
+          return;
+        }
+
+        // Find the associated checkbox
+        const checkbox = item.querySelector(".csp-checkbox");
+        if (checkbox && !checkbox.disabled) {
+          checkbox.checked = !checkbox.checked;
+          // Dispatch change event to trigger policy update
+          checkbox.dispatchEvent(new Event("change", { bubbles: true }));
+        }
+      });
+    });
+
     // Initial update
     updatePolicy();
   })();
