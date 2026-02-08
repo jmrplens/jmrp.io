@@ -73,17 +73,17 @@ const { beforeLabel = "Before", afterLabel = "After" } = Astro.props;
     border-radius: var(--radius-md);
   }
 
-  /* Pastel color scheme */
+  /* Pastel color scheme with WCAG AA contrast ≥4.5:1 */
   .ba-before {
     --ba-border-color: rgb(239 68 68 / 40%);
     --ba-header-bg: rgb(239 68 68 / 10%);
-    --ba-header-text: #dc2626;
+    --ba-header-text: #b91c1c; /* red-700 for WCAG AA contrast */
   }
 
   .ba-after {
     --ba-border-color: rgb(16 185 129 / 40%);
     --ba-header-bg: rgb(16 185 129 / 10%);
-    --ba-header-text: #059669;
+    --ba-header-text: #047857; /* emerald-700 for WCAG AA contrast ≥4.5:1 */
   }
 
   :root[data-theme="dark"] .ba-before {

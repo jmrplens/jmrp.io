@@ -828,6 +828,14 @@ const groupedDirectives = categories.map((cat) => ({
         });
       }
 
+      // Warning: Report-Only mode not supported for meta tags
+      if (currentFormat === "meta" && isReportOnly) {
+        warns.push({
+          type: "warning",
+          text: "Report-Only mode is not supported for meta tags. The meta tag will use Content-Security-Policy instead of Content-Security-Policy-Report-Only.",
+        });
+      }
+
       // Warning: deprecated directives
       if (checkedDirectives["report-uri"]) {
         warns.push({
@@ -887,7 +895,7 @@ const groupedDirectives = categories.map((cat) => ({
           const value = cb.dataset.value;
 
           if (name === "default-src" && value === "'none'") score += 15;
-          if (name === "script-src" && value.includes("nonce")) score += 20;
+          if (name === "script-src" && value?.includes("nonce")) score += 20;
           if (name === "object-src" && value === "'none'") score += 15;
           if (name === "base-uri" && value === "'none'") score += 10;
           if (name === "frame-ancestors") score += 10;
@@ -1044,18 +1052,31 @@ const groupedDirectives = categories.map((cat) => ({
       );
       if (!tagsContainer) return;
 
+      // Clear existing content safely
+      tagsContainer.innerHTML = "";
+
       const values = customValues[directive] || [];
-      tagsContainer.innerHTML = values
-        .map(
-          (value) =>
-            `<span class="csp-custom-tag">
-          <code>${value}</code>
-          <button type="button" class="csp-remove-tag" data-directive="${directive}" data-value="${value}">
-            <span class="i-mdi:close"></span>
-          </button>
-        </span>`,
-        )
-        .join("");
+      values.forEach((value) => {
+        const span = document.createElement("span");
+        span.className = "csp-custom-tag";
+
+        const code = document.createElement("code");
+        code.textContent = value;
+        span.appendChild(code);
+
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "csp-remove-tag";
+        button.dataset.directive = directive;
+        button.dataset.value = value;
+
+        const icon = document.createElement("span");
+        icon.className = "i-mdi:close";
+        button.appendChild(icon);
+
+        span.appendChild(button);
+        tagsContainer.appendChild(span);
+      });
 
       // Add remove listeners
       tagsContainer.querySelectorAll(".csp-remove-tag").forEach((btn) => {
@@ -1623,7 +1644,7 @@ const groupedDirectives = categories.map((cat) => ({
   }
 
   .csp-strict-badge {
-    color: #7c3aed;
+    color: #6d28d9; /* violet-700 for WCAG AA contrast */
     background: rgb(124 58 237 / 12%);
   }
 
@@ -1633,7 +1654,7 @@ const groupedDirectives = categories.map((cat) => ({
   }
 
   .csp-deprecated-badge {
-    color: #dc2626;
+    color: #b91c1c; /* red-700 for WCAG AA contrast */
     background: rgb(220 38 38 / 12%);
   }
 
@@ -1643,7 +1664,7 @@ const groupedDirectives = categories.map((cat) => ({
   }
 
   .csp-meta-badge {
-    color: #d97706;
+    color: #92400e; /* amber-800 for WCAG AA contrast */
     background: rgb(217 119 6 / 12%);
   }
 
@@ -2016,7 +2037,7 @@ const groupedDirectives = categories.map((cat) => ({
     margin-bottom: 0.5rem;
     font-size: 0.8rem;
     font-weight: var(--fw-semibold);
-    color: #d97706;
+    color: #92400e; /* amber-800 for WCAG AA contrast */
   }
 
   :root[data-theme="dark"] .csp-warnings-header {
@@ -2052,7 +2073,7 @@ const groupedDirectives = categories.map((cat) => ({
   }
 
   .csp-warning-warning span[class^="i-"] {
-    color: #d97706;
+    color: #92400e; /* amber-800 for WCAG AA contrast */
   }
 
   .csp-warning-info span[class^="i-"] {

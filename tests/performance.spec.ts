@@ -136,6 +136,19 @@ test.describe("Performance Optimizations", () => {
     // Check that CSS respects the preference
     // Elements with animations should have animation-duration: 0 or no animation
     const animatedElements = await page.evaluate(() => {
+      /**
+       * Parses a CSS duration string (e.g., "0.3s", "300ms") to seconds.
+       */
+      function parseDurationToSeconds(duration: string): number {
+        const value = Number.parseFloat(duration);
+        if (Number.isNaN(value)) return 0;
+        // CSS duration can be in seconds (s) or milliseconds (ms)
+        if (duration.includes("ms")) {
+          return value / 1000;
+        }
+        return value; // Already in seconds
+      }
+
       const elements = document.querySelectorAll("*");
       const animatedWithMotion: string[] = [];
 
@@ -146,10 +159,11 @@ test.describe("Performance Optimizations", () => {
 
         // Check if element has animation that's not disabled
         // Long transitions are acceptable as they naturally occur with CSS toggle effects
+        const durationInSeconds = parseDurationToSeconds(animationDuration);
         if (
           animationName !== "none" &&
           animationDuration !== "0s" &&
-          Number.parseFloat(animationDuration) > 0.3
+          durationInSeconds > 0.3
         ) {
           animatedWithMotion.push(
             `${el.tagName}.${el.className}: animation=${animationName} duration=${animationDuration}`,

@@ -34,10 +34,9 @@ if (import.meta.env.DEV && alternativeUrl && !alternative) {
   </div>
   <div class="dn-content">
     <p class="dn-message">
-      <code>{feature}</code> is deprecated
-      {
+      <code>{feature}</code> is deprecated{
         removalDate && (
-          <span class="dn-removal">and will be removed in {removalDate}</span>
+          <span class="dn-removal"> and will be removed in {removalDate}</span>
         )
       }.
     </p>
@@ -140,7 +139,15 @@ if (import.meta.env.DEV && alternativeUrl && !alternative) {
     text-decoration: none;
   }
 
-  .dn-alternative a:hover code {
+  .dn-alternative a:hover code,
+  .dn-alternative a:focus code,
+  .dn-alternative a:focus-visible code {
     text-decoration: underline;
+  }
+
+  .dn-alternative a:focus-visible {
+    outline: 2px solid currentcolor;
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
   }
 </style>

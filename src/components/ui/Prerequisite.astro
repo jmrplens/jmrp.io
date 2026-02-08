@@ -60,7 +60,14 @@ const { title = "Prerequisites" } = Astro.props;
     padding: 1rem;
   }
 
-  /* Style for skill/tool lists */
+  /*
+   * Style for skill/tool lists.
+   *
+   * ACCESSIBILITY NOTE: Safari/VoiceOver may drop list semantics when
+   * list-style:none is applied. If you pass a <ul> or <ol> to this component
+   * and need proper list semantics announced, add role="list" to the list
+   * element and role="listitem" to its <li> children.
+   */
   .prereq-content :global(ul) {
     padding: 0;
     margin: 0;

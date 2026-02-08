@@ -75,16 +75,19 @@ export function shouldIgnoreError(text: string): boolean {
   // These come from external links (author pages, favicons, etc.) - not app bugs
   // External resources can fail randomly and are out of our control.
   // Internal resources are validated by other means (lychee, sitemap, html-validate).
+  // Using substring match instead of exact match for robustness across browser versions
   const isGeneric404 =
-    text ===
-    "Failed to load resource: the server responded with a status of 404 (Not Found)";
+    text.includes("Failed to load resource") &&
+    text.includes("404") &&
+    !text.includes("localhost") &&
+    !text.includes("127.0.0.1");
 
   return (
     isCloudflareInsightsError(text) ||
     isExpectedCorsError ||
     isResource404 ||
     isExternalResource404 ||
-    // Suppress all generic 404s - external resources can fail randomly
+    // Suppress generic 404s - external resources can fail randomly
     // and internal resources are validated by lychee/html-validate
     isGeneric404 ||
     // Only ignore generic failures if likely related to localhost/CORS

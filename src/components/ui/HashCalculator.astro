@@ -376,7 +376,7 @@ const algorithms = [
     padding: 0.125rem 0.375rem;
     font-size: 0.65rem;
     font-weight: var(--fw-bold);
-    color: #059669;
+    color: #065f46; /* emerald-800 for WCAG AA contrast */
     text-transform: uppercase;
     letter-spacing: 0.03em;
     background: rgb(16 185 129 / 12%);
@@ -489,7 +489,7 @@ const algorithms = [
     color: #b84c4c; /* WCAG AA: ~5.2:1 contrast on white */
   }
 
-  :global(.dark) .hash-example-code :global(.hl-tag) {
+  :root[data-theme="dark"] .hash-example-code :global(.hl-tag) {
     color: #f07178; /* WCAG AA: ~5.3:1 contrast on dark */
   }
 
