@@ -1,8 +1,8 @@
 ---
 /**
  * HashCalculator Component
- * Interactive SHA-256 hash calculator for CSP inline scripts.
- * Shows how to generate hashes for Content-Security-Policy.
+ * Interactive hash calculator for CSP inline scripts.
+ * Supports SHA-256, SHA-384, and SHA-512 algorithms.
  *
  * Usage:
  * <HashCalculator
@@ -24,6 +24,12 @@ const {
 
 // Generate unique ID for this instance
 const uniqueId = `hash-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
+
+const algorithms = [
+  { id: "sha256", name: "SHA-256", recommended: true },
+  { id: "sha384", name: "SHA-384", recommended: false },
+  { id: "sha512", name: "SHA-512", recommended: false },
+];
 ---
 
 <div
@@ -57,40 +63,53 @@ const uniqueId = `hash-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
     <div class="hash-output-section">
       <div class="hash-output-header">
         <span class="i-mdi:shield-key hash-output-icon"></span>
-        <span>Generated Hash</span>
+        <span>Generated Hashes</span>
       </div>
 
       <div class="hash-results">
-        {/* SHA-256 Hash */}
-        <div class="hash-result-item">
-          <div class="hash-result-label">SHA-256 (Recommended)</div>
-          <div class="hash-result-value">
-            <code id={`${uniqueId}-sha256`}>Calculating...</code>
-            <button
-              class="hash-copy-btn"
-              type="button"
-              data-target={`${uniqueId}-sha256`}
-              aria-label="Copy SHA-256 hash"
+        {
+          algorithms.map((algo) => (
+            <div
+              class="hash-result-item"
+              data-algorithm={algo.id}
             >
-              <span class="i-mdi:content-copy"></span>
-            </button>
-          </div>
-        </div>
+              <div class="hash-result-label">
+                {algo.name}
+                {algo.recommended && (
+                  <span class="hash-recommended">Recommended</span>
+                )}
+              </div>
+              <div class="hash-result-value">
+                <code id={`${uniqueId}-${algo.id}`}>Calculating...</code>
+                <button
+                  class="hash-copy-btn"
+                  type="button"
+                  data-target={`${uniqueId}-${algo.id}`}
+                  aria-label={`Copy ${algo.name} hash`}
+                >
+                  <span class="i-mdi:content-copy" />
+                </button>
+              </div>
+            </div>
+          ))
+        }
+      </div>
 
-        {/* CSP Directive */}
-        <div class="hash-result-item">
-          <div class="hash-result-label">CSP Directive</div>
-          <div class="hash-result-value hash-result-directive">
-            <code id={`${uniqueId}-directive`}>Calculating...</code>
-            <button
-              class="hash-copy-btn"
-              type="button"
-              data-target={`${uniqueId}-directive`}
-              aria-label="Copy CSP directive"
-            >
-              <span class="i-mdi:content-copy"></span>
-            </button>
-          </div>
+      {/* CSP Directive Preview */}
+      <div class="hash-directive-section">
+        <div class="hash-directive-header">
+          <span class="hash-result-label">CSP Directive (using SHA-256)</span>
+        </div>
+        <div class="hash-result-value hash-result-directive">
+          <code id={`${uniqueId}-directive`}>Calculating...</code>
+          <button
+            class="hash-copy-btn"
+            type="button"
+            data-target={`${uniqueId}-directive`}
+            aria-label="Copy CSP directive"
+          >
+            <span class="i-mdi:content-copy"></span>
+          </button>
         </div>
       </div>
 
@@ -110,11 +129,11 @@ const uniqueId = `hash-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
           <span class="i-mdi:information" />
         </div>
         <div class="hash-explanation-text">
-          <strong>How it works:</strong> The browser calculates the SHA-256 hash
-          of your inline script content (excluding the{" "}
-          <code>&lt;script&gt;</code> tags) and compares it against the hash in
-          your CSP header. If they match, the script executes. Any change to the
-          script content—even whitespace—will change the hash.
+          <strong>How it works:</strong> The browser calculates the hash of your
+          inline script content (excluding <code>&lt;script&gt;</code> tags) and
+          compares it against the hash in your CSP header. If they match, the
+          script executes. Any change to the script—even whitespace—invalidates
+          the hash. SHA-256 is recommended for broad compatibility.
         </div>
       </div>
     )
@@ -122,20 +141,22 @@ const uniqueId = `hash-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
 </div>
 
 <script is:inline define:vars={{ uniqueId, defaultCode }}>
-  // Hash Calculator functionality
+  // Hash Calculator functionality with multiple algorithms
   const container = document.querySelector(`[data-hash-id="${uniqueId}"]`);
   if (container) {
     const textarea = document.getElementById(`${uniqueId}-input`);
     const sha256Output = document.getElementById(`${uniqueId}-sha256`);
+    const sha384Output = document.getElementById(`${uniqueId}-sha384`);
+    const sha512Output = document.getElementById(`${uniqueId}-sha512`);
     const directiveOutput = document.getElementById(`${uniqueId}-directive`);
     const htmlOutput = document.getElementById(`${uniqueId}-html`);
     const copyBtns = container.querySelectorAll(".hash-copy-btn");
 
-    // Calculate SHA-256 hash using Web Crypto API
-    async function calculateHash(content) {
+    // Calculate hash using Web Crypto API
+    async function calculateHash(content, algorithm) {
       const encoder = new TextEncoder();
       const data = encoder.encode(content);
-      const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+      const hashBuffer = await crypto.subtle.digest(algorithm, data);
       const hashArray = Array.from(new Uint8Array(hashBuffer));
       const hashBase64 = btoa(String.fromCharCode.apply(null, hashArray));
       return hashBase64;
@@ -144,19 +165,29 @@ const uniqueId = `hash-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
     // Update all outputs
     async function updateOutputs() {
       const content = textarea.value;
+      const emptyMsg = "(Enter script content above)";
 
       if (!content.trim()) {
-        sha256Output.textContent = "(Enter script content above)";
-        directiveOutput.textContent = "(Enter script content above)";
-        htmlOutput.textContent = "(Enter script content above)";
+        sha256Output.textContent = emptyMsg;
+        sha384Output.textContent = emptyMsg;
+        sha512Output.textContent = emptyMsg;
+        directiveOutput.textContent = emptyMsg;
+        htmlOutput.textContent = emptyMsg;
         return;
       }
 
       try {
-        const hash = await calculateHash(content);
+        // Calculate all three hashes in parallel
+        const [hash256, hash384, hash512] = await Promise.all([
+          calculateHash(content, "SHA-256"),
+          calculateHash(content, "SHA-384"),
+          calculateHash(content, "SHA-512"),
+        ]);
 
-        sha256Output.textContent = `sha256-${hash}`;
-        directiveOutput.textContent = `script-src 'sha256-${hash}';`;
+        sha256Output.textContent = `sha256-${hash256}`;
+        sha384Output.textContent = `sha384-${hash384}`;
+        sha512Output.textContent = `sha512-${hash512}`;
+        directiveOutput.textContent = `script-src 'sha256-${hash256}';`;
 
         // Generate HTML example (escape content for display)
         const escapedContent = content
@@ -166,7 +197,10 @@ const uniqueId = `hash-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
 
         htmlOutput.innerHTML = `<span class="hl-tag">&lt;script&gt;</span>\n${escapedContent}\n<span class="hl-tag">&lt;/script&gt;</span>`;
       } catch (error) {
-        sha256Output.textContent = "Error calculating hash";
+        const errorMsg = "Error calculating hash";
+        sha256Output.textContent = errorMsg;
+        sha384Output.textContent = errorMsg;
+        sha512Output.textContent = errorMsg;
         directiveOutput.textContent = "Error";
         htmlOutput.textContent = "Error";
       }
@@ -328,6 +362,9 @@ const uniqueId = `hash-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
   }
 
   .hash-result-label {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
     font-size: 0.75rem;
     font-weight: var(--fw-medium);
     color: var(--color-text-muted);
@@ -335,10 +372,35 @@ const uniqueId = `hash-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
     letter-spacing: 0.03em;
   }
 
+  .hash-recommended {
+    padding: 0.125rem 0.375rem;
+    font-size: 0.65rem;
+    font-weight: var(--fw-bold);
+    color: #059669;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    background: rgb(16 185 129 / 12%);
+    border-radius: var(--radius-sm);
+  }
+
+  :root[data-theme="dark"] .hash-recommended {
+    color: #34d399;
+  }
+
+  .hash-directive-section {
+    padding-top: 0.75rem;
+    margin-top: 0.5rem;
+    border-top: var(--border-1);
+  }
+
+  .hash-directive-header {
+    margin-bottom: 0.25rem;
+  }
+
   .hash-result-value {
     display: flex;
     gap: 0.5rem;
-    align-items: center;
+    align-items: flex-start;
     padding: 0.5rem 0.75rem;
     background: var(--color-bg);
     border: var(--border-1);
@@ -347,10 +409,11 @@ const uniqueId = `hash-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
 
   .hash-result-value code {
     flex: 1;
-    overflow-x: auto;
+    min-width: 0;
     font-family: var(--ff-mono);
     font-size: 0.8rem;
-    white-space: nowrap;
+    line-height: 1.5;
+    word-break: break-all;
   }
 
   .hash-result-directive code {
@@ -362,14 +425,19 @@ const uniqueId = `hash-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
     flex-shrink: 0;
     align-items: center;
     justify-content: center;
-    width: 28px;
-    height: 28px;
+    width: 32px;
+    height: 32px;
     color: var(--color-text-muted);
     cursor: pointer;
-    background: transparent;
+    background: var(--color-bg-subtle);
     border: var(--border-1);
     border-radius: var(--radius-sm);
     transition: all 0.15s;
+  }
+
+  .hash-copy-btn span {
+    width: 16px;
+    height: 16px;
   }
 
   .hash-copy-btn:hover {
@@ -423,6 +491,31 @@ const uniqueId = `hash-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
 
   :global(.dark) .hash-example-code :global(.hl-tag) {
     color: #f07178; /* WCAG AA: ~5.3:1 contrast on dark */
+  }
+
+  /* Responsive adjustments */
+  @media (width <= 480px) {
+    .hash-layout {
+      padding: 1rem;
+    }
+
+    .hash-result-value {
+      flex-direction: column;
+      gap: 0.375rem;
+    }
+
+    .hash-result-value code {
+      width: 100%;
+    }
+
+    .hash-copy-btn {
+      align-self: flex-end;
+    }
+
+    .hash-explanation {
+      flex-direction: column;
+      gap: 0.5rem;
+    }
   }
 
   /* Explanation */

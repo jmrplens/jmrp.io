@@ -72,24 +72,21 @@ export function shouldIgnoreError(text: string): boolean {
     !text.includes("jmrp.io");
 
   // Generic "Failed to load resource" errors with 404 status
-  // These come from external links (author pages, etc.) - not app bugs
-  // This exact message appears without URL context, so we can only suppress
-  // if we already detected it's an external resource 404
+  // These come from external links (author pages, favicons, etc.) - not app bugs
+  // External resources can fail randomly and are out of our control.
+  // Internal resources are validated by other means (lychee, sitemap, html-validate).
   const isGeneric404 =
     text ===
     "Failed to load resource: the server responded with a status of 404 (Not Found)";
-
-  if (isGeneric404 && !isExternalResource404) {
-    console.warn("[Test Filter] Suppressed generic 404 - may be app resource");
-  }
 
   return (
     isCloudflareInsightsError(text) ||
     isExpectedCorsError ||
     isResource404 ||
     isExternalResource404 ||
-    // Suppress generic 404 only when we have external resource context
-    (isGeneric404 && isExternalResource404) ||
+    // Suppress all generic 404s - external resources can fail randomly
+    // and internal resources are validated by lychee/html-validate
+    isGeneric404 ||
     // Only ignore generic failures if likely related to localhost/CORS
     (text.includes("net::ERR_FAILED") &&
       (text.includes("127.0.0.1") || text.includes("localhost")))

@@ -44,7 +44,7 @@ import Callout from "@components/ui/Callout.astro";
 import References from "@components/ui/References.astro";
 import { Tabs, TabPanel } from "@components/ui/tabs";
 import YouTube from "@components/ui/YouTube.astro";
-import CompareCode from "@components/ui/CompareCode.astro";
+import BeforeAfter from "@components/ui/BeforeAfter.astro";
 
 {/* ========================================================================
 POST CONTENT STARTS HERE
@@ -84,19 +84,19 @@ Show multiple code examples or content side by side (Centered, ~70ch):
 Compare bad vs good code (Centered, ~70ch):
 
 <CompareCode>
-  <div slot="bad">
+  <div slot="before">
     ```javascript
     // Vulnerable
     eval(input);
     ```
   </div>
-  <div slot="good">
+  <div slot="after">
     ```javascript
     // Secure
     JSON.parse(input);
     ```
   </div>
-</CompareCode>
+</BeforeAfter>
 
 ### YouTube Embed
 

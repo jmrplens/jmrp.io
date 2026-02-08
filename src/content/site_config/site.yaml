@@ -52,6 +52,8 @@ nav:
     href: "/blog/"
   - label: "Homelab"
     href: "/homelab/"
+  - label: "Tools"
+    href: "/tools/"
   - label: "CV"
     href: "/cv/"
   - label: "Publications"

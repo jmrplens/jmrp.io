@@ -11,7 +11,6 @@ draft: false
 
 import Callout from "@components/ui/Callout.astro";
 import { Tabs, TabPanel } from "@components/ui/tabs";
-import CompareCode from "@components/ui/CompareCode.astro";
 import BeforeAfter from "@components/ui/BeforeAfter.astro";
 import FileContent from "@components/ui/FileContent.astro";
 import Table from "@components/ui/Table.astro";
@@ -22,13 +21,10 @@ import Code from "@components/ui/Code.astro";
 import TLDRSummary from "@components/ui/TLDRSummary.astro";
 import CheckList from "@components/ui/CheckList.astro";
 import StateNotice from "@components/ui/StateNotice.astro";
-import BrowserSupport from "@components/ui/BrowserSupport.astro";
 import StepByStep from "@components/ui/StepByStep.astro";
 import Prerequisite from "@components/ui/Prerequisite.astro";
-import DecisionTree from "@components/ui/DecisionTree.astro";
 import Timeline from "@components/ui/Timeline.astro";
 import DirectiveCard from "@components/ui/DirectiveCard.astro";
-import Collapsible from "@components/ui/Collapsible.astro";
 import CSPBuilder from "@components/ui/CSPBuilder.astro";
 import HashCalculator from "@components/ui/HashCalculator.astro";
 
@@ -364,6 +360,10 @@ This controls which scripts can execute on your page. Get this wrong and your en
   **Never use `'unsafe-inline'` for scripts in production.** It allows attackers to execute any injected inline script—the exact attack CSP is meant to prevent. If you see this in your policy, your CSP provides essentially zero XSS protection.
 </Callout>
 
+<Callout type="info" icon="mdi:information">
+  **CSP Level 3 granular directives:** Modern browsers report violations using more specific directives like `script-src-elem` (for `<script>` elements) and `script-src-attr` (for inline event handlers like `onclick`). These fall back to `script-src`, so you don't need to set them separately unless you want different rules for each.
+</Callout>
+
 ### 3. `style-src`: CSS Control
 
 <DirectiveCard
@@ -422,6 +422,17 @@ style-src 'self' 'unsafe-inline';
     # Audio and video sources
     media-src 'self';
     ```
+  </TabPanel>
+  <TabPanel label="worker-src">
+    ```nginx
+    # Web Workers and Service Workers
+    worker-src 'self';
+    
+    # For sites using blob: URLs for workers
+    worker-src 'self' blob:;
+    ```
+    
+    Controls sources for `Worker`, `SharedWorker`, and `ServiceWorker` scripts. If not specified, falls back to `script-src`.
   </TabPanel>
 </Tabs>
 
@@ -598,33 +609,43 @@ Most websites have inline scripts like this:
 
 With `script-src 'self'`, this is blocked. You have **three solutions**:
 
-<DecisionTree question="Which solution should I use for inline scripts?">
-  <details>
-    <summary>External Files (Simplest)</summary>
-    <p>Move inline code to separate <code>.js</code> files. Best for simple cases where the script doesn't need to run before the main bundle.</p>
-    <p><strong>Pros:</strong> No nonces/hashes needed, cacheable</p>
-    <p><strong>Cons:</strong> Additional HTTP request, can't run synchronously before render</p>
-  </details>
-  <details>
-    <summary>Hashes (Static Content)</summary>
-    <p>Generate a SHA-256 hash of your script content and add it to CSP. Best for scripts that never change.</p>
-    <p><strong>Pros:</strong> Works for static content, no server changes needed</p>
-    <p><strong>Cons:</strong> Must regenerate hash when script changes, even for whitespace</p>
-  </details>
-  <details>
-    <summary>Nonces (Recommended)</summary>
-    <p>Add a unique random token to both the CSP header and script tags. Best for dynamic content and maximum security.</p>
-    <p><strong>Pros:</strong> Most flexible, recommended by Google security team</p>
-    <p><strong>Cons:</strong> Requires server-side nonce generation (or Nginx trick for static sites)</p>
-  </details>
-</DecisionTree>
+<Table title="Inline Script Solutions Comparison">
+  <thead>
+    <tr>
+      <th>Solution</th>
+      <th>Best For</th>
+      <th>Pros</th>
+      <th>Cons</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>External Files</strong></td>
+      <td>Simple cases</td>
+      <td data-status="success">No nonces/hashes needed; cacheable</td>
+      <td data-status="warning">Extra HTTP request; can't run before render</td>
+    </tr>
+    <tr>
+      <td><strong>Hashes</strong></td>
+      <td>Static scripts</td>
+      <td data-status="success">Works for static content; no server changes</td>
+      <td data-status="warning">Must regenerate on any script change</td>
+    </tr>
+    <tr>
+      <td><strong>Nonces</strong> ⭐</td>
+      <td>All cases</td>
+      <td data-status="success">Most flexible; Google-recommended</td>
+      <td data-status="warning">Requires server-side nonce (Nginx trick for static sites)</td>
+    </tr>
+  </tbody>
+</Table>
 
 ### Solution 1: Move to External Files
 
 The cleanest approach—move inline code to `.js` files:
 
-<CompareCode badTitle="Inline (blocked by CSP)" goodTitle="External (allowed)">
-  <div slot="bad">
+<BeforeAfter beforeLabel="Inline (blocked by CSP)" afterLabel="External (allowed)">
+  <div slot="before">
     ```html
     <head>
       <script>
@@ -633,14 +654,14 @@ The cleanest approach—move inline code to `.js` files:
     </head>
     ```
   </div>
-  <div slot="good">
+  <div slot="after">
     ```html
     <head>
       <script src="/js/theme.js"></script>
     </head>
     ```
   </div>
-</CompareCode>
+</BeforeAfter>
 
 ### Solution 2: Use Hashes
 
@@ -928,17 +949,9 @@ Based on [Google's research](https://web.dev/articles/strict-csp), a "strict CSP
   <li data-check="check">Sets **`base-uri 'none'`** to prevent base tag injection</li>
 </CheckList>
 
-### Browser Support
-
-<BrowserSupport
-  title="strict-dynamic Browser Support"
-  browsers={[
-    { browser: "chrome", version: "52+", support: "full" },
-    { browser: "firefox", version: "52+", support: "full" },
-    { browser: "safari", version: "15.4+", support: "full", note: "Added March 2022" },
-    { browser: "edge", version: "79+", support: "full" },
-  ]}
-/>
+<Callout type="info" icon="mdi:check-circle">
+  **Browser Support:** `strict-dynamic` is fully supported in all modern browsers (Chrome 52+, Firefox 52+, Safari 15.4+, Edge 79+).
+</Callout>
 
 ### The Template
 
@@ -1050,18 +1063,54 @@ base-uri 'none';
 
 Some major libraries contain patterns that can be exploited for XSS when that library is allowed by CSP:
 
-<Collapsible title="Known Script Gadgets by Library">
+According to [research by Sebastian Lekies et al.](https://research.google/pubs/csp-is-dead-long-live-csp-on-the-insecurity-of-whitelists-and-the-future-of-content-security-policy/), common libraries contain exploitable patterns:
 
-| Library | Gadget Type | Risk |
-|---------|-------------|------|
-| AngularJS | Template injection via `ng-app` | High |
-| jQuery (old) | `$.getScript()` with user input | Medium |
-| Require.js | Dynamic imports | Medium |
-| Polymer | Template parsing | Medium |
+<Table title="Script Gadgets in Popular Libraries">
+  <thead>
+    <tr>
+      <th>Library</th>
+      <th>Gadget Type</th>
+      <th>Attack Vector</th>
+      <th>Risk</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>AngularJS</strong> (1.x)</td>
+      <td>Template injection</td>
+      <td><code>ng-app</code> + <code>&#123;&#123;constructor.constructor('alert(1)')()&#125;&#125;</code></td>
+      <td data-status="error">Critical</td>
+    </tr>
+    <tr>
+      <td><strong>jQuery</strong> (&lt;3.0)</td>
+      <td>Selector-based XSS</td>
+      <td><code>$(location.hash)</code> with user input</td>
+      <td data-status="warning">High</td>
+    </tr>
+    <tr>
+      <td><strong>Require.js</strong></td>
+      <td>Dynamic imports</td>
+      <td>Attacker-controlled module paths</td>
+      <td data-status="warning">Medium</td>
+    </tr>
+    <tr>
+      <td><strong>Dojo Toolkit</strong></td>
+      <td>Module loading</td>
+      <td><code>require()</code> with user input</td>
+      <td data-status="warning">Medium</td>
+    </tr>
+    <tr>
+      <td><strong>Google Closure</strong></td>
+      <td>Template system</td>
+      <td>Unsafe template rendering</td>
+      <td data-status="warning">Medium</td>
+    </tr>
+  </tbody>
+</Table>
 
-**Prevention:** Use nonces + strict-dynamic instead of allowing entire libraries by domain.
-
-</Collapsible>
+<Callout type="keypoint">
+  **The pattern is clear:** Allowlisting CDNs that host these libraries opens your site to gadget-based bypasses. Nonces + `strict-dynamic` prevent this because the attacker cannot guess the nonce value, regardless of what libraries are loaded.
+</Callout>
 
 ### 5. Missing `object-src`
 
@@ -1411,15 +1460,15 @@ Some common patterns are incompatible with strict CSP. Here's how to fix them:
 
 ### Inline Event Handlers → addEventListener
 
-<CompareCode badTitle="Blocked by CSP" goodTitle="CSP-Compatible">
-  <div slot="bad">
+<BeforeAfter beforeLabel="Blocked by CSP" afterLabel="CSP-Compatible">
+  <div slot="before">
     ```html
     <button onclick="submitForm()">Submit</button>
     <a href="javascript:doSomething()">Click</a>
     <form onsubmit="validate()">...</form>
     ```
   </div>
-  <div slot="good">
+  <div slot="after">
     ```html
     <button id="submitBtn">Submit</button>
     <a href="#" id="actionLink">Click</a>
@@ -1440,12 +1489,12 @@ Some common patterns are incompatible with strict CSP. Here's how to fix them:
     </script>
     ```
   </div>
-</CompareCode>
+</BeforeAfter>
 
 ### eval() → JSON.parse()
 
-<CompareCode badTitle="Uses eval() - Blocked" goodTitle="Uses JSON.parse() - Allowed">
-  <div slot="bad">
+<BeforeAfter beforeLabel="Uses eval() - Blocked" afterLabel="Uses JSON.parse() - Allowed">
+  <div slot="before">
     ```javascript
     // Dangerous - blocked by CSP
     const data = eval('(' + jsonString + ')');
@@ -1453,7 +1502,7 @@ Some common patterns are incompatible with strict CSP. Here's how to fix them:
     const fn = new Function('x', 'return x * 2');
     ```
   </div>
-  <div slot="good">
+  <div slot="after">
     ```javascript
     // Safe - works with strict CSP
     const data = JSON.parse(jsonString);
@@ -1461,12 +1510,12 @@ Some common patterns are incompatible with strict CSP. Here's how to fix them:
     const fn = (x) => x * 2;
     ```
   </div>
-</CompareCode>
+</BeforeAfter>
 
 ### Inline Styles in JS → CSS Custom Properties
 
-<CompareCode badTitle="Using setAttribute (can be blocked)" goodTitle="CSS Custom Properties">
-  <div slot="bad">
+<BeforeAfter beforeLabel="Using setAttribute (can be blocked)" afterLabel="CSS Custom Properties">
+  <div slot="before">
     ```javascript
     // setAttribute('style', ...) can be blocked by style-src
     element.setAttribute('style', 'color:' + color);
@@ -1474,7 +1523,7 @@ Some common patterns are incompatible with strict CSP. Here's how to fix them:
     // but using CSS custom properties is more maintainable
     ```
   </div>
-  <div slot="good">
+  <div slot="after">
     ```javascript
     // Works with strict CSP and is more maintainable
     element.style.setProperty('--user-color', userColor);
@@ -1486,7 +1535,7 @@ Some common patterns are incompatible with strict CSP. Here's how to fix them:
     }
     ```
   </div>
-</CompareCode>
+</BeforeAfter>
 
 ---
 
@@ -1538,20 +1587,20 @@ Either the 'unsafe-inline' keyword, a hash ('sha256-...'), or a nonce
 
 ### 1. Using `'unsafe-inline'` for Scripts
 
-<CompareCode badTitle="Defeats CSP protection" goodTitle="Use nonces instead">
-  <div slot="bad">
+<BeforeAfter beforeLabel="Defeats CSP protection" afterLabel="Use nonces instead">
+  <div slot="before">
     ```nginx
     # Your CSP is now useless for XSS protection
     script-src 'self' 'unsafe-inline';
     ```
   </div>
-  <div slot="good">
+  <div slot="after">
     ```nginx
     # Actual protection
     script-src 'self' 'nonce-$cspNonce';
     ```
   </div>
-</CompareCode>
+</BeforeAfter>
 
 ### 2. Overly Permissive Sources
 
@@ -1567,14 +1616,14 @@ This allows any HTTPS script to execute, completely defeating CSP's purpose.
 
 ### 3. Forgetting Required Directives
 
-<CompareCode badTitle="Incomplete - Bypassable" goodTitle="Complete Strict CSP">
-  <div slot="bad">
+<BeforeAfter beforeLabel="Incomplete - Bypassable" afterLabel="Complete Strict CSP">
+  <div slot="before">
     ```nginx
     # Missing critical directives!
     script-src 'nonce-$cspNonce';
     ```
   </div>
-  <div slot="good">
+  <div slot="after">
     ```nginx
     # All required directives present
     script-src 'nonce-$cspNonce' 'strict-dynamic';
@@ -1582,24 +1631,24 @@ This allows any HTTPS script to execute, completely defeating CSP's purpose.
     base-uri 'none';
     ```
   </div>
-</CompareCode>
+</BeforeAfter>
 
 ### 4. Missing `always` in Nginx
 
-<CompareCode badTitle="Only 2xx responses" goodTitle="All responses including errors">
-  <div slot="bad">
+<BeforeAfter beforeLabel="Only 2xx responses" afterLabel="All responses including errors">
+  <div slot="before">
     ```nginx
     # CSP missing on 404, 500 pages!
     add_header Content-Security-Policy "...";
     ```
   </div>
-  <div slot="good">
+  <div slot="after">
     ```nginx
     # CSP on ALL responses
     add_header Content-Security-Policy "..." always;
     ```
   </div>
-</CompareCode>
+</BeforeAfter>
 
 Without `always`, CSP headers won't be sent on error pages (404, 500), leaving those pages vulnerable.
 
@@ -1727,25 +1776,4 @@ server {
   **Result:** Following this guide, you can achieve an A+ rating on [Mozilla Observatory](https://observatory.mozilla.org/) while maintaining full site functionality and protecting your users from XSS attacks.
 </Callout>
 
----
 
-## Resources
-
-### Official Documentation
-
-- [MDN: Content Security Policy](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP) — Comprehensive reference
-- [W3C CSP Level 3 Specification](https://www.w3.org/TR/CSP3/) — The official spec
-- [Google web.dev: Strict CSP](https://web.dev/articles/strict-csp) — Google's recommended approach
-
-### Research & Best Practices
-
-- [OWASP CSP Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Content_Security_Policy_Cheat_Sheet.html)
-- [CSP Is Dead, Long Live Strict CSP](https://research.google/pubs/csp-is-dead-long-live-csp-on-the-insecurity-of-whitelists-and-the-future-of-content-security-policy/) — Google's seminal 2016 research
-- [Trusted Types for DOM XSS Prevention](https://developer.mozilla.org/en-US/docs/Web/API/Trusted_Types_API)
-
-### Tools
-
-- [CSP Evaluator](https://csp-evaluator.withgoogle.com/) — Find bypasses in your policy
-- [Report URI](https://report-uri.com/) — CSP reporting service with dashboards
-- [Mozilla Observatory](https://observatory.mozilla.org/) — Complete security header analysis
-- [content-security-policy.com](https://content-security-policy.com/) — Reference and examples
