@@ -8,18 +8,25 @@ interface Props {
 }
 
 const { title = "Prerequisites" } = Astro.props;
+
+// Generate unique ID for aria-labelledby
+const titleId = `prereq-${crypto.randomUUID().slice(0, 8)}`;
 ---
 
 <aside
   class="prerequisite"
-  aria-label={title}
+  aria-labelledby={titleId}
 >
   <div class="prereq-header">
     <span
       class="i-mdi:clipboard-check-outline prereq-icon"
       aria-hidden="true"
     ></span>
-    <span class="prereq-title">{title}</span>
+    <span
+      class="prereq-title"
+      id={titleId}
+      >{title}</span
+    >
   </div>
   <div class="prereq-content">
     <slot />

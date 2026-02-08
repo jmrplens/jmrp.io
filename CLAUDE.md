@@ -113,8 +113,8 @@ Files starting with `_` (like `_template.mdx`) are excluded from the collection.
 All components are in `src/components/ui/`. Import pattern:
 
 ```mdx
-import ComponentName from "@/components/ui/ComponentName.astro";
-import { Tabs, TabPanel } from "@/components/ui/tabs";
+import ComponentName from "@components/ui/ComponentName.astro";
+import { Tabs, TabPanel } from "@components/ui/tabs";
 ```
 
 ### Primary Components
@@ -122,7 +122,7 @@ import { Tabs, TabPanel } from "@/components/ui/tabs";
 | Component         | Use Case               | Key Props                                                   |
 | ----------------- | ---------------------- | ----------------------------------------------------------- |
 | `Callout`         | Notes, warnings, tips  | `type: "note"\|"tip"\|"important"\|"warning"\|"caution"`    |
-| `Tabs/TabPanel`   | Tabbed content         | `index: number` for TabPanel                                |
+| `Tabs/TabPanel`   | Tabbed content         | `label: string` for TabPanel                                |
 | `Code`            | Syntax highlighting    | `lang, title, showLineNumbers, highlight`                   |
 | `FileContent`     | File with path header  | `filename, language, collapsible`                           |
 | `Mermaid`         | Diagrams (SSR)         | `caption, maxWidth, maxHeight, ariaLabel`                   |
@@ -132,7 +132,7 @@ import { Tabs, TabPanel } from "@/components/ui/tabs";
 | `Collapsible`     | Expandable sections    | `title, open`                                               |
 | `Table`           | Data tables            | `title, striped, highlight`                                 |
 | `TerminalCommand` | CLI commands           | `title, prompt`                                             |
-| `CompareCode`     | Before/after code      | `beforeCode, afterCode, lang`                               |
+| `BeforeAfter`     | Before/after code      | `beforeLabel, afterLabel` (slots: `before`, `after`)        |
 | `BrowserSupport`  | Compatibility table    | `browsers: BrowserInfo[]`                                   |
 | `YouTube`         | Video embeds           | `videoId, title`                                            |
 | `References`      | Citation links         | Uses frontmatter `references`                               |
@@ -345,9 +345,9 @@ The build generates CSP headers automatically:
 ### Component Usage Examples
 
 ````mdx
-import Callout from "@/components/ui/Callout.astro";
-import { Tabs, TabPanel } from "@/components/ui/tabs";
-import Mermaid from "@/components/ui/Mermaid.astro";
+import Callout from "@components/ui/Callout.astro";
+import { Tabs, TabPanel } from "@components/ui/tabs";
+import Mermaid from "@components/ui/Mermaid.astro";
 
 <Callout
   type="warning"
@@ -356,15 +356,15 @@ import Mermaid from "@/components/ui/Mermaid.astro";
   Critical security information here.
 </Callout>
 
-<Tabs labels={["Bash", "PowerShell"]}>
-  <TabPanel index={0}>
+<Tabs>
+  <TabPanel label="Bash">
 
 ```bash
 sudo nginx -t
 ```
 
   </TabPanel>
-  <TabPanel index={1}>
+  <TabPanel label="PowerShell">
 
 ```powershell
 nginx -t

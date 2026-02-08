@@ -69,7 +69,7 @@ export function shouldIgnoreError(text: string): boolean {
     (text.includes("http://") || text.includes("https://")) &&
     !text.includes("localhost") &&
     !text.includes("127.0.0.1") &&
-    !text.includes("jmrp.io");
+    !/\bjmrp\.io\b/.test(text);
 
   // Generic "Failed to load resource" errors with 404 status
   // These come from external links (author pages, favicons, etc.) - not app bugs
@@ -81,7 +81,7 @@ export function shouldIgnoreError(text: string): boolean {
     text.includes("status of 404") &&
     !text.includes("localhost") &&
     !text.includes("127.0.0.1") &&
-    !text.includes("jmrp.io");
+    !/\bjmrp\.io\b/.test(text);
 
   return (
     isCloudflareInsightsError(text) ||

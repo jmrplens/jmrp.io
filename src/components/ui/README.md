@@ -920,7 +920,7 @@ When adding new components:
 
 ## File Structure
 
-```
+```text
 src/components/ui/
 ├── README.md              # This file
 ├── tabs.ts                # Barrel export for Tabs

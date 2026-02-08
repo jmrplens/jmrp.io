@@ -104,3 +104,5 @@ GEMINI.md
 public/scripts/cf-beacon.js
 temp_lh/
 temp_workflow/
+# Backup files
+*.backup

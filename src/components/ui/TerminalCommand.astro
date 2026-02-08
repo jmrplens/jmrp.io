@@ -115,14 +115,14 @@ if (ariaLabel) {
     /* Accessible scrollable container: Using <pre> implies preformatted text/code, which is semantically correct and allows tabindex */
   }
   <section class="terminal-window-container">
+    {/* eslint-disable astro/jsx-a11y/no-noninteractive-tabindex */}
     <div
       class="terminal-window"
-      role="textbox"
-      aria-readonly="true"
-      aria-multiline="true"
+      role="region"
       tabindex="0"
       aria-label={finalAriaLabel}
     >
+      {/* eslint-enable astro/jsx-a11y/no-noninteractive-tabindex */}
       {
         renderedLines.map((line) => (
           <span class="command-line">

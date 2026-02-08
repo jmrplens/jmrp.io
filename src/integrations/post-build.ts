@@ -72,9 +72,10 @@ export default function postBuildIntegration(): AstroIntegration {
 
           await optimizeImages(distDir, logger);
           await compressAssets(distDir, logger);
-          fixPermissions(distDir, logger);
 
           if (systemNginxPath) {
+            // Only fix permissions when deploying to Nginx (requires sudo and www-data user)
+            fixPermissions(distDir, logger);
             validateNginxPath(systemNginxPath);
             deploySecurityHeaders(distDir, systemNginxPath, logger);
           } else {
