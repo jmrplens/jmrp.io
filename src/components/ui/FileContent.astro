@@ -145,14 +145,14 @@ if (language) {
           </span>
         </summary>
         <div class="file-body">
+          {/* eslint-disable astro/jsx-a11y/no-noninteractive-tabindex -- Focusable region for keyboard scrolling */}
           <div
-            role="textbox"
-            aria-readonly="true"
-            aria-multiline="true"
+            role="region"
             tabindex="0"
             aria-label={`Code content for ${filename} (${uuid})`}
             class="file-code-container"
           >
+            {/* eslint-enable astro/jsx-a11y/no-noninteractive-tabindex */}
             {useCustomHighlighting ? (
               <AstroCode
                 code={rawCode}
@@ -193,14 +193,14 @@ if (language) {
         </div>
       </div>
       <div class="file-body">
+        {/* eslint-disable astro/jsx-a11y/no-noninteractive-tabindex -- Focusable region for keyboard scrolling */}
         <div
-          role="textbox"
-          aria-readonly="true"
-          aria-multiline="true"
+          role="region"
           tabindex="0"
           aria-label={`Code content for ${filename} (${uuid})`}
           class="file-code-container"
         >
+          {/* eslint-enable astro/jsx-a11y/no-noninteractive-tabindex */}
           {useCustomHighlighting ? (
             <AstroCode
               code={rawCode}

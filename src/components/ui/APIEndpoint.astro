@@ -133,6 +133,10 @@ const methodColors: Record<Props["method"], string> = {
     font-size: 0.9rem;
     line-height: 1.5;
     color: var(--color-text-muted);
+  }
+
+  /* Only add border when content follows */
+  .api-endpoint:has(.ae-content) .ae-description {
     border-bottom: var(--border-1);
   }
 

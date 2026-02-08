@@ -189,13 +189,21 @@ const algorithms = [
         sha512Output.textContent = `sha512-${hash512}`;
         directiveOutput.textContent = `script-src 'sha256-${hash256}';`;
 
-        // Generate HTML example (escape content for display)
-        const escapedContent = content
-          .replace(/&/g, "&amp;")
-          .replace(/</g, "&lt;")
-          .replace(/>/g, "&gt;");
+        // Generate HTML example using DOM manipulation (safer than innerHTML)
+        const openTag = document.createElement("span");
+        openTag.className = "hl-tag";
+        // Use concatenation to avoid script tag termination in Astro
+        openTag.textContent = "<" + "script>";
 
-        htmlOutput.innerHTML = `<span class="hl-tag">&lt;script&gt;</span>\n${escapedContent}\n<span class="hl-tag">&lt;/script&gt;</span>`;
+        const closeTag = document.createElement("span");
+        closeTag.className = "hl-tag";
+        closeTag.textContent = "</" + "script>";
+
+        // Clear existing content
+        htmlOutput.textContent = "";
+        htmlOutput.appendChild(openTag);
+        htmlOutput.appendChild(document.createTextNode("\n" + content + "\n"));
+        htmlOutput.appendChild(closeTag);
       } catch (error) {
         const errorMsg = "Error calculating hash";
         sha256Output.textContent = errorMsg;
@@ -302,7 +310,7 @@ const algorithms = [
     width: 100%;
     min-height: 140px;
     padding: 0.875rem;
-    font-family: var(--ff-mono);
+    font-family: var(--font-mono);
     font-size: 0.85rem;
     line-height: 1.5;
     color: var(--color-text);
@@ -410,7 +418,7 @@ const algorithms = [
   .hash-result-value code {
     flex: 1;
     min-width: 0;
-    font-family: var(--ff-mono);
+    font-family: var(--font-mono);
     font-size: 0.8rem;
     line-height: 1.5;
     word-break: break-all;
@@ -476,7 +484,7 @@ const algorithms = [
     padding: 0.75rem;
     margin: 0;
     overflow-x: auto;
-    font-family: var(--ff-mono);
+    font-family: var(--font-mono);
     font-size: 0.8rem;
     line-height: 1.5;
     white-space: pre-wrap;
@@ -546,7 +554,7 @@ const algorithms = [
 
   .hash-explanation-text code {
     padding: 0.125rem 0.375rem;
-    font-family: var(--ff-mono);
+    font-family: var(--font-mono);
     font-size: 0.8em;
     background: var(--color-bg);
     border-radius: 3px;

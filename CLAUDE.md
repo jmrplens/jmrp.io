@@ -357,8 +357,20 @@ import Mermaid from "@/components/ui/Mermaid.astro";
 </Callout>
 
 <Tabs labels={["Bash", "PowerShell"]}>
-  <TabPanel index={0}>```bash sudo nginx -t ```</TabPanel>
-  <TabPanel index={1}>```powershell nginx -t ```</TabPanel>
+  <TabPanel index={0}>
+
+```bash
+sudo nginx -t
+```
+
+  </TabPanel>
+  <TabPanel index={1}>
+
+```powershell
+nginx -t
+```
+
+  </TabPanel>
 </Tabs>
 
 <Mermaid caption="Request Flow" ariaLabel="Diagram showing request flow">
