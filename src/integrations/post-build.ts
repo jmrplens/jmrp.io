@@ -602,6 +602,12 @@ function performRollback(
     secureOpts,
   ); // NOSONAR
   if (mvResult.status !== 0 || mvResult.error) {
+    // Clean up orphaned temp file before throwing
+    try {
+      fs.unlinkSync(tempPath);
+    } catch {
+      // Swallow unlink error - temp file cleanup is best-effort
+    }
     throw new Error(
       `Rollback failed: Could not restore ${systemNginxPath}. Stderr: ${mvResult.stderr?.toString()}`,
     );

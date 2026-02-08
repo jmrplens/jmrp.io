@@ -75,12 +75,13 @@ export function shouldIgnoreError(text: string): boolean {
   // These come from external links (author pages, favicons, etc.) - not app bugs
   // External resources can fail randomly and are out of our control.
   // Internal resources are validated by other means (lychee, sitemap, html-validate).
-  // Using substring match instead of exact match for robustness across browser versions
+  // Using substring match but excluding our domain to catch only external 404s
   const isGeneric404 =
     text.includes("Failed to load resource") &&
-    text.includes("404") &&
+    text.includes("status of 404") &&
     !text.includes("localhost") &&
-    !text.includes("127.0.0.1");
+    !text.includes("127.0.0.1") &&
+    !text.includes("jmrp.io");
 
   return (
     isCloudflareInsightsError(text) ||

@@ -287,7 +287,8 @@ const presets: Preset[] = [
     id: "cdns",
     label: "CDNs",
     icon: "i-mdi:cloud",
-    description: "Popular CDNs (cdnjs, unpkg, jsdelivr)",
+    description:
+      "⚠️ Security Risk: Popular CDNs (cdnjs, unpkg, jsdelivr) may host JSONP endpoints or templates that can bypass CSP. Use with caution.",
     additions: {
       "script-src": [
         "https://cdnjs.cloudflare.com",
@@ -914,6 +915,30 @@ const groupedDirectives = categories.map((cat) => ({
       return score;
     }
 
+    // Escape policy string for different output formats
+    function escapeForFormat(str, format) {
+      if (!str) return str;
+      switch (format) {
+        case "nginx":
+        case "apache":
+        case "netlify":
+          // Escape backslashes and double quotes for shell/config files
+          return str.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+        case "vercel":
+          // JSON escape (quotes and backslashes)
+          return str.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+        case "meta":
+          // HTML attribute escape
+          return str
+            .replace(/&/g, "&amp;")
+            .replace(/"/g, "&quot;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;");
+        default:
+          return str;
+      }
+    }
+
     // Format output based on selected format
     function formatOutput(policy) {
       if (!policy) return "(No directives selected)";
@@ -939,11 +964,15 @@ const groupedDirectives = categories.map((cat) => ({
           .join("; ");
       }
 
+      // Escape policy for the current format
+      const escapedPolicy = escapeForFormat(policy, currentFormat);
+      const escapedMetaPolicy = escapeForFormat(metaPolicy, "meta");
+
       switch (currentFormat) {
         case "nginx":
-          return `add_header ${headerName} "${policy}" always;`;
+          return `add_header ${headerName} "${escapedPolicy}" always;`;
         case "apache":
-          return `Header always set ${headerName} "${policy}"`;
+          return `Header always set ${headerName} "${escapedPolicy}"`;
         case "cloudflare":
           return `# _headers file
 /*
@@ -953,7 +982,7 @@ const groupedDirectives = categories.map((cat) => ({
 [[headers]]
   for = "/*"
   [headers.values]
-    ${headerName} = "${policy}"`;
+    ${headerName} = "${escapedPolicy}"`;
         case "vercel":
           return `// vercel.json
 {
@@ -963,14 +992,14 @@ const groupedDirectives = categories.map((cat) => ({
       "headers": [
         {
           "key": "${headerName}",
-          "value": "${policy}"
+          "value": "${escapedPolicy}"
         }
       ]
     }
   ]
 }`;
         case "meta":
-          return `<meta http-equiv="Content-Security-Policy" content="${metaPolicy}">`;
+          return `<meta http-equiv="Content-Security-Policy" content="${escapedMetaPolicy}">`;
         default:
           return `${headerName}: ${policy}`;
       }

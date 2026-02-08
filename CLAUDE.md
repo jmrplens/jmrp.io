@@ -448,5 +448,6 @@ Add to safelist in `uno.config.ts` if dynamically generated.
 
 ## Version History
 
+- **2026-02**: Verified/updated for Astro 6.0.0-beta.5, added apps folder, CodeRabbit fixes
 - **2025-06**: Initial CLAUDE.md created for AI context
 - Based on codebase at Astro 6.0.0-beta.5, UnoCSS 66.6.0
