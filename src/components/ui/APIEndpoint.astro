@@ -28,7 +28,11 @@ const methodColors: Record<Props["method"], string> = {
     <code class="ae-path">{path}</code>
     {
       auth && (
-        <span class="ae-auth">
+        <span
+          class="ae-auth"
+          role="note"
+          aria-label="Authentication required"
+        >
           <span
             class="i-mdi:lock ae-auth-icon"
             aria-hidden="true"

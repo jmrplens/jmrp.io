@@ -4,7 +4,7 @@
  * Renders a step-by-step guide with numbered steps and visual connectors.
  * Uses padding-based layout with absolute positioned circle to avoid grid issues.
  */
-import { createHash, randomBytes } from "node:crypto";
+import { randomBytes } from "node:crypto";
 
 interface Props {
   title?: string;
@@ -13,16 +13,13 @@ interface Props {
 const { title } = Astro.props;
 
 // Generate unique ID with random entropy to avoid collisions when same title appears multiple times
-const entropy = randomBytes(4).toString("hex");
-const uniqueId = createHash("sha256")
-  .update(`sbs-${title || "untitled"}-${entropy}`)
-  .digest("hex")
-  .slice(0, 8);
+const uniqueId = randomBytes(4).toString("hex");
 ---
 
 <section
   class="step-by-step"
-  aria-label={title || "Step-by-step guide"}
+  aria-labelledby={title ? `sbs-title-${uniqueId}` : undefined}
+  aria-label={title ? undefined : "Step-by-step guide"}
 >
   {
     title && (

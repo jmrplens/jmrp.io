@@ -39,27 +39,27 @@ const hasContent = Astro.slots.has("default");
     }
   </div>
 
-  <div class="dc-body">
-    {
-      syntax && (
-        <div class="dc-row">
-          <span class="dc-label">Syntax</span>
-          <code class="dc-code">{syntax}</code>
-        </div>
-      )
-    }
+  {
+    (syntax || defaultValue || description) && (
+      <div class="dc-body">
+        {syntax && (
+          <div class="dc-row">
+            <span class="dc-label">Syntax</span>
+            <code class="dc-code">{syntax}</code>
+          </div>
+        )}
 
-    {
-      defaultValue && (
-        <div class="dc-row">
-          <span class="dc-label">Default</span>
-          <code class="dc-code">{defaultValue}</code>
-        </div>
-      )
-    }
+        {defaultValue && (
+          <div class="dc-row">
+            <span class="dc-label">Default</span>
+            <code class="dc-code">{defaultValue}</code>
+          </div>
+        )}
 
-    {description && <p class="dc-description">{description}</p>}
-  </div>
+        {description && <p class="dc-description">{description}</p>}
+      </div>
+    )
+  }
 
   {
     hasContent && (

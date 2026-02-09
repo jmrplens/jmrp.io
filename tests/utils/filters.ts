@@ -7,6 +7,21 @@
  */
 
 /**
+ * Checks if a URL appears to be local or from an excluded domain.
+ * Used to identify errors that are expected in localhost test environments.
+ *
+ * @param text - The text to check for localhost/local IP indicators
+ * @returns true if the text indicates a local or excluded domain
+ */
+function isLocalOrExcludedDomain(text: string): boolean {
+  return (
+    text.includes("localhost") ||
+    text.includes("127.0.0.1") ||
+    /\bjmrp\.io\b/.test(text)
+  );
+}
+
+/**
  * Checks if a console error message is from Cloudflare Insights.
  * These are expected CORS errors in localhost test environments.
  *
@@ -67,9 +82,7 @@ export function shouldIgnoreError(text: string): boolean {
   const isExternalResource404 =
     text.includes("status of 404") &&
     (text.includes("http://") || text.includes("https://")) &&
-    !text.includes("localhost") &&
-    !text.includes("127.0.0.1") &&
-    !/\bjmrp\.io\b/.test(text);
+    !isLocalOrExcludedDomain(text);
 
   // Generic "Failed to load resource" errors with 404 status
   // These come from external links (author pages, favicons, etc.) - not app bugs
@@ -79,9 +92,7 @@ export function shouldIgnoreError(text: string): boolean {
   const isGeneric404 =
     text.includes("Failed to load resource") &&
     text.includes("status of 404") &&
-    !text.includes("localhost") &&
-    !text.includes("127.0.0.1") &&
-    !/\bjmrp\.io\b/.test(text);
+    !isLocalOrExcludedDomain(text);
 
   return (
     isCloudflareInsightsError(text) ||

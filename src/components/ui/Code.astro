@@ -92,7 +92,7 @@ if (!ariaLabel) {
   if (rawCode.length > 50) plainText += "...";
 }
 
-// Final aria-label: custom > title-based > auto-generated (descriptive only)
+// Final aria-label: custom > title-based > auto-generated (with fallback)
 const finalAriaLabel =
   ariaLabel ||
   (title

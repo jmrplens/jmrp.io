@@ -3,22 +3,32 @@
  * DecisionTree Component
  * Interactive expandable decision tree for guiding readers.
  */
+import { randomBytes } from "node:crypto";
+
 interface Props {
   question: string;
 }
 
 const { question } = Astro.props;
+const uniqueId = randomBytes(4).toString("hex");
 ---
 
 <div class="decision-tree">
-  <div class="dt-question">
+  <div
+    class="dt-question"
+    id={`dt-question-${uniqueId}`}
+  >
     <span
       class="i-mdi:help-circle dt-icon"
       aria-hidden="true"
     ></span>
     <span class="dt-question-text">{question}</span>
   </div>
-  <div class="dt-options">
+  <div
+    class="dt-options"
+    role="group"
+    aria-labelledby={`dt-question-${uniqueId}`}
+  >
     <slot />
   </div>
 </div>

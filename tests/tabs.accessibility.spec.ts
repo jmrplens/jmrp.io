@@ -1,9 +1,12 @@
 import { expect, test } from "@playwright/test";
 
+/** Blog post URL with tabs for testing - avoiding magic strings */
+const TEST_BLOG_URL = "/blog/001-secure-nginx-client-certificates";
+
 test.describe("Tabs & Code Block Accessibility", () => {
   test("Tabs (Zero-JS Radio Group) Keyboard Navigation", async ({ page }) => {
     // Navigate to a post with Tabs (001 has tabs for OS selection)
-    await page.goto("/blog/001-secure-nginx-client-certificates");
+    await page.goto(TEST_BLOG_URL);
     // Ensure styles/scripts are loaded by waiting for the component
     const tabsContainer = page.locator(".tabs-container").first();
     await tabsContainer.waitFor({ state: "visible" });
@@ -42,7 +45,7 @@ test.describe("Tabs & Code Block Accessibility", () => {
 
   test("FileContent Focus Navigation (No Ghost Focus)", async ({ page }) => {
     // Navigate to a post with FileContent
-    await page.goto("/blog/001-secure-nginx-client-certificates");
+    await page.goto(TEST_BLOG_URL);
     await page.waitForLoadState("domcontentloaded");
 
     // Find a FileContent block

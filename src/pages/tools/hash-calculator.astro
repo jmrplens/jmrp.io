@@ -160,7 +160,11 @@ const toolSchema = {
     justify-content: center;
     width: 4rem;
     height: 4rem;
-    background: linear-gradient(135deg, #10b981, #059669);
+    background: linear-gradient(
+      135deg,
+      var(--color-success, #10b981),
+      var(--color-success-dark, #059669)
+    );
     border-radius: var(--radius-lg);
   }
 
