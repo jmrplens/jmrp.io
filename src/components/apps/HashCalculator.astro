@@ -152,6 +152,19 @@ const algorithms = [
     const htmlOutput = document.getElementById(`${uniqueId}-html`);
     const copyBtns = container.querySelectorAll(".hash-copy-btn");
 
+    // Guard against missing DOM elements
+    if (
+      !textarea ||
+      !sha256Output ||
+      !sha384Output ||
+      !sha512Output ||
+      !directiveOutput ||
+      !htmlOutput
+    ) {
+      console.error("[HashCalculator] Required DOM elements not found");
+      return;
+    }
+
     // Calculate hash using Web Crypto API
     async function calculateHash(content, algorithm) {
       const encoder = new TextEncoder();
@@ -235,9 +248,9 @@ const algorithms = [
       });
     });
 
-    // Debounce function
-    let timeout;
+    // Debounce function - each call creates its own timer scope
     function debounce(fn, delay) {
+      let timeout;
       return function (...args) {
         clearTimeout(timeout);
         timeout = setTimeout(() => fn.apply(this, args), delay);

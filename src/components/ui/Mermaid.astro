@@ -451,7 +451,11 @@ const computedAriaLabel =
     color: var(--mermaid-muted-text) !important;
   }
 
-  /* Primary Node (brand/accent color) */
+  /*
+   * Primary Node - Semantic alias for highlight styling.
+   * Intentionally reuses highlight color variables to provide a semantic
+   * alternative class name while maintaining visual consistency.
+   */
   .mermaid-content :global(.node.primary > rect),
   .mermaid-content :global(.node.primary > polygon),
   .mermaid-content :global(.node.primary > circle) {

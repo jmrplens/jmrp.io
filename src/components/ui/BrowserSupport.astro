@@ -67,12 +67,12 @@ const uniqueId = `bs-${crypto.randomUUID().slice(0, 8)}`;
   class="browser-support"
   aria-labelledby={uniqueId}
 >
-  <div
+  <h3
     class="bs-title"
     id={uniqueId}
   >
     {title}
-  </div>
+  </h3>
   <div class="bs-grid">
     {
       browsers.map((b) => (
@@ -108,6 +108,7 @@ const uniqueId = `bs-${crypto.randomUUID().slice(0, 8)}`;
 
   .bs-title {
     padding: 0.625rem 1rem;
+    margin: 0;
     font-size: 0.85rem;
     font-weight: var(--fw-semibold);
     color: var(--color-text-muted);
@@ -163,15 +164,15 @@ const uniqueId = `bs-${crypto.randomUUID().slice(0, 8)}`;
   }
 
   .support-full .bs-status-icon {
-    color: #10b981;
+    color: var(--color-success, #10b981);
   }
 
   .support-partial .bs-status-icon {
-    color: #f59e0b;
+    color: var(--color-warning, #f59e0b);
   }
 
   .support-none .bs-status-icon {
-    color: #ef4444;
+    color: var(--color-danger, #ef4444);
   }
 
   .support-unknown .bs-status-icon {

@@ -24,7 +24,10 @@ const config: Record<
 };
 
 const { icon, class: badgeClass, prefix } = config[type];
-const displayValue = value || type.charAt(0).toUpperCase() + type.slice(1);
+const displayValue =
+  value !== undefined && value !== null
+    ? value
+    : type.charAt(0).toUpperCase() + type.slice(1);
 ---
 
 <span class={`version-badge ${badgeClass}`}>
@@ -98,27 +101,33 @@ const displayValue = value || type.charAt(0).toUpperCase() + type.slice(1);
   }
 
   /* Light mode adjustments for WCAG AA contrast */
-  :root[data-theme="light"] .badge-version {
+  :root[data-theme="light"] .badge-version,
+  :root:not([data-theme="dark"]) .badge-version {
     color: #7c3aed;
   }
 
-  :root[data-theme="light"] .badge-level {
+  :root[data-theme="light"] .badge-level,
+  :root:not([data-theme="dark"]) .badge-level {
     color: #1e40af; /* blue-800 */
   }
 
-  :root[data-theme="light"] .badge-deprecated {
+  :root[data-theme="light"] .badge-deprecated,
+  :root:not([data-theme="dark"]) .badge-deprecated {
     color: #991b1b; /* red-800 */
   }
 
-  :root[data-theme="light"] .badge-new {
+  :root[data-theme="light"] .badge-new,
+  :root:not([data-theme="dark"]) .badge-new {
     color: #065f46; /* emerald-800 */
   }
 
-  :root[data-theme="light"] .badge-experimental {
+  :root[data-theme="light"] .badge-experimental,
+  :root:not([data-theme="dark"]) .badge-experimental {
     color: #92400e; /* amber-800 */
   }
 
-  :root[data-theme="light"] .badge-stable {
+  :root[data-theme="light"] .badge-stable,
+  :root:not([data-theme="dark"]) .badge-stable {
     color: #065f46; /* emerald-800 */
   }
 

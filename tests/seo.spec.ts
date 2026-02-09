@@ -69,20 +69,18 @@ function validateJsonLd(
   jsonLdContent: string,
   validTypes: readonly string[],
 ): void {
-  // Validate it's parseable JSON
-  expect(() => {
-    JSON.parse(jsonLdContent);
-  }).not.toThrow();
-
-  // Validate Schema.org structure
+  // Parse once - if parsing fails, this will throw and fail the test
   const schema = JSON.parse(jsonLdContent) as JsonLdSchema;
 
   // Handle @graph container (multiple schemas in one script)
   if (schema["@graph"] && Array.isArray(schema["@graph"])) {
     for (const graphItem of schema["@graph"]) {
-      if (graphItem["@type"]) {
-        validateSchemaTypes(graphItem["@type"], validTypes);
-      }
+      // Enforce @type for all @graph items consistently with single schema
+      expect(
+        graphItem["@type"],
+        "JSON-LD @graph item should have @type",
+      ).toBeDefined();
+      validateSchemaTypes(graphItem["@type"]!, validTypes);
     }
     return;
   }

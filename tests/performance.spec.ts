@@ -59,6 +59,9 @@ test.describe("Performance Optimizations", () => {
     // Track issues for reporting
     const lazyLoadingIssues: string[] = [];
 
+    // Get viewport height once before the loop
+    const viewportHeight = await page.evaluate(() => globalThis.innerHeight);
+
     /* eslint-disable playwright/no-conditional-in-test -- Viewport detection requires conditionals */
     for (let i = 0; i < count; i++) {
       const img = images.nth(i);
@@ -68,7 +71,6 @@ test.describe("Performance Optimizations", () => {
 
       // Get image position relative to viewport
       const boundingBox = await img.boundingBox();
-      const viewportHeight = await page.evaluate(() => globalThis.innerHeight);
 
       // Images below the fold should have lazy loading
       // Skip images with fetchpriority="high" (intentionally eager)
@@ -174,7 +176,8 @@ test.describe("Performance Optimizations", () => {
       return animatedWithMotion;
     });
 
-    // Log but don't fail for now - this is informational
+    // Reduced motion test is informational - animations checking logs but doesn't fail
+    // The test validates that prefers-reduced-motion media query is detected
     // eslint-disable-next-line playwright/no-conditional-in-test -- Informational logging
     if (animatedElements.length > 0) {
       console.warn(
@@ -183,8 +186,8 @@ test.describe("Performance Optimizations", () => {
       );
     }
 
-    // Test passes if reduced motion is detected - animation checking is informational
-    expect(animatedElements).toBeDefined();
+    // Test passes if we reached this point - reduced motion was detected
+    expect(hasReducedMotion).toBe(true);
   });
 });
 
@@ -318,17 +321,19 @@ test.describe("Resource Loading", () => {
       }
     }
 
-    // Log but don't fail - many sites handle this differently
+    /* eslint-enable playwright/no-conditional-in-test */
+
+    // Stylesheet analysis is informational - logs potential issues but doesn't fail
+    // eslint-disable-next-line playwright/no-conditional-in-test -- Informational logging
     if (blockingResources.length > 0) {
       console.info(
         "Stylesheets without matching preload (may be render-blocking):",
         blockingResources,
       );
     }
-    /* eslint-enable playwright/no-conditional-in-test */
 
-    // Test passes - this is informational
-    expect(blockingResources).toBeDefined();
+    // This test is informational - pass if we completed analysis
+    expect(count).toBeGreaterThanOrEqual(0);
   });
 
   test("images have explicit dimensions", async ({ page }) => {
@@ -354,15 +359,19 @@ test.describe("Resource Loading", () => {
         style?.includes("height");
 
       // Check if the image uses CSS classes that set dimensions
-      const computedWidth = await img.evaluate((el) =>
-        getComputedStyle(el).getPropertyValue("width"),
-      );
-      const computedHeight = await img.evaluate((el) =>
-        getComputedStyle(el).getPropertyValue("height"),
-      );
-      const computedAspectRatio = await img.evaluate((el) =>
-        getComputedStyle(el).getPropertyValue("aspect-ratio"),
-      );
+      const computedStyles = await img.evaluate((el) => {
+        const style = getComputedStyle(el);
+        return {
+          width: style.getPropertyValue("width"),
+          height: style.getPropertyValue("height"),
+          aspectRatio: style.getPropertyValue("aspect-ratio"),
+        };
+      });
+      const {
+        width: computedWidth,
+        height: computedHeight,
+        aspectRatio: computedAspectRatio,
+      } = computedStyles;
 
       // Responsive images (width:100%, height:auto) are valid if they have
       // width/height HTML attributes - browser calculates aspect ratio from those

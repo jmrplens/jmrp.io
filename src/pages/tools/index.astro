@@ -46,23 +46,26 @@ const tools: Tool[] = [
   },
 ];
 
+const baseUrl = new URL(Astro.url.pathname, getSiteUrl());
+const collectionUrl = new URL("#collection", baseUrl).toString();
+
 const toolsSchema = {
   "@context": "https://schema.org",
   "@type": "CollectionPage",
-  "@id": new URL(
-    "#collection",
-    new URL(Astro.url.pathname, getSiteUrl()),
-  ).toString(),
+  "@id": collectionUrl,
   name: "Developer Tools",
   description: "Interactive tools for web security and development",
-  hasPart: tools.map((tool) => ({
-    "@type": "SoftwareApplication",
-    name: tool.name,
-    description: tool.description,
-    url: new URL(tool.href, getSiteUrl()).toString(),
-    applicationCategory: "WebApplication",
-    operatingSystem: "Web Browser",
-  })),
+  hasPart: tools.map((tool) => {
+    const toolUrl = new URL(tool.href, getSiteUrl()).toString();
+    return {
+      "@type": "SoftwareApplication",
+      name: tool.name,
+      description: tool.description,
+      url: toolUrl,
+      applicationCategory: "WebApplication",
+      operatingSystem: "Web Browser",
+    };
+  }),
 };
 ---
 
@@ -270,8 +273,12 @@ const toolsSchema = {
     justify-content: center;
     width: 3rem;
     height: 3rem;
-    color: #fff;
-    background: linear-gradient(135deg, var(--color-primary), #059669);
+    color: var(--color-on-primary, #fff);
+    background: linear-gradient(
+      135deg,
+      var(--color-primary),
+      var(--color-primary-dark, #059669)
+    );
     border-radius: var(--radius-md);
   }
 

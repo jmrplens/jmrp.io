@@ -137,6 +137,7 @@ const displayTitle = title || current.label;
               href={alternativeUrl}
               target="_blank"
               rel="noopener noreferrer"
+              aria-label={`${alternative} (opens in a new tab)`}
             >
               <code class="sn-alt-code">{alternative}</code>
             </a>
@@ -220,8 +221,8 @@ const displayTitle = title || current.label;
 
   .sn-alt-code {
     padding: 0.125rem 0.375rem;
-    color: var(--sn-text-color, #065f46);
-    background: rgb(var(--sn-bg-color, 16 185 129) / 15%);
+    color: var(--sn-text-color);
+    background: rgb(var(--sn-bg-color) / 15%);
     border-radius: var(--radius-sm);
   }
 
@@ -266,5 +267,32 @@ const displayTitle = title || current.label;
 
   :root[data-theme="dark"] .state-notice--security {
     --sn-text-color: #fb923c; /* orange-400, ~6.4:1 contrast */
+  }
+
+  /* System dark mode fallback - matches [data-theme="dark"] values */
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme]) .state-notice--deprecated {
+      --sn-text-color: #f87171;
+    }
+
+    :root:not([data-theme]) .state-notice--mandatory {
+      --sn-text-color: #34d399;
+    }
+
+    :root:not([data-theme]) .state-notice--experimental {
+      --sn-text-color: #fb6d16;
+    }
+
+    :root:not([data-theme]) .state-notice--preview {
+      --sn-text-color: #60a5fa;
+    }
+
+    :root:not([data-theme]) .state-notice--breaking {
+      --sn-text-color: #f87171;
+    }
+
+    :root:not([data-theme]) .state-notice--security {
+      --sn-text-color: #fb923c;
+    }
   }
 </style>

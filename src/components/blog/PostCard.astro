@@ -169,7 +169,7 @@ const { post, loading = "lazy", fetchpriority = "auto" } = Astro.props;
   }
 
   .tags li {
-    display: flex; /* Preserves list semantics */
+    display: flex; /* Enables flex alignment for tag content */
   }
 
   .tag {
@@ -196,6 +196,7 @@ const { post, loading = "lazy", fetchpriority = "auto" } = Astro.props;
     margin-bottom: 0.5rem;
     overflow: hidden;
     -webkit-line-clamp: 3; /* Max 3 lines */
+    line-clamp: 3; /* Standard property */
     font-size: 1.25rem;
     font-weight: 700;
     line-height: 1.3;
@@ -224,6 +225,7 @@ const { post, loading = "lazy", fetchpriority = "auto" } = Astro.props;
     margin: 0; /* Reset margin */
     overflow: hidden;
     -webkit-line-clamp: 4; /* Allow up to 4 lines when space permits */
+    line-clamp: 4; /* Standard property */
     font-size: 0.95rem;
     line-height: 1.5;
     color: var(--color-text);
@@ -270,6 +272,7 @@ const { post, loading = "lazy", fetchpriority = "auto" } = Astro.props;
     .post-card h2 {
       /* Clamp title to 3 lines, no fixed height */
       -webkit-line-clamp: 3;
+      line-clamp: 3;
       font-size: 1.1rem;
     }
 
@@ -278,6 +281,7 @@ const { post, loading = "lazy", fetchpriority = "auto" } = Astro.props;
       display: -webkit-box;
       flex-grow: 1;
       -webkit-line-clamp: 5;
+      line-clamp: 5;
       font-size: 0.85rem;
       -webkit-box-orient: vertical;
     }

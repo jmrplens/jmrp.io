@@ -7,13 +7,15 @@
 interface Props {
   title?: string;
   items?: Array<{ key: string; value: string; description?: string }>;
+  headingLevel?: 2 | 3 | 4 | 5 | 6;
 }
 
-const { title, items = [] } = Astro.props;
+const { title, items = [], headingLevel = 3 } = Astro.props;
+const HeadingTag = `h${headingLevel}` as "h2" | "h3" | "h4" | "h5" | "h6";
 ---
 
 <div class="key-value">
-  {title && <div class="kv-title">{title}</div>}
+  {title && <HeadingTag class="kv-title">{title}</HeadingTag>}
   <dl class="kv-list">
     {
       items.map((item) => (
@@ -44,6 +46,7 @@ const { title, items = [] } = Astro.props;
 
   .key-value .kv-title {
     padding: 0.625rem 1rem;
+    margin: 0;
     font-size: 0.8rem;
     font-weight: var(--fw-semibold);
     color: var(--color-text-muted);
@@ -120,7 +123,8 @@ const { title, items = [] } = Astro.props;
   }
 
   /* Light mode adjustments */
-  :root[data-theme="light"] .key-value .kv-key-badge {
+  :root[data-theme="light"] .key-value .kv-key-badge,
+  :root:not([data-theme="dark"]) .key-value .kv-key-badge {
     color: #7c3aed;
     background: linear-gradient(
       135deg,

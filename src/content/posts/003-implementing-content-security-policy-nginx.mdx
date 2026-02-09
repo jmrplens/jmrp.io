@@ -777,6 +777,9 @@ server {
     # ================================================
     # STEP 2: Replace placeholder with real nonce
     # ================================================
+    # NOTE: sub_filter requires uncompressed responses.
+    # For proxied backends, add: proxy_set_header Accept-Encoding "";
+    # For static files, ensure gzip is disabled or applied after sub_filter.
     sub_filter_once off;  # Replace ALL occurrences
     sub_filter_types text/html text/css application/javascript;
     sub_filter CSP_NONCE_NGINX $cspNonce;

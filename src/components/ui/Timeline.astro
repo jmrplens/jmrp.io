@@ -50,7 +50,12 @@ const typeConfig: Record<EventType, { icon: string; class: string }> = {
             {index < events.length - 1 && <div class="tl-line" />}
           </div>
           <div class="tl-content">
-            <span class="tl-date">{event.date}</span>
+            <time
+              class="tl-date"
+              datetime={event.date}
+            >
+              {event.date}
+            </time>
             <p class="tl-title">{event.title}</p>
             {event.description && (
               <p class="tl-description">{event.description}</p>

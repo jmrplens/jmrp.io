@@ -71,7 +71,8 @@ if (!ariaLabel) {
 
 // Include short uuid suffix in aria-label to ensure landmark uniqueness
 // when same file with similar content appears multiple times on a page
-const finalAriaLabel = ariaLabel || `${filename} (${uuid}) - ${plainText}`;
+const finalAriaLabel =
+  ariaLabel || `${filename} - ${plainText} (region ${uuid})`;
 
 // If language is specified, extract raw code for Shiki re-rendering
 let rawCode = "";

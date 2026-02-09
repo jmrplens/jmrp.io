@@ -70,14 +70,14 @@ const { title } = Astro.props;
   /* Required / Check items */
   .checklist-items :global(li[data-check="check"]::before),
   .checklist-items :global(li:not([data-check])::before) {
-    color: #10b981;
+    color: var(--color-success, #10b981);
     content: "✓";
     background: rgb(16 185 129 / 15%);
   }
 
   /* Cross / Not allowed items */
   .checklist-items :global(li[data-check="cross"]::before) {
-    color: #ef4444;
+    color: var(--color-danger, #ef4444);
     content: "✗";
     background: rgb(239 68 68 / 15%);
   }
@@ -85,7 +85,7 @@ const { title } = Astro.props;
   /* Warning items */
   .checklist-items :global(li[data-check="warning"]::before) {
     font-weight: var(--fw-bold);
-    color: #f59e0b;
+    color: var(--color-warning, #f59e0b);
     content: "!";
     background: rgb(245 158 11 / 15%);
   }
@@ -97,11 +97,17 @@ const { title } = Astro.props;
     background: var(--color-bg-secondary);
   }
 
-  /* Light mode adjustments for WCAG AA contrast */
+  /* Light mode adjustments for WCAG AA contrast - consolidated selectors */
   :root[data-theme="light"]
     .checklist-items
     :global(li[data-check="check"]::before),
   :root[data-theme="light"]
+    .checklist-items
+    :global(li:not([data-check])::before),
+  :root:not([data-theme="dark"])
+    .checklist-items
+    :global(li[data-check="check"]::before),
+  :root:not([data-theme="dark"])
     .checklist-items
     :global(li:not([data-check])::before) {
     color: #065f46; /* emerald-800 */
@@ -109,17 +115,26 @@ const { title } = Astro.props;
 
   :root[data-theme="light"]
     .checklist-items
+    :global(li[data-check="cross"]::before),
+  :root:not([data-theme="dark"])
+    .checklist-items
     :global(li[data-check="cross"]::before) {
     color: #991b1b; /* red-800 */
   }
 
   :root[data-theme="light"]
     .checklist-items
+    :global(li[data-check="warning"]::before),
+  :root:not([data-theme="dark"])
+    .checklist-items
     :global(li[data-check="warning"]::before) {
     color: #92400e; /* amber-800 */
   }
 
   :root[data-theme="light"]
+    .checklist-items
+    :global(li[data-check="optional"]::before),
+  :root:not([data-theme="dark"])
     .checklist-items
     :global(li[data-check="optional"]::before) {
     color: #4b5563; /* gray-600 for WCAG AA contrast */

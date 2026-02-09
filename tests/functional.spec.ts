@@ -190,8 +190,9 @@ test.describe("Security & Best Practices", () => {
 
         // Find all external links with target="_blank"
         // Exclude: jmrp.io (own domain), localhost (dev), Astro Dev Toolbar links (astro.build, withastro)
+        // Note: docs.astro.build is already covered by astro.build exclusion
         const externalBlankLinks = page.locator(
-          'a[target="_blank"][href^="http"]:not([href*="jmrp.io"]):not([href*="localhost"]):not([href*="astro.build"]):not([href*="withastro"]):not([href*="docs.astro.build"])',
+          'a[target="_blank"][href^="http"]:not([href*="jmrp.io"]):not([href*="localhost"]):not([href*="astro.build"]):not([href*="withastro"])',
         );
         const count = await externalBlankLinks.count();
 
@@ -223,8 +224,10 @@ test.describe("Security & Best Practices", () => {
       await test.step(`Checking image alt text: ${url}`, async () => {
         await page.goto(url);
 
-        // Find all images (excluding decorative icons in buttons)
-        const images = page.locator('img:not([role="presentation"])');
+        // Find all images (excluding decorative icons)
+        const images = page.locator(
+          'img:not([role="presentation"]):not([role="none"])',
+        );
         const count = await images.count();
 
         for (let i = 0; i < count; i++) {
@@ -234,8 +237,9 @@ test.describe("Security & Best Practices", () => {
           const ariaHidden = await img.getAttribute("aria-hidden");
           const role = await img.getAttribute("role");
 
-          // Skip purely decorative images (aria-hidden or role="none")
-          const isDecorative = ariaHidden === "true" || role === "none";
+          // Skip purely decorative images (aria-hidden or role="none" or role="presentation")
+          const isDecorative =
+            ariaHidden === "true" || role === "none" || role === "presentation";
 
           // Decorative images may have empty or missing alt - only require alt for non-decorative
           // eslint-disable-next-line playwright/no-conditional-in-test -- Required for decorative image check
