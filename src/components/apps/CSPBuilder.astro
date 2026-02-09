@@ -721,8 +721,14 @@ const groupedDirectives = categories.map((cat) => ({
     const editBtns = container.querySelectorAll(".csp-edit-btn");
     const addValueBtns = container.querySelectorAll(".csp-add-value-btn");
 
-    // Get presets data
-    const presets = JSON.parse(container.dataset.presets || "[]");
+    // Get presets data with defensive parsing
+    let presets = [];
+    try {
+      presets = JSON.parse(container.dataset.presets || "[]");
+    } catch (e) {
+      console.error("[CSPBuilder] Failed to parse presets data:", e);
+      presets = [];
+    }
 
     // Guard against missing elements
     if (!output || !rating) {

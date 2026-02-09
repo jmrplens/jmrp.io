@@ -244,6 +244,15 @@ test.describe("Security & Best Practices", () => {
             expect
               .soft(alt !== null, `Image ${src} should have an alt attribute`)
               .toBe(true);
+
+            // Non-empty alt is required for non-decorative images
+            // eslint-disable-next-line playwright/no-conditional-expect -- Decorative image exclusion
+            expect
+              .soft(
+                alt !== null && alt !== "",
+                `Image ${src} should have a non-empty alt attribute`,
+              )
+              .toBe(true);
           }
 
           // Non-decorative images should have meaningful alt (not just filename patterns)

@@ -17,6 +17,15 @@ interface Props {
 
 const { events } = Astro.props;
 
+/**
+ * Sanitizes icon name to ensure valid CSS class.
+ * Normalizes to lowercase, keeps only alphanumeric, underscores, hyphens, and colons.
+ */
+function sanitizeIconName(name: string): string {
+  const sanitized = name.toLowerCase().replaceAll(/[^a-z0-9_:-]/g, "");
+  return sanitized || "mdi:circle-medium";
+}
+
 type EventType = NonNullable<TimelineEvent["type"]>;
 const typeConfig: Record<EventType, { icon: string; class: string }> = {
   default: { icon: "mdi:circle-medium", class: "tl-default" },
@@ -30,7 +39,7 @@ const typeConfig: Record<EventType, { icon: string; class: string }> = {
   {
     events.map((event, index) => {
       const config = typeConfig[event.type || "default"];
-      const iconName = event.icon || config.icon;
+      const iconName = sanitizeIconName(event.icon || config.icon);
       return (
         <li class={`tl-event ${config.class}`}>
           <div class="tl-marker">

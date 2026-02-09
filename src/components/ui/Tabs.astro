@@ -66,21 +66,23 @@ $(".tab-panel").each((index, el) => {
     $el.attr("id", id);
   }
 
+  // Add data-panel-index for robust CSS targeting (avoids nth-child issues)
+  $el.attr("data-panel-index", String(index));
   $el.attr("role", "tabpanel");
   $el.attr("aria-labelledby", labelId);
 });
 
 const processedSlotContent = $("body").html() || "";
 
-// Generate consolidated CSS for this instance
+// Generate consolidated CSS for this instance using data-panel-index for robust targeting
 const instanceCss = labels
   .map(
     (_, index) => `
-        .tabs-container[data-tabs-id="${uniqueId}"] #tab-${uniqueId}-${index}:checked ~ .tab-content > .tab-panel:nth-child(${index + 1}) {
+        .tabs-container[data-tabs-id="${uniqueId}"] #tab-${uniqueId}-${index}:checked ~ .tab-content > .tab-panel[data-panel-index="${index}"] {
           display: block;
         }
 
-        .tabs-container[data-tabs-id="${uniqueId}"] #tab-${uniqueId}-${index}:checked ~ .tab-content > .tab-panel:not(:nth-child(${index + 1})) {
+        .tabs-container[data-tabs-id="${uniqueId}"] #tab-${uniqueId}-${index}:checked ~ .tab-content > .tab-panel:not([data-panel-index="${index}"]) {
           display: none;
         }
 
