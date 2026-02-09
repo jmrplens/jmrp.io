@@ -14,6 +14,19 @@ interface Props {
 
 const { name, syntax, description, mdnUrl, defaultValue, since } = Astro.props;
 const hasContent = Astro.slots.has("default");
+
+// Sanitize MDN URL - only allow safe protocols
+let safeMdnUrl: string | null = null;
+if (mdnUrl) {
+  try {
+    const url = new URL(mdnUrl, "https://developer.mozilla.org");
+    if (url.protocol === "https:" || url.protocol === "http:") {
+      safeMdnUrl = url.href;
+    }
+  } catch {
+    // Invalid URL - leave as null
+  }
+}
 ---
 
 <div class="directive-card">
@@ -21,9 +34,9 @@ const hasContent = Astro.slots.has("default");
     <code class="dc-name">{name}</code>
     {since && <span class="dc-since">{since}</span>}
     {
-      mdnUrl && (
+      safeMdnUrl && (
         <a
-          href={mdnUrl}
+          href={safeMdnUrl}
           target="_blank"
           rel="noopener noreferrer"
           class="dc-mdn"

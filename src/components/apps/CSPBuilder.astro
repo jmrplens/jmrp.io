@@ -983,7 +983,7 @@ const groupedDirectives = categories.map((cat) => ({
         case "cloudflare":
           return `# _headers file
 /*
-  ${headerName}: ${policy}`;
+  ${headerName}: ${escapedPolicy}`;
         case "netlify":
           return `# netlify.toml
 [[headers]]
@@ -1059,8 +1059,11 @@ const groupedDirectives = categories.map((cat) => ({
 
       // Only prefix plain hostnames without scheme
       if (!isQuotedKeyword && !isSchemeSource && !hasScheme && !isWildcard) {
-        // Looks like a bare hostname (e.g., "example.com" or "cdn.example.org")
-        if (/^[\w.-]+\.\w+$/.test(value)) {
+        // Match hostnames, IPv4 addresses, or bracketed IPv6 with optional port
+        // Examples: example.com, example.com:8080, 192.168.1.1, 192.168.1.1:443, [::1], [::1]:8080
+        const hostnamePattern =
+          /^(?:[\w.-]+\.\w+|\d{1,3}(?:\.\d{1,3}){3}|\[[\da-f:]+\])(?::\d+)?$/i;
+        if (hostnamePattern.test(value)) {
           value = `https://${value}`;
         }
       }

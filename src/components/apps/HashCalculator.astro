@@ -171,7 +171,8 @@ const algorithms = [
       const data = encoder.encode(content);
       const hashBuffer = await crypto.subtle.digest(algorithm, data);
       const hashArray = Array.from(new Uint8Array(hashBuffer));
-      const hashBase64 = btoa(String.fromCharCode.apply(null, hashArray));
+      // Use spread operator instead of apply to avoid stack limits for large arrays
+      const hashBase64 = btoa(String.fromCharCode(...hashArray));
       return hashBase64;
     }
 

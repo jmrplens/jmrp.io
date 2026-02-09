@@ -142,6 +142,8 @@ const { beforeLabel = "Before", afterLabel = "After" } = Astro.props;
     background: transparent !important;
     border: none !important;
     border-radius: 0 !important;
+    /* stylelint-disable-next-line property-no-vendor-prefix -- Safari compatibility */
+    -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
   }
 
@@ -152,6 +154,8 @@ const { beforeLabel = "Before", afterLabel = "After" } = Astro.props;
     color: var(--color-text);
     white-space: pre;
     background-color: transparent !important;
+    /* stylelint-disable-next-line property-no-vendor-prefix -- Safari compatibility */
+    -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
   }
 

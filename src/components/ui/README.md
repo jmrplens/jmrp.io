@@ -269,8 +269,9 @@ Styled box for tutorial prerequisites and requirements.
 import Prerequisite from "@/components/ui/Prerequisite.astro";
 
 <Prerequisite>
-  - **Nginx** version 1.19 or higher - **SSL certificate** configured - Basic
-  knowledge of HTTP headers
+  - **Nginx** version 1.19 or higher
+  - **SSL certificate** configured
+  - Basic knowledge of HTTP headers
 </Prerequisite>
 ```
 

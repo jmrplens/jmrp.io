@@ -259,7 +259,7 @@ const toolsSchema = {
     padding: 0.25rem 0.5rem;
     font-size: 0.65rem;
     font-weight: var(--fw-bold);
-    color: #fff;
+    color: var(--color-on-primary, #fff);
     text-transform: uppercase;
     letter-spacing: 0.05em;
     background: var(--color-primary);
@@ -356,7 +356,7 @@ const toolsSchema = {
   }
 
   .tool-card:hover .tool-arrow {
-    color: #fff;
+    color: var(--color-on-primary, #fff);
     background: var(--color-primary);
     transform: translateX(4px);
   }

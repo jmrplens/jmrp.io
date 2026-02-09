@@ -18,7 +18,7 @@ const toolSchema = {
   operatingSystem: "Web Browser",
   offers: {
     "@type": "Offer",
-    price: "0",
+    price: 0,
     priceCurrency: "USD",
   },
 };
@@ -185,7 +185,7 @@ const toolSchema = {
   .header-icon span {
     width: 2rem;
     height: 2rem;
-    color: #fff;
+    color: var(--header-icon-color, #fff);
   }
 
   .header-content {

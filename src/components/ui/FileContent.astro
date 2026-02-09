@@ -48,10 +48,10 @@ const filenameFormatted = filename.replaceAll("/", "/&#8203;");
 
 const slotContent = await Astro.slots.render("default");
 // Remove tabindex from wrapper-level elements to prevent double focus (wrapper handles it)
-// Only target HTML tags, not code samples that might contain tabindex examples
+// Only target HTML tags with matching quote pairs for valid tabindex="0" or tabindex='0'
 const trimmedContent = slotContent
   .trim()
-  .replaceAll(/(<[^>]+)\s+tabindex=["']?0["']?/g, "$1");
+  .replaceAll(/(<[^>]+)\s+tabindex=(["'])0\2/g, "$1");
 const uuid = createHash("sha256")
   .update(`${filename}-${trimmedContent}`)
   .digest("hex")
@@ -71,8 +71,10 @@ if (!ariaLabel) {
 
 // Include short uuid suffix in aria-label to ensure landmark uniqueness
 // when same file with similar content appears multiple times on a page
+const uuidShort = uuid.slice(0, 4);
 const finalAriaLabel =
-  ariaLabel || `${filename} - ${plainText} (region ${uuid})`;
+  ariaLabel ||
+  `${filename} - ${plainText}${plainText ? " " : ""}(id ${uuidShort})`;
 
 // If language is specified, extract raw code for Shiki re-rendering
 let rawCode = "";

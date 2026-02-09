@@ -123,8 +123,7 @@ const HeadingTag = `h${headingLevel}` as "h2" | "h3" | "h4" | "h5" | "h6";
   }
 
   /* Light mode adjustments */
-  :root[data-theme="light"] .key-value .kv-key-badge,
-  :root:not([data-theme="dark"]) .key-value .kv-key-badge {
+  :root[data-theme="light"] .key-value .kv-key-badge {
     color: #7c3aed;
     background: linear-gradient(
       135deg,
@@ -134,8 +133,9 @@ const HeadingTag = `h${headingLevel}` as "h2" | "h3" | "h4" | "h5" | "h6";
     border-color: rgb(124 58 237 / 20%);
   }
 
+  /* System preference fallback when no explicit theme is set */
   @media (prefers-color-scheme: light) {
-    :root:not([data-theme="dark"]) .key-value .kv-key-badge {
+    :root:not([data-theme]) .key-value .kv-key-badge {
       color: #7c3aed;
       background: linear-gradient(
         135deg,

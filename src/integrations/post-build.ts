@@ -570,6 +570,17 @@ function handleNginxValidationError(
 }
 
 /**
+ * Safely removes a temporary file, swallowing any errors.
+ */
+function cleanupTempFile(filePath: string): void {
+  try {
+    fs.rmSync(filePath, { force: true });
+  } catch {
+    // Best-effort cleanup - swallow errors
+  }
+}
+
+/**
  * Performs the file rollback for both main and assets config using sudo.
  * Uses cryptographically random temp filenames and secure spawn options.
  */
@@ -604,11 +615,7 @@ function performRollback(
   ); // NOSONAR
   if (mvResult.status !== 0 || mvResult.error) {
     // Clean up orphaned temp file before throwing
-    try {
-      fs.unlinkSync(tempPath);
-    } catch {
-      // Swallow unlink error - temp file cleanup is best-effort
-    }
+    cleanupTempFile(tempPath);
     throw new Error(
       `Rollback failed: Could not restore ${systemNginxPath}. Stderr: ${mvResult.stderr?.toString()}`,
     );
@@ -645,6 +652,8 @@ function performRollback(
       secureOpts,
     ); // NOSONAR
     if (mvAssetsResult.status !== 0 || mvAssetsResult.error) {
+      // Clean up orphaned temp file before throwing
+      cleanupTempFile(tempAssetsPath);
       throw new Error(
         `Rollback failed: Could not restore assets file ${assetsRollback.path}. Stderr: ${mvAssetsResult.stderr?.toString()}`,
       );

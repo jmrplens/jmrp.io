@@ -19,27 +19,46 @@ test.describe("Performance Optimizations", () => {
     // eslint-disable-next-line playwright/no-networkidle -- Required for LCP measurement
     await page.goto("/", { waitUntil: "networkidle" });
 
-    // Measure LCP using Performance Observer
+    // Measure LCP using Performance Observer with polling fallback
     const lcp = await page.evaluate(() => {
       return new Promise<number>((resolve) => {
         let lcpValue = 0;
+        const maxWait = 5000;
+        const pollInterval = 200;
+        let elapsed = 0;
 
         const observer = new PerformanceObserver((list) => {
           const entries = list.getEntries();
-          // LCP is the last entry in the list
           const lastEntry = entries.at(-1);
           if (lastEntry) {
             lcpValue = lastEntry.startTime;
+            // Resolve immediately when LCP is recorded
+            observer.disconnect();
+            resolve(lcpValue);
           }
         });
 
         observer.observe({ type: "largest-contentful-paint", buffered: true });
 
-        // Give LCP time to be recorded, then resolve
-        globalThis.setTimeout(() => {
-          observer.disconnect();
-          resolve(lcpValue);
-        }, 1000);
+        // Polling fallback for slow CI environments
+        const poll = () => {
+          elapsed += pollInterval;
+          const entries = performance.getEntriesByType(
+            "largest-contentful-paint",
+          );
+          if (entries.length > 0) {
+            const lastEntry = entries.at(-1);
+            if (lastEntry) lcpValue = lastEntry.startTime;
+          }
+          if (lcpValue > 0 || elapsed >= maxWait) {
+            observer.disconnect();
+            resolve(lcpValue);
+          } else {
+            globalThis.setTimeout(poll, pollInterval);
+          }
+        };
+
+        globalThis.setTimeout(poll, pollInterval);
       });
     });
 

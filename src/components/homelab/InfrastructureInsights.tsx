@@ -259,13 +259,17 @@ export default function InfrastructureInsights() {
               </output>
             </div>
             <div className="detail-row">
-              <span id="label-bandwidth-up">Bandwidth ↑</span>
+              <span id="label-bandwidth-up">
+                <span className="sr-only">Sent </span>Bandwidth ↑
+              </span>
               <output aria-labelledby="label-bandwidth-up">
                 {displayVal(stats?.bandwidth_sent_24h, formatBytes)}
               </output>
             </div>
             <div className="detail-row">
-              <span id="label-bandwidth-down">Bandwidth ↓</span>
+              <span id="label-bandwidth-down">
+                <span className="sr-only">Received </span>Bandwidth ↓
+              </span>
               <output aria-labelledby="label-bandwidth-down">
                 {displayVal(stats?.bandwidth_recv_24h, formatBytes)}
               </output>

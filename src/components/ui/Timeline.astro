@@ -19,19 +19,22 @@ const { events } = Astro.props;
 
 /**
  * Sanitizes icon name to ensure valid CSS class.
- * Normalizes to lowercase, keeps only alphanumeric, underscores, hyphens, and colons.
+ * Replaces colons with hyphens and keeps only alphanumeric, underscores, and hyphens.
  */
 function sanitizeIconName(name: string): string {
-  const sanitized = name.toLowerCase().replaceAll(/[^a-z0-9_:-]/g, "");
-  return sanitized || "mdi:circle-medium";
+  const sanitized = name
+    .toLowerCase()
+    .replaceAll(":", "-")
+    .replaceAll(/[^a-z0-9_-]/g, "");
+  return sanitized || "mdi-circle-medium";
 }
 
 type EventType = NonNullable<TimelineEvent["type"]>;
 const typeConfig: Record<EventType, { icon: string; class: string }> = {
-  default: { icon: "mdi:circle-medium", class: "tl-default" },
-  success: { icon: "mdi:check-circle", class: "tl-success" },
-  warning: { icon: "mdi:alert-circle", class: "tl-warning" },
-  milestone: { icon: "mdi:star", class: "tl-milestone" },
+  default: { icon: "mdi-circle-medium", class: "tl-default" },
+  success: { icon: "mdi-check-circle", class: "tl-success" },
+  warning: { icon: "mdi-alert-circle", class: "tl-warning" },
+  milestone: { icon: "mdi-star", class: "tl-milestone" },
 };
 ---
 
