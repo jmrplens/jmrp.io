@@ -1,7 +1,14 @@
 ---
 /**
  * Timeline Component
- * Vertical timeline with events, dates, and descriptions.
+ * Compact vertical timeline with minimal markers and clean typography.
+ *
+ * Features:
+ * - Minimal dot markers with type-based colors
+ * - Clean layout without heavy cards
+ * - Date as inline badge
+ * - Dark mode optimized
+ * - Markdown links in descriptions
  */
 interface TimelineEvent {
   date: string;
@@ -17,51 +24,62 @@ interface Props {
 
 const { events } = Astro.props;
 
-/**
- * Sanitizes icon name to ensure valid CSS class.
- * Replaces colons with hyphens and keeps only alphanumeric, underscores, and hyphens.
- */
-function sanitizeIconName(name: string): string {
-  const sanitized = name
-    .toLowerCase()
-    .replaceAll(":", "-")
-    .replaceAll(/[^a-z0-9_-]/g, "");
-  return sanitized || "mdi-circle-medium";
-}
-
 type EventType = NonNullable<TimelineEvent["type"]>;
-const typeConfig: Record<EventType, { icon: string; class: string }> = {
-  default: { icon: "mdi-circle-medium", class: "tl-default" },
-  success: { icon: "mdi-check-circle", class: "tl-success" },
-  warning: { icon: "mdi-alert-circle", class: "tl-warning" },
-  milestone: { icon: "mdi-star", class: "tl-milestone" },
+const typeConfig: Record<EventType, string> = {
+  default: "tl-default",
+  success: "tl-success",
+  warning: "tl-warning",
+  milestone: "tl-milestone",
 };
+
+const typeLabel: Record<EventType, string> = {
+  default: "",
+  success: "Standard",
+  warning: "Deprecated",
+  milestone: "Milestone",
+};
+
+/**
+ * Parse markdown links [text](url) to HTML anchors
+ */
+function parseMarkdownLinks(text: string): string {
+  return text.replaceAll(
+    /\[([^\]]+)\]\(([^)]+)\)/g,
+    '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>',
+  );
+}
 ---
 
 <ol class="timeline">
   {
-    events.map((event, index) => {
-      const config = typeConfig[event.type || "default"];
-      const iconName = sanitizeIconName(event.icon || config.icon);
+    events.map((event) => {
+      const eventType = event.type || "default";
+      const typeClass = typeConfig[eventType];
+      const label = typeLabel[eventType];
       return (
-        <li class={`tl-event ${config.class}`}>
+        <li class={`tl-event ${typeClass}`}>
           <div class="tl-marker">
             <span
-              class={`i-${iconName} tl-icon`}
+              class="tl-dot"
               aria-hidden="true"
             />
-            {index < events.length - 1 && <div class="tl-line" />}
           </div>
           <div class="tl-content">
-            <time
-              class="tl-date"
-              datetime={event.date}
-            >
-              {event.date}
-            </time>
-            <p class="tl-title">{event.title}</p>
+            <div class="tl-header">
+              <time
+                class="tl-date"
+                datetime={event.date}
+              >
+                {event.date}
+              </time>
+              {label && <span class="tl-type">{label}</span>}
+              <span class="tl-title">{event.title}</span>
+            </div>
             {event.description && (
-              <p class="tl-description">{event.description}</p>
+              <p
+                class="tl-description"
+                set:html={parseMarkdownLinks(event.description)}
+              />
             )}
           </div>
         </li>
@@ -72,89 +90,168 @@ const typeConfig: Record<EventType, { icon: string; class: string }> = {
 
 <style>
   .timeline {
+    --tl-dot-size: 10px;
+    --tl-line-width: 2px;
+    --tl-marker-col: 1rem;
+    --tl-dot-offset: 0.35rem;
+
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
     padding: 0;
-    margin: 1.5rem 0;
+    margin: 1rem 0;
     list-style: none;
+  }
+
+  /* Vertical line from first dot center to last dot center */
+  .timeline::before {
+    position: absolute;
+    top: calc(var(--tl-dot-offset) + var(--tl-dot-size) / 2);
+    bottom: calc(var(--tl-dot-offset) + var(--tl-dot-size) / 2);
+    left: calc(var(--tl-marker-col) / 2 - var(--tl-line-width) / 2);
+    width: var(--tl-line-width);
+    content: "";
+    background: var(--color-border);
   }
 
   .tl-event {
     display: grid;
-    grid-template-columns: 24px 1fr;
-    gap: 1rem;
-    padding-bottom: 1.5rem;
+    grid-template-columns: var(--tl-marker-col) 1fr;
+    gap: 0.75rem;
+    padding: 0 0 1rem;
+    margin: 0;
   }
 
   .tl-event:last-child {
     padding-bottom: 0;
   }
 
+  /* Marker column */
   .tl-marker {
     display: flex;
-    flex-direction: column;
-    align-items: center;
+    justify-content: center;
+    padding-top: var(--tl-dot-offset);
   }
 
-  .tl-icon {
+  /* Small colored dot */
+  .tl-dot {
     z-index: 1;
-    flex-shrink: 0;
-    width: 24px;
-    height: 24px;
-    color: var(--tl-color, var(--color-text-muted));
+    width: var(--tl-dot-size);
+    height: var(--tl-dot-size);
+    background: var(--tl-accent, var(--color-text-muted));
+    border-radius: 50%;
   }
 
-  .tl-line {
-    flex: 1;
-    width: 2px;
-    margin-top: 0.5rem;
-    background: var(--color-border);
-  }
-
+  /* Content */
   .tl-content {
-    padding-top: 0.125rem;
+    min-width: 0;
+  }
+
+  .tl-header {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.375rem 0.625rem;
+    align-items: baseline;
+    line-height: 1.4;
   }
 
   .tl-date {
-    display: block;
-    margin-bottom: 0.25rem;
+    flex-shrink: 0;
+    padding: 0.0625rem 0.375rem;
     font-family: var(--font-mono);
-    font-size: 0.8rem;
-    color: var(--color-text-muted);
+    font-size: 0.7rem;
+    font-weight: var(--fw-medium);
+    color: var(--tl-accent, var(--color-text-muted));
+    background: var(--tl-bg-muted, rgb(0 0 0 / 6%));
+    border-radius: 0.1875rem;
+  }
+
+  .tl-type {
+    flex-shrink: 0;
+    padding: 0.0625rem 0.375rem;
+    font-size: 0.65rem;
+    font-weight: var(--fw-semibold);
+    color: var(--tl-accent, var(--color-text-muted));
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    background: var(--tl-bg-muted, rgb(0 0 0 / 6%));
+    border-radius: 0.1875rem;
   }
 
   .tl-title {
-    margin: 0 0 0.25rem;
-    font-size: 1rem;
+    font-size: 0.9rem;
     font-weight: var(--fw-semibold);
     color: var(--color-text-heading);
   }
 
   .tl-description {
-    margin: 0;
-    font-size: 0.9rem;
+    margin: 0.25rem 0 0;
+    font-size: 0.825rem;
     line-height: 1.5;
     color: var(--color-text-muted);
   }
 
+  .tl-description a {
+    color: var(--color-primary);
+    text-decoration: underline;
+    text-decoration-color: color-mix(
+      in srgb,
+      var(--color-primary) 40%,
+      transparent
+    );
+    text-underline-offset: 2px;
+  }
+
+  .tl-description a:hover {
+    text-decoration-color: var(--color-primary);
+  }
+
   /* Type variants */
   .tl-default {
-    --tl-color: var(--color-text-muted);
+    --tl-accent: var(--color-text-muted);
+    --tl-bg-muted: rgb(0 0 0 / 6%);
   }
 
   .tl-success {
-    --tl-color: var(--color-success, #10b981);
+    --tl-accent: var(--color-success, #10b981);
+    --tl-bg-muted: color-mix(
+      in srgb,
+      var(--color-success, #10b981) 12%,
+      transparent
+    );
   }
 
   .tl-warning {
-    --tl-color: var(--color-warning, #f59e0b);
+    --tl-accent: var(--color-warning, #f59e0b);
+    --tl-bg-muted: color-mix(
+      in srgb,
+      var(--color-warning, #f59e0b) 12%,
+      transparent
+    );
   }
 
   .tl-milestone {
-    --tl-color: var(--color-primary);
+    --tl-accent: var(--color-primary);
+    --tl-bg-muted: color-mix(in srgb, var(--color-primary) 12%, transparent);
   }
 
-  .tl-milestone .tl-icon {
-    /* Use box-shadow instead of background to avoid overriding icon mask */
-    border-radius: 50%;
-    box-shadow: 0 0 0 4px var(--color-bg);
+  .tl-milestone .tl-dot {
+    box-shadow: 0 0 0 3px
+      color-mix(in srgb, var(--color-primary) 25%, transparent);
+  }
+
+  /* Dark mode */
+  :global([data-theme="dark"]) .tl-default {
+    --tl-bg-muted: rgb(255 255 255 / 8%);
+  }
+
+  /* Responsive */
+  @media (width <= 480px) {
+    .tl-header {
+      flex-direction: column;
+      gap: 0.125rem;
+      align-items: flex-start;
+    }
   }
 </style>

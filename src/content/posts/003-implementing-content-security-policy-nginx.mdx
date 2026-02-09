@@ -58,13 +58,13 @@ This guide takes you from zero to a production-ready, **A+ rated** CSP configura
 Content Security Policy has evolved significantly since its introduction. Understanding this evolution helps you appreciate why modern "strict CSP" approaches exist.
 
 <Timeline events={[
-  { date: "2010", title: "X-Content-Security-Policy", description: "Mozilla introduces the first CSP implementation as an experimental header", type: "default" },
-  { date: "2012", title: "CSP Level 1", description: "W3C standardizes CSP with basic fetch directives (script-src, style-src, etc.)", type: "milestone" },
-  { date: "2016", title: "CSP Level 2", description: "Introduces nonces, hashes, and frame-ancestors. 'unsafe-inline' can be overridden by nonces", type: "milestone" },
-  { date: "2016", title: "Google Research", description: "Google publishes 'CSP Is Dead, Long Live CSP' showing 94.72% of allowlist CSPs are bypassable", type: "warning" },
-  { date: "2018", title: "strict-dynamic", description: "New keyword allows trusted scripts to load dependencies without explicit allowlisting", type: "success" },
-  { date: "2023+", title: "CSP Level 3 (Working Draft)", description: "Introduces Trusted Types, report-to, and improved WebAssembly support", type: "milestone" },
-  { date: "2024+", title: "Trusted Types Adoption", description: "Browser support matures; enterprises begin adopting for DOM-XSS prevention", type: "success" },
+  { date: "2010", type: "default", title: "X-Content-Security-Policy", description: "Mozilla introduces the first CSP implementation as an experimental header. [Mozilla Security Blog](https://blog.mozilla.org/security/2009/06/19/content-security-policy/)" },
+  { date: "2012", type: "milestone", title: "CSP Level 1", description: "W3C standardizes CSP with basic fetch directives (script-src, style-src, etc.). [W3C CSP 1.0 Spec](https://www.w3.org/TR/CSP1/)" },
+  { date: "2016", type: "milestone", title: "CSP Level 2", description: "Introduces nonces, hashes, and frame-ancestors. 'unsafe-inline' can be overridden by nonces. [W3C CSP Level 2](https://www.w3.org/TR/CSP2/)" },
+  { date: "2016", type: "warning", title: "Google Research", description: "Google publishes 'CSP Is Dead, Long Live CSP' showing 94.72% of allowlist CSPs are bypassable. [Research Paper](https://research.google/pubs/csp-is-dead-long-live-csp-on-the-insecurity-of-whitelists-and-the-future-of-content-security-policy/)" },
+  { date: "2018", type: "success", title: "strict-dynamic", description: "New keyword allows trusted scripts to load dependencies without explicit allowlisting. [MDN strict-dynamic](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/script-src#strict-dynamic)" },
+  { date: "2023+", type: "milestone", title: "CSP Level 3 (Working Draft)", description: "Introduces Trusted Types, report-to, and improved WebAssembly support. [W3C CSP Level 3](https://www.w3.org/TR/CSP3/)" },
+  { date: "2024+", type: "success", title: "Trusted Types Adoption", description: "Browser support matures; enterprises begin adopting for DOM-XSS prevention. [web.dev Trusted Types](https://web.dev/articles/trusted-types)" },
 ]} />
 
 ---

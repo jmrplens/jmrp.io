@@ -89,23 +89,25 @@ const titleId = `prereq-${crypto.randomUUID().slice(0, 8)}`;
   }
 
   .prereq-content :global(li) {
-    display: flex;
-    gap: 0.5rem;
-    align-items: flex-start;
-    padding: 0.125rem 0;
+    position: relative;
+    padding-top: 0.125rem;
+    padding-bottom: 0.125rem;
+    padding-left: 1rem;
     font-size: 0.875rem;
     color: var(--color-text);
   }
 
   .prereq-content :global(ul li::before) {
-    flex-shrink: 0;
+    position: absolute;
+    left: 0;
     font-weight: var(--fw-bold);
     color: var(--color-primary);
     content: "•";
   }
 
   .prereq-content :global(ol li::before) {
-    flex-shrink: 0;
+    position: absolute;
+    left: 0;
     font-weight: var(--fw-bold);
     color: var(--color-primary);
     content: counter(prereq-counter) ".";
