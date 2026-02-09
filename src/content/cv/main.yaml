@@ -16,8 +16,8 @@
   type: time_table
   contents:
     - title: R&D Software Developer
-      institution: Power Electronics (<a href="https://power-electronics.com/en" aria-label="Power Electronics website">PE</a>)
-      department: Solar + Storage (<a href="https://power-electronics.com/en/solar" aria-label="Power Electronics Solar & Storage">PE Solar</a>)
+      institution: Power Electronics (<a href="https://power-electronics.com/en" aria-label="PE - Power Electronics website">PE</a>)
+      department: Solar + Storage (<a href="https://power-electronics.com/en/solar" aria-label="PE Solar - Power Electronics Solar & Storage division">PE Solar</a>)
       location: Lliria, Spain
       year: Apr 2023 - Current
       summary: >
@@ -31,8 +31,8 @@
         - "Management of software versions and collaborative workflows using Git."
 
     - title: Predoctoral researcher
-      institution: Polytechnic University of Valencia (<a href="https://www.upv.es/index-en.html" aria-label="UPV - Polytechnic University of Valencia">UPV</a>) + Spanish National Research Council (<a href="https://www.csic.es/en" aria-label="CSIC - Spanish National Research Council">CSIC</a>) + Hospital La Fe (<a href="https://www.iislafe.es/en/" aria-label="IIS La Fe - Institute for Health Research">IIS</a>)
-      department: Medical Imaging and Therapy Systems (<a href="https://i3m.csic.upv.es/" aria-label="i3M Research Institute">i3M</a>)
+      institution: Polytechnic University of Valencia (<a href="https://www.upv.es/index-en.html" aria-label="UPV - Polytechnic University of Valencia">UPV</a>) + Spanish National Research Council (<a href="https://www.csic.es/en" aria-label="CSIC - Spanish National Research Council">CSIC</a>) + Hospital La Fe (<a href="https://www.iislafe.es/en/" aria-label="IIS - Institute for Health Research La Fe">IIS</a>)
+      department: Medical Imaging and Therapy Systems (<a href="https://i3m.csic.upv.es/" aria-label="i3M - Research Institute">i3M</a>)
       year: Jan 2023 - Apr 2023
       location: Valencia, Spain
       summary: >
@@ -48,7 +48,7 @@
 
     - title: Predoctoral researcher
       institution: Polytechnic University of Valencia (<a href="https://www.upv.es/index-en.html" aria-label="UPV - Polytechnic University of Valencia">UPV</a>) + Spanish National Research Council (<a href="https://www.csic.es/en" aria-label="CSIC - Spanish National Research Council">CSIC</a>)
-      department: Medical Imaging and Therapy Systems (<a href="https://i3m.csic.upv.es/" aria-label="i3M Research Institute">i3M</a>)
+      department: Medical Imaging and Therapy Systems (<a href="https://i3m.csic.upv.es/" aria-label="i3M - Research Institute">i3M</a>)
       year: Jul 2021 - Jul 2022
       location: Valencia, Spain
       summary: >
@@ -68,8 +68,8 @@
         - Advisor of the Master thesis of a student of the Master's Degree in Acoustic Engineering of the UPV.
 
     - title: Researcher in European project
-      institution: Higher Polytechnic School of Gandia (<a href="https://www.upv.es/entidades/epsg/en/home/" aria-label="UPV Gandia Campus">UPV</a>) + European Space Agency (<a href="https://www.esa.int/" aria-label="European Space Agency">ESA</a>)
-      department: Complex Media Acoustics Group of IGIC (<a href="https://igic.webs.upv.es/" aria-label="Interdisciplinary Institute for Coastal Management (IGIC)">IGIC</a>)
+      institution: Higher Polytechnic School of Gandia (<a href="https://www.upv.es/entidades/epsg/en/home/" aria-label="UPV - Gandia Campus">UPV</a>) + European Space Agency (<a href="https://www.esa.int/" aria-label="ESA - European Space Agency">ESA</a>)
+      department: Complex Media Acoustics Group of IGIC (<a href="https://igic.webs.upv.es/" aria-label="IGIC - Interdisciplinary Institute for Coastal Management">IGIC</a>)
       year: Feb 2020 - Jul 2021
       location: Gandia, Spain
       summary:
@@ -83,7 +83,7 @@
         - Simulation of a real environment to validate design performance (MATLAB, COMSOL & Python).
         - Design of the industrial model for the manufacture of the prototype by means of plastic injection.
         - Development of software for acoustic measurements according to ISO 10534-2:1998 and ASTM 2611-19 standards. <a href="https://github.com/jmrplens/A-Lab">A|Lab</a>
-        - 'Design and development of a 3-axis robotic system to perform experimental measurements. Photos and some information here: <a href="https://cienciagandia.webs.upv.es/en/2022/03/metamaterial-to-reduce-noise-in-space-rocket-launches/" aria-label="News about the space rocket launches metamaterial project">NEWS</a>'
+        - 'Design and development of a 3-axis robotic system to perform experimental measurements. Photos and some information here: <a href="https://cienciagandia.webs.upv.es/en/2022/03/metamaterial-to-reduce-noise-in-space-rocket-launches/" aria-label="NEWS - Space rocket launches metamaterial project">NEWS</a>'
         - Results validated and accepted by ESA.
         - title: "Three publications/presentations at international congresses (Euronoise and ECSSMET) and one at a national congress (Tecniacústica):"
           contents:
@@ -94,7 +94,7 @@
 
     - title: Research internship
       institution: University of Alicante (<a href="https://www.ua.es/en/index.html" aria-label="UA - University of Alicante">UA</a>)
-      department: Dep. of Physics, Systems Engineering and Signal Theory (<a href="https://dfests.ua.es/" aria-label="DFESTS Department at UA">DFESTS</a>)
+      department: Dep. of Physics, Systems Engineering and Signal Theory (<a href="https://dfests.ua.es/" aria-label="DFESTS - Department at UA">DFESTS</a>)
       year: Feb 2018 - Jul 2018
       location: Alicante, Spain
       summary:
@@ -104,14 +104,14 @@
       description:
         - Simulation of acoustic models.
         - Acoustic measurements by means of a LabView-controlled robotic system.
-        - 'Investigation of the acoustic radiation efficiency (Vibration-borne noise) of metallic plates for an initial study of ship noise emissions in water. Carried out in collaboration with <a href="https://electronica-submarina.com/" aria-label="SAES - Marine Electronics">SAES</a>, here you can read a news item on the subject: <a href="https://electronica-submarina.com/2018/11/05/saes-latest-researches-on-underwater-noise-by-ships-are-presented-at-tecniacustica/" aria-label="News about ship underwater noise research">NEWS</a>.'
+        - 'Investigation of the acoustic radiation efficiency (Vibration-borne noise) of metallic plates for an initial study of ship noise emissions in water. Carried out in collaboration with <a href="https://electronica-submarina.com/" aria-label="SAES - Marine Electronics">SAES</a>, here you can read a news item on the subject: <a href="https://electronica-submarina.com/2018/11/05/saes-latest-researches-on-underwater-noise-by-ships-are-presented-at-tecniacustica/" aria-label="NEWS - Ship underwater noise research">NEWS</a>.'
         - title: "A publication at a national congress:"
           contents:
             - Tecniacústica - <a href="/pdf/paper-resources/Conferences/Tecniacustica/saura2018.pdf">Comportamiento vibroacústico de contenedores cilíndricos en aire</a>.
 
     - title: Founder and Vocal Member
-      institution: AmicroTech (<a href="https://www.linkedin.com/company/a-µtech/" aria-label="AmicroTech LinkedIn profile">AµTech</a>)
-      department: University of Alicante (<a href="https://www.ua.es/en/index.html" aria-label="University of Alicante (UA)">UA</a>)
+      institution: AmicroTech (<a href="https://www.linkedin.com/company/a-µtech/" aria-label="AµTech - AmicroTech LinkedIn profile">AµTech</a>)
+      department: University of Alicante (<a href="https://www.ua.es/en/index.html" aria-label="UA - University of Alicante">UA</a>)
       year: Sep 2016 - Jul 2018
       location: Alicante, Spain
       summary:
@@ -124,7 +124,7 @@
         - Communication and Public Relations.
 
     - title: Sound technician
-      institution: Acusticox (<a href="https://acusticox.com/" aria-label="Acusticox official website">web</a>)
+      institution: Acusticox (<a href="https://acusticox.com/" aria-label="web - Acusticox official website">web</a>)
       year: Jun 2011 - Feb 2018
       location: Cox, Spain
       description:
@@ -134,7 +134,7 @@
         - Customer acquisition.
 
     - title: Laboratory technician
-      institution: Profdent (<a href="https://profdent.es/" aria-label="Profdent dental laboratory website">web</a>)
+      institution: Profdent (<a href="https://profdent.es/" aria-label="web - Profdent dental laboratory website">web</a>)
       year: Sep 2005 - Nov 2009
       location: Alicante, Spain
       description:
@@ -231,8 +231,8 @@
   type: time_table
   contents:
     - title: PhD in Health and Wellness Technologies
-      institution: Polytechnic University of Valencia (<a href="https://www.upv.es/index-en.html" aria-label="Polytechnic University of Valencia (UPV) - PhD">UPV</a>)
-      department: Ultrasound Medical and Industrial Laboratory (<a href="https://i3m.csic.upv.es/" aria-label="UMIL Laboratory (PhD)">UMIL</a>)
+      institution: Polytechnic University of Valencia (<a href="https://www.upv.es/index-en.html" aria-label="UPV - Polytechnic University of Valencia (PhD)">UPV</a>)
+      department: Ultrasound Medical and Industrial Laboratory (<a href="https://i3m.csic.upv.es/" aria-label="UMIL - Laboratory (PhD)">UMIL</a>)
       location: Valencia, Spain
       year: 2023
       summary: >
@@ -249,13 +249,13 @@
       linkitems:
         - link: /pdf/degree/PhDExpEng.pdf
           linkname: "Academic record (ENG)"
-          ariaLabel: "Academic record (PhD - English)"
+          ariaLabel: "Academic record (ENG) - PhD program in English"
         - link: /pdf/degree/PhDExpCas.pdf
           linkname: "Academic record (SPA)"
-          ariaLabel: "Academic record (PhD - Spanish)"
+          ariaLabel: "Academic record (SPA) - PhD program in Spanish"
     - title: Master's Degree in Acoustical Engineering
-      institution: Polytechnic University of Valencia (<a href="https://www.upv.es/index-en.html" aria-label="Polytechnic University of Valencia (UPV) - Master">UPV</a>)
-      department: Higher Polytechnic School of Gandia (<a href="https://www.upv.es/entidades/epsg/en/home/" aria-label="EPSG Gandia Campus (Master)">EPSG</a>)
+      institution: Polytechnic University of Valencia (<a href="https://www.upv.es/index-en.html" aria-label="UPV - Polytechnic University of Valencia (Master)">UPV</a>)
+      department: Higher Polytechnic School of Gandia (<a href="https://www.upv.es/entidades/epsg/en/home/" aria-label="EPSG - Gandia Campus (Master)">EPSG</a>)
       location: Gandia, Spain
       year: 2019
       summary: >
@@ -270,14 +270,14 @@
           linkname: "Academic record"
           ariaLabel: "Academic record (Acoustical Engineering)"
     - title: Degree in Telecommunication Engineering in Sound and Image
-      institution: University of Alicante (<a href="https://www.ua.es/en/index.html" aria-label="University of Alicante (UA) - Bachelor">UA</a>)
-      department: Higher Polytechnic School (<a href="https://eps.ua.es/en/home.html" aria-label="Higher Polytechnic School (Bachelor)">EPS</a>)
+      institution: University of Alicante (<a href="https://www.ua.es/en/index.html" aria-label="UA - University of Alicante (Bachelor)">UA</a>)
+      department: Higher Polytechnic School (<a href="https://eps.ua.es/en/home.html" aria-label="EPS - Higher Polytechnic School (Bachelor)">EPS</a>)
       location: Alicante, Spain
       year: 2018
       summary: >
         Degree obtained together with the 2 specializations: Acoustic Engineering and Audiovisual Technology.
         <br><br>
-        Final Degree Work entitled <a href="https://rua.ua.es/entities/publication/51f4a3fd-7a4b-4d5a-9ff1-3cd7900b7d0f" aria-label="Study of the direct/reverberated field relationship Final Degree Work">Estudio de la relación campo directo/reverberado; útil/perjudicial</a> ('Study of the direct/reverberated field relationship; useful/harmful')
+        Final Degree Work entitled <a href="https://rua.ua.es/entities/publication/51f4a3fd-7a4b-4d5a-9ff1-3cd7900b7d0f" aria-label="Estudio de la relación campo directo/reverberado - Final Degree Work">Estudio de la relación campo directo/reverberado; útil/perjudicial</a> ('Study of the direct/reverberated field relationship; useful/harmful')
       linkitems:
         - link: /pdf/degree/Telecom.pdf
           linkname: "Diploma"
@@ -286,7 +286,7 @@
           linkname: "Academic record"
           ariaLabel: "Academic record (Telecommunications)"
     - title: Certificate of Higher Education in Electronics Technician & Superior Sound Technician
-      institution: <a href="https://elche.salesianos.edu/colegio/san-jose-artesano/" aria-label="IES Salesianos website">IES Salesianos (San Jóse Artesano)</a> & <a href="https://ies-berlanga.info/index.php/es/" aria-label="IES Luis García Berlanga website">IES Luis García Berlanga</a>
+      institution: <a href="https://elche.salesianos.edu/colegio/san-jose-artesano/" aria-label="IES Salesianos (San Jóse Artesano) - website">IES Salesianos (San Jóse Artesano)</a> & <a href="https://ies-berlanga.info/index.php/es/" aria-label="IES Luis García Berlanga - website">IES Luis García Berlanga</a>
       location: Elche & Alicante, Spain
       year: 2009/2011
       linkitems:

@@ -106,3 +106,4 @@ temp_lh/
 temp_workflow/
 # Backup files
 *.backup
+lighthouse-results/
