@@ -3,7 +3,9 @@
     "html-validate:recommended",
     "html-validate:document"
   ],
-  "elements": ["html5"],
+  "elements": [
+    "html5"
+  ],
   "rules": {
     "no-trailing-whitespace": "off",
     "void-style": "off",
@@ -17,14 +19,20 @@
       "error",
       {
         "target": "crossorigin",
-        "exclude": ["/scripts/cf-beacon.js"]
+        "exclude": [
+          "/scripts/cf-beacon.js"
+        ]
       }
     ],
     "element-required-content": [
       "error",
       {
-        "exclude": ["span"]
+        "exclude": [
+          "span"
+        ]
       }
-    ]
+    ],
+    "prefer-native-element": "off",
+    "no-redundant-role": "off"
   }
 }

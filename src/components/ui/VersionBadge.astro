@@ -1,0 +1,159 @@
+---
+/**
+ * VersionBadge Component
+ * Inline badge for versions, levels, or status indicators.
+ */
+interface Props {
+  type?: "version" | "level" | "deprecated" | "new" | "experimental" | "stable";
+  value?: string;
+}
+
+const { type = "version", value } = Astro.props;
+
+type BadgeType = NonNullable<Props["type"]>;
+const config: Record<
+  BadgeType,
+  { icon: string; class: string; prefix?: string }
+> = {
+  version: { icon: "mdi-code-tags", class: "badge-version" },
+  level: { icon: "mdi-layers-triple", class: "badge-level", prefix: "Level" },
+  deprecated: { icon: "mdi-alert-circle", class: "badge-deprecated" },
+  new: { icon: "mdi-new-box", class: "badge-new" },
+  experimental: { icon: "mdi-flask", class: "badge-experimental" },
+  stable: { icon: "mdi-check-decagram", class: "badge-stable" },
+};
+
+const { icon, class: badgeClass, prefix } = config[type];
+const displayValue =
+  value !== undefined && value !== null
+    ? value
+    : type.charAt(0).toUpperCase() + type.slice(1);
+---
+
+<span class={`version-badge ${badgeClass}`}>
+  <span
+    class={`i-${icon} badge-icon`}
+    aria-hidden="true"
+  ></span>
+  <span class="badge-text"
+    >{prefix ? `${prefix} ${displayValue}` : displayValue}</span
+  >
+</span>
+
+<style>
+  .version-badge {
+    display: inline-flex;
+    gap: 0.25rem;
+    align-items: center;
+    padding: 0.125rem 0.5rem;
+    font-size: 0.75rem;
+    font-weight: var(--fw-medium);
+    vertical-align: middle;
+    white-space: nowrap;
+    border-radius: 9999px;
+  }
+
+  .badge-icon {
+    flex-shrink: 0;
+    width: 14px;
+    height: 14px;
+  }
+
+  .badge-text {
+    font-family: var(--font-mono);
+    letter-spacing: 0.02em;
+  }
+
+  /* Version - purple/primary */
+  .badge-version {
+    color: var(--color-primary);
+    background: rgb(179 137 245 / 15%);
+  }
+
+  /* Level - blue */
+  .badge-level {
+    color: #3b82f6;
+    background: rgb(59 130 246 / 15%);
+  }
+
+  /* Deprecated - red/warning */
+  .badge-deprecated {
+    color: #ef4444;
+    background: rgb(239 68 68 / 15%);
+  }
+
+  /* New - green */
+  .badge-new {
+    color: #10b981;
+    background: rgb(16 185 129 / 15%);
+  }
+
+  /* Experimental - amber */
+  .badge-experimental {
+    color: #f59e0b;
+    background: rgb(245 158 11 / 15%);
+  }
+
+  /* Stable - emerald */
+  .badge-stable {
+    color: #059669;
+    background: rgb(5 150 105 / 15%);
+  }
+
+  /* Light mode adjustments for WCAG AA contrast */
+  :root[data-theme="light"] .badge-version,
+  :root:not([data-theme="dark"]) .badge-version {
+    color: #7c3aed;
+  }
+
+  :root[data-theme="light"] .badge-level,
+  :root:not([data-theme="dark"]) .badge-level {
+    color: #1e40af; /* blue-800 */
+  }
+
+  :root[data-theme="light"] .badge-deprecated,
+  :root:not([data-theme="dark"]) .badge-deprecated {
+    color: #991b1b; /* red-800 */
+  }
+
+  :root[data-theme="light"] .badge-new,
+  :root:not([data-theme="dark"]) .badge-new {
+    color: #065f46; /* emerald-800 */
+  }
+
+  :root[data-theme="light"] .badge-experimental,
+  :root:not([data-theme="dark"]) .badge-experimental {
+    color: #92400e; /* amber-800 */
+  }
+
+  :root[data-theme="light"] .badge-stable,
+  :root:not([data-theme="dark"]) .badge-stable {
+    color: #065f46; /* emerald-800 */
+  }
+
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) .badge-version {
+      color: #7c3aed;
+    }
+
+    :root:not([data-theme="dark"]) .badge-level {
+      color: #1e40af;
+    }
+
+    :root:not([data-theme="dark"]) .badge-deprecated {
+      color: #991b1b;
+    }
+
+    :root:not([data-theme="dark"]) .badge-new {
+      color: #065f46;
+    }
+
+    :root:not([data-theme="dark"]) .badge-experimental {
+      color: #92400e;
+    }
+
+    :root:not([data-theme="dark"]) .badge-stable {
+      color: #065f46;
+    }
+  }
+</style>

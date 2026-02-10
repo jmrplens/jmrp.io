@@ -283,12 +283,51 @@ h4 {
 
 .prose ul,
 .prose ol {
-  padding-left: 1.5rem;
+  padding-left: 1.75rem;
   margin-bottom: 1.25rem;
 }
 
+.prose ul {
+  list-style-type: disc;
+}
+
+.prose ol {
+  list-style-type: decimal;
+}
+
 .prose li {
+  position: relative;
+  padding-left: 0.25rem;
   margin-bottom: 0.5rem;
+}
+
+/* Ensure list markers are visible */
+.prose ul > li::marker {
+  font-size: 1.1em;
+  color: var(--color-accent);
+}
+
+.prose ol > li::marker {
+  font-weight: var(--fw-semibold);
+  color: var(--color-accent);
+}
+
+/* Nested lists */
+.prose ul ul,
+.prose ol ul {
+  margin-top: 0.5rem;
+  list-style-type: circle;
+}
+
+.prose ul ul ul,
+.prose ol ul ul {
+  list-style-type: square;
+}
+
+.prose ol ol,
+.prose ul ol {
+  margin-top: 0.5rem;
+  list-style-type: lower-alpha;
 }
 
 /* Accessibility: Links in text blocks must have non-color indicator */

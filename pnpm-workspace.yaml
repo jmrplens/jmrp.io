@@ -6,5 +6,4 @@ onlyBuiltDependencies:
   - esbuild
   - sharp
   - puppeteer
-  - snyk
   - sonar-scanner

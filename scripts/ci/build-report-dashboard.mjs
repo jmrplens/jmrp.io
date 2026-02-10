@@ -270,7 +270,6 @@ const saOutcomes = {
   lychee: process.env.OUTCOME_LYCHEE,
   typos: process.env.OUTCOME_TYPOS,
   security: process.env.OUTCOME_SECURITY,
-  snyk: process.env.OUTCOME_SNYK,
   sonar: process.env.OUTCOME_SONAR,
   jsdoc: process.env.OUTCOME_JSDOC,
   stylelint: process.env.OUTCOME_STYLELINT,
@@ -964,7 +963,6 @@ const html = `
                         <tr><td>Link Checker</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(saOutcomes.lychee)}">${saOutcomes.lychee || "Pending"}</span> ${status.lychee && saOutcomes.lychee === "success" ? '<a href="lychee/" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Report</a>' : ""} ${runId ? `<a href="${workflowUrl}" target="_blank" rel="noopener noreferrer" style="font-size:0.8rem; color:var(--text-muted); text-decoration:none;">GitHub ↗</a>` : ""}</div></td></tr>
                         <tr><td>Spell Checker</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(saOutcomes.typos)}">${saOutcomes.typos || "Pending"}</span> ${runId ? `<a href="${workflowUrl}" target="_blank" rel="noopener noreferrer" style="font-size:0.8rem; color:var(--text-muted); text-decoration:none;">GitHub ↗</a>` : ""}</div></td></tr>
                         <tr><td>Security Audit</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(saOutcomes.security)}">${saOutcomes.security || "Pending"}</span> <a href="javascript:void(0)" onclick="openLog('security-audit')" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Log</a></div></td></tr>
-                        <tr><td>Snyk Security</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(saOutcomes.snyk)}">${saOutcomes.snyk || "Pending"}</span> ${runId ? `<a href="${workflowUrl}" target="_blank" rel="noopener noreferrer" style="font-size:0.8rem; color:var(--text-muted); text-decoration:none;">GitHub ↗</a>` : ""}</div></td></tr>
                         <tr><td>SonarQube</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(saOutcomes.sonar)}">${saOutcomes.sonar || "Pending"}</span> <a href="https://sonarcloud.io/summary/new_code?id=jmrplens_jmrp.io" target="_blank" rel="noopener noreferrer" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Sonar ↗</a></div></td></tr>
                         <tr><td>JSDoc Coverage</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(saOutcomes.jsdoc)}">${saOutcomes.jsdoc || "Pending"}</span> <a href="javascript:void(0)" onclick="openLog('jsdoc-coverage')" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Log</a></div></td></tr>
                       </tbody>

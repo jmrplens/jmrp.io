@@ -1,0 +1,129 @@
+---
+/**
+ * DecisionTree Component
+ * Interactive expandable decision tree for guiding readers.
+ */
+import { randomBytes } from "node:crypto";
+
+interface Props {
+  question: string;
+}
+
+const { question } = Astro.props;
+const uniqueId = randomBytes(4).toString("hex");
+---
+
+<div class="decision-tree">
+  <div
+    class="dt-question"
+    id={`dt-question-${uniqueId}`}
+  >
+    <span
+      class="i-mdi:help-circle dt-icon"
+      aria-hidden="true"
+    ></span>
+    <span class="dt-question-text">{question}</span>
+  </div>
+  <div
+    class="dt-options"
+    role="group"
+    aria-labelledby={`dt-question-${uniqueId}`}
+  >
+    <slot />
+  </div>
+</div>
+
+<style>
+  .decision-tree {
+    padding: 1rem 1.25rem;
+    margin: 1.5rem 0;
+    background: var(--color-bg-subtle);
+    border: var(--border-1);
+    border-radius: var(--radius-md);
+  }
+
+  .dt-question {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+    padding-bottom: 1rem;
+    margin-bottom: 1rem;
+    border-bottom: var(--border-1);
+  }
+
+  .dt-icon {
+    flex-shrink: 0;
+    width: 24px;
+    height: 24px;
+    color: var(--color-primary);
+  }
+
+  .dt-question-text {
+    font-size: 1.1rem;
+    font-weight: var(--fw-semibold);
+    line-height: 1.4;
+    color: var(--color-text-heading);
+  }
+
+  .dt-options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  /* Style for child elements - expected to be details/summary pairs */
+  .dt-options :global(details) {
+    overflow: hidden;
+    background: var(--color-bg-secondary);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+  }
+
+  .dt-options :global(summary) {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    font-weight: var(--fw-medium);
+    color: var(--color-text);
+    cursor: pointer;
+    list-style: none;
+    transition: background-color 0.2s;
+  }
+
+  .dt-options :global(summary::-webkit-details-marker) {
+    display: none;
+  }
+
+  .dt-options :global(summary:hover) {
+    background: var(--color-bg-subtle);
+  }
+
+  .dt-options :global(summary:focus-visible) {
+    outline: 2px solid var(--color-primary);
+    outline-offset: -2px;
+    background: var(--color-bg-subtle);
+  }
+
+  .dt-options :global(summary::before) {
+    font-weight: var(--fw-bold);
+    color: var(--color-primary);
+    content: "→";
+  }
+
+  .dt-options :global(details[open] summary::before) {
+    content: "↓";
+  }
+
+  .dt-options :global(details > div),
+  .dt-options :global(details > p) {
+    padding: 0 1rem 1rem;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: var(--color-text-muted);
+  }
+
+  .dt-options :global(details > p:first-of-type) {
+    margin-top: 0;
+  }
+</style>

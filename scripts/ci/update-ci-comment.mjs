@@ -36,7 +36,6 @@ function buildSaTable(results) {
   md += `| Spell Checker | ${getIcon(results.typos)} | **${results.typos || "Pending"}** |\n`;
   md += `| Stylelint | ${getIcon(results.stylelint)} | **${results.stylelint || "Pending"}** |\n`;
   md += `| Security Audit | ${getIcon(results.security)} | **${results.security || "Pending"}** |\n`;
-  md += `| Snyk Security | ${getIcon(results.snyk)} | **${results.snyk || "Pending"}** |\n`;
   md += `| SonarQube | ${getIcon(results.sonar)} | **${results.sonar || "Pending"}** |\n`;
   md += `| JSDoc Coverage | ${getIcon(results.jsdoc)} | **${results.jsdocCoverage || "0%"}** |\n`;
   return md;
@@ -267,7 +266,6 @@ export default async function updateCiComment({ github, context, step }) {
     typos: process.env.OUTCOME_TYPOS,
     stylelint: process.env.OUTCOME_STYLELINT,
     security: process.env.OUTCOME_SECURITY,
-    snyk: process.env.OUTCOME_SNYK,
     sonar: process.env.OUTCOME_SONAR,
     jsdoc: process.env.OUTCOME_JSDOC,
     jsdocCoverage: process.env.JSDOC_COVERAGE,

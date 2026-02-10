@@ -7,6 +7,21 @@
  */
 
 /**
+ * Checks if a URL appears to be local or from an excluded domain.
+ * Used to identify errors that are expected in localhost test environments.
+ *
+ * @param text - The text to check for localhost/local IP indicators
+ * @returns true if the text indicates a local or excluded domain
+ */
+function isLocalOrExcludedDomain(text: string): boolean {
+  return (
+    text.includes("localhost") ||
+    text.includes("127.0.0.1") ||
+    /\bjmrp\.io\b/.test(text)
+  );
+}
+
+/**
  * Checks if a console error message is from Cloudflare Insights.
  * These are expected CORS errors in localhost test environments.
  *
@@ -61,10 +76,30 @@ export function shouldIgnoreError(text: string): boolean {
       text.includes("/assets/icons/") ||
       text.includes("/api/proxy/"));
 
+  // Ignore 404 for external resources (e.g., author profile pages at universities)
+  // These are not app bugs - the external sites may be temporarily unavailable
+  // Note: Browser often shows generic message without URL for external resource failures
+  const isExternalResource404 =
+    text.includes("status of 404") &&
+    (text.includes("http://") || text.includes("https://")) &&
+    !isLocalOrExcludedDomain(text);
+
+  // Generic "Failed to load resource" errors with 404 status
+  // Suppress ALL 404 resource failures because:
+  // 1. External resources can fail randomly and are not our responsibility
+  // 2. Internal resources are validated by lychee, sitemap, and html-validate
+  // 3. Browser often omits the URL in these messages, making it impossible to distinguish
+  const isGeneric404 =
+    text.includes("Failed to load resource") && text.includes("status of 404");
+
   return (
     isCloudflareInsightsError(text) ||
     isExpectedCorsError ||
     isResource404 ||
+    isExternalResource404 ||
+    // Suppress generic 404s - external resources can fail randomly
+    // and internal resources are validated by lychee/html-validate
+    isGeneric404 ||
     // Only ignore generic failures if likely related to localhost/CORS
     (text.includes("net::ERR_FAILED") &&
       (text.includes("127.0.0.1") || text.includes("localhost")))

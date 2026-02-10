@@ -86,7 +86,8 @@
     gap: var(--space-md);
   }
 
-  aside {
+  /* Only apply sticky to the sidebar in blog-layout, not all asides (e.g., Prerequisite) */
+  .blog-layout > aside {
     position: sticky;
     top: 0;
     z-index: 10;

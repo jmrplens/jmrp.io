@@ -12,9 +12,8 @@ tags: ["Nginx", "DevOps", "Containers", "Kubernetes"]
 ---
 
 import Callout from "@components/ui/Callout.astro";
-import Tabs from "@components/ui/Tabs.astro";
-import TabPanel from "@components/ui/TabPanel.astro";
-import CompareCode from "@components/ui/CompareCode.astro";
+import { Tabs, TabPanel } from "@components/ui/tabs";
+import BeforeAfter from "@components/ui/BeforeAfter.astro";
 import TerminalCommand from "@components/ui/TerminalCommand.astro";
 import FileContent from "@components/ui/FileContent.astro";
 import TerminalOutput from "@components/ui/TerminalOutput.astro";
@@ -159,8 +158,8 @@ These three directives determine _where_ Nginx looks for files.
 
 ### Visual comparison
 
-<CompareCode badTitle="root (appends URI)" goodTitle="alias (replaces prefix)">
-  <div slot="bad">
+<BeforeAfter beforeLabel="root (appends URI)" afterLabel="alias (replaces prefix)">
+  <div slot="before">
     ```nginx
     location /images/ {
         root /var/www;
@@ -171,7 +170,7 @@ These three directives determine _where_ Nginx looks for files.
     #          ^^^^^^^^ root + URI
     ```
   </div>
-  <div slot="good">
+  <div slot="after">
     ```nginx
     location /images/ {
         alias /data/photos/;
@@ -182,7 +181,7 @@ These three directives determine _where_ Nginx looks for files.
     #          ^^^^^^^^^^^^ alias replaces /images/
     ```
   </div>
-</CompareCode>
+</BeforeAfter>
 
 <Callout type="warning" icon="mdi:alert">
   **Common Mistake:** For prefix directory aliases (e.g., `location /images/`), include a trailing slash on both the location and the alias path. For exact-match aliases (e.g., `location = /robots.txt`), trailing slashes are not applicable.

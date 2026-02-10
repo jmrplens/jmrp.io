@@ -1,0 +1,154 @@
+---
+/**
+ * SecurityRating Component
+ * Visual indicator of security level (A+ to F) like Mozilla Observatory.
+ */
+interface Props {
+  rating: "A+" | "A" | "B" | "C" | "D" | "E" | "F";
+  title?: string;
+  description?: string;
+}
+
+const { rating, title, description } = Astro.props;
+
+const ratingConfig: Record<Props["rating"], { class: string; label: string }> =
+  {
+    "A+": { class: "rating-aplus", label: "Excellent" },
+    A: { class: "rating-a", label: "Very Good" },
+    B: { class: "rating-b", label: "Good" },
+    C: { class: "rating-c", label: "Acceptable" },
+    D: { class: "rating-d", label: "Needs Improvement" },
+    E: { class: "rating-e", label: "Poor" },
+    F: { class: "rating-f", label: "Critical" },
+  };
+
+const config = ratingConfig[rating];
+---
+
+<div
+  class={`security-rating ${config.class}`}
+  role="region"
+  aria-label={`Security rating: ${rating} - ${config.label}${title ? `. ${title}` : ""}`}
+>
+  <div
+    class="sr-badge"
+    aria-hidden="true"
+  >
+    <span class="sr-grade">{rating}</span>
+    <span class="sr-label">{config.label}</span>
+  </div>
+  <div class="sr-content">
+    {title && <strong class="sr-title">{title}</strong>}
+    {description && <p class="sr-description">{description}</p>}
+    <slot />
+  </div>
+</div>
+
+<style>
+  .security-rating {
+    display: flex;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    margin: 1.5rem 0;
+    background: var(--sr-bg);
+    border: 1px solid var(--sr-border);
+    border-left: 4px solid var(--sr-color);
+    border-radius: var(--radius-md);
+  }
+
+  .sr-badge {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 64px;
+    padding: 0.5rem;
+    background: var(--sr-badge-color, var(--sr-color));
+    border-radius: var(--radius-sm);
+  }
+
+  .sr-grade {
+    font-size: 1.5rem;
+    font-weight: var(--fw-bold);
+    line-height: 1;
+    color: #fff;
+  }
+
+  .sr-label {
+    margin-top: 0.25rem;
+    font-size: 0.65rem;
+    font-weight: var(--fw-medium);
+    color: #fff;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .sr-content {
+    flex: 1;
+  }
+
+  .sr-title {
+    display: block;
+    margin-bottom: 0.25rem;
+    font-size: 1rem;
+    color: var(--color-text-heading);
+  }
+
+  .sr-description {
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: var(--color-text-muted);
+  }
+
+  /* Rating variants - badge colors are darker for WCAG AA contrast (4.5:1 with white) */
+  .rating-aplus {
+    --sr-color: #059669;
+    --sr-badge-color: #047857; /* emerald-700: ~5.2:1 contrast */
+    --sr-bg: rgb(5 150 105 / 8%);
+    --sr-border: rgb(5 150 105 / 25%);
+  }
+
+  .rating-a {
+    --sr-color: #10b981;
+    --sr-badge-color: #047857; /* emerald-700: ~5.2:1 contrast */
+    --sr-bg: rgb(16 185 129 / 8%);
+    --sr-border: rgb(16 185 129 / 25%);
+  }
+
+  .rating-b {
+    --sr-color: #84cc16;
+    --sr-badge-color: #4d7c0f; /* lime-700: ~5.3:1 contrast */
+    --sr-bg: rgb(132 204 22 / 8%);
+    --sr-border: rgb(132 204 22 / 25%);
+  }
+
+  .rating-c {
+    --sr-color: #eab308;
+    --sr-badge-color: #a16207; /* yellow-700: ~5.1:1 contrast */
+    --sr-bg: rgb(234 179 8 / 8%);
+    --sr-border: rgb(234 179 8 / 25%);
+  }
+
+  .rating-d {
+    --sr-color: #f59e0b;
+    --sr-badge-color: #b45309; /* amber-700: ~4.8:1 contrast */
+    --sr-bg: rgb(245 158 11 / 8%);
+    --sr-border: rgb(245 158 11 / 25%);
+  }
+
+  .rating-e {
+    --sr-color: #f97316;
+    --sr-badge-color: #c2410c; /* orange-700: ~4.8:1 contrast */
+    --sr-bg: rgb(249 115 22 / 8%);
+    --sr-border: rgb(249 115 22 / 25%);
+  }
+
+  .rating-f {
+    --sr-color: #ef4444;
+    --sr-badge-color: #991b1b; /* red-800: ~5.5:1 contrast, WCAG AA compliant */
+    --sr-bg: rgb(239 68 68 / 8%);
+    --sr-border: rgb(239 68 68 / 25%);
+  }
+</style>

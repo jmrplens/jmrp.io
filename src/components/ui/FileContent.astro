@@ -47,7 +47,11 @@ const finalIcon = icon || getIconForFile(filename);
 const filenameFormatted = filename.replaceAll("/", "/&#8203;");
 
 const slotContent = await Astro.slots.render("default");
-const trimmedContent = slotContent.trim();
+// Remove tabindex from wrapper-level elements to prevent double focus (wrapper handles it)
+// Only target HTML tags with matching quote pairs for valid tabindex="0" or tabindex='0'
+const trimmedContent = slotContent
+  .trim()
+  .replaceAll(/(<[^>]+)\s+tabindex=(["'])0\2/g, "$1");
 const uuid = createHash("sha256")
   .update(`${filename}-${trimmedContent}`)
   .digest("hex")
@@ -65,7 +69,12 @@ if (!ariaLabel) {
   plainText = fullText.length > 50 ? fullText.slice(0, 50) + "..." : fullText;
 }
 
-const finalAriaLabel = ariaLabel || `${filename} - ${plainText}`;
+// Include short uuid suffix in aria-label to ensure landmark uniqueness
+// when same file with similar content appears multiple times on a page
+const uuidShort = uuid.slice(0, 4);
+const finalAriaLabel =
+  ariaLabel ||
+  `${filename} - ${plainText}${plainText ? " " : ""}(id ${uuidShort})`;
 
 // If language is specified, extract raw code for Shiki re-rendering
 let rawCode = "";
@@ -139,22 +148,27 @@ if (language) {
           </span>
         </summary>
         <div class="file-body">
-          {useCustomHighlighting ? (
-            <AstroCode
-              code={rawCode}
-              lang={resolveShikiLanguage(language as string)}
-              themes={{
-                light: "github-light-high-contrast",
-                dark: "github-dark-high-contrast",
-              }}
-            />
-          ) : (
-            <div
-              tabindex="0"
-              aria-label={`Code content for ${filename}`}
-              set:html={trimmedContent}
-            />
-          )}
+          {/* eslint-disable astro/jsx-a11y/no-noninteractive-tabindex -- Focusable region for keyboard scrolling */}
+          <div
+            role="region"
+            tabindex="0"
+            aria-label={`Code content for ${filename} (${uuid})`}
+            class="file-code-container"
+          >
+            {/* eslint-enable astro/jsx-a11y/no-noninteractive-tabindex */}
+            {useCustomHighlighting ? (
+              <AstroCode
+                code={rawCode}
+                lang={resolveShikiLanguage(language as string)}
+                themes={{
+                  light: "github-light-high-contrast",
+                  dark: "github-dark-high-contrast",
+                }}
+              />
+            ) : (
+              <div set:html={trimmedContent} />
+            )}
+          </div>
         </div>
       </details>
     </div>
@@ -182,22 +196,27 @@ if (language) {
         </div>
       </div>
       <div class="file-body">
-        {useCustomHighlighting ? (
-          <AstroCode
-            code={rawCode}
-            lang={resolveShikiLanguage(language as string)}
-            themes={{
-              light: "github-light-high-contrast",
-              dark: "github-dark-high-contrast",
-            }}
-          />
-        ) : (
-          <div
-            tabindex="0"
-            aria-label={`Code content for ${filename}`}
-            set:html={trimmedContent}
-          />
-        )}
+        {/* eslint-disable astro/jsx-a11y/no-noninteractive-tabindex -- Focusable region for keyboard scrolling */}
+        <div
+          role="region"
+          tabindex="0"
+          aria-label={`Code content for ${filename} (${uuid})`}
+          class="file-code-container"
+        >
+          {/* eslint-enable astro/jsx-a11y/no-noninteractive-tabindex */}
+          {useCustomHighlighting ? (
+            <AstroCode
+              code={rawCode}
+              lang={resolveShikiLanguage(language as string)}
+              themes={{
+                light: "github-light-high-contrast",
+                dark: "github-dark-high-contrast",
+              }}
+            />
+          ) : (
+            <div set:html={trimmedContent} />
+          )}
+        </div>
       </div>
     </section>
   )
@@ -231,6 +250,11 @@ if (language) {
     background-color: var(--color-bg-header);
     border-bottom: var(--border-1);
     transition: background-color 0.2s;
+  }
+
+  .file-header:focus-visible {
+    outline: 2px solid transparent;
+    box-shadow: inset 0 0 0 2px var(--color-primary);
   }
 
   .file-content-wrapper.collapsible .file-header {
@@ -311,6 +335,16 @@ if (language) {
     outline: none;
   }
 
+  .file-code-container {
+    overflow-x: auto;
+    outline: none;
+  }
+
+  .file-code-container:focus-visible {
+    outline: 2px solid transparent;
+    box-shadow: inset 0 0 0 2px var(--color-primary);
+  }
+
   /* Style the <pre> element that comes from the slot */
   .file-body :global(pre),
   .file-body :global(.astro-code) {
@@ -318,7 +352,7 @@ if (language) {
     width: 100%;
     padding: 1rem 1.25rem !important;
     margin: 0 !important;
-    overflow-x: auto;
+    overflow-x: visible !important; /* Managed by parent container for a11y */
 
     /* Typography */
     font-family: var(--font-mono);
