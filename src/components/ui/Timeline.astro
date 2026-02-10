@@ -40,70 +40,13 @@ const typeLabel: Record<EventType, string> = {
 };
 
 /**
- * Escapes HTML special characters to prevent XSS.
- */
-function escapeHtml(text: string): string {
-  return text
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#39;");
-}
-
-/**
- * Validates URL protocol - only allows safe protocols.
- */
-function isSafeUrl(url: string): boolean {
-  try {
-    const parsed = new URL(url, "https://example.com");
-    return parsed.protocol === "https:" || parsed.protocol === "http:";
-  } catch {
-    // Relative URLs are safe
-    return !url.includes(":") || url.startsWith("/");
-  }
-}
-
-/**
- * Parse markdown links [text](url) to HTML anchors with XSS protection.
- * - Escapes non-link text to prevent HTML injection
- * - Only allows http/https protocols in URLs
+ * Parse markdown links [text](url) to HTML anchors
  */
 function parseMarkdownLinks(text: string): string {
-  const linkPattern = /\[([^\]]+)\]\(([^)]+)\)/g;
-  const parts: string[] = [];
-  let lastIndex = 0;
-  let match: RegExpExecArray | null;
-
-  while ((match = linkPattern.exec(text)) !== null) {
-    // Escape text before the link
-    if (match.index > lastIndex) {
-      parts.push(escapeHtml(text.slice(lastIndex, match.index)));
-    }
-
-    const linkText = escapeHtml(match[1]);
-    const url = match[2];
-
-    // Only create anchor for safe URLs
-    if (isSafeUrl(url)) {
-      const safeUrl = escapeHtml(url);
-      parts.push(
-        `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer">${linkText}</a>`,
-      );
-    } else {
-      // Unsafe URL: just show the text without linking
-      parts.push(linkText);
-    }
-
-    lastIndex = match.index + match[0].length;
-  }
-
-  // Escape remaining text after last link
-  if (lastIndex < text.length) {
-    parts.push(escapeHtml(text.slice(lastIndex)));
-  }
-
-  return parts.join("");
+  return text.replaceAll(
+    /\[([^\]]+)\]\(([^)]+)\)/g,
+    '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>',
+  );
 }
 ---
 
