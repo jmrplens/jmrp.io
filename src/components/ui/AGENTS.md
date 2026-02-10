@@ -40,11 +40,11 @@ Types:
 ### Collapsible
 **Use**: Expandable sections for optional content.
 ```mdx
-<Collapsible title="More Details" open={false}>
+<Collapsible summary="More Details">
   Hidden content...
 </Collapsible>
 ```
-Props: `title: string`, `open?: boolean`
+Props: `summary?: string` (or `title` as alias), `open?: boolean` (native details attribute)
 
 ---
 
@@ -53,10 +53,10 @@ Props: `title: string`, `open?: boolean`
 ### StateNotice
 **Use**: Prominent status banners.
 ```mdx
-<StateNotice type="deprecated" feature="report-uri" alternative="report-to" date="2024-01" />
+<StateNotice type="deprecated" feature="report-uri" alternative="report-to" removalDate="2024-01" />
 <StateNotice type="experimental" feature="trusted-types" />
 ```
-Props: `type: "deprecated" | "mandatory" | "experimental" | "preview" | "breaking" | "security"`, `feature?: string`, `alternative?: string`, `alternativeUrl?: string`, `date?: string`
+Props: `type: "deprecated" | "mandatory" | "experimental" | "preview" | "breaking" | "security"`, `feature?: string`, `alternative?: string`, `alternativeUrl?: string`, `removalDate?: string`
 
 ### VersionBadge
 **Use**: Inline version/level indicators.
@@ -69,9 +69,9 @@ Props: `type: "version" | "level" | "deprecated" | "new" | "experimental" | "sta
 ### SecurityRating
 **Use**: A+ to F grade badges.
 ```mdx
-<SecurityRating rating="A+" label="Excellent" />
+<SecurityRating rating="A+" title="Excellent" description="Your policy meets all requirements." />
 ```
-Props: `rating: "A+" | "A" | "B" | "C" | "D" | "F"`, `label?: string`
+Props: `rating: "A+" | "A" | "B" | "C" | "D" | "F"`, `title?: string`, `description?: string`
 
 ---
 
@@ -163,18 +163,25 @@ Props: `items: { key: string; value: string }[]`, `title?: string`
 ```
 Props: `beforeLabel?: string`, `afterLabel?: string`
 
-### CompareCode
-**Use**: Code diff comparison.
+### BeforeAfter (for code comparisons)
+**Use**: Side-by-side code comparison with slots.
 ```mdx
-<CompareCode
-  beforeCode={`old code`}
-  afterCode={`new code`}
-  beforeTitle="Before"
-  afterTitle="After"
-  lang="nginx"
-/>
+<BeforeAfter beforeLabel="Before" afterLabel="After">
+  <div slot="before">
+    ```nginx
+    old code
+    ```
+  </div>
+  <div slot="after">
+    ```nginx
+    new code
+    ```
+  </div>
+</BeforeAfter>
 ```
-Props: `beforeCode: string`, `afterCode: string`, `beforeTitle?: string`, `afterTitle?: string`, `lang?: string`
+Props: `beforeLabel?: string`, `afterLabel?: string`
+
+> Note: `CompareCode` component was removed. Use `BeforeAfter` with code blocks in slots instead.
 
 ### DecisionTree
 **Use**: Interactive decision guide.
@@ -383,7 +390,7 @@ Props: `id: string`, `title?: string`
 | Chart | `BarChart` |
 | Browser support | `BrowserSupport` |
 | History | `Timeline` |
-| Before/after | `BeforeAfter` or `CompareCode` |
+| Before/after | `BeforeAfter` |
 | Decision help | `DecisionTree` |
 | Data table | `Table` |
 | Alternatives | `Tabs` |

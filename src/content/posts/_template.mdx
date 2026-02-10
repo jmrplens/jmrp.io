@@ -79,20 +79,20 @@ Show multiple code examples or content side by side (Centered, ~70ch):
   </TabPanel>
 </Tabs>
 
-### CompareCode
+### BeforeAfter
 
 Compare bad vs good code (Centered, ~70ch):
 
-<CompareCode>
+<BeforeAfter beforeLabel="Vulnerable" afterLabel="Secure">
   <div slot="before">
     ```javascript
-    // Vulnerable
+    // Don't do this
     eval(input);
     ```
   </div>
   <div slot="after">
     ```javascript
-    // Secure
+    // Do this instead
     JSON.parse(input);
     ```
   </div>

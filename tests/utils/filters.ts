@@ -85,14 +85,12 @@ export function shouldIgnoreError(text: string): boolean {
     !isLocalOrExcludedDomain(text);
 
   // Generic "Failed to load resource" errors with 404 status
-  // These come from external links (author pages, favicons, etc.) - not app bugs
-  // External resources can fail randomly and are out of our control.
-  // Internal resources are validated by other means (lychee, sitemap, html-validate).
-  // Using substring match but excluding our domain to catch only external 404s
+  // Suppress ALL 404 resource failures because:
+  // 1. External resources can fail randomly and are not our responsibility
+  // 2. Internal resources are validated by lychee, sitemap, and html-validate
+  // 3. Browser often omits the URL in these messages, making it impossible to distinguish
   const isGeneric404 =
-    text.includes("Failed to load resource") &&
-    text.includes("status of 404") &&
-    !isLocalOrExcludedDomain(text);
+    text.includes("Failed to load resource") && text.includes("status of 404");
 
   return (
     isCloudflareInsightsError(text) ||

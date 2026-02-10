@@ -45,7 +45,9 @@ if (labels.length === 0) {
 }
 
 // Generate unique ID with random entropy for collision avoidance
-const entropy = crypto.getRandomValues(new Uint32Array(1))[0].toString(36);
+// Use globalThis.crypto for compatibility across Node.js versions
+const cryptoAPI = globalThis.crypto;
+const entropy = cryptoAPI.getRandomValues(new Uint32Array(1))[0].toString(36);
 
 const labelSlug =
   labels
@@ -124,11 +126,9 @@ const instanceCss = labels
   }
 
   {/* Tab headers as labels - auto-generated from TabPanel children */}
-  <div
-    class="tab-headers"
-    role="group"
-    aria-label="Tabbed content options"
-  >
+  {/* Note: This is a CSS-only tab pattern. Accessibility is provided by the */}
+  {/* hidden radio inputs which support arrow key navigation natively. */}
+  <div class="tab-headers">
     {
       labels.map((label, index) => (
         <label
