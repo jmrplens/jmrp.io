@@ -6,7 +6,9 @@
  */
 
 import { spawnSync } from "node:child_process";
+import crypto from "node:crypto";
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -26,6 +28,22 @@ import type { CspData } from "./post-build/types.js";
  */
 const DEFAULT_SECURE_PATH =
   "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin";
+
+/**
+ * Runs a command with sudo in non-interactive mode (-n flag).
+ * This prevents sudo from prompting for password, failing fast instead.
+ *
+ * @param args - Arguments to pass to sudo (command and its args)
+ * @param options - Spawn options
+ * @returns The spawn result
+ */
+function runSudo(
+  args: string[],
+  options: ReturnType<typeof createSecureSpawnOptions>,
+) {
+  // Use -n flag for non-interactive mode to fail fast if sudo requires password
+  return spawnSync("sudo", ["-n", ...args], options);
+}
 
 /**
  * Creates the jmrp-post-build Astro integration.
@@ -68,7 +86,12 @@ export default function postBuildIntegration(): AstroIntegration {
           await processHtmlFiles(distDir, cspData, enableCsp, logger);
           await finalizeCspConfig(distDir, cspData, logger);
 
+          await optimizeImages(distDir, logger);
+          await compressAssets(distDir, logger);
+
           if (systemNginxPath) {
+            // Only fix permissions when deploying to Nginx (requires sudo and www-data user)
+            fixPermissions(distDir, logger);
             validateNginxPath(systemNginxPath);
             deploySecurityHeaders(distDir, systemNginxPath, logger);
           } else {
@@ -77,8 +100,6 @@ export default function postBuildIntegration(): AstroIntegration {
             );
           }
 
-          await optimizeImages(distDir, logger);
-          await compressAssets(distDir, logger);
           await purgeCloudflareCache(logger);
         } catch (error) {
           logger.error("Fatal optimization error:");
@@ -125,6 +146,57 @@ function validateNginxPath(systemNginxPath: string) {
     throw new Error(
       `Nginx configuration path cannot be a symbolic link: ${path.basename(normalizedPath)}`,
     );
+  }
+}
+
+/**
+ * Fixes permissions for the distribution directory to ensure Nginx (www-data) can read it.
+ *
+ * @param distDir - The distribution directory path.
+ * @param logger - Astro logger instance.
+ */
+function fixPermissions(distDir: string, logger: AstroIntegrationLogger) {
+  logger.info(`Fixing permissions for [${distDir}]...`);
+  const secureOpts = createSecureSpawnOptions();
+  try {
+    // Set ownership to www-data:www-data
+    const chownResult = runSudo(
+      ["chown", "-R", "www-data:www-data", distDir],
+      secureOpts,
+    );
+    if (chownResult.error || chownResult.status !== 0) {
+      const errorMsg =
+        chownResult.error?.message || `exit code ${chownResult.status}`;
+      throw new Error(`chown failed: ${errorMsg}`);
+    }
+
+    // Set directory permissions to 755
+    const chmodDirResult = runSudo(
+      ["find", distDir, "-type", "d", "-exec", "chmod", "755", "{}", "+"],
+      secureOpts,
+    );
+    if (chmodDirResult.error || chmodDirResult.status !== 0) {
+      const errorMsg =
+        chmodDirResult.error?.message || `exit code ${chmodDirResult.status}`;
+      throw new Error(`chmod directories failed: ${errorMsg}`);
+    }
+
+    // Set file permissions to 644
+    const chmodFileResult = runSudo(
+      ["find", distDir, "-type", "f", "-exec", "chmod", "644", "{}", "+"],
+      secureOpts,
+    );
+    if (chmodFileResult.error || chmodFileResult.status !== 0) {
+      const errorMsg =
+        chmodFileResult.error?.message || `exit code ${chmodFileResult.status}`;
+      throw new Error(`chmod files failed: ${errorMsg}`);
+    }
+
+    logger.info("✓ Permissions fixed (www-data:www-data, 755/644).");
+  } catch (error) {
+    // Permission failures should fail the build, not just warn
+    logger.error("Failed to fix permissions.");
+    throw error instanceof Error ? error : new Error(String(error));
   }
 }
 
@@ -222,12 +294,37 @@ function performNginxDeployment(
       originalAssetsContent = fs.readFileSync(systemNginxAssetsPath);
     }
 
-    fs.copyFileSync(generatedPath, systemNginxPath);
+    const secureOpts = createSecureSpawnOptions();
+
+    // Use sudo to copy files since Nginx path usually requires root privileges
+    const copyResult = runSudo(
+      ["cp", generatedPath, systemNginxPath],
+      secureOpts,
+    );
+    if (copyResult.error || copyResult.status !== 0) {
+      const errorMsg =
+        copyResult.error?.message || `exit code ${copyResult.status}`;
+      throw new Error(
+        `Failed to copy ${generatedPath} to ${systemNginxPath}: ${errorMsg}`,
+      );
+    }
+
     if (fs.existsSync(generatedAssetsPath)) {
       if (!systemAssetsExists) {
         assetsCreated = true;
       }
-      fs.copyFileSync(generatedAssetsPath, systemNginxAssetsPath);
+      const copyAssetsResult = runSudo(
+        ["cp", generatedAssetsPath, systemNginxAssetsPath],
+        secureOpts,
+      );
+      if (copyAssetsResult.error || copyAssetsResult.status !== 0) {
+        const errorMsg =
+          copyAssetsResult.error?.message ||
+          `exit code ${copyAssetsResult.status}`;
+        throw new Error(
+          `Failed to copy ${generatedAssetsPath} to ${systemNginxAssetsPath}: ${errorMsg}`,
+        );
+      }
     }
 
     try {
@@ -289,6 +386,20 @@ function createSecureExecOptions(timeout: number) {
 }
 
 /**
+ * Creates secure spawn options without timeout for simple operations.
+ * Uses sanitized PATH to mitigate PATH injection risks.
+ */
+function createSecureSpawnOptions() {
+  return {
+    stdio: "inherit" as const,
+    env: {
+      ...process.env,
+      PATH: DEFAULT_SECURE_PATH,
+    },
+  };
+}
+
+/**
  * Executes the Nginx test and reload commands safely.
  *
  * @param testTimeout - Timeout for the configuration test command.
@@ -311,7 +422,11 @@ function executeNginxReload(
   }
   const testArgs = nginxConfigPath ? ["-t", "-c", nginxConfigPath] : ["-t"];
 
-  const testResult = spawnSync("nginx", testArgs, execOptions); // NOSONAR suppressed: external command usage is intentional
+  const testResult = spawnSync(
+    "sudo",
+    ["-n", "nginx", ...testArgs],
+    execOptions,
+  ); // NOSONAR suppressed: external command usage is intentional
   if (testResult.error) {
     throw testResult.error;
   }
@@ -320,7 +435,7 @@ function executeNginxReload(
   }
 
   // prettier-ignore
-  const reloadResult = spawnSync("nginx", ["-s", "reload"], { // NOSONAR suppressed: external command usage is intentional
+  const reloadResult = spawnSync("sudo", ["-n", "nginx", "-s", "reload"], { // NOSONAR suppressed: external command usage is intentional
     ...execOptions,
     timeout: reloadTimeout,
   });
@@ -363,35 +478,49 @@ function clearNginxCache(
     return;
   }
 
-  logger.info(`Clearing Nginx cache in [${systemNginxCachePath}]...`);
-  try {
-    const realRoot = fs.realpathSync(systemNginxCachePath);
-    const files = fs.readdirSync(systemNginxCachePath);
-    for (const file of files) {
-      const fullPath = path.join(systemNginxCachePath, file);
-      // Security: Resolve the real path and verify it's within the cache directory
-      const realPath = fs.realpathSync(fullPath);
-      const relative = path.relative(realRoot, realPath);
+  // Optimize: Only clear the 'jmrp_cache' dedicated to jmrp.io
+  // instead of wiping the entire nginx cache.
+  const targetCachePath = path.join(systemNginxCachePath, "jmrp_cache");
 
-      if (
-        relative.startsWith("..") ||
-        relative === "" ||
-        relative.startsWith(path.sep)
-      ) {
-        logger.warn(
-          `Skipping deletion of path outside cache directory: ${realPath}`,
-        );
-        continue;
-      }
-      fs.rmSync(fullPath, {
-        recursive: true,
-        force: true,
-      });
+  if (fs.existsSync(targetCachePath)) {
+    // Security: Prevent TOCTOU race by checking if targetCachePath is a symlink
+    if (fs.lstatSync(targetCachePath).isSymbolicLink()) {
+      logger.warn(
+        `Refusing to clear cache path as it is a symbolic link: ${targetCachePath}`,
+      );
+      return;
     }
-  } catch (error) {
-    logger.warn(
-      `Could not clear Nginx cache: ${error instanceof Error ? error.message : String(error)}`,
-    );
+    logger.info(`Clearing specific Nginx cache: [${targetCachePath}]...`);
+
+    const secureOpts = createSecureSpawnOptions();
+
+    // We use -mindepth 1 to delete everything INSIDE jmrp_cache, but keep the folder itself
+    const clearResult = runSudo(
+      ["find", targetCachePath, "-mindepth", "1", "-delete"],
+      secureOpts,
+    ); // NOSONAR
+
+    if (clearResult.error || clearResult.status !== 0) {
+      const errorMsg =
+        clearResult.error?.message || `exit code ${clearResult.status}`;
+      logger.warn(
+        `Failed to clear Nginx cache at ${targetCachePath}: ${errorMsg}`,
+      );
+    }
+  } else {
+    logger.info(`Cache folder ${targetCachePath} not found, skipping clear.`);
+  }
+
+  // FORCE permissions on the main cache directory to ensure www-data can write
+  logger.info(`Ensuring ownership of cache path: ${systemNginxCachePath}`);
+  const chownResult = runSudo(
+    ["chown", "-R", "www-data:www-data", systemNginxCachePath],
+    createSecureSpawnOptions(),
+  );
+  if (chownResult.error || chownResult.status !== 0) {
+    const errorMsg =
+      chownResult.error?.message || `exit code ${chownResult.status}`;
+    logger.warn(`Failed to set ownership on cache path: ${errorMsg}`);
   }
 }
 
@@ -454,7 +583,19 @@ function handleNginxValidationError(
 }
 
 /**
- * Performs the file rollback for both main and assets config.
+ * Safely removes a temporary file, swallowing any errors.
+ */
+function cleanupTempFile(filePath: string): void {
+  try {
+    fs.rmSync(filePath, { force: true });
+  } catch {
+    // Best-effort cleanup - swallow errors
+  }
+}
+
+/**
+ * Performs the file rollback for both main and assets config using sudo.
+ * Uses cryptographically random temp filenames and secure spawn options.
  */
 function performRollback(
   systemNginxPath: string,
@@ -465,17 +606,62 @@ function performRollback(
     created: boolean;
   },
 ) {
-  fs.writeFileSync(systemNginxPath, originalContent);
+  const secureOpts = createSecureSpawnOptions();
+
+  // Use OS temp dir with cryptographically random suffix
+  const tempPath = path.join(
+    os.tmpdir(),
+    `nginx-rollback-${crypto.randomUUID()}.bak`,
+  );
+  try {
+    fs.writeFileSync(tempPath, originalContent);
+  } catch (error) {
+    throw new Error(
+      `Rollback failed: Could not write backup file ${tempPath}. Error: ${String(error)}`,
+    );
+  }
+
+  const mvResult = runSudo(["mv", tempPath, systemNginxPath], secureOpts); // NOSONAR
+  if (mvResult.status !== 0 || mvResult.error) {
+    // Clean up orphaned temp file before throwing
+    cleanupTempFile(tempPath);
+    throw new Error(
+      `Rollback failed: Could not restore ${systemNginxPath}. Stderr: ${mvResult.stderr?.toString()}`,
+    );
+  }
 
   if (!assetsRollback) return;
 
-  if (assetsRollback.created && fs.existsSync(assetsRollback.path)) {
-    fs.unlinkSync(assetsRollback.path);
-  } else if (
-    assetsRollback.originalContent !== null &&
-    fs.existsSync(assetsRollback.path)
-  ) {
-    fs.writeFileSync(assetsRollback.path, assetsRollback.originalContent);
+  if (assetsRollback.created) {
+    const rmResult = runSudo(["rm", "-f", assetsRollback.path], secureOpts); // NOSONAR
+    if (rmResult.status !== 0 || rmResult.error) {
+      throw new Error(
+        `Rollback failed: Could not remove created assets file ${assetsRollback.path}. Stderr: ${rmResult.stderr?.toString()}`,
+      );
+    }
+  } else if (assetsRollback.originalContent !== null) {
+    const tempAssetsPath = path.join(
+      os.tmpdir(),
+      `nginx-assets-rollback-${crypto.randomUUID()}.bak`,
+    );
+    try {
+      fs.writeFileSync(tempAssetsPath, assetsRollback.originalContent);
+    } catch (error) {
+      throw new Error(
+        `Rollback failed: Could not write assets backup file ${tempAssetsPath}. Error: ${String(error)}`,
+      );
+    }
+    const mvAssetsResult = runSudo(
+      ["mv", tempAssetsPath, assetsRollback.path],
+      secureOpts,
+    ); // NOSONAR
+    if (mvAssetsResult.status !== 0 || mvAssetsResult.error) {
+      // Clean up orphaned temp file before throwing
+      cleanupTempFile(tempAssetsPath);
+      throw new Error(
+        `Rollback failed: Could not restore assets file ${assetsRollback.path}. Stderr: ${mvAssetsResult.stderr?.toString()}`,
+      );
+    }
   }
 }
 

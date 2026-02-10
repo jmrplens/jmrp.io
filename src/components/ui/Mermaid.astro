@@ -38,10 +38,11 @@ const computedAriaLabel =
   aria-labelledby={computedAriaLabelledby}
   aria-describedby={computedAriaDescribedby}
   aria-label={computedAriaLabel}
+  style={{ maxWidth }}
 >
   <div
     class="mermaid-content"
-    style={{ maxWidth, maxHeight }}
+    style={{ maxHeight }}
   >
     <slot />
   </div>
@@ -93,6 +94,11 @@ const computedAriaLabel =
     --mermaid-muted-stroke: #9ca3af;
     --mermaid-muted-text: #374151;
 
+    /* Attacker Node Colors */
+    --mermaid-attacker-fill: #450a0a;
+    --mermaid-attacker-stroke: #ef4444;
+    --mermaid-attacker-text: #fca5a5;
+
     /* Pie Chart Colors */
     --mermaid-pie-1: #0969da;
     --mermaid-pie-2: #1a7f37;
@@ -133,6 +139,11 @@ const computedAriaLabel =
     --mermaid-muted-fill: #484f58;
     --mermaid-muted-stroke: #6e7681;
     --mermaid-muted-text: #c9d1d9;
+
+    /* Attacker Node Colors (Dark) */
+    --mermaid-attacker-fill: #7f1d1d;
+    --mermaid-attacker-stroke: #f87171;
+    --mermaid-attacker-text: #fee2e2;
 
     /* Pie Chart Colors */
     --mermaid-pie-1: #2f81f7;
@@ -217,6 +228,37 @@ const computedAriaLabel =
 
   .mermaid-content :global(.edgeLabel rect) {
     fill: var(--mermaid-bg) !important;
+  }
+
+  /* --- Flowchart Subgraphs/Clusters --- */
+
+  /* Cluster/Subgraph backgrounds - need high specificity to override Mermaid defaults */
+  .mermaid-content :global(svg .cluster rect),
+  .mermaid-content :global(svg .cluster-alt rect),
+  .mermaid-content :global(svg g.cluster > rect),
+  .mermaid-content :global(svg [class*="cluster"] > rect) {
+    fill: var(--mermaid-secondary-bg) !important;
+    stroke: var(--mermaid-border) !important;
+  }
+
+  /* Subgraph title text elements */
+  .mermaid-content :global(svg .cluster-label text),
+  .mermaid-content :global(svg .cluster-label tspan),
+  .mermaid-content :global(svg g.cluster-label text) {
+    fill: var(--mermaid-text) !important;
+  }
+
+  /* Subgraph title foreignObject (HTML labels) */
+  .mermaid-content :global(.cluster-label foreignObject) {
+    overflow: visible;
+  }
+
+  .mermaid-content :global(.cluster-label foreignObject div),
+  .mermaid-content :global(.cluster-label foreignObject span),
+  .mermaid-content :global(.cluster-label foreignObject p),
+  .mermaid-content :global(.cluster-label .nodeLabel) {
+    color: var(--mermaid-text) !important;
+    background-color: transparent !important;
   }
 
   /* Fix foreignObject labels (HTML-based) which Mermaid uses for edge labels */
@@ -407,5 +449,98 @@ const computedAriaLabel =
 
   .mermaid-content :global(.node.muted .nodeLabel) {
     color: var(--mermaid-muted-text) !important;
+  }
+
+  /*
+   * Primary Node - Semantic alias for highlight styling.
+   * Intentionally reuses highlight color variables to provide a semantic
+   * alternative class name while maintaining visual consistency.
+   */
+  .mermaid-content :global(.node.primary > rect),
+  .mermaid-content :global(.node.primary > polygon),
+  .mermaid-content :global(.node.primary > circle) {
+    fill: var(--mermaid-highlight-fill) !important;
+    stroke: var(--mermaid-highlight-stroke) !important;
+  }
+
+  .mermaid-content :global(.node.primary .nodeLabel) {
+    color: var(--mermaid-highlight-text) !important;
+  }
+
+  /* Secondary Node (subtle/muted) */
+  .mermaid-content :global(.node.secondary > rect),
+  .mermaid-content :global(.node.secondary > polygon),
+  .mermaid-content :global(.node.secondary > circle) {
+    fill: var(--mermaid-tertiary-bg) !important;
+    stroke: var(--mermaid-border) !important;
+  }
+
+  .mermaid-content :global(.node.secondary .nodeLabel) {
+    color: var(--mermaid-text) !important;
+  }
+
+  /* CSP Policy Node (represents the CSP header/rules) */
+  .mermaid-content :global(.node.cspPolicy > rect),
+  .mermaid-content :global(.node.cspPolicy > polygon),
+  .mermaid-content :global(.node.cspPolicy > circle) {
+    fill: var(--mermaid-info-fill) !important;
+    stroke: var(--mermaid-info-stroke) !important;
+    stroke-width: 2px !important;
+  }
+
+  .mermaid-content :global(.node.cspPolicy .nodeLabel) {
+    color: var(--mermaid-info-text) !important;
+  }
+
+  /* CSP Trusted Node (for allowed/trusted scripts) - uses success */
+  .mermaid-content :global(.node.cspTrusted > rect),
+  .mermaid-content :global(.node.cspTrusted > polygon),
+  .mermaid-content :global(.node.cspTrusted > circle) {
+    fill: var(--mermaid-success-fill) !important;
+    stroke: var(--mermaid-success-stroke) !important;
+  }
+
+  .mermaid-content :global(.node.cspTrusted .nodeLabel) {
+    color: var(--mermaid-success-text) !important;
+  }
+
+  /* CSP Blocked Node (for blocked/rejected scripts) - uses danger */
+  .mermaid-content :global(.node.cspBlocked > rect),
+  .mermaid-content :global(.node.cspBlocked > polygon),
+  .mermaid-content :global(.node.cspBlocked > circle) {
+    fill: var(--mermaid-danger-fill) !important;
+    stroke: var(--mermaid-danger-stroke) !important;
+  }
+
+  .mermaid-content :global(.node.cspBlocked .nodeLabel) {
+    color: var(--mermaid-danger-text) !important;
+  }
+
+  /* Attacker Node (special styling for malicious actors) */
+  .mermaid-content :global(.node.attacker > rect),
+  .mermaid-content :global(.node.attacker > polygon),
+  .mermaid-content :global(.node.attacker > circle) {
+    fill: var(--mermaid-attacker-fill) !important;
+    stroke: var(--mermaid-attacker-stroke) !important;
+    stroke-width: 2px !important;
+    stroke-dasharray: 5 3 !important;
+  }
+
+  .mermaid-content :global(.node.attacker .nodeLabel) {
+    color: var(--mermaid-attacker-text) !important;
+  }
+
+  /* Nonce Node (special styling for nonce values) */
+  .mermaid-content :global(.node.nonce > rect),
+  .mermaid-content :global(.node.nonce > polygon),
+  .mermaid-content :global(.node.nonce > circle) {
+    fill: var(--mermaid-secondary-bg) !important;
+    stroke: var(--mermaid-highlight-stroke) !important;
+    stroke-width: 2px !important;
+    stroke-dasharray: 8 4 !important;
+  }
+
+  .mermaid-content :global(.node.nonce .nodeLabel) {
+    color: var(--mermaid-highlight-stroke) !important;
   }
 </style>

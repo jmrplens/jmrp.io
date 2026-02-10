@@ -60,9 +60,27 @@ export default defineConfig({
     "i-mdi:database",
     "i-devicon:mongodb",
     "i-devicon:graphql",
+    // Timeline component icons (dynamically generated)
+    "i-mdi:circle-medium",
+    "i-mdi:check-circle",
+    "i-mdi:alert-circle",
+    "i-mdi:close-circle",
+    "i-mdi:help-circle",
+    "i-mdi:star",
+    // BrowserSupport component icons
+    "i-logos:chrome",
+    "i-logos:firefox",
+    "i-logos:safari",
+    "i-logos:microsoft-edge",
+    "i-logos:opera",
   ],
   presets: [
-    presetWind4(),
+    presetWind4({
+      // Disable built-in reset styles that override our custom typography in global.css
+      preflights: {
+        reset: false,
+      },
+    }),
     presetIcons({
       prefix: "i-",
       extraProperties: {

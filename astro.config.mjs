@@ -42,31 +42,31 @@ export default defineConfig({
     clientPrerender: true,
     contentIntellisense: true,
     chromeDevtoolsWorkspace: true,
-    fonts: [
-      {
-        name: "Geist Sans",
-        provider: fontProviders.fontsource(),
-        cssVariable: "--font-geist-sans",
-        weights: [400, 700],
-        styles: ["normal", "italic"],
-        subsets: ["latin"],
-        display: "swap",
-        fallbacks: ["sans-serif"],
-        optimizedFallbacks: true,
-      },
-      {
-        name: "Geist Mono",
-        provider: fontProviders.fontsource(),
-        cssVariable: "--font-geist-mono",
-        weights: [400, 700],
-        styles: ["normal", "italic"],
-        subsets: ["latin"],
-        display: "swap",
-        fallbacks: ["monospace"],
-        optimizedFallbacks: true,
-      },
-    ],
   },
+  fonts: [
+    {
+      name: "Geist Sans",
+      provider: fontProviders.fontsource(),
+      cssVariable: "--font-geist-sans",
+      weights: [400, 700],
+      styles: ["normal", "italic"],
+      subsets: ["latin"],
+      display: "swap",
+      fallbacks: ["sans-serif"],
+      optimizedFallbacks: true,
+    },
+    {
+      name: "Geist Mono",
+      provider: fontProviders.fontsource(),
+      cssVariable: "--font-geist-mono",
+      weights: [400, 700],
+      styles: ["normal", "italic"],
+      subsets: ["latin"],
+      display: "swap",
+      fallbacks: ["monospace"],
+      optimizedFallbacks: true,
+    },
+  ],
 
   env: {
     schema: {
@@ -350,8 +350,8 @@ export default defineConfig({
     },
     server: {},
     ssr: {
-      // Force externalization of citation-js for SSR to avoid bundling issues
-      noExternal: ["citation-js"],
+      // Externalize citation-js for SSR so Node.js handles the CommonJS require()
+      external: ["citation-js"],
     },
   },
 

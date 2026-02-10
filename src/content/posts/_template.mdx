@@ -42,10 +42,9 @@ references:
 
 import Callout from "@components/ui/Callout.astro";
 import References from "@components/ui/References.astro";
-import Tabs from "@components/ui/Tabs.astro";
-import TabPanel from "@components/ui/TabPanel.astro";
+import { Tabs, TabPanel } from "@components/ui/tabs";
 import YouTube from "@components/ui/YouTube.astro";
-import CompareCode from "@components/ui/CompareCode.astro";
+import BeforeAfter from "@components/ui/BeforeAfter.astro";
 
 {/* ========================================================================
 POST CONTENT STARTS HERE
@@ -67,7 +66,7 @@ Use callouts to highlight important information (Full Width):
 
 Show multiple code examples or content side by side (Centered, ~70ch):
 
-<Tabs labels={["JavaScript", "Python"]}>
+<Tabs>
   <TabPanel index={0}>
     ```javascript
     console.log('Hello World');
@@ -80,24 +79,24 @@ Show multiple code examples or content side by side (Centered, ~70ch):
   </TabPanel>
 </Tabs>
 
-### CompareCode
+### BeforeAfter
 
 Compare bad vs good code (Centered, ~70ch):
 
-<CompareCode>
-  <div slot="bad">
+<BeforeAfter beforeLabel="Vulnerable" afterLabel="Secure">
+  <div slot="before">
     ```javascript
-    // Vulnerable
+    // Don't do this
     eval(input);
     ```
   </div>
-  <div slot="good">
+  <div slot="after">
     ```javascript
-    // Secure
+    // Do this instead
     JSON.parse(input);
     ```
   </div>
-</CompareCode>
+</BeforeAfter>
 
 ### YouTube Embed
 

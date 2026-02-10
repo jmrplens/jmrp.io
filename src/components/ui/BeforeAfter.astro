@@ -1,0 +1,169 @@
+---
+/**
+ * BeforeAfter Component
+ * Side-by-side comparison view with pastel color scheme.
+ * Can replace CompareCode for all before/after, bad/good comparisons.
+ */
+interface Props {
+  beforeLabel?: string;
+  afterLabel?: string;
+}
+
+const { beforeLabel = "Before", afterLabel = "After" } = Astro.props;
+---
+
+<div
+  class="before-after-wrapper"
+  role="group"
+  aria-label={`Comparison: ${beforeLabel} vs ${afterLabel}`}
+>
+  <section
+    class="ba-block ba-before"
+    aria-label={beforeLabel}
+  >
+    <div class="ba-header">
+      <span
+        class="i-mdi:close-circle-outline ba-icon"
+        aria-hidden="true"
+      ></span>
+      <span>{beforeLabel}</span>
+    </div>
+    <div class="ba-content">
+      <slot name="before" />
+    </div>
+  </section>
+  <section
+    class="ba-block ba-after"
+    aria-label={afterLabel}
+  >
+    <div class="ba-header">
+      <span
+        class="i-mdi:check-circle-outline ba-icon"
+        aria-hidden="true"
+      ></span>
+      <span>{afterLabel}</span>
+    </div>
+    <div class="ba-content">
+      <slot name="after" />
+    </div>
+  </section>
+</div>
+
+<style>
+  .before-after-wrapper {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    margin: 2rem 0;
+  }
+
+  @media (width >= 768px) {
+    .before-after-wrapper {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  .ba-block {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    overflow: hidden;
+    background-color: var(--color-bg-secondary);
+    border: 1px solid var(--ba-border-color);
+    border-radius: var(--radius-md);
+  }
+
+  /* Pastel color scheme with WCAG AA contrast ≥4.5:1 */
+  .ba-before {
+    --ba-border-color: rgb(239 68 68 / 40%);
+    --ba-header-bg: rgb(239 68 68 / 10%);
+    --ba-header-text: #b91c1c; /* red-700 for WCAG AA contrast */
+  }
+
+  .ba-after {
+    --ba-border-color: rgb(16 185 129 / 40%);
+    --ba-header-bg: rgb(16 185 129 / 10%);
+    --ba-header-text: #047857; /* emerald-700 for WCAG AA contrast ≥4.5:1 */
+  }
+
+  :root[data-theme="dark"] .ba-before {
+    --ba-border-color: rgb(248 113 113 / 30%);
+    --ba-header-bg: rgb(248 113 113 / 12%);
+    --ba-header-text: #f87171;
+  }
+
+  :root[data-theme="dark"] .ba-after {
+    --ba-border-color: rgb(52 211 153 / 30%);
+    --ba-header-bg: rgb(52 211 153 / 12%);
+    --ba-header-text: #34d399;
+  }
+
+  .ba-header {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--ba-header-text);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    background-color: var(--ba-header-bg);
+    border-bottom: 1px solid var(--ba-border-color);
+  }
+
+  .ba-icon {
+    font-size: 1.1rem;
+    color: currentcolor;
+  }
+
+  .ba-content {
+    flex: 1;
+    padding: 1rem;
+  }
+
+  .ba-content :global(img) {
+    max-width: 100%;
+    height: auto;
+    border-radius: var(--radius-sm);
+  }
+
+  .ba-content :global(pre) {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    padding: 1rem !important;
+    margin: 0 !important;
+    overflow-x: auto;
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    line-height: 1.6;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    /* stylelint-disable-next-line property-no-vendor-prefix -- Safari compatibility */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  .ba-content :global(code) {
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: var(--color-text);
+    white-space: pre;
+    background-color: transparent !important;
+    /* stylelint-disable-next-line property-no-vendor-prefix -- Safari compatibility */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  .ba-content :global(p:first-child) {
+    margin-top: 0;
+  }
+
+  .ba-content :global(p:last-child) {
+    margin-bottom: 0;
+  }
+</style>

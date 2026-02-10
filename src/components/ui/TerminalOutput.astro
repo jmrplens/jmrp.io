@@ -11,6 +11,7 @@
  *   Package installed successfully.
  * </TerminalOutput>
  */
+
 interface Props {
   title?: string;
   ariaLabel?: string;
@@ -21,6 +22,7 @@ const { title, ariaLabel } = Astro.props;
 const slotContent = await Astro.slots.render("default");
 const trimmedContent = slotContent.trim();
 
+// Use descriptive fallback (avoid non-meaningful IDs for screen readers)
 const finalAriaLabel =
   ariaLabel || (title ? `Terminal Output: ${title}` : "Terminal Output");
 ---
@@ -28,7 +30,6 @@ const finalAriaLabel =
 <section
   class="terminal-output-wrapper"
   role="log"
-  tabindex="0"
   aria-live="polite"
   aria-label={finalAriaLabel}
 >
@@ -43,7 +44,18 @@ const finalAriaLabel =
       </div>
     )
   }
-  <div class="output-body">
+  {
+    /* eslint-disable astro/jsx-a11y/no-noninteractive-tabindex -- Focusable region for keyboard scrolling */
+  }
+  <div
+    class="output-body"
+    role="group"
+    tabindex="0"
+    aria-label={title
+      ? `Scrollable terminal output for ${title}`
+      : "Scrollable terminal output"}
+  >
+    {/* eslint-enable astro/jsx-a11y/no-noninteractive-tabindex */}
     <div
       class="terminal-content"
       set:html={trimmedContent}
@@ -66,9 +78,9 @@ const finalAriaLabel =
     border-radius: var(--radius-md);
   }
 
-  .terminal-output-wrapper:focus-visible {
-    outline: 2px solid var(--color-primary);
-    outline-offset: 2px;
+  .output-body:focus-visible {
+    outline: 2px solid transparent;
+    box-shadow: inset 0 0 0 2px var(--color-primary);
   }
 
   .output-header {

@@ -27,3 +27,9 @@ PN = "PN"
 # Technical protocol/standard names
 BACnet = "BACnet"
 UPnP = "UPnP"
+# CSS class prefixes (component abbreviations)
+ba = "ba"
+sbs = "sbs"
+tl = "tl"
+sr = "sr"
+bs = "bs"

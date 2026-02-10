@@ -148,7 +148,6 @@ test.describe("Keyboard Navigation Accessibility", () => {
 
     // Capture initial state
     const html = page.locator("html");
-    // eslint-disable-next-line playwright/no-conditional-in-test
     const initialTheme = (await html.getAttribute("data-theme")) || "dark";
     // eslint-disable-next-line playwright/no-conditional-in-test
     const expectedNewTheme = initialTheme === "light" ? "dark" : "light";
@@ -183,7 +182,8 @@ test.describe("Keyboard Navigation Accessibility", () => {
           requests_received_24h: 1000,
           responses_sent_24h: 900,
           upstream_sent_24h: 800,
-          bandwidth_bytes_1h: 1024 * 1024,
+          bandwidth_sent_24h: 1024 * 1024,
+          bandwidth_recv_24h: 2048 * 1024,
           tarpit_hits_24h: 50,
           nginx_bans_24h: 10,
           mikrotik_scans_total: 500,

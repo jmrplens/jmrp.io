@@ -7,17 +7,23 @@
  * <Collapsible summary="Click to expand">
  *   Hidden content here.
  * </Collapsible>
+ *
+ * Note: `title` is accepted as an alias for `summary` for compatibility.
  */
 interface Props {
-  summary: string;
+  /** The visible text for the collapsible toggle */
+  summary?: string;
+  /** Alias for summary (backward compatibility) */
+  title?: string;
 }
 
-const { summary } = Astro.props;
+const { summary, title } = Astro.props;
+const summaryText = summary ?? title ?? "Details";
 ---
 
 <details class="collapsible-wrapper">
   <summary>
-    <span class="summary-text">{summary}</span>
+    <span class="summary-text">{summaryText}</span>
     <span
       class="icon-wrapper"
       aria-hidden="true"

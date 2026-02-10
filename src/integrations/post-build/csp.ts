@@ -193,12 +193,15 @@ add_header Permissions-Policy "${permissionsPolicy}" always;
 `;
 
   // --- Optimized Assets CSP ---
-  // A version of the security headers for non-HTML assets (images, fonts, etc.)
-  // It removes the heavy script-src and style-src hashes while maintaining the strict default-src 'none'.
+  // A version of the security headers for non-HTML assets (images, fonts, etc.).
+  // It removes the heavy script-src and style-src hashes while maintaining strict default-src 'none'.
+  // Note: style-src 'unsafe-inline' is used here because some CSS files may contain
+  // inline styles (e.g., SVG with embedded styles). This is acceptable for non-HTML
+  // assets where CSP enforcement is less critical.
   const assetsCspHeader = [
     "default-src 'none'",
     "script-src 'none'",
-    "style-src 'none'",
+    "style-src 'unsafe-inline'",
     ...commonCspDirectives,
   ]
     .map((s) => s.trim())
@@ -222,7 +225,10 @@ add_header Referrer-Policy "strict-origin-when-cross-origin" always;
 # Cross-Origin Policies
 add_header Cross-Origin-Embedder-Policy "credentialless" always;
 add_header Cross-Origin-Opener-Policy "same-origin" always;
-add_header Cross-Origin-Resource-Policy "same-origin" always;
+# CORP: 'cross-origin' allows other sites to embed these assets (e.g., social media previews,
+# CDN sharing). This is intentional for static assets like images and fonts.
+# For HTML pages, the main security_headers.conf uses stricter policies.
+add_header Cross-Origin-Resource-Policy "cross-origin" always;
 
 # Content Security Policy (Optimized for Assets)
 add_header Content-Security-Policy "${assetsCspHeader}" always;

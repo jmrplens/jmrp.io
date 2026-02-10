@@ -46,6 +46,7 @@ dist-reports/
 # Deployment staging directories (a11y-deploy, lh-deploy, etc. created during CI)
 *-deploy/
 .lighthouseci/
+lighthouse-results/
 .scannerwork/
 .lycheecache
 
@@ -104,3 +105,5 @@ GEMINI.md
 public/scripts/cf-beacon.js
 temp_lh/
 temp_workflow/
+# Backup files
+*.backup

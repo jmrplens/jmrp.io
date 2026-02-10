@@ -1,189 +1,166 @@
 ---
 /**
- * Tabs Component
- * A versatile client-side web component for switching between content panels.
- * Works in conjunction with <TabPanel> children.
+ * Tabs Component - Zero JavaScript, Auto-Label Extraction
  *
- * Usage:
+ * Labels are automatically extracted from TabPanel children at build time.
+ * No need to duplicate labels in props - just add TabPanels!
+ *
+ * Usage (simplified):
  * <Tabs>
  *   <TabPanel label="Tab 1">Content 1</TabPanel>
  *   <TabPanel label="Tab 2">Content 2</TabPanel>
  * </Tabs>
  */
 
+import * as cheerio from "cheerio";
+
 interface Props {
   class?: string;
 }
 
 const { class: className } = Astro.props;
+
+// Render slot content to extract labels from TabPanel children
+const slotContent = (await Astro.slots.render("default")) || "";
+
+// Use Cheerio to parse the HTML content for robust attribute extraction
+const $ = cheerio.load(slotContent, { xmlMode: false });
+
+const labels: string[] = [];
+
+// Select elements that have the tab-panel class
+$(".tab-panel").each((_, el) => {
+  const label = $(el).attr("data-label");
+
+  if (label) {
+    labels.push(label);
+  }
+});
+
+// Fallback if no labels found (shouldn't happen with proper TabPanel usage)
+if (labels.length === 0) {
+  console.warn(
+    `[Tabs] No TabPanel labels found in slot content. Ensure <TabPanel> components are used with a "label" prop.`,
+  );
+}
+
+// Generate unique ID with random entropy for collision avoidance
+// Use globalThis.crypto for compatibility across Node.js versions
+const cryptoAPI = globalThis.crypto;
+const entropy = cryptoAPI.getRandomValues(new Uint32Array(1))[0].toString(36);
+
+const labelSlug =
+  labels
+    .join("-")
+    .replaceAll(/[^a-zA-Z0-9]/g, "")
+    .slice(0, 12) || "tabs";
+
+const uniqueId = `${labelSlug}-${entropy}`;
+
+// Inject IDs and ARIA attributes into each tab-panel for accessibility
+$(".tab-panel").each((index, el) => {
+  const $el = $(el);
+  const id = `panel-${uniqueId}-${index}`;
+  const labelId = `label-${uniqueId}-${index}`;
+
+  // Only set ID if not already present
+  if (!$el.attr("id")) {
+    $el.attr("id", id);
+  }
+
+  // Add data-panel-index for robust CSS targeting (avoids nth-child issues)
+  $el.attr("data-panel-index", String(index));
+  $el.attr("role", "tabpanel");
+  $el.attr("aria-labelledby", labelId);
+});
+
+const processedSlotContent = $("body").html() || "";
+
+// Generate consolidated CSS for this instance using data-panel-index for robust targeting
+const instanceCss = labels
+  .map(
+    (_, index) => `
+        .tabs-container[data-tabs-id="${uniqueId}"] #tab-${uniqueId}-${index}:checked ~ .tab-content > .tab-panel[data-panel-index="${index}"] {
+          display: block;
+        }
+
+        .tabs-container[data-tabs-id="${uniqueId}"] #tab-${uniqueId}-${index}:checked ~ .tab-content > .tab-panel:not([data-panel-index="${index}"]) {
+          display: none;
+        }
+
+        .tabs-container[data-tabs-id="${uniqueId}"] #tab-${uniqueId}-${index}:checked ~ .tab-headers > .tab-label:nth-child(${index + 1}) {
+          color: var(--color-primary);
+          background: var(--color-bg-secondary);
+          border-bottom-color: var(--color-primary);
+          margin-bottom: -1px;
+        }
+
+        /* Focus styles for accessibility - highlight label when hidden radio is focused */
+        .tabs-container[data-tabs-id="${uniqueId}"] #tab-${uniqueId}-${index}:focus-visible ~ .tab-headers > .tab-label:nth-child(${index + 1}) {
+          outline: 2px solid var(--color-primary);
+          outline-offset: -2px;
+          background: rgb(255 255 255 / 2%);
+        }
+      `,
+  )
+  .join("\n");
 ---
 
-<script>
-  class TabsComponent extends HTMLElement {
-    _tabListeners: {
-      button: HTMLButtonElement;
-      clickHandler: () => void;
-      keydownHandler: (e: KeyboardEvent) => void;
-    }[] = [];
-    _rafId: number | null = null;
-
-    connectedCallback() {
-      // Use requestAnimationFrame to ensure the children are fully parsed
-      // connectedCallback fires before child elements are available
-      this._rafId = requestAnimationFrame(() => {
-        this._rafId = null;
-        this.initializeTabs();
-      });
-    }
-
-    disconnectedCallback() {
-      // Cancel pending rAF to prevent stale callback on disconnected element
-      if (this._rafId !== null) {
-        cancelAnimationFrame(this._rafId);
-        this._rafId = null;
-      }
-
-      // Cleanup listeners to avoid memory leaks
-      this._tabListeners.forEach(({ button, clickHandler, keydownHandler }) => {
-        button.removeEventListener("click", clickHandler);
-        button.removeEventListener("keydown", keydownHandler);
-      });
-      this._tabListeners = [];
-
-      // Clear initialized marker to allow re-initialization on reconnect
-      const headers = this.querySelector(".tab-headers");
-      if (headers) {
-        headers.removeAttribute("data-initialized");
-        // Remove dynamically added buttons to avoid duplicates on reconnect
-        headers.innerHTML = "";
-      }
-    }
-
-    initializeTabs() {
-      const headers = this.querySelector(".tab-headers");
-      const panels = this.querySelectorAll(".tab-panel");
-
-      if (!headers || panels.length === 0) return;
-
-      // Guard against duplicate initialization
-      if (headers.hasAttribute("data-initialized")) return;
-      headers.setAttribute("data-initialized", "true");
-
-      // Generate unique IDs for ARIA
-      const uniqueId = Math.random().toString(36).substring(2, 9);
-
-      panels.forEach((panel, index) => {
-        const title = panel.getAttribute("data-label") || `Tab ${index + 1}`;
-        const panelId = `panel-${uniqueId}-${index}`;
-        const tabId = `tab-${uniqueId}-${index}`;
-
-        // Setup Panel ARIA
-        panel.setAttribute("id", panelId);
-        panel.setAttribute("role", "tabpanel");
-        panel.setAttribute("aria-labelledby", tabId);
-
-        // Create Tab Button
-        const button = document.createElement("button");
-        button.textContent = title;
-        button.id = tabId;
-        button.role = "tab";
-        button.setAttribute("aria-controls", panelId);
-        button.setAttribute("aria-selected", index === 0 ? "true" : "false");
-        button.setAttribute("tabindex", index === 0 ? "0" : "-1");
-
-        const clickHandler = () => {
-          // Deactivate all
-          headers.querySelectorAll("button").forEach((b) => {
-            b.setAttribute("aria-selected", "false");
-            b.setAttribute("tabindex", "-1");
-          });
-          panels.forEach((p) => {
-            if (p instanceof HTMLElement) {
-              p.hidden = true;
-            }
-          });
-
-          // Activate clicked
-          button.setAttribute("aria-selected", "true");
-          button.setAttribute("tabindex", "0");
-
-          // Show corresponding panel
-          if (panel instanceof HTMLElement) {
-            panel.hidden = false;
-          }
-        };
-
-        const keydownHandler = (e: KeyboardEvent) => {
-          const allButtons = Array.from(headers.querySelectorAll("button"));
-          const firstButton = allButtons[0];
-          const lastButton = allButtons[allButtons.length - 1];
-
-          if (e.key === "ArrowRight") {
-            e.preventDefault();
-            const next =
-              (button.nextElementSibling as HTMLElement) || firstButton;
-            if (next) {
-              next.click();
-              next.focus();
-            }
-          } else if (e.key === "ArrowLeft") {
-            e.preventDefault();
-            const prev =
-              (button.previousElementSibling as HTMLElement) || lastButton;
-            if (prev) {
-              prev.click();
-              prev.focus();
-            }
-          } else if (e.key === "Home") {
-            e.preventDefault();
-            if (firstButton instanceof HTMLElement) {
-              firstButton.click();
-              firstButton.focus();
-            }
-          } else if (e.key === "End") {
-            e.preventDefault();
-            if (lastButton instanceof HTMLElement) {
-              lastButton.click();
-              lastButton.focus();
-            }
-          }
-        };
-
-        button.addEventListener("click", clickHandler);
-        button.addEventListener("keydown", keydownHandler);
-
-        // Store references for cleanup
-        this._tabListeners.push({ button, clickHandler, keydownHandler });
-
-        headers.appendChild(button);
-
-        // Initial state - hide all except first
-        if (panel instanceof HTMLElement) {
-          panel.hidden = index !== 0;
-        }
-      });
-    }
+<div
+  class:list={["tabs-container", className]}
+  data-tabs-id={uniqueId}
+>
+  {/* Hidden radio inputs for CSS state management */}
+  {
+    labels.map((label, index) => (
+      <input
+        type="radio"
+        name={`tabs-${uniqueId}`}
+        id={`tab-${uniqueId}-${index}`}
+        class="tab-radio"
+        checked={index === 0}
+        aria-controls={`panel-${uniqueId}-${index}`}
+        aria-label={`Show ${label} tab`}
+      />
+    ))
   }
 
-  if (!customElements.get("ui-tabs")) {
-    customElements.define("ui-tabs", TabsComponent);
-  }
-</script>
+  {/* Tab headers as labels - auto-generated from TabPanel children */}
+  {/* Note: This is a CSS-only tab pattern. Accessibility is provided by the */}
+  {/* hidden radio inputs which support arrow key navigation natively. */}
+  <div class="tab-headers">
+    {
+      labels.map((label, index) => (
+        <label
+          for={`tab-${uniqueId}-${index}`}
+          id={`label-${uniqueId}-${index}`}
+          class="tab-label"
+        >
+          {label}
+        </label>
+      ))
+    }
+  </div>
 
-<ui-tabs class:list={[className]}>
+  {/* Tab panels from slot - already contains rendered TabPanel components */}
   <div
-    class="tab-headers"
-    role="tablist"
-    aria-label="Tabbed Content"
-  >
-  </div>
-  <div class="tab-content">
-    <slot />
-  </div>
-</ui-tabs>
+    class="tab-content"
+    set:html={processedSlotContent}
+  />
+</div>
+
+{/* Generate unique selectors for each panel (consolidated) */}
+{
+  instanceCss && (
+    <style
+      is:inline
+      set:html={instanceCss}
+    />
+  )
+}
 
 <style is:global>
-  ui-tabs {
+  .tabs-container {
     position: relative;
     display: block;
     margin: 1.5rem 0;
@@ -193,7 +170,20 @@ const { class: className } = Astro.props;
     border-radius: var(--radius-md);
   }
 
-  ui-tabs .tab-headers {
+  /* Hide radio inputs visually */
+  .tabs-container .tab-radio {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    white-space: nowrap;
+    border: 0;
+    clip-path: inset(100%);
+  }
+
+  .tabs-container .tab-headers {
     display: flex;
     overflow: auto hidden;
     scrollbar-width: thin;
@@ -201,21 +191,19 @@ const { class: className } = Astro.props;
     border-bottom: var(--border-1);
   }
 
-  ui-tabs .tab-headers::-webkit-scrollbar {
+  .tabs-container .tab-headers::-webkit-scrollbar {
     height: 4px;
   }
 
-  ui-tabs .tab-headers button {
+  .tabs-container .tab-label {
     flex-shrink: 0;
     padding: 0.75rem 1.25rem;
     font-size: 0.9rem;
     font-weight: var(--fw-medium);
     color: var(--color-text-muted);
     white-space: nowrap;
-    appearance: none;
     cursor: pointer;
     background: transparent;
-    border: none;
     border-right: var(--border-1);
     border-bottom: 2px solid transparent;
     transition:
@@ -224,44 +212,78 @@ const { class: className } = Astro.props;
       border-color 0.2s;
   }
 
-  ui-tabs .tab-headers button:hover {
+  .tabs-container .tab-label:hover {
     background: rgb(255 255 255 / 2%);
   }
 
-  ui-tabs .tab-headers button[aria-selected="true"] {
-    margin-bottom: -1px;
-    color: var(--color-primary);
-    background: var(--color-bg-secondary);
-    border-bottom-color: var(--color-primary);
-  }
-
-  ui-tabs .tab-content {
+  .tabs-container .tab-content {
     position: relative;
     max-width: 100%;
     padding: 0;
   }
 
-  ui-tabs .tab-panel {
+  /* Default: hide all panels, show first */
+  .tabs-container .tab-panel {
+    display: none;
     padding: 1.5rem;
-
-    /* No animation - content should appear instantly */
   }
 
-  /* For code-only tabs (no padding needed) */
-  ui-tabs .tab-panel.no-padding {
+  .tabs-container .tab-panel:first-child {
+    display: block;
+  }
+
+  /* Auto-remove padding when tab contains only a code block */
+  .tabs-container .tab-panel:has(> .panel-content > pre:only-child),
+  .tabs-container
+    .tab-panel:has(> .panel-content > .code-section-wrapper:only-child),
+  .tabs-container
+    .tab-panel:has(> .panel-content > section:only-child > pre:only-child) {
     padding: 0;
   }
 
-  /* Responsive overflow handling */
-  ui-tabs pre,
-  ui-tabs .mermaid {
+  /* Code blocks inside tab panels - Increased specificity to avoid !important */
+  .tabs-container .tab-panel pre,
+  .tabs-container .tab-panel pre.astro-code {
+    padding: 1rem 1.25rem;
+    margin: 0;
+    overflow-x: auto;
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: var(--color-text);
+    background-color: transparent;
+    border: none;
+    border-radius: 0;
+    text-size-adjust: none;
+  }
+
+  .tabs-container .tab-panel code {
+    font-family: var(--font-mono);
+    font-size: inherit;
+    line-height: inherit;
+    color: inherit;
+    white-space: pre;
+    background: none;
+  }
+
+  .tabs-container .tab-panel.no-padding {
+    padding: 0;
+  }
+
+  .tabs-container pre,
+  .tabs-container .mermaid {
     max-width: 100% !important;
     overflow-x: auto !important;
   }
 
-  ui-tabs img,
-  ui-tabs svg {
+  .tabs-container img,
+  .tabs-container svg {
     max-width: 100%;
     height: auto;
+  }
+
+  .tabs-container .tab-label:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: -2px;
   }
 </style>

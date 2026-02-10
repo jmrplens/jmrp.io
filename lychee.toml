@@ -17,9 +17,11 @@ exclude = [
     'https://www\.upv\.es/index-en\.html',
     'https://www\.upv\.es/entidades/epsg/en/home/',
     'http://hdl\.handle\.net/.*',
+    'http://www\.upv\.es/ficha-personal/alcebrui',
     'http://www\.upv\.es/ficha-personal/fracasra',
     'http://www\.upv\.es/ficha-personal/lmgarcia',
     'http://www\.upv\.es/ficha-personal/rpico',
+    'http://www\.upv\.es/ficha-personal/victorsm',
     # Ignore Astro/Template variables
     '.*\$\{.*',
     '.*\%7B.*',
@@ -27,6 +29,7 @@ exclude = [
     # Blocked bots or auth required
     'linkedin\.com',
     'cloudflare\.com',
+    'trevorcox\.me',
     'scholar\.google\.com',
     'scholar\.google\.es',
     'youtube\.com/embed/',

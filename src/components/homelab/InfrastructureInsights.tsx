@@ -9,7 +9,8 @@ interface HomelabStats {
   requests_received_24h: number;
   responses_sent_24h: number;
   upstream_sent_24h: number;
-  bandwidth_bytes_1h: number;
+  bandwidth_sent_24h: number;
+  bandwidth_recv_24h: number;
   tarpit_hits_24h: number;
   nginx_bans_24h: number;
   mikrotik_scans_total: number;
@@ -29,7 +30,8 @@ function isValidHomelabStats(data: unknown): data is HomelabStats {
     "requests_received_24h",
     "responses_sent_24h",
     "upstream_sent_24h",
-    "bandwidth_bytes_1h",
+    "bandwidth_sent_24h",
+    "bandwidth_recv_24h",
     "tarpit_hits_24h",
     "nginx_bans_24h",
     "mikrotik_scans_total",
@@ -257,9 +259,19 @@ export default function InfrastructureInsights() {
               </output>
             </div>
             <div className="detail-row">
-              <span id="label-bandwidth">Bandwidth (1h)</span>
-              <output aria-labelledby="label-bandwidth">
-                {displayVal(stats?.bandwidth_bytes_1h, formatBytes)}
+              <span id="label-bandwidth-up">
+                <span className="sr-only">Sent </span>Bandwidth ↑
+              </span>
+              <output aria-labelledby="label-bandwidth-up">
+                {displayVal(stats?.bandwidth_sent_24h, formatBytes)}
+              </output>
+            </div>
+            <div className="detail-row">
+              <span id="label-bandwidth-down">
+                <span className="sr-only">Received </span>Bandwidth ↓
+              </span>
+              <output aria-labelledby="label-bandwidth-down">
+                {displayVal(stats?.bandwidth_recv_24h, formatBytes)}
               </output>
             </div>
           </div>
