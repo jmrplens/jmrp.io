@@ -189,15 +189,6 @@ emyPxgcYxn/eR44/KJ4EBs+lVDR3veyJm+kXQ99b21/+jh5Xos1AnX5iItreGCc=
       return bytes.slice(1);
     }
 
-    function decodeInteger(bytes) {
-      var hex = Array.from(bytes)
-        .map(function (b) {
-          return b.toString(16).padStart(2, "0");
-        })
-        .join("");
-      return hex;
-    }
-
     var OID_NAMES = {
       "2.5.4.3": "CN",
       "2.5.4.6": "C",

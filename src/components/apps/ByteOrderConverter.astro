@@ -457,7 +457,6 @@ const uniqueId = `boc-${crypto.getRandomValues(new Uint32Array(1))[0].toString(3
           beBytes.forEach(function (b, i) {
             v.setUint8(i, b);
           });
-          var f = v.getFloat32(0, false);
           var u = v.getUint32(0, false);
           var sign = (u >> 31) & 1;
           var exp = (u >> 23) & 0xff;

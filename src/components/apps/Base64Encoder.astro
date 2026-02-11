@@ -252,10 +252,10 @@ const formats = [
     function fromHtmlEntities(str) {
       try {
         var decoded = str
-          .replace(/&#(\d+);/g, function (m, n) {
+          .replace(/&#(\d+);/g, function (_, n) {
             return String.fromCodePoint(parseInt(n));
           })
-          .replace(/&#x([0-9a-f]+);/gi, function (m, n) {
+          .replace(/&#x([0-9a-f]+);/gi, function (_, n) {
             return String.fromCodePoint(parseInt(n, 16));
           })
           .replace(/&amp;/g, "&")

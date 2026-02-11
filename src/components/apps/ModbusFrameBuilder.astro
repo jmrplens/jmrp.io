@@ -378,10 +378,6 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
       return toHex(v & 0xff, 2);
     }
 
-    function hexWord(v) {
-      return hexByte((v >> 8) & 0xff) + " " + hexByte(v & 0xff);
-    }
-
     // Determine if function is write type
     function isWriteFunc(fc) {
       return ["05", "06", "0F", "10"].includes(fc);
