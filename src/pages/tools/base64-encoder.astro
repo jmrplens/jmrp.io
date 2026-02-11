@@ -3,6 +3,7 @@
  * Base64 Encoder/Decoder Tool Page.
  */
 import Base64EncoderApp from "@components/apps/Base64Encoder.astro";
+import TerminalCommand from "@components/ui/TerminalCommand.astro";
 import BaseLayout from "@layouts/BaseLayout.astro";
 import { getSiteUrl } from "@utils/site";
 
@@ -11,17 +12,73 @@ const toolSchema = {
   "@type": "SoftwareApplication",
   name: "Base64 Encoder / Decoder",
   description:
-    "Encode and decode Base64, Base64URL, URL encoding, hexadecimal, and HTML entities.",
+    "Encode and decode Base64, Base64URL, URL encoding, hexadecimal, and HTML entities. Supports files: images, audio, documents, and more.",
   url: new URL("/tools/base64-encoder/", getSiteUrl()).toString(),
   applicationCategory: "WebApplication",
   operatingSystem: "Web Browser",
   offers: { "@type": "Offer", price: 0, priceCurrency: "USD" },
 };
+
+// Code examples as raw strings — injected via set:html inside TerminalCommand
+// slots to avoid Astro JSX parsing of $() and {} in shell commands
+const codeTextBase64 = `# Encode text to Base64
+echo -n "Hello, World!" | base64
+# SGVsbG8sIFdvcmxkIQ==
+
+# Decode Base64 to text
+echo "SGVsbG8sIFdvcmxkIQ==" | base64 --decode
+# Hello, World!`;
+
+const codeFileBase64 = `# Encode a file to Base64 (single line, no wrapping)
+base64 -w0 image.png &gt; image.b64
+
+# Decode Base64 back to the original file
+base64 --decode image.b64 &gt; restored.png
+
+# Encode and copy to clipboard (requires xclip)
+base64 -w0 document.pdf | xclip -selection clipboard`;
+
+const codeDataUri = `# Generate a complete Data URI (for embedding in CSS/HTML)
+echo "data:$(file -b --mime-type logo.png);base64,$(base64 -w0 logo.png)"
+# data:image/png;base64,iVBORw0KGgo...
+
+# One-liner to create a CSS background rule
+echo "background-image: url('data:$(file -b --mime-type bg.svg);base64,$(base64 -w0 bg.svg)');"`;
+
+const codeOtherEncodings = `# URL encoding (percent-encoding)
+python3 -c "import urllib.parse; print(urllib.parse.quote('Hello World! á€'))"
+# Hello%20World%21%20%C3%A1%E2%82%AC
+
+# URL decoding
+python3 -c "import urllib.parse; print(urllib.parse.unquote('Hello%20World%21'))"
+
+# Hexadecimal encoding
+echo -n "Hello" | xxd -p
+# 48656c6c6f
+
+# Hexadecimal decoding
+echo "48656c6c6f" | xxd -r -p
+# Hello
+
+# Binary representation via xxd
+echo -n "Hi" | xxd -b -c1 | awk '{print $2}'
+# 01001000
+# 01101001`;
+
+const codeVerifyIntegrity = `# Encode and decode, then compare checksums to verify integrity
+sha256sum original.pdf
+base64 -w0 original.pdf | base64 --decode &gt; roundtrip.pdf
+sha256sum roundtrip.pdf
+# Both checksums should be identical
+
+# Detect file type from Base64 (using magic bytes)
+head -c 32 file.b64 | base64 --decode | file -
+# /dev/stdin: PNG image data, 800 x 600, 8-bit/color RGBA`;
 ---
 
 <BaseLayout
   title="Base64 Encoder / Decoder"
-  description="Multi-format encoder and decoder for Base64, Base64URL, URL encoding, hex, and HTML entities. Auto-detects format and runs entirely client-side."
+  description="Multi-format encoder and decoder for Base64, Base64URL, URL encoding, hex, and HTML entities. Supports file encoding for images, audio, and documents. Runs entirely client-side."
   schema={toolSchema}
 >
   <div class="tool-page">
@@ -48,8 +105,9 @@ const toolSchema = {
         <div class="header-content">
           <h1>Base64 Encoder / Decoder</h1>
           <p class="subtitle">
-            Encode and decode between multiple formats: Base64, Base64URL, URL
-            encoding, hex, and HTML entities.
+            Encode and decode between multiple formats including file support.
+            Drop images, audio, documents, or any file to get its Base64
+            representation. Everything runs locally in your browser.
           </p>
         </div>
       </header>
@@ -62,7 +120,9 @@ const toolSchema = {
         <h2>About This Tool</h2>
         <p>
           A multi-format encoder and decoder supporting the most common encoding
-          schemes used in web development, APIs, and data exchange.
+          schemes used in web development, APIs, and data exchange. Now with
+          full file support for images, audio, video, documents, and any binary
+          file.
         </p>
         <h3>Supported Formats</h3>
         <ul>
@@ -71,14 +131,73 @@ const toolSchema = {
           <li><strong>URL Encoding</strong> — percent-encoding for URLs</li>
           <li><strong>Hexadecimal</strong> — hex string encoding</li>
           <li><strong>HTML Entities</strong> — HTML character escaping</li>
+          <li><strong>Binary</strong> — binary string representation</li>
+        </ul>
+        <h3>File Support</h3>
+        <ul>
+          <li>
+            <strong>Images</strong> — PNG, JPEG, GIF, WebP, SVG (with preview)
+          </li>
+          <li><strong>Audio</strong> — MP3, OGG, WAV (with player)</li>
+          <li><strong>Video</strong> — MP4, WebM (with player)</li>
+          <li>
+            <strong>Documents</strong> — PDF, JSON, plain text, and any other file
+          </li>
         </ul>
         <h3>How to Use</h3>
         <ol>
-          <li>Paste or type your text in the input area</li>
-          <li>Select the encoding format</li>
-          <li>Toggle between Encode and Decode modes</li>
-          <li>Use Auto-Detect to identify the encoding format</li>
+          <li>
+            Switch between <strong>Text</strong> and <strong>File</strong> mode using
+            the tabs
+          </li>
+          <li>
+            In Text mode: paste text and select input/output encoding formats
+          </li>
+          <li>
+            In File mode: drop a file or click to browse, then copy the Base64
+            output
+          </li>
+          <li>
+            Toggle the Data URI prefix for ready-to-use CSS/HTML embedding
+          </li>
+          <li>Use the Download button to save decoded Base64 back as a file</li>
         </ol>
+        <h3>Privacy</h3>
+        <p>
+          All encoding and decoding happens entirely in your browser. No files
+          are uploaded to any server. Your data never leaves your device.
+        </p>
+
+        <h3>Linux Command Reference</h3>
+        <p>
+          You can achieve the same operations from the terminal using built-in
+          Linux tools. Here are the most common examples:
+        </p>
+
+        <h4>Text ↔ Base64</h4>
+        <TerminalCommand>
+          <Fragment set:html={codeTextBase64} />
+        </TerminalCommand>
+
+        <h4>Files ↔ Base64</h4>
+        <TerminalCommand>
+          <Fragment set:html={codeFileBase64} />
+        </TerminalCommand>
+
+        <h4>Data URI for CSS / HTML</h4>
+        <TerminalCommand>
+          <Fragment set:html={codeDataUri} />
+        </TerminalCommand>
+
+        <h4>Other Encodings</h4>
+        <TerminalCommand>
+          <Fragment set:html={codeOtherEncodings} />
+        </TerminalCommand>
+
+        <h4>Verify File Integrity</h4>
+        <TerminalCommand>
+          <Fragment set:html={codeVerifyIntegrity} />
+        </TerminalCommand>
       </section>
     </div>
   </div>
@@ -194,6 +313,14 @@ const toolSchema = {
     font-size: 1rem;
     font-weight: var(--fw-semibold);
     color: var(--color-text-heading);
+  }
+
+  .tool-info h4 {
+    margin-top: var(--space-md);
+    margin-bottom: var(--space-xs);
+    font-size: 0.9rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text);
   }
 
   .tool-info p {

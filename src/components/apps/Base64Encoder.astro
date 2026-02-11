@@ -1,8 +1,9 @@
 ---
 /**
  * Base64Encoder Component
- * Multi-format encoding/decoding tool.
- * Supports Base64, Base64URL, URL encoding, Hex, and HTML entities.
+ * Multi-format encoding/decoding tool with file support.
+ * Supports Base64, Base64URL, URL encoding, Hex, HTML entities, and Binary.
+ * Files (images, audio, documents, etc.) can be encoded/decoded entirely client-side.
  *
  * Usage:
  * <Base64Encoder title="Encoding Tool" />
@@ -32,8 +33,45 @@ const formats = [
   {title && <div class="enc-title">{title}</div>}
 
   <div class="enc-layout">
-    {/* Input */}
-    <div class="enc-panel">
+    {/* Input mode tabs */}
+    <div
+      class="enc-mode-tabs"
+      role="tablist"
+      aria-label="Input mode"
+    >
+      <button
+        type="button"
+        class="enc-mode-btn active"
+        role="tab"
+        aria-selected="true"
+        data-mode="text"
+      >
+        <span
+          class="i-mdi:text-box-outline"
+          aria-hidden="true"
+        ></span>
+        <span>Text</span>
+      </button>
+      <button
+        type="button"
+        class="enc-mode-btn"
+        role="tab"
+        aria-selected="false"
+        data-mode="file"
+      >
+        <span
+          class="i-mdi:file-upload-outline"
+          aria-hidden="true"
+        ></span>
+        <span>File</span>
+      </button>
+    </div>
+
+    {/* Text Input Panel */}
+    <div
+      class="enc-panel enc-text-panel"
+      data-panel="text"
+    >
       <div class="enc-panel-header">
         <span
           class="i-mdi:text-box-outline enc-panel-icon"
@@ -67,6 +105,102 @@ const formats = [
       </div>
     </div>
 
+    {/* File Input Panel */}
+    <div
+      class="enc-panel enc-file-panel"
+      data-panel="file"
+      hidden
+    >
+      <div class="enc-panel-header">
+        <span
+          class="i-mdi:file-upload-outline enc-panel-icon"
+          aria-hidden="true"
+        ></span>
+        <span>File Input</span>
+        <label class="enc-data-uri-toggle">
+          <input
+            type="checkbox"
+            id={`${uniqueId}-data-uri`}
+          />
+          <span>Include Data URI prefix</span>
+        </label>
+      </div>
+
+      <div
+        class="enc-dropzone"
+        id={`${uniqueId}-dropzone`}
+        role="button"
+        tabindex="0"
+        aria-label="Drop a file here or click to browse. All processing is local."
+      >
+        <span
+          class="i-mdi:cloud-upload-outline enc-drop-icon"
+          aria-hidden="true"
+        ></span>
+        <span class="enc-drop-text">Drop a file here or click to browse</span>
+        <span class="enc-drop-hint"
+          >Images, audio, documents, or any file type</span
+        >
+        <span class="enc-drop-privacy">
+          <span
+            class="i-mdi:shield-check-outline"
+            aria-hidden="true"
+          ></span>
+          All processing stays in your browser
+        </span>
+        <input
+          type="file"
+          id={`${uniqueId}-file-input`}
+          class="enc-file-input"
+          aria-label="Select file to encode"
+        />
+      </div>
+
+      {/* File preview area */}
+      <div
+        class="enc-file-preview"
+        id={`${uniqueId}-file-preview`}
+        hidden
+      >
+        <div class="enc-file-info">
+          <span
+            class="enc-file-icon"
+            id={`${uniqueId}-file-type-icon`}
+          >
+            <span
+              class="i-mdi:file-outline"
+              aria-hidden="true"
+            ></span>
+          </span>
+          <div class="enc-file-details">
+            <span
+              class="enc-file-name"
+              id={`${uniqueId}-file-name`}
+            ></span>
+            <span
+              class="enc-file-meta"
+              id={`${uniqueId}-file-meta`}
+            ></span>
+          </div>
+          <button
+            type="button"
+            class="enc-file-remove"
+            aria-label="Remove file"
+          >
+            <span
+              class="i-mdi:close-circle"
+              aria-hidden="true"
+            ></span>
+          </button>
+        </div>
+        <div
+          class="enc-preview-content"
+          id={`${uniqueId}-preview-content`}
+        >
+        </div>
+      </div>
+    </div>
+
     {/* Direction toggle */}
     <div class="enc-direction">
       <button
@@ -74,7 +208,10 @@ const formats = [
         class="enc-swap-btn"
         aria-label="Swap input and output"
       >
-        <span class="i-mdi:swap-vertical"></span>
+        <span
+          class="i-mdi:swap-vertical"
+          aria-hidden="true"
+        ></span>
       </button>
     </div>
 
@@ -88,7 +225,7 @@ const formats = [
         <span>Output</span>
         <select
           id={`${uniqueId}-output-format`}
-          class="enc-format-select"
+          class="enc-format-select enc-text-only-control"
           aria-label="Output format"
         >
           {
@@ -101,6 +238,7 @@ const formats = [
               </option>
             ))
           }
+          <option value="text">Plain Text</option>
         </select>
       </div>
       <div class="enc-output-wrapper">
@@ -113,14 +251,31 @@ const formats = [
           role="region"
           aria-label="Encoded or decoded output"><code id={`${uniqueId}-output`}>...</code></pre>
         {/* eslint-enable astro/jsx-a11y/no-noninteractive-tabindex */}
-        <button
-          type="button"
-          class="enc-copy-btn"
-          aria-label="Copy output"
-        >
-          <span class="i-mdi:content-copy"></span>
-          <span class="enc-copy-text">Copy</span>
-        </button>
+        <div class="enc-output-actions">
+          <button
+            type="button"
+            class="enc-copy-btn"
+            aria-label="Copy output"
+          >
+            <span
+              class="i-mdi:content-copy"
+              aria-hidden="true"
+            ></span>
+            <span class="enc-copy-text">Copy</span>
+          </button>
+          <button
+            type="button"
+            class="enc-download-btn"
+            aria-label="Download decoded file"
+            hidden
+          >
+            <span
+              class="i-mdi:download"
+              aria-hidden="true"
+            ></span>
+            <span class="enc-download-text">Download</span>
+          </button>
+        </div>
       </div>
       <div class="enc-info-row">
         <span
@@ -128,6 +283,11 @@ const formats = [
           id={`${uniqueId}-output-bytes`}
           >0 bytes</span
         >
+        <span
+          class="enc-ratio"
+          id={`${uniqueId}-ratio`}
+          hidden
+        ></span>
         <span
           class="enc-error"
           id={`${uniqueId}-error`}
@@ -140,22 +300,44 @@ const formats = [
 
 <script is:inline define:vars={{ uniqueId }}>
   (function () {
-    const container = document.querySelector(`[data-enc-id="${uniqueId}"]`);
+    var container = document.querySelector('[data-enc-id="' + uniqueId + '"]');
     if (!container) return;
 
-    const inputEl = document.getElementById(`${uniqueId}-input`);
-    const outputEl = document.getElementById(`${uniqueId}-output`);
-    const inputFormat = document.getElementById(`${uniqueId}-input-format`);
-    const outputFormat = document.getElementById(`${uniqueId}-output-format`);
-    const inputBytes = document.getElementById(`${uniqueId}-input-bytes`);
-    const outputBytes = document.getElementById(`${uniqueId}-output-bytes`);
-    const errorEl = document.getElementById(`${uniqueId}-error`);
-    const copyBtn = container.querySelector(".enc-copy-btn");
-    const swapBtn = container.querySelector(".enc-swap-btn");
+    var inputEl = document.getElementById(uniqueId + "-input");
+    var outputEl = document.getElementById(uniqueId + "-output");
+    var inputFormat = document.getElementById(uniqueId + "-input-format");
+    var outputFormat = document.getElementById(uniqueId + "-output-format");
+    var inputBytes = document.getElementById(uniqueId + "-input-bytes");
+    var outputBytes = document.getElementById(uniqueId + "-output-bytes");
+    var errorEl = document.getElementById(uniqueId + "-error");
+    var ratioEl = document.getElementById(uniqueId + "-ratio");
+    var copyBtn = container.querySelector(".enc-copy-btn");
+    var swapBtn = container.querySelector(".enc-swap-btn");
+    var downloadBtn = container.querySelector(".enc-download-btn");
+
+    // File-related elements
+    var modeBtns = container.querySelectorAll(".enc-mode-btn");
+    var textPanel = container.querySelector('[data-panel="text"]');
+    var filePanel = container.querySelector('[data-panel="file"]');
+    var dropzone = document.getElementById(uniqueId + "-dropzone");
+    var fileInput = document.getElementById(uniqueId + "-file-input");
+    var filePreview = document.getElementById(uniqueId + "-file-preview");
+    var previewContent = document.getElementById(uniqueId + "-preview-content");
+    var fileNameEl = document.getElementById(uniqueId + "-file-name");
+    var fileMetaEl = document.getElementById(uniqueId + "-file-meta");
+    var fileTypeIcon = document.getElementById(uniqueId + "-file-type-icon");
+    var fileRemoveBtn = container.querySelector(".enc-file-remove");
+    var dataUriCheckbox = document.getElementById(uniqueId + "-data-uri");
+    var textOnlyControls = container.querySelectorAll(".enc-text-only-control");
 
     if (!inputEl || !outputEl) return;
 
+    var currentMode = "text";
+    var currentFileData = null; // { bytes, name, type, size }
+
+    // ========================
     // Encoding functions
+    // ========================
     function textToBytes(text) {
       return new TextEncoder().encode(text);
     }
@@ -165,16 +347,29 @@ const formats = [
     }
 
     function toBase64(bytes) {
-      return btoa(String.fromCharCode.apply(null, bytes));
+      var chunkSize = 8192;
+      var parts = [];
+      for (var i = 0; i < bytes.length; i += chunkSize) {
+        parts.push(
+          String.fromCharCode.apply(null, bytes.subarray(i, i + chunkSize)),
+        );
+      }
+      return btoa(parts.join(""));
     }
 
     function fromBase64(str) {
       try {
-        var bin = atob(str.trim());
+        var cleaned = str.trim();
+        // Remove data URI prefix if present
+        var dataUriMatch = cleaned.match(/^data:[^;]*;base64,(.*)$/s);
+        if (dataUriMatch) cleaned = dataUriMatch[1];
+        // Pad if needed
+        while (cleaned.length % 4) cleaned += "=";
+        var bin = atob(cleaned);
         var bytes = new Uint8Array(bin.length);
         for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
         return bytes;
-      } catch (e) {
+      } catch (_e) {
         return null;
       }
     }
@@ -211,7 +406,7 @@ const formats = [
           bytes[i / 2] = val;
         }
         return bytes;
-      } catch (e) {
+      } catch (_e) {
         return null;
       }
     }
@@ -223,7 +418,7 @@ const formats = [
     function fromUrlEncoding(str) {
       try {
         return textToBytes(decodeURIComponent(str.trim()));
-      } catch (e) {
+      } catch (_e) {
         return null;
       }
     }
@@ -264,7 +459,7 @@ const formats = [
           .replace(/&quot;/g, '"')
           .replace(/&apos;/g, "'");
         return textToBytes(decoded);
-      } catch (e) {
+      } catch (_e) {
         return null;
       }
     }
@@ -288,7 +483,7 @@ const formats = [
           bytes[i / 8] = val;
         }
         return bytes;
-      } catch (e) {
+      } catch (_e) {
         return null;
       }
     }
@@ -315,67 +510,542 @@ const formats = [
       return bytesToText(bytes);
     }
 
-    function update() {
-      var input = inputEl.value;
-      var inFmt = inputFormat.value;
-      var outFmt = outputFormat.value;
+    // ========================
+    // File utilities
+    // ========================
+    function formatSize(bytes) {
+      if (bytes === 0) return "0 B";
+      var units = ["B", "KB", "MB", "GB"];
+      var i = Math.floor(Math.log(bytes) / Math.log(1024));
+      return (
+        (bytes / Math.pow(1024, i)).toFixed(i > 0 ? 2 : 0) + " " + units[i]
+      );
+    }
 
-      if (errorEl) errorEl.hidden = true;
+    function getMimeCategory(type) {
+      if (!type) return "unknown";
+      if (type.startsWith("image/")) return "image";
+      if (type.startsWith("audio/")) return "audio";
+      if (type.startsWith("video/")) return "video";
+      if (type.startsWith("text/")) return "text";
+      if (type.includes("pdf")) return "pdf";
+      if (
+        type.includes("json") ||
+        type.includes("xml") ||
+        type.includes("javascript")
+      )
+        return "code";
+      if (
+        type.includes("zip") ||
+        type.includes("tar") ||
+        type.includes("gzip") ||
+        type.includes("rar") ||
+        type.includes("7z")
+      )
+        return "archive";
+      return "unknown";
+    }
 
-      if (!input) {
-        outputEl.textContent = "(Enter text above)";
-        if (inputBytes) inputBytes.textContent = "0 bytes";
-        if (outputBytes) outputBytes.textContent = "0 bytes";
-        return;
-      }
+    /** Detect MIME type from Data URI prefix or magic bytes */
+    function detectMimeFromBase64(input) {
+      var cleaned = input.trim();
+      var mime = "application/octet-stream";
+      var ext = "bin";
 
-      // Decode input to bytes
-      var bytes = decode(input, inFmt);
+      // Check for Data URI prefix: data:image/png;base64,...
+      var dataUriMatch = cleaned.match(/^data:([^;,]+);base64,/i);
+      if (dataUriMatch) {
+        mime = dataUriMatch[1];
+      } else {
+        // Try magic bytes detection from decoded content
+        try {
+          var padded = cleaned;
+          while (padded.length % 4) padded += "=";
+          var bin = atob(padded.slice(0, 32));
+          var b = [];
+          for (var i = 0; i < bin.length; i++) b.push(bin.charCodeAt(i));
 
-      if (!bytes) {
-        outputEl.textContent = "Invalid input for selected format";
-        if (errorEl) {
-          errorEl.textContent = "Could not decode input";
-          errorEl.hidden = false;
+          if (b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47)
+            mime = "image/png";
+          else if (b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff)
+            mime = "image/jpeg";
+          else if (
+            b[0] === 0x47 &&
+            b[1] === 0x49 &&
+            b[2] === 0x46 &&
+            b[3] === 0x38
+          )
+            mime = "image/gif";
+          else if (
+            b[0] === 0x52 &&
+            b[1] === 0x49 &&
+            b[2] === 0x46 &&
+            b[3] === 0x46 &&
+            b[8] === 0x57 &&
+            b[9] === 0x45 &&
+            b[10] === 0x42 &&
+            b[11] === 0x50
+          )
+            mime = "image/webp";
+          else if (
+            b[0] === 0x25 &&
+            b[1] === 0x50 &&
+            b[2] === 0x44 &&
+            b[3] === 0x46
+          )
+            mime = "application/pdf";
+          else if (
+            b[0] === 0x50 &&
+            b[1] === 0x4b &&
+            b[2] === 0x03 &&
+            b[3] === 0x04
+          )
+            mime = "application/zip";
+          else if (b[0] === 0x49 && b[1] === 0x44 && b[2] === 0x33)
+            mime = "audio/mpeg";
+          else if (b[0] === 0xff && (b[1] & 0xe0) === 0xe0) mime = "audio/mpeg";
+          else if (
+            b[0] === 0x4f &&
+            b[1] === 0x67 &&
+            b[2] === 0x67 &&
+            b[3] === 0x53
+          )
+            mime = "audio/ogg";
+          else if (
+            b[0] === 0x52 &&
+            b[1] === 0x49 &&
+            b[2] === 0x46 &&
+            b[3] === 0x46 &&
+            b[8] === 0x57 &&
+            b[9] === 0x41 &&
+            b[10] === 0x56 &&
+            b[11] === 0x45
+          )
+            mime = "audio/wav";
+          else if (
+            b[4] === 0x66 &&
+            b[5] === 0x74 &&
+            b[6] === 0x79 &&
+            b[7] === 0x70
+          )
+            mime = "video/mp4";
+          else if (
+            b[0] === 0x1a &&
+            b[1] === 0x45 &&
+            b[2] === 0xdf &&
+            b[3] === 0xa3
+          )
+            mime = "video/webm";
+          else if (b[0] === 0x3c) {
+            var snippet = bin.slice(0, 20).toLowerCase();
+            if (snippet.includes("<svg")) mime = "image/svg+xml";
+            else if (snippet.includes("<?xml") || snippet.includes("<html"))
+              mime = "text/xml";
+          }
+        } catch (_e) {
+          /* ignore decode errors */
         }
-        return;
       }
 
-      if (inputBytes) {
-        inputBytes.textContent =
-          new TextEncoder().encode(input).length + " bytes";
+      // Map MIME to file extension
+      var extMap = {
+        "image/png": "png",
+        "image/jpeg": "jpg",
+        "image/gif": "gif",
+        "image/webp": "webp",
+        "image/svg+xml": "svg",
+        "application/pdf": "pdf",
+        "application/zip": "zip",
+        "audio/mpeg": "mp3",
+        "audio/ogg": "ogg",
+        "audio/wav": "wav",
+        "video/mp4": "mp4",
+        "video/webm": "webm",
+        "text/xml": "xml",
+        "text/plain": "txt",
+        "text/html": "html",
+        "application/json": "json",
+      };
+      ext = extMap[mime] || "bin";
+
+      return { mime: mime, ext: ext };
+    }
+
+    function getFileIconClass(type) {
+      var cat = getMimeCategory(type);
+      var icons = {
+        image: "i-mdi:file-image-outline",
+        audio: "i-mdi:file-music-outline",
+        video: "i-mdi:file-video-outline",
+        text: "i-mdi:file-document-outline",
+        pdf: "i-mdi:file-pdf-box",
+        code: "i-mdi:file-code-outline",
+        archive: "i-mdi:folder-zip-outline",
+        unknown: "i-mdi:file-outline",
+      };
+      return icons[cat] || icons.unknown;
+    }
+
+    function showPreview(file, bytes) {
+      if (!filePreview || !previewContent) return;
+      filePreview.hidden = false;
+      previewContent.innerHTML = "";
+
+      if (fileNameEl) fileNameEl.textContent = file.name;
+      if (fileMetaEl) {
+        fileMetaEl.textContent =
+          formatSize(file.size) + " \u2022 " + (file.type || "unknown type");
       }
 
-      // Encode to output format
-      try {
-        var result = encode(bytes, outFmt);
-        outputEl.textContent = result;
-        if (outputBytes) {
-          outputBytes.textContent =
-            new TextEncoder().encode(result).length + " bytes";
-        }
-      } catch (e) {
-        outputEl.textContent = "Encoding error";
-        if (errorEl) {
-          errorEl.textContent = "Encoding failed";
-          errorEl.hidden = false;
+      // Update icon
+      if (fileTypeIcon) {
+        fileTypeIcon.innerHTML =
+          '<span class="' +
+          getFileIconClass(file.type) +
+          '" aria-hidden="true"></span>';
+      }
+
+      var cat = getMimeCategory(file.type);
+
+      if (cat === "image") {
+        var img = document.createElement("img");
+        img.src = URL.createObjectURL(file);
+        img.alt = "Preview of " + file.name;
+        img.className = "enc-preview-image";
+        img.addEventListener("load", function () {
+          URL.revokeObjectURL(img.src);
+        });
+        previewContent.appendChild(img);
+      } else if (cat === "audio") {
+        var audio = document.createElement("audio");
+        audio.controls = true;
+        audio.src = URL.createObjectURL(file);
+        audio.className = "enc-preview-audio";
+        audio.setAttribute("aria-label", "Audio preview: " + file.name);
+        previewContent.appendChild(audio);
+      } else if (cat === "video") {
+        var video = document.createElement("video");
+        video.controls = true;
+        video.src = URL.createObjectURL(file);
+        video.className = "enc-preview-video";
+        video.setAttribute("aria-label", "Video preview: " + file.name);
+        previewContent.appendChild(video);
+      } else if (cat === "text" || cat === "code") {
+        if (bytes.length < 100000) {
+          var text = bytesToText(bytes);
+          var preview =
+            text.length > 2000 ? text.substring(0, 2000) + "\n..." : text;
+          var pre = document.createElement("pre");
+          pre.className = "enc-preview-text";
+          pre.textContent = preview;
+          previewContent.appendChild(pre);
         }
       }
     }
 
+    function clearFilePreview() {
+      currentFileData = null;
+      if (filePreview) filePreview.hidden = true;
+      if (previewContent) previewContent.innerHTML = "";
+      if (fileInput) fileInput.value = "";
+      if (dropzone) dropzone.classList.remove("has-file");
+      updateOutput();
+    }
+
+    // ========================
+    // Mode switching
+    // ========================
+    function setMode(mode) {
+      currentMode = mode;
+      modeBtns.forEach(function (btn) {
+        var isActive = btn.getAttribute("data-mode") === mode;
+        btn.classList.toggle("active", isActive);
+        btn.setAttribute("aria-selected", isActive ? "true" : "false");
+      });
+
+      if (textPanel) textPanel.hidden = mode !== "text";
+      if (filePanel) filePanel.hidden = mode !== "file";
+
+      // Hide output format selector in file mode (always base64)
+      textOnlyControls.forEach(function (ctrl) {
+        ctrl.hidden = mode === "file";
+      });
+
+      // Show/hide download button based on mode and format
+      updateDownloadVisibility(mode);
+
+      updateOutput();
+    }
+
+    modeBtns.forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        setMode(btn.getAttribute("data-mode") || "text");
+      });
+    });
+
+    // ========================
+    // File handling
+    // ========================
+    function handleFile(file) {
+      if (!file) return;
+
+      // Max 50MB client-side
+      if (file.size > 50 * 1024 * 1024) {
+        showError("File too large (max 50 MB)");
+        return;
+      }
+
+      var reader = new FileReader();
+      reader.onload = function (e) {
+        var arrayBuffer = e.target.result;
+        var bytes = new Uint8Array(arrayBuffer);
+        currentFileData = {
+          bytes: bytes,
+          name: file.name,
+          type: file.type || "application/octet-stream",
+          size: file.size,
+        };
+        showPreview(file, bytes);
+        if (dropzone) dropzone.classList.add("has-file");
+        updateOutput();
+      };
+      reader.onerror = function () {
+        showError("Failed to read the file");
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    // Dropzone click
+    if (dropzone) {
+      dropzone.addEventListener("click", function (e) {
+        if (
+          e.target === fileRemoveBtn ||
+          (fileRemoveBtn && fileRemoveBtn.contains(e.target))
+        )
+          return;
+        if (fileInput) fileInput.click();
+      });
+      dropzone.addEventListener("keydown", function (e) {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          if (fileInput) fileInput.click();
+        }
+      });
+    }
+
+    // File input change
+    if (fileInput) {
+      fileInput.addEventListener("change", function () {
+        if (fileInput.files && fileInput.files[0]) {
+          handleFile(fileInput.files[0]);
+        }
+      });
+    }
+
+    // Drag and drop
+    if (dropzone) {
+      ["dragenter", "dragover"].forEach(function (evt) {
+        dropzone.addEventListener(evt, function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+          dropzone.classList.add("drag-over");
+        });
+      });
+      ["dragleave", "drop"].forEach(function (evt) {
+        dropzone.addEventListener(evt, function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+          dropzone.classList.remove("drag-over");
+        });
+      });
+      dropzone.addEventListener("drop", function (e) {
+        if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]) {
+          handleFile(e.dataTransfer.files[0]);
+        }
+      });
+    }
+
+    // Remove file button
+    if (fileRemoveBtn) {
+      fileRemoveBtn.addEventListener("click", function (e) {
+        e.stopPropagation();
+        clearFilePreview();
+      });
+    }
+
+    // Data URI toggle
+    if (dataUriCheckbox) {
+      dataUriCheckbox.addEventListener("change", updateOutput);
+    }
+
+    // ========================
+    // Update output
+    // ========================
+    function showError(msg) {
+      if (errorEl) {
+        errorEl.textContent = msg;
+        errorEl.hidden = false;
+      }
+    }
+
+    function updateOutput() {
+      if (errorEl) errorEl.hidden = true;
+      if (ratioEl) ratioEl.hidden = true;
+
+      if (currentMode === "file") {
+        updateFileOutput();
+      } else {
+        updateTextOutput();
+      }
+    }
+
+    function updateTextOutput() {
+      var input = inputEl.value;
+      var inFmt = inputFormat.value;
+      var outFmt = outputFormat.value;
+
+      if (!input) {
+        outputEl.textContent = "(Enter text above)";
+        if (inputBytes) inputBytes.textContent = "0 bytes";
+        if (outputBytes) {
+          outputBytes.textContent = "0 bytes";
+          outputBytes.hidden = false;
+        }
+        if (ratioEl) ratioEl.hidden = true;
+        return;
+      }
+
+      var bytes = decode(input, inFmt);
+
+      if (!bytes) {
+        outputEl.textContent = "Invalid input for selected format";
+        showError("Could not decode input");
+        return;
+      }
+
+      var inSize = new TextEncoder().encode(input).length;
+      if (inputBytes) inputBytes.textContent = formatSize(inSize);
+
+      try {
+        var result = encode(bytes, outFmt);
+        outputEl.textContent = result;
+        var outSize = new TextEncoder().encode(result).length;
+
+        // Show size comparison (hides outputBytes to avoid duplicate)
+        if (ratioEl && inSize > 0) {
+          if (outputBytes) outputBytes.hidden = true;
+          var diff = outSize - inSize;
+          var pct = ((Math.abs(diff) / inSize) * 100).toFixed(1);
+          var arrow = " \u2192 ";
+          if (diff > 0) {
+            ratioEl.textContent =
+              formatSize(inSize) +
+              arrow +
+              formatSize(outSize) +
+              " (+" +
+              formatSize(diff) +
+              ", " +
+              pct +
+              "% larger)";
+          } else if (diff < 0) {
+            ratioEl.textContent =
+              formatSize(inSize) +
+              arrow +
+              formatSize(outSize) +
+              " (-" +
+              formatSize(Math.abs(diff)) +
+              ", " +
+              pct +
+              "% smaller)";
+          } else {
+            ratioEl.textContent =
+              formatSize(inSize) + arrow + formatSize(outSize) + " (same size)";
+          }
+          ratioEl.hidden = false;
+        }
+      } catch (_e) {
+        outputEl.textContent = "Encoding error";
+        showError("Encoding failed");
+      }
+    }
+
+    function updateFileOutput() {
+      if (!currentFileData) {
+        outputEl.textContent = "(Select a file above)";
+        if (inputBytes) inputBytes.textContent = "0 bytes";
+        if (outputBytes) {
+          outputBytes.textContent = "0 bytes";
+          outputBytes.hidden = false;
+        }
+        if (ratioEl) ratioEl.hidden = true;
+        return;
+      }
+
+      var bytes = currentFileData.bytes;
+      var base64 = toBase64(bytes);
+      var includeDataUri = dataUriCheckbox && dataUriCheckbox.checked;
+      var result = includeDataUri
+        ? "data:" + currentFileData.type + ";base64," + base64
+        : base64;
+
+      outputEl.textContent = result;
+
+      var inSize = currentFileData.size;
+      var outSize = result.length;
+      if (inputBytes) inputBytes.textContent = formatSize(inSize);
+
+      if (ratioEl && inSize > 0) {
+        if (outputBytes) outputBytes.hidden = true;
+        var diff = outSize - inSize;
+        var pct = ((Math.abs(diff) / inSize) * 100).toFixed(1);
+        var arrow = " \u2192 ";
+        if (diff > 0) {
+          ratioEl.textContent =
+            formatSize(inSize) +
+            arrow +
+            formatSize(outSize) +
+            " (+" +
+            formatSize(diff) +
+            ", " +
+            pct +
+            "% larger)";
+        } else if (diff < 0) {
+          ratioEl.textContent =
+            formatSize(inSize) +
+            arrow +
+            formatSize(outSize) +
+            " (-" +
+            formatSize(Math.abs(diff)) +
+            ", " +
+            pct +
+            "% smaller)";
+        } else {
+          ratioEl.textContent =
+            formatSize(inSize) + arrow + formatSize(outSize) + " (same size)";
+        }
+        ratioEl.hidden = false;
+      }
+    }
+
+    // ========================
     // Event listeners
+    // ========================
     var timeout;
     inputEl.addEventListener("input", function () {
       clearTimeout(timeout);
-      timeout = setTimeout(update, 100);
+      timeout = setTimeout(updateOutput, 100);
     });
 
-    inputFormat.addEventListener("change", update);
-    outputFormat.addEventListener("change", update);
+    inputFormat.addEventListener("change", function () {
+      updateDownloadVisibility(currentMode);
+      updateOutput();
+    });
+    outputFormat.addEventListener("change", updateOutput);
 
-    // Swap
+    // Swap (text mode only)
     if (swapBtn) {
       swapBtn.addEventListener("click", function () {
+        if (currentMode === "file") return;
         var outText = outputEl.textContent;
         var outFmtVal = outputFormat.value;
         var inFmtVal = inputFormat.value;
@@ -383,7 +1053,7 @@ const formats = [
         inputEl.value = outText;
         inputFormat.value = outFmtVal;
         outputFormat.value = inFmtVal === "text" ? "base64" : inFmtVal;
-        update();
+        updateOutput();
       });
     }
 
@@ -404,7 +1074,80 @@ const formats = [
       });
     }
 
-    update();
+    /** Show/hide download button based on mode and input format */
+    function updateDownloadVisibility(mode) {
+      if (!downloadBtn) return;
+      var dlLabel = downloadBtn.querySelector(".enc-download-text");
+      if (mode === "file") {
+        downloadBtn.hidden = false;
+        downloadBtn.setAttribute("aria-label", "Download Base64 as text file");
+        if (dlLabel) dlLabel.textContent = "Download";
+      } else {
+        var inFmt = inputFormat.value;
+        var isBase64Input = inFmt === "base64" || inFmt === "base64url";
+        downloadBtn.hidden = !isBase64Input;
+        if (isBase64Input) {
+          downloadBtn.setAttribute(
+            "aria-label",
+            "Decode Base64 and download as original file",
+          );
+          if (dlLabel) dlLabel.textContent = "Decode to file";
+        }
+      }
+    }
+
+    // Download handler
+    if (downloadBtn) {
+      downloadBtn.addEventListener("click", function () {
+        if (currentMode === "file") {
+          // File mode: download the Base64 text output
+          var outputText = outputEl.textContent;
+          if (!outputText) return;
+
+          var filename = "base64-output.txt";
+          if (currentFileData && currentFileData.name) {
+            filename = currentFileData.name + ".base64.txt";
+          }
+
+          var blob = new Blob([outputText], { type: "text/plain" });
+          var url = URL.createObjectURL(blob);
+          var a = document.createElement("a");
+          a.href = url;
+          a.download = filename;
+          a.click();
+          URL.revokeObjectURL(url);
+        } else {
+          // Text mode with Base64 input: decode to binary file
+          var input = inputEl.value;
+          if (!input) return;
+
+          var inFmt = inputFormat.value;
+          var bytes;
+          if (inFmt === "base64") {
+            bytes = fromBase64(input);
+          } else if (inFmt === "base64url") {
+            bytes = fromBase64Url(input);
+          }
+
+          if (!bytes || bytes.length === 0) {
+            showError("Could not decode Base64 input");
+            return;
+          }
+
+          var detected = detectMimeFromBase64(input);
+          var blob = new Blob([bytes], { type: detected.mime });
+          var url = URL.createObjectURL(blob);
+          var a = document.createElement("a");
+          a.href = url;
+          a.download = "decoded-file." + detected.ext;
+          a.click();
+          URL.revokeObjectURL(url);
+        }
+      });
+    }
+
+    // Initialize
+    updateOutput();
   })();
 </script>
 
@@ -433,10 +1176,58 @@ const formats = [
     padding: 1.25rem;
   }
 
+  /* Mode tabs */
+  .enc-mode-tabs {
+    display: flex;
+    gap: 0.25rem;
+    padding: 0.25rem;
+    background: var(--color-bg-secondary);
+    border-radius: var(--radius-sm);
+  }
+
+  .enc-mode-btn {
+    display: flex;
+    flex: 1;
+    gap: 0.5rem;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+    font-weight: var(--fw-medium);
+    color: var(--color-text-muted);
+    cursor: pointer;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    transition: all 0.15s;
+  }
+
+  .enc-mode-btn span[class^="i-"] {
+    width: 18px;
+    height: 18px;
+  }
+
+  .enc-mode-btn:hover {
+    color: var(--color-text);
+    background: var(--color-bg);
+  }
+
+  .enc-mode-btn.active {
+    color: var(--color-text);
+    background: var(--color-bg);
+    border-color: var(--color-border);
+    box-shadow: 0 1px 2px rgb(0 0 0 / 5%);
+  }
+
+  /* Panels */
   .enc-panel {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
+  }
+
+  .enc-panel[hidden] {
+    display: none !important;
   }
 
   .enc-panel-header {
@@ -471,6 +1262,10 @@ const formats = [
     border-color: var(--color-primary);
   }
 
+  .enc-format-select[hidden] {
+    display: none;
+  }
+
   .enc-textarea {
     width: 100%;
     min-height: 120px;
@@ -489,6 +1284,230 @@ const formats = [
   .enc-textarea:focus {
     outline: none;
     border-color: var(--color-primary);
+  }
+
+  /* Dropzone */
+  .enc-dropzone {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: center;
+    justify-content: center;
+    min-height: 160px;
+    padding: 2rem 1.5rem;
+    cursor: pointer;
+    background: var(--color-bg);
+    border: 2px dashed var(--color-border);
+    border-radius: var(--radius-sm);
+    transition: all 0.2s;
+  }
+
+  .enc-dropzone:hover,
+  .enc-dropzone:focus-visible {
+    background: var(--color-bg-subtle);
+    border-color: var(--color-primary);
+  }
+
+  .enc-dropzone.drag-over {
+    background: var(--color-bg-subtle);
+    border-color: var(--color-primary);
+    box-shadow: inset 0 0 0 2px rgb(181 9 172 / 10%);
+  }
+
+  .enc-dropzone.has-file {
+    min-height: auto;
+    padding: 1rem;
+  }
+
+  .enc-dropzone.has-file .enc-drop-icon,
+  .enc-dropzone.has-file .enc-drop-text,
+  .enc-dropzone.has-file .enc-drop-hint,
+  .enc-dropzone.has-file .enc-drop-privacy {
+    display: none;
+  }
+
+  .enc-drop-icon {
+    width: 48px;
+    height: 48px;
+    color: var(--color-text-muted);
+  }
+
+  .enc-drop-text {
+    font-size: 0.95rem;
+    font-weight: var(--fw-medium);
+    color: var(--color-text);
+  }
+
+  .enc-drop-hint {
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+  }
+
+  .enc-drop-privacy {
+    display: flex;
+    gap: 0.375rem;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
+    margin-top: 0.25rem;
+    font-size: 0.75rem;
+    color: #047857;
+    background: #ecfdf5;
+    border-radius: 999px;
+  }
+
+  :global(.dark) .enc-drop-privacy {
+    color: #34d399;
+    background: rgb(16 185 129 / 10%);
+  }
+
+  .enc-drop-privacy span[class^="i-"] {
+    width: 14px;
+    height: 14px;
+  }
+
+  .enc-file-input {
+    position: absolute;
+    width: 0;
+    height: 0;
+    overflow: hidden;
+    opacity: 0%;
+  }
+
+  /* Data URI toggle */
+  .enc-data-uri-toggle {
+    display: flex;
+    gap: 0.375rem;
+    align-items: center;
+    margin-left: auto;
+    font-size: 0.8rem;
+    font-weight: var(--fw-normal);
+    color: var(--color-text-muted);
+    text-transform: none;
+    letter-spacing: normal;
+    cursor: pointer;
+  }
+
+  .enc-data-uri-toggle input[type="checkbox"] {
+    width: 14px;
+    height: 14px;
+    accent-color: var(--color-primary);
+  }
+
+  /* File preview */
+  .enc-file-preview {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 0.875rem;
+    background: var(--color-bg);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+  }
+
+  .enc-file-preview[hidden] {
+    display: none !important;
+  }
+
+  .enc-file-info {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+  }
+
+  .enc-file-icon {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    color: var(--color-primary);
+    background: var(--color-bg-secondary);
+    border-radius: var(--radius-sm);
+  }
+
+  .enc-file-icon span {
+    width: 22px;
+    height: 22px;
+  }
+
+  .enc-file-details {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 0.125rem;
+    min-width: 0;
+  }
+
+  .enc-file-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 0.9rem;
+    font-weight: var(--fw-medium);
+    color: var(--color-text);
+    white-space: nowrap;
+  }
+
+  .enc-file-meta {
+    font-size: 0.78rem;
+    color: var(--color-text-muted);
+  }
+
+  .enc-file-remove {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    background: transparent;
+    border: none;
+    border-radius: 50%;
+    transition: all 0.15s;
+  }
+
+  .enc-file-remove span {
+    width: 18px;
+    height: 18px;
+  }
+
+  .enc-file-remove:hover {
+    color: #b91c1c;
+    background: var(--color-bg-secondary);
+  }
+
+  /* Preview content */
+  .enc-preview-content :global(img) {
+    max-width: 100%;
+    max-height: 200px;
+    object-fit: contain;
+    border-radius: var(--radius-sm);
+  }
+
+  .enc-preview-content :global(audio) {
+    width: 100%;
+  }
+
+  .enc-preview-content :global(video) {
+    max-width: 100%;
+    max-height: 240px;
+    border-radius: var(--radius-sm);
+  }
+
+  .enc-preview-content :global(pre) {
+    max-height: 150px;
+    padding: 0.75rem;
+    margin: 0;
+    overflow: auto;
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    line-height: 1.4;
+    word-break: break-all;
+    white-space: pre-wrap;
+    background: var(--color-bg-secondary);
+    border-radius: var(--radius-sm);
   }
 
   /* Direction toggle */
@@ -531,9 +1550,10 @@ const formats = [
   }
 
   .enc-output {
+    max-height: 350px;
     padding: 0.875rem;
     margin: 0;
-    overflow-x: auto;
+    overflow: auto;
     font-family: var(--font-mono);
     font-size: 0.85rem;
     line-height: 1.5;
@@ -544,11 +1564,17 @@ const formats = [
     border-radius: var(--radius-sm);
   }
 
-  .enc-copy-btn {
+  .enc-output-actions {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: flex-end;
+  }
+
+  .enc-copy-btn,
+  .enc-download-btn {
     display: flex;
     gap: 0.375rem;
     align-items: center;
-    align-self: flex-end;
     padding: 0.375rem 0.75rem;
     font-size: 0.8rem;
     font-weight: var(--fw-medium);
@@ -560,17 +1586,28 @@ const formats = [
     transition: all 0.15s;
   }
 
-  .enc-copy-btn span[class^="i-"] {
+  .enc-copy-btn span[class^="i-"],
+  .enc-download-btn span[class^="i-"] {
     width: 14px;
     height: 14px;
   }
 
-  .enc-copy-btn:hover {
+  .enc-copy-btn:hover,
+  .enc-download-btn:hover {
     color: var(--color-primary);
     border-color: var(--color-primary);
   }
 
   .enc-copy-btn.copied {
+    color: #047857;
+    border-color: #10b981;
+  }
+
+  .enc-download-btn[hidden] {
+    display: none;
+  }
+
+  .enc-download-btn:hover {
     color: #047857;
     border-color: #10b981;
   }
@@ -583,6 +1620,11 @@ const formats = [
     color: var(--color-text-muted);
   }
 
+  .enc-ratio {
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+  }
+
   .enc-error {
     font-weight: var(--fw-medium);
     color: #b91c1c;
@@ -591,6 +1633,10 @@ const formats = [
   @media (width <= 640px) {
     .enc-layout {
       padding: 1rem;
+    }
+
+    .enc-dropzone {
+      padding: 1.5rem 1rem;
     }
   }
 </style>
