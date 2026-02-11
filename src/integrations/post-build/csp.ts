@@ -1,25 +1,24 @@
-import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 
 import { type AstroIntegrationLogger } from "astro";
-import { glob } from "glob";
 
-import { NGINX_VARIABLE_SIZE_LIMIT } from "./constants.js";
 import type { CspData } from "./types.js";
 
 /**
  * Generates the final Nginx security headers configuration file.
  *
- * This function consolidates all collected SRI hashes, CSP nonces, and third-party
- * domains into a robust Content Security Policy. It also includes other standard
- * security headers like HSTS, X-Frame-Options, and Referrer-Policy.
+ * This function uses a nonce-first CSP strategy. All inline scripts and styles
+ * are authorized via per-request nonces injected by Nginx (sub_filter replacing
+ * NGINX_CSP_NONCE with $cspNonce). External same-origin resources are covered
+ * by 'self'. This approach dramatically reduces the CSP header size compared
+ * to hash-based policies.
  *
- * Due to Nginx variable size limits, large CSP policies are automatically chunked
- * into multiple variables.
+ * Hashes are NOT included in the CSP header because every script and style
+ * element already receives a nonce attribute during the HTML post-build pass.
  *
  * @param {string} distDir - The absolute path to the production build output.
- * @param {CspData} cspData - The data object containing hashes and domains collected during HTML processing.
+ * @param {CspData} cspData - The data object containing domains collected during HTML processing.
  * @param {AstroIntegrationLogger} logger - The Astro logger instance.
  */
 export async function finalizeCspConfig(
@@ -27,62 +26,7 @@ export async function finalizeCspConfig(
   cspData: CspData,
   logger: AstroIntegrationLogger,
 ) {
-  logger.info("Finalizing CSP and Security Headers...");
-
-  // Hash standalone JS files in parallel
-  const jsFiles = await glob("**/*.js", { cwd: distDir, absolute: true });
-  const jsHashPromises = jsFiles.map(async (file) => {
-    const content = await fs.promises.readFile(file);
-    const hash = crypto.createHash("sha512").update(content).digest("base64");
-    return `'sha512-${hash}'`;
-  });
-  const standaloneScriptHashes = new Set(await Promise.all(jsHashPromises));
-
-  // Combine collected hashes
-  const allScriptHashes = new Set([
-    ...standaloneScriptHashes,
-    ...cspData.scriptHashes,
-  ]);
-  const allStyleHashes = cspData.styleHashes;
-
-  /**
-   * Chunks a large set of CSP hashes into multiple Nginx variables to avoid
-   * exceeding the ~4KB individual variable limit.
-   */
-  const chunkHashes = (
-    hashes: Set<string>,
-    prefix: string,
-  ): { vars: string; usage: string } => {
-    const list = [...hashes];
-    const chunks: string[] = [];
-    let current = "";
-
-    for (const h of list) {
-      const separator = current ? " " : "";
-      const candidate = current + separator + h;
-      if (
-        Buffer.byteLength(candidate, "utf-8") > NGINX_VARIABLE_SIZE_LIMIT &&
-        current
-      ) {
-        chunks.push(current);
-        current = h;
-      } else {
-        current = candidate;
-      }
-    }
-    if (current) chunks.push(current);
-
-    if (chunks.length === 0) return { vars: "", usage: "" };
-
-    const varsDef = chunks
-      .map((c, i) => `set $${prefix}_${i + 1} "${c}";`)
-      .join("\n");
-    const usage = chunks.map((_, i) => `$${prefix}_${i + 1}`).join(" ");
-    return { vars: varsDef, usage };
-  };
-
-  const scriptChunks = chunkHashes(allScriptHashes, "csp_script");
-  const styleChunks = chunkHashes(allStyleHashes, "csp_style");
+  logger.info("Finalizing CSP and Security Headers (nonce-only strategy)...");
 
   const imgSrc = [...cspData.imageDomains].map((d) => `https://${d}`).join(" ");
 
@@ -104,23 +48,11 @@ export async function finalizeCspConfig(
     "report-uri /csp-report",
   ];
 
-  // Modern and Strict CSP
-  // Build directives, filtering empty usage to avoid trailing spaces
-  const scriptSrcParts = [
-    "'self'",
-    "'nonce-$cspNonce'",
-    scriptChunks.usage,
-  ].filter(Boolean);
-  const styleSrcParts = [
-    "'self'",
-    "'nonce-$cspNonce'",
-    styleChunks.usage,
-  ].filter(Boolean);
-
+  // Nonce-only CSP: all scripts/styles use nonces, external same-origin covered by 'self'
   const cspHeader = [
     "default-src 'none'",
-    `script-src ${scriptSrcParts.join(" ")}`,
-    `style-src ${styleSrcParts.join(" ")}`,
+    "script-src 'self' 'nonce-$cspNonce'",
+    "style-src 'self' 'nonce-$cspNonce'",
     ...commonCspDirectives,
   ]
     .map((s) => s.trim())
@@ -146,10 +78,6 @@ export async function finalizeCspConfig(
     "xr-spatial-tracking=()",
   ].join(", ");
 
-  const headerVars = [scriptChunks.vars, styleChunks.vars]
-    .filter((v) => v && v.trim() !== "")
-    .join("\n");
-
   const demoSecurityCookieHeader =
     process.env.DEMO_SECURITY_COOKIE === "1"
       ? 'add_header Set-Cookie "__Demo-Security-Flags=1; path=/; Secure; HttpOnly; SameSite=Strict" always;'
@@ -157,7 +85,7 @@ export async function finalizeCspConfig(
 
   const content = `# Security Headers Configuration Generated by Astro Post-Build Integration
 
-${headerVars ? `${headerVars}\n\n` : ""}# HSTS (Strict Transport Security)
+# HSTS (Strict Transport Security)
 add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload" always;
 
 # Anti-Sniffing
@@ -185,7 +113,7 @@ add_header Set-Cookie "__Secure-Pref=1; path=/; Secure; HttpOnly; SameSite=Stric
 # Security Cookie (Optional demo cookie)
 ${demoSecurityCookieHeader}
 
-# Content Security Policy (Prioritizing Hashes with Nonce fallback)
+# Content Security Policy (Nonce-only: all scripts/styles use nonces)
 add_header Content-Security-Policy "${cspHeader}" always;
 
 # Permissions Policy
@@ -194,7 +122,7 @@ add_header Permissions-Policy "${permissionsPolicy}" always;
 
   // --- Optimized Assets CSP ---
   // A version of the security headers for non-HTML assets (images, fonts, etc.).
-  // It removes the heavy script-src and style-src hashes while maintaining strict default-src 'none'.
+  // It removes script-src and style-src nonces while maintaining strict default-src 'none'.
   // Note: style-src 'unsafe-inline' is used here because some CSS files may contain
   // inline styles (e.g., SVG with embedded styles). This is acceptable for non-HTML
   // assets where CSP enforcement is less critical.

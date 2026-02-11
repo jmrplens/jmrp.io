@@ -51,8 +51,6 @@ export default function postBuildIntegration(): AstroIntegration {
         logger.info(`Starting optimizations in [${relativeDist}]`);
 
         const cspData: CspData = {
-          styleHashes: new Set<string>(),
-          scriptHashes: new Set<string>(),
           imageDomains: new Set<string>(),
         };
 

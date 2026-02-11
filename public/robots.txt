@@ -1,5 +1,4 @@
 User-agent: *
-Content-Signal: ai-train=yes, search=yes, ai-input=yes
 Allow: /
 
 # Explicitly allow AI bots for training

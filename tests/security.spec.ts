@@ -329,7 +329,9 @@ test.describe("Build Output Verification", () => {
     expect(content).toContain("style-src");
     expect(content).toContain("Strict-Transport-Security");
     expect(content).toContain("X-Frame-Options");
-    expect(content).toMatch(/\$csp_script_\d+/);
+    // Nonce-only CSP: no hash variables should be present
+    expect(content).not.toMatch(/\$csp_script_\d+/);
+    expect(content).not.toMatch(/\$csp_style_\d+/);
   });
 
   test("CSP header contains required directives", () => {
