@@ -1,0 +1,864 @@
+---
+/**
+ * HTTPHeadersAnalyzer Component
+ * Analyzes HTTP security headers and provides recommendations.
+ *
+ * Usage:
+ * <HTTPHeadersAnalyzer title="HTTP Security Headers Analyzer" />
+ */
+
+interface Props {
+  title?: string;
+}
+
+const { title = "HTTP Security Headers Analyzer" } = Astro.props;
+const uniqueId = `hdr-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
+
+const sampleHeaders = `content-security-policy: default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'
+strict-transport-security: max-age=63072000; includeSubDomains; preload
+x-content-type-options: nosniff
+x-frame-options: DENY
+referrer-policy: strict-origin-when-cross-origin
+permissions-policy: camera=(), microphone=(), geolocation=()
+x-xss-protection: 0
+cross-origin-opener-policy: same-origin
+cross-origin-resource-policy: same-origin
+cross-origin-embedder-policy: require-corp`;
+---
+
+<div
+  class="hdr-analyzer"
+  data-hdr-id={uniqueId}
+>
+  {title && <div class="hdr-title">{title}</div>}
+
+  <div class="hdr-layout">
+    {/* Input */}
+    <div class="hdr-input-section">
+      <label
+        class="hdr-label"
+        for={`${uniqueId}-input`}
+      >
+        <span
+          class="i-mdi:web"
+          aria-hidden="true"
+        ></span>
+        Response Headers
+      </label>
+      <textarea
+        id={`${uniqueId}-input`}
+        class="hdr-textarea"
+        rows="10"
+        placeholder="Paste your HTTP response headers here..."
+        spellcheck="false"
+        >{sampleHeaders}</textarea
+      >
+      <button
+        type="button"
+        class="hdr-analyze-btn"
+      >
+        <span
+          class="i-mdi:shield-search"
+          aria-hidden="true"
+        ></span>
+        Analyze Headers
+      </button>
+    </div>
+
+    {/* Score */}
+    <div
+      class="hdr-score-section"
+      id={`${uniqueId}-score`}
+      hidden
+    >
+      <div class="hdr-score-display">
+        <div
+          class="hdr-score-circle"
+          id={`${uniqueId}-score-circle`}
+        >
+          <span
+            class="hdr-score-value"
+            id={`${uniqueId}-score-value`}
+            >0</span
+          >
+          <span class="hdr-score-max">/100</span>
+        </div>
+        <span
+          class="hdr-score-grade"
+          id={`${uniqueId}-grade`}
+          >—</span
+        >
+      </div>
+    </div>
+
+    {/* Results */}
+    <div
+      class="hdr-results"
+      id={`${uniqueId}-results`}
+    >
+    </div>
+  </div>
+</div>
+
+<script is:inline define:vars={{ uniqueId }}>
+  (function () {
+    const container = document.querySelector(`[data-hdr-id="${uniqueId}"]`);
+    if (!container) return;
+
+    const textarea = document.getElementById(`${uniqueId}-input`);
+    const scoreSection = document.getElementById(`${uniqueId}-score`);
+    const scoreValue = document.getElementById(`${uniqueId}-score-value`);
+    const scoreCircle = document.getElementById(`${uniqueId}-score-circle`);
+    const gradeEl = document.getElementById(`${uniqueId}-grade`);
+    const resultsEl = document.getElementById(`${uniqueId}-results`);
+    const analyzeBtn = container.querySelector(".hdr-analyze-btn");
+
+    if (!textarea || !resultsEl) return;
+
+    var securityHeaders = [
+      {
+        name: "content-security-policy",
+        weight: 25,
+        severity: "critical",
+        description:
+          "Controls which resources can be loaded. Essential for preventing XSS and injection attacks.",
+        link: "/blog/003-implementing-content-security-policy-nginx/",
+        check: function (val) {
+          if (!val) return { score: 0, notes: ["Missing — high XSS risk"] };
+          var score = 15;
+          var notes = [];
+          if (val.includes("default-src")) score += 3;
+          else notes.push("Missing default-src fallback");
+          if (val.includes("'unsafe-inline'") && val.includes("script-src")) {
+            notes.push(
+              "script-src contains 'unsafe-inline' — weakens CSP significantly",
+            );
+            score -= 5;
+          }
+          if (val.includes("'unsafe-eval'")) {
+            notes.push(
+              "Contains 'unsafe-eval' — allows dynamic code execution",
+            );
+            score -= 5;
+          }
+          if (val.includes("nonce-") || val.includes("'strict-dynamic'")) {
+            score += 5;
+            notes.push("Uses nonces or strict-dynamic — good practice");
+          }
+          if (
+            val.includes("object-src 'none'") ||
+            val.includes("object-src  'none'")
+          )
+            score += 2;
+          return { score: Math.min(score, 25), notes: notes };
+        },
+      },
+      {
+        name: "strict-transport-security",
+        weight: 15,
+        severity: "high",
+        description:
+          "Enforces HTTPS connections. Prevents protocol downgrade attacks.",
+        check: function (val) {
+          if (!val)
+            return {
+              score: 0,
+              notes: ["Missing — vulnerable to downgrade attacks"],
+            };
+          var score = 8;
+          var notes = [];
+          var maxAgeMatch = val.match(/max-age=(\d+)/);
+          if (maxAgeMatch) {
+            var maxAge = parseInt(maxAgeMatch[1]);
+            if (maxAge >= 31536000) {
+              score += 3;
+              notes.push("max-age ≥ 1 year ✓");
+            } else {
+              notes.push("max-age should be ≥ 31536000 (1 year)");
+            }
+          }
+          if (val.includes("includeSubDomains")) {
+            score += 2;
+            notes.push("includeSubDomains ✓");
+          }
+          if (val.includes("preload")) {
+            score += 2;
+            notes.push("preload ✓");
+          }
+          return { score: Math.min(score, 15), notes: notes };
+        },
+      },
+      {
+        name: "x-content-type-options",
+        weight: 10,
+        severity: "medium",
+        description: "Prevents MIME type sniffing. Must be set to 'nosniff'.",
+        check: function (val) {
+          if (!val)
+            return {
+              score: 0,
+              notes: ["Missing — browser may sniff MIME types"],
+            };
+          if (val.trim() === "nosniff")
+            return { score: 10, notes: ["Correctly set to nosniff ✓"] };
+          return { score: 2, notes: ["Should be exactly 'nosniff'"] };
+        },
+      },
+      {
+        name: "x-frame-options",
+        weight: 8,
+        severity: "medium",
+        description:
+          "Prevents clickjacking. Prefer CSP frame-ancestors instead.",
+        check: function (val) {
+          if (!val)
+            return {
+              score: 0,
+              notes: ["Missing — consider adding or using CSP frame-ancestors"],
+            };
+          if (val.trim().toUpperCase() === "DENY")
+            return { score: 8, notes: ["Set to DENY ✓"] };
+          if (val.trim().toUpperCase() === "SAMEORIGIN")
+            return {
+              score: 6,
+              notes: ["Set to SAMEORIGIN — DENY is more restrictive"],
+            };
+          return { score: 2, notes: ["Unexpected value: " + val] };
+        },
+      },
+      {
+        name: "referrer-policy",
+        weight: 8,
+        severity: "medium",
+        description:
+          "Controls how much referrer information is sent with requests.",
+        check: function (val) {
+          if (!val)
+            return {
+              score: 0,
+              notes: ["Missing — full URL may leak in Referer header"],
+            };
+          var good = [
+            "no-referrer",
+            "strict-origin-when-cross-origin",
+            "strict-origin",
+            "same-origin",
+          ];
+          if (good.includes(val.trim()))
+            return { score: 8, notes: ["Secure policy: " + val.trim() + " ✓"] };
+          if (val.trim() === "no-referrer-when-downgrade")
+            return {
+              score: 5,
+              notes: [
+                "Acceptable but 'strict-origin-when-cross-origin' is preferred",
+              ],
+            };
+          return { score: 2, notes: ["Consider a more restrictive policy"] };
+        },
+      },
+      {
+        name: "permissions-policy",
+        weight: 8,
+        severity: "low",
+        description:
+          "Controls which browser features (camera, mic, geolocation) can be used.",
+        check: function (val) {
+          if (!val)
+            return {
+              score: 0,
+              notes: ["Missing — browser features unrestricted"],
+            };
+          var score = 5;
+          var notes = [];
+          if (val.includes("camera=()")) {
+            score += 1;
+            notes.push("Camera disabled ✓");
+          }
+          if (val.includes("microphone=()")) {
+            score += 1;
+            notes.push("Microphone disabled ✓");
+          }
+          if (val.includes("geolocation=()")) {
+            score += 1;
+            notes.push("Geolocation disabled ✓");
+          }
+          return { score: Math.min(score, 8), notes: notes };
+        },
+      },
+      {
+        name: "x-xss-protection",
+        weight: 3,
+        severity: "info",
+        description:
+          "Legacy XSS filter. Should be '0' (disabled) when CSP is present, as the filter can introduce vulnerabilities.",
+        check: function (val) {
+          if (!val)
+            return { score: 2, notes: ["Absent — acceptable if CSP is set"] };
+          if (val.trim() === "0")
+            return {
+              score: 3,
+              notes: ["Correctly disabled ✓ (CSP replaces this)"],
+            };
+          return {
+            score: 1,
+            notes: [
+              "Should be '0' — the XSS auditor can introduce vulnerabilities",
+            ],
+          };
+        },
+      },
+      {
+        name: "cross-origin-opener-policy",
+        weight: 8,
+        severity: "medium",
+        description:
+          "Isolates the browsing context. Prevents Spectre-type attacks.",
+        check: function (val) {
+          if (!val)
+            return {
+              score: 0,
+              notes: ["Missing — browsing context not isolated"],
+            };
+          if (val.trim() === "same-origin")
+            return { score: 8, notes: ["same-origin ✓"] };
+          if (val.trim() === "same-origin-allow-popups")
+            return { score: 5, notes: ["Partial isolation"] };
+          return { score: 2, notes: ["Unexpected value"] };
+        },
+      },
+      {
+        name: "cross-origin-resource-policy",
+        weight: 8,
+        severity: "medium",
+        description: "Controls which origins can load your resources.",
+        check: function (val) {
+          if (!val)
+            return {
+              score: 0,
+              notes: ["Missing — resources can be loaded cross-origin"],
+            };
+          if (val.trim() === "same-origin")
+            return { score: 8, notes: ["same-origin ✓"] };
+          if (val.trim() === "same-site")
+            return {
+              score: 6,
+              notes: ["same-site — more restrictive than cross-origin"],
+            };
+          return { score: 3, notes: ["cross-origin — least restrictive"] };
+        },
+      },
+      {
+        name: "cross-origin-embedder-policy",
+        weight: 7,
+        severity: "medium",
+        description:
+          "Controls embedding of resources. Required for SharedArrayBuffer.",
+        check: function (val) {
+          if (!val)
+            return {
+              score: 0,
+              notes: ["Missing — cannot use SharedArrayBuffer"],
+            };
+          if (val.trim() === "require-corp")
+            return { score: 7, notes: ["require-corp ✓"] };
+          if (val.trim() === "credentialless")
+            return { score: 5, notes: ["credentialless — acceptable"] };
+          return { score: 2, notes: ["Unexpected value"] };
+        },
+      },
+    ];
+
+    function parseHeaders(text) {
+      var headers = {};
+      text.split("\n").forEach(function (line) {
+        line = line.trim();
+        if (!line) return;
+        var colonIdx = line.indexOf(":");
+        if (colonIdx === -1) return;
+        var name = line.substring(0, colonIdx).trim().toLowerCase();
+        var value = line.substring(colonIdx + 1).trim();
+        headers[name] = value;
+      });
+      return headers;
+    }
+
+    function analyze() {
+      var headers = parseHeaders(textarea.value);
+      var totalScore = 0;
+      var maxScore = 0;
+
+      resultsEl.textContent = "";
+
+      securityHeaders.forEach(function (h) {
+        maxScore += h.weight;
+        var val = headers[h.name] || null;
+        var result = h.check(val);
+        totalScore += result.score;
+
+        var card = document.createElement("div");
+        card.className =
+          "hdr-result-card" + (val ? " hdr-present" : " hdr-missing");
+
+        var header = document.createElement("div");
+        header.className = "hdr-result-header";
+
+        var status = document.createElement("span");
+        status.className =
+          "hdr-status " +
+          (result.score >= h.weight * 0.7
+            ? "hdr-status-good"
+            : result.score > 0
+              ? "hdr-status-warn"
+              : "hdr-status-bad");
+        var statusIcon = document.createElement("span");
+        statusIcon.className =
+          result.score >= h.weight * 0.7
+            ? "i-mdi:check-circle"
+            : result.score > 0
+              ? "i-mdi:alert-circle"
+              : "i-mdi:close-circle";
+        status.appendChild(statusIcon);
+
+        var name = document.createElement("code");
+        name.className = "hdr-result-name";
+        name.textContent = h.name;
+
+        var severity = document.createElement("span");
+        severity.className = "hdr-severity hdr-severity-" + h.severity;
+        severity.textContent = h.severity;
+
+        var scoreEl = document.createElement("span");
+        scoreEl.className = "hdr-result-score";
+        scoreEl.textContent = result.score + "/" + h.weight;
+
+        header.appendChild(status);
+        header.appendChild(name);
+        header.appendChild(severity);
+        header.appendChild(scoreEl);
+
+        var desc = document.createElement("p");
+        desc.className = "hdr-result-desc";
+        desc.textContent = h.description;
+
+        card.appendChild(header);
+        card.appendChild(desc);
+
+        if (val) {
+          var value = document.createElement("div");
+          value.className = "hdr-result-value";
+          var valueCode = document.createElement("code");
+          valueCode.textContent = val;
+          value.appendChild(valueCode);
+          card.appendChild(value);
+        }
+
+        if (result.notes.length > 0) {
+          var notes = document.createElement("ul");
+          notes.className = "hdr-result-notes";
+          result.notes.forEach(function (n) {
+            var li = document.createElement("li");
+            li.textContent = n;
+            notes.appendChild(li);
+          });
+          card.appendChild(notes);
+        }
+
+        if (h.link) {
+          var link = document.createElement("a");
+          link.className = "hdr-learn-more";
+          link.href = h.link;
+          link.textContent = "Learn more →";
+          card.appendChild(link);
+        }
+
+        resultsEl.appendChild(card);
+      });
+
+      // Score
+      var pct = Math.round((totalScore / maxScore) * 100);
+      if (scoreSection) scoreSection.hidden = false;
+      if (scoreValue) scoreValue.textContent = String(pct);
+
+      var grade;
+      if (pct >= 90) grade = "A+";
+      else if (pct >= 80) grade = "A";
+      else if (pct >= 70) grade = "B";
+      else if (pct >= 50) grade = "C";
+      else if (pct >= 30) grade = "D";
+      else grade = "F";
+
+      if (gradeEl) {
+        gradeEl.textContent = grade;
+        gradeEl.className =
+          "hdr-score-grade hdr-grade-" +
+          grade.replace("+", "plus").toLowerCase();
+      }
+
+      if (scoreCircle) {
+        scoreCircle.className =
+          "hdr-score-circle hdr-grade-" +
+          grade.replace("+", "plus").toLowerCase();
+      }
+    }
+
+    if (analyzeBtn) analyzeBtn.addEventListener("click", analyze);
+
+    analyze();
+  })();
+</script>
+
+<style>
+  .hdr-analyzer {
+    margin: 1.5rem 0;
+    overflow: hidden;
+    background: var(--color-bg-subtle);
+    border: var(--border-1);
+    border-radius: var(--radius-md);
+  }
+
+  .hdr-title {
+    padding: 1rem 1.25rem;
+    font-size: 1.1rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-heading);
+    background: var(--color-bg-secondary);
+    border-bottom: var(--border-1);
+  }
+
+  .hdr-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    padding: 1.25rem;
+  }
+
+  .hdr-input-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .hdr-label {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    font-size: 0.85rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .hdr-label span[class^="i-"] {
+    width: 18px;
+    height: 18px;
+  }
+
+  .hdr-textarea {
+    width: 100%;
+    min-height: 150px;
+    padding: 0.875rem;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    line-height: 1.6;
+    color: var(--color-text);
+    resize: vertical;
+    background: var(--color-bg);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+    transition: border-color 0.15s;
+  }
+
+  .hdr-textarea:focus {
+    outline: none;
+    border-color: var(--color-primary);
+  }
+
+  .hdr-analyze-btn {
+    display: flex;
+    gap: 0.375rem;
+    align-items: center;
+    align-self: flex-start;
+    padding: 0.625rem 1.25rem;
+    font-size: 0.9rem;
+    font-weight: var(--fw-medium);
+    color: #fff;
+    cursor: pointer;
+    background: var(--color-primary);
+    border: none;
+    border-radius: var(--radius-sm);
+    transition: opacity 0.15s;
+  }
+
+  .hdr-analyze-btn span {
+    width: 18px;
+    height: 18px;
+  }
+
+  .hdr-analyze-btn:hover {
+    opacity: 90%;
+  }
+
+  /* Score */
+  .hdr-score-section {
+    display: flex;
+    justify-content: center;
+  }
+
+  .hdr-score-section[hidden] {
+    display: none;
+  }
+
+  .hdr-score-display {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: center;
+    padding: 1.5rem 2rem;
+    background: var(--color-bg-secondary);
+    border: var(--border-1);
+    border-radius: var(--radius-md);
+  }
+
+  .hdr-score-circle {
+    display: flex;
+    gap: 0.125rem;
+    align-items: baseline;
+    padding: 1rem 1.5rem;
+    border-radius: 50%;
+  }
+
+  .hdr-score-value {
+    font-size: 2.5rem;
+    font-weight: 800;
+  }
+
+  .hdr-score-max {
+    font-size: 1rem;
+    color: var(--color-text-muted);
+  }
+
+  .hdr-score-grade {
+    padding: 0.25rem 1rem;
+    font-size: 1.5rem;
+    font-weight: var(--fw-bold);
+    border-radius: var(--radius-sm);
+  }
+
+  .hdr-grade-aplus,
+  .hdr-grade-a {
+    color: #065f46;
+    background: #d1fae5;
+  }
+
+  .hdr-grade-b {
+    color: #92400e;
+    background: #fef3c7;
+  }
+
+  .hdr-grade-c {
+    color: #9a3412;
+    background: #fed7aa;
+  }
+
+  .hdr-grade-d,
+  .hdr-grade-f {
+    color: #991b1b;
+    background: #fecaca;
+  }
+
+  :root[data-theme="dark"] .hdr-grade-aplus,
+  :root[data-theme="dark"] .hdr-grade-a {
+    color: #6ee7b7;
+    background: rgb(6 95 70 / 40%);
+  }
+
+  :root[data-theme="dark"] .hdr-grade-b {
+    color: #fcd34d;
+    background: rgb(146 64 14 / 40%);
+  }
+
+  :root[data-theme="dark"] .hdr-grade-c {
+    color: #fdba74;
+    background: rgb(154 52 18 / 40%);
+  }
+
+  :root[data-theme="dark"] .hdr-grade-d,
+  :root[data-theme="dark"] .hdr-grade-f {
+    color: #fca5a5;
+    background: rgb(153 27 27 / 40%);
+  }
+
+  /* Results */
+  .hdr-results {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .hdr-results :global(.hdr-result-card) {
+    padding: 0.875rem;
+    background: var(--color-bg-secondary);
+    border: var(--border-1);
+    border-left: 3px solid var(--color-border);
+    border-radius: var(--radius-sm);
+  }
+
+  .hdr-results :global(.hdr-present) {
+    border-left-color: #10b981;
+  }
+
+  .hdr-results :global(.hdr-missing) {
+    border-left-color: #ef4444;
+  }
+
+  .hdr-results :global(.hdr-result-header) {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+    margin-bottom: 0.375rem;
+  }
+
+  .hdr-results :global(.hdr-status) {
+    width: 18px;
+    height: 18px;
+  }
+
+  .hdr-results :global(.hdr-status) span {
+    width: 18px;
+    height: 18px;
+  }
+
+  .hdr-results :global(.hdr-status-good) {
+    color: #047857;
+  }
+
+  .hdr-results :global(.hdr-status-warn) {
+    color: #92400e;
+  }
+
+  .hdr-results :global(.hdr-status-bad) {
+    color: #b91c1c;
+  }
+
+  .hdr-results :global(.hdr-result-name) {
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-heading);
+  }
+
+  .hdr-results :global(.hdr-severity) {
+    padding: 0.125rem 0.375rem;
+    font-size: 0.6rem;
+    font-weight: var(--fw-bold);
+    text-transform: uppercase;
+    border-radius: var(--radius-sm);
+  }
+
+  .hdr-results :global(.hdr-severity-critical) {
+    color: #991b1b;
+    background: rgb(239 68 68 / 12%);
+  }
+
+  .hdr-results :global(.hdr-severity-high) {
+    color: #9a3412;
+    background: rgb(249 115 22 / 12%);
+  }
+
+  .hdr-results :global(.hdr-severity-medium) {
+    color: #92400e;
+    background: rgb(245 158 11 / 12%);
+  }
+
+  .hdr-results :global(.hdr-severity-low) {
+    color: #065f46;
+    background: rgb(16 185 129 / 12%);
+  }
+
+  .hdr-results :global(.hdr-severity-info) {
+    color: #1e40af;
+    background: rgb(59 130 246 / 12%);
+  }
+
+  :root[data-theme="dark"] .hdr-results :global(.hdr-severity-critical) {
+    color: #fca5a5;
+  }
+
+  :root[data-theme="dark"] .hdr-results :global(.hdr-severity-high) {
+    color: #fdba74;
+  }
+
+  :root[data-theme="dark"] .hdr-results :global(.hdr-severity-medium) {
+    color: #fcd34d;
+  }
+
+  :root[data-theme="dark"] .hdr-results :global(.hdr-severity-low) {
+    color: #6ee7b7;
+  }
+
+  :root[data-theme="dark"] .hdr-results :global(.hdr-severity-info) {
+    color: #93c5fd;
+  }
+
+  .hdr-results :global(.hdr-result-score) {
+    margin-left: auto;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+  }
+
+  .hdr-results :global(.hdr-result-desc) {
+    margin: 0 0 0.375rem;
+    font-size: 0.8rem;
+    line-height: 1.4;
+    color: var(--color-text-muted);
+  }
+
+  .hdr-results :global(.hdr-result-value) {
+    padding: 0.375rem 0.5rem;
+    margin-bottom: 0.375rem;
+    overflow-x: auto;
+    background: var(--color-bg);
+    border-radius: var(--radius-sm);
+  }
+
+  .hdr-results :global(.hdr-result-value) code {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--color-text);
+    word-break: break-all;
+    white-space: pre-wrap;
+  }
+
+  .hdr-results :global(.hdr-result-notes) {
+    padding-left: 1rem;
+    margin: 0;
+  }
+
+  .hdr-results :global(.hdr-result-notes) li {
+    margin-bottom: 0.125rem;
+    font-size: 0.75rem;
+    line-height: 1.4;
+    color: var(--color-text);
+  }
+
+  .hdr-results :global(.hdr-learn-more) {
+    display: inline-block;
+    margin-top: 0.375rem;
+    font-size: 0.75rem;
+    color: var(--color-primary);
+    text-decoration: none;
+  }
+
+  .hdr-results :global(.hdr-learn-more:hover) {
+    text-decoration: underline;
+  }
+
+  @media (width <= 640px) {
+    .hdr-layout {
+      padding: 1rem;
+    }
+  }
+</style>

@@ -250,6 +250,7 @@ test.describe("CSP and SRI Security Checks", () => {
          * Excludes:
          * - Empty style attributes: [style=""]
          * - Allowed display values: display: block, display: none (used by legitimate UI toggles)
+         * - CSS custom properties only: styles containing only --var: value pairs (safe for CSP)
          * - Preact shadow host: #preact-border-shadow-host (Preact debugging)
          * - SVG internals: rect, g, path, line, text, polygon, circle, ellipse
          */
@@ -264,9 +265,18 @@ test.describe("CSP and SRI Security Checks", () => {
           ),
         );
 
-        // Filter out empty styles and add violations
+        // Filter out empty styles, CSS custom property-only styles (safe for CSP), and add violations
         const violations = elementData
           .filter((data) => data.style && data.style.trim() !== "")
+          .filter((data) => {
+            // Allow styles that ONLY contain CSS custom properties (--var: value)
+            const styleStr = data.style ?? "";
+            const cleaned = styleStr
+              .split(";")
+              .map((s: string) => s.trim())
+              .filter((s: string) => s !== "");
+            return cleaned.some((prop: string) => !prop.startsWith("--"));
+          })
           .map((data) => `${url}: <${data.tagName} style="${data.style}">`);
 
         elementsWithStyle.push(...violations);

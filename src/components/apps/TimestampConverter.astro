@@ -1,0 +1,607 @@
+---
+/**
+ * TimestampConverter Component
+ * Convert between Unix timestamps and human-readable dates.
+ *
+ * Usage:
+ * <TimestampConverter title="Unix Timestamp Converter" />
+ */
+
+interface Props {
+  title?: string;
+}
+
+const { title = "Unix Timestamp Converter" } = Astro.props;
+const uniqueId = `ts-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
+---
+
+<div
+  class="ts-converter"
+  data-ts-id={uniqueId}
+>
+  {title && <div class="ts-title">{title}</div>}
+
+  <div class="ts-layout">
+    {/* Current time */}
+    <div class="ts-current">
+      <span
+        class="i-mdi:clock-outline ts-current-icon"
+        aria-hidden="true"
+      ></span>
+      <span>Current Unix Timestamp:</span>
+      <code
+        class="ts-current-value"
+        id={`${uniqueId}-current`}
+        >—</code
+      >
+    </div>
+
+    {/* Timestamp to Date */}
+    <div class="ts-section">
+      <div class="ts-section-header">
+        <span
+          class="i-mdi:arrow-right-bold"
+          aria-hidden="true"
+        ></span>
+        <span>Timestamp → Date</span>
+      </div>
+      <div class="ts-input-row">
+        <input
+          type="text"
+          id={`${uniqueId}-ts-input`}
+          class="ts-input"
+          placeholder="Enter Unix timestamp..."
+          spellcheck="false"
+          autocomplete="off"
+          aria-label="Unix timestamp input"
+        />
+        <div class="ts-unit-toggle">
+          <button
+            type="button"
+            class="ts-unit-btn active"
+            data-unit="s"
+            >Seconds</button
+          >
+          <button
+            type="button"
+            class="ts-unit-btn"
+            data-unit="ms"
+            >Milliseconds</button
+          >
+        </div>
+      </div>
+      <div
+        class="ts-results"
+        id={`${uniqueId}-ts-results`}
+      >
+        <div class="ts-result-item">
+          <span class="ts-result-label">Local Time</span>
+          <code
+            class="ts-result-value"
+            id={`${uniqueId}-local`}
+            >—</code
+          >
+        </div>
+        <div class="ts-result-item">
+          <span class="ts-result-label">UTC (ISO 8601)</span>
+          <code
+            class="ts-result-value"
+            id={`${uniqueId}-utc`}
+            >—</code
+          >
+        </div>
+        <div class="ts-result-item">
+          <span class="ts-result-label">Relative</span>
+          <code
+            class="ts-result-value"
+            id={`${uniqueId}-relative`}
+            >—</code
+          >
+        </div>
+        <div class="ts-result-item">
+          <span class="ts-result-label">Day of Week</span>
+          <code
+            class="ts-result-value"
+            id={`${uniqueId}-dow`}
+            >—</code
+          >
+        </div>
+      </div>
+    </div>
+
+    {/* Date to Timestamp */}
+    <div class="ts-section">
+      <div class="ts-section-header">
+        <span
+          class="i-mdi:arrow-left-bold"
+          aria-hidden="true"
+        ></span>
+        <span>Date → Timestamp</span>
+      </div>
+      <div class="ts-date-inputs">
+        <div class="ts-date-field">
+          <label for={`${uniqueId}-date`}>Date</label>
+          <input
+            type="date"
+            id={`${uniqueId}-date`}
+            class="ts-input"
+          />
+        </div>
+        <div class="ts-date-field">
+          <label for={`${uniqueId}-time`}>Time</label>
+          <input
+            type="time"
+            id={`${uniqueId}-time`}
+            class="ts-input"
+            step="1"
+          />
+        </div>
+      </div>
+      <div class="ts-results">
+        <div class="ts-result-item">
+          <span class="ts-result-label">Unix (seconds)</span>
+          <div class="ts-result-with-copy">
+            <code
+              class="ts-result-value"
+              id={`${uniqueId}-unix-s`}
+              >—</code
+            >
+            <button
+              type="button"
+              class="ts-copy-btn"
+              data-target-id={`${uniqueId}-unix-s`}
+              aria-label="Copy seconds timestamp"
+            >
+              <span class="i-mdi:content-copy"></span>
+            </button>
+          </div>
+        </div>
+        <div class="ts-result-item">
+          <span class="ts-result-label">Unix (milliseconds)</span>
+          <div class="ts-result-with-copy">
+            <code
+              class="ts-result-value"
+              id={`${uniqueId}-unix-ms`}
+              >—</code
+            >
+            <button
+              type="button"
+              class="ts-copy-btn"
+              data-target-id={`${uniqueId}-unix-ms`}
+              aria-label="Copy milliseconds timestamp"
+            >
+              <span class="i-mdi:content-copy"></span>
+            </button>
+          </div>
+        </div>
+        <div class="ts-result-item">
+          <span class="ts-result-label">ISO 8601</span>
+          <div class="ts-result-with-copy">
+            <code
+              class="ts-result-value"
+              id={`${uniqueId}-iso`}
+              >—</code
+            >
+            <button
+              type="button"
+              class="ts-copy-btn"
+              data-target-id={`${uniqueId}-iso`}
+              aria-label="Copy ISO timestamp"
+            >
+              <span class="i-mdi:content-copy"></span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script is:inline define:vars={{ uniqueId }}>
+  (function () {
+    const container = document.querySelector(`[data-ts-id="${uniqueId}"]`);
+    if (!container) return;
+
+    const currentEl = document.getElementById(`${uniqueId}-current`);
+    const tsInput = document.getElementById(`${uniqueId}-ts-input`);
+    const localEl = document.getElementById(`${uniqueId}-local`);
+    const utcEl = document.getElementById(`${uniqueId}-utc`);
+    const relativeEl = document.getElementById(`${uniqueId}-relative`);
+    const dowEl = document.getElementById(`${uniqueId}-dow`);
+    const dateInput = document.getElementById(`${uniqueId}-date`);
+    const timeInput = document.getElementById(`${uniqueId}-time`);
+    const unixS = document.getElementById(`${uniqueId}-unix-s`);
+    const unixMs = document.getElementById(`${uniqueId}-unix-ms`);
+    const isoEl = document.getElementById(`${uniqueId}-iso`);
+    const unitBtns = container.querySelectorAll(".ts-unit-btn");
+    const copyBtns = container.querySelectorAll(".ts-copy-btn");
+
+    var unit = "s";
+    var days = [
+      "Sunday",
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday",
+    ];
+
+    // Set default date/time to now
+    var now = new Date();
+    if (dateInput) {
+      dateInput.value = now.toISOString().slice(0, 10);
+    }
+    if (timeInput) {
+      timeInput.value = now.toTimeString().slice(0, 8);
+    }
+    if (tsInput) {
+      tsInput.value = String(Math.floor(now.getTime() / 1000));
+    }
+
+    function formatRelative(date) {
+      var diff = date.getTime() - Date.now();
+      var absDiff = Math.abs(diff);
+      var isPast = diff < 0;
+      var secs = Math.floor(absDiff / 1000);
+      var mins = Math.floor(secs / 60);
+      var hours = Math.floor(mins / 60);
+      var daysDiff = Math.floor(hours / 24);
+      var years = Math.floor(daysDiff / 365);
+
+      var str;
+      if (years > 0) str = years + " year" + (years > 1 ? "s" : "");
+      else if (daysDiff > 0)
+        str = daysDiff + " day" + (daysDiff > 1 ? "s" : "");
+      else if (hours > 0) str = hours + " hour" + (hours > 1 ? "s" : "");
+      else if (mins > 0) str = mins + " minute" + (mins > 1 ? "s" : "");
+      else str = secs + " second" + (secs !== 1 ? "s" : "");
+
+      return str + (isPast ? " ago" : " from now");
+    }
+
+    function updateTimestampToDate() {
+      var val = tsInput.value.trim();
+      if (!val) {
+        if (localEl) localEl.textContent = "—";
+        if (utcEl) utcEl.textContent = "—";
+        if (relativeEl) relativeEl.textContent = "—";
+        if (dowEl) dowEl.textContent = "—";
+        return;
+      }
+
+      var num = parseInt(val, 10);
+      if (isNaN(num)) {
+        if (localEl) localEl.textContent = "Invalid timestamp";
+        return;
+      }
+
+      var ms = unit === "ms" ? num : num * 1000;
+      var date = new Date(ms);
+
+      if (isNaN(date.getTime())) {
+        if (localEl) localEl.textContent = "Invalid date";
+        return;
+      }
+
+      if (localEl) localEl.textContent = date.toLocaleString();
+      if (utcEl) utcEl.textContent = date.toISOString();
+      if (relativeEl) relativeEl.textContent = formatRelative(date);
+      if (dowEl) dowEl.textContent = days[date.getDay()];
+    }
+
+    function updateDateToTimestamp() {
+      if (!dateInput || !dateInput.value) return;
+
+      var dateStr = dateInput.value;
+      var timeStr = timeInput && timeInput.value ? timeInput.value : "00:00:00";
+
+      var date = new Date(dateStr + "T" + timeStr);
+      if (isNaN(date.getTime())) {
+        if (unixS) unixS.textContent = "Invalid date";
+        return;
+      }
+
+      var s = Math.floor(date.getTime() / 1000);
+      var ms = date.getTime();
+
+      if (unixS) unixS.textContent = String(s);
+      if (unixMs) unixMs.textContent = String(ms);
+      if (isoEl) isoEl.textContent = date.toISOString();
+    }
+
+    // Live clock
+    function updateCurrent() {
+      if (currentEl) {
+        currentEl.textContent = String(Math.floor(Date.now() / 1000));
+      }
+    }
+
+    setInterval(updateCurrent, 1000);
+    updateCurrent();
+
+    // Unit toggle
+    unitBtns.forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        unitBtns.forEach(function (b) {
+          b.classList.remove("active");
+        });
+        btn.classList.add("active");
+        unit = btn.dataset.unit;
+        updateTimestampToDate();
+      });
+    });
+
+    // Inputs
+    if (tsInput) {
+      var timeout;
+      tsInput.addEventListener("input", function () {
+        clearTimeout(timeout);
+        timeout = setTimeout(updateTimestampToDate, 150);
+      });
+    }
+
+    if (dateInput) dateInput.addEventListener("change", updateDateToTimestamp);
+    if (timeInput) timeInput.addEventListener("change", updateDateToTimestamp);
+
+    // Copy
+    copyBtns.forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var target = document.getElementById(btn.dataset.targetId);
+        if (target && navigator.clipboard) {
+          navigator.clipboard
+            .writeText(target.textContent || "")
+            .then(function () {
+              btn.classList.add("copied");
+              setTimeout(function () {
+                btn.classList.remove("copied");
+              }, 1500);
+            });
+        }
+      });
+    });
+
+    updateTimestampToDate();
+    updateDateToTimestamp();
+  })();
+</script>
+
+<style>
+  .ts-converter {
+    margin: 1.5rem 0;
+    overflow: hidden;
+    background: var(--color-bg-subtle);
+    border: var(--border-1);
+    border-radius: var(--radius-md);
+  }
+
+  .ts-title {
+    padding: 1rem 1.25rem;
+    font-size: 1.1rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-heading);
+    background: var(--color-bg-secondary);
+    border-bottom: var(--border-1);
+  }
+
+  .ts-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    padding: 1.25rem;
+  }
+
+  /* Current time */
+  .ts-current {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+    background: rgb(from var(--color-primary) r g b / 8%);
+    border: 1px solid rgb(from var(--color-primary) r g b / 20%);
+    border-radius: var(--radius-sm);
+  }
+
+  .ts-current-icon {
+    width: 18px;
+    height: 18px;
+    color: var(--color-primary);
+  }
+
+  .ts-current-value {
+    font-family: var(--font-mono);
+    font-weight: var(--fw-bold);
+    color: var(--color-primary);
+  }
+
+  /* Sections */
+  .ts-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .ts-section-header {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    font-size: 0.85rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .ts-section-header span[class^="i-"] {
+    width: 18px;
+    height: 18px;
+  }
+
+  .ts-input-row {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+  }
+
+  .ts-input {
+    flex: 1;
+    padding: 0.625rem 0.75rem;
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    color: var(--color-text);
+    background: var(--color-bg);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+    transition: border-color 0.15s;
+  }
+
+  .ts-input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+  }
+
+  .ts-unit-toggle {
+    display: flex;
+    flex-shrink: 0;
+    gap: 0;
+  }
+
+  .ts-unit-btn {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8rem;
+    font-weight: var(--fw-medium);
+    color: var(--color-text-muted);
+    cursor: pointer;
+    background: var(--color-bg-secondary);
+    border: var(--border-1);
+    transition: all 0.15s;
+  }
+
+  .ts-unit-btn:first-child {
+    border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+  }
+
+  .ts-unit-btn:last-child {
+    border-left: none;
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  }
+
+  .ts-unit-btn.active {
+    color: #fff;
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+  }
+
+  .ts-unit-btn:hover:not(.active) {
+    color: var(--color-primary);
+    border-color: var(--color-primary);
+  }
+
+  /* Date inputs */
+  .ts-date-inputs {
+    display: flex;
+    gap: 1rem;
+  }
+
+  .ts-date-field {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 0.375rem;
+  }
+
+  .ts-date-field label {
+    font-size: 0.75rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+  }
+
+  /* Results */
+  .ts-results {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr));
+    gap: 0.5rem;
+  }
+
+  .ts-result-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 0.625rem 0.75rem;
+    background: var(--color-bg-secondary);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+  }
+
+  .ts-result-label {
+    font-size: 0.7rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .ts-result-value {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    color: var(--color-text-heading);
+    word-break: break-all;
+  }
+
+  .ts-result-with-copy {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+  }
+
+  .ts-copy-btn {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    background: transparent;
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+    transition: all 0.15s;
+  }
+
+  .ts-copy-btn span {
+    width: 14px;
+    height: 14px;
+  }
+
+  .ts-copy-btn:hover {
+    color: var(--color-primary);
+    border-color: var(--color-primary);
+  }
+
+  .ts-copy-btn.copied {
+    color: #047857;
+    border-color: #10b981;
+  }
+
+  @media (width <= 640px) {
+    .ts-layout {
+      padding: 1rem;
+    }
+
+    .ts-input-row {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .ts-date-inputs {
+      flex-direction: column;
+    }
+
+    .ts-results {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

@@ -17,34 +17,224 @@ interface Tool {
   isNew?: boolean;
 }
 
-const tools: Tool[] = [
+interface ToolCategory {
+  id: string;
+  name: string;
+  tools: Tool[];
+}
+
+const categories: ToolCategory[] = [
   {
-    id: "csp-builder",
-    name: "CSP Policy Builder",
-    description:
-      "Build Content Security Policy headers interactively with real-time security ratings.",
-    icon: "i-mdi:shield-lock-outline",
-    href: "/tools/csp-builder/",
-    features: [
-      "Visual directive selector",
-      "Live policy preview",
-      "Security score",
+    id: "security",
+    name: "Security Tools",
+    tools: [
+      {
+        id: "csp-builder",
+        name: "CSP Policy Builder",
+        description:
+          "Build Content Security Policy headers interactively with real-time security ratings.",
+        icon: "i-mdi:shield-lock-outline",
+        href: "/tools/csp-builder/",
+        features: [
+          "Visual directive selector",
+          "Live policy preview",
+          "Security score",
+        ],
+      },
+      {
+        id: "hash-calculator",
+        name: "Script Hash Generator",
+        description:
+          "Generate SHA-256, SHA-384, and SHA-512 hashes for CSP inline scripts.",
+        icon: "i-mdi:function-variant",
+        href: "/tools/hash-calculator/",
+        features: [
+          "Multiple algorithms",
+          "Ready-to-use directives",
+          "Live calculation",
+        ],
+      },
+      {
+        id: "jwt-decoder",
+        name: "JWT Decoder",
+        description:
+          "Decode and inspect JSON Web Tokens. View header, payload, and signature with security warnings.",
+        icon: "i-mdi:key-variant",
+        href: "/tools/jwt-decoder/",
+        features: ["Header & payload", "Expiration check", "Security alerts"],
+        isNew: true,
+      },
+      {
+        id: "password-generator",
+        name: "Password Generator",
+        description:
+          "Generate cryptographically secure passwords and passphrases with entropy estimation.",
+        icon: "i-mdi:lock-outline",
+        href: "/tools/password-generator/",
+        features: [
+          "Crypto-secure",
+          "Entropy estimation",
+          "Diceware passphrases",
+        ],
+        isNew: true,
+      },
+      {
+        id: "http-headers-analyzer",
+        name: "HTTP Headers Analyzer",
+        description:
+          "Analyze HTTP security headers and get a security score with detailed recommendations.",
+        icon: "i-mdi:web",
+        href: "/tools/http-headers-analyzer/",
+        features: [
+          "Security scoring",
+          "10+ headers checked",
+          "Recommendations",
+        ],
+        isNew: true,
+      },
+      {
+        id: "cert-inspector",
+        name: "Certificate Inspector",
+        description:
+          "Decode and inspect PEM-encoded X.509 certificates. View subject, issuer, validity, and key details.",
+        icon: "i-mdi:certificate",
+        href: "/tools/cert-inspector/",
+        features: ["PEM decoding", "Validity check", "Key info"],
+        isNew: true,
+      },
     ],
   },
   {
-    id: "hash-calculator",
-    name: "Script Hash Generator",
-    description:
-      "Generate SHA-256, SHA-384, and SHA-512 hashes for CSP inline scripts.",
-    icon: "i-mdi:function-variant",
-    href: "/tools/hash-calculator/",
-    features: [
-      "Multiple algorithms",
-      "Ready-to-use directives",
-      "Live calculation",
+    id: "developer",
+    name: "Developer Tools",
+    tools: [
+      {
+        id: "base64-encoder",
+        name: "Base64 Encoder / Decoder",
+        description:
+          "Encode and decode between Base64, Base64URL, URL encoding, hex, and HTML entities.",
+        icon: "i-mdi:swap-horizontal",
+        href: "/tools/base64-encoder/",
+        features: ["5 formats", "Auto-detect", "Bidirectional"],
+        isNew: true,
+      },
+      {
+        id: "regex-tester",
+        name: "Regex Tester",
+        description:
+          "Test regular expressions with real-time match highlighting and capture group extraction.",
+        icon: "i-mdi:regex",
+        href: "/tools/regex-tester/",
+        features: ["Live highlighting", "Capture groups", "Pattern presets"],
+        isNew: true,
+      },
+      {
+        id: "uuid-generator",
+        name: "UUID Generator",
+        description:
+          "Generate UUID v4, UUID v7, ULID, and Nano ID identifiers with batch generation.",
+        icon: "i-mdi:identifier",
+        href: "/tools/uuid-generator/",
+        features: ["4 ID formats", "Batch generation", "Format details"],
+        isNew: true,
+      },
+      {
+        id: "cron-builder",
+        name: "Cron Expression Builder",
+        description:
+          "Build cron expressions visually with field selectors and next execution preview.",
+        icon: "i-mdi:clock-outline",
+        href: "/tools/cron-builder/",
+        features: ["Visual builder", "Execution preview", "Common presets"],
+        isNew: true,
+      },
+      {
+        id: "timestamp-converter",
+        name: "Timestamp Converter",
+        description:
+          "Convert between Unix timestamps, ISO 8601, and human-readable dates with timezone support.",
+        icon: "i-mdi:clock-time-four-outline",
+        href: "/tools/timestamp-converter/",
+        features: ["Unix ↔ Date", "Live clock", "Relative time"],
+        isNew: true,
+      },
+      {
+        id: "color-contrast-checker",
+        name: "Color Contrast Checker",
+        description:
+          "Check WCAG 2.2 color contrast ratios for AA and AAA accessibility compliance.",
+        icon: "i-mdi:palette-outline",
+        href: "/tools/color-contrast-checker/",
+        features: ["WCAG 2.2", "AA & AAA levels", "Live preview"],
+        isNew: true,
+      },
+    ],
+  },
+  {
+    id: "network",
+    name: "Network & Server Tools",
+    tools: [
+      {
+        id: "subnet-calculator",
+        name: "Subnet Calculator",
+        description:
+          "Calculate IPv4 and IPv6 subnets with CIDR notation, network ranges, and binary visualization.",
+        icon: "i-mdi:lan",
+        href: "/tools/subnet-calculator/",
+        features: ["IPv4 & IPv6", "CIDR notation", "Binary view"],
+        isNew: true,
+      },
+      {
+        id: "nginx-config-generator",
+        name: "Nginx Config Generator",
+        description:
+          "Generate Nginx server block configurations with SSL, reverse proxy, security headers, and caching.",
+        icon: "i-devicon:nginx",
+        href: "/tools/nginx-config-generator/",
+        features: ["Quick presets", "SSL/proxy", "Security headers"],
+        isNew: true,
+      },
+    ],
+  },
+  {
+    id: "embedded",
+    name: "Embedded & Industrial Tools",
+    tools: [
+      {
+        id: "modbus-frame-builder",
+        name: "Modbus Frame Builder",
+        description:
+          "Build and decode Modbus RTU/TCP frames with CRC-16 calculation and byte visualization.",
+        icon: "i-mdi:chip",
+        href: "/tools/modbus-frame-builder/",
+        features: ["RTU & TCP", "Auto CRC-16", "Frame decoder"],
+        isNew: true,
+      },
+      {
+        id: "byte-order-converter",
+        name: "Byte Order Converter",
+        description:
+          "Convert between big-endian, little-endian, and mixed-endian byte orders with IEEE 754 support.",
+        icon: "i-mdi:swap-horizontal-bold",
+        href: "/tools/byte-order-converter/",
+        features: ["4 byte orders", "IEEE 754", "8–64 bit types"],
+        isNew: true,
+      },
+      {
+        id: "crc-calculator",
+        name: "CRC Calculator",
+        description:
+          "Calculate CRC-8, CRC-16, and CRC-32 checksums with presets for Modbus, Ethernet, and USB.",
+        icon: "i-mdi:check-decagram",
+        href: "/tools/crc-calculator/",
+        features: ["12+ algorithms", "Hex & ASCII", "Protocol presets"],
+        isNew: true,
+      },
     ],
   },
 ];
+
+const tools = categories.flatMap((cat) => cat.tools);
 
 const baseUrl = new URL(Astro.url.pathname, getSiteUrl());
 const collectionUrl = new URL("#collection", baseUrl).toString();
@@ -71,7 +261,7 @@ const toolsSchema = {
 
 <BaseLayout
   title="Tools"
-  description="Free interactive developer tools for web security. Build CSP policies, generate script hashes, and more."
+  description="Free interactive developer tools for security, encoding, networking, and embedded systems. All tools run entirely in your browser — privacy first."
   schema={toolsSchema}
 >
   <div class="container">
@@ -81,54 +271,56 @@ const toolsSchema = {
       happen locally—no data is sent to any server.
     </p>
 
-    <section
-      class="tools-section"
-      aria-label="Security Tools"
-    >
-      <div class="section-header">
-        <h2>Security Tools</h2>
-      </div>
+    {
+      categories.map((category) => (
+        <section
+          class="tools-section"
+          aria-label={category.name}
+        >
+          <div class="section-header">
+            <h2>{category.name}</h2>
+          </div>
 
-      <div class="tools-grid">
-        {
-          tools.map((tool) => (
-            <a
-              href={tool.href}
-              class="tool-card"
-            >
-              {tool.isNew && <span class="tool-badge-new">New</span>}
-              <div class="tool-icon-wrapper">
-                <span
-                  class={`tool-icon ${tool.icon}`}
-                  aria-hidden="true"
-                />
-              </div>
-              <div class="tool-content">
-                <h3 class="tool-name">{tool.name}</h3>
-                <p class="tool-description">{tool.description}</p>
-                <ul class="tool-features">
-                  {tool.features.map((feature) => (
-                    <li>
-                      <span
-                        class="i-mdi:check feature-icon"
-                        aria-hidden="true"
-                      />
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <div class="tool-arrow">
-                <span
-                  class="i-mdi:arrow-right"
-                  aria-hidden="true"
-                />
-              </div>
-            </a>
-          ))
-        }
-      </div>
-    </section>
+          <div class="tools-grid">
+            {category.tools.map((tool) => (
+              <a
+                href={tool.href}
+                class="tool-card"
+              >
+                {tool.isNew && <span class="tool-badge-new">New</span>}
+                <div class="tool-icon-wrapper">
+                  <span
+                    class={`tool-icon ${tool.icon}`}
+                    aria-hidden="true"
+                  />
+                </div>
+                <div class="tool-content">
+                  <h3 class="tool-name">{tool.name}</h3>
+                  <p class="tool-description">{tool.description}</p>
+                  <ul class="tool-features">
+                    {tool.features.map((feature) => (
+                      <li>
+                        <span
+                          class="i-mdi:check feature-icon"
+                          aria-hidden="true"
+                        />
+                        {feature}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div class="tool-arrow">
+                  <span
+                    class="i-mdi:arrow-right"
+                    aria-hidden="true"
+                  />
+                </div>
+              </a>
+            ))}
+          </div>
+        </section>
+      ))
+    }
 
     <section
       class="info-section"

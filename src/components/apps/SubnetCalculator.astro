@@ -1,0 +1,574 @@
+---
+/**
+ * SubnetCalculator Component
+ * IPv4/IPv6 subnet and CIDR calculator.
+ *
+ * Usage:
+ * <SubnetCalculator title="Subnet Calculator" />
+ */
+
+// eslint-disable-next-line sonarjs/no-hardcoded-ip -- example IP for demo UI
+const defaultIP = "192.168.1.0";
+
+interface Props {
+  title?: string;
+}
+
+const { title = "Subnet / CIDR Calculator" } = Astro.props;
+const uniqueId = `sub-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
+---
+
+<div
+  class="sub-calc"
+  data-sub-id={uniqueId}
+>
+  {title && <div class="sub-title">{title}</div>}
+
+  <div class="sub-layout">
+    {/* Input */}
+    <div class="sub-input-section">
+      <div class="sub-input-row">
+        <div class="sub-field">
+          <label
+            for={`${uniqueId}-ip`}
+            class="sub-label"
+            >IP Address</label
+          >
+          <input
+            type="text"
+            id={`${uniqueId}-ip`}
+            class="sub-input"
+            value={defaultIP}
+            placeholder={defaultIP}
+            spellcheck="false"
+            autocomplete="off"
+          />
+        </div>
+        <div class="sub-field sub-field-cidr">
+          <label
+            for={`${uniqueId}-cidr`}
+            class="sub-label"
+            >CIDR / Mask</label
+          >
+          <div class="sub-cidr-row">
+            <span class="sub-cidr-slash">/</span>
+            <input
+              type="number"
+              id={`${uniqueId}-cidr`}
+              class="sub-input sub-cidr-input"
+              value="24"
+              min="0"
+              max="128"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Quick CIDR presets */}
+      <div class="sub-presets">
+        <span class="sub-presets-label">Common:</span>
+        {
+          [8, 16, 20, 24, 25, 26, 27, 28, 29, 30, 32].map((cidr) => (
+            <button
+              type="button"
+              class="sub-preset-btn"
+              data-cidr={String(cidr)}
+            >
+              /{cidr}
+            </button>
+          ))
+        }
+      </div>
+    </div>
+
+    {/* Results */}
+    <div
+      class="sub-results"
+      id={`${uniqueId}-results`}
+    >
+      <div class="sub-result-grid">
+        <div class="sub-result-item">
+          <span class="sub-result-label">Network Address</span>
+          <code
+            class="sub-result-value"
+            id={`${uniqueId}-network`}
+            >—</code
+          >
+        </div>
+        <div class="sub-result-item">
+          <span class="sub-result-label">Broadcast Address</span>
+          <code
+            class="sub-result-value"
+            id={`${uniqueId}-broadcast`}
+            >—</code
+          >
+        </div>
+        <div class="sub-result-item">
+          <span class="sub-result-label">Subnet Mask</span>
+          <code
+            class="sub-result-value"
+            id={`${uniqueId}-mask`}
+            >—</code
+          >
+        </div>
+        <div class="sub-result-item">
+          <span class="sub-result-label">Wildcard Mask</span>
+          <code
+            class="sub-result-value"
+            id={`${uniqueId}-wildcard`}
+            >—</code
+          >
+        </div>
+        <div class="sub-result-item">
+          <span class="sub-result-label">First Host</span>
+          <code
+            class="sub-result-value"
+            id={`${uniqueId}-first`}
+            >—</code
+          >
+        </div>
+        <div class="sub-result-item">
+          <span class="sub-result-label">Last Host</span>
+          <code
+            class="sub-result-value"
+            id={`${uniqueId}-last`}
+            >—</code
+          >
+        </div>
+        <div class="sub-result-item">
+          <span class="sub-result-label">Usable Hosts</span>
+          <code
+            class="sub-result-value"
+            id={`${uniqueId}-hosts`}
+            >—</code
+          >
+        </div>
+        <div class="sub-result-item">
+          <span class="sub-result-label">Total Addresses</span>
+          <code
+            class="sub-result-value"
+            id={`${uniqueId}-total`}
+            >—</code
+          >
+        </div>
+        <div class="sub-result-item">
+          <span class="sub-result-label">CIDR Notation</span>
+          <code
+            class="sub-result-value"
+            id={`${uniqueId}-cidr-notation`}
+            >—</code
+          >
+        </div>
+        <div class="sub-result-item">
+          <span class="sub-result-label">IP Class</span>
+          <code
+            class="sub-result-value"
+            id={`${uniqueId}-class`}
+            >—</code
+          >
+        </div>
+        <div class="sub-result-item sub-result-wide">
+          <span class="sub-result-label">Binary Mask</span>
+          <code
+            class="sub-result-value sub-result-mono"
+            id={`${uniqueId}-binary`}
+            >—</code
+          >
+        </div>
+      </div>
+    </div>
+
+    {/* Error */}
+    <div
+      class="sub-error"
+      id={`${uniqueId}-error`}
+      hidden
+    >
+      <span
+        class="i-mdi:alert-circle-outline"
+        aria-hidden="true"
+      ></span>
+      <span id={`${uniqueId}-error-text`}></span>
+    </div>
+  </div>
+</div>
+
+<script is:inline define:vars={{ uniqueId }}>
+  (function () {
+    const container = document.querySelector(`[data-sub-id="${uniqueId}"]`);
+    if (!container) return;
+
+    const ipInput = document.getElementById(`${uniqueId}-ip`);
+    const cidrInput = document.getElementById(`${uniqueId}-cidr`);
+    const errorEl = document.getElementById(`${uniqueId}-error`);
+    const errorText = document.getElementById(`${uniqueId}-error-text`);
+    const presetBtns = container.querySelectorAll(".sub-preset-btn");
+
+    var fields = {};
+    [
+      "network",
+      "broadcast",
+      "mask",
+      "wildcard",
+      "first",
+      "last",
+      "hosts",
+      "total",
+      "cidr-notation",
+      "class",
+      "binary",
+    ].forEach(function (f) {
+      fields[f] = document.getElementById(`${uniqueId}-${f}`);
+    });
+
+    if (!ipInput || !cidrInput) return;
+
+    function parseIPv4(str) {
+      var parts = str.trim().split(".");
+      if (parts.length !== 4) return null;
+      var octets = [];
+      for (var i = 0; i < 4; i++) {
+        var n = parseInt(parts[i], 10);
+        if (isNaN(n) || n < 0 || n > 255 || String(n) !== parts[i].trim())
+          return null;
+        octets.push(n);
+      }
+      return octets;
+    }
+
+    function ipToInt(octets) {
+      return (
+        ((octets[0] << 24) |
+          (octets[1] << 16) |
+          (octets[2] << 8) |
+          octets[3]) >>>
+        0
+      );
+    }
+
+    function intToIp(num) {
+      return [
+        (num >>> 24) & 255,
+        (num >>> 16) & 255,
+        (num >>> 8) & 255,
+        num & 255,
+      ].join(".");
+    }
+
+    function getClass(firstOctet) {
+      if (firstOctet < 128) return "A";
+      if (firstOctet < 192) return "B";
+      if (firstOctet < 224) return "C";
+      if (firstOctet < 240) return "D (Multicast)";
+      return "E (Reserved)";
+    }
+
+    function formatBinary(mask) {
+      var parts = [];
+      for (var i = 3; i >= 0; i--) {
+        parts.push(((mask >>> (i * 8)) & 255).toString(2).padStart(8, "0"));
+      }
+      return parts.join(".");
+    }
+
+    function calculate() {
+      if (errorEl) errorEl.hidden = true;
+
+      var octets = parseIPv4(ipInput.value);
+      var cidr = parseInt(cidrInput.value, 10);
+
+      if (!octets) {
+        showError("Invalid IPv4 address format");
+        clearResults();
+        return;
+      }
+
+      if (isNaN(cidr) || cidr < 0 || cidr > 32) {
+        showError("CIDR must be between 0 and 32");
+        clearResults();
+        return;
+      }
+
+      var ip = ipToInt(octets);
+      var mask = cidr === 0 ? 0 : (~0 << (32 - cidr)) >>> 0;
+      var network = (ip & mask) >>> 0;
+      var broadcast = (network | ~mask) >>> 0;
+      var wildcard = ~mask >>> 0;
+      var totalAddresses = Math.pow(2, 32 - cidr);
+      var usableHosts =
+        cidr >= 31 ? totalAddresses : Math.max(0, totalAddresses - 2);
+      var firstHost = cidr >= 31 ? network : (network + 1) >>> 0;
+      var lastHost = cidr >= 31 ? broadcast : (broadcast - 1) >>> 0;
+
+      if (fields["network"]) fields["network"].textContent = intToIp(network);
+      if (fields["broadcast"])
+        fields["broadcast"].textContent =
+          cidr >= 31 ? "N/A" : intToIp(broadcast);
+      if (fields["mask"]) fields["mask"].textContent = intToIp(mask);
+      if (fields["wildcard"])
+        fields["wildcard"].textContent = intToIp(wildcard);
+      if (fields["first"]) fields["first"].textContent = intToIp(firstHost);
+      if (fields["last"]) fields["last"].textContent = intToIp(lastHost);
+      if (fields["hosts"])
+        fields["hosts"].textContent = usableHosts.toLocaleString();
+      if (fields["total"])
+        fields["total"].textContent = totalAddresses.toLocaleString();
+      if (fields["cidr-notation"])
+        fields["cidr-notation"].textContent = intToIp(network) + "/" + cidr;
+      if (fields["class"]) fields["class"].textContent = getClass(octets[0]);
+      if (fields["binary"]) fields["binary"].textContent = formatBinary(mask);
+    }
+
+    function showError(msg) {
+      if (errorEl && errorText) {
+        errorText.textContent = msg;
+        errorEl.hidden = false;
+      }
+    }
+
+    function clearResults() {
+      Object.keys(fields).forEach(function (k) {
+        if (fields[k]) fields[k].textContent = "—";
+      });
+    }
+
+    // Presets
+    presetBtns.forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        cidrInput.value = btn.dataset.cidr;
+        calculate();
+      });
+    });
+
+    // Input events
+    var timeout;
+    function debouncedCalc() {
+      clearTimeout(timeout);
+      timeout = setTimeout(calculate, 150);
+    }
+
+    ipInput.addEventListener("input", debouncedCalc);
+    cidrInput.addEventListener("input", debouncedCalc);
+
+    calculate();
+  })();
+</script>
+
+<style>
+  .sub-calc {
+    margin: 1.5rem 0;
+    overflow: hidden;
+    background: var(--color-bg-subtle);
+    border: var(--border-1);
+    border-radius: var(--radius-md);
+  }
+
+  .sub-title {
+    padding: 1rem 1.25rem;
+    font-size: 1.1rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-heading);
+    background: var(--color-bg-secondary);
+    border-bottom: var(--border-1);
+  }
+
+  .sub-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    padding: 1.25rem;
+  }
+
+  .sub-input-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .sub-input-row {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-end;
+  }
+
+  .sub-field {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 0.375rem;
+  }
+
+  .sub-field-cidr {
+    max-width: 120px;
+  }
+
+  .sub-label {
+    font-size: 0.8rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .sub-input {
+    padding: 0.625rem 0.75rem;
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    color: var(--color-text);
+    background: var(--color-bg);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+    transition: border-color 0.15s;
+  }
+
+  .sub-input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+  }
+
+  .sub-cidr-row {
+    display: flex;
+    gap: 0;
+    align-items: center;
+    overflow: hidden;
+    background: var(--color-bg);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+  }
+
+  .sub-cidr-slash {
+    padding: 0.625rem 0.5rem;
+    font-family: var(--font-mono);
+    font-size: 1rem;
+    font-weight: var(--fw-bold);
+    color: var(--color-primary);
+    background: var(--color-bg-secondary);
+    border-right: var(--border-1);
+  }
+
+  .sub-cidr-input {
+    width: 100%;
+    border: none;
+    border-radius: 0;
+  }
+
+  .sub-cidr-input:focus {
+    border: none;
+  }
+
+  /* Presets */
+  .sub-presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.375rem;
+    align-items: center;
+  }
+
+  .sub-presets-label {
+    font-size: 0.75rem;
+    font-weight: var(--fw-medium);
+    color: var(--color-text-muted);
+  }
+
+  .sub-preset-btn {
+    padding: 0.25rem 0.5rem;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: var(--fw-medium);
+    color: var(--color-text-muted);
+    cursor: pointer;
+    background: var(--color-bg-secondary);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+    transition: all 0.15s;
+  }
+
+  .sub-preset-btn:hover {
+    color: var(--color-primary);
+    border-color: var(--color-primary);
+  }
+
+  /* Results */
+  .sub-result-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr));
+    gap: 0.5rem;
+  }
+
+  .sub-result-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 0.625rem 0.75rem;
+    background: var(--color-bg-secondary);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+  }
+
+  .sub-result-wide {
+    grid-column: 1 / -1;
+  }
+
+  .sub-result-label {
+    font-size: 0.7rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .sub-result-value {
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    font-weight: var(--fw-medium);
+    color: var(--color-text-heading);
+    word-break: break-all;
+  }
+
+  .sub-result-mono {
+    font-size: 0.8rem;
+    letter-spacing: 0.05em;
+  }
+
+  /* Error */
+  .sub-error {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    padding: 0.625rem 0.75rem;
+    font-size: 0.8rem;
+    color: #b91c1c;
+    background: rgb(239 68 68 / 10%);
+    border: 1px solid rgb(239 68 68 / 30%);
+    border-radius: var(--radius-sm);
+  }
+
+  .sub-error[hidden] {
+    display: none;
+  }
+
+  .sub-error span[class^="i-"] {
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+  }
+
+  @media (width <= 640px) {
+    .sub-layout {
+      padding: 1rem;
+    }
+
+    .sub-input-row {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .sub-field-cidr {
+      max-width: none;
+    }
+
+    .sub-result-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

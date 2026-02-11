@@ -1,0 +1,669 @@
+---
+/**
+ * CertInspector Component
+ * Decode and inspect PEM-encoded X.509 certificates client-side.
+ * Extracts subject, issuer, validity, SANs, key info, and extensions.
+ *
+ * Usage:
+ * <CertInspector title="Certificate Inspector" />
+ */
+
+interface Props {
+  title?: string;
+}
+
+const { title = "Certificate Inspector" } = Astro.props;
+const uniqueId = `cert-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
+
+/* eslint-disable no-secrets/no-secrets -- PEM certificate sample for demo, not a secret */
+const sampleCert = `-----BEGIN CERTIFICATE-----
+MIIFazCCA1OgAwIBAgIRAIIQz7DSQONZRGPgu2OCiwAwDQYJKoZIhvcNAQELBQAw
+TzELMAkGA1UEBhMCVVMxKTAnBgNVBAoTIEludGVybmV0IFNlY3VyaXR5IFJlc2Vh
+cmNoIEdyb3VwMRUwEwYDVQQDEwxJU1JHIFJvb3QgWDEwHhcNMTUwNjA0MTEwNDM4
+WhcNMzUwNjA0MTEwNDM4WjBPMQswCQYDVQQGEwJVUzEpMCcGA1UEChMgSW50ZXJu
+ZXQgU2VjdXJpdHkgUmVzZWFyY2ggR3JvdXAxFTATBgNVBAMTDElTUkcgUm9vdCBY
+MTCCAiIwDQYJKoZIhvcNAQEBBQADggIPADCCAgoCggIBAK3oJHP0FDfzm54rVygc
+h77ct984kIxuPOZXoHj3dcKi/vVqbvYATyjb3miGbESTtrFj/RQSa78f0uoxmyF+
+0TM8ukj13Xnfs7j/EvEhmkvBioZxaUpmZmyPfjxwv60pIgbz5MDmgK7iS4+3mX6U
+A5/TR5d8mUgjU+g4rk8Kb4Mu0UlXjIB0ttov0DiNewNwIRt18jA8+o+u3dpjq+sW
+T8KOEUt+zwvo/7V3LvSye0rgTBIlDHCNAymg4VMk7BPZ7hm/ELNKjD+Jo2FR3qyH
+B5T0Y3HsLuJvW5iB4YlcNHlsdu87kGJ55tukmi8mxdAQ4Q7e2RCOFvu396j3x+UC
+B5iPNgiV5+I3lg02dZ77DnKxHZu8A/lJBdiB3QW0KtZB6awBdpUKD9jf1b0SHzUv
+KBds0pjBqAlkd25HN7rOrFleaJ1/ctaJxQZBKT5ZPt0m9STJEadao0xAH0ahmbWn
+OlFuhjuefXKnEgV4We0+UXgVCwOPjdAvBbI+e0ocS3MFEvzG6uBQE3xDk3SzynTn
+jh8BCNAw1FtxNrQHusEwMFxIt4I7mKZ9YIqioymCzLq9gwQbooMDQaHWBfEbwrbw
+qHyGO0aoSCqI3Haadr8faqU9GY/rOPNk3sgrDQoo//fb4hVC1CLQJ13hef4Y53CI
+rU7m2Ys6xt0nUW7/vGT1M0NPAgMBAAGjQjBAMA4GA1UdDwEB/wQEAwIBBjAPBgNV
+HRMBAf8EBTADAQH/MB0GA1UdDgQWBBR5tFnme7bl5AFzgAiIyBpY9umbbjANBgkq
+hkiG9w0BAQsFAAOCAgEAVR9YqbyyqFDQDLHYGmkgJykIrGF1XIpu+ILlaS/V9lZL
+ubhzEFnTIZd+50xx+7LSYK05qAvqFyFWhfFQDlnrzuBZ6brJFe+GnY+EgPbk6ZGQ
+3BebYhtF8GaV0nxvwuo77x/Py9auJ/GpsMiu/X1+mvoiBOv/2X/qkSsisRcOj/KK
+NFtY2PwByVS5uCbMiogziUwthDyC3+6WVwW6LLv3xLfHTjuCvjHIInNzktHCgKQ5
+ORAzI4JMPJ+GslWYHb4phowim57iaztXOoJwTdwJx4nLCgdNbOhdjsnvzqvHu7Ur
+TkXWStAmzOVyyghqpZXjFaH3pO3JLF+l+/+sKAIuvtd7u+Nxe5AW0wdeRlN8NwdC
+jNPElpzVmbUq4JUagEiuTDkHzsxHpFKVK7q4+63SM1N95R1NbdWhscdCb+ZAJzVc
+oyi3B43njTOQ5yOf+1CceWxG1bQVs5ZufpsMljq4Ui0/1lvh+wjChP4kqKOJ2qxq
+4RgqsahDYVvTH9w7jXbyLeiNdd8XM2w9U/t7y0Ff/9yi0GE44Za4rF2LN9d11TPA
+mRGunUHBcnWEvgJBQl9nJEiU0Zsnvgc/ubhPgXRR4Xq37Z0j4r7g1SgEEzwxA57d
+emyPxgcYxn/eR44/KJ4EBs+lVDR3veyJm+kXQ99b21/+jh5Xos1AnX5iItreGCc=
+-----END CERTIFICATE-----`;
+/* eslint-enable no-secrets/no-secrets */
+---
+
+<div
+  class="cert-inspector"
+  data-cert-id={uniqueId}
+>
+  {title && <div class="cert-title">{title}</div>}
+
+  <div class="cert-layout">
+    <div class="cert-input-section">
+      <label
+        class="cert-label"
+        for={`${uniqueId}-pem`}
+      >
+        <span
+          class="i-mdi:certificate"
+          aria-hidden="true"
+        ></span>
+        PEM Certificate
+      </label>
+      <textarea
+        id={`${uniqueId}-pem`}
+        class="cert-textarea"
+        rows="8"
+        placeholder="Paste PEM-encoded certificate here..."
+        spellcheck="false"
+        >{sampleCert}</textarea
+      >
+      <button
+        type="button"
+        class="cert-inspect-btn"
+      >
+        <span
+          class="i-mdi:magnify"
+          aria-hidden="true"
+        ></span>
+        Inspect Certificate
+      </button>
+    </div>
+
+    <div
+      class="cert-results"
+      id={`${uniqueId}-results`}
+    >
+    </div>
+  </div>
+</div>
+
+<script is:inline define:vars={{ uniqueId }}>
+  (function () {
+    var container = document.querySelector('[data-cert-id="' + uniqueId + '"]');
+    if (!container) return;
+
+    var textarea = document.getElementById(uniqueId + "-pem");
+    var resultsEl = document.getElementById(uniqueId + "-results");
+    var inspectBtn = container.querySelector(".cert-inspect-btn");
+
+    if (!textarea || !resultsEl || !inspectBtn) return;
+
+    // ASN.1 DER decoder (minimal for X.509)
+    function decodeDER(bytes, offset, end) {
+      if (offset >= end) return null;
+      var items = [];
+
+      while (offset < end) {
+        var tag = bytes[offset++];
+        if (offset >= end) break;
+
+        // Length
+        var len = bytes[offset++];
+        if (len & 0x80) {
+          var numLenBytes = len & 0x7f;
+          len = 0;
+          for (var lb = 0; lb < numLenBytes; lb++) {
+            len = (len << 8) | bytes[offset++];
+          }
+        }
+
+        var value = bytes.slice(offset, offset + len);
+        var isConstructed = tag & 0x20;
+        var tagClass = (tag >> 6) & 3;
+        var tagNum = tag & 0x1f;
+
+        var item = {
+          tag: tag,
+          tagNum: tagNum,
+          tagClass: tagClass,
+          constructed: isConstructed,
+          length: len,
+          value: value,
+          offset: offset,
+        };
+
+        if (isConstructed) {
+          item.children = decodeDER(bytes, offset, offset + len);
+        }
+
+        items.push(item);
+        offset += len;
+      }
+
+      return items;
+    }
+
+    function bytesToHex(bytes, sep) {
+      return Array.from(bytes)
+        .map(function (b) {
+          return b.toString(16).toUpperCase().padStart(2, "0");
+        })
+        .join(sep || ":");
+    }
+
+    function decodeOID(bytes) {
+      var oid = [];
+      oid.push(Math.floor(bytes[0] / 40));
+      oid.push(bytes[0] % 40);
+
+      var val = 0;
+      for (var i = 1; i < bytes.length; i++) {
+        val = (val << 7) | (bytes[i] & 0x7f);
+        if (!(bytes[i] & 0x80)) {
+          oid.push(val);
+          val = 0;
+        }
+      }
+      return oid.join(".");
+    }
+
+    function decodeUTF8(bytes) {
+      try {
+        return new TextDecoder("utf-8").decode(new Uint8Array(bytes));
+      } catch (e) {
+        return String.fromCharCode.apply(null, bytes);
+      }
+    }
+
+    function decodeBitString(bytes) {
+      // First byte is number of unused bits
+      return bytes.slice(1);
+    }
+
+    function decodeInteger(bytes) {
+      var hex = Array.from(bytes)
+        .map(function (b) {
+          return b.toString(16).padStart(2, "0");
+        })
+        .join("");
+      return hex;
+    }
+
+    var OID_NAMES = {
+      "2.5.4.3": "CN",
+      "2.5.4.6": "C",
+      "2.5.4.7": "L",
+      "2.5.4.8": "ST",
+      "2.5.4.10": "O",
+      "2.5.4.11": "OU",
+      "2.5.4.5": "SerialNumber",
+      "1.2.840.113549.1.1.1": "RSA",
+      "1.2.840.113549.1.1.5": "SHA1withRSA",
+      "1.2.840.113549.1.1.11": "SHA256withRSA",
+      "1.2.840.113549.1.1.12": "SHA384withRSA",
+      "1.2.840.113549.1.1.13": "SHA512withRSA",
+      "1.2.840.10045.2.1": "EC",
+      "1.2.840.10045.4.3.2": "SHA256withECDSA",
+      "1.2.840.10045.4.3.3": "SHA384withECDSA",
+      "1.2.840.10045.3.1.7": "P-256",
+      "1.3.132.0.34": "P-384",
+      "1.3.132.0.35": "P-521",
+      "2.5.29.14": "Subject Key Identifier",
+      "2.5.29.15": "Key Usage",
+      "2.5.29.17": "Subject Alt Name",
+      "2.5.29.19": "Basic Constraints",
+      "2.5.29.31": "CRL Distribution Points",
+      "2.5.29.32": "Certificate Policies",
+      "2.5.29.35": "Authority Key Identifier",
+      "2.5.29.37": "Extended Key Usage",
+      "1.3.6.1.5.5.7.1.1": "Authority Info Access",
+    };
+
+    function oidName(oid) {
+      return OID_NAMES[oid] || oid;
+    }
+
+    function decodeName(children) {
+      if (!children) return "Unknown";
+      var parts = [];
+      children.forEach(function (set) {
+        if (set.children) {
+          set.children.forEach(function (seq) {
+            if (seq.children && seq.children.length >= 2) {
+              var oid = decodeOID(seq.children[0].value);
+              var val = decodeUTF8(seq.children[1].value);
+              parts.push(oidName(oid) + "=" + val);
+            }
+          });
+        }
+      });
+      return parts.join(", ");
+    }
+
+    function decodeTime(item) {
+      var str = decodeUTF8(item.value);
+      // UTCTime: YYMMDDHHMMSSZ
+      if (item.tag === 0x17) {
+        var year = parseInt(str.substring(0, 2));
+        year += year >= 50 ? 1900 : 2000;
+        return new Date(
+          year,
+          parseInt(str.substring(2, 4)) - 1,
+          parseInt(str.substring(4, 6)),
+          parseInt(str.substring(6, 8)),
+          parseInt(str.substring(8, 10)),
+          parseInt(str.substring(10, 12)),
+        );
+      }
+      // GeneralizedTime: YYYYMMDDHHMMSSZ
+      if (item.tag === 0x18) {
+        return new Date(
+          parseInt(str.substring(0, 4)),
+          parseInt(str.substring(4, 6)) - 1,
+          parseInt(str.substring(6, 8)),
+          parseInt(str.substring(8, 10)),
+          parseInt(str.substring(10, 12)),
+          parseInt(str.substring(12, 14)),
+        );
+      }
+      return new Date(str);
+    }
+
+    function parsePEM(pem) {
+      var b64 = pem.replace(/-----[A-Z\s]+-----/g, "").replace(/\s+/g, "");
+      // Ensure proper base64 padding
+      while (b64.length % 4 !== 0) b64 += "=";
+      var bin = atob(b64);
+      var bytes = new Uint8Array(bin.length);
+      for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      return bytes;
+    }
+
+    function inspect() {
+      var pem = textarea.value.trim();
+      resultsEl.textContent = "";
+
+      if (!pem.includes("BEGIN CERTIFICATE")) {
+        resultsEl.innerHTML =
+          '<div class="cert-error">Please paste a PEM-encoded certificate (BEGIN CERTIFICATE)</div>';
+        return;
+      }
+
+      try {
+        var der = parsePEM(pem);
+        var tree = decodeDER(Array.from(der), 0, der.length);
+
+        if (!tree || !tree[0] || !tree[0].children) {
+          throw new Error("Invalid certificate structure");
+        }
+
+        var cert = tree[0].children;
+        var tbsCert = cert[0].children;
+
+        if (!tbsCert || tbsCert.length < 6) {
+          throw new Error("Invalid TBS certificate");
+        }
+
+        // Parse fields
+        var idx = 0;
+
+        // Version (explicit tag [0])
+        var version = 1;
+        if (tbsCert[idx].tagClass === 2 && tbsCert[idx].tagNum === 0) {
+          var versionChildren = decodeDER(
+            tbsCert[idx].value,
+            0,
+            tbsCert[idx].value.length,
+          );
+          if (versionChildren && versionChildren[0]) {
+            version = versionChildren[0].value[0] + 1;
+          }
+          idx++;
+        }
+
+        // Serial Number
+        var serialHex = bytesToHex(tbsCert[idx].value, ":");
+        idx++;
+
+        // Signature Algorithm
+        var sigAlgOID = decodeOID(tbsCert[idx].children[0].value);
+        idx++;
+
+        // Issuer
+        var issuer = decodeName(tbsCert[idx].children);
+        idx++;
+
+        // Validity
+        var notBefore = decodeTime(tbsCert[idx].children[0]);
+        var notAfter = decodeTime(tbsCert[idx].children[1]);
+        idx++;
+
+        // Subject
+        var subject = decodeName(tbsCert[idx].children);
+        idx++;
+
+        // Subject Public Key Info
+        var keyAlgOID = decodeOID(tbsCert[idx].children[0].children[0].value);
+        var keyAlgName = oidName(keyAlgOID);
+
+        var keyBits = "Unknown";
+        if (keyAlgName === "RSA") {
+          var pubKeyData = decodeBitString(tbsCert[idx].children[1].value);
+          var pubKeyTree = decodeDER(pubKeyData, 0, pubKeyData.length);
+          if (pubKeyTree && pubKeyTree[0] && pubKeyTree[0].children) {
+            var modulusBytes = pubKeyTree[0].children[0].value;
+            keyBits =
+              (modulusBytes.length - (modulusBytes[0] === 0 ? 1 : 0)) * 8 +
+              " bits";
+          }
+        } else if (keyAlgName === "EC") {
+          if (tbsCert[idx].children[0].children.length > 1) {
+            var curveOID = decodeOID(
+              tbsCert[idx].children[0].children[1].value,
+            );
+            keyBits = oidName(curveOID);
+          }
+        }
+        idx++;
+
+        // Check validity
+        var now = new Date();
+        var isValid = now >= notBefore && now <= notAfter;
+        var daysLeft = Math.ceil((notAfter - now) / (1000 * 60 * 60 * 24));
+        var isExpiring = isValid && daysLeft <= 30;
+
+        // Build result
+        var sections = [];
+
+        // Status
+        var statusClass = isValid
+          ? isExpiring
+            ? "cert-status-warning"
+            : "cert-status-valid"
+          : "cert-status-expired";
+        var statusText = isValid
+          ? isExpiring
+            ? "Valid (" + daysLeft + " days remaining)"
+            : "Valid"
+          : "Expired";
+        sections.push({
+          title: "Status",
+          items: [
+            { label: "Certificate", value: statusText, cls: statusClass },
+          ],
+        });
+
+        // Subject
+        sections.push({
+          title: "Subject",
+          items: [{ label: "Distinguished Name", value: subject }],
+        });
+
+        // Issuer
+        sections.push({
+          title: "Issuer",
+          items: [
+            { label: "Distinguished Name", value: issuer },
+            { label: "Self-Signed", value: subject === issuer ? "Yes" : "No" },
+          ],
+        });
+
+        // Validity
+        sections.push({
+          title: "Validity",
+          items: [
+            { label: "Not Before", value: notBefore.toUTCString() },
+            { label: "Not After", value: notAfter.toUTCString() },
+            {
+              label: "Days Remaining",
+              value: isValid ? String(daysLeft) : "Expired",
+            },
+          ],
+        });
+
+        // Key Info
+        sections.push({
+          title: "Public Key",
+          items: [
+            { label: "Algorithm", value: keyAlgName },
+            { label: "Key Size / Curve", value: keyBits },
+            { label: "Signature Algorithm", value: oidName(sigAlgOID) },
+          ],
+        });
+
+        // Details
+        sections.push({
+          title: "Details",
+          items: [
+            { label: "Version", value: "v" + version },
+            { label: "Serial Number", value: serialHex },
+          ],
+        });
+
+        // Render
+        sections.forEach(function (section) {
+          var card = document.createElement("div");
+          card.className = "cert-section";
+
+          var heading = document.createElement("div");
+          heading.className = "cert-section-heading";
+          heading.textContent = section.title;
+          card.appendChild(heading);
+
+          section.items.forEach(function (item) {
+            var row = document.createElement("div");
+            row.className = "cert-row";
+
+            var label = document.createElement("span");
+            label.className = "cert-row-label";
+            label.textContent = item.label;
+
+            var value = document.createElement("span");
+            value.className =
+              "cert-row-value" + (item.cls ? " " + item.cls : "");
+            value.textContent = item.value;
+
+            row.appendChild(label);
+            row.appendChild(value);
+            card.appendChild(row);
+          });
+
+          resultsEl.appendChild(card);
+        });
+      } catch (e) {
+        resultsEl.innerHTML =
+          '<div class="cert-error">Error parsing certificate: ' +
+          (e.message || "Unknown error") +
+          "</div>";
+      }
+    }
+
+    inspectBtn.addEventListener("click", inspect);
+
+    // Auto-inspect on load
+    inspect();
+  })();
+</script>
+
+<style>
+  .cert-inspector {
+    margin: 1.5rem 0;
+    overflow: hidden;
+    background: var(--color-bg-subtle);
+    border: var(--border-1);
+    border-radius: var(--radius-md);
+  }
+
+  .cert-title {
+    padding: 1rem 1.25rem;
+    font-size: 1.1rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-heading);
+    background: var(--color-bg-secondary);
+    border-bottom: var(--border-1);
+  }
+
+  .cert-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    padding: 1.25rem;
+  }
+
+  .cert-input-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .cert-label {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    font-size: 0.85rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .cert-label span {
+    width: 18px;
+    height: 18px;
+  }
+
+  .cert-textarea {
+    width: 100%;
+    min-height: 120px;
+    padding: 0.875rem;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    line-height: 1.5;
+    color: var(--color-text);
+    resize: vertical;
+    background: var(--color-bg);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+    transition: border-color 0.15s;
+  }
+
+  .cert-textarea:focus {
+    outline: none;
+    border-color: var(--color-primary);
+  }
+
+  .cert-inspect-btn {
+    display: flex;
+    gap: 0.375rem;
+    align-items: center;
+    align-self: flex-start;
+    padding: 0.625rem 1.25rem;
+    font-size: 0.9rem;
+    font-weight: var(--fw-medium);
+    color: #fff;
+    cursor: pointer;
+    background: var(--color-primary);
+    border: none;
+    border-radius: var(--radius-sm);
+    transition: opacity 0.15s;
+  }
+
+  .cert-inspect-btn span {
+    width: 18px;
+    height: 18px;
+  }
+
+  .cert-inspect-btn:hover {
+    opacity: 90%;
+  }
+
+  /* Results */
+  .cert-results :global(.cert-error) {
+    padding: 1rem;
+    font-size: 0.85rem;
+    color: #ef4444;
+    background: rgb(239 68 68 / 10%);
+    border-radius: var(--radius-sm);
+  }
+
+  .cert-results :global(.cert-section) {
+    margin-bottom: 0.75rem;
+    overflow: hidden;
+    background: var(--color-bg-secondary);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+  }
+
+  .cert-results :global(.cert-section-heading) {
+    padding: 0.5rem 0.875rem;
+    font-size: 0.8rem;
+    font-weight: var(--fw-bold);
+    color: var(--color-text-heading);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    background: var(--color-bg);
+    border-bottom: var(--border-1);
+  }
+
+  .cert-results :global(.cert-row) {
+    display: flex;
+    gap: 0.75rem;
+    align-items: baseline;
+    padding: 0.5rem 0.875rem;
+    border-bottom: 1px solid var(--color-border, rgb(0 0 0 / 5%));
+  }
+
+  .cert-results :global(.cert-row:last-child) {
+    border-bottom: none;
+  }
+
+  .cert-results :global(.cert-row-label) {
+    flex: 0 0 10rem;
+    font-size: 0.75rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-muted);
+  }
+
+  .cert-results :global(.cert-row-value) {
+    flex: 1;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--color-text);
+    word-break: break-all;
+  }
+
+  .cert-results :global(.cert-status-valid) {
+    font-weight: var(--fw-bold);
+    color: #047857;
+  }
+
+  .cert-results :global(.cert-status-warning) {
+    font-weight: var(--fw-bold);
+    color: #b45309;
+  }
+
+  .cert-results :global(.cert-status-expired) {
+    font-weight: var(--fw-bold);
+    color: #b91c1c;
+  }
+
+  @media (width <= 640px) {
+    .cert-results :global(.cert-row) {
+      flex-direction: column;
+      gap: 0.125rem;
+    }
+
+    .cert-results :global(.cert-row-label) {
+      flex: none;
+    }
+  }
+</style>

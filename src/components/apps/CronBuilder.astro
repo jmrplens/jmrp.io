@@ -1,0 +1,759 @@
+---
+/**
+ * CronBuilder Component
+ * Visual cron expression builder with next executions preview.
+ *
+ * Usage:
+ * <CronBuilder title="Cron Expression Builder" />
+ */
+
+interface Props {
+  title?: string;
+}
+
+const { title = "Cron Expression Builder" } = Astro.props;
+const uniqueId = `cron-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
+
+const presets = [
+  { label: "Every minute", value: "* * * * *" },
+  { label: "Every 5 minutes", value: "*/5 * * * *" },
+  { label: "Every hour", value: "0 * * * *" },
+  { label: "Daily at midnight", value: "0 0 * * *" },
+  { label: "Daily at 3 AM", value: "0 3 * * *" },
+  { label: "Weekly (Sunday)", value: "0 0 * * 0" },
+  { label: "Monthly (1st)", value: "0 0 1 * *" },
+  { label: "Yearly (Jan 1)", value: "0 0 1 1 *" },
+  { label: "Weekdays at 9 AM", value: "0 9 * * 1-5" },
+  { label: "Every 6 hours", value: "0 */6 * * *" },
+];
+
+const fields = [
+  { id: "minute", label: "Minute", min: 0, max: 59 },
+  { id: "hour", label: "Hour", min: 0, max: 23 },
+  { id: "day", label: "Day (Month)", min: 1, max: 31 },
+  { id: "month", label: "Month", min: 1, max: 12 },
+  { id: "weekday", label: "Day (Week)", min: 0, max: 7 },
+];
+
+const monthNames = [
+  "",
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
+const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+---
+
+<div
+  class="cron-builder"
+  data-cron-id={uniqueId}
+>
+  {title && <div class="cron-title">{title}</div>}
+
+  <div class="cron-layout">
+    {/* Expression input */}
+    <div class="cron-expr-section">
+      <label
+        class="cron-label"
+        for={`${uniqueId}-expr`}
+      >
+        <span
+          class="i-mdi:timer-outline"
+          aria-hidden="true"
+        ></span>
+        Cron Expression
+      </label>
+      <div class="cron-expr-row">
+        <input
+          type="text"
+          id={`${uniqueId}-expr`}
+          class="cron-expr-input"
+          value="0 3 * * *"
+          spellcheck="false"
+          autocomplete="off"
+          aria-label="Cron expression"
+        />
+      </div>
+
+      {/* Field labels */}
+      <div class="cron-field-labels">
+        {fields.map((f) => <span class="cron-field-label">{f.label}</span>)}
+      </div>
+    </div>
+
+    {/* Presets */}
+    <div class="cron-presets">
+      <span class="cron-presets-header">
+        <span
+          class="i-mdi:flash"
+          aria-hidden="true"
+        ></span>
+        Common Schedules
+      </span>
+      <div class="cron-presets-grid">
+        {
+          presets.map((p) => (
+            <button
+              type="button"
+              class="cron-preset-btn"
+              data-value={p.value}
+            >
+              <code>{p.value}</code>
+              <span>{p.label}</span>
+            </button>
+          ))
+        }
+      </div>
+    </div>
+
+    {/* Human readable */}
+    <div class="cron-human">
+      <span
+        class="i-mdi:translate"
+        aria-hidden="true"
+      ></span>
+      <span id={`${uniqueId}-human`}>Every day at 3:00 AM</span>
+    </div>
+
+    {/* Next executions */}
+    <div class="cron-next-section">
+      <div class="cron-next-header">
+        <span
+          class="i-mdi:calendar-clock"
+          aria-hidden="true"
+        ></span>
+        <span>Next Executions</span>
+      </div>
+      {
+        /* eslint-disable astro/jsx-a11y/no-noninteractive-tabindex -- scrollable region requires keyboard access */
+      }
+      <div
+        class="cron-next-list"
+        id={`${uniqueId}-next`}
+        tabindex="0"
+        role="region"
+        aria-label="Next scheduled executions"
+      >
+      </div>
+      {/* eslint-enable astro/jsx-a11y/no-noninteractive-tabindex */}
+    </div>
+
+    {/* Error */}
+    <div
+      class="cron-error"
+      id={`${uniqueId}-error`}
+      hidden
+    >
+      <span
+        class="i-mdi:alert-circle-outline"
+        aria-hidden="true"
+      ></span>
+      <span id={`${uniqueId}-error-text`}></span>
+    </div>
+  </div>
+</div>
+
+<script is:inline define:vars={{ uniqueId }}>
+  (function () {
+    const container = document.querySelector(`[data-cron-id="${uniqueId}"]`);
+    if (!container) return;
+
+    const exprInput = document.getElementById(`${uniqueId}-expr`);
+    const humanEl = document.getElementById(`${uniqueId}-human`);
+    const nextList = document.getElementById(`${uniqueId}-next`);
+    const errorEl = document.getElementById(`${uniqueId}-error`);
+    const errorText = document.getElementById(`${uniqueId}-error-text`);
+    const presetBtns = container.querySelectorAll(".cron-preset-btn");
+
+    if (!exprInput) return;
+
+    var dayNames = [
+      "Sunday",
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday",
+      "Sunday",
+    ];
+    var monthNames = [
+      "",
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
+    ];
+
+    function parseCronField(field, min, max) {
+      var values = [];
+      var parts = field.split(",");
+
+      for (var i = 0; i < parts.length; i++) {
+        var part = parts[i].trim();
+
+        // Step: */n or n-m/s
+        var stepMatch = part.match(/^(.+)\/(\d+)$/);
+        var step = 1;
+        if (stepMatch) {
+          step = parseInt(stepMatch[2]);
+          part = stepMatch[1];
+        }
+
+        if (part === "*") {
+          for (var v = min; v <= max; v += step) values.push(v);
+        } else if (part.includes("-")) {
+          var range = part.split("-");
+          var start = parseInt(range[0]);
+          var end = parseInt(range[1]);
+          if (isNaN(start) || isNaN(end)) return null;
+          for (var v = start; v <= end; v += step) values.push(v);
+        } else {
+          var val = parseInt(part);
+          if (isNaN(val)) return null;
+          if (step > 1) {
+            for (var v = val; v <= max; v += step) values.push(v);
+          } else {
+            values.push(val);
+          }
+        }
+      }
+
+      // Validate range
+      for (var i = 0; i < values.length; i++) {
+        if (values[i] < min || values[i] > max) return null;
+      }
+
+      return values.length > 0 ? values : null;
+    }
+
+    function parseCron(expr) {
+      var parts = expr.trim().split(/\s+/);
+      if (parts.length !== 5) return null;
+
+      var minutes = parseCronField(parts[0], 0, 59);
+      var hours = parseCronField(parts[1], 0, 23);
+      var days = parseCronField(parts[2], 1, 31);
+      var months = parseCronField(parts[3], 1, 12);
+      var weekdays = parseCronField(parts[4], 0, 7);
+
+      if (!minutes || !hours || !days || !months || !weekdays) return null;
+
+      // Normalize weekday 7 to 0 (both mean Sunday)
+      weekdays = weekdays.map(function (d) {
+        return d === 7 ? 0 : d;
+      });
+      weekdays = Array.from(new Set(weekdays)).sort(function (a, b) {
+        return a - b;
+      });
+
+      return {
+        minutes: minutes,
+        hours: hours,
+        days: days,
+        months: months,
+        weekdays: weekdays,
+        raw: parts,
+      };
+    }
+
+    function getNextExecutions(cron, count) {
+      var results = [];
+      var date = new Date();
+      date.setSeconds(0, 0);
+      date.setMinutes(date.getMinutes() + 1);
+
+      var allDays = cron.raw[2] === "*";
+      var allWeekdays = cron.raw[4] === "*";
+      var maxIterations = 525960; // ~1 year of minutes
+
+      for (
+        var iter = 0;
+        iter < maxIterations && results.length < count;
+        iter++
+      ) {
+        var month = date.getMonth() + 1;
+        var day = date.getDate();
+        var weekday = date.getDay();
+        var hour = date.getHours();
+        var minute = date.getMinutes();
+
+        var monthMatch = cron.months.includes(month);
+        var minuteMatch = cron.minutes.includes(minute);
+        var hourMatch = cron.hours.includes(hour);
+
+        var dayMatch;
+        if (allDays && allWeekdays) {
+          dayMatch = true;
+        } else if (allDays) {
+          dayMatch = cron.weekdays.includes(weekday);
+        } else if (allWeekdays) {
+          dayMatch = cron.days.includes(day);
+        } else {
+          // When both are specified, either match counts (OR logic)
+          dayMatch = cron.days.includes(day) || cron.weekdays.includes(weekday);
+        }
+
+        if (monthMatch && dayMatch && hourMatch && minuteMatch) {
+          results.push(new Date(date));
+        }
+
+        date.setMinutes(date.getMinutes() + 1);
+      }
+
+      return results;
+    }
+
+    function toHumanReadable(cron) {
+      var parts = cron.raw;
+      var desc = "";
+
+      // Simple patterns
+      if (parts.join(" ") === "* * * * *") return "Every minute";
+      if (
+        parts[0].startsWith("*/") &&
+        parts[1] === "*" &&
+        parts[2] === "*" &&
+        parts[3] === "*" &&
+        parts[4] === "*"
+      ) {
+        return "Every " + parts[0].slice(2) + " minutes";
+      }
+
+      // Hour patterns
+      if (parts[0] !== "*" && parts[1] === "*" && parts[2] === "*") {
+        desc = "Every hour at minute " + parts[0];
+      } else if (parts[1] !== "*") {
+        var hours = cron.hours;
+        var minutes = cron.minutes;
+        var timeStr = hours
+          .map(function (h) {
+            return minutes
+              .map(function (m) {
+                return (
+                  String(h).padStart(2, "0") + ":" + String(m).padStart(2, "0")
+                );
+              })
+              .join(", ");
+          })
+          .join(", ");
+
+        desc = "At " + timeStr;
+      } else if (parts[1].startsWith("*/")) {
+        desc = "Every " + parts[1].slice(2) + " hours";
+      } else {
+        desc = "At minute " + parts[0];
+      }
+
+      // Day of month
+      if (parts[2] !== "*") {
+        desc += " on day " + parts[2] + " of the month";
+      }
+
+      // Month
+      if (parts[3] !== "*") {
+        var months = cron.months.map(function (m) {
+          return monthNames[m];
+        });
+        desc += " in " + months.join(", ");
+      }
+
+      // Weekday
+      if (parts[4] !== "*") {
+        var days = cron.weekdays.map(function (d) {
+          return dayNames[d];
+        });
+        desc += " on " + days.join(", ");
+      }
+
+      return desc || "Custom schedule";
+    }
+
+    function update() {
+      if (errorEl) errorEl.hidden = true;
+
+      var expr = exprInput.value.trim();
+      if (!expr) {
+        if (humanEl) humanEl.textContent = "Enter a cron expression";
+        if (nextList) nextList.textContent = "";
+        return;
+      }
+
+      var cron = parseCron(expr);
+      if (!cron) {
+        if (errorEl && errorText) {
+          errorText.textContent =
+            "Invalid cron expression. Use format: minute hour day month weekday";
+          errorEl.hidden = false;
+        }
+        if (humanEl) humanEl.textContent = "Invalid expression";
+        if (nextList) nextList.textContent = "";
+        return;
+      }
+
+      // Human readable
+      if (humanEl) humanEl.textContent = toHumanReadable(cron);
+
+      // Next executions
+      if (nextList) {
+        nextList.textContent = "";
+        var executions = getNextExecutions(cron, 10);
+
+        if (executions.length === 0) {
+          nextList.textContent = "No executions found in the next year";
+          return;
+        }
+
+        executions.forEach(function (date, idx) {
+          var item = document.createElement("div");
+          item.className = "cron-next-item";
+
+          var num = document.createElement("span");
+          num.className = "cron-next-num";
+          num.textContent = "#" + (idx + 1);
+
+          var dateStr = document.createElement("span");
+          dateStr.className = "cron-next-date";
+
+          var options = {
+            weekday: "short",
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: false,
+          };
+          dateStr.textContent = date.toLocaleDateString(undefined, options);
+
+          var relative = document.createElement("span");
+          relative.className = "cron-next-relative";
+          var diff = date - new Date();
+          var mins = Math.floor(diff / 60000);
+          var hrs = Math.floor(mins / 60);
+          var days = Math.floor(hrs / 24);
+
+          if (days > 0) {
+            relative.textContent = "in " + days + "d " + (hrs % 24) + "h";
+          } else if (hrs > 0) {
+            relative.textContent = "in " + hrs + "h " + (mins % 60) + "m";
+          } else {
+            relative.textContent = "in " + mins + "m";
+          }
+
+          item.appendChild(num);
+          item.appendChild(dateStr);
+          item.appendChild(relative);
+          nextList.appendChild(item);
+        });
+      }
+    }
+
+    // Presets
+    presetBtns.forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        exprInput.value = btn.dataset.value;
+        update();
+      });
+    });
+
+    // Input
+    var timeout;
+    exprInput.addEventListener("input", function () {
+      clearTimeout(timeout);
+      timeout = setTimeout(update, 200);
+    });
+
+    update();
+  })();
+</script>
+
+<style>
+  .cron-builder {
+    margin: 1.5rem 0;
+    overflow: hidden;
+    background: var(--color-bg-subtle);
+    border: var(--border-1);
+    border-radius: var(--radius-md);
+  }
+
+  .cron-title {
+    padding: 1rem 1.25rem;
+    font-size: 1.1rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-heading);
+    background: var(--color-bg-secondary);
+    border-bottom: var(--border-1);
+  }
+
+  .cron-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    padding: 1.25rem;
+  }
+
+  .cron-expr-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .cron-label {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    font-size: 0.85rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .cron-label span[class^="i-"] {
+    width: 18px;
+    height: 18px;
+  }
+
+  .cron-expr-row {
+    display: flex;
+    gap: 0;
+  }
+
+  .cron-expr-input {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    font-family: var(--font-mono);
+    font-size: 1.25rem;
+    font-weight: var(--fw-medium);
+    color: var(--color-text);
+    text-align: center;
+    letter-spacing: 0.15em;
+    background: var(--color-bg);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+    transition: border-color 0.15s;
+  }
+
+  .cron-expr-input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+  }
+
+  .cron-field-labels {
+    display: flex;
+    justify-content: space-around;
+    padding: 0 1rem;
+  }
+
+  .cron-field-label {
+    flex: 1;
+    font-size: 0.65rem;
+    font-weight: var(--fw-medium);
+    color: var(--color-text-muted);
+    text-align: center;
+    text-transform: uppercase;
+  }
+
+  /* Presets */
+  .cron-presets {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .cron-presets-header {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    font-size: 0.8rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .cron-presets-header span[class^="i-"] {
+    width: 16px;
+    height: 16px;
+    color: var(--color-primary);
+  }
+
+  .cron-presets-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 0.375rem;
+  }
+
+  .cron-preset-btn {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8rem;
+    color: var(--color-text);
+    text-align: left;
+    cursor: pointer;
+    background: var(--color-bg-secondary);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+    transition: all 0.15s;
+  }
+
+  .cron-preset-btn:hover {
+    border-color: var(--color-primary);
+  }
+
+  .cron-preset-btn code {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--color-primary);
+    white-space: nowrap;
+  }
+
+  .cron-preset-btn span {
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+  }
+
+  /* Human readable */
+  .cron-human {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    padding: 0.875rem 1rem;
+    font-size: 1rem;
+    font-weight: var(--fw-medium);
+    color: var(--color-text-heading);
+    background: rgb(from var(--color-primary) r g b / 8%);
+    border: 1px solid rgb(from var(--color-primary) r g b / 20%);
+    border-radius: var(--radius-sm);
+  }
+
+  .cron-human span[class^="i-"] {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    color: var(--color-primary);
+  }
+
+  /* Next executions */
+  .cron-next-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .cron-next-header {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    font-size: 0.85rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .cron-next-header span[class^="i-"] {
+    width: 18px;
+    height: 18px;
+  }
+
+  .cron-next-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    max-height: 400px;
+    overflow-y: auto;
+  }
+
+  .cron-next-list :global(.cron-next-item) {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
+    background: var(--color-bg-secondary);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+  }
+
+  .cron-next-list :global(.cron-next-num) {
+    min-width: 2rem;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: var(--fw-bold);
+    color: var(--color-primary);
+  }
+
+  .cron-next-list :global(.cron-next-date) {
+    flex: 1;
+    color: var(--color-text);
+  }
+
+  .cron-next-list :global(.cron-next-relative) {
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+    white-space: nowrap;
+  }
+
+  /* Error */
+  .cron-error {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    padding: 0.625rem 0.75rem;
+    font-size: 0.8rem;
+    color: #b91c1c;
+    background: rgb(239 68 68 / 10%);
+    border: 1px solid rgb(239 68 68 / 30%);
+    border-radius: var(--radius-sm);
+  }
+
+  .cron-error[hidden] {
+    display: none;
+  }
+
+  .cron-error span[class^="i-"] {
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+  }
+
+  @media (width <= 640px) {
+    .cron-layout {
+      padding: 1rem;
+    }
+
+    .cron-expr-input {
+      font-size: 1rem;
+      letter-spacing: 0.1em;
+    }
+
+    .cron-presets-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .cron-field-labels {
+      display: none;
+    }
+  }
+</style>

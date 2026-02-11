@@ -1,0 +1,1590 @@
+---
+/**
+ * NginxConfigGenerator Component
+ * Visual Nginx server block builder with presets for common configurations.
+ * Includes upstream blocks, QUIC/HTTP3, rate limiting, tarpit, access control,
+ * OCSP stapling, Brotli, CSP integration, and modern best practices.
+ *
+ * Usage:
+ * <NginxConfigGenerator title="Nginx Config Generator" />
+ */
+
+interface Props {
+  title?: string;
+}
+
+const { title = "Nginx Config Generator" } = Astro.props;
+const uniqueId = `ngx-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
+---
+
+<div
+  class="ngx-generator"
+  data-ngx-id={uniqueId}
+>
+  {title && <div class="ngx-title">{title}</div>}
+
+  <div class="ngx-layout">
+    {/* Preset */}
+    <div class="ngx-section">
+      <div class="ngx-section-label">
+        <span
+          class="i-mdi:lightning-bolt"
+          aria-hidden="true"
+        ></span>
+        Quick Preset
+      </div>
+      <div class="ngx-presets">
+        <button
+          type="button"
+          class="ngx-preset-btn ngx-preset-active"
+          data-preset="static"
+          >Static Site</button
+        >
+        <button
+          type="button"
+          class="ngx-preset-btn"
+          data-preset="reverse-proxy"
+          >Reverse Proxy</button
+        >
+        <button
+          type="button"
+          class="ngx-preset-btn"
+          data-preset="spa"
+          >SPA / React</button
+        >
+        <button
+          type="button"
+          class="ngx-preset-btn"
+          data-preset="php"
+          >PHP-FPM</button
+        >
+        <button
+          type="button"
+          class="ngx-preset-btn"
+          data-preset="api"
+          >API Server</button
+        >
+        <button
+          type="button"
+          class="ngx-preset-btn"
+          data-preset="hardened"
+          >Hardened</button
+        >
+      </div>
+    </div>
+
+    <div class="ngx-grid">
+      {/* Basic Settings */}
+      <div class="ngx-section">
+        <div class="ngx-section-label">
+          <span
+            class="i-mdi:server"
+            aria-hidden="true"
+          ></span>
+          Server
+        </div>
+        <div class="ngx-field">
+          <label
+            class="ngx-label"
+            for={`${uniqueId}-domain`}
+            >Domain</label
+          >
+          <input
+            id={`${uniqueId}-domain`}
+            class="ngx-input"
+            type="text"
+            value="example.com"
+            placeholder="example.com"
+          />
+        </div>
+        <div class="ngx-field">
+          <label
+            class="ngx-label"
+            for={`${uniqueId}-root`}
+            >Root Path</label
+          >
+          <input
+            id={`${uniqueId}-root`}
+            class="ngx-input"
+            type="text"
+            value="/var/www/html"
+            placeholder="/var/www/html"
+          />
+        </div>
+        <div class="ngx-field">
+          <label
+            class="ngx-label"
+            for={`${uniqueId}-index`}
+            >Index Files</label
+          >
+          <input
+            id={`${uniqueId}-index`}
+            class="ngx-input"
+            type="text"
+            value="index.html index.htm"
+            placeholder="index.html index.htm"
+          />
+        </div>
+        <div class="ngx-toggle-row">
+          <label class="ngx-toggle-label">
+            <input
+              type="checkbox"
+              id={`${uniqueId}-server-tokens`}
+              checked
+            />
+            <span>Hide server version (server_tokens off)</span>
+          </label>
+        </div>
+      </div>
+
+      {/* SSL */}
+      <div class="ngx-section">
+        <div class="ngx-section-label">
+          <span
+            class="i-mdi:shield-lock-outline"
+            aria-hidden="true"
+          ></span>
+          SSL / TLS
+        </div>
+        <div class="ngx-toggle-row">
+          <label class="ngx-toggle-label">
+            <input
+              type="checkbox"
+              id={`${uniqueId}-ssl`}
+              checked
+            />
+            <span>Enable HTTPS</span>
+          </label>
+        </div>
+        <div
+          class="ngx-ssl-fields"
+          id={`${uniqueId}-ssl-fields`}
+        >
+          <div class="ngx-field">
+            <label
+              class="ngx-label"
+              for={`${uniqueId}-cert`}
+              >Certificate</label
+            >
+            <input
+              id={`${uniqueId}-cert`}
+              class="ngx-input"
+              type="text"
+              value="/etc/letsencrypt/live/example.com/fullchain.pem"
+            />
+          </div>
+          <div class="ngx-field">
+            <label
+              class="ngx-label"
+              for={`${uniqueId}-key`}
+              >Private Key</label
+            >
+            <input
+              id={`${uniqueId}-key`}
+              class="ngx-input"
+              type="text"
+              value="/etc/letsencrypt/live/example.com/privkey.pem"
+            />
+          </div>
+          <div class="ngx-toggle-row">
+            <label class="ngx-toggle-label">
+              <input
+                type="checkbox"
+                id={`${uniqueId}-http2`}
+                checked
+              />
+              <span>HTTP/2</span>
+            </label>
+          </div>
+          <div class="ngx-toggle-row">
+            <label class="ngx-toggle-label">
+              <input
+                type="checkbox"
+                id={`${uniqueId}-http3`}
+              />
+              <span>QUIC / HTTP/3</span>
+            </label>
+          </div>
+          <div class="ngx-toggle-row">
+            <label class="ngx-toggle-label">
+              <input
+                type="checkbox"
+                id={`${uniqueId}-hsts`}
+                checked
+              />
+              <span>HSTS Header</span>
+            </label>
+          </div>
+          <div class="ngx-toggle-row">
+            <label class="ngx-toggle-label">
+              <input
+                type="checkbox"
+                id={`${uniqueId}-ocsp`}
+                checked
+              />
+              <span>OCSP Stapling</span>
+            </label>
+          </div>
+          <div class="ngx-toggle-row">
+            <label class="ngx-toggle-label">
+              <input
+                type="checkbox"
+                id={`${uniqueId}-ssl-early`}
+              />
+              <span>SSL Early Data (0-RTT)</span>
+            </label>
+          </div>
+          <div class="ngx-toggle-row">
+            <label class="ngx-toggle-label">
+              <input
+                type="checkbox"
+                id={`${uniqueId}-redirect-http`}
+                checked
+              />
+              <span>Redirect HTTP &rarr; HTTPS</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      {/* Proxy */}
+      <div class="ngx-section">
+        <div class="ngx-section-label">
+          <span
+            class="i-mdi:arrow-right-bold"
+            aria-hidden="true"
+          ></span>
+          Reverse Proxy
+        </div>
+        <div class="ngx-toggle-row">
+          <label class="ngx-toggle-label">
+            <input
+              type="checkbox"
+              id={`${uniqueId}-proxy`}
+            />
+            <span>Enable Reverse Proxy</span>
+          </label>
+        </div>
+        <div
+          class="ngx-proxy-fields"
+          id={`${uniqueId}-proxy-fields`}
+          hidden
+        >
+          <div class="ngx-field">
+            <label
+              class="ngx-label"
+              for={`${uniqueId}-upstream-name`}
+              >Upstream Name</label
+            >
+            <input
+              id={`${uniqueId}-upstream-name`}
+              class="ngx-input"
+              type="text"
+              value="backend_app"
+              placeholder="backend_app"
+            />
+          </div>
+          <div class="ngx-field">
+            <label
+              class="ngx-label"
+              for={`${uniqueId}-upstream`}
+              >Backend Server(s)</label
+            >
+            <input
+              id={`${uniqueId}-upstream`}
+              class="ngx-input"
+              type="text"
+              value="127.0.0.1:3000"
+              placeholder="127.0.0.1:3000"
+            />
+            <span class="ngx-field-hint"
+              >Comma-separated for multiple: 127.0.0.1:3000, 127.0.0.1:3001</span
+            >
+          </div>
+          <div class="ngx-field">
+            <label
+              class="ngx-label"
+              for={`${uniqueId}-lb-method`}
+              >Load Balancing</label
+            >
+            <select
+              id={`${uniqueId}-lb-method`}
+              class="ngx-select"
+            >
+              <option value="round-robin">Round Robin (default)</option>
+              <option value="least_conn">Least Connections</option>
+              <option value="ip_hash">IP Hash (sticky)</option>
+            </select>
+          </div>
+          <div class="ngx-toggle-row">
+            <label class="ngx-toggle-label">
+              <input
+                type="checkbox"
+                id={`${uniqueId}-keepalive`}
+                checked
+              />
+              <span>Keepalive connections (64)</span>
+            </label>
+          </div>
+          <div class="ngx-toggle-row">
+            <label class="ngx-toggle-label">
+              <input
+                type="checkbox"
+                id={`${uniqueId}-ws`}
+              />
+              <span>WebSocket Support</span>
+            </label>
+          </div>
+          <div class="ngx-toggle-row">
+            <label class="ngx-toggle-label">
+              <input
+                type="checkbox"
+                id={`${uniqueId}-proxy-buffering`}
+              />
+              <span>Proxy Buffering</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      {/* Security Headers */}
+      <div class="ngx-section">
+        <div class="ngx-section-label">
+          <span
+            class="i-mdi:security"
+            aria-hidden="true"
+          ></span>
+          Security Headers
+        </div>
+        <div class="ngx-toggle-row">
+          <label class="ngx-toggle-label">
+            <input
+              type="checkbox"
+              id={`${uniqueId}-sec-xframe`}
+              checked
+            />
+            <span>X-Frame-Options</span>
+          </label>
+        </div>
+        <div class="ngx-toggle-row">
+          <label class="ngx-toggle-label">
+            <input
+              type="checkbox"
+              id={`${uniqueId}-sec-xcto`}
+              checked
+            />
+            <span>X-Content-Type-Options</span>
+          </label>
+        </div>
+        <div class="ngx-toggle-row">
+          <label class="ngx-toggle-label">
+            <input
+              type="checkbox"
+              id={`${uniqueId}-sec-referrer`}
+              checked
+            />
+            <span>Referrer-Policy</span>
+          </label>
+        </div>
+        <div class="ngx-toggle-row">
+          <label class="ngx-toggle-label">
+            <input
+              type="checkbox"
+              id={`${uniqueId}-sec-permissions`}
+            />
+            <span>Permissions-Policy</span>
+          </label>
+        </div>
+        <div class="ngx-toggle-row">
+          <label class="ngx-toggle-label">
+            <input
+              type="checkbox"
+              id={`${uniqueId}-sec-coop`}
+            />
+            <span>Cross-Origin Policies (COOP/CORP/COEP)</span>
+          </label>
+        </div>
+        <div class="ngx-toggle-row">
+          <label class="ngx-toggle-label">
+            <input
+              type="checkbox"
+              id={`${uniqueId}-sec-csp`}
+            />
+            <span>Content-Security-Policy (basic)</span>
+          </label>
+        </div>
+        <div
+          class="ngx-info-hint"
+          id={`${uniqueId}-csp-hint`}
+          hidden
+        >
+          <span
+            class="i-mdi:information-outline"
+            aria-hidden="true"
+          ></span>
+          <span
+            >For advanced CSP configuration, use the
+            <a href="/tools/csp-builder/">CSP Policy Builder</a>
+            to generate a complete policy with presets and security ratings.</span
+          >
+        </div>
+      </div>
+
+      {/* Access Control */}
+      <div class="ngx-section">
+        <div class="ngx-section-label">
+          <span
+            class="i-mdi:shield-alert-outline"
+            aria-hidden="true"
+          ></span>
+          Access Control
+        </div>
+        <div class="ngx-toggle-row">
+          <label class="ngx-toggle-label">
+            <input
+              type="checkbox"
+              id={`${uniqueId}-rate-limit`}
+            />
+            <span>Rate Limiting</span>
+          </label>
+        </div>
+        <div
+          class="ngx-rate-fields"
+          id={`${uniqueId}-rate-fields`}
+          hidden
+        >
+          <div class="ngx-field">
+            <label
+              class="ngx-label"
+              for={`${uniqueId}-rate-value`}
+              >Rate (requests/second)</label
+            >
+            <input
+              id={`${uniqueId}-rate-value`}
+              class="ngx-input"
+              type="number"
+              min="1"
+              max="1000"
+              value="10"
+            />
+          </div>
+          <div class="ngx-field">
+            <label
+              class="ngx-label"
+              for={`${uniqueId}-rate-burst`}
+              >Burst</label
+            >
+            <input
+              id={`${uniqueId}-rate-burst`}
+              class="ngx-input"
+              type="number"
+              min="0"
+              max="500"
+              value="20"
+            />
+          </div>
+        </div>
+        <div class="ngx-toggle-row">
+          <label class="ngx-toggle-label">
+            <input
+              type="checkbox"
+              id={`${uniqueId}-block-hidden`}
+              checked
+            />
+            <span>Block hidden files (.git, .env, .htaccess)</span>
+          </label>
+        </div>
+        <div class="ngx-toggle-row">
+          <label class="ngx-toggle-label">
+            <input
+              type="checkbox"
+              id={`${uniqueId}-block-exploits`}
+            />
+            <span>Block common exploit paths (wp-admin, phpMyAdmin...)</span>
+          </label>
+        </div>
+        <div class="ngx-toggle-row">
+          <label class="ngx-toggle-label">
+            <input
+              type="checkbox"
+              id={`${uniqueId}-tarpit`}
+            />
+            <span>Tarpit blocked requests (slow response)</span>
+          </label>
+        </div>
+        <div
+          class="ngx-info-hint"
+          id={`${uniqueId}-tarpit-hint`}
+          hidden
+        >
+          <span
+            class="i-mdi:information-outline"
+            aria-hidden="true"
+          ></span>
+          <span
+            >Tarpitting returns a slow 444 response to waste attacker resources.
+            See
+            <a href="/blog/implementing-tarpit-nginx/"
+              >Implementing a Tarpit in Nginx</a
+            >
+            for a detailed guide.</span
+          >
+        </div>
+        <div class="ngx-toggle-row">
+          <label class="ngx-toggle-label">
+            <input
+              type="checkbox"
+              id={`${uniqueId}-body-limit`}
+              checked
+            />
+            <span>Client body size limit (16M)</span>
+          </label>
+        </div>
+      </div>
+
+      {/* Performance */}
+      <div class="ngx-section">
+        <div class="ngx-section-label">
+          <span
+            class="i-mdi:speedometer"
+            aria-hidden="true"
+          ></span>
+          Performance
+        </div>
+        <div class="ngx-toggle-row">
+          <label class="ngx-toggle-label">
+            <input
+              type="checkbox"
+              id={`${uniqueId}-gzip`}
+              checked
+            />
+            <span>Gzip Compression</span>
+          </label>
+        </div>
+        <div class="ngx-toggle-row">
+          <label class="ngx-toggle-label">
+            <input
+              type="checkbox"
+              id={`${uniqueId}-brotli`}
+            />
+            <span>Brotli Compression</span>
+          </label>
+        </div>
+        <div class="ngx-toggle-row">
+          <label class="ngx-toggle-label">
+            <input
+              type="checkbox"
+              id={`${uniqueId}-cache`}
+              checked
+            />
+            <span>Static Asset Caching (30d)</span>
+          </label>
+        </div>
+        <div class="ngx-toggle-row">
+          <label class="ngx-toggle-label">
+            <input
+              type="checkbox"
+              id={`${uniqueId}-open-file-cache`}
+            />
+            <span>Open File Cache</span>
+          </label>
+        </div>
+        <div class="ngx-toggle-row">
+          <label class="ngx-toggle-label">
+            <input
+              type="checkbox"
+              id={`${uniqueId}-logs`}
+              checked
+            />
+            <span>Access &amp; Error Logs</span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    {/* Related blog posts */}
+    <div class="ngx-related">
+      <span
+        class="i-mdi:book-open-outline"
+        aria-hidden="true"
+      ></span>
+      <span>Related guides:</span>
+      <a href="/blog/004-enabling-quic-http3-nginx/">QUIC/HTTP3</a>
+      <a href="/blog/implementing-tarpit-nginx/">Tarpit</a>
+      <a href="/blog/003-implementing-content-security-policy-nginx/">CSP</a>
+      <a href="/blog/001-secure-nginx-client-certificates/"
+        >Client Certificates</a
+      >
+    </div>
+
+    {/* Output */}
+    <div class="ngx-output-section">
+      <div class="ngx-output-header">
+        <span class="ngx-output-label">
+          <span
+            class="i-devicon:nginx"
+            aria-hidden="true"
+          ></span>
+          Generated Configuration
+        </span>
+        <button
+          type="button"
+          class="ngx-copy-btn"
+          aria-label="Copy configuration"
+        >
+          <span
+            class="i-mdi:content-copy"
+            aria-hidden="true"
+          ></span>
+          Copy
+        </button>
+      </div>
+      {
+        /* eslint-disable astro/jsx-a11y/no-noninteractive-tabindex -- scrollable region requires keyboard access */
+      }
+      <pre
+        class="ngx-output-code"
+        tabindex="0"
+        role="region"
+        aria-label="Generated Nginx configuration"><code id={`${uniqueId}-output`} /></pre>
+      {/* eslint-enable astro/jsx-a11y/no-noninteractive-tabindex */}
+    </div>
+  </div>
+</div>
+
+<script is:inline define:vars={{ uniqueId }}>
+  (function () {
+    var container = document.querySelector('[data-ngx-id="' + uniqueId + '"]');
+    if (!container) return;
+
+    var el = function (id) {
+      return document.getElementById(uniqueId + "-" + id);
+    };
+
+    var domainInput = el("domain");
+    var rootInput = el("root");
+    var indexInput = el("index");
+    var serverTokensCheck = el("server-tokens");
+    var sslCheck = el("ssl");
+    var sslFields = el("ssl-fields");
+    var certInput = el("cert");
+    var keyInput = el("key");
+    var http2Check = el("http2");
+    var http3Check = el("http3");
+    var hstsCheck = el("hsts");
+    var ocspCheck = el("ocsp");
+    var sslEarlyCheck = el("ssl-early");
+    var redirectCheck = el("redirect-http");
+    var proxyCheck = el("proxy");
+    var proxyFields = el("proxy-fields");
+    var upstreamNameInput = el("upstream-name");
+    var upstreamInput = el("upstream");
+    var lbMethodSelect = el("lb-method");
+    var keepaliveCheck = el("keepalive");
+    var wsCheck = el("ws");
+    var proxyBufferingCheck = el("proxy-buffering");
+    var xframeCheck = el("sec-xframe");
+    var xctoCheck = el("sec-xcto");
+    var referrerCheck = el("sec-referrer");
+    var permissionsCheck = el("sec-permissions");
+    var coopCheck = el("sec-coop");
+    var cspCheck = el("sec-csp");
+    var cspHint = el("csp-hint");
+    var rateLimitCheck = el("rate-limit");
+    var rateFields = el("rate-fields");
+    var rateValue = el("rate-value");
+    var rateBurst = el("rate-burst");
+    var blockHiddenCheck = el("block-hidden");
+    var blockExploitsCheck = el("block-exploits");
+    var tarpitCheck = el("tarpit");
+    var tarpitHint = el("tarpit-hint");
+    var bodyLimitCheck = el("body-limit");
+    var gzipCheck = el("gzip");
+    var brotliCheck = el("brotli");
+    var cacheCheck = el("cache");
+    var openFileCacheCheck = el("open-file-cache");
+    var logsCheck = el("logs");
+    var output = el("output");
+    var copyBtn = container.querySelector(".ngx-copy-btn");
+    var presetBtns = container.querySelectorAll(".ngx-preset-btn");
+
+    var I1 = "    ";
+    var I2 = "        ";
+
+    function generate() {
+      var lines = [];
+      var domain = domainInput.value.trim() || "example.com";
+      var root = rootInput.value.trim() || "/var/www/html";
+      var idx = indexInput.value.trim() || "index.html";
+      var ssl = sslCheck.checked;
+      var proxy = proxyCheck.checked;
+      var upName = (upstreamNameInput.value.trim() || "backend_app").replace(
+        /[^a-zA-Z0-9_]/g,
+        "_",
+      );
+
+      var hasTarpit =
+        tarpitCheck.checked &&
+        (blockExploitsCheck.checked || blockHiddenCheck.checked);
+
+      // Rate limiting zone (http context)
+      if (rateLimitCheck.checked) {
+        var rate = parseInt(rateValue.value) || 10;
+        lines.push("# Place in http {} context");
+        lines.push(
+          "limit_req_zone $binary_remote_addr zone=req_limit:10m rate=" +
+            rate +
+            "r/s;",
+        );
+        lines.push("");
+      }
+
+      // Tarpit zone
+      if (hasTarpit) {
+        lines.push("# Place in http {} context — tarpit rate limiter");
+        lines.push(
+          "limit_req_zone $binary_remote_addr zone=tarpit:10m rate=1r/m;",
+        );
+        lines.push("");
+      }
+
+      // Upstream block
+      if (proxy) {
+        lines.push("upstream " + upName + " {");
+        var lbMethod = lbMethodSelect.value;
+        if (lbMethod === "least_conn") lines.push(I1 + "least_conn;");
+        if (lbMethod === "ip_hash") lines.push(I1 + "ip_hash;");
+
+        var servers = upstreamInput.value
+          .trim()
+          .split(",")
+          .map(function (s) {
+            return s.trim();
+          })
+          .filter(Boolean);
+        if (servers.length === 0) servers = ["127.0.0.1:3000"];
+        servers.forEach(function (srv) {
+          lines.push(I1 + "server " + srv + ";");
+        });
+
+        if (keepaliveCheck.checked) {
+          lines.push("");
+          lines.push(I1 + "keepalive 64;");
+        }
+        lines.push("}");
+        lines.push("");
+      }
+
+      // HTTP redirect block
+      if (ssl && redirectCheck.checked) {
+        lines.push("server {");
+        lines.push(I1 + "listen 80;");
+        lines.push(I1 + "listen [::]:80;");
+        lines.push(I1 + "server_name " + domain + " www." + domain + ";");
+        lines.push("");
+        lines.push(I1 + "return 301 https://$host$request_uri;");
+        lines.push("}");
+        lines.push("");
+      }
+
+      // Main server block
+      lines.push("server {");
+
+      // Listen directives
+      if (ssl) {
+        lines.push(I1 + "listen 443 ssl;");
+        lines.push(I1 + "listen [::]:443 ssl;");
+
+        if (http3Check.checked) {
+          lines.push(I1 + "listen 443 quic reuseport;");
+          lines.push(I1 + "listen [::]:443 quic reuseport;");
+        }
+
+        if (http2Check.checked) {
+          lines.push(I1 + "http2 on;");
+        }
+      } else {
+        lines.push(I1 + "listen 80;");
+        lines.push(I1 + "listen [::]:80;");
+      }
+
+      lines.push(I1 + "server_name " + domain + " www." + domain + ";");
+      lines.push("");
+
+      if (!proxy) {
+        lines.push(I1 + "root " + root + ";");
+        lines.push(I1 + "index " + idx + ";");
+        lines.push("");
+      }
+
+      // Server tokens
+      if (serverTokensCheck.checked) {
+        lines.push(I1 + "server_tokens off;");
+        lines.push("");
+      }
+
+      // SSL config
+      if (ssl) {
+        lines.push(I1 + "# SSL / TLS");
+        lines.push(
+          I1 +
+            "ssl_certificate " +
+            (certInput.value.trim() ||
+              "/etc/letsencrypt/live/" + domain + "/fullchain.pem") +
+            ";",
+        );
+        lines.push(
+          I1 +
+            "ssl_certificate_key " +
+            (keyInput.value.trim() ||
+              "/etc/letsencrypt/live/" + domain + "/privkey.pem") +
+            ";",
+        );
+        lines.push(I1 + "ssl_protocols TLSv1.2 TLSv1.3;");
+        lines.push(
+          I1 +
+            "ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305;",
+        );
+        lines.push(I1 + "ssl_prefer_server_ciphers off;");
+        lines.push(I1 + "ssl_session_cache shared:SSL:10m;");
+        lines.push(I1 + "ssl_session_timeout 1d;");
+        lines.push(I1 + "ssl_session_tickets off;");
+
+        if (ocspCheck.checked) {
+          lines.push("");
+          lines.push(I1 + "# OCSP Stapling");
+          lines.push(I1 + "ssl_stapling on;");
+          lines.push(I1 + "ssl_stapling_verify on;");
+          lines.push(
+            I1 +
+              "ssl_trusted_certificate " +
+              (certInput.value.trim() ||
+                "/etc/letsencrypt/live/" + domain + "/fullchain.pem") +
+              ";",
+          );
+          lines.push(I1 + "resolver 1.1.1.1 8.8.8.8 valid=300s;");
+          lines.push(I1 + "resolver_timeout 5s;");
+        }
+
+        if (sslEarlyCheck.checked) {
+          lines.push("");
+          lines.push(I1 + "# 0-RTT Early Data (TLS 1.3)");
+          lines.push(I1 + "ssl_early_data on;");
+          lines.push(
+            "    # Protect against replay attacks with Early-Data header",
+          );
+          lines.push(I1 + "proxy_set_header Early-Data $ssl_early_data;");
+        }
+
+        if (http3Check.checked) {
+          lines.push("");
+          lines.push(I1 + "# QUIC / HTTP/3");
+          lines.push(I1 + "add_header Alt-Svc 'h3=\":443\"; ma=86400' always;");
+        }
+
+        lines.push("");
+      }
+
+      // Security headers
+      var hasSecHeaders =
+        xframeCheck.checked ||
+        xctoCheck.checked ||
+        referrerCheck.checked ||
+        permissionsCheck.checked ||
+        coopCheck.checked ||
+        cspCheck.checked ||
+        (ssl && hstsCheck.checked);
+      if (hasSecHeaders) {
+        lines.push(I1 + "# Security Headers");
+        if (ssl && hstsCheck.checked)
+          lines.push(
+            I1 +
+              'add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload" always;',
+          );
+        if (xframeCheck.checked)
+          lines.push(I1 + 'add_header X-Frame-Options "DENY" always;');
+        if (xctoCheck.checked)
+          lines.push(
+            I1 + 'add_header X-Content-Type-Options "nosniff" always;',
+          );
+        if (referrerCheck.checked)
+          lines.push(
+            I1 +
+              'add_header Referrer-Policy "strict-origin-when-cross-origin" always;',
+          );
+        if (permissionsCheck.checked)
+          lines.push(
+            I1 +
+              'add_header Permissions-Policy "camera=(), microphone=(), geolocation=(), interest-cohort=()" always;',
+          );
+        if (coopCheck.checked) {
+          lines.push(
+            I1 + 'add_header Cross-Origin-Opener-Policy "same-origin" always;',
+          );
+          lines.push(
+            I1 +
+              'add_header Cross-Origin-Resource-Policy "same-origin" always;',
+          );
+          lines.push(
+            I1 +
+              'add_header Cross-Origin-Embedder-Policy "require-corp" always;',
+          );
+        }
+        if (cspCheck.checked) {
+          lines.push(
+            I1 +
+              "# Basic CSP — use /tools/csp-builder/ to create a complete policy",
+          );
+          lines.push(
+            I1 +
+              "add_header Content-Security-Policy \"default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'\" always;",
+          );
+        }
+        lines.push("");
+      }
+
+      // Client body limit
+      if (bodyLimitCheck.checked) {
+        lines.push(I1 + "client_max_body_size 16m;");
+        lines.push("");
+      }
+
+      // Logs
+      if (logsCheck.checked) {
+        lines.push(I1 + "# Logging");
+        lines.push(I1 + "access_log /var/log/nginx/" + domain + ".access.log;");
+        lines.push(I1 + "error_log /var/log/nginx/" + domain + ".error.log;");
+        lines.push("");
+      }
+
+      // Gzip
+      if (gzipCheck.checked) {
+        lines.push(I1 + "# Gzip Compression");
+        lines.push(I1 + "gzip on;");
+        lines.push(I1 + "gzip_vary on;");
+        lines.push(I1 + "gzip_min_length 1024;");
+        lines.push(I1 + "gzip_proxied any;");
+        lines.push(I1 + "gzip_comp_level 6;");
+        lines.push(
+          I1 +
+            "gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript image/svg+xml;",
+        );
+        lines.push("");
+      }
+
+      // Brotli
+      if (brotliCheck.checked) {
+        lines.push(I1 + "# Brotli Compression (requires ngx_brotli module)");
+        lines.push(I1 + "brotli on;");
+        lines.push(I1 + "brotli_comp_level 6;");
+        lines.push(
+          I1 +
+            "brotli_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript image/svg+xml font/woff2;",
+        );
+        lines.push("");
+      }
+
+      // Open file cache
+      if (openFileCacheCheck.checked) {
+        lines.push(I1 + "# Open File Cache");
+        lines.push(I1 + "open_file_cache max=1000 inactive=20s;");
+        lines.push(I1 + "open_file_cache_valid 30s;");
+        lines.push(I1 + "open_file_cache_min_uses 2;");
+        lines.push(I1 + "open_file_cache_errors on;");
+        lines.push("");
+      }
+
+      // Rate limiting
+      if (rateLimitCheck.checked) {
+        var burst = parseInt(rateBurst.value) || 20;
+        lines.push(I1 + "# Rate Limiting");
+        lines.push(
+          I1 + "limit_req zone=req_limit burst=" + burst + " nodelay;",
+        );
+        lines.push(I1 + "limit_req_status 429;");
+        lines.push("");
+      }
+
+      // Block hidden files
+      if (blockHiddenCheck.checked) {
+        lines.push(I1 + "# Block hidden files (.git, .env, .htaccess, etc.)");
+        lines.push(I1 + "location ~ /\\. {");
+        if (hasTarpit) {
+          lines.push(I2 + "limit_req zone=tarpit burst=1 nodelay;");
+          lines.push(I2 + "limit_rate 50;  # bytes/sec — slow tarpit response");
+          lines.push(I2 + "return 444;");
+        } else {
+          lines.push(I2 + "deny all;");
+          lines.push(I2 + "return 404;");
+        }
+        lines.push(I1 + "}");
+        lines.push("");
+      }
+
+      // Block common exploit paths
+      if (blockExploitsCheck.checked) {
+        lines.push(I1 + "# Block common exploit / scanner paths");
+        lines.push(
+          I1 +
+            "location ~* ^/(wp-admin|wp-login|wp-content|wp-includes|xmlrpc\\.php|phpmyadmin|myadmin|mysql|admin|administrator|cgi-bin) {",
+        );
+        if (hasTarpit) {
+          lines.push(I2 + "limit_req zone=tarpit burst=1 nodelay;");
+          lines.push(
+            I2 + "limit_rate 50;  # bytes/sec — waste attacker resources",
+          );
+          lines.push(I2 + "return 444;");
+        } else {
+          lines.push(I2 + "return 444;");
+        }
+        lines.push(I1 + "}");
+        lines.push("");
+      }
+
+      // Main location block
+      if (proxy) {
+        lines.push(I1 + "location / {");
+        lines.push(I2 + "proxy_pass http://" + upName + ";");
+        lines.push(I2 + "proxy_set_header Host $host;");
+        lines.push(I2 + "proxy_set_header X-Real-IP $remote_addr;");
+        lines.push(
+          I2 + "proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;",
+        );
+        lines.push(I2 + "proxy_set_header X-Forwarded-Proto $scheme;");
+
+        if (keepaliveCheck.checked) {
+          lines.push("");
+          lines.push(I2 + "proxy_http_version 1.1;");
+          lines.push(I2 + 'proxy_set_header Connection "";');
+        }
+
+        if (wsCheck.checked) {
+          lines.push("");
+          lines.push(I2 + "# WebSocket Support");
+          if (!keepaliveCheck.checked)
+            lines.push(I2 + "proxy_http_version 1.1;");
+          lines.push(I2 + "proxy_set_header Upgrade $http_upgrade;");
+          lines.push(I2 + 'proxy_set_header Connection "upgrade";');
+          lines.push(I2 + "proxy_read_timeout 86400s;");
+        }
+
+        if (proxyBufferingCheck.checked) {
+          lines.push("");
+          lines.push(I2 + "# Proxy Buffering");
+          lines.push(I2 + "proxy_buffering on;");
+          lines.push(I2 + "proxy_buffer_size 16k;");
+          lines.push(I2 + "proxy_buffers 4 64k;");
+          lines.push(I2 + "proxy_busy_buffers_size 128k;");
+        }
+
+        if (sslEarlyCheck.checked && ssl) {
+          lines.push(I2 + "proxy_set_header Early-Data $ssl_early_data;");
+        }
+
+        lines.push(I1 + "}");
+      } else {
+        lines.push(I1 + "location / {");
+        lines.push(I2 + "try_files $uri $uri/ =404;");
+        lines.push(I1 + "}");
+      }
+
+      // Static asset caching
+      if (cacheCheck.checked) {
+        lines.push("");
+        lines.push(I1 + "# Static Asset Caching");
+        lines.push(
+          I1 +
+            "location ~* \\.(js|css|png|jpg|jpeg|gif|ico|svg|woff2?|ttf|otf|webp|avif)$ {",
+        );
+        if (proxy) {
+          lines.push(I2 + "proxy_pass http://" + upName + ";");
+        }
+        lines.push(I2 + "expires 30d;");
+        lines.push(I2 + 'add_header Cache-Control "public, immutable";');
+        lines.push(I2 + "access_log off;");
+        lines.push(I1 + "}");
+      }
+
+      lines.push("}");
+
+      if (output) output.textContent = lines.join("\n");
+
+      // UI visibility
+      if (sslFields) sslFields.hidden = !ssl;
+      if (proxyFields) proxyFields.hidden = !proxy;
+      if (rateFields) rateFields.hidden = !rateLimitCheck.checked;
+      if (cspHint) cspHint.hidden = !cspCheck.checked;
+      if (tarpitHint) tarpitHint.hidden = !tarpitCheck.checked;
+    }
+
+    // Presets
+    var presets = {
+      static: function () {
+        proxyCheck.checked = false;
+        sslCheck.checked = true;
+        http2Check.checked = true;
+        http3Check.checked = false;
+        gzipCheck.checked = true;
+        brotliCheck.checked = false;
+        cacheCheck.checked = true;
+        wsCheck.checked = false;
+        rateLimitCheck.checked = false;
+        blockHiddenCheck.checked = true;
+        blockExploitsCheck.checked = false;
+        tarpitCheck.checked = false;
+        cspCheck.checked = false;
+        ocspCheck.checked = true;
+        permissionsCheck.checked = false;
+        coopCheck.checked = false;
+        openFileCacheCheck.checked = false;
+        serverTokensCheck.checked = true;
+        bodyLimitCheck.checked = true;
+        sslEarlyCheck.checked = false;
+      },
+      "reverse-proxy": function () {
+        proxyCheck.checked = true;
+        sslCheck.checked = true;
+        http2Check.checked = true;
+        http3Check.checked = false;
+        gzipCheck.checked = true;
+        brotliCheck.checked = false;
+        cacheCheck.checked = true;
+        wsCheck.checked = false;
+        keepaliveCheck.checked = true;
+        proxyBufferingCheck.checked = false;
+        rateLimitCheck.checked = false;
+        blockHiddenCheck.checked = true;
+        blockExploitsCheck.checked = false;
+        tarpitCheck.checked = false;
+        cspCheck.checked = false;
+        ocspCheck.checked = true;
+        permissionsCheck.checked = false;
+        coopCheck.checked = false;
+        openFileCacheCheck.checked = false;
+        serverTokensCheck.checked = true;
+        bodyLimitCheck.checked = true;
+        sslEarlyCheck.checked = false;
+        upstreamNameInput.value = "backend_app";
+        upstreamInput.value = "127.0.0.1:3000";
+        lbMethodSelect.value = "round-robin";
+      },
+      spa: function () {
+        proxyCheck.checked = false;
+        sslCheck.checked = true;
+        http2Check.checked = true;
+        http3Check.checked = false;
+        gzipCheck.checked = true;
+        brotliCheck.checked = false;
+        cacheCheck.checked = true;
+        wsCheck.checked = false;
+        rateLimitCheck.checked = false;
+        blockHiddenCheck.checked = true;
+        blockExploitsCheck.checked = false;
+        tarpitCheck.checked = false;
+        cspCheck.checked = false;
+        ocspCheck.checked = true;
+        permissionsCheck.checked = false;
+        coopCheck.checked = false;
+        openFileCacheCheck.checked = false;
+        serverTokensCheck.checked = true;
+        bodyLimitCheck.checked = true;
+        sslEarlyCheck.checked = false;
+        indexInput.value = "index.html";
+      },
+      php: function () {
+        proxyCheck.checked = false;
+        sslCheck.checked = true;
+        http2Check.checked = true;
+        http3Check.checked = false;
+        gzipCheck.checked = true;
+        brotliCheck.checked = false;
+        cacheCheck.checked = true;
+        wsCheck.checked = false;
+        rateLimitCheck.checked = false;
+        blockHiddenCheck.checked = true;
+        blockExploitsCheck.checked = true;
+        tarpitCheck.checked = false;
+        cspCheck.checked = false;
+        ocspCheck.checked = true;
+        permissionsCheck.checked = false;
+        coopCheck.checked = false;
+        openFileCacheCheck.checked = false;
+        serverTokensCheck.checked = true;
+        bodyLimitCheck.checked = true;
+        sslEarlyCheck.checked = false;
+        indexInput.value = "index.php index.html";
+      },
+      api: function () {
+        proxyCheck.checked = true;
+        sslCheck.checked = true;
+        http2Check.checked = true;
+        http3Check.checked = false;
+        gzipCheck.checked = true;
+        brotliCheck.checked = false;
+        cacheCheck.checked = false;
+        wsCheck.checked = false;
+        keepaliveCheck.checked = true;
+        proxyBufferingCheck.checked = true;
+        rateLimitCheck.checked = true;
+        rateValue.value = "30";
+        rateBurst.value = "50";
+        blockHiddenCheck.checked = true;
+        blockExploitsCheck.checked = true;
+        tarpitCheck.checked = false;
+        cspCheck.checked = false;
+        ocspCheck.checked = true;
+        permissionsCheck.checked = false;
+        coopCheck.checked = false;
+        openFileCacheCheck.checked = false;
+        serverTokensCheck.checked = true;
+        bodyLimitCheck.checked = true;
+        sslEarlyCheck.checked = false;
+        upstreamNameInput.value = "api_backend";
+        upstreamInput.value = "127.0.0.1:8080";
+        lbMethodSelect.value = "round-robin";
+      },
+      hardened: function () {
+        proxyCheck.checked = false;
+        sslCheck.checked = true;
+        http2Check.checked = true;
+        http3Check.checked = true;
+        gzipCheck.checked = true;
+        brotliCheck.checked = true;
+        cacheCheck.checked = true;
+        wsCheck.checked = false;
+        rateLimitCheck.checked = true;
+        rateValue.value = "10";
+        rateBurst.value = "20";
+        blockHiddenCheck.checked = true;
+        blockExploitsCheck.checked = true;
+        tarpitCheck.checked = true;
+        cspCheck.checked = true;
+        hstsCheck.checked = true;
+        ocspCheck.checked = true;
+        sslEarlyCheck.checked = true;
+        permissionsCheck.checked = true;
+        coopCheck.checked = true;
+        xframeCheck.checked = true;
+        xctoCheck.checked = true;
+        referrerCheck.checked = true;
+        openFileCacheCheck.checked = true;
+        serverTokensCheck.checked = true;
+        bodyLimitCheck.checked = true;
+      },
+    };
+
+    presetBtns.forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        presetBtns.forEach(function (b) {
+          b.classList.remove("ngx-preset-active");
+        });
+        btn.classList.add("ngx-preset-active");
+        var preset = btn.getAttribute("data-preset");
+        if (presets[preset]) presets[preset]();
+        generate();
+      });
+    });
+
+    // Bind all inputs
+    var allInputs = container.querySelectorAll("input, select");
+    allInputs.forEach(function (inp) {
+      inp.addEventListener("input", generate);
+      inp.addEventListener("change", generate);
+    });
+
+    if (copyBtn) {
+      copyBtn.addEventListener("click", function () {
+        var text = output ? output.textContent : "";
+        navigator.clipboard.writeText(text).then(function () {
+          copyBtn.innerHTML =
+            '<span class="i-mdi:check" aria-hidden="true"></span> Copied!';
+          setTimeout(function () {
+            copyBtn.innerHTML =
+              '<span class="i-mdi:content-copy" aria-hidden="true"></span> Copy';
+          }, 1500);
+        });
+      });
+    }
+
+    generate();
+  })();
+</script>
+
+<style>
+  .ngx-generator {
+    margin: 1.5rem 0;
+    overflow: hidden;
+    background: var(--color-bg-subtle);
+    border: var(--border-1);
+    border-radius: var(--radius-md);
+  }
+
+  .ngx-title {
+    padding: 1rem 1.25rem;
+    font-size: 1.1rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-heading);
+    background: var(--color-bg-secondary);
+    border-bottom: var(--border-1);
+  }
+
+  .ngx-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1.25rem;
+  }
+
+  .ngx-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+  }
+
+  .ngx-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .ngx-section-label {
+    display: flex;
+    gap: 0.375rem;
+    align-items: center;
+    margin-bottom: 0.25rem;
+    font-size: 0.8rem;
+    font-weight: var(--fw-bold);
+    color: var(--color-text-heading);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .ngx-section-label span {
+    width: 16px;
+    height: 16px;
+  }
+
+  .ngx-presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.375rem;
+  }
+
+  .ngx-preset-btn {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.8rem;
+    font-weight: var(--fw-medium);
+    color: var(--color-text-muted);
+    cursor: pointer;
+    background: var(--color-bg-secondary);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+    transition: all 0.15s;
+  }
+
+  .ngx-preset-btn:hover {
+    color: var(--color-text);
+  }
+
+  .ngx-preset-active {
+    color: var(--color-primary);
+    background: var(--color-bg);
+    border-color: var(--color-primary);
+  }
+
+  .ngx-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+  }
+
+  .ngx-label {
+    font-size: 0.7rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .ngx-input,
+  .ngx-select {
+    width: 100%;
+    padding: 0.375rem 0.5rem;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--color-text);
+    background: var(--color-bg);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+    transition: border-color 0.15s;
+  }
+
+  .ngx-input:focus,
+  .ngx-select:focus {
+    outline: none;
+    border-color: var(--color-primary);
+  }
+
+  .ngx-field-hint {
+    font-size: 0.65rem;
+    font-style: italic;
+    color: var(--color-text-muted);
+  }
+
+  .ngx-toggle-row {
+    display: flex;
+    align-items: center;
+  }
+
+  .ngx-toggle-label {
+    display: flex;
+    gap: 0.375rem;
+    align-items: center;
+    font-size: 0.8rem;
+    color: var(--color-text);
+    cursor: pointer;
+  }
+
+  .ngx-toggle-label input[type="checkbox"] {
+    accent-color: var(--color-primary);
+    cursor: pointer;
+  }
+
+  .ngx-info-hint {
+    display: flex;
+    gap: 0.375rem;
+    align-items: flex-start;
+    padding: 0.5rem 0.625rem;
+    font-size: 0.75rem;
+    line-height: 1.4;
+    color: var(--color-primary);
+    background: rgb(99 102 241 / 8%);
+    border-radius: var(--radius-sm);
+  }
+
+  .ngx-info-hint[hidden] {
+    display: none;
+  }
+
+  .ngx-info-hint span[class^="i-"] {
+    flex-shrink: 0;
+    width: 14px;
+    height: 14px;
+    margin-top: 1px;
+  }
+
+  .ngx-info-hint a {
+    font-weight: var(--fw-semibold);
+    color: var(--color-primary);
+    text-decoration: underline;
+  }
+
+  .ngx-related {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+    padding: 0.625rem 0.875rem;
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+    background: var(--color-bg-secondary);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+  }
+
+  .ngx-related span[class^="i-"] {
+    flex-shrink: 0;
+    width: 14px;
+    height: 14px;
+  }
+
+  .ngx-related a {
+    padding: 0.125rem 0.5rem;
+    color: var(--color-primary);
+    text-decoration: none;
+    background: var(--color-bg);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+    transition: all 0.15s;
+  }
+
+  .ngx-related a:hover {
+    border-color: var(--color-primary);
+  }
+
+  /* Output */
+  .ngx-output-section {
+    overflow: hidden;
+    background: var(--color-bg-secondary);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+  }
+
+  .ngx-output-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.625rem 0.875rem;
+    border-bottom: var(--border-1);
+  }
+
+  .ngx-output-label {
+    display: flex;
+    gap: 0.375rem;
+    align-items: center;
+    font-size: 0.8rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-heading);
+  }
+
+  .ngx-output-label span {
+    width: 18px;
+    height: 18px;
+  }
+
+  .ngx-copy-btn {
+    display: flex;
+    gap: 0.325rem;
+    align-items: center;
+    padding: 0.3rem 0.625rem;
+    font-size: 0.75rem;
+    font-weight: var(--fw-medium);
+    color: var(--color-text-muted);
+    cursor: pointer;
+    background: var(--color-bg);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+    transition: all 0.15s;
+  }
+
+  .ngx-copy-btn span {
+    width: 14px;
+    height: 14px;
+  }
+
+  .ngx-copy-btn:hover {
+    color: var(--color-text);
+    border-color: var(--color-primary);
+  }
+
+  .ngx-output-code {
+    padding: 1rem;
+    margin: 0;
+    overflow-x: auto;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    line-height: 1.6;
+    color: var(--color-text);
+    background: var(--color-bg);
+  }
+
+  .ngx-output-code code {
+    white-space: pre;
+  }
+
+  @media (width <= 640px) {
+    .ngx-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

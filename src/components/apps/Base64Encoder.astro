@@ -1,0 +1,596 @@
+---
+/**
+ * Base64Encoder Component
+ * Multi-format encoding/decoding tool.
+ * Supports Base64, Base64URL, URL encoding, Hex, and HTML entities.
+ *
+ * Usage:
+ * <Base64Encoder title="Encoding Tool" />
+ */
+
+interface Props {
+  title?: string;
+}
+
+const { title = "Base64 & Encoding Tool" } = Astro.props;
+const uniqueId = `enc-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
+
+const formats = [
+  { id: "base64", name: "Base64" },
+  { id: "base64url", name: "Base64URL" },
+  { id: "url", name: "URL Encoding" },
+  { id: "hex", name: "Hexadecimal" },
+  { id: "html", name: "HTML Entities" },
+  { id: "binary", name: "Binary" },
+];
+---
+
+<div
+  class="enc-tool"
+  data-enc-id={uniqueId}
+>
+  {title && <div class="enc-title">{title}</div>}
+
+  <div class="enc-layout">
+    {/* Input */}
+    <div class="enc-panel">
+      <div class="enc-panel-header">
+        <span
+          class="i-mdi:text-box-outline enc-panel-icon"
+          aria-hidden="true"
+        ></span>
+        <span>Input</span>
+        <select
+          id={`${uniqueId}-input-format`}
+          class="enc-format-select"
+          aria-label="Input format"
+        >
+          <option value="text">Plain Text</option>
+          {formats.map((f) => <option value={f.id}>{f.name}</option>)}
+        </select>
+      </div>
+      <textarea
+        id={`${uniqueId}-input`}
+        class="enc-textarea"
+        rows="6"
+        placeholder="Enter text to encode/decode..."
+        spellcheck="false"
+        aria-label="Input text"
+        >Hello, World! 🌍</textarea
+      >
+      <div class="enc-info-row">
+        <span
+          class="enc-byte-count"
+          id={`${uniqueId}-input-bytes`}
+          >0 bytes</span
+        >
+      </div>
+    </div>
+
+    {/* Direction toggle */}
+    <div class="enc-direction">
+      <button
+        type="button"
+        class="enc-swap-btn"
+        aria-label="Swap input and output"
+      >
+        <span class="i-mdi:swap-vertical"></span>
+      </button>
+    </div>
+
+    {/* Output */}
+    <div class="enc-panel">
+      <div class="enc-panel-header">
+        <span
+          class="i-mdi:code-braces enc-panel-icon"
+          aria-hidden="true"
+        ></span>
+        <span>Output</span>
+        <select
+          id={`${uniqueId}-output-format`}
+          class="enc-format-select"
+          aria-label="Output format"
+        >
+          {
+            formats.map((f) => (
+              <option
+                value={f.id}
+                selected={f.id === "base64"}
+              >
+                {f.name}
+              </option>
+            ))
+          }
+        </select>
+      </div>
+      <div class="enc-output-wrapper">
+        {
+          /* eslint-disable astro/jsx-a11y/no-noninteractive-tabindex -- scrollable region requires keyboard access */
+        }
+        <pre
+          class="enc-output"
+          tabindex="0"
+          role="region"
+          aria-label="Encoded or decoded output"><code id={`${uniqueId}-output`}>...</code></pre>
+        {/* eslint-enable astro/jsx-a11y/no-noninteractive-tabindex */}
+        <button
+          type="button"
+          class="enc-copy-btn"
+          aria-label="Copy output"
+        >
+          <span class="i-mdi:content-copy"></span>
+          <span class="enc-copy-text">Copy</span>
+        </button>
+      </div>
+      <div class="enc-info-row">
+        <span
+          class="enc-byte-count"
+          id={`${uniqueId}-output-bytes`}
+          >0 bytes</span
+        >
+        <span
+          class="enc-error"
+          id={`${uniqueId}-error`}
+          hidden
+        ></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script is:inline define:vars={{ uniqueId }}>
+  (function () {
+    const container = document.querySelector(`[data-enc-id="${uniqueId}"]`);
+    if (!container) return;
+
+    const inputEl = document.getElementById(`${uniqueId}-input`);
+    const outputEl = document.getElementById(`${uniqueId}-output`);
+    const inputFormat = document.getElementById(`${uniqueId}-input-format`);
+    const outputFormat = document.getElementById(`${uniqueId}-output-format`);
+    const inputBytes = document.getElementById(`${uniqueId}-input-bytes`);
+    const outputBytes = document.getElementById(`${uniqueId}-output-bytes`);
+    const errorEl = document.getElementById(`${uniqueId}-error`);
+    const copyBtn = container.querySelector(".enc-copy-btn");
+    const swapBtn = container.querySelector(".enc-swap-btn");
+
+    if (!inputEl || !outputEl) return;
+
+    // Encoding functions
+    function textToBytes(text) {
+      return new TextEncoder().encode(text);
+    }
+
+    function bytesToText(bytes) {
+      return new TextDecoder().decode(bytes);
+    }
+
+    function toBase64(bytes) {
+      return btoa(String.fromCharCode.apply(null, bytes));
+    }
+
+    function fromBase64(str) {
+      try {
+        var bin = atob(str.trim());
+        var bytes = new Uint8Array(bin.length);
+        for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+        return bytes;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function toBase64Url(bytes) {
+      return toBase64(bytes)
+        .replace(/\+/g, "-")
+        .replace(/\//g, "_")
+        .replace(/=+$/, "");
+    }
+
+    function fromBase64Url(str) {
+      var s = str.trim().replace(/-/g, "+").replace(/_/g, "/");
+      while (s.length % 4) s += "=";
+      return fromBase64(s);
+    }
+
+    function toHex(bytes) {
+      return Array.from(bytes)
+        .map(function (b) {
+          return b.toString(16).padStart(2, "0");
+        })
+        .join(" ");
+    }
+
+    function fromHex(str) {
+      try {
+        var hex = str.trim().replace(/\s+/g, "").replace(/0x/gi, "");
+        if (hex.length % 2 !== 0) return null;
+        var bytes = new Uint8Array(hex.length / 2);
+        for (var i = 0; i < hex.length; i += 2) {
+          var val = parseInt(hex.substring(i, i + 2), 16);
+          if (isNaN(val)) return null;
+          bytes[i / 2] = val;
+        }
+        return bytes;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function toUrlEncoding(bytes) {
+      return encodeURIComponent(bytesToText(bytes));
+    }
+
+    function fromUrlEncoding(str) {
+      try {
+        return textToBytes(decodeURIComponent(str.trim()));
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function toHtmlEntities(bytes) {
+      var text = bytesToText(bytes);
+      return text
+        .split("")
+        .map(function (ch) {
+          var code = ch.codePointAt(0);
+          if (
+            code > 127 ||
+            ch === "&" ||
+            ch === "<" ||
+            ch === ">" ||
+            ch === '"' ||
+            ch === "'"
+          ) {
+            return "&#" + code + ";";
+          }
+          return ch;
+        })
+        .join("");
+    }
+
+    function fromHtmlEntities(str) {
+      try {
+        var decoded = str
+          .replace(/&#(\d+);/g, function (m, n) {
+            return String.fromCodePoint(parseInt(n));
+          })
+          .replace(/&#x([0-9a-f]+);/gi, function (m, n) {
+            return String.fromCodePoint(parseInt(n, 16));
+          })
+          .replace(/&amp;/g, "&")
+          .replace(/&lt;/g, "<")
+          .replace(/&gt;/g, ">")
+          .replace(/&quot;/g, '"')
+          .replace(/&apos;/g, "'");
+        return textToBytes(decoded);
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function toBinary(bytes) {
+      return Array.from(bytes)
+        .map(function (b) {
+          return b.toString(2).padStart(8, "0");
+        })
+        .join(" ");
+    }
+
+    function fromBinary(str) {
+      try {
+        var bits = str.trim().replace(/\s+/g, "");
+        if (bits.length % 8 !== 0) return null;
+        var bytes = new Uint8Array(bits.length / 8);
+        for (var i = 0; i < bits.length; i += 8) {
+          var val = parseInt(bits.substring(i, i + 8), 2);
+          if (isNaN(val)) return null;
+          bytes[i / 8] = val;
+        }
+        return bytes;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function decode(str, format) {
+      if (format === "text") return textToBytes(str);
+      if (format === "base64") return fromBase64(str);
+      if (format === "base64url") return fromBase64Url(str);
+      if (format === "url") return fromUrlEncoding(str);
+      if (format === "hex") return fromHex(str);
+      if (format === "html") return fromHtmlEntities(str);
+      if (format === "binary") return fromBinary(str);
+      return textToBytes(str);
+    }
+
+    function encode(bytes, format) {
+      if (format === "text") return bytesToText(bytes);
+      if (format === "base64") return toBase64(bytes);
+      if (format === "base64url") return toBase64Url(bytes);
+      if (format === "url") return toUrlEncoding(bytes);
+      if (format === "hex") return toHex(bytes);
+      if (format === "html") return toHtmlEntities(bytes);
+      if (format === "binary") return toBinary(bytes);
+      return bytesToText(bytes);
+    }
+
+    function update() {
+      var input = inputEl.value;
+      var inFmt = inputFormat.value;
+      var outFmt = outputFormat.value;
+
+      if (errorEl) errorEl.hidden = true;
+
+      if (!input) {
+        outputEl.textContent = "(Enter text above)";
+        if (inputBytes) inputBytes.textContent = "0 bytes";
+        if (outputBytes) outputBytes.textContent = "0 bytes";
+        return;
+      }
+
+      // Decode input to bytes
+      var bytes = decode(input, inFmt);
+
+      if (!bytes) {
+        outputEl.textContent = "Invalid input for selected format";
+        if (errorEl) {
+          errorEl.textContent = "Could not decode input";
+          errorEl.hidden = false;
+        }
+        return;
+      }
+
+      if (inputBytes) {
+        inputBytes.textContent =
+          new TextEncoder().encode(input).length + " bytes";
+      }
+
+      // Encode to output format
+      try {
+        var result = encode(bytes, outFmt);
+        outputEl.textContent = result;
+        if (outputBytes) {
+          outputBytes.textContent =
+            new TextEncoder().encode(result).length + " bytes";
+        }
+      } catch (e) {
+        outputEl.textContent = "Encoding error";
+        if (errorEl) {
+          errorEl.textContent = "Encoding failed";
+          errorEl.hidden = false;
+        }
+      }
+    }
+
+    // Event listeners
+    var timeout;
+    inputEl.addEventListener("input", function () {
+      clearTimeout(timeout);
+      timeout = setTimeout(update, 100);
+    });
+
+    inputFormat.addEventListener("change", update);
+    outputFormat.addEventListener("change", update);
+
+    // Swap
+    if (swapBtn) {
+      swapBtn.addEventListener("click", function () {
+        var outText = outputEl.textContent;
+        var outFmtVal = outputFormat.value;
+        var inFmtVal = inputFormat.value;
+
+        inputEl.value = outText;
+        inputFormat.value = outFmtVal;
+        outputFormat.value = inFmtVal === "text" ? "base64" : inFmtVal;
+        update();
+      });
+    }
+
+    // Copy
+    if (copyBtn) {
+      copyBtn.addEventListener("click", function () {
+        if (navigator.clipboard && outputEl.textContent) {
+          navigator.clipboard.writeText(outputEl.textContent).then(function () {
+            var text = copyBtn.querySelector(".enc-copy-text");
+            if (text) text.textContent = "Copied!";
+            copyBtn.classList.add("copied");
+            setTimeout(function () {
+              if (text) text.textContent = "Copy";
+              copyBtn.classList.remove("copied");
+            }, 2000);
+          });
+        }
+      });
+    }
+
+    update();
+  })();
+</script>
+
+<style>
+  .enc-tool {
+    margin: 1.5rem 0;
+    overflow: hidden;
+    background: var(--color-bg-subtle);
+    border: var(--border-1);
+    border-radius: var(--radius-md);
+  }
+
+  .enc-title {
+    padding: 1rem 1.25rem;
+    font-size: 1.1rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-heading);
+    background: var(--color-bg-secondary);
+    border-bottom: var(--border-1);
+  }
+
+  .enc-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1.25rem;
+  }
+
+  .enc-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .enc-panel-header {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    font-size: 0.85rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .enc-panel-icon {
+    width: 18px;
+    height: 18px;
+  }
+
+  .enc-format-select {
+    padding: 0.375rem 0.625rem;
+    margin-left: auto;
+    font-size: 0.8rem;
+    color: var(--color-text);
+    cursor: pointer;
+    background: var(--color-bg);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+  }
+
+  .enc-format-select:focus {
+    outline: none;
+    border-color: var(--color-primary);
+  }
+
+  .enc-textarea {
+    width: 100%;
+    min-height: 120px;
+    padding: 0.875rem;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    line-height: 1.5;
+    color: var(--color-text);
+    resize: vertical;
+    background: var(--color-bg);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+    transition: border-color 0.15s;
+  }
+
+  .enc-textarea:focus {
+    outline: none;
+    border-color: var(--color-primary);
+  }
+
+  /* Direction toggle */
+  .enc-direction {
+    display: flex;
+    justify-content: center;
+  }
+
+  .enc-swap-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    background: var(--color-bg-secondary);
+    border: var(--border-1);
+    border-radius: 50%;
+    transition: all 0.2s;
+  }
+
+  .enc-swap-btn span {
+    width: 20px;
+    height: 20px;
+  }
+
+  .enc-swap-btn:hover {
+    color: var(--color-primary);
+    border-color: var(--color-primary);
+    transform: rotate(180deg);
+  }
+
+  /* Output */
+  .enc-output-wrapper {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .enc-output {
+    padding: 0.875rem;
+    margin: 0;
+    overflow-x: auto;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    line-height: 1.5;
+    word-break: break-all;
+    white-space: pre-wrap;
+    background: var(--color-bg);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+  }
+
+  .enc-copy-btn {
+    display: flex;
+    gap: 0.375rem;
+    align-items: center;
+    align-self: flex-end;
+    padding: 0.375rem 0.75rem;
+    font-size: 0.8rem;
+    font-weight: var(--fw-medium);
+    color: var(--color-text-muted);
+    cursor: pointer;
+    background: var(--color-bg-secondary);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+    transition: all 0.15s;
+  }
+
+  .enc-copy-btn span[class^="i-"] {
+    width: 14px;
+    height: 14px;
+  }
+
+  .enc-copy-btn:hover {
+    color: var(--color-primary);
+    border-color: var(--color-primary);
+  }
+
+  .enc-copy-btn.copied {
+    color: #047857;
+    border-color: #10b981;
+  }
+
+  .enc-info-row {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+  }
+
+  .enc-error {
+    font-weight: var(--fw-medium);
+    color: #b91c1c;
+  }
+
+  @media (width <= 640px) {
+    .enc-layout {
+      padding: 1rem;
+    }
+  }
+</style>

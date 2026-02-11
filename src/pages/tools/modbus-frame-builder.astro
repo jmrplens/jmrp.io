@@ -1,0 +1,260 @@
+---
+/**
+ * Modbus Frame Builder Tool Page.
+ */
+import ModbusFrameBuilderApp from "@components/apps/ModbusFrameBuilder.astro";
+import BaseLayout from "@layouts/BaseLayout.astro";
+import { getSiteUrl } from "@utils/site";
+
+const toolSchema = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  name: "Modbus Frame Builder",
+  description:
+    "Build and decode Modbus RTU and TCP frames with CRC-16 calculation and color-coded byte visualization.",
+  url: new URL("/tools/modbus-frame-builder/", getSiteUrl()).toString(),
+  applicationCategory: "WebApplication",
+  operatingSystem: "Web Browser",
+  offers: { "@type": "Offer", price: 0, priceCurrency: "USD" },
+};
+---
+
+<BaseLayout
+  title="Modbus Frame Builder"
+  description="Build and decode Modbus RTU/TCP frames. Select function codes, set addresses, calculate CRC-16, and visualize frame structure with color-coded bytes."
+  schema={toolSchema}
+>
+  <div class="tool-page">
+    <div class="content-wrapper">
+      <nav
+        class="breadcrumb"
+        aria-label="Breadcrumb"
+      >
+        <a href="/tools/">Tools</a>
+        <span
+          class="i-mdi:chevron-right"
+          aria-hidden="true"
+        ></span>
+        <span aria-current="page">Modbus Builder</span>
+      </nav>
+
+      <header class="page-header">
+        <div class="header-icon">
+          <span
+            class="i-mdi:chip"
+            aria-hidden="true"
+          ></span>
+        </div>
+        <div class="header-content">
+          <h1>Modbus Frame Builder</h1>
+          <p class="subtitle">
+            Build and decode Modbus RTU/TCP frames with automatic CRC-16
+            calculation and color-coded byte visualization.
+          </p>
+        </div>
+      </header>
+
+      <div class="tool-container">
+        <ModbusFrameBuilderApp title="" />
+      </div>
+
+      <section class="tool-info">
+        <h2>About This Tool</h2>
+        <p>
+          Build valid Modbus RTU and TCP frames for embedded device
+          communication. The tool handles CRC-16 calculation, MBAP headers, and
+          provides a visual breakdown of each frame byte.
+        </p>
+        <h3>Features</h3>
+        <ul>
+          <li>
+            <strong>RTU &amp; TCP</strong> — supports both Modbus protocols
+          </li>
+          <li>
+            <strong>All common function codes</strong> — read/write coils, registers,
+            and more
+          </li>
+          <li>
+            <strong>Automatic CRC-16</strong> — Modbus CRC calculated in real-time
+          </li>
+          <li>
+            <strong>Frame decoder</strong> — paste a hex frame to decode its structure
+          </li>
+          <li>
+            <strong>Color-coded bytes</strong> — visual breakdown of slave, function,
+            data, and CRC
+          </li>
+        </ul>
+        <h3>How to Use</h3>
+        <ol>
+          <li>Select Build or Decode mode</li>
+          <li>Choose protocol (RTU or TCP) and function code</li>
+          <li>Set slave address, start address, and quantity</li>
+          <li>The frame is generated automatically with CRC</li>
+        </ol>
+      </section>
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .tool-page {
+    min-height: calc(100vh - var(--header-height, 4rem) - 4rem);
+    padding: var(--space-xl) 0;
+  }
+
+  .content-wrapper {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: var(--max-width-container);
+    padding: 0 var(--space-lg);
+    margin: 0 auto;
+  }
+
+  .breadcrumb {
+    display: flex;
+    gap: var(--space-xs);
+    align-items: center;
+    margin-bottom: var(--space-lg);
+    font-size: 0.875rem;
+    color: var(--color-text-muted);
+  }
+
+  .breadcrumb a {
+    color: var(--color-text-muted);
+    text-decoration: none;
+    transition: color 0.2s ease;
+  }
+
+  .breadcrumb a:hover {
+    color: var(--color-primary);
+  }
+
+  .breadcrumb span[class*="i-"] {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  .page-header {
+    display: flex;
+    gap: var(--space-md);
+    align-items: center;
+    margin-bottom: var(--space-xl);
+  }
+
+  .header-icon {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 4rem;
+    height: 4rem;
+    background: linear-gradient(
+      135deg,
+      var(--color-success, #10b981),
+      var(--color-success-dark, #059669)
+    );
+    border-radius: var(--radius-lg);
+  }
+
+  .header-icon span {
+    width: 2rem;
+    height: 2rem;
+    color: var(--header-icon-color, #fff);
+  }
+
+  .header-content {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .page-header h1 {
+    margin-bottom: var(--space-xs);
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+
+  .subtitle {
+    font-size: 1rem;
+    line-height: 1.5;
+    color: var(--color-text-muted);
+  }
+
+  .tool-container {
+    margin-bottom: var(--space-xl);
+  }
+
+  .tool-info {
+    max-width: 720px;
+    padding: var(--space-lg);
+    margin: 0 auto;
+    background: var(--color-bg-secondary);
+    border: var(--border-1);
+    border-radius: var(--radius-lg);
+  }
+
+  .tool-info h2 {
+    margin-bottom: var(--space-md);
+    font-size: 1.25rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-heading);
+  }
+
+  .tool-info h3 {
+    margin-top: var(--space-lg);
+    margin-bottom: var(--space-sm);
+    font-size: 1rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-heading);
+  }
+
+  .tool-info p {
+    margin-bottom: var(--space-md);
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: var(--color-text);
+  }
+
+  .tool-info ul,
+  .tool-info ol {
+    padding-left: 1.25rem;
+    margin: 0;
+  }
+
+  .tool-info li {
+    margin-bottom: var(--space-sm);
+    font-size: 0.95rem;
+    line-height: 1.5;
+    color: var(--color-text);
+  }
+
+  .tool-info a {
+    color: var(--color-primary);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .tool-info a:hover {
+    text-decoration: none;
+  }
+
+  @media (width <= 640px) {
+    .page-header {
+      flex-direction: column;
+      text-align: center;
+    }
+
+    .page-header h1 {
+      font-size: 1.5rem;
+    }
+
+    .subtitle {
+      font-size: 0.9rem;
+    }
+
+    .tool-info {
+      padding: var(--space-md);
+    }
+  }
+</style>

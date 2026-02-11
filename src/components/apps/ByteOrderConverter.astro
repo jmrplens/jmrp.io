@@ -1,0 +1,787 @@
+---
+/**
+ * ByteOrderConverter Component
+ * Convert between big-endian, little-endian, and mixed-endian byte orders.
+ * Supports 8/16/32/64-bit integers, IEEE 754 floats, and hex strings.
+ *
+ * Usage:
+ * <ByteOrderConverter title="Byte Order Converter" />
+ */
+
+interface Props {
+  title?: string;
+}
+
+const { title = "Byte Order Converter" } = Astro.props;
+const uniqueId = `boc-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
+---
+
+<div
+  class="boc-converter"
+  data-boc-id={uniqueId}
+>
+  {title && <div class="boc-title">{title}</div>}
+
+  <div class="boc-layout">
+    {/* Input */}
+    <div class="boc-input-section">
+      <div class="boc-field-row">
+        <div class="boc-field">
+          <label
+            class="boc-label"
+            for={`${uniqueId}-type`}
+            >Data Type</label
+          >
+          <select
+            id={`${uniqueId}-type`}
+            class="boc-select"
+          >
+            <option value="uint8">Unsigned 8-bit (uint8)</option>
+            <option value="int8">Signed 8-bit (int8)</option>
+            <option value="uint16">Unsigned 16-bit (uint16)</option>
+            <option value="int16">Signed 16-bit (int16)</option>
+            <option
+              value="uint32"
+              selected
+              >Unsigned 32-bit (uint32)</option
+            >
+            <option value="int32">Signed 32-bit (int32)</option>
+            <option value="uint64">Unsigned 64-bit (uint64)</option>
+            <option value="int64">Signed 64-bit (int64)</option>
+            <option value="float32">Float 32-bit (IEEE 754)</option>
+            <option value="float64">Float 64-bit (double)</option>
+          </select>
+        </div>
+        <div class="boc-field">
+          <label
+            class="boc-label"
+            for={`${uniqueId}-format`}
+            >Input Format</label
+          >
+          <select
+            id={`${uniqueId}-format`}
+            class="boc-select"
+          >
+            <option
+              value="decimal"
+              selected
+              >Decimal</option
+            >
+            <option value="hex">Hexadecimal</option>
+            <option value="binary">Binary</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="boc-field">
+        <label
+          class="boc-label"
+          for={`${uniqueId}-value`}
+          >Value</label
+        >
+        <input
+          id={`${uniqueId}-value`}
+          class="boc-input boc-value-input"
+          type="text"
+          value="305419896"
+          placeholder="Enter a value..."
+          spellcheck="false"
+        />
+      </div>
+    </div>
+
+    {/* Results */}
+    <div
+      class="boc-results"
+      id={`${uniqueId}-results`}
+    >
+      <div class="boc-result-group">
+        <div class="boc-group-label">
+          <span
+            class="i-mdi:swap-horizontal"
+            aria-hidden="true"
+          ></span>
+          Byte Orders
+        </div>
+        <div
+          class="boc-result-grid"
+          id={`${uniqueId}-orders`}
+        >
+        </div>
+      </div>
+
+      <div class="boc-result-group">
+        <div class="boc-group-label">
+          <span
+            class="i-mdi:code-array"
+            aria-hidden="true"
+          ></span>
+          Byte Visualization
+        </div>
+        <div
+          class="boc-byte-viz"
+          id={`${uniqueId}-viz`}
+        >
+        </div>
+      </div>
+
+      <div class="boc-result-group">
+        <div class="boc-group-label">
+          <span
+            class="i-mdi:numeric"
+            aria-hidden="true"
+          ></span>
+          Representations
+        </div>
+        <div
+          class="boc-representations"
+          id={`${uniqueId}-repr`}
+        >
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script is:inline define:vars={{ uniqueId }}>
+  (function () {
+    var container = document.querySelector('[data-boc-id="' + uniqueId + '"]');
+    if (!container) return;
+
+    var typeSelect = document.getElementById(uniqueId + "-type");
+    var formatSelect = document.getElementById(uniqueId + "-format");
+    var valueInput = document.getElementById(uniqueId + "-value");
+    var ordersEl = document.getElementById(uniqueId + "-orders");
+    var vizEl = document.getElementById(uniqueId + "-viz");
+    var reprEl = document.getElementById(uniqueId + "-repr");
+
+    if (!typeSelect || !valueInput) return;
+
+    function getByteSize(type) {
+      if (type.includes("8")) return 1;
+      if (type.includes("16")) return 2;
+      if (type.includes("32")) return 4;
+      if (type.includes("64")) return 8;
+      return 4;
+    }
+
+    function parseValue(str, format, type) {
+      str = str.trim();
+      if (!str) return null;
+
+      var isFloat = type === "float32" || type === "float64";
+      var size = getByteSize(type);
+      var buf = new ArrayBuffer(8);
+      var view = new DataView(buf);
+
+      if (isFloat) {
+        var fval = parseFloat(str);
+        if (isNaN(fval)) return null;
+        if (type === "float32") view.setFloat32(0, fval, false);
+        else view.setFloat64(0, fval, false);
+        return extractBytes(view, size);
+      }
+
+      var val;
+      if (format === "hex") {
+        var hex = str.replace(/^0x/i, "").replace(/\s/g, "");
+        if (!/^[0-9a-fA-F]+$/.test(hex)) return null;
+        val = hex.length <= 8 ? parseInt(hex, 16) : null;
+        if (val === null) {
+          // Large hex for 64-bit
+          try {
+            val = BigInt("0x" + hex);
+          } catch (e) {
+            return null;
+          }
+        }
+      } else if (format === "binary") {
+        var bin = str.replace(/\s/g, "");
+        if (!/^[01]+$/.test(bin)) return null;
+        val = bin.length <= 32 ? parseInt(bin, 2) : null;
+        if (val === null) {
+          try {
+            val = BigInt("0b" + bin);
+          } catch (e) {
+            return null;
+          }
+        }
+      } else {
+        if (type.includes("64")) {
+          try {
+            val = BigInt(str);
+          } catch (e) {
+            return null;
+          }
+        } else {
+          val = parseInt(str, 10);
+          if (isNaN(val)) return null;
+        }
+      }
+
+      // Write to DataView
+      try {
+        if (size === 1) {
+          if (type === "int8") view.setInt8(0, Number(val));
+          else view.setUint8(0, Number(val));
+        } else if (size === 2) {
+          if (type === "int16") view.setInt16(0, Number(val), false);
+          else view.setUint16(0, Number(val), false);
+        } else if (size === 4) {
+          if (type === "int32") view.setInt32(0, Number(val), false);
+          else view.setUint32(0, Number(val), false);
+        } else if (size === 8) {
+          if (type === "int64") view.setBigInt64(0, BigInt(val), false);
+          else view.setBigUint64(0, BigInt(val), false);
+        }
+      } catch (e) {
+        return null;
+      }
+
+      return extractBytes(view, size);
+    }
+
+    function extractBytes(view, size) {
+      var bytes = [];
+      for (var i = 0; i < size; i++) {
+        bytes.push(view.getUint8(i));
+      }
+      return bytes;
+    }
+
+    function reverseBytes(bytes) {
+      return bytes.slice().reverse();
+    }
+
+    function swapPairs(bytes) {
+      // Mid-Little Endian (Modbus word swap): CDAB
+      var result = bytes.slice();
+      for (var i = 0; i + 1 < result.length; i += 2) {
+        var tmp = result[i];
+        result[i] = result[i + 1];
+        result[i + 1] = tmp;
+      }
+      return result;
+    }
+
+    function bytesToHex(bytes) {
+      return bytes
+        .map(function (b) {
+          return b.toString(16).toUpperCase().padStart(2, "0");
+        })
+        .join(" ");
+    }
+
+    function bytesToDecimal(bytes, type) {
+      var buf = new ArrayBuffer(8);
+      var view = new DataView(buf);
+      bytes.forEach(function (b, i) {
+        view.setUint8(i, b);
+      });
+      var size = bytes.length;
+
+      if (type === "float32") return view.getFloat32(0, false).toString();
+      if (type === "float64") return view.getFloat64(0, false).toString();
+      if (size === 1)
+        return type === "int8"
+          ? view.getInt8(0).toString()
+          : view.getUint8(0).toString();
+      if (size === 2)
+        return type === "int16"
+          ? view.getInt16(0, false).toString()
+          : view.getUint16(0, false).toString();
+      if (size === 4)
+        return type === "int32"
+          ? view.getInt32(0, false).toString()
+          : view.getUint32(0, false).toString();
+      if (size === 8)
+        return type === "int64"
+          ? view.getBigInt64(0, false).toString()
+          : view.getBigUint64(0, false).toString();
+      return "?";
+    }
+
+    function bytesToBinary(bytes) {
+      return bytes
+        .map(function (b) {
+          return b.toString(2).padStart(8, "0");
+        })
+        .join(" ");
+    }
+
+    function convert() {
+      var type = typeSelect.value;
+      var format = formatSelect.value;
+      var beBytes = parseValue(valueInput.value, format, type);
+
+      if (!beBytes) {
+        if (ordersEl)
+          ordersEl.innerHTML =
+            '<div class="boc-error">Invalid value for selected type</div>';
+        if (vizEl) vizEl.textContent = "";
+        if (reprEl) reprEl.textContent = "";
+        return;
+      }
+
+      var leBytes = reverseBytes(beBytes);
+      var size = beBytes.length;
+
+      // Byte orders
+      var orders = [
+        {
+          label: "Big-Endian (BE / ABCD)",
+          bytes: beBytes,
+          note: "Network byte order / Motorola",
+        },
+        {
+          label: "Little-Endian (LE / DCBA)",
+          bytes: leBytes,
+          note: "Intel / x86",
+        },
+      ];
+
+      if (size >= 4) {
+        var midBE = swapPairs(beBytes);
+        var midLE = swapPairs(leBytes);
+        orders.push({
+          label: "Mid-Big (BADC)",
+          bytes: midBE,
+          note: "PDP-11 / Byte-swapped",
+        });
+        orders.push({
+          label: "Mid-Little (CDAB)",
+          bytes: midLE,
+          note: "Modbus word swap",
+        });
+      }
+
+      if (ordersEl) {
+        ordersEl.textContent = "";
+        orders.forEach(function (order) {
+          var card = document.createElement("div");
+          card.className = "boc-order-card";
+
+          var header = document.createElement("div");
+          header.className = "boc-order-header";
+
+          var label = document.createElement("span");
+          label.className = "boc-order-label";
+          label.textContent = order.label;
+
+          var note = document.createElement("span");
+          note.className = "boc-order-note";
+          note.textContent = order.note;
+
+          header.appendChild(label);
+          header.appendChild(note);
+
+          var hex = document.createElement("code");
+          hex.className = "boc-order-hex";
+          hex.textContent = bytesToHex(order.bytes);
+
+          card.appendChild(header);
+          card.appendChild(hex);
+          ordersEl.appendChild(card);
+        });
+      }
+
+      // Visualization
+      if (vizEl) {
+        vizEl.textContent = "";
+        var labels = "ABCDEFGH".split("");
+
+        var vizRow = function (name, bytes, mapping) {
+          var row = document.createElement("div");
+          row.className = "boc-viz-row";
+
+          var rowLabel = document.createElement("span");
+          rowLabel.className = "boc-viz-label";
+          rowLabel.textContent = name;
+          row.appendChild(rowLabel);
+
+          var cells = document.createElement("div");
+          cells.className = "boc-viz-cells";
+          bytes.forEach(function (b, i) {
+            var cell = document.createElement("span");
+            cell.className = "boc-viz-cell boc-viz-color-" + mapping[i];
+            cell.textContent = b.toString(16).toUpperCase().padStart(2, "0");
+            cell.title = "Byte " + labels[mapping[i]];
+            cells.appendChild(cell);
+          });
+          row.appendChild(cells);
+          return row;
+        };
+
+        var beMapping = [];
+        for (var i = 0; i < size; i++) beMapping.push(i);
+
+        var leMapping = beMapping.slice().reverse();
+
+        vizEl.appendChild(vizRow("BE", beBytes, beMapping));
+        vizEl.appendChild(vizRow("LE", leBytes, leMapping));
+      }
+
+      // Representations
+      if (reprEl) {
+        reprEl.textContent = "";
+
+        var reprs = [
+          { label: "Decimal", value: bytesToDecimal(beBytes, type) },
+          {
+            label: "Hex",
+            value:
+              "0x" +
+              beBytes
+                .map(function (b) {
+                  return b.toString(16).toUpperCase().padStart(2, "0");
+                })
+                .join(""),
+          },
+          { label: "Binary", value: bytesToBinary(beBytes) },
+          {
+            label: "C Array",
+            value:
+              "{ " +
+              beBytes
+                .map(function (b) {
+                  return "0x" + b.toString(16).toUpperCase().padStart(2, "0");
+                })
+                .join(", ") +
+              " }",
+          },
+        ];
+
+        if (type === "float32") {
+          var buf = new ArrayBuffer(4);
+          var v = new DataView(buf);
+          beBytes.forEach(function (b, i) {
+            v.setUint8(i, b);
+          });
+          var f = v.getFloat32(0, false);
+          var u = v.getUint32(0, false);
+          var sign = (u >> 31) & 1;
+          var exp = (u >> 23) & 0xff;
+          var mantissa = u & 0x7fffff;
+          reprs.push({
+            label: "IEEE 754",
+            value:
+              "Sign: " +
+              sign +
+              " | Exp: " +
+              exp +
+              " (" +
+              (exp - 127) +
+              ") | Mantissa: 0x" +
+              mantissa.toString(16).toUpperCase().padStart(6, "0"),
+          });
+        }
+
+        reprs.forEach(function (r) {
+          var item = document.createElement("div");
+          item.className = "boc-repr-item";
+
+          var label = document.createElement("span");
+          label.className = "boc-repr-label";
+          label.textContent = r.label;
+
+          var value = document.createElement("code");
+          value.className = "boc-repr-value";
+          value.textContent = r.value;
+
+          item.appendChild(label);
+          item.appendChild(value);
+          reprEl.appendChild(item);
+        });
+      }
+    }
+
+    [typeSelect, formatSelect, valueInput].forEach(function (el) {
+      if (el) {
+        el.addEventListener("input", convert);
+        el.addEventListener("change", convert);
+      }
+    });
+
+    convert();
+  })();
+</script>
+
+<style>
+  .boc-converter {
+    margin: 1.5rem 0;
+    overflow: hidden;
+    background: var(--color-bg-subtle);
+    border: var(--border-1);
+    border-radius: var(--radius-md);
+  }
+
+  .boc-title {
+    padding: 1rem 1.25rem;
+    font-size: 1.1rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-heading);
+    background: var(--color-bg-secondary);
+    border-bottom: var(--border-1);
+  }
+
+  .boc-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    padding: 1.25rem;
+  }
+
+  .boc-input-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .boc-field-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .boc-field {
+    flex: 1;
+    min-width: 150px;
+  }
+
+  .boc-label {
+    display: block;
+    margin-bottom: 0.25rem;
+    font-size: 0.8rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .boc-input,
+  .boc-select {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    color: var(--color-text);
+    background: var(--color-bg);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+    transition: border-color 0.15s;
+  }
+
+  .boc-input:focus,
+  .boc-select:focus {
+    outline: none;
+    border-color: var(--color-primary);
+  }
+
+  .boc-value-input {
+    padding: 0.75rem;
+    font-size: 1.1rem;
+  }
+
+  /* Results */
+  .boc-result-group {
+    margin-bottom: 0.75rem;
+  }
+
+  .boc-group-label {
+    display: flex;
+    gap: 0.375rem;
+    align-items: center;
+    margin-bottom: 0.5rem;
+    font-size: 0.8rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .boc-group-label span {
+    width: 16px;
+    height: 16px;
+  }
+
+  .boc-result-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 0.5rem;
+  }
+
+  .boc-result-grid :global(.boc-order-card) {
+    padding: 0.75rem;
+    background: var(--color-bg-secondary);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+  }
+
+  .boc-result-grid :global(.boc-order-header) {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.375rem;
+    align-items: baseline;
+    margin-bottom: 0.375rem;
+  }
+
+  .boc-result-grid :global(.boc-order-label) {
+    font-size: 0.8rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-heading);
+  }
+
+  .boc-result-grid :global(.boc-order-note) {
+    font-size: 0.7rem;
+    color: var(--color-text-muted);
+  }
+
+  .boc-result-grid :global(.boc-order-hex) {
+    display: block;
+    padding: 0.375rem 0.5rem;
+    font-family: var(--font-mono);
+    font-size: 0.95rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-primary);
+    background: var(--color-bg);
+    border-radius: var(--radius-sm);
+  }
+
+  .boc-result-grid :global(.boc-error) {
+    grid-column: 1 / -1;
+    padding: 0.75rem;
+    font-size: 0.85rem;
+    color: #ef4444;
+    text-align: center;
+    background: rgb(239 68 68 / 10%);
+    border-radius: var(--radius-sm);
+  }
+
+  /* Visualization */
+  .boc-byte-viz :global(.boc-viz-row) {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    margin-bottom: 0.375rem;
+  }
+
+  .boc-byte-viz :global(.boc-viz-label) {
+    width: 2rem;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    font-weight: var(--fw-bold);
+    color: var(--color-text-muted);
+    text-align: right;
+  }
+
+  .boc-byte-viz :global(.boc-viz-cells) {
+    display: flex;
+    gap: 0.25rem;
+  }
+
+  .boc-byte-viz :global(.boc-viz-cell) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 1.75rem;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: var(--fw-semibold);
+    border-radius: 3px;
+  }
+
+  .boc-byte-viz :global(.boc-viz-color-0) {
+    color: #3730a3;
+    background: rgb(99 102 241 / 15%);
+  }
+
+  .boc-byte-viz :global(.boc-viz-color-1) {
+    color: #9d174d;
+    background: rgb(236 72 153 / 15%);
+  }
+
+  .boc-byte-viz :global(.boc-viz-color-2) {
+    color: #166534;
+    background: rgb(34 197 94 / 15%);
+  }
+
+  .boc-byte-viz :global(.boc-viz-color-3) {
+    color: #92400e;
+    background: rgb(245 158 11 / 15%);
+  }
+
+  .boc-byte-viz :global(.boc-viz-color-4) {
+    color: #6b21a8;
+    background: rgb(168 85 247 / 15%);
+  }
+
+  .boc-byte-viz :global(.boc-viz-color-5) {
+    color: #155e75;
+    background: rgb(6 182 212 / 15%);
+  }
+
+  .boc-byte-viz :global(.boc-viz-color-6) {
+    color: #9a3412;
+    background: rgb(249 115 22 / 15%);
+  }
+
+  .boc-byte-viz :global(.boc-viz-color-7) {
+    color: #0e7490;
+    background: rgb(34 211 238 / 15%);
+  }
+
+  :root[data-theme="dark"] .boc-byte-viz :global(.boc-viz-color-0) {
+    color: #a5b4fc;
+  }
+
+  :root[data-theme="dark"] .boc-byte-viz :global(.boc-viz-color-1) {
+    color: #f9a8d4;
+  }
+
+  :root[data-theme="dark"] .boc-byte-viz :global(.boc-viz-color-2) {
+    color: #86efac;
+  }
+
+  :root[data-theme="dark"] .boc-byte-viz :global(.boc-viz-color-3) {
+    color: #fcd34d;
+  }
+
+  /* Representations */
+  .boc-representations :global(.boc-repr-item) {
+    display: flex;
+    gap: 0.75rem;
+    align-items: baseline;
+    padding: 0.375rem 0;
+    border-bottom: 1px solid var(--color-border, rgb(0 0 0 / 8%));
+  }
+
+  .boc-representations :global(.boc-repr-item:last-child) {
+    border-bottom: none;
+  }
+
+  .boc-representations :global(.boc-repr-label) {
+    flex: 0 0 5rem;
+    font-size: 0.75rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+  }
+
+  .boc-representations :global(.boc-repr-value) {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--color-text);
+    word-break: break-all;
+  }
+
+  @media (width <= 480px) {
+    .boc-field-row {
+      flex-direction: column;
+    }
+
+    .boc-result-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

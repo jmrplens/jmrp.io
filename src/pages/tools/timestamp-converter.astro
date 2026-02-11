@@ -1,0 +1,256 @@
+---
+/**
+ * Timestamp Converter Tool Page.
+ */
+import TimestampConverterApp from "@components/apps/TimestampConverter.astro";
+import BaseLayout from "@layouts/BaseLayout.astro";
+import { getSiteUrl } from "@utils/site";
+
+const toolSchema = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  name: "Timestamp Converter",
+  description:
+    "Convert between Unix timestamps, ISO 8601, and human-readable dates with timezone support.",
+  url: new URL("/tools/timestamp-converter/", getSiteUrl()).toString(),
+  applicationCategory: "WebApplication",
+  operatingSystem: "Web Browser",
+  offers: { "@type": "Offer", price: 0, priceCurrency: "USD" },
+};
+---
+
+<BaseLayout
+  title="Timestamp Converter"
+  description="Convert Unix timestamps to human-readable dates and vice versa. Supports seconds, milliseconds, ISO 8601, and multiple timezone conversions."
+  schema={toolSchema}
+>
+  <div class="tool-page">
+    <div class="content-wrapper">
+      <nav
+        class="breadcrumb"
+        aria-label="Breadcrumb"
+      >
+        <a href="/tools/">Tools</a>
+        <span
+          class="i-mdi:chevron-right"
+          aria-hidden="true"
+        ></span>
+        <span aria-current="page">Timestamp Converter</span>
+      </nav>
+
+      <header class="page-header">
+        <div class="header-icon">
+          <span
+            class="i-mdi:clock-time-four-outline"
+            aria-hidden="true"
+          ></span>
+        </div>
+        <div class="header-content">
+          <h1>Timestamp Converter</h1>
+          <p class="subtitle">
+            Convert between Unix timestamps, ISO 8601, and human-readable dates
+            with timezone support.
+          </p>
+        </div>
+      </header>
+
+      <div class="tool-container">
+        <TimestampConverterApp title="" />
+      </div>
+
+      <section class="tool-info">
+        <h2>About This Tool</h2>
+        <p>
+          Convert between Unix timestamps and human-readable date formats.
+          Supports seconds and milliseconds precision, ISO 8601, and relative
+          time display.
+        </p>
+        <h3>Features</h3>
+        <ul>
+          <li>
+            <strong>Bidirectional conversion</strong> — timestamp to date and date
+            to timestamp
+          </li>
+          <li>
+            <strong>Multiple formats</strong> — Unix seconds, milliseconds, ISO 8601
+          </li>
+          <li>
+            <strong>Live clock</strong> — see the current timestamp updating in real-time
+          </li>
+          <li>
+            <strong>Relative time</strong> — human-readable "time ago" display
+          </li>
+          <li><strong>Timezone aware</strong> — UTC and local time display</li>
+        </ul>
+        <h3>How to Use</h3>
+        <ol>
+          <li>Enter a Unix timestamp to see the corresponding date</li>
+          <li>Or pick a date/time to get the Unix timestamp</li>
+          <li>Use "Now" to capture the current timestamp</li>
+        </ol>
+      </section>
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .tool-page {
+    min-height: calc(100vh - var(--header-height, 4rem) - 4rem);
+    padding: var(--space-xl) 0;
+  }
+
+  .content-wrapper {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: var(--max-width-container);
+    padding: 0 var(--space-lg);
+    margin: 0 auto;
+  }
+
+  .breadcrumb {
+    display: flex;
+    gap: var(--space-xs);
+    align-items: center;
+    margin-bottom: var(--space-lg);
+    font-size: 0.875rem;
+    color: var(--color-text-muted);
+  }
+
+  .breadcrumb a {
+    color: var(--color-text-muted);
+    text-decoration: none;
+    transition: color 0.2s ease;
+  }
+
+  .breadcrumb a:hover {
+    color: var(--color-primary);
+  }
+
+  .breadcrumb span[class*="i-"] {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  .page-header {
+    display: flex;
+    gap: var(--space-md);
+    align-items: center;
+    margin-bottom: var(--space-xl);
+  }
+
+  .header-icon {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 4rem;
+    height: 4rem;
+    background: linear-gradient(
+      135deg,
+      var(--color-success, #10b981),
+      var(--color-success-dark, #059669)
+    );
+    border-radius: var(--radius-lg);
+  }
+
+  .header-icon span {
+    width: 2rem;
+    height: 2rem;
+    color: var(--header-icon-color, #fff);
+  }
+
+  .header-content {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .page-header h1 {
+    margin-bottom: var(--space-xs);
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+
+  .subtitle {
+    font-size: 1rem;
+    line-height: 1.5;
+    color: var(--color-text-muted);
+  }
+
+  .tool-container {
+    margin-bottom: var(--space-xl);
+  }
+
+  .tool-info {
+    max-width: 720px;
+    padding: var(--space-lg);
+    margin: 0 auto;
+    background: var(--color-bg-secondary);
+    border: var(--border-1);
+    border-radius: var(--radius-lg);
+  }
+
+  .tool-info h2 {
+    margin-bottom: var(--space-md);
+    font-size: 1.25rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-heading);
+  }
+
+  .tool-info h3 {
+    margin-top: var(--space-lg);
+    margin-bottom: var(--space-sm);
+    font-size: 1rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-heading);
+  }
+
+  .tool-info p {
+    margin-bottom: var(--space-md);
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: var(--color-text);
+  }
+
+  .tool-info ul,
+  .tool-info ol {
+    padding-left: 1.25rem;
+    margin: 0;
+  }
+
+  .tool-info li {
+    margin-bottom: var(--space-sm);
+    font-size: 0.95rem;
+    line-height: 1.5;
+    color: var(--color-text);
+  }
+
+  .tool-info a {
+    color: var(--color-primary);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .tool-info a:hover {
+    text-decoration: none;
+  }
+
+  @media (width <= 640px) {
+    .page-header {
+      flex-direction: column;
+      text-align: center;
+    }
+
+    .page-header h1 {
+      font-size: 1.5rem;
+    }
+
+    .subtitle {
+      font-size: 0.9rem;
+    }
+
+    .tool-info {
+      padding: var(--space-md);
+    }
+  }
+</style>
