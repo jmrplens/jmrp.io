@@ -4,6 +4,7 @@
  */
 import Base64EncoderApp from "@components/apps/Base64Encoder.astro";
 import TerminalCommand from "@components/ui/TerminalCommand.astro";
+import TerminalSession from "@components/ui/TerminalSession.astro";
 import BaseLayout from "@layouts/BaseLayout.astro";
 import { getSiteUrl } from "@utils/site";
 
@@ -175,29 +176,76 @@ head -c 32 file.b64 | base64 --decode | file -
         </p>
 
         <h4>Text ↔ Base64</h4>
-        <TerminalCommand>
-          <Fragment set:html={codeTextBase64} />
-        </TerminalCommand>
+        <TerminalSession
+          command='echo -n "Hello, World!" | base64'
+          outputTitle="Base64 Output"
+        >
+          SGVsbG8sIFdvcmxkIQ==
+        </TerminalSession>
+
+        <TerminalSession
+          command='echo "SGVsbG8sIFdvcmxkIQ==" | base64 --decode'
+          outputTitle="Plain Text Output"
+        >
+          Hello, World!
+        </TerminalSession>
 
         <h4>Files ↔ Base64</h4>
-        <TerminalCommand>
-          <Fragment set:html={codeFileBase64} />
-        </TerminalCommand>
+        <TerminalSession command="base64 -w0 image.png > image.b64">
+          <p>
+            <em
+              >(Command completes with no terminal output; result is written to <code
+                >image.b64</code
+              >)</em>
+          </p>
+        </TerminalSession>
+
+        <TerminalSession command="base64 --decode image.b64 > restored.png">
+          <p>
+            <em>(Restores the binary file from its Base64 representation)</em>
+          </p>
+        </TerminalSession>
 
         <h4>Data URI for CSS / HTML</h4>
-        <TerminalCommand>
-          <Fragment set:html={codeDataUri} />
-        </TerminalCommand>
+        <TerminalSession
+          command='echo "data:$(file -b --mime-type logo.png);base64,$(base64 -w0 logo.png)"'
+          outputTitle="Data URI Output"
+        >
+          data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA...
+        </TerminalSession>
 
         <h4>Other Encodings</h4>
-        <TerminalCommand>
-          <Fragment set:html={codeOtherEncodings} />
-        </TerminalCommand>
+        <TerminalSession
+          command={`python3 -c "import urllib.parse; print(urllib.parse.quote('Hello World! á€'))"`}
+          outputTitle="URL Encoded"
+        >
+          Hello%20World%21%20%C3%A1%E2%82%AC
+        </TerminalSession>
+
+        <TerminalSession
+          command={`echo -n "Hello" | hexdump -ve '1/1 "%.2x"'`}
+          outputTitle="Hexadecimal Output"
+        >
+          48656c6c6f
+        </TerminalSession>
 
         <h4>Verify File Integrity</h4>
-        <TerminalCommand>
-          <Fragment set:html={codeVerifyIntegrity} />
-        </TerminalCommand>
+        <TerminalSession
+          command={`sha256sum original.pdf\nbase64 -w0 original.pdf | base64 --decode > roundtrip.pdf\nsha256sum roundtrip.pdf`}
+          outputTitle="Integrity Check"
+        >
+          3fdd704b45cbc536d98c5c7df2636f1a895c7f72a66f3bb5ea2d1daa26eb5e7a
+          original.pdf
+          3fdd704b45cbc536d98c5c7df2636f1a895c7f72a66f3bb5ea2d1daa26eb5e7a
+          roundtrip.pdf
+        </TerminalSession>
+
+        <TerminalSession
+          command={`head -c 32 file.b64 | base64 --decode | file -`}
+          outputTitle="File Type Detection"
+        >
+          /dev/stdin: PNG image data, 800 x 600, 8-bit/color RGBA
+        </TerminalSession>
       </section>
     </div>
   </div>

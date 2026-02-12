@@ -1,0 +1,295 @@
+---
+/**
+ * TerminalSession Component
+ * Displays a terminal command and its output together in a unified window.
+ * Features a copy button specifically for the command.
+ */
+
+import { createHash } from "node:crypto";
+import { decodeHtml } from "@utils/html";
+import * as cheerio from "cheerio";
+import CopyButton from "./CopyButton.astro";
+
+interface Props {
+  command?: string;
+  outputTitle?: string;
+  ariaLabel?: string;
+}
+
+const { command: commandProp, outputTitle, ariaLabel } = Astro.props;
+
+let commandText = commandProp || "";
+let outputHtml = "";
+
+// Extract command text if provided via slot
+if (!commandText && Astro.slots.has("command")) {
+  const htmlContent = await Astro.slots.render("command");
+  const $ = cheerio.load(htmlContent);
+  $("br").replaceWith("\n");
+  $("p, div, li, h1, h2, h3, h4, h5, h6").each((_, el) => {
+    $(el).append("\n");
+  });
+  commandText = decodeHtml($.text()).trim();
+}
+
+// Extract output content
+if (Astro.slots.has("default")) {
+  outputHtml = (await Astro.slots.render("default")).trim();
+} else if (Astro.slots.has("output")) {
+  outputHtml = (await Astro.slots.render("output")).trim();
+}
+
+const commandLines = commandText.split(/\r?\n/).map((line) => line.trim());
+
+// Generate a content-based test ID for uniqueness
+const hashInput = commandText || "empty-session";
+const contentHash = createHash("sha256")
+  .update(hashInput)
+  .digest("hex")
+  .slice(0, 8);
+
+const finalAriaLabel =
+  ariaLabel || `Terminal session: ${commandLines[0] || "interactive"}`;
+---
+
+<div
+  class="terminal-session-wrapper copy-container"
+  data-testid={`terminal-session-${contentHash}`}
+>
+  <div class="terminal-header">
+    <div class="terminal-controls">
+      <span class="dot red"></span>
+      <span class="dot yellow"></span>
+      <span class="dot green"></span>
+    </div>
+    <div
+      class="terminal-title"
+      aria-hidden="true"
+    >
+      Terminal Session
+    </div>
+    <div class="action-area">
+      <CopyButton
+        content={commandText}
+        ariaLabel={`Copy command: ${commandLines[0]}`}
+      />
+    </div>
+  </div>
+
+  <section class="terminal-body">
+    {/* Command Section */}
+    <div
+      class="command-section"
+      role="region"
+      aria-label="Terminal Command"
+    >
+      {
+        commandLines.map((line) => {
+          const isComment = line.startsWith("#");
+          const isEmpty = !line;
+          return (
+            <div class="command-line">
+              <span
+                class="prompt"
+                aria-hidden="true"
+              >
+                {!isEmpty && !isComment ? "$" : "\u00A0"}
+              </span>
+              <span class:list={["line-content", { "is-comment": isComment }]}>
+                {line}
+              </span>
+            </div>
+          );
+        })
+      }
+    </div>
+
+    {/* Output Section */}
+    {
+      outputHtml && (
+        <div
+          class="output-section"
+          role="log"
+          aria-live="polite"
+        >
+          {outputTitle && (
+            <div
+              class="output-header-mini"
+              aria-hidden="true"
+            >
+              <span class="i-mdi:chevron-right-box-outline output-icon" />
+              <span>{outputTitle}</span>
+            </div>
+          )}
+          <div
+            class="output-content"
+            set:html={outputHtml}
+          />
+        </div>
+      )
+    }
+  </section>
+
+  {/* Hidden element for CopyButton to grab clean text */}
+  <div
+    class="copy-content"
+    style="display: none;"
+    aria-hidden="true"
+    set:text={commandText}
+  />
+</div>
+
+<style>
+  .terminal-session-wrapper {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    margin: 1.5rem 0;
+    overflow: hidden;
+    background-color: var(--color-bg-secondary);
+    border: var(--border-1);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .terminal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 38px;
+    padding: 0.5rem 0.75rem;
+    background-color: var(--color-bg-header);
+    border-bottom: var(--border-1);
+  }
+
+  .terminal-controls {
+    display: flex;
+    gap: 6px;
+    flex: 1;
+  }
+
+  .terminal-title {
+    flex: 2;
+    text-align: center;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .action-area {
+    display: flex;
+    justify-content: flex-end;
+    flex: 1;
+  }
+
+  .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+  }
+
+  .dot.red {
+    background-color: #ff5f56;
+  }
+  .dot.yellow {
+    background-color: #ffbd2e;
+  }
+  .dot.green {
+    background-color: #27c93f;
+  }
+
+  .terminal-body {
+    display: flex;
+    flex-direction: column;
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    line-height: 1.6;
+  }
+
+  .command-section {
+    padding: 1rem 1rem 0.5rem;
+    background-color: rgba(var(--color-primary-rgb), 0.03);
+  }
+
+  .command-line {
+    display: flex;
+    align-items: baseline;
+    color: var(--color-text);
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+
+  .prompt {
+    flex-shrink: 0;
+    margin-right: 0.75rem;
+    font-weight: bold;
+    color: var(--color-primary);
+    user-select: none;
+    opacity: 0.8;
+  }
+
+  .line-content {
+    flex-grow: 1;
+    font-family: inherit;
+    color: var(--color-text);
+  }
+
+  .line-content.is-comment {
+    font-style: italic;
+    color: var(--color-text-muted);
+  }
+
+  .output-section {
+    padding: 0.5rem 1rem 1rem;
+    border-top: 1px dashed var(--color-border);
+  }
+
+  .output-header-mini {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.75rem;
+    font-weight: bold;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+  }
+
+  .output-icon {
+    font-size: 1rem;
+  }
+
+  .output-content {
+    color: var(--color-text-muted);
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+  }
+
+  /* Clean up nested pre/code from MDX */
+  .output-content :global(pre) {
+    padding: 0 !important;
+    margin: 0 !important;
+    font-size: inherit !important;
+    color: inherit !important;
+    background: none !important;
+    border: none !important;
+  }
+
+  .output-content :global(code) {
+    font-size: inherit !important;
+    color: inherit !important;
+    background-color: transparent !important;
+  }
+
+  :global(.terminal-session-wrapper .copy-button) {
+    position: static !important;
+  }
+
+  @media (max-width: 640px) {
+    .terminal-title {
+      display: none;
+    }
+  }
+</style>
