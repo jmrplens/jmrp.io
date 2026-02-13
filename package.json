@@ -121,7 +121,7 @@
     "eslint-plugin-simple-import-sort": "^12.1.1",
     "eslint-plugin-sonarjs": "^3.0.6",
     "eslint-plugin-unicorn": "^62.0.0",
-    "glob": "^13.0.1",
+    "glob": "^13.0.3",
     "hast-util-from-html-isomorphic": "^2.0.0",
     "he": "^1.2.0",
     "html-minifier-terser": "^7.2.0",
