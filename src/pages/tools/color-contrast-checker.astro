@@ -3,255 +3,234 @@
  * Color Contrast Checker Tool Page.
  */
 import ColorContrastCheckerApp from "@components/apps/ColorContrastChecker.astro";
-import BaseLayout from "@layouts/BaseLayout.astro";
-import { getSiteUrl } from "@utils/site";
-
-const toolSchema = {
-  "@context": "https://schema.org",
-  "@type": "SoftwareApplication",
-  name: "Color Contrast Checker",
-  description:
-    "Check WCAG 2.2 color contrast ratios for AA and AAA compliance levels.",
-  url: new URL("/tools/color-contrast-checker/", getSiteUrl()).toString(),
-  applicationCategory: "WebApplication",
-  operatingSystem: "Web Browser",
-  offers: { "@type": "Offer", price: 0, priceCurrency: "USD" },
-};
+import {
+  TerminalSession,
+  TerminalSessionCommand,
+  TerminalSessionOutput,
+} from "@components/ui/terminal-session";
+import ToolLayout from "@layouts/ToolLayout.astro";
 ---
 
-<BaseLayout
+<ToolLayout
   title="Color Contrast Checker"
-  description="Check color contrast ratios for WCAG 2.2 AA and AAA compliance. Pick colors, see real-time contrast ratio, and verify accessibility requirements."
-  schema={toolSchema}
+  description="Check color contrast ratios for WCAG 2.2 AA and AAA compliance with APCA support, color blindness simulation, and auto-fix suggestions."
+  subtitle="Check color contrast ratios against WCAG 2.2 AA and AAA requirements with APCA scoring, color blindness simulation, and automatic fix suggestions."
+  icon="i-mdi:palette-outline"
+  slug="color-contrast-checker"
 >
-  <div class="tool-page">
-    <div class="content-wrapper">
-      <nav
-        class="breadcrumb"
-        aria-label="Breadcrumb"
-      >
-        <a href="/tools/">Tools</a>
-        <span
-          class="i-mdi:chevron-right"
-          aria-hidden="true"
-        ></span>
-        <span aria-current="page">Contrast Checker</span>
-      </nav>
+  <ColorContrastCheckerApp title="" />
 
-      <header class="page-header">
-        <div class="header-icon">
-          <span
-            class="i-mdi:palette-outline"
-            aria-hidden="true"
-          ></span>
-        </div>
-        <div class="header-content">
-          <h1>Color Contrast Checker</h1>
-          <p class="subtitle">
-            Check color contrast ratios against WCAG 2.2 AA and AAA requirements
-            for accessibility compliance.
-          </p>
-        </div>
-      </header>
+  <Fragment slot="info">
+    <h2>About This Tool</h2>
+    <p>
+      Verify that your color combinations meet accessibility requirements using
+      both <strong>WCAG 2.2</strong> contrast ratio and the newer
+      <strong>APCA</strong> (Accessible Perceptual Contrast Algorithm) metric. The
+      tool also simulates how colors appear to people with different types of color
+      vision deficiency and suggests fixes when contrast is insufficient.
+    </p>
 
-      <div class="tool-container">
-        <ColorContrastCheckerApp title="" />
-      </div>
+    <h3>Features</h3>
+    <ul>
+      <li>
+        <strong>WCAG 2.2 contrast ratio</strong> — pass/fail for AA and AAA levels
+        (text and non-text)
+      </li>
+      <li>
+        <strong>APCA Lc score</strong> — perceptual contrast from the WCAG 3.0 draft,
+        with usage recommendations
+      </li>
+      <li>
+        <strong>Color blindness simulation</strong> — protanopia, deuteranopia, tritanopia,
+        and achromatopsia previews with simulated contrast ratios
+      </li>
+      <li>
+        <strong>Auto-fix suggestions</strong> — when contrast fails, click a suggestion
+        to apply the closest passing color
+      </li>
+      <li>
+        <strong>Non-text contrast</strong> — WCAG 2.2 SC 1.4.11 check for UI components
+        and graphical objects (≥ 3:1)
+      </li>
+      <li>
+        <strong>Multi-format display</strong> — view and copy colors in HEX, RGB,
+        and HSL
+      </li>
+      <li>
+        <strong>Live preview</strong> — see text at different sizes and UI components
+        with your color pair
+      </li>
+      <li>
+        <strong>Shareable links</strong> — colors are encoded in the URL for easy
+        sharing
+      </li>
+      <li>
+        <strong>CSS export</strong> — copy colors as CSS custom properties
+      </li>
+    </ul>
 
-      <section class="tool-info">
-        <h2>About This Tool</h2>
-        <p>
-          Verify that your color combinations meet WCAG 2.2 accessibility
-          requirements. The tool calculates the contrast ratio between
-          foreground and background colors and checks compliance at different
-          levels.
-        </p>
-        <h3>WCAG Levels</h3>
-        <ul>
-          <li>
-            <strong>AA Normal Text</strong> — minimum 4.5:1 contrast ratio
-          </li>
-          <li>
-            <strong>AA Large Text</strong> — minimum 3:1 contrast ratio (18pt+ or
-            14pt+ bold)
-          </li>
-          <li>
-            <strong>AAA Normal Text</strong> — minimum 7:1 contrast ratio (enhanced)
-          </li>
-          <li>
-            <strong>AAA Large Text</strong> — minimum 4.5:1 contrast ratio
-          </li>
-        </ul>
-        <h3>How to Use</h3>
-        <ol>
-          <li>Pick or enter foreground (text) and background colors</li>
-          <li>The contrast ratio updates automatically</li>
-          <li>Check the pass/fail indicators for each WCAG level</li>
-          <li>Use the swap button to reverse foreground and background</li>
-        </ol>
-      </section>
-    </div>
-  </div>
-</BaseLayout>
+    <h3>WCAG 2.2 Contrast Requirements</h3>
+    <p>
+      The Web Content Accessibility Guidelines (WCAG) 2.2 define four contrast
+      thresholds based on text size and compliance level:
+    </p>
+    <ul>
+      <li>
+        <strong>AA Normal Text</strong> — minimum 4.5:1 ratio. Applies to text smaller
+        than 18pt (24px) or 14pt (18.66px) bold.
+      </li>
+      <li>
+        <strong>AA Large Text</strong> — minimum 3:1 ratio. For text 18pt+ (24px)
+        or 14pt+ bold (18.66px).
+      </li>
+      <li>
+        <strong>AAA Normal Text</strong> — minimum 7:1 ratio (enhanced). Same size
+        rules as AA.
+      </li>
+      <li>
+        <strong>AAA Large Text</strong> — minimum 4.5:1 ratio. Enhanced level for
+        large text.
+      </li>
+      <li>
+        <strong>Non-Text (SC 1.4.11)</strong> — minimum 3:1 ratio. Applies to UI components
+        (buttons, inputs, borders) and graphical objects that convey information.
+      </li>
+    </ul>
 
-<style>
-  .tool-page {
-    min-height: calc(100vh - var(--header-height, 4rem) - 4rem);
-    padding: var(--space-xl) 0;
-  }
+    <h3>APCA — The Next Generation</h3>
+    <p>
+      APCA (Accessible Perceptual Contrast Algorithm) is being developed for
+      WCAG 3.0. Unlike WCAG 2.x which uses a simple luminance ratio, APCA
+      accounts for human visual perception, including:
+    </p>
+    <ul>
+      <li>
+        <strong>Polarity sensitivity</strong> — dark text on light backgrounds is
+        perceived differently than light text on dark backgrounds
+      </li>
+      <li>
+        <strong>Font size awareness</strong> — the Lc value maps to recommended font
+        sizes and weights
+      </li>
+      <li>
+        <strong>Spatial frequency</strong> — thin fonts need more contrast than bold
+        fonts
+      </li>
+    </ul>
+    <p>APCA Lc value usage guidelines:</p>
+    <ul>
+      <li><strong>Lc ≥ 90</strong> — Preferred for body text</li>
+      <li>
+        <strong>Lc ≥ 75</strong> — Good for body text, perfect for large text
+      </li>
+      <li><strong>Lc ≥ 60</strong> — Large text and headings only</li>
+      <li><strong>Lc ≥ 45</strong> — Large non-text elements only</li>
+      <li>
+        <strong>Lc ≥ 30</strong> — Non-text elements (icons, borders, dividers)
+      </li>
+      <li><strong>Lc &lt; 15</strong> — Not usable for any purpose</li>
+    </ul>
 
-  .content-wrapper {
-    box-sizing: border-box;
-    width: 100%;
-    max-width: var(--max-width-container);
-    padding: 0 var(--space-lg);
-    margin: 0 auto;
-  }
+    <h3>Color Vision Deficiency</h3>
+    <p>
+      Approximately 8% of males and 0.5% of females have some form of color
+      vision deficiency. The simulation uses Brettel/Viénot transformation
+      matrices to show how your color pair appears to people with:
+    </p>
+    <ul>
+      <li>
+        <strong>Protanopia</strong> (~1% of males) — missing red cone cells. Red appears
+        dark, red-green differences are lost.
+      </li>
+      <li>
+        <strong>Deuteranopia</strong> (~1% of males) — missing green cone cells. The
+        most common form. Green-red confusion.
+      </li>
+      <li>
+        <strong>Tritanopia</strong> (~0.003%) — missing blue cone cells. Blue and
+        yellow are affected.
+      </li>
+      <li>
+        <strong>Achromatopsia</strong> (~0.003%) — complete color blindness. Only
+        luminance differences are perceived.
+      </li>
+    </ul>
+    <p>
+      Each simulation card shows the simulated contrast ratio so you can verify
+      your colors work for all users.
+    </p>
 
-  .breadcrumb {
-    display: flex;
-    gap: var(--space-xs);
-    align-items: center;
-    margin-bottom: var(--space-lg);
-    font-size: 0.875rem;
-    color: var(--color-text-muted);
-  }
+    <h3>How to Use</h3>
+    <ol>
+      <li>
+        Pick or type foreground (text) and background colors in HEX format
+      </li>
+      <li>View WCAG 2.2 and APCA scores, plus the visual contrast gauge</li>
+      <li>
+        Check color blindness simulations — each card shows the perceived
+        contrast ratio
+      </li>
+      <li>
+        If contrast fails, click a suggested fix to automatically apply the
+        closest passing color
+      </li>
+      <li>Click RGB/HSL buttons to copy the color in that format</li>
+      <li>
+        Use <strong>Copy CSS</strong> to export as custom properties or
+        <strong>Share Link</strong> to share the URL with encoded colors
+      </li>
+      <li>Use the swap button to reverse foreground and background colors</li>
+    </ol>
 
-  .breadcrumb a {
-    color: var(--color-text-muted);
-    text-decoration: none;
-    transition: color 0.2s ease;
-  }
+    <h3>Linux Command Reference</h3>
+    <p>
+      You can calculate contrast ratios from the terminal using Python or shell
+      tools:
+    </p>
 
-  .breadcrumb a:hover {
-    color: var(--color-primary);
-  }
+    <h4>Calculate WCAG Contrast Ratio</h4>
+    <TerminalSession>
+      <TerminalSessionCommand>
+        {
+          `python3 -c "\ndef lum(h):\n    r,g,b = [int(h[i:i+2],16)/255 for i in (0,2,4)]\n    r,g,b = [(c/12.92 if c<=0.04045 else ((c+0.055)/1.055)**2.4) for c in (r,g,b)]\n    return 0.2126*r + 0.7152*g + 0.0722*b\nfg,bg = lum('1a1a2e'), lum('ffffff')\nratio = (max(fg,bg)+0.05)/(min(fg,bg)+0.05)\np = lambda ok: 'Pass' if ok else 'Fail'\nprint(f'Ratio: {ratio:.2f}:1')\nprint(f'AA Normal: {p(ratio>=4.5)}')\nprint(f'AAA Normal: {p(ratio>=7)}')\n"`
+        }
+      </TerminalSessionCommand>
+      <TerminalSessionOutput title="Contrast Result">
+        {`Ratio: 17.06:1\nAA Normal: Pass\nAAA Normal: Pass`}
+      </TerminalSessionOutput>
+    </TerminalSession>
 
-  .breadcrumb span[class*="i-"] {
-    width: 1rem;
-    height: 1rem;
-  }
+    <h4>Extract Dominant Colors from Image</h4>
+    <TerminalSession>
+      <TerminalSessionCommand>
+        convert image.png -colors 5 -unique-colors txt:- | tail -n +2
+      </TerminalSessionCommand>
+      <TerminalSessionOutput title="Dominant Colors">
+        {
+          `0,0: (26,26,46)  #1A1A2E  srgb(26,26,46)\n0,1: (22,78,99)  #164E63  srgb(22,78,99)\n0,2: (240,240,240)  #F0F0F0  srgb(240,240,240)`
+        }
+      </TerminalSessionOutput>
+    </TerminalSession>
 
-  .page-header {
-    display: flex;
-    gap: var(--space-md);
-    align-items: center;
-    margin-bottom: var(--space-xl);
-  }
+    <h4>Batch Check Multiple Color Pairs</h4>
+    <TerminalSession>
+      <TerminalSessionCommand>
+        {
+          `echo "1a1a2e:ffffff\n333333:f5f5f5\nff0000:ffffff\n777777:ffffff" | while IFS=: read fg bg; do\n  python3 -c "\ndef lum(h):\n    r,g,b=[int(h[i:i+2],16)/255 for i in(0,2,4)]\n    r,g,b=[(c/12.92 if c<=.04045 else((c+.055)/1.055)**2.4)for c in(r,g,b)]\n    return .2126*r+.7152*g+.0722*b\nl1,l2=lum('$fg'),lum('$bg')\nr=(max(l1,l2)+.05)/(min(l1,l2)+.05)\nok='✓' if r>=4.5 else '✗'\nprint(f'#$fg on #$bg → {r:.1f}:1 {ok}')\n"\ndone`
+        }
+      </TerminalSessionCommand>
+      <TerminalSessionOutput title="Batch Results">
+        {
+          `#1a1a2e on #ffffff → 17.1:1 ✓\n#333333 on #f5f5f5 → 11.6:1 ✓\n#ff0000 on #ffffff → 4.0:1 ✗\n#777777 on #ffffff → 4.5:1 ✗`
+        }
+      </TerminalSessionOutput>
+    </TerminalSession>
 
-  .header-icon {
-    display: flex;
-    flex-shrink: 0;
-    align-items: center;
-    justify-content: center;
-    width: 4rem;
-    height: 4rem;
-    background: linear-gradient(
-      135deg,
-      var(--color-success, #10b981),
-      var(--color-success-dark, #059669)
-    );
-    border-radius: var(--radius-lg);
-  }
-
-  .header-icon span {
-    width: 2rem;
-    height: 2rem;
-    color: var(--header-icon-color, #fff);
-  }
-
-  .header-content {
-    flex: 1;
-    min-width: 0;
-  }
-
-  .page-header h1 {
-    margin-bottom: var(--space-xs);
-    font-size: 2rem;
-    font-weight: 800;
-    letter-spacing: -0.02em;
-  }
-
-  .subtitle {
-    font-size: 1rem;
-    line-height: 1.5;
-    color: var(--color-text-muted);
-  }
-
-  .tool-container {
-    margin-bottom: var(--space-xl);
-  }
-
-  .tool-info {
-    max-width: 720px;
-    padding: var(--space-lg);
-    margin: 0 auto;
-    background: var(--color-bg-secondary);
-    border: var(--border-1);
-    border-radius: var(--radius-lg);
-  }
-
-  .tool-info h2 {
-    margin-bottom: var(--space-md);
-    font-size: 1.25rem;
-    font-weight: var(--fw-semibold);
-    color: var(--color-text-heading);
-  }
-
-  .tool-info h3 {
-    margin-top: var(--space-lg);
-    margin-bottom: var(--space-sm);
-    font-size: 1rem;
-    font-weight: var(--fw-semibold);
-    color: var(--color-text-heading);
-  }
-
-  .tool-info p {
-    margin-bottom: var(--space-md);
-    font-size: 0.95rem;
-    line-height: 1.6;
-    color: var(--color-text);
-  }
-
-  .tool-info ul,
-  .tool-info ol {
-    padding-left: 1.25rem;
-    margin: 0;
-  }
-
-  .tool-info li {
-    margin-bottom: var(--space-sm);
-    font-size: 0.95rem;
-    line-height: 1.5;
-    color: var(--color-text);
-  }
-
-  .tool-info a {
-    color: var(--color-primary);
-    text-decoration: underline;
-    text-underline-offset: 2px;
-  }
-
-  .tool-info a:hover {
-    text-decoration: none;
-  }
-
-  @media (width <= 640px) {
-    .page-header {
-      flex-direction: column;
-      text-align: center;
-    }
-
-    .page-header h1 {
-      font-size: 1.5rem;
-    }
-
-    .subtitle {
-      font-size: 0.9rem;
-    }
-
-    .tool-info {
-      padding: var(--space-md);
-    }
-  }
-</style>
+    <h3>Privacy</h3>
+    <p>
+      All contrast calculations happen entirely in your browser. No color data
+      is transmitted to any server. The shareable link only encodes colors in
+      the URL parameters.
+    </p>
+  </Fragment>
+</ToolLayout>

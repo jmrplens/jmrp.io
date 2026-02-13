@@ -1,7 +1,8 @@
 ---
 /**
  * RegexTester Component
- * Interactive regex tester with match highlighting and group extraction.
+ * Interactive regex tester with match highlighting, group extraction,
+ * replace mode, named groups, execution time, and quick reference.
  *
  * Usage:
  * <RegexTester title="Regex Tester" />
@@ -14,36 +15,138 @@ interface Props {
 const { title = "Regex Tester" } = Astro.props;
 const uniqueId = `rgx-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
 
+const defaultTestString = `The Quick Brown Fox Jumps Over The Lazy Dog.
+Server nginx/1.25.4 running on port 443.
+IP addresses: 192.168.1.1 and 10.0.0.254
+Contact: admin@example.com or dev@test.org
+Date: 2025-06-15T14:30:00 UUID: 550e8400-e29b-41d4-a716-446655440000
+MAC: 00:1A:2B:3C:4D:5E Color: #ff5733 Phone: +1-555-123-4567`;
+
 const presets = [
   {
     label: "Email",
     pattern: String.raw`[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}`,
     flags: "g",
+    sample:
+      "Contact: admin@example.com or dev@test.org\nInvalid: user@, @host.com, plain text",
   },
   {
     label: "IPv4",
-    pattern: String.raw`\b(?:\d{1,3}\.){3}\d{1,3}\b`,
+    pattern: String.raw`\b(?:(?:25[0-5]|2[0-4]\d|[01]?\d?\d)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d?\d)\b`,
     flags: "g",
+    sample:
+      "Valid: 192.168.1.1, 10.0.0.254, 255.255.255.0\nInvalid: 999.999.999.999, 256.1.1.1",
   },
   {
     label: "URL",
     pattern: String.raw`https?://[^\s/$.?#].[^\s]*`,
     flags: "gi",
+    sample:
+      "Visit https://example.com/path?q=1#hash\nOr http://sub.domain.org/page\nNot a URL: ftp://files.example.com",
   },
   {
     label: "Nginx Location",
     pattern: String.raw`location\s+(?:(=|~\*?|\^~)\s+)?(.+?)\s*\{`,
     flags: "g",
+    sample:
+      "location = /exact { }\nlocation ~* \\.php$ { }\nlocation ^~ /images/ { }\nlocation /prefix { }",
   },
   {
     label: "ISO Date",
-    pattern: String.raw`\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}:\d{2})?`,
+    pattern: String.raw`\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})?)?`,
     flags: "g",
+    sample:
+      "Created: 2025-06-15\nModified: 2025-06-15T14:30:00\nUTC: 2025-06-15T14:30:00Z",
   },
   {
     label: "HEX Color",
     pattern: String.raw`#(?:[0-9a-fA-F]{3}){1,2}\b`,
     flags: "gi",
+    sample: "Colors: #ff5733 #0af #DEADBE\nBackground: #333 Accent: #00ff88",
+  },
+  {
+    label: "UUID",
+    pattern: String.raw`[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}`,
+    flags: "gi",
+    sample:
+      "ID: 550e8400-e29b-41d4-a716-446655440000\nSession: a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  },
+  {
+    label: "Phone",
+    pattern: String.raw`(?:\+?\d{1,3}[-.\s]?)?\(?\d{1,4}\)?[-.\s]?\d{1,4}[-.\s]?\d{1,9}`,
+    flags: "g",
+    sample:
+      "US: +1-555-123-4567 or (555) 123-4567\nUK: +44 20 7946 0958\nLocal: 555.123.4567",
+  },
+  {
+    label: "MAC Address",
+    pattern: String.raw`(?:[0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}`,
+    flags: "gi",
+    sample:
+      "Ethernet: 00:1A:2B:3C:4D:5E\nWiFi: AA-BB-CC-DD-EE-FF\nInvalid: GG:HH:II:JJ:KK:LL",
+  },
+  {
+    label: "JWT",
+    pattern: String.raw`eyJ[A-Za-z0-9_-]+\.eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+`,
+    flags: "g",
+    sample:
+      // eslint-disable-next-line no-secrets/no-secrets -- Example JWT for regex testing
+      "Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U\nNot JWT: abc.def.ghi",
+  },
+];
+
+/** Regex quick reference data for the built-in cheat sheet */
+const quickRef = [
+  {
+    cat: "Characters",
+    items: [
+      { token: ".", desc: "Any character (except newline)" },
+      { token: String.raw`\d`, desc: "Digit [0-9]" },
+      { token: String.raw`\D`, desc: "Non-digit" },
+      { token: String.raw`\w`, desc: "Word char [A-Za-z0-9_]" },
+      { token: String.raw`\W`, desc: "Non-word char" },
+      { token: String.raw`\s`, desc: "Whitespace" },
+      { token: String.raw`\S`, desc: "Non-whitespace" },
+    ],
+  },
+  {
+    cat: "Anchors",
+    items: [
+      { token: "^", desc: "Start of string/line" },
+      { token: "$", desc: "End of string/line" },
+      { token: String.raw`\b`, desc: "Word boundary" },
+      { token: String.raw`\B`, desc: "Non-word boundary" },
+    ],
+  },
+  {
+    cat: "Quantifiers",
+    items: [
+      { token: "*", desc: "0 or more" },
+      { token: "+", desc: "1 or more" },
+      { token: "?", desc: "0 or 1 (optional)" },
+      { token: "{n}", desc: "Exactly n" },
+      { token: "{n,m}", desc: "Between n and m" },
+      { token: "*?", desc: "Lazy (non-greedy)" },
+    ],
+  },
+  {
+    cat: "Groups",
+    items: [
+      { token: "(...)", desc: "Capture group" },
+      { token: "(?:...)", desc: "Non-capturing group" },
+      { token: "(?<name>...)", desc: "Named capture group" },
+      { token: String.raw`\1`, desc: "Backreference to group 1" },
+      { token: "a|b", desc: "Alternation (a or b)" },
+    ],
+  },
+  {
+    cat: "Lookaround",
+    items: [
+      { token: "(?=...)", desc: "Positive lookahead" },
+      { token: "(?!...)", desc: "Negative lookahead" },
+      { token: "(?<=...)", desc: "Positive lookbehind" },
+      { token: "(?<!...)", desc: "Negative lookbehind" },
+    ],
   },
 ];
 ---
@@ -91,6 +194,7 @@ const presets = [
               class="rgx-preset-btn"
               data-pattern={p.pattern}
               data-flags={p.flags}
+              data-sample={p.sample}
             >
               {p.label}
             </button>
@@ -137,6 +241,15 @@ const presets = [
           <span class="rgx-flag-box">s</span>
           <span>Dot-all</span>
         </label>
+        <label class="rgx-flag-label">
+          <input
+            type="checkbox"
+            class="rgx-flag-check"
+            data-flag="u"
+          />
+          <span class="rgx-flag-box">u</span>
+          <span>Unicode</span>
+        </label>
       </div>
     </div>
 
@@ -155,29 +268,89 @@ const presets = [
       <textarea
         id={`${uniqueId}-test`}
         class="rgx-textarea"
-        rows="6"
+        rows="7"
         spellcheck="false"
-        >The Quick Brown Fox Jumps Over The Lazy Dog. Server nginx/1.25.4
-        running on port 443. IP addresses: 192.168.1.1 and 10.0.0.254 Contact:
-        admin@example.com or dev@test.org</textarea
+        >{defaultTestString}</textarea
       >
+    </div>
+
+    {/* Replace section */}
+    <div class="rgx-replace-section">
+      <div class="rgx-replace-toggle-row">
+        <span class="rgx-label">
+          <span
+            class="i-mdi:find-replace"
+            aria-hidden="true"
+          ></span>
+          Replace Mode
+        </span>
+        <label
+          class="rgx-switch-label"
+          aria-label="Toggle replace mode"
+        >
+          <input
+            type="checkbox"
+            id={`${uniqueId}-replace-toggle`}
+            class="rgx-switch-input"
+          />
+          <span class="rgx-switch-track">
+            <span class="rgx-switch-thumb"></span>
+          </span>
+        </label>
+      </div>
+      <div
+        class="rgx-replace-body"
+        id={`${uniqueId}-replace-body`}
+        hidden
+      >
+        <input
+          type="text"
+          id={`${uniqueId}-replace`}
+          class="rgx-replace-input"
+          placeholder="Replacement string (supports $1, $&, etc.)"
+          spellcheck="false"
+          autocomplete="off"
+          aria-label="Replacement string"
+        />
+        <div class="rgx-replace-result-header">
+          <span
+            class="i-mdi:text-box-check-outline"
+            aria-hidden="true"
+          ></span>
+          <span>Result</span>
+        </div>
+        <div
+          class="rgx-replace-result"
+          id={`${uniqueId}-replace-result`}
+        >
+        </div>
+      </div>
     </div>
 
     {/* Results */}
     <div class="rgx-results-section">
-      {/* Highlighted matches */}
-      <div class="rgx-match-header">
-        <span
-          class="i-mdi:target"
-          aria-hidden="true"
-        ></span>
-        <span>Matches</span>
-        <span
-          class="rgx-match-count"
-          id={`${uniqueId}-count`}
-          >0</span
+      {/* Stats bar */}
+      <div class="rgx-stats-bar">
+        <div class="rgx-match-header">
+          <span
+            class="i-mdi:target"
+            aria-hidden="true"
+          ></span>
+          <span>Matches</span>
+          <span
+            class="rgx-match-count"
+            id={`${uniqueId}-count`}
+            >0</span
+          >
+        </div>
+        <div
+          class="rgx-exec-time"
+          id={`${uniqueId}-time`}
         >
+        </div>
       </div>
+
+      {/* Highlighted matches */}
       <div
         class="rgx-highlight-area"
         id={`${uniqueId}-highlight`}
@@ -219,24 +392,59 @@ const presets = [
         <span id={`${uniqueId}-error-text`}></span>
       </div>
     </div>
+
+    {/* Quick Reference (collapsible) */}
+    <details class="rgx-quickref">
+      <summary class="rgx-quickref-summary">
+        <span
+          class="i-mdi:book-open-page-variant-outline"
+          aria-hidden="true"
+        ></span>
+        Quick Reference
+        <span
+          class="rgx-quickref-chevron i-mdi:chevron-down"
+          aria-hidden="true"
+        ></span>
+      </summary>
+      <div class="rgx-quickref-grid">
+        {
+          quickRef.map((section) => (
+            <div class="rgx-quickref-cat">
+              <div class="rgx-quickref-cat-title">{section.cat}</div>
+              {section.items.map((item) => (
+                <div class="rgx-quickref-item">
+                  <code class="rgx-quickref-token">{item.token}</code>
+                  <span class="rgx-quickref-desc">{item.desc}</span>
+                </div>
+              ))}
+            </div>
+          ))
+        }
+      </div>
+    </details>
   </div>
 </div>
 
 <script is:inline define:vars={{ uniqueId }}>
   (function () {
-    const container = document.querySelector(`[data-rgx-id="${uniqueId}"]`);
+    var container = document.querySelector('[data-rgx-id="' + uniqueId + '"]');
     if (!container) return;
 
-    const patternInput = document.getElementById(`${uniqueId}-pattern`);
-    const flagsInput = document.getElementById(`${uniqueId}-flags`);
-    const testInput = document.getElementById(`${uniqueId}-test`);
-    const highlightArea = document.getElementById(`${uniqueId}-highlight`);
-    const detailsArea = document.getElementById(`${uniqueId}-details`);
-    const countEl = document.getElementById(`${uniqueId}-count`);
-    const errorEl = document.getElementById(`${uniqueId}-error`);
-    const errorText = document.getElementById(`${uniqueId}-error-text`);
-    const presetBtns = container.querySelectorAll(".rgx-preset-btn");
-    const flagChecks = container.querySelectorAll(".rgx-flag-check");
+    var patternInput = document.getElementById(uniqueId + "-pattern");
+    var flagsInput = document.getElementById(uniqueId + "-flags");
+    var testInput = document.getElementById(uniqueId + "-test");
+    var highlightArea = document.getElementById(uniqueId + "-highlight");
+    var detailsArea = document.getElementById(uniqueId + "-details");
+    var countEl = document.getElementById(uniqueId + "-count");
+    var timeEl = document.getElementById(uniqueId + "-time");
+    var errorEl = document.getElementById(uniqueId + "-error");
+    var errorText = document.getElementById(uniqueId + "-error-text");
+    var replaceToggle = document.getElementById(uniqueId + "-replace-toggle");
+    var replaceBody = document.getElementById(uniqueId + "-replace-body");
+    var replaceInput = document.getElementById(uniqueId + "-replace");
+    var replaceResult = document.getElementById(uniqueId + "-replace-result");
+    var presetBtns = container.querySelectorAll(".rgx-preset-btn");
+    var flagChecks = container.querySelectorAll(".rgx-flag-check");
 
     if (!patternInput || !testInput || !highlightArea) return;
 
@@ -274,6 +482,8 @@ const presets = [
         highlightArea.textContent = text || "(Enter a pattern and test string)";
         if (detailsArea) detailsArea.textContent = "";
         if (countEl) countEl.textContent = "0";
+        if (timeEl) timeEl.textContent = "";
+        if (replaceResult) replaceResult.textContent = "";
         return;
       }
 
@@ -288,8 +498,13 @@ const presets = [
         highlightArea.textContent = text;
         if (detailsArea) detailsArea.textContent = "";
         if (countEl) countEl.textContent = "0";
+        if (timeEl) timeEl.textContent = "";
+        if (replaceResult) replaceResult.textContent = "";
         return;
       }
+
+      // Measure execution time
+      var t0 = performance.now();
 
       // Find matches
       var matches = [];
@@ -303,6 +518,7 @@ const presets = [
             value: match[0],
             index: match.index,
             groups: match.slice(1),
+            namedGroups: match.groups || null,
           });
           if (match[0].length === 0) regex.lastIndex++;
           safetyCounter++;
@@ -314,11 +530,19 @@ const presets = [
             value: match[0],
             index: match.index,
             groups: match.slice(1),
+            namedGroups: match.groups || null,
           });
         }
       }
 
+      var t1 = performance.now();
+      var elapsed = t1 - t0;
+
       if (countEl) countEl.textContent = String(matches.length);
+      if (timeEl) {
+        timeEl.textContent =
+          elapsed < 1 ? "< 1 ms" : elapsed.toFixed(1) + " ms";
+      }
 
       // Build highlighted text
       var html = "";
@@ -346,6 +570,17 @@ const presets = [
 
       highlightArea.innerHTML = html;
 
+      // Build replace result
+      if (replaceBody && !replaceBody.hidden && replaceInput && replaceResult) {
+        try {
+          var replaceRegex = new RegExp(pattern, flags);
+          var replaced = text.replace(replaceRegex, replaceInput.value);
+          replaceResult.textContent = replaced;
+        } catch (_) {
+          replaceResult.textContent = "(invalid replacement)";
+        }
+      }
+
       // Build match details
       if (detailsArea) {
         detailsArea.textContent = "";
@@ -368,19 +603,46 @@ const presets = [
 
           var pos = document.createElement("span");
           pos.className = "rgx-detail-pos";
-          pos.textContent = "index " + m.index;
+
+          // Calculate line:col position
+          var linesBefore = text.slice(0, m.index).split("\n");
+          var lineNum = linesBefore.length;
+          var col = linesBefore[linesBefore.length - 1].length + 1;
+          pos.textContent = "Ln " + lineNum + ", Col " + col;
 
           item.appendChild(idx);
           item.appendChild(val);
           item.appendChild(pos);
 
-          // Show groups if any
+          // Show named groups first
+          if (m.namedGroups) {
+            var names = Object.keys(m.namedGroups);
+            for (var ni = 0; ni < names.length; ni++) {
+              var nv = m.namedGroups[names[ni]];
+              if (nv !== undefined) {
+                var namedGrp = document.createElement("span");
+                namedGrp.className = "rgx-detail-group rgx-detail-named";
+                namedGrp.innerHTML =
+                  '<span class="rgx-group-label">' +
+                  escapeHtml(names[ni]) +
+                  "</span>" +
+                  escapeHtml(String(nv));
+                item.appendChild(namedGrp);
+              }
+            }
+          }
+
+          // Show numbered groups
           if (m.groups.length > 0) {
             m.groups.forEach(function (g, gi) {
               if (g !== undefined) {
                 var grp = document.createElement("span");
                 grp.className = "rgx-detail-group";
-                grp.textContent = "Group " + (gi + 1) + ": " + g;
+                grp.innerHTML =
+                  '<span class="rgx-group-label">$' +
+                  (gi + 1) +
+                  "</span>" +
+                  escapeHtml(String(g));
                 item.appendChild(grp);
               }
             });
@@ -396,6 +658,9 @@ const presets = [
       btn.addEventListener("click", function () {
         patternInput.value = btn.dataset.pattern;
         flagsInput.value = btn.dataset.flags;
+        if (btn.dataset.sample) {
+          testInput.value = btn.dataset.sample;
+        }
         syncFlagCheckboxes();
         runTest();
       });
@@ -411,6 +676,21 @@ const presets = [
       syncFlagCheckboxes();
       runTest();
     });
+
+    // Replace mode toggle
+    if (replaceToggle && replaceBody) {
+      replaceToggle.addEventListener("change", function () {
+        replaceBody.hidden = !replaceToggle.checked;
+        if (replaceToggle.checked) runTest();
+      });
+    }
+
+    // Replace input
+    if (replaceInput) {
+      replaceInput.addEventListener("input", function () {
+        runTest();
+      });
+    }
 
     // Debounced input
     var timeout;
@@ -622,11 +902,135 @@ const presets = [
     border-color: var(--color-primary);
   }
 
+  /* Replace section */
+  .rgx-replace-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.625rem;
+  }
+
+  .rgx-replace-toggle-row {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .rgx-switch-label {
+    position: relative;
+    display: inline-flex;
+    cursor: pointer;
+  }
+
+  .rgx-switch-input {
+    position: absolute;
+    pointer-events: none;
+    opacity: 0%;
+  }
+
+  .rgx-switch-track {
+    position: relative;
+    display: block;
+    width: 36px;
+    height: 20px;
+    background: var(--color-border);
+    border-radius: 10px;
+    transition: background 0.2s;
+  }
+
+  .rgx-switch-input:checked + .rgx-switch-track {
+    background: var(--color-primary);
+  }
+
+  .rgx-switch-input:focus-visible + .rgx-switch-track {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  .rgx-switch-thumb {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    display: block;
+    width: 16px;
+    height: 16px;
+    background: #fff;
+    border-radius: 50%;
+    transition: transform 0.2s;
+  }
+
+  .rgx-switch-input:checked + .rgx-switch-track .rgx-switch-thumb {
+    transform: translateX(16px);
+  }
+
+  .rgx-replace-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .rgx-replace-body[hidden] {
+    display: none;
+  }
+
+  .rgx-replace-input {
+    width: 100%;
+    padding: 0.625rem 0.75rem;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    color: var(--color-text);
+    background: var(--color-bg);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+    transition: border-color 0.15s;
+  }
+
+  .rgx-replace-input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+  }
+
+  .rgx-replace-result-header {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    font-size: 0.85rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .rgx-replace-result-header span[class^="i-"] {
+    width: 18px;
+    height: 18px;
+  }
+
+  .rgx-replace-result {
+    padding: 0.875rem;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    line-height: 1.6;
+    word-break: break-all;
+    white-space: pre-wrap;
+    background: var(--color-bg);
+    border: var(--border-1);
+    border-left: 3px solid var(--color-success, #10b981);
+    border-radius: var(--radius-sm);
+  }
+
   /* Results */
   .rgx-results-section {
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
+  }
+
+  .rgx-stats-bar {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    justify-content: space-between;
   }
 
   .rgx-match-header,
@@ -655,6 +1059,12 @@ const presets = [
     color: color-mix(in srgb, var(--color-primary) 80%, #000);
     background: rgb(from var(--color-primary) r g b / 10%);
     border-radius: 9999px;
+  }
+
+  .rgx-exec-time {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--color-text-muted);
   }
 
   .rgx-highlight-area {
@@ -742,11 +1152,28 @@ const presets = [
   }
 
   .rgx-details :global(.rgx-detail-group) {
+    display: flex;
+    gap: 0.375rem;
+    align-items: center;
     width: 100%;
     padding-left: 2rem;
     font-family: var(--font-mono);
     font-size: 0.75rem;
     color: var(--color-text-muted);
+  }
+
+  .rgx-details :global(.rgx-detail-named) {
+    color: var(--color-text);
+  }
+
+  .rgx-details :global(.rgx-group-label) {
+    display: inline-block;
+    padding: 0.0625rem 0.375rem;
+    font-size: 0.675rem;
+    font-weight: var(--fw-bold);
+    color: var(--color-primary);
+    background: rgb(from var(--color-primary) r g b / 10%);
+    border-radius: var(--radius-sm);
   }
 
   /* Error */
@@ -772,6 +1199,104 @@ const presets = [
     height: 16px;
   }
 
+  /* Quick Reference */
+  .rgx-quickref {
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+  }
+
+  .rgx-quickref-summary {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    font-size: 0.85rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-muted);
+    cursor: pointer;
+    background: var(--color-bg-secondary);
+    border-radius: var(--radius-sm);
+    transition: color 0.15s;
+  }
+
+  .rgx-quickref-summary:hover {
+    color: var(--color-primary);
+  }
+
+  .rgx-quickref[open] .rgx-quickref-summary {
+    border-bottom: var(--border-1);
+    border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  }
+
+  .rgx-quickref-summary span[class^="i-"] {
+    width: 18px;
+    height: 18px;
+  }
+
+  .rgx-quickref-chevron {
+    margin-left: auto;
+    transition: transform 0.2s;
+  }
+
+  .rgx-quickref[open] .rgx-quickref-chevron {
+    transform: rotate(180deg);
+  }
+
+  .rgx-quickref-summary::-webkit-details-marker,
+  .rgx-quickref-summary::marker {
+    display: none;
+    content: "";
+  }
+
+  .rgx-quickref-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--color-bg);
+  }
+
+  .rgx-quickref-cat {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .rgx-quickref-cat-title {
+    padding-bottom: 0.25rem;
+    margin-bottom: 0.25rem;
+    font-size: 0.75rem;
+    font-weight: var(--fw-bold);
+    color: var(--color-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: var(--border-1);
+  }
+
+  .rgx-quickref-item {
+    display: flex;
+    gap: 0.5rem;
+    align-items: baseline;
+    font-size: 0.75rem;
+    line-height: 1.5;
+  }
+
+  .rgx-quickref-token {
+    flex-shrink: 0;
+    min-width: 4rem;
+    padding: 0 0.25rem;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    font-weight: var(--fw-bold);
+    color: var(--color-text-heading);
+    background: var(--color-bg-secondary);
+    border-radius: 2px;
+  }
+
+  .rgx-quickref-desc {
+    color: var(--color-text-muted);
+  }
+
   @media (width <= 640px) {
     .rgx-layout {
       padding: 1rem;
@@ -779,6 +1304,16 @@ const presets = [
 
     .rgx-flag-toggles {
       gap: 0.375rem;
+    }
+
+    .rgx-quickref-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .rgx-stats-bar {
+      flex-direction: column;
+      gap: 0.25rem;
+      align-items: flex-start;
     }
   }
 </style>

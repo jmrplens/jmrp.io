@@ -36,7 +36,7 @@ export async function finalizeCspConfig(
       ? `img-src 'self' data: ${imgSrc} https://*.jmrp.io`
       : "img-src 'self' data: https://*.jmrp.io",
     "font-src 'self'",
-    "connect-src 'self' https://api.github.com https://cloudflareinsights.com https://*.cloudflareinsights.com",
+    "connect-src 'self' https://api.github.com https://cloudflareinsights.com https://*.cloudflareinsights.com https://api.certspotter.com https://crt.sh",
     "media-src 'self'",
     "manifest-src 'self'",
     "frame-src 'none'",
@@ -49,9 +49,12 @@ export async function finalizeCspConfig(
   ];
 
   // Nonce-only CSP: all scripts/styles use nonces, external same-origin covered by 'self'
+  // default-src 'self' allows same-origin prefetch/prerender initiated by Astro's
+  // client router (prefetchAll + Speculation Rules). Firefox falls back to <link rel="prefetch">
+  // which has no dedicated CSP directive and inherits from default-src.
   const cspHeader = [
-    "default-src 'none'",
-    "script-src 'self' 'nonce-$cspNonce'",
+    "default-src 'self'",
+    "script-src 'self' 'nonce-$cspNonce' 'strict-dynamic'",
     "style-src 'self' 'nonce-$cspNonce'",
     ...commonCspDirectives,
   ]
@@ -102,7 +105,7 @@ add_header X-Frame-Options "DENY" always;
 add_header Referrer-Policy "strict-origin-when-cross-origin" always;
 
 # Cross-Origin Policies (COOP, COEP, CORP)
-add_header Cross-Origin-Embedder-Policy "credentialless" always;
+add_header Cross-Origin-Embedder-Policy "require-corp" always;
 add_header Cross-Origin-Opener-Policy "same-origin" always;
 add_header Cross-Origin-Resource-Policy "same-origin" always;
 
@@ -151,7 +154,7 @@ add_header X-Frame-Options "DENY" always;
 add_header Referrer-Policy "strict-origin-when-cross-origin" always;
 
 # Cross-Origin Policies
-add_header Cross-Origin-Embedder-Policy "credentialless" always;
+add_header Cross-Origin-Embedder-Policy "require-corp" always;
 add_header Cross-Origin-Opener-Policy "same-origin" always;
 # CORP: 'cross-origin' allows other sites to embed these assets (e.g., social media previews,
 # CDN sharing). This is intentional for static assets like images and fonts.

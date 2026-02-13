@@ -3,256 +3,548 @@
  * Subnet Calculator Tool Page.
  */
 import SubnetCalculatorApp from "@components/apps/SubnetCalculator.astro";
-import BaseLayout from "@layouts/BaseLayout.astro";
-import { getSiteUrl } from "@utils/site";
-
-const toolSchema = {
-  "@context": "https://schema.org",
-  "@type": "SoftwareApplication",
-  name: "Subnet Calculator",
-  description:
-    "Calculate IPv4 and IPv6 subnets with CIDR notation, network ranges, and binary visualization.",
-  url: new URL("/tools/subnet-calculator/", getSiteUrl()).toString(),
-  applicationCategory: "WebApplication",
-  operatingSystem: "Web Browser",
-  offers: { "@type": "Offer", price: 0, priceCurrency: "USD" },
-};
+import {
+  TerminalSession,
+  TerminalSessionCommand,
+  TerminalSessionOutput,
+} from "@components/ui/terminal-session";
+import ToolLayout from "@layouts/ToolLayout.astro";
 ---
 
-<BaseLayout
-  title="Subnet Calculator"
-  description="IPv4 and IPv6 subnet calculator with CIDR notation, network/broadcast addresses, available hosts, and binary visualization. Client-side only."
-  schema={toolSchema}
+<ToolLayout
+  title="IP / Subnet Calculator"
+  description="Comprehensive IPv4 and IPv6 subnet calculator with CIDR notation, VLSM planner, range-to-CIDR converter, address info, reverse DNS, and bit boundary visualization. Client-side only."
+  subtitle="Full IPv4/IPv6 networking toolkit: subnet calculator, address info, VLSM planner, and range-to-CIDR converter."
+  icon="i-mdi:lan"
+  slug="subnet-calculator"
 >
-  <div class="tool-page">
-    <div class="content-wrapper">
-      <nav
-        class="breadcrumb"
-        aria-label="Breadcrumb"
-      >
-        <a href="/tools/">Tools</a>
-        <span
-          class="i-mdi:chevron-right"
-          aria-hidden="true"
-        ></span>
-        <span aria-current="page">Subnet Calculator</span>
-      </nav>
+  <SubnetCalculatorApp />
 
-      <header class="page-header">
-        <div class="header-icon">
-          <span
-            class="i-mdi:lan"
-            aria-hidden="true"
-          ></span>
-        </div>
-        <div class="header-content">
-          <h1>Subnet Calculator</h1>
-          <p class="subtitle">
-            Calculate IPv4 and IPv6 subnets, network ranges, and available hosts
-            with CIDR notation.
-          </p>
-        </div>
-      </header>
+  <Fragment slot="info">
+    <h2>About This Tool</h2>
+    <p>
+      A comprehensive IP networking toolkit covering everything you need for
+      IPv4 and IPv6 address planning. Four specialized calculators in one tool:
+      subnet calculator, address info, VLSM planner, and range-to-CIDR
+      converter.
+    </p>
 
-      <div class="tool-container">
-        <SubnetCalculatorApp title="" />
-      </div>
+    <h3>Features</h3>
+    <ul>
+      <li>
+        <strong>Full IPv4 and IPv6</strong> — subnet calculation with BigInt math
+        for 128-bit addresses
+      </li>
+      <li>
+        <strong>Auto-detect</strong> — automatically identifies IPv4 vs IPv6 from
+        your input
+      </li>
+      <li>
+        <strong>Smart CIDR parsing</strong> — paste 192.168.1.0/24 and it auto-splits
+        the prefix
+      </li>
+      <li>
+        <strong>Address type detection</strong> — Private (RFC 1918), CGNAT, Loopback,
+        Link-Local, Multicast, Documentation, ULA, Teredo, 6to4, and more
+      </li>
+      <li>
+        <strong>Address converter</strong> — binary, hex, integer, reverse DNS (PTR),
+        IPv4-mapped IPv6, 6to4
+      </li>
+      <li>
+        <strong>VLSM planner</strong> — allocate subnets of different sizes with waste
+        calculation
+      </li>
+      <li>
+        <strong>Range to CIDR</strong> — convert arbitrary IP ranges to optimal CIDR
+        blocks
+      </li>
+      <li>
+        <strong>Bit boundary visualization</strong> — colored network/host bit display
+      </li>
+      <li>
+        <strong>Common presets</strong> — quick access to typical IPv4 and IPv6 prefix
+        lengths
+      </li>
+      <li>
+        <strong>Share link</strong> — URL parameters for bookmarking and sharing
+      </li>
+      <li>
+        <strong>Copy results</strong> — one-click copy of all calculated values
+      </li>
+    </ul>
 
-      <section class="tool-info">
-        <h2>About This Tool</h2>
-        <p>
-          Calculate subnet information for IPv4 and IPv6 networks. Enter an IP
-          address with CIDR notation to see the network address, broadcast
-          address, usable host range, and binary representation.
-        </p>
-        <h3>Features</h3>
-        <ul>
-          <li>
-            <strong>IPv4 &amp; IPv6</strong> — supports both address families
-          </li>
-          <li>
-            <strong>CIDR notation</strong> — enter addresses like 192.168.1.0/24
-          </li>
-          <li>
-            <strong>Full breakdown</strong> — network, broadcast, first/last host,
-            wildcard mask
-          </li>
-          <li>
-            <strong>Binary view</strong> — visualize the network/host bit boundary
-          </li>
-          <li>
-            <strong>Common presets</strong> — quick access to typical subnet sizes
-          </li>
-        </ul>
-        <h3>How to Use</h3>
-        <ol>
-          <li>Enter an IP address with CIDR prefix (e.g., 192.168.1.0/24)</li>
-          <li>Or use the slider to adjust the prefix length</li>
-          <li>View network details, host range, and binary representation</li>
-        </ol>
-      </section>
-    </div>
-  </div>
-</BaseLayout>
+    <h2>How to Use</h2>
 
-<style>
-  .tool-page {
-    min-height: calc(100vh - var(--header-height, 4rem) - 4rem);
-    padding: var(--space-xl) 0;
-  }
+    <h3>Subnet Calculator</h3>
+    <ol>
+      <li>
+        Enter an IPv4 address (e.g., <code>192.168.1.0</code>) or IPv6 address
+        (e.g., <code>2001:db8::</code>)
+      </li>
+      <li>Set the CIDR prefix length or click a preset button</li>
+      <li>
+        View network address, broadcast, mask, wildcard, host range, address
+        type, and more
+      </li>
+      <li>
+        Scroll down to see the bit boundary visualization showing network vs
+        host bits
+      </li>
+    </ol>
 
-  .content-wrapper {
-    box-sizing: border-box;
-    width: 100%;
-    max-width: var(--max-width-container);
-    padding: 0 var(--space-lg);
-    margin: 0 auto;
-  }
+    <h3>Address Info</h3>
+    <ol>
+      <li>
+        Enter any IP address, integer, or hex value (e.g., <code
+          >3232235777</code
+        > = 192.168.1.1)
+      </li>
+      <li>
+        View all representations: binary, hex, integer, reverse DNS, IPv4-mapped
+        IPv6, and 6to4
+      </li>
+      <li>Identify address type, class, and scope</li>
+    </ol>
 
-  .breadcrumb {
-    display: flex;
-    gap: var(--space-xs);
-    align-items: center;
-    margin-bottom: var(--space-lg);
-    font-size: 0.875rem;
-    color: var(--color-text-muted);
-  }
+    <h3>VLSM Planner</h3>
+    <ol>
+      <li>Enter a base IPv4 network (e.g., <code>10.0.0.0/16</code>)</li>
+      <li>Add subnet requirements with names and required host counts</li>
+      <li>
+        Click Calculate to see optimal allocation sorted by size, with waste
+        analysis
+      </li>
+    </ol>
 
-  .breadcrumb a {
-    color: var(--color-text-muted);
-    text-decoration: none;
-    transition: color 0.2s ease;
-  }
+    <h3>Range to CIDR</h3>
+    <ol>
+      <li>
+        Enter start and end IPv4 addresses (e.g., <code>192.168.1.0</code> to
+        <code>192.168.3.255</code>)
+      </li>
+      <li>View the minimal set of CIDR blocks covering the range</li>
+    </ol>
 
-  .breadcrumb a:hover {
-    color: var(--color-primary);
-  }
+    <h2>IPv4 Subnet Reference</h2>
 
-  .breadcrumb span[class*="i-"] {
-    width: 1rem;
-    height: 1rem;
-  }
+    <h3>Common Subnet Sizes</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>CIDR</th>
+          <th>Subnet Mask</th>
+          <th>Addresses</th>
+          <th>Usable Hosts</th>
+          <th>Typical Use</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>/32</code></td>
+          <td><code>255.255.255.255</code></td>
+          <td>1</td>
+          <td>1</td>
+          <td>Host route</td>
+        </tr>
+        <tr>
+          <td><code>/31</code></td>
+          <td><code>255.255.255.254</code></td>
+          <td>2</td>
+          <td>2</td>
+          <td>Point-to-point link (RFC 3021)</td>
+        </tr>
+        <tr>
+          <td><code>/30</code></td>
+          <td><code>255.255.255.252</code></td>
+          <td>4</td>
+          <td>2</td>
+          <td>Point-to-point link</td>
+        </tr>
+        <tr>
+          <td><code>/29</code></td>
+          <td><code>255.255.255.248</code></td>
+          <td>8</td>
+          <td>6</td>
+          <td>Small office</td>
+        </tr>
+        <tr>
+          <td><code>/28</code></td>
+          <td><code>255.255.255.240</code></td>
+          <td>16</td>
+          <td>14</td>
+          <td>Small network</td>
+        </tr>
+        <tr>
+          <td><code>/27</code></td>
+          <td><code>255.255.255.224</code></td>
+          <td>32</td>
+          <td>30</td>
+          <td>Department</td>
+        </tr>
+        <tr>
+          <td><code>/26</code></td>
+          <td><code>255.255.255.192</code></td>
+          <td>64</td>
+          <td>62</td>
+          <td>Floor / building</td>
+        </tr>
+        <tr>
+          <td><code>/25</code></td>
+          <td><code>255.255.255.128</code></td>
+          <td>128</td>
+          <td>126</td>
+          <td>Large department</td>
+        </tr>
+        <tr>
+          <td><code>/24</code></td>
+          <td><code>255.255.255.0</code></td>
+          <td>256</td>
+          <td>254</td>
+          <td>Standard LAN</td>
+        </tr>
+        <tr>
+          <td><code>/16</code></td>
+          <td><code>255.255.0.0</code></td>
+          <td>65,536</td>
+          <td>65,534</td>
+          <td>Large site</td>
+        </tr>
+        <tr>
+          <td><code>/8</code></td>
+          <td><code>255.0.0.0</code></td>
+          <td>16,777,216</td>
+          <td>16,777,214</td>
+          <td>ISP / Class A</td>
+        </tr>
+      </tbody>
+    </table>
 
-  .page-header {
-    display: flex;
-    gap: var(--space-md);
-    align-items: center;
-    margin-bottom: var(--space-xl);
-  }
+    <h3>IPv4 Classes</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Class</th>
+          <th>Range</th>
+          <th>Default Mask</th>
+          <th>Networks</th>
+          <th>Purpose</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>A</td>
+          <td><code>1.0.0.0 – 126.255.255.255</code></td>
+          <td><code>/8</code></td>
+          <td>126</td>
+          <td>Large organizations</td>
+        </tr>
+        <tr>
+          <td>B</td>
+          <td><code>128.0.0.0 – 191.255.255.255</code></td>
+          <td><code>/16</code></td>
+          <td>16,384</td>
+          <td>Medium organizations</td>
+        </tr>
+        <tr>
+          <td>C</td>
+          <td><code>192.0.0.0 – 223.255.255.255</code></td>
+          <td><code>/24</code></td>
+          <td>2,097,152</td>
+          <td>Small organizations</td>
+        </tr>
+        <tr>
+          <td>D</td>
+          <td><code>224.0.0.0 – 239.255.255.255</code></td>
+          <td>N/A</td>
+          <td>N/A</td>
+          <td>Multicast</td>
+        </tr>
+        <tr>
+          <td>E</td>
+          <td><code>240.0.0.0 – 255.255.255.255</code></td>
+          <td>N/A</td>
+          <td>N/A</td>
+          <td>Reserved / Experimental</td>
+        </tr>
+      </tbody>
+    </table>
 
-  .header-icon {
-    display: flex;
-    flex-shrink: 0;
-    align-items: center;
-    justify-content: center;
-    width: 4rem;
-    height: 4rem;
-    background: linear-gradient(
-      135deg,
-      var(--color-success, #10b981),
-      var(--color-success-dark, #059669)
-    );
-    border-radius: var(--radius-lg);
-  }
+    <h3>Private and Reserved Ranges</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Range</th>
+          <th>CIDR</th>
+          <th>Purpose</th>
+          <th>RFC</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>10.0.0.0</code></td>
+          <td><code>/8</code></td>
+          <td>Private network</td>
+          <td>RFC 1918</td>
+        </tr>
+        <tr>
+          <td><code>172.16.0.0</code></td>
+          <td><code>/12</code></td>
+          <td>Private network</td>
+          <td>RFC 1918</td>
+        </tr>
+        <tr>
+          <td><code>192.168.0.0</code></td>
+          <td><code>/16</code></td>
+          <td>Private network</td>
+          <td>RFC 1918</td>
+        </tr>
+        <tr>
+          <td><code>100.64.0.0</code></td>
+          <td><code>/10</code></td>
+          <td>CGNAT / Shared</td>
+          <td>RFC 6598</td>
+        </tr>
+        <tr>
+          <td><code>127.0.0.0</code></td>
+          <td><code>/8</code></td>
+          <td>Loopback</td>
+          <td>RFC 1122</td>
+        </tr>
+        <tr>
+          <td><code>169.254.0.0</code></td>
+          <td><code>/16</code></td>
+          <td>Link-Local / APIPA</td>
+          <td>RFC 3927</td>
+        </tr>
+        <tr>
+          <td><code>192.0.2.0</code></td>
+          <td><code>/24</code></td>
+          <td>Documentation (TEST-NET-1)</td>
+          <td>RFC 5737</td>
+        </tr>
+        <tr>
+          <td><code>198.51.100.0</code></td>
+          <td><code>/24</code></td>
+          <td>Documentation (TEST-NET-2)</td>
+          <td>RFC 5737</td>
+        </tr>
+        <tr>
+          <td><code>203.0.113.0</code></td>
+          <td><code>/24</code></td>
+          <td>Documentation (TEST-NET-3)</td>
+          <td>RFC 5737</td>
+        </tr>
+        <tr>
+          <td><code>224.0.0.0</code></td>
+          <td><code>/4</code></td>
+          <td>Multicast</td>
+          <td>RFC 5771</td>
+        </tr>
+      </tbody>
+    </table>
 
-  .header-icon span {
-    width: 2rem;
-    height: 2rem;
-    color: var(--header-icon-color, #fff);
-  }
+    <h2>IPv6 Reference</h2>
 
-  .header-content {
-    flex: 1;
-    min-width: 0;
-  }
+    <h3>Common Prefix Lengths</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Prefix</th>
+          <th>Addresses</th>
+          <th>Typical Use</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>/128</code></td>
+          <td>1</td>
+          <td>Host address</td>
+        </tr>
+        <tr>
+          <td><code>/127</code></td>
+          <td>2</td>
+          <td>Point-to-point link (RFC 6164)</td>
+        </tr>
+        <tr>
+          <td><code>/64</code></td>
+          <td>2<sup>64</sup></td>
+          <td>Standard subnet (SLAAC required)</td>
+        </tr>
+        <tr>
+          <td><code>/56</code></td>
+          <td>2<sup>72</sup></td>
+          <td>Residential site (256 /64s)</td>
+        </tr>
+        <tr>
+          <td><code>/48</code></td>
+          <td>2<sup>80</sup></td>
+          <td>Enterprise site (65,536 /64s)</td>
+        </tr>
+        <tr>
+          <td><code>/32</code></td>
+          <td>2<sup>96</sup></td>
+          <td>ISP allocation</td>
+        </tr>
+      </tbody>
+    </table>
 
-  .page-header h1 {
-    margin-bottom: var(--space-xs);
-    font-size: 2rem;
-    font-weight: 800;
-    letter-spacing: -0.02em;
-  }
+    <h3>IPv6 Special Addresses</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Address / Prefix</th>
+          <th>Purpose</th>
+          <th>RFC</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>::/128</code></td>
+          <td>Unspecified</td>
+          <td>RFC 4291</td>
+        </tr>
+        <tr>
+          <td><code>::1/128</code></td>
+          <td>Loopback</td>
+          <td>RFC 4291</td>
+        </tr>
+        <tr>
+          <td><code>::ffff:0:0/96</code></td>
+          <td>IPv4-Mapped IPv6</td>
+          <td>RFC 4291</td>
+        </tr>
+        <tr>
+          <td><code>64:ff9b::/96</code></td>
+          <td>NAT64 translation</td>
+          <td>RFC 6052</td>
+        </tr>
+        <tr>
+          <td><code>2001:db8::/32</code></td>
+          <td>Documentation</td>
+          <td>RFC 3849</td>
+        </tr>
+        <tr>
+          <td><code>2002::/16</code></td>
+          <td>6to4 tunneling</td>
+          <td>RFC 3056</td>
+        </tr>
+        <tr>
+          <td><code>fc00::/7</code></td>
+          <td>Unique Local Address (ULA)</td>
+          <td>RFC 4193</td>
+        </tr>
+        <tr>
+          <td><code>fe80::/10</code></td>
+          <td>Link-Local</td>
+          <td>RFC 4291</td>
+        </tr>
+        <tr>
+          <td><code>ff00::/8</code></td>
+          <td>Multicast</td>
+          <td>RFC 4291</td>
+        </tr>
+      </tbody>
+    </table>
 
-  .subtitle {
-    font-size: 1rem;
-    line-height: 1.5;
-    color: var(--color-text-muted);
-  }
+    <h2>Linux Command Reference</h2>
 
-  .tool-container {
-    margin-bottom: var(--space-xl);
-  }
+    <h3>Show IP addresses</h3>
+    <TerminalSession>
+      <TerminalSessionCommand> ip -4 addr show </TerminalSessionCommand>
+      <TerminalSessionOutput title="IPv4 addresses on all interfaces">
+        inet 192.168.1.100/24 brd 192.168.1.255 scope global eth0
+      </TerminalSessionOutput>
+    </TerminalSession>
 
-  .tool-info {
-    max-width: 720px;
-    padding: var(--space-lg);
-    margin: 0 auto;
-    background: var(--color-bg-secondary);
-    border: var(--border-1);
-    border-radius: var(--radius-lg);
-  }
+    <h3>Show IPv6 addresses</h3>
+    <TerminalSession>
+      <TerminalSessionCommand>
+        ip -6 addr show scope global
+      </TerminalSessionCommand>
+      <TerminalSessionOutput title="Global IPv6 addresses">
+        inet6 2001:db8::1/64 scope global
+      </TerminalSessionOutput>
+    </TerminalSession>
 
-  .tool-info h2 {
-    margin-bottom: var(--space-md);
-    font-size: 1.25rem;
-    font-weight: var(--fw-semibold);
-    color: var(--color-text-heading);
-  }
+    <h3>Routing table</h3>
+    <TerminalSession>
+      <TerminalSessionCommand> ip route show </TerminalSessionCommand>
+      <TerminalSessionOutput title="IPv4 routing table">
+        {
+          `default via 192.168.1.1 dev eth0\n192.168.1.0/24 dev eth0 proto kernel scope link src 192.168.1.100`
+        }
+      </TerminalSessionOutput>
+    </TerminalSession>
 
-  .tool-info h3 {
-    margin-top: var(--space-lg);
-    margin-bottom: var(--space-sm);
-    font-size: 1rem;
-    font-weight: var(--fw-semibold);
-    color: var(--color-text-heading);
-  }
+    <h3>Calculate subnet with ipcalc</h3>
+    <TerminalSession>
+      <TerminalSessionCommand> ipcalc 192.168.1.0/24 </TerminalSessionCommand>
+      <TerminalSessionOutput title="Subnet details">
+        {
+          `Network:   192.168.1.0/24\nNetmask:   255.255.255.0\nBroadcast: 192.168.1.255\nHostMin:   192.168.1.1\nHostMax:   192.168.1.254\nHosts/Net: 254\nClass C, Private Internet`
+        }
+      </TerminalSessionOutput>
+    </TerminalSession>
 
-  .tool-info p {
-    margin-bottom: var(--space-md);
-    font-size: 0.95rem;
-    line-height: 1.6;
-    color: var(--color-text);
-  }
+    <h3>Reverse DNS lookup</h3>
+    <TerminalSession>
+      <TerminalSessionCommand> dig -x 8.8.8.8 +short </TerminalSessionCommand>
+      <TerminalSessionOutput title="PTR record for 8.8.8.8">
+        dns.google.
+      </TerminalSessionOutput>
+    </TerminalSession>
 
-  .tool-info ul,
-  .tool-info ol {
-    padding-left: 1.25rem;
-    margin: 0;
-  }
+    <h3>Scan a subnet</h3>
+    <TerminalSession>
+      <TerminalSessionCommand>
+        {`nmap -sn 192.168.1.0/24 | grep "Nmap scan report"`}
+      </TerminalSessionCommand>
+      <TerminalSessionOutput title="Discover live hosts on a subnet">
+        {`Nmap scan report for 192.168.1.1\nNmap scan report for 192.168.1.100`}
+      </TerminalSessionOutput>
+    </TerminalSession>
 
-  .tool-info li {
-    margin-bottom: var(--space-sm);
-    font-size: 0.95rem;
-    line-height: 1.5;
-    color: var(--color-text);
-  }
+    <h2>VLSM Explanation</h2>
+    <p>
+      <strong>Variable Length Subnet Masking (VLSM)</strong> allows dividing a network
+      into subnets of different sizes, minimizing wasted addresses. The algorithm:
+    </p>
+    <ol>
+      <li>Sort requirements by host count (largest first)</li>
+      <li>
+        For each requirement, find the smallest power-of-2 block that fits
+        (hosts + 2 for network/broadcast addresses)
+      </li>
+      <li>Align the block to its natural boundary</li>
+      <li>Allocate and advance to the next available space</li>
+    </ol>
+    <p>
+      In IPv6, VLSM is less relevant because /64 is the standard prefix for all
+      subnets (required for SLAAC). The immense address space makes variable
+      sizing unnecessary.
+    </p>
 
-  .tool-info a {
-    color: var(--color-primary);
-    text-decoration: underline;
-    text-underline-offset: 2px;
-  }
+    <h2>Range to CIDR Algorithm</h2>
+    <p>
+      Converting an arbitrary IP range to CIDR blocks finds the minimal set of
+      prefixes that exactly cover the range. For each position:
+    </p>
+    <ol>
+      <li>Find the largest aligned block starting at the current address</li>
+      <li>Ensure the block does not extend beyond the end of the range</li>
+      <li>Record the block and advance past it</li>
+    </ol>
+    <p>
+      This is useful for firewall rules, route aggregation, and access control
+      lists where CIDR notation is required.
+    </p>
 
-  .tool-info a:hover {
-    text-decoration: none;
-  }
-
-  @media (width <= 640px) {
-    .page-header {
-      flex-direction: column;
-      text-align: center;
-    }
-
-    .page-header h1 {
-      font-size: 1.5rem;
-    }
-
-    .subtitle {
-      font-size: 0.9rem;
-    }
-
-    .tool-info {
-      padding: var(--space-md);
-    }
-  }
-</style>
+    <h2>Privacy</h2>
+    <p>
+      All calculations run entirely in your browser. No IP addresses or network
+      data are sent to any server. The tool works offline after initial page
+      load.
+    </p>
+  </Fragment>
+</ToolLayout>

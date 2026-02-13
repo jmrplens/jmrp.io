@@ -85,7 +85,7 @@ export async function getPublications(): Promise<PublicationGroup[]> {
      */
     const extractCustomField = (id: string, field: string): string | null => {
       const escapeRegExp = (string: string) => {
-        return string.replaceAll(/[.*+?^${}()|[\]\\]/g, "\\$&"); // eslint-disable-line
+        return string.replaceAll(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
       };
 
       // Find the specific entry block first to avoid matching fields from subsequent entries
@@ -188,7 +188,7 @@ export async function getPublications(): Promise<PublicationGroup[]> {
      */
     const extractRawBibtex = (id: string) => {
       const escapeRegExp = (string: string) => {
-        return string.replaceAll(/[.*+?^${}()|[\]\\]/g, "\\$&"); // eslint-disable-line
+        return string.replaceAll(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
       };
       const escapedId = escapeRegExp(id);
       const entryRegex = new RegExp(

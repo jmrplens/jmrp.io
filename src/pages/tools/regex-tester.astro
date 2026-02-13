@@ -2,259 +2,451 @@
 /**
  * Regex Tester Tool Page.
  */
+import RegexFlavorTable from "@components/apps/RegexFlavorTable.astro";
 import RegexTesterApp from "@components/apps/RegexTester.astro";
-import BaseLayout from "@layouts/BaseLayout.astro";
-import { getSiteUrl } from "@utils/site";
-
-const toolSchema = {
-  "@context": "https://schema.org",
-  "@type": "SoftwareApplication",
-  name: "Regex Tester",
-  description:
-    "Test regular expressions with real-time match highlighting, capture groups, and common pattern presets.",
-  url: new URL("/tools/regex-tester/", getSiteUrl()).toString(),
-  applicationCategory: "WebApplication",
-  operatingSystem: "Web Browser",
-  offers: { "@type": "Offer", price: 0, priceCurrency: "USD" },
-};
+import {
+  TerminalSession,
+  TerminalSessionCommand,
+  TerminalSessionOutput,
+} from "@components/ui/terminal-session";
+import ToolLayout from "@layouts/ToolLayout.astro";
 ---
 
-<BaseLayout
+<ToolLayout
   title="Regex Tester"
-  description="Test and debug regular expressions with real-time match highlighting, capture group extraction, and common pattern presets. Runs entirely in your browser."
-  schema={toolSchema}
+  description="Test and debug regular expressions with real-time match highlighting, capture group extraction, replace mode, and common pattern presets. Runs entirely in your browser."
+  subtitle="Test regular expressions with real-time highlighting, capture groups, replace mode, and common pattern presets."
+  icon="i-mdi:regex"
+  slug="regex-tester"
 >
-  <div class="tool-page">
-    <div class="content-wrapper">
-      <nav
-        class="breadcrumb"
-        aria-label="Breadcrumb"
-      >
-        <a href="/tools/">Tools</a>
-        <span
-          class="i-mdi:chevron-right"
-          aria-hidden="true"
-        ></span>
-        <span aria-current="page">Regex Tester</span>
-      </nav>
+  <RegexTesterApp title="" />
 
-      <header class="page-header">
-        <div class="header-icon">
-          <span
-            class="i-mdi:regex"
-            aria-hidden="true"
-          ></span>
-        </div>
-        <div class="header-content">
-          <h1>Regex Tester</h1>
-          <p class="subtitle">
-            Test regular expressions with real-time highlighting, capture
-            groups, and common pattern presets.
+  <Fragment slot="info">
+    <h2>About This Tool</h2>
+    <p>
+      A real-time regex tester that highlights matches, extracts capture groups
+      (named and numbered), supports find-and-replace with backreferences, and
+      provides quick access to common patterns used in web development and
+      system administration.
+    </p>
+
+    <h3>Features</h3>
+    <ul>
+      <li>
+        <strong>Real-time highlighting</strong> — matches highlighted with alternating
+        colors as you type
+      </li>
+      <li>
+        <strong>Capture groups</strong> — both named (<code
+          >{"(?<name>...)"}</code
+        >) and numbered groups displayed with labels
+      </li>
+      <li>
+        <strong>Replace mode</strong> — test substitutions with backreferences (<code
+          >$1</code
+        >, <code>$&</code>,
+        <code>{"$<name>"}</code>)
+      </li>
+      <li>
+        <strong>Regex flags</strong> — toggle global, case-insensitive, multiline,
+        dot-all, and unicode
+      </li>
+      <li>
+        <strong>10 pattern presets</strong> — email, URL, IPv4, UUID, phone, JWT,
+        MAC address, HEX color, ISO date, and Nginx location
+      </li>
+      <li>
+        <strong>Match statistics</strong> — count, execution time, and line:column
+        position for every match
+      </li>
+      <li>
+        <strong>Quick reference</strong> — collapsible regex cheat sheet with characters,
+        anchors, quantifiers, groups, and lookaround
+      </li>
+    </ul>
+
+    <h3>How to Use</h3>
+    <ol>
+      <li>Enter your regex pattern in the pattern field</li>
+      <li>Set the desired flags (g, i, m, s, u) using the checkboxes</li>
+      <li>Type or paste your test string in the textarea</li>
+      <li>Matches are highlighted in real time with detailed info below</li>
+      <li>
+        Toggle <strong>Replace Mode</strong> to test substitutions — enter a replacement
+        string with <code>$1</code>, <code>$&</code>, or
+        <code>{"$<name>"}</code> backreferences
+      </li>
+      <li>
+        Click any <strong>preset</strong> to load a common pattern with matching sample
+        text
+      </li>
+      <li>
+        Expand <strong>Quick Reference</strong> at the bottom for a compact regex
+        syntax cheat sheet
+      </li>
+    </ol>
+
+    <h3>Regex Flags Explained</h3>
+    <p>
+      Flags (also called modifiers) change how the regex engine interprets your
+      pattern. In JavaScript they are placed after the closing delimiter:
+      <code>/pattern/flags</code>. This tool lets you toggle each one
+      individually.
+    </p>
+
+    <div class="flags-grid">
+      <div class="flag-card">
+        <div class="flag-badge">g</div>
+        <div class="flag-content">
+          <strong>Global</strong>
+          <p>
+            Find <em>all</em> matches in the string instead of stopping after the
+            first one. Without <code>g</code>, only the first match is returned.
+            Essential when counting occurrences or performing a global
+            find-and-replace.
           </p>
+          <div class="flag-example">
+            <code>/\d+/g</code> on <code>"a1 b2 c3"</code> → 3 matches (<code
+              >1</code
+            >, <code>2</code>, <code>3</code>)
+          </div>
         </div>
-      </header>
-
-      <div class="tool-container">
-        <RegexTesterApp title="" />
       </div>
-
-      <section class="tool-info">
-        <h2>About This Tool</h2>
-        <p>
-          A real-time regex tester that highlights matches, extracts capture
-          groups, and provides quick access to common patterns used in web
-          development.
-        </p>
-        <h3>Features</h3>
-        <ul>
-          <li>
-            <strong>Real-time highlighting</strong> — matches highlighted as you type
-          </li>
-          <li>
-            <strong>Capture groups</strong> — named and numbered groups displayed
-          </li>
-          <li>
-            <strong>Regex flags</strong> — toggle global, case-insensitive, multiline,
-            and more
-          </li>
-          <li>
-            <strong>Pattern presets</strong> — email, URL, IP, date, and other common
-            patterns
-          </li>
-          <li>
-            <strong>Match statistics</strong> — count and details for all matches
-          </li>
-        </ul>
-        <h3>How to Use</h3>
-        <ol>
-          <li>Enter your regex pattern in the pattern field</li>
-          <li>Set the desired flags (g, i, m, etc.)</li>
-          <li>Type or paste your test string</li>
-          <li>Matches are highlighted automatically</li>
-        </ol>
-      </section>
+      <div class="flag-card">
+        <div class="flag-badge">i</div>
+        <div class="flag-content">
+          <strong>Case-Insensitive</strong>
+          <p>
+            Makes the pattern match regardless of letter case.
+            <code>/abc/i</code> matches <code>abc</code>, <code>ABC</code>,
+            <code>aBc</code>, etc. Applies to both literal characters and
+            character ranges like <code>[a-z]</code>.
+          </p>
+          <div class="flag-example">
+            <code>/error/i</code> matches <code>"Error"</code>,
+            <code>"ERROR"</code>, <code>"error"</code>
+          </div>
+        </div>
+      </div>
+      <div class="flag-card">
+        <div class="flag-badge">m</div>
+        <div class="flag-content">
+          <strong>Multiline</strong>
+          <p>
+            Changes the behavior of <code>^</code> and <code>$</code>
+            anchors. Normally they match the start/end of the entire string. With
+            <code>m</code>, they match the start/end of each
+            <em>line</em> (separated by <code>\n</code>). Does not affect
+            <code>.</code> — use <code>s</code> for that.
+          </p>
+          <div class="flag-example">
+            <code>/^server/m</code> matches <code>"server"</code> at the start of
+            any line, not just the first
+          </div>
+        </div>
+      </div>
+      <div class="flag-card">
+        <div class="flag-badge">s</div>
+        <div class="flag-content">
+          <strong>Dot-All (Single-line)</strong>
+          <p>
+            Makes the <code>.</code> metacharacter match <em>any</em>
+            character including newlines (<code>\n</code>,
+            <code>\r</code>). By default, <code>.</code> matches everything except
+            line terminators. Useful for matching multiline blocks.
+          </p>
+          <div class="flag-example">
+            <code>/{"<div>.*?</div>"}/s</code> matches a div and its contents even
+            if they span multiple lines
+          </div>
+        </div>
+      </div>
+      <div class="flag-card">
+        <div class="flag-badge">u</div>
+        <div class="flag-content">
+          <strong>Unicode</strong>
+          <p>
+            Enables full Unicode matching. Without it, characters outside the
+            Basic Multilingual Plane (emojis, CJK, math symbols) may be treated
+            as two separate code units. Also enables Unicode property escapes
+            like <code>\p&#123;Letter&#125;</code> and
+            <code>\p&#123;Emoji&#125;</code>.
+          </p>
+          <div class="flag-example">
+            <code>/\p&#123;Emoji&#125;/gu</code> correctly matches emojis like <code
+              >🔥</code
+            >, <code>👋</code>, <code>🎉</code>
+          </div>
+        </div>
+      </div>
     </div>
-  </div>
-</BaseLayout>
+
+    <h3>Common Flag Combinations</h3>
+    <div class="flag-combos">
+      <div class="flag-combo-item">
+        <code>gi</code>
+        <span
+          >— Find all matches, case-insensitive. The most common combination for
+          text search.</span
+        >
+      </div>
+      <div class="flag-combo-item">
+        <code>gm</code>
+        <span
+          >— Find all matches across multiple lines. Useful for log files and
+          config files.</span
+        >
+      </div>
+      <div class="flag-combo-item">
+        <code>gis</code>
+        <span
+          >— Global, case-insensitive, dot-all. For matching multiline HTML/XML
+          blocks.</span
+        >
+      </div>
+      <div class="flag-combo-item">
+        <code>gu</code>
+        <span
+          >— Global with Unicode. Required when working with internationalized
+          text or emoji.</span
+        >
+      </div>
+      <div class="flag-combo-item">
+        <code>gms</code>
+        <span
+          >— Global, multiline, dot-all. Full power for parsing structured
+          multiline content.</span
+        >
+      </div>
+    </div>
+
+    <h3>JavaScript vs Other Regex Flavors</h3>
+    <p>
+      This tool uses JavaScript's native <code>RegExp</code> engine, which follows
+      the ECMAScript specification. Some differences to be aware of when porting patterns
+      to other environments:
+    </p>
+    <RegexFlavorTable />
+
+    <h3>Regex Performance Tips</h3>
+    <ul>
+      <li>
+        <strong>Avoid catastrophic backtracking</strong> — patterns like
+        <code>(a+)+b</code> can cause the engine to hang on long non-matching strings.
+        Use atomic-like constructs or rewrite as
+        <code>a+b</code>.
+      </li>
+      <li>
+        <strong>Be specific with quantifiers</strong> — prefer
+        <code>[^"]*</code> over <code>.*?</code> when matching content between delimiters.
+        The negated character class is faster because it does not need backtracking.
+      </li>
+      <li>
+        <strong>Anchor when possible</strong> — if you know the match starts at the
+        beginning of a line, use <code>^</code> to let the engine skip positions early.
+      </li>
+      <li>
+        <strong>Use non-capturing groups</strong> — write <code>(?:...)</code>
+        instead of <code>(...)</code> when you do not need the captured value. It
+        avoids allocating memory for the group.
+      </li>
+      <li>
+        <strong>Monitor execution time</strong> — this tool displays the match time
+        for each test. If a pattern takes more than a few milliseconds, consider simplifying
+        it.
+      </li>
+    </ul>
+
+    <h3>Privacy</h3>
+    <p>
+      All pattern matching and text processing happens entirely in your browser
+      using JavaScript's built-in <code>RegExp</code> engine. No data is transmitted
+      to any server — your patterns and test strings never leave your device.
+    </p>
+
+    <h3>Linux Command Reference</h3>
+    <p>
+      Regular expressions are deeply integrated into the Linux command line.
+      Here are common tools with their regex capabilities.
+    </p>
+
+    <h4>grep — Match Lines with a Pattern</h4>
+    <TerminalSession>
+      <TerminalSessionCommand>
+        grep -Pn '\b[A-Z][a-z]+\b' /var/log/nginx/access.log | head -5
+      </TerminalSessionCommand>
+      <TerminalSessionOutput title="Matches (PCRE)">
+        {
+          `3:The Quick Brown Fox Jumps Over The Lazy Dog\n15:Server nginx/1.25.4...Starting worker process\n42:Connection from Remote host established`
+        }
+      </TerminalSessionOutput>
+    </TerminalSession>
+
+    <h4>grep -oP — Extract Matches Only</h4>
+    <TerminalSession>
+      <TerminalSessionCommand>
+        {
+          String.raw`echo '192.168.1.1 and 10.0.0.254' | grep -oP '\b(?:\d{1,3}\.){3}\d{1,3}\b'`
+        }
+      </TerminalSessionCommand>
+      <TerminalSessionOutput title="Extracted IPs">
+        {`192.168.1.1\n10.0.0.254`}
+      </TerminalSessionOutput>
+    </TerminalSession>
+
+    <h4>sed — Find and Replace</h4>
+    <TerminalSession>
+      <TerminalSessionCommand>
+        {
+          String.raw`echo 'Date: 2025-06-15' | sed -E 's/([0-9]{4})-([0-9]{2})-([0-9]{2})/\3\/\2\/\1/'`
+        }
+      </TerminalSessionCommand>
+      <TerminalSessionOutput title="Reformatted Date">
+        Date: 15/06/2025
+      </TerminalSessionOutput>
+    </TerminalSession>
+
+    <h4>awk — Pattern-Based Processing</h4>
+    <TerminalSession>
+      <TerminalSessionCommand>
+        {
+          String.raw`echo -e 'admin@example.com\ndev@test.org\ninvalid' | awk '/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/ {print "Valid:", $0}'`
+        }
+      </TerminalSessionCommand>
+      <TerminalSessionOutput title="Filtered Output">
+        {`Valid: admin@example.com\nValid: dev@test.org`}
+      </TerminalSessionOutput>
+    </TerminalSession>
+
+    <h4>find — Search Files by Regex Name</h4>
+    <TerminalSession>
+      <TerminalSessionCommand>
+        {
+          String.raw`find /etc/nginx -regextype posix-extended -regex '.*\.(conf|key|crt)$' -type f | head -5`
+        }
+      </TerminalSessionCommand>
+      <TerminalSessionOutput title="Matching Files">
+        {
+          `/etc/nginx/snippets/disable_assets_log.conf\n/etc/nginx/snippets/server_ssl.conf\n/etc/nginx/conf.d/default.conf\n/etc/nginx/nginx.conf\n/etc/nginx/ssl/server.crt`
+        }
+      </TerminalSessionOutput>
+    </TerminalSession>
+
+    <h3>Related</h3>
+    <p>
+      See the regex patterns used in
+      <a href="/blog/implementing-content-security-policy-nginx/"
+        >Implementing Content Security Policy with Nginx</a
+      > for real-world CSP validation examples, or try the
+      <a href="/tools/http-headers-analyzer/">HTTP Headers Analyzer</a>
+      to inspect regex-validated security headers.
+    </p>
+  </Fragment>
+</ToolLayout>
 
 <style>
-  .tool-page {
-    min-height: calc(100vh - var(--header-height, 4rem) - 4rem);
-    padding: var(--space-xl) 0;
-  }
-
-  .content-wrapper {
-    box-sizing: border-box;
-    width: 100%;
-    max-width: var(--max-width-container);
-    padding: 0 var(--space-lg);
-    margin: 0 auto;
-  }
-
-  .breadcrumb {
-    display: flex;
-    gap: var(--space-xs);
-    align-items: center;
-    margin-bottom: var(--space-lg);
-    font-size: 0.875rem;
-    color: var(--color-text-muted);
-  }
-
-  .breadcrumb a {
-    color: var(--color-text-muted);
-    text-decoration: none;
-    transition: color 0.2s ease;
-  }
-
-  .breadcrumb a:hover {
-    color: var(--color-primary);
-  }
-
-  .breadcrumb span[class*="i-"] {
-    width: 1rem;
-    height: 1rem;
-  }
-
-  .page-header {
-    display: flex;
+  /* Flags grid — page-specific styles */
+  .flags-grid {
+    display: grid;
     gap: var(--space-md);
-    align-items: center;
-    margin-bottom: var(--space-xl);
+    margin-top: var(--space-md);
+    margin-bottom: var(--space-md);
   }
 
-  .header-icon {
+  @media (width >= 640px) {
+    .flags-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (width >= 1024px) {
+    .flags-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  .flag-card {
+    display: flex;
+    gap: var(--space-sm);
+    padding: var(--space-md);
+    background: var(--color-bg);
+    border: var(--border-1);
+    border-radius: var(--radius-md);
+  }
+
+  .flag-badge {
     display: flex;
     flex-shrink: 0;
     align-items: center;
     justify-content: center;
-    width: 4rem;
-    height: 4rem;
-    background: linear-gradient(
-      135deg,
-      var(--color-success, #10b981),
-      var(--color-success-dark, #059669)
-    );
-    border-radius: var(--radius-lg);
+    width: 2.25rem;
+    height: 2.25rem;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--color-primary);
+    background: color-mix(in oklch, var(--color-primary) 12%, transparent);
+    border-radius: var(--radius-sm);
   }
 
-  .header-icon span {
-    width: 2rem;
-    height: 2rem;
-    color: var(--header-icon-color, #fff);
-  }
-
-  .header-content {
+  .flag-content {
     flex: 1;
     min-width: 0;
   }
 
-  .page-header h1 {
-    margin-bottom: var(--space-xs);
-    font-size: 2rem;
-    font-weight: 800;
-    letter-spacing: -0.02em;
+  .flag-content strong {
+    display: block;
+    margin-bottom: var(--space-2xs);
+    font-size: 0.95rem;
+    color: var(--color-text-heading);
   }
 
-  .subtitle {
-    font-size: 1rem;
+  .flag-content p {
+    margin-bottom: var(--space-xs);
+    font-size: 0.85rem;
+    line-height: 1.5;
+  }
+
+  .flag-example {
+    padding: var(--space-xs) var(--space-sm);
+    font-size: 0.8rem;
     line-height: 1.5;
     color: var(--color-text-muted);
+    background: color-mix(
+      in oklch,
+      var(--color-bg-secondary) 60%,
+      var(--color-bg)
+    );
+    border-radius: var(--radius-sm);
   }
 
-  .tool-container {
-    margin-bottom: var(--space-xl);
-  }
-
-  .tool-info {
-    max-width: 720px;
-    padding: var(--space-lg);
-    margin: 0 auto;
-    background: var(--color-bg-secondary);
-    border: var(--border-1);
-    border-radius: var(--radius-lg);
-  }
-
-  .tool-info h2 {
+  /* Flag combinations */
+  .flag-combos {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+    margin-top: var(--space-sm);
     margin-bottom: var(--space-md);
-    font-size: 1.25rem;
-    font-weight: var(--fw-semibold);
-    color: var(--color-text-heading);
   }
 
-  .tool-info h3 {
-    margin-top: var(--space-lg);
-    margin-bottom: var(--space-sm);
-    font-size: 1rem;
-    font-weight: var(--fw-semibold);
-    color: var(--color-text-heading);
-  }
-
-  .tool-info p {
-    margin-bottom: var(--space-md);
-    font-size: 0.95rem;
-    line-height: 1.6;
-    color: var(--color-text);
-  }
-
-  .tool-info ul,
-  .tool-info ol {
-    padding-left: 1.25rem;
-    margin: 0;
-  }
-
-  .tool-info li {
-    margin-bottom: var(--space-sm);
-    font-size: 0.95rem;
+  .flag-combo-item {
+    display: flex;
+    gap: var(--space-sm);
+    align-items: baseline;
+    padding: var(--space-xs) var(--space-sm);
+    font-size: 0.9rem;
     line-height: 1.5;
-    color: var(--color-text);
+    background: var(--color-bg);
+    border-radius: var(--radius-sm);
   }
 
-  .tool-info a {
+  .flag-combo-item code {
+    flex-shrink: 0;
+    font-weight: 600;
     color: var(--color-primary);
-    text-decoration: underline;
-    text-underline-offset: 2px;
   }
 
-  .tool-info a:hover {
-    text-decoration: none;
-  }
-
-  @media (width <= 640px) {
-    .page-header {
-      flex-direction: column;
-      text-align: center;
-    }
-
-    .page-header h1 {
-      font-size: 1.5rem;
-    }
-
-    .subtitle {
-      font-size: 0.9rem;
-    }
-
-    .tool-info {
-      padding: var(--space-md);
-    }
+  .flag-combo-item span {
+    color: var(--color-text);
   }
 </style>

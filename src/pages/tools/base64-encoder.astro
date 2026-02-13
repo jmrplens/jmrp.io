@@ -3,420 +3,170 @@
  * Base64 Encoder/Decoder Tool Page.
  */
 import Base64EncoderApp from "@components/apps/Base64Encoder.astro";
-import TerminalCommand from "@components/ui/TerminalCommand.astro";
-import TerminalSession from "@components/ui/TerminalSession.astro";
-import BaseLayout from "@layouts/BaseLayout.astro";
-import { getSiteUrl } from "@utils/site";
-
-const toolSchema = {
-  "@context": "https://schema.org",
-  "@type": "SoftwareApplication",
-  name: "Base64 Encoder / Decoder",
-  description:
-    "Encode and decode Base64, Base64URL, URL encoding, hexadecimal, and HTML entities. Supports files: images, audio, documents, and more.",
-  url: new URL("/tools/base64-encoder/", getSiteUrl()).toString(),
-  applicationCategory: "WebApplication",
-  operatingSystem: "Web Browser",
-  offers: { "@type": "Offer", price: 0, priceCurrency: "USD" },
-};
-
-// Code examples as raw strings — injected via set:html inside TerminalCommand
-// slots to avoid Astro JSX parsing of $() and {} in shell commands
-const codeTextBase64 = `# Encode text to Base64
-echo -n "Hello, World!" | base64
-# SGVsbG8sIFdvcmxkIQ==
-
-# Decode Base64 to text
-echo "SGVsbG8sIFdvcmxkIQ==" | base64 --decode
-# Hello, World!`;
-
-const codeFileBase64 = `# Encode a file to Base64 (single line, no wrapping)
-base64 -w0 image.png &gt; image.b64
-
-# Decode Base64 back to the original file
-base64 --decode image.b64 &gt; restored.png
-
-# Encode and copy to clipboard (requires xclip)
-base64 -w0 document.pdf | xclip -selection clipboard`;
-
-const codeDataUri = `# Generate a complete Data URI (for embedding in CSS/HTML)
-echo "data:$(file -b --mime-type logo.png);base64,$(base64 -w0 logo.png)"
-# data:image/png;base64,iVBORw0KGgo...
-
-# One-liner to create a CSS background rule
-echo "background-image: url('data:$(file -b --mime-type bg.svg);base64,$(base64 -w0 bg.svg)');"`;
-
-const codeOtherEncodings = `# URL encoding (percent-encoding)
-python3 -c "import urllib.parse; print(urllib.parse.quote('Hello World! á€'))"
-# Hello%20World%21%20%C3%A1%E2%82%AC
-
-# URL decoding
-python3 -c "import urllib.parse; print(urllib.parse.unquote('Hello%20World%21'))"
-
-# Hexadecimal encoding
-echo -n "Hello" | xxd -p
-# 48656c6c6f
-
-# Hexadecimal decoding
-echo "48656c6c6f" | xxd -r -p
-# Hello
-
-# Binary representation via xxd
-echo -n "Hi" | xxd -b -c1 | awk '{print $2}'
-# 01001000
-# 01101001`;
-
-const codeVerifyIntegrity = `# Encode and decode, then compare checksums to verify integrity
-sha256sum original.pdf
-base64 -w0 original.pdf | base64 --decode &gt; roundtrip.pdf
-sha256sum roundtrip.pdf
-# Both checksums should be identical
-
-# Detect file type from Base64 (using magic bytes)
-head -c 32 file.b64 | base64 --decode | file -
-# /dev/stdin: PNG image data, 800 x 600, 8-bit/color RGBA`;
+import {
+  TerminalSession,
+  TerminalSessionCommand,
+  TerminalSessionOutput,
+} from "@components/ui/terminal-session";
+import ToolLayout from "@layouts/ToolLayout.astro";
 ---
 
-<BaseLayout
+<ToolLayout
   title="Base64 Encoder / Decoder"
   description="Multi-format encoder and decoder for Base64, Base64URL, URL encoding, hex, and HTML entities. Supports file encoding for images, audio, and documents. Runs entirely client-side."
-  schema={toolSchema}
+  subtitle="Encode and decode between multiple formats including file support. Drop images, audio, documents, or any file to get its Base64 representation. Everything runs locally in your browser."
+  icon="i-mdi:swap-horizontal"
+  slug="base64-encoder"
 >
-  <div class="tool-page">
-    <div class="content-wrapper">
-      <nav
-        class="breadcrumb"
-        aria-label="Breadcrumb"
-      >
-        <a href="/tools/">Tools</a>
-        <span
-          class="i-mdi:chevron-right"
-          aria-hidden="true"
-        ></span>
-        <span aria-current="page">Base64 Encoder</span>
-      </nav>
+  <Base64EncoderApp title="" />
 
-      <header class="page-header">
-        <div class="header-icon">
-          <span
-            class="i-mdi:swap-horizontal"
-            aria-hidden="true"
-          ></span>
-        </div>
-        <div class="header-content">
-          <h1>Base64 Encoder / Decoder</h1>
-          <p class="subtitle">
-            Encode and decode between multiple formats including file support.
-            Drop images, audio, documents, or any file to get its Base64
-            representation. Everything runs locally in your browser.
-          </p>
-        </div>
-      </header>
+  <Fragment slot="info">
+    <h2>About This Tool</h2>
+    <p>
+      A multi-format encoder and decoder supporting the most common encoding
+      schemes used in web development, APIs, and data exchange. Now with full
+      file support for images, audio, video, documents, and any binary file.
+    </p>
+    <h3>Supported Formats</h3>
+    <ul>
+      <li><strong>Base64</strong> — standard RFC 4648 encoding</li>
+      <li><strong>Base64URL</strong> — URL-safe variant used in JWTs</li>
+      <li><strong>URL Encoding</strong> — percent-encoding for URLs</li>
+      <li><strong>Hexadecimal</strong> — hex string encoding</li>
+      <li><strong>HTML Entities</strong> — HTML character escaping</li>
+      <li><strong>Binary</strong> — binary string representation</li>
+    </ul>
+    <h3>File Support</h3>
+    <ul>
+      <li>
+        <strong>Images</strong> — PNG, JPEG, GIF, WebP, SVG (with preview)
+      </li>
+      <li><strong>Audio</strong> — MP3, OGG, WAV (with player)</li>
+      <li><strong>Video</strong> — MP4, WebM (with player)</li>
+      <li>
+        <strong>Documents</strong> — PDF, JSON, plain text, and any other file
+      </li>
+    </ul>
+    <h3>How to Use</h3>
+    <ol>
+      <li>
+        Switch between <strong>Text</strong> and <strong>File</strong> mode using
+        the tabs
+      </li>
+      <li>In Text mode: paste text and select input/output encoding formats</li>
+      <li>
+        In File mode: drop a file or click to browse, then copy the Base64
+        output
+      </li>
+      <li>Toggle the Data URI prefix for ready-to-use CSS/HTML embedding</li>
+      <li>Use the Download button to save decoded Base64 back as a file</li>
+    </ol>
+    <h3>Privacy</h3>
+    <p>
+      All encoding and decoding happens entirely in your browser. No files are
+      uploaded to any server. Your data never leaves your device.
+    </p>
 
-      <div class="tool-container">
-        <Base64EncoderApp title="" />
-      </div>
+    <h3>Linux Command Reference</h3>
+    <p>
+      You can achieve the same operations from the terminal using built-in Linux
+      tools. Here are the most common examples:
+    </p>
 
-      <section class="tool-info">
-        <h2>About This Tool</h2>
-        <p>
-          A multi-format encoder and decoder supporting the most common encoding
-          schemes used in web development, APIs, and data exchange. Now with
-          full file support for images, audio, video, documents, and any binary
-          file.
-        </p>
-        <h3>Supported Formats</h3>
-        <ul>
-          <li><strong>Base64</strong> — standard RFC 4648 encoding</li>
-          <li><strong>Base64URL</strong> — URL-safe variant used in JWTs</li>
-          <li><strong>URL Encoding</strong> — percent-encoding for URLs</li>
-          <li><strong>Hexadecimal</strong> — hex string encoding</li>
-          <li><strong>HTML Entities</strong> — HTML character escaping</li>
-          <li><strong>Binary</strong> — binary string representation</li>
-        </ul>
-        <h3>File Support</h3>
-        <ul>
-          <li>
-            <strong>Images</strong> — PNG, JPEG, GIF, WebP, SVG (with preview)
-          </li>
-          <li><strong>Audio</strong> — MP3, OGG, WAV (with player)</li>
-          <li><strong>Video</strong> — MP4, WebM (with player)</li>
-          <li>
-            <strong>Documents</strong> — PDF, JSON, plain text, and any other file
-          </li>
-        </ul>
-        <h3>How to Use</h3>
-        <ol>
-          <li>
-            Switch between <strong>Text</strong> and <strong>File</strong> mode using
-            the tabs
-          </li>
-          <li>
-            In Text mode: paste text and select input/output encoding formats
-          </li>
-          <li>
-            In File mode: drop a file or click to browse, then copy the Base64
-            output
-          </li>
-          <li>
-            Toggle the Data URI prefix for ready-to-use CSS/HTML embedding
-          </li>
-          <li>Use the Download button to save decoded Base64 back as a file</li>
-        </ol>
-        <h3>Privacy</h3>
-        <p>
-          All encoding and decoding happens entirely in your browser. No files
-          are uploaded to any server. Your data never leaves your device.
-        </p>
+    <h4>Text ↔ Base64</h4>
+    <TerminalSession>
+      <TerminalSessionCommand>
+        echo -n "Hello, World!" | base64
+      </TerminalSessionCommand>
+      <TerminalSessionOutput title="Base64 Output">
+        SGVsbG8sIFdvcmxkIQ==
+      </TerminalSessionOutput>
+    </TerminalSession>
 
-        <h3>Linux Command Reference</h3>
-        <p>
-          You can achieve the same operations from the terminal using built-in
-          Linux tools. Here are the most common examples:
-        </p>
+    <TerminalSession>
+      <TerminalSessionCommand>
+        echo "SGVsbG8sIFdvcmxkIQ==" | base64 --decode
+      </TerminalSessionCommand>
+      <TerminalSessionOutput title="Plain Text Output">
+        Hello, World!
+      </TerminalSessionOutput>
+    </TerminalSession>
 
-        <h4>Text ↔ Base64</h4>
-        <TerminalSession
-          command='echo -n "Hello, World!" | base64'
-          outputTitle="Base64 Output"
-        >
-          SGVsbG8sIFdvcmxkIQ==
-        </TerminalSession>
+    <h4>Files ↔ Base64</h4>
+    <TerminalSession>
+      <TerminalSessionCommand>
+        {`base64 -w0 image.png > image.b64`}
+      </TerminalSessionCommand>
+      <TerminalSessionOutput title="Binary to Base64">
+        {
+          `(El comando genera el archivo image.b64 con el contenido en una sola línea)`
+        }
+      </TerminalSessionOutput>
+    </TerminalSession>
 
-        <TerminalSession
-          command='echo "SGVsbG8sIFdvcmxkIQ==" | base64 --decode'
-          outputTitle="Plain Text Output"
-        >
-          Hello, World!
-        </TerminalSession>
+    <TerminalSession>
+      <TerminalSessionCommand>
+        {`base64 --decode image.b64 > restored.png`}
+      </TerminalSessionCommand>
+      <TerminalSessionOutput title="Base64 to Binary">
+        {`(Restaura el archivo original a partir de su representación Base64)`}
+      </TerminalSessionOutput>
+    </TerminalSession>
 
-        <h4>Files ↔ Base64</h4>
-        <TerminalSession command="base64 -w0 image.png > image.b64">
-          <p>
-            <em
-              >(Command completes with no terminal output; result is written to <code
-                >image.b64</code
-              >)</em>
-          </p>
-        </TerminalSession>
+    <h4>Data URI para CSS / HTML</h4>
+    <TerminalSession>
+      <TerminalSessionCommand>
+        {
+          `echo "data:$(file -b --mime-type logo.png);base64,$(base64 -w0 logo.png)"`
+        }
+      </TerminalSessionCommand>
+      <TerminalSessionOutput title="Data URI Output">
+        data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA...
+      </TerminalSessionOutput>
+    </TerminalSession>
 
-        <TerminalSession command="base64 --decode image.b64 > restored.png">
-          <p>
-            <em>(Restores the binary file from its Base64 representation)</em>
-          </p>
-        </TerminalSession>
+    <h4>Otras Codificaciones</h4>
+    <TerminalSession>
+      <TerminalSessionCommand>
+        {
+          `python3 -c "import urllib.parse; print(urllib.parse.quote('Hello World! á€'))"`
+        }
+      </TerminalSessionCommand>
+      <TerminalSessionOutput title="URL Encoded">
+        Hello%20World%21%20%C3%A1%E2%82%AC
+      </TerminalSessionOutput>
+    </TerminalSession>
 
-        <h4>Data URI for CSS / HTML</h4>
-        <TerminalSession
-          command='echo "data:$(file -b --mime-type logo.png);base64,$(base64 -w0 logo.png)"'
-          outputTitle="Data URI Output"
-        >
-          data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA...
-        </TerminalSession>
+    <TerminalSession>
+      <TerminalSessionCommand>
+        {`echo -n "Hello" | hexdump -ve '1/1 "%.2x"'`}
+      </TerminalSessionCommand>
+      <TerminalSessionOutput title="Hexadecimal Output">
+        48656c6c6f
+      </TerminalSessionOutput>
+    </TerminalSession>
 
-        <h4>Other Encodings</h4>
-        <TerminalSession
-          command={`python3 -c "import urllib.parse; print(urllib.parse.quote('Hello World! á€'))"`}
-          outputTitle="URL Encoded"
-        >
-          Hello%20World%21%20%C3%A1%E2%82%AC
-        </TerminalSession>
+    <h4>Verificar Integridad</h4>
+    <TerminalSession>
+      <TerminalSessionCommand>
+        {
+          `sha256sum original.pdf\nbase64 -w0 original.pdf | base64 --decode > roundtrip.pdf\nsha256sum roundtrip.pdf`
+        }
+      </TerminalSessionCommand>
+      <TerminalSessionOutput title="Integrity Verification">
+        {
+          `3fdd704b45cbc536d98c5c7df2636f1a895c7f72a66f3bb5ea2d1daa26eb5e7a  original.pdf\n3fdd704b45cbc536d98c5c7df2636f1a895c7f72a66f3bb5ea2d1daa26eb5e7a  roundtrip.pdf`
+        }
+      </TerminalSessionOutput>
+    </TerminalSession>
 
-        <TerminalSession
-          command={`echo -n "Hello" | hexdump -ve '1/1 "%.2x"'`}
-          outputTitle="Hexadecimal Output"
-        >
-          48656c6c6f
-        </TerminalSession>
-
-        <h4>Verify File Integrity</h4>
-        <TerminalSession
-          command={`sha256sum original.pdf\nbase64 -w0 original.pdf | base64 --decode > roundtrip.pdf\nsha256sum roundtrip.pdf`}
-          outputTitle="Integrity Check"
-        >
-          3fdd704b45cbc536d98c5c7df2636f1a895c7f72a66f3bb5ea2d1daa26eb5e7a
-          original.pdf
-          3fdd704b45cbc536d98c5c7df2636f1a895c7f72a66f3bb5ea2d1daa26eb5e7a
-          roundtrip.pdf
-        </TerminalSession>
-
-        <TerminalSession
-          command={`head -c 32 file.b64 | base64 --decode | file -`}
-          outputTitle="File Type Detection"
-        >
-          /dev/stdin: PNG image data, 800 x 600, 8-bit/color RGBA
-        </TerminalSession>
-      </section>
-    </div>
-  </div>
-</BaseLayout>
-
-<style>
-  .tool-page {
-    min-height: calc(100vh - var(--header-height, 4rem) - 4rem);
-    padding: var(--space-xl) 0;
-  }
-
-  .content-wrapper {
-    box-sizing: border-box;
-    width: 100%;
-    max-width: var(--max-width-container);
-    padding: 0 var(--space-lg);
-    margin: 0 auto;
-  }
-
-  .breadcrumb {
-    display: flex;
-    gap: var(--space-xs);
-    align-items: center;
-    margin-bottom: var(--space-lg);
-    font-size: 0.875rem;
-    color: var(--color-text-muted);
-  }
-
-  .breadcrumb a {
-    color: var(--color-text-muted);
-    text-decoration: none;
-    transition: color 0.2s ease;
-  }
-
-  .breadcrumb a:hover {
-    color: var(--color-primary);
-  }
-
-  .breadcrumb span[class*="i-"] {
-    width: 1rem;
-    height: 1rem;
-  }
-
-  .page-header {
-    display: flex;
-    gap: var(--space-md);
-    align-items: center;
-    margin-bottom: var(--space-xl);
-  }
-
-  .header-icon {
-    display: flex;
-    flex-shrink: 0;
-    align-items: center;
-    justify-content: center;
-    width: 4rem;
-    height: 4rem;
-    background: linear-gradient(
-      135deg,
-      var(--color-success, #10b981),
-      var(--color-success-dark, #059669)
-    );
-    border-radius: var(--radius-lg);
-  }
-
-  .header-icon span {
-    width: 2rem;
-    height: 2rem;
-    color: var(--header-icon-color, #fff);
-  }
-
-  .header-content {
-    flex: 1;
-    min-width: 0;
-  }
-
-  .page-header h1 {
-    margin-bottom: var(--space-xs);
-    font-size: 2rem;
-    font-weight: 800;
-    letter-spacing: -0.02em;
-  }
-
-  .subtitle {
-    font-size: 1rem;
-    line-height: 1.5;
-    color: var(--color-text-muted);
-  }
-
-  .tool-container {
-    margin-bottom: var(--space-xl);
-  }
-
-  .tool-info {
-    max-width: 720px;
-    padding: var(--space-lg);
-    margin: 0 auto;
-    background: var(--color-bg-secondary);
-    border: var(--border-1);
-    border-radius: var(--radius-lg);
-  }
-
-  .tool-info h2 {
-    margin-bottom: var(--space-md);
-    font-size: 1.25rem;
-    font-weight: var(--fw-semibold);
-    color: var(--color-text-heading);
-  }
-
-  .tool-info h3 {
-    margin-top: var(--space-lg);
-    margin-bottom: var(--space-sm);
-    font-size: 1rem;
-    font-weight: var(--fw-semibold);
-    color: var(--color-text-heading);
-  }
-
-  .tool-info h4 {
-    margin-top: var(--space-md);
-    margin-bottom: var(--space-xs);
-    font-size: 0.9rem;
-    font-weight: var(--fw-semibold);
-    color: var(--color-text);
-  }
-
-  .tool-info p {
-    margin-bottom: var(--space-md);
-    font-size: 0.95rem;
-    line-height: 1.6;
-    color: var(--color-text);
-  }
-
-  .tool-info ul,
-  .tool-info ol {
-    padding-left: 1.25rem;
-    margin: 0;
-  }
-
-  .tool-info li {
-    margin-bottom: var(--space-sm);
-    font-size: 0.95rem;
-    line-height: 1.5;
-    color: var(--color-text);
-  }
-
-  .tool-info a {
-    color: var(--color-primary);
-    text-decoration: underline;
-    text-underline-offset: 2px;
-  }
-
-  .tool-info a:hover {
-    text-decoration: none;
-  }
-
-  @media (width <= 640px) {
-    .page-header {
-      flex-direction: column;
-      text-align: center;
-    }
-
-    .page-header h1 {
-      font-size: 1.5rem;
-    }
-
-    .subtitle {
-      font-size: 0.9rem;
-    }
-
-    .tool-info {
-      padding: var(--space-md);
-    }
-  }
-</style>
+    <TerminalSession>
+      <TerminalSessionCommand>
+        {`head -c 32 file.b64 | base64 --decode | file -`}
+      </TerminalSessionCommand>
+      <TerminalSessionOutput title="Magic Bytes Detection">
+        /dev/stdin: PNG image data, 800 x 600, 8-bit/color RGBA
+      </TerminalSessionOutput>
+    </TerminalSession>
+  </Fragment>
+</ToolLayout>

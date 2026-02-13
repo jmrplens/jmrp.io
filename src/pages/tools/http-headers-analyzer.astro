@@ -3,265 +3,185 @@
  * HTTP Headers Analyzer Tool Page.
  */
 import HTTPHeadersAnalyzer from "@components/apps/HTTPHeadersAnalyzer.astro";
-import BaseLayout from "@layouts/BaseLayout.astro";
-import { getSiteUrl } from "@utils/site";
-
-const toolSchema = {
-  "@context": "https://schema.org",
-  "@type": "SoftwareApplication",
-  name: "HTTP Security Headers Analyzer",
-  description:
-    "Analyze HTTP security headers and get recommendations for improving your site's security posture.",
-  url: new URL("/tools/http-headers-analyzer/", getSiteUrl()).toString(),
-  applicationCategory: "WebApplication",
-  operatingSystem: "Web Browser",
-  offers: { "@type": "Offer", price: 0, priceCurrency: "USD" },
-};
+import {
+  TerminalSession,
+  TerminalSessionCommand,
+  TerminalSessionOutput,
+} from "@components/ui/terminal-session";
+import ToolLayout from "@layouts/ToolLayout.astro";
 ---
 
-<BaseLayout
+<ToolLayout
   title="HTTP Security Headers Analyzer"
   description="Analyze HTTP response headers for security best practices. Get a security score, recommendations, and detailed analysis for each header."
-  schema={toolSchema}
+  subtitle="Analyze HTTP security headers and get a security score with detailed recommendations."
+  icon="i-mdi:web"
+  slug="http-headers-analyzer"
 >
-  <div class="tool-page">
-    <div class="content-wrapper">
-      <nav
-        class="breadcrumb"
-        aria-label="Breadcrumb"
-      >
-        <a href="/tools/">Tools</a>
-        <span
-          class="i-mdi:chevron-right"
-          aria-hidden="true"
-        ></span>
-        <span aria-current="page">Headers Analyzer</span>
-      </nav>
+  <HTTPHeadersAnalyzer title="" />
 
-      <header class="page-header">
-        <div class="header-icon">
-          <span
-            class="i-mdi:web"
-            aria-hidden="true"
-          ></span>
-        </div>
-        <div class="header-content">
-          <h1>HTTP Security Headers Analyzer</h1>
-          <p class="subtitle">
-            Analyze HTTP security headers and get a security score with detailed
-            recommendations.
-          </p>
-        </div>
-      </header>
+  <Fragment slot="info">
+    <h2>About This Tool</h2>
+    <p>
+      Analyze your HTTP response headers for security best practices. The tool
+      evaluates 10 critical security headers, checks for information leakage,
+      and provides a weighted score with actionable recommendations. You can
+      paste headers manually or fetch them directly from a URL.
+    </p>
+    <h3>Headers Analyzed</h3>
+    <ul>
+      <li>
+        <strong>Content-Security-Policy</strong> (25 pts) — XSS and injection prevention
+      </li>
+      <li>
+        <strong>Strict-Transport-Security</strong> (15 pts) — HTTPS enforcement
+      </li>
+      <li>
+        <strong>X-Content-Type-Options</strong> (10 pts) — MIME sniffing prevention
+      </li>
+      <li>
+        <strong>X-Frame-Options</strong> (8 pts) — clickjacking protection
+      </li>
+      <li>
+        <strong>Referrer-Policy</strong> (8 pts) — referrer information control
+      </li>
+      <li>
+        <strong>Permissions-Policy</strong> (8 pts) — browser feature restrictions
+      </li>
+      <li>
+        <strong>Cross-Origin-Opener-Policy</strong> (8 pts) — browsing context isolation
+      </li>
+      <li>
+        <strong>Cross-Origin-Resource-Policy</strong> (8 pts) — resource loading control
+      </li>
+      <li>
+        <strong>Cross-Origin-Embedder-Policy</strong> (7 pts) — embedding control
+      </li>
+      <li>
+        <strong>X-XSS-Protection</strong> (3 pts) — legacy XSS filter (should be disabled)
+      </li>
+    </ul>
+    <p>
+      Additionally, the tool checks for <strong>information leakage</strong> via
+      <code>Server</code>, <code>X-Powered-By</code>, and
+      <code>X-AspNet-Version</code> headers.
+    </p>
+    <h3>Grading Scale</h3>
+    <ul>
+      <li><strong>A+</strong> (90-100) — Excellent security posture</li>
+      <li>
+        <strong>A</strong> (80-89) — Strong, minor improvements possible
+      </li>
+      <li><strong>B</strong> (70-79) — Good, some headers missing</li>
+      <li>
+        <strong>C</strong> (50-69) — Fair, several important headers missing
+      </li>
+      <li><strong>D</strong> (30-49) — Poor, major gaps</li>
+      <li><strong>F</strong> (0-29) — Critical, most headers missing</li>
+    </ul>
+    <h3>How to Use</h3>
+    <ol>
+      <li>
+        Enter a URL and click Fetch, or paste headers from browser DevTools /
+        curl
+      </li>
+      <li>Click Analyze to see the security score and recommendations</li>
+      <li>Fix missing headers in your server configuration and re-analyze</li>
+    </ol>
+    <h3>Privacy</h3>
+    <p>
+      All analysis happens entirely in your browser. When using the Fetch
+      feature, the request is made directly from your browser — no server-side
+      proxy is used. Note that CORS restrictions may limit which headers are
+      visible; use <code>curl</code> for complete results.
+    </p>
 
-      <div class="tool-container">
-        <HTTPHeadersAnalyzer title="" />
-      </div>
+    <h3>Linux Command Reference</h3>
+    <p>You can inspect HTTP headers from the terminal using these tools:</p>
 
-      <section class="tool-info">
-        <h2>About This Tool</h2>
-        <p>
-          Paste your HTTP response headers to get a comprehensive security
-          analysis. The tool checks for the presence and configuration of
-          critical security headers and provides a score with recommendations.
-        </p>
-        <h3>Headers Analyzed</h3>
-        <ul>
-          <li>
-            <strong>Content-Security-Policy</strong> — XSS and injection prevention
-          </li>
-          <li>
-            <strong>Strict-Transport-Security</strong> — HTTPS enforcement
-          </li>
-          <li>
-            <strong>X-Content-Type-Options</strong> — MIME sniffing prevention
-          </li>
-          <li><strong>X-Frame-Options</strong> — clickjacking protection</li>
-          <li>
-            <strong>Referrer-Policy</strong> — referrer information control
-          </li>
-          <li>
-            <strong>Permissions-Policy</strong> — browser feature restrictions
-          </li>
-          <li><strong>Cross-Origin policies</strong> — COOP, CORP, COEP</li>
-        </ul>
-        <h3>How to Use</h3>
-        <ol>
-          <li>
-            Copy your HTTP response headers (from browser DevTools or curl)
-          </li>
-          <li>Paste them in the input field</li>
-          <li>Click Analyze to see the security score and recommendations</li>
-        </ol>
-        <h3>Learn More</h3>
-        <p>
-          See <a href="/blog/003-implementing-content-security-policy-nginx/"
-            >Implementing CSP in Nginx</a
-          > for a detailed guide on security headers.
-        </p>
-      </section>
-    </div>
-  </div>
-</BaseLayout>
+    <h4>curl — Headers Only</h4>
+    <TerminalSession>
+      <TerminalSessionCommand>
+        curl -sI https://example.com
+      </TerminalSessionCommand>
+      <TerminalSessionOutput title="Response Headers">
+        {
+          `HTTP/2 200\ndate: Thu, 12 Feb 2026 07:37:48 GMT\ncontent-type: text/html\ncf-ray: 9cca6c3e7e52ddef-MAD\nlast-modified: Wed, 11 Feb 2026 23:52:30 GMT\naccept-ranges: bytes\ncf-cache-status: HIT\nserver: cloudflare`
+        }
+      </TerminalSessionOutput>
+    </TerminalSession>
 
-<style>
-  .tool-page {
-    min-height: calc(100vh - var(--header-height, 4rem) - 4rem);
-    padding: var(--space-xl) 0;
-  }
+    <h4>curl — Filter Security Headers</h4>
+    <TerminalSession>
+      <TerminalSessionCommand>
+        {
+          `curl -sI https://jmrp.io | grep -iE '^(strict-transport|x-content-type|x-frame|referrer|cross-origin|permissions|content-security)'`
+        }
+      </TerminalSessionCommand>
+      <TerminalSessionOutput title="Security Headers">
+        {
+          `strict-transport-security: max-age=63072000; includeSubDomains; preload\nx-content-type-options: nosniff\nx-frame-options: DENY\nreferrer-policy: strict-origin-when-cross-origin\ncross-origin-embedder-policy: require-corp\ncross-origin-opener-policy: same-origin\ncross-origin-resource-policy: same-origin\ncontent-security-policy: default-src 'self'; script-src 'self' ...`
+        }
+      </TerminalSessionOutput>
+    </TerminalSession>
 
-  .content-wrapper {
-    box-sizing: border-box;
-    width: 100%;
-    max-width: var(--max-width-container);
-    padding: 0 var(--space-lg);
-    margin: 0 auto;
-  }
+    <h4>curl — Verbose (TLS + Headers)</h4>
+    <TerminalSession>
+      <TerminalSessionCommand>
+        {`curl -sv https://example.com -o /dev/null 2>&1 | grep '< '`}
+      </TerminalSessionCommand>
+      <TerminalSessionOutput title="Verbose Output">
+        {
+          `< HTTP/2 200\n< date: Thu, 12 Feb 2026 07:37:48 GMT\n< content-type: text/html\n< server: cloudflare`
+        }
+      </TerminalSessionOutput>
+    </TerminalSession>
 
-  .breadcrumb {
-    display: flex;
-    gap: var(--space-xs);
-    align-items: center;
-    margin-bottom: var(--space-lg);
-    font-size: 0.875rem;
-    color: var(--color-text-muted);
-  }
+    <h4>wget — Spider Mode</h4>
+    <TerminalSession>
+      <TerminalSessionCommand>
+        {`wget -S --spider https://example.com 2>&1 | grep '^\s'`}
+      </TerminalSessionCommand>
+      <TerminalSessionOutput title="wget Response Headers">
+        {
+          `HTTP/1.1 200 OK\nDate: Thu, 12 Feb 2026 07:37:52 GMT\nContent-Type: text/html\ncf-cache-status: HIT\nserver: cloudflare`
+        }
+      </TerminalSessionOutput>
+    </TerminalSession>
 
-  .breadcrumb a {
-    color: var(--color-text-muted);
-    text-decoration: none;
-    transition: color 0.2s ease;
-  }
+    <h4>Check Specific Header</h4>
+    <TerminalSession>
+      <TerminalSessionCommand>
+        {
+          `# Check if HSTS is present\ncurl -sI https://jmrp.io | grep -i strict-transport\n\n# Check CSP policy\ncurl -sI https://jmrp.io | grep -i content-security-policy`
+        }
+      </TerminalSessionCommand>
+      <TerminalSessionOutput title="Header Check">
+        {
+          `strict-transport-security: max-age=63072000; includeSubDomains; preload\ncontent-security-policy: default-src 'self'; script-src 'self' ...`
+        }
+      </TerminalSessionOutput>
+    </TerminalSession>
 
-  .breadcrumb a:hover {
-    color: var(--color-primary);
-  }
+    <h4>Compare Multiple Sites</h4>
+    <TerminalSession>
+      <TerminalSessionCommand>
+        {
+          `for site in example.com jmrp.io github.com; do\n  echo "=== $site ==="\n  curl -sI "https://$site" | grep -ci '^\\(strict-transport\\|x-content-type\\|x-frame\\|referrer-policy\\|permissions-policy\\|content-security-policy\\|cross-origin\\)'\n  echo "security headers found"\ndone`
+        }
+      </TerminalSessionCommand>
+      <TerminalSessionOutput title="Headers Count">
+        {
+          `=== example.com ===\n0 security headers found\n=== jmrp.io ===\n9 security headers found\n=== github.com ===\n5 security headers found`
+        }
+      </TerminalSessionOutput>
+    </TerminalSession>
 
-  .breadcrumb span[class*="i-"] {
-    width: 1rem;
-    height: 1rem;
-  }
-
-  .page-header {
-    display: flex;
-    gap: var(--space-md);
-    align-items: center;
-    margin-bottom: var(--space-xl);
-  }
-
-  .header-icon {
-    display: flex;
-    flex-shrink: 0;
-    align-items: center;
-    justify-content: center;
-    width: 4rem;
-    height: 4rem;
-    background: linear-gradient(
-      135deg,
-      var(--color-success, #10b981),
-      var(--color-success-dark, #059669)
-    );
-    border-radius: var(--radius-lg);
-  }
-
-  .header-icon span {
-    width: 2rem;
-    height: 2rem;
-    color: var(--header-icon-color, #fff);
-  }
-
-  .header-content {
-    flex: 1;
-    min-width: 0;
-  }
-
-  .page-header h1 {
-    margin-bottom: var(--space-xs);
-    font-size: 2rem;
-    font-weight: 800;
-    letter-spacing: -0.02em;
-  }
-
-  .subtitle {
-    font-size: 1rem;
-    line-height: 1.5;
-    color: var(--color-text-muted);
-  }
-
-  .tool-container {
-    margin-bottom: var(--space-xl);
-  }
-
-  .tool-info {
-    max-width: 720px;
-    padding: var(--space-lg);
-    margin: 0 auto;
-    background: var(--color-bg-secondary);
-    border: var(--border-1);
-    border-radius: var(--radius-lg);
-  }
-
-  .tool-info h2 {
-    margin-bottom: var(--space-md);
-    font-size: 1.25rem;
-    font-weight: var(--fw-semibold);
-    color: var(--color-text-heading);
-  }
-
-  .tool-info h3 {
-    margin-top: var(--space-lg);
-    margin-bottom: var(--space-sm);
-    font-size: 1rem;
-    font-weight: var(--fw-semibold);
-    color: var(--color-text-heading);
-  }
-
-  .tool-info p {
-    margin-bottom: var(--space-md);
-    font-size: 0.95rem;
-    line-height: 1.6;
-    color: var(--color-text);
-  }
-
-  .tool-info ul,
-  .tool-info ol {
-    padding-left: 1.25rem;
-    margin: 0;
-  }
-
-  .tool-info li {
-    margin-bottom: var(--space-sm);
-    font-size: 0.95rem;
-    line-height: 1.5;
-    color: var(--color-text);
-  }
-
-  .tool-info a {
-    color: var(--color-primary);
-    text-decoration: underline;
-    text-underline-offset: 2px;
-  }
-
-  .tool-info a:hover {
-    text-decoration: none;
-  }
-
-  @media (width <= 640px) {
-    .page-header {
-      flex-direction: column;
-      text-align: center;
-    }
-
-    .page-header h1 {
-      font-size: 1.5rem;
-    }
-
-    .subtitle {
-      font-size: 0.9rem;
-    }
-
-    .tool-info {
-      padding: var(--space-md);
-    }
-  }
-</style>
+    <h3>Learn More</h3>
+    <p>
+      See <a href="/blog/003-implementing-content-security-policy-nginx/"
+        >Implementing CSP in Nginx</a
+      > for a detailed guide on configuring security headers.
+    </p>
+  </Fragment>
+</ToolLayout>
