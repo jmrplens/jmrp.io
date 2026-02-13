@@ -212,8 +212,8 @@ importers:
         specifier: ^4.1.1
         version: 4.1.1
       lighthouse:
-        specifier: ^13.0.2
-        version: 13.0.2
+        specifier: ^13.0.3
+        version: 13.0.3
       mermaid-isomorphic:
         specifier: ^3.0.4
         version: 3.0.4(playwright@1.58.2)
@@ -4915,8 +4915,8 @@ packages:
     engines: {node: '>=18.20'}
     hasBin: true
 
-  lighthouse@13.0.2:
-    resolution: {integrity: sha512-n0gdiopYHdTugNMeysuO/1jAUTDVNk/rfybvbbetzdn1po82a+V1vI7JB0yv3SIJM8yTRb+1EFEHJqQmKK8crA==}
+  lighthouse@13.0.3:
+    resolution: {integrity: sha512-mEHAQV3nn4fB+3FDapye+KGeeE4V8FERgbCFegKT7HxqDVGWVOM/BoH9Qof71fzVYVMLIiGnDsnWRrH0sQ9o4Q==}
     engines: {node: '>=22.19'}
     hasBin: true
 
@@ -12735,7 +12735,7 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  lighthouse@13.0.2:
+  lighthouse@13.0.3:
     dependencies:
       '@paulirish/trace_engine': 0.0.61
       '@sentry/node': 9.47.1

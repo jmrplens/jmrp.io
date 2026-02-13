@@ -127,7 +127,7 @@
     "html-minifier-terser": "^7.2.0",
     "html-validate": "^10.7.0",
     "js-yaml": "^4.1.1",
-    "lighthouse": "^13.0.2",
+    "lighthouse": "^13.0.3",
     "mermaid-isomorphic": "^3.0.4",
     "playwright": "^1.58.2",
     "prettier": "^3.8.1",
