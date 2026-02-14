@@ -13,8 +13,6 @@ interface Tool {
   description: string;
   icon: string;
   href: string;
-  features: string[];
-  isNew?: boolean;
 }
 
 interface ToolCategory {
@@ -35,11 +33,6 @@ const categories: ToolCategory[] = [
           "Build Content Security Policy headers interactively with real-time security ratings.",
         icon: "i-mdi:shield-lock-outline",
         href: "/tools/csp-builder/",
-        features: [
-          "Visual directive selector",
-          "Live policy preview",
-          "Security score",
-        ],
       },
       {
         id: "hash-calculator",
@@ -48,11 +41,6 @@ const categories: ToolCategory[] = [
           "Generate SHA-256, SHA-384, and SHA-512 hashes for CSP inline scripts.",
         icon: "i-mdi:function-variant",
         href: "/tools/hash-calculator/",
-        features: [
-          "Multiple algorithms",
-          "Ready-to-use directives",
-          "Live calculation",
-        ],
       },
       {
         id: "password-generator",
@@ -61,12 +49,6 @@ const categories: ToolCategory[] = [
           "Generate cryptographically secure passwords and passphrases with entropy estimation.",
         icon: "i-mdi:lock-outline",
         href: "/tools/password-generator/",
-        features: [
-          "Crypto-secure",
-          "Entropy estimation",
-          "Diceware passphrases",
-        ],
-        isNew: true,
       },
       {
         id: "http-headers-analyzer",
@@ -75,12 +57,6 @@ const categories: ToolCategory[] = [
           "Analyze HTTP security headers and get a security score with detailed recommendations.",
         icon: "i-mdi:web",
         href: "/tools/http-headers-analyzer/",
-        features: [
-          "Security scoring",
-          "10+ headers checked",
-          "Recommendations",
-        ],
-        isNew: true,
       },
       {
         id: "cert-inspector",
@@ -89,8 +65,6 @@ const categories: ToolCategory[] = [
           "Decode and inspect PEM-encoded X.509 certificates. View subject, issuer, validity, and key details.",
         icon: "i-mdi:certificate",
         href: "/tools/cert-inspector/",
-        features: ["PEM decoding", "Validity check", "Key info"],
-        isNew: true,
       },
     ],
   },
@@ -105,8 +79,6 @@ const categories: ToolCategory[] = [
           "Encode and decode between Base64, Base64URL, URL encoding, hex, and HTML entities.",
         icon: "i-mdi:swap-horizontal",
         href: "/tools/base64-encoder/",
-        features: ["5 formats", "Auto-detect", "Bidirectional"],
-        isNew: true,
       },
       {
         id: "regex-tester",
@@ -115,8 +87,6 @@ const categories: ToolCategory[] = [
           "Test regular expressions with real-time match highlighting and capture group extraction.",
         icon: "i-mdi:regex",
         href: "/tools/regex-tester/",
-        features: ["Live highlighting", "Capture groups", "Pattern presets"],
-        isNew: true,
       },
       {
         id: "cron-builder",
@@ -125,8 +95,6 @@ const categories: ToolCategory[] = [
           "Build cron expressions visually with field selectors and next execution preview.",
         icon: "i-mdi:clock-outline",
         href: "/tools/cron-builder/",
-        features: ["Visual builder", "Execution preview", "Common presets"],
-        isNew: true,
       },
       {
         id: "timestamp-converter",
@@ -135,8 +103,6 @@ const categories: ToolCategory[] = [
           "Convert between Unix timestamps, ISO 8601, and human-readable dates with timezone support.",
         icon: "i-mdi:clock-time-four-outline",
         href: "/tools/timestamp-converter/",
-        features: ["Unix ↔ Date", "Live clock", "Relative time"],
-        isNew: true,
       },
       {
         id: "color-contrast-checker",
@@ -145,8 +111,6 @@ const categories: ToolCategory[] = [
           "Check WCAG 2.2 color contrast ratios for AA and AAA accessibility compliance.",
         icon: "i-mdi:palette-outline",
         href: "/tools/color-contrast-checker/",
-        features: ["WCAG 2.2", "AA & AAA levels", "Live preview"],
-        isNew: true,
       },
     ],
   },
@@ -161,8 +125,6 @@ const categories: ToolCategory[] = [
           "Calculate IPv4 and IPv6 subnets with CIDR notation, network ranges, and binary visualization.",
         icon: "i-mdi:lan",
         href: "/tools/subnet-calculator/",
-        features: ["IPv4 & IPv6", "CIDR notation", "Binary view"],
-        isNew: true,
       },
       {
         id: "nginx-config-generator",
@@ -171,8 +133,6 @@ const categories: ToolCategory[] = [
           "Generate Nginx server block configurations with SSL, reverse proxy, security headers, and caching.",
         icon: "i-devicon:nginx",
         href: "/tools/nginx-config-generator/",
-        features: ["Quick presets", "SSL/proxy", "Security headers"],
-        isNew: true,
       },
     ],
   },
@@ -187,8 +147,6 @@ const categories: ToolCategory[] = [
           "Build and decode Modbus RTU/TCP frames with CRC-16 calculation and byte visualization.",
         icon: "i-mdi:chip",
         href: "/tools/modbus-frame-builder/",
-        features: ["RTU & TCP", "Auto CRC-16", "Frame decoder"],
-        isNew: true,
       },
     ],
   },
@@ -247,34 +205,18 @@ const toolsSchema = {
                 href={tool.href}
                 class="tool-card"
               >
-                {tool.isNew && <span class="tool-badge-new">New</span>}
-                <div class="tool-icon-wrapper">
-                  <span
-                    class={`tool-icon ${tool.icon}`}
-                    aria-hidden="true"
-                  />
-                </div>
+                <span
+                  class={`tool-icon ${tool.icon}`}
+                  aria-hidden="true"
+                />
                 <div class="tool-content">
                   <h3 class="tool-name">{tool.name}</h3>
                   <p class="tool-description">{tool.description}</p>
-                  <ul class="tool-features">
-                    {tool.features.map((feature) => (
-                      <li>
-                        <span
-                          class="i-mdi:check feature-icon"
-                          aria-hidden="true"
-                        />
-                        {feature}
-                      </li>
-                    ))}
-                  </ul>
                 </div>
-                <div class="tool-arrow">
-                  <span
-                    class="i-mdi:arrow-right"
-                    aria-hidden="true"
-                  />
-                </div>
+                <span
+                  class="i-mdi:chevron-right tool-arrow"
+                  aria-hidden="true"
+                />
               </a>
             ))}
           </div>
@@ -368,35 +310,31 @@ const toolsSchema = {
     border-bottom: 2px solid var(--color-primary);
   }
 
-  /* Tools Grid */
+  /* Tools Grid — compact 2-col */
   .tools-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
-    gap: var(--space-lg);
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+    gap: var(--space-sm);
   }
 
-  /* Tool Card */
+  /* Compact Tool Card */
   .tool-card {
-    position: relative;
-    display: grid;
-    grid-template-columns: auto 1fr auto;
-    gap: var(--space-md);
-    align-items: start;
-    padding: var(--space-lg);
+    display: flex;
+    gap: var(--space-sm);
+    align-items: center;
+    padding: 0.625rem 0.75rem;
     text-decoration: none;
     background: var(--color-bg-secondary);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
     transition:
-      transform 0.2s ease,
-      box-shadow 0.2s ease,
-      border-color 0.2s ease;
+      border-color 0.15s ease,
+      box-shadow 0.15s ease;
   }
 
   .tool-card:hover {
     border-color: var(--color-primary);
-    box-shadow: var(--shadow-md);
-    transform: translateY(-2px);
+    box-shadow: 0 1px 4px rgb(0 0 0 / 8%);
   }
 
   .tool-card:focus-visible {
@@ -404,127 +342,69 @@ const toolsSchema = {
     outline-offset: 2px;
   }
 
-  .tool-badge-new {
-    position: absolute;
-    top: var(--space-sm);
-    right: var(--space-sm);
-    padding: 0.25rem 0.5rem;
-    font-size: 0.65rem;
-    font-weight: var(--fw-bold);
-    color: var(--color-on-primary, #fff);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    background: var(--color-primary);
-    border-radius: var(--radius-sm);
-  }
-
-  .tool-icon-wrapper {
-    display: flex;
-    flex-shrink: 0;
-    align-items: center;
-    justify-content: center;
-    width: 3rem;
-    height: 3rem;
-    color: var(--color-on-primary, #fff);
-    background: linear-gradient(
-      135deg,
-      var(--color-primary),
-      var(--color-primary-dark, #059669)
-    );
-    border-radius: var(--radius-md);
-  }
-
   .tool-icon {
-    width: 1.5rem;
-    height: 1.5rem;
+    flex-shrink: 0;
+    width: 1.25rem;
+    height: 1.25rem;
+    color: var(--color-primary);
   }
 
   .tool-content {
     display: flex;
+    flex: 1;
     flex-direction: column;
-    gap: var(--space-xs);
+    gap: 0.125rem;
     min-width: 0;
   }
 
   .tool-name {
     margin: 0;
-    font-size: 1.1rem;
+    font-size: 0.9rem;
     font-weight: var(--fw-semibold);
+    line-height: 1.3;
     color: var(--color-text-heading);
   }
 
   .tool-description {
+    display: -webkit-box;
     margin: 0;
-    font-size: 0.9rem;
-    line-height: 1.5;
+    overflow: hidden;
+    -webkit-line-clamp: 2;
+    font-size: 0.775rem;
+    line-height: 1.4;
     color: var(--color-text-muted);
-  }
-
-  .tool-features {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.375rem;
-    padding: 0;
-    margin: var(--space-xs) 0 0;
-    list-style: none;
-  }
-
-  .tool-features li {
-    display: flex;
-    gap: 0.25rem;
-    align-items: center;
-    padding: 0.125rem 0.5rem;
-    font-size: 0.75rem;
-    color: var(--color-text-muted);
-    background: var(--color-bg-subtle);
-    border-radius: var(--radius-sm);
-  }
-
-  .feature-icon {
-    width: 0.75rem;
-    height: 0.75rem;
-    color: var(--color-primary);
+    -webkit-box-orient: vertical;
   }
 
   .tool-arrow {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 2rem;
-    height: 2rem;
-    margin-top: 0.25rem;
+    flex-shrink: 0;
+    width: 1rem;
+    height: 1rem;
     color: var(--color-text-muted);
-    background: var(--color-bg-subtle);
-    border-radius: 50%;
+    opacity: 50%;
     transition:
-      transform 0.2s ease,
-      background 0.2s ease,
-      color 0.2s ease;
-  }
-
-  .tool-arrow span {
-    width: 1.25rem;
-    height: 1.25rem;
+      transform 0.15s ease,
+      opacity 0.15s ease;
   }
 
   .tool-card:hover .tool-arrow {
-    color: var(--color-on-primary, #fff);
-    background: var(--color-primary);
-    transform: translateX(4px);
+    color: var(--color-primary);
+    opacity: 100%;
+    transform: translateX(2px);
   }
 
   /* Info Section */
   .info-grid {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-md);
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr));
+    gap: var(--space-sm);
   }
 
   .info-item {
     display: flex;
-    gap: var(--space-md);
+    gap: var(--space-sm);
     align-items: flex-start;
-    padding: var(--space-md);
+    padding: 0.625rem 0.75rem;
     background: var(--color-bg-secondary);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
@@ -532,9 +412,9 @@ const toolsSchema = {
 
   .info-icon {
     flex-shrink: 0;
-    width: 1.5rem;
-    height: 1.5rem;
-    margin-top: 2px;
+    width: 1.25rem;
+    height: 1.25rem;
+    margin-top: 1px;
     color: var(--color-primary);
   }
 
@@ -544,15 +424,15 @@ const toolsSchema = {
 
   .info-content strong {
     display: block;
-    margin-bottom: 0.25rem;
-    font-size: 0.95rem;
+    margin-bottom: 0.125rem;
+    font-size: 0.85rem;
     color: var(--color-text-heading);
   }
 
   .info-content p {
     margin: 0;
-    font-size: 0.875rem;
-    line-height: 1.5;
+    font-size: 0.775rem;
+    line-height: 1.4;
     color: var(--color-text-muted);
   }
 
@@ -568,23 +448,8 @@ const toolsSchema = {
 
   /* Responsive */
   @media (width <= 640px) {
-    .tool-card {
+    .tools-grid {
       grid-template-columns: 1fr;
-      gap: var(--space-sm);
-    }
-
-    .tool-icon-wrapper {
-      width: 2.5rem;
-      height: 2.5rem;
-    }
-
-    .tool-icon {
-      width: 1.25rem;
-      height: 1.25rem;
-    }
-
-    .tool-arrow {
-      display: none;
     }
   }
 
