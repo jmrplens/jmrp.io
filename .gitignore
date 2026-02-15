@@ -17,11 +17,12 @@ node_modules/
 # --- 2. IDE & OS SPECIFIC ---
 # macOS system files
 .DS_Store
-# JetBrains IDEs (WebStorm, IntelliJ)
-.idea/
+# VS Code workspace-specific settings
+.vscode/mcp.json
 # AI/Editor Specific
 .claude/
 .qodo/
+nanobanana-output/
 
 # --- 3. LOGS ---
 # Standard package manager logs
@@ -47,6 +48,7 @@ dist-reports/
 *-deploy/
 .lighthouseci/
 lighthouse-results/
+lighthouse-report/
 .scannerwork/
 .lycheecache
 

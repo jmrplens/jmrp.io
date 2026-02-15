@@ -8,7 +8,8 @@ const getUrls = () => {
       console.warn("⚠️ Sitemap not found at " + sitemapPath);
       return [
         "http://localhost/",
-        "http://localhost/services/",
+        "http://localhost/homelab/",
+        "http://localhost/tools/",
         "http://localhost/cv/",
         "http://localhost/publications/",
         "http://localhost/github/",
@@ -30,10 +31,16 @@ const getUrls = () => {
 
     // Optimization: Only analyze the first tag page encountered
     let tagFound = false;
+    // Optimization: Only analyze the first tool category page encountered
+    let categoryFound = false;
     urls = urls.filter((url) => {
       if (url.includes("/blog/tags/")) {
         if (tagFound) return false;
         tagFound = true;
+      }
+      if (url.includes("/tools/categories/")) {
+        if (categoryFound) return false;
+        categoryFound = true;
       }
       return true;
     });

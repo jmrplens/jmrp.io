@@ -55,7 +55,10 @@ const linkRegex = /\[([^\]]+)\]\(([^)]+(?:\([^)]+\)[^)]*)*)\)/g;
 const collectedRefsFromMarkdown = [];
 let match;
 while ((match = linkRegex.exec(bodyWithoutCode)) !== null) {
-  collectedRefsFromMarkdown.push({ text: match[1], url: match[2] });
+  const url = match[2];
+  // Skip anchor-only links (e.g., #section-id) — they are internal page references
+  if (url.startsWith("#")) continue;
+  collectedRefsFromMarkdown.push({ text: match[1], url });
 }
 
 // Also find raw <a> tags in the body, as MDX allows HTML

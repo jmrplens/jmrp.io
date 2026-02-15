@@ -24,7 +24,10 @@ PNGs = "PNGs"
 PN = "PN"
 BA = "BA"
 dorder = "dorder"
+nd = "nd"
 comando = "comando"
+Cliente = "Cliente"
+Yoh = "Yoh"
 
 [default.extend-identifiers]
 # Technical protocol/standard names
