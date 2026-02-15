@@ -9,10 +9,24 @@
  *   <TerminalSessionOutput title="Output">hello</TerminalSessionOutput>
  * </TerminalSession>
  *
- * Multi-line output: use template literals with explicit \n:
+ * In MDX files, use code fences for multi-line output:
+ * <TerminalSessionOutput title="Result">
+ *
+ * ```
+ * line 1
+ * line 2
+ * line 3
+ * ```
+ *
+ * </TerminalSessionOutput>
+ *
+ * In .astro files, use template literals for multi-line output:
  *   <TerminalSessionOutput title="Result">
  *     {`line 1\nline 2\nline 3`}
  *   </TerminalSessionOutput>
+ *
+ * The cheerio pipeline extracts text from any HTML structure,
+ * including Shiki-rendered code blocks.
  *
  * Accessibility:
  * - Semantic <section> with role="log" for screen readers.

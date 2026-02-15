@@ -9,6 +9,20 @@
  *   <TerminalSessionOutput title="Output">hello</TerminalSessionOutput>
  * </TerminalSession>
  *
+ * In MDX files, use code fences for multi-line commands:
+ * <TerminalSessionCommand>
+ *
+ * ```
+ * # Install dependencies
+ * npm install
+ * npm run build
+ * ```
+ *
+ * </TerminalSessionCommand>
+ *
+ * The cheerio pipeline extracts text from any HTML structure,
+ * including Shiki-rendered code blocks.
+ *
  * Accessibility:
  * - Focusable scrollable region for keyboard navigation.
  * - ARIA labels for screen readers.
