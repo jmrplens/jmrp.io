@@ -1,0 +1,48 @@
+---
+title: "CSP Hash Calculator"
+slug: "hash-calculator"
+description: "Generate SHA-256 hashes for inline scripts. Get ready-to-use CSP directives for your Content Security Policy."
+subtitle: "Generate SHA-256 hashes for inline scripts. Copy the hash directly into your Content Security Policy."
+icon: "i-mdi:calculator-variant-outline"
+category: "security"
+tags: ["csp", "hash", "sha256", "security", "sri"]
+appComponent: "HashCalculator"
+appProps:
+  showExplanation: true
+---
+
+<h2>About This Tool</h2>
+<p>
+  When you need to allow specific inline scripts in your CSP without using{" "}
+  <code>'unsafe-inline'</code>, you can use hashes. This tool calculates the
+  SHA-256 hash of your script content in the format CSP expects.
+</p>
+<h3>How to Use</h3>
+<ol>
+  <li>
+    Paste your inline script content (excluding <code>&lt;script&gt;</code>{" "}
+    tags)
+  </li>
+  <li>Copy the generated hash or full CSP directive</li>
+  <li>
+    Add the hash to your <code>script-src</code> directive
+  </li>
+</ol>
+<h3>Important Notes</h3>
+<ul>
+  <li>Any change to the script (even whitespace) will change the hash</li>
+  <li>
+    For dynamic scripts, consider using
+    <a href="/blog/003-implementing-content-security-policy-nginx/#solution-3-use-nonces">
+      nonces
+    </a>{" "}
+    instead
+  </li>
+  <li>
+    See
+    <a href="/blog/003-implementing-content-security-policy-nginx/">
+      the complete CSP guide
+    </a>{" "}
+    for best practices
+  </li>
+</ul>

@@ -1,158 +1,46 @@
 ---
 /**
  * Tools Index Page.
- * Displays available interactive tools and utilities.
+ * Displays available interactive tools and utilities,
+ * grouped by category from the `tools` content collection.
  * Style matches CV, Publications, and Homelab pages.
  */
 import BaseLayout from "@layouts/BaseLayout.astro";
 import { getSiteUrl } from "@utils/site";
+import { getCollection } from "astro:content";
 
-interface Tool {
-  id: string;
-  name: string;
-  description: string;
-  icon: string;
-  href: string;
-}
+/** Category display metadata. Order determines rendering order. */
+const categoryMeta: Record<string, { name: string; order: number }> = {
+  security: { name: "Security Tools", order: 1 },
+  developer: { name: "Developer Tools", order: 2 },
+  network: { name: "Network & Server Tools", order: 3 },
+  embedded: { name: "Embedded & Industrial Tools", order: 4 },
+};
 
-interface ToolCategory {
-  id: string;
-  name: string;
-  tools: Tool[];
-}
+const allTools = await getCollection("tools");
 
-const categories: ToolCategory[] = [
-  {
-    id: "security",
-    name: "Security Tools",
-    tools: [
-      {
-        id: "csp-builder",
-        name: "CSP Policy Builder",
-        description:
-          "Build Content Security Policy headers interactively with real-time security ratings.",
-        icon: "i-mdi:shield-lock-outline",
-        href: "/tools/csp-builder/",
-      },
-      {
-        id: "hash-calculator",
-        name: "Script Hash Generator",
-        description:
-          "Generate SHA-256, SHA-384, and SHA-512 hashes for CSP inline scripts.",
-        icon: "i-mdi:function-variant",
-        href: "/tools/hash-calculator/",
-      },
-      {
-        id: "password-generator",
-        name: "Password Generator",
-        description:
-          "Generate cryptographically secure passwords and passphrases with entropy estimation.",
-        icon: "i-mdi:lock-outline",
-        href: "/tools/password-generator/",
-      },
-      {
-        id: "http-headers-analyzer",
-        name: "HTTP Headers Analyzer",
-        description:
-          "Analyze HTTP security headers and get a security score with detailed recommendations.",
-        icon: "i-mdi:web",
-        href: "/tools/http-headers-analyzer/",
-      },
-      {
-        id: "cert-inspector",
-        name: "Certificate Inspector",
-        description:
-          "Decode and inspect PEM-encoded X.509 certificates. View subject, issuer, validity, and key details.",
-        icon: "i-mdi:certificate",
-        href: "/tools/cert-inspector/",
-      },
-    ],
-  },
-  {
-    id: "developer",
-    name: "Developer Tools",
-    tools: [
-      {
-        id: "base64-encoder",
-        name: "Base64 Encoder / Decoder",
-        description:
-          "Encode and decode between Base64, Base64URL, URL encoding, hex, and HTML entities.",
-        icon: "i-mdi:swap-horizontal",
-        href: "/tools/base64-encoder/",
-      },
-      {
-        id: "regex-tester",
-        name: "Regex Tester",
-        description:
-          "Test regular expressions with real-time match highlighting and capture group extraction.",
-        icon: "i-mdi:regex",
-        href: "/tools/regex-tester/",
-      },
-      {
-        id: "cron-builder",
-        name: "Cron Expression Builder",
-        description:
-          "Build cron expressions visually with field selectors and next execution preview.",
-        icon: "i-mdi:clock-outline",
-        href: "/tools/cron-builder/",
-      },
-      {
-        id: "timestamp-converter",
-        name: "Timestamp Converter",
-        description:
-          "Convert between Unix timestamps, ISO 8601, and human-readable dates with timezone support.",
-        icon: "i-mdi:clock-time-four-outline",
-        href: "/tools/timestamp-converter/",
-      },
-      {
-        id: "color-contrast-checker",
-        name: "Color Contrast Checker",
-        description:
-          "Check WCAG 2.2 color contrast ratios for AA and AAA accessibility compliance.",
-        icon: "i-mdi:palette-outline",
-        href: "/tools/color-contrast-checker/",
-      },
-    ],
-  },
-  {
-    id: "network",
-    name: "Network & Server Tools",
-    tools: [
-      {
-        id: "subnet-calculator",
-        name: "Subnet Calculator",
-        description:
-          "Calculate IPv4 and IPv6 subnets with CIDR notation, network ranges, and binary visualization.",
-        icon: "i-mdi:lan",
-        href: "/tools/subnet-calculator/",
-      },
-      {
-        id: "nginx-config-generator",
-        name: "Nginx Config Generator",
-        description:
-          "Generate Nginx server block configurations with SSL, reverse proxy, security headers, and caching.",
-        icon: "i-devicon:nginx",
-        href: "/tools/nginx-config-generator/",
-      },
-    ],
-  },
-  {
-    id: "embedded",
-    name: "Embedded & Industrial Tools",
-    tools: [
-      {
-        id: "modbus-frame-builder",
-        name: "Modbus Frame Builder",
-        description:
-          "Build and decode Modbus RTU/TCP frames with CRC-16 calculation and byte visualization.",
-        icon: "i-mdi:chip",
-        href: "/tools/modbus-frame-builder/",
-      },
-    ],
-  },
-];
-
-const tools = categories.flatMap((cat) => cat.tools);
+/** Group tools by category and sort categories by defined order. */
+const categories = Object.entries(
+  allTools.reduce<
+    Record<string, { id: string; name: string; tools: typeof allTools }>
+  >((acc, tool) => {
+    const cat = tool.data.category;
+    if (!acc[cat]) {
+      acc[cat] = {
+        id: cat,
+        name: categoryMeta[cat]?.name ?? cat,
+        tools: [],
+      };
+    }
+    acc[cat].tools.push(tool);
+    return acc;
+  }, {}),
+)
+  .map(([, value]) => value)
+  .sort(
+    (a, b) =>
+      (categoryMeta[a.id]?.order ?? 99) - (categoryMeta[b.id]?.order ?? 99),
+  );
 
 const baseUrl = new URL(Astro.url.pathname, getSiteUrl());
 const collectionUrl = new URL("#collection", baseUrl).toString();
@@ -163,12 +51,15 @@ const toolsSchema = {
   "@id": collectionUrl,
   name: "Developer Tools",
   description: "Interactive tools for web security and development",
-  hasPart: tools.map((tool) => {
-    const toolUrl = new URL(tool.href, getSiteUrl()).toString();
+  hasPart: allTools.map((tool) => {
+    const toolUrl = new URL(
+      `/tools/${tool.data.slug}/`,
+      getSiteUrl(),
+    ).toString();
     return {
       "@type": "SoftwareApplication",
-      name: tool.name,
-      description: tool.description,
+      name: tool.data.title,
+      description: tool.data.description,
       url: toolUrl,
       applicationCategory: "WebApplication",
       operatingSystem: "Web Browser",
@@ -196,22 +87,24 @@ const toolsSchema = {
           aria-label={category.name}
         >
           <div class="section-header">
-            <h2>{category.name}</h2>
+            <h2>
+              <a href={`/tools/categories/${category.id}/`}>{category.name}</a>
+            </h2>
           </div>
 
           <div class="tools-grid">
             {category.tools.map((tool) => (
               <a
-                href={tool.href}
+                href={`/tools/${tool.data.slug}/`}
                 class="tool-card"
               >
                 <span
-                  class={`tool-icon ${tool.icon}`}
+                  class={`tool-icon ${tool.data.icon}`}
                   aria-hidden="true"
                 />
                 <div class="tool-content">
-                  <h3 class="tool-name">{tool.name}</h3>
-                  <p class="tool-description">{tool.description}</p>
+                  <h3 class="tool-name">{tool.data.title}</h3>
+                  <p class="tool-description">{tool.data.description}</p>
                 </div>
                 <span
                   class="i-mdi:chevron-right tool-arrow"

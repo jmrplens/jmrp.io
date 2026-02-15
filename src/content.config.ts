@@ -267,4 +267,30 @@ const publications_data = defineCollection({
   ),
 });
 
-export const collections = { posts, site_config, cv, publications_data };
+/**
+ * Configuration for 'tools' content collection.
+ * Defines the schema for interactive tool pages (MDX files).
+ */
+const tools = defineCollection({
+  loader: glob({
+    pattern: "**/[^_]*.mdx",
+    base: "./src/content/tools",
+    generateId: ({ entry }) => stripExtension(entry),
+  }),
+  schema: z.object({
+    title: z.string(),
+    slug: z.string(),
+    description: z.string(),
+    subtitle: z.string().optional(),
+    icon: z.string(),
+    category: z.enum(["security", "developer", "network", "embedded"]),
+    tags: z.array(z.string()).default([]),
+    appComponent: z.string(),
+    /** Extra props to pass to the app component, e.g. { showExplanation: true }. */
+    appProps: z.record(z.string(), z.any()).optional(),
+    publishedDate: z.coerce.date().optional(),
+    updatedDate: z.coerce.date().optional(),
+  }),
+});
+
+export const collections = { posts, site_config, cv, publications_data, tools };

@@ -940,10 +940,6 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
     function isMultiWrite(fc) {
       return ["0F", "10"].indexOf(fc) >= 0;
     }
-    function isReadFC(fc) {
-      return ["01", "02", "03", "04"].indexOf(fc) >= 0;
-    }
-
     var FC_NAMES = {
       0x01: "Read Coils",
       0x02: "Read Discrete Inputs",
@@ -981,7 +977,6 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
     function resolveAddress() {
       var raw = parseInt(startAddr.value) || 0;
       var fmt = addrFmtSel.value;
-      var fc = funcSel.value;
       var addr = raw;
       var hint = "";
 
@@ -990,7 +985,6 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
         hint = "Protocol address: " + addr + " (0x" + toHex(addr, 4) + ")";
       } else if (fmt === "modicon") {
         // 0xxxx = coils, 1xxxx = discrete inputs, 3xxxx = input regs, 4xxxx = holding regs
-        var prefix = Math.floor(raw / 10000);
         var offset = raw % 10000;
         addr = Math.max(0, offset - 1);
         hint =

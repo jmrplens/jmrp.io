@@ -12,7 +12,7 @@ interface Props {
   title?: string;
 }
 
-const { title = "" } = Astro.props;
+const { title: _title = "" } = Astro.props;
 const id = `net-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
 ---
 
@@ -665,14 +665,6 @@ const id = `net-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
       return g;
     }
 
-    function ipv6ToBinary(g) {
-      return g
-        .map(function (v) {
-          return v.toString(2).padStart(16, "0");
-        })
-        .join(":");
-    }
-
     function ipv6Type(n) {
       if (n === 0n) return "Unspecified (::)";
       if (n === 1n) return "Loopback (::1)";
@@ -862,19 +854,6 @@ const id = `net-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
         (network >>> 8) & 255,
         network & 255,
       ];
-      var maskOctets = [
-        (mask >>> 24) & 255,
-        (mask >>> 16) & 255,
-        (mask >>> 8) & 255,
-        mask & 255,
-      ];
-      var wcOctets = [
-        (wildcard >>> 24) & 255,
-        (wildcard >>> 16) & 255,
-        (wildcard >>> 8) & 255,
-        wildcard & 255,
-      ];
-
       var grid = makeGrid();
       var items = [
         ["Network Address", intToIPv4(network)],
@@ -982,7 +961,6 @@ const id = `net-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
       var maskBig = cidr === 0 ? 0n : (MAX128 << BigInt(128 - cidr)) & MAX128;
       var networkBig = ipBig & maskBig;
       var lastBig = networkBig | (MAX128 & ~maskBig);
-      var firstBig = cidr === 128 ? networkBig : networkBig;
       var lastAddr = cidr === 128 ? networkBig : lastBig;
       var hostBits = 128 - cidr;
 
@@ -1068,8 +1046,6 @@ const id = `net-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
 
       var legend = document.createElement("div");
       legend.className = "net-visual-legend";
-      var netBitsShown = Math.min(cidr, showBits);
-      var hostBitsShown = showBits - netBitsShown;
       legend.innerHTML =
         '<span class="net-bit-legend-n">\u2588 Network (' +
         cidr +

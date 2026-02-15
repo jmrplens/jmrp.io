@@ -173,8 +173,6 @@ emyPxgcYxn/eR44/KJ4EBs+lVDR3veyJm+kXQ99b21/+jh5Xos1AnX5iItreGCc=
     var selectorPills = selectorEl
       ? selectorEl.querySelector(".cert-selector-pills")
       : null;
-    var fetchedCerts = []; // { pem, issuerLabel, notBefore, notAfter, isCurrent }
-
     if (!textarea || !resultsEl || !inspectBtn) return;
 
     // Quick-parse a PEM to extract issuer O and CN, and validity dates
@@ -347,8 +345,6 @@ emyPxgcYxn/eR44/KJ4EBs+lVDR3veyJm+kXQ99b21/+jh5Xos1AnX5iItreGCc=
 
             // Group by issuer, keep most recent from each
             var grouped = groupByIssuer(allCerts);
-            fetchedCerts = grouped;
-
             // Show selector if multiple issuers
             renderSelector(grouped);
 
@@ -393,7 +389,7 @@ emyPxgcYxn/eR44/KJ4EBs+lVDR3veyJm+kXQ99b21/+jh5Xos1AnX5iItreGCc=
                   throw new Error("Invalid PEM data");
                 }
               })
-              .catch(function (e2) {
+              .catch(function () {
                 showError(
                   "Could not fetch certificate for " +
                     hostname +
@@ -642,15 +638,13 @@ emyPxgcYxn/eR44/KJ4EBs+lVDR3veyJm+kXQ99b21/+jh5Xos1AnX5iItreGCc=
     }
 
     // SHA-256 fingerprint
-    function computeFingerprint(der) {
-      return crypto.subtle
-        .digest("SHA-256", der)
-        .then(function (hash) {
-          return bytesToHex(new Uint8Array(hash), ":");
-        })
-        .catch(function () {
-          return "Unavailable";
-        });
+    async function computeFingerprint(der) {
+      try {
+        var hash = await crypto.subtle.digest("SHA-256", der);
+        return bytesToHex(new Uint8Array(hash), ":");
+      } catch (_) {
+        return "Unavailable";
+      }
     }
 
     // Decode extensions from TBS certificate
