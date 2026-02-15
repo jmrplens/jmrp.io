@@ -1811,4 +1811,53 @@ const uniqueId = `cc-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
       flex-direction: column;
     }
   }
+
+  /* ── Dark mode contrast fixes ── */
+  :root[data-theme="dark"] .cc-pass .cc-wcag-result {
+    color: #34d399;
+  }
+
+  :root[data-theme="dark"] .cc-fail .cc-wcag-result {
+    color: #fca5a5;
+  }
+
+  :root[data-theme="dark"] .cc-sim-pass {
+    color: #34d399;
+  }
+
+  :root[data-theme="dark"] .cc-sim-warn {
+    color: #fde047;
+  }
+
+  :root[data-theme="dark"] .cc-sim-fail {
+    color: #fca5a5;
+  }
+
+  :root[data-theme="dark"] .cc-apca-excellent {
+    color: #34d399;
+  }
+
+  :root[data-theme="dark"] .cc-apca-good {
+    color: #4ade80;
+  }
+
+  :root[data-theme="dark"] .cc-apca-fair {
+    color: #fde047;
+  }
+
+  :root[data-theme="dark"] .cc-apca-minimum {
+    color: #fb923c;
+  }
+
+  :root[data-theme="dark"] .cc-apca-nontext {
+    color: #fb923c;
+  }
+
+  :root[data-theme="dark"] .cc-apca-poor {
+    color: #fca5a5;
+  }
+
+  :root[data-theme="dark"] .cc-apca-fail {
+    color: #fca5a5;
+  }
 </style>

@@ -1316,4 +1316,40 @@ const quickRef = [
       align-items: flex-start;
     }
   }
+
+  /* ── Dark mode contrast fixes ── */
+  :root[data-theme="dark"] .rgx-match-count {
+    color: #c4b5fd;
+    background: rgb(from var(--color-primary) r g b / 20%);
+  }
+
+  :root[data-theme="dark"] .rgx-highlight-area :global(.rgx-hl-1) {
+    color: #bfdbfe;
+    background: rgb(59 130 246 / 35%);
+  }
+
+  :root[data-theme="dark"] .rgx-highlight-area :global(.rgx-hl-2) {
+    color: #e9d5ff;
+    background: rgb(168 85 247 / 35%);
+  }
+
+  :root[data-theme="dark"] .rgx-highlight-area :global(.rgx-hl-3) {
+    color: #a7f3d0;
+    background: rgb(16 185 129 / 35%);
+  }
+
+  :root[data-theme="dark"] .rgx-highlight-area :global(.rgx-hl-4) {
+    color: #fde68a;
+    background: rgb(245 158 11 / 35%);
+  }
+
+  :root[data-theme="dark"] .rgx-highlight-area :global(.rgx-hl-5) {
+    color: #fecaca;
+    background: rgb(239 68 68 / 35%);
+  }
+
+  :root[data-theme="dark"] .rgx-highlight-area :global(.rgx-hl-6) {
+    color: #bae6fd;
+    background: rgb(14 165 233 / 35%);
+  }
 </style>

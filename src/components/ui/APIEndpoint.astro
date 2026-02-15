@@ -215,4 +215,29 @@ const methodColors: Record<Props["method"], string> = {
   :root:not([data-theme]) .ae-auth {
     color: var(--ae-auth-color, #f59e0b);
   }
+
+  /* Dark mode contrast fixes */
+  :root[data-theme="dark"] .method-get {
+    color: #6ee7b7;
+  }
+
+  :root[data-theme="dark"] .method-post {
+    color: #93c5fd;
+  }
+
+  :root[data-theme="dark"] .method-put {
+    color: #fcd34d;
+  }
+
+  :root[data-theme="dark"] .method-patch {
+    color: #c4b5fd;
+  }
+
+  :root[data-theme="dark"] .method-delete {
+    color: #fca5a5;
+  }
+
+  :root[data-theme="dark"] .ae-auth {
+    color: #fcd34d;
+  }
 </style>
