@@ -42,7 +42,7 @@ export function resolveShikiLanguage(
 
 /** Shared themes used by Code and FileContent components. */
 export const SHIKI_THEMES = {
-  light: "github-light",
+  light: "github-light-high-contrast",
   dark: "github-dark-high-contrast",
 } as const;
 
@@ -119,7 +119,7 @@ export async function highlightCode(
   return highlighter.codeToHtml(trimmedCode, {
     lang: langName,
     themes: SHIKI_THEMES,
-    defaultColor: false,
+    defaultColor: "light",
     transformers: [
       {
         // Match Astro's built-in Code component output format:
