@@ -695,6 +695,7 @@ No Docker. Direct SSG deployment on the production server:
 - **Project root**: `/var/www/jmrp.io/`
 - **Nginx document root**: `/var/www/jmrp.io/dist/` — Nginx serves this directory directly as `jmrp.io`
 - **Build output**: `pnpm build` uses atomic swap (`dist_new` → `dist_old` → `dist`) for zero-downtime deploys
+- **Live update**: Running `pnpm build` on the server immediately updates the live website — no git push, CI pipeline, or separate deploy step is needed
 
 Steps:
 
