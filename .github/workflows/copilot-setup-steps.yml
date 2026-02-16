@@ -20,15 +20,17 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - name: "Enable corepack"
+        run: corepack enable
+
       - name: "Setup Node.js"
         uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: "pnpm"
 
       - name: "Install dependencies"
-        run: |
-          corepack enable
-          pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile
 
       - name: "Install Playwright browsers"
         run: pnpm exec playwright install --with-deps chromium
