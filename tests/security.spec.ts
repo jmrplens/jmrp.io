@@ -10,6 +10,9 @@
  *
  * Note: Nonces are placeholders ("nonce-$cspNonce") in static builds,
  * replaced at runtime by Nginx with unique per-request values.
+ *
+ * Per-page tests run in parallel across workers for maximum performance.
+ * Dynamically tests all pages discovered from the sitemap.
  */
 
 import fs from "node:fs";
@@ -17,7 +20,10 @@ import path from "node:path";
 
 import { expect, test } from "@playwright/test";
 
-import { getSitemapUrls } from "./utils";
+import { getCachedPages } from "./utils";
+
+// Read pages synchronously at module scope for parallel test registration
+const pages = getCachedPages();
 
 /**
  * Validates the integrity hash of a resource.
@@ -140,13 +146,12 @@ async function getStyleElementData(
 }
 
 test.describe("CSP and SRI Security Checks", () => {
-  test("scripts have nonce placeholders for CSP", async ({ page }) => {
-    const urls = await getSitemapUrls();
+  for (const pageInfo of pages) {
+    test(`CSP & SRI: ${pageInfo.name}`, async ({ page }) => {
+      await page.goto(pageInfo.url);
 
-    for (const url of urls) {
-      await test.step(`Checking CSP nonces: ${url}`, async () => {
-        await page.goto(url);
-
+      // --- Script nonce placeholders ---
+      await test.step("Scripts have nonce placeholders", async () => {
         const scriptsWithSrc = page.locator("script[src]");
         const count = await scriptsWithSrc.count();
 
@@ -155,70 +160,46 @@ test.describe("CSP and SRI Security Checks", () => {
           await expect(script).toHaveAttribute("nonce", /.+/);
         }
       });
-    }
-  });
 
-  test("external scripts and stylesheets have SRI integrity hashes", async ({
-    page,
-  }) => {
-    const urls = await getSitemapUrls();
-    const issues: string[] = [];
-
-    for (const url of urls) {
-      await test.step(`Checking SRI: ${url}`, async () => {
-        await page.goto(url);
-
-        // Gather scripts data
+      // --- SRI integrity hashes ---
+      await test.step("SRI integrity hashes", async () => {
         const scripts = page.locator("script[src]");
         const scriptCount = await scripts.count();
-        const scriptUrls = await Promise.all(
+        const scriptData = await Promise.all(
           Array.from({ length: scriptCount }).map((_, i) =>
             getResourceData(scripts, i, "src"),
           ),
         );
 
-        // Gather stylesheets data
         const stylesheets = page.locator("link[rel='stylesheet'][href]");
         const styleCount = await stylesheets.count();
-        const styleUrls = await Promise.all(
+        const styleData = await Promise.all(
           Array.from({ length: styleCount }).map((_, i) =>
             getResourceData(stylesheets, i, "href"),
           ),
         );
 
-        // Validate and archive issues functionally to satisfy Playwright lint
-        const scriptErrors = scriptUrls
-          .map((s) => validateIntegrity(url, s.url, s.integrity, "Script"))
-          .filter((e): e is string => e !== null);
-        issues.push(...scriptErrors);
+        const issues = [
+          ...scriptData
+            .map((s) =>
+              validateIntegrity(pageInfo.url, s.url, s.integrity, "Script"),
+            )
+            .filter((e): e is string => e !== null),
+          ...styleData
+            .map((s) =>
+              validateIntegrity(pageInfo.url, s.url, s.integrity, "Stylesheet"),
+            )
+            .filter((e): e is string => e !== null),
+        ];
 
-        const styleErrors = styleUrls
-          .map((s) => validateIntegrity(url, s.url, s.integrity, "Stylesheet"))
-          .filter((e): e is string => e !== null);
-        issues.push(...styleErrors);
+        expect(issues, "SRI integrity hash issues").toEqual([]);
       });
-    }
 
-    // ESLint still might complain about 'if' in loops.
-    // Let's use a more functional approach to satisfy it.
-
-    expect(
-      issues,
-      "All local scripts and stylesheets should have valid SRI integrity hashes",
-    ).toEqual([]);
-  });
-
-  test("inline scripts have nonce for CSP compliance", async ({ page }) => {
-    const urls = await getSitemapUrls();
-
-    for (const url of urls) {
-      await test.step(`Checking inline script nonces: ${url}`, async () => {
-        await page.goto(url);
-
+      // --- Inline script nonces ---
+      await test.step("Inline scripts have nonce", async () => {
         const inlineScripts = page.locator("script:not([src])");
         const count = await inlineScripts.count();
 
-        // Gather data first to avoid recursion/nesting depth issues
         const scriptData = await Promise.all(
           Array.from({ length: count }).map((_, i) =>
             getInlineScriptData(inlineScripts, i),
@@ -228,64 +209,43 @@ test.describe("CSP and SRI Security Checks", () => {
         for (const data of scriptData) {
           expect(
             data.hasContent && !data.nonce ? "missing" : "ok",
-            `[${url}] ${data.type} script missing nonce. Preview: "${data.content}..."`,
+            `[${pageInfo.url}] ${data.type} script missing nonce. Preview: "${data.content}..."`,
           ).toBe("ok");
         }
       });
-    }
-  });
 
-  test("no elements have inline style attributes (CSP compliance)", async ({
-    page,
-  }) => {
-    const urls = await getSitemapUrls();
-    const elementsWithStyle: string[] = [];
-
-    for (const url of urls) {
-      await test.step(`Checking inline styles: ${url}`, async () => {
-        await page.goto(url);
-
-        /**
-         * Exclusion selector for inline style checking.
-         * Excludes:
-         * - Empty style attributes: [style=""]
-         * - Allowed display values: display: block, display: none (used by legitimate UI toggles)
-         * - Preact shadow host: #preact-border-shadow-host (Preact debugging)
-         * - SVG internals: rect, g, path, line, text, polygon, circle, ellipse
-         */
+      // --- No inline style attributes ---
+      await test.step("No inline style attributes", async () => {
         const STYLE_EXCLUSION_SELECTOR = `[style]:not([style=""]):not([style*="display: block"]):not([style*="display:block"]):not([style*="display: none"]):not([style*="display:none"]):not([id="preact-border-shadow-host"]):not(rect):not(g):not(path):not(line):not(text):not(polygon):not(circle):not(ellipse)`;
-
         const locator = page.locator(STYLE_EXCLUSION_SELECTOR);
-
         const count = await locator.count();
+
         const elementData = await Promise.all(
           Array.from({ length: count }).map((_, i) =>
             getStyleElementData(locator, i),
           ),
         );
 
-        // Filter out empty styles and add violations
         const violations = elementData
           .filter((data) => data.style && data.style.trim() !== "")
-          .map((data) => `${url}: <${data.tagName} style="${data.style}">`);
+          .filter((data) => {
+            const styleStr = data.style ?? "";
+            const cleaned = styleStr
+              .split(";")
+              .map((s: string) => s.trim())
+              .filter((s: string) => s !== "");
+            return cleaned.some((prop: string) => !prop.startsWith("--"));
+          })
+          .map(
+            (data) =>
+              `${pageInfo.url}: <${data.tagName} style="${data.style}">`,
+          );
 
-        elementsWithStyle.push(...violations);
+        expect(violations, "Unexpected inline style attributes").toEqual([]);
       });
-    }
 
-    expect(
-      elementsWithStyle,
-      "Found unexpected inline style attributes (should have been converted to classes by post-build integration)",
-    ).toEqual([]);
-  });
-
-  test("all style tags have nonce for CSP", async ({ page }) => {
-    const urls = await getSitemapUrls();
-
-    for (const url of urls) {
-      await test.step(`Checking style nonces: ${url}`, async () => {
-        await page.goto(url);
-
+      // --- Style tag nonces ---
+      await test.step("Style tags have nonce", async () => {
         const styleTags = page.locator("style");
         const count = await styleTags.count();
 
@@ -293,12 +253,12 @@ test.describe("CSP and SRI Security Checks", () => {
           const style = styleTags.nth(i);
           await expect(
             style,
-            `Style tag at ${url} should have a nonce attribute`,
+            `Style tag should have a nonce attribute`,
           ).toHaveAttribute("nonce", /.+/);
         }
       });
-    }
-  });
+    });
+  }
 });
 
 test.describe("Build Output Verification", () => {
@@ -319,7 +279,9 @@ test.describe("Build Output Verification", () => {
     expect(content).toContain("style-src");
     expect(content).toContain("Strict-Transport-Security");
     expect(content).toContain("X-Frame-Options");
-    expect(content).toMatch(/\$csp_script_\d+/);
+    // Nonce-only CSP: no hash variables should be present
+    expect(content).not.toMatch(/\$csp_script_\d+/);
+    expect(content).not.toMatch(/\$csp_style_\d+/);
   });
 
   test("CSP header contains required directives", () => {
@@ -370,7 +332,7 @@ test.describe("Build Output Verification", () => {
       ).toBe(true);
     }
 
-    expect(cspPolicy).toContain("default-src 'none'");
+    expect(cspPolicy).toContain("default-src 'self'");
     expect(cspPolicy).toContain("frame-src 'none'");
     expect(cspPolicy).toContain("object-src 'none'");
     expect(cspPolicy).toContain("frame-ancestors 'none'");

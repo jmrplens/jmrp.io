@@ -133,11 +133,52 @@ const server = http.createServer((req, res) => {
 });
 
 /**
+ * Checks whether a CSP violation was caused by a browser extension rather than
+ * by the page itself. Extensions inject scripts and styles that lack the page's
+ * nonce, producing harmless "inline" violations that are safe to ignore.
+ *
+ * Detection heuristics:
+ * - source-file points to an extension protocol (moz-extension://, chrome-extension://, safari-extension://)
+ * - source-file is "<anonymous code>" (Firefox reports extension-injected styles this way)
+ * - blocked-uri points to an extension protocol
+ *
+ * @param {Record<string, unknown>} r - The csp-report object
+ * @returns {boolean} true if the violation is from a browser extension
+ */
+function isExtensionViolation(r) {
+  const rawSource = r["source-file"];
+  const rawBlocked = r["blocked-uri"];
+  const source = typeof rawSource === "string" ? rawSource : "";
+  const blocked = typeof rawBlocked === "string" ? rawBlocked : "";
+
+  const extensionPatterns =
+    /^(moz-extension|chrome-extension|safari-extension|safari-web-extension|ms-browser-extension):/i;
+
+  if (extensionPatterns.test(source) || extensionPatterns.test(blocked)) {
+    return true;
+  }
+
+  // Firefox reports extension-injected <style> elements with source-file "<anonymous code>"
+  // and very high line numbers from the extension's bundled script
+  if (source === "<anonymous code>") {
+    return true;
+  }
+
+  return false;
+}
+
+/**
  * Processes the received report and handles logging/notification
  */
 function processReport(report, ip, ua) {
   const r = report["csp-report"] || report;
   if (!r) return;
+
+  // Silently discard violations caused by browser extensions (Dark Reader, ad blockers, etc.)
+  // These inject <style>/<script> elements without the page nonce, producing expected violations.
+  if (isExtensionViolation(r)) {
+    return;
+  }
 
   const blockedUri = r["blocked-uri"] || "inline/eval";
   const cacheKey = `${ip}:${blockedUri}`;

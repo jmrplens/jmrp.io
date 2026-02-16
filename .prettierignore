@@ -16,6 +16,8 @@ pnpm-lock.yaml
 # --- Auto-generated or Raw Content ---
 # Markdown posts often have custom formatting or long lines
 src/content/posts/
+# Tool pages (MDX) use code fences inside JSX that Prettier cannot handle
+src/content/tools/
 # Specific templates
 src/components/ui/AGENTS.md
 src/components/ui/README.md

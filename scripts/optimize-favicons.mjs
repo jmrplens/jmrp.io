@@ -33,27 +33,32 @@ const getHostname = (url) => {
 };
 
 /**
- * Collect all unique hostnames from all posts
+ * Collect all unique hostnames from all posts.
+ * Uses markdown link regex to properly extract URLs from [text](url) patterns.
  */
 const collectHostnames = () => {
   const hostnames = new Set();
   const files = fs
     .readdirSync(POSTS_DIR)
-    .filter((f) => f.endsWith(".mdx") || f.endsWith(".md"));
+    .filter(
+      (f) => (f.endsWith(".mdx") || f.endsWith(".md")) && !f.startsWith("_"),
+    );
+
+  // Regex to find markdown links: [text](url) — supports one level of nested parentheses
+  const linkRegex = /\[([^\]]+)\]\(([^)]+(?:\([^)]+\)[^)]*)*)\)/g;
 
   for (const file of files) {
     const content = fs.readFileSync(path.join(POSTS_DIR, file), "utf-8");
-    // Simple split by whitespace only to avoid ReDoS
-    const tokens = content.split(/\s+/);
-    for (const token of tokens) {
-      if (token.includes("://")) {
-        // Strip common punctuation and delimiters
-        const cleanLink = token
-          .replace(/^[([<]+/, "")
-          .replace(/[\])>.,;:"']+$/, "");
-        const hostname = getHostname(cleanLink);
-        if (hostname) hostnames.add(hostname);
-      }
+
+    // Strip code blocks to avoid false positives from code examples
+    const bodyWithoutCode = content
+      .replaceAll(/```[\s\S]*?```/g, "")
+      .replaceAll(/`[^`]*?`/g, "");
+
+    let match;
+    while ((match = linkRegex.exec(bodyWithoutCode)) !== null) {
+      const hostname = getHostname(match[2]);
+      if (hostname) hostnames.add(hostname);
     }
   }
 
@@ -61,7 +66,20 @@ const collectHostnames = () => {
 };
 
 /**
- * Download and optimize favicon
+ * Fetch a favicon from Google's favicon service for a given domain.
+ * @param {string} domain - The domain to fetch
+ * @returns {Promise<Buffer|null>} The favicon buffer, or null if not found
+ */
+const fetchFavicon = async (domain) => {
+  const url = `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
+  const response = await fetch(url);
+  if (!response.ok) return null;
+  return Buffer.from(await response.arrayBuffer());
+};
+
+/**
+ * Download and optimize favicon.
+ * Falls back to the parent domain if the subdomain favicon is not found.
  * @param {string} hostname - The domain to fetch
  */
 const processFavicon = async (hostname) => {
@@ -73,13 +91,22 @@ const processFavicon = async (hostname) => {
   }
 
   console.log(`  + Fetching favicon for: ${hostname}`);
-  const googleFaviconUrl = `https://www.google.com/s2/favicons?domain=${hostname}&sz=64`;
 
   try {
-    const response = await fetch(googleFaviconUrl);
-    if (!response.ok) throw new Error("Failed to fetch");
+    // Try the exact hostname first
+    let buffer = await fetchFavicon(hostname);
 
-    const buffer = Buffer.from(await response.arrayBuffer());
+    // Fallback: try parent domain (e.g. blog.example.com → example.com)
+    if (!buffer) {
+      const parts = hostname.split(".");
+      if (parts.length > 2) {
+        const parentDomain = parts.slice(-2).join(".");
+        console.log(`    ↳ Trying parent domain: ${parentDomain}`);
+        buffer = await fetchFavicon(parentDomain);
+      }
+    }
+
+    if (!buffer) throw new Error("Favicon not found");
 
     // Optimize with sharp
     await sharp(buffer)

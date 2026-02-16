@@ -1,0 +1,1963 @@
+---
+/**
+ * HTTPHeadersAnalyzer Component
+ * Analyzes HTTP security headers and provides recommendations.
+ * Supports pasting headers or fetching from a URL.
+ *
+ * Usage:
+ * <HTTPHeadersAnalyzer title="HTTP Security Headers Analyzer" />
+ */
+
+interface Props {
+  title?: string;
+}
+
+const { title = "HTTP Security Headers Analyzer" } = Astro.props;
+const uniqueId = `hdr-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
+
+const sampleHeaders = `content-security-policy: default-src 'none'; script-src 'self' 'nonce-MASKED' 'strict-dynamic'; style-src 'self' 'nonce-MASKED'; img-src 'self' data: https://*.jmrp.io; font-src 'self'; connect-src 'self' https://api.github.com https://cloudflareinsights.com https://*.cloudflareinsights.com; media-src 'self'; manifest-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests; report-uri /csp-report
+strict-transport-security: max-age=63072000; includeSubDomains; preload
+x-content-type-options: nosniff
+x-frame-options: DENY
+referrer-policy: strict-origin-when-cross-origin
+permissions-policy: accelerometer=(), autoplay=(), browsing-topics=(), camera=(), encrypted-media=(), fullscreen=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), midi=(), payment=(), picture-in-picture=(), publickey-credentials-get=(self), sync-xhr=(), usb=(), xr-spatial-tracking=()
+cross-origin-opener-policy: same-origin
+cross-origin-resource-policy: same-origin
+cross-origin-embedder-policy: require-corp
+set-cookie: __Host-Session=1; path=/; Secure; HttpOnly; SameSite=Strict
+set-cookie: __Secure-Pref=1; path=/; Secure; HttpOnly; SameSite=Strict
+server: jmrp.io`;
+---
+
+<div
+  class="hdr-analyzer"
+  data-hdr-id={uniqueId}
+>
+  {title && <div class="hdr-title">{title}</div>}
+
+  <div class="hdr-layout">
+    {/* URL Fetch */}
+    <div class="hdr-fetch-section">
+      <label
+        class="hdr-label"
+        for={`${uniqueId}-url`}
+      >
+        <span
+          class="i-mdi:link-variant"
+          aria-hidden="true"
+        ></span>
+        Fetch from URL
+      </label>
+      <div class="hdr-url-row">
+        <input
+          type="url"
+          id={`${uniqueId}-url`}
+          class="hdr-url-input"
+          placeholder="https://example.com"
+          spellcheck="false"
+          autocomplete="off"
+        />
+        <button
+          type="button"
+          class="hdr-fetch-btn"
+        >
+          <span
+            class="i-mdi:download"
+            aria-hidden="true"
+          ></span>
+          Fetch
+        </button>
+      </div>
+      <div
+        class="hdr-fetch-status"
+        id={`${uniqueId}-fetch-status`}
+        hidden
+      >
+      </div>
+      <div class="hdr-separator">
+        <span>or paste headers manually</span>
+      </div>
+    </div>
+
+    {/* Input */}
+    <div class="hdr-input-section">
+      <label
+        class="hdr-label"
+        for={`${uniqueId}-input`}
+      >
+        <span
+          class="i-mdi:web"
+          aria-hidden="true"
+        ></span>
+        Response Headers
+      </label>
+      <textarea
+        id={`${uniqueId}-input`}
+        class="hdr-textarea"
+        rows="10"
+        placeholder="Paste your HTTP response headers here..."
+        spellcheck="false"
+        >{sampleHeaders}</textarea
+      >
+      <button
+        type="button"
+        class="hdr-analyze-btn"
+      >
+        <span
+          class="i-mdi:shield-search"
+          aria-hidden="true"
+        ></span>
+        Analyze Headers
+      </button>
+    </div>
+
+    {/* Score */}
+    <div
+      class="hdr-score-section"
+      id={`${uniqueId}-score`}
+      hidden
+    >
+      <div class="hdr-score-display">
+        <div
+          class="hdr-score-ring"
+          id={`${uniqueId}-score-ring`}
+        >
+          <svg
+            viewBox="0 0 120 120"
+            class="hdr-ring-svg"
+          >
+            <circle
+              cx="60"
+              cy="60"
+              r="52"
+              class="hdr-ring-bg"
+            ></circle>
+            <circle
+              cx="60"
+              cy="60"
+              r="52"
+              class="hdr-ring-fill"
+              id={`${uniqueId}-ring-fill`}
+            ></circle>
+          </svg>
+          <div class="hdr-ring-text">
+            <span
+              class="hdr-score-value"
+              id={`${uniqueId}-score-value`}
+              >0</span
+            >
+            <span class="hdr-score-max">/100</span>
+          </div>
+        </div>
+        <span
+          class="hdr-score-grade"
+          id={`${uniqueId}-grade`}
+          >—</span
+        >
+        <div
+          class="hdr-summary"
+          id={`${uniqueId}-summary`}
+        >
+        </div>
+      </div>
+    </div>
+
+    {/* Results */}
+    <div
+      class="hdr-results"
+      id={`${uniqueId}-results`}
+    >
+    </div>
+  </div>
+</div>
+
+<script is:inline define:vars={{ uniqueId }}>
+  (function () {
+    const container = document.querySelector(`[data-hdr-id="${uniqueId}"]`);
+    if (!container) return;
+
+    const textarea = document.getElementById(`${uniqueId}-input`);
+    const urlInput = document.getElementById(`${uniqueId}-url`);
+    const fetchBtn = container.querySelector(".hdr-fetch-btn");
+    const fetchStatus = document.getElementById(`${uniqueId}-fetch-status`);
+    const scoreSection = document.getElementById(`${uniqueId}-score`);
+    const scoreValue = document.getElementById(`${uniqueId}-score-value`);
+    const ringFill = document.getElementById(`${uniqueId}-ring-fill`);
+    const scoreRing = document.getElementById(`${uniqueId}-score-ring`);
+    const gradeEl = document.getElementById(`${uniqueId}-grade`);
+    const summaryEl = document.getElementById(`${uniqueId}-summary`);
+    const resultsEl = document.getElementById(`${uniqueId}-results`);
+    const analyzeBtn = container.querySelector(".hdr-analyze-btn");
+
+    if (!textarea || !resultsEl) return;
+
+    var circumference = 2 * Math.PI * 52;
+
+    /* ====== URL Fetch ====== */
+    if (fetchBtn && urlInput) {
+      fetchBtn.addEventListener("click", function () {
+        var url = urlInput.value.trim();
+        if (!url) return;
+        if (!/^https?:\/\//.test(url)) url = "https://" + url;
+
+        fetchBtn.disabled = true;
+        fetchBtn.textContent = "Fetching...";
+        if (fetchStatus) {
+          fetchStatus.hidden = false;
+          fetchStatus.textContent = "Fetching headers...";
+          fetchStatus.className = "hdr-fetch-status hdr-fetch-loading";
+        }
+
+        fetch(url, { method: "HEAD", mode: "cors", redirect: "follow" })
+          .then(function (res) {
+            var lines = [];
+            res.headers.forEach(function (value, name) {
+              lines.push(name + ": " + value);
+            });
+            if (lines.length === 0) {
+              throw new Error(
+                "No headers returned — CORS may be blocking access. Use curl instead.",
+              );
+            }
+            textarea.value = lines.join("\n");
+            if (fetchStatus) {
+              fetchStatus.textContent =
+                "\u2713 Fetched " +
+                lines.length +
+                " headers. Note: browsers may hide some headers due to CORS. Use curl for complete results.";
+              fetchStatus.className = "hdr-fetch-status hdr-fetch-warn";
+            }
+            analyze();
+          })
+          .catch(function (err) {
+            if (fetchStatus) {
+              fetchStatus.textContent =
+                "\u2717 " +
+                (err.message || "Failed to fetch") +
+                ". Use curl -sI " +
+                url +
+                " to get full headers.";
+              fetchStatus.className = "hdr-fetch-status hdr-fetch-error";
+            }
+          })
+          .finally(function () {
+            fetchBtn.disabled = false;
+            fetchBtn.innerHTML =
+              '<span class="i-mdi:download" aria-hidden="true"></span> Fetch';
+          });
+      });
+
+      urlInput.addEventListener("keydown", function (e) {
+        if (e.key === "Enter") fetchBtn.click();
+      });
+    }
+
+    /* ====== Security Headers Definition ====== */
+    var securityHeaders = [
+      {
+        name: "content-security-policy",
+        weight: 25,
+        severity: "critical",
+        description:
+          "Controls which resources can be loaded. Essential for preventing XSS and injection attacks.",
+        link: "/blog/003-implementing-content-security-policy-nginx/",
+        toolLink: "/tools/csp-builder/",
+        recommended:
+          "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'",
+        check: function (val) {
+          if (!val)
+            return {
+              score: 0,
+              notes: [
+                "Missing \u2014 high XSS risk. Use the CSP Builder tool to generate a policy.",
+              ],
+            };
+          var score = 5;
+          var notes = [];
+          // Core structure
+          if (val.match(/default-src\s+'none'/)) {
+            score += 6;
+            notes.push("default-src 'none' \u2713");
+          } else if (val.match(/default-src\s+'self'/)) {
+            score += 3;
+            notes.push(
+              "default-src 'self' \u2713 (consider 'none' for stricter policy)",
+            );
+          } else if (val.includes("default-src")) {
+            score += 1;
+          } else {
+            notes.push("Missing default-src fallback");
+          }
+          // Script safety
+          if (val.match(/script-src[^;]*'unsafe-inline'/)) {
+            score -= 3;
+            notes.push(
+              "script-src 'unsafe-inline' \u2014 negates XSS protection",
+            );
+          }
+          if (val.includes("'unsafe-eval'")) {
+            score -= 3;
+            notes.push("'unsafe-eval' \u2014 allows dynamic code execution");
+          }
+          // Wildcard / broad sources in script-src
+          if (val.match(/script-src[^;]*(\s\*\s|data:|blob:)/)) {
+            score -= 3;
+            notes.push("Dangerous source in script-src (wildcard/data:/blob:)");
+          }
+          if (val.match(/script-src[^;]*https:/)) {
+            notes.push(
+              "script-src trusts all HTTPS \u2014 prefer explicit origins or nonces",
+            );
+          }
+          // CDN bypass warning
+          if (
+            val.match(
+              /cdn\.jsdelivr\.net|cdnjs\.cloudflare\.com|unpkg\.com|googleapis\.com/,
+            )
+          ) {
+            notes.push(
+              "CDN allowlisting can be bypassed via JSONP \u2014 prefer nonces",
+            );
+          }
+          // Strict CSP
+          if (val.includes("nonce-")) {
+            score += 4;
+            notes.push("Uses nonces \u2713");
+          } else {
+            notes.push(
+              "Missing nonces \u2014 consider nonces for stricter inline control (+4 pts)",
+            );
+          }
+          if (val.includes("'strict-dynamic'")) {
+            score += 3;
+            notes.push("strict-dynamic \u2713");
+          } else if (
+            val.includes("nonce-") ||
+            val.match(/'sha(256|384|512)-/)
+          ) {
+            notes.push(
+              "Missing strict-dynamic \u2014 recommended with nonces for CSP Level 3 (+3 pts)",
+            );
+          }
+          // Hardening directives
+          if (val.match(/object-src\s+'none'/)) {
+            score += 2;
+            notes.push("object-src 'none' \u2713");
+          } else if (!val.includes("object-src")) {
+            notes.push(
+              "Missing object-src 'none' \u2014 plugin bypass vector (+2 pts)",
+            );
+          }
+          if (val.match(/base-uri\s+'(none|self)'/)) {
+            score += 1;
+            notes.push("base-uri restricted \u2713");
+          } else if (!val.includes("base-uri")) {
+            notes.push(
+              "Missing base-uri \u2014 vulnerable to base tag injection (+1 pt)",
+            );
+          }
+          if (val.includes("form-action")) {
+            score += 1;
+            notes.push("form-action defined \u2713");
+          } else {
+            notes.push(
+              "Missing form-action \u2014 forms can submit to attacker servers (+1 pt)",
+            );
+          }
+          if (val.includes("frame-ancestors")) {
+            score += 1;
+            notes.push("frame-ancestors defined \u2713");
+          } else {
+            notes.push(
+              "Missing frame-ancestors \u2014 use 'none' to prevent framing (+1 pt)",
+            );
+          }
+          if (val.includes("upgrade-insecure-requests")) {
+            score += 1;
+            notes.push("upgrade-insecure-requests \u2713");
+          } else {
+            notes.push("Missing upgrade-insecure-requests (+1 pt)");
+          }
+          if (val.includes("report-to") || val.includes("report-uri")) {
+            score += 1;
+            notes.push("CSP reporting configured \u2713");
+          } else {
+            notes.push(
+              "No CSP reporting \u2014 add report-uri or report-to for violation monitoring (+1 pt)",
+            );
+          }
+          if (val.includes("require-trusted-types-for")) {
+            notes.push("Trusted Types enabled \u2713");
+          }
+          return { score: Math.min(Math.max(score, 0), 25), notes: notes };
+        },
+      },
+      {
+        name: "strict-transport-security",
+        weight: 15,
+        severity: "high",
+        description:
+          "Enforces HTTPS connections. Prevents protocol downgrade and cookie hijacking attacks.",
+        recommended: "max-age=63072000; includeSubDomains; preload",
+        check: function (val) {
+          if (!val)
+            return {
+              score: 0,
+              notes: ["Missing \u2014 vulnerable to downgrade attacks"],
+            };
+          var score = 8;
+          var notes = [];
+          var maxAgeMatch = val.match(/max-age=(\d+)/);
+          if (maxAgeMatch) {
+            var maxAge = parseInt(maxAgeMatch[1]);
+            if (maxAge === 0) {
+              return {
+                score: 1,
+                notes: ["max-age=0 effectively disables HSTS"],
+              };
+            }
+            if (maxAge >= 63072000) {
+              score += 3;
+              notes.push("max-age \u2265 2 years \u2713");
+            } else if (maxAge >= 31536000) {
+              score += 2;
+              notes.push(
+                "max-age \u2265 1 year \u2014 increase to 63072000 for 2 years (+1 pt)",
+              );
+            } else {
+              notes.push("max-age should be \u2265 31536000 (1 year)");
+            }
+          }
+          if (val.includes("includeSubDomains")) {
+            score += 2;
+            notes.push("includeSubDomains \u2713");
+          } else {
+            notes.push("Missing includeSubDomains (+2 pts)");
+          }
+          if (val.includes("preload")) {
+            score += 2;
+            notes.push("preload \u2713 (submit to hstspreload.org)");
+          } else {
+            notes.push(
+              "Missing preload \u2014 add to be eligible for HSTS preload list (+2 pts)",
+            );
+          }
+          return { score: Math.min(score, 15), notes: notes };
+        },
+      },
+      {
+        name: "x-content-type-options",
+        weight: 10,
+        severity: "medium",
+        description:
+          "Prevents MIME type sniffing. Must be set to 'nosniff'. Stops browsers from interpreting files as a different MIME type.",
+        recommended: "nosniff",
+        check: function (val) {
+          if (!val)
+            return {
+              score: 0,
+              notes: ["Missing \u2014 browser may sniff MIME types"],
+            };
+          if (val.trim() === "nosniff")
+            return { score: 10, notes: ["Correctly set to nosniff \u2713"] };
+          return { score: 2, notes: ["Should be exactly 'nosniff'"] };
+        },
+      },
+      {
+        name: "x-frame-options",
+        weight: 8,
+        severity: "medium",
+        description:
+          "Prevents clickjacking by controlling iframe embedding. CSP frame-ancestors is the modern replacement.",
+        recommended: "DENY",
+        check: function (val) {
+          if (!val)
+            return {
+              score: 0,
+              notes: [
+                "Missing \u2014 consider adding or using CSP frame-ancestors",
+              ],
+            };
+          if (val.trim().toUpperCase() === "DENY")
+            return { score: 8, notes: ["Set to DENY \u2713"] };
+          if (val.trim().toUpperCase() === "SAMEORIGIN")
+            return {
+              score: 6,
+              notes: [
+                "Set to SAMEORIGIN \u2014 DENY is more restrictive (+2 pts)",
+              ],
+            };
+          return { score: 2, notes: ["Unexpected value: " + val] };
+        },
+      },
+      {
+        name: "referrer-policy",
+        weight: 8,
+        severity: "medium",
+        description:
+          "Controls how much referrer information is sent with requests. Prevents leaking sensitive URL paths to third parties.",
+        recommended: "strict-origin-when-cross-origin",
+        check: function (val) {
+          if (!val)
+            return {
+              score: 0,
+              notes: ["Missing \u2014 full URL may leak in Referer header"],
+            };
+          var good = [
+            "no-referrer",
+            "strict-origin-when-cross-origin",
+            "strict-origin",
+            "same-origin",
+          ];
+          if (good.includes(val.trim()))
+            return {
+              score: 8,
+              notes: ["Secure policy: " + val.trim() + " \u2713"],
+            };
+          if (val.trim() === "no-referrer-when-downgrade")
+            return {
+              score: 5,
+              notes: [
+                "Acceptable but 'strict-origin-when-cross-origin' is preferred (+3 pts)",
+              ],
+            };
+          if (val.trim() === "unsafe-url")
+            return {
+              score: 0,
+              notes: ["unsafe-url \u2014 full URL leaked on all requests"],
+            };
+          return { score: 2, notes: ["Consider a more restrictive policy"] };
+        },
+      },
+      {
+        name: "permissions-policy",
+        weight: 8,
+        severity: "low",
+        description:
+          "Controls which browser features (camera, mic, geolocation, etc.) can be used. Reduces attack surface from embedded content.",
+        recommended: "camera=(), microphone=(), geolocation=(), payment=()",
+        check: function (val) {
+          if (!val)
+            return {
+              score: 0,
+              notes: ["Missing \u2014 browser features unrestricted"],
+            };
+          var score = 4;
+          var notes = [];
+          var features = [
+            "camera=()",
+            "microphone=()",
+            "geolocation=()",
+            "payment=()",
+          ];
+          features.forEach(function (f) {
+            var featureName =
+              f.split("=")[0].charAt(0).toUpperCase() +
+              f.split("=")[0].slice(1);
+            if (val.includes(f)) {
+              score += 1;
+              notes.push(featureName + " disabled \u2713");
+            } else {
+              notes.push(
+                "Missing " +
+                  featureName.toLowerCase() +
+                  "=() restriction (+1 pt)",
+              );
+            }
+          });
+          return { score: Math.min(score, 8), notes: notes };
+        },
+      },
+      {
+        name: "x-xss-protection",
+        weight: 3,
+        severity: "info",
+        description:
+          "Legacy XSS filter. Should be '0' (disabled) when CSP is present. If no CSP, setting '1; mode=block' provides basic protection.",
+        recommended: "0",
+        // This check receives hasCsp as second arg from analyze()
+        check: function (val, hasCsp) {
+          if (hasCsp) {
+            // CSP present: absent or '0' both acceptable
+            if (!val)
+              return {
+                score: 3,
+                notes: [
+                  "Absent \u2014 correct, CSP provides superior protection \u2713",
+                ],
+              };
+            if (val.trim() === "0")
+              return {
+                score: 3,
+                notes: ["Correctly disabled \u2713 (CSP replaces this)"],
+              };
+            return {
+              score: 1,
+              notes: [
+                "Should be '0' when CSP is present \u2014 the XSS auditor can introduce vulnerabilities",
+              ],
+            };
+          }
+          // No CSP: x-xss-protection becomes more relevant
+          if (!val)
+            return {
+              score: 0,
+              notes: ["Missing and no CSP \u2014 no XSS protection at all"],
+            };
+          if (val.trim() === "0")
+            return {
+              score: 1,
+              notes: [
+                "Disabled but no CSP set \u2014 consider adding CSP or '1; mode=block'",
+              ],
+            };
+          if (val.trim() === "1; mode=block")
+            return {
+              score: 2,
+              notes: [
+                "Legacy filter enabled \u2014 add CSP for proper protection",
+              ],
+            };
+          return {
+            score: 1,
+            notes: ["Consider adding CSP for robust protection"],
+          };
+        },
+      },
+      {
+        name: "cross-origin-opener-policy",
+        weight: 8,
+        severity: "medium",
+        description:
+          "Isolates the browsing context from cross-origin popups. Prevents Spectre-type side-channel attacks.",
+        recommended: "same-origin",
+        check: function (val) {
+          if (!val)
+            return {
+              score: 0,
+              notes: ["Missing \u2014 browsing context not isolated"],
+            };
+          if (val.trim() === "same-origin")
+            return { score: 8, notes: ["same-origin \u2713"] };
+          if (val.trim() === "same-origin-allow-popups")
+            return {
+              score: 5,
+              notes: [
+                "Partial isolation \u2014 allows popups",
+                "Consider same-origin for full isolation (+3 pts)",
+              ],
+            };
+          return { score: 2, notes: ["Unexpected value"] };
+        },
+      },
+      {
+        name: "cross-origin-resource-policy",
+        weight: 8,
+        severity: "medium",
+        description:
+          "Controls which origins can load your resources. Prevents data leaks via cross-origin requests.",
+        recommended: "same-origin",
+        check: function (val) {
+          if (!val)
+            return {
+              score: 0,
+              notes: ["Missing \u2014 resources can be loaded cross-origin"],
+            };
+          if (val.trim() === "same-origin")
+            return { score: 8, notes: ["same-origin \u2713"] };
+          if (val.trim() === "same-site")
+            return {
+              score: 6,
+              notes: [
+                "same-site \u2014 more restrictive than cross-origin",
+                "Consider same-origin for strictest protection (+2 pts)",
+              ],
+            };
+          return {
+            score: 3,
+            notes: [
+              "cross-origin \u2014 least restrictive",
+              "Consider same-origin for strictest protection (+5 pts)",
+            ],
+          };
+        },
+      },
+      {
+        name: "cross-origin-embedder-policy",
+        weight: 7,
+        severity: "medium",
+        description:
+          "Controls embedding of cross-origin resources. Required for SharedArrayBuffer and high-resolution timers.",
+        recommended: "require-corp",
+        check: function (val) {
+          if (!val)
+            return {
+              score: 0,
+              notes: ["Missing \u2014 cannot use SharedArrayBuffer"],
+            };
+          if (val.trim() === "require-corp")
+            return { score: 7, notes: ["require-corp \u2713"] };
+          if (val.trim() === "credentialless")
+            return {
+              score: 5,
+              notes: [
+                "credentialless \u2014 acceptable",
+                "Consider require-corp for full cross-origin isolation (+2 pts)",
+              ],
+            };
+          return { score: 2, notes: ["Unexpected value"] };
+        },
+      },
+    ];
+
+    /* ====== Information Leak & Cookie Checks ====== */
+    var infoLeakHeaders = [
+      {
+        name: "server",
+        severity: "info",
+        description:
+          "Reveals server software and version. Helps attackers identify known vulnerabilities.",
+        check: function (val) {
+          if (!val) return { status: "good", notes: ["Not exposed \u2713"] };
+          var proxies = [
+            "cloudflare",
+            "vercel",
+            "netlify",
+            "fastly",
+            "akamai",
+            "cloudfront",
+            "azure",
+            "google frontend",
+            "gws",
+            "gse",
+            "envoy",
+            "fly.io",
+            "railway",
+            "render",
+            "heroku",
+            "deno",
+          ];
+          var isProxy = proxies.some(function (p) {
+            return val.toLowerCase().includes(p);
+          });
+          if (isProxy)
+            return {
+              status: "good",
+              notes: [
+                "Proxy/CDN identified ('" +
+                  val +
+                  "') \u2014 no origin server exposed \u2713",
+              ],
+            };
+          if (/\d/.test(val))
+            return {
+              status: "warn",
+              notes: [
+                "Exposes server version ('" +
+                  val +
+                  "') \u2014 remove version number",
+              ],
+            };
+          return {
+            status: "info",
+            notes: [
+              "Server name exposed ('" + val + "') \u2014 consider removing",
+            ],
+          };
+        },
+      },
+      {
+        name: "x-powered-by",
+        severity: "info",
+        description:
+          "Reveals backend technology. Should be removed to reduce information leakage.",
+        check: function (val) {
+          if (!val) return { status: "good", notes: ["Not exposed \u2713"] };
+          return {
+            status: "warn",
+            notes: [
+              "Exposes technology: '" + val + "' \u2014 remove this header",
+            ],
+          };
+        },
+      },
+      {
+        name: "x-aspnet-version",
+        severity: "info",
+        description: "Reveals ASP.NET version. Should be removed.",
+        check: function (val) {
+          if (!val) return null;
+          return {
+            status: "warn",
+            notes: ["Exposes ASP.NET version: '" + val + "' \u2014 remove it"],
+          };
+        },
+      },
+      {
+        name: "x-aspnetmvc-version",
+        severity: "info",
+        description: "Reveals ASP.NET MVC version. Should be removed.",
+        check: function (val) {
+          if (!val) return null;
+          return {
+            status: "warn",
+            notes: ["Exposes ASP.NET MVC version \u2014 remove it"],
+          };
+        },
+      },
+      {
+        name: "x-generator",
+        severity: "info",
+        description: "Reveals CMS or framework used (e.g., WordPress, Drupal).",
+        check: function (val) {
+          if (!val) return null;
+          return {
+            status: "warn",
+            notes: ["Exposes generator: '" + val + "' \u2014 remove it"],
+          };
+        },
+      },
+    ];
+
+    function parseHeaders(text) {
+      var headers = {};
+      var setCookies = [];
+      text.split("\n").forEach(function (line) {
+        line = line.trim();
+        if (!line) return;
+        if (/^HTTP\/[\d.]+\s/.test(line)) return;
+        var colonIdx = line.indexOf(":");
+        if (colonIdx === -1) return;
+        var name = line.substring(0, colonIdx).trim().toLowerCase();
+        var value = line.substring(colonIdx + 1).trim();
+        if (name === "set-cookie") {
+          setCookies.push(value);
+        }
+        headers[name] = value;
+      });
+      headers._setCookies = setCookies;
+      return headers;
+    }
+
+    function analyze() {
+      var headers = parseHeaders(textarea.value);
+      var totalScore = 0;
+      var maxScore = 0;
+      var present = 0;
+      var missing = 0;
+      var hasCsp = !!headers["content-security-policy"];
+
+      resultsEl.textContent = "";
+
+      securityHeaders.forEach(function (h) {
+        maxScore += h.weight;
+        var val = headers[h.name] || null;
+        var result =
+          h.name === "x-xss-protection" ? h.check(val, hasCsp) : h.check(val);
+        totalScore += result.score;
+        if (val) present++;
+        else if (h.name === "x-xss-protection" && hasCsp) {
+          // Don't count as missing if CSP covers it
+          present++;
+        } else {
+          missing++;
+        }
+
+        var card = document.createElement("div");
+        var isGood = result.score >= h.weight * 0.7;
+        var cardClass = "hdr-result-card";
+        if (val) cardClass += " hdr-present";
+        else if (
+          h.name === "x-xss-protection" &&
+          hasCsp &&
+          result.score >= h.weight * 0.7
+        )
+          cardClass += " hdr-present";
+        else cardClass += " hdr-missing";
+        card.className = cardClass;
+
+        var header = document.createElement("div");
+        header.className = "hdr-result-header";
+
+        var status = document.createElement("span");
+        status.className =
+          "hdr-status " +
+          (isGood
+            ? "hdr-status-good"
+            : result.score > 0
+              ? "hdr-status-warn"
+              : "hdr-status-bad");
+        var statusIcon = document.createElement("span");
+        statusIcon.className = isGood
+          ? "i-mdi:check-circle"
+          : result.score > 0
+            ? "i-mdi:alert-circle"
+            : "i-mdi:close-circle";
+        status.appendChild(statusIcon);
+
+        var name = document.createElement("code");
+        name.className = "hdr-result-name";
+        name.textContent = h.name;
+
+        var severity = document.createElement("span");
+        severity.className = "hdr-severity hdr-severity-" + h.severity;
+        severity.textContent = h.severity;
+
+        var scoreEl = document.createElement("span");
+        scoreEl.className = "hdr-result-score";
+        scoreEl.textContent = result.score + "/" + h.weight;
+
+        header.appendChild(status);
+        header.appendChild(name);
+        header.appendChild(severity);
+        header.appendChild(scoreEl);
+
+        var desc = document.createElement("p");
+        desc.className = "hdr-result-desc";
+        desc.textContent = h.description;
+
+        card.appendChild(header);
+        card.appendChild(desc);
+
+        if (val) {
+          var value = document.createElement("div");
+          value.className = "hdr-result-value";
+          var valueCode = document.createElement("code");
+          valueCode.textContent = val;
+          value.appendChild(valueCode);
+          card.appendChild(value);
+        }
+
+        if (!val && h.recommended) {
+          var rec = document.createElement("div");
+          rec.className = "hdr-recommended";
+          rec.innerHTML =
+            '<span class="hdr-rec-label">Recommended:</span> <code>' +
+            h.recommended +
+            "</code>";
+          card.appendChild(rec);
+        }
+
+        if (result.notes.length > 0) {
+          var notes = document.createElement("ul");
+          notes.className = "hdr-result-notes";
+          result.notes.forEach(function (n) {
+            var li = document.createElement("li");
+            li.textContent = n;
+            if (n.includes("\u2713")) {
+              li.className = "hdr-note-pass";
+            } else if (n.includes("Missing") || n.includes("pt)")) {
+              li.className = "hdr-note-miss";
+            }
+            notes.appendChild(li);
+          });
+          card.appendChild(notes);
+        }
+
+        // Links
+        if (h.link || h.toolLink) {
+          var linksDiv = document.createElement("div");
+          linksDiv.className = "hdr-result-links";
+          if (h.link) {
+            var link = document.createElement("a");
+            link.className = "hdr-learn-more";
+            link.href = h.link;
+            link.textContent = "Learn more \u2192";
+            linksDiv.appendChild(link);
+          }
+          if (h.toolLink) {
+            var toolLink = document.createElement("a");
+            toolLink.className = "hdr-learn-more";
+            toolLink.href = h.toolLink;
+            toolLink.textContent = "CSP Builder tool \u2192";
+            linksDiv.appendChild(toolLink);
+          }
+          card.appendChild(linksDiv);
+        }
+
+        resultsEl.appendChild(card);
+      });
+
+      // Set-Cookie security
+      var cookies = headers._setCookies || [];
+      if (cookies.length > 0) {
+        var cookieTitle = document.createElement("div");
+        cookieTitle.className = "hdr-section-title";
+        cookieTitle.textContent = "Cookie Security";
+        resultsEl.appendChild(cookieTitle);
+
+        cookies.forEach(function (cookie) {
+          var cookieName = cookie.split("=")[0].trim();
+          var lc = cookie.toLowerCase();
+          var notes = [];
+          var worstStatus = "good";
+
+          if (!lc.includes("secure")) {
+            notes.push("Missing Secure flag \u2014 cookie sent over HTTP");
+            worstStatus = "warn";
+          }
+          if (!lc.includes("httponly")) {
+            notes.push("Missing HttpOnly flag \u2014 accessible to JavaScript");
+            worstStatus = "warn";
+          }
+          if (!lc.includes("samesite")) {
+            notes.push("Missing SameSite attribute \u2014 CSRF risk");
+            worstStatus = "warn";
+          }
+          if (lc.includes("samesite=none") && !lc.includes("secure")) {
+            notes.push("SameSite=None requires Secure flag");
+            worstStatus = "warn";
+          }
+          if (cookieName.startsWith("__Host-")) {
+            notes.push("Uses __Host- prefix \u2713 (most secure)");
+          } else if (cookieName.startsWith("__Secure-")) {
+            notes.push("Uses __Secure- prefix \u2713");
+          }
+          if (notes.length === 0) {
+            notes.push("Secure, HttpOnly, SameSite all present \u2713");
+          }
+
+          var card = document.createElement("div");
+          card.className =
+            "hdr-result-card hdr-info-card hdr-info-" + worstStatus;
+
+          var hdr = document.createElement("div");
+          hdr.className = "hdr-result-header";
+
+          var st = document.createElement("span");
+          st.className = "hdr-status hdr-status-" + worstStatus;
+          var stIcon = document.createElement("span");
+          stIcon.className =
+            worstStatus === "good"
+              ? "i-mdi:check-circle"
+              : "i-mdi:alert-circle";
+          st.appendChild(stIcon);
+
+          var n = document.createElement("code");
+          n.className = "hdr-result-name";
+          n.textContent = cookieName;
+
+          var sev = document.createElement("span");
+          sev.className = "hdr-severity hdr-severity-medium";
+          sev.textContent = "cookie";
+
+          hdr.appendChild(st);
+          hdr.appendChild(n);
+          hdr.appendChild(sev);
+
+          card.appendChild(hdr);
+
+          var valDiv = document.createElement("div");
+          valDiv.className = "hdr-result-value";
+          var valCode = document.createElement("code");
+          valCode.textContent = cookie;
+          valDiv.appendChild(valCode);
+          card.appendChild(valDiv);
+
+          var notesList = document.createElement("ul");
+          notesList.className = "hdr-result-notes";
+          notes.forEach(function (note) {
+            var li = document.createElement("li");
+            li.textContent = note;
+            notesList.appendChild(li);
+          });
+          card.appendChild(notesList);
+          resultsEl.appendChild(card);
+        });
+      }
+
+      // Information leak section
+      var hasInfoLeak = false;
+      var infoResults = [];
+      infoLeakHeaders.forEach(function (h) {
+        var val = headers[h.name] || null;
+        var result = h.check(val);
+        if (result) infoResults.push({ header: h, result: result, val: val });
+        if (result && result.status === "warn") hasInfoLeak = true;
+      });
+
+      if (infoResults.length > 0) {
+        var infoTitle = document.createElement("div");
+        infoTitle.className = "hdr-section-title";
+        infoTitle.textContent = "Information Leakage";
+        resultsEl.appendChild(infoTitle);
+
+        infoResults.forEach(function (item) {
+          if (!item.result) return;
+          var card = document.createElement("div");
+          card.className =
+            "hdr-result-card hdr-info-card hdr-info-" + item.result.status;
+
+          var header = document.createElement("div");
+          header.className = "hdr-result-header";
+
+          var status = document.createElement("span");
+          status.className = "hdr-status hdr-status-" + item.result.status;
+          var statusIcon = document.createElement("span");
+          statusIcon.className =
+            item.result.status === "good"
+              ? "i-mdi:check-circle"
+              : "i-mdi:alert-circle";
+          status.appendChild(statusIcon);
+
+          var nameEl = document.createElement("code");
+          nameEl.className = "hdr-result-name";
+          nameEl.textContent = item.header.name;
+
+          var sev = document.createElement("span");
+          sev.className = "hdr-severity hdr-severity-info";
+          sev.textContent = "info";
+
+          header.appendChild(status);
+          header.appendChild(nameEl);
+          header.appendChild(sev);
+
+          var desc = document.createElement("p");
+          desc.className = "hdr-result-desc";
+          desc.textContent = item.header.description;
+
+          card.appendChild(header);
+          card.appendChild(desc);
+
+          if (item.result.notes.length > 0) {
+            var notes = document.createElement("ul");
+            notes.className = "hdr-result-notes";
+            item.result.notes.forEach(function (n) {
+              var li = document.createElement("li");
+              li.textContent = n;
+              notes.appendChild(li);
+            });
+            card.appendChild(notes);
+          }
+
+          resultsEl.appendChild(card);
+        });
+      }
+
+      // Cross-header consistency checks
+      var consistency = [];
+      if (
+        headers["x-frame-options"] &&
+        hasCsp &&
+        !headers["content-security-policy"].includes("frame-ancestors")
+      ) {
+        consistency.push(
+          "X-Frame-Options is set but CSP frame-ancestors is missing \u2014 add frame-ancestors for modern browsers",
+        );
+      }
+      if (
+        hasCsp &&
+        headers["x-xss-protection"] &&
+        headers["x-xss-protection"].trim() !== "0"
+      ) {
+        consistency.push(
+          "CSP is present but X-XSS-Protection is not '0' \u2014 disable the legacy auditor to avoid introducing vulnerabilities",
+        );
+      }
+      if (
+        !headers["strict-transport-security"] &&
+        hasCsp &&
+        headers["content-security-policy"].includes("upgrade-insecure-requests")
+      ) {
+        consistency.push(
+          "upgrade-insecure-requests set in CSP but HSTS is missing \u2014 add HSTS for complete HTTPS enforcement",
+        );
+      }
+      if (
+        headers["x-frame-options"] &&
+        hasCsp &&
+        headers["content-security-policy"].includes("frame-ancestors") &&
+        headers["x-frame-options"].trim().toUpperCase() !== "DENY" &&
+        headers["content-security-policy"].includes("frame-ancestors 'none'")
+      ) {
+        consistency.push(
+          "X-Frame-Options (" +
+            headers["x-frame-options"] +
+            ") contradicts CSP frame-ancestors 'none'",
+        );
+      }
+
+      if (consistency.length > 0) {
+        var conTitle = document.createElement("div");
+        conTitle.className = "hdr-section-title";
+        conTitle.textContent = "Cross-Header Consistency";
+        resultsEl.appendChild(conTitle);
+
+        consistency.forEach(function (msg) {
+          var card = document.createElement("div");
+          card.className = "hdr-result-card hdr-info-card hdr-info-warn";
+          var hdr = document.createElement("div");
+          hdr.className = "hdr-result-header";
+          var st = document.createElement("span");
+          st.className = "hdr-status hdr-status-warn";
+          var stIcon = document.createElement("span");
+          stIcon.className = "i-mdi:alert-circle";
+          st.appendChild(stIcon);
+          var label = document.createElement("span");
+          label.className = "hdr-result-name";
+          label.style.fontFamily = "inherit";
+          label.textContent = "Inconsistency detected";
+          hdr.appendChild(st);
+          hdr.appendChild(label);
+          card.appendChild(hdr);
+          var desc = document.createElement("p");
+          desc.className = "hdr-result-desc";
+          desc.textContent = msg;
+          card.appendChild(desc);
+          resultsEl.appendChild(card);
+        });
+      }
+
+      // Score
+      var pct = Math.round((totalScore / maxScore) * 100);
+      if (scoreSection) scoreSection.hidden = false;
+      if (scoreValue) scoreValue.textContent = String(pct);
+
+      if (ringFill) {
+        var offset = circumference - (pct / 100) * circumference;
+        ringFill.style.strokeDasharray = circumference;
+        ringFill.style.strokeDashoffset = offset;
+      }
+
+      var grade;
+      if (pct >= 90) grade = "A+";
+      else if (pct >= 80) grade = "A";
+      else if (pct >= 70) grade = "B";
+      else if (pct >= 50) grade = "C";
+      else if (pct >= 30) grade = "D";
+      else grade = "F";
+
+      var gradeClass = "hdr-grade-" + grade.replace("+", "plus").toLowerCase();
+
+      if (gradeEl) {
+        gradeEl.textContent = grade;
+        gradeEl.className = "hdr-score-grade " + gradeClass;
+      }
+
+      if (scoreRing) {
+        scoreRing.className = "hdr-score-ring " + gradeClass;
+      }
+
+      if (summaryEl) {
+        summaryEl.innerHTML =
+          '<span class="hdr-sum-ok">' +
+          present +
+          " present</span> \u00B7 " +
+          '<span class="hdr-sum-miss">' +
+          missing +
+          " missing</span>" +
+          (cookies.length > 0
+            ? " \u00B7 <span>" +
+              cookies.length +
+              " cookie" +
+              (cookies.length > 1 ? "s" : "") +
+              " analyzed</span>"
+            : "") +
+          (hasInfoLeak
+            ? ' \u00B7 <span class="hdr-sum-warn">Info leaks detected</span>'
+            : "") +
+          (consistency.length > 0
+            ? ' \u00B7 <span class="hdr-sum-warn">' +
+              consistency.length +
+              " inconsistenc" +
+              (consistency.length > 1 ? "ies" : "y") +
+              "</span>"
+            : "");
+      }
+    }
+
+    if (analyzeBtn) analyzeBtn.addEventListener("click", analyze);
+
+    analyze();
+  })();
+</script>
+
+<style>
+  .hdr-analyzer {
+    margin: 1.5rem 0;
+    overflow: hidden;
+    background: var(--color-bg-subtle);
+    border: var(--border-1);
+    border-radius: var(--radius-md);
+  }
+
+  .hdr-title {
+    padding: 1rem 1.25rem;
+    font-size: 1.1rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-heading);
+    background: var(--color-bg-secondary);
+    border-bottom: var(--border-1);
+  }
+
+  .hdr-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    padding: 1.25rem;
+  }
+
+  /* URL Fetch */
+  .hdr-fetch-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .hdr-url-row {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .hdr-url-input {
+    flex: 1;
+    padding: 0.625rem 0.875rem;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    color: var(--color-text);
+    background: var(--color-bg);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+    transition: border-color 0.15s;
+  }
+
+  .hdr-url-input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+  }
+
+  .hdr-fetch-btn {
+    display: flex;
+    flex-shrink: 0;
+    gap: 0.375rem;
+    align-items: center;
+    padding: 0.625rem 1rem;
+    font-size: 0.85rem;
+    font-weight: var(--fw-medium);
+    color: #fff;
+    cursor: pointer;
+    background: var(--color-primary);
+    border: none;
+    border-radius: var(--radius-sm);
+    transition: opacity 0.15s;
+  }
+
+  .hdr-fetch-btn span {
+    width: 16px;
+    height: 16px;
+  }
+
+  .hdr-fetch-btn:hover {
+    opacity: 90%;
+  }
+
+  .hdr-fetch-btn:disabled {
+    cursor: not-allowed;
+    opacity: 60%;
+  }
+
+  .hdr-fetch-status {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.75rem;
+    line-height: 1.4;
+    border-radius: var(--radius-sm);
+  }
+
+  .hdr-fetch-status[hidden] {
+    display: none;
+  }
+
+  .hdr-fetch-loading {
+    color: var(--color-primary);
+    background: rgb(var(--color-primary-rgb), 0.08);
+  }
+
+  .hdr-fetch-warn {
+    color: #92400e;
+    background: rgb(245 158 11 / 10%);
+  }
+
+  .hdr-fetch-error {
+    color: #991b1b;
+    background: rgb(239 68 68 / 10%);
+  }
+
+  :root[data-theme="dark"] .hdr-fetch-warn {
+    color: #fcd34d;
+  }
+
+  :root[data-theme="dark"] .hdr-fetch-error {
+    color: #fca5a5;
+  }
+
+  .hdr-separator {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .hdr-separator::before,
+  .hdr-separator::after {
+    flex: 1;
+    height: 1px;
+    content: "";
+    background: var(--color-border);
+  }
+
+  /* Input */
+  .hdr-input-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .hdr-label {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    font-size: 0.85rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .hdr-label span[class^="i-"] {
+    width: 18px;
+    height: 18px;
+  }
+
+  .hdr-textarea {
+    width: 100%;
+    min-height: 150px;
+    padding: 0.875rem;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    line-height: 1.6;
+    color: var(--color-text);
+    resize: vertical;
+    background: var(--color-bg);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+    transition: border-color 0.15s;
+  }
+
+  .hdr-textarea:focus {
+    outline: none;
+    border-color: var(--color-primary);
+  }
+
+  .hdr-analyze-btn {
+    display: flex;
+    gap: 0.375rem;
+    align-items: center;
+    align-self: flex-start;
+    padding: 0.625rem 1.25rem;
+    font-size: 0.9rem;
+    font-weight: var(--fw-medium);
+    color: #fff;
+    cursor: pointer;
+    background: var(--color-primary);
+    border: none;
+    border-radius: var(--radius-sm);
+    transition: opacity 0.15s;
+  }
+
+  .hdr-analyze-btn span {
+    width: 18px;
+    height: 18px;
+  }
+
+  .hdr-analyze-btn:hover {
+    opacity: 90%;
+  }
+
+  /* Score - SVG Ring */
+  .hdr-score-section {
+    display: flex;
+    justify-content: center;
+  }
+
+  .hdr-score-section[hidden] {
+    display: none;
+  }
+
+  .hdr-score-display {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: center;
+    padding: 1.5rem 2rem;
+    background: var(--color-bg-secondary);
+    border: var(--border-1);
+    border-radius: var(--radius-md);
+  }
+
+  .hdr-score-ring {
+    position: relative;
+    width: 120px;
+    height: 120px;
+  }
+
+  .hdr-ring-svg {
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+  }
+
+  .hdr-ring-bg {
+    fill: none;
+    stroke: var(--color-border);
+    stroke-width: 8;
+  }
+
+  .hdr-ring-fill {
+    fill: none;
+    stroke: currentcolor;
+    stroke-width: 8;
+    stroke-linecap: round;
+    transition:
+      stroke-dashoffset 0.6s ease,
+      color 0.3s ease;
+  }
+
+  .hdr-ring-text {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .hdr-score-value {
+    font-size: 2.25rem;
+    font-weight: 800;
+    line-height: 1;
+    color: var(--color-text-heading);
+  }
+
+  .hdr-score-max {
+    margin-top: 0.125rem;
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+  }
+
+  .hdr-score-grade {
+    padding: 0.25rem 1rem;
+    font-size: 1.25rem;
+    font-weight: var(--fw-bold);
+    border-radius: var(--radius-sm);
+  }
+
+  .hdr-grade-aplus,
+  .hdr-grade-a {
+    color: #065f46;
+    background: #d1fae5;
+  }
+
+  .hdr-score-ring.hdr-grade-aplus,
+  .hdr-score-ring.hdr-grade-a {
+    color: #10b981;
+    background: transparent;
+  }
+
+  .hdr-grade-b {
+    color: #92400e;
+    background: #fef3c7;
+  }
+
+  .hdr-score-ring.hdr-grade-b {
+    color: #f59e0b;
+    background: transparent;
+  }
+
+  .hdr-grade-c {
+    color: #9a3412;
+    background: #fed7aa;
+  }
+
+  .hdr-score-ring.hdr-grade-c {
+    color: #f97316;
+    background: transparent;
+  }
+
+  .hdr-grade-d,
+  .hdr-grade-f {
+    color: #991b1b;
+    background: #fecaca;
+  }
+
+  .hdr-score-ring.hdr-grade-d,
+  .hdr-score-ring.hdr-grade-f {
+    color: #ef4444;
+    background: transparent;
+  }
+
+  :root[data-theme="dark"] .hdr-grade-aplus,
+  :root[data-theme="dark"] .hdr-grade-a {
+    color: #6ee7b7;
+    background: rgb(6 95 70 / 40%);
+  }
+
+  :root[data-theme="dark"] .hdr-score-ring.hdr-grade-aplus,
+  :root[data-theme="dark"] .hdr-score-ring.hdr-grade-a {
+    color: #34d399;
+    background: transparent;
+  }
+
+  :root[data-theme="dark"] .hdr-grade-b {
+    color: #fcd34d;
+    background: rgb(146 64 14 / 40%);
+  }
+
+  :root[data-theme="dark"] .hdr-score-ring.hdr-grade-b {
+    color: #fbbf24;
+    background: transparent;
+  }
+
+  :root[data-theme="dark"] .hdr-grade-c {
+    color: #fdba74;
+    background: rgb(154 52 18 / 40%);
+  }
+
+  :root[data-theme="dark"] .hdr-score-ring.hdr-grade-c {
+    color: #fb923c;
+    background: transparent;
+  }
+
+  :root[data-theme="dark"] .hdr-grade-d,
+  :root[data-theme="dark"] .hdr-grade-f {
+    color: #fca5a5;
+    background: rgb(153 27 27 / 40%);
+  }
+
+  :root[data-theme="dark"] .hdr-score-ring.hdr-grade-d,
+  :root[data-theme="dark"] .hdr-score-ring.hdr-grade-f {
+    color: #f87171;
+    background: transparent;
+  }
+
+  .hdr-summary {
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+  }
+
+  .hdr-summary :global(.hdr-sum-ok) {
+    color: #047857;
+  }
+
+  .hdr-summary :global(.hdr-sum-miss) {
+    color: #b91c1c;
+  }
+
+  .hdr-summary :global(.hdr-sum-warn) {
+    color: #92400e;
+  }
+
+  :root[data-theme="dark"] .hdr-summary :global(.hdr-sum-ok) {
+    color: #6ee7b7;
+  }
+
+  :root[data-theme="dark"] .hdr-summary :global(.hdr-sum-miss) {
+    color: #fca5a5;
+  }
+
+  :root[data-theme="dark"] .hdr-summary :global(.hdr-sum-warn) {
+    color: #fcd34d;
+  }
+
+  /* Results */
+  .hdr-results {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .hdr-results :global(.hdr-section-title) {
+    padding-bottom: 0.375rem;
+    margin-top: 0.75rem;
+    font-size: 0.8rem;
+    font-weight: var(--fw-bold);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    border-bottom: var(--border-1);
+  }
+
+  .hdr-results :global(.hdr-result-card) {
+    padding: 0.875rem;
+    background: var(--color-bg-secondary);
+    border: var(--border-1);
+    border-left: 3px solid var(--color-border);
+    border-radius: var(--radius-sm);
+  }
+
+  .hdr-results :global(.hdr-present) {
+    border-left-color: #10b981;
+  }
+
+  .hdr-results :global(.hdr-missing) {
+    border-left-color: #ef4444;
+  }
+
+  .hdr-results :global(.hdr-info-good) {
+    border-left-color: #10b981;
+  }
+
+  .hdr-results :global(.hdr-info-warn) {
+    border-left-color: #f59e0b;
+  }
+
+  .hdr-results :global(.hdr-info-info) {
+    border-left-color: #3b82f6;
+  }
+
+  .hdr-results :global(.hdr-result-header) {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+    margin-bottom: 0.375rem;
+  }
+
+  .hdr-results :global(.hdr-status) {
+    width: 18px;
+    height: 18px;
+  }
+
+  .hdr-results :global(.hdr-status) span {
+    width: 18px;
+    height: 18px;
+  }
+
+  .hdr-results :global(.hdr-status-good) {
+    color: #047857;
+  }
+
+  .hdr-results :global(.hdr-status-warn) {
+    color: #92400e;
+  }
+
+  .hdr-results :global(.hdr-status-bad) {
+    color: #b91c1c;
+  }
+
+  .hdr-results :global(.hdr-status-info) {
+    color: #1e40af;
+  }
+
+  :root[data-theme="dark"] .hdr-results :global(.hdr-status-good) {
+    color: #6ee7b7;
+  }
+
+  :root[data-theme="dark"] .hdr-results :global(.hdr-status-warn) {
+    color: #fcd34d;
+  }
+
+  :root[data-theme="dark"] .hdr-results :global(.hdr-status-bad) {
+    color: #fca5a5;
+  }
+
+  :root[data-theme="dark"] .hdr-results :global(.hdr-status-info) {
+    color: #93c5fd;
+  }
+
+  .hdr-results :global(.hdr-result-name) {
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-heading);
+  }
+
+  .hdr-results :global(.hdr-severity) {
+    padding: 0.125rem 0.375rem;
+    font-size: 0.6rem;
+    font-weight: var(--fw-bold);
+    text-transform: uppercase;
+    border-radius: var(--radius-sm);
+  }
+
+  .hdr-results :global(.hdr-severity-critical) {
+    color: #991b1b;
+    background: rgb(239 68 68 / 12%);
+  }
+
+  .hdr-results :global(.hdr-severity-high) {
+    color: #9a3412;
+    background: rgb(249 115 22 / 12%);
+  }
+
+  .hdr-results :global(.hdr-severity-medium) {
+    color: #92400e;
+    background: rgb(245 158 11 / 12%);
+  }
+
+  .hdr-results :global(.hdr-severity-low) {
+    color: #065f46;
+    background: rgb(16 185 129 / 12%);
+  }
+
+  .hdr-results :global(.hdr-severity-info) {
+    color: #1e40af;
+    background: rgb(59 130 246 / 12%);
+  }
+
+  :root[data-theme="dark"] .hdr-results :global(.hdr-severity-critical) {
+    color: #fca5a5;
+  }
+
+  :root[data-theme="dark"] .hdr-results :global(.hdr-severity-high) {
+    color: #fdba74;
+  }
+
+  :root[data-theme="dark"] .hdr-results :global(.hdr-severity-medium) {
+    color: #fcd34d;
+  }
+
+  :root[data-theme="dark"] .hdr-results :global(.hdr-severity-low) {
+    color: #6ee7b7;
+  }
+
+  :root[data-theme="dark"] .hdr-results :global(.hdr-severity-info) {
+    color: #93c5fd;
+  }
+
+  .hdr-results :global(.hdr-result-score) {
+    margin-left: auto;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+  }
+
+  .hdr-results :global(.hdr-result-desc) {
+    margin: 0 0 0.375rem;
+    font-size: 0.8rem;
+    line-height: 1.4;
+    color: var(--color-text-muted);
+  }
+
+  .hdr-results :global(.hdr-result-value) {
+    padding: 0.375rem 0.5rem;
+    margin-bottom: 0.375rem;
+    overflow-x: auto;
+    background: var(--color-bg);
+    border-radius: var(--radius-sm);
+  }
+
+  .hdr-results :global(.hdr-result-value) code {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--color-text);
+    word-break: break-all;
+    white-space: pre-wrap;
+  }
+
+  .hdr-results :global(.hdr-recommended) {
+    padding: 0.375rem 0.5rem;
+    margin-bottom: 0.375rem;
+    font-size: 0.75rem;
+    background: rgb(16 185 129 / 6%);
+    border: 1px dashed rgb(16 185 129 / 30%);
+    border-radius: var(--radius-sm);
+  }
+
+  .hdr-results :global(.hdr-rec-label) {
+    font-weight: var(--fw-semibold);
+    color: #047857;
+  }
+
+  :root[data-theme="dark"] .hdr-results :global(.hdr-rec-label) {
+    color: #6ee7b7;
+  }
+
+  .hdr-results :global(.hdr-recommended) code {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--color-text);
+    word-break: break-all;
+  }
+
+  .hdr-results :global(.hdr-result-notes) {
+    padding-left: 1rem;
+    margin: 0;
+  }
+
+  .hdr-results :global(.hdr-result-notes) li {
+    margin-bottom: 0.125rem;
+    font-size: 0.75rem;
+    line-height: 1.4;
+    color: var(--color-text);
+  }
+
+  .hdr-results :global(.hdr-note-pass) {
+    color: #047857;
+  }
+
+  .hdr-results :global(.hdr-note-miss) {
+    color: #b45309;
+  }
+
+  :root[data-theme="dark"] .hdr-results :global(.hdr-note-pass) {
+    color: #6ee7b7;
+  }
+
+  :root[data-theme="dark"] .hdr-results :global(.hdr-note-miss) {
+    color: #fbbf24;
+  }
+
+  .hdr-results :global(.hdr-result-links) {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-top: 0.375rem;
+  }
+
+  .hdr-results :global(.hdr-learn-more) {
+    display: inline-block;
+    font-size: 0.75rem;
+    color: var(--color-primary);
+    text-decoration: none;
+  }
+
+  .hdr-results :global(.hdr-learn-more:hover) {
+    text-decoration: underline;
+  }
+
+  :global(.dark) .hdr-results :global(.hdr-info-warn) {
+    border-left-color: #d97706;
+  }
+
+  @media (width <= 640px) {
+    .hdr-layout {
+      padding: 1rem;
+    }
+
+    .hdr-url-row {
+      flex-direction: column;
+    }
+
+    .hdr-score-display {
+      padding: 1rem;
+    }
+
+    .hdr-score-ring {
+      width: 100px;
+      height: 100px;
+    }
+
+    .hdr-score-value {
+      font-size: 1.875rem;
+    }
+  }
+
+  /* ── Dark mode contrast fixes ── */
+  :root[data-theme="dark"] .hdr-fetch-btn,
+  :root[data-theme="dark"] .hdr-analyze-btn {
+    color: #000;
+  }
+</style>

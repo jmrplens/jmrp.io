@@ -15,7 +15,6 @@ import {
 } from "./constants.js";
 import type { CspData } from "./types.js";
 import {
-  getDualHashes,
   getExtensionFromMime,
   getFileHash,
   resolveFile,
@@ -493,15 +492,16 @@ function addNonce(
 
 function collectInlineHashes(
   $: cheerio.CheerioAPI,
-  cspData: CspData,
+  _cspData: CspData,
   enableCsp: boolean,
 ): boolean {
   if (!enableCsp) return false;
   let modified = false;
 
+  // With nonce-only CSP, we no longer collect hashes for the CSP header.
+  // We only ensure all inline elements have the nonce placeholder.
   $("style").each((_, el) => {
     const $el = $(el);
-    getDualHashes($el.html() || "").forEach((h) => cspData.styleHashes.add(h));
     if (!$el.attr("nonce")) {
       $el.attr("nonce", "NGINX_CSP_NONCE");
       modified = true;
@@ -510,7 +510,6 @@ function collectInlineHashes(
 
   $("script:not([src])").each((_, el) => {
     const $el = $(el);
-    getDualHashes($el.html() || "").forEach((h) => cspData.scriptHashes.add(h));
     if (!$el.attr("nonce")) {
       $el.attr("nonce", "NGINX_CSP_NONCE");
       modified = true;

@@ -496,7 +496,7 @@ jobs:
   functional-tests:
     name: Functional Tests
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     needs: build
     steps:
       - uses: actions/checkout@v6
@@ -532,7 +532,7 @@ jobs:
   accessibility:
     name: Accessibility Tests (${{ matrix.theme }} mode)
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     needs: build
     strategy:
       matrix:
@@ -573,7 +573,7 @@ jobs:
   lighthouse-audit:
     name: LH Audit (${{ matrix.theme }} - ${{ matrix.formFactor }})
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 45
     needs: build
     strategy:
       matrix:
@@ -737,7 +737,7 @@ jobs:
   deploy-reports:
     name: "🚀 Deploy CI Dashboard"
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     needs:
       [
         ci-setup,

@@ -1,67 +1,261 @@
 ---
+/**
+ * 404 Error Page — "Ah ah ah, you didn't say the magic word!"
+ * Jurassic Park / Dennis Nedry themed error page.
+ * Assets are extracted to `@assets/nedry-assets.ts` to keep this file clean.
+ */
+import {
+  nedryAudio,
+  nedryBody,
+  nedryHand,
+  nedryHead,
+} from "@assets/nedry-assets";
 import BaseLayout from "@layouts/BaseLayout.astro";
 ---
 
 <BaseLayout
-  title="404: Not Found"
-  description="Page not found"
+  title="404: Ah ah ah!"
+  description="You didn't say the magic word — page not found"
 >
-  <div class="content-wrapper">
-    <div class="error-container">
-      <h1 class="text-primary">404</h1>
-      <p class="subtitle">Page Not Found</p>
-      <p class="description">
-        Sorry, the page you are looking for does not exist or has been moved.
-      </p>
-      <a
-        href="/"
-        class="btn btn-primary"
-        >Go Home</a
+  <div class="nedry-page">
+    <div class="nedry-wrapper">
+      <!-- 404 heading -->
+      <h1 class="nedry-code">
+        <span class="nedry-code-num">404</span>
+        <span class="nedry-code-label">Page Not Found</span>
+      </h1>
+
+      <!-- Nedry character (click to play audio) -->
+      <div
+        class="nedry-stage"
+        data-nedry-trigger
+        role="button"
+        tabindex="0"
+        aria-label="Play Nedry sound"
       >
+        <div class="nedry-container">
+          <img
+            class="nedry-body"
+            src={nedryBody}
+            alt="Dennis Nedry illustration from Jurassic Park"
+          />
+          <img
+            class="nedry-head"
+            src={nedryHead}
+            alt=""
+            role="presentation"
+          />
+          <img
+            class="nedry-hand"
+            src={nedryHand}
+            alt=""
+            role="presentation"
+          />
+        </div>
+      </div>
+
+      <!-- Message -->
+      <p class="nedry-message">Ah ah ah, you didn't say the magic word!</p>
+
+      <!-- Actions -->
+      <div class="nedry-actions">
+        <a
+          href="/"
+          class="btn btn-primary"
+        >
+          ← Go Home
+        </a>
+      </div>
     </div>
+
+    <audio
+      data-nedry-audio
+      loop
+    >
+      <source
+        src={nedryAudio}
+        type="audio/mp3"
+      />
+    </audio>
   </div>
 </BaseLayout>
 
 <style>
-  .content-wrapper {
+  /* ── Page container ── */
+  .nedry-page {
+    position: relative;
     display: flex;
+    flex: 1;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    min-height: 60vh;
+    min-height: 0;
+    padding: var(--space-sm) var(--space-md);
+    overflow: hidden;
+  }
+
+  /* ── Scaling wrapper ── */
+  .nedry-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 500px;
+  }
+
+  /* ── 404 Heading ── */
+  .nedry-code {
+    display: flex;
+    flex-shrink: 0;
+    flex-direction: column;
+    align-items: center;
+    margin: 0 0 var(--space-xs, 0.25rem);
+    line-height: 1;
     text-align: center;
   }
 
-  .error-container {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-md);
-    align-items: center;
-  }
-
-  h1 {
-    margin: 0;
-    font-size: 6rem;
+  .nedry-code-num {
+    font-family: var(--font-mono);
+    font-size: clamp(3rem, 10vw, 6rem);
     font-weight: 800;
-    line-height: 1;
+    color: var(--color-primary);
+    letter-spacing: -0.04em;
   }
 
-  @media (width <= 640px) {
-    h1 {
-      font-size: 4rem;
+  .nedry-code-label {
+    font-size: clamp(1rem, 3vw, 1.3rem);
+    font-weight: var(--fw-medium, 500);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  /* ── Character stage ── */
+  .nedry-stage {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    max-width: 380px;
+    cursor: pointer;
+    outline-offset: 4px;
+    border-radius: var(--radius-lg, 12px);
+  }
+
+  .nedry-stage:focus-visible {
+    outline: 2px solid var(--color-primary);
+  }
+
+  /* ── Layered character ── */
+  .nedry-container {
+    position: relative;
+    max-width: 100%;
+    height: min(calc(100dvh - 25rem), 466px);
+    aspect-ratio: 440 / 540;
+  }
+
+  .nedry-body {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    object-fit: contain;
+  }
+
+  .nedry-head {
+    position: absolute;
+    top: 6.5%;
+    left: 31.8%;
+    z-index: 2;
+    width: 36.4%;
+  }
+
+  .nedry-hand {
+    position: absolute;
+    top: 28.7%;
+    left: 60.2%;
+    z-index: 3;
+    width: 22.7%;
+    transform-origin: 50% 100%;
+    animation: hand-wave 1s linear infinite;
+  }
+
+  @keyframes hand-wave {
+    0% {
+      transform: rotate(-10deg);
+    }
+
+    50% {
+      transform: rotate(14deg);
+    }
+
+    100% {
+      transform: rotate(-10deg);
     }
   }
 
-  .subtitle {
-    margin: 0;
-    font-size: 2rem;
-    font-weight: 600;
-    color: var(--color-text-heading);
+  @media (prefers-reduced-motion: reduce) {
+    .nedry-hand {
+      animation: none;
+    }
   }
 
-  .description {
-    max-width: 400px;
-    margin-bottom: var(--space-lg);
-    font-size: 1.1rem;
-    color: var(--color-text-muted);
+  /* ── Message ── */
+  .nedry-message {
+    flex-shrink: 0;
+    margin: var(--space-lg, 1.25rem) 0 0;
+    font-family: var(--font-mono);
+    font-size: clamp(0.85rem, 2.5vw, 1.05rem);
+    font-weight: var(--fw-semibold, 600);
+    color: var(--color-text);
+    text-align: center;
+  }
+
+  /* ── Actions ── */
+  .nedry-actions {
+    display: flex;
+    flex-shrink: 0;
+    gap: var(--space-sm);
+    margin-top: var(--space-sm);
   }
 </style>
+
+<script is:inline>
+  (function () {
+    var audio = document.querySelector("[data-nedry-audio]");
+    var trigger = document.querySelector("[data-nedry-trigger]");
+    var played = false;
+
+    function play() {
+      if (!audio || played) return;
+      audio
+        .play()
+        .then(function () {
+          played = true;
+        })
+        .catch(function () {});
+    }
+
+    /* Explicit clicks on Nedry */
+    if (trigger) {
+      trigger.addEventListener("click", play);
+      trigger.addEventListener("keydown", function (e) {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          play();
+        }
+      });
+    }
+
+    /* Try autoplay on load */
+    play();
+
+    /* Fallback: play on first user interaction of any kind */
+    var once = { once: true, passive: true };
+    ["pointerdown", "scroll", "keydown"].forEach(function (evt) {
+      document.addEventListener(evt, play, once);
+    });
+  })();
+</script>

@@ -8,71 +8,129 @@
  * - External link security (rel="noopener noreferrer")
  * - Image accessibility (alt attributes)
  *
+ * Per-page tests run in parallel across workers for maximum performance.
  * Dynamically tests all pages discovered from the sitemap.
  */
 
 import { expect, test } from "@playwright/test";
 
-import { getSitemapUrls, shouldIgnoreError } from "./utils";
+import { getCachedPages, shouldIgnoreError } from "./utils";
 
-let cachedSitemapUrls: string[] | null = null;
-
-async function getCachedSitemapUrls() {
-  cachedSitemapUrls ??= await getSitemapUrls();
-  return cachedSitemapUrls;
-}
+// Read pages synchronously at module scope for parallel test registration
+const pages = getCachedPages();
 
 test.describe("Site-wide Functional Checks", () => {
-  let urls: string[] = [];
+  for (const pageInfo of pages) {
+    test(`Page: ${pageInfo.name}`, async ({ page }) => {
+      // Block the Cloudflare beacon to prevent CORS errors in localhost tests
+      await page.route("**/beacon.min.js", (route) => route.abort());
+      await page.route("**/cdn-cgi/rum*", (route) => route.abort());
 
-  test.beforeAll(async () => {
-    urls = await getCachedSitemapUrls();
-  });
-
-  // Dynamic tests for every page in the sitemap
-  test("check all pages from sitemap", async ({ page }) => {
-    // Block the Cloudflare beacon to prevent CORS errors in localhost tests
-    await page.route("**/beacon.min.js", (route) => route.abort());
-    await page.route("**/cdn-cgi/rum*", (route) => route.abort());
-
-    // Listen for console errors
-    const consoleErrors: string[] = [];
-    page.on("console", (msg) => {
-      if (msg.type() === "error") {
-        const text = msg.text();
-        // Use shared filter to ignore known errors
-        if (!shouldIgnoreError(text)) {
-          consoleErrors.push(`[${msg.type()}] ${text}`);
+      // Listen for console errors
+      const consoleErrors: string[] = [];
+      page.on("console", (msg) => {
+        if (msg.type() === "error") {
+          const text = msg.text();
+          if (!shouldIgnoreError(text)) {
+            consoleErrors.push(`[${msg.type()}] ${text}`);
+          }
         }
-      }
-    });
+      });
 
-    // Listen for unhandled exceptions
-    const pageErrors: Error[] = [];
-    page.on("pageerror", (exception) => {
-      pageErrors.push(exception);
-    });
+      // Listen for unhandled exceptions
+      const pageErrors: Error[] = [];
+      page.on("pageerror", (exception) => {
+        pageErrors.push(exception);
+      });
 
-    for (const url of urls) {
-      await test.step(`Checking page: ${url}`, async () => {
-        const response = await page.goto(url);
+      const response = await page.goto(pageInfo.url);
+
+      // --- Functional checks ---
+      await test.step("Status, structure & console errors", async () => {
         expect(response?.status()).toBe(200);
-
-        // Fail if there were errors
-        expect(consoleErrors, `Console errors on ${url}`).toEqual([]);
-        expect(pageErrors, `Page errors on ${url}`).toEqual([]);
-
-        // Header & Footer should be present on every page
-        // Use .first() to avoid strict mode violations if multiple headers/footers exist
+        expect(consoleErrors, `Console errors on ${pageInfo.url}`).toEqual([]);
+        expect(pageErrors, `Page errors on ${pageInfo.url}`).toEqual([]);
         await expect(page.locator("header").first()).toBeVisible();
         await expect(page.locator("footer").first()).toBeVisible();
-
-        // Every page should have a title
         const title = await page.title();
         expect(title.length).toBeGreaterThan(0);
       });
-    }
-  });
+
+      // --- External links security ---
+      await test.step("External links have secure rel attributes", async () => {
+        const externalBlankLinks = page.locator(
+          'a[target="_blank"][href^="http"]:not([href*="jmrp.io"]):not([href*="localhost"]):not([href*="astro.build"]):not([href*="withastro"])',
+        );
+        const count = await externalBlankLinks.count();
+
+        for (let i = 0; i < count; i++) {
+          const link = externalBlankLinks.nth(i);
+          const href = await link.getAttribute("href");
+          const rel = await link.getAttribute("rel");
+          expect
+            .soft(
+              rel,
+              `${pageInfo.url}: ${href} is missing rel="noopener noreferrer"`,
+            )
+            .toMatch(/(?=.*noopener)(?=.*noreferrer)/);
+        }
+      });
+
+      // --- Image accessibility ---
+      /* eslint-disable playwright/no-conditional-in-test -- Required for decorative image checks */
+      await test.step("Images have alt attributes", async () => {
+        const images = page.locator(
+          'img:not([role="presentation"]):not([role="none"])',
+        );
+        const count = await images.count();
+
+        for (let i = 0; i < count; i++) {
+          const img = images.nth(i);
+          const alt = await img.getAttribute("alt");
+          const src = await img.getAttribute("src");
+          const ariaHidden = await img.getAttribute("aria-hidden");
+          const role = await img.getAttribute("role");
+          const isDecorative =
+            ariaHidden === "true" || role === "none" || role === "presentation";
+
+          if (!isDecorative) {
+            // eslint-disable-next-line playwright/no-conditional-expect
+            expect
+              .soft(alt !== null, `Image ${src} should have an alt attribute`)
+              .toBe(true);
+            // eslint-disable-next-line playwright/no-conditional-expect
+            expect
+              .soft(
+                alt !== null && alt !== "",
+                `Image ${src} should have a non-empty alt attribute`,
+              )
+              .toBe(true);
+          }
+
+          if (!isDecorative && alt !== null && alt !== "") {
+            const isPlaceholder =
+              /^(image|img|photo|picture|untitled|dsc_?\d+|img_?\d+)(\.[a-z]+)?$/i.test(
+                alt,
+              );
+            // eslint-disable-next-line playwright/no-conditional-expect
+            expect
+              .soft(
+                !isPlaceholder,
+                `Image ${src} has placeholder alt text: "${alt}"`,
+              )
+              .toBe(true);
+          }
+        }
+      });
+      /* eslint-enable playwright/no-conditional-in-test */
+
+      // Fail if any soft assertions failed
+      expect(
+        test.info().errors,
+        "Soft assertion failures on this page",
+      ).toHaveLength(0);
+    });
+  }
 });
 
 test.describe("Interactive Features", () => {
@@ -175,115 +233,5 @@ test.describe("Interactive Features", () => {
     // Verify scroll position is restored (within tolerance for sub-pixel differences)
     const scrollAfterClose = await page.evaluate(() => window.scrollY);
     expect(Math.abs(scrollAfterClose - scrollBeforeOpen)).toBeLessThan(10);
-  });
-});
-
-test.describe("Security & Best Practices", () => {
-  test("external links with target=_blank have secure rel attributes", async ({
-    page,
-  }) => {
-    const urls = await getCachedSitemapUrls();
-
-    for (const url of urls) {
-      await test.step(`Checking external links: ${url}`, async () => {
-        await page.goto(url);
-
-        // Find all external links with target="_blank"
-        // Exclude: jmrp.io (own domain), localhost (dev), Astro Dev Toolbar links (astro.build, withastro)
-        // Note: docs.astro.build is already covered by astro.build exclusion
-        const externalBlankLinks = page.locator(
-          'a[target="_blank"][href^="http"]:not([href*="jmrp.io"]):not([href*="localhost"]):not([href*="astro.build"]):not([href*="withastro"])',
-        );
-        const count = await externalBlankLinks.count();
-
-        for (let i = 0; i < count; i++) {
-          const link = externalBlankLinks.nth(i);
-          const href = await link.getAttribute("href");
-          const rel = await link.getAttribute("rel");
-
-          // If rel is missing or doesn't contain both noopener and noreferrer, track the issue using soft assertions
-          // Using regex with positive lookaheads to require both tokens in any order
-          expect
-            .soft(rel, `${url}: ${href} is missing rel="noopener noreferrer"`)
-            .toMatch(/(?=.*noopener)(?=.*noreferrer)/);
-        }
-      });
-    }
-
-    // Fail test if any soft assertions failed
-    expect(
-      test.info().errors,
-      "Some external links are missing secure rel attributes",
-    ).toHaveLength(0);
-  });
-
-  test("images have alt attributes", async ({ page }) => {
-    const urls = await getCachedSitemapUrls();
-
-    for (const url of urls) {
-      await test.step(`Checking image alt text: ${url}`, async () => {
-        await page.goto(url);
-
-        // Find all images (excluding decorative icons)
-        const images = page.locator(
-          'img:not([role="presentation"]):not([role="none"])',
-        );
-        const count = await images.count();
-
-        for (let i = 0; i < count; i++) {
-          const img = images.nth(i);
-          const alt = await img.getAttribute("alt");
-          const src = await img.getAttribute("src");
-          const ariaHidden = await img.getAttribute("aria-hidden");
-          const role = await img.getAttribute("role");
-
-          // Skip purely decorative images (aria-hidden or role="none" or role="presentation")
-          const isDecorative =
-            ariaHidden === "true" || role === "none" || role === "presentation";
-
-          // Decorative images may have empty or missing alt - only require alt for non-decorative
-          // eslint-disable-next-line playwright/no-conditional-in-test -- Required for decorative image check
-          if (!isDecorative) {
-            // eslint-disable-next-line playwright/no-conditional-expect -- Decorative image exclusion
-            expect
-              .soft(alt !== null, `Image ${src} should have an alt attribute`)
-              .toBe(true);
-
-            // Non-empty alt is required for non-decorative images
-            // eslint-disable-next-line playwright/no-conditional-expect -- Decorative image exclusion
-            expect
-              .soft(
-                alt !== null && alt !== "",
-                `Image ${src} should have a non-empty alt attribute`,
-              )
-              .toBe(true);
-          }
-
-          // Non-decorative images should have meaningful alt (not just filename patterns)
-          // eslint-disable-next-line playwright/no-conditional-in-test -- Required for decorative image check
-          if (!isDecorative && alt !== null && alt !== "") {
-            // Check for common placeholder patterns that indicate missing alt text
-            // Must match entire alt text or be a clear filename pattern
-            const isPlaceholder =
-              /^(image|img|photo|picture|untitled|dsc_?\d+|img_?\d+)(\.[a-z]+)?$/i.test(
-                alt,
-              );
-            // eslint-disable-next-line playwright/no-conditional-expect -- Inside required conditional
-            expect
-              .soft(
-                !isPlaceholder,
-                `Image ${src} has placeholder alt text: "${alt}"`,
-              )
-              .toBe(true);
-          }
-        }
-      });
-    }
-
-    // Fail test if any soft assertions failed
-    expect(
-      test.info().errors,
-      "Some images have missing or placeholder alt attributes",
-    ).toHaveLength(0);
   });
 });

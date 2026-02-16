@@ -37,6 +37,8 @@ const iconName = icon || icons[type];
 <aside
   class={`callout callout-${type}`}
   role="note"
+  aria-label={title ||
+    `${type.charAt(0).toUpperCase() + type.slice(1)} callout`}
 >
   <span class="sr-only">{type.charAt(0).toUpperCase() + type.slice(1)}:</span>
   <span

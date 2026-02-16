@@ -866,17 +866,6 @@ const groupedDirectives = categories.map((cat) => ({
         });
       }
 
-      // Warning: strict-dynamic without script-src
-      if (
-        checkedDirectives["strict-dynamic"] &&
-        !checkedDirectives["script-src"]
-      ) {
-        warns.push({
-          type: "warning",
-          text: "'strict-dynamic' has no effect without script-src. Enable script-src first.",
-        });
-      }
-
       return warns;
     }
 

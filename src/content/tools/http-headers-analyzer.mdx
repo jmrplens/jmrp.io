@@ -1,0 +1,231 @@
+---
+title: "HTTP Security Headers Analyzer"
+slug: "http-headers-analyzer"
+description: "Analyze HTTP response headers for security best practices. Get a security score, recommendations, and detailed analysis for each header."
+subtitle: "Analyze HTTP security headers and get a security score with detailed recommendations."
+icon: "i-mdi:web"
+category: "security"
+tags: ["http", "headers", "security", "hsts", "csp", "analysis"]
+appComponent: "HTTPHeadersAnalyzer"
+---
+
+import {
+  TerminalSession,
+  TerminalSessionCommand,
+  TerminalSessionOutput,
+} from "@components/ui/terminal-session";
+
+<h2>About This Tool</h2>
+<p>
+  Analyze your HTTP response headers for security best practices. The tool
+  evaluates 10 critical security headers, checks for information leakage, and
+  provides a weighted score with actionable recommendations. You can paste
+  headers manually or fetch them directly from a URL.
+</p>
+<h3>Headers Analyzed</h3>
+<ul>
+  <li>
+    <strong>Content-Security-Policy</strong> (25 pts) — XSS and injection
+    prevention
+  </li>
+  <li>
+    <strong>Strict-Transport-Security</strong> (15 pts) — HTTPS enforcement
+  </li>
+  <li>
+    <strong>X-Content-Type-Options</strong> (10 pts) — MIME sniffing prevention
+  </li>
+  <li>
+    <strong>X-Frame-Options</strong> (8 pts) — clickjacking protection
+  </li>
+  <li>
+    <strong>Referrer-Policy</strong> (8 pts) — referrer information control
+  </li>
+  <li>
+    <strong>Permissions-Policy</strong> (8 pts) — browser feature restrictions
+  </li>
+  <li>
+    <strong>Cross-Origin-Opener-Policy</strong> (8 pts) — browsing context
+    isolation
+  </li>
+  <li>
+    <strong>Cross-Origin-Resource-Policy</strong> (8 pts) — resource loading
+    control
+  </li>
+  <li>
+    <strong>Cross-Origin-Embedder-Policy</strong> (7 pts) — embedding control
+  </li>
+  <li>
+    <strong>X-XSS-Protection</strong> (3 pts) — legacy XSS filter (should be
+    disabled)
+  </li>
+</ul>
+<p>
+  Additionally, the tool checks for <strong>information leakage</strong> via
+  <code>Server</code>, <code>X-Powered-By</code>, and
+  <code>X-AspNet-Version</code> headers.
+</p>
+<h3>Grading Scale</h3>
+<ul>
+  <li>
+    <strong>A+</strong> (90-100) — Excellent security posture
+  </li>
+  <li>
+    <strong>A</strong> (80-89) — Strong, minor improvements possible
+  </li>
+  <li>
+    <strong>B</strong> (70-79) — Good, some headers missing
+  </li>
+  <li>
+    <strong>C</strong> (50-69) — Fair, several important headers missing
+  </li>
+  <li>
+    <strong>D</strong> (30-49) — Poor, major gaps
+  </li>
+  <li>
+    <strong>F</strong> (0-29) — Critical, most headers missing
+  </li>
+</ul>
+<h3>How to Use</h3>
+<ol>
+  <li>
+    Enter a URL and click Fetch, or paste headers from browser DevTools / curl
+  </li>
+  <li>Click Analyze to see the security score and recommendations</li>
+  <li>Fix missing headers in your server configuration and re-analyze</li>
+</ol>
+<h3>Privacy</h3>
+<p>
+  All analysis happens entirely in your browser. When using the Fetch feature,
+  the request is made directly from your browser — no server-side proxy is used.
+  Note that CORS restrictions may limit which headers are visible; use{" "}
+  <code>curl</code> for complete results.
+</p>
+
+<h3>Linux Command Reference</h3>
+<p>You can inspect HTTP headers from the terminal using these tools:</p>
+
+<h4>curl — Headers Only</h4>
+<TerminalSession>
+  <TerminalSessionCommand>
+    curl -sI https://example.com
+  </TerminalSessionCommand>
+  <TerminalSessionOutput title="Response Headers">
+    ```
+    HTTP/2 200
+    date: Thu, 12 Feb 2026 07:37:48 GMT
+    content-type: text/html
+    cf-ray: 9cca6c3e7e52ddef-MAD
+    last-modified: Wed, 11 Feb 2026 23:52:30 GMT
+    accept-ranges: bytes
+    cf-cache-status: HIT
+    server: cloudflare
+    ```
+  </TerminalSessionOutput>
+</TerminalSession>
+
+<h4>curl — Filter Security Headers</h4>
+<TerminalSession>
+  <TerminalSessionCommand>
+    ```
+    curl -sI https://jmrp.io | grep -iE '^(strict-transport|x-content-type|x-frame|referrer|cross-origin|permissions|content-security)'
+    ```
+  </TerminalSessionCommand>
+  <TerminalSessionOutput title="Security Headers">
+    ```
+    strict-transport-security: max-age=63072000; includeSubDomains; preload
+    x-content-type-options: nosniff
+    x-frame-options: DENY
+    referrer-policy: strict-origin-when-cross-origin
+    cross-origin-embedder-policy: require-corp
+    cross-origin-opener-policy: same-origin
+    cross-origin-resource-policy: same-origin
+    content-security-policy: default-src 'self'; script-src 'self' ...
+    ```
+  </TerminalSessionOutput>
+</TerminalSession>
+
+<h4>curl — Verbose (TLS + Headers)</h4>
+<TerminalSession>
+  <TerminalSessionCommand>
+    ```
+    curl -sv https://example.com -o /dev/null 2>&1 | grep '< '
+    ```
+  </TerminalSessionCommand>
+  <TerminalSessionOutput title="Verbose Output">
+    ```
+    < HTTP/2 200
+    < date: Thu, 12 Feb 2026 07:37:48 GMT
+    < content-type: text/html
+    < server: cloudflare
+    ```
+  </TerminalSessionOutput>
+</TerminalSession>
+
+<h4>wget — Spider Mode</h4>
+<TerminalSession>
+  <TerminalSessionCommand>
+    ```
+    wget -S --spider https://example.com 2>&1 | grep '^\s'
+    ```
+  </TerminalSessionCommand>
+  <TerminalSessionOutput title="wget Response Headers">
+    ```
+    HTTP/1.1 200 OK
+    Date: Thu, 12 Feb 2026 07:37:52 GMT
+    Content-Type: text/html
+    cf-cache-status: HIT
+    server: cloudflare
+    ```
+  </TerminalSessionOutput>
+</TerminalSession>
+
+<h4>Check Specific Header</h4>
+<TerminalSession>
+  <TerminalSessionCommand>
+    ```
+    # Check if HSTS is present
+    curl -sI https://jmrp.io | grep -i strict-transport
+
+    # Check CSP policy
+    curl -sI https://jmrp.io | grep -i content-security-policy
+    ```
+  </TerminalSessionCommand>
+  <TerminalSessionOutput title="Header Check">
+    ```
+    strict-transport-security: max-age=63072000; includeSubDomains; preload
+    content-security-policy: default-src 'self'; script-src 'self' ...
+    ```
+  </TerminalSessionOutput>
+</TerminalSession>
+
+<h4>Compare Multiple Sites</h4>
+<TerminalSession>
+  <TerminalSessionCommand>
+    ```
+    for site in example.com jmrp.io github.com; do
+      echo "=== $site ==="
+      curl -sI "https://$site" | grep -ci '^\(strict-transport\|x-content-type\|x-frame\|referrer-policy\|permissions-policy\|content-security-policy\|cross-origin\)'
+      echo "security headers found"
+    done
+    ```
+  </TerminalSessionCommand>
+  <TerminalSessionOutput title="Headers Count">
+    ```
+    === example.com ===
+    0 security headers found
+    === jmrp.io ===
+    9 security headers found
+    === github.com ===
+    5 security headers found
+    ```
+  </TerminalSessionOutput>
+</TerminalSession>
+
+<h3>Learn More</h3>
+<p>
+  See{" "}
+  <a href="/blog/003-implementing-content-security-policy-nginx/">
+    Implementing CSP in Nginx
+  </a>{" "}
+  for a detailed guide on configuring security headers.
+</p>

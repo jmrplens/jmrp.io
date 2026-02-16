@@ -30,22 +30,6 @@ const DEFAULT_SECURE_PATH =
   "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin";
 
 /**
- * Runs a command with sudo in non-interactive mode (-n flag).
- * This prevents sudo from prompting for password, failing fast instead.
- *
- * @param args - Arguments to pass to sudo (command and its args)
- * @param options - Spawn options
- * @returns The spawn result
- */
-function runSudo(
-  args: string[],
-  options: ReturnType<typeof createSecureSpawnOptions>,
-) {
-  // Use -n flag for non-interactive mode to fail fast if sudo requires password
-  return spawnSync("sudo", ["-n", ...args], options);
-}
-
-/**
  * Creates the jmrp-post-build Astro integration.
  *
  * This integration performs several critical optimizations and security hardening
@@ -67,8 +51,6 @@ export default function postBuildIntegration(): AstroIntegration {
         logger.info(`Starting optimizations in [${relativeDist}]`);
 
         const cspData: CspData = {
-          styleHashes: new Set<string>(),
-          scriptHashes: new Set<string>(),
           imageDomains: new Set<string>(),
         };
 
@@ -160,7 +142,8 @@ function fixPermissions(distDir: string, logger: AstroIntegrationLogger) {
   const secureOpts = createSecureSpawnOptions();
   try {
     // Set ownership to www-data:www-data
-    const chownResult = runSudo(
+    const chownResult = spawnSync(
+      "sudo",
       ["chown", "-R", "www-data:www-data", distDir],
       secureOpts,
     );
@@ -171,7 +154,8 @@ function fixPermissions(distDir: string, logger: AstroIntegrationLogger) {
     }
 
     // Set directory permissions to 755
-    const chmodDirResult = runSudo(
+    const chmodDirResult = spawnSync(
+      "sudo",
       ["find", distDir, "-type", "d", "-exec", "chmod", "755", "{}", "+"],
       secureOpts,
     );
@@ -182,7 +166,8 @@ function fixPermissions(distDir: string, logger: AstroIntegrationLogger) {
     }
 
     // Set file permissions to 644
-    const chmodFileResult = runSudo(
+    const chmodFileResult = spawnSync(
+      "sudo",
       ["find", distDir, "-type", "f", "-exec", "chmod", "644", "{}", "+"],
       secureOpts,
     );
@@ -297,7 +282,8 @@ function performNginxDeployment(
     const secureOpts = createSecureSpawnOptions();
 
     // Use sudo to copy files since Nginx path usually requires root privileges
-    const copyResult = runSudo(
+    const copyResult = spawnSync(
+      "sudo",
       ["cp", generatedPath, systemNginxPath],
       secureOpts,
     );
@@ -313,7 +299,8 @@ function performNginxDeployment(
       if (!systemAssetsExists) {
         assetsCreated = true;
       }
-      const copyAssetsResult = runSudo(
+      const copyAssetsResult = spawnSync(
+        "sudo",
         ["cp", generatedAssetsPath, systemNginxAssetsPath],
         secureOpts,
       );
@@ -422,11 +409,7 @@ function executeNginxReload(
   }
   const testArgs = nginxConfigPath ? ["-t", "-c", nginxConfigPath] : ["-t"];
 
-  const testResult = spawnSync(
-    "sudo",
-    ["-n", "nginx", ...testArgs],
-    execOptions,
-  ); // NOSONAR suppressed: external command usage is intentional
+  const testResult = spawnSync("sudo", ["nginx", ...testArgs], execOptions); // NOSONAR suppressed: external command usage is intentional
   if (testResult.error) {
     throw testResult.error;
   }
@@ -435,7 +418,7 @@ function executeNginxReload(
   }
 
   // prettier-ignore
-  const reloadResult = spawnSync("sudo", ["-n", "nginx", "-s", "reload"], { // NOSONAR suppressed: external command usage is intentional
+  const reloadResult = spawnSync("sudo", ["nginx", "-s", "reload"], { // NOSONAR suppressed: external command usage is intentional
     ...execOptions,
     timeout: reloadTimeout,
   });
@@ -495,7 +478,8 @@ function clearNginxCache(
     const secureOpts = createSecureSpawnOptions();
 
     // We use -mindepth 1 to delete everything INSIDE jmrp_cache, but keep the folder itself
-    const clearResult = runSudo(
+    const clearResult = spawnSync(
+      "sudo",
       ["find", targetCachePath, "-mindepth", "1", "-delete"],
       secureOpts,
     ); // NOSONAR
@@ -513,7 +497,8 @@ function clearNginxCache(
 
   // FORCE permissions on the main cache directory to ensure www-data can write
   logger.info(`Ensuring ownership of cache path: ${systemNginxCachePath}`);
-  const chownResult = runSudo(
+  const chownResult = spawnSync(
+    "sudo",
     ["chown", "-R", "www-data:www-data", systemNginxCachePath],
     createSecureSpawnOptions(),
   );
@@ -621,7 +606,11 @@ function performRollback(
     );
   }
 
-  const mvResult = runSudo(["mv", tempPath, systemNginxPath], secureOpts); // NOSONAR
+  const mvResult = spawnSync(
+    "sudo",
+    ["mv", tempPath, systemNginxPath],
+    secureOpts,
+  ); // NOSONAR
   if (mvResult.status !== 0 || mvResult.error) {
     // Clean up orphaned temp file before throwing
     cleanupTempFile(tempPath);
@@ -633,7 +622,11 @@ function performRollback(
   if (!assetsRollback) return;
 
   if (assetsRollback.created) {
-    const rmResult = runSudo(["rm", "-f", assetsRollback.path], secureOpts); // NOSONAR
+    const rmResult = spawnSync(
+      "sudo",
+      ["rm", "-f", assetsRollback.path],
+      secureOpts,
+    ); // NOSONAR
     if (rmResult.status !== 0 || rmResult.error) {
       throw new Error(
         `Rollback failed: Could not remove created assets file ${assetsRollback.path}. Stderr: ${rmResult.stderr?.toString()}`,
@@ -651,7 +644,8 @@ function performRollback(
         `Rollback failed: Could not write assets backup file ${tempAssetsPath}. Error: ${String(error)}`,
       );
     }
-    const mvAssetsResult = runSudo(
+    const mvAssetsResult = spawnSync(
+      "sudo",
       ["mv", tempAssetsPath, assetsRollback.path],
       secureOpts,
     ); // NOSONAR

@@ -1,0 +1,159 @@
+---
+/**
+ * TerminalSessionOutput Component
+ * Renders command output inside a TerminalSession.
+ *
+ * Must be used as a child of <TerminalSession>:
+ * <TerminalSession>
+ *   <TerminalSessionCommand>echo "hello"</TerminalSessionCommand>
+ *   <TerminalSessionOutput title="Output">hello</TerminalSessionOutput>
+ * </TerminalSession>
+ *
+ * In MDX files, use code fences for multi-line output:
+ * <TerminalSessionOutput title="Result">
+ *
+ * ```
+ * line 1
+ * line 2
+ * line 3
+ * ```
+ *
+ * </TerminalSessionOutput>
+ *
+ * In .astro files, use template literals for multi-line output:
+ *   <TerminalSessionOutput title="Result">
+ *     {`line 1\nline 2\nline 3`}
+ *   </TerminalSessionOutput>
+ *
+ * The cheerio pipeline extracts text from any HTML structure,
+ * including Shiki-rendered code blocks.
+ *
+ * Accessibility:
+ * - Semantic <section> with role="log" for screen readers.
+ * - Focusable scrollable region for keyboard navigation.
+ * - ARIA live region for dynamic output.
+ */
+
+import { decodeHtml } from "@utils/html";
+import * as cheerio from "cheerio";
+
+interface Props {
+  /** Title shown in the output header bar. */
+  title?: string;
+  /** Custom ARIA label for the output region. */
+  ariaLabel?: string;
+}
+
+const { title, ariaLabel } = Astro.props;
+
+let lines: string[] = [];
+
+/**
+ * Slot Rendering Pipeline:
+ * Extract text via cheerio, split by newlines, and render each
+ * line as a block element. This ensures line breaks survive
+ * HTML minification (which collapses whitespace in text nodes).
+ */
+if (Astro.slots.has("default")) {
+  const htmlContent = await Astro.slots.render("default");
+  const $ = cheerio.load(htmlContent);
+
+  $("br").replaceWith("\n");
+  $("p, div, li, h1, h2, h3, h4, h5, h6").each((_, el) => {
+    $(el).append("\n");
+  });
+
+  let processed = $.text();
+  processed = decodeHtml(processed);
+
+  const trimmed = processed.trim();
+  if (trimmed) {
+    lines = trimmed.split(/\r?\n/);
+  }
+}
+
+const finalAriaLabel =
+  ariaLabel || (title ? `Terminal Output: ${title}` : "Terminal Output");
+---
+
+<section
+  class="ts-output-section"
+  data-ts="output"
+  role="log"
+  aria-live="polite"
+  aria-label={finalAriaLabel}
+>
+  {
+    title && (
+      <div
+        class="output-header"
+        aria-hidden="true"
+      >
+        <span class="i-mdi:chevron-right-box-outline output-icon" />
+        <span class="output-title">{title}</span>
+      </div>
+    )
+  }
+
+  {/* eslint-disable astro/jsx-a11y/no-noninteractive-tabindex */}
+  <div
+    class="output-body"
+    role="group"
+    tabindex="0"
+    aria-label={title
+      ? `Scrollable terminal output for ${title}`
+      : "Scrollable terminal output"}
+  >
+    {/* eslint-enable astro/jsx-a11y/no-noninteractive-tabindex */}
+    <div class="output-content">
+      {lines.map((line) => <span class="output-line">{line || "\u00A0"}</span>)}
+    </div>
+  </div>
+</section>
+
+<style>
+  .ts-output-section {
+    overflow: hidden;
+    border-top: var(--border-1);
+  }
+
+  .output-header {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    padding: 0.6rem 1rem;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+    border-bottom: var(--border-1);
+  }
+
+  .output-icon {
+    font-size: 1.1rem;
+  }
+
+  .output-body {
+    padding: 1rem;
+    overflow-x: auto;
+    font-family: var(--font-mono);
+    font-size: 0.85em;
+    color: var(--color-text-muted);
+  }
+
+  .output-body:focus-visible {
+    outline: 2px solid transparent;
+    box-shadow: inset 0 0 0 2px var(--color-primary);
+  }
+
+  .output-content {
+    word-break: normal;
+    overflow-wrap: break-word;
+  }
+
+  .output-line {
+    display: block;
+    min-height: 1.4em;
+    line-height: 1.6;
+    white-space: pre-wrap;
+  }
+</style>

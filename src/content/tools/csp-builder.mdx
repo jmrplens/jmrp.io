@@ -1,0 +1,66 @@
+---
+title: "CSP Policy Builder"
+slug: "csp-builder"
+description: "Build Content Security Policy headers interactively. Toggle directives, see real-time policy generation, and get security ratings for your CSP."
+subtitle: "Build Content Security Policy headers interactively. Toggle directives to see your policy update in real-time."
+icon: "i-mdi:shield-lock-outline"
+category: "security"
+tags: ["csp", "security", "headers", "xss", "nginx"]
+appComponent: "CSPBuilder"
+---
+
+<h2>About This Tool</h2>
+<p>
+  Content Security Policy (CSP) is a security standard that helps prevent
+  cross-site scripting (XSS), clickjacking, and other code injection attacks.
+  This builder helps you create a policy by selecting the directives you need.
+</p>
+
+<h3>Features</h3>
+<ul>
+  <li>
+    <strong>20+ directives</strong> organized by category
+  </li>
+  <li>
+    <strong>Quick presets</strong> for Google Fonts, Analytics, YouTube, and
+    CDNs
+  </li>
+  <li>
+    <strong>Custom domains</strong> — add your own URLs to any directive
+  </li>
+  <li>
+    <strong>7 export formats</strong> — HTTP header, Nginx, Apache, Cloudflare,
+    Netlify, Vercel, and meta tag
+  </li>
+  <li>
+    <strong>Report-Only mode</strong> — test your policy before enforcing
+  </li>
+  <li>
+    <strong>Security warnings</strong> — get recommendations for a stronger
+    policy
+  </li>
+</ul>
+
+<h3>How to Use</h3>
+<ol>
+  <li>Enable the directives you need for your website</li>
+  <li>Use quick presets to add common third-party services</li>
+  <li>
+    Add custom domains by clicking the <strong>+</strong> button on editable
+    directives
+  </li>
+  <li>Select your server format (Nginx, Apache, Cloudflare, etc.)</li>
+  <li>
+    Enable <strong>Report-Only mode</strong> to test before enforcing
+  </li>
+  <li>Copy and add to your server configuration</li>
+</ol>
+
+<h3>Learn More</h3>
+<p>
+  For a complete guide on implementing CSP, see
+  <a href="/blog/003-implementing-content-security-policy-nginx/">
+    Implementing Content Security Policy in Nginx
+  </a>
+  .
+</p>
