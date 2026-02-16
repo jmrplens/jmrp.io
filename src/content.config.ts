@@ -283,7 +283,13 @@ const tools = defineCollection({
     description: z.string(),
     subtitle: z.string().optional(),
     icon: z.string(),
-    category: z.enum(["security", "developer", "network", "embedded"]),
+    category: z.enum([
+      "security",
+      "developer",
+      "network",
+      "embedded",
+      "mikrotik",
+    ]),
     tags: z.array(z.string()).default([]),
     appComponent: z.string(),
     /** Extra props to pass to the app component, e.g. { showExplanation: true }. */

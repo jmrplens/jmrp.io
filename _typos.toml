@@ -10,7 +10,10 @@ extend-exclude = [
     "schema-report.html",
     "html-validation.json",
     "accessibility-report.json",
-    "lighthouse-results/**"
+    "lighthouse-results/**",
+    "AI_CONFIG_TASKS.md",
+    "AI_CONTEXT_ROADMAP.md",
+    "SEO_AUDIT.md"
 ]
 
 [default]

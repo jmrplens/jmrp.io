@@ -1,0 +1,61 @@
+# jmrp.io
+
+> Personal technical blog and portfolio of José Manuel Requena Plens — R&D Engineer specializing in Embedded Systems, Acoustics, and Industrial Software Development.
+
+> For comprehensive context including detailed blog post topics, tool features, and author background, see [llms-full.txt](https://jmrp.io/llms-full.txt).
+
+## About
+
+José Manuel Requena Plens (JMRP) is a multidisciplinary engineer building control systems for renewable energy at Power Electronics. Background in Acoustics research, noise mitigation for the European Space Agency (ESA), and biomedical ultrasound at UPV. Active open source contributor and self-hoster.
+
+## Sections
+
+- [Blog](https://jmrp.io/blog/): Technical articles on Nginx, MikroTik, networking, security, and DevOps
+- [CV](https://jmrp.io/cv/): Professional curriculum vitae and experience
+- [Publications](https://jmrp.io/publications/): Academic papers on acoustics, metamaterials, and ultrasound
+- [Homelab](https://jmrp.io/homelab/): Self-hosted infrastructure — Mastodon, Matrix, Meshtastic
+- [GitHub](https://jmrp.io/github/): Open source projects and contributions
+- [Tools](https://jmrp.io/tools/): Free browser-based developer tools (privacy-first, no server calls)
+
+## Blog Posts
+
+- [Mastering Mutual TLS (mTLS) with Nginx](https://jmrp.io/blog/001-secure-nginx-client-certificates/)
+- [Mastering Virtual Files in Nginx](https://jmrp.io/blog/002-serve-virtual-files-nginx/)
+- [Content Security Policy (CSP) with Nginx](https://jmrp.io/blog/003-implementing-content-security-policy-nginx/)
+- [Mastering QUIC and HTTP/3 with Nginx](https://jmrp.io/blog/004-enabling-quic-http3-nginx/)
+- [Implementing a Tarpit in Nginx](https://jmrp.io/blog/005-implementing-tarpit-nginx/)
+- [MikroTik Honeypot: Trap & Auto-Block](https://jmrp.io/blog/006-implementing-mikrotik-honeypot/)
+- [MikroTik WireGuard VPN: Dual-Stack](https://jmrp.io/blog/007-mikrotik-wireguard-dual-stack-vpn/)
+- [MikroTik PPPoE + DHCPv6-PD: Dual-Stack](https://jmrp.io/blog/008-mikrotik-pppoe-dualstack-digi/)
+
+## Developer Tools
+
+- [CSP Policy Builder](https://jmrp.io/tools/csp-builder/): Build Content Security Policy headers visually
+- [CSP Hash Calculator](https://jmrp.io/tools/hash-calculator/): Generate SRI hashes for scripts and styles
+- [Nginx Config Generator](https://jmrp.io/tools/nginx-config-generator/): Generate Nginx configuration files
+- [WireGuard Config Generator](https://jmrp.io/tools/wireguard-config-generator/): Create WireGuard VPN configs
+- [Subnet Calculator](https://jmrp.io/tools/subnet-calculator/): IPv4/IPv6 subnet calculations
+- [Password Generator](https://jmrp.io/tools/password-generator/): Secure random password generation
+- [Regex Tester](https://jmrp.io/tools/regex-tester/): Test regular expressions with real-time matching
+- [Base64 Encoder/Decoder](https://jmrp.io/tools/base64-encoder/): Encode and decode Base64 strings
+- [Cron Expression Builder](https://jmrp.io/tools/cron-builder/): Visual cron schedule builder
+- [Certificate Inspector](https://jmrp.io/tools/cert-inspector/): Inspect SSL/TLS certificates
+- [HTTP Headers Analyzer](https://jmrp.io/tools/http-headers-analyzer/): Analyze HTTP security headers
+- [Color Contrast Checker](https://jmrp.io/tools/color-contrast-checker/): WCAG contrast ratio checker
+- [Timestamp Converter](https://jmrp.io/tools/timestamp-converter/): Unix timestamp conversions
+- [Modbus Frame Builder](https://jmrp.io/tools/modbus-frame-builder/): Build Modbus RTU/TCP frames
+
+## Contact
+
+- GitHub: https://github.com/jmrplens
+- LinkedIn: https://www.linkedin.com/in/jmrplens
+- Mastodon: https://mstdn.jmrp.io/@jmrplens
+- Email: mail@jmrp.io
+
+## Technical Details
+
+- Built with Astro 6 (Static Site Generation)
+- Zero client-side JavaScript (except progressive enhancement islands)
+- WCAG 2.2 AA/AAA accessibility compliant
+- Content Security Policy with SRI hashes
+- RSS feed available at https://jmrp.io/rss.xml

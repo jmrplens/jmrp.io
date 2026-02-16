@@ -296,7 +296,8 @@ function sendToTelegram(report, ip, ua) {
     res.on("data", (chunk) => (resBody += chunk));
     res.on("end", () => {
       if (res.statusCode !== 200) {
-        console.error(`Telegram API HTTP Error (${res.statusCode}):`, resBody);
+        const statusCode = Number(res.statusCode);
+        console.error("Telegram API HTTP Error (%d): %s", statusCode, resBody);
         return;
       }
       try {

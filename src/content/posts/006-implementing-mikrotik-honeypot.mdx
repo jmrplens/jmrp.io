@@ -2,7 +2,7 @@
 title: "MikroTik Honeypot: Trap & Auto-Block Port Scanners"
 slug: "implementing-mikrotik-honeypot"
 publishedDate: 2026-01-19
-description: "Learn how to configure your MikroTik router as a low-interaction honeypot to detect port scanners, log malicious activity, and automatically block attackers using firewall address lists and the RAW table."
+description: "Configure a MikroTik honeypot to detect port scanners, log malicious activity, and auto-block attackers using firewall address lists and the RAW table."
 author: "José Manuel Requena Plens"
 authorEmail: "mail@jmrp.io"
 draft: false
@@ -107,7 +107,7 @@ Before configuring our honeypot, it's essential to understand how stateful firew
 
 Our honeypot rules specifically target `connection-state=new`. Here's why this is critical:
 
-<Mermaid caption="TCP Three-Way Handshake" maxWidth="500px">
+<Mermaid caption="TCP Three-Way Handshake" maxWidth="500px" ariaLabel="Sequence diagram showing a TCP three-way handshake: Scanner sends SYN (new connection), Router replies SYN-ACK, Scanner sends ACK to establish the connection. The honeypot triggers on the initial SYN packet.">
 ```mermaid-render
 sequenceDiagram
     participant Scanner
@@ -137,7 +137,7 @@ If your honeypot rules matched `established` connections, you would block legiti
 
 Our honeypot strategy has three phases:
 
-<Mermaid caption="Honeypot Detection Flow" maxWidth="550px">
+<Mermaid caption="Honeypot Detection Flow" maxWidth="550px" ariaLabel="Flowchart showing the honeypot detection flow: incoming scanner traffic is checked against the blacklist first (RAW table DROP), then checked against trapped ports. Legitimate traffic on ports 80/443 is allowed, while trapped ports trigger logging, syslog, and blacklist addition.">
 ```mermaid-render
 flowchart TD
     classDef warning fill:#e6a700,color:#000

@@ -58,7 +58,7 @@ const schema = {
 
 <BaseLayout
   title={`Blog - #${tag}`}
-  description={`Posts tagged with #${tag}`}
+  description={`Browse ${posts.length} technical ${posts.length === 1 ? "article" : "articles"} about ${tag}. In-depth tutorials and guides by José Manuel Requena Plens covering practical ${tag} implementations.`}
   schema={schema}
 >
   <div class="content-wrapper">

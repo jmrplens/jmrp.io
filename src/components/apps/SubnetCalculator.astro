@@ -164,6 +164,59 @@ const id = `net-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
           ))
         }
       </div>
+      <div
+        class="net-presets"
+        id={`${id}-scenarios-v4`}
+      >
+        <span class="net-presets-label">Scenarios:</span>
+        {
+          [
+            { label: "Home LAN", ip: "192.168.1.0", cidr: "24" },
+            { label: "Office /22", ip: "10.0.0.0", cidr: "22" },
+            { label: "Docker", ip: "172.17.0.0", cidr: "16" },
+            { label: "AWS VPC", ip: "10.0.0.0", cidr: "16" },
+            { label: "CGNAT", ip: "100.64.0.0", cidr: "10" },
+            { label: "P2P Link", ip: "10.255.255.252", cidr: "30" },
+            { label: "WireGuard", ip: "10.13.13.0", cidr: "24" },
+          ].map((s) => (
+            <button
+              type="button"
+              class="net-preset-btn net-scenario-btn"
+              data-preset-ip={s.ip}
+              data-preset-cidr={s.cidr}
+            >
+              {s.label}
+            </button>
+          ))
+        }
+      </div>
+      <div
+        class="net-presets"
+        id={`${id}-scenarios-v6`}
+        hidden
+      >
+        <span class="net-presets-label">Scenarios:</span>
+        {
+          [
+            { label: "Subnet /64", ip: "2001:db8:abcd:1::", cidr: "64" },
+            { label: "Home Site", ip: "fd00:1::", cidr: "48" },
+            { label: "Residential /56", ip: "2001:db8:ab00::", cidr: "56" },
+            { label: "ISP /32", ip: "2001:db8::", cidr: "32" },
+            { label: "ULA", ip: "fd00::", cidr: "48" },
+            { label: "Link-Local", ip: "fe80::", cidr: "10" },
+            { label: "P2P /127", ip: "2001:db8::0", cidr: "127" },
+          ].map((s) => (
+            <button
+              type="button"
+              class="net-preset-btn net-scenario-btn"
+              data-preset-ip={s.ip}
+              data-preset-cidr={s.cidr}
+            >
+              {s.label}
+            </button>
+          ))
+        }
+      </div>
     </div>
     <div class="net-actions">
       <button
@@ -437,6 +490,8 @@ const id = `net-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
     var cidrInput = document.getElementById(id + "-cidr");
     var presetsV4 = document.getElementById(id + "-presets-v4");
     var presetsV6 = document.getElementById(id + "-presets-v6");
+    var scenariosV4 = document.getElementById(id + "-scenarios-v4");
+    var scenariosV6 = document.getElementById(id + "-scenarios-v6");
     var subResults = document.getElementById(id + "-sub-results");
     var subVisual = document.getElementById(id + "-sub-visual");
     var subCopyBtn = document.getElementById(id + "-sub-copy");
@@ -816,6 +871,10 @@ const id = `net-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
       if (presetsV4 && presetsV6) {
         presetsV4.hidden = ver === 6;
         presetsV6.hidden = ver !== 6;
+      }
+      if (scenariosV4 && scenariosV6) {
+        scenariosV4.hidden = ver === 6;
+        scenariosV6.hidden = ver !== 6;
       }
 
       if (ver === 4) {
@@ -1647,6 +1706,17 @@ const id = `net-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
       });
     });
 
+    /* Scenario presets (fill IP + CIDR) */
+    C.querySelectorAll(".net-scenario-btn[data-preset-ip]").forEach(
+      function (btn) {
+        btn.addEventListener("click", function () {
+          ipInput.value = btn.dataset.presetIp;
+          cidrInput.value = btn.dataset.presetCidr;
+          calcSubnet();
+        });
+      },
+    );
+
     /* Info tab events */
     var infoTimeout;
     function debouncedInfo() {
@@ -1896,6 +1966,12 @@ const id = `net-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
   .net-preset-btn:hover {
     color: var(--color-primary);
     border-color: var(--color-primary);
+  }
+
+  .net-scenario-btn {
+    font-family: var(--font-body);
+    background: var(--color-bg-tertiary, var(--color-bg-secondary));
+    border-style: dashed;
   }
 
   /* ── Actions ── */

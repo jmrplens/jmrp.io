@@ -1,0 +1,2391 @@
+---
+/* eslint-disable sonarjs/no-hardcoded-ip -- Default IPs are essential for a VPN config builder */
+/**
+ * WireGuardConfigGenerator Component
+ * Interactive MikroTik WireGuard VPN configuration builder.
+ * Generates complete RouterOS scripts and client .conf files
+ * based on user-defined parameters.
+ *
+ * Usage:
+ * <WireGuardConfigGenerator title="WireGuard Config Generator" />
+ */
+
+interface Props {
+  title?: string;
+}
+
+const { title = "WireGuard Config Generator" } = Astro.props;
+const uniqueId = `wg-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
+---
+
+<div
+  class="wg-generator"
+  data-wg-id={uniqueId}
+>
+  {title && <div class="wg-title">{title}</div>}
+
+  <div class="wg-layout">
+    {/* ── Presets ── */}
+    <div class="wg-presets-bar">
+      <span class="wg-presets-label">
+        <span
+          class="i-mdi:lightning-bolt"
+          aria-hidden="true"
+        ></span>
+        Preset
+      </span>
+      <div class="wg-presets">
+        <button
+          type="button"
+          class="wg-preset-btn"
+          data-preset="ipv4-only"
+          >IPv4 Only</button
+        >
+        <button
+          type="button"
+          class="wg-preset-btn wg-preset-active"
+          data-preset="dual-stack"
+          >Dual-Stack</button
+        >
+        <button
+          type="button"
+          class="wg-preset-btn"
+          data-preset="site-to-site"
+          >Site-to-Site</button
+        >
+      </div>
+    </div>
+
+    {/* ── Interface Settings ── */}
+    <div class="wg-card">
+      <div class="wg-card-header">
+        <span
+          class="i-mdi:vpn"
+          aria-hidden="true"
+        ></span>
+        WireGuard Interface
+      </div>
+      <div class="wg-card-body">
+        <div class="wg-fields-row">
+          <div class="wg-field">
+            <label
+              class="wg-label"
+              for={`${uniqueId}-iface-name`}
+              >Interface Name</label
+            >
+            <input
+              id={`${uniqueId}-iface-name`}
+              class="wg-input"
+              type="text"
+              value="wg_devices"
+              placeholder="wg_devices"
+            />
+          </div>
+          <div class="wg-field">
+            <label
+              class="wg-label"
+              for={`${uniqueId}-listen-port`}
+              >Listen Port</label
+            >
+            <input
+              id={`${uniqueId}-listen-port`}
+              class="wg-input"
+              type="number"
+              value="53537"
+              min="1"
+              max="65535"
+            />
+          </div>
+        </div>
+        <div class="wg-field">
+          <label
+            class="wg-label"
+            for={`${uniqueId}-iface-comment`}
+            >Comment</label
+          >
+          <input
+            id={`${uniqueId}-iface-comment`}
+            class="wg-input"
+            type="text"
+            value="VPN for Mobile Devices"
+            placeholder="VPN for Mobile Devices"
+          />
+        </div>
+      </div>
+    </div>
+
+    {/* ── Network Settings ── */}
+    <div class="wg-card">
+      <div class="wg-card-header">
+        <span
+          class="i-mdi:ip-network"
+          aria-hidden="true"
+        ></span>
+        Network
+      </div>
+      <div class="wg-card-body">
+        <div class="wg-fields-row">
+          <div class="wg-field">
+            <label
+              class="wg-label"
+              for={`${uniqueId}-vpn-subnet`}
+              >VPN IPv4 Subnet</label
+            >
+            <input
+              id={`${uniqueId}-vpn-subnet`}
+              class="wg-input"
+              type="text"
+              value="192.168.100.0/24"
+              placeholder="192.168.100.0/24"
+            />
+            <span class="wg-field-hint">Gateway will be .1</span>
+          </div>
+          <div class="wg-field">
+            <label
+              class="wg-label"
+              for={`${uniqueId}-lan-subnet`}
+              >Home LAN Subnet</label
+            >
+            <input
+              id={`${uniqueId}-lan-subnet`}
+              class="wg-input"
+              type="text"
+              value="192.168.0.0/24"
+              placeholder="192.168.0.0/24"
+            />
+          </div>
+        </div>
+        <div class="wg-toggle-row wg-main-toggle">
+          <label class="wg-toggle-label">
+            <input
+              id={`${uniqueId}-enable-ipv6`}
+              type="checkbox"
+              checked
+            />
+            <span>Enable IPv6 (Dual-Stack)</span>
+          </label>
+        </div>
+        <div
+          class="wg-sub-fields"
+          id={`${uniqueId}-ipv6-fields`}
+        >
+          <div class="wg-field">
+            <label
+              class="wg-label"
+              for={`${uniqueId}-vpn-ipv6`}
+              >VPN IPv6 ULA Prefix</label
+            >
+            <input
+              id={`${uniqueId}-vpn-ipv6`}
+              class="wg-input"
+              type="text"
+              value="fd00:1111:2222:100::/64"
+              placeholder="fd00:1111:2222:100::/64"
+            />
+            <span class="wg-field-hint">Gateway will be ::1</span>
+          </div>
+        </div>
+        <div class="wg-toggle-row">
+          <label class="wg-toggle-label">
+            <input
+              id={`${uniqueId}-enable-extra-lans`}
+              type="checkbox"
+            />
+            <span>Additional LAN Subnets</span>
+          </label>
+        </div>
+        <div
+          class="wg-sub-fields"
+          id={`${uniqueId}-extra-lans-fields`}
+          hidden
+        >
+          <div class="wg-field">
+            <label
+              class="wg-label"
+              for={`${uniqueId}-extra-lans`}
+              >Subnets</label
+            >
+            <input
+              id={`${uniqueId}-extra-lans`}
+              class="wg-input"
+              type="text"
+              value=""
+              placeholder="192.168.99.0/24, 10.0.0.0/16 (comma-separated)"
+            />
+            <span class="wg-field-hint"
+              >Extra subnets VPN clients can access</span
+            >
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {/* ── Endpoint & DNS ── */}
+    <div class="wg-card">
+      <div class="wg-card-header">
+        <span
+          class="i-mdi:dns"
+          aria-hidden="true"
+        ></span>
+        Endpoint & DNS
+      </div>
+      <div class="wg-card-body">
+        <div class="wg-fields-row">
+          <div class="wg-field">
+            <label
+              class="wg-label"
+              for={`${uniqueId}-endpoint`}
+              >Public Endpoint</label
+            >
+            <input
+              id={`${uniqueId}-endpoint`}
+              class="wg-input"
+              type="text"
+              value=""
+              placeholder="vpn.example.com or public IP"
+            />
+            <span class="wg-field-hint"
+              >Domain or DDNS hostname for client connections</span
+            >
+          </div>
+          <div class="wg-field">
+            <label
+              class="wg-label"
+              for={`${uniqueId}-dns`}
+              >DNS Server(s)</label
+            >
+            <input
+              id={`${uniqueId}-dns`}
+              class="wg-input"
+              type="text"
+              value=""
+              placeholder="Auto (router gateway IP)"
+            />
+            <span class="wg-field-hint"
+              >Leave empty to use router gateway IP</span
+            >
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {/* ── Advanced Configuration Toggle ── */}
+    <div class="wg-toggle-row wg-main-toggle">
+      <label class="wg-toggle-label">
+        <input
+          id={`${uniqueId}-advanced`}
+          type="checkbox"
+        />
+        <span>Advanced Configuration</span>
+      </label>
+    </div>
+
+    <div
+      id={`${uniqueId}-advanced-section`}
+      hidden
+    >
+      {/* ── MTU ── */}
+      <div
+        class="wg-card"
+        style="margin-bottom: 1rem;"
+      >
+        <div class="wg-card-header">
+          <span
+            class="i-mdi:resize"
+            aria-hidden="true"
+          ></span>
+          MTU
+        </div>
+        <div class="wg-card-body">
+          <div class="wg-fields-row">
+            <div class="wg-field">
+              <label
+                class="wg-label"
+                for={`${uniqueId}-mtu`}
+                >Interface MTU</label
+              >
+              <input
+                id={`${uniqueId}-mtu`}
+                class="wg-input"
+                type="number"
+                value="1500"
+                min="1280"
+                max="9000"
+              />
+              <span class="wg-field-hint"
+                >Default 1500. Reduce to 1420 if experiencing fragmentation.</span
+              >
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Interface Lists ── */}
+      <details
+        class="wg-card"
+        style="margin-bottom: 1rem;"
+      >
+        <summary class="wg-card-header wg-summary">
+          <span
+            class="i-mdi:format-list-group"
+            aria-hidden="true"
+          ></span>
+          Interface Lists
+          <span
+            class="i-mdi:chevron-right wg-chevron"
+            aria-hidden="true"
+          ></span>
+        </summary>
+        <div class="wg-card-body">
+          <div class="wg-fields-row">
+            <div class="wg-field">
+              <label
+                class="wg-label"
+                for={`${uniqueId}-wan-list`}
+                >WAN List</label
+              >
+              <input
+                id={`${uniqueId}-wan-list`}
+                class="wg-input"
+                type="text"
+                value="WAN"
+                placeholder="WAN"
+              />
+            </div>
+            <div class="wg-field">
+              <label
+                class="wg-label"
+                for={`${uniqueId}-vpn-list`}
+                >VPN List</label
+              >
+              <input
+                id={`${uniqueId}-vpn-list`}
+                class="wg-input"
+                type="text"
+                value="VPN"
+                placeholder="VPN"
+              />
+            </div>
+            <div class="wg-field">
+              <label
+                class="wg-label"
+                for={`${uniqueId}-lan-list`}
+                >LAN List</label
+              >
+              <input
+                id={`${uniqueId}-lan-list`}
+                class="wg-input"
+                type="text"
+                value="LAN"
+                placeholder="LAN"
+              />
+            </div>
+          </div>
+          <div class="wg-toggle-row">
+            <label class="wg-toggle-label">
+              <input
+                id={`${uniqueId}-add-to-lan`}
+                type="checkbox"
+                checked
+              />
+              <span>Add WireGuard interface to LAN list</span>
+            </label>
+          </div>
+        </div>
+      </details>
+
+      {/* ── Firewall Options ── */}
+      <details
+        class="wg-card"
+        open
+      >
+        <summary class="wg-card-header wg-summary">
+          <span
+            class="i-mdi:shield-lock"
+            aria-hidden="true"
+          ></span>
+          Firewall & NAT
+          <span
+            class="i-mdi:chevron-right wg-chevron"
+            aria-hidden="true"
+          ></span>
+        </summary>
+        <div class="wg-card-body">
+          <div class="wg-toggles-row">
+            <label class="wg-toggle-label">
+              <input
+                id={`${uniqueId}-fw-internet`}
+                type="checkbox"
+                checked
+              />
+              <span>Allow VPN → Internet</span>
+            </label>
+            <label class="wg-toggle-label">
+              <input
+                id={`${uniqueId}-fw-lan`}
+                type="checkbox"
+                checked
+              />
+              <span>Allow VPN → LAN</span>
+            </label>
+            <label class="wg-toggle-label">
+              <input
+                id={`${uniqueId}-fw-fasttrack`}
+                type="checkbox"
+                checked
+              />
+              <span>FastTrack</span>
+            </label>
+            <label class="wg-toggle-label">
+              <input
+                id={`${uniqueId}-fw-addrlist`}
+                type="checkbox"
+                checked
+              />
+              <span>Address List</span>
+            </label>
+          </div>
+          <div class="wg-toggles-row">
+            <label class="wg-toggle-label">
+              <input
+                id={`${uniqueId}-fw-mss`}
+                type="checkbox"
+                checked
+              />
+              <span>MSS Clamping</span>
+            </label>
+            <label class="wg-toggle-label">
+              <input
+                id={`${uniqueId}-fw-raw`}
+                type="checkbox"
+                checked
+              />
+              <span>RAW Skip Flood Protection</span>
+            </label>
+          </div>
+          <div
+            class="wg-sub-fields"
+            id={`${uniqueId}-mss-fields`}
+          >
+            <div class="wg-field">
+              <label
+                class="wg-label"
+                for={`${uniqueId}-mss-value`}
+                >MSS Value</label
+              >
+              <input
+                id={`${uniqueId}-mss-value`}
+                class="wg-input"
+                type="number"
+                value="1420"
+                min="500"
+                max="9000"
+              />
+              <span class="wg-field-hint"
+                >Auto-calculated from MTU. Override if needed.</span
+              >
+            </div>
+          </div>
+        </div>
+      </details>
+    </div>
+
+    {/* ── Peers ── */}
+    <div class="wg-card">
+      <div class="wg-card-header">
+        <span
+          class="i-mdi:devices"
+          aria-hidden="true"
+        ></span>
+        Peers / Clients
+        <button
+          type="button"
+          class="wg-add-peer-btn"
+          id={`${uniqueId}-add-peer`}
+          aria-label="Add peer"
+        >
+          <span
+            class="i-mdi:plus"
+            aria-hidden="true"
+          ></span> Add Peer
+        </button>
+      </div>
+      <div
+        class="wg-card-body"
+        id={`${uniqueId}-peers-container`}
+      >
+        {/* Peer 1 (default) */}
+        <div
+          class="wg-peer"
+          data-peer-index="0"
+        >
+          <div class="wg-peer-header">
+            <span class="wg-peer-number">Peer 1</span>
+            <button
+              type="button"
+              class="wg-remove-peer-btn"
+              data-remove-peer="0"
+              aria-label="Remove peer"
+              style="display:none"
+            >
+              <span
+                class="i-mdi:close"
+                aria-hidden="true"
+              ></span>
+            </button>
+          </div>
+          <div class="wg-fields-row">
+            <div class="wg-field">
+              <label
+                class="wg-label"
+                for={`${uniqueId}-peer0-name`}
+                >Name</label
+              >
+              <input
+                id={`${uniqueId}-peer0-name`}
+                class="wg-input wg-peer-name"
+                type="text"
+                value="wg_phone"
+                placeholder="wg_client1"
+              />
+            </div>
+            <div class="wg-field">
+              <label
+                class="wg-label"
+                for={`${uniqueId}-peer0-comment`}
+                >Comment</label
+              >
+              <input
+                id={`${uniqueId}-peer0-comment`}
+                class="wg-input wg-peer-comment"
+                type="text"
+                value="Phone - Mobile VPN"
+                placeholder="Client description"
+              />
+            </div>
+          </div>
+          <div class="wg-fields-row">
+            <div class="wg-field">
+              <label
+                class="wg-label"
+                for={`${uniqueId}-peer0-ipv4`}
+                >IPv4 Address</label
+              >
+              <input
+                id={`${uniqueId}-peer0-ipv4`}
+                class="wg-input wg-peer-ipv4"
+                type="text"
+                value="192.168.100.2"
+                placeholder="192.168.100.2"
+              />
+            </div>
+            <div class="wg-field wg-peer-ipv6-field">
+              <label
+                class="wg-label"
+                for={`${uniqueId}-peer0-ipv6`}
+                >IPv6 Address</label
+              >
+              <input
+                id={`${uniqueId}-peer0-ipv6`}
+                class="wg-input wg-peer-ipv6"
+                type="text"
+                value="fd00:1111:2222:100::2"
+                placeholder="fd00:1111:2222:100::2"
+              />
+            </div>
+          </div>
+          <div class="wg-fields-row">
+            <div class="wg-field">
+              <label
+                class="wg-label"
+                for={`${uniqueId}-peer0-keepalive`}
+                >Keepalive</label
+              >
+              <input
+                id={`${uniqueId}-peer0-keepalive`}
+                class="wg-input wg-peer-keepalive"
+                type="text"
+                value="25s"
+                placeholder="25s"
+              />
+            </div>
+            <div class="wg-field">
+              <label
+                class="wg-label"
+                for={`${uniqueId}-peer0-keygen`}
+                >Key Generation</label
+              >
+              <select
+                id={`${uniqueId}-peer0-keygen`}
+                class="wg-select wg-peer-keygen"
+              >
+                <option
+                  value="auto"
+                  selected
+                  >RouterOS auto (recommended)</option
+                >
+                <option value="manual">Manual (enter keys)</option>
+              </select>
+            </div>
+          </div>
+          <div
+            class="wg-peer-manual-keys"
+            style="display:none"
+          >
+            <div class="wg-fields-row">
+              <div class="wg-field">
+                <label
+                  class="wg-label"
+                  for={`${uniqueId}-peer0-privkey`}
+                  >Private Key</label
+                >
+                <div class="wg-key-row">
+                  <input
+                    id={`${uniqueId}-peer0-privkey`}
+                    class="wg-input wg-peer-privkey"
+                    type="text"
+                    value=""
+                    placeholder="Client private key (base64)"
+                  />
+                  <button
+                    type="button"
+                    class="wg-gen-key-btn"
+                    data-keygen="privkey"
+                    aria-label="Generate private key"
+                  >
+                    <span
+                      class="i-mdi:autorenew"
+                      aria-hidden="true"
+                    ></span>
+                  </button>
+                </div>
+              </div>
+              <div class="wg-field">
+                <label
+                  class="wg-label"
+                  for={`${uniqueId}-peer0-pubkey`}
+                  >Public Key</label
+                >
+                <input
+                  id={`${uniqueId}-peer0-pubkey`}
+                  class="wg-input wg-peer-pubkey"
+                  type="text"
+                  value=""
+                  placeholder="Auto-derived from private key"
+                  readonly
+                />
+              </div>
+            </div>
+            <div class="wg-fields-row">
+              <div class="wg-field">
+                <label
+                  class="wg-label"
+                  for={`${uniqueId}-peer0-psk`}
+                  >Preshared Key <span class="wg-field-hint">(optional)</span
+                  ></label
+                >
+                <div class="wg-key-row">
+                  <input
+                    id={`${uniqueId}-peer0-psk`}
+                    class="wg-input wg-peer-psk"
+                    type="text"
+                    value=""
+                    placeholder="Leave empty to disable preshared key"
+                  />
+                  <button
+                    type="button"
+                    class="wg-gen-key-btn"
+                    data-keygen="psk"
+                    aria-label="Generate preshared key"
+                  >
+                    <span
+                      class="i-mdi:autorenew"
+                      aria-hidden="true"
+                    ></span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {/* ── Client Config Options ── */}
+    <details
+      class="wg-card"
+      open
+    >
+      <summary class="wg-card-header wg-summary">
+        <span
+          class="i-mdi:file-document-outline"
+          aria-hidden="true"
+        ></span>
+        Client Configuration
+        <span
+          class="i-mdi:chevron-right wg-chevron"
+          aria-hidden="true"
+        ></span>
+      </summary>
+      <div class="wg-card-body">
+        <div class="wg-toggle-row wg-main-toggle">
+          <label class="wg-toggle-label">
+            <input
+              id={`${uniqueId}-gen-client-conf`}
+              type="checkbox"
+              checked
+            />
+            <span>Generate client .conf files</span>
+          </label>
+        </div>
+        <div class="wg-fields-row">
+          <div class="wg-field">
+            <label
+              class="wg-label"
+              for={`${uniqueId}-tunnel-mode`}
+              >Tunnel Mode</label
+            >
+            <select
+              id={`${uniqueId}-tunnel-mode`}
+              class="wg-select"
+            >
+              <option
+                value="full"
+                selected
+                >Full Tunnel (all traffic via VPN)</option
+              >
+              <option value="split"
+                >Split Tunnel (only specified subnets)</option
+              >
+            </select>
+          </div>
+        </div>
+        <div
+          class="wg-sub-fields"
+          id={`${uniqueId}-split-fields`}
+          hidden
+        >
+          <div class="wg-field">
+            <label
+              class="wg-label"
+              for={`${uniqueId}-split-subnets`}
+              >Split Tunnel Subnets</label
+            >
+            <input
+              id={`${uniqueId}-split-subnets`}
+              class="wg-input"
+              type="text"
+              value=""
+              placeholder="Auto (LAN + VPN subnets)"
+            />
+            <span class="wg-field-hint"
+              >Leave empty to auto-include LAN and VPN subnets</span
+            >
+          </div>
+        </div>
+      </div>
+    </details>
+
+    {/* ── RouterOS Output ── */}
+    <div class="wg-output-section">
+      <div class="wg-output-header">
+        <span class="wg-output-label">
+          <span
+            class="i-simple-icons:mikrotik"
+            aria-hidden="true"
+          ></span>
+          RouterOS Configuration
+        </span>
+        <button
+          type="button"
+          class="wg-copy-btn"
+          data-copy-target="routeros"
+          aria-label="Copy RouterOS configuration"
+        >
+          <span
+            class="i-mdi:content-copy"
+            aria-hidden="true"
+          ></span>
+          Copy
+        </button>
+      </div>
+      {
+        /* eslint-disable astro/jsx-a11y/no-noninteractive-tabindex -- scrollable region requires keyboard access */
+      }
+      <pre
+        class="wg-output-code"
+        tabindex="0"
+        role="region"
+        aria-label="Generated RouterOS configuration"><code id={`${uniqueId}-output-routeros`} /></pre>
+      {/* eslint-enable astro/jsx-a11y/no-noninteractive-tabindex */}
+    </div>
+
+    {/* ── Client Config Output ── */}
+    <div
+      class="wg-output-section"
+      id={`${uniqueId}-client-output-section`}
+    >
+      <div class="wg-output-header">
+        <span class="wg-output-label">
+          <span
+            class="i-mdi:cellphone-link"
+            aria-hidden="true"
+          ></span>
+          Client Configuration Files
+        </span>
+        <button
+          type="button"
+          class="wg-copy-btn"
+          data-copy-target="client"
+          aria-label="Copy client configuration"
+        >
+          <span
+            class="i-mdi:content-copy"
+            aria-hidden="true"
+          ></span>
+          Copy
+        </button>
+      </div>
+      {
+        /* eslint-disable astro/jsx-a11y/no-noninteractive-tabindex -- scrollable region requires keyboard access */
+      }
+      <pre
+        class="wg-output-code"
+        tabindex="0"
+        role="region"
+        aria-label="Generated client configuration files"><code id={`${uniqueId}-output-client`} /></pre>
+      {/* eslint-enable astro/jsx-a11y/no-noninteractive-tabindex */}
+    </div>
+
+    {/* Related link */}
+    <div class="wg-related">
+      <span
+        class="i-mdi:book-open-variant"
+        aria-hidden="true"
+      ></span>
+      Full guide:
+      <a href="/blog/mikrotik-wireguard-dual-stack-vpn/"
+        >MikroTik WireGuard Dual-Stack VPN</a
+      >
+    </div>
+  </div>
+</div>
+
+<script is:inline define:vars={{ uniqueId }}>
+  (function () {
+    var container = document.querySelector('[data-wg-id="' + uniqueId + '"]');
+    if (!container) return;
+
+    function el(suffix) {
+      return document.getElementById(uniqueId + "-" + suffix);
+    }
+
+    // ── References ──
+    var ifaceNameInput = el("iface-name");
+    var listenPortInput = el("listen-port");
+    var mtuInput = el("mtu");
+    var ifaceCommentInput = el("iface-comment");
+    var vpnSubnetInput = el("vpn-subnet");
+    var lanSubnetInput = el("lan-subnet");
+    var enableIpv6Check = el("enable-ipv6");
+    var ipv6Fields = el("ipv6-fields");
+    var vpnIpv6Input = el("vpn-ipv6");
+    var enableExtraLansCheck = el("enable-extra-lans");
+    var extraLansFields = el("extra-lans-fields");
+    var extraLansInput = el("extra-lans");
+    var endpointInput = el("endpoint");
+    var dnsInput = el("dns");
+    var advancedCheck = el("advanced");
+    var advancedSection = el("advanced-section");
+    var wanListInput = el("wan-list");
+    var vpnListInput = el("vpn-list");
+    var lanListInput = el("lan-list");
+    var addToLanCheck = el("add-to-lan");
+    var fwInternetCheck = el("fw-internet");
+    var fwLanCheck = el("fw-lan");
+    var fwFasttrackCheck = el("fw-fasttrack");
+    var fwAddrlistCheck = el("fw-addrlist");
+    var fwMssCheck = el("fw-mss");
+    var fwRawCheck = el("fw-raw");
+    var mssFields = el("mss-fields");
+    var mssValueInput = el("mss-value");
+    var genClientConfCheck = el("gen-client-conf");
+    var tunnelModeSelect = el("tunnel-mode");
+    var splitFields = el("split-fields");
+    var splitSubnetsInput = el("split-subnets");
+    var peersContainer = el("peers-container");
+    var addPeerBtn = el("add-peer");
+    var outputRouterOS = el("output-routeros");
+    var outputClient = el("output-client");
+    var clientOutputSection = el("client-output-section");
+    var presetBtns = container.querySelectorAll(".wg-preset-btn");
+
+    // ── Helper: parse subnet to get gateway ──
+    function parseSubnet(cidr) {
+      var parts = cidr.split("/");
+      if (parts.length !== 2) return null;
+
+      var ip = parts[0];
+      var prefix = parseInt(parts[1], 10);
+      if (isNaN(prefix) || prefix < 0 || prefix > 32) return null;
+
+      var octets = ip.split(".").map(Number);
+      if (
+        octets.length !== 4 ||
+        octets.some(function (o) {
+          return isNaN(o) || o < 0 || o > 255;
+        })
+      )
+        return null;
+
+      // Build 32-bit mask and compute network address with bitwise ops
+      var ipInt =
+        ((octets[0] << 24) |
+          (octets[1] << 16) |
+          (octets[2] << 8) |
+          octets[3]) >>>
+        0;
+      var maskInt = prefix === 0 ? 0 : (~0 << (32 - prefix)) >>> 0;
+      var networkInt = (ipInt & maskInt) >>> 0;
+
+      function toDotted(n) {
+        return [
+          (n >>> 24) & 255,
+          (n >>> 16) & 255,
+          (n >>> 8) & 255,
+          n & 255,
+        ].join(".");
+      }
+
+      var networkAddress = toDotted(networkInt);
+      var gatewayIp = prefix < 31 ? toDotted(networkInt + 1) : networkAddress;
+
+      return {
+        network: networkAddress + "/" + prefix,
+        gateway: gatewayIp + "/" + prefix,
+        gatewayIp: gatewayIp,
+        mask: String(prefix),
+        base: networkAddress,
+      };
+    }
+
+    function parseIpv6Prefix(cidr) {
+      var parts = cidr.split("/");
+      var prefix = parts[0].replace(/::.*$/, "");
+      var mask = parts[1] || "64";
+      return {
+        prefix: prefix,
+        network: cidr,
+        gateway: prefix + "::1/" + mask,
+        gatewayIp: prefix + "::1",
+        mask: mask,
+      };
+    }
+
+    function getExtraLans() {
+      if (!enableExtraLansCheck.checked) return [];
+      var val = extraLansInput.value.trim();
+      if (!val) return [];
+      return val
+        .split(",")
+        .map(function (s) {
+          return s.trim();
+        })
+        .filter(Boolean);
+    }
+
+    // ── Peer management ──
+    var peerCount = 1;
+
+    function getPeers() {
+      var peerEls = peersContainer.querySelectorAll(".wg-peer");
+      var peers = [];
+      peerEls.forEach(function (peerEl, i) {
+        var pubkeyEl = peerEl.querySelector(".wg-peer-pubkey");
+        var privkeyEl = peerEl.querySelector(".wg-peer-privkey");
+        var pskEl = peerEl.querySelector(".wg-peer-psk");
+        peers.push({
+          name:
+            peerEl.querySelector(".wg-peer-name").value.trim() ||
+            "wg_client" + (i + 1),
+          comment:
+            peerEl.querySelector(".wg-peer-comment").value.trim() ||
+            "Client " + (i + 1),
+          ipv4: peerEl.querySelector(".wg-peer-ipv4").value.trim(),
+          ipv6: peerEl.querySelector(".wg-peer-ipv6").value.trim(),
+          keepalive:
+            peerEl.querySelector(".wg-peer-keepalive").value.trim() || "25s",
+          keygen: peerEl.querySelector(".wg-peer-keygen").value,
+          pubkey: pubkeyEl ? pubkeyEl.value.trim() : "",
+          privkey: privkeyEl ? privkeyEl.value.trim() : "",
+          psk: pskEl ? pskEl.value.trim() : "",
+        });
+      });
+      return peers;
+    }
+
+    function getNextIp(subnet, index) {
+      var parts = subnet.split("/")[0].split(".");
+      parts[3] = String(index + 2);
+      return parts.join(".");
+    }
+
+    function getNextIpv6(prefix, index) {
+      var base = prefix.split("/")[0].replace(/::.*$/, "");
+      return base + "::" + (index + 2).toString(16);
+    }
+
+    function createPeerHtml(index) {
+      var uid = uniqueId;
+      var ipv4 = getNextIp(vpnSubnetInput.value, index);
+      var ipv6 = getNextIpv6(vpnIpv6Input.value, index);
+      var ipv6Display = enableIpv6Check.checked ? "" : ' style="display:none"';
+      var names = [
+        "wg_phone",
+        "wg_laptop",
+        "wg_tablet",
+        "wg_desktop",
+        "wg_remote",
+      ];
+      var comments = [
+        "Phone - Mobile VPN",
+        "Laptop - Mobile VPN",
+        "Tablet - Mobile VPN",
+        "Desktop - VPN",
+        "Remote Site",
+      ];
+      var name = names[index] || "wg_client" + (index + 1);
+      var comment = comments[index] || "Client " + (index + 1);
+
+      var html = '<div class="wg-peer" data-peer-index="' + index + '">';
+      html += '<div class="wg-peer-header">';
+      html += '<span class="wg-peer-number">Peer ' + (index + 1) + "</span>";
+      html +=
+        '<button type="button" class="wg-remove-peer-btn" data-remove-peer="' +
+        index +
+        '" aria-label="Remove peer">';
+      html +=
+        '<span class="i-mdi:close" aria-hidden="true"></span></button></div>';
+      html += '<div class="wg-fields-row">';
+      html +=
+        '<div class="wg-field"><label class="wg-label" for="' +
+        uid +
+        "-peer" +
+        index +
+        '-name">Name</label>';
+      html +=
+        '<input id="' +
+        uid +
+        "-peer" +
+        index +
+        '-name" class="wg-input wg-peer-name" type="text" value="' +
+        name +
+        '" placeholder="wg_client' +
+        (index + 1) +
+        '" /></div>';
+      html +=
+        '<div class="wg-field"><label class="wg-label" for="' +
+        uid +
+        "-peer" +
+        index +
+        '-comment">Comment</label>';
+      html +=
+        '<input id="' +
+        uid +
+        "-peer" +
+        index +
+        '-comment" class="wg-input wg-peer-comment" type="text" value="' +
+        comment +
+        '" placeholder="Client description" /></div></div>';
+      html += '<div class="wg-fields-row">';
+      html +=
+        '<div class="wg-field"><label class="wg-label" for="' +
+        uid +
+        "-peer" +
+        index +
+        '-ipv4">IPv4 Address</label>';
+      html +=
+        '<input id="' +
+        uid +
+        "-peer" +
+        index +
+        '-ipv4" class="wg-input wg-peer-ipv4" type="text" value="' +
+        ipv4 +
+        '" /></div>';
+      html +=
+        '<div class="wg-field wg-peer-ipv6-field"' +
+        ipv6Display +
+        '><label class="wg-label" for="' +
+        uid +
+        "-peer" +
+        index +
+        '-ipv6">IPv6 Address</label>';
+      html +=
+        '<input id="' +
+        uid +
+        "-peer" +
+        index +
+        '-ipv6" class="wg-input wg-peer-ipv6" type="text" value="' +
+        ipv6 +
+        '" /></div></div>';
+      html += '<div class="wg-fields-row">';
+      html +=
+        '<div class="wg-field"><label class="wg-label" for="' +
+        uid +
+        "-peer" +
+        index +
+        '-keepalive">Keepalive</label>';
+      html +=
+        '<input id="' +
+        uid +
+        "-peer" +
+        index +
+        '-keepalive" class="wg-input wg-peer-keepalive" type="text" value="25s" /></div>';
+      html +=
+        '<div class="wg-field"><label class="wg-label" for="' +
+        uid +
+        "-peer" +
+        index +
+        '-keygen">Key Generation</label>';
+      html +=
+        '<select id="' +
+        uid +
+        "-peer" +
+        index +
+        '-keygen" class="wg-select wg-peer-keygen"><option value="auto" selected>RouterOS auto (recommended)</option>';
+      html +=
+        '<option value="manual">Manual (enter keys)</option></select></div></div>';
+      // Manual key fields
+      html += '<div class="wg-peer-manual-keys" style="display:none">';
+      html += '<div class="wg-fields-row">';
+      html +=
+        '<div class="wg-field"><label class="wg-label" for="' +
+        uid +
+        "-peer" +
+        index +
+        '-privkey">Private Key</label>';
+      html +=
+        '<div class="wg-key-row"><input id="' +
+        uid +
+        "-peer" +
+        index +
+        '-privkey" class="wg-input wg-peer-privkey" type="text" value="" placeholder="Client private key (base64)" />';
+      html +=
+        '<button type="button" class="wg-gen-key-btn" data-keygen="privkey" aria-label="Generate private key"><span class="i-mdi:autorenew" aria-hidden="true"></span></button></div></div>';
+      html +=
+        '<div class="wg-field"><label class="wg-label" for="' +
+        uid +
+        "-peer" +
+        index +
+        '-pubkey">Public Key</label>';
+      html +=
+        '<input id="' +
+        uid +
+        "-peer" +
+        index +
+        '-pubkey" class="wg-input wg-peer-pubkey" type="text" value="" placeholder="Auto-derived from private key" readonly /></div></div>';
+      html += '<div class="wg-fields-row">';
+      html +=
+        '<div class="wg-field"><label class="wg-label" for="' +
+        uid +
+        "-peer" +
+        index +
+        '-psk">Preshared Key <span class="wg-field-hint">(optional)</span></label>';
+      html +=
+        '<div class="wg-key-row"><input id="' +
+        uid +
+        "-peer" +
+        index +
+        '-psk" class="wg-input wg-peer-psk" type="text" value="" placeholder="Leave empty to disable preshared key" />';
+      html +=
+        '<button type="button" class="wg-gen-key-btn" data-keygen="psk" aria-label="Generate preshared key"><span class="i-mdi:autorenew" aria-hidden="true"></span></button></div></div></div>';
+      html += "</div>";
+      html += "</div>";
+      return html;
+    }
+
+    function addPeer() {
+      var div = document.createElement("div");
+      div.innerHTML = createPeerHtml(peerCount);
+      var newPeer = div.firstChild;
+      peersContainer.appendChild(newPeer);
+      peerCount++;
+      bindPeerEvents(newPeer);
+      updateRemoveButtons();
+      generate();
+    }
+
+    function removePeer(peerEl) {
+      peerEl.remove();
+      updatePeerNumbers();
+      updateRemoveButtons();
+      generate();
+    }
+
+    function updatePeerNumbers() {
+      var peers = peersContainer.querySelectorAll(".wg-peer");
+      peers.forEach(function (p, i) {
+        p.querySelector(".wg-peer-number").textContent = "Peer " + (i + 1);
+      });
+    }
+
+    function updateRemoveButtons() {
+      var peers = peersContainer.querySelectorAll(".wg-peer");
+      peers.forEach(function (p) {
+        var btn = p.querySelector(".wg-remove-peer-btn");
+        if (btn) btn.style.display = peers.length > 1 ? "" : "none";
+      });
+    }
+
+    // ── WireGuard key generation (Web Crypto API) ──
+    function generateWgKeyPair() {
+      // Generate 32 random bytes for private key
+      var privBytes = new Uint8Array(32);
+      crypto.getRandomValues(privBytes);
+      // Clamp for Curve25519
+      privBytes[0] &= 248;
+      privBytes[31] &= 127;
+      privBytes[31] |= 64;
+      var privKey = btoa(String.fromCharCode.apply(null, privBytes));
+      // Public key derivation requires Curve25519 which isn't in Web Crypto.
+      // We generate the private key and show a note about deriving public key.
+      return { privateKey: privKey, publicKey: "" };
+    }
+
+    function generatePsk() {
+      var bytes = new Uint8Array(32);
+      crypto.getRandomValues(bytes);
+      return btoa(String.fromCharCode.apply(null, bytes));
+    }
+
+    function bindPeerEvents(peerEl) {
+      peerEl.querySelectorAll("input, select").forEach(function (inp) {
+        inp.addEventListener("input", generate);
+        inp.addEventListener("change", generate);
+      });
+      var removeBtn = peerEl.querySelector(".wg-remove-peer-btn");
+      if (removeBtn) {
+        removeBtn.addEventListener("click", function () {
+          removePeer(peerEl);
+        });
+      }
+      // Keygen mode toggle
+      var keygenSelect = peerEl.querySelector(".wg-peer-keygen");
+      var manualKeys = peerEl.querySelector(".wg-peer-manual-keys");
+      if (keygenSelect && manualKeys) {
+        keygenSelect.addEventListener("change", function () {
+          manualKeys.style.display =
+            keygenSelect.value === "manual" ? "" : "none";
+          generate();
+        });
+      }
+      // Key generation buttons
+      peerEl.querySelectorAll(".wg-gen-key-btn").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          var type = btn.getAttribute("data-keygen");
+          if (type === "privkey") {
+            var keys = generateWgKeyPair();
+            var privInput = peerEl.querySelector(".wg-peer-privkey");
+            var pubInput = peerEl.querySelector(".wg-peer-pubkey");
+            if (privInput) privInput.value = keys.privateKey;
+            if (pubInput)
+              pubInput.value =
+                "(derive with: echo '" + keys.privateKey + "' | wg pubkey)";
+          } else if (type === "psk") {
+            var pskInput = peerEl.querySelector(".wg-peer-psk");
+            if (pskInput) pskInput.value = generatePsk();
+          }
+          generate();
+        });
+      });
+    }
+
+    // ── Toggle visibility ──
+    function updateVisibility() {
+      var ipv6On = enableIpv6Check.checked;
+      ipv6Fields.style.display = ipv6On ? "" : "none";
+      extraLansFields.hidden = !enableExtraLansCheck.checked;
+      advancedSection.hidden = !advancedCheck.checked;
+      mssFields.style.display = fwMssCheck.checked ? "" : "none";
+      splitFields.hidden = tunnelModeSelect.value !== "split";
+      clientOutputSection.style.display = genClientConfCheck.checked
+        ? ""
+        : "none";
+
+      peersContainer
+        .querySelectorAll(".wg-peer-ipv6-field")
+        .forEach(function (f) {
+          f.style.display = ipv6On ? "" : "none";
+        });
+
+      // Toggle manual key visibility per peer
+      peersContainer.querySelectorAll(".wg-peer").forEach(function (p) {
+        var keygen = p.querySelector(".wg-peer-keygen");
+        var manualKeys = p.querySelector(".wg-peer-manual-keys");
+        if (keygen && manualKeys) {
+          manualKeys.style.display = keygen.value === "manual" ? "" : "none";
+        }
+      });
+    }
+
+    // ── Auto-calculate MSS ──
+    function autoMss() {
+      var mtu = parseInt(mtuInput.value) || 1500;
+      mssValueInput.value = mtu - 80;
+    }
+
+    mtuInput.addEventListener("input", function () {
+      autoMss();
+      generate();
+    });
+
+    // ── Generate RouterOS config ──
+    function generate() {
+      updateVisibility();
+
+      var ifaceName = ifaceNameInput.value.trim() || "wg_devices";
+      var listenPort = listenPortInput.value.trim() || "53537";
+      var mtu = mtuInput.value.trim() || "1500";
+      var ifaceComment =
+        ifaceCommentInput.value.trim() || "VPN for Mobile Devices";
+      var vpnSubnet = vpnSubnetInput.value.trim() || "192.168.100.0/24";
+      var lanSubnet = lanSubnetInput.value.trim() || "192.168.0.0/24";
+      var ipv6On = enableIpv6Check.checked;
+      var vpnIpv6 = vpnIpv6Input.value.trim() || "fd00:1111:2222:100::/64";
+      var endpoint = endpointInput.value.trim() || "your-domain.com";
+      var wanList = wanListInput.value.trim() || "WAN";
+      var vpnList = vpnListInput.value.trim() || "VPN";
+      var lanList = lanListInput.value.trim() || "LAN";
+      var addToLan = addToLanCheck.checked;
+      var fwInternet = fwInternetCheck.checked;
+      var fwLan = fwLanCheck.checked;
+      var fwFasttrack = fwFasttrackCheck.checked;
+      var fwAddrlist = fwAddrlistCheck.checked;
+      var fwMss = fwMssCheck.checked;
+      var fwRaw = fwRawCheck.checked;
+      var mssValue = mssValueInput.value.trim() || "1420";
+      var extraLans = getExtraLans();
+
+      var vpn = parseSubnet(vpnSubnet);
+      var lan = parseSubnet(lanSubnet);
+      if (!vpn || !lan) return;
+      var v6 = ipv6On ? parseIpv6Prefix(vpnIpv6) : null;
+      var peers = getPeers();
+
+      var dnsServers = dnsInput.value.trim();
+      if (!dnsServers) {
+        dnsServers = ipv6On
+          ? lan.gatewayIp + "," + v6.gatewayIp
+          : lan.gatewayIp;
+      }
+
+      var lines = [];
+      var sep =
+        "# ═══════════════════════════════════════════════════════════════════════════════";
+      var sec =
+        "# ───────────────────────────────────────────────────────────────────────────────";
+
+      // Header
+      lines.push(sep);
+      lines.push(
+        "# WIREGUARD VPN - " +
+          (ipv6On ? "DUAL-STACK" : "IPv4") +
+          " CONFIGURATION",
+      );
+      lines.push(sep);
+      lines.push("# MikroTik RouterOS 7.x");
+      lines.push(
+        "# Generated by WireGuard Config Builder — https://jmrp.io/tools/wireguard-config-generator/",
+      );
+      lines.push(sep);
+      lines.push("");
+
+      // Interface
+      lines.push(sec);
+      lines.push("# INTERFACE CONFIGURATION");
+      lines.push(sec);
+      lines.push("");
+      lines.push("/interface wireguard add \\");
+      lines.push("    name=" + ifaceName + " \\");
+      lines.push("    mtu=" + mtu + " \\");
+      lines.push("    listen-port=" + listenPort + " \\");
+      lines.push('    comment="' + ifaceComment + '"');
+      lines.push("");
+
+      // IP Addresses
+      lines.push(sec);
+      lines.push("# IP ADDRESS ASSIGNMENT");
+      lines.push(sec);
+      lines.push("");
+      lines.push("/ip address add \\");
+      lines.push("    address=" + vpn.gateway + " \\");
+      lines.push("    interface=" + ifaceName + " \\");
+      lines.push("    network=" + vpn.base + " \\");
+      lines.push('    comment="VPN Network"');
+
+      if (ipv6On) {
+        lines.push("");
+        lines.push("/ipv6 address add \\");
+        lines.push("    address=" + v6.gateway + " \\");
+        lines.push("    interface=" + ifaceName + " \\");
+        lines.push("    advertise=no \\");
+        lines.push('    comment="VPN IPv6 ULA"');
+      }
+      lines.push("");
+
+      // IPv6 Pool
+      if (ipv6On) {
+        lines.push(sec);
+        lines.push("# IPv6 POOL");
+        lines.push(sec);
+        lines.push("");
+        lines.push("/ipv6 pool add \\");
+        lines.push("    name=" + ifaceName + "_pool_global \\");
+        lines.push("    prefix=" + vpnIpv6 + " \\");
+        lines.push("    prefix-length=" + v6.mask + " \\");
+        lines.push('    comment="WireGuard IPv6 Pool"');
+        lines.push("");
+      }
+
+      // Interface Lists
+      lines.push(sec);
+      lines.push("# INTERFACE LISTS");
+      lines.push(sec);
+      lines.push("");
+      lines.push(
+        "/interface list add name=" + vpnList + ' comment="VPN Interfaces"',
+      );
+      lines.push(
+        "/interface list member add interface=" +
+          ifaceName +
+          " list=" +
+          vpnList +
+          ' comment="' +
+          ifaceComment +
+          '"',
+      );
+      if (addToLan) {
+        lines.push(
+          "/interface list member add interface=" +
+            ifaceName +
+            " list=" +
+            lanList +
+            ' comment="' +
+            ifaceComment +
+            ' - LAN Access"',
+        );
+      }
+      lines.push("");
+
+      // Address Lists
+      if (fwAddrlist) {
+        lines.push(sec);
+        lines.push("# ADDRESS LISTS");
+        lines.push(sec);
+        lines.push("");
+        lines.push("/ip firewall address-list add \\");
+        lines.push("    list=WireGuard \\");
+        lines.push("    address=" + vpnSubnet + " \\");
+        lines.push('    comment="WireGuard Network"');
+        lines.push("");
+      }
+
+      // Firewall Input
+      lines.push(sec);
+      lines.push("# FIREWALL - INPUT CHAIN");
+      lines.push(sec);
+      lines.push("");
+      lines.push("/ip firewall filter add \\");
+      lines.push("    chain=input \\");
+      lines.push("    action=accept \\");
+      lines.push("    protocol=udp \\");
+      lines.push("    dst-port=" + listenPort + " \\");
+      lines.push('    comment="WireGuard - Accept incoming connections"');
+
+      if (ipv6On) {
+        lines.push("");
+        lines.push("/ipv6 firewall filter add \\");
+        lines.push("    chain=input \\");
+        lines.push("    action=accept \\");
+        lines.push("    protocol=udp \\");
+        lines.push("    port=" + listenPort + " \\");
+        lines.push('    comment="Allow WireGuard"');
+      }
+      lines.push("");
+
+      // Firewall Forward IPv4
+      if (fwInternet || fwLan) {
+        lines.push(sec);
+        lines.push("# FIREWALL - FORWARD CHAIN (IPv4)");
+        lines.push(sec);
+        lines.push("");
+
+        if (fwFasttrack && fwAddrlist) {
+          lines.push("/ip firewall filter add \\");
+          lines.push("    chain=forward \\");
+          lines.push("    action=fasttrack-connection \\");
+          lines.push("    connection-state=established,related \\");
+          lines.push("    src-address-list=WireGuard \\");
+          lines.push('    comment="FastTrack for WireGuard Networks"');
+          lines.push("");
+        }
+
+        if (fwInternet) {
+          lines.push("/ip firewall filter add \\");
+          lines.push("    chain=forward \\");
+          lines.push("    action=accept \\");
+          lines.push("    src-address=" + vpnSubnet + " \\");
+          lines.push("    out-interface-list=" + wanList + " \\");
+          lines.push('    comment="Allow WireGuard to Internet"');
+          lines.push("");
+          lines.push("/ip firewall filter add \\");
+          lines.push("    chain=forward \\");
+          lines.push("    action=accept \\");
+          lines.push("    connection-state=established,related \\");
+          lines.push("    dst-address=" + vpnSubnet + " \\");
+          lines.push("    in-interface-list=" + wanList + " \\");
+          lines.push('    comment="Allow Internet to WireGuard (replies)"');
+          lines.push("");
+        }
+
+        if (fwLan) {
+          lines.push("/ip firewall filter add \\");
+          lines.push("    chain=forward \\");
+          lines.push("    action=accept \\");
+          lines.push("    src-address=" + vpnSubnet + " \\");
+          lines.push("    dst-address=" + lanSubnet + " \\");
+          lines.push('    comment="Allow WireGuard to Home LAN"');
+          lines.push("");
+
+          extraLans.forEach(function (extra) {
+            lines.push("/ip firewall filter add \\");
+            lines.push("    chain=forward \\");
+            lines.push("    action=accept \\");
+            lines.push("    src-address=" + vpnSubnet + " \\");
+            lines.push("    dst-address=" + extra + " \\");
+            lines.push('    comment="Allow WireGuard to ' + extra + '"');
+            lines.push("");
+          });
+        }
+      }
+
+      // Firewall Forward IPv6
+      if (ipv6On && (fwInternet || fwLan)) {
+        lines.push(sec);
+        lines.push("# FIREWALL - FORWARD CHAIN (IPv6)");
+        lines.push(sec);
+        lines.push("");
+        lines.push("/ipv6 firewall filter add \\");
+        lines.push("    chain=forward \\");
+        lines.push("    action=accept \\");
+        lines.push("    in-interface=" + ifaceName + " \\");
+        lines.push('    comment="WireGuard: Allow all outbound"');
+        lines.push("");
+        lines.push("/ipv6 firewall filter add \\");
+        lines.push("    chain=forward \\");
+        lines.push("    action=accept \\");
+        lines.push("    connection-state=established,related \\");
+        lines.push("    out-interface=" + ifaceName + " \\");
+        lines.push('    comment="WireGuard: Allow replies"');
+        lines.push("");
+      }
+
+      // NAT
+      if (fwInternet) {
+        lines.push(sec);
+        lines.push("# NAT / MASQUERADE");
+        lines.push(sec);
+        lines.push("");
+        lines.push("/ip firewall nat add \\");
+        lines.push("    chain=srcnat \\");
+        lines.push("    action=masquerade \\");
+        lines.push("    src-address=" + vpnSubnet + " \\");
+        lines.push("    out-interface-list=" + wanList + " \\");
+        lines.push('    comment="WireGuard - Internet Access"');
+
+        if (ipv6On) {
+          lines.push("");
+          lines.push("/ipv6 firewall nat add \\");
+          lines.push("    chain=srcnat \\");
+          lines.push("    action=masquerade \\");
+          lines.push("    src-address=" + vpnIpv6 + " \\");
+          lines.push("    out-interface-list=" + wanList + " \\");
+          lines.push('    comment="WireGuard - IPv6 Internet Access"');
+        }
+        lines.push("");
+      }
+
+      // MSS Clamping
+      if (fwMss) {
+        lines.push(sec);
+        lines.push("# MANGLE - MSS CLAMPING");
+        lines.push(sec);
+        lines.push("");
+        lines.push("/ip firewall mangle add \\");
+        lines.push("    chain=forward \\");
+        lines.push("    action=change-mss \\");
+        lines.push("    protocol=tcp \\");
+        lines.push("    tcp-flags=syn \\");
+        lines.push("    tcp-mss=1349-65535 \\");
+        lines.push("    new-mss=" + mssValue + " \\");
+        lines.push("    in-interface=" + ifaceName + " \\");
+        lines.push('    comment="WireGuard MSS clamping"');
+        lines.push("");
+      }
+
+      // RAW
+      if (fwRaw) {
+        lines.push(sec);
+        lines.push("# RAW TABLE - SKIP FLOOD PROTECTION");
+        lines.push(sec);
+        lines.push("");
+        lines.push("/ip firewall raw add \\");
+        lines.push("    chain=prerouting \\");
+        lines.push("    action=accept \\");
+        lines.push("    protocol=udp \\");
+        lines.push("    dst-port=" + listenPort + " \\");
+        lines.push('    comment="WireGuard - Skip flood protection"');
+
+        if (ipv6On) {
+          lines.push("");
+          lines.push("/ipv6 firewall raw add \\");
+          lines.push("    chain=prerouting \\");
+          lines.push("    action=accept \\");
+          lines.push("    protocol=udp \\");
+          lines.push("    dst-port=" + listenPort + " \\");
+          lines.push('    comment="WireGuard - Skip flood protection"');
+        }
+        lines.push("");
+      }
+
+      // Peers
+      if (peers.length > 0) {
+        lines.push(sec);
+        lines.push("# PEERS");
+        lines.push(sec);
+        lines.push("");
+
+        peers.forEach(function (peer) {
+          var allowedAddr = peer.ipv4 + "/32";
+          if (ipv6On && peer.ipv6) allowedAddr += "," + peer.ipv6 + "/128";
+
+          lines.push("/interface wireguard peers add \\");
+          lines.push("    interface=" + ifaceName + " \\");
+          lines.push("    name=" + peer.name + " \\");
+          if (peer.keygen === "auto") {
+            lines.push("    private-key=auto \\");
+            lines.push("    preshared-key=auto \\");
+          } else {
+            var pubkeyVal = peer.pubkey || "<CLIENT_PUBLIC_KEY>";
+            lines.push('    public-key="' + pubkeyVal + '" \\');
+            if (peer.psk) {
+              lines.push('    preshared-key="' + peer.psk + '" \\');
+            }
+          }
+          lines.push("    allowed-address=" + allowedAddr + " \\");
+          lines.push("    persistent-keepalive=" + peer.keepalive + " \\");
+          lines.push('    comment="' + peer.comment + '"');
+          lines.push("");
+
+          // Client config properties for auto-key peers
+          if (peer.keygen === "auto") {
+            var clientAddr = peer.ipv4 + "/32";
+            if (ipv6On && peer.ipv6) clientAddr += "," + peer.ipv6 + "/128";
+            var clientDns = dnsServers;
+            var clientAllowed =
+              tunnelModeSelect.value === "full"
+                ? ipv6On
+                  ? "0.0.0.0/0,::/0"
+                  : "0.0.0.0/0"
+                : getSplitAllowedIps(
+                    vpnSubnet,
+                    lanSubnet,
+                    extraLans,
+                    ipv6On,
+                    vpnIpv6,
+                  );
+
+            lines.push(
+              "/interface wireguard peers set [find name=" + peer.name + "] \\",
+            );
+            lines.push("    client-address=" + clientAddr + " \\");
+            lines.push("    client-dns=" + clientDns + " \\");
+            lines.push(
+              "    client-endpoint=" + endpoint + ":" + listenPort + " \\",
+            );
+            lines.push("    client-allowed-address=" + clientAllowed + " \\");
+            lines.push(
+              "    client-keepalive=" + peer.keepalive.replace(/s$/, ""),
+            );
+            lines.push("");
+          }
+        });
+
+        // Key retrieval commands for auto peers
+        var hasAuto = peers.some(function (p) {
+          return p.keygen === "auto";
+        });
+        if (hasAuto) {
+          lines.push("# Retrieve keys for manual client configuration:");
+          peers.forEach(function (peer) {
+            if (peer.keygen === "auto") {
+              lines.push("# " + peer.name + ":");
+              lines.push(
+                "#   :put [/interface wireguard peers get [find name=" +
+                  peer.name +
+                  "] private-key]",
+              );
+              lines.push(
+                "#   :put [/interface wireguard peers get [find name=" +
+                  peer.name +
+                  "] preshared-key]",
+              );
+            }
+          });
+          lines.push("# Server public key:");
+          lines.push(
+            "#   :put [/interface wireguard get [find name=" +
+              ifaceName +
+              "] public-key]",
+          );
+        }
+      }
+
+      outputRouterOS.textContent = lines.join("\n");
+
+      // ── Generate client configs ──
+      if (genClientConfCheck.checked) {
+        var clientLines = [];
+        var allowedIps =
+          tunnelModeSelect.value === "full"
+            ? ipv6On
+              ? "0.0.0.0/0, ::/0"
+              : "0.0.0.0/0"
+            : getSplitAllowedIps(
+                vpnSubnet,
+                lanSubnet,
+                extraLans,
+                ipv6On,
+                vpnIpv6,
+              ).replace(/,/g, ", ");
+
+        peers.forEach(function (peer, i) {
+          if (i > 0) clientLines.push("");
+          clientLines.push("# ── " + peer.comment + " (" + peer.name + ") ──");
+          clientLines.push("");
+          clientLines.push("[Interface]");
+          var privKeyVal =
+            peer.keygen === "manual" && peer.privkey
+              ? peer.privkey
+              : "<CLIENT_PRIVATE_KEY>";
+          clientLines.push("PrivateKey = " + privKeyVal);
+          var addr = peer.ipv4 + "/32";
+          if (ipv6On && peer.ipv6) addr += ", " + peer.ipv6 + "/128";
+          clientLines.push("Address = " + addr);
+          clientLines.push("DNS = " + dnsServers.replace(/,/g, ", "));
+          clientLines.push("");
+          clientLines.push("[Peer]");
+          clientLines.push("PublicKey = <SERVER_PUBLIC_KEY>");
+          if (peer.keygen === "manual") {
+            if (peer.psk) {
+              clientLines.push("PresharedKey = " + peer.psk);
+            }
+          } else {
+            clientLines.push("PresharedKey = <PRESHARED_KEY>");
+          }
+          clientLines.push("Endpoint = " + endpoint + ":" + listenPort);
+          clientLines.push("AllowedIPs = " + allowedIps);
+          clientLines.push(
+            "PersistentKeepalive = " + peer.keepalive.replace(/s$/, ""),
+          );
+
+          if (peer.keygen === "auto") {
+            clientLines.push("");
+            clientLines.push("# Keys are auto-generated on the router.");
+            clientLines.push(
+              "# Retrieve with: :put [/interface wireguard peers get [find name=" +
+                peer.name +
+                "] private-key]",
+            );
+            clientLines.push(
+              "# Or scan QR code from WinBox/WebFig → peer → show-client-config",
+            );
+          }
+        });
+
+        outputClient.textContent = clientLines.join("\n");
+      }
+    }
+
+    function getSplitAllowedIps(
+      vpnSubnet,
+      lanSubnet,
+      extraLans,
+      ipv6On,
+      vpnIpv6,
+    ) {
+      var custom = splitSubnetsInput.value.trim();
+      if (custom) return custom;
+      var subnets = [lanSubnet, vpnSubnet];
+      extraLans.forEach(function (s) {
+        subnets.push(s);
+      });
+      if (ipv6On) subnets.push(vpnIpv6);
+      return subnets.join(",");
+    }
+
+    // ── Presets ──
+    var presets = {
+      "ipv4-only": function () {
+        enableIpv6Check.checked = false;
+        fwInternetCheck.checked = true;
+        fwLanCheck.checked = true;
+        fwFasttrackCheck.checked = true;
+        fwMssCheck.checked = true;
+        fwRawCheck.checked = true;
+        fwAddrlistCheck.checked = true;
+        addToLanCheck.checked = true;
+        tunnelModeSelect.value = "full";
+        genClientConfCheck.checked = true;
+      },
+      "dual-stack": function () {
+        enableIpv6Check.checked = true;
+        fwInternetCheck.checked = true;
+        fwLanCheck.checked = true;
+        fwFasttrackCheck.checked = true;
+        fwMssCheck.checked = true;
+        fwRawCheck.checked = true;
+        fwAddrlistCheck.checked = true;
+        addToLanCheck.checked = true;
+        tunnelModeSelect.value = "full";
+        genClientConfCheck.checked = true;
+      },
+      "site-to-site": function () {
+        enableIpv6Check.checked = true;
+        fwInternetCheck.checked = false;
+        fwLanCheck.checked = true;
+        fwFasttrackCheck.checked = true;
+        fwMssCheck.checked = true;
+        fwRawCheck.checked = true;
+        fwAddrlistCheck.checked = true;
+        addToLanCheck.checked = true;
+        tunnelModeSelect.value = "split";
+        genClientConfCheck.checked = false;
+      },
+    };
+
+    // ── Event binding ──
+    presetBtns.forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        presetBtns.forEach(function (b) {
+          b.classList.remove("wg-preset-active");
+        });
+        btn.classList.add("wg-preset-active");
+        var preset = btn.getAttribute("data-preset");
+        if (presets[preset]) presets[preset]();
+        generate();
+      });
+    });
+
+    addPeerBtn.addEventListener("click", addPeer);
+
+    // Bind existing peer events
+    peersContainer.querySelectorAll(".wg-peer").forEach(function (p) {
+      bindPeerEvents(p);
+    });
+
+    // Bind all top-level inputs
+    container.querySelectorAll("input, select").forEach(function (inp) {
+      if (!inp.closest(".wg-peer")) {
+        inp.addEventListener("input", generate);
+        inp.addEventListener("change", generate);
+      }
+    });
+
+    // Copy buttons
+    container.querySelectorAll(".wg-copy-btn").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var target = btn.getAttribute("data-copy-target");
+        var code = target === "routeros" ? outputRouterOS : outputClient;
+        var text = code ? code.textContent : "";
+        navigator.clipboard.writeText(text).then(function () {
+          btn.innerHTML =
+            '<span class="i-mdi:check" aria-hidden="true"></span> Copied!';
+          setTimeout(function () {
+            btn.innerHTML =
+              '<span class="i-mdi:content-copy" aria-hidden="true"></span> Copy';
+          }, 1500);
+        });
+      });
+    });
+
+    generate();
+  })();
+</script>
+
+<style>
+  .wg-generator {
+    margin: 1.5rem 0;
+    overflow: hidden;
+    background: var(--color-bg-subtle);
+    border: var(--border-1);
+    border-radius: var(--radius-md);
+  }
+
+  .wg-title {
+    padding: 1rem 1.25rem;
+    font-size: 1.1rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-heading);
+    background: var(--color-bg-secondary);
+    border-bottom: var(--border-1);
+  }
+
+  .wg-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1.25rem;
+  }
+
+  /* Presets bar */
+  .wg-presets-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+  }
+
+  .wg-presets-label {
+    display: flex;
+    gap: 0.25rem;
+    align-items: center;
+    font-size: 0.8rem;
+    font-weight: var(--fw-bold);
+    color: var(--color-text-heading);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .wg-presets-label span {
+    width: 16px;
+    height: 16px;
+  }
+
+  .wg-presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.375rem;
+  }
+
+  .wg-preset-btn {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.8rem;
+    font-weight: var(--fw-medium);
+    color: var(--color-text-muted);
+    cursor: pointer;
+    background: var(--color-bg-secondary);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+    transition: all 0.15s;
+  }
+
+  .wg-preset-btn:hover {
+    color: var(--color-text);
+  }
+
+  .wg-preset-active {
+    color: var(--color-primary);
+    background: var(--color-bg);
+    border-color: var(--color-primary);
+  }
+
+  /* Card sections */
+  .wg-card {
+    overflow: hidden;
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+  }
+
+  .wg-card-header {
+    display: flex;
+    gap: 0.375rem;
+    align-items: center;
+    padding: 0.625rem 0.875rem;
+    font-size: 0.8rem;
+    font-weight: var(--fw-bold);
+    color: var(--color-text-heading);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    background: var(--color-bg-secondary);
+    border-bottom: var(--border-1);
+  }
+
+  .wg-card-header span[class*="i-"] {
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+  }
+
+  .wg-card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.625rem;
+    padding: 0.75rem 0.875rem;
+  }
+
+  /* Collapsible details */
+  .wg-summary {
+    cursor: pointer;
+    user-select: none;
+    list-style: none;
+  }
+
+  .wg-summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .wg-summary::marker {
+    display: none;
+    content: "";
+  }
+
+  .wg-chevron {
+    transition: transform 0.15s ease;
+  }
+
+  .wg-card[open] > .wg-summary .wg-chevron {
+    transform: rotate(90deg);
+  }
+
+  details.wg-card:not([open]) > .wg-card-header {
+    border-bottom: none;
+  }
+
+  /* Fields */
+  .wg-fields-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.5rem;
+  }
+
+  .wg-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+  }
+
+  .wg-label {
+    font-size: 0.7rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .wg-input,
+  .wg-select {
+    width: 100%;
+    padding: 0.375rem 0.5rem;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--color-text);
+    background: var(--color-bg);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+    transition: border-color 0.15s;
+  }
+
+  .wg-input:focus,
+  .wg-select:focus {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 1px;
+    border-color: var(--color-primary);
+  }
+
+  .wg-field-hint {
+    font-size: 0.65rem;
+    font-style: italic;
+    color: var(--color-text-muted);
+  }
+
+  /* Toggle rows */
+  .wg-toggle-row {
+    display: flex;
+    align-items: center;
+  }
+
+  .wg-toggles-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 0.875rem;
+  }
+
+  .wg-toggle-label {
+    display: flex;
+    gap: 0.375rem;
+    align-items: center;
+    font-size: 0.8rem;
+    color: var(--color-text);
+    cursor: pointer;
+  }
+
+  .wg-toggle-label input[type="checkbox"] {
+    accent-color: var(--color-primary);
+    cursor: pointer;
+  }
+
+  .wg-main-toggle .wg-toggle-label span {
+    font-weight: var(--fw-semibold);
+  }
+
+  /* Sub-fields */
+  .wg-sub-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding-left: 0.5rem;
+    margin-top: 0.25rem;
+    border-left: 2px solid var(--color-primary-muted, rgb(99 102 241 / 30%));
+  }
+
+  .wg-sub-fields[hidden] {
+    display: none;
+  }
+
+  /* Peer sections */
+  .wg-peer {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    background: var(--color-bg);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+  }
+
+  .wg-peer + .wg-peer {
+    margin-top: 0.5rem;
+  }
+
+  .wg-peer-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .wg-peer-number {
+    font-size: 0.75rem;
+    font-weight: var(--fw-bold);
+    color: var(--color-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .wg-remove-peer-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    background: none;
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+    transition: all 0.15s;
+  }
+
+  .wg-remove-peer-btn:hover {
+    color: var(--color-danger, #ef4444);
+    border-color: var(--color-danger, #ef4444);
+  }
+
+  .wg-remove-peer-btn span {
+    width: 14px;
+    height: 14px;
+  }
+
+  .wg-add-peer-btn {
+    display: flex;
+    gap: 0.25rem;
+    align-items: center;
+    padding: 0.25rem 0.625rem;
+    margin-left: auto;
+    font-size: 0.7rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-primary);
+    cursor: pointer;
+    background: var(--color-bg);
+    border: var(--border-1);
+    border-color: var(--color-primary);
+    border-radius: var(--radius-sm);
+    transition: all 0.15s;
+  }
+
+  .wg-add-peer-btn:hover {
+    background: var(--color-bg-subtle);
+  }
+
+  .wg-add-peer-btn span {
+    width: 14px;
+    height: 14px;
+  }
+
+  /* Key row (input + generate button) */
+  .wg-key-row {
+    display: flex;
+    gap: 0.375rem;
+    align-items: center;
+  }
+
+  .wg-key-row .wg-input {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .wg-gen-key-btn {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    color: var(--color-primary);
+    cursor: pointer;
+    background: var(--color-bg);
+    border: var(--border-1);
+    border-color: var(--color-primary);
+    border-radius: var(--radius-sm);
+    transition: all 0.15s;
+  }
+
+  .wg-gen-key-btn:hover {
+    background: var(--color-bg-subtle);
+  }
+
+  .wg-gen-key-btn span {
+    width: 16px;
+    height: 16px;
+  }
+
+  .wg-peer-manual-keys {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding-top: 0.375rem;
+    border-top: 1px dashed var(--color-border, rgb(200 200 200 / 40%));
+  }
+
+  /* Output */
+  .wg-output-section {
+    overflow: hidden;
+    background: var(--color-bg-secondary);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+  }
+
+  .wg-output-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.625rem 0.875rem;
+    border-bottom: var(--border-1);
+  }
+
+  .wg-output-label {
+    display: flex;
+    gap: 0.375rem;
+    align-items: center;
+    font-size: 0.8rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-heading);
+  }
+
+  .wg-output-label span {
+    width: 18px;
+    height: 18px;
+  }
+
+  .wg-copy-btn {
+    display: flex;
+    gap: 0.325rem;
+    align-items: center;
+    padding: 0.3rem 0.625rem;
+    font-size: 0.75rem;
+    font-weight: var(--fw-medium);
+    color: var(--color-text-muted);
+    cursor: pointer;
+    background: var(--color-bg);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+    transition: all 0.15s;
+  }
+
+  .wg-copy-btn span {
+    width: 14px;
+    height: 14px;
+  }
+
+  .wg-copy-btn:hover {
+    color: var(--color-text);
+    border-color: var(--color-primary);
+  }
+
+  .wg-output-code {
+    padding: 1rem;
+    margin: 0;
+    overflow-x: auto;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    line-height: 1.6;
+    color: var(--color-text);
+    background: var(--color-bg);
+  }
+
+  .wg-output-code code {
+    white-space: pre;
+  }
+
+  /* Related */
+  .wg-related {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+    padding: 0.625rem 0.875rem;
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+    background: var(--color-bg-secondary);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+  }
+
+  .wg-related span[class^="i-"] {
+    flex-shrink: 0;
+    width: 14px;
+    height: 14px;
+  }
+
+  .wg-related a {
+    padding: 0.125rem 0.5rem;
+    color: var(--color-primary);
+    text-decoration: none;
+    background: var(--color-bg);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+    transition: all 0.15s;
+  }
+
+  .wg-related a:hover {
+    border-color: var(--color-primary);
+  }
+
+  @media (width <= 640px) {
+    .wg-fields-row {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

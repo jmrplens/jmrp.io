@@ -19,6 +19,7 @@ interface Props {
   type?: string;
   schema?: Record<string, unknown> | Record<string, unknown>[]; // JSON-LD schema defaults or overrides
   image?: string;
+  noIndex?: boolean;
   // Article specific
   publishDate?: Date;
   modifiedDate?: Date;
@@ -32,6 +33,7 @@ const {
   type,
   schema,
   image,
+  noIndex,
   publishDate,
   modifiedDate,
   authors,
@@ -53,6 +55,7 @@ const {
       type={type}
       schema={schema}
       image={image}
+      noIndex={noIndex}
       publishDate={publishDate}
       modifiedDate={modifiedDate}
       authors={authors}

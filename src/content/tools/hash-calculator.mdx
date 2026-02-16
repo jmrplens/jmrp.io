@@ -109,7 +109,7 @@ import {
   <TerminalSessionCommand>
     echo -n 'console.log("Hello CSP");' | openssl dgst -sha256 -binary | openssl base64
   </TerminalSessionCommand>
-  <TerminalSessionOutput title="Base64 Hash Output">
+  <TerminalSessionOutput title="SHA-256 Base64 Hash Output">
     7fJ6A1b9qS8r...[hash]...=
   </TerminalSessionOutput>
 </TerminalSession>
@@ -119,7 +119,7 @@ import {
   <TerminalSessionCommand>
     cat script.js | openssl dgst -sha384 -binary | openssl base64 -A
   </TerminalSessionCommand>
-  <TerminalSessionOutput title="Base64 Hash Output">
+  <TerminalSessionOutput title="SHA-384 Base64 Hash Output">
     Nkhj...[base64 hash]...
   </TerminalSessionOutput>
 </TerminalSession>

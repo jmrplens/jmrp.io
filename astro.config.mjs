@@ -133,6 +133,16 @@ export default defineConfig({
         defaultLocale: i18nConfig.defaultLocale,
         locales: Object.fromEntries(i18nConfig.locales.map((l) => [l, l])),
       },
+      filter: (page) =>
+        // Exclude 404 and test/draft pages from sitemap
+        !page.includes("/404") &&
+        !page.includes("/998-") &&
+        !page.includes("/999-"),
+      serialize: (item) => ({
+        ...item,
+        // Set lastmod to current build date for all pages
+        lastmod: new Date().toISOString(),
+      }),
     }),
     mdx({
       // MDX needs to know about remark plugins too if we want it to work in .mdx files

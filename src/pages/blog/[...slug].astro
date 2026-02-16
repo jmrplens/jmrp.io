@@ -32,7 +32,7 @@ const siteEntry = await getEntry("site_config", "site");
 const siteData = (siteEntry?.data || {}) as SiteConfig;
 
 export async function getStaticPaths() {
-  const posts = await getCollection("posts");
+  const posts = await getCollection("posts", ({ data }) => !data.draft);
   return posts.map((post) => ({
     params: { slug: post.id },
     props: post,

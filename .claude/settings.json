@@ -1,0 +1,64 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm build)",
+      "Bash(pnpm verify)",
+      "Bash(pnpm dev)",
+      "Bash(pnpm preview)",
+      "Bash(pnpm test:e2e*)",
+      "Bash(pnpm typecheck*)",
+      "Bash(pnpm lint*)",
+      "Bash(pnpm lint:css)",
+      "Bash(pnpm lint:html)",
+      "Bash(pnpm exec prettier*)",
+      "Bash(pnpm exec typos)",
+      "Bash(pnpm verify-icons)",
+      "Bash(node scripts/*)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Bash(git status*)",
+      "Bash(git add*)",
+      "Bash(git commit*)",
+      "Bash(git branch*)",
+      "Bash(git checkout*)",
+      "Bash(cat *)",
+      "Bash(head *)",
+      "Bash(tail *)",
+      "Bash(wc *)",
+      "Bash(find *)",
+      "Bash(grep *)",
+      "Bash(ls *)"
+    ],
+    "deny": [
+      "Read(.env)",
+      "Read(.env.*)",
+      "Write(pnpm-lock.yaml)",
+      "Write(dist/**)",
+      "Write(.env)",
+      "Write(.env.*)",
+      "Edit(pnpm-lock.yaml)",
+      "Edit(dist/**)",
+      "Edit(.env)",
+      "Edit(.env.*)",
+      "Bash(rm -rf *)",
+      "Bash(curl *)",
+      "Bash(wget *)",
+      "Bash(npm *)",
+      "Bash(yarn *)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "pnpm exec prettier --write \"$TOOL_INPUT_FILE_PATH\" 2>/dev/null || true",
+            "async": true
+          }
+        ]
+      }
+    ]
+  }
+}

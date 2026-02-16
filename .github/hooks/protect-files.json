@@ -1,0 +1,26 @@
+{
+  "name": "Protect critical files",
+  "description": "Prevents the agent from modifying lock files, build output, and environment files",
+  "event": "preToolUse",
+  "match": {
+    "toolName": ["editFiles", "createFile"],
+    "filePath": [
+      "pnpm-lock.yaml",
+      "dist/**",
+      "dist_old/**",
+      "dist_new/**",
+      ".env",
+      ".env.*",
+      "playwright-report/**",
+      "test-results/**",
+      "accessibility-report/**",
+      "node_modules/**"
+    ]
+  },
+  "steps": [
+    {
+      "type": "reject",
+      "message": "This file is protected and should not be modified by the agent. Lock files, build output, environment files, and test reports are managed by their respective tools."
+    }
+  ]
+}

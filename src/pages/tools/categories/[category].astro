@@ -1,7 +1,7 @@
 ---
 /**
  * Tool Category Page.
- * Displays tools filtered by category (security, developer, network, embedded).
+ * Displays tools filtered by category (security, developer, network, embedded, mikrotik).
  * Pattern mirrors blog/tags/[tag].astro but for tool categories.
  */
 import BaseLayout from "@layouts/BaseLayout.astro";
@@ -16,26 +16,32 @@ const categoryMeta: Record<
   security: {
     name: "Security Tools",
     description:
-      "Tools for web security auditing, CSP policy building, certificate inspection, and cryptographic operations.",
+      "Free online security tools — CSP policy builder, SRI hash calculator, certificate inspector, and Base64/hex encoding. No data sent to servers.",
     icon: "i-mdi:shield-lock-outline",
   },
   developer: {
     name: "Developer Tools",
     description:
-      "Utilities for encoding, regex testing, cron building, timestamp conversion, and accessibility checking.",
+      "Free online developer utilities — Base64 encoder, regex tester, cron expression builder, Unix timestamp converter, and color contrast checker.",
     icon: "i-mdi:code-braces",
   },
   network: {
     name: "Network & Server Tools",
     description:
-      "Networking utilities for IP subnet calculation, server configuration generation, and network planning.",
+      "Free online network tools — IP/CIDR subnet calculator, Nginx and Apache config generators, and DNS lookup utilities. All processing runs locally.",
     icon: "i-mdi:lan",
   },
   embedded: {
     name: "Embedded & Industrial Tools",
     description:
-      "Tools for industrial protocols like Modbus RTU/TCP frame building and embedded systems development.",
+      "Free online embedded tools — Modbus RTU/TCP frame builder and CRC calculator for industrial automation and SCADA systems development.",
     icon: "i-mdi:chip",
+  },
+  mikrotik: {
+    name: "MikroTik Tools",
+    description:
+      "Free MikroTik RouterOS tools — WireGuard VPN config generator for dual-stack setups. All processing runs locally in your browser.",
+    icon: "i-simple-icons:mikrotik",
   },
 };
 
