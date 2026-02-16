@@ -690,7 +690,13 @@ Extends: `stylelint-config-standard`, `stylelint-config-recess-order`, `stylelin
 
 ## Deployment
 
-No Docker. Direct SSG deployment:
+No Docker. Direct SSG deployment on the production server:
+
+- **Project root**: `/var/www/jmrp.io/`
+- **Nginx document root**: `/var/www/jmrp.io/dist/` — Nginx serves this directory directly as `jmrp.io`
+- **Build output**: `pnpm build` uses atomic swap (`dist_new` → `dist_old` → `dist`) for zero-downtime deploys
+
+Steps:
 
 1. `pnpm build` → `dist/` (atomic swap: `dist_new` → `dist_old` → `dist`)
 2. Post-build copies `security_headers.conf` to Nginx snippets path

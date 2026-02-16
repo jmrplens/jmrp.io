@@ -17,6 +17,8 @@ pnpm build
 ```
 This runs: `astro build` → atomic swap (`dist_new` → `dist_old` → `dist`) → Prettier check.
 
+> **Deployment**: The project lives at `/var/www/jmrp.io/` on the production server. Nginx serves `/var/www/jmrp.io/dist/` directly as the document root for `jmrp.io`. The atomic swap ensures zero-downtime deploys.
+
 ### Development Server
 ```bash
 pnpm dev
