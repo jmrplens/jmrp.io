@@ -1,8 +1,9 @@
 # Copilot Coding Agent Setup Steps
 # https://docs.github.com/en/copilot/how-tos/agents/copilot-coding-agent/customizing-the-development-environment-for-copilot-coding-agent
 #
-# These steps run when Copilot Coding Agent starts working on a task.
-# They install dependencies and verify the project builds successfully.
+# This workflow runs automatically when Copilot Coding Agent starts working
+# on a task. It pre-installs dependencies and browsers so the agent can
+# build and test the project immediately.
 
 name: "Copilot Setup Steps"
 
@@ -32,8 +33,7 @@ jobs:
       - name: "Install Playwright browsers"
         run: pnpm exec playwright install --with-deps chromium
 
-      - name: "Verify build"
-        run: pnpm build
-
-      - name: "Run type checking"
-        run: pnpm typecheck
+      - name: "Verify environment"
+        run: |
+          pnpm typecheck
+          pnpm exec astro build
