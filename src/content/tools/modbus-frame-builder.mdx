@@ -463,6 +463,13 @@ import {
   </tbody>
 </table>
 
+<h3>Privacy</h3>
+<p>
+  All frame building, decoding, CRC/LRC calculation, and data interpretation
+  happens entirely in your browser. No Modbus data is transmitted to any server.
+  The shareable link only encodes frame parameters in URL query strings.
+</p>
+
 <h3>Linux Command Reference</h3>
 <p>Common tools for testing Modbus communication from the command line:</p>
 
@@ -555,11 +562,4 @@ import {
   <strong>two's complement</strong> of the 8-bit sum of all bytes in the message
   (slave address through the last data byte). It is transmitted as two ASCII hex
   characters before the trailing CR LF.
-</p>
-
-<h3>Privacy</h3>
-<p>
-  All frame building, decoding, CRC/LRC calculation, and data interpretation
-  happens entirely in your browser. No Modbus data is transmitted to any server.
-  The shareable link only encodes frame parameters in URL query strings.
 </p>

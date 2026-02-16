@@ -120,6 +120,16 @@
 /**
  * Global Shiki Code Block Styling
  * Ensures code blocks integrate seamlessly into components (Tabs, FileContent, etc.)
+ *
+ * Shiki dual-theme output (with defaultColor: "light"):
+ *   color: #xxx              (light value applied directly via class)
+ *   --shiki-dark: #yyy       (dark variant as CSS variable)
+ *
+ * Strategy:
+ *   - Light mode = Shiki's `color:` from classes applies naturally (no override).
+ *   - Dark mode  = Override `color` with `var(--shiki-dark)`.
+ *   - All dark overrides use !important to beat Shiki's class-level `color:`.
+ *   - Light overrides are absent, allowing the class `color:` to win.
  */
 .astro-code,
 .astro-code span {
@@ -127,25 +137,36 @@
   background-color: transparent !important;
 }
 
-/* Force Shiki to use dark theme variables when data-theme is dark */
-:root[data-theme="dark"] .astro-code,
+/*
+ * Dark mode overrides — explicit [data-theme="dark"] or default (dark-first).
+ * The default :root:not([data-theme]) = dark, but a @media query for
+ * prefers-color-scheme: light neutralises it when the OS is in light mode.
+ */
 :root[data-theme="dark"] .astro-code span {
   font-style: var(--shiki-dark-font-style) !important;
   font-weight: var(--shiki-dark-font-weight) !important;
   color: var(--shiki-dark) !important;
   text-decoration: var(--shiki-dark-text-decoration) !important;
-  background-color: transparent !important;
 }
 
-/* Force Shiki to use light theme variables when data-theme is light */
-:root[data-theme="light"] .astro-code,
-:root[data-theme="light"] .astro-code span {
-  font-style: var(--shiki-light-font-style) !important;
-  font-weight: var(--shiki-light-font-weight) !important;
-  color: var(--shiki-light) !important;
-  text-decoration: var(--shiki-light-text-decoration) !important;
-  background-color: transparent !important;
+/*
+ * Default state (no data-theme) is dark-first.
+ * Use a separate class for this so that @media can override it cleanly.
+ */
+@media not (prefers-color-scheme: light) {
+  :root:not([data-theme]) .astro-code span {
+    font-style: var(--shiki-dark-font-style) !important;
+    font-weight: var(--shiki-dark-font-weight) !important;
+    color: var(--shiki-dark) !important;
+    text-decoration: var(--shiki-dark-text-decoration) !important;
+  }
 }
+
+/*
+ * Light mode: no color override — Shiki's direct `color:` from the
+ * .sh-* classes applies naturally. Both [data-theme="light"] and
+ * prefers-color-scheme: light are handled by simply not overriding.
+ */
 
 html {
   font-family: var(--font-body);
