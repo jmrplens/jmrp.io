@@ -1,0 +1,1863 @@
+---
+/**
+ * ColorContrastChecker Component
+ * WCAG 2.2 color contrast ratio checker with APCA support,
+ * color blindness simulation, auto-fix suggestions, and multi-format display.
+ *
+ * Usage:
+ * <ColorContrastChecker title="Color Contrast Checker" />
+ */
+
+interface Props {
+  title?: string;
+}
+
+const { title = "Color Contrast Checker" } = Astro.props;
+const uniqueId = `cc-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
+---
+
+<div
+  class="cc-checker"
+  data-cc-id={uniqueId}
+>
+  {title && <div class="cc-title">{title}</div>}
+
+  <div class="cc-layout">
+    {/* Color pickers */}
+    <div class="cc-pickers">
+      <div class="cc-picker-group">
+        <label
+          class="cc-picker-label"
+          for={`${uniqueId}-fg-color`}
+          >Foreground (Text)</label
+        >
+        <div class="cc-picker-row">
+          <input
+            type="color"
+            id={`${uniqueId}-fg-color`}
+            class="cc-color-input"
+            value="#1a1a2e"
+          />
+          <input
+            type="text"
+            id={`${uniqueId}-fg-hex`}
+            class="cc-hex-input"
+            value="#1a1a2e"
+            spellcheck="false"
+            maxlength="9"
+            aria-label="Foreground color hex value"
+          />
+        </div>
+        <div
+          class="cc-color-formats"
+          id={`${uniqueId}-fg-formats`}
+        >
+          <button
+            type="button"
+            class="cc-format-btn"
+            data-format="rgb"
+            aria-label="Copy foreground RGB value"
+          >
+            <span class="cc-format-label">RGB</span>
+            <span
+              class="cc-format-value"
+              data-fmt="rgb"
+              >—</span
+            >
+          </button>
+          <button
+            type="button"
+            class="cc-format-btn"
+            data-format="hsl"
+            aria-label="Copy foreground HSL value"
+          >
+            <span class="cc-format-label">HSL</span>
+            <span
+              class="cc-format-value"
+              data-fmt="hsl"
+              >—</span
+            >
+          </button>
+        </div>
+      </div>
+
+      <button
+        type="button"
+        class="cc-swap-btn"
+        aria-label="Swap foreground and background colors"
+      >
+        <span class="i-mdi:swap-horizontal"></span>
+      </button>
+
+      <div class="cc-picker-group">
+        <label
+          class="cc-picker-label"
+          for={`${uniqueId}-bg-color`}
+          >Background</label
+        >
+        <div class="cc-picker-row">
+          <input
+            type="color"
+            id={`${uniqueId}-bg-color`}
+            class="cc-color-input"
+            value="#ffffff"
+          />
+          <input
+            type="text"
+            id={`${uniqueId}-bg-hex`}
+            class="cc-hex-input"
+            value="#ffffff"
+            spellcheck="false"
+            maxlength="9"
+            aria-label="Background color hex value"
+          />
+        </div>
+        <div
+          class="cc-color-formats"
+          id={`${uniqueId}-bg-formats`}
+        >
+          <button
+            type="button"
+            class="cc-format-btn"
+            data-format="rgb"
+            aria-label="Copy background RGB value"
+          >
+            <span class="cc-format-label">RGB</span>
+            <span
+              class="cc-format-value"
+              data-fmt="rgb"
+              >—</span
+            >
+          </button>
+          <button
+            type="button"
+            class="cc-format-btn"
+            data-format="hsl"
+            aria-label="Copy background HSL value"
+          >
+            <span class="cc-format-label">HSL</span>
+            <span
+              class="cc-format-value"
+              data-fmt="hsl"
+              >—</span
+            >
+          </button>
+        </div>
+      </div>
+    </div>
+
+    {/* Preview */}
+    <div
+      class="cc-preview"
+      id={`${uniqueId}-preview`}
+    >
+      <span
+        class="cc-preview-large"
+        id={`${uniqueId}-preview-large`}
+      >
+        Large text (24px) — Heading
+      </span>
+      <span
+        class="cc-preview-normal"
+        id={`${uniqueId}-preview-normal`}
+      >
+        Normal text (16px) — The quick brown fox jumps over the lazy dog.
+      </span>
+      <span
+        class="cc-preview-small"
+        id={`${uniqueId}-preview-small`}
+      >
+        Small text (12px) — Secondary information and captions
+      </span>
+      <div
+        class="cc-preview-ui"
+        id={`${uniqueId}-preview-ui`}
+      >
+        <span class="cc-preview-ui-label">UI Components</span>
+        <span class="cc-ui-button">Button</span>
+        <span class="cc-ui-icon">
+          <span class="i-mdi:star"></span>
+          <span class="i-mdi:check-circle"></span>
+          <span class="i-mdi:alert"></span>
+        </span>
+        <span class="cc-ui-border-box">Input field</span>
+      </div>
+    </div>
+
+    {/* Contrast scores */}
+    <div class="cc-scores">
+      {/* WCAG 2.2 ratio */}
+      <div class="cc-score-card">
+        <div class="cc-score-header">
+          <span class="cc-score-badge">WCAG 2.2</span>
+          <span class="cc-score-subtitle">Contrast Ratio</span>
+        </div>
+        <div class="cc-ratio-display">
+          <span
+            class="cc-ratio-value"
+            id={`${uniqueId}-ratio`}
+            >—</span
+          >
+        </div>
+        <div
+          class="cc-gauge"
+          id={`${uniqueId}-gauge`}
+          role="img"
+          aria-label="Contrast quality indicator"
+        >
+          <div class="cc-gauge-track">
+            <div
+              class="cc-gauge-fill"
+              id={`${uniqueId}-gauge-fill`}
+            >
+            </div>
+          </div>
+          <div class="cc-gauge-labels">
+            <span>Poor</span>
+            <span>AA Large</span>
+            <span>AA</span>
+            <span>AAA</span>
+          </div>
+        </div>
+      </div>
+
+      {/* APCA score */}
+      <div class="cc-score-card">
+        <div class="cc-score-header">
+          <span class="cc-score-badge cc-score-badge-apca">APCA</span>
+          <span class="cc-score-subtitle">Lightness Contrast (Lc)</span>
+        </div>
+        <div class="cc-ratio-display">
+          <span
+            class="cc-ratio-value cc-apca-value"
+            id={`${uniqueId}-apca`}
+            >—</span
+          >
+        </div>
+        <div
+          class="cc-apca-use"
+          id={`${uniqueId}-apca-use`}
+        >
+          —
+        </div>
+      </div>
+    </div>
+
+    {/* WCAG results grid */}
+    <div class="cc-wcag-section">
+      <div class="cc-section-title">WCAG 2.2 Compliance</div>
+      <div class="cc-wcag-grid">
+        <div
+          class="cc-wcag-item"
+          id={`${uniqueId}-aa-normal`}
+        >
+          <span class="cc-wcag-badge">AA</span>
+          <span class="cc-wcag-text">Normal Text</span>
+          <span class="cc-wcag-min">(≥ 4.5:1)</span>
+          <span class="cc-wcag-result">—</span>
+        </div>
+        <div
+          class="cc-wcag-item"
+          id={`${uniqueId}-aa-large`}
+        >
+          <span class="cc-wcag-badge">AA</span>
+          <span class="cc-wcag-text">Large Text</span>
+          <span class="cc-wcag-min">(≥ 3:1)</span>
+          <span class="cc-wcag-result">—</span>
+        </div>
+        <div
+          class="cc-wcag-item"
+          id={`${uniqueId}-aaa-normal`}
+        >
+          <span class="cc-wcag-badge cc-wcag-aaa">AAA</span>
+          <span class="cc-wcag-text">Normal Text</span>
+          <span class="cc-wcag-min">(≥ 7:1)</span>
+          <span class="cc-wcag-result">—</span>
+        </div>
+        <div
+          class="cc-wcag-item"
+          id={`${uniqueId}-aaa-large`}
+        >
+          <span class="cc-wcag-badge cc-wcag-aaa">AAA</span>
+          <span class="cc-wcag-text">Large Text</span>
+          <span class="cc-wcag-min">(≥ 4.5:1)</span>
+          <span class="cc-wcag-result">—</span>
+        </div>
+        <div
+          class="cc-wcag-item"
+          id={`${uniqueId}-nontext`}
+        >
+          <span class="cc-wcag-badge cc-wcag-nontext">1.4.11</span>
+          <span class="cc-wcag-text">Non-Text</span>
+          <span class="cc-wcag-min">(≥ 3:1)</span>
+          <span class="cc-wcag-result">—</span>
+        </div>
+      </div>
+    </div>
+
+    {/* Auto-fix suggestions */}
+    <div
+      class="cc-suggestions"
+      id={`${uniqueId}-suggestions`}
+      hidden
+    >
+      <div class="cc-section-title">
+        <span class="i-mdi:auto-fix"></span>
+        Suggested Fixes (AA Normal Text)
+      </div>
+      <div
+        class="cc-suggestion-cards"
+        id={`${uniqueId}-suggestion-cards`}
+      >
+      </div>
+    </div>
+
+    {/* Color blindness simulation */}
+    <div class="cc-blindness-section">
+      <div class="cc-section-title">
+        <span class="i-mdi:eye-outline"></span>
+        Color Vision Deficiency Simulation
+      </div>
+      <div
+        class="cc-blindness-grid"
+        id={`${uniqueId}-blindness-grid`}
+      >
+        <div
+          class="cc-blindness-card"
+          data-type="protanopia"
+        >
+          <div class="cc-blindness-label">
+            Protanopia <span class="cc-blindness-pct">~1% males</span>
+          </div>
+          <div class="cc-blindness-desc">No red cone cells</div>
+          <div
+            class="cc-blindness-preview"
+            id={`${uniqueId}-sim-protanopia`}
+          >
+            <span
+              class="cc-sim-swatch"
+              data-sim-role="fg"
+            ></span>
+            <span class="cc-sim-text">Sample Text</span>
+            <span
+              class="cc-sim-swatch"
+              data-sim-role="bg"
+            ></span>
+          </div>
+          <div
+            class="cc-sim-ratio"
+            id={`${uniqueId}-sim-ratio-protanopia`}
+          >
+            —
+          </div>
+        </div>
+        <div
+          class="cc-blindness-card"
+          data-type="deuteranopia"
+        >
+          <div class="cc-blindness-label">
+            Deuteranopia <span class="cc-blindness-pct">~1% males</span>
+          </div>
+          <div class="cc-blindness-desc">No green cone cells</div>
+          <div
+            class="cc-blindness-preview"
+            id={`${uniqueId}-sim-deuteranopia`}
+          >
+            <span
+              class="cc-sim-swatch"
+              data-sim-role="fg"
+            ></span>
+            <span class="cc-sim-text">Sample Text</span>
+            <span
+              class="cc-sim-swatch"
+              data-sim-role="bg"
+            ></span>
+          </div>
+          <div
+            class="cc-sim-ratio"
+            id={`${uniqueId}-sim-ratio-deuteranopia`}
+          >
+            —
+          </div>
+        </div>
+        <div
+          class="cc-blindness-card"
+          data-type="tritanopia"
+        >
+          <div class="cc-blindness-label">
+            Tritanopia <span class="cc-blindness-pct">~0.003%</span>
+          </div>
+          <div class="cc-blindness-desc">No blue cone cells</div>
+          <div
+            class="cc-blindness-preview"
+            id={`${uniqueId}-sim-tritanopia`}
+          >
+            <span
+              class="cc-sim-swatch"
+              data-sim-role="fg"
+            ></span>
+            <span class="cc-sim-text">Sample Text</span>
+            <span
+              class="cc-sim-swatch"
+              data-sim-role="bg"
+            ></span>
+          </div>
+          <div
+            class="cc-sim-ratio"
+            id={`${uniqueId}-sim-ratio-tritanopia`}
+          >
+            —
+          </div>
+        </div>
+        <div
+          class="cc-blindness-card"
+          data-type="achromatopsia"
+        >
+          <div class="cc-blindness-label">
+            Achromatopsia <span class="cc-blindness-pct">~0.003%</span>
+          </div>
+          <div class="cc-blindness-desc">No color vision (monochrome)</div>
+          <div
+            class="cc-blindness-preview"
+            id={`${uniqueId}-sim-achromatopsia`}
+          >
+            <span
+              class="cc-sim-swatch"
+              data-sim-role="fg"
+            ></span>
+            <span class="cc-sim-text">Sample Text</span>
+            <span
+              class="cc-sim-swatch"
+              data-sim-role="bg"
+            ></span>
+          </div>
+          <div
+            class="cc-sim-ratio"
+            id={`${uniqueId}-sim-ratio-achromatopsia`}
+          >
+            —
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {/* Copy CSS / Share */}
+    <div class="cc-export-section">
+      <button
+        type="button"
+        class="cc-export-btn"
+        id={`${uniqueId}-copy-css`}
+        aria-label="Copy CSS custom properties"
+      >
+        <span class="i-mdi:code-braces"></span>
+        Copy CSS
+      </button>
+      <button
+        type="button"
+        class="cc-export-btn"
+        id={`${uniqueId}-share`}
+        aria-label="Copy shareable link"
+      >
+        <span class="i-mdi:share-variant"></span>
+        Share Link
+      </button>
+    </div>
+  </div>
+</div>
+
+<script is:inline define:vars={{ uniqueId }}>
+  (function () {
+    var container = document.querySelector('[data-cc-id="' + uniqueId + '"]');
+    if (!container) return;
+
+    var fgColor = document.getElementById(uniqueId + "-fg-color");
+    var fgHex = document.getElementById(uniqueId + "-fg-hex");
+    var bgColor = document.getElementById(uniqueId + "-bg-color");
+    var bgHex = document.getElementById(uniqueId + "-bg-hex");
+    var ratioEl = document.getElementById(uniqueId + "-ratio");
+    var apcaEl = document.getElementById(uniqueId + "-apca");
+    var apcaUseEl = document.getElementById(uniqueId + "-apca-use");
+    var gaugeFill = document.getElementById(uniqueId + "-gauge-fill");
+    var suggestionsEl = document.getElementById(uniqueId + "-suggestions");
+    var suggestionCards = document.getElementById(
+      uniqueId + "-suggestion-cards",
+    );
+    var swapBtn = container.querySelector(".cc-swap-btn");
+    var copyCssBtn = document.getElementById(uniqueId + "-copy-css");
+    var shareBtn = document.getElementById(uniqueId + "-share");
+    var fgFormats = document.getElementById(uniqueId + "-fg-formats");
+    var bgFormats = document.getElementById(uniqueId + "-bg-formats");
+
+    var wcagItems = {};
+    ["aa-normal", "aa-large", "aaa-normal", "aaa-large", "nontext"].forEach(
+      function (id) {
+        wcagItems[id] = document.getElementById(uniqueId + "-" + id);
+      },
+    );
+
+    if (!fgColor || !bgColor) return;
+
+    /* ---- Constructable stylesheet for CSP-compliant dynamic styles ---- */
+    var dynSheet = new CSSStyleSheet();
+    document.adoptedStyleSheets = [].concat(
+      Array.from(document.adoptedStyleSheets),
+      [dynSheet],
+    );
+    var ccSel = '[data-cc-id="' + uniqueId + '"]';
+
+    /* ---- Color conversion utilities ---- */
+    function hexToRgb(hex) {
+      hex = hex.replace("#", "");
+      if (hex.length === 3) {
+        hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+      }
+      if (hex.length !== 6) return null;
+      var num = parseInt(hex, 16);
+      if (isNaN(num)) return null;
+      return { r: (num >> 16) & 255, g: (num >> 8) & 255, b: num & 255 };
+    }
+
+    function rgbToHex(r, g, b) {
+      return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+    }
+
+    function rgbToHsl(r, g, b) {
+      r /= 255;
+      g /= 255;
+      b /= 255;
+      var max = Math.max(r, g, b),
+        min = Math.min(r, g, b);
+      var h = 0,
+        s = 0,
+        l = (max + min) / 2;
+      if (max !== min) {
+        var d = max - min;
+        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+        if (max === r) h = ((g - b) / d + (g < b ? 6 : 0)) / 6;
+        else if (max === g) h = ((b - r) / d + 2) / 6;
+        else h = ((r - g) / d + 4) / 6;
+      }
+      return {
+        h: Math.round(h * 360),
+        s: Math.round(s * 100),
+        l: Math.round(l * 100),
+      };
+    }
+
+    function hslToRgb(h, s, l) {
+      h /= 360;
+      s /= 100;
+      l /= 100;
+      var r, g, b;
+      if (s === 0) {
+        r = g = b = l;
+      } else {
+        var hue2rgb = function (p, q, t) {
+          if (t < 0) t += 1;
+          if (t > 1) t -= 1;
+          if (t < 1 / 6) return p + (q - p) * 6 * t;
+          if (t < 1 / 2) return q;
+          if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+          return p;
+        };
+        var q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+        var p = 2 * l - q;
+        r = hue2rgb(p, q, h + 1 / 3);
+        g = hue2rgb(p, q, h);
+        b = hue2rgb(p, q, h - 1 / 3);
+      }
+      return {
+        r: Math.round(r * 255),
+        g: Math.round(g * 255),
+        b: Math.round(b * 255),
+      };
+    }
+
+    function formatRgb(rgb) {
+      return "rgb(" + rgb.r + ", " + rgb.g + ", " + rgb.b + ")";
+    }
+
+    function formatHsl(rgb) {
+      var hsl = rgbToHsl(rgb.r, rgb.g, rgb.b);
+      return "hsl(" + hsl.h + ", " + hsl.s + "%, " + hsl.l + "%)";
+    }
+
+    /* ---- Luminance & contrast ---- */
+    function sRGBtoLin(c) {
+      return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+    }
+
+    function relativeLuminance(rgb) {
+      return (
+        0.2126 * sRGBtoLin(rgb.r / 255) +
+        0.7152 * sRGBtoLin(rgb.g / 255) +
+        0.0722 * sRGBtoLin(rgb.b / 255)
+      );
+    }
+
+    function contrastRatio(fg, bg) {
+      var l1 = relativeLuminance(fg);
+      var l2 = relativeLuminance(bg);
+      var lighter = Math.max(l1, l2);
+      var darker = Math.min(l1, l2);
+      return (lighter + 0.05) / (darker + 0.05);
+    }
+
+    /* ---- APCA (Accessible Perceptual Contrast Algorithm) ----
+     * Simplified APCA W3 reference algorithm (APCA-W3 0.0.98G-4g).
+     * Returns Lc value (lightness contrast): negative if text is lighter than bg.
+     */
+    function apcaContrast(fgRgb, bgRgb) {
+      var fR = sRGBtoLin(fgRgb.r / 255);
+      var fG = sRGBtoLin(fgRgb.g / 255);
+      var fB = sRGBtoLin(fgRgb.b / 255);
+      var bR = sRGBtoLin(bgRgb.r / 255);
+      var bG = sRGBtoLin(bgRgb.g / 255);
+      var bB = sRGBtoLin(bgRgb.b / 255);
+
+      var Ytxt = 0.2126729 * fR + 0.7151522 * fG + 0.072175 * fB;
+      var Ybg = 0.2126729 * bR + 0.7151522 * bG + 0.072175 * bB;
+
+      if (Ytxt < 0) Ytxt = 0;
+      if (Ybg < 0) Ybg = 0;
+
+      var normBG = 0.56;
+      var normTXT = 0.57;
+      var revBG = 0.65;
+      var revTXT = 0.62;
+      var blkThrs = 0.022;
+      var blkClmp = 1.414;
+      var loClip = 0.1;
+      var deltaYmin = 0.0005;
+
+      if (Ytxt < blkThrs) Ytxt += Math.pow(blkThrs - Ytxt, blkClmp);
+      if (Ybg < blkThrs) Ybg += Math.pow(blkThrs - Ybg, blkClmp);
+
+      if (Math.abs(Ybg - Ytxt) < deltaYmin) return 0;
+
+      var SAPC;
+      if (Ybg > Ytxt) {
+        SAPC = (Math.pow(Ybg, normBG) - Math.pow(Ytxt, normTXT)) * 1.14;
+      } else {
+        SAPC = (Math.pow(Ybg, revBG) - Math.pow(Ytxt, revTXT)) * 1.14;
+      }
+
+      if (Math.abs(SAPC) < loClip) return 0;
+
+      if (SAPC > 0) {
+        return (SAPC - 0.027) * 100;
+      } else {
+        return (SAPC + 0.027) * 100;
+      }
+    }
+
+    function apcaUsage(lc) {
+      var absLc = Math.abs(lc);
+      if (absLc >= 90)
+        return { text: "Preferred for body text", cls: "cc-apca-excellent" };
+      if (absLc >= 75)
+        return {
+          text: "Good for body text, perfect for large text",
+          cls: "cc-apca-good",
+        };
+      if (absLc >= 60)
+        return { text: "Large text and headings only", cls: "cc-apca-fair" };
+      if (absLc >= 45)
+        return { text: "Large non-text elements only", cls: "cc-apca-minimum" };
+      if (absLc >= 30)
+        return {
+          text: "Non-text elements (icons, borders)",
+          cls: "cc-apca-nontext",
+        };
+      if (absLc >= 15)
+        return { text: "Subtle visual indicators only", cls: "cc-apca-poor" };
+      return { text: "Invisible — not usable", cls: "cc-apca-fail" };
+    }
+
+    /* ---- Color blindness simulation (Brettel/Viénot matrices) ---- */
+    var cbMatrices = {
+      protanopia: [
+        [0.152286, 1.052583, -0.204868],
+        [0.114503, 0.786281, 0.099216],
+        [-0.003882, -0.048116, 1.051998],
+      ],
+      deuteranopia: [
+        [0.367322, 0.860646, -0.227968],
+        [0.280085, 0.672501, 0.047413],
+        [-0.01182, 0.04294, 0.968881],
+      ],
+      tritanopia: [
+        [1.255528, -0.076749, -0.178779],
+        [-0.078411, 0.930809, 0.147602],
+        [0.004733, 0.691367, 0.3039],
+      ],
+      achromatopsia: [
+        [0.2126, 0.7152, 0.0722],
+        [0.2126, 0.7152, 0.0722],
+        [0.2126, 0.7152, 0.0722],
+      ],
+    };
+
+    function simulateColorBlindness(rgb, type) {
+      var m = cbMatrices[type];
+      if (!m) return rgb;
+      var r = Math.max(
+        0,
+        Math.min(
+          255,
+          Math.round(m[0][0] * rgb.r + m[0][1] * rgb.g + m[0][2] * rgb.b),
+        ),
+      );
+      var g = Math.max(
+        0,
+        Math.min(
+          255,
+          Math.round(m[1][0] * rgb.r + m[1][1] * rgb.g + m[1][2] * rgb.b),
+        ),
+      );
+      var b = Math.max(
+        0,
+        Math.min(
+          255,
+          Math.round(m[2][0] * rgb.r + m[2][1] * rgb.g + m[2][2] * rgb.b),
+        ),
+      );
+      return { r: r, g: g, b: b };
+    }
+
+    /* ---- Auto-fix: find closest color that meets threshold ---- */
+    function findFixedColor(fg, bg, threshold, adjustFg) {
+      var fixed = adjustFg
+        ? { r: fg.r, g: fg.g, b: fg.b }
+        : { r: bg.r, g: bg.g, b: bg.b };
+      var lFg = relativeLuminance(fg);
+      var lBg = relativeLuminance(bg);
+
+      var lighterIsBg = lBg >= lFg;
+      var step = adjustFg ? (lighterIsBg ? -1 : 1) : lighterIsBg ? 1 : -1;
+
+      for (var i = 0; i < 256; i++) {
+        var hsl = rgbToHsl(fixed.r, fixed.g, fixed.b);
+        var newL = Math.max(0, Math.min(100, hsl.l + step));
+        hsl.l = newL;
+        var rgb = hslToRgb(hsl.h, hsl.s, hsl.l);
+        fixed = rgb;
+
+        var ratio = adjustFg
+          ? contrastRatio(fixed, bg)
+          : contrastRatio(fg, fixed);
+        if (ratio >= threshold) return fixed;
+        if (newL <= 0 || newL >= 100) break;
+      }
+      return fixed;
+    }
+
+    /* ---- Update WCAG items ---- */
+    function updateWcagItem(id, ratio, threshold) {
+      var el = wcagItems[id];
+      if (!el) return;
+      var result = el.querySelector(".cc-wcag-result");
+      if (!result) return;
+      var passes = ratio >= threshold;
+      result.textContent = passes ? "Pass ✓" : "Fail ✗";
+      el.className = "cc-wcag-item " + (passes ? "cc-pass" : "cc-fail");
+    }
+
+    /* ---- Update color format displays ---- */
+    function updateFormats(formatsEl, rgb) {
+      if (!formatsEl) return;
+      var rgbBtn = formatsEl.querySelector('[data-fmt="rgb"]');
+      var hslBtn = formatsEl.querySelector('[data-fmt="hsl"]');
+      if (rgbBtn) rgbBtn.textContent = formatRgb(rgb);
+      if (hslBtn) hslBtn.textContent = formatHsl(rgb);
+    }
+
+    /* ---- Update color blindness simulation (returns CSS rules) ---- */
+    function updateSimulations(fg, bg) {
+      var css = "";
+      var types = ["protanopia", "deuteranopia", "tritanopia", "achromatopsia"];
+      types.forEach(function (type) {
+        var ratioSim = document.getElementById(uniqueId + "-sim-ratio-" + type);
+
+        var simFg = simulateColorBlindness(fg, type);
+        var simBg = simulateColorBlindness(bg, type);
+        var simFgHex = rgbToHex(simFg.r, simFg.g, simFg.b);
+        var simBgHex = rgbToHex(simBg.r, simBg.g, simBg.b);
+
+        css +=
+          ccSel +
+          ' [data-type="' +
+          type +
+          '"] .cc-sim-swatch[data-sim-role="fg"]{background-color:' +
+          simFgHex +
+          "}";
+        css +=
+          ccSel +
+          ' [data-type="' +
+          type +
+          '"] .cc-sim-swatch[data-sim-role="bg"]{background-color:' +
+          simBgHex +
+          "}";
+        css +=
+          ccSel +
+          ' [data-type="' +
+          type +
+          '"] .cc-sim-text{color:' +
+          simFgHex +
+          ";background-color:" +
+          simBgHex +
+          "}";
+
+        var simRatio = contrastRatio(simFg, simBg);
+        if (ratioSim) {
+          ratioSim.textContent = simRatio.toFixed(2) + ":1";
+          ratioSim.className =
+            "cc-sim-ratio " +
+            (simRatio >= 4.5
+              ? "cc-sim-pass"
+              : simRatio >= 3
+                ? "cc-sim-warn"
+                : "cc-sim-fail");
+        }
+      });
+      return css;
+    }
+
+    /* ---- Update suggestions (returns CSS rules) ---- */
+    function updateSuggestions(fg, bg, ratio) {
+      if (!suggestionsEl || !suggestionCards) return "";
+      if (ratio >= 4.5) {
+        suggestionsEl.hidden = true;
+        return "";
+      }
+      suggestionsEl.hidden = false;
+
+      var fixedFg = findFixedColor(fg, bg, 4.5, true);
+      var fixedBg = findFixedColor(fg, bg, 4.5, false);
+
+      var html = "";
+
+      var fixedFgHex = rgbToHex(fixedFg.r, fixedFg.g, fixedFg.b);
+      var fixedFgRatio = contrastRatio(fixedFg, bg);
+      html +=
+        '<button type="button" class="cc-suggestion-card" data-apply="fg" data-hex="' +
+        fixedFgHex +
+        '">';
+      html += '<div class="cc-sug-label">Adjust foreground</div>';
+      html += '<div class="cc-sug-preview" data-sug="fg">Sample Text</div>';
+      html +=
+        '<div class="cc-sug-info"><code>' +
+        fixedFgHex +
+        "</code> → " +
+        fixedFgRatio.toFixed(2) +
+        ":1</div>";
+      html += "</button>";
+
+      var fixedBgHex = rgbToHex(fixedBg.r, fixedBg.g, fixedBg.b);
+      var fixedBgRatio = contrastRatio(fg, fixedBg);
+      html +=
+        '<button type="button" class="cc-suggestion-card" data-apply="bg" data-hex="' +
+        fixedBgHex +
+        '">';
+      html += '<div class="cc-sug-label">Adjust background</div>';
+      html += '<div class="cc-sug-preview" data-sug="bg">Sample Text</div>';
+      html +=
+        '<div class="cc-sug-info"><code>' +
+        fixedBgHex +
+        "</code> → " +
+        fixedBgRatio.toFixed(2) +
+        ":1</div>";
+      html += "</button>";
+
+      suggestionCards.innerHTML = html;
+
+      var css = "";
+      css +=
+        ccSel +
+        ' .cc-sug-preview[data-sug="fg"]{color:' +
+        fixedFgHex +
+        ";background-color:" +
+        bgHex.value +
+        "}";
+      css +=
+        ccSel +
+        ' .cc-sug-preview[data-sug="bg"]{color:' +
+        fgHex.value +
+        ";background-color:" +
+        fixedBgHex +
+        "}";
+      return css;
+    }
+
+    /* ---- Gauge update (returns CSS rule) ---- */
+    function updateGauge(ratio) {
+      if (!gaugeFill) return "";
+      var pct = Math.min(100, Math.max(0, ((ratio - 1) / 20) * 100));
+
+      var cls = "cc-gauge-fill";
+      if (ratio >= 7) cls += " cc-gauge-aaa";
+      else if (ratio >= 4.5) cls += " cc-gauge-aa";
+      else if (ratio >= 3) cls += " cc-gauge-aalarge";
+      else cls += " cc-gauge-fail";
+      gaugeFill.className = cls;
+
+      return ccSel + " .cc-gauge-fill{width:" + pct + "%}";
+    }
+
+    /* ---- Main update ---- */
+    function update() {
+      var fg = hexToRgb(fgHex.value);
+      var bg = hexToRgb(bgHex.value);
+
+      if (!fg || !bg) {
+        if (ratioEl) ratioEl.textContent = "Invalid color";
+        return;
+      }
+
+      var ratio = contrastRatio(fg, bg);
+      if (ratioEl) ratioEl.textContent = ratio.toFixed(2) + ":1";
+
+      /* APCA */
+      var lc = apcaContrast(fg, bg);
+      if (apcaEl) apcaEl.textContent = "Lc " + lc.toFixed(1);
+      if (apcaUseEl) {
+        var usage = apcaUsage(lc);
+        apcaUseEl.textContent = usage.text;
+        apcaUseEl.className = "cc-apca-use " + usage.cls;
+      }
+
+      /* Build dynamic CSS (CSP-compliant via Constructable Stylesheets) */
+      var css = "";
+
+      /* Preview colors via CSS custom properties */
+      css +=
+        ccSel +
+        " .cc-preview{--cc-preview-fg:" +
+        fgHex.value +
+        ";--cc-preview-bg:" +
+        bgHex.value +
+        "}";
+      css +=
+        ccSel +
+        " .cc-preview-ui{--cc-ui-fg:" +
+        fgHex.value +
+        ";--cc-ui-bg:" +
+        bgHex.value +
+        "}";
+
+      /* Gauge */
+      css += updateGauge(ratio);
+
+      /* WCAG checks */
+      updateWcagItem("aa-normal", ratio, 4.5);
+      updateWcagItem("aa-large", ratio, 3);
+      updateWcagItem("aaa-normal", ratio, 7);
+      updateWcagItem("aaa-large", ratio, 4.5);
+      updateWcagItem("nontext", ratio, 3);
+
+      /* Color formats */
+      updateFormats(fgFormats, fg);
+      updateFormats(bgFormats, bg);
+
+      /* Color blindness simulation */
+      css += updateSimulations(fg, bg);
+
+      /* Suggestions */
+      css += updateSuggestions(fg, bg, ratio);
+
+      /* Apply all dynamic styles via CSSOM (bypasses CSP style-src-attr) */
+      dynSheet.replaceSync(css);
+
+      /* Update URL */
+      if (window.history && window.history.replaceState) {
+        var url = new URL(window.location);
+        url.searchParams.set("fg", fgHex.value.replace("#", ""));
+        url.searchParams.set("bg", bgHex.value.replace("#", ""));
+        window.history.replaceState(null, "", url);
+      }
+    }
+
+    /* ---- Input sync ---- */
+    function syncFromColor(colorEl, hexEl) {
+      hexEl.value = colorEl.value;
+      update();
+    }
+
+    function syncFromHex(hexEl, colorEl) {
+      var val = hexEl.value.trim();
+      if (!val.startsWith("#")) val = "#" + val;
+      if (/^#[0-9a-f]{6}$/i.test(val)) {
+        colorEl.value = val;
+      }
+      hexEl.value = val;
+      update();
+    }
+
+    fgColor.addEventListener("input", function () {
+      syncFromColor(fgColor, fgHex);
+    });
+    bgColor.addEventListener("input", function () {
+      syncFromColor(bgColor, bgHex);
+    });
+    fgHex.addEventListener("input", function () {
+      syncFromHex(fgHex, fgColor);
+    });
+    bgHex.addEventListener("input", function () {
+      syncFromHex(bgHex, bgColor);
+    });
+
+    /* Swap */
+    if (swapBtn) {
+      swapBtn.addEventListener("click", function () {
+        var tmpColor = fgColor.value;
+        var tmpHex = fgHex.value;
+        fgColor.value = bgColor.value;
+        fgHex.value = bgHex.value;
+        bgColor.value = tmpColor;
+        bgHex.value = tmpHex;
+        update();
+      });
+    }
+
+    /* Suggestion click → apply */
+    if (suggestionCards) {
+      suggestionCards.addEventListener("click", function (e) {
+        var card = e.target.closest(".cc-suggestion-card");
+        if (!card) return;
+        var apply = card.getAttribute("data-apply");
+        var hex = card.getAttribute("data-hex");
+        if (apply === "fg") {
+          fgColor.value = hex;
+          fgHex.value = hex;
+        } else {
+          bgColor.value = hex;
+          bgHex.value = hex;
+        }
+        update();
+      });
+    }
+
+    /* Format buttons → copy */
+    function setupFormatCopy(formatsEl) {
+      if (!formatsEl) return;
+      formatsEl.addEventListener("click", function (e) {
+        var btn = e.target.closest(".cc-format-btn");
+        if (!btn) return;
+        var val = btn.querySelector(".cc-format-value");
+        if (val && navigator.clipboard) {
+          navigator.clipboard.writeText(val.textContent).then(function () {
+            var label = btn.querySelector(".cc-format-label");
+            if (label) {
+              var orig = label.textContent;
+              label.textContent = "Copied!";
+              setTimeout(function () {
+                label.textContent = orig;
+              }, 1200);
+            }
+          });
+        }
+      });
+    }
+    setupFormatCopy(fgFormats);
+    setupFormatCopy(bgFormats);
+
+    /* Copy CSS */
+    if (copyCssBtn) {
+      copyCssBtn.addEventListener("click", function () {
+        var css =
+          ":root {\n  --color-foreground: " +
+          fgHex.value +
+          ";\n  --color-background: " +
+          bgHex.value +
+          ";\n  /* Contrast ratio: " +
+          ratioEl.textContent +
+          " */\n}";
+        if (navigator.clipboard) {
+          navigator.clipboard.writeText(css).then(function () {
+            copyCssBtn.innerHTML = '<span class="i-mdi:check"></span> Copied!';
+            setTimeout(function () {
+              copyCssBtn.innerHTML =
+                '<span class="i-mdi:code-braces"></span> Copy CSS';
+            }, 1500);
+          });
+        }
+      });
+    }
+
+    /* Share link */
+    if (shareBtn) {
+      shareBtn.addEventListener("click", function () {
+        var url = window.location.href;
+        if (navigator.clipboard) {
+          navigator.clipboard.writeText(url).then(function () {
+            shareBtn.innerHTML = '<span class="i-mdi:check"></span> Copied!';
+            setTimeout(function () {
+              shareBtn.innerHTML =
+                '<span class="i-mdi:share-variant"></span> Share Link';
+            }, 1500);
+          });
+        }
+      });
+    }
+
+    /* Load from URL params */
+    function loadFromUrl() {
+      var params = new URLSearchParams(window.location.search);
+      var fg = params.get("fg");
+      var bg = params.get("bg");
+      if (fg && /^[0-9a-f]{6}$/i.test(fg)) {
+        fgColor.value = "#" + fg;
+        fgHex.value = "#" + fg;
+      }
+      if (bg && /^[0-9a-f]{6}$/i.test(bg)) {
+        bgColor.value = "#" + bg;
+        bgHex.value = "#" + bg;
+      }
+    }
+
+    loadFromUrl();
+    update();
+  })();
+</script>
+
+<style>
+  .cc-checker {
+    overflow: hidden;
+    background: var(--color-bg-subtle);
+    border: var(--border-1);
+    border-radius: var(--radius-md);
+  }
+
+  .cc-title {
+    padding: 1rem 1.25rem;
+    font-size: 1.1rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-heading);
+    background: var(--color-bg-secondary);
+    border-bottom: var(--border-1);
+  }
+
+  .cc-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    padding: 1.25rem;
+  }
+
+  /* ---- Section titles ---- */
+  .cc-section-title {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    padding-bottom: 0.5rem;
+    margin-bottom: 0.75rem;
+    font-size: 0.85rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-heading);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    border-bottom: var(--border-1);
+  }
+
+  .cc-section-title span {
+    width: 18px;
+    height: 18px;
+    color: var(--color-primary);
+  }
+
+  /* ---- Pickers ---- */
+  .cc-pickers {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+
+  .cc-picker-group {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 0.375rem;
+  }
+
+  .cc-picker-label {
+    font-size: 0.8rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .cc-picker-row {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+  }
+
+  .cc-color-input {
+    width: 48px;
+    height: 40px;
+    padding: 2px;
+    cursor: pointer;
+    background: var(--color-bg);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+  }
+
+  .cc-color-input::-webkit-color-swatch-wrapper {
+    padding: 2px;
+  }
+
+  .cc-color-input::-webkit-color-swatch {
+    border: none;
+    border-radius: 3px;
+  }
+
+  .cc-hex-input {
+    flex: 1;
+    min-width: 0;
+    padding: 0.5rem 0.75rem;
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    color: var(--color-text);
+    background: var(--color-bg);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+    transition: border-color 0.15s;
+  }
+
+  .cc-hex-input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+  }
+
+  /* Color format buttons */
+  .cc-color-formats {
+    display: flex;
+    gap: 0.375rem;
+    margin-top: 0.25rem;
+  }
+
+  .cc-format-btn {
+    display: flex;
+    gap: 0.375rem;
+    align-items: center;
+    padding: 0.2rem 0.5rem;
+    font-size: 0.7rem;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    background: var(--color-bg);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+    transition: border-color 0.15s;
+  }
+
+  .cc-format-btn:hover {
+    border-color: var(--color-primary);
+  }
+
+  .cc-format-label {
+    font-weight: var(--fw-semibold);
+    color: var(--color-text);
+  }
+
+  .cc-format-value {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+  }
+
+  /* Swap */
+  .cc-swap-btn {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    align-self: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    margin-top: 1.2rem;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    background: var(--color-bg-secondary);
+    border: var(--border-1);
+    border-radius: 50%;
+    transition: all 0.15s;
+  }
+
+  .cc-swap-btn span {
+    width: 20px;
+    height: 20px;
+  }
+
+  .cc-swap-btn:hover {
+    color: var(--color-primary);
+    border-color: var(--color-primary);
+  }
+
+  /* ---- Preview ---- */
+  .cc-preview {
+    display: flex;
+    flex-direction: column;
+    gap: 0.625rem;
+    padding: 1.25rem;
+    color: var(--cc-preview-fg, #1a1a2e);
+    background-color: var(--cc-preview-bg, #fff);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+    transition:
+      background-color 0.2s,
+      color 0.2s;
+  }
+
+  .cc-preview-normal {
+    font-size: 1rem;
+    line-height: 1.5;
+  }
+
+  .cc-preview-large {
+    font-size: 1.5rem;
+    font-weight: var(--fw-bold);
+    line-height: 1.3;
+  }
+
+  .cc-preview-small {
+    font-size: 0.75rem;
+    line-height: 1.4;
+  }
+
+  /* UI components preview */
+  .cc-preview-ui {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    padding-top: 0.625rem;
+    margin-top: 0.375rem;
+    border-top: 1px solid currentcolor;
+    opacity: 85%;
+  }
+
+  .cc-preview-ui-label {
+    font-size: 0.7rem;
+    font-weight: var(--fw-semibold);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .cc-ui-button {
+    padding: 0.25rem 0.75rem;
+    font-size: 0.8rem;
+    color: var(--cc-ui-bg, #fff);
+    background: var(--cc-ui-fg, #1a1a2e);
+    border-radius: var(--radius-sm);
+  }
+
+  .cc-ui-icon {
+    display: flex;
+    gap: 0.375rem;
+  }
+
+  .cc-ui-icon span {
+    width: 20px;
+    height: 20px;
+  }
+
+  .cc-ui-border-box {
+    padding: 0.25rem 0.75rem;
+    font-size: 0.8rem;
+    background: transparent;
+    border: 2px solid currentcolor;
+    border-radius: var(--radius-sm);
+  }
+
+  /* ---- Scores (WCAG + APCA) ---- */
+  .cc-scores {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+  }
+
+  .cc-score-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 1rem;
+    background: var(--color-bg-secondary);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+  }
+
+  .cc-score-header {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+  }
+
+  .cc-score-badge {
+    padding: 0.125rem 0.5rem;
+    font-size: 0.65rem;
+    font-weight: var(--fw-bold);
+    color: #065f46;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    background: #d1fae5;
+    border-radius: var(--radius-sm);
+  }
+
+  :root[data-theme="dark"] .cc-score-badge {
+    color: #6ee7b7;
+    background: rgb(6 95 70 / 40%);
+  }
+
+  .cc-score-badge-apca {
+    color: #1e40af;
+    background: #dbeafe;
+  }
+
+  :root[data-theme="dark"] .cc-score-badge-apca {
+    color: #93c5fd;
+    background: rgb(30 64 175 / 30%);
+  }
+
+  .cc-score-subtitle {
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+  }
+
+  .cc-ratio-display {
+    text-align: center;
+  }
+
+  .cc-ratio-value {
+    font-family: var(--font-mono);
+    font-size: 2rem;
+    font-weight: var(--fw-bold);
+    color: var(--color-text-heading);
+  }
+
+  .cc-apca-value {
+    font-size: 1.75rem;
+  }
+
+  /* Gauge */
+  .cc-gauge {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .cc-gauge-track {
+    width: 100%;
+    height: 6px;
+    overflow: hidden;
+    background: var(--color-bg);
+    border-radius: 3px;
+  }
+
+  .cc-gauge-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition:
+      width 0.3s,
+      background-color 0.3s;
+  }
+
+  .cc-gauge-fail {
+    background: #ef4444;
+  }
+
+  .cc-gauge-aalarge {
+    background: #f59e0b;
+  }
+
+  .cc-gauge-aa {
+    background: #22c55e;
+  }
+
+  .cc-gauge-aaa {
+    background: #059669;
+  }
+
+  .cc-gauge-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.6rem;
+    color: var(--color-text-muted);
+  }
+
+  /* APCA usage text */
+  .cc-apca-use {
+    padding: 0.375rem 0.625rem;
+    font-size: 0.75rem;
+    text-align: center;
+    background: var(--color-bg);
+    border-radius: var(--radius-sm);
+  }
+
+  .cc-apca-excellent {
+    color: #047857;
+  }
+
+  .cc-apca-good {
+    color: #16a34a;
+  }
+
+  .cc-apca-fair {
+    color: #ca8a04;
+  }
+
+  .cc-apca-minimum {
+    color: #ea580c;
+  }
+
+  .cc-apca-nontext {
+    color: #c2410c;
+  }
+
+  .cc-apca-poor {
+    color: #dc2626;
+  }
+
+  .cc-apca-fail {
+    color: #991b1b;
+  }
+
+  /* ---- WCAG grid ---- */
+  .cc-wcag-section {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .cc-wcag-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+  }
+
+  .cc-wcag-item {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.375rem;
+    align-items: center;
+    padding: 0.625rem 0.75rem;
+    background: var(--color-bg-secondary);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+    transition: border-color 0.2s;
+  }
+
+  .cc-wcag-item.cc-pass {
+    border-color: #047857;
+  }
+
+  .cc-wcag-item.cc-fail {
+    border-color: #b91c1c;
+  }
+
+  .cc-wcag-badge {
+    padding: 0.125rem 0.375rem;
+    font-size: 0.7rem;
+    font-weight: var(--fw-bold);
+    color: #065f46;
+    background: #d1fae5;
+    border-radius: var(--radius-sm);
+  }
+
+  :root[data-theme="dark"] .cc-wcag-badge {
+    color: #6ee7b7;
+    background: rgb(6 95 70 / 40%);
+  }
+
+  .cc-wcag-aaa {
+    color: #6d28d9;
+    background: rgb(124 58 237 / 12%);
+  }
+
+  :root[data-theme="dark"] .cc-wcag-aaa {
+    color: #a78bfa;
+    background: rgb(124 58 237 / 20%);
+  }
+
+  .cc-wcag-nontext {
+    color: #0369a1;
+    background: rgb(14 165 233 / 12%);
+  }
+
+  :root[data-theme="dark"] .cc-wcag-nontext {
+    color: #7dd3fc;
+    background: rgb(14 165 233 / 20%);
+  }
+
+  .cc-wcag-text {
+    font-size: 0.8rem;
+    font-weight: var(--fw-medium);
+    color: var(--color-text);
+  }
+
+  .cc-wcag-min {
+    font-size: 0.7rem;
+    color: var(--color-text-muted);
+  }
+
+  .cc-wcag-result {
+    margin-left: auto;
+    font-size: 0.8rem;
+    font-weight: var(--fw-semibold);
+  }
+
+  .cc-pass .cc-wcag-result {
+    color: #047857;
+  }
+
+  .cc-fail .cc-wcag-result {
+    color: #b91c1c;
+  }
+
+  /* ---- Suggestions ---- */
+  .cc-suggestions {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .cc-suggestion-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+  }
+
+  .cc-suggestion-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    cursor: pointer;
+    background: var(--color-bg-secondary);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+    transition: border-color 0.15s;
+  }
+
+  .cc-suggestion-card:hover {
+    border-color: var(--color-primary);
+  }
+
+  .cc-sug-label {
+    font-size: 0.8rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-heading);
+  }
+
+  .cc-sug-preview {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.9rem;
+    border-radius: var(--radius-sm);
+  }
+
+  .cc-sug-info {
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+  }
+
+  .cc-sug-info code {
+    padding: 0.1rem 0.3rem;
+    font-size: 0.7rem;
+    background: var(--color-bg);
+    border-radius: 3px;
+  }
+
+  /* ---- Color blindness simulation ---- */
+  .cc-blindness-section {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .cc-blindness-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+  }
+
+  .cc-blindness-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+    padding: 0.75rem;
+    background: var(--color-bg-secondary);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+  }
+
+  .cc-blindness-label {
+    font-size: 0.8rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-heading);
+  }
+
+  .cc-blindness-pct {
+    font-size: 0.65rem;
+    font-weight: normal;
+    color: var(--color-text-muted);
+  }
+
+  .cc-blindness-desc {
+    font-size: 0.7rem;
+    color: var(--color-text-muted);
+  }
+
+  .cc-blindness-preview {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    margin-top: 0.25rem;
+  }
+
+  .cc-sim-swatch {
+    flex-shrink: 0;
+    width: 24px;
+    height: 24px;
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+  }
+
+  .cc-sim-text {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.8rem;
+    font-weight: var(--fw-medium);
+    border-radius: var(--radius-sm);
+  }
+
+  .cc-sim-ratio {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: var(--fw-semibold);
+  }
+
+  .cc-sim-pass {
+    color: #047857;
+  }
+
+  .cc-sim-warn {
+    color: #ca8a04;
+  }
+
+  .cc-sim-fail {
+    color: #b91c1c;
+  }
+
+  /* ---- Export buttons ---- */
+  .cc-export-section {
+    display: flex;
+    gap: 0.75rem;
+  }
+
+  .cc-export-btn {
+    display: flex;
+    flex: 1;
+    gap: 0.5rem;
+    align-items: center;
+    justify-content: center;
+    padding: 0.625rem 1rem;
+    font-size: 0.85rem;
+    font-weight: var(--fw-medium);
+    color: var(--color-text);
+    cursor: pointer;
+    background: var(--color-bg-secondary);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+    transition: all 0.15s;
+  }
+
+  .cc-export-btn:hover {
+    color: var(--color-primary);
+    border-color: var(--color-primary);
+  }
+
+  .cc-export-btn span:first-child {
+    width: 18px;
+    height: 18px;
+  }
+
+  /* ---- Responsive ---- */
+  @media (width <= 640px) {
+    .cc-layout {
+      padding: 1rem;
+    }
+
+    .cc-pickers {
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .cc-swap-btn {
+      margin-top: 0;
+      transform: rotate(90deg);
+    }
+
+    .cc-scores {
+      grid-template-columns: 1fr;
+    }
+
+    .cc-wcag-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .cc-suggestion-cards {
+      grid-template-columns: 1fr;
+    }
+
+    .cc-blindness-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .cc-export-section {
+      flex-direction: column;
+    }
+  }
+
+  /* ── Dark mode contrast fixes ── */
+  :root[data-theme="dark"] .cc-pass .cc-wcag-result {
+    color: #34d399;
+  }
+
+  :root[data-theme="dark"] .cc-fail .cc-wcag-result {
+    color: #fca5a5;
+  }
+
+  :root[data-theme="dark"] .cc-sim-pass {
+    color: #34d399;
+  }
+
+  :root[data-theme="dark"] .cc-sim-warn {
+    color: #fde047;
+  }
+
+  :root[data-theme="dark"] .cc-sim-fail {
+    color: #fca5a5;
+  }
+
+  :root[data-theme="dark"] .cc-apca-excellent {
+    color: #34d399;
+  }
+
+  :root[data-theme="dark"] .cc-apca-good {
+    color: #4ade80;
+  }
+
+  :root[data-theme="dark"] .cc-apca-fair {
+    color: #fde047;
+  }
+
+  :root[data-theme="dark"] .cc-apca-minimum {
+    color: #fb923c;
+  }
+
+  :root[data-theme="dark"] .cc-apca-nontext {
+    color: #fb923c;
+  }
+
+  :root[data-theme="dark"] .cc-apca-poor {
+    color: #fca5a5;
+  }
+
+  :root[data-theme="dark"] .cc-apca-fail {
+    color: #fca5a5;
+  }
+</style>

@@ -1,0 +1,177 @@
+---
+/**
+ * TerminalSession Component (Composition Pattern)
+ * A parent wrapper that renders a terminal card with a header, copy button,
+ * and child sub-components for command and output sections.
+ *
+ * Uses the same cheerio-based slot introspection pattern as Tabs/TabPanel:
+ * children render themselves, and the parent extracts metadata (raw command
+ * text) from the rendered HTML for the copy button.
+ *
+ * Usage:
+ * import { TerminalSession, TerminalSessionCommand, TerminalSessionOutput } from "@components/ui/terminal-session";
+ *
+ * <TerminalSession>
+ *   <TerminalSessionCommand>echo "hello"</TerminalSessionCommand>
+ *   <TerminalSessionOutput title="Output">hello</TerminalSessionOutput>
+ * </TerminalSession>
+ *
+ * Accessibility:
+ * - Semantic markup with proper ARIA attributes.
+ * - Focusable scrollable regions in sub-components.
+ * - Copy button with descriptive ARIA label.
+ * - WCAG 2.2 AA compliant contrast and interactivity.
+ */
+
+import { createHash } from "node:crypto";
+
+import * as cheerio from "cheerio";
+
+import CopyButton from "./CopyButton.astro";
+
+interface Props {
+  /** Title displayed in the terminal header bar between dots and copy button. */
+  title?: string;
+  /** Custom ARIA label for the overall terminal session. */
+  ariaLabel?: string;
+}
+
+const { title, ariaLabel } = Astro.props;
+
+// Render slot content (contains TerminalSessionCommand and TerminalSessionOutput)
+const slotContent = (await Astro.slots.render("default")) || "";
+
+// Use cheerio to extract raw command text from child TerminalSessionCommand
+const $ = cheerio.load(slotContent, { xmlMode: false });
+
+const rawCommands: string[] = [];
+$(".ts-command-raw").each((_, el) => {
+  const text = $(el).text().trim();
+  if (text) {
+    rawCommands.push(text);
+  }
+});
+
+const commandText = rawCommands.join("\n");
+const firstCommand = commandText.split(/\r?\n/).find(Boolean);
+
+// Generate a content-based test ID for uniqueness
+const hashInput = commandText || "empty-session";
+const contentHash = createHash("sha256")
+  .update(hashInput)
+  .digest("hex")
+  .slice(0, 8);
+
+const finalAriaLabel =
+  ariaLabel || `Terminal session: ${firstCommand || "interactive"}`;
+---
+
+<div
+  class="terminal-session copy-container"
+  data-testid={`terminal-session-${contentHash}`}
+>
+  <div class="terminal-header">
+    <div class="terminal-controls">
+      <span class="dot red"></span>
+      <span class="dot yellow"></span>
+      <span class="dot green"></span>
+    </div>
+    {
+      title && (
+        <span
+          class="terminal-title"
+          aria-hidden="true"
+        >
+          {title}
+        </span>
+      )
+    }
+    <div class="action-area">
+      <CopyButton
+        content={commandText}
+        ariaLabel={`Copy command: ${firstCommand || "terminal"}`}
+      />
+    </div>
+  </div>
+
+  <div
+    class="terminal-body"
+    role="group"
+    aria-label={finalAriaLabel}
+    set:html={slotContent}
+  />
+
+  {/* Hidden element for CopyButton fallback */}
+  <div
+    class="copy-content"
+    style="display: none;"
+    aria-hidden="true"
+    set:text={commandText}
+  />
+</div>
+
+<style>
+  .terminal-session {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    margin: 1.5rem 0;
+    overflow: hidden;
+    background-color: var(--color-bg-secondary);
+    border: var(--border-1);
+    border-radius: var(--radius-md);
+  }
+
+  .terminal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 36px;
+    padding: 0.5rem 0.75rem;
+    background-color: var(--color-bg-header);
+    border-bottom: var(--border-1);
+  }
+
+  .terminal-controls {
+    display: flex;
+    gap: 6px;
+  }
+
+  .terminal-title {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+    white-space: nowrap;
+  }
+
+  .dot {
+    width: 10px;
+    height: 10px;
+    background-color: var(--color-border);
+    border-radius: 50%;
+  }
+
+  .dot.red {
+    background-color: #ff5f56;
+  }
+
+  .dot.yellow {
+    background-color: #ffbd2e;
+  }
+
+  .dot.green {
+    background-color: #27c93f;
+  }
+
+  .terminal-body {
+    display: flex;
+    flex-direction: column;
+  }
+
+  :global(.terminal-session .copy-button) {
+    position: static !important;
+  }
+</style>

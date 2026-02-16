@@ -145,6 +145,19 @@ const FALLBACK_PAGES: PageInfo[] = [
 ];
 
 /**
+ * Reads pages from the globalSetup-generated cache file synchronously.
+ * Used at module scope for Playwright test registration (parallel tests).
+ * Falls back to an empty array when the cache does not exist (e.g., test listing).
+ *
+ * @returns Cached page list from the sitemap.
+ */
+export function getCachedPages(): PageInfo[] {
+  const pagesCache = path.resolve("accessibility-report/.pages-cache.json");
+  if (!fs.existsSync(pagesCache)) return [];
+  return JSON.parse(fs.readFileSync(pagesCache, "utf-8")) as PageInfo[];
+}
+
+/**
  * Parses sitemap to retrieve pages with friendly names for test descriptions.
  * Optimizes by only including the first tag page encountered.
  *

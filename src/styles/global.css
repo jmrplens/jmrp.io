@@ -137,9 +137,13 @@
   background-color: transparent !important;
 }
 
-/* Light mode: also needs transparent background */
+/* Force Shiki to use light theme variables when data-theme is light */
 :root[data-theme="light"] .astro-code,
 :root[data-theme="light"] .astro-code span {
+  font-style: var(--shiki-light-font-style) !important;
+  font-weight: var(--shiki-light-font-weight) !important;
+  color: var(--shiki-light) !important;
+  text-decoration: var(--shiki-light-text-decoration) !important;
   background-color: transparent !important;
 }
 

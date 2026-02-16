@@ -25,11 +25,11 @@ add_header Cross-Origin-Resource-Policy "same-origin" always;
 # Enable via build-time environment variable: DEMO_SECURITY_COOKIE=1
 # add_header Set-Cookie "__Host-Session=1; path=/; Secure; HttpOnly; SameSite=Strict" always;
 
-# Content Security Policy (Nonce-based with SHA fallback)
-# - 'nonce-$cspNonce': Injected by Nginx via sub_filter
-# - hashes: Calculated during build for all inline content
-# - 'report-uri': Endpoint for violation reports
-add_header Content-Security-Policy "default-src 'none'; script-src 'self' 'nonce-$cspNonce' $csp_script_1; style-src 'self' 'nonce-$cspNonce' $csp_style_1; img-src 'self' https://*.jmrp.io; font-src 'self'; connect-src 'self' https://api.github.com https://cloudflareinsights.com https://*.cloudflareinsights.com; media-src 'self'; manifest-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests; report-uri /csp-report" always;
+# Content Security Policy (Nonce-only: all scripts/styles use nonces)
+# - 'nonce-$cspNonce': Injected by Nginx via sub_filter (replaces NGINX_CSP_NONCE placeholders)
+# - 'self': Covers same-origin external scripts and stylesheets
+# - No hashes needed: every element gets a nonce during post-build
+add_header Content-Security-Policy "default-src 'none'; script-src 'self' 'nonce-$cspNonce'; style-src 'self' 'nonce-$cspNonce'; img-src 'self' https://*.jmrp.io; font-src 'self'; connect-src 'self' https://api.github.com https://cloudflareinsights.com https://*.cloudflareinsights.com; media-src 'self'; manifest-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests; report-uri /csp-report" always;
 
 # Permissions Policy
 add_header Permissions-Policy "accelerometer=(), autoplay=(), browsing-topics=(), camera=(), encrypted-media=(), fullscreen=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), midi=(), payment=(), picture-in-picture=(), publickey-credentials-get=(self), sync-xhr=(), usb=(), xr-spatial-tracking=()" always;

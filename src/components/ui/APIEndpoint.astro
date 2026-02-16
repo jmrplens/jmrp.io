@@ -174,16 +174,6 @@ const methodColors: Record<Props["method"], string> = {
     --ae-auth-color: #92400e; /* amber-800 */
   }
 
-  /* Dark mode adjustments for WCAG AA contrast - use lighter shades */
-  :root[data-theme="dark"] {
-    --method-get-color: #34d399; /* emerald-400 */
-    --method-post-color: #60a5fa; /* blue-400 */
-    --method-put-color: #fbbf24; /* amber-400 */
-    --method-patch-color: #a78bfa; /* violet-400 */
-    --method-delete-color: #f87171; /* red-400 */
-    --ae-auth-color: #fbbf24; /* amber-400 */
-  }
-
   /* System preference fallback when no explicit theme is set */
   @media (prefers-color-scheme: light) {
     :root:not([data-theme]) {
@@ -196,50 +186,58 @@ const methodColors: Record<Props["method"], string> = {
     }
   }
 
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme]) {
-      --method-get-color: #34d399;
-      --method-post-color: #60a5fa;
-      --method-put-color: #fbbf24;
-      --method-patch-color: #a78bfa;
-      --method-delete-color: #f87171;
-      --ae-auth-color: #fbbf24;
-    }
-  }
-
   :root[data-theme="light"] .method-get,
-  :root:not([data-theme]) .method-get,
-  :root[data-theme="dark"] .method-get {
+  :root:not([data-theme]) .method-get {
     color: var(--method-get-color, #10b981);
   }
 
   :root[data-theme="light"] .method-post,
-  :root:not([data-theme]) .method-post,
-  :root[data-theme="dark"] .method-post {
+  :root:not([data-theme]) .method-post {
     color: var(--method-post-color, #3b82f6);
   }
 
   :root[data-theme="light"] .method-put,
-  :root:not([data-theme]) .method-put,
-  :root[data-theme="dark"] .method-put {
+  :root:not([data-theme]) .method-put {
     color: var(--method-put-color, #f59e0b);
   }
 
   :root[data-theme="light"] .method-patch,
-  :root:not([data-theme]) .method-patch,
-  :root[data-theme="dark"] .method-patch {
+  :root:not([data-theme]) .method-patch {
     color: var(--method-patch-color, #8b5cf6);
   }
 
   :root[data-theme="light"] .method-delete,
-  :root:not([data-theme]) .method-delete,
-  :root[data-theme="dark"] .method-delete {
+  :root:not([data-theme]) .method-delete {
     color: var(--method-delete-color, #ef4444);
   }
 
   :root[data-theme="light"] .ae-auth,
-  :root:not([data-theme]) .ae-auth,
-  :root[data-theme="dark"] .ae-auth {
+  :root:not([data-theme]) .ae-auth {
     color: var(--ae-auth-color, #f59e0b);
+  }
+
+  /* Dark mode contrast fixes */
+  :root[data-theme="dark"] .method-get {
+    color: #6ee7b7;
+  }
+
+  :root[data-theme="dark"] .method-post {
+    color: #93c5fd;
+  }
+
+  :root[data-theme="dark"] .method-put {
+    color: #fcd34d;
+  }
+
+  :root[data-theme="dark"] .method-patch {
+    color: #c4b5fd;
+  }
+
+  :root[data-theme="dark"] .method-delete {
+    color: #fca5a5;
+  }
+
+  :root[data-theme="dark"] .ae-auth {
+    color: #fcd34d;
   }
 </style>

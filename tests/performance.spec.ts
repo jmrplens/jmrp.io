@@ -291,15 +291,12 @@ test.describe("Content Integrity", () => {
           continue;
         }
 
-        // Check if link returns a successful status
+        // Check if link returns 200
         const response = await page.goto(normalizedHref);
         const status = response?.status() ?? 0;
 
-        // Accept successful responses (200, 304) and common redirects (301, 302, 307, 308)
-        // Redirects are valid for trailing slash normalization (/path -> /path/)
-        const validStatuses = [200, 304, 301, 302, 307, 308];
         // eslint-disable-next-line playwright/no-conditional-in-test -- Required for status checking
-        if (!validStatuses.includes(status)) {
+        if (status !== 200 && status !== 304) {
           brokenLinks.push(`${url} -> ${normalizedHref} (${status})`);
         }
       }

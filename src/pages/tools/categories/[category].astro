@@ -1,0 +1,352 @@
+---
+/**
+ * Tool Category Page.
+ * Displays tools filtered by category (security, developer, network, embedded).
+ * Pattern mirrors blog/tags/[tag].astro but for tool categories.
+ */
+import BaseLayout from "@layouts/BaseLayout.astro";
+import { getSiteUrl } from "@utils/site";
+import { getCollection } from "astro:content";
+
+/** Category display metadata. */
+const categoryMeta: Record<
+  string,
+  { name: string; description: string; icon: string }
+> = {
+  security: {
+    name: "Security Tools",
+    description:
+      "Tools for web security auditing, CSP policy building, certificate inspection, and cryptographic operations.",
+    icon: "i-mdi:shield-lock-outline",
+  },
+  developer: {
+    name: "Developer Tools",
+    description:
+      "Utilities for encoding, regex testing, cron building, timestamp conversion, and accessibility checking.",
+    icon: "i-mdi:code-braces",
+  },
+  network: {
+    name: "Network & Server Tools",
+    description:
+      "Networking utilities for IP subnet calculation, server configuration generation, and network planning.",
+    icon: "i-mdi:lan",
+  },
+  embedded: {
+    name: "Embedded & Industrial Tools",
+    description:
+      "Tools for industrial protocols like Modbus RTU/TCP frame building and embedded systems development.",
+    icon: "i-mdi:chip",
+  },
+};
+
+export async function getStaticPaths() {
+  const allTools = await getCollection("tools");
+  const categories = [...new Set(allTools.map((tool) => tool.data.category))];
+
+  return categories.map((category) => {
+    const filteredTools = allTools.filter(
+      (tool) => tool.data.category === category,
+    );
+    return {
+      params: { category },
+      props: { tools: filteredTools },
+    };
+  });
+}
+
+const { category } = Astro.params;
+const { tools } = Astro.props;
+
+const meta = categoryMeta[category!] ?? {
+  name: category,
+  description: `Tools in the ${category} category.`,
+  icon: "i-mdi:tools",
+};
+
+const schema = {
+  "@type": "CollectionPage",
+  "@id": new URL(
+    "#collection",
+    new URL(Astro.url.pathname, getSiteUrl()),
+  ).toString(),
+  name: meta.name,
+  description: meta.description,
+  url: new URL(Astro.url.pathname, getSiteUrl()).toString(),
+  mainEntity: {
+    "@type": "ItemList",
+    itemListElement: tools.map(
+      (tool: { data: { slug: string; title: string } }, index: number) => ({
+        "@type": "ListItem",
+        position: index + 1,
+        url: new URL(`/tools/${tool.data.slug}/`, getSiteUrl()).toString(),
+        name: tool.data.title,
+      }),
+    ),
+  },
+};
+---
+
+<BaseLayout
+  title={meta.name}
+  description={meta.description}
+  schema={schema}
+>
+  <div class="container">
+    <nav
+      class="breadcrumb"
+      aria-label="Breadcrumb"
+    >
+      <a href="/tools/">Tools</a>
+      <span
+        class="i-mdi:chevron-right"
+        aria-hidden="true"
+      ></span>
+      <span aria-current="page">{meta.name}</span>
+    </nav>
+
+    <header class="page-header">
+      <div class="header-icon">
+        <span
+          class={meta.icon}
+          aria-hidden="true"
+        ></span>
+      </div>
+      <div class="header-content">
+        <h1>{meta.name}</h1>
+        <p class="subtitle">
+          {tools.length}
+          {tools.length === 1 ? "tool" : "tools"} in this category
+        </p>
+      </div>
+    </header>
+
+    <div class="tools-grid">
+      {
+        tools.map(
+          (tool: {
+            data: {
+              slug: string;
+              icon: string;
+              title: string;
+              description: string;
+            };
+          }) => (
+            <a
+              href={`/tools/${tool.data.slug}/`}
+              class="tool-card"
+            >
+              <span
+                class={`tool-icon ${tool.data.icon}`}
+                aria-hidden="true"
+              />
+              <div class="tool-content">
+                <h2 class="tool-name">{tool.data.title}</h2>
+                <p class="tool-description">{tool.data.description}</p>
+              </div>
+              <span
+                class="i-mdi:chevron-right tool-arrow"
+                aria-hidden="true"
+              />
+            </a>
+          ),
+        )
+      }
+    </div>
+
+    <div class="back-link">
+      <a href="/tools/">&larr; Back to all tools</a>
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  /* Breadcrumb */
+  .breadcrumb {
+    display: flex;
+    gap: var(--space-xs);
+    align-items: center;
+    margin-bottom: var(--space-lg);
+    font-size: 0.875rem;
+    color: var(--color-text-muted);
+  }
+
+  .breadcrumb a {
+    color: var(--color-text-muted);
+    text-decoration: none;
+    transition: color 0.2s ease;
+  }
+
+  .breadcrumb a:hover {
+    color: var(--color-primary);
+  }
+
+  .breadcrumb span[class*="i-"] {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  /* Page header */
+  .page-header {
+    display: flex;
+    gap: var(--space-md);
+    align-items: center;
+    margin-bottom: var(--space-xl);
+  }
+
+  .header-icon {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 4rem;
+    height: 4rem;
+    background: linear-gradient(
+      135deg,
+      var(--color-success, #10b981),
+      var(--color-success-dark, #059669)
+    );
+    border-radius: var(--radius-lg);
+  }
+
+  .header-icon span {
+    width: 2rem;
+    height: 2rem;
+    color: var(--header-icon-color, #fff);
+  }
+
+  .header-content {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .page-header h1 {
+    margin-bottom: var(--space-xs);
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+
+  .subtitle {
+    font-size: 1rem;
+    line-height: 1.5;
+    color: var(--color-text-muted);
+  }
+
+  /* Tools Grid */
+  .tools-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+    gap: var(--space-sm);
+    margin-bottom: var(--space-xl);
+  }
+
+  /* Tool Card */
+  .tool-card {
+    display: flex;
+    gap: var(--space-sm);
+    align-items: center;
+    padding: 0.625rem 0.75rem;
+    text-decoration: none;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    transition:
+      border-color 0.15s ease,
+      box-shadow 0.15s ease;
+  }
+
+  .tool-card:hover {
+    border-color: var(--color-primary);
+    box-shadow: 0 1px 4px rgb(0 0 0 / 8%);
+  }
+
+  .tool-card:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  .tool-icon {
+    flex-shrink: 0;
+    width: 1.25rem;
+    height: 1.25rem;
+    color: var(--color-primary);
+  }
+
+  .tool-content {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 0.125rem;
+    min-width: 0;
+  }
+
+  .tool-name {
+    margin: 0;
+    font-size: 0.9rem;
+    font-weight: var(--fw-semibold);
+    line-height: 1.3;
+    color: var(--color-text-heading);
+  }
+
+  .tool-description {
+    display: -webkit-box;
+    margin: 0;
+    overflow: hidden;
+    -webkit-line-clamp: 2;
+    font-size: 0.775rem;
+    line-height: 1.4;
+    color: var(--color-text-muted);
+    -webkit-box-orient: vertical;
+  }
+
+  .tool-arrow {
+    flex-shrink: 0;
+    width: 1rem;
+    height: 1rem;
+    color: var(--color-text-muted);
+    opacity: 50%;
+    transition:
+      transform 0.15s ease,
+      opacity 0.15s ease;
+  }
+
+  .tool-card:hover .tool-arrow {
+    color: var(--color-primary);
+    opacity: 100%;
+    transform: translateX(2px);
+  }
+
+  /* Back link */
+  .back-link {
+    margin-top: var(--space-lg);
+  }
+
+  .back-link a {
+    color: var(--color-text-muted);
+    text-decoration: none;
+    transition: color 0.2s ease;
+  }
+
+  .back-link a:hover {
+    color: var(--color-primary);
+  }
+
+  /* Responsive */
+  @media (width <= 640px) {
+    .page-header {
+      flex-direction: column;
+      text-align: center;
+    }
+
+    .tools-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .tool-card,
+    .tool-arrow {
+      transition: none;
+    }
+  }
+</style>

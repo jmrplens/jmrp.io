@@ -1,0 +1,115 @@
+---
+/**
+ * Regex flavor comparison table extracted as a separate component.
+ * This isolation works around an Astro 6 beta compiler bug where
+ * JSX expressions containing angle brackets (e.g. `{"(?<name>...)"}`)
+ * inside `<code>` elements cause ghost `<code>` tags to leak into
+ * the parent template, wrapping subsequent block content.
+ *
+ * @see https://github.com/withastro/compiler/issues
+ */
+---
+
+<div class="flavor-table-wrapper">
+  <table class="flavor-table">
+    <thead>
+      <tr>
+        <th scope="col">Feature</th>
+        <th scope="col">JavaScript</th>
+        <th scope="col">PCRE (grep -P, PHP)</th>
+        <th scope="col">Python re</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Named groups</td>
+        <td><code>{"(?<name>...)"}</code></td>
+        <td><code>{"(?P<name>...)"}</code> or <code>{"(?<name>...)"}</code></td>
+        <td><code>{"(?P<name>...)"}</code></td>
+      </tr>
+      <tr>
+        <td>Lookbehind</td>
+        <td>Variable-length (ES2018+)</td>
+        <td>Fixed-length only</td>
+        <td>Fixed-length only</td>
+      </tr>
+      <tr>
+        <td>Unicode properties</td>
+        <td><code>\p&#123;L&#125;</code> (with <code>u</code> flag)</td>
+        <td><code>\p&#123;L&#125;</code> (built-in)</td>
+        <td>Via <code>regex</code> module</td>
+      </tr>
+      <tr>
+        <td>Atomic groups</td>
+        <td>Not supported</td>
+        <td><code>{"(?>...)"}</code></td>
+        <td>Not supported</td>
+      </tr>
+      <tr>
+        <td>Recursion</td>
+        <td>Not supported</td>
+        <td><code>{"(?R)"}</code>, <code>{"(?1)"}</code></td>
+        <td>Via <code>regex</code> module</td>
+      </tr>
+      <tr>
+        <td>Possessive quantifiers</td>
+        <td>Not supported</td>
+        <td><code>a++</code>, <code>a*+</code></td>
+        <td>Not supported</td>
+      </tr>
+      <tr>
+        <td>Backreference in replace</td>
+        <td><code>$1</code>, <code>$&amp;</code></td>
+        <td><code>\1</code>, <code>$1</code></td>
+        <td><code>\1</code>, <code>{String.raw`\g<1>`}</code></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<style>
+  .flavor-table-wrapper {
+    margin-top: var(--space-sm);
+    margin-bottom: var(--space-md);
+    overflow-x: auto;
+    border: var(--border-1);
+    border-radius: var(--radius-md);
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .flavor-table {
+    width: 100%;
+    font-size: 0.85rem;
+    border-collapse: collapse;
+  }
+
+  .flavor-table thead {
+    background: var(--color-bg);
+  }
+
+  .flavor-table th {
+    padding: var(--space-sm) var(--space-md);
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-heading);
+    text-align: left;
+    border-bottom: var(--border-1);
+  }
+
+  .flavor-table td {
+    padding: var(--space-sm) var(--space-md);
+    color: var(--color-text);
+    border-bottom: var(--border-1);
+  }
+
+  .flavor-table tr:last-child td {
+    border-bottom: none;
+  }
+
+  .flavor-table tbody tr:nth-child(even) {
+    background: color-mix(
+      in oklch,
+      var(--color-bg) 50%,
+      var(--color-bg-secondary)
+    );
+  }
+</style>

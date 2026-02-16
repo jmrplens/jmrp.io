@@ -18,8 +18,7 @@ import { createHash } from "node:crypto";
 
 import { decodeHtml } from "@utils/html";
 import { getIconForLang } from "@utils/icons";
-import { resolveShikiLanguage } from "@utils/shiki";
-import { Code as AstroCode } from "astro/components";
+import { highlightCode, resolveShikiLanguage } from "@utils/shiki";
 import type { BuiltinLanguage, SpecialLanguage } from "shiki";
 
 import CopyButton from "./CopyButton.astro";
@@ -103,6 +102,11 @@ const finalAriaLabel =
 const langDisplay = lang.toUpperCase();
 
 const langIcon = getIconForLang(lang);
+
+// Highlight using the singleton Shiki instance (avoids creating N instances per page)
+const highlightedHtml = isEmpty
+  ? ""
+  : await highlightCode(rawCode, resolveShikiLanguage(lang));
 ---
 
 {
@@ -132,14 +136,7 @@ const langIcon = getIconForLang(lang);
         />
       </div>
       <div class="code-body">
-        <AstroCode
-          code={rawCode}
-          lang={resolveShikiLanguage(lang)}
-          themes={{
-            light: "github-light-high-contrast",
-            dark: "github-dark-high-contrast",
-          }}
-        />
+        <Fragment set:html={highlightedHtml} />
       </div>
     </section>
   )

@@ -17,8 +17,7 @@ import { createHash } from "node:crypto";
 
 import { decodeHtml } from "@utils/html";
 import { getIconForFile } from "@utils/icons";
-import { resolveShikiLanguage } from "@utils/shiki";
-import { Code as AstroCode } from "astro/components";
+import { highlightCode, resolveShikiLanguage } from "@utils/shiki";
 import type { BuiltinLanguage, SpecialLanguage } from "shiki";
 
 import CopyButton from "./CopyButton.astro";
@@ -97,6 +96,12 @@ if (language) {
     rawCode = decodeHtml(stripped);
   }
 }
+
+// Highlight using the singleton Shiki instance (avoids per-render instance creation)
+const highlightedHtml =
+  useCustomHighlighting && language
+    ? await highlightCode(rawCode, resolveShikiLanguage(language))
+    : "";
 ---
 
 {
@@ -157,14 +162,7 @@ if (language) {
           >
             {/* eslint-enable astro/jsx-a11y/no-noninteractive-tabindex */}
             {useCustomHighlighting ? (
-              <AstroCode
-                code={rawCode}
-                lang={resolveShikiLanguage(language as string)}
-                themes={{
-                  light: "github-light-high-contrast",
-                  dark: "github-dark-high-contrast",
-                }}
-              />
+              <Fragment set:html={highlightedHtml} />
             ) : (
               <div set:html={trimmedContent} />
             )}
@@ -205,14 +203,7 @@ if (language) {
         >
           {/* eslint-enable astro/jsx-a11y/no-noninteractive-tabindex */}
           {useCustomHighlighting ? (
-            <AstroCode
-              code={rawCode}
-              lang={resolveShikiLanguage(language as string)}
-              themes={{
-                light: "github-light-high-contrast",
-                dark: "github-dark-high-contrast",
-              }}
-            />
+            <Fragment set:html={highlightedHtml} />
           ) : (
             <div set:html={trimmedContent} />
           )}

@@ -11,11 +11,14 @@
  * - Structured data (JSON-LD)
  * - Language attributes
  * - 404 page metadata
+ *
+ * Per-page tests run in parallel across workers for maximum performance.
+ * Dynamically tests all pages discovered from the sitemap.
  */
 
 import { expect, test } from "@playwright/test";
 
-import { getSitemapUrls } from "./utils";
+import { getCachedPages } from "./utils";
 
 /** JSON-LD schema structure for validation */
 interface JsonLdSchema {
@@ -90,45 +93,26 @@ function validateJsonLd(
   validateSchemaTypes(schema["@type"]!, validTypes);
 }
 
-test.describe("SEO & Metadata Checks", () => {
-  let urls: string[] = [];
+// Read pages synchronously at module scope for parallel test registration
+const pages = getCachedPages();
 
-  test.beforeAll(async () => {
-    urls = await getSitemapUrls();
-  });
+test.describe("SEO Per-Page Checks", () => {
+  for (const pageInfo of pages) {
+    test(`SEO: ${pageInfo.name}`, async ({ page }) => {
+      await page.goto(pageInfo.url);
 
-  test("Technical SEO files exist", async ({ page }) => {
-    // Check robots.txt
-    const robots = await page.goto("/robots.txt");
-    expect(robots?.status()).toBe(200);
-    expect(await robots?.text()).toContain("User-agent:");
-
-    // Check sitemap-index.xml redirect or content
-    const sitemap = await page.goto("/sitemap-index.xml");
-    expect(sitemap?.status()).toBe(200);
-    const text = await sitemap?.text();
-    expect(text).toMatch(/urlset|sitemapindex/);
-  });
-
-  test("Page Metadata Verification", async ({ page }) => {
-    for (const url of urls) {
-      await test.step(`Checking Metadata: ${url}`, async () => {
-        await page.goto(url);
-
-        // 1. Title
+      // --- Page Metadata ---
+      await test.step("Page metadata", async () => {
         const title = await page.title();
         expect(title.length).toBeGreaterThan(0);
-        expect(title.length).toBeLessThan(70); // Google truncates ~60-70 chars
+        expect(title.length).toBeLessThan(70);
 
-        // 2. Canonical Tag
         const canonical = page.locator('link[rel="canonical"]');
         await expect(canonical).toHaveAttribute("href", /^https?:\/\//);
 
-        // 3. Meta Description
         const description = page.locator('meta[name="description"]');
         await expect(description).toHaveAttribute("content", /.{10,}/);
 
-        // 4. Open Graph Tags (Social Sharing)
         await expect(page.locator('meta[property="og:title"]')).toHaveAttribute(
           "content",
           /.+/,
@@ -145,7 +129,57 @@ test.describe("SEO & Metadata Checks", () => {
           /.+/,
         );
       });
-    }
+
+      // --- Twitter Card ---
+      /* eslint-disable playwright/no-conditional-in-test -- Twitter card presence is optional */
+      await test.step("Twitter Card meta tags", async () => {
+        const twitterCard = page.locator('meta[name="twitter:card"]');
+        const hasTwitterCard = (await twitterCard.count()) > 0;
+
+        if (hasTwitterCard) {
+          // eslint-disable-next-line playwright/no-conditional-expect
+          await expect(twitterCard).toHaveAttribute(
+            "content",
+            /summary|summary_large_image|player|app/,
+          );
+        }
+
+        const socialTitle = page.locator(
+          'meta[name="twitter:title"], meta[property="og:title"]',
+        );
+        await expect(socialTitle.first()).toHaveAttribute("content", /.+/);
+
+        const socialDesc = page.locator(
+          'meta[name="twitter:description"], meta[property="og:description"]',
+        );
+        await expect(socialDesc.first()).toHaveAttribute("content", /.+/);
+      });
+      /* eslint-enable playwright/no-conditional-in-test */
+
+      // --- Language attribute ---
+      await test.step("HTML language attribute", async () => {
+        const html = page.locator("html");
+        await expect(html).toHaveAttribute(
+          "lang",
+          /^[a-z]{2,3}(?:-[a-z0-9]+)*$/i,
+        );
+      });
+    });
+  }
+});
+
+test.describe("SEO & Metadata Checks", () => {
+  test("Technical SEO files exist", async ({ page }) => {
+    // Check robots.txt
+    const robots = await page.goto("/robots.txt");
+    expect(robots?.status()).toBe(200);
+    expect(await robots?.text()).toContain("User-agent:");
+
+    // Check sitemap-index.xml redirect or content
+    const sitemap = await page.goto("/sitemap-index.xml");
+    expect(sitemap?.status()).toBe(200);
+    const text = await sitemap?.text();
+    expect(text).toMatch(/urlset|sitemapindex/);
   });
 
   test("404 page has correct SEO metadata", async ({ page }) => {
@@ -162,54 +196,6 @@ test.describe("SEO & Metadata Checks", () => {
     // Verify Canonical is present and valid
     const canonical = page.locator('link[rel="canonical"]');
     await expect(canonical).toHaveAttribute("href", /^https?:\/\//);
-  });
-
-  test("Twitter Card meta tags (if present)", async ({ page }) => {
-    for (const url of urls) {
-      await test.step(`Checking Twitter Cards: ${url}`, async () => {
-        await page.goto(url);
-
-        // Twitter Card is optional - only validate if present
-        const twitterCard = page.locator('meta[name="twitter:card"]');
-        const hasTwitterCard = (await twitterCard.count()) > 0;
-
-        // eslint-disable-next-line playwright/no-conditional-in-test
-        if (hasTwitterCard) {
-          // Twitter Card type (summary, summary_large_image, etc.)
-          // eslint-disable-next-line playwright/no-conditional-expect
-          await expect(twitterCard).toHaveAttribute(
-            "content",
-            /summary|summary_large_image|player|app/,
-          );
-        }
-
-        // Twitter/OG title and description should always exist (falls back to OG)
-        const socialTitle = page.locator(
-          'meta[name="twitter:title"], meta[property="og:title"]',
-        );
-        await expect(socialTitle.first()).toHaveAttribute("content", /.+/);
-
-        const socialDesc = page.locator(
-          'meta[name="twitter:description"], meta[property="og:description"]',
-        );
-        await expect(socialDesc.first()).toHaveAttribute("content", /.+/);
-      });
-    }
-  });
-
-  test("HTML language attribute is set", async ({ page }) => {
-    for (const url of urls) {
-      await test.step(`Checking lang attribute: ${url}`, async () => {
-        await page.goto(url);
-
-        // HTML element should have lang attribute
-        const html = page.locator("html");
-        await expect(html).toHaveAttribute(
-          "lang",
-          /^[a-z]{2,3}(?:-[a-z0-9]+)*$/i,
-        );
-      });
-    }
   });
 
   test("Structured data (JSON-LD) is present on key pages", async ({

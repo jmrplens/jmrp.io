@@ -31,6 +31,7 @@ export default [
       "**/temp_workflow/**",
       "**/lh-deploy/**",
       "**/.scannerwork/**",
+      "src/assets/nedry-assets.ts", // Base64-encoded assets (large file, no logic)
     ],
   },
 
@@ -194,9 +195,11 @@ export default [
     },
   },
   {
-    files: ["scripts/ci/update-ci-comment.mjs"],
+    files: [
+      "scripts/ci/update-ci-comment.mjs", // False positives on GitHub badges
+    ],
     rules: {
-      "no-secrets/no-secrets": "off", // False positives on GitHub badges
+      "no-secrets/no-secrets": "off",
     },
   },
 
@@ -278,6 +281,12 @@ export default [
     files: ["src/components/ui/*.astro"],
     rules: {
       "sonarjs/no-nested-template-literals": "off",
+    },
+  },
+  {
+    files: ["src/pages/404.astro"],
+    rules: {
+      "astro/jsx-a11y/media-has-caption": "off", // SFX-only audio clip, no spoken content
     },
   },
 ];

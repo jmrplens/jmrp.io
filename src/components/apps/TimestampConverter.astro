@@ -1,0 +1,1259 @@
+---
+/**
+ * TimestampConverter Component
+ * Convert between Unix timestamps and human-readable dates.
+ *
+ * Features:
+ * - Bidirectional sync (timestamp ↔ date picker)
+ * - Auto-detect seconds vs milliseconds
+ * - Timezone comparison table (11 zones, local highlighted)
+ * - Multiple output formats (Local, UTC, RFC 2822, short date, week, day-of-year)
+ * - URL parameter sharing (?ts=...&unit=auto|s|ms)
+ * - Copy buttons on all result values
+ * - Live current-timestamp clock with "Now" button
+ *
+ * @example
+ * <TimestampConverter title="Unix Timestamp Converter" />
+ */
+
+interface Props {
+  title?: string;
+}
+
+const { title = "Unix Timestamp Converter" } = Astro.props;
+const uniqueId = `ts-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
+---
+
+<div
+  class="ts-converter"
+  data-ts-id={uniqueId}
+>
+  {title && <div class="ts-title">{title}</div>}
+
+  <div class="ts-layout">
+    {/* Current time + Now button */}
+    <div class="ts-current">
+      <span
+        class="i-mdi:clock-outline ts-current-icon"
+        aria-hidden="true"
+      ></span>
+      <span>Current Unix Timestamp:</span>
+      <code
+        class="ts-current-value"
+        id={`${uniqueId}-current`}
+        >—</code
+      >
+      <button
+        type="button"
+        class="ts-now-btn"
+        aria-label="Fill input with current timestamp"
+      >
+        <span
+          class="i-mdi:clock-fast"
+          aria-hidden="true"
+        ></span>
+        <span>Now</span>
+      </button>
+    </div>
+
+    {/* Timestamp → Date */}
+    <div class="ts-section">
+      <div class="ts-section-header">
+        <span
+          class="i-mdi:arrow-right-bold"
+          aria-hidden="true"
+        ></span>
+        <span>Timestamp → Date</span>
+      </div>
+      <div class="ts-input-row">
+        <input
+          type="text"
+          id={`${uniqueId}-ts-input`}
+          class="ts-input"
+          placeholder="Enter Unix timestamp..."
+          spellcheck="false"
+          autocomplete="off"
+          aria-label="Unix timestamp input"
+          inputmode="numeric"
+        />
+        <div class="ts-unit-toggle">
+          <button
+            type="button"
+            class="ts-unit-btn active"
+            data-unit="auto"
+            >Auto</button
+          >
+          <button
+            type="button"
+            class="ts-unit-btn"
+            data-unit="s"
+            >Seconds</button
+          >
+          <button
+            type="button"
+            class="ts-unit-btn"
+            data-unit="ms"
+            >Milliseconds</button
+          >
+        </div>
+      </div>
+      <div
+        class="ts-detect-hint"
+        id={`${uniqueId}-detect-hint`}
+        aria-live="polite"
+      >
+      </div>
+      <div
+        class="ts-results"
+        id={`${uniqueId}-ts-results`}
+      >
+        <div class="ts-result-item">
+          <span class="ts-result-label">Local Time</span>
+          <div class="ts-result-with-copy">
+            <code
+              class="ts-result-value"
+              id={`${uniqueId}-local`}
+              >—</code
+            >
+            <button
+              type="button"
+              class="ts-copy-btn"
+              data-target-id={`${uniqueId}-local`}
+              aria-label="Copy local time"
+            >
+              <span class="i-mdi:content-copy"></span>
+            </button>
+          </div>
+        </div>
+        <div class="ts-result-item">
+          <span class="ts-result-label">UTC (ISO 8601)</span>
+          <div class="ts-result-with-copy">
+            <code
+              class="ts-result-value"
+              id={`${uniqueId}-utc`}
+              >—</code
+            >
+            <button
+              type="button"
+              class="ts-copy-btn"
+              data-target-id={`${uniqueId}-utc`}
+              aria-label="Copy UTC time"
+            >
+              <span class="i-mdi:content-copy"></span>
+            </button>
+          </div>
+        </div>
+        <div class="ts-result-item">
+          <span class="ts-result-label">RFC 2822</span>
+          <div class="ts-result-with-copy">
+            <code
+              class="ts-result-value"
+              id={`${uniqueId}-rfc`}
+              >—</code
+            >
+            <button
+              type="button"
+              class="ts-copy-btn"
+              data-target-id={`${uniqueId}-rfc`}
+              aria-label="Copy RFC 2822 date"
+            >
+              <span class="i-mdi:content-copy"></span>
+            </button>
+          </div>
+        </div>
+        <div class="ts-result-item">
+          <span class="ts-result-label">Short Date</span>
+          <div class="ts-result-with-copy">
+            <code
+              class="ts-result-value"
+              id={`${uniqueId}-short`}
+              >—</code
+            >
+            <button
+              type="button"
+              class="ts-copy-btn"
+              data-target-id={`${uniqueId}-short`}
+              aria-label="Copy short date"
+            >
+              <span class="i-mdi:content-copy"></span>
+            </button>
+          </div>
+        </div>
+        <div class="ts-result-item">
+          <span class="ts-result-label">Relative</span>
+          <code
+            class="ts-result-value"
+            id={`${uniqueId}-relative`}
+            >—</code
+          >
+        </div>
+        <div class="ts-result-item">
+          <span class="ts-result-label">Day of Week</span>
+          <code
+            class="ts-result-value"
+            id={`${uniqueId}-dow`}
+            >—</code
+          >
+        </div>
+        <div class="ts-result-item">
+          <span class="ts-result-label">Week Number</span>
+          <code
+            class="ts-result-value"
+            id={`${uniqueId}-week`}
+            >—</code
+          >
+        </div>
+        <div class="ts-result-item">
+          <span class="ts-result-label">Day of Year</span>
+          <code
+            class="ts-result-value"
+            id={`${uniqueId}-doy`}
+            >—</code
+          >
+        </div>
+      </div>
+    </div>
+
+    {/* Date → Timestamp */}
+    <div class="ts-section">
+      <div class="ts-section-header">
+        <span
+          class="i-mdi:arrow-left-bold"
+          aria-hidden="true"
+        ></span>
+        <span>Date → Timestamp</span>
+      </div>
+      <div class="ts-date-inputs">
+        <div class="ts-date-field">
+          <label for={`${uniqueId}-date`}>Date</label>
+          <input
+            type="date"
+            id={`${uniqueId}-date`}
+            class="ts-input"
+          />
+        </div>
+        <div class="ts-date-field">
+          <label for={`${uniqueId}-time`}>Time</label>
+          <input
+            type="time"
+            id={`${uniqueId}-time`}
+            class="ts-input"
+            step="1"
+          />
+        </div>
+      </div>
+      <div class="ts-results">
+        <div class="ts-result-item">
+          <span class="ts-result-label">Unix (seconds)</span>
+          <div class="ts-result-with-copy">
+            <code
+              class="ts-result-value"
+              id={`${uniqueId}-unix-s`}
+              >—</code
+            >
+            <button
+              type="button"
+              class="ts-copy-btn"
+              data-target-id={`${uniqueId}-unix-s`}
+              aria-label="Copy seconds timestamp"
+            >
+              <span class="i-mdi:content-copy"></span>
+            </button>
+          </div>
+        </div>
+        <div class="ts-result-item">
+          <span class="ts-result-label">Unix (milliseconds)</span>
+          <div class="ts-result-with-copy">
+            <code
+              class="ts-result-value"
+              id={`${uniqueId}-unix-ms`}
+              >—</code
+            >
+            <button
+              type="button"
+              class="ts-copy-btn"
+              data-target-id={`${uniqueId}-unix-ms`}
+              aria-label="Copy milliseconds timestamp"
+            >
+              <span class="i-mdi:content-copy"></span>
+            </button>
+          </div>
+        </div>
+        <div class="ts-result-item">
+          <span class="ts-result-label">ISO 8601</span>
+          <div class="ts-result-with-copy">
+            <code
+              class="ts-result-value"
+              id={`${uniqueId}-iso`}
+              >—</code
+            >
+            <button
+              type="button"
+              class="ts-copy-btn"
+              data-target-id={`${uniqueId}-iso`}
+              aria-label="Copy ISO timestamp"
+            >
+              <span class="i-mdi:content-copy"></span>
+            </button>
+          </div>
+        </div>
+        <div class="ts-result-item">
+          <span class="ts-result-label">RFC 2822</span>
+          <div class="ts-result-with-copy">
+            <code
+              class="ts-result-value"
+              id={`${uniqueId}-rfc2`}
+              >—</code
+            >
+            <button
+              type="button"
+              class="ts-copy-btn"
+              data-target-id={`${uniqueId}-rfc2`}
+              aria-label="Copy RFC 2822 date"
+            >
+              <span class="i-mdi:content-copy"></span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {/* Timezone Comparison */}
+    <div class="ts-section">
+      <div class="ts-section-header">
+        <span
+          class="i-mdi:earth"
+          aria-hidden="true"
+        ></span>
+        <span>Timezone Comparison</span>
+      </div>
+      <div class="ts-tz-wrap">
+        <table
+          class="ts-tz-table"
+          aria-label="Timestamp in different timezones"
+        >
+          <thead>
+            <tr>
+              <th scope="col">City</th>
+              <th scope="col">Date &amp; Time</th>
+              <th scope="col">Zone</th>
+            </tr>
+          </thead>
+          <tbody id={`${uniqueId}-tz-body`}></tbody>
+        </table>
+      </div>
+    </div>
+
+    {/* Actions */}
+    <div class="ts-actions">
+      <button
+        type="button"
+        class="ts-share-btn"
+        aria-label="Copy shareable link"
+      >
+        <span
+          class="i-mdi:share-variant"
+          aria-hidden="true"
+        ></span>
+        <span class="ts-share-text">Share Link</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script is:inline define:vars={{ uniqueId }}>
+  (function () {
+    var container = document.querySelector('[data-ts-id="' + uniqueId + '"]');
+    if (!container) return;
+
+    /* ── Element references ── */
+    var currentEl = document.getElementById(uniqueId + "-current");
+    var tsInput = document.getElementById(uniqueId + "-ts-input");
+    var detectHint = document.getElementById(uniqueId + "-detect-hint");
+    var localEl = document.getElementById(uniqueId + "-local");
+    var utcEl = document.getElementById(uniqueId + "-utc");
+    var rfcEl = document.getElementById(uniqueId + "-rfc");
+    var shortEl = document.getElementById(uniqueId + "-short");
+    var relativeEl = document.getElementById(uniqueId + "-relative");
+    var dowEl = document.getElementById(uniqueId + "-dow");
+    var weekEl = document.getElementById(uniqueId + "-week");
+    var doyEl = document.getElementById(uniqueId + "-doy");
+    var dateInput = document.getElementById(uniqueId + "-date");
+    var timeInput = document.getElementById(uniqueId + "-time");
+    var unixS = document.getElementById(uniqueId + "-unix-s");
+    var unixMs = document.getElementById(uniqueId + "-unix-ms");
+    var isoEl = document.getElementById(uniqueId + "-iso");
+    var rfc2El = document.getElementById(uniqueId + "-rfc2");
+    var tzBody = document.getElementById(uniqueId + "-tz-body");
+    var unitBtns = container.querySelectorAll(".ts-unit-btn");
+    var copyBtns = container.querySelectorAll(".ts-copy-btn");
+    var nowBtn = container.querySelector(".ts-now-btn");
+    var shareBtn = container.querySelector(".ts-share-btn");
+    var shareText = container.querySelector(".ts-share-text");
+
+    var unit = "auto";
+    var syncing = false;
+    var currentDate = null;
+    var dayNames = [
+      "Sunday",
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday",
+    ];
+    var dayAbbr = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    var monthAbbr = [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
+    ];
+
+    /* ── Timezone list ── */
+    var tzList = [
+      { tz: "local", label: "Local" },
+      { tz: "UTC", label: "UTC" },
+      { tz: "America/New_York", label: "New York" },
+      { tz: "America/Los_Angeles", label: "Los Angeles" },
+      { tz: "America/Chicago", label: "Chicago" },
+      { tz: "Europe/London", label: "London" },
+      { tz: "Europe/Berlin", label: "Berlin" },
+      { tz: "Asia/Tokyo", label: "Tokyo" },
+      { tz: "Asia/Shanghai", label: "Shanghai" },
+      { tz: "Asia/Kolkata", label: "Kolkata" },
+      { tz: "Australia/Sydney", label: "Sydney" },
+    ];
+
+    var localTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    var tzRows = [];
+
+    /* Build timezone table rows */
+    tzList.forEach(function (item) {
+      var tr = document.createElement("tr");
+      var tdCity = document.createElement("td");
+      if (item.tz === "local") {
+        var cityName = localTz.split("/").pop().replace(/_/g, " ");
+        tdCity.textContent = item.label + " (" + cityName + ")";
+        tr.className = "ts-tz-local";
+      } else {
+        tdCity.textContent = item.label;
+      }
+      var tdTime = document.createElement("td");
+      tdTime.className = "ts-tz-time";
+      tdTime.textContent = "\u2014";
+      var tdZone = document.createElement("td");
+      tdZone.className = "ts-tz-zone";
+      tdZone.textContent = "\u2014";
+      tr.appendChild(tdCity);
+      tr.appendChild(tdTime);
+      tr.appendChild(tdZone);
+      tzBody.appendChild(tr);
+      tzRows.push({ tz: item.tz, time: tdTime, zone: tdZone });
+    });
+
+    /* ── URL params ── */
+    var params = new URLSearchParams(window.location.search);
+    var urlTs = params.get("ts");
+    var urlUnit = params.get("unit");
+
+    /* ── Helpers ── */
+    function pad2(n) {
+      return String(n).padStart(2, "0");
+    }
+
+    function autoDetect(val) {
+      var num = parseInt(val, 10);
+      if (isNaN(num)) return "s";
+      return Math.abs(num) > 9999999999 ? "ms" : "s";
+    }
+
+    function getEffectiveUnit(val) {
+      if (unit !== "auto") return unit;
+      return autoDetect(val);
+    }
+
+    function isLeapYear(year) {
+      return (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
+    }
+
+    function toRFC2822(date) {
+      var d = dayAbbr[date.getDay()];
+      var day = pad2(date.getDate());
+      var mon = monthAbbr[date.getMonth()];
+      var year = date.getFullYear();
+      var time =
+        pad2(date.getHours()) +
+        ":" +
+        pad2(date.getMinutes()) +
+        ":" +
+        pad2(date.getSeconds());
+      var offset = date.getTimezoneOffset();
+      var sign = offset <= 0 ? "+" : "-";
+      var offH = pad2(Math.floor(Math.abs(offset) / 60));
+      var offM = pad2(Math.abs(offset) % 60);
+      return (
+        d +
+        ", " +
+        day +
+        " " +
+        mon +
+        " " +
+        year +
+        " " +
+        time +
+        " " +
+        sign +
+        offH +
+        offM
+      );
+    }
+
+    function getWeekNumber(date) {
+      var d = new Date(
+        Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()),
+      );
+      var dayNum = d.getUTCDay() || 7;
+      d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+      var yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+      return Math.ceil(((d - yearStart) / 86400000 + 1) / 7);
+    }
+
+    function getDayOfYear(date) {
+      var start = new Date(date.getFullYear(), 0, 0);
+      return Math.floor((date - start) / 86400000);
+    }
+
+    function formatRelative(date) {
+      var diff = date.getTime() - Date.now();
+      var absDiff = Math.abs(diff);
+      var isPast = diff < 0;
+      var secs = Math.floor(absDiff / 1000);
+      var mins = Math.floor(secs / 60);
+      var hours = Math.floor(mins / 60);
+      var daysDiff = Math.floor(hours / 24);
+      var months = Math.floor(daysDiff / 30.44);
+      var years = Math.floor(daysDiff / 365.25);
+
+      var str;
+      if (years > 0) str = years + " year" + (years > 1 ? "s" : "");
+      else if (months > 0) str = months + " month" + (months > 1 ? "s" : "");
+      else if (daysDiff > 0)
+        str = daysDiff + " day" + (daysDiff > 1 ? "s" : "");
+      else if (hours > 0) str = hours + " hour" + (hours > 1 ? "s" : "");
+      else if (mins > 0) str = mins + " minute" + (mins > 1 ? "s" : "");
+      else str = secs + " second" + (secs !== 1 ? "s" : "");
+
+      return str + (isPast ? " ago" : " from now");
+    }
+
+    function formatInTz(date, tz) {
+      var opts = {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: false,
+      };
+      if (tz && tz !== "local") opts.timeZone = tz;
+      try {
+        var parts = new Intl.DateTimeFormat("en-CA", opts).formatToParts(date);
+        var find = function (type) {
+          var p = parts.find(function (x) {
+            return x.type === type;
+          });
+          return p ? p.value : "";
+        };
+        var h = find("hour");
+        if (h === "24") h = "00";
+        return (
+          find("year") +
+          "-" +
+          find("month") +
+          "-" +
+          find("day") +
+          " " +
+          h +
+          ":" +
+          find("minute") +
+          ":" +
+          find("second")
+        );
+      } catch (e) {
+        return "\u2014";
+      }
+    }
+
+    function getTzAbbr(date, tz) {
+      if (tz === "UTC") return "UTC";
+      var opts = { timeZoneName: "short" };
+      if (tz && tz !== "local") opts.timeZone = tz;
+      try {
+        var parts = new Intl.DateTimeFormat("en", opts).formatToParts(date);
+        var p = parts.find(function (x) {
+          return x.type === "timeZoneName";
+        });
+        return p ? p.value : "";
+      } catch (e) {
+        return "";
+      }
+    }
+
+    /* ── Core update ── */
+    function clearAll() {
+      var dashes = [
+        localEl,
+        utcEl,
+        rfcEl,
+        shortEl,
+        relativeEl,
+        dowEl,
+        weekEl,
+        doyEl,
+        unixS,
+        unixMs,
+        isoEl,
+        rfc2El,
+      ];
+      dashes.forEach(function (el) {
+        if (el) el.textContent = "\u2014";
+      });
+      tzRows.forEach(function (r) {
+        r.time.textContent = "\u2014";
+        r.zone.textContent = "\u2014";
+      });
+      if (detectHint) detectHint.textContent = "";
+      currentDate = null;
+    }
+
+    function updateOutputs(date) {
+      if (!date || isNaN(date.getTime())) {
+        clearAll();
+        return;
+      }
+      currentDate = date;
+
+      /* Timestamp → Date results */
+      if (localEl) localEl.textContent = date.toLocaleString();
+      if (utcEl) utcEl.textContent = date.toISOString();
+      if (rfcEl) rfcEl.textContent = toRFC2822(date);
+      if (shortEl) shortEl.textContent = date.toISOString().slice(0, 10);
+      if (relativeEl) relativeEl.textContent = formatRelative(date);
+      if (dowEl) dowEl.textContent = dayNames[date.getDay()];
+      if (weekEl) weekEl.textContent = "W" + pad2(getWeekNumber(date));
+      if (doyEl)
+        doyEl.textContent =
+          getDayOfYear(date) +
+          " / " +
+          (isLeapYear(date.getFullYear()) ? "366" : "365");
+
+      /* Date → Timestamp results */
+      var s = Math.floor(date.getTime() / 1000);
+      var ms = date.getTime();
+      if (unixS) unixS.textContent = String(s);
+      if (unixMs) unixMs.textContent = String(ms);
+      if (isoEl) isoEl.textContent = date.toISOString();
+      if (rfc2El) rfc2El.textContent = toRFC2822(date);
+
+      /* Timezone table */
+      tzRows.forEach(function (r) {
+        r.time.textContent = formatInTz(date, r.tz);
+        r.zone.textContent = getTzAbbr(date, r.tz);
+      });
+
+      /* URL update */
+      updateUrl(s);
+    }
+
+    function updateUrl(ts) {
+      var u = unit === "auto" ? "" : "&unit=" + unit;
+      var newUrl = window.location.pathname + "?ts=" + ts + u;
+      history.replaceState(null, "", newUrl);
+    }
+
+    /* ── Sync functions ── */
+    function syncFromTimestamp() {
+      if (syncing) return;
+      syncing = true;
+
+      var val = tsInput ? tsInput.value.trim() : "";
+      if (!val) {
+        clearAll();
+        syncing = false;
+        return;
+      }
+
+      var num = parseFloat(val);
+      if (isNaN(num) || !isFinite(num)) {
+        if (localEl) localEl.textContent = "Invalid timestamp";
+        syncing = false;
+        return;
+      }
+      num = Math.floor(num);
+
+      var eff = getEffectiveUnit(val);
+      var ms = eff === "ms" ? num : num * 1000;
+      var date = new Date(ms);
+
+      /* Auto-detect hint */
+      if (detectHint) {
+        detectHint.textContent =
+          unit === "auto"
+            ? "Auto-detected as " + (eff === "ms" ? "milliseconds" : "seconds")
+            : "";
+      }
+
+      if (isNaN(date.getTime())) {
+        if (localEl) localEl.textContent = "Invalid date";
+        syncing = false;
+        return;
+      }
+
+      /* Sync date picker */
+      if (dateInput) dateInput.value = date.toISOString().slice(0, 10);
+      if (timeInput)
+        timeInput.value =
+          pad2(date.getHours()) +
+          ":" +
+          pad2(date.getMinutes()) +
+          ":" +
+          pad2(date.getSeconds());
+
+      updateOutputs(date);
+      syncing = false;
+    }
+
+    function syncFromDate() {
+      if (syncing) return;
+      syncing = true;
+
+      if (!dateInput || !dateInput.value) {
+        syncing = false;
+        return;
+      }
+
+      var dateStr = dateInput.value;
+      var timeStr = timeInput && timeInput.value ? timeInput.value : "00:00:00";
+      var date = new Date(dateStr + "T" + timeStr);
+
+      if (isNaN(date.getTime())) {
+        if (unixS) unixS.textContent = "Invalid date";
+        syncing = false;
+        return;
+      }
+
+      /* Sync timestamp input */
+      var s = Math.floor(date.getTime() / 1000);
+      if (tsInput) tsInput.value = String(s);
+      if (detectHint) detectHint.textContent = "";
+
+      updateOutputs(date);
+      syncing = false;
+    }
+
+    /* ── Live clock ── */
+    function updateCurrent() {
+      if (currentEl)
+        currentEl.textContent = String(Math.floor(Date.now() / 1000));
+    }
+    setInterval(updateCurrent, 1000);
+    updateCurrent();
+
+    /* Refresh relative time every 30 s */
+    setInterval(function () {
+      if (currentDate && relativeEl) {
+        relativeEl.textContent = formatRelative(currentDate);
+      }
+    }, 30000);
+
+    /* ── Now button ── */
+    if (nowBtn) {
+      nowBtn.addEventListener("click", function () {
+        var now = Math.floor(Date.now() / 1000);
+        if (tsInput) tsInput.value = String(now);
+        syncFromTimestamp();
+      });
+    }
+
+    /* ── Unit toggle ── */
+    unitBtns.forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        unitBtns.forEach(function (b) {
+          b.classList.remove("active");
+        });
+        btn.classList.add("active");
+        unit = btn.dataset.unit;
+        syncFromTimestamp();
+      });
+    });
+
+    /* ── Inputs ── */
+    if (tsInput) {
+      var timeout;
+      tsInput.addEventListener("input", function () {
+        clearTimeout(timeout);
+        timeout = setTimeout(syncFromTimestamp, 150);
+      });
+    }
+
+    if (dateInput) {
+      dateInput.addEventListener("change", syncFromDate);
+      dateInput.addEventListener("input", syncFromDate);
+    }
+    if (timeInput) {
+      timeInput.addEventListener("change", syncFromDate);
+      timeInput.addEventListener("input", syncFromDate);
+    }
+
+    /* ── Copy buttons ── */
+    copyBtns.forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var target = document.getElementById(btn.dataset.targetId);
+        if (
+          target &&
+          target.textContent &&
+          target.textContent !== "\u2014" &&
+          navigator.clipboard
+        ) {
+          navigator.clipboard.writeText(target.textContent).then(function () {
+            btn.classList.add("copied");
+            setTimeout(function () {
+              btn.classList.remove("copied");
+            }, 1500);
+          });
+        }
+      });
+    });
+
+    /* ── Share button ── */
+    if (shareBtn) {
+      shareBtn.addEventListener("click", function () {
+        if (navigator.clipboard) {
+          navigator.clipboard.writeText(window.location.href).then(function () {
+            shareBtn.classList.add("copied");
+            if (shareText) shareText.textContent = "Copied!";
+            setTimeout(function () {
+              shareBtn.classList.remove("copied");
+              if (shareText) shareText.textContent = "Share Link";
+            }, 1500);
+          });
+        }
+      });
+    }
+
+    /* ── Initialize ── */
+    if (urlTs) {
+      if (tsInput) tsInput.value = urlTs;
+      if (
+        urlUnit &&
+        (urlUnit === "s" || urlUnit === "ms" || urlUnit === "auto")
+      ) {
+        unit = urlUnit;
+        unitBtns.forEach(function (b) {
+          b.classList.remove("active");
+          if (b.dataset.unit === unit) b.classList.add("active");
+        });
+      }
+      syncFromTimestamp();
+    } else {
+      var now = new Date();
+      if (tsInput) tsInput.value = String(Math.floor(now.getTime() / 1000));
+      syncFromTimestamp();
+    }
+  })();
+</script>
+
+<style>
+  .ts-converter {
+    margin: 1.5rem 0;
+    overflow: hidden;
+    background: var(--color-bg-subtle);
+    border: var(--border-1);
+    border-radius: var(--radius-md);
+  }
+
+  .ts-title {
+    padding: 1rem 1.25rem;
+    font-size: 1.1rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-heading);
+    background: var(--color-bg-secondary);
+    border-bottom: var(--border-1);
+  }
+
+  .ts-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    padding: 1.25rem;
+  }
+
+  /* Current time */
+  .ts-current {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+    background: rgb(from var(--color-primary) r g b / 8%);
+    border: 1px solid rgb(from var(--color-primary) r g b / 20%);
+    border-radius: var(--radius-sm);
+  }
+
+  .ts-current-icon {
+    width: 18px;
+    height: 18px;
+    color: var(--color-primary);
+  }
+
+  .ts-current-value {
+    font-family: var(--font-mono);
+    font-weight: var(--fw-bold);
+    color: var(--color-primary);
+  }
+
+  .ts-now-btn {
+    display: flex;
+    gap: 0.375rem;
+    align-items: center;
+    padding: 0.375rem 0.75rem;
+    margin-left: auto;
+    font-size: 0.8rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-primary);
+    cursor: pointer;
+    background: transparent;
+    border: 1px solid rgb(from var(--color-primary) r g b / 40%);
+    border-radius: var(--radius-sm);
+    transition: all 0.15s;
+  }
+
+  .ts-now-btn span[class^="i-"] {
+    width: 16px;
+    height: 16px;
+  }
+
+  .ts-now-btn:hover {
+    color: #fff;
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+  }
+
+  /* Sections */
+  .ts-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .ts-section-header {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    font-size: 0.85rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .ts-section-header span[class^="i-"] {
+    width: 18px;
+    height: 18px;
+  }
+
+  .ts-input-row {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+  }
+
+  .ts-input {
+    flex: 1;
+    padding: 0.625rem 0.75rem;
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    color: var(--color-text);
+    background: var(--color-bg);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+    transition: border-color 0.15s;
+  }
+
+  .ts-input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+  }
+
+  .ts-unit-toggle {
+    display: flex;
+    flex-shrink: 0;
+    gap: 0;
+  }
+
+  .ts-unit-btn {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8rem;
+    font-weight: var(--fw-medium);
+    color: var(--color-text-muted);
+    cursor: pointer;
+    background: var(--color-bg-secondary);
+    border: var(--border-1);
+    transition: all 0.15s;
+  }
+
+  .ts-unit-btn:first-child {
+    border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+  }
+
+  .ts-unit-btn:last-child {
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  }
+
+  .ts-unit-btn:not(:first-child) {
+    border-left: none;
+  }
+
+  .ts-unit-btn.active {
+    color: #fff;
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+  }
+
+  .ts-unit-btn:hover:not(.active) {
+    color: var(--color-primary);
+    border-color: var(--color-primary);
+  }
+
+  /* Auto-detect hint */
+  .ts-detect-hint {
+    min-height: 0;
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+    transition: min-height 0.15s;
+  }
+
+  .ts-detect-hint:empty {
+    display: none;
+  }
+
+  /* Date inputs */
+  .ts-date-inputs {
+    display: flex;
+    gap: 1rem;
+  }
+
+  .ts-date-field {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 0.375rem;
+  }
+
+  .ts-date-field label {
+    font-size: 0.75rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+  }
+
+  /* Results */
+  .ts-results {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr));
+    gap: 0.5rem;
+  }
+
+  .ts-result-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 0.625rem 0.75rem;
+    background: var(--color-bg-secondary);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+  }
+
+  .ts-result-label {
+    font-size: 0.7rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .ts-result-value {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    color: var(--color-text-heading);
+    word-break: break-all;
+  }
+
+  .ts-result-with-copy {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+  }
+
+  .ts-copy-btn {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    background: transparent;
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+    transition: all 0.15s;
+  }
+
+  .ts-copy-btn span {
+    width: 14px;
+    height: 14px;
+  }
+
+  .ts-copy-btn:hover {
+    color: var(--color-primary);
+    border-color: var(--color-primary);
+  }
+
+  .ts-copy-btn.copied {
+    color: #047857;
+    border-color: #10b981;
+  }
+
+  /* Timezone table */
+  .ts-tz-wrap {
+    overflow-x: auto;
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+  }
+
+  .ts-tz-table {
+    width: 100%;
+    font-size: 0.85rem;
+    border-collapse: collapse;
+  }
+
+  .ts-tz-table th {
+    padding: 0.625rem 0.75rem;
+    font-size: 0.7rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-muted);
+    text-align: left;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    background: var(--color-bg-secondary);
+    border-bottom: var(--border-1);
+  }
+
+  .ts-tz-table td {
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid rgb(from var(--color-border) r g b / 50%);
+  }
+
+  .ts-tz-table tr:last-child td {
+    border-bottom: none;
+  }
+
+  .ts-tz-time {
+    font-family: var(--font-mono);
+  }
+
+  .ts-tz-zone {
+    font-size: 0.8rem;
+    font-weight: var(--fw-medium);
+    color: var(--color-text-muted);
+  }
+
+  .ts-tz-local td {
+    font-weight: var(--fw-medium);
+    background: rgb(from var(--color-primary) r g b / 6%);
+  }
+
+  /* Actions */
+  .ts-actions {
+    display: flex;
+    gap: 0.75rem;
+    padding-top: 0.5rem;
+    border-top: var(--border-1);
+  }
+
+  .ts-share-btn {
+    display: flex;
+    gap: 0.375rem;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+    font-weight: var(--fw-medium);
+    color: var(--color-text-muted);
+    cursor: pointer;
+    background: var(--color-bg-secondary);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+    transition: all 0.15s;
+  }
+
+  .ts-share-btn span[class^="i-"] {
+    width: 16px;
+    height: 16px;
+  }
+
+  .ts-share-btn:hover {
+    color: var(--color-primary);
+    border-color: var(--color-primary);
+  }
+
+  .ts-share-btn.copied {
+    color: #047857;
+    border-color: #10b981;
+  }
+
+  @media (width <= 640px) {
+    .ts-layout {
+      padding: 1rem;
+    }
+
+    .ts-input-row {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .ts-date-inputs {
+      flex-direction: column;
+    }
+
+    .ts-results {
+      grid-template-columns: 1fr;
+    }
+
+    .ts-unit-toggle {
+      justify-content: stretch;
+    }
+
+    .ts-unit-btn {
+      flex: 1;
+      text-align: center;
+    }
+  }
+
+  /* ── Dark mode contrast fixes ── */
+  :root[data-theme="dark"] .ts-unit-btn.active {
+    color: #000;
+  }
+</style>

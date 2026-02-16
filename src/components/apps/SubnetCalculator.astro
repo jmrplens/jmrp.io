@@ -1,0 +1,2251 @@
+---
+/* eslint-disable sonarjs/no-hardcoded-ip -- Example IPs are essential for a subnet calculator */
+/**
+ * SubnetCalculator — Comprehensive IPv4/IPv6 Network Calculator
+ *
+ * Tabs: Subnet Calculator, Address Info, VLSM Planner, Range → CIDR
+ * Full IPv4 and IPv6 support with BigInt math.
+ * CSP-compliant: no inline styles.
+ */
+
+interface Props {
+  title?: string;
+}
+
+const { title: _title = "" } = Astro.props;
+const id = `net-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
+---
+
+<div
+  class="net-calc"
+  data-net-id={id}
+>
+  {/* ── Tabs ── */}
+  <div
+    class="net-tabs"
+    role="tablist"
+    aria-label="Calculator mode"
+  >
+    <button
+      type="button"
+      role="tab"
+      class="net-tab active"
+      data-tab="subnet"
+      aria-selected="true"
+      id={`${id}-tab-subnet`}
+      aria-controls={`${id}-panel-subnet`}
+    >
+      <span
+        class="i-mdi:lan"
+        aria-hidden="true"
+      ></span> Subnet
+    </button>
+    <button
+      type="button"
+      role="tab"
+      class="net-tab"
+      data-tab="info"
+      aria-selected="false"
+      id={`${id}-tab-info`}
+      aria-controls={`${id}-panel-info`}
+    >
+      <span
+        class="i-mdi:information-outline"
+        aria-hidden="true"
+      ></span> Address Info
+    </button>
+    <button
+      type="button"
+      role="tab"
+      class="net-tab"
+      data-tab="vlsm"
+      aria-selected="false"
+      id={`${id}-tab-vlsm`}
+      aria-controls={`${id}-panel-vlsm`}
+    >
+      <span
+        class="i-mdi:view-split-vertical"
+        aria-hidden="true"
+      ></span> VLSM
+    </button>
+    <button
+      type="button"
+      role="tab"
+      class="net-tab"
+      data-tab="range"
+      aria-selected="false"
+      id={`${id}-tab-range`}
+      aria-controls={`${id}-panel-range`}
+    >
+      <span
+        class="i-mdi:swap-horizontal"
+        aria-hidden="true"
+      ></span> Range ↔ CIDR
+    </button>
+  </div>
+
+  {/* ── Tab 1: Subnet Calculator ── */}
+  <div
+    role="tabpanel"
+    class="net-panel"
+    id={`${id}-panel-subnet`}
+    data-panel="subnet"
+    aria-labelledby={`${id}-tab-subnet`}
+  >
+    <div class="net-input-section">
+      <div class="net-input-row">
+        <div class="net-field">
+          <label
+            for={`${id}-ip`}
+            class="net-label"
+            >IP Address</label
+          >
+          <input
+            type="text"
+            id={`${id}-ip`}
+            class="net-input"
+            value="192.168.1.0"
+            placeholder="192.168.1.0 or 2001:db8::"
+            spellcheck="false"
+            autocomplete="off"
+          />
+        </div>
+        <div class="net-field net-field-sm">
+          <label
+            for={`${id}-cidr`}
+            class="net-label"
+            >CIDR</label
+          >
+          <div class="net-cidr-row">
+            <span class="net-cidr-slash">/</span>
+            <input
+              type="number"
+              id={`${id}-cidr`}
+              class="net-input net-cidr-input"
+              value="24"
+              min="0"
+              max="128"
+            />
+          </div>
+        </div>
+      </div>
+      <div
+        class="net-presets"
+        id={`${id}-presets-v4`}
+      >
+        <span class="net-presets-label">IPv4:</span>
+        {
+          [8, 16, 20, 24, 25, 26, 27, 28, 29, 30, 31, 32].map((c) => (
+            <button
+              type="button"
+              class="net-preset-btn"
+              data-cidr={String(c)}
+            >
+              /{c}
+            </button>
+          ))
+        }
+      </div>
+      <div
+        class="net-presets"
+        id={`${id}-presets-v6`}
+        hidden
+      >
+        <span class="net-presets-label">IPv6:</span>
+        {
+          [32, 48, 56, 64, 80, 96, 112, 128].map((c) => (
+            <button
+              type="button"
+              class="net-preset-btn"
+              data-cidr={String(c)}
+            >
+              /{c}
+            </button>
+          ))
+        }
+      </div>
+    </div>
+    <div class="net-actions">
+      <button
+        type="button"
+        class="net-btn"
+        id={`${id}-sub-copy`}
+      >
+        <span
+          class="i-mdi:content-copy"
+          aria-hidden="true"
+        ></span> Copy Results
+      </button>
+      <button
+        type="button"
+        class="net-btn"
+        id={`${id}-sub-share`}
+      >
+        <span
+          class="i-mdi:share-variant"
+          aria-hidden="true"
+        ></span> Share Link
+      </button>
+    </div>
+    <div id={`${id}-sub-results`}></div>
+    <div id={`${id}-sub-visual`}></div>
+  </div>
+
+  {/* ── Tab 2: Address Info ── */}
+  <div
+    role="tabpanel"
+    class="net-panel"
+    id={`${id}-panel-info`}
+    data-panel="info"
+    aria-labelledby={`${id}-tab-info`}
+    hidden
+  >
+    <div class="net-input-section">
+      <div class="net-field">
+        <label
+          for={`${id}-info-ip`}
+          class="net-label"
+          >IP Address, Integer, or Hex</label
+        >
+        <input
+          type="text"
+          id={`${id}-info-ip`}
+          class="net-input"
+          value="192.168.1.1"
+          placeholder="10.0.0.1, 2001:db8::1, or 3232235777"
+          spellcheck="false"
+          autocomplete="off"
+        />
+      </div>
+      <div class="net-examples">
+        <span class="net-presets-label">Examples:</span>
+        {
+          [
+            "10.0.0.1",
+            "2001:db8::1",
+            "::ffff:192.168.1.1",
+            "fe80::1",
+            "127.0.0.1",
+            "3232235777",
+          ].map((ex) => (
+            <button
+              type="button"
+              class="net-preset-btn"
+              data-example={ex}
+            >
+              {ex}
+            </button>
+          ))
+        }
+      </div>
+    </div>
+    <div class="net-actions">
+      <button
+        type="button"
+        class="net-btn"
+        id={`${id}-info-copy`}
+      >
+        <span
+          class="i-mdi:content-copy"
+          aria-hidden="true"
+        ></span> Copy All
+      </button>
+    </div>
+    <div id={`${id}-info-results`}></div>
+  </div>
+
+  {/* ── Tab 3: VLSM Planner ── */}
+  <div
+    role="tabpanel"
+    class="net-panel"
+    id={`${id}-panel-vlsm`}
+    data-panel="vlsm"
+    aria-labelledby={`${id}-tab-vlsm`}
+    hidden
+  >
+    <div class="net-input-section">
+      <div class="net-input-row">
+        <div class="net-field">
+          <label
+            for={`${id}-vlsm-net`}
+            class="net-label"
+            >Base Network (IPv4)</label
+          >
+          <input
+            type="text"
+            id={`${id}-vlsm-net`}
+            class="net-input"
+            value="10.0.0.0"
+            placeholder="10.0.0.0"
+            spellcheck="false"
+            autocomplete="off"
+          />
+        </div>
+        <div class="net-field net-field-sm">
+          <label
+            for={`${id}-vlsm-cidr`}
+            class="net-label"
+            >CIDR</label
+          >
+          <div class="net-cidr-row">
+            <span class="net-cidr-slash">/</span>
+            <input
+              type="number"
+              id={`${id}-vlsm-cidr`}
+              class="net-input net-cidr-input"
+              value="16"
+              min="0"
+              max="30"
+            />
+          </div>
+        </div>
+      </div>
+      <div class="net-vlsm-note">
+        <span
+          class="i-mdi:information-outline"
+          aria-hidden="true"
+        ></span>
+        IPv4 only. In IPv6, /64 is standard for all subnets.
+      </div>
+    </div>
+    <div class="net-vlsm-header">
+      <span class="net-label">Subnet Requirements</span>
+    </div>
+    <div id={`${id}-vlsm-reqs`}></div>
+    <div class="net-actions">
+      <button
+        type="button"
+        class="net-btn"
+        id={`${id}-vlsm-add`}
+      >
+        <span
+          class="i-mdi:plus"
+          aria-hidden="true"
+        ></span> Add Subnet
+      </button>
+      <button
+        type="button"
+        class="net-btn net-btn-primary"
+        id={`${id}-vlsm-calc`}
+      >
+        <span
+          class="i-mdi:calculator"
+          aria-hidden="true"
+        ></span> Calculate
+      </button>
+    </div>
+    <div id={`${id}-vlsm-results`}></div>
+  </div>
+
+  {/* ── Tab 4: Range ↔ CIDR ── */}
+  <div
+    role="tabpanel"
+    class="net-panel"
+    id={`${id}-panel-range`}
+    data-panel="range"
+    aria-labelledby={`${id}-tab-range`}
+    hidden
+  >
+    <div class="net-input-section">
+      <div class="net-input-row">
+        <div class="net-field">
+          <label
+            for={`${id}-range-start`}
+            class="net-label"
+            >Start IP (IPv4)</label
+          >
+          <input
+            type="text"
+            id={`${id}-range-start`}
+            class="net-input"
+            value="192.168.1.0"
+            placeholder="192.168.1.0"
+            spellcheck="false"
+            autocomplete="off"
+          />
+        </div>
+        <div class="net-field">
+          <label
+            for={`${id}-range-end`}
+            class="net-label"
+            >End IP</label
+          >
+          <input
+            type="text"
+            id={`${id}-range-end`}
+            class="net-input"
+            value="192.168.1.255"
+            placeholder="192.168.1.255"
+            spellcheck="false"
+            autocomplete="off"
+          />
+        </div>
+      </div>
+    </div>
+    <div class="net-actions">
+      <button
+        type="button"
+        class="net-btn net-btn-primary"
+        id={`${id}-range-calc`}
+      >
+        <span
+          class="i-mdi:swap-horizontal"
+          aria-hidden="true"
+        ></span> Convert
+      </button>
+      <button
+        type="button"
+        class="net-btn"
+        id={`${id}-range-copy`}
+      >
+        <span
+          class="i-mdi:content-copy"
+          aria-hidden="true"
+        ></span> Copy
+      </button>
+    </div>
+    <div id={`${id}-range-results`}></div>
+  </div>
+
+  {/* ── Shared error ── */}
+  <div
+    class="net-error"
+    id={`${id}-error`}
+    hidden
+  >
+    <span
+      class="i-mdi:alert-circle-outline"
+      aria-hidden="true"
+    ></span>
+    <span id={`${id}-error-text`}></span>
+  </div>
+</div>
+
+<script is:inline define:vars={{ id }}>
+  (function () {
+    var C = document.querySelector('[data-net-id="' + id + '"]');
+    if (!C) return;
+
+    /* ═══════════════════════════════════════════
+       DOM REFERENCES
+       ═══════════════════════════════════════════ */
+    var tabs = C.querySelectorAll(".net-tab");
+    var panels = C.querySelectorAll(".net-panel");
+
+    /* Subnet tab */
+    var ipInput = document.getElementById(id + "-ip");
+    var cidrInput = document.getElementById(id + "-cidr");
+    var presetsV4 = document.getElementById(id + "-presets-v4");
+    var presetsV6 = document.getElementById(id + "-presets-v6");
+    var subResults = document.getElementById(id + "-sub-results");
+    var subVisual = document.getElementById(id + "-sub-visual");
+    var subCopyBtn = document.getElementById(id + "-sub-copy");
+    var subShareBtn = document.getElementById(id + "-sub-share");
+
+    /* Info tab */
+    var infoInput = document.getElementById(id + "-info-ip");
+    var infoResults = document.getElementById(id + "-info-results");
+    var infoCopyBtn = document.getElementById(id + "-info-copy");
+
+    /* VLSM tab */
+    var vlsmNet = document.getElementById(id + "-vlsm-net");
+    var vlsmCidr = document.getElementById(id + "-vlsm-cidr");
+    var vlsmReqs = document.getElementById(id + "-vlsm-reqs");
+    var vlsmAddBtn = document.getElementById(id + "-vlsm-add");
+    var vlsmCalcBtn = document.getElementById(id + "-vlsm-calc");
+    var vlsmResultsEl = document.getElementById(id + "-vlsm-results");
+
+    /* Range tab */
+    var rangeStart = document.getElementById(id + "-range-start");
+    var rangeEnd = document.getElementById(id + "-range-end");
+    var rangeCalcBtn = document.getElementById(id + "-range-calc");
+    var rangeCopyBtn = document.getElementById(id + "-range-copy");
+    var rangeResultsEl = document.getElementById(id + "-range-results");
+
+    var errorEl = document.getElementById(id + "-error");
+    var errorText = document.getElementById(id + "-error-text");
+
+    /* State */
+    var lastSubnetText = "";
+    var lastInfoText = "";
+    var lastRangeText = "";
+
+    /* ═══════════════════════════════════════════
+       IPv4 UTILITIES
+       ═══════════════════════════════════════════ */
+    function parseIPv4(s) {
+      var p = s.trim().split(".");
+      if (p.length !== 4) return null;
+      var o = [];
+      for (var i = 0; i < 4; i++) {
+        var n = parseInt(p[i], 10);
+        if (isNaN(n) || n < 0 || n > 255 || String(n) !== p[i].trim())
+          return null;
+        o.push(n);
+      }
+      return o;
+    }
+
+    function ipv4ToInt(o) {
+      return ((o[0] << 24) | (o[1] << 16) | (o[2] << 8) | o[3]) >>> 0;
+    }
+
+    function intToIPv4(n) {
+      return [
+        (n >>> 24) & 255,
+        (n >>> 16) & 255,
+        (n >>> 8) & 255,
+        n & 255,
+      ].join(".");
+    }
+
+    function ipv4ToBinary(o) {
+      return o
+        .map(function (b) {
+          return b.toString(2).padStart(8, "0");
+        })
+        .join(".");
+    }
+
+    function ipv4ToHex(o) {
+      return (
+        "0x" +
+        o
+          .map(function (b) {
+            return b.toString(16).padStart(2, "0");
+          })
+          .join("")
+      );
+    }
+
+    function ipv4MaskBinary(cidr) {
+      var mask = cidr === 0 ? 0 : (~0 << (32 - cidr)) >>> 0;
+      var o = [
+        (mask >>> 24) & 255,
+        (mask >>> 16) & 255,
+        (mask >>> 8) & 255,
+        mask & 255,
+      ];
+      return o
+        .map(function (b) {
+          return b.toString(2).padStart(8, "0");
+        })
+        .join(".");
+    }
+
+    function ipv4Class(first) {
+      if (first < 128) return "A";
+      if (first < 192) return "B";
+      if (first < 224) return "C";
+      if (first < 240) return "D (Multicast)";
+      return "E (Reserved)";
+    }
+
+    function ipv4Type(ip) {
+      var a = (ip >>> 24) & 255;
+      var b = (ip >>> 16) & 255;
+      if (a === 0) return "Current Network (RFC 1122)";
+      if (a === 10) return "Private (RFC 1918)";
+      if (a === 100 && b >= 64 && b <= 127) return "CGNAT / Shared (RFC 6598)";
+      if (a === 127) return "Loopback (RFC 1122)";
+      if (a === 169 && b === 254) return "Link-Local / APIPA (RFC 3927)";
+      if (a === 172 && b >= 16 && b <= 31) return "Private (RFC 1918)";
+      if (a === 192 && b === 0 && ((ip >>> 8) & 255) === 2)
+        return "Documentation (RFC 5737)";
+      if (a === 192 && b === 88 && ((ip >>> 8) & 255) === 99)
+        return "6to4 Relay (RFC 7526)";
+      if (a === 192 && b === 168) return "Private (RFC 1918)";
+      if (a === 198 && (b === 18 || b === 19)) return "Benchmarking (RFC 2544)";
+      if (a === 198 && b === 51 && ((ip >>> 8) & 255) === 100)
+        return "Documentation (RFC 5737)";
+      if (a === 203 && b === 0 && ((ip >>> 8) & 255) === 113)
+        return "Documentation (RFC 5737)";
+      if (a >= 224 && a <= 239) return "Multicast (RFC 5771)";
+      if (a >= 240) return ip === 0xffffffff ? "Broadcast" : "Reserved";
+      return "Public / Global";
+    }
+
+    function ipv4ReverseDNS(o) {
+      return o[3] + "." + o[2] + "." + o[1] + "." + o[0] + ".in-addr.arpa";
+    }
+
+    function ipv4MappedIPv6(o) {
+      var h1 = ((o[0] << 8) | o[1]).toString(16);
+      var h2 = ((o[2] << 8) | o[3]).toString(16);
+      return "::ffff:" + h1 + ":" + h2;
+    }
+
+    /* ═══════════════════════════════════════════
+       IPv6 UTILITIES
+       ═══════════════════════════════════════════ */
+    var MAX128 = (1n << 128n) - 1n;
+
+    function parseIPv6(s) {
+      s = s.trim();
+      /* Mixed notation ::ffff:1.2.3.4 */
+      var mixRx = /:(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$/;
+      var mix = s.match(mixRx);
+      if (mix) {
+        var v4 = parseIPv4(mix[1]);
+        if (!v4) return null;
+        var h1 = ((v4[0] << 8) | v4[1]).toString(16);
+        var h2 = ((v4[2] << 8) | v4[3]).toString(16);
+        s = s.replace(mix[1], h1 + ":" + h2);
+      }
+
+      var groups;
+      if (s.indexOf("::") !== -1) {
+        if ((s.match(/::/g) || []).length > 1) return null;
+        var sides = s.split("::");
+        var left = sides[0] ? sides[0].split(":") : [];
+        var right = sides[1] ? sides[1].split(":") : [];
+        var missing = 8 - left.length - right.length;
+        if (missing < 0) return null;
+        groups = left.concat(Array(missing).fill("0")).concat(right);
+      } else {
+        groups = s.split(":");
+      }
+
+      if (groups.length !== 8) return null;
+      var result = [];
+      for (var i = 0; i < 8; i++) {
+        if (!/^[0-9a-fA-F]{1,4}$/.test(groups[i])) return null;
+        result.push(parseInt(groups[i], 16));
+      }
+      return result;
+    }
+
+    function ipv6Expand(g) {
+      return g
+        .map(function (v) {
+          return v.toString(16).padStart(4, "0");
+        })
+        .join(":");
+    }
+
+    function ipv6Compress(g) {
+      var strs = g.map(function (v) {
+        return v.toString(16);
+      });
+      var bestIdx = -1,
+        bestLen = 0,
+        ci = -1,
+        cl = 0;
+      for (var i = 0; i < 8; i++) {
+        if (g[i] === 0) {
+          if (ci === -1) ci = i;
+          cl++;
+          if (cl > bestLen) {
+            bestLen = cl;
+            bestIdx = ci;
+          }
+        } else {
+          ci = -1;
+          cl = 0;
+        }
+      }
+      if (bestLen < 2) return strs.join(":");
+      var left = strs.slice(0, bestIdx).join(":");
+      var right = strs.slice(bestIdx + bestLen).join(":");
+      return (left || "") + "::" + (right || "");
+    }
+
+    function ipv6ToBigInt(g) {
+      var n = 0n;
+      for (var i = 0; i < 8; i++) n = (n << 16n) | BigInt(g[i]);
+      return n;
+    }
+
+    function bigIntToIPv6(n) {
+      var g = [];
+      for (var i = 0; i < 8; i++) {
+        g.unshift(Number(n & 0xffffn));
+        n = n >> 16n;
+      }
+      return g;
+    }
+
+    function ipv6Type(n) {
+      if (n === 0n) return "Unspecified (::)";
+      if (n === 1n) return "Loopback (::1)";
+      /* ::ffff:0:0/96 */
+      if (n >> 32n === 0xffffn) return "IPv4-Mapped";
+      /* 64:ff9b::/96 */
+      if (n >> 32n === 0x64ff9bn) return "NAT64 (RFC 6052)";
+      /* 100::/64 */
+      if (n >> 64n === 0x100n) return "Discard (RFC 6666)";
+      /* 2001::/32 Teredo */
+      if (n >> 96n === 0x20010000n) return "Teredo (RFC 4380)";
+      /* 2001:2::/48 Benchmarking */
+      if (n >> 80n === 0x200100020000n >> 0n) {
+        var top48 = n >> 80n;
+        if (top48 === 0x20010002n) return "Benchmarking (RFC 5180)";
+      }
+      /* 2001:db8::/32 Documentation */
+      if (n >> 96n === 0x20010db8n) return "Documentation (RFC 3849)";
+      /* 2002::/16 6to4 */
+      if (n >> 112n === 0x2002n) return "6to4 (RFC 3056)";
+      /* fc00::/7 ULA */
+      if (n >> 121n === 0xfcn >> 1n) {
+        var top7 = Number(n >> 121n);
+        if (top7 === 126) return "Unique Local Address (RFC 4193)";
+      }
+      /* fe80::/10 Link-local */
+      if (n >> 118n === 0xfe8n >> 0n) {
+        var top10 = Number(n >> 118n);
+        if (top10 === 0x3fa) return "Link-Local (RFC 4291)";
+      }
+      /* ff00::/8 Multicast */
+      if (n >> 120n === 0xffn) return "Multicast (RFC 4291)";
+      /* 2000::/3 Global Unicast */
+      if (n >> 125n === 1n) return "Global Unicast";
+      return "Reserved";
+    }
+
+    function ipv6ReverseDNS(g) {
+      var hex = g
+        .map(function (v) {
+          return v.toString(16).padStart(4, "0");
+        })
+        .join("");
+      return hex.split("").reverse().join(".") + ".ip6.arpa";
+    }
+
+    /* ═══════════════════════════════════════════
+       DETECTION & PARSING
+       ═══════════════════════════════════════════ */
+    function detectVersion(s) {
+      s = s.trim();
+      if (s.indexOf(":") !== -1) return 6;
+      if (/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(s)) return 4;
+      /* Could be an integer */
+      if (/^\d+$/.test(s)) {
+        var n = Number(s);
+        if (n >= 0 && n <= 0xffffffff) return 4;
+        return 0; /* ambiguous large integer */
+      }
+      if (/^0x[0-9a-fA-F]+$/i.test(s)) return 4;
+      return 0;
+    }
+
+    /* ═══════════════════════════════════════════
+       RENDERING HELPERS
+       ═══════════════════════════════════════════ */
+    function makeGrid() {
+      var g = document.createElement("div");
+      g.className = "net-result-grid";
+      return g;
+    }
+
+    function makeItem(label, value, wide) {
+      var d = document.createElement("div");
+      d.className = "net-result-item" + (wide ? " net-result-wide" : "");
+      var l = document.createElement("span");
+      l.className = "net-result-label";
+      l.textContent = label;
+      var v = document.createElement("code");
+      v.className = "net-result-value";
+      v.textContent = value;
+      d.appendChild(l);
+      d.appendChild(v);
+      return d;
+    }
+
+    function showError(msg) {
+      if (errorEl && errorText) {
+        errorText.textContent = msg;
+        errorEl.hidden = false;
+      }
+    }
+
+    function hideError() {
+      if (errorEl) errorEl.hidden = true;
+    }
+
+    function formatBigTotal(hostBits) {
+      if (hostBits <= 20) return Math.pow(2, hostBits).toLocaleString();
+      var n = (1n << BigInt(hostBits)).toString();
+      if (n.length <= 12) {
+        return n.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+      }
+      return (
+        "2^" +
+        hostBits +
+        " (\u2248 " +
+        n[0] +
+        "." +
+        n.substring(1, 3) +
+        " \u00d7 10^" +
+        (n.length - 1) +
+        ")"
+      );
+    }
+
+    function copyText(text, btn) {
+      if (!navigator.clipboard || !btn) return;
+      navigator.clipboard.writeText(text).then(function () {
+        btn.classList.add("copied");
+        setTimeout(function () {
+          btn.classList.remove("copied");
+        }, 1500);
+      });
+    }
+
+    /* ═══════════════════════════════════════════
+       TAB 1: SUBNET CALCULATOR
+       ═══════════════════════════════════════════ */
+    function calcSubnet() {
+      hideError();
+      if (!subResults) return;
+      subResults.textContent = "";
+      if (subVisual) subVisual.textContent = "";
+
+      var raw = ipInput.value.trim();
+      /* Auto-split CIDR from pasted input */
+      if (raw.indexOf("/") !== -1) {
+        var sp = raw.split("/");
+        ipInput.value = sp[0];
+        cidrInput.value = sp[1];
+        raw = sp[0].trim();
+      }
+
+      var ver = detectVersion(raw);
+      var cidr = parseInt(cidrInput.value, 10);
+
+      /* Toggle presets */
+      if (presetsV4 && presetsV6) {
+        presetsV4.hidden = ver === 6;
+        presetsV6.hidden = ver !== 6;
+      }
+
+      if (ver === 4) {
+        calcSubnetV4(raw, cidr);
+      } else if (ver === 6) {
+        calcSubnetV6(raw, cidr);
+      } else {
+        showError("Enter a valid IPv4 or IPv6 address");
+      }
+    }
+
+    function calcSubnetV4(raw, cidr) {
+      var octets = parseIPv4(raw);
+      if (!octets) {
+        showError("Invalid IPv4 address");
+        return;
+      }
+      if (isNaN(cidr) || cidr < 0 || cidr > 32) {
+        showError("IPv4 CIDR must be 0–32");
+        return;
+      }
+
+      var ip = ipv4ToInt(octets);
+      var mask = cidr === 0 ? 0 : (~0 << (32 - cidr)) >>> 0;
+      var network = (ip & mask) >>> 0;
+      var broadcast = (network | ~mask) >>> 0;
+      var wildcard = ~mask >>> 0;
+      var total = Math.pow(2, 32 - cidr);
+      var usable = cidr >= 31 ? total : Math.max(0, total - 2);
+      var first = cidr >= 31 ? network : (network + 1) >>> 0;
+      var last = cidr >= 31 ? broadcast : (broadcast - 1) >>> 0;
+
+      var netOctets = [
+        (network >>> 24) & 255,
+        (network >>> 16) & 255,
+        (network >>> 8) & 255,
+        network & 255,
+      ];
+      var grid = makeGrid();
+      var items = [
+        ["Network Address", intToIPv4(network)],
+        ["Broadcast Address", cidr >= 31 ? "N/A" : intToIPv4(broadcast)],
+        ["Subnet Mask", intToIPv4(mask)],
+        ["Wildcard Mask", intToIPv4(wildcard)],
+        ["First Usable Host", intToIPv4(first)],
+        ["Last Usable Host", intToIPv4(last)],
+        ["Usable Hosts", usable.toLocaleString()],
+        ["Total Addresses", total.toLocaleString()],
+        ["CIDR Notation", intToIPv4(network) + "/" + cidr],
+        ["IP Class", ipv4Class(octets[0])],
+        ["Address Type", ipv4Type(ip)],
+        ["Hex Address", ipv4ToHex(octets)],
+      ];
+      items.forEach(function (it) {
+        grid.appendChild(makeItem(it[0], it[1], false));
+      });
+
+      /* Wide items */
+      grid.appendChild(makeItem("Binary Mask", ipv4MaskBinary(cidr), true));
+      grid.appendChild(
+        makeItem("Reverse DNS (PTR)", ipv4ReverseDNS(netOctets), true),
+      );
+      grid.appendChild(
+        makeItem("IPv4-Mapped IPv6", ipv4MappedIPv6(netOctets), true),
+      );
+
+      subResults.appendChild(grid);
+
+      /* Build text for copy */
+      lastSubnetText = items
+        .map(function (it) {
+          return it[0] + ": " + it[1];
+        })
+        .join("\n");
+      lastSubnetText +=
+        "\nBinary Mask: " +
+        ipv4MaskBinary(cidr) +
+        "\nReverse DNS: " +
+        ipv4ReverseDNS(netOctets) +
+        "\nIPv4-Mapped IPv6: " +
+        ipv4MappedIPv6(netOctets);
+
+      /* Visual binary */
+      renderBinaryVisualV4(cidr);
+    }
+
+    function renderBinaryVisualV4(cidr) {
+      if (!subVisual) return;
+      subVisual.textContent = "";
+
+      var wrapper = document.createElement("div");
+      wrapper.className = "net-visual-wrap";
+
+      var heading = document.createElement("div");
+      heading.className = "net-visual-title";
+      heading.textContent = "Bit Boundary Visualization";
+      wrapper.appendChild(heading);
+
+      var bitsDiv = document.createElement("div");
+      bitsDiv.className = "net-bits";
+
+      for (var i = 0; i < 32; i++) {
+        if (i > 0 && i % 8 === 0) {
+          var dot = document.createElement("span");
+          dot.className = "net-bit-dot";
+          dot.textContent = ".";
+          bitsDiv.appendChild(dot);
+        }
+        var bit = document.createElement("span");
+        bit.className = i < cidr ? "net-bit net-bit-n" : "net-bit net-bit-h";
+        bit.textContent = i < cidr ? "1" : "0";
+        bit.title = "Bit " + i + " — " + (i < cidr ? "Network" : "Host");
+        bitsDiv.appendChild(bit);
+      }
+      wrapper.appendChild(bitsDiv);
+
+      var legend = document.createElement("div");
+      legend.className = "net-visual-legend";
+      legend.innerHTML =
+        '<span class="net-bit-legend-n">\u2588 Network (' +
+        cidr +
+        " bits)</span>" +
+        '<span class="net-bit-legend-h">\u2588 Host (' +
+        (32 - cidr) +
+        " bits)</span>";
+      wrapper.appendChild(legend);
+
+      subVisual.appendChild(wrapper);
+    }
+
+    function calcSubnetV6(raw, cidr) {
+      var groups = parseIPv6(raw);
+      if (!groups) {
+        showError("Invalid IPv6 address");
+        return;
+      }
+      if (isNaN(cidr) || cidr < 0 || cidr > 128) {
+        showError("IPv6 CIDR must be 0–128");
+        return;
+      }
+
+      var ipBig = ipv6ToBigInt(groups);
+      var maskBig = cidr === 0 ? 0n : (MAX128 << BigInt(128 - cidr)) & MAX128;
+      var networkBig = ipBig & maskBig;
+      var lastBig = networkBig | (MAX128 & ~maskBig);
+      var lastAddr = cidr === 128 ? networkBig : lastBig;
+      var hostBits = 128 - cidr;
+
+      var netGroups = bigIntToIPv6(networkBig);
+      var lastGroups = bigIntToIPv6(lastAddr);
+      var addrType = ipv6Type(ipBig);
+
+      var grid = makeGrid();
+      var items = [
+        ["Network Prefix", ipv6Compress(netGroups) + "/" + cidr],
+        ["First Address", ipv6Compress(netGroups)],
+        ["Last Address", ipv6Compress(lastGroups)],
+        ["Prefix Length", "/" + cidr],
+        ["Total Addresses", formatBigTotal(hostBits)],
+        ["Address Type", addrType],
+      ];
+      items.forEach(function (it) {
+        grid.appendChild(makeItem(it[0], it[1], false));
+      });
+
+      grid.appendChild(makeItem("Expanded", ipv6Expand(netGroups), true));
+      grid.appendChild(makeItem("Compressed", ipv6Compress(netGroups), true));
+      grid.appendChild(
+        makeItem("Reverse DNS (PTR)", ipv6ReverseDNS(netGroups), true),
+      );
+
+      /* If IPv4-mapped, show extracted IPv4 */
+      if (networkBig >> 32n === 0xffffn) {
+        var v4part = Number(networkBig & 0xffffffffn);
+        grid.appendChild(
+          makeItem("Extracted IPv4", intToIPv4(v4part >>> 0), true),
+        );
+      }
+
+      subResults.appendChild(grid);
+
+      lastSubnetText = items
+        .map(function (it) {
+          return it[0] + ": " + it[1];
+        })
+        .join("\n");
+      lastSubnetText +=
+        "\nExpanded: " +
+        ipv6Expand(netGroups) +
+        "\nCompressed: " +
+        ipv6Compress(netGroups) +
+        "\nReverse DNS: " +
+        ipv6ReverseDNS(netGroups);
+
+      /* Visual binary for IPv6 — show first 32 bits for clarity */
+      renderBinaryVisualV6(cidr);
+    }
+
+    function renderBinaryVisualV6(cidr) {
+      if (!subVisual) return;
+      subVisual.textContent = "";
+
+      var wrapper = document.createElement("div");
+      wrapper.className = "net-visual-wrap";
+
+      var heading = document.createElement("div");
+      heading.className = "net-visual-title";
+      heading.textContent = "Prefix Boundary (first 64 bits)";
+      wrapper.appendChild(heading);
+
+      var bitsDiv = document.createElement("div");
+      bitsDiv.className = "net-bits net-bits-v6";
+
+      var showBits = 64;
+      for (var i = 0; i < showBits; i++) {
+        if (i > 0 && i % 16 === 0) {
+          var sep = document.createElement("span");
+          sep.className = "net-bit-dot";
+          sep.textContent = ":";
+          bitsDiv.appendChild(sep);
+        }
+        var bit = document.createElement("span");
+        bit.className = i < cidr ? "net-bit net-bit-n" : "net-bit net-bit-h";
+        bit.textContent = i < cidr ? "1" : "0";
+        bitsDiv.appendChild(bit);
+      }
+      wrapper.appendChild(bitsDiv);
+
+      var legend = document.createElement("div");
+      legend.className = "net-visual-legend";
+      legend.innerHTML =
+        '<span class="net-bit-legend-n">\u2588 Network (' +
+        cidr +
+        " bits total)</span>" +
+        '<span class="net-bit-legend-h">\u2588 Host (' +
+        (128 - cidr) +
+        " bits total)</span>";
+      wrapper.appendChild(legend);
+
+      if (cidr > 64) {
+        var note = document.createElement("div");
+        note.className = "net-visual-note";
+        note.textContent =
+          "Prefix extends beyond 64 bits (" + cidr + "/128 shown)";
+        wrapper.appendChild(note);
+      }
+
+      subVisual.appendChild(wrapper);
+    }
+
+    /* ═══════════════════════════════════════════
+       TAB 2: ADDRESS INFO
+       ═══════════════════════════════════════════ */
+    function calcInfo() {
+      hideError();
+      if (!infoResults) return;
+      infoResults.textContent = "";
+
+      var raw = infoInput.value.trim();
+      if (!raw) {
+        showError("Enter an IP address or integer");
+        return;
+      }
+
+      /* Try IPv4 */
+      var v4 = parseIPv4(raw);
+      if (v4) {
+        calcInfoV4(v4);
+        return;
+      }
+
+      /* Try IPv6 */
+      var v6 = parseIPv6(raw);
+      if (v6) {
+        calcInfoV6(v6);
+        return;
+      }
+
+      /* Try integer */
+      if (/^\d+$/.test(raw)) {
+        var num = Number(raw);
+        if (num >= 0 && num <= 0xffffffff) {
+          var oct = [
+            (num >>> 24) & 255,
+            (num >>> 16) & 255,
+            (num >>> 8) & 255,
+            num & 255,
+          ];
+          calcInfoV4(oct);
+          return;
+        }
+        /* Try as BigInt for IPv6 */
+        try {
+          var big = BigInt(raw);
+          if (big >= 0n && big <= MAX128) {
+            calcInfoV6(bigIntToIPv6(big));
+            return;
+          }
+        } catch (e) {
+          /* ignore */
+        }
+      }
+
+      /* Try hex */
+      if (/^0x[0-9a-fA-F]+$/i.test(raw)) {
+        var hnum = parseInt(raw, 16);
+        if (hnum >= 0 && hnum <= 0xffffffff) {
+          var hoct = [
+            (hnum >>> 24) & 255,
+            (hnum >>> 16) & 255,
+            (hnum >>> 8) & 255,
+            hnum & 255,
+          ];
+          calcInfoV4(hoct);
+          return;
+        }
+      }
+
+      showError("Could not parse input as IPv4, IPv6, integer, or hex");
+    }
+
+    function calcInfoV4(octets) {
+      var ip = ipv4ToInt(octets);
+      var grid = makeGrid();
+      var items = [
+        ["Version", "IPv4"],
+        ["Address", octets.join(".")],
+        ["Address Type", ipv4Type(ip)],
+        ["IP Class", ipv4Class(octets[0])],
+        ["Integer", ip.toString()],
+        ["Hexadecimal", ipv4ToHex(octets)],
+      ];
+      items.forEach(function (it) {
+        grid.appendChild(makeItem(it[0], it[1], false));
+      });
+
+      grid.appendChild(makeItem("Binary", ipv4ToBinary(octets), true));
+      grid.appendChild(
+        makeItem("Reverse DNS (PTR)", ipv4ReverseDNS(octets), true),
+      );
+      grid.appendChild(
+        makeItem("IPv4-Mapped IPv6", ipv4MappedIPv6(octets), true),
+      );
+      grid.appendChild(
+        makeItem(
+          "IPv4-Compatible IPv6 (deprecated)",
+          "::" +
+            octets
+              .map(function (o) {
+                return o.toString(16).padStart(2, "0");
+              })
+              .join("")
+              .replace(/^0+/, "") || "0",
+          true,
+        ),
+      );
+
+      /* 6to4 address */
+      var hex6to4 = octets
+        .map(function (o) {
+          return o.toString(16).padStart(2, "0");
+        })
+        .join("");
+      var g1 = hex6to4.substring(0, 4);
+      var g2 = hex6to4.substring(4, 8);
+      grid.appendChild(
+        makeItem("6to4 Address", "2002:" + g1 + ":" + g2 + "::1", true),
+      );
+
+      infoResults.appendChild(grid);
+
+      lastInfoText = items
+        .concat([
+          ["Binary", ipv4ToBinary(octets)],
+          ["Reverse DNS", ipv4ReverseDNS(octets)],
+          ["IPv4-Mapped IPv6", ipv4MappedIPv6(octets)],
+          ["6to4 Address", "2002:" + g1 + ":" + g2 + "::1"],
+        ])
+        .map(function (it) {
+          return it[0] + ": " + it[1];
+        })
+        .join("\n");
+    }
+
+    function calcInfoV6(groups) {
+      var big = ipv6ToBigInt(groups);
+      var grid = makeGrid();
+      var items = [
+        ["Version", "IPv6"],
+        ["Compressed", ipv6Compress(groups)],
+        ["Address Type", ipv6Type(big)],
+        ["Scope", ipv6Scope(groups)],
+        ["Integer", big.toString()],
+        ["Hexadecimal", "0x" + big.toString(16).padStart(32, "0")],
+      ];
+      items.forEach(function (it) {
+        grid.appendChild(makeItem(it[0], it[1], false));
+      });
+
+      grid.appendChild(makeItem("Expanded", ipv6Expand(groups), true));
+      grid.appendChild(
+        makeItem("Reverse DNS (PTR)", ipv6ReverseDNS(groups), true),
+      );
+
+      /* Extract IPv4 if mapped */
+      if (big >> 32n === 0xffffn) {
+        var v4int = Number(big & 0xffffffffn);
+        grid.appendChild(
+          makeItem("Extracted IPv4", intToIPv4(v4int >>> 0), true),
+        );
+      }
+
+      /* Extract IPv4 from 6to4 */
+      if (big >> 112n === 0x2002n) {
+        var v4from6to4 = Number((big >> 80n) & 0xffffffffn);
+        grid.appendChild(
+          makeItem("Embedded IPv4 (6to4)", intToIPv4(v4from6to4 >>> 0), true),
+        );
+      }
+
+      infoResults.appendChild(grid);
+
+      lastInfoText = items
+        .concat([
+          ["Expanded", ipv6Expand(groups)],
+          ["Reverse DNS", ipv6ReverseDNS(groups)],
+        ])
+        .map(function (it) {
+          return it[0] + ": " + it[1];
+        })
+        .join("\n");
+    }
+
+    function ipv6Scope(g) {
+      if (g[0] === 0xfe80) return "Link-Local";
+      if (g[0] >= 0xfc00 && g[0] <= 0xfdff) return "Site-Local (ULA)";
+      if (g[0] >= 0xff00 && g[0] <= 0xffff) {
+        var scope = (g[0] >> 4) & 0xf;
+        var scopes = {
+          1: "Interface-Local",
+          2: "Link-Local",
+          4: "Admin-Local",
+          5: "Site-Local",
+          8: "Organization-Local",
+          14: "Global",
+        };
+        return "Multicast — " + (scopes[scope] || "Unknown scope " + scope);
+      }
+      if (g[0] >= 0x2000 && g[0] <= 0x3fff) return "Global";
+      if (
+        g.every(function (v) {
+          return v === 0;
+        })
+      )
+        return "Unspecified";
+      return "Reserved";
+    }
+
+    /* ═══════════════════════════════════════════
+       TAB 3: VLSM PLANNER
+       ═══════════════════════════════════════════ */
+    function addVLSMRow(name, hosts) {
+      var row = document.createElement("div");
+      row.className = "net-vlsm-row";
+
+      var ni = document.createElement("input");
+      ni.type = "text";
+      ni.placeholder = "Subnet name";
+      ni.className = "net-input";
+      ni.value = name || "";
+
+      var hi = document.createElement("input");
+      hi.type = "number";
+      hi.placeholder = "Hosts needed";
+      hi.min = "1";
+      hi.className = "net-input net-vlsm-hosts";
+      hi.value = hosts || "";
+
+      var rm = document.createElement("button");
+      rm.type = "button";
+      rm.className = "net-vlsm-rm";
+      rm.textContent = "\u00d7";
+      rm.title = "Remove subnet";
+      rm.addEventListener("click", function () {
+        row.remove();
+      });
+
+      row.appendChild(ni);
+      row.appendChild(hi);
+      row.appendChild(rm);
+      vlsmReqs.appendChild(row);
+    }
+
+    function calcVLSM() {
+      hideError();
+      if (!vlsmResultsEl) return;
+      vlsmResultsEl.textContent = "";
+
+      var baseOctets = parseIPv4(vlsmNet.value);
+      if (!baseOctets) {
+        showError("Invalid base network IPv4 address");
+        return;
+      }
+      var baseCidr = parseInt(vlsmCidr.value, 10);
+      if (isNaN(baseCidr) || baseCidr < 0 || baseCidr > 30) {
+        showError("CIDR must be 0–30");
+        return;
+      }
+
+      var baseMask = baseCidr === 0 ? 0 : (~0 << (32 - baseCidr)) >>> 0;
+      var baseNet = (ipv4ToInt(baseOctets) & baseMask) >>> 0;
+      var baseEnd = baseNet + Math.pow(2, 32 - baseCidr);
+
+      /* Gather requirements */
+      var rows = vlsmReqs.querySelectorAll(".net-vlsm-row");
+      var reqs = [];
+      rows.forEach(function (row, idx) {
+        var inputs = row.querySelectorAll("input");
+        var name = inputs[0].value.trim() || "Subnet " + (idx + 1);
+        var hosts = parseInt(inputs[1].value, 10);
+        if (isNaN(hosts) || hosts < 1) return;
+        reqs.push({ name: name, hosts: hosts, origIdx: idx });
+      });
+
+      if (reqs.length === 0) {
+        showError("Add at least one subnet requirement");
+        return;
+      }
+
+      /* Sort by hosts descending (allocate largest first) */
+      reqs.sort(function (a, b) {
+        return b.hosts - a.hosts;
+      });
+
+      var current = baseNet;
+      var allocations = [];
+      var failed = false;
+
+      for (var i = 0; i < reqs.length; i++) {
+        var needed = reqs[i].hosts + 2; /* network + broadcast */
+        var bits = Math.ceil(Math.log2(needed));
+        if (bits < 2) bits = 2; /* minimum /30 */
+        var sCidr = 32 - bits;
+        if (sCidr < baseCidr) {
+          showError(
+            '"' +
+              reqs[i].name +
+              '" needs /' +
+              sCidr +
+              " but base is /" +
+              baseCidr,
+          );
+          failed = true;
+          break;
+        }
+
+        var blockSize = Math.pow(2, bits);
+        /* Align to block boundary */
+        var remainder = current % blockSize;
+        if (remainder !== 0) current += blockSize - remainder;
+
+        if (current + blockSize > baseEnd) {
+          showError("Not enough space for all subnets");
+          failed = true;
+          break;
+        }
+
+        var sNet = current >>> 0;
+        var sBcast = (sNet + blockSize - 1) >>> 0;
+        allocations.push({
+          name: reqs[i].name,
+          network: sNet,
+          cidr: sCidr,
+          size: blockSize,
+          usable: blockSize - 2,
+          needed: reqs[i].hosts,
+          broadcast: sBcast,
+          first: (sNet + 1) >>> 0,
+          last: (sBcast - 1) >>> 0,
+        });
+
+        current += blockSize;
+      }
+
+      if (failed) return;
+
+      /* Render table */
+      var table = document.createElement("table");
+      table.className = "net-table";
+
+      var thead = document.createElement("thead");
+      var hr = document.createElement("tr");
+      [
+        "#",
+        "Name",
+        "Network",
+        "CIDR",
+        "Range",
+        "Usable",
+        "Needed",
+        "Wasted",
+      ].forEach(function (h) {
+        var th = document.createElement("th");
+        th.textContent = h;
+        hr.appendChild(th);
+      });
+      thead.appendChild(hr);
+      table.appendChild(thead);
+
+      var tbody = document.createElement("tbody");
+      allocations.forEach(function (a, idx) {
+        var tr = document.createElement("tr");
+        var cells = [
+          String(idx + 1),
+          a.name,
+          intToIPv4(a.network),
+          "/" + a.cidr,
+          intToIPv4(a.first) + " – " + intToIPv4(a.last),
+          a.usable.toString(),
+          a.needed.toString(),
+          (a.usable - a.needed).toString(),
+        ];
+        cells.forEach(function (c) {
+          var td = document.createElement("td");
+          td.textContent = c;
+          tr.appendChild(td);
+        });
+        tbody.appendChild(tr);
+      });
+      table.appendChild(tbody);
+
+      vlsmResultsEl.appendChild(table);
+
+      /* Summary */
+      var totalUsed = allocations.reduce(function (sum, a) {
+        return sum + a.size;
+      }, 0);
+      var totalAvailable = Math.pow(2, 32 - baseCidr);
+      var remaining = totalAvailable - totalUsed;
+
+      var summary = document.createElement("div");
+      summary.className = "net-vlsm-summary";
+      summary.textContent =
+        "Used: " +
+        totalUsed.toLocaleString() +
+        " / " +
+        totalAvailable.toLocaleString() +
+        " addresses (" +
+        ((totalUsed / totalAvailable) * 100).toFixed(1) +
+        "%). Remaining: " +
+        remaining.toLocaleString() +
+        " addresses.";
+      vlsmResultsEl.appendChild(summary);
+    }
+
+    /* ═══════════════════════════════════════════
+       TAB 4: RANGE → CIDR
+       ═══════════════════════════════════════════ */
+    function calcRange() {
+      hideError();
+      if (!rangeResultsEl) return;
+      rangeResultsEl.textContent = "";
+
+      var startOctets = parseIPv4(rangeStart.value);
+      var endOctets = parseIPv4(rangeEnd.value);
+      if (!startOctets || !endOctets) {
+        showError("Enter valid IPv4 addresses");
+        return;
+      }
+
+      var startInt = ipv4ToInt(startOctets);
+      var endInt = ipv4ToInt(endOctets);
+      if (startInt > endInt) {
+        showError("Start IP must be less than or equal to End IP");
+        return;
+      }
+
+      var blocks = [];
+      var current = startInt;
+
+      while (current <= endInt) {
+        /* Max block alignment from trailing zeros */
+        var maxBits = 0;
+        if (current === 0) {
+          maxBits = 32;
+        } else {
+          var tmp = current;
+          while ((tmp & 1) === 0 && maxBits < 32) {
+            maxBits++;
+            tmp >>>= 1;
+          }
+        }
+
+        /* Don't exceed range */
+        var maxSize = endInt - current + 1;
+        var sizeFromBits = Math.pow(2, maxBits);
+        while (sizeFromBits > maxSize && maxBits > 0) {
+          maxBits--;
+          sizeFromBits = Math.pow(2, maxBits);
+        }
+
+        blocks.push({
+          network: current,
+          cidr: 32 - maxBits,
+          size: sizeFromBits,
+        });
+
+        current += sizeFromBits;
+        if (current > 0xffffffff) break;
+      }
+
+      if (blocks.length === 0) {
+        showError("No CIDR blocks found");
+        return;
+      }
+
+      /* Render table */
+      var table = document.createElement("table");
+      table.className = "net-table";
+
+      var thead = document.createElement("thead");
+      var hr = document.createElement("tr");
+      ["#", "CIDR Block", "Range", "Addresses"].forEach(function (h) {
+        var th = document.createElement("th");
+        th.textContent = h;
+        hr.appendChild(th);
+      });
+      thead.appendChild(hr);
+      table.appendChild(thead);
+
+      var tbody = document.createElement("tbody");
+      blocks.forEach(function (b, idx) {
+        var tr = document.createElement("tr");
+        var lastAddr = (b.network + b.size - 1) >>> 0;
+        var cells = [
+          String(idx + 1),
+          intToIPv4(b.network) + "/" + b.cidr,
+          intToIPv4(b.network) + " – " + intToIPv4(lastAddr),
+          b.size.toLocaleString(),
+        ];
+        cells.forEach(function (c) {
+          var td = document.createElement("td");
+          td.textContent = c;
+          tr.appendChild(td);
+        });
+        tbody.appendChild(tr);
+      });
+      table.appendChild(tbody);
+
+      rangeResultsEl.appendChild(table);
+
+      var summary = document.createElement("div");
+      summary.className = "net-vlsm-summary";
+      summary.textContent =
+        blocks.length +
+        " CIDR block" +
+        (blocks.length > 1 ? "s" : "") +
+        " covering " +
+        (endInt - startInt + 1).toLocaleString() +
+        " addresses.";
+      rangeResultsEl.appendChild(summary);
+
+      lastRangeText = blocks
+        .map(function (b) {
+          var lastAddr = (b.network + b.size - 1) >>> 0;
+          return (
+            intToIPv4(b.network) +
+            "/" +
+            b.cidr +
+            "  (" +
+            intToIPv4(b.network) +
+            " – " +
+            intToIPv4(lastAddr) +
+            ")"
+          );
+        })
+        .join("\n");
+    }
+
+    /* ═══════════════════════════════════════════
+       EVENT SETUP
+       ═══════════════════════════════════════════ */
+
+    /* Tab switching */
+    tabs.forEach(function (tab) {
+      tab.addEventListener("click", function () {
+        var target = tab.dataset.tab;
+        tabs.forEach(function (t) {
+          var active = t.dataset.tab === target;
+          t.classList.toggle("active", active);
+          t.setAttribute("aria-selected", String(active));
+        });
+        panels.forEach(function (p) {
+          p.hidden = p.dataset.panel !== target;
+        });
+        hideError();
+      });
+
+      /* Arrow key navigation */
+      tab.addEventListener("keydown", function (e) {
+        var tabArr = Array.from(tabs);
+        var idx = tabArr.indexOf(tab);
+        if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
+          e.preventDefault();
+          var next =
+            e.key === "ArrowRight"
+              ? (idx + 1) % tabArr.length
+              : (idx - 1 + tabArr.length) % tabArr.length;
+          tabArr[next].click();
+          tabArr[next].focus();
+        }
+      });
+    });
+
+    /* Subnet tab events */
+    var subTimeout;
+    function debouncedSubnet() {
+      clearTimeout(subTimeout);
+      subTimeout = setTimeout(calcSubnet, 200);
+    }
+    ipInput.addEventListener("input", debouncedSubnet);
+    cidrInput.addEventListener("input", debouncedSubnet);
+
+    /* Presets */
+    C.querySelectorAll(".net-preset-btn[data-cidr]").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        cidrInput.value = btn.dataset.cidr;
+        calcSubnet();
+      });
+    });
+
+    /* Info tab events */
+    var infoTimeout;
+    function debouncedInfo() {
+      clearTimeout(infoTimeout);
+      infoTimeout = setTimeout(calcInfo, 200);
+    }
+    infoInput.addEventListener("input", debouncedInfo);
+
+    /* Info examples */
+    C.querySelectorAll(".net-preset-btn[data-example]").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        infoInput.value = btn.dataset.example;
+        calcInfo();
+      });
+    });
+
+    /* VLSM events */
+    vlsmAddBtn.addEventListener("click", function () {
+      addVLSMRow("", "");
+    });
+    vlsmCalcBtn.addEventListener("click", calcVLSM);
+
+    /* Range events */
+    rangeCalcBtn.addEventListener("click", calcRange);
+
+    /* Copy buttons */
+    if (subCopyBtn)
+      subCopyBtn.addEventListener("click", function () {
+        copyText(lastSubnetText, subCopyBtn);
+      });
+    if (infoCopyBtn)
+      infoCopyBtn.addEventListener("click", function () {
+        copyText(lastInfoText, infoCopyBtn);
+      });
+    if (rangeCopyBtn)
+      rangeCopyBtn.addEventListener("click", function () {
+        copyText(lastRangeText, rangeCopyBtn);
+      });
+
+    /* Share button */
+    if (subShareBtn)
+      subShareBtn.addEventListener("click", function () {
+        var url =
+          window.location.pathname +
+          "?ip=" +
+          encodeURIComponent(ipInput.value.trim()) +
+          "&cidr=" +
+          cidrInput.value;
+        history.replaceState(null, "", url);
+        copyText(window.location.origin + url, subShareBtn);
+      });
+
+    /* ═══════════════════════════════════════════
+       URL PARAMS & INIT
+       ═══════════════════════════════════════════ */
+    var params = new URLSearchParams(window.location.search);
+    if (params.has("ip")) ipInput.value = params.get("ip");
+    if (params.has("cidr")) cidrInput.value = params.get("cidr");
+    if (params.has("tab")) {
+      var targetTab = params.get("tab");
+      tabs.forEach(function (t) {
+        if (t.dataset.tab === targetTab) t.click();
+      });
+    }
+
+    /* Add default VLSM rows */
+    addVLSMRow("Servers", "50");
+    addVLSMRow("Staff", "100");
+    addVLSMRow("Guests", "25");
+
+    /* Initial calculations */
+    calcSubnet();
+    calcInfo();
+  })();
+</script>
+
+<style>
+  .net-calc {
+    margin: 1.5rem 0;
+    overflow: hidden;
+    background: var(--color-bg-subtle);
+    border: var(--border-1);
+    border-radius: var(--radius-md);
+  }
+
+  /* ── Tabs ── */
+  .net-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0;
+    padding: 0;
+    overflow-x: auto;
+    background: var(--color-bg-secondary);
+    border-bottom: var(--border-1);
+  }
+
+  .net-tab {
+    display: flex;
+    gap: 0.375rem;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    font-size: 0.8rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-muted);
+    cursor: pointer;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    transition: all 0.15s;
+  }
+
+  .net-tab:hover {
+    color: var(--color-text);
+    background: var(--color-bg-subtle);
+  }
+
+  .net-tab.active {
+    color: var(--color-primary);
+    border-bottom-color: var(--color-primary);
+  }
+
+  .net-tab span[class^="i-"] {
+    width: 16px;
+    height: 16px;
+  }
+
+  /* ── Panels ── */
+  .net-panel {
+    padding: 1.25rem;
+  }
+
+  .net-panel[hidden] {
+    display: none;
+  }
+
+  /* ── Input section ── */
+  .net-input-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+
+  .net-input-row {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-end;
+  }
+
+  .net-field {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 0.375rem;
+  }
+
+  .net-field-sm {
+    max-width: 100px;
+  }
+
+  .net-label {
+    font-size: 0.75rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .net-input {
+    padding: 0.6rem 0.75rem;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    color: var(--color-text);
+    background: var(--color-bg);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+    transition: border-color 0.15s;
+  }
+
+  .net-input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+  }
+
+  .net-cidr-row {
+    display: flex;
+    gap: 0;
+    align-items: center;
+    overflow: hidden;
+    background: var(--color-bg);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+  }
+
+  .net-cidr-slash {
+    padding: 0.6rem 0.5rem;
+    font-family: var(--font-mono);
+    font-size: 1rem;
+    font-weight: var(--fw-bold);
+    color: var(--color-primary);
+    background: var(--color-bg-secondary);
+    border-right: var(--border-1);
+  }
+
+  .net-cidr-input {
+    width: 100%;
+    border: none;
+    border-radius: 0;
+  }
+
+  .net-cidr-input:focus {
+    border: none;
+  }
+
+  /* ── Presets & Examples ── */
+  .net-presets,
+  .net-examples {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.375rem;
+    align-items: center;
+  }
+
+  .net-presets[hidden] {
+    display: none;
+  }
+
+  .net-presets-label {
+    font-size: 0.7rem;
+    font-weight: var(--fw-medium);
+    color: var(--color-text-muted);
+  }
+
+  .net-preset-btn {
+    padding: 0.2rem 0.5rem;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    font-weight: var(--fw-medium);
+    color: var(--color-text-muted);
+    cursor: pointer;
+    background: var(--color-bg-secondary);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+    transition: all 0.15s;
+  }
+
+  .net-preset-btn:hover {
+    color: var(--color-primary);
+    border-color: var(--color-primary);
+  }
+
+  /* ── Actions ── */
+  .net-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .net-btn {
+    display: flex;
+    gap: 0.375rem;
+    align-items: center;
+    padding: 0.5rem 0.875rem;
+    font-size: 0.8rem;
+    font-weight: var(--fw-medium);
+    color: var(--color-text-muted);
+    cursor: pointer;
+    background: var(--color-bg-secondary);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+    transition: all 0.15s;
+  }
+
+  .net-btn:hover {
+    color: var(--color-text);
+    border-color: var(--color-primary);
+  }
+
+  .net-btn.copied {
+    color: var(--color-success);
+    border-color: var(--color-success);
+  }
+
+  .net-btn-primary {
+    color: #fff;
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+  }
+
+  .net-btn-primary:hover {
+    color: #fff;
+    filter: brightness(1.1);
+  }
+
+  .net-btn span[class^="i-"] {
+    width: 14px;
+    height: 14px;
+  }
+
+  /* ── Result grid ── */
+  .net-result-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr));
+    gap: 0.5rem;
+  }
+
+  .net-result-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 0.6rem 0.75rem;
+    background: var(--color-bg-secondary);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+  }
+
+  .net-result-wide {
+    grid-column: 1 / -1;
+  }
+
+  .net-result-label {
+    font-size: 0.65rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .net-result-value {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    font-weight: var(--fw-medium);
+    color: var(--color-text-heading);
+    word-break: break-all;
+  }
+
+  /* ── Visual binary ── */
+  .net-visual-wrap {
+    padding: 1rem;
+    margin-top: 1rem;
+    background: var(--color-bg-secondary);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+  }
+
+  .net-visual-title {
+    margin-bottom: 0.75rem;
+    font-size: 0.75rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .net-bits {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1px;
+    align-items: center;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    line-height: 1;
+  }
+
+  .net-bit {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.35rem;
+    height: 1.35rem;
+    font-weight: var(--fw-bold);
+    border-radius: 2px;
+    transition: transform 0.1s;
+  }
+
+  .net-bit:hover {
+    transform: scale(1.2);
+  }
+
+  .net-bit-n {
+    color: #fff;
+    background: var(--color-primary);
+  }
+
+  .net-bit-h {
+    color: var(--color-text-muted);
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+  }
+
+  .net-bit-dot {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1rem;
+    font-size: 1rem;
+    font-weight: var(--fw-bold);
+    color: var(--color-text-muted);
+  }
+
+  .net-visual-legend {
+    display: flex;
+    gap: 1rem;
+    margin-top: 0.75rem;
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+  }
+
+  .net-bit-legend-n {
+    color: var(--color-primary);
+  }
+
+  .net-bit-legend-h {
+    color: var(--color-text-muted);
+  }
+
+  .net-visual-note {
+    margin-top: 0.5rem;
+    font-size: 0.7rem;
+    font-style: italic;
+    color: var(--color-text-muted);
+  }
+
+  /* ── VLSM ── */
+  .net-vlsm-note {
+    display: flex;
+    gap: 0.375rem;
+    align-items: center;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+    background: var(--color-bg-secondary);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+  }
+
+  .net-vlsm-note span[class^="i-"] {
+    flex-shrink: 0;
+    width: 14px;
+    height: 14px;
+  }
+
+  .net-vlsm-header {
+    margin-bottom: 0.5rem;
+  }
+
+  .net-vlsm-row {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    margin-bottom: 0.375rem;
+  }
+
+  .net-vlsm-row .net-input:first-child {
+    flex: 2;
+  }
+
+  .net-vlsm-hosts {
+    max-width: 110px;
+  }
+
+  .net-vlsm-rm {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    font-size: 1.1rem;
+    font-weight: var(--fw-bold);
+    color: var(--color-text-muted);
+    cursor: pointer;
+    background: none;
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+    transition: all 0.15s;
+  }
+
+  .net-vlsm-rm:hover {
+    color: #ef4444;
+    border-color: #ef4444;
+  }
+
+  .net-vlsm-summary {
+    padding: 0.625rem 0.75rem;
+    margin-top: 0.75rem;
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+    background: var(--color-bg-secondary);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+  }
+
+  /* ── Table (VLSM / Range) ── */
+  .net-table {
+    width: 100%;
+    overflow-x: auto;
+    font-size: 0.8rem;
+    border-collapse: collapse;
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+  }
+
+  .net-table th {
+    padding: 0.5rem 0.625rem;
+    font-size: 0.7rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-muted);
+    text-align: left;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    background: var(--color-bg-secondary);
+    border-bottom: var(--border-1);
+  }
+
+  .net-table td {
+    padding: 0.5rem 0.625rem;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--color-text);
+    border-bottom: 1px solid var(--color-border-subtle, rgb(128 128 128 / 10%));
+  }
+
+  .net-table tr:last-child td {
+    border-bottom: none;
+  }
+
+  .net-table tr:hover td {
+    background: var(--color-bg-secondary);
+  }
+
+  /* ── Error ── */
+  .net-error {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    padding: 0.625rem 1.25rem;
+    font-size: 0.8rem;
+    color: #b91c1c;
+    background: rgb(239 68 68 / 10%);
+    border-top: 1px solid rgb(239 68 68 / 30%);
+  }
+
+  .net-error[hidden] {
+    display: none;
+  }
+
+  .net-error span[class^="i-"] {
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+  }
+
+  /* ── Responsive ── */
+  @media (width <= 640px) {
+    .net-panel {
+      padding: 1rem;
+    }
+
+    .net-input-row {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .net-field-sm {
+      max-width: none;
+    }
+
+    .net-result-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .net-tab {
+      padding: 0.625rem;
+      font-size: 0.7rem;
+    }
+
+    .net-tab span[class^="i-"] {
+      display: none;
+    }
+
+    .net-bit {
+      width: 1.1rem;
+      height: 1.1rem;
+      font-size: 0.6rem;
+    }
+
+    .net-table {
+      display: block;
+      overflow-x: auto;
+    }
+
+    .net-vlsm-row {
+      flex-wrap: wrap;
+    }
+
+    .net-vlsm-hosts {
+      flex: 1;
+      max-width: none;
+    }
+  }
+</style>

@@ -5,7 +5,8 @@
     "dist",
     "dist_new",
     "node_modules",
-    "public/scripts/cf-beacon.js"
+    "public/scripts/cf-beacon.js",
+    "src/assets/nedry-assets.ts"
   ],
   "compilerOptions": {
     "jsx": "react-jsx",

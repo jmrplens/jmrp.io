@@ -1,0 +1,2741 @@
+---
+/**
+ * ModbusFrameBuilder Component
+ * Build and decode Modbus RTU/TCP/ASCII frames with CRC-16/LRC calculation,
+ * register value interpretation, response frame generation, exception handling,
+ * address format options, common presets, and shareable links.
+ *
+ * @component
+ * @example
+ * <ModbusFrameBuilder title="Modbus Frame Builder" />
+ */
+
+interface Props {
+  title?: string;
+}
+
+const { title = "Modbus Frame Builder" } = Astro.props;
+const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
+---
+
+<div
+  class="mbus-builder"
+  data-mbus-id={uniqueId}
+>
+  {title && <div class="mbus-title">{title}</div>}
+
+  <div class="mbus-layout">
+    {/* Mode Toggle */}
+    <div class="mbus-modes">
+      <button
+        type="button"
+        class="mbus-mode-btn mbus-mode-active"
+        data-mode="build"
+      >
+        <span
+          class="i-mdi:wrench"
+          aria-hidden="true"
+        ></span>
+        Build Frame
+      </button>
+      <button
+        type="button"
+        class="mbus-mode-btn"
+        data-mode="decode"
+      >
+        <span
+          class="i-mdi:magnify"
+          aria-hidden="true"
+        ></span>
+        Decode Frame
+      </button>
+      <button
+        type="button"
+        class="mbus-mode-btn"
+        data-mode="response"
+      >
+        <span
+          class="i-mdi:swap-horizontal"
+          aria-hidden="true"
+        ></span>
+        Response Builder
+      </button>
+    </div>
+
+    {/* === BUILD MODE === */}
+    <div
+      class="mbus-build-panel"
+      id={`${uniqueId}-build`}
+    >
+      {/* Protocol & Address */}
+      <div class="mbus-field-row">
+        <div class="mbus-field">
+          <label
+            class="mbus-label"
+            for={`${uniqueId}-protocol`}
+            >Protocol</label
+          >
+          <select
+            id={`${uniqueId}-protocol`}
+            class="mbus-select"
+          >
+            <option value="rtu">Modbus RTU</option>
+            <option value="tcp">Modbus TCP</option>
+            <option value="ascii">Modbus ASCII</option>
+          </select>
+        </div>
+        <div class="mbus-field">
+          <label
+            class="mbus-label"
+            for={`${uniqueId}-slave`}
+            >Slave Address</label
+          >
+          <input
+            id={`${uniqueId}-slave`}
+            class="mbus-input"
+            type="number"
+            min="0"
+            max="247"
+            value="1"
+          />
+        </div>
+        <div class="mbus-field">
+          <label
+            class="mbus-label"
+            for={`${uniqueId}-addr-fmt`}
+            >Address Format</label
+          >
+          <select
+            id={`${uniqueId}-addr-fmt`}
+            class="mbus-select"
+          >
+            <option value="0based">0-based</option>
+            <option value="1based">1-based</option>
+            <option value="modicon">Modicon (4xxxx)</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Function Code */}
+      <div class="mbus-field">
+        <label
+          class="mbus-label"
+          for={`${uniqueId}-func`}
+          >Function Code</label
+        >
+        <select
+          id={`${uniqueId}-func`}
+          class="mbus-select"
+        >
+          <option value="01">01 — Read Coils</option>
+          <option value="02">02 — Read Discrete Inputs</option>
+          <option
+            value="03"
+            selected
+            >03 — Read Holding Registers</option
+          >
+          <option value="04">04 — Read Input Registers</option>
+          <option value="05">05 — Write Single Coil</option>
+          <option value="06">06 — Write Single Register</option>
+          <option value="07">07 — Read Exception Status</option>
+          <option value="08">08 — Diagnostics</option>
+          <option value="0F">0F — Write Multiple Coils</option>
+          <option value="10">10 — Write Multiple Registers</option>
+          <option value="17">17 — Read/Write Multiple Registers</option>
+        </select>
+      </div>
+
+      {/* Standard Data Fields */}
+      <div
+        class="mbus-data-fields"
+        id={`${uniqueId}-data-fields`}
+      >
+        <div class="mbus-field-row">
+          <div class="mbus-field">
+            <label
+              class="mbus-label"
+              for={`${uniqueId}-start-addr`}
+              >Start Address</label
+            >
+            <input
+              id={`${uniqueId}-start-addr`}
+              class="mbus-input"
+              type="number"
+              min="0"
+              max="65535"
+              value="0"
+            />
+            <div
+              class="mbus-addr-hint"
+              id={`${uniqueId}-addr-hint`}
+            >
+            </div>
+          </div>
+          <div class="mbus-field">
+            <label
+              class="mbus-label"
+              for={`${uniqueId}-quantity`}
+              >Quantity</label
+            >
+            <input
+              id={`${uniqueId}-quantity`}
+              class="mbus-input"
+              type="number"
+              min="1"
+              max="125"
+              value="10"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Write data section */}
+      <div
+        class="mbus-field"
+        id={`${uniqueId}-write-section`}
+        hidden
+      >
+        <label
+          class="mbus-label"
+          for={`${uniqueId}-write-data`}
+          >Write Values (hex bytes, space-separated)</label
+        >
+        <input
+          id={`${uniqueId}-write-data`}
+          class="mbus-input"
+          type="text"
+          placeholder="00 0A 00 64"
+          spellcheck="false"
+        />
+      </div>
+
+      {/* Data format helper */}
+      <div
+        class="mbus-data-helper"
+        id={`${uniqueId}-data-helper`}
+        hidden
+      >
+        <div class="mbus-field-row">
+          <div class="mbus-field">
+            <label
+              class="mbus-label"
+              for={`${uniqueId}-data-fmt`}
+              >Data Format</label
+            >
+            <select
+              id={`${uniqueId}-data-fmt`}
+              class="mbus-select"
+            >
+              <option value="hex">Hex bytes</option>
+              <option value="uint16">Unsigned Int 16</option>
+              <option value="int16">Signed Int 16</option>
+              <option value="uint32">Unsigned Int 32</option>
+              <option value="float32">Float 32</option>
+            </select>
+          </div>
+          <div class="mbus-field">
+            <label
+              class="mbus-label"
+              for={`${uniqueId}-data-val`}
+              >Decimal Value(s) (comma-separated)</label
+            >
+            <input
+              id={`${uniqueId}-data-val`}
+              class="mbus-input"
+              type="text"
+              placeholder="10, 100"
+              spellcheck="false"
+            />
+          </div>
+          <div class="mbus-field">
+            <label
+              class="mbus-label"
+              for={`${uniqueId}-byte-order`}
+              >Byte Order</label
+            >
+            <select
+              id={`${uniqueId}-byte-order`}
+              class="mbus-select"
+            >
+              <option value="BE">Big-Endian (AB CD)</option>
+              <option value="LE">Little-Endian (CD AB)</option>
+              <option value="MBE">Mid Big-Endian (BA DC)</option>
+              <option value="MLE">Mid Little-Endian (DC BA)</option>
+            </select>
+          </div>
+        </div>
+        <button
+          type="button"
+          class="mbus-action-btn mbus-convert-btn"
+        >
+          <span
+            class="i-mdi:swap-vertical"
+            aria-hidden="true"
+          ></span>
+          Convert to hex
+        </button>
+      </div>
+
+      {/* Diagnostics sub-function */}
+      <div
+        class="mbus-field"
+        id={`${uniqueId}-diag-section`}
+        hidden
+      >
+        <label
+          class="mbus-label"
+          for={`${uniqueId}-diag-sub`}
+          >Sub-Function</label
+        >
+        <select
+          id={`${uniqueId}-diag-sub`}
+          class="mbus-select"
+        >
+          <option value="0000">00 00 — Return Query Data</option>
+          <option value="0001">00 01 — Restart Communications</option>
+          <option value="0002">00 02 — Return Diagnostic Register</option>
+          <option value="000A">00 0A — Clear Counters</option>
+          <option value="000B">00 0B — Return Bus Message Count</option>
+          <option value="000C">00 0C — Return Bus Comm Error Count</option>
+          <option value="000E">00 0E — Return Slave No Response Count</option>
+        </select>
+      </div>
+
+      {/* FC 17 extra fields */}
+      <div
+        class="mbus-field-row"
+        id={`${uniqueId}-fc17-section`}
+        hidden
+      >
+        <div class="mbus-field">
+          <label
+            class="mbus-label"
+            for={`${uniqueId}-write-addr`}
+            >Write Start Address</label
+          >
+          <input
+            id={`${uniqueId}-write-addr`}
+            class="mbus-input"
+            type="number"
+            min="0"
+            max="65535"
+            value="0"
+          />
+        </div>
+        <div class="mbus-field">
+          <label
+            class="mbus-label"
+            for={`${uniqueId}-write-qty`}
+            >Write Quantity</label
+          >
+          <input
+            id={`${uniqueId}-write-qty`}
+            class="mbus-input"
+            type="number"
+            min="1"
+            max="121"
+            value="1"
+          />
+        </div>
+      </div>
+
+      {/* TCP-specific fields */}
+      <div
+        class="mbus-tcp-fields"
+        id={`${uniqueId}-tcp-fields`}
+        hidden
+      >
+        <div class="mbus-field-row">
+          <div class="mbus-field">
+            <label
+              class="mbus-label"
+              for={`${uniqueId}-transaction`}
+              >Transaction ID</label
+            >
+            <input
+              id={`${uniqueId}-transaction`}
+              class="mbus-input"
+              type="number"
+              min="0"
+              max="65535"
+              value="1"
+            />
+          </div>
+          <div class="mbus-field">
+            <label
+              class="mbus-label"
+              for={`${uniqueId}-unit`}
+              >Unit ID</label
+            >
+            <input
+              id={`${uniqueId}-unit`}
+              class="mbus-input"
+              type="number"
+              min="0"
+              max="255"
+              value="1"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {/* === DECODE MODE === */}
+    <div
+      class="mbus-decode-panel"
+      id={`${uniqueId}-decode`}
+      hidden
+    >
+      <div class="mbus-field-row">
+        <div class="mbus-field mbus-field-shrink">
+          <label
+            class="mbus-label"
+            for={`${uniqueId}-decode-protocol`}
+            >Protocol</label
+          >
+          <select
+            id={`${uniqueId}-decode-protocol`}
+            class="mbus-select"
+          >
+            <option value="rtu">RTU</option>
+            <option value="tcp">TCP</option>
+            <option value="ascii">ASCII</option>
+            <option value="auto">Auto-detect</option>
+          </select>
+        </div>
+        <div class="mbus-field mbus-field-grow">
+          <label
+            class="mbus-label"
+            for={`${uniqueId}-decode-input`}
+            >Hex Frame</label
+          >
+          <input
+            id={`${uniqueId}-decode-input`}
+            class="mbus-input"
+            type="text"
+            placeholder="01 03 00 00 00 0A C5 CD"
+            spellcheck="false"
+          />
+        </div>
+      </div>
+      <div class="mbus-field-row">
+        <div class="mbus-field mbus-field-shrink">
+          <label
+            class="mbus-label"
+            for={`${uniqueId}-decode-data-fmt`}
+            >Data Interpretation</label
+          >
+          <select
+            id={`${uniqueId}-decode-data-fmt`}
+            class="mbus-select"
+          >
+            <option value="hex">Hex bytes</option>
+            <option value="uint16">Unsigned Int 16</option>
+            <option value="int16">Signed Int 16</option>
+            <option value="uint32">Unsigned Int 32</option>
+            <option value="float32">Float 32</option>
+          </select>
+        </div>
+        <div class="mbus-field mbus-field-shrink">
+          <label
+            class="mbus-label"
+            for={`${uniqueId}-decode-byte-order`}
+            >Byte Order</label
+          >
+          <select
+            id={`${uniqueId}-decode-byte-order`}
+            class="mbus-select"
+          >
+            <option value="BE">Big-Endian (AB CD)</option>
+            <option value="LE">Little-Endian (CD AB)</option>
+            <option value="MBE">Mid Big-Endian (BA DC)</option>
+            <option value="MLE">Mid Little-Endian (DC BA)</option>
+          </select>
+        </div>
+      </div>
+      <button
+        type="button"
+        class="mbus-action-btn mbus-decode-btn"
+      >
+        <span
+          class="i-mdi:magnify"
+          aria-hidden="true"
+        ></span>
+        Decode
+      </button>
+    </div>
+
+    {/* === RESPONSE BUILDER === */}
+    <div
+      class="mbus-response-panel"
+      id={`${uniqueId}-response`}
+      hidden
+    >
+      <div class="mbus-info-box">
+        <span
+          class="i-mdi:information-outline"
+          aria-hidden="true"
+        ></span>
+        Build a response frame matching a request. Enter the request parameters, then
+        configure the response data.
+      </div>
+      <div class="mbus-field-row">
+        <div class="mbus-field">
+          <label
+            class="mbus-label"
+            for={`${uniqueId}-resp-protocol`}
+            >Protocol</label
+          >
+          <select
+            id={`${uniqueId}-resp-protocol`}
+            class="mbus-select"
+          >
+            <option value="rtu">RTU</option>
+            <option value="tcp">TCP</option>
+            <option value="ascii">ASCII</option>
+          </select>
+        </div>
+        <div class="mbus-field">
+          <label
+            class="mbus-label"
+            for={`${uniqueId}-resp-slave`}
+            >Slave Address</label
+          >
+          <input
+            id={`${uniqueId}-resp-slave`}
+            class="mbus-input"
+            type="number"
+            min="0"
+            max="247"
+            value="1"
+          />
+        </div>
+        <div class="mbus-field">
+          <label
+            class="mbus-label"
+            for={`${uniqueId}-resp-fc`}
+            >Function Code</label
+          >
+          <select
+            id={`${uniqueId}-resp-fc`}
+            class="mbus-select"
+          >
+            <option value="01">01 — Read Coils</option>
+            <option value="02">02 — Read Discrete Inputs</option>
+            <option
+              value="03"
+              selected
+              >03 — Read Holding Registers</option
+            >
+            <option value="04">04 — Read Input Registers</option>
+            <option value="05">05 — Write Single Coil</option>
+            <option value="06">06 — Write Single Register</option>
+            <option value="0F">0F — Write Multiple Coils</option>
+            <option value="10">10 — Write Multiple Registers</option>
+            <option value="exception">Exception Response</option>
+          </select>
+        </div>
+      </div>
+      <div id={`${uniqueId}-resp-data-section`}>
+        <div class="mbus-field">
+          <label
+            class="mbus-label"
+            for={`${uniqueId}-resp-data`}
+            >Response Data (hex bytes)</label
+          >
+          <input
+            id={`${uniqueId}-resp-data`}
+            class="mbus-input"
+            type="text"
+            placeholder="04 00 0A 00 64"
+            spellcheck="false"
+          />
+          <div
+            class="mbus-addr-hint"
+            id={`${uniqueId}-resp-hint`}
+          >
+          </div>
+        </div>
+      </div>
+      <div
+        id={`${uniqueId}-resp-exc-section`}
+        hidden
+      >
+        <div class="mbus-field-row">
+          <div class="mbus-field">
+            <label
+              class="mbus-label"
+              for={`${uniqueId}-exc-fc`}
+              >Original FC</label
+            >
+            <select
+              id={`${uniqueId}-exc-fc`}
+              class="mbus-select"
+            >
+              <option value="01">01</option>
+              <option value="02">02</option>
+              <option
+                value="03"
+                selected
+                >03</option
+              >
+              <option value="04">04</option>
+              <option value="05">05</option>
+              <option value="06">06</option>
+              <option value="0F">0F</option>
+              <option value="10">10</option>
+            </select>
+          </div>
+          <div class="mbus-field">
+            <label
+              class="mbus-label"
+              for={`${uniqueId}-exc-code`}
+              >Exception Code</label
+            >
+            <select
+              id={`${uniqueId}-exc-code`}
+              class="mbus-select"
+            >
+              <option value="01">01 — Illegal Function</option>
+              <option value="02">02 — Illegal Data Address</option>
+              <option value="03">03 — Illegal Data Value</option>
+              <option value="04">04 — Slave Device Failure</option>
+              <option value="05">05 — Acknowledge</option>
+              <option value="06">06 — Slave Device Busy</option>
+              <option value="08">08 — Memory Parity Error</option>
+              <option value="0A">0A — Gateway Path Unavailable</option>
+              <option value="0B">0B — Gateway Target No Response</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      {/* TCP response fields */}
+      <div
+        class="mbus-tcp-fields"
+        id={`${uniqueId}-resp-tcp`}
+        hidden
+      >
+        <div class="mbus-field-row">
+          <div class="mbus-field">
+            <label
+              class="mbus-label"
+              for={`${uniqueId}-resp-tid`}
+              >Transaction ID</label
+            >
+            <input
+              id={`${uniqueId}-resp-tid`}
+              class="mbus-input"
+              type="number"
+              min="0"
+              max="65535"
+              value="1"
+            />
+          </div>
+          <div class="mbus-field">
+            <label
+              class="mbus-label"
+              for={`${uniqueId}-resp-uid`}
+              >Unit ID</label
+            >
+            <input
+              id={`${uniqueId}-resp-uid`}
+              class="mbus-input"
+              type="number"
+              min="0"
+              max="255"
+              value="1"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {/* Common Presets */}
+    <details class="mbus-presets-group">
+      <summary class="mbus-presets-summary">
+        <span
+          class="i-mdi:lightning-bolt"
+          aria-hidden="true"
+        ></span>
+        Common Presets
+      </summary>
+      <div
+        class="mbus-presets-grid"
+        id={`${uniqueId}-presets`}
+      >
+        <button
+          type="button"
+          class="mbus-preset-btn"
+          data-preset="read10holding"
+        >
+          <span class="mbus-preset-label">Read 10 Holding Regs</span>
+          <code>01 03 00 00 00 0A</code>
+        </button>
+        <button
+          type="button"
+          class="mbus-preset-btn"
+          data-preset="read8coils"
+        >
+          <span class="mbus-preset-label">Read 8 Coils</span>
+          <code>01 01 00 00 00 08</code>
+        </button>
+        <button
+          type="button"
+          class="mbus-preset-btn"
+          data-preset="writesinglecoil"
+        >
+          <span class="mbus-preset-label">Write Single Coil ON</span>
+          <code>01 05 00 00 FF 00</code>
+        </button>
+        <button
+          type="button"
+          class="mbus-preset-btn"
+          data-preset="writesingleregister"
+        >
+          <span class="mbus-preset-label">Write Register = 100</span>
+          <code>01 06 00 00 00 64</code>
+        </button>
+        <button
+          type="button"
+          class="mbus-preset-btn"
+          data-preset="writemultiple"
+        >
+          <span class="mbus-preset-label">Write 2 Registers</span>
+          <code>01 10 00 00 00 02</code>
+        </button>
+        <button
+          type="button"
+          class="mbus-preset-btn"
+          data-preset="read5inputs"
+        >
+          <span class="mbus-preset-label">Read 5 Input Regs</span>
+          <code>01 04 00 00 00 05</code>
+        </button>
+        <button
+          type="button"
+          class="mbus-preset-btn"
+          data-preset="diagnostics"
+        >
+          <span class="mbus-preset-label">Diagnostics Echo</span>
+          <code>01 08 00 00 12 34</code>
+        </button>
+        <button
+          type="button"
+          class="mbus-preset-btn"
+          data-preset="exceptionresp"
+        >
+          <span class="mbus-preset-label">Exception Response</span>
+          <code>01 83 02</code>
+        </button>
+      </div>
+    </details>
+
+    {/* Output */}
+    <div class="mbus-output-section">
+      <div class="mbus-output-header">
+        <div class="mbus-output-label">
+          <span
+            class="i-mdi:code-brackets"
+            aria-hidden="true"
+          ></span>
+          Frame
+        </div>
+        <div class="mbus-output-actions">
+          <button
+            type="button"
+            class="mbus-copy-btn"
+            data-copy="spaces"
+            aria-label="Copy frame with spaces"
+          >
+            <span
+              class="i-mdi:content-copy"
+              aria-hidden="true"
+            ></span>
+            Copy
+          </button>
+          <button
+            type="button"
+            class="mbus-copy-btn"
+            data-copy="nospaces"
+            aria-label="Copy frame without spaces"
+          >
+            No spaces
+          </button>
+          <button
+            type="button"
+            class="mbus-copy-btn"
+            data-copy="carray"
+            aria-label="Copy as C array"
+          >
+            C array
+          </button>
+          <button
+            type="button"
+            class="mbus-copy-btn"
+            data-copy="python"
+            aria-label="Copy as Python bytes"
+          >
+            Python
+          </button>
+        </div>
+      </div>
+      <div
+        class="mbus-frame-display"
+        id={`${uniqueId}-frame`}
+      >
+        <span class="mbus-frame-placeholder"
+          >Configure the fields above to generate a frame</span
+        >
+      </div>
+      <div
+        class="mbus-frame-breakdown"
+        id={`${uniqueId}-breakdown`}
+      >
+      </div>
+      {/* Data interpretation results */}
+      <div
+        class="mbus-data-interp"
+        id={`${uniqueId}-data-interp`}
+        hidden
+      >
+      </div>
+    </div>
+
+    {/* Share link */}
+    <button
+      type="button"
+      class="mbus-share-btn"
+      id={`${uniqueId}-share`}
+    >
+      <span
+        class="i-mdi:link-variant"
+        aria-hidden="true"
+      ></span>
+      Share Link
+    </button>
+  </div>
+</div>
+
+<script is:inline define:vars={{ uniqueId }}>
+  (function () {
+    var root = document.querySelector('[data-mbus-id="' + uniqueId + '"]');
+    if (!root) return;
+
+    /* ── Constructable stylesheet for dynamic styles ── */
+    var dynSheet = new CSSStyleSheet();
+    document.adoptedStyleSheets = [].concat(
+      Array.from(document.adoptedStyleSheets),
+      [dynSheet],
+    );
+
+    /* ── DOM references ── */
+    var $ = function (sel) {
+      return root.querySelector(sel);
+    };
+    var $id = function (sfx) {
+      return document.getElementById(uniqueId + "-" + sfx);
+    };
+
+    var protocolSel = $id("protocol");
+    var slaveInput = $id("slave");
+    var addrFmtSel = $id("addr-fmt");
+    var funcSel = $id("func");
+    var startAddr = $id("start-addr");
+    var quantity = $id("quantity");
+    var writeSection = $id("write-section");
+    var writeData = $id("write-data");
+    var dataHelper = $id("data-helper");
+    var dataFmt = $id("data-fmt");
+    var dataVal = $id("data-val");
+    var byteOrder = $id("byte-order");
+    var convertBtn = $(".mbus-convert-btn");
+    var diagSection = $id("diag-section");
+    var diagSub = $id("diag-sub");
+    var fc17Section = $id("fc17-section");
+    var writeAddr = $id("write-addr");
+    var writeQty = $id("write-qty");
+    var tcpFields = $id("tcp-fields");
+    var transId = $id("transaction");
+    var unitId = $id("unit");
+    var addrHint = $id("addr-hint");
+
+    var buildPanel = $id("build");
+    var decodePanel = $id("decode");
+    var responsePanel = $id("response");
+    var modeBtns = root.querySelectorAll(".mbus-mode-btn");
+
+    var decodeInput = $id("decode-input");
+    var decodeProtocol = $id("decode-protocol");
+    var decodeDataFmt = $id("decode-data-fmt");
+    var decodeByteOrder = $id("decode-byte-order");
+    var decodeBtn = $(".mbus-decode-btn");
+
+    var respProtocol = $id("resp-protocol");
+    var respSlave = $id("resp-slave");
+    var respFc = $id("resp-fc");
+    var respData = $id("resp-data");
+    var respHint = $id("resp-hint");
+    var respDataSection = $id("resp-data-section");
+    var respExcSection = $id("resp-exc-section");
+    var excFc = $id("exc-fc");
+    var excCode = $id("exc-code");
+    var respTcpFields = $id("resp-tcp");
+    var respTid = $id("resp-tid");
+    var respUid = $id("resp-uid");
+
+    var frameDisplay = $id("frame");
+    var breakdownEl = $id("breakdown");
+    var dataInterp = $id("data-interp");
+    var shareBtn = $id("share");
+    var presetsGrid = $id("presets");
+
+    var currentFrame = "";
+    var currentMode = "build";
+
+    /* ── CRC-16 Modbus ── */
+    function crc16(bytes) {
+      var crc = 0xffff;
+      for (var i = 0; i < bytes.length; i++) {
+        crc ^= bytes[i];
+        for (var j = 0; j < 8; j++) {
+          if (crc & 1) crc = (crc >> 1) ^ 0xa001;
+          else crc >>= 1;
+        }
+      }
+      return crc;
+    }
+
+    /* ── LRC (Modbus ASCII) ── */
+    function lrc(bytes) {
+      var sum = 0;
+      for (var i = 0; i < bytes.length; i++) sum += bytes[i];
+      return -sum & 0xff;
+    }
+
+    /* ── Helpers ── */
+    function toHex(v, pad) {
+      return v
+        .toString(16)
+        .toUpperCase()
+        .padStart(pad || 2, "0");
+    }
+    function hexB(v) {
+      return toHex(v & 0xff, 2);
+    }
+
+    function parseHexStr(str) {
+      if (!str) return [];
+      return str
+        .replace(/[^0-9a-fA-F\s]/g, "")
+        .split(/\s+/)
+        .filter(Boolean)
+        .map(function (h) {
+          return parseInt(h, 16);
+        });
+    }
+
+    function isWriteFC(fc) {
+      return ["05", "06", "0F", "10"].indexOf(fc) >= 0;
+    }
+    function isMultiWrite(fc) {
+      return ["0F", "10"].indexOf(fc) >= 0;
+    }
+    var FC_NAMES = {
+      0x01: "Read Coils",
+      0x02: "Read Discrete Inputs",
+      0x03: "Read Holding Registers",
+      0x04: "Read Input Registers",
+      0x05: "Write Single Coil",
+      0x06: "Write Single Register",
+      0x07: "Read Exception Status",
+      0x08: "Diagnostics",
+      0x0f: "Write Multiple Coils",
+      0x10: "Write Multiple Registers",
+      0x17: "Read/Write Multiple Registers",
+    };
+
+    var EXC_NAMES = {
+      0x01: "Illegal Function",
+      0x02: "Illegal Data Address",
+      0x03: "Illegal Data Value",
+      0x04: "Slave Device Failure",
+      0x05: "Acknowledge",
+      0x06: "Slave Device Busy",
+      0x08: "Memory Parity Error",
+      0x0a: "Gateway Path Unavailable",
+      0x0b: "Gateway Target No Response",
+    };
+
+    function getFcName(fc) {
+      return FC_NAMES[fc] || "Unknown (0x" + toHex(fc) + ")";
+    }
+    function getExcName(ec) {
+      return EXC_NAMES[ec] || "Unknown (0x" + toHex(ec) + ")";
+    }
+
+    /* ── Address format conversion ── */
+    function resolveAddress() {
+      var raw = parseInt(startAddr.value) || 0;
+      var fmt = addrFmtSel.value;
+      var addr = raw;
+      var hint = "";
+
+      if (fmt === "1based") {
+        addr = Math.max(0, raw - 1);
+        hint = "Protocol address: " + addr + " (0x" + toHex(addr, 4) + ")";
+      } else if (fmt === "modicon") {
+        // 0xxxx = coils, 1xxxx = discrete inputs, 3xxxx = input regs, 4xxxx = holding regs
+        var offset = raw % 10000;
+        addr = Math.max(0, offset - 1);
+        hint =
+          "Modicon " +
+          raw +
+          " → address " +
+          addr +
+          " (0x" +
+          toHex(addr, 4) +
+          ")";
+      } else {
+        hint = "Hex: 0x" + toHex(raw, 4);
+      }
+
+      if (addrHint) addrHint.textContent = hint;
+      return addr;
+    }
+
+    /* ── Data format conversion ── */
+    function convertValues() {
+      var fmt = dataFmt.value;
+      var order = byteOrder.value;
+      var vals = (dataVal.value || "")
+        .split(",")
+        .map(function (s) {
+          return s.trim();
+        })
+        .filter(Boolean);
+      if (!vals.length) return;
+
+      var hexBytes = [];
+      var buf, view;
+
+      vals.forEach(function (v) {
+        if (fmt === "uint16") {
+          var u16 = parseInt(v) & 0xffff;
+          hexBytes.push(hexB(u16 >> 8), hexB(u16));
+        } else if (fmt === "int16") {
+          buf = new ArrayBuffer(2);
+          view = new DataView(buf);
+          view.setInt16(0, parseInt(v), false);
+          hexBytes.push(hexB(view.getUint8(0)), hexB(view.getUint8(1)));
+        } else if (fmt === "uint32") {
+          buf = new ArrayBuffer(4);
+          view = new DataView(buf);
+          view.setUint32(0, parseInt(v) >>> 0, false);
+          var b = [
+            hexB(view.getUint8(0)),
+            hexB(view.getUint8(1)),
+            hexB(view.getUint8(2)),
+            hexB(view.getUint8(3)),
+          ];
+          hexBytes = hexBytes.concat(applyOrder(b, order));
+        } else if (fmt === "float32") {
+          buf = new ArrayBuffer(4);
+          view = new DataView(buf);
+          view.setFloat32(0, parseFloat(v), false);
+          var b2 = [
+            hexB(view.getUint8(0)),
+            hexB(view.getUint8(1)),
+            hexB(view.getUint8(2)),
+            hexB(view.getUint8(3)),
+          ];
+          hexBytes = hexBytes.concat(applyOrder(b2, order));
+        }
+      });
+
+      if (hexBytes.length > 0 && writeData) {
+        writeData.value = hexBytes.join(" ");
+        buildFrame();
+      }
+    }
+
+    function applyOrder(bytes4, order) {
+      if (order === "LE") return [bytes4[1], bytes4[0], bytes4[3], bytes4[2]];
+      if (order === "MBE") return [bytes4[1], bytes4[0], bytes4[3], bytes4[2]]; // BA DC
+      if (order === "MLE") return [bytes4[3], bytes4[2], bytes4[1], bytes4[0]]; // DC BA
+      return bytes4; // BE = AB CD
+    }
+
+    /* ── Build Frame ── */
+    function buildFrame() {
+      var protocol = protocolSel.value;
+      var slave = parseInt(slaveInput.value) || 0;
+      var fc = funcSel.value;
+      var addr = resolveAddress();
+      var qty = parseInt(quantity.value) || 1;
+
+      var pdu = [];
+      var fcNum = parseInt(fc, 16);
+      pdu.push(fcNum);
+
+      if (fc === "07") {
+        // Read Exception Status — no data
+      } else if (fc === "08") {
+        // Diagnostics
+        var sub = diagSub.value || "0000";
+        pdu.push(
+          parseInt(sub.substring(0, 2), 16),
+          parseInt(sub.substring(2, 4), 16),
+        );
+        // Diagnostics data from write field
+        var diagData = parseHexStr(writeData.value.trim() || "12 34");
+        diagData.forEach(function (b) {
+          pdu.push(b);
+        });
+      } else if (fc === "17") {
+        // Read/Write Multiple Registers
+        pdu.push((addr >> 8) & 0xff, addr & 0xff);
+        pdu.push((qty >> 8) & 0xff, qty & 0xff);
+        var wa = parseInt(writeAddr.value) || 0;
+        var wq = parseInt(writeQty.value) || 1;
+        pdu.push((wa >> 8) & 0xff, wa & 0xff);
+        pdu.push((wq >> 8) & 0xff, wq & 0xff);
+        var wBytes = parseHexStr(writeData.value.trim() || "00 0A");
+        pdu.push(wBytes.length);
+        wBytes.forEach(function (b) {
+          pdu.push(b);
+        });
+      } else if (isWriteFC(fc)) {
+        pdu.push((addr >> 8) & 0xff, addr & 0xff);
+        if (fc === "05") {
+          var coilVal = writeData.value.trim() || "FF 00";
+          var coilB = parseHexStr(coilVal);
+          while (coilB.length < 2) coilB.push(0);
+          pdu.push(coilB[0], coilB[1]);
+        } else if (fc === "06") {
+          var regVal = writeData.value.trim() || "00 0A";
+          var regB = parseHexStr(regVal);
+          while (regB.length < 2) regB.push(0);
+          pdu.push(regB[0], regB[1]);
+        } else if (isMultiWrite(fc)) {
+          pdu.push((qty >> 8) & 0xff, qty & 0xff);
+          var dataB = parseHexStr(writeData.value.trim() || "00 0A");
+          pdu.push(dataB.length);
+          dataB.forEach(function (b) {
+            pdu.push(b);
+          });
+        }
+      } else {
+        // Read functions
+        pdu.push((addr >> 8) & 0xff, addr & 0xff);
+        pdu.push((qty >> 8) & 0xff, qty & 0xff);
+      }
+
+      var frame = [];
+      var segments = [];
+
+      if (protocol === "rtu") {
+        frame.push(slave);
+        frame = frame.concat(pdu);
+        var c = crc16(frame);
+        var cLo = c & 0xff;
+        var cHi = (c >> 8) & 0xff;
+        frame.push(cLo, cHi);
+
+        segments.push({
+          label: "Slave",
+          bytes: [hexB(slave)],
+          cls: "seg-slave",
+        });
+        segments.push({
+          label: "FC " + fc,
+          bytes: [hexB(fcNum)],
+          cls: "seg-fc",
+        });
+        if (pdu.length > 1) {
+          segments.push({
+            label: "Data",
+            bytes: pdu.slice(1).map(hexB),
+            cls: "seg-data",
+          });
+        }
+        segments.push({
+          label: "CRC-16",
+          bytes: [hexB(cLo), hexB(cHi)],
+          cls: "seg-crc",
+        });
+      } else if (protocol === "tcp") {
+        var tid = parseInt(transId.value) || 1;
+        var uid = parseInt(unitId.value) || 1;
+        var aduLen = pdu.length + 1;
+        var mbap = [
+          (tid >> 8) & 0xff,
+          tid & 0xff,
+          0x00,
+          0x00,
+          (aduLen >> 8) & 0xff,
+          aduLen & 0xff,
+          uid,
+        ];
+        frame = mbap.concat(pdu);
+
+        segments.push({
+          label: "Transaction",
+          bytes: [hexB(mbap[0]), hexB(mbap[1])],
+          cls: "seg-slave",
+        });
+        segments.push({
+          label: "Protocol",
+          bytes: ["00", "00"],
+          cls: "seg-protocol",
+        });
+        segments.push({
+          label: "Length",
+          bytes: [hexB(mbap[4]), hexB(mbap[5])],
+          cls: "seg-crc",
+        });
+        segments.push({
+          label: "Unit ID",
+          bytes: [hexB(uid)],
+          cls: "seg-slave",
+        });
+        segments.push({
+          label: "FC " + fc,
+          bytes: [hexB(fcNum)],
+          cls: "seg-fc",
+        });
+        if (pdu.length > 1) {
+          segments.push({
+            label: "Data",
+            bytes: pdu.slice(1).map(hexB),
+            cls: "seg-data",
+          });
+        }
+      } else {
+        // ASCII: :ADDR FC DATA LRC CR LF
+        var aduBytes = [slave].concat(pdu);
+        var lrcVal = lrc(aduBytes);
+        aduBytes.push(lrcVal);
+        // ASCII frame is ":HEXHEX...HEXCRLF"
+        var asciiHex = aduBytes.map(hexB).join("");
+        frame = [0x3a]; // ':'
+        for (var i = 0; i < asciiHex.length; i++)
+          frame.push(asciiHex.charCodeAt(i));
+        frame.push(0x0d, 0x0a); // CR LF
+
+        segments.push({ label: "Start", bytes: [":"], cls: "seg-protocol" });
+        segments.push({
+          label: "Slave",
+          bytes: [hexB(slave)],
+          cls: "seg-slave",
+        });
+        segments.push({
+          label: "FC " + fc,
+          bytes: [hexB(fcNum)],
+          cls: "seg-fc",
+        });
+        if (pdu.length > 1) {
+          segments.push({
+            label: "Data",
+            bytes: pdu.slice(1).map(hexB),
+            cls: "seg-data",
+          });
+        }
+        segments.push({ label: "LRC", bytes: [hexB(lrcVal)], cls: "seg-crc" });
+        segments.push({
+          label: "End",
+          bytes: ["CR", "LF"],
+          cls: "seg-protocol",
+        });
+      }
+
+      currentFrame = frame.map(hexB).join(" ");
+      if (protocol === "ascii") {
+        // Display readable ASCII representation
+        currentFrame =
+          ":" +
+          [slave]
+            .concat(pdu)
+            .concat([lrc([slave].concat(pdu))])
+            .map(hexB)
+            .join("");
+      }
+
+      renderFrame(segments);
+      if (dataInterp) dataInterp.hidden = true;
+    }
+
+    /* ── Build Response Frame ── */
+    function buildResponse() {
+      var protocol = respProtocol.value;
+      var slave = parseInt(respSlave.value) || 1;
+      var fc = respFc.value;
+      var isException = fc === "exception";
+
+      var pdu = [];
+
+      if (isException) {
+        var origFc = parseInt(excFc.value, 16);
+        var excCodeVal = parseInt(excCode.value, 16);
+        pdu.push(origFc | 0x80);
+        pdu.push(excCodeVal);
+      } else {
+        var fcNum = parseInt(fc, 16);
+        pdu.push(fcNum);
+        var respBytes = parseHexStr(respData.value.trim());
+        respBytes.forEach(function (b) {
+          pdu.push(b);
+        });
+      }
+
+      var frame = [];
+      var segments = [];
+      var fcLabel = isException ? "Error FC 0x" + hexB(pdu[0]) : "FC " + fc;
+
+      if (protocol === "rtu") {
+        frame.push(slave);
+        frame = frame.concat(pdu);
+        var c = crc16(frame);
+        frame.push(c & 0xff, (c >> 8) & 0xff);
+
+        segments.push({
+          label: "Slave",
+          bytes: [hexB(slave)],
+          cls: "seg-slave",
+        });
+        segments.push({
+          label: fcLabel,
+          bytes: [hexB(pdu[0])],
+          cls: isException ? "seg-error" : "seg-fc",
+        });
+        if (pdu.length > 1) {
+          segments.push({
+            label: isException ? "Exception Code" : "Data",
+            bytes: pdu.slice(1).map(hexB),
+            cls: isException ? "seg-error" : "seg-data",
+          });
+        }
+        segments.push({
+          label: "CRC-16",
+          bytes: [hexB(c & 0xff), hexB((c >> 8) & 0xff)],
+          cls: "seg-crc",
+        });
+      } else if (protocol === "tcp") {
+        var tid = parseInt(respTid.value) || 1;
+        var uid = parseInt(respUid.value) || 1;
+        var aLen = pdu.length + 1;
+        var mbap = [
+          (tid >> 8) & 0xff,
+          tid & 0xff,
+          0x00,
+          0x00,
+          (aLen >> 8) & 0xff,
+          aLen & 0xff,
+          uid,
+        ];
+        frame = mbap.concat(pdu);
+
+        segments.push({
+          label: "Transaction",
+          bytes: [hexB(mbap[0]), hexB(mbap[1])],
+          cls: "seg-slave",
+        });
+        segments.push({
+          label: "Protocol",
+          bytes: ["00", "00"],
+          cls: "seg-protocol",
+        });
+        segments.push({
+          label: "Length",
+          bytes: [hexB(mbap[4]), hexB(mbap[5])],
+          cls: "seg-crc",
+        });
+        segments.push({
+          label: "Unit ID",
+          bytes: [hexB(uid)],
+          cls: "seg-slave",
+        });
+        segments.push({
+          label: fcLabel,
+          bytes: [hexB(pdu[0])],
+          cls: isException ? "seg-error" : "seg-fc",
+        });
+        if (pdu.length > 1) {
+          segments.push({
+            label: isException ? "Exception Code" : "Data",
+            bytes: pdu.slice(1).map(hexB),
+            cls: isException ? "seg-error" : "seg-data",
+          });
+        }
+      } else {
+        // ASCII
+        var aduB = [slave].concat(pdu);
+        var lrcV = lrc(aduB);
+        segments.push({ label: "Start", bytes: [":"], cls: "seg-protocol" });
+        segments.push({
+          label: "Slave",
+          bytes: [hexB(slave)],
+          cls: "seg-slave",
+        });
+        segments.push({
+          label: fcLabel,
+          bytes: [hexB(pdu[0])],
+          cls: isException ? "seg-error" : "seg-fc",
+        });
+        if (pdu.length > 1) {
+          segments.push({
+            label: isException ? "Exception Code" : "Data",
+            bytes: pdu.slice(1).map(hexB),
+            cls: isException ? "seg-error" : "seg-data",
+          });
+        }
+        segments.push({ label: "LRC", bytes: [hexB(lrcV)], cls: "seg-crc" });
+        segments.push({
+          label: "End",
+          bytes: ["CR", "LF"],
+          cls: "seg-protocol",
+        });
+        currentFrame = ":" + aduB.concat([lrcV]).map(hexB).join("");
+        renderFrame(segments);
+        if (dataInterp) dataInterp.hidden = true;
+        return;
+      }
+
+      currentFrame = frame.map(hexB).join(" ");
+      renderFrame(segments);
+
+      // Show hint for response data format
+      if (respHint && !isException) {
+        var fcN = parseInt(fc, 16);
+        if (fcN === 0x03 || fcN === 0x04) {
+          respHint.textContent =
+            "Format: [byte count] [register data]. Example: 04 00 0A 00 64 (2 registers: 10, 100)";
+        } else if (fcN === 0x01 || fcN === 0x02) {
+          respHint.textContent =
+            "Format: [byte count] [coil data]. Example: 01 CD (coils as bits)";
+        } else if (fcN === 0x05 || fcN === 0x06) {
+          respHint.textContent =
+            "Response echoes request: [addr hi] [addr lo] [value hi] [value lo]";
+        } else if (fcN === 0x0f || fcN === 0x10) {
+          respHint.textContent =
+            "Response echoes: [addr hi] [addr lo] [qty hi] [qty lo]";
+        }
+      }
+      if (dataInterp) dataInterp.hidden = true;
+    }
+
+    /* ── Decode Frame ── */
+    function decodeFrame() {
+      var proto = decodeProtocol.value;
+      var inputHex = decodeInput.value.trim();
+
+      // Strip ASCII framing if present
+      if (inputHex.startsWith(":")) {
+        inputHex = inputHex.replace(/^:/, "").replace(/\r?\n$/, "");
+        if (proto === "auto") proto = "ascii";
+      }
+
+      var bytes = parseHexStr(inputHex);
+      if (bytes.length < 2) {
+        showPlaceholder("Frame too short (minimum 2 bytes)");
+        return;
+      }
+
+      // Auto-detect protocol
+      if (proto === "auto") {
+        if (bytes.length >= 9 && bytes[2] === 0 && bytes[3] === 0) {
+          proto = "tcp"; // Protocol identifier 0x0000
+        } else {
+          proto = "rtu";
+        }
+      }
+
+      var segments = [];
+      var dataBytes = [];
+      var fcVal = 0;
+      var isExc = false;
+
+      if (proto === "rtu") {
+        if (bytes.length < 4) {
+          showPlaceholder("RTU frame too short (min 4 bytes)");
+          return;
+        }
+        var slave = bytes[0];
+        fcVal = bytes[1];
+        isExc = (fcVal & 0x80) !== 0;
+        var data = bytes.slice(2, -2);
+        var crcB = bytes.slice(-2);
+        var expected = crc16(bytes.slice(0, -2));
+        var actual = crcB[0] | (crcB[1] << 8);
+        var crcOk = expected === actual;
+
+        segments.push({
+          label: "Slave: " + slave,
+          bytes: [hexB(slave)],
+          cls: "seg-slave",
+        });
+
+        if (isExc) {
+          var origFcVal2 = fcVal & 0x7f;
+          var excCodeVal2 = data.length > 0 ? data[0] : 0;
+          segments.push({
+            label:
+              "Error FC: 0x" + hexB(fcVal) + " (" + getFcName(origFcVal2) + ")",
+            bytes: [hexB(fcVal)],
+            cls: "seg-error",
+          });
+          if (data.length > 0) {
+            segments.push({
+              label:
+                "Exception: " +
+                hexB(excCodeVal2) +
+                " (" +
+                getExcName(excCodeVal2) +
+                ")",
+              bytes: [hexB(excCodeVal2)],
+              cls: "seg-error",
+            });
+            if (data.length > 1) {
+              segments.push({
+                label: "Extra Data",
+                bytes: data.slice(1).map(hexB),
+                cls: "seg-data",
+              });
+            }
+          }
+        } else {
+          segments.push({
+            label: "FC: " + hexB(fcVal) + " (" + getFcName(fcVal) + ")",
+            bytes: [hexB(fcVal)],
+            cls: "seg-fc",
+          });
+          if (data.length > 0) {
+            segments.push({
+              label: "Data",
+              bytes: data.map(hexB),
+              cls: "seg-data",
+            });
+            dataBytes = data;
+          }
+        }
+
+        var crcLabel =
+          "CRC: " +
+          (crcOk
+            ? "✓ Valid"
+            : "✗ Invalid (expected " +
+              hexB(expected & 0xff) +
+              " " +
+              hexB((expected >> 8) & 0xff) +
+              ")");
+        segments.push({
+          label: crcLabel,
+          bytes: crcB.map(hexB),
+          cls: crcOk ? "seg-crc" : "seg-error",
+        });
+      } else if (proto === "tcp") {
+        if (bytes.length < 8) {
+          showPlaceholder("TCP frame too short (min 8 bytes)");
+          return;
+        }
+        var tid = (bytes[0] << 8) | bytes[1];
+        var pid = (bytes[2] << 8) | bytes[3];
+        var len = (bytes[4] << 8) | bytes[5];
+        var uid = bytes[6];
+        fcVal = bytes[7];
+        isExc = (fcVal & 0x80) !== 0;
+        var tcpData = bytes.slice(8);
+
+        segments.push({
+          label: "Transaction: " + tid,
+          bytes: [hexB(bytes[0]), hexB(bytes[1])],
+          cls: "seg-slave",
+        });
+        segments.push({
+          label: "Protocol: " + pid,
+          bytes: [hexB(bytes[2]), hexB(bytes[3])],
+          cls: "seg-protocol",
+        });
+        segments.push({
+          label: "Length: " + len,
+          bytes: [hexB(bytes[4]), hexB(bytes[5])],
+          cls: "seg-crc",
+        });
+        segments.push({
+          label: "Unit: " + uid,
+          bytes: [hexB(uid)],
+          cls: "seg-slave",
+        });
+
+        if (isExc) {
+          var origFcVal3 = fcVal & 0x7f;
+          segments.push({
+            label:
+              "Error FC: 0x" + hexB(fcVal) + " (" + getFcName(origFcVal3) + ")",
+            bytes: [hexB(fcVal)],
+            cls: "seg-error",
+          });
+          if (tcpData.length > 0) {
+            segments.push({
+              label:
+                "Exception: " +
+                hexB(tcpData[0]) +
+                " (" +
+                getExcName(tcpData[0]) +
+                ")",
+              bytes: [hexB(tcpData[0])],
+              cls: "seg-error",
+            });
+            if (tcpData.length > 1)
+              segments.push({
+                label: "Extra Data",
+                bytes: tcpData.slice(1).map(hexB),
+                cls: "seg-data",
+              });
+          }
+        } else {
+          segments.push({
+            label: "FC: " + hexB(fcVal) + " (" + getFcName(fcVal) + ")",
+            bytes: [hexB(fcVal)],
+            cls: "seg-fc",
+          });
+          if (tcpData.length > 0) {
+            segments.push({
+              label: "Data",
+              bytes: tcpData.map(hexB),
+              cls: "seg-data",
+            });
+            dataBytes = tcpData;
+          }
+        }
+      } else {
+        // ASCII
+        var asciiBytes = bytes;
+        if (asciiBytes.length < 3) {
+          showPlaceholder("ASCII frame too short");
+          return;
+        }
+        var aSlaveA = asciiBytes[0];
+        fcVal = asciiBytes[1];
+        isExc = (fcVal & 0x80) !== 0;
+        var aData = asciiBytes.slice(2, -1);
+        var aLrc = asciiBytes[asciiBytes.length - 1];
+        var expLrc = lrc(asciiBytes.slice(0, -1));
+        var lrcOk = aLrc === expLrc;
+
+        segments.push({
+          label: "Slave: " + aSlaveA,
+          bytes: [hexB(aSlaveA)],
+          cls: "seg-slave",
+        });
+
+        if (isExc) {
+          segments.push({
+            label: "Error FC: 0x" + hexB(fcVal),
+            bytes: [hexB(fcVal)],
+            cls: "seg-error",
+          });
+          if (aData.length > 0) {
+            segments.push({
+              label:
+                "Exception: " +
+                hexB(aData[0]) +
+                " (" +
+                getExcName(aData[0]) +
+                ")",
+              bytes: [hexB(aData[0])],
+              cls: "seg-error",
+            });
+          }
+        } else {
+          segments.push({
+            label: "FC: " + hexB(fcVal) + " (" + getFcName(fcVal) + ")",
+            bytes: [hexB(fcVal)],
+            cls: "seg-fc",
+          });
+          if (aData.length > 0) {
+            segments.push({
+              label: "Data",
+              bytes: aData.map(hexB),
+              cls: "seg-data",
+            });
+            dataBytes = aData;
+          }
+        }
+
+        segments.push({
+          label:
+            "LRC: " +
+            (lrcOk ? "✓ Valid" : "✗ Invalid (expected " + hexB(expLrc) + ")"),
+          bytes: [hexB(aLrc)],
+          cls: lrcOk ? "seg-crc" : "seg-error",
+        });
+      }
+
+      currentFrame = bytes.map(hexB).join(" ");
+      renderFrame(segments);
+
+      // Data interpretation
+      if (dataBytes.length > 0 && !isExc) {
+        interpretData(dataBytes, fcVal);
+      } else {
+        if (dataInterp) dataInterp.hidden = true;
+      }
+    }
+
+    /* ── Data Interpretation ── */
+    function interpretData(dataB, fc) {
+      if (!dataInterp) return;
+      var fmt = decodeDataFmt.value;
+      var order = decodeByteOrder.value;
+
+      // For read responses, first byte is byte count
+      var isReadResp = fc >= 0x01 && fc <= 0x04 && dataB.length >= 2;
+      var regData = dataB;
+      var byteCountInfo = "";
+
+      if (isReadResp && dataB[0] === dataB.length - 1) {
+        byteCountInfo = "Byte count: " + dataB[0];
+        regData = dataB.slice(1);
+      }
+
+      if (fmt === "hex" && !byteCountInfo) {
+        dataInterp.hidden = true;
+        return;
+      }
+
+      var html =
+        '<div class="mbus-interp-title"><span class="i-mdi:format-list-numbered" aria-hidden="true"></span> Data Interpretation</div>';
+
+      if (byteCountInfo) {
+        html += '<div class="mbus-interp-info">' + byteCountInfo + "</div>";
+      }
+
+      if (fmt === "hex") {
+        html +=
+          '<div class="mbus-interp-row">Raw: ' +
+          regData.map(hexB).join(" ") +
+          "</div>";
+      } else if (fmt === "uint16" || fmt === "int16") {
+        html +=
+          '<table class="mbus-interp-table"><thead><tr><th>Register</th><th>Hex</th><th>Value</th></tr></thead><tbody>';
+        for (var i = 0; i + 1 < regData.length; i += 2) {
+          var raw16 = (regData[i] << 8) | regData[i + 1];
+          var val = fmt === "int16" ? toSigned16(raw16) : raw16;
+          html +=
+            "<tr><td>#" +
+            i / 2 +
+            "</td><td>" +
+            hexB(regData[i]) +
+            " " +
+            hexB(regData[i + 1]) +
+            "</td><td>" +
+            val +
+            "</td></tr>";
+        }
+        html += "</tbody></table>";
+      } else if (fmt === "uint32" || fmt === "float32") {
+        html +=
+          '<table class="mbus-interp-table"><thead><tr><th>Register Pair</th><th>Hex</th><th>Value</th></tr></thead><tbody>';
+        for (var j = 0; j + 3 < regData.length; j += 4) {
+          var b4 = [regData[j], regData[j + 1], regData[j + 2], regData[j + 3]];
+          var ordered = reorderBytes(b4, order);
+          var buf = new ArrayBuffer(4);
+          var dv = new DataView(buf);
+          dv.setUint8(0, ordered[0]);
+          dv.setUint8(1, ordered[1]);
+          dv.setUint8(2, ordered[2]);
+          dv.setUint8(3, ordered[3]);
+          var val32 =
+            fmt === "float32"
+              ? dv.getFloat32(0, false).toFixed(4)
+              : dv.getUint32(0, false);
+          html +=
+            "<tr><td>#" +
+            j / 4 +
+            "</td><td>" +
+            b4.map(hexB).join(" ") +
+            "</td><td>" +
+            val32 +
+            "</td></tr>";
+        }
+        html += "</tbody></table>";
+      }
+
+      dataInterp.innerHTML = html;
+      dataInterp.hidden = false;
+    }
+
+    function toSigned16(v) {
+      return v >= 0x8000 ? v - 0x10000 : v;
+    }
+
+    function reorderBytes(b4, order) {
+      if (order === "LE") return [b4[1], b4[0], b4[3], b4[2]];
+      if (order === "MBE") return [b4[1], b4[0], b4[3], b4[2]];
+      if (order === "MLE") return [b4[3], b4[2], b4[1], b4[0]];
+      return b4; // BE
+    }
+
+    /* ── Render ── */
+    function showPlaceholder(msg) {
+      if (frameDisplay)
+        frameDisplay.innerHTML =
+          '<span class="mbus-frame-placeholder">' + msg + "</span>";
+      if (breakdownEl) breakdownEl.textContent = "";
+      if (dataInterp) dataInterp.hidden = true;
+    }
+
+    function renderFrame(segments) {
+      if (!frameDisplay || !breakdownEl) return;
+
+      frameDisplay.textContent = "";
+      segments.forEach(function (seg) {
+        seg.bytes.forEach(function (b) {
+          var span = document.createElement("span");
+          span.className = "mbus-byte " + seg.cls;
+          span.textContent = b;
+          span.title = seg.label;
+          frameDisplay.appendChild(span);
+        });
+      });
+
+      breakdownEl.textContent = "";
+      segments.forEach(function (seg) {
+        var item = document.createElement("span");
+        item.className = "mbus-legend-item";
+        var dot = document.createElement("span");
+        dot.className = "mbus-legend-dot " + seg.cls;
+        item.appendChild(dot);
+        item.appendChild(
+          document.createTextNode(seg.label + ": " + seg.bytes.join(" ")),
+        );
+        breakdownEl.appendChild(item);
+      });
+    }
+
+    /* ── Mode Switching ── */
+    modeBtns.forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        modeBtns.forEach(function (b) {
+          b.classList.remove("mbus-mode-active");
+        });
+        btn.classList.add("mbus-mode-active");
+        currentMode = btn.getAttribute("data-mode");
+
+        buildPanel.hidden = currentMode !== "build";
+        decodePanel.hidden = currentMode !== "decode";
+        responsePanel.hidden = currentMode !== "response";
+
+        if (currentMode === "build") {
+          updateBuildUI();
+        } else if (currentMode === "decode") {
+          showPlaceholder("Enter a hex frame and click Decode");
+        } else {
+          updateResponseUI();
+        }
+      });
+    });
+
+    /* ── Build UI Updates ── */
+    function updateBuildUI() {
+      var fc = funcSel.value;
+      var isWrite = isWriteFC(fc);
+      var proto = protocolSel.value;
+
+      if (writeSection)
+        writeSection.hidden = !isWrite && fc !== "08" && fc !== "17";
+      if (dataHelper) dataHelper.hidden = !isWrite || fc === "05";
+      if (tcpFields) tcpFields.hidden = proto !== "tcp";
+      if (diagSection) diagSection.hidden = fc !== "08";
+      if (fc17Section) fc17Section.hidden = fc !== "17";
+
+      // Hide start addr & quantity for FC 07
+      var dataFields = $id("data-fields");
+      if (dataFields) dataFields.hidden = fc === "07";
+
+      // Update quantity label
+      var qtyLabel = root.querySelector(
+        'label[for="' + uniqueId + '-quantity"]',
+      );
+      if (qtyLabel) {
+        if (fc === "05" || fc === "06") qtyLabel.textContent = "Value";
+        else qtyLabel.textContent = "Quantity";
+      }
+
+      // Update write data label
+      var wdLabel = root.querySelector(
+        'label[for="' + uniqueId + '-write-data"]',
+      );
+      if (wdLabel) {
+        if (fc === "05")
+          wdLabel.textContent = "Coil Value (FF 00=ON, 00 00=OFF)";
+        else if (fc === "06")
+          wdLabel.textContent = "Register Value (hex bytes)";
+        else if (fc === "08")
+          wdLabel.textContent = "Diagnostics Data (hex bytes)";
+        else if (fc === "17") wdLabel.textContent = "Write Data (hex bytes)";
+        else wdLabel.textContent = "Write Values (hex bytes, space-separated)";
+      }
+
+      buildFrame();
+    }
+
+    /* ── Response UI Updates ── */
+    function updateResponseUI() {
+      var fc = respFc.value;
+      var isExc = fc === "exception";
+      var proto = respProtocol.value;
+
+      if (respDataSection) respDataSection.hidden = isExc;
+      if (respExcSection) respExcSection.hidden = !isExc;
+      if (respTcpFields) respTcpFields.hidden = proto !== "tcp";
+
+      buildResponse();
+    }
+
+    /* ── Presets ── */
+    var PRESETS = {
+      read10holding: { protocol: "rtu", slave: 1, fc: "03", addr: 0, qty: 10 },
+      read8coils: { protocol: "rtu", slave: 1, fc: "01", addr: 0, qty: 8 },
+      writesinglecoil: {
+        protocol: "rtu",
+        slave: 1,
+        fc: "05",
+        addr: 0,
+        qty: 1,
+        write: "FF 00",
+      },
+      writesingleregister: {
+        protocol: "rtu",
+        slave: 1,
+        fc: "06",
+        addr: 0,
+        qty: 1,
+        write: "00 64",
+      },
+      writemultiple: {
+        protocol: "rtu",
+        slave: 1,
+        fc: "10",
+        addr: 0,
+        qty: 2,
+        write: "00 0A 00 64",
+      },
+      read5inputs: { protocol: "rtu", slave: 1, fc: "04", addr: 0, qty: 5 },
+      diagnostics: {
+        protocol: "rtu",
+        slave: 1,
+        fc: "08",
+        addr: 0,
+        qty: 1,
+        write: "12 34",
+        diag: "0000",
+      },
+      exceptionresp: {
+        mode: "decode",
+        decodeProto: "rtu",
+        decodeHex: "01 83 02 C0 F1",
+      },
+    };
+
+    if (presetsGrid) {
+      presetsGrid.addEventListener("click", function (e) {
+        var btn = e.target.closest(".mbus-preset-btn");
+        if (!btn) return;
+        var key = btn.getAttribute("data-preset");
+        var p = PRESETS[key];
+        if (!p) return;
+
+        if (p.mode === "decode") {
+          // Switch to decode mode
+          modeBtns.forEach(function (b) {
+            b.classList.remove("mbus-mode-active");
+          });
+          root
+            .querySelector('[data-mode="decode"]')
+            .classList.add("mbus-mode-active");
+          currentMode = "decode";
+          buildPanel.hidden = true;
+          decodePanel.hidden = false;
+          responsePanel.hidden = true;
+          if (decodeProtocol) decodeProtocol.value = p.decodeProto || "rtu";
+          if (decodeInput) decodeInput.value = p.decodeHex || "";
+          decodeFrame();
+          return;
+        }
+
+        // Switch to build mode
+        modeBtns.forEach(function (b) {
+          b.classList.remove("mbus-mode-active");
+        });
+        root
+          .querySelector('[data-mode="build"]')
+          .classList.add("mbus-mode-active");
+        currentMode = "build";
+        buildPanel.hidden = false;
+        decodePanel.hidden = true;
+        responsePanel.hidden = true;
+
+        if (protocolSel) protocolSel.value = p.protocol || "rtu";
+        if (slaveInput) slaveInput.value = p.slave || 1;
+        if (funcSel) funcSel.value = p.fc || "03";
+        if (startAddr) startAddr.value = p.addr || 0;
+        if (quantity) quantity.value = p.qty || 1;
+        if (writeData) writeData.value = p.write || "";
+        if (diagSub && p.diag) diagSub.value = p.diag;
+
+        updateBuildUI();
+      });
+    }
+
+    /* ── Copy Buttons ── */
+    root.querySelectorAll(".mbus-copy-btn").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        if (!currentFrame) return;
+        var fmt = btn.getAttribute("data-copy");
+        var text = currentFrame;
+
+        if (fmt === "nospaces") {
+          text = currentFrame.replace(/\s/g, "");
+        } else if (fmt === "carray") {
+          var bytes2 = currentFrame.split(/\s+/).filter(Boolean);
+          text =
+            "{ " +
+            bytes2
+              .map(function (b) {
+                return "0x" + b;
+              })
+              .join(", ") +
+            " }";
+        } else if (fmt === "python") {
+          var bytes3 = currentFrame.split(/\s+/).filter(Boolean);
+          text =
+            "b'" +
+            bytes3
+              .map(function (b) {
+                return "\\x" + b.toLowerCase();
+              })
+              .join("") +
+            "'";
+        }
+
+        navigator.clipboard.writeText(text).then(function () {
+          var orig = btn.innerHTML;
+          btn.textContent = "Copied!";
+          setTimeout(function () {
+            btn.innerHTML = orig;
+          }, 1500);
+        });
+      });
+    });
+
+    /* ── Share Link ── */
+    if (shareBtn) {
+      shareBtn.addEventListener("click", function () {
+        var params = new URLSearchParams();
+        params.set("mode", currentMode);
+
+        if (currentMode === "build") {
+          params.set("proto", protocolSel.value);
+          params.set("slave", slaveInput.value);
+          params.set("fc", funcSel.value);
+          params.set("addr", startAddr.value);
+          params.set("qty", quantity.value);
+          params.set("afmt", addrFmtSel.value);
+          if (writeData.value) params.set("wd", writeData.value);
+          if (protocolSel.value === "tcp") {
+            params.set("tid", transId.value);
+            params.set("uid", unitId.value);
+          }
+        } else if (currentMode === "decode") {
+          params.set("dproto", decodeProtocol.value);
+          params.set("hex", decodeInput.value);
+          params.set("dfmt", decodeDataFmt.value);
+          params.set("dorder", decodeByteOrder.value);
+        } else {
+          params.set("rproto", respProtocol.value);
+          params.set("rslave", respSlave.value);
+          params.set("rfc", respFc.value);
+          params.set("rdata", respData.value || "");
+        }
+
+        var url = window.location.pathname + "?" + params.toString();
+        navigator.clipboard
+          .writeText(window.location.origin + url)
+          .then(function () {
+            var orig = shareBtn.innerHTML;
+            shareBtn.innerHTML =
+              '<span class="i-mdi:check" aria-hidden="true"></span> Copied!';
+            setTimeout(function () {
+              shareBtn.innerHTML = orig;
+            }, 2000);
+          });
+        history.replaceState(null, "", url);
+      });
+    }
+
+    /* ── Load from URL ── */
+    function loadFromURL() {
+      var params = new URLSearchParams(window.location.search);
+      var mode = params.get("mode");
+      if (!mode) return;
+
+      if (mode === "build") {
+        if (params.get("proto")) protocolSel.value = params.get("proto");
+        if (params.get("slave")) slaveInput.value = params.get("slave");
+        if (params.get("fc")) funcSel.value = params.get("fc");
+        if (params.get("addr")) startAddr.value = params.get("addr");
+        if (params.get("qty")) quantity.value = params.get("qty");
+        if (params.get("afmt")) addrFmtSel.value = params.get("afmt");
+        if (params.get("wd")) writeData.value = params.get("wd");
+        if (params.get("tid")) transId.value = params.get("tid");
+        if (params.get("uid")) unitId.value = params.get("uid");
+        updateBuildUI();
+      } else if (mode === "decode") {
+        modeBtns.forEach(function (b) {
+          b.classList.remove("mbus-mode-active");
+        });
+        root
+          .querySelector('[data-mode="decode"]')
+          .classList.add("mbus-mode-active");
+        currentMode = "decode";
+        buildPanel.hidden = true;
+        decodePanel.hidden = false;
+        responsePanel.hidden = true;
+
+        if (params.get("dproto")) decodeProtocol.value = params.get("dproto");
+        if (params.get("hex")) decodeInput.value = params.get("hex");
+        if (params.get("dfmt")) decodeDataFmt.value = params.get("dfmt");
+        if (params.get("dorder")) decodeByteOrder.value = params.get("dorder");
+        decodeFrame();
+      } else if (mode === "response") {
+        modeBtns.forEach(function (b) {
+          b.classList.remove("mbus-mode-active");
+        });
+        root
+          .querySelector('[data-mode="response"]')
+          .classList.add("mbus-mode-active");
+        currentMode = "response";
+        buildPanel.hidden = true;
+        decodePanel.hidden = true;
+        responsePanel.hidden = false;
+
+        if (params.get("rproto")) respProtocol.value = params.get("rproto");
+        if (params.get("rslave")) respSlave.value = params.get("rslave");
+        if (params.get("rfc")) respFc.value = params.get("rfc");
+        if (params.get("rdata")) respData.value = params.get("rdata");
+        updateResponseUI();
+      }
+    }
+
+    /* ── Event Bindings ── */
+    var buildInputs = [
+      protocolSel,
+      slaveInput,
+      addrFmtSel,
+      funcSel,
+      startAddr,
+      quantity,
+      writeData,
+      transId,
+      unitId,
+      diagSub,
+      writeAddr,
+      writeQty,
+    ];
+    buildInputs.forEach(function (el) {
+      if (!el) return;
+      el.addEventListener("input", function () {
+        if (currentMode === "build") updateBuildUI();
+      });
+      el.addEventListener("change", function () {
+        if (currentMode === "build") updateBuildUI();
+      });
+    });
+
+    var respInputs = [
+      respProtocol,
+      respSlave,
+      respFc,
+      respData,
+      excFc,
+      excCode,
+      respTid,
+      respUid,
+    ];
+    respInputs.forEach(function (el) {
+      if (!el) return;
+      el.addEventListener("input", function () {
+        if (currentMode === "response") updateResponseUI();
+      });
+      el.addEventListener("change", function () {
+        if (currentMode === "response") updateResponseUI();
+      });
+    });
+
+    if (decodeBtn) decodeBtn.addEventListener("click", decodeFrame);
+    if (decodeInput)
+      decodeInput.addEventListener("keydown", function (e) {
+        if (e.key === "Enter") decodeFrame();
+      });
+    if (convertBtn) convertBtn.addEventListener("click", convertValues);
+
+    /* ── Init ── */
+    loadFromURL();
+    if (currentMode === "build") updateBuildUI();
+  })();
+</script>
+
+<style>
+  .mbus-builder {
+    margin: 1.5rem 0;
+    overflow: hidden;
+    background: var(--color-bg-subtle);
+    border: var(--border-1);
+    border-radius: var(--radius-md);
+  }
+
+  .mbus-title {
+    padding: 1rem 1.25rem;
+    font-size: 1.1rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-heading);
+    background: var(--color-bg-secondary);
+    border-bottom: var(--border-1);
+  }
+
+  .mbus-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    padding: 1.25rem;
+  }
+
+  .mbus-modes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .mbus-mode-btn {
+    display: flex;
+    gap: 0.375rem;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+    font-weight: var(--fw-medium);
+    color: var(--color-text-muted);
+    cursor: pointer;
+    background: var(--color-bg-secondary);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+    transition: all 0.15s;
+  }
+
+  .mbus-mode-btn span {
+    width: 16px;
+    height: 16px;
+  }
+
+  .mbus-mode-btn:hover {
+    color: var(--color-text);
+  }
+
+  .mbus-mode-active {
+    color: var(--color-primary);
+    background: var(--color-bg);
+    border-color: var(--color-primary);
+  }
+
+  .mbus-label {
+    display: block;
+    margin-bottom: 0.25rem;
+    font-size: 0.8rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .mbus-input,
+  .mbus-select {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    color: var(--color-text);
+    background: var(--color-bg);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+    transition: border-color 0.15s;
+  }
+
+  .mbus-input:focus,
+  .mbus-select:focus {
+    outline: none;
+    border-color: var(--color-primary);
+  }
+
+  .mbus-field {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .mbus-field-shrink {
+    flex: 0 0 auto;
+  }
+
+  .mbus-field-grow {
+    flex: 1;
+  }
+
+  .mbus-field-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .mbus-field-row .mbus-field {
+    min-width: 120px;
+  }
+
+  .mbus-addr-hint {
+    margin-top: 0.25rem;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--color-text-muted);
+  }
+
+  .mbus-action-btn {
+    display: flex;
+    gap: 0.375rem;
+    align-items: center;
+    align-self: flex-start;
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+    font-weight: var(--fw-medium);
+    color: #fff;
+    cursor: pointer;
+    background: var(--color-primary);
+    border: none;
+    border-radius: var(--radius-sm);
+    transition: opacity 0.15s;
+  }
+
+  .mbus-action-btn span {
+    width: 16px;
+    height: 16px;
+  }
+
+  .mbus-action-btn:hover {
+    opacity: 90%;
+  }
+
+  .mbus-info-box {
+    display: flex;
+    gap: 0.5rem;
+    align-items: flex-start;
+    padding: 0.75rem 1rem;
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+    background: var(--color-bg);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+  }
+
+  .mbus-info-box span {
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    margin-top: 0.1rem;
+  }
+
+  /* Data helper */
+  .mbus-data-helper {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: var(--color-bg);
+    border: 1px dashed var(--color-border);
+    border-radius: var(--radius-sm);
+  }
+
+  /* Presets */
+  .mbus-presets-group {
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+  }
+
+  .mbus-presets-summary {
+    display: flex;
+    gap: 0.375rem;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    font-size: 0.85rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text);
+    cursor: pointer;
+    list-style: none;
+    background: var(--color-bg-secondary);
+    border-radius: var(--radius-sm);
+  }
+
+  .mbus-presets-summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .mbus-presets-summary span {
+    width: 16px;
+    height: 16px;
+    color: var(--color-primary);
+  }
+
+  .mbus-presets-summary::after {
+    display: inline-block;
+    margin-left: auto;
+    content: "▸";
+    transition: transform 0.15s;
+  }
+
+  .mbus-presets-group[open] > .mbus-presets-summary::after {
+    transform: rotate(90deg);
+  }
+
+  .mbus-presets-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 0.5rem;
+    padding: 0.75rem;
+  }
+
+  .mbus-preset-btn {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    align-items: flex-start;
+    padding: 0.5rem 0.75rem;
+    text-align: left;
+    cursor: pointer;
+    background: var(--color-bg);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+    transition: border-color 0.15s;
+  }
+
+  .mbus-preset-btn:hover {
+    border-color: var(--color-primary);
+  }
+
+  .mbus-preset-label {
+    font-size: 0.75rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text);
+  }
+
+  .mbus-preset-btn code {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--color-text-muted);
+  }
+
+  /* Output */
+  .mbus-output-section {
+    padding: 1rem;
+    background: var(--color-bg-secondary);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+  }
+
+  .mbus-output-header {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+  }
+
+  .mbus-output-label {
+    display: flex;
+    gap: 0.375rem;
+    align-items: center;
+    font-size: 0.8rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .mbus-output-label span {
+    width: 16px;
+    height: 16px;
+  }
+
+  .mbus-output-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+  }
+
+  .mbus-frame-display {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    min-height: 2.5rem;
+    padding: 0.75rem;
+    font-family: var(--font-mono);
+    background: var(--color-bg);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+  }
+
+  .mbus-frame-display :global(.mbus-frame-placeholder) {
+    font-family: inherit;
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+  }
+
+  .mbus-frame-display :global(.mbus-byte) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2rem;
+    height: 1.75rem;
+    padding: 0 0.25rem;
+    font-size: 0.8rem;
+    font-weight: var(--fw-semibold);
+    border-radius: 3px;
+  }
+
+  .mbus-frame-display :global(.seg-slave) {
+    color: #3730a3;
+    background: rgb(99 102 241 / 15%);
+  }
+
+  .mbus-frame-display :global(.seg-fc) {
+    color: #9d174d;
+    background: rgb(236 72 153 / 15%);
+  }
+
+  .mbus-frame-display :global(.seg-data) {
+    color: #166534;
+    background: rgb(34 197 94 / 15%);
+  }
+
+  .mbus-frame-display :global(.seg-crc) {
+    color: #92400e;
+    background: rgb(245 158 11 / 15%);
+  }
+
+  .mbus-frame-display :global(.seg-protocol) {
+    color: #6b21a8;
+    background: rgb(168 85 247 / 15%);
+  }
+
+  .mbus-frame-display :global(.seg-error) {
+    color: #b91c1c;
+    background: rgb(239 68 68 / 15%);
+  }
+
+  :root[data-theme="dark"] .mbus-frame-display :global(.seg-slave) {
+    color: #a5b4fc;
+  }
+
+  :root[data-theme="dark"] .mbus-frame-display :global(.seg-fc) {
+    color: #f9a8d4;
+  }
+
+  :root[data-theme="dark"] .mbus-frame-display :global(.seg-data) {
+    color: #86efac;
+  }
+
+  :root[data-theme="dark"] .mbus-frame-display :global(.seg-crc) {
+    color: #fcd34d;
+  }
+
+  :root[data-theme="dark"] .mbus-frame-display :global(.seg-protocol) {
+    color: #d8b4fe;
+  }
+
+  :root[data-theme="dark"] .mbus-frame-display :global(.seg-error) {
+    color: #fca5a5;
+  }
+
+  .mbus-frame-breakdown {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+  }
+
+  .mbus-frame-breakdown :global(.mbus-legend-item) {
+    display: flex;
+    gap: 0.375rem;
+    align-items: center;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--color-text-muted);
+  }
+
+  .mbus-frame-breakdown :global(.mbus-legend-dot) {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+  }
+
+  .mbus-frame-breakdown :global(.mbus-legend-dot.seg-slave) {
+    background: #6366f1;
+  }
+
+  .mbus-frame-breakdown :global(.mbus-legend-dot.seg-fc) {
+    background: #ec4899;
+  }
+
+  .mbus-frame-breakdown :global(.mbus-legend-dot.seg-data) {
+    background: #22c55e;
+  }
+
+  .mbus-frame-breakdown :global(.mbus-legend-dot.seg-crc) {
+    background: #f59e0b;
+  }
+
+  .mbus-frame-breakdown :global(.mbus-legend-dot.seg-protocol) {
+    background: #a855f7;
+  }
+
+  .mbus-frame-breakdown :global(.mbus-legend-dot.seg-error) {
+    background: #ef4444;
+  }
+
+  .mbus-copy-btn {
+    display: flex;
+    gap: 0.25rem;
+    align-items: center;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.7rem;
+    font-weight: var(--fw-medium);
+    color: var(--color-text-muted);
+    cursor: pointer;
+    background: var(--color-bg);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+    transition: all 0.15s;
+  }
+
+  .mbus-copy-btn span {
+    width: 12px;
+    height: 12px;
+  }
+
+  .mbus-copy-btn:hover {
+    color: var(--color-text);
+    border-color: var(--color-primary);
+  }
+
+  /* Data interpretation */
+  .mbus-data-interp {
+    padding: 0.75rem;
+    margin-top: 0.75rem;
+    background: var(--color-bg);
+    border: 1px dashed var(--color-border);
+    border-radius: var(--radius-sm);
+  }
+
+  .mbus-data-interp :global(.mbus-interp-title) {
+    display: flex;
+    gap: 0.375rem;
+    align-items: center;
+    margin-bottom: 0.5rem;
+    font-size: 0.8rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-heading);
+  }
+
+  .mbus-data-interp :global(.mbus-interp-title) span {
+    width: 16px;
+    height: 16px;
+  }
+
+  .mbus-data-interp :global(.mbus-interp-info) {
+    margin-bottom: 0.5rem;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+  }
+
+  .mbus-data-interp :global(.mbus-interp-row) {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--color-text);
+  }
+
+  .mbus-data-interp :global(.mbus-interp-table) {
+    width: 100%;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    border-collapse: collapse;
+  }
+
+  .mbus-data-interp :global(.mbus-interp-table th) {
+    padding: 0.25rem 0.5rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-muted);
+    text-align: left;
+    border-bottom: var(--border-1);
+  }
+
+  .mbus-data-interp :global(.mbus-interp-table td) {
+    padding: 0.25rem 0.5rem;
+    color: var(--color-text);
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  /* Share link */
+  .mbus-share-btn {
+    display: flex;
+    gap: 0.375rem;
+    align-items: center;
+    align-self: flex-start;
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+    font-weight: var(--fw-medium);
+    color: var(--color-text-muted);
+    cursor: pointer;
+    background: var(--color-bg-secondary);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+    transition: all 0.15s;
+  }
+
+  .mbus-share-btn span {
+    width: 16px;
+    height: 16px;
+  }
+
+  .mbus-share-btn:hover {
+    color: var(--color-text);
+    border-color: var(--color-primary);
+  }
+
+  @media (width <= 480px) {
+    .mbus-field-row {
+      flex-direction: column;
+    }
+
+    .mbus-presets-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .mbus-output-header {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
+
+  /* ── Dark mode contrast fixes ── */
+  :root[data-theme="dark"] .mbus-action-btn {
+    color: #000;
+  }
+</style>
