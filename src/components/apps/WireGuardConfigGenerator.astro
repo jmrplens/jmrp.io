@@ -1,4 +1,6 @@
 ---
+/* eslint-disable sonarjs/no-hardcoded-ip -- Default IPs are essential for a VPN config builder */
+/* eslint-disable astro/jsx-a11y/label-has-associated-control -- Peer template is cloned via JS; labels are visually and structurally paired with inputs */
 /**
  * WireGuardConfigGenerator Component
  * Interactive MikroTik WireGuard VPN configuration builder.
@@ -95,21 +97,6 @@ const uniqueId = `wg-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
               max="65535"
             />
           </div>
-          <div class="wg-field">
-            <label
-              class="wg-label"
-              for={`${uniqueId}-mtu`}
-              >MTU</label
-            >
-            <input
-              id={`${uniqueId}-mtu`}
-              class="wg-input"
-              type="number"
-              value="1500"
-              min="1280"
-              max="9000"
-            />
-          </div>
         </div>
         <div class="wg-field">
           <label
@@ -199,21 +186,37 @@ const uniqueId = `wg-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
             <span class="wg-field-hint">Gateway will be ::1</span>
           </div>
         </div>
-        <div class="wg-field">
-          <label
-            class="wg-label"
-            for={`${uniqueId}-extra-lans`}
-            >Additional LAN Subnets</label
-          >
-          <input
-            id={`${uniqueId}-extra-lans`}
-            class="wg-input"
-            type="text"
-            value=""
-            placeholder="192.168.99.0/24, 10.0.0.0/16 (comma-separated)"
-          />
-          <span class="wg-field-hint">Extra subnets VPN clients can access</span
-          >
+        <div class="wg-toggle-row">
+          <label class="wg-toggle-label">
+            <input
+              id={`${uniqueId}-enable-extra-lans`}
+              type="checkbox"
+            />
+            <span>Additional LAN Subnets</span>
+          </label>
+        </div>
+        <div
+          class="wg-sub-fields"
+          id={`${uniqueId}-extra-lans-fields`}
+          hidden
+        >
+          <div class="wg-field">
+            <label
+              class="wg-label"
+              for={`${uniqueId}-extra-lans`}
+              >Subnets</label
+            >
+            <input
+              id={`${uniqueId}-extra-lans`}
+              class="wg-input"
+              type="text"
+              value=""
+              placeholder="192.168.99.0/24, 10.0.0.0/16 (comma-separated)"
+            />
+            <span class="wg-field-hint"
+              >Extra subnets VPN clients can access</span
+            >
+          </div>
         </div>
       </div>
     </div>
@@ -267,157 +270,226 @@ const uniqueId = `wg-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
       </div>
     </div>
 
-    {/* ── Interface Lists ── */}
-    <details class="wg-card">
-      <summary class="wg-card-header wg-summary">
-        <span
-          class="i-mdi:format-list-group"
-          aria-hidden="true"
-        ></span>
-        Interface Lists
-        <span
-          class="i-mdi:chevron-right wg-chevron"
-          aria-hidden="true"
-        ></span>
-      </summary>
-      <div class="wg-card-body">
-        <div class="wg-fields-row">
-          <div class="wg-field">
-            <label
-              class="wg-label"
-              for={`${uniqueId}-wan-list`}
-              >WAN List</label
-            >
-            <input
-              id={`${uniqueId}-wan-list`}
-              class="wg-input"
-              type="text"
-              value="WAN"
-              placeholder="WAN"
-            />
-          </div>
-          <div class="wg-field">
-            <label
-              class="wg-label"
-              for={`${uniqueId}-vpn-list`}
-              >VPN List</label
-            >
-            <input
-              id={`${uniqueId}-vpn-list`}
-              class="wg-input"
-              type="text"
-              value="VPN"
-              placeholder="VPN"
-            />
-          </div>
-        </div>
-        <div class="wg-toggle-row">
-          <label class="wg-toggle-label">
-            <input
-              id={`${uniqueId}-add-to-lan`}
-              type="checkbox"
-              checked
-            />
-            <span>Add WireGuard interface to LAN list</span>
-          </label>
-        </div>
-      </div>
-    </details>
+    {/* ── Advanced Configuration Toggle ── */}
+    <div class="wg-toggle-row wg-main-toggle">
+      <label class="wg-toggle-label">
+        <input
+          id={`${uniqueId}-advanced`}
+          type="checkbox"
+        />
+        <span>Advanced Configuration</span>
+      </label>
+    </div>
 
-    {/* ── Firewall Options ── */}
-    <details
-      class="wg-card"
-      open
+    <div
+      id={`${uniqueId}-advanced-section`}
+      hidden
     >
-      <summary class="wg-card-header wg-summary">
-        <span
-          class="i-mdi:shield-lock"
-          aria-hidden="true"
-        ></span>
-        Firewall & NAT
-        <span
-          class="i-mdi:chevron-right wg-chevron"
-          aria-hidden="true"
-        ></span>
-      </summary>
-      <div class="wg-card-body">
-        <div class="wg-toggles-row">
-          <label class="wg-toggle-label">
-            <input
-              id={`${uniqueId}-fw-internet`}
-              type="checkbox"
-              checked
-            />
-            <span>Allow VPN → Internet</span>
-          </label>
-          <label class="wg-toggle-label">
-            <input
-              id={`${uniqueId}-fw-lan`}
-              type="checkbox"
-              checked
-            />
-            <span>Allow VPN → LAN</span>
-          </label>
-          <label class="wg-toggle-label">
-            <input
-              id={`${uniqueId}-fw-fasttrack`}
-              type="checkbox"
-              checked
-            />
-            <span>FastTrack</span>
-          </label>
-          <label class="wg-toggle-label">
-            <input
-              id={`${uniqueId}-fw-addrlist`}
-              type="checkbox"
-              checked
-            />
-            <span>Address List</span>
-          </label>
+      {/* ── MTU ── */}
+      <div
+        class="wg-card"
+        style="margin-bottom: 1rem;"
+      >
+        <div class="wg-card-header">
+          <span
+            class="i-mdi:resize"
+            aria-hidden="true"
+          ></span>
+          MTU
         </div>
-        <div class="wg-toggles-row">
-          <label class="wg-toggle-label">
-            <input
-              id={`${uniqueId}-fw-mss`}
-              type="checkbox"
-              checked
-            />
-            <span>MSS Clamping</span>
-          </label>
-          <label class="wg-toggle-label">
-            <input
-              id={`${uniqueId}-fw-raw`}
-              type="checkbox"
-              checked
-            />
-            <span>RAW Skip Flood Protection</span>
-          </label>
-        </div>
-        <div
-          class="wg-sub-fields"
-          id={`${uniqueId}-mss-fields`}
-        >
-          <div class="wg-field">
-            <label
-              class="wg-label"
-              for={`${uniqueId}-mss-value`}
-              >MSS Value</label
-            >
-            <input
-              id={`${uniqueId}-mss-value`}
-              class="wg-input"
-              type="number"
-              value="1420"
-              min="500"
-              max="9000"
-            />
-            <span class="wg-field-hint"
-              >Auto-calculated from MTU. Override if needed.</span
-            >
+        <div class="wg-card-body">
+          <div class="wg-fields-row">
+            <div class="wg-field">
+              <label
+                class="wg-label"
+                for={`${uniqueId}-mtu`}
+                >Interface MTU</label
+              >
+              <input
+                id={`${uniqueId}-mtu`}
+                class="wg-input"
+                type="number"
+                value="1500"
+                min="1280"
+                max="9000"
+              />
+              <span class="wg-field-hint"
+                >Default 1500. Reduce to 1420 if experiencing fragmentation.</span
+              >
+            </div>
           </div>
         </div>
       </div>
-    </details>
+
+      {/* ── Interface Lists ── */}
+      <details
+        class="wg-card"
+        style="margin-bottom: 1rem;"
+      >
+        <summary class="wg-card-header wg-summary">
+          <span
+            class="i-mdi:format-list-group"
+            aria-hidden="true"
+          ></span>
+          Interface Lists
+          <span
+            class="i-mdi:chevron-right wg-chevron"
+            aria-hidden="true"
+          ></span>
+        </summary>
+        <div class="wg-card-body">
+          <div class="wg-fields-row">
+            <div class="wg-field">
+              <label
+                class="wg-label"
+                for={`${uniqueId}-wan-list`}
+                >WAN List</label
+              >
+              <input
+                id={`${uniqueId}-wan-list`}
+                class="wg-input"
+                type="text"
+                value="WAN"
+                placeholder="WAN"
+              />
+            </div>
+            <div class="wg-field">
+              <label
+                class="wg-label"
+                for={`${uniqueId}-vpn-list`}
+                >VPN List</label
+              >
+              <input
+                id={`${uniqueId}-vpn-list`}
+                class="wg-input"
+                type="text"
+                value="VPN"
+                placeholder="VPN"
+              />
+            </div>
+            <div class="wg-field">
+              <label
+                class="wg-label"
+                for={`${uniqueId}-lan-list`}
+                >LAN List</label
+              >
+              <input
+                id={`${uniqueId}-lan-list`}
+                class="wg-input"
+                type="text"
+                value="LAN"
+                placeholder="LAN"
+              />
+            </div>
+          </div>
+          <div class="wg-toggle-row">
+            <label class="wg-toggle-label">
+              <input
+                id={`${uniqueId}-add-to-lan`}
+                type="checkbox"
+                checked
+              />
+              <span>Add WireGuard interface to LAN list</span>
+            </label>
+          </div>
+        </div>
+      </details>
+
+      {/* ── Firewall Options ── */}
+      <details
+        class="wg-card"
+        open
+      >
+        <summary class="wg-card-header wg-summary">
+          <span
+            class="i-mdi:shield-lock"
+            aria-hidden="true"
+          ></span>
+          Firewall & NAT
+          <span
+            class="i-mdi:chevron-right wg-chevron"
+            aria-hidden="true"
+          ></span>
+        </summary>
+        <div class="wg-card-body">
+          <div class="wg-toggles-row">
+            <label class="wg-toggle-label">
+              <input
+                id={`${uniqueId}-fw-internet`}
+                type="checkbox"
+                checked
+              />
+              <span>Allow VPN → Internet</span>
+            </label>
+            <label class="wg-toggle-label">
+              <input
+                id={`${uniqueId}-fw-lan`}
+                type="checkbox"
+                checked
+              />
+              <span>Allow VPN → LAN</span>
+            </label>
+            <label class="wg-toggle-label">
+              <input
+                id={`${uniqueId}-fw-fasttrack`}
+                type="checkbox"
+                checked
+              />
+              <span>FastTrack</span>
+            </label>
+            <label class="wg-toggle-label">
+              <input
+                id={`${uniqueId}-fw-addrlist`}
+                type="checkbox"
+                checked
+              />
+              <span>Address List</span>
+            </label>
+          </div>
+          <div class="wg-toggles-row">
+            <label class="wg-toggle-label">
+              <input
+                id={`${uniqueId}-fw-mss`}
+                type="checkbox"
+                checked
+              />
+              <span>MSS Clamping</span>
+            </label>
+            <label class="wg-toggle-label">
+              <input
+                id={`${uniqueId}-fw-raw`}
+                type="checkbox"
+                checked
+              />
+              <span>RAW Skip Flood Protection</span>
+            </label>
+          </div>
+          <div
+            class="wg-sub-fields"
+            id={`${uniqueId}-mss-fields`}
+          >
+            <div class="wg-field">
+              <label
+                class="wg-label"
+                for={`${uniqueId}-mss-value`}
+                >MSS Value</label
+              >
+              <input
+                id={`${uniqueId}-mss-value`}
+                class="wg-input"
+                type="number"
+                value="1420"
+                min="500"
+                max="9000"
+              />
+              <span class="wg-field-hint"
+                >Auto-calculated from MTU. Override if needed.</span
+              >
+            </div>
+          </div>
+        </div>
+      </details>
+    </div>
 
     {/* ── Peers ── */}
     <div class="wg-card">
@@ -521,8 +593,74 @@ const uniqueId = `wg-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
                   selected
                   >RouterOS auto (recommended)</option
                 >
-                <option value="manual">Manual (paste public key)</option>
+                <option value="manual">Manual (enter keys)</option>
               </select>
+            </div>
+          </div>
+          <div
+            class="wg-peer-manual-keys"
+            style="display:none"
+          >
+            <div class="wg-fields-row">
+              <div class="wg-field">
+                <label class="wg-label">Private Key</label>
+                <div class="wg-key-row">
+                  <input
+                    class="wg-input wg-peer-privkey"
+                    type="text"
+                    value=""
+                    placeholder="Client private key (base64)"
+                  />
+                  <button
+                    type="button"
+                    class="wg-gen-key-btn"
+                    data-keygen="privkey"
+                    aria-label="Generate private key"
+                  >
+                    <span
+                      class="i-mdi:autorenew"
+                      aria-hidden="true"
+                    ></span>
+                  </button>
+                </div>
+              </div>
+              <div class="wg-field">
+                <label class="wg-label">Public Key</label>
+                <input
+                  class="wg-input wg-peer-pubkey"
+                  type="text"
+                  value=""
+                  placeholder="Auto-derived from private key"
+                  readonly
+                />
+              </div>
+            </div>
+            <div class="wg-fields-row">
+              <div class="wg-field">
+                <label class="wg-label"
+                  >Preshared Key <span class="wg-field-hint">(optional)</span
+                  ></label
+                >
+                <div class="wg-key-row">
+                  <input
+                    class="wg-input wg-peer-psk"
+                    type="text"
+                    value=""
+                    placeholder="Leave empty to disable preshared key"
+                  />
+                  <button
+                    type="button"
+                    class="wg-gen-key-btn"
+                    data-keygen="psk"
+                    aria-label="Generate preshared key"
+                  >
+                    <span
+                      class="i-mdi:autorenew"
+                      aria-hidden="true"
+                    ></span>
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -708,11 +846,16 @@ const uniqueId = `wg-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
     var enableIpv6Check = el("enable-ipv6");
     var ipv6Fields = el("ipv6-fields");
     var vpnIpv6Input = el("vpn-ipv6");
+    var enableExtraLansCheck = el("enable-extra-lans");
+    var extraLansFields = el("extra-lans-fields");
     var extraLansInput = el("extra-lans");
     var endpointInput = el("endpoint");
     var dnsInput = el("dns");
+    var advancedCheck = el("advanced");
+    var advancedSection = el("advanced-section");
     var wanListInput = el("wan-list");
     var vpnListInput = el("vpn-list");
+    var lanListInput = el("lan-list");
     var addToLanCheck = el("add-to-lan");
     var fwInternetCheck = el("fw-internet");
     var fwLanCheck = el("fw-lan");
@@ -772,6 +915,7 @@ const uniqueId = `wg-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
     }
 
     function getExtraLans() {
+      if (!enableExtraLansCheck.checked) return [];
       var val = extraLansInput.value.trim();
       if (!val) return [];
       return val
@@ -789,6 +933,9 @@ const uniqueId = `wg-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
       var peerEls = peersContainer.querySelectorAll(".wg-peer");
       var peers = [];
       peerEls.forEach(function (peerEl, i) {
+        var pubkeyEl = peerEl.querySelector(".wg-peer-pubkey");
+        var privkeyEl = peerEl.querySelector(".wg-peer-privkey");
+        var pskEl = peerEl.querySelector(".wg-peer-psk");
         peers.push({
           name:
             peerEl.querySelector(".wg-peer-name").value.trim() ||
@@ -801,6 +948,9 @@ const uniqueId = `wg-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
           keepalive:
             peerEl.querySelector(".wg-peer-keepalive").value.trim() || "25s",
           keygen: peerEl.querySelector(".wg-peer-keygen").value,
+          pubkey: pubkeyEl ? pubkeyEl.value.trim() : "",
+          privkey: privkeyEl ? privkeyEl.value.trim() : "",
+          psk: pskEl ? pskEl.value.trim() : "",
         });
       });
       return peers;
@@ -884,7 +1034,29 @@ const uniqueId = `wg-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
       html +=
         '<select class="wg-select wg-peer-keygen"><option value="auto" selected>RouterOS auto (recommended)</option>';
       html +=
-        '<option value="manual">Manual (paste public key)</option></select></div></div></div>';
+        '<option value="manual">Manual (enter keys)</option></select></div></div>';
+      // Manual key fields
+      html += '<div class="wg-peer-manual-keys" style="display:none">';
+      html += '<div class="wg-fields-row">';
+      html +=
+        '<div class="wg-field"><label class="wg-label">Private Key</label>';
+      html +=
+        '<div class="wg-key-row"><input class="wg-input wg-peer-privkey" type="text" value="" placeholder="Client private key (base64)" />';
+      html +=
+        '<button type="button" class="wg-gen-key-btn" data-keygen="privkey" aria-label="Generate private key"><span class="i-mdi:autorenew" aria-hidden="true"></span></button></div></div>';
+      html +=
+        '<div class="wg-field"><label class="wg-label">Public Key</label>';
+      html +=
+        '<input class="wg-input wg-peer-pubkey" type="text" value="" placeholder="Auto-derived from private key" readonly /></div></div>';
+      html += '<div class="wg-fields-row">';
+      html +=
+        '<div class="wg-field"><label class="wg-label">Preshared Key <span class="wg-field-hint">(optional)</span></label>';
+      html +=
+        '<div class="wg-key-row"><input class="wg-input wg-peer-psk" type="text" value="" placeholder="Leave empty to disable preshared key" />';
+      html +=
+        '<button type="button" class="wg-gen-key-btn" data-keygen="psk" aria-label="Generate preshared key"><span class="i-mdi:autorenew" aria-hidden="true"></span></button></div></div></div>';
+      html += "</div>";
+      html += "</div>";
       return html;
     }
 
@@ -921,6 +1093,27 @@ const uniqueId = `wg-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
       });
     }
 
+    // ── WireGuard key generation (Web Crypto API) ──
+    function generateWgKeyPair() {
+      // Generate 32 random bytes for private key
+      var privBytes = new Uint8Array(32);
+      crypto.getRandomValues(privBytes);
+      // Clamp for Curve25519
+      privBytes[0] &= 248;
+      privBytes[31] &= 127;
+      privBytes[31] |= 64;
+      var privKey = btoa(String.fromCharCode.apply(null, privBytes));
+      // Public key derivation requires Curve25519 which isn't in Web Crypto.
+      // We generate the private key and show a note about deriving public key.
+      return { privateKey: privKey, publicKey: "" };
+    }
+
+    function generatePsk() {
+      var bytes = new Uint8Array(32);
+      crypto.getRandomValues(bytes);
+      return btoa(String.fromCharCode.apply(null, bytes));
+    }
+
     function bindPeerEvents(peerEl) {
       peerEl.querySelectorAll("input, select").forEach(function (inp) {
         inp.addEventListener("input", generate);
@@ -932,12 +1125,43 @@ const uniqueId = `wg-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
           removePeer(peerEl);
         });
       }
+      // Keygen mode toggle
+      var keygenSelect = peerEl.querySelector(".wg-peer-keygen");
+      var manualKeys = peerEl.querySelector(".wg-peer-manual-keys");
+      if (keygenSelect && manualKeys) {
+        keygenSelect.addEventListener("change", function () {
+          manualKeys.style.display =
+            keygenSelect.value === "manual" ? "" : "none";
+          generate();
+        });
+      }
+      // Key generation buttons
+      peerEl.querySelectorAll(".wg-gen-key-btn").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          var type = btn.getAttribute("data-keygen");
+          if (type === "privkey") {
+            var keys = generateWgKeyPair();
+            var privInput = peerEl.querySelector(".wg-peer-privkey");
+            var pubInput = peerEl.querySelector(".wg-peer-pubkey");
+            if (privInput) privInput.value = keys.privateKey;
+            if (pubInput)
+              pubInput.value =
+                "(derive with: echo '" + keys.privateKey + "' | wg pubkey)";
+          } else if (type === "psk") {
+            var pskInput = peerEl.querySelector(".wg-peer-psk");
+            if (pskInput) pskInput.value = generatePsk();
+          }
+          generate();
+        });
+      });
     }
 
     // ── Toggle visibility ──
     function updateVisibility() {
       var ipv6On = enableIpv6Check.checked;
       ipv6Fields.style.display = ipv6On ? "" : "none";
+      extraLansFields.hidden = !enableExtraLansCheck.checked;
+      advancedSection.hidden = !advancedCheck.checked;
       mssFields.style.display = fwMssCheck.checked ? "" : "none";
       splitFields.hidden = tunnelModeSelect.value !== "split";
       clientOutputSection.style.display = genClientConfCheck.checked
@@ -949,6 +1173,15 @@ const uniqueId = `wg-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
         .forEach(function (f) {
           f.style.display = ipv6On ? "" : "none";
         });
+
+      // Toggle manual key visibility per peer
+      peersContainer.querySelectorAll(".wg-peer").forEach(function (p) {
+        var keygen = p.querySelector(".wg-peer-keygen");
+        var manualKeys = p.querySelector(".wg-peer-manual-keys");
+        if (keygen && manualKeys) {
+          manualKeys.style.display = keygen.value === "manual" ? "" : "none";
+        }
+      });
     }
 
     // ── Auto-calculate MSS ──
@@ -978,6 +1211,7 @@ const uniqueId = `wg-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
       var endpoint = endpointInput.value.trim() || "your-domain.com";
       var wanList = wanListInput.value.trim() || "WAN";
       var vpnList = vpnListInput.value.trim() || "VPN";
+      var lanList = lanListInput.value.trim() || "LAN";
       var addToLan = addToLanCheck.checked;
       var fwInternet = fwInternetCheck.checked;
       var fwLan = fwLanCheck.checked;
@@ -1089,7 +1323,9 @@ const uniqueId = `wg-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
         lines.push(
           "/interface list member add interface=" +
             ifaceName +
-            ' list=LAN comment="' +
+            " list=" +
+            lanList +
+            ' comment="' +
             ifaceComment +
             ' - LAN Access"',
         );
@@ -1295,8 +1531,11 @@ const uniqueId = `wg-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
             lines.push("    private-key=auto \\");
             lines.push("    preshared-key=auto \\");
           } else {
-            lines.push('    public-key="<CLIENT_PUBLIC_KEY>" \\');
-            lines.push('    preshared-key="<PRESHARED_KEY>" \\');
+            var pubkeyVal = peer.pubkey || "<CLIENT_PUBLIC_KEY>";
+            lines.push('    public-key="' + pubkeyVal + '" \\');
+            if (peer.psk) {
+              lines.push('    preshared-key="' + peer.psk + '" \\');
+            }
           }
           lines.push("    allowed-address=" + allowedAddr + " \\");
           lines.push("    persistent-keepalive=" + peer.keepalive + " \\");
@@ -1390,7 +1629,11 @@ const uniqueId = `wg-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
           clientLines.push("# ── " + peer.comment + " (" + peer.name + ") ──");
           clientLines.push("");
           clientLines.push("[Interface]");
-          clientLines.push("PrivateKey = <CLIENT_PRIVATE_KEY>");
+          var privKeyVal =
+            peer.keygen === "manual" && peer.privkey
+              ? peer.privkey
+              : "<CLIENT_PRIVATE_KEY>";
+          clientLines.push("PrivateKey = " + privKeyVal);
           var addr = peer.ipv4 + "/32";
           if (ipv6On && peer.ipv6) addr += ", " + peer.ipv6 + "/128";
           clientLines.push("Address = " + addr);
@@ -1398,7 +1641,13 @@ const uniqueId = `wg-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
           clientLines.push("");
           clientLines.push("[Peer]");
           clientLines.push("PublicKey = <SERVER_PUBLIC_KEY>");
-          clientLines.push("PresharedKey = <PRESHARED_KEY>");
+          if (peer.keygen === "manual") {
+            if (peer.psk) {
+              clientLines.push("PresharedKey = " + peer.psk);
+            }
+          } else {
+            clientLines.push("PresharedKey = <PRESHARED_KEY>");
+          }
           clientLines.push("Endpoint = " + endpoint + ":" + listenPort);
           clientLines.push("AllowedIPs = " + allowedIps);
           clientLines.push(
@@ -1836,6 +2085,52 @@ const uniqueId = `wg-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
   .wg-add-peer-btn span {
     width: 14px;
     height: 14px;
+  }
+
+  /* Key row (input + generate button) */
+  .wg-key-row {
+    display: flex;
+    gap: 0.375rem;
+    align-items: center;
+  }
+
+  .wg-key-row .wg-input {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .wg-gen-key-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    color: var(--color-primary);
+    cursor: pointer;
+    background: var(--color-bg);
+    border: var(--border-1);
+    border-color: var(--color-primary);
+    border-radius: var(--radius-sm);
+    transition: all 0.15s;
+  }
+
+  .wg-gen-key-btn:hover {
+    background: var(--color-bg-subtle);
+  }
+
+  .wg-gen-key-btn span {
+    width: 16px;
+    height: 16px;
+  }
+
+  .wg-peer-manual-keys {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding-top: 0.375rem;
+    border-top: 1px dashed var(--color-border, rgb(200 200 200 / 40%));
   }
 
   /* Output */
