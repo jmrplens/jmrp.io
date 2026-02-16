@@ -1,0 +1,15 @@
+{
+  "name": "Auto-format after file edits",
+  "description": "Runs Prettier on files after they are created or modified by the agent",
+  "event": "postToolUse",
+  "match": {
+    "toolName": ["editFiles", "createFile"]
+  },
+  "steps": [
+    {
+      "type": "command",
+      "command": "pnpm exec prettier --write ${filePath}",
+      "description": "Format the edited file with Prettier"
+    }
+  ]
+}

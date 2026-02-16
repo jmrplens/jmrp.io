@@ -48,6 +48,7 @@ interface Props {
   description?: string;
   image?: string | ImageMetadata;
   type?: string;
+  noIndex?: boolean;
   // Article specific props
   publishDate?: Date;
   modifiedDate?: Date;
@@ -63,6 +64,7 @@ const {
   description = siteData.description,
   image,
   type = "website",
+  noIndex = false,
   publishDate,
   modifiedDate,
   authors = [siteData.author],
@@ -261,7 +263,7 @@ const jsonLD = {
 />
 <meta
   name="robots"
-  content="index, follow"
+  content={noIndex ? "noindex, follow" : "index, follow"}
 />
 
 <!-- SEO -->
@@ -322,6 +324,10 @@ const jsonLD = {
 <meta
   property="og:image:height"
   content="630"
+/>
+<meta
+  property="og:image:alt"
+  content={`${title} - ${siteData.author}`}
 />
 <meta
   property="og:locale"
@@ -392,6 +398,10 @@ const jsonLD = {
 <meta
   name="twitter:image"
   content={resolvedImage}
+/>
+<meta
+  name="twitter:image:alt"
+  content={`${title} - ${siteData.author}`}
 />
 
 <!-- Cloudflare Web Analytics (Static with SRI) -->

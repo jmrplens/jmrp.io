@@ -9,6 +9,7 @@ import githubAvatar from "@assets/github-avatar.png";
 import GitHubSearch from "@components/github/GitHubSearch.astro";
 import BaseLayout from "@layouts/BaseLayout.astro";
 import { fetchGitHubProfile, fetchTopRepositories } from "@utils/github";
+import { getSiteUrl } from "@utils/site";
 import { getImage, Image } from "astro:assets";
 
 const profile = await fetchGitHubProfile();
@@ -27,11 +28,30 @@ const avatarSrcSetResolves = await Promise.all(
 );
 
 const avatarSrcSetString = avatarSrcSetResolves.join(", ");
+
+const githubSchema = {
+  "@type": "ProfilePage",
+  "@id": new URL(
+    "#github-profile",
+    new URL(Astro.url.pathname, getSiteUrl()),
+  ).toString(),
+  name: "GitHub Repositories",
+  description:
+    "Open source contributions and repositories by José Manuel Requena Plens.",
+  url: new URL(Astro.url.pathname, getSiteUrl()).toString(),
+  mainEntity: {
+    "@type": "Person",
+    name: profile.name ?? "José Manuel Requena Plens",
+    url: profile.html_url ?? "https://github.com/jmrplens",
+    sameAs: [profile.html_url ?? "https://github.com/jmrplens"],
+  },
+};
 ---
 
 <BaseLayout
   title="GitHub Repositories"
-  description="My Open Source Contributions"
+  description="Open source projects and contributions by José Manuel Requena Plens. Tools for acoustics, DevOps utilities, and community resources."
+  schema={githubSchema}
 >
   <link
     slot="head"

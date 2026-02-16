@@ -1,45 +1,45 @@
 # CLAUDE.md - AI Context for jmrp.io
 
-> **Purpose**: Comprehensive context for Claude, Gemini, and other AI agents working on this codebase.
-> This file enables AI to understand architecture, conventions, and constraints for code generation, reviews, and content creation.
+> **Purpose**: Comprehensive context for Claude, Copilot, Gemini, and other AI agents working on this codebase.
+> **Last verified**: February 2026 (Astro 6.0.0-beta.11, UnoCSS 66.6.0)
 
 ## Project Overview
 
-**jmrp.io** is a personal technical blog and portfolio built with **Astro 6** (beta), focusing on:
+**jmrp.io** is a personal technical blog and portfolio built with **Astro 6** (SSG), focusing on:
 
 - **Zero client-side JavaScript** except for progressive enhancement islands
-- **WCAG 2.2 AA/AAA accessibility** compliance
+- **WCAG 2.2 AA/AAA accessibility** compliance (axe-core tested)
 - **100/100 PageSpeed scores** on all metrics
-- **Content Security Policy (CSP)** with SRI hashes
-- **Optimal CLS (Cumulative Layout Shift)**
+- **Content Security Policy (CSP)** with nonce-only strategy
+- **Optimal CLS** — no layout shifts, proper sizing for all elements
 
-### Core Principles (User Requirements)
+### Core Principles
 
-1. **WCAG 2.2 AA compliance** (AAA when possible) - All components must pass axe-core
-2. **Zero-JS client-side** - No JavaScript unless absolutely necessary (islands pattern)
-3. **Updated packages** - Use latest versions including beta/alpha
-4. **Optimal CLS** - No layout shifts, proper sizing for all elements
-5. **No duplicate resources** - UnoCSS deduplicates icons globally
+1. **WCAG 2.2 AA compliance** (AAA when possible) — All components must pass axe-core
+2. **Zero-JS client-side** — No JavaScript unless absolutely necessary (islands pattern)
+3. **Updated packages** — Use latest versions including beta/alpha
+4. **Optimal CLS** — No layout shifts, proper sizing for all elements
+5. **No duplicate resources** — UnoCSS deduplicates icons globally
+6. **Dark-first theme** — Default is dark mode, light mode is the override
+7. **Privacy-first tools** — All interactive tools run client-side only
 
 ---
 
 ## Tech Stack
 
-> **Last verified**: February 2026 — Run `pnpm outdated` to check for updates.
-
-| Layer           | Technology              | Version        |
-| --------------- | ----------------------- | -------------- |
-| Framework       | Astro                   | 6.0.0-beta.5   |
-| Content         | MDX                     | 5.0.0-beta.2   |
-| Styling         | UnoCSS (presetWind4)    | ^66.6.0        |
-| Islands         | Preact                  | ^10.28.3       |
-| Diagrams        | Mermaid (SSR)           | ^11.12.2       |
-| Math            | MathJax (SSR)           | ^4.0.0-beta.11 |
-| Syntax          | Shiki                   | ^3.22.0        |
-| Testing         | Playwright + Axe-core   | ^1.58.1        |
-| Icons           | Iconify (multiple sets) | ^3.1.1         |
-| Package Manager | pnpm                    | >=10           |
-| Node            | Required                | >=22.12.0      |
+| Layer           | Technology               | Version        |
+| --------------- | ------------------------ | -------------- |
+| Framework       | Astro                    | 6.0.0-beta.11  |
+| Content         | MDX                      | 5.0.0-beta.7   |
+| Styling         | UnoCSS (presetWind4)     | ^66.6.0        |
+| Islands         | Preact                   | ^10.28.3       |
+| Diagrams        | Mermaid + mermaid-isomorphic | ^11.12.2 / ^3.0.4 |
+| Math            | rehype-mathjax (SSR)     | ^7.1.0         |
+| Syntax          | Shiki                    | ^3.22.0        |
+| Testing         | Playwright + Axe-core    | ^1.58.2        |
+| Icons           | Iconify (12 collections) | @iconify-json/* |
+| Package Manager | pnpm                     | >=10           |
+| Node            | Required                 | >=22.12.0      |
 
 ---
 
@@ -48,301 +48,697 @@
 ```plaintext
 /
 ├── src/
-│   ├── content/           # Content Collections (MDX, YAML)
-│   │   ├── posts/         # Blog posts (MDX)
-│   │   ├── cv/            # Resume data (YAML)
-│   │   ├── publications_data/  # Academic papers
-│   │   └── site_config/   # Site settings (YAML)
-│   ├── content.config.ts  # Collection schemas (Zod)
+│   ├── content/                # Content Collections (MDX, YAML, BibTeX)
+│   │   ├── posts/              # Blog posts (MDX, numbered: 001-slug.mdx)
+│   │   ├── tools/              # Interactive tools (MDX)
+│   │   ├── cv/                 # Resume data (main.yaml)
+│   │   ├── publications_data/  # papers.bib + coauthors.yaml
+│   │   └── site_config/        # site.yaml + socials.yaml
+│   ├── content.config.ts       # Collection schemas (Zod)
+│   ├── types.ts                # Global TypeScript types
 │   ├── components/
-│   │   ├── apps/          # Interactive applications (CSPBuilder, HashCalculator)
-│   │   ├── ui/            # 37+ reusable UI components
-│   │   ├── common/        # Shared components
-│   │   └── sections/      # Page sections
-│   ├── pages/             # File-based routing
-│   ├── layouts/           # Page layouts
+│   │   ├── apps/               # Interactive tools (vanilla JS, no Preact)
+│   │   ├── ui/                 # 35 reusable UI components
+│   │   ├── layout/             # BaseHead, Header, Footer, ToC
+│   │   ├── homelab/            # Preact islands (InfrastructureInsights, ServiceStats)
+│   │   ├── blog/               # PostCard, PostGrid, TagCloud
+│   │   ├── cv/                 # CV-specific components
+│   │   ├── github/             # GitHubSearch, RepoCard
+│   │   └── publications/       # PublicationItem
+│   ├── pages/                  # File-based routing
+│   ├── layouts/                # BaseLayout, ToolLayout
+│   ├── styles/                 # Global CSS, design tokens
 │   ├── integrations/
-│   │   ├── pre-build/     # Avatar fetch, beacon setup
-│   │   └── post-build/    # CSP, compression, HTML minify
-│   └── utils/             # Shared utilities
+│   │   ├── pre-build/          # Avatar fetch, beacon setup
+│   │   └── post-build/         # CSP, compression, HTML minify
+│   ├── utils/                  # Shared utilities
+│   └── languages/              # Custom Shiki grammars (RouterOS)
 ├── scripts/
-│   ├── ci/                # CI automation scripts
-│   └── *.mjs              # Development tools
-├── tests/                 # Playwright E2E tests
-├── docs/                  # Extended documentation
-├── public/                # Static assets
-└── dist/                  # Build output
+│   ├── ci/                     # 20 CI automation scripts
+│   └── *.mjs                   # Development tools (11 scripts)
+├── tests/                      # 12 Playwright test suites + utils
+├── docs/                       # Extended documentation
+├── public/                     # Static assets (favicons, llms.txt, PDFs)
+└── dist/                       # Build output (atomic swap deployment)
 ```
 
 ---
 
-## Content System
+## Content Collections
 
-### Blog Posts Schema
-
-Posts are MDX files in `src/content/posts/` with frontmatter:
+### `posts` — Blog Posts (MDX)
 
 ```yaml
----
-title: "Post Title" # Required
-slug: "post-url-slug" # Required
-publishedDate: 2025-01-15 # Required (YYYY-MM-DD)
-updatedDate: 2025-01-16 # Optional
-description: "SEO description" # Recommended
-author: "Author Name" # Optional
-authorEmail: "email@example.com" # Optional
-draft: false # Default: false
-tags: ["nginx", "security"] # Default: []
-coverImage: ./cover.jpg # Optional (relative image)
-references: # Optional
-  - text: "Reference"
-    url: "https://..."
----
+title: string # Required
+slug: string # Required
+publishedDate: Date # Required (YYYY-MM-DD)
+updatedDate: Date # Optional
+description: string # Optional (≤ 155 chars for SEO)
+author: string # Optional
+authorEmail: string # Optional
+draft: boolean # Default: false
+tags: string[] # Default: []
+coverImage: ImageMeta # Optional (relative image)
 ```
 
-### File Naming Convention
+File naming: `001-post-slug.mdx`. Files starting with `_` are excluded.
 
-Posts use numbered prefixes for ordering: `001-post-slug.mdx`, `002-another-post.mdx`
+### `tools` — Interactive Tools (MDX)
 
-Files starting with `_` (like `_template.mdx`) are excluded from the collection.
+```yaml
+title: string # Required
+slug: string # Required
+description: string # Required (≤ 155 chars)
+subtitle: string # Optional
+icon: string # UnoCSS class (e.g. "i-mdi:shield-lock-outline")
+category: enum # "security" | "developer" | "network" | "embedded" | "mikrotik"
+tags: string[] # Default: []
+appComponent: string # Maps to component in componentMap (e.g. "CSPBuilder")
+appProps: Record # Extra props passed to the component
+publishedDate: Date # Optional
+updatedDate: Date # Optional
+```
+
+14 tools: `base64-encoder`, `cert-inspector`, `color-contrast-checker`, `cron-builder`, `csp-builder`, `hash-calculator`, `http-headers-analyzer`, `modbus-frame-builder`, `nginx-config-generator`, `password-generator`, `regex-tester`, `subnet-calculator`, `timestamp-converter`, `wireguard-config-generator`.
+
+### `site_config` — Discriminated Union
+
+**`type: "site"` (site.yaml)**: `title`, `description`, `author`, `url`, `keywords`, `fediverse_creator`, `locale`, `name`, `jobTitle`, `social[]`, `person`, `social_links[]`, `theme_color`, `background_color`, `twitter_creator`, `logo_text`, `nav[]`, `hero { title, subtitle, bio[] }`, `featured_projects[]`, `shortcuts[]`.
+
+**`type: "socials"` (socials.yaml)**: `github_username`, `linkedin_username`, `mastodon_username`, `scholar_userid`, `matrix_id`, `work_url`, `custom_social[]`.
+
+### `cv` — Resume Data (YAML)
+
+Array of sections with discriminated union by `type`:
+
+- **`map`**: Key-value items with optional links
+- **`time_table`**: Timeline items (title, institution, department, location, year, summary)
+- **`list_groups`**: Skill groups with categories, icons, and levels
+- **`certificate_list`**: Certificate groups with school, time, links
+
+### `publications_data` — Academic Papers
+
+- `papers.bib`: BibTeX entries parsed via `citation-js`
+- `coauthors.yaml`: Map of co-author surnames → name variants + profile URLs
 
 ---
 
-## UI Components Reference
+## Tools Architecture
 
-All components are in `src/components/ui/`. Import pattern:
+### Routing
 
-```mdx
-import ComponentName from "@components/ui/ComponentName.astro";
-import { Tabs, TabPanel } from "@components/ui/tabs";
+- `/tools/` → `tools/index.astro` (grouped by category, ordered: security=1, developer=2, network=3, embedded=4, mikrotik=5)
+- `/tools/[slug]/` → `tools/[...slug].astro` (static `componentMap` maps `appComponent` → imported component)
+- `/tools/categories/[category]` → category filter pages
+
+### ToolLayout Props
+
+```typescript
+{ title, description, subtitle?, icon, slug, extraSchema? }
 ```
 
-### Primary Components
+Auto-generates `SoftwareApplication` JSON-LD. Slots: `default` (tool component), `info` (MDX documentation).
 
-| Component         | Use Case               | Key Props                                                   |
-| ----------------- | ---------------------- | ----------------------------------------------------------- |
-| `Callout`         | Notes, warnings, tips  | `type: "note"\|"tip"\|"important"\|"warning"\|"caution"`    |
-| `Tabs/TabPanel`   | Tabbed content         | `label: string` for TabPanel                                |
-| `Code`            | Syntax highlighting    | `lang, title, showLineNumbers, highlight`                   |
-| `FileContent`     | File with path header  | `filename, language, collapsible`                           |
-| `Mermaid`         | Diagrams (SSR)         | `caption, maxWidth, maxHeight, ariaLabel`                   |
-| `StateNotice`     | Feature status banners | `type: "deprecated"\|"experimental"\|"preview"\|"security"` |
-| `StepByStep`      | Numbered instructions  | `title`                                                     |
-| `CheckList`       | Semantic checklists    | Item attr: `data-check="check\|cross\|warning\|optional"`   |
-| `Collapsible`     | Expandable sections    | `title, open`                                               |
-| `Table`           | Data tables            | `title, striped, highlight`                                 |
-| `TerminalCommand` | CLI commands           | `title, prompt`                                             |
-| `BeforeAfter`     | Before/after code      | `beforeLabel, afterLabel` (slots: `before`, `after`)        |
-| `BrowserSupport`  | Compatibility table    | `browsers: BrowserInfo[]`                                   |
-| `YouTube`         | Video embeds           | `videoId, title`                                            |
-| `References`      | Citation links         | Uses frontmatter `references`                               |
+### App Components (NOT Preact)
 
-### Detailed Documentation
+Located in `src/components/apps/`. Each is **Astro-only** using `<script is:inline>` with DOM manipulation via `data-*` attributes. IDs generated with `crypto.getRandomValues()`. Examples: `CSPBuilder.astro` (2213 lines), `HashCalculator.astro` (577 lines).
 
-- **Full component docs**: `src/components/ui/README.md` (933 lines)
-- **Agent quick reference**: `src/components/ui/AGENTS.md` (402 lines)
+> **Important**: Tools do NOT use Preact. Preact islands are used **exclusively** in `src/components/homelab/` for real-time data (InfrastructureInsights, ServiceStats).
+
+---
+
+## Layouts
+
+### BaseLayout
+
+```typescript
+interface Props {
+  title: string;
+  description?: string;
+  type?: string; // "website" | "article" | "profile"
+  schema?: Record<string, unknown> | Record<string, unknown>[];
+  image?: string;
+  noIndex?: boolean; // Default: false — outputs <meta name="robots" content="noindex, follow">
+  publishDate?: Date;
+  modifiedDate?: Date;
+  authors?: string[];
+  tags?: string[];
+}
+```
+
+Includes: BaseHead, Header, Footer, SRIEventListener, skip link, theme toggle script with MutationObserver, View Transitions handlers (`astro:before-swap` / `astro:after-swap`).
+
+### ToolLayout
+
+```typescript
+interface Props {
+  title: string;
+  description: string;
+  subtitle?: string;
+  icon: string; // UnoCSS icon class
+  slug: string;
+  extraSchema?: Record<string, unknown>;
+}
+```
+
+---
+
+## SEO & Metadata System (BaseHead)
+
+```typescript
+interface Props {
+  title: string;
+  description?: string;
+  image?: string | ImageMetadata;
+  type?: string; // Default: "website"
+  noIndex?: boolean; // Default: false
+  publishDate?: Date;
+  modifiedDate?: Date;
+  authors?: string[];
+  tags?: string[];
+  schema?: Record<string, unknown> | Record<string, unknown>[];
+}
+```
+
+### Key Behaviors
+
+- **Title truncation**: ≤65 chars with progressive fallback (`title | author` → `title | JMRP` → `title`)
+- **OG Image**: Optimized to WebP 1200×630 via `getImage()`. Default: `mehome_landscape.webp`
+- **Fonts**: Geist Sans + Geist Mono via Astro Fonts API, CSS vars `--font-geist-sans`, `--font-geist-mono`
+- **Favicons**: WebP + PNG (32×32), Apple Touch Icon (180×180)
+- **Cloudflare Analytics**: `cf-beacon.js` injected only in production with `PUBLIC_CF_BEACON_TOKEN`
+
+### JSON-LD Schema System
+
+Generates `@graph` array with automatic schemas:
+
+1. **WebSite** — `@id: #website`, publisher as Person with `sameAs` social links
+2. **SiteNavigationElement** — One item per nav entry in site config
+3. **BreadcrumbList** — Auto-generated from `Astro.url.pathname`
+4. **Page-specific** — Merged from `schema` prop (BlogPosting, SoftwareApplication, ProfilePage, etc.)
+
+All JSON-LD wrapped in `safeJsonLd()` — escapes `<`, `>`, `&`, `\u2028`, `\u2029` to prevent XSS.
+
+---
+
+## CSS Design System
+
+### Files
+
+- `src/styles/global.css` (542 lines): Variables, theme, Shiki, typography
+- `src/styles/blog.css`: Blog post styles
+- `src/styles/rss.css`, `skills.css`: RSS, CV styles
+- `src/styles/components/`: Homelab component styles
+
+### Design Tokens (CSS Custom Properties)
+
+**Theme (Dark-first)**:
+
+```css
+/* Dark (default) */
+--color-bg: #000;
+--color-bg-secondary: #0d1117;
+--color-bg-subtle: rgb(255 255 255 / 5%);
+--color-text: #c9d1d9;
+--color-text-muted: #8b949e;
+--color-text-heading: #fff;
+--color-primary: #b389f5;
+--color-primary-hover: #c49af5;
+--color-on-primary: #000;
+--color-accent: #b389f5;
+--color-border: #30363d;
+--color-bg-header: rgb(255 255 255 / 3%);
+
+/* Light (override) */
+--color-bg: #fff;
+--color-bg-secondary: #f6f8fa;
+--color-bg-subtle: rgb(0 0 0 / 5%);
+--color-text: #24292f;
+--color-text-muted: #57606a;
+--color-text-heading: #1f2328;
+--color-primary: #b509ac;
+--color-primary-hover: #d11cd1;
+--color-on-primary: #fff;
+--color-accent: #b509ac;
+--color-border: #d0d7de;
+--color-bg-header: #eaeff2;
+```
+
+**Typography**: `--font-body: var(--font-geist-sans)`, `--font-mono: var(--font-geist-mono)`. Weights: `--fw-normal` (400), `--fw-medium` (500), `--fw-semibold` (600), `--fw-bold` (700), `--fw-extrabold` (800).
+
+**Border radii**: `--radius-sm` (4px), `--radius-md` (8px), `--radius-lg` (16px).
+
+**Borders**: `--border-1: 1px solid var(--color-border)`, `--border-2: 2px solid var(--color-border)`.
+
+**Spacing**: `--space-xs` (0.25rem), `--space-sm` (0.5rem), `--space-md` (1rem), `--space-md-lg` (1.5rem), `--space-lg` (2rem), `--space-lg-xl` (3rem), `--space-xl` (4rem).
+
+**Layout**: `--header-height: 64px`, `--max-width-container: 1200px`, `--max-width-prose: 70ch`.
+
+**Z-indices**: `--z-fab: 900`, `--z-header: 1000`, `--z-backdrop: 1010`, `--z-drawer: 1020`.
+
+**Theme switching**: Dark-first with `@media (prefers-color-scheme: light)` override and `:root[data-theme="light/dark"]` explicit toggle.
+
+---
+
+## UI Components (35 total)
+
+### Content & Summary
+
+| Component     | Import                             | Key Props                                                          |
+| ------------- | ---------------------------------- | ------------------------------------------------------------------ |
+| `TLDRSummary` | `@components/ui/TLDRSummary.astro` | Slot content                                                       |
+| `Callout`     | `@components/ui/Callout.astro`     | `type: "info"\|"warning"\|"error"\|"success"\|"tip"\|"note"\|"keypoint"\|"important"`, `title?` |
+| `Collapsible` | `@components/ui/Collapsible.astro` | `title`, `open?`                                                   |
+
+### Status & Version
+
+| Component          | Import                                  | Key Props                                                   |
+| ------------------ | --------------------------------------- | ----------------------------------------------------------- |
+| `StateNotice`      | `@components/ui/StateNotice.astro`      | `type: "deprecated"\|"mandatory"\|"experimental"\|"preview"\|"breaking"\|"security"` |
+| `VersionBadge`     | `@components/ui/VersionBadge.astro`     | `version`, `status?`                                        |
+| `SecurityRating`   | `@components/ui/SecurityRating.astro`   | Rating display                                              |
+| `DeprecatedNotice` | `@components/ui/DeprecatedNotice.astro` | Deprecation banner                                          |
+
+### Lists & Steps
+
+| Component      | Import                              | Key Props                                                 |
+| -------------- | ----------------------------------- | --------------------------------------------------------- |
+| `CheckList`    | `@components/ui/CheckList.astro`    | Item attr: `data-check="check\|cross\|warning\|optional"` |
+| `StepByStep`   | `@components/ui/StepByStep.astro`   | `title`                                                   |
+| `Prerequisite` | `@components/ui/Prerequisite.astro` | Prerequisites list                                        |
+
+### Documentation
+
+| Component       | Import                               | Key Props               |
+| --------------- | ------------------------------------ | ----------------------- |
+| `DirectiveCard` | `@components/ui/DirectiveCard.astro` | Directive documentation |
+| `APIEndpoint`   | `@components/ui/APIEndpoint.astro`   | API endpoint docs       |
+| `KeyValue`      | `@components/ui/KeyValue.astro`      | Key-value display       |
+
+### Comparison & Decision
+
+| Component      | Import                              | Key Props                                             |
+| -------------- | ----------------------------------- | ----------------------------------------------------- |
+| `BeforeAfter`  | `@components/ui/BeforeAfter.astro`  | `beforeLabel`, `afterLabel`, slots: `before`, `after` |
+| `DecisionTree` | `@components/ui/DecisionTree.astro` | Decision flow                                         |
+
+### Code & Terminal
+
+| Component         | Import                                                                                                      | Key Props                                       |
+| ----------------- | ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
+| `Code`            | `@components/ui/Code.astro`                                                                                 | `lang`, `title`, `showLineNumbers`, `highlight` |
+| `FileContent`     | `@components/ui/FileContent.astro`                                                                          | `filename`, `language`, `collapsible`           |
+| `TerminalCommand` | `@components/ui/TerminalCommand.astro`                                                                      | `title`, `prompt`                               |
+| `TerminalOutput`  | `@components/ui/TerminalOutput.astro`                                                                       | Output display                                  |
+| `TerminalSession` | `{ TerminalSession, TerminalSessionCommand, TerminalSessionOutput }` from `@components/ui/terminal-session` | Multi-command sessions                          |
+
+### Visual & Data
+
+| Component        | Import                                | Key Props                                                  |
+| ---------------- | ------------------------------------- | ---------------------------------------------------------- |
+| `Mermaid`        | `@components/ui/Mermaid.astro`        | `caption`, `maxWidth`, `maxHeight`, `ariaLabel` (required) |
+| `BarChart`       | `@components/ui/BarChart.astro`       | Chart data                                                 |
+| `BrowserSupport` | `@components/ui/BrowserSupport.astro` | `browsers: BrowserInfo[]`                                  |
+| `Table`          | `@components/ui/Table.astro`          | `title`, `striped`, `highlight`                            |
+| `Timeline`       | `@components/ui/Timeline.astro`       | Timeline events                                            |
+
+### Tabs
+
+| Component       | Import                                          | Key Props                    |
+| --------------- | ----------------------------------------------- | ---------------------------- |
+| `Tabs/TabPanel` | `{ Tabs, TabPanel }` from `@components/ui/tabs` | `label: string` for TabPanel |
+
+### Media & Other
+
+| Component          | Import                                  | Key Props                         |
+| ------------------ | --------------------------------------- | --------------------------------- |
+| `YouTube`          | `@components/ui/YouTube.astro`          | `id`, `title`                     |
+| `References`       | `@components/ui/References.astro`       | Auto-collected from content links |
+| `CopyButton`       | `@components/ui/CopyButton.astro`       | Copy-to-clipboard                 |
+| `IconDetector`     | `@components/ui/IconDetector.astro`     | Icon consistency check            |
+| `SRIEventListener` | `@components/ui/SRIEventListener.astro` | SRI integrity for event listeners |
+| `ThemeToggle`      | `@components/ui/ThemeToggle.astro`      | Theme switcher                    |
+
+### Barrel Exports
+
+- `tabs.ts`: Re-exports `Tabs` + `TabPanel`
+- `terminal-session.ts`: Re-exports `TerminalSession` + `TerminalSessionCommand` + `TerminalSessionOutput`
+
+### Documentation
+
+- **Full component docs**: `src/components/ui/README.md`
+- **Agent quick reference**: `src/components/ui/AGENTS.md`
 - **Blog writing guide**: `docs/BLOG_POST_GUIDE.md`
 - **Accessibility guide**: `docs/ACCESSIBILITY_GUIDE.md`
 
 ---
 
-## Styling with UnoCSS
+## Utility Functions
 
-### Configuration
+| File                 | Exports                                                     | Purpose                                              |
+| -------------------- | ----------------------------------------------------------- | ---------------------------------------------------- |
+| `blog.ts`            | `getUniqueTags(posts)`                                      | Unique tags with counts, sorted by frequency         |
+| `content.ts`         | `stripExtension(entry)`                                     | Clean file extensions for collection IDs             |
+| `cv.ts`              | `getCVData()`                                               | Read/parse CV from `src/content/cv/main.yaml`        |
+| `github.ts`          | `GitHubRepo`, `GitHubProfile`, fetch fns                    | GitHub API interfaces + optional `GITHUB_TOKEN`      |
+| `html.ts`            | `stripHtml()`, `sanitize()`, `escapeHtml()`, `safeJsonLd()` | HTML sanitization (sanitize-html + he)               |
+| `icons-extractor.ts` | `extractIcons(data)`                                        | Recursive icon field extraction for UnoCSS           |
+| `icons.ts`           | `iconMap`                                                   | 60+ language/extension → Iconify icon mappings       |
+| `publications.ts`    | `PublicationItem`, `PublicationGroup`                       | BibTeX parsing via citation-js, co-author enrichment |
+| `shiki.ts`           | `resolveShikiLanguage()`, `getHighlighter()`                | Singleton Shiki highlighter, RouterOS custom grammar |
+| `site.ts`            | `getSiteUrl()`, `getAbsoluteUrl(path)`                      | URL construction from `import.meta.env.SITE`         |
 
-UnoCSS uses `presetWind4` (Tailwind 4 compatible) + `presetIcons`:
+### Global Types (`src/types.ts`)
 
 ```typescript
-// uno.config.ts
-presets: [
-  presetWind4({ preflights: { reset: false } }),
-  presetIcons({ prefix: "i-" }),
-];
+(SiteConfig,
+  SocialsConfig,
+  CVData,
+  CVSection,
+  CVSkillGroup,
+  CVCertificateGroup);
 ```
 
-### Icon Usage
+---
 
-Icons use the pattern `i-{collection}:{icon-name}`:
+## UnoCSS Configuration
+
+### Presets
+
+```typescript
+presetWind4({ preflights: { reset: false } });
+presetIcons({
+  prefix: "i-",
+  extraProperties: { display: "inline-block", "vertical-align": "middle" },
+});
+```
+
+### Icon Collections (12)
+
+`mdi`, `logos`, `simple-icons`, `devicon`, `carbon`, `tabler`, `heroicons`, `lucide`, `fa-solid`, `fa-brands`, `fa-regular`, `vscode-icons`
+
+> Note: `@iconify-json/marketeq` is installed but NOT in the `iconCollections` extractor array.
+
+### Icon Pattern
 
 ```html
-<span class="i-mdi:check-circle"></span>
-<span class="i-logos:github-icon"></span>
+<span class="i-{collection}:{icon-name}"></span>
 ```
 
-Available collections: `mdi`, `logos`, `simple-icons`, `devicon`, `carbon`, `tabler`, `heroicons`, `lucide`, `fa-solid`, `fa-brands`, `vscode-icons`
+### Custom Extractors
 
-**Icon Deduplication**: UnoCSS extracts icons globally to prevent duplicate CSS. Use exact icon patterns in templates.
-
-### Dark Mode
-
-All components must support dark mode with proper contrast ratios:
-
-- Light mode: White/cream backgrounds
-- Dark mode: Dark gray backgrounds
-- WCAG AA requires ≥4.5:1 contrast for normal text
+- `icon-extractor`: Detects `collection:name` patterns in YAML/MDX without `i-` prefix
+- Safelist in `uno.config.ts` for dynamically generated icons (Timeline, BrowserSupport, file types)
 
 ---
 
 ## Build System
 
-### Pre-Build Integrations (`src/integrations/pre-build/`)
+### Build Command (Atomic Swap)
+
+```bash
+pnpm build
+# Internally: build → dist_new → swap → dist (zero-downtime)
+```
+
+### Pre-Build Integrations
 
 | Integration | Purpose                             |
 | ----------- | ----------------------------------- |
 | `avatar.ts` | Fetches GitHub avatar with fallback |
-| `beacon.ts` | Beacon analytics setup              |
+| `beacon.ts` | Cloudflare beacon analytics setup   |
 
-### Post-Build Integrations (`src/integrations/post-build/`)
+### Post-Build Pipeline (Sequential)
 
-| Integration      | Purpose                                |
-| ---------------- | -------------------------------------- |
-| `csp.ts`         | Generates CSP headers with SRI hashes  |
-| `compression.ts` | Gzip + Brotli pre-compression          |
-| `html.ts`        | HTML minification, data URI extraction |
-| `css.ts`         | CSS optimization                       |
-| `images.ts`      | Image optimization                     |
-| `cloudflare.ts`  | Cloudflare-specific optimizations      |
+1. `extractCssDataUris()` — CSS data URI extraction to physical files
+2. `processHtmlFiles()` — SRI integrity hashes, nonce attributes, inline style → class, data URI extraction, HTML minification
+3. `finalizeCspConfig()` — Generates `security_headers.conf` + `security_headers_assets.conf` for Nginx
+4. `optimizeImages()` — Image optimization (PNG, JPEG, WebP, AVIF)
+5. `compressAssets()` — Gzip + Brotli pre-compression
+6. `fixPermissions()` + `deploySecurityHeaders()` — Copy headers to Nginx path + reload (if configured)
+7. `purgeCloudflareCache()` — Purge via API (if configured)
 
-### Build Commands
+### Vite Plugin: Prefetch Nonce
 
-```bash
-pnpm build          # Production build
-pnpm dev            # Development server
-pnpm preview        # Preview production build
-pnpm verify         # Full QA pipeline
+`vite-plugin-prefetch-nonce.ts` — Patches Astro's `appendSpeculationRules` to inject nonce on dynamic speculation rules, preventing CSP violations.
+
+### CSP Strategy: Nonce-Only
+
+Nginx replaces `NGINX_CSP_NONCE` placeholder with `$cspNonce` per-request. Two header files:
+
+- `security_headers.conf`: For HTML (nonce in script-src + style-src + strict-dynamic)
+- `security_headers_assets.conf`: For static assets (default-src 'none', no nonces)
+
+Additional security headers: HSTS (2 years), X-Content-Type-Options, X-Frame-Options DENY, Referrer-Policy, COOP, COEP, CORP, Permissions-Policy (18 features disabled).
+
+---
+
+## Markdown/Rehype Pipeline
+
+### Remark Plugins
+
+- `remarkMath` — LaTeX math blocks
+- `remarkMermaidBypass` — Transforms `mermaid-render` blocks to `<pre class="mermaid">`
+
+### Rehype Plugins
+
+- `rehypeMathjax` — MathJax SSR rendering
+- `rehypeMermaid` — Mermaid SSR (inline-svg strategy with theme variables)
+- `rehypeRaw` — Allow raw HTML in MDX
+- `rehypeExternalLinks` — `rel="external noopener noreferrer"`, `target="_blank"`
+- `rehypeLinkDisambiguator` — Auto aria-labels for links with same text but different destinations
+
+### Custom Shiki Language
+
+RouterOS grammar at `src/languages/routeros.tmLanguage.json`. Aliases: `routeros`, `mikrotik`, `rsc`.
+
+---
+
+## Astro Configuration Highlights
+
+```javascript
+experimental: { clientPrerender: true, contentIntellisense: true, chromeDevtoolsWorkspace: true }
+prefetch: { prefetchAll: true, defaultStrategy: "viewport" }
+i18n: { defaultLocale: "en", locales: ["en", "es"] }
+// Image: remote patterns for Google favicons, responsiveStyles: true
+// Vite: chunkSizeWarningLimit: 1000, SSR external: citation-js
+// Fonts: Geist Sans + Geist Mono via fontsource, optimizedFallbacks: true
 ```
+
+---
+
+## Routing
+
+| Route                     | File                                | Purpose                                               |
+| ------------------------- | ----------------------------------- | ----------------------------------------------------- |
+| `/`                       | `index.astro`                       | Homepage                                              |
+| `/blog/`                  | `blog/index.astro`                  | Blog listing                                          |
+| `/blog/[slug]/`           | `blog/[...slug].astro`              | Blog post (auto-collects all references from content) |
+| `/blog/tags/[tag]/`       | `blog/tags/[tag].astro`             | Posts filtered by tag                                 |
+| `/cv`                     | `cv.astro`                          | Curriculum Vitae                                      |
+| `/github`                 | `github.astro`                      | GitHub profile + repos                                |
+| `/homelab`                | `homelab.astro`                     | Self-hosted infrastructure                            |
+| `/publications`           | `publications.astro`                | Academic publications (BibTeX)                        |
+| `/tools/`                 | `tools/index.astro`                 | Tools index (grouped by category)                     |
+| `/tools/[slug]/`          | `tools/[...slug].astro`             | Individual tool page                                  |
+| `/tools/categories/[cat]` | `tools/categories/[category].astro` | Tools by category                                     |
+| `/404`                    | `404.astro`                         | Error page (noIndex)                                  |
+| `/rss.xml`                | `rss.xml.ts`                        | RSS 2.0 feed (custom XML with enclosures, media)      |
+| `/site.webmanifest`       | `site.webmanifest.ts`               | PWA manifest                                          |
+
+---
+
+## Testing
+
+### Test Suites (12 files)
+
+| Suite                            | Purpose                                                    |
+| -------------------------------- | ---------------------------------------------------------- |
+| `accessibility.spec.ts`          | Axe-core WCAG 2.1 AA per-page (light + dark themes)        |
+| `deep.accessibility.spec.ts`     | Semantic landmarks, keyboard, heading order, copy buttons  |
+| `keyboard.accessibility.spec.ts` | Menu, skip link, mobile menu, theme toggle navigation      |
+| `tabs.accessibility.spec.ts`     | Zero-JS radio group keyboard nav, FileContent focus        |
+| `functional.spec.ts`             | Theme toggle/persistence, mobile menu, per-page functional |
+| `integration.spec.ts`            | Cross-page navigation flows, content verification          |
+| `security.spec.ts`               | CSP/SRI per-page verification, build output checks         |
+| `seo.spec.ts`                    | Meta tags, OG/Twitter, JSON-LD, robots.txt, RSS, llms.txt  |
+| `performance.spec.ts`            | LCP, lazy loading, preloads, reduced motion, broken links  |
+| `prerender.spec.ts`              | Speculation rules injection, CSP compliance                |
+| `icons.spec.ts`                  | UnoCSS icon consistency per-page                           |
+| `global-setup.ts`                | Pre-generates page cache from sitemap for parallel tests   |
+| `global-teardown.ts`             | Cleanup after test runs                                    |
+
+### Playwright Config
+
+3 projects: `functional` (Desktop Chrome), `mobile-functional` (Pixel 5), `accessibility` (Desktop Chrome, 30s timeout). WebServer: `pnpm astro preview` on port 4321. Permissions: clipboard-read/write.
+
+### Test Utils
+
+- `sitemap.ts`: `getCachedPages()`, `getPagesFromSitemap()`, `getSitemapUrls()`
+- `accessibility.ts`: `aggregateAxeResults()`, report generation
+- `filters.ts`: `shouldIgnoreError()` — filters expected localhost errors
+- `index.ts`: Barrel re-exports
+- `types.ts`: Shared test type definitions
+
+---
+
+## Scripts
+
+### Development (`scripts/`)
+
+| Script                          | Purpose                                                 |
+| ------------------------------- | ------------------------------------------------------- |
+| `run-verify.mjs`                | Full QA pipeline orchestrator                           |
+| `verify-icons.mjs`              | UnoCSS icon consistency in dist/                        |
+| `csp-reporter.mjs`              | CSP violation receiver + Telegram notifications         |
+| `audit-aria-labels.mjs`         | Accessibility name audit on built HTML                  |
+| `optimize-favicons.mjs`         | Favicon generation from source with sharp               |
+| `preview-rss.mjs`               | RSS feed HTML preview                                   |
+| `rehype-link-disambiguator.mjs` | Rehype plugin: auto aria-labels for ambiguous links     |
+| `remark-mermaid-bypass.mjs`     | Remark plugin: mermaid-render → `<pre class="mermaid">` |
+| `run-lighthouse-audit.mjs`      | Lighthouse audits against localhost/production          |
+| `test-mermaid.mjs`              | Verify mermaid-isomorphic SSR works                     |
+
+### CI (`scripts/ci/`)
+
+20 scripts: bundle analysis, accessibility/Lighthouse/schema/HTML/image/link reports, JSDoc coverage, SonarQube issues, RSS validation, schema validation, CI dashboard generation, PR comment updates, deployment cleanup, health score calculation, deploy report.
 
 ---
 
 ## CI/CD Pipeline
 
-### Workflow Structure (`.github/workflows/ci.yml`)
+### Workflow (`.github/workflows/ci.yml`)
 
 ```
 ci-setup → build → [parallel quality checks] → [parallel tests] → reporting
 ```
 
-### Quality Checks (Parallel)
+### Quality Checks (12 parallel jobs)
 
-| Job              | Tool          | Purpose                     |
-| ---------------- | ------------- | --------------------------- |
-| `sa-astro`       | `astro check` | TypeScript/Astro validation |
-| `sa-prettier`    | Prettier      | Code formatting             |
-| `sa-eslint`      | ESLint        | Linting                     |
-| `sa-audit`       | pnpm audit    | Security vulnerabilities    |
-| `sa-stylelint`   | Stylelint     | CSS linting                 |
-| `sa-jsdoc`       | Custom script | JSDoc coverage              |
-| `sa-lychee`      | Lychee        | Link checking               |
-| `sa-typos`       | Typos         | Spell checking              |
-| `sa-sonar`       | SonarQube     | Code quality                |
-| `bundle-size`    | Custom        | Bundle analysis             |
-| `html-validator` | html-validate | HTML5 validation            |
-| `rss-validation` | Custom        | RSS feed validation         |
+`astro check`, Prettier, ESLint, pnpm audit, Stylelint, JSDoc coverage, Lychee (links), Typos, SonarQube, bundle size, HTML validation, RSS validation.
 
-### Testing Matrix
+### Tests
 
-- **Functional tests**: Playwright E2E
-- **Accessibility tests**: Axe-core integration
-- **Lighthouse audits**: Performance scoring
+Playwright E2E (functional + accessibility + Lighthouse).
+
+---
+
+## Environment Variables
+
+| Variable                        | Context  | Purpose                              |
+| ------------------------------- | -------- | ------------------------------------ |
+| `PUBLIC_SITE_URL`               | Public   | Canonical site URL                   |
+| `PUBLIC_CF_BEACON_TOKEN`        | Public   | Cloudflare Analytics token           |
+| `PRIVATE_CF_API_TOKEN`          | Secret   | Cloudflare API for cache purge       |
+| `PRIVATE_CF_EMAIL`              | Secret   | Cloudflare email                     |
+| `PRIVATE_CF_ZONE_ID`            | Secret   | Cloudflare zone ID                   |
+| `POSTBUILD_NGINX_SNIPPETS_PATH` | Secret   | Path to deploy security_headers.conf |
+| `POSTBUILD_NGINX_CONFIG_PATH`   | Secret   | Nginx config path for verification   |
+| `POSTBUILD_NGINX_CACHE_PATH`    | Secret   | Nginx cache path to clear            |
+| `POSTBUILD_NGINX_RELOAD_TIMEOUT`| Secret   | Timeout for Nginx reload (ms)        |
+| `POSTBUILD_NGINX_TEST_TIMEOUT`  | Secret   | Timeout for Nginx test (ms)          |
+| `GITHUB_TOKEN`                  | Optional | GitHub API rate limit increase       |
+| `TELEGRAM_BOT_TOKEN`            | Server   | CSP reporter Telegram bot            |
+| `TELEGRAM_CHAT_ID`              | Server   | CSP reporter Telegram chat           |
+
+---
+
+## Config Files
+
+### TypeScript Path Aliases (`tsconfig.json`)
+
+```
+@components/* → src/components/*    @assets/*     → src/assets/*
+@layouts/*    → src/layouts/*       @utils/*      → src/utils/*
+@styles/*     → src/styles/*        @data/*       → src/data/*
+@languages/*  → src/languages/*     @src/*        → src/*
+```
+
+JSX: `react-jsx` with `jsxImportSource: "preact"`. Extends: `astro/tsconfigs/strict`.
+
+### Prettier (`.prettierrc`)
+
+`semi: true`, `singleQuote: false`, `tabWidth: 2`, `trailingComma: "all"`, `printWidth: 80`, `singleAttributePerLine: true`. Plugin: `prettier-plugin-astro`.
+
+### Stylelint (`.stylelintrc.json`)
+
+Extends: `stylelint-config-standard`, `stylelint-config-recess-order`, `stylelint-config-html`. Rules: kebab-case BEM selectors, `color-named: never`, `max-nesting-depth: 4`.
+
+### ESLint (`eslint.config.mjs`)
+
+12 plugins: `@gorazdo/preact`, `@unocss`, `astro` (recommended + jsx-a11y), `jsdoc`, `no-secrets`, `playwright`, `react-hooks`, `simple-import-sort`, `sonarjs`, `unicorn`, `typescript-eslint`.
+
+---
+
+## Deployment
+
+No Docker. Direct SSG deployment:
+
+1. `pnpm build` → `dist/` (atomic swap: `dist_new` → `dist_old` → `dist`)
+2. Post-build copies `security_headers.conf` to Nginx snippets path
+3. Verifies Nginx config (`nginx -t`) and reloads
+4. Purges Cloudflare cache via API
+5. CSP Reporter runs as separate service (`scripts/csp-reporter.mjs`)
 
 ---
 
 ## Development Commands
 
 ```bash
-# Core development
-pnpm dev              # Start dev server
-pnpm build            # Production build
-pnpm preview          # Preview build
-
-# Quality assurance
-pnpm verify           # FULL QA pipeline (run before PR)
+pnpm dev              # Start dev server (port 4321)
+pnpm build            # Production build (atomic swap)
+pnpm preview          # Preview production build
+pnpm verify           # FULL QA pipeline — 14 steps (run before PR)
 pnpm typecheck        # astro check
 pnpm lint             # ESLint
 pnpm lint:css         # Stylelint
-pnpm format           # Prettier write
-
-# Testing
+pnpm lint:html        # HTML5 validation (requires build)
 pnpm test:e2e         # Playwright tests
 pnpm test:e2e --ui    # Playwright interactive mode
+pnpm verify-icons     # Check icon consistency
+pnpm exec typos       # Spell check
+pnpm exec prettier --check .  # Format check (runs at end of build)
 ```
 
-> ⚠️ **CRITICAL**: Stop `astro dev` before running `pnpm verify` or tests.
->
-> Playwright's `reuseExistingServer: true` reuses any server on port 4321.
-> The dev server lacks **nonces, SRI hashes, and production optimizations**,
-> causing security tests to fail with errors like `nonce=null`.
+> ⚠️ **CRITICAL**: Stop `astro dev` before running `pnpm verify` or tests. The dev server lacks nonces/SRI, causing security tests to fail.
 >
 > ```bash
-> # Always check/kill dev server first:
 > pkill -f "astro dev" 2>/dev/null; pnpm verify
 > ```
 
-```bash
-# Utilities
-pnpm verify-icons     # Check icon consistency
-pnpm exec typos       # Spell check
-```
+### `pnpm verify` Pipeline Detail (`scripts/run-verify.mjs`)
 
----
+14 sequential steps, fail-fast (except SonarCloud):
 
-## Accessibility Requirements
+1. **Astro Check** — `pnpm typecheck --minimumFailingSeverity warning`
+2. **ESLint** — `pnpm lint --max-warnings=0`
+3. **Prettier** — `pnpm exec prettier --check .`
+4. **Stylelint** — `pnpm lint:css`
+5. **Production Build** — `pnpm run build` (includes pre-build + post-build integrations)
+6. **HTML5 Validation** — `pnpm lint:html`
+7. **RSS Feed Validation** — `node scripts/ci/validate-rss.mjs dist`
+8. **Schema.org JSON-LD** — `node scripts/ci/validate-schema.mjs dist`
+9. **Spelling (Typos)** — `typos`
+10. **Broken Links (Lychee)** — `lychee --config lychee.toml --root-dir dist dist/**/*.html`
+11. **JSDoc Coverage** — `node scripts/ci/calculate-jsdoc-coverage.mjs`
+12. **SonarCloud Analysis** — `pnpm exec sonar-scanner` *(conditional: requires `SONAR_TOKEN`)*
+13. **SonarCloud Issues** — `node scripts/ci/get-sonar-issues.mjs` *(conditional: requires `SONAR_TOKEN` + `SONAR_PROJECT_KEY`)*
+14. **Playwright E2E** — `pnpm test:e2e`
 
-### WCAG Compliance Checklist
-
-- [ ] All images have descriptive `alt` text
-- [ ] Interactive elements are keyboard accessible
-- [ ] Color contrast ≥4.5:1 for normal text (AA)
-- [ ] Color contrast ≥7:1 for enhanced (AAA)
-- [ ] No reliance on color alone for information
-- [ ] Proper heading hierarchy (h1 → h2 → h3)
-- [ ] ARIA labels for complex widgets
-- [ ] Focus indicators visible
-- [ ] Reduced motion support (`prefers-reduced-motion`)
-
-### Component-Specific Guidelines
-
-| Component         | Requirement                                  |
-| ----------------- | -------------------------------------------- |
-| `Mermaid`         | Must have `ariaLabel` describing the diagram |
-| `Table`           | Use semantic `<thead>`, `<th scope>`         |
-| `TerminalCommand` | Include `aria-label` for copy button         |
-| `Collapsible`     | Proper `aria-expanded` state                 |
-| `Tabs`            | ARIA tabs pattern implemented                |
-
----
-
-## Security Considerations
-
-### Content Security Policy
-
-The build generates CSP headers automatically:
-
-- **script-src**: Hash-based with nonce fallback
-- **style-src**: Hash-based with nonce fallback
-- **default-src**: `'none'`
-- **img-src**: `'self'` + specific domains
-- **frame-src**: `'none'`
-
-### No Inline JavaScript
-
-- Use data attributes for progressive enhancement
-- CSS-only interactions when possible
-- Preact islands for complex interactivity
+Steps 6-14 require a prior build. Steps 12-13 are skipped without env vars. Pre-run cleanup: removes `schema-report.json`, `html-validation.json`, `rss-validation.json`.
 
 ---
 
 ## Writing Blog Posts
 
-### Quick Start
-
 1. Copy `src/content/posts/_template.mdx`
-2. Rename with numbered prefix: `007-my-post.mdx`
-3. Update frontmatter (title, slug, publishedDate, tags)
+2. Rename with numbered prefix: `009-my-post.mdx`
+3. Update frontmatter (title, slug, publishedDate, tags, description ≤ 155 chars)
 4. Import needed components
 5. Write content with MDX
+6. References auto-collected from markdown links + HTML `<a>` tags in content
 
-### Component Usage Examples
+### Component Usage in MDX
 
 ````mdx
 import Callout from "@components/ui/Callout.astro";
@@ -353,24 +749,11 @@ import Mermaid from "@components/ui/Mermaid.astro";
   type="warning"
   title="Important"
 >
-  Critical security information here.
+  Critical information here.
 </Callout>
 
 <Tabs>
-  <TabPanel label="Bash">
-
-```bash
-sudo nginx -t
-```
-
-  </TabPanel>
-  <TabPanel label="PowerShell">
-
-```powershell
-nginx -t
-```
-
-  </TabPanel>
+  <TabPanel label="Bash">```bash sudo nginx -t ```</TabPanel>
 </Tabs>
 
 <Mermaid caption="Request Flow" ariaLabel="Diagram showing request flow">
@@ -381,86 +764,107 @@ flowchart LR
 </Mermaid>
 ````
 
-### Mermaid Diagram Styling
+### Mermaid Node Classes
 
-Use built-in node classes for consistent styling:
-
-- `.success` - Green accent
-- `.warning` - Yellow accent
-- `.danger` - Red accent
-- `.info` - Blue accent
-- `.highlight` - Purple accent
-- `.secondary` - Gray accent
+`.success` (green), `.warning` (yellow), `.danger` (red), `.info` (blue), `.highlight` (purple), `.secondary` (gray).
 
 ---
 
-## Common Tasks
+## Accessibility Requirements
 
-### Adding a New Component
+### WCAG Compliance
 
-1. Create `src/components/ui/NewComponent.astro`
-2. Ensure zero client-side JS (or use Preact island)
-3. Support dark mode with proper contrast
-4. Add ARIA attributes for accessibility
-5. Update `README.md` and `AGENTS.md`
-6. Add examples to `999-testing-components.mdx`
+- All images: descriptive `alt` text
+- Interactive elements: keyboard accessible
+- Color contrast: ≥4.5:1 (AA), ≥7:1 (AAA target)
+- No color-only indicators
+- Heading hierarchy: h1 → h2 → h3
+- ARIA labels for complex widgets
+- Focus indicators visible
+- `prefers-reduced-motion` support
 
-### Updating Dependencies
+### Component-Specific
 
-```bash
-pnpm update --latest     # Update all (including beta)
-pnpm build               # Verify build works
-pnpm verify              # Full QA check
-```
-
-### Adding Icons
-
-Icons are auto-extracted from source files. Just use the pattern:
-
-```astro
-<span class="i-mdi:new-icon"></span>
-```
-
-Add to safelist in `uno.config.ts` if dynamically generated.
+| Component         | Requirement                      |
+| ----------------- | -------------------------------- |
+| `Mermaid`         | `ariaLabel` required             |
+| `Table`           | Semantic `<thead>`, `<th scope>` |
+| `TerminalCommand` | `aria-label` for copy button     |
+| `Collapsible`     | `aria-expanded` state            |
+| `Tabs`            | ARIA tabs pattern                |
 
 ---
 
-## File References
+## SEO System
 
-| Purpose           | Location                          |
-| ----------------- | --------------------------------- |
-| Main config       | `astro.config.mjs`                |
-| Content schemas   | `src/content.config.ts`           |
-| UnoCSS config     | `uno.config.ts`                   |
-| TypeScript config | `tsconfig.json`                   |
-| ESLint config     | `eslint.config.mjs`               |
-| Playwright config | `playwright.config.ts`            |
-| CI workflow       | `.github/workflows/ci.yml`        |
-| Post template     | `src/content/posts/_template.mdx` |
-| Component docs    | `src/components/ui/README.md`     |
-| Agent quick ref   | `src/components/ui/AGENTS.md`     |
-| Blog guide        | `docs/BLOG_POST_GUIDE.md`         |
-| A11y guide        | `docs/ACCESSIBILITY_GUIDE.md`     |
+- **robots.txt**: 17+ AI bots + 6 search engine bots explicitly allowed, Sitemap reference, llms.txt references
+- **Sitemap**: Auto-generated with filter (excludes /404, test pages) and `lastmod`
+- **RSS**: Custom RSS 2.0 with atom:link, enclosures, media:content/thumbnail, channel image
+- **JSON-LD**: @graph pattern on all pages, page-specific schemas (BlogPosting, SoftwareApplication, ProfilePage, CollectionPage)
+- **Meta descriptions**: All ≤ 155 chars, validated by Playwright tests
+- **noIndex**: 404 page excluded from indexing
+- **llms.txt/llms-full.txt**: LLM context files (llmstxt.org standard)
 
 ---
 
-## Anti-Patterns (Avoid These)
+## Anti-Patterns (Avoid)
 
-1. **❌ Inline `<script>` tags** - Breaks CSP, use data attributes
-2. **❌ Inline styles** - Use UnoCSS classes
-3. **❌ getElementById/querySelector** - Prefer CSS-only or islands
-4. **❌ Fixed pixel widths** - Use responsive units (%, rem, ch)
-5. **❌ Missing alt text** - Always describe images
-6. **❌ Color-only indicators** - Add icons or text
-7. **❌ Duplicate icon classes** - UnoCSS handles deduplication
-8. **❌ Hardcoded dark mode colors** - Use CSS custom properties
-9. **❌ Large bundle dependencies** - Prefer smaller alternatives
-10. **❌ Ignoring CLS** - Always size images/embeds
+1. **❌ Inline `<script>` tags** — Breaks CSP, use data attributes or `<script is:inline>` only in app components
+2. **❌ Inline styles** — Use UnoCSS classes
+3. **❌ getElementById/querySelector in .astro** — Prefer CSS-only or islands pattern
+4. **❌ Fixed pixel widths** — Use responsive units (%, rem, ch)
+5. **❌ Missing alt text** — Always describe images
+6. **❌ Color-only indicators** — Add icons or text
+7. **❌ Duplicate icon classes** — UnoCSS handles deduplication
+8. **❌ Hardcoded dark mode colors** — Use CSS custom properties
+9. **❌ Large bundle dependencies** — Prefer smaller alternatives
+10. **❌ Ignoring CLS** — Always size images/embeds
+11. **❌ Meta descriptions > 155 chars** — Google truncates, tests enforce this
+12. **❌ Preact in tools** — Tools use vanilla JS via `<script is:inline>`
+13. **❌ Missing `ariaLabel` on Mermaid** — Required for accessibility
 
 ---
 
-## Version History
+## AI Context Files
 
-- **2026-02**: Verified/updated for Astro 6.0.0-beta.5, added apps folder, CodeRabbit fixes
-- **2025-06**: Initial CLAUDE.md created for AI context
-- Based on codebase at Astro 6.0.0-beta.5, UnoCSS 66.6.0
+### VS Code Copilot (`.github/`)
+
+| File                                     | Purpose                                          |
+| ---------------------------------------- | ------------------------------------------------ |
+| `.github/copilot-instructions.md`        | Always-on coding conventions                     |
+| `.github/instructions/*.instructions.md` | File-scoped instructions (4 files, `applyTo`)    |
+| `.github/prompts/*.prompt.md`            | Reusable slash commands (5 files)                |
+| `.github/agents/*.agent.md`              | Custom agents: planner, implementer, reviewer    |
+| `.github/skills/*/SKILL.md`             | Agent skills: astro-build, accessibility-audit, csp-debug |
+| `.github/hooks/*.json`                   | Lifecycle hooks: auto-format, protect-files      |
+
+### Claude Code (`.claude/`)
+
+| File                                     | Purpose                                          |
+| ---------------------------------------- | ------------------------------------------------ |
+| `.claude/settings.json`                  | Permissions, denied ops, hooks                   |
+| `.claude/skills/*/SKILL.md`             | Skills: astro-build, accessibility-audit, csp-debug |
+| `.claude/rules/*.md`                     | Path-scoped rules (4 files, `paths` frontmatter) |
+
+> **Note**: Agents are only defined in `.github/agents/` to avoid duplicates in VS Code's agent picker (VS Code reads both `.github/agents/` and `.claude/agents/`).
+
+### Cross-Platform
+
+| File                                     | Purpose                                          |
+| ---------------------------------------- | ------------------------------------------------ |
+| `CLAUDE.md`                              | Primary AI context (this file) — VS Code + Claude Code |
+| `CLAUDE.local.md`                        | Personal overrides (gitignored)                  |
+| `GEMINI.md`                              | Quick reference for Google Gemini                |
+| `src/components/ui/AGENTS.md`            | UI component quick reference for agents          |
+| `src/components/apps/AGENTS.md`          | Interactive tools reference for agents           |
+
+### Documentation
+
+| File                                     | Purpose                                          |
+| ---------------------------------------- | ------------------------------------------------ |
+| `docs/BLOG_POST_GUIDE.md`               | Blog writing guide                               |
+| `docs/ACCESSIBILITY_GUIDE.md`           | Accessibility requirements                       |
+| `docs/CSP_REPORTER.md`                  | CSP violation reporter documentation             |
+| `public/llms.txt`                        | LLM site context (llmstxt.org)                   |
+| `public/llms-full.txt`                   | Detailed LLM context                             |
+| `AI_CONFIG_TASKS.md`                     | AI configuration task checklist                  |

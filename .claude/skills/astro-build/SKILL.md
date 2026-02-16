@@ -1,0 +1,72 @@
+---
+name: astro-build
+description: Build, preview, and verify the jmrp.io Astro 6 project. Use when asked to build, deploy, or run the QA pipeline.
+argument-hint: "[command: build|verify|preview|dev]"
+---
+
+# Astro Build Skill
+
+Build and verify the jmrp.io Astro 6 SSG project.
+
+## Build Commands
+
+### Full Production Build (Atomic Swap)
+```bash
+pnpm build
+```
+This runs: `astro build` → atomic swap (`dist_new` → `dist_old` → `dist`) → Prettier check.
+
+### Development Server
+```bash
+pnpm dev
+```
+Starts on port 4321. **Warning**: Dev server lacks nonces/SRI — do not run tests against it.
+
+### Preview Production Build
+```bash
+pnpm preview
+```
+Serves `dist/` on port 4321. Use this for testing.
+
+## Full QA Pipeline (`pnpm verify`)
+```bash
+pkill -f "astro dev" 2>/dev/null  # Stop dev server first!
+pnpm verify
+```
+
+Runs `scripts/run-verify.mjs` — 14 sequential steps (fail-fast except SonarCloud):
+
+| #  | Step                          | Command                                            |
+| -- | ----------------------------- | -------------------------------------------------- |
+| 1  | Static: Astro Check           | `pnpm typecheck --minimumFailingSeverity warning`  |
+| 2  | Static: ESLint                | `pnpm lint --max-warnings=0`                       |
+| 3  | Static: Prettier              | `pnpm exec prettier --check .`                     |
+| 4  | Lint: CSS Stylelint           | `pnpm lint:css`                                    |
+| 5  | Build: Production Build       | `pnpm run build`                                   |
+| 6  | Lint: HTML5 Validation        | `pnpm lint:html`                                   |
+| 7  | Lint: RSS Feed                | `node scripts/ci/validate-rss.mjs dist`            |
+| 8  | Lint: Schema.org JSON-LD      | `node scripts/ci/validate-schema.mjs dist`         |
+| 9  | Lint: Spelling (Typos)        | `typos`                                            |
+| 10 | Lint: Broken Links (Lychee)   | `lychee --config lychee.toml --root-dir dist dist/**/*.html` |
+| 11 | Lint: JSDoc Coverage          | `node scripts/ci/calculate-jsdoc-coverage.mjs`     |
+| 12 | Security: SonarCloud Analysis | `pnpm exec sonar-scanner` *(if SONAR_TOKEN set)*   |
+| 13 | Analyze: SonarCloud Issues    | `node scripts/ci/get-sonar-issues.mjs` *(if SONAR_TOKEN + SONAR_PROJECT_KEY)* |
+| 14 | Tests: Playwright E2E         | `pnpm test:e2e`                                    |
+
+## Individual Checks
+```bash
+pnpm typecheck        # astro check
+pnpm lint             # ESLint
+pnpm lint:css         # Stylelint
+pnpm test:e2e         # Playwright tests
+pnpm verify-icons     # Icon consistency (not in verify pipeline)
+pnpm exec typos       # Spell check
+pnpm exec prettier --check .  # Format check
+pnpm lint:html        # HTML5 validation (requires build)
+```
+
+## Common Issues
+
+- **Build fails with nonce errors**: The `NGINX_CSP_NONCE` placeholder is expected — it's replaced by Nginx at runtime.
+- **Tests fail with CSP errors**: Stop `astro dev` first (`pkill -f "astro dev"`).
+- **Port 4321 in use**: Kill existing processes: `lsof -ti:4321 | xargs kill`.
