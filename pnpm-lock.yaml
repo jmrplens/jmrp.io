@@ -8,7 +8,7 @@ overrides:
   '@astrojs/internal-helpers': ^0.7.5
   axios: '>=1.13.2'
   form-data: '>=4.0.0'
-  qs: '>=6.14.1'
+  qs: '>=6.14.2'
   tough-cookie: '>=6.0.0'
   tmp: '>=0.2.5'
   glob: '>=13.0.0'
@@ -22,6 +22,9 @@ overrides:
   request: '>=2.88.2'
   whatwg-encoding: '>=3.1.1'
   vite: '>=7.3.1'
+  lodash: '>=4.17.23'
+  lodash-es: '>=4.17.23'
+  '@vercel/blob': '>=2.2.0'
 
 importers:
 
@@ -29,7 +32,7 @@ importers:
     dependencies:
       '@astrojs/mdx':
         specifier: 5.0.0-beta.7
-        version: 5.0.0-beta.7(astro@6.0.0-beta.11(@types/node@25.2.3)(@vercel/blob@1.0.2)(idb-keyval@6.2.2)(jiti@2.6.1)(rollup@4.57.1)(terser@5.46.0)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.2))
+        version: 5.0.0-beta.7(astro@6.0.0-beta.11(@types/node@25.2.3)(@vercel/blob@2.2.0)(idb-keyval@6.2.2)(jiti@2.6.1)(rollup@4.57.1)(terser@5.46.0)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.2))
       '@astrojs/preact':
         specifier: 5.0.0-beta.3
         version: 5.0.0-beta.3(@babel/core@7.29.0)(@types/node@25.2.3)(jiti@2.6.1)(preact@10.28.3)(rollup@4.57.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)
@@ -65,7 +68,7 @@ importers:
         version: 66.6.0(vite@7.3.1(@types/node@25.2.3)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2))
       astro:
         specifier: 6.0.0-beta.11
-        version: 6.0.0-beta.11(@types/node@25.2.3)(@vercel/blob@1.0.2)(idb-keyval@6.2.2)(jiti@2.6.1)(rollup@4.57.1)(terser@5.46.0)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.2)
+        version: 6.0.0-beta.11(@types/node@25.2.3)(@vercel/blob@2.2.0)(idb-keyval@6.2.2)(jiti@2.6.1)(rollup@4.57.1)(terser@5.46.0)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.2)
       citation-js:
         specifier: ^0.7.22
         version: 0.7.22
@@ -1109,10 +1112,6 @@ packages:
   '@eslint/plugin-kit@0.4.1':
     resolution: {integrity: sha512-43/qtrDUokr7LJqoF2c3+RInu/t4zfrpYdoSDfYyhg52rwLV6TnOvdG4fXm7IkSB3wErkcmJS9iEhjVtOSEjjA==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
-
-  '@fastify/busboy@2.1.1':
-    resolution: {integrity: sha512-vBZP4NlzfOlerQTnba4aqZoMhE/a9HY7HRqoOPaETQcSQuWEIyZMHGfVu6w9wGtGK5fED5qRs2DteVCjOH60sA==}
-    engines: {node: '>=14'}
 
   '@formatjs/ecma402-abstract@2.3.6':
     resolution: {integrity: sha512-HJnTFeRM2kVFVr5gr5kH1XP6K0JcJtE7Lzvtr3FS/so5f1kpsqqqxy5JF+FRaO6H2qmcMfAUIox7AJteieRtVw==}
@@ -2340,9 +2339,9 @@ packages:
     peerDependencies:
       vite: '>=7.3.1'
 
-  '@vercel/blob@1.0.2':
-    resolution: {integrity: sha512-Im/KeFH4oPx7UsM+QiteimnE07bIUD7JK6CBafI9Z0jRFogaialTBMiZj8EKk/30ctUYsrpIIyP9iIY1YxWnUQ==}
-    engines: {node: '>=16.14'}
+  '@vercel/blob@2.2.0':
+    resolution: {integrity: sha512-h9ruqqTyAlLrmLIT55NUDnfc889feZnQXWOBxpXrAiAzWKmHqIokLchuMBKFsT9MDV/jM0HRQlvlTyubMHrOKA==}
+    engines: {node: '>=20.0.0'}
 
   '@vercel/build-utils@13.4.0':
     resolution: {integrity: sha512-hGBYt+olxUtDZu0W8DKl4NjY8tQC1eJUxDpkJdOhcugap4NnHeHZQ33vEKs0Z72bYlqotgu0AoEOv+ri5rlh4w==}
@@ -4655,9 +4654,6 @@ packages:
     resolution: {integrity: sha512-iPZK6eYjbxRu3uB4/WZ3EsEIMJFMqAoopl3R+zuq0UjcAm/MO6KCweDgPfP3elTztoKP3KtnVHxTn2NHBSDVUw==}
     engines: {node: '>=10'}
 
-  lodash-es@4.17.21:
-    resolution: {integrity: sha512-mKnC+QJ9pWVzv+C4/U3rRsHapFfHvQFoFB92e52xeyGMcX6/OlIl78je1u8vePzYZSkkogMPJ2yjxxsb89cxyw==}
-
   lodash-es@4.17.23:
     resolution: {integrity: sha512-kVI48u3PZr38HdYz98UmfPnXl2DXrpdctLrFLCd3kOx1xUkOmpFPx7gCWWM5MPkL/fD8zb+Ph0QzjGFs4+hHWg==}
 
@@ -4666,9 +4662,6 @@ packages:
 
   lodash.truncate@4.4.2:
     resolution: {integrity: sha512-jttmRe7bRse52OsWIMDLaXxWqRAmtIUccAQ3garviCqJjafXOfNMO0yMfNpdD6zbGaTU0P5Nz7e7gAT6cKmJRw==}
-
-  lodash@4.17.21:
-    resolution: {integrity: sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg==}
 
   lodash@4.17.23:
     resolution: {integrity: sha512-LgVTMpQtIopCi79SJeDiP0TfWi5CNEc/L/aRdTh3yIvmZXTnheWpKjSZhnvMl8iXbC1tFg9gdHHDMLoV7CnG+w==}
@@ -5557,8 +5550,8 @@ packages:
     resolution: {integrity: sha512-tsSGN1x3h569ZSU1u6diwhltLyfUWDp3YbFHedapTmpBl0B3P6U3+Qptg7xu+v+1io1EwhdPyyRHYbEw0KN2FA==}
     engines: {node: '>=20'}
 
-  qs@6.14.1:
-    resolution: {integrity: sha512-4EK3+xJl8Ts67nLYNwqw/dsFVnCf+qR7RgXSK9jEEm9unao3njwMDdmsdvoKBKHzxd7tCYz5e5M+SnMjdtXGQQ==}
+  qs@6.15.0:
+    resolution: {integrity: sha512-mAZTtNCeetKMH+pSjrb76NAM8V9a05I9aBZOHztWy/UqcJdQYNsf59vrRKWnojAT9Y+GbIvoTBC++CPHqpDBhQ==}
     engines: {node: '>=0.6'}
 
   quansync@1.0.0:
@@ -6422,9 +6415,9 @@ packages:
   undici-types@7.16.0:
     resolution: {integrity: sha512-Zz+aZWSj8LE6zoxD+xrjh4VfkIG8Ya6LvYkZqtUQGJPZjYl53ypCaUwWqo7eI0x66KBGeRo+mlBEkMSeSZ38Nw==}
 
-  undici@5.29.0:
-    resolution: {integrity: sha512-raqeBD6NQK4SkWhQzeYKd1KmIG6dllBOTt55Rmkt4HtI9mwdWtJljnrXjAFUBLTSN67HWrOIZ3EPF4kjUw80Bg==}
-    engines: {node: '>=14.0'}
+  undici@6.23.0:
+    resolution: {integrity: sha512-VfQPToRA5FZs/qJxLIinmU59u0r7LXqoJkCzinq3ckNJp3vKEh7jTWN589YQ5+aoAC/TGRLyJLCPKcLQbM8r9g==}
+    engines: {node: '>=18.17'}
 
   undici@7.21.0:
     resolution: {integrity: sha512-Hn2tCQpoDt1wv23a68Ctc8Cr/BHpUSfaPYrkajTXOS9IKpxVRx/X5m1K2YkbK2ipgZgxXSgsUinl3x+2YdSSfg==}
@@ -6512,7 +6505,7 @@ packages:
       '@netlify/blobs': ^6.5.0 || ^7.0.0 || ^8.1.0 || ^9.0.0 || ^10.0.0
       '@planetscale/database': ^1.19.0
       '@upstash/redis': ^1.34.3
-      '@vercel/blob': '>=0.27.1'
+      '@vercel/blob': '>=2.2.0'
       '@vercel/functions': ^2.2.12 || ^3.0.0
       '@vercel/kv': ^1 || ^2 || ^3
       aws4fetch: ^1.0.20
@@ -7149,12 +7142,12 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@astrojs/mdx@5.0.0-beta.7(astro@6.0.0-beta.11(@types/node@25.2.3)(@vercel/blob@1.0.2)(idb-keyval@6.2.2)(jiti@2.6.1)(rollup@4.57.1)(terser@5.46.0)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.2))':
+  '@astrojs/mdx@5.0.0-beta.7(astro@6.0.0-beta.11(@types/node@25.2.3)(@vercel/blob@2.2.0)(idb-keyval@6.2.2)(jiti@2.6.1)(rollup@4.57.1)(terser@5.46.0)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.2))':
     dependencies:
       '@astrojs/markdown-remark': 7.0.0-beta.6
       '@mdx-js/mdx': 3.1.1
       acorn: 8.15.0
-      astro: 6.0.0-beta.11(@types/node@25.2.3)(@vercel/blob@1.0.2)(idb-keyval@6.2.2)(jiti@2.6.1)(rollup@4.57.1)(terser@5.46.0)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.2)
+      astro: 6.0.0-beta.11(@types/node@25.2.3)(@vercel/blob@2.2.0)(idb-keyval@6.2.2)(jiti@2.6.1)(rollup@4.57.1)(terser@5.46.0)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.2)
       es-module-lexer: 2.0.0
       estree-util-visit: 2.0.0
       hast-util-to-html: 9.0.5
@@ -7391,12 +7384,12 @@ snapshots:
     dependencies:
       '@chevrotain/gast': 11.0.3
       '@chevrotain/types': 11.0.3
-      lodash-es: 4.17.21
+      lodash-es: 4.17.23
 
   '@chevrotain/gast@11.0.3':
     dependencies:
       '@chevrotain/types': 11.0.3
-      lodash-es: 4.17.21
+      lodash-es: 4.17.23
 
   '@chevrotain/regexp-to-ast@11.0.3': {}
 
@@ -7810,8 +7803,6 @@ snapshots:
     dependencies:
       '@eslint/core': 0.17.0
       levn: 0.4.1
-
-  '@fastify/busboy@2.1.1': {}
 
   '@formatjs/ecma402-abstract@2.3.6':
     dependencies:
@@ -9302,13 +9293,13 @@ snapshots:
       unplugin-utils: 0.3.1
       vite: 7.3.1(@types/node@25.2.3)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)
 
-  '@vercel/blob@1.0.2':
+  '@vercel/blob@2.2.0':
     dependencies:
       async-retry: 1.3.3
       is-buffer: 2.0.5
       is-node-process: 1.2.0
       throttleit: 2.1.0
-      undici: 5.29.0
+      undici: 6.23.0
 
   '@vercel/build-utils@13.4.0':
     dependencies:
@@ -9654,7 +9645,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  astro@6.0.0-beta.11(@types/node@25.2.3)(@vercel/blob@1.0.2)(idb-keyval@6.2.2)(jiti@2.6.1)(rollup@4.57.1)(terser@5.46.0)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.2):
+  astro@6.0.0-beta.11(@types/node@25.2.3)(@vercel/blob@2.2.0)(idb-keyval@6.2.2)(jiti@2.6.1)(rollup@4.57.1)(terser@5.46.0)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.2):
     dependencies:
       '@astrojs/compiler': 3.0.0-beta.0
       '@astrojs/internal-helpers': 0.7.5
@@ -9706,7 +9697,7 @@ snapshots:
       ultrahtml: 1.6.0
       unifont: 0.7.3
       unist-util-visit: 5.1.0
-      unstorage: 1.17.4(@vercel/blob@1.0.2)(idb-keyval@6.2.2)
+      unstorage: 1.17.4(@vercel/blob@2.2.0)(idb-keyval@6.2.2)
       vfile: 6.0.3
       vite: 7.3.1(@types/node@25.2.3)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)
       vitefu: 1.1.1(vite@7.3.1(@types/node@25.2.3)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2))
@@ -9863,7 +9854,7 @@ snapshots:
       http-errors: 2.0.1
       iconv-lite: 0.4.24
       on-finished: 2.4.1
-      qs: 6.14.1
+      qs: 6.15.0
       raw-body: 2.5.3
       type-is: 1.6.18
       unpipe: 1.0.0
@@ -10027,7 +10018,7 @@ snapshots:
       '@chevrotain/regexp-to-ast': 11.0.3
       '@chevrotain/types': 11.0.3
       '@chevrotain/utils': 11.0.3
-      lodash-es: 4.17.21
+      lodash-es: 4.17.23
 
   chokidar@4.0.0:
     dependencies:
@@ -11171,7 +11162,7 @@ snapshots:
       parseurl: 1.3.3
       path-to-regexp: 0.1.12
       proxy-addr: 2.0.7
-      qs: 6.14.1
+      qs: 6.15.0
       range-parser: 1.2.1
       safe-buffer: 5.2.1
       send: 0.19.2
@@ -12252,15 +12243,11 @@ snapshots:
     dependencies:
       p-locate: 5.0.0
 
-  lodash-es@4.17.21: {}
-
   lodash-es@4.17.23: {}
 
   lodash.merge@4.6.2: {}
 
   lodash.truncate@4.4.2: {}
-
-  lodash@4.17.21: {}
 
   lodash@4.17.23: {}
 
@@ -13461,7 +13448,7 @@ snapshots:
     dependencies:
       hookified: 1.15.1
 
-  qs@6.14.1:
+  qs@6.15.0:
     dependencies:
       side-channel: 1.1.0
 
@@ -14601,9 +14588,7 @@ snapshots:
 
   undici-types@7.16.0: {}
 
-  undici@5.29.0:
-    dependencies:
-      '@fastify/busboy': 2.1.1
+  undici@6.23.0: {}
 
   undici@7.21.0: {}
 
@@ -14711,7 +14696,7 @@ snapshots:
       pathe: 2.0.3
       picomatch: 4.0.3
 
-  unstorage@1.17.4(@vercel/blob@1.0.2)(idb-keyval@6.2.2):
+  unstorage@1.17.4(@vercel/blob@2.2.0)(idb-keyval@6.2.2):
     dependencies:
       anymatch: 3.1.3
       chokidar: 5.0.0
@@ -14722,7 +14707,7 @@ snapshots:
       ofetch: 1.5.1
       ufo: 1.6.3
     optionalDependencies:
-      '@vercel/blob': 1.0.2
+      '@vercel/blob': 2.2.0
       idb-keyval: 6.2.2
 
   update-browserslist-db@1.2.3(browserslist@4.28.1):
@@ -14745,7 +14730,7 @@ snapshots:
 
   vercel@50.17.1(@vercel/go@3.4.0)(@vercel/hydrogen@1.3.5)(@vercel/next@4.15.28(rollup@4.57.1))(@vercel/redwood@2.4.9(rollup@4.57.1))(@vercel/remix-builder@5.5.10(rollup@4.57.1))(@vercel/ruby@2.3.0)(@vercel/rust@1.0.5):
     dependencies:
-      '@vercel/blob': 1.0.2
+      '@vercel/blob': 2.2.0
       '@vercel/build-utils': 13.4.0
       '@vercel/detect-agent': 1.1.0
       '@vercel/fun': 1.3.0
@@ -15091,7 +15076,7 @@ snapshots:
       '@vscode/l10n': 0.0.18
       ajv: 8.17.1
       ajv-draft-04: 1.0.0(ajv@8.17.1)
-      lodash: 4.17.21
+      lodash: 4.17.23
       prettier: 3.8.1
       request-light: 0.5.8
       vscode-json-languageservice: 4.1.8
