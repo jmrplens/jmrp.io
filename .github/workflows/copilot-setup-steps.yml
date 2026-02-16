@@ -29,6 +29,9 @@ jobs:
           corepack enable
           pnpm install --frozen-lockfile
 
+      - name: "Install Playwright browsers"
+        run: pnpm exec playwright install --with-deps chromium
+
       - name: "Verify build"
         run: pnpm build
 
