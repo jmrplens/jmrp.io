@@ -21,7 +21,8 @@ const getHostname = (url) => {
       hostname.startsWith("$") || // Avoid Nginx variables
       hostname.includes(";") || // Avoid code snippets
       hostname === "localhost" ||
-      hostname.includes("example.com")
+      hostname === "example.com" ||
+      hostname.endsWith(".example.com")
     ) {
       return null;
     }

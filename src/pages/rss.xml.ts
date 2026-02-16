@@ -160,6 +160,12 @@ export async function GET(context: { site: URL }) {
     <ttl>60</ttl>
     <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>
     <generator>Astro RSS Generator (Manual)</generator>
+    <docs>https://www.rssboard.org/rss-specification</docs>
+    <image>
+      <url>${escapeXml(new URL("/favicon.png", site).toString())}</url>
+      <title>${escapeXml(siteData?.title || "José Manuel Requena Plens | Blog")}</title>
+      <link>${escapeXml(site)}</link>
+    </image>
     ${itemsXml}
   </channel>
 </rss>`;

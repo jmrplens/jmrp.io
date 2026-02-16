@@ -20,7 +20,9 @@ node_modules/
 # VS Code workspace-specific settings
 .vscode/mcp.json
 # AI/Editor Specific
-.claude/
+.claude/settings.local.json
+.claude/agent-memory/
+CLAUDE.local.md
 .qodo/
 nanobanana-output/
 

@@ -18,6 +18,7 @@ import PasswordGenerator from "@components/apps/PasswordGenerator.astro";
 import RegexTester from "@components/apps/RegexTester.astro";
 import SubnetCalculator from "@components/apps/SubnetCalculator.astro";
 import TimestampConverter from "@components/apps/TimestampConverter.astro";
+import WireGuardConfigGenerator from "@components/apps/WireGuardConfigGenerator.astro";
 import ToolLayout from "@layouts/ToolLayout.astro";
 import { type CollectionEntry, getCollection, render } from "astro:content";
 
@@ -36,6 +37,7 @@ const componentMap: Record<string, any> = {
   RegexTester,
   SubnetCalculator,
   TimestampConverter,
+  WireGuardConfigGenerator,
 };
 
 export async function getStaticPaths() {

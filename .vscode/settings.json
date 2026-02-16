@@ -3,4 +3,21 @@
     "connectionId": "jmrplens",
     "projectKey": "jmrplens_jmrp.io"
   },
+
+  // --- AI / Copilot Customization ---
+
+  // Enable CLAUDE.md as always-on instructions (cross-compatible with Claude Code)
+  "chat.useClaudeMdFile": true,
+
+  // Enable AGENTS.md files as always-on instructions
+  "chat.useAgentsMdFile": true,
+
+  // Enable nested AGENTS.md in subdirectories (e.g. src/components/ui/AGENTS.md)
+  "chat.useNestedAgentsMdFiles": true,
+
+  // Auto-include pattern-matching .instructions.md files
+  "chat.includeApplyingInstructions": true,
+
+  // Include instructions referenced via Markdown links
+  "chat.includeReferencedInstructions": true
 }

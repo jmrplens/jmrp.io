@@ -45,6 +45,15 @@ const VALID_SCHEMA_TYPES = [
   "SiteNavigationElement",
   "ListItem",
   "CollectionPage",
+  "ProfilePage",
+  "ScholarlyArticle",
+  "Periodical",
+  "EducationalOrganization",
+  "Occupation",
+  "EducationalOccupationalCredential",
+  "SoftwareApplication",
+  "Offer",
+  "Service",
 ] as const;
 
 /**
@@ -113,6 +122,20 @@ test.describe("SEO Per-Page Checks", () => {
         const description = page.locator('meta[name="description"]');
         await expect(description).toHaveAttribute("content", /.{10,}/);
 
+        // Meta description should not exceed 160 chars (Google truncation)
+        const descContent = await description.getAttribute("content");
+        expect(
+          descContent!.length,
+          `Description too long (${descContent!.length} chars): ${descContent!.substring(0, 50)}...`,
+        ).toBeLessThanOrEqual(160);
+
+        // Robots meta tag should be present
+        const robotsMeta = page.locator('meta[name="robots"]');
+        await expect(robotsMeta).toHaveAttribute(
+          "content",
+          /^(no)?index, (no)?follow$/,
+        );
+
         await expect(page.locator('meta[property="og:title"]')).toHaveAttribute(
           "content",
           /.+/,
@@ -128,6 +151,17 @@ test.describe("SEO Per-Page Checks", () => {
           "content",
           /.+/,
         );
+
+        // og:type should be present with a valid value
+        await expect(page.locator('meta[property="og:type"]')).toHaveAttribute(
+          "content",
+          /^(website|article|profile)$/,
+        );
+
+        // og:image:alt for accessibility
+        await expect(
+          page.locator('meta[property="og:image:alt"]'),
+        ).toHaveAttribute("content", /.+/);
       });
 
       // --- Twitter Card ---
@@ -153,6 +187,14 @@ test.describe("SEO Per-Page Checks", () => {
           'meta[name="twitter:description"], meta[property="og:description"]',
         );
         await expect(socialDesc.first()).toHaveAttribute("content", /.+/);
+
+        // twitter:image:alt for accessibility
+        const twitterImageAlt = page.locator('meta[name="twitter:image:alt"]');
+        const hasTwitterImageAlt = (await twitterImageAlt.count()) > 0;
+        if (hasTwitterImageAlt) {
+          // eslint-disable-next-line playwright/no-conditional-expect
+          await expect(twitterImageAlt).toHaveAttribute("content", /.+/);
+        }
       });
       /* eslint-enable playwright/no-conditional-in-test */
 
@@ -196,6 +238,60 @@ test.describe("SEO & Metadata Checks", () => {
     // Verify Canonical is present and valid
     const canonical = page.locator('link[rel="canonical"]');
     await expect(canonical).toHaveAttribute("href", /^https?:\/\//);
+
+    // 404 pages must not be indexed by search engines
+    const robotsMeta = page.locator('meta[name="robots"]');
+    await expect(robotsMeta).toHaveAttribute("content", /noindex/);
+  });
+
+  test("RSS feed is valid and accessible", async ({ page }) => {
+    const response = await page.goto("/rss.xml");
+    expect(response?.status()).toBe(200);
+
+    const content = await response?.text();
+    expect(content).toBeDefined();
+
+    // Verify RSS structure
+    expect(content).toContain("<rss");
+    expect(content).toContain("<channel>");
+    expect(content).toContain("<title>");
+    expect(content).toContain("<link>");
+    expect(content).toContain("<description>");
+    expect(content).toContain("<item>");
+
+    // Verify channel has image element
+    expect(content).toContain("<image>");
+
+    // Verify Atom self-link for feed readers
+    expect(content).toContain('rel="self"');
+  });
+
+  test("llms.txt exists and has valid structure", async ({ page }) => {
+    const response = await page.goto("/llms.txt");
+    expect(response?.status()).toBe(200);
+
+    const content = await response?.text();
+    expect(content).toBeDefined();
+
+    // Verify llms.txt has key sections
+    expect(content).toContain("# ");
+    expect(content).toContain("> ");
+
+    // Verify llms-full.txt reference
+    expect(content).toContain("llms-full.txt");
+  });
+
+  test("llms-full.txt exists and has detailed content", async ({ page }) => {
+    const response = await page.goto("/llms-full.txt");
+    expect(response?.status()).toBe(200);
+
+    const content = await response?.text();
+    expect(content).toBeDefined();
+
+    // Verify comprehensive structure
+    expect(content).toContain("## Blog Posts");
+    expect(content).toContain("## Developer Tools");
+    expect(content).toContain("## Contact");
   });
 
   test("Structured data (JSON-LD) is present on key pages", async ({
@@ -247,5 +343,46 @@ test.describe("SEO & Metadata Checks", () => {
         }
       }
     }
+  });
+
+  test("JSON-LD schema on secondary pages", async ({ page }) => {
+    // Verify structured data exists on all key section pages
+    const keyPages = ["/cv", "/publications", "/github"];
+
+    for (const pageUrl of keyPages) {
+      await page.goto(pageUrl);
+      const jsonLdScripts = page.locator('script[type="application/ld+json"]');
+      const count = await jsonLdScripts.count();
+      expect(
+        count,
+        `${pageUrl} should have JSON-LD structured data`,
+      ).toBeGreaterThan(0);
+
+      // Validate all schemas on this page
+      for (let i = 0; i < count; i++) {
+        const content = await jsonLdScripts.nth(i).textContent();
+        // eslint-disable-next-line playwright/no-conditional-in-test
+        if (content) {
+          validateJsonLd(content, VALID_SCHEMA_TYPES);
+        }
+      }
+    }
+  });
+
+  test("robots.txt has comprehensive bot directives", async ({ page }) => {
+    const response = await page.goto("/robots.txt");
+    const content = await response?.text();
+    expect(content).toBeDefined();
+
+    // Verify essential search engine bots are addressed
+    expect(content).toContain("Googlebot");
+    expect(content).toContain("Bingbot");
+
+    // Verify sitemap reference
+    expect(content).toMatch(/Sitemap:\s*https?:\/\//i);
+
+    // Verify AI bot directives exist
+    expect(content).toContain("GPTBot");
+    expect(content).toContain("ClaudeBot");
   });
 });
