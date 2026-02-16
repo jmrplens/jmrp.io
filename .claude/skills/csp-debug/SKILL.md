@@ -94,3 +94,25 @@ TELEGRAM_BOT_TOKEN=xxx TELEGRAM_CHAT_ID=xxx node scripts/csp-reporter.mjs
 - **Dev server lacks nonces/SRI** — always test CSP against `pnpm preview`, not `pnpm dev`
 - **External links**: Use `rel="external noopener noreferrer"` + `target="_blank"`
 - JSON-LD must use `safeJsonLd()` from `@utils/html` to prevent XSS
+
+## SonarCloud Security Analysis
+
+For security issues beyond CSP/SRI (code smells, vulnerabilities, hotspots), use SonarCloud:
+
+### Check Security Hotspots
+```bash
+SONAR_PROJECT_KEY=jmrplens_jmrp.io node scripts/ci/get-sonar-issues.mjs
+```
+Requires `SONAR_TOKEN` env var. Reports open issues and TO_REVIEW security hotspots.
+
+### SonarCloud Dashboard
+`https://sonarcloud.io/dashboard?id=jmrplens_jmrp.io`
+
+### SonarLint IDE
+SonarLint connected mode is configured in `.vscode/settings.json` — provides real-time security issue detection in the editor.
+
+### Key Security Rules Tracked
+- **S4721** — OS Command Injection (execSync/execFileSync usage)
+- **S5852** — Regex Denial of Service (complex regex patterns)
+- **S4036** — OS command shell security (PATH resolution)
+- Suppressions defined in `sonar-project.properties` for CI scripts with validated inputs

@@ -68,6 +68,39 @@ pnpm exec prettier --check .  # Format check
 pnpm lint:html        # HTML5 validation (requires build)
 ```
 
+## SonarCloud Analysis
+
+### Check Issues & Hotspots Manually
+```bash
+# Requires SONAR_TOKEN and SONAR_PROJECT_KEY env vars
+SONAR_PROJECT_KEY=jmrplens_jmrp.io node scripts/ci/get-sonar-issues.mjs
+```
+
+This script queries the SonarCloud API for:
+- **Open issues** — bugs, code smells, vulnerabilities
+- **Security hotspots** — items marked TO_REVIEW
+- Checks local files for `NOSONAR` suppression comments
+
+### Run SonarCloud Scanner
+```bash
+pnpm exec sonar-scanner  # Requires SONAR_TOKEN
+```
+
+### SonarCloud Dashboard
+- **URL**: `https://sonarcloud.io/dashboard?id=jmrplens_jmrp.io`
+- **Project key**: `jmrplens_jmrp.io`
+- **Organization**: `jmrplens`
+- **Config**: `sonar-project.properties`
+
+### SonarLint IDE Integration
+VS Code has SonarLint connected mode configured in `.vscode/settings.json`:
+- Connection ID: `jmrplens`
+- Project key: `jmrplens_jmrp.io`
+- Provides real-time issue detection in the editor
+
+### Issue Suppressions
+`sonar-project.properties` defines multicriteria suppressions for CI scripts that intentionally use `execSync`/`execFileSync` and regex patterns. These suppress S4721 (OS Command Injection), S5852 (Regex complexity), and S4036 (OS command shell PATH) in specific files.
+
 ## Post-Build Pipeline (Automatic)
 
 The build integration runs these sequentially:

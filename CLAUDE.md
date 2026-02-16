@@ -621,6 +621,22 @@ ci-setup → build → [parallel quality checks] → [parallel tests] → report
 
 Playwright E2E (functional + accessibility + Lighthouse).
 
+### SonarCloud Manual Consultation
+
+```bash
+# Check open issues and security hotspots
+SONAR_PROJECT_KEY=jmrplens_jmrp.io node scripts/ci/get-sonar-issues.mjs
+
+# Run full scanner analysis
+pnpm exec sonar-scanner
+```
+
+- **Dashboard**: `https://sonarcloud.io/dashboard?id=jmrplens_jmrp.io`
+- **Project key**: `jmrplens_jmrp.io` | **Organization**: `jmrplens`
+- **Config**: `sonar-project.properties` (sources, exclusions, rule suppressions)
+- **IDE**: SonarLint connected mode in `.vscode/settings.json`
+- **Script**: `scripts/ci/get-sonar-issues.mjs` — queries issues + TO_REVIEW hotspots, checks `NOSONAR` suppressions
+
 ---
 
 ## Environment Variables
@@ -638,6 +654,8 @@ Playwright E2E (functional + accessibility + Lighthouse).
 | `POSTBUILD_NGINX_RELOAD_TIMEOUT`| Secret   | Timeout for Nginx reload (ms)        |
 | `POSTBUILD_NGINX_TEST_TIMEOUT`  | Secret   | Timeout for Nginx test (ms)          |
 | `GITHUB_TOKEN`                  | Optional | GitHub API rate limit increase       |
+| `SONAR_TOKEN`                   | Optional | SonarCloud API token (CI + manual)   |
+| `SONAR_PROJECT_KEY`             | Optional | SonarCloud project (`jmrplens_jmrp.io`) |
 | `TELEGRAM_BOT_TOKEN`            | Server   | CSP reporter Telegram bot            |
 | `TELEGRAM_CHAT_ID`              | Server   | CSP reporter Telegram chat           |
 
