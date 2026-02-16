@@ -11,32 +11,102 @@ appProps:
   showExplanation: true
 ---
 
+import {
+  TerminalSession,
+  TerminalSessionCommand,
+  TerminalSessionOutput,
+} from "@components/ui/terminal-session";
+
 <h2>About This Tool</h2>
 <p>
-  When you need to allow specific inline scripts in your CSP without using{" "}
-  <code>'unsafe-inline'</code>, you can use hashes. This tool calculates the
-  SHA-256 hash of your script content in the format CSP expects.
+  When you need to allow specific inline scripts or styles in your Content
+  Security Policy (CSP) without using <code>'unsafe-inline'</code>, you can use
+  cryptographic hashes. This tool calculates the SHA-256 hash of your content
+  in the exact base64 format that browsers expect.
 </p>
+
+<h3>Features</h3>
+<ul>
+  <li>
+    <strong>Real-time calculation</strong> — hash updates instantly as you type
+    or paste
+  </li>
+  <li>
+    <strong>Multiple algorithms</strong> — supports SHA-256, SHA-384, and
+    SHA-512
+  </li>
+  <li>
+    <strong>Ready-to-use directives</strong> — get the full{" "}
+    <code>'sha256-...'</code> string or the complete <code>script-src</code>{" "}
+    line
+  </li>
+  <li>
+    <strong>Automatic cleanup</strong> — removes leading/trailing whitespace
+    automatically if selected
+  </li>
+  <li>
+    <strong>Client-side only</strong> — your sensitive scripts are never sent
+    to a server
+  </li>
+</ul>
+
 <h3>How to Use</h3>
 <ol>
   <li>
-    Paste your inline script content (excluding <code>&lt;script&gt;</code>{" "}
-    tags)
+    Paste your inline script or style content (excluding <code>&lt;script&gt;</code>{" "}
+    or <code>&lt;style&gt;</code> tags)
   </li>
   <li>Copy the generated hash or full CSP directive</li>
   <li>
-    Add the hash to your <code>script-src</code> directive
+    Add the hash to your <code>script-src</code> or <code>style-src</code>{" "}
+    directive in your Nginx/Apache config or meta tag
   </li>
 </ol>
+
+<h3>Linux Command Reference</h3>
+<p>
+  You can also calculate these hashes manually in your terminal using standard
+  Linux utilities.
+</p>
+
+<h4>SHA-256 for CSP</h4>
+<TerminalSession>
+  <TerminalSessionCommand>
+    echo -n 'console.log("Hello CSP");' | openssl dgst -sha256 -binary | openssl base64
+  </TerminalSessionCommand>
+  <TerminalSessionOutput title="Base64 Hash Output">
+    7fJ6A1b9qS8r...[hash]...=
+  </TerminalSessionOutput>
+</TerminalSession>
+
+<h4>SHA-384 for SRI (Subresource Integrity)</h4>
+<TerminalSession>
+  <TerminalSessionCommand>
+    cat script.js | openssl dgst -sha384 -binary | openssl base64 -A
+  </TerminalSessionCommand>
+  <TerminalSessionOutput title="SRI Hash">
+    sha384-Nkhj...[hash]...
+  </TerminalSessionOutput>
+</TerminalSession>
+
 <h3>Important Notes</h3>
 <ul>
-  <li>Any change to the script (even whitespace) will change the hash</li>
   <li>
-    For dynamic scripts, consider using
+    <strong>Exact matching</strong> — Any change to the script (even a single
+    space or newline) will result in a completely different hash and cause the
+    browser to block the script.
+  </li>
+  <li>
+    <strong>No tags</strong> — Do not include the <code>&lt;script&gt;</code>{" "}
+    or <code>&lt;style&gt;</code> HTML tags themselves, only the inner content.
+  </li>
+  <li>
+    <strong>Dynamic scripts</strong> — If your script contains dynamic values
+    (like a user ID), hashes won't work. Consider using{" "}
     <a href="/blog/003-implementing-content-security-policy-nginx/#solution-3-use-nonces">
       nonces
     </a>{" "}
-    instead
+    instead.
   </li>
   <li>
     See
@@ -46,3 +116,10 @@ appProps:
     for best practices
   </li>
 </ul>
+
+<h3>Privacy</h3>
+<p>
+  Security is the priority. All cryptographic operations are performed locally
+  in your browser using the Web Crypto API. Your script content is never
+  transmitted over the network.
+</p>

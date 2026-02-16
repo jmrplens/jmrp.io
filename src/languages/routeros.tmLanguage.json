@@ -73,7 +73,7 @@
       "patterns": [
         {
           "name": "entity.name.tag.routeros",
-          "match": "/(?:ip|ipv6|interface|system|routing|tool|queue|user|certificate|file|log|port|snmp|radius|mpls|ppp|caps-man|container|iot|partitions)(?:/[\\w-]+)*"
+          "match": "/(?:ipv6|ip|interface|system|routing|tool|queue|user|certificate|file|log|port|snmp|radius|mpls|ppp|caps-man|container|iot|partitions)\\b(?:/[\\w-]+)*"
         }
       ]
     },

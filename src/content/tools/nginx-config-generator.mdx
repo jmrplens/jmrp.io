@@ -9,12 +9,19 @@ tags: ["nginx", "server", "ssl", "tls", "reverse-proxy", "http3"]
 appComponent: "NginxConfigGenerator"
 ---
 
+import {
+  TerminalSession,
+  TerminalSessionCommand,
+  TerminalSessionOutput,
+} from "@components/ui/terminal-session";
+
 <h2>About This Tool</h2>
 <p>
   Generate production-ready Nginx server block configurations with a visual
   builder. Select the features you need and get a complete configuration file
   you can copy directly to your server.
 </p>
+
 <h3>Features</h3>
 <ul>
   <li>
@@ -48,6 +55,7 @@ appComponent: "NginxConfigGenerator"
     keepalive, buffering options
   </li>
 </ul>
+
 <h3>How to Use</h3>
 <ol>
   <li>Start with a preset that matches your use case</li>
@@ -59,6 +67,50 @@ appComponent: "NginxConfigGenerator"
     Copy the generated configuration and place it in your Nginx sites directory
   </li>
 </ol>
+
+<h3>Linux Command Reference</h3>
+<p>Common commands for managing Nginx and verifying configurations:</p>
+
+<h4>Verify Configuration</h4>
+<TerminalSession>
+  <TerminalSessionCommand>nginx -t</TerminalSessionCommand>
+  <TerminalSessionOutput title="Validation Result">
+    ```
+    nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
+    nginx: configuration file /etc/nginx/nginx.conf test is successful
+    ```
+  </TerminalSessionOutput>
+</TerminalSession>
+
+<h4>Reload Configuration (No Downtime)</h4>
+<TerminalSession>
+  <TerminalSessionCommand>nginx -s reload</TerminalSessionCommand>
+  <TerminalSessionOutput title="Reload Result">
+    # Nginx reloads configuration without dropping active connections
+  </TerminalSessionOutput>
+</TerminalSession>
+
+<h4>Check Version and Modules</h4>
+<TerminalSession>
+  <TerminalSessionCommand>nginx -V</TerminalSessionCommand>
+  <TerminalSessionOutput title="Build Details">
+    ```
+    nginx version: nginx/1.25.4
+    built by gcc 12.2.0 (Debian 12.2.0-14)
+    built with OpenSSL 3.0.11 19 Sep 2023
+    TLS SNI support enabled
+    configure arguments: --with-http_ssl_module --with-http_v2_module --with-http_v3_module ...
+    ```
+  </TerminalSessionOutput>
+</TerminalSession>
+
+<h3>Privacy</h3>
+<p>
+  All configuration generation happens entirely in your browser. No domains, IP
+  addresses, or backend paths are transmitted to any server. Your server
+  architecture stays private.
+</p>
+
 <h3>Learn More</h3>
 <p>
   These blog posts provide detailed guides on the features available in this
@@ -72,7 +124,7 @@ appComponent: "NginxConfigGenerator"
     — Configure HTTP/3 and QUIC transport protocol
   </li>
   <li>
-    <a href="/blog/implementing-tarpit-nginx/">
+    <a href="/blog/005-implementing-tarpit-nginx/">
       Implementing a Tarpit in Nginx
     </a>{" "}
     — Slow down attackers and scanners
