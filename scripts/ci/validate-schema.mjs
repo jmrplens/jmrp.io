@@ -187,11 +187,23 @@ function validateSchema(schema) {
   }
 
   const context = schema["@context"];
+  const isSchemaOrgUrl = (/** @type {string} */ url) => {
+    try {
+      const parsed = new URL(url);
+      return (
+        parsed.hostname === "schema.org" || parsed.hostname === "www.schema.org"
+      );
+    } catch {
+      return false;
+    }
+  };
   const hasSchemaOrg = (ctx) => {
-    if (typeof ctx === "string") return ctx.includes("schema.org");
+    if (typeof ctx === "string") return isSchemaOrgUrl(ctx);
     if (Array.isArray(ctx)) return ctx.some(hasSchemaOrg);
-    if (ctx && typeof ctx === "object")
-      return JSON.stringify(ctx).includes("schema.org");
+    if (ctx && typeof ctx === "object") {
+      const values = Object.values(ctx);
+      return values.some((v) => typeof v === "string" && isSchemaOrgUrl(v));
+    }
     return false;
   };
 

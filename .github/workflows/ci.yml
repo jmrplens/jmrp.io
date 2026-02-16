@@ -10,6 +10,11 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# Least-privilege: restrict GITHUB_TOKEN to read-only by default.
+# Jobs that need more (e.g. pull-requests: write) declare their own block.
+permissions:
+  contents: read
+
 # Suppress deprecation warnings from upstream GitHub Actions dependencies
 env:
   NODE_OPTIONS: "--no-deprecation"
