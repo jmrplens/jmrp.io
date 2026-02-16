@@ -119,7 +119,7 @@ export async function highlightCode(
   return highlighter.codeToHtml(trimmedCode, {
     lang: langName,
     themes: SHIKI_THEMES,
-    defaultColor: false,
+    defaultColor: "light",
     transformers: [
       {
         // Match Astro's built-in Code component output format:

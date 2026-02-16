@@ -9,35 +9,44 @@ tags: ["csp", "security", "headers", "xss", "nginx"]
 appComponent: "CSPBuilder"
 ---
 
+import {
+  TerminalSession,
+  TerminalSessionCommand,
+  TerminalSessionOutput,
+} from "@components/ui/terminal-session";
+
 <h2>About This Tool</h2>
 <p>
-  Content Security Policy (CSP) is a security standard that helps prevent
-  cross-site scripting (XSS), clickjacking, and other code injection attacks.
-  This builder helps you create a policy by selecting the directives you need.
+  Content Security Policy (CSP) is a critical security layer that helps detect
+  and mitigate certain types of attacks, including Cross-Site Scripting (XSS)
+  and data injection attacks. This interactive builder helps you construct
+  complex CSP headers by selecting directives and adding trusted sources.
 </p>
 
 <h3>Features</h3>
 <ul>
   <li>
-    <strong>20+ directives</strong> organized by category
+    <strong>20+ directives</strong> organized by category (Fetch, Navigation,
+    Document, etc.)
   </li>
   <li>
-    <strong>Quick presets</strong> for Google Fonts, Analytics, YouTube, and
-    CDNs
+    <strong>Quick presets</strong> for common services like Google Fonts,
+    Analytics, YouTube, and CDNs
   </li>
   <li>
-    <strong>Custom domains</strong> — add your own URLs to any directive
+    <strong>Custom domains</strong> — add your own trusted URLs to any directive
   </li>
   <li>
-    <strong>7 export formats</strong> — HTTP header, Nginx, Apache, Cloudflare,
-    Netlify, Vercel, and meta tag
+    <strong>7 export formats</strong> — ready-to-use config for Nginx, Apache,
+    Cloudflare, Vercel, and more
   </li>
   <li>
-    <strong>Report-Only mode</strong> — test your policy before enforcing
+    <strong>Report-Only mode</strong> — test your policy without blocking
+    resources
   </li>
   <li>
-    <strong>Security warnings</strong> — get recommendations for a stronger
-    policy
+    <strong>Security assessment</strong> — real-time warnings for insecure
+    configurations like <code>'unsafe-inline'</code>
   </li>
 </ul>
 
@@ -55,6 +64,38 @@ appComponent: "CSPBuilder"
   </li>
   <li>Copy and add to your server configuration</li>
 </ol>
+
+<h3>Privacy</h3>
+<p>
+  Your security configurations are private. All policy building and formatting
+  happens entirely in your browser. No domains, URLs, or policy settings are
+  sent to any server.
+</p>
+
+<h3>Linux Command Reference</h3>
+<p>
+  Once you've configured your CSP, you can verify it using terminal tools.
+</p>
+
+<h4>Check CSP Header with curl</h4>
+<TerminalSession>
+  <TerminalSessionCommand>
+    curl -I https://jmrp.io | grep -i "content-security-policy"
+  </TerminalSessionCommand>
+  <TerminalSessionOutput title="CSP Header Output">
+    content-security-policy: default-src 'self'; script-src 'self' ...
+  </TerminalSessionOutput>
+</TerminalSession>
+
+<h4>Calculate Hash for Inline Script</h4>
+<TerminalSession>
+  <TerminalSessionCommand>
+    echo -n 'alert("Hello");' | openssl dgst -sha256 -binary | openssl base64
+  </TerminalSessionCommand>
+  <TerminalSessionOutput title="Base64 Hash">
+    qznLcsROU4CHAtWia...
+  </TerminalSessionOutput>
+</TerminalSession>
 
 <h3>Learn More</h3>
 <p>
