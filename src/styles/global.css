@@ -137,10 +137,6 @@
   background-color: transparent !important;
 }
 
-.astro-code {
-  background-color: transparent !important;
-}
-
 /*
  * Dark mode overrides — explicit [data-theme="dark"] or default (dark-first).
  * The default :root:not([data-theme]) = dark, but a @media query for

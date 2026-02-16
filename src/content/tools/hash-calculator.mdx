@@ -63,32 +63,6 @@ import {
   </li>
 </ol>
 
-<h3>Linux Command Reference</h3>
-<p>
-  You can also calculate these hashes manually in your terminal using standard
-  Linux utilities.
-</p>
-
-<h4>SHA-256 for CSP</h4>
-<TerminalSession>
-  <TerminalSessionCommand>
-    echo -n 'console.log("Hello CSP");' | openssl dgst -sha256 -binary | openssl base64
-  </TerminalSessionCommand>
-  <TerminalSessionOutput title="Base64 Hash Output">
-    7fJ6A1b9qS8r...[hash]...=
-  </TerminalSessionOutput>
-</TerminalSession>
-
-<h4>SHA-384 for SRI (Subresource Integrity)</h4>
-<TerminalSession>
-  <TerminalSessionCommand>
-    cat script.js | openssl dgst -sha384 -binary | openssl base64 -A
-  </TerminalSessionCommand>
-  <TerminalSessionOutput title="SRI Hash">
-    sha384-Nkhj...[hash]...
-  </TerminalSessionOutput>
-</TerminalSession>
-
 <h3>Important Notes</h3>
 <ul>
   <li>
@@ -123,3 +97,29 @@ import {
   in your browser using the Web Crypto API. Your script content is never
   transmitted over the network.
 </p>
+
+<h3>Linux Command Reference</h3>
+<p>
+  You can also calculate these hashes manually in your terminal using standard
+  Linux utilities.
+</p>
+
+<h4>SHA-256 for CSP</h4>
+<TerminalSession>
+  <TerminalSessionCommand>
+    echo -n 'console.log("Hello CSP");' | openssl dgst -sha256 -binary | openssl base64
+  </TerminalSessionCommand>
+  <TerminalSessionOutput title="Base64 Hash Output">
+    7fJ6A1b9qS8r...[hash]...=
+  </TerminalSessionOutput>
+</TerminalSession>
+
+<h4>SHA-384 for SRI (Subresource Integrity)</h4>
+<TerminalSession>
+  <TerminalSessionCommand>
+    cat script.js | openssl dgst -sha384 -binary | openssl base64 -A
+  </TerminalSessionCommand>
+  <TerminalSessionOutput title="Base64 Hash Output">
+    Nkhj...[base64 hash]...
+  </TerminalSessionOutput>
+</TerminalSession>
