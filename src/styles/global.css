@@ -134,6 +134,9 @@
   font-weight: var(--shiki-dark-font-weight) !important;
   color: var(--shiki-dark) !important;
   text-decoration: var(--shiki-dark-text-decoration) !important;
+}
+
+:root[data-theme="dark"] .astro-code {
   background-color: transparent !important;
 }
 
@@ -144,6 +147,9 @@
   font-weight: var(--shiki-light-font-weight) !important;
   color: var(--shiki-light) !important;
   text-decoration: var(--shiki-light-text-decoration) !important;
+}
+
+:root[data-theme="light"] .astro-code {
   background-color: transparent !important;
 }
 

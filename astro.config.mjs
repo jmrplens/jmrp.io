@@ -20,7 +20,7 @@ import { vitePrefetchNoncePlugin } from "./src/integrations/vite-plugin-prefetch
 import routerosGrammar from "./src/languages/routeros.tmLanguage.json";
 
 // Setup Shiki themes
-const githubLight = "github-light-high-contrast";
+const githubLight = "github-light";
 const githubDark = "github-dark-high-contrast";
 
 // Image optimizer cache location (also referenced in .gitignore and CI)

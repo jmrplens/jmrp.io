@@ -42,7 +42,7 @@ export function resolveShikiLanguage(
 
 /** Shared themes used by Code and FileContent components. */
 export const SHIKI_THEMES = {
-  light: "github-light-high-contrast",
+  light: "github-light",
   dark: "github-dark-high-contrast",
 } as const;
 
