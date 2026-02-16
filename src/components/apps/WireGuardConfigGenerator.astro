@@ -883,13 +883,16 @@ const uniqueId = `wg-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
       var mask = parts[1] || "24";
       var octets = ip.split(".");
       if (octets.length === 4) {
-        octets[3] = "1";
+        var netOctets = octets.slice();
+        netOctets[3] = "0";
+        var gwOctets = octets.slice();
+        gwOctets[3] = "1";
         return {
-          network: ip + "/" + mask,
-          gateway: octets.join(".") + "/" + mask,
-          gatewayIp: octets.join("."),
+          network: netOctets.join(".") + "/" + mask,
+          gateway: gwOctets.join(".") + "/" + mask,
+          gatewayIp: gwOctets.join("."),
           mask: mask,
-          base: parts[0],
+          base: netOctets.join("."),
         };
       }
       return {
