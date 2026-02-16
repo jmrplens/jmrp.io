@@ -202,7 +202,7 @@ function validateSchema(schema) {
     if (Array.isArray(ctx)) return ctx.some(hasSchemaOrg);
     if (ctx && typeof ctx === "object") {
       const values = Object.values(ctx);
-      return values.some((v) => typeof v === "string" && isSchemaOrgUrl(v));
+      return values.some(hasSchemaOrg);
     }
     return false;
   };

@@ -28,7 +28,7 @@ pnpm test:e2e --ui               # Interactive mode
 
 | Suite                            | Focus                                     |
 | -------------------------------- | ----------------------------------------- |
-| `accessibility.spec.ts`          | axe-core WCAG 2.1 AA (light + dark)       |
+| `accessibility.spec.ts`          | axe-core WCAG 2.2 AA (light + dark)       |
 | `deep.accessibility.spec.ts`     | Semantic landmarks, heading order         |
 | `keyboard.accessibility.spec.ts` | Menu, skip link, tab navigation           |
 | `tabs.accessibility.spec.ts`     | Zero-JS radio group keyboard nav          |

@@ -56,8 +56,8 @@ pnpm exec typos       # Spell check
 pnpm exec prettier --check .  # Format check
 ```
 
-4. **Available test suites** (12 total):
-   - `accessibility.spec.ts` — axe-core WCAG 2.1 AA (light + dark themes)
+4. **Available test suites** (11 total):
+   - `accessibility.spec.ts` — axe-core WCAG 2.2 AA (light + dark themes)
    - `deep.accessibility.spec.ts` — Semantic landmarks, heading order
    - `keyboard.accessibility.spec.ts` — Menu, skip link, tab navigation
    - `tabs.accessibility.spec.ts` — Zero-JS radio group keyboard nav

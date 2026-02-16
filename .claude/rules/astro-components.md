@@ -20,6 +20,7 @@ interface Props {
   description?: string;
 }
 const { title, description } = Astro.props;
+const titleId = `section-${crypto.getRandomValues(new Uint32Array(1))[0]}`;
 ---
 
 <section aria-labelledby={titleId}>

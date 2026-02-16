@@ -8,7 +8,7 @@
   "steps": [
     {
       "type": "command",
-      "command": "pnpm exec prettier --write ${filePath}",
+      "command": "jq -r '.tool_response.filePath // .tool_input.file_path // empty' | xargs -r pnpm exec prettier --write",
       "description": "Format the edited file with Prettier"
     }
   ]

@@ -1,0 +1,31 @@
+# Copilot Coding Agent Setup Steps
+# https://docs.github.com/en/copilot/how-tos/agents/copilot-coding-agent/customizing-the-development-environment-for-copilot-coding-agent
+#
+# These steps run when Copilot Coding Agent starts working on a task.
+# They install dependencies and verify the project builds successfully.
+
+name: "Copilot Setup Steps"
+
+on:
+  push:
+    paths:
+      - ".github/workflows/copilot-setup-steps.yml"
+
+jobs:
+  copilot-setup-steps:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: "Install dependencies"
+        run: |
+          corepack enable
+          pnpm install --frozen-lockfile
+
+      - name: "Verify build"
+        run: pnpm build
+
+      - name: "Run type checking"
+        run: pnpm typecheck

@@ -1,7 +1,7 @@
 ---
 /**
  * Tool Category Page.
- * Displays tools filtered by category (security, developer, network, embedded).
+ * Displays tools filtered by category (security, developer, network, embedded, mikrotik).
  * Pattern mirrors blog/tags/[tag].astro but for tool categories.
  */
 import BaseLayout from "@layouts/BaseLayout.astro";
@@ -40,7 +40,7 @@ const categoryMeta: Record<
   mikrotik: {
     name: "MikroTik Tools",
     description:
-      "Free MikroTik RouterOS tools — WireGuard VPN config generator, firewall rule builder, and network setup wizards for home and enterprise routers.",
+      "Free MikroTik RouterOS tools — WireGuard VPN config generator for dual-stack setups. All processing runs locally in your browser.",
     icon: "i-simple-icons:mikrotik",
   },
 };

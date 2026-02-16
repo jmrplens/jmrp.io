@@ -923,28 +923,49 @@ const uniqueId = `wg-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
     // ── Helper: parse subnet to get gateway ──
     function parseSubnet(cidr) {
       var parts = cidr.split("/");
+      if (parts.length !== 2) return null;
+
       var ip = parts[0];
-      var mask = parts[1] || "24";
-      var octets = ip.split(".");
-      if (octets.length === 4) {
-        var netOctets = octets.slice();
-        netOctets[3] = "0";
-        var gwOctets = octets.slice();
-        gwOctets[3] = "1";
-        return {
-          network: netOctets.join(".") + "/" + mask,
-          gateway: gwOctets.join(".") + "/" + mask,
-          gatewayIp: gwOctets.join("."),
-          mask: mask,
-          base: netOctets.join("."),
-        };
+      var prefix = parseInt(parts[1], 10);
+      if (isNaN(prefix) || prefix < 0 || prefix > 32) return null;
+
+      var octets = ip.split(".").map(Number);
+      if (
+        octets.length !== 4 ||
+        octets.some(function (o) {
+          return isNaN(o) || o < 0 || o > 255;
+        })
+      )
+        return null;
+
+      // Build 32-bit mask and compute network address with bitwise ops
+      var ipInt =
+        ((octets[0] << 24) |
+          (octets[1] << 16) |
+          (octets[2] << 8) |
+          octets[3]) >>>
+        0;
+      var maskInt = prefix === 0 ? 0 : (~0 << (32 - prefix)) >>> 0;
+      var networkInt = (ipInt & maskInt) >>> 0;
+
+      function toDotted(n) {
+        return [
+          (n >>> 24) & 255,
+          (n >>> 16) & 255,
+          (n >>> 8) & 255,
+          n & 255,
+        ].join(".");
       }
+
+      var networkAddress = toDotted(networkInt);
+      var gatewayIp = prefix < 31 ? toDotted(networkInt + 1) : networkAddress;
+
       return {
-        network: cidr,
-        gateway: ip,
-        gatewayIp: ip,
-        mask: mask,
-        base: parts[0],
+        network: networkAddress + "/" + prefix,
+        gateway: gatewayIp + "/" + prefix,
+        gatewayIp: gatewayIp,
+        mask: String(prefix),
+        base: networkAddress,
       };
     }
 
@@ -1347,6 +1368,7 @@ const uniqueId = `wg-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
 
       var vpn = parseSubnet(vpnSubnet);
       var lan = parseSubnet(lanSubnet);
+      if (!vpn || !lan) return;
       var v6 = ipv6On ? parseIpv6Prefix(vpnIpv6) : null;
       var peers = getPeers();
 
@@ -2076,7 +2098,8 @@ const uniqueId = `wg-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
 
   .wg-input:focus,
   .wg-select:focus {
-    outline: none;
+    outline: 2px solid var(--color-primary);
+    outline-offset: 1px;
     border-color: var(--color-primary);
   }
 

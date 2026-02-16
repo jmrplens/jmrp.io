@@ -24,6 +24,7 @@ jobs:
     name: "🚀 Initialize CI Report"
     runs-on: ubuntu-latest
     permissions:
+      contents: read
       pull-requests: write
     steps:
       - uses: actions/checkout@v6
@@ -635,6 +636,7 @@ jobs:
         ci-setup,
       ]
     permissions:
+      contents: read
       pull-requests: write
     steps:
       - uses: actions/checkout@v6
@@ -766,6 +768,7 @@ jobs:
       ]
     if: always() && (github.event_name == 'pull_request' || github.ref == 'refs/heads/main')
     permissions:
+      contents: read
       pull-requests: write
     steps:
       - uses: actions/checkout@v6
@@ -865,14 +868,15 @@ jobs:
           OUTCOME_FUNCTIONAL: ${{ needs.functional-tests.result }}
       - name: Deploy to Vercel
         id: deploy
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: |
-          export VERCEL_TOKEN=${{ secrets.VERCEL_TOKEN }}
           # Deploy to production domain if on main branch, otherwise preview
           IS_PROD=${{ github.ref == 'refs/heads/main' && '--prod' || '' }}
           # NOTE: To view PR reports without Vercel authentication, you must disable
           # 'Deployment Protection' for this project in your Vercel Dashboard.
           PR_ID=${{ github.event.pull_request.number || '0' }}
-          DEPLOY_URL=$(npx vercel deploy ./dist-reports --name jmrp-ci-reports --token=${{ secrets.VERCEL_TOKEN }} --yes --public $IS_PROD --meta prid=$PR_ID)
+          DEPLOY_URL=$(npx vercel deploy ./dist-reports --name jmrp-ci-reports --token="$VERCEL_TOKEN" --yes --public $IS_PROD --meta prid=$PR_ID)
           echo "url=$DEPLOY_URL" >> $GITHUB_OUTPUT
       - name: Update CI Comment (Final Results)
         uses: actions/github-script@v8

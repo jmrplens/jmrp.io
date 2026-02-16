@@ -54,7 +54,7 @@ Runs `scripts/run-verify.mjs` — 14 sequential steps (fail-fast except SonarClo
 | 13 | Analyze: SonarCloud Issues    | `node scripts/ci/get-sonar-issues.mjs` *(if SONAR_TOKEN + SONAR_PROJECT_KEY)* |
 | 14 | Tests: Playwright E2E         | `pnpm test:e2e`                                    |
 
-Steps 5-14 require a successful build. Steps 12-13 are conditional (skipped without env vars). SonarCloud failures are recorded but don't block subsequent steps.
+Steps 6-14 require a successful build. Steps 12-13 are conditional (skipped without env vars). SonarCloud failures are recorded but don't block subsequent steps.
 
 ## Individual Checks
 ```bash
