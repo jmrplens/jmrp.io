@@ -17,7 +17,7 @@ If you discover a security vulnerability in this project, please report it respo
 Instead, please use one of the following methods:
 
 1. **GitHub Security Advisories** (preferred): [Report a vulnerability](https://github.com/jmrplens/jmrp.io/security/advisories/new)
-2. **Email**: Contact the maintainer directly at the email listed on the [GitHub profile](https://github.com/jmrplens)
+2. **Email**: Contact the maintainer directly via [mail@jmrp.io](mailto:mail@jmrp.io)
 
 ### What to include
 

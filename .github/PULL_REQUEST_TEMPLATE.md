@@ -13,7 +13,7 @@
 
 ## Checklist
 
-- [ ] `pnpm verify` passes (14/14 steps)
+- [ ] `pnpm verify` passes (all steps)
 - [ ] Follows existing code conventions (see `CLAUDE.md`)
 - [ ] No `any` types — uses `unknown` with type guards
 - [ ] Accessibility: WCAG 2.2 AA compliance verified
