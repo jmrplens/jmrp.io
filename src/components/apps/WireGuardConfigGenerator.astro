@@ -1,6 +1,5 @@
 ---
 /* eslint-disable sonarjs/no-hardcoded-ip -- Default IPs are essential for a VPN config builder */
-/* eslint-disable astro/jsx-a11y/label-has-associated-control -- Peer template is cloned via JS; labels are visually and structurally paired with inputs */
 /**
  * WireGuardConfigGenerator Component
  * Interactive MikroTik WireGuard VPN configuration builder.
@@ -537,8 +536,13 @@ const uniqueId = `wg-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
           </div>
           <div class="wg-fields-row">
             <div class="wg-field">
-              <label class="wg-label">Name</label>
+              <label
+                class="wg-label"
+                for={`${uniqueId}-peer0-name`}
+                >Name</label
+              >
               <input
+                id={`${uniqueId}-peer0-name`}
                 class="wg-input wg-peer-name"
                 type="text"
                 value="wg_phone"
@@ -546,8 +550,13 @@ const uniqueId = `wg-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
               />
             </div>
             <div class="wg-field">
-              <label class="wg-label">Comment</label>
+              <label
+                class="wg-label"
+                for={`${uniqueId}-peer0-comment`}
+                >Comment</label
+              >
               <input
+                id={`${uniqueId}-peer0-comment`}
                 class="wg-input wg-peer-comment"
                 type="text"
                 value="Phone - Mobile VPN"
@@ -557,8 +566,13 @@ const uniqueId = `wg-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
           </div>
           <div class="wg-fields-row">
             <div class="wg-field">
-              <label class="wg-label">IPv4 Address</label>
+              <label
+                class="wg-label"
+                for={`${uniqueId}-peer0-ipv4`}
+                >IPv4 Address</label
+              >
               <input
+                id={`${uniqueId}-peer0-ipv4`}
                 class="wg-input wg-peer-ipv4"
                 type="text"
                 value="192.168.100.2"
@@ -566,8 +580,13 @@ const uniqueId = `wg-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
               />
             </div>
             <div class="wg-field wg-peer-ipv6-field">
-              <label class="wg-label">IPv6 Address</label>
+              <label
+                class="wg-label"
+                for={`${uniqueId}-peer0-ipv6`}
+                >IPv6 Address</label
+              >
               <input
+                id={`${uniqueId}-peer0-ipv6`}
                 class="wg-input wg-peer-ipv6"
                 type="text"
                 value="fd00:1111:2222:100::2"
@@ -577,8 +596,13 @@ const uniqueId = `wg-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
           </div>
           <div class="wg-fields-row">
             <div class="wg-field">
-              <label class="wg-label">Keepalive</label>
+              <label
+                class="wg-label"
+                for={`${uniqueId}-peer0-keepalive`}
+                >Keepalive</label
+              >
               <input
+                id={`${uniqueId}-peer0-keepalive`}
                 class="wg-input wg-peer-keepalive"
                 type="text"
                 value="25s"
@@ -586,8 +610,15 @@ const uniqueId = `wg-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
               />
             </div>
             <div class="wg-field">
-              <label class="wg-label">Key Generation</label>
-              <select class="wg-select wg-peer-keygen">
+              <label
+                class="wg-label"
+                for={`${uniqueId}-peer0-keygen`}
+                >Key Generation</label
+              >
+              <select
+                id={`${uniqueId}-peer0-keygen`}
+                class="wg-select wg-peer-keygen"
+              >
                 <option
                   value="auto"
                   selected
@@ -603,9 +634,14 @@ const uniqueId = `wg-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
           >
             <div class="wg-fields-row">
               <div class="wg-field">
-                <label class="wg-label">Private Key</label>
+                <label
+                  class="wg-label"
+                  for={`${uniqueId}-peer0-privkey`}
+                  >Private Key</label
+                >
                 <div class="wg-key-row">
                   <input
+                    id={`${uniqueId}-peer0-privkey`}
                     class="wg-input wg-peer-privkey"
                     type="text"
                     value=""
@@ -625,8 +661,13 @@ const uniqueId = `wg-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
                 </div>
               </div>
               <div class="wg-field">
-                <label class="wg-label">Public Key</label>
+                <label
+                  class="wg-label"
+                  for={`${uniqueId}-peer0-pubkey`}
+                  >Public Key</label
+                >
                 <input
+                  id={`${uniqueId}-peer0-pubkey`}
                   class="wg-input wg-peer-pubkey"
                   type="text"
                   value=""
@@ -637,12 +678,15 @@ const uniqueId = `wg-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
             </div>
             <div class="wg-fields-row">
               <div class="wg-field">
-                <label class="wg-label"
+                <label
+                  class="wg-label"
+                  for={`${uniqueId}-peer0-psk`}
                   >Preshared Key <span class="wg-field-hint">(optional)</span
                   ></label
                 >
                 <div class="wg-key-row">
                   <input
+                    id={`${uniqueId}-peer0-psk`}
                     class="wg-input wg-peer-psk"
                     type="text"
                     value=""
@@ -971,6 +1015,7 @@ const uniqueId = `wg-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
     }
 
     function createPeerHtml(index) {
+      var uid = uniqueId;
       var ipv4 = getNextIp(vpnSubnetInput.value, index);
       var ipv6 = getNextIpv6(vpnIpv6Input.value, index);
       var ipv6Display = enableIpv6Check.checked ? "" : ' style="display:none"';
@@ -1001,61 +1046,136 @@ const uniqueId = `wg-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
       html +=
         '<span class="i-mdi:close" aria-hidden="true"></span></button></div>';
       html += '<div class="wg-fields-row">';
-      html += '<div class="wg-field"><label class="wg-label">Name</label>';
       html +=
-        '<input class="wg-input wg-peer-name" type="text" value="' +
+        '<div class="wg-field"><label class="wg-label" for="' +
+        uid +
+        "-peer" +
+        index +
+        '-name">Name</label>';
+      html +=
+        '<input id="' +
+        uid +
+        "-peer" +
+        index +
+        '-name" class="wg-input wg-peer-name" type="text" value="' +
         name +
         '" placeholder="wg_client' +
         (index + 1) +
         '" /></div>';
-      html += '<div class="wg-field"><label class="wg-label">Comment</label>';
       html +=
-        '<input class="wg-input wg-peer-comment" type="text" value="' +
+        '<div class="wg-field"><label class="wg-label" for="' +
+        uid +
+        "-peer" +
+        index +
+        '-comment">Comment</label>';
+      html +=
+        '<input id="' +
+        uid +
+        "-peer" +
+        index +
+        '-comment" class="wg-input wg-peer-comment" type="text" value="' +
         comment +
         '" placeholder="Client description" /></div></div>';
       html += '<div class="wg-fields-row">';
       html +=
-        '<div class="wg-field"><label class="wg-label">IPv4 Address</label>';
+        '<div class="wg-field"><label class="wg-label" for="' +
+        uid +
+        "-peer" +
+        index +
+        '-ipv4">IPv4 Address</label>';
       html +=
-        '<input class="wg-input wg-peer-ipv4" type="text" value="' +
+        '<input id="' +
+        uid +
+        "-peer" +
+        index +
+        '-ipv4" class="wg-input wg-peer-ipv4" type="text" value="' +
         ipv4 +
         '" /></div>';
       html +=
         '<div class="wg-field wg-peer-ipv6-field"' +
         ipv6Display +
-        '><label class="wg-label">IPv6 Address</label>';
+        '><label class="wg-label" for="' +
+        uid +
+        "-peer" +
+        index +
+        '-ipv6">IPv6 Address</label>';
       html +=
-        '<input class="wg-input wg-peer-ipv6" type="text" value="' +
+        '<input id="' +
+        uid +
+        "-peer" +
+        index +
+        '-ipv6" class="wg-input wg-peer-ipv6" type="text" value="' +
         ipv6 +
         '" /></div></div>';
       html += '<div class="wg-fields-row">';
-      html += '<div class="wg-field"><label class="wg-label">Keepalive</label>';
       html +=
-        '<input class="wg-input wg-peer-keepalive" type="text" value="25s" /></div>';
+        '<div class="wg-field"><label class="wg-label" for="' +
+        uid +
+        "-peer" +
+        index +
+        '-keepalive">Keepalive</label>';
       html +=
-        '<div class="wg-field"><label class="wg-label">Key Generation</label>';
+        '<input id="' +
+        uid +
+        "-peer" +
+        index +
+        '-keepalive" class="wg-input wg-peer-keepalive" type="text" value="25s" /></div>';
       html +=
-        '<select class="wg-select wg-peer-keygen"><option value="auto" selected>RouterOS auto (recommended)</option>';
+        '<div class="wg-field"><label class="wg-label" for="' +
+        uid +
+        "-peer" +
+        index +
+        '-keygen">Key Generation</label>';
+      html +=
+        '<select id="' +
+        uid +
+        "-peer" +
+        index +
+        '-keygen" class="wg-select wg-peer-keygen"><option value="auto" selected>RouterOS auto (recommended)</option>';
       html +=
         '<option value="manual">Manual (enter keys)</option></select></div></div>';
       // Manual key fields
       html += '<div class="wg-peer-manual-keys" style="display:none">';
       html += '<div class="wg-fields-row">';
       html +=
-        '<div class="wg-field"><label class="wg-label">Private Key</label>';
+        '<div class="wg-field"><label class="wg-label" for="' +
+        uid +
+        "-peer" +
+        index +
+        '-privkey">Private Key</label>';
       html +=
-        '<div class="wg-key-row"><input class="wg-input wg-peer-privkey" type="text" value="" placeholder="Client private key (base64)" />';
+        '<div class="wg-key-row"><input id="' +
+        uid +
+        "-peer" +
+        index +
+        '-privkey" class="wg-input wg-peer-privkey" type="text" value="" placeholder="Client private key (base64)" />';
       html +=
         '<button type="button" class="wg-gen-key-btn" data-keygen="privkey" aria-label="Generate private key"><span class="i-mdi:autorenew" aria-hidden="true"></span></button></div></div>';
       html +=
-        '<div class="wg-field"><label class="wg-label">Public Key</label>';
+        '<div class="wg-field"><label class="wg-label" for="' +
+        uid +
+        "-peer" +
+        index +
+        '-pubkey">Public Key</label>';
       html +=
-        '<input class="wg-input wg-peer-pubkey" type="text" value="" placeholder="Auto-derived from private key" readonly /></div></div>';
+        '<input id="' +
+        uid +
+        "-peer" +
+        index +
+        '-pubkey" class="wg-input wg-peer-pubkey" type="text" value="" placeholder="Auto-derived from private key" readonly /></div></div>';
       html += '<div class="wg-fields-row">';
       html +=
-        '<div class="wg-field"><label class="wg-label">Preshared Key <span class="wg-field-hint">(optional)</span></label>';
+        '<div class="wg-field"><label class="wg-label" for="' +
+        uid +
+        "-peer" +
+        index +
+        '-psk">Preshared Key <span class="wg-field-hint">(optional)</span></label>';
       html +=
-        '<div class="wg-key-row"><input class="wg-input wg-peer-psk" type="text" value="" placeholder="Leave empty to disable preshared key" />';
+        '<div class="wg-key-row"><input id="' +
+        uid +
+        "-peer" +
+        index +
+        '-psk" class="wg-input wg-peer-psk" type="text" value="" placeholder="Leave empty to disable preshared key" />';
       html +=
         '<button type="button" class="wg-gen-key-btn" data-keygen="psk" aria-label="Generate preshared key"><span class="i-mdi:autorenew" aria-hidden="true"></span></button></div></div></div>';
       html += "</div>";
@@ -2068,8 +2188,8 @@ const uniqueId = `wg-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
     display: flex;
     gap: 0.25rem;
     align-items: center;
-    margin-left: auto;
     padding: 0.25rem 0.625rem;
+    margin-left: auto;
     font-size: 0.7rem;
     font-weight: var(--fw-semibold);
     color: var(--color-primary);
@@ -2104,9 +2224,9 @@ const uniqueId = `wg-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
 
   .wg-gen-key-btn {
     display: flex;
+    flex-shrink: 0;
     align-items: center;
     justify-content: center;
-    flex-shrink: 0;
     width: 32px;
     height: 32px;
     padding: 0;
