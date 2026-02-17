@@ -1,6 +1,41 @@
 const fs = require("node:fs");
 const path = require("node:path");
 
+/**
+ * Filters URLs by the LOCALE_FILTER env var.
+ * @param {string[]} urls - Full list of URLs.
+ * @returns {string[]} Filtered list.
+ */
+const filterByLocale = (urls) => {
+  const locale = process.env.LOCALE_FILTER;
+  if (locale === "en") return urls.filter((u) => !u.includes("/es/"));
+  if (locale === "es") return urls.filter((u) => u.includes("/es/"));
+  return urls;
+};
+
+/**
+ * Keeps only the first tag page and first category page per locale.
+ * @param {string[]} urls - URL list.
+ * @returns {string[]} Deduplicated list.
+ */
+const deduplicatePages = (urls) => {
+  const seen = { enTag: false, esTag: false, enCat: false, esCat: false };
+  return urls.filter((url) => {
+    const isEs = url.includes("/es/");
+    if (url.includes("/blog/tags/")) {
+      const key = isEs ? "esTag" : "enTag";
+      if (seen[key]) return false;
+      seen[key] = true;
+    }
+    if (url.includes("/tools/categories/")) {
+      const key = isEs ? "esCat" : "enCat";
+      if (seen[key]) return false;
+      seen[key] = true;
+    }
+    return true;
+  });
+};
+
 const getUrls = () => {
   try {
     const sitemapPath = path.join(__dirname, "dist", "sitemap-0.xml");
@@ -29,24 +64,14 @@ const getUrls = () => {
       urls.push(url);
     }
 
-    // Optimization: Only analyze the first tag page encountered
-    let tagFound = false;
-    // Optimization: Only analyze the first tool category page encountered
-    let categoryFound = false;
-    urls = urls.filter((url) => {
-      if (url.includes("/blog/tags/")) {
-        if (tagFound) return false;
-        tagFound = true;
-      }
-      if (url.includes("/tools/categories/")) {
-        if (categoryFound) return false;
-        categoryFound = true;
-      }
-      return true;
-    });
+    urls = filterByLocale(urls);
+    urls = deduplicatePages(urls);
 
+    const filterLabel = process.env.LOCALE_FILTER
+      ? ` [locale=${process.env.LOCALE_FILTER}]`
+      : "";
     console.log(
-      `📄 Found ${urls.length} optimized pages in sitemap for Lighthouse analysis.`,
+      `📄 Found ${urls.length} optimized pages${filterLabel} in sitemap for Lighthouse analysis.`,
     );
     return urls;
   } catch (error) {

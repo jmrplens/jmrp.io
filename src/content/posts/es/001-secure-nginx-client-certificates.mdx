@@ -1,13 +1,14 @@
 ---
-title: "Mastering Mutual TLS (mTLS) with Nginx: A Deep Dive"
+title: "Dominando Mutual TLS (mTLS) con Nginx: Una Guía Completa"
 slug: "001-secure-nginx-client-certificates"
-description: "Implement Mutual TLS (mTLS) with Nginx — create a CA, generate client certificates, configure CRL and OCSP revocation, and enable Zero Trust."
+description: "Implementa Mutual TLS (mTLS) con Nginx — crea una CA, genera certificados de cliente, configura revocación CRL y OCSP, y habilita Zero Trust."
 author: "José Manuel Requena Plens"
 authorEmail: "mail@jmrp.io"
 publishedDate: 2025-12-16
 updatedDate: 2025-12-16
 draft: false
-coverImage: "../../assets/images/blog/mtls-auth.webp"
+lang: "es"
+coverImage: "../../../assets/images/blog/mtls-auth.webp"
 tags: ["Nginx", "Security", "mTLS"]
 ---
 
@@ -20,193 +21,193 @@ import Collapsible from "@components/ui/Collapsible.astro";
 import Mermaid from "@components/ui/Mermaid.astro";
 import Table from "@components/ui/Table.astro";
 
-**[Mutual TLS (mTLS)](https://www.cloudflare.com/learning/access-management/what-is-mutual-tls/)** represents the gold standard for securing private web services. Unlike passwords, API keys, or even 2FA, mTLS requires the client (your browser/device) to present a cryptographic certificate signed by your own Certificate Authority (CA)—a secret that _cannot_ be phished, guessed, or brute-forced.
+**[Mutual TLS (mTLS)](https://www.cloudflare.com/learning/access-management/what-is-mutual-tls/)** representa el estándar de referencia para asegurar servicios web privados. A diferencia de las contraseñas, las API keys o incluso el 2FA, mTLS requiere que el cliente (tu navegador/dispositivo) presente un certificado criptográfico firmado por tu propia Certificate Authority (CA) — un secreto que _no puede_ ser robado mediante phishing, adivinado o forzado por fuerza bruta.
 
-If the client doesn't have the certificate, Nginx rejects the connection **before** the application even loads. This is perfect for securing private administration panels, NAS interfaces, or internal tools.
+Si el cliente no tiene el certificado, Nginx rechaza la conexión **antes** de que la aplicación siquiera se cargue. Esto es perfecto para asegurar paneles de administración privados, interfaces NAS o herramientas internas.
 
-In this comprehensive guide, I'll walk you through implementing mTLS on Nginx, covering everything from creating a certificate authority to advanced topics like **OCSP vs CRL revocation**, **Zero Trust architecture**, and **performance tuning**. This guide incorporates best practices from [Smallstep](https://smallstep.com/hello-mtls), [SSL.com](https://www.ssl.com/article/authenticating-users-and-iot-devices-with-mutual-tls/), and [official Nginx documentation](https://nginx.org/en/docs/http/ngx_http_ssl_module.html).
+En esta guía completa, te guiaré a través de la implementación de mTLS en Nginx, cubriendo todo desde la creación de una certificate authority hasta temas avanzados como **revocación OCSP vs CRL**, **arquitectura Zero Trust** y **ajuste de rendimiento**. Esta guía incorpora las mejores prácticas de [Smallstep](https://smallstep.com/hello-mtls), [SSL.com](https://www.ssl.com/article/authenticating-users-and-iot-devices-with-mutual-tls/) y la [documentación oficial de Nginx](https://nginx.org/en/docs/http/ngx_http_ssl_module.html).
 
 ---
 
-## Why mTLS? The Zero Trust Approach
+## ¿Por qué mTLS? El enfoque Zero Trust
 
-In the modern security landscape, the perimeter-based model ("trust everything inside the firewall") is obsolete. **[Zero Trust](https://www.cloudflare.com/learning/security/glossary/what-is-zero-trust/)** assumes that attackers may already be inside your network and requires verification for every access request.
+En el panorama de seguridad actual, el modelo basado en perímetro ("confía en todo lo que está dentro del firewall") está obsoleto. **[Zero Trust](https://www.cloudflare.com/learning/security/glossary/what-is-zero-trust/)** asume que los atacantes podrían estar ya dentro de tu red y requiere verificación para cada solicitud de acceso.
 
-mTLS is a cornerstone of Zero Trust architecture because it provides **mutual authentication**: both the server and client verify each other's identity using cryptographic certificates.
+mTLS es una piedra angular de la arquitectura Zero Trust porque proporciona **autenticación mutua**: tanto el servidor como el cliente verifican la identidad del otro mediante certificados criptográficos.
 
-<Table title="mTLS vs Other Authentication Methods">
+<Table title="mTLS vs Otros Métodos de Autenticación">
   <thead>
     <tr>
-      <th scope="col">Method</th>
-      <th scope="col">Phishable?</th>
-      <th scope="col">Credential Storage</th>
-      <th scope="col">Automation</th>
+      <th scope="col">Método</th>
+      <th scope="col">¿Phishing posible?</th>
+      <th scope="col">Almacenamiento de credenciales</th>
+      <th scope="col">Automatización</th>
       <th scope="col">Zero Trust</th>
     </tr>
   </thead>
   <tbody>
     <tr>
-      <td><strong>Username/Password</strong></td>
-      <td data-status="error">Yes</td>
-      <td>Server database</td>
-      <td>Easy</td>
+      <td><strong>Usuario/Contraseña</strong></td>
+      <td data-status="error">Sí</td>
+      <td>Base de datos del servidor</td>
+      <td>Fácil</td>
       <td data-status="error">No</td>
     </tr>
     <tr>
       <td><strong>API Keys</strong></td>
-      <td data-status="error">Yes (if exposed)</td>
-      <td>Server + client</td>
-      <td>Easy</td>
+      <td data-status="error">Sí (si se exponen)</td>
+      <td>Servidor + cliente</td>
+      <td>Fácil</td>
       <td data-status="error">No</td>
     </tr>
     <tr>
-      <td><strong>Password + 2FA</strong></td>
-      <td data-status="warning">Partially</td>
-      <td>Server + authenticator</td>
-      <td>Hard</td>
-      <td data-status="warning">Partial</td>
+      <td><strong>Contraseña + 2FA</strong></td>
+      <td data-status="warning">Parcialmente</td>
+      <td>Servidor + autenticador</td>
+      <td>Difícil</td>
+      <td data-status="warning">Parcial</td>
     </tr>
     <tr>
       <td><strong>mTLS</strong></td>
       <td data-status="success">No</td>
       <td>Hardware/keychain</td>
-      <td>Medium</td>
-      <td data-status="success">Yes</td>
+      <td>Medio</td>
+      <td data-status="success">Sí</td>
     </tr>
   </tbody>
 </Table>
 
-### Why mTLS cannot be phished
+### Por qué mTLS no puede ser víctima de phishing
 
-Unlike passwords, client certificates:
+A diferencia de las contraseñas, los certificados de cliente:
 
-1. **Are never transmitted** — only a signature proving possession is sent
-2. **Are bound to hardware** — stored in secure keychains/TPMs
-3. **Require private key access** — the private key never leaves the device
-4. **Are validated cryptographically** — forging is computationally infeasible
+1. **Nunca se transmiten** — solo se envía una firma que demuestra la posesión
+2. **Están vinculados al hardware** — almacenados en keychains/TPMs seguros
+3. **Requieren acceso a la clave privada** — la clave privada nunca sale del dispositivo
+4. **Se validan criptográficamente** — falsificarlos es computacionalmente inviable
 
 <Callout type="keypoint" icon="mdi:shield-check">
-  **Key Insight:** With mTLS, even if an attacker steals your password AND intercepts your 2FA code, they still cannot access the protected resource without the certificate file installed on an authorized device.
+  **Punto Clave:** Con mTLS, incluso si un atacante roba tu contraseña E intercepta tu código 2FA, seguiría sin poder acceder al recurso protegido sin el archivo de certificado instalado en un dispositivo autorizado.
 </Callout>
 
 ---
 
-## One-Way TLS vs Mutual TLS
+## TLS Unidireccional vs Mutual TLS
 
-Understanding the difference is fundamental:
+Entender la diferencia es fundamental:
 
-<Table title="One-Way TLS vs Mutual TLS">
+<Table title="TLS Unidireccional vs Mutual TLS">
   <thead>
     <tr>
-      <th scope="col">Aspect</th>
-      <th scope="col">One-Way TLS (Standard HTTPS)</th>
+      <th scope="col">Aspecto</th>
+      <th scope="col">TLS Unidireccional (HTTPS Estándar)</th>
       <th scope="col">Mutual TLS (mTLS)</th>
     </tr>
   </thead>
   <tbody>
     <tr>
-      <td><strong>Server authenticates to</strong></td>
-      <td>Client (browser)</td>
-      <td>Client (browser)</td>
+      <td><strong>El servidor se autentica ante</strong></td>
+      <td>Cliente (navegador)</td>
+      <td>Cliente (navegador)</td>
     </tr>
     <tr>
-      <td><strong>Client authenticates to</strong></td>
-      <td data-status="error">Not verified</td>
-      <td data-status="success">Server verifies client cert</td>
+      <td><strong>El cliente se autentica ante</strong></td>
+      <td data-status="error">No se verifica</td>
+      <td data-status="success">El servidor verifica el certificado del cliente</td>
     </tr>
     <tr>
-      <td><strong>Certificate requirement</strong></td>
-      <td>Server only</td>
-      <td>Both server and client</td>
+      <td><strong>Requisito de certificado</strong></td>
+      <td>Solo el servidor</td>
+      <td>Tanto servidor como cliente</td>
     </tr>
     <tr>
-      <td><strong>Use case</strong></td>
-      <td>Public websites</td>
-      <td>APIs, admin panels, IoT, B2B</td>
+      <td><strong>Caso de uso</strong></td>
+      <td>Sitios web públicos</td>
+      <td>APIs, paneles de administración, IoT, B2B</td>
     </tr>
   </tbody>
 </Table>
 
-### The standard HTTPS model
+### El modelo HTTPS estándar
 
 
 
-In regular HTTPS, only the server presents a certificate.
+En el HTTPS regular, solo el servidor presenta un certificado.
 
- The client (browser) verifies it, but the server has no way to verify _who_ the client is—it just knows the connection is encrypted.
+ El cliente (navegador) lo verifica, pero el servidor no tiene forma de verificar _quién_ es el cliente — solo sabe que la conexión está cifrada.
 
-### The mTLS enhancement
+### La mejora de mTLS
 
 
 
-mTLS adds a second step: after verifying the server, the **server requests a certificate from the client**.
+mTLS añade un segundo paso: después de verificar el servidor, el **servidor solicita un certificado al cliente**.
 
- Only clients presenting a valid certificate signed by a trusted CA are allowed to continue.
+ Solo los clientes que presentan un certificado válido firmado por una CA de confianza pueden continuar.
 
 ---
 
-## The mTLS handshake flow
+## El flujo del handshake mTLS
 
 
 
-Understanding the handshake helps with debugging.
+Entender el handshake ayuda con la depuración.
 
- Here's the complete flow:
+ Aquí está el flujo completo:
 
-<Mermaid caption="Nginx mTLS Handshake Flow" maxWidth="550px">
+<Mermaid caption="Flujo del Handshake mTLS en Nginx" maxWidth="550px">
 ```mermaid-render
 sequenceDiagram
-    participant C as Client
-    participant N as Nginx Server
+    participant C as Cliente
+    participant N as Servidor Nginx
     
-    Note over C,N: TCP Connection Established
+    Note over C,N: Conexión TCP Establecida
     
-    C->>N: ClientHello (TLS version, cipher suites)
-    N->>C: ServerHello + Server Certificate
+    C->>N: ClientHello (versión TLS, cipher suites)
+    N->>C: ServerHello + Certificado del Servidor
     N->>C: CertificateRequest
-    Note right of N: "Send me YOUR certificate"
+    Note right of N: "Envíame TU certificado"
     
-    C->>N: Client Certificate
-    C->>N: CertificateVerify (signature proof)
+    C->>N: Certificado del Cliente
+    C->>N: CertificateVerify (prueba de firma)
     C->>N: Finished
     
-    Note over N: Verification Pipeline
-    N->>N: 1. Validate CA signature chain
-    N->>N: 2. Check against CRL/OCSP
-    N->>N: 3. Verify CN/SAN if required
+    Note over N: Pipeline de Verificación
+    N->>N: 1. Validar cadena de firma CA
+    N->>N: 2. Comprobar contra CRL/OCSP
+    N->>N: 3. Verificar CN/SAN si es necesario
     
-    alt All Checks Pass
+    alt Todas las Comprobaciones Pasan
         N->>C: Finished + 200 OK
-        Note over C,N: Encrypted Session Begins
-    else Any Check Fails
+        Note over C,N: Comienza la Sesión Cifrada
+    else Alguna Comprobación Falla
         N->>C: 400 Bad Request / 403 Forbidden
-        Note over C,N: Connection Terminated
+        Note over C,N: Conexión Terminada
     end
 ```
 </Mermaid>
 
-### Key steps explained
+### Pasos clave explicados
 
-1. **ClientHello**: Client initiates TLS, proposing cipher suites
-2. **ServerHello**: Server responds with its certificate
-3. **CertificateRequest**: Server asks client to prove identity
-4. **Client Certificate**: Client sends its certificate
-5. **CertificateVerify**: Client proves it owns the private key (without revealing it)
-6. **Verification**: Server validates the entire chain
+1. **ClientHello**: El cliente inicia TLS, proponiendo cipher suites
+2. **ServerHello**: El servidor responde con su certificado
+3. **CertificateRequest**: El servidor solicita al cliente que demuestre su identidad
+4. **Certificado del Cliente**: El cliente envía su certificado
+5. **CertificateVerify**: El cliente demuestra que posee la clave privada (sin revelarla)
+6. **Verificación**: El servidor valida toda la cadena
 
 ---
 
-## Prerequisites and directory setup
+## Requisitos previos y configuración de directorios
 
-Before starting, ensure you have:
+Antes de comenzar, asegúrate de tener:
 
-- A Linux server (Debian/Ubuntu/CentOS/RHEL) with Nginx installed
-- [OpenSSL](https://docs.openssl.org/) (minimum version 1.1.1, check with `openssl version`, recommended 3.5.0+)
-- Root or sudo access
+- Un servidor Linux (Debian/Ubuntu/CentOS/RHEL) con Nginx instalado
+- [OpenSSL](https://docs.openssl.org/) (versión mínima 1.1.1, compruébalo con `openssl version`, recomendado 3.5.0+)
+- Acceso root o sudo
 
-### Create your PKI directory
+### Crea tu directorio PKI
 
-A well-organized directory structure is essential for managing certificates:
+Una estructura de directorios bien organizada es esencial para gestionar certificados:
 
 <TerminalCommand>
 ```bash
@@ -225,64 +226,64 @@ echo 1000 | sudo tee crlnumber > /dev/null
 </TerminalCommand>
 
 <Callout type="info" icon="mdi:folder-outline">
-  **Directory Structure Explained:**
+  **Estructura de Directorios Explicada:**
   
-  - `ca/` — Certificate Authority certificates
-  - `certs/` — Issued client and server certificates
-  - `private/` — Private keys (chmod 700!)
-  - `crl/` — Certificate Revocation Lists
-  - `newcerts/` — OpenSSL's archive of issued certs
+  - `ca/` — Certificados de la Certificate Authority
+  - `certs/` — Certificados de cliente y servidor emitidos
+  - `private/` — Claves privadas (¡chmod 700!)
+  - `crl/` — Listas de Revocación de Certificados (CRL)
+  - `newcerts/` — Archivo de certificados emitidos por OpenSSL
 </Callout>
 
 ---
 
-## Creating your certificate authority
+## Creando tu certificate authority
 
 
 
-A CA is the root of trust in your PKI.
+Una CA es la raíz de confianza en tu PKI.
 
- All client certificates must be signed by this CA for Nginx to accept them.
+ Todos los certificados de cliente deben estar firmados por esta CA para que Nginx los acepte.
 
-### CA design decisions
+### Decisiones de diseño de la CA
 
-Before generating, decide on these parameters:
+Antes de generar, decide sobre estos parámetros:
 
-<Table title="CA Configuration Choices">
+<Table title="Opciones de Configuración de la CA">
   <thead>
     <tr>
-      <th scope="col">Parameter</th>
-      <th scope="col">Recommendation</th>
-      <th scope="col">Rationale</th>
+      <th scope="col">Parámetro</th>
+      <th scope="col">Recomendación</th>
+      <th scope="col">Justificación</th>
     </tr>
   </thead>
   <tbody>
     <tr>
-      <td><strong>Key Size</strong></td>
-      <td>4096-bit RSA or P-384 ECDSA</td>
-      <td>Stronger security margin against classical attacks</td>
+      <td><strong>Tamaño de Clave</strong></td>
+      <td>RSA de 4096 bits o ECDSA P-384</td>
+      <td>Mayor margen de seguridad contra ataques clásicos</td>
     </tr>
     <tr>
-      <td><strong>Validity</strong></td>
-      <td>10 years for CA</td>
-      <td>Longer than any client cert</td>
+      <td><strong>Validez</strong></td>
+      <td>10 años para la CA</td>
+      <td>Más largo que cualquier certificado de cliente</td>
     </tr>
     <tr>
-      <td><strong>Hash Algorithm</strong></td>
-      <td>SHA-256 minimum</td>
-      <td>SHA-1 is deprecated</td>
+      <td><strong>Algoritmo Hash</strong></td>
+      <td>SHA-256 como mínimo</td>
+      <td>SHA-1 está obsoleto</td>
     </tr>
     <tr>
-      <td><strong>Extensions</strong></td>
+      <td><strong>Extensiones</strong></td>
       <td><code>CA:TRUE</code>, <code>keyUsage:keyCertSign,cRLSign</code></td>
-      <td>Required for signing certs and CRLs</td>
+      <td>Necesario para firmar certificados y CRLs</td>
     </tr>
   </tbody>
 </Table>
 
-### Create the OpenSSL configuration
+### Crea la configuración de OpenSSL
 
-Create a comprehensive OpenSSL configuration file:
+Crea un archivo de configuración completo de OpenSSL:
 
 <FileContent filename="/etc/nginx/pki/openssl.cnf" icon="mdi:file-cog">
 ```ini
@@ -365,171 +366,171 @@ extendedKeyUsage        = clientAuth
 ```
 </FileContent>
 
-### Configuration breakdown
+### Desglose de la configuración
 
-Let's dissect the `openssl.cnf` file to understand what each section controls.
+Analicemos el archivo `openssl.cnf` para entender qué controla cada sección.
 
-#### 1. CA Global Settings (`[ ca ]` & `[ CA_default ]`)
+#### 1. Configuración global de la CA (`[ ca ]` y `[ CA_default ]`)
 
-This section tells OpenSSL where to find your files and how to sign certificates.
+Esta sección indica a OpenSSL dónde encontrar los archivos y cómo firmar los certificados.
 
-<Table title="CA Default Settings">
+<Table title="Configuración por Defecto de la CA">
   <thead>
     <tr>
-      <th scope="col">Directive</th>
-      <th scope="col">Value/Type</th>
-      <th scope="col">Description</th>
+      <th scope="col">Directiva</th>
+      <th scope="col">Valor/Tipo</th>
+      <th scope="col">Descripción</th>
     </tr>
   </thead>
   <tbody>
     <tr>
       <td><code>dir</code></td>
-      <td>Path (String)</td>
-      <td>Base directory for your PKI (e.g., <code>/etc/nginx/pki</code>).</td>
+      <td>Ruta (String)</td>
+      <td>Directorio base de tu PKI (p. ej., <code>/etc/nginx/pki</code>).</td>
     </tr>
     <tr>
       <td><code>database</code></td>
-      <td>File Path</td>
-      <td>Text file (<code>index.txt</code>) tracking all issued and revoked certificates.</td>
+      <td>Ruta de archivo</td>
+      <td>Archivo de texto (<code>index.txt</code>) que registra todos los certificados emitidos y revocados.</td>
     </tr>
     <tr>
       <td><code>new_certs_dir</code></td>
-      <td>Directory Path</td>
-      <td>Where copies of every issued certificate are archived by serial number.</td>
+      <td>Ruta de directorio</td>
+      <td>Donde se archivan copias de cada certificado emitido por número de serie.</td>
     </tr>
     <tr>
       <td><code>certificate</code></td>
-      <td>File Path</td>
-      <td>The CA's own public certificate used to sign others.</td>
+      <td>Ruta de archivo</td>
+      <td>El certificado público de la CA utilizado para firmar otros.</td>
     </tr>
     <tr>
       <td><code>private_key</code></td>
-      <td>File Path</td>
-      <td>The CA's private key. <strong>Must be protected.</strong></td>
+      <td>Ruta de archivo</td>
+      <td>La clave privada de la CA. <strong>Debe estar protegida.</strong></td>
     </tr>
     <tr>
       <td><code>default_days</code></td>
-      <td>Integer (Days)</td>
-      <td>Default validity period for issued certificates (e.g., 365).</td>
+      <td>Entero (Días)</td>
+      <td>Período de validez por defecto para los certificados emitidos (p. ej., 365).</td>
     </tr>
     <tr>
       <td><code>policy</code></td>
-      <td>Section Name</td>
-      <td>Which policy section to enforce for matching DN fields (e.g., <code>policy_loose</code>).</td>
+      <td>Nombre de sección</td>
+      <td>Qué sección de política aplicar para la coincidencia de campos DN (p. ej., <code>policy_loose</code>).</td>
     </tr>
     <tr>
       <td><code>copy_extensions</code></td>
       <td><code>copy</code> | <code>none</code></td>
-      <td><strong>Crucial:</strong> Copies SANs (Subject Alternative Names) from the CSR to the final certificate.</td>
+      <td><strong>Crucial:</strong> Copia los SANs (Subject Alternative Names) del CSR al certificado final.</td>
     </tr>
   </tbody>
 </Table>
 
-#### 2. Validation Policies (`[ policy_loose ]`)
+#### 2. Políticas de validación (`[ policy_loose ]`)
 
-Controls which fields in the Certificate Signing Request (CSR) must match the CA's own fields.
+Controla qué campos en la Solicitud de Firma de Certificado (CSR) deben coincidir con los propios campos de la CA.
 
-<Table title="Policy Rules">
+<Table title="Reglas de Política">
   <thead>
     <tr>
-      <th scope="col">Field</th>
-      <th scope="col">Rule</th>
-      <th scope="col">Meaning</th>
+      <th scope="col">Campo</th>
+      <th scope="col">Regla</th>
+      <th scope="col">Significado</th>
     </tr>
   </thead>
   <tbody>
     <tr>
       <td><code>countryName</code></td>
       <td><code>optional</code></td>
-      <td>The client doesn't need to specify a country.</td>
+      <td>El cliente no necesita especificar un país.</td>
     </tr>
     <tr>
       <td><code>commonName</code></td>
       <td><code>supplied</code></td>
-      <td><strong>Required.</strong> The client must provide a Common Name (used for identification).</td>
+      <td><strong>Obligatorio.</strong> El cliente debe proporcionar un Common Name (utilizado para identificación).</td>
     </tr>
     <tr>
       <td><code>organizationName</code></td>
       <td><code>optional</code></td>
-      <td>Can be left empty.</td>
+      <td>Puede dejarse vacío.</td>
     </tr>
   </tbody>
 </Table>
 
-#### 3. Request Settings (`[ req ]`)
+#### 3. Configuración de solicitudes (`[ req ]`)
 
-Defaults used when you run `openssl req` to generate keys or CSRs.
+Valores por defecto utilizados al ejecutar `openssl req` para generar claves o CSRs.
 
-<Table title="Request Defaults">
+<Table title="Valores por Defecto de Solicitudes">
   <thead>
     <tr>
-      <th scope="col">Directive</th>
-      <th scope="col">Value</th>
-      <th scope="col">Description</th>
+      <th scope="col">Directiva</th>
+      <th scope="col">Valor</th>
+      <th scope="col">Descripción</th>
     </tr>
   </thead>
   <tbody>
     <tr>
       <td><code>default_bits</code></td>
-      <td>Integer (e.g., 4096)</td>
-      <td>Default key size if not specified.</td>
+      <td>Entero (p. ej., 4096)</td>
+      <td>Tamaño de clave por defecto si no se especifica.</td>
     </tr>
     <tr>
       <td><code>distinguished_name</code></td>
-      <td>Section Name</td>
-      <td>Points to the section defining default DN values (<code>[ req_distinguished_name ]</code>).</td>
+      <td>Nombre de sección</td>
+      <td>Apunta a la sección que define los valores DN por defecto (<code>[ req_distinguished_name ]</code>).</td>
     </tr>
     <tr>
       <td><code>x509_extensions</code></td>
-      <td>Section Name</td>
-      <td>Extensions to add when creating a <strong>self-signed</strong> root certificate (e.g., <code>v3_ca</code>).</td>
+      <td>Nombre de sección</td>
+      <td>Extensiones a añadir al crear un certificado raíz <strong>autofirmado</strong> (p. ej., <code>v3_ca</code>).</td>
     </tr>
   </tbody>
 </Table>
 
-#### 4. Certificate Extensions (`[ v3_* ]`)
+#### 4. Extensiones de certificado (`[ v3_* ]`)
 
-These sections define the "capabilities" of the certificates you issue. This is the security core.
+Estas secciones definen las "capacidades" de los certificados que emites. Este es el núcleo de seguridad.
 
-<Table title="Extension Profiles">
+<Table title="Perfiles de Extensiones">
   <thead>
     <tr>
-      <th scope="col">Profile/Directive</th>
-      <th scope="col">Value</th>
-      <th scope="col">Effect</th>
+      <th scope="col">Perfil/Directiva</th>
+      <th scope="col">Valor</th>
+      <th scope="col">Efecto</th>
     </tr>
   </thead>
   <tbody>
     <tr>
-      <td colspan="3"><strong>[ v3_ca ] - For the Root CA</strong></td>
+      <td colspan="3"><strong>[ v3_ca ] - Para la CA Raíz</strong></td>
     </tr>
     <tr>
       <td><code>basicConstraints</code></td>
       <td><code>critical, CA:TRUE</code></td>
-      <td><strong>Identity:</strong> Marks this cert as a Certificate Authority that can sign others.</td>
+      <td><strong>Identidad:</strong> Marca este certificado como una Certificate Authority que puede firmar otros.</td>
     </tr>
     <tr>
       <td><code>keyUsage</code></td>
       <td><code>keyCertSign, cRLSign</code></td>
-      <td><strong>Permissions:</strong> Allowed to sign certificates and CRLs.</td>
+      <td><strong>Permisos:</strong> Autorizado para firmar certificados y CRLs.</td>
     </tr>
     <tr>
-      <td colspan="3"><strong>[ v3_client ] - For User Devices</strong></td>
+      <td colspan="3"><strong>[ v3_client ] - Para Dispositivos de Usuario</strong></td>
     </tr>
     <tr>
       <td><code>basicConstraints</code></td>
       <td><code>critical, CA:FALSE</code></td>
-      <td><strong>Restriction:</strong> This certificate <strong>cannot</strong> be used to sign other certificates.</td>
+      <td><strong>Restricción:</strong> Este certificado <strong>no puede</strong> utilizarse para firmar otros certificados.</td>
     </tr>
     <tr>
       <td><code>extendedKeyUsage</code></td>
       <td><code>clientAuth</code></td>
-      <td><strong>Purpose:</strong> Valid <strong>only</strong> for authenticating a client to a server (mTLS).</td>
+      <td><strong>Propósito:</strong> Válido <strong>únicamente</strong> para autenticar un cliente ante un servidor (mTLS).</td>
     </tr>
   </tbody>
 </Table>
 
-### Generate the CA key and certificate
+### Genera la clave y el certificado de la CA
 
 <TerminalCommand>
 ```bash
@@ -550,7 +551,7 @@ sudo openssl req -new -x509 -days 3650 \
 ```
 </TerminalCommand>
 
-### Verify your CA certificate
+### Verifica tu certificado de CA
 
 <TerminalCommand>
 ```bash
@@ -558,7 +559,7 @@ openssl x509 -in ca/ca.crt -text -noout | head -30
 ```
 </TerminalCommand>
 
-<TerminalOutput title="CA Certificate Details">
+<TerminalOutput title="Detalles del Certificado de la CA">
 Certificate:
     Data:
         Version: 3 (0x2)
@@ -584,42 +585,42 @@ Certificate:
 
 ---
 
-## Generating client certificates
+## Generando certificados de cliente
 
-Each client (device, user, or service) needs its own certificate signed by your CA.
+Cada cliente (dispositivo, usuario o servicio) necesita su propio certificado firmado por tu CA.
 
-### SAN vs CN: which to use?
+### SAN vs CN: ¿cuál usar?
 
 <Table title="Subject Alternative Name (SAN) vs Common Name (CN)">
   <thead>
     <tr>
-      <th scope="col">Aspect</th>
+      <th scope="col">Aspecto</th>
       <th scope="col">Common Name (CN)</th>
       <th scope="col">Subject Alternative Name (SAN)</th>
     </tr>
   </thead>
   <tbody>
     <tr>
-      <td><strong>Standard</strong></td>
-      <td>Legacy (deprecated for server certs)</td>
-      <td>Modern, RFC 6125 compliant</td>
+      <td><strong>Estándar</strong></td>
+      <td>Legacy (obsoleto para certificados de servidor)</td>
+      <td>Moderno, conforme con RFC 6125</td>
     </tr>
     <tr>
-      <td><strong>Multiple identities</strong></td>
+      <td><strong>Múltiples identidades</strong></td>
       <td data-status="error">No</td>
-      <td data-status="success">Yes (DNS, email, URI)</td>
+      <td data-status="success">Sí (DNS, email, URI)</td>
     </tr>
     <tr>
-      <td><strong>Best for</strong></td>
-      <td>Simple client identification</td>
-      <td>Services, multi-identity clients</td>
+      <td><strong>Ideal para</strong></td>
+      <td>Identificación simple de cliente</td>
+      <td>Servicios, clientes multi-identidad</td>
     </tr>
   </tbody>
 </Table>
 
-For simple user identification (like we're doing), CN is sufficient. For service-to-service authentication, use SANs.
+Para la identificación simple de usuarios (como estamos haciendo), CN es suficiente. Para autenticación servicio-a-servicio, usa SANs.
 
-### Generate a client certificate
+### Genera un certificado de cliente
 
 <TerminalCommand>
 ```bash
@@ -646,7 +647,7 @@ sudo openssl ca -config openssl.cnf \
 ```
 </TerminalCommand>
 
-<TerminalOutput title="Certificate Signing Output">
+<TerminalOutput title="Salida de la Firma del Certificado">
 Using configuration from openssl.cnf
 Check that the request matches the signature
 Signature ok
@@ -658,34 +659,34 @@ Write out database with 1 new entries
 Database updated
 </TerminalOutput>
 
-### PKCS12 vs PEM: export formats
+### PKCS12 vs PEM: formatos de exportación
 
-<Table title="Certificate Format Comparison">
+<Table title="Comparación de Formatos de Certificado">
   <thead>
     <tr>
-      <th scope="col">Format</th>
-      <th scope="col">Contains</th>
-      <th scope="col">Best For</th>
-      <th scope="col">Password Protected</th>
+      <th scope="col">Formato</th>
+      <th scope="col">Contiene</th>
+      <th scope="col">Ideal Para</th>
+      <th scope="col">Protegido por contraseña</th>
     </tr>
   </thead>
   <tbody>
     <tr>
       <td><strong>PEM (.crt, .key)</strong></td>
-      <td>Separate text files</td>
-      <td>Linux servers, scripting</td>
-      <td>Optional</td>
+      <td>Archivos de texto separados</td>
+      <td>Servidores Linux, scripting</td>
+      <td>Opcional</td>
     </tr>
     <tr>
       <td><strong>PKCS12 (.p12, .pfx)</strong></td>
-      <td>All-in-one binary bundle</td>
-      <td>Browsers, mobile, Windows</td>
-      <td>Required</td>
+      <td>Paquete binario todo-en-uno</td>
+      <td>Navegadores, móvil, Windows</td>
+      <td>Obligatorio</td>
     </tr>
   </tbody>
 </Table>
 
-### Create PKCS12 bundle for clients
+### Crea el paquete PKCS12 para clientes
 
 <TerminalCommand>
 ```bash
@@ -703,56 +704,56 @@ sudo openssl pkcs12 -export \
 </TerminalCommand>
 
 <Callout type="warning" icon="mdi:alert">
-  **Security:** Choose a strong export password. This password protects the certificate during transfer to client devices. Transmit it separately from the .p12 file (e.g., via encrypted message or in person).
+  **Seguridad:** Elige una contraseña de exportación fuerte. Esta contraseña protege el certificado durante la transferencia a los dispositivos cliente. Transmítela por separado del archivo .p12 (p. ej., mediante un mensaje cifrado o en persona).
 </Callout>
 
 ---
 
-## Configuring Nginx for mTLS
+## Configurando Nginx para mTLS
 
-Now configure Nginx to require and validate client certificates.
+Ahora configura Nginx para requerir y validar certificados de cliente.
 
-### Understanding ssl_verify_client options
+### Entendiendo las opciones de ssl_verify_client
 
-The `ssl_verify_client` directive controls how Nginx handles client certificates:
+La directiva `ssl_verify_client` controla cómo Nginx gestiona los certificados de cliente:
 
-<Table title="ssl_verify_client Options">
+<Table title="Opciones de ssl_verify_client">
   <thead>
     <tr>
-      <th scope="col">Value</th>
-      <th scope="col">Behavior</th>
-      <th scope="col">Use Case</th>
+      <th scope="col">Valor</th>
+      <th scope="col">Comportamiento</th>
+      <th scope="col">Caso de Uso</th>
     </tr>
   </thead>
   <tbody>
     <tr>
       <td><code>on</code></td>
-      <td>Require valid cert; reject without</td>
-      <td>Strict access control (recommended)</td>
+      <td>Requiere certificado válido; rechaza sin él</td>
+      <td>Control de acceso estricto (recomendado)</td>
     </tr>
     <tr>
       <td><code>optional</code></td>
-      <td>Accept if valid; proceed without</td>
-      <td>Hybrid auth, optional verification</td>
+      <td>Acepta si es válido; continúa sin él</td>
+      <td>Autenticación híbrida, verificación opcional</td>
     </tr>
     <tr>
       <td><code>optional_no_ca</code></td>
-      <td>Accept any cert, no CA validation</td>
-      <td>Development/testing only</td>
+      <td>Acepta cualquier certificado, sin validación de CA</td>
+      <td>Solo desarrollo/pruebas</td>
     </tr>
     <tr>
       <td><code>off</code></td>
-      <td>No client certificate required</td>
-      <td>Standard HTTPS</td>
+      <td>No se requiere certificado de cliente</td>
+      <td>HTTPS estándar</td>
     </tr>
   </tbody>
 </Table>
 
 <Callout type="warning" icon="mdi:shield-alert">
-  **Never use `optional_no_ca` in production!** It accepts _any_ certificate without validating the CA chain, defeating the purpose of mTLS.
+  **¡Nunca uses `optional_no_ca` en producción!** Acepta _cualquier_ certificado sin validar la cadena de CA, anulando el propósito de mTLS.
 </Callout>
 
-### Complete Nginx configuration
+### Configuración completa de Nginx
 
 <FileContent filename="/etc/nginx/sites-available/secure.example.com.conf" icon="devicon:nginx">
 ```nginx
@@ -824,13 +825,13 @@ server {
 </FileContent>
 
 <Callout type="warning" icon="mdi:shield-alert">
-  **Trust Boundary Warning:** The `X-Client-DN`, `X-Client-Verify`, and `X-Client-Fingerprint` headers can be spoofed by malicious clients if upstream proxies don't clear them. Ensure:
-  - Any load balancer or reverse proxy in front of Nginx strips these headers before forwarding
-  - Backend applications only trust these headers when requests come directly from Nginx (validate source IP or use mTLS between Nginx and backend)
-  - Consider using an internal-only network interface for the Nginx-to-backend connection
+  **Advertencia sobre Límites de Confianza:** Los headers `X-Client-DN`, `X-Client-Verify` y `X-Client-Fingerprint` pueden ser falsificados por clientes maliciosos si los proxies intermedios no los limpian. Asegúrate de que:
+  - Cualquier load balancer o reverse proxy delante de Nginx elimine estos headers antes de reenviar
+  - Las aplicaciones backend solo confíen en estos headers cuando las solicitudes provienen directamente de Nginx (valida la IP de origen o usa mTLS entre Nginx y el backend)
+  - Considera usar una interfaz de red interna exclusiva para la conexión entre Nginx y el backend
 </Callout>
 
-### Test and reload
+### Prueba y recarga
 
 <TerminalCommand>
 ```bash
@@ -842,11 +843,11 @@ sudo systemctl reload nginx
 ```
 </TerminalCommand>
 
-Now, let's verify the connections using `curl`.
+Ahora, verifiquemos las conexiones usando `curl`.
 
-**1. Access Denied (No Certificate):**
+**1. Acceso Denegado (Sin Certificado):**
 
-<Collapsible summary="Show curl output (400 Bad Request)">
+<Collapsible summary="Mostrar salida de curl (400 Bad Request)">
 <TerminalOutput title="curl -v https://secure.example.com">
 ```text
 > GET / HTTP/1.1
@@ -872,9 +873,9 @@ Now, let's verify the connections using `curl`.
 </TerminalOutput>
 </Collapsible>
 
-**2. Access Granted (With Valid Certificate):**
+**2. Acceso Concedido (Con Certificado Válido):**
 
-<Collapsible summary="Show curl output (200 OK)">
+<Collapsible summary="Mostrar salida de curl (200 OK)">
 <TerminalOutput title="curl -v --cert client.crt --key client.key https://secure.example.com">
 ```text
 * TLSv1.3 (IN), TLS handshake, Request CERT (13):
@@ -903,51 +904,51 @@ mTLS Authentication Successful! Client DN: CN=iphone-jmrp
 
 ---
 
-## TLS protocol and cipher configuration
+## Configuración de protocolo TLS y cipher suites
 
 
 
-Proper TLS configuration is critical for security.
+Una configuración TLS adecuada es fundamental para la seguridad.
 
- Here's what each setting does:
+ Esto es lo que hace cada ajuste:
 
-### Protocol version selection
+### Selección de versión de protocolo
 
-<Table title="TLS Protocol Versions">
+<Table title="Versiones del Protocolo TLS">
   <thead>
     <tr>
-      <th scope="col">Version</th>
-      <th scope="col">Status</th>
-      <th scope="col">Security</th>
+      <th scope="col">Versión</th>
+      <th scope="col">Estado</th>
+      <th scope="col">Seguridad</th>
     </tr>
   </thead>
   <tbody>
     <tr>
       <td>TLS 1.0</td>
-      <td data-status="error">Deprecated</td>
+      <td data-status="error">Obsoleto</td>
       <td>Vulnerable (BEAST, POODLE)</td>
     </tr>
     <tr>
       <td>TLS 1.1</td>
-      <td data-status="error">Deprecated</td>
-      <td>Weak ciphers, no AEAD</td>
+      <td data-status="error">Obsoleto</td>
+      <td>Cipher suites débiles, sin AEAD</td>
     </tr>
     <tr>
       <td>TLS 1.2</td>
-      <td data-status="success">Supported</td>
-      <td>Secure with proper ciphers</td>
+      <td data-status="success">Soportado</td>
+      <td>Seguro con cipher suites adecuados</td>
     </tr>
     <tr>
       <td>TLS 1.3</td>
-      <td data-status="success">Recommended</td>
-      <td>Best security, faster handshake</td>
+      <td data-status="success">Recomendado</td>
+      <td>Mejor seguridad, handshake más rápido</td>
     </tr>
   </tbody>
 </Table>
 
-### Recommended configuration
+### Configuración recomendada
 
-<FileContent filename="TLS Security Settings" icon="mdi:lock">
+<FileContent filename="Ajustes de Seguridad TLS" icon="mdi:lock">
 ```nginx
 # Only allow TLS 1.2 and 1.3
 ssl_protocols TLSv1.2 TLSv1.3;
@@ -972,63 +973,63 @@ ssl_dhparam /etc/nginx/dhparam.pem;
 </FileContent>
 
 <Callout type="tip" icon="mdi:speedometer">
-  **Performance Tip:** SSL session caching significantly reduces handshake overhead. A 10MB cache can store ~40,000 sessions. This is especially important for mTLS where handshakes are more expensive.
+  **Consejo de Rendimiento:** El almacenamiento en caché de sesiones SSL reduce significativamente la sobrecarga del handshake. Una caché de 10 MB puede almacenar ~40.000 sesiones. Esto es especialmente importante para mTLS donde los handshakes son más costosos.
 </Callout>
 
 ---
 
-## Advanced access control
+## Control de acceso avanzado
 
 
 
-By default, _any_ client with a valid certificate signed by your CA can access the site.
+Por defecto, _cualquier_ cliente con un certificado válido firmado por tu CA puede acceder al sitio.
 
- You can add granular controls using Nginx variables.
+ Puedes añadir controles granulares usando variables de Nginx.
 
-### Useful mTLS variables
+### Variables mTLS útiles
 
-Nginx exposes these variables for client certificate information:
+Nginx expone estas variables para la información del certificado de cliente:
 
-<Table title="Nginx mTLS Variables">
+<Table title="Variables mTLS de Nginx">
   <thead>
     <tr>
       <th scope="col">Variable</th>
-      <th scope="col">Content</th>
-      <th scope="col">Example</th>
+      <th scope="col">Contenido</th>
+      <th scope="col">Ejemplo</th>
     </tr>
   </thead>
   <tbody>
     <tr>
       <td><code>$ssl_client_verify</code></td>
-      <td>Verification result</td>
+      <td>Resultado de la verificación</td>
       <td><code>SUCCESS</code>, <code>FAILED:reason</code></td>
     </tr>
     <tr>
       <td><code>$ssl_client_s_dn</code></td>
-      <td>Subject DN</td>
+      <td>DN del sujeto</td>
       <td><code>CN=iphone-jmrp</code></td>
     </tr>
     <tr>
       <td><code>$ssl_client_i_dn</code></td>
-      <td>Issuer DN</td>
+      <td>DN del emisor</td>
       <td><code>CN=JMRP-IO-LAB Root CA</code></td>
     </tr>
     <tr>
       <td><code>$ssl_client_fingerprint</code></td>
-      <td>SHA1 fingerprint</td>
+      <td>Fingerprint SHA1</td>
       <td><code>AB:CD:EF:12:34:...</code></td>
     </tr>
     <tr>
       <td><code>$ssl_client_serial</code></td>
-      <td>Certificate serial</td>
+      <td>Número de serie del certificado</td>
       <td><code>1000</code></td>
     </tr>
   </tbody>
 </Table>
 
-### CN-based authorization with map
+### Autorización basada en CN con map
 
-Use the `map` directive to create an allowlist:
+Usa la directiva `map` para crear una lista de permitidos:
 
 <FileContent filename="/etc/nginx/conf.d/mtls-access.conf" icon="devicon:nginx">
 ```nginx
@@ -1049,9 +1050,9 @@ map $ssl_client_s_dn $mtls_access_allowed {
 ```
 </FileContent>
 
-Then in your server block:
+Luego en tu bloque server:
 
-<FileContent filename="Server Block Access Control" icon="devicon:nginx">
+<FileContent filename="Control de Acceso en el Bloque Server" icon="devicon:nginx">
 ```nginx
 server {
     # ... SSL configuration ...
@@ -1071,17 +1072,17 @@ server {
 
 ---
 
-## Advanced use case: rate limit bypass
+## Caso de uso avanzado: bypass de rate limit
 
 
 
-One often overlooked benefit of mTLS is the ability to trust authenticated clients at the network level.
+Un beneficio de mTLS que a menudo se pasa por alto es la capacidad de confiar en clientes autenticados a nivel de red.
 
- For example, you might want to apply strict **DDoS protection** and **Rate Limiting** to the public internet, but allow your own devices (authenticated via mTLS) to have unlimited access.
+ Por ejemplo, podrías querer aplicar protección estricta contra **DDoS** y **Rate Limiting** al internet público, pero permitir que tus propios dispositivos (autenticados mediante mTLS) tengan acceso ilimitado.
 
-You can achieve this in Nginx using a `map` directive to whitelist verified clients.
+Puedes lograr esto en Nginx usando una directiva `map` para incluir en la lista blanca a los clientes verificados.
 
-### Configuration example
+### Ejemplo de configuración
 
 <FileContent filename="/etc/nginx/nginx.conf" icon="devicon:nginx">
 ```nginx
@@ -1114,59 +1115,59 @@ http {
 </FileContent>
 
 <Callout type="keypoint" icon="mdi:speedometer">
-  **How it works:** Nginx `limit_req_zone` ignores any request where the key variable is empty. By mapping `SUCCESS` to an empty string, mTLS-authenticated clients completely bypass the rate limiter, while everyone else is tracked by their IP address.
+  **Cómo funciona:** La directiva `limit_req_zone` de Nginx ignora cualquier solicitud donde la variable clave está vacía. Al mapear `SUCCESS` a una cadena vacía, los clientes autenticados con mTLS evitan completamente el rate limiter, mientras que el resto se rastrea por su dirección IP.
 </Callout>
 
 ---
 
-## Certificate revocation: CRL vs OCSP
+## Revocación de certificados: CRL vs OCSP
 
 
 
-What happens when a device is lost or compromised?
+¿Qué sucede cuando un dispositivo se pierde o se ve comprometido?
 
- You need to **revoke** its certificate. There are two methods:
+ Necesitas **revocar** su certificado. Hay dos métodos:
 
-<Table title="CRL vs OCSP Comparison">
+<Table title="Comparación CRL vs OCSP">
   <thead>
     <tr>
-      <th scope="col">Aspect</th>
+      <th scope="col">Aspecto</th>
       <th scope="col">CRL (Certificate Revocation List)</th>
       <th scope="col">OCSP (Online Certificate Status)</th>
     </tr>
   </thead>
   <tbody>
     <tr>
-      <td><strong>How it works</strong></td>
-      <td>Server downloads full list of revoked certs</td>
-      <td>Server queries responder for single cert</td>
+      <td><strong>Cómo funciona</strong></td>
+      <td>El servidor descarga la lista completa de certificados revocados</td>
+      <td>El servidor consulta al respondedor para un solo certificado</td>
     </tr>
     <tr>
-      <td><strong>Timeliness</strong></td>
-      <td>Delayed (depends on CRL refresh interval)</td>
-      <td>Near real-time</td>
+      <td><strong>Inmediatez</strong></td>
+      <td>Con retardo (depende del intervalo de actualización del CRL)</td>
+      <td>Casi en tiempo real</td>
     </tr>
     <tr>
-      <td><strong>Bandwidth</strong></td>
-      <td>Higher (downloads entire list)</td>
-      <td>Lower (single query)</td>
+      <td><strong>Ancho de banda</strong></td>
+      <td>Mayor (descarga la lista completa)</td>
+      <td>Menor (consulta individual)</td>
     </tr>
     <tr>
-      <td><strong>Nginx directive</strong></td>
+      <td><strong>Directiva Nginx</strong></td>
       <td><code>ssl_crl</code></td>
-      <td><code>ssl_stapling</code> (for server cert)</td>
+      <td><code>ssl_stapling</code> (para el certificado del servidor)</td>
     </tr>
     <tr>
-      <td><strong>Complexity</strong></td>
-      <td>Simple (file on disk)</td>
-      <td>Requires OCSP responder service</td>
+      <td><strong>Complejidad</strong></td>
+      <td>Simple (archivo en disco)</td>
+      <td>Requiere un servicio respondedor OCSP</td>
     </tr>
   </tbody>
 </Table>
 
-### Method 1: CRL (recommended for small deployments)
+### Método 1: CRL (recomendado para despliegues pequeños)
 
-#### Step 1: revoke a certificate
+#### Paso 1: revocar un certificado
 
 <TerminalCommand>
 ```bash
@@ -1178,13 +1179,13 @@ sudo openssl ca -config openssl.cnf \
 ```
 </TerminalCommand>
 
-<TerminalOutput title="Revocation Output">
+<TerminalOutput title="Salida de la Revocación">
 Using configuration from openssl.cnf
 Revoking Certificate 1000.
 Database updated
 </TerminalOutput>
 
-#### Step 2: generate the CRL file
+#### Paso 2: generar el archivo CRL
 
 <TerminalCommand>
 ```bash
@@ -1197,9 +1198,9 @@ openssl crl -in crl/ca.crl -text -noout
 ```
 </TerminalCommand>
 
-#### Step 3: configure Nginx
+#### Paso 3: configurar Nginx
 
-<FileContent filename="Add to server block" icon="devicon:nginx">
+<FileContent filename="Añadir al bloque server" icon="devicon:nginx">
 ```nginx
 # Enable CRL checking
 ssl_crl /etc/nginx/pki/crl/ca.crl;
@@ -1213,14 +1214,14 @@ sudo nginx -t && sudo systemctl reload nginx
 </TerminalCommand>
 
 <Callout type="warning" icon="mdi:refresh">
-  **Important:** You must regenerate the CRL and reload Nginx **every time** you revoke a certificate. Consider automating this with a cron job.
+  **Importante:** Debes regenerar el CRL y recargar Nginx **cada vez** que revoques un certificado. Considera automatizar esto con un cron job.
 </Callout>
 
-### Verify revocation
+### Verificar la revocación
 
-Accessing the site with the revoked certificate should now fail:
+Acceder al sitio con el certificado revocado debería fallar ahora:
 
-<Collapsible summary="Show curl output (Revoked - 400 Bad Request)">
+<Collapsible summary="Mostrar salida de curl (Revocado - 400 Bad Request)">
 <TerminalOutput title="curl -v --cert revoked.crt ...">
 ```text
 < HTTP/1.1 400 Bad Request
@@ -1241,55 +1242,55 @@ Accessing the site with the revoked certificate should now fail:
 </TerminalOutput>
 </Collapsible>
 
-### Method 2: OCSP (for larger deployments)
+### Método 2: OCSP (para despliegues más grandes)
 
 
 
-For enterprises with many certificates, OCSP is more efficient.
+Para empresas con muchos certificados, OCSP es más eficiente.
 
- This requires running an OCSP responder (beyond the scope of this guide, but tools like [step-ca](https://smallstep.com/docs/step-ca) provide this).
+ Esto requiere ejecutar un respondedor OCSP (fuera del alcance de esta guía, pero herramientas como [step-ca](https://smallstep.com/docs/step-ca) lo proporcionan).
 
 ---
 
-## Certificate lifecycle management
+## Gestión del ciclo de vida de los certificados
 
-A complete lifecycle includes creation, distribution, monitoring, renewal, and revocation.
+Un ciclo de vida completo incluye creación, distribución, monitorización, renovación y revocación.
 
-### The certificate lifecycle
+### El ciclo de vida del certificado
 
-<Mermaid caption="Certificate Lifecycle Flow" maxWidth="100%">
+<Mermaid caption="Flujo del Ciclo de Vida del Certificado" maxWidth="100%">
 ```mermaid-render
 flowchart LR
-    A[Generate Key & CSR] --> B[Sign with CA]
-    B --> C[Export to PKCS12]
-    C --> D[Secure Distribution]
-    D --> E[Install on Device]
-    E --> F[Monitor Expiration]
-    F --> G{Expired?}
+    A[Generar Clave y CSR] --> B[Firmar con la CA]
+    B --> C[Exportar a PKCS12]
+    C --> D[Distribución Segura]
+    D --> E[Instalar en Dispositivo]
+    E --> F[Monitorizar Expiración]
+    F --> G{¿Expirado?}
     G -->|No| F
-    G -->|Yes| H[Renew]
+    G -->|Sí| H[Renovar]
     H --> B
-    E --> I{Compromised?}
-    I -->|Yes| J[Revoke & Update CRL]
+    E --> I{¿Comprometido?}
+    I -->|Sí| J[Revocar y Actualizar CRL]
     J --> F
 ```
 </Mermaid>
 
-## Automation scripts
+## Scripts de automatización
 
 
 
-Managing certificates manually is error-prone.
+Gestionar certificados manualmente es propenso a errores.
 
- Here are two essential scripts to automate the lifecycle.
+ Aquí tienes dos scripts esenciales para automatizar el ciclo de vida.
 
-### 1. Client certificate generator
+### 1. Generador de certificados de cliente
 
 
 
-This script automates the entire creation process
+Este script automatiza todo el proceso de creación
 
-: generating the key, CSR, signing it, and exporting the PKCS#12 bundle.
+: generando la clave, el CSR, firmándolo y exportando el paquete PKCS#12.
 
 <FileContent filename="/usr/local/bin/mtls-add-client.sh" icon="mdi:bash" collapsible={true}>
 ```bash
@@ -1374,13 +1375,13 @@ sudo /usr/local/bin/mtls-add-client.sh my-iphone securepassword
 ```
 </TerminalCommand>
 
-### 2. Auto-renewal script
+### 2. Script de auto-renovación
 
 
 
-This script checks for expiring certificates
+Este script comprueba los certificados próximos a expirar
 
-, revokes them, re-signs the original CSR, and generates a new `.p12` bundle.
+, los revoca, refirma el CSR original y genera un nuevo paquete `.p12`.
 
 <FileContent filename="/usr/local/bin/mtls-renew.sh" icon="mdi:bash" collapsible={true}>
 ```bash
@@ -1491,10 +1492,10 @@ fi
 </FileContent>
 
 <Callout type="warning" icon="mdi:linux">
-  **Platform Note:** This script uses GNU `date -d` which is Linux-specific. On macOS/BSD, you'll need to modify the `end_epoch` calculation using `date -j -f` or use a cross-platform tool like Python's `datetime` module.
+  **Nota de Plataforma:** Este script usa `date -d` de GNU, que es específico de Linux. En macOS/BSD, necesitarás modificar el cálculo de `end_epoch` usando `date -j -f` o utilizar una herramienta multiplataforma como el módulo `datetime` de Python.
 </Callout>
 
-Schedule this in crontab to run daily:
+Programa esto en crontab para que se ejecute diariamente:
 
 <FileContent filename="crontab -e" icon="mdi:calendar-clock">
 ```text
@@ -1504,64 +1505,64 @@ Schedule this in crontab to run daily:
 
 ---
 
-## Installing certificates on clients
+## Instalando certificados en los clientes
 
 
 
-Transfer the `.p12` file securely
+Transfiere el archivo `.p12` de forma segura
 
- (AirDrop, USB, encrypted cloud) and install on each device.
+ (AirDrop, USB, nube cifrada) e instálalo en cada dispositivo.
 
 <Tabs>
   <TabPanel label="iOS (iPhone/iPad)">
-    1. Transfer the `.p12` file via **AirDrop** or save to **Files** app
-    2. Tap on the file in Files
-    3. Go to **Settings** → **Profile Downloaded** (appears at top)
-    4. Tap **Install** and enter your device passcode
-    5. Enter the certificate export password
-    6. The certificate is now installed. Safari will use it automatically when visiting the mTLS site
+    1. Transfiere el archivo `.p12` mediante **AirDrop** o guárdalo en la app **Archivos**
+    2. Toca el archivo en Archivos
+    3. Ve a **Ajustes** → **Perfil Descargado** (aparece en la parte superior)
+    4. Toca **Instalar** e introduce el código de tu dispositivo
+    5. Introduce la contraseña de exportación del certificado
+    6. El certificado ya está instalado. Safari lo usará automáticamente al visitar el sitio con mTLS
     
     <Callout type="tip" icon="mdi:cellphone">
-      **Tip:** If Safari doesn't prompt for the certificate, try private browsing first, then regular mode.
+      **Consejo:** Si Safari no muestra el aviso del certificado, prueba primero con navegación privada, luego con el modo normal.
     </Callout>
   </TabPanel>
   
   <TabPanel label="macOS">
-    1. Double-click the `.p12` file
-    2. **Keychain Access** opens. Enter the export password
-    3. Choose the **login** keychain (not System)
-    4. Click **Add**
-    5. Restart your browser
-    6. When visiting the site, macOS prompts "Select a Certificate"
+    1. Haz doble clic en el archivo `.p12`
+    2. Se abre **Acceso a Llaveros**. Introduce la contraseña de exportación
+    3. Elige el llavero **inicio de sesión** (no Sistema)
+    4. Haz clic en **Añadir**
+    5. Reinicia tu navegador
+    6. Al visitar el sitio, macOS te pregunta "Selecciona un Certificado"
     
     <Callout type="info" icon="mdi:apple-finder">
-      **Note:** You may need to set the certificate to "Always Trust" in Keychain Access if prompted.
+      **Nota:** Puede que necesites configurar el certificado como "Confiar Siempre" en Acceso a Llaveros si se solicita.
     </Callout>
   </TabPanel>
   
   <TabPanel label="Windows">
-    1. Double-click the `.p12` file
-    2. **Certificate Import Wizard** launches
-    3. Select **Current User** (not Local Machine)
-    4. Enter the password
-    5. Select "Automatically select the certificate store"
-    6. Click **Finish**
-    7. Restart your browser
+    1. Haz doble clic en el archivo `.p12`
+    2. Se abre el **Asistente de Importación de Certificados**
+    3. Selecciona **Usuario Actual** (no Equipo Local)
+    4. Introduce la contraseña
+    5. Selecciona "Seleccionar automáticamente el almacén de certificados"
+    6. Haz clic en **Finalizar**
+    7. Reinicia tu navegador
     
-    Edge and Chrome will now present the certificate when needed.
+    Edge y Chrome presentarán ahora el certificado cuando sea necesario.
   </TabPanel>
   
   <TabPanel label="Android">
-    1. Save `.p12` to device storage
-    2. Go to **Settings** → **Security** → **Encryption & credentials**
-    3. Tap **Install a certificate** → **VPN & app user certificate**
-    4. Browse to the `.p12` file
-    5. Enter the password and provide a name
-    6. The certificate is installed for Chrome and other apps
+    1. Guarda el `.p12` en el almacenamiento del dispositivo
+    2. Ve a **Ajustes** → **Seguridad** → **Cifrado y credenciales**
+    3. Toca **Instalar un certificado** → **Certificado de usuario de VPN y aplicación**
+    4. Navega hasta el archivo `.p12`
+    5. Introduce la contraseña y asigna un nombre
+    6. El certificado queda instalado para Chrome y otras aplicaciones
   </TabPanel>
   
   <TabPanel label="Linux (curl)">
-    For command-line/scripting access using PEM files:
+    Para acceso por línea de comandos/scripting usando archivos PEM:
     
     ```bash
     # Using curl with client certificate
@@ -1580,50 +1581,50 @@ Transfer the `.p12` file securely
 
 ---
 
-## Troubleshooting guide
+## Guía de solución de problemas
 
-### Common errors and solutions
+### Errores comunes y soluciones
 
-<Table title="mTLS Error Diagnosis">
+<Table title="Diagnóstico de Errores mTLS">
   <thead>
     <tr>
       <th scope="col">Error</th>
-      <th scope="col">Cause</th>
-      <th scope="col">Solution</th>
+      <th scope="col">Causa</th>
+      <th scope="col">Solución</th>
     </tr>
   </thead>
   <tbody>
     <tr>
       <td><code>400 No required SSL certificate was sent</code></td>
-      <td>Browser didn't send a certificate</td>
-      <td>Check certificate is installed; restart browser; try incognito mode</td>
+      <td>El navegador no envió un certificado</td>
+      <td>Comprueba que el certificado está instalado; reinicia el navegador; prueba en modo incógnito</td>
     </tr>
     <tr>
       <td><code>400 The SSL certificate error</code></td>
-      <td>Certificate validation failed</td>
-      <td>Verify <code>ssl_client_certificate</code> points to correct CA</td>
+      <td>La validación del certificado falló</td>
+      <td>Verifica que <code>ssl_client_certificate</code> apunta a la CA correcta</td>
     </tr>
     <tr>
       <td><code>403 Forbidden</code></td>
-      <td>Cert valid but not authorized</td>
-      <td>Check CRL or <code>map</code> rules; examine <code>error_log</code></td>
+      <td>Certificado válido pero no autorizado</td>
+      <td>Comprueba el CRL o las reglas <code>map</code>; examina el <code>error_log</code></td>
     </tr>
     <tr>
-      <td>Certificate selection loop</td>
-      <td>OS keeps prompting</td>
-      <td>Trust the CA in keychain; restart browser</td>
+      <td>Bucle de selección de certificado</td>
+      <td>El SO sigue preguntando</td>
+      <td>Confía en la CA en el keychain; reinicia el navegador</td>
     </tr>
     <tr>
       <td><code>ssl_client_verify: FAILED</code></td>
-      <td>Chain validation failed</td>
-      <td>Ensure full chain in ssl_client_certificate</td>
+      <td>La validación de la cadena falló</td>
+      <td>Asegúrate de que la cadena completa está en ssl_client_certificate</td>
     </tr>
   </tbody>
 </Table>
 
-### Debugging commands
+### Comandos de depuración
 
-#### Verify certificate against CA
+#### Verificar el certificado contra la CA
 
 <TerminalCommand>
 ```bash
@@ -1633,7 +1634,7 @@ openssl verify -CAfile /etc/nginx/pki/ca/ca.crt \
 ```
 </TerminalCommand>
 
-#### Test mTLS connection with curl
+#### Probar la conexión mTLS con curl
 
 <TerminalCommand>
 ```bash
@@ -1647,7 +1648,7 @@ curl -v --cert-type P12 --cert client.p12:password \
 ```
 </TerminalCommand>
 
-#### Check Nginx error logs
+#### Comprobar los logs de error de Nginx
 
 <TerminalCommand>
 ```bash
@@ -1656,50 +1657,50 @@ tail -f /var/log/nginx/error.log | grep ssl
 ```
 </TerminalCommand>
 
-<TerminalOutput title="Example Error Log Entry">
+<TerminalOutput title="Ejemplo de Entrada en el Log de Errores">
 2026/01/12 12:00:00 [info] 1234#5678: *1 client certificate verification failed: certificate revoked, client: 192.168.1.100, server: secure.example.com
 </TerminalOutput>
 
 ---
 
-## Security best practices
+## Mejores prácticas de seguridad
 
-### Key management
+### Gestión de claves
 
 <Callout type="warning" icon="mdi:key-alert">
-  **Critical:** Your CA private key (`ca.key`) is the crown jewel. If compromised, an attacker can issue valid certificates. Protect it with:
+  **Crítico:** Tu clave privada de la CA (`ca.key`) es la joya de la corona. Si se ve comprometida, un atacante puede emitir certificados válidos. Protégela con:
   
-  - File permissions: `chmod 400 ca.key`
-  - Separate from web server (air-gapped for high security)
-  - HSM for enterprise deployments
+  - Permisos de archivo: `chmod 400 ca.key`
+  - Separada del servidor web (aislada en un equipo sin red para alta seguridad)
+  - HSM para despliegues empresariales
 </Callout>
 
-### Checklist
+### Lista de verificación
 
-1. **Use 4096-bit RSA keys** for CA (2048 minimum for clients)
-2. **Enable CRL/OCSP** to revoke compromised certificates
-3. **Short client cert validity** (1 year max, shorter for high security)
-4. **TLS 1.2+** only, with strong ciphers
-5. **Session caching** for performance
-6. **Monitor expiry** and automate renewal
-7. **Separate CAs** for different trust levels if needed
-8. **Log client DNs** for audit trails
-9. **Regular rotation** of client certificates
+1. **Usa claves RSA de 4096 bits** para la CA (2048 como mínimo para clientes)
+2. **Habilita CRL/OCSP** para revocar certificados comprometidos
+3. **Validez corta de certificados de cliente** (1 año máximo, más corta para alta seguridad)
+4. **Solo TLS 1.2+**, con cipher suites robustos
+5. **Almacenamiento en caché de sesiones** para rendimiento
+6. **Monitoriza la expiración** y automatiza la renovación
+7. **CAs separadas** para diferentes niveles de confianza si es necesario
+8. **Registra los DNs de los clientes** para trazabilidad de auditoría
+9. **Rotación periódica** de certificados de cliente
 
 ---
 
-## Deep Dive
+## Profundización
 
-### Official Documentation
-- [Nginx ngx_http_ssl_module](https://nginx.org/en/docs/http/ngx_http_ssl_module.html) — All SSL/TLS directives
-- [OpenSSL CA Documentation](https://docs.openssl.org/3.5/man1/openssl-ca/) — Certificate authority commands
+### Documentación Oficial
+- [Nginx ngx_http_ssl_module](https://nginx.org/en/docs/http/ngx_http_ssl_module.html) — Todas las directivas SSL/TLS
+- [Documentación de CA de OpenSSL](https://docs.openssl.org/3.5/man1/openssl-ca/) — Comandos de la certificate authority
 
-### Tutorials & Guides
-- [Smallstep Hello mTLS](https://smallstep.com/hello-mtls) — Interactive mTLS tutorial
-- [SSL.com mTLS Guide](https://www.ssl.com/article/authenticating-users-and-iot-devices-with-mutual-tls/) — IoT and user authentication
-- [Cloudflare: What is mTLS?](https://www.cloudflare.com/learning/access-management/what-is-mutual-tls/) — Conceptual overview
+### Tutoriales y Guías
+- [Smallstep Hello mTLS](https://smallstep.com/hello-mtls) — Tutorial interactivo de mTLS
+- [Guía de mTLS de SSL.com](https://www.ssl.com/article/authenticating-users-and-iot-devices-with-mutual-tls/) — Autenticación de IoT y usuarios
+- [Cloudflare: ¿Qué es mTLS?](https://www.cloudflare.com/learning/access-management/what-is-mutual-tls/) — Resumen conceptual
 
-### Tools
-- [step-ca](https://smallstep.com/docs/step-ca) — Modern certificate authority
-- [cfssl](https://github.com/cloudflare/cfssl) — Cloudflare's PKI toolkit
-- [easy-rsa](https://github.com/OpenVPN/easy-rsa) — Simple CA management scripts
+### Herramientas
+- [step-ca](https://smallstep.com/docs/step-ca) — Certificate authority moderna
+- [cfssl](https://github.com/cloudflare/cfssl) — Kit de herramientas PKI de Cloudflare
+- [easy-rsa](https://github.com/OpenVPN/easy-rsa) — Scripts simples de gestión de CA

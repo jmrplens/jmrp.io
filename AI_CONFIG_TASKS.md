@@ -263,7 +263,7 @@ Configuración compartible con el equipo (commit a git):
       "Bash(pnpm lint:css)",
       "Bash(pnpm lint:html)",
       "Bash(pnpm exec prettier *)",
-      "Bash(pnpm exec typos)",
+      "Bash(pnpm exec cspell*)",
       "Bash(node scripts/*)",
       "Bash(git diff *)",
       "Bash(git log *)",

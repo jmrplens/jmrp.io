@@ -12,6 +12,8 @@
  * </Tabs>
  */
 
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslations } from "@i18n/utils";
 import * as cheerio from "cheerio";
 
 interface Props {
@@ -19,6 +21,9 @@ interface Props {
 }
 
 const { class: className } = Astro.props;
+
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
 
 // Render slot content to extract labels from TabPanel children
 const slotContent = (await Astro.slots.render("default")) || "";
@@ -120,7 +125,7 @@ const instanceCss = labels
         class="tab-radio"
         checked={index === 0}
         aria-controls={`panel-${uniqueId}-${index}`}
-        aria-label={`Show ${label} tab`}
+        aria-label={t("components.tabs.showTab", { label })}
       />
     ))
   }

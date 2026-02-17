@@ -264,29 +264,27 @@ jobs:
             lychee-report.html
           retention-days: 1
 
-  sa-typos:
+  sa-cspell:
     name: "SA: Spell Checker"
     runs-on: ubuntu-latest
     timeout-minutes: 5
     needs: build
     steps:
       - uses: actions/checkout@v6
-      - name: Install Typos binary
-        run: |
-          curl -LsSf https://github.com/crate-ci/typos/releases/download/v1.42.0/typos-v1.42.0-x86_64-unknown-linux-musl.tar.gz -o typos.tar.gz
-          echo "202ffa8dcb8f27c57c1fd22a5248f4f54e53115c7cf0665ecec252427b282c29 typos.tar.gz" | sha256sum -c -
-          mkdir -p typos-bin
-          tar xzf typos.tar.gz -C typos-bin
-          sudo mv typos-bin/typos /usr/local/bin/typos
-          rm -rf typos.tar.gz typos-bin
-      - name: Run Spell Checker
-        run: typos . | tee typos.log
-      - name: Upload Typos log
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: package.json
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile --prefer-offline
+      - name: Run CSpell
+        run: pnpm exec cspell lint "." --no-progress | tee cspell.log
+      - name: Upload CSpell log
         if: always()
         uses: actions/upload-artifact@v6
         with:
-          name: log-typos
-          path: typos.log
+          name: log-cspell
+          path: cspell.log
           retention-days: 1
 
   sa-sonar:
@@ -536,13 +534,14 @@ jobs:
           retention-days: 1
 
   accessibility:
-    name: Accessibility Tests (${{ matrix.theme }} mode)
+    name: Accessibility Tests (${{ matrix.theme }} - ${{ matrix.locale }})
     runs-on: ubuntu-latest
     timeout-minutes: 30
     needs: build
     strategy:
       matrix:
         theme: [light, dark]
+        locale: [en, es]
       fail-fast: false
     steps:
       - uses: actions/checkout@v6
@@ -567,17 +566,17 @@ jobs:
         if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: pnpm exec playwright install --with-deps chromium
       - name: Run Axe accessibility tests
-        run: THEME=${{ matrix.theme }} pnpm exec playwright test --project=accessibility
+        run: THEME=${{ matrix.theme }} LOCALE_FILTER=${{ matrix.locale }} pnpm exec playwright test --project=accessibility
       - name: Upload Axe Results
         if: always()
         uses: actions/upload-artifact@v6
         with:
-          name: axe-accessibility-report-${{ matrix.theme }}
+          name: axe-accessibility-report-${{ matrix.theme }}-${{ matrix.locale }}
           path: accessibility-report/
           retention-days: 7
 
   lighthouse-audit:
-    name: LH Audit (${{ matrix.theme }} - ${{ matrix.formFactor }})
+    name: LH Audit (${{ matrix.theme }} - ${{ matrix.formFactor }} - ${{ matrix.locale }})
     runs-on: ubuntu-latest
     timeout-minutes: 45
     needs: build
@@ -585,6 +584,7 @@ jobs:
       matrix:
         theme: [light, dark]
         formFactor: [mobile, desktop]
+        locale: [en, es]
       fail-fast: false
     steps:
       - uses: actions/checkout@v6
@@ -603,6 +603,7 @@ jobs:
         shell: bash
         env:
           FORM_FACTOR: ${{ matrix.formFactor }}
+          LOCALE_FILTER: ${{ matrix.locale }}
           LHCI_GITHUB_TOKEN: ${{ secrets.TOKEN_GITHUB }}
         run: |
           if [ "${{ matrix.theme }}" = "dark" ]; then export LHCI_CHROME_FLAGS="--force-dark-mode --force-prefers-color-scheme=dark"; fi
@@ -611,7 +612,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v6
         with:
-          name: lh-results-${{ matrix.theme }}-${{ matrix.formFactor }}
+          name: lh-results-${{ matrix.theme }}-${{ matrix.formFactor }}-${{ matrix.locale }}
           path: lighthouse-results/
           retention-days: 1
 
@@ -630,7 +631,7 @@ jobs:
         sa-audit,
         sa-jsdoc,
         sa-lychee,
-        sa-typos,
+        sa-cspell,
         sa-sonar,
         sa-stylelint,
         ci-setup,
@@ -648,7 +649,7 @@ jobs:
           OUTCOME_PRETTIER: ${{ needs.sa-prettier.result }}
           OUTCOME_ESLINT: ${{ needs.sa-eslint.result }}
           OUTCOME_LYCHEE: ${{ needs.sa-lychee.result }}
-          OUTCOME_TYPOS: ${{ needs.sa-typos.result }}
+          OUTCOME_CSPELL: ${{ needs.sa-cspell.result }}
           OUTCOME_STYLELINT: ${{ needs.sa-stylelint.result }}
           OUTCOME_SECURITY: ${{ needs.sa-audit.result }}
           OUTCOME_SONAR: ${{ needs.sa-sonar.result }}
@@ -677,14 +678,16 @@ jobs:
         uses: actions/download-artifact@v7
         continue-on-error: true
         with:
-          name: axe-accessibility-report-light
+          pattern: axe-accessibility-report-light-*
           path: a11y-deploy/light
+          merge-multiple: true
       - name: Download Axe Results (Dark)
         uses: actions/download-artifact@v7
         continue-on-error: true
         with:
-          name: axe-accessibility-report-dark
+          pattern: axe-accessibility-report-dark-*
           path: a11y-deploy/dark
+          merge-multiple: true
       - name: Generate Dashboard
         run: node scripts/ci/generate-accessibility-index.mjs a11y-deploy
       - name: Upload consolidated assets
@@ -712,26 +715,30 @@ jobs:
         uses: actions/download-artifact@v7
         continue-on-error: true
         with:
-          name: lh-results-light-mobile
+          pattern: lh-results-light-mobile-*
           path: lh-deploy/light/mobile
+          merge-multiple: true
       - name: Download LH Results (Light - Desktop)
         uses: actions/download-artifact@v7
         continue-on-error: true
         with:
-          name: lh-results-light-desktop
+          pattern: lh-results-light-desktop-*
           path: lh-deploy/light/desktop
+          merge-multiple: true
       - name: Download LH Results (Dark - Mobile)
         uses: actions/download-artifact@v7
         continue-on-error: true
         with:
-          name: lh-results-dark-mobile
+          pattern: lh-results-dark-mobile-*
           path: lh-deploy/dark/mobile
+          merge-multiple: true
       - name: Download LH Results (Dark - Desktop)
         uses: actions/download-artifact@v7
         continue-on-error: true
         with:
-          name: lh-results-dark-desktop
+          pattern: lh-results-dark-desktop-*
           path: lh-deploy/dark/desktop
+          merge-multiple: true
       - name: Generate Dashboard
         run: node scripts/ci/generate-lighthouse-index.mjs lh-deploy
       - name: Upload LH Dashboard
@@ -754,7 +761,7 @@ jobs:
         sa-audit,
         sa-jsdoc,
         sa-lychee,
-        sa-typos,
+        sa-cspell,
         sa-sonar,
         sa-stylelint,
         accessibility-report,
@@ -854,7 +861,7 @@ jobs:
           OUTCOME_PRETTIER: ${{ needs.sa-prettier.result }}
           OUTCOME_ESLINT: ${{ needs.sa-eslint.result }}
           OUTCOME_LYCHEE: ${{ needs.sa-lychee.result }}
-          OUTCOME_TYPOS: ${{ needs.sa-typos.result }}
+          OUTCOME_CSPELL: ${{ needs.sa-cspell.result }}
           OUTCOME_SECURITY: ${{ needs.sa-audit.result }}
           OUTCOME_SONAR: ${{ needs.sa-sonar.result }}
           OUTCOME_JSDOC: ${{ needs.sa-jsdoc.result }}
@@ -886,7 +893,7 @@ jobs:
           OUTCOME_PRETTIER: ${{ needs.sa-prettier.result }}
           OUTCOME_ESLINT: ${{ needs.sa-eslint.result }}
           OUTCOME_LYCHEE: ${{ needs.sa-lychee.result }}
-          OUTCOME_TYPOS: ${{ needs.sa-typos.result }}
+          OUTCOME_CSPELL: ${{ needs.sa-cspell.result }}
           OUTCOME_SECURITY: ${{ needs.sa-audit.result }}
           OUTCOME_SONAR: ${{ needs.sa-sonar.result }}
           OUTCOME_JSDOC: ${{ needs.sa-jsdoc.result }}

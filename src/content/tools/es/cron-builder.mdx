@@ -1,0 +1,438 @@
+---
+title: "Constructor de Expresiones Cron"
+slug: "cron-builder"
+description: "Constructor visual de expresiones cron con selectores interactivos, presets comunes, vista previa de ejecuciones y línea crontab lista para usar."
+subtitle: "Crea expresiones cron visualmente con selectores interactivos, descripciones legibles y vista previa de próximas ejecuciones."
+icon: "i-mdi:clock-outline"
+category: "developer"
+tags: ["cron", "programación", "linux", "crontab", "automatización"]
+appComponent: "CronBuilder"
+lang: "es"
+---
+
+import {
+  TerminalSession,
+  TerminalSessionCommand,
+  TerminalSessionOutput,
+} from "@components/ui/terminal-session";
+
+<h2>Acerca de esta herramienta</h2>
+<p>
+  Crea expresiones de programación cron utilizando una interfaz visual con
+  selectores de campo interactivos. Haz clic en los valores para alternarlos,
+  usa los botones de selección rápida o escribe las expresiones directamente. La
+  herramienta muestra una descripción legible, previsualiza las próximas 10
+  ejecuciones y genera una línea de crontab lista para usar.
+</p>
+
+<h3>Características</h3>
+<ul>
+  <li>
+    <strong>Selectores de campo interactivos</strong> — haz clic en los valores
+    individuales para minuto (0–59), hora (0–23), día del mes (1–31), mes (1–12)
+    y día de la semana (0–6) con botones de alternancia visuales
+  </li>
+  <li>
+    <strong>Ayudas de selección rápida</strong> — botones "Every (*)" y "Clear"
+    por campo para una selección rápida
+  </li>
+  <li>
+    <strong>Sincronización bidireccional</strong> — edita el texto de la
+    expresión y los selectores se actualizan, o haz clic en los selectores y la
+    expresión se actualiza
+  </li>
+  <li>
+    <strong>Generación inteligente de expresiones</strong> — detecta
+    automáticamente patrones de paso (<code>{"*/5"}</code>), rangos (
+    <code>1-5</code>) y listas (<code>1,15</code>) a partir de los valores
+    seleccionados
+  </li>
+  <li>
+    <strong>14 presets comunes</strong> — cada minuto, 5/15/30 min, cada hora,
+    6h, 12h, diario, dos veces al día, días laborables, semanal, mensual,
+    trimestral
+  </li>
+  <li>
+    <strong>Descripción legible</strong> — traducción en lenguaje natural de la
+    expresión con nombres de días y meses
+  </li>
+  <li>
+    <strong>Próximas 10 ejecuciones</strong> — previsualización de las próximas
+    ejecuciones con tiempos relativos (en Xd Xh, en Xh Xm)
+  </li>
+  <li>
+    <strong>Línea de crontab</strong> — campo de comando editable que se combina
+    con la expresión para una línea de crontab lista para pegar
+  </li>
+  <li>
+    <strong>Copiar y compartir</strong> — copia la expresión, la línea completa
+    de crontab o una URL compartible con la expresión codificada
+  </li>
+  <li>
+    <strong>Referencia de sintaxis integrada</strong> — referencia rápida
+    desplegable para los símbolos <code>{"*"}</code>, <code>,</code>,{" "}
+    <code>-</code>, <code>/</code> y el diagrama de campos
+  </li>
+</ul>
+
+<h3>Cómo usar</h3>
+<ol>
+  <li>
+    Haz clic en los valores en los <strong>selectores de campo</strong> para
+    alternarlos. Usa "Every (*)" para seleccionar todos los valores o "Clear"
+    para deseleccionar todos.
+  </li>
+  <li>
+    O escribe una expresión cron directamente en el campo de entrada — los
+    selectores se sincronizan automáticamente.
+  </li>
+  <li>
+    Comprueba la <strong>descripción legible</strong> para verificar que la
+    programación coincide con tu intención.
+  </li>
+  <li>
+    Revisa las <strong>próximas 10 ejecuciones</strong> para confirmar la
+    temporización.
+  </li>
+  <li>
+    Edita el comando en la sección <strong>Crontab Line</strong> y copia la
+    línea completa para pegarla en tu crontab.
+  </li>
+  <li>
+    Pulsa <strong>Share Link</strong> para copiar una URL que precarga la
+    expresión.
+  </li>
+</ol>
+
+<h3>Formato de expresión cron</h3>
+<p>
+  Una expresión cron estándar consta de <strong>5 campos</strong>
+  separados por espacios:
+</p>
+<table>
+  <thead>
+    <tr>
+      <th>Campo</th>
+      <th>Rango</th>
+      <th>Caracteres especiales</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Minuto</td>
+      <td>
+        <code>0–59</code>
+      </td>
+      <td>
+        <code>{"* , - /"}</code>
+      </td>
+    </tr>
+    <tr>
+      <td>Hora</td>
+      <td>
+        <code>0–23</code>
+      </td>
+      <td>
+        <code>{"* , - /"}</code>
+      </td>
+    </tr>
+    <tr>
+      <td>Día del mes</td>
+      <td>
+        <code>1–31</code>
+      </td>
+      <td>
+        <code>{"* , - /"}</code>
+      </td>
+    </tr>
+    <tr>
+      <td>Mes</td>
+      <td>
+        <code>1–12</code>
+      </td>
+      <td>
+        <code>{"* , - /"}</code>
+      </td>
+    </tr>
+    <tr>
+      <td>Día de la semana</td>
+      <td>
+        <code>0–7</code> (0 y 7 = domingo)
+      </td>
+      <td>
+        <code>{"* , - /"}</code>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Caracteres especiales</h3>
+<ul>
+  <li>
+    <code>{"*"}</code> — coincide con <strong>cualquier valor</strong>.{" "}
+    <code>{"* * * * *"}</code>
+    se ejecuta cada minuto.
+  </li>
+  <li>
+    <code>,</code> — <strong>lista</strong> de valores.
+    <code>{"1,15 * * * *"}</code> se ejecuta en el minuto 1 y en el minuto 15.
+  </li>
+  <li>
+    <code>-</code> — <strong>rango</strong> de valores.
+    <code>{"0 9-17 * * *"}</code> se ejecuta cada hora de 9 a 17.
+  </li>
+  <li>
+    <code>/</code> — intervalo de <strong>paso</strong>.
+    <code>{"*/10 * * * *"}</code> se ejecuta cada 10 minutos.
+    <code>{"0 */6 * * *"}</code> se ejecuta cada 6 horas.
+  </li>
+</ul>
+
+<h3>Cadenas de atajo</h3>
+<p>
+  Algunas implementaciones de cron soportan estas cadenas de atajo (no todos los
+  sistemas — consulta tu documentación):
+</p>
+<table>
+  <thead>
+    <tr>
+      <th>Atajo</th>
+      <th>Equivalente</th>
+      <th>Descripción</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        <code>@yearly</code>
+      </td>
+      <td>
+        <code>{"0 0 1 1 *"}</code>
+      </td>
+      <td>Una vez al año (1 de enero)</td>
+    </tr>
+    <tr>
+      <td>
+        <code>@monthly</code>
+      </td>
+      <td>
+        <code>{"0 0 1 * *"}</code>
+      </td>
+      <td>Una vez al mes (día 1)</td>
+    </tr>
+    <tr>
+      <td>
+        <code>@weekly</code>
+      </td>
+      <td>
+        <code>{"0 0 * * 0"}</code>
+      </td>
+      <td>Una vez a la semana (domingo)</td>
+    </tr>
+    <tr>
+      <td>
+        <code>@daily</code>
+      </td>
+      <td>
+        <code>{"0 0 * * *"}</code>
+      </td>
+      <td>Una vez al día (medianoche)</td>
+    </tr>
+    <tr>
+      <td>
+        <code>@hourly</code>
+      </td>
+      <td>
+        <code>{"0 * * * *"}</code>
+      </td>
+      <td>Una vez a la hora (:00)</td>
+    </tr>
+    <tr>
+      <td>
+        <code>@reboot</code>
+      </td>
+      <td>—</td>
+      <td>Ejecutar una vez al iniciar el sistema</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Patrones comunes</h3>
+<table>
+  <thead>
+    <tr>
+      <th>Expresión</th>
+      <th>Descripción</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        <code>{"*/5 * * * *"}</code>
+      </td>
+      <td>Cada 5 minutos</td>
+    </tr>
+    <tr>
+      <td>
+        <code>{"0 */2 * * *"}</code>
+      </td>
+      <td>Cada 2 horas en punto</td>
+    </tr>
+    <tr>
+      <td>
+        <code>{"0 9,17 * * 1-5"}</code>
+      </td>
+      <td>Días laborables a las 9:00 y 17:00</td>
+    </tr>
+    <tr>
+      <td>
+        <code>{"30 2 * * 0"}</code>
+      </td>
+      <td>Domingos a las 2:30</td>
+    </tr>
+    <tr>
+      <td>
+        <code>{"0 0 1,15 * *"}</code>
+      </td>
+      <td>El 1 y el 15 de cada mes a medianoche</td>
+    </tr>
+    <tr>
+      <td>
+        <code>{"0 4 * * 6"}</code>
+      </td>
+      <td>Sábados a las 4:00 (ventana de mantenimiento)</td>
+    </tr>
+    <tr>
+      <td>
+        <code>{"0 0 1 1,4,7,10 *"}</code>
+      </td>
+      <td>Trimestral (primer día de ene, abr, jul, oct)</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Privacidad</h3>
+<p>
+  Todo el análisis de expresiones y el cálculo de ejecuciones se realiza
+  íntegramente en tu navegador. Ningún dato de cron se transmite a ningún
+  servidor. El enlace compartible solo codifica la expresión en los parámetros
+  de la URL.
+</p>
+
+<h3>Referencia de comandos Linux</h3>
+<p>Comandos esenciales de crontab para gestionar tareas programadas:</p>
+
+<h4>Ver crontab actual</h4>
+<TerminalSession>
+  <TerminalSessionCommand>
+    crontab -l
+  </TerminalSessionCommand>
+  <TerminalSessionOutput title="Tu crontab">
+    ```
+    # Backup every day at 3 AM
+    0 3 * * * /usr/local/bin/backup.sh >> /var/log/backup.log 2>&1
+    # Cleanup temp files weekly
+    0 0 * * 0 find /tmp -mtime +7 -delete
+    ```
+  </TerminalSessionOutput>
+</TerminalSession>
+
+<h4>Editar crontab</h4>
+<TerminalSession>
+  <TerminalSessionCommand>
+    crontab -e
+  </TerminalSessionCommand>
+  <TerminalSessionOutput title="Resultado de edición de crontab">
+    ```
+    # Opens your crontab in $EDITOR (nano, vim, etc.)
+    # Save and exit to install the new crontab
+    ```
+  </TerminalSessionOutput>
+</TerminalSession>
+
+<h4>Instalar crontab desde un archivo</h4>
+<TerminalSession>
+  <TerminalSessionCommand>
+    ```
+    echo "0 3 * * * /usr/local/bin/backup.sh" | crontab -
+    ```
+  </TerminalSessionCommand>
+  <TerminalSessionOutput title="Resultado de instalación">
+    ```
+    # Replaces entire crontab with the piped content
+    # WARNING: This overwrites all existing entries
+    ```
+  </TerminalSessionOutput>
+</TerminalSession>
+
+<h4>Añadir tarea al crontab existente</h4>
+<TerminalSession>
+  <TerminalSessionCommand>
+    ```
+    (crontab -l 2>/dev/null; echo "*/5 * * * * /usr/local/bin/monitor.sh") | crontab -
+    ```
+  </TerminalSessionCommand>
+  <TerminalSessionOutput title="Resultado de añadir">
+    # Safely appends without removing existing jobs
+  </TerminalSessionOutput>
+</TerminalSession>
+
+<h4>Ver crontab de otro usuario (root)</h4>
+<TerminalSession>
+  <TerminalSessionCommand>sudo crontab -u www-data -l</TerminalSessionCommand>
+  <TerminalSessionOutput title="Crontab de www-data">
+    0 */6 * * * /var/www/scripts/cache-warm.sh
+  </TerminalSessionOutput>
+</TerminalSession>
+
+<h4>Tareas cron del sistema</h4>
+<TerminalSession>
+  <TerminalSessionCommand>
+    ```
+    ls -la /etc/cron.d/ /etc/cron.daily/ /etc/cron.hourly/ /etc/cron.weekly/ /etc/cron.monthly/
+    ```
+  </TerminalSessionCommand>
+  <TerminalSessionOutput title="Directorios cron del sistema">
+    ```
+    /etc/cron.d/:
+    e2scrub_all  geoipupdate  sysstat
+    /etc/cron.daily/:
+    apt-compat  dpkg  logrotate  man-db  sysstat
+    /etc/cron.hourly/:
+    (empty)
+    /etc/cron.weekly/:
+    man-db
+    /etc/cron.monthly/:
+    (empty)
+    ```
+  </TerminalSessionOutput>
+</TerminalSession>
+
+<h3>Notas importantes</h3>
+<ul>
+  <li>
+    <strong>Zona horaria</strong> — cron usa la zona horaria del sistema por
+    defecto. Compruébala con <code>timedatectl</code> o establece la variable de
+    entorno <code>TZ</code> al principio de tu crontab.
+  </li>
+  <li>
+    <strong>PATH</strong> — cron se ejecuta con un <code>PATH</code> mínimo. Usa
+    siempre rutas absolutas para los comandos (<code>/usr/bin/python3</code>, no{" "}
+    <code>python3</code>).
+  </li>
+  <li>
+    <strong>Salida</strong> — por defecto, cron envía la salida por correo al
+    usuario. Redirige stdout y stderr a un archivo:
+    <code>&gt;&gt; /var/log/myjob.log 2&gt;&amp;1</code>.
+  </li>
+  <li>
+    <strong>Día del mes + Día de la semana</strong> — cuando ambos campos están
+    definidos (no <code>{"*"}</code>), cron usa lógica <strong>OR</strong>: la
+    tarea se ejecuta si se cumple <em>cualquiera</em> de las condiciones.
+  </li>
+  <li>
+    <strong>Depuración</strong> — consulta <code>/var/log/syslog</code>
+    (Debian/Ubuntu) o <code>/var/log/cron</code> (RHEL/CentOS) para los
+    registros de ejecución.
+  </li>
+</ul>

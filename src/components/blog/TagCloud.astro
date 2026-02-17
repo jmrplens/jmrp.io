@@ -1,20 +1,29 @@
 ---
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslatedPath, useTranslations } from "@i18n/utils";
+import { getPostsForLocale } from "@utils/blog";
 import { getUniqueTags } from "@utils/blog";
-import { getCollection } from "astro:content";
 
-const posts = (await getCollection("posts")).filter((post) => !post.data.draft);
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
+const translatePath = useTranslatedPath(locale);
+
+const entries = await getPostsForLocale(locale);
+const posts = entries.map((e) => e.post);
 const tags = getUniqueTags(posts);
 ---
 
 <div class="tag-cloud">
-  <h3>Topics</h3>
+  <h3>{t("pages.blog.topicsTitle")}</h3>
   <div class="tags">
     {
       tags.map(({ tag, count }) => (
         <a
-          href={`/blog/tags/${encodeURIComponent(tag.toLowerCase())}/`}
+          href={translatePath(
+            `/blog/tags/${encodeURIComponent(tag.toLowerCase())}/`,
+          )}
           class="tag"
-          aria-label={`View posts tagged ${tag}`}
+          aria-label={t("aria.viewTaggedPosts", { tag })}
         >
           <span class="tag-name">
             <span class="hash">#</span>

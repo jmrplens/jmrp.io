@@ -60,12 +60,172 @@ export const common = {
     authRequired: "Autenticación requerida",
     playSoundNedry: "Reproducir sonido de Nedry",
     languageSwitcher: "Cambiar idioma",
+    postsGrid: "Cuadrícula de entradas del blog",
+    openCVMenu: "Abrir menú del CV",
+    closeMenu: "Cerrar menú",
+    skillLevel: "{name} nivel: {level}",
+    downloadCertificate: "Descargar certificado: {name}",
+    viewPublicationsBy: "Ver publicaciones de {author} (de: {title})",
+    toggleAbstract: "Mostrar/ocultar resumen de {title}",
+    toggleBibtex: "Mostrar/ocultar BibTeX de {title}",
+    downloadPdf: "Descargar PDF de {title}",
+    viewDoi: "Ver DOI de {title}",
+    viewUrl: "Ver URL de {title}",
+    viewSlides: "Ver diapositivas de {title}",
+    viewPoster: "Ver póster de {title}",
+    copyAbstract: "Copiar resumen de {title}",
+    copyBibtex: "Copiar BibTeX de {title}",
+    homelabInfrastructure: "Infraestructura del homelab",
+    cvNavigation: "Navegación del CV",
+  },
+  components: {
+    copyButton: {
+      clipboardUnavailable: "API del portapapeles no disponible",
+      failedToCopy: "¡Error al copiar!",
+    },
+    callout: {
+      info: "Información",
+      warning: "Advertencia",
+      error: "Error",
+      success: "Éxito",
+      tip: "Consejo",
+      note: "Nota",
+      keypoint: "Punto clave",
+      important: "Importante",
+    },
+    tldr: {
+      title: "Resumen",
+    },
+    collapsible: {
+      defaultSummary: "Detalles",
+    },
+    prerequisite: {
+      title: "Requisitos previos",
+    },
+    browserSupport: {
+      title: "Compatibilidad del navegador",
+      fullSupport: "Soporte completo",
+      partialSupport: "Soporte parcial",
+      noSupport: "Sin soporte",
+      unknown: "Desconocido",
+    },
+    references: {
+      title: "Lecturas y recursos adicionales",
+    },
+    deprecated: {
+      label: "Obsoleto",
+      isDeprecated: "{feature} está obsoleto",
+      willBeRemoved: " y se eliminará en {date}",
+      useInstead: "Usar en su lugar:",
+    },
+    stateNotice: {
+      deprecated: "Obsoleto",
+      mandatory: "Obligatorio",
+      experimental: "Experimental",
+      preview: "Vista previa",
+      breakingChange: "Cambio importante",
+      security: "Seguridad",
+      isDeprecated: " está obsoleto",
+      isRequired: " es obligatorio",
+      isExperimental: " es experimental",
+      isInPreview: " está en vista previa",
+      introducesBreaking: " introduce cambios importantes",
+      hasSecurityImplications: " tiene implicaciones de seguridad",
+      willBeRemoved: " y se eliminará en {date}",
+      effectiveFrom: " vigente desde {date}",
+      mitigationRequired: " — mitigación requerida antes de {date}",
+      target: " — objetivo: {date}",
+      useInstead: "Usar en su lugar:",
+      recommended: "Recomendado:",
+    },
+    versionBadge: {
+      level: "Nivel",
+    },
+    apiEndpoint: {
+      auth: "Auth",
+    },
+    fileContent: {
+      copyContent: "Copiar contenido de {filename}",
+    },
+    beforeAfter: {
+      before: "Antes",
+      after: "Después",
+    },
+    directiveCard: {
+      syntax: "Sintaxis",
+      default: "Predeterminado",
+    },
+    code: {
+      codeAria: "Código {lang}: {title}",
+      snippetAria: "Fragmento {lang}: {text}",
+      fallbackAria: "fragmento de código",
+      copyAria: "Copiar {label}",
+    },
+    terminal: {
+      commandAria: "Comando de terminal: {command}",
+      noCommand: "Terminal: sin comando",
+      copyCommand: "Copiar comando: {command}",
+      outputTitle: "Salida del terminal: {title}",
+      outputFallback: "Salida del terminal",
+      scrollableOutput: "Salida de terminal desplazable para {title}",
+      scrollableFallback: "Salida de terminal desplazable",
+      sessionAria: "Sesión de terminal: {command}",
+      sessionFallback: "interactivo",
+      terminalFallback: "terminal",
+    },
+    tabPanel: {
+      copyContent: "Copiar contenido de {label}",
+    },
+    table: {
+      defaultAria: "Tabla de datos",
+    },
+    securityRating: {
+      excellent: "Excelente",
+      veryGood: "Muy bueno",
+      good: "Bueno",
+      acceptable: "Aceptable",
+      needsImprovement: "Necesita mejorar",
+      poor: "Deficiente",
+      critical: "Crítico",
+      ratingAria: "Calificación de seguridad: {rating} - {label}",
+    },
+    barChart: {
+      ariaWithTitle: "Gráfico de barras: {title}. Mostrando {count} elementos.",
+      ariaWithoutTitle: "Gráfico de barras mostrando {count} elementos",
+    },
+    timeline: {
+      standard: "Estándar",
+      deprecated: "Obsoleto",
+      milestone: "Hito",
+    },
+    youtube: {
+      defaultTitle: "Vídeo de YouTube",
+    },
+    mermaid: {
+      defaultAria: "Diagrama Mermaid",
+    },
+    tabs: {
+      showTab: "Mostrar pestaña {label}",
+    },
   },
   seo: {
     rssFeedTitle: "RSS del Blog JMRP",
+    siteTitle: "José Manuel Requena Plens | Ingeniero de I+D",
+    siteDescription:
+      "Portfolio de José Manuel Requena Plens. Especializado en Sistemas Embebidos, Acústica y Desarrollo de Software Industrial.",
+    siteKeywords:
+      "I+D, Sistemas Embebidos, Acústica, Ingeniero de Software, Portfolio, CV, Metamateriales, Investigación",
+    jobTitle: "Ingeniero de I+D",
   },
   pages: {
     home: {
+      heroTitle: "Hola, soy José Manuel.",
+      heroSubtitle:
+        "Ingeniero de Software & Investigador. <br>Tendiendo puentes entre la <strong>Acústica</strong>, la <strong>Electrónica</strong> y el <strong>Código</strong>.",
+      heroBio1:
+        "Soy un ingeniero multidisciplinar que actualmente desarrolla sistemas de control para energías renovables en <strong>Power Electronics</strong>. Mi formación tiene raíces en la <strong>investigación en acústica</strong>, habiendo trabajado en mitigación de ruido para la <strong>Agencia Espacial Europea (ESA)</strong> y ultrasonido biomédico en la <strong>UPV</strong>.",
+      heroBio2:
+        "Disfruto del reto de integrar hardware y software. Cuando no estoy programando sistemas industriales, soy un activo contribuidor de <strong>Open Source</strong> y un apasionado del autoalojamiento, refinando constantemente mi homelab y creando herramientas para la comunidad. <a href='/es/cv/'>Consulta mi CV</a> para ver la trayectoria completa.",
       viewCV: "Ver CV",
       viewCVAria: "Ver CV - mi currículum profesional",
       readBlog: "Leer Blog",
@@ -82,6 +242,7 @@ export const common = {
     blog: {
       title: "Blog",
       subtitle: "Reflexiones, tutoriales y notas de ingeniería.",
+      topicsTitle: "Temas",
       aiDisclaimer:
         "Proyectos reales, redacción asistida por IA. Documento mis experimentos y código reales, usando herramientas de IA para estructurar y pulir los textos finales.",
       description:
@@ -91,6 +252,9 @@ export const common = {
     blogPost: {
       backToBlog: "Volver al Blog",
       coverImageAlt: "Imagen de portada de {title}",
+      readAction: "Leer artículo →",
+      codeFallback: "Código",
+      codeExampleTemplate: "Ejemplo {lang} {index}",
     },
     blogTags: {
       titlePrefix: "Blog - #",
@@ -110,6 +274,16 @@ export const common = {
       heading: "Curriculum Vitae",
       description:
         "CV de José Manuel Requena Plens — Ingeniero de I+D en sistemas embebidos, infraestructura cloud, acústica y software industrial.",
+      certificateFallback: "Certificado",
+      schemaDescription:
+        "Ingeniero de I+D especializado en desarrollo de software, infraestructura cloud y seguridad.",
+      levelNone: "Ninguno",
+      levelElementary: "Elemental",
+      levelBasic: "Básico",
+      levelIntermediate: "Intermedio",
+      levelAdvanced: "Avanzado",
+      levelExpert: "Experto",
+      levelUnknown: "Desconocido",
     },
     github: {
       title: "Repositorios de GitHub",
@@ -121,9 +295,19 @@ export const common = {
       repositories: "Repositorios",
       followers: "Seguidores",
       following: "Siguiendo",
+      findRepoPlaceholder: "Buscar un repositorio...",
+      noDescription: "Sin descripción disponible.",
+      starSingular: "estrella",
+      starPlural: "estrellas",
+      forkSingular: "fork",
+      forkPlural: "forks",
+      noReposFound: "No se encontraron repositorios.",
+      avatarAlt: "Avatar de GitHub",
+      userFallback: "Usuario de GitHub",
     },
     homelab: {
       title: "Estado del Homelab",
+      schemaName: "Infraestructura del Homelab",
       description:
         "Estado de la infraestructura autoalojada — Mastodon, Matrix y Meshtastic ejecutándose en un homelab personal. Disponibilidad y estadísticas en tiempo real.",
       intro:
@@ -142,18 +326,80 @@ export const common = {
       meshtasticDescription:
         "Infraestructura para la red mesh Meshtastic. Incluye mapa, base de datos de nodos y monitores de red.",
       meshtasticLink: "Abrir Mesh Hub",
+      opensInNewTab: "(se abre en nueva pestaña)",
+      // InfrastructureInsights
+      statsAriaLabel: "Estadísticas en tiempo real del nodo edge",
+      statsError: "No se pudieron cargar las estadísticas de infraestructura.",
+      requestsReceived: "Peticiones Recibidas (24h)",
+      requestsReceivedSR: "peticiones recibidas",
+      handled: "gestionadas",
+      responsesSent: "Respuestas Enviadas",
+      upstream: "Upstream (Reenviadas)",
+      sentPrefix: "Enviado",
+      bandwidthUp: "Ancho de banda ↑",
+      receivedPrefix: "Recibido",
+      bandwidthDown: "Ancho de banda ↓",
+      securityBlocks: "Seguridad y Bloqueos (24h)",
+      loading: "Cargando",
+      totalSecurityBlocks: "bloqueos de seguridad totales",
+      blocks: "bloqueos",
+      nginxBans: "Bloqueos Nginx",
+      tarpitBlogAria: "Leer artículo sobre la implementación de Nginx Tarpit",
+      tarpitHits: "Impactos Tarpit",
+      tarpitHitsUnit: "impactos tarpit",
+      portScannerBlogAria:
+        "Leer artículo sobre el Honeypot de MikroTik Port Scanner",
+      portScanners: "Escáneres de Puertos",
+      portScannersDetected: "escáneres de puertos detectados",
+      attackRegions: "Regiones de Ataque",
+      attackRegionsList: "Lista de regiones de ataque:",
+      noAttackRegions: "No se registraron regiones de ataque",
+      hits: "impactos",
+      availability: "Disponibilidad (24h)",
+      rateLimits: "límites de tasa",
+      systemStatus: "Estado del Sistema",
+      nodeResourceLoad: "Carga de Recursos del Nodo",
+      cpuUsagePrefix: "Uso de CPU:",
+      percentCPU: "% CPU",
+      memoryUsage: "Uso de Memoria",
+      percentRAM: "% RAM",
+      loadStatus: "Estado de Carga",
+      statusCritical: "Crítico",
+      statusHigh: "Alto",
+      statusElevated: "Elevado",
+      statusOptimal: "Óptimo",
+      statusHealthy: "Saludable",
+      statusUnknown: "Desconocido",
+      // ServiceStats
+      serviceUnavailable: "Servicio No Disponible",
+      online: "En Línea",
+      knownInstances: "Instancias Conocidas",
+      knownServers: "Servidores Conocidos",
+      trendingNow: "Tendencias Ahora",
+      nodes: "Nodos",
+      viewMap: "Ver Mapa",
+      viewMapAria: "Ver Mapa en PotatoMesh",
+      viewMonitor: "Ver Monitor",
+      viewMonitorLFAria: "Ver Monitor en MeshMonitor LF",
+      viewMonitorMFAria: "Ver Monitor en MeshMonitor MF",
     },
     publications: {
       title: "Publicaciones",
       description:
-        "Publicaciones académicas y artículos de investigación de José Manuel Requena Plens. Temas: acústica, metamateriales, ultrasonidos y mitigación de ruido para la ESA.",
+        "Publicaciones académicas de José Manuel Requena Plens. Temas: acústica, metamateriales, ultrasonidos y mitigación de ruido para la ESA.",
       schemaDescription:
         "Publicaciones académicas e investigación de José Manuel Requena Plens.",
+      journalArticles: "Artículos de revista",
+      conferencePapers: "Ponencias en congresos y talleres",
+      thesis: "Tesis",
+      other: "Otros",
+      abstract: "Resumen",
+      bibtex: "BibTeX",
     },
     tools: {
       title: "Herramientas para desarrolladores",
       description:
-        "Herramientas interactivas gratuitas para desarrolladores: seguridad, codificación, redes y sistemas embebidos. Todo se ejecuta en tu navegador — privacidad ante todo.",
+        "Herramientas gratuitas para desarrolladores: seguridad, codificación, redes y sistemas embebidos. Se ejecutan en tu navegador — privacidad ante todo.",
       intro:
         "Utilidades en el navegador para seguridad web y desarrollo. Todos los cálculos se realizan localmente — ningún dato se envía a ningún servidor.",
       aboutTitle: "Sobre estas herramientas",
@@ -177,6 +423,17 @@ export const common = {
       toolPlural: "herramientas",
       inCategory: "en esta categoría",
       backToTools: "← Volver a todas las herramientas",
+      securityDesc:
+        "Herramientas de seguridad online gratuitas — constructor CSP, calculadora SRI, inspector de certificados y codificación Base64/hex. Sin envío de datos.",
+      developerDesc:
+        "Utilidades gratuitas para desarrolladores — codificador Base64, probador regex, constructor cron, conversor timestamps y comprobador de contraste.",
+      networkDesc:
+        "Herramientas de red online gratuitas — calculadora de subredes IP/CIDR, generadores de configuración Nginx y DNS. Todo el procesamiento se ejecuta localmente.",
+      embeddedDesc:
+        "Herramientas embebidas online gratuitas — constructor de tramas Modbus RTU/TCP y calculadora CRC para automatización industrial y desarrollo SCADA.",
+      mikrotikDesc:
+        "Herramientas gratuitas para MikroTik RouterOS — generador de configuración WireGuard VPN para configuraciones dual-stack. Procesamiento local en tu navegador.",
+      fallbackDesc: "Herramientas en la categoría {category}.",
     },
     notFound: {
       title: "404: Ah ah ah!",
@@ -184,6 +441,23 @@ export const common = {
       pageNotFound: "Página no encontrada",
       message: "¡Ah ah ah, no has dicho la palabra mágica!",
       goHome: "← Ir al inicio",
+      nedryAlt: "Ilustración de Dennis Nedry de Jurassic Park",
     },
+  },
+  rss: {
+    continueReading: "Continuar leyendo en jmrp.io →",
+    copyright: "Copyright {year}, José Manuel Requena Plens",
+  },
+  pwa: {
+    shortcutBlog: "Blog",
+    shortcutBlogDesc: "Lee los últimos artículos y tutoriales",
+    shortcutCV: "CV",
+    shortcutCVDesc: "Consulta experiencia profesional y habilidades",
+    shortcutPublications: "Publicaciones",
+    shortcutPublicationsDesc: "Artículos de investigación y coautores",
+  },
+  content: {
+    fallbackNotice:
+      "Este contenido aún no está disponible en español. Se muestra la versión original en inglés.",
   },
 } as const;

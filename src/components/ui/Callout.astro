@@ -3,6 +3,9 @@
  * Callout Component
  * Renders a colored alert box with an icon to highlight information.
  */
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslations } from "@i18n/utils";
+
 interface Props {
   type?:
     | "info"
@@ -18,6 +21,22 @@ interface Props {
 }
 
 const { type = "info", title, icon } = Astro.props;
+
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
+
+const typeLabels: Record<NonNullable<Props["type"]>, string> = {
+  info: t("components.callout.info"),
+  warning: t("components.callout.warning"),
+  error: t("components.callout.error"),
+  success: t("components.callout.success"),
+  tip: t("components.callout.tip"),
+  note: t("components.callout.note"),
+  keypoint: t("components.callout.keypoint"),
+  important: t("components.callout.important"),
+};
+
+const translatedType = typeLabels[type];
 
 /* Map icons but handle colors in CSS */
 const icons = {
@@ -37,10 +56,9 @@ const iconName = icon || icons[type];
 <aside
   class={`callout callout-${type}`}
   role="note"
-  aria-label={title ||
-    `${type.charAt(0).toUpperCase() + type.slice(1)} callout`}
+  aria-label={title || t("aria.calloutType", { type: translatedType })}
 >
-  <span class="sr-only">{type.charAt(0).toUpperCase() + type.slice(1)}:</span>
+  <span class="sr-only">{translatedType}:</span>
   <span
     class={`i-${iconName} icon-wrapper`}
     aria-hidden="true"

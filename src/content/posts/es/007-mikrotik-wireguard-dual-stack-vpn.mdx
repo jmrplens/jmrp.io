@@ -1,12 +1,13 @@
 ---
-title: "MikroTik WireGuard VPN: Complete Dual-Stack IPv4/IPv6 Configuration"
-slug: "mikrotik-wireguard-dual-stack-vpn"
+title: "WireGuard en MikroTik: Configuración Completa Dual-Stack IPv4/IPv6"
+slug: "007-mikrotik-wireguard-dual-stack-vpn"
+lang: "es"
 publishedDate: 2026-02-14
-description: "Configure WireGuard VPN on MikroTik RouterOS with full IPv4/IPv6 dual-stack. Access your home network with native IPv6 from any connection."
+description: "Configura WireGuard en MikroTik RouterOS con dual-stack IPv4/IPv6 completo. Accede a tu red doméstica con IPv6 nativo desde cualquier conexión."
 author: "José Manuel Requena Plens"
 authorEmail: "mail@jmrp.io"
 draft: false
-coverImage: "../../assets/images/blog/wireguard-vpn.webp"
+coverImage: "../../../assets/images/blog/wireguard-vpn.webp"
 tags: ["MikroTik", "WireGuard", "VPN", "IPv6", "Security"]
 ---
 
@@ -27,39 +28,39 @@ import Prerequisite from "@components/ui/Prerequisite.astro";
 import { Tabs, TabPanel } from "@components/ui/tabs";
 import Collapsible from "@components/ui/Collapsible.astro";
 
-[WireGuard](https://www.wireguard.com/) has revolutionized VPN technology with its simplicity, speed, and modern cryptography. Unlike traditional VPN protocols like [OpenVPN](https://openvpn.net/) or [IPSec](https://datatracker.ietf.org/doc/html/rfc7296), WireGuard uses a minimal codebase (~4,000 lines vs 100,000+) and state-of-the-art cryptographic primitives as described in the [WireGuard whitepaper](https://www.wireguard.com/papers/wireguard.pdf), resulting in faster connections and lower latency.
+[WireGuard](https://www.wireguard.com/) ha revolucionado la tecnología VPN con su simplicidad, velocidad y criptografía moderna. A diferencia de protocolos VPN tradicionales como [OpenVPN](https://openvpn.net/) o [IPSec](https://datatracker.ietf.org/doc/html/rfc7296), WireGuard utiliza una base de código mínima (~4.000 líneas frente a más de 100.000) y primitivas criptográficas de última generación, tal como se describe en el [whitepaper de WireGuard](https://www.wireguard.com/papers/wireguard.pdf), lo que se traduce en conexiones más rápidas y menor latencia.
 
-This guide demonstrates how to configure a **production-ready WireGuard VPN** on MikroTik RouterOS with **dual-stack IPv4/IPv6 support**. The result? You can connect from any network—even those without IPv6—and enjoy full IPv6 connectivity through your home router.
+Esta guía muestra cómo configurar un **WireGuard VPN listo para producción** en MikroTik RouterOS con **soporte dual-stack IPv4/IPv6**. ¿El resultado? Puedes conectarte desde cualquier red —incluso sin IPv6— y disfrutar de conectividad IPv6 completa a través de tu router doméstico.
 
-<TLDRSummary title="What You'll Build">
-  - A **WireGuard VPN server** on MikroTik RouterOS with full IPv4 + IPv6 dual-stack support
-  - **IPv6 via ULA + NAT66**: VPN clients get private ULA addresses translated to your ISP's global prefix
-  - **Firewall rules**: Input, forward, NAT/masquerade, MSS clamping, and RAW table optimizations
-  - **Multi-client support**: Each device gets unique keys and a dedicated IP pair (IPv4 + IPv6)
-  - **Full tunnel or split tunnel**: Route all traffic through VPN, or only home network traffic
-  - **Tested on RouterOS 7.x** with RB5009, but applicable to any MikroTik router with WireGuard support
+<TLDRSummary title="Lo que vas a construir">
+  - Un **servidor WireGuard VPN** en MikroTik RouterOS con soporte completo dual-stack IPv4 + IPv6
+  - **IPv6 mediante ULA + NAT66**: los clientes VPN reciben direcciones ULA privadas traducidas al prefix global de tu ISP
+  - **Reglas de firewall**: input, forward, NAT/masquerade, MSS clamping y optimizaciones en la tabla RAW
+  - **Soporte multi-cliente**: cada dispositivo recibe claves únicas y un par de IPs dedicado (IPv4 + IPv6)
+  - **Full tunnel o split tunnel**: encamina todo el tráfico por la VPN o solo el de la red doméstica
+  - **Probado en RouterOS 7.x** con RB5009, pero aplicable a cualquier router MikroTik con soporte WireGuard
 </TLDRSummary>
 
-<Callout type="important" title="Values You Must Customize">
-Throughout this guide, values that **you must replace** with your own are clearly marked. Look for:
+<Callout type="important" title="Valores que debes personalizar">
+A lo largo de esta guía, los valores que **debes sustituir** por los tuyos están claramente marcados. Busca:
 
-- **`wg_devices`** — WireGuard interface name (customize if you prefer a different name)
-- **`53537`** — WireGuard listen port (choose any unused UDP port)
-- **`192.168.100.0/24`** — VPN IPv4 subnet (change if it conflicts with your network)
-- **`fd00:1111:2222:100::/64`** — VPN IPv6 ULA prefix (generate your own at [unique-local-ipv6.com](https://www.unique-local-ipv6.com/))
-- **`192.168.0.0/24`** — Your home LAN subnet (adjust to match your network)
-- **Client keys** — Always generate unique keypairs per device
-- **`your-domain.com`** — Your public IP or DDNS hostname
+- **`wg_devices`** — nombre de la interface WireGuard (personalízalo si prefieres otro nombre)
+- **`53537`** — port de escucha de WireGuard (elige cualquier port UDP no utilizado)
+- **`192.168.100.0/24`** — subnet IPv4 de la VPN (cámbiala si entra en conflicto con tu red)
+- **`fd00:1111:2222:100::/64`** — prefix ULA IPv6 de la VPN (genera el tuyo en [unique-local-ipv6.com](https://www.unique-local-ipv6.com/))
+- **`192.168.0.0/24`** — subnet de tu LAN doméstica (ajústala a tu red)
+- **Claves de cliente** — genera siempre pares de claves únicos por dispositivo
+- **`your-domain.com`** — tu IP pública o nombre de host DDNS
 </Callout>
 
 ---
 
-## Why WireGuard on MikroTik?
+## ¿Por qué WireGuard en MikroTik?
 
-<Table title="VPN Protocol Comparison">
+<Table title="Comparativa de protocolos VPN">
   <thead>
     <tr>
-      <th scope="col">Feature</th>
+      <th scope="col">Característica</th>
       <th scope="col">WireGuard</th>
       <th scope="col">OpenVPN</th>
       <th scope="col">IPSec/IKEv2</th>
@@ -67,130 +68,130 @@ Throughout this guide, values that **you must replace** with your own are clearl
   </thead>
   <tbody>
     <tr>
-      <td>Code complexity</td>
-      <td>~4,000 lines</td>
-      <td>~100,000 lines</td>
-      <td>~400,000 lines</td>
+      <td>Complejidad de código</td>
+      <td>~4.000 líneas</td>
+      <td>~100.000 líneas</td>
+      <td>~400.000 líneas</td>
     </tr>
     <tr>
-      <td>Connection time</td>
+      <td>Tiempo de conexión</td>
       <td>100ms</td>
-      <td>3-10 seconds</td>
-      <td>1-3 seconds</td>
+      <td>3-10 segundos</td>
+      <td>1-3 segundos</td>
     </tr>
     <tr>
-      <td>CPU overhead</td>
-      <td>Very low</td>
-      <td>High (userspace)</td>
-      <td>Medium</td>
+      <td>Carga de CPU</td>
+      <td>Muy baja</td>
+      <td>Alta (espacio de usuario)</td>
+      <td>Media</td>
     </tr>
     <tr>
-      <td>Cryptography</td>
+      <td>Criptografía</td>
       <td>ChaCha20, Curve25519</td>
-      <td>Configurable (varies)</td>
+      <td>Configurable (varía)</td>
       <td>AES, RSA/ECDH</td>
     </tr>
     <tr>
-      <td>Roaming support</td>
-      <td>Seamless</td>
-      <td>Reconnection needed</td>
-      <td>Limited (MOBIKE)</td>
+      <td>Soporte de roaming</td>
+      <td>Transparente</td>
+      <td>Necesita reconexión</td>
+      <td>Limitado (MOBIKE)</td>
     </tr>
   </tbody>
 </Table>
 
-<Callout type="tip" title="Mobile-Friendly Design">
-WireGuard excels on mobile devices. When you switch from Wi-Fi to cellular or change networks, WireGuard reconnects instantly without dropping your session. This "roaming" capability makes it ideal for smartphones and laptops.
+<Callout type="tip" title="Diseñado para móviles">
+WireGuard destaca en dispositivos móviles. Cuando cambias de Wi-Fi a datos móviles o de red, WireGuard reconecta instantáneamente sin perder la sesión. Esta capacidad de roaming lo hace ideal para smartphones y portátiles.
 </Callout>
 
 ---
 
-## Architecture overview
+## Visión general de la arquitectura
 
-Our configuration creates a dual-stack VPN where connected clients receive both IPv4 and IPv6 addresses. Traffic from clients is NAT'd (masqueraded) to access the internet through your home connection. For detailed [MikroTik WireGuard documentation](https://help.mikrotik.com/docs/display/ROS/WireGuard), refer to the official wiki.
+Nuestra configuración crea una VPN dual-stack en la que los clientes conectados reciben tanto dirección IPv4 como IPv6. El tráfico de los clientes se traduce mediante NAT (masquerade) para acceder a internet a través de tu conexión doméstica. Para más información, consulta la [documentación oficial de WireGuard en MikroTik](https://help.mikrotik.com/docs/display/ROS/WireGuard).
 
-<Mermaid caption="WireGuard Dual-Stack Architecture" ariaLabel="Diagram showing WireGuard VPN topology with IPv4 and IPv6 networks flowing through MikroTik router to the internet" maxWidth="600px">
+<Mermaid caption="Arquitectura WireGuard Dual-Stack" ariaLabel="Diagrama que muestra la topología VPN WireGuard con redes IPv4 e IPv6 pasando a través del router MikroTik hacia internet" maxWidth="600px">
 ```mermaid-render
 flowchart TB
     subgraph Internet
-        WAN[ISP Connection<br/>IPv4 + IPv6]:::info
+        WAN[Conexión ISP<br/>IPv4 + IPv6]:::info
     end
     
-    subgraph MikroTik["MikroTik Router"]
-        WG[WireGuard Interface<br/>wg_devices]:::highlight
+    subgraph MikroTik["Router MikroTik"]
+        WG[Interface WireGuard<br/>wg_devices]:::highlight
         FW[Firewall + NAT]:::warning
     end
     
-    subgraph VPN_Clients["VPN Clients"]
-        Client1[Client 1<br/>192.168.100.2<br/>fd00:...:100::2]:::secondary
-        Client2[Client 2<br/>192.168.100.3<br/>fd00:...:100::3]:::secondary
-        ClientN[Client N<br/>192.168.100.x<br/>fd00:...:100::x]:::secondary
+    subgraph VPN_Clients["Clientes VPN"]
+        Client1[Cliente 1<br/>192.168.100.2<br/>fd00:...:100::2]:::secondary
+        Client2[Cliente 2<br/>192.168.100.3<br/>fd00:...:100::3]:::secondary
+        ClientN[Cliente N<br/>192.168.100.x<br/>fd00:...:100::x]:::secondary
     end
     
-    subgraph Home["Home Network"]
-        LAN[LAN Devices<br/>192.168.0.0/24]:::success
+    subgraph Home["Red doméstica"]
+        LAN[Dispositivos LAN<br/>192.168.0.0/24]:::success
     end
     
-    Client1 & Client2 & ClientN -->|Encrypted Tunnel| WG
+    Client1 & Client2 & ClientN -->|Túnel cifrado| WG
     WG --> FW
     FW -->|Masquerade| WAN
-    FW <-->|Access| LAN
+    FW <-->|Acceso| LAN
 ```
 </Mermaid>
 
-### Network addressing scheme
+### Esquema de direccionamiento
 
-<Table title="IP Address Assignment">
+<Table title="Asignación de direcciones IP">
   <thead>
     <tr>
-      <th scope="col">Component</th>
-      <th scope="col">IPv4 Address</th>
-      <th scope="col">IPv6 Address</th>
+      <th scope="col">Componente</th>
+      <th scope="col">Dirección IPv4</th>
+      <th scope="col">Dirección IPv6</th>
     </tr>
   </thead>
   <tbody>
     <tr>
-      <td>WireGuard Interface (Router)</td>
+      <td>Interface WireGuard (Router)</td>
       <td>`192.168.100.1/24`</td>
       <td>`fd00:1111:2222:100::1/64`</td>
     </tr>
     <tr>
-      <td>VPN Client Range</td>
+      <td>Rango de clientes VPN</td>
       <td>`192.168.100.2-254`</td>
       <td>`fd00:1111:2222:100::2-ffff`</td>
     </tr>
     <tr>
-      <td>Home LAN</td>
+      <td>LAN doméstica</td>
       <td>`192.168.0.0/24`</td>
-      <td>ISP-assigned prefix</td>
+      <td>Prefix asignado por el ISP</td>
     </tr>
   </tbody>
 </Table>
 
-<Callout type="info" title="Why ULA for IPv6?">
-We use [Unique Local Addresses (ULA)](https://datatracker.ietf.org/doc/html/rfc4193) in the `fd00::/8` range for the VPN. These addresses are private (like RFC1918 for IPv4) and guaranteed not to conflict with public IPv6 addresses. The router then NAT66 translates them to your ISP-assigned global IPv6 prefix.
+<Callout type="info" title="¿Por qué ULA para IPv6?">
+Utilizamos [direcciones Unique Local (ULA)](https://datatracker.ietf.org/doc/html/rfc4193) del rango `fd00::/8` para la VPN. Estas direcciones son privadas (como RFC1918 para IPv4) y no entran en conflicto con direcciones IPv6 públicas. El router las traduce mediante NAT66 al prefix IPv6 global asignado por tu ISP.
 </Callout>
 
 ---
 
-## Prerequisites
+## Requisitos previos
 
-<Prerequisite title="Before You Start">
-  - **MikroTik RouterOS 7.x** or later (WireGuard is built-in since RouterOS 7)
-  - **Public IP address** (static) or **Dynamic DNS** (DDNS) configured on your router
-  - **IPv6 connectivity** from your ISP (optional but recommended for dual-stack)
-  - **UDP port forwarding** capability if your MikroTik is behind another router/NAT
-  - **Administrative access** to your MikroTik router (via WinBox, WebFig, or SSH)
-  - **Interface lists** already created: `WAN` (for internet-facing interfaces) and `LAN` (for local network interfaces). These are part of the default MikroTik configuration
+<Prerequisite title="Antes de empezar">
+  - **MikroTik RouterOS 7.x** o posterior (WireGuard viene integrado desde RouterOS 7)
+  - **Dirección IP pública** (estática) o **Dynamic DNS** (DDNS) configurado en tu router
+  - **Conectividad IPv6** desde tu ISP (opcional pero recomendada para dual-stack)
+  - **Capacidad de port forwarding UDP** si tu MikroTik está detrás de otro router/NAT
+  - **Acceso administrativo** a tu router MikroTik (vía WinBox, WebFig o SSH)
+  - **Listas de interfaces** ya creadas: `WAN` (para interfaces de cara a internet) y `LAN` (para interfaces de red local). Forman parte de la configuración por defecto de MikroTik
 </Prerequisite>
 
 ---
 
-## Step 1: create the WireGuard interface
+## Paso 1: crear la interface WireGuard
 
-First, we create the WireGuard interface on the MikroTik router. The router will generate a keypair automatically.
+Primero, creamos la interface WireGuard en el router MikroTik. El router generará un par de claves automáticamente.
 
-<Code lang="routeros" title="Create WireGuard Interface">
+<Code lang="routeros" title="Crear interface WireGuard">
 ```routeros
 /interface wireguard add \
     name=wg_devices \
@@ -200,15 +201,15 @@ First, we create the WireGuard interface on the MikroTik router. The router will
 ```
 </Code>
 
-<Callout type="tip" title="Port Selection">
-Using a non-standard port like `53537` instead of the default `51820` helps avoid automated scans targeting common VPN ports. Some networks also block standard VPN ports, so a high random port may have better connectivity.
+<Callout type="tip" title="Selección de port">
+Usar un port no estándar como `53537` en lugar del `51820` por defecto ayuda a evitar escaneos automatizados dirigidos a puertos VPN conocidos. Algunas redes también bloquean puertos VPN estándar, así que un port alto aleatorio puede ofrecer mejor conectividad.
 </Callout>
 
-### Retrieve the server's public key
+### Obtener la public key del servidor
 
-After creating the interface, retrieve the public key to configure clients:
+Tras crear la interface, obtén la public key para configurar los clientes:
 
-<TerminalSession title="Retrieve Server Public Key">
+<TerminalSession title="Obtener Public Key del servidor">
   <TerminalSessionCommand>
     /interface wireguard print
   </TerminalSessionCommand>
@@ -224,15 +225,15 @@ Flags: X - disabled; R - running
   </TerminalSessionOutput>
 </TerminalSession>
 
-Save the `public-key` value—you'll need it when configuring client devices.
+Guarda el valor de `public-key` — lo necesitarás al configurar los dispositivos cliente.
 
 ---
 
-## Step 2: assign IP addresses to the interface
+## Paso 2: asignar direcciones IP a la interface
 
-The WireGuard interface needs both IPv4 and IPv6 addresses to serve as the gateway for VPN clients.
+La interface WireGuard necesita tanto dirección IPv4 como IPv6 para servir como gateway de los clientes VPN.
 
-<Code lang="routeros" title="Assign IP Addresses">
+<Code lang="routeros" title="Asignar direcciones IP">
 ```routeros
 # IPv4 address for WireGuard interface
 /ip address add \
@@ -250,17 +251,17 @@ The WireGuard interface needs both IPv4 and IPv6 addresses to serve as the gatew
 ```
 </Code>
 
-<Callout type="warning" title="IPv6 Advertise Setting">
-Set `advertise=no` for the WireGuard IPv6 address. We don't want Router Advertisements on the VPN tunnel—clients receive their static addresses through the WireGuard configuration, not SLAAC.
+<Callout type="warning" title="Ajuste de advertise en IPv6">
+Establece `advertise=no` para la dirección IPv6 de WireGuard. No queremos Router Advertisements en el tunnel VPN — los clientes reciben sus direcciones estáticas a través de la configuración de WireGuard, no por SLAAC.
 </Callout>
 
 ---
 
-## Step 3: create IPv6 pool (optional)
+## Paso 3: crear pool IPv6 (opcional)
 
-If you want to manage IPv6 address allocation centrally, create a pool:
+Si quieres gestionar la asignación de direcciones IPv6 de forma centralizada, crea un pool:
 
-<Code lang="routeros" title="Create IPv6 Pool">
+<Code lang="routeros" title="Crear pool IPv6">
 ```routeros
 /ipv6 pool add \
     name=wg_devices_pool_global \
@@ -272,11 +273,11 @@ If you want to manage IPv6 address allocation centrally, create a pool:
 
 ---
 
-## Step 4: add the interface to interface lists
+## Paso 4: añadir la interface a las listas de interfaces
 
-MikroTik uses interface lists for firewall rules. Adding WireGuard to the appropriate lists ensures proper traffic handling.
+MikroTik utiliza listas de interfaces para las reglas de firewall. Añadir WireGuard a las listas adecuadas garantiza una gestión correcta del tráfico.
 
-<Code lang="routeros" title="Add to Interface Lists">
+<Code lang="routeros" title="Añadir a listas de interfaces">
 ```routeros
 # Add to VPN list for VPN-specific rules
 /interface list member add \
@@ -294,24 +295,24 @@ MikroTik uses interface lists for firewall rules. Adding WireGuard to the approp
 
 ---
 
-## Step 5: configure firewall rules
+## Paso 5: configurar reglas de firewall
 
-The firewall configuration is critical for security and connectivity. We need rules for:
+La configuración del firewall es crítica para la seguridad y la conectividad. Necesitamos reglas para:
 
-1. **Accepting WireGuard traffic** on the listening port
-2. **Allowing VPN clients** to access the internet
-3. **Allowing VPN clients** to access local networks
-4. **NAT/Masquerade** for outbound traffic
+1. **Aceptar tráfico WireGuard** en el port de escucha
+2. **Permitir a los clientes VPN** acceder a internet
+3. **Permitir a los clientes VPN** acceder a las redes locales
+4. **NAT/Masquerade** para el tráfico saliente
 
-<Callout type="warning" title="Firewall Rule Placement">
-MikroTik processes firewall rules **top to bottom**. The rules below must be placed **before** any `drop` rules in their respective chains. Use the `place-before` parameter or reorder rules in WinBox after adding them.
+<Callout type="warning" title="Ubicación de las reglas de firewall">
+MikroTik procesa las reglas de firewall **de arriba a abajo**. Las reglas siguientes deben colocarse **antes** de cualquier regla `drop` en sus respectivas cadenas. Usa el parámetro `place-before` o reordena las reglas en WinBox después de añadirlas.
 
-If you use the default MikroTik firewall, add these rules near the top of each chain, after the `established,related` accept rules.
+Si usas el firewall por defecto de MikroTik, añade estas reglas cerca del inicio de cada cadena, después de las reglas `established,related` de aceptación.
 </Callout>
 
-### Input chain: accept WireGuard connections
+### Cadena input: aceptar conexiones WireGuard
 
-<Code lang="routeros" title="Firewall Input Rules">
+<Code lang="routeros" title="Reglas de firewall input">
 ```routeros
 # Allow WireGuard UDP port (IPv4)
 /ip firewall filter add \
@@ -331,9 +332,9 @@ If you use the default MikroTik firewall, add these rules near the top of each c
 ```
 </Code>
 
-### Forward chain: allow VPN traffic
+### Cadena forward: permitir tráfico VPN
 
-<Code lang="routeros" title="Firewall Forward Rules - IPv4">
+<Code lang="routeros" title="Reglas de firewall forward - IPv4">
 ```routeros
 # FastTrack for established WireGuard connections (performance)
 /ip firewall filter add \
@@ -370,7 +371,7 @@ If you use the default MikroTik firewall, add these rules near the top of each c
 ```
 </Code>
 
-<Code lang="routeros" title="Firewall Forward Rules - IPv6">
+<Code lang="routeros" title="Reglas de firewall forward - IPv6">
 ```routeros
 # Allow VPN clients all outbound IPv6 traffic
 /ipv6 firewall filter add \
@@ -389,9 +390,9 @@ If you use the default MikroTik firewall, add these rules near the top of each c
 ```
 </Code>
 
-### Create address list for WireGuard networks
+### Crear address list para redes WireGuard
 
-<Code lang="routeros" title="Address Lists">
+<Code lang="routeros" title="Listas de direcciones">
 ```routeros
 /ip firewall address-list add \
     list=WireGuard \
@@ -402,11 +403,11 @@ If you use the default MikroTik firewall, add these rules near the top of each c
 
 ---
 
-## Step 6: configure NAT/Masquerade
+## Paso 6: configurar NAT/Masquerade
 
-For VPN clients to access the internet, their private addresses must be translated (NAT) to your public IP.
+Para que los clientes VPN accedan a internet, sus direcciones privadas deben traducirse (NAT) a tu IP pública.
 
-<Code lang="routeros" title="NAT Configuration">
+<Code lang="routeros" title="Configuración NAT">
 ```routeros
 # IPv4 Masquerade for WireGuard
 /ip firewall nat add \
@@ -426,15 +427,15 @@ For VPN clients to access the internet, their private addresses must be translat
 ```
 </Code>
 
-<Callout type="info" title="NAT66 Explained">
-Traditional IPv6 philosophy discourages NAT, preferring end-to-end connectivity. However, NAT66 (masquerade for IPv6) is practical for VPNs using ULA addresses. Your VPN clients use private ULA addresses, which are translated to your ISP-assigned global IPv6 prefix when accessing the internet.
+<Callout type="info" title="NAT66 explicado">
+La filosofía tradicional de IPv6 desaconseja el NAT, prefiriendo la conectividad extremo a extremo. Sin embargo, NAT66 (masquerade para IPv6) resulta práctico en VPNs que usan direcciones ULA. Tus clientes VPN utilizan direcciones ULA privadas, que se traducen al prefix IPv6 global asignado por tu ISP cuando acceden a internet.
 </Callout>
 
 ---
 
-## Step 7: configure MSS clamping
+## Paso 7: configurar MSS clamping
 
-TCP Maximum Segment Size (MSS) clamping prevents fragmentation issues with VPN tunnels. The WireGuard overhead reduces the effective MTU, so we must adjust TCP MSS accordingly.
+El TCP Maximum Segment Size (MSS) clamping evita problemas de fragmentación en túneles VPN. La sobrecarga de WireGuard reduce el MTU efectivo, por lo que debemos ajustar el TCP MSS en consecuencia.
 
 <Code lang="routeros" title="MSS Clamping">
 ```routeros
@@ -450,23 +451,23 @@ TCP Maximum Segment Size (MSS) clamping prevents fragmentation issues with VPN t
 ```
 </Code>
 
-<Callout type="tip" title="MTU and MSS Calculation">
-WireGuard adds overhead to each packet (40 bytes IPv6/20 bytes IPv4 + 8 bytes UDP + 32 bytes WG header). We set `mtu=1500` on the WireGuard interface to allow full-sized inner packets:
+<Callout type="tip" title="Cálculo de MTU y MSS">
+WireGuard añade sobrecarga a cada paquete (40 bytes IPv6/20 bytes IPv4 + 8 bytes UDP + 32 bytes cabecera WG). Establecemos `mtu=1500` en la interface WireGuard para permitir paquetes internos de tamaño completo:
 
-- **WireGuard interface MTU**: 1500 (inner packets; outer packets with WG overhead are fragmented transparently by the transport layer)
-- **TCP MSS for IPv4**: 1500 - 20 (IP) - 20 (TCP) = **1460**
-- **TCP MSS for IPv6**: 1500 - 40 (IPv6) - 20 (TCP) = **1440**
+- **MTU de la interface WireGuard**: 1500 (paquetes internos; los paquetes externos con sobrecarga WG se fragmentan de forma transparente por la capa de transporte)
+- **TCP MSS para IPv4**: 1500 - 20 (IP) - 20 (TCP) = **1460**
+- **TCP MSS para IPv6**: 1500 - 40 (IPv6) - 20 (TCP) = **1440**
 
-We use `new-mss=1420` as a conservative value below both limits. If you experience connection issues (pages loading partially, stalled downloads), try reducing to `1380` or setting the WireGuard MTU to `1420` (the RouterOS default, which avoids outer fragmentation by accounting for the WireGuard overhead).
+Usamos `new-mss=1420` como valor conservador por debajo de ambos límites. Si experimentas problemas de conexión (páginas que cargan parcialmente, descargas que se atascan), prueba a reducir a `1380` o establece el MTU de WireGuard a `1420` (el valor por defecto de RouterOS, que evita la fragmentación externa al tener en cuenta la sobrecarga de WireGuard).
 </Callout>
 
 ---
 
-## Step 8: configure RAW table for performance
+## Paso 8: configurar la tabla RAW para rendimiento
 
-Skip flood protection for WireGuard traffic to ensure smooth connectivity:
+Omitir la protección contra flood para el tráfico WireGuard garantiza una conectividad fluida:
 
-<Code lang="routeros" title="RAW Table Rules">
+<Code lang="routeros" title="Reglas de la tabla RAW">
 ```routeros
 # IPv4: Skip flood protection for WireGuard
 /ip firewall raw add \
@@ -488,26 +489,26 @@ Skip flood protection for WireGuard traffic to ensure smooth connectivity:
 
 ---
 
-## Step 9: add WireGuard peers (clients)
+## Paso 9: añadir peers WireGuard (clientes)
 
-Now we add client devices. Each client needs:
+Ahora añadimos los dispositivos cliente. Cada cliente necesita:
 
-- **Unique IP addresses**: A dedicated IPv4 and IPv6 address within the WireGuard subnet
-- **Keypair**: Private and public keys for authentication
-- **Preshared key**: Optional but recommended additional encryption layer
+- **Direcciones IP únicas**: una dirección IPv4 y una IPv6 dedicadas dentro de la subnet WireGuard
+- **Par de claves**: private key y public key para autenticación
+- **Preshared key**: opcional pero recomendada como capa adicional de cifrado
 
-### Create a peer
+### Crear un peer
 
-Choose how to generate the cryptographic keys. The **recommended** approach lets RouterOS generate everything automatically, but you can also pre-generate keys on the client device.
+Elige cómo generar las claves criptográficas. El enfoque **recomendado** deja que RouterOS genere todo automáticamente, pero también puedes pre-generar las claves en el dispositivo cliente.
 
 <Tabs>
-  <TabPanel label="RouterOS (recommended)">
+  <TabPanel label="RouterOS (recomendado)">
 
-Since RouterOS 7.x, the router can generate all cryptographic keys automatically. This is the **simplest approach** — the router creates the private key, computes the public key, and generates the preshared key in a single command.
+Desde RouterOS 7.x, el router puede generar todas las claves criptográficas automáticamente. Es el **enfoque más sencillo** — el router crea la private key, calcula la public key y genera la preshared key en un solo comando.
 
-#### Create the peer with auto-generated keys
+#### Crear el peer con claves auto-generadas
 
-<Code lang="routeros" title="Add Peer with Auto-Generated Keys">
+<Code lang="routeros" title="Añadir peer con claves auto-generadas">
 ```routeros
 /interface wireguard peers add \
     interface=wg_devices \
@@ -520,15 +521,15 @@ Since RouterOS 7.x, the router can generate all cryptographic keys automatically
 ```
 </Code>
 
-<Callout type="tip" title="What auto Does">
-`private-key=auto` generates a private key and automatically computes the corresponding public key. `preshared-key=auto` generates a random preshared key. Both values are stored on the peer and can be retrieved later.
+<Callout type="tip" title="Qué hace auto">
+`private-key=auto` genera una private key y calcula automáticamente la public key correspondiente. `preshared-key=auto` genera una preshared key aleatoria. Ambos valores se almacenan en el peer y pueden consultarse posteriormente.
 </Callout>
 
-#### Set client configuration properties (optional)
+#### Establecer propiedades de configuración del cliente (opcional)
 
-These properties define the client-side configuration and enable the **QR code** feature in WinBox/WebFig:
+Estas propiedades definen la configuración del lado del cliente y habilitan la función de **código QR** en WinBox/WebFig:
 
-<Code lang="routeros" title="Set Client Configuration Properties">
+<Code lang="routeros" title="Establecer propiedades de configuración del cliente">
 ```routeros
 /interface wireguard peers set wg_client1 \
     client-address=192.168.100.2/32,fd00:1111:2222:100::2/128 \
@@ -539,15 +540,15 @@ These properties define the client-side configuration and enable the **QR code**
 ```
 </Code>
 
-<Callout type="tip" title="QR Code in WinBox / WebFig">
-With these client properties set, open the peer in **WinBox** or **WebFig** and use `show-client-config` to display the complete client configuration and a QR code. This is the **easiest way** to configure iOS/Android clients — just scan the code from the WireGuard app.
+<Callout type="tip" title="Código QR en WinBox / WebFig">
+Con estas propiedades de cliente configuradas, abre el peer en **WinBox** o **WebFig** y usa `show-client-config` para mostrar la configuración completa del cliente y un código QR. Es la **forma más fácil** de configurar clientes iOS/Android — simplemente escanea el código desde la app WireGuard.
 </Callout>
 
-#### Retrieve keys for manual client configuration
+#### Obtener claves para configuración manual del cliente
 
-If you need to configure the client manually instead of scanning the QR code, retrieve the generated keys from the router:
+Si necesitas configurar el cliente manualmente en lugar de escanear el código QR, obtén las claves generadas desde el router:
 
-<Code lang="routeros" title="Retrieve Generated Keys">
+<Code lang="routeros" title="Obtener claves generadas">
 ```routeros
 # Client's private key → goes into client's [Interface] section
 :put [/interface wireguard peers get [find name=wg_client1] private-key]
@@ -560,16 +561,16 @@ If you need to configure the client manually instead of scanning the QR code, re
 ```
 </Code>
 
-Use these values to fill in the client configuration file in [Step 10](#step-10-client-configuration).
+Usa estos valores para completar el archivo de configuración del cliente en el [Paso 10](#paso-10-configuración-del-cliente).
 
   </TabPanel>
   <TabPanel label="Linux / macOS">
 
-Generate keys on the client device first, then add the peer on the router using the client's **public** key.
+Genera las claves en el dispositivo cliente primero y luego añade el peer en el router usando la **public key** del cliente.
 
-#### Generate keys on the client
+#### Generar claves en el cliente
 
-<TerminalCommand title="Generate Client Keys">
+<TerminalCommand title="Generar claves del cliente">
 ```bash
 # Generate private key
 wg genkey > privatekey
@@ -585,11 +586,11 @@ cat privatekey publickey presharedkey
 ```
 </TerminalCommand>
 
-#### Add peer on MikroTik
+#### Añadir peer en MikroTik
 
-Use the client's **public** key (not the private key) and the preshared key:
+Usa la **public key** del cliente (no la private key) y la preshared key:
 
-<Code lang="routeros" title="Add WireGuard Peer (Linux/macOS)">
+<Code lang="routeros" title="Añadir peer WireGuard (Linux/macOS)">
 ```routeros
 /interface wireguard peers add \
     interface=wg_devices \
@@ -602,30 +603,30 @@ Use the client's **public** key (not the private key) and the preshared key:
 ```
 </Code>
 
-<Callout type="important" title="Keep the Private Key Secure">
-The private key stays on the client device and goes into the client's `[Interface]` section. Only the **public** key is shared with the router. **Never** transfer the private key over an insecure channel.
+<Callout type="important" title="Mantén la private key segura">
+La private key permanece en el dispositivo cliente y va en la sección `[Interface]` del cliente. Solo la **public key** se comparte con el router. **Nunca** transfieras la private key por un canal inseguro.
 </Callout>
 
   </TabPanel>
   <TabPanel label="Windows">
 
-The WireGuard Windows app generates keys automatically when creating a new tunnel.
+La aplicación WireGuard para Windows genera las claves automáticamente al crear un nuevo tunnel.
 
-1. Download and install [WireGuard for Windows](https://www.wireguard.com/install/)
-2. Open the app and click **Add Tunnel** → **Add empty tunnel**
-3. The app generates a keypair — copy the **Public Key** shown at the top
-4. Generate a preshared key from the command line:
+1. Descarga e instala [WireGuard para Windows](https://www.wireguard.com/install/)
+2. Abre la aplicación y haz clic en **Add Tunnel** → **Add empty tunnel**
+3. La aplicación genera un par de claves — copia la **Public Key** que aparece en la parte superior
+4. Genera una preshared key desde la línea de comandos:
 
-<TerminalCommand title="Generate Preshared Key">
+<TerminalCommand title="Generar preshared key">
 ```powershell
 # If WireGuard is installed, wg.exe is available in PATH
 wg genpsk
 ```
 </TerminalCommand>
 
-#### Add peer on MikroTik
+#### Añadir peer en MikroTik
 
-<Code lang="routeros" title="Add WireGuard Peer (Windows)">
+<Code lang="routeros" title="Añadir peer WireGuard (Windows)">
 ```routeros
 /interface wireguard peers add \
     interface=wg_devices \
@@ -641,52 +642,52 @@ wg genpsk
   </TabPanel>
 </Tabs>
 
-<Table title="Peer Configuration Parameters">
+<Table title="Parámetros de configuración del peer">
   <thead>
     <tr>
-      <th scope="col">Parameter</th>
-      <th scope="col">Value</th>
-      <th scope="col">Purpose</th>
+      <th scope="col">Parámetro</th>
+      <th scope="col">Valor</th>
+      <th scope="col">Propósito</th>
     </tr>
   </thead>
   <tbody>
     <tr>
       <td>`private-key`</td>
-      <td>`auto` / none</td>
-      <td>Auto-generates keypair on the router (recommended method)</td>
+      <td>`auto` / ninguno</td>
+      <td>Auto-genera el par de claves en el router (método recomendado)</td>
     </tr>
     <tr>
       <td>`public-key`</td>
-      <td>Client's public key</td>
-      <td>Identifies and authenticates the client</td>
+      <td>Public key del cliente</td>
+      <td>Identifica y autentica al cliente</td>
     </tr>
     <tr>
       <td>`preshared-key`</td>
-      <td>`auto` / shared secret</td>
-      <td>Additional symmetric encryption layer (post-quantum security)</td>
+      <td>`auto` / secreto compartido</td>
+      <td>Capa de cifrado simétrico adicional (seguridad post-cuántica)</td>
     </tr>
     <tr>
       <td>`allowed-address`</td>
-      <td>Client IP(s)</td>
-      <td>IPs the client can use; also acts as routing table</td>
+      <td>IP(s) del cliente</td>
+      <td>IPs que el cliente puede usar; también actúa como routing table</td>
     </tr>
     <tr>
       <td>`persistent-keepalive`</td>
-      <td>25 seconds</td>
-      <td>Maintains NAT mappings, enables incoming connections</td>
+      <td>25 segundos</td>
+      <td>Mantiene los mapeos NAT, permite conexiones entrantes</td>
     </tr>
   </tbody>
 </Table>
 
 <Callout type="warning" title="Persistent Keepalive">
-The `persistent-keepalive=25s` setting is crucial for mobile devices behind NAT. It sends a keepalive packet every 25 seconds, maintaining the NAT translation and allowing the server to send data to the client even if the client hasn't sent anything recently.
+El ajuste `persistent-keepalive=25s` es crucial para dispositivos móviles detrás de NAT. Envía un paquete keepalive cada 25 segundos, manteniendo la traducción NAT y permitiendo al servidor enviar datos al cliente incluso si este no ha enviado nada recientemente.
 </Callout>
 
-### Example: multiple peers
+### Ejemplo: múltiples peers
 
-Each peer must have a **unique keypair** and **unique IP addresses**. Never reuse keys between devices.
+Cada peer debe tener un **par de claves único** y **direcciones IP únicas**. Nunca reutilices claves entre dispositivos.
 
-<Code lang="routeros" title="Multiple Peer Configuration (RouterOS auto-keys)">
+<Code lang="routeros" title="Configuración de múltiples peers (claves auto en RouterOS)">
 ```routeros
 # Client 1 - Mobile Device (e.g., iPhone)
 /interface wireguard peers add \
@@ -720,39 +721,39 @@ Each peer must have a **unique keypair** and **unique IP addresses**. Never reus
 ```
 </Code>
 
-<Callout type="warning" title="Security: Never Share Private Keys">
-Whether keys are auto-generated on the router or pre-generated on the client, the private key must **only** exist on the client device. When using RouterOS auto-generation, retrieve the private key once for client configuration and avoid logging or storing it elsewhere. **Never** commit real keys to documentation or version control.
+<Callout type="warning" title="Seguridad: nunca compartas las private keys">
+Tanto si las claves se auto-generan en el router como si se pre-generan en el cliente, la private key solo debe existir en el dispositivo cliente. Cuando uses la auto-generación de RouterOS, obtén la private key una vez para la configuración del cliente y evita registrarla o almacenarla en otro lugar. **Nunca** incluyas claves reales en documentación o control de versiones.
 </Callout>
 
 ---
 
-## Step 10: client configuration
+## Paso 10: configuración del cliente
 
-Now configure the client device. If you used the **RouterOS auto-keys** method and set the client properties in Step 9, you can simply scan the **QR code** from WinBox/WebFig — no manual configuration needed.
+Ahora configura el dispositivo cliente. Si usaste el método de **claves auto de RouterOS** y estableciste las propiedades del cliente en el Paso 9, simplemente escanea el **código QR** desde WinBox/WebFig — no necesitas configuración manual.
 
-For manual setup, the configuration file format is the same across all platforms, but the setup method varies.
+Para la configuración manual, el formato del archivo de configuración es el mismo en todas las plataformas, pero el método de instalación varía.
 
-<Callout type="important" title="Replace These Values">
-In every client configuration below, you **must** replace:
-- **`<CLIENT_PRIVATE_KEY>`** — the client's private key (auto-generated on router or generated locally in Step 9)
-- **`<SERVER_PUBLIC_KEY>`** — the server's public key (from Step 1, or retrieved with `:put` in Step 9)
-- **`<PRESHARED_KEY>`** — the preshared key (must match server peer config)
-- **`your-domain.com:53537`** — your router's public IP/domain and WireGuard port
-- **IP addresses** — must match the `allowed-address` configured on the server peer
+<Callout type="important" title="Sustituye estos valores">
+En cada configuración de cliente a continuación, **debes** sustituir:
+- **`<CLIENT_PRIVATE_KEY>`** — la private key del cliente (auto-generada en el router o generada localmente en el Paso 9)
+- **`<SERVER_PUBLIC_KEY>`** — la public key del servidor (del Paso 1, u obtenida con `:put` en el Paso 9)
+- **`<PRESHARED_KEY>`** — la preshared key (debe coincidir con la configuración del peer en el servidor)
+- **`your-domain.com:53537`** — la IP pública/dominio de tu router y el port de WireGuard
+- **Direcciones IP** — deben coincidir con `allowed-address` configurado en el peer del servidor
 </Callout>
 
 <Tabs>
   <TabPanel label="iOS / Android">
 
-Download the **WireGuard** app from the [App Store](https://apps.apple.com/app/wireguard/id1441195209) or [Google Play](https://play.google.com/store/apps/details?id=com.wireguard.android). You can either:
-- **Import a .conf file** or scan a **QR code**
-- **Create manually** in the app
+Descarga la app **WireGuard** desde la [App Store](https://apps.apple.com/app/wireguard/id1441195209) o [Google Play](https://play.google.com/store/apps/details?id=com.wireguard.android). Puedes:
+- **Importar un archivo .conf** o escanear un **código QR**
+- **Crear manualmente** en la app
 
 <FileContent
   filename="wg_home.conf (iOS/Android)"
   language="ini"
   collapsible={false}
-  title="Mobile Client Configuration"
+  title="Configuración del cliente móvil"
 >
 ```ini
 [Interface]
@@ -769,16 +770,16 @@ PersistentKeepalive = 25
 ```
 </FileContent>
 
-<Callout type="tip" title="QR Code from RouterOS">
-If you set the client properties in Step 9 (`client-address`, `client-dns`, `client-endpoint`, etc.), open the peer in **WinBox** or **WebFig** and use `show-client-config` to display a QR code. Scan it with the WireGuard app — no manual configuration needed.
+<Callout type="tip" title="Código QR desde RouterOS">
+Si configuraste las propiedades del cliente en el Paso 9 (`client-address`, `client-dns`, `client-endpoint`, etc.), abre el peer en **WinBox** o **WebFig** y usa `show-client-config` para mostrar un código QR. Escanéalo con la app WireGuard — sin necesidad de configuración manual.
 </Callout>
 
   </TabPanel>
   <TabPanel label="macOS / Linux">
 
-Install WireGuard:
+Instala WireGuard:
 
-<TerminalCommand title="Install WireGuard">
+<TerminalCommand title="Instalar WireGuard">
 ```bash
 # macOS (Homebrew)
 brew install wireguard-tools
@@ -791,13 +792,13 @@ sudo dnf install wireguard-tools
 ```
 </TerminalCommand>
 
-Create the configuration file:
+Crea el archivo de configuración:
 
 <FileContent
   filename="/etc/wireguard/wg_home.conf"
   language="ini"
   collapsible={false}
-  title="Linux/macOS Client Configuration"
+  title="Configuración del cliente Linux/macOS"
 >
 ```ini
 [Interface]
@@ -814,9 +815,9 @@ PersistentKeepalive = 25
 ```
 </FileContent>
 
-Activate the tunnel:
+Activa el tunnel:
 
-<TerminalCommand title="Activate WireGuard">
+<TerminalCommand title="Activar WireGuard">
 ```bash
 # Start the tunnel
 sudo wg-quick up wg_home
@@ -835,15 +836,15 @@ sudo systemctl enable wg-quick@wg_home
   </TabPanel>
   <TabPanel label="Windows">
 
-1. Download and install [WireGuard for Windows](https://www.wireguard.com/install/)
-2. Open the app and click **Add Tunnel** → **Import tunnel(s) from file** (if you have a `.conf` file) or **Add empty tunnel** to paste the configuration
-3. If creating from scratch, replace the configuration with:
+1. Descarga e instala [WireGuard para Windows](https://www.wireguard.com/install/)
+2. Abre la aplicación y haz clic en **Add Tunnel** → **Import tunnel(s) from file** (si tienes un archivo `.conf`) o **Add empty tunnel** para pegar la configuración
+3. Si lo creas desde cero, sustituye la configuración con:
 
 <FileContent
   filename="wg_home.conf (Windows)"
   language="ini"
   collapsible={false}
-  title="Windows Client Configuration"
+  title="Configuración del cliente Windows"
 >
 ```ini
 [Interface]
@@ -860,81 +861,81 @@ PersistentKeepalive = 25
 ```
 </FileContent>
 
-5. Click **Save** then **Activate**
+5. Haz clic en **Save** y luego en **Activate**
 
   </TabPanel>
 </Tabs>
 
-### Configuration options explained
+### Opciones de configuración explicadas
 
-<Table title="Client Configuration Parameters">
+<Table title="Parámetros de configuración del cliente">
   <thead>
     <tr>
-      <th scope="col">Parameter</th>
-      <th scope="col">Description</th>
+      <th scope="col">Parámetro</th>
+      <th scope="col">Descripción</th>
     </tr>
   </thead>
   <tbody>
     <tr>
       <td>`Address`</td>
-      <td>The IP addresses assigned to this client (both IPv4 and IPv6)</td>
+      <td>Las direcciones IP asignadas a este cliente (tanto IPv4 como IPv6)</td>
     </tr>
     <tr>
       <td>`DNS`</td>
-      <td>DNS servers to use. Can be your router or any DNS server accessible via VPN</td>
+      <td>Servidores DNS a utilizar. Puede ser tu router o cualquier servidor DNS accesible vía VPN</td>
     </tr>
     <tr>
       <td>`Endpoint`</td>
-      <td>Your router's public IP or domain name with the WireGuard port</td>
+      <td>La IP pública o nombre de dominio de tu router con el port de WireGuard</td>
     </tr>
     <tr>
       <td>`AllowedIPs`</td>
-      <td>`0.0.0.0/0, ::/0` routes ALL traffic through VPN. Use specific subnets for split-tunnel</td>
+      <td>`0.0.0.0/0, ::/0` encamina TODO el tráfico por la VPN. Usa subnets específicas para split tunnel</td>
     </tr>
   </tbody>
 </Table>
 
 ### Split tunnel vs full tunnel
 
-<Mermaid caption="Traffic Routing Modes" ariaLabel="Comparison diagram showing split tunnel versus full tunnel VPN routing" maxWidth="900px">
+<Mermaid caption="Modos de encaminamiento de tráfico" ariaLabel="Diagrama comparativo que muestra split tunnel frente a full tunnel en el encaminamiento VPN" maxWidth="900px">
 ```mermaid-render
 flowchart TB
     subgraph Full_Tunnel["Full Tunnel"]
         direction LR
-        FT_Client[Client]:::secondary --> FT_VPN[VPN Tunnel]:::highlight
-        FT_VPN --> FT_Router[Home Router]:::info
+        FT_Client[Cliente]:::secondary --> FT_VPN[Túnel VPN]:::highlight
+        FT_VPN --> FT_Router[Router doméstico]:::info
         FT_Router --> FT_Internet[Internet]:::success
     end
     
     subgraph Split_Tunnel["Split Tunnel"]
         direction LR
-        ST_Client[Client]:::secondary --> ST_Decision{Destination?}:::warning
-        ST_Decision -->|Home Network| ST_VPN[VPN Tunnel]:::highlight
-        ST_VPN --> ST_Router[Home Router]:::info
-        ST_Decision -->|Internet| ST_Direct[Direct Connection]:::success
+        ST_Client[Cliente]:::secondary --> ST_Decision{¿Destino?}:::warning
+        ST_Decision -->|Red doméstica| ST_VPN[Túnel VPN]:::highlight
+        ST_VPN --> ST_Router[Router doméstico]:::info
+        ST_Decision -->|Internet| ST_Direct[Conexión directa]:::success
     end
 
     Full_Tunnel ~~~ Split_Tunnel
 ```
 </Mermaid>
 
-**Full tunnel** — all traffic goes through VPN:
-- Hides your location from all websites
-- Higher latency for general browsing
-- Full IPv6 access through home connection
+**Full tunnel** — todo el tráfico pasa por la VPN:
+- Oculta tu ubicación a todos los sitios web
+- Mayor latencia para la navegación general
+- Acceso IPv6 completo a través de la conexión doméstica
 
-<Code lang="ini" title="Full Tunnel Example">
+<Code lang="ini" title="Ejemplo de full tunnel">
 ```ini
 # Route ALL traffic through VPN
 AllowedIPs = 0.0.0.0/0, ::/0
 ```
 </Code>
 
-**Split tunnel** — only traffic to specified networks uses VPN:
-- Better performance for general internet use
-- Home network access without routing everything
+**Split tunnel** — solo el tráfico a redes especificadas usa la VPN:
+- Mejor rendimiento para el uso general de internet
+- Acceso a la red doméstica sin encaminar todo el tráfico
 
-<Code lang="ini" title="Split Tunnel Example">
+<Code lang="ini" title="Ejemplo de split tunnel">
 ```ini
 # Only route home network traffic through VPN
 AllowedIPs = 192.168.0.0/24, 192.168.100.0/24, fd00:1111:2222::/48
@@ -943,13 +944,13 @@ AllowedIPs = 192.168.0.0/24, 192.168.100.0/24, fd00:1111:2222::/48
 
 ---
 
-## Step 11: verify the connection
+## Paso 11: verificar la conexión
 
-After configuring both sides, test the connection.
+Tras configurar ambos lados, prueba la conexión.
 
-### On the client
+### En el cliente
 
-<TerminalSession title="Check WireGuard Status (Client)">
+<TerminalSession title="Comprobar estado de WireGuard (cliente)">
   <TerminalSessionCommand>
 
 ```bash
@@ -960,7 +961,7 @@ sudo wg show
 ```
 
   </TerminalSessionCommand>
-  <TerminalSessionOutput title="Successful Connection">
+  <TerminalSessionOutput title="Conexión exitosa">
 
 ```
 interface: wg_home
@@ -979,13 +980,13 @@ peer: YourServerPublicKeyHere123456789ABCDEFGHIJ=
   </TerminalSessionOutput>
 </TerminalSession>
 
-### On the MikroTik router
+### En el router MikroTik
 
-<TerminalSession title="Check Peer Status (Router)">
+<TerminalSession title="Comprobar estado del peer (router)">
   <TerminalSessionCommand>
     /interface wireguard peers print
   </TerminalSessionCommand>
-  <TerminalSessionOutput title="Connected Peer">
+  <TerminalSessionOutput title="Peer conectado">
 
 ```
 Flags: X - disabled
@@ -999,17 +1000,17 @@ Flags: X - disabled
   </TerminalSessionOutput>
 </TerminalSession>
 
-<Callout type="tip" title="Responder Mode (RouterOS 7.15+)">
-If your MikroTik acts as a VPN server (clients connect to it, not the other way around), consider setting `responder=yes` on each peer. This prevents the router from repeatedly trying to initiate connections to clients that don't have a fixed endpoint:
+<Callout type="tip" title="Modo Responder (RouterOS 7.15+)">
+Si tu MikroTik actúa como servidor VPN (los clientes se conectan a él, no al revés), considera establecer `responder=yes` en cada peer. Esto evita que el router intente repetidamente iniciar conexiones a clientes que no tienen un endpoint fijo:
 
 ```routeros
 /interface wireguard peers set [find name=wg_client1] responder=yes
 ```
 </Callout>
 
-### Test IPv6 connectivity
+### Probar conectividad IPv6
 
-<TerminalCommand title="Test IPv6 Through VPN">
+<TerminalCommand title="Probar IPv6 a través de la VPN">
 ```bash
 # Check your IPv6 address
 curl -6 ifconfig.co
@@ -1024,15 +1025,15 @@ traceroute6 google.com
 
 ---
 
-## Complete configuration summary
+## Resumen completo de la configuración
 
-Here's the complete RouterOS configuration for reference. Values marked with `# ← CUSTOMIZE` must be replaced with your own.
+Aquí está la configuración completa de RouterOS como referencia. Los valores marcados con `# ← CUSTOMIZE` deben sustituirse por los tuyos.
 
 <FileContent 
   filename="wireguard-complete.rsc" 
   language="routeros" 
   collapsible={true}
-  title="Complete WireGuard Configuration"
+  title="Configuración completa de WireGuard"
 >
 ```routeros
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -1240,15 +1241,15 @@ Here's the complete RouterOS configuration for reference. Values marked with `# 
 
 ---
 
-## Troubleshooting
+## Resolución de problemas
 
-### Connection won't establish
+### La conexión no se establece
 
-The most common issue. If `last-handshake` never appears on either side, the initial handshake isn't completing.
+El problema más común. Si `last-handshake` nunca aparece en ninguno de los dos lados, el handshake inicial no se está completando.
 
-**Check the WireGuard interface is running** — a disabled or stopped interface won't accept connections:
+**Comprueba que la interface WireGuard está en funcionamiento** — una interface desactivada o detenida no aceptará conexiones:
 
-<Code lang="routeros" title="Verify Interface Status">
+<Code lang="routeros" title="Verificar estado de la interface">
 ```routeros
 /interface wireguard print
 # Look for the "R" (running) flag. If you see "X" (disabled), enable it:
@@ -1256,9 +1257,9 @@ The most common issue. If `last-handshake` never appears on either side, the ini
 ```
 </Code>
 
-**Verify the UDP port is reachable** — the firewall must accept incoming WireGuard packets. Check the input chain has an accept rule for your port:
+**Verifica que el port UDP es accesible** — el firewall debe aceptar paquetes WireGuard entrantes. Comprueba que la cadena input tiene una regla de aceptación para tu port:
 
-<Code lang="routeros" title="Check Firewall Input Rules">
+<Code lang="routeros" title="Comprobar reglas de firewall input">
 ```routeros
 # List input rules that match your WireGuard port
 /ip firewall filter print where chain=input and dst-port~"53537"
@@ -1268,9 +1269,9 @@ The most common issue. If `last-handshake` never appears on either side, the ini
 ```
 </Code>
 
-**Verify the peer's public key matches** — the most subtle error. The server must have the client's public key, and the client must have the server's public key. Any mismatch silently drops all packets:
+**Verifica que la public key del peer coincide** — el error más sutil. El servidor debe tener la public key del cliente, y el cliente debe tener la public key del servidor. Cualquier discrepancia descarta silenciosamente todos los paquetes:
 
-<Code lang="routeros" title="Verify Keys">
+<Code lang="routeros" title="Verificar claves">
 ```routeros
 # Show the server's public key (this goes into the client's [Peer] section)
 :put [/interface wireguard get wg_devices public-key]
@@ -1280,9 +1281,9 @@ The most common issue. If `last-handshake` never appears on either side, the ini
 ```
 </Code>
 
-**Check if the peer shows a handshake** — if `last-handshake` shows a time, the tunnel is established even if traffic isn't flowing:
+**Comprueba si el peer muestra un handshake** — si `last-handshake` muestra un tiempo, el tunnel está establecido aunque el tráfico no fluya:
 
-<Code lang="routeros" title="Check Peer Handshake">
+<Code lang="routeros" title="Comprobar handshake del peer">
 ```routeros
 /interface wireguard peers print detail where interface=wg_devices
 # Look for: last-handshake=Xs (seconds since last handshake)
@@ -1291,16 +1292,16 @@ The most common issue. If `last-handshake` never appears on either side, the ini
 </Code>
 
 <Callout type="tip" title="Port Forwarding">
-If your MikroTik is behind another router or NAT gateway, you must forward the WireGuard UDP port (e.g., `53537`) to your MikroTik's internal IP. WireGuard uses **only UDP** — TCP forwarding will not work.
+Si tu MikroTik está detrás de otro router o gateway NAT, debes redirigir el port UDP de WireGuard (p. ej., `53537`) a la IP interna de tu MikroTik. WireGuard usa **solo UDP** — la redirección TCP no funcionará.
 </Callout>
 
-### Can connect but no internet access
+### Se conecta pero no hay acceso a internet
 
-The tunnel is up (handshake succeeds) but the client can't browse the web or reach external hosts.
+El tunnel está activo (el handshake tiene éxito) pero el cliente no puede navegar ni alcanzar hosts externos.
 
-**Check NAT/masquerade rules** — without masquerade, the VPN client's private IP reaches the internet but return packets have nowhere to go:
+**Comprueba las reglas NAT/masquerade** — sin masquerade, la IP privada del cliente VPN llega a internet pero los paquetes de retorno no tienen adónde ir:
 
-<Code lang="routeros" title="Verify NAT Rules">
+<Code lang="routeros" title="Verificar reglas NAT">
 ```routeros
 # Check IPv4 masquerade
 /ip firewall nat print where chain=srcnat and src-address~"192.168.100"
@@ -1311,9 +1312,9 @@ The tunnel is up (handshake succeeds) but the client can't browse the web or rea
 ```
 </Code>
 
-**Check forward chain rules** — even with NAT, the firewall's forward chain must allow VPN traffic toward the WAN:
+**Comprueba las reglas de la cadena forward** — incluso con NAT, la cadena forward del firewall debe permitir el tráfico VPN hacia la WAN:
 
-<Code lang="routeros" title="Verify Forward Rules">
+<Code lang="routeros" title="Verificar reglas forward">
 ```routeros
 /ip firewall filter print where chain=forward and src-address~"192.168.100"
 # You need at least:
@@ -1322,9 +1323,9 @@ The tunnel is up (handshake succeeds) but the client can't browse the web or rea
 ```
 </Code>
 
-**Test DNS resolution** — a common cause of "no internet" is that DNS queries fail. From the client, try reaching an IP directly to isolate the issue:
+**Prueba la resolución DNS** — una causa habitual de "no hay internet" es que las consultas DNS fallan. Desde el cliente, intenta alcanzar una IP directamente para aislar el problema:
 
-<TerminalCommand title="Isolate DNS vs Routing Issue">
+<TerminalCommand title="Aislar problema DNS vs encaminamiento">
 ```bash
 # Test direct IP connectivity (bypasses DNS)
 ping 1.1.1.1
@@ -1335,35 +1336,35 @@ ping 1.1.1.1
 ```
 </TerminalCommand>
 
-<Callout type="tip" title="Router as DNS Server">
-If you use your MikroTik as the DNS server for VPN clients (`DNS = 192.168.0.1`), ensure `allow-remote-requests=yes` is set under `/ip dns`. Also verify the WireGuard interface or its address is in the `LAN` interface list, so input rules allow DNS queries from VPN clients.
+<Callout type="tip" title="Router como servidor DNS">
+Si usas tu MikroTik como servidor DNS para los clientes VPN (`DNS = 192.168.0.1`), asegúrate de que `allow-remote-requests=yes` está configurado en `/ip dns`. También verifica que la interface WireGuard o su dirección está en la lista de interfaces `LAN`, para que las reglas de input permitan consultas DNS desde los clientes VPN.
 </Callout>
 
-### IPv6 not working
+### IPv6 no funciona
 
-IPv4 works through the tunnel but IPv6 traffic doesn't flow.
+IPv4 funciona a través del tunnel pero el tráfico IPv6 no fluye.
 
-**Verify the IPv6 address is assigned** to the WireGuard interface:
+**Verifica que la dirección IPv6 está asignada** a la interface WireGuard:
 
-<Code lang="routeros" title="Check IPv6 Address">
+<Code lang="routeros" title="Comprobar dirección IPv6">
 ```routeros
 /ipv6 address print where interface=wg_devices
 # Should show your ULA address, e.g., fd00:1111:2222:100::1/64
 ```
 </Code>
 
-**Check IPv6 NAT66 rule** — unlike IPv4, the IPv6 masquerade is often forgotten:
+**Comprueba la regla NAT66 para IPv6** — a diferencia de IPv4, el masquerade para IPv6 suele olvidarse:
 
-<Code lang="routeros" title="Verify IPv6 NAT66">
+<Code lang="routeros" title="Verificar NAT66 para IPv6">
 ```routeros
 /ipv6 firewall nat print where chain=srcnat
 # Must include: action=masquerade src-address=fd00:1111:2222:100::/64 out-interface-list=WAN
 ```
 </Code>
 
-**Check IPv6 forward rules** — the IPv6 firewall is independent from IPv4. You need explicit forward rules:
+**Comprueba las reglas forward de IPv6** — el firewall IPv6 es independiente del de IPv4. Necesitas reglas forward explícitas:
 
-<Code lang="routeros" title="Verify IPv6 Forward Rules">
+<Code lang="routeros" title="Verificar reglas forward de IPv6">
 ```routeros
 /ipv6 firewall filter print where chain=forward and interface~"wg_devices"
 # Need at minimum:
@@ -1372,9 +1373,9 @@ IPv4 works through the tunnel but IPv6 traffic doesn't flow.
 ```
 </Code>
 
-**Test from the client** — run these commands while connected to the VPN:
+**Prueba desde el cliente** — ejecuta estos comandos mientras estás conectado a la VPN:
 
-<TerminalCommand title="Diagnose IPv6">
+<TerminalCommand title="Diagnosticar IPv6">
 ```bash
 # Verify your IPv6 address is from the ULA range
 ip -6 addr show wg_home
@@ -1387,17 +1388,17 @@ curl -6 ifconfig.co
 ```
 </TerminalCommand>
 
-<Callout type="warning" title="ISP IPv6 Required">
-NAT66 translates your VPN client's ULA address to your ISP's global IPv6 prefix. If your ISP doesn't provide IPv6, there's no global prefix to translate to, and IPv6 internet access won't work — the tunnel itself will still carry IPv6 between client and router, but no further.
+<Callout type="warning" title="Se requiere IPv6 del ISP">
+NAT66 traduce la dirección ULA de tu cliente VPN al prefix IPv6 global de tu ISP. Si tu ISP no proporciona IPv6, no hay prefix global al que traducir, y el acceso a internet por IPv6 no funcionará — el tunnel seguirá transportando IPv6 entre cliente y router, pero no más allá.
 </Callout>
 
-### Slow performance
+### Rendimiento lento
 
-WireGuard is extremely efficient, but several factors can limit throughput on MikroTik devices.
+WireGuard es extremadamente eficiente, pero varios factores pueden limitar el rendimiento en dispositivos MikroTik.
 
-**Enable FastTrack** — this is the single largest performance improvement. FastTrack bypasses most firewall processing for established connections:
+**Habilita FastTrack** — esta es la mejora de rendimiento más significativa. FastTrack omite la mayor parte del procesamiento del firewall para conexiones establecidas:
 
-<Code lang="routeros" title="Check FastTrack">
+<Code lang="routeros" title="Comprobar FastTrack">
 ```routeros
 # Verify FastTrack rule exists and has packet counters increasing
 /ip firewall filter print stats where action=fasttrack-connection and comment~"WireGuard"
@@ -1408,18 +1409,18 @@ WireGuard is extremely efficient, but several factors can limit throughput on Mi
 ```
 </Code>
 
-**Check MSS clamping** — symptoms of missing MSS clamping include: pages partially loading, HTTPS sites timing out, large file downloads failing while small requests work fine:
+**Comprueba MSS clamping** — los síntomas de falta de MSS clamping incluyen: páginas que cargan parcialmente, sitios HTTPS que agotan el tiempo, descargas de archivos grandes que fallan mientras las peticiones pequeñas funcionan:
 
-<Code lang="routeros" title="Verify MSS Clamping">
+<Code lang="routeros" title="Verificar MSS clamping">
 ```routeros
 /ip firewall mangle print where action=change-mss and in-interface=wg_devices
 # Should show: new-mss=1420 tcp-flags=syn tcp-mss=1349-65535
 ```
 </Code>
 
-**Check MTU** — if you experience packet loss or stalls, try reducing the WireGuard interface MTU:
+**Comprueba el MTU** — si experimentas pérdida de paquetes o bloqueos, prueba a reducir el MTU de la interface WireGuard:
 
-<Code lang="routeros" title="Adjust MTU">
+<Code lang="routeros" title="Ajustar MTU">
 ```routeros
 # Check current MTU
 /interface wireguard print proplist=name,mtu
@@ -1431,9 +1432,9 @@ WireGuard is extremely efficient, but several factors can limit throughput on Mi
 ```
 </Code>
 
-**Monitor CPU load** — WireGuard encryption is not hardware-offloaded on MikroTik. High CPU usage limits throughput:
+**Monitoriza la carga de CPU** — el cifrado de WireGuard no tiene aceleración por hardware en MikroTik. Un uso alto de CPU limita el rendimiento:
 
-<Code lang="routeros" title="Monitor CPU">
+<Code lang="routeros" title="Monitorizar CPU">
 ```routeros
 /system resource print
 # Look for cpu-load percentage. On RB5009 with a single client,
@@ -1441,11 +1442,11 @@ WireGuard is extremely efficient, but several factors can limit throughput on Mi
 ```
 </Code>
 
-### Useful diagnostic commands
+### Comandos de diagnóstico útiles
 
-A quick-reference for common RouterOS diagnostic commands related to WireGuard:
+Referencia rápida de comandos comunes de diagnóstico en RouterOS relacionados con WireGuard:
 
-<Code lang="routeros" title="WireGuard Diagnostic Commands">
+<Code lang="routeros" title="Comandos de diagnóstico WireGuard">
 ```routeros
 # Show all peers with connection status and traffic stats
 /interface wireguard peers print detail
@@ -1469,28 +1470,26 @@ A quick-reference for common RouterOS diagnostic commands related to WireGuard:
 
 ---
 
-## Security best practices
+## Buenas prácticas de seguridad
 
 <CheckList>
-<li data-check="check">Always use preshared keys for post-quantum security</li>
-<li data-check="check">Use unique keypairs for each device (never share private keys)</li>
-<li data-check="check">Keep RouterOS updated for security patches</li>
-<li data-check="check">Use a non-standard port to reduce scan exposure</li>
-<li data-check="check">Consider automatic IP whitelisting for connected peers</li>
-<li data-check="check">Monitor connection logs for unauthorized access attempts</li>
+<li data-check="check">Usa siempre preshared keys para seguridad post-cuántica</li>
+<li data-check="check">Utiliza pares de claves únicos para cada dispositivo (nunca compartas las private keys)</li>
+<li data-check="check">Mantén RouterOS actualizado para recibir parches de seguridad</li>
+<li data-check="check">Usa un port no estándar para reducir la exposición a escaneos</li>
+<li data-check="check">Considera la inclusión automática en lista blanca de IPs para peers conectados</li>
+<li data-check="check">Monitoriza los registros de conexión en busca de intentos de acceso no autorizados</li>
 </CheckList>
 
 ---
 
-## Conclusion
+## Conclusión
 
-You now have a fully functional [WireGuard](https://www.wireguard.com/) VPN with dual-stack IPv4/IPv6 support on your [MikroTik](https://mikrotik.com/) router. This configuration provides:
+Ahora tienes un [WireGuard](https://www.wireguard.com/) VPN completamente funcional con soporte dual-stack IPv4/IPv6 en tu router [MikroTik](https://mikrotik.com/). Esta configuración proporciona:
 
-- **Secure remote access** to your home network from anywhere
-- **Full IPv6 connectivity** even from IPv4-only networks
-- **Fast, modern encryption** with minimal overhead
-- **Seamless roaming** between Wi-Fi and cellular networks
+- **Acceso remoto seguro** a tu red doméstica desde cualquier lugar
+- **Conectividad IPv6 completa** incluso desde redes solo IPv4
+- **Cifrado rápido y moderno** con sobrecarga mínima
+- **Roaming transparente** entre redes Wi-Fi y datos móviles
 
-WireGuard's simplicity makes it easy to maintain, and MikroTik's implementation is robust enough for production use. Whether you're accessing your NAS, home automation, or simply want to browse securely on public Wi-Fi, this setup has you covered.
-
-
+La simplicidad de WireGuard facilita su mantenimiento, y la implementación de MikroTik es lo suficientemente robusta para uso en producción. Ya sea para acceder a tu NAS, domótica o simplemente navegar con seguridad en redes Wi-Fi públicas, esta configuración lo cubre todo.

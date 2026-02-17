@@ -8,13 +8,45 @@
  * Usage:
  * <Base64Encoder title="Encoding Tool" />
  */
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslations } from "@i18n/utils";
+
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
 
 interface Props {
   title?: string;
 }
 
-const { title = "Base64 & Encoding Tool" } = Astro.props;
+const { title = t("tools.base64Encoder.title") } = Astro.props;
 const uniqueId = `enc-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
+
+/** Translations passed to the inline script via define:vars. */
+const i18n = {
+  unknownType: t("tools.base64Encoder.unknownType"),
+  previewOf: t("tools.base64Encoder.previewOf"),
+  audioPreview: t("tools.base64Encoder.audioPreview"),
+  videoPreview: t("tools.base64Encoder.videoPreview"),
+  fileTooLarge: t("tools.base64Encoder.fileTooLarge"),
+  fileReadFailed: t("tools.base64Encoder.fileReadFailed"),
+  enterTextAbove: t("tools.base64Encoder.enterTextAbove"),
+  zeroBytes: t("tools.shared.zeroBytes"),
+  invalidInputFormat: t("tools.base64Encoder.invalidInputFormat"),
+  couldNotDecode: t("tools.base64Encoder.couldNotDecode"),
+  percentLarger: t("tools.base64Encoder.percentLarger"),
+  percentSmaller: t("tools.base64Encoder.percentSmaller"),
+  sameSize: t("tools.base64Encoder.sameSize"),
+  encodingError: t("tools.base64Encoder.encodingError"),
+  encodingFailed: t("tools.base64Encoder.encodingFailed"),
+  selectFileAbove: t("tools.base64Encoder.selectFileAbove"),
+  copied: t("tools.shared.copied"),
+  copy: t("tools.shared.copy"),
+  downloadBase64AsText: t("tools.base64Encoder.downloadBase64AsText"),
+  download: t("tools.shared.download"),
+  decodeAndDownload: t("tools.base64Encoder.decodeAndDownload"),
+  decodeToFile: t("tools.base64Encoder.decodeToFile"),
+  couldNotDecodeBase64: t("tools.base64Encoder.couldNotDecodeBase64"),
+};
 
 const formats = [
   { id: "base64", name: "Base64" },
@@ -37,7 +69,7 @@ const formats = [
     <div
       class="enc-mode-tabs"
       role="tablist"
-      aria-label="Input mode"
+      aria-label={t("tools.base64Encoder.inputModeAriaLabel")}
     >
       <button
         type="button"
@@ -50,7 +82,7 @@ const formats = [
           class="i-mdi:text-box-outline"
           aria-hidden="true"
         ></span>
-        <span>Text</span>
+        <span>{t("tools.base64Encoder.textTab")}</span>
       </button>
       <button
         type="button"
@@ -63,7 +95,7 @@ const formats = [
           class="i-mdi:file-upload-outline"
           aria-hidden="true"
         ></span>
-        <span>File</span>
+        <span>{t("tools.base64Encoder.fileTab")}</span>
       </button>
     </div>
 
@@ -77,13 +109,13 @@ const formats = [
           class="i-mdi:text-box-outline enc-panel-icon"
           aria-hidden="true"
         ></span>
-        <span>Input</span>
+        <span>{t("tools.base64Encoder.input")}</span>
         <select
           id={`${uniqueId}-input-format`}
           class="enc-format-select"
-          aria-label="Input format"
+          aria-label={t("tools.base64Encoder.inputFormatAriaLabel")}
         >
-          <option value="text">Plain Text</option>
+          <option value="text">{t("tools.base64Encoder.plainText")}</option>
           {formats.map((f) => <option value={f.id}>{f.name}</option>)}
         </select>
       </div>
@@ -91,16 +123,16 @@ const formats = [
         id={`${uniqueId}-input`}
         class="enc-textarea"
         rows="6"
-        placeholder="Enter text to encode/decode..."
+        placeholder={t("tools.base64Encoder.inputPlaceholder")}
         spellcheck="false"
-        aria-label="Input text"
+        aria-label={t("tools.base64Encoder.inputTextAriaLabel")}
         >Hello, World! 🌍</textarea
       >
       <div class="enc-info-row">
         <span
           class="enc-byte-count"
           id={`${uniqueId}-input-bytes`}
-          >0 bytes</span
+          >{t("tools.shared.zeroBytes")}</span
         >
       </div>
     </div>
@@ -116,13 +148,13 @@ const formats = [
           class="i-mdi:file-upload-outline enc-panel-icon"
           aria-hidden="true"
         ></span>
-        <span>File Input</span>
+        <span>{t("tools.base64Encoder.fileInput")}</span>
         <label class="enc-data-uri-toggle">
           <input
             type="checkbox"
             id={`${uniqueId}-data-uri`}
           />
-          <span>Include Data URI prefix</span>
+          <span>{t("tools.base64Encoder.includeDataUri")}</span>
         </label>
       </div>
 
@@ -131,28 +163,30 @@ const formats = [
         id={`${uniqueId}-dropzone`}
         role="button"
         tabindex="0"
-        aria-label="Drop a file here or click to browse. All processing is local."
+        aria-label={t("tools.base64Encoder.dropFileAriaLabel")}
       >
         <span
           class="i-mdi:cloud-upload-outline enc-drop-icon"
           aria-hidden="true"
         ></span>
-        <span class="enc-drop-text">Drop a file here or click to browse</span>
+        <span class="enc-drop-text"
+          >{t("tools.base64Encoder.dropFileText")}</span
+        >
         <span class="enc-drop-hint"
-          >Images, audio, documents, or any file type</span
+          >{t("tools.base64Encoder.dropFileSubtext")}</span
         >
         <span class="enc-drop-privacy">
           <span
             class="i-mdi:shield-check-outline"
             aria-hidden="true"
           ></span>
-          All processing stays in your browser
+          {t("tools.base64Encoder.localProcessing")}
         </span>
         <input
           type="file"
           id={`${uniqueId}-file-input`}
           class="enc-file-input"
-          aria-label="Select file to encode"
+          aria-label={t("tools.base64Encoder.selectFileAriaLabel")}
         />
       </div>
 
@@ -185,7 +219,7 @@ const formats = [
           <button
             type="button"
             class="enc-file-remove"
-            aria-label="Remove file"
+            aria-label={t("tools.base64Encoder.removeFileAriaLabel")}
           >
             <span
               class="i-mdi:close-circle"
@@ -206,7 +240,7 @@ const formats = [
       <button
         type="button"
         class="enc-swap-btn"
-        aria-label="Swap input and output"
+        aria-label={t("tools.base64Encoder.swapAriaLabel")}
       >
         <span
           class="i-mdi:swap-vertical"
@@ -222,11 +256,11 @@ const formats = [
           class="i-mdi:code-braces enc-panel-icon"
           aria-hidden="true"
         ></span>
-        <span>Output</span>
+        <span>{t("tools.base64Encoder.output")}</span>
         <select
           id={`${uniqueId}-output-format`}
           class="enc-format-select enc-text-only-control"
-          aria-label="Output format"
+          aria-label={t("tools.base64Encoder.outputFormatAriaLabel")}
         >
           {
             formats.map((f) => (
@@ -238,7 +272,7 @@ const formats = [
               </option>
             ))
           }
-          <option value="text">Plain Text</option>
+          <option value="text">{t("tools.base64Encoder.plainText")}</option>
         </select>
       </div>
       <div class="enc-output-wrapper">
@@ -249,31 +283,33 @@ const formats = [
           class="enc-output"
           tabindex="0"
           role="region"
-          aria-label="Encoded or decoded output"><code id={`${uniqueId}-output`}>...</code></pre>
+          aria-label={t(
+            "tools.base64Encoder.outputAriaLabel",
+          )}><code id={`${uniqueId}-output`}>...</code></pre>
         {/* eslint-enable astro/jsx-a11y/no-noninteractive-tabindex */}
         <div class="enc-output-actions">
           <button
             type="button"
             class="enc-copy-btn"
-            aria-label="Copy output"
+            aria-label={t("tools.base64Encoder.copyOutputAriaLabel")}
           >
             <span
               class="i-mdi:content-copy"
               aria-hidden="true"
             ></span>
-            <span class="enc-copy-text">Copy</span>
+            <span class="enc-copy-text">{t("tools.shared.copy")}</span>
           </button>
           <button
             type="button"
             class="enc-download-btn"
-            aria-label="Download decoded file"
+            aria-label={t("tools.base64Encoder.downloadFileAriaLabel")}
             hidden
           >
             <span
               class="i-mdi:download"
               aria-hidden="true"
             ></span>
-            <span class="enc-download-text">Download</span>
+            <span class="enc-download-text">{t("tools.shared.download")}</span>
           </button>
         </div>
       </div>
@@ -281,7 +317,7 @@ const formats = [
         <span
           class="enc-byte-count"
           id={`${uniqueId}-output-bytes`}
-          >0 bytes</span
+          >{t("tools.shared.zeroBytes")}</span
         >
         <span
           class="enc-ratio"
@@ -298,7 +334,7 @@ const formats = [
   </div>
 </div>
 
-<script is:inline define:vars={{ uniqueId }}>
+<script is:inline define:vars={{ uniqueId, i18n }}>
   (function () {
     var container = document.querySelector('[data-enc-id="' + uniqueId + '"]');
     if (!container) return;
@@ -694,7 +730,7 @@ const formats = [
       if (fileNameEl) fileNameEl.textContent = file.name;
       if (fileMetaEl) {
         fileMetaEl.textContent =
-          formatSize(file.size) + " \u2022 " + (file.type || "unknown type");
+          formatSize(file.size) + " \u2022 " + (file.type || i18n.unknownType);
       }
 
       // Update icon
@@ -710,7 +746,7 @@ const formats = [
       if (cat === "image") {
         var img = document.createElement("img");
         img.src = URL.createObjectURL(file);
-        img.alt = "Preview of " + file.name;
+        img.alt = i18n.previewOf + " " + file.name;
         img.className = "enc-preview-image";
         img.addEventListener("load", function () {
           URL.revokeObjectURL(img.src);
@@ -721,14 +757,14 @@ const formats = [
         audio.controls = true;
         audio.src = URL.createObjectURL(file);
         audio.className = "enc-preview-audio";
-        audio.setAttribute("aria-label", "Audio preview: " + file.name);
+        audio.setAttribute("aria-label", i18n.audioPreview + " " + file.name);
         previewContent.appendChild(audio);
       } else if (cat === "video") {
         var video = document.createElement("video");
         video.controls = true;
         video.src = URL.createObjectURL(file);
         video.className = "enc-preview-video";
-        video.setAttribute("aria-label", "Video preview: " + file.name);
+        video.setAttribute("aria-label", i18n.videoPreview + " " + file.name);
         previewContent.appendChild(video);
       } else if (cat === "text" || cat === "code") {
         if (bytes.length < 100000) {
@@ -791,7 +827,7 @@ const formats = [
 
       // Max 50MB client-side
       if (file.size > 50 * 1024 * 1024) {
-        showError("File too large (max 50 MB)");
+        showError(i18n.fileTooLarge);
         return;
       }
 
@@ -810,7 +846,7 @@ const formats = [
         updateOutput();
       };
       reader.onerror = function () {
-        showError("Failed to read the file");
+        showError(i18n.fileReadFailed);
       };
       reader.readAsArrayBuffer(file);
     }
@@ -905,10 +941,10 @@ const formats = [
       var outFmt = outputFormat.value;
 
       if (!input) {
-        outputEl.textContent = "(Enter text above)";
-        if (inputBytes) inputBytes.textContent = "0 bytes";
+        outputEl.textContent = i18n.enterTextAbove;
+        if (inputBytes) inputBytes.textContent = i18n.zeroBytes;
         if (outputBytes) {
-          outputBytes.textContent = "0 bytes";
+          outputBytes.textContent = i18n.zeroBytes;
           outputBytes.hidden = false;
         }
         if (ratioEl) ratioEl.hidden = true;
@@ -918,8 +954,8 @@ const formats = [
       var bytes = decode(input, inFmt);
 
       if (!bytes) {
-        outputEl.textContent = "Invalid input for selected format";
-        showError("Could not decode input");
+        outputEl.textContent = i18n.invalidInputFormat;
+        showError(i18n.couldNotDecode);
         return;
       }
 
@@ -946,7 +982,7 @@ const formats = [
               formatSize(diff) +
               ", " +
               pct +
-              "% larger)";
+              i18n.percentLarger;
           } else if (diff < 0) {
             ratioEl.textContent =
               formatSize(inSize) +
@@ -956,25 +992,30 @@ const formats = [
               formatSize(Math.abs(diff)) +
               ", " +
               pct +
-              "% smaller)";
+              i18n.percentSmaller;
           } else {
             ratioEl.textContent =
-              formatSize(inSize) + arrow + formatSize(outSize) + " (same size)";
+              formatSize(inSize) +
+              arrow +
+              formatSize(outSize) +
+              " (" +
+              i18n.sameSize +
+              ")";
           }
           ratioEl.hidden = false;
         }
       } catch (_e) {
-        outputEl.textContent = "Encoding error";
-        showError("Encoding failed");
+        outputEl.textContent = i18n.encodingError;
+        showError(i18n.encodingFailed);
       }
     }
 
     function updateFileOutput() {
       if (!currentFileData) {
-        outputEl.textContent = "(Select a file above)";
-        if (inputBytes) inputBytes.textContent = "0 bytes";
+        outputEl.textContent = i18n.selectFileAbove;
+        if (inputBytes) inputBytes.textContent = i18n.zeroBytes;
         if (outputBytes) {
-          outputBytes.textContent = "0 bytes";
+          outputBytes.textContent = i18n.zeroBytes;
           outputBytes.hidden = false;
         }
         if (ratioEl) ratioEl.hidden = true;
@@ -1063,10 +1104,10 @@ const formats = [
         if (navigator.clipboard && outputEl.textContent) {
           navigator.clipboard.writeText(outputEl.textContent).then(function () {
             var text = copyBtn.querySelector(".enc-copy-text");
-            if (text) text.textContent = "Copied!";
+            if (text) text.textContent = i18n.copied;
             copyBtn.classList.add("copied");
             setTimeout(function () {
-              if (text) text.textContent = "Copy";
+              if (text) text.textContent = i18n.copy;
               copyBtn.classList.remove("copied");
             }, 2000);
           });
@@ -1080,18 +1121,15 @@ const formats = [
       var dlLabel = downloadBtn.querySelector(".enc-download-text");
       if (mode === "file") {
         downloadBtn.hidden = false;
-        downloadBtn.setAttribute("aria-label", "Download Base64 as text file");
-        if (dlLabel) dlLabel.textContent = "Download";
+        downloadBtn.setAttribute("aria-label", i18n.downloadBase64AsText);
+        if (dlLabel) dlLabel.textContent = i18n.download;
       } else {
         var inFmt = inputFormat.value;
         var isBase64Input = inFmt === "base64" || inFmt === "base64url";
         downloadBtn.hidden = !isBase64Input;
         if (isBase64Input) {
-          downloadBtn.setAttribute(
-            "aria-label",
-            "Decode Base64 and download as original file",
-          );
-          if (dlLabel) dlLabel.textContent = "Decode to file";
+          downloadBtn.setAttribute("aria-label", i18n.decodeAndDownload);
+          if (dlLabel) dlLabel.textContent = i18n.decodeToFile;
         }
       }
     }
@@ -1130,7 +1168,7 @@ const formats = [
           }
 
           if (!bytes || bytes.length === 0) {
-            showError("Could not decode Base64 input");
+            showError(i18n.couldNotDecodeBase64);
             return;
           }
 

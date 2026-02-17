@@ -95,7 +95,7 @@ function runVerify() {
       name: "Lint: Schema.org JSON-LD",
       command: "node scripts/ci/validate-schema.mjs dist",
     },
-    { name: "Lint: Spelling (Typos)", command: "typos" },
+    { name: "Lint: Spelling (CSpell)", command: "pnpm exec cspell lint ." },
     {
       name: "Lint: Broken Links (Lychee)",
       command: "lychee --config lychee.toml --root-dir dist dist/**/*.html",

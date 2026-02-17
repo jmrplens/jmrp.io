@@ -9,11 +9,17 @@
  *   <CopyButton />
  * </div>
  */
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslations } from "@i18n/utils";
+
 interface Props {
   class?: string;
   content?: string;
   ariaLabel?: string;
 }
+
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
 
 const { class: className, content, ariaLabel } = Astro.props;
 const encodedContent = content ? encodeURIComponent(content) : undefined;
@@ -22,8 +28,11 @@ const encodedContent = content ? encodeURIComponent(content) : undefined;
 <button
   class:list={["copy-button", className]}
   type="button"
-  aria-label={ariaLabel || "Copy to clipboard"}
+  aria-label={ariaLabel || t("aria.copyToClipboard")}
   data-content={encodedContent}
+  data-msg-copied={t("aria.copied")}
+  data-msg-unavailable={t("components.copyButton.clipboardUnavailable")}
+  data-msg-failed={t("components.copyButton.failedToCopy")}
 >
   <span
     class="copy-status sr-only"
@@ -77,7 +86,11 @@ const encodedContent = content ? encodeURIComponent(content) : undefined;
         if (!navigator.clipboard) {
           console.error("Clipboard API not available");
           if (button instanceof HTMLElement) {
-            button.setAttribute("title", "Clipboard API unavailable");
+            button.setAttribute(
+              "title",
+              button.getAttribute("data-msg-unavailable") ||
+                "Clipboard API unavailable",
+            );
           }
           return;
         }
@@ -97,7 +110,9 @@ const encodedContent = content ? encodeURIComponent(content) : undefined;
 
               // Screen reader feedback
               const status = button.querySelector(".copy-status");
-              if (status) status.textContent = "Copied!";
+              if (status)
+                status.textContent =
+                  button.getAttribute("data-msg-copied") || "Copied!";
 
               // Clear any existing timeout to prevent flickering
               // Use a data attribute to store the timeout ID for cross-browser safety
@@ -121,7 +136,10 @@ const encodedContent = content ? encodeURIComponent(content) : undefined;
           (err) => {
             console.error("Failed to copy:", err);
             if (button instanceof HTMLElement) {
-              button.setAttribute("title", "Failed to copy!");
+              button.setAttribute(
+                "title",
+                button.getAttribute("data-msg-failed") || "Failed to copy!",
+              );
             }
           },
         );

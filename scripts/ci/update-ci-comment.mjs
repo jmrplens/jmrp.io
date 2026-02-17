@@ -33,7 +33,7 @@ function buildSaTable(results) {
   md += `| Prettier | ${getIcon(results.prettier)} | **${results.prettier || "Pending"}** |\n`;
   md += `| ESLint | ${getIcon(results.eslint)} | **${results.eslint || "Pending"}** |\n`;
   md += `| Link Checker | ${getIcon(results.lychee)} | **${results.lychee || "Pending"}** |\n`;
-  md += `| Spell Checker | ${getIcon(results.typos)} | **${results.typos || "Pending"}** |\n`;
+  md += `| Spell Checker | ${getIcon(results.cspell)} | **${results.cspell || "Pending"}** |\n`;
   md += `| Stylelint | ${getIcon(results.stylelint)} | **${results.stylelint || "Pending"}** |\n`;
   md += `| Security Audit | ${getIcon(results.security)} | **${results.security || "Pending"}** |\n`;
   md += `| SonarQube | ${getIcon(results.sonar)} | **${results.sonar || "Pending"}** |\n`;
@@ -263,7 +263,7 @@ export default async function updateCiComment({ github, context, step }) {
     prettier: process.env.OUTCOME_PRETTIER,
     eslint: process.env.OUTCOME_ESLINT,
     lychee: process.env.OUTCOME_LYCHEE,
-    typos: process.env.OUTCOME_TYPOS,
+    cspell: process.env.OUTCOME_CSPELL,
     stylelint: process.env.OUTCOME_STYLELINT,
     security: process.env.OUTCOME_SECURITY,
     sonar: process.env.OUTCOME_SONAR,

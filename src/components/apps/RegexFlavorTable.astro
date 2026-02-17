@@ -8,13 +8,18 @@
  *
  * @see https://github.com/withastro/compiler/issues
  */
+import type { Locale } from "@src/i18n";
+import { defaultLocale, useTranslations } from "@src/i18n";
+
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
 ---
 
 <div class="flavor-table-wrapper">
   <table class="flavor-table">
     <thead>
       <tr>
-        <th scope="col">Feature</th>
+        <th scope="col">{t("tools.regexFlavorTable.feature")}</th>
         <th scope="col">JavaScript</th>
         <th scope="col">PCRE (grep -P, PHP)</th>
         <th scope="col">Python re</th>
@@ -22,43 +27,43 @@
     </thead>
     <tbody>
       <tr>
-        <td>Named groups</td>
+        <td>{t("tools.regexFlavorTable.namedGroups")}</td>
         <td><code>{"(?<name>...)"}</code></td>
         <td><code>{"(?P<name>...)"}</code> or <code>{"(?<name>...)"}</code></td>
         <td><code>{"(?P<name>...)"}</code></td>
       </tr>
       <tr>
-        <td>Lookbehind</td>
-        <td>Variable-length (ES2018+)</td>
-        <td>Fixed-length only</td>
-        <td>Fixed-length only</td>
+        <td>{t("tools.regexFlavorTable.lookbehind")}</td>
+        <td>{t("tools.regexFlavorTable.variableLengthEs2018")}</td>
+        <td>{t("tools.regexFlavorTable.fixedLengthOnly")}</td>
+        <td>{t("tools.regexFlavorTable.fixedLengthOnly")}</td>
       </tr>
       <tr>
-        <td>Unicode properties</td>
+        <td>{t("tools.regexFlavorTable.unicodeProperties")}</td>
         <td><code>\p&#123;L&#125;</code> (with <code>u</code> flag)</td>
         <td><code>\p&#123;L&#125;</code> (built-in)</td>
         <td>Via <code>regex</code> module</td>
       </tr>
       <tr>
-        <td>Atomic groups</td>
-        <td>Not supported</td>
+        <td>{t("tools.regexFlavorTable.atomicGroups")}</td>
+        <td>{t("tools.regexFlavorTable.notSupported")}</td>
         <td><code>{"(?>...)"}</code></td>
-        <td>Not supported</td>
+        <td>{t("tools.regexFlavorTable.notSupported")}</td>
       </tr>
       <tr>
-        <td>Recursion</td>
-        <td>Not supported</td>
+        <td>{t("tools.regexFlavorTable.recursion")}</td>
+        <td>{t("tools.regexFlavorTable.notSupported")}</td>
         <td><code>{"(?R)"}</code>, <code>{"(?1)"}</code></td>
         <td>Via <code>regex</code> module</td>
       </tr>
       <tr>
-        <td>Possessive quantifiers</td>
-        <td>Not supported</td>
+        <td>{t("tools.regexFlavorTable.possessiveQuantifiers")}</td>
+        <td>{t("tools.regexFlavorTable.notSupported")}</td>
         <td><code>a++</code>, <code>a*+</code></td>
-        <td>Not supported</td>
+        <td>{t("tools.regexFlavorTable.notSupported")}</td>
       </tr>
       <tr>
-        <td>Backreference in replace</td>
+        <td>{t("tools.regexFlavorTable.backreferenceInReplace")}</td>
         <td><code>$1</code>, <code>$&amp;</code></td>
         <td><code>\1</code>, <code>$1</code></td>
         <td><code>\1</code>, <code>{String.raw`\g<1>`}</code></td>

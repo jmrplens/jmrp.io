@@ -61,6 +61,13 @@ See `src/components/ui/AGENTS.md` for the complete component reference.
 </Tabs>
 ````
 
+## i18n
+
+- Blog post content (MDX) is in English only — not translated
+- Code snippets stay in English
+- UI chrome around posts (dates, labels, aria) is translated via `t()`
+- Component props like `title` in `<Callout>` are part of post content and stay in English
+
 ## Don'ts
 
 - No `<script>` tags in MDX (breaks CSP)

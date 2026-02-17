@@ -97,8 +97,10 @@
   "devDependencies": {
     "@astrojs/check": "0.9.6",
     "@axe-core/playwright": "^4.11.1",
+    "@cspell/dict-es-es": "^3.0.8",
     "@gorazdo/eslint-plugin-preact": "^1.0.7",
     "@iconify-json/devicon": "^1.2.58",
+    "@iconify-json/tabler": "^1.2.26",
     "@lhci/cli": "^0.15.1",
     "@playwright/test": "^1.58.2",
     "@types/he": "^1.2.3",
@@ -114,6 +116,7 @@
     "axe-core": "^4.11.1",
     "axe-html-reporter": "^2.2.11",
     "cheerio": "^1.2.0",
+    "cspell": "^9.6.4",
     "domhandler": "^5.0.3",
     "eslint": "^9.39.2",
     "eslint-plugin-astro": "^1.6.0",

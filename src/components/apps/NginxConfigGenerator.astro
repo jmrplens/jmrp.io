@@ -9,13 +9,24 @@
  * Usage:
  * <NginxConfigGenerator title="Nginx Config Generator" />
  */
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslations } from "@i18n/utils";
+
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
 
 interface Props {
   title?: string;
 }
 
-const { title = "Nginx Config Generator" } = Astro.props;
+const { title = t("tools.nginxConfigGenerator.title") } = Astro.props;
 const uniqueId = `ngx-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
+
+/** Translations passed to the inline script via define:vars. */
+const i18n = {
+  copied: t("tools.shared.copied"),
+  copy: t("tools.shared.copy"),
+};
 ---
 
 <div
@@ -32,44 +43,44 @@ const uniqueId = `ngx-${crypto.getRandomValues(new Uint32Array(1))[0].toString(3
           class="i-mdi:lightning-bolt"
           aria-hidden="true"
         ></span>
-        Preset
+        {t("tools.nginxConfigGenerator.preset")}
       </span>
       <div class="ngx-presets">
         <button
           type="button"
           class="ngx-preset-btn ngx-preset-active"
           data-preset="static"
-          >Static Site</button
+          >{t("tools.nginxConfigGenerator.presetStaticSite")}</button
         >
         <button
           type="button"
           class="ngx-preset-btn"
           data-preset="reverse-proxy"
-          >Reverse Proxy</button
+          >{t("tools.nginxConfigGenerator.presetReverseProxy")}</button
         >
         <button
           type="button"
           class="ngx-preset-btn"
           data-preset="spa"
-          >SPA / React</button
+          >{t("tools.nginxConfigGenerator.presetSpaReact")}</button
         >
         <button
           type="button"
           class="ngx-preset-btn"
           data-preset="php"
-          >PHP-FPM</button
+          >{t("tools.nginxConfigGenerator.presetPhpFpm")}</button
         >
         <button
           type="button"
           class="ngx-preset-btn"
           data-preset="api"
-          >API Backend</button
+          >{t("tools.nginxConfigGenerator.presetApiBackend")}</button
         >
         <button
           type="button"
           class="ngx-preset-btn"
           data-preset="hardened"
-          >Hardened</button
+          >{t("tools.nginxConfigGenerator.presetHardened")}</button
         >
       </div>
     </div>
@@ -81,7 +92,7 @@ const uniqueId = `ngx-${crypto.getRandomValues(new Uint32Array(1))[0].toString(3
           class="i-mdi:server"
           aria-hidden="true"
         ></span>
-        Server
+        {t("tools.nginxConfigGenerator.sectionServer")}
       </div>
       <div class="ngx-card-body">
         <div class="ngx-fields-row">
@@ -89,7 +100,7 @@ const uniqueId = `ngx-${crypto.getRandomValues(new Uint32Array(1))[0].toString(3
             <label
               class="ngx-label"
               for={`${uniqueId}-domain`}
-              >Domain</label
+              >{t("tools.nginxConfigGenerator.labelDomain")}</label
             >
             <input
               id={`${uniqueId}-domain`}
@@ -106,7 +117,7 @@ const uniqueId = `ngx-${crypto.getRandomValues(new Uint32Array(1))[0].toString(3
             <label
               class="ngx-label"
               for={`${uniqueId}-root`}
-              >Root Path</label
+              >{t("tools.nginxConfigGenerator.labelRootPath")}</label
             >
             <input
               id={`${uniqueId}-root`}
@@ -123,7 +134,7 @@ const uniqueId = `ngx-${crypto.getRandomValues(new Uint32Array(1))[0].toString(3
             <label
               class="ngx-label"
               for={`${uniqueId}-index`}
-              >Index Files</label
+              >{t("tools.nginxConfigGenerator.labelIndexFiles")}</label
             >
             <input
               id={`${uniqueId}-index`}
@@ -161,7 +172,7 @@ const uniqueId = `ngx-${crypto.getRandomValues(new Uint32Array(1))[0].toString(3
               type="checkbox"
               id={`${uniqueId}-spa-mode`}
             />
-            <span>SPA mode (fallback to index.html)</span>
+            <span>{t("tools.nginxConfigGenerator.toggleSpaMode")}</span>
           </label>
           <label class="ngx-toggle-label">
             <input
@@ -180,7 +191,7 @@ const uniqueId = `ngx-${crypto.getRandomValues(new Uint32Array(1))[0].toString(3
             <label
               class="ngx-label"
               for={`${uniqueId}-php-socket`}
-              >PHP-FPM Socket</label
+              >{t("tools.nginxConfigGenerator.labelPhpSocket")}</label
             >
             <input
               id={`${uniqueId}-php-socket`}
@@ -209,7 +220,7 @@ const uniqueId = `ngx-${crypto.getRandomValues(new Uint32Array(1))[0].toString(3
           class="i-mdi:shield-lock-outline"
           aria-hidden="true"
         ></span>
-        SSL / TLS
+        {t("tools.nginxConfigGenerator.sectionSslTls")}
       </summary>
       <div class="ngx-card-body">
         <div class="ngx-toggle-row ngx-main-toggle">
@@ -219,7 +230,7 @@ const uniqueId = `ngx-${crypto.getRandomValues(new Uint32Array(1))[0].toString(3
               id={`${uniqueId}-ssl`}
               checked
             />
-            <span>Enable HTTPS</span>
+            <span>{t("tools.nginxConfigGenerator.toggleEnableHttps")}</span>
           </label>
         </div>
         <div
@@ -231,7 +242,7 @@ const uniqueId = `ngx-${crypto.getRandomValues(new Uint32Array(1))[0].toString(3
               <label
                 class="ngx-label"
                 for={`${uniqueId}-cert`}
-                >Certificate</label
+                >{t("tools.nginxConfigGenerator.labelCertificate")}</label
               >
               <input
                 id={`${uniqueId}-cert`}
@@ -244,7 +255,7 @@ const uniqueId = `ngx-${crypto.getRandomValues(new Uint32Array(1))[0].toString(3
               <label
                 class="ngx-label"
                 for={`${uniqueId}-key`}
-                >Private Key</label
+                >{t("tools.nginxConfigGenerator.labelPrivateKey")}</label
               >
               <input
                 id={`${uniqueId}-key`}
@@ -299,7 +310,7 @@ const uniqueId = `ngx-${crypto.getRandomValues(new Uint32Array(1))[0].toString(3
                 id={`${uniqueId}-redirect-http`}
                 checked
               />
-              <span>Redirect HTTP &rarr; HTTPS</span>
+              <span>{t("tools.nginxConfigGenerator.toggleRedirectHttp")}</span>
             </label>
           </div>
         </div>
@@ -320,7 +331,7 @@ const uniqueId = `ngx-${crypto.getRandomValues(new Uint32Array(1))[0].toString(3
           class="i-mdi:arrow-right-bold"
           aria-hidden="true"
         ></span>
-        Reverse Proxy
+        {t("tools.nginxConfigGenerator.sectionReverseProxy")}
       </summary>
       <div class="ngx-card-body">
         <div class="ngx-toggle-row ngx-main-toggle">
@@ -329,7 +340,7 @@ const uniqueId = `ngx-${crypto.getRandomValues(new Uint32Array(1))[0].toString(3
               type="checkbox"
               id={`${uniqueId}-proxy`}
             />
-            <span>Enable reverse proxy</span>
+            <span>{t("tools.nginxConfigGenerator.toggleEnableProxy")}</span>
           </label>
         </div>
         <div
@@ -342,7 +353,7 @@ const uniqueId = `ngx-${crypto.getRandomValues(new Uint32Array(1))[0].toString(3
               <label
                 class="ngx-label"
                 for={`${uniqueId}-upstream-name`}
-                >Upstream Name</label
+                >{t("tools.nginxConfigGenerator.labelUpstreamName")}</label
               >
               <input
                 id={`${uniqueId}-upstream-name`}
@@ -356,7 +367,7 @@ const uniqueId = `ngx-${crypto.getRandomValues(new Uint32Array(1))[0].toString(3
               <label
                 class="ngx-label"
                 for={`${uniqueId}-upstream`}
-                >Backend Server(s)</label
+                >{t("tools.nginxConfigGenerator.labelBackendServers")}</label
               >
               <input
                 id={`${uniqueId}-upstream`}
@@ -366,7 +377,7 @@ const uniqueId = `ngx-${crypto.getRandomValues(new Uint32Array(1))[0].toString(3
                 placeholder="127.0.0.1:3000"
               />
               <span class="ngx-field-hint"
-                >Comma-separated: 127.0.0.1:3000, 127.0.0.1:3001</span
+                >{t("tools.nginxConfigGenerator.hintCommaSeparated")}</span
               >
             </div>
           </div>
@@ -374,15 +385,21 @@ const uniqueId = `ngx-${crypto.getRandomValues(new Uint32Array(1))[0].toString(3
             <label
               class="ngx-label"
               for={`${uniqueId}-lb-method`}
-              >Load Balancing</label
+              >{t("tools.nginxConfigGenerator.labelLoadBalancing")}</label
             >
             <select
               id={`${uniqueId}-lb-method`}
               class="ngx-select"
             >
-              <option value="round-robin">Round Robin (default)</option>
-              <option value="least_conn">Least Connections</option>
-              <option value="ip_hash">IP Hash (sticky)</option>
+              <option value="round-robin"
+                >{t("tools.nginxConfigGenerator.optRoundRobin")}</option
+              >
+              <option value="least_conn"
+                >{t("tools.nginxConfigGenerator.optLeastConn")}</option
+              >
+              <option value="ip_hash"
+                >{t("tools.nginxConfigGenerator.optIpHash")}</option
+              >
             </select>
           </div>
           <div class="ngx-toggles-row">
@@ -406,7 +423,8 @@ const uniqueId = `ngx-${crypto.getRandomValues(new Uint32Array(1))[0].toString(3
                 type="checkbox"
                 id={`${uniqueId}-proxy-buffering`}
               />
-              <span>Proxy Buffering</span>
+              <span>{t("tools.nginxConfigGenerator.toggleProxyBuffering")}</span
+              >
             </label>
           </div>
           <div class="ngx-toggle-row">
@@ -415,7 +433,7 @@ const uniqueId = `ngx-${crypto.getRandomValues(new Uint32Array(1))[0].toString(3
                 type="checkbox"
                 id={`${uniqueId}-resolver`}
               />
-              <span>DNS Resolver</span>
+              <span>{t("tools.nginxConfigGenerator.toggleDnsResolver")}</span>
             </label>
           </div>
           <div
@@ -427,7 +445,7 @@ const uniqueId = `ngx-${crypto.getRandomValues(new Uint32Array(1))[0].toString(3
               <label
                 class="ngx-label"
                 for={`${uniqueId}-resolver-servers`}
-                >Resolver Servers</label
+                >{t("tools.nginxConfigGenerator.labelResolverServers")}</label
               >
               <input
                 id={`${uniqueId}-resolver-servers`}
@@ -444,7 +462,7 @@ const uniqueId = `ngx-${crypto.getRandomValues(new Uint32Array(1))[0].toString(3
                 type="checkbox"
                 id={`${uniqueId}-proxy-cache`}
               />
-              <span>Proxy Cache</span>
+              <span>{t("tools.nginxConfigGenerator.toggleProxyCache")}</span>
             </label>
           </div>
           <div
@@ -457,7 +475,7 @@ const uniqueId = `ngx-${crypto.getRandomValues(new Uint32Array(1))[0].toString(3
                 <label
                   class="ngx-label"
                   for={`${uniqueId}-cache-zone`}
-                  >Zone Name</label
+                  >{t("tools.nginxConfigGenerator.labelZoneName")}</label
                 >
                 <input
                   id={`${uniqueId}-cache-zone`}
@@ -471,7 +489,7 @@ const uniqueId = `ngx-${crypto.getRandomValues(new Uint32Array(1))[0].toString(3
                 <label
                   class="ngx-label"
                   for={`${uniqueId}-cache-valid-time`}
-                  >Cache Valid (200/302)</label
+                  >{t("tools.nginxConfigGenerator.labelCacheValid")}</label
                 >
                 <input
                   id={`${uniqueId}-cache-valid-time`}
@@ -502,7 +520,7 @@ const uniqueId = `ngx-${crypto.getRandomValues(new Uint32Array(1))[0].toString(3
           class="i-mdi:security"
           aria-hidden="true"
         ></span>
-        Security Headers
+        {t("tools.nginxConfigGenerator.sectionSecurityHeaders")}
       </summary>
       <div class="ngx-card-body">
         <div class="ngx-toggles-row">
@@ -562,9 +580,11 @@ const uniqueId = `ngx-${crypto.getRandomValues(new Uint32Array(1))[0].toString(3
             aria-hidden="true"
           ></span>
           <span
-            >For advanced CSP, use the
-            <a href="/tools/csp-builder/">CSP Policy Builder</a>
-            to generate a complete policy with presets and security ratings.</span
+            >{t("tools.nginxConfigGenerator.hintCspAdvanced")}
+            <a href="/tools/csp-builder/"
+              >{t("tools.nginxConfigGenerator.hintCspBuilderLink")}</a
+            >
+            {t("tools.nginxConfigGenerator.hintCspAdvancedSuffix")}</span
           >
         </div>
       </div>
@@ -585,7 +605,7 @@ const uniqueId = `ngx-${crypto.getRandomValues(new Uint32Array(1))[0].toString(3
           class="i-mdi:shield-alert-outline"
           aria-hidden="true"
         ></span>
-        Access Control
+        {t("tools.nginxConfigGenerator.sectionAccessControl")}
       </summary>
       <div class="ngx-card-body">
         <div class="ngx-toggle-row">
@@ -594,7 +614,7 @@ const uniqueId = `ngx-${crypto.getRandomValues(new Uint32Array(1))[0].toString(3
               type="checkbox"
               id={`${uniqueId}-rate-limit`}
             />
-            <span>Rate Limiting</span>
+            <span>{t("tools.nginxConfigGenerator.toggleRateLimiting")}</span>
           </label>
         </div>
         <div
@@ -607,7 +627,7 @@ const uniqueId = `ngx-${crypto.getRandomValues(new Uint32Array(1))[0].toString(3
               <label
                 class="ngx-label"
                 for={`${uniqueId}-rate-value`}
-                >Rate (req/s)</label
+                >{t("tools.nginxConfigGenerator.labelRate")}</label
               >
               <input
                 id={`${uniqueId}-rate-value`}
@@ -622,7 +642,7 @@ const uniqueId = `ngx-${crypto.getRandomValues(new Uint32Array(1))[0].toString(3
               <label
                 class="ngx-label"
                 for={`${uniqueId}-rate-burst`}
-                >Burst</label
+                >{t("tools.nginxConfigGenerator.labelBurst")}</label
               >
               <input
                 id={`${uniqueId}-rate-burst`}
@@ -642,21 +662,21 @@ const uniqueId = `ngx-${crypto.getRandomValues(new Uint32Array(1))[0].toString(3
               id={`${uniqueId}-block-hidden`}
               checked
             />
-            <span>Block hidden files (.git, .env)</span>
+            <span>{t("tools.nginxConfigGenerator.toggleBlockHidden")}</span>
           </label>
           <label class="ngx-toggle-label">
             <input
               type="checkbox"
               id={`${uniqueId}-block-exploits`}
             />
-            <span>Block exploit paths (wp-admin...)</span>
+            <span>{t("tools.nginxConfigGenerator.toggleBlockExploits")}</span>
           </label>
           <label class="ngx-toggle-label">
             <input
               type="checkbox"
               id={`${uniqueId}-tarpit`}
             />
-            <span>Tarpit blocked requests</span>
+            <span>{t("tools.nginxConfigGenerator.toggleTarpit")}</span>
           </label>
           <label class="ngx-toggle-label">
             <input
@@ -664,7 +684,7 @@ const uniqueId = `ngx-${crypto.getRandomValues(new Uint32Array(1))[0].toString(3
               id={`${uniqueId}-body-limit`}
               checked
             />
-            <span>Body size limit (16M)</span>
+            <span>{t("tools.nginxConfigGenerator.toggleBodyLimit")}</span>
           </label>
         </div>
         <div
@@ -677,9 +697,9 @@ const uniqueId = `ngx-${crypto.getRandomValues(new Uint32Array(1))[0].toString(3
             aria-hidden="true"
           ></span>
           <span
-            >Tarpitting returns slow responses to waste attacker resources. See
-            <a href="/blog/implementing-tarpit-nginx/"
-              >Implementing a Tarpit in Nginx</a
+            >{t("tools.nginxConfigGenerator.hintTarpit")}
+            <a href="/blog/005-implementing-tarpit-nginx/"
+              >{t("tools.nginxConfigGenerator.hintTarpitLink")}</a
             >.</span
           >
         </div>
@@ -701,7 +721,7 @@ const uniqueId = `ngx-${crypto.getRandomValues(new Uint32Array(1))[0].toString(3
           class="i-mdi:speedometer"
           aria-hidden="true"
         ></span>
-        Performance &amp; Caching
+        {t("tools.nginxConfigGenerator.sectionPerformance")}
       </summary>
       <div class="ngx-card-body">
         <div class="ngx-toggles-row">
@@ -726,14 +746,14 @@ const uniqueId = `ngx-${crypto.getRandomValues(new Uint32Array(1))[0].toString(3
               id={`${uniqueId}-cache`}
               checked
             />
-            <span>Static asset caching (30d)</span>
+            <span>{t("tools.nginxConfigGenerator.toggleStaticCaching")}</span>
           </label>
           <label class="ngx-toggle-label">
             <input
               type="checkbox"
               id={`${uniqueId}-open-file-cache`}
             />
-            <span>Open File Cache</span>
+            <span>{t("tools.nginxConfigGenerator.toggleOpenFileCache")}</span>
           </label>
           <label class="ngx-toggle-label">
             <input
@@ -749,7 +769,7 @@ const uniqueId = `ngx-${crypto.getRandomValues(new Uint32Array(1))[0].toString(3
               id={`${uniqueId}-logs`}
               checked
             />
-            <span>Access &amp; Error Logs</span>
+            <span>{t("tools.nginxConfigGenerator.toggleLogs")}</span>
           </label>
         </div>
       </div>
@@ -769,7 +789,7 @@ const uniqueId = `ngx-${crypto.getRandomValues(new Uint32Array(1))[0].toString(3
           class="i-mdi:clock-outline"
           aria-hidden="true"
         ></span>
-        Timeouts &amp; Buffers
+        {t("tools.nginxConfigGenerator.sectionTimeouts")}
       </summary>
       <div class="ngx-card-body">
         <div class="ngx-fields-row">
@@ -849,7 +869,9 @@ const uniqueId = `ngx-${crypto.getRandomValues(new Uint32Array(1))[0].toString(3
           id={`${uniqueId}-proxy-timeout-fields`}
           hidden
         >
-          <div class="ngx-sub-label">Proxy Timeouts</div>
+          <div class="ngx-sub-label">
+            {t("tools.nginxConfigGenerator.subLabelProxyTimeouts")}
+          </div>
           <div class="ngx-fields-row">
             <div class="ngx-field">
               <label
@@ -892,12 +914,12 @@ const uniqueId = `ngx-${crypto.getRandomValues(new Uint32Array(1))[0].toString(3
         class="i-mdi:book-open-outline"
         aria-hidden="true"
       ></span>
-      <span>Related guides:</span>
+      <span>{t("tools.nginxConfigGenerator.relatedGuides")}</span>
       <a href="/blog/004-enabling-quic-http3-nginx/">QUIC/HTTP3</a>
-      <a href="/blog/implementing-tarpit-nginx/">Tarpit</a>
+      <a href="/blog/005-implementing-tarpit-nginx/">Tarpit</a>
       <a href="/blog/003-implementing-content-security-policy-nginx/">CSP</a>
       <a href="/blog/001-secure-nginx-client-certificates/"
-        >Client Certificates</a
+        >{t("tools.nginxConfigGenerator.relatedClientCerts")}</a
       >
     </div>
 
@@ -909,18 +931,18 @@ const uniqueId = `ngx-${crypto.getRandomValues(new Uint32Array(1))[0].toString(3
             class="i-devicon:nginx"
             aria-hidden="true"
           ></span>
-          Generated Configuration
+          {t("tools.nginxConfigGenerator.generatedConfig")}
         </span>
         <button
           type="button"
           class="ngx-copy-btn"
-          aria-label="Copy configuration"
+          aria-label={t("tools.nginxConfigGenerator.copyConfigAriaLabel")}
         >
           <span
             class="i-mdi:content-copy"
             aria-hidden="true"
           ></span>
-          Copy
+          {t("tools.shared.copy")}
         </button>
       </div>
       {
@@ -930,13 +952,15 @@ const uniqueId = `ngx-${crypto.getRandomValues(new Uint32Array(1))[0].toString(3
         class="ngx-output-code"
         tabindex="0"
         role="region"
-        aria-label="Generated Nginx configuration"><code id={`${uniqueId}-output`} /></pre>
+        aria-label={t(
+          "tools.nginxConfigGenerator.outputAriaLabel",
+        )}><code id={`${uniqueId}-output`} /></pre>
       {/* eslint-enable astro/jsx-a11y/no-noninteractive-tabindex */}
     </div>
   </div>
 </div>
 
-<script is:inline define:vars={{ uniqueId }}>
+<script is:inline define:vars={{ uniqueId, i18n }}>
   (function () {
     var container = document.querySelector('[data-ngx-id="' + uniqueId + '"]');
     if (!container) return;
@@ -1899,10 +1923,12 @@ const uniqueId = `ngx-${crypto.getRandomValues(new Uint32Array(1))[0].toString(3
         var text = output ? output.textContent : "";
         navigator.clipboard.writeText(text).then(function () {
           copyBtn.innerHTML =
-            '<span class="i-mdi:check" aria-hidden="true"></span> Copied!';
+            '<span class="i-mdi:check" aria-hidden="true"></span> ' +
+            i18n.copied;
           setTimeout(function () {
             copyBtn.innerHTML =
-              '<span class="i-mdi:content-copy" aria-hidden="true"></span> Copy';
+              '<span class="i-mdi:content-copy" aria-hidden="true"></span> ' +
+              i18n.copy;
           }, 1500);
         });
       });

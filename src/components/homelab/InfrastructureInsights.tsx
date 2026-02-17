@@ -1,5 +1,100 @@
 import { useEffect, useRef, useState } from "preact/hooks";
 
+/** Translations required by InfrastructureInsights. Passed from Astro parent. */
+export interface InfrastructureTranslations {
+  /** ARIA label for the infrastructure insights container. */
+  ariaLabel: string;
+  /** Error message shown when data fetching fails. */
+  error: string;
+  /** Heading for the requests received metric. */
+  requestsReceived: string;
+  /** Screen-reader-only label for the requests received value. */
+  requestsReceivedSR: string;
+  /** Label indicating how many requests were handled. */
+  handled: string;
+  /** Heading for the responses sent metric. */
+  responsesSent: string;
+  /** Label for upstream proxy responses. */
+  upstream: string;
+  /** Prefix text before the upload bandwidth value. */
+  sentPrefix: string;
+  /** Label for the upload bandwidth metric. */
+  bandwidthUp: string;
+  /** Prefix text before the download bandwidth value. */
+  receivedPrefix: string;
+  /** Label for the download bandwidth metric. */
+  bandwidthDown: string;
+  /** Heading for the security blocks section. */
+  securityBlocks: string;
+  /** Text shown while data is loading. */
+  loading: string;
+  /** Label for the total security blocks count. */
+  totalSecurityBlocks: string;
+  /** Unit label for block counts. */
+  blocks: string;
+  /** Label for the Nginx ban count. */
+  nginxBans: string;
+  /** ARIA label for the link to the tarpit blog post. */
+  tarpitBlogAria: string;
+  /** URL of the tarpit blog post. */
+  tarpitBlogUrl: string;
+  /** Label for the tarpit hits metric. */
+  tarpitHits: string;
+  /** Unit label for tarpit hit counts. */
+  tarpitHitsUnit: string;
+  /** ARIA label for the link to the port scanner blog post. */
+  portScannerBlogAria: string;
+  /** URL of the port scanner blog post. */
+  portScannerBlogUrl: string;
+  /** Label for the port scanners metric. */
+  portScanners: string;
+  /** Descriptive text for detected port scanners count. */
+  portScannersDetected: string;
+  /** Heading for the attack regions section. */
+  attackRegions: string;
+  /** ARIA label for the attack regions list. */
+  attackRegionsList: string;
+  /** Text shown when no attack regions are detected. */
+  noAttackRegions: string;
+  /** Unit label for hit counts in attack regions. */
+  hits: string;
+  /** Label for the service availability metric. */
+  availability: string;
+  /** Label for the rate-limited requests metric. */
+  rateLimits: string;
+  /** Heading for the system status section. */
+  systemStatus: string;
+  /** Heading for the node resource load subsection. */
+  nodeResourceLoad: string;
+  /** Prefix text before the CPU usage value. */
+  cpuUsagePrefix: string;
+  /** Unit label for CPU percentage. */
+  percentCPU: string;
+  /** Label for the memory usage metric. */
+  memoryUsage: string;
+  /** Unit label for RAM percentage. */
+  percentRAM: string;
+  /** Heading for the load status indicator. */
+  loadStatus: string;
+  /** Status text when load is critical. */
+  statusCritical: string;
+  /** Status text when load is high. */
+  statusHigh: string;
+  /** Status text when load is elevated. */
+  statusElevated: string;
+  /** Status text when load is optimal. */
+  statusOptimal: string;
+  /** Status text when load is healthy. */
+  statusHealthy: string;
+  /** Status text when load status cannot be determined. */
+  statusUnknown: string;
+}
+
+/** Component props */
+interface Props {
+  readonly translations: InfrastructureTranslations;
+}
+
 interface Country {
   code: string;
   count: number;
@@ -75,39 +170,40 @@ function formatPercent(v: number | string) {
   return Number.isFinite(num) ? num.toFixed(1) : "...";
 }
 
-type StatusLevel =
-  | "Critical"
-  | "High"
-  | "Elevated"
-  | "Optimal"
-  | "Healthy"
-  | "Unknown";
+type StatusKey =
+  | "critical"
+  | "high"
+  | "elevated"
+  | "optimal"
+  | "healthy"
+  | "unknown";
 
 /**
- * Returns a status label based on CPU and Memory usage thresholds.
+ * Returns a status key based on CPU and Memory usage thresholds.
  */
 function getStatus(
   cpu: number | undefined,
   mem: number | undefined,
-  labels: { high: StatusLevel; medium: StatusLevel; normal: StatusLevel },
-): StatusLevel {
-  if (cpu === undefined || mem === undefined) return "Unknown";
+  labels: { high: StatusKey; medium: StatusKey; normal: StatusKey },
+): StatusKey {
+  if (cpu === undefined || mem === undefined) return "unknown";
   if (cpu > 90 || mem > 90) return labels.high;
   if (cpu > 70 || mem > 70) return labels.medium;
   return labels.normal;
 }
 
-function getStatusColor(status: StatusLevel) {
+/** Maps a status key to a CSS color class. */
+function getStatusColor(status: StatusKey) {
   switch (status) {
-    case "Critical": {
+    case "critical": {
       return "color-danger";
     }
-    case "Elevated":
-    case "High": {
+    case "elevated":
+    case "high": {
       return "color-warning";
     }
-    case "Healthy":
-    case "Optimal": {
+    case "healthy":
+    case "optimal": {
       return "color-success";
     }
     default: {
@@ -116,11 +212,29 @@ function getStatusColor(status: StatusLevel) {
   }
 }
 
+/** Maps a status key to its translated display label. */
+function getStatusLabel(
+  status: StatusKey,
+  translations: InfrastructureTranslations,
+): string {
+  const map: Record<StatusKey, string> = {
+    critical: translations.statusCritical,
+    high: translations.statusHigh,
+    elevated: translations.statusElevated,
+    optimal: translations.statusOptimal,
+    healthy: translations.statusHealthy,
+    unknown: translations.statusUnknown,
+  };
+  return map[status];
+}
+
 /**
  * Infrastructure insights component.
  * Displays real-time statistics from Nginx and InfluxDB.
+ *
+ * @param props - Component properties including translations.
  */
-export default function InfrastructureInsights() {
+export default function InfrastructureInsights({ translations: t }: Props) {
   const [stats, setStats] = useState<HomelabStats | null>(null);
   const [error, setError] = useState(false);
   const isFetchingRef = useRef(false);
@@ -195,27 +309,25 @@ export default function InfrastructureInsights() {
     stats?.cpu_usage_avg,
     stats?.mem_used_percent,
     {
-      high: "Critical",
-      medium: "Elevated",
-      normal: "Healthy",
+      high: "critical",
+      medium: "elevated",
+      normal: "healthy",
     },
   );
 
   const loadStatus = getStatus(stats?.cpu_usage_avg, stats?.mem_used_percent, {
-    high: "Critical",
-    medium: "High",
-    normal: "Optimal",
+    high: "critical",
+    medium: "high",
+    normal: "optimal",
   });
 
   if (error) {
     return (
       <section
         className="infrastructure-section"
-        aria-label="Edge node real-time statistics"
+        aria-label={t.ariaLabel}
       >
-        <div className="stats-error">
-          Unable to load infrastructure statistics.
-        </div>
+        <div className="stats-error">{t.error}</div>
       </section>
     );
   }
@@ -223,7 +335,7 @@ export default function InfrastructureInsights() {
   return (
     <section
       className="infrastructure-section"
-      aria-label="Edge node real-time statistics"
+      aria-label={t.ariaLabel}
     >
       <div className="insights-grid">
         <article
@@ -234,33 +346,34 @@ export default function InfrastructureInsights() {
             className="insight-label"
             id="label-traffic"
           >
-            Requests Received (24h)
+            {t.requestsReceived}
           </span>
           <div className="insight-value">
             <span className="sr-only">
-              {displayVal(stats?.requests_received_24h)} requests received
+              {displayVal(stats?.requests_received_24h)} {t.requestsReceivedSR}
             </span>
             <span aria-hidden="true">
               <output>{displayVal(stats?.requests_received_24h)}</output>{" "}
-              <small>handled</small>
+              <small>{t.handled}</small>
             </span>
           </div>
           <div className="insight-details">
             <div className="detail-row">
-              <span id="label-responses">Responses Sent</span>
+              <span id="label-responses">{t.responsesSent}</span>
               <output aria-labelledby="label-responses">
                 {displayVal(stats?.responses_sent_24h)}
               </output>
             </div>
             <div className="detail-row">
-              <span id="label-upstream">Upstream (Forwarded)</span>
+              <span id="label-upstream">{t.upstream}</span>
               <output aria-labelledby="label-upstream">
                 {displayVal(stats?.upstream_sent_24h)}
               </output>
             </div>
             <div className="detail-row">
               <span id="label-bandwidth-up">
-                <span className="sr-only">Sent </span>Bandwidth ↑
+                <span className="sr-only">{t.sentPrefix} </span>
+                {t.bandwidthUp}
               </span>
               <output aria-labelledby="label-bandwidth-up">
                 {displayVal(stats?.bandwidth_sent_24h, formatBytes)}
@@ -268,7 +381,8 @@ export default function InfrastructureInsights() {
             </div>
             <div className="detail-row">
               <span id="label-bandwidth-down">
-                <span className="sr-only">Received </span>Bandwidth ↓
+                <span className="sr-only">{t.receivedPrefix} </span>
+                {t.bandwidthDown}
               </span>
               <output aria-labelledby="label-bandwidth-down">
                 {displayVal(stats?.bandwidth_recv_24h, formatBytes)}
@@ -285,65 +399,65 @@ export default function InfrastructureInsights() {
             className="insight-label"
             id="label-security"
           >
-            Security & Blocks (24h)
+            {t.securityBlocks}
           </span>
           <div className="insight-value">
             <span className="sr-only">
-              {totalSecurityBlocks?.toLocaleString() ?? "Loading"} total
-              security blocks
+              {totalSecurityBlocks?.toLocaleString() ?? t.loading}{" "}
+              {t.totalSecurityBlocks}
             </span>
             <span aria-hidden="true">
               {totalSecurityBlocks?.toLocaleString() ?? "..."}{" "}
-              <small>blocks</small>
+              <small>{t.blocks}</small>
             </span>
           </div>
           <div className="insight-details">
             <div className="detail-row">
-              <span id="label-nginx-bans">Nginx Bans</span>
+              <span id="label-nginx-bans">{t.nginxBans}</span>
               <output aria-labelledby="label-nginx-bans">
                 {displayVal(stats?.nginx_bans_24h)}
               </output>
             </div>
             <div className="detail-row">
               <a
-                href="/blog/005-implementing-tarpit-nginx/"
+                href={t.tarpitBlogUrl}
                 className="insight-link"
-                aria-label="Read blog post about implementing Nginx Tarpit"
+                aria-label={t.tarpitBlogAria}
               >
-                Tarpit Hits
+                {t.tarpitHits}
               </a>
               <output
-                aria-label={`${displayVal(stats?.tarpit_hits_24h)} tarpit hits`}
+                aria-label={`${displayVal(stats?.tarpit_hits_24h)} ${t.tarpitHitsUnit}`}
               >
                 {displayVal(stats?.tarpit_hits_24h)}
               </output>
             </div>
             <div className="detail-row">
               <a
-                href="/blog/006-implementing-mikrotik-honeypot/"
+                href={t.portScannerBlogUrl}
                 className="insight-link"
-                aria-label="Read blog post about MikroTik Port Scanner Honeypot"
+                aria-label={t.portScannerBlogAria}
               >
-                Port Scanners
+                {t.portScanners}
               </a>
               <output
-                aria-label={`${displayVal(stats?.mikrotik_scans_total)} port scanners detected`}
+                aria-label={`${displayVal(stats?.mikrotik_scans_total)} ${t.portScannersDetected}`}
               >
                 {displayVal(stats?.mikrotik_scans_total)}
               </output>
             </div>
             <div className="detail-row">
-              <span className="sr-only">Attack Regions:</span>
-              <span aria-hidden="true">Attack Regions</span>
+              <span className="sr-only">{t.attackRegions}:</span>
+              <span aria-hidden="true">{t.attackRegions}</span>
               <ul className="country-list">
-                <li className="sr-only">List of attack regions:</li>
+                <li className="sr-only">{t.attackRegionsList}</li>
                 {countries.length > 0 ? (
                   countries.map((c) => (
                     <li
                       key={c.code}
                       className="country-badge"
-                      aria-label={`Region ${c.code} with ${c.count} hits`}
-                      title={`${c.count} hits`}
+                      aria-label={`${c.code} — ${c.count} ${t.hits}`}
+                      title={`${c.count} ${t.hits}`}
                     >
                       {c.code}
                     </li>
@@ -351,7 +465,7 @@ export default function InfrastructureInsights() {
                 ) : (
                   <li>
                     <span aria-hidden="true">{stats ? "-" : "..."}</span>
-                    <span className="sr-only">No attack regions recorded</span>
+                    <span className="sr-only">{t.noAttackRegions}</span>
                   </li>
                 )}
               </ul>
@@ -367,25 +481,25 @@ export default function InfrastructureInsights() {
             className="insight-label"
             id="label-availability"
           >
-            Availability (24h)
+            {t.availability}
           </span>
           <div className="insight-value">
             <span className="sr-only">
-              {displayVal(stats?.rate_limited_503_24h)} rate limits
+              {displayVal(stats?.rate_limited_503_24h)} {t.rateLimits}
             </span>
             <span aria-hidden="true">
               {displayVal(stats?.rate_limited_503_24h)}{" "}
-              <small>rate limits</small>
+              <small>{t.rateLimits}</small>
             </span>
           </div>
           <div className="insight-details">
             <div className="detail-row">
-              <span id="label-system-status">System Status</span>
+              <span id="label-system-status">{t.systemStatus}</span>
               <output
                 className={getStatusColor(systemStatus)}
                 aria-labelledby="label-system-status"
               >
-                {systemStatus}
+                {getStatusLabel(systemStatus, t)}
               </output>
             </div>
           </div>
@@ -399,32 +513,33 @@ export default function InfrastructureInsights() {
             className="insight-label"
             id="label-hardware"
           >
-            Node Resource Load
+            {t.nodeResourceLoad}
           </span>
           <div className="insight-value">
             <span className="sr-only">
-              CPU usage: {displayVal(stats?.cpu_usage_avg, formatPercent)} %
+              {t.cpuUsagePrefix}{" "}
+              {displayVal(stats?.cpu_usage_avg, formatPercent)} %
             </span>
             <span aria-hidden="true">
               <output>{displayVal(stats?.cpu_usage_avg, formatPercent)}</output>{" "}
-              <small>% CPU</small>
+              <small>{t.percentCPU}</small>
             </span>
           </div>
           <div className="insight-details">
             <div className="detail-row">
-              <span id="label-memory">Memory Usage</span>
+              <span id="label-memory">{t.memoryUsage}</span>
               <output aria-labelledby="label-memory">
                 {displayVal(stats?.mem_used_percent, formatPercent)}
-                <small aria-hidden="true"> % RAM</small>
+                <small aria-hidden="true"> {t.percentRAM}</small>
               </output>
             </div>
             <div className="detail-row">
-              <span id="label-load-status">Load Status</span>
+              <span id="label-load-status">{t.loadStatus}</span>
               <output
                 className={getStatusColor(loadStatus)}
                 aria-labelledby="label-load-status"
               >
-                {loadStatus}
+                {getStatusLabel(loadStatus, t)}
               </output>
             </div>
           </div>

@@ -6,6 +6,9 @@
 
 import { createHash } from "node:crypto";
 
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslations } from "@i18n/utils";
+
 interface Props {
   caption?: string;
   title?: string;
@@ -16,7 +19,11 @@ interface Props {
 
 const { caption, title, ariaLabel, maxWidth, maxHeight } = Astro.props;
 
-const fallbackAriaLabel = ariaLabel || title || "Mermaid Diagram";
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
+
+const fallbackAriaLabel =
+  ariaLabel || title || t("components.mermaid.defaultAria");
 
 // Generate a deterministic ID based on the caption content
 const captionId = caption

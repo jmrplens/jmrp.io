@@ -14,10 +14,10 @@
  */
 export {
   defaultLocale,
-  localeConfig,
-  locales,
   type Locale,
   type LocaleConfig,
+  localeConfig,
+  locales,
 } from "./config";
 export { type Translations, translations } from "./translations";
 export {

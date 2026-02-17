@@ -8,6 +8,7 @@
 **jmrp.io** is a personal technical blog and portfolio built with **Astro 6** (SSG), focusing on:
 
 - **Zero client-side JavaScript** except for progressive enhancement islands
+- **Bilingual (EN/ES)** with Astro's built-in i18n routing
 - **WCAG 2.2 AA/AAA accessibility** compliance (axe-core tested)
 - **100/100 PageSpeed scores** on all metrics
 - **Content Security Policy (CSP)** with nonce-only strategy
@@ -520,6 +521,7 @@ RouterOS grammar at `src/languages/routeros.tmLanguage.json`. Aliases: `routeros
 experimental: { clientPrerender: true, contentIntellisense: true, chromeDevtoolsWorkspace: true }
 prefetch: { prefetchAll: true, defaultStrategy: "viewport" }
 i18n: { defaultLocale: "en", locales: ["en", "es"] }
+build: { inlineStylesheets: "always", concurrency: 2 }
 // Image: remote patterns for Google favicons, responsiveStyles: true
 // Vite: chunkSizeWarningLimit: 1000, SSR external: citation-js
 // Fonts: Geist Sans + Geist Mono via fontsource, optimizedFallbacks: true
@@ -527,11 +529,99 @@ i18n: { defaultLocale: "en", locales: ["en", "es"] }
 
 ---
 
+## Internationalization (i18n)
+
+### Architecture
+
+Bilingual support (EN/ES) using Astro's built-in i18n routing with a custom translation layer.
+
+| Layer | File(s) | Purpose |
+|-------|---------|---------|
+| Config | `src/i18n/config.ts` | `Locale` type, `defaultLocale`, `localeConfig` |
+| Translations | `src/i18n/translations/{en,es}/{common,tools}.ts` | All UI strings (~460 keys each in common, ~1350 in tools) |
+| Utils | `src/i18n/utils.ts` | `useTranslations()`, `formatDate()`, `pluralize()`, path helpers |
+| Barrel | `src/i18n/index.ts` | Re-exports everything |
+
+### URL Structure
+
+- **English (default)**: `/blog/`, `/tools/`, `/cv` — no prefix
+- **Spanish**: `/es/blog/`, `/es/tools/`, `/es/cv` — prefixed
+- **`hreflang` alternates**: Auto-generated via `getAlternateLinks()` in `BaseHead.astro`
+- **Language switcher**: `LanguageSwitcher.astro` in header, uses `useTranslatedPath()`
+
+### Translation Pattern
+
+```astro
+---
+import { getLangFromUrl, useTranslations } from "@src/i18n/utils";
+const locale = getLangFromUrl(Astro.url);
+const t = useTranslations(locale);
+---
+<nav aria-label={t("aria.mainNav")}>{t("nav.home")}</nav>
+<p>{t("ui.backTo", { page: "Blog" })}</p>
+```
+
+### Key Functions
+
+| Function | Purpose |
+|----------|---------|
+| `getLangFromUrl(url)` | Extract locale from URL pathname |
+| `useTranslations(locale)` | Returns `t(key, params?)` with fallback to EN |
+| `useTranslatedPath(locale)` | Returns `translatePath(path, target?)` for localized URLs |
+| `stripLocalePrefix(path)` | Remove `/es/` prefix from paths |
+| `getAlternateLinks(pathname, siteUrl)` | Generate hreflang alternate URLs |
+| `formatDate(date, locale)` | Locale-aware date formatting via `Intl` |
+| `formatNumber(num, locale)` | Locale-aware number formatting via `Intl` |
+| `pluralize(count, forms, locale)` | Plural form selection via `Intl.PluralRules` |
+
+### Translation File Structure
+
+```typescript
+// src/i18n/translations/en/common.ts
+export const common = {
+  nav: { home: "Home", blog: "Blog", ... },
+  ui: { skipToContent: "Skip to content", backTo: "← Back to {page}", ... },
+  aria: { mainNav: "Main Navigation", ... },
+  blog: { publishedOn: "Published on {date}", ... },
+  seo: { titleSuffix: "JMRP", ... },
+  footer: { copyright: "© {year}", ... },
+  pages: { github: { ... }, cv: { ... }, ... },
+};
+```
+
+### Client-Side i18n
+
+For `<script>` blocks that need translated strings, inject via `data-*` attributes:
+
+```astro
+<article data-code-fallback={t("pages.blogPost.codeFallback")}>
+  ...
+</article>
+<script>
+  const article = document.querySelector("article");
+  const fallback = article?.getAttribute("data-code-fallback") ?? "Code";
+</script>
+```
+
+### Adding a New Translation Key
+
+1. Add the key to `src/i18n/translations/en/common.ts` (or `tools.ts` for tool-specific)
+2. Add the Spanish translation to `src/i18n/translations/es/common.ts` (or `tools.ts`)
+3. Use `t("section.key")` in the component
+4. For interpolation: `t("key", { param: value })` with `{param}` in the translation string
+
+### Content i18n
+
+Blog posts and tools content are **not currently translated** — MDX files exist only in English. The translation system covers all UI chrome, navigation, SEO metadata, schemas, and ARIA labels.
+
+---
+
 ## Routing
 
 | Route                     | File                                | Purpose                                               |
 | ------------------------- | ----------------------------------- | ----------------------------------------------------- |
-| `/`                       | `index.astro`                       | Homepage                                              |
+| `/`                       | `index.astro`                       | Homepage (EN)                                         |
+| `/es/`                    | `index.astro`                       | Homepage (ES)                                         |
 | `/blog/`                  | `blog/index.astro`                  | Blog listing                                          |
 | `/blog/[slug]/`           | `blog/[...slug].astro`              | Blog post (auto-collects all references from content) |
 | `/blog/tags/[tag]/`       | `blog/tags/[tag].astro`             | Posts filtered by tag                                 |
@@ -545,6 +635,8 @@ i18n: { defaultLocale: "en", locales: ["en", "es"] }
 | `/404`                    | `404.astro`                         | Error page (noIndex)                                  |
 | `/rss.xml`                | `rss.xml.ts`                        | RSS 2.0 feed (custom XML with enclosures, media)      |
 | `/site.webmanifest`       | `site.webmanifest.ts`               | PWA manifest                                          |
+
+> All routes above (except RSS, webmanifest, 404) also exist under `/es/` prefix for Spanish.
 
 ---
 
@@ -574,7 +666,7 @@ i18n: { defaultLocale: "en", locales: ["en", "es"] }
 
 ### Test Utils
 
-- `sitemap.ts`: `getCachedPages()`, `getPagesFromSitemap()`, `getSitemapUrls()`
+- `sitemap.ts`: `getCachedPages()`, `getPagesFromSitemap()`, `getSitemapUrls()`, `filterPagesByLocale()`
 - `accessibility.ts`: `aggregateAxeResults()`, report generation
 - `filters.ts`: `shouldIgnoreError()` — filters expected localhost errors
 - `index.ts`: Barrel re-exports
@@ -615,11 +707,11 @@ ci-setup → build → [parallel quality checks] → [parallel tests] → report
 
 ### Quality Checks (12 parallel jobs)
 
-`astro check`, Prettier, ESLint, pnpm audit, Stylelint, JSDoc coverage, Lychee (links), Typos, SonarQube, bundle size, HTML validation, RSS validation.
+`astro check`, Prettier, ESLint, pnpm audit, Stylelint, JSDoc coverage, Lychee (links), CSpell, SonarQube, bundle size, HTML validation, RSS validation.
 
 ### Tests
 
-Playwright E2E (functional + accessibility + Lighthouse).
+Playwright E2E (functional + accessibility + Lighthouse). Accessibility and Lighthouse use `LOCALE_FILTER` env var to split workload by locale (EN/ES) in CI matrices, doubling parallelism.
 
 ### SonarCloud Manual Consultation
 
@@ -658,6 +750,7 @@ pnpm exec sonar-scanner
 | `SONAR_PROJECT_KEY`             | Optional | SonarCloud project (`jmrplens_jmrp.io`) |
 | `TELEGRAM_BOT_TOKEN`            | Server   | CSP reporter Telegram bot            |
 | `TELEGRAM_CHAT_ID`              | Server   | CSP reporter Telegram chat           |
+| `LOCALE_FILTER`                 | CI/Test  | Filter test pages by locale (`en` or `es`). Used in accessibility and Lighthouse CI matrices |
 
 ---
 
@@ -721,7 +814,7 @@ pnpm lint:html        # HTML5 validation (requires build)
 pnpm test:e2e         # Playwright tests
 pnpm test:e2e --ui    # Playwright interactive mode
 pnpm verify-icons     # Check icon consistency
-pnpm exec typos       # Spell check
+pnpm exec cspell lint . # Spell check (bilingual EN/ES)
 pnpm exec prettier --check .  # Format check (runs at end of build)
 ```
 
@@ -743,7 +836,7 @@ pnpm exec prettier --check .  # Format check (runs at end of build)
 6. **HTML5 Validation** — `pnpm lint:html`
 7. **RSS Feed Validation** — `node scripts/ci/validate-rss.mjs dist`
 8. **Schema.org JSON-LD** — `node scripts/ci/validate-schema.mjs dist`
-9. **Spelling (Typos)** — `typos`
+9. **Spelling (CSpell)** — `pnpm exec cspell lint .`
 10. **Broken Links (Lychee)** — `lychee --config lychee.toml --root-dir dist dist/**/*.html`
 11. **JSDoc Coverage** — `node scripts/ci/calculate-jsdoc-coverage.mjs`
 12. **SonarCloud Analysis** — `pnpm exec sonar-scanner` *(conditional: requires `SONAR_TOKEN`)*
@@ -847,6 +940,7 @@ flowchart LR
 11. **❌ Meta descriptions > 155 chars** — Google truncates, tests enforce this
 12. **❌ Preact in tools** — Tools use vanilla JS via `<script is:inline>`
 13. **❌ Missing `ariaLabel` on Mermaid** — Required for accessibility
+14. **❌ Hardcoded English strings in components** — Use `t()` from `useTranslations()` for all UI text
 
 ---
 
@@ -889,6 +983,7 @@ flowchart LR
 | ---------------------------------------- | ------------------------------------------------ |
 | `docs/BLOG_POST_GUIDE.md`               | Blog writing guide                               |
 | `docs/ACCESSIBILITY_GUIDE.md`           | Accessibility requirements                       |
+| `docs/I18N_GUIDE.md`                    | Internationalization guide                       |
 | `docs/CSP_REPORTER.md`                  | CSP violation reporter documentation             |
 | `public/llms.txt`                        | LLM site context (llmstxt.org)                   |
 | `public/llms-full.txt`                   | Detailed LLM context                             |

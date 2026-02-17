@@ -1,0 +1,90 @@
+# CSpell Configuration — jmrp.io
+# Bilingual spell checker (English + Spanish)
+# Docs: https://cspell.org/configuration/
+
+version: "0.2"
+language: en
+
+# Import Spanish dictionary
+import:
+  - "@cspell/dict-es-es/cspell-ext.json"
+
+# Dictionaries to always enable (Spanish activates via overrides)
+dictionaryDefinitions:
+  - name: project-words
+    path: ./cspell-project-words.txt
+    addWords: true
+    description: "Project-specific terms, names, and technical vocabulary"
+
+dictionaries:
+  - project-words
+  - typescript
+  - html
+  - css
+  - node
+  - npm
+  - bash
+  - shellscript
+  - fullstack
+  - softwareTerms
+  - networking-terms
+  - en_us
+
+# Additional words not in the project word list
+# (for new terms, add directly to cspell-project-words.txt instead)
+words: []
+
+# Patterns to ignore (base64 strings, hashes, etc.)
+ignoreRegExpList:
+  - /[a-zA-Z0-9+/=]{20,}/g
+  - /\b[0-9a-f]{32,}\b/gi
+  - /nonce-[A-Za-z0-9+/=]+/g
+  - /sha256-[A-Za-z0-9+/=]+/g
+  - /sha384-[A-Za-z0-9+/=]+/g
+  - /sha512-[A-Za-z0-9+/=]+/g
+
+# Files and directories to skip entirely
+ignorePaths:
+  - node_modules
+  - dist
+  - dist_new
+  - dist_old
+  - .git
+  - pnpm-lock.yaml
+  - package-lock.json
+  - "*.trie.gz"
+  - "*.woff2"
+  - "*.woff"
+  - cv_latex/**
+  - public/pdf/**
+  - src/content/publications_data/papers.bib
+  - schema-report.json
+  - schema-report.html
+  - html-validation.json
+  - rss-validation.json
+  - accessibility-report/**
+  - lighthouse-results/**
+  - playwright-report/**
+  - test-results/**
+  - screenshots-linkedin/**
+  - AI_CONFIG_TASKS.md
+  - AI_CONTEXT_ROADMAP.md
+  - SEO_AUDIT.md
+  - docs/I18N_PLAN.md
+  - docs/I18N_RESEARCH.md
+  - "*.tmLanguage.json"
+
+# Per-path language overrides
+overrides:
+  # Spanish content — check against BOTH English and Spanish dictionaries
+  - filename: "src/content/posts/es/**"
+    language: es,en
+  - filename: "src/content/tools/es/**"
+    language: es,en
+  - filename: "src/content/cv/es.yaml"
+    language: es,en
+  - filename: "src/i18n/translations/es/**"
+    language: es,en
+  # RSS template has odd interpolation patterns
+  - filename: "src/pages/rss.xml.ts"
+    enabled: false

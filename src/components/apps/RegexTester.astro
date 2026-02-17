@@ -7,12 +7,17 @@
  * Usage:
  * <RegexTester title="Regex Tester" />
  */
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslations } from "@i18n/utils";
+
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
 
 interface Props {
   title?: string;
 }
 
-const { title = "Regex Tester" } = Astro.props;
+const { title = t("tools.regexTester.title") } = Astro.props;
 const uniqueId = `rgx-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
 
 const defaultTestString = `The Quick Brown Fox Jumps Over The Lazy Dog.
@@ -98,7 +103,7 @@ const presets = [
 /** Regex quick reference data for the built-in cheat sheet */
 const quickRef = [
   {
-    cat: "Characters",
+    cat: t("tools.regexTester.charClasses"),
     items: [
       { token: ".", desc: "Any character (except newline)" },
       { token: String.raw`\d`, desc: "Digit [0-9]" },
@@ -110,7 +115,7 @@ const quickRef = [
     ],
   },
   {
-    cat: "Anchors",
+    cat: t("tools.regexTester.anchors"),
     items: [
       { token: "^", desc: "Start of string/line" },
       { token: "$", desc: "End of string/line" },
@@ -119,7 +124,7 @@ const quickRef = [
     ],
   },
   {
-    cat: "Quantifiers",
+    cat: t("tools.regexTester.quantifiers"),
     items: [
       { token: "*", desc: "0 or more" },
       { token: "+", desc: "1 or more" },
@@ -130,7 +135,7 @@ const quickRef = [
     ],
   },
   {
-    cat: "Groups",
+    cat: t("tools.regexTester.groups"),
     items: [
       { token: "(...)", desc: "Capture group" },
       { token: "(?:...)", desc: "Non-capturing group" },
@@ -140,7 +145,7 @@ const quickRef = [
     ],
   },
   {
-    cat: "Lookaround",
+    cat: t("tools.regexTester.lookaround"),
     items: [
       { token: "(?=...)", desc: "Positive lookahead" },
       { token: "(?!...)", desc: "Negative lookahead" },
@@ -149,6 +154,13 @@ const quickRef = [
     ],
   },
 ];
+
+/** Translations passed to the inline script via define:vars. */
+const i18n = {
+  noMatches: t("tools.regexTester.noMatches"),
+  enterPrompt: t("tools.regexTester.enterPrompt"),
+  invalidReplacement: t("tools.regexTester.invalidReplacement"),
+};
 ---
 
 <div
@@ -166,11 +178,11 @@ const quickRef = [
           type="text"
           id={`${uniqueId}-pattern`}
           class="rgx-pattern-input"
-          placeholder="Enter regex pattern..."
+          placeholder={t("tools.regexTester.patternPlaceholder")}
           value="\\b[A-Z][a-z]+\\b"
           spellcheck="false"
           autocomplete="off"
-          aria-label="Regular expression pattern"
+          aria-label={t("tools.regexTester.patternLabel")}
         />
         <span class="rgx-slash">/</span>
         <input
@@ -181,7 +193,7 @@ const quickRef = [
           placeholder="g"
           maxlength="6"
           spellcheck="false"
-          aria-label="Regex flags"
+          aria-label={t("tools.regexTester.flagsAriaLabel")}
         />
       </div>
 
@@ -212,7 +224,7 @@ const quickRef = [
             checked
           />
           <span class="rgx-flag-box">g</span>
-          <span>Global</span>
+          <span>{t("tools.regexTester.flagGlobal")}</span>
         </label>
         <label class="rgx-flag-label">
           <input
@@ -221,7 +233,7 @@ const quickRef = [
             data-flag="i"
           />
           <span class="rgx-flag-box">i</span>
-          <span>Case-insensitive</span>
+          <span>{t("tools.regexTester.flagCaseInsensitive")}</span>
         </label>
         <label class="rgx-flag-label">
           <input
@@ -230,7 +242,7 @@ const quickRef = [
             data-flag="m"
           />
           <span class="rgx-flag-box">m</span>
-          <span>Multiline</span>
+          <span>{t("tools.regexTester.flagMultiline")}</span>
         </label>
         <label class="rgx-flag-label">
           <input
@@ -239,7 +251,7 @@ const quickRef = [
             data-flag="s"
           />
           <span class="rgx-flag-box">s</span>
-          <span>Dot-all</span>
+          <span>{t("tools.regexTester.flagDotAll")}</span>
         </label>
         <label class="rgx-flag-label">
           <input
@@ -248,7 +260,7 @@ const quickRef = [
             data-flag="u"
           />
           <span class="rgx-flag-box">u</span>
-          <span>Unicode</span>
+          <span>{t("tools.regexTester.flagUnicode")}</span>
         </label>
       </div>
     </div>
@@ -263,7 +275,7 @@ const quickRef = [
           class="i-mdi:text-box-outline"
           aria-hidden="true"
         ></span>
-        Test String
+        {t("tools.regexTester.testStringLabel")}
       </label>
       <textarea
         id={`${uniqueId}-test`}
@@ -282,11 +294,11 @@ const quickRef = [
             class="i-mdi:find-replace"
             aria-hidden="true"
           ></span>
-          Replace Mode
+          {t("tools.regexTester.replaceMode")}
         </span>
         <label
           class="rgx-switch-label"
-          aria-label="Toggle replace mode"
+          aria-label={t("tools.regexTester.toggleReplaceMode")}
         >
           <input
             type="checkbox"
@@ -307,17 +319,17 @@ const quickRef = [
           type="text"
           id={`${uniqueId}-replace`}
           class="rgx-replace-input"
-          placeholder="Replacement string (supports $1, $&, etc.)"
+          placeholder={t("tools.regexTester.replacementPlaceholder")}
           spellcheck="false"
           autocomplete="off"
-          aria-label="Replacement string"
+          aria-label={t("tools.regexTester.replacementAriaLabel")}
         />
         <div class="rgx-replace-result-header">
           <span
             class="i-mdi:text-box-check-outline"
             aria-hidden="true"
           ></span>
-          <span>Result</span>
+          <span>{t("tools.regexTester.result")}</span>
         </div>
         <div
           class="rgx-replace-result"
@@ -336,7 +348,7 @@ const quickRef = [
             class="i-mdi:target"
             aria-hidden="true"
           ></span>
-          <span>Matches</span>
+          <span>{t("tools.regexTester.matches")}</span>
           <span
             class="rgx-match-count"
             id={`${uniqueId}-count`}
@@ -364,7 +376,7 @@ const quickRef = [
           class="i-mdi:format-list-numbered"
           aria-hidden="true"
         ></span>
-        <span>Match Details</span>
+        <span>{t("tools.regexTester.matchDetails")}</span>
       </div>
       {
         /* eslint-disable astro/jsx-a11y/no-noninteractive-tabindex -- scrollable region requires keyboard access */
@@ -374,7 +386,7 @@ const quickRef = [
         id={`${uniqueId}-details`}
         tabindex="0"
         role="region"
-        aria-label="Match details"
+        aria-label={t("tools.regexTester.matchDetailsAriaLabel")}
       >
       </div>
       {/* eslint-enable astro/jsx-a11y/no-noninteractive-tabindex */}
@@ -400,7 +412,7 @@ const quickRef = [
           class="i-mdi:book-open-page-variant-outline"
           aria-hidden="true"
         ></span>
-        Quick Reference
+        {t("tools.regexTester.quickReference")}
         <span
           class="rgx-quickref-chevron i-mdi:chevron-down"
           aria-hidden="true"
@@ -425,7 +437,7 @@ const quickRef = [
   </div>
 </div>
 
-<script is:inline define:vars={{ uniqueId }}>
+<script is:inline define:vars={{ uniqueId, i18n }}>
   (function () {
     var container = document.querySelector('[data-rgx-id="' + uniqueId + '"]');
     if (!container) return;
@@ -479,7 +491,7 @@ const quickRef = [
       if (errorEl) errorEl.hidden = true;
 
       if (!pattern || !text) {
-        highlightArea.textContent = text || "(Enter a pattern and test string)";
+        highlightArea.textContent = text || i18n.enterPrompt;
         if (detailsArea) detailsArea.textContent = "";
         if (countEl) countEl.textContent = "0";
         if (timeEl) timeEl.textContent = "";
@@ -577,7 +589,7 @@ const quickRef = [
           var replaced = text.replace(replaceRegex, replaceInput.value);
           replaceResult.textContent = replaced;
         } catch (_) {
-          replaceResult.textContent = "(invalid replacement)";
+          replaceResult.textContent = i18n.invalidReplacement;
         }
       }
 
@@ -585,7 +597,7 @@ const quickRef = [
       if (detailsArea) {
         detailsArea.textContent = "";
         if (matches.length === 0) {
-          detailsArea.textContent = "No matches found";
+          detailsArea.textContent = i18n.noMatches;
           return;
         }
 

@@ -13,11 +13,16 @@ import "@styles/global.css";
 import appleTouchIconSrc from "@assets/apple-touch-icon.png";
 import faviconSrc from "@assets/favicon.png";
 import defaultOgImage from "@assets/mehome_landscape.webp";
+import { defaultLocale, type Locale, locales } from "@i18n/config";
+import {
+  getAlternateLinks,
+  getOgLocale,
+  type TranslationKey,
+  useTranslations,
+} from "@i18n/utils";
 import type { SiteConfig } from "@src/types";
 import { safeJsonLd } from "@utils/html";
 import { getSiteUrl } from "@utils/site";
-import { defaultLocale, type Locale } from "@i18n/config";
-import { getAlternateLinks, getOgLocale, useTranslations } from "@i18n/utils";
 // Variable Fonts (managed by Astro Experimental Fonts)
 import type { ImageMetadata } from "astro";
 import { Font, getImage } from "astro:assets";
@@ -67,7 +72,7 @@ const canonicalURL = new URL(Astro.url.pathname, getSiteUrl());
 
 const {
   title,
-  description = siteData.description,
+  description = t("seo.siteDescription"),
   image,
   type = "website",
   noIndex = false,
@@ -78,8 +83,9 @@ const {
   schema,
 } = Astro.props;
 
+const siteTitle = t("seo.siteTitle");
 const fullTitle = (() => {
-  if (title === siteData.title) return title;
+  if (title === siteTitle) return title;
   const suffix = siteData.author;
   const shortSuffix = "JMRP";
 
@@ -129,7 +135,7 @@ const websiteSchema = {
   "@id": new URL("#website", getSiteUrl()).toString(),
   url: getSiteUrl(),
   name: siteData.author,
-  description: siteData.description,
+  description: t("seo.siteDescription"),
   inLanguage: locale,
   publisher: {
     "@type": "Person",
@@ -141,10 +147,19 @@ const websiteSchema = {
   },
 };
 
-// 2. Navigation Schema
+// 2. Navigation Schema — use translated labels
+const navLabelKeyMap: Record<string, TranslationKey> = {
+  "/": "nav.home",
+  "/blog/": "nav.blog",
+  "/homelab/": "nav.homelab",
+  "/tools/": "nav.tools",
+  "/cv/": "nav.cv",
+  "/publications/": "nav.publications",
+  "/github/": "nav.repositories",
+};
 const navSchema = (siteData.nav || []).map((item) => ({
   "@type": "SiteNavigationElement",
-  name: item.label,
+  name: navLabelKeyMap[item.href] ? t(navLabelKeyMap[item.href]) : item.label,
   url: new URL(item.href, getSiteUrl()).toString(),
 }));
 
@@ -244,7 +259,9 @@ const jsonLD = {
 />
 <link
   rel="manifest"
-  href="/site.webmanifest"
+  href={locale === defaultLocale
+    ? "/site.webmanifest"
+    : `/${locale}/site.webmanifest`}
 />
 <link
   rel="sitemap"
@@ -254,8 +271,24 @@ const jsonLD = {
   rel="alternate"
   type="application/rss+xml"
   title={t("seo.rssFeedTitle")}
-  href="/rss.xml"
+  href={locale === defaultLocale ? "/rss.xml" : `/${locale}/rss.xml`}
 />
+{/* RSS feed for alternate locale */}
+{
+  locales
+    .filter((l) => l !== locale)
+    .map((l) => {
+      const altT = useTranslations(l);
+      return (
+        <link
+          rel="alternate"
+          type="application/rss+xml"
+          title={altT("seo.rssFeedTitle")}
+          href={l === defaultLocale ? "/rss.xml" : `/${l}/rss.xml`}
+        />
+      );
+    })
+}
 <meta
   name="generator"
   content={Astro.generator}
@@ -272,7 +305,7 @@ const jsonLD = {
 <!-- SEO -->
 <meta
   name="keywords"
-  content={siteData.keywords}
+  content={t("seo.siteKeywords")}
 />
 <meta
   name="author"

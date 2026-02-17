@@ -11,10 +11,11 @@
  * <LanguageSwitcher />
  * ```
  */
-import { defaultLocale, localeConfig, type Locale } from "@i18n/config";
-import { stripLocalePrefix } from "@i18n/utils";
+import { defaultLocale, type Locale, localeConfig } from "@i18n/config";
+import { stripLocalePrefix, useTranslations } from "@i18n/utils";
 
 const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
 const targetLocale: Locale = locale === "en" ? "es" : "en";
 const targetConfig = localeConfig[targetLocale];
 
@@ -23,10 +24,7 @@ const cleanPath = stripLocalePrefix(Astro.url.pathname);
 const targetPath =
   targetLocale === defaultLocale ? cleanPath : `/${targetLocale}${cleanPath}`;
 
-const ariaLabel =
-  locale === "en"
-    ? `Switch to ${targetConfig.label}`
-    : `Cambiar a ${targetConfig.label}`;
+const ariaLabel = t("ui.switchLanguage", { lang: targetConfig.label });
 ---
 
 <a

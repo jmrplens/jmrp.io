@@ -1,4 +1,6 @@
 ---
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslations } from "@i18n/utils";
 import type { CVCertificateGroup } from "@src/types";
 
 interface Props {
@@ -6,6 +8,9 @@ interface Props {
 }
 
 const { group } = Astro.props;
+
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
 ---
 
 <div class="group-category">
@@ -53,13 +58,13 @@ const { group } = Astro.props;
               href={item.link}
               class="btn btn-sm"
               download
-              aria-label={`Download certificate: ${item.name}`}
+              aria-label={t("aria.downloadCertificate", { name: item.name })}
             >
               <span
                 class="i-fa-solid:download"
                 aria-hidden="true"
               />
-              {item.linkname || "Certificate"}
+              {item.linkname || t("pages.cv.certificateFallback")}
             </a>
           )}
         </div>

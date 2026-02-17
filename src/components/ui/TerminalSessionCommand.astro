@@ -29,6 +29,8 @@
  * - WCAG 2.2 AA compliant contrast.
  */
 
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslations } from "@i18n/utils";
 import { decodeHtml } from "@utils/html";
 import * as cheerio from "cheerio";
 
@@ -79,15 +81,21 @@ const renderedLines = lines.map((line) => {
 });
 
 const trimmedRaw = rawContent.trim();
+
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
+
 let finalAriaLabel: string;
 if (ariaLabel) {
   finalAriaLabel = ariaLabel;
 } else if (trimmedRaw) {
   const snippet = trimmedRaw.slice(0, 120);
   const suffix = trimmedRaw.length > 120 ? "..." : "";
-  finalAriaLabel = `Terminal command: ${snippet}${suffix}`;
+  finalAriaLabel = t("components.terminal.commandAria", {
+    command: `${snippet}${suffix}`,
+  });
 } else {
-  finalAriaLabel = "Terminal: no command";
+  finalAriaLabel = t("components.terminal.noCommand");
 }
 ---
 

@@ -60,12 +60,172 @@ export const common = {
     authRequired: "Authentication required",
     playSoundNedry: "Play Nedry sound",
     languageSwitcher: "Switch language",
+    postsGrid: "Blog posts grid",
+    openCVMenu: "Open CV Menu",
+    closeMenu: "Close Menu",
+    skillLevel: "{name} level: {level}",
+    downloadCertificate: "Download certificate: {name}",
+    viewPublicationsBy: "View publications by {author} (from: {title})",
+    toggleAbstract: "Toggle Abstract for {title}",
+    toggleBibtex: "Toggle BibTeX for {title}",
+    downloadPdf: "Download PDF for {title}",
+    viewDoi: "View DOI for {title}",
+    viewUrl: "View URL for {title}",
+    viewSlides: "View Slides for {title}",
+    viewPoster: "View Poster for {title}",
+    copyAbstract: "Copy abstract for {title}",
+    copyBibtex: "Copy BibTeX for {title}",
+    homelabInfrastructure: "Homelab infrastructure",
+    cvNavigation: "CV Navigation",
+  },
+  components: {
+    copyButton: {
+      clipboardUnavailable: "Clipboard API unavailable",
+      failedToCopy: "Failed to copy!",
+    },
+    callout: {
+      info: "Info",
+      warning: "Warning",
+      error: "Error",
+      success: "Success",
+      tip: "Tip",
+      note: "Note",
+      keypoint: "Key Point",
+      important: "Important",
+    },
+    tldr: {
+      title: "TL;DR",
+    },
+    collapsible: {
+      defaultSummary: "Details",
+    },
+    prerequisite: {
+      title: "Prerequisites",
+    },
+    browserSupport: {
+      title: "Browser Support",
+      fullSupport: "Full Support",
+      partialSupport: "Partial Support",
+      noSupport: "No Support",
+      unknown: "Unknown",
+    },
+    references: {
+      title: "Further Reading & Resources",
+    },
+    deprecated: {
+      label: "Deprecated",
+      isDeprecated: "{feature} is deprecated",
+      willBeRemoved: " and will be removed in {date}",
+      useInstead: "Use instead:",
+    },
+    stateNotice: {
+      deprecated: "Deprecated",
+      mandatory: "Mandatory",
+      experimental: "Experimental",
+      preview: "Preview",
+      breakingChange: "Breaking Change",
+      security: "Security",
+      isDeprecated: " is deprecated",
+      isRequired: " is required",
+      isExperimental: " is experimental",
+      isInPreview: " is in preview",
+      introducesBreaking: " introduces breaking changes",
+      hasSecurityImplications: " has security implications",
+      willBeRemoved: " and will be removed in {date}",
+      effectiveFrom: " effective from {date}",
+      mitigationRequired: " — mitigation required by {date}",
+      target: " — target: {date}",
+      useInstead: "Use instead:",
+      recommended: "Recommended:",
+    },
+    versionBadge: {
+      level: "Level",
+    },
+    apiEndpoint: {
+      auth: "Auth",
+    },
+    fileContent: {
+      copyContent: "Copy content of {filename}",
+    },
+    beforeAfter: {
+      before: "Before",
+      after: "After",
+    },
+    directiveCard: {
+      syntax: "Syntax",
+      default: "Default",
+    },
+    code: {
+      codeAria: "{lang} code: {title}",
+      snippetAria: "{lang} snippet: {text}",
+      fallbackAria: "code snippet",
+      copyAria: "Copy {label}",
+    },
+    terminal: {
+      commandAria: "Terminal command: {command}",
+      noCommand: "Terminal: no command",
+      copyCommand: "Copy command: {command}",
+      outputTitle: "Terminal Output: {title}",
+      outputFallback: "Terminal Output",
+      scrollableOutput: "Scrollable terminal output for {title}",
+      scrollableFallback: "Scrollable terminal output",
+      sessionAria: "Terminal session: {command}",
+      sessionFallback: "interactive",
+      terminalFallback: "terminal",
+    },
+    tabPanel: {
+      copyContent: "Copy content from {label}",
+    },
+    table: {
+      defaultAria: "Data table",
+    },
+    securityRating: {
+      excellent: "Excellent",
+      veryGood: "Very Good",
+      good: "Good",
+      acceptable: "Acceptable",
+      needsImprovement: "Needs Improvement",
+      poor: "Poor",
+      critical: "Critical",
+      ratingAria: "Security rating: {rating} - {label}",
+    },
+    barChart: {
+      ariaWithTitle: "Bar chart: {title}. Showing {count} items.",
+      ariaWithoutTitle: "Bar chart showing {count} items",
+    },
+    timeline: {
+      standard: "Standard",
+      deprecated: "Deprecated",
+      milestone: "Milestone",
+    },
+    youtube: {
+      defaultTitle: "YouTube Video",
+    },
+    mermaid: {
+      defaultAria: "Mermaid Diagram",
+    },
+    tabs: {
+      showTab: "Show {label} tab",
+    },
   },
   seo: {
     rssFeedTitle: "JMRP Blog RSS Feed",
+    siteTitle: "José Manuel Requena Plens | R&D Engineer",
+    siteDescription:
+      "Portfolio of José Manuel Requena Plens. Specializing in Embedded Systems, Acoustics, and Industrial Software Development.",
+    siteKeywords:
+      "R&D, Embedded Systems, Acoustics, Software Engineer, Portfolio, CV, Metamaterials, Research",
+    jobTitle: "R&D Engineer",
   },
   pages: {
     home: {
+      heroTitle: "Hi, I'm José Manuel.",
+      heroSubtitle:
+        "Software Engineer & Researcher. <br>Bridging the gap between <strong>Acoustics</strong>, <strong>Electronics</strong>, and <strong>Code</strong>.",
+      heroBio1:
+        "I'm a multidisciplinary engineer currently building control systems for renewable energy at <strong>Power Electronics</strong>. My background is rooted in <strong>Acoustics research</strong>, having worked on noise mitigation for the <strong>European Space Agency (ESA)</strong> and biomedical ultrasound at <strong>UPV</strong>.",
+      heroBio2:
+        "I thrive on the challenge of integrating hardware and software. When I'm not coding industrial systems, I'm an active <strong>Open Source</strong> contributor and a passionate self-hoster, constantly refining my homelab and building tools for the community. <a href='/cv/'>Check out my CV</a> to see the full journey.",
       viewCV: "View CV",
       viewCVAria: "View CV - my professional curriculum vitae",
       readBlog: "Read Blog",
@@ -82,6 +242,7 @@ export const common = {
     blog: {
       title: "Blog",
       subtitle: "Thoughts, tutorials, and engineering notes.",
+      topicsTitle: "Topics",
       aiDisclaimer:
         "Real projects, AI-assisted drafting. I document my actual experiments and code, using AI tools to structure and polish the final write-ups.",
       description:
@@ -91,6 +252,9 @@ export const common = {
     blogPost: {
       backToBlog: "Back to Blog",
       coverImageAlt: "Cover image for {title}",
+      readAction: "Read article →",
+      codeFallback: "Code",
+      codeExampleTemplate: "{lang} example {index}",
     },
     blogTags: {
       titlePrefix: "Blog - #",
@@ -110,6 +274,16 @@ export const common = {
       heading: "Curriculum Vitae",
       description:
         "CV of José Manuel Requena Plens — R&D Engineer in embedded systems, cloud infrastructure, acoustics, and industrial software.",
+      certificateFallback: "Certificate",
+      schemaDescription:
+        "R&D Engineer specializing in software development, cloud infrastructure, and security.",
+      levelNone: "None",
+      levelElementary: "Elementary",
+      levelBasic: "Basic",
+      levelIntermediate: "Intermediate",
+      levelAdvanced: "Advanced",
+      levelExpert: "Expert",
+      levelUnknown: "Unknown",
     },
     github: {
       title: "GitHub Repositories",
@@ -121,9 +295,19 @@ export const common = {
       repositories: "Repositories",
       followers: "Followers",
       following: "Following",
+      findRepoPlaceholder: "Find a repository...",
+      noDescription: "No description provided.",
+      starSingular: "star",
+      starPlural: "stars",
+      forkSingular: "fork",
+      forkPlural: "forks",
+      noReposFound: "No repositories found.",
+      avatarAlt: "GitHub avatar",
+      userFallback: "GitHub user",
     },
     homelab: {
       title: "Homelab Status",
+      schemaName: "Homelab Infrastructure",
       description:
         "Self-hosted infrastructure status — Mastodon, Matrix, and Meshtastic services running on a personal homelab. Real-time availability and statistics.",
       intro:
@@ -142,6 +326,62 @@ export const common = {
       meshtasticDescription:
         "Infrastructure for the Meshtastic mesh network. Includes Map, Node Database, and Network Monitors.",
       meshtasticLink: "Open Mesh Hub",
+      opensInNewTab: "(opens in new tab)",
+      // InfrastructureInsights
+      statsAriaLabel: "Edge node real-time statistics",
+      statsError: "Unable to load infrastructure statistics.",
+      requestsReceived: "Requests Received (24h)",
+      requestsReceivedSR: "requests received",
+      handled: "handled",
+      responsesSent: "Responses Sent",
+      upstream: "Upstream (Forwarded)",
+      sentPrefix: "Sent",
+      bandwidthUp: "Bandwidth ↑",
+      receivedPrefix: "Received",
+      bandwidthDown: "Bandwidth ↓",
+      securityBlocks: "Security & Blocks (24h)",
+      loading: "Loading",
+      totalSecurityBlocks: "total security blocks",
+      blocks: "blocks",
+      nginxBans: "Nginx Bans",
+      tarpitBlogAria: "Read blog post about implementing Nginx Tarpit",
+      tarpitHits: "Tarpit Hits",
+      tarpitHitsUnit: "tarpit hits",
+      portScannerBlogAria:
+        "Read blog post about MikroTik Port Scanner Honeypot",
+      portScanners: "Port Scanners",
+      portScannersDetected: "port scanners detected",
+      attackRegions: "Attack Regions",
+      attackRegionsList: "List of attack regions:",
+      noAttackRegions: "No attack regions recorded",
+      hits: "hits",
+      availability: "Availability (24h)",
+      rateLimits: "rate limits",
+      systemStatus: "System Status",
+      nodeResourceLoad: "Node Resource Load",
+      cpuUsagePrefix: "CPU usage:",
+      percentCPU: "% CPU",
+      memoryUsage: "Memory Usage",
+      percentRAM: "% RAM",
+      loadStatus: "Load Status",
+      statusCritical: "Critical",
+      statusHigh: "High",
+      statusElevated: "Elevated",
+      statusOptimal: "Optimal",
+      statusHealthy: "Healthy",
+      statusUnknown: "Unknown",
+      // ServiceStats
+      serviceUnavailable: "Service Unavailable",
+      online: "Online",
+      knownInstances: "Known Instances",
+      knownServers: "Known Servers",
+      trendingNow: "Trending Now",
+      nodes: "Nodes",
+      viewMap: "View Map",
+      viewMapAria: "View Map on PotatoMesh",
+      viewMonitor: "View Monitor",
+      viewMonitorLFAria: "View Monitor on MeshMonitor LF",
+      viewMonitorMFAria: "View Monitor on MeshMonitor MF",
     },
     publications: {
       title: "Publications",
@@ -149,6 +389,12 @@ export const common = {
         "Academic publications and research papers by José Manuel Requena Plens. Topics include acoustics, metamaterials, ultrasound, and noise mitigation for ESA.",
       schemaDescription:
         "Academic publications and research by José Manuel Requena Plens.",
+      journalArticles: "Journal articles",
+      conferencePapers: "Conference and workshop papers",
+      thesis: "Thesis",
+      other: "Other",
+      abstract: "Abstract",
+      bibtex: "BibTeX",
     },
     tools: {
       title: "Developer Tools",
@@ -176,6 +422,17 @@ export const common = {
       toolPlural: "tools",
       inCategory: "in this category",
       backToTools: "← Back to all tools",
+      securityDesc:
+        "Free online security tools — CSP policy builder, SRI hash calculator, certificate inspector, and Base64/hex encoding. No data sent to servers.",
+      developerDesc:
+        "Free online developer utilities — Base64 encoder, regex tester, cron expression builder, Unix timestamp converter, and color contrast checker.",
+      networkDesc:
+        "Free online network tools — IP/CIDR subnet calculator, Nginx and Apache config generators, and DNS lookup utilities. All processing runs locally.",
+      embeddedDesc:
+        "Free online embedded tools — Modbus RTU/TCP frame builder and CRC calculator for industrial automation and SCADA systems development.",
+      mikrotikDesc:
+        "Free MikroTik RouterOS tools — WireGuard VPN config generator for dual-stack setups. All processing runs locally in your browser.",
+      fallbackDesc: "Tools in the {category} category.",
     },
     notFound: {
       title: "404: Ah ah ah!",
@@ -183,6 +440,23 @@ export const common = {
       pageNotFound: "Page Not Found",
       message: "Ah ah ah, you didn't say the magic word!",
       goHome: "← Go Home",
+      nedryAlt: "Dennis Nedry illustration from Jurassic Park",
     },
+  },
+  rss: {
+    continueReading: "Continue reading on jmrp.io →",
+    copyright: "Copyright {year}, José Manuel Requena Plens",
+  },
+  pwa: {
+    shortcutBlog: "Blog",
+    shortcutBlogDesc: "Read the latest thoughts and tutorials",
+    shortcutCV: "CV",
+    shortcutCVDesc: "View professional experience and skills",
+    shortcutPublications: "Publications",
+    shortcutPublicationsDesc: "Research papers and co-authors",
+  },
+  content: {
+    fallbackNotice:
+      "This content is not yet available in your language. Showing the original English version.",
   },
 } as const;

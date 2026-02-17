@@ -9,13 +9,70 @@
  * @example
  * <ModbusFrameBuilder title="Modbus Frame Builder" />
  */
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslations } from "@i18n/utils";
+
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
 
 interface Props {
   title?: string;
 }
 
-const { title = "Modbus Frame Builder" } = Astro.props;
+const { title = t("tools.modbusFrameBuilder.title") } = Astro.props;
 const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
+
+/** Translations passed to the inline script via define:vars. */
+const i18n = {
+  // Address hints
+  protocolAddress: t("tools.modbusFrameBuilder.protocolAddress"),
+  modiconAddress: t("tools.modbusFrameBuilder.modiconAddress"),
+  hexAddr: t("tools.modbusFrameBuilder.hexAddr"),
+  // Dynamic labels
+  labelValue: t("tools.modbusFrameBuilder.labelValue"),
+  labelQuantity: t("tools.modbusFrameBuilder.labelQuantity"),
+  coilValue: t("tools.modbusFrameBuilder.coilValue"),
+  registerValue: t("tools.modbusFrameBuilder.registerValue"),
+  diagnosticsData: t("tools.modbusFrameBuilder.diagnosticsData"),
+  writeDataHex: t("tools.modbusFrameBuilder.writeDataHex"),
+  writeValuesHex: t("tools.modbusFrameBuilder.writeValuesHex"),
+  // Error/placeholder messages
+  frameTooShort: t("tools.modbusFrameBuilder.frameTooShort"),
+  rtuFrameTooShort: t("tools.modbusFrameBuilder.rtuFrameTooShort"),
+  tcpFrameTooShort: t("tools.modbusFrameBuilder.tcpFrameTooShort"),
+  asciiFrameTooShort: t("tools.modbusFrameBuilder.asciiFrameTooShort"),
+  enterHexFrame: t("tools.modbusFrameBuilder.enterHexFrame"),
+  // Data interpretation
+  dataInterpretation: t("tools.modbusFrameBuilder.dataInterpretation"),
+  byteCount: t("tools.modbusFrameBuilder.byteCount"),
+  rawData: t("tools.modbusFrameBuilder.rawData"),
+  register: t("tools.modbusFrameBuilder.register"),
+  hex: t("tools.modbusFrameBuilder.hex"),
+  value: t("tools.modbusFrameBuilder.value"),
+  registerPair: t("tools.modbusFrameBuilder.registerPair"),
+  // CRC/LRC validation
+  crcValid: t("tools.modbusFrameBuilder.crcValid"),
+  crcInvalid: t("tools.modbusFrameBuilder.crcInvalid"),
+  // Response hints
+  hintReadRegisterData: t("tools.modbusFrameBuilder.hintReadRegisterData"),
+  hintReadCoilData: t("tools.modbusFrameBuilder.hintReadCoilData"),
+  hintWriteEcho: t("tools.modbusFrameBuilder.hintWriteEcho"),
+  hintMultiWriteEcho: t("tools.modbusFrameBuilder.hintMultiWriteEcho"),
+  // Segment labels
+  segSlave: t("tools.modbusFrameBuilder.segSlave"),
+  segData: t("tools.modbusFrameBuilder.segData"),
+  segTransaction: t("tools.modbusFrameBuilder.segTransaction"),
+  segProtocol: t("tools.modbusFrameBuilder.segProtocol"),
+  segLength: t("tools.modbusFrameBuilder.segLength"),
+  segUnitId: t("tools.modbusFrameBuilder.segUnitId"),
+  segStart: t("tools.modbusFrameBuilder.segStart"),
+  segEnd: t("tools.modbusFrameBuilder.segEnd"),
+  segExtraData: t("tools.modbusFrameBuilder.segExtraData"),
+  segExceptionCode: t("tools.modbusFrameBuilder.segExceptionCode"),
+  // Shared
+  copied: t("tools.shared.copied"),
+  shareLink: t("tools.shared.shareLink"),
+};
 ---
 
 <div
@@ -36,7 +93,7 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
           class="i-mdi:wrench"
           aria-hidden="true"
         ></span>
-        Build Frame
+        {t("tools.modbusFrameBuilder.buildFrame")}
       </button>
       <button
         type="button"
@@ -47,7 +104,7 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
           class="i-mdi:magnify"
           aria-hidden="true"
         ></span>
-        Decode Frame
+        {t("tools.modbusFrameBuilder.decodeFrame")}
       </button>
       <button
         type="button"
@@ -58,7 +115,7 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
           class="i-mdi:swap-horizontal"
           aria-hidden="true"
         ></span>
-        Response Builder
+        {t("tools.modbusFrameBuilder.responseBuilder")}
       </button>
     </div>
 
@@ -73,7 +130,7 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
           <label
             class="mbus-label"
             for={`${uniqueId}-protocol`}
-            >Protocol</label
+            >{t("tools.modbusFrameBuilder.protocol")}</label
           >
           <select
             id={`${uniqueId}-protocol`}
@@ -88,7 +145,7 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
           <label
             class="mbus-label"
             for={`${uniqueId}-slave`}
-            >Slave Address</label
+            >{t("tools.modbusFrameBuilder.slaveAddress")}</label
           >
           <input
             id={`${uniqueId}-slave`}
@@ -103,15 +160,21 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
           <label
             class="mbus-label"
             for={`${uniqueId}-addr-fmt`}
-            >Address Format</label
+            >{t("tools.modbusFrameBuilder.addressFormat")}</label
           >
           <select
             id={`${uniqueId}-addr-fmt`}
             class="mbus-select"
           >
-            <option value="0based">0-based</option>
-            <option value="1based">1-based</option>
-            <option value="modicon">Modicon (4xxxx)</option>
+            <option value="0based"
+              >{t("tools.modbusFrameBuilder.zeroBased")}</option
+            >
+            <option value="1based"
+              >{t("tools.modbusFrameBuilder.oneBased")}</option
+            >
+            <option value="modicon"
+              >{t("tools.modbusFrameBuilder.modicon")}</option
+            >
           </select>
         </div>
       </div>
@@ -121,7 +184,7 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
         <label
           class="mbus-label"
           for={`${uniqueId}-func`}
-          >Function Code</label
+          >{t("tools.modbusFrameBuilder.functionCode")}</label
         >
         <select
           id={`${uniqueId}-func`}
@@ -155,7 +218,7 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
             <label
               class="mbus-label"
               for={`${uniqueId}-start-addr`}
-              >Start Address</label
+              >{t("tools.modbusFrameBuilder.startAddress")}</label
             >
             <input
               id={`${uniqueId}-start-addr`}
@@ -175,7 +238,7 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
             <label
               class="mbus-label"
               for={`${uniqueId}-quantity`}
-              >Quantity</label
+              >{t("tools.modbusFrameBuilder.quantity")}</label
             >
             <input
               id={`${uniqueId}-quantity`}
@@ -198,7 +261,7 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
         <label
           class="mbus-label"
           for={`${uniqueId}-write-data`}
-          >Write Values (hex bytes, space-separated)</label
+          >{t("tools.modbusFrameBuilder.writeValues")}</label
         >
         <input
           id={`${uniqueId}-write-data`}
@@ -220,13 +283,15 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
             <label
               class="mbus-label"
               for={`${uniqueId}-data-fmt`}
-              >Data Format</label
+              >{t("tools.modbusFrameBuilder.dataFormat")}</label
             >
             <select
               id={`${uniqueId}-data-fmt`}
               class="mbus-select"
             >
-              <option value="hex">Hex bytes</option>
+              <option value="hex"
+                >{t("tools.modbusFrameBuilder.hexBytes")}</option
+              >
               <option value="uint16">Unsigned Int 16</option>
               <option value="int16">Signed Int 16</option>
               <option value="uint32">Unsigned Int 32</option>
@@ -237,7 +302,7 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
             <label
               class="mbus-label"
               for={`${uniqueId}-data-val`}
-              >Decimal Value(s) (comma-separated)</label
+              >{t("tools.modbusFrameBuilder.decimalValues")}</label
             >
             <input
               id={`${uniqueId}-data-val`}
@@ -251,16 +316,24 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
             <label
               class="mbus-label"
               for={`${uniqueId}-byte-order`}
-              >Byte Order</label
+              >{t("tools.modbusFrameBuilder.byteOrder")}</label
             >
             <select
               id={`${uniqueId}-byte-order`}
               class="mbus-select"
             >
-              <option value="BE">Big-Endian (AB CD)</option>
-              <option value="LE">Little-Endian (CD AB)</option>
-              <option value="MBE">Mid Big-Endian (BA DC)</option>
-              <option value="MLE">Mid Little-Endian (DC BA)</option>
+              <option value="BE"
+                >{t("tools.modbusFrameBuilder.bigEndian")}</option
+              >
+              <option value="LE"
+                >{t("tools.modbusFrameBuilder.littleEndian")}</option
+              >
+              <option value="MBE"
+                >{t("tools.modbusFrameBuilder.midBigEndian")}</option
+              >
+              <option value="MLE"
+                >{t("tools.modbusFrameBuilder.midLittleEndian")}</option
+              >
             </select>
           </div>
         </div>
@@ -272,7 +345,7 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
             class="i-mdi:swap-vertical"
             aria-hidden="true"
           ></span>
-          Convert to hex
+          {t("tools.modbusFrameBuilder.convertToHex")}
         </button>
       </div>
 
@@ -285,7 +358,7 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
         <label
           class="mbus-label"
           for={`${uniqueId}-diag-sub`}
-          >Sub-Function</label
+          >{t("tools.modbusFrameBuilder.subFunction")}</label
         >
         <select
           id={`${uniqueId}-diag-sub`}
@@ -311,7 +384,7 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
           <label
             class="mbus-label"
             for={`${uniqueId}-write-addr`}
-            >Write Start Address</label
+            >{t("tools.modbusFrameBuilder.writeStartAddress")}</label
           >
           <input
             id={`${uniqueId}-write-addr`}
@@ -326,7 +399,7 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
           <label
             class="mbus-label"
             for={`${uniqueId}-write-qty`}
-            >Write Quantity</label
+            >{t("tools.modbusFrameBuilder.writeQuantity")}</label
           >
           <input
             id={`${uniqueId}-write-qty`}
@@ -350,7 +423,7 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
             <label
               class="mbus-label"
               for={`${uniqueId}-transaction`}
-              >Transaction ID</label
+              >{t("tools.modbusFrameBuilder.transactionId")}</label
             >
             <input
               id={`${uniqueId}-transaction`}
@@ -365,7 +438,7 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
             <label
               class="mbus-label"
               for={`${uniqueId}-unit`}
-              >Unit ID</label
+              >{t("tools.modbusFrameBuilder.unitId")}</label
             >
             <input
               id={`${uniqueId}-unit`}
@@ -391,7 +464,7 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
           <label
             class="mbus-label"
             for={`${uniqueId}-decode-protocol`}
-            >Protocol</label
+            >{t("tools.modbusFrameBuilder.protocol")}</label
           >
           <select
             id={`${uniqueId}-decode-protocol`}
@@ -400,14 +473,16 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
             <option value="rtu">RTU</option>
             <option value="tcp">TCP</option>
             <option value="ascii">ASCII</option>
-            <option value="auto">Auto-detect</option>
+            <option value="auto"
+              >{t("tools.modbusFrameBuilder.autoDetect")}</option
+            >
           </select>
         </div>
         <div class="mbus-field mbus-field-grow">
           <label
             class="mbus-label"
             for={`${uniqueId}-decode-input`}
-            >Hex Frame</label
+            >{t("tools.modbusFrameBuilder.hexFrame")}</label
           >
           <input
             id={`${uniqueId}-decode-input`}
@@ -423,13 +498,14 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
           <label
             class="mbus-label"
             for={`${uniqueId}-decode-data-fmt`}
-            >Data Interpretation</label
+            >{t("tools.modbusFrameBuilder.dataInterpretation")}</label
           >
           <select
             id={`${uniqueId}-decode-data-fmt`}
             class="mbus-select"
           >
-            <option value="hex">Hex bytes</option>
+            <option value="hex">{t("tools.modbusFrameBuilder.hexBytes")}</option
+            >
             <option value="uint16">Unsigned Int 16</option>
             <option value="int16">Signed Int 16</option>
             <option value="uint32">Unsigned Int 32</option>
@@ -440,16 +516,23 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
           <label
             class="mbus-label"
             for={`${uniqueId}-decode-byte-order`}
-            >Byte Order</label
+            >{t("tools.modbusFrameBuilder.byteOrder")}</label
           >
           <select
             id={`${uniqueId}-decode-byte-order`}
             class="mbus-select"
           >
-            <option value="BE">Big-Endian (AB CD)</option>
-            <option value="LE">Little-Endian (CD AB)</option>
-            <option value="MBE">Mid Big-Endian (BA DC)</option>
-            <option value="MLE">Mid Little-Endian (DC BA)</option>
+            <option value="BE">{t("tools.modbusFrameBuilder.bigEndian")}</option
+            >
+            <option value="LE"
+              >{t("tools.modbusFrameBuilder.littleEndian")}</option
+            >
+            <option value="MBE"
+              >{t("tools.modbusFrameBuilder.midBigEndian")}</option
+            >
+            <option value="MLE"
+              >{t("tools.modbusFrameBuilder.midLittleEndian")}</option
+            >
           </select>
         </div>
       </div>
@@ -461,7 +544,7 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
           class="i-mdi:magnify"
           aria-hidden="true"
         ></span>
-        Decode
+        {t("tools.modbusFrameBuilder.decode")}
       </button>
     </div>
 
@@ -476,15 +559,14 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
           class="i-mdi:information-outline"
           aria-hidden="true"
         ></span>
-        Build a response frame matching a request. Enter the request parameters, then
-        configure the response data.
+        {t("tools.modbusFrameBuilder.responseInfoText")}
       </div>
       <div class="mbus-field-row">
         <div class="mbus-field">
           <label
             class="mbus-label"
             for={`${uniqueId}-resp-protocol`}
-            >Protocol</label
+            >{t("tools.modbusFrameBuilder.protocol")}</label
           >
           <select
             id={`${uniqueId}-resp-protocol`}
@@ -499,7 +581,7 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
           <label
             class="mbus-label"
             for={`${uniqueId}-resp-slave`}
-            >Slave Address</label
+            >{t("tools.modbusFrameBuilder.slaveAddress")}</label
           >
           <input
             id={`${uniqueId}-resp-slave`}
@@ -514,7 +596,7 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
           <label
             class="mbus-label"
             for={`${uniqueId}-resp-fc`}
-            >Function Code</label
+            >{t("tools.modbusFrameBuilder.functionCode")}</label
           >
           <select
             id={`${uniqueId}-resp-fc`}
@@ -532,7 +614,9 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
             <option value="06">06 — Write Single Register</option>
             <option value="0F">0F — Write Multiple Coils</option>
             <option value="10">10 — Write Multiple Registers</option>
-            <option value="exception">Exception Response</option>
+            <option value="exception"
+              >{t("tools.modbusFrameBuilder.exceptionResponse")}</option
+            >
           </select>
         </div>
       </div>
@@ -541,7 +625,7 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
           <label
             class="mbus-label"
             for={`${uniqueId}-resp-data`}
-            >Response Data (hex bytes)</label
+            >{t("tools.modbusFrameBuilder.responseData")}</label
           >
           <input
             id={`${uniqueId}-resp-data`}
@@ -566,7 +650,7 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
             <label
               class="mbus-label"
               for={`${uniqueId}-exc-fc`}
-              >Original FC</label
+              >{t("tools.modbusFrameBuilder.originalFc")}</label
             >
             <select
               id={`${uniqueId}-exc-fc`}
@@ -590,7 +674,7 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
             <label
               class="mbus-label"
               for={`${uniqueId}-exc-code`}
-              >Exception Code</label
+              >{t("tools.modbusFrameBuilder.exceptionCode")}</label
             >
             <select
               id={`${uniqueId}-exc-code`}
@@ -620,7 +704,7 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
             <label
               class="mbus-label"
               for={`${uniqueId}-resp-tid`}
-              >Transaction ID</label
+              >{t("tools.modbusFrameBuilder.transactionId")}</label
             >
             <input
               id={`${uniqueId}-resp-tid`}
@@ -635,7 +719,7 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
             <label
               class="mbus-label"
               for={`${uniqueId}-resp-uid`}
-              >Unit ID</label
+              >{t("tools.modbusFrameBuilder.unitId")}</label
             >
             <input
               id={`${uniqueId}-resp-uid`}
@@ -657,7 +741,7 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
           class="i-mdi:lightning-bolt"
           aria-hidden="true"
         ></span>
-        Common Presets
+        {t("tools.modbusFrameBuilder.commonPresets")}
       </summary>
       <div
         class="mbus-presets-grid"
@@ -668,7 +752,9 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
           class="mbus-preset-btn"
           data-preset="read10holding"
         >
-          <span class="mbus-preset-label">Read 10 Holding Regs</span>
+          <span class="mbus-preset-label"
+            >{t("tools.modbusFrameBuilder.presetRead10Holding")}</span
+          >
           <code>01 03 00 00 00 0A</code>
         </button>
         <button
@@ -676,7 +762,9 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
           class="mbus-preset-btn"
           data-preset="read8coils"
         >
-          <span class="mbus-preset-label">Read 8 Coils</span>
+          <span class="mbus-preset-label"
+            >{t("tools.modbusFrameBuilder.presetRead8Coils")}</span
+          >
           <code>01 01 00 00 00 08</code>
         </button>
         <button
@@ -684,7 +772,9 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
           class="mbus-preset-btn"
           data-preset="writesinglecoil"
         >
-          <span class="mbus-preset-label">Write Single Coil ON</span>
+          <span class="mbus-preset-label"
+            >{t("tools.modbusFrameBuilder.presetWriteSingleCoilOn")}</span
+          >
           <code>01 05 00 00 FF 00</code>
         </button>
         <button
@@ -692,7 +782,9 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
           class="mbus-preset-btn"
           data-preset="writesingleregister"
         >
-          <span class="mbus-preset-label">Write Register = 100</span>
+          <span class="mbus-preset-label"
+            >{t("tools.modbusFrameBuilder.presetWriteRegister100")}</span
+          >
           <code>01 06 00 00 00 64</code>
         </button>
         <button
@@ -700,7 +792,9 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
           class="mbus-preset-btn"
           data-preset="writemultiple"
         >
-          <span class="mbus-preset-label">Write 2 Registers</span>
+          <span class="mbus-preset-label"
+            >{t("tools.modbusFrameBuilder.presetWrite2Registers")}</span
+          >
           <code>01 10 00 00 00 02</code>
         </button>
         <button
@@ -708,7 +802,9 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
           class="mbus-preset-btn"
           data-preset="read5inputs"
         >
-          <span class="mbus-preset-label">Read 5 Input Regs</span>
+          <span class="mbus-preset-label"
+            >{t("tools.modbusFrameBuilder.presetRead5InputRegs")}</span
+          >
           <code>01 04 00 00 00 05</code>
         </button>
         <button
@@ -716,7 +812,9 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
           class="mbus-preset-btn"
           data-preset="diagnostics"
         >
-          <span class="mbus-preset-label">Diagnostics Echo</span>
+          <span class="mbus-preset-label"
+            >{t("tools.modbusFrameBuilder.presetDiagnosticsEcho")}</span
+          >
           <code>01 08 00 00 12 34</code>
         </button>
         <button
@@ -724,7 +822,9 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
           class="mbus-preset-btn"
           data-preset="exceptionresp"
         >
-          <span class="mbus-preset-label">Exception Response</span>
+          <span class="mbus-preset-label"
+            >{t("tools.modbusFrameBuilder.presetExceptionResponse")}</span
+          >
           <code>01 83 02</code>
         </button>
       </div>
@@ -738,42 +838,42 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
             class="i-mdi:code-brackets"
             aria-hidden="true"
           ></span>
-          Frame
+          {t("tools.modbusFrameBuilder.frame")}
         </div>
         <div class="mbus-output-actions">
           <button
             type="button"
             class="mbus-copy-btn"
             data-copy="spaces"
-            aria-label="Copy frame with spaces"
+            aria-label={t("tools.modbusFrameBuilder.copyFrameSpaces")}
           >
             <span
               class="i-mdi:content-copy"
               aria-hidden="true"
             ></span>
-            Copy
+            {t("tools.shared.copy")}
           </button>
           <button
             type="button"
             class="mbus-copy-btn"
             data-copy="nospaces"
-            aria-label="Copy frame without spaces"
+            aria-label={t("tools.modbusFrameBuilder.copyFrameNoSpaces")}
           >
-            No spaces
+            {t("tools.modbusFrameBuilder.noSpaces")}
           </button>
           <button
             type="button"
             class="mbus-copy-btn"
             data-copy="carray"
-            aria-label="Copy as C array"
+            aria-label={t("tools.modbusFrameBuilder.copyCArray")}
           >
-            C array
+            {t("tools.modbusFrameBuilder.cArray")}
           </button>
           <button
             type="button"
             class="mbus-copy-btn"
             data-copy="python"
-            aria-label="Copy as Python bytes"
+            aria-label={t("tools.modbusFrameBuilder.copyPython")}
           >
             Python
           </button>
@@ -784,7 +884,7 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
         id={`${uniqueId}-frame`}
       >
         <span class="mbus-frame-placeholder"
-          >Configure the fields above to generate a frame</span
+          >{t("tools.modbusFrameBuilder.framePlaceholder")}</span
         >
       </div>
       <div
@@ -811,12 +911,12 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
         class="i-mdi:link-variant"
         aria-hidden="true"
       ></span>
-      Share Link
+      {t("tools.shared.shareLink")}
     </button>
   </div>
 </div>
 
-<script is:inline define:vars={{ uniqueId }}>
+<script is:inline define:vars={{ uniqueId, i18n }}>
   (function () {
     var root = document.querySelector('[data-mbus-id="' + uniqueId + '"]');
     if (!root) return;
@@ -982,21 +1082,19 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
 
       if (fmt === "1based") {
         addr = Math.max(0, raw - 1);
-        hint = "Protocol address: " + addr + " (0x" + toHex(addr, 4) + ")";
+        hint = i18n.protocolAddress
+          .replace("{addr}", addr)
+          .replace("{hex}", toHex(addr, 4));
       } else if (fmt === "modicon") {
         // 0xxxx = coils, 1xxxx = discrete inputs, 3xxxx = input regs, 4xxxx = holding regs
         var offset = raw % 10000;
         addr = Math.max(0, offset - 1);
-        hint =
-          "Modicon " +
-          raw +
-          " → address " +
-          addr +
-          " (0x" +
-          toHex(addr, 4) +
-          ")";
+        hint = i18n.modiconAddress
+          .replace("{raw}", raw)
+          .replace("{addr}", addr)
+          .replace("{hex}", toHex(addr, 4));
       } else {
-        hint = "Hex: 0x" + toHex(raw, 4);
+        hint = i18n.hexAddr.replace("{hex}", toHex(raw, 4));
       }
 
       if (addrHint) addrHint.textContent = hint;
@@ -1142,7 +1240,7 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
         frame.push(cLo, cHi);
 
         segments.push({
-          label: "Slave",
+          label: i18n.segSlave,
           bytes: [hexB(slave)],
           cls: "seg-slave",
         });
@@ -1153,7 +1251,7 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
         });
         if (pdu.length > 1) {
           segments.push({
-            label: "Data",
+            label: i18n.segData,
             bytes: pdu.slice(1).map(hexB),
             cls: "seg-data",
           });
@@ -1179,22 +1277,22 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
         frame = mbap.concat(pdu);
 
         segments.push({
-          label: "Transaction",
+          label: i18n.segTransaction,
           bytes: [hexB(mbap[0]), hexB(mbap[1])],
           cls: "seg-slave",
         });
         segments.push({
-          label: "Protocol",
+          label: i18n.segProtocol,
           bytes: ["00", "00"],
           cls: "seg-protocol",
         });
         segments.push({
-          label: "Length",
+          label: i18n.segLength,
           bytes: [hexB(mbap[4]), hexB(mbap[5])],
           cls: "seg-crc",
         });
         segments.push({
-          label: "Unit ID",
+          label: i18n.segUnitId,
           bytes: [hexB(uid)],
           cls: "seg-slave",
         });
@@ -1205,7 +1303,7 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
         });
         if (pdu.length > 1) {
           segments.push({
-            label: "Data",
+            label: i18n.segData,
             bytes: pdu.slice(1).map(hexB),
             cls: "seg-data",
           });
@@ -1222,9 +1320,13 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
           frame.push(asciiHex.charCodeAt(i));
         frame.push(0x0d, 0x0a); // CR LF
 
-        segments.push({ label: "Start", bytes: [":"], cls: "seg-protocol" });
         segments.push({
-          label: "Slave",
+          label: i18n.segStart,
+          bytes: [":"],
+          cls: "seg-protocol",
+        });
+        segments.push({
+          label: i18n.segSlave,
           bytes: [hexB(slave)],
           cls: "seg-slave",
         });
@@ -1235,14 +1337,14 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
         });
         if (pdu.length > 1) {
           segments.push({
-            label: "Data",
+            label: i18n.segData,
             bytes: pdu.slice(1).map(hexB),
             cls: "seg-data",
           });
         }
         segments.push({ label: "LRC", bytes: [hexB(lrcVal)], cls: "seg-crc" });
         segments.push({
-          label: "End",
+          label: i18n.segEnd,
           bytes: ["CR", "LF"],
           cls: "seg-protocol",
         });
@@ -1298,7 +1400,7 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
         frame.push(c & 0xff, (c >> 8) & 0xff);
 
         segments.push({
-          label: "Slave",
+          label: i18n.segSlave,
           bytes: [hexB(slave)],
           cls: "seg-slave",
         });
@@ -1309,7 +1411,7 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
         });
         if (pdu.length > 1) {
           segments.push({
-            label: isException ? "Exception Code" : "Data",
+            label: isException ? i18n.segExceptionCode : i18n.segData,
             bytes: pdu.slice(1).map(hexB),
             cls: isException ? "seg-error" : "seg-data",
           });
@@ -1335,22 +1437,22 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
         frame = mbap.concat(pdu);
 
         segments.push({
-          label: "Transaction",
+          label: i18n.segTransaction,
           bytes: [hexB(mbap[0]), hexB(mbap[1])],
           cls: "seg-slave",
         });
         segments.push({
-          label: "Protocol",
+          label: i18n.segProtocol,
           bytes: ["00", "00"],
           cls: "seg-protocol",
         });
         segments.push({
-          label: "Length",
+          label: i18n.segLength,
           bytes: [hexB(mbap[4]), hexB(mbap[5])],
           cls: "seg-crc",
         });
         segments.push({
-          label: "Unit ID",
+          label: i18n.segUnitId,
           bytes: [hexB(uid)],
           cls: "seg-slave",
         });
@@ -1361,7 +1463,7 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
         });
         if (pdu.length > 1) {
           segments.push({
-            label: isException ? "Exception Code" : "Data",
+            label: isException ? i18n.segExceptionCode : i18n.segData,
             bytes: pdu.slice(1).map(hexB),
             cls: isException ? "seg-error" : "seg-data",
           });
@@ -1370,9 +1472,13 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
         // ASCII
         var aduB = [slave].concat(pdu);
         var lrcV = lrc(aduB);
-        segments.push({ label: "Start", bytes: [":"], cls: "seg-protocol" });
         segments.push({
-          label: "Slave",
+          label: i18n.segStart,
+          bytes: [":"],
+          cls: "seg-protocol",
+        });
+        segments.push({
+          label: i18n.segSlave,
           bytes: [hexB(slave)],
           cls: "seg-slave",
         });
@@ -1383,14 +1489,14 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
         });
         if (pdu.length > 1) {
           segments.push({
-            label: isException ? "Exception Code" : "Data",
+            label: isException ? i18n.segExceptionCode : i18n.segData,
             bytes: pdu.slice(1).map(hexB),
             cls: isException ? "seg-error" : "seg-data",
           });
         }
         segments.push({ label: "LRC", bytes: [hexB(lrcV)], cls: "seg-crc" });
         segments.push({
-          label: "End",
+          label: i18n.segEnd,
           bytes: ["CR", "LF"],
           cls: "seg-protocol",
         });
@@ -1407,17 +1513,13 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
       if (respHint && !isException) {
         var fcN = parseInt(fc, 16);
         if (fcN === 0x03 || fcN === 0x04) {
-          respHint.textContent =
-            "Format: [byte count] [register data]. Example: 04 00 0A 00 64 (2 registers: 10, 100)";
+          respHint.textContent = i18n.hintReadRegisterData;
         } else if (fcN === 0x01 || fcN === 0x02) {
-          respHint.textContent =
-            "Format: [byte count] [coil data]. Example: 01 CD (coils as bits)";
+          respHint.textContent = i18n.hintReadCoilData;
         } else if (fcN === 0x05 || fcN === 0x06) {
-          respHint.textContent =
-            "Response echoes request: [addr hi] [addr lo] [value hi] [value lo]";
+          respHint.textContent = i18n.hintWriteEcho;
         } else if (fcN === 0x0f || fcN === 0x10) {
-          respHint.textContent =
-            "Response echoes: [addr hi] [addr lo] [qty hi] [qty lo]";
+          respHint.textContent = i18n.hintMultiWriteEcho;
         }
       }
       if (dataInterp) dataInterp.hidden = true;
@@ -1436,7 +1538,7 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
 
       var bytes = parseHexStr(inputHex);
       if (bytes.length < 2) {
-        showPlaceholder("Frame too short (minimum 2 bytes)");
+        showPlaceholder(i18n.frameTooShort);
         return;
       }
 
@@ -1456,7 +1558,7 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
 
       if (proto === "rtu") {
         if (bytes.length < 4) {
-          showPlaceholder("RTU frame too short (min 4 bytes)");
+          showPlaceholder(i18n.rtuFrameTooShort);
           return;
         }
         var slave = bytes[0];
@@ -1469,7 +1571,7 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
         var crcOk = expected === actual;
 
         segments.push({
-          label: "Slave: " + slave,
+          label: i18n.segSlave + ": " + slave,
           bytes: [hexB(slave)],
           cls: "seg-slave",
         });
@@ -1486,7 +1588,8 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
           if (data.length > 0) {
             segments.push({
               label:
-                "Exception: " +
+                i18n.segExceptionCode +
+                ": " +
                 hexB(excCodeVal2) +
                 " (" +
                 getExcName(excCodeVal2) +
@@ -1496,7 +1599,7 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
             });
             if (data.length > 1) {
               segments.push({
-                label: "Extra Data",
+                label: i18n.segExtraData,
                 bytes: data.slice(1).map(hexB),
                 cls: "seg-data",
               });
@@ -1510,7 +1613,7 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
           });
           if (data.length > 0) {
             segments.push({
-              label: "Data",
+              label: i18n.segData,
               bytes: data.map(hexB),
               cls: "seg-data",
             });
@@ -1521,12 +1624,11 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
         var crcLabel =
           "CRC: " +
           (crcOk
-            ? "✓ Valid"
-            : "✗ Invalid (expected " +
-              hexB(expected & 0xff) +
-              " " +
-              hexB((expected >> 8) & 0xff) +
-              ")");
+            ? i18n.crcValid
+            : i18n.crcInvalid.replace(
+                "{expected}",
+                hexB(expected & 0xff) + " " + hexB((expected >> 8) & 0xff),
+              ));
         segments.push({
           label: crcLabel,
           bytes: crcB.map(hexB),
@@ -1534,7 +1636,7 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
         });
       } else if (proto === "tcp") {
         if (bytes.length < 8) {
-          showPlaceholder("TCP frame too short (min 8 bytes)");
+          showPlaceholder(i18n.tcpFrameTooShort);
           return;
         }
         var tid = (bytes[0] << 8) | bytes[1];
@@ -1546,22 +1648,22 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
         var tcpData = bytes.slice(8);
 
         segments.push({
-          label: "Transaction: " + tid,
+          label: i18n.segTransaction + ": " + tid,
           bytes: [hexB(bytes[0]), hexB(bytes[1])],
           cls: "seg-slave",
         });
         segments.push({
-          label: "Protocol: " + pid,
+          label: i18n.segProtocol + ": " + pid,
           bytes: [hexB(bytes[2]), hexB(bytes[3])],
           cls: "seg-protocol",
         });
         segments.push({
-          label: "Length: " + len,
+          label: i18n.segLength + ": " + len,
           bytes: [hexB(bytes[4]), hexB(bytes[5])],
           cls: "seg-crc",
         });
         segments.push({
-          label: "Unit: " + uid,
+          label: i18n.segUnitId + ": " + uid,
           bytes: [hexB(uid)],
           cls: "seg-slave",
         });
@@ -1577,7 +1679,8 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
           if (tcpData.length > 0) {
             segments.push({
               label:
-                "Exception: " +
+                i18n.segExceptionCode +
+                ": " +
                 hexB(tcpData[0]) +
                 " (" +
                 getExcName(tcpData[0]) +
@@ -1587,7 +1690,7 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
             });
             if (tcpData.length > 1)
               segments.push({
-                label: "Extra Data",
+                label: i18n.segExtraData,
                 bytes: tcpData.slice(1).map(hexB),
                 cls: "seg-data",
               });
@@ -1600,7 +1703,7 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
           });
           if (tcpData.length > 0) {
             segments.push({
-              label: "Data",
+              label: i18n.segData,
               bytes: tcpData.map(hexB),
               cls: "seg-data",
             });
@@ -1611,7 +1714,7 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
         // ASCII
         var asciiBytes = bytes;
         if (asciiBytes.length < 3) {
-          showPlaceholder("ASCII frame too short");
+          showPlaceholder(i18n.asciiFrameTooShort);
           return;
         }
         var aSlaveA = asciiBytes[0];
@@ -1623,7 +1726,7 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
         var lrcOk = aLrc === expLrc;
 
         segments.push({
-          label: "Slave: " + aSlaveA,
+          label: i18n.segSlave + ": " + aSlaveA,
           bytes: [hexB(aSlaveA)],
           cls: "seg-slave",
         });
@@ -1637,7 +1740,8 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
           if (aData.length > 0) {
             segments.push({
               label:
-                "Exception: " +
+                i18n.segExceptionCode +
+                ": " +
                 hexB(aData[0]) +
                 " (" +
                 getExcName(aData[0]) +
@@ -1654,7 +1758,7 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
           });
           if (aData.length > 0) {
             segments.push({
-              label: "Data",
+              label: i18n.segData,
               bytes: aData.map(hexB),
               cls: "seg-data",
             });
@@ -1665,7 +1769,9 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
         segments.push({
           label:
             "LRC: " +
-            (lrcOk ? "✓ Valid" : "✗ Invalid (expected " + hexB(expLrc) + ")"),
+            (lrcOk
+              ? i18n.crcValid
+              : i18n.crcInvalid.replace("{expected}", hexB(expLrc))),
           bytes: [hexB(aLrc)],
           cls: lrcOk ? "seg-crc" : "seg-error",
         });
@@ -1694,7 +1800,7 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
       var byteCountInfo = "";
 
       if (isReadResp && dataB[0] === dataB.length - 1) {
-        byteCountInfo = "Byte count: " + dataB[0];
+        byteCountInfo = i18n.byteCount.replace("{n}", dataB[0]);
         regData = dataB.slice(1);
       }
 
@@ -1704,7 +1810,9 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
       }
 
       var html =
-        '<div class="mbus-interp-title"><span class="i-mdi:format-list-numbered" aria-hidden="true"></span> Data Interpretation</div>';
+        '<div class="mbus-interp-title"><span class="i-mdi:format-list-numbered" aria-hidden="true"></span> ' +
+        i18n.dataInterpretation +
+        "</div>";
 
       if (byteCountInfo) {
         html += '<div class="mbus-interp-info">' + byteCountInfo + "</div>";
@@ -1712,12 +1820,18 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
 
       if (fmt === "hex") {
         html +=
-          '<div class="mbus-interp-row">Raw: ' +
-          regData.map(hexB).join(" ") +
+          '<div class="mbus-interp-row">' +
+          i18n.rawData.replace("{data}", regData.map(hexB).join(" ")) +
           "</div>";
       } else if (fmt === "uint16" || fmt === "int16") {
         html +=
-          '<table class="mbus-interp-table"><thead><tr><th>Register</th><th>Hex</th><th>Value</th></tr></thead><tbody>';
+          '<table class="mbus-interp-table"><thead><tr><th>' +
+          i18n.register +
+          "</th><th>" +
+          i18n.hex +
+          "</th><th>" +
+          i18n.value +
+          "</th></tr></thead><tbody>";
         for (var i = 0; i + 1 < regData.length; i += 2) {
           var raw16 = (regData[i] << 8) | regData[i + 1];
           var val = fmt === "int16" ? toSigned16(raw16) : raw16;
@@ -1735,7 +1849,13 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
         html += "</tbody></table>";
       } else if (fmt === "uint32" || fmt === "float32") {
         html +=
-          '<table class="mbus-interp-table"><thead><tr><th>Register Pair</th><th>Hex</th><th>Value</th></tr></thead><tbody>';
+          '<table class="mbus-interp-table"><thead><tr><th>' +
+          i18n.registerPair +
+          "</th><th>" +
+          i18n.hex +
+          "</th><th>" +
+          i18n.value +
+          "</th></tr></thead><tbody>";
         for (var j = 0; j + 3 < regData.length; j += 4) {
           var b4 = [regData[j], regData[j + 1], regData[j + 2], regData[j + 3]];
           var ordered = reorderBytes(b4, order);
@@ -1829,7 +1949,7 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
         if (currentMode === "build") {
           updateBuildUI();
         } else if (currentMode === "decode") {
-          showPlaceholder("Enter a hex frame and click Decode");
+          showPlaceholder(i18n.enterHexFrame);
         } else {
           updateResponseUI();
         }
@@ -1858,8 +1978,8 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
         'label[for="' + uniqueId + '-quantity"]',
       );
       if (qtyLabel) {
-        if (fc === "05" || fc === "06") qtyLabel.textContent = "Value";
-        else qtyLabel.textContent = "Quantity";
+        if (fc === "05" || fc === "06") qtyLabel.textContent = i18n.labelValue;
+        else qtyLabel.textContent = i18n.labelQuantity;
       }
 
       // Update write data label
@@ -1867,14 +1987,11 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
         'label[for="' + uniqueId + '-write-data"]',
       );
       if (wdLabel) {
-        if (fc === "05")
-          wdLabel.textContent = "Coil Value (FF 00=ON, 00 00=OFF)";
-        else if (fc === "06")
-          wdLabel.textContent = "Register Value (hex bytes)";
-        else if (fc === "08")
-          wdLabel.textContent = "Diagnostics Data (hex bytes)";
-        else if (fc === "17") wdLabel.textContent = "Write Data (hex bytes)";
-        else wdLabel.textContent = "Write Values (hex bytes, space-separated)";
+        if (fc === "05") wdLabel.textContent = i18n.coilValue;
+        else if (fc === "06") wdLabel.textContent = i18n.registerValue;
+        else if (fc === "08") wdLabel.textContent = i18n.diagnosticsData;
+        else if (fc === "17") wdLabel.textContent = i18n.writeDataHex;
+        else wdLabel.textContent = i18n.writeValuesHex;
       }
 
       buildFrame();
@@ -2021,7 +2138,7 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
 
         navigator.clipboard.writeText(text).then(function () {
           var orig = btn.innerHTML;
-          btn.textContent = "Copied!";
+          btn.textContent = i18n.copied;
           setTimeout(function () {
             btn.innerHTML = orig;
           }, 1500);
@@ -2065,7 +2182,8 @@ const uniqueId = `mbus-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
           .then(function () {
             var orig = shareBtn.innerHTML;
             shareBtn.innerHTML =
-              '<span class="i-mdi:check" aria-hidden="true"></span> Copied!';
+              '<span class="i-mdi:check" aria-hidden="true"></span> ' +
+              i18n.copied;
             setTimeout(function () {
               shareBtn.innerHTML = orig;
             }, 2000);

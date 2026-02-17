@@ -4,10 +4,14 @@
  * Contains the logo, navigation menu, and theme toggle.
  * Responsive design with a hamburger menu for mobile.
  */
-import ThemeToggle from "@components/ui/ThemeToggle.astro";
 import LanguageSwitcher from "@components/layout/LanguageSwitcher.astro";
+import ThemeToggle from "@components/ui/ThemeToggle.astro";
 import { defaultLocale, type Locale } from "@i18n/config";
-import { useTranslatedPath, useTranslations } from "@i18n/utils";
+import {
+  type TranslationKey,
+  useTranslatedPath,
+  useTranslations,
+} from "@i18n/utils";
 import { getEntry } from "astro:content";
 
 const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
@@ -24,6 +28,17 @@ const navItems =
 const logoText =
   (siteData && "logo_text" in siteData ? siteData.logo_text : undefined) ??
   "<JMRP />";
+
+/** Map each nav href to its i18n translation key. */
+const navLabelKeyMap: Record<string, TranslationKey> = {
+  "/": "nav.home",
+  "/blog/": "nav.blog",
+  "/homelab/": "nav.homelab",
+  "/tools/": "nav.tools",
+  "/cv/": "nav.cv",
+  "/publications/": "nav.publications",
+  "/github/": "nav.repositories",
+};
 ---
 
 <header>
@@ -62,16 +77,20 @@ const logoText =
         tabindex="-1"
       >
         {
-          navItems.map((item) => (
-            <li>
-              <a
-                href={translatePath(item.href)}
-                data-astro-prefetch
-              >
-                {item.label}
-              </a>
-            </li>
-          ))
+          navItems.map((item) => {
+            const labelKey = navLabelKeyMap[item.href];
+            const label = labelKey ? t(labelKey) : item.label;
+            return (
+              <li>
+                <a
+                  href={translatePath(item.href)}
+                  data-astro-prefetch
+                >
+                  {label}
+                </a>
+              </li>
+            );
+          })
         }
       </ul>
       <LanguageSwitcher />

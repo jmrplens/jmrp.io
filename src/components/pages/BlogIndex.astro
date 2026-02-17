@@ -1,0 +1,112 @@
+---
+/**
+ * Blog Index shared component.
+ * Lists all published blog posts, sorted by date (newest first).
+ */
+import "@styles/blog.css";
+
+import PostGrid from "@components/blog/PostGrid.astro";
+import TagCloud from "@components/blog/TagCloud.astro";
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslations } from "@i18n/utils";
+import BaseLayout from "@layouts/BaseLayout.astro";
+import { getPostsForLocale } from "@utils/blog";
+import { getSiteUrl } from "@utils/site";
+import { getImage } from "astro:assets";
+
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
+
+const entries = await getPostsForLocale(locale);
+const posts = entries.map((e) => e.post);
+
+// Optimize LCP image for preload
+const lcpPost = posts[0];
+let lcpImagePreload = null;
+
+if (lcpPost && lcpPost.data.coverImage) {
+  const optimizedLcp = await getImage({
+    src: lcpPost.data.coverImage,
+    format: "webp",
+    width: 400,
+    height: 225,
+    widths: [360, 480, 640, 720, 960, 1200],
+    quality: 60,
+  });
+  lcpImagePreload = {
+    href: optimizedLcp.src,
+    imagesrcset: optimizedLcp.srcSet.attribute,
+    imagesizes: "(max-width: 640px) 100vw, 400px",
+  };
+}
+
+// Schema.org: CollectionPage with ItemList for Blog Index
+const baseUrl = new URL(Astro.url.pathname, getSiteUrl()).toString();
+const schema = {
+  "@type": "CollectionPage",
+  "@id": `${baseUrl}#collection`,
+  name: t("pages.blog.schemaName"),
+  description: t("pages.blog.description"),
+  url: baseUrl,
+  inLanguage: locale,
+  mainEntity: {
+    "@type": "ItemList",
+    itemListElement: posts.map((post, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      url: new URL(`/blog/${post.data.slug}/`, getSiteUrl()).toString(),
+      name: post.data.title,
+    })),
+  },
+};
+---
+
+<BaseLayout
+  title={t("pages.blog.title")}
+  description={t("pages.blog.description")}
+  schema={schema}
+>
+  {
+    lcpImagePreload && (
+      <link
+        slot="head"
+        rel="preload"
+        as="image"
+        href={lcpImagePreload.href}
+        imagesrcset={lcpImagePreload.imagesrcset}
+        imagesizes={lcpImagePreload.imagesizes}
+        fetchpriority="high"
+      />
+    )
+  }
+  <div class="content-wrapper">
+    <header class="page-header">
+      <h1 class="text-primary">{t("pages.blog.title")}</h1>
+      <p class="subtitle">{t("pages.blog.subtitle")}</p>
+      <p class="ai-disclaimer">
+        {t("pages.blog.aiDisclaimer")}
+      </p>
+    </header>
+
+    <div class="blog-layout">
+      <div class="posts-container">
+        <PostGrid posts={posts} />
+      </div>
+      <aside>
+        <TagCloud />
+      </aside>
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .ai-disclaimer {
+    max-width: 600px;
+    margin-inline: auto;
+    margin-top: var(--space-xs);
+    font-size: 0.95rem;
+    font-style: italic;
+    line-height: 1.5;
+    color: var(--color-text-muted);
+  }
+</style>

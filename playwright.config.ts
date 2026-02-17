@@ -29,7 +29,7 @@ export default defineConfig({
       name: "functional",
       use: { ...devices["Desktop Chrome"] },
       testMatch:
-        /functional\.spec\.ts|integration\.spec\.ts|seo\.spec\.ts|prerender\.spec\.ts|security\.spec\.ts|icons\.spec\.ts/,
+        /functional\.spec\.ts|integration\.spec\.ts|seo\.spec\.ts|prerender\.spec\.ts|security\.spec\.ts|icons\.spec\.ts|i18n\.spec\.ts/,
     },
     {
       name: "mobile-functional",

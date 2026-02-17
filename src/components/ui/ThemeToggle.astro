@@ -6,13 +6,20 @@
  * Usage:
  * <ThemeToggle />
  */
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslations } from "@i18n/utils";
+
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
 ---
 
 <button
   id="theme-toggle"
   type="button"
   class="theme-toggle"
-  aria-label="Toggle theme"
+  aria-label={t("aria.toggleTheme")}
+  data-label-light={t("aria.switchToLight")}
+  data-label-dark={t("aria.switchToDark")}
 >
   <span
     class="i-fa-solid:sun icon-sun"
@@ -70,10 +77,11 @@
 
     const update = () => {
       const theme = document.documentElement.dataset.theme || "dark";
-      btn.setAttribute(
-        "aria-label",
-        `Switch to ${theme === "dark" ? "light" : "dark"} mode`,
-      );
+      const label =
+        theme === "dark"
+          ? btn.getAttribute("data-label-light")
+          : btn.getAttribute("data-label-dark");
+      btn.setAttribute("aria-label", label || "Toggle theme");
     };
 
     update();

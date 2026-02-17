@@ -65,6 +65,18 @@
 2. Path aliases (`@components/`, `@utils/`, `@layouts/`)
 3. Relative imports (`./`, `../`)
 
+### i18n (Internationalization)
+
+- Site is bilingual (EN/ES) — all UI text uses `t()` from `useTranslations()`
+- Never hardcode English strings — use translation keys
+- Pattern: `const locale = getLangFromUrl(Astro.url)`, `const t = useTranslations(locale)`
+- Interpolation: `t("key", { param: value })` with `{param}` in the translation string
+- Client-side scripts: inject translations via `data-*` attributes
+- Translation files: `src/i18n/translations/{en,es}/{common,tools}.ts`
+- Path helpers: `useTranslatedPath(locale)` for localized URLs
+- Formatting: `formatDate()`, `formatNumber()`, `pluralize()` from `@src/i18n/utils`
+- See `docs/I18N_GUIDE.md` for complete reference
+
 ### Commit Style
 
 - Conventional commits: `feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:`

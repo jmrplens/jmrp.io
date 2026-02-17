@@ -157,4 +157,72 @@ test.describe("Integration Flows", () => {
     );
     await expect(metadata.first()).toBeVisible();
   });
+
+  test("ES homepage loads and navigates to ES blog", async ({ page }) => {
+    // Go to ES homepage
+    await page.goto("/es/");
+    await expect(page.locator("html")).toHaveAttribute("lang", "es");
+
+    // Click Blog link
+    await page.getByRole("link", { name: /Blog/ }).first().click();
+    await expect(page).toHaveURL(/\/es\/blog\/?/);
+
+    // Verify at least one blog post is listed
+    const posts = page.locator("article");
+    await expect(posts.first()).toBeVisible();
+  });
+
+  test("Theme persists across language switch", async ({ page }) => {
+    await page.goto("/");
+
+    // Set to dark mode
+    await page.evaluate(() => {
+      localStorage.setItem("theme", "dark");
+    });
+    await page.reload();
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+
+    // Navigate to ES version
+    await page.goto("/es/");
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+  });
+
+  test("Internal links in ES pages use /es/ prefix", async ({ page }) => {
+    await page.goto("/es/blog/");
+
+    // Get all internal links (excluding anchors, external, and special protocols)
+    const internalLinks = await page
+      .locator(
+        'main a[href^="/"]:not([href^="//"]):not([href*="mailto:"]):not([href*="tel:"]):not([href="/rss.xml"])',
+      )
+      .evaluateAll((links) =>
+        links
+          .map((l) => l.getAttribute("href"))
+          .filter((href): href is string => href !== null),
+      );
+
+    // Blog-internal navigation links should use /es/ prefix
+    // (skip links that go to /rss.xml, /sitemap, etc.)
+    // Filter to navigation links that should have /es/ prefix
+    const navLinks = internalLinks.filter(
+      (href) =>
+        href.startsWith("/blog/") ||
+        href.startsWith("/tools/") ||
+        href.startsWith("/cv") ||
+        href.startsWith("/publications") ||
+        href.startsWith("/github") ||
+        href.startsWith("/homelab"),
+    );
+
+    for (const href of navLinks) {
+      expect
+        .soft(
+          href.startsWith("/es/"),
+          `Internal link ${href} should have /es/ prefix in ES pages`,
+        )
+        .toBe(true);
+    }
+
+    expect(test.info().errors).toHaveLength(0);
+  });
 });

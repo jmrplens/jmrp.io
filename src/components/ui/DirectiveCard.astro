@@ -3,6 +3,9 @@
  * DirectiveCard Component
  * Card for documenting a directive/option with syntax, description, and MDN link.
  */
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslations } from "@i18n/utils";
+
 interface Props {
   name: string;
   syntax?: string;
@@ -14,6 +17,9 @@ interface Props {
 
 const { name, syntax, description, mdnUrl, defaultValue, since } = Astro.props;
 const hasContent = Astro.slots.has("default");
+
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
 
 // Sanitize MDN URL - only allow safe protocols
 let safeMdnUrl: string | null = null;
@@ -40,7 +46,7 @@ if (mdnUrl) {
           target="_blank"
           rel="noopener noreferrer"
           class="dc-mdn"
-          aria-label={`MDN documentation for ${name}`}
+          aria-label={t("aria.mdnDocs", { name })}
         >
           <span
             class="i-simple-icons:mdnwebdocs dc-mdn-icon"
@@ -57,14 +63,16 @@ if (mdnUrl) {
       <div class="dc-body">
         {syntax && (
           <div class="dc-row">
-            <span class="dc-label">Syntax</span>
+            <span class="dc-label">{t("components.directiveCard.syntax")}</span>
             <code class="dc-code">{syntax}</code>
           </div>
         )}
 
         {defaultValue && (
           <div class="dc-row">
-            <span class="dc-label">Default</span>
+            <span class="dc-label">
+              {t("components.directiveCard.default")}
+            </span>
             <code class="dc-code">{defaultValue}</code>
           </div>
         )}

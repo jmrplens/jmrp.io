@@ -1,0 +1,105 @@
+---
+/**
+ * Blog Tag Page shared component.
+ * Displays posts filtered by a specific tag.
+ */
+import "@styles/blog.css";
+
+import PostGrid from "@components/blog/PostGrid.astro";
+import TagCloud from "@components/blog/TagCloud.astro";
+import { defaultLocale, type Locale } from "@i18n/config";
+import { pluralize, useTranslatedPath, useTranslations } from "@i18n/utils";
+import BaseLayout from "@layouts/BaseLayout.astro";
+import { getSiteUrl } from "@utils/site";
+import type { CollectionEntry } from "astro:content";
+
+interface Props {
+  /** The tag being filtered. */
+  tag: string;
+  /** Posts matching this tag. */
+  posts: CollectionEntry<"posts">[];
+}
+
+const { tag, posts } = Astro.props;
+
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
+const translatePath = useTranslatedPath(locale);
+
+const postWord = pluralize(
+  posts.length,
+  {
+    one: t("pages.blogTags.postSingular"),
+    other: t("pages.blogTags.postPlural"),
+  },
+  locale,
+);
+const articleWord = pluralize(
+  posts.length,
+  {
+    one: t("pages.blogTags.articleSingular"),
+    other: t("pages.blogTags.articlePlural"),
+  },
+  locale,
+);
+
+// Schema.org: CollectionPage with ItemList
+const schema = {
+  "@type": "CollectionPage",
+  "@id": new URL(
+    "#collection",
+    new URL(Astro.url.pathname, getSiteUrl()),
+  ).toString(),
+  name: t("pages.blogTags.schemaName", { tag }),
+  description: t("pages.blogTags.schemaDescription", {
+    count: posts.length,
+    tag,
+  }),
+  url: new URL(Astro.url.pathname, getSiteUrl()).toString(),
+  inLanguage: locale,
+  mainEntity: {
+    "@type": "ItemList",
+    itemListElement: posts.map((post, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      url: new URL(`/blog/${post.data.slug}/`, getSiteUrl()).toString(),
+      name: post.data.title,
+    })),
+  },
+};
+---
+
+<BaseLayout
+  title={`${t("pages.blogTags.titlePrefix")}${tag}`}
+  description={t("pages.blogTags.metaDescription", {
+    count: posts.length,
+    articleWord,
+    tag,
+  })}
+  schema={schema}
+>
+  <div class="content-wrapper">
+    <header class="page-header">
+      <h1 class="text-primary">#{tag}</h1>
+      <p class="subtitle">
+        {posts.length}
+        {postWord}
+        {t("pages.blogTags.aboutTopic")}
+      </p>
+      <div class="back-link">
+        <a href={translatePath("/blog/")}
+          >{t("pages.blogTags.backToAllPosts")}</a
+        >
+      </div>
+    </header>
+
+    <div class="blog-layout">
+      <div class="posts-container">
+        <PostGrid posts={posts} />
+      </div>
+      <aside>
+        <TagCloud />
+      </aside>
+    </div>
+  </div>
+</BaseLayout>

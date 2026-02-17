@@ -3,6 +3,9 @@
  * SecurityRating Component
  * Visual indicator of security level (A+ to F) like Mozilla Observatory.
  */
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslations } from "@i18n/utils";
+
 interface Props {
   rating: "A+" | "A" | "B" | "C" | "D" | "E" | "F";
   title?: string;
@@ -11,15 +14,24 @@ interface Props {
 
 const { rating, title, description } = Astro.props;
 
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
+
 const ratingConfig: Record<Props["rating"], { class: string; label: string }> =
   {
-    "A+": { class: "rating-aplus", label: "Excellent" },
-    A: { class: "rating-a", label: "Very Good" },
-    B: { class: "rating-b", label: "Good" },
-    C: { class: "rating-c", label: "Acceptable" },
-    D: { class: "rating-d", label: "Needs Improvement" },
-    E: { class: "rating-e", label: "Poor" },
-    F: { class: "rating-f", label: "Critical" },
+    "A+": {
+      class: "rating-aplus",
+      label: t("components.securityRating.excellent"),
+    },
+    A: { class: "rating-a", label: t("components.securityRating.veryGood") },
+    B: { class: "rating-b", label: t("components.securityRating.good") },
+    C: { class: "rating-c", label: t("components.securityRating.acceptable") },
+    D: {
+      class: "rating-d",
+      label: t("components.securityRating.needsImprovement"),
+    },
+    E: { class: "rating-e", label: t("components.securityRating.poor") },
+    F: { class: "rating-f", label: t("components.securityRating.critical") },
   };
 
 const config = ratingConfig[rating];
@@ -28,7 +40,10 @@ const config = ratingConfig[rating];
 <div
   class={`security-rating ${config.class}`}
   role="region"
-  aria-label={`Security rating: ${rating} - ${config.label}${title ? `. ${title}` : ""}`}
+  aria-label={t("components.securityRating.ratingAria", {
+    rating,
+    label: config.label,
+  }) + (title ? `. ${title}` : "")}
 >
   <div
     class="sr-badge"

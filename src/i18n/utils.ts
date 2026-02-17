@@ -6,8 +6,8 @@
  *
  * @see https://docs.astro.build/en/recipes/i18n/
  */
-import { defaultLocale, localeConfig, locales, type Locale } from "./config";
-import { translations, type Translations } from "./translations";
+import { defaultLocale, type Locale, localeConfig, locales } from "./config";
+import { type Translations, translations } from "./translations";
 
 // ---------------------------------------------------------------------------
 // Dot-notation key flattening
@@ -81,9 +81,9 @@ function interpolate(
   params?: Record<string, string | number>,
 ): string {
   if (!params) return text;
-  return text.replace(/\{(\w+)\}/g, (match, key: string) => {
-    const value = params[key];
-    return value !== undefined ? String(value) : match;
+  return text.replaceAll(/\{(\w+)\}/g, (match, key: string) => {
+    if (!(key in params)) return match;
+    return String(params[key]);
   });
 }
 

@@ -19,6 +19,9 @@
 
 import { createHash } from "node:crypto";
 
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslations } from "@i18n/utils";
+
 interface BarData {
   /** Label for the bar (displayed on the left) */
   label: string;
@@ -76,6 +79,9 @@ const {
   ariaLabel,
   caption,
 } = Astro.props;
+
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
 
 // Generate unique ID for this chart instance based on content hash
 const chartId = createHash("sha256")
@@ -174,8 +180,13 @@ function getBarColor(index: number, item: BarData): string {
   role="img"
   aria-label={ariaLabel ||
     (title
-      ? `Bar chart: ${title}. Showing ${data.length} items.`
-      : `Bar chart showing ${data.length} items`)}
+      ? t("components.barChart.ariaWithTitle", {
+          title,
+          count: String(data.length),
+        })
+      : t("components.barChart.ariaWithoutTitle", {
+          count: String(data.length),
+        }))}
   data-animated="false"
 >
   {title && <figcaption class="bar-chart-title">{title}</figcaption>}

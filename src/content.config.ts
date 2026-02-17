@@ -20,6 +20,8 @@ const posts = defineCollection({
     z.object({
       title: z.string(),
       slug: z.string(),
+      /** Content language. Defaults to "en" when omitted from frontmatter. */
+      lang: z.enum(["en", "es"]).default("en"),
       publishedDate: z.coerce.date(),
       updatedDate: z.coerce.date().optional(),
       draft: z.boolean().default(false),
@@ -280,6 +282,8 @@ const tools = defineCollection({
   schema: z.object({
     title: z.string(),
     slug: z.string(),
+    /** Content language. Defaults to "en" when omitted from frontmatter. */
+    lang: z.enum(["en", "es"]).default("en"),
     description: z.string(),
     subtitle: z.string().optional(),
     icon: z.string(),

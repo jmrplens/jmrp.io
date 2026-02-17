@@ -1,12 +1,13 @@
 ---
-title: "MikroTik PPPoE + DHCPv6-PD: Dual-Stack for DIGI Spain"
-slug: "mikrotik-pppoe-dualstack-digi"
+title: "MikroTik PPPoE + DHCPv6-PD: Dual-Stack para DIGI España"
+slug: "008-mikrotik-pppoe-dualstack-digi"
+lang: "es"
 publishedDate: 2026-02-15
-description: "Configure PPPoE with DHCPv6 Prefix Delegation on MikroTik RouterOS for DIGI Spain. VLAN tagging, SLAAC, prefix change handling, and firewall rules."
+description: "Configura PPPoE con DHCPv6 Prefix Delegation en MikroTik RouterOS para DIGI España. VLAN tagging, SLAAC, gestión de cambios de prefix y firewall."
 author: "José Manuel Requena Plens"
 authorEmail: "mail@jmrp.io"
 draft: false
-coverImage: "../../assets/images/blog/pppoe-dualstack.webp"
+coverImage: "../../../assets/images/blog/pppoe-dualstack.webp"
 tags: ["MikroTik", "PPPoE", "IPv6", "DHCPv6-PD", "Networking"]
 ---
 
@@ -27,116 +28,116 @@ import Prerequisite from "@components/ui/Prerequisite.astro";
 import { Tabs, TabPanel } from "@components/ui/tabs";
 import Collapsible from "@components/ui/Collapsible.astro";
 
-[DIGI Spain](https://www.digimobil.es/) is one of the few ISPs in Spain that provides native IPv6 connectivity to residential customers. Their fiber network uses [PPPoE](https://datatracker.ietf.org/doc/html/rfc2516) authentication with VLAN tagging and delivers both a dynamic IPv4 address and a dynamic /56 IPv6 prefix via [DHCPv6 Prefix Delegation (DHCPv6-PD)](https://datatracker.ietf.org/doc/html/rfc3633).
+[DIGI España](https://www.digimobil.es/) es uno de los pocos ISP en España que ofrece conectividad IPv6 nativa a clientes residenciales. Su red de fibra utiliza autenticación [PPPoE](https://datatracker.ietf.org/doc/html/rfc2516) con VLAN tagging y proporciona tanto una dirección IPv4 dinámica como un prefix IPv6 dinámico /56 a través de [DHCPv6 Prefix Delegation (DHCPv6-PD)](https://datatracker.ietf.org/doc/html/rfc3633).
 
-This guide covers the complete configuration of a [MikroTik](https://mikrotik.com/) router for DIGI's network, including automatic handling of prefix changes—a challenge when your ISP assigns dynamic prefixes that can change on each reconnection.
+Esta guía cubre la configuración completa de un router [MikroTik](https://mikrotik.com/) para la red de DIGI, incluyendo la gestión automática de cambios de prefix, un reto habitual cuando tu ISP asigna prefixes dinámicos que pueden cambiar en cada reconexión.
 
-<TLDRSummary title="What You'll Configure">
-  - **PPPoE over VLAN 20** for DIGI Spain fiber authentication
-  - **Dynamic IPv4** with automatic default route and peer DNS
-  - **DHCPv6 Prefix Delegation** (/56 prefix) for native IPv6 connectivity
-  - **SLAAC** for automatic IPv6 address assignment on LAN devices
-  - **Automatic prefix change handling** with DHCPv6 script that updates addresses on reconnection
-  - **Production-ready firewall** with input, forward chains for both IPv4 and IPv6
-  - **Tested on RouterOS 7.x** with RB5009, but applicable to any MikroTik router
+<TLDRSummary title="Lo que vas a configurar">
+  - **PPPoE sobre VLAN 20** para autenticación en la fibra de DIGI España
+  - **IPv4 dinámico** con default route automática y DNS del ISP
+  - **DHCPv6 Prefix Delegation** (prefix /56) para conectividad IPv6 nativa
+  - **SLAAC** para asignación automática de direcciones IPv6 en dispositivos LAN
+  - **Gestión automática de cambios de prefix** con script DHCPv6 que actualiza las direcciones en cada reconexión
+  - **Firewall listo para producción** con cadenas input y forward para IPv4 e IPv6
+  - **Probado en RouterOS 7.x** con RB5009, pero aplicable a cualquier router MikroTik
 </TLDRSummary>
 
-<Callout type="important" title="DIGI-Specific vs Generic Values">
-This guide is written for **DIGI Spain**, but the PPPoE + DHCPv6-PD setup applies to many ISPs. Values specific to DIGI are clearly marked:
+<Callout type="important" title="Valores específicos de DIGI vs genéricos">
+Esta guía está escrita para **DIGI España**, pero la configuración PPPoE + DHCPv6-PD es aplicable a muchos ISPs. Los valores específicos de DIGI están claramente marcados:
 
-- **VLAN 20** — DIGI-specific. Other ISPs may use different VLAN IDs or no VLAN at all
-- **`your_number@digi`** — DIGI username format (a numeric identifier assigned by DIGI). Replace with your ISP's credentials
-- **`max-mtu=1500`** — Upper limit the client will accept. DIGI negotiates the actual MTU to **1480** via LCP
-- **`ether1`** — Physical port connected to ONT. Use whichever port you prefer
+- **VLAN 20** — Específico de DIGI. Otros ISPs pueden usar IDs de VLAN diferentes o no usar VLAN
+- **`your_number@digi`** — Formato de usuario de DIGI (un identificador numérico asignado por DIGI). Sustitúyelo por las credenciales de tu ISP
+- **`max-mtu=1500`** — Límite superior que el cliente aceptará. DIGI negocia el MTU real a **1480** vía LCP
+- **`ether1`** — Puerto físico conectado al ONT. Usa el puerto que prefieras
 
-- **`pool6`** — DHCPv6 pool name. Can be any name you choose
+- **`pool6`** — Nombre del pool DHCPv6. Puede ser cualquier nombre que elijas
 
-If your ISP doesn't use VLAN tagging, skip Step 2 and set the PPPoE client interface directly to the physical port.
+Si tu ISP no usa VLAN tagging, sáltate el Paso 2 y configura la interfaz del cliente PPPoE directamente sobre el puerto físico.
 </Callout>
 
 ---
 
-## Network architecture overview
+## Arquitectura de red
 
-DIGI's network requires a specific setup: ONT in bridge mode → VLAN 20 → PPPoE authentication → dual-stack IPv4 + IPv6 (DHCPv6-PD) → firewall/NAT → LAN with SLAAC.
+La red de DIGI requiere una configuración específica: ONT en modo bridge → VLAN 20 → autenticación PPPoE → dual-stack IPv4 + IPv6 (DHCPv6-PD) → firewall/NAT → LAN con SLAAC.
 
-### What you receive from DIGI
+### Lo que recibes de DIGI
 
-<Table title="DIGI Connection Parameters">
+<Table title="Parámetros de conexión de DIGI">
   <thead>
     <tr>
-      <th scope="col">Parameter</th>
-      <th scope="col">Value</th>
-      <th scope="col">Notes</th>
+      <th scope="col">Parámetro</th>
+      <th scope="col">Valor</th>
+      <th scope="col">Notas</th>
     </tr>
   </thead>
   <tbody>
     <tr>
-      <td>Connection Type</td>
-      <td>PPPoE over VLAN 20</td>
-      <td>VLAN tagging required</td>
+      <td>Tipo de conexión</td>
+      <td>PPPoE sobre VLAN 20</td>
+      <td>Requiere VLAN tagging</td>
     </tr>
     <tr>
-      <td>IPv4 Address</td>
-      <td>Dynamic (CGNAT or Public)</td>
-      <td>Assigned via PPPoE</td>
+      <td>Dirección IPv4</td>
+      <td>Dinámica (CGNAT o pública)</td>
+      <td>Asignada vía PPPoE</td>
     </tr>
     <tr>
-      <td>IPv6 Prefix</td>
-      <td>Dynamic /56</td>
-      <td>Via DHCPv6-PD, can change on reconnect</td>
+      <td>Prefix IPv6</td>
+      <td>Dinámico /56</td>
+      <td>Vía DHCPv6-PD, puede cambiar en reconexiones</td>
     </tr>
     <tr>
       <td>MTU</td>
-      <td>1480 (negotiated)</td>
-      <td>Standard PPPoE, negotiated via LCP</td>
+      <td>1480 (negociado)</td>
+      <td>PPPoE estándar, negociado vía LCP</td>
     </tr>
     <tr>
       <td>MRU</td>
-      <td>1492 (negotiated)</td>
-      <td>Maximum Receive Unit, negotiated via LCP</td>
+      <td>1492 (negociado)</td>
+      <td>Maximum Receive Unit, negociado vía LCP</td>
     </tr>
     <tr>
       <td>Service Name</td>
       <td>ftth</td>
-      <td>PPPoE service identifier reported by DIGI</td>
+      <td>Identificador del servicio PPPoE reportado por DIGI</td>
     </tr>
     <tr>
       <td>DNS</td>
-      <td>ISP-provided or custom</td>
-      <td>Can use peer DNS or configure your own</td>
+      <td>Proporcionado por el ISP o personalizado</td>
+      <td>Se puede usar el DNS del ISP o configurar uno propio</td>
     </tr>
   </tbody>
 </Table>
 
-<Callout type="info" title="About the /56 Prefix">
-DIGI delegates a /56 prefix, which gives you 256 /64 subnets to work with. This is generous compared to some ISPs that only provide a single /64. You can use different /64 subnets for your main LAN, IoT network, guest network, etc.
+<Callout type="info" title="Sobre el prefix /56">
+DIGI delega un prefix /56, lo que te da 256 subnets /64 para trabajar. Esto es generoso en comparación con algunos ISPs que solo proporcionan un único /64. Puedes usar diferentes subnets /64 para tu LAN principal, red IoT, red de invitados, etc.
 </Callout>
 
 ---
 
-## Prerequisites
+## Requisitos previos
 
-<Prerequisite title="Before You Start">
-  - **MikroTik router** with RouterOS 7.x or later
-  - **DIGI fiber connection** with ONT in bridge mode (or your ISP's equivalent)
-  - **PPPoE credentials** from your ISP (DIGI format: `identifier@digi`)
-  - **Physical ethernet cable** between ONT and router
-  - **Administrative access** to your MikroTik router (WinBox, WebFig, or SSH)
-  - **Interface lists** `WAN` and `LAN` with your bridge already in the `LAN` list (default in most MikroTik configurations)
+<Prerequisite title="Antes de empezar">
+  - **Router MikroTik** con RouterOS 7.x o posterior
+  - **Conexión de fibra DIGI** con ONT en modo bridge (o el equivalente de tu ISP)
+  - **Credenciales PPPoE** de tu ISP (formato DIGI: `identificador@digi`)
+  - **Cable ethernet físico** entre ONT y router
+  - **Acceso administrativo** a tu router MikroTik (WinBox, WebFig o SSH)
+  - **Listas de interfaces** `WAN` y `LAN` con tu bridge ya en la lista `LAN` (configuración por defecto en la mayoría de equipos MikroTik)
 </Prerequisite>
 
-<Callout type="tip" title="Other ISPs Using PPPoE">
-This configuration works with any PPPoE-based ISP that provides IPv6 via DHCPv6-PD. The key differences per ISP are usually: VLAN ID (or no VLAN), negotiated MTU (typically 1480–1492, determined by the server via LCP), username format, and the delegated prefix size (/48, /56, or /64). Adjust the DIGI-specific values for your ISP.
+<Callout type="tip" title="Otros ISPs que usan PPPoE">
+Esta configuración funciona con cualquier ISP basado en PPPoE que proporcione IPv6 vía DHCPv6-PD. Las diferencias clave entre ISPs suelen ser: el ID de VLAN (o ausencia de VLAN), el MTU negociado (normalmente 1480–1492, determinado por el servidor vía LCP), el formato de usuario y el tamaño del prefix delegado (/48, /56 o /64). Ajusta los valores específicos de DIGI para tu ISP.
 </Callout>
 
 ---
 
-## Step 1: configure the physical interface
+## Paso 1: configurar la interfaz física
 
-First, configure the ethernet port connected to the DIGI ONT:
+Primero, configura el puerto ethernet conectado al ONT de DIGI:
 
-<Code lang="routeros" title="Physical Interface Configuration">
+<Code lang="routeros" title="Configuración de la interfaz física">
 ```routeros
 /interface ethernet set [ find default-name=ether1 ] \
     comment="DIGI ONT" \
@@ -145,17 +146,17 @@ First, configure the ethernet port connected to the DIGI ONT:
 ```
 </Code>
 
-<Callout type="tip" title="Which Port to Use">
-Choose any available ethernet port. In this example, we use `ether1`, but you can use any port not assigned to your LAN bridge. Using a dedicated port for WAN improves security and simplifies firewall rules.
+<Callout type="tip" title="Qué puerto usar">
+Elige cualquier puerto ethernet disponible. En este ejemplo usamos `ether1`, pero puedes usar cualquier puerto que no esté asignado al bridge de tu LAN. Usar un puerto dedicado para WAN mejora la seguridad y simplifica las reglas de firewall.
 </Callout>
 
 ---
 
-## Step 2: create the VLAN interface
+## Paso 2: crear la interfaz VLAN
 
-DIGI requires VLAN 20 tagging for PPPoE traffic. Create the VLAN interface:
+DIGI requiere VLAN 20 tagging para el tráfico PPPoE. Crea la interfaz VLAN:
 
-<Code lang="routeros" title="VLAN Configuration">
+<Code lang="routeros" title="Configuración de VLAN">
 ```routeros
 /interface vlan add \
     name=VLAN_DIGI \
@@ -165,13 +166,13 @@ DIGI requires VLAN 20 tagging for PPPoE traffic. Create the VLAN interface:
 ```
 </Code>
 
-### Why VLAN 20?
+### ¿Por qué VLAN 20?
 
-DIGI uses [802.1Q VLAN tagging](https://datatracker.ietf.org/doc/html/rfc3069) to separate different services on their network. VLAN 20 is specifically for internet service. If you connect directly without VLAN tagging, PPPoE authentication will fail.
+DIGI utiliza [VLAN tagging 802.1Q](https://datatracker.ietf.org/doc/html/rfc3069) para separar diferentes servicios en su red. VLAN 20 es específicamente para el servicio de internet. Si conectas directamente sin VLAN tagging, la autenticación PPPoE fallará.
 
-<Collapsible summary="What If My ISP Doesn't Use VLANs?">
+<Collapsible summary="¿Y si mi ISP no usa VLANs?">
 
-If your ISP doesn't require VLAN tagging, skip this step entirely. In Step 3, set the PPPoE client interface directly to the physical port:
+Si tu ISP no requiere VLAN tagging, sáltate este paso. En el Paso 3, configura la interfaz del cliente PPPoE directamente sobre el puerto físico:
 
 ```routeros
 /interface pppoe-client add \
@@ -179,21 +180,21 @@ If your ISP doesn't require VLAN tagging, skip this step entirely. In Step 3, se
     ...
 ```
 
-Common ISP VLAN configurations:
-- **DIGI Spain**: VLAN 20
-- **Movistar Spain**: VLAN 6 (internet) + VLAN 2 (VoIP) + VLAN 3 (IPTV)
-- **Orange Spain**: VLAN 832
-- **No VLAN**: Many ISPs (especially cable/DOCSIS providers)
+Configuraciones VLAN habituales en ISPs españoles:
+- **DIGI España**: VLAN 20
+- **Movistar España**: VLAN 6 (internet) + VLAN 2 (VoIP) + VLAN 3 (IPTV)
+- **Orange España**: VLAN 832
+- **Sin VLAN**: Muchos ISPs (especialmente operadores de cable/DOCSIS)
 
 </Collapsible>
 
 ---
 
-## Step 3: configure the PPPoE client
+## Paso 3: configurar el cliente PPPoE
 
-Now create the PPPoE client that will authenticate with DIGI:
+Ahora crea el cliente PPPoE que se autenticará con DIGI:
 
-<Code lang="routeros" title="PPPoE Client Configuration">
+<Code lang="routeros" title="Configuración del cliente PPPoE">
 ```routeros
 /interface pppoe-client add \
     name=PPPoE_DIGI \
@@ -209,70 +210,70 @@ Now create the PPPoE client that will authenticate with DIGI:
 ```
 </Code>
 
-<Callout type="warning" title="Replace Credentials">
-You **must** replace `your_number@digi` and `your_password` with the credentials provided by your ISP. For DIGI Spain, the username is a numeric identifier assigned by DIGI followed by `@digi`.
+<Callout type="warning" title="Sustituye las credenciales">
+**Debes** reemplazar `your_number@digi` y `your_password` con las credenciales proporcionadas por tu ISP. En DIGI España, el usuario es un identificador numérico asignado por DIGI seguido de `@digi`.
 </Callout>
 
-<Table title="PPPoE Configuration Parameters">
+<Table title="Parámetros de configuración PPPoE">
   <thead>
     <tr>
-      <th scope="col">Parameter</th>
-      <th scope="col">Value</th>
-      <th scope="col">Purpose</th>
+      <th scope="col">Parámetro</th>
+      <th scope="col">Valor</th>
+      <th scope="col">Propósito</th>
     </tr>
   </thead>
   <tbody>
     <tr>
       <td>`interface`</td>
       <td>VLAN_DIGI</td>
-      <td>PPPoE runs over the VLAN interface, not the physical port</td>
+      <td>PPPoE se ejecuta sobre la interfaz VLAN, no sobre el puerto físico</td>
     </tr>
     <tr>
       <td>`add-default-route`</td>
       <td>yes</td>
-      <td>Automatically adds default route when connected</td>
+      <td>Añade automáticamente la default route al conectarse</td>
     </tr>
     <tr>
       <td>`use-peer-dns`</td>
       <td>yes</td>
-      <td>Uses DIGI's DNS servers (can disable for custom DNS)</td>
+      <td>Usa los servidores DNS de DIGI (se puede desactivar para DNS personalizado)</td>
     </tr>
     <tr>
       <td>`max-mtu`</td>
       <td>1500</td>
-      <td>Maximum MTU the client accepts. DIGI negotiates down to 1480 via LCP</td>
+      <td>MTU máximo que acepta el cliente. DIGI negocia hasta 1480 vía LCP</td>
     </tr>
     <tr>
       <td>`profile`</td>
       <td>default-encryption</td>
-      <td>Standard PPP profile with MPPE encryption support</td>
+      <td>Perfil PPP estándar con soporte de cifrado MPPE</td>
     </tr>
   </tbody>
 </Table>
 
-<Collapsible summary="About the PPP Profile">
-The `default-encryption` profile enables **MPPE (Microsoft Point-to-Point Encryption)** negotiation during PPP authentication. This is the standard choice for most ISPs.
+<Collapsible summary="Sobre el perfil PPP">
+El perfil `default-encryption` habilita la negociación **MPPE (Microsoft Point-to-Point Encryption)** durante la autenticación PPP. Es la opción estándar para la mayoría de ISPs.
 
-MikroTik includes two built-in profiles:
-- **`default`** — No encryption requirement
-- **`default-encryption`** — Requires encryption (recommended)
+MikroTik incluye dos perfiles predefinidos:
+- **`default`** — Sin requisito de cifrado
+- **`default-encryption`** — Requiere cifrado (recomendado)
 
-Most ISPs, including DIGI, work fine with either profile. Use `default-encryption` unless your ISP specifically requires otherwise. You can check available profiles with `/ppp profile print`.
+La mayoría de ISPs, incluido DIGI, funcionan con ambos perfiles. Usa `default-encryption` salvo que tu ISP requiera lo contrario. Puedes consultar los perfiles disponibles con `/ppp profile print`.
 </Collapsible>
 
-<Callout type="info" title="MTU Considerations">
-The `max-mtu` parameter is the **upper limit** the client is willing to accept—it is not the actual MTU used on the link. The real MTU is determined by the PPPoE server during [LCP negotiation](https://datatracker.ietf.org/doc/html/rfc1661#section-6.1). DIGI's server negotiates MTU to **1480** regardless of the `max-mtu` value you set. Using `max-mtu=1500` is safe and gives the server room to negotiate higher if it ever supports it.
+<Callout type="info" title="Consideraciones sobre el MTU">
+El parámetro `max-mtu` es el **límite superior** que el cliente está dispuesto a aceptar; no es el MTU real de la conexión. El MTU real lo determina el servidor PPPoE durante la [negociación LCP](https://datatracker.ietf.org/doc/html/rfc1661#section-6.1). El servidor de DIGI negocia el MTU a **1480** independientemente del valor de `max-mtu` configurado. Usar `max-mtu=1500` es seguro y deja margen al servidor para negociar un valor superior si algún día lo soporta.
 
-**Important**: Changing `max-mtu` on a live PPPoE client causes RouterOS to **restart the session**, resulting in a brief disconnection (~3–5 seconds) while it renegotiates with the server.
+**Importante**: Cambiar `max-mtu` en un cliente PPPoE activo hace que RouterOS **reinicie la sesión**, provocando una breve desconexión (~3–5 segundos) mientras renegocia con el servidor.
 </Callout>
 
 ---
 
-## Step 4: add interfaces to WAN list
+## Paso 4: añadir interfaces a la lista WAN
 
-For firewall rules to work correctly, add all WAN-related interfaces to an interface list. This is essential—without it, firewall rules referencing the `WAN` list won't match traffic correctly.
+Para que las reglas de firewall funcionen correctamente, añade todas las interfaces WAN a una lista de interfaces. Esto es esencial: sin ello, las reglas de firewall que referencien la lista `WAN` no coincidirán correctamente con el tráfico.
 
-<Code lang="routeros" title="Interface Lists">
+<Code lang="routeros" title="Listas de interfaces">
 ```routeros
 # Create WAN interface list (skip if it already exists in your config)
 /interface list add name=WAN comment="ISP Interfaces Group"
@@ -295,27 +296,27 @@ For firewall rules to work correctly, add all WAN-related interfaces to an inter
 ```
 </Code>
 
-<Callout type="info" title="Why Three WAN Interfaces?">
-The WAN list includes all three layers because firewall rules may need to match traffic at different stages:
-- **Physical port** (`ether1`): Raw ethernet frames
-- **VLAN** (`VLAN_DIGI`): Tagged traffic before PPPoE
-- **PPPoE** (`PPPoE_DIGI`): Authenticated tunnel (most firewall rules match here)
+<Callout type="info" title="¿Por qué tres interfaces WAN?">
+La lista WAN incluye las tres capas porque las reglas de firewall pueden necesitar coincidir con tráfico en diferentes etapas:
+- **Puerto físico** (`ether1`): Tramas ethernet sin procesar
+- **VLAN** (`VLAN_DIGI`): Tráfico etiquetado antes de PPPoE
+- **PPPoE** (`PPPoE_DIGI`): Túnel autenticado (la mayoría de reglas de firewall coinciden aquí)
 
-Adding all three ensures your firewall rules work regardless of which interface the traffic arrives on.
+Añadir las tres garantiza que tus reglas de firewall funcionen independientemente de por qué interfaz llegue el tráfico.
 </Callout>
 
 ---
 
-## Step 5: configure DHCPv6 client for prefix delegation
+## Paso 5: configurar el cliente DHCPv6 para prefix delegation
 
-This is where IPv6 gets interesting. DIGI provides a /56 prefix via [DHCPv6-PD (Prefix Delegation)](https://datatracker.ietf.org/doc/html/rfc3633). We need to:
+Aquí es donde IPv6 se pone interesante. DIGI proporciona un prefix /56 vía [DHCPv6-PD (Prefix Delegation)](https://datatracker.ietf.org/doc/html/rfc3633). Necesitamos:
 
-1. Request the prefix from DIGI
-2. Store it in a local pool
-3. Assign addresses to our LAN from that pool
-4. Configure Router Advertisements for [SLAAC](https://datatracker.ietf.org/doc/html/rfc4862)
+1. Solicitar el prefix a DIGI
+2. Almacenarlo en un pool local
+3. Asignar direcciones a nuestra LAN desde ese pool
+4. Configurar Router Advertisements para [SLAAC](https://datatracker.ietf.org/doc/html/rfc4862)
 
-<Code lang="routeros" title="DHCPv6 Client with Script">
+<Code lang="routeros" title="Cliente DHCPv6 con script">
 ```routeros
 /ipv6 dhcp-client add \
     interface=PPPoE_DIGI \
@@ -332,19 +333,19 @@ This is where IPv6 gets interesting. DIGI provides a /56 prefix via [DHCPv6-PD (
 ```
 </Code>
 
-The script waits 5 seconds for the pool to be populated, removes any old advertised IPv6 address on the bridge, and adds a new one from the updated pool. Because the address uses `advertise=yes`, RouterOS **automatically creates a dynamic ND prefix** for SLAAC—no manual ND prefix management is needed.
+El script espera 5 segundos a que el pool se rellene, elimina cualquier dirección IPv6 anunciada anteriormente en el bridge y añade una nueva desde el pool actualizado. Como la dirección usa `advertise=yes`, RouterOS **crea automáticamente un ND prefix dinámico** para SLAAC; no es necesario gestionar manualmente los ND prefix.
 
-<Callout type="info" title="Why Remove and Re-add?">
-When the ISP prefix changes (PPPoE reconnection, lease renewal), the old address becomes invalid. The script ensures the bridge always has a valid address from the current pool. The `advertise=yes` flag triggers RouterOS to automatically announce the correct `/64` prefix to LAN devices via Router Advertisements (SLAAC).
+<Callout type="info" title="¿Por qué eliminar y volver a añadir?">
+Cuando el prefix del ISP cambia (reconexión PPPoE, renovación de lease), la dirección antigua se vuelve inválida. El script garantiza que el bridge siempre tenga una dirección válida del pool actual. El flag `advertise=yes` hace que RouterOS anuncie automáticamente el prefix `/64` correcto a los dispositivos LAN mediante Router Advertisements (SLAAC).
 </Callout>
 
 ---
 
-## Step 6: assign IPv6 address to LAN
+## Paso 6: asignar dirección IPv6 a la LAN
 
-The router's LAN interface needs an IPv6 address from the delegated pool:
+La interfaz LAN del router necesita una dirección IPv6 del pool delegado:
 
-<Code lang="routeros" title="LAN IPv6 Address">
+<Code lang="routeros" title="Dirección IPv6 en LAN">
 ```routeros
 /ipv6 address add \
     interface=bridge \
@@ -354,13 +355,13 @@ The router's LAN interface needs an IPv6 address from the delegated pool:
 ```
 </Code>
 
-This creates an address like `2a0c:5a84:xxxx:xx00::1/64` where the prefix comes from DIGI's delegation.
+Esto crea una dirección como `2a0c:5a84:xxxx:xx00::1/64` donde el prefix proviene de la delegación de DIGI.
 
 ---
 
-## Step 7: configure Neighbor Discovery (SLAAC)
+## Paso 7: configurar Neighbor Discovery (SLAAC)
 
-For LAN devices to automatically configure their IPv6 addresses via [SLAAC (Stateless Address Autoconfiguration)](https://datatracker.ietf.org/doc/html/rfc4862), configure Neighbor Discovery:
+Para que los dispositivos LAN configuren automáticamente sus direcciones IPv6 mediante [SLAAC (Stateless Address Autoconfiguration)](https://datatracker.ietf.org/doc/html/rfc4862), configura Neighbor Discovery:
 
 <Code lang="routeros" title="IPv6 Neighbor Discovery">
 ```routeros
@@ -384,45 +385,45 @@ For LAN devices to automatically configure their IPv6 addresses via [SLAAC (Stat
 ```
 </Code>
 
-<Table title="Neighbor Discovery Parameters">
+<Table title="Parámetros de Neighbor Discovery">
   <thead>
     <tr>
-      <th scope="col">Parameter</th>
-      <th scope="col">Value</th>
-      <th scope="col">Purpose</th>
+      <th scope="col">Parámetro</th>
+      <th scope="col">Valor</th>
+      <th scope="col">Propósito</th>
     </tr>
   </thead>
   <tbody>
     <tr>
       <td>`ra-preference`</td>
       <td>high</td>
-      <td>Clients prefer this router over others</td>
+      <td>Los clientes prefieren este router sobre otros</td>
     </tr>
     <tr>
       <td>`hop-limit`</td>
       <td>64</td>
-      <td>TTL for outgoing packets (standard value)</td>
+      <td>TTL para paquetes salientes (valor estándar)</td>
     </tr>
     <tr>
       <td>`dns`</td>
       <td>fe80::1</td>
-      <td>Router's link-local address as DNS (RDNSS)</td>
+      <td>Dirección link-local del router como DNS (RDNSS)</td>
     </tr>
     <tr>
       <td>`other-configuration`</td>
       <td>yes</td>
-      <td>Tells clients to use DHCPv6 for other options</td>
+      <td>Indica a los clientes que usen DHCPv6 para otras opciones</td>
     </tr>
   </tbody>
 </Table>
 
 ---
 
-## Step 8: configure IPv4 NAT (Masquerade)
+## Paso 8: configurar NAT IPv4 (masquerade)
 
-For outbound IPv4 connectivity:
+Para la conectividad IPv4 de salida:
 
-<Code lang="routeros" title="IPv4 Masquerade">
+<Code lang="routeros" title="Masquerade IPv4">
 ```routeros
 /ip firewall nat add \
     chain=srcnat \
@@ -435,15 +436,15 @@ For outbound IPv4 connectivity:
 
 ---
 
-## Step 9: verify the connection
+## Paso 9: verificar la conexión
 
-### Check PPPoE status
+### Comprobar el estado de PPPoE
 
-<TerminalSession title="PPPoE Client Status">
+<TerminalSession title="Estado del cliente PPPoE">
   <TerminalSessionCommand>
     /interface pppoe-client print detail
   </TerminalSessionCommand>
-  <TerminalSessionOutput title="Connected PPPoE">
+  <TerminalSessionOutput title="PPPoE conectado">
 
 ```
 Flags: X - disabled; R - running
@@ -460,20 +461,20 @@ Flags: X - disabled; R - running
   </TerminalSessionOutput>
 </TerminalSession>
 
-<Callout type="tip" title="What to Look For">
-- **status=connected** — The PPPoE session is active
-- **local-address** — Your public IPv4 address assigned by the ISP
-- **max-mtu** — Upper limit the client accepts (1500). The actual MTU is negotiated by the server via LCP (DIGI: 1480)
-- If `status=connecting` or `status=disconnected`, check your credentials and VLAN configuration
+<Callout type="tip" title="Qué buscar">
+- **status=connected** — La sesión PPPoE está activa
+- **local-address** — Tu dirección IPv4 pública asignada por el ISP
+- **max-mtu** — Límite superior que acepta el cliente (1500). El MTU real se negocia por el servidor vía LCP (DIGI: 1480)
+- Si `status=connecting` o `status=disconnected`, revisa las credenciales y la configuración de VLAN
 </Callout>
 
-### Check negotiated PPPoE values
+### Comprobar los valores negociados de PPPoE
 
-<TerminalSession title="PPPoE Monitor Output">
+<TerminalSession title="Salida del monitor PPPoE">
   <TerminalSessionCommand>
     /interface pppoe-client monitor PPPoE_DIGI once
   </TerminalSessionCommand>
-  <TerminalSessionOutput title="Negotiated Values">
+  <TerminalSessionOutput title="Valores negociados">
 
 ```
                status: connected
@@ -491,16 +492,16 @@ Flags: X - disabled; R - running
 </TerminalSession>
 
 <Callout type="tip" title="Monitor vs Print">
-The `monitor` command shows **live negotiated values**—the actual MTU (1480), MRU (1492), service name (`ftth`), and access concentrator name. Use this to verify what the server actually provides, as opposed to `print detail` which shows your configured parameters.
+El comando `monitor` muestra los **valores negociados en tiempo real**: el MTU real (1480), MRU (1492), service name (`ftth`) y el nombre del access concentrator. Úsalo para verificar lo que realmente proporciona el servidor, a diferencia de `print detail` que muestra los parámetros configurados.
 </Callout>
 
-### Check IPv6 prefix delegation
+### Comprobar la delegación de prefix IPv6
 
-<TerminalSession title="IPv6 Prefix Delegation">
+<TerminalSession title="Prefix Delegation IPv6">
   <TerminalSessionCommand>
     /ipv6 pool print
   </TerminalSessionCommand>
-  <TerminalSessionOutput title="Delegated Prefix">
+  <TerminalSessionOutput title="Prefix delegado">
 
 ```
 Flags: D - dynamic
@@ -510,18 +511,18 @@ Flags: D - dynamic
   </TerminalSessionOutput>
 </TerminalSession>
 
-<Callout type="info" title="Example Prefix">
-The prefix shown above (`2001:db8:...`) is a documentation example. Your ISP will assign a real prefix from their allocation.
-DIGI Spain typically delegates a `/56` prefix, giving you 256 possible `/64` subnets.
+<Callout type="info" title="Prefix de ejemplo">
+El prefix mostrado arriba (`2001:db8:...`) es un ejemplo de documentación. Tu ISP asignará un prefix real de su asignación.
+DIGI España normalmente delega un prefix `/56`, lo que te da 256 posibles subnets `/64`.
 </Callout>
 
-### Check IPv6 addresses
+### Comprobar las direcciones IPv6
 
 <TerminalSession>
   <TerminalSessionCommand>
     /ipv6 address print where interface=bridge
   </TerminalSessionCommand>
-  <TerminalSessionOutput title="LAN IPv6 Address">
+  <TerminalSessionOutput title="Dirección IPv6 en LAN">
 
 ```
 Flags: X - disabled, I - invalid, D - dynamic, G - global, L - link-local
@@ -532,9 +533,9 @@ Flags: X - disabled, I - invalid, D - dynamic, G - global, L - link-local
   </TerminalSessionOutput>
 </TerminalSession>
 
-### Test IPv6 connectivity
+### Probar la conectividad IPv6
 
-<TerminalCommand title="Test IPv6">
+<TerminalCommand title="Probar IPv6">
 ```bash
 /ping 2001:4860:4860::8888 count=4
 ```
@@ -542,13 +543,13 @@ Flags: X - disabled, I - invalid, D - dynamic, G - global, L - link-local
 
 ---
 
-## Complete configuration summary
+## Resumen completo de la configuración
 
 <FileContent 
   filename="pppoe-digi-complete.rsc" 
   language="routeros" 
   collapsible={true}
-  title="Complete DIGI PPPoE Configuration"
+  title="Configuración PPPoE completa para DIGI"
 >
 ```routeros
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -664,23 +665,23 @@ Flags: X - disabled, I - invalid, D - dynamic, G - global, L - link-local
 
 ---
 
-## Optional enhancements
+## Mejoras opcionales
 
-The core PPPoE + DHCPv6-PD configuration is complete. The following sections cover additional features you can add depending on your needs.
+La configuración principal de PPPoE + DHCPv6-PD está completa. Las siguientes secciones cubren funcionalidades adicionales que puedes añadir según tus necesidades.
 
-### IPv6 port forwarding with automatic NAT update
+### Port forwarding IPv6 con actualización automática de NAT
 
-<Callout type="info" title="When Do You Need This?">
-Only required if you expose services to the internet over IPv6 (e.g., a web server). If you only need outbound IPv6 connectivity for LAN devices, skip this section.
+<Callout type="info" title="¿Cuándo necesitas esto?">
+Solo es necesario si expones servicios a internet por IPv6 (por ejemplo, un servidor web). Si solo necesitas conectividad IPv6 de salida para los dispositivos LAN, sáltate esta sección.
 
-If you use this script, add `/system script run update-ipv6-nat;` as the last line of the DHCPv6 client script from Step 5 so it runs automatically on each prefix change.
+Si usas este script, añade `/system script run update-ipv6-nat;` como última línea del script del cliente DHCPv6 del Paso 5 para que se ejecute automáticamente en cada cambio de prefix.
 </Callout>
 
-#### Create a port forwarding rule
+#### Crear una regla de port forwarding
 
-You need at least one IPv6 dstnat rule. This example forwards HTTP and HTTPS traffic from the WAN to an internal web server:
+Necesitas al menos una regla dstnat IPv6. Este ejemplo redirige tráfico HTTP y HTTPS desde la WAN a un servidor web interno:
 
-<Code lang="routeros" title="IPv6 Port Forwarding — Web Server">
+<Code lang="routeros" title="Port forwarding IPv6 — Servidor web">
 ```routeros
 /ipv6 firewall nat add \
     chain=dstnat \
@@ -693,15 +694,15 @@ You need at least one IPv6 dstnat rule. This example forwards HTTP and HTTPS tra
 ```
 </Code>
 
-<Callout type="tip" title="Rule Identification by Comment">
-The `comment` field is how the update script identifies which rules to modify. Use a **descriptive and unique** comment for each service you expose. If you have additional services, add more rules with different comments (e.g., `"Mail Server"`, `"Game Server"`).
+<Callout type="tip" title="Identificación de reglas por comment">
+El campo `comment` es lo que el script de actualización usa para identificar qué reglas modificar. Usa un **comment descriptivo y único** para cada servicio que expongas. Si tienes servicios adicionales, añade más reglas con comments diferentes (por ejemplo, `"Mail Server"`, `"Game Server"`).
 </Callout>
 
-#### Create the update script
+#### Crear el script de actualización
 
-Since the delegated prefix changes on each PPPoE reconnection, the `to-address` in your dstnat rules becomes stale. This script automatically reconstructs the full IPv6 address from the new prefix and updates all matching rules:
+Dado que el prefix delegado cambia en cada reconexión PPPoE, el `to-address` de tus reglas dstnat queda obsoleto. Este script reconstruye automáticamente la dirección IPv6 completa a partir del nuevo prefix y actualiza todas las reglas coincidentes:
 
-<Code lang="routeros" title="IPv6 NAT Update Script">
+<Code lang="routeros" title="Script de actualización de NAT IPv6">
 ```routeros
 /system script add \
     name=update-ipv6-nat \
@@ -723,24 +724,24 @@ Since the delegated prefix changes on each PPPoE reconnection, the `to-address` 
 ```
 </Code>
 
-<Callout type="important" title="Customize Before Use">
-Replace `1111:2222:3333:4444` with your server's static IPv6 host portion (see tip below). Replace `"Web Server"` with the exact comment on your NAT rule. If you have multiple rules, add a `set [find comment="..."]` line for each one.
+<Callout type="important" title="Personalizar antes de usar">
+Sustituye `1111:2222:3333:4444` con la parte host estática de tu servidor (ver consejo más abajo). Sustituye `"Web Server"` con el comment exacto de tu regla NAT. Si tienes varias reglas, añade una línea `set [find comment="..."]` para cada una.
 </Callout>
 
-#### How the script works
+#### Cómo funciona el script
 
-<Mermaid caption="IPv6 Address Construction" ariaLabel="Diagram showing how the full IPv6 address is constructed by combining the ISP delegated prefix with the static host suffix" maxWidth="650px">
+<Mermaid caption="Construcción de la dirección IPv6" ariaLabel="Diagrama que muestra cómo se construye la dirección IPv6 completa combinando el prefix delegado por el ISP con el sufijo host estático" maxWidth="650px">
 ```mermaid-render
 flowchart LR
-    subgraph Prefix["ISP Delegated Prefix"]
+    subgraph Prefix["Prefix delegado por el ISP"]
         P1["2001:db8:abcd:ef00"]:::info
     end
     
-    subgraph Host["Static Host Suffix"]
+    subgraph Host["Sufijo host estático"]
         H1["1111:2222:3333:4444"]:::highlight
     end
     
-    subgraph Full["Complete IPv6 Address"]
+    subgraph Full["Dirección IPv6 completa"]
         F1["2001:db8:abcd:ef00:1111:2222:3333:4444"]:::success
     end
     
@@ -749,29 +750,29 @@ flowchart LR
 ```
 </Mermaid>
 
-The script:
-1. Gets the current prefix from `pool6` (e.g., `2001:db8:abcd:ef00::/56`)
-2. Strips the length notation (`/56`) and trailing `::` to isolate the network prefix
-3. Appends the static host portion to form the complete IPv6 address
-4. Updates all matching dstnat rules identified by their `comment` field
+El script:
+1. Obtiene el prefix actual de `pool6` (por ejemplo, `2001:db8:abcd:ef00::/56`)
+2. Elimina la notación de longitud (`/56`) y los `::` finales para aislar el prefix de red
+3. Añade la parte host estática para formar la dirección IPv6 completa
+4. Actualiza todas las reglas dstnat coincidentes identificadas por su campo `comment`
 
-<Callout type="tip" title="Static Host Portion">
-Use your server's [EUI-64 address](https://datatracker.ietf.org/doc/html/rfc4291#section-2.5.1) (derived from its MAC address) or assign a [static suffix](https://datatracker.ietf.org/doc/html/rfc8064). The host portion remains constant across prefix changes, making automatic updates reliable.
+<Callout type="tip" title="Parte host estática">
+Usa la [dirección EUI-64](https://datatracker.ietf.org/doc/html/rfc4291#section-2.5.1) de tu servidor (derivada de su dirección MAC) o asigna un [sufijo estático](https://datatracker.ietf.org/doc/html/rfc8064). La parte host permanece constante entre cambios de prefix, lo que hace fiables las actualizaciones automáticas.
 </Callout>
 
-<Callout type="note" title="Alternative: Address List">
-If you manage multiple services pointing to the same server, consider maintaining a **firewall address list** with the server's current IPv6. The script updates a single entry in `/ipv6 firewall address-list`, and firewall **filter** rules can reference it via `dst-address-list` — simplifying rule management. Note that dstnat rules require an explicit `to-address`, so those still need individual updates in the script.
+<Callout type="note" title="Alternativa: address list">
+Si gestionas múltiples servicios apuntando al mismo servidor, considera mantener una **address list en el firewall** con la IPv6 actual del servidor. El script actualiza una única entrada en `/ipv6 firewall address-list`, y las reglas de **filter** del firewall pueden referenciarla mediante `dst-address-list`, simplificando la gestión de reglas. Ten en cuenta que las reglas dstnat requieren un `to-address` explícito, por lo que estas siguen necesitando actualizaciones individuales en el script.
 </Callout>
 
-### Basic firewall rules
+### Reglas básicas de firewall
 
-Secure your connection with essential firewall rules for both IPv4 and IPv6:
+Protege tu conexión con reglas de firewall esenciales para IPv4 e IPv6:
 
 <FileContent 
   filename="firewall-basic.rsc" 
   language="routeros" 
   collapsible={true}
-  title="Basic Firewall Configuration"
+  title="Configuración básica de firewall"
 >
 ```routeros
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -905,11 +906,11 @@ add chain=forward action=drop \
 ```
 </FileContent>
 
-### PPPoE logging
+### Logging de PPPoE
 
-Optionally enable PPPoE event logging for troubleshooting:
+Opcionalmente, habilita el registro de eventos PPPoE para la resolución de problemas:
 
-<Code lang="routeros" title="PPPoE Logging">
+<Code lang="routeros" title="Logging de PPPoE">
 ```routeros
 /system logging add \
     topics=pppoe \
@@ -920,45 +921,43 @@ Optionally enable PPPoE event logging for troubleshooting:
 
 ---
 
-## Troubleshooting
+## Resolución de problemas
 
-### PPPoE won't connect
+### PPPoE no conecta
 
 <CheckList>
-<li data-check="check">Verify VLAN ID is 20</li>
-<li data-check="check">Check username format: <code>identifier@digi</code></li>
-<li data-check="check">Ensure ONT is in bridge mode</li>
-<li data-check="check">Check physical cable connection</li>
+<li data-check="check">Verifica que el VLAN ID sea 20</li>
+<li data-check="check">Comprueba el formato del usuario: <code>identificador@digi</code></li>
+<li data-check="check">Asegúrate de que el ONT esté en modo bridge</li>
+<li data-check="check">Revisa la conexión del cable físico</li>
 </CheckList>
 
-### No IPv6 prefix received
+### No se recibe prefix IPv6
 
 <CheckList>
-<li data-check="check">DHCPv6 client must be on PPPoE interface, not VLAN</li>
-<li data-check="check">Request type should be <code>prefix</code> not <code>address</code></li>
-<li data-check="check">Check firewall allows DHCPv6 (UDP 546)</li>
+<li data-check="check">El cliente DHCPv6 debe estar en la interfaz PPPoE, no en la VLAN</li>
+<li data-check="check">El tipo de solicitud debe ser <code>prefix</code>, no <code>address</code></li>
+<li data-check="check">Comprueba que el firewall permite DHCPv6 (UDP 546)</li>
 </CheckList>
 
-### LAN devices don't get IPv6
+### Los dispositivos LAN no obtienen IPv6
 
 <CheckList>
-<li data-check="check">Verify ND is configured for bridge interface</li>
-<li data-check="check">Check <code>advertise=yes</code> on bridge IPv6 address</li>
-<li data-check="check">Ensure pool6 has a valid prefix</li>
+<li data-check="check">Verifica que ND esté configurado para la interfaz bridge</li>
+<li data-check="check">Comprueba que la dirección IPv6 del bridge tenga <code>advertise=yes</code></li>
+<li data-check="check">Asegúrate de que pool6 tenga un prefix válido</li>
 </CheckList>
 
 ---
 
-## Conclusion
+## Conclusión
 
-You now have a complete dual-stack configuration for [DIGI Spain](https://www.digimobil.es/) with:
+Ahora tienes una configuración dual-stack completa para [DIGI España](https://www.digimobil.es/) con:
 
-- **PPPoE authentication** over VLAN 20
-- **Dynamic IPv4** with automatic default route
-- **DHCPv6 Prefix Delegation** for native IPv6
-- **Automatic handling** of prefix changes
-- **SLAAC** for effortless LAN device configuration
+- **Autenticación PPPoE** sobre VLAN 20
+- **IPv4 dinámico** con default route automática
+- **DHCPv6 Prefix Delegation** para IPv6 nativo
+- **Gestión automática** de cambios de prefix
+- **SLAAC** para configuración sencilla de dispositivos LAN
 
-This setup ensures your network maintains full IPv4 and IPv6 connectivity even when the ISP changes your assigned prefixes. The DHCPv6 script handles the complexity of prefix changes, making the configuration truly "set and forget."
-
-
+Esta configuración garantiza que tu red mantenga conectividad IPv4 e IPv6 completa incluso cuando el ISP cambie los prefixes asignados. El script DHCPv6 gestiona la complejidad de los cambios de prefix, haciendo que la configuración sea realmente «configura y olvídate».

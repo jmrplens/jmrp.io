@@ -13,7 +13,9 @@ extend-exclude = [
     "lighthouse-results/**",
     "AI_CONFIG_TASKS.md",
     "AI_CONTEXT_ROADMAP.md",
-    "SEO_AUDIT.md"
+    "SEO_AUDIT.md",
+    "docs/I18N_PLAN.md",
+    "docs/I18N_RESEARCH.md"
 ]
 
 [default]
@@ -28,9 +30,26 @@ PN = "PN"
 BA = "BA"
 dorder = "dorder"
 nd = "nd"
+Yoh = "Yoh"
+# Spanish words (i18n bilingual content)
+algoritmos = "algoritmos"
+aplicable = "aplicable"
+clases = "clases"
+clientes = "clientes"
 comando = "comando"
 Cliente = "Cliente"
-Yoh = "Yoh"
+computacional = "computacional"
+curso = "curso"
+dentistas = "dentistas"
+emergencias = "emergencias"
+inicial = "inicial"
+instituto = "instituto"
+mis = "mis"
+oficial = "oficial"
+profesional = "profesional"
+programa = "programa"
+protocolos = "protocolos"
+versiones = "versiones"
 
 [default.extend-identifiers]
 # Technical protocol/standard names

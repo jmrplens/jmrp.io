@@ -48,7 +48,7 @@ Runs `scripts/run-verify.mjs` — 14 sequential steps (fail-fast except SonarClo
 | 6  | Lint: HTML5 Validation        | `pnpm lint:html`                                   |
 | 7  | Lint: RSS Feed                | `node scripts/ci/validate-rss.mjs dist`            |
 | 8  | Lint: Schema.org JSON-LD      | `node scripts/ci/validate-schema.mjs dist`         |
-| 9  | Lint: Spelling (Typos)        | `typos`                                            |
+| 9  | Lint: Spelling (CSpell)        | `pnpm exec cspell lint .`                          |
 | 10 | Lint: Broken Links (Lychee)   | `lychee --config lychee.toml --root-dir dist dist/**/*.html` |
 | 11 | Lint: JSDoc Coverage          | `node scripts/ci/calculate-jsdoc-coverage.mjs`     |
 | 12 | Security: SonarCloud Analysis | `pnpm exec sonar-scanner` *(if SONAR_TOKEN set)*   |
@@ -62,7 +62,7 @@ pnpm lint             # ESLint
 pnpm lint:css         # Stylelint
 pnpm test:e2e         # Playwright tests
 pnpm verify-icons     # Icon consistency (not in verify pipeline)
-pnpm exec typos       # Spell check
+pnpm exec cspell lint . # Spell check (bilingual EN/ES)
 pnpm exec prettier --check .  # Format check
 pnpm lint:html        # HTML5 validation (requires build)
 ```

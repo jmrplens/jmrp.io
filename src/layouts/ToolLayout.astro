@@ -9,9 +9,9 @@
  *   - default: The tool component (rendered inside `.tool-container`)
  *   - info: Content inside the `<section class="tool-info">` card
  */
-import BaseLayout from "@layouts/BaseLayout.astro";
 import { defaultLocale, type Locale } from "@i18n/config";
 import { useTranslatedPath, useTranslations } from "@i18n/utils";
+import BaseLayout from "@layouts/BaseLayout.astro";
 import { getSiteUrl } from "@utils/site";
 
 interface Props {
@@ -44,6 +44,7 @@ const toolSchema = {
   applicationCategory: "WebApplication",
   operatingSystem: "Web Browser",
   offers: { "@type": "Offer", price: 0, priceCurrency: "USD" },
+  inLanguage: locale,
   ...extraSchema,
 };
 ---

@@ -73,6 +73,8 @@ export default defineConfig({
     "i-logos:safari",
     "i-logos:microsoft-edge",
     "i-logos:opera",
+    // LanguageSwitcher icon
+    "i-tabler:language",
   ],
   presets: [
     presetWind4({

@@ -1,0 +1,462 @@
+---
+title: "Probador de Regex"
+slug: "regex-tester"
+description: "Prueba expresiones regulares con resaltado en tiempo real, capture groups, modo de reemplazo y presets de patrones comunes. Se ejecuta en tu navegador."
+subtitle: "Prueba expresiones regulares con resaltado en tiempo real, capture groups, modo de reemplazo y presets de patrones comunes."
+icon: "i-mdi:regex"
+category: "developer"
+tags: ["regex", "regexp", "patrón", "grep", "sed", "pruebas"]
+appComponent: "RegexTester"
+lang: "es"
+---
+
+import RegexFlavorTable from "@components/apps/RegexFlavorTable.astro";
+import {
+  TerminalSession,
+  TerminalSessionCommand,
+  TerminalSessionOutput,
+} from "@components/ui/terminal-session";
+
+<h2>Acerca de esta herramienta</h2>
+<p>
+  Un probador de regex en tiempo real que resalta las coincidencias, extrae
+  capture groups (con nombre y numerados), soporta buscar y reemplazar con
+  backreferences, y proporciona acceso rápido a patrones comunes usados en
+  desarrollo web y administración de sistemas.
+</p>
+
+<h3>Características</h3>
+<ul>
+  <li>
+    <strong>Resaltado en tiempo real</strong> — las coincidencias se resaltan con
+    colores alternos mientras escribes
+  </li>
+  <li>
+    <strong>Capture groups</strong> — tanto con nombre (
+    <code>{"(?<name>...)"}</code>) como numerados, se muestran con etiquetas
+  </li>
+  <li>
+    <strong>Modo de reemplazo</strong> — prueba sustituciones con
+    backreferences (<code>$1</code>, <code>$&</code>,{" "}
+    <code>{"$<name>"}</code>)
+  </li>
+  <li>
+    <strong>Flags de regex</strong> — alterna global, insensible a mayúsculas,
+    multilínea, dot-all y Unicode
+  </li>
+  <li>
+    <strong>10 presets de patrones</strong> — email, URL, IPv4, UUID, teléfono,
+    JWT, dirección MAC, color HEX, fecha ISO y location de Nginx
+  </li>
+  <li>
+    <strong>Estadísticas de coincidencias</strong> — recuento, tiempo de
+    ejecución y posición línea:columna para cada coincidencia
+  </li>
+  <li>
+    <strong>Referencia rápida</strong> — hoja de referencia de regex desplegable
+    con caracteres, anclas, quantifiers, grupos y lookaround
+  </li>
+</ul>
+
+<h3>Cómo usar</h3>
+<ol>
+  <li>Introduce tu patrón regex en el campo de patrón</li>
+  <li>Configura los flags deseados (g, i, m, s, u) usando las casillas</li>
+  <li>Escribe o pega tu cadena de prueba en el área de texto</li>
+  <li>
+    Las coincidencias se resaltan en tiempo real con información detallada
+    debajo
+  </li>
+  <li>
+    Activa el <strong>modo de reemplazo</strong> para probar sustituciones —
+    introduce una cadena de reemplazo con backreferences <code>$1</code>,{" "}
+    <code>$&</code> o <code>{"$<name>"}</code>
+  </li>
+  <li>
+    Haz clic en cualquier <strong>preset</strong> para cargar un patrón común con
+    texto de ejemplo
+  </li>
+  <li>
+    Despliega la <strong>referencia rápida</strong> de la parte inferior para una
+    hoja de referencia compacta de la sintaxis regex
+  </li>
+</ol>
+
+<h3>Flags de regex explicados</h3>
+<p>
+  Los flags (también llamados modificadores) cambian cómo el motor de regex
+  interpreta tu patrón. En JavaScript se colocan después del delimitador de
+  cierre: <code>/pattern/flags</code>. Esta herramienta te permite alternar cada
+  uno individualmente.
+</p>
+
+<div class="flags-grid">
+  <div class="flag-card">
+    <div class="flag-badge">g</div>
+    <div class="flag-content">
+      <strong>Global</strong>
+      <p>
+        Encuentra <em>todas</em> las coincidencias en la cadena en lugar de
+        detenerse tras la primera. Sin <code>g</code>, solo se devuelve la
+        primera coincidencia. Esencial para contar ocurrencias o realizar un
+        buscar y reemplazar global.
+      </p>
+      <div class="flag-example">
+        <code>/\d+/g</code> en <code>"a1 b2 c3"</code> → 3 coincidencias (
+        <code>1</code>, <code>2</code>, <code>3</code>)
+      </div>
+    </div>
+  </div>
+  <div class="flag-card">
+    <div class="flag-badge">i</div>
+    <div class="flag-content">
+      <strong>Insensible a mayúsculas</strong>
+      <p>
+        Hace que el patrón coincida sin importar mayúsculas o minúsculas.
+        <code>/abc/i</code> coincide con <code>abc</code>, <code>ABC</code>,{" "}
+        <code>aBc</code>, etc. Se aplica tanto a caracteres literales como a
+        rangos de caracteres como <code>{"[a-z]"}</code>.
+      </p>
+      <div class="flag-example">
+        <code>/error/i</code> coincide con <code>"Error"</code>,{" "}
+        <code>"ERROR"</code>, <code>"error"</code>
+      </div>
+    </div>
+  </div>
+  <div class="flag-card">
+    <div class="flag-badge">m</div>
+    <div class="flag-content">
+      <strong>Multilínea</strong>
+      <p>
+        Cambia el comportamiento de las anclas <code>^</code> y <code>$</code>.
+        Normalmente coinciden con el inicio/fin de toda la cadena. Con{" "}
+        <code>m</code>, coinciden con el inicio/fin de cada <em>línea</em>
+        (separada por <code>\n</code>). No afecta a <code>.</code> — usa{" "}
+        <code>s</code> para eso.
+      </p>
+      <div class="flag-example">
+        <code>/^server/m</code> coincide con <code>"server"</code> al inicio de
+        cualquier línea, no solo la primera
+      </div>
+    </div>
+  </div>
+  <div class="flag-card">
+    <div class="flag-badge">s</div>
+    <div class="flag-content">
+      <strong>Dot-All (línea única)</strong>
+      <p>
+        Hace que el metacarácter <code>.</code> coincida con <em>cualquier</em>
+        carácter incluyendo saltos de línea (<code>\n</code>, <code>\r</code>).
+        Por defecto, <code>.</code> coincide con todo excepto terminadores de
+        línea. Útil para coincidencias en bloques multilínea.
+      </p>
+      <div class="flag-example">
+        <code>/{"<div>.*?</div>"}/s</code> coincide con un div y su contenido
+        incluso si abarca varias líneas
+      </div>
+    </div>
+  </div>
+  <div class="flag-card">
+    <div class="flag-badge">u</div>
+    <div class="flag-content">
+      <strong>Unicode</strong>
+      <p>
+        Habilita la coincidencia completa de Unicode. Sin él, los caracteres
+        fuera del Basic Multilingual Plane (emojis, CJK, símbolos matemáticos)
+        pueden tratarse como dos unidades de código separadas. También habilita
+        escapes de propiedades Unicode como{" "}
+        <code>\p&#123;Letter&#125;</code> y{" "}
+        <code>\p&#123;Emoji&#125;</code>.
+      </p>
+      <div class="flag-example">
+        <code>/\p&#123;Emoji&#125;/gu</code> coincide correctamente con emojis
+        como <code>🔥</code>, <code>👋</code>, <code>🎉</code>
+      </div>
+    </div>
+  </div>
+</div>
+
+<h3>Combinaciones de flags comunes</h3>
+<div class="flag-combos">
+  <div class="flag-combo-item">
+    <code>gi</code>
+    <div>
+      — Encuentra todas las coincidencias, insensible a mayúsculas. La
+      combinación más habitual para búsqueda de texto.
+    </div>
+  </div>
+  <div class="flag-combo-item">
+    <code>gm</code>
+    <div>
+      — Encuentra todas las coincidencias en múltiples líneas. Útil para
+      archivos de log y de configuración.
+    </div>
+  </div>
+  <div class="flag-combo-item">
+    <code>gis</code>
+    <div>
+      — Global, insensible a mayúsculas, dot-all. Para coincidencias en bloques
+      HTML/XML multilínea.
+    </div>
+  </div>
+  <div class="flag-combo-item">
+    <code>gu</code>
+    <div>
+      — Global con Unicode. Necesario cuando se trabaja con texto
+      internacionalizado o emojis.
+    </div>
+  </div>
+  <div class="flag-combo-item">
+    <code>gms</code>
+    <div>
+      — Global, multilínea, dot-all. Máxima potencia para analizar contenido
+      estructurado multilínea.
+    </div>
+  </div>
+</div>
+
+<h3>JavaScript frente a otros sabores de regex</h3>
+<p>
+  Esta herramienta usa el motor nativo <code>RegExp</code> de JavaScript, que
+  sigue la especificación ECMAScript. Algunas diferencias a tener en cuenta al
+  portar patrones a otros entornos:
+</p>
+<RegexFlavorTable />
+
+<h3>Consejos de rendimiento de regex</h3>
+<ul>
+  <li>
+    <strong>Evita el backtracking catastrófico</strong> — patrones como{" "}
+    <code>(a+)+b</code> pueden hacer que el motor se bloquee con cadenas largas
+    que no coinciden. Usa construcciones tipo atomic o reescribe como{" "}
+    <code>a+b</code>.
+  </li>
+  <li>
+    <strong>Sé específico con los quantifiers</strong> — prefiere{" "}
+    <code>{'[^"]*'}</code> sobre <code>{".*?"}</code> cuando busques
+    coincidencias entre delimitadores. La character class negada es más rápida
+    porque no necesita backtracking.
+  </li>
+  <li>
+    <strong>Ancla cuando sea posible</strong> — si sabes que la coincidencia
+    empieza al principio de una línea, usa <code>^</code> para que el motor
+    descarte posiciones rápidamente.
+  </li>
+  <li>
+    <strong>Usa non-capturing groups</strong> — escribe <code>(?:...)</code>
+    en lugar de <code>(...)</code> cuando no necesites el valor capturado. Evita
+    reservar memoria para el grupo.
+  </li>
+  <li>
+    <strong>Monitoriza el tiempo de ejecución</strong> — esta herramienta
+    muestra el tiempo de coincidencia para cada prueba. Si un patrón tarda más
+    de unos milisegundos, considera simplificarlo.
+  </li>
+</ul>
+
+<h3>Privacidad</h3>
+<p>
+  Todo el análisis de patrones y procesamiento de texto se realiza íntegramente
+  en tu navegador utilizando el motor <code>RegExp</code> nativo de JavaScript.
+  Ningún dato se transmite a ningún servidor — tus patrones y cadenas de prueba
+  nunca salen de tu dispositivo.
+</p>
+
+<h3>Referencia de comandos Linux</h3>
+<p>
+  Las expresiones regulares están profundamente integradas en la línea de
+  comandos de Linux. A continuación se muestran herramientas comunes con sus
+  capacidades de regex.
+</p>
+
+<h4>grep — Buscar líneas con un patrón</h4>
+<TerminalSession>
+  <TerminalSessionCommand>
+    grep -Pn '\b[A-Z][a-z]+\b' /var/log/nginx/access.log | head -5
+  </TerminalSessionCommand>
+  <TerminalSessionOutput title="Coincidencias (PCRE)">
+    ```
+    3:The Quick Brown Fox Jumps Over The Lazy Dog
+    15:Server nginx/1.25.4...Starting worker process
+    42:Connection from Remote host established
+    ```
+  </TerminalSessionOutput>
+</TerminalSession>
+
+<h4>grep -oP — Extraer solo coincidencias</h4>
+<TerminalSession>
+  <TerminalSessionCommand>
+  ```
+  echo '192.168.1.1 and 10.0.0.254' | grep -oP '\b(?:\d{1,3}\.){3}\d{1,3}\b'
+  ```
+  </TerminalSessionCommand>
+  <TerminalSessionOutput title="IPs extraídas">
+    ```
+    192.168.1.1
+    10.0.0.254
+    ```
+  </TerminalSessionOutput>
+</TerminalSession>
+
+<h4>sed — Buscar y reemplazar</h4>
+<TerminalSession>
+  <TerminalSessionCommand>
+    ```
+    echo 'Date: 2025-06-15' | sed -E 's/([0-9]{4})-([0-9]{2})-([0-9]{2})/\3\/\2\/\1/'
+    ```
+  </TerminalSessionCommand>
+  <TerminalSessionOutput title="Fecha reformateada">
+    Date: 15/06/2025
+  </TerminalSessionOutput>
+</TerminalSession>
+
+<h4>awk — Procesamiento basado en patrones</h4>
+<TerminalSession>
+  <TerminalSessionCommand>
+    ```
+    echo -e 'admin@example.com\ndev@test.org\ninvalid' | awk '/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/ {print "Valid:", $0}'
+    ```
+  </TerminalSessionCommand>
+  <TerminalSessionOutput title="Salida filtrada">
+    ```
+    Valid: admin@example.com
+    Valid: dev@test.org
+    ```
+  </TerminalSessionOutput>
+</TerminalSession>
+
+<h4>find — Buscar archivos por nombre con regex</h4>
+<TerminalSession>
+  <TerminalSessionCommand>
+    ```
+    find /etc/nginx -regextype posix-extended -regex '.*\.(conf|key|crt)$' -type f | head -5
+    ```
+  </TerminalSessionCommand>
+  <TerminalSessionOutput title="Archivos encontrados">
+    ```
+    /etc/nginx/snippets/disable_assets_log.conf
+    /etc/nginx/snippets/server_ssl.conf
+    /etc/nginx/conf.d/default.conf
+    /etc/nginx/nginx.conf
+    /etc/nginx/ssl/server.crt
+    ```
+  </TerminalSessionOutput>
+</TerminalSession>
+
+<h3>Relacionado</h3>
+<p>
+  Consulta los patrones regex usados en{" "}
+  <a href="/blog/003-implementing-content-security-policy-nginx/">
+    Implementar Content Security Policy con Nginx
+  </a>{" "}
+  para ejemplos reales de validación de CSP, o prueba el{" "}
+  <a href="/tools/http-headers-analyzer/">analizador de cabeceras HTTP</a>
+  para inspeccionar cabeceras de seguridad validadas con regex.
+</p>
+
+<style>{`
+/* Flags grid — page-specific styles */
+.flags-grid {
+  display: grid;
+  gap: var(--space-md);
+  margin-top: var(--space-md);
+  margin-bottom: var(--space-md);
+}
+
+@media (width >= 640px) {
+  .flags-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (width >= 1024px) {
+  .flags-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.flag-card {
+  display: flex;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  background: var(--color-bg);
+  border: var(--border-1);
+  border-radius: var(--radius-md);
+}
+
+.flag-badge {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  background: color-mix(in oklch, var(--color-primary) 12%, transparent);
+  border-radius: var(--radius-sm);
+}
+
+.flag-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.flag-content strong {
+  display: block;
+  margin-bottom: var(--space-2xs);
+  font-size: 0.95rem;
+  color: var(--color-text-heading);
+}
+
+.flag-content p {
+  margin-bottom: var(--space-xs);
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.flag-example {
+  padding: var(--space-xs) var(--space-sm);
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--color-text-muted);
+  background: color-mix(
+    in oklch,
+    var(--color-bg-secondary) 60%,
+    var(--color-bg)
+  );
+  border-radius: var(--radius-sm);
+}
+
+/* Flag combinations */
+.flag-combos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  margin-top: var(--space-sm);
+  margin-bottom: var(--space-md);
+}
+
+.flag-combo-item {
+  display: flex;
+  gap: var(--space-sm);
+  align-items: baseline;
+  padding: var(--space-xs) var(--space-sm);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  background: var(--color-bg);
+  border-radius: var(--radius-sm);
+}
+
+.flag-combo-item code {
+  flex-shrink: 0;
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+.flag-combo-item div {
+  color: var(--color-text);
+}
+`}</style>

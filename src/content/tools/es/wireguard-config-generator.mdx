@@ -1,0 +1,178 @@
+---
+title: "Generador de Configuración WireGuard"
+slug: "wireguard-config-generator"
+description: "Genera configuraciones completas de VPN WireGuard para MikroTik RouterOS con dual-stack IPv4/IPv6, reglas de firewall, NAT, peers y archivos de cliente."
+subtitle: "Crea configuraciones VPN WireGuard para MikroTik listas para producción con un constructor visual — dual-stack, firewall, NAT y configuraciones de cliente incluidas."
+icon: "i-mdi:vpn"
+category: "mikrotik"
+tags: ["wireguard", "vpn", "mikrotik", "routeros", "ipv6", "firewall"]
+appComponent: "WireGuardConfigGenerator"
+lang: "es"
+---
+
+<h2>Acerca de esta herramienta</h2>
+<p>
+  Genera configuraciones completas de VPN WireGuard para MikroTik RouterOS con
+  un constructor interactivo. Configura los parámetros de tu VPN, añade peers y
+  obtén un script RouterOS listo para pegar junto con archivos
+  <code>.conf</code> de cliente.
+</p>
+
+<h3>Características</h3>
+<ul>
+  <li>
+    <strong>3 presets</strong> — Solo IPv4, Dual-Stack (recomendado),
+    Site-to-Site
+  </li>
+  <li>
+    <strong>Soporte dual-stack</strong> — configuración completa IPv4 + IPv6
+    ULA con NAT66
+  </li>
+  <li>
+    <strong>Reglas de firewall completas</strong> — Input, forward,
+    NAT/masquerade, MSS clamping, protección contra flood RAW, FastTrack
+  </li>
+  <li>
+    <strong>Múltiples peers</strong> — añade clientes ilimitados con
+    direcciones IP autoasignadas y personalización por peer
+  </li>
+  <li>
+    <strong>Opciones de generación de claves</strong> — claves autogeneradas
+    por RouterOS (recomendado) o entrada manual de clave pública
+  </li>
+  <li>
+    <strong>Archivos de configuración de cliente</strong> — archivos
+    WireGuard <code>.conf</code> completos para cada peer con soporte de
+    túnel completo o dividido
+  </li>
+  <li>
+    <strong>Propiedades de cliente</strong> — autogenera propiedades
+    <code>client-*</code> para soporte de códigos QR en WinBox/WebFig
+  </li>
+  <li>
+    <strong>Gestión de listas de interfaces</strong> — pertenencia configurable
+    a listas WAN, VPN y LAN
+  </li>
+  <li>
+    <strong>Subredes LAN adicionales</strong> — permite acceso VPN a redes
+    adicionales (IoT, invitados, etc.)
+  </li>
+</ul>
+
+<h3>Cómo usar</h3>
+<ol>
+  <li>
+    Selecciona un <strong>preset</strong> para empezar con una configuración
+    común, o personaliza desde cero
+  </li>
+  <li>
+    Configura los ajustes de la <strong>interfaz WireGuard</strong> (nombre,
+    puerto, MTU)
+  </li>
+  <li>
+    Establece los <strong>parámetros de red</strong> (subred VPN, subred LAN,
+    prefijo IPv6)
+  </li>
+  <li>
+    Introduce tu <strong>endpoint público</strong> (nombre de dominio o
+    hostname DDNS)
+  </li>
+  <li>
+    Añade <strong>peers</strong> para cada dispositivo cliente con direcciones
+    IP únicas
+  </li>
+  <li>
+    Elige entre <strong>túnel completo</strong> (todo el tráfico por VPN) o{" "}
+    <strong>túnel dividido</strong> (solo subredes especificadas)
+  </li>
+  <li>
+    <strong>Copia</strong> la configuración RouterOS generada y pégala en la
+    terminal de tu router
+  </li>
+  <li>
+    Usa los <strong>archivos de configuración de cliente</strong> para
+    configurar cada dispositivo, o escanea el código QR desde WinBox/WebFig
+  </li>
+</ol>
+
+<h3>Secciones de configuración generadas</h3>
+<ul>
+  <li>
+    <strong>Creación de interfaz</strong> — interfaz WireGuard con MTU y
+    puerto de escucha
+  </li>
+  <li>
+    <strong>Direccionamiento IP</strong> — direcciones IPv4 e IPv6 (ULA) en
+    la interfaz
+  </li>
+  <li>
+    <strong>Pool IPv6</strong> — pool de direcciones para delegación de
+    prefijo IPv6
+  </li>
+  <li>
+    <strong>Listas de interfaces</strong> — pertenencia a listas VPN y LAN
+    para coincidencia en reglas de firewall
+  </li>
+  <li>
+    <strong>Listas de direcciones</strong> — lista de direcciones de firewall
+    para FastTrack y coincidencia de reglas
+  </li>
+  <li>
+    <strong>Firewall input</strong> — aceptar puerto UDP WireGuard en IPv4
+    e IPv6
+  </li>
+  <li>
+    <strong>Firewall forward</strong> — VPN a Internet, VPN a LAN y reglas
+    de respuesta
+  </li>
+  <li>
+    <strong>NAT/masquerade</strong> — masquerade IPv4 y NAT66 para IPv6
+  </li>
+  <li>
+    <strong>MSS clamping</strong> — previene problemas de fragmentación con
+    valor MSS calculado automáticamente
+  </li>
+  <li>
+    <strong>Reglas RAW</strong> — omitir protección contra flood para el
+    puerto WireGuard
+  </li>
+  <li>
+    <strong>Definiciones de peers</strong> — todos los peers con propiedades
+    de cliente para generación de códigos QR
+  </li>
+</ul>
+
+<h2>Privacidad</h2>
+<p>
+  Esta herramienta se ejecuta <strong>completamente en tu navegador</strong>.
+  No se envía ningún dato a ningún servidor — toda la configuración se genera
+  localmente con JavaScript. Los ajustes de red, las direcciones IP y las
+  claves que introduzcas nunca salen de tu dispositivo.
+</p>
+
+<h2>Más información</h2>
+<ul>
+  <li>
+    <a href="/blog/007-mikrotik-wireguard-dual-stack-vpn/">
+      VPN Dual-Stack WireGuard con MikroTik — Guía paso a paso
+    </a>
+  </li>
+  <li>
+    <a
+      href="https://help.mikrotik.com/docs/spaces/ROS/pages/69664792/WireGuard"
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      Documentación de WireGuard en MikroTik
+    </a>
+  </li>
+  <li>
+    <a
+      href="https://www.wireguard.com/"
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      Sitio oficial de WireGuard
+    </a>
+  </li>
+</ul>

@@ -42,11 +42,19 @@ const titleId = `section-${crypto.getRandomValues(new Uint32Array(1))[0]}`;
 - No inline styles — use UnoCSS classes
 - External links: `rel="external noopener noreferrer"` + `target="_blank"`
 
+## i18n
+
+- All user-facing text must use `t()` from `useTranslations()`
+- Pattern: `const locale = getLangFromUrl(Astro.url); const t = useTranslations(locale);`
+- Import from `@src/i18n/utils`
+- Client-side scripts: inject translations via `data-*` attributes
+- Never hardcode English strings in templates or ARIA labels
+
 ## Accessibility
 
 - WCAG 2.2 AA minimum
 - `aria-labelledby` for sections with visible headings
-- `aria-label` when no visible heading
+- `aria-label` when no visible heading — use `t()` for the label
 - `role="note"` for informational asides
 - Focus-visible styles required on interactive elements
 - `prefers-reduced-motion` support for animations

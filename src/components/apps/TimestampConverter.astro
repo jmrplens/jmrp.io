@@ -15,13 +15,48 @@
  * @example
  * <TimestampConverter title="Unix Timestamp Converter" />
  */
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslations } from "@i18n/utils";
+
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
 
 interface Props {
   title?: string;
 }
 
-const { title = "Unix Timestamp Converter" } = Astro.props;
+const { title = t("tools.timestampConverter.title") } = Astro.props;
 const uniqueId = `ts-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
+
+/** Translations passed to the inline script via define:vars. */
+const i18n = {
+  local: t("tools.timestampConverter.local"),
+  invalidTimestamp: t("tools.timestampConverter.invalidTimestamp"),
+  autoDetectedAsSeconds: t("tools.timestampConverter.autoDetectedAs").replace(
+    "{unit}",
+    t("tools.timestampConverter.seconds").toLowerCase(),
+  ),
+  autoDetectedAsMilliseconds: t(
+    "tools.timestampConverter.autoDetectedAs",
+  ).replace("{unit}", t("tools.timestampConverter.milliseconds").toLowerCase()),
+  invalidDate: t("tools.timestampConverter.invalidDate"),
+  year: t("tools.timestampConverter.year"),
+  years: t("tools.timestampConverter.years"),
+  month: t("tools.timestampConverter.month"),
+  months: t("tools.timestampConverter.months"),
+  day: t("tools.timestampConverter.day"),
+  days: t("tools.timestampConverter.days"),
+  hour: t("tools.timestampConverter.hour"),
+  hours: t("tools.timestampConverter.hours"),
+  minute: t("tools.timestampConverter.minute"),
+  minutes: t("tools.timestampConverter.minutes"),
+  second: t("tools.timestampConverter.second"),
+  ago: t("tools.timestampConverter.ago"),
+  fromNow: t("tools.timestampConverter.fromNow"),
+  copied: t("tools.shared.copied"),
+  shareLink: t("tools.shared.shareLink"),
+  secondsRelative: t("tools.timestampConverter.seconds_relative"),
+};
 ---
 
 <div
@@ -37,7 +72,7 @@ const uniqueId = `ts-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
         class="i-mdi:clock-outline ts-current-icon"
         aria-hidden="true"
       ></span>
-      <span>Current Unix Timestamp:</span>
+      <span>{t("tools.timestampConverter.currentTimestamp")}</span>
       <code
         class="ts-current-value"
         id={`${uniqueId}-current`}
@@ -46,13 +81,13 @@ const uniqueId = `ts-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
       <button
         type="button"
         class="ts-now-btn"
-        aria-label="Fill input with current timestamp"
+        aria-label={t("tools.timestampConverter.fillCurrentAriaLabel")}
       >
         <span
           class="i-mdi:clock-fast"
           aria-hidden="true"
         ></span>
-        <span>Now</span>
+        <span>{t("tools.timestampConverter.now")}</span>
       </button>
     </div>
 
@@ -63,17 +98,17 @@ const uniqueId = `ts-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
           class="i-mdi:arrow-right-bold"
           aria-hidden="true"
         ></span>
-        <span>Timestamp → Date</span>
+        <span>{t("tools.timestampConverter.timestampToDate")}</span>
       </div>
       <div class="ts-input-row">
         <input
           type="text"
           id={`${uniqueId}-ts-input`}
           class="ts-input"
-          placeholder="Enter Unix timestamp..."
+          placeholder={t("tools.timestampConverter.inputPlaceholder")}
           spellcheck="false"
           autocomplete="off"
-          aria-label="Unix timestamp input"
+          aria-label={t("tools.timestampConverter.inputAriaLabel")}
           inputmode="numeric"
         />
         <div class="ts-unit-toggle">
@@ -81,19 +116,19 @@ const uniqueId = `ts-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
             type="button"
             class="ts-unit-btn active"
             data-unit="auto"
-            >Auto</button
+            >{t("tools.timestampConverter.auto")}</button
           >
           <button
             type="button"
             class="ts-unit-btn"
             data-unit="s"
-            >Seconds</button
+            >{t("tools.timestampConverter.seconds")}</button
           >
           <button
             type="button"
             class="ts-unit-btn"
             data-unit="ms"
-            >Milliseconds</button
+            >{t("tools.timestampConverter.milliseconds")}</button
           >
         </div>
       </div>
@@ -108,7 +143,9 @@ const uniqueId = `ts-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
         id={`${uniqueId}-ts-results`}
       >
         <div class="ts-result-item">
-          <span class="ts-result-label">Local Time</span>
+          <span class="ts-result-label"
+            >{t("tools.timestampConverter.localTime")}</span
+          >
           <div class="ts-result-with-copy">
             <code
               class="ts-result-value"
@@ -119,14 +156,16 @@ const uniqueId = `ts-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
               type="button"
               class="ts-copy-btn"
               data-target-id={`${uniqueId}-local`}
-              aria-label="Copy local time"
+              aria-label={t("tools.timestampConverter.copyLocalTime")}
             >
               <span class="i-mdi:content-copy"></span>
             </button>
           </div>
         </div>
         <div class="ts-result-item">
-          <span class="ts-result-label">UTC (ISO 8601)</span>
+          <span class="ts-result-label"
+            >{t("tools.timestampConverter.utcIso8601")}</span
+          >
           <div class="ts-result-with-copy">
             <code
               class="ts-result-value"
@@ -137,14 +176,16 @@ const uniqueId = `ts-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
               type="button"
               class="ts-copy-btn"
               data-target-id={`${uniqueId}-utc`}
-              aria-label="Copy UTC time"
+              aria-label={t("tools.timestampConverter.copyUtcTime")}
             >
               <span class="i-mdi:content-copy"></span>
             </button>
           </div>
         </div>
         <div class="ts-result-item">
-          <span class="ts-result-label">RFC 2822</span>
+          <span class="ts-result-label"
+            >{t("tools.timestampConverter.rfc2822")}</span
+          >
           <div class="ts-result-with-copy">
             <code
               class="ts-result-value"
@@ -155,14 +196,16 @@ const uniqueId = `ts-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
               type="button"
               class="ts-copy-btn"
               data-target-id={`${uniqueId}-rfc`}
-              aria-label="Copy RFC 2822 date"
+              aria-label={t("tools.timestampConverter.copyRfc2822")}
             >
               <span class="i-mdi:content-copy"></span>
             </button>
           </div>
         </div>
         <div class="ts-result-item">
-          <span class="ts-result-label">Short Date</span>
+          <span class="ts-result-label"
+            >{t("tools.timestampConverter.shortDate")}</span
+          >
           <div class="ts-result-with-copy">
             <code
               class="ts-result-value"
@@ -173,14 +216,16 @@ const uniqueId = `ts-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
               type="button"
               class="ts-copy-btn"
               data-target-id={`${uniqueId}-short`}
-              aria-label="Copy short date"
+              aria-label={t("tools.timestampConverter.copyShortDate")}
             >
               <span class="i-mdi:content-copy"></span>
             </button>
           </div>
         </div>
         <div class="ts-result-item">
-          <span class="ts-result-label">Relative</span>
+          <span class="ts-result-label"
+            >{t("tools.timestampConverter.relative")}</span
+          >
           <code
             class="ts-result-value"
             id={`${uniqueId}-relative`}
@@ -188,7 +233,9 @@ const uniqueId = `ts-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
           >
         </div>
         <div class="ts-result-item">
-          <span class="ts-result-label">Day of Week</span>
+          <span class="ts-result-label"
+            >{t("tools.timestampConverter.dayOfWeek")}</span
+          >
           <code
             class="ts-result-value"
             id={`${uniqueId}-dow`}
@@ -196,7 +243,9 @@ const uniqueId = `ts-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
           >
         </div>
         <div class="ts-result-item">
-          <span class="ts-result-label">Week Number</span>
+          <span class="ts-result-label"
+            >{t("tools.timestampConverter.weekNumber")}</span
+          >
           <code
             class="ts-result-value"
             id={`${uniqueId}-week`}
@@ -204,7 +253,9 @@ const uniqueId = `ts-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
           >
         </div>
         <div class="ts-result-item">
-          <span class="ts-result-label">Day of Year</span>
+          <span class="ts-result-label"
+            >{t("tools.timestampConverter.dayOfYear")}</span
+          >
           <code
             class="ts-result-value"
             id={`${uniqueId}-doy`}
@@ -221,11 +272,13 @@ const uniqueId = `ts-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
           class="i-mdi:arrow-left-bold"
           aria-hidden="true"
         ></span>
-        <span>Date → Timestamp</span>
+        <span>{t("tools.timestampConverter.dateToTimestamp")}</span>
       </div>
       <div class="ts-date-inputs">
         <div class="ts-date-field">
-          <label for={`${uniqueId}-date`}>Date</label>
+          <label for={`${uniqueId}-date`}
+            >{t("tools.timestampConverter.date")}</label
+          >
           <input
             type="date"
             id={`${uniqueId}-date`}
@@ -233,7 +286,9 @@ const uniqueId = `ts-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
           />
         </div>
         <div class="ts-date-field">
-          <label for={`${uniqueId}-time`}>Time</label>
+          <label for={`${uniqueId}-time`}
+            >{t("tools.timestampConverter.time")}</label
+          >
           <input
             type="time"
             id={`${uniqueId}-time`}
@@ -244,7 +299,9 @@ const uniqueId = `ts-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
       </div>
       <div class="ts-results">
         <div class="ts-result-item">
-          <span class="ts-result-label">Unix (seconds)</span>
+          <span class="ts-result-label"
+            >{t("tools.timestampConverter.unixSeconds")}</span
+          >
           <div class="ts-result-with-copy">
             <code
               class="ts-result-value"
@@ -255,14 +312,16 @@ const uniqueId = `ts-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
               type="button"
               class="ts-copy-btn"
               data-target-id={`${uniqueId}-unix-s`}
-              aria-label="Copy seconds timestamp"
+              aria-label={t("tools.timestampConverter.copySecondsTimestamp")}
             >
               <span class="i-mdi:content-copy"></span>
             </button>
           </div>
         </div>
         <div class="ts-result-item">
-          <span class="ts-result-label">Unix (milliseconds)</span>
+          <span class="ts-result-label"
+            >{t("tools.timestampConverter.unixMilliseconds")}</span
+          >
           <div class="ts-result-with-copy">
             <code
               class="ts-result-value"
@@ -273,14 +332,18 @@ const uniqueId = `ts-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
               type="button"
               class="ts-copy-btn"
               data-target-id={`${uniqueId}-unix-ms`}
-              aria-label="Copy milliseconds timestamp"
+              aria-label={t(
+                "tools.timestampConverter.copyMillisecondsTimestamp",
+              )}
             >
               <span class="i-mdi:content-copy"></span>
             </button>
           </div>
         </div>
         <div class="ts-result-item">
-          <span class="ts-result-label">ISO 8601</span>
+          <span class="ts-result-label"
+            >{t("tools.timestampConverter.iso8601")}</span
+          >
           <div class="ts-result-with-copy">
             <code
               class="ts-result-value"
@@ -291,14 +354,16 @@ const uniqueId = `ts-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
               type="button"
               class="ts-copy-btn"
               data-target-id={`${uniqueId}-iso`}
-              aria-label="Copy ISO timestamp"
+              aria-label={t("tools.timestampConverter.copyIsoTimestamp")}
             >
               <span class="i-mdi:content-copy"></span>
             </button>
           </div>
         </div>
         <div class="ts-result-item">
-          <span class="ts-result-label">RFC 2822</span>
+          <span class="ts-result-label"
+            >{t("tools.timestampConverter.rfc2822")}</span
+          >
           <div class="ts-result-with-copy">
             <code
               class="ts-result-value"
@@ -309,7 +374,7 @@ const uniqueId = `ts-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
               type="button"
               class="ts-copy-btn"
               data-target-id={`${uniqueId}-rfc2`}
-              aria-label="Copy RFC 2822 date"
+              aria-label={t("tools.timestampConverter.copyRfc2822")}
             >
               <span class="i-mdi:content-copy"></span>
             </button>
@@ -325,18 +390,18 @@ const uniqueId = `ts-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
           class="i-mdi:earth"
           aria-hidden="true"
         ></span>
-        <span>Timezone Comparison</span>
+        <span>{t("tools.timestampConverter.timezoneComparison")}</span>
       </div>
       <div class="ts-tz-wrap">
         <table
           class="ts-tz-table"
-          aria-label="Timestamp in different timezones"
+          aria-label={t("tools.timestampConverter.timezoneTableAriaLabel")}
         >
           <thead>
             <tr>
-              <th scope="col">City</th>
-              <th scope="col">Date &amp; Time</th>
-              <th scope="col">Zone</th>
+              <th scope="col">{t("tools.timestampConverter.thCity")}</th>
+              <th scope="col">{t("tools.timestampConverter.thDateTime")}</th>
+              <th scope="col">{t("tools.timestampConverter.thZone")}</th>
             </tr>
           </thead>
           <tbody id={`${uniqueId}-tz-body`}></tbody>
@@ -349,19 +414,19 @@ const uniqueId = `ts-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
       <button
         type="button"
         class="ts-share-btn"
-        aria-label="Copy shareable link"
+        aria-label={t("tools.timestampConverter.copyShareableLink")}
       >
         <span
           class="i-mdi:share-variant"
           aria-hidden="true"
         ></span>
-        <span class="ts-share-text">Share Link</span>
+        <span class="ts-share-text">{t("tools.shared.shareLink")}</span>
       </button>
     </div>
   </div>
 </div>
 
-<script is:inline define:vars={{ uniqueId }}>
+<script is:inline define:vars={{ uniqueId, i18n }}>
   (function () {
     var container = document.querySelector('[data-ts-id="' + uniqueId + '"]');
     if (!container) return;
@@ -421,7 +486,7 @@ const uniqueId = `ts-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
 
     /* ── Timezone list ── */
     var tzList = [
-      { tz: "local", label: "Local" },
+      { tz: "local", label: i18n.local },
       { tz: "UTC", label: "UTC" },
       { tz: "America/New_York", label: "New York" },
       { tz: "America/Los_Angeles", label: "Los Angeles" },
@@ -545,15 +610,19 @@ const uniqueId = `ts-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
       var years = Math.floor(daysDiff / 365.25);
 
       var str;
-      if (years > 0) str = years + " year" + (years > 1 ? "s" : "");
-      else if (months > 0) str = months + " month" + (months > 1 ? "s" : "");
+      if (years > 0) str = years + " " + (years > 1 ? i18n.years : i18n.year);
+      else if (months > 0)
+        str = months + " " + (months > 1 ? i18n.months : i18n.month);
       else if (daysDiff > 0)
-        str = daysDiff + " day" + (daysDiff > 1 ? "s" : "");
-      else if (hours > 0) str = hours + " hour" + (hours > 1 ? "s" : "");
-      else if (mins > 0) str = mins + " minute" + (mins > 1 ? "s" : "");
-      else str = secs + " second" + (secs !== 1 ? "s" : "");
+        str = daysDiff + " " + (daysDiff > 1 ? i18n.days : i18n.day);
+      else if (hours > 0)
+        str = hours + " " + (hours > 1 ? i18n.hours : i18n.hour);
+      else if (mins > 0)
+        str = mins + " " + (mins > 1 ? i18n.minutes : i18n.minute);
+      else str = secs + " " + (secs !== 1 ? i18n.secondsRelative : i18n.second);
 
-      return str + (isPast ? " ago" : " from now");
+      var template = isPast ? i18n.ago : i18n.fromNow;
+      return template.replace("{time}", str);
     }
 
     function formatInTz(date, tz) {
@@ -696,7 +765,7 @@ const uniqueId = `ts-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
 
       var num = parseFloat(val);
       if (isNaN(num) || !isFinite(num)) {
-        if (localEl) localEl.textContent = "Invalid timestamp";
+        if (localEl) localEl.textContent = i18n.invalidTimestamp;
         syncing = false;
         return;
       }
@@ -710,12 +779,14 @@ const uniqueId = `ts-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
       if (detectHint) {
         detectHint.textContent =
           unit === "auto"
-            ? "Auto-detected as " + (eff === "ms" ? "milliseconds" : "seconds")
+            ? eff === "ms"
+              ? i18n.autoDetectedAsMilliseconds
+              : i18n.autoDetectedAsSeconds
             : "";
       }
 
       if (isNaN(date.getTime())) {
-        if (localEl) localEl.textContent = "Invalid date";
+        if (localEl) localEl.textContent = i18n.invalidDate;
         syncing = false;
         return;
       }
@@ -748,7 +819,7 @@ const uniqueId = `ts-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
       var date = new Date(dateStr + "T" + timeStr);
 
       if (isNaN(date.getTime())) {
-        if (unixS) unixS.textContent = "Invalid date";
+        if (unixS) unixS.textContent = i18n.invalidDate;
         syncing = false;
         return;
       }
@@ -842,10 +913,10 @@ const uniqueId = `ts-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
         if (navigator.clipboard) {
           navigator.clipboard.writeText(window.location.href).then(function () {
             shareBtn.classList.add("copied");
-            if (shareText) shareText.textContent = "Copied!";
+            if (shareText) shareText.textContent = i18n.copied;
             setTimeout(function () {
               shareBtn.classList.remove("copied");
-              if (shareText) shareText.textContent = "Share Link";
+              if (shareText) shareText.textContent = i18n.shareLink;
             }, 1500);
           });
         }

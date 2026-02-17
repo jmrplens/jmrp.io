@@ -372,6 +372,9 @@ export default defineConfig({
   build: {
     // Inline critical CSS to improve performance
     inlineStylesheets: "always",
+    // Parallelize page rendering (default: 1). Improves build time
+    // for large sites with many pages (EN + ES).
+    concurrency: 2,
   },
 
   // Production minification

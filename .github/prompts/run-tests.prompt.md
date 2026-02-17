@@ -22,7 +22,7 @@ For **all tests** (full QA pipeline — 14 sequential steps, fail-fast):
 ```bash
 pnpm verify
 ```
-Pipeline steps: Astro Check → ESLint → Prettier → Stylelint → Production Build → HTML5 Validation → RSS Feed → Schema.org JSON-LD → Spelling (Typos) → Broken Links (Lychee) → JSDoc Coverage → SonarCloud Analysis* → SonarCloud Issues* → Playwright E2E.
+Pipeline steps: Astro Check → ESLint → Prettier → Stylelint → Production Build → HTML5 Validation → RSS Feed → Schema.org JSON-LD → Spelling (CSpell) → Broken Links (Lychee) → JSDoc Coverage → SonarCloud Analysis* → SonarCloud Issues* → Playwright E2E.
 *SonarCloud steps require `SONAR_TOKEN` env var.
 
 For **specific Playwright suites**:
@@ -52,7 +52,7 @@ pnpm lint             # ESLint
 pnpm lint:css         # Stylelint
 pnpm lint:html        # HTML5 validation (requires build)
 pnpm verify-icons     # Icon consistency (not in verify pipeline)
-pnpm exec typos       # Spell check
+pnpm exec cspell lint . # Spell check (bilingual EN/ES)
 pnpm exec prettier --check .  # Format check
 ```
 

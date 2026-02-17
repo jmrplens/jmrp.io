@@ -266,6 +266,31 @@ test.describe("SEO & Metadata Checks", () => {
     expect(content).toContain('rel="self"');
   });
 
+  test("ES RSS feed is valid and accessible", async ({ page }) => {
+    const response = await page.goto("/es/rss.xml");
+    expect(response?.status()).toBe(200);
+
+    const content = await response?.text();
+    expect(content).toBeDefined();
+
+    // Verify RSS structure
+    expect(content).toContain("<rss");
+    expect(content).toContain("<channel>");
+    expect(content).toContain("<title>");
+    expect(content).toContain("<link>");
+    expect(content).toContain("<description>");
+    expect(content).toContain("<item>");
+
+    // Verify Spanish language tag
+    expect(content).toContain("<language>es-es</language>");
+
+    // Verify channel has image element
+    expect(content).toContain("<image>");
+
+    // Verify Atom self-link for feed readers
+    expect(content).toContain('rel="self"');
+  });
+
   test("llms.txt exists and has valid structure", async ({ page }) => {
     const response = await page.goto("/llms.txt");
     expect(response?.status()).toBe(200);

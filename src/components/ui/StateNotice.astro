@@ -3,6 +3,9 @@
  * StateNotice Component (formerly DeprecatedNotice)
  * Banner for state notices with multiple types: deprecated, mandatory, experimental, preview, etc.
  */
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslations } from "@i18n/utils";
+
 interface Props {
   type?:
     | "deprecated"
@@ -27,6 +30,9 @@ const {
   title,
 } = Astro.props;
 
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
+
 type NoticeType = NonNullable<Props["type"]>;
 const config: Record<
   NoticeType,
@@ -40,42 +46,42 @@ const config: Record<
 > = {
   deprecated: {
     icon: "mdi:alert-octagon",
-    label: "Deprecated",
+    label: t("components.stateNotice.deprecated"),
     color: "#ef4444",
     bgColor: "239 68 68",
     textColor: "#991b1b", // red-800 for WCAG AA (~5.8:1)
   },
   mandatory: {
     icon: "mdi:check-decagram",
-    label: "Mandatory",
+    label: t("components.stateNotice.mandatory"),
     color: "#10b981",
     bgColor: "16 185 129",
     textColor: "#065f46", // emerald-800 for WCAG AA (~6.5:1)
   },
   experimental: {
     icon: "mdi:flask",
-    label: "Experimental",
+    label: t("components.stateNotice.experimental"),
     color: "#f59e0b",
     bgColor: "245 158 11",
     textColor: "#92400e", // amber-800 for WCAG AA (~6.3:1)
   },
   preview: {
     icon: "mdi:eye",
-    label: "Preview",
+    label: t("components.stateNotice.preview"),
     color: "#3b82f6",
     bgColor: "59 130 246",
     textColor: "#1e40af", // blue-800 for WCAG AA (~6.1:1)
   },
   breaking: {
     icon: "mdi:alert-box",
-    label: "Breaking Change",
+    label: t("components.stateNotice.breakingChange"),
     color: "#dc2626",
     bgColor: "220 38 38",
     textColor: "#7f1d1d", // red-900 for WCAG AA (~7.8:1)
   },
   security: {
     icon: "mdi:shield-alert",
-    label: "Security",
+    label: t("components.stateNotice.security"),
     color: "#f97316",
     bgColor: "249 115 22",
     textColor: "#9a3412", // orange-800 for WCAG AA (~5.9:1)
@@ -84,6 +90,38 @@ const config: Record<
 
 const current = config[type];
 const displayTitle = title || current.label;
+
+/** Map type to the corresponding state message translation key */
+const stateMessages: Record<NoticeType, string> = {
+  deprecated: t("components.stateNotice.isDeprecated"),
+  mandatory: t("components.stateNotice.isRequired"),
+  experimental: t("components.stateNotice.isExperimental"),
+  preview: t("components.stateNotice.isInPreview"),
+  breaking: t("components.stateNotice.introducesBreaking"),
+  security: t("components.stateNotice.hasSecurityImplications"),
+};
+
+/** Map type to the corresponding removal date message */
+const removalMessages: Record<NoticeType, string | null> = {
+  deprecated: removalDate
+    ? t("components.stateNotice.willBeRemoved", { date: removalDate })
+    : null,
+  mandatory: removalDate
+    ? t("components.stateNotice.effectiveFrom", { date: removalDate })
+    : null,
+  breaking: removalDate
+    ? t("components.stateNotice.effectiveFrom", { date: removalDate })
+    : null,
+  security: removalDate
+    ? t("components.stateNotice.mitigationRequired", { date: removalDate })
+    : null,
+  experimental: removalDate
+    ? t("components.stateNotice.target", { date: removalDate })
+    : null,
+  preview: removalDate
+    ? t("components.stateNotice.target", { date: removalDate })
+    : null,
+};
 ---
 
 <div
@@ -104,23 +142,9 @@ const displayTitle = title || current.label;
       feature && (
         <p class="sn-message">
           <code class="sn-feature">{feature}</code>
-          {type === "deprecated" && " is deprecated"}
-          {type === "mandatory" && " is required"}
-          {type === "experimental" && " is experimental"}
-          {type === "preview" && " is in preview"}
-          {type === "breaking" && " introduces breaking changes"}
-          {type === "security" && " has security implications"}
-          {removalDate && (
-            <span class="sn-date">
-              {type === "deprecated" &&
-                ` and will be removed in ${removalDate}`}
-              {(type === "breaking" || type === "mandatory") &&
-                ` effective from ${removalDate}`}
-              {type === "security" &&
-                ` — mitigation required by ${removalDate}`}
-              {(type === "experimental" || type === "preview") &&
-                ` — target: ${removalDate}`}
-            </span>
+          {stateMessages[type]}
+          {removalMessages[type] && (
+            <span class="sn-date">{removalMessages[type]}</span>
           )}
           .
         </p>
@@ -130,14 +154,16 @@ const displayTitle = title || current.label;
       alternative && (
         <p class="sn-alternative">
           <span class="sn-label">
-            {type === "deprecated" ? "Use instead:" : "Recommended:"}
+            {type === "deprecated"
+              ? t("components.stateNotice.useInstead")
+              : t("components.stateNotice.recommended")}
           </span>
           {alternativeUrl ? (
             <a
               href={alternativeUrl}
               target="_blank"
               rel="noopener noreferrer"
-              aria-label={`${alternative} (opens in a new tab)`}
+              aria-label={t("aria.opensNewTab", { text: alternative })}
             >
               <code class="sn-alt-code">{alternative}</code>
             </a>
