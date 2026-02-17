@@ -42,13 +42,13 @@ const getUrls = () => {
     if (!fs.existsSync(sitemapPath)) {
       console.warn("⚠️ Sitemap not found at " + sitemapPath);
       return [
-        "http://localhost/",
-        "http://localhost/homelab/",
-        "http://localhost/tools/",
-        "http://localhost/cv/",
-        "http://localhost/publications/",
-        "http://localhost/github/",
-        "http://localhost/blog/",
+        "http://localhost:4321/",
+        "http://localhost:4321/homelab/",
+        "http://localhost:4321/tools/",
+        "http://localhost:4321/cv/",
+        "http://localhost:4321/publications/",
+        "http://localhost:4321/github/",
+        "http://localhost:4321/blog/",
       ];
     }
 
@@ -59,8 +59,8 @@ const getUrls = () => {
 
     while ((match = regex.exec(content)) !== null) {
       let url = match[1];
-      // Replace production domain with localhost magic string for LHCI
-      url = url.replace("https://jmrp.io", "http://localhost");
+      // Replace production domain with localhost:4321 for LHCI preview server
+      url = url.replace("https://jmrp.io", "http://localhost:4321");
       urls.push(url);
     }
 
@@ -76,14 +76,15 @@ const getUrls = () => {
     return urls;
   } catch (error) {
     console.error("❌ Error parsing sitemap for URLs:", error);
-    return ["http://localhost/"];
+    return ["http://localhost:4321/"];
   }
 };
 
 module.exports = {
   ci: {
     collect: {
-      staticDistDir: "./dist",
+      startServerCommand: "pnpm astro preview --port 4321",
+      startServerReadyPattern: "Local",
       url: getUrls(),
       numberOfRuns: 3,
       outputDir: "lighthouse-results",
