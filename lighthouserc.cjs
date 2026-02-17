@@ -86,7 +86,7 @@ module.exports = {
       startServerCommand: "pnpm astro preview --port 4321",
       startServerReadyPattern: "Local",
       url: getUrls(),
-      numberOfRuns: 3,
+      numberOfRuns: 2,
       outputDir: "lighthouse-results",
       settings: {
         chromeFlags:

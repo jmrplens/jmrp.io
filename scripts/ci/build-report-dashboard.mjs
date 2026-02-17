@@ -71,7 +71,7 @@ const reports = [
   { id: "a11y", src: "a11y-deploy", dest: "a11y", main: "index.html" },
   {
     id: "html",
-    src: "html-report.html",
+    src: "html-validation-report.html",
     dest: "html/index.html",
     main: "index.html",
   },
@@ -177,6 +177,7 @@ if (fs.existsSync("rss-validation.json")) {
   }
 }
 const rssAllValid = rssFeeds.length > 0 && rssFeeds.every((f) => f.valid);
+const rssStatusText = rssFeeds.length === 0 ? "N/A" : "Invalid";
 const rssTotalItems = rssFeeds.reduce(
   (sum, f) => sum + (f.metadata?.items || 0),
   0,
@@ -988,7 +989,7 @@ const html = `
             <div class="card">
                 <div class="card-header">
                     <div class="card-icon">📡</div>
-                    <span class="status-badge ${rssAllValid ? "status-success" : "status-danger"}">${rssAllValid ? "Valid" : rssFeeds.length === 0 ? "N/A" : "Invalid"}</span>
+                    <span class="status-badge ${rssAllValid ? "status-success" : "status-danger"}">${rssAllValid ? "Valid" : rssStatusText}</span>
                 </div>
                 <div class="card-title">RSS Feeds</div>
                 <div class="card-value">${rssTotalItems} Items</div>
@@ -1029,8 +1030,8 @@ const html = `
                         <tr><td>Prettier</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(saOutcomes.prettier)}">${saOutcomes.prettier || "Pending"}</span> <a href="javascript:void(0)" onclick="openLog('prettier')" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Log</a></div></td></tr>
                         <tr><td>ESLint</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(saOutcomes.eslint)}">${saOutcomes.eslint || "Pending"}</span> <a href="javascript:void(0)" onclick="openLog('eslint')" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Log</a></div></td></tr>
                         <tr><td>Stylelint</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(saOutcomes.stylelint)}">${saOutcomes.stylelint || "Pending"}</span> <a href="javascript:void(0)" onclick="openLog('stylelint')" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Log</a></div></td></tr>
-                        <tr><td>Link Checker</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(saOutcomes.lychee)}">${saOutcomes.lychee || "Pending"}</span> ${status.lychee && saOutcomes.lychee === "success" ? '<a href="lychee/" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Report</a>' : ""} ${runId ? `<a href="${workflowUrl}" target="_blank" rel="noopener noreferrer" style="font-size:0.8rem; color:var(--text-muted); text-decoration:none;">GitHub ↗</a>` : ""}</div></td></tr>
-                        <tr><td>Spell Checker</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(saOutcomes.cspell)}">${saOutcomes.cspell || "Pending"}</span> ${runId ? `<a href="${workflowUrl}" target="_blank" rel="noopener noreferrer" style="font-size:0.8rem; color:var(--text-muted); text-decoration:none;">GitHub ↗</a>` : ""}</div></td></tr>
+                        <tr><td>Link Checker</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(saOutcomes.lychee)}">${saOutcomes.lychee || "Pending"}</span> ${status.lychee ? '<a href="lychee/" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Report</a>' : ""} ${runId ? `<a href="${workflowUrl}" target="_blank" rel="noopener noreferrer" style="font-size:0.8rem; color:var(--text-muted); text-decoration:none;">↗</a>` : ""}</div></td></tr>
+                        <tr><td>Spell Checker</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(saOutcomes.cspell)}">${saOutcomes.cspell || "Pending"}</span> <a href="javascript:void(0)" onclick="openLog('cspell')" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Log</a> ${runId ? `<a href="${workflowUrl}" target="_blank" rel="noopener noreferrer" style="font-size:0.8rem; color:var(--text-muted); text-decoration:none;">↗</a>` : ""}</div></td></tr>
                         <tr><td>Security Audit</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(saOutcomes.security)}">${saOutcomes.security || "Pending"}</span> <a href="javascript:void(0)" onclick="openLog('security-audit')" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Log</a></div></td></tr>
                         <tr><td>SonarQube</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(saOutcomes.sonar)}">${saOutcomes.sonar || "Pending"}</span> <a href="https://sonarcloud.io/summary/new_code?id=jmrplens_jmrp.io" target="_blank" rel="noopener noreferrer" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Sonar ↗</a></div></td></tr>
                         <tr><td>JSDoc Coverage</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(saOutcomes.jsdoc)}">${saOutcomes.jsdoc || "Pending"}</span> <a href="javascript:void(0)" onclick="openLog('jsdoc-coverage')" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Log</a></div></td></tr>
