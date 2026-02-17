@@ -1,4 +1,8 @@
 ---
+/**
+ * Spanish Blog Tags — wrapper page.
+ * Generates `/es/blog/tags/[tag]/` routes with Spanish translations.
+ */
 import "@styles/blog.css";
 
 import PostGrid from "@components/blog/PostGrid.astro";
@@ -58,7 +62,6 @@ const articleWord = pluralize(
   locale,
 );
 
-// Schema.org: CollectionPage with ItemList
 const schema = {
   "@type": "CollectionPage",
   "@id": new URL(

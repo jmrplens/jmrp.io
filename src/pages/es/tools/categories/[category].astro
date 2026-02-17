@@ -1,8 +1,7 @@
 ---
 /**
- * Tool Category Page.
- * Displays tools filtered by category (security, developer, network, embedded, mikrotik).
- * Pattern mirrors blog/tags/[tag].astro but for tool categories.
+ * Spanish Tool Category Page.
+ * Generates `/es/tools/categories/[category]/` routes with Spanish translations.
  */
 import BaseLayout from "@layouts/BaseLayout.astro";
 import { getSiteUrl } from "@utils/site";
@@ -185,7 +184,6 @@ const schema = {
 </BaseLayout>
 
 <style>
-  /* Breadcrumb */
   .breadcrumb {
     display: flex;
     gap: var(--space-xs);
@@ -210,7 +208,6 @@ const schema = {
     height: 1rem;
   }
 
-  /* Page header */
   .page-header {
     display: flex;
     gap: var(--space-md);
@@ -257,7 +254,6 @@ const schema = {
     color: var(--color-text-muted);
   }
 
-  /* Tools Grid */
   .tools-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
@@ -265,7 +261,6 @@ const schema = {
     margin-bottom: var(--space-xl);
   }
 
-  /* Tool Card */
   .tool-card {
     display: flex;
     gap: var(--space-sm);
@@ -341,7 +336,6 @@ const schema = {
     transform: translateX(2px);
   }
 
-  /* Back link */
   .back-link {
     margin-top: var(--space-lg);
   }
@@ -356,7 +350,6 @@ const schema = {
     color: var(--color-primary);
   }
 
-  /* Responsive */
   @media (width <= 640px) {
     .page-header {
       flex-direction: column;

@@ -1,0 +1,78 @@
+---
+/**
+ * Spanish Dynamic Tool Page.
+ * Generates `/es/tools/[slug]/` routes with Spanish translations.
+ * Renders individual tool pages from the `tools` content collection.
+ */
+import Base64Encoder from "@components/apps/Base64Encoder.astro";
+import CertInspector from "@components/apps/CertInspector.astro";
+import ColorContrastChecker from "@components/apps/ColorContrastChecker.astro";
+import CronBuilder from "@components/apps/CronBuilder.astro";
+import CSPBuilder from "@components/apps/CSPBuilder.astro";
+import HashCalculator from "@components/apps/HashCalculator.astro";
+import HTTPHeadersAnalyzer from "@components/apps/HTTPHeadersAnalyzer.astro";
+import ModbusFrameBuilder from "@components/apps/ModbusFrameBuilder.astro";
+import NginxConfigGenerator from "@components/apps/NginxConfigGenerator.astro";
+import PasswordGenerator from "@components/apps/PasswordGenerator.astro";
+import RegexTester from "@components/apps/RegexTester.astro";
+import SubnetCalculator from "@components/apps/SubnetCalculator.astro";
+import TimestampConverter from "@components/apps/TimestampConverter.astro";
+import WireGuardConfigGenerator from "@components/apps/WireGuardConfigGenerator.astro";
+import ToolLayout from "@layouts/ToolLayout.astro";
+import { type CollectionEntry, getCollection, render } from "astro:content";
+
+/** Static map of appComponent names → imported Astro components. */
+const componentMap: Record<string, any> = {
+  Base64Encoder,
+  CSPBuilder,
+  CertInspector,
+  ColorContrastChecker,
+  CronBuilder,
+  HTTPHeadersAnalyzer,
+  HashCalculator,
+  ModbusFrameBuilder,
+  NginxConfigGenerator,
+  PasswordGenerator,
+  RegexTester,
+  SubnetCalculator,
+  TimestampConverter,
+  WireGuardConfigGenerator,
+};
+
+export async function getStaticPaths() {
+  const tools = await getCollection("tools");
+  return tools.map((tool) => ({
+    params: { slug: tool.data.slug },
+    props: tool,
+  }));
+}
+
+type Props = CollectionEntry<"tools">;
+
+const tool = Astro.props;
+const { Content } = await render(tool);
+
+const AppComponent = componentMap[tool.data.appComponent];
+if (!AppComponent) {
+  throw new Error(
+    `Unknown app component "${tool.data.appComponent}" for tool "${tool.data.title}". ` +
+      `Available components: ${Object.keys(componentMap).join(", ")}`,
+  );
+}
+
+const appProps = tool.data.appProps ?? {};
+---
+
+<ToolLayout
+  title={tool.data.title}
+  description={tool.data.description}
+  subtitle={tool.data.subtitle}
+  icon={tool.data.icon}
+  slug={tool.data.slug}
+>
+  <AppComponent {...appProps} />
+
+  <Fragment slot="info">
+    <Content />
+  </Fragment>
+</ToolLayout>

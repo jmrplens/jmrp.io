@@ -16,6 +16,13 @@ import { Image } from "astro:assets";
 // Config
 import { getCollection, getEntry } from "astro:content";
 
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslatedPath, useTranslations } from "@i18n/utils";
+
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
+const translatePath = useTranslatedPath(locale);
+
 const siteEntry = await getEntry("site_config", "site");
 const siteData = (siteEntry?.data || {}) as SiteConfig;
 
@@ -105,44 +112,48 @@ const personSchema = {
 
       <div class="social-links-row">
         <a
-          href="/cv/"
+          href={translatePath("/cv/")}
           class="btn btn-primary"
-          aria-label="View CV - my professional curriculum vitae"
+          aria-label={t("pages.home.viewCVAria")}
         >
           <span
             class="i-fa-solid:file-pdf"
             aria-hidden="true"
-          ></span> View CV
+          ></span>
+          {t("pages.home.viewCV")}
         </a>
         <a
-          href="/blog/"
+          href={translatePath("/blog/")}
           class="btn btn-outline"
-          aria-label="Read Blog - articles and tutorials"
+          aria-label={t("pages.home.readBlogAria")}
         >
           <span
             class="i-fa-solid:pen-nib"
             aria-hidden="true"
-          ></span> Read Blog
+          ></span>
+          {t("pages.home.readBlog")}
         </a>
         <a
-          href="/github/"
+          href={translatePath("/github/")}
           class="btn btn-outline"
-          aria-label="Projects - view my work on GitHub"
+          aria-label={t("pages.home.projectsAria")}
         >
           <span
             class="i-fa-brands:github"
             aria-hidden="true"
-          ></span> Projects
+          ></span>
+          {t("pages.home.projects")}
         </a>
         <a
-          href="/homelab/"
+          href={translatePath("/homelab/")}
           class="btn btn-outline"
-          aria-label="Homelab - infrastructure and status"
+          aria-label={t("pages.home.homelabAria")}
         >
           <span
             class="i-fa-solid:server"
             aria-hidden="true"
-          ></span> Homelab
+          ></span>
+          {t("pages.home.homelab")}
         </a>
       </div>
     </div>
@@ -153,12 +164,12 @@ const personSchema = {
       <section class="latest-posts">
         <div class="container">
           <div class="section-header">
-            <h2>Latest from the Blog</h2>
+            <h2>{t("pages.home.latestFromBlog")}</h2>
             <a
-              href="/blog/"
+              href={translatePath("/blog/")}
               class="btn btn-link"
             >
-              View all posts &rarr;
+              {t("pages.home.viewAllPosts")}
             </a>
           </div>
           <div class="grid-layout">
@@ -176,12 +187,12 @@ const personSchema = {
       <section class="featured-projects">
         <div class="container">
           <div class="section-header">
-            <h2>Featured Projects</h2>
+            <h2>{t("pages.home.featuredProjects")}</h2>
             <a
-              href="/github/"
+              href={translatePath("/github/")}
               class="btn btn-link"
             >
-              View all repositories &rarr;
+              {t("pages.home.viewAllRepos")}
             </a>
           </div>
           <div class="grid-layout">

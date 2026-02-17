@@ -11,11 +11,7 @@
  * <LanguageSwitcher />
  * ```
  */
-import {
-  defaultLocale,
-  localeConfig,
-  type Locale,
-} from "@i18n/config";
+import { defaultLocale, localeConfig, type Locale } from "@i18n/config";
 import { stripLocalePrefix } from "@i18n/utils";
 
 const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
@@ -85,7 +81,8 @@ const ariaLabel =
 
 <script>
   function setupLangSwitcher() {
-    const links = document.querySelectorAll<HTMLAnchorElement>(".lang-switcher");
+    const links =
+      document.querySelectorAll<HTMLAnchorElement>(".lang-switcher");
     for (const link of links) {
       link.addEventListener("click", () => {
         if (typeof (window as any).__markLanguageChoice === "function") {

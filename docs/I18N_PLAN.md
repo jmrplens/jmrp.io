@@ -43,41 +43,41 @@
 
 ### Dimensión del trabajo
 
-| Categoría | ~Strings únicos | Complejidad |
-|-----------|----------------|-------------|
-| Infraestructura i18n | — | Media |
-| Layouts y navegación | ~15 | Baja |
-| Páginas (UI text) | ~80 | Media |
-| Páginas (metadata/SEO) | ~40 | Media |
-| Componentes UI | ~50 | Baja |
-| ARIA/Accesibilidad | ~60 | Media |
-| Preact Islands (Homelab) | ~70 | Alta |
-| Contenido site_config | ~30 | Baja |
-| CV YAML | ~200+ | Alta |
-| Publications utils | ~4 | Baja |
-| 14 Tools (apps) | ~500+ | **Muy alta** |
-| 8 Blog posts MDX | Miles de palabras | **Altísima** |
-| 14 Tools MDX docs | Cientos de palabras | Alta |
-| RSS/PWA/manifest | ~10 | Baja |
-| Tests | ~20 | Media |
+| Categoría                | ~Strings únicos     | Complejidad  |
+| ------------------------ | ------------------- | ------------ |
+| Infraestructura i18n     | —                   | Media        |
+| Layouts y navegación     | ~15                 | Baja         |
+| Páginas (UI text)        | ~80                 | Media        |
+| Páginas (metadata/SEO)   | ~40                 | Media        |
+| Componentes UI           | ~50                 | Baja         |
+| ARIA/Accesibilidad       | ~60                 | Media        |
+| Preact Islands (Homelab) | ~70                 | Alta         |
+| Contenido site_config    | ~30                 | Baja         |
+| CV YAML                  | ~200+               | Alta         |
+| Publications utils       | ~4                  | Baja         |
+| 14 Tools (apps)          | ~500+               | **Muy alta** |
+| 8 Blog posts MDX         | Miles de palabras   | **Altísima** |
+| 14 Tools MDX docs        | Cientos de palabras | Alta         |
+| RSS/PWA/manifest         | ~10                 | Baja         |
+| Tests                    | ~20                 | Media        |
 
 ### Rutas resultantes
 
-| Inglés (default) | Español |
-|-------------------|---------|
-| `/` | `/es/` |
-| `/blog/` | `/es/blog/` |
-| `/blog/[slug]/` | `/es/blog/[slug]/` |
-| `/blog/tags/[tag]/` | `/es/blog/tags/[tag]/` |
-| `/cv/` | `/es/cv/` |
-| `/github/` | `/es/github/` |
-| `/homelab/` | `/es/homelab/` |
-| `/publications/` | `/es/publications/` |
-| `/tools/` | `/es/tools/` |
-| `/tools/[slug]/` | `/es/tools/[slug]/` |
+| Inglés (default)           | Español                       |
+| -------------------------- | ----------------------------- |
+| `/`                        | `/es/`                        |
+| `/blog/`                   | `/es/blog/`                   |
+| `/blog/[slug]/`            | `/es/blog/[slug]/`            |
+| `/blog/tags/[tag]/`        | `/es/blog/tags/[tag]/`        |
+| `/cv/`                     | `/es/cv/`                     |
+| `/github/`                 | `/es/github/`                 |
+| `/homelab/`                | `/es/homelab/`                |
+| `/publications/`           | `/es/publications/`           |
+| `/tools/`                  | `/es/tools/`                  |
+| `/tools/[slug]/`           | `/es/tools/[slug]/`           |
 | `/tools/categories/[cat]/` | `/es/tools/categories/[cat]/` |
-| `/404` | `/es/404` |
-| `/rss.xml` | `/es/rss.xml` |
+| `/404`                     | `/es/404`                     |
+| `/rss.xml`                 | `/es/rss.xml`                 |
 
 ---
 
@@ -145,13 +145,22 @@ import { getRelativeLocaleUrl } from "astro:i18n";
 // Patrón basado en el recipe oficial de Astro
 export function getLangFromUrl(url: URL): Locale;
 export function useTranslations(lang: Locale): (key: TranslationKey) => string;
-export function useTranslatedPath(lang: Locale): (path: string, l?: Locale) => string;
+export function useTranslatedPath(
+  lang: Locale,
+): (path: string, l?: Locale) => string;
 
 // Helpers adicionales
-export function getAlternateUrls(path: string): { locale: Locale; url: string }[];
-export function formatDate(date: Date, locale: Locale): string;  // Intl.DateTimeFormat
-export function formatNumber(num: number, locale: Locale): string;  // Intl.NumberFormat
-export function pluralize(count: number, singular: string, plural: string, locale: Locale): string;  // Intl.PluralRules
+export function getAlternateUrls(
+  path: string,
+): { locale: Locale; url: string }[];
+export function formatDate(date: Date, locale: Locale): string; // Intl.DateTimeFormat
+export function formatNumber(num: number, locale: Locale): string; // Intl.NumberFormat
+export function pluralize(
+  count: number,
+  singular: string,
+  plural: string,
+  locale: Locale,
+): string; // Intl.PluralRules
 ```
 
 **Nota**: Usar `getRelativeLocaleUrl()` de `astro:i18n` en lugar de implementar URL generation manual. Astro ya sabe cómo construir URLs con/sin prefijo según la configuración.
@@ -180,11 +189,13 @@ i18n: {
 ```
 
 **Nota sobre `fallback` a nivel de routing:**
+
 - `i18n.fallback` de Astro genera redirects/rewrites automáticos que pueden conflictuar con páginas ES que existen. Se omite del config.
 - El fallback se maneja **a nivel de contenido** (query de colecciones) → muestra contenido EN con banner y `lang="en"` en el `<article>`.
 - `fallbackType: "redirect"` tampoco se usa — los redirects manuales dan más control.
 
 **Decisiones de routing:**
+
 1. Páginas de `/es/` son wrapper pages (componente compartido + locale prop)
 2. `Astro.currentLocale` como fuente primaria del locale actual (disponible en SSG y SSR)
 3. `getRelativeLocaleUrl()` de `astro:i18n` para generar URLs localizadas
@@ -287,14 +298,14 @@ i18n: {
 
 ### Archivos afectados
 
-| Archivo | Strings a traducir |
-|---------|-------------------|
-| `src/layouts/BaseLayout.astro` | 2 |
-| `src/layouts/ToolLayout.astro` | 3 |
-| `src/components/layout/BaseHead.astro` | 3+ meta tags |
-| `src/components/layout/Header.astro` | 3 ARIA + nav labels |
-| `src/components/layout/Footer.astro` | 2 |
-| `src/components/layout/TableOfContentsDrawer.astro` | 4 |
+| Archivo                                             | Strings a traducir  |
+| --------------------------------------------------- | ------------------- |
+| `src/layouts/BaseLayout.astro`                      | 2                   |
+| `src/layouts/ToolLayout.astro`                      | 3                   |
+| `src/components/layout/BaseHead.astro`              | 3+ meta tags        |
+| `src/components/layout/Header.astro`                | 3 ARIA + nav labels |
+| `src/components/layout/Footer.astro`                | 2                   |
+| `src/components/layout/TableOfContentsDrawer.astro` | 4                   |
 
 ---
 
@@ -476,6 +487,7 @@ Los componentes `.astro` se renderizan en build time. El locale se puede:
 const locale = (Astro.currentLocale ?? "en") as Locale;
 const t = useTranslations(locale);
 ---
+
 <nav aria-label={t("aria.mainNav")}>...</nav>
 ```
 
@@ -556,11 +568,11 @@ src/content/posts/
 
 ### 8.4 Contenido a traducir
 
-| Contenido | Palabras aprox. | Fase |
-|-----------|----------------|------|
-| 8 blog posts | ~15,000+ | Fase 5 |
-| 14 tools MDX | ~3,000 | Fase 5 |
-| CV completo | ~2,000 | Fase 4 |
+| Contenido    | Palabras aprox. | Fase   |
+| ------------ | --------------- | ------ |
+| 8 blog posts | ~15,000+        | Fase 5 |
+| 14 tools MDX | ~3,000          | Fase 5 |
+| CV completo  | ~2,000          | Fase 4 |
 
 > **Nota (D5)**: Se traducirán los 8 posts existentes al español. Contenido futuro sin traducir usará fallback a EN con banner (D2).
 
@@ -584,6 +596,7 @@ if (!post) {
   post = await getEntry("posts", `en/${slug}`);
 }
 ---
+
 {isFallback && <FallbackBanner locale={locale} />}
 <article lang={isFallback ? "en" : locale}>
   <Content />
@@ -627,7 +640,7 @@ Los Preact islands se hidratan en el cliente. Necesitan las traducciones disponi
 ## 10. Fase 7 — Tools Interactivos (Apps)
 
 > **Objetivo**: i18n para los 14 componentes interactivos en `src/components/apps/`.
-> 
+>
 > **⚠️ Esta es la fase más compleja y puede ejecutarse de forma incremental.**
 
 ### Reto específico
@@ -656,22 +669,22 @@ Para cada uno de los 14 tools (`base64-encoder`, `cert-inspector`, `color-contra
 
 ### Prioridad sugerida por tool
 
-| Prioridad | Tool | ~Strings | Complejidad |
-|-----------|------|----------|-------------|
-| Alta | `password-generator` | ~20 | Baja |
-| Alta | `hash-calculator` | ~25 | Baja |
-| Alta | `base64-encoder` | ~15 | Baja |
-| Alta | `timestamp-converter` | ~20 | Baja |
-| Media | `subnet-calculator` | ~30 | Media |
-| Media | `regex-tester` | ~25 | Media |
-| Media | `color-contrast-checker` | ~30 | Media |
-| Media | `cron-builder` | ~35 | Media |
-| Baja | `cert-inspector` | ~35 | Media |
-| Baja | `http-headers-analyzer` | ~40 | Media |
-| Baja | `modbus-frame-builder` | ~40 | Alta |
-| Baja | `nginx-config-generator` | ~50 | Alta |
-| Baja | `wireguard-config-generator` | ~40 | Alta |
-| Baja | `csp-builder` | ~100+ | **Muy alta** |
+| Prioridad | Tool                         | ~Strings | Complejidad  |
+| --------- | ---------------------------- | -------- | ------------ |
+| Alta      | `password-generator`         | ~20      | Baja         |
+| Alta      | `hash-calculator`            | ~25      | Baja         |
+| Alta      | `base64-encoder`             | ~15      | Baja         |
+| Alta      | `timestamp-converter`        | ~20      | Baja         |
+| Media     | `subnet-calculator`          | ~30      | Media        |
+| Media     | `regex-tester`               | ~25      | Media        |
+| Media     | `color-contrast-checker`     | ~30      | Media        |
+| Media     | `cron-builder`               | ~35      | Media        |
+| Baja      | `cert-inspector`             | ~35      | Media        |
+| Baja      | `http-headers-analyzer`      | ~40      | Media        |
+| Baja      | `modbus-frame-builder`       | ~40      | Alta         |
+| Baja      | `nginx-config-generator`     | ~50      | Alta         |
+| Baja      | `wireguard-config-generator` | ~40      | Alta         |
+| Baja      | `csp-builder`                | ~100+    | **Muy alta** |
 
 ---
 
@@ -979,46 +992,46 @@ Para cada uno de los 14 tools (`base64-encoder`, `cert-inspector`, `color-contra
 
 ### 15.1 Confirmadas
 
-| # | Decisión | Razón |
-|---|----------|-------|
-| 1 | **Prefix-based routing** (`/es/`) | Estándar SEO, Astro nativo |
-| 2 | **Inglés sin prefijo** | Es el default, URLs limpias |
-| 3 | **TypeScript para traducciones** | Type-safety, autocompletado |
-| 4 | **`Astro.currentLocale`** | API nativa Astro 6, menos boilerplate |
-| 5 | **Carpetas por locale en content** | Claridad, permite contenido parcial |
-| 6 | **Props para Preact i18n** | Mínimo overhead, build-time resolution |
+| #   | Decisión                           | Razón                                  |
+| --- | ---------------------------------- | -------------------------------------- |
+| 1   | **Prefix-based routing** (`/es/`)  | Estándar SEO, Astro nativo             |
+| 2   | **Inglés sin prefijo**             | Es el default, URLs limpias            |
+| 3   | **TypeScript para traducciones**   | Type-safety, autocompletado            |
+| 4   | **`Astro.currentLocale`**          | API nativa Astro 6, menos boilerplate  |
+| 5   | **Carpetas por locale en content** | Claridad, permite contenido parcial    |
+| 6   | **Props para Preact i18n**         | Mínimo overhead, build-time resolution |
 
 ### 15.2 Decisiones Resueltas
 
-| # | Decisión | **Resolución** | Razón |
-|---|----------|----------------|-------|
-| D1 | Páginas `/es/` | **Wrapper** | Páginas mínimas en `src/pages/es/` que importan componente compartido con `locale` prop. Menos duplicación, fácil de mantener. |
-| D2 | Contenido parcial en ES | **Fallback a EN con banner** | Si un post/tool no tiene versión ES, se muestra la versión EN con banner "Este contenido aún no está disponible en español". Siempre accesible. |
-| D3 | Tools interactivos | **Traducir todo** | Traducir las 14 tools como parte del plan completo. Es la fase más compleja pero se busca cobertura total. |
-| D4 | URL slugs | **Mantener en inglés** | Mismo slug en ambos idiomas (`/es/blog/secure-nginx/`). Más simple, no rompe links, facilita mapeo entre versiones. |
-| D5 | Blog posts | **Traducir todos** | Crear versiones ES de los 8 posts existentes. Esfuerzo considerable (~15.000 palabras) pero se busca cobertura completa. |
-| D6 | Detección de idioma | **Client-side detect + redirect** | Script client-side que detecta `navigator.language` y redirige en primera visita si el usuario no ha elegido manualmente. |
-| D7 | Página 404 | **Un 404 por locale** | `src/pages/es/404.astro` (wrapper). Más limpio, cada locale tiene su propia página de error traducida. |
-| D8 | Site config | **YAML separados por locale** | `site.yaml` (compartido) + `site.en.yaml` + `site.es.yaml`. Claro y explícito, requiere actualizar schema en `content.config.ts`. |
+| #   | Decisión                | **Resolución**                    | Razón                                                                                                                                           |
+| --- | ----------------------- | --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| D1  | Páginas `/es/`          | **Wrapper**                       | Páginas mínimas en `src/pages/es/` que importan componente compartido con `locale` prop. Menos duplicación, fácil de mantener.                  |
+| D2  | Contenido parcial en ES | **Fallback a EN con banner**      | Si un post/tool no tiene versión ES, se muestra la versión EN con banner "Este contenido aún no está disponible en español". Siempre accesible. |
+| D3  | Tools interactivos      | **Traducir todo**                 | Traducir las 14 tools como parte del plan completo. Es la fase más compleja pero se busca cobertura total.                                      |
+| D4  | URL slugs               | **Mantener en inglés**            | Mismo slug en ambos idiomas (`/es/blog/secure-nginx/`). Más simple, no rompe links, facilita mapeo entre versiones.                             |
+| D5  | Blog posts              | **Traducir todos**                | Crear versiones ES de los 8 posts existentes. Esfuerzo considerable (~15.000 palabras) pero se busca cobertura completa.                        |
+| D6  | Detección de idioma     | **Client-side detect + redirect** | Script client-side que detecta `navigator.language` y redirige en primera visita si el usuario no ha elegido manualmente.                       |
+| D7  | Página 404              | **Un 404 por locale**             | `src/pages/es/404.astro` (wrapper). Más limpio, cada locale tiene su propia página de error traducida.                                          |
+| D8  | Site config             | **YAML separados por locale**     | `site.yaml` (compartido) + `site.en.yaml` + `site.es.yaml`. Claro y explícito, requiere actualizar schema en `content.config.ts`.               |
 
 ---
 
 ## 16. Riesgos y Mitigaciones
 
-| Riesgo | Impacto | Probabilidad | Mitigación |
-|--------|---------|--------------|------------|
-| Tools `<script is:inline>` difíciles de i18n | Alto | Alta | Inyectar strings vía `data-*`, no reescribir JS |
-| Content collections break al reorganizar | Alto | Media | Hacer en rama separada, tests antes/después |
-| Performance: doble build (2x páginas) | Medio | Media | Astro SSG maneja bien, monitorizar build time |
-| SEO: Google indexa contenido duplicado | Alto | Baja | hreflang correcto, canonical tags |
-| Strings sin traducir en producción | Medio | Media | Test de regression: buscar strings EN en páginas ES |
-| `Astro.currentLocale` no disponible en beta | Medio | Baja | Fallback a `getLangFromUrl(Astro.url)` |
-| Mermaid SVGs con texto embebido | Bajo | Media | Los diagramas se adaptan en el MDX traducido |
-| Formularios en tools no accesibles en ES | Medio | Media | Auditoría axe-core por tool |
-| Build time aumenta significativamente | Medio | Media | Caché de imágenes optimizadas, builds incrementales |
-| Tests lentos con doble de páginas | Bajo | Alta | Filtrar por locale o paralelizar |
-| View Transitions + cambio de idioma | Medio | Media | Verificar `<html lang>` en `astro:before-swap` handler |
-| Nginx 404 no configurado por locale | Medio | Baja | Actualizar post-build integration para generar config |
+| Riesgo                                       | Impacto | Probabilidad | Mitigación                                             |
+| -------------------------------------------- | ------- | ------------ | ------------------------------------------------------ |
+| Tools `<script is:inline>` difíciles de i18n | Alto    | Alta         | Inyectar strings vía `data-*`, no reescribir JS        |
+| Content collections break al reorganizar     | Alto    | Media        | Hacer en rama separada, tests antes/después            |
+| Performance: doble build (2x páginas)        | Medio   | Media        | Astro SSG maneja bien, monitorizar build time          |
+| SEO: Google indexa contenido duplicado       | Alto    | Baja         | hreflang correcto, canonical tags                      |
+| Strings sin traducir en producción           | Medio   | Media        | Test de regression: buscar strings EN en páginas ES    |
+| `Astro.currentLocale` no disponible en beta  | Medio   | Baja         | Fallback a `getLangFromUrl(Astro.url)`                 |
+| Mermaid SVGs con texto embebido              | Bajo    | Media        | Los diagramas se adaptan en el MDX traducido           |
+| Formularios en tools no accesibles en ES     | Medio   | Media        | Auditoría axe-core por tool                            |
+| Build time aumenta significativamente        | Medio   | Media        | Caché de imágenes optimizadas, builds incrementales    |
+| Tests lentos con doble de páginas            | Bajo    | Alta         | Filtrar por locale o paralelizar                       |
+| View Transitions + cambio de idioma          | Medio   | Media        | Verificar `<html lang>` en `astro:before-swap` handler |
+| Nginx 404 no configurado por locale          | Medio   | Baja         | Actualizar post-build integration para generar config  |
 
 ---
 
@@ -1042,6 +1055,7 @@ Fase 10 (Docs/CI)             ████░░░░░░  Semana 8
 ### Cobertura Completa
 
 Todas las fases (0-10) = sitio completamente bilingüe:
+
 - ✅ Selector de idioma + detección automática (client-side)
 - ✅ Layouts y navegación traducidos
 - ✅ Todas las páginas con UI en español
@@ -1101,24 +1115,34 @@ Cada post/tool debería tener un enlace visible a su versión en el otro idioma:
 
 ```html
 <!-- En versión EN -->
-<a href="/es/blog/post/" hreflang="es" lang="es">Leer en español</a>
+<a
+  href="/es/blog/post/"
+  hreflang="es"
+  lang="es"
+  >Leer en español</a
+>
 
 <!-- En versión ES -->
-<a href="/blog/post/" hreflang="en" lang="en">Read in English</a>
+<a
+  href="/blog/post/"
+  hreflang="en"
+  lang="en"
+  >Read in English</a
+>
 ```
 
 Esto complementa el LanguageSwitcher del header y mejora la descubribilidad.
 
 ### 17.5 Estimación de impacto en build time
 
-| Concepto | Actual | Con i18n | Impacto |
-|----------|--------|----------|---------|
-| Páginas estáticas | ~13 | ~26 | ×2 |
-| Blog posts | 8 | 16 | ×2 |
-| Tool pages | 14 | 28 | ×2 |
-| Category pages | ~5 | ~10 | ×2 |
-| Tag pages | ~8 | ~16 | ×2 |
-| **Total páginas** | **~48** | **~96** | **×2** |
+| Concepto          | Actual  | Con i18n | Impacto |
+| ----------------- | ------- | -------- | ------- |
+| Páginas estáticas | ~13     | ~26      | ×2      |
+| Blog posts        | 8       | 16       | ×2      |
+| Tool pages        | 14      | 28       | ×2      |
+| Category pages    | ~5      | ~10      | ×2      |
+| Tag pages         | ~8      | ~16      | ×2      |
+| **Total páginas** | **~48** | **~96**  | **×2**  |
 
 Astro SSG maneja cientos de páginas sin problemas. El impacto esperado es mínimo (~+30-60s en build).
 
@@ -1126,12 +1150,12 @@ Astro SSG maneja cientos de páginas sin problemas. El impacto esperado es míni
 
 Preferir la API `Intl` nativa de JavaScript sobre implementaciones manuales:
 
-| API | Uso | Ejemplo |
-|-----|-----|---------|
-| `Intl.DateTimeFormat` | Formateo de fechas | `new Intl.DateTimeFormat("es", { dateStyle: "long" }).format(date)` → "17 de febrero de 2026" |
-| `Intl.NumberFormat` | Formateo de números | `new Intl.NumberFormat("es").format(1234)` → "1.234" |
-| `Intl.PluralRules` | Pluralización | `new Intl.PluralRules("es").select(1)` → "one", `select(2)` → "other" |
-| `Intl.RelativeTimeFormat` | Tiempo relativo | `new Intl.RelativeTimeFormat("es").format(-2, "day")` → "hace 2 días" |
+| API                       | Uso                 | Ejemplo                                                                                       |
+| ------------------------- | ------------------- | --------------------------------------------------------------------------------------------- |
+| `Intl.DateTimeFormat`     | Formateo de fechas  | `new Intl.DateTimeFormat("es", { dateStyle: "long" }).format(date)` → "17 de febrero de 2026" |
+| `Intl.NumberFormat`       | Formateo de números | `new Intl.NumberFormat("es").format(1234)` → "1.234"                                          |
+| `Intl.PluralRules`        | Pluralización       | `new Intl.PluralRules("es").select(1)` → "one", `select(2)` → "other"                         |
+| `Intl.RelativeTimeFormat` | Tiempo relativo     | `new Intl.RelativeTimeFormat("es").format(-2, "day")` → "hace 2 días"                         |
 
 **Ventaja**: Sin dependencias extras, soporte nativo en Node 22+, locale-aware.
 

@@ -1,8 +1,8 @@
 ---
 /**
- * 404 Error Page — "Ah ah ah, you didn't say the magic word!"
+ * Spanish 404 Error Page.
+ * Generates `/es/404/` route with Spanish translations.
  * Jurassic Park / Dennis Nedry themed error page.
- * Assets are extracted to `@assets/nedry-assets.ts` to keep this file clean.
  */
 import {
   nedryAudio,
@@ -89,7 +89,6 @@ const translatePath = useTranslatedPath(locale);
 </BaseLayout>
 
 <style>
-  /* ── Page container ── */
   .nedry-page {
     position: relative;
     display: flex;
@@ -102,7 +101,6 @@ const translatePath = useTranslatedPath(locale);
     overflow: hidden;
   }
 
-  /* ── Scaling wrapper ── */
   .nedry-wrapper {
     display: flex;
     flex-direction: column;
@@ -111,7 +109,6 @@ const translatePath = useTranslatedPath(locale);
     max-width: 500px;
   }
 
-  /* ── 404 Heading ── */
   .nedry-code {
     display: flex;
     flex-shrink: 0;
@@ -138,7 +135,6 @@ const translatePath = useTranslatedPath(locale);
     letter-spacing: 0.05em;
   }
 
-  /* ── Character stage ── */
   .nedry-stage {
     position: relative;
     display: flex;
@@ -155,7 +151,6 @@ const translatePath = useTranslatedPath(locale);
     outline: 2px solid var(--color-primary);
   }
 
-  /* ── Layered character ── */
   .nedry-container {
     position: relative;
     max-width: 100%;
@@ -210,7 +205,6 @@ const translatePath = useTranslatedPath(locale);
     }
   }
 
-  /* ── Message ── */
   .nedry-message {
     flex-shrink: 0;
     margin: var(--space-lg, 1.25rem) 0 0;
@@ -221,7 +215,6 @@ const translatePath = useTranslatedPath(locale);
     text-align: center;
   }
 
-  /* ── Actions ── */
   .nedry-actions {
     display: flex;
     flex-shrink: 0;
@@ -246,7 +239,6 @@ const translatePath = useTranslatedPath(locale);
         .catch(function () {});
     }
 
-    /* Explicit clicks on Nedry */
     if (trigger) {
       trigger.addEventListener("click", play);
       trigger.addEventListener("keydown", function (e) {
@@ -257,10 +249,8 @@ const translatePath = useTranslatedPath(locale);
       });
     }
 
-    /* Try autoplay on load */
     play();
 
-    /* Fallback: play on first user interaction of any kind */
     var once = { once: true, passive: true };
     ["pointerdown", "scroll", "keydown"].forEach(function (evt) {
       document.addEventListener(evt, play, once);

@@ -1,11 +1,7 @@
 ---
 /**
- * Blog Post Page ([...slug].astro).
- * Renders individual blog posts dynamically based on their slug.
- * Includes support for:
- * - Custom components (Callout, CodeTabs, YouTube) in MDX
- * - Automated Table of Contents generation
- * - SEO Schema for blog postings
+ * Spanish Blog Post — wrapper page.
+ * Generates `/es/blog/[slug]/` routes with Spanish translations.
  */
 import "@styles/blog.css";
 
@@ -52,23 +48,19 @@ const post = Astro.props;
 const { Content, headings } = await render(post);
 
 // --- Reference Collection Logic ---
-// Strip code blocks to avoid false positives from code examples
 const bodyWithoutCode = (post.body || "")
   .replaceAll(/```[\s\S]*?```/g, "")
   .replaceAll(/`[^`]*?`/g, "");
 
-// Regex to find all markdown links: [text](url) - supports one level of nested parentheses
 const linkRegex = /\[([^\]]+)\]\(([^)]+(?:\([^)]+\)[^)]*)*)\)/g;
 const collectedRefsFromMarkdown = [];
 let match;
 while ((match = linkRegex.exec(bodyWithoutCode)) !== null) {
   const url = match[2];
-  // Skip anchor-only links (e.g., #section-id) — they are internal page references
   if (url.startsWith("#")) continue;
   collectedRefsFromMarkdown.push({ text: match[1], url });
 }
 
-// Also find raw <a> tags in the body, as MDX allows HTML
 const $ = cheerio.load(bodyWithoutCode);
 $('a[href^="http"], a[href^="//"]').each((_, el) => {
   const $el = $(el);
@@ -79,7 +71,6 @@ $('a[href^="http"], a[href^="//"]').each((_, el) => {
   }
 });
 
-// Combine collected references and deduplicate
 const uniqueUrls = new Set<string>();
 const finalReferences = collectedRefsFromMarkdown.filter((ref) => {
   if (!uniqueUrls.has(ref.url)) {
@@ -88,20 +79,15 @@ const finalReferences = collectedRefsFromMarkdown.filter((ref) => {
   }
   return false;
 });
-// --- End of Reference Logic ---
 
 // --- Image Optimization (JSON-LD) ---
-
 let jsonLdImage = "/default-blog-cover.webp";
-
-// Shared constants for image optimization
 const coverImageWidths = [400, 450, 540, 600, 720, 800, 1080, 1200];
 const coverImageSizes =
   "(max-width: 768px) calc(100vw - 2.5rem), (max-width: 1024px) 600px, 460px";
 
 if (post.data.coverImage) {
   const coverImage = post.data.coverImage;
-  // Generate JSON-LD Schema Image (Standard OG size)
   const schemaImage = await getImage({
     src: coverImage,
     format: "webp",
@@ -237,50 +223,10 @@ const articleSchema = [
   </article>
 
   <TableOfContentsDrawer headings={headings} />
-
-  {/* ICON_DETECTION_START */}
-  <div
-    class="hidden"
-    aria-hidden="true"
-  >
-    <span class="i-mdi:shield-check"></span>
-    <span class="i-mdi:folder-outline"></span>
-    <span class="i-mdi:file-cog"></span>
-    <span class="i-mdi:alert"></span>
-    <span class="i-mdi:shield-alert"></span>
-    <span class="i-devicon:nginx"></span>
-    <span class="i-mdi:lock"></span>
-    <span class="i-mdi:speedometer"></span>
-    <span class="i-mdi:refresh"></span>
-    <span class="i-mdi:bash"></span>
-    <span class="i-mdi:linux"></span>
-    <span class="i-mdi:calendar-clock"></span>
-    <span class="i-mdi:cellphone"></span>
-    <span class="i-mdi:apple-finder"></span>
-    <span class="i-mdi:key-alert"></span>
-    <span class="i-mdi:lightbulb"></span>
-    <span class="i-mdi:information"></span>
-    <span class="i-mdi:language-javascript"></span>
-    <span class="i-mdi:monitor-dashboard"></span>
-    <span class="i-mdi:check-decagram"></span>
-    <span class="i-simple-icons:astro"></span>
-    <span class="i-mdi:shield-lock"></span>
-    <span class="i-mdi:code-json"></span>
-    <span class="i-mdi:nodejs"></span>
-    <span class="i-mdi:cog"></span>
-    <span class="i-mdi:trophy"></span>
-    <span class="i-mdi:cellphone-wireless"></span>
-    <span class="i-mdi:incognito"></span>
-    <span class="i-mdi:alert-circle"></span>
-    <span class="i-mdi:file-code"></span>
-  </div>
-  {/* ICON_DETECTION_END */}
 </BaseLayout>
 
 <script>
-  // WeakSet to track observed elements without mutating DOM properties
   const observedElements = new WeakSet<Element>();
-  // Map to store observers for cleanup on navigation
   const observerMap = new Map<Element, MutationObserver>();
 
   const cleanupObservers = () => {
@@ -289,12 +235,8 @@ const articleSchema = [
   };
 
   const setupPostInteractions = () => {
-    // Cleanup any existing observers before setting up new ones
     cleanupObservers();
 
-    // Accessibility: Fix duplicate role="region" on code blocks
-    // We use requestIdleCallback to avoid forced reflows during initial layout
-    // Properly typed: uses IdleRequestCallback signature, falls back to setTimeout returning number
     const rIC: (callback: IdleRequestCallback) => number =
       window.requestIdleCallback?.bind(window) ??
       ((cb) =>
@@ -316,10 +258,8 @@ const articleSchema = [
       });
     };
 
-    // Run once initially, but slightly deferred
     setTimeout(applyLabels, 100);
 
-    // Debounced observer for hydration changes
     const prose = document.querySelector(".prose");
     if (prose && !observedElements.has(prose)) {
       observedElements.add(prose);
@@ -334,210 +274,13 @@ const articleSchema = [
         attributes: true,
         attributeFilter: ["role"],
       });
-      // Store observer for cleanup
       observerMap.set(prose, observer);
     }
   };
 
-  // Initialize
   setupPostInteractions();
   if (!document.documentElement.hasAttribute("data-blog-listener-init")) {
     document.documentElement.setAttribute("data-blog-listener-init", "true");
     document.addEventListener("astro:after-swap", setupPostInteractions);
   }
 </script>
-
-<style>
-  .post-header {
-    padding: var(--space-lg) 0;
-    margin-bottom: var(--space-md-lg);
-    background-color: var(--color-bg-secondary);
-    border-bottom: var(--border-1);
-  }
-
-  .content-wrapper {
-    width: 100%;
-    max-width: var(--max-width-container);
-    padding: 0 var(--space-lg);
-    margin: 0 auto;
-  }
-
-  .header-grid {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-lg);
-  }
-
-  /* New container for top metadata */
-  .header-meta {
-    margin-bottom: var(--space-lg);
-  }
-
-  .header-content {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-  }
-
-  .meta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-md);
-    align-items: center;
-    min-height: 1.5em;
-    font-family:
-      system-ui,
-      -apple-system,
-      blinkmacsystemfont,
-      "Segoe UI",
-      roboto,
-      helvetica,
-      arial,
-      sans-serif;
-    font-size: 0.9rem;
-    color: var(--color-text-muted);
-  }
-
-  .author {
-    font-weight: var(--fw-semibold);
-    color: var(--color-text);
-  }
-
-  .separator {
-    display: inline-block;
-    width: 1ch;
-    text-align: center;
-  }
-
-  .tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-sm);
-  }
-
-  .tag {
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: var(--color-primary);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    text-decoration: none;
-    transition:
-      color 0.2s ease,
-      text-decoration 0.2s ease;
-  }
-
-  .tag:hover {
-    text-decoration: underline;
-    text-underline-offset: 3px;
-  }
-
-  .tag:focus-visible {
-    outline: 2px solid var(--color-primary);
-    outline-offset: 2px;
-    border-radius: 2px;
-  }
-
-  h1 {
-    margin-bottom: 1.25rem;
-    font-size: 2.5rem;
-    font-weight: 800;
-    line-height: 1.2;
-    color: var(--color-text-heading);
-    letter-spacing: -0.02em;
-    text-wrap: balance;
-  }
-
-  .lead {
-    font-size: 1.25rem;
-    line-height: 1.6;
-    color: var(--color-text);
-  }
-
-  .cover-image-container {
-    width: 100%;
-    height: auto;
-    aspect-ratio: 16 / 9;
-    overflow: hidden;
-    background-color: var(--color-bg-secondary);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-lg);
-  }
-
-  .cover-image {
-    display: block;
-    width: 100%;
-    height: auto;
-    aspect-ratio: 16 / 9;
-    object-fit: cover;
-  }
-
-  /* Desktop Split Layout */
-  @media (width > 1024px) {
-    .post-header {
-      padding: var(--space-lg-xl) 0;
-    }
-
-    .header-grid {
-      display: grid;
-      grid-template-columns: 1.2fr 0.8fr;
-      gap: var(--space-xl);
-      align-items: center;
-    }
-
-    h1 {
-      font-size: 3.5rem;
-    }
-
-    .cover-image-container {
-      max-width: none;
-
-      /* Allow image to take natural height based on aspect ratio */
-      height: auto;
-      max-height: none;
-
-      /* Reset any margins */
-      margin: 0;
-    }
-  }
-
-  /* Tablet/Mobile Adjustments */
-  @media (width <= 1024px) {
-    .cover-image-container {
-      order: 2;
-
-      /* Constrain width so it doesn't become huge when stacked */
-      max-width: 600px;
-      margin-top: var(--space-md-lg);
-      margin-right: auto;
-
-      /* Center the image */
-      margin-left: auto;
-    }
-  }
-
-  @media (width <= 768px) {
-    .post-header {
-      padding: var(--space-lg) 0;
-      text-align: left;
-    }
-
-    h1 {
-      font-size: 2rem;
-    }
-
-    .lead {
-      font-size: 1.125rem;
-    }
-
-    .content-wrapper {
-      padding: 0 1.25rem;
-    }
-
-    .cover-image-container {
-      /* On very small screens, let it be full width again if needed,
-               but 600px max-width usually covers it nicely. */
-      width: 100%;
-    }
-  }
-</style>

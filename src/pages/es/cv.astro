@@ -1,8 +1,7 @@
 ---
 /**
- * CV Page.
- * Displays curriculum vitae data loaded from `src/content/cv/main.yaml`.
- * Renders sections dynamically using specific components (SkillGroup, CertificateGroup) or generic map/timeline layouts.
+ * Spanish CV Page.
+ * Generates `/es/cv/` route with Spanish translations.
  */
 import "@styles/skills.css";
 
@@ -449,7 +448,7 @@ const personSchema = {
 
   .timeline-marker {
     position: absolute;
-    top: 24px; /* Align with card top content */
+    top: 24px;
     left: calc(-1 * var(--space-lg) - 7px);
     z-index: 10;
     width: 12px;
@@ -477,7 +476,6 @@ const personSchema = {
     transform: translateY(-2px);
   }
 
-  /* Arrow logic */
   .timeline-content::before {
     position: absolute;
     top: 22px;
@@ -526,7 +524,7 @@ const personSchema = {
 
   .item-location {
     display: flex;
-    gap: var(--space-xs); /* 6px - aligns with stat inline spacing */
+    gap: var(--space-xs);
     align-items: center;
     margin-top: var(--space-xs);
     font-size: 0.9rem;

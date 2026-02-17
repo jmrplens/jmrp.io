@@ -185,7 +185,12 @@ const socialLinksWithType = socialLinks.map((link) => {
 <footer>
   <div class="container">
     <p>
-      {t("ui.copyright", { year: String(today.getFullYear()), author: siteConfig.author })}
+      {
+        t("ui.copyright", {
+          year: String(today.getFullYear()),
+          author: siteConfig.author,
+        })
+      }
     </p>
     <div class="social-links">
       {

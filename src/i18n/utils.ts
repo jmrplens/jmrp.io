@@ -6,12 +6,7 @@
  *
  * @see https://docs.astro.build/en/recipes/i18n/
  */
-import {
-  defaultLocale,
-  localeConfig,
-  locales,
-  type Locale,
-} from "./config";
+import { defaultLocale, localeConfig, locales, type Locale } from "./config";
 import { translations, type Translations } from "./translations";
 
 // ---------------------------------------------------------------------------
@@ -143,10 +138,7 @@ export function useTranslations(lang: Locale) {
  * @returns A function `(path, targetLocale?) => localisedPath`.
  */
 export function useTranslatedPath(lang: Locale) {
-  return function translatePath(
-    path: string,
-    targetLocale?: Locale,
-  ): string {
+  return function translatePath(path: string, targetLocale?: Locale): string {
     const locale = targetLocale ?? lang;
     const cleanPath = stripLocalePrefix(path);
 
@@ -166,10 +158,7 @@ export function useTranslatedPath(lang: Locale) {
 export function stripLocalePrefix(path: string): string {
   const segments = path.split("/");
   // segments[0] is always '' (leading slash)
-  if (
-    segments[1] &&
-    (locales as readonly string[]).includes(segments[1])
-  ) {
+  if (segments[1] && (locales as readonly string[]).includes(segments[1])) {
     return "/" + segments.slice(2).join("/") || "/";
   }
   return path;
@@ -256,9 +245,7 @@ export function formatNumber(
   locale: Locale,
   options?: Intl.NumberFormatOptions,
 ): string {
-  return new Intl.NumberFormat(localeConfig[locale].bcp47, options).format(
-    num,
-  );
+  return new Intl.NumberFormat(localeConfig[locale].bcp47, options).format(num);
 }
 
 /**
@@ -280,9 +267,7 @@ export function pluralize(
   forms: Partial<Record<Intl.LDMLPluralRule, string>>,
   locale: Locale,
 ): string {
-  const rule = new Intl.PluralRules(localeConfig[locale].bcp47).select(
-    count,
-  );
+  const rule = new Intl.PluralRules(localeConfig[locale].bcp47).select(count);
   return forms[rule] ?? forms.other ?? String(count);
 }
 

@@ -15,12 +15,16 @@ export const translations = {
   es: { ...esCommon },
 } as const;
 
-/** The full translation tree type — uses string values (not literal types). */
-export type Translations = {
-  [K in keyof typeof translations.en]: {
-    [J in keyof (typeof translations.en)[K]]: string;
-  };
+/** The full translation tree type — recursively maps to string leaves. */
+type DeepStringify<T> = {
+  [K in keyof T]: T[K] extends string
+    ? string
+    : T[K] extends Record<string, unknown>
+      ? DeepStringify<T[K]>
+      : string;
 };
+
+export type Translations = DeepStringify<typeof translations.en>;
 
 /**
  * Get the full translations object for a given locale.

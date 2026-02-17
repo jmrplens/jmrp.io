@@ -289,13 +289,15 @@ const jsonLD = {
 />
 
 <!-- Hreflang alternates -->
-{alternateLinks.map((alt) => (
-  <link
-    rel="alternate"
-    hreflang={alt.hreflang}
-    href={alt.url}
-  />
-))}
+{
+  alternateLinks.map((alt) => (
+    <link
+      rel="alternate"
+      hreflang={alt.hreflang}
+      href={alt.url}
+    />
+  ))
+}
 
 <!-- Primary Meta Tags -->
 <title>{fullTitle}</title>
@@ -345,14 +347,15 @@ const jsonLD = {
   property="og:locale"
   content={getOgLocale(locale)}
 />
-{alternateLinks
-  .filter((alt) => alt.locale !== "x-default" && alt.locale !== locale)
-  .map((alt) => (
-    <meta
-      property="og:locale:alternate"
-      content={getOgLocale(alt.locale as Locale)}
-    />
-  ))
+{
+  alternateLinks
+    .filter((alt) => alt.locale !== "x-default" && alt.locale !== locale)
+    .map((alt) => (
+      <meta
+        property="og:locale:alternate"
+        content={getOgLocale(alt.locale as Locale)}
+      />
+    ))
 }
 <meta
   property="og:site_name"

@@ -1,9 +1,7 @@
 ---
 /**
- * GitHub Repositories Page.
- * Displays GitHub repositories using SSG + Islands architecture.
- * Profile and top 12 repos are fetched at build time for optimal performance.
- * Search functionality is client-side only (no API calls).
+ * Spanish GitHub Page.
+ * Generates `/es/github/` route with Spanish translations.
  */
 import githubAvatar from "@assets/github-avatar.png";
 import GitHubSearch from "@components/github/GitHubSearch.astro";
@@ -19,7 +17,7 @@ const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
 const t = useTranslations(locale);
 
 const profile = await fetchGitHubProfile();
-const repos = await fetchTopRepositories(12); // Top 12 most recently updated
+const repos = await fetchTopRepositories(12);
 
 const avatarSrcSetResolves = await Promise.all(
   [60, 120, 240].map(async (w) => {
@@ -148,7 +146,6 @@ const githubSchema = {
     border-radius: var(--radius-lg);
   }
 
-  /* Responsive Profile: Grid on Desktop */
   @media (width >= 768px) {
     .profile-header {
       flex-direction: row;
@@ -166,7 +163,6 @@ const githubSchema = {
     }
   }
 
-  /* Profile Elements */
   .profile-avatar img {
     width: 120px;
     max-width: 100%;
@@ -196,7 +192,7 @@ const githubSchema = {
 
   .profile-info .bio {
     max-width: 100%;
-    min-height: 1.5em; /* Stabilize for CLS */
+    min-height: 1.5em;
     margin-bottom: 16px;
     overflow-wrap: anywhere;
   }
@@ -207,7 +203,7 @@ const githubSchema = {
     gap: 20px;
     justify-content: center;
     max-width: 100%;
-    min-height: 1.5em; /* Stabilize for CLS */
+    min-height: 1.5em;
     margin-top: var(--space-md);
     overflow-wrap: anywhere;
   }
@@ -225,12 +221,12 @@ const githubSchema = {
     display: flex;
     gap: 4px;
     align-items: center;
-    min-height: 1.5em; /* Stabilize for micro-CLS */
+    min-height: 1.5em;
   }
 
   .location {
     display: flex;
-    gap: var(--space-xs); /* 6px */
+    gap: var(--space-xs);
     align-items: center;
     justify-content: center;
     margin-top: 12px;

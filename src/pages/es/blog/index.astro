@@ -1,7 +1,7 @@
 ---
 /**
- * Blog Index Page.
- * Lists all published blog posts, sorted by date (newest first).
+ * Spanish Blog Index — wrapper page.
+ * Generates the `/es/blog/` route with Spanish translations.
  */
 import "@styles/blog.css";
 
@@ -24,10 +24,8 @@ const posts = (await getCollection("posts"))
     (a, b) => b.data.publishedDate.valueOf() - a.data.publishedDate.valueOf(),
   );
 
-// Optimize LCP image for preload
-const lcpPost = posts[0];
 let lcpImagePreload = null;
-
+const lcpPost = posts[0];
 if (lcpPost && lcpPost.data.coverImage) {
   const optimizedLcp = await getImage({
     src: lcpPost.data.coverImage,
@@ -44,7 +42,6 @@ if (lcpPost && lcpPost.data.coverImage) {
   };
 }
 
-// Schema.org: CollectionPage with ItemList for Blog Index
 const baseUrl = new URL(Astro.url.pathname, getSiteUrl()).toString();
 const schema = {
   "@type": "CollectionPage",

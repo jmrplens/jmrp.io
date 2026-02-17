@@ -1,9 +1,7 @@
 ---
 /**
- * Tools Index Page.
- * Displays available interactive tools and utilities,
- * grouped by category from the `tools` content collection.
- * Style matches CV, Publications, and Homelab pages.
+ * Spanish Tools Index Page.
+ * Generates `/es/tools/` route with Spanish translations.
  */
 import BaseLayout from "@layouts/BaseLayout.astro";
 import { getSiteUrl } from "@utils/site";
@@ -191,7 +189,6 @@ const toolsSchema = {
     color: var(--color-text-muted);
   }
 
-  /* Section Styling (matches CV/Publications) */
   .tools-section,
   .info-section {
     margin-bottom: var(--space-2xl);
@@ -211,14 +208,12 @@ const toolsSchema = {
     border-bottom: 2px solid var(--color-primary);
   }
 
-  /* Tools Grid — compact 2-col */
   .tools-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
     gap: var(--space-sm);
   }
 
-  /* Compact Tool Card */
   .tool-card {
     display: flex;
     gap: var(--space-sm);
@@ -294,7 +289,6 @@ const toolsSchema = {
     transform: translateX(2px);
   }
 
-  /* Info Section */
   .info-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr));
@@ -347,7 +341,6 @@ const toolsSchema = {
     text-decoration: none;
   }
 
-  /* Responsive */
   @media (width <= 640px) {
     .tools-grid {
       grid-template-columns: 1fr;
