@@ -196,32 +196,26 @@ Configuración actual en `astro.config.mjs` ya contempla esto. Solo falta:
   - [ ] Preservar la ruta actual al cambiar idioma
   - [ ] Accesible (ARIA, keyboard nav)
   - [ ] Integrar en Header
-- [ ] **0.10** Crear helper para páginas: patrón de wrapper page
+- [ ] **0.10** Crear script de detección automática de idioma (client-side):
+  - [ ] Detectar `navigator.language` / `navigator.languages`
+  - [ ] Redirigir a `/es/` en primera visita si idioma del navegador es `es*`
+  - [ ] Respetar elección manual del usuario (guardar en `localStorage`)
+  - [ ] No redirigir si el usuario ya está en la versión correcta
+  - [ ] Inyectar en `BaseLayout.astro` (solo se ejecuta una vez)
+- [ ] **0.11** Crear helper para páginas: patrón de wrapper page
   ```astro
   ---
-  // src/pages/es/index.astro
-  import HomePage from "../index.astro"; // o componente compartido
-  export const locale = "es";
+  // src/pages/es/index.astro — wrapper que importa componente compartido
   ---
   ```
-- [ ] **0.11** Documentar el patrón de uso para desarrolladores
-- [ ] **0.12** Crear test unitario para `t()`, `getLocale()`, `getLocalizedUrl()`
+- [ ] **0.12** Documentar el patrón de uso para desarrolladores
+- [ ] **0.13** Crear test unitario para `t()`, `getLocale()`, `getLocalizedUrl()`
 
-### Decisiones pendientes
+### Decisiones resueltas en Fase 0
 
-- [ ] **D0.1**: ¿Páginas duplicadas en `/es/` o generar rutas dinámicamente con `getStaticPaths`?
-  - Opción A: Duplicar archivos `.astro` en `src/pages/es/` (más explícito, más mantenible a largo plazo)
-  - Opción B: Un solo archivo con `getStaticPaths` que genera ambos locales (menos duplicación, más complejo)
-  - Opción C: Páginas wrapper minimalistas en `/es/` que importan un componente compartido
-  - **Recomendada**: Opción C — minimiza duplicación manteniendo claridad
-- [ ] **D0.2**: ¿Archivos de traducción `.ts` o `.json`?
-  - `.ts`: type-safe, permite comentarios, facilita interpolación
-  - `.json`: más sencillo, importable por herramientas de traducción
-  - **Recomendada**: `.ts` con export `as const satisfies` para type-safety
-- [ ] **D0.3**: ¿Namespace flat o nested para keys de traducción?
-  - Flat: `"nav.home"`, `"nav.blog"` → más simple pero menos organizado
-  - Nested: `{ nav: { home: "...", blog: "..." } }` → más estructura
-  - **Recomendada**: Nested con punto-notation flatten para la función `t()`
+- **D0.1** → **Wrapper pages**: Páginas mínimas en `/es/` que importan componente compartido con `locale` prop
+- **D0.2** → **TypeScript** (`.ts`): con `as const satisfies` para type-safety, permite comentarios e interpolación
+- **D0.3** → **Nested** con punto-notation flatten para la función `t()`: `{ nav: { home: "..." } }` → `t(locale, "nav.home")`
 
 ---
 
@@ -381,13 +375,13 @@ Configuración actual en `astro.config.mjs` ya contempla esto. Solo falta:
 - [ ] **2.11.2** Breadcrumb labels
 - [ ] **2.11.3** Crear `src/pages/es/tools/[...slug].astro`
 
-### 5.12 404 (`404.astro`)
+### 5.12 404 (`404.astro`) — Un 404 por locale (D7)
 
 - [ ] **2.12.1** `"404: Ah ah ah!"` — título (¿mantener en inglés por ser referencia cultural?)
 - [ ] **2.12.2** `"Page Not Found"` → `"Página No Encontrada"`
 - [ ] **2.12.3** `"You didn't say the magic word"` → traducir
 - [ ] **2.12.4** `"← Go Home"` → `"← Ir al Inicio"`
-- [ ] **2.12.5** Crear `src/pages/es/404.astro` (o detectar locale en runtime)
+- [ ] **2.12.5** Crear `src/pages/es/404.astro` (wrapper, cada locale tiene su 404)
 
 ---
 
@@ -523,13 +517,15 @@ src/content/posts/
 - [ ] **5.2.5** Actualizar queries de tools para filtrar por `lang`
 - [ ] **5.2.6** Crear al menos 1 tool MDX de prueba en `tools/es/`
 
-### 8.4 Contenido pendiente de traducción (futuro)
+### 8.4 Contenido a traducir
 
-| Contenido | Palabras aprox. | Prioridad |
-|-----------|----------------|-----------|
-| 8 blog posts | ~15,000+ | P6 |
-| 14 tools MDX | ~3,000 | P5 |
-| CV completo | ~2,000 | P4 |
+| Contenido | Palabras aprox. | Fase |
+|-----------|----------------|------|
+| 8 blog posts | ~15,000+ | Fase 5 |
+| 14 tools MDX | ~3,000 | Fase 5 |
+| CV completo | ~2,000 | Fase 4 |
+
+> **Nota (D5)**: Se traducirán los 8 posts existentes al español. Contenido futuro sin traducir usará fallback a EN con banner (D2).
 
 ---
 
@@ -914,18 +910,18 @@ Para cada uno de los 14 tools (`base64-encoder`, `cert-inspector`, `color-contra
 | 5 | **Carpetas por locale en content** | Claridad, permite contenido parcial |
 | 6 | **Props para Preact i18n** | Mínimo overhead, build-time resolution |
 
-### 15.2 Pendientes de decidir
+### 15.2 Decisiones Resueltas
 
-| # | Decisión | Opciones | Impacto |
-|---|----------|----------|---------|
-| D1 | Páginas `/es/` wrappers vs dinámicas | Wrapper (recomendado) vs getStaticPaths | Arquitectura |
-| D2 | Contenido parcial en español | Mostrar EN como fallback vs ocultar | UX |
-| D3 | Tools interactivos: ¿traducir fase 1 o diferir? | Ahora vs después | Scope |
-| D4 | URL slugs en español | `/es/blog/seguridad-nginx/` vs `/es/blog/secure-nginx/` | SEO |
-| D5 | Blog posts traducidos: ¿reescribir o no publicar? | Traducir vs no disponible en ES | Contenido |
-| D6 | Detección automática de idioma | Sí (Accept-Language) vs No (solo manual) | SSG limita opciones |
-| D7 | 404: ¿un 404 por locale o detectar? | Uno por locale (más limpio) | UX |
-| D8 | Site config: ¿separar YAML o campo en schema? | YAML separado (recomendado) | Data model |
+| # | Decisión | **Resolución** | Razón |
+|---|----------|----------------|-------|
+| D1 | Páginas `/es/` | **Wrapper** | Páginas mínimas en `src/pages/es/` que importan componente compartido con `locale` prop. Menos duplicación, fácil de mantener. |
+| D2 | Contenido parcial en ES | **Fallback a EN con banner** | Si un post/tool no tiene versión ES, se muestra la versión EN con banner "Este contenido aún no está disponible en español". Siempre accesible. |
+| D3 | Tools interactivos | **Traducir todo** | Traducir las 14 tools como parte del plan completo. Es la fase más compleja pero se busca cobertura total. |
+| D4 | URL slugs | **Mantener en inglés** | Mismo slug en ambos idiomas (`/es/blog/secure-nginx/`). Más simple, no rompe links, facilita mapeo entre versiones. |
+| D5 | Blog posts | **Traducir todos** | Crear versiones ES de los 8 posts existentes. Esfuerzo considerable (~15.000 palabras) pero se busca cobertura completa. |
+| D6 | Detección de idioma | **Client-side detect + redirect** | Script client-side que detecta `navigator.language` y redirige en primera visita si el usuario no ha elegido manualmente. |
+| D7 | Página 404 | **Un 404 por locale** | `src/pages/es/404.astro` (wrapper). Más limpio, cada locale tiene su propia página de error traducida. |
+| D8 | Site config | **YAML separados por locale** | `site.yaml` (compartido) + `site.en.yaml` + `site.es.yaml`. Claro y explícito, requiere actualizar schema en `content.config.ts`. |
 
 ---
 
@@ -949,34 +945,34 @@ Para cada uno de los 14 tools (`base64-encoder`, `cert-inspector`, `color-contra
 ## Orden de Ejecución Recomendado
 
 ```
-Fase 0 (Infraestructura)     ████████░░  Semana 1
+Fase 0 (Infraestructura)      ████████░░  Semana 1
 Fase 1 (Layouts/Nav)          ██████░░░░  Semana 1-2
 Fase 8 (SEO/RSS/PWA)          ████░░░░░░  Semana 2
 Fase 2 (Páginas, sin content) ████████░░  Semana 2-3
 Fase 3 (Componentes UI)       ██████░░░░  Semana 3
 Fase 4 (YAML content)         ████░░░░░░  Semana 3-4
 Fase 5 (Content Collections)  ██████░░░░  Semana 4
-Fase 9 (Tests)                ████████░░  Semana 5
-Fase 10 (Docs/CI)             ████░░░░░░  Semana 5
---- MVP bilingüe listo ---
-Fase 6 (Preact Islands)       ████░░░░░░  Semana 6
-Fase 7 (Tools Apps)           ████████████ Semana 6-8+
+Fase 6 (Preact Islands)       ████░░░░░░  Semana 4-5
+Fase 7 (Tools Apps)           ████████████ Semana 5-7
+Fase 9 (Tests)                ████████░░  Semana 7-8
+Fase 10 (Docs/CI)             ████░░░░░░  Semana 8
 --- Cobertura completa ---
 ```
 
-### MVP (Minimum Viable Product)
+### Cobertura Completa
 
-Fases 0-5 + 8-10 = sitio navegable en español con:
-- ✅ Selector de idioma
+Todas las fases (0-10) = sitio completamente bilingüe:
+- ✅ Selector de idioma + detección automática (client-side)
 - ✅ Layouts y navegación traducidos
 - ✅ Todas las páginas con UI en español
 - ✅ SEO correcto (hreflang, og:locale, JSON-LD)
 - ✅ CV en español
 - ✅ RSS en español
+- ✅ 8 blog posts traducidos al español
+- ✅ 14 tools interactivos traducidos
+- ✅ Homelab islands traducidos
 - ✅ Tests cubriendo ambos idiomas
-- ⏳ Blog posts en español (escritura pendiente)
-- ⏳ Tools apps traducidos (Fase 7)
-- ⏳ Homelab islands traducidos (Fase 6)
+- ✅ Fallback a EN con banner para contenido futuro sin traducir
 
 ---
 
