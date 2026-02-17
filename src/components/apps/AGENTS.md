@@ -82,7 +82,7 @@ Tool-specific translations are in `src/i18n/translations/{en,es}/tools.ts`. Sinc
 
 ```astro
 ---
-import { getLangFromUrl, useTranslations } from "@src/i18n/utils";
+import { getLangFromUrl, useTranslations } from "@i18n/utils";
 const locale = getLangFromUrl(Astro.url);
 const t = useTranslations(locale);
 ---

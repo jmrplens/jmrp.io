@@ -553,7 +553,7 @@ Bilingual support (EN/ES) using Astro's built-in i18n routing with a custom tran
 
 ```astro
 ---
-import { getLangFromUrl, useTranslations } from "@src/i18n/utils";
+import { getLangFromUrl, useTranslations } from "@i18n/utils";
 const locale = getLangFromUrl(Astro.url);
 const t = useTranslations(locale);
 ---

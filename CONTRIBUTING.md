@@ -120,7 +120,7 @@ The site is bilingual (EN/ES). All user-facing text in components uses translati
 
 ```astro
 ---
-import { getLangFromUrl, useTranslations } from "@src/i18n/utils";
+import { getLangFromUrl, useTranslations } from "@i18n/utils";
 const locale = getLangFromUrl(Astro.url);
 const t = useTranslations(locale);
 ---

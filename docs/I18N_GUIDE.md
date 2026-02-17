@@ -72,7 +72,7 @@ src/i18n/
 
 ```astro
 ---
-import { getLangFromUrl, useTranslations } from "@src/i18n/utils";
+import { getLangFromUrl, useTranslations } from "@i18n/utils";
 
 const locale = getLangFromUrl(Astro.url);
 const t = useTranslations(locale);
@@ -106,7 +106,7 @@ import {
   getLangFromUrl,
   useTranslations,
   useTranslatedPath,
-} from "@src/i18n/utils";
+} from "@i18n/utils";
 
 const locale = getLangFromUrl(Astro.url);
 const t = useTranslations(locale);
@@ -123,8 +123,8 @@ In some cases you can use `Astro.currentLocale` instead of `getLangFromUrl`:
 
 ```astro
 ---
-import type { Locale } from "@src/i18n/config";
-import { useTranslations } from "@src/i18n/utils";
+import type { Locale } from "@i18n/config";
+import { useTranslations } from "@i18n/utils";
 
 const locale = (Astro.currentLocale ?? "en") as Locale;
 const t = useTranslations(locale);
@@ -268,7 +268,7 @@ export const common = {
 ### `formatDate(date, locale)`
 
 ```typescript
-import { formatDate } from "@src/i18n/utils";
+import { formatDate } from "@i18n/utils";
 formatDate(new Date("2025-01-15"), "en"); // "January 15, 2025"
 formatDate(new Date("2025-01-15"), "es"); // "15 de enero de 2025"
 ```
@@ -276,7 +276,7 @@ formatDate(new Date("2025-01-15"), "es"); // "15 de enero de 2025"
 ### `formatNumber(num, locale)`
 
 ```typescript
-import { formatNumber } from "@src/i18n/utils";
+import { formatNumber } from "@i18n/utils";
 formatNumber(1234567, "en"); // "1,234,567"
 formatNumber(1234567, "es"); // "1.234.567"
 ```
@@ -284,7 +284,7 @@ formatNumber(1234567, "es"); // "1.234.567"
 ### `pluralize(count, forms, locale)`
 
 ```typescript
-import { pluralize } from "@src/i18n/utils";
+import { pluralize } from "@i18n/utils";
 pluralize(1, { one: "post", other: "posts" }, "en"); // "post"
 pluralize(3, { one: "post", other: "posts" }, "en"); // "posts"
 ```
@@ -433,7 +433,7 @@ import {
   getLangFromUrl,
   useTranslations,
   useTranslatedPath,
-} from "@src/i18n/utils";
+} from "@i18n/utils";
 
 const locale = getLangFromUrl(Astro.url);
 const t = useTranslations(locale);
@@ -447,7 +447,7 @@ const translatePath = useTranslatedPath(locale);
 
 ```astro
 ---
-import { getLangFromUrl, useTranslations } from "@src/i18n/utils";
+import { getLangFromUrl, useTranslations } from "@i18n/utils";
 
 const locale = getLangFromUrl(Astro.url);
 const t = useTranslations(locale);
@@ -460,7 +460,7 @@ const t = useTranslations(locale);
 
 ```astro
 ---
-import { pluralize } from "@src/i18n/utils";
+import { pluralize } from "@i18n/utils";
 const starText = pluralize(
   count,
   {

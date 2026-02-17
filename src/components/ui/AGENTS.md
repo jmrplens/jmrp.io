@@ -25,7 +25,7 @@ All user-facing text in Astro components must use translated strings via `t()`:
 
 ```astro
 ---
-import { getLangFromUrl, useTranslations } from "@src/i18n/utils";
+import { getLangFromUrl, useTranslations } from "@i18n/utils";
 const locale = getLangFromUrl(Astro.url);
 const t = useTranslations(locale);
 ---
