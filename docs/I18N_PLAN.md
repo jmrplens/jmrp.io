@@ -3,7 +3,10 @@
 > **Rama**: `feat/i18n`  
 > **Idiomas**: Inglés (default, sin prefijo) + Español (`/es/`)  
 > **Estrategia de routing**: Prefix-based (Astro native i18n)  
-> **Fecha de creación**: 2026-02-17
+> **Enfoque**: Manual (Astro native + recipe pattern) — sin dependencias externas  
+> **Fecha de creación**: 2026-02-17  
+> **Última revisión**: 2026-02-17 (post-investigación)  
+> **Referencia técnica**: [`docs/I18N_RESEARCH.md`](./I18N_RESEARCH.md)
 
 ---
 
@@ -25,6 +28,7 @@
 14. [Inventario Completo de Strings](#14-inventario-completo-de-strings)
 15. [Decisiones de Diseño](#15-decisiones-de-diseño)
 16. [Riesgos y Mitigaciones](#16-riesgos-y-mitigaciones)
+17. [Consideraciones Nuevas (Post-Investigación)](#17-consideraciones-nuevas-post-investigación)
 
 ---
 
@@ -136,14 +140,21 @@ src/
 ```typescript
 // src/i18n/utils.ts
 import type { Locale } from "./config";
+import { getRelativeLocaleUrl } from "astro:i18n";
 
-export function t(locale: Locale, key: string): string;
-export function t(locale: Locale, key: string, params: Record<string, string | number>): string;
+// Patrón basado en el recipe oficial de Astro
+export function getLangFromUrl(url: URL): Locale;
+export function useTranslations(lang: Locale): (key: TranslationKey) => string;
+export function useTranslatedPath(lang: Locale): (path: string, l?: Locale) => string;
 
-export function getLocale(url: URL): Locale;
-export function getLocalizedUrl(url: URL, locale: Locale): string;
-export function formatDate(date: Date, locale: Locale): string;
+// Helpers adicionales
+export function getAlternateUrls(path: string): { locale: Locale; url: string }[];
+export function formatDate(date: Date, locale: Locale): string;  // Intl.DateTimeFormat
+export function formatNumber(num: number, locale: Locale): string;  // Intl.NumberFormat
+export function pluralize(count: number, singular: string, plural: string, locale: Locale): string;  // Intl.PluralRules
 ```
+
+**Nota**: Usar `getRelativeLocaleUrl()` de `astro:i18n` en lugar de implementar URL generation manual. Astro ya sabe cómo construir URLs con/sin prefijo según la configuración.
 
 ### 2.3 Path alias
 
@@ -156,11 +167,32 @@ Añadir `@i18n/*` → `src/i18n/*` en `tsconfig.json`.
 - `en` (default): sin prefijo → `/blog/`, `/cv/`
 - `es`: con prefijo → `/es/blog/`, `/es/cv/`
 
-Configuración actual en `astro.config.mjs` ya contempla esto. Solo falta:
+**Configuración completa de `astro.config.mjs`:**
 
-1. Configurar `routing` strategy si Astro 6 lo soporta (manual vs auto)
-2. Crear las páginas `/es/` duplicadas que importen los mismos componentes pero con locale `es`
-3. Evaluar si usar páginas wrapper o una capa de middleware
+```javascript
+i18n: {
+  defaultLocale: "en",
+  locales: ["en", "es"],
+  routing: {
+    prefixDefaultLocale: false,   // EN sin prefijo (/)
+    redirectToDefaultLocale: true, // /en/blog/ → 301 → /blog/
+    fallbackType: "redirect",     // /es/page-sin-traducir → 301 → /page-sin-traducir
+  },
+  fallback: {
+    es: "en",  // Contenido EN como fallback para ES
+  },
+}
+```
+
+**Notas sobre `fallbackType`:**
+- `"redirect"` (elegido): Redirige `/es/ruta` a `/ruta` si no existe versión ES. Cambia la URL visible.
+- `"rewrite"`: Genera contenido EN en la ruta `/es/` sin cambiar URL. No permite banner de "no traducido".
+- Para **contenido de colecciones** (posts/tools), el fallback es a nivel de query, no de routing — se muestra contenido EN con banner y atributo `lang="en"` en el `<article>`.
+
+**Decisiones de routing:**
+1. Páginas de `/es/` son wrapper pages (componente compartido + locale prop)
+2. `Astro.currentLocale` como fuente primaria del locale actual (disponible en SSG y SSR)
+3. `getRelativeLocaleUrl()` de `astro:i18n` para generar URLs localizadas
 
 ---
 
@@ -175,21 +207,22 @@ Configuración actual en `astro.config.mjs` ya contempla esto. Solo falta:
   - [ ] Definir tipo `Locale = "en" | "es"`
   - [ ] Definir `defaultLocale`, `locales`, `localeLabels`
   - [ ] Definir tipo `LocaleConfig` con nombre del idioma, dirección, date locale
-- [ ] **0.3** Crear `src/i18n/utils.ts`:
-  - [ ] Implementar `getLocale(url: URL): Locale` — extrae locale de la URL
-  - [ ] Implementar `t(locale, key): string` — type-safe translation lookup
-  - [ ] Implementar `t(locale, key, params): string` — con interpolación `{name}`, `{count}`
-  - [ ] Implementar `getLocalizedUrl(path, locale): string` — genera URL con/sin prefijo
-  - [ ] Implementar `getAlternateUrl(url, locale): string` — para hreflang
-  - [ ] Implementar `formatDate(date, locale): string` — wrapper de `toLocaleDateString`
-  - [ ] Implementar `formatNumber(num, locale): string` — wrapper de `toLocaleString`
-  - [ ] Implementar `pluralize(count, singular, plural, locale): string` — pluralización simple
+- [ ] **0.3** Crear `src/i18n/utils.ts` (basado en el recipe oficial de Astro):
+  - [ ] Implementar `getLangFromUrl(url: URL): Locale` — extrae locale de la URL
+  - [ ] Implementar `useTranslations(lang: Locale)` — retorna función `t(key)` type-safe
+  - [ ] Implementar `useTranslatedPath(lang: Locale)` — retorna función para generar paths localizados
+  - [ ] Implementar `getAlternateUrls(path: string): { locale: Locale; url: string }[]` — para hreflang
+  - [ ] Implementar `formatDate(date, locale): string` — usar `Intl.DateTimeFormat` (no `toLocaleDateString`)
+  - [ ] Implementar `formatNumber(num, locale): string` — usar `Intl.NumberFormat`
+  - [ ] Implementar `pluralize(count, key, locale): string` — usar `Intl.PluralRules` (ES tiene reglas different a EN)
 - [ ] **0.4** Crear `src/i18n/translations/en/common.ts` — primer archivo con las keys básicas
 - [ ] **0.5** Crear `src/i18n/translations/es/common.ts` — traducción española
 - [ ] **0.6** Crear `src/i18n/translations/index.ts` — barrel export con types
 - [ ] **0.7** Añadir path alias `@i18n` en `tsconfig.json`
 - [ ] **0.8** Actualizar `astro.config.mjs`:
-  - [ ] Configurar `i18n.routing` strategy (evaluar `manual` vs `prefix-other-locales`)
+  - [ ] Configurar `i18n.routing`: `{ prefixDefaultLocale: false, redirectToDefaultLocale: true, fallbackType: "redirect" }`
+  - [ ] Configurar `i18n.fallback`: `{ es: "en" }`
+  - [ ] Verificar `@astrojs/sitemap` i18n config (ya configurado parcialmente en L131-134)
   - [ ] Verificar compatibilidad con Astro 6 beta
 - [ ] **0.9** Crear componente `LanguageSwitcher.astro`:
   - [ ] Botón/dropdown para cambiar idioma
@@ -436,11 +469,20 @@ Configuración actual en `astro.config.mjs` ya contempla esto. Solo falta:
 
 Los componentes `.astro` se renderizan en build time. El locale se puede:
 
-1. **Derivar de `Astro.url`** en cada componente (cada uno llama `getLocale(Astro.url)`)
-2. **Pasar como prop** desde el layout/page
-3. **Usar `Astro.currentLocale`** (API nativa de Astro i18n — preferida)
+1. **Usar `Astro.currentLocale`** (API nativa de Astro i18n — **preferida**, disponible en SSG y SSR)
+2. **Derivar de `Astro.url`** con `getLangFromUrl(Astro.url)` (fallback si `currentLocale` no está disponible)
+3. **Pasar como prop** desde el layout/page (solo si el componente no tiene acceso a `Astro`)
 
-**Decisión**: Usar `Astro.currentLocale` cuando disponible, fallback a `getLocale(Astro.url)`.
+**Decisión**: Usar `Astro.currentLocale` como fuente primaria. Es la API oficial y no requiere prop drilling.
+
+```astro
+---
+// En cualquier componente .astro
+const locale = (Astro.currentLocale ?? "en") as Locale;
+const t = useTranslations(locale);
+---
+<nav aria-label={t("aria.mainNav")}>...</nav>
+```
 
 ---
 
@@ -526,6 +568,32 @@ src/content/posts/
 | CV completo | ~2,000 | Fase 4 |
 
 > **Nota (D5)**: Se traducirán los 8 posts existentes al español. Contenido futuro sin traducir usará fallback a EN con banner (D2).
+
+### 8.5 Fallback de contenido (D2 — detalle de implementación)
+
+Cuando una página ES no tiene contenido traducido:
+
+1. **Query**: Buscar contenido con `lang: locale`, si no existe, buscar con `lang: "en"`
+2. **Banner**: Mostrar aviso visible: `"Este contenido aún no está disponible en español. Mostrando la versión en inglés."`
+3. **Atributo `lang`**: Envolver el contenido fallback en `<article lang="en">` para que los lectores de pantalla pronuncien correctamente en inglés
+4. **Canonical**: El canonical de la página fallback debe apuntar a la versión EN original
+5. **hreflang**: NO generar hreflang ES para páginas que son 100% fallback (no hay contenido ES real)
+
+```astro
+---
+// Ejemplo de patrón fallback en [slug].astro
+const locale = Astro.currentLocale as Locale;
+let post = await getEntry("posts", `${locale}/${slug}`);
+const isFallback = !post;
+if (!post) {
+  post = await getEntry("posts", `en/${slug}`);
+}
+---
+{isFallback && <FallbackBanner locale={locale} />}
+<article lang={isFallback ? "en" : locale}>
+  <Content />
+</article>
+```
 
 ---
 
@@ -616,13 +684,25 @@ Para cada uno de los 14 tools (`base64-encoder`, `cert-inspector`, `color-contra
 
 > **Objetivo**: Que los metadatos, feeds y manifests soporten ambos idiomas.
 
+### Requisitos SEO (según documentación oficial de Google)
+
+1. **hreflang bidireccional**: Cada página EN debe enlazar a ES y viceversa. Si falta una dirección, Google puede ignorar ambas.
+2. **URLs absolutas**: `hreflang` debe usar URLs absolutas con protocolo (`https://jmrp.io/...`).
+3. **`x-default`**: Apunta a la versión por defecto (EN). Indica a Google qué mostrar cuando ningún hreflang coincide con el idioma del usuario.
+4. **Auto-referencia**: Cada página debe incluir un hreflang que apunte a sí misma.
+5. **Canonical por locale**: Cada versión traducida tiene su propio canonical (`/es/blog/post/` → canonical `/es/blog/post/`, NO cross-locale).
+6. **Formato de código**: ISO 639-1 para idioma (`en`, `es`), opcionalmente ISO 3166-1 Alpha 2 para región (`en-US`, `es-ES`).
+
 ### Checklist
 
 - [ ] **8.1** `src/components/layout/BaseHead.astro` — SEO:
-  - [ ] `<link rel="alternate" hreflang="en" href="...">` para todas las páginas
-  - [ ] `<link rel="alternate" hreflang="es" href="...">` para todas las páginas
-  - [ ] `<link rel="alternate" hreflang="x-default" href="...">` → inglés
-  - [ ] `og:locale` → `"en_US"` o `"es_ES"` dinámico
+  - [ ] `<link rel="alternate" hreflang="en" href="https://jmrp.io/...">` (URL absoluta)
+  - [ ] `<link rel="alternate" hreflang="es" href="https://jmrp.io/es/...">` (URL absoluta)
+  - [ ] `<link rel="alternate" hreflang="x-default" href="https://jmrp.io/...">` → siempre EN
+  - [ ] Asegurar bidireccionalidad: EN→ES y ES→EN en cada página
+  - [ ] Auto-referencia: cada página se incluye a sí misma en hreflang
+  - [ ] `<link rel="canonical">` por locale (NO cross-locale canonical)
+  - [ ] `og:locale` → `"en_US"` o `"es_ES"` dinámico (formato con underscore, no guion)
   - [ ] `og:locale:alternate` → el otro locale
   - [ ] `<html lang>` dinámico (ya cubierto en Fase 1)
 - [ ] **8.2** JSON-LD `@graph`:
@@ -630,20 +710,23 @@ Para cada uno de los 14 tools (`base64-encoder`, `cert-inspector`, `color-contra
   - [ ] `BreadcrumbList` → labels traducidos
   - [ ] `BlogPosting` → `inLanguage` por post
   - [ ] `SoftwareApplication` → `inLanguage`
-- [ ] **8.3** `src/pages/rss.xml.ts`:
-  - [ ] `<language>en-us</language>` → dinámico según locale
-  - [ ] `"Continue reading on jmrp.io →"` → traducir
+  - [ ] Añadir `isPartOf` con referencia al `WebSite` `@id` correcto
+- [ ] **8.3** RSS — feeds por locale:
+  - [ ] `src/pages/rss.xml.ts` → filtrar solo posts EN, `<language>en-us</language>`
+  - [ ] `src/pages/es/rss.xml.ts` → filtrar solo posts ES, `<language>es-es</language>`
+  - [ ] `"Continue reading on jmrp.io →"` → traducir en cada versión
   - [ ] Copyright → traducir
-  - [ ] Filtrar posts por locale
-  - [ ] Crear `src/pages/es/rss.xml.ts` o manejar con query param
+  - [ ] `<link rel="alternate" type="application/rss+xml">` para ambos feeds en `BaseHead.astro`
+  - [ ] Título del feed traducido: `"JMRP Blog RSS Feed"` / `"JMRP Blog - Feed RSS"`
 - [ ] **8.4** `src/pages/site.webmanifest.ts`:
   - [ ] `lang: "en-US"` → dinámico
   - [ ] `short_name`, `name`, `description` → traducir
   - [ ] `shortcuts[].name` y `.description` → traducir
-  - [ ] Evaluar si generar un manifest por locale
+  - [ ] Evaluar si generar un manifest por locale o mantener uno único
 - [ ] **8.5** Sitemap:
-  - [ ] Verificar que `@astrojs/sitemap` genera entries con `hreflang` alternates
-  - [ ] Confirmar que las URLs `/es/` aparecen en el sitemap
+  - [ ] Verificar que `@astrojs/sitemap` genera `<xhtml:link rel="alternate">` para cada locale
+  - [ ] Cada `<url>` debe tener alternates para TODOS los locales incluyendo auto-referencia
+  - [ ] Confirmar que las URLs `/es/` aparecen en el sitemap con `lastmod`
 - [ ] **8.6** `robots.txt`:
   - [ ] Añadir `Sitemap: .../sitemap-index.xml` (ya debería estar)
   - [ ] No bloquear `/es/`
@@ -934,11 +1017,13 @@ Para cada uno de los 14 tools (`base64-encoder`, `cert-inspector`, `color-contra
 | Performance: doble build (2x páginas) | Medio | Media | Astro SSG maneja bien, monitorizar build time |
 | SEO: Google indexa contenido duplicado | Alto | Baja | hreflang correcto, canonical tags |
 | Strings sin traducir en producción | Medio | Media | Test de regression: buscar strings EN en páginas ES |
-| `Astro.currentLocale` no disponible en beta | Medio | Baja | Fallback a `getLocale(Astro.url)` |
-| Mermaid SVGs con texto embebido | Bajo | Media | Los diagramas se dejan en inglés o se duplican en MDX |
+| `Astro.currentLocale` no disponible en beta | Medio | Baja | Fallback a `getLangFromUrl(Astro.url)` |
+| Mermaid SVGs con texto embebido | Bajo | Media | Los diagramas se adaptan en el MDX traducido |
 | Formularios en tools no accesibles en ES | Medio | Media | Auditoría axe-core por tool |
 | Build time aumenta significativamente | Medio | Media | Caché de imágenes optimizadas, builds incrementales |
 | Tests lentos con doble de páginas | Bajo | Alta | Filtrar por locale o paralelizar |
+| View Transitions + cambio de idioma | Medio | Media | Verificar `<html lang>` en `astro:before-swap` handler |
+| Nginx 404 no configurado por locale | Medio | Baja | Actualizar post-build integration para generar config |
 
 ---
 
@@ -976,4 +1061,122 @@ Todas las fases (0-10) = sitio completamente bilingüe:
 
 ---
 
-> **Siguiente paso**: Decidir las cuestiones pendientes (sección 15.2) y comenzar con la **Fase 0 — Infraestructura Base**.
+## 17. Consideraciones Nuevas (Post-Investigación)
+
+> Puntos descubiertos durante la investigación de docs oficiales, plugins y mejores prácticas.
+
+### 17.1 Nginx — Configuración 404 por locale
+
+El servidor Nginx necesita servir la página 404 correcta según el locale:
+
+```nginx
+# /es/ → página 404 en español
+location /es/ {
+    error_page 404 /es/404/index.html;
+}
+
+# Default → página 404 en inglés
+error_page 404 /404/index.html;
+```
+
+**Impacto**: Requiere actualizar el post-build que genera `security_headers.conf` y/o la config de Nginx.
+
+### 17.2 View Transitions y locale
+
+El sitio usa Astro View Transitions (`astro:before-swap`, `astro:after-swap`). Al cambiar de idioma:
+
+1. El `<html lang="...">` debe actualizarse correctamente durante la transición
+2. El script de detección de idioma (0.10) NO debe redirigir durante una View Transition
+3. El tema (dark/light) persiste en `localStorage` por dominio — sin impacto entre locales ✅
+4. El `LanguageSwitcher` debería funcionar con View Transitions sin recarga completa
+
+**Acción**: Verificar en Phase 1 que `astro:before-swap` handler actualiza `<html lang>`.
+
+### 17.3 Atributo `lang` en contenido fallback
+
+Cuando se muestra contenido EN en una página ES (fallback por D2):
+
+- Envolver en `<article lang="en">` para que los lectores de pantalla cambien de voz
+- Importante para WCAG 3.1.2 (Language of Parts, nivel AA)
+- El banner de fallback SÍ debe estar en español (es UI, no contenido)
+
+### 17.4 Cross-locale links visibles
+
+Cada post/tool debería tener un enlace visible a su versión en el otro idioma:
+
+```html
+<!-- En versión EN -->
+<a href="/es/blog/post/" hreflang="es" lang="es">Leer en español</a>
+
+<!-- En versión ES -->
+<a href="/blog/post/" hreflang="en" lang="en">Read in English</a>
+```
+
+Esto complementa el LanguageSwitcher del header y mejora la descubribilidad.
+
+### 17.5 Estimación de impacto en build time
+
+| Concepto | Actual | Con i18n | Impacto |
+|----------|--------|----------|---------|
+| Páginas estáticas | ~13 | ~26 | ×2 |
+| Blog posts | 8 | 16 | ×2 |
+| Tool pages | 14 | 28 | ×2 |
+| Category pages | ~5 | ~10 | ×2 |
+| Tag pages | ~8 | ~16 | ×2 |
+| **Total páginas** | **~48** | **~96** | **×2** |
+
+Astro SSG maneja cientos de páginas sin problemas. El impacto esperado es mínimo (~+30-60s en build).
+
+### 17.6 Uso de `Intl` API
+
+Preferir la API `Intl` nativa de JavaScript sobre implementaciones manuales:
+
+| API | Uso | Ejemplo |
+|-----|-----|---------|
+| `Intl.DateTimeFormat` | Formateo de fechas | `new Intl.DateTimeFormat("es", { dateStyle: "long" }).format(date)` → "17 de febrero de 2026" |
+| `Intl.NumberFormat` | Formateo de números | `new Intl.NumberFormat("es").format(1234)` → "1.234" |
+| `Intl.PluralRules` | Pluralización | `new Intl.PluralRules("es").select(1)` → "one", `select(2)` → "other" |
+| `Intl.RelativeTimeFormat` | Tiempo relativo | `new Intl.RelativeTimeFormat("es").format(-2, "day")` → "hace 2 días" |
+
+**Ventaja**: Sin dependencias extras, soporte nativo en Node 22+, locale-aware.
+
+### 17.7 Content Collections — `generateId` con locales
+
+Al mover contenido a carpetas por locale (`posts/en/`, `posts/es/`), el `generateId` puede incluir el prefijo de locale. Para evitar problemas con los slugs:
+
+```typescript
+// content.config.ts — opción posible
+const posts = defineCollection({
+  // ...
+  generateId: ({ entry }) => {
+    // entry: "en/001-post-slug.mdx" → id: "en/001-post-slug"
+    return entry.replace(/\.mdx?$/, "");
+  },
+});
+```
+
+La query luego filtra por prefix: `posts.filter(p => p.id.startsWith("en/"))` o mejor, por campo `lang` del frontmatter.
+
+### 17.8 Compatibilidad con `Astro.preferredLocale`
+
+- `Astro.preferredLocale` = **SSR-only** (requiere `Accept-Language` header del request)
+- `Astro.currentLocale` = **SSG + SSR** (derivado de la URL, siempre disponible)
+- En SSG, la detección de idioma del navegador SOLO se puede hacer client-side con `navigator.language`
+
+**Conclusión**: Usar siempre `Astro.currentLocale` en componentes. La detección automática es un script client-side separado (0.10).
+
+### 17.9 Web Manifest por locale
+
+Evaluar si generar `/es/site.webmanifest` separado o mantener uno único. Si el manifest tiene `name` y `description` traducidos, conviene uno por locale. El `<link rel="manifest">` en `BaseHead.astro` apuntaría al manifest del locale actual.
+
+### 17.10 Mermaid diagrams
+
+Los diagramas Mermaid se renderizan como SVG en build time con texto embebido. Opciones:
+
+1. **Dejar en inglés** — Los textos técnicos (flowcharts, secuencias) suelen ser más claros en inglés
+2. **Duplicar en MDX** — Crear versión ES del bloque Mermaid en el post traducido
+3. **Recomendado**: Opción 2 para posts traducidos (el traductor adapta el diagrama en el MDX ES)
+
+---
+
+> **Siguiente paso**: Comenzar con la **Fase 0 — Infraestructura Base**.
