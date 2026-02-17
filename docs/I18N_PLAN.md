@@ -175,19 +175,14 @@ i18n: {
   locales: ["en", "es"],
   routing: {
     prefixDefaultLocale: false,   // EN sin prefijo (/)
-    redirectToDefaultLocale: true, // /en/blog/ → 301 → /blog/
-    fallbackType: "redirect",     // /es/page-sin-traducir → 301 → /page-sin-traducir
-  },
-  fallback: {
-    es: "en",  // Contenido EN como fallback para ES
   },
 }
 ```
 
-**Notas sobre `fallbackType`:**
-- `"redirect"` (elegido): Redirige `/es/ruta` a `/ruta` si no existe versión ES. Cambia la URL visible.
-- `"rewrite"`: Genera contenido EN en la ruta `/es/` sin cambiar URL. No permite banner de "no traducido".
-- Para **contenido de colecciones** (posts/tools), el fallback es a nivel de query, no de routing — se muestra contenido EN con banner y atributo `lang="en"` en el `<article>`.
+**Nota sobre `fallback` a nivel de routing:**
+- `i18n.fallback` de Astro genera redirects/rewrites automáticos que pueden conflictuar con páginas ES que existen. Se omite del config.
+- El fallback se maneja **a nivel de contenido** (query de colecciones) → muestra contenido EN con banner y `lang="en"` en el `<article>`.
+- `fallbackType: "redirect"` tampoco se usa — los redirects manuales dan más control.
 
 **Decisiones de routing:**
 1. Páginas de `/es/` son wrapper pages (componente compartido + locale prop)
@@ -220,8 +215,8 @@ i18n: {
 - [ ] **0.6** Crear `src/i18n/translations/index.ts` — barrel export con types
 - [ ] **0.7** Añadir path alias `@i18n` en `tsconfig.json`
 - [ ] **0.8** Actualizar `astro.config.mjs`:
-  - [ ] Configurar `i18n.routing`: `{ prefixDefaultLocale: false, redirectToDefaultLocale: true, fallbackType: "redirect" }`
-  - [ ] Configurar `i18n.fallback`: `{ es: "en" }`
+  - [ ] Configurar `i18n.routing`: `{ prefixDefaultLocale: false }`
+  - [ ] NO usar `i18n.fallback` (conflictos con páginas ES existentes — fallback a nivel de contenido)
   - [ ] Verificar `@astrojs/sitemap` i18n config (ya configurado parcialmente en L131-134)
   - [ ] Verificar compatibilidad con Astro 6 beta
 - [ ] **0.9** Crear componente `LanguageSwitcher.astro`:

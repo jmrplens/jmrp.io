@@ -20,6 +20,8 @@
       "@styles/*": ["src/styles/*"],
       "@data/*": ["src/data/*"],
       "@languages/*": ["src/languages/*"],
+      "@i18n": ["src/i18n/index.ts"],
+      "@i18n/*": ["src/i18n/*"],
       "@src/*": ["src/*"]
     }
   }

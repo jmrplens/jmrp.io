@@ -1,0 +1,35 @@
+---
+/**
+ * Spanish Home Page — wrapper page.
+ *
+ * This page re-exports the English home page to generate the `/es/` route.
+ * Astro's i18n system sets `Astro.currentLocale` to "es" automatically.
+ *
+ * In Phase 2, this page will import a shared HomeContent component
+ * and pass `locale="es"` to it. For now, it forwards to the same layout
+ * as the EN page — the LanguageSwitcher and `<html lang>` already
+ * respond correctly to the locale.
+ *
+ * @see docs/I18N_PLAN.md — Phase 2 (Páginas Principales)
+ */
+
+// This is intentionally a minimal stub for Phase 0.
+// Full implementation comes in Phase 2 when page content is extracted
+// into shared components.
+
+import BaseLayout from "@layouts/BaseLayout.astro";
+
+// For Phase 0, this page simply renders a placeholder so that
+// the /es/ route exists and the LanguageSwitcher has a target.
+---
+
+<BaseLayout
+  title="Inicio — JMRP"
+  description="Blog técnico y portfolio personal de José Manuel Requena Plens."
+>
+  <div class="container">
+    <p style="padding: 2rem 0; text-align: center; color: var(--color-text-muted);">
+      🚧 Versión en español en construcción — <a href="/">View in English</a>
+    </p>
+  </div>
+</BaseLayout>

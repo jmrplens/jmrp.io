@@ -5,6 +5,7 @@
  * Responsive design with a hamburger menu for mobile.
  */
 import ThemeToggle from "@components/ui/ThemeToggle.astro";
+import LanguageSwitcher from "@components/layout/LanguageSwitcher.astro";
 import { getEntry } from "astro:content";
 
 const siteEntry = await getEntry("site_config", "site");
@@ -67,6 +68,7 @@ const logoText =
           ))
         }
       </ul>
+      <LanguageSwitcher />
       <ThemeToggle />
     </div>
   </nav>

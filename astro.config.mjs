@@ -30,6 +30,9 @@ const OPTIMIZED_IMAGES_CACHE_DIR = ".cache/optimized-images";
 const i18nConfig = {
   defaultLocale: "en",
   locales: ["en", "es"],
+  routing: {
+    prefixDefaultLocale: false,
+  },
 };
 
 // https://astro.build/config

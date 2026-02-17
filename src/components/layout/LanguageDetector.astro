@@ -1,0 +1,63 @@
+---
+/**
+ * LanguageDetector Component
+ *
+ * Client-side script that detects the user's browser language on first visit
+ * and redirects to the Spanish version if appropriate.
+ *
+ * Rules:
+ * 1. Only triggers on pages without locale prefix (EN pages)
+ * 2. Only redirects if user has NOT manually chosen a language before
+ * 3. Checks `navigator.language` / `navigator.languages` for `es*`
+ * 4. Stores preference in `localStorage` to avoid repeated redirects
+ * 5. Does NOT redirect during View Transitions (astro:before-swap)
+ *
+ * To be included in BaseLayout.astro (runs once per page load).
+ */
+---
+
+<script>
+  const LANG_KEY = "preferred-lang";
+  const REDIRECT_DONE_KEY = "lang-redirect-done";
+
+  function detectAndRedirect() {
+    // Skip if user has manually chosen a language
+    if (localStorage.getItem(LANG_KEY)) return;
+
+    // Skip if we already redirected once this session
+    if (sessionStorage.getItem(REDIRECT_DONE_KEY)) return;
+
+    // Only redirect on default locale (EN) pages — paths without /es/ prefix
+    if (window.location.pathname.startsWith("/es/")) return;
+
+    // Check browser languages for Spanish preference
+    const langs = navigator.languages ?? [navigator.language];
+    const prefersSpanish = langs.some((lang) =>
+      lang.toLowerCase().startsWith("es"),
+    );
+
+    if (prefersSpanish) {
+      // Mark that we've done the redirect to avoid loops
+      sessionStorage.setItem(REDIRECT_DONE_KEY, "1");
+
+      // Build the Spanish URL preserving the current path
+      const esPath = `/es${window.location.pathname}`;
+      window.location.replace(esPath);
+    }
+  }
+
+  /**
+   * Mark that the user has manually chosen a language.
+   * Called by the LanguageSwitcher when clicked.
+   */
+  function markLanguageChoice() {
+    const isSpanish = window.location.pathname.startsWith("/es/");
+    localStorage.setItem(LANG_KEY, isSpanish ? "es" : "en");
+  }
+
+  // Expose globally so LanguageSwitcher can call it
+  (window as any).__markLanguageChoice = markLanguageChoice;
+
+  // Run on initial page load (not on View Transitions)
+  detectAndRedirect();
+</script>
