@@ -14,8 +14,10 @@ import Header from "@components/layout/Header.astro";
 import LanguageDetector from "@components/layout/LanguageDetector.astro";
 import SRIEventListener from "@components/ui/SRIEventListener.astro";
 import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslations } from "@i18n/utils";
 
 const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
 
 interface Props {
   title: string;
@@ -135,7 +137,7 @@ const {
     <a
       href="#main-content"
       class="skip-link"
-      >Skip to content</a
+      >{t("ui.skipToContent")}</a
     >
     <Header />
     <main

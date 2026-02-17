@@ -61,4 +61,7 @@ export const common = {
     playSoundNedry: "Play Nedry sound",
     languageSwitcher: "Switch language",
   },
+  seo: {
+    rssFeedTitle: "JMRP Blog RSS Feed",
+  },
 } as const;

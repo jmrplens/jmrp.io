@@ -16,10 +16,16 @@ import defaultOgImage from "@assets/mehome_landscape.webp";
 import type { SiteConfig } from "@src/types";
 import { safeJsonLd } from "@utils/html";
 import { getSiteUrl } from "@utils/site";
+import { defaultLocale, type Locale } from "@i18n/config";
+import { getAlternateLinks, getOgLocale, useTranslations } from "@i18n/utils";
 // Variable Fonts (managed by Astro Experimental Fonts)
 import type { ImageMetadata } from "astro";
 import { Font, getImage } from "astro:assets";
 import { getEntry } from "astro:content";
+
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
+const alternateLinks = getAlternateLinks(Astro.url.pathname, getSiteUrl());
 
 const favicon = await getImage({
   src: faviconSrc,
@@ -124,7 +130,7 @@ const websiteSchema = {
   url: getSiteUrl(),
   name: siteData.author,
   description: siteData.description,
-  inLanguage: siteData.locale,
+  inLanguage: locale,
   publisher: {
     "@type": "Person",
     "@id": new URL("#person", getSiteUrl()).toString(),
@@ -151,7 +157,7 @@ const breadcrumbList = {
     {
       "@type": "ListItem",
       position: 1,
-      name: "Home",
+      name: t("nav.home"),
       item: getSiteUrl(),
     },
     ...pathSegments.map((segment, index) => {
@@ -236,9 +242,6 @@ const jsonLD = {
   rel="apple-touch-icon"
   href={appleTouchIcon.src}
 />
-
-<!-- DNS Prefetch for external resources -->
-
 <link
   rel="manifest"
   href="/site.webmanifest"
@@ -250,7 +253,7 @@ const jsonLD = {
 <link
   rel="alternate"
   type="application/rss+xml"
-  title="JMRP Blog RSS Feed"
+  title={t("seo.rssFeedTitle")}
   href="/rss.xml"
 />
 <meta
@@ -284,6 +287,15 @@ const jsonLD = {
   rel="canonical"
   href={canonicalURL}
 />
+
+<!-- Hreflang alternates -->
+{alternateLinks.map((alt) => (
+  <link
+    rel="alternate"
+    hreflang={alt.hreflang}
+    href={alt.url}
+  />
+))}
 
 <!-- Primary Meta Tags -->
 <title>{fullTitle}</title>
@@ -331,8 +343,17 @@ const jsonLD = {
 />
 <meta
   property="og:locale"
-  content={siteData.locale}
+  content={getOgLocale(locale)}
 />
+{alternateLinks
+  .filter((alt) => alt.locale !== "x-default" && alt.locale !== locale)
+  .map((alt) => (
+    <meta
+      property="og:locale:alternate"
+      content={getOgLocale(alt.locale as Locale)}
+    />
+  ))
+}
 <meta
   property="og:site_name"
   content={siteData.author}

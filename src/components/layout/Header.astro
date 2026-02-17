@@ -6,7 +6,13 @@
  */
 import ThemeToggle from "@components/ui/ThemeToggle.astro";
 import LanguageSwitcher from "@components/layout/LanguageSwitcher.astro";
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslatedPath, useTranslations } from "@i18n/utils";
 import { getEntry } from "astro:content";
+
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
+const translatePath = useTranslatedPath(locale);
 
 const siteEntry = await getEntry("site_config", "site");
 // Type guard: siteEntry may be undefined, and data is a union type.
@@ -23,12 +29,12 @@ const logoText =
 <header>
   <nav
     class="container"
-    aria-label="Main Navigation"
+    aria-label={t("aria.mainNav")}
   >
     <a
-      href="/"
+      href={translatePath("/")}
       class="logo"
-      aria-label="Home - JMRP"
+      aria-label={t("aria.homeLogo")}
     >
       <span class="text-mono">{logoText}</span>
     </a>
@@ -36,7 +42,7 @@ const logoText =
       <button
         id="menu-toggle"
         type="button"
-        aria-label="Toggle Navigation"
+        aria-label={t("aria.toggleNav")}
         aria-controls="nav-links"
         aria-expanded="false"
         class="menu-toggle"
@@ -59,7 +65,7 @@ const logoText =
           navItems.map((item) => (
             <li>
               <a
-                href={item.href}
+                href={translatePath(item.href)}
                 data-astro-prefetch
               >
                 {item.label}

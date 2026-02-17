@@ -5,8 +5,13 @@
  * Includes logic to map FontAwesome classes to Iconify names.
  */
 import type { SiteConfig, SocialsConfig } from "@src/types";
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslations } from "@i18n/utils";
 import { Image } from "astro:assets";
 import { getEntry } from "astro:content";
+
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
 
 const today = new Date();
 const socialsEntry = await getEntry("site_config", "socials");
@@ -180,8 +185,7 @@ const socialLinksWithType = socialLinks.map((link) => {
 <footer>
   <div class="container">
     <p>
-      &copy; {today.getFullYear()}
-      {siteConfig.author}. All rights reserved.
+      {t("ui.copyright", { year: String(today.getFullYear()), author: siteConfig.author })}
     </p>
     <div class="social-links">
       {
@@ -190,7 +194,7 @@ const socialLinksWithType = socialLinks.map((link) => {
             href={link.url}
             target="_blank"
             rel={link.rel || "noopener noreferrer"}
-            aria-label={`Visit my ${link.label} profile`}
+            aria-label={t("aria.visitProfile", { name: link.label })}
             title={link.label}
             class="social-btn"
           >
