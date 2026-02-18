@@ -80,12 +80,16 @@ const loadReport = () => {
 
 /**
  * Renders the HTML report
+ * @param {Array} results - Array of validation results (only files with issues)
+ * @param {Record<string, unknown>} activeRules - Map of active rule names
+ * @param {number} totalScannedFiles - Total number of HTML files scanned
  */
-const generateHtml = (results, activeRules) => {
-  const totalFiles = results.length;
+const generateHtml = (results, activeRules, totalScannedFiles) => {
+  const filesWithIssues = results.length;
   const invalidFiles = results.filter((r) => !r.valid).length;
   const totalErrors = results.reduce((acc, r) => acc + r.errorCount, 0);
   const totalWarnings = results.reduce((acc, r) => acc + r.warningCount, 0);
+  const validFiles = totalScannedFiles - invalidFiles;
 
   const statusClass = invalidFiles === 0 ? "status-success" : "status-danger";
   const statusText = invalidFiles === 0 ? "PASSED" : "FAILED";
@@ -260,19 +264,23 @@ const generateHtml = (results, activeRules) => {
 
         <div class="stats-grid">
             <div class="stat-card">
-                <span class="stat-value">${totalFiles}</span>
+                <span class="stat-value">${totalScannedFiles}</span>
                 <span class="stat-label">Files Scanned</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-value" style="color: var(--success)">${validFiles}</span>
+                <span class="stat-label">Valid Files</span>
             </div>
             <div class="stat-card">
                 <span class="stat-value" style="color: ${invalidFiles > 0 ? "var(--danger)" : "var(--success)"}">${invalidFiles}</span>
                 <span class="stat-label">Invalid Files</span>
             </div>
             <div class="stat-card">
-                <span class="stat-value" style="color: var(--danger)">${totalErrors}</span>
+                <span class="stat-value" style="color: ${totalErrors > 0 ? "var(--danger)" : "var(--success)"}">${totalErrors}</span>
                 <span class="stat-label">Total Errors</span>
             </div>
             <div class="stat-card">
-                <span class="stat-value" style="color: var(--warning)">${totalWarnings}</span>
+                <span class="stat-value" style="color: ${totalWarnings > 0 ? "var(--warning)" : "var(--success)"}">${totalWarnings}</span>
                 <span class="stat-label">Total Warnings</span>
             </div>
         </div>
@@ -291,9 +299,11 @@ const generateHtml = (results, activeRules) => {
                             </tr>
                         </thead>
                         <tbody>
-                            ${results
-                              .map(
-                                (r) => `
+                            ${
+                              filesWithIssues > 0
+                                ? results
+                                    .map(
+                                      (r) => `
                                 <tr>
                                     <td><a href="#" class="file-link">${escapeHtml(r.filePath.replace(DIST_DIR + "/", ""))}</a></td>
                                     <td>${r.valid ? "✅ Valid" : "❌ Invalid"}</td>
@@ -301,8 +311,10 @@ const generateHtml = (results, activeRules) => {
                                     <td><span class="count-badge ${r.warningCount > 0 ? "count-warning" : "count-zero"}">${r.warningCount}</span></td>
                                 </tr>
                             `,
-                              )
-                              .join("")}
+                                    )
+                                    .join("")
+                                : `<tr><td colspan="4" style="text-align:center; padding:2rem; color:var(--success); font-weight:600;">✅ All ${totalScannedFiles} files passed validation — no issues found!</td></tr>`
+                            }
                         </tbody>
                     </table>
                 </div>
@@ -343,7 +355,8 @@ const generateHtml = (results, activeRules) => {
         </div>
 
         <footer style="margin-top: 3rem; text-align: center; color: var(--text-muted); font-size: 0.875rem; border-top: 1px solid var(--border); padding-top: 1rem;">
-            Generated on ${new Date().toISOString()} | html-validate engine
+            <a href="../" style="color: var(--primary); text-decoration: none; font-weight: 600;">← Back to Dashboard</a>
+            <div style="margin-top: 0.5rem;">Generated on ${new Date().toISOString()} | html-validate engine</div>
         </footer>
     </div>
 </body>
@@ -373,8 +386,14 @@ const main = () => {
     process.exit(1);
   }
 
+  // Count total HTML files in dist directory independently of the JSON report,
+  // because html-validate only includes files with errors/warnings in its JSON output
+  const allHtmlFiles = getAllHtmlFiles(DIST_DIR);
+  const totalScannedFiles = allHtmlFiles.length;
+  console.log(`📁 Found ${totalScannedFiles} HTML files in ${DIST_DIR}/`);
+
   const activeRules = getActiveRules();
-  const html = generateHtml(results, activeRules);
+  const html = generateHtml(results, activeRules, totalScannedFiles);
 
   fs.writeFileSync(OUTPUT_FILE, html, "utf-8");
   console.log(`✅ HTML report generated at ${OUTPUT_FILE}`);
