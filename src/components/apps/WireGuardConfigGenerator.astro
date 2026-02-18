@@ -2236,20 +2236,20 @@ const i18n = {
     border-bottom: none;
   }
 
-  /* Fields */
-  .wg-fields-row {
+  /* Fields — :global() needed because peers are dynamically created via innerHTML */
+  .wg-card-body :global(.wg-fields-row) {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 0.5rem;
   }
 
-  .wg-field {
+  .wg-card-body :global(.wg-field) {
     display: flex;
     flex-direction: column;
     gap: 0.125rem;
   }
 
-  .wg-label {
+  .wg-card-body :global(.wg-label) {
     font-size: 0.7rem;
     font-weight: var(--fw-semibold);
     color: var(--color-text-muted);
@@ -2257,8 +2257,8 @@ const i18n = {
     letter-spacing: 0.03em;
   }
 
-  .wg-input,
-  .wg-select {
+  .wg-card-body :global(.wg-input),
+  .wg-card-body :global(.wg-select) {
     width: 100%;
     padding: 0.375rem 0.5rem;
     font-family: var(--font-mono);
@@ -2270,14 +2270,14 @@ const i18n = {
     transition: border-color 0.15s;
   }
 
-  .wg-input:focus,
-  .wg-select:focus {
+  .wg-card-body :global(.wg-input:focus),
+  .wg-card-body :global(.wg-select:focus) {
     outline: 2px solid var(--color-primary);
     outline-offset: 1px;
     border-color: var(--color-primary);
   }
 
-  .wg-field-hint {
+  .wg-card-body :global(.wg-field-hint) {
     font-size: 0.65rem;
     font-style: italic;
     color: var(--color-text-muted);
@@ -2327,8 +2327,8 @@ const i18n = {
     display: none;
   }
 
-  /* Peer sections */
-  .wg-peer {
+  /* Peer sections — :global() needed because peers are dynamically created via innerHTML */
+  .wg-card-body :global(.wg-peer) {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
@@ -2338,17 +2338,17 @@ const i18n = {
     border-radius: var(--radius-sm);
   }
 
-  .wg-peer + .wg-peer {
+  .wg-card-body :global(.wg-peer + .wg-peer) {
     margin-top: 0.5rem;
   }
 
-  .wg-peer-header {
+  .wg-card-body :global(.wg-peer-header) {
     display: flex;
     align-items: center;
     justify-content: space-between;
   }
 
-  .wg-peer-number {
+  .wg-card-body :global(.wg-peer-number) {
     font-size: 0.75rem;
     font-weight: var(--fw-bold);
     color: var(--color-primary);
@@ -2356,7 +2356,7 @@ const i18n = {
     letter-spacing: 0.04em;
   }
 
-  .wg-remove-peer-btn {
+  .wg-card-body :global(.wg-remove-peer-btn) {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -2371,12 +2371,12 @@ const i18n = {
     transition: all 0.15s;
   }
 
-  .wg-remove-peer-btn:hover {
+  .wg-card-body :global(.wg-remove-peer-btn:hover) {
     color: var(--color-danger, #ef4444);
     border-color: var(--color-danger, #ef4444);
   }
 
-  .wg-remove-peer-btn span {
+  .wg-card-body :global(.wg-remove-peer-btn span) {
     width: 14px;
     height: 14px;
   }
@@ -2407,19 +2407,19 @@ const i18n = {
     height: 14px;
   }
 
-  /* Key row (input + generate button) */
-  .wg-key-row {
+  /* Key row (input + generate button) — :global() for dynamic peers */
+  .wg-card-body :global(.wg-key-row) {
     display: flex;
     gap: 0.375rem;
     align-items: center;
   }
 
-  .wg-key-row .wg-input {
+  .wg-card-body :global(.wg-key-row .wg-input) {
     flex: 1;
     min-width: 0;
   }
 
-  .wg-gen-key-btn {
+  .wg-card-body :global(.wg-gen-key-btn) {
     display: flex;
     flex-shrink: 0;
     align-items: center;
@@ -2436,16 +2436,16 @@ const i18n = {
     transition: all 0.15s;
   }
 
-  .wg-gen-key-btn:hover {
+  .wg-card-body :global(.wg-gen-key-btn:hover) {
     background: var(--color-bg-subtle);
   }
 
-  .wg-gen-key-btn span {
+  .wg-card-body :global(.wg-gen-key-btn span) {
     width: 16px;
     height: 16px;
   }
 
-  .wg-peer-manual-keys {
+  .wg-card-body :global(.wg-peer-manual-keys) {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
@@ -2558,7 +2558,7 @@ const i18n = {
   }
 
   @media (width <= 640px) {
-    .wg-fields-row {
+    .wg-card-body :global(.wg-fields-row) {
       grid-template-columns: 1fr;
     }
   }
