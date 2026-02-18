@@ -49,13 +49,16 @@ export async function finalizeCspConfig(
   ];
 
   // Nonce-only CSP: all scripts/styles use nonces, external same-origin covered by 'self'
-  // default-src 'self' allows same-origin prefetch/prerender initiated by Astro's
-  // client router (prefetchAll + Speculation Rules). Firefox falls back to <link rel="prefetch">
-  // which has no dedicated CSP directive and inherits from default-src.
+  // default-src 'none' denies everything not explicitly allowed — recommended by Mozilla Observatory.
+  // Every resource type has its own explicit directive (script-src, style-src, img-src, etc.).
+  // Prefetch/prerender: Astro uses Speculation Rules (Chrome) or <link rel="prefetch"> (Firefox).
+  // Firefox prefetch is covered by connect-src 'self'. worker-src 'self' is added explicitly
+  // since no dedicated worker-src would otherwise fall back to the blocked default-src.
   const cspHeader = [
-    "default-src 'self'",
+    "default-src 'none'",
     "script-src 'self' 'nonce-$cspNonce' 'strict-dynamic'",
     "style-src 'self' 'nonce-$cspNonce'",
+    "worker-src 'self'",
     ...commonCspDirectives,
   ]
     .map((s) => s.trim())

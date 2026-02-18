@@ -332,7 +332,8 @@ test.describe("Build Output Verification", () => {
       ).toBe(true);
     }
 
-    expect(cspPolicy).toContain("default-src 'self'");
+    expect(cspPolicy).toContain("default-src 'none'");
+    expect(cspPolicy).toContain("worker-src 'self'");
     expect(cspPolicy).toContain("frame-src 'none'");
     expect(cspPolicy).toContain("object-src 'none'");
     expect(cspPolicy).toContain("frame-ancestors 'none'");
