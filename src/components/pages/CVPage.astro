@@ -581,5 +581,10 @@ const personSchema = {
 
   equalizeGridHeaders();
   document.addEventListener("astro:after-swap", equalizeGridHeaders);
-  window.addEventListener("resize", equalizeGridHeaders);
+
+  let resizeTimer: ReturnType<typeof setTimeout>;
+  window.addEventListener("resize", () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(equalizeGridHeaders, 150);
+  });
 </script>
