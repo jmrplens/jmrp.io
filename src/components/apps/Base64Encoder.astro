@@ -1102,15 +1102,18 @@ const formats = [
     if (copyBtn) {
       copyBtn.addEventListener("click", function () {
         if (navigator.clipboard && outputEl.textContent) {
-          navigator.clipboard.writeText(outputEl.textContent).then(function () {
-            var text = copyBtn.querySelector(".enc-copy-text");
-            if (text) text.textContent = i18n.copied;
-            copyBtn.classList.add("copied");
-            setTimeout(function () {
-              if (text) text.textContent = i18n.copy;
-              copyBtn.classList.remove("copied");
-            }, 2000);
-          });
+          navigator.clipboard
+            .writeText(outputEl.textContent)
+            .then(function () {
+              var text = copyBtn.querySelector(".enc-copy-text");
+              if (text) text.textContent = i18n.copied;
+              copyBtn.classList.add("copied");
+              setTimeout(function () {
+                if (text) text.textContent = i18n.copy;
+                copyBtn.classList.remove("copied");
+              }, 2000);
+            })
+            .catch(function () {});
         }
       });
     }

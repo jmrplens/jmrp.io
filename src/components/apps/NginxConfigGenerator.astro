@@ -1921,16 +1921,19 @@ const i18n = {
     if (copyBtn) {
       copyBtn.addEventListener("click", function () {
         var text = output ? output.textContent : "";
-        navigator.clipboard.writeText(text).then(function () {
-          copyBtn.innerHTML =
-            '<span class="i-mdi:check" aria-hidden="true"></span> ' +
-            i18n.copied;
-          setTimeout(function () {
+        navigator.clipboard
+          .writeText(text)
+          .then(function () {
             copyBtn.innerHTML =
-              '<span class="i-mdi:content-copy" aria-hidden="true"></span> ' +
-              i18n.copy;
-          }, 1500);
-        });
+              '<span class="i-mdi:check" aria-hidden="true"></span> ' +
+              i18n.copied;
+            setTimeout(function () {
+              copyBtn.innerHTML =
+                '<span class="i-mdi:content-copy" aria-hidden="true"></span> ' +
+                i18n.copy;
+            }, 1500);
+          })
+          .catch(function () {});
       });
     }
 

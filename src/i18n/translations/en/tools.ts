@@ -1060,6 +1060,16 @@ export const tools = {
     segEnd: "End",
     segExtraData: "Extra Data",
     segExceptionCode: "Exception Code",
+    // JS — segment labels with placeholders (frame breakdown)
+    segSlaveLabel: "Slave: {value}",
+    segTransactionLabel: "Transaction: {value}",
+    segProtocolLabel: "Protocol: {value}",
+    segLengthLabel: "Length: {value}",
+    segUnitIdLabel: "Unit ID: {value}",
+    segExceptionLabel: "Exception Code: {code} ({name})",
+    segFcLabel: "FC: {code} ({name})",
+    segErrorFcLabel: "Error FC: 0x{code} ({name})",
+    segErrorFcShort: "Error FC: 0x{code}",
   },
   nginxConfigGenerator: {
     title: "Nginx Config Generator",

@@ -2077,16 +2077,19 @@ const i18n = {
         var target = btn.getAttribute("data-copy-target");
         var code = target === "routeros" ? outputRouterOS : outputClient;
         var text = code ? code.textContent : "";
-        navigator.clipboard.writeText(text).then(function () {
-          btn.innerHTML =
-            '<span class="i-mdi:check" aria-hidden="true"></span> ' +
-            i18n.copied;
-          setTimeout(function () {
+        navigator.clipboard
+          .writeText(text)
+          .then(function () {
             btn.innerHTML =
-              '<span class="i-mdi:content-copy" aria-hidden="true"></span> ' +
-              i18n.copy;
-          }, 1500);
-        });
+              '<span class="i-mdi:check" aria-hidden="true"></span> ' +
+              i18n.copied;
+            setTimeout(function () {
+              btn.innerHTML =
+                '<span class="i-mdi:content-copy" aria-hidden="true"></span> ' +
+                i18n.copy;
+            }, 1500);
+          })
+          .catch(function () {});
       });
     });
 

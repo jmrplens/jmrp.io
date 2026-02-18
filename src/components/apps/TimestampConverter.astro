@@ -897,12 +897,15 @@ const i18n = {
           target.textContent !== "\u2014" &&
           navigator.clipboard
         ) {
-          navigator.clipboard.writeText(target.textContent).then(function () {
-            btn.classList.add("copied");
-            setTimeout(function () {
-              btn.classList.remove("copied");
-            }, 1500);
-          });
+          navigator.clipboard
+            .writeText(target.textContent)
+            .then(function () {
+              btn.classList.add("copied");
+              setTimeout(function () {
+                btn.classList.remove("copied");
+              }, 1500);
+            })
+            .catch(function () {});
         }
       });
     });
@@ -911,14 +914,17 @@ const i18n = {
     if (shareBtn) {
       shareBtn.addEventListener("click", function () {
         if (navigator.clipboard) {
-          navigator.clipboard.writeText(window.location.href).then(function () {
-            shareBtn.classList.add("copied");
-            if (shareText) shareText.textContent = i18n.copied;
-            setTimeout(function () {
-              shareBtn.classList.remove("copied");
-              if (shareText) shareText.textContent = i18n.shareLink;
-            }, 1500);
-          });
+          navigator.clipboard
+            .writeText(window.location.href)
+            .then(function () {
+              shareBtn.classList.add("copied");
+              if (shareText) shareText.textContent = i18n.copied;
+              setTimeout(function () {
+                shareBtn.classList.remove("copied");
+                if (shareText) shareText.textContent = i18n.shareLink;
+              }, 1500);
+            })
+            .catch(function () {});
         }
       });
     }

@@ -116,3 +116,4 @@ temp_lh/
 temp_workflow/
 # Backup files
 *.backup
+accessibility-report.json

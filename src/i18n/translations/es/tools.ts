@@ -1080,6 +1080,16 @@ export const tools = {
     segEnd: "Fin",
     segExtraData: "Datos extra",
     segExceptionCode: "Código de excepción",
+    // JS — etiquetas de segmento con marcadores (desglose de trama)
+    segSlaveLabel: "Esclavo: {value}",
+    segTransactionLabel: "Transacción: {value}",
+    segProtocolLabel: "Protocolo: {value}",
+    segLengthLabel: "Longitud: {value}",
+    segUnitIdLabel: "ID de unidad: {value}",
+    segExceptionLabel: "Código de excepción: {code} ({name})",
+    segFcLabel: "FC: {code} ({name})",
+    segErrorFcLabel: "Error FC: 0x{code} ({name})",
+    segErrorFcShort: "Error FC: 0x{code}",
   },
   nginxConfigGenerator: {
     title: "Generador de configuración Nginx",

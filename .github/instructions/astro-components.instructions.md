@@ -46,7 +46,7 @@ const titleId = `section-${crypto.getRandomValues(new Uint32Array(1))[0]}`;
 
 - All user-facing text must use `t()` from `useTranslations()`
 - Pattern: `const locale = getLangFromUrl(Astro.url); const t = useTranslations(locale);`
-- Import from `@src/i18n/utils`
+- Import from `@i18n/utils`
 - Client-side scripts: inject translations via `data-*` attributes
 - Never hardcode English strings in templates or ARIA labels
 

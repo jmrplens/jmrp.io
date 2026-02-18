@@ -364,6 +364,13 @@ server: jmrp.io`;
     const container = document.querySelector(`[data-hdr-id="${uniqueId}"]`);
     if (!container) return;
 
+    /** Replace `{key}` placeholders in a string with values from vars object. */
+    function tpl(str, vars) {
+      return str.replace(/\{(\w+)\}/g, function (_, k) {
+        return vars[k] != null ? vars[k] : "";
+      });
+    }
+
     const textarea = document.getElementById(`${uniqueId}-input`);
     const urlInput = document.getElementById(`${uniqueId}-url`);
     const fetchBtn = container.querySelector(".hdr-fetch-btn");
@@ -407,19 +414,19 @@ server: jmrp.io`;
             }
             textarea.value = lines.join("\n");
             if (fetchStatus) {
-              fetchStatus.textContent = i18n.fetchedHeaders.replace(
-                "{count}",
-                lines.length,
-              );
+              fetchStatus.textContent = tpl(i18n.fetchedHeaders, {
+                count: lines.length,
+              });
               fetchStatus.className = "hdr-fetch-status hdr-fetch-warn";
             }
             analyze();
           })
           .catch(function (err) {
             if (fetchStatus) {
-              fetchStatus.textContent = i18n.failedToFetch
-                .replace("{msg}", err.message || i18n.failedToFetchDefault)
-                .replace("{url}", url);
+              fetchStatus.textContent = tpl(i18n.failedToFetch, {
+                msg: err.message || i18n.failedToFetchDefault,
+                url: url,
+              });
               fetchStatus.className = "hdr-fetch-status hdr-fetch-error";
             }
           })
@@ -637,7 +644,7 @@ server: jmrp.io`;
             };
           return {
             score: 2,
-            notes: [i18n.xfoUnexpected.replace("{val}", val)],
+            notes: [tpl(i18n.xfoUnexpected, { val: val })],
           };
         },
       },
@@ -662,7 +669,7 @@ server: jmrp.io`;
           if (good.includes(val.trim()))
             return {
               score: 8,
-              notes: [i18n.rpSecure.replace("{val}", val.trim())],
+              notes: [tpl(i18n.rpSecure, { val: val.trim() })],
             };
           if (val.trim() === "no-referrer-when-downgrade")
             return {
@@ -703,13 +710,12 @@ server: jmrp.io`;
               f.split("=")[0].slice(1);
             if (val.includes(f)) {
               score += 1;
-              notes.push(i18n.ppDisabled.replace("{feature}", featureName));
+              notes.push(tpl(i18n.ppDisabled, { feature: featureName }));
             } else {
               notes.push(
-                i18n.ppMissingRestriction.replace(
-                  "{feature}",
-                  featureName.toLowerCase(),
-                ),
+                tpl(i18n.ppMissingRestriction, {
+                  feature: featureName.toLowerCase(),
+                }),
               );
             }
           });
@@ -866,16 +872,16 @@ server: jmrp.io`;
           if (isProxy)
             return {
               status: "good",
-              notes: [i18n.serverProxyCdn.replace("{val}", val)],
+              notes: [tpl(i18n.serverProxyCdn, { val: val })],
             };
           if (/\d/.test(val))
             return {
               status: "warn",
-              notes: [i18n.serverVersionExposed.replace("{val}", val)],
+              notes: [tpl(i18n.serverVersionExposed, { val: val })],
             };
           return {
             status: "info",
-            notes: [i18n.serverNameExposed.replace("{val}", val)],
+            notes: [tpl(i18n.serverNameExposed, { val: val })],
           };
         },
       },
@@ -887,7 +893,7 @@ server: jmrp.io`;
           if (!val) return { status: "good", notes: [i18n.serverNotExposed] };
           return {
             status: "warn",
-            notes: [i18n.xPoweredByExposed.replace("{val}", val)],
+            notes: [tpl(i18n.xPoweredByExposed, { val: val })],
           };
         },
       },
@@ -899,7 +905,7 @@ server: jmrp.io`;
           if (!val) return null;
           return {
             status: "warn",
-            notes: [i18n.xAspnetVersionExposed.replace("{val}", val)],
+            notes: [tpl(i18n.xAspnetVersionExposed, { val: val })],
           };
         },
       },
@@ -923,7 +929,7 @@ server: jmrp.io`;
           if (!val) return null;
           return {
             status: "warn",
-            notes: [i18n.xGeneratorExposed.replace("{val}", val)],
+            notes: [tpl(i18n.xGeneratorExposed, { val: val })],
           };
         },
       },
@@ -1348,17 +1354,19 @@ server: jmrp.io`;
       if (summaryEl) {
         summaryEl.innerHTML =
           '<span class="hdr-sum-ok">' +
-          i18n.summaryPresent.replace("{count}", present) +
+          tpl(i18n.summaryPresent, { count: present }) +
           "</span> \u00B7 " +
           '<span class="hdr-sum-miss">' +
-          i18n.summaryMissing.replace("{count}", missing) +
+          tpl(i18n.summaryMissing, { count: missing }) +
           "</span>" +
           (cookies.length > 0
             ? " \u00B7 <span>" +
-              (cookies.length > 1
-                ? i18n.summaryCookiesAnalyzed
-                : i18n.summaryCookieAnalyzed
-              ).replace("{count}", cookies.length) +
+              tpl(
+                cookies.length > 1
+                  ? i18n.summaryCookiesAnalyzed
+                  : i18n.summaryCookieAnalyzed,
+                { count: cookies.length },
+              ) +
               "</span>"
             : "") +
           (hasInfoLeak
@@ -1368,10 +1376,12 @@ server: jmrp.io`;
             : "") +
           (consistency.length > 0
             ? ' \u00B7 <span class="hdr-sum-warn">' +
-              (consistency.length > 1
-                ? i18n.summaryInconsistencies
-                : i18n.summaryInconsistency
-              ).replace("{count}", consistency.length) +
+              tpl(
+                consistency.length > 1
+                  ? i18n.summaryInconsistencies
+                  : i18n.summaryInconsistency,
+                { count: consistency.length },
+              ) +
               "</span>"
             : "");
       }

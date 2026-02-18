@@ -1134,16 +1134,19 @@ const i18n = {
         if (!btn) return;
         var val = btn.querySelector(".cc-format-value");
         if (val && navigator.clipboard) {
-          navigator.clipboard.writeText(val.textContent).then(function () {
-            var label = btn.querySelector(".cc-format-label");
-            if (label) {
-              var orig = label.textContent;
-              label.textContent = i18n.copied;
-              setTimeout(function () {
-                label.textContent = orig;
-              }, 1200);
-            }
-          });
+          navigator.clipboard
+            .writeText(val.textContent)
+            .then(function () {
+              var label = btn.querySelector(".cc-format-label");
+              if (label) {
+                var orig = label.textContent;
+                label.textContent = i18n.copied;
+                setTimeout(function () {
+                  label.textContent = orig;
+                }, 1200);
+              }
+            })
+            .catch(function () {});
         }
       });
     }
@@ -1162,14 +1165,17 @@ const i18n = {
           ratioEl.textContent +
           " */\n}";
         if (navigator.clipboard) {
-          navigator.clipboard.writeText(css).then(function () {
-            copyCssBtn.innerHTML =
-              '<span class="i-mdi:check"></span> ' + i18n.copied;
-            setTimeout(function () {
+          navigator.clipboard
+            .writeText(css)
+            .then(function () {
               copyCssBtn.innerHTML =
-                '<span class="i-mdi:code-braces"></span> ' + i18n.copyCss;
-            }, 1500);
-          });
+                '<span class="i-mdi:check"></span> ' + i18n.copied;
+              setTimeout(function () {
+                copyCssBtn.innerHTML =
+                  '<span class="i-mdi:code-braces"></span> ' + i18n.copyCss;
+              }, 1500);
+            })
+            .catch(function () {});
         }
       });
     }
@@ -1179,14 +1185,17 @@ const i18n = {
       shareBtn.addEventListener("click", function () {
         var url = window.location.href;
         if (navigator.clipboard) {
-          navigator.clipboard.writeText(url).then(function () {
-            shareBtn.innerHTML =
-              '<span class="i-mdi:check"></span> ' + i18n.copied;
-            setTimeout(function () {
+          navigator.clipboard
+            .writeText(url)
+            .then(function () {
               shareBtn.innerHTML =
-                '<span class="i-mdi:share-variant"></span> ' + i18n.shareLink;
-            }, 1500);
-          });
+                '<span class="i-mdi:check"></span> ' + i18n.copied;
+              setTimeout(function () {
+                shareBtn.innerHTML =
+                  '<span class="i-mdi:share-variant"></span> ' + i18n.shareLink;
+              }, 1500);
+            })
+            .catch(function () {});
         }
       });
     }

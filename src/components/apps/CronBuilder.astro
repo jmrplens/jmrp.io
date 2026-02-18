@@ -453,6 +453,13 @@ const i18n = {
     var container = document.querySelector('[data-cron-id="' + uniqueId + '"]');
     if (!container) return;
 
+    /** Replace `{key}` placeholders in a string with values from vars object. */
+    function tpl(str, vars) {
+      return str.replace(/\{(\w+)\}/g, function (_, k) {
+        return vars[k] != null ? vars[k] : "";
+      });
+    }
+
     /* ── Element references ── */
     var exprInput = document.getElementById(uniqueId + "-expr");
     var humanEl = document.getElementById(uniqueId + "-human");
@@ -633,11 +640,7 @@ const i18n = {
         if (times.length <= 6) {
           desc.push(i18n.descAtTimes.replace("{times}", times.join(", ")));
         } else {
-          desc.push(
-            i18n.descAtMinuteOfHour
-              .replace("{min}", p[0])
-              .replace("{hour}", p[1]),
-          );
+          desc.push(tpl(i18n.descAtMinuteOfHour, { min: p[0], hour: p[1] }));
         }
       } else if (p[1] !== "*" && p[0] === "*") {
         desc.push(i18n.descEveryMinuteDuringHour.replace("{hour}", p[1]));
@@ -866,13 +869,15 @@ const i18n = {
           var daysD = Math.floor(hrs / 24);
 
           if (daysD > 0) {
-            relative.textContent = i18n.relativeInDH
-              .replace("{d}", daysD)
-              .replace("{h}", hrs % 24);
+            relative.textContent = tpl(i18n.relativeInDH, {
+              d: daysD,
+              h: hrs % 24,
+            });
           } else if (hrs > 0) {
-            relative.textContent = i18n.relativeInHM
-              .replace("{h}", hrs)
-              .replace("{m}", mins % 60);
+            relative.textContent = tpl(i18n.relativeInHM, {
+              h: hrs,
+              m: mins % 60,
+            });
           } else {
             relative.textContent = i18n.relativeInM.replace("{m}", mins);
           }
@@ -951,7 +956,8 @@ const i18n = {
               setTimeout(function () {
                 copyExprBtn.classList.remove("copied");
               }, 1500);
-            });
+            })
+            .catch(function () {});
         }
       });
     }
@@ -961,12 +967,15 @@ const i18n = {
       copyLineBtn.addEventListener("click", function () {
         if (navigator.clipboard && crontabCmd) {
           var line = exprInput.value.trim() + " " + crontabCmd.value.trim();
-          navigator.clipboard.writeText(line).then(function () {
-            copyLineBtn.classList.add("copied");
-            setTimeout(function () {
-              copyLineBtn.classList.remove("copied");
-            }, 1500);
-          });
+          navigator.clipboard
+            .writeText(line)
+            .then(function () {
+              copyLineBtn.classList.add("copied");
+              setTimeout(function () {
+                copyLineBtn.classList.remove("copied");
+              }, 1500);
+            })
+            .catch(function () {});
         }
       });
     }
@@ -975,14 +984,17 @@ const i18n = {
     if (shareBtn) {
       shareBtn.addEventListener("click", function () {
         if (navigator.clipboard) {
-          navigator.clipboard.writeText(window.location.href).then(function () {
-            shareBtn.classList.add("copied");
-            if (shareText) shareText.textContent = i18n.copied;
-            setTimeout(function () {
-              shareBtn.classList.remove("copied");
-              if (shareText) shareText.textContent = i18n.shareLink;
-            }, 1500);
-          });
+          navigator.clipboard
+            .writeText(window.location.href)
+            .then(function () {
+              shareBtn.classList.add("copied");
+              if (shareText) shareText.textContent = i18n.copied;
+              setTimeout(function () {
+                shareBtn.classList.remove("copied");
+                if (shareText) shareText.textContent = i18n.shareLink;
+              }, 1500);
+            })
+            .catch(function () {});
         }
       });
     }

@@ -74,7 +74,7 @@
 - Client-side scripts: inject translations via `data-*` attributes
 - Translation files: `src/i18n/translations/{en,es}/{common,tools}.ts`
 - Path helpers: `useTranslatedPath(locale)` for localized URLs
-- Formatting: `formatDate()`, `formatNumber()`, `pluralize()` from `@src/i18n/utils`
+- Formatting: `formatDate()`, `formatNumber()`, `pluralize()` from `@i18n/utils`
 - See `docs/I18N_GUIDE.md` for complete reference
 
 ### Commit Style

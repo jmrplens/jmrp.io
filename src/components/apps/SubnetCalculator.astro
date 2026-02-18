@@ -691,6 +691,13 @@ const i18n = {
     var C = document.querySelector('[data-net-id="' + id + '"]');
     if (!C) return;
 
+    /** Replace `{key}` placeholders in a string with values from vars object. */
+    function tpl(str, vars) {
+      return str.replace(/\{(\w+)\}/g, function (_, k) {
+        return vars[k] != null ? vars[k] : "";
+      });
+    }
+
     /* ═══════════════════════════════════════════
        DOM REFERENCES
        ═══════════════════════════════════════════ */
@@ -1051,12 +1058,15 @@ const i18n = {
 
     function copyText(text, btn) {
       if (!navigator.clipboard || !btn) return;
-      navigator.clipboard.writeText(text).then(function () {
-        btn.classList.add("copied");
-        setTimeout(function () {
-          btn.classList.remove("copied");
-        }, 1500);
-      });
+      navigator.clipboard
+        .writeText(text)
+        .then(function () {
+          btn.classList.add("copied");
+          setTimeout(function () {
+            btn.classList.remove("copied");
+          }, 1500);
+        })
+        .catch(function () {});
     }
 
     /* ═══════════════════════════════════════════
@@ -1666,9 +1676,10 @@ const i18n = {
             '"' +
               reqs[i].name +
               '"' +
-              i18n.vlsmNeedsLargerBase
-                .replace("{needed}", sCidr)
-                .replace("{base}", baseCidr),
+              tpl(i18n.vlsmNeedsLargerBase, {
+                needed: sCidr,
+                base: baseCidr,
+              }),
           );
           failed = true;
           break;
@@ -1760,11 +1771,12 @@ const i18n = {
 
       var summary = document.createElement("div");
       summary.className = "net-vlsm-summary";
-      summary.textContent = i18n.vlsmUsedSummary
-        .replace("{used}", totalUsed.toLocaleString())
-        .replace("{total}", totalAvailable.toLocaleString())
-        .replace("{percent}", ((totalUsed / totalAvailable) * 100).toFixed(1))
-        .replace("{remaining}", remaining.toLocaleString());
+      summary.textContent = tpl(i18n.vlsmUsedSummary, {
+        used: totalUsed.toLocaleString(),
+        total: totalAvailable.toLocaleString(),
+        percent: ((totalUsed / totalAvailable) * 100).toFixed(1),
+        remaining: remaining.toLocaleString(),
+      });
       vlsmResultsEl.appendChild(summary);
     }
 
@@ -1871,9 +1883,10 @@ const i18n = {
 
       var summary = document.createElement("div");
       summary.className = "net-vlsm-summary";
-      summary.textContent = i18n.rangeCidrBlocks
-        .replace("{count}", blocks.length)
-        .replace("{total}", (endInt - startInt + 1).toLocaleString());
+      summary.textContent = tpl(i18n.rangeCidrBlocks, {
+        count: blocks.length,
+        total: (endInt - startInt + 1).toLocaleString(),
+      });
       rangeResultsEl.appendChild(summary);
 
       lastRangeText = blocks
