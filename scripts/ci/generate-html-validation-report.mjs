@@ -79,24 +79,57 @@ const loadReport = () => {
 };
 
 /**
- * Renders the HTML report
- * @param {Array} results - Array of validation results (only files with issues)
- * @param {Record<string, unknown>} activeRules - Map of active rule names
- * @param {number} totalScannedFiles - Total number of HTML files scanned
+ * Builds a complete file list merging all HTML files with error-only results.
+ * html-validate only reports files with issues, so we fill in passing files.
+ * @param {string[]} allFiles - All HTML file paths in dist/
+ * @param {Array} errorResults - Validation results (only files with issues)
+ * @returns {Array<{filePath: string, valid: boolean, errorCount: number, warningCount: number, messages: Array}>}
  */
-const generateHtml = (results, activeRules, totalScannedFiles) => {
-  const filesWithIssues = results.length;
-  const invalidFiles = results.filter((r) => !r.valid).length;
-  const totalErrors = results.reduce((acc, r) => acc + r.errorCount, 0);
-  const totalWarnings = results.reduce((acc, r) => acc + r.warningCount, 0);
+const buildCompleteResults = (allFiles, errorResults) => {
+  // Index error results by normalized path for fast lookup
+  const errorMap = new Map();
+  for (const r of errorResults) {
+    errorMap.set(r.filePath, r);
+  }
+
+  return allFiles
+    .map((filePath) => {
+      const errorResult = errorMap.get(filePath);
+      if (errorResult) return errorResult;
+      // File passed validation — synthesize a clean result
+      return {
+        filePath,
+        valid: true,
+        errorCount: 0,
+        warningCount: 0,
+        messages: [],
+      };
+    })
+    .sort((a, b) => {
+      // Invalid files first, then alphabetical
+      if (a.valid !== b.valid) return a.valid ? 1 : -1;
+      return a.filePath.localeCompare(b.filePath);
+    });
+};
+
+/**
+ * Renders the HTML report with complete file listing.
+ * @param {Array} allResults - Complete array of all file validation results
+ * @param {Record<string, unknown>} activeRules - Map of active rule names
+ */
+const generateHtml = (allResults, activeRules) => {
+  const totalScannedFiles = allResults.length;
+  const invalidFiles = allResults.filter((r) => !r.valid).length;
   const validFiles = totalScannedFiles - invalidFiles;
+  const totalErrors = allResults.reduce((acc, r) => acc + r.errorCount, 0);
+  const totalWarnings = allResults.reduce((acc, r) => acc + r.warningCount, 0);
 
   const statusClass = invalidFiles === 0 ? "status-success" : "status-danger";
   const statusText = invalidFiles === 0 ? "PASSED" : "FAILED";
 
   // Group errors by rule
   const ruleStats = {};
-  results.forEach((r) => {
+  allResults.forEach((r) => {
     r.messages.forEach((m) => {
       ruleStats[m.ruleId] = (ruleStats[m.ruleId] || 0) + 1;
     });
@@ -250,6 +283,45 @@ const generateHtml = (results, activeRules, totalScannedFiles) => {
             border-radius: 4px;
             color: var(--text-muted);
         }
+
+        .filter-bar {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .filter-bar input {
+            flex: 1;
+            min-width: 200px;
+            padding: 0.5rem 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--card-bg);
+            color: var(--text);
+            font-size: 0.875rem;
+        }
+        .filter-btn {
+            padding: 0.4rem 0.8rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--card-bg);
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 600;
+            transition: all 0.15s;
+        }
+        .filter-btn.active, .filter-btn:hover {
+            background: var(--primary);
+            color: #fff;
+            border-color: var(--primary);
+        }
+        .file-count {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-left: auto;
+        }
     </style>
 </head>
 <body>
@@ -288,6 +360,13 @@ const generateHtml = (results, activeRules, totalScannedFiles) => {
         <div class="grid-main">
             <div class="results-area">
                 <h2 class="section-title">📄 File Details</h2>
+                <div class="filter-bar">
+                    <input type="text" id="fileFilter" placeholder="Filter files..." oninput="filterFiles()">
+                    <button class="filter-btn active" data-filter="all" onclick="setFilter('all')">All (${totalScannedFiles})</button>
+                    ${invalidFiles > 0 ? `<button class="filter-btn" data-filter="invalid" onclick="setFilter('invalid')">Invalid (${invalidFiles})</button>` : ""}
+                    <button class="filter-btn" data-filter="valid" onclick="setFilter('valid')">Valid (${validFiles})</button>
+                    <span class="file-count" id="visibleCount">${totalScannedFiles} files</span>
+                </div>
                 <div class="card">
                     <table>
                         <thead>
@@ -298,23 +377,19 @@ const generateHtml = (results, activeRules, totalScannedFiles) => {
                                 <th>Warnings</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            ${
-                              filesWithIssues > 0
-                                ? results
-                                    .map(
-                                      (r) => `
-                                <tr>
-                                    <td><a href="#" class="file-link">${escapeHtml(r.filePath.replace(DIST_DIR + "/", ""))}</a></td>
+                        <tbody id="fileTableBody">
+                            ${allResults
+                              .map(
+                                (r) => `
+                                <tr data-status="${r.valid ? "valid" : "invalid"}">
+                                    <td><span class="file-link">${escapeHtml(r.filePath.replace(DIST_DIR + "/", ""))}</span></td>
                                     <td>${r.valid ? "✅ Valid" : "❌ Invalid"}</td>
                                     <td><span class="count-badge ${r.errorCount > 0 ? "count-error" : "count-zero"}">${r.errorCount}</span></td>
                                     <td><span class="count-badge ${r.warningCount > 0 ? "count-warning" : "count-zero"}">${r.warningCount}</span></td>
                                 </tr>
                             `,
-                                    )
-                                    .join("")
-                                : `<tr><td colspan="4" style="text-align:center; padding:2rem; color:var(--success); font-weight:600;">✅ All ${totalScannedFiles} files passed validation — no issues found!</td></tr>`
-                            }
+                              )
+                              .join("")}
                         </tbody>
                     </table>
                 </div>
@@ -359,6 +434,31 @@ const generateHtml = (results, activeRules, totalScannedFiles) => {
             <div style="margin-top: 0.5rem;">Generated on ${new Date().toISOString()} | html-validate engine</div>
         </footer>
     </div>
+    <script>
+        let currentFilter = 'all';
+        function filterFiles() {
+            const query = document.getElementById('fileFilter').value.toLowerCase();
+            const rows = document.querySelectorAll('#fileTableBody tr');
+            let visible = 0;
+            rows.forEach(row => {
+                const text = row.querySelector('.file-link')?.textContent?.toLowerCase() || '';
+                const status = row.getAttribute('data-status');
+                const matchesFilter = currentFilter === 'all' || status === currentFilter;
+                const matchesQuery = !query || text.includes(query);
+                const show = matchesFilter && matchesQuery;
+                row.style.display = show ? '' : 'none';
+                if (show) visible++;
+            });
+            document.getElementById('visibleCount').textContent = visible + ' files';
+        }
+        function setFilter(filter) {
+            currentFilter = filter;
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.getAttribute('data-filter') === filter);
+            });
+            filterFiles();
+        }
+    </script>
 </body>
 </html>
   `;
@@ -386,14 +486,17 @@ const main = () => {
     process.exit(1);
   }
 
-  // Count total HTML files in dist directory independently of the JSON report,
-  // because html-validate only includes files with errors/warnings in its JSON output
+  // Get all HTML files in dist/ and merge with error-only results
+  // html-validate only includes files with errors/warnings in its JSON output
   const allHtmlFiles = getAllHtmlFiles(DIST_DIR);
-  const totalScannedFiles = allHtmlFiles.length;
-  console.log(`📁 Found ${totalScannedFiles} HTML files in ${DIST_DIR}/`);
+  console.log(`📁 Found ${allHtmlFiles.length} HTML files in ${DIST_DIR}/`);
+  console.log(
+    `📊 ${results.length} files with issues, ${allHtmlFiles.length - results.length} clean`,
+  );
 
+  const allResults = buildCompleteResults(allHtmlFiles, results);
   const activeRules = getActiveRules();
-  const html = generateHtml(results, activeRules, totalScannedFiles);
+  const html = generateHtml(allResults, activeRules);
 
   fs.writeFileSync(OUTPUT_FILE, html, "utf-8");
   console.log(`✅ HTML report generated at ${OUTPUT_FILE}`);
