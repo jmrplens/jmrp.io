@@ -1,0 +1,111 @@
+---
+title: "Constructor de Políticas CSP"
+slug: "csp-builder"
+description: "Construye cabeceras Content Security Policy de forma interactiva. Activa directivas, genera la política en tiempo real y evalúa su seguridad."
+subtitle: "Construye cabeceras Content Security Policy de forma interactiva. Activa directivas y observa cómo se actualiza tu política en tiempo real."
+icon: "i-mdi:shield-lock-outline"
+category: "security"
+tags: ["csp", "seguridad", "cabeceras", "xss", "nginx"]
+appComponent: "CSPBuilder"
+lang: "es"
+---
+
+import {
+  TerminalSession,
+  TerminalSessionCommand,
+  TerminalSessionOutput,
+} from "@components/ui/terminal-session";
+
+<h2>Acerca de esta herramienta</h2>
+<p>
+  Content Security Policy (CSP) es una capa de seguridad crítica que ayuda a
+  detectar y mitigar ciertos tipos de ataques, incluyendo Cross-Site Scripting
+  (XSS) y ataques de inyección de datos. Este constructor interactivo te ayuda
+  a crear cabeceras CSP complejas seleccionando directivas y añadiendo fuentes
+  de confianza.
+</p>
+
+<h3>Características</h3>
+<ul>
+  <li>
+    <strong>Más de 20 directivas</strong> organizadas por categoría (Fetch,
+    Navigation, Document, etc.)
+  </li>
+  <li>
+    <strong>Presets rápidos</strong> para servicios comunes como Google Fonts,
+    Analytics, YouTube y CDNs
+  </li>
+  <li>
+    <strong>Dominios personalizados</strong> — añade tus propias URLs de
+    confianza a cualquier directiva
+  </li>
+  <li>
+    <strong>7 formatos de exportación</strong> — configuración lista para usar
+    en Nginx, Apache, Cloudflare, Vercel y más
+  </li>
+  <li>
+    <strong>Modo Report-Only</strong> — prueba tu política sin bloquear
+    recursos
+  </li>
+  <li>
+    <strong>Evaluación de seguridad</strong> — advertencias en tiempo real para
+    configuraciones inseguras como <code>'unsafe-inline'</code>
+  </li>
+</ul>
+
+<h3>Cómo usar</h3>
+<ol>
+  <li>Activa las directivas que necesites para tu sitio web</li>
+  <li>Usa los presets rápidos para añadir servicios de terceros comunes</li>
+  <li>
+    Añade dominios personalizados haciendo clic en el botón <strong>+</strong>
+    en las directivas editables
+  </li>
+  <li>Selecciona el formato de tu servidor (Nginx, Apache, Cloudflare, etc.)</li>
+  <li>
+    Activa el <strong>modo Report-Only</strong> para probar antes de aplicar
+  </li>
+  <li>Copia y añade la configuración a tu servidor</li>
+</ol>
+
+<h3>Privacidad</h3>
+<p>
+  Tus configuraciones de seguridad son privadas. Toda la construcción y
+  formateo de políticas ocurre completamente en tu navegador. No se envía
+  ningún dominio, URL ni configuración de política a ningún servidor.
+</p>
+
+<h3>Referencia de comandos Linux</h3>
+<p>
+  Una vez configurada tu CSP, puedes verificarla usando herramientas de
+  terminal.
+</p>
+
+<h4>Comprobar la cabecera CSP con curl</h4>
+<TerminalSession>
+  <TerminalSessionCommand>
+    curl -I https://jmrp.io | grep -i "content-security-policy"
+  </TerminalSessionCommand>
+  <TerminalSessionOutput title="Salida de la cabecera CSP">
+    content-security-policy: default-src 'self'; script-src 'self' ...
+  </TerminalSessionOutput>
+</TerminalSession>
+
+<h4>Calcular hash para script inline</h4>
+<TerminalSession>
+  <TerminalSessionCommand>
+    echo -n 'alert("Hello");' | openssl dgst -sha256 -binary | openssl base64
+  </TerminalSessionCommand>
+  <TerminalSessionOutput title="Hash Base64">
+    qznLcsROU4CHAtWia...
+  </TerminalSessionOutput>
+</TerminalSession>
+
+<h3>Más información</h3>
+<p>
+  Para una guía completa sobre la implementación de CSP, consulta
+  <a href="/blog/003-implementing-content-security-policy-nginx/">
+    Implementando Content Security Policy en Nginx
+  </a>
+  .
+</p>

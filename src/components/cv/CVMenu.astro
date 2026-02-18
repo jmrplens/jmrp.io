@@ -4,6 +4,8 @@
  * A floating action button (FAB) that opens a navigation drawer for the CV page.
  * Displays sections and their subsections (e.g., specific jobs, skill categories).
  */
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslations } from "@i18n/utils";
 
 export interface MenuSection {
   title: string;
@@ -19,14 +21,17 @@ interface Props {
 }
 
 const { sections } = Astro.props;
+
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
 ---
 
-<nav aria-label="CV Navigation">
+<nav aria-label={t("aria.cvNavigation")}>
   <button
     id="cv-menu-trigger"
     type="button"
     class="cv-fab"
-    aria-label="Open CV Menu"
+    aria-label={t("aria.openCVMenu")}
     aria-haspopup="true"
     aria-expanded="false"
   >
@@ -43,12 +48,12 @@ const { sections } = Astro.props;
     inert
   >
     <div class="cv-drawer-header">
-      <h2 id="cv-menu-title">Curriculum Vitae</h2>
+      <h2 id="cv-menu-title">{t("pages.cv.heading")}</h2>
       <button
         id="cv-menu-close"
         type="button"
         class="cv-close-btn"
-        aria-label="Close Menu"
+        aria-label={t("aria.closeMenu")}
       >
         <span class="i-mdi:close"></span>
       </button>

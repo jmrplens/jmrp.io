@@ -25,6 +25,8 @@
 
 import { createHash } from "node:crypto";
 
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslations } from "@i18n/utils";
 import * as cheerio from "cheerio";
 
 import CopyButton from "./CopyButton.astro";
@@ -62,8 +64,14 @@ const contentHash = createHash("sha256")
   .digest("hex")
   .slice(0, 8);
 
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
+
 const finalAriaLabel =
-  ariaLabel || `Terminal session: ${firstCommand || "interactive"}`;
+  ariaLabel ||
+  t("components.terminal.sessionAria", {
+    command: firstCommand || t("components.terminal.sessionFallback"),
+  });
 ---
 
 <div
@@ -89,7 +97,9 @@ const finalAriaLabel =
     <div class="action-area">
       <CopyButton
         content={commandText}
-        ariaLabel={`Copy command: ${firstCommand || "terminal"}`}
+        ariaLabel={t("components.terminal.copyCommand", {
+          command: firstCommand || t("components.terminal.terminalFallback"),
+        })}
       />
     </div>
   </div>

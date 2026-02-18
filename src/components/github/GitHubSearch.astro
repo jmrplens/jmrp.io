@@ -1,4 +1,6 @@
 ---
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslations } from "@i18n/utils";
 import type { GitHubRepo } from "@utils/github";
 
 import RepoCard from "./RepoCard.astro";
@@ -8,6 +10,9 @@ interface Props {
 }
 
 const { initialRepos } = Astro.props;
+
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
 ---
 
 <div class="github-repos-wrapper">
@@ -16,8 +21,8 @@ const { initialRepos } = Astro.props;
     <input
       type="search"
       id="repo-search"
-      placeholder="Find a repository..."
-      aria-label="Search repositories"
+      placeholder={t("pages.github.findRepoPlaceholder")}
+      aria-label={t("aria.searchRepos")}
     />
   </div>
 
@@ -30,8 +35,9 @@ const { initialRepos } = Astro.props;
     <p
       class="no-results"
       style="display: none;"
+      data-no-results
     >
-      No repositories found.
+      {t("pages.github.noReposFound")}
     </p>
   </div>
 </div>
@@ -50,7 +56,7 @@ const { initialRepos } = Astro.props;
           const term = (e.target as HTMLInputElement).value.toLowerCase();
 
           const cards = container.querySelectorAll(".repo-card");
-          const noResults = container.querySelector(".no-results");
+          const noResults = container.querySelector("[data-no-results]");
           let matchCount = 0;
 
           cards.forEach((card) => {

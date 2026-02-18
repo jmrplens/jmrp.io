@@ -1,0 +1,705 @@
+---
+title: "Calculadora de Subredes IP"
+slug: "subnet-calculator"
+description: "Calculadora de subredes IPv4 e IPv6 con notación CIDR, planificador VLSM, conversor de rangos a CIDR, DNS inverso y visualización de bits."
+subtitle: "Kit completo de redes IPv4/IPv6: calculadora de subredes, información de direcciones, planificador VLSM y conversor de rangos a CIDR."
+icon: "i-mdi:lan"
+category: "network"
+tags: ["redes", "ip", "subnet", "cidr", "ipv4", "ipv6", "vlsm"]
+appComponent: "SubnetCalculator"
+lang: "es"
+---
+
+import {
+  TerminalSession,
+  TerminalSessionCommand,
+  TerminalSessionOutput,
+} from "@components/ui/terminal-session";
+
+<h2>Acerca de esta herramienta</h2>
+<p>
+  Un conjunto completo de herramientas de redes IP que cubre todo lo necesario
+  para la planificación de direcciones IPv4 e IPv6. Cuatro calculadoras
+  especializadas en una sola herramienta: calculadora de subredes, información
+  de dirección, planificador VLSM y conversor de rangos a CIDR.
+</p>
+
+<h3>Características</h3>
+<ul>
+  <li>
+    <strong>IPv4 e IPv6 completo</strong> — cálculo de subredes con aritmética
+    BigInt para direcciones de 128 bits
+  </li>
+  <li>
+    <strong>Autodetección</strong> — identifica automáticamente IPv4 vs IPv6 a
+    partir de tu entrada
+  </li>
+  <li>
+    <strong>Análisis inteligente de CIDR</strong> — pega 192.168.1.0/24 y se
+    separa automáticamente el prefijo
+  </li>
+  <li>
+    <strong>Detección del tipo de dirección</strong> — Private (RFC 1918),
+    CGNAT, Loopback, Link-Local, Multicast, Documentation, ULA, Teredo, 6to4 y
+    más
+  </li>
+  <li>
+    <strong>Conversor de dirección</strong> — binario, hex, entero, DNS inverso
+    (PTR), IPv4-mapped IPv6, 6to4
+  </li>
+  <li>
+    <strong>Planificador VLSM</strong> — asigna subredes de diferentes tamaños
+    con cálculo de desperdicio
+  </li>
+  <li>
+    <strong>Rango a CIDR</strong> — convierte rangos de IP arbitrarios en
+    bloques CIDR óptimos
+  </li>
+  <li>
+    <strong>Visualización de límite de bits</strong> — visualización coloreada
+    de bits de red/host
+  </li>
+  <li>
+    <strong>Presets comunes</strong> — acceso rápido a longitudes de prefijo
+    típicas de IPv4 e IPv6
+  </li>
+  <li>
+    <strong>Enlace compartible</strong> — parámetros de URL para guardar en
+    marcadores y compartir
+  </li>
+  <li>
+    <strong>Copiar resultados</strong> — copia con un clic de todos los valores
+    calculados
+  </li>
+</ul>
+
+<h2>Cómo usar</h2>
+
+<h3>Calculadora de subredes</h3>
+<ol>
+  <li>
+    Introduce una dirección IPv4 (p. ej., <code>192.168.1.0</code>) o IPv6
+    (p. ej., <code>2001:db8::</code>)
+  </li>
+  <li>Establece la longitud del prefijo CIDR o haz clic en un botón de preset</li>
+  <li>
+    Consulta la dirección de red, broadcast, máscara, wildcard, rango de hosts,
+    tipo de dirección y más
+  </li>
+  <li>
+    Desplázate hacia abajo para ver la visualización de límite de bits que
+    muestra los bits de red frente a los de host
+  </li>
+</ol>
+
+<h3>Información de dirección</h3>
+<ol>
+  <li>
+    Introduce cualquier dirección IP, entero o valor hexadecimal (p. ej.,{" "}
+    <code>3232235777</code> = 192.168.1.1)
+  </li>
+  <li>
+    Consulta todas las representaciones: binario, hex, entero, DNS inverso,
+    IPv4-mapped IPv6 y 6to4
+  </li>
+  <li>Identifica el tipo, clase y ámbito de la dirección</li>
+</ol>
+
+<h3>Planificador VLSM</h3>
+<ol>
+  <li>
+    Introduce una red IPv4 base (p. ej., <code>10.0.0.0/16</code>)
+  </li>
+  <li>
+    Añade requisitos de subredes con nombres y número de hosts necesarios
+  </li>
+  <li>
+    Pulsa Calculate para ver la asignación óptima ordenada por tamaño, con
+    análisis de desperdicio
+  </li>
+</ol>
+
+<h3>Rango a CIDR</h3>
+<ol>
+  <li>
+    Introduce las direcciones IPv4 de inicio y fin (p. ej.,{" "}
+    <code>192.168.1.0</code> a <code>192.168.3.255</code>)
+  </li>
+  <li>
+    Consulta el conjunto mínimo de bloques CIDR que cubren el rango
+  </li>
+</ol>
+
+<h2>Referencia de subredes IPv4</h2>
+
+<h3>Tamaños de subred comunes</h3>
+<table>
+  <thead>
+    <tr>
+      <th>CIDR</th>
+      <th>Máscara de subred</th>
+      <th>Direcciones</th>
+      <th>Hosts utilizables</th>
+      <th>Uso típico</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        <code>/32</code>
+      </td>
+      <td>
+        <code>255.255.255.255</code>
+      </td>
+      <td>1</td>
+      <td>1</td>
+      <td>Ruta de host</td>
+    </tr>
+    <tr>
+      <td>
+        <code>/31</code>
+      </td>
+      <td>
+        <code>255.255.255.254</code>
+      </td>
+      <td>2</td>
+      <td>2</td>
+      <td>Enlace punto a punto (RFC 3021)</td>
+    </tr>
+    <tr>
+      <td>
+        <code>/30</code>
+      </td>
+      <td>
+        <code>255.255.255.252</code>
+      </td>
+      <td>4</td>
+      <td>2</td>
+      <td>Enlace punto a punto</td>
+    </tr>
+    <tr>
+      <td>
+        <code>/29</code>
+      </td>
+      <td>
+        <code>255.255.255.248</code>
+      </td>
+      <td>8</td>
+      <td>6</td>
+      <td>Oficina pequeña</td>
+    </tr>
+    <tr>
+      <td>
+        <code>/28</code>
+      </td>
+      <td>
+        <code>255.255.255.240</code>
+      </td>
+      <td>16</td>
+      <td>14</td>
+      <td>Red pequeña</td>
+    </tr>
+    <tr>
+      <td>
+        <code>/27</code>
+      </td>
+      <td>
+        <code>255.255.255.224</code>
+      </td>
+      <td>32</td>
+      <td>30</td>
+      <td>Departamento</td>
+    </tr>
+    <tr>
+      <td>
+        <code>/26</code>
+      </td>
+      <td>
+        <code>255.255.255.192</code>
+      </td>
+      <td>64</td>
+      <td>62</td>
+      <td>Planta / edificio</td>
+    </tr>
+    <tr>
+      <td>
+        <code>/25</code>
+      </td>
+      <td>
+        <code>255.255.255.128</code>
+      </td>
+      <td>128</td>
+      <td>126</td>
+      <td>Departamento grande</td>
+    </tr>
+    <tr>
+      <td>
+        <code>/24</code>
+      </td>
+      <td>
+        <code>255.255.255.0</code>
+      </td>
+      <td>256</td>
+      <td>254</td>
+      <td>LAN estándar</td>
+    </tr>
+    <tr>
+      <td>
+        <code>/16</code>
+      </td>
+      <td>
+        <code>255.255.0.0</code>
+      </td>
+      <td>65.536</td>
+      <td>65.534</td>
+      <td>Sede grande</td>
+    </tr>
+    <tr>
+      <td>
+        <code>/8</code>
+      </td>
+      <td>
+        <code>255.0.0.0</code>
+      </td>
+      <td>16.777.216</td>
+      <td>16.777.214</td>
+      <td>ISP / Clase A</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Clases IPv4</h3>
+<table>
+  <thead>
+    <tr>
+      <th>Clase</th>
+      <th>Rango</th>
+      <th>Máscara por defecto</th>
+      <th>Redes</th>
+      <th>Propósito</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>A</td>
+      <td>
+        <code>1.0.0.0 – 126.255.255.255</code>
+      </td>
+      <td>
+        <code>/8</code>
+      </td>
+      <td>126</td>
+      <td>Grandes organizaciones</td>
+    </tr>
+    <tr>
+      <td>B</td>
+      <td>
+        <code>128.0.0.0 – 191.255.255.255</code>
+      </td>
+      <td>
+        <code>/16</code>
+      </td>
+      <td>16.384</td>
+      <td>Organizaciones medianas</td>
+    </tr>
+    <tr>
+      <td>C</td>
+      <td>
+        <code>192.0.0.0 – 223.255.255.255</code>
+      </td>
+      <td>
+        <code>/24</code>
+      </td>
+      <td>2.097.152</td>
+      <td>Organizaciones pequeñas</td>
+    </tr>
+    <tr>
+      <td>D</td>
+      <td>
+        <code>224.0.0.0 – 239.255.255.255</code>
+      </td>
+      <td>N/A</td>
+      <td>N/A</td>
+      <td>Multicast</td>
+    </tr>
+    <tr>
+      <td>E</td>
+      <td>
+        <code>240.0.0.0 – 255.255.255.255</code>
+      </td>
+      <td>N/A</td>
+      <td>N/A</td>
+      <td>Reservado / Experimental</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Rangos privados y reservados</h3>
+<table>
+  <thead>
+    <tr>
+      <th>Rango</th>
+      <th>CIDR</th>
+      <th>Propósito</th>
+      <th>RFC</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        <code>10.0.0.0</code>
+      </td>
+      <td>
+        <code>/8</code>
+      </td>
+      <td>Red privada</td>
+      <td>RFC 1918</td>
+    </tr>
+    <tr>
+      <td>
+        <code>172.16.0.0</code>
+      </td>
+      <td>
+        <code>/12</code>
+      </td>
+      <td>Red privada</td>
+      <td>RFC 1918</td>
+    </tr>
+    <tr>
+      <td>
+        <code>192.168.0.0</code>
+      </td>
+      <td>
+        <code>/16</code>
+      </td>
+      <td>Red privada</td>
+      <td>RFC 1918</td>
+    </tr>
+    <tr>
+      <td>
+        <code>100.64.0.0</code>
+      </td>
+      <td>
+        <code>/10</code>
+      </td>
+      <td>CGNAT / Compartida</td>
+      <td>RFC 6598</td>
+    </tr>
+    <tr>
+      <td>
+        <code>127.0.0.0</code>
+      </td>
+      <td>
+        <code>/8</code>
+      </td>
+      <td>Loopback</td>
+      <td>RFC 1122</td>
+    </tr>
+    <tr>
+      <td>
+        <code>169.254.0.0</code>
+      </td>
+      <td>
+        <code>/16</code>
+      </td>
+      <td>Link-Local / APIPA</td>
+      <td>RFC 3927</td>
+    </tr>
+    <tr>
+      <td>
+        <code>192.0.2.0</code>
+      </td>
+      <td>
+        <code>/24</code>
+      </td>
+      <td>Documentación (TEST-NET-1)</td>
+      <td>RFC 5737</td>
+    </tr>
+    <tr>
+      <td>
+        <code>198.51.100.0</code>
+      </td>
+      <td>
+        <code>/24</code>
+      </td>
+      <td>Documentación (TEST-NET-2)</td>
+      <td>RFC 5737</td>
+    </tr>
+    <tr>
+      <td>
+        <code>203.0.113.0</code>
+      </td>
+      <td>
+        <code>/24</code>
+      </td>
+      <td>Documentación (TEST-NET-3)</td>
+      <td>RFC 5737</td>
+    </tr>
+    <tr>
+      <td>
+        <code>224.0.0.0</code>
+      </td>
+      <td>
+        <code>/4</code>
+      </td>
+      <td>Multicast</td>
+      <td>RFC 5771</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>Referencia IPv6</h2>
+
+<h3>Longitudes de prefijo comunes</h3>
+<table>
+  <thead>
+    <tr>
+      <th>Prefijo</th>
+      <th>Direcciones</th>
+      <th>Uso típico</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        <code>/128</code>
+      </td>
+      <td>1</td>
+      <td>Dirección de host</td>
+    </tr>
+    <tr>
+      <td>
+        <code>/127</code>
+      </td>
+      <td>2</td>
+      <td>Enlace punto a punto (RFC 6164)</td>
+    </tr>
+    <tr>
+      <td>
+        <code>/64</code>
+      </td>
+      <td>
+        2<sup>64</sup>
+      </td>
+      <td>Subred estándar (requiere SLAAC)</td>
+    </tr>
+    <tr>
+      <td>
+        <code>/56</code>
+      </td>
+      <td>
+        2<sup>72</sup>
+      </td>
+      <td>Sede residencial (256 /64s)</td>
+    </tr>
+    <tr>
+      <td>
+        <code>/48</code>
+      </td>
+      <td>
+        2<sup>80</sup>
+      </td>
+      <td>Sede empresarial (65.536 /64s)</td>
+    </tr>
+    <tr>
+      <td>
+        <code>/32</code>
+      </td>
+      <td>
+        2<sup>96</sup>
+      </td>
+      <td>Asignación ISP</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Direcciones especiales IPv6</h3>
+<table>
+  <thead>
+    <tr>
+      <th>Dirección / Prefijo</th>
+      <th>Propósito</th>
+      <th>RFC</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        <code>::/128</code>
+      </td>
+      <td>No especificada</td>
+      <td>RFC 4291</td>
+    </tr>
+    <tr>
+      <td>
+        <code>::1/128</code>
+      </td>
+      <td>Loopback</td>
+      <td>RFC 4291</td>
+    </tr>
+    <tr>
+      <td>
+        <code>::ffff:0:0/96</code>
+      </td>
+      <td>IPv4-Mapped IPv6</td>
+      <td>RFC 4291</td>
+    </tr>
+    <tr>
+      <td>
+        <code>64:ff9b::/96</code>
+      </td>
+      <td>Traducción NAT64</td>
+      <td>RFC 6052</td>
+    </tr>
+    <tr>
+      <td>
+        <code>2001:db8::/32</code>
+      </td>
+      <td>Documentación</td>
+      <td>RFC 3849</td>
+    </tr>
+    <tr>
+      <td>
+        <code>2002::/16</code>
+      </td>
+      <td>Túnel 6to4</td>
+      <td>RFC 3056</td>
+    </tr>
+    <tr>
+      <td>
+        <code>fc00::/7</code>
+      </td>
+      <td>Unique Local Address (ULA)</td>
+      <td>RFC 4193</td>
+    </tr>
+    <tr>
+      <td>
+        <code>fe80::/10</code>
+      </td>
+      <td>Link-Local</td>
+      <td>RFC 4291</td>
+    </tr>
+    <tr>
+      <td>
+        <code>ff00::/8</code>
+      </td>
+      <td>Multicast</td>
+      <td>RFC 4291</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>Privacidad</h2>
+<p>
+  Todos los cálculos se ejecutan íntegramente en tu navegador. No se envía
+  ninguna dirección IP ni dato de red a ningún servidor. La herramienta funciona
+  sin conexión después de la carga inicial de la página.
+</p>
+
+<h2>Referencia de comandos Linux</h2>
+
+<h3>Mostrar direcciones IP</h3>
+<TerminalSession>
+  <TerminalSessionCommand>ip -4 addr show</TerminalSessionCommand>
+  <TerminalSessionOutput title="Direcciones IPv4 en todas las interfaces">
+    inet 192.168.1.100/24 brd 192.168.1.255 scope global eth0
+  </TerminalSessionOutput>
+</TerminalSession>
+
+<h3>Mostrar direcciones IPv6</h3>
+<TerminalSession>
+  <TerminalSessionCommand>ip -6 addr show scope global</TerminalSessionCommand>
+  <TerminalSessionOutput title="Direcciones IPv6 globales">
+    inet6 2001:db8::1/64 scope global
+  </TerminalSessionOutput>
+</TerminalSession>
+
+<h3>Tabla de enrutamiento</h3>
+<TerminalSession>
+  <TerminalSessionCommand>
+    ip route show
+  </TerminalSessionCommand>
+  <TerminalSessionOutput title="Tabla de enrutamiento IPv4">
+    ```
+    default via 192.168.1.1 dev eth0
+    192.168.1.0/24 dev eth0 proto kernel scope link src 192.168.1.100
+    ```
+  </TerminalSessionOutput>
+</TerminalSession>
+
+<h3>Calcular subred con ipcalc</h3>
+<TerminalSession>
+  <TerminalSessionCommand>
+    ipcalc 192.168.1.0/24
+  </TerminalSessionCommand>
+  <TerminalSessionOutput title="Detalles de subred">
+    ```
+    Network:   192.168.1.0/24
+    Netmask:   255.255.255.0
+    Broadcast: 192.168.1.255
+    HostMin:   192.168.1.1
+    HostMax:   192.168.1.254
+    Hosts/Net: 254
+    Class C, Private Internet
+    ```
+  </TerminalSessionOutput>
+</TerminalSession>
+
+<h3>Consulta DNS inversa</h3>
+<TerminalSession>
+  <TerminalSessionCommand>dig -x 8.8.8.8 +short</TerminalSessionCommand>
+  <TerminalSessionOutput title="Registro PTR para 8.8.8.8">
+    dns.google.
+  </TerminalSessionOutput>
+</TerminalSession>
+
+<h3>Escanear una subred</h3>
+<TerminalSession>
+  <TerminalSessionCommand>
+    ```
+    nmap -sn 192.168.1.0/24 | grep "Nmap scan report"
+    ```
+  </TerminalSessionCommand>
+  <TerminalSessionOutput title="Descubrir hosts activos en una subred">
+    ```
+    Nmap scan report for 192.168.1.1
+    Nmap scan report for 192.168.1.100
+    ```
+  </TerminalSessionOutput>
+</TerminalSession>
+
+<h2>Explicación de VLSM</h2>
+<p>
+  <strong>Variable Length Subnet Masking (VLSM)</strong> permite dividir una red
+  en subredes de diferentes tamaños, minimizando el desperdicio de direcciones.
+  El algoritmo:
+</p>
+<ol>
+  <li>Ordena los requisitos por número de hosts (de mayor a menor)</li>
+  <li>
+    Para cada requisito, encuentra el bloque potencia de 2 más pequeño que
+    encaje (hosts + 2 para direcciones de red/broadcast)
+  </li>
+  <li>Alinea el bloque a su límite natural</li>
+  <li>Asigna y avanza al siguiente espacio disponible</li>
+</ol>
+<p>
+  En IPv6, VLSM es menos relevante porque /64 es el prefijo estándar para todas
+  las subredes (requerido para SLAAC). El inmenso espacio de direcciones hace
+  innecesaria la variación de tamaños.
+</p>
+
+<h2>Algoritmo de rango a CIDR</h2>
+<p>
+  Convertir un rango de IP arbitrario a bloques CIDR encuentra el conjunto
+  mínimo de prefijos que cubren exactamente el rango. Para cada posición:
+</p>
+<ol>
+  <li>Encuentra el bloque alineado más grande que comience en la dirección actual</li>
+  <li>Asegúrate de que el bloque no se extienda más allá del final del rango</li>
+  <li>Registra el bloque y avanza más allá de él</li>
+</ol>
+<p>
+  Esto es útil para reglas de firewall, agregación de rutas y listas de control
+  de acceso donde se requiere notación CIDR.
+</p>

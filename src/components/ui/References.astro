@@ -3,6 +3,8 @@
  * References component (Simple).
  * Renders a grid of external reference cards from a given prop.
  */
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslations } from "@i18n/utils";
 import type { ImageMetadata } from "astro";
 import { Image } from "astro:assets";
 
@@ -16,6 +18,9 @@ interface Props {
 }
 
 const { references = [] } = Astro.props;
+
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
 
 const iconFiles = import.meta.glob<{ default: ImageMetadata }>(
   "/src/assets/icons/*.webp",
@@ -33,7 +38,7 @@ const iconFiles = import.meta.glob<{ default: ImageMetadata }>(
           class="i-mdi:book-open-page-variant-outline header-icon"
           aria-hidden="true"
         />
-        <h3>Further Reading &amp; Resources</h3>
+        <h3>{t("components.references.title")}</h3>
       </div>
       <div class="references-grid">
         {references.map((ref) => {

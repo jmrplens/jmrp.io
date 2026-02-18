@@ -105,9 +105,15 @@ cv_latex/*.pdf
 .agent/
 PROJECT_KNOWLEDGE.md
 GEMINI.md
+# Implementation plans and audit docs (local only)
+AI_CONFIG_TASKS.md
+AI_CONTEXT_ROADMAP.md
+SEO_AUDIT.md
+docs/I18N_PLAN.md
 # Vendored scripts (downloaded during build)
 public/scripts/cf-beacon.js
 temp_lh/
 temp_workflow/
 # Backup files
 *.backup
+accessibility-report.json

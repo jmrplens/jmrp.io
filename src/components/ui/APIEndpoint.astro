@@ -3,6 +3,9 @@
  * APIEndpoint Component
  * Renders documentation for a REST API endpoint.
  */
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslations } from "@i18n/utils";
+
 interface Props {
   method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   path: string;
@@ -12,6 +15,9 @@ interface Props {
 
 const { method, path, description, auth = false } = Astro.props;
 const hasContent = Astro.slots.has("default");
+
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
 
 const methodColors: Record<Props["method"], string> = {
   GET: "method-get",
@@ -31,13 +37,13 @@ const methodColors: Record<Props["method"], string> = {
         <span
           class="ae-auth"
           role="note"
-          aria-label="Authentication required"
+          aria-label={t("aria.authRequired")}
         >
           <span
             class="i-mdi:lock ae-auth-icon"
             aria-hidden="true"
           />
-          Auth
+          {t("components.apiEndpoint.auth")}
         </span>
       )
     }

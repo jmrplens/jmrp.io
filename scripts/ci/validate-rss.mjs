@@ -65,10 +65,11 @@ function validateItemContent(item, idx, results) {
 
   if (
     !contentLower.includes("continue reading") &&
+    !contentLower.includes("continuar leyendo") &&
     !content.includes(item.link)
   ) {
     results.warnings.push(
-      `Item ${idx}: Content missing 'Continue reading' link or backlink`,
+      `Item ${idx}: Content missing 'Continue reading'/'Continuar leyendo' link or backlink`,
     );
   }
 }
@@ -232,15 +233,12 @@ function parseCliArgs(argv) {
 }
 
 /**
- * Validates the RSS feed structural integrity and content.
+ * Validates a single RSS feed file.
  *
- * @returns {Promise<void>} Resolves when validation is complete.
+ * @param rssFile - Absolute path to the RSS feed file.
+ * @returns {Promise<object>} Validation results for this feed.
  */
-async function validateRSS() {
-  console.log("🔍 Validating RSS feed...\n");
-
-  const { distDir, rssFile } = parseCliArgs(process.argv.slice(2));
-
+async function validateSingleFeed(rssFile) {
   const results = {
     valid: false,
     file: rssFile,
@@ -257,8 +255,7 @@ async function validateRSS() {
 
   if (!fs.existsSync(rssFile)) {
     results.errors.push(`RSS feed not found: ${rssFile}`);
-    writeResults(results, path.join(distDir, OUTPUT_FILE));
-    process.exit(1);
+    return results;
   }
 
   results.size = (fs.statSync(rssFile).size / 1024).toFixed(2);
@@ -268,20 +265,105 @@ async function validateRSS() {
   await validateFeedContent(content, results);
 
   results.valid = results.errors.length === 0;
+  return results;
+}
 
-  console.log(
-    results.valid
-      ? "✅ RSS feed is valid!"
-      : `❌ RSS validation failed with ${results.errors.length} errors.`,
-  );
-  if (results.valid) {
-    console.log(`   Items: ${results.metadata.items}`);
-  } else {
-    for (const error of results.errors) console.log(`   - ${error}`);
+/**
+ * Discovers all RSS feed files in the dist directory.
+ *
+ * @param distDir - The build output directory.
+ * @returns {string[]} Array of absolute paths to RSS feed files.
+ */
+function discoverRssFeeds(distDir) {
+  const feeds = [];
+  const mainFeed = path.join(distDir, "rss.xml");
+  if (fs.existsSync(mainFeed)) {
+    feeds.push(mainFeed);
   }
 
-  writeResults(results, OUTPUT_FILE);
-  process.exit(results.valid ? 0 : 1);
+  // Check locale subdirectories for RSS feeds (e.g., es/rss.xml)
+  try {
+    const entries = fs.readdirSync(distDir, { withFileTypes: true });
+    for (const entry of entries) {
+      if (entry.isDirectory()) {
+        const localeFeed = path.join(distDir, entry.name, "rss.xml");
+        if (fs.existsSync(localeFeed)) {
+          feeds.push(localeFeed);
+        }
+      }
+    }
+  } catch {
+    // Ignore errors reading directory
+  }
+
+  return feeds;
+}
+
+/**
+ * Logs the validation results for a single feed.
+ *
+ * @param results - Validation results for the feed.
+ * @param label - Display label for the feed file.
+ */
+function logFeedResults(results, label) {
+  console.log(`📄 Validating ${label}...`);
+
+  if (results.valid) {
+    console.log(`   ✅ Valid — ${results.metadata.items} items`);
+  } else {
+    console.log(`   ❌ Failed with ${results.errors.length} error(s):`);
+    for (const error of results.errors) console.log(`      - ${error}`);
+  }
+
+  for (const w of results.warnings) console.log(`   ⚠️  ${w}`);
+  console.log();
+}
+
+/**
+ * Validates the RSS feed structural integrity and content.
+ *
+ * @returns {Promise<void>} Resolves when validation is complete.
+ */
+async function validateRSS() {
+  console.log("🔍 Validating RSS feed(s)...\n");
+
+  const { distDir, rssFile } = parseCliArgs(process.argv.slice(2));
+
+  // If a specific file was passed (not just a directory), validate only that file
+  const isSpecificFile =
+    process.argv.length > 3 || process.argv[2]?.endsWith(".xml");
+  const feedFiles = isSpecificFile ? [rssFile] : discoverRssFeeds(distDir);
+
+  if (feedFiles.length === 0) {
+    console.error("❌ No RSS feeds found in", distDir);
+    process.exit(1);
+  }
+
+  console.log(`   Found ${feedFiles.length} RSS feed(s) to validate\n`);
+
+  const allResults = [];
+
+  for (const feedFile of feedFiles) {
+    const results = await validateSingleFeed(feedFile);
+    allResults.push(results);
+    logFeedResults(results, path.relative(distDir, feedFile));
+  }
+
+  // Write combined results (array for multiple feeds, single object for one)
+  const output = allResults.length === 1 ? allResults[0] : allResults;
+  writeResults(output, OUTPUT_FILE);
+
+  const failedCount = allResults.filter((r) => !r.valid).length;
+
+  if (failedCount > 0) {
+    console.log(
+      `❌ RSS validation failed — ${failedCount}/${feedFiles.length} feed(s) invalid.`,
+    );
+    process.exit(1);
+  }
+
+  console.log(`✅ All ${feedFiles.length} RSS feed(s) valid!`);
+  process.exit(0);
 }
 
 /**

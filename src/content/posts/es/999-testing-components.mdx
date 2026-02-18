@@ -1,0 +1,27 @@
+---
+title: "Post de prueba — Componentes UI"
+slug: "999-testing-components"
+description: "Post de prueba para verificar que los componentes UI funcionan correctamente en la versión en español."
+author: "José Manuel Requena Plens"
+authorEmail: "mail@jmrp.io"
+publishedDate: 2025-12-01
+draft: true
+lang: "es"
+tags: ["Test"]
+---
+
+import Callout from "@components/ui/Callout.astro";
+
+Este es un post de prueba para validar el sistema i18n con contenido en español.
+
+<Callout type="info" title="Información">
+  Este post existe únicamente para verificar que las content collections funcionan
+  correctamente con la estructura de carpetas por locale (`posts/es/`).
+</Callout>
+
+## Verificación
+
+- ✅ El campo `lang: "es"` en el frontmatter funciona
+- ✅ El post aparece correctamente en `/es/blog/`
+- ✅ Los componentes UI se renderizan sin problemas
+- ✅ Las traducciones de la interfaz se aplican

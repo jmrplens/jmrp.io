@@ -1,0 +1,62 @@
+---
+/**
+ * FallbackBanner — displayed when content is not yet translated.
+ *
+ * Shows a visible notice that the user is viewing EN content
+ * because no translation is available for the current locale.
+ */
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslations } from "@i18n/utils";
+
+interface Props {
+  /** The locale originally requested by the user. */
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const t = useTranslations(locale);
+---
+
+{
+  locale !== defaultLocale && (
+    <div
+      class="fallback-banner"
+      role="status"
+      aria-live="polite"
+    >
+      <span
+        class="fallback-banner__icon i-mdi:translate"
+        aria-hidden="true"
+      />
+      <p>{t("content.fallbackNotice")}</p>
+    </div>
+  )
+}
+
+<style>
+  .fallback-banner {
+    display: flex;
+    gap: var(--space-sm);
+    align-items: center;
+    padding: var(--space-sm) var(--space-md);
+    margin-bottom: var(--space-md);
+    font-size: 0.9rem;
+    color: var(--color-text-muted);
+    background-color: var(--color-bg-subtle);
+    border: var(--border-1);
+    border-left: 3px solid var(--color-primary);
+    border-radius: var(--radius-md);
+  }
+
+  .fallback-banner p {
+    margin: 0;
+    line-height: 1.4;
+  }
+
+  .fallback-banner__icon {
+    flex-shrink: 0;
+    width: 1.25rem;
+    height: 1.25rem;
+    color: var(--color-primary);
+  }
+</style>

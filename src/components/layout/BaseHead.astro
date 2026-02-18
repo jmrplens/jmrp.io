@@ -13,6 +13,13 @@ import "@styles/global.css";
 import appleTouchIconSrc from "@assets/apple-touch-icon.png";
 import faviconSrc from "@assets/favicon.png";
 import defaultOgImage from "@assets/mehome_landscape.webp";
+import { defaultLocale, type Locale, locales } from "@i18n/config";
+import {
+  getAlternateLinks,
+  getOgLocale,
+  type TranslationKey,
+  useTranslations,
+} from "@i18n/utils";
 import type { SiteConfig } from "@src/types";
 import { safeJsonLd } from "@utils/html";
 import { getSiteUrl } from "@utils/site";
@@ -20,6 +27,10 @@ import { getSiteUrl } from "@utils/site";
 import type { ImageMetadata } from "astro";
 import { Font, getImage } from "astro:assets";
 import { getEntry } from "astro:content";
+
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
+const alternateLinks = getAlternateLinks(Astro.url.pathname, getSiteUrl());
 
 const favicon = await getImage({
   src: faviconSrc,
@@ -61,7 +72,7 @@ const canonicalURL = new URL(Astro.url.pathname, getSiteUrl());
 
 const {
   title,
-  description = siteData.description,
+  description = t("seo.siteDescription"),
   image,
   type = "website",
   noIndex = false,
@@ -72,8 +83,9 @@ const {
   schema,
 } = Astro.props;
 
+const siteTitle = t("seo.siteTitle");
 const fullTitle = (() => {
-  if (title === siteData.title) return title;
+  if (title === siteTitle) return title;
   const suffix = siteData.author;
   const shortSuffix = "JMRP";
 
@@ -123,8 +135,8 @@ const websiteSchema = {
   "@id": new URL("#website", getSiteUrl()).toString(),
   url: getSiteUrl(),
   name: siteData.author,
-  description: siteData.description,
-  inLanguage: siteData.locale,
+  description: t("seo.siteDescription"),
+  inLanguage: locale,
   publisher: {
     "@type": "Person",
     "@id": new URL("#person", getSiteUrl()).toString(),
@@ -135,10 +147,19 @@ const websiteSchema = {
   },
 };
 
-// 2. Navigation Schema
+// 2. Navigation Schema — use translated labels
+const navLabelKeyMap: Record<string, TranslationKey> = {
+  "/": "nav.home",
+  "/blog/": "nav.blog",
+  "/homelab/": "nav.homelab",
+  "/tools/": "nav.tools",
+  "/cv/": "nav.cv",
+  "/publications/": "nav.publications",
+  "/github/": "nav.repositories",
+};
 const navSchema = (siteData.nav || []).map((item) => ({
   "@type": "SiteNavigationElement",
-  name: item.label,
+  name: navLabelKeyMap[item.href] ? t(navLabelKeyMap[item.href]) : item.label,
   url: new URL(item.href, getSiteUrl()).toString(),
 }));
 
@@ -151,7 +172,7 @@ const breadcrumbList = {
     {
       "@type": "ListItem",
       position: 1,
-      name: "Home",
+      name: t("nav.home"),
       item: getSiteUrl(),
     },
     ...pathSegments.map((segment, index) => {
@@ -236,12 +257,11 @@ const jsonLD = {
   rel="apple-touch-icon"
   href={appleTouchIcon.src}
 />
-
-<!-- DNS Prefetch for external resources -->
-
 <link
   rel="manifest"
-  href="/site.webmanifest"
+  href={locale === defaultLocale
+    ? "/site.webmanifest"
+    : `/${locale}/site.webmanifest`}
 />
 <link
   rel="sitemap"
@@ -250,9 +270,25 @@ const jsonLD = {
 <link
   rel="alternate"
   type="application/rss+xml"
-  title="JMRP Blog RSS Feed"
-  href="/rss.xml"
+  title={t("seo.rssFeedTitle")}
+  href={locale === defaultLocale ? "/rss.xml" : `/${locale}/rss.xml`}
 />
+{/* RSS feed for alternate locale */}
+{
+  locales
+    .filter((l) => l !== locale)
+    .map((l) => {
+      const altT = useTranslations(l);
+      return (
+        <link
+          rel="alternate"
+          type="application/rss+xml"
+          title={altT("seo.rssFeedTitle")}
+          href={l === defaultLocale ? "/rss.xml" : `/${l}/rss.xml`}
+        />
+      );
+    })
+}
 <meta
   name="generator"
   content={Astro.generator}
@@ -269,7 +305,7 @@ const jsonLD = {
 <!-- SEO -->
 <meta
   name="keywords"
-  content={siteData.keywords}
+  content={t("seo.siteKeywords")}
 />
 <meta
   name="author"
@@ -284,6 +320,17 @@ const jsonLD = {
   rel="canonical"
   href={canonicalURL}
 />
+
+<!-- Hreflang alternates -->
+{
+  alternateLinks.map((alt) => (
+    <link
+      rel="alternate"
+      hreflang={alt.hreflang}
+      href={alt.url}
+    />
+  ))
+}
 
 <!-- Primary Meta Tags -->
 <title>{fullTitle}</title>
@@ -331,8 +378,18 @@ const jsonLD = {
 />
 <meta
   property="og:locale"
-  content={siteData.locale}
+  content={getOgLocale(locale)}
 />
+{
+  alternateLinks
+    .filter((alt) => alt.locale !== "x-default" && alt.locale !== locale)
+    .map((alt) => (
+      <meta
+        property="og:locale:alternate"
+        content={getOgLocale(alt.locale as Locale)}
+      />
+    ))
+}
 <meta
   property="og:site_name"
   content={siteData.author}

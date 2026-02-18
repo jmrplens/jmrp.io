@@ -18,54 +18,128 @@
  * @example
  * <CronBuilder title="Cron Expression Builder" />
  */
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslations } from "@i18n/utils";
+
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
 
 interface Props {
   title?: string;
 }
 
-const { title = "Cron Expression Builder" } = Astro.props;
+const { title = t("tools.cronBuilder.title") } = Astro.props;
 const uniqueId = `cron-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
 
 const presets = [
-  { label: "Every minute", value: "* * * * *" },
-  { label: "Every 5 minutes", value: "*/5 * * * *" },
-  { label: "Every 15 minutes", value: "*/15 * * * *" },
-  { label: "Every 30 minutes", value: "*/30 * * * *" },
-  { label: "Every hour", value: "0 * * * *" },
-  { label: "Every 6 hours", value: "0 */6 * * *" },
-  { label: "Every 12 hours", value: "0 */12 * * *" },
-  { label: "Daily at midnight", value: "0 0 * * *" },
-  { label: "Daily at 3 AM", value: "0 3 * * *" },
-  { label: "Twice daily (9 & 21)", value: "0 9,21 * * *" },
-  { label: "Weekdays at 9 AM", value: "0 9 * * 1-5" },
-  { label: "Weekly (Sunday midnight)", value: "0 0 * * 0" },
-  { label: "Monthly (1st at midnight)", value: "0 0 1 * *" },
-  { label: "Quarterly (Jan,Apr,Jul,Oct)", value: "0 0 1 1,4,7,10 *" },
+  { label: t("tools.cronBuilder.presetEveryMinute"), value: "* * * * *" },
+  { label: t("tools.cronBuilder.presetEvery5Min"), value: "*/5 * * * *" },
+  { label: t("tools.cronBuilder.presetEvery15Min"), value: "*/15 * * * *" },
+  { label: t("tools.cronBuilder.presetEvery30Min"), value: "*/30 * * * *" },
+  { label: t("tools.cronBuilder.presetEveryHour"), value: "0 * * * *" },
+  { label: t("tools.cronBuilder.presetEvery6Hours"), value: "0 */6 * * *" },
+  {
+    label: t("tools.cronBuilder.presetEvery12Hours"),
+    value: "0 */12 * * *",
+  },
+  { label: t("tools.cronBuilder.presetEveryDay"), value: "0 0 * * *" },
+  { label: t("tools.cronBuilder.presetDailyAt3AM"), value: "0 3 * * *" },
+  { label: t("tools.cronBuilder.presetTwiceDaily"), value: "0 9,21 * * *" },
+  {
+    label: t("tools.cronBuilder.presetEveryWeekday"),
+    value: "0 9 * * 1-5",
+  },
+  { label: t("tools.cronBuilder.presetEveryWeek"), value: "0 0 * * 0" },
+  { label: t("tools.cronBuilder.presetEveryMonth"), value: "0 0 1 * *" },
+  {
+    label: t("tools.cronBuilder.presetQuarterly"),
+    value: "0 0 1 1,4,7,10 *",
+  },
 ];
 
 const fields = [
-  { id: "minute", label: "Minute", min: 0, max: 59 },
-  { id: "hour", label: "Hour", min: 0, max: 23 },
-  { id: "dom", label: "Day (Month)", min: 1, max: 31 },
-  { id: "month", label: "Month", min: 1, max: 12 },
-  { id: "dow", label: "Day (Week)", min: 0, max: 6 },
+  { id: "minute", label: t("tools.cronBuilder.minute"), min: 0, max: 59 },
+  { id: "hour", label: t("tools.cronBuilder.hour"), min: 0, max: 23 },
+  { id: "dom", label: t("tools.cronBuilder.dayMonth"), min: 1, max: 31 },
+  { id: "month", label: t("tools.cronBuilder.month"), min: 1, max: 12 },
+  { id: "dow", label: t("tools.cronBuilder.dayWeek"), min: 0, max: 6 },
 ];
 
 const monthLabels = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec",
+  t("tools.cronBuilder.monthJanShort"),
+  t("tools.cronBuilder.monthFebShort"),
+  t("tools.cronBuilder.monthMarShort"),
+  t("tools.cronBuilder.monthAprShort"),
+  t("tools.cronBuilder.monthMayShort"),
+  t("tools.cronBuilder.monthJunShort"),
+  t("tools.cronBuilder.monthJulShort"),
+  t("tools.cronBuilder.monthAugShort"),
+  t("tools.cronBuilder.monthSepShort"),
+  t("tools.cronBuilder.monthOctShort"),
+  t("tools.cronBuilder.monthNovShort"),
+  t("tools.cronBuilder.monthDecShort"),
 ];
-const dowLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const dowLabels = [
+  t("tools.cronBuilder.daySunShort"),
+  t("tools.cronBuilder.dayMonShort"),
+  t("tools.cronBuilder.dayTueShort"),
+  t("tools.cronBuilder.dayWedShort"),
+  t("tools.cronBuilder.dayThuShort"),
+  t("tools.cronBuilder.dayFriShort"),
+  t("tools.cronBuilder.daySatShort"),
+];
+
+/** Translations passed to the inline script via define:vars. */
+const i18n = {
+  dayNames: [
+    t("tools.cronBuilder.daySun"),
+    t("tools.cronBuilder.dayMon"),
+    t("tools.cronBuilder.dayTue"),
+    t("tools.cronBuilder.dayWed"),
+    t("tools.cronBuilder.dayThu"),
+    t("tools.cronBuilder.dayFri"),
+    t("tools.cronBuilder.daySat"),
+    t("tools.cronBuilder.daySun"),
+  ],
+  monthNames: [
+    "",
+    t("tools.cronBuilder.monthJan"),
+    t("tools.cronBuilder.monthFeb"),
+    t("tools.cronBuilder.monthMar"),
+    t("tools.cronBuilder.monthApr"),
+    t("tools.cronBuilder.monthMay"),
+    t("tools.cronBuilder.monthJun"),
+    t("tools.cronBuilder.monthJul"),
+    t("tools.cronBuilder.monthAug"),
+    t("tools.cronBuilder.monthSep"),
+    t("tools.cronBuilder.monthOct"),
+    t("tools.cronBuilder.monthNov"),
+    t("tools.cronBuilder.monthDec"),
+  ],
+  everyMinute: t("tools.cronBuilder.everyMinute"),
+  descEveryNMinutes: t("tools.cronBuilder.descEveryNMinutes"),
+  descEveryNHours: t("tools.cronBuilder.descEveryNHours"),
+  descAtMidnight: t("tools.cronBuilder.descAtMidnight"),
+  descAtTimes: t("tools.cronBuilder.descAtTimes"),
+  descAtMinuteOfHour: t("tools.cronBuilder.descAtMinuteOfHour"),
+  descEveryMinuteDuringHour: t("tools.cronBuilder.descEveryMinuteDuringHour"),
+  descAtMinuteOfEveryHour: t("tools.cronBuilder.descAtMinuteOfEveryHour"),
+  descOnDayOfMonth: t("tools.cronBuilder.descOnDayOfMonth"),
+  descOnWeekdays: t("tools.cronBuilder.descOnWeekdays"),
+  descOnWeekends: t("tools.cronBuilder.descOnWeekends"),
+  descriptionIn: t("tools.cronBuilder.descriptionIn"),
+  descriptionOn: t("tools.cronBuilder.descriptionOn"),
+  customSchedule: t("tools.cronBuilder.customSchedule"),
+  enterExpression: t("tools.cronBuilder.enterExpression"),
+  invalidExpressionFormat: t("tools.cronBuilder.invalidExpressionFormat"),
+  invalidExpressionShort: t("tools.cronBuilder.invalidExpressionShort"),
+  noExecutions: t("tools.cronBuilder.noExecutions"),
+  relativeInDH: t("tools.cronBuilder.relativeInDH"),
+  relativeInHM: t("tools.cronBuilder.relativeInHM"),
+  relativeInM: t("tools.cronBuilder.relativeInM"),
+  copied: t("tools.shared.copied"),
+  shareLink: t("tools.shared.shareLink"),
+};
 ---
 
 <div
@@ -85,7 +159,7 @@ const dowLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
           class="i-mdi:timer-outline"
           aria-hidden="true"
         ></span>
-        Cron Expression
+        {t("tools.cronBuilder.expressionLabel")}
       </label>
       <div class="cron-expr-row">
         <input
@@ -95,12 +169,12 @@ const dowLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
           value="0 3 * * *"
           spellcheck="false"
           autocomplete="off"
-          aria-label="Cron expression"
+          aria-label={t("tools.cronBuilder.expressionAriaLabel")}
         />
         <button
           type="button"
           class="cron-copy-expr-btn"
-          aria-label="Copy cron expression"
+          aria-label={t("tools.cronBuilder.copyExpression")}
         >
           <span
             class="i-mdi:content-copy"
@@ -119,7 +193,7 @@ const dowLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
         class="i-mdi:translate"
         aria-hidden="true"
       ></span>
-      <span id={`${uniqueId}-human`}>Every day at 03:00</span>
+      <span id={`${uniqueId}-human`}></span>
     </div>
 
     {/* Visual field selectors */}
@@ -129,7 +203,7 @@ const dowLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
           class="i-mdi:tune-variant"
           aria-hidden="true"
         ></span>
-        <span>Field Selectors</span>
+        <span>{t("tools.cronBuilder.fieldSelectors")}</span>
       </div>
       {
         fields.map((f) => (
@@ -148,21 +222,24 @@ const dowLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
                   class="cron-quick-btn"
                   data-action="every"
                 >
-                  Every (*)
+                  {t("tools.cronBuilder.everyWildcard")}
                 </button>
                 <button
                   type="button"
                   class="cron-quick-btn"
                   data-action="clear"
                 >
-                  Clear
+                  {t("tools.cronBuilder.clear")}
                 </button>
               </div>
             </div>
             <div
               class="cron-value-grid"
               role="group"
-              aria-label={`Select ${f.label.toLowerCase()} values`}
+              aria-label={t("tools.cronBuilder.selectFieldValues").replace(
+                "{field}",
+                f.label.toLowerCase(),
+              )}
             >
               {Array.from({ length: f.max - f.min + 1 }, (_, i) => {
                 const val = f.min + i;
@@ -194,7 +271,7 @@ const dowLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
           class="i-mdi:flash"
           aria-hidden="true"
         ></span>
-        Common Schedules
+        {t("tools.cronBuilder.commonSchedules")}
       </span>
       <div class="cron-presets-grid">
         {
@@ -219,7 +296,7 @@ const dowLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
           class="i-mdi:calendar-clock"
           aria-hidden="true"
         ></span>
-        <span>Next 10 Executions</span>
+        <span>{t("tools.cronBuilder.nextExecutionsTitle")}</span>
       </div>
       {
         /* eslint-disable astro/jsx-a11y/no-noninteractive-tabindex -- scrollable region requires keyboard access */
@@ -229,7 +306,7 @@ const dowLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
         id={`${uniqueId}-next`}
         tabindex="0"
         role="region"
-        aria-label="Next scheduled executions"
+        aria-label={t("tools.cronBuilder.nextExecutionsAriaLabel")}
       >
       </div>
       {/* eslint-enable astro/jsx-a11y/no-noninteractive-tabindex */}
@@ -242,7 +319,7 @@ const dowLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
           class="i-mdi:console"
           aria-hidden="true"
         ></span>
-        <span>Crontab Line</span>
+        <span>{t("tools.cronBuilder.crontabLine")}</span>
       </div>
       <div class="cron-crontab-row">
         <code
@@ -257,13 +334,13 @@ const dowLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
           value="/usr/local/bin/backup.sh >> /var/log/backup.log 2>&1"
           spellcheck="false"
           autocomplete="off"
-          aria-label="Command to run"
-          placeholder="Enter command..."
+          aria-label={t("tools.cronBuilder.commandToRun")}
+          placeholder={t("tools.cronBuilder.commandPlaceholder")}
         />
         <button
           type="button"
           class="cron-copy-line-btn"
-          aria-label="Copy full crontab line"
+          aria-label={t("tools.cronBuilder.copyCrontabLine")}
         >
           <span
             class="i-mdi:content-copy"
@@ -280,47 +357,63 @@ const dowLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
           class="i-mdi:information-outline"
           aria-hidden="true"
         ></span>
-        <span>Syntax Quick Reference</span>
+        <span>{t("tools.cronBuilder.syntaxReference")}</span>
       </summary>
       <div class="cron-syntax-content">
         <table class="cron-syntax-table">
           <thead>
             <tr>
-              <th>Symbol</th>
-              <th>Meaning</th>
-              <th>Example</th>
+              <th>{t("tools.cronBuilder.symbolColumn")}</th>
+              <th>{t("tools.cronBuilder.meaningColumn")}</th>
+              <th>{t("tools.cronBuilder.exampleColumn")}</th>
             </tr>
           </thead>
           <tbody>
             <tr>
               <td><code>*</code></td>
-              <td>Any value</td>
-              <td><code>* * * * *</code> — every minute</td>
+              <td>{t("tools.cronBuilder.symbolAsteriskMeaning")}</td>
+              <td
+                ><code>* * * * *</code> — {
+                  t("tools.cronBuilder.symbolAsteriskExample")
+                }</td
+              >
             </tr>
             <tr>
               <td><code>,</code></td>
-              <td>List of values</td>
-              <td><code>0,30 * * * *</code> — at :00 and :30</td>
+              <td>{t("tools.cronBuilder.symbolCommaMeaning")}</td>
+              <td
+                ><code>0,30 * * * *</code> — {
+                  t("tools.cronBuilder.symbolCommaExample")
+                }</td
+              >
             </tr>
             <tr>
               <td><code>-</code></td>
-              <td>Range</td>
-              <td><code>0 9-17 * * *</code> — every hour 9–17</td>
+              <td>{t("tools.cronBuilder.symbolDashMeaning")}</td>
+              <td
+                ><code>0 9-17 * * *</code> — {
+                  t("tools.cronBuilder.symbolDashExample")
+                }</td
+              >
             </tr>
             <tr>
               <td><code>/</code></td>
-              <td>Step / interval</td>
-              <td><code>*/10 * * * *</code> — every 10 min</td>
+              <td>{t("tools.cronBuilder.symbolSlashMeaning")}</td>
+              <td
+                ><code>*/10 * * * *</code> — {
+                  t("tools.cronBuilder.symbolSlashExample")
+                }</td
+              >
             </tr>
           </tbody>
         </table>
         <div class="cron-syntax-fields">
-          <code>┌──────── minute (0–59)</code>
-          <code>│ ┌────── hour (0–23)</code>
-          <code>│ │ ┌──── day of month (1–31)</code>
-          <code>│ │ │ ┌── month (1–12)</code>
-          <code>│ │ │ │ ┌ day of week (0–7, 0&7=Sun)</code>
-          <code>* * * * * command</code>
+          <code>┌──────── {t("tools.cronBuilder.syntaxMinute")}</code>
+          <code>│ ┌────── {t("tools.cronBuilder.syntaxHour")}</code>
+          <code>│ │ ┌──── {t("tools.cronBuilder.syntaxDom")}</code>
+          <code>│ │ │ ┌── {t("tools.cronBuilder.syntaxMonth")}</code>
+          <code>│ │ │ │ ┌ {t("tools.cronBuilder.syntaxDow")}</code>
+          <code>* * * * * {t("tools.cronBuilder.syntaxCommand")}</code>
         </div>
       </div>
     </details>
@@ -343,22 +436,29 @@ const dowLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
       <button
         type="button"
         class="cron-share-btn"
-        aria-label="Copy shareable link"
+        aria-label={t("tools.cronBuilder.copyShareableLink")}
       >
         <span
           class="i-mdi:share-variant"
           aria-hidden="true"
         ></span>
-        <span class="cron-share-text">Share Link</span>
+        <span class="cron-share-text">{t("tools.shared.shareLink")}</span>
       </button>
     </div>
   </div>
 </div>
 
-<script is:inline define:vars={{ uniqueId }}>
+<script is:inline define:vars={{ uniqueId, i18n }}>
   (function () {
     var container = document.querySelector('[data-cron-id="' + uniqueId + '"]');
     if (!container) return;
+
+    /** Replace `{key}` placeholders in a string with values from vars object. */
+    function tpl(str, vars) {
+      return str.replace(/\{(\w+)\}/g, function (_, k) {
+        return vars[k] != null ? vars[k] : "";
+      });
+    }
 
     /* ── Element references ── */
     var exprInput = document.getElementById(uniqueId + "-expr");
@@ -379,31 +479,8 @@ const dowLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
     var syncing = false;
 
-    var dayNames = [
-      "Sunday",
-      "Monday",
-      "Tuesday",
-      "Wednesday",
-      "Thursday",
-      "Friday",
-      "Saturday",
-      "Sunday",
-    ];
-    var monthNames = [
-      "",
-      "January",
-      "February",
-      "March",
-      "April",
-      "May",
-      "June",
-      "July",
-      "August",
-      "September",
-      "October",
-      "November",
-      "December",
-    ];
+    var dayNames = i18n.dayNames;
+    var monthNames = i18n.monthNames;
 
     var fieldDefs = [
       { id: "minute", min: 0, max: 59, idx: 0 },
@@ -536,21 +613,21 @@ const dowLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
     function toHumanReadable(cron) {
       var p = cron.raw;
 
-      if (p.join(" ") === "* * * * *") return "Every minute";
+      if (p.join(" ") === "* * * * *") return i18n.everyMinute;
 
       var desc = [];
 
       /* Time part */
       if (p[0].indexOf("/") !== -1 && p[1] === "*" && p[0].charAt(0) === "*") {
-        desc.push("Every " + p[0].slice(2) + " minutes");
+        desc.push(i18n.descEveryNMinutes.replace("{n}", p[0].slice(2)));
       } else if (
         p[1].indexOf("/") !== -1 &&
         p[0] === "0" &&
         p[1].charAt(0) === "*"
       ) {
-        desc.push("Every " + p[1].slice(2) + " hours");
+        desc.push(i18n.descEveryNHours.replace("{n}", p[1].slice(2)));
       } else if (p[0] === "0" && p[1] === "0") {
-        desc.push("At midnight (00:00)");
+        desc.push(i18n.descAtMidnight);
       } else if (p[1] !== "*" && p[0] !== "*") {
         var times = [];
         cron.hours.forEach(function (h) {
@@ -561,22 +638,22 @@ const dowLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
           });
         });
         if (times.length <= 6) {
-          desc.push("At " + times.join(", "));
+          desc.push(i18n.descAtTimes.replace("{times}", times.join(", ")));
         } else {
-          desc.push("At minute " + p[0] + " of hour " + p[1]);
+          desc.push(tpl(i18n.descAtMinuteOfHour, { min: p[0], hour: p[1] }));
         }
       } else if (p[1] !== "*" && p[0] === "*") {
-        desc.push("Every minute during hour " + p[1]);
+        desc.push(i18n.descEveryMinuteDuringHour.replace("{hour}", p[1]));
       } else if (p[0] !== "*") {
-        desc.push("At minute " + p[0] + " of every hour");
+        desc.push(i18n.descAtMinuteOfEveryHour.replace("{min}", p[0]));
       } else {
-        desc.push("Every minute");
+        desc.push(i18n.everyMinute);
       }
 
       /* Day of month */
       if (p[2] !== "*") {
         var dayList = cron.days.join(", ");
-        desc.push("on day " + dayList + " of the month");
+        desc.push(i18n.descOnDayOfMonth.replace("{days}", dayList));
       }
 
       /* Month */
@@ -584,7 +661,7 @@ const dowLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
         var mNames = cron.months.map(function (m) {
           return monthNames[m];
         });
-        desc.push("in " + mNames.join(", "));
+        desc.push(i18n.descriptionIn + " " + mNames.join(", "));
       }
 
       /* Weekday */
@@ -593,15 +670,15 @@ const dowLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
           return dayNames[d];
         });
         if (p[4] === "1-5") {
-          desc.push("on weekdays (Mon–Fri)");
+          desc.push(i18n.descOnWeekdays);
         } else if (p[4] === "0,6") {
-          desc.push("on weekends (Sat–Sun)");
+          desc.push(i18n.descOnWeekends);
         } else {
-          desc.push("on " + dNames.join(", "));
+          desc.push(i18n.descriptionOn + " " + dNames.join(", "));
         }
       }
 
-      return desc.join(", ") || "Custom schedule";
+      return desc.join(", ") || i18n.customSchedule;
     }
 
     /* ── Visual selectors: read from expression ── */
@@ -720,7 +797,7 @@ const dowLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
       var expr = exprInput.value.trim();
       if (!expr) {
-        if (humanEl) humanEl.textContent = "Enter a cron expression";
+        if (humanEl) humanEl.textContent = i18n.enterExpression;
         if (nextList) nextList.textContent = "";
         return;
       }
@@ -728,11 +805,10 @@ const dowLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
       var cron = parseCron(expr);
       if (!cron) {
         if (errorEl && errorText) {
-          errorText.textContent =
-            "Invalid cron expression. Use format: minute hour day month weekday";
+          errorText.textContent = i18n.invalidExpressionFormat;
           errorEl.hidden = false;
         }
-        if (humanEl) humanEl.textContent = "Invalid expression";
+        if (humanEl) humanEl.textContent = i18n.invalidExpressionShort;
         if (nextList) nextList.textContent = "";
         return;
       }
@@ -760,7 +836,7 @@ const dowLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
         var executions = getNextExecutions(cron, 10);
 
         if (executions.length === 0) {
-          nextList.textContent = "No executions found in the next year";
+          nextList.textContent = i18n.noExecutions;
           return;
         }
 
@@ -793,11 +869,17 @@ const dowLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
           var daysD = Math.floor(hrs / 24);
 
           if (daysD > 0) {
-            relative.textContent = "in " + daysD + "d " + (hrs % 24) + "h";
+            relative.textContent = tpl(i18n.relativeInDH, {
+              d: daysD,
+              h: hrs % 24,
+            });
           } else if (hrs > 0) {
-            relative.textContent = "in " + hrs + "h " + (mins % 60) + "m";
+            relative.textContent = tpl(i18n.relativeInHM, {
+              h: hrs,
+              m: mins % 60,
+            });
           } else {
-            relative.textContent = "in " + mins + "m";
+            relative.textContent = i18n.relativeInM.replace("{m}", mins);
           }
 
           item.appendChild(num);
@@ -874,7 +956,8 @@ const dowLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
               setTimeout(function () {
                 copyExprBtn.classList.remove("copied");
               }, 1500);
-            });
+            })
+            .catch(function () {});
         }
       });
     }
@@ -884,12 +967,15 @@ const dowLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
       copyLineBtn.addEventListener("click", function () {
         if (navigator.clipboard && crontabCmd) {
           var line = exprInput.value.trim() + " " + crontabCmd.value.trim();
-          navigator.clipboard.writeText(line).then(function () {
-            copyLineBtn.classList.add("copied");
-            setTimeout(function () {
-              copyLineBtn.classList.remove("copied");
-            }, 1500);
-          });
+          navigator.clipboard
+            .writeText(line)
+            .then(function () {
+              copyLineBtn.classList.add("copied");
+              setTimeout(function () {
+                copyLineBtn.classList.remove("copied");
+              }, 1500);
+            })
+            .catch(function () {});
         }
       });
     }
@@ -898,14 +984,17 @@ const dowLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
     if (shareBtn) {
       shareBtn.addEventListener("click", function () {
         if (navigator.clipboard) {
-          navigator.clipboard.writeText(window.location.href).then(function () {
-            shareBtn.classList.add("copied");
-            if (shareText) shareText.textContent = "Copied!";
-            setTimeout(function () {
-              shareBtn.classList.remove("copied");
-              if (shareText) shareText.textContent = "Share Link";
-            }, 1500);
-          });
+          navigator.clipboard
+            .writeText(window.location.href)
+            .then(function () {
+              shareBtn.classList.add("copied");
+              if (shareText) shareText.textContent = i18n.copied;
+              setTimeout(function () {
+                shareBtn.classList.remove("copied");
+                if (shareText) shareText.textContent = i18n.shareLink;
+              }, 1500);
+            })
+            .catch(function () {});
         }
       });
     }

@@ -11,7 +11,7 @@
       "Bash(pnpm lint:css)",
       "Bash(pnpm lint:html)",
       "Bash(pnpm exec prettier*)",
-      "Bash(pnpm exec typos)",
+      "Bash(pnpm exec cspell*)",
       "Bash(pnpm verify-icons)",
       "Bash(node scripts/*)",
       "Bash(git diff*)",

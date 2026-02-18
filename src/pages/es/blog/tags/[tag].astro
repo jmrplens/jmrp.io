@@ -1,0 +1,39 @@
+---
+/**
+ * Página de Tag — ruta ES `/es/blog/tags/[tag]/`.
+ * Mantiene getStaticPaths, delega renderizado a BlogTagPage.
+ */
+import BlogTagPage from "@components/pages/BlogTagPage.astro";
+import { getPostsForLocale } from "@utils/blog";
+import { getUniqueTags } from "@utils/blog";
+import type { CollectionEntry } from "astro:content";
+
+export async function getStaticPaths() {
+  const entries = await getPostsForLocale("es");
+  const allPosts = entries.map((e) => e.post);
+  const tags = getUniqueTags(allPosts);
+  return tags.map(({ tag }) => {
+    const filteredPosts = allPosts.filter((post) =>
+      post.data.tags.some(
+        (t) => t.toLowerCase().replaceAll(/\s+/g, "-") === tag,
+      ),
+    );
+    return {
+      params: { tag },
+      props: { tag, posts: filteredPosts },
+    };
+  });
+}
+
+interface Props {
+  tag: string;
+  posts: CollectionEntry<"posts">[];
+}
+
+const { tag, posts } = Astro.props;
+---
+
+<BlogTagPage
+  tag={tag}
+  posts={posts}
+/>

@@ -76,6 +76,32 @@ container.addEventListener('click', (e) => {
 });
 ```
 
+### i18n in Tools
+
+Tool-specific translations are in `src/i18n/translations/{en,es}/tools.ts`. Since tools use `<script is:inline>` (no module imports), inject translations via `data-*` attributes:
+
+```astro
+---
+import { getLangFromUrl, useTranslations } from "@i18n/utils";
+const locale = getLangFromUrl(Astro.url);
+const t = useTranslations(locale);
+---
+<div
+  data-error-msg={t("shared.error")}
+  data-copy-label={t("shared.copy")}
+  data-copied-label={t("shared.copied")}
+>
+  <!-- Tool UI -->
+</div>
+
+<script is:inline nonce="NGINX_CSP_NONCE">
+  const container = document.querySelector('[data-error-msg]');
+  const errorMsg = container.getAttribute('data-error-msg');
+</script>
+```
+
+Never hardcode English strings in `<script is:inline>` blocks.
+
 ## Adding a New Tool
 
 1. Create `src/components/apps/MyTool.astro` following the patterns above

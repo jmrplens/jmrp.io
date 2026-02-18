@@ -1,4 +1,6 @@
 ---
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslations } from "@i18n/utils";
 import type { GitHubRepo } from "@utils/github";
 import { langColors } from "@utils/github";
 
@@ -7,6 +9,9 @@ interface Props {
 }
 
 const { repo } = Astro.props;
+
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
 ---
 
 <div
@@ -20,14 +25,14 @@ const { repo } = Astro.props;
         href={repo.html_url}
         target="_blank"
         rel="noopener noreferrer"
-        aria-label={`View repository ${repo.name} on GitHub`}
+        aria-label={t("aria.viewRepo", { name: repo.name })}
       >
         {repo.name}
       </a>
     </h3>
   </div>
   <p class="repo-desc">
-    {repo.description || "No description provided."}
+    {repo.description || t("pages.github.noDescription")}
   </p>
   <div class="repo-meta">
     {
@@ -47,7 +52,9 @@ const { repo } = Astro.props;
         <div class="meta-item">
           <span class="sr-only">
             {repo.stargazers_count}{" "}
-            {repo.stargazers_count === 1 ? "star" : "stars"}
+            {repo.stargazers_count === 1
+              ? t("pages.github.starSingular")
+              : t("pages.github.starPlural")}
           </span>
           <span
             class="i-fa-solid:star"
@@ -61,7 +68,10 @@ const { repo } = Astro.props;
       repo.forks_count > 0 && (
         <div class="meta-item">
           <span class="sr-only">
-            {repo.forks_count} {repo.forks_count === 1 ? "fork" : "forks"}
+            {repo.forks_count}{" "}
+            {repo.forks_count === 1
+              ? t("pages.github.forkSingular")
+              : t("pages.github.forkPlural")}
           </span>
           <span
             class="i-fa-solid:code-branch"

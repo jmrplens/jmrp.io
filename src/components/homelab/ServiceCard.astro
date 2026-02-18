@@ -3,6 +3,9 @@
  * ServiceCard component.
  * Displays a card for a service or skill area, with optional slots for extra content.
  */
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslations } from "@i18n/utils";
+
 interface Props {
   title: string;
   icon: string;
@@ -13,6 +16,9 @@ interface Props {
 }
 
 const { title, icon, description, link, linkText, id } = Astro.props;
+
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
 ---
 
 <div
@@ -45,7 +51,7 @@ const { title, icon, description, link, linkText, id } = Astro.props;
         target="_blank"
         rel="noopener noreferrer"
         class="btn btn-primary btn-sm service-link"
-        aria-label={`${linkText} (opens in new tab)`}
+        aria-label={`${linkText} ${t("pages.homelab.opensInNewTab")}`}
       >
         {linkText}
       </a>

@@ -1,0 +1,168 @@
+---
+title: "Codificador / Decodificador Base64"
+slug: "base64-encoder"
+description: "Codifica y decodifica Base64, Base64URL, URL encoding, hex y entidades HTML. Soporte de archivos para imágenes y documentos. Todo en el navegador."
+subtitle: "Codifica y decodifica entre múltiples formatos con soporte de archivos. Arrastra imágenes, audio, documentos o cualquier archivo para obtener su representación Base64. Todo se ejecuta localmente en tu navegador."
+icon: "i-mdi:swap-horizontal"
+category: "developer"
+tags: ["base64", "codificación", "decodificación", "hex", "url-encoding"]
+appComponent: "Base64Encoder"
+lang: "es"
+---
+
+import {
+  TerminalSession,
+  TerminalSessionCommand,
+  TerminalSessionOutput,
+} from "@components/ui/terminal-session";
+
+<h2>Acerca de esta herramienta</h2>
+<p>
+  Un codificador y decodificador multiformato que soporta los esquemas de
+  codificación más comunes en desarrollo web, APIs e intercambio de datos.
+  Ahora con soporte completo de archivos para imágenes, audio, vídeo,
+  documentos y cualquier archivo binario.
+</p>
+<h3>Formatos soportados</h3>
+<ul>
+  <li><strong>Base64</strong> — codificación estándar RFC 4648</li>
+  <li><strong>Base64URL</strong> — variante segura para URLs, utilizada en JWTs</li>
+  <li><strong>URL Encoding</strong> — codificación porcentual para URLs</li>
+  <li><strong>Hexadecimal</strong> — codificación en cadena hexadecimal</li>
+  <li><strong>Entidades HTML</strong> — escapado de caracteres HTML</li>
+  <li><strong>Binario</strong> — representación en cadena binaria</li>
+</ul>
+<h3>Soporte de archivos</h3>
+<ul>
+  <li>
+    <strong>Imágenes</strong> — PNG, JPEG, GIF, WebP, SVG (con vista previa)
+  </li>
+  <li><strong>Audio</strong> — MP3, OGG, WAV (con reproductor)</li>
+  <li><strong>Vídeo</strong> — MP4, WebM (con reproductor)</li>
+  <li>
+    <strong>Documentos</strong> — PDF, JSON, texto plano y cualquier otro archivo
+  </li>
+</ul>
+<h3>Cómo usar</h3>
+<ol>
+  <li>
+    Cambia entre el modo <strong>Texto</strong> y <strong>Archivo</strong> usando
+    las pestañas
+  </li>
+  <li>En modo Texto: pega texto y selecciona los formatos de entrada/salida</li>
+  <li>
+    En modo Archivo: arrastra un archivo o haz clic para explorar, luego copia
+    la salida Base64
+  </li>
+  <li>Activa el prefijo Data URI para embeber directamente en CSS/HTML</li>
+  <li>Usa el botón Descargar para guardar Base64 decodificado como archivo</li>
+</ol>
+<h3>Privacidad</h3>
+<p>
+  Toda la codificación y decodificación ocurre completamente en tu navegador.
+  No se sube ningún archivo a ningún servidor. Tus datos nunca salen de tu
+  dispositivo.
+</p>
+
+<h3>Referencia de comandos Linux</h3>
+<p>
+  Puedes realizar las mismas operaciones desde la terminal usando herramientas
+  integradas de Linux. Estos son los ejemplos más comunes:
+</p>
+
+<h4>Texto ↔ Base64</h4>
+<TerminalSession>
+  <TerminalSessionCommand>
+    echo -n "Hello, World!" | base64
+  </TerminalSessionCommand>
+  <TerminalSessionOutput title="Salida Base64">
+    SGVsbG8sIFdvcmxkIQ==
+  </TerminalSessionOutput>
+</TerminalSession>
+
+<TerminalSession>
+  <TerminalSessionCommand>
+    echo "SGVsbG8sIFdvcmxkIQ==" | base64 --decode
+  </TerminalSessionCommand>
+  <TerminalSessionOutput title="Salida en texto plano">
+    Hello, World!
+  </TerminalSessionOutput>
+</TerminalSession>
+
+<h4>Archivos ↔ Base64</h4>
+<TerminalSession>
+  <TerminalSessionCommand>
+    base64 -w0 image.png > image.b64
+  </TerminalSessionCommand>
+  <TerminalSessionOutput title="Binario a Base64">
+    (El comando genera el archivo image.b64 con el contenido en una sola línea)
+  </TerminalSessionOutput>
+</TerminalSession>
+
+<TerminalSession>
+  <TerminalSessionCommand>
+    base64 --decode image.b64 > restored.png
+  </TerminalSessionCommand>
+  <TerminalSessionOutput title="Base64 a binario">
+    (Restaura el archivo original a partir de su representación Base64)
+  </TerminalSessionOutput>
+</TerminalSession>
+
+<h4>Data URI para CSS / HTML</h4>
+<TerminalSession>
+  <TerminalSessionCommand>
+    ```
+    echo "data:$(file -b --mime-type logo.png);base64,$(base64 -w0 logo.png)"
+    ```
+  </TerminalSessionCommand>
+  <TerminalSessionOutput title="Salida Data URI">
+    data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA...
+  </TerminalSessionOutput>
+</TerminalSession>
+
+<h4>Otras codificaciones</h4>
+<TerminalSession>
+  <TerminalSessionCommand>
+    ```
+    python3 -c "import urllib.parse; print(urllib.parse.quote('Hello World! á€'))"
+    ```
+  </TerminalSessionCommand>
+  <TerminalSessionOutput title="URL Encoded">
+    Hello%20World%21%20%C3%A1%E2%82%AC
+  </TerminalSessionOutput>
+</TerminalSession>
+
+<TerminalSession>
+  <TerminalSessionCommand>
+    echo -n "Hello" | hexdump -ve '1/1 "%.2x"'
+  </TerminalSessionCommand>
+  <TerminalSessionOutput title="Salida hexadecimal">
+    48656c6c6f
+  </TerminalSessionOutput>
+</TerminalSession>
+
+<h4>Verificar integridad</h4>
+<TerminalSession>
+  <TerminalSessionCommand>
+    ```
+    sha256sum original.pdf
+    base64 -w0 original.pdf | base64 --decode > roundtrip.pdf
+    sha256sum roundtrip.pdf
+    ```
+  </TerminalSessionCommand>
+  <TerminalSessionOutput title="Verificación de integridad">
+    ```
+    3fdd704b45cbc536d98c5c7df2636f1a895c7f72a66f3bb5ea2d1daa26eb5e7a  original.pdf
+    3fdd704b45cbc536d98c5c7df2636f1a895c7f72a66f3bb5ea2d1daa26eb5e7a  roundtrip.pdf
+    ```
+  </TerminalSessionOutput>
+</TerminalSession>
+
+<TerminalSession>
+  <TerminalSessionCommand>
+    head -c 32 file.b64 | base64 --decode | file -
+  </TerminalSessionCommand>
+  <TerminalSessionOutput title="Detección de bytes mágicos">
+    /dev/stdin: PNG image data, 800 x 600, 8-bit/color RGBA
+  </TerminalSessionOutput>
+</TerminalSession>

@@ -7,6 +7,11 @@
  * Full IPv4 and IPv6 support with BigInt math.
  * CSP-compliant: no inline styles.
  */
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslations } from "@i18n/utils";
+
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
 
 interface Props {
   title?: string;
@@ -14,6 +19,134 @@ interface Props {
 
 const { title: _title = "" } = Astro.props;
 const id = `net-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
+
+/** Translations passed to the inline script via define:vars. */
+const i18n = {
+  // Error messages
+  enterValidAddress: t("tools.subnetCalculator.enterValidAddress"),
+  invalidIpv4: t("tools.subnetCalculator.invalidIpv4"),
+  ipv4CidrRange: t("tools.subnetCalculator.ipv4CidrRange"),
+  invalidIpv6: t("tools.subnetCalculator.invalidIpv6"),
+  ipv6CidrRange: t("tools.subnetCalculator.ipv6CidrRange"),
+  enterIpOrInteger: t("tools.subnetCalculator.enterIpOrInteger"),
+  couldNotParse: t("tools.subnetCalculator.couldNotParse"),
+  invalidBaseNetwork: t("tools.subnetCalculator.invalidBaseNetwork"),
+  cidrRange030: t("tools.subnetCalculator.cidrRange030"),
+  addAtLeastOneSubnet: t("tools.subnetCalculator.addAtLeastOneSubnet"),
+  notEnoughSpace: t("tools.subnetCalculator.notEnoughSpace"),
+  enterValidIpv4Addresses: t("tools.subnetCalculator.enterValidIpv4Addresses"),
+  startMustBeLessOrEqual: t("tools.subnetCalculator.startMustBeLessOrEqual"),
+  noCidrBlocksFound: t("tools.subnetCalculator.noCidrBlocksFound"),
+  // Result labels — IPv4 subnet
+  networkAddress: t("tools.subnetCalculator.networkAddress"),
+  broadcastAddress: t("tools.subnetCalculator.broadcastAddress"),
+  subnetMask: t("tools.subnetCalculator.subnetMask"),
+  wildcardMask: t("tools.subnetCalculator.wildcardMask"),
+  firstUsableHost: t("tools.subnetCalculator.firstUsableHost"),
+  lastUsableHost: t("tools.subnetCalculator.lastUsableHost"),
+  usableHosts: t("tools.subnetCalculator.usableHosts"),
+  totalAddresses: t("tools.subnetCalculator.totalAddresses"),
+  cidrNotation: t("tools.subnetCalculator.cidrNotation"),
+  ipClass: t("tools.subnetCalculator.ipClass"),
+  addressType: t("tools.subnetCalculator.addressType"),
+  hexAddress: t("tools.subnetCalculator.hexAddress"),
+  binaryMask: t("tools.subnetCalculator.binaryMask"),
+  reverseDns: t("tools.subnetCalculator.reverseDns"),
+  ipv4MappedIpv6: t("tools.subnetCalculator.ipv4MappedIpv6"),
+  // Result labels — IPv6 subnet
+  networkPrefix: t("tools.subnetCalculator.networkPrefix"),
+  firstAddress: t("tools.subnetCalculator.firstAddress"),
+  lastAddress: t("tools.subnetCalculator.lastAddress"),
+  prefixLength: t("tools.subnetCalculator.prefixLength"),
+  expanded: t("tools.subnetCalculator.expanded"),
+  compressed: t("tools.subnetCalculator.compressed"),
+  extractedIpv4: t("tools.subnetCalculator.extractedIpv4"),
+  // Visual labels
+  bitBoundaryVisualization: t(
+    "tools.subnetCalculator.bitBoundaryVisualization",
+  ),
+  network: t("tools.subnetCalculator.network"),
+  host: t("tools.subnetCalculator.host"),
+  bits: t("tools.subnetCalculator.bits"),
+  bitsTotal: t("tools.subnetCalculator.bitsTotal"),
+  prefixBoundary: t("tools.subnetCalculator.prefixBoundary"),
+  prefixExtendsBeyond: t("tools.subnetCalculator.prefixExtendsBeyond"),
+  // Address type strings — IPv4
+  typeCurrentNetwork: t("tools.subnetCalculator.typeCurrentNetwork"),
+  typePrivate: t("tools.subnetCalculator.typePrivate"),
+  typeCgnat: t("tools.subnetCalculator.typeCgnat"),
+  typeLoopback: t("tools.subnetCalculator.typeLoopback"),
+  typeLinkLocal: t("tools.subnetCalculator.typeLinkLocal"),
+  typeDocumentation: t("tools.subnetCalculator.typeDocumentation"),
+  type6to4Relay: t("tools.subnetCalculator.type6to4Relay"),
+  typeBenchmarking: t("tools.subnetCalculator.typeBenchmarking"),
+  typeMulticast: t("tools.subnetCalculator.typeMulticast"),
+  typeBroadcast: t("tools.subnetCalculator.typeBroadcast"),
+  typeReserved: t("tools.subnetCalculator.typeReserved"),
+  typePublicGlobal: t("tools.subnetCalculator.typePublicGlobal"),
+  // Address type strings — IPv6
+  typeUnspecified: t("tools.subnetCalculator.typeUnspecified"),
+  typeLoopbackV6: t("tools.subnetCalculator.typeLoopbackV6"),
+  typeIpv4Mapped: t("tools.subnetCalculator.typeIpv4Mapped"),
+  typeNat64: t("tools.subnetCalculator.typeNat64"),
+  typeDiscard: t("tools.subnetCalculator.typeDiscard"),
+  typeTeredo: t("tools.subnetCalculator.typeTeredo"),
+  typeBenchmarkingV6: t("tools.subnetCalculator.typeBenchmarkingV6"),
+  typeDocumentationV6: t("tools.subnetCalculator.typeDocumentationV6"),
+  type6to4: t("tools.subnetCalculator.type6to4"),
+  typeUla: t("tools.subnetCalculator.typeUla"),
+  typeLinkLocalV6: t("tools.subnetCalculator.typeLinkLocalV6"),
+  typeMulticastV6: t("tools.subnetCalculator.typeMulticastV6"),
+  typeGlobalUnicast: t("tools.subnetCalculator.typeGlobalUnicast"),
+  // Address info labels
+  version: t("tools.subnetCalculator.version"),
+  address: t("tools.subnetCalculator.address"),
+  scope: t("tools.subnetCalculator.scope"),
+  integer: t("tools.subnetCalculator.integer"),
+  hexadecimal: t("tools.subnetCalculator.hexadecimal"),
+  binary: t("tools.subnetCalculator.binary"),
+  ipv4CompatibleDeprecated: t(
+    "tools.subnetCalculator.ipv4CompatibleDeprecated",
+  ),
+  address6to4: t("tools.subnetCalculator.address6to4"),
+  embedded6to4: t("tools.subnetCalculator.embedded6to4"),
+  // Scope strings
+  scopeLinkLocal: t("tools.subnetCalculator.scopeLinkLocal"),
+  scopeSiteLocalUla: t("tools.subnetCalculator.scopeSiteLocalUla"),
+  scopeInterfaceLocal: t("tools.subnetCalculator.scopeInterfaceLocal"),
+  scopeAdminLocal: t("tools.subnetCalculator.scopeAdminLocal"),
+  scopeSiteLocal: t("tools.subnetCalculator.scopeSiteLocal"),
+  scopeOrgLocal: t("tools.subnetCalculator.scopeOrgLocal"),
+  scopeGlobal: t("tools.subnetCalculator.scopeGlobal"),
+  scopeMulticast: t("tools.subnetCalculator.scopeMulticast"),
+  scopeUnspecified: t("tools.subnetCalculator.scopeUnspecified"),
+  scopeReserved: t("tools.subnetCalculator.scopeReserved"),
+  // VLSM UI
+  subnetNamePlaceholder: t("tools.subnetCalculator.subnetNamePlaceholder"),
+  hostsNeededPlaceholder: t("tools.subnetCalculator.hostsNeededPlaceholder"),
+  removeSubnet: t("tools.subnetCalculator.removeSubnet"),
+  defaultSubnetPrefix: t("tools.subnetCalculator.defaultSubnetPrefix"),
+  vlsmHeaderHash: t("tools.subnetCalculator.vlsmHeaderHash"),
+  vlsmHeaderName: t("tools.subnetCalculator.vlsmHeaderName"),
+  vlsmHeaderNetwork: t("tools.subnetCalculator.vlsmHeaderNetwork"),
+  vlsmHeaderCidr: t("tools.subnetCalculator.vlsmHeaderCidr"),
+  vlsmHeaderRange: t("tools.subnetCalculator.vlsmHeaderRange"),
+  vlsmHeaderUsable: t("tools.subnetCalculator.vlsmHeaderUsable"),
+  vlsmHeaderNeeded: t("tools.subnetCalculator.vlsmHeaderNeeded"),
+  vlsmHeaderWasted: t("tools.subnetCalculator.vlsmHeaderWasted"),
+  vlsmUsedSummary: t("tools.subnetCalculator.vlsmUsedSummary"),
+  vlsmNeedsLargerBase: t("tools.subnetCalculator.vlsmNeedsLargerBase"),
+  // Range ↔ CIDR
+  rangeHeaderHash: t("tools.subnetCalculator.rangeHeaderHash"),
+  rangeHeaderCidrBlock: t("tools.subnetCalculator.rangeHeaderCidrBlock"),
+  rangeHeaderRange: t("tools.subnetCalculator.rangeHeaderRange"),
+  rangeHeaderAddresses: t("tools.subnetCalculator.rangeHeaderAddresses"),
+  rangeCidrBlocks: t("tools.subnetCalculator.rangeCidrBlocks"),
+  // Default subnet names
+  defaultSubnetServers: t("tools.subnetCalculator.defaultSubnetServers"),
+  defaultSubnetStaff: t("tools.subnetCalculator.defaultSubnetStaff"),
+  defaultSubnetGuests: t("tools.subnetCalculator.defaultSubnetGuests"),
+};
 ---
 
 <div
@@ -24,7 +157,7 @@ const id = `net-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
   <div
     class="net-tabs"
     role="tablist"
-    aria-label="Calculator mode"
+    aria-label={t("tools.subnetCalculator.modeAriaLabel")}
   >
     <button
       type="button"
@@ -38,7 +171,8 @@ const id = `net-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
       <span
         class="i-mdi:lan"
         aria-hidden="true"
-      ></span> Subnet
+      ></span>
+      {t("tools.subnetCalculator.tabSubnet")}
     </button>
     <button
       type="button"
@@ -52,7 +186,8 @@ const id = `net-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
       <span
         class="i-mdi:information-outline"
         aria-hidden="true"
-      ></span> Address Info
+      ></span>
+      {t("tools.subnetCalculator.tabAddressInfo")}
     </button>
     <button
       type="button"
@@ -66,7 +201,8 @@ const id = `net-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
       <span
         class="i-mdi:view-split-vertical"
         aria-hidden="true"
-      ></span> VLSM
+      ></span>
+      {t("tools.subnetCalculator.tabVlsm")}
     </button>
     <button
       type="button"
@@ -80,7 +216,8 @@ const id = `net-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
       <span
         class="i-mdi:swap-horizontal"
         aria-hidden="true"
-      ></span> Range ↔ CIDR
+      ></span>
+      {t("tools.subnetCalculator.tabRangeCidr")}
     </button>
   </div>
 
@@ -98,14 +235,14 @@ const id = `net-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
           <label
             for={`${id}-ip`}
             class="net-label"
-            >IP Address</label
+            >{t("tools.subnetCalculator.ipAddress")}</label
           >
           <input
             type="text"
             id={`${id}-ip`}
             class="net-input"
             value="192.168.1.0"
-            placeholder="192.168.1.0 or 2001:db8::"
+            placeholder={t("tools.subnetCalculator.ipPlaceholder")}
             spellcheck="false"
             autocomplete="off"
           />
@@ -114,7 +251,7 @@ const id = `net-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
           <label
             for={`${id}-cidr`}
             class="net-label"
-            >CIDR</label
+            >{t("tools.subnetCalculator.cidr")}</label
           >
           <div class="net-cidr-row">
             <span class="net-cidr-slash">/</span>
@@ -133,7 +270,9 @@ const id = `net-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
         class="net-presets"
         id={`${id}-presets-v4`}
       >
-        <span class="net-presets-label">IPv4:</span>
+        <span class="net-presets-label"
+          >{t("tools.subnetCalculator.ipv4Label")}</span
+        >
         {
           [8, 16, 20, 24, 25, 26, 27, 28, 29, 30, 31, 32].map((c) => (
             <button
@@ -151,7 +290,9 @@ const id = `net-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
         id={`${id}-presets-v6`}
         hidden
       >
-        <span class="net-presets-label">IPv6:</span>
+        <span class="net-presets-label"
+          >{t("tools.subnetCalculator.ipv6Label")}</span
+        >
         {
           [32, 48, 56, 64, 80, 96, 112, 128].map((c) => (
             <button
@@ -168,16 +309,46 @@ const id = `net-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
         class="net-presets"
         id={`${id}-scenarios-v4`}
       >
-        <span class="net-presets-label">Scenarios:</span>
+        <span class="net-presets-label"
+          >{t("tools.subnetCalculator.scenarios")}</span
+        >
         {
           [
-            { label: "Home LAN", ip: "192.168.1.0", cidr: "24" },
-            { label: "Office /22", ip: "10.0.0.0", cidr: "22" },
-            { label: "Docker", ip: "172.17.0.0", cidr: "16" },
-            { label: "AWS VPC", ip: "10.0.0.0", cidr: "16" },
-            { label: "CGNAT", ip: "100.64.0.0", cidr: "10" },
-            { label: "P2P Link", ip: "10.255.255.252", cidr: "30" },
-            { label: "WireGuard", ip: "10.13.13.0", cidr: "24" },
+            {
+              label: t("tools.subnetCalculator.scenarioHomeLan"),
+              ip: "192.168.1.0",
+              cidr: "24",
+            },
+            {
+              label: t("tools.subnetCalculator.scenarioOffice"),
+              ip: "10.0.0.0",
+              cidr: "22",
+            },
+            {
+              label: t("tools.subnetCalculator.scenarioDocker"),
+              ip: "172.17.0.0",
+              cidr: "16",
+            },
+            {
+              label: t("tools.subnetCalculator.scenarioAwsVpc"),
+              ip: "10.0.0.0",
+              cidr: "16",
+            },
+            {
+              label: t("tools.subnetCalculator.scenarioCgnat"),
+              ip: "100.64.0.0",
+              cidr: "10",
+            },
+            {
+              label: t("tools.subnetCalculator.scenarioP2pLink"),
+              ip: "10.255.255.252",
+              cidr: "30",
+            },
+            {
+              label: t("tools.subnetCalculator.scenarioWireGuard"),
+              ip: "10.13.13.0",
+              cidr: "24",
+            },
           ].map((s) => (
             <button
               type="button"
@@ -195,16 +366,46 @@ const id = `net-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
         id={`${id}-scenarios-v6`}
         hidden
       >
-        <span class="net-presets-label">Scenarios:</span>
+        <span class="net-presets-label"
+          >{t("tools.subnetCalculator.scenarios")}</span
+        >
         {
           [
-            { label: "Subnet /64", ip: "2001:db8:abcd:1::", cidr: "64" },
-            { label: "Home Site", ip: "fd00:1::", cidr: "48" },
-            { label: "Residential /56", ip: "2001:db8:ab00::", cidr: "56" },
-            { label: "ISP /32", ip: "2001:db8::", cidr: "32" },
-            { label: "ULA", ip: "fd00::", cidr: "48" },
-            { label: "Link-Local", ip: "fe80::", cidr: "10" },
-            { label: "P2P /127", ip: "2001:db8::0", cidr: "127" },
+            {
+              label: t("tools.subnetCalculator.scenarioSubnet64"),
+              ip: "2001:db8:abcd:1::",
+              cidr: "64",
+            },
+            {
+              label: t("tools.subnetCalculator.scenarioHomeSite"),
+              ip: "fd00:1::",
+              cidr: "48",
+            },
+            {
+              label: t("tools.subnetCalculator.scenarioResidential56"),
+              ip: "2001:db8:ab00::",
+              cidr: "56",
+            },
+            {
+              label: t("tools.subnetCalculator.scenarioIsp32"),
+              ip: "2001:db8::",
+              cidr: "32",
+            },
+            {
+              label: t("tools.subnetCalculator.scenarioUla"),
+              ip: "fd00::",
+              cidr: "48",
+            },
+            {
+              label: t("tools.subnetCalculator.scenarioLinkLocal"),
+              ip: "fe80::",
+              cidr: "10",
+            },
+            {
+              label: t("tools.subnetCalculator.scenarioP2p127"),
+              ip: "2001:db8::0",
+              cidr: "127",
+            },
           ].map((s) => (
             <button
               type="button"
@@ -227,7 +428,8 @@ const id = `net-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
         <span
           class="i-mdi:content-copy"
           aria-hidden="true"
-        ></span> Copy Results
+        ></span>
+        {t("tools.subnetCalculator.copyResults")}
       </button>
       <button
         type="button"
@@ -237,7 +439,8 @@ const id = `net-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
         <span
           class="i-mdi:share-variant"
           aria-hidden="true"
-        ></span> Share Link
+        ></span>
+        {t("tools.shared.shareLink")}
       </button>
     </div>
     <div id={`${id}-sub-results`}></div>
@@ -258,20 +461,22 @@ const id = `net-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
         <label
           for={`${id}-info-ip`}
           class="net-label"
-          >IP Address, Integer, or Hex</label
+          >{t("tools.subnetCalculator.addressInputLabel")}</label
         >
         <input
           type="text"
           id={`${id}-info-ip`}
           class="net-input"
           value="192.168.1.1"
-          placeholder="10.0.0.1, 2001:db8::1, or 3232235777"
+          placeholder={t("tools.subnetCalculator.addressInputPlaceholder")}
           spellcheck="false"
           autocomplete="off"
         />
       </div>
       <div class="net-examples">
-        <span class="net-presets-label">Examples:</span>
+        <span class="net-presets-label"
+          >{t("tools.subnetCalculator.examples")}</span
+        >
         {
           [
             "10.0.0.1",
@@ -301,7 +506,8 @@ const id = `net-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
         <span
           class="i-mdi:content-copy"
           aria-hidden="true"
-        ></span> Copy All
+        ></span>
+        {t("tools.subnetCalculator.copyAll")}
       </button>
     </div>
     <div id={`${id}-info-results`}></div>
@@ -322,7 +528,7 @@ const id = `net-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
           <label
             for={`${id}-vlsm-net`}
             class="net-label"
-            >Base Network (IPv4)</label
+            >{t("tools.subnetCalculator.baseNetwork")}</label
           >
           <input
             type="text"
@@ -338,7 +544,7 @@ const id = `net-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
           <label
             for={`${id}-vlsm-cidr`}
             class="net-label"
-            >CIDR</label
+            >{t("tools.subnetCalculator.cidr")}</label
           >
           <div class="net-cidr-row">
             <span class="net-cidr-slash">/</span>
@@ -358,11 +564,13 @@ const id = `net-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
           class="i-mdi:information-outline"
           aria-hidden="true"
         ></span>
-        IPv4 only. In IPv6, /64 is standard for all subnets.
+        {t("tools.subnetCalculator.ipv4OnlyNote")}
       </div>
     </div>
     <div class="net-vlsm-header">
-      <span class="net-label">Subnet Requirements</span>
+      <span class="net-label"
+        >{t("tools.subnetCalculator.subnetRequirements")}</span
+      >
     </div>
     <div id={`${id}-vlsm-reqs`}></div>
     <div class="net-actions">
@@ -374,7 +582,8 @@ const id = `net-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
         <span
           class="i-mdi:plus"
           aria-hidden="true"
-        ></span> Add Subnet
+        ></span>
+        {t("tools.subnetCalculator.addSubnet")}
       </button>
       <button
         type="button"
@@ -384,7 +593,8 @@ const id = `net-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
         <span
           class="i-mdi:calculator"
           aria-hidden="true"
-        ></span> Calculate
+        ></span>
+        {t("tools.subnetCalculator.calculate")}
       </button>
     </div>
     <div id={`${id}-vlsm-results`}></div>
@@ -405,7 +615,7 @@ const id = `net-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
           <label
             for={`${id}-range-start`}
             class="net-label"
-            >Start IP (IPv4)</label
+            >{t("tools.subnetCalculator.startIp")}</label
           >
           <input
             type="text"
@@ -421,7 +631,7 @@ const id = `net-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
           <label
             for={`${id}-range-end`}
             class="net-label"
-            >End IP</label
+            >{t("tools.subnetCalculator.endIp")}</label
           >
           <input
             type="text"
@@ -444,7 +654,8 @@ const id = `net-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
         <span
           class="i-mdi:swap-horizontal"
           aria-hidden="true"
-        ></span> Convert
+        ></span>
+        {t("tools.subnetCalculator.convert")}
       </button>
       <button
         type="button"
@@ -454,7 +665,8 @@ const id = `net-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
         <span
           class="i-mdi:content-copy"
           aria-hidden="true"
-        ></span> Copy
+        ></span>
+        {t("tools.shared.copy")}
       </button>
     </div>
     <div id={`${id}-range-results`}></div>
@@ -474,10 +686,17 @@ const id = `net-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
   </div>
 </div>
 
-<script is:inline define:vars={{ id }}>
+<script is:inline define:vars={{ id, i18n }}>
   (function () {
     var C = document.querySelector('[data-net-id="' + id + '"]');
     if (!C) return;
+
+    /** Replace `{key}` placeholders in a string with values from vars object. */
+    function tpl(str, vars) {
+      return str.replace(/\{(\w+)\}/g, function (_, k) {
+        return vars[k] != null ? vars[k] : "";
+      });
+    }
 
     /* ═══════════════════════════════════════════
        DOM REFERENCES
@@ -599,25 +818,26 @@ const id = `net-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
     function ipv4Type(ip) {
       var a = (ip >>> 24) & 255;
       var b = (ip >>> 16) & 255;
-      if (a === 0) return "Current Network (RFC 1122)";
-      if (a === 10) return "Private (RFC 1918)";
-      if (a === 100 && b >= 64 && b <= 127) return "CGNAT / Shared (RFC 6598)";
-      if (a === 127) return "Loopback (RFC 1122)";
-      if (a === 169 && b === 254) return "Link-Local / APIPA (RFC 3927)";
-      if (a === 172 && b >= 16 && b <= 31) return "Private (RFC 1918)";
+      if (a === 0) return i18n.typeCurrentNetwork;
+      if (a === 10) return i18n.typePrivate;
+      if (a === 100 && b >= 64 && b <= 127) return i18n.typeCgnat;
+      if (a === 127) return i18n.typeLoopback;
+      if (a === 169 && b === 254) return i18n.typeLinkLocal;
+      if (a === 172 && b >= 16 && b <= 31) return i18n.typePrivate;
       if (a === 192 && b === 0 && ((ip >>> 8) & 255) === 2)
-        return "Documentation (RFC 5737)";
+        return i18n.typeDocumentation;
       if (a === 192 && b === 88 && ((ip >>> 8) & 255) === 99)
-        return "6to4 Relay (RFC 7526)";
-      if (a === 192 && b === 168) return "Private (RFC 1918)";
-      if (a === 198 && (b === 18 || b === 19)) return "Benchmarking (RFC 2544)";
+        return i18n.type6to4Relay;
+      if (a === 192 && b === 168) return i18n.typePrivate;
+      if (a === 198 && (b === 18 || b === 19)) return i18n.typeBenchmarking;
       if (a === 198 && b === 51 && ((ip >>> 8) & 255) === 100)
-        return "Documentation (RFC 5737)";
+        return i18n.typeDocumentation;
       if (a === 203 && b === 0 && ((ip >>> 8) & 255) === 113)
-        return "Documentation (RFC 5737)";
-      if (a >= 224 && a <= 239) return "Multicast (RFC 5771)";
-      if (a >= 240) return ip === 0xffffffff ? "Broadcast" : "Reserved";
-      return "Public / Global";
+        return i18n.typeDocumentation;
+      if (a >= 224 && a <= 239) return i18n.typeMulticast;
+      if (a >= 240)
+        return ip === 0xffffffff ? i18n.typeBroadcast : i18n.typeReserved;
+      return i18n.typePublicGlobal;
     }
 
     function ipv4ReverseDNS(o) {
@@ -721,40 +941,40 @@ const id = `net-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
     }
 
     function ipv6Type(n) {
-      if (n === 0n) return "Unspecified (::)";
-      if (n === 1n) return "Loopback (::1)";
+      if (n === 0n) return i18n.typeUnspecified;
+      if (n === 1n) return i18n.typeLoopbackV6;
       /* ::ffff:0:0/96 */
-      if (n >> 32n === 0xffffn) return "IPv4-Mapped";
+      if (n >> 32n === 0xffffn) return i18n.typeIpv4Mapped;
       /* 64:ff9b::/96 */
-      if (n >> 32n === 0x64ff9bn) return "NAT64 (RFC 6052)";
+      if (n >> 32n === 0x64ff9bn) return i18n.typeNat64;
       /* 100::/64 */
-      if (n >> 64n === 0x100n) return "Discard (RFC 6666)";
+      if (n >> 64n === 0x100n) return i18n.typeDiscard;
       /* 2001::/32 Teredo */
-      if (n >> 96n === 0x20010000n) return "Teredo (RFC 4380)";
+      if (n >> 96n === 0x20010000n) return i18n.typeTeredo;
       /* 2001:2::/48 Benchmarking */
       if (n >> 80n === 0x200100020000n >> 0n) {
         var top48 = n >> 80n;
-        if (top48 === 0x20010002n) return "Benchmarking (RFC 5180)";
+        if (top48 === 0x20010002n) return i18n.typeBenchmarkingV6;
       }
       /* 2001:db8::/32 Documentation */
-      if (n >> 96n === 0x20010db8n) return "Documentation (RFC 3849)";
+      if (n >> 96n === 0x20010db8n) return i18n.typeDocumentationV6;
       /* 2002::/16 6to4 */
-      if (n >> 112n === 0x2002n) return "6to4 (RFC 3056)";
+      if (n >> 112n === 0x2002n) return i18n.type6to4;
       /* fc00::/7 ULA */
       if (n >> 121n === 0xfcn >> 1n) {
         var top7 = Number(n >> 121n);
-        if (top7 === 126) return "Unique Local Address (RFC 4193)";
+        if (top7 === 126) return i18n.typeUla;
       }
       /* fe80::/10 Link-local */
       if (n >> 118n === 0xfe8n >> 0n) {
         var top10 = Number(n >> 118n);
-        if (top10 === 0x3fa) return "Link-Local (RFC 4291)";
+        if (top10 === 0x3fa) return i18n.typeLinkLocalV6;
       }
       /* ff00::/8 Multicast */
-      if (n >> 120n === 0xffn) return "Multicast (RFC 4291)";
+      if (n >> 120n === 0xffn) return i18n.typeMulticastV6;
       /* 2000::/3 Global Unicast */
-      if (n >> 125n === 1n) return "Global Unicast";
-      return "Reserved";
+      if (n >> 125n === 1n) return i18n.typeGlobalUnicast;
+      return i18n.typeReserved;
     }
 
     function ipv6ReverseDNS(g) {
@@ -838,12 +1058,15 @@ const id = `net-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
 
     function copyText(text, btn) {
       if (!navigator.clipboard || !btn) return;
-      navigator.clipboard.writeText(text).then(function () {
-        btn.classList.add("copied");
-        setTimeout(function () {
-          btn.classList.remove("copied");
-        }, 1500);
-      });
+      navigator.clipboard
+        .writeText(text)
+        .then(function () {
+          btn.classList.add("copied");
+          setTimeout(function () {
+            btn.classList.remove("copied");
+          }, 1500);
+        })
+        .catch(function () {});
     }
 
     /* ═══════════════════════════════════════════
@@ -882,18 +1105,18 @@ const id = `net-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
       } else if (ver === 6) {
         calcSubnetV6(raw, cidr);
       } else {
-        showError("Enter a valid IPv4 or IPv6 address");
+        showError(i18n.enterValidAddress);
       }
     }
 
     function calcSubnetV4(raw, cidr) {
       var octets = parseIPv4(raw);
       if (!octets) {
-        showError("Invalid IPv4 address");
+        showError(i18n.invalidIpv4);
         return;
       }
       if (isNaN(cidr) || cidr < 0 || cidr > 32) {
-        showError("IPv4 CIDR must be 0–32");
+        showError(i18n.ipv4CidrRange);
         return;
       }
 
@@ -915,30 +1138,30 @@ const id = `net-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
       ];
       var grid = makeGrid();
       var items = [
-        ["Network Address", intToIPv4(network)],
-        ["Broadcast Address", cidr >= 31 ? "N/A" : intToIPv4(broadcast)],
-        ["Subnet Mask", intToIPv4(mask)],
-        ["Wildcard Mask", intToIPv4(wildcard)],
-        ["First Usable Host", intToIPv4(first)],
-        ["Last Usable Host", intToIPv4(last)],
-        ["Usable Hosts", usable.toLocaleString()],
-        ["Total Addresses", total.toLocaleString()],
-        ["CIDR Notation", intToIPv4(network) + "/" + cidr],
-        ["IP Class", ipv4Class(octets[0])],
-        ["Address Type", ipv4Type(ip)],
-        ["Hex Address", ipv4ToHex(octets)],
+        [i18n.networkAddress, intToIPv4(network)],
+        [i18n.broadcastAddress, cidr >= 31 ? "N/A" : intToIPv4(broadcast)],
+        [i18n.subnetMask, intToIPv4(mask)],
+        [i18n.wildcardMask, intToIPv4(wildcard)],
+        [i18n.firstUsableHost, intToIPv4(first)],
+        [i18n.lastUsableHost, intToIPv4(last)],
+        [i18n.usableHosts, usable.toLocaleString()],
+        [i18n.totalAddresses, total.toLocaleString()],
+        [i18n.cidrNotation, intToIPv4(network) + "/" + cidr],
+        [i18n.ipClass, ipv4Class(octets[0])],
+        [i18n.addressType, ipv4Type(ip)],
+        [i18n.hexAddress, ipv4ToHex(octets)],
       ];
       items.forEach(function (it) {
         grid.appendChild(makeItem(it[0], it[1], false));
       });
 
       /* Wide items */
-      grid.appendChild(makeItem("Binary Mask", ipv4MaskBinary(cidr), true));
+      grid.appendChild(makeItem(i18n.binaryMask, ipv4MaskBinary(cidr), true));
       grid.appendChild(
-        makeItem("Reverse DNS (PTR)", ipv4ReverseDNS(netOctets), true),
+        makeItem(i18n.reverseDns, ipv4ReverseDNS(netOctets), true),
       );
       grid.appendChild(
-        makeItem("IPv4-Mapped IPv6", ipv4MappedIPv6(netOctets), true),
+        makeItem(i18n.ipv4MappedIpv6, ipv4MappedIPv6(netOctets), true),
       );
 
       subResults.appendChild(grid);
@@ -950,11 +1173,17 @@ const id = `net-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
         })
         .join("\n");
       lastSubnetText +=
-        "\nBinary Mask: " +
+        "\n" +
+        i18n.binaryMask +
+        ": " +
         ipv4MaskBinary(cidr) +
-        "\nReverse DNS: " +
+        "\n" +
+        i18n.reverseDns +
+        ": " +
         ipv4ReverseDNS(netOctets) +
-        "\nIPv4-Mapped IPv6: " +
+        "\n" +
+        i18n.ipv4MappedIpv6 +
+        ": " +
         ipv4MappedIPv6(netOctets);
 
       /* Visual binary */
@@ -970,7 +1199,7 @@ const id = `net-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
 
       var heading = document.createElement("div");
       heading.className = "net-visual-title";
-      heading.textContent = "Bit Boundary Visualization";
+      heading.textContent = i18n.bitBoundaryVisualization;
       wrapper.appendChild(heading);
 
       var bitsDiv = document.createElement("div");
@@ -986,7 +1215,7 @@ const id = `net-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
         var bit = document.createElement("span");
         bit.className = i < cidr ? "net-bit net-bit-n" : "net-bit net-bit-h";
         bit.textContent = i < cidr ? "1" : "0";
-        bit.title = "Bit " + i + " — " + (i < cidr ? "Network" : "Host");
+        bit.title = "Bit " + i + " — " + (i < cidr ? i18n.network : i18n.host);
         bitsDiv.appendChild(bit);
       }
       wrapper.appendChild(bitsDiv);
@@ -994,12 +1223,20 @@ const id = `net-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
       var legend = document.createElement("div");
       legend.className = "net-visual-legend";
       legend.innerHTML =
-        '<span class="net-bit-legend-n">\u2588 Network (' +
+        '<span class="net-bit-legend-n">\u2588 ' +
+        i18n.network +
+        " (" +
         cidr +
-        " bits)</span>" +
-        '<span class="net-bit-legend-h">\u2588 Host (' +
+        " " +
+        i18n.bits +
+        ")</span>" +
+        '<span class="net-bit-legend-h">\u2588 ' +
+        i18n.host +
+        " (" +
         (32 - cidr) +
-        " bits)</span>";
+        " " +
+        i18n.bits +
+        ")</span>";
       wrapper.appendChild(legend);
 
       subVisual.appendChild(wrapper);
@@ -1008,11 +1245,11 @@ const id = `net-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
     function calcSubnetV6(raw, cidr) {
       var groups = parseIPv6(raw);
       if (!groups) {
-        showError("Invalid IPv6 address");
+        showError(i18n.invalidIpv6);
         return;
       }
       if (isNaN(cidr) || cidr < 0 || cidr > 128) {
-        showError("IPv6 CIDR must be 0–128");
+        showError(i18n.ipv6CidrRange);
         return;
       }
 
@@ -1029,28 +1266,30 @@ const id = `net-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
 
       var grid = makeGrid();
       var items = [
-        ["Network Prefix", ipv6Compress(netGroups) + "/" + cidr],
-        ["First Address", ipv6Compress(netGroups)],
-        ["Last Address", ipv6Compress(lastGroups)],
-        ["Prefix Length", "/" + cidr],
-        ["Total Addresses", formatBigTotal(hostBits)],
-        ["Address Type", addrType],
+        [i18n.networkPrefix, ipv6Compress(netGroups) + "/" + cidr],
+        [i18n.firstAddress, ipv6Compress(netGroups)],
+        [i18n.lastAddress, ipv6Compress(lastGroups)],
+        [i18n.prefixLength, "/" + cidr],
+        [i18n.totalAddresses, formatBigTotal(hostBits)],
+        [i18n.addressType, addrType],
       ];
       items.forEach(function (it) {
         grid.appendChild(makeItem(it[0], it[1], false));
       });
 
-      grid.appendChild(makeItem("Expanded", ipv6Expand(netGroups), true));
-      grid.appendChild(makeItem("Compressed", ipv6Compress(netGroups), true));
+      grid.appendChild(makeItem(i18n.expanded, ipv6Expand(netGroups), true));
       grid.appendChild(
-        makeItem("Reverse DNS (PTR)", ipv6ReverseDNS(netGroups), true),
+        makeItem(i18n.compressed, ipv6Compress(netGroups), true),
+      );
+      grid.appendChild(
+        makeItem(i18n.reverseDns, ipv6ReverseDNS(netGroups), true),
       );
 
       /* If IPv4-mapped, show extracted IPv4 */
       if (networkBig >> 32n === 0xffffn) {
         var v4part = Number(networkBig & 0xffffffffn);
         grid.appendChild(
-          makeItem("Extracted IPv4", intToIPv4(v4part >>> 0), true),
+          makeItem(i18n.extractedIpv4, intToIPv4(v4part >>> 0), true),
         );
       }
 
@@ -1062,11 +1301,17 @@ const id = `net-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
         })
         .join("\n");
       lastSubnetText +=
-        "\nExpanded: " +
+        "\n" +
+        i18n.expanded +
+        ": " +
         ipv6Expand(netGroups) +
-        "\nCompressed: " +
+        "\n" +
+        i18n.compressed +
+        ": " +
         ipv6Compress(netGroups) +
-        "\nReverse DNS: " +
+        "\n" +
+        i18n.reverseDns +
+        ": " +
         ipv6ReverseDNS(netGroups);
 
       /* Visual binary for IPv6 — show first 32 bits for clarity */
@@ -1082,7 +1327,7 @@ const id = `net-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
 
       var heading = document.createElement("div");
       heading.className = "net-visual-title";
-      heading.textContent = "Prefix Boundary (first 64 bits)";
+      heading.textContent = i18n.prefixBoundary;
       wrapper.appendChild(heading);
 
       var bitsDiv = document.createElement("div");
@@ -1106,19 +1351,26 @@ const id = `net-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
       var legend = document.createElement("div");
       legend.className = "net-visual-legend";
       legend.innerHTML =
-        '<span class="net-bit-legend-n">\u2588 Network (' +
+        '<span class="net-bit-legend-n">\u2588 ' +
+        i18n.network +
+        " (" +
         cidr +
-        " bits total)</span>" +
-        '<span class="net-bit-legend-h">\u2588 Host (' +
+        " " +
+        i18n.bitsTotal +
+        ")</span>" +
+        '<span class="net-bit-legend-h">\u2588 ' +
+        i18n.host +
+        " (" +
         (128 - cidr) +
-        " bits total)</span>";
+        " " +
+        i18n.bitsTotal +
+        ")</span>";
       wrapper.appendChild(legend);
 
       if (cidr > 64) {
         var note = document.createElement("div");
         note.className = "net-visual-note";
-        note.textContent =
-          "Prefix extends beyond 64 bits (" + cidr + "/128 shown)";
+        note.textContent = i18n.prefixExtendsBeyond + " (" + cidr + "/128)";
         wrapper.appendChild(note);
       }
 
@@ -1135,7 +1387,7 @@ const id = `net-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
 
       var raw = infoInput.value.trim();
       if (!raw) {
-        showError("Enter an IP address or integer");
+        showError(i18n.enterIpOrInteger);
         return;
       }
 
@@ -1193,34 +1445,32 @@ const id = `net-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
         }
       }
 
-      showError("Could not parse input as IPv4, IPv6, integer, or hex");
+      showError(i18n.couldNotParse);
     }
 
     function calcInfoV4(octets) {
       var ip = ipv4ToInt(octets);
       var grid = makeGrid();
       var items = [
-        ["Version", "IPv4"],
-        ["Address", octets.join(".")],
-        ["Address Type", ipv4Type(ip)],
-        ["IP Class", ipv4Class(octets[0])],
-        ["Integer", ip.toString()],
-        ["Hexadecimal", ipv4ToHex(octets)],
+        [i18n.version, "IPv4"],
+        [i18n.address, octets.join(".")],
+        [i18n.addressType, ipv4Type(ip)],
+        [i18n.ipClass, ipv4Class(octets[0])],
+        [i18n.integer, ip.toString()],
+        [i18n.hexadecimal, ipv4ToHex(octets)],
       ];
       items.forEach(function (it) {
         grid.appendChild(makeItem(it[0], it[1], false));
       });
 
-      grid.appendChild(makeItem("Binary", ipv4ToBinary(octets), true));
+      grid.appendChild(makeItem(i18n.binary, ipv4ToBinary(octets), true));
+      grid.appendChild(makeItem(i18n.reverseDns, ipv4ReverseDNS(octets), true));
       grid.appendChild(
-        makeItem("Reverse DNS (PTR)", ipv4ReverseDNS(octets), true),
-      );
-      grid.appendChild(
-        makeItem("IPv4-Mapped IPv6", ipv4MappedIPv6(octets), true),
+        makeItem(i18n.ipv4MappedIpv6, ipv4MappedIPv6(octets), true),
       );
       grid.appendChild(
         makeItem(
-          "IPv4-Compatible IPv6 (deprecated)",
+          i18n.ipv4CompatibleDeprecated,
           "::" +
             octets
               .map(function (o) {
@@ -1241,17 +1491,17 @@ const id = `net-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
       var g1 = hex6to4.substring(0, 4);
       var g2 = hex6to4.substring(4, 8);
       grid.appendChild(
-        makeItem("6to4 Address", "2002:" + g1 + ":" + g2 + "::1", true),
+        makeItem(i18n.address6to4, "2002:" + g1 + ":" + g2 + "::1", true),
       );
 
       infoResults.appendChild(grid);
 
       lastInfoText = items
         .concat([
-          ["Binary", ipv4ToBinary(octets)],
-          ["Reverse DNS", ipv4ReverseDNS(octets)],
-          ["IPv4-Mapped IPv6", ipv4MappedIPv6(octets)],
-          ["6to4 Address", "2002:" + g1 + ":" + g2 + "::1"],
+          [i18n.binary, ipv4ToBinary(octets)],
+          [i18n.reverseDns, ipv4ReverseDNS(octets)],
+          [i18n.ipv4MappedIpv6, ipv4MappedIPv6(octets)],
+          [i18n.address6to4, "2002:" + g1 + ":" + g2 + "::1"],
         ])
         .map(function (it) {
           return it[0] + ": " + it[1];
@@ -1263,27 +1513,25 @@ const id = `net-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
       var big = ipv6ToBigInt(groups);
       var grid = makeGrid();
       var items = [
-        ["Version", "IPv6"],
-        ["Compressed", ipv6Compress(groups)],
-        ["Address Type", ipv6Type(big)],
-        ["Scope", ipv6Scope(groups)],
-        ["Integer", big.toString()],
-        ["Hexadecimal", "0x" + big.toString(16).padStart(32, "0")],
+        [i18n.version, "IPv6"],
+        [i18n.compressed, ipv6Compress(groups)],
+        [i18n.addressType, ipv6Type(big)],
+        [i18n.scope, ipv6Scope(groups)],
+        [i18n.integer, big.toString()],
+        [i18n.hexadecimal, "0x" + big.toString(16).padStart(32, "0")],
       ];
       items.forEach(function (it) {
         grid.appendChild(makeItem(it[0], it[1], false));
       });
 
-      grid.appendChild(makeItem("Expanded", ipv6Expand(groups), true));
-      grid.appendChild(
-        makeItem("Reverse DNS (PTR)", ipv6ReverseDNS(groups), true),
-      );
+      grid.appendChild(makeItem(i18n.expanded, ipv6Expand(groups), true));
+      grid.appendChild(makeItem(i18n.reverseDns, ipv6ReverseDNS(groups), true));
 
       /* Extract IPv4 if mapped */
       if (big >> 32n === 0xffffn) {
         var v4int = Number(big & 0xffffffffn);
         grid.appendChild(
-          makeItem("Extracted IPv4", intToIPv4(v4int >>> 0), true),
+          makeItem(i18n.extractedIpv4, intToIPv4(v4int >>> 0), true),
         );
       }
 
@@ -1291,7 +1539,7 @@ const id = `net-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
       if (big >> 112n === 0x2002n) {
         var v4from6to4 = Number((big >> 80n) & 0xffffffffn);
         grid.appendChild(
-          makeItem("Embedded IPv4 (6to4)", intToIPv4(v4from6to4 >>> 0), true),
+          makeItem(i18n.embedded6to4, intToIPv4(v4from6to4 >>> 0), true),
         );
       }
 
@@ -1299,8 +1547,8 @@ const id = `net-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
 
       lastInfoText = items
         .concat([
-          ["Expanded", ipv6Expand(groups)],
-          ["Reverse DNS", ipv6ReverseDNS(groups)],
+          [i18n.expanded, ipv6Expand(groups)],
+          [i18n.reverseDns, ipv6ReverseDNS(groups)],
         ])
         .map(function (it) {
           return it[0] + ": " + it[1];
@@ -1309,28 +1557,32 @@ const id = `net-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
     }
 
     function ipv6Scope(g) {
-      if (g[0] === 0xfe80) return "Link-Local";
-      if (g[0] >= 0xfc00 && g[0] <= 0xfdff) return "Site-Local (ULA)";
+      if (g[0] === 0xfe80) return i18n.scopeLinkLocal;
+      if (g[0] >= 0xfc00 && g[0] <= 0xfdff) return i18n.scopeSiteLocalUla;
       if (g[0] >= 0xff00 && g[0] <= 0xffff) {
         var scope = (g[0] >> 4) & 0xf;
         var scopes = {
-          1: "Interface-Local",
-          2: "Link-Local",
-          4: "Admin-Local",
-          5: "Site-Local",
-          8: "Organization-Local",
-          14: "Global",
+          1: i18n.scopeInterfaceLocal,
+          2: i18n.scopeLinkLocal,
+          4: i18n.scopeAdminLocal,
+          5: i18n.scopeSiteLocal,
+          8: i18n.scopeOrgLocal,
+          14: i18n.scopeGlobal,
         };
-        return "Multicast — " + (scopes[scope] || "Unknown scope " + scope);
+        return (
+          i18n.scopeMulticast +
+          " " +
+          (scopes[scope] || "Unknown scope " + scope)
+        );
       }
-      if (g[0] >= 0x2000 && g[0] <= 0x3fff) return "Global";
+      if (g[0] >= 0x2000 && g[0] <= 0x3fff) return i18n.scopeGlobal;
       if (
         g.every(function (v) {
           return v === 0;
         })
       )
-        return "Unspecified";
-      return "Reserved";
+        return i18n.scopeUnspecified;
+      return i18n.scopeReserved;
     }
 
     /* ═══════════════════════════════════════════
@@ -1342,13 +1594,13 @@ const id = `net-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
 
       var ni = document.createElement("input");
       ni.type = "text";
-      ni.placeholder = "Subnet name";
+      ni.placeholder = i18n.subnetNamePlaceholder;
       ni.className = "net-input";
       ni.value = name || "";
 
       var hi = document.createElement("input");
       hi.type = "number";
-      hi.placeholder = "Hosts needed";
+      hi.placeholder = i18n.hostsNeededPlaceholder;
       hi.min = "1";
       hi.className = "net-input net-vlsm-hosts";
       hi.value = hosts || "";
@@ -1357,7 +1609,7 @@ const id = `net-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
       rm.type = "button";
       rm.className = "net-vlsm-rm";
       rm.textContent = "\u00d7";
-      rm.title = "Remove subnet";
+      rm.title = i18n.removeSubnet;
       rm.addEventListener("click", function () {
         row.remove();
       });
@@ -1375,12 +1627,12 @@ const id = `net-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
 
       var baseOctets = parseIPv4(vlsmNet.value);
       if (!baseOctets) {
-        showError("Invalid base network IPv4 address");
+        showError(i18n.invalidBaseNetwork);
         return;
       }
       var baseCidr = parseInt(vlsmCidr.value, 10);
       if (isNaN(baseCidr) || baseCidr < 0 || baseCidr > 30) {
-        showError("CIDR must be 0–30");
+        showError(i18n.cidrRange030);
         return;
       }
 
@@ -1393,14 +1645,15 @@ const id = `net-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
       var reqs = [];
       rows.forEach(function (row, idx) {
         var inputs = row.querySelectorAll("input");
-        var name = inputs[0].value.trim() || "Subnet " + (idx + 1);
+        var name =
+          inputs[0].value.trim() || i18n.defaultSubnetPrefix + (idx + 1);
         var hosts = parseInt(inputs[1].value, 10);
         if (isNaN(hosts) || hosts < 1) return;
         reqs.push({ name: name, hosts: hosts, origIdx: idx });
       });
 
       if (reqs.length === 0) {
-        showError("Add at least one subnet requirement");
+        showError(i18n.addAtLeastOneSubnet);
         return;
       }
 
@@ -1422,10 +1675,11 @@ const id = `net-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
           showError(
             '"' +
               reqs[i].name +
-              '" needs /' +
-              sCidr +
-              " but base is /" +
-              baseCidr,
+              '"' +
+              tpl(i18n.vlsmNeedsLargerBase, {
+                needed: sCidr,
+                base: baseCidr,
+              }),
           );
           failed = true;
           break;
@@ -1437,7 +1691,7 @@ const id = `net-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
         if (remainder !== 0) current += blockSize - remainder;
 
         if (current + blockSize > baseEnd) {
-          showError("Not enough space for all subnets");
+          showError(i18n.notEnoughSpace);
           failed = true;
           break;
         }
@@ -1468,14 +1722,14 @@ const id = `net-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
       var thead = document.createElement("thead");
       var hr = document.createElement("tr");
       [
-        "#",
-        "Name",
-        "Network",
-        "CIDR",
-        "Range",
-        "Usable",
-        "Needed",
-        "Wasted",
+        i18n.vlsmHeaderHash,
+        i18n.vlsmHeaderName,
+        i18n.vlsmHeaderNetwork,
+        i18n.vlsmHeaderCidr,
+        i18n.vlsmHeaderRange,
+        i18n.vlsmHeaderUsable,
+        i18n.vlsmHeaderNeeded,
+        i18n.vlsmHeaderWasted,
       ].forEach(function (h) {
         var th = document.createElement("th");
         th.textContent = h;
@@ -1517,16 +1771,12 @@ const id = `net-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
 
       var summary = document.createElement("div");
       summary.className = "net-vlsm-summary";
-      summary.textContent =
-        "Used: " +
-        totalUsed.toLocaleString() +
-        " / " +
-        totalAvailable.toLocaleString() +
-        " addresses (" +
-        ((totalUsed / totalAvailable) * 100).toFixed(1) +
-        "%). Remaining: " +
-        remaining.toLocaleString() +
-        " addresses.";
+      summary.textContent = tpl(i18n.vlsmUsedSummary, {
+        used: totalUsed.toLocaleString(),
+        total: totalAvailable.toLocaleString(),
+        percent: ((totalUsed / totalAvailable) * 100).toFixed(1),
+        remaining: remaining.toLocaleString(),
+      });
       vlsmResultsEl.appendChild(summary);
     }
 
@@ -1541,14 +1791,14 @@ const id = `net-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
       var startOctets = parseIPv4(rangeStart.value);
       var endOctets = parseIPv4(rangeEnd.value);
       if (!startOctets || !endOctets) {
-        showError("Enter valid IPv4 addresses");
+        showError(i18n.enterValidIpv4Addresses);
         return;
       }
 
       var startInt = ipv4ToInt(startOctets);
       var endInt = ipv4ToInt(endOctets);
       if (startInt > endInt) {
-        showError("Start IP must be less than or equal to End IP");
+        showError(i18n.startMustBeLessOrEqual);
         return;
       }
 
@@ -1587,7 +1837,7 @@ const id = `net-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
       }
 
       if (blocks.length === 0) {
-        showError("No CIDR blocks found");
+        showError(i18n.noCidrBlocksFound);
         return;
       }
 
@@ -1597,7 +1847,12 @@ const id = `net-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
 
       var thead = document.createElement("thead");
       var hr = document.createElement("tr");
-      ["#", "CIDR Block", "Range", "Addresses"].forEach(function (h) {
+      [
+        i18n.rangeHeaderHash,
+        i18n.rangeHeaderCidrBlock,
+        i18n.rangeHeaderRange,
+        i18n.rangeHeaderAddresses,
+      ].forEach(function (h) {
         var th = document.createElement("th");
         th.textContent = h;
         hr.appendChild(th);
@@ -1628,13 +1883,10 @@ const id = `net-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
 
       var summary = document.createElement("div");
       summary.className = "net-vlsm-summary";
-      summary.textContent =
-        blocks.length +
-        " CIDR block" +
-        (blocks.length > 1 ? "s" : "") +
-        " covering " +
-        (endInt - startInt + 1).toLocaleString() +
-        " addresses.";
+      summary.textContent = tpl(i18n.rangeCidrBlocks, {
+        count: blocks.length,
+        total: (endInt - startInt + 1).toLocaleString(),
+      });
       rangeResultsEl.appendChild(summary);
 
       lastRangeText = blocks
@@ -1783,9 +2035,9 @@ const id = `net-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
     }
 
     /* Add default VLSM rows */
-    addVLSMRow("Servers", "50");
-    addVLSMRow("Staff", "100");
-    addVLSMRow("Guests", "25");
+    addVLSMRow(i18n.defaultSubnetServers, "50");
+    addVLSMRow(i18n.defaultSubnetStaff, "100");
+    addVLSMRow(i18n.defaultSubnetGuests, "25");
 
     /* Initial calculations */
     calcSubnet();

@@ -3,6 +3,9 @@
  * VersionBadge Component
  * Inline badge for versions, levels, or status indicators.
  */
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslations } from "@i18n/utils";
+
 interface Props {
   type?: "version" | "level" | "deprecated" | "new" | "experimental" | "stable";
   value?: string;
@@ -10,13 +13,20 @@ interface Props {
 
 const { type = "version", value } = Astro.props;
 
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
+
 type BadgeType = NonNullable<Props["type"]>;
 const config: Record<
   BadgeType,
   { icon: string; class: string; prefix?: string }
 > = {
   version: { icon: "mdi-code-tags", class: "badge-version" },
-  level: { icon: "mdi-layers-triple", class: "badge-level", prefix: "Level" },
+  level: {
+    icon: "mdi-layers-triple",
+    class: "badge-level",
+    prefix: t("components.versionBadge.level"),
+  },
   deprecated: { icon: "mdi-alert-circle", class: "badge-deprecated" },
   new: { icon: "mdi-new-box", class: "badge-new" },
   experimental: { icon: "mdi-flask", class: "badge-experimental" },

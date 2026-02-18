@@ -580,6 +580,15 @@ function processCodeBlocks($: cheerio.CheerioAPI): boolean {
       }
       return;
     }
+    // If the <pre> already has its own aria-label (e.g. tool output blocks),
+    // keep role="region" so the label is valid per ARIA spec and skip wrapping.
+    if ($el.attr("aria-label")) {
+      if (!$el.attr("role")) {
+        $el.attr("role", "region");
+        modified = true;
+      }
+      return;
+    }
     regionCount++;
     const safeLang = sanitizeLanguage($el.attr("data-language") || "code");
     const displayLang = safeLang.charAt(0).toUpperCase() + safeLang.slice(1);

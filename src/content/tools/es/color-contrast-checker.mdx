@@ -1,0 +1,285 @@
+---
+title: "Verificador de Contraste de Color"
+slug: "color-contrast-checker"
+description: "Comprueba ratios de contraste de color para WCAG 2.2 AA y AAA con soporte APCA, simulación de daltonismo y sugerencias automáticas."
+subtitle: "Comprueba ratios de contraste de color según los requisitos WCAG 2.2 AA y AAA con puntuación APCA, simulación de daltonismo y sugerencias automáticas."
+icon: "i-mdi:palette-outline"
+category: "developer"
+tags: ["accesibilidad", "wcag", "contraste", "color", "a11y", "apca"]
+appComponent: "ColorContrastChecker"
+lang: "es"
+---
+
+import {
+  TerminalSession,
+  TerminalSessionCommand,
+  TerminalSessionOutput,
+} from "@components/ui/terminal-session";
+
+<h2>Acerca de esta herramienta</h2>
+<p>
+  Verifica que tus combinaciones de colores cumplen los requisitos de
+  accesibilidad utilizando tanto el ratio de contraste de{" "}
+  <strong>WCAG 2.2</strong> como la métrica más reciente
+  <strong>APCA</strong> (Accessible Perceptual Contrast Algorithm). La
+  herramienta también simula cómo se perciben los colores por personas con
+  diferentes tipos de deficiencia en la visión del color y sugiere correcciones
+  cuando el contraste es insuficiente.
+</p>
+
+<h3>Características</h3>
+<ul>
+  <li>
+    <strong>Ratio de contraste WCAG 2.2</strong> — aprobado/suspendido para
+    niveles AA y AAA (texto y no-texto)
+  </li>
+  <li>
+    <strong>Puntuación APCA Lc</strong> — contraste perceptual del borrador de
+    WCAG 3.0, con recomendaciones de uso
+  </li>
+  <li>
+    <strong>Simulación de daltonismo</strong> — previsualizaciones de
+    protanopia, deuteranopia, tritanopia y acromatopsia con ratios de contraste
+    simulados
+  </li>
+  <li>
+    <strong>Sugerencias automáticas</strong> — cuando el contraste falla, haz
+    clic en una sugerencia para aplicar el color más cercano que aprueba
+  </li>
+  <li>
+    <strong>Contraste no-texto</strong> — verificación WCAG 2.2 SC 1.4.11 para
+    componentes de interfaz y objetos gráficos (≥ 3:1)
+  </li>
+  <li>
+    <strong>Visualización multiformato</strong> — consulta y copia colores en
+    HEX, RGB y HSL
+  </li>
+  <li>
+    <strong>Previsualización en vivo</strong> — observa texto en diferentes
+    tamaños y componentes de interfaz con tu par de colores
+  </li>
+  <li>
+    <strong>Enlaces compartibles</strong> — los colores se codifican en la URL
+    para compartir fácilmente
+  </li>
+  <li>
+    <strong>Exportación CSS</strong> — copia los colores como propiedades
+    personalizadas CSS
+  </li>
+</ul>
+
+<h3>Requisitos de contraste WCAG 2.2</h3>
+<p>
+  Las Pautas de Accesibilidad para el Contenido Web (WCAG) 2.2 definen cuatro
+  umbrales de contraste según el tamaño del texto y el nivel de conformidad:
+</p>
+<ul>
+  <li>
+    <strong>AA Texto normal</strong> — ratio mínimo de 4.5:1. Se aplica a texto
+    menor de 18pt (24px) o 14pt (18.66px) en negrita.
+  </li>
+  <li>
+    <strong>AA Texto grande</strong> — ratio mínimo de 3:1. Para texto de 18pt+
+    (24px) o 14pt+ en negrita (18.66px).
+  </li>
+  <li>
+    <strong>AAA Texto normal</strong> — ratio mínimo de 7:1 (mejorado). Mismas
+    reglas de tamaño que AA.
+  </li>
+  <li>
+    <strong>AAA Texto grande</strong> — ratio mínimo de 4.5:1. Nivel mejorado
+    para texto grande.
+  </li>
+  <li>
+    <strong>No-texto (SC 1.4.11)</strong> — ratio mínimo de 3:1. Se aplica a
+    componentes de interfaz (botones, campos de entrada, bordes) y objetos
+    gráficos que transmiten información.
+  </li>
+</ul>
+
+<h3>APCA — La próxima generación</h3>
+<p>
+  APCA (Accessible Perceptual Contrast Algorithm) se está desarrollando para
+  WCAG 3.0. A diferencia de WCAG 2.x, que usa un simple ratio de luminancia,
+  APCA tiene en cuenta la percepción visual humana, incluyendo:
+</p>
+<ul>
+  <li>
+    <strong>Sensibilidad a la polaridad</strong> — el texto oscuro sobre fondo
+    claro se percibe de forma diferente al texto claro sobre fondo oscuro
+  </li>
+  <li>
+    <strong>Conciencia del tamaño de fuente</strong> — el valor Lc se
+    corresponde con tamaños y pesos de fuente recomendados
+  </li>
+  <li>
+    <strong>Frecuencia espacial</strong> — las fuentes finas necesitan más
+    contraste que las negritas
+  </li>
+</ul>
+<p>Guía de uso del valor APCA Lc:</p>
+<ul>
+  <li>
+    <strong>Lc ≥ 90</strong> — Preferido para texto de cuerpo
+  </li>
+  <li>
+    <strong>Lc ≥ 75</strong> — Bueno para texto de cuerpo, perfecto para texto
+    grande
+  </li>
+  <li>
+    <strong>Lc ≥ 60</strong> — Solo para texto grande y encabezados
+  </li>
+  <li>
+    <strong>Lc ≥ 45</strong> — Solo para elementos grandes no-texto
+  </li>
+  <li>
+    <strong>Lc ≥ 30</strong> — Elementos no-texto (iconos, bordes, divisores)
+  </li>
+  <li>
+    <strong>Lc &lt; 15</strong> — No utilizable para ningún propósito
+  </li>
+</ul>
+
+<h3>Deficiencia en la visión del color</h3>
+<p>
+  Aproximadamente el 8% de los hombres y el 0,5% de las mujeres tienen alguna
+  forma de deficiencia en la visión del color. La simulación utiliza matrices de
+  transformación Brettel/Viénot para mostrar cómo se percibe tu par de colores
+  por personas con:
+</p>
+<ul>
+  <li>
+    <strong>Protanopia</strong> (~1% de los hombres) — ausencia de células cono
+    rojas. El rojo se ve oscuro, se pierden las diferencias rojo-verde.
+  </li>
+  <li>
+    <strong>Deuteranopia</strong> (~1% de los hombres) — ausencia de células
+    cono verdes. La forma más común. Confusión verde-rojo.
+  </li>
+  <li>
+    <strong>Tritanopia</strong> (~0,003%) — ausencia de células cono azules. Se
+    ven afectados el azul y el amarillo.
+  </li>
+  <li>
+    <strong>Acromatopsia</strong> (~0,003%) — ceguera al color completa. Solo se
+    perciben diferencias de luminancia.
+  </li>
+</ul>
+<p>
+  Cada tarjeta de simulación muestra el ratio de contraste simulado para que
+  puedas verificar que tus colores funcionan para todos los usuarios.
+</p>
+
+<h3>Cómo usar</h3>
+<ol>
+  <li>
+    Selecciona o escribe los colores de primer plano (texto) y fondo en formato
+    HEX
+  </li>
+  <li>
+    Consulta las puntuaciones WCAG 2.2 y APCA, junto con el indicador visual de
+    contraste
+  </li>
+  <li>
+    Revisa las simulaciones de daltonismo — cada tarjeta muestra el ratio de
+    contraste percibido
+  </li>
+  <li>
+    Si el contraste falla, haz clic en una sugerencia para aplicar
+    automáticamente el color más cercano que aprueba
+  </li>
+  <li>Pulsa los botones RGB/HSL para copiar el color en ese formato</li>
+  <li>
+    Usa <strong>Copy CSS</strong> para exportar como propiedades personalizadas o
+    <strong>Share Link</strong> para compartir la URL con los colores codificados
+  </li>
+  <li>
+    Usa el botón de intercambio para invertir los colores de primer plano y
+    fondo
+  </li>
+</ol>
+
+<h3>Privacidad</h3>
+<p>
+  Todos los cálculos de contraste se realizan íntegramente en tu navegador.
+  Ningún dato de color se transmite a ningún servidor. El enlace compartible
+  solo codifica los colores en los parámetros de la URL.
+</p>
+
+<h3>Referencia de comandos Linux</h3>
+<p>
+  Puedes calcular ratios de contraste desde la terminal usando Python u otras
+  herramientas:
+</p>
+
+<h4>Calcular ratio de contraste WCAG</h4>
+<TerminalSession>
+  <TerminalSessionCommand>
+    ```
+    python3 -c "
+    def lum(h):
+        r,g,b = [int(h[i:i+2],16)/255 for i in (0,2,4)]
+        r,g,b = [(c/12.92 if c<=0.04045 else ((c+0.055)/1.055)**2.4) for c in (r,g,b)]
+        return 0.2126*r + 0.7152*g + 0.0722*b
+    fg,bg = lum('1a1a2e'), lum('ffffff')
+    ratio = (max(fg,bg)+0.05)/(min(fg,bg)+0.05)
+    p = lambda ok: 'Pass' if ok else 'Fail'
+    print(f'Ratio: {ratio:.2f}:1')
+    print(f'AA Normal: {p(ratio>=4.5)}')
+    print(f'AAA Normal: {p(ratio>=7)}')
+    "
+    ```
+  </TerminalSessionCommand>
+  <TerminalSessionOutput title="Resultado de contraste">
+    ```
+    Ratio: 17.06:1
+    AA Normal: Pass
+    AAA Normal: Pass
+    ```
+  </TerminalSessionOutput>
+</TerminalSession>
+
+<h4>Extraer colores dominantes de una imagen</h4>
+<TerminalSession>
+  <TerminalSessionCommand>
+    convert image.png -colors 5 -unique-colors txt:- | tail -n +2
+  </TerminalSessionCommand>
+  <TerminalSessionOutput title="Colores dominantes">
+    ```
+    0,0: (26,26,46)  #1A1A2E  srgb(26,26,46)
+    0,1: (22,78,99)  #164E63  srgb(22,78,99)
+    0,2: (240,240,240)  #F0F0F0  srgb(240,240,240)
+    ```
+  </TerminalSessionOutput>
+</TerminalSession>
+
+<h4>Comprobar varios pares de colores por lotes</h4>
+<TerminalSession>
+  <TerminalSessionCommand>
+    ```
+    echo "1a1a2e:ffffff
+    333333:f5f5f5
+    ff0000:ffffff
+    777777:ffffff" | while IFS=: read fg bg; do
+    python3 -c "
+    def lum(h):
+        r,g,b=[int(h[i:i+2],16)/255 for i in(0,2,4)]
+        r,g,b=[(c/12.92 if c<=.04045 else((c+.055)/1.055)**2.4)for c in(r,g,b)]
+        return .2126*r+.7152*g+.0722*b
+    l1,l2=lum('$fg'),lum('$bg')
+    r=(max(l1,l2)+.05)/(min(l1,l2)+.05)
+    ok='✓' if r>=4.5 else '✗'
+    print(f'#$fg on #$bg → {r:.1f}:1 {ok}')
+    "
+    done
+    ```
+  </TerminalSessionCommand>
+  <TerminalSessionOutput title="Resultados por lotes">
+    ```
+    #1a1a2e on #ffffff → 17.1:1 ✓
+    #333333 on #f5f5f5 → 11.6:1 ✓
+    #ff0000 on #ffffff → 4.0:1 ✗
+    #777777 on #ffffff → 4.5:1 ✗
+    ```
+  </TerminalSessionOutput>
+</TerminalSession>

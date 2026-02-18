@@ -1,8 +1,35 @@
 import { useEffect, useState } from "preact/hooks";
 
+/** Translations required by ServiceStats. Passed from Astro parent. */
+export interface ServiceStatsTranslations {
+  /** Label shown when the service API is unavailable. */
+  serviceUnavailable: string;
+  /** Status text displayed when the service is online. */
+  online: string;
+  /** Label for the known instances count (e.g. Mastodon peers). */
+  knownInstances: string;
+  /** Label for the known servers count (e.g. Matrix federation). */
+  knownServers: string;
+  /** Heading for the trending topics section. */
+  trendingNow: string;
+  /** Label for the node count in Meshtastic stats. */
+  nodes: string;
+  /** Visible text for the "view map" link. */
+  viewMap: string;
+  /** ARIA label for the "view map" link. */
+  viewMapAria: string;
+  /** Visible text for the "view monitor" link. */
+  viewMonitor: string;
+  /** ARIA label for the "view monitor" link (long-form variant). */
+  viewMonitorLFAria: string;
+  /** ARIA label for the "view monitor" link (medium-form variant). */
+  viewMonitorMFAria: string;
+}
+
 /** Component props for ServiceStats */
 interface Props {
   readonly type: "mastodon" | "matrix" | "meshtastic-combined";
+  readonly translations: ServiceStatsTranslations;
 }
 
 /** Data structure for Mastodon statistics */
@@ -258,11 +285,14 @@ async function fetchPotatoVersion(): Promise<string> {
  *
  * @param props - Component properties.
  * @param props.stats - The data to display.
+ * @param props.translations - Translated strings.
  */
 function MastodonStats({
   stats,
+  translations: t,
 }: {
   readonly stats: MastodonStatsData | null;
+  readonly translations: ServiceStatsTranslations;
 }) {
   const peersCount = stats?.peersCount;
   const mastodonTrends = stats?.mastodonTrends || [];
@@ -273,11 +303,11 @@ function MastodonStats({
       <div className="status-header">
         <div className="status-badge">
           <span className="status-dot"></span>
-          <strong>Online</strong>
+          <strong>{t.online}</strong>
         </div>
         <div className="status-text-muted">
-          <strong className="status-text">{peersCount ?? "..."}</strong> Known
-          Instances
+          <strong className="status-text">{peersCount ?? "..."}</strong>{" "}
+          {t.knownInstances}
         </div>
       </div>
 
@@ -304,7 +334,7 @@ function MastodonStats({
       </div>
 
       <div>
-        <div className="trending-header">Trending Now</div>
+        <div className="trending-header">{t.trendingNow}</div>
         <div className="trending-grid">
           {mastodonTrends.length > 0
             ? mastodonTrends.map((tag: { url: string; name: string }) => (
@@ -339,8 +369,15 @@ function MastodonStats({
  *
  * @param props - Component properties.
  * @param props.stats - The data to display.
+ * @param props.translations - Translated strings.
  */
-function MatrixStats({ stats }: { readonly stats: MatrixStatsData | null }) {
+function MatrixStats({
+  stats,
+  translations: t,
+}: {
+  readonly stats: MatrixStatsData | null;
+  readonly translations: ServiceStatsTranslations;
+}) {
   const matrixData = stats?.matrixData;
   const matrixFed = stats?.matrixFed;
   const synapseVersion = matrixFed?.server?.version || "...";
@@ -350,13 +387,13 @@ function MatrixStats({ stats }: { readonly stats: MatrixStatsData | null }) {
       <div className="status-header">
         <div className="status-badge">
           <span className="status-dot"></span>
-          <strong>Online</strong>
+          <strong>{t.online}</strong>
         </div>
         <div className="status-text-muted">
           <strong className="status-text">
             {matrixData?.federationTotal ?? "..."}
           </strong>{" "}
-          Known Servers
+          {t.knownServers}
         </div>
       </div>
 
@@ -396,6 +433,7 @@ interface MeshRowProps {
   readonly linkHref: string;
   readonly linkLabel: string;
   readonly linkText: string;
+  readonly nodesLabel: string;
 }
 
 /** Component for a single Meshtastic service row */
@@ -406,6 +444,7 @@ const MeshRow = ({
   linkHref,
   linkLabel,
   linkText,
+  nodesLabel,
 }: MeshRowProps) => (
   <div className="meshtastic-row">
     <div className="meshtastic-left">
@@ -413,7 +452,7 @@ const MeshRow = ({
       <div>
         <strong className="meshtastic-title">{title}</strong>
         <div className="meshtastic-sub">
-          {nodes ?? "..."} Nodes
+          {nodes ?? "..."} {nodesLabel}
           {version && <span className="meshtastic-ver">• {version}</span>}
         </div>
       </div>
@@ -435,11 +474,14 @@ const MeshRow = ({
  *
  * @param props - Component properties.
  * @param props.stats - The data to display.
+ * @param props.translations - Translated strings.
  */
 function MeshtasticStats({
   stats,
+  translations: t,
 }: {
   readonly stats: MeshtasticStatsData | null;
+  readonly translations: ServiceStatsTranslations;
 }) {
   const potatoNodes = stats?.potatoNodes;
   const lfNodes = stats?.lfNodes;
@@ -453,24 +495,27 @@ function MeshtasticStats({
         nodes={potatoNodes}
         version={potatoVersion}
         linkHref="https://potatomesh.jmrp.io"
-        linkLabel="View Map on PotatoMesh"
-        linkText="View Map"
+        linkLabel={t.viewMapAria}
+        linkText={t.viewMap}
+        nodesLabel={t.nodes}
       />
 
       <MeshRow
         title="MeshMonitor LF"
         nodes={lfNodes}
         linkHref="https://mesh_lf.jmrp.io/meshmonitor"
-        linkLabel="View Monitor on MeshMonitor LF"
-        linkText="View Monitor"
+        linkLabel={t.viewMonitorLFAria}
+        linkText={t.viewMonitor}
+        nodesLabel={t.nodes}
       />
 
       <MeshRow
         title="MeshMonitor MF"
         nodes={mfNodes}
         linkHref="https://mesh_mf.jmrp.io/meshmonitor"
-        linkLabel="View Monitor on MeshMonitor MF"
-        linkText="View Monitor"
+        linkLabel={t.viewMonitorMFAria}
+        linkText={t.viewMonitor}
+        nodesLabel={t.nodes}
       />
     </div>
   );
@@ -482,9 +527,10 @@ function MeshtasticStats({
  *
  * @param props - Component properties.
  * @param props.type - The service type to display stats for.
+ * @param props.translations - Translated strings for the component.
  * @returns The rendered stats component.
  */
-export default function ServiceStats({ type }: Props) {
+export default function ServiceStats({ type, translations: t }: Props) {
   const [stats, setStats] = useState<
     MastodonStatsData | MatrixStatsData | MeshtasticStatsData | null
   >(null);
@@ -528,20 +574,35 @@ export default function ServiceStats({ type }: Props) {
   }, [type]);
 
   if (error) {
-    return <div className="stats-error">Service Unavailable</div>;
+    return <div className="stats-error">{t.serviceUnavailable}</div>;
   }
 
   // Route to appropriate component based on type
   // Note: We render even if stats is null (loading) to provide a static layout
   switch (type) {
     case "mastodon": {
-      return <MastodonStats stats={stats as MastodonStatsData | null} />;
+      return (
+        <MastodonStats
+          stats={stats as MastodonStatsData | null}
+          translations={t}
+        />
+      );
     }
     case "matrix": {
-      return <MatrixStats stats={stats as MatrixStatsData | null} />;
+      return (
+        <MatrixStats
+          stats={stats as MatrixStatsData | null}
+          translations={t}
+        />
+      );
     }
     case "meshtastic-combined": {
-      return <MeshtasticStats stats={stats as MeshtasticStatsData | null} />;
+      return (
+        <MeshtasticStats
+          stats={stats as MeshtasticStatsData | null}
+          translations={t}
+        />
+      );
     }
     default: {
       return null;

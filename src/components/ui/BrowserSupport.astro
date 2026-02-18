@@ -3,6 +3,9 @@
  * BrowserSupport Component
  * Renders a browser compatibility table with icons and status badges.
  */
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslations } from "@i18n/utils";
+
 interface BrowserInfo {
   browser: "chrome" | "firefox" | "safari" | "edge" | "opera";
   version?: string;
@@ -15,7 +18,10 @@ interface Props {
   browsers: BrowserInfo[];
 }
 
-const { title = "Browser Support", browsers } = Astro.props;
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
+
+const { title = t("components.browserSupport.title"), browsers } = Astro.props;
 
 const browserIcons: Record<string, string> = {
   chrome: "logos:chrome",
@@ -40,22 +46,22 @@ const supportConfig: Record<
   full: {
     icon: "mdi:check-circle",
     class: "support-full",
-    label: "Full Support",
+    label: t("components.browserSupport.fullSupport"),
   },
   partial: {
     icon: "mdi:alert-circle",
     class: "support-partial",
-    label: "Partial Support",
+    label: t("components.browserSupport.partialSupport"),
   },
   none: {
     icon: "mdi:close-circle",
     class: "support-none",
-    label: "No Support",
+    label: t("components.browserSupport.noSupport"),
   },
   unknown: {
     icon: "mdi:help-circle",
     class: "support-unknown",
-    label: "Unknown",
+    label: t("components.browserSupport.unknown"),
   },
 };
 

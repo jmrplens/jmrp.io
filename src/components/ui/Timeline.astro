@@ -10,6 +10,9 @@
  * - Dark mode optimized
  * - Markdown links in descriptions
  */
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslations } from "@i18n/utils";
+
 interface TimelineEvent {
   date: string;
   title: string;
@@ -24,6 +27,9 @@ interface Props {
 
 const { events } = Astro.props;
 
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
+
 type EventType = NonNullable<TimelineEvent["type"]>;
 const typeConfig: Record<EventType, string> = {
   default: "tl-default",
@@ -34,9 +40,9 @@ const typeConfig: Record<EventType, string> = {
 
 const typeLabel: Record<EventType, string> = {
   default: "",
-  success: "Standard",
-  warning: "Deprecated",
-  milestone: "Milestone",
+  success: t("components.timeline.standard"),
+  warning: t("components.timeline.deprecated"),
+  milestone: t("components.timeline.milestone"),
 };
 
 /**

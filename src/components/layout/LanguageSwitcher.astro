@@ -1,0 +1,95 @@
+---
+/**
+ * LanguageSwitcher Component
+ *
+ * A link that switches between English and Spanish versions of the current page.
+ * Renders as a simple `<a>` tag (works without JS, no hydration needed).
+ * The alternate URL is computed at build time using the current pathname.
+ *
+ * @example
+ * ```astro
+ * <LanguageSwitcher />
+ * ```
+ */
+import { defaultLocale, type Locale, localeConfig } from "@i18n/config";
+import { stripLocalePrefix, useTranslations } from "@i18n/utils";
+
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
+const targetLocale: Locale = locale === "en" ? "es" : "en";
+const targetConfig = localeConfig[targetLocale];
+
+// Build the alternate URL preserving the current path
+const cleanPath = stripLocalePrefix(Astro.url.pathname);
+const targetPath =
+  targetLocale === defaultLocale ? cleanPath : `/${targetLocale}${cleanPath}`;
+
+const ariaLabel = t("ui.switchLanguage", { lang: targetConfig.label });
+---
+
+<a
+  href={targetPath}
+  class="lang-switcher"
+  aria-label={ariaLabel}
+  title={ariaLabel}
+  hreflang={targetLocale}
+  lang={targetLocale}
+  data-astro-prefetch
+>
+  <span
+    class="i-tabler:language lang-icon"
+    aria-hidden="true"
+  ></span>
+  <span class="lang-label">{targetConfig.label}</span>
+</a>
+
+<style>
+  .lang-switcher {
+    display: flex;
+    gap: 0.25rem;
+    align-items: center;
+    padding: 0.5rem;
+    font-size: 0.85rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text);
+    text-decoration: none;
+    border-radius: var(--radius-sm);
+    transition:
+      color 0.2s,
+      background-color 0.2s;
+  }
+
+  .lang-switcher:hover,
+  .lang-switcher:focus-visible {
+    color: var(--color-primary);
+    background-color: rgb(179 137 245 / 10%);
+  }
+
+  .lang-icon {
+    font-size: 1.2rem;
+  }
+
+  /* Hide text label on very small screens, keep icon */
+  @media (width <= 400px) {
+    .lang-label {
+      display: none;
+    }
+  }
+</style>
+
+<script>
+  function setupLangSwitcher() {
+    const links =
+      document.querySelectorAll<HTMLAnchorElement>(".lang-switcher");
+    for (const link of links) {
+      link.addEventListener("click", () => {
+        if (typeof (window as any).__markLanguageChoice === "function") {
+          (window as any).__markLanguageChoice();
+        }
+      });
+    }
+  }
+
+  setupLangSwitcher();
+  document.addEventListener("astro:after-swap", setupLangSwitcher);
+</script>

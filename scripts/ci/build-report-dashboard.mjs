@@ -71,7 +71,7 @@ const reports = [
   { id: "a11y", src: "a11y-deploy", dest: "a11y", main: "index.html" },
   {
     id: "html",
-    src: "html-report.html",
+    src: "html-validation-report.html",
     dest: "html/index.html",
     main: "index.html",
   },
@@ -165,102 +165,133 @@ if (fs.existsSync("html-validation.json")) {
   }
 }
 
-let rssValidation = {
-  valid: false,
-  metadata: { items: 0 },
-  errors: ["Report missing"],
-};
+/** @type {Array<{valid: boolean, file: string, metadata: {items: number, title: string}, errors: string[]}>} */
+let rssFeeds = [];
 if (fs.existsSync("rss-validation.json")) {
   try {
-    rssValidation = JSON.parse(fs.readFileSync("rss-validation.json", "utf-8"));
+    const raw = JSON.parse(fs.readFileSync("rss-validation.json", "utf-8"));
+    rssFeeds = Array.isArray(raw) ? raw : [raw];
   } catch (error) {
     const errMsg = error instanceof Error ? error.message : String(error);
     console.warn(`⚠️ Warning: Failed to parse rss-validation.json: ${errMsg}`);
-    rssValidation.errors = [`Parse error: ${errMsg}`];
   }
 }
+const rssAllValid = rssFeeds.length > 0 && rssFeeds.every((f) => f.valid);
+const rssStatusText = rssFeeds.length === 0 ? "N/A" : "Invalid";
+const rssTotalItems = rssFeeds.reduce(
+  (sum, f) => sum + (f.metadata?.items || 0),
+  0,
+);
 
-// 2.1 Load Lighthouse Data - FIXED: Load BOTH light AND dark themes
-let lighthouseData = [];
-const pages = [
-  { name: "Home", urlPart: "localhost:40679/$", pathMatch: ":40679/" },
-  { name: "Blog", urlPart: "/blog/", pathMatch: "/blog/" },
-  { name: "CV", urlPart: "/cv/", pathMatch: "/cv/" },
-  {
-    name: "Publications",
-    urlPart: "/publications/",
-    pathMatch: "/publications/",
-  },
+// 2.1 Load Lighthouse Data for all main pages, split by locale
+let lighthouseDataEn = [];
+let lighthouseDataEs = [];
+const mainPages = [
+  { name: "Home", path: "/" },
+  { name: "Blog", path: "/blog/" },
+  { name: "Homelab", path: "/homelab/" },
+  { name: "Tools", path: "/tools/" },
+  { name: "CV", path: "/cv/" },
+  { name: "Publications", path: "/publications/" },
+  { name: "Repositories", path: "/github/" },
 ];
 
 /**
- * Helper to find performance score in manifest
+ * Reads and caches a Lighthouse manifest.json as an array.
  * @param {string} manifestPath - Path to manifest.json
- * @param {object} p - Page config with name and urlPart
- * @returns {number|null} Performance score 0-100 or null
+ * @returns {Array<{url: string, summary: {performance: number}}>} Parsed entries
  */
-const findScore = (manifestPath, p) => {
-  if (!fs.existsSync(manifestPath)) return null;
+const manifestCache = new Map();
+const readManifest = (manifestPath) => {
+  if (manifestCache.has(manifestPath)) return manifestCache.get(manifestPath);
+  if (!fs.existsSync(manifestPath)) {
+    manifestCache.set(manifestPath, []);
+    return [];
+  }
   try {
     const json = JSON.parse(fs.readFileSync(manifestPath, "utf-8"));
-    if (!Array.isArray(json)) {
-      console.warn(`⚠️ Lighthouse manifest is not an array: ${manifestPath}`);
-      return null;
-    }
-    const item = json.find((i) => {
-      if (p.name === "Home") {
-        // Match localhost:PORT/ (any port) or production domain ending with /
-        try {
-          const url = new URL(i.url);
-          return (
-            url.pathname === "/" ||
-            url.pathname === "" ||
-            url.pathname === "/index.html"
-          );
-        } catch (parseError) {
-          console.debug(
-            `Failed to parse URL "${i.url}": ${parseError instanceof Error ? parseError.message : String(parseError)}`,
-          );
-          return false;
-        }
-      }
-      return i.url.includes(p.pathMatch);
-    });
-    return item?.summary?.performance &&
-      typeof item.summary.performance === "number"
-      ? Math.round(item.summary.performance * 100)
-      : null;
+    const arr = Array.isArray(json) ? json : [];
+    manifestCache.set(manifestPath, arr);
+    return arr;
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
     console.error(
-      `Error parsing Lighthouse manifest ${manifestPath}: ${errorMessage}`,
+      `Error parsing Lighthouse manifest ${manifestPath}: ${error instanceof Error ? error.message : String(error)}`,
     );
-    return null;
+    manifestCache.set(manifestPath, []);
+    return [];
   }
 };
 
-// Build comprehensive Lighthouse data from all 4 combinations
-lighthouseData = pages.map((p) => {
-  return {
+/**
+ * Find performance score in manifest for a given page and locale.
+ * @param {string} manifestPath - Path to manifest.json
+ * @param {object} page - Page config with name and path
+ * @param {"en"|"es"} locale - Locale to match
+ * @returns {number|null} Performance score 0-100 or null
+ */
+const findScore = (manifestPath, page, locale) => {
+  const entries = readManifest(manifestPath);
+  const item = entries.find((i) => {
+    try {
+      const url = new URL(i.url);
+      const pathname =
+        url.pathname.replace(/\/index\.html$/, "/").replace(/\/$/, "") || "/";
+      if (locale === "es") {
+        // ES pages: /es/ prefix
+        if (page.path === "/") return pathname === "/es" || pathname === "/es/";
+        return (
+          pathname === `/es${page.path.replace(/\/$/, "")}` ||
+          pathname === `/es${page.path}`
+        );
+      }
+      // EN pages: no /es/ prefix
+      if (pathname.startsWith("/es/") || pathname === "/es") return false;
+      if (page.path === "/") return pathname === "/" || pathname === "";
+      return (
+        pathname === page.path.replace(/\/$/, "") || pathname === page.path
+      );
+    } catch {
+      return false;
+    }
+  });
+  return item?.summary?.performance &&
+    typeof item.summary.performance === "number"
+    ? Math.round(item.summary.performance * 100)
+    : null;
+};
+
+/**
+ * Build Lighthouse data array for a specific locale.
+ * @param {"en"|"es"} locale
+ * @returns {Array<{page: string, mobileLight: number|null, mobileDark: number|null, desktopLight: number|null, desktopDark: number|null}>}
+ */
+const buildLighthouseData = (locale) =>
+  mainPages.map((p) => ({
     page: p.name,
     mobileLight: findScore(
       path.join("lh-deploy", "light", "mobile", "manifest.json"),
       p,
+      locale,
     ),
     mobileDark: findScore(
       path.join("lh-deploy", "dark", "mobile", "manifest.json"),
       p,
+      locale,
     ),
     desktopLight: findScore(
       path.join("lh-deploy", "light", "desktop", "manifest.json"),
       p,
+      locale,
     ),
     desktopDark: findScore(
       path.join("lh-deploy", "dark", "desktop", "manifest.json"),
       p,
+      locale,
     ),
-  };
-});
+  }));
+
+lighthouseDataEn = buildLighthouseData("en");
+lighthouseDataEs = buildLighthouseData("es");
 
 // 3. Health Score Calculation (Synchronized with update-ci-comment.mjs)
 const saOutcomes = {
@@ -268,7 +299,7 @@ const saOutcomes = {
   prettier: process.env.OUTCOME_PRETTIER,
   eslint: process.env.OUTCOME_ESLINT,
   lychee: process.env.OUTCOME_LYCHEE,
-  typos: process.env.OUTCOME_TYPOS,
+  cspell: process.env.OUTCOME_CSPELL,
   security: process.env.OUTCOME_SECURITY,
   sonar: process.env.OUTCOME_SONAR,
   jsdoc: process.env.OUTCOME_JSDOC,
@@ -862,9 +893,9 @@ const html = `
         </section>
 
         <div class="summary-grid">
-            <!-- Performance (Lighthouse) -->
+            <!-- Performance (Lighthouse EN) -->
             <div class="card span-2">
-                <div class="card-title">Lighthouse Audit Summary</div>
+                <div class="card-title">🇬🇧 Lighthouse Audit — English</div>
                 <div class="table-wrapper" style="margin-top:1rem; border:none; background:transparent;">
                    <table class="lh-summary-table">
                         <thead>
@@ -882,7 +913,46 @@ const html = `
                             </tr>
                         </thead>
                         <tbody>
-                            ${lighthouseData
+                            ${lighthouseDataEn
+                              .map(
+                                (d) => `
+                            <tr>
+                                <td>${d.page}</td>
+                                <td>${getScoreBadge(d.mobileLight)}</td>
+                                <td>${getScoreBadge(d.mobileDark)}</td>
+                                <td>${getScoreBadge(d.desktopLight)}</td>
+                                <td>${getScoreBadge(d.desktopDark)}</td>
+                            </tr>
+                            `,
+                              )
+                              .join("")}
+                        </tbody>
+                   </table>
+                </div>
+                <a href="lighthouse/" class="card-action ${status.lighthouse ? "" : "disabled"}" style="margin-top: 1.5rem;">View Full Report →</a>
+            </div>
+
+            <!-- Performance (Lighthouse ES) -->
+            <div class="card span-2">
+                <div class="card-title">🇪🇸 Lighthouse Audit — Español</div>
+                <div class="table-wrapper" style="margin-top:1rem; border:none; background:transparent;">
+                   <table class="lh-summary-table">
+                        <thead>
+                            <tr>
+                                <th style="text-align:left;">Page</th>
+                                <th colspan="2">📱 Mobile</th>
+                                <th colspan="2">🖥️ Desktop</th>
+                            </tr>
+                            <tr>
+                                <th></th>
+                                <th style="font-size: 0.65rem;">Light</th>
+                                <th style="font-size: 0.65rem;">Dark</th>
+                                <th style="font-size: 0.65rem;">Light</th>
+                                <th style="font-size: 0.65rem;">Dark</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${lighthouseDataEs
                               .map(
                                 (d) => `
                             <tr>
@@ -919,12 +989,12 @@ const html = `
             <div class="card">
                 <div class="card-header">
                     <div class="card-icon">📡</div>
-                    <span class="status-badge ${rssValidation?.valid ? "status-success" : "status-danger"}">${rssValidation?.valid ? "Valid" : "Invalid"}</span>
+                    <span class="status-badge ${rssAllValid ? "status-success" : "status-danger"}">${rssAllValid ? "Valid" : rssStatusText}</span>
                 </div>
-                <div class="card-title">RSS Feed</div>
-                <div class="card-value">${rssValidation?.metadata?.items || 0} Items</div>
+                <div class="card-title">RSS Feeds</div>
+                <div class="card-value">${rssTotalItems} Items</div>
                  <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
-                    ${rssValidation?.valid ? "Schema & Syntax verified." : "Validation errors detected."}
+                    ${rssFeeds.length > 0 ? rssFeeds.map((f) => `<div style="margin-bottom:0.25rem;">${f.valid ? "✅" : "❌"} <b>${f.metadata?.title || "Unknown"}</b> — ${f.metadata?.items || 0} items</div>`).join("") : "No feeds found."}
                 </div>
                 <a href="rss/" class="card-action ${status.rss ? "" : "disabled"}">Preview Feed →</a>
             </div>
@@ -960,8 +1030,8 @@ const html = `
                         <tr><td>Prettier</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(saOutcomes.prettier)}">${saOutcomes.prettier || "Pending"}</span> <a href="javascript:void(0)" onclick="openLog('prettier')" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Log</a></div></td></tr>
                         <tr><td>ESLint</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(saOutcomes.eslint)}">${saOutcomes.eslint || "Pending"}</span> <a href="javascript:void(0)" onclick="openLog('eslint')" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Log</a></div></td></tr>
                         <tr><td>Stylelint</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(saOutcomes.stylelint)}">${saOutcomes.stylelint || "Pending"}</span> <a href="javascript:void(0)" onclick="openLog('stylelint')" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Log</a></div></td></tr>
-                        <tr><td>Link Checker</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(saOutcomes.lychee)}">${saOutcomes.lychee || "Pending"}</span> ${status.lychee && saOutcomes.lychee === "success" ? '<a href="lychee/" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Report</a>' : ""} ${runId ? `<a href="${workflowUrl}" target="_blank" rel="noopener noreferrer" style="font-size:0.8rem; color:var(--text-muted); text-decoration:none;">GitHub ↗</a>` : ""}</div></td></tr>
-                        <tr><td>Spell Checker</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(saOutcomes.typos)}">${saOutcomes.typos || "Pending"}</span> ${runId ? `<a href="${workflowUrl}" target="_blank" rel="noopener noreferrer" style="font-size:0.8rem; color:var(--text-muted); text-decoration:none;">GitHub ↗</a>` : ""}</div></td></tr>
+                        <tr><td>Link Checker</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(saOutcomes.lychee)}">${saOutcomes.lychee || "Pending"}</span> ${status.lychee ? '<a href="lychee/" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Report</a>' : ""} ${runId ? `<a href="${workflowUrl}" target="_blank" rel="noopener noreferrer" style="font-size:0.8rem; color:var(--text-muted); text-decoration:none;">↗</a>` : ""}</div></td></tr>
+                        <tr><td>Spell Checker</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(saOutcomes.cspell)}">${saOutcomes.cspell || "Pending"}</span> <a href="javascript:void(0)" onclick="openLog('cspell')" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Log</a> ${runId ? `<a href="${workflowUrl}" target="_blank" rel="noopener noreferrer" style="font-size:0.8rem; color:var(--text-muted); text-decoration:none;">↗</a>` : ""}</div></td></tr>
                         <tr><td>Security Audit</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(saOutcomes.security)}">${saOutcomes.security || "Pending"}</span> <a href="javascript:void(0)" onclick="openLog('security-audit')" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Log</a></div></td></tr>
                         <tr><td>SonarQube</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(saOutcomes.sonar)}">${saOutcomes.sonar || "Pending"}</span> <a href="https://sonarcloud.io/summary/new_code?id=jmrplens_jmrp.io" target="_blank" rel="noopener noreferrer" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Sonar ↗</a></div></td></tr>
                         <tr><td>JSDoc Coverage</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(saOutcomes.jsdoc)}">${saOutcomes.jsdoc || "Pending"}</span> <a href="javascript:void(0)" onclick="openLog('jsdoc-coverage')" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Log</a></div></td></tr>
@@ -977,7 +1047,7 @@ const html = `
                       <table>
                         <tbody>
                           <tr><td>JS/CSS Size</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><b>${bundleStats?.readableTotalSize || "N/A"}</b> <a href="javascript:void(0)" onclick="openLog('bundle-size')" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Log</a></div></td></tr>
-                          <tr><td>HTML Validation</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(qualityOutcomes.html)}">${qualityOutcomes.html || "Pending"}</span> ${status.htmlReport ? '<a href="html/" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Report</a>' : ""} <a href="javascript:void(0)" onclick="openLog('html-validation')" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Log</a></div></td></tr>
+                          <tr><td>HTML Validation</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(qualityOutcomes.html)}">${qualityOutcomes.html || "Pending"}</span> <a href="html/" style="font-size:0.8rem; color:var(--primary); text-decoration:none;${status.htmlReport ? "" : " opacity:0.4; pointer-events:none;"}">Report</a> <a href="javascript:void(0)" onclick="openLog('html-validation')" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Log</a></div></td></tr>
                           <tr><td>RSS Validation</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(qualityOutcomes.rss)}">${qualityOutcomes.rss || "Pending"}</span> ${status.rssPreview ? '<a href="rss/" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Preview</a>' : ""} <a href="javascript:void(0)" onclick="openLog('rss-validation')" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Log</a></div></td></tr>
                           <tr><td>JSON-LD Schema</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(qualityOutcomes.schema)}">${qualityOutcomes.schema || "Pending"}</span> ${status.schemaReport ? '<a href="schema/" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Report</a>' : ""} <a href="javascript:void(0)" onclick="openLog('schema-validation')" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Log</a></div></td></tr>
                           <tr><td>Image Check</td><td><div style="display:flex; align-items:center; gap:0.5rem;"><span class="status-badge ${getStatusClass(qualityOutcomes.image)}">${qualityOutcomes.image || "Pending"}</span> ${status.images ? '<a href="images/" style="font-size:0.8rem; color:var(--primary); text-decoration:none;">Report</a>' : ""}</div></td></tr>

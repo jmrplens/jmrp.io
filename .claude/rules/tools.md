@@ -21,6 +21,7 @@ Tools are interactive web utilities at `/tools/[slug]/`. They are **NOT Preact**
 - **Privacy-first** — All processing happens client-side
 - **WCAG AA** — Tools must be keyboard accessible with proper ARIA
 - **Dark mode** — CSS custom properties for theming
+- **i18n** — Tool-specific strings in `src/i18n/translations/{en,es}/tools.ts`, inject into JS via `data-*` attributes
 
 ## Categories (ordered)
 

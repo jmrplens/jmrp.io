@@ -1,8 +1,13 @@
 ---
 import CopyButton from "@components/ui/CopyButton.astro";
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslations } from "@i18n/utils";
 import { sanitize } from "@utils/html";
 
 const { pub } = Astro.props;
+
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
 
 // Function to clean BibTeX
 const cleanBibtex = (bibtex: string) => {
@@ -70,7 +75,10 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
                   target="_blank"
                   rel="noopener noreferrer"
                   data-astro-prefetch="false"
-                  aria-label={`View publications by ${author.given} ${author.family} (from: ${pub.title})`}
+                  aria-label={t("aria.viewPublicationsBy", {
+                    author: `${author.given} ${author.family}`,
+                    title: pub.title,
+                  })}
                 >
                   {author.given} {author.family}
                 </a>
@@ -96,11 +104,12 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
               class="btn-sm btn-abstract"
               type="button"
               data-id={pub.id}
-              aria-label={`Toggle Abstract for ${pub.title}`}
+              aria-label={t("aria.toggleAbstract", { title: pub.title })}
               aria-expanded="false"
               aria-controls={abstractId}
             >
-              <span class="i-fa-solid:align-left" /> Abstract
+              <span class="i-fa-solid:align-left" />{" "}
+              {t("pages.publications.abstract")}
             </button>
           )
         }
@@ -110,11 +119,11 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
               class="btn-sm btn-bibtex-toggle"
               type="button"
               data-id={pub.id}
-              aria-label={`Toggle BibTeX for ${pub.title}`}
+              aria-label={t("aria.toggleBibtex", { title: pub.title })}
               aria-expanded="false"
               aria-controls={bibtexId}
             >
-              <span class="i-fa-solid:code" /> BibTeX
+              <span class="i-fa-solid:code" /> {t("pages.publications.bibtex")}
             </button>
           )
         }
@@ -126,7 +135,7 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
               target="_blank"
               rel="noopener noreferrer"
               data-astro-prefetch="false"
-              aria-label={`Download PDF for ${pub.title}`}
+              aria-label={t("aria.downloadPdf", { title: pub.title })}
             >
               <span class="i-fa-solid:file-pdf" /> PDF
             </a>
@@ -140,7 +149,7 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
               target="_blank"
               rel="noopener noreferrer"
               data-astro-prefetch="false"
-              aria-label={`View DOI for ${pub.title}`}
+              aria-label={t("aria.viewDoi", { title: pub.title })}
             >
               <span class="i-fa-solid:external-link-alt" /> DOI
             </a>
@@ -154,7 +163,7 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
               target="_blank"
               rel="noopener noreferrer"
               data-astro-prefetch="false"
-              aria-label={`View URL for ${pub.title}`}
+              aria-label={t("aria.viewUrl", { title: pub.title })}
             >
               <span class="i-fa-solid:link" /> URL
             </a>
@@ -168,7 +177,7 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
               target="_blank"
               rel="noopener noreferrer"
               data-astro-prefetch="false"
-              aria-label={`View Slides for ${pub.title}`}
+              aria-label={t("aria.viewSlides", { title: pub.title })}
             >
               <span class="i-fa-solid:chalkboard-teacher" /> Slides
             </a>
@@ -182,7 +191,7 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
               target="_blank"
               rel="noopener noreferrer"
               data-astro-prefetch="false"
-              aria-label={`View Poster for ${pub.title}`}
+              aria-label={t("aria.viewPoster", { title: pub.title })}
             >
               <span class="i-fa-solid:image" /> Poster
             </a>
@@ -198,11 +207,13 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
           >
             <div class="pub-card-wrapper copy-container">
               <div class="pub-card-header">
-                <div class="pub-card-title">Abstract</div>
+                <div class="pub-card-title">
+                  {t("pages.publications.abstract")}
+                </div>
                 <CopyButton
                   class="pub-copy-btn"
                   content={sanitize(pub.abstract)}
-                  ariaLabel={`Copy abstract for ${pub.title}`}
+                  ariaLabel={t("aria.copyAbstract", { title: pub.title })}
                 />
               </div>
               <div
@@ -222,11 +233,13 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
           >
             <div class="pub-card-wrapper copy-container">
               <div class="pub-card-header">
-                <div class="pub-card-title">BibTeX</div>
+                <div class="pub-card-title">
+                  {t("pages.publications.bibtex")}
+                </div>
                 <CopyButton
                   class="pub-copy-btn"
                   content={cleanedBibtex}
-                  ariaLabel={`Copy BibTeX for ${pub.title}`}
+                  ariaLabel={t("aria.copyBibtex", { title: pub.title })}
                 />
               </div>
               <div class="pub-card-content">

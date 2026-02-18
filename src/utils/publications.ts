@@ -1,6 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
 
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslations } from "@i18n/utils";
 import { getEntry } from "astro:content";
 import Cite from "citation-js"; // Library to parse BibTeX files
 
@@ -62,9 +64,12 @@ interface CoauthorMap {
  * - Extracting custom fields (slides, poster) that citation-js might miss.
  * - Grouping into categories: Journal, Conference, Thesis, Others.
  *
+ * @param locale - The locale for group titles (defaults to `defaultLocale`).
  * @returns {Promise<PublicationGroup[]>} Structured list of publication groups.
  */
-export async function getPublications(): Promise<PublicationGroup[]> {
+export async function getPublications(
+  locale: Locale = defaultLocale,
+): Promise<PublicationGroup[]> {
   try {
     const filePath = path.join(
       process.cwd(),
@@ -251,11 +256,19 @@ export async function getPublications(): Promise<PublicationGroup[]> {
 
     data.forEach(processItem);
 
+    const t = useTranslations(locale);
+
     return [
-      { title: "Journal articles", items: journalArticles },
-      { title: "Conference and workshop papers", items: conferencePapers },
-      { title: "Thesis", items: thesisList },
-      { title: "Other", items: otherPublications },
+      {
+        title: t("pages.publications.journalArticles"),
+        items: journalArticles,
+      },
+      {
+        title: t("pages.publications.conferencePapers"),
+        items: conferencePapers,
+      },
+      { title: t("pages.publications.thesis"), items: thesisList },
+      { title: t("pages.publications.other"), items: otherPublications },
     ].filter((g) => g.items.length > 0);
   } catch (error) {
     console.error("Error fetching publications:", error);

@@ -1,0 +1,37 @@
+---
+/**
+ * Página de Categoría de Herramientas — ruta ES `/es/tools/categories/[category]/`.
+ * Mantiene getStaticPaths, delega renderizado a ToolCategoryPage.
+ */
+import ToolCategoryPage from "@components/pages/ToolCategoryPage.astro";
+import { getToolsForLocale } from "@utils/tools";
+import type { CollectionEntry } from "astro:content";
+
+export async function getStaticPaths() {
+  const entries = await getToolsForLocale("es");
+  const allTools = entries.map((e) => e.tool);
+  const categories = [...new Set(allTools.map((tool) => tool.data.category))];
+
+  return categories.map((category) => {
+    const filteredTools = allTools.filter(
+      (tool) => tool.data.category === category,
+    );
+    return {
+      params: { category },
+      props: { tools: filteredTools },
+    };
+  });
+}
+
+interface Props {
+  tools: CollectionEntry<"tools">[];
+}
+
+const { category } = Astro.params;
+const { tools } = Astro.props;
+---
+
+<ToolCategoryPage
+  category={category!}
+  tools={tools}
+/>

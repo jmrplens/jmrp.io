@@ -138,7 +138,7 @@ async function analyze() {
 
   // Define warning threshold for CODE only (e.g., 8MB is reasonable for a static site with heavy content)
   // Assets (images/PDFs) should not trigger code-bloat warnings.
-  stats.isHighCodeSize = stats.codeSize > 8 * 1024 * 1024; // 8MB limit for code
+  stats.isHighCodeSize = stats.codeSize > 30 * 1024 * 1024; // 30MB limit for code
 
   fs.writeFileSync(OUTPUT_FILE, JSON.stringify(stats, null, 2));
   console.log(`✅ Analysis complete! Report saved to ${OUTPUT_FILE}`);

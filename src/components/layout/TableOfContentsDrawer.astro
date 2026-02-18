@@ -4,6 +4,9 @@
  * A drawer component that shows the Table of Contents.
  * Acts as a bottom sheet on mobile and side drawer on desktop.
  */
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslations } from "@i18n/utils";
+
 interface Props {
   headings: {
     slug: string;
@@ -13,6 +16,8 @@ interface Props {
 }
 
 const { headings } = Astro.props;
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
 ---
 
 {
@@ -22,7 +27,7 @@ const { headings } = Astro.props;
         id="toc-toggle-btn"
         type="button"
         class="toc-fab toc-trigger"
-        aria-label="Table of Contents"
+        aria-label={t("aria.tableOfContents")}
         aria-haspopup="true"
         aria-expanded="false"
       >
@@ -42,12 +47,12 @@ const { headings } = Astro.props;
         inert
       >
         <div class="toc-header">
-          <h2 id="toc-title">Table of Contents</h2>
+          <h2 id="toc-title">{t("aria.tableOfContents")}</h2>
           <button
             id="toc-close-btn"
             type="button"
             class="toc-close"
-            aria-label="Close"
+            aria-label={t("aria.close")}
           >
             <span
               class="i-mdi:close"
@@ -57,7 +62,7 @@ const { headings } = Astro.props;
         </div>
         <nav
           class="toc-content"
-          aria-label="Table of Contents Drawer"
+          aria-label={t("aria.tocDrawer")}
         >
           <ul>
             {headings.map((heading) => (

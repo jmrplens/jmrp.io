@@ -15,6 +15,11 @@
  * Usage:
  * <CSPBuilder title="Build Your CSP" />
  */
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslations } from "@i18n/utils";
+
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
 
 interface Directive {
   name: string;
@@ -40,7 +45,7 @@ interface Props {
   title?: string;
 }
 
-const { title = "CSP Policy Builder" } = Astro.props;
+const { title = t("tools.cspBuilder.title") } = Astro.props;
 
 // Generate unique ID for this instance
 const uniqueId = `csp-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
@@ -50,7 +55,7 @@ const directives: Directive[] = [
   {
     name: "default-src",
     value: "'none'",
-    description: "Block all resources by default (deny-by-default approach)",
+    description: t("tools.cspBuilder.descDefaultSrc"),
     category: "essential",
     defaultChecked: true,
     requiredForStrict: true,
@@ -58,7 +63,7 @@ const directives: Directive[] = [
   {
     name: "script-src",
     value: "'self' 'nonce-{RANDOM}'",
-    description: "Allow scripts from same origin with nonce",
+    description: t("tools.cspBuilder.descScriptSrc"),
     category: "essential",
     defaultChecked: true,
     requiredForStrict: true,
@@ -67,7 +72,7 @@ const directives: Directive[] = [
   {
     name: "style-src",
     value: "'self' 'unsafe-inline'",
-    description: "Allow styles from same origin + inline styles",
+    description: t("tools.cspBuilder.descStyleSrc"),
     category: "essential",
     defaultChecked: true,
     editable: true,
@@ -77,7 +82,7 @@ const directives: Directive[] = [
   {
     name: "object-src",
     value: "'none'",
-    description: "Block plugins (Flash, Java) — Required for strict CSP",
+    description: t("tools.cspBuilder.descObjectSrc"),
     category: "security",
     defaultChecked: true,
     requiredForStrict: true,
@@ -85,7 +90,7 @@ const directives: Directive[] = [
   {
     name: "base-uri",
     value: "'none'",
-    description: "Prevent base tag injection — Required for strict CSP",
+    description: t("tools.cspBuilder.descBaseUri"),
     category: "security",
     defaultChecked: true,
     requiredForStrict: true,
@@ -93,7 +98,7 @@ const directives: Directive[] = [
   {
     name: "frame-ancestors",
     value: "'none'",
-    description: "Prevent clickjacking (replaces X-Frame-Options)",
+    description: t("tools.cspBuilder.descFrameAncestors"),
     category: "security",
     defaultChecked: true,
     notInMeta: true,
@@ -101,14 +106,14 @@ const directives: Directive[] = [
   {
     name: "form-action",
     value: "'self'",
-    description: "Restrict form submissions to same origin",
+    description: t("tools.cspBuilder.descFormAction"),
     category: "security",
     defaultChecked: false,
   },
   {
     name: "frame-src",
     value: "'self'",
-    description: "Control sources for frames and iframes",
+    description: t("tools.cspBuilder.descFrameSrc"),
     category: "security",
     defaultChecked: false,
     editable: true,
@@ -116,7 +121,7 @@ const directives: Directive[] = [
   {
     name: "sandbox",
     value: "allow-scripts allow-same-origin",
-    description: "Apply sandbox restrictions (like iframe sandbox)",
+    description: t("tools.cspBuilder.descSandbox"),
     category: "security",
     defaultChecked: false,
     notInMeta: true,
@@ -126,7 +131,7 @@ const directives: Directive[] = [
   {
     name: "img-src",
     value: "'self' data:",
-    description: "Allow images from same origin + data URIs",
+    description: t("tools.cspBuilder.descImgSrc"),
     category: "resources",
     defaultChecked: true,
     editable: true,
@@ -134,7 +139,7 @@ const directives: Directive[] = [
   {
     name: "font-src",
     value: "'self'",
-    description: "Allow fonts from same origin",
+    description: t("tools.cspBuilder.descFontSrc"),
     category: "resources",
     defaultChecked: true,
     editable: true,
@@ -142,7 +147,7 @@ const directives: Directive[] = [
   {
     name: "connect-src",
     value: "'self'",
-    description: "Restrict XHR/Fetch/WebSocket connections",
+    description: t("tools.cspBuilder.descConnectSrc"),
     category: "resources",
     defaultChecked: true,
     editable: true,
@@ -150,7 +155,7 @@ const directives: Directive[] = [
   {
     name: "media-src",
     value: "'self'",
-    description: "Allow audio/video from same origin",
+    description: t("tools.cspBuilder.descMediaSrc"),
     category: "resources",
     defaultChecked: false,
     editable: true,
@@ -158,14 +163,14 @@ const directives: Directive[] = [
   {
     name: "worker-src",
     value: "'self'",
-    description: "Allow Web Workers from same origin",
+    description: t("tools.cspBuilder.descWorkerSrc"),
     category: "resources",
     defaultChecked: false,
   },
   {
     name: "child-src",
     value: "'self'",
-    description: "Control workers and nested browsing contexts",
+    description: t("tools.cspBuilder.descChildSrc"),
     category: "resources",
     defaultChecked: false,
     editable: true,
@@ -173,7 +178,7 @@ const directives: Directive[] = [
   {
     name: "manifest-src",
     value: "'self'",
-    description: "Control web app manifest sources",
+    description: t("tools.cspBuilder.descManifestSrc"),
     category: "resources",
     defaultChecked: false,
   },
@@ -182,21 +187,21 @@ const directives: Directive[] = [
   {
     name: "strict-dynamic",
     value: "",
-    description: "Trust scripts loaded by trusted scripts (add to script-src)",
+    description: t("tools.cspBuilder.descStrictDynamic"),
     category: "advanced",
     defaultChecked: false,
   },
   {
     name: "upgrade-insecure-requests",
     value: "",
-    description: "Auto-upgrade HTTP to HTTPS",
+    description: t("tools.cspBuilder.descUpgradeInsecureRequests"),
     category: "advanced",
     defaultChecked: true,
   },
   {
     name: "block-all-mixed-content",
     value: "",
-    description: "Block all HTTP resources on HTTPS pages",
+    description: t("tools.cspBuilder.descBlockAllMixedContent"),
     category: "advanced",
     defaultChecked: false,
     deprecated: true,
@@ -204,15 +209,14 @@ const directives: Directive[] = [
   {
     name: "require-trusted-types-for",
     value: "'script'",
-    description: "Require Trusted Types for DOM XSS sinks",
+    description: t("tools.cspBuilder.descRequireTrustedTypes"),
     category: "advanced",
     defaultChecked: false,
   },
   {
     name: "report-to",
     value: "csp-endpoint",
-    description:
-      "Modern reporting endpoint (use with Reporting-Endpoints header)",
+    description: t("tools.cspBuilder.descReportTo"),
     category: "advanced",
     defaultChecked: false,
     notInMeta: true,
@@ -220,7 +224,7 @@ const directives: Directive[] = [
   {
     name: "report-uri",
     value: "/csp-reports",
-    description: "Violation report endpoint (deprecated, use report-to)",
+    description: t("tools.cspBuilder.descReportUri"),
     category: "advanced",
     defaultChecked: false,
     deprecated: true,
@@ -229,25 +233,41 @@ const directives: Directive[] = [
 ];
 
 const categories = [
-  { id: "essential", label: "Core Directives", icon: "i-mdi:lightning-bolt" },
-  { id: "security", label: "Security Hardening", icon: "i-mdi:shield-check" },
-  { id: "resources", label: "Resource Control", icon: "i-mdi:package-variant" },
-  { id: "advanced", label: "Advanced Options", icon: "i-mdi:cog" },
+  {
+    id: "essential",
+    label: t("tools.cspBuilder.categoryEssential"),
+    icon: "i-mdi:lightning-bolt",
+  },
+  {
+    id: "security",
+    label: t("tools.cspBuilder.categorySecurity"),
+    icon: "i-mdi:shield-check",
+  },
+  {
+    id: "resources",
+    label: t("tools.cspBuilder.categoryResources"),
+    icon: "i-mdi:package-variant",
+  },
+  {
+    id: "advanced",
+    label: t("tools.cspBuilder.categoryAdvanced"),
+    icon: "i-mdi:cog",
+  },
 ];
 
 const presets: Preset[] = [
   {
     id: "strict",
-    label: "Strict CSP",
+    label: t("tools.cspBuilder.presetStrictLabel"),
     icon: "i-mdi:shield-lock",
-    description: "Google's recommended strict CSP",
+    description: t("tools.cspBuilder.presetStrictDesc"),
     additions: {},
   },
   {
     id: "google-fonts",
-    label: "Google Fonts",
+    label: t("tools.cspBuilder.presetGoogleFontsLabel"),
     icon: "i-mdi:format-font",
-    description: "Allow Google Fonts",
+    description: t("tools.cspBuilder.presetGoogleFontsDesc"),
     additions: {
       "style-src": ["https://fonts.googleapis.com"],
       "font-src": ["https://fonts.gstatic.com"],
@@ -255,9 +275,9 @@ const presets: Preset[] = [
   },
   {
     id: "google-analytics",
-    label: "Analytics",
+    label: t("tools.cspBuilder.presetAnalyticsLabel"),
     icon: "i-mdi:google-analytics",
-    description: "Google Analytics / Tag Manager",
+    description: t("tools.cspBuilder.presetAnalyticsDesc"),
     additions: {
       "script-src": [
         "https://www.googletagmanager.com",
@@ -272,9 +292,9 @@ const presets: Preset[] = [
   },
   {
     id: "youtube",
-    label: "YouTube",
+    label: t("tools.cspBuilder.presetYoutubeLabel"),
     icon: "i-mdi:youtube",
-    description: "Embed YouTube videos",
+    description: t("tools.cspBuilder.presetYoutubeDesc"),
     additions: {
       "frame-src": [
         "https://www.youtube.com",
@@ -285,10 +305,9 @@ const presets: Preset[] = [
   },
   {
     id: "cdns",
-    label: "CDNs",
+    label: t("tools.cspBuilder.presetCdnsLabel"),
     icon: "i-mdi:cloud",
-    description:
-      "⚠️ Security Risk: Popular CDNs (cdnjs, unpkg, jsdelivr) may host JSONP endpoints or templates that can bypass CSP. Use with caution.",
+    description: t("tools.cspBuilder.presetCdnsDesc"),
     additions: {
       "script-src": [
         "https://cdnjs.cloudflare.com",
@@ -319,6 +338,27 @@ const groupedDirectives = categories.map((cat) => ({
   ...cat,
   directives: directives.filter((d) => d.category === cat.id),
 }));
+
+/** Translations passed to the inline script via define:vars. */
+const i18n = {
+  copy: t("tools.shared.copy"),
+  copied: t("tools.shared.copied"),
+  noDirectivesSelected: t("tools.cspBuilder.noDirectivesSelected"),
+  ratingAPlus: t("tools.cspBuilder.ratingAPlus"),
+  ratingA: t("tools.cspBuilder.ratingA"),
+  ratingB: t("tools.cspBuilder.ratingB"),
+  ratingC: t("tools.cspBuilder.ratingC"),
+  ratingD: t("tools.cspBuilder.ratingD"),
+  warnStyleNonce: t("tools.cspBuilder.warnStyleNonce"),
+  warnFrameAncestorsMeta: t("tools.cspBuilder.warnFrameAncestorsMeta"),
+  warnSandboxMeta: t("tools.cspBuilder.warnSandboxMeta"),
+  warnReportOnlyMeta: t("tools.cspBuilder.warnReportOnlyMeta"),
+  warnReportUriDeprecated: t("tools.cspBuilder.warnReportUriDeprecated"),
+  warnBlockMixedContentDeprecated: t(
+    "tools.cspBuilder.warnBlockMixedContentDeprecated",
+  ),
+  warnNoDefaultSrc: t("tools.cspBuilder.warnNoDefaultSrc"),
+};
 ---
 
 <div
@@ -334,10 +374,10 @@ const groupedDirectives = categories.map((cat) => ({
     <button
       type="button"
       class="csp-reset-btn"
-      aria-label="Reset to default settings"
+      aria-label={t("tools.cspBuilder.resetAriaLabel")}
     >
       <span class="i-mdi:refresh csp-reset-icon"></span>
-      Reset
+      {t("tools.cspBuilder.reset")}
     </button>
     <label class="csp-report-only-toggle">
       <input
@@ -348,7 +388,9 @@ const groupedDirectives = categories.map((cat) => ({
       <span class="csp-toggle-track">
         <span class="csp-toggle-thumb"></span>
       </span>
-      <span class="csp-toggle-label">Report-Only Mode</span>
+      <span class="csp-toggle-label"
+        >{t("tools.cspBuilder.reportOnlyMode")}</span
+      >
     </label>
   </div>
 
@@ -356,7 +398,7 @@ const groupedDirectives = categories.map((cat) => ({
   <div class="csp-presets">
     <div class="csp-presets-header">
       <span class="i-mdi:flash csp-presets-icon"></span>
-      <span>Quick Presets</span>
+      <span>{t("tools.cspBuilder.quickPresets")}</span>
     </div>
     <div class="csp-presets-grid">
       {
@@ -423,25 +465,27 @@ const groupedDirectives = categories.map((cat) => ({
                               {directive.requiredForStrict && (
                                 <span
                                   class="csp-badge csp-strict-badge"
-                                  title="Required for Strict CSP"
+                                  title={t("tools.cspBuilder.badgeStrictTitle")}
                                 >
-                                  Strict
+                                  {t("tools.cspBuilder.badgeStrict")}
                                 </span>
                               )}
                               {directive.deprecated && (
                                 <span
                                   class="csp-badge csp-deprecated-badge"
-                                  title="Deprecated directive"
+                                  title={t(
+                                    "tools.cspBuilder.badgeDeprecatedTitle",
+                                  )}
                                 >
-                                  Deprecated
+                                  {t("tools.cspBuilder.badgeDeprecated")}
                                 </span>
                               )}
                               {directive.notInMeta && (
                                 <span
                                   class="csp-badge csp-meta-badge"
-                                  title="Not available in meta tags"
+                                  title={t("tools.cspBuilder.badgeNoMetaTitle")}
                                 >
-                                  No Meta
+                                  {t("tools.cspBuilder.badgeNoMeta")}
                                 </span>
                               )}
                               {directive.editable && (
@@ -449,7 +493,9 @@ const groupedDirectives = categories.map((cat) => ({
                                   type="button"
                                   class="csp-edit-btn"
                                   data-for={directive.name}
-                                  aria-label="Add custom domains"
+                                  aria-label={t(
+                                    "tools.cspBuilder.addCustomDomainsAriaLabel",
+                                  )}
                                 >
                                   <span class="i-mdi:plus-circle-outline" />
                                 </button>
@@ -473,13 +519,17 @@ const groupedDirectives = categories.map((cat) => ({
                               <input
                                 type="text"
                                 class="csp-custom-input"
-                                placeholder="Add domain (e.g., cdn.example.com)"
+                                placeholder={t(
+                                  "tools.cspBuilder.addDomainPlaceholder",
+                                )}
                                 data-directive={directive.name}
                               />
                               <button
                                 type="button"
                                 class="csp-add-value-btn"
-                                aria-label="Add domain"
+                                aria-label={t(
+                                  "tools.cspBuilder.addDomainAriaLabel",
+                                )}
                                 data-directive={directive.name}
                               >
                                 <span class="i-mdi:plus" />
@@ -542,25 +592,27 @@ const groupedDirectives = categories.map((cat) => ({
                               {directive.requiredForStrict && (
                                 <span
                                   class="csp-badge csp-strict-badge"
-                                  title="Required for Strict CSP"
+                                  title={t("tools.cspBuilder.badgeStrictTitle")}
                                 >
-                                  Strict
+                                  {t("tools.cspBuilder.badgeStrict")}
                                 </span>
                               )}
                               {directive.deprecated && (
                                 <span
                                   class="csp-badge csp-deprecated-badge"
-                                  title="Deprecated directive"
+                                  title={t(
+                                    "tools.cspBuilder.badgeDeprecatedTitle",
+                                  )}
                                 >
-                                  Deprecated
+                                  {t("tools.cspBuilder.badgeDeprecated")}
                                 </span>
                               )}
                               {directive.notInMeta && (
                                 <span
                                   class="csp-badge csp-meta-badge"
-                                  title="Not available in meta tags"
+                                  title={t("tools.cspBuilder.badgeNoMetaTitle")}
                                 >
-                                  No Meta
+                                  {t("tools.cspBuilder.badgeNoMeta")}
                                 </span>
                               )}
                               {directive.editable && (
@@ -568,7 +620,9 @@ const groupedDirectives = categories.map((cat) => ({
                                   type="button"
                                   class="csp-edit-btn"
                                   data-for={directive.name}
-                                  aria-label="Add custom domains"
+                                  aria-label={t(
+                                    "tools.cspBuilder.addCustomDomainsAriaLabel",
+                                  )}
                                 >
                                   <span class="i-mdi:plus-circle-outline" />
                                 </button>
@@ -592,13 +646,17 @@ const groupedDirectives = categories.map((cat) => ({
                               <input
                                 type="text"
                                 class="csp-custom-input"
-                                placeholder="Add domain (e.g., cdn.example.com)"
+                                placeholder={t(
+                                  "tools.cspBuilder.addDomainPlaceholder",
+                                )}
                                 data-directive={directive.name}
                               />
                               <button
                                 type="button"
                                 class="csp-add-value-btn"
-                                aria-label="Add domain"
+                                aria-label={t(
+                                  "tools.cspBuilder.addDomainAriaLabel",
+                                )}
                                 data-directive={directive.name}
                               >
                                 <span class="i-mdi:plus" />
@@ -625,7 +683,7 @@ const groupedDirectives = categories.map((cat) => ({
     <div class="csp-preview">
       <div class="csp-preview-header">
         <span class="i-mdi:code-braces csp-preview-icon"></span>
-        <span>Generated Policy</span>
+        <span>{t("tools.cspBuilder.generatedPolicy")}</span>
       </div>
 
       {/* Export Format Selector */}
@@ -633,7 +691,7 @@ const groupedDirectives = categories.map((cat) => ({
         <label
           for={`${uniqueId}-format`}
           class="csp-format-label"
-          >Format:</label
+          >{t("tools.cspBuilder.formatLabel")}</label
         >
         <select
           id={`${uniqueId}-format`}
@@ -658,15 +716,17 @@ const groupedDirectives = categories.map((cat) => ({
         <button
           class="csp-copy-btn"
           type="button"
-          aria-label="Copy CSP policy"
+          aria-label={t("tools.cspBuilder.copyAriaLabel")}
         >
           <span class="i-mdi:content-copy"></span>
-          <span class="csp-copy-text">Copy</span>
+          <span class="csp-copy-text">{t("tools.shared.copy")}</span>
         </button>
       </div>
 
       <div class="csp-rating">
-        <span class="csp-rating-label">Security Level:</span>
+        <span class="csp-rating-label"
+          >{t("tools.cspBuilder.securityLevel")}</span
+        >
         <span
           class="csp-rating-badge"
           id={`${uniqueId}-rating`}
@@ -682,7 +742,7 @@ const groupedDirectives = categories.map((cat) => ({
       >
         <div class="csp-warnings-header">
           <span class="i-mdi:alert-circle-outline"></span>
-          <span>Recommendations</span>
+          <span>{t("tools.cspBuilder.recommendations")}</span>
         </div>
         <ul class="csp-warnings-list"></ul>
       </div>
@@ -690,17 +750,26 @@ const groupedDirectives = categories.map((cat) => ({
       <div class="csp-strict-info">
         <span class="i-mdi:information-outline csp-strict-info-icon"></span>
         <span
-          >Enable <strong>script-src with nonce</strong>, <strong
-            >object-src 'none'</strong
-          >, and <strong>base-uri 'none'</strong> for Google's recommended Strict
-          CSP.</span
-        >
+          set:html={t("tools.cspBuilder.strictInfoText")
+            .replace(
+              "{scriptSrcNonce}",
+              `<strong>${t("tools.cspBuilder.scriptSrcNonce")}</strong>`,
+            )
+            .replace(
+              "{objectSrcNone}",
+              `<strong>${t("tools.cspBuilder.objectSrcNone")}</strong>`,
+            )
+            .replace(
+              "{baseUriNone}",
+              `<strong>${t("tools.cspBuilder.baseUriNone")}</strong>`,
+            )}
+        />
       </div>
     </div>
   </div>
 </div>
 
-<script is:inline define:vars={{ uniqueId }}>
+<script is:inline define:vars={{ uniqueId, i18n }}>
   // CSP Builder interactive functionality
   (function () {
     const container = document.querySelector(`[data-csp-id="${uniqueId}"]`);
@@ -815,7 +884,7 @@ const groupedDirectives = categories.map((cat) => ({
       ) {
         warns.push({
           type: "info",
-          text: "Consider using nonce for style-src too instead of 'unsafe-inline' for better security.",
+          text: i18n.warnStyleNonce,
         });
       }
 
@@ -823,7 +892,7 @@ const groupedDirectives = categories.map((cat) => ({
       if (currentFormat === "meta" && checkedDirectives["frame-ancestors"]) {
         warns.push({
           type: "warning",
-          text: "frame-ancestors is ignored in meta tags. Use HTTP headers instead.",
+          text: i18n.warnFrameAncestorsMeta,
         });
       }
 
@@ -831,7 +900,7 @@ const groupedDirectives = categories.map((cat) => ({
       if (currentFormat === "meta" && checkedDirectives["sandbox"]) {
         warns.push({
           type: "warning",
-          text: "sandbox directive is ignored in meta tags. Use HTTP headers instead.",
+          text: i18n.warnSandboxMeta,
         });
       }
 
@@ -839,7 +908,7 @@ const groupedDirectives = categories.map((cat) => ({
       if (currentFormat === "meta" && isReportOnly) {
         warns.push({
           type: "warning",
-          text: "Report-Only mode is not supported for meta tags. The meta tag will use Content-Security-Policy instead of Content-Security-Policy-Report-Only.",
+          text: i18n.warnReportOnlyMeta,
         });
       }
 
@@ -847,14 +916,14 @@ const groupedDirectives = categories.map((cat) => ({
       if (checkedDirectives["report-uri"]) {
         warns.push({
           type: "info",
-          text: "report-uri is deprecated. Consider using report-to with Reporting-Endpoints header.",
+          text: i18n.warnReportUriDeprecated,
         });
       }
 
       if (checkedDirectives["block-all-mixed-content"]) {
         warns.push({
           type: "info",
-          text: "block-all-mixed-content is deprecated. Modern browsers block mixed content by default.",
+          text: i18n.warnBlockMixedContentDeprecated,
         });
       }
 
@@ -862,7 +931,7 @@ const groupedDirectives = categories.map((cat) => ({
       if (!checkedDirectives["default-src"]) {
         warns.push({
           type: "warning",
-          text: "Missing default-src. Without it, some directives may not have a fallback.",
+          text: i18n.warnNoDefaultSrc,
         });
       }
 
@@ -948,7 +1017,7 @@ const groupedDirectives = categories.map((cat) => ({
 
     // Format output based on selected format
     function formatOutput(policy) {
-      if (!policy) return "(No directives selected)";
+      if (!policy) return i18n.noDirectivesSelected;
 
       const headerName = isReportOnly
         ? "Content-Security-Policy-Report-Only"
@@ -1022,19 +1091,19 @@ const groupedDirectives = categories.map((cat) => ({
       // Determine rating
       let ratingText, ratingClass;
       if (score >= 85) {
-        ratingText = "A+ Strict";
+        ratingText = i18n.ratingAPlus;
         ratingClass = "rating-a-plus";
       } else if (score >= 70) {
-        ratingText = "A Excellent";
+        ratingText = i18n.ratingA;
         ratingClass = "rating-a";
       } else if (score >= 50) {
-        ratingText = "B Good";
+        ratingText = i18n.ratingB;
         ratingClass = "rating-b";
       } else if (score >= 30) {
-        ratingText = "C Basic";
+        ratingText = i18n.ratingC;
         ratingClass = "rating-c";
       } else {
-        ratingText = "D Weak";
+        ratingText = i18n.ratingD;
         ratingClass = "rating-d";
       }
 
@@ -1307,10 +1376,10 @@ const groupedDirectives = categories.map((cat) => ({
             .then(() => {
               copyBtn.classList.add("copied");
               const copyText = copyBtn.querySelector(".csp-copy-text");
-              if (copyText) copyText.textContent = "Copied!";
+              if (copyText) copyText.textContent = i18n.copied;
               setTimeout(() => {
                 copyBtn.classList.remove("copied");
-                if (copyText) copyText.textContent = "Copy";
+                if (copyText) copyText.textContent = i18n.copy;
               }, 2000);
             })
             .catch((err) => {

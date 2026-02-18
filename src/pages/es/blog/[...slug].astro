@@ -1,0 +1,24 @@
+---
+/**
+ * Página de Post — ruta ES `/es/blog/[slug]/`.
+ * Mantiene getStaticPaths, delega renderizado a BlogPost.
+ */
+import BlogPost from "@components/pages/BlogPost.astro";
+import { getPostsForLocale, type LocalizedPost } from "@utils/blog";
+
+export async function getStaticPaths() {
+  const entries = await getPostsForLocale("es");
+  return entries.map(({ post, isFallback }) => ({
+    params: { slug: post.data.slug },
+    props: { post, isFallback },
+  }));
+}
+
+type Props = LocalizedPost;
+const { post, isFallback } = Astro.props;
+---
+
+<BlogPost
+  post={post}
+  isFallback={isFallback}
+/>
