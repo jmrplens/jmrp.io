@@ -5,6 +5,7 @@
  * from the content collection.
  */
 
+import { defaultLocale, type Locale } from "@i18n/config";
 import type { CollectionEntry } from "astro:content";
 import { getEntry } from "astro:content";
 
@@ -12,15 +13,23 @@ import { getEntry } from "astro:content";
 export type CVData = CollectionEntry<"cv">["data"];
 
 /**
- * Reads and parses the CV data from the YAML file.
- * Located at: src/content/cv/main.yaml
+ * Reads and parses the CV data from the locale-specific YAML file.
+ * Files located at: src/content/cv/{locale}.yaml
  *
+ * @param locale - The locale to load (defaults to `defaultLocale`).
  * @returns {Promise<CVData>} Array of CV sections and their contents.
  */
-export async function getCVData(): Promise<CVData> {
-  const entry = await getEntry("cv", "main");
+export async function getCVData(
+  locale: Locale = defaultLocale,
+): Promise<CVData> {
+  const entry = await getEntry("cv", locale);
   if (!entry) {
-    throw new Error("Could not find CV data");
+    // Fallback to default locale if requested locale not found
+    if (locale !== defaultLocale) {
+      const fallback = await getEntry("cv", defaultLocale);
+      if (fallback) return fallback.data;
+    }
+    throw new Error(`Could not find CV data for locale: ${locale}`);
   }
   return entry.data;
 }

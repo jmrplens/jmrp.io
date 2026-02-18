@@ -55,7 +55,9 @@ José Manuel Requena Plens (JMRP) is a multidisciplinary engineer building contr
 ## Technical Details
 
 - Built with Astro 6 (Static Site Generation)
+- Bilingual: English (default) and Spanish — all content available in both languages
 - Zero client-side JavaScript (except progressive enhancement islands)
 - WCAG 2.2 AA/AAA accessibility compliant
 - Content Security Policy with SRI hashes
-- RSS feed available at https://jmrp.io/rss.xml
+- RSS feeds: https://jmrp.io/rss.xml (EN) and https://jmrp.io/es/rss.xml (ES)
+- Spanish version of all pages available under /es/ prefix

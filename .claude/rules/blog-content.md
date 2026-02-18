@@ -31,5 +31,7 @@ coverImage: ./cover.webp # Optional
 - `description` must be ≤ 155 characters (enforced by Playwright tests)
 - `<Mermaid>` requires `ariaLabel` prop
 - References auto-collected from markdown links and `<a>` tags
+- Blog content is in English only — UI chrome is translated via `t()`
+- Code snippets stay in English
 - No `<script>` tags in MDX (breaks CSP)
 - No inline styles

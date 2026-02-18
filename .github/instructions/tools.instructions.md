@@ -75,6 +75,7 @@ const componentMap: Record<string, any> = {
 - **Privacy-first** — All processing happens client-side
 - **WCAG AA** — Tools must be keyboard accessible with proper ARIA
 - **Dark mode** — CSS custom properties for theming
+- **i18n** — Tool-specific strings in `src/i18n/translations/{en,es}/tools.ts`, inject into JS via `data-*` attributes
 
 ## Categories (ordered)
 

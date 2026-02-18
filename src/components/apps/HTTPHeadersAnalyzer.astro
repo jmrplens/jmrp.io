@@ -7,13 +7,201 @@
  * Usage:
  * <HTTPHeadersAnalyzer title="HTTP Security Headers Analyzer" />
  */
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslations } from "@i18n/utils";
+
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
 
 interface Props {
   title?: string;
 }
 
-const { title = "HTTP Security Headers Analyzer" } = Astro.props;
+const { title = t("tools.httpHeadersAnalyzer.title") } = Astro.props;
 const uniqueId = `hdr-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
+
+/** Translations passed to the inline script via define:vars. */
+const i18n = {
+  // Fetch status
+  fetching: t("tools.httpHeadersAnalyzer.fetching"),
+  fetchingHeaders: t("tools.httpHeadersAnalyzer.fetchingHeaders"),
+  noHeadersReturned: t("tools.httpHeadersAnalyzer.noHeadersReturned"),
+  fetchedHeaders: t("tools.httpHeadersAnalyzer.fetchedHeaders"),
+  failedToFetch: t("tools.httpHeadersAnalyzer.failedToFetch"),
+  failedToFetchDefault: t("tools.httpHeadersAnalyzer.failedToFetchDefault"),
+  fetch: t("tools.httpHeadersAnalyzer.fetch"),
+  // Section titles
+  cookieSecurity: t("tools.httpHeadersAnalyzer.cookieSecurity"),
+  informationLeakage: t("tools.httpHeadersAnalyzer.informationLeakage"),
+  crossHeaderConsistency: t("tools.httpHeadersAnalyzer.crossHeaderConsistency"),
+  inconsistencyDetected: t("tools.httpHeadersAnalyzer.inconsistencyDetected"),
+  // Summary
+  summaryPresent: t("tools.httpHeadersAnalyzer.present"),
+  summaryMissing: t("tools.httpHeadersAnalyzer.summaryMissing"),
+  summaryCookieAnalyzed: t("tools.httpHeadersAnalyzer.cookieAnalyzed"),
+  summaryCookiesAnalyzed: t("tools.httpHeadersAnalyzer.cookiesAnalyzed"),
+  summaryInfoLeaks: t("tools.httpHeadersAnalyzer.infoLeaksDetected"),
+  summaryInconsistency: t("tools.httpHeadersAnalyzer.inconsistencyCount"),
+  summaryInconsistencies: t("tools.httpHeadersAnalyzer.inconsistenciesCount"),
+  // Result labels
+  recommended: t("tools.httpHeadersAnalyzer.recommended"),
+  learnMore: t("tools.httpHeadersAnalyzer.learnMore"),
+  cspBuilderTool: t("tools.httpHeadersAnalyzer.cspBuilderTool"),
+  // Severity labels
+  severityCritical: t("tools.httpHeadersAnalyzer.severityCritical"),
+  severityHigh: t("tools.httpHeadersAnalyzer.severityHigh"),
+  severityMedium: t("tools.httpHeadersAnalyzer.severityMedium"),
+  severityLow: t("tools.httpHeadersAnalyzer.severityLow"),
+  severityInfo: t("tools.httpHeadersAnalyzer.severityInfo"),
+  severityCookie: t("tools.httpHeadersAnalyzer.severityCookie"),
+  // CSP
+  cspDesc: t("tools.httpHeadersAnalyzer.cspDesc"),
+  cspMissing: t("tools.httpHeadersAnalyzer.cspMissing"),
+  cspDefaultSrcNone: t("tools.httpHeadersAnalyzer.cspDefaultSrcNone"),
+  cspDefaultSrcSelf: t("tools.httpHeadersAnalyzer.cspDefaultSrcSelf"),
+  cspMissingDefaultSrc: t("tools.httpHeadersAnalyzer.cspMissingDefaultSrc"),
+  cspUnsafeInline: t("tools.httpHeadersAnalyzer.cspUnsafeInline"),
+  cspUnsafeEval: t("tools.httpHeadersAnalyzer.cspUnsafeEval"),
+  cspDangerousSource: t("tools.httpHeadersAnalyzer.cspDangerousSource"),
+  cspTrustsAllHttps: t("tools.httpHeadersAnalyzer.cspTrustsAllHttps"),
+  cspCdnBypass: t("tools.httpHeadersAnalyzer.cspCdnBypass"),
+  cspUsesNonces: t("tools.httpHeadersAnalyzer.cspUsesNonces"),
+  cspMissingNonces: t("tools.httpHeadersAnalyzer.cspMissingNonces"),
+  cspStrictDynamic: t("tools.httpHeadersAnalyzer.cspStrictDynamic"),
+  cspMissingStrictDynamic: t(
+    "tools.httpHeadersAnalyzer.cspMissingStrictDynamic",
+  ),
+  cspObjectSrcNone: t("tools.httpHeadersAnalyzer.cspObjectSrcNone"),
+  cspMissingObjectSrc: t("tools.httpHeadersAnalyzer.cspMissingObjectSrc"),
+  cspBaseUriRestricted: t("tools.httpHeadersAnalyzer.cspBaseUriRestricted"),
+  cspMissingBaseUri: t("tools.httpHeadersAnalyzer.cspMissingBaseUri"),
+  cspFormActionDefined: t("tools.httpHeadersAnalyzer.cspFormActionDefined"),
+  cspMissingFormAction: t("tools.httpHeadersAnalyzer.cspMissingFormAction"),
+  cspFrameAncestorsDefined: t(
+    "tools.httpHeadersAnalyzer.cspFrameAncestorsDefined",
+  ),
+  cspMissingFrameAncestors: t(
+    "tools.httpHeadersAnalyzer.cspMissingFrameAncestors",
+  ),
+  cspUpgradeInsecure: t("tools.httpHeadersAnalyzer.cspUpgradeInsecure"),
+  cspMissingUpgradeInsecure: t(
+    "tools.httpHeadersAnalyzer.cspMissingUpgradeInsecure",
+  ),
+  cspReportingConfigured: t("tools.httpHeadersAnalyzer.cspReportingConfigured"),
+  cspNoReporting: t("tools.httpHeadersAnalyzer.cspNoReporting"),
+  cspTrustedTypes: t("tools.httpHeadersAnalyzer.cspTrustedTypes"),
+  // HSTS
+  hstsDesc: t("tools.httpHeadersAnalyzer.hstsDesc"),
+  hstsMissing: t("tools.httpHeadersAnalyzer.hstsMissing"),
+  hstsMaxAgeZero: t("tools.httpHeadersAnalyzer.hstsMaxAgeZero"),
+  hstsMaxAge2Years: t("tools.httpHeadersAnalyzer.hstsMaxAge2Years"),
+  hstsMaxAge1Year: t("tools.httpHeadersAnalyzer.hstsMaxAge1Year"),
+  hstsMaxAgeLow: t("tools.httpHeadersAnalyzer.hstsMaxAgeLow"),
+  hstsIncludeSubDomains: t("tools.httpHeadersAnalyzer.hstsIncludeSubDomains"),
+  hstsMissingIncludeSubDomains: t(
+    "tools.httpHeadersAnalyzer.hstsMissingIncludeSubDomains",
+  ),
+  hstsPreload: t("tools.httpHeadersAnalyzer.hstsPreload"),
+  hstsMissingPreload: t("tools.httpHeadersAnalyzer.hstsMissingPreload"),
+  // X-Content-Type-Options
+  xctDesc: t("tools.httpHeadersAnalyzer.xctDesc"),
+  xctMissing: t("tools.httpHeadersAnalyzer.xctMissing"),
+  xctCorrect: t("tools.httpHeadersAnalyzer.xctCorrect"),
+  xctWrong: t("tools.httpHeadersAnalyzer.xctWrong"),
+  // X-Frame-Options
+  xfoDesc: t("tools.httpHeadersAnalyzer.xfoDesc"),
+  xfoMissing: t("tools.httpHeadersAnalyzer.xfoMissing"),
+  xfoDeny: t("tools.httpHeadersAnalyzer.xfoDeny"),
+  xfoSameorigin: t("tools.httpHeadersAnalyzer.xfoSameorigin"),
+  xfoUnexpected: t("tools.httpHeadersAnalyzer.xfoUnexpected"),
+  // Referrer-Policy
+  rpDesc: t("tools.httpHeadersAnalyzer.rpDesc"),
+  rpMissing: t("tools.httpHeadersAnalyzer.rpMissing"),
+  rpSecure: t("tools.httpHeadersAnalyzer.rpSecure"),
+  rpAcceptable: t("tools.httpHeadersAnalyzer.rpAcceptable"),
+  rpUnsafeUrl: t("tools.httpHeadersAnalyzer.rpUnsafeUrl"),
+  rpConsider: t("tools.httpHeadersAnalyzer.rpConsider"),
+  // Permissions-Policy
+  ppDesc: t("tools.httpHeadersAnalyzer.ppDesc"),
+  ppMissing: t("tools.httpHeadersAnalyzer.ppMissing"),
+  ppDisabled: t("tools.httpHeadersAnalyzer.ppDisabled"),
+  ppMissingRestriction: t("tools.httpHeadersAnalyzer.ppMissingRestriction"),
+  // X-XSS-Protection
+  xxpDesc: t("tools.httpHeadersAnalyzer.xxpDesc"),
+  xxpAbsentCorrect: t("tools.httpHeadersAnalyzer.xxpAbsentCorrect"),
+  xxpDisabledCorrect: t("tools.httpHeadersAnalyzer.xxpDisabledCorrect"),
+  xxpShouldBeZero: t("tools.httpHeadersAnalyzer.xxpShouldBeZero"),
+  xxpMissingNoCsp: t("tools.httpHeadersAnalyzer.xxpMissingNoCsp"),
+  xxpDisabledNoCsp: t("tools.httpHeadersAnalyzer.xxpDisabledNoCsp"),
+  xxpLegacyEnabled: t("tools.httpHeadersAnalyzer.xxpLegacyEnabled"),
+  xxpConsiderCsp: t("tools.httpHeadersAnalyzer.xxpConsiderCsp"),
+  // COOP
+  coopDesc: t("tools.httpHeadersAnalyzer.coopDesc"),
+  coopMissing: t("tools.httpHeadersAnalyzer.coopMissing"),
+  coopSameOrigin: t("tools.httpHeadersAnalyzer.coopSameOrigin"),
+  coopPartialIsolation: t("tools.httpHeadersAnalyzer.coopPartialIsolation"),
+  coopConsiderSameOrigin: t("tools.httpHeadersAnalyzer.coopConsiderSameOrigin"),
+  coopUnexpected: t("tools.httpHeadersAnalyzer.coopUnexpected"),
+  // CORP
+  corpDesc: t("tools.httpHeadersAnalyzer.corpDesc"),
+  corpMissing: t("tools.httpHeadersAnalyzer.corpMissing"),
+  corpSameOrigin: t("tools.httpHeadersAnalyzer.corpSameOrigin"),
+  corpSameSite: t("tools.httpHeadersAnalyzer.corpSameSite"),
+  corpConsiderSameOrigin2: t(
+    "tools.httpHeadersAnalyzer.corpConsiderSameOrigin2",
+  ),
+  corpCrossOrigin: t("tools.httpHeadersAnalyzer.corpCrossOrigin"),
+  corpConsiderSameOrigin5: t(
+    "tools.httpHeadersAnalyzer.corpConsiderSameOrigin5",
+  ),
+  // COEP
+  coepDesc: t("tools.httpHeadersAnalyzer.coepDesc"),
+  coepMissing: t("tools.httpHeadersAnalyzer.coepMissing"),
+  coepRequireCorp: t("tools.httpHeadersAnalyzer.coepRequireCorp"),
+  coepCredentialless: t("tools.httpHeadersAnalyzer.coepCredentialless"),
+  coepConsiderRequireCorp: t(
+    "tools.httpHeadersAnalyzer.coepConsiderRequireCorp",
+  ),
+  coepUnexpected: t("tools.httpHeadersAnalyzer.coepUnexpected"),
+  // Info leak descriptions
+  serverDesc: t("tools.httpHeadersAnalyzer.serverDesc"),
+  xPoweredByDesc: t("tools.httpHeadersAnalyzer.xPoweredByDesc"),
+  xAspnetVersionDesc: t("tools.httpHeadersAnalyzer.xAspnetVersionDesc"),
+  xAspnetMvcVersionDesc: t("tools.httpHeadersAnalyzer.xAspnetMvcVersionDesc"),
+  xGeneratorDesc: t("tools.httpHeadersAnalyzer.xGeneratorDesc"),
+  // Info leak checks
+  serverNotExposed: t("tools.httpHeadersAnalyzer.serverNotExposed"),
+  serverProxyCdn: t("tools.httpHeadersAnalyzer.serverProxyCdn"),
+  serverVersionExposed: t("tools.httpHeadersAnalyzer.serverVersionExposed"),
+  serverNameExposed: t("tools.httpHeadersAnalyzer.serverNameExposed"),
+  xPoweredByExposed: t("tools.httpHeadersAnalyzer.xPoweredByExposed"),
+  xAspnetVersionExposed: t("tools.httpHeadersAnalyzer.xAspnetVersionExposed"),
+  xAspnetMvcVersionExposed: t(
+    "tools.httpHeadersAnalyzer.xAspnetMvcVersionExposed",
+  ),
+  xGeneratorExposed: t("tools.httpHeadersAnalyzer.xGeneratorExposed"),
+  // Cookie security
+  cookieMissingSecure: t("tools.httpHeadersAnalyzer.cookieMissingSecure"),
+  cookieMissingHttpOnly: t("tools.httpHeadersAnalyzer.cookieMissingHttpOnly"),
+  cookieMissingSameSite: t("tools.httpHeadersAnalyzer.cookieMissingSameSite"),
+  cookieSameSiteNoneNoSecure: t(
+    "tools.httpHeadersAnalyzer.cookieSameSiteNoneNoSecure",
+  ),
+  cookieHostPrefix: t("tools.httpHeadersAnalyzer.cookieHostPrefix"),
+  cookieSecurePrefix: t("tools.httpHeadersAnalyzer.cookieSecurePrefix"),
+  cookieAllPresent: t("tools.httpHeadersAnalyzer.cookieAllPresent"),
+  // Consistency
+  consistencyXfoNoCspFrameAncestors: t(
+    "tools.httpHeadersAnalyzer.consistencyXfoNoCspFrameAncestors",
+  ),
+  consistencyXxpNotZero: t("tools.httpHeadersAnalyzer.consistencyXxpNotZero"),
+  consistencyUpgradeNoHsts: t(
+    "tools.httpHeadersAnalyzer.consistencyUpgradeNoHsts",
+  ),
+  consistencyXfoContradictsFrameAncestors: t(
+    "tools.httpHeadersAnalyzer.consistencyXfoContradictsFrameAncestors",
+  ),
+};
 
 const sampleHeaders = `content-security-policy: default-src 'none'; script-src 'self' 'nonce-MASKED' 'strict-dynamic'; style-src 'self' 'nonce-MASKED'; img-src 'self' data: https://*.jmrp.io; font-src 'self'; connect-src 'self' https://api.github.com https://cloudflareinsights.com https://*.cloudflareinsights.com; media-src 'self'; manifest-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests; report-uri /csp-report
 strict-transport-security: max-age=63072000; includeSubDomains; preload
@@ -46,7 +234,7 @@ server: jmrp.io`;
           class="i-mdi:link-variant"
           aria-hidden="true"
         ></span>
-        Fetch from URL
+        {t("tools.httpHeadersAnalyzer.fetchFromUrl")}
       </label>
       <div class="hdr-url-row">
         <input
@@ -65,7 +253,7 @@ server: jmrp.io`;
             class="i-mdi:download"
             aria-hidden="true"
           ></span>
-          Fetch
+          {t("tools.httpHeadersAnalyzer.fetch")}
         </button>
       </div>
       <div
@@ -75,7 +263,7 @@ server: jmrp.io`;
       >
       </div>
       <div class="hdr-separator">
-        <span>or paste headers manually</span>
+        <span>{t("tools.httpHeadersAnalyzer.orPasteHeaders")}</span>
       </div>
     </div>
 
@@ -89,13 +277,13 @@ server: jmrp.io`;
           class="i-mdi:web"
           aria-hidden="true"
         ></span>
-        Response Headers
+        {t("tools.httpHeadersAnalyzer.responseHeaders")}
       </label>
       <textarea
         id={`${uniqueId}-input`}
         class="hdr-textarea"
         rows="10"
-        placeholder="Paste your HTTP response headers here..."
+        placeholder={t("tools.httpHeadersAnalyzer.pasteHeadersPlaceholder")}
         spellcheck="false"
         >{sampleHeaders}</textarea
       >
@@ -107,7 +295,7 @@ server: jmrp.io`;
           class="i-mdi:shield-search"
           aria-hidden="true"
         ></span>
-        Analyze Headers
+        {t("tools.httpHeadersAnalyzer.analyzeHeaders")}
       </button>
     </div>
 
@@ -171,10 +359,17 @@ server: jmrp.io`;
   </div>
 </div>
 
-<script is:inline define:vars={{ uniqueId }}>
+<script is:inline define:vars={{ uniqueId, i18n }}>
   (function () {
     const container = document.querySelector(`[data-hdr-id="${uniqueId}"]`);
     if (!container) return;
+
+    /** Replace `{key}` placeholders in a string with values from vars object. */
+    function tpl(str, vars) {
+      return str.replace(/\{(\w+)\}/g, function (_, k) {
+        return vars[k] != null ? vars[k] : "";
+      });
+    }
 
     const textarea = document.getElementById(`${uniqueId}-input`);
     const urlInput = document.getElementById(`${uniqueId}-url`);
@@ -201,10 +396,10 @@ server: jmrp.io`;
         if (!/^https?:\/\//.test(url)) url = "https://" + url;
 
         fetchBtn.disabled = true;
-        fetchBtn.textContent = "Fetching...";
+        fetchBtn.textContent = i18n.fetching;
         if (fetchStatus) {
           fetchStatus.hidden = false;
-          fetchStatus.textContent = "Fetching headers...";
+          fetchStatus.textContent = i18n.fetchingHeaders;
           fetchStatus.className = "hdr-fetch-status hdr-fetch-loading";
         }
 
@@ -215,35 +410,31 @@ server: jmrp.io`;
               lines.push(name + ": " + value);
             });
             if (lines.length === 0) {
-              throw new Error(
-                "No headers returned — CORS may be blocking access. Use curl instead.",
-              );
+              throw new Error(i18n.noHeadersReturned);
             }
             textarea.value = lines.join("\n");
             if (fetchStatus) {
-              fetchStatus.textContent =
-                "\u2713 Fetched " +
-                lines.length +
-                " headers. Note: browsers may hide some headers due to CORS. Use curl for complete results.";
+              fetchStatus.textContent = tpl(i18n.fetchedHeaders, {
+                count: lines.length,
+              });
               fetchStatus.className = "hdr-fetch-status hdr-fetch-warn";
             }
             analyze();
           })
           .catch(function (err) {
             if (fetchStatus) {
-              fetchStatus.textContent =
-                "\u2717 " +
-                (err.message || "Failed to fetch") +
-                ". Use curl -sI " +
-                url +
-                " to get full headers.";
+              fetchStatus.textContent = tpl(i18n.failedToFetch, {
+                msg: err.message || i18n.failedToFetchDefault,
+                url: url,
+              });
               fetchStatus.className = "hdr-fetch-status hdr-fetch-error";
             }
           })
           .finally(function () {
             fetchBtn.disabled = false;
             fetchBtn.innerHTML =
-              '<span class="i-mdi:download" aria-hidden="true"></span> Fetch';
+              '<span class="i-mdi:download" aria-hidden="true"></span> ' +
+              i18n.fetch;
           });
       });
 
@@ -257,9 +448,8 @@ server: jmrp.io`;
       {
         name: "content-security-policy",
         weight: 25,
-        severity: "critical",
-        description:
-          "Controls which resources can be loaded. Essential for preventing XSS and injection attacks.",
+        severity: i18n.severityCritical,
+        description: i18n.cspDesc,
         link: "/blog/003-implementing-content-security-policy-nginx/",
         toolLink: "/tools/csp-builder/",
         recommended:
@@ -268,46 +458,38 @@ server: jmrp.io`;
           if (!val)
             return {
               score: 0,
-              notes: [
-                "Missing \u2014 high XSS risk. Use the CSP Builder tool to generate a policy.",
-              ],
+              notes: [i18n.cspMissing],
             };
           var score = 5;
           var notes = [];
           // Core structure
           if (val.match(/default-src\s+'none'/)) {
             score += 6;
-            notes.push("default-src 'none' \u2713");
+            notes.push(i18n.cspDefaultSrcNone);
           } else if (val.match(/default-src\s+'self'/)) {
             score += 3;
-            notes.push(
-              "default-src 'self' \u2713 (consider 'none' for stricter policy)",
-            );
+            notes.push(i18n.cspDefaultSrcSelf);
           } else if (val.includes("default-src")) {
             score += 1;
           } else {
-            notes.push("Missing default-src fallback");
+            notes.push(i18n.cspMissingDefaultSrc);
           }
           // Script safety
           if (val.match(/script-src[^;]*'unsafe-inline'/)) {
             score -= 3;
-            notes.push(
-              "script-src 'unsafe-inline' \u2014 negates XSS protection",
-            );
+            notes.push(i18n.cspUnsafeInline);
           }
           if (val.includes("'unsafe-eval'")) {
             score -= 3;
-            notes.push("'unsafe-eval' \u2014 allows dynamic code execution");
+            notes.push(i18n.cspUnsafeEval);
           }
           // Wildcard / broad sources in script-src
           if (val.match(/script-src[^;]*(\s\*\s|data:|blob:)/)) {
             score -= 3;
-            notes.push("Dangerous source in script-src (wildcard/data:/blob:)");
+            notes.push(i18n.cspDangerousSource);
           }
           if (val.match(/script-src[^;]*https:/)) {
-            notes.push(
-              "script-src trusts all HTTPS \u2014 prefer explicit origins or nonces",
-            );
+            notes.push(i18n.cspTrustsAllHttps);
           }
           // CDN bypass warning
           if (
@@ -315,79 +497,63 @@ server: jmrp.io`;
               /cdn\.jsdelivr\.net|cdnjs\.cloudflare\.com|unpkg\.com|googleapis\.com/,
             )
           ) {
-            notes.push(
-              "CDN allowlisting can be bypassed via JSONP \u2014 prefer nonces",
-            );
+            notes.push(i18n.cspCdnBypass);
           }
           // Strict CSP
           if (val.includes("nonce-")) {
             score += 4;
-            notes.push("Uses nonces \u2713");
+            notes.push(i18n.cspUsesNonces);
           } else {
-            notes.push(
-              "Missing nonces \u2014 consider nonces for stricter inline control (+4 pts)",
-            );
+            notes.push(i18n.cspMissingNonces);
           }
           if (val.includes("'strict-dynamic'")) {
             score += 3;
-            notes.push("strict-dynamic \u2713");
+            notes.push(i18n.cspStrictDynamic);
           } else if (
             val.includes("nonce-") ||
             val.match(/'sha(256|384|512)-/)
           ) {
-            notes.push(
-              "Missing strict-dynamic \u2014 recommended with nonces for CSP Level 3 (+3 pts)",
-            );
+            notes.push(i18n.cspMissingStrictDynamic);
           }
           // Hardening directives
           if (val.match(/object-src\s+'none'/)) {
             score += 2;
-            notes.push("object-src 'none' \u2713");
+            notes.push(i18n.cspObjectSrcNone);
           } else if (!val.includes("object-src")) {
-            notes.push(
-              "Missing object-src 'none' \u2014 plugin bypass vector (+2 pts)",
-            );
+            notes.push(i18n.cspMissingObjectSrc);
           }
           if (val.match(/base-uri\s+'(none|self)'/)) {
             score += 1;
-            notes.push("base-uri restricted \u2713");
+            notes.push(i18n.cspBaseUriRestricted);
           } else if (!val.includes("base-uri")) {
-            notes.push(
-              "Missing base-uri \u2014 vulnerable to base tag injection (+1 pt)",
-            );
+            notes.push(i18n.cspMissingBaseUri);
           }
           if (val.includes("form-action")) {
             score += 1;
-            notes.push("form-action defined \u2713");
+            notes.push(i18n.cspFormActionDefined);
           } else {
-            notes.push(
-              "Missing form-action \u2014 forms can submit to attacker servers (+1 pt)",
-            );
+            notes.push(i18n.cspMissingFormAction);
           }
           if (val.includes("frame-ancestors")) {
             score += 1;
-            notes.push("frame-ancestors defined \u2713");
+            notes.push(i18n.cspFrameAncestorsDefined);
           } else {
-            notes.push(
-              "Missing frame-ancestors \u2014 use 'none' to prevent framing (+1 pt)",
-            );
+            notes.push(i18n.cspMissingFrameAncestors);
           }
           if (val.includes("upgrade-insecure-requests")) {
             score += 1;
-            notes.push("upgrade-insecure-requests \u2713");
+            notes.push(i18n.cspUpgradeInsecure);
           } else {
-            notes.push("Missing upgrade-insecure-requests (+1 pt)");
+            notes.push(i18n.cspMissingUpgradeInsecure);
           }
           if (val.includes("report-to") || val.includes("report-uri")) {
             score += 1;
-            notes.push("CSP reporting configured \u2713");
+            notes.push(i18n.cspReportingConfigured);
           } else {
-            notes.push(
-              "No CSP reporting \u2014 add report-uri or report-to for violation monitoring (+1 pt)",
-            );
+            notes.push(i18n.cspNoReporting);
           }
           if (val.includes("require-trusted-types-for")) {
-            notes.push("Trusted Types enabled \u2713");
+            notes.push(i18n.cspTrustedTypes);
           }
           return { score: Math.min(Math.max(score, 0), 25), notes: notes };
         },
@@ -395,15 +561,14 @@ server: jmrp.io`;
       {
         name: "strict-transport-security",
         weight: 15,
-        severity: "high",
-        description:
-          "Enforces HTTPS connections. Prevents protocol downgrade and cookie hijacking attacks.",
+        severity: i18n.severityHigh,
+        description: i18n.hstsDesc,
         recommended: "max-age=63072000; includeSubDomains; preload",
         check: function (val) {
           if (!val)
             return {
               score: 0,
-              notes: ["Missing \u2014 vulnerable to downgrade attacks"],
+              notes: [i18n.hstsMissing],
             };
           var score = 8;
           var notes = [];
@@ -413,34 +578,30 @@ server: jmrp.io`;
             if (maxAge === 0) {
               return {
                 score: 1,
-                notes: ["max-age=0 effectively disables HSTS"],
+                notes: [i18n.hstsMaxAgeZero],
               };
             }
             if (maxAge >= 63072000) {
               score += 3;
-              notes.push("max-age \u2265 2 years \u2713");
+              notes.push(i18n.hstsMaxAge2Years);
             } else if (maxAge >= 31536000) {
               score += 2;
-              notes.push(
-                "max-age \u2265 1 year \u2014 increase to 63072000 for 2 years (+1 pt)",
-              );
+              notes.push(i18n.hstsMaxAge1Year);
             } else {
-              notes.push("max-age should be \u2265 31536000 (1 year)");
+              notes.push(i18n.hstsMaxAgeLow);
             }
           }
           if (val.includes("includeSubDomains")) {
             score += 2;
-            notes.push("includeSubDomains \u2713");
+            notes.push(i18n.hstsIncludeSubDomains);
           } else {
-            notes.push("Missing includeSubDomains (+2 pts)");
+            notes.push(i18n.hstsMissingIncludeSubDomains);
           }
           if (val.includes("preload")) {
             score += 2;
-            notes.push("preload \u2713 (submit to hstspreload.org)");
+            notes.push(i18n.hstsPreload);
           } else {
-            notes.push(
-              "Missing preload \u2014 add to be eligible for HSTS preload list (+2 pts)",
-            );
+            notes.push(i18n.hstsMissingPreload);
           }
           return { score: Math.min(score, 15), notes: notes };
         },
@@ -448,60 +609,56 @@ server: jmrp.io`;
       {
         name: "x-content-type-options",
         weight: 10,
-        severity: "medium",
-        description:
-          "Prevents MIME type sniffing. Must be set to 'nosniff'. Stops browsers from interpreting files as a different MIME type.",
+        severity: i18n.severityMedium,
+        description: i18n.xctDesc,
         recommended: "nosniff",
         check: function (val) {
           if (!val)
             return {
               score: 0,
-              notes: ["Missing \u2014 browser may sniff MIME types"],
+              notes: [i18n.xctMissing],
             };
           if (val.trim() === "nosniff")
-            return { score: 10, notes: ["Correctly set to nosniff \u2713"] };
-          return { score: 2, notes: ["Should be exactly 'nosniff'"] };
+            return { score: 10, notes: [i18n.xctCorrect] };
+          return { score: 2, notes: [i18n.xctWrong] };
         },
       },
       {
         name: "x-frame-options",
         weight: 8,
-        severity: "medium",
-        description:
-          "Prevents clickjacking by controlling iframe embedding. CSP frame-ancestors is the modern replacement.",
+        severity: i18n.severityMedium,
+        description: i18n.xfoDesc,
         recommended: "DENY",
         check: function (val) {
           if (!val)
             return {
               score: 0,
-              notes: [
-                "Missing \u2014 consider adding or using CSP frame-ancestors",
-              ],
+              notes: [i18n.xfoMissing],
             };
           if (val.trim().toUpperCase() === "DENY")
-            return { score: 8, notes: ["Set to DENY \u2713"] };
+            return { score: 8, notes: [i18n.xfoDeny] };
           if (val.trim().toUpperCase() === "SAMEORIGIN")
             return {
               score: 6,
-              notes: [
-                "Set to SAMEORIGIN \u2014 DENY is more restrictive (+2 pts)",
-              ],
+              notes: [i18n.xfoSameorigin],
             };
-          return { score: 2, notes: ["Unexpected value: " + val] };
+          return {
+            score: 2,
+            notes: [tpl(i18n.xfoUnexpected, { val: val })],
+          };
         },
       },
       {
         name: "referrer-policy",
         weight: 8,
-        severity: "medium",
-        description:
-          "Controls how much referrer information is sent with requests. Prevents leaking sensitive URL paths to third parties.",
+        severity: i18n.severityMedium,
+        description: i18n.rpDesc,
         recommended: "strict-origin-when-cross-origin",
         check: function (val) {
           if (!val)
             return {
               score: 0,
-              notes: ["Missing \u2014 full URL may leak in Referer header"],
+              notes: [i18n.rpMissing],
             };
           var good = [
             "no-referrer",
@@ -512,35 +669,32 @@ server: jmrp.io`;
           if (good.includes(val.trim()))
             return {
               score: 8,
-              notes: ["Secure policy: " + val.trim() + " \u2713"],
+              notes: [tpl(i18n.rpSecure, { val: val.trim() })],
             };
           if (val.trim() === "no-referrer-when-downgrade")
             return {
               score: 5,
-              notes: [
-                "Acceptable but 'strict-origin-when-cross-origin' is preferred (+3 pts)",
-              ],
+              notes: [i18n.rpAcceptable],
             };
           if (val.trim() === "unsafe-url")
             return {
               score: 0,
-              notes: ["unsafe-url \u2014 full URL leaked on all requests"],
+              notes: [i18n.rpUnsafeUrl],
             };
-          return { score: 2, notes: ["Consider a more restrictive policy"] };
+          return { score: 2, notes: [i18n.rpConsider] };
         },
       },
       {
         name: "permissions-policy",
         weight: 8,
-        severity: "low",
-        description:
-          "Controls which browser features (camera, mic, geolocation, etc.) can be used. Reduces attack surface from embedded content.",
+        severity: i18n.severityLow,
+        description: i18n.ppDesc,
         recommended: "camera=(), microphone=(), geolocation=(), payment=()",
         check: function (val) {
           if (!val)
             return {
               score: 0,
-              notes: ["Missing \u2014 browser features unrestricted"],
+              notes: [i18n.ppMissing],
             };
           var score = 4;
           var notes = [];
@@ -556,12 +710,12 @@ server: jmrp.io`;
               f.split("=")[0].slice(1);
             if (val.includes(f)) {
               score += 1;
-              notes.push(featureName + " disabled \u2713");
+              notes.push(tpl(i18n.ppDisabled, { feature: featureName }));
             } else {
               notes.push(
-                "Missing " +
-                  featureName.toLowerCase() +
-                  "=() restriction (+1 pt)",
+                tpl(i18n.ppMissingRestriction, {
+                  feature: featureName.toLowerCase(),
+                }),
               );
             }
           });
@@ -571,9 +725,8 @@ server: jmrp.io`;
       {
         name: "x-xss-protection",
         weight: 3,
-        severity: "info",
-        description:
-          "Legacy XSS filter. Should be '0' (disabled) when CSP is present. If no CSP, setting '1; mode=block' provides basic protection.",
+        severity: i18n.severityInfo,
+        description: i18n.xxpDesc,
         recommended: "0",
         // This check receives hasCsp as second arg from analyze()
         check: function (val, hasCsp) {
@@ -582,130 +735,107 @@ server: jmrp.io`;
             if (!val)
               return {
                 score: 3,
-                notes: [
-                  "Absent \u2014 correct, CSP provides superior protection \u2713",
-                ],
+                notes: [i18n.xxpAbsentCorrect],
               };
             if (val.trim() === "0")
               return {
                 score: 3,
-                notes: ["Correctly disabled \u2713 (CSP replaces this)"],
+                notes: [i18n.xxpDisabledCorrect],
               };
             return {
               score: 1,
-              notes: [
-                "Should be '0' when CSP is present \u2014 the XSS auditor can introduce vulnerabilities",
-              ],
+              notes: [i18n.xxpShouldBeZero],
             };
           }
           // No CSP: x-xss-protection becomes more relevant
           if (!val)
             return {
               score: 0,
-              notes: ["Missing and no CSP \u2014 no XSS protection at all"],
+              notes: [i18n.xxpMissingNoCsp],
             };
           if (val.trim() === "0")
             return {
               score: 1,
-              notes: [
-                "Disabled but no CSP set \u2014 consider adding CSP or '1; mode=block'",
-              ],
+              notes: [i18n.xxpDisabledNoCsp],
             };
           if (val.trim() === "1; mode=block")
             return {
               score: 2,
-              notes: [
-                "Legacy filter enabled \u2014 add CSP for proper protection",
-              ],
+              notes: [i18n.xxpLegacyEnabled],
             };
           return {
             score: 1,
-            notes: ["Consider adding CSP for robust protection"],
+            notes: [i18n.xxpConsiderCsp],
           };
         },
       },
       {
         name: "cross-origin-opener-policy",
         weight: 8,
-        severity: "medium",
-        description:
-          "Isolates the browsing context from cross-origin popups. Prevents Spectre-type side-channel attacks.",
+        severity: i18n.severityMedium,
+        description: i18n.coopDesc,
         recommended: "same-origin",
         check: function (val) {
           if (!val)
             return {
               score: 0,
-              notes: ["Missing \u2014 browsing context not isolated"],
+              notes: [i18n.coopMissing],
             };
           if (val.trim() === "same-origin")
-            return { score: 8, notes: ["same-origin \u2713"] };
+            return { score: 8, notes: [i18n.coopSameOrigin] };
           if (val.trim() === "same-origin-allow-popups")
             return {
               score: 5,
-              notes: [
-                "Partial isolation \u2014 allows popups",
-                "Consider same-origin for full isolation (+3 pts)",
-              ],
+              notes: [i18n.coopPartialIsolation, i18n.coopConsiderSameOrigin],
             };
-          return { score: 2, notes: ["Unexpected value"] };
+          return { score: 2, notes: [i18n.coopUnexpected] };
         },
       },
       {
         name: "cross-origin-resource-policy",
         weight: 8,
-        severity: "medium",
-        description:
-          "Controls which origins can load your resources. Prevents data leaks via cross-origin requests.",
+        severity: i18n.severityMedium,
+        description: i18n.corpDesc,
         recommended: "same-origin",
         check: function (val) {
           if (!val)
             return {
               score: 0,
-              notes: ["Missing \u2014 resources can be loaded cross-origin"],
+              notes: [i18n.corpMissing],
             };
           if (val.trim() === "same-origin")
-            return { score: 8, notes: ["same-origin \u2713"] };
+            return { score: 8, notes: [i18n.corpSameOrigin] };
           if (val.trim() === "same-site")
             return {
               score: 6,
-              notes: [
-                "same-site \u2014 more restrictive than cross-origin",
-                "Consider same-origin for strictest protection (+2 pts)",
-              ],
+              notes: [i18n.corpSameSite, i18n.corpConsiderSameOrigin2],
             };
           return {
             score: 3,
-            notes: [
-              "cross-origin \u2014 least restrictive",
-              "Consider same-origin for strictest protection (+5 pts)",
-            ],
+            notes: [i18n.corpCrossOrigin, i18n.corpConsiderSameOrigin5],
           };
         },
       },
       {
         name: "cross-origin-embedder-policy",
         weight: 7,
-        severity: "medium",
-        description:
-          "Controls embedding of cross-origin resources. Required for SharedArrayBuffer and high-resolution timers.",
+        severity: i18n.severityMedium,
+        description: i18n.coepDesc,
         recommended: "require-corp",
         check: function (val) {
           if (!val)
             return {
               score: 0,
-              notes: ["Missing \u2014 cannot use SharedArrayBuffer"],
+              notes: [i18n.coepMissing],
             };
           if (val.trim() === "require-corp")
-            return { score: 7, notes: ["require-corp \u2713"] };
+            return { score: 7, notes: [i18n.coepRequireCorp] };
           if (val.trim() === "credentialless")
             return {
               score: 5,
-              notes: [
-                "credentialless \u2014 acceptable",
-                "Consider require-corp for full cross-origin isolation (+2 pts)",
-              ],
+              notes: [i18n.coepCredentialless, i18n.coepConsiderRequireCorp],
             };
-          return { score: 2, notes: ["Unexpected value"] };
+          return { score: 2, notes: [i18n.coepUnexpected] };
         },
       },
     ];
@@ -714,11 +844,10 @@ server: jmrp.io`;
     var infoLeakHeaders = [
       {
         name: "server",
-        severity: "info",
-        description:
-          "Reveals server software and version. Helps attackers identify known vulnerabilities.",
+        severity: i18n.severityInfo,
+        description: i18n.serverDesc,
         check: function (val) {
-          if (!val) return { status: "good", notes: ["Not exposed \u2713"] };
+          if (!val) return { status: "good", notes: [i18n.serverNotExposed] };
           var proxies = [
             "cloudflare",
             "vercel",
@@ -743,77 +872,64 @@ server: jmrp.io`;
           if (isProxy)
             return {
               status: "good",
-              notes: [
-                "Proxy/CDN identified ('" +
-                  val +
-                  "') \u2014 no origin server exposed \u2713",
-              ],
+              notes: [tpl(i18n.serverProxyCdn, { val: val })],
             };
           if (/\d/.test(val))
             return {
               status: "warn",
-              notes: [
-                "Exposes server version ('" +
-                  val +
-                  "') \u2014 remove version number",
-              ],
+              notes: [tpl(i18n.serverVersionExposed, { val: val })],
             };
           return {
             status: "info",
-            notes: [
-              "Server name exposed ('" + val + "') \u2014 consider removing",
-            ],
+            notes: [tpl(i18n.serverNameExposed, { val: val })],
           };
         },
       },
       {
         name: "x-powered-by",
-        severity: "info",
-        description:
-          "Reveals backend technology. Should be removed to reduce information leakage.",
+        severity: i18n.severityInfo,
+        description: i18n.xPoweredByDesc,
         check: function (val) {
-          if (!val) return { status: "good", notes: ["Not exposed \u2713"] };
+          if (!val) return { status: "good", notes: [i18n.serverNotExposed] };
           return {
             status: "warn",
-            notes: [
-              "Exposes technology: '" + val + "' \u2014 remove this header",
-            ],
+            notes: [tpl(i18n.xPoweredByExposed, { val: val })],
           };
         },
       },
       {
         name: "x-aspnet-version",
-        severity: "info",
-        description: "Reveals ASP.NET version. Should be removed.",
+        severity: i18n.severityInfo,
+        description: i18n.xAspnetVersionDesc,
         check: function (val) {
           if (!val) return null;
           return {
             status: "warn",
-            notes: ["Exposes ASP.NET version: '" + val + "' \u2014 remove it"],
+            notes: [tpl(i18n.xAspnetVersionExposed, { val: val })],
           };
         },
       },
       {
         name: "x-aspnetmvc-version",
-        severity: "info",
-        description: "Reveals ASP.NET MVC version. Should be removed.",
+        severity: i18n.severityInfo,
+        description: i18n.xAspnetMvcVersionDesc,
         check: function (val) {
           if (!val) return null;
           return {
             status: "warn",
-            notes: ["Exposes ASP.NET MVC version \u2014 remove it"],
+            notes: [i18n.xAspnetMvcVersionExposed],
           };
         },
       },
       {
         name: "x-generator",
-        severity: "info",
-        description: "Reveals CMS or framework used (e.g., WordPress, Drupal).",
+        severity: i18n.severityInfo,
+        description: i18n.xGeneratorDesc,
         check: function (val) {
           if (!val) return null;
           return {
             status: "warn",
-            notes: ["Exposes generator: '" + val + "' \u2014 remove it"],
+            notes: [tpl(i18n.xGeneratorExposed, { val: val })],
           };
         },
       },
@@ -932,7 +1048,9 @@ server: jmrp.io`;
           var rec = document.createElement("div");
           rec.className = "hdr-recommended";
           rec.innerHTML =
-            '<span class="hdr-rec-label">Recommended:</span> <code>' +
+            '<span class="hdr-rec-label">' +
+            i18n.recommended +
+            "</span> <code>" +
             h.recommended +
             "</code>";
           card.appendChild(rec);
@@ -946,7 +1064,7 @@ server: jmrp.io`;
             li.textContent = n;
             if (n.includes("\u2713")) {
               li.className = "hdr-note-pass";
-            } else if (n.includes("Missing") || n.includes("pt)")) {
+            } else if (result.score < h.weight * 0.7) {
               li.className = "hdr-note-miss";
             }
             notes.appendChild(li);
@@ -962,14 +1080,14 @@ server: jmrp.io`;
             var link = document.createElement("a");
             link.className = "hdr-learn-more";
             link.href = h.link;
-            link.textContent = "Learn more \u2192";
+            link.textContent = i18n.learnMore;
             linksDiv.appendChild(link);
           }
           if (h.toolLink) {
             var toolLink = document.createElement("a");
             toolLink.className = "hdr-learn-more";
             toolLink.href = h.toolLink;
-            toolLink.textContent = "CSP Builder tool \u2192";
+            toolLink.textContent = i18n.cspBuilderTool;
             linksDiv.appendChild(toolLink);
           }
           card.appendChild(linksDiv);
@@ -983,7 +1101,7 @@ server: jmrp.io`;
       if (cookies.length > 0) {
         var cookieTitle = document.createElement("div");
         cookieTitle.className = "hdr-section-title";
-        cookieTitle.textContent = "Cookie Security";
+        cookieTitle.textContent = i18n.cookieSecurity;
         resultsEl.appendChild(cookieTitle);
 
         cookies.forEach(function (cookie) {
@@ -993,28 +1111,28 @@ server: jmrp.io`;
           var worstStatus = "good";
 
           if (!lc.includes("secure")) {
-            notes.push("Missing Secure flag \u2014 cookie sent over HTTP");
+            notes.push(i18n.cookieMissingSecure);
             worstStatus = "warn";
           }
           if (!lc.includes("httponly")) {
-            notes.push("Missing HttpOnly flag \u2014 accessible to JavaScript");
+            notes.push(i18n.cookieMissingHttpOnly);
             worstStatus = "warn";
           }
           if (!lc.includes("samesite")) {
-            notes.push("Missing SameSite attribute \u2014 CSRF risk");
+            notes.push(i18n.cookieMissingSameSite);
             worstStatus = "warn";
           }
           if (lc.includes("samesite=none") && !lc.includes("secure")) {
-            notes.push("SameSite=None requires Secure flag");
+            notes.push(i18n.cookieSameSiteNoneNoSecure);
             worstStatus = "warn";
           }
           if (cookieName.startsWith("__Host-")) {
-            notes.push("Uses __Host- prefix \u2713 (most secure)");
+            notes.push(i18n.cookieHostPrefix);
           } else if (cookieName.startsWith("__Secure-")) {
-            notes.push("Uses __Secure- prefix \u2713");
+            notes.push(i18n.cookieSecurePrefix);
           }
           if (notes.length === 0) {
-            notes.push("Secure, HttpOnly, SameSite all present \u2713");
+            notes.push(i18n.cookieAllPresent);
           }
 
           var card = document.createElement("div");
@@ -1039,7 +1157,7 @@ server: jmrp.io`;
 
           var sev = document.createElement("span");
           sev.className = "hdr-severity hdr-severity-medium";
-          sev.textContent = "cookie";
+          sev.textContent = i18n.severityCookie;
 
           hdr.appendChild(st);
           hdr.appendChild(n);
@@ -1079,7 +1197,7 @@ server: jmrp.io`;
       if (infoResults.length > 0) {
         var infoTitle = document.createElement("div");
         infoTitle.className = "hdr-section-title";
-        infoTitle.textContent = "Information Leakage";
+        infoTitle.textContent = i18n.informationLeakage;
         resultsEl.appendChild(infoTitle);
 
         infoResults.forEach(function (item) {
@@ -1106,7 +1224,7 @@ server: jmrp.io`;
 
           var sev = document.createElement("span");
           sev.className = "hdr-severity hdr-severity-info";
-          sev.textContent = "info";
+          sev.textContent = i18n.severityInfo;
 
           header.appendChild(status);
           header.appendChild(nameEl);
@@ -1141,27 +1259,21 @@ server: jmrp.io`;
         hasCsp &&
         !headers["content-security-policy"].includes("frame-ancestors")
       ) {
-        consistency.push(
-          "X-Frame-Options is set but CSP frame-ancestors is missing \u2014 add frame-ancestors for modern browsers",
-        );
+        consistency.push(i18n.consistencyXfoNoCspFrameAncestors);
       }
       if (
         hasCsp &&
         headers["x-xss-protection"] &&
         headers["x-xss-protection"].trim() !== "0"
       ) {
-        consistency.push(
-          "CSP is present but X-XSS-Protection is not '0' \u2014 disable the legacy auditor to avoid introducing vulnerabilities",
-        );
+        consistency.push(i18n.consistencyXxpNotZero);
       }
       if (
         !headers["strict-transport-security"] &&
         hasCsp &&
         headers["content-security-policy"].includes("upgrade-insecure-requests")
       ) {
-        consistency.push(
-          "upgrade-insecure-requests set in CSP but HSTS is missing \u2014 add HSTS for complete HTTPS enforcement",
-        );
+        consistency.push(i18n.consistencyUpgradeNoHsts);
       }
       if (
         headers["x-frame-options"] &&
@@ -1171,16 +1283,17 @@ server: jmrp.io`;
         headers["content-security-policy"].includes("frame-ancestors 'none'")
       ) {
         consistency.push(
-          "X-Frame-Options (" +
-            headers["x-frame-options"] +
-            ") contradicts CSP frame-ancestors 'none'",
+          i18n.consistencyXfoContradictsFrameAncestors.replace(
+            "{val}",
+            headers["x-frame-options"],
+          ),
         );
       }
 
       if (consistency.length > 0) {
         var conTitle = document.createElement("div");
         conTitle.className = "hdr-section-title";
-        conTitle.textContent = "Cross-Header Consistency";
+        conTitle.textContent = i18n.crossHeaderConsistency;
         resultsEl.appendChild(conTitle);
 
         consistency.forEach(function (msg) {
@@ -1196,7 +1309,7 @@ server: jmrp.io`;
           var label = document.createElement("span");
           label.className = "hdr-result-name";
           label.style.fontFamily = "inherit";
-          label.textContent = "Inconsistency detected";
+          label.textContent = i18n.inconsistencyDetected;
           hdr.appendChild(st);
           hdr.appendChild(label);
           card.appendChild(hdr);
@@ -1241,26 +1354,34 @@ server: jmrp.io`;
       if (summaryEl) {
         summaryEl.innerHTML =
           '<span class="hdr-sum-ok">' +
-          present +
-          " present</span> \u00B7 " +
+          tpl(i18n.summaryPresent, { count: present }) +
+          "</span> \u00B7 " +
           '<span class="hdr-sum-miss">' +
-          missing +
-          " missing</span>" +
+          tpl(i18n.summaryMissing, { count: missing }) +
+          "</span>" +
           (cookies.length > 0
             ? " \u00B7 <span>" +
-              cookies.length +
-              " cookie" +
-              (cookies.length > 1 ? "s" : "") +
-              " analyzed</span>"
+              tpl(
+                cookies.length > 1
+                  ? i18n.summaryCookiesAnalyzed
+                  : i18n.summaryCookieAnalyzed,
+                { count: cookies.length },
+              ) +
+              "</span>"
             : "") +
           (hasInfoLeak
-            ? ' \u00B7 <span class="hdr-sum-warn">Info leaks detected</span>'
+            ? ' \u00B7 <span class="hdr-sum-warn">' +
+              i18n.summaryInfoLeaks +
+              "</span>"
             : "") +
           (consistency.length > 0
             ? ' \u00B7 <span class="hdr-sum-warn">' +
-              consistency.length +
-              " inconsistenc" +
-              (consistency.length > 1 ? "ies" : "y") +
+              tpl(
+                consistency.length > 1
+                  ? i18n.summaryInconsistencies
+                  : i18n.summaryInconsistency,
+                { count: consistency.length },
+              ) +
               "</span>"
             : "");
       }

@@ -252,6 +252,21 @@ Before publishing your post:
 - **Slug:** You **MUST** define the `slug` property in the frontmatter.
   - This ensures the URL remains `/blog/post-slug/` regardless of the file prefix.
 
+## Bilingual Support (EN/ES)
+
+The site is bilingual, but **blog post content is in English only**. The translation system handles all UI chrome around posts:
+
+- **Translated automatically**: Dates, "Published on", "Updated on", "Read more", "Back to Blog", tag labels, ARIA labels, navigation, footer
+- **Not translated**: Post body text, code snippets, component content (e.g., Callout text)
+
+### What This Means for Authors
+
+- Write your post content in English
+- Code snippets stay in English (universal convention)
+- Component props like `title` in `<Callout>` are part of your content — write them in English
+- SEO metadata (`title`, `description`) in frontmatter is in English
+- The UI around your post will automatically appear in the user's selected language
+
 ## Required Frontmatter
 
 ```yaml

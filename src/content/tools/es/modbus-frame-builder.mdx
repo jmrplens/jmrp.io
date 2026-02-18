@@ -1,0 +1,581 @@
+---
+title: "Constructor de Tramas Modbus"
+slug: "modbus-frame-builder"
+description: "Construye y decodifica tramas Modbus RTU/TCP/ASCII con cálculo de CRC-16/LRC, interpretación de registros y visualización de bytes."
+subtitle: "Construye, decodifica e inspecciona tramas Modbus RTU/TCP/ASCII con cálculo automático de CRC-16 y LRC, interpretación de datos y generación de respuestas."
+icon: "i-mdi:chip"
+category: "embedded"
+tags: ["modbus", "rtu", "tcp", "industrial", "plc", "embebido", "serial"]
+appComponent: "ModbusFrameBuilder"
+lang: "es"
+---
+
+import {
+  TerminalSession,
+  TerminalSessionCommand,
+  TerminalSessionOutput,
+} from "@components/ui/terminal-session";
+
+<h2>Acerca de esta herramienta</h2>
+<p>
+  Construye tramas Modbus RTU, TCP y ASCII válidas para la comunicación con
+  dispositivos embebidos. La herramienta gestiona el cálculo de CRC-16 y LRC,
+  cabeceras MBAP, interpretación de valores de registros, generación de tramas
+  de respuesta y proporciona un desglose visual de cada byte de la trama con
+  segmentos codificados por colores.
+</p>
+
+<h3>Características</h3>
+<ul>
+  <li>
+    <strong>Tres protocolos</strong> — Modbus RTU (CRC-16), Modbus TCP (cabecera
+    MBAP) y Modbus ASCII (LRC)
+  </li>
+  <li>
+    <strong>11 function codes</strong> — Read Coils (01), Read Discrete Inputs
+    (02), Read Holding Registers (03), Read Input Registers (04), Write Single
+    Coil (05), Write Single Register (06), Read Exception Status (07),
+    Diagnostics (08), Write Multiple Coils (0F), Write Multiple Registers (10),
+    Read/Write Multiple Registers (17)
+  </li>
+  <li>
+    <strong>Decodificador de tramas</strong> — pega tramas en hexadecimal para
+    decodificar con autodetección de protocolo RTU/TCP, validación de CRC/LRC y
+    detección de respuestas de excepción
+  </li>
+  <li>
+    <strong>Interpretación de datos</strong> — decodifica datos de registros como
+    Unsigned Int 16, Signed Int 16, Unsigned Int 32 o Float 32 con selección de
+    orden de bytes (Big-Endian, Little-Endian, Mid Big-Endian, Mid
+    Little-Endian)
+  </li>
+  <li>
+    <strong>Constructor de respuestas</strong> — genera tramas de respuesta
+    válidas para cualquier function code, incluyendo respuestas de excepción con
+    todos los códigos de excepción estándar
+  </li>
+  <li>
+    <strong>Ayuda de formato de datos</strong> — introduce valores decimales y
+    conviértelos automáticamente a bytes hexadecimales, soportando uint16,
+    int16, uint32 y float32
+  </li>
+  <li>
+    <strong>Cambio de formato de dirección</strong> — alterna entre notación
+    base 0, base 1 y notación Modicon (4xxxx, 3xxxx) con conversión automática
+  </li>
+  <li>
+    <strong>Presets comunes</strong> — 8 ejemplos de tramas de carga rápida para
+    pruebas instantáneas
+  </li>
+  <li>
+    <strong>Formatos de copia</strong> — copia como hex con espacios, sin
+    espacios, array de C o literal de bytes de Python
+  </li>
+  <li>
+    <strong>Bytes codificados por colores</strong> — desglose visual con colores
+    distintos para slave/unit, function code, datos, CRC/LRC, protocolo y
+    segmentos de error
+  </li>
+  <li>
+    <strong>Enlace compartible</strong> — URL compartible que codifica la
+    configuración actual de la trama
+  </li>
+</ul>
+
+<h3>Cómo usar</h3>
+<h4>Modo construcción</h4>
+<ol>
+  <li>
+    Selecciona el modo <strong>Build Frame</strong> (por defecto)
+  </li>
+  <li>Elige el protocolo (RTU, TCP o ASCII)</li>
+  <li>
+    Configura la dirección del esclavo, el function code, la dirección de inicio
+    y la cantidad
+  </li>
+  <li>
+    Para funciones de escritura, introduce los datos en hexadecimal o usa la
+    ayuda de formato de datos para introducir valores decimales/float
+  </li>
+  <li>
+    La trama se genera automáticamente con CRC-16 (RTU), cabecera MBAP (TCP) o
+    LRC (ASCII)
+  </li>
+  <li>
+    Copia la trama en tu formato preferido usando los botones de copiar
+  </li>
+</ol>
+
+<h4>Modo decodificación</h4>
+<ol>
+  <li>
+    Selecciona el modo <strong>Decode Frame</strong>
+  </li>
+  <li>
+    Elige el protocolo o usa <strong>Auto-detect</strong>
+  </li>
+  <li>
+    Pega una trama en hexadecimal (p. ej., <code>01 03 04 00 0A 00 64 B2 62</code>)
+  </li>
+  <li>
+    Pulsa <strong>Decode</strong> o presiona Enter
+  </li>
+  <li>
+    Selecciona el formato de interpretación de datos (uint16, int16, float32,
+    etc.) para ver los valores de los registros
+  </li>
+</ol>
+
+<h4>Constructor de respuestas</h4>
+<ol>
+  <li>
+    Selecciona el modo <strong>Response Builder</strong>
+  </li>
+  <li>Elige el function code para la respuesta</li>
+  <li>
+    Introduce los datos de respuesta en bytes hexadecimales, o selecciona{" "}
+    <strong>Exception Response</strong> para construir una trama de error
+  </li>
+</ol>
+
+<h3>Visión general del protocolo Modbus</h3>
+<p>
+  Modbus es un protocolo de comunicación serie desarrollado por Modicon en 1979
+  para dispositivos industriales (PLCs, sensores, actuadores). Sigue una
+  arquitectura maestro/esclavo donde el maestro inicia las solicitudes y los
+  esclavos responden.
+</p>
+
+<h4>Estructuras de trama</h4>
+<table>
+  <thead>
+    <tr>
+      <th>Protocolo</th>
+      <th>Estructura de trama</th>
+      <th>Verificación de error</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        <strong>RTU</strong>
+      </td>
+      <td>
+        <code>{"[Slave] [FC] [Data...] [CRC Lo] [CRC Hi]"}</code>
+      </td>
+      <td>CRC-16</td>
+    </tr>
+    <tr>
+      <td>
+        <strong>TCP</strong>
+      </td>
+      <td>
+        <code>
+          {"[Transaction ID] [Protocol ID] [Length] [Unit ID] [FC] [Data...]"}
+        </code>
+      </td>
+      <td>TCP/IP</td>
+    </tr>
+    <tr>
+      <td>
+        <strong>ASCII</strong>
+      </td>
+      <td>
+        <code>{": [Slave] [FC] [Data...] [LRC] CR LF"}</code>
+      </td>
+      <td>LRC</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Referencia de function codes</h3>
+<table>
+  <thead>
+    <tr>
+      <th>Código</th>
+      <th>Nombre</th>
+      <th>Tipo de dato</th>
+      <th>Acceso</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        <code>01</code>
+      </td>
+      <td>Read Coils</td>
+      <td>Discrete Output (1 bit)</td>
+      <td>Lectura</td>
+    </tr>
+    <tr>
+      <td>
+        <code>02</code>
+      </td>
+      <td>Read Discrete Inputs</td>
+      <td>Discrete Input (1 bit)</td>
+      <td>Lectura</td>
+    </tr>
+    <tr>
+      <td>
+        <code>03</code>
+      </td>
+      <td>Read Holding Registers</td>
+      <td>Registro de 16 bits</td>
+      <td>Lectura</td>
+    </tr>
+    <tr>
+      <td>
+        <code>04</code>
+      </td>
+      <td>Read Input Registers</td>
+      <td>Registro de 16 bits</td>
+      <td>Lectura</td>
+    </tr>
+    <tr>
+      <td>
+        <code>05</code>
+      </td>
+      <td>Write Single Coil</td>
+      <td>Discrete Output (1 bit)</td>
+      <td>Escritura</td>
+    </tr>
+    <tr>
+      <td>
+        <code>06</code>
+      </td>
+      <td>Write Single Register</td>
+      <td>Registro de 16 bits</td>
+      <td>Escritura</td>
+    </tr>
+    <tr>
+      <td>
+        <code>07</code>
+      </td>
+      <td>Read Exception Status</td>
+      <td>8 coils (diagnóstico)</td>
+      <td>Lectura</td>
+    </tr>
+    <tr>
+      <td>
+        <code>08</code>
+      </td>
+      <td>Diagnostics</td>
+      <td>Datos de sub-función</td>
+      <td>Lectura/Escritura</td>
+    </tr>
+    <tr>
+      <td>
+        <code>0F</code>
+      </td>
+      <td>Write Multiple Coils</td>
+      <td>Discrete Output (1 bit)</td>
+      <td>Escritura</td>
+    </tr>
+    <tr>
+      <td>
+        <code>10</code>
+      </td>
+      <td>Write Multiple Registers</td>
+      <td>Registro de 16 bits</td>
+      <td>Escritura</td>
+    </tr>
+    <tr>
+      <td>
+        <code>17</code>
+      </td>
+      <td>Read/Write Multiple Registers</td>
+      <td>Registro de 16 bits</td>
+      <td>Lectura/Escritura</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Notación de direcciones Modicon</h3>
+<p>
+  La documentación tradicional de Modbus usa rangos de direcciones Modicon para
+  identificar los tipos de datos:
+</p>
+<table>
+  <thead>
+    <tr>
+      <th>Rango</th>
+      <th>Tipo de dato</th>
+      <th>Function codes</th>
+      <th>Dirección de protocolo</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        <code>00001–09999</code>
+      </td>
+      <td>Coils (salida discreta)</td>
+      <td>01, 05, 0F</td>
+      <td>0–9998 (0x0000–0x270E)</td>
+    </tr>
+    <tr>
+      <td>
+        <code>10001–19999</code>
+      </td>
+      <td>Discrete Inputs</td>
+      <td>02</td>
+      <td>0–9998 (0x0000–0x270E)</td>
+    </tr>
+    <tr>
+      <td>
+        <code>30001–39999</code>
+      </td>
+      <td>Input Registers</td>
+      <td>04</td>
+      <td>0–9998 (0x0000–0x270E)</td>
+    </tr>
+    <tr>
+      <td>
+        <code>40001–49999</code>
+      </td>
+      <td>Holding Registers</td>
+      <td>03, 06, 10</td>
+      <td>0–9998 (0x0000–0x270E)</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Códigos de excepción</h3>
+<p>
+  Cuando un esclavo no puede procesar una solicitud, devuelve una{" "}
+  <strong>respuesta de excepción</strong> con el function code en OR con{" "}
+  <code>0x80</code> y un código de excepción:
+</p>
+<table>
+  <thead>
+    <tr>
+      <th>Código</th>
+      <th>Nombre</th>
+      <th>Descripción</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        <code>01</code>
+      </td>
+      <td>Illegal Function</td>
+      <td>Function code no soportado por el esclavo</td>
+    </tr>
+    <tr>
+      <td>
+        <code>02</code>
+      </td>
+      <td>Illegal Data Address</td>
+      <td>Dirección no disponible en el dispositivo esclavo</td>
+    </tr>
+    <tr>
+      <td>
+        <code>03</code>
+      </td>
+      <td>Illegal Data Value</td>
+      <td>Valor fuera de rango para el esclavo</td>
+    </tr>
+    <tr>
+      <td>
+        <code>04</code>
+      </td>
+      <td>Slave Device Failure</td>
+      <td>Error irrecuperable en el esclavo</td>
+    </tr>
+    <tr>
+      <td>
+        <code>05</code>
+      </td>
+      <td>Acknowledge</td>
+      <td>Solicitud aceptada pero el procesamiento requiere tiempo</td>
+    </tr>
+    <tr>
+      <td>
+        <code>06</code>
+      </td>
+      <td>Slave Device Busy</td>
+      <td>El esclavo está ocupado procesando otra solicitud</td>
+    </tr>
+    <tr>
+      <td>
+        <code>08</code>
+      </td>
+      <td>Memory Parity Error</td>
+      <td>Falló la verificación de paridad del área de archivo extendida</td>
+    </tr>
+    <tr>
+      <td>
+        <code>0A</code>
+      </td>
+      <td>Gateway Path Unavailable</td>
+      <td>Gateway mal configurado o no disponible</td>
+    </tr>
+    <tr>
+      <td>
+        <code>0B</code>
+      </td>
+      <td>Gateway Target No Response</td>
+      <td>El dispositivo de destino no respondió al gateway</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Orden de bytes (endianness)</h3>
+<p>
+  Los registros Modbus son de 16 bits, pero muchos dispositivos almacenan
+  valores de 32 bits (enteros, floats) en dos registros. El orden de bytes varía
+  según el fabricante:
+</p>
+<table>
+  <thead>
+    <tr>
+      <th>Nombre</th>
+      <th>Orden</th>
+      <th>Ejemplo (Float 123.456)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        <strong>Big-Endian (AB CD)</strong>
+      </td>
+      <td>El más común, estándar Modbus</td>
+      <td>
+        <code>42 F6 E9 79</code>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <strong>Little-Endian (CD AB)</strong>
+      </td>
+      <td>Palabras intercambiadas</td>
+      <td>
+        <code>E9 79 42 F6</code>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <strong>Mid Big-Endian (BA DC)</strong>
+      </td>
+      <td>Bytes intercambiados</td>
+      <td>
+        <code>F6 42 79 E9</code>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <strong>Mid Little-Endian (DC BA)</strong>
+      </td>
+      <td>Completamente invertido</td>
+      <td>
+        <code>79 E9 F6 42</code>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Privacidad</h3>
+<p>
+  Toda la construcción de tramas, decodificación, cálculo de CRC/LRC e
+  interpretación de datos se realiza íntegramente en tu navegador. Ningún dato
+  Modbus se transmite a ningún servidor. El enlace compartible solo codifica los
+  parámetros de la trama en los parámetros de la URL.
+</p>
+
+<h3>Referencia de comandos Linux</h3>
+<p>
+  Herramientas comunes para probar la comunicación Modbus desde la línea de
+  comandos:
+</p>
+
+<h4>Leer Holding Registers con mbpoll</h4>
+<TerminalSession>
+  <TerminalSessionCommand>
+    mbpoll -a 1 -r 0 -c 10 -t 4 /dev/ttyUSB0
+  </TerminalSessionCommand>
+  <TerminalSessionOutput title="Salida de lectura mbpoll">
+    ```
+    mbpoll 1.5 - FieldTalk(tm) Modbus(R) Master Simulator
+    Protocol configuration: Modbus RTU
+    Slave configuration: address = [1]
+    -- Polling slave 1...
+    [0]: 100
+    [1]: 200
+    [2]: 0
+    [3]: 1500
+    [4]: 0
+    ```
+  </TerminalSessionOutput>
+</TerminalSession>
+
+<h4>Leer registros vía TCP con modbus-cli</h4>
+<TerminalSession>
+  <TerminalSessionCommand>
+    modbus read 192.168.1.100 %MW0 10
+  </TerminalSessionCommand>
+  <TerminalSessionOutput title="Salida de modbus-cli">
+    ```
+    %MW0 = 100
+    %MW1 = 200
+    %MW2 = 0
+    %MW3 = 1500
+    ```
+  </TerminalSessionOutput>
+</TerminalSession>
+
+<h4>Leer registros con pymodbus</h4>
+<TerminalSession>
+  <TerminalSessionCommand>
+    ```
+    python3 -c 'from pymodbus.client import ModbusTcpClient as C; c=C("192.168.1.100"); c.connect(); print(c.read_holding_registers(0,10,slave=1).registers)'
+    ```
+  </TerminalSessionCommand>
+  <TerminalSessionOutput title="Salida de pymodbus">
+    [100, 200, 0, 1500, 0, 0, 0, 0, 0, 0]
+  </TerminalSessionOutput>
+</TerminalSession>
+
+<h4>Escribir un registro con mbpoll</h4>
+<TerminalSession>
+  <TerminalSessionCommand>
+    mbpoll -a 1 -r 0 -t 4 /dev/ttyUSB0 -- 100
+  </TerminalSessionCommand>
+  <TerminalSessionOutput title="Confirmación de escritura">
+    ```
+    mbpoll 1.5 - FieldTalk(tm) Modbus(R) Master Simulator
+    Written 1 reference(s).
+    ```
+  </TerminalSessionOutput>
+</TerminalSession>
+
+<h4>Escanear dispositivos Modbus</h4>
+<TerminalSession>
+  <TerminalSessionCommand>
+    ```
+    for id in $(seq 1 247); do mbpoll -a $id -r 0 -c 1 -t 4 -1 /dev/ttyUSB0 2>/dev/null && echo "Device at $id"; done
+    ```
+  </TerminalSessionCommand>
+  <TerminalSessionOutput title="Resultados del escaneo">
+    ```
+    Device at 1
+    Device at 5
+    ```
+  </TerminalSessionOutput>
+</TerminalSession>
+
+<h3>Cálculo de CRC-16</h3>
+<p>
+  Modbus RTU usa CRC-16 con el polinomio <code>0xA001</code>
+  (forma reflejada de <code>0x8005</code>). El CRC se calcula sobre todos los
+  bytes de la trama excepto el propio CRC, y se añade en orden{" "}
+  <strong>little-endian</strong> (byte bajo primero, byte alto segundo).
+</p>
+
+<h3>Cálculo de LRC</h3>
+<p>
+  Modbus ASCII usa un Longitudinal Redundancy Check. El LRC es el{" "}
+  <strong>complemento a dos</strong> de la suma de 8 bits de todos los bytes del
+  mensaje (desde la dirección del esclavo hasta el último byte de datos). Se
+  transmite como dos caracteres ASCII hexadecimales antes del CR LF final.
+</p>

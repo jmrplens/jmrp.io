@@ -19,6 +19,28 @@ import { TerminalSession, TerminalSessionCommand, TerminalSessionOutput } from "
 
 ---
 
+## i18n in UI Components
+
+All user-facing text in Astro components must use translated strings via `t()`:
+
+```astro
+---
+import { getLangFromUrl, useTranslations } from "@i18n/utils";
+const locale = getLangFromUrl(Astro.url);
+const t = useTranslations(locale);
+---
+<section aria-label={t("aria.sectionName")}>
+  <h2>{t("ui.heading")}</h2>
+</section>
+```
+
+- Translation keys are in `src/i18n/translations/{en,es}/common.ts`
+- Never hardcode English strings in templates or ARIA labels
+- Component props like `title` in `<Callout>` are set by the caller (post content), not translated internally
+- See `docs/I18N_GUIDE.md` for the complete guide
+
+---
+
 ## Component Reference
 
 ### Content & Summary
@@ -496,3 +518,4 @@ import References from "@components/ui/References.astro";
 - Don't hardcode IDs — components auto-generate unique IDs
 - Don't use `<script>` in MDX — breaks CSP
 - Don't import TabPanel/Tabs individually when both are needed — use barrel export
+- Don't hardcode English strings — use `t()` from `useTranslations()`

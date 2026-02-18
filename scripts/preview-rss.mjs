@@ -15,8 +15,7 @@ import Parser from "rss-parser";
 
 import { escapeHtml } from "./utils/html.mjs";
 
-const RSS_FILE = "dist/rss.xml";
-const OUTPUT_FILE = "dist/rss-preview.html";
+const RSS_FILES = ["dist/rss.xml", "dist/es/rss.xml"];
 const DIST_DIR = "dist";
 
 /**
@@ -84,28 +83,34 @@ function embedImage(imageUrl) {
  * @returns {Promise<void>} Resolves when the preview is generated.
  */
 async function generatePreview() {
-  if (!fs.existsSync(RSS_FILE)) {
-    console.error(`Error: File ${RSS_FILE} not found. Run 'pnpm build' first.`);
+  const availableFeeds = RSS_FILES.filter((f) => fs.existsSync(f));
+
+  if (availableFeeds.length === 0) {
+    console.error(`Error: No RSS feed files found. Run 'pnpm build' first.`);
     process.exit(1);
   }
 
-  const parser = new Parser({
-    customFields: {
-      item: ["content:encoded"],
-    },
-  });
+  for (const rssFile of availableFeeds) {
+    const outputFile = rssFile.replace(".xml", "-preview.html");
+    const lang = rssFile.includes("/es/") ? "es" : "en";
 
-  const xml = fs.readFileSync(RSS_FILE, "utf-8");
-  const feed = await parser.parseString(xml);
+    const parser = new Parser({
+      customFields: {
+        item: ["content:encoded"],
+      },
+    });
 
-  const htmlContent = `
+    const xml = fs.readFileSync(rssFile, "utf-8");
+    const feed = await parser.parseString(xml);
+
+    const htmlContent = `
   <!DOCTYPE html>
   <!-- [html-validate-disable-block no-inline-style, attribute-allowed-values -- RSS content relies on these] -->
-  <html lang="en">
+  <html lang="${lang}">
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RSS Feed Preview</title>
+    <title>RSS Feed Preview (${lang.toUpperCase()})</title>
     <style>
       :root {
         --bg: #f3f4f6;
@@ -173,7 +178,7 @@ async function generatePreview() {
       <div class="feed-header">
         <h1>RSS Preview: ${escapeHtml(feed.title)}</h1>
         <p class="feed-description">${escapeHtml(feed.description)}</p>
-        <p><small>Generated from <code>dist/rss.xml</code> on ${new Date().toUTCString()}</small></p>
+        <p><small>Generated from <code>${rssFile}</code> on ${new Date().toUTCString()}</small></p>
       </div>
 
       ${feed.items
@@ -211,8 +216,9 @@ async function generatePreview() {
   </html>
   `;
 
-  fs.writeFileSync(OUTPUT_FILE, htmlContent);
-  console.log(`✅ Preview generated at: ${path.resolve(OUTPUT_FILE)}`);
+    fs.writeFileSync(outputFile, htmlContent);
+    console.log(`✅ Preview generated at: ${path.resolve(outputFile)}`);
+  }
 }
 
 try {

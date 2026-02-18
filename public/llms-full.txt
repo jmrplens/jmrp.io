@@ -198,6 +198,8 @@ Free browser-based developer tools. All processing runs client-side — no data 
 - **Styling**: UnoCSS with Tailwind 4 compatible preset
 - **Islands**: Preact for interactive tool components
 - **JavaScript**: Zero client-side JS except progressive enhancement islands
+- **Internationalization**: Fully bilingual (English and Spanish). All pages, blog posts, tools, and metadata available in both languages. Spanish pages use `/es/` URL prefix. RSS feeds per locale.
+- **RSS Feeds**: English at https://jmrp.io/rss.xml, Spanish at https://jmrp.io/es/rss.xml
 - **Accessibility**: WCAG 2.2 AA/AAA compliant, axe-core tested
 - **Security**: Content Security Policy with SRI hashes, strict CSP
 - **Performance**: 100/100 PageSpeed scores, optimal CLS

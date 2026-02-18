@@ -18,6 +18,30 @@ import type {
   SitemapUrlSet,
 } from "./types";
 
+/**
+ * Filters pages by the `LOCALE_FILTER` environment variable.
+ *
+ * - `LOCALE_FILTER=en` → only pages without `/es/` prefix
+ * - `LOCALE_FILTER=es` → only pages with `/es/` prefix
+ * - unset or other value → all pages (no filtering)
+ *
+ * @param pages - Full list of pages from the sitemap.
+ * @returns Filtered list based on locale.
+ */
+export function filterPagesByLocale(pages: PageInfo[]): PageInfo[] {
+  const locale = process.env.LOCALE_FILTER?.toLowerCase();
+  if (!locale) return pages;
+
+  if (locale === "en") {
+    return pages.filter((p) => !p.url.startsWith("/es/"));
+  }
+  if (locale === "es") {
+    return pages.filter((p) => p.url.startsWith("/es/"));
+  }
+
+  return pages;
+}
+
 const SITEMAP_INDEX_PATH = path.resolve("dist/sitemap-index.xml");
 const SITEMAP_0_PATH = path.resolve("dist/sitemap-0.xml");
 const SITEMAP_PATH = path.resolve("dist/sitemap.xml");
@@ -149,12 +173,20 @@ const FALLBACK_PAGES: PageInfo[] = [
  * Used at module scope for Playwright test registration (parallel tests).
  * Falls back to an empty array when the cache does not exist (e.g., test listing).
  *
- * @returns Cached page list from the sitemap.
+ * Respects the `LOCALE_FILTER` env var to filter pages by locale:
+ * - `LOCALE_FILTER=en` → only EN pages (no `/es/` prefix)
+ * - `LOCALE_FILTER=es` → only ES pages (with `/es/` prefix)
+ * - unset → all pages
+ *
+ * @returns Cached page list from the sitemap (optionally filtered by locale).
  */
 export function getCachedPages(): PageInfo[] {
   const pagesCache = path.resolve("accessibility-report/.pages-cache.json");
   if (!fs.existsSync(pagesCache)) return [];
-  return JSON.parse(fs.readFileSync(pagesCache, "utf-8")) as PageInfo[];
+  const allPages = JSON.parse(
+    fs.readFileSync(pagesCache, "utf-8"),
+  ) as PageInfo[];
+  return filterPagesByLocale(allPages);
 }
 
 /**

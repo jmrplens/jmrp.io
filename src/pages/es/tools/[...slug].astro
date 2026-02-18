@@ -1,0 +1,21 @@
+---
+/**
+ * Página de Herramienta — ruta ES `/es/tools/[slug]/`.
+ * Mantiene getStaticPaths, delega renderizado a ToolPage.
+ */
+import ToolPage from "@components/pages/ToolPage.astro";
+import { getToolsForLocale, type LocalizedTool } from "@utils/tools";
+
+export async function getStaticPaths() {
+  const entries = await getToolsForLocale("es");
+  return entries.map(({ tool, isFallback }) => ({
+    params: { slug: tool.data.slug },
+    props: { tool, isFallback },
+  }));
+}
+
+type Props = LocalizedTool;
+const { tool } = Astro.props;
+---
+
+<ToolPage tool={tool} />

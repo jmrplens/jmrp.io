@@ -1,85 +1,39 @@
 ---
-import "@styles/blog.css";
-
-import PostGrid from "@components/blog/PostGrid.astro";
-import TagCloud from "@components/blog/TagCloud.astro";
-import BaseLayout from "@layouts/BaseLayout.astro";
+/**
+ * Blog Tag Page — EN route `/blog/tags/[tag]/`.
+ * Keeps getStaticPaths for route generation, delegates rendering to BlogTagPage.
+ */
+import BlogTagPage from "@components/pages/BlogTagPage.astro";
+import { getPostsForLocale } from "@utils/blog";
 import { getUniqueTags } from "@utils/blog";
-import { getSiteUrl } from "@utils/site";
-import { getCollection } from "astro:content";
+import type { CollectionEntry } from "astro:content";
 
 export async function getStaticPaths() {
-  const posts = (await getCollection("posts")).filter(
-    (post) => !post.data.draft,
-  );
-  const tags = getUniqueTags(posts);
-
+  const entries = await getPostsForLocale("en");
+  const allPosts = entries.map((e) => e.post);
+  const tags = getUniqueTags(allPosts);
   return tags.map(({ tag }) => {
-    const filteredPosts = posts
-      .filter((post) =>
-        post.data.tags?.some((t) => t.toLowerCase() === tag.toLowerCase()),
-      )
-      .sort(
-        (a, b) =>
-          b.data.publishedDate.valueOf() - a.data.publishedDate.valueOf(),
-      );
-
+    const filteredPosts = allPosts.filter((post) =>
+      post.data.tags.some(
+        (t) => t.toLowerCase().replaceAll(/\s+/g, "-") === tag,
+      ),
+    );
     return {
       params: { tag },
-      props: { posts: filteredPosts },
+      props: { tag, posts: filteredPosts },
     };
   });
 }
 
-const { tag } = Astro.params;
-const { posts } = Astro.props;
+interface Props {
+  tag: string;
+  posts: CollectionEntry<"posts">[];
+}
 
-// Schema.org: CollectionPage with ItemList
-const schema = {
-  "@type": "CollectionPage",
-  "@id": new URL(
-    "#collection",
-    new URL(Astro.url.pathname, getSiteUrl()),
-  ).toString(),
-  name: `Blog posts tagged with #${tag}`,
-  description: `Browse ${posts.length} articles about ${tag}.`,
-  url: new URL(Astro.url.pathname, getSiteUrl()).toString(),
-  mainEntity: {
-    "@type": "ItemList",
-    itemListElement: posts.map((post, index) => ({
-      "@type": "ListItem",
-      position: index + 1,
-      url: new URL(`/blog/${post.data.slug}/`, getSiteUrl()).toString(),
-      name: post.data.title,
-    })),
-  },
-};
+const { tag, posts } = Astro.props;
 ---
 
-<BaseLayout
-  title={`Blog - #${tag}`}
-  description={`Browse ${posts.length} technical ${posts.length === 1 ? "article" : "articles"} about ${tag}. In-depth tutorials and guides by José Manuel Requena Plens covering practical ${tag} implementations.`}
-  schema={schema}
->
-  <div class="content-wrapper">
-    <header class="page-header">
-      <h1 class="text-primary">#{tag}</h1>
-      <p class="subtitle">
-        {posts.length}
-        {posts.length === 1 ? "post" : "posts"} about this topic
-      </p>
-      <div class="back-link">
-        <a href="/blog/">&larr; Back to all posts</a>
-      </div>
-    </header>
-
-    <div class="blog-layout">
-      <div class="posts-container">
-        <PostGrid posts={posts} />
-      </div>
-      <aside>
-        <TagCloud />
-      </aside>
-    </div>
-  </div>
-</BaseLayout>
+<BlogTagPage
+  tag={tag}
+  posts={posts}
+/>

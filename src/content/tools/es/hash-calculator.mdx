@@ -1,0 +1,28 @@
+---
+title: "Calculadora de Hashes CSP"
+slug: "hash-calculator"
+description: "Genera hashes SHA-256 para scripts inline. Obtén directivas CSP listas para usar en tu Content Security Policy."
+subtitle: "Genera hashes SHA-256 para scripts inline. Copia el hash directamente en tu Content Security Policy."
+icon: "i-mdi:calculator-variant-outline"
+category: "security"
+tags: ["csp", "hash", "sha256", "seguridad", "sri"]
+appComponent: "HashCalculator"
+lang: "es"
+appProps:
+  showExplanation: true
+---
+
+<h2>Acerca de esta herramienta</h2>
+<p>
+  Cuando necesitas permitir scripts o estilos inline específicos en tu Content
+  Security Policy (CSP) sin usar <code>'unsafe-inline'</code>, puedes utilizar
+  hashes criptográficos. Esta herramienta calcula el hash SHA-256 de tu contenido
+  en el formato base64 exacto que esperan los navegadores.
+</p>
+
+<h2>¿Por qué usar hashes en CSP?</h2>
+<p>
+  Los hashes proporcionan una forma segura de permitir scripts inline específicos
+  sin abrir la puerta a ataques XSS. Cada hash es único para su contenido exacto,
+  lo que garantiza que solo se ejecuten los scripts autorizados.
+</p>

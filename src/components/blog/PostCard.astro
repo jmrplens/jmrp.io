@@ -1,4 +1,6 @@
 ---
+import { defaultLocale, type Locale } from "@i18n/config";
+import { formatDate, useTranslatedPath, useTranslations } from "@i18n/utils";
 import { Image } from "astro:assets";
 import type { CollectionEntry } from "astro:content";
 
@@ -9,6 +11,9 @@ interface Props {
 }
 
 const { post, loading = "lazy", fetchpriority = "auto" } = Astro.props;
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
+const translatePath = useTranslatedPath(locale);
 ---
 
 <article class="post-card">
@@ -34,13 +39,7 @@ const { post, loading = "lazy", fetchpriority = "auto" } = Astro.props;
   <div class="card-content">
     <div class="post-meta">
       <time datetime={post.data.publishedDate.toISOString()}>
-        {
-          post.data.publishedDate.toLocaleDateString("en-US", {
-            year: "numeric",
-            month: "short",
-            day: "numeric",
-          })
-        }
+        {formatDate(post.data.publishedDate, locale)}
       </time>
       {
         post.data.tags && (
@@ -52,9 +51,11 @@ const { post, loading = "lazy", fetchpriority = "auto" } = Astro.props;
             {post.data.tags.slice(0, 3).map((tag) => (
               <li>
                 <a
-                  href={`/blog/tags/${encodeURIComponent(tag.toLowerCase())}/`}
+                  href={translatePath(
+                    `/blog/tags/${encodeURIComponent(tag.toLowerCase())}/`,
+                  )}
                   class="tag"
-                  aria-label={`View all posts tagged with ${tag}`}
+                  aria-label={t("aria.viewTaggedPosts", { tag })}
                 >
                   #{tag}
                 </a>
@@ -66,9 +67,11 @@ const { post, loading = "lazy", fetchpriority = "auto" } = Astro.props;
     </div>
     <h2>
       <a
-        href={`/blog/${post.id}/`}
+        href={translatePath(`/blog/${post.data.slug}/`)}
         class="main-link"
-        aria-label={`Read article: ${post.data.title}`}
+        aria-label={t("aria.readArticle", {
+          title: post.data.title,
+        })}
       >
         {post.data.title}
       </a>
@@ -79,7 +82,7 @@ const { post, loading = "lazy", fetchpriority = "auto" } = Astro.props;
     class="card-footer"
     aria-hidden="true"
   >
-    <span class="read-more">Read article &rarr;</span>
+    <span class="read-more">{t("pages.blogPost.readAction")}</span>
   </div>
 </article>
 

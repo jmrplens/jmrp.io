@@ -23,7 +23,12 @@ export type {
 } from "./types";
 
 // Sitemap utilities
-export { getCachedPages, getPagesFromSitemap, getSitemapUrls } from "./sitemap";
+export {
+  filterPagesByLocale,
+  getCachedPages,
+  getPagesFromSitemap,
+  getSitemapUrls,
+} from "./sitemap";
 
 // Accessibility utilities
 export {

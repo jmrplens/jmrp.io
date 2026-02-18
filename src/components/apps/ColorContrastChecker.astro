@@ -7,13 +7,38 @@
  * Usage:
  * <ColorContrastChecker title="Color Contrast Checker" />
  */
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslations } from "@i18n/utils";
+
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
 
 interface Props {
   title?: string;
 }
 
-const { title = "Color Contrast Checker" } = Astro.props;
+const { title = t("tools.colorContrastChecker.title") } = Astro.props;
 const uniqueId = `cc-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
+
+/** Translations passed to the inline script via define:vars. */
+const i18n = {
+  invalidColor: t("tools.colorContrastChecker.invalidColor"),
+  pass: t("tools.colorContrastChecker.passSymbol"),
+  fail: t("tools.colorContrastChecker.failSymbol"),
+  adjustForeground: t("tools.colorContrastChecker.adjustForeground"),
+  adjustBackground: t("tools.colorContrastChecker.adjustBackground"),
+  sampleText: t("tools.colorContrastChecker.sampleText"),
+  copyCss: t("tools.colorContrastChecker.copyCss"),
+  shareLink: t("tools.colorContrastChecker.shareLink"),
+  copied: t("tools.shared.copied"),
+  apcaPreferredBody: t("tools.colorContrastChecker.apcaPreferredBody"),
+  apcaGoodBody: t("tools.colorContrastChecker.apcaGoodBody"),
+  apcaLargeText: t("tools.colorContrastChecker.apcaLargeText"),
+  apcaLargeNonText: t("tools.colorContrastChecker.apcaLargeNonText"),
+  apcaNonText: t("tools.colorContrastChecker.apcaNonText"),
+  apcaSubtle: t("tools.colorContrastChecker.apcaSubtle"),
+  apcaInvisible: t("tools.colorContrastChecker.apcaInvisible"),
+};
 ---
 
 <div
@@ -29,7 +54,7 @@ const uniqueId = `cc-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
         <label
           class="cc-picker-label"
           for={`${uniqueId}-fg-color`}
-          >Foreground (Text)</label
+          >{t("tools.colorContrastChecker.foregroundLabel")}</label
         >
         <div class="cc-picker-row">
           <input
@@ -45,7 +70,7 @@ const uniqueId = `cc-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
             value="#1a1a2e"
             spellcheck="false"
             maxlength="9"
-            aria-label="Foreground color hex value"
+            aria-label={t("tools.colorContrastChecker.fgHexAriaLabel")}
           />
         </div>
         <div
@@ -56,9 +81,11 @@ const uniqueId = `cc-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
             type="button"
             class="cc-format-btn"
             data-format="rgb"
-            aria-label="Copy foreground RGB value"
+            aria-label={t("tools.colorContrastChecker.copyFgRgb")}
           >
-            <span class="cc-format-label">RGB</span>
+            <span class="cc-format-label"
+              >{t("tools.colorContrastChecker.rgb")}</span
+            >
             <span
               class="cc-format-value"
               data-fmt="rgb"
@@ -69,9 +96,11 @@ const uniqueId = `cc-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
             type="button"
             class="cc-format-btn"
             data-format="hsl"
-            aria-label="Copy foreground HSL value"
+            aria-label={t("tools.colorContrastChecker.copyFgHsl")}
           >
-            <span class="cc-format-label">HSL</span>
+            <span class="cc-format-label"
+              >{t("tools.colorContrastChecker.hsl")}</span
+            >
             <span
               class="cc-format-value"
               data-fmt="hsl"
@@ -84,7 +113,7 @@ const uniqueId = `cc-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
       <button
         type="button"
         class="cc-swap-btn"
-        aria-label="Swap foreground and background colors"
+        aria-label={t("tools.colorContrastChecker.swapColors")}
       >
         <span class="i-mdi:swap-horizontal"></span>
       </button>
@@ -93,7 +122,7 @@ const uniqueId = `cc-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
         <label
           class="cc-picker-label"
           for={`${uniqueId}-bg-color`}
-          >Background</label
+          >{t("tools.colorContrastChecker.background")}</label
         >
         <div class="cc-picker-row">
           <input
@@ -109,7 +138,7 @@ const uniqueId = `cc-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
             value="#ffffff"
             spellcheck="false"
             maxlength="9"
-            aria-label="Background color hex value"
+            aria-label={t("tools.colorContrastChecker.bgHexAriaLabel")}
           />
         </div>
         <div
@@ -120,9 +149,11 @@ const uniqueId = `cc-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
             type="button"
             class="cc-format-btn"
             data-format="rgb"
-            aria-label="Copy background RGB value"
+            aria-label={t("tools.colorContrastChecker.copyBgRgb")}
           >
-            <span class="cc-format-label">RGB</span>
+            <span class="cc-format-label"
+              >{t("tools.colorContrastChecker.rgb")}</span
+            >
             <span
               class="cc-format-value"
               data-fmt="rgb"
@@ -133,9 +164,11 @@ const uniqueId = `cc-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
             type="button"
             class="cc-format-btn"
             data-format="hsl"
-            aria-label="Copy background HSL value"
+            aria-label={t("tools.colorContrastChecker.copyBgHsl")}
           >
-            <span class="cc-format-label">HSL</span>
+            <span class="cc-format-label"
+              >{t("tools.colorContrastChecker.hsl")}</span
+            >
             <span
               class="cc-format-value"
               data-fmt="hsl"
@@ -155,32 +188,40 @@ const uniqueId = `cc-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
         class="cc-preview-large"
         id={`${uniqueId}-preview-large`}
       >
-        Large text (24px) — Heading
+        {t("tools.colorContrastChecker.previewLargeText")}
       </span>
       <span
         class="cc-preview-normal"
         id={`${uniqueId}-preview-normal`}
       >
-        Normal text (16px) — The quick brown fox jumps over the lazy dog.
+        {t("tools.colorContrastChecker.normalText")} (16px) — {
+          t("tools.colorContrastChecker.sampleNormalText")
+        }
       </span>
       <span
         class="cc-preview-small"
         id={`${uniqueId}-preview-small`}
       >
-        Small text (12px) — Secondary information and captions
+        {t("tools.colorContrastChecker.previewSmallText")}
       </span>
       <div
         class="cc-preview-ui"
         id={`${uniqueId}-preview-ui`}
       >
-        <span class="cc-preview-ui-label">UI Components</span>
-        <span class="cc-ui-button">Button</span>
+        <span class="cc-preview-ui-label"
+          >{t("tools.colorContrastChecker.uiComponents")}</span
+        >
+        <span class="cc-ui-button"
+          >{t("tools.colorContrastChecker.button")}</span
+        >
         <span class="cc-ui-icon">
           <span class="i-mdi:star"></span>
           <span class="i-mdi:check-circle"></span>
           <span class="i-mdi:alert"></span>
         </span>
-        <span class="cc-ui-border-box">Input field</span>
+        <span class="cc-ui-border-box"
+          >{t("tools.colorContrastChecker.inputField")}</span
+        >
       </div>
     </div>
 
@@ -190,7 +231,9 @@ const uniqueId = `cc-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
       <div class="cc-score-card">
         <div class="cc-score-header">
           <span class="cc-score-badge">WCAG 2.2</span>
-          <span class="cc-score-subtitle">Contrast Ratio</span>
+          <span class="cc-score-subtitle"
+            >{t("tools.colorContrastChecker.contrastRatio")}</span
+          >
         </div>
         <div class="cc-ratio-display">
           <span
@@ -203,7 +246,7 @@ const uniqueId = `cc-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
           class="cc-gauge"
           id={`${uniqueId}-gauge`}
           role="img"
-          aria-label="Contrast quality indicator"
+          aria-label={t("tools.colorContrastChecker.gaugeAriaLabel")}
         >
           <div class="cc-gauge-track">
             <div
@@ -213,10 +256,10 @@ const uniqueId = `cc-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
             </div>
           </div>
           <div class="cc-gauge-labels">
-            <span>Poor</span>
-            <span>AA Large</span>
-            <span>AA</span>
-            <span>AAA</span>
+            <span>{t("tools.colorContrastChecker.gaugePoor")}</span>
+            <span>{t("tools.colorContrastChecker.gaugeAALarge")}</span>
+            <span>{t("tools.colorContrastChecker.levelAA")}</span>
+            <span>{t("tools.colorContrastChecker.levelAAA")}</span>
           </div>
         </div>
       </div>
@@ -225,7 +268,9 @@ const uniqueId = `cc-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
       <div class="cc-score-card">
         <div class="cc-score-header">
           <span class="cc-score-badge cc-score-badge-apca">APCA</span>
-          <span class="cc-score-subtitle">Lightness Contrast (Lc)</span>
+          <span class="cc-score-subtitle"
+            >{t("tools.colorContrastChecker.lightnessContrast")}</span
+          >
         </div>
         <div class="cc-ratio-display">
           <span
@@ -245,14 +290,18 @@ const uniqueId = `cc-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
 
     {/* WCAG results grid */}
     <div class="cc-wcag-section">
-      <div class="cc-section-title">WCAG 2.2 Compliance</div>
+      <div class="cc-section-title">
+        {t("tools.colorContrastChecker.wcagCompliance")}
+      </div>
       <div class="cc-wcag-grid">
         <div
           class="cc-wcag-item"
           id={`${uniqueId}-aa-normal`}
         >
           <span class="cc-wcag-badge">AA</span>
-          <span class="cc-wcag-text">Normal Text</span>
+          <span class="cc-wcag-text"
+            >{t("tools.colorContrastChecker.normalText")}</span
+          >
           <span class="cc-wcag-min">(≥ 4.5:1)</span>
           <span class="cc-wcag-result">—</span>
         </div>
@@ -261,7 +310,9 @@ const uniqueId = `cc-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
           id={`${uniqueId}-aa-large`}
         >
           <span class="cc-wcag-badge">AA</span>
-          <span class="cc-wcag-text">Large Text</span>
+          <span class="cc-wcag-text"
+            >{t("tools.colorContrastChecker.largeText")}</span
+          >
           <span class="cc-wcag-min">(≥ 3:1)</span>
           <span class="cc-wcag-result">—</span>
         </div>
@@ -270,7 +321,9 @@ const uniqueId = `cc-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
           id={`${uniqueId}-aaa-normal`}
         >
           <span class="cc-wcag-badge cc-wcag-aaa">AAA</span>
-          <span class="cc-wcag-text">Normal Text</span>
+          <span class="cc-wcag-text"
+            >{t("tools.colorContrastChecker.normalText")}</span
+          >
           <span class="cc-wcag-min">(≥ 7:1)</span>
           <span class="cc-wcag-result">—</span>
         </div>
@@ -279,7 +332,9 @@ const uniqueId = `cc-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
           id={`${uniqueId}-aaa-large`}
         >
           <span class="cc-wcag-badge cc-wcag-aaa">AAA</span>
-          <span class="cc-wcag-text">Large Text</span>
+          <span class="cc-wcag-text"
+            >{t("tools.colorContrastChecker.largeText")}</span
+          >
           <span class="cc-wcag-min">(≥ 4.5:1)</span>
           <span class="cc-wcag-result">—</span>
         </div>
@@ -288,7 +343,9 @@ const uniqueId = `cc-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
           id={`${uniqueId}-nontext`}
         >
           <span class="cc-wcag-badge cc-wcag-nontext">1.4.11</span>
-          <span class="cc-wcag-text">Non-Text</span>
+          <span class="cc-wcag-text"
+            >{t("tools.colorContrastChecker.nonText")}</span
+          >
           <span class="cc-wcag-min">(≥ 3:1)</span>
           <span class="cc-wcag-result">—</span>
         </div>
@@ -303,7 +360,7 @@ const uniqueId = `cc-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
     >
       <div class="cc-section-title">
         <span class="i-mdi:auto-fix"></span>
-        Suggested Fixes (AA Normal Text)
+        {t("tools.colorContrastChecker.suggestedFixes")}
       </div>
       <div
         class="cc-suggestion-cards"
@@ -316,7 +373,7 @@ const uniqueId = `cc-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
     <div class="cc-blindness-section">
       <div class="cc-section-title">
         <span class="i-mdi:eye-outline"></span>
-        Color Vision Deficiency Simulation
+        {t("tools.colorContrastChecker.cvdSimulation")}
       </div>
       <div
         class="cc-blindness-grid"
@@ -327,9 +384,14 @@ const uniqueId = `cc-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
           data-type="protanopia"
         >
           <div class="cc-blindness-label">
-            Protanopia <span class="cc-blindness-pct">~1% males</span>
+            {t("tools.colorContrastChecker.protanopia")}
+            <span class="cc-blindness-pct"
+              >{t("tools.colorContrastChecker.protanopiaPct")}</span
+            >
           </div>
-          <div class="cc-blindness-desc">No red cone cells</div>
+          <div class="cc-blindness-desc">
+            {t("tools.colorContrastChecker.protanopiaDesc")}
+          </div>
           <div
             class="cc-blindness-preview"
             id={`${uniqueId}-sim-protanopia`}
@@ -338,7 +400,9 @@ const uniqueId = `cc-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
               class="cc-sim-swatch"
               data-sim-role="fg"
             ></span>
-            <span class="cc-sim-text">Sample Text</span>
+            <span class="cc-sim-text"
+              >{t("tools.colorContrastChecker.sampleText")}</span
+            >
             <span
               class="cc-sim-swatch"
               data-sim-role="bg"
@@ -356,9 +420,14 @@ const uniqueId = `cc-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
           data-type="deuteranopia"
         >
           <div class="cc-blindness-label">
-            Deuteranopia <span class="cc-blindness-pct">~1% males</span>
+            {t("tools.colorContrastChecker.deuteranopia")}
+            <span class="cc-blindness-pct"
+              >{t("tools.colorContrastChecker.deuteranopiaPct")}</span
+            >
           </div>
-          <div class="cc-blindness-desc">No green cone cells</div>
+          <div class="cc-blindness-desc">
+            {t("tools.colorContrastChecker.deuteranopiaDesc")}
+          </div>
           <div
             class="cc-blindness-preview"
             id={`${uniqueId}-sim-deuteranopia`}
@@ -367,7 +436,9 @@ const uniqueId = `cc-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
               class="cc-sim-swatch"
               data-sim-role="fg"
             ></span>
-            <span class="cc-sim-text">Sample Text</span>
+            <span class="cc-sim-text"
+              >{t("tools.colorContrastChecker.sampleText")}</span
+            >
             <span
               class="cc-sim-swatch"
               data-sim-role="bg"
@@ -385,9 +456,14 @@ const uniqueId = `cc-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
           data-type="tritanopia"
         >
           <div class="cc-blindness-label">
-            Tritanopia <span class="cc-blindness-pct">~0.003%</span>
+            {t("tools.colorContrastChecker.tritanopia")}
+            <span class="cc-blindness-pct"
+              >{t("tools.colorContrastChecker.tritanopiaPct")}</span
+            >
           </div>
-          <div class="cc-blindness-desc">No blue cone cells</div>
+          <div class="cc-blindness-desc">
+            {t("tools.colorContrastChecker.tritanopiaDesc")}
+          </div>
           <div
             class="cc-blindness-preview"
             id={`${uniqueId}-sim-tritanopia`}
@@ -396,7 +472,9 @@ const uniqueId = `cc-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
               class="cc-sim-swatch"
               data-sim-role="fg"
             ></span>
-            <span class="cc-sim-text">Sample Text</span>
+            <span class="cc-sim-text"
+              >{t("tools.colorContrastChecker.sampleText")}</span
+            >
             <span
               class="cc-sim-swatch"
               data-sim-role="bg"
@@ -414,9 +492,14 @@ const uniqueId = `cc-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
           data-type="achromatopsia"
         >
           <div class="cc-blindness-label">
-            Achromatopsia <span class="cc-blindness-pct">~0.003%</span>
+            {t("tools.colorContrastChecker.achromatopsia")}
+            <span class="cc-blindness-pct"
+              >{t("tools.colorContrastChecker.achromatopsiaPct")}</span
+            >
           </div>
-          <div class="cc-blindness-desc">No color vision (monochrome)</div>
+          <div class="cc-blindness-desc">
+            {t("tools.colorContrastChecker.achromatopsiaDesc")}
+          </div>
           <div
             class="cc-blindness-preview"
             id={`${uniqueId}-sim-achromatopsia`}
@@ -425,7 +508,9 @@ const uniqueId = `cc-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
               class="cc-sim-swatch"
               data-sim-role="fg"
             ></span>
-            <span class="cc-sim-text">Sample Text</span>
+            <span class="cc-sim-text"
+              >{t("tools.colorContrastChecker.sampleText")}</span
+            >
             <span
               class="cc-sim-swatch"
               data-sim-role="bg"
@@ -447,25 +532,25 @@ const uniqueId = `cc-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
         type="button"
         class="cc-export-btn"
         id={`${uniqueId}-copy-css`}
-        aria-label="Copy CSS custom properties"
+        aria-label={t("tools.colorContrastChecker.copyCssAriaLabel")}
       >
         <span class="i-mdi:code-braces"></span>
-        Copy CSS
+        {t("tools.colorContrastChecker.copyCss")}
       </button>
       <button
         type="button"
         class="cc-export-btn"
         id={`${uniqueId}-share`}
-        aria-label="Copy shareable link"
+        aria-label={t("tools.colorContrastChecker.copyShareLink")}
       >
         <span class="i-mdi:share-variant"></span>
-        Share Link
+        {t("tools.colorContrastChecker.shareLink")}
       </button>
     </div>
   </div>
 </div>
 
-<script is:inline define:vars={{ uniqueId }}>
+<script is:inline define:vars={{ uniqueId, i18n }}>
   (function () {
     var container = document.querySelector('[data-cc-id="' + uniqueId + '"]');
     if (!container) return;
@@ -654,24 +739,22 @@ const uniqueId = `cc-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
     function apcaUsage(lc) {
       var absLc = Math.abs(lc);
       if (absLc >= 90)
-        return { text: "Preferred for body text", cls: "cc-apca-excellent" };
+        return { text: i18n.apcaPreferredBody, cls: "cc-apca-excellent" };
       if (absLc >= 75)
         return {
-          text: "Good for body text, perfect for large text",
+          text: i18n.apcaGoodBody,
           cls: "cc-apca-good",
         };
-      if (absLc >= 60)
-        return { text: "Large text and headings only", cls: "cc-apca-fair" };
+      if (absLc >= 60) return { text: i18n.apcaLargeText, cls: "cc-apca-fair" };
       if (absLc >= 45)
-        return { text: "Large non-text elements only", cls: "cc-apca-minimum" };
+        return { text: i18n.apcaLargeNonText, cls: "cc-apca-minimum" };
       if (absLc >= 30)
         return {
-          text: "Non-text elements (icons, borders)",
+          text: i18n.apcaNonText,
           cls: "cc-apca-nontext",
         };
-      if (absLc >= 15)
-        return { text: "Subtle visual indicators only", cls: "cc-apca-poor" };
-      return { text: "Invisible — not usable", cls: "cc-apca-fail" };
+      if (absLc >= 15) return { text: i18n.apcaSubtle, cls: "cc-apca-poor" };
+      return { text: i18n.apcaInvisible, cls: "cc-apca-fail" };
     }
 
     /* ---- Color blindness simulation (Brettel/Viénot matrices) ---- */
@@ -759,7 +842,7 @@ const uniqueId = `cc-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
       var result = el.querySelector(".cc-wcag-result");
       if (!result) return;
       var passes = ratio >= threshold;
-      result.textContent = passes ? "Pass ✓" : "Fail ✗";
+      result.textContent = passes ? i18n.pass : i18n.fail;
       el.className = "cc-wcag-item " + (passes ? "cc-pass" : "cc-fail");
     }
 
@@ -843,8 +926,11 @@ const uniqueId = `cc-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
         '<button type="button" class="cc-suggestion-card" data-apply="fg" data-hex="' +
         fixedFgHex +
         '">';
-      html += '<div class="cc-sug-label">Adjust foreground</div>';
-      html += '<div class="cc-sug-preview" data-sug="fg">Sample Text</div>';
+      html += '<div class="cc-sug-label">' + i18n.adjustForeground + "</div>";
+      html +=
+        '<div class="cc-sug-preview" data-sug="fg">' +
+        i18n.sampleText +
+        "</div>";
       html +=
         '<div class="cc-sug-info"><code>' +
         fixedFgHex +
@@ -859,8 +945,11 @@ const uniqueId = `cc-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
         '<button type="button" class="cc-suggestion-card" data-apply="bg" data-hex="' +
         fixedBgHex +
         '">';
-      html += '<div class="cc-sug-label">Adjust background</div>';
-      html += '<div class="cc-sug-preview" data-sug="bg">Sample Text</div>';
+      html += '<div class="cc-sug-label">' + i18n.adjustBackground + "</div>";
+      html +=
+        '<div class="cc-sug-preview" data-sug="bg">' +
+        i18n.sampleText +
+        "</div>";
       html +=
         '<div class="cc-sug-info"><code>' +
         fixedBgHex +
@@ -910,7 +999,7 @@ const uniqueId = `cc-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
       var bg = hexToRgb(bgHex.value);
 
       if (!fg || !bg) {
-        if (ratioEl) ratioEl.textContent = "Invalid color";
+        if (ratioEl) ratioEl.textContent = i18n.invalidColor;
         return;
       }
 
@@ -1045,16 +1134,19 @@ const uniqueId = `cc-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
         if (!btn) return;
         var val = btn.querySelector(".cc-format-value");
         if (val && navigator.clipboard) {
-          navigator.clipboard.writeText(val.textContent).then(function () {
-            var label = btn.querySelector(".cc-format-label");
-            if (label) {
-              var orig = label.textContent;
-              label.textContent = "Copied!";
-              setTimeout(function () {
-                label.textContent = orig;
-              }, 1200);
-            }
-          });
+          navigator.clipboard
+            .writeText(val.textContent)
+            .then(function () {
+              var label = btn.querySelector(".cc-format-label");
+              if (label) {
+                var orig = label.textContent;
+                label.textContent = i18n.copied;
+                setTimeout(function () {
+                  label.textContent = orig;
+                }, 1200);
+              }
+            })
+            .catch(function () {});
         }
       });
     }
@@ -1073,13 +1165,17 @@ const uniqueId = `cc-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
           ratioEl.textContent +
           " */\n}";
         if (navigator.clipboard) {
-          navigator.clipboard.writeText(css).then(function () {
-            copyCssBtn.innerHTML = '<span class="i-mdi:check"></span> Copied!';
-            setTimeout(function () {
+          navigator.clipboard
+            .writeText(css)
+            .then(function () {
               copyCssBtn.innerHTML =
-                '<span class="i-mdi:code-braces"></span> Copy CSS';
-            }, 1500);
-          });
+                '<span class="i-mdi:check"></span> ' + i18n.copied;
+              setTimeout(function () {
+                copyCssBtn.innerHTML =
+                  '<span class="i-mdi:code-braces"></span> ' + i18n.copyCss;
+              }, 1500);
+            })
+            .catch(function () {});
         }
       });
     }
@@ -1089,13 +1185,17 @@ const uniqueId = `cc-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36
       shareBtn.addEventListener("click", function () {
         var url = window.location.href;
         if (navigator.clipboard) {
-          navigator.clipboard.writeText(url).then(function () {
-            shareBtn.innerHTML = '<span class="i-mdi:check"></span> Copied!';
-            setTimeout(function () {
+          navigator.clipboard
+            .writeText(url)
+            .then(function () {
               shareBtn.innerHTML =
-                '<span class="i-mdi:share-variant"></span> Share Link';
-            }, 1500);
-          });
+                '<span class="i-mdi:check"></span> ' + i18n.copied;
+              setTimeout(function () {
+                shareBtn.innerHTML =
+                  '<span class="i-mdi:share-variant"></span> ' + i18n.shareLink;
+              }, 1500);
+            })
+            .catch(function () {});
         }
       });
     }

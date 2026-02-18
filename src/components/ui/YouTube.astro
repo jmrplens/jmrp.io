@@ -6,12 +6,18 @@
  * Usage:
  * <YouTube id="dQw4w9WgXcQ" title="Video Title" />
  */
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslations } from "@i18n/utils";
+
 interface Props {
   id: string; // Video ID
   title?: string;
 }
 
-const { id, title = "YouTube Video" } = Astro.props;
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
+
+const { id, title = t("components.youtube.defaultTitle") } = Astro.props;
 ---
 
 <div class="youtube-embed">

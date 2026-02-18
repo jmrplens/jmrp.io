@@ -9,6 +9,8 @@
  *   - default: The tool component (rendered inside `.tool-container`)
  *   - info: Content inside the `<section class="tool-info">` card
  */
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslatedPath, useTranslations } from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
 import { getSiteUrl } from "@utils/site";
 
@@ -29,6 +31,10 @@ interface Props {
 
 const { title, description, subtitle, icon, slug, extraSchema } = Astro.props;
 
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
+const translatePath = useTranslatedPath(locale);
+
 const toolSchema = {
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
@@ -38,6 +44,7 @@ const toolSchema = {
   applicationCategory: "WebApplication",
   operatingSystem: "Web Browser",
   offers: { "@type": "Offer", price: 0, priceCurrency: "USD" },
+  inLanguage: locale,
   ...extraSchema,
 };
 ---
@@ -51,9 +58,9 @@ const toolSchema = {
     <div class="content-wrapper">
       <nav
         class="breadcrumb"
-        aria-label="Breadcrumb"
+        aria-label={t("aria.breadcrumb")}
       >
-        <a href="/tools/">Tools</a>
+        <a href={translatePath("/tools/")}>{t("nav.tools")}</a>
         <span
           class="i-mdi:chevron-right"
           aria-hidden="true"

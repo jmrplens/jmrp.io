@@ -4,18 +4,27 @@
  * Side-by-side comparison view with pastel color scheme.
  * Can replace CompareCode for all before/after, bad/good comparisons.
  */
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslations } from "@i18n/utils";
+
 interface Props {
   beforeLabel?: string;
   afterLabel?: string;
 }
 
-const { beforeLabel = "Before", afterLabel = "After" } = Astro.props;
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
+
+const {
+  beforeLabel = t("components.beforeAfter.before"),
+  afterLabel = t("components.beforeAfter.after"),
+} = Astro.props;
 ---
 
 <div
   class="before-after-wrapper"
   role="group"
-  aria-label={`Comparison: ${beforeLabel} vs ${afterLabel}`}
+  aria-label={t("aria.comparison", { before: beforeLabel, after: afterLabel })}
 >
   <section
     class="ba-block ba-before"

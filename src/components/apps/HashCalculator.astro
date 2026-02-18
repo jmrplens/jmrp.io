@@ -9,6 +9,11 @@
  *   defaultCode="console.log('hello');"
  * />
  */
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslations } from "@i18n/utils";
+
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
 
 interface Props {
   title?: string;
@@ -17,13 +22,20 @@ interface Props {
 }
 
 const {
-  title = "CSP Hash Calculator",
+  title = t("tools.hashCalculator.title"),
   defaultCode = "const theme = localStorage.getItem('theme');\ndocument.documentElement.dataset.theme = theme;",
   showExplanation = true,
 } = Astro.props;
 
 // Generate unique ID for this instance
 const uniqueId = `hash-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
+
+/** Translations passed to the inline script via define:vars. */
+const i18n = {
+  emptyInput: t("tools.hashCalculator.emptyInput"),
+  errorCalculating: t("tools.hashCalculator.errorCalculating"),
+  error: t("tools.shared.error"),
+};
 
 const algorithms = [
   { id: "sha256", name: "SHA-256", recommended: true },
@@ -46,13 +58,13 @@ const algorithms = [
         for={`${uniqueId}-input`}
       >
         <span class="i-mdi:code-tags hash-label-icon"></span>
-        Script Content (without &lt;script&gt; tags)
+        {t("tools.hashCalculator.scriptContentLabel")}
       </label>
       <textarea
         id={`${uniqueId}-input`}
         class="hash-textarea"
         rows="5"
-        placeholder="Enter your inline script content here..."
+        placeholder={t("tools.hashCalculator.inputPlaceholder")}
         spellcheck="false"
         autocomplete="off"
         >{defaultCode}</textarea
@@ -63,7 +75,7 @@ const algorithms = [
     <div class="hash-output-section">
       <div class="hash-output-header">
         <span class="i-mdi:shield-key hash-output-icon"></span>
-        <span>Generated Hashes</span>
+        <span>{t("tools.hashCalculator.generatedHashes")}</span>
       </div>
 
       <div class="hash-results">
@@ -76,16 +88,23 @@ const algorithms = [
               <div class="hash-result-label">
                 {algo.name}
                 {algo.recommended && (
-                  <span class="hash-recommended">Recommended</span>
+                  <span class="hash-recommended">
+                    {t("tools.hashCalculator.recommended")}
+                  </span>
                 )}
               </div>
               <div class="hash-result-value">
-                <code id={`${uniqueId}-${algo.id}`}>Calculating...</code>
+                <code id={`${uniqueId}-${algo.id}`}>
+                  {t("tools.shared.calculating")}
+                </code>
                 <button
                   class="hash-copy-btn"
                   type="button"
                   data-target={`${uniqueId}-${algo.id}`}
-                  aria-label={`Copy ${algo.name} hash`}
+                  aria-label={t("tools.hashCalculator.copyShaHash").replace(
+                    "{algo}",
+                    algo.name,
+                  )}
                 >
                   <span class="i-mdi:content-copy" />
                 </button>
@@ -98,15 +117,19 @@ const algorithms = [
       {/* CSP Directive Preview */}
       <div class="hash-directive-section">
         <div class="hash-directive-header">
-          <span class="hash-result-label">CSP Directive (using SHA-256)</span>
+          <span class="hash-result-label"
+            >{t("tools.hashCalculator.cspDirectiveLabel")}</span
+          >
         </div>
         <div class="hash-result-value hash-result-directive">
-          <code id={`${uniqueId}-directive`}>Calculating...</code>
+          <code id={`${uniqueId}-directive`}
+            >{t("tools.shared.calculating")}</code
+          >
           <button
             class="hash-copy-btn"
             type="button"
             data-target={`${uniqueId}-directive`}
-            aria-label="Copy CSP directive"
+            aria-label={t("tools.hashCalculator.copyCspDirective")}
           >
             <span class="i-mdi:content-copy"></span>
           </button>
@@ -115,7 +138,9 @@ const algorithms = [
 
       {/* HTML Example */}
       <div class="hash-example">
-        <div class="hash-example-label">HTML with matching script:</div>
+        <div class="hash-example-label">
+          {t("tools.hashCalculator.htmlExampleLabel")}
+        </div>
         <pre
           class="hash-example-code"><code id={`${uniqueId}-html`}>...</code></pre>
       </div>
@@ -129,18 +154,15 @@ const algorithms = [
           <span class="i-mdi:information" />
         </div>
         <div class="hash-explanation-text">
-          <strong>How it works:</strong> The browser calculates the hash of your
-          inline script content (excluding <code>&lt;script&gt;</code> tags) and
-          compares it against the hash in your CSP header. If they match, the
-          script executes. Any change to the script—even whitespace—invalidates
-          the hash. SHA-256 is recommended for broad compatibility.
+          <strong>{t("tools.hashCalculator.howItWorks")}</strong>
+          <Fragment set:html={t("tools.hashCalculator.howItWorksText")} />
         </div>
       </div>
     )
   }
 </div>
 
-<script is:inline define:vars={{ uniqueId, defaultCode }}>
+<script is:inline define:vars={{ uniqueId, defaultCode, i18n }}>
   // Hash Calculator functionality with multiple algorithms
   const container = document.querySelector(`[data-hash-id="${uniqueId}"]`);
   if (container) {
@@ -179,7 +201,7 @@ const algorithms = [
     // Update all outputs
     async function updateOutputs() {
       const content = textarea.value;
-      const emptyMsg = "(Enter script content above)";
+      const emptyMsg = i18n.emptyInput;
 
       if (!content.trim()) {
         sha256Output.textContent = emptyMsg;
@@ -219,12 +241,12 @@ const algorithms = [
         htmlOutput.appendChild(document.createTextNode("\n" + content + "\n"));
         htmlOutput.appendChild(closeTag);
       } catch (error) {
-        const errorMsg = "Error calculating hash";
+        const errorMsg = i18n.errorCalculating;
         sha256Output.textContent = errorMsg;
         sha384Output.textContent = errorMsg;
         sha512Output.textContent = errorMsg;
-        directiveOutput.textContent = "Error";
-        htmlOutput.textContent = "Error";
+        directiveOutput.textContent = i18n.error;
+        htmlOutput.textContent = i18n.error;
       }
     }
 

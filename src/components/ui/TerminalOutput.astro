@@ -11,6 +11,8 @@
  *   Package installed successfully.
  * </TerminalOutput>
  */
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslations } from "@i18n/utils";
 
 interface Props {
   title?: string;
@@ -19,12 +21,18 @@ interface Props {
 
 const { title, ariaLabel } = Astro.props;
 
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
+
 const slotContent = await Astro.slots.render("default");
 const trimmedContent = slotContent.trim();
 
 // Use descriptive fallback (avoid non-meaningful IDs for screen readers)
 const finalAriaLabel =
-  ariaLabel || (title ? `Terminal Output: ${title}` : "Terminal Output");
+  ariaLabel ||
+  (title
+    ? t("components.terminal.outputTitle", { title })
+    : t("components.terminal.outputFallback"));
 ---
 
 <section
@@ -52,8 +60,8 @@ const finalAriaLabel =
     role="group"
     tabindex="0"
     aria-label={title
-      ? `Scrollable terminal output for ${title}`
-      : "Scrollable terminal output"}
+      ? t("components.terminal.scrollableOutput", { title })
+      : t("components.terminal.scrollableFallback")}
   >
     {/* eslint-enable astro/jsx-a11y/no-noninteractive-tabindex */}
     <div

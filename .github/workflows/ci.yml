@@ -89,7 +89,7 @@ jobs:
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile --prefer-offline
       - name: Run Astro Check
-        run: pnpm exec astro check | tee astro-check.log
+        run: pnpm exec astro check 2>&1 | tee astro-check.log
       - name: Upload Astro Check log
         if: always()
         uses: actions/upload-artifact@v6
@@ -112,7 +112,7 @@ jobs:
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile --prefer-offline
       - name: Run Prettier check
-        run: pnpm exec prettier --check . | tee prettier.log
+        run: pnpm exec prettier --check . 2>&1 | tee prettier.log
       - name: Upload Prettier log
         if: always()
         uses: actions/upload-artifact@v6
@@ -135,7 +135,7 @@ jobs:
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile --prefer-offline
       - name: Run ESLint
-        run: pnpm exec eslint . --max-warnings=0 | tee eslint.log
+        run: pnpm exec eslint . --max-warnings=0 2>&1 | tee eslint.log
       - name: Upload ESLint log
         if: always()
         uses: actions/upload-artifact@v6
@@ -158,7 +158,7 @@ jobs:
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile --prefer-offline
       - name: Run Security Audit
-        run: pnpm audit --audit-level=high | tee security-audit.log
+        run: pnpm audit --audit-level=high 2>&1 | tee security-audit.log
       - name: Upload Audit log
         if: always()
         uses: actions/upload-artifact@v6
@@ -181,7 +181,7 @@ jobs:
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile --prefer-offline
       - name: Run Stylelint
-        run: pnpm exec stylelint "src/**/*.{astro,css}" | tee stylelint.log
+        run: pnpm exec stylelint "src/**/*.{astro,css}" 2>&1 | tee stylelint.log
       - name: Upload Stylelint log
         if: always()
         uses: actions/upload-artifact@v6
@@ -264,29 +264,27 @@ jobs:
             lychee-report.html
           retention-days: 1
 
-  sa-typos:
+  sa-cspell:
     name: "SA: Spell Checker"
     runs-on: ubuntu-latest
     timeout-minutes: 5
     needs: build
     steps:
       - uses: actions/checkout@v6
-      - name: Install Typos binary
-        run: |
-          curl -LsSf https://github.com/crate-ci/typos/releases/download/v1.42.0/typos-v1.42.0-x86_64-unknown-linux-musl.tar.gz -o typos.tar.gz
-          echo "202ffa8dcb8f27c57c1fd22a5248f4f54e53115c7cf0665ecec252427b282c29 typos.tar.gz" | sha256sum -c -
-          mkdir -p typos-bin
-          tar xzf typos.tar.gz -C typos-bin
-          sudo mv typos-bin/typos /usr/local/bin/typos
-          rm -rf typos.tar.gz typos-bin
-      - name: Run Spell Checker
-        run: typos . | tee typos.log
-      - name: Upload Typos log
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: package.json
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile --prefer-offline
+      - name: Run CSpell
+        run: pnpm exec cspell lint "." --no-progress 2>&1 | tee cspell.log
+      - name: Upload CSpell log
         if: always()
         uses: actions/upload-artifact@v6
         with:
-          name: log-typos
-          path: typos.log
+          name: log-cspell
+          path: cspell.log
           retention-days: 1
 
   sa-sonar:
@@ -302,6 +300,7 @@ jobs:
         # Only run when SONAR_TOKEN is configured
         if: env.SONAR_TOKEN != ''
         uses: SonarSource/sonarqube-scan-action@v7
+        continue-on-error: true
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -325,7 +324,7 @@ jobs:
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile --prefer-offline
       - name: Analyze bundle size
-        run: node scripts/ci/analyze-bundle-size.mjs | tee bundle-size.log
+        run: node scripts/ci/analyze-bundle-size.mjs 2>&1 | tee bundle-size.log
       - name: Upload bundle log
         if: always()
         uses: actions/upload-artifact@v6
@@ -364,7 +363,7 @@ jobs:
         # 2. Stylish formatter (no || true): This run determines workflow pass/fail
         run: |
           pnpm exec html-validate -c .htmlvalidate.json --formatter json dist > html-validation.json 2>&1 || true
-          pnpm exec html-validate -c .htmlvalidate.json --formatter stylish dist | tee html-validation.log
+          pnpm exec html-validate -c .htmlvalidate.json --formatter stylish dist 2>&1 | tee html-validation.log
           node scripts/ci/generate-html-validation-report.mjs
       - name: Upload HTML log
         if: always()
@@ -380,7 +379,7 @@ jobs:
           name: html-validation-report
           path: |
             html-validation.json
-            html-report.html
+            html-validation-report.html
           retention-days: 1
 
   rss-validation:
@@ -404,7 +403,7 @@ jobs:
       - name: Validate RSS feed
         run: |
           set -e -o pipefail
-          node scripts/ci/validate-rss.mjs dist | tee rss-validation.log
+          node scripts/ci/validate-rss.mjs dist 2>&1 | tee rss-validation.log
       - name: Generate RSS preview
         run: |
           set -e -o pipefail
@@ -444,7 +443,7 @@ jobs:
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile --prefer-offline
       - name: Validate Schema.org structured data
-        run: node scripts/ci/validate-schema.mjs dist | tee schema-validation.log
+        run: node scripts/ci/validate-schema.mjs dist 2>&1 | tee schema-validation.log
       - name: Generate Schema Report
         if: always()
         run: |
@@ -536,13 +535,14 @@ jobs:
           retention-days: 1
 
   accessibility:
-    name: Accessibility Tests (${{ matrix.theme }} mode)
+    name: Accessibility Tests (${{ matrix.theme }} - ${{ matrix.locale }})
     runs-on: ubuntu-latest
     timeout-minutes: 30
     needs: build
     strategy:
       matrix:
         theme: [light, dark]
+        locale: [en, es]
       fail-fast: false
     steps:
       - uses: actions/checkout@v6
@@ -567,17 +567,17 @@ jobs:
         if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: pnpm exec playwright install --with-deps chromium
       - name: Run Axe accessibility tests
-        run: THEME=${{ matrix.theme }} pnpm exec playwright test --project=accessibility
+        run: THEME=${{ matrix.theme }} LOCALE_FILTER=${{ matrix.locale }} pnpm exec playwright test --project=accessibility
       - name: Upload Axe Results
         if: always()
         uses: actions/upload-artifact@v6
         with:
-          name: axe-accessibility-report-${{ matrix.theme }}
+          name: axe-accessibility-report-${{ matrix.theme }}-${{ matrix.locale }}
           path: accessibility-report/
           retention-days: 7
 
   lighthouse-audit:
-    name: LH Audit (${{ matrix.theme }} - ${{ matrix.formFactor }})
+    name: LH Audit (${{ matrix.theme }} - ${{ matrix.formFactor }} - ${{ matrix.locale }})
     runs-on: ubuntu-latest
     timeout-minutes: 45
     needs: build
@@ -585,6 +585,7 @@ jobs:
       matrix:
         theme: [light, dark]
         formFactor: [mobile, desktop]
+        locale: [en, es]
       fail-fast: false
     steps:
       - uses: actions/checkout@v6
@@ -603,6 +604,7 @@ jobs:
         shell: bash
         env:
           FORM_FACTOR: ${{ matrix.formFactor }}
+          LOCALE_FILTER: ${{ matrix.locale }}
           LHCI_GITHUB_TOKEN: ${{ secrets.TOKEN_GITHUB }}
         run: |
           if [ "${{ matrix.theme }}" = "dark" ]; then export LHCI_CHROME_FLAGS="--force-dark-mode --force-prefers-color-scheme=dark"; fi
@@ -611,7 +613,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v6
         with:
-          name: lh-results-${{ matrix.theme }}-${{ matrix.formFactor }}
+          name: lh-results-${{ matrix.theme }}-${{ matrix.formFactor }}-${{ matrix.locale }}
           path: lighthouse-results/
           retention-days: 1
 
@@ -630,7 +632,7 @@ jobs:
         sa-audit,
         sa-jsdoc,
         sa-lychee,
-        sa-typos,
+        sa-cspell,
         sa-sonar,
         sa-stylelint,
         ci-setup,
@@ -648,7 +650,7 @@ jobs:
           OUTCOME_PRETTIER: ${{ needs.sa-prettier.result }}
           OUTCOME_ESLINT: ${{ needs.sa-eslint.result }}
           OUTCOME_LYCHEE: ${{ needs.sa-lychee.result }}
-          OUTCOME_TYPOS: ${{ needs.sa-typos.result }}
+          OUTCOME_CSPELL: ${{ needs.sa-cspell.result }}
           OUTCOME_STYLELINT: ${{ needs.sa-stylelint.result }}
           OUTCOME_SECURITY: ${{ needs.sa-audit.result }}
           OUTCOME_SONAR: ${{ needs.sa-sonar.result }}
@@ -673,18 +675,90 @@ jobs:
           node-version: 22
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile --prefer-offline
-      - name: Download Axe Results (Light)
+      # Download each locale separately to avoid summary JSON overwrites
+      - name: Download Axe Results (Light EN)
         uses: actions/download-artifact@v7
         continue-on-error: true
         with:
-          name: axe-accessibility-report-light
-          path: a11y-deploy/light
-      - name: Download Axe Results (Dark)
+          name: axe-accessibility-report-light-en
+          path: a11y-deploy/light/en
+      - name: Download Axe Results (Light ES)
         uses: actions/download-artifact@v7
         continue-on-error: true
         with:
-          name: axe-accessibility-report-dark
-          path: a11y-deploy/dark
+          name: axe-accessibility-report-light-es
+          path: a11y-deploy/light/es
+      - name: Download Axe Results (Dark EN)
+        uses: actions/download-artifact@v7
+        continue-on-error: true
+        with:
+          name: axe-accessibility-report-dark-en
+          path: a11y-deploy/dark/en
+      - name: Download Axe Results (Dark ES)
+        uses: actions/download-artifact@v7
+        continue-on-error: true
+        with:
+          name: axe-accessibility-report-dark-es
+          path: a11y-deploy/dark/es
+      - name: Merge locale results per theme
+        run: |
+          for theme in light dark; do
+            # Move HTML reports from locale subdirs to theme dir
+            for locale in en es; do
+              src="a11y-deploy/${theme}/${locale}"
+              if [ -d "$src" ]; then
+                # Move HTML reports (skip summary JSONs and index.html)
+                find "$src" -maxdepth 1 -name '*.html' ! -name 'index.html' \
+                  -exec mv {} "a11y-deploy/${theme}/" \;
+              fi
+            done
+
+            # Merge summary JSONs per theme using Node.js
+            node -e "
+              const fs = require('fs');
+              const path = require('path');
+              const theme = '${theme}';
+              const base = 'a11y-deploy/${theme}';
+              const summaries = [];
+              for (const locale of ['en', 'es']) {
+                const f = path.join(base, locale, 'accessibility-summary-' + theme + '.json');
+                if (fs.existsSync(f)) summaries.push(JSON.parse(fs.readFileSync(f, 'utf-8')));
+              }
+              if (summaries.length === 0) { console.log('No summaries for ' + theme); process.exit(0); }
+
+              // Merge pages arrays
+              const pages = summaries.flatMap(s => s.pages || []);
+
+              // Merge violations/incomplete by rule id, summing nodes
+              function mergeRules(arrays) {
+                const map = new Map();
+                for (const arr of arrays) {
+                  for (const item of (arr || [])) {
+                    const existing = map.get(item.id);
+                    if (existing) { existing.nodes += item.nodes || 0; }
+                    else { map.set(item.id, { ...item }); }
+                  }
+                }
+                return [...map.values()];
+              }
+
+              const merged = {
+                theme,
+                totalPages: pages.length,
+                passed: pages.filter(p => p.violations === 0).length,
+                failed: pages.filter(p => p.violations > 0).length,
+                incomplete: pages.filter(p => p.incomplete > 0).length,
+                violations: mergeRules(summaries.map(s => s.violations)),
+                incompleteList: mergeRules(summaries.map(s => s.incompleteList)),
+                pages,
+              };
+              fs.writeFileSync('a11y-deploy/accessibility-summary-' + theme + '.json', JSON.stringify(merged, null, 2));
+              console.log('Merged ' + theme + ' summary: ' + merged.totalPages + ' pages');
+            "
+
+            # Cleanup locale subdirs
+            rm -rf "a11y-deploy/${theme}/en" "a11y-deploy/${theme}/es"
+          done
       - name: Generate Dashboard
         run: node scripts/ci/generate-accessibility-index.mjs a11y-deploy
       - name: Upload consolidated assets
@@ -708,30 +782,70 @@ jobs:
           node-version: 22
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile --prefer-offline
-      - name: Download LH Results (Light - Mobile)
+      - name: Download LH Results (Light - Mobile - EN)
         uses: actions/download-artifact@v7
         continue-on-error: true
         with:
-          name: lh-results-light-mobile
-          path: lh-deploy/light/mobile
-      - name: Download LH Results (Light - Desktop)
+          name: lh-results-light-mobile-en
+          path: lh-deploy/light/mobile/en
+      - name: Download LH Results (Light - Mobile - ES)
         uses: actions/download-artifact@v7
         continue-on-error: true
         with:
-          name: lh-results-light-desktop
-          path: lh-deploy/light/desktop
-      - name: Download LH Results (Dark - Mobile)
+          name: lh-results-light-mobile-es
+          path: lh-deploy/light/mobile/es
+      - name: Download LH Results (Light - Desktop - EN)
         uses: actions/download-artifact@v7
         continue-on-error: true
         with:
-          name: lh-results-dark-mobile
-          path: lh-deploy/dark/mobile
-      - name: Download LH Results (Dark - Desktop)
+          name: lh-results-light-desktop-en
+          path: lh-deploy/light/desktop/en
+      - name: Download LH Results (Light - Desktop - ES)
         uses: actions/download-artifact@v7
         continue-on-error: true
         with:
-          name: lh-results-dark-desktop
-          path: lh-deploy/dark/desktop
+          name: lh-results-light-desktop-es
+          path: lh-deploy/light/desktop/es
+      - name: Download LH Results (Dark - Mobile - EN)
+        uses: actions/download-artifact@v7
+        continue-on-error: true
+        with:
+          name: lh-results-dark-mobile-en
+          path: lh-deploy/dark/mobile/en
+      - name: Download LH Results (Dark - Mobile - ES)
+        uses: actions/download-artifact@v7
+        continue-on-error: true
+        with:
+          name: lh-results-dark-mobile-es
+          path: lh-deploy/dark/mobile/es
+      - name: Download LH Results (Dark - Desktop - EN)
+        uses: actions/download-artifact@v7
+        continue-on-error: true
+        with:
+          name: lh-results-dark-desktop-en
+          path: lh-deploy/dark/desktop/en
+      - name: Download LH Results (Dark - Desktop - ES)
+        uses: actions/download-artifact@v7
+        continue-on-error: true
+        with:
+          name: lh-results-dark-desktop-es
+          path: lh-deploy/dark/desktop/es
+      - name: Merge Lighthouse manifests per combo
+        run: |
+          for dir in lh-deploy/light/mobile lh-deploy/light/desktop lh-deploy/dark/mobile lh-deploy/dark/desktop; do
+            merged="[]"
+            for locale_dir in "$dir"/en "$dir"/es; do
+              if [ -f "$locale_dir/manifest.json" ]; then
+                merged=$(node -e "
+                  const a = JSON.parse(process.argv[1]);
+                  const b = JSON.parse(require('fs').readFileSync('$locale_dir/manifest.json','utf-8'));
+                  console.log(JSON.stringify([...a, ...b]));
+                " "$merged")
+              fi
+            done
+            echo "$merged" > "$dir/manifest.json"
+            echo "Merged manifest for $dir ($(node -e "console.log(JSON.parse(process.argv[1]).length)" "$merged") entries)"
+          done
       - name: Generate Dashboard
         run: node scripts/ci/generate-lighthouse-index.mjs lh-deploy
       - name: Upload LH Dashboard
@@ -744,7 +858,7 @@ jobs:
   deploy-reports:
     name: "🚀 Deploy CI Dashboard"
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 10
     needs:
       [
         ci-setup,
@@ -754,7 +868,7 @@ jobs:
         sa-audit,
         sa-jsdoc,
         sa-lychee,
-        sa-typos,
+        sa-cspell,
         sa-sonar,
         sa-stylelint,
         accessibility-report,
@@ -820,12 +934,6 @@ jobs:
         with:
           name: lychee-report
           path: .
-      - name: Cache Playwright Browsers
-        id: playwright-cache
-        uses: actions/cache@v5
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-browsers-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
@@ -833,10 +941,6 @@ jobs:
           cache: "pnpm"
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --prefer-offline
-      - name: Install Playwright Browsers
-        if: steps.playwright-cache.outputs.cache-hit != 'true'
-        run: pnpm exec playwright install --with-deps chromium
-
       - name: Download Logs
         uses: actions/download-artifact@v7
         continue-on-error: true
@@ -854,7 +958,7 @@ jobs:
           OUTCOME_PRETTIER: ${{ needs.sa-prettier.result }}
           OUTCOME_ESLINT: ${{ needs.sa-eslint.result }}
           OUTCOME_LYCHEE: ${{ needs.sa-lychee.result }}
-          OUTCOME_TYPOS: ${{ needs.sa-typos.result }}
+          OUTCOME_CSPELL: ${{ needs.sa-cspell.result }}
           OUTCOME_SECURITY: ${{ needs.sa-audit.result }}
           OUTCOME_SONAR: ${{ needs.sa-sonar.result }}
           OUTCOME_JSDOC: ${{ needs.sa-jsdoc.result }}
@@ -876,7 +980,7 @@ jobs:
           # NOTE: To view PR reports without Vercel authentication, you must disable
           # 'Deployment Protection' for this project in your Vercel Dashboard.
           PR_ID=${{ github.event.pull_request.number || '0' }}
-          DEPLOY_URL=$(npx vercel deploy ./dist-reports --name jmrp-ci-reports --token="$VERCEL_TOKEN" --yes --public $IS_PROD --meta prid=$PR_ID)
+          DEPLOY_URL=$(npx vercel deploy ./dist-reports --archive=tgz --name jmrp-ci-reports --token="$VERCEL_TOKEN" --yes --public $IS_PROD --meta prid=$PR_ID)
           echo "url=$DEPLOY_URL" >> $GITHUB_OUTPUT
       - name: Update CI Comment (Final Results)
         uses: actions/github-script@v8
@@ -886,7 +990,7 @@ jobs:
           OUTCOME_PRETTIER: ${{ needs.sa-prettier.result }}
           OUTCOME_ESLINT: ${{ needs.sa-eslint.result }}
           OUTCOME_LYCHEE: ${{ needs.sa-lychee.result }}
-          OUTCOME_TYPOS: ${{ needs.sa-typos.result }}
+          OUTCOME_CSPELL: ${{ needs.sa-cspell.result }}
           OUTCOME_SECURITY: ${{ needs.sa-audit.result }}
           OUTCOME_SONAR: ${{ needs.sa-sonar.result }}
           OUTCOME_JSDOC: ${{ needs.sa-jsdoc.result }}

@@ -1,0 +1,269 @@
+---
+title: "Conversor de Timestamps"
+slug: "timestamp-converter"
+description: "Convierte timestamps Unix a fechas legibles y viceversa. Soporta segundos, milisegundos, ISO 8601, RFC 2822, comparación de zonas horarias y autodetección."
+subtitle: "Convierte entre timestamps Unix, ISO 8601 y fechas legibles con comparación de zonas horarias y autodetección."
+icon: "i-mdi:clock-time-four-outline"
+category: "developer"
+tags: ["timestamp", "unix", "fecha", "hora", "zona-horaria", "iso8601"]
+appComponent: "TimestampConverter"
+lang: "es"
+appProps:
+  title: ""
+---
+
+import {
+  TerminalSession,
+  TerminalSessionCommand,
+  TerminalSessionOutput,
+} from "@components/ui/terminal-session";
+
+<h2>Acerca de esta herramienta</h2>
+<p>
+  Convierte entre timestamps Unix y formatos de fecha legibles. La herramienta
+  soporta sincronización bidireccional, detección automática de segundos vs
+  milisegundos y comparación simultánea en <strong>11 zonas horarias</strong>.
+</p>
+
+<h3>Características</h3>
+<ul>
+  <li>
+    <strong>Sincronización bidireccional</strong> — el timestamp y el selector
+    de fecha se mantienen sincronizados; editar cualquiera actualiza todas las
+    salidas al instante
+  </li>
+  <li>
+    <strong>Autodetección de segundos / milisegundos</strong> — determina
+    automáticamente la unidad según el número de dígitos, con opción de ajuste
+    manual
+  </li>
+  <li>
+    <strong>Múltiples formatos de salida</strong> — hora local, UTC (ISO 8601),
+    RFC 2822, fecha corta (YYYY-MM-DD), número de semana y día del año
+  </li>
+  <li>
+    <strong>Comparación de zonas horarias</strong> — visualiza el mismo instante
+    en 11 ciudades (Nueva York, Los Ángeles, Chicago, Londres, Berlín, Tokio,
+    Shanghái, Calcuta, Sídney) con tu zona horaria local resaltada
+  </li>
+  <li>
+    <strong>Reloj en vivo</strong> — el timestamp Unix actual se actualiza cada
+    segundo con un botón "Ahora" para capturarlo al instante
+  </li>
+  <li>
+    <strong>Tiempo relativo</strong> — indicación legible de "hace X tiempo /
+    dentro de X tiempo" que se actualiza automáticamente
+  </li>
+  <li>
+    <strong>Enlaces compartibles</strong> — los timestamps se codifican en la
+    URL (<code>?ts=...&amp;unit=...</code>) para compartir fácilmente
+  </li>
+  <li>
+    <strong>Botones de copia</strong> — copia con un clic en cada valor de salida
+  </li>
+</ul>
+
+<h3>Cómo usar</h3>
+<ol>
+  <li>
+    Introduce un timestamp Unix para ver la fecha, la tabla de zonas horarias
+    y todos los formatos actualizarse al instante
+  </li>
+  <li>
+    O selecciona una fecha y hora — la entrada de timestamp y todas las salidas
+    se sincronizan automáticamente
+  </li>
+  <li>
+    Haz clic en <strong>Ahora</strong> para capturar el timestamp actual
+  </li>
+  <li>
+    Usa el selector <strong>Auto / Segundos / Milisegundos</strong> para
+    controlar la interpretación de la unidad (Auto usa heurística de dígitos:
+    ≤10 dígitos → segundos, &gt;10 dígitos → milisegundos)
+  </li>
+  <li>
+    Haz clic en <strong>Compartir enlace</strong> para copiar una URL que abre
+    la herramienta con el mismo timestamp precargado
+  </li>
+</ol>
+
+<h3>Lógica de autodetección</h3>
+<p>
+  Cuando el selector de unidad está en <strong>Auto</strong> (por defecto), la
+  herramienta determina la unidad según la magnitud de la entrada:
+</p>
+<ul>
+  <li>
+    <strong>≤ 9.999.999.999</strong> (10 dígitos o menos) → se interpreta como{" "}
+    <strong>segundos</strong>. Esto cubre fechas hasta noviembre de 2286.
+  </li>
+  <li>
+    <strong>&gt; 9.999.999.999</strong> (11+ dígitos) → se interpreta como{" "}
+    <strong>milisegundos</strong>. El <code>Date.now()</code> de JavaScript
+    devuelve timestamps de milisegundos con 13 dígitos.
+  </li>
+</ul>
+<p>
+  Siempre puedes anular la autodetección seleccionando manualmente
+  <strong>Segundos</strong> o <strong>Milisegundos</strong>.
+</p>
+
+<h3>Referencia de formatos de salida</h3>
+<ul>
+  <li>
+    <strong>Hora local</strong> — formateada usando la configuración regional
+    y zona horaria de tu navegador (<code>toLocaleString()</code>)
+  </li>
+  <li>
+    <strong>UTC (ISO 8601)</strong> — <code>2025-01-15T10:30:00.000Z</code> —
+    el estándar para APIs, logs e intercambio de datos
+  </li>
+  <li>
+    <strong>RFC 2822</strong> — <code>Wed, 15 Jan 2025 11:30:00 +0100</code> —
+    usado en cabeceras de correo electrónico y fechas HTTP
+  </li>
+  <li>
+    <strong>Fecha corta</strong> — <code>2025-01-15</code> — formato ISO 8601
+    solo con fecha
+  </li>
+  <li>
+    <strong>Número de semana</strong> — número de semana ISO 8601 (W01–W53),
+    útil para planificación de sprints e informes
+  </li>
+  <li>
+    <strong>Día del año</strong> — día ordinal (1–366) con el total de días del
+    año, útil para referencias de fecha juliana
+  </li>
+</ul>
+
+<h3>Timestamps Unix notables</h3>
+<table>
+  <thead>
+    <tr>
+      <th>Timestamp</th>
+      <th>Fecha (UTC)</th>
+      <th>Evento</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        <code>0</code>
+      </td>
+      <td>1970-01-01 00:00:00</td>
+      <td>Unix Epoch — el origen del tiempo Unix</td>
+    </tr>
+    <tr>
+      <td>
+        <code>1000000000</code>
+      </td>
+      <td>2001-09-09 01:46:40</td>
+      <td>Mil millones de segundos desde el epoch</td>
+    </tr>
+    <tr>
+      <td>
+        <code>1234567890</code>
+      </td>
+      <td>2009-02-13 23:31:30</td>
+      <td>Dígitos secuenciales — celebrado por desarrolladores de todo el mundo</td>
+    </tr>
+    <tr>
+      <td>
+        <code>2000000000</code>
+      </td>
+      <td>2033-05-18 03:33:20</td>
+      <td>Dos mil millones de segundos desde el epoch</td>
+    </tr>
+    <tr>
+      <td>
+        <code>2147483647</code>
+      </td>
+      <td>2038-01-19 03:14:07</td>
+      <td>
+        <strong>Y2K38</strong> — desbordamiento de entero con signo de 32 bits.
+        Los sistemas que almacenan timestamps como <code>int32</code> pasarán a
+        valores negativos.
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <code>4294967295</code>
+      </td>
+      <td>2106-02-07 06:28:15</td>
+      <td>Máximo de entero sin signo de 32 bits</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Privacidad</h3>
+<p>
+  Todas las conversiones ocurren completamente en tu navegador usando las APIs
+  integradas de JavaScript <code>Date</code> e <code>Intl</code>. No se
+  transmite ningún dato de timestamp a ningún servidor. El enlace compartible
+  solo codifica el timestamp en los parámetros de la URL.
+</p>
+
+<h3>Referencia de comandos Linux</h3>
+<p>Operaciones de timestamp comunes desde la terminal:</p>
+
+<h4>Obtener el timestamp actual</h4>
+<TerminalSession>
+  <TerminalSessionCommand>date +%s</TerminalSessionCommand>
+  <TerminalSessionOutput title="Timestamp Unix (segundos)">
+    1739361234
+  </TerminalSessionOutput>
+</TerminalSession>
+
+<h4>Timestamp a fecha</h4>
+<TerminalSession>
+  <TerminalSessionCommand>
+    date -d @1739361234 "+%Y-%m-%d %H:%M:%S %Z"
+  </TerminalSessionCommand>
+  <TerminalSessionOutput title="Fecha formateada">
+    2025-02-12 12:53:54 CET
+  </TerminalSessionOutput>
+</TerminalSession>
+
+<h4>Fecha a timestamp</h4>
+<TerminalSession>
+  <TerminalSessionCommand>
+    date -d "2025-02-12 12:53:54" +%s
+  </TerminalSessionCommand>
+  <TerminalSessionOutput title="Timestamp Unix">
+    1739361234
+  </TerminalSessionOutput>
+</TerminalSession>
+
+<h4>Convertir entre zonas horarias</h4>
+<TerminalSession>
+  <TerminalSessionCommand>
+    TZ="America/New_York" date -d @1739361234 "+%Y-%m-%d %H:%M:%S %Z"
+  </TerminalSessionCommand>
+  <TerminalSessionOutput title="Hora en Nueva York">
+    2025-02-12 06:53:54 EST
+  </TerminalSessionOutput>
+</TerminalSession>
+
+<h4>Timestamp en milisegundos</h4>
+<TerminalSession>
+  <TerminalSessionCommand>date +%s%3N</TerminalSessionCommand>
+  <TerminalSessionOutput title="Timestamp Unix (milisegundos)">
+    1739361234567
+  </TerminalSessionOutput>
+</TerminalSession>
+
+<h4>ISO 8601 y RFC 2822</h4>
+<TerminalSession>
+  <TerminalSessionCommand>
+    ```
+    date -d @1739361234 --iso-8601=seconds
+    date -d @1739361234 -R
+    ```
+  </TerminalSessionCommand>
+  <TerminalSessionOutput title="Formatos estándar">
+    ```
+    2025-02-12T12:53:54+01:00
+    Wed, 12 Feb 2025 12:53:54 +0100
+    ```
+  </TerminalSessionOutput>
+</TerminalSession>

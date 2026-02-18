@@ -1,4 +1,6 @@
 ---
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslations } from "@i18n/utils";
 import type { CollectionEntry } from "astro:content";
 
 import PostCard from "./PostCard.astro";
@@ -8,11 +10,14 @@ interface Props {
 }
 
 const { posts } = Astro.props;
+
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
 ---
 
 <section
   class="posts-grid"
-  aria-label="Blog posts grid"
+  aria-label={t("aria.postsGrid")}
 >
   {
     posts.map((post, index) => (

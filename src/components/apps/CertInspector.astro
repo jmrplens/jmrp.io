@@ -9,13 +9,113 @@
  * Usage:
  * <CertInspector title="Certificate Inspector" />
  */
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslations } from "@i18n/utils";
+
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
 
 interface Props {
   title?: string;
 }
 
-const { title = "Certificate Inspector" } = Astro.props;
+const { title = t("tools.certInspector.title") } = Astro.props;
 const uniqueId = `cert-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
+
+/** Translations passed to the inline script via define:vars. */
+const i18n = {
+  // Fetch states & errors
+  fetching: t("tools.certInspector.fetching"),
+  invalidUrl: t("tools.certInspector.invalidUrl"),
+  noCertsFound: t("tools.certInspector.noCertsFound"),
+  couldNotParse: t("tools.certInspector.couldNotParse"),
+  couldNotFetch: t("tools.certInspector.couldNotFetch"),
+  // Pill meta
+  dRemaining: t("tools.certInspector.dRemaining"),
+  expired: t("tools.certInspector.expired"),
+  // Parse errors
+  invalidPem: t("tools.certInspector.invalidPem"),
+  invalidStructure: t("tools.certInspector.invalidStructure"),
+  invalidTbs: t("tools.certInspector.invalidTbs"),
+  errorParsing: t("tools.certInspector.errorParsing"),
+  unknownError: t("tools.certInspector.unknownError"),
+  // Section titles
+  sectionStatus: t("tools.certInspector.sectionStatus"),
+  sectionSubject: t("tools.certInspector.sectionSubject"),
+  sectionSans: t("tools.certInspector.sectionSans"),
+  sectionIssuer: t("tools.certInspector.sectionIssuer"),
+  sectionValidity: t("tools.certInspector.sectionValidity"),
+  sectionPublicKey: t("tools.certInspector.sectionPublicKey"),
+  sectionKeyUsage: t("tools.certInspector.sectionKeyUsage"),
+  sectionExtKeyUsage: t("tools.certInspector.sectionExtKeyUsage"),
+  sectionAia: t("tools.certInspector.sectionAia"),
+  sectionDetails: t("tools.certInspector.sectionDetails"),
+  sectionSecurity: t("tools.certInspector.sectionSecurity"),
+  // Status
+  certificate: t("tools.certInspector.certificate"),
+  type: t("tools.certInspector.type"),
+  caCertificate: t("tools.certInspector.caCertificate"),
+  endEntityCertificate: t("tools.certInspector.endEntityCertificate"),
+  validDaysRemaining: t("tools.certInspector.validDaysRemaining"),
+  // Subject/Issuer
+  commonName: t("tools.certInspector.commonName"),
+  organization: t("tools.certInspector.organization"),
+  organizationalUnit: t("tools.certInspector.organizationalUnit"),
+  country: t("tools.certInspector.country"),
+  state: t("tools.certInspector.state"),
+  locality: t("tools.certInspector.locality"),
+  distinguishedName: t("tools.certInspector.distinguishedName"),
+  selfSigned: t("tools.certInspector.selfSigned"),
+  yes: t("tools.certInspector.yes"),
+  no: t("tools.certInspector.no"),
+  // SANs
+  sanLabel: t("tools.certInspector.sanLabel"),
+  // Validity
+  notBefore: t("tools.certInspector.notBefore"),
+  notAfter: t("tools.certInspector.notAfter"),
+  duration: t("tools.certInspector.duration"),
+  daysValue: t("tools.certInspector.daysValue"),
+  daysRemaining: t("tools.certInspector.daysRemaining"),
+  // Public Key
+  algorithm: t("tools.certInspector.algorithm"),
+  keySizeCurve: t("tools.certInspector.keySizeCurve"),
+  signatureAlgorithm: t("tools.certInspector.signatureAlgorithm"),
+  // AIA
+  caIssuers: t("tools.certInspector.caIssuers"),
+  // Details
+  version: t("tools.certInspector.version"),
+  serialNumber: t("tools.certInspector.serialNumber"),
+  subjectKeyId: t("tools.certInspector.subjectKeyId"),
+  authorityKeyId: t("tools.certInspector.authorityKeyId"),
+  ctScts: t("tools.certInspector.ctScts"),
+  ctPresent: t("tools.certInspector.ctPresent"),
+  ctNotFound: t("tools.certInspector.ctNotFound"),
+  // Fingerprint
+  sha256Fingerprint: t("tools.certInspector.sha256Fingerprint"),
+  computing: t("tools.certInspector.computing"),
+  unavailable: t("tools.certInspector.unavailable"),
+  // Security findings
+  unknown: t("tools.certInspector.unknown"),
+  certExpired: t("tools.certInspector.certExpired"),
+  certExpiresIn: t("tools.certInspector.certExpiresIn"),
+  certValid: t("tools.certInspector.certValid"),
+  rsaKeyTooSmall: t("tools.certInspector.rsaKeyTooSmall"),
+  rsaKeyOk: t("tools.certInspector.rsaKeyOk"),
+  rsaKeyStrong: t("tools.certInspector.rsaKeyStrong"),
+  ecdsaKeyStrong: t("tools.certInspector.ecdsaKeyStrong"),
+  ecCurve: t("tools.certInspector.ecCurve"),
+  sha1Deprecated: t("tools.certInspector.sha1Deprecated"),
+  sigAlgOk: t("tools.certInspector.sigAlgOk"),
+  selfSignedWarning: t("tools.certInspector.selfSignedWarning"),
+  sansPresent: t("tools.certInspector.sansPresent"),
+  noSans: t("tools.certInspector.noSans"),
+  wildcardDetected: t("tools.certInspector.wildcardDetected"),
+  isCaCert: t("tools.certInspector.isCaCert"),
+  ctSctsPresent: t("tools.certInspector.ctSctsPresent"),
+  noCtScts: t("tools.certInspector.noCtScts"),
+  validityExceeds: t("tools.certInspector.validityExceeds"),
+  validityPeriodOk: t("tools.certInspector.validityPeriodOk"),
+};
 
 /* eslint-disable no-secrets/no-secrets -- PEM certificate sample for demo, not a secret */
 const sampleCert = `-----BEGIN CERTIFICATE-----
@@ -70,14 +170,14 @@ emyPxgcYxn/eR44/KJ4EBs+lVDR3veyJm+kXQ99b21/+jh5Xos1AnX5iItreGCc=
             class="i-mdi:web"
             aria-hidden="true"
           ></span>
-          Fetch from URL
+          {t("tools.certInspector.fetchFromUrl")}
         </label>
         <div class="cert-url-input-row">
           <input
             type="text"
             id={`${uniqueId}-url`}
             class="cert-url-input"
-            placeholder="https://example.com"
+            placeholder={t("tools.certInspector.urlPlaceholder")}
             spellcheck="false"
             autocomplete="off"
           />
@@ -89,7 +189,7 @@ emyPxgcYxn/eR44/KJ4EBs+lVDR3veyJm+kXQ99b21/+jh5Xos1AnX5iItreGCc=
               class="i-mdi:download"
               aria-hidden="true"
             ></span>
-            Fetch
+            {t("tools.certInspector.fetch")}
           </button>
         </div>
       </div>
@@ -105,18 +205,18 @@ emyPxgcYxn/eR44/KJ4EBs+lVDR3veyJm+kXQ99b21/+jh5Xos1AnX5iItreGCc=
             class="i-mdi:certificate-outline"
             aria-hidden="true"
           ></span>
-          Certificates Found
+          {t("tools.certInspector.certificatesFound")}
         </span>
         <div
           class="cert-selector-pills"
           role="radiogroup"
-          aria-label="Select certificate by issuer"
+          aria-label={t("tools.certInspector.selectCertificateAriaLabel")}
         >
         </div>
       </div>
 
       <div class="cert-separator">
-        <span>or</span>
+        <span>{t("tools.certInspector.separatorOr")}</span>
       </div>
 
       <!-- PEM Paste -->
@@ -134,7 +234,7 @@ emyPxgcYxn/eR44/KJ4EBs+lVDR3veyJm+kXQ99b21/+jh5Xos1AnX5iItreGCc=
         id={`${uniqueId}-pem`}
         class="cert-textarea"
         rows="8"
-        placeholder="Paste PEM-encoded certificate here..."
+        placeholder={t("tools.certInspector.pastePemPlaceholder")}
         spellcheck="false"
         >{sampleCert}</textarea
       >
@@ -146,7 +246,7 @@ emyPxgcYxn/eR44/KJ4EBs+lVDR3veyJm+kXQ99b21/+jh5Xos1AnX5iItreGCc=
           class="i-mdi:magnify"
           aria-hidden="true"
         ></span>
-        Inspect Certificate
+        {t("tools.certInspector.inspectCertificate")}
       </button>
     </div>
 
@@ -158,7 +258,7 @@ emyPxgcYxn/eR44/KJ4EBs+lVDR3veyJm+kXQ99b21/+jh5Xos1AnX5iItreGCc=
   </div>
 </div>
 
-<script is:inline define:vars={{ uniqueId }}>
+<script is:inline define:vars={{ uniqueId, i18n }}>
   (function () {
     var container = document.querySelector('[data-cert-id="' + uniqueId + '"]');
     if (!container) return;
@@ -197,7 +297,7 @@ emyPxgcYxn/eR44/KJ4EBs+lVDR3veyJm+kXQ99b21/+jh5Xos1AnX5iItreGCc=
         var notBefore = decodeTime(tbsCert[idx].children[0]);
         var notAfter = decodeTime(tbsCert[idx].children[1]);
 
-        var label = issuerParts.O || issuerParts.CN || "Unknown";
+        var label = issuerParts.O || issuerParts.CN || i18n.unknown;
         if (issuerParts.CN && issuerParts.O) {
           label = issuerParts.O + " (" + issuerParts.CN + ")";
         }
@@ -262,7 +362,9 @@ emyPxgcYxn/eR44/KJ4EBs+lVDR3veyJm+kXQ99b21/+jh5Xos1AnX5iItreGCc=
               ? " cert-pill-expiring"
               : " cert-pill-valid"
             : " cert-pill-expired");
-        pillMeta.textContent = isValid ? daysLeft + "d remaining" : "Expired";
+        pillMeta.textContent = isValid
+          ? i18n.dRemaining.replace("{days}", daysLeft)
+          : i18n.expired;
 
         pill.appendChild(pillLabel);
         pill.appendChild(pillMeta);
@@ -298,13 +400,13 @@ emyPxgcYxn/eR44/KJ4EBs+lVDR3veyJm+kXQ99b21/+jh5Xos1AnX5iItreGCc=
         try {
           hostname = new URL(url).hostname;
         } catch (e) {
-          showError("Invalid URL");
+          showError(i18n.invalidUrl);
           return;
         }
 
         fetchBtn.disabled = true;
         var origHtml = fetchBtn.innerHTML;
-        fetchBtn.textContent = "Fetching\u2026";
+        fetchBtn.textContent = i18n.fetching;
 
         // Use multiple public APIs for certificate info
         var apiUrl =
@@ -319,7 +421,9 @@ emyPxgcYxn/eR44/KJ4EBs+lVDR3veyJm+kXQ99b21/+jh5Xos1AnX5iItreGCc=
           })
           .then(function (data) {
             if (!data || data.length === 0)
-              throw new Error("No certificates found for " + hostname);
+              throw new Error(
+                i18n.noCertsFound.replace("{hostname}", hostname),
+              );
 
             // Process ALL certificates
             var allCerts = [];
@@ -340,8 +444,7 @@ emyPxgcYxn/eR44/KJ4EBs+lVDR3veyJm+kXQ99b21/+jh5Xos1AnX5iItreGCc=
               }
             });
 
-            if (allCerts.length === 0)
-              throw new Error("Could not parse any certificates");
+            if (allCerts.length === 0) throw new Error(i18n.couldNotParse);
 
             // Group by issuer, keep most recent from each
             var grouped = groupByIssuer(allCerts);
@@ -391,11 +494,7 @@ emyPxgcYxn/eR44/KJ4EBs+lVDR3veyJm+kXQ99b21/+jh5Xos1AnX5iItreGCc=
               })
               .catch(function () {
                 showError(
-                  "Could not fetch certificate for " +
-                    hostname +
-                    ". CORS restrictions may apply. Try using openssl in the terminal instead: openssl s_client -connect " +
-                    hostname +
-                    ":443",
+                  i18n.couldNotFetch.replace(/\{hostname\}/g, hostname),
                 );
               });
           })
@@ -643,7 +742,7 @@ emyPxgcYxn/eR44/KJ4EBs+lVDR3veyJm+kXQ99b21/+jh5Xos1AnX5iItreGCc=
         var hash = await crypto.subtle.digest("SHA-256", der);
         return bytesToHex(new Uint8Array(hash), ":");
       } catch (_) {
-        return "Unavailable";
+        return i18n.unavailable;
       }
     }
 
@@ -808,20 +907,20 @@ emyPxgcYxn/eR44/KJ4EBs+lVDR3veyJm+kXQ99b21/+jh5Xos1AnX5iItreGCc=
       if (!certInfo.isValid) {
         findings.push({
           severity: "critical",
-          text: "Certificate has expired",
+          text: i18n.certExpired,
         });
       } else if (certInfo.daysLeft <= 7) {
         findings.push({
           severity: "critical",
-          text: "Certificate expires in " + certInfo.daysLeft + " days",
+          text: i18n.certExpiresIn.replace("{days}", certInfo.daysLeft),
         });
       } else if (certInfo.daysLeft <= 30) {
         findings.push({
           severity: "warning",
-          text: "Certificate expires in " + certInfo.daysLeft + " days",
+          text: i18n.certExpiresIn.replace("{days}", certInfo.daysLeft),
         });
       } else {
-        findings.push({ severity: "pass", text: "Certificate is valid" });
+        findings.push({ severity: "pass", text: i18n.certValid });
       }
 
       // Key strength
@@ -830,20 +929,17 @@ emyPxgcYxn/eR44/KJ4EBs+lVDR3veyJm+kXQ99b21/+jh5Xos1AnX5iItreGCc=
         if (bits < 2048) {
           findings.push({
             severity: "critical",
-            text:
-              "RSA key too small (" +
-              bits +
-              " bits) \u2014 minimum 2048 required",
+            text: i18n.rsaKeyTooSmall.replace("{bits}", bits),
           });
         } else if (bits < 4096) {
           findings.push({
             severity: "pass",
-            text: "RSA " + bits + "-bit key \u2713",
+            text: i18n.rsaKeyOk.replace("{bits}", bits),
           });
         } else {
           findings.push({
             severity: "pass",
-            text: "RSA " + bits + "-bit key (strong) \u2713",
+            text: i18n.rsaKeyStrong.replace("{bits}", bits),
           });
         }
       } else if (certInfo.keyAlgName === "EC") {
@@ -851,12 +947,12 @@ emyPxgcYxn/eR44/KJ4EBs+lVDR3veyJm+kXQ99b21/+jh5Xos1AnX5iItreGCc=
         if (curve === "P-256" || curve === "P-384" || curve === "P-521") {
           findings.push({
             severity: "pass",
-            text: "ECDSA " + curve + " key (strong) \u2713",
+            text: i18n.ecdsaKeyStrong.replace("{curve}", curve),
           });
         } else {
           findings.push({
             severity: "info",
-            text: "EC curve: " + curve,
+            text: i18n.ecCurve.replace("{curve}", curve),
           });
         }
       }
@@ -866,7 +962,7 @@ emyPxgcYxn/eR44/KJ4EBs+lVDR3veyJm+kXQ99b21/+jh5Xos1AnX5iItreGCc=
       if (sigAlg.includes("SHA1")) {
         findings.push({
           severity: "critical",
-          text: "SHA-1 signature \u2014 deprecated and insecure",
+          text: i18n.sha1Deprecated,
         });
       } else if (
         sigAlg.includes("SHA256") ||
@@ -875,7 +971,7 @@ emyPxgcYxn/eR44/KJ4EBs+lVDR3veyJm+kXQ99b21/+jh5Xos1AnX5iItreGCc=
       ) {
         findings.push({
           severity: "pass",
-          text: sigAlg + " signature \u2713",
+          text: i18n.sigAlgOk.replace("{alg}", sigAlg),
         });
       }
 
@@ -883,7 +979,7 @@ emyPxgcYxn/eR44/KJ4EBs+lVDR3veyJm+kXQ99b21/+jh5Xos1AnX5iItreGCc=
       if (certInfo.isSelfSigned && !certInfo.isCA) {
         findings.push({
           severity: "warning",
-          text: "Self-signed certificate \u2014 not trusted by browsers",
+          text: i18n.selfSignedWarning,
         });
       }
 
@@ -891,12 +987,12 @@ emyPxgcYxn/eR44/KJ4EBs+lVDR3veyJm+kXQ99b21/+jh5Xos1AnX5iItreGCc=
       if (certInfo.sans.length > 0) {
         findings.push({
           severity: "pass",
-          text: certInfo.sans.length + " Subject Alternative Name(s) \u2713",
+          text: i18n.sansPresent.replace("{count}", certInfo.sans.length),
         });
       } else if (!certInfo.isCA) {
         findings.push({
           severity: "warning",
-          text: "No Subject Alternative Names \u2014 modern browsers require SANs",
+          text: i18n.noSans,
         });
       }
 
@@ -907,7 +1003,7 @@ emyPxgcYxn/eR44/KJ4EBs+lVDR3veyJm+kXQ99b21/+jh5Xos1AnX5iItreGCc=
       if (hasWildcard) {
         findings.push({
           severity: "info",
-          text: "Wildcard certificate detected",
+          text: i18n.wildcardDetected,
         });
       }
 
@@ -915,7 +1011,7 @@ emyPxgcYxn/eR44/KJ4EBs+lVDR3veyJm+kXQ99b21/+jh5Xos1AnX5iItreGCc=
       if (certInfo.isCA) {
         findings.push({
           severity: "info",
-          text: "This is a CA certificate",
+          text: i18n.isCaCert,
         });
       }
 
@@ -923,12 +1019,12 @@ emyPxgcYxn/eR44/KJ4EBs+lVDR3veyJm+kXQ99b21/+jh5Xos1AnX5iItreGCc=
       if (certInfo.hasCT) {
         findings.push({
           severity: "pass",
-          text: "Certificate Transparency SCTs present \u2713",
+          text: i18n.ctSctsPresent,
         });
       } else if (!certInfo.isCA) {
         findings.push({
           severity: "warning",
-          text: "No CT SCTs found \u2014 may not be trusted by Chrome",
+          text: i18n.noCtScts,
         });
       }
 
@@ -939,15 +1035,12 @@ emyPxgcYxn/eR44/KJ4EBs+lVDR3veyJm+kXQ99b21/+jh5Xos1AnX5iItreGCc=
       if (totalDays > 398) {
         findings.push({
           severity: "warning",
-          text:
-            "Certificate validity " +
-            totalDays +
-            " days \u2014 exceeds 398-day maximum (CA/B Forum)",
+          text: i18n.validityExceeds.replace("{days}", totalDays),
         });
       } else if (!certInfo.isCA) {
         findings.push({
           severity: "pass",
-          text: "Validity period " + totalDays + " days \u2713",
+          text: i18n.validityPeriodOk.replace("{days}", totalDays),
         });
       }
 
@@ -959,7 +1052,7 @@ emyPxgcYxn/eR44/KJ4EBs+lVDR3veyJm+kXQ99b21/+jh5Xos1AnX5iItreGCc=
       resultsEl.textContent = "";
 
       if (!pem.includes("BEGIN CERTIFICATE")) {
-        showError("Please paste a PEM-encoded certificate (BEGIN CERTIFICATE)");
+        showError(i18n.invalidPem);
         return;
       }
 
@@ -968,14 +1061,14 @@ emyPxgcYxn/eR44/KJ4EBs+lVDR3veyJm+kXQ99b21/+jh5Xos1AnX5iItreGCc=
         var tree = decodeDER(Array.from(der), 0, der.length);
 
         if (!tree || !tree[0] || !tree[0].children) {
-          throw new Error("Invalid certificate structure");
+          throw new Error(i18n.invalidStructure);
         }
 
         var cert = tree[0].children;
         var tbsCert = cert[0].children;
 
         if (!tbsCert || tbsCert.length < 6) {
-          throw new Error("Invalid TBS certificate");
+          throw new Error(i18n.invalidTbs);
         }
 
         // Parse fields
@@ -1111,19 +1204,17 @@ emyPxgcYxn/eR44/KJ4EBs+lVDR3veyJm+kXQ99b21/+jh5Xos1AnX5iItreGCc=
             : "cert-status-valid"
           : "cert-status-expired";
         var statusText = isValid
-          ? isExpiring
-            ? "Valid (" + daysLeft + " days remaining)"
-            : "Valid (" + daysLeft + " days remaining)"
-          : "Expired";
+          ? i18n.validDaysRemaining.replace("{days}", daysLeft)
+          : i18n.expired;
         sections.push({
-          title: "Status",
+          title: i18n.sectionStatus,
           items: [
-            { label: "Certificate", value: statusText, cls: statusClass },
+            { label: i18n.certificate, value: statusText, cls: statusClass },
             {
-              label: "Type",
+              label: i18n.type,
               value: basicConstraints.isCA
-                ? "CA Certificate"
-                : "End-Entity Certificate",
+                ? i18n.caCertificate
+                : i18n.endEntityCertificate,
             },
           ],
         });
@@ -1132,35 +1223,38 @@ emyPxgcYxn/eR44/KJ4EBs+lVDR3veyJm+kXQ99b21/+jh5Xos1AnX5iItreGCc=
         var subjectItems = [];
         if (subjectParts.CN)
           subjectItems.push({
-            label: "Common Name (CN)",
+            label: i18n.commonName,
             value: subjectParts.CN,
           });
         if (subjectParts.O)
           subjectItems.push({
-            label: "Organization (O)",
+            label: i18n.organization,
             value: subjectParts.O,
           });
         if (subjectParts.OU)
           subjectItems.push({
-            label: "Organizational Unit (OU)",
+            label: i18n.organizationalUnit,
             value: subjectParts.OU,
           });
         if (subjectParts.C)
-          subjectItems.push({ label: "Country (C)", value: subjectParts.C });
+          subjectItems.push({ label: i18n.country, value: subjectParts.C });
         if (subjectParts.ST)
-          subjectItems.push({ label: "State (ST)", value: subjectParts.ST });
+          subjectItems.push({ label: i18n.state, value: subjectParts.ST });
         if (subjectParts.L)
-          subjectItems.push({ label: "Locality (L)", value: subjectParts.L });
+          subjectItems.push({ label: i18n.locality, value: subjectParts.L });
         if (subjectItems.length === 0)
-          subjectItems.push({ label: "Distinguished Name", value: subject });
-        sections.push({ title: "Subject", items: subjectItems });
+          subjectItems.push({ label: i18n.distinguishedName, value: subject });
+        sections.push({ title: i18n.sectionSubject, items: subjectItems });
 
         // SANs
         if (sans.length > 0) {
           sections.push({
-            title: "Subject Alternative Names (" + sans.length + ")",
+            title: i18n.sectionSans.replace("{count}", sans.length),
             items: sans.map(function (s, i) {
-              return { label: "SAN " + (i + 1), value: s };
+              return {
+                label: i18n.sanLabel.replace("{index}", i + 1),
+                value: s,
+              };
             }),
           });
         }
@@ -1169,37 +1263,37 @@ emyPxgcYxn/eR44/KJ4EBs+lVDR3veyJm+kXQ99b21/+jh5Xos1AnX5iItreGCc=
         var issuerItems = [];
         if (issuerParts.CN)
           issuerItems.push({
-            label: "Common Name (CN)",
+            label: i18n.commonName,
             value: issuerParts.CN,
           });
         if (issuerParts.O)
-          issuerItems.push({ label: "Organization (O)", value: issuerParts.O });
+          issuerItems.push({ label: i18n.organization, value: issuerParts.O });
         if (issuerParts.C)
-          issuerItems.push({ label: "Country (C)", value: issuerParts.C });
+          issuerItems.push({ label: i18n.country, value: issuerParts.C });
         if (issuerItems.length === 0)
-          issuerItems.push({ label: "Distinguished Name", value: issuer });
+          issuerItems.push({ label: i18n.distinguishedName, value: issuer });
         issuerItems.push({
-          label: "Self-Signed",
-          value: isSelfSigned ? "Yes" : "No",
+          label: i18n.selfSigned,
+          value: isSelfSigned ? i18n.yes : i18n.no,
         });
-        sections.push({ title: "Issuer", items: issuerItems });
+        sections.push({ title: i18n.sectionIssuer, items: issuerItems });
 
         // Validity
         var totalDays = Math.ceil(
           (notAfter - notBefore) / (1000 * 60 * 60 * 24),
         );
         sections.push({
-          title: "Validity",
+          title: i18n.sectionValidity,
           items: [
-            { label: "Not Before", value: notBefore.toUTCString() },
-            { label: "Not After", value: notAfter.toUTCString() },
+            { label: i18n.notBefore, value: notBefore.toUTCString() },
+            { label: i18n.notAfter, value: notAfter.toUTCString() },
             {
-              label: "Duration",
-              value: totalDays + " days",
+              label: i18n.duration,
+              value: i18n.daysValue.replace("{days}", totalDays),
             },
             {
-              label: "Days Remaining",
-              value: isValid ? String(daysLeft) : "Expired",
+              label: i18n.daysRemaining,
+              value: isValid ? String(daysLeft) : i18n.expired,
               cls: isValid
                 ? daysLeft <= 30
                   ? "cert-status-warning"
@@ -1211,18 +1305,18 @@ emyPxgcYxn/eR44/KJ4EBs+lVDR3veyJm+kXQ99b21/+jh5Xos1AnX5iItreGCc=
 
         // Key Info
         sections.push({
-          title: "Public Key",
+          title: i18n.sectionPublicKey,
           items: [
-            { label: "Algorithm", value: keyAlgName },
-            { label: "Key Size / Curve", value: keyBits },
-            { label: "Signature Algorithm", value: sigAlgName },
+            { label: i18n.algorithm, value: keyAlgName },
+            { label: i18n.keySizeCurve, value: keyBits },
+            { label: i18n.signatureAlgorithm, value: sigAlgName },
           ],
         });
 
         // Key Usage
         if (keyUsage.length > 0) {
           sections.push({
-            title: "Key Usage",
+            title: i18n.sectionKeyUsage,
             items: keyUsage.map(function (u) {
               return { label: "\u2713", value: u, cls: "cert-ext-value" };
             }),
@@ -1232,7 +1326,7 @@ emyPxgcYxn/eR44/KJ4EBs+lVDR3veyJm+kXQ99b21/+jh5Xos1AnX5iItreGCc=
         // Extended Key Usage
         if (ekuList.length > 0) {
           sections.push({
-            title: "Extended Key Usage",
+            title: i18n.sectionExtKeyUsage,
             items: ekuList.map(function (u) {
               return { label: "\u2713", value: u, cls: "cert-ext-value" };
             }),
@@ -1246,28 +1340,28 @@ emyPxgcYxn/eR44/KJ4EBs+lVDR3veyJm+kXQ99b21/+jh5Xos1AnX5iItreGCc=
             aiaItems.push({ label: "OCSP", value: u });
           });
           aia.caIssuers.forEach(function (u) {
-            aiaItems.push({ label: "CA Issuers", value: u });
+            aiaItems.push({ label: i18n.caIssuers, value: u });
           });
-          sections.push({ title: "Authority Info Access", items: aiaItems });
+          sections.push({ title: i18n.sectionAia, items: aiaItems });
         }
 
         // Details
         var detailItems = [
-          { label: "Version", value: "v" + version },
-          { label: "Serial Number", value: serialHex },
+          { label: i18n.version, value: "v" + version },
+          { label: i18n.serialNumber, value: serialHex },
         ];
-        if (ski) detailItems.push({ label: "Subject Key ID", value: ski });
-        if (aki) detailItems.push({ label: "Authority Key ID", value: aki });
+        if (ski) detailItems.push({ label: i18n.subjectKeyId, value: ski });
+        if (aki) detailItems.push({ label: i18n.authorityKeyId, value: aki });
         detailItems.push({
-          label: "CT SCTs",
-          value: hasCT ? "Present \u2713" : "Not found",
+          label: i18n.ctScts,
+          value: hasCT ? i18n.ctPresent : i18n.ctNotFound,
           cls: hasCT ? "cert-status-valid" : "",
         });
-        sections.push({ title: "Details", items: detailItems });
+        sections.push({ title: i18n.sectionDetails, items: detailItems });
 
         // Security Assessment
         sections.push({
-          title: "Security Assessment",
+          title: i18n.sectionSecurity,
           items: findings.map(function (f) {
             var cls = "";
             if (f.severity === "pass") cls = "cert-finding-pass";
@@ -1307,17 +1401,20 @@ emyPxgcYxn/eR44/KJ4EBs+lVDR3veyJm+kXQ99b21/+jh5Xos1AnX5iItreGCc=
           fpRow.className = "cert-row";
           var fpLabel = document.createElement("span");
           fpLabel.className = "cert-row-label";
-          fpLabel.textContent = "SHA-256 Fingerprint";
+          fpLabel.textContent = i18n.sha256Fingerprint;
           var fpValue = document.createElement("span");
           fpValue.className = "cert-row-value cert-fingerprint-value";
-          fpValue.textContent = "Computing\u2026";
+          fpValue.textContent = i18n.computing;
           fpRow.appendChild(fpLabel);
           fpRow.appendChild(fpValue);
           lastDetailSection.appendChild(fpRow);
         }
       } catch (e) {
         showError(
-          "Error parsing certificate: " + (e.message || "Unknown error"),
+          i18n.errorParsing.replace(
+            "{message}",
+            e.message || i18n.unknownError,
+          ),
         );
       }
     }

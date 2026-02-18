@@ -211,18 +211,19 @@ test.describe("Performance Optimizations", () => {
 });
 
 test.describe("Content Integrity", () => {
-  test("RSS feed contains all published blog posts", async ({ page }) => {
-    // Get all blog posts from sitemap
+  test("EN RSS feed contains all published EN blog posts", async ({ page }) => {
+    // Get all EN blog posts from sitemap (exclude /es/ prefix)
     const urls = await getSitemapUrls();
     const blogPosts = urls.filter(
       (url) =>
         url.includes("/blog/") &&
+        !url.startsWith("/es/") &&
         !url.includes("/tags/") &&
         !url.endsWith("/blog/") &&
         !url.includes("999-testing"),
     );
 
-    // Fetch RSS feed
+    // Fetch EN RSS feed
     const rssResponse = await page.goto("/rss.xml");
     expect(rssResponse?.status()).toBe(200);
 
@@ -233,7 +234,7 @@ test.describe("Content Integrity", () => {
     expect(rssContent).toMatch(/<\?xml/);
     expect(rssContent).toMatch(/<rss|<feed/);
 
-    // Check that each blog post is in the RSS feed
+    // Check that each EN blog post is in the EN RSS feed
     const missingPosts: string[] = [];
 
     for (const postUrl of blogPosts) {
@@ -247,7 +248,50 @@ test.describe("Content Integrity", () => {
       }
     }
 
-    expect(missingPosts, "All blog posts should be in RSS feed").toEqual([]);
+    expect(missingPosts, "All EN blog posts should be in EN RSS feed").toEqual(
+      [],
+    );
+  });
+
+  test("ES RSS feed contains all published ES blog posts", async ({ page }) => {
+    // Get all ES blog posts from sitemap
+    const urls = await getSitemapUrls();
+    const esBlogPosts = urls.filter(
+      (url) =>
+        url.startsWith("/es/") &&
+        url.includes("/blog/") &&
+        !url.includes("/tags/") &&
+        !url.endsWith("/blog/") &&
+        !url.includes("999-testing"),
+    );
+
+    // Fetch ES RSS feed
+    const rssResponse = await page.goto("/es/rss.xml");
+    expect(rssResponse?.status()).toBe(200);
+
+    const rssContent = await rssResponse?.text();
+    expect(rssContent, "ES RSS feed should not be empty").toBeTruthy();
+
+    // Verify RSS is valid XML with Spanish language
+    expect(rssContent).toMatch(/<\?xml/);
+    expect(rssContent).toContain("<language>es-es</language>");
+
+    // Check that each ES blog post is in the ES RSS feed
+    const missingPosts: string[] = [];
+
+    for (const postUrl of esBlogPosts) {
+      // Extract slug (e.g., /es/blog/001-secure-nginx/ -> 001-secure-nginx)
+      const slug = postUrl.replace(/^\/es\/blog\//, "").replace(/\/$/, "");
+
+      // eslint-disable-next-line playwright/no-conditional-in-test -- Required for content check
+      if (!rssContent?.includes(slug)) {
+        missingPosts.push(postUrl);
+      }
+    }
+
+    expect(missingPosts, "All ES blog posts should be in ES RSS feed").toEqual(
+      [],
+    );
   });
 
   test("no broken internal links", async ({ page }) => {

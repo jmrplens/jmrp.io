@@ -1,4 +1,6 @@
 ---
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslations } from "@i18n/utils";
 import type { CVSkillGroup } from "@src/types";
 
 interface Props {
@@ -7,13 +9,16 @@ interface Props {
 
 const { group } = Astro.props;
 
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
+
 const levelTextMap: Record<number, string> = {
-  0: "None",
-  1: "Elementary",
-  2: "Basic",
-  3: "Intermediate",
-  4: "Advanced",
-  5: "Expert",
+  0: t("pages.cv.levelNone"),
+  1: t("pages.cv.levelElementary"),
+  2: t("pages.cv.levelBasic"),
+  3: t("pages.cv.levelIntermediate"),
+  4: t("pages.cv.levelAdvanced"),
+  5: t("pages.cv.levelExpert"),
 };
 
 import "@styles/skills.css";
@@ -39,7 +44,7 @@ import "@styles/skills.css";
         // For aria-valuenow, we only want a number.
 
         let score = 0;
-        let levelLabel: string | number = "Unknown";
+        let levelLabel: string | number = t("pages.cv.levelUnknown");
 
         if (typeof item.level === "number") {
           score = item.level;
@@ -71,7 +76,10 @@ import "@styles/skills.css";
                   aria-valuemin={showDots ? 0 : undefined}
                   aria-valuemax={showDots ? 5 : undefined}
                   aria-valuenow={showDots ? score : undefined}
-                  aria-label={`${item.name} level: ${levelLabel}`}
+                  aria-label={t("aria.skillLevel", {
+                    name: item.name,
+                    level: String(levelLabel),
+                  })}
                 >
                   {showDots && (
                     <div

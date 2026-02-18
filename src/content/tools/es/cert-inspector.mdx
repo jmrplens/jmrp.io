@@ -1,0 +1,240 @@
+---
+title: "Inspector de Certificados"
+slug: "cert-inspector"
+description: "Decodifica certificados SSL/TLS en formato PEM o descárgalos desde una URL en el navegador. Inspecciona sujeto, emisor, validez, SANs y seguridad."
+subtitle: "Decodifica e inspecciona certificados X.509. Descárgalos desde una URL o pega datos PEM. Visualiza sujeto, SANs, clave, extensiones y evaluación de seguridad — todo en el navegador."
+icon: "i-mdi:certificate"
+category: "security"
+tags: ["ssl", "tls", "certificados", "x509", "pem", "seguridad"]
+appComponent: "CertInspector"
+lang: "es"
+---
+
+import {
+  TerminalSession,
+  TerminalSessionCommand,
+  TerminalSessionOutput,
+} from "@components/ui/terminal-session";
+
+<h2>Acerca de esta herramienta</h2>
+<p>
+  Inspecciona certificados SSL/TLS descargándolos desde una URL o pegando
+  datos codificados en PEM. La herramienta decodifica la estructura ASN.1 DER
+  completamente en tu navegador y proporciona un análisis exhaustivo que
+  incluye una evaluación de seguridad.
+</p>
+<h3>Información mostrada</h3>
+<ul>
+  <li>
+    <strong>Estado de validez</strong> — válido, próximo a expirar o expirado,
+    con días restantes
+  </li>
+  <li>
+    <strong>Sujeto y emisor</strong> — nombres distinguidos con desglose de CN,
+    O, C
+  </li>
+  <li>
+    <strong>Subject Alternative Names</strong> — todos los nombres DNS, IPs,
+    correos, URIs
+  </li>
+  <li>
+    <strong>Clave pública</strong> — algoritmo (RSA/EC/Ed25519), tamaño de
+    clave, curva, algoritmo de firma
+  </li>
+  <li>
+    <strong>Key Usage y Extended Key Usage</strong> — firma digital,
+    autenticación de servidor/cliente
+  </li>
+  <li>
+    <strong>Authority Info Access</strong> — URLs de OCSP y CA Issuer
+  </li>
+  <li>
+    <strong>Certificate Transparency</strong> — comprobación de presencia de SCT
+  </li>
+  <li>
+    <strong>Huella SHA-256</strong> — calculada en el navegador mediante Web
+    Crypto
+  </li>
+  <li>
+    <strong>Evaluación de seguridad</strong> — fortaleza de clave, algoritmo de
+    firma, duración de validez, cumplimiento de CT
+  </li>
+</ul>
+<h3>Cómo usar</h3>
+<ol>
+  <li>
+    Introduce una URL y haz clic en <strong>Obtener</strong> para descargar el
+    certificado, o pega datos PEM directamente
+  </li>
+  <li>
+    Haz clic en <strong>Inspeccionar certificado</strong> para decodificar y
+    analizar
+  </li>
+  <li>Revisa todos los detalles del certificado y los hallazgos de seguridad</li>
+</ol>
+<h3>Privacidad</h3>
+<p>
+  Todo el análisis y la decodificación del certificado ocurren completamente en
+  tu navegador. Al obtener por URL, se utilizan APIs públicas de logs CT
+  (certspotter, crt.sh) — sin proxy del lado del servidor. Para certificados
+  privados o internos, usa la opción de pegar PEM o los comandos
+  <code>openssl</code> que se muestran a continuación.
+</p>
+
+<h3>Referencia de comandos Linux</h3>
+<p>
+  Puedes inspeccionar certificados desde la terminal usando
+  <code>openssl</code>:
+</p>
+
+<h4>Descargar y guardar certificado</h4>
+<TerminalSession>
+  <TerminalSessionCommand>
+    ```
+    echo | openssl s_client -connect jmrp.io:443 -servername jmrp.io 2>/dev/null | openssl x509 > cert.pem
+    ```
+  </TerminalSessionCommand>
+  <TerminalSessionOutput title="Guardado en cert.pem">
+    (certificado guardado en cert.pem)
+  </TerminalSessionOutput>
+</TerminalSession>
+
+<h4>Resumen rápido del certificado</h4>
+<TerminalSession>
+  <TerminalSessionCommand>
+    ```
+    echo | openssl s_client -connect jmrp.io:443 -servername jmrp.io 2>/dev/null | openssl x509 -noout -subject -issuer -dates -fingerprint -sha256
+    ```
+  </TerminalSessionCommand>
+  <TerminalSessionOutput title="Resumen del certificado">
+    ```
+    subject=CN=jmrp.io
+    issuer=C=US, O=Let's Encrypt, CN=E7
+    notBefore=Jan 3 14:02:05 2026 GMT
+    notAfter=Apr 3 14:02:04 2026 GMT
+    sha256 Fingerprint=31:B2:A8:53:45:F8:CE:34:AE:20:FE:83:31:07:9C:5D:66:56:DB:29:...
+    ```
+  </TerminalSessionOutput>
+</TerminalSession>
+
+<h4>Ver Subject Alternative Names</h4>
+<TerminalSession>
+  <TerminalSessionCommand>
+    ```
+    echo | openssl s_client -connect jmrp.io:443 -servername jmrp.io 2>/dev/null | openssl x509 -noout -ext subjectAltName
+    ```
+  </TerminalSessionCommand>
+  <TerminalSessionOutput title="SANs">
+    ```
+    X509v3 Subject Alternative Name:
+        DNS:*.jmrp.io, DNS:jmrp.io
+    ```
+  </TerminalSessionOutput>
+</TerminalSession>
+
+<h4>Detalles completos del certificado</h4>
+<TerminalSession>
+  <TerminalSessionCommand>
+    ```
+    echo | openssl s_client -connect jmrp.io:443 -servername jmrp.io 2>/dev/null | openssl x509 -noout -text | head -25
+    ```
+  </TerminalSessionCommand>
+  <TerminalSessionOutput title="Texto del certificado">
+    ```
+    Certificate:
+        Data:
+            Version: 3 (0x2)
+            Serial Number:
+                05:fc:45:dd:04:c9:dc:90:3a:35:bd:76:be:e2:1b:f7:e6:b6
+        Signature Algorithm: ecdsa-with-SHA384
+        Issuer: C=US, O=Let's Encrypt, CN=E7
+        Validity
+            Not Before: Jan 3 14:02:05 2026 GMT
+            Not After : Apr 3 14:02:04 2026 GMT
+        Subject: CN=jmrp.io
+        Subject Public Key Info:
+            Public Key Algorithm: id-ecPublicKey
+                Public-Key: (256 bit)
+                ASN1 OID: prime256v1
+                NIST CURVE: P-256
+    ```
+  </TerminalSessionOutput>
+</TerminalSession>
+
+<h4>Comprobar expiración (30 días)</h4>
+<TerminalSession>
+  <TerminalSessionCommand>
+    ```
+    # Comprobar si el certificado expira en 30 días (2592000 segundos)
+    echo | openssl s_client -connect jmrp.io:443 -servername jmrp.io 2>/dev/null | openssl x509 -noout -checkend 2592000
+
+    # Código de salida 0 = OK, 1 = expira pronto
+    ```
+  </TerminalSessionCommand>
+  <TerminalSessionOutput title="Comprobación de expiración">
+    Certificate will not expire
+  </TerminalSessionOutput>
+</TerminalSession>
+
+<h4>Handshake TLS y cadena</h4>
+<TerminalSession>
+  <TerminalSessionCommand>
+    ```
+    echo | openssl s_client -connect jmrp.io:443 -servername jmrp.io 2>&1 | grep -E "Protocol|Cipher|Verify|depth"
+    ```
+  </TerminalSessionCommand>
+  <TerminalSessionOutput title="Detalles TLS">
+    ```
+    depth=2 C=US, O=Internet Security Research Group, CN=ISRG Root X1
+    depth=1 C=US, O=Let's Encrypt, CN=E7
+    depth=0 CN=jmrp.io
+    New, TLSv1.3, Cipher is TLS_AES_256_GCM_SHA384
+    Protocol: TLSv1.3
+    Verify return code: 0 (ok)
+    ```
+  </TerminalSessionOutput>
+</TerminalSession>
+
+<h4>Verificar cadena de certificados</h4>
+<TerminalSession>
+  <TerminalSessionCommand>
+    ```
+    # Verificar un certificado contra el paquete de CA del sistema
+    openssl verify cert.pem
+
+    # Verificar con cadena CA explícita
+    openssl verify -CAfile chain.pem cert.pem
+    ```
+  </TerminalSessionCommand>
+  <TerminalSessionOutput title="Verificación">
+    cert.pem: OK
+  </TerminalSessionOutput>
+</TerminalSession>
+
+<h4>Monitorizar expiración (script cron)</h4>
+<TerminalSession>
+  <TerminalSessionCommand>
+    ```
+    # Añadir al crontab: comprobar diariamente, alertar si expira en 14 días
+    for domain in jmrp.io example.com; do
+    if ! echo | openssl s_client -connect "$domain:443" \
+        -servername "$domain" 2>/dev/null | \
+        openssl x509 -noout -checkend 1209600 2>/dev/null; then
+        echo "AVISO: el certificado de $domain expira en 14 días"
+    fi
+    done
+    ```
+  </TerminalSessionCommand>
+  <TerminalSessionOutput title="Monitor de expiración">
+    (sin salida = todos los certificados OK)
+  </TerminalSessionOutput>
+</TerminalSession>
+
+<h3>Relacionado</h3>
+<p>
+  Consulta{" "}
+  <a href="/blog/001-secure-nginx-client-certificates/">
+    Asegurar Nginx con certificados de cliente
+  </a>{" "}
+  para una guía sobre autenticación TLS mutua.
+</p>

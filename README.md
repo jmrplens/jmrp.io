@@ -51,6 +51,7 @@ This is the source code for my personal website, **[jmrp.io](https://jmrp.io)**,
 - **Content**:
   - **Content Layer API**: Advanced content management (Standard in Astro v6).
   - **Technical Blog**: Support for MDX, LaTeX (Mathjax), and Mermaid diagrams (SSR rendered).
+  - **Bilingual (EN/ES)**: Full i18n with Astro's built-in routing, `hreflang` alternates, and a language switcher.
   - **Unified CV**: Dynamic CV generation with automated LaTeX-to-PDF compilation.
 - **DevOps & QA**:
   - **CI Health Dashboard**: Premium unified report interface hosted on Vercel.
@@ -147,7 +148,7 @@ graph TD
 - **Executive Summary**: High-level overview of project health and critical highlights.
 - **Bundle Analysis**: Tracks JS/CSS size with a generous **8MB threshold** for heavy technical content.
 - **Accessibility Matrix**: Parallel tests for Light/Dark themes and Mobile/Desktop form factors.
-- **Static Analysis**: Real-time feedback from ESLint, Stylelint, Prettier, Typos, and JSDoc.
+- **Static Analysis**: Real-time feedback from ESLint, Stylelint, Prettier, CSpell, and JSDoc.
 - **Security Audit**: Integrated SonarCloud and `npm audit` monitoring.
 
 ## 🔒 Security & Nginx

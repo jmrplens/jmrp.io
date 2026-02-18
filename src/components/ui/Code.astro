@@ -16,6 +16,8 @@
  */
 import { createHash } from "node:crypto";
 
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslations } from "@i18n/utils";
 import { decodeHtml } from "@utils/html";
 import { getIconForLang } from "@utils/icons";
 import { highlightCode, resolveShikiLanguage } from "@utils/shiki";
@@ -36,6 +38,9 @@ const {
   title,
   class: className,
 } = Astro.props;
+
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
 
 // Render slot content
 const slotContent = await Astro.slots.render("default");
@@ -95,8 +100,11 @@ if (!ariaLabel) {
 const finalAriaLabel =
   ariaLabel ||
   (title
-    ? `${lang} code: ${title}`
-    : `${lang} snippet: ${plainText || "code snippet"}`);
+    ? t("components.code.codeAria", { lang, title })
+    : t("components.code.snippetAria", {
+        lang,
+        text: plainText || t("components.code.fallbackAria"),
+      }));
 
 // Language display name (uppercase)
 const langDisplay = lang.toUpperCase();
@@ -132,7 +140,7 @@ const highlightedHtml = isEmpty
         </div>
         <CopyButton
           class="code-header-copy-btn"
-          ariaLabel={`Copy ${finalAriaLabel}`}
+          ariaLabel={t("components.code.copyAria", { label: finalAriaLabel })}
         />
       </div>
       <div class="code-body">

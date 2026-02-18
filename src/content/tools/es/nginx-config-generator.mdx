@@ -1,0 +1,148 @@
+---
+title: "Generador de Configuración Nginx"
+slug: "nginx-config-generator"
+description: "Genera bloques de servidor Nginx con upstream, QUIC/HTTP3, rate limiting, tarpit, OCSP stapling, Brotli y buenas prácticas TLS modernas."
+subtitle: "Genera bloques de servidor Nginx listos para producción con bloques upstream, QUIC/HTTP3, tarpit, rate limiting y buenas prácticas TLS modernas."
+icon: "i-devicon:nginx"
+category: "network"
+tags: ["nginx", "servidor", "ssl", "tls", "reverse-proxy", "http3"]
+appComponent: "NginxConfigGenerator"
+lang: "es"
+---
+
+import {
+  TerminalSession,
+  TerminalSessionCommand,
+  TerminalSessionOutput,
+} from "@components/ui/terminal-session";
+
+<h2>Acerca de esta herramienta</h2>
+<p>
+  Genera configuraciones de bloques de servidor Nginx listas para producción
+  con un constructor visual. Selecciona las funcionalidades que necesitas y
+  obtén un archivo de configuración completo que puedes copiar directamente
+  a tu servidor.
+</p>
+
+<h3>Características</h3>
+<ul>
+  <li>
+    <strong>6 presets</strong> — Estático, Reverse Proxy, SPA, PHP-FPM,
+    Servidor API, Fortificado
+  </li>
+  <li>
+    <strong>Bloques upstream</strong> — upstream con nombre, balanceo de carga
+    (round-robin, least connections, IP hash), conexiones keepalive y múltiples
+    servidores backend
+  </li>
+  <li>
+    <strong>SSL/TLS moderno</strong> — QUIC/HTTP3, OCSP stapling, 0-RTT early
+    data, cipher suites robustos, session tickets desactivados, HSTS preload
+  </li>
+  <li>
+    <strong>Control de acceso</strong> — rate limiting con burst, bloqueo de
+    archivos ocultos, bloqueo de rutas de exploits (wp-admin, phpMyAdmin),
+    respuestas tarpit lentas
+  </li>
+  <li>
+    <strong>Cabeceras de seguridad</strong> — X-Frame-Options, XCTO,
+    Referrer-Policy, Permissions-Policy, COOP/CORP/COEP, CSP básica con enlace
+    al <a href="/tools/csp-builder/">Constructor de Políticas CSP</a>
+  </li>
+  <li>
+    <strong>Rendimiento</strong> — Gzip, Brotli, caché de recursos estáticos,
+    caché de archivos abiertos, proxy buffering
+  </li>
+  <li>
+    <strong>Reverse proxy</strong> — soporte WebSocket, cabeceras de proxy,
+    keepalive, opciones de buffering
+  </li>
+</ul>
+
+<h3>Cómo usar</h3>
+<ol>
+  <li>Empieza con un preset que se ajuste a tu caso de uso</li>
+  <li>Personaliza el dominio, la ruta raíz y las rutas de los certificados SSL</li>
+  <li>Activa QUIC/HTTP3, OCSP stapling y las opciones TLS modernas</li>
+  <li>Configura el control de acceso: rate limiting, rutas bloqueadas y tarpit</li>
+  <li>Activa las cabeceras de seguridad y las optimizaciones de rendimiento</li>
+  <li>
+    Copia la configuración generada y colócala en el directorio de sitios de
+    tu Nginx
+  </li>
+</ol>
+
+<h3>Privacidad</h3>
+<p>
+  Toda la generación de configuración ocurre completamente en tu navegador. No
+  se transmite ningún dominio, dirección IP ni ruta de backend a ningún
+  servidor. La arquitectura de tu servidor permanece privada.
+</p>
+
+<h3>Referencia de comandos Linux</h3>
+<p>Comandos comunes para gestionar Nginx y verificar configuraciones:</p>
+
+<h4>Verificar configuración</h4>
+<TerminalSession>
+  <TerminalSessionCommand>nginx -t</TerminalSessionCommand>
+  <TerminalSessionOutput title="Resultado de la validación">
+    ```
+    nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
+    nginx: configuration file /etc/nginx/nginx.conf test is successful
+    ```
+  </TerminalSessionOutput>
+</TerminalSession>
+
+<h4>Recargar configuración (sin interrupciones)</h4>
+<TerminalSession>
+  <TerminalSessionCommand>nginx -s reload</TerminalSessionCommand>
+  <TerminalSessionOutput title="Resultado de la recarga">
+    # Nginx recarga la configuración sin interrumpir las conexiones activas
+  </TerminalSessionOutput>
+</TerminalSession>
+
+<h4>Comprobar versión y módulos</h4>
+<TerminalSession>
+  <TerminalSessionCommand>nginx -V</TerminalSessionCommand>
+  <TerminalSessionOutput title="Detalles de compilación">
+    ```
+    nginx version: nginx/1.25.4
+    built by gcc 12.2.0 (Debian 12.2.0-14)
+    built with OpenSSL 3.0.11 19 Sep 2023
+    TLS SNI support enabled
+    configure arguments: --with-http_ssl_module --with-http_v2_module --with-http_v3_module ...
+    ```
+  </TerminalSessionOutput>
+</TerminalSession>
+
+<h3>Más información</h3>
+<p>
+  Estos artículos del blog ofrecen guías detalladas sobre las funcionalidades
+  disponibles en este generador:
+</p>
+<ul>
+  <li>
+    <a href="/blog/004-enabling-quic-http3-nginx/">
+      Activando QUIC/HTTP3 en Nginx
+    </a>{" "}
+    — Configurar el protocolo de transporte HTTP/3 y QUIC
+  </li>
+  <li>
+    <a href="/blog/005-implementing-tarpit-nginx/">
+      Implementando un Tarpit en Nginx
+    </a>{" "}
+    — Ralentizar a atacantes y escáneres
+  </li>
+  <li>
+    <a href="/blog/003-implementing-content-security-policy-nginx/">
+      Implementando CSP en Nginx
+    </a>{" "}
+    — Configuración de Content Security Policy
+  </li>
+  <li>
+    <a href="/blog/001-secure-nginx-client-certificates/">
+      Asegurar Nginx con certificados de cliente
+    </a>{" "}
+    — Autenticación TLS mutua
+  </li>
+</ul>

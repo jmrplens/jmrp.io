@@ -41,6 +41,9 @@
  */
 import { createHash } from "node:crypto";
 
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslations } from "@i18n/utils";
+
 interface Props {
   title?: string;
   id?: string; // Optional id for stable data-testid
@@ -73,9 +76,14 @@ const uuid =
     .digest("hex")
     .slice(0, 8);
 
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
+
 // When title is present, caption provides accessible name - don't duplicate with aria-label
 // Only use aria-label when there's no caption (title)
-const finalAriaLabel = title ? undefined : propAriaLabel || "Data table";
+const finalAriaLabel = title
+  ? undefined
+  : propAriaLabel || t("components.table.defaultAria");
 
 const wrapperClasses = [
   "table-wrapper",
