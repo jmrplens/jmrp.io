@@ -538,9 +538,14 @@ const personSchema = {
   /* Grid Layouts for Skills/Certs */
   .grid-layout {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    grid-template-columns: repeat(2, 1fr);
     gap: var(--space-xl);
     align-items: start;
+  }
+
+  .grid-layout :global(h3) {
+    box-sizing: border-box;
+    min-height: var(--grid-header-min-h, auto);
   }
 
   /* Responsive */
@@ -549,5 +554,32 @@ const personSchema = {
       flex-direction: column;
       gap: 0;
     }
+
+    .grid-layout {
+      grid-template-columns: 1fr;
+    }
   }
 </style>
+
+<script>
+  /** Equalizes h3 header heights within each .grid-layout container via CSS custom property. */
+  function equalizeGridHeaders() {
+    document.querySelectorAll<HTMLElement>(".grid-layout").forEach((grid) => {
+      const headings = grid.querySelectorAll<HTMLElement>("h3");
+      if (headings.length < 2) return;
+
+      grid.style.removeProperty("--grid-header-min-h");
+
+      let maxHeight = 0;
+      headings.forEach((h) => {
+        if (h.offsetHeight > maxHeight) maxHeight = h.offsetHeight;
+      });
+
+      grid.style.setProperty("--grid-header-min-h", `${maxHeight}px`);
+    });
+  }
+
+  equalizeGridHeaders();
+  document.addEventListener("astro:after-swap", equalizeGridHeaders);
+  window.addEventListener("resize", equalizeGridHeaders);
+</script>
