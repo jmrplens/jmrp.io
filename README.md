@@ -2,7 +2,7 @@
 
 <!-- Project & Status -->
 
-![Astro](https://img.shields.io/badge/astro-6.0.0--beta.3-orange?style=flat&logo=astro)
+![Astro](https://img.shields.io/badge/astro-6.0.0--beta.13-orange?style=flat&logo=astro)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 [![Dependabot](https://badgen.net/badge/Dependabot/enabled/green?icon=dependabot)](https://github.com/jmrplens/jmrp.io/pulls)
 [![CI Dashboard](https://img.shields.io/badge/CI_Dashboard-Live_Status-blueviolet?style=for-the-badge&logo=vercel)](https://jmrp-ci-reports.vercel.app)
@@ -40,33 +40,40 @@ This is the source code for my personal website, **[jmrp.io](https://jmrp.io)**,
   - **Core Web Vitals**: LCP < 0.8s, CLS < 0.031, FCP < 0.3s.
   - **SSG (Static Site Generation)**: All pages pre-rendered at build time.
   - **Islands Architecture**: Minimal JavaScript with Preact islands.
-  - **Image Optimization**: WebP format with responsive sizing via `vite-plugin-image-optimizer`.
+  - **Image Optimization**: WebP/AVIF format with responsive sizing.
   - **UnoCSS**: Atomic CSS engine with `presetWind4` for minimal and ultra-fast styles.
   - **Icon Consistency**: Custom verification engine ensuring 1:1 mapping between icons and CSS rules.
   - **CSS Inlining**: Critical CSS inlined for sub-second FCP.
 - **Accessibility**:
-  - **WCAG 2.1 AA Compliance**: Automated testing via Playwright + Axe-core.
+  - **WCAG 2.2 AA Compliance**: Automated testing via Playwright + Axe-core.
   - **HTML5 Compliance**: Strict HTML validation (`html-validate`).
   - **Motion Sensitivity**: Respects `prefers-reduced-motion` settings.
 - **Content**:
   - **Content Layer API**: Advanced content management (Standard in Astro v6).
-  - **Technical Blog**: Support for MDX, LaTeX (Mathjax), and Mermaid diagrams (SSR rendered).
-  - **Bilingual (EN/ES)**: Full i18n with Astro's built-in routing, `hreflang` alternates, and a language switcher.
+  - **Technical Blog**: Support for MDX, LaTeX (MathJax), and Mermaid diagrams (SSR rendered).
+  - **Bilingual (EN/ES)**: Full i18n with Astro's built-in routing, `hreflang` alternates, and a language switcher with automatic browser language detection.
+  - **Interactive Tools**: 14 privacy-first browser tools (security, network, developer utilities).
   - **Unified CV**: Dynamic CV generation with automated LaTeX-to-PDF compilation.
+- **Security**:
+  - **CSP (Content Security Policy)**: Nonce-only strategy with strict-dynamic.
+  - **SRI (Subresource Integrity)**: Automated hash generation for all local resources.
+  - **Security Headers**: HSTS, X-Frame-Options, COOP, COEP, CORP, Permissions-Policy.
 - **DevOps & QA**:
   - **CI Health Dashboard**: Premium unified report interface hosted on Vercel.
   - **Living PR Comments**: Real-time CI status updates directly in GitHub Pull Requests.
-  - **Deep Security**: Automated SonarCloud analysis and `npm audit` on every commit.
+  - **Deep Security**: Automated SonarCloud analysis and `pnpm audit` on every commit.
 
 ## 🛠️ Tech Stack
 
 - **Framework**: [Astro v6 (Beta)](https://astro.build/)
-- **UI Components**: [Preact](https://preactjs.com/)
-- **Styling**: [UnoCSS](https://unocss.dev/) & Native CSS
-- **Content**: [MDX](https://mdxjs.com/), [Mermaid](https://mermaid.js.org/), [MathJax](https://www.mathjax.org/)
-- **Icons**: [Iconify](https://icon-sets.iconify.design/)
+- **UI Components**: [Preact](https://preactjs.com/) (islands only)
+- **Styling**: [UnoCSS](https://unocss.dev/) (`presetWind4`) & CSS Custom Properties
+- **Content**: [MDX](https://mdxjs.com/), [Mermaid](https://mermaid.js.org/) (SSR), [MathJax](https://www.mathjax.org/) (SSR)
+- **Icons**: [Iconify](https://icon-sets.iconify.design/) (12 collections)
+- **Syntax Highlighting**: [Shiki](https://shiki.style/) (with custom RouterOS grammar)
 - **Testing**: [Playwright](https://playwright.dev/), [Axe-core](https://www.deque.com/axe/), [Lighthouse](https://developers.google.com/web/tools/lighthouse)
-- **Security**: [SonarCloud](https://sonarcloud.io/)
+- **Linting**: [ESLint](https://eslint.org/), [Stylelint](https://stylelint.io/), [Prettier](https://prettier.io/), [CSpell](https://cspell.org/)
+- **Security**: [SonarCloud](https://sonarcloud.io/), CSP Nonce-only strategy
 - **CI/CD**: GitHub Actions & Vercel (Reports)
 
 ## 📂 Project Structure
@@ -78,15 +85,26 @@ This is the source code for my personal website, **[jmrp.io](https://jmrp.io)**,
 /
 ├── src/
 │   ├── components/       # Reusable Astro & Preact components
-│   ├── content/          # Content Collections (Blog, CV, Config)
+│   │   ├── apps/         # Interactive tool components (vanilla JS)
+│   │   ├── ui/           # 36 reusable UI components
+│   │   ├── layout/       # BaseHead, Header, Footer, LanguageDetector
+│   │   ├── homelab/      # Preact islands (real-time data)
+│   │   ├── blog/         # PostCard, PostGrid, TagCloud
+│   │   ├── cv/           # CV-specific components
+│   │   └── pages/        # Full page components
+│   ├── content/          # Content Collections (Blog, Tools, CV, Config)
 │   ├── content.config.ts # Collection Definitions (Content Layer)
-│   ├── layouts/          # Page layouts (Base, etc.)
+│   ├── i18n/             # Internationalization (EN/ES translations)
+│   ├── integrations/     # Pre-build & post-build pipelines
+│   ├── layouts/          # Page layouts (Base, Tool)
 │   ├── pages/            # File-based routing
-│   ├── styles/           # Global CSS & Fonts
+│   ├── styles/           # Global CSS & design tokens
 │   └── utils/            # Helper functions
-├── public/               # Static assets (images, fonts, robots.txt)
+├── public/               # Static assets (favicons, PDFs, llms.txt)
 ├── scripts/              # Build, QA & maintenance scripts
-├── tests/                # Playwright E2E & Accessibility tests
+│   └── ci/               # 19 CI automation scripts
+├── tests/                # 12 Playwright E2E & Accessibility test suites
+├── docs/                 # Extended documentation
 ├── cv_latex/             # LaTeX source files for CV
 ├── astro.config.mjs      # Astro configuration
 ├── uno.config.ts         # UnoCSS configuration
@@ -118,15 +136,17 @@ pnpm run dev
 
 ### Build & Verify
 
-The project uses a unified verification suite to ensure everything is correct.
+The project uses a unified verification suite (`pnpm verify`) with 14 sequential steps: typecheck, ESLint, Prettier, Stylelint, build, HTML validation, RSS validation, Schema.org validation, CSpell, broken links, JSDoc coverage, SonarCloud, and Playwright E2E.
 
 ```bash
-# Full Quality Suite (Lint, Build, A11y, E2E)
+# Full Quality Suite (14 steps, fail-fast)
 pnpm verify
 
 # Production Build only
 pnpm run build
 ```
+
+> ⚠️ **Stop `astro dev` before running `pnpm verify`** — the dev server lacks nonces/SRI, causing security tests to fail.
 
 ## 🧪 Quality Assurance
 
@@ -149,16 +169,17 @@ graph TD
 - **Bundle Analysis**: Tracks JS/CSS size with a generous **8MB threshold** for heavy technical content.
 - **Accessibility Matrix**: Parallel tests for Light/Dark themes and Mobile/Desktop form factors.
 - **Static Analysis**: Real-time feedback from ESLint, Stylelint, Prettier, CSpell, and JSDoc.
-- **Security Audit**: Integrated SonarCloud and `npm audit` monitoring.
+- **Security Audit**: Integrated SonarCloud and `pnpm audit` monitoring.
 
 ## 🔒 Security & Nginx
 
 Advanced Nginx configuration for high-security environments.
 
-- **CSP (Content Security Policy)**: Hybrid strategy with SHA-512 hashes and dynamic nonces.
+- **CSP (Content Security Policy)**: Nonce-only strategy with `strict-dynamic` for CSP compliance.
 - **SRI (Subresource Integrity)**: Automated hash generation for all local resources.
-- **Astro v6 Nonce Patch**: custom Vite plugin to ensure CSP compliance with Astro's prefetch system.
+- **Astro v6 Nonce Patch**: Custom Vite plugin to ensure CSP compliance with Astro's prefetch system.
 - **Automated Deployment**: Post-build script verifies Nginx config and deploys security snippets atomically.
+- **Security Headers**: HSTS (2 years), X-Content-Type-Options, X-Frame-Options, COOP, COEP, CORP, Permissions-Policy.
 
 ## 📄 LaTeX CV Compilation
 

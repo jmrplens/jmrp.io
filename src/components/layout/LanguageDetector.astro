@@ -8,9 +8,10 @@
  * Rules:
  * 1. Only triggers on pages without locale prefix (EN pages)
  * 2. Only redirects if user has NOT manually chosen a language before
- * 3. Checks `navigator.language` / `navigator.languages` for `es*`
- * 4. Stores preference in `localStorage` to avoid repeated redirects
- * 5. Does NOT redirect during View Transitions (astro:before-swap)
+ * 3. Checks `navigator.languages` / `navigator.language` for `es*`
+ * 4. Falls back to `Intl.DateTimeFormat` locale (Safari iOS reliability)
+ * 5. Stores preference in `localStorage` to avoid repeated redirects
+ * 6. Does NOT redirect during View Transitions (astro:before-swap)
  *
  * To be included in BaseLayout.astro (runs once per page load).
  */
@@ -28,20 +29,35 @@
     if (sessionStorage.getItem(REDIRECT_DONE_KEY)) return;
 
     // Only redirect on default locale (EN) pages — paths without /es/ prefix
-    if (window.location.pathname.startsWith("/es/")) return;
+    const path = window.location.pathname;
+    if (path.startsWith("/es/") || path === "/es") return;
 
     // Check browser languages for Spanish preference
-    const langs = navigator.languages ?? [navigator.language];
-    const prefersSpanish = langs.some((lang) =>
+    const langs = navigator.languages
+      ? Array.from(navigator.languages)
+      : [navigator.language];
+    let prefersSpanish = langs.some((lang) =>
       lang.toLowerCase().startsWith("es"),
     );
+
+    // Fallback: Intl.DateTimeFormat resolvedOptions (reliable on Safari iOS)
+    if (!prefersSpanish) {
+      try {
+        const intlLocale = Intl.DateTimeFormat().resolvedOptions().locale;
+        if (intlLocale.toLowerCase().startsWith("es")) {
+          prefersSpanish = true;
+        }
+      } catch {
+        // Intl not available — ignore
+      }
+    }
 
     if (prefersSpanish) {
       // Mark that we've done the redirect to avoid loops
       sessionStorage.setItem(REDIRECT_DONE_KEY, "1");
 
       // Build the Spanish URL preserving the current path
-      const esPath = `/es${window.location.pathname}`;
+      const esPath = `/es${path}`;
       window.location.replace(esPath);
     }
   }
@@ -51,7 +67,8 @@
    * Called by the LanguageSwitcher when clicked.
    */
   function markLanguageChoice() {
-    const isSpanish = window.location.pathname.startsWith("/es/");
+    const path = window.location.pathname;
+    const isSpanish = path.startsWith("/es/") || path === "/es";
     localStorage.setItem(LANG_KEY, isSpanish ? "es" : "en");
   }
 
