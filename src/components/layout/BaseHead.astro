@@ -332,6 +332,16 @@ const jsonLD = {
   ))
 }
 
+<!-- Social Verification (rel="me" for identity verification) -->
+{
+  siteData.social_links?.map((link) => (
+    <link
+      rel="me"
+      href={link.url}
+    />
+  ))
+}
+
 <!-- Primary Meta Tags -->
 <title>{fullTitle}</title>
 <meta
@@ -363,6 +373,10 @@ const jsonLD = {
 <meta
   property="og:image"
   content={resolvedImage}
+/>
+<meta
+  property="og:image:type"
+  content="image/webp"
 />
 <meta
   property="og:image:width"
