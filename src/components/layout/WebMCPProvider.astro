@@ -84,6 +84,14 @@ const serializedTools = allTools.map((tool) => ({
       if (!s) return;
       var d = JSON.parse(s.getAttribute("data-webmcp-tools") || "[]");
       if (!d.length) return;
+      // Inject inputStr helper used by execute functions
+      if (typeof window.inputStr === "undefined") {
+        window.inputStr = function (v, f) {
+          if (v == null) return f || "";
+          if (typeof v === "string") return v;
+          return JSON.stringify(v);
+        };
+      }
       var ns = "_wmcp_" + Math.random().toString(36).slice(2);
       window[ns] = {};
       for (var i = 0; i < d.length; i++) {

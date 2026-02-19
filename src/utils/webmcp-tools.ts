@@ -56,15 +56,9 @@ export function getSiteTools(): WebMCPTool[] {
       description:
         "Toggle the site color theme between dark and light mode. Returns the new theme after toggling.",
       execute: () => {
-        if (
-          typeof (globalThis as unknown as Record<string, unknown>)
-            .toggleTheme === "function"
-        ) {
-          (
-            globalThis as unknown as Record<string, unknown> & {
-              toggleTheme: () => void;
-            }
-          ).toggleTheme();
+        const g = globalThis as unknown as Record<string, unknown>;
+        if (typeof g.toggleTheme === "function") {
+          (g.toggleTheme as () => void)();
         }
         const newTheme = document.documentElement.dataset.theme ?? "dark";
         return {
@@ -109,7 +103,7 @@ export function getSiteTools(): WebMCPTool[] {
           ...document.querySelectorAll("header nav a[href]"),
         ].map((a) => ({
           text: a.textContent?.trim() ?? "",
-          href: (a as HTMLAnchorElement).href,
+          href: a.getAttribute("href") ?? "",
         }));
         return {
           content: [{ type: "text", text: JSON.stringify(navLinks) }],
@@ -516,7 +510,7 @@ export function getToolsIndexTools(): WebMCPTool[] {
               card.querySelector("h2, h3, .tool-title")?.textContent?.trim() ??
               card.textContent?.trim() ??
               "",
-            url: (link as HTMLAnchorElement | null)?.href ?? "",
+            url: link?.getAttribute("href") ?? "",
             description:
               card.querySelector(".tool-description, p")?.textContent?.trim() ??
               "",
