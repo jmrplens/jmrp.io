@@ -37,4 +37,8 @@ export {
 } from "./accessibility";
 
 // Error filters
-export { isCloudflareInsightsError, shouldIgnoreError } from "./filters";
+export {
+  blockCloudflare,
+  isCloudflareInsightsError,
+  shouldIgnoreError,
+} from "./filters";
