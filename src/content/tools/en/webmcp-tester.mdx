@@ -1,0 +1,81 @@
+---
+title: "WebMCP Tester"
+slug: "webmcp-tester"
+description: "Test and inspect WebMCP API tools registered on this site. Simulate navigator.modelContext, execute tools, and view the manifest."
+subtitle: "Interactive testing environment for the WebMCP (Model Context Protocol) API implementation. Discover, inspect, and execute all registered tools."
+icon: "i-mdi:api"
+category: "developer"
+tags: ["webmcp", "api", "testing", "ai", "model-context"]
+appComponent: "WebMCPTester"
+---
+
+<h2>About This Tool</h2>
+<p>
+  The WebMCP Tester is a developer utility for inspecting and testing the
+  <a href="https://webmachinelearning.github.io/webmcp/" target="_blank" rel="external noopener noreferrer">WebMCP API</a>
+  implementation on this site. WebMCP (Model Context Protocol for the Web) is a
+  W3C proposal that allows websites to expose functionality as "tools" that
+  browser-based AI agents can discover and invoke.
+</p>
+
+<h3>What is WebMCP?</h3>
+<p>
+  WebMCP extends the browser with <code>navigator.modelContext</code>, enabling
+  sites to register tools that AI assistants can use. This site registers 29
+  tools across all pages — from theme switching and navigation to interactive
+  tool execution like hashing, encoding, and subnet calculation.
+</p>
+
+<h3>How to Use</h3>
+<ol>
+  <li>
+    <strong>Enable Simulation</strong> — Since no browser natively supports
+    WebMCP yet, click "Enable Simulation" to polyfill the API. This creates a
+    local <code>navigator.modelContext</code> and re-executes all registration
+    scripts on the page.
+  </li>
+  <li>
+    <strong>Browse Tools</strong> — The left panel lists all tools registered
+    on this page. Click any tool to see its details, input schema, and
+    annotations.
+  </li>
+  <li>
+    <strong>Execute Tools</strong> — Fill in the input parameters and click
+    "Execute" to run the tool. Results are shown in real-time with execution
+    timing.
+  </li>
+  <li>
+    <strong>View Manifest</strong> — Click "Load Manifest" to fetch and
+    inspect the <code>.well-known/webmcp.json</code> file, which lists all 29
+    tools available across the site.
+  </li>
+</ol>
+
+<h3>Registered Tool Categories</h3>
+<ul>
+  <li><strong>Site-wide (6)</strong> — Theme toggle, page info, navigation, language switch</li>
+  <li><strong>Blog (2)</strong> — List posts, search posts by keyword</li>
+  <li><strong>CV (5)</strong> — Summary, skills, experience, education, certifications</li>
+  <li><strong>Publications (2)</strong> — List and search academic publications</li>
+  <li><strong>Tools Index (2)</strong> — List tools, get tool info by category</li>
+  <li><strong>App Tools (12)</strong> — One per interactive tool (hash, base64, subnet, etc.)</li>
+</ul>
+
+<h3>Tool Annotations</h3>
+<ul>
+  <li>
+    <strong>Read-only</strong> — The tool only reads data without modifying page
+    state (e.g., listing posts, getting page info)
+  </li>
+  <li>
+    <strong>Mutating</strong> — The tool changes page state (e.g., toggling
+    theme, navigating to a page)
+  </li>
+</ul>
+
+<h3>Privacy</h3>
+<p>
+  The simulation runs entirely in your browser. No data is sent to any server.
+  The polyfill only exists in the current page session and is removed when you
+  disable the simulation or navigate away.
+</p>

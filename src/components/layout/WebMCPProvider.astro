@@ -84,21 +84,27 @@ const serializedTools = allTools.map((tool) => ({
       if (!s) return;
       var d = JSON.parse(s.getAttribute("data-webmcp-tools") || "[]");
       if (!d.length) return;
-      var t = [];
+      var ns = "_wmcp_" + Math.random().toString(36).slice(2);
+      window[ns] = {};
       for (var i = 0; i < d.length; i++) {
-        var e = d[i];
+        var sc = document.createElement("script");
+        sc.textContent =
+          'window["' + ns + '"]["f' + i + '"] = ' + d[i].executeStr + ";";
+        document.head.appendChild(sc);
+        document.head.removeChild(sc);
+      }
+      var t = [];
+      for (var j = 0; j < d.length; j++) {
+        var e = d[j];
         t.push({
           name: e.name,
           description: e.description,
           inputSchema: e.inputSchema,
           annotations: e.annotations,
-          execute: new Function(
-            "input",
-            "client",
-            "return (" + e.executeStr + ")(input, client)",
-          ),
+          execute: window[ns]["f" + j],
         });
       }
+      delete window[ns];
       navigator.modelContext.provideContext({ tools: t });
     } catch (err) {
       console.warn("[WebMCP] Provider init failed:", err);

@@ -1,0 +1,84 @@
+---
+title: "WebMCP Tester"
+slug: "webmcp-tester"
+description: "Prueba e inspecciona las herramientas WebMCP registradas en este sitio. Simula navigator.modelContext, ejecuta herramientas y visualiza el manifiesto."
+subtitle: "Entorno interactivo de pruebas para la implementación de la API WebMCP (Model Context Protocol). Descubre, inspecciona y ejecuta todas las herramientas registradas."
+icon: "i-mdi:api"
+category: "developer"
+tags: ["webmcp", "api", "testing", "ai", "model-context"]
+appComponent: "WebMCPTester"
+lang: "es"
+---
+
+<h2>Acerca de esta Herramienta</h2>
+<p>
+  El WebMCP Tester es una utilidad para desarrolladores que permite inspeccionar
+  y probar la implementación de la
+  <a href="https://webmachinelearning.github.io/webmcp/" target="_blank" rel="external noopener noreferrer">API WebMCP</a>
+  en este sitio. WebMCP (Model Context Protocol para la Web) es una propuesta
+  del W3C que permite a los sitios web exponer funcionalidades como "herramientas"
+  que los agentes de IA del navegador pueden descubrir e invocar.
+</p>
+
+<h3>¿Qué es WebMCP?</h3>
+<p>
+  WebMCP extiende el navegador con <code>navigator.modelContext</code>,
+  permitiendo a los sitios registrar herramientas que los asistentes de IA
+  pueden utilizar. Este sitio registra 29 herramientas en todas sus páginas —
+  desde cambio de tema y navegación hasta ejecución de herramientas interactivas
+  como hash, codificación y cálculo de subredes.
+</p>
+
+<h3>Cómo Usar</h3>
+<ol>
+  <li>
+    <strong>Activar Simulación</strong> — Como ningún navegador soporta
+    WebMCP nativamente aún, haz clic en "Activar Simulación" para crear un
+    polyfill de la API. Esto crea un <code>navigator.modelContext</code>
+    local y re-ejecuta todos los scripts de registro en la página.
+  </li>
+  <li>
+    <strong>Explorar Herramientas</strong> — El panel izquierdo lista todas las
+    herramientas registradas en esta página. Haz clic en cualquiera para ver
+    sus detalles, esquema de entrada y anotaciones.
+  </li>
+  <li>
+    <strong>Ejecutar Herramientas</strong> — Completa los parámetros de entrada
+    y haz clic en "Ejecutar" para probar la herramienta. Los resultados se
+    muestran en tiempo real con el tiempo de ejecución.
+  </li>
+  <li>
+    <strong>Ver Manifiesto</strong> — Haz clic en "Cargar Manifiesto" para
+    obtener e inspeccionar el archivo <code>.well-known/webmcp.json</code>,
+    que lista las 29 herramientas disponibles en el sitio.
+  </li>
+</ol>
+
+<h3>Categorías de Herramientas Registradas</h3>
+<ul>
+  <li><strong>Globales del sitio (6)</strong> — Cambio de tema, información de página, navegación, cambio de idioma</li>
+  <li><strong>Blog (2)</strong> — Listar publicaciones, buscar publicaciones por palabra clave</li>
+  <li><strong>CV (5)</strong> — Resumen, habilidades, experiencia, educación, certificaciones</li>
+  <li><strong>Publicaciones (2)</strong> — Listar y buscar publicaciones académicas</li>
+  <li><strong>Índice de herramientas (2)</strong> — Listar herramientas, obtener información por categoría</li>
+  <li><strong>Herramientas de apps (12)</strong> — Una por herramienta interactiva (hash, base64, subred, etc.)</li>
+</ul>
+
+<h3>Anotaciones de Herramientas</h3>
+<ul>
+  <li>
+    <strong>Solo lectura</strong> — La herramienta solo lee datos sin modificar
+    el estado de la página (p. ej., listar publicaciones, obtener información)
+  </li>
+  <li>
+    <strong>Mutante</strong> — La herramienta cambia el estado de la página
+    (p. ej., cambiar tema, navegar a una página)
+  </li>
+</ul>
+
+<h3>Privacidad</h3>
+<p>
+  La simulación se ejecuta completamente en tu navegador. No se envían datos a
+  ningún servidor. El polyfill solo existe en la sesión actual y se elimina
+  cuando desactivas la simulación o navegas a otra página.
+</p>

@@ -1,0 +1,1115 @@
+---
+/**
+ * WebMCPTester Component
+ * Interactive testing tool for the WebMCP API (navigator.modelContext).
+ * Polyfills the API when not natively available, discovers registered tools,
+ * lets users execute them, and inspects the .well-known/webmcp.json manifest.
+ * All processing happens client-side.
+ */
+import { defaultLocale } from "@i18n/config";
+import { getLangFromUrl, useTranslations } from "@i18n/utils";
+
+interface Props {
+  locale?: string;
+}
+
+const locale = (Astro.props.locale ??
+  getLangFromUrl(Astro.url) ??
+  defaultLocale) as "en" | "es";
+const t = useTranslations(locale);
+
+const uniqueId = crypto.getRandomValues(new Uint32Array(1))[0].toString(36);
+
+const i18n = {
+  toolsRegistered: t("tools.webmcpTester.toolsRegistered"),
+  noToolsFound: t("tools.webmcpTester.noToolsFound"),
+  selectTool: t("tools.webmcpTester.selectTool"),
+  execute: t("tools.webmcpTester.execute"),
+  result: t("tools.webmcpTester.result"),
+  error: t("tools.shared.error"),
+  copied: t("tools.shared.copied"),
+  copy: t("tools.shared.copy"),
+  simulationActive: t("tools.webmcpTester.simulationActive"),
+  simulationInfo: t("tools.webmcpTester.simulationInfo"),
+  nativeDetected: t("tools.webmcpTester.nativeDetected"),
+  enableSimulation: t("tools.webmcpTester.enableSimulation"),
+  disableSimulation: t("tools.webmcpTester.disableSimulation"),
+  toolName: t("tools.webmcpTester.toolName"),
+  toolDescription: t("tools.webmcpTester.toolDescription"),
+  inputParameters: t("tools.webmcpTester.inputParameters"),
+  noParameters: t("tools.webmcpTester.noParameters"),
+  readOnly: t("tools.webmcpTester.readOnly"),
+  mutating: t("tools.webmcpTester.mutating"),
+  manifestTitle: t("tools.webmcpTester.manifestTitle"),
+  loadManifest: t("tools.webmcpTester.loadManifest"),
+  manifestLoaded: t("tools.webmcpTester.manifestLoaded"),
+  manifestError: t("tools.webmcpTester.manifestError"),
+  registeredTools: t("tools.webmcpTester.registeredTools"),
+  manifestTools: t("tools.webmcpTester.manifestTools"),
+  apiStatus: t("tools.webmcpTester.apiStatus"),
+  running: t("tools.webmcpTester.running"),
+  executionTime: t("tools.webmcpTester.executionTime"),
+  required: t("tools.webmcpTester.required"),
+  optional: t("tools.webmcpTester.optional"),
+  copyResult: t("tools.webmcpTester.copyResult"),
+  clearResult: t("tools.webmcpTester.clearResult"),
+  reloadTools: t("tools.webmcpTester.reloadTools"),
+};
+---
+
+<div
+  class="webmcp-tester"
+  data-webmcp-tester={uniqueId}
+>
+  <!-- API Status -->
+  <div
+    class="webmcp-status"
+    id={`${uniqueId}-status`}
+  >
+    <div class="webmcp-status__header">
+      <span
+        class="i-mdi:api mr-1"
+        aria-hidden="true"
+      ></span>
+      <strong>{i18n.apiStatus}</strong>
+      <span
+        class="webmcp-status__badge"
+        id={`${uniqueId}-badge`}
+      ></span>
+    </div>
+    <div class="webmcp-status__actions">
+      <button
+        class="webmcp-btn webmcp-btn--primary"
+        id={`${uniqueId}-sim-toggle`}
+        type="button"
+      >
+        {i18n.enableSimulation}
+      </button>
+      <button
+        class="webmcp-btn"
+        id={`${uniqueId}-reload`}
+        type="button"
+        title={i18n.reloadTools}
+      >
+        <span
+          class="i-mdi:refresh"
+          aria-hidden="true"
+        ></span>
+        {i18n.reloadTools}
+      </button>
+    </div>
+  </div>
+
+  <!-- Main panels -->
+  <div class="webmcp-panels">
+    <!-- Tool list -->
+    <div class="webmcp-panel">
+      <h2 class="webmcp-panel__title">
+        <span
+          class="i-mdi:tools"
+          aria-hidden="true"
+        ></span>
+        {i18n.registeredTools}
+        <span
+          class="webmcp-count"
+          id={`${uniqueId}-count`}
+          >(0)</span
+        >
+      </h2>
+      <div
+        class="webmcp-tool-list"
+        id={`${uniqueId}-list`}
+        aria-label={i18n.registeredTools}
+      >
+        <p class="webmcp-empty">{i18n.noToolsFound}</p>
+      </div>
+    </div>
+
+    <!-- Tool detail / executor -->
+    <div class="webmcp-panel">
+      <h2 class="webmcp-panel__title">
+        <span
+          class="i-mdi:play-circle-outline"
+          aria-hidden="true"
+        ></span>
+        {i18n.selectTool}
+      </h2>
+      <div
+        class="webmcp-detail"
+        id={`${uniqueId}-detail`}
+      >
+        <p class="webmcp-empty">{i18n.selectTool}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Manifest viewer -->
+  <div class="webmcp-manifest-section">
+    <h2 class="webmcp-panel__title">
+      <span
+        class="i-mdi:file-document-outline"
+        aria-hidden="true"
+      ></span>
+      {i18n.manifestTitle}
+    </h2>
+    <button
+      class="webmcp-btn"
+      id={`${uniqueId}-manifest-btn`}
+      type="button"
+    >
+      <span
+        class="i-mdi:download"
+        aria-hidden="true"
+      ></span>
+      {i18n.loadManifest}
+    </button>
+    <pre
+      class="webmcp-manifest-output"
+      id={`${uniqueId}-manifest`}
+      hidden>
+    </pre>
+  </div>
+</div>
+
+<style>
+  .webmcp-tester {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+  }
+
+  .webmcp-status {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
+    border: var(--border-2);
+    border-radius: var(--radius-md);
+    background: var(--color-bg-secondary);
+  }
+
+  .webmcp-status--native {
+    border-color: #28a745;
+  }
+
+  .webmcp-status--simulated {
+    border-color: var(--color-primary);
+  }
+
+  .webmcp-status__header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+  }
+
+  .webmcp-status__badge {
+    padding: 0.125rem 0.5rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.75rem;
+    font-weight: var(--fw-semibold);
+  }
+
+  .webmcp-status__badge--simulated {
+    background: rgb(179 137 245 / 20%);
+    color: var(--color-primary);
+  }
+
+  .webmcp-status__badge--native {
+    background: rgb(40 167 69 / 20%);
+    color: #28a745;
+  }
+
+  .webmcp-status__badge--unavailable {
+    background: rgb(139 148 158 / 20%);
+    color: var(--color-text-muted);
+  }
+
+  .webmcp-status__actions {
+    display: flex;
+    gap: var(--space-sm);
+  }
+
+  .webmcp-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+    padding: 0.375rem 0.75rem;
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+    background: var(--color-bg-subtle);
+    color: var(--color-text);
+    font-size: 0.8125rem;
+    cursor: pointer;
+    transition: background-color 0.15s;
+  }
+
+  .webmcp-btn:hover {
+    background: var(--color-bg-secondary);
+  }
+
+  .webmcp-btn:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  .webmcp-btn--primary {
+    background: var(--color-primary);
+    color: var(--color-on-primary);
+    border-color: var(--color-primary);
+  }
+
+  .webmcp-btn--primary:hover {
+    background: var(--color-primary-hover);
+  }
+
+  .webmcp-panels {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-md);
+  }
+
+  @media (max-width: 768px) {
+    .webmcp-panels {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .webmcp-panel {
+    border: var(--border-1);
+    border-radius: var(--radius-md);
+    background: var(--color-bg-secondary);
+    overflow: hidden;
+  }
+
+  .webmcp-panel__title {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    padding: var(--space-sm) var(--space-md);
+    margin: 0;
+    font-size: 0.9375rem;
+    font-weight: var(--fw-semibold);
+    border-bottom: var(--border-1);
+    background: var(--color-bg-subtle);
+  }
+
+  .webmcp-count {
+    font-weight: var(--fw-normal);
+    color: var(--color-text-muted);
+    font-size: 0.8125rem;
+  }
+
+  .webmcp-tool-list {
+    max-height: 400px;
+    overflow-y: auto;
+    padding: var(--space-sm);
+  }
+
+  .webmcp-tool-card {
+    padding: var(--space-sm);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+    margin-bottom: var(--space-xs);
+    cursor: pointer;
+    transition:
+      border-color 0.15s,
+      background-color 0.15s;
+  }
+
+  .webmcp-tool-card:hover {
+    background: var(--color-bg-subtle);
+  }
+
+  .webmcp-tool-card:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  .webmcp-tool-card--selected {
+    border-color: var(--color-primary);
+    background: var(--color-bg-subtle);
+  }
+
+  .webmcp-tool-card__name {
+    font-weight: var(--fw-semibold);
+    font-size: 0.875rem;
+    color: var(--color-text-heading);
+  }
+
+  .webmcp-tool-card__desc {
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+    margin-top: 0.125rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .webmcp-tool-card__badges {
+    display: flex;
+    gap: var(--space-xs);
+    margin-top: 0.25rem;
+  }
+
+  .webmcp-badge {
+    display: inline-block;
+    padding: 0.0625rem 0.375rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.6875rem;
+    font-weight: var(--fw-medium);
+  }
+
+  .webmcp-badge--readonly {
+    background: rgb(40 167 69 / 15%);
+    color: #28a745;
+  }
+
+  .webmcp-badge--mutating {
+    background: rgb(255 165 0 / 15%);
+    color: #ffa500;
+  }
+
+  .webmcp-detail {
+    padding: var(--space-md);
+    min-height: 200px;
+  }
+
+  .webmcp-empty {
+    color: var(--color-text-muted);
+    font-style: italic;
+    text-align: center;
+    padding: var(--space-lg);
+  }
+
+  .webmcp-detail__name {
+    font-size: 1.125rem;
+    font-weight: var(--fw-bold);
+    color: var(--color-text-heading);
+    margin-bottom: var(--space-xs);
+  }
+
+  .webmcp-detail__desc {
+    color: var(--color-text-muted);
+    font-size: 0.875rem;
+    margin-bottom: var(--space-md);
+  }
+
+  .webmcp-form-group {
+    margin-bottom: var(--space-sm);
+  }
+
+  .webmcp-form-group label {
+    display: block;
+    font-size: 0.8125rem;
+    font-weight: var(--fw-medium);
+    margin-bottom: 0.25rem;
+    color: var(--color-text);
+  }
+
+  .webmcp-form-group input[type="text"],
+  .webmcp-form-group input[type="number"],
+  .webmcp-form-group textarea {
+    width: 100%;
+    padding: 0.375rem 0.5rem;
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+  }
+
+  .webmcp-form-group input:focus,
+  .webmcp-form-group textarea:focus {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 1px;
+  }
+
+  .webmcp-form-group .webmcp-required {
+    color: var(--color-primary);
+    font-size: 0.75rem;
+  }
+
+  .webmcp-checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+  }
+
+  .webmcp-result-area {
+    margin-top: var(--space-md);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+  }
+
+  .webmcp-result-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-xs) var(--space-sm);
+    background: var(--color-bg-subtle);
+    border-bottom: var(--border-1);
+    font-size: 0.8125rem;
+    font-weight: var(--fw-medium);
+  }
+
+  .webmcp-result-header__actions {
+    display: flex;
+    gap: var(--space-xs);
+  }
+
+  .webmcp-result-output {
+    padding: var(--space-sm);
+    max-height: 300px;
+    overflow: auto;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    white-space: pre-wrap;
+    word-break: break-word;
+    background: var(--color-bg);
+  }
+
+  .webmcp-result-time {
+    font-size: 0.6875rem;
+    color: var(--color-text-muted);
+  }
+
+  .webmcp-manifest-section {
+    border: var(--border-1);
+    border-radius: var(--radius-md);
+    background: var(--color-bg-secondary);
+    overflow: hidden;
+  }
+
+  .webmcp-manifest-section .webmcp-panel__title {
+    margin-bottom: 0;
+  }
+
+  .webmcp-manifest-section .webmcp-btn {
+    margin: var(--space-sm) var(--space-md);
+  }
+
+  .webmcp-manifest-output {
+    margin: 0 var(--space-md) var(--space-md);
+    padding: var(--space-sm);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+    background: var(--color-bg);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    max-height: 400px;
+    overflow: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .webmcp-exec-actions {
+    display: flex;
+    gap: var(--space-sm);
+    margin-top: var(--space-sm);
+  }
+
+  .webmcp-section-label {
+    font-size: 0.8125rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: var(--space-xs);
+    margin-top: var(--space-sm);
+  }
+
+  .webmcp-no-params {
+    font-size: 0.8125rem;
+    color: var(--color-text-muted);
+  }
+
+  .webmcp-field-desc {
+    font-size: 0.6875rem;
+    color: var(--color-text-muted);
+    margin-bottom: 0.25rem;
+  }
+
+  .webmcp-select {
+    width: 100%;
+    padding: 0.375rem 0.5rem;
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-size: 0.8125rem;
+  }
+
+  .webmcp-select:focus {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 1px;
+  }
+</style>
+
+<script is:inline define:vars={{ uniqueId, i18n }}>
+  (function () {
+    var container = document.querySelector(
+      '[data-webmcp-tester="' + uniqueId + '"]',
+    );
+    if (!container) return;
+
+    // DOM refs
+    var statusEl = document.getElementById(uniqueId + "-status");
+    var badgeEl = document.getElementById(uniqueId + "-badge");
+    var simToggle = document.getElementById(uniqueId + "-sim-toggle");
+    var reloadBtn = document.getElementById(uniqueId + "-reload");
+    var listEl = document.getElementById(uniqueId + "-list");
+    var countEl = document.getElementById(uniqueId + "-count");
+    var detailEl = document.getElementById(uniqueId + "-detail");
+    var manifestBtn = document.getElementById(uniqueId + "-manifest-btn");
+    var manifestEl = document.getElementById(uniqueId + "-manifest");
+
+    var registeredTools = [];
+    var selectedToolName = null;
+    var simulationEnabled = false;
+    var originalModelContext = null;
+
+    // --- Simulation polyfill ---
+    function createSimulationContext() {
+      return {
+        provideContext: function (opts) {
+          registeredTools = (opts && opts.tools) || [];
+          refreshToolList();
+        },
+        registerTool: function (tool) {
+          if (!tool || !tool.name) return;
+          // Replace if exists
+          for (var j = 0; j < registeredTools.length; j++) {
+            if (registeredTools[j].name === tool.name) {
+              registeredTools[j] = tool;
+              refreshToolList();
+              return;
+            }
+          }
+          registeredTools.push(tool);
+          refreshToolList();
+        },
+        unregisterTool: function (name) {
+          registeredTools = registeredTools.filter(function (t) {
+            return t.name !== name;
+          });
+          refreshToolList();
+        },
+        clearContext: function () {
+          registeredTools = [];
+          refreshToolList();
+        },
+      };
+    }
+
+    function enableSimulation() {
+      // Store original if native
+      if (navigator.modelContext && !simulationEnabled) {
+        originalModelContext = navigator.modelContext;
+      }
+      navigator.modelContext = createSimulationContext();
+      simulationEnabled = true;
+      registeredTools = [];
+      updateStatus();
+      reExecuteProviderScripts();
+    }
+
+    function disableSimulation() {
+      if (originalModelContext) {
+        navigator.modelContext = originalModelContext;
+      } else {
+        delete navigator.modelContext;
+      }
+      simulationEnabled = false;
+      registeredTools = [];
+      updateStatus();
+      refreshToolList();
+      showEmptyDetail();
+    }
+
+    // Re-execute WebMCP provider + app scripts to register tools
+    function reExecuteProviderScripts() {
+      // 1. Re-execute the main provider script
+      var providerScript = document.getElementById("webmcp-provider");
+      if (providerScript) {
+        try {
+          var dataAttr =
+            providerScript.getAttribute("data-webmcp-tools") || "[]";
+          var d = JSON.parse(dataAttr);
+          if (d.length) {
+            var ns = "_wmcp_t_" + Math.random().toString(36).slice(2);
+            window[ns] = {};
+            for (var k = 0; k < d.length; k++) {
+              var sc = document.createElement("script");
+              sc.textContent =
+                'window["' + ns + '"]["f' + k + '"] = ' + d[k].executeStr + ";";
+              document.head.appendChild(sc);
+              document.head.removeChild(sc);
+            }
+            var tools = [];
+            for (var m = 0; m < d.length; m++) {
+              var e = d[m];
+              tools.push({
+                name: e.name,
+                description: e.description,
+                inputSchema: e.inputSchema,
+                annotations: e.annotations,
+                execute: window[ns]["f" + m],
+              });
+            }
+            delete window[ns];
+            navigator.modelContext.provideContext({ tools: tools });
+          }
+        } catch (err) {
+          console.warn("[WebMCP Tester] Provider re-exec failed:", err);
+        }
+      }
+
+      // 2. Re-execute app component WebMCP blocks
+      // App scripts register via navigator.modelContext.registerTool()
+      // We look for inline scripts that contain the WebMCP marker
+      // Use dynamic <script> creation (CSP strict-dynamic allows this)
+      var scripts = document.querySelectorAll(
+        "script[is\\:inline], script:not([src])",
+      );
+      for (var s = 0; s < scripts.length; s++) {
+        var src = scripts[s].textContent || "";
+        if (
+          src.indexOf("=== WebMCP START ===") !== -1 &&
+          src.indexOf("modelContext") !== -1
+        ) {
+          var startMark = "// === WebMCP START ===";
+          var endMark = "// === WebMCP END ===";
+          var startIdx = src.indexOf(startMark);
+          var endIdx = src.indexOf(endMark);
+          if (startIdx !== -1 && endIdx !== -1) {
+            var block = src.substring(startIdx + startMark.length, endIdx);
+            try {
+              var dynScript = document.createElement("script");
+              dynScript.textContent = "(function(){" + block + "})();";
+              document.head.appendChild(dynScript);
+              document.head.removeChild(dynScript);
+            } catch (err) {
+              console.warn("[WebMCP Tester] App script re-exec failed:", err);
+            }
+          }
+        }
+      }
+    }
+
+    // --- UI Updates ---
+    function updateStatus() {
+      var hasNative =
+        !simulationEnabled &&
+        typeof navigator !== "undefined" &&
+        "modelContext" in navigator &&
+        !!navigator.modelContext;
+
+      statusEl.className = "webmcp-status";
+      if (simulationEnabled) {
+        statusEl.classList.add("webmcp-status--simulated");
+        badgeEl.textContent = i18n.simulationActive;
+        badgeEl.className =
+          "webmcp-status__badge webmcp-status__badge--simulated";
+        simToggle.textContent = i18n.disableSimulation;
+      } else if (hasNative) {
+        statusEl.classList.add("webmcp-status--native");
+        badgeEl.textContent = i18n.nativeDetected;
+        badgeEl.className = "webmcp-status__badge webmcp-status__badge--native";
+        simToggle.textContent = i18n.enableSimulation;
+      } else {
+        badgeEl.textContent = "Not available";
+        badgeEl.className =
+          "webmcp-status__badge webmcp-status__badge--unavailable";
+        simToggle.textContent = i18n.enableSimulation;
+      }
+    }
+
+    function refreshToolList() {
+      countEl.textContent = "(" + registeredTools.length + ")";
+      if (registeredTools.length === 0) {
+        listEl.innerHTML =
+          '<p class="webmcp-empty">' + i18n.noToolsFound + "</p>";
+        return;
+      }
+      var html = "";
+      for (var t = 0; t < registeredTools.length; t++) {
+        var tool = registeredTools[t];
+        var isSelected = tool.name === selectedToolName;
+        var isReadOnly =
+          tool.annotations && tool.annotations.readOnlyHint === true;
+        html += '<div class="webmcp-tool-card';
+        if (isSelected) html += " webmcp-tool-card--selected";
+        html += '" tabindex="0" data-tool-name="' + escHtml(tool.name) + '">';
+        html +=
+          '<div class="webmcp-tool-card__name">' +
+          escHtml(tool.name) +
+          "</div>";
+        if (tool.description) {
+          html +=
+            '<div class="webmcp-tool-card__desc">' +
+            escHtml(tool.description) +
+            "</div>";
+        }
+        html += '<div class="webmcp-tool-card__badges">';
+        if (isReadOnly) {
+          html +=
+            '<span class="webmcp-badge webmcp-badge--readonly">' +
+            i18n.readOnly +
+            "</span>";
+        } else {
+          html +=
+            '<span class="webmcp-badge webmcp-badge--mutating">' +
+            i18n.mutating +
+            "</span>";
+        }
+        html += "</div></div>";
+      }
+      listEl.innerHTML = html;
+
+      // Attach click handlers
+      var cards = listEl.querySelectorAll(".webmcp-tool-card");
+      for (var c = 0; c < cards.length; c++) {
+        cards[c].addEventListener("click", onToolSelect);
+        cards[c].addEventListener("keydown", function (ev) {
+          if (ev.key === "Enter" || ev.key === " ") {
+            ev.preventDefault();
+            onToolSelect.call(this, ev);
+          }
+        });
+      }
+    }
+
+    function onToolSelect(ev) {
+      var card = ev.currentTarget;
+      var name = card.getAttribute("data-tool-name");
+      selectedToolName = name;
+      refreshToolList();
+      showToolDetail(name);
+    }
+
+    function findTool(name) {
+      for (var j = 0; j < registeredTools.length; j++) {
+        if (registeredTools[j].name === name) return registeredTools[j];
+      }
+      return null;
+    }
+
+    function showEmptyDetail() {
+      detailEl.innerHTML =
+        '<p class="webmcp-empty">' + i18n.selectTool + "</p>";
+    }
+
+    function showToolDetail(name) {
+      var tool = findTool(name);
+      if (!tool) {
+        showEmptyDetail();
+        return;
+      }
+
+      var html = "";
+      html +=
+        '<div class="webmcp-detail__name">' + escHtml(tool.name) + "</div>";
+      html +=
+        '<div class="webmcp-detail__desc">' +
+        escHtml(tool.description || "") +
+        "</div>";
+
+      // Input schema form
+      var schema = tool.inputSchema || {};
+      var props = schema.properties || {};
+      var requiredFields = schema.required || [];
+      var propKeys = Object.keys(props);
+
+      html +=
+        '<div class="webmcp-section-label">' + i18n.inputParameters + "</div>";
+
+      if (propKeys.length === 0) {
+        html += '<p class="webmcp-no-params">' + i18n.noParameters + "</p>";
+      } else {
+        for (var p = 0; p < propKeys.length; p++) {
+          var key = propKeys[p];
+          var prop = props[key];
+          var isRequired = requiredFields.indexOf(key) !== -1;
+          var fieldType = prop.type || "string";
+          html += '<div class="webmcp-form-group">';
+          html +=
+            "<label>" +
+            escHtml(key) +
+            " <span class='webmcp-required'>(" +
+            (isRequired ? i18n.required : i18n.optional) +
+            ")</span></label>";
+
+          if (prop.description) {
+            html +=
+              '<div class="webmcp-field-desc">' +
+              escHtml(prop.description) +
+              "</div>";
+          }
+
+          if (fieldType === "boolean") {
+            html += '<div class="webmcp-checkbox-row">';
+            html +=
+              '<input type="checkbox" data-input-key="' +
+              escHtml(key) +
+              '" data-input-type="boolean" id="' +
+              uniqueId +
+              "-field-" +
+              key +
+              '">';
+            html +=
+              '<label for="' + uniqueId + "-field-" + key + '">true</label>';
+            html += "</div>";
+          } else if (fieldType === "number" || fieldType === "integer") {
+            html +=
+              '<input type="number" data-input-key="' +
+              escHtml(key) +
+              '" data-input-type="number" placeholder="' +
+              escHtml(prop.description || key) +
+              '">';
+          } else if (prop.enum) {
+            html +=
+              '<select data-input-key="' +
+              escHtml(key) +
+              '" data-input-type="enum" class="webmcp-select">';
+            for (var e = 0; e < prop.enum.length; e++) {
+              html +=
+                '<option value="' +
+                escHtml(prop.enum[e]) +
+                '">' +
+                escHtml(prop.enum[e]) +
+                "</option>";
+            }
+            html += "</select>";
+          } else {
+            html +=
+              '<input type="text" data-input-key="' +
+              escHtml(key) +
+              '" data-input-type="string" placeholder="' +
+              escHtml(prop.description || key) +
+              '">';
+          }
+          html += "</div>";
+        }
+      }
+
+      html += '<div class="webmcp-exec-actions">';
+      html +=
+        '<button class="webmcp-btn webmcp-btn--primary" data-action="execute" type="button">';
+      html +=
+        '<span class="i-mdi:play" aria-hidden="true"></span> ' + i18n.execute;
+      html += "</button>";
+      html += "</div>";
+
+      // Result area (empty initially)
+      html += '<div class="webmcp-result-area" hidden data-result-area>';
+      html += '<div class="webmcp-result-header">';
+      html += "<span>" + i18n.result + "</span>";
+      html += '<div class="webmcp-result-header__actions">';
+      html += '<span class="webmcp-result-time" data-result-time></span>';
+      html +=
+        '<button class="webmcp-btn" data-action="copy-result" type="button" title="' +
+        i18n.copyResult +
+        '">';
+      html +=
+        '<span class="i-mdi:content-copy" aria-hidden="true"></span> ' +
+        i18n.copy;
+      html += "</button>";
+      html +=
+        '<button class="webmcp-btn" data-action="clear-result" type="button" title="' +
+        i18n.clearResult +
+        '">';
+      html += '<span class="i-mdi:close" aria-hidden="true"></span>';
+      html += "</button>";
+      html += "</div></div>";
+      html += '<div class="webmcp-result-output" data-result-output></div>';
+      html += "</div>";
+
+      detailEl.innerHTML = html;
+
+      // Attach execute handler
+      var execBtn = detailEl.querySelector('[data-action="execute"]');
+      if (execBtn) {
+        execBtn.addEventListener("click", function () {
+          executeTool(name);
+        });
+      }
+
+      var copyBtn = detailEl.querySelector('[data-action="copy-result"]');
+      if (copyBtn) {
+        copyBtn.addEventListener("click", copyResult);
+      }
+
+      var clearBtn = detailEl.querySelector('[data-action="clear-result"]');
+      if (clearBtn) {
+        clearBtn.addEventListener("click", function () {
+          var area = detailEl.querySelector("[data-result-area]");
+          if (area) area.hidden = true;
+        });
+      }
+    }
+
+    function executeTool(name) {
+      var tool = findTool(name);
+      if (!tool || typeof tool.execute !== "function") return;
+
+      // Gather inputs
+      var inputEls = detailEl.querySelectorAll("[data-input-key]");
+      var input = {};
+      for (var i = 0; i < inputEls.length; i++) {
+        var el = inputEls[i];
+        var key = el.getAttribute("data-input-key");
+        var type = el.getAttribute("data-input-type");
+        if (type === "boolean") {
+          input[key] = el.checked;
+        } else if (type === "number") {
+          input[key] = el.value ? Number(el.value) : 0;
+        } else {
+          input[key] = el.value || "";
+        }
+      }
+
+      var client = {
+        requestUserInteraction: function (cb) {
+          if (typeof cb === "function") {
+            return cb();
+          }
+        },
+      };
+
+      var resultArea = detailEl.querySelector("[data-result-area]");
+      var resultOutput = detailEl.querySelector("[data-result-output]");
+      var resultTime = detailEl.querySelector("[data-result-time]");
+      if (!resultArea || !resultOutput) return;
+
+      resultArea.hidden = false;
+      resultOutput.textContent = i18n.running + "...";
+
+      var start = performance.now();
+      try {
+        var result = tool.execute(input, client);
+        // Handle both sync and Promise results
+        if (result && typeof result.then === "function") {
+          result
+            .then(function (res) {
+              var elapsed = (performance.now() - start).toFixed(1);
+              resultTime.textContent =
+                i18n.executionTime + ": " + elapsed + "ms";
+              resultOutput.textContent = formatResult(res);
+            })
+            .catch(function (err) {
+              var elapsed = (performance.now() - start).toFixed(1);
+              resultTime.textContent =
+                i18n.executionTime + ": " + elapsed + "ms";
+              resultOutput.textContent =
+                i18n.error + ": " + (err.message || String(err));
+            });
+        } else {
+          var elapsed = (performance.now() - start).toFixed(1);
+          resultTime.textContent = i18n.executionTime + ": " + elapsed + "ms";
+          resultOutput.textContent = formatResult(result);
+        }
+      } catch (err) {
+        var elapsedErr = (performance.now() - start).toFixed(1);
+        resultTime.textContent = i18n.executionTime + ": " + elapsedErr + "ms";
+        resultOutput.textContent =
+          i18n.error + ": " + (err.message || String(err));
+      }
+    }
+
+    function formatResult(result) {
+      if (result === undefined || result === null) return "null";
+      if (typeof result === "string") return result;
+      try {
+        return JSON.stringify(result, null, 2);
+      } catch (_e) {
+        return String(result);
+      }
+    }
+
+    function copyResult() {
+      var output = detailEl.querySelector("[data-result-output]");
+      if (!output || !output.textContent) return;
+      try {
+        navigator.clipboard.writeText(output.textContent);
+        var copyBtn = detailEl.querySelector('[data-action="copy-result"]');
+        if (copyBtn) {
+          var origHTML = copyBtn.innerHTML;
+          copyBtn.textContent = i18n.copied;
+          setTimeout(function () {
+            copyBtn.innerHTML = origHTML;
+          }, 1500);
+        }
+      } catch (_e) {
+        // Clipboard API not available
+      }
+    }
+
+    // --- Manifest viewer ---
+    function loadManifest() {
+      manifestBtn.disabled = true;
+      fetch("/.well-known/webmcp.json")
+        .then(function (r) {
+          if (!r.ok) throw new Error("HTTP " + r.status);
+          return r.json();
+        })
+        .then(function (data) {
+          manifestEl.hidden = false;
+          var toolCount = data.tools ? data.tools.length : 0;
+          manifestEl.textContent =
+            "// " +
+            i18n.manifestLoaded +
+            " (" +
+            toolCount +
+            " " +
+            i18n.manifestTools +
+            ")\n" +
+            JSON.stringify(data, null, 2);
+          manifestBtn.disabled = false;
+        })
+        .catch(function (err) {
+          manifestEl.hidden = false;
+          manifestEl.textContent =
+            i18n.manifestError + ": " + (err.message || String(err));
+          manifestBtn.disabled = false;
+        });
+    }
+
+    // --- Helpers ---
+    function escHtml(str) {
+      if (!str) return "";
+      return str
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    // --- Event bindings ---
+    simToggle.addEventListener("click", function () {
+      if (simulationEnabled) {
+        disableSimulation();
+      } else {
+        enableSimulation();
+      }
+    });
+
+    reloadBtn.addEventListener("click", function () {
+      if (simulationEnabled) {
+        registeredTools = [];
+        navigator.modelContext = createSimulationContext();
+        reExecuteProviderScripts();
+      }
+    });
+
+    manifestBtn.addEventListener("click", loadManifest);
+
+    // Initial status update
+    updateStatus();
+    refreshToolList();
+  })();
+</script>
