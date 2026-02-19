@@ -141,11 +141,44 @@ export default defineConfig({
         !page.includes("/404") &&
         !page.includes("/998-") &&
         !page.includes("/999-"),
-      serialize: (item) => ({
-        ...item,
-        // Set lastmod to current build date for all pages
-        lastmod: new Date().toISOString(),
-      }),
+      serialize: (item) => {
+        const url = item.url;
+        // Strip locale prefix for pattern matching
+        const path = url.replace(/^https?:\/\/[^/]+/, "").replace(/^\/es/, "");
+
+        // Priority: homepage > blog/tools index > blog posts > tools > static > tags
+        // changefreq default: monthly (only override when different)
+        let priority = 0.5;
+        /** @type {"weekly" | "monthly" | "yearly"} */
+        let changefreq = /** @type {const} */ ("monthly");
+
+        if (path === "/" || path === "") {
+          priority = 1;
+          changefreq = "weekly";
+        } else if (path === "/blog/" || path === "/tools/") {
+          priority = 0.8;
+          changefreq = "weekly";
+        } else if (/^\/blog\/\d{3}-/.test(path)) {
+          priority = 0.8;
+        } else if (
+          /^\/tools\/[a-z]/.test(path) &&
+          !path.includes("/categories/")
+        ) {
+          priority = 0.7;
+          changefreq = "yearly";
+        } else if (/^\/(cv|publications|github|homelab)(\/|$)/.test(path)) {
+          priority = 0.6;
+        } else if (path.includes("/tags/") || path.includes("/categories/")) {
+          priority = 0.3;
+        }
+
+        return /** @type {import("@astrojs/sitemap").SitemapItem} */ ({
+          ...item,
+          priority,
+          changefreq,
+          lastmod: new Date().toISOString(),
+        });
+      },
     }),
     mdx({
       // MDX needs to know about remark plugins too if we want it to work in .mdx files
