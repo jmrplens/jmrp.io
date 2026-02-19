@@ -1,18 +1,17 @@
 /* eslint-disable playwright/no-conditional-in-test */
-/* eslint-disable playwright/no-conditional-expect */
 /* eslint-disable playwright/no-wait-for-timeout */
 /* eslint-disable playwright/no-networkidle */
 /* eslint-disable playwright/prefer-web-first-assertions */
 import type { Page } from "@playwright/test";
 import { expect, test } from "@playwright/test";
 
-import { getCachedPages, shouldIgnoreError } from "./utils";
+import { blockCloudflare, getCachedPages, shouldIgnoreError } from "./utils";
 
 /**
  * Helper: block Cloudflare beacon and track page errors + console errors.
  */
 async function setupPage(page: Page, errors: string[]): Promise<void> {
-  await page.route("**/beacon.min.js", (route) => route.abort());
+  await blockCloudflare(page);
   page.on("pageerror", (error) => {
     if (!shouldIgnoreError(error.message)) {
       errors.push(error.message);
@@ -83,27 +82,22 @@ test.describe("Edge Cases: View Transitions", () => {
 
     // Set theme to light
     const toggle = page.locator("#theme-toggle");
-    if (await toggle.isVisible()) {
-      const currentTheme = await page
-        .locator("html")
-        .getAttribute("data-theme");
-      if (currentTheme !== "light") {
-        await toggle.click();
-        await page.waitForTimeout(300);
-      }
-      const themeAfterToggle = await page
-        .locator("html")
-        .getAttribute("data-theme");
-      expect(themeAfterToggle).toBe("light");
-
-      // Navigate to blog
-      await page.goto("/blog/");
-      await page.waitForLoadState("domcontentloaded");
-      const themeAfterNav = await page
-        .locator("html")
-        .getAttribute("data-theme");
-      expect(themeAfterNav).toBe("light");
+    await expect(toggle).toBeVisible();
+    const currentTheme = await page.locator("html").getAttribute("data-theme");
+    if (currentTheme !== "light") {
+      await toggle.click();
+      await page.waitForTimeout(300);
     }
+    const themeAfterToggle = await page
+      .locator("html")
+      .getAttribute("data-theme");
+    expect(themeAfterToggle).toBe("light");
+
+    // Navigate to blog
+    await page.goto("/blog/");
+    await page.waitForLoadState("domcontentloaded");
+    const themeAfterNav = await page.locator("html").getAttribute("data-theme");
+    expect(themeAfterNav).toBe("light");
   });
 
   test("Back button works after View Transition navigation", async ({
@@ -171,13 +165,12 @@ test.describe("Edge Cases: Print Styles", () => {
         p.url !== "/blog/" &&
         !p.url.includes("/tags/"),
     );
-    if (blogPost) {
-      await page.goto(blogPost.url);
-      await page.emulateMedia({ media: "print" });
-      await page.waitForTimeout(500);
-      const body = page.locator("body");
-      await expect(body).toBeVisible();
-    }
+    expect(blogPost, "No blog post found in sitemap").toBeDefined();
+    await page.goto(blogPost!.url);
+    await page.emulateMedia({ media: "print" });
+    await page.waitForTimeout(500);
+    const body = page.locator("body");
+    await expect(body).toBeVisible();
   });
 
   test("CV page renders in print media", async ({ page }) => {
@@ -329,8 +322,12 @@ test.describe("Edge Cases: Asset Loading", () => {
 
     page.on("requestfailed", (request) => {
       const url = request.url();
-      // Ignore beacon (blocked by us) and data URIs
-      if (!url.includes("beacon.min.js") && !url.startsWith("data:")) {
+      // Ignore beacon and cdn-cgi/rum (blocked by us) and data URIs
+      if (
+        !url.includes("beacon.min.js") &&
+        !url.includes("cdn-cgi/rum") &&
+        !url.startsWith("data:")
+      ) {
         failedAssets.push(url);
       }
     });
@@ -349,7 +346,12 @@ test.describe("Edge Cases: Asset Loading", () => {
 
     page.on("requestfailed", (request) => {
       const url = request.url();
-      if (!url.includes("beacon.min.js") && !url.startsWith("data:")) {
+      // Ignore beacon and cdn-cgi/rum (blocked by us) and data URIs
+      if (
+        !url.includes("beacon.min.js") &&
+        !url.includes("cdn-cgi/rum") &&
+        !url.startsWith("data:")
+      ) {
         failedAssets.push(url);
       }
     });
@@ -362,14 +364,13 @@ test.describe("Edge Cases: Asset Loading", () => {
         p.url !== "/blog/" &&
         !p.url.includes("/tags/"),
     );
-    if (blogPost) {
-      await page.goto(blogPost.url);
-      await page.waitForLoadState("networkidle");
-      expect(
-        failedAssets,
-        `Failed assets on ${blogPost.url}: ${failedAssets.join(", ")}`,
-      ).toEqual([]);
-    }
+    expect(blogPost, "No blog post found in sitemap").toBeDefined();
+    await page.goto(blogPost!.url);
+    await page.waitForLoadState("networkidle");
+    expect(
+      failedAssets,
+      `Failed assets on ${blogPost!.url}: ${failedAssets.join(", ")}`,
+    ).toEqual([]);
   });
 });
 

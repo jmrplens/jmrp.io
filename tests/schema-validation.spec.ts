@@ -41,23 +41,31 @@ async function getJsonLd(page: Page): Promise<JsonLdDocument> {
   return JSON.parse(content) as JsonLdDocument;
 }
 
+/** Check if a schema's @type matches the given type (handles array @type) */
+function matchesType(schemaType: unknown, type: string): boolean {
+  if (Array.isArray(schemaType)) {
+    return schemaType.includes(type);
+  }
+  return schemaType === type;
+}
+
 /** Find schema in @graph by @type */
 function findInGraph(
   jsonLd: JsonLdDocument,
   type: string,
 ): JsonLdSchema | null {
   if (jsonLd["@graph"]) {
-    return jsonLd["@graph"].find((i) => i["@type"] === type) ?? null;
+    return jsonLd["@graph"].find((i) => matchesType(i["@type"], type)) ?? null;
   }
-  return jsonLd["@type"] === type ? (jsonLd as JsonLdSchema) : null;
+  return matchesType(jsonLd["@type"], type) ? (jsonLd as JsonLdSchema) : null;
 }
 
 /** Find all schemas in @graph by @type */
 function findAllInGraph(jsonLd: JsonLdDocument, type: string): JsonLdSchema[] {
   if (jsonLd["@graph"]) {
-    return jsonLd["@graph"].filter((i) => i["@type"] === type);
+    return jsonLd["@graph"].filter((i) => matchesType(i["@type"], type));
   }
-  return jsonLd["@type"] === type ? [jsonLd as JsonLdSchema] : [];
+  return matchesType(jsonLd["@type"], type) ? [jsonLd as JsonLdSchema] : [];
 }
 
 /** Check if value is a non-empty string */

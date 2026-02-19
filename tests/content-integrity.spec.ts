@@ -15,7 +15,7 @@
 /* eslint-disable playwright/no-conditional-in-test -- Content checks require conditionals */
 /* eslint-disable playwright/no-conditional-expect -- Conditional expects after null guards */
 
-import { existsSync, readdirSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { expect, test } from "@playwright/test";
@@ -95,7 +95,7 @@ test.describe("External Links Security", () => {
         const rel = (await link.getAttribute("rel")) ?? "";
 
         // Skip rel="me" links — they intentionally omit noopener/noreferrer
-        if (rel.includes("me")) continue;
+        if (rel.split(/\s+/).includes("me")) continue;
 
         expect(rel, `Link ${href} on ${url} missing noopener`).toContain(
           "noopener",
@@ -182,12 +182,19 @@ test.describe("RSS Feed Completeness", () => {
     const rssItems = content.split("<item>").length - 1;
     const postsDir = join(process.cwd(), "src", "content", "posts", "en");
     const postFiles = readdirSync(postsDir);
-    const published = postFiles.filter(
-      (f) =>
-        f.endsWith(".mdx") &&
-        !f.startsWith("_") &&
-        !f.includes("999-testing-components"),
-    );
+    const published = postFiles.filter((f) => {
+      if (
+        !f.endsWith(".mdx") ||
+        f.startsWith("_") ||
+        f.includes("999-testing-components")
+      ) {
+        return false;
+      }
+      // Exclude draft posts
+      const content = readFileSync(join(postsDir, f), "utf-8");
+      const draftMatch = /^draft:\s*true$/m.exec(content);
+      return !draftMatch;
+    });
 
     expect(rssItems, "RSS item count should match published posts").toBe(
       published.length,
