@@ -1,0 +1,286 @@
+/**
+ * Content Integrity & Build Output Validation Tests
+ *
+ * Validates content quality, build output, and security requirements:
+ * - Image alt text (accessibility)
+ * - External link security (rel=noopener noreferrer, target=_blank)
+ * - Build compression (Brotli and Gzip)
+ * - Favicon files
+ * - RSS feed completeness
+ * - Sitemap completeness
+ * - rel=me social verification links
+ * - Meta description length compliance
+ */
+
+/* eslint-disable playwright/no-conditional-in-test -- Content checks require conditionals */
+/* eslint-disable playwright/no-conditional-expect -- Conditional expects after null guards */
+
+import { existsSync, readdirSync } from "node:fs";
+import { join } from "node:path";
+
+import type { Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
+
+import { getCachedPages, shouldIgnoreError } from "./utils";
+
+/** Block Cloudflare analytics */
+async function blockCloudflare(page: Page): Promise<void> {
+  await page.route("**/beacon.min.js", (route) => route.abort());
+  await page.route("**/cdn-cgi/rum*", (route) => route.abort());
+}
+
+const pages = getCachedPages();
+
+// ─── Image Alt Text ──────────────────────────────────────────────────
+
+test.describe("Image Alt Text Validation", () => {
+  for (const pageInfo of pages) {
+    test(`images have alt text on ${pageInfo.name}`, async ({ page }) => {
+      const errors: string[] = [];
+      page.on("pageerror", (error) => {
+        if (!shouldIgnoreError(error.message)) errors.push(error.message);
+      });
+
+      await blockCloudflare(page);
+      await page.goto(pageInfo.url);
+
+      const images = page.locator("img");
+      const count = await images.count();
+
+      for (let i = 0; i < count; i++) {
+        const img = images.nth(i);
+        const alt = await img.getAttribute("alt");
+        const role = await img.getAttribute("role");
+        const ariaHidden = await img.getAttribute("aria-hidden");
+
+        // All images must have an alt attribute
+        expect(
+          alt,
+          `Image ${i} on ${pageInfo.url} missing alt attribute`,
+        ).not.toBeNull();
+
+        // Non-decorative images must have non-empty alt
+        const isDecorative =
+          role === "presentation" || ariaHidden === "true" || alt === "";
+        if (!isDecorative && alt === "") {
+          const src = await img.getAttribute("src");
+          expect
+            .soft(
+              alt,
+              `Image (src: ${src}) has empty alt but is not decorative`,
+            )
+            .not.toBe("");
+        }
+      }
+
+      expect(errors).toEqual([]);
+    });
+  }
+});
+
+// ─── External Links Security ─────────────────────────────────────────
+
+test.describe("External Links Security", () => {
+  const samplePages = [
+    "/",
+    "/blog/001-secure-nginx-client-certificates/",
+    "/cv",
+    "/tools/",
+    "/github/",
+  ];
+
+  for (const url of samplePages) {
+    test(`external links have security attrs on ${url}`, async ({ page }) => {
+      await blockCloudflare(page);
+      await page.goto(url);
+
+      const externalLinks = page.locator('a[href^="http"]');
+      const count = await externalLinks.count();
+
+      for (let i = 0; i < count; i++) {
+        const link = externalLinks.nth(i);
+        const href = await link.getAttribute("href");
+        const rel = (await link.getAttribute("rel")) ?? "";
+
+        // Skip rel="me" links — they intentionally omit noopener/noreferrer
+        if (rel.includes("me")) continue;
+
+        expect(rel, `Link ${href} on ${url} missing noopener`).toContain(
+          "noopener",
+        );
+        expect(rel, `Link ${href} on ${url} missing noreferrer`).toContain(
+          "noreferrer",
+        );
+        await expect(
+          link,
+          `Link ${href} on ${url} missing target=_blank`,
+        ).toHaveAttribute("target", "_blank");
+      }
+    });
+  }
+});
+
+// ─── Build Compression ───────────────────────────────────────────────
+
+test.describe("Build Compression", () => {
+  test("JS files have Brotli and Gzip companions", () => {
+    const astroDir = join(process.cwd(), "dist", "_astro");
+    expect(existsSync(astroDir)).toBe(true);
+
+    const files = readdirSync(astroDir);
+    const jsFiles = files
+      .filter((f) => f.endsWith(".js"))
+      .sort((a, b) => a.localeCompare(b));
+
+    expect(jsFiles.length).toBeGreaterThan(0);
+
+    for (const jsFile of jsFiles) {
+      const base = join(astroDir, jsFile);
+      expect(existsSync(`${base}.br`), `Missing .br for ${jsFile}`).toBe(true);
+      expect(existsSync(`${base}.gz`), `Missing .gz for ${jsFile}`).toBe(true);
+    }
+  });
+
+  test("text assets have Brotli and Gzip companions", () => {
+    const distDir = join(process.cwd(), "dist");
+    const textAssets = ["rss.xml", "sitemap-index.xml", "llms.txt"];
+
+    for (const asset of textAssets) {
+      const base = join(distDir, asset);
+      expect(existsSync(base), `Missing asset: ${asset}`).toBe(true);
+      expect(existsSync(`${base}.br`), `Missing .br for ${asset}`).toBe(true);
+      expect(existsSync(`${base}.gz`), `Missing .gz for ${asset}`).toBe(true);
+    }
+  });
+});
+
+// ─── Favicon Files ───────────────────────────────────────────────────
+
+test.describe("Favicon Files", () => {
+  test("required favicon files exist in dist", () => {
+    const distDir = join(process.cwd(), "dist");
+    const required = ["favicon.ico", "favicon.png", "apple-touch-icon.png"];
+
+    for (const file of required) {
+      expect(existsSync(join(distDir, file)), `Missing: ${file}`).toBe(true);
+    }
+  });
+});
+
+// ─── RSS Completeness ────────────────────────────────────────────────
+
+test.describe("RSS Feed Completeness", () => {
+  test("RSS feed is valid and matches published posts", async ({ page }) => {
+    await blockCloudflare(page);
+    const response = await page.goto("/rss.xml");
+    expect(response?.status()).toBe(200);
+
+    const content = (await response?.text()) ?? "";
+    expect(content).toContain("<?xml");
+    expect(content).toContain("<channel>");
+    expect(content).toContain("<title>");
+    expect(content).toContain("<description>");
+
+    // Each item has required elements
+    expect(content).toMatch(/<item>[\s\S]*?<title>/);
+    expect(content).toMatch(/<item>[\s\S]*?<link>/);
+    expect(content).toMatch(/<item>[\s\S]*?<pubDate>/);
+
+    // Count RSS items vs published posts
+    const rssItems = content.split("<item>").length - 1;
+    const postsDir = join(process.cwd(), "src", "content", "posts", "en");
+    const postFiles = readdirSync(postsDir);
+    const published = postFiles.filter(
+      (f) =>
+        f.endsWith(".mdx") &&
+        !f.startsWith("_") &&
+        !f.includes("999-testing-components"),
+    );
+
+    expect(rssItems, "RSS item count should match published posts").toBe(
+      published.length,
+    );
+  });
+});
+
+// ─── Sitemap Completeness ────────────────────────────────────────────
+
+test.describe("Sitemap Completeness", () => {
+  test("sitemap contains all pages with loc and lastmod", async ({ page }) => {
+    await blockCloudflare(page);
+
+    const indexResp = await page.goto("/sitemap-index.xml");
+    expect(indexResp?.status()).toBe(200);
+    const indexContent = (await indexResp?.text()) ?? "";
+    expect(indexContent).toContain("sitemapindex");
+
+    // Extract sub-sitemap URL
+    const sitemapMatch = /<loc>(.*?)<\/loc>/.exec(indexContent);
+    expect(sitemapMatch).toBeTruthy();
+
+    const sitemapResp = await page.goto(sitemapMatch![1]);
+    expect(sitemapResp?.status()).toBe(200);
+    const sitemapContent = (await sitemapResp?.text()) ?? "";
+
+    // Count URL entries
+    const locs = [...sitemapContent.matchAll(/<loc>(.*?)<\/loc>/g)];
+    expect(locs.length).toBeGreaterThanOrEqual(50);
+
+    // Each URL block has loc + lastmod with absolute URL
+    const urlBlocks = sitemapContent.split("<url>").slice(1);
+    for (const block of urlBlocks) {
+      expect(block).toMatch(/<loc>https?:\/\//);
+      expect(block).toMatch(/<lastmod>/);
+    }
+  });
+});
+
+// ─── rel=me Social Links ────────────────────────────────────────────
+
+test.describe("Social Verification Links", () => {
+  test("homepage has rel=me links for social profiles", async ({ page }) => {
+    await blockCloudflare(page);
+    await page.goto("/");
+
+    const expectedProfiles = [
+      { domain: "mstdn.jmrp.io", name: "Mastodon" },
+      { domain: "github.com/jmrplens", name: "GitHub" },
+      { domain: "linkedin.com/in/jmrplens", name: "LinkedIn" },
+      { domain: "matrix.to", name: "Matrix" },
+    ];
+
+    for (const profile of expectedProfiles) {
+      // rel=me links are <link> elements in <head>
+      const link = page.locator(`link[rel="me"][href*="${profile.domain}"]`);
+      await expect(link, `Missing rel="me" for ${profile.name}`).toHaveCount(1);
+    }
+  });
+
+  test("ES homepage has rel=me links too", async ({ page }) => {
+    await blockCloudflare(page);
+    await page.goto("/es/");
+
+    const meLinks = page.locator('link[rel="me"]');
+    const count = await meLinks.count();
+    expect(count).toBeGreaterThanOrEqual(4);
+  });
+});
+
+// ─── Meta Description Length ─────────────────────────────────────────
+
+test.describe("Meta Description Length", () => {
+  for (const pageInfo of pages) {
+    test(`description ≤155 chars on ${pageInfo.name}`, async ({ page }) => {
+      await blockCloudflare(page);
+      await page.goto(pageInfo.url);
+
+      const metaDesc = page.locator('meta[name="description"]');
+      await expect(metaDesc).toHaveAttribute("content", /.+/);
+      const content = await metaDesc.getAttribute("content");
+      expect(
+        content!.length,
+        `Description on ${pageInfo.url} is ${content!.length} chars: "${content}"`,
+      ).toBeLessThanOrEqual(155);
+    });
+  }
+});

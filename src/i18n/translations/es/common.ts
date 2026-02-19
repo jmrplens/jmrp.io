@@ -428,11 +428,11 @@ export const common = {
       developerDesc:
         "Utilidades gratuitas para desarrolladores — codificador Base64, probador regex, constructor cron, conversor timestamps y comprobador de contraste.",
       networkDesc:
-        "Herramientas de red online gratuitas — calculadora de subredes IP/CIDR, generadores de configuración Nginx y DNS. Todo el procesamiento se ejecuta localmente.",
+        "Herramientas de red online gratuitas — calculadora de subredes IP/CIDR, generadores de configuración Nginx y DNS. Procesamiento local.",
       embeddedDesc:
         "Herramientas embebidas online gratuitas — constructor de tramas Modbus RTU/TCP y calculadora CRC para automatización industrial y desarrollo SCADA.",
       mikrotikDesc:
-        "Herramientas gratuitas para MikroTik RouterOS — generador de configuración WireGuard VPN para configuraciones dual-stack. Procesamiento local en tu navegador.",
+        "Herramientas gratuitas para MikroTik RouterOS — generador de configuración WireGuard VPN para configuraciones dual-stack. Procesamiento local.",
       fallbackDesc: "Herramientas en la categoría {category}.",
     },
     notFound: {
