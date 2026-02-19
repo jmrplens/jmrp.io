@@ -2,6 +2,8 @@
 
 > Personal technical blog and portfolio of José Manuel Requena Plens — R&D Engineer specializing in Embedded Systems, Acoustics, and Industrial Software Development. This document provides comprehensive context for AI models.
 
+> Last updated: 2026-02-19
+
 ## About the Author
 
 José Manuel Requena Plens (JMRP) is a multidisciplinary engineer building control systems for renewable energy at Power Electronics (Valencia, Spain). Background in Acoustics research, noise mitigation for the European Space Agency (ESA), and biomedical ultrasound at Universitat Politècnica de València (UPV). Active open source contributor and self-hoster.
