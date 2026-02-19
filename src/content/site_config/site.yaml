@@ -31,6 +31,9 @@ social_links:
     url: "https://mstdn.jmrp.io/@jmrplens"
     icon: "i-fa-brands:mastodon"
     rel: "me noopener noreferrer"
+  - name: "Matrix"
+    url: "https://matrix.to/#/@jmrplens:matrix.jmrp.io"
+    icon: "i-simple-icons:matrix"
 
 shortcuts:
   - name: "Blog"

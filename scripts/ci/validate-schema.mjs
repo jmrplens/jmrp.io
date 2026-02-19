@@ -169,6 +169,11 @@ function validateSingleSchema(schema, prefix = "") {
       validateBreadcrumbListSchema(schema, p, errors);
       break;
     }
+    case "ProfilePage": {
+      // Validate nested mainEntity if present
+      validateNested("mainEntity");
+      break;
+    }
   }
 
   return { errors, warnings };
