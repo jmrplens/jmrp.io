@@ -52,22 +52,29 @@ const [postEntries, featuredProjects] = await Promise.all([
 // Process posts
 const latestPosts = postEntries.slice(0, 3).map((e) => e.post);
 
-const personSchema = {
-  "@context": "https://schema.org",
-  "@type": "Person",
-  "@id": new URL("#person", getSiteUrl()).toString(),
-  name: person.name,
-  url: getSiteUrl(),
-  image: new URL(mehomeImg.src, getSiteUrl()).toString(),
-  sameAs: siteData.social_links?.map((s) => s.url) || [],
-  jobTitle: t("seo.jobTitle"),
-  worksFor: {
-    "@type": "Organization",
-    name: person.worksFor.name,
-    ...(person.worksFor.url && { url: person.worksFor.url }),
+const personSchema = [
+  {
+    "@type": "ProfilePage",
+    "@id": new URL("#profile", getSiteUrl()).toString(),
+    name: person.name,
+    url: getSiteUrl(),
+    inLanguage: locale,
+    mainEntity: {
+      "@type": "Person",
+      "@id": new URL("#person", getSiteUrl()).toString(),
+      name: person.name,
+      url: getSiteUrl(),
+      image: new URL(mehomeImg.src, getSiteUrl()).toString(),
+      sameAs: siteData.social_links?.map((s) => s.url) || [],
+      jobTitle: t("seo.jobTitle"),
+      worksFor: {
+        "@type": "Organization",
+        name: person.worksFor.name,
+        ...(person.worksFor.url && { url: person.worksFor.url }),
+      },
+    },
   },
-  inLanguage: locale,
-};
+];
 ---
 
 <BaseLayout

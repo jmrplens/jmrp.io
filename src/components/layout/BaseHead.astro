@@ -127,6 +127,21 @@ if (image) {
   resolvedImage = new URL(optimizedDefault.src, getSiteUrl());
 }
 
+/** Derive MIME type from the resolved image URL extension. */
+const ogImageMime = (() => {
+  const ext = resolvedImage.pathname.split(".").pop()?.toLowerCase();
+  const mimeMap: Record<string, string> = {
+    webp: "image/webp",
+    png: "image/png",
+    jpg: "image/jpeg",
+    jpeg: "image/jpeg",
+    gif: "image/gif",
+    avif: "image/avif",
+    svg: "image/svg+xml",
+  };
+  return mimeMap[ext ?? ""] ?? "image/webp";
+})();
+
 // --- Schema.org Construction ---
 
 // 1. WebSite Schema (Global)
@@ -332,6 +347,16 @@ const jsonLD = {
   ))
 }
 
+<!-- Social Verification (rel="me" for identity verification) -->
+{
+  siteData.social_links?.map((link) => (
+    <link
+      rel="me"
+      href={link.url}
+    />
+  ))
+}
+
 <!-- Primary Meta Tags -->
 <title>{fullTitle}</title>
 <meta
@@ -363,6 +388,10 @@ const jsonLD = {
 <meta
   property="og:image"
   content={resolvedImage}
+/>
+<meta
+  property="og:image:type"
+  content={ogImageMime}
 />
 <meta
   property="og:image:width"
