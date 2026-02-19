@@ -473,3 +473,144 @@ test.describe("i18n: Canonical URLs", () => {
     expect(href).toContain("/es/");
   });
 });
+
+// ---------------------------------------------------------------------------
+// Translation Key Parity & Integrity
+// ---------------------------------------------------------------------------
+
+/**
+ * Recursively extract all leaf keys from a nested object.
+ * Returns dot-separated paths like "nav.home", "ui.backTo".
+ */
+function extractKeys(obj: Record<string, unknown>, prefix = ""): string[] {
+  const keys: string[] = [];
+  for (const [key, value] of Object.entries(obj)) {
+    const path = prefix ? `${prefix}.${key}` : key;
+    if (typeof value === "object" && value !== null && !Array.isArray(value)) {
+      keys.push(...extractKeys(value as Record<string, unknown>, path));
+    } else {
+      keys.push(path);
+    }
+  }
+  return keys;
+}
+
+test.describe("i18n: Translation key parity", () => {
+  test("common.ts EN and ES have the same keys", async () => {
+    const enCommon = await import("../src/i18n/translations/en/common.ts");
+    const esCommon = await import("../src/i18n/translations/es/common.ts");
+
+    const enKeys = extractKeys(enCommon.common).sort((a, b) =>
+      a.localeCompare(b),
+    );
+    const esKeys = extractKeys(esCommon.common).sort((a, b) =>
+      a.localeCompare(b),
+    );
+
+    // Find missing keys in each direction
+    const missingInEs = enKeys.filter((k) => !esKeys.includes(k));
+    const missingInEn = esKeys.filter((k) => !enKeys.includes(k));
+
+    expect(
+      missingInEs,
+      `Keys in EN common.ts but missing in ES: ${missingInEs.join(", ")}`,
+    ).toEqual([]);
+    expect(
+      missingInEn,
+      `Keys in ES common.ts but missing in EN: ${missingInEn.join(", ")}`,
+    ).toEqual([]);
+  });
+
+  test("tools.ts EN and ES have the same keys", async () => {
+    const enTools = await import("../src/i18n/translations/en/tools.ts");
+    const esTools = await import("../src/i18n/translations/es/tools.ts");
+
+    const enKeys = extractKeys(enTools.tools).sort((a, b) =>
+      a.localeCompare(b),
+    );
+    const esKeys = extractKeys(esTools.tools).sort((a, b) =>
+      a.localeCompare(b),
+    );
+
+    const missingInEs = enKeys.filter((k) => !esKeys.includes(k));
+    const missingInEn = esKeys.filter((k) => !enKeys.includes(k));
+
+    expect(
+      missingInEs,
+      `Keys in EN tools.ts but missing in ES: ${missingInEs.join(", ")}`,
+    ).toEqual([]);
+    expect(
+      missingInEn,
+      `Keys in ES tools.ts but missing in EN: ${missingInEn.join(", ")}`,
+    ).toEqual([]);
+  });
+});
+
+/**
+ * Check for empty string values in a translation object.
+ * Returns dot-separated paths of empty values.
+ */
+function checkNoEmpty(
+  obj: Record<string, unknown>,
+  locale: string,
+  prefix = "",
+): string[] {
+  const empties: string[] = [];
+  for (const [key, value] of Object.entries(obj)) {
+    const path = prefix ? `${prefix}.${key}` : key;
+    if (typeof value === "object" && value !== null && !Array.isArray(value)) {
+      empties.push(
+        ...checkNoEmpty(value as Record<string, unknown>, locale, path),
+      );
+    } else if (value === "") {
+      empties.push(`${locale}:${path}`);
+    }
+  }
+  return empties;
+}
+
+test.describe("i18n: No empty translations", () => {
+  test("common.ts has no empty string values", async () => {
+    const enCommon = await import("../src/i18n/translations/en/common.ts");
+    const esCommon = await import("../src/i18n/translations/es/common.ts");
+
+    const emptyEn = checkNoEmpty(enCommon.common, "EN");
+    const emptyEs = checkNoEmpty(esCommon.common, "ES");
+    const allEmpty = [...emptyEn, ...emptyEs];
+
+    expect(
+      allEmpty,
+      `Empty translation values found: ${allEmpty.join(", ")}`,
+    ).toEqual([]);
+  });
+
+  test("tools.ts has no empty string values", async () => {
+    const enTools = await import("../src/i18n/translations/en/tools.ts");
+    const esTools = await import("../src/i18n/translations/es/tools.ts");
+
+    const emptyEn = checkNoEmpty(enTools.tools, "EN");
+    const emptyEs = checkNoEmpty(esTools.tools, "ES");
+    const allEmpty = [...emptyEn, ...emptyEs];
+
+    expect(
+      allEmpty,
+      `Empty translation values found: ${allEmpty.join(", ")}`,
+    ).toEqual([]);
+  });
+});
+
+test.describe("i18n: 404 page translations", () => {
+  test("EN 404 has English content", async ({ page }) => {
+    await page.goto("/nonexistent-page-xyz/");
+    const heading = page.locator("h1");
+    const text = await heading.textContent();
+    expect(text?.toLowerCase()).toContain("404");
+  });
+
+  test("ES 404 has Spanish content", async ({ page }) => {
+    await page.goto("/es/nonexistent-page-xyz/");
+    const heading = page.locator("h1");
+    const text = await heading.textContent();
+    expect(text?.toLowerCase()).toContain("404");
+  });
+});
