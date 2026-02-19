@@ -83,11 +83,7 @@ function isIsoDate(value: unknown): value is string {
   return !Number.isNaN(d.getTime()) && value.includes("T");
 }
 
-/** Block Cloudflare analytics */
-async function blockCloudflare(page: Page): Promise<void> {
-  await page.route("**/beacon.min.js", (route) => route.abort());
-  await page.route("**/cdn-cgi/rum*", (route) => route.abort());
-}
+import { blockCloudflare } from "./utils";
 
 // ─── Common Schemas ──────────────────────────────────────────────────
 
@@ -347,10 +343,13 @@ test.describe("URL correctness in schemas", () => {
       for (const [key, val] of Object.entries(rec)) {
         if (
           (key === "@id" || key === "url" || key === "item") &&
-          typeof val === "string" &&
-          val.startsWith("http")
+          typeof val === "string"
         ) {
-          expect(isValidUrl(val)).toBe(true);
+          // All URL-like fields must be absolute http(s) URLs
+          expect(
+            isValidUrl(val),
+            `Expected absolute URL for "${key}" but got: ${val}`,
+          ).toBe(true);
         }
         if (typeof val === "object" && val !== null) {
           checkUrls(val);
@@ -372,7 +371,14 @@ test.describe("URL correctness in schemas", () => {
     const siteUrls: string[] = [];
 
     // Keys whose children contain external URLs by design
-    const externalKeys = new Set(["sameAs", "worksFor", "alumni"]);
+    const externalKeys = new Set([
+      "sameAs",
+      "worksFor",
+      "alumni",
+      "alumniOf",
+      "hasCredential",
+      "memberOf",
+    ]);
 
     /** Collect @id and url values (skip external subtrees) */
     const collectSiteUrls = (obj: unknown, insideExternal = false): void => {
@@ -389,7 +395,7 @@ test.describe("URL correctness in schemas", () => {
           !isExtKey &&
           (key === "@id" || key === "url" || key === "item") &&
           typeof val === "string" &&
-          val.startsWith("http")
+          isValidUrl(val)
         ) {
           siteUrls.push(val);
         }

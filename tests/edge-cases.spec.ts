@@ -3,21 +3,28 @@
 /* eslint-disable playwright/no-wait-for-timeout */
 /* eslint-disable playwright/no-networkidle */
 /* eslint-disable playwright/prefer-web-first-assertions */
+import type { Page } from "@playwright/test";
 import { expect, test } from "@playwright/test";
 
 import { getCachedPages, shouldIgnoreError } from "./utils";
 
 /**
- * Helper: block Cloudflare beacon and track console errors.
+ * Helper: block Cloudflare beacon and track page errors + console errors.
  */
-function setupPage(
-  page: import("@playwright/test").Page,
-  errors: string[],
-): void {
-  void page.route("**/beacon.min.js", (route) => route.abort());
+async function setupPage(page: Page, errors: string[]): Promise<void> {
+  await page.route("**/beacon.min.js", (route) => route.abort());
   page.on("pageerror", (error) => {
     if (!shouldIgnoreError(error.message)) {
       errors.push(error.message);
+    }
+  });
+  page.on("console", (message) => {
+    if (message.type() !== "error") {
+      return;
+    }
+    const text = message.text();
+    if (!shouldIgnoreError(text)) {
+      errors.push(text);
     }
   });
 }
@@ -28,21 +35,21 @@ function setupPage(
 test.describe("Edge Cases: 404 Responses", () => {
   test("Non-existent EN URL returns 404 status", async ({ page }) => {
     const errors: string[] = [];
-    setupPage(page, errors);
+    await setupPage(page, errors);
     const response = await page.goto("/this-page-does-not-exist-12345");
     expect(response?.status()).toBe(404);
   });
 
   test("Non-existent ES URL returns 404 status", async ({ page }) => {
     const errors: string[] = [];
-    setupPage(page, errors);
+    await setupPage(page, errors);
     const response = await page.goto("/es/this-page-does-not-exist-12345");
     expect(response?.status()).toBe(404);
   });
 
   test("404 page has noindex meta tag", async ({ page }) => {
     const errors: string[] = [];
-    setupPage(page, errors);
+    await setupPage(page, errors);
     await page.goto("/this-page-does-not-exist-12345");
     const robots = page.locator('meta[name="robots"]');
     await expect(robots).toHaveAttribute("content", /noindex/);
@@ -50,7 +57,7 @@ test.describe("Edge Cases: 404 Responses", () => {
 
   test("404 page has proper title", async ({ page }) => {
     const errors: string[] = [];
-    setupPage(page, errors);
+    await setupPage(page, errors);
     await page.goto("/this-page-does-not-exist-12345");
     const title = await page.title();
     expect(title.length).toBeGreaterThan(0);
@@ -59,7 +66,7 @@ test.describe("Edge Cases: 404 Responses", () => {
 
   test("Deep nested non-existent path returns 404", async ({ page }) => {
     const errors: string[] = [];
-    setupPage(page, errors);
+    await setupPage(page, errors);
     const response = await page.goto("/blog/fake/nested/path/slug");
     expect(response?.status()).toBe(404);
   });
@@ -71,7 +78,7 @@ test.describe("Edge Cases: 404 Responses", () => {
 test.describe("Edge Cases: View Transitions", () => {
   test("Theme persists after navigation", async ({ page }) => {
     const errors: string[] = [];
-    setupPage(page, errors);
+    await setupPage(page, errors);
     await page.goto("/");
 
     // Set theme to light
@@ -103,7 +110,7 @@ test.describe("Edge Cases: View Transitions", () => {
     page,
   }) => {
     const errors: string[] = [];
-    setupPage(page, errors);
+    await setupPage(page, errors);
     await page.goto("/");
     await page.waitForLoadState("domcontentloaded");
 
@@ -115,14 +122,13 @@ test.describe("Edge Cases: View Transitions", () => {
     // Go back
     await page.goBack();
     await page.waitForLoadState("domcontentloaded");
-    const url = page.url();
-    // Should be back at homepage (path is / or empty)
-    expect(url.endsWith("/") || url.endsWith(":4321")).toBeTruthy();
+    // Should be back at homepage
+    expect(new URL(page.url()).pathname).toBe("/");
   });
 
   test("Forward button works after going back", async ({ page }) => {
     const errors: string[] = [];
-    setupPage(page, errors);
+    await setupPage(page, errors);
     await page.goto("/");
     await page.waitForLoadState("domcontentloaded");
 
@@ -144,7 +150,7 @@ test.describe("Edge Cases: View Transitions", () => {
 test.describe("Edge Cases: Print Styles", () => {
   test("Pages render in print media without overflow", async ({ page }) => {
     const errors: string[] = [];
-    setupPage(page, errors);
+    await setupPage(page, errors);
     await page.goto("/");
     await page.emulateMedia({ media: "print" });
     await page.waitForTimeout(500);
@@ -156,7 +162,7 @@ test.describe("Edge Cases: Print Styles", () => {
 
   test("Blog post renders in print media", async ({ page }) => {
     const errors: string[] = [];
-    setupPage(page, errors);
+    await setupPage(page, errors);
     const pages = getCachedPages();
     const blogPost = pages.find(
       (p) =>
@@ -176,7 +182,7 @@ test.describe("Edge Cases: Print Styles", () => {
 
   test("CV page renders in print media", async ({ page }) => {
     const errors: string[] = [];
-    setupPage(page, errors);
+    await setupPage(page, errors);
     await page.goto("/cv");
     await page.emulateMedia({ media: "print" });
     await page.waitForTimeout(500);
@@ -191,7 +197,7 @@ test.describe("Edge Cases: Print Styles", () => {
 test.describe("Edge Cases: Overflow Detection", () => {
   test("Homepage has no horizontal overflow", async ({ page }) => {
     const errors: string[] = [];
-    setupPage(page, errors);
+    await setupPage(page, errors);
     await page.goto("/");
     await page.waitForLoadState("networkidle");
 
@@ -203,7 +209,7 @@ test.describe("Edge Cases: Overflow Detection", () => {
 
   test("Blog listing has no horizontal overflow", async ({ page }) => {
     const errors: string[] = [];
-    setupPage(page, errors);
+    await setupPage(page, errors);
     await page.goto("/blog/");
     await page.waitForLoadState("networkidle");
 
@@ -215,7 +221,7 @@ test.describe("Edge Cases: Overflow Detection", () => {
 
   test("Tool pages have no horizontal overflow", async ({ page }) => {
     const errors: string[] = [];
-    setupPage(page, errors);
+    await setupPage(page, errors);
     await page.goto("/tools/");
     await page.waitForLoadState("networkidle");
 
@@ -227,7 +233,7 @@ test.describe("Edge Cases: Overflow Detection", () => {
 
   test("Blog posts have no horizontal overflow", async ({ page }) => {
     const errors: string[] = [];
-    setupPage(page, errors);
+    await setupPage(page, errors);
     const pages = getCachedPages();
     const blogPosts = pages.filter(
       (p) =>
@@ -257,7 +263,7 @@ test.describe("Edge Cases: Overflow Detection", () => {
 test.describe("Edge Cases: Console Error Monitoring", () => {
   test("Homepage loads without console errors", async ({ page }) => {
     const errors: string[] = [];
-    setupPage(page, errors);
+    await setupPage(page, errors);
     await page.goto("/");
     await page.waitForLoadState("networkidle");
     expect(errors, `Console errors: ${errors.join("; ")}`).toEqual([]);
@@ -265,7 +271,7 @@ test.describe("Edge Cases: Console Error Monitoring", () => {
 
   test("Blog listing loads without console errors", async ({ page }) => {
     const errors: string[] = [];
-    setupPage(page, errors);
+    await setupPage(page, errors);
     await page.goto("/blog/");
     await page.waitForLoadState("networkidle");
     expect(errors, `Console errors: ${errors.join("; ")}`).toEqual([]);
@@ -273,7 +279,7 @@ test.describe("Edge Cases: Console Error Monitoring", () => {
 
   test("Tools index loads without console errors", async ({ page }) => {
     const errors: string[] = [];
-    setupPage(page, errors);
+    await setupPage(page, errors);
     await page.goto("/tools/");
     await page.waitForLoadState("networkidle");
     expect(errors, `Console errors: ${errors.join("; ")}`).toEqual([]);
@@ -281,7 +287,7 @@ test.describe("Edge Cases: Console Error Monitoring", () => {
 
   test("ES homepage loads without console errors", async ({ page }) => {
     const errors: string[] = [];
-    setupPage(page, errors);
+    await setupPage(page, errors);
     await page.goto("/es/");
     await page.waitForLoadState("networkidle");
     expect(errors, `Console errors: ${errors.join("; ")}`).toEqual([]);
@@ -294,7 +300,7 @@ test.describe("Edge Cases: Console Error Monitoring", () => {
 test.describe("Edge Cases: Reduced Motion", () => {
   test("Page loads with prefers-reduced-motion", async ({ page }) => {
     const errors: string[] = [];
-    setupPage(page, errors);
+    await setupPage(page, errors);
     await page.emulateMedia({ reducedMotion: "reduce" });
     await page.goto("/");
     await page.waitForLoadState("networkidle");
@@ -318,7 +324,7 @@ test.describe("Edge Cases: Reduced Motion", () => {
 test.describe("Edge Cases: Asset Loading", () => {
   test("Critical assets load successfully on homepage", async ({ page }) => {
     const errors: string[] = [];
-    setupPage(page, errors);
+    await setupPage(page, errors);
     const failedAssets: string[] = [];
 
     page.on("requestfailed", (request) => {
@@ -338,7 +344,7 @@ test.describe("Edge Cases: Asset Loading", () => {
 
   test("Critical assets load on blog post", async ({ page }) => {
     const errors: string[] = [];
-    setupPage(page, errors);
+    await setupPage(page, errors);
     const failedAssets: string[] = [];
 
     page.on("requestfailed", (request) => {
@@ -373,7 +379,7 @@ test.describe("Edge Cases: Asset Loading", () => {
 test.describe("Edge Cases: Viewport Sizes", () => {
   test("Page renders at very small viewport (320px)", async ({ page }) => {
     const errors: string[] = [];
-    setupPage(page, errors);
+    await setupPage(page, errors);
     await page.setViewportSize({ width: 320, height: 568 });
     await page.goto("/");
     await page.waitForLoadState("networkidle");
@@ -389,7 +395,7 @@ test.describe("Edge Cases: Viewport Sizes", () => {
 
   test("Page renders at very large viewport (2560px)", async ({ page }) => {
     const errors: string[] = [];
-    setupPage(page, errors);
+    await setupPage(page, errors);
     await page.setViewportSize({ width: 2560, height: 1440 });
     await page.goto("/");
     await page.waitForLoadState("networkidle");

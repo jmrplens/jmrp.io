@@ -15,13 +15,7 @@
 import type { Page } from "@playwright/test";
 import { expect, test } from "@playwright/test";
 
-import { shouldIgnoreError } from "./utils";
-
-/** Block Cloudflare analytics scripts that cause CORS errors in localhost */
-async function blockCloudflare(page: Page): Promise<void> {
-  await page.route("**/beacon.min.js", (route) => route.abort());
-  await page.route("**/cdn-cgi/rum*", (route) => route.abort());
-}
+import { blockCloudflare, shouldIgnoreError } from "./utils";
 
 /** Helper to setup console error tracking */
 function trackConsoleErrors(page: Page): string[] {
@@ -308,9 +302,10 @@ test.describe("Timestamp Converter", () => {
     await nowBtn.click();
     await page.waitForTimeout(500);
 
-    // Results should show date information
+    // Results should show date information including the current year
     const containerText = await container.textContent();
-    expect(containerText).toMatch(/202[4-9]/);
+    const currentYear = new Date().getFullYear().toString();
+    expect(containerText).toContain(currentYear);
   });
 });
 
@@ -467,20 +462,18 @@ test.describe("Certificate Inspector", () => {
 
     // Sample self-signed certificate (test fixture)
     /* eslint-disable no-secrets/no-secrets */
-    const sampleCert = [
-      "-----BEGIN CERTIFICATE-----",
-      "MIIBkTCB+wIUEFbGcNPf1MTFZqa6FiV6FGhBa+Iw",
-      "DQYJKoZIhvcNAQELBQAwEjEQMA4GA1UEAwwHdGVzdC5pbzAe",
-      "Fw0yNDAxMDEwMDAwMDBaFw0yNTAxMDEwMDAwMDBaMBIxEDAO",
-      "BgNVBAMMB3Rlc3QuaW8wXDANBgkqhkiG9w0BAQEFAANLAEBI",
-      "AkEA0Z3VS5hJnMoubR1EQm5r6R4BPqF4l4h5JBhAFBJr0Bx7",
-      "rVTSR7XDkW5LRk7Kq3K0qThJYd+k2N0IYJuGlnU3QIDAQAB",
-      "oyMwITAfBgNVHREEGDAWhwR/AAABggpsb2NhbGhvc3QwDQYJ",
-      "KoZIhvcNAQELBQADQQAJr5aW9T0feLAHPSCiVlbTZpFkn4QF",
-      "7s0z/GpGORg/G3xPEMO6FzBe9PF0Fy6J2MX8lD4FnHdVnGbm",
-      "1VExjRz",
-      "-----END CERTIFICATE-----",
-    ].join("\n");
+    const sampleCert = `-----BEGIN CERTIFICATE-----
+MIIBkTCB+wIUEFbGcNPf1MTFZqa6FiV6FGhBa+Iw
+DQYJKoZIhvcNAQELBQAwEjEQMA4GA1UEAwwHdGVzdC5pbzAe
+Fw0yNDAxMDEwMDAwMDBaFw0yNTAxMDEwMDAwMDBaMBIxEDAO
+BgNVBAMMB3Rlc3QuaW8wXDANBgkqhkiG9w0BAQEFAANLAEBI
+AkEA0Z3VS5hJnMoubR1EQm5r6R4BPqF4l4h5JBhAFBJr0Bx7
+rVTSR7XDkW5LRk7Kq3K0qThJYd+k2N0IYJuGlnU3QIDAQAB
+oyMwITAfBgNVHREEGDAWhwR/AAABggpsb2NhbGhvc3QwDQYJ
+KoZIhvcNAQELBQADQQAJr5aW9T0feLAHPSCiVlbTZpFkn4QF
+7s0z/GpGORg/G3xPEMO6FzBe9PF0Fy6J2MX8lD4FnHdVnGbm
+1VExjRz
+-----END CERTIFICATE-----`;
     /* eslint-enable no-secrets/no-secrets */
 
     await container.locator("textarea").fill(sampleCert);

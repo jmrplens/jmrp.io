@@ -18,16 +18,9 @@
 import { existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 
-import type { Page } from "@playwright/test";
 import { expect, test } from "@playwright/test";
 
-import { getCachedPages, shouldIgnoreError } from "./utils";
-
-/** Block Cloudflare analytics */
-async function blockCloudflare(page: Page): Promise<void> {
-  await page.route("**/beacon.min.js", (route) => route.abort());
-  await page.route("**/cdn-cgi/rum*", (route) => route.abort());
-}
+import { blockCloudflare, getCachedPages, shouldIgnoreError } from "./utils";
 
 const pages = getCachedPages();
 
@@ -60,8 +53,7 @@ test.describe("Image Alt Text Validation", () => {
         ).not.toBeNull();
 
         // Non-decorative images must have non-empty alt
-        const isDecorative =
-          role === "presentation" || ariaHidden === "true" || alt === "";
+        const isDecorative = role === "presentation" || ariaHidden === "true";
         if (!isDecorative && alt === "") {
           const src = await img.getAttribute("src");
           expect

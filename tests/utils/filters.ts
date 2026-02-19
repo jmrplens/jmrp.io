@@ -6,6 +6,18 @@
  * on localhost) to prevent false negative test results.
  */
 
+import type { Page } from "@playwright/test";
+
+/**
+ * Blocks the Cloudflare beacon script and RUM routes to prevent analytics errors in tests.
+ *
+ * @param page - Playwright page instance
+ */
+export async function blockCloudflare(page: Page): Promise<void> {
+  await page.route("**/beacon.min.js", (route) => route.abort());
+  await page.route("**/cdn-cgi/rum*", (route) => route.abort());
+}
+
 /**
  * Checks if a URL appears to be local or from an excluded domain.
  * Used to identify errors that are expected in localhost test environments.

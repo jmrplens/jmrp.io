@@ -600,17 +600,29 @@ test.describe("i18n: No empty translations", () => {
 });
 
 test.describe("i18n: 404 page translations", () => {
-  test("EN 404 has English content", async ({ page }) => {
-    await page.goto("/nonexistent-page-xyz/");
-    const heading = page.locator("h1");
-    const text = await heading.textContent();
-    expect(text?.toLowerCase()).toContain("404");
+  test("EN 404 has English content", async () => {
+    // Read built file directly to avoid Astro preview serving wrong locale
+    const fs = await import("node:fs/promises");
+    const path = await import("node:path");
+    const html = await fs.readFile(
+      path.join(process.cwd(), "dist/404.html"),
+      "utf-8",
+    );
+    expect(html).toContain("404");
+    // Verify English text is present
+    expect(html.toLowerCase()).toContain("page");
   });
 
-  test("ES 404 has Spanish content", async ({ page }) => {
-    await page.goto("/es/nonexistent-page-xyz/");
-    const heading = page.locator("h1");
-    const text = await heading.textContent();
-    expect(text?.toLowerCase()).toContain("404");
+  test("ES 404 has Spanish content", async () => {
+    // Read built file directly to avoid Astro preview always serving EN 404
+    const fs = await import("node:fs/promises");
+    const path = await import("node:path");
+    const html = await fs.readFile(
+      path.join(process.cwd(), "dist/es/404/index.html"),
+      "utf-8",
+    );
+    expect(html).toContain("404");
+    // Verify Spanish text is present
+    expect(html.toLowerCase()).toMatch(/página|pagina/);
   });
 });

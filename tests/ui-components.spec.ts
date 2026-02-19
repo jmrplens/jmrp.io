@@ -18,14 +18,9 @@
 /* eslint-disable playwright/no-conditional-expect -- Component presence checks need conditionals */
 /* eslint-disable playwright/no-force-option -- Overlapping elements require force clicks */
 
-import type { Page } from "@playwright/test";
 import { expect, test } from "@playwright/test";
 
-/** Block Cloudflare analytics */
-async function blockCloudflare(page: Page): Promise<void> {
-  await page.route("**/beacon.min.js", (route) => route.abort());
-  await page.route("**/cdn-cgi/rum*", (route) => route.abort());
-}
+import { blockCloudflare } from "./utils";
 
 // ─── CopyButton ──────────────────────────────────────────────────────
 
@@ -109,6 +104,9 @@ test.describe("Mermaid Diagrams", () => {
 
     const figures = page.locator(".mermaid-figure");
     const figCount = await figures.count();
+    expect(figCount, "No Mermaid figures found on test pages").toBeGreaterThan(
+      0,
+    );
 
     for (let i = 0; i < figCount; i++) {
       const figure = figures.nth(i);
