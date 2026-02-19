@@ -189,7 +189,7 @@ Free browser-based developer tools. All processing runs client-side — no data 
 
 - **Website**: https://jmrp.io
 - **GitHub**: https://github.com/jmrplens
-- **LinkedIn**: https://linkedin.com/in/jmrplens
+- **LinkedIn**: https://www.linkedin.com/in/jmrplens
 - **Mastodon**: https://mstdn.jmrp.io/@jmrplens
 - **Email**: mail@jmrp.io
 - **RSS Feed**: https://jmrp.io/rss.xml

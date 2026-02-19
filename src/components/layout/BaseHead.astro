@@ -127,6 +127,21 @@ if (image) {
   resolvedImage = new URL(optimizedDefault.src, getSiteUrl());
 }
 
+/** Derive MIME type from the resolved image URL extension. */
+const ogImageMime = (() => {
+  const ext = resolvedImage.pathname.split(".").pop()?.toLowerCase();
+  const mimeMap: Record<string, string> = {
+    webp: "image/webp",
+    png: "image/png",
+    jpg: "image/jpeg",
+    jpeg: "image/jpeg",
+    gif: "image/gif",
+    avif: "image/avif",
+    svg: "image/svg+xml",
+  };
+  return mimeMap[ext ?? ""] ?? "image/webp";
+})();
+
 // --- Schema.org Construction ---
 
 // 1. WebSite Schema (Global)
@@ -376,7 +391,7 @@ const jsonLD = {
 />
 <meta
   property="og:image:type"
-  content="image/webp"
+  content={ogImageMime}
 />
 <meta
   property="og:image:width"

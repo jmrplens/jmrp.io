@@ -50,7 +50,7 @@ José Manuel Requena Plens (JMRP) is a multidisciplinary engineer building contr
 ## Contact
 
 - GitHub: https://github.com/jmrplens
-- LinkedIn: https://linkedin.com/in/jmrplens
+- LinkedIn: https://www.linkedin.com/in/jmrplens
 - Mastodon: https://mstdn.jmrp.io/@jmrplens
 - Email: mail@jmrp.io
 

@@ -12,14 +12,19 @@ import SkillGroup from "@components/cv/SkillGroup.astro";
 import { defaultLocale, type Locale } from "@i18n/config";
 import { useTranslations } from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
+import type { SiteConfig } from "@src/types";
 import { getCVData } from "@utils/cv";
 import { sanitize, stripHtml } from "@utils/html";
 import { getSiteUrl } from "@utils/site";
+import { getEntry } from "astro:content";
 
 const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
 const t = useTranslations(locale);
 
 const cvData = await getCVData(locale);
+
+const siteEntry = await getEntry("site_config", "site");
+const siteData = (siteEntry?.data || {}) as SiteConfig;
 
 // Use cvData directly — YAML defines the section order
 const sortedSections = cvData;
@@ -84,12 +89,7 @@ const personSchema = {
     description: t("pages.cv.schemaDescription"),
     url: "https://jmrp.io",
     image: "https://jmrp.io/assets/mehome.webp",
-    sameAs: [
-      "https://github.com/jmrplens",
-      "https://mstdn.jmrp.io/@jmrplens",
-      "https://linkedin.com/in/jmrplens",
-      "https://matrix.to/#/@jmrplens:matrix.jmrp.io",
-    ],
+    sameAs: siteData.social_links?.map((s) => s.url) || [],
     worksFor: {
       "@type": "Organization",
       name: "Power Electronics",
