@@ -8,6 +8,10 @@
  * - Copy functionality
  */
 
+/* eslint-disable playwright/no-wait-for-timeout -- Tools need delays for async DOM updates */
+/* eslint-disable playwright/no-force-option -- Custom toggle overlays require force clicks */
+/* eslint-disable playwright/no-conditional-in-test -- Conditional logic needed for dynamic tool UIs */
+
 import type { Page } from "@playwright/test";
 import { expect, test } from "@playwright/test";
 
@@ -74,13 +78,13 @@ test.describe("Password Generator", () => {
 
     const result = container.locator(".pwd-result");
     const initial = await result.textContent();
+    expect(initial).not.toBeNull();
 
     await container.locator(".pwd-refresh-btn").click();
     await page.waitForTimeout(300);
 
-    const updated = result;
     // Statistically near-impossible to generate same password twice
-    await expect(updated).not.toHaveText(initial);
+    await expect(result).not.toHaveText(initial as string);
   });
 
   test("has working copy button", async ({ page }) => {
