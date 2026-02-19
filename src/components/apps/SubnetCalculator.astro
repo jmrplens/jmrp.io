@@ -2042,6 +2042,97 @@ const i18n = {
     /* Initial calculations */
     calcSubnet();
     calcInfo();
+
+    // === WebMCP START ===
+    if (
+      typeof navigator !== "undefined" &&
+      "modelContext" in navigator &&
+      navigator.modelContext
+    ) {
+      try {
+        navigator.modelContext.registerTool({
+          name: "calculate-subnet",
+          description:
+            "Calculate IPv4 subnet information from an IP address and CIDR prefix. Returns network address, broadcast, host range, number of usable hosts, subnet mask, and wildcard mask.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              ip: {
+                type: "string",
+                description: "IPv4 address (e.g. '192.168.1.0')",
+              },
+              cidr: {
+                type: "number",
+                description: "CIDR prefix length (0-32)",
+              },
+            },
+            required: ["ip", "cidr"],
+          },
+          annotations: { readOnlyHint: true },
+          execute: function (input) {
+            var parts = String(input.ip).split(".").map(Number);
+            if (
+              parts.length !== 4 ||
+              parts.some(function (p) {
+                return isNaN(p) || p < 0 || p > 255;
+              })
+            ) {
+              return {
+                content: [
+                  { type: "text", text: "Error: Invalid IPv4 address." },
+                ],
+              };
+            }
+            var cidr = Number(input.cidr);
+            if (isNaN(cidr) || cidr < 0 || cidr > 32) {
+              return {
+                content: [{ type: "text", text: "Error: CIDR must be 0-32." }],
+              };
+            }
+            var ip =
+              ((parts[0] << 24) |
+                (parts[1] << 16) |
+                (parts[2] << 8) |
+                parts[3]) >>>
+              0;
+            var mask = cidr === 0 ? 0 : (0xffffffff << (32 - cidr)) >>> 0;
+            var network = (ip & mask) >>> 0;
+            var broadcast = (network | (~mask >>> 0)) >>> 0;
+            var hostMin = cidr >= 31 ? network : (network + 1) >>> 0;
+            var hostMax = cidr >= 31 ? broadcast : (broadcast - 1) >>> 0;
+            var numHosts =
+              cidr >= 31 ? (cidr === 32 ? 1 : 2) : broadcast - network - 1;
+            function toIP(n) {
+              return [
+                (n >>> 24) & 255,
+                (n >>> 16) & 255,
+                (n >>> 8) & 255,
+                n & 255,
+              ].join(".");
+            }
+            return {
+              content: [
+                {
+                  type: "text",
+                  text: JSON.stringify({
+                    network: toIP(network) + "/" + cidr,
+                    netmask: toIP(mask),
+                    wildcard: toIP(~mask >>> 0),
+                    broadcast: toIP(broadcast),
+                    hostMin: toIP(hostMin),
+                    hostMax: toIP(hostMax),
+                    usableHosts: numHosts,
+                  }),
+                },
+              ],
+            };
+          },
+        });
+      } catch (e) {
+        console.warn("[WebMCP] Tool registration failed:", e);
+      }
+    }
+    // === WebMCP END ===
   })();
 </script>
 

@@ -1189,6 +1189,69 @@ const formats = [
 
     // Initialize
     updateOutput();
+
+    // === WebMCP START ===
+    if (
+      typeof navigator !== "undefined" &&
+      "modelContext" in navigator &&
+      navigator.modelContext
+    ) {
+      try {
+        navigator.modelContext.registerTool({
+          name: "encode-base64",
+          description:
+            "Encode text to Base64 format. Supports standard and URL-safe encoding.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              text: { type: "string", description: "Text to encode" },
+              urlSafe: {
+                type: "boolean",
+                description: "Use URL-safe Base64 (default: false)",
+              },
+            },
+            required: ["text"],
+          },
+          execute: async (args) => {
+            const text = args.text;
+            const urlSafe = args.urlSafe || false;
+            const bytes = textToBytes(text);
+            let encoded = toBase64(bytes);
+            if (urlSafe) {
+              encoded = encoded.replace(/\+/g, "-").replace(/\//g, "_");
+            }
+            return { result: encoded };
+          },
+          annotations: { readOnlyHint: true },
+        });
+
+        navigator.modelContext.registerTool({
+          name: "decode-base64",
+          description: "Decode a Base64-encoded string back to text.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              encoded: {
+                type: "string",
+                description: "Base64 string to decode",
+              },
+            },
+            required: ["encoded"],
+          },
+          execute: async (args) => {
+            const encoded = args.encoded;
+            const bytes = fromBase64(encoded);
+            const decoder = new TextDecoder();
+            const decoded = decoder.decode(bytes);
+            return { result: decoded };
+          },
+          annotations: { readOnlyHint: true },
+        });
+      } catch (e) {
+        console.warn("[WebMCP] Tool registration failed:", e);
+      }
+    }
+    // === WebMCP END ===
   })();
 </script>
 

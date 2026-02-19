@@ -925,6 +925,56 @@ flowchart LR
 
 ---
 
+## WebMCP (Experimental — `feat/webmcp` branch)
+
+### Overview
+
+Implementation of the [WebMCP proposal](https://webmachinelearning.github.io/webmcp/) — a W3C draft spec that exposes site functionality as "tools" invocable by browser-based AI agents via `navigator.modelContext`. No browser implements it yet; the code uses progressive enhancement (feature detection everywhere).
+
+### Architecture
+
+- **Zero npm dependencies** — pure vanilla JS/TS
+- **Non-structural** — designed for easy removal (4 new files + marked blocks)
+- **Progressive enhancement** — only activates if `navigator.modelContext` exists
+
+### Files (all removable)
+
+| File | Purpose |
+|------|---------|
+| `src/types/webmcp.ts` | TypeScript interfaces for the WebMCP API |
+| `src/utils/webmcp.ts` | Safe wrapper functions with feature detection |
+| `src/utils/webmcp-tools.ts` | Tool catalog organized by page context (~500 lines) |
+| `src/components/layout/WebMCPProvider.astro` | Astro component injected in BaseLayout |
+| `public/.well-known/webmcp.json` | Static manifest for agent discovery (29 tools) |
+
+### Modified files (minimal changes)
+
+| File | Change |
+|------|--------|
+| `src/layouts/BaseLayout.astro` | +3 lines (import + `<WebMCPProvider />`) |
+| `src/components/layout/BaseHead.astro` | +1 line (`<link rel="webmcp-manifest">`) |
+| `src/components/apps/*.astro` | WebMCP block in each of 14 tool scripts |
+| `public/llms.txt`, `public/llms-full.txt` | WebMCP section |
+
+### Tool categories (29 total)
+
+- **Site-wide (6)**: theme toggle, get theme, navigate, page info, language switch, site navigation
+- **Blog (2)**: list posts, search posts
+- **CV (5)**: summary, skills, experience, education, certifications
+- **Publications (2)**: list, search
+- **Tools index (2)**: list tools, get tool info
+- **App tools (12)**: One per interactive tool (hash, base64, subnet, password, timestamp, regex, contrast, cron, CSP, cert, headers, Modbus, Nginx, WireGuard)
+
+### Removal instructions
+
+1. Delete: `src/types/webmcp.ts`, `src/utils/webmcp.ts`, `src/utils/webmcp-tools.ts`, `src/components/layout/WebMCPProvider.astro`, `public/.well-known/webmcp.json`
+2. Remove import + `<WebMCPProvider />` from `BaseLayout.astro` (~3 lines)
+3. Remove `<link rel="webmcp-manifest">` from `BaseHead.astro` (~1 line)
+4. Remove `// === WebMCP START ===` to `// === WebMCP END ===` blocks from each app component
+5. Remove WebMCP sections from `llms.txt` and `llms-full.txt`
+
+---
+
 ## Anti-Patterns (Avoid)
 
 1. **❌ Inline `<script>` tags** — Breaks CSP, use data attributes or `<script is:inline>` only in app components

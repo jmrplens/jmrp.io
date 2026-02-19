@@ -1217,6 +1217,76 @@ const i18n = {
 
     loadFromUrl();
     update();
+
+    // === WebMCP START ===
+    if (
+      typeof navigator !== "undefined" &&
+      "modelContext" in navigator &&
+      navigator.modelContext
+    ) {
+      try {
+        navigator.modelContext.registerTool({
+          name: "check-color-contrast",
+          description:
+            "Check WCAG 2.1 color contrast ratio between foreground and background colors. Returns the contrast ratio and pass/fail status for AA and AAA levels for both normal and large text.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              foreground: {
+                type: "string",
+                description: "Foreground color in hex format (e.g. '#ffffff')",
+              },
+              background: {
+                type: "string",
+                description: "Background color in hex format (e.g. '#000000')",
+              },
+            },
+            required: ["foreground", "background"],
+          },
+          annotations: { readOnlyHint: true },
+          execute: function (input) {
+            function hexToRgb(hex) {
+              var h = String(hex).replace("#", "");
+              if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+              var n = parseInt(h, 16);
+              return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+            }
+            function luminance(rgb) {
+              var a = rgb.map(function (v) {
+                v = v / 255;
+                return v <= 0.04045
+                  ? v / 12.92
+                  : Math.pow((v + 0.055) / 1.055, 2.4);
+              });
+              return 0.2126 * a[0] + 0.7152 * a[1] + 0.0722 * a[2];
+            }
+            var fg = hexToRgb(input.foreground);
+            var bg = hexToRgb(input.background);
+            var l1 = luminance(fg);
+            var l2 = luminance(bg);
+            var ratio = (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
+            ratio = Math.round(ratio * 100) / 100;
+            return {
+              content: [
+                {
+                  type: "text",
+                  text: JSON.stringify({
+                    ratio: ratio + ":1",
+                    AA_normal: ratio >= 4.5 ? "PASS" : "FAIL",
+                    AA_large: ratio >= 3 ? "PASS" : "FAIL",
+                    AAA_normal: ratio >= 7 ? "PASS" : "FAIL",
+                    AAA_large: ratio >= 4.5 ? "PASS" : "FAIL",
+                  }),
+                },
+              ],
+            };
+          },
+        });
+      } catch (e) {
+        console.warn("[WebMCP] Tool registration failed:", e);
+      }
+    }
+    // === WebMCP END ===
   })();
 </script>
 

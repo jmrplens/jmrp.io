@@ -2094,6 +2094,91 @@ const i18n = {
     });
 
     generate();
+
+    // === WebMCP START ===
+    if (
+      typeof navigator !== "undefined" &&
+      "modelContext" in navigator &&
+      navigator.modelContext
+    ) {
+      try {
+        navigator.modelContext.registerTool({
+          name: "generate-wireguard-config",
+          description:
+            "Generate WireGuard VPN configuration files for server and client. Creates [Interface] and [Peer] sections with proper key placeholders.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              serverEndpoint: {
+                type: "string",
+                description:
+                  "Server public IP or hostname (e.g. 'vpn.example.com:51820')",
+              },
+              serverAddress: {
+                type: "string",
+                description: "Server tunnel IP (e.g. '10.0.0.1/24')",
+              },
+              clientAddress: {
+                type: "string",
+                description: "Client tunnel IP (e.g. '10.0.0.2/32')",
+              },
+              dns: {
+                type: "string",
+                description: "DNS server for the client (e.g. '1.1.1.1')",
+              },
+              allowedIPs: {
+                type: "string",
+                description:
+                  "Allowed IPs for routing (default: '0.0.0.0/0' for full tunnel)",
+              },
+            },
+            required: ["serverEndpoint", "serverAddress", "clientAddress"],
+          },
+          annotations: { readOnlyHint: true },
+          execute: function (input) {
+            var serverConf = [
+              "[Interface]",
+              "Address = " + String(input.serverAddress),
+              "ListenPort = " +
+                (String(input.serverEndpoint).split(":")[1] || "51820"),
+              "PrivateKey = <SERVER_PRIVATE_KEY>",
+              "",
+              "[Peer]",
+              "PublicKey = <CLIENT_PUBLIC_KEY>",
+              "AllowedIPs = " + String(input.clientAddress),
+            ].join("\n");
+            var clientConf = [
+              "[Interface]",
+              "Address = " + String(input.clientAddress),
+              "PrivateKey = <CLIENT_PRIVATE_KEY>",
+              input.dns ? "DNS = " + String(input.dns) : "",
+              "",
+              "[Peer]",
+              "PublicKey = <SERVER_PUBLIC_KEY>",
+              "Endpoint = " + String(input.serverEndpoint),
+              "AllowedIPs = " + String(input.allowedIPs || "0.0.0.0/0, ::/0"),
+              "PersistentKeepalive = 25",
+            ]
+              .filter(Boolean)
+              .join("\n");
+            return {
+              content: [
+                {
+                  type: "text",
+                  text: JSON.stringify({
+                    serverConfig: serverConf,
+                    clientConfig: clientConf,
+                  }),
+                },
+              ],
+            };
+          },
+        });
+      } catch (e) {
+        console.warn("[WebMCP] Tool registration failed:", e);
+      }
+    }
+    // === WebMCP END ===
   })();
 </script>
 

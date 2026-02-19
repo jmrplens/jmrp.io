@@ -1938,6 +1938,90 @@ const i18n = {
     }
 
     generate();
+
+    // === WebMCP START ===
+    if (
+      typeof navigator !== "undefined" &&
+      "modelContext" in navigator &&
+      navigator.modelContext
+    ) {
+      try {
+        navigator.modelContext.registerTool({
+          name: "generate-nginx-config",
+          description:
+            "Generate an Nginx server block configuration. Supports reverse proxy, static site, PHP, SSL/TLS, and common security headers.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              serverName: {
+                type: "string",
+                description: "Domain name (e.g. 'example.com')",
+              },
+              listenPort: {
+                type: "number",
+                description: "Listen port (default: 80)",
+              },
+              ssl: {
+                type: "boolean",
+                description: "Enable HTTPS with SSL/TLS (default: false)",
+              },
+              rootPath: {
+                type: "string",
+                description: "Document root path (e.g. '/var/www/html')",
+              },
+              proxyPass: {
+                type: "string",
+                description:
+                  "Upstream proxy URL (e.g. 'http://localhost:3000')",
+              },
+            },
+            required: ["serverName"],
+          },
+          annotations: { readOnlyHint: true },
+          execute: function (input) {
+            var name = String(input.serverName);
+            var port = Number(input.listenPort) || (input.ssl ? 443 : 80);
+            var lines = ["server {"];
+            lines.push(
+              "    listen " + port + (input.ssl ? " ssl http2" : "") + ";",
+            );
+            lines.push("    server_name " + name + ";");
+            if (input.ssl) {
+              lines.push(
+                "    ssl_certificate /etc/letsencrypt/live/" +
+                  name +
+                  "/fullchain.pem;",
+              );
+              lines.push(
+                "    ssl_certificate_key /etc/letsencrypt/live/" +
+                  name +
+                  "/privkey.pem;",
+              );
+            }
+            if (input.rootPath) {
+              lines.push("    root " + String(input.rootPath) + ";");
+              lines.push("    index index.html;");
+            }
+            if (input.proxyPass) {
+              lines.push("    location / {");
+              lines.push("        proxy_pass " + String(input.proxyPass) + ";");
+              lines.push("        proxy_set_header Host $host;");
+              lines.push("        proxy_set_header X-Real-IP $remote_addr;");
+              lines.push("    }");
+            } else if (input.rootPath) {
+              lines.push("    location / {");
+              lines.push("        try_files $uri $uri/ =404;");
+              lines.push("    }");
+            }
+            lines.push("}");
+            return { content: [{ type: "text", text: lines.join("\n") }] };
+          },
+        });
+      } catch (e) {
+        console.warn("[WebMCP] Tool registration failed:", e);
+      }
+    }
+    // === WebMCP END ===
   })();
 </script>
 

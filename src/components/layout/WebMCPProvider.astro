@@ -1,0 +1,107 @@
+---
+/**
+ * WebMCPProvider Component
+ *
+ * Injects a client-side script that registers WebMCP tools with the browser.
+ * Uses feature detection — completely inert if `navigator.modelContext` is not available.
+ *
+ * Automatically determines which tools to register based on the current page path:
+ * - Site tools: registered on every page
+ * - Blog tools: registered on /blog/* pages
+ * - CV tools: registered on /cv page
+ * - Publications tools: registered on /publications page
+ * - Tools-index tools: registered on /tools/* pages
+ *
+ * App-specific tools (hash calculator, base64, etc.) are registered by each
+ * app component's own `<script is:inline>` block, not by this provider.
+ *
+ * @example
+ * ```astro
+ * <WebMCPProvider />
+ * ```
+ */
+import {
+  getBlogTools,
+  getCVTools,
+  getPublicationsTools,
+  getSiteTools,
+  getToolsIndexTools,
+} from "@utils/webmcp-tools";
+
+const pathname = Astro.url.pathname;
+
+// Determine which contextual tools to include based on current route
+const stripLocale = (p: string): string =>
+  p.replace(/^\/es\//, "/").replace(/^\/es$/, "/");
+const cleanPath = stripLocale(pathname);
+
+const isBlogPage = cleanPath.startsWith("/blog");
+const isCVPage = cleanPath === "/cv" || cleanPath === "/cv/";
+const isPublicationsPage = cleanPath.startsWith("/publications");
+const isToolsPage = cleanPath.startsWith("/tools");
+
+// Build combined tool list — site tools are always included
+const allTools = [
+  ...getSiteTools(),
+  ...(isBlogPage ? getBlogTools() : []),
+  ...(isCVPage ? getCVTools() : []),
+  ...(isPublicationsPage ? getPublicationsTools() : []),
+  ...(isToolsPage ? getToolsIndexTools() : []),
+];
+
+/**
+ * Serialize tool definitions for injection into inline script.
+ * We must convert the `execute` functions to strings, then reconstruct
+ * them in the client-side script. Astro's `define:vars` cannot serialize functions.
+ *
+ * Instead, we serialize the full tool array as a JSON-compatible structure
+ * where `execute` is stored as a string body, then reconstruct on the client.
+ */
+const serializedTools = allTools.map((tool) => ({
+  name: tool.name,
+  description: tool.description,
+  inputSchema: tool.inputSchema ?? {},
+  annotations: tool.annotations ?? {},
+  executeStr: tool.execute.toString(),
+}));
+---
+
+<script
+  is:inline
+  id="webmcp-provider"
+  data-webmcp-tools={JSON.stringify(serializedTools)}
+>
+  (function () {
+    if (
+      typeof navigator === "undefined" ||
+      !("modelContext" in navigator) ||
+      !navigator.modelContext
+    ) {
+      return;
+    }
+    try {
+      var s = document.getElementById("webmcp-provider");
+      if (!s) return;
+      var d = JSON.parse(s.getAttribute("data-webmcp-tools") || "[]");
+      if (!d.length) return;
+      var t = [];
+      for (var i = 0; i < d.length; i++) {
+        var e = d[i];
+        t.push({
+          name: e.name,
+          description: e.description,
+          inputSchema: e.inputSchema,
+          annotations: e.annotations,
+          execute: new Function(
+            "input",
+            "client",
+            "return (" + e.executeStr + ")(input, client)",
+          ),
+        });
+      }
+      navigator.modelContext.provideContext({ tools: t });
+    } catch (err) {
+      console.warn("[WebMCP] Provider init failed:", err);
+    }
+  })();
+</script>

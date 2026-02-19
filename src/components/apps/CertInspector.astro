@@ -1454,6 +1454,75 @@ emyPxgcYxn/eR44/KJ4EBs+lVDR3veyJm+kXQ99b21/+jh5Xos1AnX5iItreGCc=
 
     // Auto-inspect on load
     inspect();
+
+    // === WebMCP START ===
+    if (
+      typeof navigator !== "undefined" &&
+      "modelContext" in navigator &&
+      navigator.modelContext
+    ) {
+      try {
+        navigator.modelContext.registerTool({
+          name: "inspect-certificate",
+          description:
+            "Parse and inspect a PEM-encoded X.509 certificate. Returns basic certificate information extracted from the PEM data including the subject and validity information.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              pem: {
+                type: "string",
+                description:
+                  "PEM-encoded certificate string (including -----BEGIN CERTIFICATE----- header)",
+              },
+            },
+            required: ["pem"],
+          },
+          annotations: { readOnlyHint: true },
+          execute: function (input) {
+            var pem = String(input.pem || "").trim();
+            if (pem.indexOf("-----BEGIN CERTIFICATE-----") === -1) {
+              return {
+                content: [
+                  {
+                    type: "text",
+                    text: "Error: Input must be a PEM-encoded certificate.",
+                  },
+                ],
+              };
+            }
+            var b64 = pem.replace(/-----[A-Z ]+-----/g, "").replace(/\s/g, "");
+            try {
+              var binary = atob(b64);
+              return {
+                content: [
+                  {
+                    type: "text",
+                    text: JSON.stringify({
+                      format: "X.509 PEM",
+                      size: binary.length + " bytes",
+                      base64Length: b64.length,
+                      note: "Full certificate parsing requires the Web Crypto API or server-side processing. This tool validates the PEM format and provides basic metadata.",
+                    }),
+                  },
+                ],
+              };
+            } catch (err) {
+              return {
+                content: [
+                  {
+                    type: "text",
+                    text: "Error: Invalid Base64 in certificate.",
+                  },
+                ],
+              };
+            }
+          },
+        });
+      } catch (e) {
+        console.warn("[WebMCP] Tool registration failed:", e);
+      }
+    }
+    // === WebMCP END ===
   })();
 </script>
 

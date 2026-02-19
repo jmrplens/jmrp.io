@@ -1007,6 +1007,91 @@ const i18n = {
     }
 
     update();
+
+    // === WebMCP START ===
+    if (
+      typeof navigator !== "undefined" &&
+      "modelContext" in navigator &&
+      navigator.modelContext
+    ) {
+      try {
+        navigator.modelContext.registerTool({
+          name: "parse-cron",
+          description:
+            "Parse a cron expression and return a human-readable description of the schedule. Supports standard 5-field cron format (minute hour day month weekday).",
+          inputSchema: {
+            type: "object",
+            properties: {
+              expression: {
+                type: "string",
+                description:
+                  "Cron expression (e.g. '*/5 * * * *' for every 5 minutes)",
+              },
+            },
+            required: ["expression"],
+          },
+          annotations: { readOnlyHint: true },
+          execute: function (input) {
+            var parts = String(input.expression).trim().split(/\s+/);
+            if (parts.length < 5) {
+              return {
+                content: [
+                  {
+                    type: "text",
+                    text: "Error: Cron expression must have 5 fields (minute hour day month weekday).",
+                  },
+                ],
+              };
+            }
+            var names = [
+              "minute",
+              "hour",
+              "day of month",
+              "month",
+              "day of week",
+            ];
+            var desc = [];
+            for (var i = 0; i < 5; i++) {
+              var f = parts[i];
+              if (f === "*") desc.push("every " + names[i]);
+              else if (f.indexOf("/") !== -1)
+                desc.push("every " + f.split("/")[1] + " " + names[i] + "(s)");
+              else if (f.indexOf(",") !== -1) desc.push(names[i] + " " + f);
+              else if (f.indexOf("-") !== -1)
+                desc.push(
+                  names[i] +
+                    " " +
+                    f.split("-")[0] +
+                    " through " +
+                    f.split("-")[1],
+                );
+              else desc.push("at " + names[i] + " " + f);
+            }
+            return {
+              content: [
+                {
+                  type: "text",
+                  text: JSON.stringify({
+                    expression: parts.slice(0, 5).join(" "),
+                    description: desc.join(", "),
+                    fields: {
+                      minute: parts[0],
+                      hour: parts[1],
+                      dayOfMonth: parts[2],
+                      month: parts[3],
+                      dayOfWeek: parts[4],
+                    },
+                  }),
+                },
+              ],
+            };
+          },
+        });
+      } catch (e) {
+        console.warn("[WebMCP] Tool registration failed:", e);
+      }
+    }
+    // === WebMCP END ===
   })();
 </script>
 

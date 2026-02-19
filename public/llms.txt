@@ -63,3 +63,12 @@ José Manuel Requena Plens (JMRP) is a multidisciplinary engineer building contr
 - Content Security Policy with SRI hashes
 - RSS feeds: https://jmrp.io/rss.xml (EN) and https://jmrp.io/es/rss.xml (ES)
 - Spanish version of all pages available under /es/ prefix
+
+## WebMCP (AI Agent Tools)
+
+This site implements the [WebMCP API proposal](https://webmachinelearning.github.io/webmcp/) to expose interactive tool functionality to AI agents and browser assistants.
+
+- WebMCP Manifest: https://jmrp.io/.well-known/webmcp.json
+- 29 tools available across the site (6 site-wide + 5 content + 18 app-specific)
+- All tools run client-side only (privacy-first)
+- Feature detection: tools register only if `navigator.modelContext` is supported

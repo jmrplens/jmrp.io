@@ -948,6 +948,74 @@ const i18n = {
       if (tsInput) tsInput.value = String(Math.floor(now.getTime() / 1000));
       syncFromTimestamp();
     }
+
+    // === WebMCP START ===
+    if (
+      typeof navigator !== "undefined" &&
+      "modelContext" in navigator &&
+      navigator.modelContext
+    ) {
+      try {
+        navigator.modelContext.registerTool({
+          name: "convert-timestamp",
+          description:
+            "Convert between Unix timestamps and human-readable date formats. Supports seconds, milliseconds, and ISO 8601.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              value: {
+                type: "string",
+                description:
+                  "Input value: Unix timestamp (seconds or ms) or ISO 8601 date string",
+              },
+              toFormat: {
+                type: "string",
+                enum: [
+                  "unix-seconds",
+                  "unix-milliseconds",
+                  "iso8601",
+                  "utc",
+                  "local",
+                ],
+                description: "Output format (default: all formats)",
+              },
+            },
+            required: ["value"],
+          },
+          annotations: { readOnlyHint: true },
+          execute: function (input) {
+            var val = String(input.value).trim();
+            var date;
+            if (/^\d+$/.test(val)) {
+              var num = Number(val);
+              date = num > 1e12 ? new Date(num) : new Date(num * 1000);
+            } else {
+              date = new Date(val);
+            }
+            if (isNaN(date.getTime())) {
+              return {
+                content: [
+                  { type: "text", text: "Error: Invalid date/timestamp." },
+                ],
+              };
+            }
+            var result = {
+              unixSeconds: Math.floor(date.getTime() / 1000),
+              unixMilliseconds: date.getTime(),
+              iso8601: date.toISOString(),
+              utc: date.toUTCString(),
+              local: date.toString(),
+            };
+            return {
+              content: [{ type: "text", text: JSON.stringify(result) }],
+            };
+          },
+        });
+      } catch (e) {
+        console.warn("[WebMCP] Tool registration failed:", e);
+      }
+    }
+    // === WebMCP END ===
   })();
 </script>
 

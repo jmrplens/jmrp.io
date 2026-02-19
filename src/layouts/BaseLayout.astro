@@ -12,6 +12,7 @@ import BaseHead from "@components/layout/BaseHead.astro";
 import Footer from "@components/layout/Footer.astro";
 import Header from "@components/layout/Header.astro";
 import LanguageDetector from "@components/layout/LanguageDetector.astro";
+import WebMCPProvider from "@components/layout/WebMCPProvider.astro";
 import SRIEventListener from "@components/ui/SRIEventListener.astro";
 import { defaultLocale, type Locale } from "@i18n/config";
 import { useTranslations } from "@i18n/utils";
@@ -148,6 +149,7 @@ const {
     </main>
     <Footer />
     <LanguageDetector />
+    <WebMCPProvider />
 
     <style is:global>
       /* Accessibility: Skip Link */

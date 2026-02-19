@@ -716,6 +716,86 @@ const i18n = {
 
     syncFlagCheckboxes();
     runTest();
+
+    // === WebMCP START ===
+    if (
+      typeof navigator !== "undefined" &&
+      "modelContext" in navigator &&
+      navigator.modelContext
+    ) {
+      try {
+        navigator.modelContext.registerTool({
+          name: "test-regex",
+          description:
+            "Test a regular expression against a string. Returns all matches with their index, captured groups, and whether the pattern matches.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              pattern: {
+                type: "string",
+                description: "Regular expression pattern (without delimiters)",
+              },
+              flags: {
+                type: "string",
+                description: "Regex flags (e.g. 'gi', 'gm'). Default: 'g'",
+              },
+              testString: {
+                type: "string",
+                description: "String to test the regex against",
+              },
+            },
+            required: ["pattern", "testString"],
+          },
+          annotations: { readOnlyHint: true },
+          execute: function (input) {
+            try {
+              var flags = String(input.flags || "g");
+              var re = new RegExp(String(input.pattern), flags);
+              var text = String(input.testString);
+              var matches = [];
+              var m;
+              if (flags.indexOf("g") !== -1) {
+                while ((m = re.exec(text)) !== null) {
+                  matches.push({
+                    match: m[0],
+                    index: m.index,
+                    groups: m.slice(1),
+                  });
+                  if (!m[0]) re.lastIndex++;
+                }
+              } else {
+                m = re.exec(text);
+                if (m)
+                  matches.push({
+                    match: m[0],
+                    index: m.index,
+                    groups: m.slice(1),
+                  });
+              }
+              return {
+                content: [
+                  {
+                    type: "text",
+                    text: JSON.stringify({
+                      matches: matches,
+                      totalMatches: matches.length,
+                      isMatch: matches.length > 0,
+                    }),
+                  },
+                ],
+              };
+            } catch (err) {
+              return {
+                content: [{ type: "text", text: "Error: " + err.message }],
+              };
+            }
+          },
+        });
+      } catch (e) {
+        console.warn("[WebMCP] Tool registration failed:", e);
+      }
+    }
+    // === WebMCP END ===
   })();
 </script>
 

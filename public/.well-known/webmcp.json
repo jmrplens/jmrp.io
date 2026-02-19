@@ -1,0 +1,348 @@
+{
+  "version": "0.1.0",
+  "name": "jmrp.io",
+  "description": "Personal technical blog and portfolio with interactive developer tools, built with Astro 6. Features privacy-first tools that run entirely client-side.",
+  "url": "https://jmrp.io",
+  "spec": "https://webmachinelearning.github.io/webmcp/",
+  "tools": [
+    {
+      "name": "get-current-theme",
+      "description": "Get the current color theme of the site. Returns 'dark' or 'light'.",
+      "annotations": { "readOnlyHint": true },
+      "availableOn": "*"
+    },
+    {
+      "name": "toggle-theme",
+      "description": "Toggle the site color theme between dark and light mode. Returns the new theme after toggling.",
+      "annotations": { "readOnlyHint": false },
+      "availableOn": "*"
+    },
+    {
+      "name": "get-page-info",
+      "description": "Get metadata about the current page including title, description, URL, locale, and type.",
+      "annotations": { "readOnlyHint": true },
+      "availableOn": "*"
+    },
+    {
+      "name": "get-site-navigation",
+      "description": "Get the site navigation structure with all available pages and their URLs.",
+      "annotations": { "readOnlyHint": true },
+      "availableOn": "*"
+    },
+    {
+      "name": "navigate-to",
+      "description": "Navigate to a page on this site by providing a relative path. Only same-origin navigation is allowed.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "path": { "type": "string", "description": "Relative URL path to navigate to" }
+        },
+        "required": ["path"]
+      },
+      "annotations": { "readOnlyHint": false },
+      "availableOn": "*"
+    },
+    {
+      "name": "switch-language",
+      "description": "Switch the page language between English ('en') and Spanish ('es').",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "locale": { "type": "string", "enum": ["en", "es"], "description": "Target language code" }
+        },
+        "required": ["locale"]
+      },
+      "annotations": { "readOnlyHint": false },
+      "availableOn": "*"
+    },
+    {
+      "name": "list-blog-posts",
+      "description": "List all blog posts visible on the current page with their title, URL, date, tags, and description.",
+      "annotations": { "readOnlyHint": true },
+      "availableOn": ["/blog/", "/es/blog/"]
+    },
+    {
+      "name": "search-blog-posts",
+      "description": "Search blog posts by keyword in title and description.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": { "type": "string", "description": "Search keyword" }
+        },
+        "required": ["query"]
+      },
+      "annotations": { "readOnlyHint": true },
+      "availableOn": ["/blog/", "/es/blog/"]
+    },
+    {
+      "name": "get-post-tags",
+      "description": "Get all unique blog post tags available on the current page.",
+      "annotations": { "readOnlyHint": true },
+      "availableOn": ["/blog/", "/es/blog/"]
+    },
+    {
+      "name": "get-cv-summary",
+      "description": "Get a summary of the CV/resume including name, job title, and all section headings.",
+      "annotations": { "readOnlyHint": true },
+      "availableOn": ["/cv", "/cv/", "/es/cv", "/es/cv/"]
+    },
+    {
+      "name": "get-cv-section",
+      "description": "Get the content of a specific CV section by its heading name.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "section": { "type": "string", "description": "The heading name of the CV section to retrieve" }
+        },
+        "required": ["section"]
+      },
+      "annotations": { "readOnlyHint": true },
+      "availableOn": ["/cv", "/cv/", "/es/cv", "/es/cv/"]
+    },
+    {
+      "name": "list-publications",
+      "description": "List all academic publications on the page with title, authors, year, and venue.",
+      "annotations": { "readOnlyHint": true },
+      "availableOn": ["/publications", "/publications/", "/es/publications", "/es/publications/"]
+    },
+    {
+      "name": "search-publications",
+      "description": "Search publications by keyword in title, authors, or venue.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": { "type": "string", "description": "Search keyword" }
+        },
+        "required": ["query"]
+      },
+      "annotations": { "readOnlyHint": true },
+      "availableOn": ["/publications", "/publications/", "/es/publications", "/es/publications/"]
+    },
+    {
+      "name": "list-available-tools",
+      "description": "List all interactive tools available on the site with their name, description, category, and URL.",
+      "annotations": { "readOnlyHint": true },
+      "availableOn": ["/tools/", "/es/tools/"]
+    },
+    {
+      "name": "calculate-hash",
+      "description": "Calculate SHA-256, SHA-384, and SHA-512 hashes of the provided text. Returns Base64-encoded hashes and the CSP directive format.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "text": { "type": "string", "description": "Text to hash" },
+          "algorithm": { "type": "string", "enum": ["SHA-256", "SHA-384", "SHA-512"], "description": "Hash algorithm (default: all)" }
+        },
+        "required": ["text"]
+      },
+      "annotations": { "readOnlyHint": true },
+      "availableOn": "/tools/hash-calculator/"
+    },
+    {
+      "name": "encode-base64",
+      "description": "Encode text to Base64 format. Supports standard and URL-safe encoding.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "text": { "type": "string", "description": "Text to encode" },
+          "urlSafe": { "type": "boolean", "description": "Use URL-safe Base64 (default: false)" }
+        },
+        "required": ["text"]
+      },
+      "annotations": { "readOnlyHint": true },
+      "availableOn": "/tools/base64-encoder/"
+    },
+    {
+      "name": "decode-base64",
+      "description": "Decode a Base64-encoded string back to text.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "encoded": { "type": "string", "description": "Base64 string to decode" }
+        },
+        "required": ["encoded"]
+      },
+      "annotations": { "readOnlyHint": true },
+      "availableOn": "/tools/base64-encoder/"
+    },
+    {
+      "name": "calculate-subnet",
+      "description": "Calculate IPv4 subnet information from an IP address and CIDR prefix. Returns network address, broadcast, host range, number of usable hosts, subnet mask, and wildcard mask.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "ip": { "type": "string", "description": "IPv4 address (e.g. '192.168.1.0')" },
+          "cidr": { "type": "number", "description": "CIDR prefix length (0-32)" }
+        },
+        "required": ["ip", "cidr"]
+      },
+      "annotations": { "readOnlyHint": true },
+      "availableOn": "/tools/subnet-calculator/"
+    },
+    {
+      "name": "generate-password",
+      "description": "Generate a cryptographically secure random password with configurable length and character sets.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "length": { "type": "number", "description": "Password length (8-128, default: 16)" },
+          "uppercase": { "type": "boolean", "description": "Include uppercase letters (default: true)" },
+          "lowercase": { "type": "boolean", "description": "Include lowercase letters (default: true)" },
+          "numbers": { "type": "boolean", "description": "Include digits (default: true)" },
+          "symbols": { "type": "boolean", "description": "Include special characters (default: true)" }
+        }
+      },
+      "annotations": { "readOnlyHint": true },
+      "availableOn": "/tools/password-generator/"
+    },
+    {
+      "name": "convert-timestamp",
+      "description": "Convert between Unix timestamps and human-readable date formats. Supports seconds, milliseconds, and ISO 8601.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "value": { "type": "string", "description": "Input value: Unix timestamp or ISO 8601 date string" },
+          "toFormat": { "type": "string", "enum": ["unix-seconds", "unix-milliseconds", "iso8601", "utc", "local"], "description": "Output format (default: all)" }
+        },
+        "required": ["value"]
+      },
+      "annotations": { "readOnlyHint": true },
+      "availableOn": "/tools/timestamp-converter/"
+    },
+    {
+      "name": "test-regex",
+      "description": "Test a regular expression against a string. Returns all matches with their index, captured groups, and whether the pattern matches.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "pattern": { "type": "string", "description": "Regular expression pattern (without delimiters)" },
+          "flags": { "type": "string", "description": "Regex flags (e.g. 'gi'). Default: 'g'" },
+          "testString": { "type": "string", "description": "String to test the regex against" }
+        },
+        "required": ["pattern", "testString"]
+      },
+      "annotations": { "readOnlyHint": true },
+      "availableOn": "/tools/regex-tester/"
+    },
+    {
+      "name": "check-color-contrast",
+      "description": "Check WCAG 2.1 color contrast ratio between foreground and background colors. Returns contrast ratio and pass/fail for AA and AAA levels.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "foreground": { "type": "string", "description": "Foreground color in hex format (e.g. '#ffffff')" },
+          "background": { "type": "string", "description": "Background color in hex format (e.g. '#000000')" }
+        },
+        "required": ["foreground", "background"]
+      },
+      "annotations": { "readOnlyHint": true },
+      "availableOn": "/tools/color-contrast-checker/"
+    },
+    {
+      "name": "parse-cron",
+      "description": "Parse a cron expression and return a human-readable description of the schedule.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "expression": { "type": "string", "description": "Cron expression (e.g. '*/5 * * * *')" }
+        },
+        "required": ["expression"]
+      },
+      "annotations": { "readOnlyHint": true },
+      "availableOn": "/tools/cron-builder/"
+    },
+    {
+      "name": "build-csp",
+      "description": "Generate a Content-Security-Policy header string from a set of directives.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "directives": {
+            "type": "object",
+            "description": "CSP directives as key-value pairs where keys are directive names and values are arrays of sources",
+            "additionalProperties": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "required": ["directives"]
+      },
+      "annotations": { "readOnlyHint": true },
+      "availableOn": "/tools/csp-builder/"
+    },
+    {
+      "name": "inspect-certificate",
+      "description": "Parse and inspect a PEM-encoded X.509 certificate. Returns basic certificate metadata.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "pem": { "type": "string", "description": "PEM-encoded certificate string" }
+        },
+        "required": ["pem"]
+      },
+      "annotations": { "readOnlyHint": true },
+      "availableOn": "/tools/cert-inspector/"
+    },
+    {
+      "name": "analyze-headers",
+      "description": "Analyze HTTP response headers for security best practices. Checks for CSP, HSTS, X-Frame-Options, etc.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "headers": { "type": "string", "description": "Raw HTTP response headers (one per line)" }
+        },
+        "required": ["headers"]
+      },
+      "annotations": { "readOnlyHint": true },
+      "availableOn": "/tools/http-headers-analyzer/"
+    },
+    {
+      "name": "build-modbus-frame",
+      "description": "Build a Modbus RTU frame with CRC-16 checksum.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "slaveId": { "type": "number", "description": "Slave/unit address (1-247)" },
+          "functionCode": { "type": "number", "description": "Function code (1-6)" },
+          "startAddress": { "type": "number", "description": "Starting address (0-65535)" },
+          "quantity": { "type": "number", "description": "Number of coils/registers or value to write" }
+        },
+        "required": ["slaveId", "functionCode", "startAddress", "quantity"]
+      },
+      "annotations": { "readOnlyHint": true },
+      "availableOn": "/tools/modbus-frame-builder/"
+    },
+    {
+      "name": "generate-nginx-config",
+      "description": "Generate an Nginx server block configuration with SSL, reverse proxy, and security headers support.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "serverName": { "type": "string", "description": "Domain name" },
+          "listenPort": { "type": "number", "description": "Listen port (default: 80)" },
+          "ssl": { "type": "boolean", "description": "Enable HTTPS" },
+          "rootPath": { "type": "string", "description": "Document root path" },
+          "proxyPass": { "type": "string", "description": "Upstream proxy URL" }
+        },
+        "required": ["serverName"]
+      },
+      "annotations": { "readOnlyHint": true },
+      "availableOn": "/tools/nginx-config-generator/"
+    },
+    {
+      "name": "generate-wireguard-config",
+      "description": "Generate WireGuard VPN configuration files for server and client.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "serverEndpoint": { "type": "string", "description": "Server public IP or hostname with port" },
+          "serverAddress": { "type": "string", "description": "Server tunnel IP (e.g. '10.0.0.1/24')" },
+          "clientAddress": { "type": "string", "description": "Client tunnel IP (e.g. '10.0.0.2/32')" },
+          "dns": { "type": "string", "description": "DNS server for client" },
+          "allowedIPs": { "type": "string", "description": "Allowed IPs for routing" }
+        },
+        "required": ["serverEndpoint", "serverAddress", "clientAddress"]
+      },
+      "annotations": { "readOnlyHint": true },
+      "availableOn": "/tools/wireguard-config-generator/"
+    }
+  ]
+}

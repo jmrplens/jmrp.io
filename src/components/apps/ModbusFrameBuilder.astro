@@ -2324,6 +2324,103 @@ const i18n = {
     /* ── Init ── */
     loadFromURL();
     if (currentMode === "build") updateBuildUI();
+
+    // === WebMCP START ===
+    if (
+      typeof navigator !== "undefined" &&
+      "modelContext" in navigator &&
+      navigator.modelContext
+    ) {
+      try {
+        navigator.modelContext.registerTool({
+          name: "build-modbus-frame",
+          description:
+            "Build a Modbus RTU frame with CRC-16 checksum. Supports common function codes (01-06, 15, 16) for reading/writing coils and registers.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              slaveId: {
+                type: "number",
+                description: "Slave/unit address (1-247)",
+              },
+              functionCode: {
+                type: "number",
+                description:
+                  "Function code (1=Read Coils, 2=Read Discrete Inputs, 3=Read Holding Registers, 4=Read Input Registers, 5=Write Single Coil, 6=Write Single Register)",
+              },
+              startAddress: {
+                type: "number",
+                description: "Starting address (0-65535)",
+              },
+              quantity: {
+                type: "number",
+                description:
+                  "Number of coils/registers to read, or value to write",
+              },
+            },
+            required: ["slaveId", "functionCode", "startAddress", "quantity"],
+          },
+          annotations: { readOnlyHint: true },
+          execute: function (input) {
+            var sid = Number(input.slaveId);
+            var fc = Number(input.functionCode);
+            var addr = Number(input.startAddress);
+            var qty = Number(input.quantity);
+            if (sid < 1 || sid > 247)
+              return {
+                content: [
+                  { type: "text", text: "Error: Slave ID must be 1-247." },
+                ],
+              };
+            if (fc < 1 || fc > 6)
+              return {
+                content: [
+                  { type: "text", text: "Error: Function code must be 1-6." },
+                ],
+              };
+            var frame = [
+              sid,
+              fc,
+              (addr >> 8) & 0xff,
+              addr & 0xff,
+              (qty >> 8) & 0xff,
+              qty & 0xff,
+            ];
+            // CRC-16/Modbus
+            var crc = 0xffff;
+            for (var i = 0; i < frame.length; i++) {
+              crc ^= frame[i];
+              for (var b = 0; b < 8; b++) {
+                if (crc & 1) {
+                  crc = (crc >> 1) ^ 0xa001;
+                } else {
+                  crc >>= 1;
+                }
+              }
+            }
+            frame.push(crc & 0xff, (crc >> 8) & 0xff);
+            var hex = frame.map(function (b) {
+              return ("0" + b.toString(16).toUpperCase()).slice(-2);
+            });
+            return {
+              content: [
+                {
+                  type: "text",
+                  text: JSON.stringify({
+                    frame: hex.join(" "),
+                    bytes: frame.length,
+                    crc: hex.slice(-2).join(" "),
+                  }),
+                },
+              ],
+            };
+          },
+        });
+      } catch (e) {
+        console.warn("[WebMCP] Tool registration failed:", e);
+      }
+    }
+    // === WebMCP END ===
   })();
 </script>
 

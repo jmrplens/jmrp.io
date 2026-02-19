@@ -1390,6 +1390,85 @@ server: jmrp.io`;
     if (analyzeBtn) analyzeBtn.addEventListener("click", analyze);
 
     analyze();
+
+    // === WebMCP START ===
+    if (
+      typeof navigator !== "undefined" &&
+      "modelContext" in navigator &&
+      navigator.modelContext
+    ) {
+      try {
+        navigator.modelContext.registerTool({
+          name: "analyze-headers",
+          description:
+            "Analyze HTTP response headers for security best practices. Checks for presence and correctness of security headers like CSP, HSTS, X-Frame-Options, etc.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              headers: {
+                type: "string",
+                description:
+                  "Raw HTTP response headers (one per line, 'Header-Name: value' format)",
+              },
+            },
+            required: ["headers"],
+          },
+          annotations: { readOnlyHint: true },
+          execute: function (input) {
+            var lines = String(input.headers)
+              .split("\n")
+              .filter(function (l) {
+                return l.trim();
+              });
+            var parsed = {};
+            for (var i = 0; i < lines.length; i++) {
+              var idx = lines[i].indexOf(":");
+              if (idx > 0) {
+                var name = lines[i].substring(0, idx).trim().toLowerCase();
+                parsed[name] = lines[i].substring(idx + 1).trim();
+              }
+            }
+            var securityHeaders = [
+              "content-security-policy",
+              "strict-transport-security",
+              "x-content-type-options",
+              "x-frame-options",
+              "referrer-policy",
+              "permissions-policy",
+              "cross-origin-opener-policy",
+              "cross-origin-embedder-policy",
+              "cross-origin-resource-policy",
+              "x-xss-protection",
+            ];
+            var present = [];
+            var missing = [];
+            for (var j = 0; j < securityHeaders.length; j++) {
+              if (parsed[securityHeaders[j]]) present.push(securityHeaders[j]);
+              else missing.push(securityHeaders[j]);
+            }
+            return {
+              content: [
+                {
+                  type: "text",
+                  text: JSON.stringify({
+                    totalHeaders: Object.keys(parsed).length,
+                    securityHeadersPresent: present,
+                    securityHeadersMissing: missing,
+                    score:
+                      Math.round(
+                        (present.length / securityHeaders.length) * 100,
+                      ) + "%",
+                  }),
+                },
+              ],
+            };
+          },
+        });
+      } catch (e) {
+        console.warn("[WebMCP] Tool registration failed:", e);
+      }
+    }
+    // === WebMCP END ===
   })();
 </script>
 

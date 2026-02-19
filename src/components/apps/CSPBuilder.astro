@@ -1420,6 +1420,59 @@ const i18n = {
 
     // Initial update
     updatePolicy();
+
+    // === WebMCP START ===
+    if (
+      typeof navigator !== "undefined" &&
+      "modelContext" in navigator &&
+      navigator.modelContext
+    ) {
+      try {
+        navigator.modelContext.registerTool({
+          name: "build-csp",
+          description:
+            "Generate a Content-Security-Policy header string from a set of directives. Returns a valid CSP header value.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              directives: {
+                type: "object",
+                description:
+                  "CSP directives as key-value pairs where keys are directive names (e.g. 'default-src', 'script-src') and values are arrays of sources (e.g. [\"'self'\", 'https://example.com'])",
+                additionalProperties: {
+                  type: "array",
+                  items: { type: "string" },
+                },
+              },
+            },
+            required: ["directives"],
+          },
+          annotations: { readOnlyHint: true },
+          execute: function (input) {
+            var directives = input.directives || {};
+            var parts = [];
+            var keys = Object.keys(directives);
+            for (var i = 0; i < keys.length; i++) {
+              var values = directives[keys[i]];
+              if (Array.isArray(values) && values.length > 0) {
+                parts.push(keys[i] + " " + values.join(" "));
+              }
+            }
+            if (parts.length === 0) {
+              return {
+                content: [
+                  { type: "text", text: "Error: No directives provided." },
+                ],
+              };
+            }
+            return { content: [{ type: "text", text: parts.join("; ") }] };
+          },
+        });
+      } catch (e) {
+        console.warn("[WebMCP] Tool registration failed:", e);
+      }
+    }
+    // === WebMCP END ===
   })();
 </script>
 
