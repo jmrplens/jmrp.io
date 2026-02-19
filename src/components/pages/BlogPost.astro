@@ -125,6 +125,7 @@ const articleSchema = [
       "@id": new URL(`/blog/${post.data.slug}`, getSiteUrl()).toString(),
     },
     inLanguage: locale,
+    ...(post.data.tags.length > 0 && { keywords: post.data.tags }),
     isPartOf: {
       "@id": new URL("#website", getSiteUrl()).toString(),
     },
