@@ -943,9 +943,9 @@ Implementation of the [WebMCP proposal](https://webmachinelearning.github.io/web
 |------|---------|
 | `src/types/webmcp.ts` | TypeScript interfaces for the WebMCP API |
 | `src/utils/webmcp.ts` | Safe wrapper functions with feature detection |
-| `src/utils/webmcp-tools.ts` | Tool catalog organized by page context (~500 lines) |
+| `src/utils/webmcp-tools.ts` | Tool catalog organized by page context (~480 lines) |
 | `src/components/layout/WebMCPProvider.astro` | Astro component injected in BaseLayout |
-| `public/.well-known/webmcp.json` | Static manifest for agent discovery (29 tools) |
+| `public/.well-known/webmcp.json` | Static manifest for agent discovery (30 tools) |
 
 ### Modified files (minimal changes)
 
@@ -956,14 +956,14 @@ Implementation of the [WebMCP proposal](https://webmachinelearning.github.io/web
 | `src/components/apps/*.astro` | WebMCP block in each of 14 tool scripts |
 | `public/llms.txt`, `public/llms-full.txt` | WebMCP section |
 
-### Tool categories (29 total)
+### Tool categories (30 total)
 
 - **Site-wide (6)**: theme toggle, get theme, navigate, page info, language switch, site navigation
-- **Blog (2)**: list posts, search posts
-- **CV (5)**: summary, skills, experience, education, certifications
+- **Blog (3)**: list posts, search posts, get post tags
+- **CV (2)**: summary, section (generic by heading name)
 - **Publications (2)**: list, search
-- **Tools index (2)**: list tools, get tool info
-- **App tools (12)**: One per interactive tool (hash, base64, subnet, password, timestamp, regex, contrast, cron, CSP, cert, headers, Modbus, Nginx, WireGuard)
+- **Tools index (1)**: list available tools
+- **App tools (16)**: One per interactive tool (hash, base64 encode, base64 decode, subnet, password, timestamp, regex, contrast, cron, CSP, cert, headers, Modbus, Nginx, WireGuard, tester)
 
 ### Removal instructions
 

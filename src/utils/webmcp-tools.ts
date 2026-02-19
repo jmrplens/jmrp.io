@@ -17,17 +17,7 @@
  * @module
  */
 
-import type { WebMCPTool } from "@src/types/webmcp";
-
-/**
- * Safely extract a string value from a tool input parameter.
- * Returns the fallback if the value is undefined or null.
- */
-function inputStr(value: unknown, fallback = ""): string {
-  if (value == null) return fallback;
-  if (typeof value === "string") return value;
-  return JSON.stringify(value);
-}
+import type { WebMCPClient, WebMCPTool } from "@src/types/webmcp";
 
 // ─── Site-Wide Tools (available on every page) ───────────────────────
 
@@ -114,7 +104,7 @@ export function getSiteTools(): WebMCPTool[] {
     {
       name: "navigate-to",
       description:
-        "Navigate to a page on this site by providing a relative path (e.g. '/blog/', '/tools/', '/cv'). Only same-origin navigation is allowed.",
+        "Navigate to a page on this site by providing a relative path (e.g. '/blog/', '/tools/', '/cv'). Only same-origin navigation is allowed. Requests user confirmation before navigating.",
       inputSchema: {
         type: "object",
         properties: {
@@ -125,7 +115,14 @@ export function getSiteTools(): WebMCPTool[] {
         },
         required: ["path"],
       },
-      execute: (input: Record<string, unknown>) => {
+      execute: async (
+        input: Record<string, unknown>,
+        client?: WebMCPClient,
+      ) => {
+        const inputStr = (v: unknown, f = ""): string => {
+          if (v == null) return f;
+          return typeof v === "string" ? v : JSON.stringify(v);
+        };
         const path = inputStr(input.path, "/");
         // Security: only allow same-origin navigation
         try {
@@ -139,6 +136,28 @@ export function getSiteTools(): WebMCPTool[] {
                 },
               ],
             };
+          }
+          // Request user confirmation before navigation (spec §5.2.3)
+          if (client && typeof client.requestUserInteraction === "function") {
+            try {
+              const confirmed = await client.requestUserInteraction(
+                async () => {
+                  return confirm("Navigate to " + target.pathname + "?");
+                },
+              );
+              if (!confirmed) {
+                return {
+                  content: [
+                    {
+                      type: "text",
+                      text: "Navigation cancelled by user.",
+                    },
+                  ],
+                };
+              }
+            } catch {
+              // If requestUserInteraction fails, proceed without confirmation
+            }
           }
           globalThis.location.href = target.href;
           return {
@@ -157,7 +176,7 @@ export function getSiteTools(): WebMCPTool[] {
     {
       name: "switch-language",
       description:
-        "Switch the page language between English ('en') and Spanish ('es'). The page will reload in the selected language.",
+        "Switch the page language between English ('en') and Spanish ('es'). The page will reload in the selected language. Requests user confirmation before switching.",
       inputSchema: {
         type: "object",
         properties: {
@@ -170,7 +189,14 @@ export function getSiteTools(): WebMCPTool[] {
         },
         required: ["locale"],
       },
-      execute: (input: Record<string, unknown>) => {
+      execute: async (
+        input: Record<string, unknown>,
+        client?: WebMCPClient,
+      ) => {
+        const inputStr = (v: unknown, f = ""): string => {
+          if (v == null) return f;
+          return typeof v === "string" ? v : JSON.stringify(v);
+        };
         const targetLocale = inputStr(input.locale, "en");
         const currentPath = globalThis.location.pathname;
         const currentLocale = document.documentElement.lang;
@@ -192,6 +218,31 @@ export function getSiteTools(): WebMCPTool[] {
           newPath = currentPath.startsWith("/es/")
             ? currentPath.replace(/^\/es/, "")
             : currentPath;
+        }
+
+        // Request user confirmation before language switch (spec §5.2.3)
+        if (client && typeof client.requestUserInteraction === "function") {
+          try {
+            const confirmed = await client.requestUserInteraction(async () => {
+              return confirm(
+                "Switch language to " +
+                  (targetLocale === "es" ? "Spanish" : "English") +
+                  "?",
+              );
+            });
+            if (!confirmed) {
+              return {
+                content: [
+                  {
+                    type: "text",
+                    text: "Language switch cancelled by user.",
+                  },
+                ],
+              };
+            }
+          } catch {
+            // If requestUserInteraction fails, proceed without confirmation
+          }
         }
 
         globalThis.location.href = newPath || "/";
@@ -267,6 +318,10 @@ export function getBlogTools(): WebMCPTool[] {
         required: ["query"],
       },
       execute: (input: Record<string, unknown>) => {
+        const inputStr = (v: unknown, f = ""): string => {
+          if (v == null) return f;
+          return typeof v === "string" ? v : JSON.stringify(v);
+        };
         const query = inputStr(input.query).toLowerCase();
         const articles = [...document.querySelectorAll("article")];
         const matches = articles
@@ -364,6 +419,10 @@ export function getCVTools(): WebMCPTool[] {
         required: ["section"],
       },
       execute: (input: Record<string, unknown>) => {
+        const inputStr = (v: unknown, f = ""): string => {
+          if (v == null) return f;
+          return typeof v === "string" ? v : JSON.stringify(v);
+        };
         const sectionName = inputStr(input.section).toLowerCase();
         const headings = [...document.querySelectorAll("h2")];
         const heading = headings.find((h) =>
@@ -452,6 +511,10 @@ export function getPublicationsTools(): WebMCPTool[] {
         required: ["query"],
       },
       execute: (input: Record<string, unknown>) => {
+        const inputStr = (v: unknown, f = ""): string => {
+          if (v == null) return f;
+          return typeof v === "string" ? v : JSON.stringify(v);
+        };
         const query = inputStr(input.query).toLowerCase();
         const items = [
           ...document.querySelectorAll(
@@ -496,80 +559,52 @@ export function getToolsIndexTools(): WebMCPTool[] {
     {
       name: "list-available-tools",
       description:
-        "List all interactive tools available on the site with their name, description, category, and URL.",
-      execute: () => {
-        const toolCards = [
-          ...document.querySelectorAll(
-            "[data-tool-card], .tool-card, article a[href*='/tools/']",
-          ),
-        ];
-        const tools = toolCards.map((card) => {
-          const link = card.closest("a[href]") ?? card.querySelector("a[href]");
+        "List all interactive tools available on the site with their name, description, and URL. Fetches from the .well-known/webmcp.json manifest.",
+      execute: async () => {
+        try {
+          const res = await fetch("/.well-known/webmcp.json");
+          if (!res.ok) throw new Error("HTTP " + res.status);
+          const manifest = await res.json();
+          const tools = (manifest.tools || []).map(
+            (t: Record<string, unknown>) => ({
+              name: t.name ?? "",
+              description: t.description ?? "",
+              url: (t.annotations as Record<string, unknown>)?.url ?? "",
+            }),
+          );
           return {
-            name:
-              card.querySelector("h2, h3, .tool-title")?.textContent?.trim() ??
-              card.textContent?.trim() ??
-              "",
-            url: link?.getAttribute("href") ?? "",
-            description:
-              card.querySelector(".tool-description, p")?.textContent?.trim() ??
-              "",
+            content: [{ type: "text", text: JSON.stringify(tools) }],
           };
-        });
-        return {
-          content: [{ type: "text", text: JSON.stringify(tools) }],
-        };
+        } catch {
+          // Fallback: scrape tool cards from DOM (works on /tools/ index page)
+          const toolCards = [
+            ...document.querySelectorAll(
+              "[data-tool-card], .tool-card, article a[href*='/tools/']",
+            ),
+          ];
+          const tools = toolCards.map((card) => {
+            const link =
+              card.closest("a[href]") ?? card.querySelector("a[href]");
+            return {
+              name:
+                card
+                  .querySelector("h2, h3, .tool-title")
+                  ?.textContent?.trim() ??
+                card.textContent?.trim() ??
+                "",
+              url: link?.getAttribute("href") ?? "",
+              description:
+                card
+                  .querySelector(".tool-description, p")
+                  ?.textContent?.trim() ?? "",
+            };
+          });
+          return {
+            content: [{ type: "text", text: JSON.stringify(tools) }],
+          };
+        }
       },
       annotations: { readOnlyHint: true },
     },
   ];
-}
-
-// ─── App-Specific Tool Helpers (for inline scripts) ──────────────────
-
-/**
- * Generates the inline JavaScript string for registering a WebMCP tool
- * inside a `<script is:inline>` block. This is used by individual app
- * components to expose their functionality.
- *
- * Returns a self-contained JS snippet with feature detection that can
- * be concatenated into an existing IIFE.
- *
- * @param toolDefs - Array of tool definitions (without execute, which is inline JS)
- * @returns JavaScript source string, or empty string if no tools
- */
-export function generateAppToolRegistrationScript(
-  toolDefs: Array<{
-    name: string;
-    description: string;
-    inputSchema?: Record<string, unknown>;
-    annotations?: { readOnlyHint?: boolean };
-    executeBody: string;
-  }>,
-): string {
-  if (toolDefs.length === 0) return "";
-
-  const toolsJS = toolDefs
-    .map(
-      (t) => `{
-        name: ${JSON.stringify(t.name)},
-        description: ${JSON.stringify(t.description)},
-        inputSchema: ${JSON.stringify(t.inputSchema ?? {})},
-        annotations: ${JSON.stringify(t.annotations ?? {})},
-        execute: function(input, client) { ${t.executeBody} }
-      }`,
-    )
-    .join(",\n");
-
-  return `
-    // === WebMCP START ===
-    if (typeof navigator !== "undefined" && "modelContext" in navigator && navigator.modelContext) {
-      try {
-        var webmcpTools = [${toolsJS}];
-        for (var i = 0; i < webmcpTools.length; i++) {
-          navigator.modelContext.registerTool(webmcpTools[i]);
-        }
-      } catch(e) { console.warn("[WebMCP] App tool registration failed:", e); }
-    }
-    // === WebMCP END ===`;
 }

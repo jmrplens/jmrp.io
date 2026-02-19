@@ -24,7 +24,7 @@ lang: "es"
 <p>
   WebMCP extiende el navegador con <code>navigator.modelContext</code>,
   permitiendo a los sitios registrar herramientas que los asistentes de IA
-  pueden utilizar. Este sitio registra 29 herramientas en todas sus páginas —
+  pueden utilizar. Este sitio registra 30 herramientas en todas sus páginas —
   desde cambio de tema y navegación hasta ejecución de herramientas interactivas
   como hash, codificación y cálculo de subredes.
 </p>
@@ -39,8 +39,11 @@ lang: "es"
   </li>
   <li>
     <strong>Explorar Herramientas</strong> — El panel izquierdo lista todas las
-    herramientas registradas en esta página. Haz clic en cualquiera para ver
-    sus detalles, esquema de entrada y anotaciones.
+    herramientas registradas. Esta página del tester incluye todas las
+    herramientas no específicas de aplicación (globales del sitio, blog, CV,
+    publicaciones, índice de herramientas — 14 herramientas) para que puedas
+    probar cada categoría. Las herramientas de apps (16) solo están disponibles
+    en sus páginas respectivas ya que requieren elementos DOM específicos.
   </li>
   <li>
     <strong>Ejecutar Herramientas</strong> — Completa los parámetros de entrada
@@ -50,18 +53,18 @@ lang: "es"
   <li>
     <strong>Ver Manifiesto</strong> — Haz clic en "Cargar Manifiesto" para
     obtener e inspeccionar el archivo <code>.well-known/webmcp.json</code>,
-    que lista las 29 herramientas disponibles en el sitio.
+    que lista las 30 herramientas disponibles en el sitio.
   </li>
 </ol>
 
 <h3>Categorías de Herramientas Registradas</h3>
 <ul>
   <li><strong>Globales del sitio (6)</strong> — Cambio de tema, información de página, navegación, cambio de idioma</li>
-  <li><strong>Blog (2)</strong> — Listar publicaciones, buscar publicaciones por palabra clave</li>
-  <li><strong>CV (5)</strong> — Resumen, habilidades, experiencia, educación, certificaciones</li>
+  <li><strong>Blog (3)</strong> — Listar publicaciones, buscar publicaciones por palabra clave, obtener etiquetas</li>
+  <li><strong>CV (2)</strong> — Resumen, contenido de sección por nombre de encabezado</li>
   <li><strong>Publicaciones (2)</strong> — Listar y buscar publicaciones académicas</li>
-  <li><strong>Índice de herramientas (2)</strong> — Listar herramientas, obtener información por categoría</li>
-  <li><strong>Herramientas de apps (12)</strong> — Una por herramienta interactiva (hash, base64, subred, etc.)</li>
+  <li><strong>Índice de herramientas (1)</strong> — Listar herramientas disponibles</li>
+  <li><strong>Herramientas de apps (16)</strong> — Una por herramienta interactiva (hash, base64 codificar/decodificar, subred, etc.)</li>
 </ul>
 
 <h3>Anotaciones de Herramientas</h3>

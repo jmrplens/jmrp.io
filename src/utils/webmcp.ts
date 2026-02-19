@@ -5,6 +5,11 @@
  * feature detection and graceful fallbacks. All functions are
  * no-ops when the browser does not support WebMCP.
  *
+ * **Note**: These wrappers are not currently imported by WebMCPProvider
+ * or app component inline scripts because `<script is:inline>` blocks
+ * cannot import TypeScript modules. They remain as the canonical API
+ * surface for any future module-based consumers (e.g. Preact islands).
+ *
  * @see https://webmachinelearning.github.io/webmcp/
  * @module
  */

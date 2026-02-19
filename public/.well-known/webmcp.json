@@ -1,9 +1,18 @@
 {
-  "version": "0.1.0",
+  "version": "0.2.0",
   "name": "jmrp.io",
   "description": "Personal technical blog and portfolio with interactive developer tools, built with Astro 6. Features privacy-first tools that run entirely client-side.",
   "url": "https://jmrp.io",
   "spec": "https://webmachinelearning.github.io/webmcp/",
+  "specDate": "2026-02-12",
+  "features": [
+    "provideContext",
+    "registerTool",
+    "clearContext",
+    "requestUserInteraction",
+    "viewTransitionLifecycle",
+    "staticManifest"
+  ],
   "tools": [
     {
       "name": "get-current-theme",

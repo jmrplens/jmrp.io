@@ -208,4 +208,4 @@ Free browser-based developer tools. All processing runs client-side — no data 
 - **Content**: MDX blog posts, YAML data collections
 - **Hosting**: Static files with Cloudflare CDN
 - **Testing**: Playwright E2E + accessibility + Lighthouse audits
-- **WebMCP**: Implements the [WebMCP API proposal](https://webmachinelearning.github.io/webmcp/) for AI agent tool discovery. Manifest at `/.well-known/webmcp.json`. 29 tools: site navigation, theme control, blog/CV/publication search, and all 14 interactive tools (hash, base64, subnet, password, timestamp, regex, contrast, cron, CSP, certificates, HTTP headers, Modbus, Nginx, WireGuard).
+- **WebMCP**: Implements the [WebMCP API proposal](https://webmachinelearning.github.io/webmcp/) for AI agent tool discovery. Manifest at `/.well-known/webmcp.json`. 30 tools: site navigation, theme control, blog/CV/publication search, and 16 app-specific tools (hash, base64 encode/decode, subnet, password, timestamp, regex, contrast, cron, CSP, certificates, HTTP headers, Modbus, Nginx, WireGuard, tester).

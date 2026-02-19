@@ -52,13 +52,18 @@ export interface WebMCPClient {
 /**
  * Callback function invoked when an agent calls a tool.
  *
+ * Per spec: `callback ToolExecuteCallback = Promise<any> (object input, ModelContextClient client)`
+ * The client parameter is always passed by the browser, but typed as optional
+ * to support defensive coding in tools that don't require user interaction.
+ * The return type (`unknown`) covers both sync and async (Promise) results.
+ *
  * @param input - The input parameters matching the tool's inputSchema
  * @param client - The ModelContextClient for requesting user interaction
- * @returns A promise or value with the tool's result (typically MCP content format)
+ * @returns The tool's result (sync or async), typically MCP content format
  */
 export type WebMCPToolExecuteCallback = (
   input: Record<string, unknown>,
-  client: WebMCPClient,
+  client?: WebMCPClient,
 ) => unknown;
 
 // ─── Tool Definition ─────────────────────────────────────────────────
@@ -151,8 +156,12 @@ export interface WebMCPModelContext {
  */
 declare global {
   interface Navigator {
-    /** WebMCP ModelContext API — may be undefined if browser does not support it. */
-    modelContext?: WebMCPModelContext;
+    /**
+     * WebMCP ModelContext API — may be undefined if browser does not support it.
+     * Marked readonly per spec (`[SameObject] readonly attribute`).
+     * The optional (?) allows feature detection: `if (navigator.modelContext) { ... }`
+     */
+    readonly modelContext?: WebMCPModelContext;
   }
 }
 

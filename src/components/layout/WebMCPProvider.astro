@@ -12,8 +12,9 @@
  * - Publications tools: registered on /publications page
  * - Tools-index tools: registered on /tools/* pages
  *
- * App-specific tools (hash calculator, base64, etc.) are registered by each
- * app component's own `<script is:inline>` block, not by this provider.
+ * Special case: The WebMCP Tester page (/tools/webmcp-tester/) receives ALL
+ * tool categories so users can test every tool type from a single page.
+ * App-specific tools are still registered by each app component's own script.
  *
  * @example
  * ```astro
@@ -40,13 +41,17 @@ const isCVPage = cleanPath === "/cv" || cleanPath === "/cv/";
 const isPublicationsPage = cleanPath.startsWith("/publications");
 const isToolsPage = cleanPath.startsWith("/tools");
 
+// The tester page needs ALL tools so it can test every category
+const isTesterPage =
+  cleanPath === "/tools/webmcp-tester" || cleanPath === "/tools/webmcp-tester/";
+
 // Build combined tool list — site tools are always included
 const allTools = [
   ...getSiteTools(),
-  ...(isBlogPage ? getBlogTools() : []),
-  ...(isCVPage ? getCVTools() : []),
-  ...(isPublicationsPage ? getPublicationsTools() : []),
-  ...(isToolsPage ? getToolsIndexTools() : []),
+  ...(isBlogPage || isTesterPage ? getBlogTools() : []),
+  ...(isCVPage || isTesterPage ? getCVTools() : []),
+  ...(isPublicationsPage || isTesterPage ? getPublicationsTools() : []),
+  ...(isToolsPage || isTesterPage ? getToolsIndexTools() : []),
 ];
 
 /**
@@ -84,14 +89,6 @@ const serializedTools = allTools.map((tool) => ({
       if (!s) return;
       var d = JSON.parse(s.getAttribute("data-webmcp-tools") || "[]");
       if (!d.length) return;
-      // Inject inputStr helper used by execute functions
-      if (typeof window.inputStr === "undefined") {
-        window.inputStr = function (v, f) {
-          if (v == null) return f || "";
-          if (typeof v === "string") return v;
-          return JSON.stringify(v);
-        };
-      }
       var ns = "_wmcp_" + Math.random().toString(36).slice(2);
       window[ns] = {};
       for (var i = 0; i < d.length; i++) {
@@ -114,6 +111,21 @@ const serializedTools = allTools.map((tool) => ({
       }
       delete window[ns];
       navigator.modelContext.provideContext({ tools: t });
+
+      // View Transitions lifecycle: clear stale tools before DOM swap
+      // so agents never hit tools from the previous page.
+      // Guard ensures the handler is registered only once across navigations.
+      if (!window._wmcpTransitionHandlerSet) {
+        document.addEventListener("astro:before-swap", function () {
+          if (
+            navigator.modelContext &&
+            typeof navigator.modelContext.clearContext === "function"
+          ) {
+            navigator.modelContext.clearContext();
+          }
+        });
+        window._wmcpTransitionHandlerSet = true;
+      }
     } catch (err) {
       console.warn("[WebMCP] Provider init failed:", err);
     }

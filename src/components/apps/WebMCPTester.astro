@@ -657,14 +657,6 @@ const i18n = {
 
     // Re-execute WebMCP provider + app scripts to register tools
     function reExecuteProviderScripts() {
-      // Inject inputStr helper used by execute functions
-      if (typeof window.inputStr === "undefined") {
-        window.inputStr = function (v, f) {
-          if (v == null) return f || "";
-          if (typeof v === "string") return v;
-          return JSON.stringify(v);
-        };
-      }
       // 1. Re-execute the main provider script
       var providerScript = document.getElementById("webmcp-provider");
       if (providerScript) {
@@ -705,9 +697,8 @@ const i18n = {
       // App scripts register via navigator.modelContext.registerTool()
       // We look for inline scripts that contain the WebMCP marker
       // Use dynamic <script> creation (CSP strict-dynamic allows this)
-      var scripts = document.querySelectorAll(
-        "script[is\\:inline], script:not([src])",
-      );
+      // Note: Astro strips `is:inline` at build, so only script:not([src]) works
+      var scripts = document.querySelectorAll("script:not([src])");
       for (var s = 0; s < scripts.length; s++) {
         var src = scripts[s].textContent || "";
         if (
@@ -1026,10 +1017,33 @@ const i18n = {
         }
       }
 
+      // Validate required fields before execution
+      var schema = tool.inputSchema || {};
+      var requiredFields = schema.required || [];
+      var missingFields = [];
+      for (var r = 0; r < requiredFields.length; r++) {
+        var rKey = requiredFields[r];
+        if (input[rKey] === undefined || input[rKey] === "") {
+          missingFields.push(rKey);
+        }
+      }
+      if (missingFields.length > 0) {
+        var resultArea = detailEl.querySelector("[data-result-area]");
+        var resultOutput = detailEl.querySelector("[data-result-output]");
+        if (resultArea && resultOutput) {
+          resultArea.hidden = false;
+          resultOutput.textContent =
+            i18n.error +
+            ": Missing required fields: " +
+            missingFields.join(", ");
+        }
+        return;
+      }
+
       var client = {
-        requestUserInteraction: function (cb) {
+        requestUserInteraction: async function (cb) {
           if (typeof cb === "function") {
-            return cb();
+            return await cb();
           }
         },
       };

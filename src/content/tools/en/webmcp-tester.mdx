@@ -21,7 +21,7 @@ appComponent: "WebMCPTester"
 <h3>What is WebMCP?</h3>
 <p>
   WebMCP extends the browser with <code>navigator.modelContext</code>, enabling
-  sites to register tools that AI assistants can use. This site registers 29
+  sites to register tools that AI assistants can use. This site registers 30
   tools across all pages — from theme switching and navigation to interactive
   tool execution like hashing, encoding, and subnet calculation.
 </p>
@@ -35,9 +35,11 @@ appComponent: "WebMCPTester"
     scripts on the page.
   </li>
   <li>
-    <strong>Browse Tools</strong> — The left panel lists all tools registered
-    on this page. Click any tool to see its details, input schema, and
-    annotations.
+    <strong>Browse Tools</strong> — The left panel lists all registered tools.
+    This tester page includes all non-app tools (site-wide, blog, CV,
+    publications, tools index — 14 tools) so you can test every category.
+    App-specific tools (16) are only available on their respective tool pages
+    since they require page-specific DOM elements to function.
   </li>
   <li>
     <strong>Execute Tools</strong> — Fill in the input parameters and click
@@ -46,7 +48,7 @@ appComponent: "WebMCPTester"
   </li>
   <li>
     <strong>View Manifest</strong> — Click "Load Manifest" to fetch and
-    inspect the <code>.well-known/webmcp.json</code> file, which lists all 29
+    inspect the <code>.well-known/webmcp.json</code> file, which lists all 30
     tools available across the site.
   </li>
 </ol>
@@ -54,11 +56,11 @@ appComponent: "WebMCPTester"
 <h3>Registered Tool Categories</h3>
 <ul>
   <li><strong>Site-wide (6)</strong> — Theme toggle, page info, navigation, language switch</li>
-  <li><strong>Blog (2)</strong> — List posts, search posts by keyword</li>
-  <li><strong>CV (5)</strong> — Summary, skills, experience, education, certifications</li>
+  <li><strong>Blog (3)</strong> — List posts, search posts by keyword, get post tags</li>
+  <li><strong>CV (2)</strong> — Summary, section content by heading name</li>
   <li><strong>Publications (2)</strong> — List and search academic publications</li>
-  <li><strong>Tools Index (2)</strong> — List tools, get tool info by category</li>
-  <li><strong>App Tools (12)</strong> — One per interactive tool (hash, base64, subnet, etc.)</li>
+  <li><strong>Tools Index (1)</strong> — List available tools</li>
+  <li><strong>App Tools (16)</strong> — One per interactive tool (hash, base64 encode/decode, subnet, etc.)</li>
 </ul>
 
 <h3>Tool Annotations</h3>

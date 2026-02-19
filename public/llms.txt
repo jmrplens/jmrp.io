@@ -69,6 +69,6 @@ José Manuel Requena Plens (JMRP) is a multidisciplinary engineer building contr
 This site implements the [WebMCP API proposal](https://webmachinelearning.github.io/webmcp/) to expose interactive tool functionality to AI agents and browser assistants.
 
 - WebMCP Manifest: https://jmrp.io/.well-known/webmcp.json
-- 29 tools available across the site (6 site-wide + 5 content + 18 app-specific)
+- 30 tools available across the site (6 site-wide + 8 content + 16 app-specific)
 - All tools run client-side only (privacy-first)
 - Feature detection: tools register only if `navigator.modelContext` is supported

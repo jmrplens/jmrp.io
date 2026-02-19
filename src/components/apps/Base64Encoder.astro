@@ -1213,14 +1213,29 @@ const formats = [
             required: ["text"],
           },
           execute: async (args) => {
-            const text = args.text;
-            const urlSafe = args.urlSafe || false;
-            const bytes = textToBytes(text);
-            let encoded = toBase64(bytes);
-            if (urlSafe) {
-              encoded = encoded.replace(/\+/g, "-").replace(/\//g, "_");
+            try {
+              const text = args.text;
+              const urlSafe = args.urlSafe || false;
+              const bytes = textToBytes(text);
+              let encoded = toBase64(bytes);
+              if (urlSafe) {
+                encoded = encoded.replace(/\+/g, "-").replace(/\//g, "_");
+              }
+              return {
+                content: [
+                  { type: "text", text: JSON.stringify({ result: encoded }) },
+                ],
+              };
+            } catch (err) {
+              return {
+                content: [
+                  {
+                    type: "text",
+                    text: "Error: " + (err.message || String(err)),
+                  },
+                ],
+              };
             }
-            return { result: encoded };
           },
           annotations: { readOnlyHint: true },
         });
@@ -1239,11 +1254,26 @@ const formats = [
             required: ["encoded"],
           },
           execute: async (args) => {
-            const encoded = args.encoded;
-            const bytes = fromBase64(encoded);
-            const decoder = new TextDecoder();
-            const decoded = decoder.decode(bytes);
-            return { result: decoded };
+            try {
+              const encoded = args.encoded;
+              const bytes = fromBase64(encoded);
+              const decoder = new TextDecoder();
+              const decoded = decoder.decode(bytes);
+              return {
+                content: [
+                  { type: "text", text: JSON.stringify({ result: decoded }) },
+                ],
+              };
+            } catch (err) {
+              return {
+                content: [
+                  {
+                    type: "text",
+                    text: "Error: " + (err.message || String(err)),
+                  },
+                ],
+              };
+            }
           },
           annotations: { readOnlyHint: true },
         });
