@@ -316,7 +316,7 @@ const sampleUrl = "https://jmrp.io";
 
     {/* ── Checks by Category ── */}
     <div class="wma-checks-section">
-      <h3 class="wma-section-title">{i18n.checksLabel}</h3>
+      <h2 class="wma-section-title">{i18n.checksLabel}</h2>
       <div class="wma-checks-container"></div>
     </div>
 
@@ -325,13 +325,13 @@ const sampleUrl = "https://jmrp.io";
       class="wma-tools-section"
       hidden
     >
-      <h3 class="wma-section-title">
+      <h2 class="wma-section-title">
         <span
           class="i-mdi:tools"
           aria-hidden="true"
         ></span>
         <span class="wma-tools-title-text">{i18n.toolDefinitions}</span>
-      </h3>
+      </h2>
       <div class="wma-tools-table-wrap">
         <table class="wma-tools-table">
           <thead>
@@ -353,13 +353,13 @@ const sampleUrl = "https://jmrp.io";
       class="wma-pages-section"
       hidden
     >
-      <h3 class="wma-section-title">
+      <h2 class="wma-section-title">
         <span
           class="i-mdi:file-search-outline"
           aria-hidden="true"
         ></span>
         <span class="wma-pages-title-text">{i18n.pageAnalysis}</span>
-      </h3>
+      </h2>
       <div class="wma-pages-table-wrap">
         <table class="wma-pages-table">
           <thead>
@@ -383,13 +383,13 @@ const sampleUrl = "https://jmrp.io";
       class="wma-recommendations"
       hidden
     >
-      <h3 class="wma-section-title">
+      <h2 class="wma-section-title">
         <span
           class="i-mdi:lightbulb-on-outline"
           aria-hidden="true"
         ></span>
         {i18n.recommendations}
-      </h3>
+      </h2>
       <ol class="wma-rec-list"></ol>
     </div>
 
@@ -473,13 +473,6 @@ const sampleUrl = "https://jmrp.io";
         }
       }
     })();
-    /** Create a scoped DOM element with optional class. */
-    function ce(tag, cls) {
-      var el = document.createElement(tag);
-      if (cls) el.className = cls;
-      if (scopeAttr) el.setAttribute(scopeAttr, "");
-      return el;
-    }
     /** Propagate Astro scope attribute to el and all descendants. */
     function scopeAll(el) {
       if (!scopeAttr || !el) return;
@@ -561,17 +554,13 @@ const sampleUrl = "https://jmrp.io";
      * @param {string} [method]
      * @returns {Promise<{status:number, headers:Object, body:string, url:string}>}
      */
-    function proxyFetch(targetUrl, method) {
+    async function proxyFetch(targetUrl, method) {
       var params = "?url=" + encodeURIComponent(targetUrl);
       if (method === "HEAD") params += "&method=HEAD";
-      return fetch("/api/proxy/fetch" + params)
-        .then(function (res) {
-          return res.json();
-        })
-        .then(function (data) {
-          if (data.error) throw new Error(data.error);
-          return data;
-        });
+      var res = await fetch("/api/proxy/fetch" + params);
+      var data = await res.json();
+      if (data.error) throw new Error(data.error);
+      return data;
     }
 
     /* ── HTML Parser Helpers ── */
@@ -1303,7 +1292,7 @@ const sampleUrl = "https://jmrp.io";
 
       // External JS scanning
       if (options.scanJs) {
-        await scanExternalScripts(doc, url, origin, page);
+        await scanExternalScripts(doc, url, page);
       }
 
       // Declarative elements
@@ -1350,7 +1339,7 @@ const sampleUrl = "https://jmrp.io";
       return page;
     }
 
-    async function scanExternalScripts(doc, pageUrl, origin, page) {
+    async function scanExternalScripts(doc, pageUrl, page) {
       var scripts = doc.querySelectorAll("script[src]");
       var candidates = [];
       scripts.forEach(function (script) {
@@ -1925,11 +1914,7 @@ const sampleUrl = "https://jmrp.io";
               .join(", "),
         );
       }
-      var noSchema = result.tools.filter(function (t) {
-        return !t.has_input_schema && t.param_count === 0;
-      });
-      // Only suggest schema for tools that might need parameters
-      // (if they have no params and no schema, that's fine)
+      // Tools with no schema and no params are fine — no recommendation needed
 
       if (recs.length === 0) {
         recsSection.hidden = true;
@@ -2173,9 +2158,9 @@ const sampleUrl = "https://jmrp.io";
   }
 
   .wma-url-input:focus {
-    border-color: var(--color-primary);
     outline: 2px solid rgb(179 137 245 / 30%);
     outline-offset: 1px;
+    border-color: var(--color-primary);
   }
 
   .wma-analyze-btn {
@@ -2199,7 +2184,7 @@ const sampleUrl = "https://jmrp.io";
 
   .wma-analyze-btn:disabled {
     cursor: not-allowed;
-    opacity: 0.7;
+    opacity: 70%;
   }
 
   .wma-analyze-btn span[class*="i-"] {
@@ -2250,9 +2235,9 @@ const sampleUrl = "https://jmrp.io";
   }
 
   .wma-pages-input:focus {
-    border-color: var(--color-primary);
     outline: 2px solid rgb(179 137 245 / 30%);
     outline-offset: 1px;
+    border-color: var(--color-primary);
   }
 
   /* ── Progress ── */
@@ -2374,12 +2359,15 @@ const sampleUrl = "https://jmrp.io";
   .wma-count-pass {
     color: var(--color-success, #10b981);
   }
+
   .wma-count-warn {
     color: var(--color-warning, #f59e0b);
   }
+
   .wma-count-err {
     color: var(--color-error, #ef4444);
   }
+
   .wma-count-info {
     color: var(--color-info, #3b82f6);
   }
@@ -2500,9 +2488,11 @@ const sampleUrl = "https://jmrp.io";
   .wma-fill-pass {
     background: var(--color-success, #10b981);
   }
+
   .wma-fill-warn {
     background: var(--color-warning, #f59e0b);
   }
+
   .wma-fill-err {
     background: var(--color-error, #ef4444);
   }
@@ -2511,63 +2501,83 @@ const sampleUrl = "https://jmrp.io";
   .wma-w-0 {
     width: 0%;
   }
+
   .wma-w-5 {
     width: 5%;
   }
+
   .wma-w-10 {
     width: 10%;
   }
+
   .wma-w-15 {
     width: 15%;
   }
+
   .wma-w-20 {
     width: 20%;
   }
+
   .wma-w-25 {
     width: 25%;
   }
+
   .wma-w-30 {
     width: 30%;
   }
+
   .wma-w-35 {
     width: 35%;
   }
+
   .wma-w-40 {
     width: 40%;
   }
+
   .wma-w-45 {
     width: 45%;
   }
+
   .wma-w-50 {
     width: 50%;
   }
+
   .wma-w-55 {
     width: 55%;
   }
+
   .wma-w-60 {
     width: 60%;
   }
+
   .wma-w-65 {
     width: 65%;
   }
+
   .wma-w-70 {
     width: 70%;
   }
+
   .wma-w-75 {
     width: 75%;
   }
+
   .wma-w-80 {
     width: 80%;
   }
+
   .wma-w-85 {
     width: 85%;
   }
+
   .wma-w-90 {
     width: 90%;
   }
+
   .wma-w-95 {
     width: 95%;
   }
+
   .wma-w-100 {
     width: 100%;
   }
@@ -2597,12 +2607,15 @@ const sampleUrl = "https://jmrp.io";
   :global(.wma-icon-pass) {
     color: var(--color-success, #10b981);
   }
+
   :global(.wma-icon-warn) {
     color: var(--color-warning, #f59e0b);
   }
+
   :global(.wma-icon-err) {
     color: var(--color-error, #ef4444);
   }
+
   :global(.wma-icon-info) {
     color: var(--color-info, #3b82f6);
   }
@@ -2664,17 +2677,20 @@ const sampleUrl = "https://jmrp.io";
 
   /* Badges */
   .wma-badge-pass {
+    font-weight: var(--fw-medium);
     color: var(--color-success, #10b981);
-    font-weight: var(--fw-medium);
   }
+
   .wma-badge-warn {
+    font-weight: var(--fw-medium);
     color: var(--color-warning, #f59e0b);
-    font-weight: var(--fw-medium);
   }
+
   .wma-badge-err {
-    color: var(--color-error, #ef4444);
     font-weight: var(--fw-medium);
+    color: var(--color-error, #ef4444);
   }
+
   .wma-badge-muted {
     color: var(--color-text-muted);
   }

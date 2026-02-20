@@ -53,14 +53,6 @@ const REQUEST_TIMEOUT = 15_000; // 15 seconds
 const RATE_LIMIT_WINDOW = 60_000; // 1 minute
 const RATE_LIMIT_MAX = 30; // requests per window per IP
 
-/** Allowed site origins that may use this proxy. */
-const ALLOWED_ORIGINS = new Set([
-  "https://jmrp.io",
-  "https://www.jmrp.io",
-  "http://localhost:4321", // dev server
-  "http://localhost:4322", // preview server
-]);
-
 /**
  * Hostnames exempt from SSRF private-IP checks.
  * The site's own domain resolves to loopback (::1) on this server,

@@ -32,6 +32,7 @@ export default [
       "**/lh-deploy/**",
       "**/.scannerwork/**",
       "src/assets/nedry-assets.ts", // Base64-encoded assets (large file, no logic)
+      "scripts/webmcp-proxy.mjs", // Development-only WebMCP proxy server
     ],
   },
 

@@ -41,6 +41,7 @@ export default defineConfig({
         /content-integrity\.spec\.ts/,
         /ui-components\.spec\.ts/,
         /edge-cases\.spec\.ts/,
+        /webmcp\.spec\.ts/,
       ],
     },
     {

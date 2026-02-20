@@ -141,6 +141,7 @@ export function getSiteTools(): WebMCPTool[] {
           if (client && typeof client.requestUserInteraction === "function") {
             try {
               const confirmed = await client.requestUserInteraction(
+                // eslint-disable-next-line @typescript-eslint/require-await
                 async () => {
                   return confirm("Navigate to " + target.pathname + "?");
                 },
@@ -223,6 +224,7 @@ export function getSiteTools(): WebMCPTool[] {
         // Request user confirmation before language switch (spec §5.2.3)
         if (client && typeof client.requestUserInteraction === "function") {
           try {
+            // eslint-disable-next-line @typescript-eslint/require-await
             const confirmed = await client.requestUserInteraction(async () => {
               return confirm(
                 "Switch language to " +
