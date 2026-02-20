@@ -120,8 +120,8 @@ importers:
         specifier: ^1.0.7
         version: 1.0.7(eslint@10.0.0(jiti@2.6.1))(typescript@5.9.3)
       '@iconify-json/devicon':
-        specifier: ^1.2.58
-        version: 1.2.58
+        specifier: ^1.2.59
+        version: 1.2.59
       '@iconify-json/tabler':
         specifier: ^1.2.26
         version: 1.2.26
@@ -1439,8 +1439,8 @@ packages:
   '@iconify-json/carbon@1.2.18':
     resolution: {integrity: sha512-Grb13E6r/RqTEV4Sqd/BQR2FUt57U2WLuticJ5H8JbTdHLop1LmdePu3EJJA3Xi8DcWRbD6OnC133hKfOwlgtg==}
 
-  '@iconify-json/devicon@1.2.58':
-    resolution: {integrity: sha512-hgbYB4a2GI5VPN9rcLnrwCLP9iXIRLnKUpDFf0+P/O7CPyR/jFdCvZbIckvsbXAyBWnQTaWw+C6dq8NfO9P0Jw==}
+  '@iconify-json/devicon@1.2.59':
+    resolution: {integrity: sha512-OBa/V8rB3zyDmT0W+XAdF/20ErDIL8hxwtPjxv6fRKkokqdWhfTJiRXtS6YZXp8M03scjT+uugd7jonIgfbnfg==}
 
   '@iconify-json/fa-brands@1.2.2':
     resolution: {integrity: sha512-Aze0j7l95gmOLdeC4L+8MvvpN3+QmAVk9IuTJN170zYH5I7jS0jGSIMFsf0KE8vGbG8jPpXkmmDq7qQU8Rymnw==}
@@ -8708,7 +8708,7 @@ snapshots:
     dependencies:
       '@iconify/types': 2.0.0
 
-  '@iconify-json/devicon@1.2.58':
+  '@iconify-json/devicon@1.2.59':
     dependencies:
       '@iconify/types': 2.0.0
 

@@ -99,7 +99,7 @@
     "@axe-core/playwright": "^4.11.1",
     "@cspell/dict-es-es": "^3.0.8",
     "@gorazdo/eslint-plugin-preact": "^1.0.7",
-    "@iconify-json/devicon": "^1.2.58",
+    "@iconify-json/devicon": "^1.2.59",
     "@iconify-json/tabler": "^1.2.26",
     "@lhci/cli": "^0.15.1",
     "@playwright/test": "^1.58.2",
