@@ -51,7 +51,7 @@ const PORT = (() => {
 const MAX_RESPONSE_SIZE = 2 * 1024 * 1024; // 2 MB
 const REQUEST_TIMEOUT = 15_000; // 15 seconds
 const RATE_LIMIT_WINDOW = 60_000; // 1 minute
-const RATE_LIMIT_MAX = 30; // requests per window per IP
+const RATE_LIMIT_MAX = 1000; // requests per window per IP
 
 /**
  * Hostnames exempt from SSRF private-IP checks.

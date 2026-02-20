@@ -54,23 +54,6 @@ const navLabelKeyMap: Record<string, TranslationKey> = {
       <span class="text-mono">{logoText}</span>
     </a>
     <div class="nav-right">
-      <button
-        id="menu-toggle"
-        type="button"
-        aria-label={t("aria.toggleNav")}
-        aria-controls="nav-links"
-        aria-expanded="false"
-        class="menu-toggle"
-      >
-        <span
-          class="i-fa-solid:bars icon-bars"
-          aria-hidden="true"
-        ></span>
-        <span
-          class="i-fa-solid:times icon-times"
-          aria-hidden="true"
-        ></span>
-      </button>
       <ul
         id="nav-links"
         class="nav-links"
@@ -95,6 +78,23 @@ const navLabelKeyMap: Record<string, TranslationKey> = {
       </ul>
       <LanguageSwitcher />
       <ThemeToggle />
+      <button
+        id="menu-toggle"
+        type="button"
+        aria-label={t("aria.toggleNav")}
+        aria-controls="nav-links"
+        aria-expanded="false"
+        class="menu-toggle"
+      >
+        <span
+          class="i-fa-solid:bars icon-bars"
+          aria-hidden="true"
+        ></span>
+        <span
+          class="i-fa-solid:times icon-times"
+          aria-hidden="true"
+        ></span>
+      </button>
     </div>
   </nav>
 </header>

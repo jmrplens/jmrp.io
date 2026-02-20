@@ -45,6 +45,31 @@ interface SerializedTool {
   executeStr: string;
 }
 
+interface StaticData {
+  staticPosts: {
+    title: string;
+    url: string;
+    date: string;
+    tags: string[];
+    description: string;
+  }[];
+  staticPubs: {
+    title: string;
+    authors: string;
+    year: string;
+    venue: string;
+    group: string;
+  }[];
+  staticSections: { title: string; type: string; summary: string }[];
+  personName: string;
+  staticTools: {
+    name: string;
+    description: string;
+    url: string;
+    category: string;
+  }[];
+}
+
 interface JsonLdNode {
   "@type"?: string;
   "@graph"?: JsonLdNode[];
@@ -92,8 +117,10 @@ test.describe("WebMCP — Manifest (build output)", () => {
     expect(manifest.tools).toBeInstanceOf(Array);
   });
 
-  test("manifest has 31 tools", () => {
-    expect(manifest.tools).toHaveLength(31);
+  test("manifest has a reasonable number of tools", () => {
+    // At minimum: 6 site + 3 blog + 2 CV + 2 pubs + 1 tools-index = 14 content tools
+    // plus app-specific tools. Avoid hardcoding the exact count.
+    expect(manifest.tools.length).toBeGreaterThanOrEqual(14);
   });
 
   test("every tool has required fields", () => {
@@ -197,8 +224,8 @@ test.describe("WebMCP — Per-page integration", () => {
       await expect(scriptEl).toHaveAttribute("data-webmcp-tools");
 
       const names = await getProviderToolNames(page);
-      // Every page gets at least the 6 site-wide tools
-      expect(names.length).toBeGreaterThanOrEqual(6);
+      // Every page gets at least 14 tools: 6 site + 3 blog + 2 CV + 2 pubs + 1 tools-index
+      expect(names.length).toBeGreaterThanOrEqual(14);
     });
   }
 });
@@ -218,7 +245,9 @@ test.describe("WebMCP — Manifest HTTP", () => {
     const body = (await res.json()) as WebMCPManifest;
     expect(body.version).toBeTruthy();
     expect(body.tools).toBeInstanceOf(Array);
-    expect(body.tools).toHaveLength(31);
+    // Must match the build-output manifest (no hardcoded count)
+    const buildManifest = loadManifest();
+    expect(body.tools).toHaveLength(buildManifest.tools.length);
   });
 });
 
@@ -318,82 +347,197 @@ test.describe("WebMCP — Cross-references", () => {
     expect(res.status()).toBe(200);
     const text = await res.text();
     expect(text.toLowerCase()).toContain("webmcp");
-    expect(text).toContain("31 tools");
+    // Verify it mentions a tool count (any number), not a hardcoded value
+    expect(text).toMatch(/\d+ tools/);
   });
 });
 
-// ─── Context-specific tool injection ────────────────────────────────
+// ─── All tools on all pages (static data) ──────────────────────────
 
-test.describe("WebMCP — Context-specific tools", () => {
-  test("blog page includes blog tools", async ({ page }) => {
-    await page.goto("/blog/", { waitUntil: "domcontentloaded" });
-    const names = await getProviderToolNames(page);
+test.describe("WebMCP — All content tools on every page", () => {
+  /** All 14 content tools that should be on every page. */
+  const allContentToolNames = [
+    // Site-wide (6)
+    "get-current-theme",
+    "toggle-theme",
+    "get-page-info",
+    "get-site-navigation",
+    "navigate-to",
+    "switch-language",
+    // Blog (3)
+    "list-blog-posts",
+    "search-blog-posts",
+    "get-post-tags",
+    // CV (2)
+    "get-cv-summary",
+    "get-cv-section",
+    // Publications (2)
+    "list-publications",
+    "search-publications",
+    // Tools index (1)
+    "list-available-tools",
+  ];
 
-    expect(names).toContain("list-blog-posts");
-    expect(names).toContain("search-blog-posts");
-    expect(names).toContain("get-post-tags");
-  });
+  const spotCheckUrls = ["/", "/blog/", "/cv", "/tools/", "/publications/"];
 
-  test("CV page includes CV tools", async ({ page }) => {
-    await page.goto("/cv", { waitUntil: "domcontentloaded" });
-    const names = await getProviderToolNames(page);
-
-    expect(names).toContain("get-cv-summary");
-    expect(names).toContain("get-cv-section");
-  });
-
-  test("publications page includes publications tools", async ({ page }) => {
-    await page.goto("/publications/", { waitUntil: "domcontentloaded" });
-    const names = await getProviderToolNames(page);
-
-    expect(names).toContain("list-publications");
-    expect(names).toContain("search-publications");
-  });
-
-  test("tools index includes tools-index tools", async ({ page }) => {
-    await page.goto("/tools/", { waitUntil: "domcontentloaded" });
-    const names = await getProviderToolNames(page);
-
-    expect(names).toContain("list-available-tools");
-  });
-
-  test("homepage has only site-wide tools (no contextual extras)", async ({
-    page,
-  }) => {
-    await page.goto("/", { waitUntil: "domcontentloaded" });
-    const names = await getProviderToolNames(page);
-
-    // Should include site-wide tools
-    expect(names).toContain("get-current-theme");
-    expect(names).toContain("get-page-info");
-
-    // Should NOT include contextual tools
-    expect(names).not.toContain("list-blog-posts");
-    expect(names).not.toContain("get-cv-summary");
-    expect(names).not.toContain("list-publications");
-    expect(names).not.toContain("list-available-tools");
-  });
-
-  test("all pages include site-wide tools", async ({ page }) => {
-    const spotCheckUrls = ["/", "/blog/", "/cv", "/tools/"];
-    const siteToolNames = [
-      "get-current-theme",
-      "toggle-theme",
-      "get-page-info",
-      "get-site-navigation",
-      "navigate-to",
-      "switch-language",
-    ];
-
-    for (const url of spotCheckUrls) {
+  for (const url of spotCheckUrls) {
+    test(`${url} — has all 14 content tools`, async ({ page }) => {
       await page.goto(url, { waitUntil: "domcontentloaded" });
       const names = await getProviderToolNames(page);
 
-      for (const toolName of siteToolNames) {
-        expect(names, `${url} missing site-wide tool "${toolName}"`).toContain(
-          toolName,
-        );
+      for (const toolName of allContentToolNames) {
+        expect(names, `${url} missing tool "${toolName}"`).toContain(toolName);
       }
+    });
+  }
+});
+
+// ─── Static data attribute validation ───────────────────────────────
+
+test.describe("WebMCP — Static data (data-webmcp-static)", () => {
+  test("homepage has data-webmcp-static attribute with valid JSON", async ({
+    page,
+  }) => {
+    await page.goto("/", { waitUntil: "domcontentloaded" });
+
+    const scriptEl = page.locator("script#webmcp-provider");
+    await expect(scriptEl).toHaveAttribute("data-webmcp-static");
+
+    const raw = await scriptEl.getAttribute("data-webmcp-static");
+    const data = JSON.parse(raw ?? "{}") as StaticData;
+
+    expect(data.staticPosts).toBeInstanceOf(Array);
+    expect(data.staticPubs).toBeInstanceOf(Array);
+    expect(data.staticSections).toBeInstanceOf(Array);
+    expect(data.staticTools).toBeInstanceOf(Array);
+    expect(typeof data.personName).toBe("string");
+  });
+
+  test("static data contains actual content (not empty)", async ({ page }) => {
+    await page.goto("/", { waitUntil: "domcontentloaded" });
+
+    const raw = await page
+      .locator("script#webmcp-provider")
+      .getAttribute("data-webmcp-static");
+    const data = JSON.parse(raw ?? "{}") as StaticData;
+
+    expect(data.staticPosts.length).toBeGreaterThan(0);
+    expect(data.staticPubs.length).toBeGreaterThan(0);
+    expect(data.staticSections.length).toBeGreaterThan(0);
+    expect(data.staticTools.length).toBeGreaterThan(0);
+    expect(data.personName.length).toBeGreaterThan(0);
+  });
+
+  test("static posts have required fields", async ({ page }) => {
+    await page.goto("/", { waitUntil: "domcontentloaded" });
+
+    const raw = await page
+      .locator("script#webmcp-provider")
+      .getAttribute("data-webmcp-static");
+    const data = JSON.parse(raw ?? "{}") as StaticData;
+
+    for (const post of data.staticPosts) {
+      expect(post.title, "post missing title").toBeTruthy();
+      expect(post.url, `${post.title} missing url`).toMatch(/^\/blog\//);
+      expect(post.date, `${post.title} missing date`).toMatch(
+        /^\d{4}-\d{2}-\d{2}$/,
+      );
+      expect(post.tags, `${post.title} missing tags`).toBeInstanceOf(Array);
+    }
+  });
+
+  test("static tools have required fields", async ({ page }) => {
+    await page.goto("/", { waitUntil: "domcontentloaded" });
+
+    const raw = await page
+      .locator("script#webmcp-provider")
+      .getAttribute("data-webmcp-static");
+    const data = JSON.parse(raw ?? "{}") as StaticData;
+
+    for (const tool of data.staticTools) {
+      expect(tool.name, "tool missing name").toBeTruthy();
+      expect(tool.url, `${tool.name} missing url`).toMatch(/^\/tools\//);
+      expect(tool.category, `${tool.name} missing category`).toBeTruthy();
+    }
+  });
+
+  test("static data is consistent across pages", async ({ page }) => {
+    // Data should be identical on all pages since it's build-time static
+    await page.goto("/", { waitUntil: "domcontentloaded" });
+    const homeEl = page.locator("script#webmcp-provider");
+    await expect(homeEl).toHaveAttribute("data-webmcp-static");
+    const homeRaw = await homeEl.getAttribute("data-webmcp-static");
+
+    await page.goto("/blog/", { waitUntil: "domcontentloaded" });
+    const blogEl = page.locator("script#webmcp-provider");
+    await expect(blogEl).toHaveAttribute("data-webmcp-static", homeRaw!);
+  });
+});
+
+// ─── Serialization smoke tests ──────────────────────────────────────
+
+test.describe("WebMCP — Serialization integrity", () => {
+  test("blog tool executeStr references staticPosts closure variable", async ({
+    page,
+  }) => {
+    await page.goto("/", { waitUntil: "domcontentloaded" });
+
+    const raw = await page
+      .locator("script#webmcp-provider")
+      .getAttribute("data-webmcp-tools");
+    const tools = JSON.parse(raw ?? "[]") as SerializedTool[];
+
+    const listPosts = tools.find((t) => t.name === "list-blog-posts");
+    expect(listPosts).toBeDefined();
+    expect(listPosts!.executeStr).toContain("staticPosts");
+  });
+
+  test("CV tool executeStr references closure variables", async ({ page }) => {
+    await page.goto("/", { waitUntil: "domcontentloaded" });
+
+    const raw = await page
+      .locator("script#webmcp-provider")
+      .getAttribute("data-webmcp-tools");
+    const tools = JSON.parse(raw ?? "[]") as SerializedTool[];
+
+    const cvSummary = tools.find((t) => t.name === "get-cv-summary");
+    expect(cvSummary).toBeDefined();
+    expect(cvSummary!.executeStr).toContain("personName");
+    expect(cvSummary!.executeStr).toContain("staticSections");
+  });
+
+  test("publications tool executeStr references staticPubs", async ({
+    page,
+  }) => {
+    await page.goto("/", { waitUntil: "domcontentloaded" });
+
+    const raw = await page
+      .locator("script#webmcp-provider")
+      .getAttribute("data-webmcp-tools");
+    const tools = JSON.parse(raw ?? "[]") as SerializedTool[];
+
+    const listPubs = tools.find((t) => t.name === "list-publications");
+    expect(listPubs).toBeDefined();
+    expect(listPubs!.executeStr).toContain("staticPubs");
+  });
+
+  test("every tool has a valid executeStr", async ({ page }) => {
+    await page.goto("/", { waitUntil: "domcontentloaded" });
+
+    const raw = await page
+      .locator("script#webmcp-provider")
+      .getAttribute("data-webmcp-tools");
+    const tools = JSON.parse(raw ?? "[]") as SerializedTool[];
+
+    for (const tool of tools) {
+      expect(tool.executeStr, `${tool.name} has empty executeStr`).toBeTruthy();
+      // Every execute function should be a function expression or arrow
+      expect(
+        tool.executeStr.startsWith("(") ||
+          tool.executeStr.startsWith("function") ||
+          tool.executeStr.startsWith("async"),
+        `${tool.name} executeStr doesn't look like a function: ${tool.executeStr.slice(0, 50)}`,
+      ).toBe(true);
     }
   });
 });

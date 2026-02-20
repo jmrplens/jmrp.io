@@ -92,18 +92,15 @@
     },
     {
       "name": "list-blog-posts",
-      "description": "List all blog posts visible on the current page with their title, URL, date, tags, and description.",
+      "description": "List all blog posts with their title, URL, date, tags, and description. Works from any page.",
       "annotations": {
         "readOnlyHint": true
       },
-      "availableOn": [
-        "/blog/",
-        "/es/blog/"
-      ]
+      "availableOn": "*"
     },
     {
       "name": "search-blog-posts",
-      "description": "Search blog posts by keyword in title and description.",
+      "description": "Search blog posts by keyword in title, description, and tags. Works from any page.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -119,38 +116,27 @@
       "annotations": {
         "readOnlyHint": true
       },
-      "availableOn": [
-        "/blog/",
-        "/es/blog/"
-      ]
+      "availableOn": "*"
     },
     {
       "name": "get-post-tags",
-      "description": "Get all unique blog post tags available on the current page.",
+      "description": "Get all unique blog post tags with their occurrence count. Works from any page.",
       "annotations": {
         "readOnlyHint": true
       },
-      "availableOn": [
-        "/blog/",
-        "/es/blog/"
-      ]
+      "availableOn": "*"
     },
     {
       "name": "get-cv-summary",
-      "description": "Get a summary of the CV/resume including name, job title, and all section headings.",
+      "description": "Get a summary of the CV/resume including name and all section headings. Works from any page.",
       "annotations": {
         "readOnlyHint": true
       },
-      "availableOn": [
-        "/cv",
-        "/cv/",
-        "/es/cv",
-        "/es/cv/"
-      ]
+      "availableOn": "*"
     },
     {
       "name": "get-cv-section",
-      "description": "Get the content of a specific CV section by its heading name.",
+      "description": "Get the content summary of a specific CV section by its heading name. Works from any page.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -166,29 +152,19 @@
       "annotations": {
         "readOnlyHint": true
       },
-      "availableOn": [
-        "/cv",
-        "/cv/",
-        "/es/cv",
-        "/es/cv/"
-      ]
+      "availableOn": "*"
     },
     {
       "name": "list-publications",
-      "description": "List all academic publications on the page with title, authors, year, and venue.",
+      "description": "List all academic publications with title, authors, year, and venue. Works from any page.",
       "annotations": {
         "readOnlyHint": true
       },
-      "availableOn": [
-        "/publications",
-        "/publications/",
-        "/es/publications",
-        "/es/publications/"
-      ]
+      "availableOn": "*"
     },
     {
       "name": "search-publications",
-      "description": "Search publications by keyword in title, authors, or venue.",
+      "description": "Search publications by keyword in title, authors, or venue. Works from any page.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -204,23 +180,15 @@
       "annotations": {
         "readOnlyHint": true
       },
-      "availableOn": [
-        "/publications",
-        "/publications/",
-        "/es/publications",
-        "/es/publications/"
-      ]
+      "availableOn": "*"
     },
     {
       "name": "list-available-tools",
-      "description": "List all interactive tools available on the site with their name, description, category, and URL.",
+      "description": "List all interactive tools available on the site with their name, description, and URL. Works from any page.",
       "annotations": {
         "readOnlyHint": true
       },
-      "availableOn": [
-        "/tools/",
-        "/es/tools/"
-      ]
+      "availableOn": "*"
     },
     {
       "name": "calculate-hash",

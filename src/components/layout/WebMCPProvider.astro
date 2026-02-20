@@ -7,10 +7,10 @@
  *
  * Automatically determines which tools to register based on the current page path:
  * - Site tools: registered on every page
- * - Blog tools: registered on /blog/* pages
- * - CV tools: registered on /cv page
- * - Publications tools: registered on /publications page
- * - Tools-index tools: registered on /tools/* pages
+ * - Blog tools: registered on every page (static data from build time)
+ * - Tools-index tools: registered on every page (static data from build time)
+ * - CV tools: registered on every page (static data from build time)
+ * - Publications tools: registered on every page (static data from build time)
  *
  * Special case: The WebMCP Tester page (/tools/webmcp-tester/) receives ALL
  * tool categories so users can test every tool type from a single page.
@@ -21,6 +21,17 @@
  * <WebMCPProvider />
  * ```
  */
+import { getLangFromUrl } from "@i18n/utils";
+import { getPostsForLocale } from "@utils/blog";
+import { getCVData } from "@utils/cv";
+import { getPublications } from "@utils/publications";
+import { getToolsForLocale } from "@utils/tools";
+import type {
+  StaticCVSection,
+  StaticPostData,
+  StaticPublicationData,
+  StaticToolData,
+} from "@utils/webmcp-tools";
 import {
   getBlogTools,
   getCVTools,
@@ -29,29 +40,89 @@ import {
   getToolsIndexTools,
 } from "@utils/webmcp-tools";
 
-const pathname = Astro.url.pathname;
+const locale = getLangFromUrl(Astro.url);
 
-// Determine which contextual tools to include based on current route
-const stripLocale = (p: string): string =>
-  p.replace(/^\/es\//, "/").replace(/^\/es$/, "/");
-const cleanPath = stripLocale(pathname);
+// ── Blog: fetch all published posts at build time ──
+const localizedPosts = await getPostsForLocale(locale);
+const staticPosts: StaticPostData[] = localizedPosts.map(({ post }) => ({
+  title: post.data.title,
+  url: `/blog/${post.data.slug}/`,
+  date: post.data.publishedDate.toISOString().split("T")[0],
+  tags: post.data.tags,
+  description: post.data.description ?? "",
+}));
 
-const isBlogPage = cleanPath.startsWith("/blog");
-const isCVPage = cleanPath === "/cv" || cleanPath === "/cv/";
-const isPublicationsPage = cleanPath.startsWith("/publications");
-const isToolsPage = cleanPath.startsWith("/tools");
+// ── Publications: fetch and flatten at build time ──
+const pubGroups = await getPublications(locale);
+const staticPubs: StaticPublicationData[] = pubGroups.flatMap((group) =>
+  group.items.map((item) => ({
+    title: item.title,
+    authors: (item.author ?? [])
+      .map((a) => [a.given, a.family].filter(Boolean).join(" "))
+      .join(", "),
+    year: String(item.issued?.["date-parts"]?.[0]?.[0] ?? ""),
+    venue:
+      (item["container-title"] as string) ?? (item.publisher as string) ?? "",
+    group: group.title,
+  })),
+);
 
-// The tester page needs ALL tools so it can test every category
-const isTesterPage =
-  cleanPath === "/tools/webmcp-tester" || cleanPath === "/tools/webmcp-tester/";
+// ── CV: extract section summaries at build time ──
+const cvData = await getCVData(locale);
+const personName =
+  cvData
+    .find((s) => s.type === "map")
+    ?.contents.find(
+      (item) => "name" in item && item.name.toLowerCase().includes("full name"),
+    )?.value ?? "";
+const staticCVSections: StaticCVSection[] = cvData.map((section) => {
+  let summary = "";
+  switch (section.type) {
+    case "map": {
+      summary = section.contents
+        .map((item) => `${item.name}: ${item.value ?? ""}`)
+        .join("; ");
+      break;
+    }
+    case "time_table": {
+      const parts = section.contents.map((item) => {
+        const inst = item.institution ? " @ " + item.institution : "";
+        const yr = item.year ? " (" + item.year + ")" : "";
+        return item.title + inst + yr;
+      });
+      summary = parts.join("; ");
+      break;
+    }
+    case "list_groups":
+    case "certificate_list": {
+      summary = section.contents
+        .map(
+          (group) =>
+            `${group.category}: ${group.items.map((i) => i.name).join(", ")}`,
+        )
+        .join("; ");
+      break;
+    }
+  }
+  return { title: section.title, type: section.type, summary };
+});
 
-// Build combined tool list — site tools are always included
+// ── Tools: fetch tool listing at build time ──
+const localizedTools = await getToolsForLocale(locale);
+const staticTools: StaticToolData[] = localizedTools.map(({ tool }) => ({
+  name: tool.data.title,
+  description: tool.data.description,
+  url: `/tools/${tool.data.slug}/`,
+  category: tool.data.category,
+}));
+
+// Build combined tool list — all tools registered on every page
 const allTools = [
   ...getSiteTools(),
-  ...(isBlogPage || isTesterPage ? getBlogTools() : []),
-  ...(isCVPage || isTesterPage ? getCVTools() : []),
-  ...(isPublicationsPage || isTesterPage ? getPublicationsTools() : []),
-  ...(isToolsPage || isTesterPage ? getToolsIndexTools() : []),
+  ...getBlogTools(staticPosts),
+  ...getToolsIndexTools(staticTools),
+  ...getCVTools(staticCVSections, personName),
+  ...getPublicationsTools(staticPubs),
 ];
 
 /**
@@ -61,6 +132,10 @@ const allTools = [
  *
  * Instead, we serialize the full tool array as a JSON-compatible structure
  * where `execute` is stored as a string body, then reconstruct on the client.
+ *
+ * Static data (posts, publications, CV, tools) is serialized separately into
+ * `data-webmcp-static`. The client wraps all function evaluations in an IIFE
+ * that provides the closure variables the serialized functions reference.
  */
 const serializedTools = allTools.map((tool) => ({
   name: tool.name,
@@ -69,12 +144,21 @@ const serializedTools = allTools.map((tool) => ({
   annotations: tool.annotations ?? {},
   executeStr: tool.execute.toString(),
 }));
+
+const serializedStaticData = {
+  staticPosts,
+  staticPubs,
+  staticSections: staticCVSections,
+  personName,
+  staticTools,
+};
 ---
 
 <script
   is:inline
   id="webmcp-provider"
   data-webmcp-tools={JSON.stringify(serializedTools)}
+  data-webmcp-static={JSON.stringify(serializedStaticData)}
 >
   (function () {
     if (
@@ -91,13 +175,35 @@ const serializedTools = allTools.map((tool) => ({
       if (!d.length) return;
       var ns = "_wmcp_" + Math.random().toString(36).slice(2);
       window[ns] = {};
+
+      // Parse static data and store as temporary global for inner script access.
+      // The serialized execute functions reference closure variables
+      // (staticPosts, staticPubs, etc.) that don't exist on the client.
+      // We provide them via an IIFE wrapper so the reconstructed functions
+      // capture them in their scope chain.
+      var sd = JSON.parse(s.getAttribute("data-webmcp-static") || "{}");
+      var cdKey = "_wmcd_" + Math.random().toString(36).slice(2);
+      window[cdKey] = sd;
+
+      var sc = document.createElement("script");
+      var body = "(function() {\n";
+      body += 'var __sd = window["' + cdKey + '"];\n';
+      body += "var staticPosts = __sd.staticPosts || [];\n";
+      body += "var staticPubs = __sd.staticPubs || [];\n";
+      body += "var staticSections = __sd.staticSections || [];\n";
+      body += 'var personName = __sd.personName || "";\n';
+      body += "var staticTools = __sd.staticTools || [];\n";
       for (var i = 0; i < d.length; i++) {
-        var sc = document.createElement("script");
-        sc.textContent =
-          'window["' + ns + '"]["f' + i + '"] = ' + d[i].executeStr + ";";
-        document.head.appendChild(sc);
-        document.head.removeChild(sc);
+        body +=
+          'window["' + ns + '"]["f' + i + '"] = ' + d[i].executeStr + ";\n";
       }
+      body += "})();";
+      sc.textContent = body;
+      document.head.appendChild(sc);
+      document.head.removeChild(sc);
+
+      delete window[cdKey];
+
       var t = [];
       for (var j = 0; j < d.length; j++) {
         var e = d[j];

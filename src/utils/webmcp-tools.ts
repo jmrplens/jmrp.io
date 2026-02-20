@@ -7,10 +7,10 @@
  *
  * Tool categories:
  * - **Site tools**: Available on every page (theme, navigation, page info)
- * - **Blog tools**: Available on /blog/* pages
- * - **CV tools**: Available on /cv page
- * - **Publications tools**: Available on /publications page
- * - **Tools-index tools**: Available on /tools/* pages
+ * - **Blog tools**: Available on every page (static data from build time)
+ * - **CV tools**: Available on every page (static data from build time)
+ * - **Publications tools**: Available on every page (static data from build time)
+ * - **Tools-index tools**: Available on every page (static data from build time)
  * - **App tools**: Available on individual tool pages (hash, base64, etc.)
  *
  * @see https://webmachinelearning.github.io/webmcp/
@@ -264,42 +264,29 @@ export function getSiteTools(): WebMCPTool[] {
 
 // ─── Blog Tools ──────────────────────────────────────────────────────
 
+/** Static post data embedded at build time for cross-page availability. */
+export interface StaticPostData {
+  title: string;
+  url: string;
+  date: string;
+  tags: string[];
+  description: string;
+}
+
 /**
- * Returns tools available on blog pages (/blog/*).
- * These allow agents to search and list blog posts from the rendered DOM.
+ * Returns blog tools that use static post data embedded at build time.
+ * Available on every page — agents can list and search posts without navigating to /blog/.
+ *
+ * @param staticPosts - Pre-built post data from the content collection.
  */
-export function getBlogTools(): WebMCPTool[] {
+export function getBlogTools(staticPosts: StaticPostData[]): WebMCPTool[] {
   return [
     {
       name: "list-blog-posts",
       description:
-        "List all blog posts visible on the current page with their title, URL, date, tags, and description.",
+        "List all blog posts with their title, URL, date, tags, and description. Works from any page.",
       execute: () => {
-        const articles = [...document.querySelectorAll("article.post-card")];
-        const posts = articles.map((article) => {
-          const link = article.querySelector(
-            "a.main-link, h2 a[href], h3 a[href]",
-          );
-          const time = article.querySelector("time");
-          const tags = [...article.querySelectorAll(".tags a.tag")].map((t) =>
-            (t.textContent?.trim() ?? "").replace(/^#/, ""),
-          );
-          const desc =
-            article
-              .querySelector(".description, .card-description, p")
-              ?.textContent?.trim() ?? "";
-          return {
-            title:
-              link?.textContent?.trim() ??
-              article.querySelector("h2, h3")?.textContent?.trim() ??
-              "",
-            url: link?.getAttribute("href") ?? "",
-            date:
-              time?.getAttribute("datetime") ?? time?.textContent?.trim() ?? "",
-            tags,
-            description: desc,
-          };
-        });
+        const posts = staticPosts;
         return {
           content: [{ type: "text", text: JSON.stringify(posts) }],
         };
@@ -309,14 +296,14 @@ export function getBlogTools(): WebMCPTool[] {
     {
       name: "search-blog-posts",
       description:
-        "Search blog posts by keyword in title and description. Returns matching posts from the current page.",
+        "Search blog posts by keyword in title, description, and tags. Returns matching posts. Works from any page.",
       inputSchema: {
         type: "object",
         properties: {
           query: {
             type: "string",
             description:
-              "Search keyword to match against post titles and descriptions",
+              "Search keyword to match against post titles, descriptions, and tags",
           },
         },
         required: ["query"],
@@ -327,24 +314,11 @@ export function getBlogTools(): WebMCPTool[] {
           return typeof v === "string" ? v : JSON.stringify(v);
         };
         const query = inputStr(input.query).toLowerCase();
-        const articles = [...document.querySelectorAll("article.post-card")];
-        const matches = articles
-          .filter((article) => {
-            const text = article.textContent?.toLowerCase() ?? "";
-            return text.includes(query);
-          })
-          .map((article) => {
-            const link = article.querySelector(
-              "a.main-link, h2 a[href], h3 a[href]",
-            );
-            return {
-              title:
-                link?.textContent?.trim() ??
-                article.querySelector("h2, h3")?.textContent?.trim() ??
-                "",
-              url: link?.getAttribute("href") ?? "",
-            };
-          });
+        const matches = staticPosts.filter((post) => {
+          const searchable =
+            `${post.title} ${post.description} ${post.tags.join(" ")}`.toLowerCase();
+          return searchable.includes(query);
+        });
         return {
           content: [
             {
@@ -362,30 +336,19 @@ export function getBlogTools(): WebMCPTool[] {
     {
       name: "get-post-tags",
       description:
-        "Get all unique blog post tags available on the current page.",
+        "Get all unique blog post tags with their occurrence count. Works from any page.",
       execute: () => {
-        // Extract tag names from the tag cloud sidebar (.tag-cloud .tag-name)
-        // or from post card tag links (article.post-card .tags a.tag)
-        const tagNames: string[] = [];
-        // Prefer tag cloud: has all tags with proper names
-        const cloudTags = document.querySelectorAll(".tag-cloud .tag-name");
-        if (cloudTags.length > 0) {
-          cloudTags.forEach((el) => {
-            const name = el.textContent?.trim().replace(/^#\s*/, "") ?? "";
-            if (name) tagNames.push(name);
-          });
-        } else {
-          // Fallback: extract from post card tags
-          document
-            .querySelectorAll("article.post-card .tags a.tag")
-            .forEach((el) => {
-              const name = el.textContent?.trim().replace(/^#/, "") ?? "";
-              if (name) tagNames.push(name);
-            });
+        const tagCounts: Record<string, number> = {};
+        for (const post of staticPosts) {
+          for (const tag of post.tags) {
+            tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+          }
         }
-        const unique = [...new Set(tagNames)].filter(Boolean);
+        const sorted = Object.entries(tagCounts)
+          .map(([tag, count]) => ({ tag, count }))
+          .sort((a, b) => b.count - a.count);
         return {
-          content: [{ type: "text", text: JSON.stringify(unique) }],
+          content: [{ type: "text", text: JSON.stringify(sorted) }],
         };
       },
       annotations: { readOnlyHint: true },
@@ -395,42 +358,38 @@ export function getBlogTools(): WebMCPTool[] {
 
 // ─── CV Tools ────────────────────────────────────────────────────────
 
+/** Static CV section data embedded at build time. */
+export interface StaticCVSection {
+  title: string;
+  type: string;
+  summary: string;
+}
+
 /**
- * Returns tools available on the CV page (/cv).
- * These extract structured CV data from the rendered DOM.
+ * Returns CV tools that use static section data embedded at build time.
+ * Available on every page — agents can query CV info without navigating to /cv.
+ *
+ * @param staticSections - Pre-built CV section summaries.
+ * @param personName - Name from CV data.
  */
-export function getCVTools(): WebMCPTool[] {
+export function getCVTools(
+  staticSections: StaticCVSection[],
+  personName: string,
+): WebMCPTool[] {
   return [
     {
       name: "get-cv-summary",
       description:
-        "Get a summary of the CV/resume including name, job title, and all section headings.",
+        "Get a summary of the CV/resume including name and all section headings. Works from any page.",
       execute: () => {
-        // The h1 is "Curriculum Vitae", the actual name is in General Information
-        // CV uses .map-key / .map-value pairs inside .cv-map
-        const generalSection = document.querySelector(
-          ".cv-section#general-information",
-        );
-        const mapItems = generalSection?.querySelectorAll(".map-item") ?? [];
-        let name = "";
-        for (const item of mapItems) {
-          const key = item.querySelector(".map-key")?.textContent?.trim() ?? "";
-          if (key.startsWith("Full Name")) {
-            name = item.querySelector(".map-value")?.textContent?.trim() ?? "";
-            break;
-          }
-        }
-        if (!name) {
-          name = document.querySelector("h1")?.textContent?.trim() ?? "";
-        }
-        const sections = [...document.querySelectorAll(".cv-section")]
-          .map((s) => s.querySelector("h2")?.textContent?.trim() ?? "")
-          .filter(Boolean);
         return {
           content: [
             {
               type: "text",
-              text: JSON.stringify({ name, sections }),
+              text: JSON.stringify({
+                name: personName,
+                sections: staticSections.map((s) => s.title),
+              }),
             },
           ],
         };
@@ -440,7 +399,7 @@ export function getCVTools(): WebMCPTool[] {
     {
       name: "get-cv-section",
       description:
-        "Get the content of a specific CV section by its heading name (e.g. 'Experience', 'Education', 'Skills', 'Certifications').",
+        "Get the content summary of a specific CV section by its heading name (e.g. 'Experience', 'Education', 'Skills', 'Certifications'). For full detail, navigate to /cv. Works from any page.",
       inputSchema: {
         type: "object",
         properties: {
@@ -458,37 +417,21 @@ export function getCVTools(): WebMCPTool[] {
           return typeof v === "string" ? v : JSON.stringify(v);
         };
         const sectionName = inputStr(input.section).toLowerCase();
-        // CV uses .cv-section containers with h2 inside .section-header
-        const cvSections = [...document.querySelectorAll(".cv-section")];
-        const section = cvSections.find((s) =>
-          s
-            .querySelector("h2")
-            ?.textContent?.trim()
-            .toLowerCase()
-            .includes(sectionName),
+        const section = staticSections.find((s) =>
+          s.title.toLowerCase().includes(sectionName),
         );
         if (!section) {
-          const available = cvSections
-            .map((s) => s.querySelector("h2")?.textContent?.trim())
-            .filter(Boolean);
           return {
             content: [
               {
                 type: "text",
-                text: `Section "${inputStr(input.section)}" not found. Available sections: ${available.join(", ")}`,
+                text: `Section "${inputStr(input.section)}" not found. Available sections: ${staticSections.map((s) => s.title).join(", ")}`,
               },
             ],
           };
         }
-        // Extract content from everything after the section-header
-        const contents: string[] = [];
-        for (const child of section.children) {
-          if (child.classList.contains("section-header")) continue;
-          const text = child.textContent?.trim() ?? "";
-          if (text) contents.push(text);
-        }
         return {
-          content: [{ type: "text", text: contents.join("\n") }],
+          content: [{ type: "text", text: section.summary }],
         };
       },
       annotations: { readOnlyHint: true },
@@ -498,28 +441,32 @@ export function getCVTools(): WebMCPTool[] {
 
 // ─── Publications Tools ──────────────────────────────────────────────
 
+/** Static publication data embedded at build time. */
+export interface StaticPublicationData {
+  title: string;
+  authors: string;
+  year: string;
+  venue: string;
+  group: string;
+}
+
 /**
- * Returns tools available on the publications page (/publications).
+ * Returns publication tools that use static data embedded at build time.
+ * Available on every page — agents can list and search publications without navigating to /publications.
+ *
+ * @param staticPubs - Pre-built publication data.
  */
-export function getPublicationsTools(): WebMCPTool[] {
+export function getPublicationsTools(
+  staticPubs: StaticPublicationData[],
+): WebMCPTool[] {
   return [
     {
       name: "list-publications",
       description:
-        "List all academic publications on the page with title, authors, year, and venue.",
+        "List all academic publications with title, authors, year, and venue. Works from any page.",
       execute: () => {
-        const items = [...document.querySelectorAll(".publication-item")].map(
-          (el) => ({
-            title:
-              el.querySelector(".pub-title, h3, h4")?.textContent?.trim() ?? "",
-            authors:
-              el.querySelector(".pub-authors")?.textContent?.trim() ?? "",
-            year: el.querySelector(".pub-year")?.textContent?.trim() ?? "",
-            venue: el.querySelector(".pub-venue")?.textContent?.trim() ?? "",
-          }),
-        );
         return {
-          content: [{ type: "text", text: JSON.stringify(items) }],
+          content: [{ type: "text", text: JSON.stringify(staticPubs) }],
         };
       },
       annotations: { readOnlyHint: true },
@@ -527,7 +474,7 @@ export function getPublicationsTools(): WebMCPTool[] {
     {
       name: "search-publications",
       description:
-        "Search publications by keyword in title, authors, or venue.",
+        "Search publications by keyword in title, authors, or venue. Works from any page.",
       inputSchema: {
         type: "object",
         properties: {
@@ -544,21 +491,18 @@ export function getPublicationsTools(): WebMCPTool[] {
           return typeof v === "string" ? v : JSON.stringify(v);
         };
         const query = inputStr(input.query).toLowerCase();
-        const items = [...document.querySelectorAll(".publication-item")]
-          .filter((el) => (el.textContent?.toLowerCase() ?? "").includes(query))
-          .map((el) => ({
-            title:
-              el.querySelector(".pub-title, h3, h4")?.textContent?.trim() ?? "",
-            authors:
-              el.querySelector(".pub-authors")?.textContent?.trim() ?? "",
-          }));
+        const matches = staticPubs.filter((pub) => {
+          const searchable =
+            `${pub.title} ${pub.authors} ${pub.venue}`.toLowerCase();
+          return searchable.includes(query);
+        });
         return {
           content: [
             {
               type: "text",
               text:
-                items.length > 0
-                  ? JSON.stringify(items)
+                matches.length > 0
+                  ? JSON.stringify(matches)
                   : `No publications found matching "${inputStr(input.query)}".`,
             },
           ],
@@ -571,58 +515,32 @@ export function getPublicationsTools(): WebMCPTool[] {
 
 // ─── Tools Index Tools ───────────────────────────────────────────────
 
+/** Static tool data embedded at build time. */
+export interface StaticToolData {
+  name: string;
+  description: string;
+  url: string;
+  category: string;
+}
+
 /**
- * Returns tools available on the tools index page (/tools/).
+ * Returns tools-index tools that use static data embedded at build time.
+ * Available on every page.
+ *
+ * @param staticTools - Pre-built tool listing data.
  */
-export function getToolsIndexTools(): WebMCPTool[] {
+export function getToolsIndexTools(
+  staticTools: StaticToolData[],
+): WebMCPTool[] {
   return [
     {
       name: "list-available-tools",
       description:
-        "List all interactive tools available on the site with their name, description, and URL. Fetches from the .well-known/webmcp.json manifest.",
-      execute: async () => {
-        try {
-          const res = await fetch("/.well-known/webmcp.json");
-          if (!res.ok) throw new Error("HTTP " + res.status);
-          const manifest = await res.json();
-          const tools = (manifest.tools || []).map(
-            (t: Record<string, unknown>) => ({
-              name: t.name ?? "",
-              description: t.description ?? "",
-              url: (t.availableOn as string) ?? "",
-            }),
-          );
-          return {
-            content: [{ type: "text", text: JSON.stringify(tools) }],
-          };
-        } catch {
-          // Fallback: scrape tool cards from DOM (works on /tools/ index page)
-          const toolCards = [
-            ...document.querySelectorAll(
-              "[data-tool-card], .tool-card, article a[href*='/tools/']",
-            ),
-          ];
-          const tools = toolCards.map((card) => {
-            const link =
-              card.closest("a[href]") ?? card.querySelector("a[href]");
-            return {
-              name:
-                card
-                  .querySelector("h2, h3, .tool-title")
-                  ?.textContent?.trim() ??
-                card.textContent?.trim() ??
-                "",
-              url: link?.getAttribute("href") ?? "",
-              description:
-                card
-                  .querySelector(".tool-description, p")
-                  ?.textContent?.trim() ?? "",
-            };
-          });
-          return {
-            content: [{ type: "text", text: JSON.stringify(tools) }],
-          };
-        }
+        "List all interactive tools available on the site with their name, description, category, and URL. Works from any page.",
+      execute: () => {
+        return {
+          content: [{ type: "text", text: JSON.stringify(staticTools) }],
+        };
       },
       annotations: { readOnlyHint: true },
     },
