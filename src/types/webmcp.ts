@@ -116,9 +116,11 @@ export interface WebMCPTool {
 export interface WebMCPContextOptions {
   /**
    * List of tools to register. Each tool name must be unique.
-   * Calling provideContext() clears any pre-existing tools first.
+   * Required by Chrome's implementation — omitting it throws a TypeError.
+   * Calling provideContext() replaces (not appends) any tools from a
+   * previous provideContext() call.
    */
-  tools?: WebMCPTool[];
+  tools: WebMCPTool[];
 }
 
 // ─── ModelContext Interface ──────────────────────────────────────────
@@ -129,21 +131,32 @@ export interface WebMCPContextOptions {
  */
 export interface WebMCPModelContext {
   /**
-   * Registers tools with the browser, clearing any pre-existing ones.
-   * Useful for SPAs that change available tools based on UI state.
+   * Registers tools with the browser, replacing any previously provided tools.
+   * Tools registered via registerTool() are in a separate namespace and are
+   * NOT affected by subsequent provideContext() calls.
+   * However, clearContext() clears tools from both namespaces.
    */
-  provideContext: (options?: WebMCPContextOptions) => void;
+  provideContext: (options: WebMCPContextOptions) => void;
 
-  /** Unregisters all tools from the browser. */
+  /**
+   * Unregisters all tools from the browser — both provideContext() and
+   * registerTool() tools are cleared.
+   */
   clearContext: () => void;
 
   /**
    * Registers a single tool without clearing existing ones.
-   * Throws if a tool with the same name already exists or if inputSchema is invalid.
+   * Uses a separate namespace from provideContext() — names may overlap.
+   * Throws DOMException if a tool with the same name was already
+   * registered via registerTool() (provideContext names don't conflict).
    */
   registerTool: (tool: WebMCPTool) => void;
 
-  /** Removes the tool with the specified name from the registered set. */
+  /**
+   * Removes the tool with the specified name from the registerTool() set.
+   * Throws if the name was not registered via registerTool()
+   * (provideContext tools cannot be individually unregistered).
+   */
   unregisterTool: (name: string) => void;
 }
 

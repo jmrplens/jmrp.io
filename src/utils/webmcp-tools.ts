@@ -273,16 +273,18 @@ export function getBlogTools(): WebMCPTool[] {
       description:
         "List all blog posts visible on the current page with their title, URL, date, tags, and description.",
       execute: () => {
-        const articles = [...document.querySelectorAll("article")];
+        const articles = [...document.querySelectorAll("article.post-card")];
         const posts = articles.map((article) => {
-          const link = article.querySelector("a[href]");
+          const link = article.querySelector(
+            "a.main-link, h2 a[href], h3 a[href]",
+          );
           const time = article.querySelector("time");
-          const tags = [...article.querySelectorAll("[data-tag]")].map(
+          const tags = [...article.querySelectorAll(".tags a.tag")].map(
             (t) => t.textContent?.trim() ?? "",
           );
           const desc =
             article
-              .querySelector(".description, [data-description]")
+              .querySelector(".description, .card-description, p")
               ?.textContent?.trim() ?? "";
           return {
             title:
@@ -323,14 +325,16 @@ export function getBlogTools(): WebMCPTool[] {
           return typeof v === "string" ? v : JSON.stringify(v);
         };
         const query = inputStr(input.query).toLowerCase();
-        const articles = [...document.querySelectorAll("article")];
+        const articles = [...document.querySelectorAll("article.post-card")];
         const matches = articles
           .filter((article) => {
             const text = article.textContent?.toLowerCase() ?? "";
             return text.includes(query);
           })
           .map((article) => {
-            const link = article.querySelector("a[href]");
+            const link = article.querySelector(
+              "a.main-link, h2 a[href], h3 a[href]",
+            );
             return {
               title:
                 link?.textContent?.trim() ??
@@ -358,16 +362,28 @@ export function getBlogTools(): WebMCPTool[] {
       description:
         "Get all unique blog post tags available on the current page.",
       execute: () => {
-        const tagElements = document.querySelectorAll(
-          "[data-tag], .tag-cloud a, .tags a",
-        );
-        const tags = [
-          ...new Set(
-            [...tagElements].map((el) => el.textContent?.trim() ?? ""),
-          ),
-        ].filter(Boolean);
+        // Extract tag names from the tag cloud sidebar (.tag-cloud .tag-name)
+        // or from post card tag links (article.post-card .tags a.tag)
+        const tagNames: string[] = [];
+        // Prefer tag cloud: has all tags with proper names
+        const cloudTags = document.querySelectorAll(".tag-cloud .tag-name");
+        if (cloudTags.length > 0) {
+          cloudTags.forEach((el) => {
+            const name = el.textContent?.trim().replace(/^#\s*/, "") ?? "";
+            if (name) tagNames.push(name);
+          });
+        } else {
+          // Fallback: extract from post card tags
+          document
+            .querySelectorAll("article.post-card .tags a.tag")
+            .forEach((el) => {
+              const name = el.textContent?.trim().replace(/^#/, "") ?? "";
+              if (name) tagNames.push(name);
+            });
+        }
+        const unique = [...new Set(tagNames)].filter(Boolean);
         return {
-          content: [{ type: "text", text: JSON.stringify(tags) }],
+          content: [{ type: "text", text: JSON.stringify(unique) }],
         };
       },
       annotations: { readOnlyHint: true },
@@ -388,10 +404,26 @@ export function getCVTools(): WebMCPTool[] {
       description:
         "Get a summary of the CV/resume including name, job title, and all section headings.",
       execute: () => {
-        const name = document.querySelector("h1")?.textContent?.trim() ?? "";
-        const sections = [...document.querySelectorAll("h2")].map(
-          (h) => h.textContent?.trim() ?? "",
+        // The h1 is "Curriculum Vitae", the actual name is in General Information
+        // CV uses .map-key / .map-value pairs inside .cv-map
+        const generalSection = document.querySelector(
+          ".cv-section#general-information",
         );
+        const mapItems = generalSection?.querySelectorAll(".map-item") ?? [];
+        let name = "";
+        for (const item of mapItems) {
+          const key = item.querySelector(".map-key")?.textContent?.trim() ?? "";
+          if (key.startsWith("Full Name")) {
+            name = item.querySelector(".map-value")?.textContent?.trim() ?? "";
+            break;
+          }
+        }
+        if (!name) {
+          name = document.querySelector("h1")?.textContent?.trim() ?? "";
+        }
+        const sections = [...document.querySelectorAll(".cv-section")]
+          .map((s) => s.querySelector("h2")?.textContent?.trim() ?? "")
+          .filter(Boolean);
         return {
           content: [
             {
@@ -424,31 +456,37 @@ export function getCVTools(): WebMCPTool[] {
           return typeof v === "string" ? v : JSON.stringify(v);
         };
         const sectionName = inputStr(input.section).toLowerCase();
-        const headings = [...document.querySelectorAll("h2")];
-        const heading = headings.find((h) =>
-          h.textContent?.trim().toLowerCase().includes(sectionName),
+        // CV uses .cv-section containers with h2 inside .section-header
+        const cvSections = [...document.querySelectorAll(".cv-section")];
+        const section = cvSections.find((s) =>
+          s
+            .querySelector("h2")
+            ?.textContent?.trim()
+            .toLowerCase()
+            .includes(sectionName),
         );
-        if (!heading) {
+        if (!section) {
+          const available = cvSections
+            .map((s) => s.querySelector("h2")?.textContent?.trim())
+            .filter(Boolean);
           return {
             content: [
               {
                 type: "text",
-                text: `Section "${inputStr(input.section)}" not found. Available sections: ${headings.map((h) => h.textContent?.trim()).join(", ")}`,
+                text: `Section "${inputStr(input.section)}" not found. Available sections: ${available.join(", ")}`,
               },
             ],
           };
         }
-        // Collect all content between this h2 and the next h2
+        // Extract content from everything after the section-header
         const contents: string[] = [];
-        let sibling = heading.nextElementSibling;
-        while (sibling && sibling.tagName !== "H2") {
-          contents.push(sibling.textContent?.trim() ?? "");
-          sibling = sibling.nextElementSibling;
+        for (const child of section.children) {
+          if (child.classList.contains("section-header")) continue;
+          const text = child.textContent?.trim() ?? "";
+          if (text) contents.push(text);
         }
         return {
-          content: [
-            { type: "text", text: contents.filter(Boolean).join("\n") },
-          ],
+          content: [{ type: "text", text: contents.join("\n") }],
         };
       },
       annotations: { readOnlyHint: true },
@@ -468,28 +506,16 @@ export function getPublicationsTools(): WebMCPTool[] {
       description:
         "List all academic publications on the page with title, authors, year, and venue.",
       execute: () => {
-        const items = [
-          ...document.querySelectorAll(
-            "[data-publication], .publication-item, article",
-          ),
-        ].map((el) => ({
-          title:
-            el
-              .querySelector(".publication-title, h3, h4")
-              ?.textContent?.trim() ?? "",
-          authors:
-            el
-              .querySelector(".publication-authors, .authors")
-              ?.textContent?.trim() ?? "",
-          year:
-            el
-              .querySelector(".publication-year, .year, time")
-              ?.textContent?.trim() ?? "",
-          venue:
-            el
-              .querySelector(".publication-venue, .venue")
-              ?.textContent?.trim() ?? "",
-        }));
+        const items = [...document.querySelectorAll(".publication-item")].map(
+          (el) => ({
+            title:
+              el.querySelector(".pub-title, h3, h4")?.textContent?.trim() ?? "",
+            authors:
+              el.querySelector(".pub-authors")?.textContent?.trim() ?? "",
+            year: el.querySelector(".pub-year")?.textContent?.trim() ?? "",
+            venue: el.querySelector(".pub-venue")?.textContent?.trim() ?? "",
+          }),
+        );
         return {
           content: [{ type: "text", text: JSON.stringify(items) }],
         };
@@ -516,21 +542,13 @@ export function getPublicationsTools(): WebMCPTool[] {
           return typeof v === "string" ? v : JSON.stringify(v);
         };
         const query = inputStr(input.query).toLowerCase();
-        const items = [
-          ...document.querySelectorAll(
-            "[data-publication], .publication-item, article",
-          ),
-        ]
+        const items = [...document.querySelectorAll(".publication-item")]
           .filter((el) => (el.textContent?.toLowerCase() ?? "").includes(query))
           .map((el) => ({
             title:
-              el
-                .querySelector(".publication-title, h3, h4")
-                ?.textContent?.trim() ?? "",
+              el.querySelector(".pub-title, h3, h4")?.textContent?.trim() ?? "",
             authors:
-              el
-                .querySelector(".publication-authors, .authors")
-                ?.textContent?.trim() ?? "",
+              el.querySelector(".pub-authors")?.textContent?.trim() ?? "",
           }));
         return {
           content: [

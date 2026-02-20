@@ -753,9 +753,30 @@ As of February 2026, WebMCP is an early-stage proposal. A survey of known implem
 
 ## Browser Compatibility
 
-**Current status**: No browser implements `navigator.modelContext` as of February 2026.
+**Current status**: Chrome Canary 147+ supports `navigator.modelContext` behind the `chrome://flags/#enable-webmcp-testing` flag (as of February 2026). No stable browser implements it yet.
 
-The spec is at **Editor's Draft** stage within the W3C Web Machine Learning Community Group, authored by engineers from Microsoft and Google. Browser vendors have not announced implementation timelines.
+### Chrome Canary 147 — Verified API Behavior
+
+Tested against the real Chrome implementation with the following findings:
+
+| Feature | Behavior |
+| ------- | -------- |
+| `provideContext({ tools })` | **Replaces** all previous provideContext tools (not additive). `tools` property is **required**. |
+| `registerTool(tool)` | Registers in a **separate namespace** from provideContext. Throws `DOMException: Duplicate tool name` on duplicates within its own namespace. |
+| `unregisterTool(name)` | Only works for `registerTool()` tools. Throws for provideContext tools or non-existent names. |
+| `clearContext()` | Clears **both** namespaces (provideContext + registerTool). |
+| `inputSchema` | Fully supported — JSON Schema validated. |
+| `annotations` | `readOnlyHint` and `openWorldHint` both accepted. |
+| Async execute | Both sync and async (Promise-returning) execute callbacks work. |
+| Namespace isolation | provideContext and registerTool names don't conflict with each other. |
+
+### How the implementation maps to the API
+
+- **`WebMCPProvider.astro`** uses `provideContext()` for page-context tools (site + section-specific).
+- **App components** use `registerTool()` for individual tool functionality (hash, base64, etc.).
+- **View Transitions**: `astro:before-swap` calls `clearContext()` to clean both namespaces before the new page re-registers its tools.
+
+### Progressive Enhancement
 
 The implementation is designed as a forward-looking progressive enhancement:
 
