@@ -1,0 +1,2663 @@
+---
+/**
+ * WebMCPAnalyzer Component
+ *
+ * Client-side WebMCP implementation analyzer. Validates and scores
+ * any website's WebMCP implementation by checking:
+ * - Discovery: manifest existence, link tags, content-type
+ * - Manifest: structure, tool definitions, naming conventions
+ * - Pages: provider detection, tool registration, JS bundle scanning
+ * - Security: HTTPS, SSRF checks, sensitive data patterns
+ *
+ * Uses a server-side proxy (/api/proxy/fetch) to bypass CORS restrictions.
+ *
+ * Usage:
+ * <WebMCPAnalyzer />
+ */
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslations } from "@i18n/utils";
+
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
+
+interface Props {
+  title?: string;
+}
+
+const { title = t("tools.webmcpAnalyzer.title") } = Astro.props;
+const uniqueId = `wma-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
+
+/** Translations passed to the inline script via define:vars. */
+const i18n = {
+  // Main UI
+  analyze: t("tools.webmcpAnalyzer.analyze"),
+  analyzing: t("tools.webmcpAnalyzer.analyzing"),
+  placeholder: t("tools.webmcpAnalyzer.placeholder"),
+  urlLabel: t("tools.webmcpAnalyzer.urlLabel"),
+  crawlLabel: t("tools.webmcpAnalyzer.crawlLabel"),
+  crawlHint: t("tools.webmcpAnalyzer.crawlHint"),
+  scanJsLabel: t("tools.webmcpAnalyzer.scanJsLabel"),
+  scanJsHint: t("tools.webmcpAnalyzer.scanJsHint"),
+  extraPagesLabel: t("tools.webmcpAnalyzer.extraPagesLabel"),
+  extraPagesHint: t("tools.webmcpAnalyzer.extraPagesHint"),
+  // Results
+  overallScore: t("tools.webmcpAnalyzer.overallScore"),
+  implementationType: t("tools.webmcpAnalyzer.implementationType"),
+  passed: t("tools.webmcpAnalyzer.passed"),
+  warnings: t("tools.webmcpAnalyzer.warnings"),
+  errors: t("tools.webmcpAnalyzer.errors"),
+  info: t("tools.webmcpAnalyzer.info"),
+  // Categories
+  catDiscovery: t("tools.webmcpAnalyzer.catDiscovery"),
+  catManifest: t("tools.webmcpAnalyzer.catManifest"),
+  catTools: t("tools.webmcpAnalyzer.catTools"),
+  catPages: t("tools.webmcpAnalyzer.catPages"),
+  catSecurity: t("tools.webmcpAnalyzer.catSecurity"),
+  // Tool table
+  toolDefinitions: t("tools.webmcpAnalyzer.toolDefinitions"),
+  toolName: t("tools.webmcpAnalyzer.toolName"),
+  readOnly: t("tools.webmcpAnalyzer.readOnly"),
+  params: t("tools.webmcpAnalyzer.params"),
+  schema: t("tools.webmcpAnalyzer.schema"),
+  status: t("tools.webmcpAnalyzer.status"),
+  valid: t("tools.webmcpAnalyzer.valid"),
+  issues: t("tools.webmcpAnalyzer.issues"),
+  yes: t("tools.webmcpAnalyzer.yes"),
+  no: t("tools.webmcpAnalyzer.no"),
+  // Page analysis
+  pageAnalysis: t("tools.webmcpAnalyzer.pageAnalysis"),
+  pagePath: t("tools.webmcpAnalyzer.pagePath"),
+  pageStatus: t("tools.webmcpAnalyzer.pageStatus"),
+  provider: t("tools.webmcpAnalyzer.provider"),
+  linkTag: t("tools.webmcpAnalyzer.linkTag"),
+  tools: t("tools.webmcpAnalyzer.tools"),
+  blocks: t("tools.webmcpAnalyzer.blocks"),
+  jsDetected: t("tools.webmcpAnalyzer.jsDetected"),
+  // Recommendations
+  recommendations: t("tools.webmcpAnalyzer.recommendations"),
+  recAddManifest: t("tools.webmcpAnalyzer.recAddManifest"),
+  recAddLinkTag: t("tools.webmcpAnalyzer.recAddLinkTag"),
+  recNoImplementation: t("tools.webmcpAnalyzer.recNoImplementation"),
+  // Spec reference
+  specReference: t("tools.webmcpAnalyzer.specReference"),
+  // Error messages
+  errProxyUnavailable: t("tools.webmcpAnalyzer.errProxyUnavailable"),
+  errInvalidUrl: t("tools.webmcpAnalyzer.errInvalidUrl"),
+  errFetchFailed: t("tools.webmcpAnalyzer.errFetchFailed"),
+  // Status messages
+  stepDiscovery: t("tools.webmcpAnalyzer.stepDiscovery"),
+  stepManifest: t("tools.webmcpAnalyzer.stepManifest"),
+  stepPages: t("tools.webmcpAnalyzer.stepPages"),
+  stepSecurity: t("tools.webmcpAnalyzer.stepSecurity"),
+  stepCrossRef: t("tools.webmcpAnalyzer.stepCrossRef"),
+  stepDone: t("tools.webmcpAnalyzer.stepDone"),
+  pagesScanned: t("tools.webmcpAnalyzer.pagesScanned"),
+  checksLabel: t("tools.webmcpAnalyzer.checksLabel"),
+  // Export
+  exportJson: t("tools.webmcpAnalyzer.exportJson"),
+  copyResults: t("tools.webmcpAnalyzer.copyResults"),
+  copied: t("tools.webmcpAnalyzer.copied"),
+  // Manifest viewer
+  viewManifest: t("tools.webmcpAnalyzer.viewManifest"),
+  hideManifest: t("tools.webmcpAnalyzer.hideManifest"),
+  noManifest: t("tools.webmcpAnalyzer.noManifest"),
+};
+
+const sampleUrl = "https://jmrp.io";
+---
+
+<div
+  class="wma-analyzer"
+  data-wma-id={uniqueId}
+>
+  {title && <div class="wma-title">{title}</div>}
+
+  {/* ── Input Section ── */}
+  <div class="wma-input-section">
+    <label
+      class="wma-label"
+      for={`${uniqueId}-url`}
+    >
+      <span
+        class="i-mdi:web"
+        aria-hidden="true"
+      ></span>
+      {i18n.urlLabel}
+    </label>
+    <div class="wma-url-row">
+      <input
+        type="url"
+        id={`${uniqueId}-url`}
+        class="wma-url-input"
+        placeholder={i18n.placeholder}
+        value={sampleUrl}
+        spellcheck="false"
+        autocomplete="off"
+      />
+      <button
+        type="button"
+        class="wma-analyze-btn"
+      >
+        <span
+          class="i-mdi:magnify-scan"
+          aria-hidden="true"
+        ></span>
+        {i18n.analyze}
+      </button>
+    </div>
+
+    {/* ── Options ── */}
+    <div class="wma-options">
+      <label class="wma-checkbox">
+        <input
+          type="checkbox"
+          class="wma-opt-crawl"
+        />
+        <span>{i18n.crawlLabel}</span>
+        <span class="wma-hint">{i18n.crawlHint}</span>
+      </label>
+      <label class="wma-checkbox">
+        <input
+          type="checkbox"
+          class="wma-opt-scanjs"
+          checked
+        />
+        <span>{i18n.scanJsLabel}</span>
+        <span class="wma-hint">{i18n.scanJsHint}</span>
+      </label>
+      <div class="wma-extra-pages">
+        <label
+          class="wma-label"
+          for={`${uniqueId}-pages`}
+        >
+          {i18n.extraPagesLabel}
+        </label>
+        <input
+          type="text"
+          id={`${uniqueId}-pages`}
+          class="wma-pages-input"
+          placeholder="/blog/ /tools/ /cv"
+          spellcheck="false"
+          autocomplete="off"
+        />
+        <span class="wma-hint">{i18n.extraPagesHint}</span>
+      </div>
+    </div>
+  </div>
+
+  {/* ── Progress Bar ── */}
+  <div
+    class="wma-progress"
+    hidden
+  >
+    <div class="wma-progress-bar">
+      <div class="wma-progress-fill"></div>
+    </div>
+    <div class="wma-progress-text"></div>
+  </div>
+
+  {/* ── Error Display ── */}
+  <div
+    class="wma-error"
+    hidden
+  >
+  </div>
+
+  {/* ── Results Section ── */}
+  <div
+    class="wma-results"
+    hidden
+  >
+    {/* Score Summary */}
+    <div class="wma-score-panel">
+      <div class="wma-score-circle">
+        <svg
+          viewBox="0 0 120 120"
+          class="wma-score-svg"
+        >
+          <circle
+            class="wma-score-bg"
+            cx="60"
+            cy="60"
+            r="52"
+          ></circle>
+          <circle
+            class="wma-score-ring"
+            cx="60"
+            cy="60"
+            r="52"
+          ></circle>
+        </svg>
+        <div class="wma-score-value">0</div>
+      </div>
+      <div class="wma-score-details">
+        <div class="wma-score-label">{i18n.overallScore}</div>
+        <div class="wma-impl-type"></div>
+        <div class="wma-score-counts">
+          <span class="wma-count-pass">
+            <span
+              class="i-mdi:check-circle"
+              aria-hidden="true"
+            ></span>
+            <span class="wma-cnt-pass">0</span>
+            {i18n.passed}
+          </span>
+          <span class="wma-count-warn">
+            <span
+              class="i-mdi:alert"
+              aria-hidden="true"
+            ></span>
+            <span class="wma-cnt-warn">0</span>
+            {i18n.warnings}
+          </span>
+          <span class="wma-count-err">
+            <span
+              class="i-mdi:close-circle"
+              aria-hidden="true"
+            ></span>
+            <span class="wma-cnt-err">0</span>
+            {i18n.errors}
+          </span>
+          <span class="wma-count-info">
+            <span
+              class="i-mdi:information"
+              aria-hidden="true"
+            ></span>
+            <span class="wma-cnt-info">0</span>
+            {i18n.info}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    {/* ── Actions Bar ── */}
+    <div class="wma-actions">
+      <button
+        type="button"
+        class="wma-btn-export"
+      >
+        <span
+          class="i-mdi:code-json"
+          aria-hidden="true"
+        ></span>
+        {i18n.exportJson}
+      </button>
+      <button
+        type="button"
+        class="wma-btn-copy"
+      >
+        <span
+          class="i-mdi:content-copy"
+          aria-hidden="true"
+        ></span>
+        {i18n.copyResults}
+      </button>
+      <button
+        type="button"
+        class="wma-btn-manifest"
+      >
+        <span
+          class="i-mdi:file-document-outline"
+          aria-hidden="true"
+        ></span>
+        {i18n.viewManifest}
+      </button>
+    </div>
+
+    {/* ── Manifest Viewer ── */}
+    <div
+      class="wma-manifest-viewer"
+      hidden
+    >
+      <pre class="wma-manifest-pre"><code /></pre>
+    </div>
+
+    {/* ── Checks by Category ── */}
+    <div class="wma-checks-section">
+      <h3 class="wma-section-title">{i18n.checksLabel}</h3>
+      <div class="wma-checks-container"></div>
+    </div>
+
+    {/* ── Tool Definitions Table ── */}
+    <div
+      class="wma-tools-section"
+      hidden
+    >
+      <h3 class="wma-section-title">
+        <span
+          class="i-mdi:tools"
+          aria-hidden="true"
+        ></span>
+        <span class="wma-tools-title-text">{i18n.toolDefinitions}</span>
+      </h3>
+      <div class="wma-tools-table-wrap">
+        <table class="wma-tools-table">
+          <thead>
+            <tr>
+              <th>{i18n.toolName}</th>
+              <th>{i18n.readOnly}</th>
+              <th>{i18n.params}</th>
+              <th>{i18n.schema}</th>
+              <th>{i18n.status}</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    {/* ── Page Analysis Table ── */}
+    <div
+      class="wma-pages-section"
+      hidden
+    >
+      <h3 class="wma-section-title">
+        <span
+          class="i-mdi:file-search-outline"
+          aria-hidden="true"
+        ></span>
+        <span class="wma-pages-title-text">{i18n.pageAnalysis}</span>
+      </h3>
+      <div class="wma-pages-table-wrap">
+        <table class="wma-pages-table">
+          <thead>
+            <tr>
+              <th>{i18n.pagePath}</th>
+              <th>{i18n.pageStatus}</th>
+              <th>{i18n.provider}</th>
+              <th>{i18n.linkTag}</th>
+              <th>{i18n.tools}</th>
+              <th>{i18n.blocks}</th>
+              <th>{i18n.jsDetected}</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    {/* ── Recommendations ── */}
+    <div
+      class="wma-recommendations"
+      hidden
+    >
+      <h3 class="wma-section-title">
+        <span
+          class="i-mdi:lightbulb-on-outline"
+          aria-hidden="true"
+        ></span>
+        {i18n.recommendations}
+      </h3>
+      <ol class="wma-rec-list"></ol>
+    </div>
+
+    {/* ── Spec Reference ── */}
+    <div class="wma-spec-ref">
+      <span
+        class="i-mdi:book-open-variant"
+        aria-hidden="true"
+      ></span>
+      {i18n.specReference}:
+      <a
+        href="https://webmachinelearning.github.io/webmcp/"
+        target="_blank"
+        rel="external noopener noreferrer"
+        >WebMCP Specification (W3C Draft)</a
+      >
+    </div>
+  </div>
+</div>
+
+<script is:inline define:vars={{ uniqueId, i18n }}>
+  (function () {
+    "use strict";
+
+    /* ── DOM References ── */
+    var container = document.querySelector('[data-wma-id="' + uniqueId + '"]');
+    if (!container) return;
+
+    var urlInput = container.querySelector(".wma-url-input");
+    var analyzeBtn = container.querySelector(".wma-analyze-btn");
+    var progressEl = container.querySelector(".wma-progress");
+    var progressFill = container.querySelector(".wma-progress-fill");
+    var progressText = container.querySelector(".wma-progress-text");
+    var errorEl = container.querySelector(".wma-error");
+    var resultsEl = container.querySelector(".wma-results");
+
+    var scoreValue = container.querySelector(".wma-score-value");
+    var scoreRing = container.querySelector(".wma-score-ring");
+    var implType = container.querySelector(".wma-impl-type");
+    var cntPass = container.querySelector(".wma-cnt-pass");
+    var cntWarn = container.querySelector(".wma-cnt-warn");
+    var cntErr = container.querySelector(".wma-cnt-err");
+    var cntInfo = container.querySelector(".wma-cnt-info");
+
+    var checksContainer = container.querySelector(".wma-checks-container");
+    var toolsSection = container.querySelector(".wma-tools-section");
+    var toolsTitleText = container.querySelector(".wma-tools-title-text");
+    var toolsBody = container.querySelector(".wma-tools-table tbody");
+    var pagesSection = container.querySelector(".wma-pages-section");
+    var pagesTitleText = container.querySelector(".wma-pages-title-text");
+    var pagesBody = container.querySelector(".wma-pages-table tbody");
+    var recsSection = container.querySelector(".wma-recommendations");
+    var recsList = container.querySelector(".wma-rec-list");
+
+    var btnExport = container.querySelector(".wma-btn-export");
+    var btnCopy = container.querySelector(".wma-btn-copy");
+    var btnManifest = container.querySelector(".wma-btn-manifest");
+    var manifestViewer = container.querySelector(".wma-manifest-viewer");
+    var manifestCode = container.querySelector(".wma-manifest-pre code");
+
+    var optCrawl = container.querySelector(".wma-opt-crawl");
+    var optScanJs = container.querySelector(".wma-opt-scanjs");
+    var pagesInput = container.querySelector(".wma-pages-input");
+
+    var circumference = 2 * Math.PI * 52;
+    if (scoreRing) {
+      scoreRing.style.strokeDasharray = circumference;
+      scoreRing.style.strokeDashoffset = circumference;
+    }
+
+    var currentResult = null;
+
+    /* ── Constants ── */
+    var WELL_KNOWN_PATH = "/.well-known/webmcp.json";
+    var LINK_REL = "webmcp-manifest";
+    var KEBAB_RE = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/;
+    var SENSITIVE_VALUE_PATTERNS = [
+      /["'](api[_-]?key|secret[_-]?key|access[_-]?token)["']\s*:\s*["'][^"']{8,}["']/i,
+      /["'](password|secret|credential)["']\s*:\s*["'](?!.*\{)[^"']{8,}["']/i,
+      /(sk-[a-zA-Z0-9]{20,}|ghp_[a-zA-Z0-9]{36}|Bearer\s+[a-zA-Z0-9._-]{20,})/i,
+    ];
+    var WEBMCP_JS_RE =
+      /modelContext|registerTool|provideContext|clearContext|unregisterTool/;
+    var CDN_DOMAINS = new Set([
+      "cdnjs.cloudflare.com",
+      "cdn.jsdelivr.net",
+      "unpkg.com",
+      "cdn.skypack.dev",
+      "esm.sh",
+      "ajax.googleapis.com",
+      "code.jquery.com",
+      "fonts.googleapis.com",
+      "fonts.gstatic.com",
+      "www.googletagmanager.com",
+      "www.google-analytics.com",
+      "cdn.cloudflare.com",
+      "static.cloudflareinsights.com",
+    ]);
+    var MAX_CRAWL_PAGES = 20;
+    var MAX_SCRIPTS_PER_PAGE = 5;
+    var MAX_JS_SIZE = 512 * 1024;
+    var VALID_ANNOTATION_KEYS = new Set(["readOnlyHint"]);
+
+    var SEVERITY_WEIGHT = { pass: 1.0, info: 0.0, warning: 0.5, error: 0.0 };
+    var CATEGORY_MAX = {
+      discovery: 25,
+      manifest: 25,
+      tools: 25,
+      pages: 15,
+      security: 10,
+    };
+    var CATEGORY_LABELS = {
+      discovery: i18n.catDiscovery,
+      manifest: i18n.catManifest,
+      tools: i18n.catTools,
+      pages: i18n.catPages,
+      security: i18n.catSecurity,
+    };
+    var SEVERITY_ICONS = {
+      pass: '<span class="i-mdi:check-circle wma-icon-pass" aria-hidden="true"></span>',
+      info: '<span class="i-mdi:information wma-icon-info" aria-hidden="true"></span>',
+      warning:
+        '<span class="i-mdi:alert wma-icon-warn" aria-hidden="true"></span>',
+      error:
+        '<span class="i-mdi:close-circle wma-icon-err" aria-hidden="true"></span>',
+    };
+
+    /* ── Proxy Fetch ── */
+
+    /**
+     * Fetch a URL through the server-side proxy.
+     * @param {string} targetUrl
+     * @param {string} [method]
+     * @returns {Promise<{status:number, headers:Object, body:string, url:string}>}
+     */
+    function proxyFetch(targetUrl, method) {
+      var params = "?url=" + encodeURIComponent(targetUrl);
+      if (method === "HEAD") params += "&method=HEAD";
+      return fetch("/api/proxy/fetch" + params)
+        .then(function (res) {
+          return res.json();
+        })
+        .then(function (data) {
+          if (data.error) throw new Error(data.error);
+          return data;
+        });
+    }
+
+    /* ── HTML Parser Helpers ── */
+
+    function parseHTML(html) {
+      var parser = new DOMParser();
+      return parser.parseFromString(html, "text/html");
+    }
+
+    function escHtml(text) {
+      var d = document.createElement("div");
+      d.textContent = text;
+      return d.innerHTML;
+    }
+
+    /* ── Analysis Model ── */
+
+    function createResult(url) {
+      var parsed = new URL(url);
+      return {
+        target_url: url,
+        origin: parsed.origin,
+        version: "1.0.0",
+        checks: [],
+        tools: [],
+        pages: [],
+        manifest_raw: null,
+        manifest_url: "",
+        errors: [],
+      };
+    }
+
+    function addCheck(result, id, category, description, severity, details) {
+      result.checks.push({
+        id: id,
+        category: category,
+        description: description,
+        severity: severity,
+        details: details || "",
+      });
+    }
+
+    /* ── Score Calculation ── */
+
+    function calcScore(result) {
+      var catScores = {};
+      result.checks.forEach(function (c) {
+        if (c.severity === "info") return;
+        if (!catScores[c.category])
+          catScores[c.category] = { earned: 0, total: 0 };
+        catScores[c.category].total += 1;
+        catScores[c.category].earned += SEVERITY_WEIGHT[c.severity] || 0;
+      });
+      var sum = 0;
+      for (var cat in catScores) {
+        if (catScores[cat].total === 0) continue;
+        var ratio = catScores[cat].earned / catScores[cat].total;
+        sum += ratio * (CATEGORY_MAX[cat] || 0);
+      }
+      return Math.round(sum);
+    }
+
+    function getImplType(result) {
+      var hasManifest = result.manifest_raw !== null;
+      var hasProvider = result.pages.some(function (p) {
+        return p.has_provider;
+      });
+      var hasJs = result.pages.some(function (p) {
+        return p.js_webmcp_detected;
+      });
+      var hasDecl = result.pages.some(function (p) {
+        return p.declarative_tool_count > 0;
+      });
+      if (!hasManifest && !hasProvider && !hasJs && !hasDecl) return "none";
+      var parts = [];
+      if (hasManifest) parts.push("manifest");
+      if (hasProvider) parts.push("provider");
+      if (hasJs) parts.push("js-runtime");
+      if (hasDecl) parts.push("declarative");
+      return parts.join(" + ");
+    }
+
+    /* ── Analysis Phases ── */
+
+    async function analyzeUrl(baseUrl, options) {
+      var parsed = new URL(baseUrl);
+      var origin = parsed.origin;
+      var result = createResult(baseUrl);
+      result.origin = origin;
+
+      // Phase 0: Security
+      updateProgress(10, i18n.stepSecurity);
+      checkSecurity(result, parsed);
+
+      // Phase 1: Discovery
+      updateProgress(20, i18n.stepDiscovery);
+      var manifestData = await checkDiscovery(result, origin, baseUrl);
+
+      // Phase 2: Manifest validation
+      if (manifestData) {
+        updateProgress(40, i18n.stepManifest);
+        validateManifest(result, manifestData);
+      }
+
+      // Phase 3: Page analysis
+      updateProgress(55, i18n.stepPages);
+      await analyzePages(result, origin, parsed, options);
+
+      // Post-analysis adjustments
+      postAnalysisAdjustments(result);
+
+      // Phase 4: Cross-reference
+      if (manifestData && result.pages.length > 0) {
+        updateProgress(85, i18n.stepCrossRef);
+        crossReference(result);
+      }
+
+      updateProgress(100, i18n.stepDone);
+      return result;
+    }
+
+    /* ── Phase 0: Security ── */
+
+    function checkSecurity(result, parsed) {
+      if (parsed.protocol === "https:") {
+        addCheck(result, "S001", "security", "Site uses HTTPS", "pass");
+      } else {
+        addCheck(
+          result,
+          "S001",
+          "security",
+          "Site does not use HTTPS",
+          "warning",
+          "WebMCP tools may handle sensitive data; HTTPS is strongly recommended.",
+        );
+      }
+    }
+
+    /* ── Phase 1: Discovery ── */
+
+    async function checkDiscovery(result, origin, baseUrl) {
+      var manifestUrl = origin + WELL_KNOWN_PATH;
+      result.manifest_url = manifestUrl;
+
+      // D001: Fetch manifest
+      var resp;
+      try {
+        resp = await proxyFetch(manifestUrl);
+      } catch (e) {
+        addCheck(
+          result,
+          "D001",
+          "discovery",
+          "Manifest HTTP request failed",
+          "error",
+          e.message,
+        );
+        // Still check for link tag on the page
+        await checkLinkTag(result, baseUrl);
+        return null;
+      }
+
+      if (resp.status === 200) {
+        addCheck(
+          result,
+          "D001",
+          "discovery",
+          "Manifest found at " + WELL_KNOWN_PATH,
+          "pass",
+          "HTTP " + resp.status + ", " + resp.body.length + " bytes",
+        );
+      } else {
+        addCheck(
+          result,
+          "D001",
+          "discovery",
+          "Manifest not found at " + WELL_KNOWN_PATH,
+          "error",
+          "HTTP " + resp.status,
+        );
+        await checkLinkTag(result, baseUrl);
+        return null;
+      }
+
+      // D002: Content-Type
+      var ct = resp.headers["content-type"] || "";
+      if (ct.indexOf("application/json") !== -1) {
+        addCheck(
+          result,
+          "D002",
+          "discovery",
+          "Manifest Content-Type is application/json",
+          "pass",
+        );
+      } else {
+        addCheck(
+          result,
+          "D002",
+          "discovery",
+          "Manifest Content-Type is '" + ct + "'",
+          "warning",
+          "Expected application/json",
+        );
+      }
+
+      // D003: Parse JSON
+      var data;
+      try {
+        data = JSON.parse(resp.body);
+      } catch (e) {
+        addCheck(
+          result,
+          "D003",
+          "discovery",
+          "Manifest is not valid JSON",
+          "error",
+          e.message,
+        );
+        return null;
+      }
+      addCheck(result, "D003", "discovery", "Manifest is valid JSON", "pass");
+      result.manifest_raw = data;
+
+      // D004: Cache headers
+      var cacheControl = resp.headers["cache-control"] || "";
+      if (cacheControl) {
+        addCheck(
+          result,
+          "D004",
+          "discovery",
+          "Manifest has Cache-Control header",
+          "pass",
+          cacheControl,
+        );
+      } else {
+        addCheck(
+          result,
+          "D004",
+          "discovery",
+          "Manifest missing Cache-Control header",
+          "warning",
+          "Consider adding caching for the static manifest file.",
+        );
+      }
+
+      // D005: Link tag
+      await checkLinkTag(result, baseUrl);
+
+      return data;
+    }
+
+    async function checkLinkTag(result, url) {
+      try {
+        var resp = await proxyFetch(url);
+        if (resp.status !== 200) {
+          addCheck(
+            result,
+            "D005",
+            "discovery",
+            "Could not fetch page to check link tag",
+            "warning",
+            url,
+          );
+          return;
+        }
+        var doc = parseHTML(resp.body);
+        var link = doc.querySelector('link[rel="' + LINK_REL + '"]');
+        if (link) {
+          var href = link.getAttribute("href") || "";
+          addCheck(
+            result,
+            "D005",
+            "discovery",
+            '<link rel="' + LINK_REL + '"> found in HTML',
+            "pass",
+            'href="' + href + '"',
+          );
+          // D006: Verify href matches well-known
+          if (href) {
+            var resolvedHref;
+            try {
+              resolvedHref = new URL(href, url).href.replace(/\/$/, "");
+            } catch (e) {
+              resolvedHref = href;
+            }
+            var expectedHref = new URL(WELL_KNOWN_PATH, url).href.replace(
+              /\/$/,
+              "",
+            );
+            if (resolvedHref === expectedHref) {
+              addCheck(
+                result,
+                "D006",
+                "discovery",
+                "Link href matches well-known manifest location",
+                "pass",
+              );
+            } else {
+              addCheck(
+                result,
+                "D006",
+                "discovery",
+                "Link href does not match well-known location",
+                "warning",
+                "Link points to " + resolvedHref + ", expected " + expectedHref,
+              );
+            }
+          }
+        } else {
+          addCheck(
+            result,
+            "D005",
+            "discovery",
+            'No <link rel="' + LINK_REL + '"> found in HTML',
+            "error",
+            "Agents rely on this tag for manifest discovery.",
+          );
+        }
+      } catch (e) {
+        addCheck(
+          result,
+          "D005",
+          "discovery",
+          "Could not fetch page to check link tag",
+          "warning",
+          e.message,
+        );
+      }
+    }
+
+    /* ── Phase 2: Manifest Validation ── */
+
+    function validateManifest(result, data) {
+      var toolsRaw = data.tools;
+      if (!Array.isArray(toolsRaw)) {
+        addCheck(
+          result,
+          "M001",
+          "manifest",
+          'Manifest missing "tools" array',
+          "error",
+          "Found type: " + typeof toolsRaw,
+        );
+        return;
+      }
+      addCheck(
+        result,
+        "M001",
+        "manifest",
+        'Manifest has "tools" array (' + toolsRaw.length + " tools)",
+        "pass",
+      );
+
+      if (toolsRaw.length === 0) {
+        addCheck(result, "M002", "manifest", "Tools array is empty", "warning");
+      } else {
+        addCheck(
+          result,
+          "M002",
+          "manifest",
+          toolsRaw.length + " tools defined",
+          "pass",
+        );
+      }
+
+      var namesSeen = new Set();
+      var allNamesValid = true;
+      var allHaveName = true;
+      var allHaveDesc = true;
+      var nameIssues = [];
+
+      toolsRaw.forEach(function (raw, idx) {
+        var tool = validateTool(result, raw, idx);
+        result.tools.push(tool);
+        if (!tool.name) allHaveName = false;
+        if (!tool.description) allHaveDesc = false;
+        if (namesSeen.has(tool.name)) {
+          nameIssues.push("Duplicate: " + tool.name);
+          tool.issues.push("Duplicate tool name");
+        }
+        namesSeen.add(tool.name);
+        if (tool.name && !KEBAB_RE.test(tool.name)) allNamesValid = false;
+      });
+
+      // M003: All have name
+      if (allHaveName) {
+        addCheck(result, "M003", "manifest", "All tools have a name", "pass");
+      } else {
+        var missing = result.tools.filter(function (t) {
+          return !t.name;
+        }).length;
+        addCheck(
+          result,
+          "M003",
+          "manifest",
+          missing + " tool(s) missing name",
+          "error",
+        );
+      }
+
+      // M004: All have description
+      if (allHaveDesc) {
+        addCheck(
+          result,
+          "M004",
+          "manifest",
+          "All tools have a description",
+          "pass",
+        );
+      } else {
+        var missingD = result.tools.filter(function (t) {
+          return !t.description;
+        }).length;
+        addCheck(
+          result,
+          "M004",
+          "manifest",
+          missingD + " tool(s) missing description",
+          "error",
+        );
+      }
+
+      // M005: Unique names
+      if (nameIssues.length === 0) {
+        addCheck(
+          result,
+          "M005",
+          "manifest",
+          "All tool names are unique",
+          "pass",
+        );
+      } else {
+        addCheck(
+          result,
+          "M005",
+          "manifest",
+          "Duplicate tool names found",
+          "error",
+          nameIssues.join("; "),
+        );
+      }
+
+      // M006: Naming convention
+      if (allNamesValid) {
+        addCheck(
+          result,
+          "M006",
+          "manifest",
+          "All tool names follow kebab-case convention",
+          "pass",
+        );
+      } else {
+        var bad = result.tools
+          .filter(function (t) {
+            return t.name && !KEBAB_RE.test(t.name);
+          })
+          .map(function (t) {
+            return t.name;
+          });
+        addCheck(
+          result,
+          "M006",
+          "manifest",
+          bad.length + " tool name(s) not in kebab-case",
+          "warning",
+          bad.slice(0, 5).join(", ") + (bad.length > 5 ? "..." : ""),
+        );
+      }
+
+      // M007: Unknown top-level keys
+      var knownKeys = new Set(["tools", "name", "description", "version"]);
+      var extra = Object.keys(data).filter(function (k) {
+        return !knownKeys.has(k);
+      });
+      if (extra.length > 0) {
+        addCheck(
+          result,
+          "M007",
+          "manifest",
+          "Extra top-level keys: " + extra.join(", "),
+          "info",
+          "These are not part of the WebMCP spec but won't cause issues.",
+        );
+      }
+
+      // S002: Sensitive data
+      var manifestStr = JSON.stringify(data);
+      var hasSensitive = SENSITIVE_VALUE_PATTERNS.some(function (re) {
+        return re.test(manifestStr);
+      });
+      if (hasSensitive) {
+        addCheck(
+          result,
+          "S002",
+          "security",
+          "Manifest may contain embedded credentials",
+          "warning",
+        );
+      } else {
+        addCheck(
+          result,
+          "S002",
+          "security",
+          "No embedded credentials detected in manifest",
+          "pass",
+        );
+      }
+    }
+
+    function validateTool(result, raw, index) {
+      if (typeof raw !== "object" || raw === null || Array.isArray(raw)) {
+        var t = {
+          name: "<invalid-" + index + ">",
+          description: "",
+          has_input_schema: false,
+          param_count: 0,
+          required_params: 0,
+          has_annotations: false,
+          read_only: null,
+          issues: ["Tool at index " + index + " is not an object"],
+        };
+        addCheck(
+          result,
+          "T-" + index,
+          "tools",
+          "Tool at index " + index + " is invalid",
+          "error",
+          t.issues[0],
+        );
+        return t;
+      }
+
+      var name = raw.name || "";
+      var desc = raw.description || "";
+      var issues = [];
+
+      if (!name) issues.push("Missing name");
+      if (!desc) issues.push("Missing description");
+      else if (desc.length < 10)
+        issues.push("Description too short (" + desc.length + " chars)");
+      else if (desc.length > 500)
+        issues.push("Description too long (" + desc.length + " chars)");
+
+      var schema = raw.inputSchema || {};
+      var hasSchema = Object.keys(schema).length > 0;
+      var paramCount = 0;
+      var requiredParams = 0;
+
+      if (hasSchema && typeof schema === "object") {
+        var props = schema.properties || {};
+        paramCount = Object.keys(props).length;
+        var req = schema.required || [];
+        requiredParams = Array.isArray(req) ? req.length : 0;
+        if (schema.type !== "object" && paramCount > 0)
+          issues.push('inputSchema missing type: "object"');
+        if (Array.isArray(req)) {
+          req.forEach(function (r) {
+            if (!(r in props))
+              issues.push('Required field "' + r + '" not in properties');
+          });
+        }
+        for (var pName in props) {
+          if (
+            typeof props[pName] === "object" &&
+            !("type" in props[pName]) &&
+            !("enum" in props[pName])
+          ) {
+            issues.push('Property "' + pName + '" missing type');
+          }
+        }
+      }
+
+      var annotations = raw.annotations || {};
+      var hasAnnotations = Object.keys(annotations).length > 0;
+      var readOnly = null;
+      if (hasAnnotations) {
+        readOnly = annotations.readOnlyHint;
+        var unknown = Object.keys(annotations).filter(function (k) {
+          return !VALID_ANNOTATION_KEYS.has(k);
+        });
+        if (unknown.length > 0)
+          issues.push("Unknown annotation keys: " + unknown.join(", "));
+      }
+
+      var checkName = name || String(index);
+      if (issues.length > 0) {
+        addCheck(
+          result,
+          "T-" + checkName,
+          "tools",
+          'Tool "' + checkName + '" has ' + issues.length + " issue(s)",
+          "warning",
+          issues.join("; "),
+        );
+      } else {
+        addCheck(
+          result,
+          "T-" + checkName,
+          "tools",
+          'Tool "' + checkName + '" is valid',
+          "pass",
+        );
+      }
+
+      return {
+        name: name,
+        description: desc,
+        has_input_schema: hasSchema,
+        param_count: paramCount,
+        required_params: requiredParams,
+        has_annotations: hasAnnotations,
+        read_only: readOnly,
+        issues: issues,
+      };
+    }
+
+    /* ── Phase 3: Page Analysis ── */
+
+    async function analyzePages(result, origin, parsed, options) {
+      var pagesToCheck = [parsed.pathname || "/"];
+      if (options.extraPages) {
+        options.extraPages.forEach(function (p) {
+          var path = p.startsWith("/") ? p : "/" + p;
+          if (pagesToCheck.indexOf(path) === -1) pagesToCheck.push(path);
+        });
+      }
+
+      if (options.crawl) {
+        var sitemapPages = await getSitemapPages(origin);
+        sitemapPages.forEach(function (sp) {
+          if (
+            pagesToCheck.indexOf(sp) === -1 &&
+            pagesToCheck.length < MAX_CRAWL_PAGES
+          ) {
+            pagesToCheck.push(sp);
+          }
+        });
+      }
+
+      for (var idx = 0; idx < pagesToCheck.length; idx++) {
+        var pct = 55 + Math.round((idx / pagesToCheck.length) * 30);
+        updateProgress(
+          pct,
+          i18n.stepPages + " (" + (idx + 1) + "/" + pagesToCheck.length + ")",
+        );
+        var pageInfo = await analyzeSinglePage(
+          result,
+          origin,
+          pagesToCheck[idx],
+          options,
+        );
+        result.pages.push(pageInfo);
+      }
+    }
+
+    async function analyzeSinglePage(result, origin, path, options) {
+      var url = origin + path;
+      var page = {
+        url: url,
+        path: path,
+        status_code: 0,
+        has_provider: false,
+        has_link_tag: false,
+        manifest_href: "",
+        tool_count: 0,
+        tool_names: [],
+        webmcp_script_blocks: 0,
+        js_webmcp_detected: false,
+        js_webmcp_scripts: [],
+        declarative_tool_count: 0,
+        issues: [],
+      };
+
+      var resp;
+      try {
+        resp = await proxyFetch(url);
+        page.status_code = resp.status;
+      } catch (e) {
+        page.issues.push("Request failed: " + e.message);
+        return page;
+      }
+
+      if (resp.status !== 200) {
+        page.issues.push("HTTP " + resp.status);
+        return page;
+      }
+
+      var doc = parseHTML(resp.body);
+
+      // Link tag
+      var linkTag = doc.querySelector('link[rel="' + LINK_REL + '"]');
+      page.has_link_tag = linkTag !== null;
+      if (linkTag) page.manifest_href = linkTag.getAttribute("href") || "";
+
+      // Provider script
+      var provider =
+        doc.getElementById("webmcp-provider") ||
+        doc.querySelector("[data-webmcp-tools]");
+      if (provider) {
+        page.has_provider = true;
+        var toolsJson = provider.getAttribute("data-webmcp-tools") || "";
+        if (toolsJson) {
+          try {
+            var toolsData = JSON.parse(toolsJson);
+            if (Array.isArray(toolsData)) {
+              page.tool_count = toolsData.length;
+              page.tool_names = toolsData
+                .map(function (t) {
+                  return (t && t.name) || "";
+                })
+                .filter(Boolean);
+            }
+          } catch (e) {
+            page.issues.push("Could not parse data-webmcp-tools JSON");
+          }
+        }
+      }
+
+      // WebMCP script blocks
+      var scripts = doc.querySelectorAll("script");
+      scripts.forEach(function (script) {
+        var text = script.textContent || "";
+        var hasMarker = text.indexOf("=== WebMCP START ===") !== -1;
+        var hasRegister =
+          text.indexOf("registerTool") !== -1 &&
+          text.indexOf("modelContext") !== -1;
+        if (hasMarker || hasRegister) page.webmcp_script_blocks++;
+      });
+
+      // External JS scanning
+      if (options.scanJs) {
+        await scanExternalScripts(doc, url, origin, page);
+      }
+
+      // Declarative elements
+      page.declarative_tool_count = doc.querySelectorAll("webmcp-tool").length;
+      page.declarative_tool_count +=
+        doc.querySelectorAll("form[toolname]").length;
+
+      // Per-page check
+      var hasAny =
+        page.has_provider ||
+        page.js_webmcp_detected ||
+        page.declarative_tool_count > 0 ||
+        page.webmcp_script_blocks > 0;
+
+      if (hasAny) {
+        var details = [];
+        if (page.has_provider)
+          details.push("provider: " + page.tool_count + " tools");
+        if (page.webmcp_script_blocks)
+          details.push("script blocks: " + page.webmcp_script_blocks);
+        if (page.js_webmcp_detected)
+          details.push("JS bundles: " + page.js_webmcp_scripts.join(", "));
+        if (page.declarative_tool_count)
+          details.push("declarative: " + page.declarative_tool_count);
+        addCheck(
+          result,
+          "P-" + path,
+          "pages",
+          "Page " + path + ": WebMCP implementation detected",
+          "pass",
+          details.join("; "),
+        );
+      } else {
+        addCheck(
+          result,
+          "P-" + path,
+          "pages",
+          "Page " + path + ": no WebMCP integration detected",
+          "info",
+          "This page may not have WebMCP tools registered.",
+        );
+      }
+
+      return page;
+    }
+
+    async function scanExternalScripts(doc, pageUrl, origin, page) {
+      var scripts = doc.querySelectorAll("script[src]");
+      var candidates = [];
+      scripts.forEach(function (script) {
+        var src = script.getAttribute("src");
+        if (!src) return;
+        var absUrl;
+        try {
+          absUrl = new URL(src, pageUrl).href;
+        } catch (e) {
+          return;
+        }
+        var parsed = new URL(absUrl);
+        if (CDN_DOMAINS.has(parsed.hostname)) return;
+        candidates.push(absUrl);
+      });
+
+      for (
+        var idx = 0;
+        idx < Math.min(candidates.length, MAX_SCRIPTS_PER_PAGE);
+        idx++
+      ) {
+        try {
+          var resp = await proxyFetch(candidates[idx]);
+          if (resp.status !== 200) continue;
+          var text = resp.body;
+          if (text.length > MAX_JS_SIZE) text = text.substring(0, MAX_JS_SIZE);
+          if (WEBMCP_JS_RE.test(text)) {
+            page.js_webmcp_detected = true;
+            var filename =
+              new URL(candidates[idx]).pathname.split("/").pop() ||
+              candidates[idx];
+            page.js_webmcp_scripts.push(filename);
+          }
+        } catch (e) {
+          /* skip */
+        }
+      }
+    }
+
+    async function getSitemapPages(origin) {
+      var paths = [];
+      var sitemapUrls = [
+        origin + "/sitemap-index.xml",
+        origin + "/sitemap.xml",
+      ];
+
+      for (var idx = 0; idx < sitemapUrls.length; idx++) {
+        try {
+          var resp = await proxyFetch(sitemapUrls[idx]);
+          if (resp.status !== 200) continue;
+          var parser = new DOMParser();
+          var xmlDoc = parser.parseFromString(resp.body, "text/xml");
+
+          // Check for sitemap index
+          var sitemapLocs = xmlDoc.querySelectorAll("sitemap > loc");
+          if (sitemapLocs.length > 0) {
+            for (var si = 0; si < sitemapLocs.length; si++) {
+              var subPaths = await fetchSitemapUrls(
+                sitemapLocs[si].textContent,
+              );
+              paths = paths.concat(subPaths);
+            }
+            break;
+          }
+
+          // Direct sitemap
+          var urlLocs = xmlDoc.querySelectorAll("url > loc");
+          urlLocs.forEach(function (loc) {
+            if (loc.textContent) {
+              try {
+                paths.push(new URL(loc.textContent).pathname);
+              } catch (e) {
+                /* skip */
+              }
+            }
+          });
+          break;
+        } catch (e) {
+          /* skip */
+        }
+      }
+
+      return selectRepresentativePages(paths);
+    }
+
+    async function fetchSitemapUrls(sitemapUrl) {
+      var paths = [];
+      try {
+        var resp = await proxyFetch(sitemapUrl);
+        if (resp.status !== 200) return paths;
+        var parser = new DOMParser();
+        var xmlDoc = parser.parseFromString(resp.body, "text/xml");
+        xmlDoc.querySelectorAll("url > loc").forEach(function (loc) {
+          if (loc.textContent) {
+            try {
+              paths.push(new URL(loc.textContent).pathname);
+            } catch (e) {
+              /* skip */
+            }
+          }
+        });
+      } catch (e) {
+        /* skip */
+      }
+      return paths;
+    }
+
+    function selectRepresentativePages(paths) {
+      var sections = {};
+      paths.forEach(function (p) {
+        var parts = p.split("/").filter(Boolean);
+        var section = parts[0] || "root";
+        if ((section === "en" || section === "es") && parts.length > 1)
+          section = parts[1];
+        if (!sections[section]) sections[section] = [];
+        sections[section].push(p);
+      });
+
+      var selected = [];
+      for (var section in sections) {
+        var sectionPaths = sections[section];
+        // Index page
+        var idx = sectionPaths.find(function (p) {
+          return p.replace(/\/$/, "").split("/").filter(Boolean).length <= 2;
+        });
+        if (idx && selected.indexOf(idx) === -1) selected.push(idx);
+        // One deep page
+        var deep = sectionPaths.find(function (p) {
+          return (
+            p.replace(/\/$/, "").split("/").filter(Boolean).length >= 2 &&
+            selected.indexOf(p) === -1
+          );
+        });
+        if (deep) selected.push(deep);
+        if (selected.length >= MAX_CRAWL_PAGES) break;
+      }
+      return selected.slice(0, MAX_CRAWL_PAGES);
+    }
+
+    /* ── Post-Analysis Adjustments ── */
+
+    function postAnalysisAdjustments(result) {
+      var hasManifest = result.manifest_raw !== null;
+      var hasJs = result.pages.some(function (p) {
+        return p.js_webmcp_detected;
+      });
+      var hasDecl = result.pages.some(function (p) {
+        return p.declarative_tool_count > 0;
+      });
+
+      if (!(hasJs || hasDecl) || hasManifest) return;
+
+      // Soften D001 for JS-only implementations
+      result.checks.forEach(function (c) {
+        if (c.id === "D001" && c.severity === "error") {
+          c.severity = "warning";
+          c.details +=
+            " — JS-based implementation detected; add manifest for static discoverability";
+        }
+      });
+
+      if (hasJs) {
+        var jsFiles = new Set();
+        result.pages.forEach(function (p) {
+          p.js_webmcp_scripts.forEach(function (f) {
+            jsFiles.add(f);
+          });
+        });
+        addCheck(
+          result,
+          "D007",
+          "discovery",
+          "WebMCP JS runtime detected (" + jsFiles.size + " bundle(s))",
+          "pass",
+          "Files: " + Array.from(jsFiles).slice(0, 5).join(", "),
+        );
+      }
+
+      if (hasDecl) {
+        var total = result.pages.reduce(function (s, p) {
+          return s + p.declarative_tool_count;
+        }, 0);
+        addCheck(
+          result,
+          "D008",
+          "discovery",
+          "Declarative <webmcp-tool> elements found (" + total + ")",
+          "pass",
+        );
+      }
+
+      addCheck(
+        result,
+        "T-JS",
+        "tools",
+        "Tool definitions in JS bundles (not statically analyzable)",
+        "warning",
+        "Add /.well-known/webmcp.json for full tool validation.",
+      );
+    }
+
+    /* ── Phase 4: Cross-Reference ── */
+
+    function crossReference(result) {
+      var manifestNames = new Set(
+        result.tools.map(function (t) {
+          return t.name;
+        }),
+      );
+      var foundOnPages = new Set();
+      result.pages.forEach(function (p) {
+        p.tool_names.forEach(function (n) {
+          foundOnPages.add(n);
+        });
+      });
+
+      // Tools on pages not in manifest
+      var pageOnly = Array.from(foundOnPages).filter(function (n) {
+        return !manifestNames.has(n);
+      });
+      if (pageOnly.length > 0) {
+        addCheck(
+          result,
+          "X002",
+          "pages",
+          pageOnly.length + " tool(s) found on pages but not in manifest",
+          "warning",
+          "Names: " + pageOnly.join(", "),
+        );
+      } else {
+        addCheck(
+          result,
+          "X002",
+          "pages",
+          "All page tools are listed in the manifest",
+          "pass",
+        );
+      }
+
+      // Coverage
+      var found = Array.from(foundOnPages).filter(function (n) {
+        return manifestNames.has(n);
+      }).length;
+      var totalManifest = manifestNames.size;
+      if (totalManifest > 0) {
+        var pct = Math.round((found / totalManifest) * 100);
+        addCheck(
+          result,
+          "X003",
+          "pages",
+          "Tool coverage: " +
+            found +
+            "/" +
+            totalManifest +
+            " (" +
+            pct +
+            "%) seen across " +
+            result.pages.length +
+            " page(s)",
+          "info",
+          "Enable sitemap crawling to scan more pages for better coverage.",
+        );
+      }
+    }
+
+    /* ── UI Update Functions ── */
+
+    function updateProgress(pct, text) {
+      if (progressEl) progressEl.hidden = false;
+      if (progressFill) progressFill.style.width = pct + "%";
+      if (progressText) progressText.textContent = text;
+    }
+
+    function showError(msg) {
+      if (errorEl) {
+        errorEl.textContent = msg;
+        errorEl.hidden = false;
+      }
+    }
+
+    function hideError() {
+      if (errorEl) errorEl.hidden = true;
+    }
+
+    function renderResults(result) {
+      currentResult = result;
+      resultsEl.hidden = false;
+
+      var score = calcScore(result);
+      var impl = getImplType(result);
+
+      // Score circle animation
+      animateScore(score);
+      implType.textContent = i18n.implementationType + ": " + impl;
+
+      // Counts
+      var passed = 0,
+        warns = 0,
+        errs = 0,
+        infos = 0;
+      result.checks.forEach(function (c) {
+        if (c.severity === "pass") passed++;
+        else if (c.severity === "warning") warns++;
+        else if (c.severity === "error") errs++;
+        else if (c.severity === "info") infos++;
+      });
+      cntPass.textContent = passed;
+      cntWarn.textContent = warns;
+      cntErr.textContent = errs;
+      cntInfo.textContent = infos;
+
+      // Checks by category
+      renderChecks(result);
+
+      // Tool table
+      renderTools(result);
+
+      // Page table
+      renderPages(result);
+
+      // Recommendations
+      renderRecommendations(result, impl);
+
+      // Manifest viewer
+      if (result.manifest_raw) {
+        manifestCode.textContent = JSON.stringify(result.manifest_raw, null, 2);
+      } else {
+        manifestCode.textContent = i18n.noManifest;
+      }
+    }
+
+    function animateScore(target) {
+      var current = 0;
+      var step = Math.max(1, Math.ceil(target / 40));
+      function tick() {
+        current = Math.min(current + step, target);
+        scoreValue.textContent = current;
+        var offset = circumference - (current / 100) * circumference;
+        scoreRing.style.strokeDashoffset = offset;
+        // Color
+        var color;
+        if (current >= 80) color = "var(--color-success, #10b981)";
+        else if (current >= 50) color = "var(--color-warning, #f59e0b)";
+        else color = "var(--color-error, #ef4444)";
+        scoreRing.style.stroke = color;
+        if (current < target) requestAnimationFrame(tick);
+      }
+      tick();
+    }
+
+    function renderChecks(result) {
+      checksContainer.innerHTML = "";
+      var categories = ["discovery", "manifest", "tools", "pages", "security"];
+
+      categories.forEach(function (cat) {
+        var checks = result.checks.filter(function (c) {
+          return c.category === cat;
+        });
+        if (checks.length === 0) return;
+
+        var scored = checks.filter(function (c) {
+          return c.severity !== "info";
+        });
+        var passedCount = scored.filter(function (c) {
+          return c.severity === "pass";
+        }).length;
+        var catRatio = scored.length > 0 ? passedCount / scored.length : 1;
+        var pct = Math.round(catRatio * 100);
+
+        var section = document.createElement("div");
+        section.className = "wma-cat-section";
+
+        var header = document.createElement("div");
+        header.className = "wma-cat-header";
+        header.innerHTML =
+          '<span class="wma-cat-name">' +
+          escHtml(CATEGORY_LABELS[cat] || cat) +
+          "</span>" +
+          '<span class="wma-cat-score">' +
+          passedCount +
+          "/" +
+          scored.length +
+          " — " +
+          pct +
+          "%</span>";
+        section.appendChild(header);
+
+        var bar = document.createElement("div");
+        bar.className = "wma-cat-bar";
+        var fill = document.createElement("div");
+        fill.className = "wma-cat-fill";
+        fill.style.width = pct + "%";
+        fill.className +=
+          catRatio >= 0.8
+            ? " wma-fill-pass"
+            : catRatio >= 0.5
+              ? " wma-fill-warn"
+              : " wma-fill-err";
+        bar.appendChild(fill);
+        section.appendChild(bar);
+
+        var list = document.createElement("div");
+        list.className = "wma-check-list";
+        checks.forEach(function (c) {
+          var item = document.createElement("div");
+          item.className = "wma-check-item wma-check-" + c.severity;
+          var html =
+            SEVERITY_ICONS[c.severity] +
+            ' <span class="wma-check-desc">' +
+            escHtml(c.description) +
+            "</span>";
+          if (c.details) {
+            html +=
+              ' <span class="wma-check-details">(' +
+              escHtml(c.details) +
+              ")</span>";
+          }
+          item.innerHTML = html;
+          list.appendChild(item);
+        });
+        section.appendChild(list);
+        checksContainer.appendChild(section);
+      });
+    }
+
+    function renderTools(result) {
+      if (result.tools.length === 0) {
+        toolsSection.hidden = true;
+        return;
+      }
+      toolsSection.hidden = false;
+      toolsTitleText.textContent =
+        i18n.toolDefinitions + " (" + result.tools.length + ")";
+      toolsBody.innerHTML = "";
+
+      result.tools.forEach(function (tool) {
+        var tr = document.createElement("tr");
+        var roStr =
+          tool.read_only === true
+            ? '<span class="wma-badge-pass">' + i18n.yes + "</span>"
+            : tool.read_only === false
+              ? '<span class="wma-badge-warn">' + i18n.no + "</span>"
+              : '<span class="wma-badge-muted">—</span>';
+        var schemaStr = tool.has_input_schema
+          ? '<span class="wma-badge-pass">✓</span>'
+          : '<span class="wma-badge-muted">—</span>';
+        var statusStr =
+          tool.issues.length === 0
+            ? '<span class="wma-badge-pass">' + i18n.valid + "</span>"
+            : '<span class="wma-badge-warn" title="' +
+              escHtml(tool.issues.join("; ")) +
+              '">' +
+              i18n.issues +
+              "</span>";
+
+        tr.innerHTML =
+          '<td class="wma-td-name">' +
+          escHtml(tool.name) +
+          "</td>" +
+          '<td class="wma-td-center">' +
+          roStr +
+          "</td>" +
+          '<td class="wma-td-center">' +
+          tool.param_count +
+          "</td>" +
+          '<td class="wma-td-center">' +
+          schemaStr +
+          "</td>" +
+          '<td class="wma-td-center">' +
+          statusStr +
+          "</td>";
+        toolsBody.appendChild(tr);
+      });
+    }
+
+    function renderPages(result) {
+      if (result.pages.length === 0) {
+        pagesSection.hidden = true;
+        return;
+      }
+      pagesSection.hidden = false;
+      pagesTitleText.textContent =
+        i18n.pageAnalysis +
+        " (" +
+        result.pages.length +
+        " " +
+        i18n.pagesScanned +
+        ")";
+      pagesBody.innerHTML = "";
+
+      result.pages.forEach(function (page) {
+        var tr = document.createElement("tr");
+        var statusCls =
+          page.status_code === 200
+            ? "wma-badge-pass"
+            : page.status_code
+              ? "wma-badge-err"
+              : "wma-badge-muted";
+        var provStr = page.has_provider
+          ? '<span class="wma-badge-pass">✓</span>'
+          : '<span class="wma-badge-muted">—</span>';
+        var linkStr = page.has_link_tag
+          ? '<span class="wma-badge-pass">✓</span>'
+          : '<span class="wma-badge-muted">—</span>';
+        var jsStr = page.js_webmcp_detected
+          ? '<span class="wma-badge-pass">✓ (' +
+            page.js_webmcp_scripts.length +
+            ")</span>"
+          : '<span class="wma-badge-muted">—</span>';
+
+        tr.innerHTML =
+          '<td class="wma-td-path" title="' +
+          escHtml(page.url) +
+          '">' +
+          escHtml(page.path) +
+          "</td>" +
+          '<td class="wma-td-center"><span class="' +
+          statusCls +
+          '">' +
+          (page.status_code || "—") +
+          "</span></td>" +
+          '<td class="wma-td-center">' +
+          provStr +
+          "</td>" +
+          '<td class="wma-td-center">' +
+          linkStr +
+          "</td>" +
+          '<td class="wma-td-center">' +
+          page.tool_count +
+          "</td>" +
+          '<td class="wma-td-center">' +
+          page.webmcp_script_blocks +
+          "</td>" +
+          '<td class="wma-td-center">' +
+          jsStr +
+          "</td>";
+        pagesBody.appendChild(tr);
+      });
+    }
+
+    function renderRecommendations(result, impl) {
+      var recs = [];
+      if (
+        impl.indexOf("js-runtime") !== -1 &&
+        impl.indexOf("manifest") === -1
+      ) {
+        recs.push(i18n.recAddManifest);
+        recs.push(i18n.recAddLinkTag);
+      }
+      if (impl === "none") {
+        recs.push(i18n.recNoImplementation);
+      }
+
+      // Tool-specific recommendations
+      var noAnnotations = result.tools.filter(function (t) {
+        return !t.has_annotations;
+      });
+      if (noAnnotations.length > 0) {
+        recs.push(
+          "Add readOnlyHint annotations to " +
+            noAnnotations.length +
+            " tool(s): " +
+            noAnnotations
+              .slice(0, 5)
+              .map(function (t) {
+                return t.name;
+              })
+              .join(", "),
+        );
+      }
+      var noSchema = result.tools.filter(function (t) {
+        return !t.has_input_schema && t.param_count === 0;
+      });
+      // Only suggest schema for tools that might need parameters
+      // (if they have no params and no schema, that's fine)
+
+      if (recs.length === 0) {
+        recsSection.hidden = true;
+        return;
+      }
+      recsSection.hidden = false;
+      recsList.innerHTML = "";
+      recs.forEach(function (rec) {
+        var li = document.createElement("li");
+        li.textContent = rec;
+        recsList.appendChild(li);
+      });
+    }
+
+    /* ── Event Handlers ── */
+
+    analyzeBtn.addEventListener("click", async function () {
+      var url = urlInput.value.trim();
+      if (!url) return;
+      if (!/^https?:\/\//.test(url)) url = "https://" + url;
+
+      // Validate URL
+      try {
+        new URL(url);
+      } catch (e) {
+        showError(i18n.errInvalidUrl);
+        return;
+      }
+
+      hideError();
+      resultsEl.hidden = true;
+      manifestViewer.hidden = true;
+      analyzeBtn.disabled = true;
+      analyzeBtn.innerHTML =
+        '<span class="i-mdi:loading wma-spin" aria-hidden="true"></span> ' +
+        i18n.analyzing;
+
+      try {
+        var options = {
+          crawl: optCrawl.checked,
+          scanJs: optScanJs.checked,
+          extraPages: (pagesInput.value || "").split(/\s+/).filter(Boolean),
+        };
+
+        var result = await analyzeUrl(url, options);
+        renderResults(result);
+      } catch (e) {
+        showError(i18n.errFetchFailed + ": " + e.message);
+      } finally {
+        if (progressEl) progressEl.hidden = true;
+        analyzeBtn.disabled = false;
+        analyzeBtn.innerHTML =
+          '<span class="i-mdi:magnify-scan" aria-hidden="true"></span> ' +
+          i18n.analyze;
+      }
+    });
+
+    // Enter key on URL input
+    urlInput.addEventListener("keydown", function (e) {
+      if (e.key === "Enter") analyzeBtn.click();
+    });
+
+    // Export JSON
+    btnExport.addEventListener("click", function () {
+      if (!currentResult) return;
+      var data = JSON.stringify(resultToJson(currentResult), null, 2);
+      var blob = new Blob([data], { type: "application/json" });
+      var a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download =
+        "webmcp-analysis-" +
+        new URL(currentResult.target_url).hostname +
+        ".json";
+      a.click();
+      URL.revokeObjectURL(a.href);
+    });
+
+    // Copy results
+    btnCopy.addEventListener("click", function () {
+      if (!currentResult) return;
+      var text = formatTextReport(currentResult);
+      navigator.clipboard.writeText(text).then(function () {
+        var orig = btnCopy.innerHTML;
+        btnCopy.innerHTML =
+          '<span class="i-mdi:check" aria-hidden="true"></span> ' + i18n.copied;
+        setTimeout(function () {
+          btnCopy.innerHTML = orig;
+        }, 2000);
+      });
+    });
+
+    // Manifest viewer
+    btnManifest.addEventListener("click", function () {
+      if (manifestViewer.hidden) {
+        manifestViewer.hidden = false;
+        btnManifest.innerHTML =
+          '<span class="i-mdi:file-document-outline" aria-hidden="true"></span> ' +
+          i18n.hideManifest;
+      } else {
+        manifestViewer.hidden = true;
+        btnManifest.innerHTML =
+          '<span class="i-mdi:file-document-outline" aria-hidden="true"></span> ' +
+          i18n.viewManifest;
+      }
+    });
+
+    /* ── Serialization Helpers ── */
+
+    function resultToJson(result) {
+      return {
+        target_url: result.target_url,
+        version: result.version,
+        score: calcScore(result),
+        implementation_type: getImplType(result),
+        summary: {
+          total_checks: result.checks.filter(function (c) {
+            return c.severity !== "info";
+          }).length,
+          passed: result.checks.filter(function (c) {
+            return c.severity === "pass";
+          }).length,
+          warnings: result.checks.filter(function (c) {
+            return c.severity === "warning";
+          }).length,
+          errors: result.checks.filter(function (c) {
+            return c.severity === "error";
+          }).length,
+        },
+        checks: result.checks,
+        tools: result.tools,
+        pages: result.pages.map(function (p) {
+          return {
+            url: p.url,
+            path: p.path,
+            status_code: p.status_code,
+            has_provider: p.has_provider,
+            has_link_tag: p.has_link_tag,
+            tool_count: p.tool_count,
+            tool_names: p.tool_names,
+            webmcp_script_blocks: p.webmcp_script_blocks,
+            js_webmcp_detected: p.js_webmcp_detected,
+            js_webmcp_scripts: p.js_webmcp_scripts,
+            declarative_tool_count: p.declarative_tool_count,
+          };
+        }),
+        manifest: result.manifest_raw,
+      };
+    }
+
+    function formatTextReport(result) {
+      var score = calcScore(result);
+      var impl = getImplType(result);
+      var lines = [
+        "WebMCP Analysis Report",
+        "======================",
+        "Target: " + result.target_url,
+        "Score: " + score + "/100",
+        "Implementation: " + impl,
+        "",
+      ];
+      var categories = ["discovery", "manifest", "tools", "pages", "security"];
+      categories.forEach(function (cat) {
+        var checks = result.checks.filter(function (c) {
+          return c.category === cat;
+        });
+        if (checks.length === 0) return;
+        lines.push(CATEGORY_LABELS[cat] || cat);
+        lines.push("-".repeat(40));
+        checks.forEach(function (c) {
+          var icon =
+            c.severity === "pass"
+              ? "✓"
+              : c.severity === "warning"
+                ? "⚠"
+                : c.severity === "error"
+                  ? "✗"
+                  : "ℹ";
+          var line = "  " + icon + " " + c.description;
+          if (c.details) line += " (" + c.details + ")";
+          lines.push(line);
+        });
+        lines.push("");
+      });
+      return lines.join("\n");
+    }
+  })();
+</script>
+
+<style>
+  .wma-analyzer {
+    font-family: var(--font-body);
+  }
+
+  .wma-title {
+    margin-bottom: var(--space-lg);
+    font-size: 1.25rem;
+    font-weight: var(--fw-bold);
+    color: var(--color-text-heading);
+  }
+
+  /* ── Input Section ── */
+  .wma-input-section {
+    padding: var(--space-lg);
+    margin-bottom: var(--space-lg);
+    background: var(--color-bg-secondary);
+    border: var(--border-1);
+    border-radius: var(--radius-lg);
+  }
+
+  .wma-label {
+    display: flex;
+    gap: var(--space-xs);
+    align-items: center;
+    margin-bottom: var(--space-sm);
+    font-size: 0.9rem;
+    font-weight: var(--fw-medium);
+    color: var(--color-text);
+  }
+
+  .wma-label span[class*="i-"] {
+    width: 1.2rem;
+    height: 1.2rem;
+    color: var(--color-primary);
+  }
+
+  .wma-url-row {
+    display: flex;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-md);
+  }
+
+  .wma-url-input {
+    flex: 1;
+    padding: 0.625rem 0.875rem;
+    font-family: var(--font-mono);
+    font-size: 0.95rem;
+    color: var(--color-text);
+    background: var(--color-bg);
+    border: var(--border-1);
+    border-radius: var(--radius-md);
+  }
+
+  .wma-url-input:focus {
+    border-color: var(--color-primary);
+    outline: 2px solid rgb(179 137 245 / 30%);
+    outline-offset: 1px;
+  }
+
+  .wma-analyze-btn {
+    display: flex;
+    gap: var(--space-xs);
+    align-items: center;
+    padding: 0.625rem 1.25rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-on-primary);
+    white-space: nowrap;
+    cursor: pointer;
+    background: var(--color-primary);
+    border: none;
+    border-radius: var(--radius-md);
+    transition: background 0.2s;
+  }
+
+  .wma-analyze-btn:hover:not(:disabled) {
+    background: var(--color-primary-hover);
+  }
+
+  .wma-analyze-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+  }
+
+  .wma-analyze-btn span[class*="i-"] {
+    width: 1.1rem;
+    height: 1.1rem;
+  }
+
+  /* Options */
+  .wma-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-md);
+    align-items: flex-start;
+  }
+
+  .wma-checkbox {
+    display: flex;
+    gap: var(--space-xs);
+    align-items: center;
+    font-size: 0.85rem;
+    color: var(--color-text);
+    cursor: pointer;
+  }
+
+  .wma-checkbox input[type="checkbox"] {
+    accent-color: var(--color-primary);
+  }
+
+  .wma-hint {
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+  }
+
+  .wma-extra-pages {
+    flex-basis: 100%;
+  }
+
+  .wma-pages-input {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    margin-top: var(--space-xs);
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    color: var(--color-text);
+    background: var(--color-bg);
+    border: var(--border-1);
+    border-radius: var(--radius-md);
+  }
+
+  .wma-pages-input:focus {
+    border-color: var(--color-primary);
+    outline: 2px solid rgb(179 137 245 / 30%);
+    outline-offset: 1px;
+  }
+
+  /* ── Progress ── */
+  .wma-progress {
+    margin-bottom: var(--space-lg);
+  }
+
+  .wma-progress-bar {
+    height: 6px;
+    margin-bottom: var(--space-xs);
+    overflow: hidden;
+    background: var(--color-bg-subtle);
+    border-radius: 3px;
+  }
+
+  .wma-progress-fill {
+    width: 0;
+    height: 100%;
+    background: var(--color-primary);
+    border-radius: 3px;
+    transition: width 0.3s ease;
+  }
+
+  .wma-progress-text {
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+  }
+
+  /* ── Error ── */
+  .wma-error {
+    padding: var(--space-md);
+    margin-bottom: var(--space-lg);
+    font-size: 0.9rem;
+    color: var(--color-error, #ef4444);
+    background: rgb(239 68 68 / 10%);
+    border: 1px solid rgb(239 68 68 / 30%);
+    border-radius: var(--radius-md);
+  }
+
+  /* ── Score Panel ── */
+  .wma-score-panel {
+    display: flex;
+    gap: var(--space-lg);
+    align-items: center;
+    padding: var(--space-lg);
+    margin-bottom: var(--space-lg);
+    background: var(--color-bg-secondary);
+    border: var(--border-1);
+    border-radius: var(--radius-lg);
+  }
+
+  .wma-score-circle {
+    position: relative;
+    flex-shrink: 0;
+    width: 120px;
+    height: 120px;
+  }
+
+  .wma-score-svg {
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+  }
+
+  .wma-score-bg {
+    fill: none;
+    stroke: var(--color-bg-subtle);
+    stroke-width: 8;
+  }
+
+  .wma-score-ring {
+    fill: none;
+    stroke: var(--color-primary);
+    stroke-width: 8;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 0.5s ease;
+  }
+
+  .wma-score-value {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    font-size: 2rem;
+    font-weight: var(--fw-extrabold);
+    color: var(--color-text-heading);
+    transform: translate(-50%, -50%);
+  }
+
+  .wma-score-details {
+    flex: 1;
+  }
+
+  .wma-score-label {
+    font-size: 1.1rem;
+    font-weight: var(--fw-bold);
+    color: var(--color-text-heading);
+  }
+
+  .wma-impl-type {
+    margin-top: var(--space-xs);
+    margin-bottom: var(--space-sm);
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+  }
+
+  .wma-score-counts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-md);
+  }
+
+  .wma-score-counts span {
+    display: flex;
+    gap: 0.25rem;
+    align-items: center;
+    font-size: 0.85rem;
+  }
+
+  .wma-count-pass {
+    color: var(--color-success, #10b981);
+  }
+  .wma-count-warn {
+    color: var(--color-warning, #f59e0b);
+  }
+  .wma-count-err {
+    color: var(--color-error, #ef4444);
+  }
+  .wma-count-info {
+    color: var(--color-info, #3b82f6);
+  }
+
+  .wma-score-counts span[class*="i-"] {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  /* ── Actions Bar ── */
+  .wma-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-lg);
+  }
+
+  .wma-actions button {
+    display: flex;
+    gap: var(--space-xs);
+    align-items: center;
+    padding: 0.5rem 0.875rem;
+    font-size: 0.85rem;
+    font-weight: var(--fw-medium);
+    color: var(--color-text);
+    cursor: pointer;
+    background: var(--color-bg-secondary);
+    border: var(--border-1);
+    border-radius: var(--radius-md);
+    transition: border-color 0.2s;
+  }
+
+  .wma-actions button:hover {
+    border-color: var(--color-primary);
+  }
+
+  .wma-actions button span[class*="i-"] {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  /* ── Manifest Viewer ── */
+  .wma-manifest-viewer {
+    margin-bottom: var(--space-lg);
+  }
+
+  .wma-manifest-pre {
+    max-height: 400px;
+    padding: var(--space-md);
+    overflow: auto;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    line-height: 1.5;
+    color: var(--color-text);
+    background: var(--color-bg);
+    border: var(--border-1);
+    border-radius: var(--radius-md);
+  }
+
+  /* ── Checks Section ── */
+  .wma-section-title {
+    display: flex;
+    gap: var(--space-sm);
+    align-items: center;
+    margin-bottom: var(--space-md);
+    font-size: 1rem;
+    font-weight: var(--fw-bold);
+    color: var(--color-text-heading);
+  }
+
+  .wma-section-title span[class*="i-"] {
+    width: 1.2rem;
+    height: 1.2rem;
+    color: var(--color-primary);
+  }
+
+  .wma-cat-section {
+    padding: var(--space-md);
+    margin-bottom: var(--space-md);
+    background: var(--color-bg-secondary);
+    border: var(--border-1);
+    border-radius: var(--radius-md);
+  }
+
+  .wma-cat-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: var(--space-xs);
+  }
+
+  .wma-cat-name {
+    font-size: 0.9rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-heading);
+  }
+
+  .wma-cat-score {
+    font-size: 0.8rem;
+    font-weight: var(--fw-medium);
+    color: var(--color-text-muted);
+  }
+
+  .wma-cat-bar {
+    height: 4px;
+    margin-bottom: var(--space-sm);
+    overflow: hidden;
+    background: var(--color-bg-subtle);
+    border-radius: 2px;
+  }
+
+  .wma-cat-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.4s ease;
+  }
+
+  .wma-fill-pass {
+    background: var(--color-success, #10b981);
+  }
+  .wma-fill-warn {
+    background: var(--color-warning, #f59e0b);
+  }
+  .wma-fill-err {
+    background: var(--color-error, #ef4444);
+  }
+
+  .wma-check-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .wma-check-item {
+    display: flex;
+    gap: var(--space-xs);
+    align-items: flex-start;
+    padding: 0.25rem 0;
+    font-size: 0.85rem;
+    line-height: 1.4;
+  }
+
+  .wma-check-item span[class*="i-"] {
+    flex-shrink: 0;
+    width: 1rem;
+    height: 1rem;
+    margin-top: 0.1rem;
+  }
+
+  :global(.wma-icon-pass) {
+    color: var(--color-success, #10b981);
+  }
+  :global(.wma-icon-warn) {
+    color: var(--color-warning, #f59e0b);
+  }
+  :global(.wma-icon-err) {
+    color: var(--color-error, #ef4444);
+  }
+  :global(.wma-icon-info) {
+    color: var(--color-info, #3b82f6);
+  }
+
+  .wma-check-desc {
+    color: var(--color-text);
+  }
+
+  .wma-check-details {
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+  }
+
+  /* ── Tables ── */
+  .wma-tools-table-wrap,
+  .wma-pages-table-wrap {
+    margin-bottom: var(--space-lg);
+    overflow-x: auto;
+  }
+
+  .wma-tools-table,
+  .wma-pages-table {
+    width: 100%;
+    border-spacing: 0;
+    border-collapse: collapse;
+    background: var(--color-bg-secondary);
+    border: var(--border-1);
+    border-radius: var(--radius-md);
+  }
+
+  .wma-tools-table th,
+  .wma-pages-table th {
+    padding: 0.625rem 0.75rem;
+    font-size: 0.8rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-muted);
+    text-align: left;
+    background: var(--color-bg-subtle);
+    border-bottom: var(--border-1);
+  }
+
+  .wma-tools-table td,
+  .wma-pages-table td {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
+    color: var(--color-text);
+    border-bottom: 1px solid rgb(255 255 255 / 5%);
+  }
+
+  .wma-td-name,
+  .wma-td-path {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+  }
+
+  .wma-td-center {
+    text-align: center;
+  }
+
+  /* Badges */
+  .wma-badge-pass {
+    color: var(--color-success, #10b981);
+    font-weight: var(--fw-medium);
+  }
+  .wma-badge-warn {
+    color: var(--color-warning, #f59e0b);
+    font-weight: var(--fw-medium);
+  }
+  .wma-badge-err {
+    color: var(--color-error, #ef4444);
+    font-weight: var(--fw-medium);
+  }
+  .wma-badge-muted {
+    color: var(--color-text-muted);
+  }
+
+  /* ── Recommendations ── */
+  .wma-rec-list {
+    padding-left: 1.5rem;
+  }
+
+  .wma-rec-list li {
+    margin-bottom: var(--space-sm);
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: var(--color-text);
+  }
+
+  /* ── Spec Reference ── */
+  .wma-spec-ref {
+    display: flex;
+    gap: var(--space-xs);
+    align-items: center;
+    padding: var(--space-md);
+    margin-top: var(--space-lg);
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+    background: var(--color-bg-secondary);
+    border: var(--border-1);
+    border-radius: var(--radius-md);
+  }
+
+  .wma-spec-ref span[class*="i-"] {
+    flex-shrink: 0;
+    width: 1.2rem;
+    height: 1.2rem;
+  }
+
+  .wma-spec-ref a {
+    color: var(--color-primary);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .wma-spec-ref a:hover {
+    text-decoration: none;
+  }
+
+  /* ── Spinner ── */
+  @keyframes wma-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  :global(.wma-spin) {
+    animation: wma-spin 1s linear infinite;
+  }
+
+  /* ── Responsive ── */
+  @media (width <= 640px) {
+    .wma-url-row {
+      flex-direction: column;
+    }
+
+    .wma-score-panel {
+      flex-direction: column;
+      text-align: center;
+    }
+
+    .wma-score-counts {
+      justify-content: center;
+    }
+
+    .wma-actions {
+      flex-direction: column;
+    }
+
+    .wma-actions button {
+      justify-content: center;
+    }
+  }
+
+  /* Light theme overrides */
+  :root[data-theme="light"] .wma-tools-table td,
+  :root[data-theme="light"] .wma-pages-table td {
+    border-bottom-color: rgb(0 0 0 / 8%);
+  }
+
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) .wma-tools-table td,
+    :root:not([data-theme="dark"]) .wma-pages-table td {
+      border-bottom-color: rgb(0 0 0 / 8%);
+    }
+  }
+</style>

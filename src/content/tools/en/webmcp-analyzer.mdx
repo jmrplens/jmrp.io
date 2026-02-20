@@ -1,0 +1,104 @@
+---
+title: "WebMCP Analyzer"
+slug: "webmcp-analyzer"
+description: "Analyze and score any website's WebMCP implementation. Validates manifest, tool definitions, page integration, and security practices."
+subtitle: "Comprehensive WebMCP implementation validator and scorer. Analyze any site's compliance with the W3C WebMCP specification."
+icon: "i-mdi:magnify-scan"
+category: "developer"
+tags: ["webmcp", "api", "analyzer", "validation", "ai", "model-context"]
+appComponent: "WebMCPAnalyzer"
+---
+
+<h2>About This Tool</h2>
+<p>
+  The WebMCP Analyzer validates and scores any website's
+  <a href="https://webmachinelearning.github.io/webmcp/" target="_blank" rel="external noopener noreferrer">WebMCP</a>
+  implementation against the W3C specification. It performs 5 analysis phases and
+  produces a weighted score (0–100) with detailed per-check findings.
+</p>
+
+<h3>How It Works</h3>
+<p>
+  The analyzer fetches pages through a server-side proxy to bypass CORS restrictions.
+  All analysis logic runs in your browser — the proxy only relays HTTP requests
+  and never stores any data.
+</p>
+
+<h3>Analysis Phases</h3>
+<ol>
+  <li>
+    <strong>Security (10 pts)</strong> — HTTPS verification, credential leak
+    detection in manifest data.
+  </li>
+  <li>
+    <strong>Discovery (25 pts)</strong> — Checks for
+    <code>.well-known/webmcp.json</code> manifest, Content-Type, JSON validity,
+    cache headers, <code>&lt;link rel="webmcp-manifest"&gt;</code> tag presence,
+    and JS runtime / declarative detection.
+  </li>
+  <li>
+    <strong>Manifest (25 pts)</strong> — Validates the <code>tools</code> array
+    structure: names, descriptions, uniqueness, kebab-case naming convention,
+    input schemas, and annotation keys.
+  </li>
+  <li>
+    <strong>Tools (25 pts)</strong> — Per-tool validation: name presence,
+    description quality, <code>inputSchema</code> structure, required fields,
+    property types, and annotation correctness.
+  </li>
+  <li>
+    <strong>Pages (15 pts)</strong> — Scans individual pages for
+    <code>navigator.modelContext</code> provider elements, WebMCP script blocks,
+    JS bundle references, declarative <code>&lt;webmcp-tool&gt;</code> elements,
+    and cross-references page tools against the manifest.
+  </li>
+</ol>
+
+<h3>Scoring System</h3>
+<p>
+  Each check receives a severity:
+</p>
+<ul>
+  <li><strong>✓ Pass</strong> (weight 1.0) — Fully compliant</li>
+  <li><strong>⚠ Warning</strong> (weight 0.5) — Partially compliant or best practice missing</li>
+  <li><strong>✗ Error</strong> (weight 0.0) — Non-compliant</li>
+  <li><strong>ℹ Info</strong> (weight 0.0) — Informational, does not affect score</li>
+</ul>
+<p>
+  The final score is a weighted sum across the 5 categories. A score of 80+ indicates
+  a solid implementation; 50–79 means partial compliance with room for improvement;
+  below 50 suggests significant gaps.
+</p>
+
+<h3>Options</h3>
+<ul>
+  <li>
+    <strong>Crawl sitemap</strong> — Fetches the site's sitemap.xml to discover
+    representative pages across all sections. Limited to 20 pages.
+  </li>
+  <li>
+    <strong>Scan JS bundles</strong> — Downloads and inspects external JavaScript
+    files for WebMCP API calls (<code>modelContext</code>, <code>registerTool</code>, etc.).
+    Skips known CDN domains and limits per-file size to 512 KB.
+  </li>
+  <li>
+    <strong>Extra pages</strong> — Manually specify additional paths to analyze
+    (space-separated, e.g., <code>/blog/ /tools/ /cv</code>).
+  </li>
+</ul>
+
+<h3>Implementation Types</h3>
+<p>The analyzer detects these implementation patterns:</p>
+<ul>
+  <li><strong>manifest</strong> — Static <code>.well-known/webmcp.json</code> file</li>
+  <li><strong>provider</strong> — Server-rendered <code>data-webmcp-tools</code> attributes</li>
+  <li><strong>js-runtime</strong> — JavaScript calling <code>navigator.modelContext.registerTool()</code></li>
+  <li><strong>declarative</strong> — HTML-based <code>&lt;webmcp-tool&gt;</code> elements or <code>&lt;form toolname&gt;</code> attributes</li>
+</ul>
+
+<h3>Privacy</h3>
+<p>
+  All analysis runs in your browser. The proxy server relays HTTP requests
+  without logging request content. No analysis data is stored or transmitted
+  to third parties.
+</p>

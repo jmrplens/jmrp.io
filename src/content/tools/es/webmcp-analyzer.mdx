@@ -1,0 +1,109 @@
+---
+title: "WebMCP Analyzer"
+slug: "webmcp-analyzer"
+description: "Analiza y puntúa la implementación WebMCP de cualquier sitio. Valida manifiesto, herramientas, integración en páginas y prácticas de seguridad."
+subtitle: "Validador y puntuador integral de implementaciones WebMCP. Analiza el cumplimiento de cualquier sitio con la especificación W3C WebMCP."
+icon: "i-mdi:magnify-scan"
+category: "developer"
+tags: ["webmcp", "api", "analyzer", "validation", "ai", "model-context"]
+appComponent: "WebMCPAnalyzer"
+lang: "es"
+---
+
+<h2>Acerca de esta Herramienta</h2>
+<p>
+  El WebMCP Analyzer valida y puntúa la implementación
+  <a href="https://webmachinelearning.github.io/webmcp/" target="_blank" rel="external noopener noreferrer">WebMCP</a>
+  de cualquier sitio web según la especificación del W3C. Realiza 5 fases de análisis
+  y produce una puntuación ponderada (0–100) con hallazgos detallados por comprobación.
+</p>
+
+<h3>Cómo Funciona</h3>
+<p>
+  El analizador obtiene las páginas a través de un proxy del servidor para evitar
+  restricciones de CORS. Toda la lógica de análisis se ejecuta en tu navegador — el
+  proxy solo reenvía las solicitudes HTTP y nunca almacena datos.
+</p>
+
+<h3>Fases de Análisis</h3>
+<ol>
+  <li>
+    <strong>Seguridad (10 pts)</strong> — Verificación HTTPS, detección de credenciales
+    filtradas en los datos del manifiesto.
+  </li>
+  <li>
+    <strong>Descubrimiento (25 pts)</strong> — Comprueba el manifiesto
+    <code>.well-known/webmcp.json</code>, Content-Type, validez JSON,
+    cabeceras de caché, presencia de la etiqueta
+    <code>&lt;link rel="webmcp-manifest"&gt;</code>,
+    y detección de runtime JS / elementos declarativos.
+  </li>
+  <li>
+    <strong>Manifiesto (25 pts)</strong> — Valida la estructura del array
+    <code>tools</code>: nombres, descripciones, unicidad, convención de
+    nombres kebab-case, esquemas de entrada y claves de anotación.
+  </li>
+  <li>
+    <strong>Herramientas (25 pts)</strong> — Validación por herramienta:
+    presencia del nombre, calidad de la descripción, estructura de
+    <code>inputSchema</code>, campos requeridos, tipos de propiedades
+    y corrección de anotaciones.
+  </li>
+  <li>
+    <strong>Páginas (15 pts)</strong> — Escanea páginas individuales buscando
+    elementos <code>navigator.modelContext</code>, bloques de script WebMCP,
+    referencias en bundles JS, elementos declarativos
+    <code>&lt;webmcp-tool&gt;</code>, y cruza las herramientas encontradas
+    con el manifiesto.
+  </li>
+</ol>
+
+<h3>Sistema de Puntuación</h3>
+<p>
+  Cada comprobación recibe una severidad:
+</p>
+<ul>
+  <li><strong>✓ Correcto</strong> (peso 1.0) — Totalmente conforme</li>
+  <li><strong>⚠ Advertencia</strong> (peso 0.5) — Parcialmente conforme o falta buena práctica</li>
+  <li><strong>✗ Error</strong> (peso 0.0) — No conforme</li>
+  <li><strong>ℹ Info</strong> (peso 0.0) — Informativo, no afecta la puntuación</li>
+</ul>
+<p>
+  La puntuación final es una suma ponderada entre las 5 categorías. Una puntuación de
+  80+ indica una implementación sólida; 50–79 significa cumplimiento parcial con
+  margen de mejora; por debajo de 50 sugiere brechas significativas.
+</p>
+
+<h3>Opciones</h3>
+<ul>
+  <li>
+    <strong>Rastrear sitemap</strong> — Obtiene el sitemap.xml del sitio para
+    descubrir páginas representativas de todas las secciones. Limitado a 20 páginas.
+  </li>
+  <li>
+    <strong>Escanear bundles JS</strong> — Descarga e inspecciona archivos JavaScript
+    externos buscando llamadas a la API WebMCP (<code>modelContext</code>,
+    <code>registerTool</code>, etc.). Omite dominios CDN conocidos y limita el
+    tamaño por archivo a 512 KB.
+  </li>
+  <li>
+    <strong>Páginas extra</strong> — Especifica manualmente rutas adicionales a
+    analizar (separadas por espacios, p. ej., <code>/blog/ /tools/ /cv</code>).
+  </li>
+</ul>
+
+<h3>Tipos de Implementación</h3>
+<p>El analizador detecta estos patrones de implementación:</p>
+<ul>
+  <li><strong>manifest</strong> — Archivo estático <code>.well-known/webmcp.json</code></li>
+  <li><strong>provider</strong> — Atributos <code>data-webmcp-tools</code> renderizados en servidor</li>
+  <li><strong>js-runtime</strong> — JavaScript que llama a <code>navigator.modelContext.registerTool()</code></li>
+  <li><strong>declarative</strong> — Elementos HTML <code>&lt;webmcp-tool&gt;</code> o atributos <code>&lt;form toolname&gt;</code></li>
+</ul>
+
+<h3>Privacidad</h3>
+<p>
+  Todo el análisis se ejecuta en tu navegador. El servidor proxy reenvía las
+  solicitudes HTTP sin registrar su contenido. No se almacenan ni transmiten
+  datos de análisis a terceros.
+</p>

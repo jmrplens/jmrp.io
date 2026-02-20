@@ -644,6 +644,37 @@
         "/tools/webmcp-tester",
         "/tools/webmcp-tester/"
       ]
+    },
+    {
+      "name": "analyze-webmcp",
+      "description": "Analyze and score any website's WebMCP implementation. Validates manifest, tool definitions, page integration, and security practices against the W3C specification.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "Website URL to analyze (e.g. 'https://example.com')"
+          },
+          "crawl": {
+            "type": "boolean",
+            "description": "Crawl sitemap for additional pages (default: false)"
+          },
+          "scanJs": {
+            "type": "boolean",
+            "description": "Scan JS bundles for WebMCP API calls (default: true)"
+          }
+        },
+        "required": [
+          "url"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": true
+      },
+      "availableOn": [
+        "/tools/webmcp-analyzer",
+        "/tools/webmcp-analyzer/"
+      ]
     }
   ]
 }

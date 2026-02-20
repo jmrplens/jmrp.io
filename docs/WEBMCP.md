@@ -90,12 +90,12 @@ callback ModelContextInteractionCallback = Promise<any> ();
 
 ### Key API Methods
 
-| Method | Purpose |
-|--------|---------|
+| Method                      | Purpose                                                                                     |
+| --------------------------- | ------------------------------------------------------------------------------------------- |
 | `provideContext({ tools })` | Registers tools, replacing any previous set. Idempotent — safe to call on every navigation. |
-| `registerTool(tool)` | Adds a single tool without clearing existing ones. Throws if the name already exists. |
-| `unregisterTool(name)` | Removes a single tool by name. |
-| `clearContext()` | Unregisters all tools. |
+| `registerTool(tool)`        | Adds a single tool without clearing existing ones. Throws if the name already exists.       |
+| `unregisterTool(name)`      | Removes a single tool by name.                                                              |
+| `clearContext()`            | Unregisters all tools.                                                                      |
 
 ### Key Concepts
 
@@ -116,13 +116,13 @@ Discovery is **out of scope** — the spec only covers the JavaScript API for to
 
 ### Spec vs. Implementation Terminology
 
-| Spec Term | Our Type Name | Notes |
-|-----------|--------------|-------|
-| `ModelContext` | `WebMCPModelContext` | Prefixed to avoid global conflicts |
-| `ModelContextTool` | `WebMCPTool` | |
-| `ModelContextClient` | `WebMCPClient` | |
-| `ToolExecuteCallback` | `WebMCPToolExecuteCallback` | |
-| `ModelContextToolAnnotations` | `WebMCPToolAnnotations` | |
+| Spec Term                     | Our Type Name               | Notes                              |
+| ----------------------------- | --------------------------- | ---------------------------------- |
+| `ModelContext`                | `WebMCPModelContext`        | Prefixed to avoid global conflicts |
+| `ModelContextTool`            | `WebMCPTool`                |                                    |
+| `ModelContextClient`          | `WebMCPClient`              |                                    |
+| `ToolExecuteCallback`         | `WebMCPToolExecuteCallback` |                                    |
+| `ModelContextToolAnnotations` | `WebMCPToolAnnotations`     |                                    |
 
 ---
 
@@ -138,26 +138,26 @@ This site implements the **full WebMCP spec** as progressive enhancement:
 
 ### Implemented Spec Features
 
-| Spec Feature | Status | Notes |
-|-------------|--------|-------|
-| `provideContext()` | ✅ Full | Used by WebMCPProvider for page-context tools |
-| `registerTool()` | ✅ Full | Used by each app component for its specific tool |
-| `unregisterTool()` | ✅ Full | Available via wrapper, used by tester |
-| `clearContext()` | ✅ Full | Called on `astro:before-swap` View Transitions |
+| Spec Feature                | Status  | Notes                                             |
+| --------------------------- | ------- | ------------------------------------------------- |
+| `provideContext()`          | ✅ Full | Used by WebMCPProvider for page-context tools     |
+| `registerTool()`            | ✅ Full | Used by each app component for its specific tool  |
+| `unregisterTool()`          | ✅ Full | Available via wrapper, used by tester             |
+| `clearContext()`            | ✅ Full | Called on `astro:before-swap` View Transitions    |
 | `inputSchema` (JSON Schema) | ✅ Full | All tools with parameters define complete schemas |
-| `annotations.readOnlyHint` | ✅ Full | Every tool explicitly annotated (`true`/`false`) |
-| `requestUserInteraction()` | ✅ Full | Used by `navigate-to` and `switch-language` |
-| `execute(input, client)` | ✅ Full | All 30 tools implement the execute callback |
+| `annotations.readOnlyHint`  | ✅ Full | Every tool explicitly annotated (`true`/`false`)  |
+| `requestUserInteraction()`  | ✅ Full | Used by `navigate-to` and `switch-language`       |
+| `execute(input, client)`    | ✅ Full | All 30 tools implement the execute callback       |
 
 ### Custom Extensions (beyond spec)
 
-| Extension | Purpose |
-|-----------|---------|
-| `.well-known/webmcp.json` manifest | Static tool discovery without JavaScript |
-| `<link rel="webmcp-manifest">` | HTML-based manifest discovery |
-| `availableOn` field in manifest | Maps tools to specific page paths |
-| MCP content format responses | `{ content: [{ type: "text", text: "..." }] }` |
-| `specDate` and `features` in manifest | Machine-readable capability declaration |
+| Extension                             | Purpose                                        |
+| ------------------------------------- | ---------------------------------------------- |
+| `.well-known/webmcp.json` manifest    | Static tool discovery without JavaScript       |
+| `<link rel="webmcp-manifest">`        | HTML-based manifest discovery                  |
+| `availableOn` field in manifest       | Maps tools to specific page paths              |
+| MCP content format responses          | `{ content: [{ type: "text", text: "..." }] }` |
+| `specDate` and `features` in manifest | Machine-readable capability declaration        |
 
 ### Design Principles
 
@@ -220,7 +220,8 @@ Astro's `define:vars` cannot serialize JavaScript functions. The solution:
 ```javascript
 // For each tool, a dynamic <script> is created:
 var sc = document.createElement("script");
-sc.textContent = 'window["' + ns + '"]["f' + i + '"] = ' + d[i].executeStr + ";";
+sc.textContent =
+  'window["' + ns + '"]["f' + i + '"] = ' + d[i].executeStr + ";";
 document.head.appendChild(sc);
 document.head.removeChild(sc);
 ```
@@ -240,19 +241,19 @@ async (input, client) => {
   const confirmed = await client.requestUserInteraction(async () => {
     return confirm("Navigate to " + target.pathname + "?");
   });
-}
+};
 ```
 
 ### Tool Registration Strategy
 
-| Context | Method | Location |
-|---------|--------|----------|
-| Site-wide tools (6) | `provideContext()` | WebMCPProvider.astro |
-| Blog tools (3) | `provideContext()` | WebMCPProvider.astro (path-conditional) |
-| CV tools (2) | `provideContext()` | WebMCPProvider.astro (path-conditional) |
-| Publications tools (2) | `provideContext()` | WebMCPProvider.astro (path-conditional) |
-| Tools-index tools (1) | `provideContext()` | WebMCPProvider.astro (path-conditional) |
-| App tools (15 files → 16 tools) | `registerTool()` | Each app component's `<script is:inline>` |
+| Context                         | Method             | Location                                  |
+| ------------------------------- | ------------------ | ----------------------------------------- |
+| Site-wide tools (6)             | `provideContext()` | WebMCPProvider.astro                      |
+| Blog tools (3)                  | `provideContext()` | WebMCPProvider.astro (path-conditional)   |
+| CV tools (2)                    | `provideContext()` | WebMCPProvider.astro (path-conditional)   |
+| Publications tools (2)          | `provideContext()` | WebMCPProvider.astro (path-conditional)   |
+| Tools-index tools (1)           | `provideContext()` | WebMCPProvider.astro (path-conditional)   |
+| App tools (15 files → 16 tools) | `registerTool()`   | Each app component's `<script is:inline>` |
 
 The provider uses `provideContext()` (which replaces all tools) for the base set, then each app component uses `registerTool()` (which adds without replacing) for its specific tool(s). This two-phase approach ensures:
 
@@ -308,63 +309,63 @@ All tools with parameters define JSON Schema objects with:
 
 ### Site-Wide Tools (available on every page)
 
-| Tool | Description | Mutating | `requestUserInteraction` |
-|------|-------------|----------|--------------------------|
-| `get-current-theme` | Returns current theme (`dark`/`light`) | No | — |
-| `toggle-theme` | Switches between dark and light theme | Yes | No (reversible) |
-| `get-page-info` | Returns page title, URL, description, locale, type | No | — |
-| `get-site-navigation` | Returns all navigation links from header | No | — |
-| `navigate-to` | Navigates to a specified URL path (same-origin only) | Yes | **Yes** |
-| `switch-language` | Switches between English and Spanish | Yes | **Yes** |
+| Tool                  | Description                                          | Mutating | `requestUserInteraction` |
+| --------------------- | ---------------------------------------------------- | -------- | ------------------------ |
+| `get-current-theme`   | Returns current theme (`dark`/`light`)               | No       | —                        |
+| `toggle-theme`        | Switches between dark and light theme                | Yes      | No (reversible)          |
+| `get-page-info`       | Returns page title, URL, description, locale, type   | No       | —                        |
+| `get-site-navigation` | Returns all navigation links from header             | No       | —                        |
+| `navigate-to`         | Navigates to a specified URL path (same-origin only) | Yes      | **Yes**                  |
+| `switch-language`     | Switches between English and Spanish                 | Yes      | **Yes**                  |
 
 ### Blog Tools (available on `/blog/*`)
 
-| Tool | Description | Mutating |
-|------|-------------|----------|
-| `list-blog-posts` | Lists all posts on the page with title, URL, date, tags, description | No |
-| `search-blog-posts` | Searches posts by keyword in title/description | No |
-| `get-post-tags` | Gets all unique tags on the page | No |
+| Tool                | Description                                                          | Mutating |
+| ------------------- | -------------------------------------------------------------------- | -------- |
+| `list-blog-posts`   | Lists all posts on the page with title, URL, date, tags, description | No       |
+| `search-blog-posts` | Searches posts by keyword in title/description                       | No       |
+| `get-post-tags`     | Gets all unique tags on the page                                     | No       |
 
 ### CV Tools (available on `/cv`)
 
-| Tool | Description | Mutating |
-|------|-------------|----------|
-| `get-cv-summary` | Returns profile name and section headings | No |
-| `get-cv-section` | Returns content of a specific CV section by heading name | No |
+| Tool             | Description                                              | Mutating |
+| ---------------- | -------------------------------------------------------- | -------- |
+| `get-cv-summary` | Returns profile name and section headings                | No       |
+| `get-cv-section` | Returns content of a specific CV section by heading name | No       |
 
 ### Publications Tools (available on `/publications`)
 
-| Tool | Description | Mutating |
-|------|-------------|----------|
-| `list-publications` | Lists all academic publications with title, authors, year, venue | No |
-| `search-publications` | Searches publications by keyword | No |
+| Tool                  | Description                                                      | Mutating |
+| --------------------- | ---------------------------------------------------------------- | -------- |
+| `list-publications`   | Lists all academic publications with title, authors, year, venue | No       |
+| `search-publications` | Searches publications by keyword                                 | No       |
 
 ### Tools Index Tool (available on `/tools/*`)
 
-| Tool | Description | Mutating |
-|------|-------------|----------|
-| `list-available-tools` | Lists all tools from manifest (with DOM fallback) | No |
+| Tool                   | Description                                       | Mutating |
+| ---------------------- | ------------------------------------------------- | -------- |
+| `list-available-tools` | Lists all tools from manifest (with DOM fallback) | No       |
 
 ### App-Specific Tools (available on individual tool pages)
 
-| Tool | Page | Description |
-|------|------|-------------|
-| `calculate-hash` | `/tools/hash-calculator/` | Compute SHA-256/384/512 hashes |
-| `encode-base64` | `/tools/base64-encoder/` | Encode text to Base64 |
-| `decode-base64` | `/tools/base64-encoder/` | Decode Base64 to text |
-| `calculate-subnet` | `/tools/subnet-calculator/` | Calculate IPv4 subnet info |
-| `generate-password` | `/tools/password-generator/` | Generate cryptographically secure passwords |
-| `convert-timestamp` | `/tools/timestamp-converter/` | Convert Unix timestamps / ISO 8601 |
-| `test-regex` | `/tools/regex-tester/` | Test regular expressions with matches |
-| `check-color-contrast` | `/tools/color-contrast-checker/` | Check WCAG 2.1 contrast ratios |
-| `parse-cron` | `/tools/cron-builder/` | Parse cron expressions to human-readable |
-| `build-csp` | `/tools/csp-builder/` | Generate CSP header strings |
-| `inspect-certificate` | `/tools/cert-inspector/` | Parse PEM X.509 certificates |
-| `analyze-headers` | `/tools/http-headers-analyzer/` | Analyze HTTP security headers |
-| `build-modbus-frame` | `/tools/modbus-frame-builder/` | Build Modbus RTU frames with CRC-16 |
-| `generate-nginx-config` | `/tools/nginx-config-generator/` | Generate Nginx server blocks |
-| `generate-wireguard-config` | `/tools/wireguard-config-generator/` | Generate WireGuard VPN configs |
-| `webmcp-tester` | `/tools/webmcp-tester/` | Interactive WebMCP API testing |
+| Tool                        | Page                                 | Description                                 |
+| --------------------------- | ------------------------------------ | ------------------------------------------- |
+| `calculate-hash`            | `/tools/hash-calculator/`            | Compute SHA-256/384/512 hashes              |
+| `encode-base64`             | `/tools/base64-encoder/`             | Encode text to Base64                       |
+| `decode-base64`             | `/tools/base64-encoder/`             | Decode Base64 to text                       |
+| `calculate-subnet`          | `/tools/subnet-calculator/`          | Calculate IPv4 subnet info                  |
+| `generate-password`         | `/tools/password-generator/`         | Generate cryptographically secure passwords |
+| `convert-timestamp`         | `/tools/timestamp-converter/`        | Convert Unix timestamps / ISO 8601          |
+| `test-regex`                | `/tools/regex-tester/`               | Test regular expressions with matches       |
+| `check-color-contrast`      | `/tools/color-contrast-checker/`     | Check WCAG 2.1 contrast ratios              |
+| `parse-cron`                | `/tools/cron-builder/`               | Parse cron expressions to human-readable    |
+| `build-csp`                 | `/tools/csp-builder/`                | Generate CSP header strings                 |
+| `inspect-certificate`       | `/tools/cert-inspector/`             | Parse PEM X.509 certificates                |
+| `analyze-headers`           | `/tools/http-headers-analyzer/`      | Analyze HTTP security headers               |
+| `build-modbus-frame`        | `/tools/modbus-frame-builder/`       | Build Modbus RTU frames with CRC-16         |
+| `generate-nginx-config`     | `/tools/nginx-config-generator/`     | Generate Nginx server blocks                |
+| `generate-wireguard-config` | `/tools/wireguard-config-generator/` | Generate WireGuard VPN configs              |
+| `webmcp-tester`             | `/tools/webmcp-tester/`              | Interactive WebMCP API testing              |
 
 ---
 
@@ -375,7 +376,11 @@ All tools with parameters define JSON Schema objects with:
 Every page includes a `<link>` tag pointing to the manifest:
 
 ```html
-<link rel="webmcp-manifest" href="/.well-known/webmcp.json" type="application/json" />
+<link
+  rel="webmcp-manifest"
+  href="/.well-known/webmcp.json"
+  type="application/json"
+/>
 ```
 
 > **Note**: `rel="webmcp-manifest"` is NOT defined by the spec. It is a forward-looking extension inspired by the spec's acknowledgment that "a future iteration could introduce declarative tools definitions in an app manifest."
@@ -420,16 +425,16 @@ The static manifest at `/.well-known/webmcp.json` provides tool discovery withou
 
 Manifest fields:
 
-| Field | Purpose |
-|-------|---------|
-| `version` | Manifest format version (currently `0.2.0`) |
-| `name` | Human-readable site name |
-| `description` | Site description |
-| `url` | Canonical URL |
-| `spec` | URL of the WebMCP spec being implemented |
-| `specDate` | Date of the spec edition being followed |
-| `features` | Array of implemented spec features (machine-readable) |
-| `tools[]` | Each tool with name, description, inputSchema, annotations |
+| Field                 | Purpose                                                       |
+| --------------------- | ------------------------------------------------------------- |
+| `version`             | Manifest format version (currently `0.2.0`)                   |
+| `name`                | Human-readable site name                                      |
+| `description`         | Site description                                              |
+| `url`                 | Canonical URL                                                 |
+| `spec`                | URL of the WebMCP spec being implemented                      |
+| `specDate`            | Date of the spec edition being followed                       |
+| `features`            | Array of implemented spec features (machine-readable)         |
+| `tools[]`             | Each tool with name, description, inputSchema, annotations    |
 | `tools[].availableOn` | Page path(s) where the tool is registered (`"*"` = site-wide) |
 
 ### 3. LLM Context Files
@@ -457,8 +462,10 @@ Without lifecycle management:
 // In WebMCPProvider's inline script:
 if (!window._wmcpTransitionHandlerSet) {
   document.addEventListener("astro:before-swap", function () {
-    if (navigator.modelContext &&
-        typeof navigator.modelContext.clearContext === "function") {
+    if (
+      navigator.modelContext &&
+      typeof navigator.modelContext.clearContext === "function"
+    ) {
       navigator.modelContext.clearContext();
     }
   });
@@ -506,18 +513,20 @@ execute: async (input: Record<string, unknown>, client?: WebMCPClient) => {
 
   // Perform the action
   globalThis.location.href = target.href;
-  return { content: [{ type: "text", text: `Navigating to ${target.pathname}` }] };
-}
+  return {
+    content: [{ type: "text", text: `Navigating to ${target.pathname}` }],
+  };
+};
 ```
 
 ### Design Decisions
 
-| Tool | Uses `requestUserInteraction`? | Rationale |
-|------|-------------------------------|-----------|
-| `navigate-to` | **Yes** | Causes page navigation — user loses current page context |
-| `switch-language` | **Yes** | Causes page reload in different locale — disruptive |
-| `toggle-theme` | No | Non-destructive, instantly reversible, no page reload |
-| All read-only tools | No | Read-only tools don't modify state |
+| Tool                | Uses `requestUserInteraction`? | Rationale                                                |
+| ------------------- | ------------------------------ | -------------------------------------------------------- |
+| `navigate-to`       | **Yes**                        | Causes page navigation — user loses current page context |
+| `switch-language`   | **Yes**                        | Causes page reload in different locale — disruptive      |
+| `toggle-theme`      | No                             | Non-destructive, instantly reversible, no page reload    |
+| All read-only tools | No                             | Read-only tools don't modify state                       |
 
 ### Graceful Degradation
 
@@ -566,10 +575,12 @@ The `navigate-to` tool enforces same-origin navigation:
 const target = new URL(path, globalThis.location.origin);
 if (target.origin !== globalThis.location.origin) {
   return {
-    content: [{
-      type: "text",
-      text: "Error: Cross-origin navigation is not allowed.",
-    }],
+    content: [
+      {
+        type: "text",
+        text: "Error: Cross-origin navigation is not allowed.",
+      },
+    ],
   };
 }
 ```
@@ -588,32 +599,32 @@ Mutating tools (`navigate-to`, `switch-language`) use `requestUserInteraction()`
 
 ### New Files (all removable)
 
-| File | Lines | Purpose |
-|------|-------|---------|
-| `src/types/webmcp.ts` | ~210 | TypeScript interfaces: `WebMCPTool`, `WebMCPClient`, `WebMCPToolExecuteCallback`, `WebMCPModelContext`, `WebMCPManifest`, Navigator augmentation |
-| `src/utils/webmcp.ts` | ~101 | Safe wrapper functions: `isWebMCPSupported()`, `provideContext()`, `registerTool()`, `unregisterTool()`, `clearContext()`, `registerTools()` |
-| `src/utils/webmcp-tools.ts` | ~610 | Tool catalog: `getSiteTools()`, `getBlogTools()`, `getCVTools()`, `getPublicationsTools()`, `getToolsIndexTools()` |
-| `src/components/layout/WebMCPProvider.astro` | ~133 | Astro component: serializes tools, injects client-side registration script, View Transitions lifecycle handler |
-| `src/components/apps/WebMCPTester.astro` | ~1182 | Interactive testing tool: polyfills API, lists tools, executes them, views manifest |
-| `public/.well-known/webmcp.json` | ~648 | Static manifest: 30 tool definitions with schemas, `availableOn` paths, and feature list |
-| `src/content/tools/en/webmcp-tester.mdx` | ~80 | Tool documentation (English) |
-| `src/content/tools/es/webmcp-tester.mdx` | ~80 | Tool documentation (Spanish) |
-| `docs/WEBMCP.md` | — | This file |
+| File                                         | Lines | Purpose                                                                                                                                          |
+| -------------------------------------------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `src/types/webmcp.ts`                        | ~210  | TypeScript interfaces: `WebMCPTool`, `WebMCPClient`, `WebMCPToolExecuteCallback`, `WebMCPModelContext`, `WebMCPManifest`, Navigator augmentation |
+| `src/utils/webmcp.ts`                        | ~101  | Safe wrapper functions: `isWebMCPSupported()`, `provideContext()`, `registerTool()`, `unregisterTool()`, `clearContext()`, `registerTools()`     |
+| `src/utils/webmcp-tools.ts`                  | ~610  | Tool catalog: `getSiteTools()`, `getBlogTools()`, `getCVTools()`, `getPublicationsTools()`, `getToolsIndexTools()`                               |
+| `src/components/layout/WebMCPProvider.astro` | ~133  | Astro component: serializes tools, injects client-side registration script, View Transitions lifecycle handler                                   |
+| `src/components/apps/WebMCPTester.astro`     | ~1182 | Interactive testing tool: polyfills API, lists tools, executes them, views manifest                                                              |
+| `public/.well-known/webmcp.json`             | ~648  | Static manifest: 30 tool definitions with schemas, `availableOn` paths, and feature list                                                         |
+| `src/content/tools/en/webmcp-tester.mdx`     | ~80   | Tool documentation (English)                                                                                                                     |
+| `src/content/tools/es/webmcp-tester.mdx`     | ~80   | Tool documentation (Spanish)                                                                                                                     |
+| `docs/WEBMCP.md`                             | —     | This file                                                                                                                                        |
 
 ### Modified Files (minimal changes)
 
-| File | Change | Lines |
-|------|--------|-------|
-| `src/layouts/BaseLayout.astro` | Import + `<WebMCPProvider />` | +3 |
-| `src/components/layout/BaseHead.astro` | `<link rel="webmcp-manifest">` | +1 |
-| `src/components/pages/ToolPage.astro` | Import + componentMap entry for WebMCPTester | +2 |
+| File                                     | Change                                       | Lines       |
+| ---------------------------------------- | -------------------------------------------- | ----------- |
+| `src/layouts/BaseLayout.astro`           | Import + `<WebMCPProvider />`                | +3          |
+| `src/components/layout/BaseHead.astro`   | `<link rel="webmcp-manifest">`               | +1          |
+| `src/components/pages/ToolPage.astro`    | Import + componentMap entry for WebMCPTester | +2          |
 | `src/components/apps/*.astro` (15 files) | WebMCP registration blocks in inline scripts | +20-60 each |
-| `src/i18n/translations/en/tools.ts` | `webmcpTester` translation keys | +35 |
-| `src/i18n/translations/es/tools.ts` | `webmcpTester` translation keys | +35 |
-| `public/llms.txt` | WebMCP section | +5 |
-| `public/llms-full.txt` | WebMCP bullet | +1 |
-| `cspell-project-words.txt` | "webmcp" | +1 |
-| `CLAUDE.md` | WebMCP documentation section | +55 |
+| `src/i18n/translations/en/tools.ts`      | `webmcpTester` translation keys              | +35         |
+| `src/i18n/translations/es/tools.ts`      | `webmcpTester` translation keys              | +35         |
+| `public/llms.txt`                        | WebMCP section                               | +5          |
+| `public/llms-full.txt`                   | WebMCP bullet                                | +1          |
+| `cspell-project-words.txt`               | "webmcp"                                     | +1          |
+| `CLAUDE.md`                              | WebMCP documentation section                 | +55         |
 
 ---
 
@@ -676,10 +687,12 @@ delete window[ns];
 navigator.modelContext.provideContext({ tools: reconstructed });
 
 // 3. List registered tools
-console.table(tools.map((t) => ({
-  name: t.name,
-  readOnly: t.annotations?.readOnlyHint
-})));
+console.table(
+  tools.map((t) => ({
+    name: t.name,
+    readOnly: t.annotations?.readOnlyHint,
+  })),
+);
 
 // 4. Execute a read-only tool
 const result = tools.find((t) => t.name === "get-page-info").execute({});
@@ -689,7 +702,8 @@ console.log(result);
 const mockClient = {
   requestUserInteraction: async (cb) => await cb(),
 };
-const navResult = await tools.find((t) => t.name === "navigate-to")
+const navResult = await tools
+  .find((t) => t.name === "navigate-to")
   .execute({ path: "/blog/" }, mockClient);
 console.log(navResult);
 ```
@@ -702,28 +716,28 @@ As of February 2026, WebMCP is an early-stage proposal. A survey of known implem
 
 ### Implementation Approaches in the Wild
 
-| Approach | Description | Examples |
-|----------|-------------|---------|
-| **Astro SSG + inline script** | Server-rendered tools serialized into HTML | jmrp.io (this site) |
-| **JavaScript bundle** | Tools registered from a JS bundle on page load | weather-tools.vercel.app, web-arcade.vercel.app, webmcp-music-player.vercel.app |
-| **Declarative forms** | No JS API — tools inferred from HTML `<form>` elements | webmcp-todo.nichochar.com |
-| **React SPA** | Tools registered within React lifecycle | tabmcp.nichochar.com |
+| Approach                      | Description                                            | Examples                                                                        |
+| ----------------------------- | ------------------------------------------------------ | ------------------------------------------------------------------------------- |
+| **Astro SSG + inline script** | Server-rendered tools serialized into HTML             | jmrp.io (this site)                                                             |
+| **JavaScript bundle**         | Tools registered from a JS bundle on page load         | weather-tools.vercel.app, web-arcade.vercel.app, webmcp-music-player.vercel.app |
+| **Declarative forms**         | No JS API — tools inferred from HTML `<form>` elements | webmcp-todo.nichochar.com                                                       |
+| **React SPA**                 | Tools registered within React lifecycle                | tabmcp.nichochar.com                                                            |
 
 ### Feature Comparison
 
-| Feature | jmrp.io | JS Bundle Sites | Declarative Sites |
-|---------|---------|----------------|-------------------|
-| `provideContext()` | ✅ | ✅ | ❌ (no JS API) |
-| `registerTool()` | ✅ | ❌ (most use only provideContext) | ❌ |
-| `clearContext()` on navigation | ✅ | ❌ | ❌ |
-| `requestUserInteraction()` | ✅ | ❌ | ❌ |
-| `annotations.readOnlyHint` on ALL tools | ✅ | Partial | ❌ |
-| `inputSchema` on all parameterized tools | ✅ | Partial | ❌ (inferred from form) |
-| Static manifest | ✅ | ❌ | ❌ |
-| `<link rel="webmcp-manifest">` | ✅ | ❌ | ❌ |
-| SPA lifecycle management | ✅ | ❌ | ❌ |
-| Multiple page contexts | ✅ (6 contexts) | ❌ (single) | ❌ (single) |
-| Tool count | 30 | 3-8 | 2-4 |
+| Feature                                  | jmrp.io         | JS Bundle Sites                   | Declarative Sites       |
+| ---------------------------------------- | --------------- | --------------------------------- | ----------------------- |
+| `provideContext()`                       | ✅              | ✅                                | ❌ (no JS API)          |
+| `registerTool()`                         | ✅              | ❌ (most use only provideContext) | ❌                      |
+| `clearContext()` on navigation           | ✅              | ❌                                | ❌                      |
+| `requestUserInteraction()`               | ✅              | ❌                                | ❌                      |
+| `annotations.readOnlyHint` on ALL tools  | ✅              | Partial                           | ❌                      |
+| `inputSchema` on all parameterized tools | ✅              | Partial                           | ❌ (inferred from form) |
+| Static manifest                          | ✅              | ❌                                | ❌                      |
+| `<link rel="webmcp-manifest">`           | ✅              | ❌                                | ❌                      |
+| SPA lifecycle management                 | ✅              | ❌                                | ❌                      |
+| Multiple page contexts                   | ✅ (6 contexts) | ❌ (single)                       | ❌ (single)             |
+| Tool count                               | 30              | 3-8                               | 2-4                     |
 
 ### Key Findings
 
