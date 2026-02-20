@@ -94,3 +94,6 @@ Sitemap: https://jmrp.io/sitemap-index.xml
 # LLM context (llmstxt.org standard)
 # https://jmrp.io/llms.txt
 # https://jmrp.io/llms-full.txt
+
+# WebMCP manifest (W3C draft — AI agent tool discovery)
+# https://jmrp.io/.well-known/webmcp.json

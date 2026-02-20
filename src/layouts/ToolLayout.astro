@@ -13,6 +13,7 @@ import { defaultLocale, type Locale } from "@i18n/config";
 import { useTranslatedPath, useTranslations } from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
 import { getSiteUrl } from "@utils/site";
+import webmcpManifest from "../../public/.well-known/webmcp.json";
 
 interface Props {
   /** Page <title> and visible <h1>. */
@@ -35,16 +36,34 @@ const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
 const t = useTranslations(locale);
 const translatePath = useTranslatedPath(locale);
 
+const toolPath = `/tools/${slug}/`;
+const webmcpTools = (
+  webmcpManifest.tools as Array<{
+    name: string;
+    availableOn: string | string[];
+  }>
+)
+  .filter((tool) => {
+    const on = tool.availableOn;
+    return Array.isArray(on)
+      ? on.some((p) => p === toolPath || p === toolPath.replace(/\/$/, ""))
+      : on === toolPath;
+  })
+  .map((tool) => tool.name);
+
 const toolSchema = {
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
   name: title,
   description,
-  url: new URL(`/tools/${slug}/`, getSiteUrl()).toString(),
+  url: new URL(toolPath, getSiteUrl()).toString(),
   applicationCategory: "WebApplication",
   operatingSystem: "Web Browser",
   offers: { "@type": "Offer", price: 0, priceCurrency: "USD" },
   inLanguage: locale,
+  ...(webmcpTools.length > 0 && {
+    featureList: webmcpTools.map((n) => `WebMCP: ${n}`).join(", "),
+  }),
   ...extraSchema,
 };
 ---

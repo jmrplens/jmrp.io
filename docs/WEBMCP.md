@@ -759,16 +759,16 @@ As of February 2026, WebMCP is an early-stage proposal. A survey of known implem
 
 Tested against the real Chrome implementation with the following findings:
 
-| Feature | Behavior |
-| ------- | -------- |
-| `provideContext({ tools })` | **Replaces** all previous provideContext tools (not additive). `tools` property is **required**. |
-| `registerTool(tool)` | Registers in a **separate namespace** from provideContext. Throws `DOMException: Duplicate tool name` on duplicates within its own namespace. |
-| `unregisterTool(name)` | Only works for `registerTool()` tools. Throws for provideContext tools or non-existent names. |
-| `clearContext()` | Clears **both** namespaces (provideContext + registerTool). |
-| `inputSchema` | Fully supported — JSON Schema validated. |
-| `annotations` | `readOnlyHint` and `openWorldHint` both accepted. |
-| Async execute | Both sync and async (Promise-returning) execute callbacks work. |
-| Namespace isolation | provideContext and registerTool names don't conflict with each other. |
+| Feature                     | Behavior                                                                                                                                      |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `provideContext({ tools })` | **Replaces** all previous provideContext tools (not additive). `tools` property is **required**.                                              |
+| `registerTool(tool)`        | Registers in a **separate namespace** from provideContext. Throws `DOMException: Duplicate tool name` on duplicates within its own namespace. |
+| `unregisterTool(name)`      | Only works for `registerTool()` tools. Throws for provideContext tools or non-existent names.                                                 |
+| `clearContext()`            | Clears **both** namespaces (provideContext + registerTool).                                                                                   |
+| `inputSchema`               | Fully supported — JSON Schema validated.                                                                                                      |
+| `annotations`               | `readOnlyHint` and `openWorldHint` both accepted.                                                                                             |
+| Async execute               | Both sync and async (Promise-returning) execute callbacks work.                                                                               |
+| Namespace isolation         | provideContext and registerTool names don't conflict with each other.                                                                         |
 
 ### How the implementation maps to the API
 

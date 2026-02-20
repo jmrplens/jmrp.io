@@ -279,8 +279,8 @@ export function getBlogTools(): WebMCPTool[] {
             "a.main-link, h2 a[href], h3 a[href]",
           );
           const time = article.querySelector("time");
-          const tags = [...article.querySelectorAll(".tags a.tag")].map(
-            (t) => t.textContent?.trim() ?? "",
+          const tags = [...article.querySelectorAll(".tags a.tag")].map((t) =>
+            (t.textContent?.trim() ?? "").replace(/^#/, ""),
           );
           const desc =
             article
