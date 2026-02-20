@@ -322,17 +322,18 @@ const algorithms = [
 
               if (algorithm) {
                 // Compute specific algorithm
-                const hash = await computeHash(algorithm, text);
+                const hash = await calculateHash(text, algorithm);
+                const prefix = algorithm.replace("-", "").toLowerCase();
                 result = {
                   algorithm,
                   hash,
-                  directive: `'${algorithm.toLowerCase()}-${hash}'`,
+                  directive: `'${prefix}-${hash}'`,
                 };
               } else {
                 // Compute all three
-                const sha256 = await computeHash("SHA-256", text);
-                const sha384 = await computeHash("SHA-384", text);
-                const sha512 = await computeHash("SHA-512", text);
+                const sha256 = await calculateHash(text, "SHA-256");
+                const sha384 = await calculateHash(text, "SHA-384");
+                const sha512 = await calculateHash(text, "SHA-512");
 
                 result = {
                   sha256: {

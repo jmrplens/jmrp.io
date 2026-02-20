@@ -115,14 +115,21 @@ function isPrivateIPv4(ip) {
  */
 function isPrivateIPv6(ip) {
   const lower = ip.toLowerCase();
-  return (
+  if (
     lower === "::1" || // Loopback
     lower.startsWith("fe80:") || // Link-local
     lower.startsWith("fc") || // Unique local (fc00::/7)
     lower.startsWith("fd") || // Unique local (fc00::/7)
-    lower === "::" || // Unspecified
-    lower.startsWith("::ffff:") // IPv4-mapped (check the v4 part)
-  );
+    lower === "::" // Unspecified
+  ) {
+    return true;
+  }
+  // IPv4-mapped IPv6 (::ffff:x.x.x.x) — extract and check the v4 part
+  if (lower.startsWith("::ffff:")) {
+    const v4 = lower.slice(7);
+    if (net.isIPv4(v4)) return isPrivateIPv4(v4);
+  }
+  return false;
 }
 
 /**
@@ -272,7 +279,7 @@ function sendSuccess(res, data) {
  * @param {string} method - HTTP method (GET or HEAD).
  * @returns {Promise<{ status: number, headers: Record<string, string>, body: string, url: string }>}
  */
-function proxyFetch(targetUrl, method = "GET") {
+function proxyFetch(targetUrl, method = "GET", redirectCount = 0) {
   return new Promise((resolve, reject) => {
     const parsed = new URL(targetUrl);
     const client = parsed.protocol === "https:" ? https : http;
@@ -297,15 +304,18 @@ function proxyFetch(targetUrl, method = "GET") {
         [301, 302, 303, 307, 308].includes(res.statusCode) &&
         res.headers.location
       ) {
-        const redirectUrl = new URL(res.headers.location, targetUrl).href;
-        // Prevent infinite redirects
-        const redirectCount = (options._redirectCount || 0) + 1;
-        if (redirectCount > 5) {
+        if (redirectCount >= 5) {
           reject(new Error("Too many redirects"));
           return;
         }
+        const redirectUrl = new URL(res.headers.location, targetUrl).href;
+        const redirectParsed = new URL(redirectUrl);
+        // Re-validate SSRF on redirect target
         res.resume(); // Consume response to free up socket
-        proxyFetch(redirectUrl, method).then(resolve).catch(reject);
+        resolveAndValidate(redirectParsed.hostname)
+          .then(() => proxyFetch(redirectUrl, method, redirectCount + 1))
+          .then(resolve)
+          .catch(reject);
         return;
       }
 
@@ -393,10 +403,11 @@ const server = http.createServer(async (req, res) => {
   }
 
   // Rate limiting
-  const clientIp =
+  const rawIp =
     req.headers["x-real-ip"] ||
     req.headers["x-forwarded-for"] ||
     req.socket.remoteAddress;
+  const clientIp = String(rawIp).split(",")[0].trim();
   if (!checkRateLimit(clientIp)) {
     sendError(res, 429, "Rate limit exceeded. Try again in 1 minute.");
     return;
@@ -427,7 +438,8 @@ const server = http.createServer(async (req, res) => {
   try {
     await resolveAndValidate(parsed.hostname);
   } catch (err) {
-    sendError(res, 403, err.message);
+    console.warn(`[WebMCP Proxy] SSRF blocked: ${err.message}`);
+    sendError(res, 403, "Blocked: target host not allowed");
     return;
   }
 

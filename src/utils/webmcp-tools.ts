@@ -589,7 +589,7 @@ export function getToolsIndexTools(): WebMCPTool[] {
             (t: Record<string, unknown>) => ({
               name: t.name ?? "",
               description: t.description ?? "",
-              url: (t.annotations as Record<string, unknown>)?.url ?? "",
+              url: (t.availableOn as string) ?? "",
             }),
           );
           return {
