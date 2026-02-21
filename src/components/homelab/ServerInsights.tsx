@@ -91,6 +91,7 @@ interface MatrixStats {
   main_running: boolean;
   cpu_usage_avg: number;
   mem_used_percent: number;
+  cpu_temp: number;
   pg_connections: number;
   redis_memory: number;
 }
@@ -106,6 +107,7 @@ interface MastodonStats {
   puma_threads: number;
   cpu_usage_avg: number;
   mem_used_percent: number;
+  cpu_temp: number;
   pg_connections: number;
   redis_memory: number;
 }
@@ -139,6 +141,7 @@ function isValidMatrixStats(data: unknown): data is MatrixStats {
     typeof d.main_running === "boolean" &&
     typeof d.cpu_usage_avg === "number" &&
     typeof d.mem_used_percent === "number" &&
+    typeof d.cpu_temp === "number" &&
     typeof d.pg_connections === "number" &&
     typeof d.redis_memory === "number"
   );
@@ -159,6 +162,7 @@ function isValidMastodonStats(data: unknown): data is MastodonStats {
     typeof d.puma_threads === "number" &&
     typeof d.cpu_usage_avg === "number" &&
     typeof d.mem_used_percent === "number" &&
+    typeof d.cpu_temp === "number" &&
     typeof d.pg_connections === "number" &&
     typeof d.redis_memory === "number"
   );
@@ -433,6 +437,10 @@ export default function ServerInsights({
                 </output>
               </div>
               <div className="detail-row">
+                <span>{t.cpuTemp}</span>
+                <output>{s.cpu_temp}°C</output>
+              </div>
+              <div className="detail-row">
                 <span>{t.loadStatus}</span>
                 <output className={getStatusColor(loadStatus)}>
                   {getStatusLabel(loadStatus, t)}
@@ -544,6 +552,10 @@ export default function ServerInsights({
                   {fmtVal(s.mem_used_percent, formatPercent)}
                   <small aria-hidden="true"> {t.percentRAM}</small>
                 </output>
+              </div>
+              <div className="detail-row">
+                <span>{t.cpuTemp}</span>
+                <output>{s.cpu_temp}°C</output>
               </div>
               <div className="detail-row">
                 <span>{t.loadStatus}</span>

@@ -88,6 +88,8 @@ export interface InfrastructureTranslations {
   statusHealthy: string;
   /** Status text when load status cannot be determined. */
   statusUnknown: string;
+  /** Label for CPU temperature. */
+  cpuTemp: string;
 }
 
 /** Component props */
@@ -112,6 +114,7 @@ interface HomelabStats {
   rate_limited_503_24h: number;
   cpu_usage_avg: number;
   mem_used_percent: number;
+  cpu_temp: number;
   top_security_countries: Country[];
 }
 
@@ -133,6 +136,7 @@ function isValidHomelabStats(data: unknown): data is HomelabStats {
     "rate_limited_503_24h",
     "cpu_usage_avg",
     "mem_used_percent",
+    "cpu_temp",
   ];
 
   return (
@@ -531,6 +535,14 @@ export default function InfrastructureInsights({ translations: t }: Props) {
               <output aria-labelledby="label-memory">
                 {displayVal(stats?.mem_used_percent, formatPercent)}
                 <small aria-hidden="true"> {t.percentRAM}</small>
+              </output>
+            </div>
+            <div className="detail-row">
+              <span id="label-cpu-temp">{t.cpuTemp}</span>
+              <output aria-labelledby="label-cpu-temp">
+                {stats?.cpu_temp != null
+                  ? `${Math.round(stats.cpu_temp)}°C`
+                  : "—"}
               </output>
             </div>
             <div className="detail-row">
