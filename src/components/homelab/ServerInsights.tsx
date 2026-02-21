@@ -602,7 +602,21 @@ export default function ServerInsights({
   if (type === "truenas" && stats) {
     const s = stats as TrueNASStats;
     const loadStatus = getStatus(s.cpu_usage_avg, s.mem_used_percent);
-    const totalCapacity = s.zfs_pools.reduce((sum, pool) => sum + pool.size, 0);
+
+    // Map internal pool names to public display labels and exclude boot-pool
+    const poolDisplayNames: Record<string, string> = {
+      Datos: "Volume 1 (data)",
+      Apps: "Volume 2 (apps)",
+      Backups: "Volume 3 (backups)",
+    };
+    const visiblePools = s.zfs_pools.filter(
+      (p) => p.name !== "boot-pool" && poolDisplayNames[p.name],
+    );
+
+    const totalCapacity = visiblePools.reduce(
+      (sum, pool) => sum + pool.size,
+      0,
+    );
     const totalTB = totalCapacity / Math.pow(1024, 4);
     const uptimeDays = Math.floor(s.uptime / 86_400);
 
@@ -632,13 +646,13 @@ export default function ServerInsights({
               </span>
             </div>
             <div className="insight-details">
-              {s.zfs_pools.map((pool) => (
+              {visiblePools.map((pool) => (
                 <div
                   key={pool.name}
                   className="detail-row"
                 >
                   <span>
-                    {pool.name} ({pool.cap}%)
+                    {poolDisplayNames[pool.name]} ({pool.cap}%)
                   </span>
                   <output className={getHealthColor(pool.health)}>
                     {pool.health}
