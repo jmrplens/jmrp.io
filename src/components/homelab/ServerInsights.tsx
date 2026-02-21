@@ -40,14 +40,6 @@ export interface ServerInsightsTranslations {
   storageUnit: string;
   /** Label for ZFS pool health. */
   poolHealth: string;
-  /** Label for Docker containers heading. */
-  containersTitle: string;
-  /** Unit label for running containers. */
-  containersRunning: string;
-  /** Label for uptime heading. */
-  uptimeTitle: string;
-  /** Unit label for days. */
-  uptimeDays: string;
   /** Prefix text before the CPU usage value. */
   cpuUsagePrefix: string;
   /** Unit label for CPU percentage. */
@@ -84,15 +76,11 @@ export interface ServerInsightsTranslations {
   arcCache: string;
   /** Label for CPU temperature. */
   cpuTemp: string;
-  /** Label for total containers. */
-  dockerTotal: string;
-  /** Label for total images. */
-  dockerImages: string;
 }
 
 /** Component props for ServerInsights. */
 interface Props {
-  readonly type: "matrix" | "mastodon" | "truenas" | "docker";
+  readonly type: "matrix" | "mastodon" | "truenas";
   readonly translations: ServerInsightsTranslations;
 }
 
@@ -135,24 +123,9 @@ interface ZFSPool {
 interface TrueNASStats {
   cpu_usage_avg: number;
   mem_used_percent: number;
-  uptime: number;
   arc_size: number;
   cpu_temp: number;
   zfs_pools: ZFSPool[];
-}
-
-interface DockerHost {
-  name: string;
-  containers_running: number;
-  containers_total: number;
-  images: number;
-}
-
-interface DockerStats {
-  hosts: DockerHost[];
-  total_running: number;
-  total_containers: number;
-  total_images: number;
 }
 
 /** Validates that the data matches the MatrixStats shape. */
@@ -198,7 +171,6 @@ function isValidTrueNASStats(data: unknown): data is TrueNASStats {
   return (
     typeof d.cpu_usage_avg === "number" &&
     typeof d.mem_used_percent === "number" &&
-    typeof d.uptime === "number" &&
     typeof d.arc_size === "number" &&
     typeof d.cpu_temp === "number" &&
     Array.isArray(d.zfs_pools) &&
@@ -213,27 +185,6 @@ function isValidTrueNASStats(data: unknown): data is TrueNASStats {
         typeof (p as Record<string, unknown>).cap === "number" &&
         typeof (p as Record<string, unknown>).health === "string" &&
         typeof (p as Record<string, unknown>).frag === "number",
-    )
-  );
-}
-
-/** Validates that the data matches the DockerStats shape. */
-function isValidDockerStats(data: unknown): data is DockerStats {
-  if (!data || typeof data !== "object") return false;
-  const d = data as Record<string, unknown>;
-  return (
-    typeof d.total_running === "number" &&
-    typeof d.total_containers === "number" &&
-    typeof d.total_images === "number" &&
-    Array.isArray(d.hosts) &&
-    d.hosts.every(
-      (h: unknown) =>
-        h &&
-        typeof h === "object" &&
-        typeof (h as Record<string, unknown>).name === "string" &&
-        typeof (h as Record<string, unknown>).containers_running === "number" &&
-        typeof (h as Record<string, unknown>).containers_total === "number" &&
-        typeof (h as Record<string, unknown>).images === "number",
     )
   );
 }
@@ -328,7 +279,7 @@ export default function ServerInsights({
   translations: t,
 }: Props): preact.JSX.Element {
   const [stats, setStats] = useState<
-    MatrixStats | MastodonStats | TrueNASStats | DockerStats | null
+    MatrixStats | MastodonStats | TrueNASStats | null
   >(null);
   const [error, setError] = useState(false);
   const isFetchingRef = useRef(false);
@@ -359,16 +310,10 @@ export default function ServerInsights({
               isValid = isValidTrueNASStats(data);
               break;
             }
-            case "docker": {
-              isValid = isValidDockerStats(data);
-              break;
-            }
           }
 
           if (isValid) {
-            setStats(
-              data as MatrixStats | MastodonStats | TrueNASStats | DockerStats,
-            );
+            setStats(data as MatrixStats | MastodonStats | TrueNASStats);
             setError(false);
           } else {
             setError(true);
@@ -664,7 +609,6 @@ export default function ServerInsights({
       0,
     );
     const totalTB = totalCapacity / Math.pow(1024, 4);
-    const uptimeDays = Math.floor(s.uptime / 86_400);
 
     return (
       <section
@@ -716,21 +660,17 @@ export default function ServerInsights({
               className="insight-label"
               id="label-truenas-system"
             >
-              {t.uptimeTitle}
+              {t.arcCache}
             </span>
             <div className="insight-value">
               <span className="sr-only">
-                {uptimeDays} {t.uptimeDays}
+                {fmtVal(s.arc_size, formatBytes)} {t.arcCache}
               </span>
               <span aria-hidden="true">
-                <output>{uptimeDays}</output> <small>{t.uptimeDays}</small>
+                <output>{fmtVal(s.arc_size, formatBytes)}</output>
               </span>
             </div>
             <div className="insight-details">
-              <div className="detail-row">
-                <span>{t.arcCache}</span>
-                <output>{fmtVal(s.arc_size, formatBytes)}</output>
-              </div>
               <div className="detail-row">
                 <span>{t.cpuTemp}</span>
                 <output>{s.cpu_temp}°C</output>
@@ -773,54 +713,6 @@ export default function ServerInsights({
               </div>
             </div>
           </article>
-        </div>
-      </section>
-    );
-  }
-
-  // Docker view
-  if (type === "docker" && stats) {
-    const s = stats as DockerStats;
-
-    return (
-      <section
-        className="infrastructure-section"
-        aria-label={t.ariaLabel}
-      >
-        <div className="insights-grid">
-          {s.hosts.map((host) => (
-            <article
-              key={host.name}
-              className="insight-card"
-              aria-labelledby={`label-docker-${host.name.toLowerCase()}`}
-            >
-              <span
-                className="insight-label"
-                id={`label-docker-${host.name.toLowerCase()}`}
-              >
-                {host.name}
-              </span>
-              <div className="insight-value">
-                <span className="sr-only">
-                  {fmtVal(host.containers_running)} /{" "}
-                  {fmtVal(host.containers_total)} {t.containersRunning}
-                </span>
-                <span aria-hidden="true">
-                  <output>
-                    {fmtVal(host.containers_running)} /{" "}
-                    {fmtVal(host.containers_total)}
-                  </output>{" "}
-                  <small>{t.containersRunning}</small>
-                </span>
-              </div>
-              <div className="insight-details">
-                <div className="detail-row">
-                  <span>{t.dockerImages}</span>
-                  <output>{fmtVal(host.images)}</output>
-                </div>
-              </div>
-            </article>
-          ))}
         </div>
       </section>
     );

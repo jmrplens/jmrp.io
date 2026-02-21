@@ -412,18 +412,8 @@ export const common = {
       storageTitle: "Almacenamiento ZFS",
       storageUnit: "total",
       poolHealth: "Salud",
-      containersTitle: "Contenedores Docker",
-      containersRunning: "en ejecución",
-      uptimeTitle: "Tiempo activo",
-      uptimeDays: "días",
       arcCache: "Caché ZFS ARC",
       cpuTemp: "Temperatura CPU",
-      // ServerInsights — Docker
-      dockerNode: "Nodo: Infraestructura Docker (Portainer)",
-      dockerStatsAriaLabel:
-        "Estadísticas en tiempo real de la infraestructura Docker",
-      dockerStatsError: "No se pudieron cargar las estadísticas de Docker.",
-      dockerImages: "Imágenes",
       // ServerInsights — Common
       resourceLoad: "Carga de Recursos",
       dbConnections: "conexiones",
