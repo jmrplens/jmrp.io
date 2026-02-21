@@ -8,6 +8,8 @@ import "@styles/components/homelab-components.css";
 
 import type { InfrastructureTranslations } from "@components/homelab/InfrastructureInsights";
 import InfrastructureInsights from "@components/homelab/InfrastructureInsights";
+import type { ServerInsightsTranslations } from "@components/homelab/ServerInsights";
+import ServerInsights from "@components/homelab/ServerInsights";
 import ServiceCard from "@components/homelab/ServiceCard.astro";
 import type { ServiceStatsTranslations } from "@components/homelab/ServiceStats";
 import ServiceStats from "@components/homelab/ServiceStats";
@@ -84,6 +86,107 @@ const serviceStatsTranslations: ServiceStatsTranslations = {
   viewMonitor: t("pages.homelab.viewMonitor"),
   viewMonitorLFAria: t("pages.homelab.viewMonitorLFAria"),
   viewMonitorMFAria: t("pages.homelab.viewMonitorMFAria"),
+};
+
+/** Shared translation keys used by all ServerInsights instances. */
+const serverInsightsCommon = {
+  cpuUsagePrefix: t("pages.homelab.cpuUsagePrefix"),
+  percentCPU: t("pages.homelab.percentCPU"),
+  memoryUsage: t("pages.homelab.memoryUsage"),
+  percentRAM: t("pages.homelab.percentRAM"),
+  loadStatus: t("pages.homelab.loadStatus"),
+  statusCritical: t("pages.homelab.statusCritical"),
+  statusHigh: t("pages.homelab.statusHigh"),
+  statusElevated: t("pages.homelab.statusElevated"),
+  statusOptimal: t("pages.homelab.statusOptimal"),
+  statusHealthy: t("pages.homelab.statusHealthy"),
+  statusUnknown: t("pages.homelab.statusUnknown"),
+  resourceLoad: t("pages.homelab.resourceLoad"),
+  dbConnections: t("pages.homelab.dbConnections"),
+  redisMemory: t("pages.homelab.redisMemory"),
+  services: t("pages.homelab.servicesLabel"),
+  database: t("pages.homelab.databaseLabel"),
+};
+
+const matrixInsightsTranslations: ServerInsightsTranslations = {
+  ...serverInsightsCommon,
+  ariaLabel: t("pages.homelab.matrixStatsAriaLabel"),
+  error: t("pages.homelab.matrixStatsError"),
+  matrixWorkers: t("pages.homelab.matrixWorkers"),
+  matrixWorkersUnit: t("pages.homelab.matrixWorkersUnit"),
+  matrixMainProcess: t("pages.homelab.matrixMainProcess"),
+  matrixRunning: t("pages.homelab.matrixRunning"),
+  matrixStopped: t("pages.homelab.matrixStopped"),
+  matrixRooms: t("pages.homelab.matrixRooms"),
+  matrixUsers: t("pages.homelab.matrixUsers"),
+  sidekiqJobs: "",
+  sidekiqJobsUnit: "",
+  sidekiqFailed: "",
+  sidekiqRetry: "",
+  sidekiqScheduled: "",
+  sidekiqProcesses: "",
+  pumaThreads: "",
+  storageTitle: "",
+  storageUnit: "",
+  poolHealth: "",
+  containersTitle: "",
+  containersRunning: "",
+  uptimeTitle: "",
+  uptimeDays: "",
+};
+
+const mastodonInsightsTranslations: ServerInsightsTranslations = {
+  ...serverInsightsCommon,
+  ariaLabel: t("pages.homelab.mastodonStatsAriaLabel"),
+  error: t("pages.homelab.mastodonStatsError"),
+  sidekiqJobs: t("pages.homelab.sidekiqJobs"),
+  sidekiqJobsUnit: t("pages.homelab.sidekiqJobsUnit"),
+  sidekiqFailed: t("pages.homelab.sidekiqFailed"),
+  sidekiqRetry: t("pages.homelab.sidekiqRetry"),
+  sidekiqScheduled: t("pages.homelab.sidekiqScheduled"),
+  sidekiqProcesses: t("pages.homelab.sidekiqProcesses"),
+  pumaThreads: t("pages.homelab.pumaThreads"),
+  matrixWorkers: "",
+  matrixWorkersUnit: "",
+  matrixMainProcess: "",
+  matrixRunning: "",
+  matrixStopped: "",
+  matrixRooms: "",
+  matrixUsers: "",
+  storageTitle: "",
+  storageUnit: "",
+  poolHealth: "",
+  containersTitle: "",
+  containersRunning: "",
+  uptimeTitle: "",
+  uptimeDays: "",
+};
+
+const truenasInsightsTranslations: ServerInsightsTranslations = {
+  ...serverInsightsCommon,
+  ariaLabel: t("pages.homelab.truenasStatsAriaLabel"),
+  error: t("pages.homelab.truenasStatsError"),
+  storageTitle: t("pages.homelab.storageTitle"),
+  storageUnit: t("pages.homelab.storageUnit"),
+  poolHealth: t("pages.homelab.poolHealth"),
+  containersTitle: t("pages.homelab.containersTitle"),
+  containersRunning: t("pages.homelab.containersRunning"),
+  uptimeTitle: t("pages.homelab.uptimeTitle"),
+  uptimeDays: t("pages.homelab.uptimeDays"),
+  matrixWorkers: "",
+  matrixWorkersUnit: "",
+  matrixMainProcess: "",
+  matrixRunning: "",
+  matrixStopped: "",
+  matrixRooms: "",
+  matrixUsers: "",
+  sidekiqJobs: "",
+  sidekiqJobsUnit: "",
+  sidekiqFailed: "",
+  sidekiqRetry: "",
+  sidekiqScheduled: "",
+  sidekiqProcesses: "",
+  pumaThreads: "",
 };
 
 interface Provider {
@@ -223,6 +326,57 @@ const servicesSchema = {
         <InfrastructureInsights
           client:visible
           translations={infrastructureTranslations}
+        />
+      </section>
+
+      <section
+        class="infrastructure-insights"
+        aria-labelledby="node-matrix-homeserver"
+      >
+        <h2
+          class="section-subtitle"
+          id="node-matrix-homeserver"
+        >
+          {t("pages.homelab.matrixNode")}
+        </h2>
+        <ServerInsights
+          client:visible
+          type="matrix"
+          translations={matrixInsightsTranslations}
+        />
+      </section>
+
+      <section
+        class="infrastructure-insights"
+        aria-labelledby="node-mastodon-instance"
+      >
+        <h2
+          class="section-subtitle"
+          id="node-mastodon-instance"
+        >
+          {t("pages.homelab.mastodonNode")}
+        </h2>
+        <ServerInsights
+          client:visible
+          type="mastodon"
+          translations={mastodonInsightsTranslations}
+        />
+      </section>
+
+      <section
+        class="infrastructure-insights"
+        aria-labelledby="node-truenas-storage"
+      >
+        <h2
+          class="section-subtitle"
+          id="node-truenas-storage"
+        >
+          {t("pages.homelab.truenasNode")}
+        </h2>
+        <ServerInsights
+          client:visible
+          type="truenas"
+          translations={truenasInsightsTranslations}
         />
       </section>
     </div>
