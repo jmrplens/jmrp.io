@@ -755,10 +755,9 @@ export const tools = {
     fetching: "Fetching...",
     fetchingHeaders: "Fetching headers...",
     noHeadersReturned:
-      "No headers returned \u2014 CORS may be blocking access. Use curl instead.",
-    fetchedHeaders:
-      "\u2713 Fetched {count} headers. Note: browsers may hide some headers due to CORS. Use curl for complete results.",
-    failedToFetch: "\u2717 {msg}. Use curl -sI {url} to get full headers.",
+      "No headers returned — the server may have refused the request.",
+    fetchedHeaders: "\u2713 Fetched {count} headers.",
+    failedToFetch: "\u2717 {msg}",
     failedToFetchDefault: "Failed to fetch",
     // Section titles
     cookieSecurity: "Cookie Security",

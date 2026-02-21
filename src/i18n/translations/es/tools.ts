@@ -762,11 +762,9 @@ export const tools = {
     fetching: "Obteniendo...",
     fetchingHeaders: "Obteniendo cabeceras...",
     noHeadersReturned:
-      "No se obtuvieron cabeceras \u2014 CORS puede estar bloqueando el acceso. Usa curl en su lugar.",
-    fetchedHeaders:
-      "\u2713 Se obtuvieron {count} cabeceras. Nota: los navegadores pueden ocultar algunas cabeceras por CORS. Usa curl para resultados completos.",
-    failedToFetch:
-      "\u2717 {msg}. Usa curl -sI {url} para obtener todas las cabeceras.",
+      "No se obtuvieron cabeceras — el servidor puede haber rechazado la solicitud.",
+    fetchedHeaders: "\u2713 Se obtuvieron {count} cabeceras.",
+    failedToFetch: "\u2717 {msg}",
     failedToFetchDefault: "Error al obtener",
     // Títulos de sección
     cookieSecurity: "Seguridad de cookies",
