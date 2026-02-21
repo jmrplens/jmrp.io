@@ -415,6 +415,13 @@ export const common = {
       containersRunning: "running",
       uptimeTitle: "Uptime",
       uptimeDays: "days",
+      arcCache: "ZFS ARC Cache",
+      cpuTemp: "CPU Temperature",
+      // ServerInsights — Docker
+      dockerNode: "Node: Docker Infrastructure (Portainer)",
+      dockerStatsAriaLabel: "Docker infrastructure real-time statistics",
+      dockerStatsError: "Unable to load Docker statistics.",
+      dockerImages: "Images",
       // ServerInsights — Common
       resourceLoad: "Resource Load",
       dbConnections: "connections",

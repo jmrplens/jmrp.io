@@ -133,6 +133,10 @@ const matrixInsightsTranslations: ServerInsightsTranslations = {
   containersRunning: "",
   uptimeTitle: "",
   uptimeDays: "",
+  arcCache: "",
+  cpuTemp: "",
+  dockerImages: "",
+  dockerTotal: "",
 };
 
 const mastodonInsightsTranslations: ServerInsightsTranslations = {
@@ -160,6 +164,10 @@ const mastodonInsightsTranslations: ServerInsightsTranslations = {
   containersRunning: "",
   uptimeTitle: "",
   uptimeDays: "",
+  arcCache: "",
+  cpuTemp: "",
+  dockerImages: "",
+  dockerTotal: "",
 };
 
 const truenasInsightsTranslations: ServerInsightsTranslations = {
@@ -169,10 +177,45 @@ const truenasInsightsTranslations: ServerInsightsTranslations = {
   storageTitle: t("pages.homelab.storageTitle"),
   storageUnit: t("pages.homelab.storageUnit"),
   poolHealth: t("pages.homelab.poolHealth"),
-  containersTitle: t("pages.homelab.containersTitle"),
-  containersRunning: t("pages.homelab.containersRunning"),
+  containersTitle: "",
+  containersRunning: "",
   uptimeTitle: t("pages.homelab.uptimeTitle"),
   uptimeDays: t("pages.homelab.uptimeDays"),
+  arcCache: t("pages.homelab.arcCache"),
+  cpuTemp: t("pages.homelab.cpuTemp"),
+  dockerImages: "",
+  dockerTotal: "",
+  matrixWorkers: "",
+  matrixWorkersUnit: "",
+  matrixMainProcess: "",
+  matrixRunning: "",
+  matrixStopped: "",
+  matrixRooms: "",
+  matrixUsers: "",
+  sidekiqJobs: "",
+  sidekiqJobsUnit: "",
+  sidekiqFailed: "",
+  sidekiqRetry: "",
+  sidekiqScheduled: "",
+  sidekiqProcesses: "",
+  pumaThreads: "",
+};
+
+const dockerInsightsTranslations: ServerInsightsTranslations = {
+  ...serverInsightsCommon,
+  ariaLabel: t("pages.homelab.dockerStatsAriaLabel"),
+  error: t("pages.homelab.dockerStatsError"),
+  containersTitle: t("pages.homelab.containersTitle"),
+  containersRunning: t("pages.homelab.containersRunning"),
+  dockerImages: t("pages.homelab.dockerImages"),
+  dockerTotal: "",
+  storageTitle: "",
+  storageUnit: "",
+  poolHealth: "",
+  uptimeTitle: "",
+  uptimeDays: "",
+  arcCache: "",
+  cpuTemp: "",
   matrixWorkers: "",
   matrixWorkersUnit: "",
   matrixMainProcess: "",
@@ -377,6 +420,23 @@ const servicesSchema = {
           client:visible
           type="truenas"
           translations={truenasInsightsTranslations}
+        />
+      </section>
+
+      <section
+        class="infrastructure-insights"
+        aria-labelledby="node-docker-infrastructure"
+      >
+        <h2
+          class="section-subtitle"
+          id="node-docker-infrastructure"
+        >
+          {t("pages.homelab.dockerNode")}
+        </h2>
+        <ServerInsights
+          client:visible
+          type="docker"
+          translations={dockerInsightsTranslations}
         />
       </section>
     </div>
