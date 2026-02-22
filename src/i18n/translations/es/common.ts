@@ -431,7 +431,7 @@ export const common = {
       mikrotikStatsAriaLabel: "Estadísticas y métricas del Edge Router",
       mikrotikStatsError: "No se pudieron cargar las métricas del Edge Router.",
       mikrotikSystem: "Sistema",
-      mikrotikBoard: "Placa",
+
       mikrotikCpuFrequency: "Frecuencia CPU",
       mikrotikMhz: "MHz",
       mikrotikStorage: "Almacenamiento",

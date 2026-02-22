@@ -102,8 +102,6 @@ export interface ServerInsightsTranslations {
   mastodonMediaStorage: string;
   /** Label for MikroTik system card heading. */
   mikrotikSystem: string;
-  /** Label for MikroTik board model. */
-  mikrotikBoard: string;
   /** Label for CPU frequency. */
   mikrotikCpuFrequency: string;
   /** Unit for MHz. */
