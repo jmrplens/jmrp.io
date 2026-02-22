@@ -147,11 +147,20 @@ async function fetchMastodonStats(setError: (error: boolean) => void) {
  */
 async function fetchMatrixStats(setError: (error: boolean) => void) {
   try {
-    const [resConfig, resVer, resFed, resDest] = await Promise.all([
+    const token =
+      document.querySelector<HTMLElement>("[data-homelab-token]")?.dataset
+        .homelabToken ?? "";
+    const homelabHeaders: HeadersInit = token
+      ? { "X-Homelab-Token": token }
+      : {};
+
+    const [resConfig, resVer, resFed, resHomelab] = await Promise.all([
       fetch("/api/proxy/matrix/config").catch(() => null),
       fetch("/api/proxy/matrix/versions").catch(() => null),
       fetch("/api/proxy/matrix/federation").catch(() => null),
-      fetch("/api/proxy/matrix/stats").catch(() => null),
+      fetch("/api/homelab/matrix", { headers: homelabHeaders }).catch(
+        () => null,
+      ),
     ]);
 
     const matrixData = await safeFetchJson<MatrixData>(
@@ -178,16 +187,14 @@ async function fetchMatrixStats(setError: (error: boolean) => void) {
       null,
     );
 
-    const destData = await safeFetchJson<{ total: number } | null>(
-      resDest,
-      "Failed to parse Matrix stats response",
-      null,
-    );
-    if (destData) {
-      matrixData.federationTotal = destData.total;
+    const homelabData = await safeFetchJson<{
+      federation_destinations?: number;
+    } | null>(resHomelab, "Failed to parse Matrix homelab response", null);
+    if (homelabData?.federation_destinations != null) {
+      matrixData.federationTotal = homelabData.federation_destinations;
     }
 
-    if (!resConfig?.ok && !resVer?.ok && !resFed?.ok && !resDest?.ok) {
+    if (!resConfig?.ok && !resVer?.ok && !resFed?.ok && !resHomelab?.ok) {
       setError(true);
     }
 
