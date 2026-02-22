@@ -86,6 +86,9 @@ overrides:
     language: es,en
   - filename: "src/i18n/translations/es/**"
     language: es,en
+  # PDF metadata script has Spanish certificate/course names
+  - filename: "scripts/optimize-pdf-metadata.py"
+    language: es,en
   # RSS template has odd interpolation patterns
   - filename: "src/pages/rss.xml.ts"
     enabled: false

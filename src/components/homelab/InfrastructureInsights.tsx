@@ -544,9 +544,9 @@ export default function InfrastructureInsights({ translations: t }: Props) {
             <div className="detail-row">
               <span id="label-cpu-temp">{t.cpuTemp}</span>
               <output aria-labelledby="label-cpu-temp">
-                {stats?.cpu_temp != null
-                  ? `${Math.round(stats.cpu_temp)}°C`
-                  : "—"}
+                {stats?.cpu_temp == null
+                  ? "—"
+                  : `${Math.round(stats.cpu_temp)}°C`}
               </output>
             </div>
             <div className="detail-row">

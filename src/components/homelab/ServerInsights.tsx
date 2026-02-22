@@ -100,11 +100,43 @@ export interface ServerInsightsTranslations {
   mastodonDbSize: string;
   /** Label for Mastodon media storage size. */
   mastodonMediaStorage: string;
+  /** Label for MikroTik system card heading. */
+  mikrotikSystem: string;
+  /** Label for MikroTik board model. */
+  mikrotikBoard: string;
+  /** Label for CPU frequency. */
+  mikrotikCpuFrequency: string;
+  /** Unit for MHz. */
+  mikrotikMhz: string;
+  /** Label for storage usage. */
+  mikrotikStorage: string;
+  /** Label for MikroTik network card heading. */
+  mikrotikNetwork: string;
+  /** Label for WAN download. */
+  mikrotikWanDownload: string;
+  /** Label for WAN upload. */
+  mikrotikWanUpload: string;
+  /** Label for WAN total packets. */
+  mikrotikWanPackets: string;
+  /** Unit for packets. */
+  mikrotikPacketsUnit: string;
+  /** Label for MikroTik security card heading. */
+  mikrotikSecurity: string;
+  /** Label for active connections. */
+  mikrotikActiveConnections: string;
+  /** Label for CrowdSec blocked. */
+  mikrotikCrowdsecBlocked: string;
+  /** Label for blacklisted scanners. */
+  mikrotikBlacklistScanners: string;
+  /** Label for honeypot hits. */
+  mikrotikHoneypotHits: string;
+  /** Label for port scanners dropped. */
+  mikrotikPortScanners: string;
 }
 
 /** Component props for ServerInsights. */
 interface Props {
-  readonly type: "matrix" | "mastodon" | "truenas";
+  readonly type: "matrix" | "mastodon" | "truenas" | "mikrotik";
   readonly translations: ServerInsightsTranslations;
 }
 
@@ -165,6 +197,25 @@ interface TrueNASStats {
   arc_size: number;
   cpu_temp: number;
   zfs_pools: ZFSPool[];
+}
+
+interface MikroTikStats {
+  board: string;
+  cpu_load: number;
+  cpu_temp: number;
+  cpu_frequency: number;
+  mem_used_percent: number;
+  mem_total: number;
+  disk_used_percent: number;
+  wan_rx_bytes: number;
+  wan_tx_bytes: number;
+  wan_rx_packets: number;
+  wan_tx_packets: number;
+  active_connections: number;
+  crowdsec_blocked: number;
+  blacklist_scanners: number;
+  honeypot_hits: number;
+  port_scanners_dropped: number;
 }
 
 /** Validates that the data matches the MatrixStats shape. */
@@ -240,6 +291,30 @@ function isValidTrueNASStats(data: unknown): data is TrueNASStats {
         typeof (p as Record<string, unknown>).health === "string" &&
         typeof (p as Record<string, unknown>).frag === "number",
     )
+  );
+}
+
+/** Validates that the data matches the MikroTikStats shape. */
+function isValidMikroTikStats(data: unknown): data is MikroTikStats {
+  if (!data || typeof data !== "object") return false;
+  const d = data as Record<string, unknown>;
+  return (
+    typeof d.board === "string" &&
+    typeof d.cpu_load === "number" &&
+    typeof d.cpu_temp === "number" &&
+    typeof d.cpu_frequency === "number" &&
+    typeof d.mem_used_percent === "number" &&
+    typeof d.mem_total === "number" &&
+    typeof d.disk_used_percent === "number" &&
+    typeof d.wan_rx_bytes === "number" &&
+    typeof d.wan_tx_bytes === "number" &&
+    typeof d.wan_rx_packets === "number" &&
+    typeof d.wan_tx_packets === "number" &&
+    typeof d.active_connections === "number" &&
+    typeof d.crowdsec_blocked === "number" &&
+    typeof d.blacklist_scanners === "number" &&
+    typeof d.honeypot_hits === "number" &&
+    typeof d.port_scanners_dropped === "number"
   );
 }
 
@@ -333,7 +408,7 @@ export default function ServerInsights({
   translations: t,
 }: Props): preact.JSX.Element {
   const [stats, setStats] = useState<
-    MatrixStats | MastodonStats | TrueNASStats | null
+    MatrixStats | MastodonStats | TrueNASStats | MikroTikStats | null
   >(null);
   const [error, setError] = useState(false);
   const isFetchingRef = useRef(false);
@@ -370,10 +445,20 @@ export default function ServerInsights({
               isValid = isValidTrueNASStats(data);
               break;
             }
+            case "mikrotik": {
+              isValid = isValidMikroTikStats(data);
+              break;
+            }
           }
 
           if (isValid) {
-            setStats(data as MatrixStats | MastodonStats | TrueNASStats);
+            setStats(
+              data as
+                | MatrixStats
+                | MastodonStats
+                | TrueNASStats
+                | MikroTikStats,
+            );
             setError(false);
           } else {
             setError(true);
@@ -856,6 +941,146 @@ export default function ServerInsights({
                 <output className={getStatusColor(loadStatus)}>
                   {getStatusLabel(loadStatus, t)}
                 </output>
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
+    );
+  }
+
+  // MikroTik view
+  if (type === "mikrotik" && stats) {
+    const s = stats as MikroTikStats;
+    const loadStatus = getStatus(s.cpu_load, s.mem_used_percent);
+
+    return (
+      <section
+        className="infrastructure-section"
+        aria-label={t.ariaLabel}
+      >
+        <div className="insights-grid">
+          <article
+            className="insight-card hardware"
+            aria-labelledby="label-mikrotik-system"
+          >
+            <span
+              className="insight-label"
+              id="label-mikrotik-system"
+            >
+              {t.mikrotikSystem}
+            </span>
+            <div className="insight-value">
+              <span className="sr-only">
+                {t.cpuUsagePrefix} {fmtVal(s.cpu_load, formatPercent)} %
+              </span>
+              <span aria-hidden="true">
+                <output>{fmtVal(s.cpu_load, formatPercent)}</output>{" "}
+                <small>{t.percentCPU}</small>
+              </span>
+            </div>
+            <div className="insight-details">
+              <div className="detail-row">
+                <span>{t.cpuTemp}</span>
+                <output>{s.cpu_temp}°C</output>
+              </div>
+              <div className="detail-row">
+                <span>{t.mikrotikCpuFrequency}</span>
+                <output>
+                  {s.cpu_frequency} {t.mikrotikMhz}
+                </output>
+              </div>
+              <div className="detail-row">
+                <span>{t.memoryUsage}</span>
+                <output>
+                  {fmtVal(s.mem_used_percent, formatPercent)}
+                  <small aria-hidden="true"> {t.percentRAM}</small>
+                </output>
+              </div>
+              <div className="detail-row">
+                <span>{t.mikrotikStorage}</span>
+                <output>{fmtVal(s.disk_used_percent, formatPercent)}%</output>
+              </div>
+              <div className="detail-row">
+                <span>{t.loadStatus}</span>
+                <output className={getStatusColor(loadStatus)}>
+                  {getStatusLabel(loadStatus, t)}
+                </output>
+              </div>
+            </div>
+          </article>
+
+          <article
+            className="insight-card"
+            aria-labelledby="label-mikrotik-network"
+          >
+            <span
+              className="insight-label"
+              id="label-mikrotik-network"
+            >
+              {t.mikrotikNetwork}
+            </span>
+            <div className="insight-value">
+              <span className="sr-only">
+                {fmtVal(s.wan_rx_bytes, formatBytes)} {t.mikrotikWanDownload}
+              </span>
+              <span aria-hidden="true">
+                <output>{fmtVal(s.wan_rx_bytes, formatBytes)}</output>{" "}
+                <small>{t.mikrotikWanDownload}</small>
+              </span>
+            </div>
+            <div className="insight-details">
+              <div className="detail-row">
+                <span>{t.mikrotikWanUpload}</span>
+                <output>{fmtVal(s.wan_tx_bytes, formatBytes)}</output>
+              </div>
+              <div className="detail-row">
+                <span>{t.mikrotikWanPackets}</span>
+                <output>
+                  {((s.wan_rx_packets + s.wan_tx_packets) / 1_000_000).toFixed(
+                    1,
+                  )}
+                  M <small>{t.mikrotikPacketsUnit}</small>
+                </output>
+              </div>
+            </div>
+          </article>
+
+          <article
+            className="insight-card"
+            aria-labelledby="label-mikrotik-security"
+          >
+            <span
+              className="insight-label"
+              id="label-mikrotik-security"
+            >
+              {t.mikrotikSecurity}
+            </span>
+            <div className="insight-value">
+              <span className="sr-only">
+                {fmtVal(s.crowdsec_blocked)} {t.mikrotikCrowdsecBlocked}
+              </span>
+              <span aria-hidden="true">
+                <output>{fmtVal(s.crowdsec_blocked)}</output>{" "}
+                <small>{t.mikrotikCrowdsecBlocked}</small>
+              </span>
+            </div>
+            <div className="insight-details">
+              <div className="detail-row">
+                <span>{t.mikrotikActiveConnections}</span>
+                <output>{fmtVal(s.active_connections)}</output>
+              </div>
+              <div className="detail-row">
+                <span>{t.mikrotikBlacklistScanners}</span>
+                <output>{fmtVal(s.blacklist_scanners)}</output>
+              </div>
+              <div className="detail-row">
+                <span>{t.mikrotikHoneypotHits}</span>
+                <output>{fmtVal(s.honeypot_hits)}</output>
+              </div>
+              <div className="detail-row">
+                <span>{t.mikrotikPortScanners}</span>
+                <output>{fmtVal(s.port_scanners_dropped)}</output>
               </div>
             </div>
           </article>

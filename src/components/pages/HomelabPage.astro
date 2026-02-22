@@ -144,6 +144,22 @@ const matrixInsightsTranslations: ServerInsightsTranslations = {
   poolHealth: "",
   arcCache: "",
   cpuTemp: t("pages.homelab.cpuTemp"),
+  mikrotikSystem: "",
+  mikrotikBoard: "",
+  mikrotikCpuFrequency: "",
+  mikrotikMhz: "",
+  mikrotikStorage: "",
+  mikrotikNetwork: "",
+  mikrotikWanDownload: "",
+  mikrotikWanUpload: "",
+  mikrotikWanPackets: "",
+  mikrotikPacketsUnit: "",
+  mikrotikSecurity: "",
+  mikrotikActiveConnections: "",
+  mikrotikCrowdsecBlocked: "",
+  mikrotikBlacklistScanners: "",
+  mikrotikHoneypotHits: "",
+  mikrotikPortScanners: "",
 };
 
 const mastodonInsightsTranslations: ServerInsightsTranslations = {
@@ -181,6 +197,22 @@ const mastodonInsightsTranslations: ServerInsightsTranslations = {
   poolHealth: "",
   arcCache: "",
   cpuTemp: t("pages.homelab.cpuTemp"),
+  mikrotikSystem: "",
+  mikrotikBoard: "",
+  mikrotikCpuFrequency: "",
+  mikrotikMhz: "",
+  mikrotikStorage: "",
+  mikrotikNetwork: "",
+  mikrotikWanDownload: "",
+  mikrotikWanUpload: "",
+  mikrotikWanPackets: "",
+  mikrotikPacketsUnit: "",
+  mikrotikSecurity: "",
+  mikrotikActiveConnections: "",
+  mikrotikCrowdsecBlocked: "",
+  mikrotikBlacklistScanners: "",
+  mikrotikHoneypotHits: "",
+  mikrotikPortScanners: "",
 };
 
 const truenasInsightsTranslations: ServerInsightsTranslations = {
@@ -218,6 +250,76 @@ const truenasInsightsTranslations: ServerInsightsTranslations = {
   mastodonKnownPeers: "",
   mastodonDbSize: "",
   mastodonMediaStorage: "",
+  mikrotikSystem: "",
+  mikrotikBoard: "",
+  mikrotikCpuFrequency: "",
+  mikrotikMhz: "",
+  mikrotikStorage: "",
+  mikrotikNetwork: "",
+  mikrotikWanDownload: "",
+  mikrotikWanUpload: "",
+  mikrotikWanPackets: "",
+  mikrotikPacketsUnit: "",
+  mikrotikSecurity: "",
+  mikrotikActiveConnections: "",
+  mikrotikCrowdsecBlocked: "",
+  mikrotikBlacklistScanners: "",
+  mikrotikHoneypotHits: "",
+  mikrotikPortScanners: "",
+};
+
+const mikrotikInsightsTranslations: ServerInsightsTranslations = {
+  ...serverInsightsCommon,
+  ariaLabel: t("pages.homelab.mikrotikStatsAriaLabel"),
+  error: t("pages.homelab.mikrotikStatsError"),
+  mikrotikSystem: t("pages.homelab.mikrotikSystem"),
+  mikrotikBoard: t("pages.homelab.mikrotikBoard"),
+  mikrotikCpuFrequency: t("pages.homelab.mikrotikCpuFrequency"),
+  mikrotikMhz: t("pages.homelab.mikrotikMhz"),
+  mikrotikStorage: t("pages.homelab.mikrotikStorage"),
+  mikrotikNetwork: t("pages.homelab.mikrotikNetwork"),
+  mikrotikWanDownload: t("pages.homelab.mikrotikWanDownload"),
+  mikrotikWanUpload: t("pages.homelab.mikrotikWanUpload"),
+  mikrotikWanPackets: t("pages.homelab.mikrotikWanPackets"),
+  mikrotikPacketsUnit: t("pages.homelab.mikrotikPacketsUnit"),
+  mikrotikSecurity: t("pages.homelab.mikrotikSecurity"),
+  mikrotikActiveConnections: t("pages.homelab.mikrotikActiveConnections"),
+  mikrotikCrowdsecBlocked: t("pages.homelab.mikrotikCrowdsecBlocked"),
+  mikrotikBlacklistScanners: t("pages.homelab.mikrotikBlacklistScanners"),
+  mikrotikHoneypotHits: t("pages.homelab.mikrotikHoneypotHits"),
+  mikrotikPortScanners: t("pages.homelab.mikrotikPortScanners"),
+  cpuTemp: t("pages.homelab.cpuTemp"),
+  // Empty strings for other servers' keys
+  matrixWorkers: "",
+  matrixWorkersUnit: "",
+  matrixMainProcess: "",
+  matrixRunning: "",
+  matrixStopped: "",
+  matrixRooms: "",
+  matrixLocalRooms: "",
+  matrixUsers: "",
+  matrixLocalUsers: "",
+  matrixFederation: "",
+  matrixFederationServers: "",
+  matrixTotalEvents: "",
+  matrixDbSize: "",
+  matrixSynapse: "",
+  sidekiqJobs: "",
+  sidekiqJobsUnit: "",
+  sidekiqFailed: "",
+  sidekiqRetry: "",
+  sidekiqScheduled: "",
+  sidekiqProcesses: "",
+  pumaThreads: "",
+  mastodonFederation: "",
+  mastodonKnownDomains: "",
+  mastodonKnownPeers: "",
+  mastodonDbSize: "",
+  mastodonMediaStorage: "",
+  storageTitle: "",
+  storageUnit: "",
+  poolHealth: "",
+  arcCache: "",
 };
 
 interface Provider {
@@ -415,6 +517,23 @@ const servicesSchema = {
           client:visible
           type="truenas"
           translations={truenasInsightsTranslations}
+        />
+      </section>
+
+      <section
+        class="infrastructure-insights"
+        aria-labelledby="node-edge-router"
+      >
+        <h2
+          class="section-subtitle"
+          id="node-edge-router"
+        >
+          {t("pages.homelab.routerNode")}
+        </h2>
+        <ServerInsights
+          client:visible
+          type="mikrotik"
+          translations={mikrotikInsightsTranslations}
         />
       </section>
     </div>

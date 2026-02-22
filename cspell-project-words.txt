@@ -25,6 +25,7 @@ applebot
 aquí
 arduino
 artesano
+asonaman
 asonoman
 aspnet
 aspnetmvc
@@ -130,10 +131,12 @@ csirt
 curso
 d'acoustique
 dakfl
+datos
 dcid
 ddns
 deepcode
 delega
+denorms
 dentistas
 desactualizados
 descárgalos
@@ -151,6 +154,7 @@ digi
 dios
 directo
 disambiguator
+docinfo
 docsis
 domcontentloaded
 domhandler
@@ -218,6 +222,7 @@ guarinos
 guillem
 hardvard
 healthz
+helpdesk
 herramienta
 herramientas
 heurística
@@ -325,13 +330,17 @@ menlo
 meshtastic
 metacarácter
 metacharacter
+metadiffuser
 metadiffusers
+metadifusor
 metadifusores
 metamaterial
 metamateriales
 metamaterials
 metasmart
+metasuperficie
 metasuperficies
+metasurface
 metasurfaces
 microcontroller
 microservicios
@@ -405,6 +414,7 @@ parseo
 partir
 passout
 pcre
+pdfs
 pégala
 perjudicial
 personalízalo
@@ -491,6 +501,8 @@ restaura
 retrocedarán
 reuseport
 reverberado
+reverberante
+rgpd
 rmem
 robótico
 rproto
@@ -506,11 +518,13 @@ sánchez
 sanitización
 sanitizar
 sapc
+saura
 scannerwork
 scid
 scts
 securepassword
 segoe
+semiempírico
 sendfile
 servicios
 sfmono
@@ -518,6 +532,7 @@ shanghái
 shiki
 shiki's
 shuf
+sidekiq
 sídney
 silverlight
 sitemapindex
@@ -563,10 +578,12 @@ traceroute
 transmítela
 trevorcox
 tritanopía
+truenas
 ttfb
 uaaaaj
 ulnp
 ultrasónica
+ultrathin
 umil
 universitat
 université
@@ -579,6 +596,7 @@ valència
 valencian
 verificar
 versiones
+vibroacústica
 vibroacústico
 vicent
 víctor
