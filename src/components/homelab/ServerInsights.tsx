@@ -90,6 +90,22 @@ export interface ServerInsightsTranslations {
   arcCache: string;
   /** Label for CPU temperature. */
   cpuTemp: string;
+  /** Label for Mastodon federation heading. */
+  mastodonFederation: string;
+  /** Label for Mastodon local users count. */
+  mastodonLocalUsers: string;
+  /** Label for Mastodon local statuses count. */
+  mastodonStatuses: string;
+  /** Unit label for Mastodon known domains headline. */
+  mastodonKnownDomains: string;
+  /** Label for Mastodon known peers count. */
+  mastodonKnownPeers: string;
+  /** Label for Mastodon monthly active users. */
+  mastodonMonthlyActive: string;
+  /** Label for Mastodon database size. */
+  mastodonDbSize: string;
+  /** Label for Mastodon media storage size. */
+  mastodonMediaStorage: string;
 }
 
 /** Component props for ServerInsights. */
@@ -129,6 +145,14 @@ interface MastodonStats {
   cpu_temp: number;
   pg_connections: number;
   redis_memory: number;
+  user_count: number;
+  status_count: number;
+  domain_count: number;
+  peers_count: number;
+  active_month: number;
+  db_size_bytes: number;
+  media_size_bytes: number;
+  instance_version: string;
 }
 
 interface ZFSPool {
@@ -188,7 +212,15 @@ function isValidMastodonStats(data: unknown): data is MastodonStats {
     typeof d.mem_used_percent === "number" &&
     typeof d.cpu_temp === "number" &&
     typeof d.pg_connections === "number" &&
-    typeof d.redis_memory === "number"
+    typeof d.redis_memory === "number" &&
+    typeof d.user_count === "number" &&
+    typeof d.status_count === "number" &&
+    typeof d.domain_count === "number" &&
+    typeof d.peers_count === "number" &&
+    typeof d.active_month === "number" &&
+    typeof d.db_size_bytes === "number" &&
+    typeof d.media_size_bytes === "number" &&
+    typeof d.instance_version === "string"
   );
 }
 
@@ -666,6 +698,53 @@ export default function ServerInsights({
               <div className="detail-row">
                 <span>{t.redisMemory}</span>
                 <output>{fmtVal(s.redis_memory, formatBytes)}</output>
+              </div>
+            </div>
+          </article>
+
+          <article
+            className="insight-card"
+            aria-labelledby="label-mastodon-federation"
+          >
+            <span
+              className="insight-label"
+              id="label-mastodon-federation"
+            >
+              {t.mastodonFederation}
+            </span>
+            <div className="insight-value">
+              <span className="sr-only">
+                {fmtVal(s.domain_count)} {t.mastodonKnownDomains}
+              </span>
+              <span aria-hidden="true">
+                <output>{fmtVal(s.domain_count)}</output>{" "}
+                <small>{t.mastodonKnownDomains}</small>
+              </span>
+            </div>
+            <div className="insight-details">
+              <div className="detail-row">
+                <span>{t.mastodonKnownPeers}</span>
+                <output>{fmtVal(s.peers_count)}</output>
+              </div>
+              <div className="detail-row">
+                <span>{t.mastodonLocalUsers}</span>
+                <output>{fmtVal(s.user_count)}</output>
+              </div>
+              <div className="detail-row">
+                <span>{t.mastodonStatuses}</span>
+                <output>{fmtVal(s.status_count)}</output>
+              </div>
+              <div className="detail-row">
+                <span>{t.mastodonMonthlyActive}</span>
+                <output>{fmtVal(s.active_month)}</output>
+              </div>
+              <div className="detail-row">
+                <span>{t.mastodonDbSize}</span>
+                <output>{fmtVal(s.db_size_bytes, formatBytes)}</output>
+              </div>
+              <div className="detail-row">
+                <span>{t.mastodonMediaStorage}</span>
+                <output>{fmtVal(s.media_size_bytes, formatBytes)}</output>
               </div>
             </div>
           </article>

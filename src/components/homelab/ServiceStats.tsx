@@ -100,18 +100,26 @@ async function safeFetchJson<T>(
  */
 async function fetchMastodonStats(setError: (error: boolean) => void) {
   try {
-    const [resPeers, resTrends, resInstance] = await Promise.all([
-      fetch("/api/proxy/mastodon/peers").catch(() => null),
+    const token =
+      document.querySelector<HTMLElement>("[data-homelab-token]")?.dataset
+        .homelabToken ?? "";
+    const homelabHeaders: HeadersInit = token
+      ? { "X-Homelab-Token": token }
+      : {};
+
+    const [resHomelab, resTrends] = await Promise.all([
+      fetch("/api/homelab/mastodon", { headers: homelabHeaders }).catch(
+        () => null,
+      ),
       fetch("/api/proxy/mastodon/trends").catch(() => null),
-      fetch("/api/proxy/mastodon/instance").catch(() => null),
     ]);
 
-    const peersData = await safeFetchJson<unknown[]>(
-      resPeers,
-      "Failed to parse Mastodon peers response",
-      [],
-    );
-    const peersCount = Array.isArray(peersData) ? peersData.length : 0;
+    const homelabData = await safeFetchJson<{
+      peers_count?: number;
+      instance_version?: string;
+    } | null>(resHomelab, "Failed to parse Mastodon homelab response", null);
+    const peersCount = homelabData?.peers_count ?? 0;
+    const instanceVersion = homelabData?.instance_version || "Unknown";
 
     const mastodonTrends = await safeFetchJson<{ url: string; name: string }[]>(
       resTrends,
@@ -119,14 +127,7 @@ async function fetchMastodonStats(setError: (error: boolean) => void) {
       [],
     );
 
-    const instanceData = await safeFetchJson<{ version: string } | null>(
-      resInstance,
-      "Failed to parse Mastodon instance response",
-      null,
-    );
-    const instanceVersion = instanceData?.version || "Unknown";
-
-    if (!resPeers?.ok && !resTrends?.ok && !resInstance?.ok) {
+    if (!resHomelab?.ok && !resTrends?.ok) {
       setError(true);
     }
 
