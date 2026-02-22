@@ -268,6 +268,13 @@ const servicesSchema = {
   description={t("pages.homelab.description")}
   schema={servicesSchema}
 >
+  {/* HMAC token injected by Nginx sub_filter at serve time for API auth */}
+  <div
+    data-homelab-token="NGINX_HOMELAB_TOKEN"
+    hidden
+    aria-hidden="true"
+  >
+  </div>
   <section aria-label={t("aria.homelabInfrastructure")}>
     <div class="container">
       <h1 class="page-title">{t("pages.homelab.title")}</h1>

@@ -297,7 +297,13 @@ export default function ServerInsights({
       if (isFetchingRef.current) return;
       isFetchingRef.current = true;
       try {
-        const res = await fetch(endpoint, { signal: controller.signal });
+        const token =
+          document.querySelector<HTMLElement>("[data-homelab-token]")?.dataset
+            .homelabToken ?? "";
+        const res = await fetch(endpoint, {
+          signal: controller.signal,
+          headers: { "X-Homelab-Token": token },
+        });
         if (res.ok) {
           const data: unknown = await res.json();
           let isValid = false;

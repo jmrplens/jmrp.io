@@ -253,8 +253,12 @@ export default function InfrastructureInsights({ translations: t }: Props) {
 
       isFetchingRef.current = true;
       try {
+        const token =
+          document.querySelector<HTMLElement>("[data-homelab-token]")?.dataset
+            .homelabToken ?? "";
         const res = await fetch("/api/homelab/stats", {
           signal: controller.signal,
+          headers: { "X-Homelab-Token": token },
         });
         if (res.ok) {
           const data = (await res.json()) as unknown;
