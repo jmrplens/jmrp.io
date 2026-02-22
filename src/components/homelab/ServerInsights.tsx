@@ -92,16 +92,10 @@ export interface ServerInsightsTranslations {
   cpuTemp: string;
   /** Label for Mastodon federation heading. */
   mastodonFederation: string;
-  /** Label for Mastodon local users count. */
-  mastodonLocalUsers: string;
-  /** Label for Mastodon local statuses count. */
-  mastodonStatuses: string;
   /** Unit label for Mastodon known domains headline. */
   mastodonKnownDomains: string;
   /** Label for Mastodon known peers count. */
   mastodonKnownPeers: string;
-  /** Label for Mastodon monthly active users. */
-  mastodonMonthlyActive: string;
   /** Label for Mastodon database size. */
   mastodonDbSize: string;
   /** Label for Mastodon media storage size. */
@@ -725,18 +719,6 @@ export default function ServerInsights({
               <div className="detail-row">
                 <span>{t.mastodonKnownPeers}</span>
                 <output>{fmtVal(s.peers_count)}</output>
-              </div>
-              <div className="detail-row">
-                <span>{t.mastodonLocalUsers}</span>
-                <output>{fmtVal(s.user_count)}</output>
-              </div>
-              <div className="detail-row">
-                <span>{t.mastodonStatuses}</span>
-                <output>{fmtVal(s.status_count)}</output>
-              </div>
-              <div className="detail-row">
-                <span>{t.mastodonMonthlyActive}</span>
-                <output>{fmtVal(s.active_month)}</output>
               </div>
               <div className="detail-row">
                 <span>{t.mastodonDbSize}</span>

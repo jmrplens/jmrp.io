@@ -412,11 +412,8 @@ export const common = {
       sidekiqProcesses: "Processes",
       pumaThreads: "Puma Threads",
       mastodonFederation: "Federation",
-      mastodonLocalUsers: "Local Users",
-      mastodonStatuses: "Local Statuses",
       mastodonKnownDomains: "known domains",
       mastodonKnownPeers: "Known Peers",
-      mastodonMonthlyActive: "Monthly Active",
       mastodonDbSize: "Database Size",
       mastodonMediaStorage: "Media Storage",
       // ServerInsights — TrueNAS
