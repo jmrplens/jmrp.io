@@ -18,8 +18,22 @@ export interface ServerInsightsTranslations {
   matrixStopped: string;
   /** Label for Matrix rooms count. */
   matrixRooms: string;
-  /** Label for Matrix federated users count. */
+  /** Label for Matrix local rooms count. */
+  matrixLocalRooms: string;
+  /** Label for Matrix known users count. */
   matrixUsers: string;
+  /** Label for Matrix local users count. */
+  matrixLocalUsers: string;
+  /** Label for Matrix federation heading. */
+  matrixFederation: string;
+  /** Label for Matrix known federation servers. */
+  matrixFederationServers: string;
+  /** Label for Matrix total events. */
+  matrixTotalEvents: string;
+  /** Label for Matrix database size. */
+  matrixDbSize: string;
+  /** Label for Synapse heading. */
+  matrixSynapse: string;
   /** Label for Sidekiq jobs processed. */
   sidekiqJobs: string;
   /** Unit label for jobs processed. */
@@ -89,6 +103,11 @@ interface MatrixStats {
   total_rooms: number;
   total_users: number;
   main_running: boolean;
+  local_users: number;
+  local_rooms: number;
+  federation_destinations: number;
+  total_events: number;
+  db_size_bytes: number;
   cpu_usage_avg: number;
   mem_used_percent: number;
   cpu_temp: number;
@@ -139,6 +158,11 @@ function isValidMatrixStats(data: unknown): data is MatrixStats {
     typeof d.total_rooms === "number" &&
     typeof d.total_users === "number" &&
     typeof d.main_running === "boolean" &&
+    typeof d.local_users === "number" &&
+    typeof d.local_rooms === "number" &&
+    typeof d.federation_destinations === "number" &&
+    typeof d.total_events === "number" &&
+    typeof d.db_size_bytes === "number" &&
     typeof d.cpu_usage_avg === "number" &&
     typeof d.mem_used_percent === "number" &&
     typeof d.cpu_temp === "number" &&
@@ -382,13 +406,13 @@ export default function ServerInsights({
         <div className="insights-grid">
           <article
             className="insight-card"
-            aria-labelledby="label-matrix-workers"
+            aria-labelledby="label-matrix-synapse"
           >
             <span
               className="insight-label"
-              id="label-matrix-workers"
+              id="label-matrix-synapse"
             >
-              {t.matrixWorkers}
+              {t.matrixSynapse}
             </span>
             <div className="insight-value">
               <span className="sr-only">
@@ -411,6 +435,41 @@ export default function ServerInsights({
               <div className="detail-row">
                 <span>{t.matrixRooms}</span>
                 <output>{fmtVal(s.total_rooms)}</output>
+              </div>
+              <div className="detail-row">
+                <span>{t.matrixLocalRooms}</span>
+                <output>{fmtVal(s.local_rooms)}</output>
+              </div>
+            </div>
+          </article>
+
+          <article
+            className="insight-card"
+            aria-labelledby="label-matrix-federation"
+          >
+            <span
+              className="insight-label"
+              id="label-matrix-federation"
+            >
+              {t.matrixFederation}
+            </span>
+            <div className="insight-value">
+              <span className="sr-only">
+                {fmtVal(s.federation_destinations)} {t.matrixFederationServers}
+              </span>
+              <span aria-hidden="true">
+                <output>{fmtVal(s.federation_destinations)}</output>{" "}
+                <small>{t.matrixFederationServers}</small>
+              </span>
+            </div>
+            <div className="insight-details">
+              <div className="detail-row">
+                <span>{t.matrixUsers}</span>
+                <output>{fmtVal(s.total_users)}</output>
+              </div>
+              <div className="detail-row">
+                <span>{t.matrixLocalUsers}</span>
+                <output>{fmtVal(s.local_users)}</output>
               </div>
             </div>
           </article>
@@ -467,14 +526,22 @@ export default function ServerInsights({
             </span>
             <div className="insight-value">
               <span className="sr-only">
-                {fmtVal(s.pg_connections)} {t.dbConnections}
+                {fmtVal(s.db_size_bytes, formatBytes)} {t.matrixDbSize}
               </span>
               <span aria-hidden="true">
-                <output>{fmtVal(s.pg_connections)}</output>{" "}
-                <small>{t.dbConnections}</small>
+                <output>{fmtVal(s.db_size_bytes, formatBytes)}</output>{" "}
+                <small>{t.matrixDbSize}</small>
               </span>
             </div>
             <div className="insight-details">
+              <div className="detail-row">
+                <span>{t.matrixTotalEvents}</span>
+                <output>{fmtVal(s.total_events)}</output>
+              </div>
+              <div className="detail-row">
+                <span>{t.dbConnections}</span>
+                <output>{fmtVal(s.pg_connections)}</output>
+              </div>
               <div className="detail-row">
                 <span>{t.redisMemory}</span>
                 <output>{fmtVal(s.redis_memory, formatBytes)}</output>

@@ -391,8 +391,15 @@ export const common = {
       matrixMainProcess: "Proceso Principal",
       matrixRunning: "En ejecución",
       matrixStopped: "Detenido",
-      matrixRooms: "Salas",
-      matrixUsers: "Usuarios Federados",
+      matrixRooms: "Salas Totales",
+      matrixLocalRooms: "Salas Locales",
+      matrixUsers: "Usuarios Conocidos",
+      matrixLocalUsers: "Usuarios Locales",
+      matrixFederation: "Federación",
+      matrixFederationServers: "Servidores Conocidos",
+      matrixTotalEvents: "Eventos Totales",
+      matrixDbSize: "Tamaño de Base de Datos",
+      matrixSynapse: "Synapse",
       // ServerInsights — Mastodon
       mastodonNode: "Nodo: Instancia Mastodon",
       mastodonStatsAriaLabel:
