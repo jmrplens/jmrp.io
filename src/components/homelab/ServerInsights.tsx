@@ -1041,6 +1041,10 @@ export default function ServerInsights({
                   M <small>{t.mikrotikPacketsUnit}</small>
                 </output>
               </div>
+              <div className="detail-row">
+                <span>{t.mikrotikActiveConnections}</span>
+                <output>{fmtVal(s.active_connections)}</output>
+              </div>
             </div>
           </article>
 
@@ -1064,10 +1068,6 @@ export default function ServerInsights({
               </span>
             </div>
             <div className="insight-details">
-              <div className="detail-row">
-                <span>{t.mikrotikActiveConnections}</span>
-                <output>{fmtVal(s.active_connections)}</output>
-              </div>
               <div className="detail-row">
                 <span>{t.mikrotikBlacklistScanners}</span>
                 <output>{fmtVal(s.blacklist_scanners)}</output>
