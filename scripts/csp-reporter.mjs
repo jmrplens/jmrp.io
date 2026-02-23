@@ -168,6 +168,45 @@ function isExtensionViolation(r) {
 }
 
 /**
+ * Checks whether a CSP violation is a false positive caused by Firefox's lack
+ * of `prefetch-src` support. When Astro's prefetch module creates
+ * `<link rel="prefetch">` elements, Firefox falls back to `default-src` (which
+ * is `'none'`), generating spurious violations for same-origin prefetches.
+ *
+ * Chrome handles this correctly via the `prefetch-src 'self'` directive.
+ *
+ * The filter requires ALL three conditions to match — this ensures no legitimate
+ * `default-src` violation is ever discarded:
+ * 1. violated-directive is `default-src` (Firefox's fallback for missing prefetch-src)
+ * 2. source-file is Astro's prefetch module (`_astro/page.*.js`)
+ * 3. blocked-uri is same-origin as document-uri (i.e. a harmless self-prefetch)
+ *
+ * @param {Record<string, unknown>} r - The csp-report object
+ * @returns {boolean} true if the violation is a Firefox prefetch false positive
+ */
+function isFirefoxPrefetchFalsePositive(r) {
+  const directive = String(
+    r["effective-directive"] || r["violated-directive"] || "",
+  );
+  if (directive !== "default-src") return false;
+
+  const sourceFile = String(r["source-file"] || "");
+  if (!/_astro\/page\.[A-Za-z0-9_-]+\.js/.test(sourceFile)) return false;
+
+  const blockedUri = String(r["blocked-uri"] || "");
+  const documentUri = String(r["document-uri"] || "");
+  if (!blockedUri || !documentUri) return false;
+
+  try {
+    const blockedOrigin = new URL(blockedUri).origin;
+    const documentOrigin = new URL(documentUri).origin;
+    return blockedOrigin === documentOrigin;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Processes the received report and handles logging/notification
  */
 function processReport(report, ip, ua) {
@@ -177,6 +216,13 @@ function processReport(report, ip, ua) {
   // Silently discard violations caused by browser extensions (Dark Reader, ad blockers, etc.)
   // These inject <style>/<script> elements without the page nonce, producing expected violations.
   if (isExtensionViolation(r)) {
+    return;
+  }
+
+  // Silently discard Firefox prefetch false positives. Firefox doesn't support
+  // `prefetch-src` and falls back to `default-src 'none'`, blocking harmless
+  // same-origin prefetches initiated by Astro's prefetch module.
+  if (isFirefoxPrefetchFalsePositive(r)) {
     return;
   }
 
