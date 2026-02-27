@@ -67,7 +67,7 @@ jobs:
       - name: Build Project (Production)
         run: pnpm run build
       - name: Upload build artifact
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: dist-build
           path: dist/
@@ -92,7 +92,7 @@ jobs:
         run: pnpm exec astro check 2>&1 | tee astro-check.log
       - name: Upload Astro Check log
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: log-astro
           path: astro-check.log
@@ -115,7 +115,7 @@ jobs:
         run: pnpm exec prettier --check . 2>&1 | tee prettier.log
       - name: Upload Prettier log
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: log-prettier
           path: prettier.log
@@ -138,7 +138,7 @@ jobs:
         run: pnpm exec eslint . --max-warnings=0 2>&1 | tee eslint.log
       - name: Upload ESLint log
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: log-eslint
           path: eslint.log
@@ -161,7 +161,7 @@ jobs:
         run: pnpm audit --audit-level=high 2>&1 | tee security-audit.log
       - name: Upload Audit log
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: log-audit
           path: security-audit.log
@@ -184,7 +184,7 @@ jobs:
         run: pnpm exec stylelint "src/**/*.{astro,css}" 2>&1 | tee stylelint.log
       - name: Upload Stylelint log
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: log-stylelint
           path: stylelint.log
@@ -218,7 +218,7 @@ jobs:
           echo "coverage=${COVERAGE}%" >> $GITHUB_OUTPUT
       - name: Upload JSDoc log
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: log-jsdoc
           path: jsdoc-coverage.log
@@ -256,7 +256,7 @@ jobs:
           node scripts/ci/generate-lychee-report.mjs
       - name: Upload Lychee reports
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: lychee-report
           path: |
@@ -281,7 +281,7 @@ jobs:
         run: pnpm exec cspell lint "." --no-progress 2>&1 | tee cspell.log
       - name: Upload CSpell log
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: log-cspell
           path: cspell.log
@@ -327,13 +327,13 @@ jobs:
         run: node scripts/ci/analyze-bundle-size.mjs 2>&1 | tee bundle-size.log
       - name: Upload bundle log
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: log-bundle
           path: bundle-size.log
           retention-days: 1
       - name: Upload bundle analysis
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: bundle-analysis
           path: bundle-analysis.json
@@ -367,14 +367,14 @@ jobs:
           node scripts/ci/generate-html-validation-report.mjs
       - name: Upload HTML log
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: log-html
           path: html-validation.log
           retention-days: 1
 
       - name: Upload HTML validation files
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: html-validation-report
           path: |
@@ -410,13 +410,13 @@ jobs:
           node scripts/preview-rss.mjs
       - name: Upload RSS log
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: log-rss
           path: rss-validation.log
           retention-days: 1
       - name: Upload RSS validation files
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: rss-validation-report
           path: |
@@ -452,13 +452,13 @@ jobs:
           fi
       - name: Upload Schema log
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: log-schema
           path: schema-validation.log
           retention-days: 1
       - name: Upload Schema validation files
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: schema-validation-report
           path: |
@@ -492,7 +492,7 @@ jobs:
       - name: Generate Image HTML Report
         run: node scripts/ci/generate-image-report.mjs
       - name: Upload image report
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: image-optimization-report
           path: image-report.html
@@ -528,7 +528,7 @@ jobs:
       - name: Run Playwright tests
         run: pnpm exec playwright test --project=functional --project=mobile-functional
       - name: Upload functional report
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: functional-report
           path: playwright-report/
@@ -570,7 +570,7 @@ jobs:
         run: THEME=${{ matrix.theme }} LOCALE_FILTER=${{ matrix.locale }} pnpm exec playwright test --project=accessibility
       - name: Upload Axe Results
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: axe-accessibility-report-${{ matrix.theme }}-${{ matrix.locale }}
           path: accessibility-report/
@@ -611,7 +611,7 @@ jobs:
           pnpm exec lhci autorun
       - name: Upload Lighthouse Results
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: lh-results-${{ matrix.theme }}-${{ matrix.formFactor }}-${{ matrix.locale }}
           path: lighthouse-results/
@@ -762,7 +762,7 @@ jobs:
       - name: Generate Dashboard
         run: node scripts/ci/generate-accessibility-index.mjs a11y-deploy
       - name: Upload consolidated assets
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: a11y-dashboard
           path: a11y-deploy/
@@ -849,7 +849,7 @@ jobs:
       - name: Generate Dashboard
         run: node scripts/ci/generate-lighthouse-index.mjs lh-deploy
       - name: Upload LH Dashboard
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: lh-dashboard
           path: lh-deploy/
