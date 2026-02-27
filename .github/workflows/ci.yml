@@ -238,7 +238,7 @@ jobs:
           key: cache-lychee-source-${{ github.sha }}
           restore-keys: cache-lychee-source-
       - name: Download build artifact
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: dist-build
           path: dist
@@ -313,7 +313,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Download build artifact
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: dist-build
           path: dist
@@ -347,7 +347,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Download build artifact
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: dist-build
           path: dist
@@ -390,7 +390,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Download build artifact
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: dist-build
           path: dist
@@ -432,7 +432,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Download build artifact
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: dist-build
           path: dist
@@ -474,7 +474,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Download build artifact
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: dist-build
           path: dist
@@ -506,7 +506,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Download build artifact
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: dist-build
           path: dist
@@ -547,7 +547,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Download build artifact
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: dist-build
           path: dist
@@ -590,7 +590,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Download build artifact
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: dist-build
           path: dist
@@ -677,25 +677,25 @@ jobs:
       - run: pnpm install --frozen-lockfile --prefer-offline
       # Download each locale separately to avoid summary JSON overwrites
       - name: Download Axe Results (Light EN)
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         continue-on-error: true
         with:
           name: axe-accessibility-report-light-en
           path: a11y-deploy/light/en
       - name: Download Axe Results (Light ES)
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         continue-on-error: true
         with:
           name: axe-accessibility-report-light-es
           path: a11y-deploy/light/es
       - name: Download Axe Results (Dark EN)
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         continue-on-error: true
         with:
           name: axe-accessibility-report-dark-en
           path: a11y-deploy/dark/en
       - name: Download Axe Results (Dark ES)
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         continue-on-error: true
         with:
           name: axe-accessibility-report-dark-es
@@ -783,49 +783,49 @@ jobs:
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile --prefer-offline
       - name: Download LH Results (Light - Mobile - EN)
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         continue-on-error: true
         with:
           name: lh-results-light-mobile-en
           path: lh-deploy/light/mobile/en
       - name: Download LH Results (Light - Mobile - ES)
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         continue-on-error: true
         with:
           name: lh-results-light-mobile-es
           path: lh-deploy/light/mobile/es
       - name: Download LH Results (Light - Desktop - EN)
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         continue-on-error: true
         with:
           name: lh-results-light-desktop-en
           path: lh-deploy/light/desktop/en
       - name: Download LH Results (Light - Desktop - ES)
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         continue-on-error: true
         with:
           name: lh-results-light-desktop-es
           path: lh-deploy/light/desktop/es
       - name: Download LH Results (Dark - Mobile - EN)
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         continue-on-error: true
         with:
           name: lh-results-dark-mobile-en
           path: lh-deploy/dark/mobile/en
       - name: Download LH Results (Dark - Mobile - ES)
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         continue-on-error: true
         with:
           name: lh-results-dark-mobile-es
           path: lh-deploy/dark/mobile/es
       - name: Download LH Results (Dark - Desktop - EN)
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         continue-on-error: true
         with:
           name: lh-results-dark-desktop-en
           path: lh-deploy/dark/desktop/en
       - name: Download LH Results (Dark - Desktop - ES)
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         continue-on-error: true
         with:
           name: lh-results-dark-desktop-es
@@ -887,49 +887,49 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Download Accessibility Dashboard
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         continue-on-error: true
         with:
           name: a11y-dashboard
           path: a11y-deploy
       - name: Download Lighthouse Dashboard
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         continue-on-error: true
         with:
           name: lh-dashboard
           path: lh-deploy
       - name: Download HTML Validation
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         continue-on-error: true
         with:
           name: html-validation-report
           path: .
       - name: Download RSS Preview
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         continue-on-error: true
         with:
           name: rss-validation-report
           path: .
       - name: Download Schema Report
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         continue-on-error: true
         with:
           name: schema-validation-report
           path: .
       - name: Download Image Report
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         continue-on-error: true
         with:
           name: image-optimization-report
           path: .
       - name: Download Bundle Stats
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         continue-on-error: true
         with:
           name: bundle-analysis
           path: .
       - name: Download Lychee Report
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         continue-on-error: true
         with:
           name: lychee-report
@@ -942,7 +942,7 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --prefer-offline
       - name: Download Logs
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         continue-on-error: true
         with:
           pattern: log-*
