@@ -242,7 +242,7 @@ jobs:
         with:
           name: dist-build
           path: dist
-      - uses: lycheeverse/lychee-action@v2.7.0
+      - uses: lycheeverse/lychee-action@v2.8.0
         with:
           args: --config lychee.toml --root-dir ${{ github.workspace }}/dist --format markdown ./dist/**/*.html
           output: lychee-report.md
