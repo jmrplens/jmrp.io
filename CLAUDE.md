@@ -348,6 +348,7 @@ All JSON-LD wrapped in `safeJsonLd()` — escapes `<`, `>`, `&`, `\u2028`, `\u20
 | Component         | Import                                                                                                      | Key Props                                       |
 | ----------------- | ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
 | `Code`            | `@components/ui/Code.astro`                                                                                 | `lang`, `title`, `showLineNumbers`, `highlight` |
+| `CodeBlock`       | `@components/ui/CodeBlock.astro`                                                                            | `lang` — bare highlight, no chrome (for TabPanel) |
 | `FileContent`     | `@components/ui/FileContent.astro`                                                                          | `filename`, `language`, `collapsible`           |
 | `TerminalCommand` | `@components/ui/TerminalCommand.astro`                                                                      | `title`, `prompt`                               |
 | `TerminalOutput`  | `@components/ui/TerminalOutput.astro`                                                                       | Output display                                  |

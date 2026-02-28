@@ -276,6 +276,19 @@ server {
 | `aria-label` | `string` | auto |
 | `class` | `string` | — |
 
+#### CodeBlock
+```mdx
+import CodeBlock from "@components/ui/CodeBlock.astro";
+<CodeBlock lang="routeros">
+/ip firewall filter add chain=forward action=drop
+</CodeBlock>
+```
+| Prop | Type | Default |
+|------|------|---------|
+| `lang` | `string` | `"text"` |
+
+> Lightweight code highlighting — same Shiki output as `Code` but with **no wrapper, header, or copy button**. Use inside `<TabPanel noPadding>` or anywhere bare highlighted code is needed.
+
 #### FileContent
 ```mdx
 import FileContent from "@components/ui/FileContent.astro";

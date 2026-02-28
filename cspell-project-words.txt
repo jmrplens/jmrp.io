@@ -70,6 +70,7 @@ brotlied
 bypassable
 bytespider
 calcuta
+CAPI
 carbajo
 carray
 carretilla
@@ -194,6 +195,7 @@ fasttrack
 fediverse
 fediverso
 feedly
+firehol
 firewalld
 firmándolo
 firstname
@@ -202,6 +204,7 @@ fouc
 français
 ftth
 fullchain
+Funkolab
 gandia
 garcía
 gencrl
@@ -249,6 +252,7 @@ httponly
 icmpv
 iconify
 idempotentes
+idempotently
 igic
 imagesift
 imudp
@@ -289,6 +293,8 @@ labora
 laboratoire
 labview
 lans
+LAPI
+LAPI's
 ldaps
 leakspeed
 lekies
@@ -377,6 +383,7 @@ netwatch
 networkidle
 neutralises
 newcerts
+nftables
 nginx
 ngtcp
 nikto
@@ -396,6 +403,7 @@ nsanitización
 nsecs
 nunca
 nuxtjs
+nvtkaszpir
 observabilidad
 ocsp
 oficial
@@ -490,6 +498,7 @@ relación
 renderizado
 renderizan
 renegocia
+replaceability
 representación
 reqs
 requena
@@ -585,6 +594,8 @@ ulnp
 ultrasónica
 ultrathin
 umil
+unban
+unbans
 universitat
 université
 unocss
