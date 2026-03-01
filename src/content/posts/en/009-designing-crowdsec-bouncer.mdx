@@ -443,14 +443,14 @@ Each decision in the stream contains these key fields:
 Your bouncer should implement a clear parsing pipeline that validates, filters, and transforms each decision:
 
 <StepByStep title="Decision processing pipeline">
-  1. **Validate required fields** — Ensure `value`, `type`, `duration`, and `scope` are present and non-null. Drop malformed decisions with a warning log.
-  2. **Check decision type** — Most bouncers only handle `ban` decisions. If your bouncer supports `captcha` or custom types, route them accordingly.
-  3. **Check simulation flag** — If `simulated` is `true`, log the decision but do not enforce it. This is useful for testing scenarios.
-  4. **Parse the duration** — Convert the CrowdSec duration string (e.g., `4h0m0s`) to your target system's format. Have a fallback default (e.g., 4 hours) for unparseable durations.
-  5. **Detect IP version** — Determine if the value is IPv4 or IPv6. Check if your target system supports both protocols. Skip unsupported protocols gracefully.
-  6. **Detect address type** — Distinguish single IPs from CIDR ranges (look for `/` in the value). Some systems handle ranges differently from individual addresses.
-  7. **Apply filters** — Check against your configured origin, scope, and scenario filters. Drop decisions that don't match.
-  8. **Transform for target** — Convert the decision into whatever format your target system needs (firewall rule, ACL entry, DNS record).
+  <li>**Validate required fields** — Ensure `value`, `type`, `duration`, and `scope` are present and non-null. Drop malformed decisions with a warning log.</li>
+  <li>**Check decision type** — Most bouncers only handle `ban` decisions. If your bouncer supports `captcha` or custom types, route them accordingly.</li>
+  <li>**Check simulation flag** — If `simulated` is `true`, log the decision but do not enforce it. This is useful for testing scenarios.</li>
+  <li>**Parse the duration** — Convert the CrowdSec duration string (e.g., `4h0m0s`) to your target system's format. Have a fallback default (e.g., 4 hours) for unparseable durations.</li>
+  <li>**Detect IP version** — Determine if the value is IPv4 or IPv6. Check if your target system supports both protocols. Skip unsupported protocols gracefully.</li>
+  <li>**Detect address type** — Distinguish single IPs from CIDR ranges (look for `/` in the value). Some systems handle ranges differently from individual addresses.</li>
+  <li>**Apply filters** — Check against your configured origin, scope, and scenario filters. Drop decisions that don't match.</li>
+  <li>**Transform for target** — Convert the decision into whatever format your target system needs (firewall rule, ACL entry, DNS record).</li>
 </StepByStep>
 
 <Callout type="tip" title="IPv6 normalization">
@@ -918,13 +918,13 @@ A bouncer runs in the critical path of your security infrastructure — if it br
 The most effective way to test a bouncer is against a real CrowdSec instance:
 
 <StepByStep title="Integration testing approach">
-  1. **Set up a local CrowdSec instance** — Use Docker or install directly. Configure a test bouncer API key.
-  2. **Create test decisions** — Use `cscli decisions add -i 203.0.113.1 -d 1h -t ban` to manually create decisions.
-  3. **Verify enforcement** — Confirm that the bouncer created the expected rule/entry on the target system.
-  4. **Test deletion** — Use `cscli decisions delete --id X` and verify the bouncer removes the corresponding entry.
-  5. **Test reconciliation** — Manually remove a rule, restart the bouncer, and verify it re-adds the missing entry.
-  6. **Test bulk operations** — Add hundreds of decisions at once and measure startup time.
-  7. **Test failure modes** — Stop the LAPI, restart it, and verify the bouncer recovers gracefully.
+  <li>**Set up a local CrowdSec instance** — Use Docker or install directly. Configure a test bouncer API key.</li>
+  <li>**Create test decisions** — Use `cscli decisions add -i 203.0.113.1 -d 1h -t ban` to manually create decisions.</li>
+  <li>**Verify enforcement** — Confirm that the bouncer created the expected rule/entry on the target system.</li>
+  <li>**Test deletion** — Use `cscli decisions delete --id X` and verify the bouncer removes the corresponding entry.</li>
+  <li>**Test reconciliation** — Manually remove a rule, restart the bouncer, and verify it re-adds the missing entry.</li>
+  <li>**Test bulk operations** — Add hundreds of decisions at once and measure startup time.</li>
+  <li>**Test failure modes** — Stop the LAPI, restart it, and verify the bouncer recovers gracefully.</li>
 </StepByStep>
 
 ### Logging Best Practices
