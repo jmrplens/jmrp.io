@@ -30,13 +30,13 @@
 
 | Layer           | Technology               | Version        |
 | --------------- | ------------------------ | -------------- |
-| Framework       | Astro                    | 6.0.0-beta.11  |
-| Content         | MDX                      | 5.0.0-beta.7   |
-| Styling         | UnoCSS (presetWind4)     | ^66.6.0        |
+| Framework       | Astro                    | 6.0.0-beta.17  |
+| Content         | MDX                      | 5.0.0-beta.9   |
+| Styling         | UnoCSS (presetWind4)     | ^66.6.2        |
 | Islands         | Preact                   | ^10.28.3       |
 | Diagrams        | Mermaid + mermaid-isomorphic | ^11.12.2 / ^3.0.4 |
 | Math            | rehype-mathjax (SSR)     | ^7.1.0         |
-| Syntax          | Shiki                    | ^3.22.0        |
+| Syntax          | Shiki                    | ^4.0.0         |
 | Testing         | Playwright + Axe-core    | ^1.58.2        |
 | Icons           | Iconify (12 collections) | @iconify-json/* |
 | Package Manager | pnpm                     | >=10           |

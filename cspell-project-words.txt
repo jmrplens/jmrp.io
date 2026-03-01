@@ -126,6 +126,7 @@ cplusplus
 credentialless
 crlnumber
 crowdsec
+crowdsecurity
 cscli
 csic
 csirt
@@ -495,6 +496,7 @@ regs
 reimagining
 reintentan
 relación
+remediations
 renderizado
 renderizan
 renegocia
@@ -599,6 +601,7 @@ unbans
 universitat
 université
 unocss
+unparseable
 urandom
 urlencode
 usar

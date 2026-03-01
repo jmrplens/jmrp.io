@@ -63,6 +63,7 @@ ignorePaths:
   - html-validation.json
   - rss-validation.json
   - accessibility-report/**
+  - skills-lock.json
   - accessibility-report.json
   - lighthouse-results/**
   - playwright-report/**

@@ -40,11 +40,9 @@ if (isHtml) {
   const match = trimmedContent.match(
     /^<pre[^>]*><code[^>]*>([\s\S]*?)<\/code><\/pre>$/,
   );
-  if (match) {
-    rawCode = decodeHtml(match[1].replaceAll(/<[^>]*>/g, ""));
-  } else {
-    rawCode = decodeHtml(trimmedContent.replaceAll(/<[^>]*>/g, ""));
-  }
+  rawCode = match
+    ? decodeHtml(match[1].replaceAll(/<[^>]*>/g, ""))
+    : decodeHtml(trimmedContent.replaceAll(/<[^>]*>/g, ""));
 } else {
   rawCode = decodeHtml(trimmedContent);
 }

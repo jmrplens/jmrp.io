@@ -191,7 +191,8 @@ function isBrowserInternalViolation(r) {
 
   // Blob and data URIs used by extensions / devtools
   const rawBlocked = r["blocked-uri"];
-  const blocked = typeof rawBlocked === "string" ? rawBlocked.toLowerCase() : "";
+  const blocked =
+    typeof rawBlocked === "string" ? rawBlocked.toLowerCase() : "";
   if (source === "blob" || source.startsWith("blob:")) return true;
   if (blocked === "blob" || blocked.startsWith("blob:")) return true;
 
@@ -241,7 +242,8 @@ function isPrefetchFalsePositive(r) {
   if (!rawSource || rawSource === "" || rawSource === null) {
     try {
       const blockedPath = new URL(blockedUri).pathname;
-      const isPagePath = blockedPath.endsWith("/") || !blockedPath.includes(".");
+      const isPagePath =
+        blockedPath.endsWith("/") || !blockedPath.includes(".");
       if (isPagePath) return true;
     } catch {
       /* skip */
