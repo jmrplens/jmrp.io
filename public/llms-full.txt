@@ -2,7 +2,7 @@
 
 > Personal technical blog and portfolio of José Manuel Requena Plens — R&D Engineer specializing in Embedded Systems, Acoustics, and Industrial Software Development. This document provides comprehensive context for AI models.
 
-> Last updated: 2026-03-01
+> Last updated: 2026-03-04
 
 ## About the Author
 
@@ -72,32 +72,39 @@ Free browser-based developer tools. All processing runs client-side — no data 
 - **Topics covered**: QUIC protocol architecture, UDP vs TCP comparison, 0-RTT connection establishment, TLS 1.3 integration, connection migration, head-of-line blocking solution, Nginx quic_retry, ssl_early_data, Alt-Svc header, QUIC port configuration, firewall rules for UDP 443, browser support, performance benchmarks.
 
 ### 5. Implementing a Tarpit in Nginx: Trap Malicious Scanners
-- **URL**: https://jmrp.io/blog/implementing-tarpit-nginx/
+- **URL**: https://jmrp.io/blog/005-implementing-tarpit-nginx/
 - **Published**: 2026-01-16
 - **Tags**: Nginx, Security, Tarpit
 - **Description**: Implement an Nginx tarpit to slow down and trap malicious bots, vulnerability scanners, and brute-force attackers. Includes CrowdSec integration.
 - **Topics covered**: Tarpit concept and theory, Nginx limit_rate directive, return 444, intentional slow responses, bot detection via User-Agent and request patterns, CrowdSec bouncer integration, automatic IP banning, log parsing with CrowdSec scenarios, fail2ban alternative comparison.
 
 ### 6. MikroTik Honeypot: Trap & Auto-Block Port Scanners
-- **URL**: https://jmrp.io/blog/implementing-mikrotik-honeypot/
+- **URL**: https://jmrp.io/blog/006-implementing-mikrotik-honeypot/
 - **Published**: 2026-01-19
 - **Tags**: MikroTik, Security, Honeypot
 - **Description**: Configure a MikroTik honeypot to detect port scanners, log malicious activity, and auto-block attackers using firewall address lists and the RAW table.
 - **Topics covered**: Low-interaction honeypot design, MikroTik RouterOS firewall filter rules, RAW table for early packet drop, address-list auto-population, common honeypot ports (23, 445, 3389, 8080), logging configuration, detection rate analysis, Syslog integration, firewall rule ordering, performance impact assessment.
 
 ### 7. MikroTik WireGuard VPN: Complete Dual-Stack IPv4/IPv6 Configuration
-- **URL**: https://jmrp.io/blog/mikrotik-wireguard-dual-stack-vpn/
+- **URL**: https://jmrp.io/blog/007-mikrotik-wireguard-dual-stack-vpn/
 - **Published**: 2026-02-14
 - **Tags**: MikroTik, WireGuard, VPN, IPv6, Security
 - **Description**: Configure WireGuard VPN on MikroTik RouterOS with full IPv4/IPv6 dual-stack. Access your home network with native IPv6 from any connection.
 - **Topics covered**: WireGuard protocol on RouterOS, interface creation, key generation, peer configuration, IPv6 ULA addresses, NAT66 vs NPTv6, dual-stack routing, DNS over VPN, split tunneling vs full tunnel, firewall rules for VPN traffic, client configuration (iOS, Android, Windows, macOS, Linux), MTU optimization, persistent keepalive.
 
 ### 8. MikroTik PPPoE + DHCPv6-PD: Dual-Stack for DIGI Spain
-- **URL**: https://jmrp.io/blog/mikrotik-pppoe-dualstack-digi/
+- **URL**: https://jmrp.io/blog/008-mikrotik-pppoe-dualstack-digi/
 - **Published**: 2026-02-15
 - **Tags**: MikroTik, PPPoE, IPv6, DHCPv6-PD, Networking
 - **Description**: Configure PPPoE with DHCPv6 Prefix Delegation on MikroTik RouterOS for DIGI Spain. VLAN tagging, SLAAC, prefix change handling, and firewall rules.
 - **Topics covered**: PPPoE client configuration, VLAN tagging (VLAN ID for DIGI), DHCPv6 client with Prefix Delegation, /56 prefix handling, SLAAC (Stateless Address Autoconfiguration), Router Advertisement, automatic prefix change detection via scripting, IPv6 firewall rules, connection tracking for IPv6, dual-stack DNS configuration.
+
+### 9. Designing a CrowdSec Bouncer: Architecture, Decisions, and Metrics
+- **URL**: https://jmrp.io/blog/009-designing-crowdsec-bouncer/
+- **Published**: 2026-03-01
+- **Tags**: CrowdSec, Security, Bouncer, Architecture, Firewall, Open-Source
+- **Description**: A deep dive into CrowdSec bouncer design: LAPI protocol, decision processing, remediation patterns, delta metrics, and reconciliation.
+- **Topics covered**: CrowdSec LAPI protocol, bouncer architecture, decision processing, remediation patterns, delta metrics, reconciliation strategies, firewall integration, open-source security tooling.
 
 ---
 

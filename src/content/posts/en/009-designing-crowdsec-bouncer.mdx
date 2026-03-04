@@ -1,8 +1,9 @@
 ---
 title: "Designing a CrowdSec Bouncer: Architecture, Decisions, and Metrics"
-slug: "designing-crowdsec-bouncer"
+slug: "009-designing-crowdsec-bouncer"
 publishedDate: 2026-03-01
-description: "A didactic guide to designing CrowdSec bouncers: LAPI connectivity, decision processing, remediation patterns, metrics reporting, and reconciliation."
+updatedDate: 2026-07-22
+description: "A deep dive into CrowdSec bouncer design: LAPI protocol, decision processing, remediation patterns, delta metrics, and reconciliation."
 author: "José Manuel Requena Plens"
 authorEmail: "mail@jmrp.io"
 coverImage: "../../../assets/images/blog/crowdsec-bouncer.webp"
@@ -21,805 +22,908 @@ draft: false
 import TLDRSummary from "@components/ui/TLDRSummary.astro";
 import Callout from "@components/ui/Callout.astro";
 import Mermaid from "@components/ui/Mermaid.astro";
-import { Tabs, TabPanel } from "@components/ui/tabs";
 import CheckList from "@components/ui/CheckList.astro";
 import StepByStep from "@components/ui/StepByStep.astro";
 import Collapsible from "@components/ui/Collapsible.astro";
 import Table from "@components/ui/Table.astro";
-import KeyValue from "@components/ui/KeyValue.astro";
 import Code from "@components/ui/Code.astro";
-import CodeBlock from "@components/ui/CodeBlock.astro";
 import APIEndpoint from "@components/ui/APIEndpoint.astro";
 import BeforeAfter from "@components/ui/BeforeAfter.astro";
-
-<TLDRSummary title="What You'll Learn">
-  - How the **CrowdSec ecosystem** works: agents, LAPI, bouncers, CAPI, and Console
-  - The **architecture of a bouncer**: authentication, decision fetching, remediation, and metrics
-  - How to connect to the **Local API (LAPI)** and consume the decisions stream
-  - Techniques for **processing and filtering** decisions (IPs, ranges, durations)
-  - Patterns for **translating decisions** into firewall rules or application-level actions
-  - How to implement **reconciliation** and crash recovery for state consistency
-  - How to **report metrics** so your bouncer appears in the CrowdSec Console
-  - A real-world **case study** using [cs-routeros-bouncer](https://github.com/jmrplens/cs-routeros-bouncer)
-</TLDRSummary>
+import Timeline from "@components/ui/Timeline.astro";
+import BarChart from "@components/ui/BarChart.astro";
+import DecisionTree from "@components/ui/DecisionTree.astro";
+import { TerminalSession, TerminalSessionCommand, TerminalSessionOutput } from "@components/ui/terminal-session";
 
 ## Introduction
 
-[CrowdSec](https://www.crowdsec.net/) is an open-source, collaborative security engine that detects and remediates threats using behavior analysis and community-driven intelligence. At its core, CrowdSec follows a simple but powerful pattern: **detect** suspicious behavior, **decide** on remediation, and **enforce** that decision.
+<TLDRSummary>
+- **Receiving decisions**: How bouncers authenticate with the LAPI and consume decision streams (startup baseline + delta polling).
+- **Enforcing remediation**: Translating abstract decisions (ban, captcha, throttle) into concrete system actions (firewall rules, HTTP responses).
+- **Reporting metrics**: The three metric categories (`active_decisions`, `dropped`, `processed`), delta computation from cumulative counters, and window metadata.
+- **Reconciliation**: Recovering from crashes, handling stale state, and signature-based cleanup.
+- **Testing and observability**: Prometheus metrics, structured logging, and health endpoints for production monitoring.
+- **Common pitfalls**: Mistakes to avoid when building your first bouncer.
+</TLDRSummary>
 
-The enforcement layer is where **bouncers** live. A bouncer is any software component that reads decisions from CrowdSec and translates them into concrete actions — blocking an IP at the firewall, returning an HTTP 403, presenting a CAPTCHA, or redirecting DNS queries. While CrowdSec provides [official bouncers](https://docs.crowdsec.net/u/bouncers/intro/) for common platforms (iptables, nftables, Nginx, Cloudflare), the real power lies in the ability to build your own bouncer for **any** system.
+Bouncers are the enforcement arm of CrowdSec. They sit between the Local API (LAPI) and the system they protect — a firewall, a reverse proxy, a DNS resolver, or anything that can take action on malicious traffic. While the Security Engine handles detection, bouncers handle the response.
 
-This guide walks through the complete architecture of a CrowdSec bouncer — from the first API handshake to reporting metrics back to the [CrowdSec Console](https://app.crowdsec.net/). Rather than focusing on a specific programming language, we concentrate on the **design decisions**, **data flows**, and **patterns** that every bouncer must implement. Along the way, we use the [cs-routeros-bouncer](https://github.com/jmrplens/cs-routeros-bouncer) (a bouncer for MikroTik RouterOS) as a case study to illustrate real-world solutions to these challenges.
+This post covers the **full bidirectional protocol** that every bouncer must implement:
 
-<Callout type="info" title="Who is this for?">
-  This post is for developers and security engineers who want to understand how CrowdSec bouncers work under the hood — whether you plan to build your own bouncer, contribute to an existing one, or simply understand the enforcement layer better.
+1. **LAPI → Bouncer**: Receiving and processing decisions (who to block, for how long, and why).
+2. **Bouncer → System**: Translating decisions into concrete remediation actions.
+4. **Reconciliation**: Detecting and recovering from state drift between the bouncer and the target system.
+5. **Observability**: Health endpoints, structured logs, and Prometheus metrics for production monitoring.
+
+Each of these layers introduces design decisions that affect reliability, performance, and operational experience.
+3. **Bouncer → LAPI**: Reporting usage metrics back so operators can monitor enforcement.
+
+The concepts here are **language-agnostic**. Whether you build your bouncer in Go, Python, Rust, or shell scripts, the protocol and design patterns are identical. We use [cs-routeros-bouncer](https://github.com/jmrplens/cs-routeros-bouncer) as a real-world case study, but every pattern applies universally.
+
+For official documentation on what bouncers are and how they fit into the CrowdSec ecosystem, see the [bouncer introduction](https://docs.crowdsec.net/u/bouncers/intro/).
+
+<Callout type="info" title="Who is this post for?">
+This post targets developers building **new CrowdSec bouncers** or operators who want to understand how their existing bouncers work under the hood. You don't need CrowdSec experience to follow along — we build up every concept from scratch. If you're already running CrowdSec, skip ahead to the section that interests you most.
 </Callout>
 
-## The CrowdSec Ecosystem
+## The CrowdSec ecosystem
 
-Before diving into bouncer design, it helps to understand where bouncers fit in the broader CrowdSec architecture. The system has five main components that interact in a clearly defined flow:
+Before diving into bouncer internals, let's establish where bouncers fit in the broader architecture.
 
-<Mermaid caption="CrowdSec Ecosystem: from log analysis to enforcement" ariaLabel="Diagram showing the CrowdSec ecosystem with agents analyzing logs, LAPI coordinating decisions, bouncers enforcing them, CAPI sharing community intelligence, and Console providing monitoring">
+CrowdSec is a **detect → decide → enforce** pipeline. The Security Engine parses logs and detects threats using behavioral scenarios. The LAPI (Local API) centralizes these detections into decisions — time-limited directives that specify which IPs, ranges, or identifiers should be restricted, and how. Bouncers sit at the enforcement layer: they query the LAPI for decisions and translate them into concrete actions on the systems they protect. The Console provides a centralized dashboard. And CAPI (Central API) enables community-wide intelligence sharing, distributing curated blocklists across the entire fleet.
+
+<Mermaid caption="CrowdSec ecosystem: detection, decisions, enforcement, and feedback" ariaLabel="Flowchart showing log sources feeding the Security Engine, which creates decisions in the LAPI. The LAPI exchanges community intelligence with CAPI, distributes decisions to bouncers, and feeds visibility data to the Console. Bouncers enforce decisions on protected systems and report metrics back to the LAPI.">
 ```mermaid-render
 flowchart TB
-    subgraph Detection["Detection Layer"]
-        Logs["Log Sources<br/>(syslog, journald, files)"]
-        Agent["CrowdSec Agent<br/>(parser + scenarios)"]
-    end
-
-    subgraph Coordination["Coordination Layer"]
-        LAPI["Local API (LAPI)<br/>(decisions + alerts)"]
-        DB[("Database<br/>(SQLite/PostgreSQL)")]
-    end
-
-    subgraph Enforcement["Enforcement Layer"]
-        B1["Firewall Bouncer<br/>(iptables, nftables, pf)"]
-        B2["Application Bouncer<br/>(Nginx, Traefik, Caddy)"]
-        B3["Custom Bouncer<br/>(MikroTik, Cloudflare, DNS)"]
-    end
-
-    subgraph Cloud["Cloud Layer"]
-        CAPI["Central API (CAPI)<br/>(community blocklists)"]
-        Console["CrowdSec Console<br/>(monitoring dashboard)"]
-    end
-
-    Logs --> Agent
-    Agent -->|"alerts + decisions"| LAPI
-    LAPI <--> DB
-    LAPI -->|"decisions stream"| B1
-    LAPI -->|"decisions stream"| B2
-    LAPI -->|"decisions stream"| B3
-    B1 -->|"usage metrics"| LAPI
-    B2 -->|"usage metrics"| LAPI
-    B3 -->|"usage metrics"| LAPI
-    LAPI <-->|"signals + blocklists"| CAPI
-    CAPI --> Console
-
-    classDef detection fill:#1a3a5c,stroke:#4a9eff,color:#fff
-    classDef coordination fill:#2d1b4e,stroke:#b389f5,color:#fff
-    classDef enforcement fill:#1a3d1a,stroke:#4ade80,color:#fff
-    classDef cloud fill:#3d1a1a,stroke:#f87171,color:#fff
-
-    class Logs,Agent detection
-    class LAPI,DB coordination
-    class B1,B2,B3 enforcement
-    class CAPI,Console cloud
+    LS["Log Sources<br/>(syslog, journald, files)"]:::secondary --> SE["Security Engine<br/>(parsers + scenarios)"]:::info
+    SE -->|"creates decisions"| LAPI["Local API (LAPI)<br/>(decision store)"]:::highlight
+    LAPI <-->|"community intelligence"| CAPI["Central API (CAPI)"]:::info
+    LAPI -->|"decisions"| B1["Bouncer A<br/>(firewall)"]:::success
+    LAPI -->|"decisions"| B2["Bouncer B<br/>(reverse proxy)"]:::success
+    B1 -->|"enforces"| FW["Protected System<br/>(iptables, RouterOS...)"]:::secondary
+    B2 -->|"enforces"| APP["Protected System<br/>(Nginx, Traefik...)"]:::secondary
+    B1 -->|"metrics"| LAPI
+    B2 -->|"metrics"| LAPI
+    LAPI -->|"visibility"| CON["CrowdSec Console"]:::info
 ```
 </Mermaid>
 
-The key interactions from a bouncer's perspective are:
+The key insight is that **bouncers are bidirectional**. They don't just consume decisions — they report back what they did with them. This feedback loop is what enables operators to verify that enforcement is working and to measure its impact.
 
-1. **LAPI → Bouncer**: The bouncer polls the [Local API](https://docs.crowdsec.net/docs/local_api/intro/) for new and expired decisions
-2. **Bouncer → Target System**: The bouncer translates decisions into actions on whatever system it protects
-3. **Bouncer → LAPI**: The bouncer reports usage metrics (blocks, processed traffic) back to the LAPI
-4. **LAPI → CAPI → Console**: The LAPI forwards aggregated metrics to the [Central API](https://crowdsecurity.github.io/api_doc/capi/), which feeds the Console dashboard
+CrowdSec provides SDKs in several languages to simplify bouncer development. The [Go SDK (go-cs-bouncer)](https://github.com/crowdsecurity/go-cs-bouncer) and [Python SDK (pycrowdsec)](https://github.com/crowdsecurity/pycrowdsec) handle LAPI communication, but understanding the underlying protocol is essential for debugging and custom implementations.
 
-<Callout type="tip" title="Bouncers never talk to the Console directly">
-  A common misconception is that bouncers report directly to the CrowdSec Console. They don't — bouncers only communicate with the LAPI. The LAPI then aggregates metrics and pushes them upstream to CAPI, which feeds the Console. This design keeps bouncers simple and avoids requiring internet access from every enforcement point.
-</Callout>
+## Types of bouncers
 
-## Types of Bouncers
+Not all bouncers work the same way. The type of bouncer you build depends on **where** it runs and **what actions** it can take.
 
-CrowdSec bouncers fall into four broad categories based on where and how they enforce decisions:
+<Table title="Bouncer types by deployment model" ariaLabel="Table comparing four bouncer types: firewall, application, DNS, and custom, showing where each runs, how it blocks traffic, and examples">
 
-<Table title="Bouncer types and their characteristics" ariaLabel="Comparison table of four bouncer types: firewall, application, DNS, and WAF">
-  <table>
-    <thead>
-      <tr>
-        <th>Type</th>
-        <th>Layer</th>
-        <th>Actions</th>
-        <th>Pros</th>
-        <th>Cons</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>**Firewall**</td>
-        <td>Network (L3/L4)</td>
-        <td>Block/allow IPs via firewall rules</td>
-        <td>Fast, universal, low overhead</td>
-        <td>No application context</td>
-      </tr>
-      <tr>
-        <td>**Application**</td>
-        <td>HTTP/S (L7)</td>
-        <td>HTTP 403, CAPTCHA, redirect</td>
-        <td>Granular, user interaction</td>
-        <td>Higher latency, app-specific</td>
-      </tr>
-      <tr>
-        <td>**DNS**</td>
-        <td>DNS resolution</td>
-        <td>Block/redirect domain queries</td>
-        <td>Preemptive, lightweight</td>
-        <td>Bypassable, limited scope</td>
-      </tr>
-      <tr>
-        <td>**WAF**</td>
-        <td>HTTP/S (L7)</td>
-        <td>Payload inspection, virtual patches</td>
-        <td>Deep inspection, app-aware</td>
-        <td>Requires tuning per stack</td>
-      </tr>
-    </tbody>
-  </table>
+| Type | Where it runs | How it blocks | Examples |
+|---|---|---|---|
+| **Firewall** | Network edge (iptables, nftables, pf, RouterOS) | IP-level drop or reject | cs-firewall-bouncer, cs-routeros-bouncer |
+| **Application** | Inside the app or reverse proxy | HTTP 403, captcha challenge, throttle | Traefik plugin, WordPress plugin |
+| **DNS** | DNS resolver | NXDOMAIN or sinkhole response | Custom implementations |
+| **Custom** | Anywhere | Any action your system supports | Your own bouncer using the LAPI |
+
 </Table>
 
-Regardless of type, every bouncer shares the same core responsibilities: **authenticate** with the LAPI, **fetch** decisions, **apply** remediation, and **report** metrics. The differences lie in *what* they do with the decisions.
+**Firewall bouncers** operate at the network layer. They maintain address lists (or ipsets, or pf tables) and drop packets before they reach the application. This is the most efficient approach — blocked traffic never consumes application resources.
 
-## Anatomy of a Bouncer
+**Application bouncers** operate at the HTTP layer. They can do things firewall bouncers cannot: show captcha challenges, return custom error pages, or throttle requests with `429 Too Many Requests`. The trade-off is that the connection is already established before the bouncer acts.
 
-Every bouncer, regardless of its target system, must implement these six core components:
+**DNS bouncers** intercept at the resolution layer, returning `NXDOMAIN` or redirecting to a sinkhole. This is useful for blocking entire domains but less common for IP-based decisions.
 
-<Mermaid caption="Core components of a CrowdSec bouncer" ariaLabel="Diagram showing the six core components of a bouncer: configuration, LAPI client, decision processor, remediation engine, reconciliation loop, and metrics reporter">
+**Custom bouncers** are anything else. You might build a bouncer that updates a CDN's WAF rules, modifies a load balancer's backend pool, sends alerts to a SIEM, or even controls physical access systems. The LAPI protocol is the same regardless of what the bouncer does with the decisions.
+
+<DecisionTree question="What type of bouncer do you need?">
+  <details>
+    <summary>I need to block at the network level (drop packets before they reach the application)</summary>
+
+    **Build a firewall bouncer.** This is the best choice for infrastructure-level protection. Your bouncer will manage address lists in a firewall (iptables, nftables, pf, RouterOS) and drop or reject packets from banned IPs. This is the most resource-efficient approach since blocked traffic never reaches your application stack.
+  </details>
+  <details>
+    <summary>I need to show captchas, return HTTP errors, or throttle requests</summary>
+
+    **Build an application bouncer.** This runs inside your reverse proxy or web application. It can inspect HTTP requests and respond with 403 Forbidden, a captcha challenge page, or rate-limited 429 responses. Choose this when you need granular, protocol-aware responses.
+  </details>
+  <details>
+    <summary>I need to block at the DNS resolution level</summary>
+
+    **Build a DNS bouncer.** This intercepts DNS queries and returns NXDOMAIN or redirects to a sinkhole for blocked domains or IPs. Useful for network-wide blocking at the resolver level, but less common for IP-based CrowdSec decisions.
+  </details>
+</DecisionTree>
+
+## Anatomy of a bouncer
+
+Regardless of type, every bouncer shares a common internal architecture. Here are the six subsystems that any production-ready bouncer must implement.
+
+<Mermaid caption="Internal architecture of a generic CrowdSec bouncer" ariaLabel="Block diagram showing six internal components of a bouncer: LAPI Client for authentication and polling, Decision Processor for parsing and caching, Remediation Engine for translating decisions to system actions, Reconciliation Module for startup sync and crash recovery, Metrics Reporter for usage-metrics to LAPI, and Observability for Prometheus metrics and structured logs.">
 ```mermaid-render
-flowchart LR
-    subgraph Bouncer["Bouncer Architecture"]
+flowchart TB
+    subgraph Bouncer["Generic CrowdSec Bouncer"]
         direction TB
-        Config["1. Configuration<br/>API keys, targets, filters"]
-        Client["2. LAPI Client<br/>Authentication + polling"]
-        Processor["3. Decision Processor<br/>Parse, filter, transform"]
-        Engine["4. Remediation Engine<br/>Apply to target system"]
-        Reconciler["5. Reconciliation<br/>Drift detection + sync"]
-        Metrics["6. Metrics Reporter<br/>Usage stats to LAPI"]
+        LC["LAPI Client<br/>(authentication, polling)"]:::info
+        DP["Decision Processor<br/>(parsing, caching, dedup)"]:::highlight
+        RE["Remediation Engine<br/>(system actions)"]:::success
+        RM["Reconciliation Module<br/>(startup sync, crash recovery)"]:::warning
+        MR["Metrics Reporter<br/>(usage-metrics to LAPI)"]:::info
+        OB["Observability<br/>(Prometheus, logs, health)"]:::secondary
     end
 
-    Config --> Client
-    Client --> Processor
-    Processor --> Engine
-    Engine --> Reconciler
-    Reconciler --> Metrics
-    Metrics -.->|"periodic"| Client
-
-    classDef bouncer fill:#1a3a5c,stroke:#4a9eff,color:#fff
-    class Config,Client,Processor,Engine,Reconciler,Metrics bouncer
+    LAPI["CrowdSec LAPI"]:::highlight --> LC
+    LC --> DP
+    DP --> RE
+    RE --> SYS["Target System<br/>(firewall, proxy, DNS)"]:::secondary
+    RM --> RE
+    MR --> LAPI
+    OB --> MON["Monitoring Stack"]:::secondary
+    RE -.->|"counter data"| MR
 ```
 </Mermaid>
 
-Let's walk through each one in detail.
+<StepByStep title="What every bouncer must implement">
 
-## Connecting to the LAPI
+1. **Authenticate with the LAPI** using a registered API key. This is the bouncer's identity — without it, the LAPI rejects all requests.
 
-The first thing any bouncer must do is establish a connection to the CrowdSec [Local API (LAPI)](https://docs.crowdsec.net/docs/local_api/intro/). This is the single point of contact between your bouncer and the CrowdSec ecosystem.
+2. **Poll for decisions** using the stream endpoint (for firewall bouncers) or the live endpoint (for application bouncers). Handle both the startup baseline and subsequent deltas.
+
+3. **Process decisions** by parsing the decision model, deduplicating against a local cache, and handling unknown decision types gracefully.
+
+4. **Enforce remediation** by translating abstract decisions (ban, captcha, throttle) into concrete system actions (firewall rules, HTTP responses, DNS overrides).
+
+5. **Reconcile state on startup** by comparing the LAPI's current decisions against whatever is already in the target system. Apply the diff.
+
+6. **Report usage metrics** back to the LAPI at regular intervals, including active decision counts, dropped traffic, and processed traffic.
+
+7. **Expose observability** through Prometheus metrics, structured logs, and a health endpoint for monitoring.
+
+</StepByStep>
+
+The rest of this post unpacks each of these steps in detail.
+
+## Receiving decisions
+
+The first job of any bouncer is to learn **what to block**. CrowdSec provides two modes for this: **stream mode** (polling) and **live mode** (per-request lookup). Both use the same LAPI, the same authentication, and the same decision model.
 
 ### Authentication
 
-Bouncers authenticate using an **API key** generated through the CrowdSec CLI:
+Every bouncer must register with the LAPI before it can receive decisions. Registration creates a unique API key that the bouncer sends on every request via the `X-Api-Key` header.
 
-```bash
-sudo cscli bouncers add my-bouncer-name
-```
+<TerminalSession title="Registering a bouncer with the LAPI">
+  <TerminalSessionCommand prompt="$" ariaLabel="Register a new bouncer named my-firewall-bouncer with cscli">
+    cscli bouncers add my-firewall-bouncer
+  </TerminalSessionCommand>
+  <TerminalSessionOutput>
+{`API key for 'my-firewall-bouncer':
 
-This produces an API key that the bouncer sends in every request via the `X-Api-Key` HTTP header. The key is tied to a named bouncer identity that appears in the CrowdSec Console.
+   a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4
 
-<Callout type="warning" title="Secure your API key">
-  The bouncer API key grants read access to all decisions and the ability to report metrics. Store it securely — in environment variables, a secrets manager, or an encrypted configuration file. Never commit it to version control.
-</Callout>
+Please keep this key since you will not be able to retrieve it!`}
+  </TerminalSessionOutput>
+</TerminalSession>
 
-For production deployments, the LAPI also supports **mutual TLS (mTLS)** authentication. This requires:
+Store this key securely. The bouncer includes it in every LAPI request:
 
-<CheckList title="mTLS requirements">
-  <li data-check="check">A client certificate and private key for the bouncer</li>
-  <li data-check="check">The CA certificate that signed the LAPI's server certificate</li>
-  <li data-check="check">TLS configuration in the bouncer (cert path, key path, CA path)</li>
-  <li data-check="optional">InsecureSkipVerify option for self-signed certificates in development</li>
-</CheckList>
-
-### The Decisions Stream
-
-The primary API endpoint for bouncers is the **decisions stream**. This is how your bouncer learns about new threats and expired remediations:
-
-<APIEndpoint
-  method="GET"
-  path="/v1/decisions/stream"
-  description="Returns new and expired decisions since the last poll. On first call with startup=true, returns all active decisions."
-/>
-
-The endpoint accepts these key query parameters:
-
-<Table title="Decisions stream parameters" ariaLabel="Table of query parameters for the decisions stream API endpoint">
-  <table>
-    <thead>
-      <tr>
-        <th>Parameter</th>
-        <th>Type</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>`startup`</td>
-        <td>boolean</td>
-        <td>When `true`, returns **all** active decisions (initial baseline). Use only on first poll.</td>
-      </tr>
-      <tr>
-        <td>`scopes`</td>
-        <td>string</td>
-        <td>Comma-separated list of scopes to filter (e.g., `ip,range`)</td>
-      </tr>
-      <tr>
-        <td>`origins`</td>
-        <td>string</td>
-        <td>Filter by decision origin (e.g., `crowdsec,cscli,CAPI`)</td>
-      </tr>
-      <tr>
-        <td>`scenarios_containing`</td>
-        <td>string</td>
-        <td>Only include decisions from scenarios matching this substring</td>
-      </tr>
-      <tr>
-        <td>`scenarios_not_containing`</td>
-        <td>string</td>
-        <td>Exclude decisions from scenarios matching this substring</td>
-      </tr>
-    </tbody>
-  </table>
-</Table>
-
-The response is a JSON object with two arrays:
-
-<Code lang="json" title="Decisions stream response structure">
-{`{
-  "new": [
-    {
-      "id": 42,
-      "origin": "crowdsec",
-      "type": "ban",
-      "scope": "ip",
-      "value": "203.0.113.45",
-      "duration": "4h0m0s",
-      "scenario": "crowdsecurity/ssh-bf",
-      "simulated": false
-    }
-  ],
-  "deleted": [
-    {
-      "id": 37,
-      "origin": "crowdsec",
-      "type": "ban",
-      "scope": "ip",
-      "value": "198.51.100.12",
-      "duration": "0s",
-      "scenario": "crowdsecurity/http-probing"
-    }
-  ]
-}`}
+<Code lang="http" title="Authentication header on every LAPI request">
+{`GET /v1/decisions/stream?startup=true HTTP/1.1
+Host: localhost:8080
+X-Api-Key: a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4`}
 </Code>
 
-### Stream vs Live Mode
+If the key is invalid or revoked, the LAPI returns `403 Forbidden` and the bouncer must stop operating — it has no authority to make enforcement decisions without a valid identity.
 
-CrowdSec's [Go SDK](https://github.com/crowdsecurity/go-cs-bouncer) offers two operational modes for consuming decisions:
+### Stream mode: `/v1/decisions/stream`
 
-<Tabs>
-  <TabPanel label="Stream Mode (Recommended)" noPadding>
-    <CodeBlock lang="text" code={`Stream Mode:
-- Polls /v1/decisions/stream periodically (e.g., every 10-30 seconds)
-- First poll uses startup=true to get ALL active decisions
-- Subsequent polls return only changes (new + deleted) since last poll
-- Bouncer maintains a local cache of active decisions
-- Best for: firewall bouncers, any system that manages a blocklist
+Stream mode is the primary consumption pattern for **firewall bouncers** and any bouncer that maintains a local state of active decisions. The bouncer polls the LAPI at regular intervals (typically every 10–60 seconds) and receives **delta updates**.
 
-Advantages:
-✓ Efficient — only transfers deltas after startup
-✓ Resilient — local cache survives brief LAPI outages
-✓ Batch-friendly — apply multiple changes at once
+<APIEndpoint>
 
-Trade-offs:
-✗ Slight delay between decision and enforcement (polling interval)
-✗ Must manage local state (cache invalidation, persistence)`} />
-  </TabPanel>
-  <TabPanel label="Live Mode" noPadding>
-    <CodeBlock lang="text" code={`Live Mode:
-- Queries LAPI on-demand for a specific IP/range
-- No local cache — every check hits the LAPI
-- Best for: application bouncers, per-request checks
+**`GET /v1/decisions/stream`**
 
-Advantages:
-✓ Always up-to-date — real-time decisions
-✓ No state to manage — stateless design
-✓ Simple implementation
+Returns decisions as a stream of changes (new additions and deletions) since the last poll.
 
-Trade-offs:
-✗ Higher latency — network round-trip per check
-✗ LAPI dependency — if LAPI is down, no decisions
-✗ Not suitable for high-throughput scenarios`} />
-  </TabPanel>
-</Tabs>
+**Key parameter**: `startup=true` on the first request to receive the complete baseline of all active decisions. Subsequent requests use `startup=false` (default) to receive only changes.
 
-<Callout type="keypoint" title="When to use which mode">
-  Use **Stream mode** when your bouncer manages a blocklist (firewall rules, address lists, ACLs). Use **Live mode** when your bouncer checks individual requests (web application middleware, reverse proxy plugins). Most production bouncers use Stream mode because it's more resilient and efficient at scale.
-</Callout>
+For busy LAPI instances connected to the community blocklist (CAPI), the startup response can contain thousands of decisions. Your bouncer must be prepared to handle a large initial payload efficiently — this is where bulk operations (Section 7) become essential.
 
-### Polling Pattern
+**Response shape**:
+```json
+{
+  "new": [/* Decision objects to enforce */],
+  "deleted": [/* Decision objects to remove */]
+}
+```
 
-The typical polling loop for a stream-mode bouncer follows this pattern:
+</APIEndpoint>
 
-<Mermaid caption="Stream polling lifecycle" ariaLabel="Sequence diagram showing the bouncer's polling lifecycle: initial startup poll, then periodic delta polls with new and deleted decisions">
+The two-phase pattern is critical to understand:
+
+<Mermaid caption="Stream mode: startup baseline followed by delta polling" ariaLabel="Sequence diagram showing a bouncer making its first request to the LAPI with startup=true and receiving all active decisions, then making subsequent requests with startup=false and receiving only new and deleted decisions since the last poll.">
 ```mermaid-render
 sequenceDiagram
     participant B as Bouncer
     participant L as LAPI
 
-    Note over B: Startup
+    Note over B: First poll (startup)
     B->>L: GET /v1/decisions/stream?startup=true
-    L-->>B: All active decisions (baseline)
-    Note over B: Apply all decisions<br/>to target system
+    L-->>B: { new: [all active decisions], deleted: [] }
+    Note over B: Apply all decisions as baseline
 
     loop Every N seconds
+        Note over B: Subsequent polls (delta)
         B->>L: GET /v1/decisions/stream
-        L-->>B: {"new": [...], "deleted": [...]}
-        Note over B: Apply new decisions<br/>Remove deleted decisions
+        L-->>B: { new: [added since last], deleted: [removed since last] }
+        Note over B: Apply new, remove deleted
     end
 ```
 </Mermaid>
 
-The `startup=true` parameter on the first poll is critical — it tells the LAPI to return the complete set of active decisions, not just changes since a (nonexistent) last poll. After that initial sync, every subsequent poll returns only the delta.
+**Why two phases?** On startup, the bouncer has no local state. It needs the complete picture. After that, it only needs changes — this keeps the payload small and the processing fast, even when the LAPI manages thousands of decisions.
 
-## Processing Decisions
+The polling interval is configurable — typically between 10 and 60 seconds. A shorter interval means faster enforcement (less time between a decision being created and the bouncer applying it) but more load on the LAPI. A longer interval reduces load but increases the window during which a newly banned IP can still reach the protected system. For most deployments, **30 seconds** is a good default.
 
-Once your bouncer receives decisions from the LAPI, it must process them before taking action. This is where most of the bouncer's logic lives.
-
-### The Decision Object
-
-Each decision in the stream contains these key fields:
-
-<Table title="Decision object fields" ariaLabel="Table describing the fields in a CrowdSec decision object">
-  <table>
-    <thead>
-      <tr>
-        <th>Field</th>
-        <th>Type</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>`id`</td>
-        <td>integer</td>
-        <td>Unique decision identifier</td>
-      </tr>
-      <tr>
-        <td>`origin`</td>
-        <td>string</td>
-        <td>Source: `crowdsec` (local detection), `cscli` (manual), `CAPI` (community), `lists` (blocklists)</td>
-      </tr>
-      <tr>
-        <td>`type`</td>
-        <td>string</td>
-        <td>Remediation type: `ban`, `captcha`, `throttle`, or custom</td>
-      </tr>
-      <tr>
-        <td>`scope`</td>
-        <td>string</td>
-        <td>Target scope: `ip`, `range`, `as`, `country`</td>
-      </tr>
-      <tr>
-        <td>`value`</td>
-        <td>string</td>
-        <td>The target value (e.g., `203.0.113.45`, `198.51.100.0/24`)</td>
-      </tr>
-      <tr>
-        <td>`duration`</td>
-        <td>string</td>
-        <td>How long the decision is valid (e.g., `4h0m0s`, `24h0m0s`)</td>
-      </tr>
-      <tr>
-        <td>`scenario`</td>
-        <td>string</td>
-        <td>The detection scenario that triggered this decision (e.g., `crowdsecurity/ssh-bf`)</td>
-      </tr>
-      <tr>
-        <td>`simulated`</td>
-        <td>boolean</td>
-        <td>If `true`, the decision is for logging only — do not enforce</td>
-      </tr>
-    </tbody>
-  </table>
-</Table>
-
-### Parsing Pipeline
-
-Your bouncer should implement a clear parsing pipeline that validates, filters, and transforms each decision:
-
-<StepByStep title="Decision processing pipeline">
-  <li>**Validate required fields** — Ensure `value`, `type`, `duration`, and `scope` are present and non-null. Drop malformed decisions with a warning log.</li>
-  <li>**Check decision type** — Most bouncers only handle `ban` decisions. If your bouncer supports `captcha` or custom types, route them accordingly.</li>
-  <li>**Check simulation flag** — If `simulated` is `true`, log the decision but do not enforce it. This is useful for testing scenarios.</li>
-  <li>**Parse the duration** — Convert the CrowdSec duration string (e.g., `4h0m0s`) to your target system's format. Have a fallback default (e.g., 4 hours) for unparseable durations.</li>
-  <li>**Detect IP version** — Determine if the value is IPv4 or IPv6. Check if your target system supports both protocols. Skip unsupported protocols gracefully.</li>
-  <li>**Detect address type** — Distinguish single IPs from CIDR ranges (look for `/` in the value). Some systems handle ranges differently from individual addresses.</li>
-  <li>**Apply filters** — Check against your configured origin, scope, and scenario filters. Drop decisions that don't match.</li>
-  <li>**Transform for target** — Convert the decision into whatever format your target system needs (firewall rule, ACL entry, DNS record).</li>
-</StepByStep>
-
-<Callout type="tip" title="IPv6 normalization">
-  When processing IPv6 addresses, normalize single addresses to /128 CIDR notation for consistency. This simplifies your internal data structures — everything becomes a prefix, whether it's a single IP or a range. For example, `2001:db8::1` becomes `2001:db8::1/128`.
+<Callout type="note" title="Empty responses are normal">
+If no decisions have changed since the last poll, the LAPI returns `{ "new": null, "deleted": null }`. Your bouncer should handle `null` arrays gracefully — they mean "no changes," not "an error occurred." This is the common case during quiet periods.
 </Callout>
 
-### Duration Handling
+### Live mode: `/v1/decisions`
 
-CrowdSec expresses durations in Go's time format: `4h0m0s`, `24h30m0s`, `168h0m0s`. Your bouncer needs to parse this and convert it to whatever format the target system expects:
+Live mode is designed for **application bouncers** that check individual IPs at request time rather than maintaining a local cache.
 
-<Tabs>
-  <TabPanel label="Common Formats">
-
-Different systems expect different duration formats:
-
-<Table title="Duration format examples" ariaLabel="Table showing how CrowdSec durations map to different system formats">
-  <table>
-    <thead>
-      <tr>
-        <th>CrowdSec</th>
-        <th>Seconds</th>
-        <th>iptables</th>
-        <th>MikroTik</th>
-        <th>Human</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>`4h0m0s`</td>
-        <td>14400</td>
-        <td>14400 (timeout)</td>
-        <td>`4h`</td>
-        <td>4 hours</td>
-      </tr>
-      <tr>
-        <td>`24h0m0s`</td>
-        <td>86400</td>
-        <td>86400</td>
-        <td>`1d`</td>
-        <td>1 day</td>
-      </tr>
-      <tr>
-        <td>`168h0m0s`</td>
-        <td>604800</td>
-        <td>604800</td>
-        <td>`1w`</td>
-        <td>1 week</td>
-      </tr>
-    </tbody>
-  </table>
-</Table>
-
-  </TabPanel>
-  <TabPanel label="Fallback Strategy">
-
-Always implement a fallback for unparseable durations:
-
-<CheckList title="Duration parsing best practices">
-  <li data-check="check">Parse the standard Go duration format (`Xh Ym Zs`)</li>
-  <li data-check="check">Handle edge cases: `0s` (already expired), negative durations</li>
-  <li data-check="check">Implement a configurable default duration (e.g., 4 hours)</li>
-  <li data-check="warning">Log a warning when falling back to the default — this may indicate a bug</li>
-  <li data-check="cross">Never silently drop a decision because of an unparseable duration</li>
-</CheckList>
-
-  </TabPanel>
-</Tabs>
-
-### Caching Strategies
-
-For stream-mode bouncers, maintaining a local cache of active decisions dramatically improves performance. The two main patterns are:
-
-<Tabs>
-  <TabPanel label="Address Cache">
-
-An in-memory map keyed by IP/range that stores the current state:
-
-<Code lang="json" title="Address cache structure example">
-{`{
-  "203.0.113.45": {
-    "decision_id": 42,
-    "type": "ban",
-    "origin": "crowdsec",
-    "scenario": "crowdsecurity/ssh-bf",
-    "duration": "4h0m0s",
-    "added_at": "2026-03-01T10:00:00Z",
-    "protocol": "ipv4"
-  },
-  "2001:db8::1/128": {
-    "decision_id": 43,
-    "type": "ban",
-    "origin": "CAPI",
-    "scenario": "crowdsecurity/http-probing",
-    "duration": "24h0m0s",
-    "added_at": "2026-03-01T09:30:00Z",
-    "protocol": "ipv6"
-  }
-}`}
+<Code lang="http" title="Live mode: checking a specific IP">
+{`GET /v1/decisions?ip=203.0.113.42 HTTP/1.1
+Host: localhost:8080
+X-Api-Key: a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4`}
 </Code>
 
-This cache enables O(1) lookups when deleting decisions — instead of searching the target system for a matching rule, you can directly reference the cached entry.
+The LAPI returns any active decisions matching that IP, or an empty response if the IP is clean. This is simpler to implement — no local cache, no reconciliation — but it adds latency to every request since the bouncer must query the LAPI synchronously.
 
-  </TabPanel>
-  <TabPanel label="No Cache (Stateless)">
+In practice, many application bouncers use a **hybrid approach**: they poll the LAPI in stream mode to maintain a local in-memory cache, and then check that cache on each request instead of making a live LAPI call. This gives the speed benefits of a local cache with the simplicity of not managing persistent state in a firewall.
 
-Some bouncers skip local caching entirely and rely on the target system as the source of truth:
+<Callout type="tip" title="Choosing between stream and live mode">
+**Use stream mode** when your bouncer maintains persistent state (firewall address lists, ipsets, pf tables). The local cache means enforcement is instant — no LAPI roundtrip per packet.
 
-<CheckList title="Stateless approach">
-  <li data-check="check">Simpler implementation — no cache invalidation logic</li>
-  <li data-check="check">Target system is always authoritative</li>
-  <li data-check="warning">Slower deletions — must search the target system for matching entries</li>
-  <li data-check="warning">Requires the target system to support efficient lookups</li>
-  <li data-check="cross">Not recommended for systems with slow query APIs</li>
-</CheckList>
+**Use live mode** when your bouncer is stateless or runs inside a request pipeline (reverse proxy plugin, application middleware). It trades latency for simplicity.
+</Callout>
 
-  </TabPanel>
-</Tabs>
+### The Decision model
 
-## Translating Decisions to Actions
+Every decision the LAPI sends — whether via stream or live mode — follows the same structure. Understanding each field is essential for correct enforcement. The LAPI may evolve this model over time, so a well-designed bouncer should tolerate unknown fields gracefully.
 
-This is the heart of your bouncer — the **remediation engine** that bridges CrowdSec's abstract decisions into concrete actions on your target system. The implementation varies widely depending on the bouncer type, but the patterns are consistent.
+<Table title="Decision model fields" ariaLabel="Table listing all fields in a CrowdSec decision object with their types and descriptions">
 
-### Firewall Bouncers
+| Field | Type | Description |
+|---|---|---|
+| `id` | integer | Internal LAPI identifier (read-only, used for deduplication) |
+| `uuid` | string | Globally unique decision identifier (read-only) |
+| `origin` | string | Source of the decision: `"crowdsec"`, `"CAPI"`, `"cscli"`, `"lists"` |
+| `type` | string | Remediation action: `"ban"`, `"captcha"`, `"throttle"`, or custom |
+| `scope` | string | Target scope: `"ip"`, `"range"`, `"country"`, etc. |
+| `value` | string | The actual target: an IP address, CIDR block, or country code |
+| `duration` | string | Remaining time-to-live (e.g., `"3h59m42s"`) |
+| `until` | string | Absolute expiration timestamp (ISO 8601) |
+| `scenario` | string | The scenario that triggered this decision (e.g., `"crowdsecurity/http-probing"`) |
+| `simulated` | boolean | If `true`, the decision is for testing only — **do NOT enforce** |
 
-Firewall bouncers translate `ban` decisions into network-level blocks. The general pattern is:
+</Table>
 
-<Mermaid caption="Firewall bouncer decision flow" ariaLabel="Flowchart showing how a ban decision is translated into firewall rules for both IPv4 and IPv6">
+<Callout type="keypoint" title="The simulated flag is not optional">
+Bouncers **must** check the `simulated` field and skip enforcement when it is `true`. This flag allows operators to deploy new detection scenarios in production and observe what *would* be blocked, without actually impacting traffic. If your bouncer ignores this field, operators lose the ability to safely test new rules — and that leads to either over-blocking in production or never deploying new scenarios at all.
+</Callout>
+
+### Stream filters
+
+The stream endpoint accepts query parameters that let bouncers request only the decisions they care about. This reduces network traffic and processing overhead.
+
+<Table title="Stream filter parameters" ariaLabel="Table showing available filter parameters for the decisions stream endpoint, with their purpose and example values">
+
+| Parameter | Purpose | Example |
+|---|---|---|
+| `scopes` | Limit to specific target scopes | `scopes=ip,range` |
+| `origins` | Only from specific decision origins | `origins=crowdsec,cscli` |
+| `scenarios_containing` | Only decisions matching these scenarios | `scenarios_containing=http-` |
+| `scenarios_not_containing` | Exclude decisions matching these scenarios | `scenarios_not_containing=ssh-` |
+
+</Table>
+
+<Callout type="tip" title="Filter aggressively">
+A firewall bouncer doesn't need `captcha` decisions (it can't show a challenge page). An SSH-focused bouncer doesn't need HTTP scenarios. Filtering at the LAPI level means your bouncer processes less data, makes fewer system calls, and starts up faster after a restart.
+</Callout>
+
+## Processing decisions
+
+Once decisions arrive from the LAPI, the bouncer must process them correctly before taking any action. This section covers the parsing, caching, and edge cases that trip up naive implementations.
+
+### Parsing new vs deleted
+
+Every stream response contains two arrays: `new` (decisions to enforce) and `deleted` (decisions to remove). The processing loop must handle both on every poll:
+
+<Code lang="text" title="Decision processing pseudocode">
+{`function processStreamResponse(response):
+    for decision in response.new:
+        if decision.simulated:
+            log("Skipping simulated decision", decision)
+            continue
+        enforcementType = resolveType(decision.type)
+        timeout = parseDuration(decision.duration)
+        enforceDecision(decision.scope, decision.value, enforcementType, timeout)
+        cache.add(decision.value, decision)
+
+    for decision in response.deleted:
+        if cache.contains(decision.value):
+            removeDecision(decision.scope, decision.value)
+            cache.remove(decision.value)
+        else:
+            log("Ignoring deletion for unknown decision", decision.value)`}
+</Code>
+
+The `deleted` array contains decisions that have either **expired** (their duration elapsed) or been **manually removed** by an operator via `cscli decisions delete`. Either way, the bouncer must remove the corresponding system-level rule.
+
+### Duration handling
+
+CrowdSec sends the `duration` field as a Go-style duration string: `"4h"`, `"24h0m0s"`, `"3h59m42.123s"`. Your bouncer must parse this into whatever format the target system expects.
+
+<Code lang="text" title="Duration parsing with fallback">
+{`function parseDuration(durationString):
+    // Parse Go-style duration: "4h", "30m", "24h0m0s", "3h59m42.123s"
+    hours = extractHours(durationString)
+    minutes = extractMinutes(durationString)
+    seconds = extractSeconds(durationString)
+
+    totalSeconds = hours * 3600 + minutes * 60 + seconds
+
+    if totalSeconds <= 0:
+        log("Failed to parse duration, using fallback", durationString)
+        totalSeconds = 4 * 3600  // Safe default: 4 hours
+
+    return totalSeconds`}
+</Code>
+
+<Callout type="warning" title="Always have a fallback duration">
+If duration parsing fails — due to an unexpected format, a new LAPI version, or a custom scenario with unusual durations — your bouncer should use a safe default rather than crashing or applying an infinite ban. Four hours is a reasonable choice: long enough to be useful, short enough to self-heal if something goes wrong.
+</Callout>
+
+### Caching and deduplication
+
+Maintaining a local cache of active decisions is critical for performance. Without it, every poll cycle results in redundant system calls:
+
+- **On ban**: Check if the IP is already in cache. If yes, just update the timeout — don't re-add the firewall rule.
+- **On unban**: Check if the IP is in cache. If no, skip the removal — the entry already expired or was never applied.
+
+This matters because system calls (adding a firewall rule, modifying an ipset) are **expensive** compared to an in-memory lookup. A bouncer receiving 12,000+ decisions from CAPI on startup should not make 12,000 API calls to a router if most of those IPs are already in its address list from a previous run.
+
+The cache also enables **efficient metrics collection**. When the bouncer needs to count active decisions by origin and IP type, it iterates the cache — not the firewall. Cache lookups are O(1), while querying a remote device could take seconds.
+
+<Code lang="text" title="Cache operations pseudocode">
+{`// Cache interface — use whatever data structure fits your language
+cache = new Map<string, Decision>()
+
+function onNewDecision(decision):
+    existing = cache.get(decision.value)
+    if existing != null:
+        // Already cached — update timeout, skip system call
+        existing.duration = decision.duration
+        updateTimeout(decision.value, parseDuration(decision.duration))
+        return
+    // New entry — add to cache and to the target system
+    cache.set(decision.value, decision)
+    addToSystem(decision)
+
+function onDeletedDecision(decision):
+    if cache.has(decision.value):
+        cache.delete(decision.value)
+        removeFromSystem(decision.value)
+
+function countActiveByOrigin():
+    counts = new Map<string, int>()
+    for decision in cache.values():
+        key = decision.origin + ":" + decision.ip_type
+        counts[key] = counts.getOrDefault(key, 0) + 1
+    return counts`}
+</Code>
+
+### Unknown decision types
+
+CrowdSec allows custom decision types through scenario profiles. Your bouncer might receive a decision with `type: "throttle"` or `type: "mfa-required"` that it doesn't know how to handle.
+
+<DecisionTree question="What to do with an unknown decision type?">
+  <details>
+    <summary>Fallback to ban</summary>
+
+    The safest approach: treat any unknown type as a ban. This ensures no malicious traffic slips through, but it may over-block — a `captcha` decision that gets enforced as a `ban` blocks legitimate users who could have solved the challenge.
+  </details>
+  <details>
+    <summary>Ignore and log</summary>
+
+    The most conservative approach: skip unknown types and log a warning. This avoids false positives but means some decisions go unenforced. Suitable for bouncers where over-blocking is worse than under-blocking.
+  </details>
+  <details>
+    <summary>Configuration-driven fallback</summary>
+
+    The most flexible approach: let the operator configure the fallback behavior. For example, a config option like `unknown_decision_action: ban | ignore | log` gives operators control over the trade-off. This is what mature bouncers implement.
+  </details>
+</DecisionTree>
+
+## Remediation actions
+
+Receiving decisions is only half the job. The bouncer must translate each decision into a concrete action on the target system. This is where bouncer types diverge.
+
+### Decision type catalog
+
+<Table title="Remediation actions by bouncer type" ariaLabel="Table mapping each CrowdSec decision type to the corresponding action for firewall and application bouncers">
+
+| Type | Firewall bouncer action | Application bouncer action | Notes |
+|---|---|---|---|
+| `ban` | Drop or reject packets from the IP | Return HTTP 403 Forbidden | Most common type, supported by all bouncers |
+| `captcha` | N/A (cannot show challenges) | Show hCaptcha, reCAPTCHA, or Turnstile | Application bouncers only |
+| `throttle` | Rate limit if supported | HTTP 429 + `Retry-After` header | Requires rate-limiting capability |
+| Custom | Depends on implementation | Depends on implementation | Defined via CrowdSec scenario profiles |
+
+</Table>
+
+### Firewall enforcement: drop vs reject
+
+When a firewall bouncer blocks an IP, it must choose between two strategies: **drop** (silently discard) or **reject** (send an error response back).
+
+<BeforeAfter beforeLabel="Drop (silent discard)" afterLabel="Reject (explicit denial)">
+  <Fragment slot="before">
+    **Drop** silently discards the packet. The sender receives no response and eventually times out. This reveals nothing about the firewall's existence, uses minimal resources (no response packet generated), and is the standard production default. However, it can frustrate legitimate users behind a shared IP — they see a mysterious timeout instead of a clear error.
+  </Fragment>
+  <Fragment slot="after">
+    **Reject** sends an ICMP Destination Unreachable or a TCP RST back to the sender. The client immediately knows it's blocked. This uses slightly more resources (one response packet per blocked attempt) and reveals that a firewall is present, but provides cleaner feedback. Better for development, testing, and networks where shared IPs are common.
+  </Fragment>
+</BeforeAfter>
+
+<Table title="Drop vs Reject comparison" ariaLabel="Table comparing drop and reject firewall strategies across response behavior, resource usage, information leakage, and recommended use">
+
+| Aspect | Drop | Reject |
+|---|---|---|
+| Response to client | None (timeout) | ICMP unreachable or TCP RST |
+| Resource usage | Minimal | Slightly higher |
+| Information leakage | None | Reveals firewall presence |
+| User experience | Mysterious timeout | Immediate clear error |
+| Recommended for | Production (default) | Testing, development |
+
+</Table>
+
+### Decision lifecycle
+
+A single ban decision goes through multiple states over its lifetime. Understanding this lifecycle helps when debugging timing issues.
+
+<Timeline events={[
+  { date: "T+0", title: "Decision created", description: "CrowdSec Security Engine detects malicious behavior and creates a ban decision via the LAPI.", type: "milestone" },
+  { date: "T+0 to T+60s", title: "Decision propagated", description: "Bouncer polls the LAPI on its next cycle and receives the new decision in the `new` array.", type: "default" },
+  { date: "T+60s", title: "Remediation enforced", description: "Bouncer adds the IP to the firewall address list with a timeout matching the decision duration.", type: "success" },
+  { date: "T+60s to T+4h", title: "Decision active", description: "Traffic from the banned IP is dropped or rejected. The bouncer tracks dropped bytes and packets for metrics reporting.", type: "default" },
+  { date: "T+4h", title: "Decision expires", description: "The duration elapses. The LAPI includes this decision in the `deleted` array on the next poll. The system-level timeout also expires.", type: "warning" },
+  { date: "T+4h+60s", title: "Cleanup", description: "Bouncer removes the IP from its local cache. If the target system already expired the entry via its own timeout, this is a no-op.", type: "default" }
+]} />
+
+Notice the **dual expiration** pattern: the target system has its own timeout (set when the rule was created), and the LAPI eventually sends a deletion. A well-designed bouncer handles both gracefully — the system-side timeout acts as a safety net if the bouncer misses a deletion, and the LAPI deletion acts as a safety net if the system-side timeout drifts.
+
+### Bulk operations
+
+On startup, a bouncer may receive **thousands** of decisions in the baseline response (`startup=true`). Applying them one by one is prohibitively slow — each system call (adding a firewall rule, making an API request to a router) takes time.
+
+Production bouncers should use **bulk operations** wherever the target system supports them:
+
+- **iptables/nftables**: `ipset restore` can load thousands of entries in a single call.
+- **pf**: `pfctl -t crowdsec -T add` accepts multiple addresses.
+- **RouterOS**: Scripting mode can batch multiple `/ip/firewall/address-list/add` commands.
+- **Application bouncers**: Load all decisions into an in-memory map in a single pass.
+
+The startup path should always be optimized for bulk. The steady-state polling path (small deltas) can afford individual operations.
+
+<Callout type="tip" title="Benchmark your bulk path">
+During development, create a test set of 10,000 decisions and measure how long your bouncer takes to import them at startup. If it exceeds a few seconds, increase parallelism, use a bulk API, or batch operations more aggressively.
+</Callout>
+
+For systems without native bulk APIs, group operations into batches of 100–500 items and apply them sequentially. This provides a good balance between speed and resource pressure on the target system.
+
+Consider implementing a progress indicator for large imports. When processing 10,000+ decisions at startup, operators appreciate knowing whether the bouncer is making progress or stuck. A simple log message every 1,000 entries ("Applied 3000/12500 decisions...") transforms a silent wait into a transparent operation.
+
+## Reconciliation
+
+Reconciliation is the process of **synchronizing** the bouncer's local state, the LAPI's decisions, and the target system's actual configuration. It's most critical at startup but also relevant during normal operation.
+
+### Why reconciliation is necessary
+
+Over time, the bouncer's local state inevitably drifts from reality. There are several root causes, and all of them occur regularly in production environments.
+
+Three scenarios create state divergence:
+
+1. **Bouncer crashes and restarts**: The bouncer's in-memory state is lost, but the target system (firewall) still has the rules from the previous run. Without reconciliation, the bouncer would re-add all decisions, creating duplicates.
+
+2. **Decisions expire while bouncer is offline**: If the bouncer is down for several hours, some decisions will have expired in the LAPI. The target system may still have those entries if its local timeout hasn't elapsed. The bouncer must remove them.
+
+3. **Configuration changes**: If the operator changes the address list name or the comment prefix between runs, the bouncer's new configuration won't match the entries from the previous run. Stale entries accumulate.
+
+### The reconciliation algorithm
+
+<Mermaid caption="Reconciliation: computing and applying the diff between LAPI and system state" ariaLabel="Flowchart showing the reconciliation algorithm. On startup, the bouncer fetches the full baseline from the LAPI, lists all entries currently in the target system that match its signature, computes entries to add (in LAPI but not in system) and entries to remove (in system but not in LAPI), then applies both sets in bulk.">
 ```mermaid-render
-flowchart TD
-    D["New 'ban' decision<br/>value: 203.0.113.45"]
-    V{{"IPv4 or IPv6?"}}
-    V4["Add to IPv4 blocklist<br/>(ipset, address-list, pf table)"]
-    V6["Add to IPv6 blocklist<br/>(ipset, address-list, pf table)"]
-    R["Create firewall rule<br/>DROP packets from blocklist"]
+flowchart TB
+    START["Bouncer starts"]:::info --> FETCH["Fetch full baseline<br/>GET /v1/decisions/stream?startup=true"]
+    FETCH --> LIST["List current entries in target system<br/>(filter by bouncer signature)"]
+    LIST --> DIFF["Compute diff"]
 
-    D --> V
-    V -->|"IPv4"| V4
-    V -->|"IPv6"| V6
-    V4 --> R
-    V6 --> R
+    DIFF --> ADD["Entries to ADD<br/>(in LAPI, not in system)"]:::success
+    DIFF --> REM["Entries to REMOVE<br/>(in system, not in LAPI)"]:::danger
 
-    classDef decision fill:#1a3a5c,stroke:#4a9eff,color:#fff
-    classDef action fill:#1a3d1a,stroke:#4ade80,color:#fff
-    classDef check fill:#3d3d1a,stroke:#fbbf24,color:#fff
-
-    class D decision
-    class V check
-    class V4,V6,R action
+    ADD --> APPLY["Apply additions in bulk"]
+    REM --> CLEAN["Remove stale entries in bulk"]
+    APPLY --> READY["Bouncer ready<br/>Begin delta polling"]:::success
+    CLEAN --> READY
 ```
 </Mermaid>
 
-The key design decisions for firewall bouncers are:
+The key optimization is computing the diff **before** making any system calls. A naive implementation that blindly adds all LAPI decisions and then removes stale entries does twice the work — and on a router with limited CPU, that matters.
 
-<CheckList title="Firewall bouncer design decisions">
-  <li data-check="check">**Separate IPv4 and IPv6 blocklists** — Most firewall systems require separate rules/sets for each protocol</li>
-  <li data-check="check">**Use timeout-based entries** — Let entries expire automatically based on decision duration rather than managing deletion timers yourself</li>
-  <li data-check="check">**Rule placement** — Place block rules early in the chain (before ESTABLISHED/RELATED accept rules) for maximum efficiency</li>
-  <li data-check="check">**Idempotent operations** — Adding an already-blocked IP should update its timeout, not fail</li>
-  <li data-check="optional">**Whitelist support** — Allow specific IPs or interfaces to bypass the bouncer's blocks</li>
-  <li data-check="optional">**Counting rules** — Add passthrough rules to measure total processed traffic for metrics</li>
-</CheckList>
+<Code lang="text" title="Reconciliation diff pseudocode">
+{`function reconcile():
+    // Phase 1: Gather state
+    lapiDecisions = fetchBaseline()    // GET /v1/decisions/stream?startup=true
+    systemEntries = listSystemEntries() // Only entries with our signature
 
-### Application Bouncers
+    lapiSet = Set(d.value for d in lapiDecisions)
+    systemSet = Set(e.address for e in systemEntries)
 
-Application-level bouncers integrate as middleware in web servers or reverse proxies. Instead of firewall rules, they make per-request decisions:
+    // Phase 2: Compute diff
+    toAdd = lapiSet - systemSet     // In LAPI but not in system
+    toRemove = systemSet - lapiSet  // In system but not in LAPI
+    toUpdate = lapiSet & systemSet  // In both — check timeout freshness
 
-<Code lang="text" title="Application bouncer decision logic (pseudocode)">
-{`function handleRequest(request):
-    clientIP = extractClientIP(request)
-    
-    // Check local cache first (stream mode)
-    decision = cache.lookup(clientIP)
-    
-    // Or query LAPI directly (live mode)
-    if decision is null:
-        decision = lapi.getDecision(clientIP)
-    
-    if decision is null:
-        return passthrough(request)  // No decision — allow
-    
-    switch decision.type:
-        case "ban":
-            return HTTP 403 Forbidden
-        case "captcha":
-            return redirectToCaptchaPage()
-        case "throttle":
-            return HTTP 429 Too Many Requests
-        default:
-            log.warn("Unknown decision type", decision.type)
-            return passthrough(request)`}
+    // Phase 3: Apply (bulk where possible)
+    bulkAdd(toAdd, lapiDecisions)
+    bulkRemove(toRemove, systemEntries)
+    for entry in toUpdate:
+        if needsTimeoutRefresh(entry):
+            updateTimeout(entry)
+
+    log("Reconciliation complete",
+        "added", len(toAdd),
+        "removed", len(toRemove),
+        "updated", len(toUpdate))`}
 </Code>
 
-### Bulk Operations and Performance
+This algorithm is idempotent — running it twice produces the same result. This is important because the bouncer may crash during reconciliation and need to restart the process.
 
-When your bouncer starts up and receives the initial baseline (all active decisions via `startup=true`), it may need to process thousands of entries at once. Naive one-by-one insertion can be extremely slow on some systems.
+### Signature-based cleanup
 
-<Callout type="keypoint" title="Batch your operations">
-  If your target system supports it, **always batch** initial operations. For example, the [cs-routeros-bouncer](https://github.com/jmrplens/cs-routeros-bouncer) uses RouterOS scripting to batch 100 address-list entries per API call, reducing startup time from minutes to seconds. The [firewall bouncer](https://github.com/crowdsecurity/cs-firewall-bouncer) uses ipset for O(1) additions regardless of set size.
-</Callout>
+After a crash, entries from the previous run remain in the target system. How does the bouncer find them?
 
-Performance patterns commonly used by bouncers:
+The answer is **signatures**. Every entry the bouncer creates should include a fixed, recognizable marker in its comment or tag field. On startup, the bouncer searches for this marker to discover all entries it previously created — regardless of whether the configuration has changed.
 
-<Table title="Bulk operation strategies" ariaLabel="Table comparing different strategies for bulk operations in bouncers">
-  <table>
-    <thead>
-      <tr>
-        <th>Strategy</th>
-        <th>Description</th>
-        <th>Example</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>**API batching**</td>
-        <td>Group multiple operations into a single API call</td>
-        <td>Cloudflare API supports bulk rule creation</td>
-      </tr>
-      <tr>
-        <td>**Script injection**</td>
-        <td>Generate a script with all operations and execute it at once</td>
-        <td>MikroTik RouterOS scripting (100 entries/script)</td>
-      </tr>
-      <tr>
-        <td>**Set-based operations**</td>
-        <td>Use data structures optimized for bulk membership operations</td>
-        <td>Linux ipset (O(1) per operation)</td>
-      </tr>
-      <tr>
-        <td>**Connection pooling**</td>
-        <td>Use parallel connections for concurrent operations</td>
-        <td>Multiple SSH/API sessions for parallel deletions</td>
-      </tr>
-      <tr>
-        <td>**Optimistic add**</td>
-        <td>Try to add; if already exists, update timeout instead of failing</td>
-        <td>Avoids expensive "check-then-add" two-step pattern</td>
-      </tr>
-    </tbody>
-  </table>
-</Table>
+<Code lang="text" title="Comment format with embedded signature">
+{`// Format: "<scenario> | <origin> @<bouncer-signature>"
+// Examples:
+"crowdsecurity/http-probing | crowdsec @cs-routeros-bouncer"
+"crowdsecurity/ssh-bf | CAPI @cs-routeros-bouncer"
+"manual ban | cscli @cs-routeros-bouncer"
 
-## Reconciliation and Drift Detection
-
-One of the most critical — and often overlooked — aspects of bouncer design is **reconciliation**: ensuring that the bouncer's intended state matches the actual state of the target system.
-
-### Why Reconciliation Matters
-
-State drift can occur for several reasons:
-
-<CheckList title="Sources of state drift">
-  <li data-check="warning">**Bouncer crash** — The bouncer applied some decisions, then crashed before applying the rest</li>
-  <li data-check="warning">**Target system restart** — Firewall rules may be lost on reboot if not persistent</li>
-  <li data-check="warning">**Manual modifications** — An administrator manually removes or adds rules</li>
-  <li data-check="warning">**Timeout mismatch** — The target system expired an entry before CrowdSec sent the deletion</li>
-  <li data-check="warning">**Network issues** — A poll was missed, leaving the bouncer with stale data</li>
-</CheckList>
-
-### The Reconciliation Pattern
-
-A well-designed bouncer performs reconciliation on startup and optionally at periodic intervals:
-
-<Mermaid caption="Reconciliation process" ariaLabel="Flowchart showing the reconciliation process: fetch desired state from LAPI, read current state from target, compute diff, apply additions and removals">
-```mermaid-render
-flowchart TD
-    Start["Reconciliation triggered<br/>(startup or periodic)"]
-    Fetch["Fetch all active decisions<br/>from LAPI (startup=true)"]
-    Read["Read current state<br/>from target system"]
-    Diff["Compute diff:<br/>desired vs actual"]
-    Add["Add missing entries<br/>(in LAPI but not in target)"]
-    Remove["Remove stale entries<br/>(in target but not in LAPI)"]
-    Done["State synchronized"]
-
-    Start --> Fetch
-    Fetch --> Read
-    Read --> Diff
-    Diff --> Add
-    Diff --> Remove
-    Add --> Done
-    Remove --> Done
-
-    classDef process fill:#1a3a5c,stroke:#4a9eff,color:#fff
-    classDef action fill:#1a3d1a,stroke:#4ade80,color:#fff
-
-    class Start,Fetch,Read,Diff process
-    class Add,Remove,Done action
-```
-</Mermaid>
-
-### Crash Recovery with Signatures
-
-A robust technique for crash recovery is **embedding a signature** in every rule or entry your bouncer creates. This allows the bouncer to identify its own rules after a restart, even without any local state.
-
-For example, the [cs-routeros-bouncer](https://github.com/jmrplens/cs-routeros-bouncer) embeds `@cs-routeros-bouncer` in the comment field of every address-list entry. On startup, it queries all entries with this signature, compares them against the LAPI's active decisions, and reconciles the difference.
-
-<Code lang="text" title="Signature-based identification pattern">
-{`# Rule comment format with embedded signature:
-# {prefix}:{type}:{chain}:{proto}:{origin} {scenario} @bouncer-name
-#
-# Example:
-# crowdsec:ban:input:ipv4:crowdsec crowdsecurity/ssh-bf @cs-routeros-bouncer
-
-On startup:
-1. Query all entries with "@bouncer-name" signature
-2. Fetch all active decisions from LAPI
-3. Entries in target but NOT in LAPI → remove (stale)
-4. Entries in LAPI but NOT in target → add (missing)
-5. Entries in both → update timeout if needed`}
+// On startup, search for all entries containing "@cs-routeros-bouncer"
+// This works even if the comment prefix or address list name changed`}
 </Code>
 
-<Callout type="important" title="Initial sync optimization">
-  During the initial startup poll, the LAPI sends all active decisions at once. Some of these may have been immediately followed by deletions (e.g., a decision was created then revoked within the same polling interval). Filter these out **before** applying to the target system — there's no point in adding an entry only to delete it immediately after.
+<Callout type="keypoint" title="Why signatures matter">
+Without a signature, the bouncer has no reliable way to distinguish its own entries from manually created firewall rules. It would need to rely on exact comment matching or address list names — both of which break when operators change configuration. A fixed signature embedded in every comment provides a stable anchor across restarts and configuration changes.
 </Callout>
 
-## Reporting Metrics to CrowdSec
+## Metrics reporting
 
-Metrics reporting is what makes your bouncer **visible** in the [CrowdSec Console](https://app.crowdsec.net/). Without it, your bouncer silently enforces decisions but operators have no visibility into its activity.
+This section is the heart of the bouncer-to-LAPI communication. Metrics reporting is what makes CrowdSec's Console dashboard work — without it, operators can see decisions but cannot verify that enforcement is actually happening.
 
-### The Usage Metrics Endpoint
+### The usage-metrics endpoint
 
-Bouncers report their activity via a single LAPI endpoint:
+Bouncers report metrics by POSTing to the [LAPI's usage-metrics endpoint](https://crowdsecurity.github.io/api_doc/lapi/#/bouncers/post_v1_usage_metrics):
 
-<APIEndpoint
-  method="POST"
-  path="/v1/usage-metrics"
-  description="Reports bouncer activity metrics to the LAPI. The LAPI aggregates these and pushes them to CAPI, which feeds the Console dashboard."
-/>
+<APIEndpoint>
 
-The payload includes remediation statistics and active decision counts:
+**`POST /v1/usage-metrics`**
 
-<Code lang="json" title="Usage metrics payload example">
+Reports bouncer telemetry to the LAPI. Authenticated with the same `X-Api-Key` header used for decision polling.
+
+**Content-Type**: `application/json`
+
+The payload identifies the bouncer and includes one or more metric snapshots.
+
+</APIEndpoint>
+
+### Bouncer metadata
+
+Every metrics payload starts with metadata identifying the bouncer instance:
+
+<Code lang="json" title="Top-level structure of a usage-metrics payload">
 {`{
   "remediation_components": [
     {
       "version": "1.2.0",
-      "name": "cs-routeros-bouncer",
-      "type": "crowdsec-routeros-bouncer",
-      "utc_startup_timestamp": "2026-03-01T10:00:00Z"
-    }
-  ],
-  "metrics": [
-    {
-      "meta": {
-        "utc_now_timestamp": "2026-03-01T10:15:00Z",
-        "window_size_seconds": 900
+      "name": "cscli-generated-bouncer-name",
+      "type": "cs-routeros-bouncer",
+      "utc_startup_timestamp": 1719849600,
+      "os": {
+        "name": "linux",
+        "family": "debian",
+        "version": "12"
       },
-      "items": [
+      "feature_flags": [],
+      "metrics": [ ... ]
+    }
+  ]
+}`}
+</Code>
+
+The `name` field must match the bouncer name registered with `cscli bouncers add`. The `type` identifies the bouncer software (e.g., `cs-firewall-bouncer`, `cs-routeros-bouncer`). The `utc_startup_timestamp` tells the LAPI when this bouncer instance started — useful for detecting restarts.
+
+### The three metric categories
+
+CrowdSec metrics fall into three categories, each serving a different purpose in the Console dashboard.
+
+<BarChart
+  data={[
+    { label: "active_decisions (CAPI)", value: 12500 },
+    { label: "active_decisions (crowdsec)", value: 45 },
+    { label: "active_decisions (cscli)", value: 3 },
+    { label: "dropped (ipv4, bytes)", value: 847000 },
+    { label: "dropped (ipv6, bytes)", value: 12300 },
+    { label: "processed (ipv4, bytes)", value: 5200000 }
+  ]}
+  title="Example metric values for a single reporting window"
+  valueUnit=""
+  showValue={true}
+  ariaLabel="Bar chart showing example metric values: 12500 active CAPI decisions, 45 active crowdsec decisions, 3 active cscli decisions, 847000 dropped IPv4 bytes, 12300 dropped IPv6 bytes, and 5200000 processed IPv4 bytes"
+  caption="Relative scale of typical metric values in a single 600-second window"
+/>
+
+#### `active_decisions` — what's currently enforced
+
+This metric reports **how many decisions are currently active** in the bouncer, broken down by origin and IP type. It's a **snapshot** (gauge) — not a delta.
+
+<Code lang="json" title="active_decisions metric item">
+{`{
+  "name": "active_decisions",
+  "value": 12500,
+  "unit": "ip",
+  "labels": {
+    "origin": "CAPI",
+    "ip_type": "ipv4"
+  }
+}`}
+</Code>
+
+Labels:
+- **`origin`**: Where the decision came from — `"crowdsec"` (local Security Engine), `"CAPI"` (community blocklist), `"cscli"` (manual), or `"lists"` (static lists).
+- **`ip_type`**: `"ipv4"` or `"ipv6"`.
+
+This tells operators: "Right now, I have 12,500 CAPI-sourced IPv4 bans active." It's the single most important metric for verifying that the bouncer is actually receiving and enforcing decisions.
+
+#### `dropped` — what got blocked
+
+This metric reports **traffic that was blocked** by the bouncer's rules. It uses two units (`"byte"` and `"packet"`) and is labeled by IP type.
+
+<Code lang="json" title="dropped metric items (bytes and packets)">
+{`{
+  "name": "dropped",
+  "value": 847293,
+  "unit": "byte",
+  "labels": { "ip_type": "ipv4" }
+}
+{
+  "name": "dropped",
+  "value": 1523,
+  "unit": "packet",
+  "labels": { "ip_type": "ipv4" }
+}`}
+</Code>
+
+**These are deltas** — the increment since the last metrics report, not cumulative totals. If the bouncer dropped 847,293 bytes in the last 600 seconds, that's the value it reports. The next report covers the next 600-second window.
+
+#### `processed` — total traffic through the rules
+
+This metric reports **all traffic** that traversed the bouncer's rules — both allowed and dropped. It has the same structure as `dropped`: two units, same labels, also deltas.
+
+<Code lang="json" title="processed metric items">
+{`{
+  "name": "processed",
+  "value": 52340000,
+  "unit": "byte",
+  "labels": { "ip_type": "ipv4" }
+}
+{
+  "name": "processed",
+  "value": 89200,
+  "unit": "packet",
+  "labels": { "ip_type": "ipv4" }
+}`}
+</Code>
+
+Combined with `dropped`, this allows the CrowdSec Console to compute a **block rate**: `dropped / processed`. A block rate of 1.6% means that 1.6% of all traffic traversing the firewall rules matched a CrowdSec decision and was blocked.
+
+<Callout type="keypoint" title="Gauges vs deltas — don't mix them up">
+The distinction between snapshots and deltas is the single most common source of metrics bugs in bouncer implementations.
+
+- **`active_decisions`** is a **gauge** (point-in-time snapshot). Report the current count every time.
+- **`dropped`** and **`processed`** are **deltas** (increments over a time window). Report only the change since the last report.
+
+If you accidentally report cumulative dropped bytes instead of the delta, the Console will show exponentially growing traffic graphs — a telltale sign that delta computation is broken.
+</Callout>
+
+### Window metadata
+
+Every metrics push includes metadata describing the time window it covers:
+
+<Code lang="json" title="Metrics window metadata">
+{`{
+  "meta": {
+    "window_size_seconds": 600,
+    "utc_now_timestamp": 1719850200
+  },
+  "items": [ ... ]
+}`}
+</Code>
+
+- **`window_size_seconds`**: How much time these deltas cover (e.g., 600 seconds = 10 minutes). This is the bouncer's reporting interval.
+- **`utc_now_timestamp`**: When this snapshot was taken (Unix epoch).
+
+The Console uses these to calculate rates. If the bouncer reports 847,293 dropped bytes with a window of 600 seconds, the Console can display ~1,412 bytes/sec blocked.
+
+### Delta tracking from cumulative counters
+
+This is the trickiest part of metrics implementation. Most target systems (iptables, nftables, RouterOS, pf) expose **cumulative** counters — they count total bytes/packets since the rule was created or the counter was last reset. CrowdSec expects **deltas**.
+
+The bouncer must compute deltas itself by tracking the previous counter value:
+
+<Mermaid caption="Delta computation from cumulative firewall counters" ariaLabel="Sequence diagram showing a bouncer reading cumulative firewall counters at three consecutive intervals. At T1 it reads 10000 bytes and stores that as lastSent. At T2 it reads 15000 bytes, computes delta as 5000, reports that to the LAPI, and stores 15000 as lastSent. At T3 it reads 3000 bytes (counter wrapped), detects the wrap, uses 3000 as the delta, and stores 3000 as lastSent.">
+```mermaid-render
+sequenceDiagram
+    participant FW as Firewall Counters
+    participant B as Bouncer
+    participant L as LAPI
+
+    Note over B: T1: First read
+    B->>FW: Read counters
+    FW-->>B: dropped_bytes = 10000
+    Note over B: Store lastSent = 10000<br/>No report yet (no previous value)
+
+    Note over B: T2: Normal increment
+    B->>FW: Read counters
+    FW-->>B: dropped_bytes = 15000
+    Note over B: delta = 15000 - 10000 = 5000
+    B->>L: Report dropped = 5000
+    Note over B: Store lastSent = 15000
+
+    Note over B: T3: Counter wrapped!
+    B->>FW: Read counters
+    FW-->>B: dropped_bytes = 3000
+    Note over B: 3000 < 15000 → wrap detected<br/>delta = 3000 (use current as delta)
+    B->>L: Report dropped = 3000
+    Note over B: Store lastSent = 3000
+```
+</Mermaid>
+
+The pseudocode is simple but important to get right:
+
+<Code lang="text" title="Delta computation with wrap-around handling">
+{`function computeDelta(current, lastSent):
+    if current >= lastSent:
+        return current - lastSent   // Normal increment
+    else:
+        return current              // Counter wrapped, use current as delta`}
+</Code>
+
+<Callout type="warning" title="Counter wrap-around is real">
+Counter wrap-around happens when the system's counter exceeds its maximum value (e.g., `uint32` max ≈ 4.3 billion) and resets to zero. It also happens after a system restart or a manual counter reset. A bouncer **must** handle this gracefully — using the current value as the delta is a safe approximation. The small inaccuracy (losing the bytes between the last read and the wrap point) is acceptable and self-corrects on the next interval.
+</Callout>
+
+### The complete collection cycle
+
+Putting it all together, here is the full metrics collection and reporting cycle:
+
+<Mermaid caption="Complete metrics collection and reporting cycle" ariaLabel="Flowchart showing the complete metrics push cycle. A timer fires every N seconds. The bouncer reads firewall counters from the target system, reads active decision counts from its internal cache, computes deltas for dropped and processed metrics, builds the AllMetrics payload with window metadata, filters out items with value zero, posts to the LAPI usage-metrics endpoint, and stores the current counter values for the next cycle.">
+```mermaid-render
+flowchart TB
+    TIMER["Timer fires<br/>(every N seconds)"]:::info --> READ["Read firewall counters<br/>from target system"]
+    READ --> CACHE["Read active decision counts<br/>from internal cache"]
+    CACHE --> DELTA["Compute deltas<br/>for dropped and processed"]
+    DELTA --> BUILD["Build metrics payload"]
+    BUILD --> FILTER["Filter out items<br/>where value = 0"]
+    FILTER --> META["Add window metadata<br/>(window_size_seconds, utc_now_timestamp)"]
+    META --> POST["POST /v1/usage-metrics"]:::success
+    POST --> STORE["Store current counters<br/>as lastSent for next cycle"]:::info
+```
+</Mermaid>
+
+<Callout type="tip" title="Only report non-zero items">
+Skip metric items where the value is zero. If no IPv6 traffic was dropped in this window, don't include a `dropped` item with `ip_type: ipv6` and `value: 0`. This keeps the payload small and avoids cluttering the Console with noise.
+</Callout>
+
+### Full example payload
+
+Here is a complete, realistic metrics payload that a firewall bouncer might send:
+
+<Collapsible title="Complete usage-metrics JSON payload">
+
+<Code lang="json" title="Realistic usage-metrics POST body">
+{`{
+  "remediation_components": [
+    {
+      "version": "1.5.0",
+      "name": "my-firewall-bouncer",
+      "type": "cs-firewall-bouncer",
+      "utc_startup_timestamp": 1719849600,
+      "os": {
+        "name": "linux",
+        "family": "debian",
+        "version": "12"
+      },
+      "feature_flags": [],
+      "metrics": [
         {
-          "name": "active_decisions",
-          "value": 1250,
-          "labels": {
-            "origin": "CAPI",
-            "ip_type": "ipv4"
-          }
-        },
-        {
-          "name": "dropped",
-          "value": 3847,
-          "unit": "packet",
-          "labels": {
-            "ip_type": "ipv4"
-          }
-        },
-        {
-          "name": "dropped",
-          "value": 184320,
-          "unit": "byte",
-          "labels": {
-            "ip_type": "ipv4"
-          }
+          "meta": {
+            "window_size_seconds": 600,
+            "utc_now_timestamp": 1719850200
+          },
+          "items": [
+            {
+              "name": "active_decisions",
+              "value": 12500,
+              "unit": "ip",
+              "labels": { "origin": "CAPI", "ip_type": "ipv4" }
+            },
+            {
+              "name": "active_decisions",
+              "value": 45,
+              "unit": "ip",
+              "labels": { "origin": "crowdsec", "ip_type": "ipv4" }
+            },
+            {
+              "name": "active_decisions",
+              "value": 3,
+              "unit": "ip",
+              "labels": { "origin": "cscli", "ip_type": "ipv4" }
+            },
+            {
+              "name": "active_decisions",
+              "value": 8,
+              "unit": "ip",
+              "labels": { "origin": "CAPI", "ip_type": "ipv6" }
+            },
+            {
+              "name": "dropped",
+              "value": 847293,
+              "unit": "byte",
+              "labels": { "ip_type": "ipv4" }
+            },
+            {
+              "name": "dropped",
+              "value": 1523,
+              "unit": "packet",
+              "labels": { "ip_type": "ipv4" }
+            },
+            {
+              "name": "dropped",
+              "value": 12340,
+              "unit": "byte",
+              "labels": { "ip_type": "ipv6" }
+            },
+            {
+              "name": "dropped",
+              "value": 42,
+              "unit": "packet",
+              "labels": { "ip_type": "ipv6" }
+            },
+            {
+              "name": "processed",
+              "value": 52340000,
+              "unit": "byte",
+              "labels": { "ip_type": "ipv4" }
+            },
+            {
+              "name": "processed",
+              "value": 89200,
+              "unit": "packet",
+              "labels": { "ip_type": "ipv4" }
+            }
+          ]
         }
       ]
     }
@@ -827,280 +931,283 @@ The payload includes remediation statistics and active decision counts:
 }`}
 </Code>
 
-### Metrics Flow
+</Collapsible>
 
-Understanding how metrics travel through the CrowdSec ecosystem helps you design the right reporting strategy:
+### What the operator sees
 
-<Mermaid caption="Metrics flow from bouncer to Console" ariaLabel="Sequence diagram showing metrics flowing from bouncer to LAPI to CAPI to Console dashboard">
-```mermaid-render
-sequenceDiagram
-    participant B as Bouncer
-    participant L as LAPI
-    participant C as CAPI
-    participant D as Console
+These metrics flow from the bouncer to the LAPI and ultimately to two places:
 
-    Note over B: Collect metrics<br/>(active decisions, drops, bytes)
-    B->>L: POST /v1/usage-metrics
-    Note over L: Aggregate metrics<br/>from all bouncers
-    L->>C: Push aggregated metrics
-    Note over C: Store in<br/>community database
-    C->>D: Display in dashboard
-    Note over D: Operators see bouncer<br/>activity and health
-```
-</Mermaid>
+**`cscli metrics`** — The command-line tool shows a summary of bouncer activity, including active decision counts, decisions processed, and the last time the bouncer reported in. This is the operator's first-line diagnostic tool.
 
-### What to Report
+**CrowdSec Console** — The web dashboard aggregates metrics across all bouncers and displays active decisions, block rates (dropped/processed), traffic volumes, and historical trends. It's where operators verify that enforcement is working at scale.
 
-The minimum set of metrics to report are:
+Why does accuracy matter? If the bouncer reports incorrect metrics — cumulative instead of deltas, missing origins, wrong IP types — the Console shows misleading data. Operators might think enforcement is broken when it's working fine, or worse, think it's working when it isn't. Accurate metrics are the foundation of operational trust.
 
-<CheckList title="Essential metrics">
-  <li data-check="check">**Active decisions** — How many decisions are currently being enforced, broken down by origin (`crowdsec`, `CAPI`, `cscli`, `lists`) and IP type (`ipv4`, `ipv6`)</li>
-  <li data-check="check">**Dropped traffic** — Packets and bytes dropped by bouncer-managed rules, broken down by IP type</li>
-  <li data-check="optional">**Processed traffic** — Total packets and bytes that passed through bouncer-managed rules (both allowed and blocked)</li>
-  <li data-check="optional">**Bouncer version and name** — Helps operators identify which bouncer version is running</li>
-</CheckList>
+## Testing and observability
 
-### Reporting Interval
+A bouncer that works but cannot be tested or observed is a liability. This section covers the tools and patterns for verifying bouncer behavior.
 
-<Callout type="tip" title="Recommended reporting interval">
-  A reporting interval of **10-15 minutes** is typical for most bouncers. Too frequent (seconds) wastes resources; too infrequent (hours) makes the Console data stale. The [cs-routeros-bouncer](https://github.com/jmrplens/cs-routeros-bouncer) defaults to 15 minutes. CrowdSec's official firewall bouncer uses a similar interval. Make the interval configurable.
-</Callout>
+### Testing with cscli
 
-### Prometheus Integration
+The `cscli` command-line tool is the primary way to test bouncer behavior manually. You can create, list, and delete decisions without waiting for the Security Engine to detect real threats.
 
-Beyond LAPI reporting, exposing [Prometheus](https://prometheus.io/) metrics allows operators to monitor your bouncer with their existing observability stack:
+<TerminalSession title="Testing the full decision lifecycle with cscli">
+  <TerminalSessionCommand prompt="$" ariaLabel="Add a test ban decision for IP 1.2.3.4 with a 5-minute duration">
+    cscli decisions add --ip 1.2.3.4 --duration 5m --reason "manual test" --type ban
+  </TerminalSessionCommand>
+  <TerminalSessionOutput>
+{`INFO[0000] Decision successfully added`}
+  </TerminalSessionOutput>
+  <TerminalSessionCommand prompt="$" ariaLabel="List all active decisions to verify the test ban was created">
+    cscli decisions list
+  </TerminalSessionCommand>
+  <TerminalSessionOutput>
+{`╭────┬──────────┬────────────────────┬──────────┬───────┬─────────┬───────────────────╮
+│ ID │  Source  │     Scope:Value    │ Decision │ Until │ Created │     Scenario      │
+├────┼──────────┼────────────────────┼──────────┼───────┼─────────┼───────────────────┤
+│ 42 │ cscli    │ Ip:1.2.3.4         │ ban      │ 4m58s │ 2s ago  │ manual test       │
+╰────┴──────────┴────────────────────┴──────────┴───────┴─────────┴───────────────────╯`}
+  </TerminalSessionOutput>
+  <TerminalSessionCommand prompt="$" ariaLabel="Delete the test ban decision for IP 1.2.3.4">
+    cscli decisions delete --ip 1.2.3.4
+  </TerminalSessionCommand>
+  <TerminalSessionOutput>
+{`INFO[0000] 1 decision(s) deleted`}
+  </TerminalSessionOutput>
+</TerminalSession>
 
-<Table title="Useful Prometheus metrics for bouncers" ariaLabel="Table of recommended Prometheus metrics to expose from a bouncer">
-  <table>
-    <thead>
-      <tr>
-        <th>Metric</th>
-        <th>Type</th>
-        <th>Labels</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>`decisions_total`</td>
-        <td>Counter</td>
-        <td>action, proto, origin</td>
-        <td>Total decisions processed (ban/unban)</td>
-      </tr>
-      <tr>
-        <td>`active_decisions`</td>
-        <td>Gauge</td>
-        <td>proto</td>
-        <td>Currently enforced decisions</td>
-      </tr>
-      <tr>
-        <td>`dropped_packets_total`</td>
-        <td>Counter</td>
-        <td>proto</td>
-        <td>Packets dropped by bouncer rules</td>
-      </tr>
-      <tr>
-        <td>`operation_duration_seconds`</td>
-        <td>Histogram</td>
-        <td>operation</td>
-        <td>Time to add/remove/reconcile entries</td>
-      </tr>
-    </tbody>
-  </table>
+After adding a decision, verify that your bouncer picks it up on the next poll cycle and applies it to the target system. After deleting, verify the removal. This tests the full `new` → enforce → `deleted` → remove pipeline.
+
+You can also test edge cases that are hard to trigger organically:
+
+<Table title="Testing scenarios with cscli" ariaLabel="Table listing test scenarios that can be verified using cscli commands, including the specific command and what to verify">
+
+| Scenario | cscli command | What to verify |
+|---|---|---|
+| Basic ban | `cscli decisions add --ip 1.2.3.4 --type ban` | IP appears in firewall address list |
+| IPv6 ban | `cscli decisions add --ip 2001:db8::1 --type ban` | IPv6 handling works correctly |
+| Range ban | `cscli decisions add --range 10.0.0.0/24 --type ban` | CIDR ranges are handled |
+| Simulated decision | `cscli decisions add --ip 5.6.7.8 --type ban` + set simulated flag | Decision is NOT enforced |
+| Manual unban | `cscli decisions delete --ip 1.2.3.4` | IP removed from address list |
+| Short duration | `cscli decisions add --ip 9.8.7.6 --duration 30s` | Entry expires after 30 seconds |
+| Bulk import | `cscli decisions import -i blocklist.csv` | Startup-like bulk handling |
+
 </Table>
 
-## Testing and Observability
+<TerminalSession title="Checking bouncer registration and metrics">
+  <TerminalSessionCommand prompt="$" ariaLabel="List all registered bouncers to see their status and last activity">
+    cscli bouncers list
+  </TerminalSessionCommand>
+  <TerminalSessionOutput>
+{`╭───────────────────────────┬───────────┬─────────────────────╮
+│           Name            │ IP Address│    Last Pull        │
+├───────────────────────────┼───────────┼─────────────────────┤
+│ my-firewall-bouncer       │ 127.0.0.1 │ 2026-03-01 14:30:00 │
+╰───────────────────────────┴───────────┴─────────────────────╯`}
+  </TerminalSessionOutput>
+</TerminalSession>
 
-A bouncer runs in the critical path of your security infrastructure — if it breaks, threats go unblocked. Proper testing and observability are essential.
+### Prometheus metrics
 
-### Integration Testing
+The LAPI usage-metrics protocol gives CrowdSec Console visibility into your fleet. But for **local operational monitoring** — dashboards, alerting, capacity planning — you need Prometheus-compatible metrics.
 
-The most effective way to test a bouncer is against a real CrowdSec instance:
+A production bouncer should expose Prometheus metrics for integration with monitoring stacks (Grafana, Alertmanager, etc.). Key metrics to expose:
 
-<StepByStep title="Integration testing approach">
-  <li>**Set up a local CrowdSec instance** — Use Docker or install directly. Configure a test bouncer API key.</li>
-  <li>**Create test decisions** — Use `cscli decisions add -i 203.0.113.1 -d 1h -t ban` to manually create decisions.</li>
-  <li>**Verify enforcement** — Confirm that the bouncer created the expected rule/entry on the target system.</li>
-  <li>**Test deletion** — Use `cscli decisions delete --id X` and verify the bouncer removes the corresponding entry.</li>
-  <li>**Test reconciliation** — Manually remove a rule, restart the bouncer, and verify it re-adds the missing entry.</li>
-  <li>**Test bulk operations** — Add hundreds of decisions at once and measure startup time.</li>
-  <li>**Test failure modes** — Stop the LAPI, restart it, and verify the bouncer recovers gracefully.</li>
-</StepByStep>
+<Table title="Recommended Prometheus metrics for a bouncer" ariaLabel="Table listing recommended Prometheus metric names, types, labels, and descriptions for a CrowdSec bouncer">
 
-### Logging Best Practices
+| Metric name | Type | Labels | Description |
+|---|---|---|---|
+| `bouncer_active_decisions` | Gauge | `ip_type`, `origin` | Currently active decisions |
+| `bouncer_decisions_total` | Counter | `action`, `ip_type`, `origin` | Total decisions processed |
+| `bouncer_errors_total` | Counter | `operation` | Errors by operation type |
+| `bouncer_operation_duration_seconds` | Histogram | `operation` | Duration of system operations |
 
-<CheckList title="Logging recommendations">
-  <li data-check="check">**Structured logging** — Use JSON or key-value format for easy parsing by log aggregators</li>
-  <li data-check="check">**Log every decision action** — Record when decisions are added, updated, or removed with the IP, scenario, and origin</li>
-  <li data-check="check">**Log reconciliation results** — Report how many entries were added, removed, and unchanged during reconciliation</li>
-  <li data-check="check">**Include operation timings** — Log how long bulk operations and API calls take</li>
-  <li data-check="warning">**Rate-limit error logs** — Avoid flooding logs during extended LAPI outages</li>
-  <li data-check="cross">**Never log the API key** — Even in debug mode, mask credentials in log output</li>
-</CheckList>
+</Table>
 
-### Health Checks
+These metrics serve a different purpose than the LAPI usage-metrics. Prometheus metrics are for **local observability** — alerting on errors, tracking operation latency, and debugging performance issues. LAPI metrics are for **CrowdSec Console** — aggregate enforcement visibility across all bouncers.
 
-Expose a health endpoint or status mechanism so monitoring systems can detect when the bouncer is degraded:
+<Table title="Metrics comparison: Prometheus vs LAPI" ariaLabel="Table comparing Prometheus metrics and LAPI usage-metrics by audience, granularity, transport, and use case">
 
-<Code lang="json" title="Health check response example">
+| Aspect | Prometheus metrics | LAPI usage-metrics |
+|---|---|---|
+| Audience | Local ops team | CrowdSec Console |
+| Granularity | Per-second counters | Aggregated per window |
+| Transport | Pull (HTTP scrape) | Push (HTTP POST) |
+| Retention | Local TSDB | CrowdSec cloud |
+| Alerting | Grafana / Alertmanager | Console dashboards |
+
+</Table>
+
+### Structured logging
+
+Bouncer logs should include contextual fields that make debugging possible without grepping through walls of text. Key fields for each log entry:
+
+<Code lang="json" title="Example structured log entries">
+{`// Ban applied
+{"level":"info","action":"ban","address":"203.0.113.42","list":"crowdsec-blocklist","timeout":"4h","origin":"CAPI","scenario":"crowdsecurity/http-probing"}
+
+// Unban applied
+{"level":"info","action":"unban","address":"203.0.113.42","list":"crowdsec-blocklist","origin":"CAPI"}
+
+// Cache hit (skip redundant operation)
+{"level":"debug","action":"ban_skip","address":"203.0.113.42","reason":"already_in_cache"}
+
+// Error
+{"level":"error","action":"ban","address":"203.0.113.42","error":"connection timeout to target system"}`}
+</Code>
+
+Use **INFO** for ban/unban actions, **DEBUG** for cache hits and skipped operations, and **ERROR** for failures. This lets operators run at INFO level in production and switch to DEBUG for troubleshooting.
+
+### Health endpoint
+
+Every bouncer should expose a health endpoint (`/health` or `/metrics`) that monitoring systems can probe. The health check should verify:
+
+- **LAPI connectivity**: Can the bouncer reach the LAPI? Is the API key still valid?
+- **Target system connectivity**: Can the bouncer reach the firewall/router/proxy?
+- **Last successful poll**: How long since the bouncer received decisions? (Staleness detection)
+- **Last successful metrics push**: How long since the bouncer reported metrics?
+
+If any of these checks fail, the health endpoint returns a non-200 status code, triggering an alert before the bouncer silently stops enforcing.
+
+<Code lang="json" title="Example health endpoint response">
 {`{
   "status": "healthy",
-  "lapi_connected": true,
-  "last_poll": "2026-03-01T10:14:30Z",
-  "active_decisions": {
-    "ipv4": 1247,
-    "ipv6": 3
+  "lapi": {
+    "reachable": true,
+    "last_pull": "2026-03-01T14:30:00Z",
+    "seconds_since_last_pull": 28
   },
   "target_system": {
-    "connected": true,
-    "rules_synced": true
+    "reachable": true,
+    "type": "routeros",
+    "address_list_count": 12548
   },
-  "uptime": "72h15m30s"
+  "metrics": {
+    "last_push": "2026-03-01T14:25:00Z",
+    "seconds_since_last_push": 328
+  },
+  "uptime_seconds": 86420
 }`}
 </Code>
 
-## Case Study: cs-routeros-bouncer
+The health endpoint is also the right place to expose **staleness thresholds**. If the bouncer hasn't pulled decisions in over 5 minutes (5× the expected interval), something is likely wrong. This lets external monitoring systems (Prometheus, Nagios, uptime robots) detect bouncer failures even when the process is still running.
 
-To illustrate these patterns in practice, let's look at [cs-routeros-bouncer](https://github.com/jmrplens/cs-routeros-bouncer) — a CrowdSec bouncer designed for [MikroTik](https://mikrotik.com/) RouterOS devices. This project solves a particularly interesting challenge: MikroTik routers have a limited API that doesn't support batch operations natively, and their connection capacity is constrained.
+## Case study: cs-routeros-bouncer
 
-### Architecture Overview
+To ground these patterns in reality, let's look at [cs-routeros-bouncer](https://github.com/jmrplens/cs-routeros-bouncer) — a CrowdSec bouncer for MikroTik RouterOS devices. It implements every pattern described in this post.
 
-<Mermaid caption="cs-routeros-bouncer architecture" ariaLabel="Architecture diagram of cs-routeros-bouncer showing LAPI client, decision processor, MikroTik connection pool, address list manager, and metrics reporter">
-```mermaid-render
-flowchart LR
-    subgraph CrowdSec
-        LAPI["CrowdSec LAPI"]
-    end
+### Architecture overview
 
-    subgraph Bouncer["cs-routeros-bouncer"]
-        direction TB
-        Stream["Stream Client<br/>(go-cs-bouncer SDK)"]
-        Manager["Decision Manager<br/>(parse, filter, cache)"]
-        Pool["Connection Pool<br/>(parallel MikroTik sessions)"]
-        MReporter["Metrics Reporter<br/>(LAPI + Prometheus)"]
-    end
+RouterOS devices (MikroTik routers) present unique constraints for bouncer design. They have limited memory, no local package manager, and their management API operates over HTTP REST or SSH. The bouncer must run externally and push firewall rules to the device remotely.
 
-    subgraph MikroTik["MikroTik Router"]
-        FW["Firewall Rules<br/>(filter + raw tables)"]
-        AL["Address Lists<br/>(IPv4 + IPv6)"]
-        Counters["Traffic Counters<br/>(bytes + packets)"]
-    end
+The bouncer manages firewall address lists on MikroTik routers via the RouterOS REST API. Its architecture follows the generic pattern from Section 4, with adaptations for the RouterOS platform:
 
-    LAPI -->|"decisions stream"| Stream
-    Stream --> Manager
-    Manager -->|"add (script batch)"| Pool
-    Manager -->|"remove (parallel)"| Pool
-    Pool --> AL
-    Pool --> FW
-    Counters -->|"poll counters"| MReporter
-    MReporter -->|"POST /v1/usage-metrics"| LAPI
+- **Manager**: Orchestrates startup, coordinates all subsystems, handles graceful shutdown.
+- **CrowdSec Stream**: Polls the LAPI via the stream endpoint, processes decisions, and feeds them into the remediation engine.
+- **RouterOS Client**: Manages the connection to the MikroTik router, handles authentication, bulk operations, and connection pooling.
+- **Metrics Subsystem**: Reads firewall counters from the router, computes deltas, and pushes usage-metrics to the LAPI.
 
-    classDef crowdsec fill:#2d1b4e,stroke:#b389f5,color:#fff
-    classDef bouncer fill:#1a3a5c,stroke:#4a9eff,color:#fff
-    classDef router fill:#1a3d1a,stroke:#4ade80,color:#fff
+### Key design decisions
 
-    class LAPI crowdsec
-    class Stream,Manager,Pool,MReporter bouncer
-    class FW,AL,Counters router
-```
-</Mermaid>
+These decisions, while implemented in this specific bouncer, apply to any bouncer you might build:
 
-### Key Design Decisions
+**Channel-based architecture** — Decision intake (LAPI polling) is decoupled from firewall operations (RouterOS API calls) using asynchronous message passing. This means a slow router API response doesn't block decision polling, and a burst of decisions doesn't overwhelm the router with simultaneous requests.
 
-The bouncer implements several of the patterns discussed in this post, plus some unique solutions for MikroTik's constraints:
+**Connection pooling** — During reconciliation, the bouncer needs to make many parallel API calls to the router (listing existing entries, adding new ones, removing stale ones). A connection pool allows controlled parallelism without exhausting the router's connection limits.
 
-<Table title="Key design decisions in cs-routeros-bouncer" ariaLabel="Table of notable design decisions and their rationale in the cs-routeros-bouncer project">
-  <table>
-    <thead>
-      <tr>
-        <th>Challenge</th>
-        <th>Solution</th>
-        <th>Pattern</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>MikroTik has no batch add API</td>
-        <td>Generate RouterOS scripts with up to 100 entries each, execute via scripting API</td>
-        <td>Script injection</td>
-      </tr>
-      <tr>
-        <td>Limited concurrent connections (max ~20 sessions)</td>
-        <td>Auto-detect max sessions, create pool sized to `max - 2` (leave room for admin)</td>
-        <td>Connection pooling</td>
-      </tr>
-      <tr>
-        <td>Adding an existing entry returns an error</td>
-        <td>Catch "already have" error, update timeout instead of failing</td>
-        <td>Optimistic add</td>
-      </tr>
-      <tr>
-        <td>Crash recovery without persistent state</td>
-        <td>Embed `@cs-routeros-bouncer` signature in address-list comments</td>
-        <td>Rule signature</td>
-      </tr>
-      <tr>
-        <td>Efficient deletion of expired entries</td>
-        <td>In-memory address cache for O(1) lookup; parallel deletion via pool</td>
-        <td>Address cache + parallel ops</td>
-      </tr>
-      <tr>
-        <td>Metrics collection from firewall counters</td>
-        <td>Passthrough rules count traffic; periodic sampling for Prometheus + LAPI</td>
-        <td>Counting rules</td>
-      </tr>
-    </tbody>
-  </table>
+**Optimistic add pattern** — When adding an IP to the address list, the bouncer tries to add first without checking if it already exists. If the router returns "already exists," the bouncer updates the timeout instead. This is faster than checking first because the common case (new IP) requires only one API call instead of two.
+
+**Address cache** — An in-memory set of all known addresses enables fast-path unbans. When a deletion arrives, the bouncer checks the cache first. If the address isn't there, it skips the router API call entirely — the entry already expired or was never applied.
+
+**Signature-based cleanup** — Every firewall entry includes `@cs-routeros-bouncer` in its comment field. On startup, the bouncer searches for this signature to find all entries from previous runs, enabling reliable reconciliation regardless of configuration changes.
+
+**Dual metrics** — Prometheus metrics for local observability (Grafana dashboards, alerts) and LAPI usage-metrics for CrowdSec Console visibility. Both draw from the same underlying data but serve different audiences.
+
+**Delta tracking with wrap-around** — MikroTik's firewall counters are cumulative. The bouncer reads them each interval, computes deltas using the algorithm described in Section 9.5, and handles counter wrap-around (which happens after router reboots or when counters exceed their maximum value).
+
+### Performance characteristics
+
+Real-world numbers from a production deployment managing ~12,500 community blocklist entries on a MikroTik hAP ax³ router:
+
+<Table title="cs-routeros-bouncer performance metrics" ariaLabel="Table showing performance metrics from a real cs-routeros-bouncer deployment, including startup reconciliation time, steady-state operations, and memory usage">
+
+| Operation | Typical value | Notes |
+|---|---|---|
+| Startup reconciliation | 45–90 seconds | For 12,500 entries with 64 parallel connections |
+| Steady-state poll cycle | < 1 second | Usually 0–20 changes per cycle |
+| Metrics collection | 2–5 seconds | Reading counters from all address list entries |
+| Memory usage | ~25 MB | In-memory cache of all active decisions |
+| RouterOS API connections | 64 (pooled) | Configurable based on router capacity |
+
 </Table>
 
-### Performance Results
+The bottleneck is almost always the target system, not the bouncer itself. RouterOS devices have limited CPU and memory, and the REST API adds overhead compared to native CLI commands. The connection pool and bulk operations are what make it practical to manage 12,500+ entries on consumer-grade hardware.
 
-The combination of script batching and connection pooling yields substantial performance gains:
+## Common pitfalls
 
-<Table title="cs-routeros-bouncer startup performance" ariaLabel="Table showing startup performance benchmarks for different numbers of IP addresses">
-  <table>
-    <thead>
-      <tr>
-        <th>Addresses</th>
-        <th>Time (with pool + scripts)</th>
-        <th>Approx. per-entry rate</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>1,500 IPs</td>
-        <td>~9 seconds</td>
-        <td>~167 entries/sec</td>
-      </tr>
-      <tr>
-        <td>10,000 IPs</td>
-        <td>~65 seconds</td>
-        <td>~154 entries/sec</td>
-      </tr>
-      <tr>
-        <td>25,000 IPs</td>
-        <td>~2 min 50 sec</td>
-        <td>~147 entries/sec</td>
-      </tr>
-    </tbody>
-  </table>
-</Table>
+Before wrapping up, here are the most frequent mistakes bouncer developers make:
 
-For more details, including installation and configuration instructions, see the [cs-routeros-bouncer documentation](https://jmrplens.github.io/cs-routeros-bouncer/).
+<CheckList>
+<ul>
+<li data-check="cross">Treating `duration` as seconds instead of parsing the Go duration string</li>
+<li data-check="cross">Using decision `id` as cache key instead of `value` + `type`</li>
+<li data-check="cross">Ignoring the `simulated` flag and blocking traffic during scenario testing</li>
+<li data-check="cross">Not implementing reconciliation, causing stale entries to persist forever</li>
+<li data-check="cross">Sending cumulative counters instead of deltas in usage-metrics</li>
+<li data-check="cross">Hardcoding decision types instead of using a configurable mapping</li>
+<li data-check="warning">Not batching startup decisions, causing slow boot times</li>
+<li data-check="warning">Missing the `origins` filter, processing decisions from unwanted sources</li>
+</ul>
+</CheckList>
 
 ## Conclusion
 
-Designing a CrowdSec bouncer is fundamentally about bridging two worlds: the **CrowdSec decision ecosystem** and your **target enforcement system**. Whether you're building for a firewall, a web server, a DNS resolver, or a router, the core architecture remains the same:
+Building a CrowdSec bouncer is a systems integration problem. The protocol is well-defined, the decisions are structured, and the metrics format is documented. The challenge lies in handling the edge cases: counter wrap-around, crash recovery, duplicate detection, and graceful degradation when the target system is slow or unreachable.
 
-<CheckList title="Bouncer design principles">
-  <li data-check="check">**Authenticate securely** — Use API keys and support mTLS for production</li>
-  <li data-check="check">**Stream, don't poll individually** — Use the decisions stream with a local cache for efficiency and resilience</li>
-  <li data-check="check">**Validate and filter** — Never blindly apply every decision; filter by scope, origin, type, and protocol</li>
-  <li data-check="check">**Batch operations** — Target systems often have performance constraints; batch wherever possible</li>
-  <li data-check="check">**Reconcile on startup** — Compare LAPI state against target system state; fix drift automatically</li>
-  <li data-check="check">**Plan for crashes** — Embed signatures in your rules so you can recover without persistent state</li>
-  <li data-check="check">**Report metrics** — Make your bouncer visible in the Console by reporting to `/v1/usage-metrics`</li>
-  <li data-check="check">**Expose observability** — Prometheus metrics, structured logs, and health endpoints are not optional</li>
+If you are starting a new bouncer project, begin with stream mode, implement reconciliation early, and add metrics from the first iteration. These three capabilities form the foundation of a reliable bouncer. Everything else — captcha pages, rate limiting, multi-origin filtering — can be layered on incrementally.
+
+The CrowdSec community maintains a growing collection of official and community bouncers. Study their source code, file issues, and share your implementations. The protocol is open, the ecosystem is welcoming, and every new bouncer makes the collective defense stronger.
+
+The patterns described in this post are not theoretical — they are the result of building and operating [cs-routeros-bouncer](https://github.com/jmrplens/cs-routeros-bouncer) in production with CrowdSec community blocklists containing 12,500+ entries. Every edge case mentioned (counter wrap-around, crash recovery, duration parsing failures) was discovered through real-world operation.
+
+Here is a checklist of everything a production-ready bouncer should implement:
+
+<CheckList>
+<ul>
+  <li data-check="check">Authenticate with the LAPI using a registered API key</li>
+  <li data-check="check">Use stream mode for firewall bouncers, live mode for application bouncers</li>
+  <li data-check="check">Handle both <code>new</code> and <code>deleted</code> decision arrays on every poll</li>
+  <li data-check="check">Respect the <code>simulated</code> flag — never enforce simulated decisions</li>
+  <li data-check="check">Parse durations with fallback to a safe default</li>
+  <li data-check="check">Maintain a local decision cache for deduplication</li>
+  <li data-check="check">Handle unknown decision types gracefully (configurable fallback)</li>
+  <li data-check="check">Use bulk operations for startup reconciliation</li>
+  <li data-check="check">Implement signature-based cleanup for crash recovery</li>
+  <li data-check="check">Report usage-metrics with all three categories (<code>active_decisions</code>, <code>dropped</code>, <code>processed</code>)</li>
+  <li data-check="check">Track deltas correctly for dropped/processed counters (handle wrap-around)</li>
+  <li data-check="check">Include window metadata (<code>window_size_seconds</code>, <code>utc_now_timestamp</code>) in every push</li>
+  <li data-check="check">Expose Prometheus metrics for local observability</li>
+  <li data-check="check">Implement structured logging with contextual fields</li>
+  <li data-check="warning">Never enforce decisions with <code>simulated: true</code></li>
+  <li data-check="warning">Don't report cumulative counters as deltas — always compute the increment</li>
+</ul>
 </CheckList>
 
-The CrowdSec ecosystem is designed with extensibility in mind — the [LAPI](https://crowdsecurity.github.io/api_doc/index.html?urls.primaryName=LAPI) is well-documented, the [Go SDK](https://github.com/crowdsecurity/go-cs-bouncer) handles the boilerplate, and the [community](https://discourse.crowdsec.net/) is active and welcoming. If your system can block an IP or deny a request, you can build a bouncer for it.
+<Callout type="info" title="Keep up with protocol changes">
+The CrowdSec team actively evolves the LAPI protocol. Before starting a new bouncer project, check the latest API documentation for any changes to endpoints, request formats, or authentication mechanisms. The CrowdSec Discord server is also a valuable resource for bouncer developers.
+</Callout>
+
+---
+
+The architecture and patterns in this post are language-agnostic. Whether you implement your bouncer in Python, Rust, TypeScript, or shell scripts, the same design principles apply: authenticate, consume decisions efficiently, enforce them reliably, report metrics accurately, and always clean up after yourself.
+
+### References
+
+1. [LAPI API Specification](https://crowdsecurity.github.io/api_doc/lapi/) — Complete reference for all LAPI endpoints including decisions and usage-metrics.
+2. [CAPI API Specification](https://crowdsecurity.github.io/api_doc/capi/) — Central API documentation for community intelligence sharing.
+3. [Bouncer Introduction](https://docs.crowdsec.net/u/bouncers/intro/) — Official documentation on what bouncers are and how they integrate.
+4. [CrowdSec Go SDK (go-cs-bouncer)](https://github.com/crowdsecurity/go-cs-bouncer) — Reference SDK for building bouncers in Go.
+5. [CrowdSec Python SDK (pycrowdsec)](https://github.com/crowdsecurity/pycrowdsec) — SDK for building bouncers in Python.
+6. [Official Firewall Bouncer (cs-firewall-bouncer)](https://github.com/crowdsecurity/cs-firewall-bouncer) — Reference implementation for iptables, nftables, ipset, and pf.
+7. [cs-routeros-bouncer](https://github.com/jmrplens/cs-routeros-bouncer) — The MikroTik RouterOS bouncer used as a case study in this post.
+8. [CrowdSec Discourse](https://discourse.crowdsec.net/) — Community forum for questions, discussions, and bouncer development support.

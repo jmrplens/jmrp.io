@@ -19,7 +19,12 @@ const posts = defineCollection({
   schema: ({ image }) =>
     z.object({
       title: z.string(),
-      slug: z.string(),
+      slug: z
+        .string()
+        .regex(
+          /^\d{3}-/,
+          "Slug must start with a three-digit prefix (e.g. 009-my-post)",
+        ),
       /** Content language. Defaults to "en" when omitted from frontmatter. */
       lang: z.enum(["en", "es"]).default("en"),
       publishedDate: z.coerce.date(),
