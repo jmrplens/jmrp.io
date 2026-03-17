@@ -29,7 +29,6 @@
   },
   "pnpm": {
     "overrides": {
-      "@astrojs/internal-helpers": "^0.7.5",
       "axios": ">=1.13.2",
       "form-data": ">=4.0.0",
       "qs": ">=6.14.2",
@@ -53,7 +52,7 @@
       "shiki": "^4.0.0"
     }
   },
-  "packageManager": "pnpm@10.30.3+sha512.c961d1e0a2d8e354ecaa5166b822516668b7f44cb5bd95122d590dd81922f606f5473b6d23ec4a5be05e7fcd18e8488d47d978bbe981872f1145d06e9a740017",
+  "packageManager": "pnpm@10.32.1+sha512.a706938f0e89ac1456b6563eab4edf1d1faf3368d1191fc5c59790e96dc918e4456ab2e67d613de1043d2e8c81f87303e6b40d4ffeca9df15ef1ad567348f2be",
   "scripts": {
     "dev": "astro dev",
     "build": "export DIST_DIR=dist_new && rm -rf $DIST_DIR && astro build --outDir $DIST_DIR && rm -rf dist_old && (mv dist dist_old || true) && mv $DIST_DIR dist && rm -rf dist_old && pnpm exec prettier --check .",
@@ -69,8 +68,8 @@
     "verify": "node scripts/run-verify.mjs"
   },
   "dependencies": {
-    "@astrojs/mdx": "5.0.0-beta.9",
-    "@astrojs/preact": "5.0.0-beta.4",
+    "@astrojs/mdx": "5.0.1",
+    "@astrojs/preact": "5.0.1",
     "@astrojs/sitemap": "3.7.0",
     "@iconify-json/carbon": "^1.2.19",
     "@iconify-json/fa-brands": "^1.2.2",
@@ -81,7 +80,7 @@
     "@iconify-json/simple-icons": "^1.2.72",
     "@iconify-json/vscode-icons": "^1.2.44",
     "@unocss/astro": "^66.6.5",
-    "astro": "6.0.0-beta.17",
+    "astro": "6.0.5",
     "citation-js": "^0.7.22",
     "marked": "^17.0.3",
     "mermaid": "^11.12.3",
