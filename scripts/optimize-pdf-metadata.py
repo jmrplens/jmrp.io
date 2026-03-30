@@ -15,6 +15,7 @@ import sys
 from datetime import datetime
 
 AUTHOR = "José Manuel Requena Plens"
+AUTHOR_GUARINOS = "José M. Requena-Plens, Nicolás Guarinos"
 BASE_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "public", "pdf")
 
 # Metadata map: relative path from public/pdf/ → {title, subject, keywords}
@@ -133,13 +134,13 @@ PDF_METADATA = {
     },
     "paper-resources/Conferences/Tecniacustica/plens2018.pdf": {
         "title": "Cálculo corregido basado en la teoría moderna de los campos acústicos (directo, temprano y tardío) — Tecniacústica 2018",
-        "author": "José M. Requena-Plens, Nicolás Guarinos",
+        "author": AUTHOR_GUARINOS,
         "subject": "Cálculo teórico corregido de los campos directo, temprano y reverberante basado en las teorías de Barron y Lee",
         "keywords": "Campos Acústicos, Barron y Lee, Acústica de Salas, Campo Directo, Campo Reverberante, Tecniacústica 2018, Room Acoustics",
     },
     "paper-resources/Conferences/Tecniacustica/plens2018-2.pdf": {
         "title": "Campo directo (útil)/reverberado (perjudicial): resultados experimentales frente a simulación en EASE — Tecniacústica 2018",
-        "author": "José M. Requena-Plens, Nicolás Guarinos",
+        "author": AUTHOR_GUARINOS,
         "subject": "Comparación experimental vs simulación de campos acústicos útil y perjudicial usando el software EASE",
         "keywords": "Campo Directo, Campo Reverberante, EASE, Simulación Acústica, Tecniacústica 2018, Acoustic Simulation",
     },
@@ -151,7 +152,7 @@ PDF_METADATA = {
     },
     "paper-resources/Conferences/Tecniacustica/plens2017.pdf": {
         "title": "Campo directo (útil)/reverberado (perjudicial): resultados experimentales frente a simulación en CATT-Acoustic — Tecniacústica 2017",
-        "author": "José M. Requena-Plens, Nicolás Guarinos",
+        "author": AUTHOR_GUARINOS,
         "subject": "Resultados experimentales vs simulación 3D de campos acústicos útil y perjudicial usando CATT-Acoustic",
         "keywords": "Campo Directo, Campo Reverberante, CATT-Acoustic, Simulación 3D, Tecniacústica 2017, Acoustic Simulation",
     },
@@ -352,6 +353,17 @@ def update_pdf_metadata(filepath: str, metadata: dict) -> bool:
         return False
 
 
+def _find_unmapped_pdfs():
+    """Find PDF files not present in the metadata map."""
+    all_pdfs = set()
+    for root, dirs, files in os.walk(BASE_DIR):
+        for f in files:
+            if f.endswith(".pdf"):
+                rel = os.path.relpath(os.path.join(root, f), BASE_DIR)
+                all_pdfs.add(rel)
+    return all_pdfs - set(PDF_METADATA.keys())
+
+
 def main():
     success = 0
     errors = 0
@@ -377,15 +389,7 @@ def main():
     print("-" * 60)
     print(f"Done: {success} updated, {errors} errors, {skipped} skipped")
 
-    # Check for PDFs not in the metadata map
-    all_pdfs = set()
-    for root, dirs, files in os.walk(BASE_DIR):
-        for f in files:
-            if f.endswith(".pdf"):
-                rel = os.path.relpath(os.path.join(root, f), BASE_DIR)
-                all_pdfs.add(rel)
-
-    unmapped = all_pdfs - set(PDF_METADATA.keys())
+    unmapped = _find_unmapped_pdfs()
     if unmapped:
         print(f"\nWARNING: {len(unmapped)} PDFs not in metadata map:")
         for p in sorted(unmapped):

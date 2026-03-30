@@ -246,10 +246,10 @@ test.describe("i18n: RSS feeds", () => {
     const rssLinks = page.locator(
       'link[rel="alternate"][type="application/rss+xml"]',
     );
-    const count = await rssLinks.count();
-    expect(count).toBe(2);
+    await expect(rssLinks).toHaveCount(2);
 
     const hrefs: string[] = [];
+    const count = await rssLinks.count();
     for (let i = 0; i < count; i++) {
       const href = await rssLinks.nth(i).getAttribute("href");
       hrefs.push(href ?? "");

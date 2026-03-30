@@ -38,14 +38,11 @@ export const tools = {
   passwordGenerator: {
     title: "Generador de contraseñas",
     generating: "Generando...",
-    // eslint-disable-next-line sonarjs/no-hardcoded-passwords -- translation key, not a credential
     copyPassword: "Copiar contraseña",
     generateNew: "Generar nueva contraseña",
     entropy: "0 bits",
     calculating: "Calculando...",
-    // eslint-disable-next-line sonarjs/no-hardcoded-passwords -- translation key, not a credential
     randomPassword: "Contraseña aleatoria",
-    // eslint-disable-next-line sonarjs/no-hardcoded-passwords -- translation key, not a credential
     passphrase: "Frase de contraseña",
     length: "Longitud",
     uppercase: "Mayúsculas (A-Z)",

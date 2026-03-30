@@ -19,7 +19,7 @@ test.describe("Keyboard Navigation Accessibility", () => {
     await page.goto("/");
 
     // Ensure we are in a clean state (start at body)
-    await page.focus("body");
+    await page.locator("body").focus();
 
     // 1. Tab to "Skip to content" then Logo
     // Ensure the page is hydrated/ready by waiting for a key element
@@ -60,7 +60,7 @@ test.describe("Keyboard Navigation Accessibility", () => {
     await page.goto("/");
 
     // Ensure we start fresh
-    await page.focus("body");
+    await page.locator("body").focus();
 
     // 1. Tab to Skip Link
     await page.keyboard.press("Tab");

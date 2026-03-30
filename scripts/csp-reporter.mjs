@@ -215,13 +215,15 @@ function isBrowserInternalViolation(r) {
  * @returns {boolean} true if the violation is a prefetch false positive
  */
 function isPrefetchFalsePositive(r) {
-  const directive = String(
-    r["effective-directive"] || r["violated-directive"] || "",
-  );
+  const rawDirective =
+    r["effective-directive"] ?? r["violated-directive"] ?? "";
+  const directive = typeof rawDirective === "string" ? rawDirective : "";
   if (directive !== "default-src" && directive !== "prefetch-src") return false;
 
-  const blockedUri = String(r["blocked-uri"] || "");
-  const documentUri = String(r["document-uri"] || "");
+  const rawBlocked = r["blocked-uri"] ?? "";
+  const blockedUri = typeof rawBlocked === "string" ? rawBlocked : "";
+  const rawDocument = r["document-uri"] ?? "";
+  const documentUri = typeof rawDocument === "string" ? rawDocument : "";
   if (!blockedUri || !documentUri) return false;
 
   let sameOrigin = false;
@@ -239,7 +241,7 @@ function isPrefetchFalsePositive(r) {
 
   // Heuristic 2: no source-file but blocked-uri is an HTML page path
   // (ends with / or has no file extension) — very likely a prefetch
-  if (!rawSource || rawSource === "" || rawSource === null) {
+  if (!rawSource) {
     try {
       const blockedPath = new URL(blockedUri).pathname;
       const isPagePath =

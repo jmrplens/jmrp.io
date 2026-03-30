@@ -161,21 +161,13 @@ flowchart TB
 </Mermaid>
 
 <StepByStep title="What every bouncer must implement">
-
-1. **Authenticate with the LAPI** using a registered API key. This is the bouncer's identity — without it, the LAPI rejects all requests.
-
-2. **Poll for decisions** using the stream endpoint (for firewall bouncers) or the live endpoint (for application bouncers). Handle both the startup baseline and subsequent deltas.
-
-3. **Process decisions** by parsing the decision model, deduplicating against a local cache, and handling unknown decision types gracefully.
-
-4. **Enforce remediation** by translating abstract decisions (ban, captcha, throttle) into concrete system actions (firewall rules, HTTP responses, DNS overrides).
-
-5. **Reconcile state on startup** by comparing the LAPI's current decisions against whatever is already in the target system. Apply the diff.
-
-6. **Report usage metrics** back to the LAPI at regular intervals, including active decision counts, dropped traffic, and processed traffic.
-
-7. **Expose observability** through Prometheus metrics, structured logs, and a health endpoint for monitoring.
-
+<li>**Authenticate with the LAPI** using a registered API key. This is the bouncer's identity — without it, the LAPI rejects all requests.</li>
+<li>**Poll for decisions** using the stream endpoint (for firewall bouncers) or the live endpoint (for application bouncers). Handle both the startup baseline and subsequent deltas.</li>
+<li>**Process decisions** by parsing the decision model, deduplicating against a local cache, and handling unknown decision types gracefully.</li>
+<li>**Enforce remediation** by translating abstract decisions (ban, captcha, throttle) into concrete system actions (firewall rules, HTTP responses, DNS overrides).</li>
+<li>**Reconcile state on startup** by comparing the LAPI's current decisions against whatever is already in the target system. Apply the diff.</li>
+<li>**Report usage metrics** back to the LAPI at regular intervals, including active decision counts, dropped traffic, and processed traffic.</li>
+<li>**Expose observability** through Prometheus metrics, structured logs, and a health endpoint for monitoring.</li>
 </StepByStep>
 
 The rest of this post unpacks each of these steps in detail.
@@ -1148,7 +1140,6 @@ The bottleneck is almost always the target system, not the bouncer itself. Route
 Before wrapping up, here are the most frequent mistakes bouncer developers make:
 
 <CheckList>
-<ul>
 <li data-check="cross">Treating `duration` as seconds instead of parsing the Go duration string</li>
 <li data-check="cross">Using decision `id` as cache key instead of `value` + `type`</li>
 <li data-check="cross">Ignoring the `simulated` flag and blocking traffic during scenario testing</li>
@@ -1157,7 +1148,6 @@ Before wrapping up, here are the most frequent mistakes bouncer developers make:
 <li data-check="cross">Hardcoding decision types instead of using a configurable mapping</li>
 <li data-check="warning">Not batching startup decisions, causing slow boot times</li>
 <li data-check="warning">Missing the `origins` filter, processing decisions from unwanted sources</li>
-</ul>
 </CheckList>
 
 ## Conclusion
@@ -1173,7 +1163,6 @@ The patterns described in this post are not theoretical — they are the result 
 Here is a checklist of everything a production-ready bouncer should implement:
 
 <CheckList>
-<ul>
   <li data-check="check">Authenticate with the LAPI using a registered API key</li>
   <li data-check="check">Use stream mode for firewall bouncers, live mode for application bouncers</li>
   <li data-check="check">Handle both <code>new</code> and <code>deleted</code> decision arrays on every poll</li>
@@ -1190,7 +1179,6 @@ Here is a checklist of everything a production-ready bouncer should implement:
   <li data-check="check">Implement structured logging with contextual fields</li>
   <li data-check="warning">Never enforce decisions with <code>simulated: true</code></li>
   <li data-check="warning">Don't report cumulative counters as deltas — always compute the increment</li>
-</ul>
 </CheckList>
 
 <Callout type="info" title="Keep up with protocol changes">
