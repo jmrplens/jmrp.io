@@ -106,8 +106,10 @@ export async function getSitemapUrls(): Promise<string[]> {
       | SitemapIndexResult;
     const urls: string[] = [];
 
+    // eslint-disable-next-line sonarjs/in-operator-type-error -- parsed is always an object from XML parser
     if (sitemap.isIndex && "sitemapindex" in parsed) {
       await processSitemapIndex(parsed.sitemapindex, urls);
+      // eslint-disable-next-line sonarjs/in-operator-type-error -- parsed is always an object
     } else if (parsed && "urlset" in parsed) {
       urls.push(...extractPathnames(parsed.urlset));
     }
@@ -216,6 +218,7 @@ export async function getPagesFromSitemap(): Promise<PageInfo[]> {
     let urls: PageInfo[] = [];
 
     // Handle sitemap index vs standard sitemap
+    // eslint-disable-next-line sonarjs/in-operator-type-error -- parsed is always an object from XML parser
     if (sitemap.isIndex && "sitemapindex" in parsed) {
       // Recursively resolve sitemap index using the shared processSitemapIndex
       // The 'in' check narrows the type to SitemapIndexResult
@@ -237,7 +240,13 @@ export async function getPagesFromSitemap(): Promise<PageInfo[]> {
                 .join(" - ");
         return { name, url: urlPath };
       });
-    } else if ("urlset" in parsed && Array.isArray(parsed.urlset.url)) {
+      /* eslint-disable sonarjs/in-operator-type-error, sonarjs/different-types-comparison -- parsed is always an object from XML parser */
+    } else if (
+      parsed !== null &&
+      "urlset" in parsed &&
+      Array.isArray(parsed.urlset.url)
+    ) {
+      /* eslint-enable sonarjs/in-operator-type-error, sonarjs/different-types-comparison */
       urls = parsed.urlset.url
         .filter(
           (entry) =>

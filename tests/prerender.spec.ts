@@ -55,15 +55,18 @@ async function getSpeculationRules(
     const scripts = document.querySelectorAll(
       'script[type="speculationrules"]',
     );
-    return [...scripts].map((script) => {
-      const content = script.textContent;
-      if (!content?.trim()) return null;
-      try {
-        return JSON.parse(content) as SpeculationRule;
-      } catch {
-        return null;
-      }
-    });
+    return [...scripts].map(
+      // eslint-disable-next-line sonarjs/function-return-type -- intentional null sentinel for unparseable rules
+      (script): SpeculationRule | null => {
+        const content = script.textContent;
+        if (!content?.trim()) return null;
+        try {
+          return JSON.parse(content) as SpeculationRule;
+        } catch {
+          return null;
+        }
+      },
+    );
   });
 }
 

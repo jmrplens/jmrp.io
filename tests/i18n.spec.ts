@@ -401,7 +401,7 @@ test.describe("i18n: JSON-LD inLanguage", () => {
               type === "BlogPosting" ||
               type === "TechArticle" ||
               (Array.isArray(type) &&
-                (type.includes("BlogPosting") || type.includes("TechArticle")))
+                (type.includes("BlogPosting") || type.includes("TechArticle"))) // eslint-disable-line sonarjs/argument-type
             );
           });
           expect(blogPosting?.inLanguage).toBe("en");
@@ -508,8 +508,8 @@ test.describe("i18n: Translation key parity", () => {
     );
 
     // Find missing keys in each direction
-    const missingInEs = enKeys.filter((k) => !esKeys.includes(k));
-    const missingInEn = esKeys.filter((k) => !enKeys.includes(k));
+    const missingInEs = enKeys.filter((k) => !esKeys.includes(k)); // eslint-disable-line sonarjs/argument-type
+    const missingInEn = esKeys.filter((k) => !enKeys.includes(k)); // eslint-disable-line sonarjs/argument-type
 
     expect(
       missingInEs,
@@ -532,8 +532,8 @@ test.describe("i18n: Translation key parity", () => {
       a.localeCompare(b),
     );
 
-    const missingInEs = enKeys.filter((k) => !esKeys.includes(k));
-    const missingInEn = esKeys.filter((k) => !enKeys.includes(k));
+    const missingInEs = enKeys.filter((k) => !esKeys.includes(k)); // eslint-disable-line sonarjs/argument-type
+    const missingInEn = esKeys.filter((k) => !enKeys.includes(k)); // eslint-disable-line sonarjs/argument-type
 
     expect(
       missingInEs,

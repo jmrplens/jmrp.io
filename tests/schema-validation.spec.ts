@@ -44,7 +44,7 @@ async function getJsonLd(page: Page): Promise<JsonLdDocument> {
 /** Check if a schema's @type matches the given type (handles array @type) */
 function matchesType(schemaType: unknown, type: string): boolean {
   if (Array.isArray(schemaType)) {
-    return schemaType.includes(type);
+    return schemaType.includes(type); // eslint-disable-line sonarjs/argument-type -- schemaType elements are strings
   }
   return schemaType === type;
 }
