@@ -1,3 +1,4 @@
+import type { JSX } from "preact";
 import { useEffect, useRef, useState } from "preact/hooks";
 
 /** Translations required by ServerInsights. Passed from Astro parent. */
@@ -150,7 +151,7 @@ interface MatrixStats {
   db_size_bytes: number;
   cpu_usage_avg: number;
   mem_used_percent: number;
-  cpu_temp: number;
+  cpu_temp: number | null;
   pg_connections: number;
   redis_memory: number;
 }
@@ -166,7 +167,7 @@ interface MastodonStats {
   puma_threads: number;
   cpu_usage_avg: number;
   mem_used_percent: number;
-  cpu_temp: number;
+  cpu_temp: number | null;
   pg_connections: number;
   redis_memory: number;
   user_count: number;
@@ -193,14 +194,14 @@ interface TrueNASStats {
   cpu_usage_avg: number;
   mem_used_percent: number;
   arc_size: number;
-  cpu_temp: number;
+  cpu_temp: number | null;
   zfs_pools: ZFSPool[];
 }
 
 interface MikroTikStats {
   board: string;
   cpu_load: number;
-  cpu_temp: number;
+  cpu_temp: number | null;
   cpu_frequency: number;
   mem_used_percent: number;
   mem_total: number;
@@ -232,7 +233,7 @@ function isValidMatrixStats(data: unknown): data is MatrixStats {
     typeof d.db_size_bytes === "number" &&
     typeof d.cpu_usage_avg === "number" &&
     typeof d.mem_used_percent === "number" &&
-    typeof d.cpu_temp === "number" &&
+    (typeof d.cpu_temp === "number" || d.cpu_temp === null) &&
     typeof d.pg_connections === "number" &&
     typeof d.redis_memory === "number"
   );
@@ -253,7 +254,7 @@ function isValidMastodonStats(data: unknown): data is MastodonStats {
     typeof d.puma_threads === "number" &&
     typeof d.cpu_usage_avg === "number" &&
     typeof d.mem_used_percent === "number" &&
-    typeof d.cpu_temp === "number" &&
+    (typeof d.cpu_temp === "number" || d.cpu_temp === null) &&
     typeof d.pg_connections === "number" &&
     typeof d.redis_memory === "number" &&
     typeof d.user_count === "number" &&
@@ -275,7 +276,7 @@ function isValidTrueNASStats(data: unknown): data is TrueNASStats {
     typeof d.cpu_usage_avg === "number" &&
     typeof d.mem_used_percent === "number" &&
     typeof d.arc_size === "number" &&
-    typeof d.cpu_temp === "number" &&
+    (typeof d.cpu_temp === "number" || d.cpu_temp === null) &&
     Array.isArray(d.zfs_pools) &&
     d.zfs_pools.every(
       (p: unknown) =>
@@ -299,7 +300,7 @@ function isValidMikroTikStats(data: unknown): data is MikroTikStats {
   return (
     typeof d.board === "string" &&
     typeof d.cpu_load === "number" &&
-    typeof d.cpu_temp === "number" &&
+    (typeof d.cpu_temp === "number" || d.cpu_temp === null) &&
     typeof d.cpu_frequency === "number" &&
     typeof d.mem_used_percent === "number" &&
     typeof d.mem_total === "number" &&
@@ -397,14 +398,83 @@ function getHealthColor(health: string): string {
   return "";
 }
 
+/** Renders a resource load card with CPU, memory, temperature, and status. */
+function ResourceLoadCard({
+  labelId,
+  label,
+  cpuUsage,
+  memUsage,
+  cpuTemp,
+  loadStatus,
+  t,
+  fmtVal,
+}: {
+  readonly labelId: string;
+  readonly label: string;
+  readonly cpuUsage: number;
+  readonly memUsage: number;
+  readonly cpuTemp: number | null;
+  readonly loadStatus: StatusKey;
+  readonly t: ServerInsightsTranslations;
+  readonly fmtVal: (
+    val: number | null | undefined,
+    f?: (v: number | string) => string,
+  ) => string;
+}): JSX.Element {
+  return (
+    <article
+      className="insight-card hardware"
+      aria-labelledby={labelId}
+    >
+      <span
+        className="insight-label"
+        id={labelId}
+      >
+        {label}
+      </span>
+      <div className="insight-value">
+        <span className="sr-only">
+          {t.cpuUsagePrefix} {fmtVal(cpuUsage, formatPercent)} %
+        </span>
+        <span aria-hidden="true">
+          <output>{fmtVal(cpuUsage, formatPercent)}</output>{" "}
+          <small>{t.percentCPU}</small>
+        </span>
+      </div>
+      <div className="insight-details">
+        <div className="detail-row">
+          <span>{t.memoryUsage}</span>
+          <output>
+            {fmtVal(memUsage, formatPercent)}
+            <small aria-hidden="true"> {t.percentRAM}</small>
+          </output>
+        </div>
+        {cpuTemp == null ? null : (
+          <div className="detail-row">
+            <span>{t.cpuTemp}</span>
+            <output>{Math.round(cpuTemp)}°C</output>
+          </div>
+        )}
+        <div className="detail-row">
+          <span>{t.loadStatus}</span>
+          <output className={getStatusColor(loadStatus)}>
+            {getStatusLabel(loadStatus, t)}
+          </output>
+        </div>
+      </div>
+    </article>
+  );
+}
+
 /**
  * Server insights component for Matrix, Mastodon, TrueNAS, and MikroTik.
  * Displays real-time statistics fetched from `/api/homelab/{type}` endpoints.
  */
+// eslint-disable-next-line sonarjs/cognitive-complexity -- Multi-view component with inherent branching per server type
 export default function ServerInsights({
   type,
   translations: t,
-}: Props): preact.JSX.Element {
+}: Props): JSX.Element {
   const [stats, setStats] = useState<
     MatrixStats | MastodonStats | TrueNASStats | MikroTikStats | null
   >(null);
@@ -583,45 +653,16 @@ export default function ServerInsights({
             </div>
           </article>
 
-          <article
-            className="insight-card hardware"
-            aria-labelledby="label-matrix-resources"
-          >
-            <span
-              className="insight-label"
-              id="label-matrix-resources"
-            >
-              {t.resourceLoad}
-            </span>
-            <div className="insight-value">
-              <span className="sr-only">
-                {t.cpuUsagePrefix} {fmtVal(s.cpu_usage_avg, formatPercent)} %
-              </span>
-              <span aria-hidden="true">
-                <output>{fmtVal(s.cpu_usage_avg, formatPercent)}</output>{" "}
-                <small>{t.percentCPU}</small>
-              </span>
-            </div>
-            <div className="insight-details">
-              <div className="detail-row">
-                <span>{t.memoryUsage}</span>
-                <output>
-                  {fmtVal(s.mem_used_percent, formatPercent)}
-                  <small aria-hidden="true"> {t.percentRAM}</small>
-                </output>
-              </div>
-              <div className="detail-row">
-                <span>{t.cpuTemp}</span>
-                <output>{s.cpu_temp}°C</output>
-              </div>
-              <div className="detail-row">
-                <span>{t.loadStatus}</span>
-                <output className={getStatusColor(loadStatus)}>
-                  {getStatusLabel(loadStatus, t)}
-                </output>
-              </div>
-            </div>
-          </article>
+          <ResourceLoadCard
+            labelId="label-matrix-resources"
+            label={t.resourceLoad}
+            cpuUsage={s.cpu_usage_avg}
+            memUsage={s.mem_used_percent}
+            cpuTemp={s.cpu_temp}
+            loadStatus={loadStatus}
+            t={t}
+            fmtVal={fmtVal}
+          />
 
           <article
             className="insight-card"
@@ -708,45 +749,16 @@ export default function ServerInsights({
             </div>
           </article>
 
-          <article
-            className="insight-card hardware"
-            aria-labelledby="label-mastodon-resources"
-          >
-            <span
-              className="insight-label"
-              id="label-mastodon-resources"
-            >
-              {t.resourceLoad}
-            </span>
-            <div className="insight-value">
-              <span className="sr-only">
-                {t.cpuUsagePrefix} {fmtVal(s.cpu_usage_avg, formatPercent)} %
-              </span>
-              <span aria-hidden="true">
-                <output>{fmtVal(s.cpu_usage_avg, formatPercent)}</output>{" "}
-                <small>{t.percentCPU}</small>
-              </span>
-            </div>
-            <div className="insight-details">
-              <div className="detail-row">
-                <span>{t.memoryUsage}</span>
-                <output>
-                  {fmtVal(s.mem_used_percent, formatPercent)}
-                  <small aria-hidden="true"> {t.percentRAM}</small>
-                </output>
-              </div>
-              <div className="detail-row">
-                <span>{t.cpuTemp}</span>
-                <output>{s.cpu_temp}°C</output>
-              </div>
-              <div className="detail-row">
-                <span>{t.loadStatus}</span>
-                <output className={getStatusColor(loadStatus)}>
-                  {getStatusLabel(loadStatus, t)}
-                </output>
-              </div>
-            </div>
-          </article>
+          <ResourceLoadCard
+            labelId="label-mastodon-resources"
+            label={t.resourceLoad}
+            cpuUsage={s.cpu_usage_avg}
+            memUsage={s.mem_used_percent}
+            cpuTemp={s.cpu_temp}
+            loadStatus={loadStatus}
+            t={t}
+            fmtVal={fmtVal}
+          />
 
           <article
             className="insight-card"
@@ -902,46 +914,23 @@ export default function ServerInsights({
             <div className="insight-details">
               <div className="detail-row">
                 <span>{t.cpuTemp}</span>
-                <output>{s.cpu_temp}°C</output>
+                <output>
+                  {s.cpu_temp == null ? "—" : `${Math.round(s.cpu_temp)}°C`}
+                </output>
               </div>
             </div>
           </article>
 
-          <article
-            className="insight-card hardware"
-            aria-labelledby="label-truenas-resources"
-          >
-            <span
-              className="insight-label"
-              id="label-truenas-resources"
-            >
-              {t.resourceLoad}
-            </span>
-            <div className="insight-value">
-              <span className="sr-only">
-                {t.cpuUsagePrefix} {fmtVal(s.cpu_usage_avg, formatPercent)} %
-              </span>
-              <span aria-hidden="true">
-                <output>{fmtVal(s.cpu_usage_avg, formatPercent)}</output>{" "}
-                <small>{t.percentCPU}</small>
-              </span>
-            </div>
-            <div className="insight-details">
-              <div className="detail-row">
-                <span>{t.memoryUsage}</span>
-                <output>
-                  {fmtVal(s.mem_used_percent, formatPercent)}
-                  <small aria-hidden="true"> {t.percentRAM}</small>
-                </output>
-              </div>
-              <div className="detail-row">
-                <span>{t.loadStatus}</span>
-                <output className={getStatusColor(loadStatus)}>
-                  {getStatusLabel(loadStatus, t)}
-                </output>
-              </div>
-            </div>
-          </article>
+          <ResourceLoadCard
+            labelId="label-truenas-resources"
+            label={t.resourceLoad}
+            cpuUsage={s.cpu_usage_avg}
+            memUsage={s.mem_used_percent}
+            cpuTemp={s.cpu_temp}
+            loadStatus={loadStatus}
+            t={t}
+            fmtVal={fmtVal}
+          />
         </div>
       </section>
     );
@@ -980,7 +969,9 @@ export default function ServerInsights({
             <div className="insight-details">
               <div className="detail-row">
                 <span>{t.cpuTemp}</span>
-                <output>{s.cpu_temp}°C</output>
+                <output>
+                  {s.cpu_temp == null ? "—" : `${Math.round(s.cpu_temp)}°C`}
+                </output>
               </div>
               <div className="detail-row">
                 <span>{t.mikrotikCpuFrequency}</span>

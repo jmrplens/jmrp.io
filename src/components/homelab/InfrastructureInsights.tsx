@@ -114,7 +114,7 @@ interface HomelabStats {
   rate_limited_503_24h: number;
   cpu_usage_avg: number;
   mem_used_percent: number;
-  cpu_temp: number;
+  cpu_temp: number | null;
   top_security_countries: Country[];
 }
 
@@ -136,11 +136,11 @@ function isValidHomelabStats(data: unknown): data is HomelabStats {
     "rate_limited_503_24h",
     "cpu_usage_avg",
     "mem_used_percent",
-    "cpu_temp",
   ];
 
   return (
     requiredNumericFields.every((field) => typeof d[field] === "number") &&
+    (typeof d.cpu_temp === "number" || d.cpu_temp === null) &&
     Array.isArray(d.top_security_countries) &&
     d.top_security_countries.every(
       (c: unknown) =>

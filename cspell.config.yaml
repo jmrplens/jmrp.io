@@ -65,6 +65,7 @@ ignorePaths:
   - accessibility-report/**
   - skills-lock.json
   - accessibility-report.json
+  - tools.yaml
   - lighthouse-results/**
   - playwright-report/**
   - test-results/**

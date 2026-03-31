@@ -1,7 +1,7 @@
 # CLAUDE.md - AI Context for jmrp.io
 
 > **Purpose**: Comprehensive context for Claude, Copilot, Gemini, and other AI agents working on this codebase.
-> **Last verified**: February 2026 (Astro 6.0.0-beta.11, UnoCSS 66.6.0)
+> **Last verified**: March 2026 (Astro 6.1.2, UnoCSS 66.6.7)
 
 ## Project Overview
 
@@ -30,8 +30,8 @@
 
 | Layer           | Technology               | Version        |
 | --------------- | ------------------------ | -------------- |
-| Framework       | Astro                    | 6.0.0-beta.17  |
-| Content         | MDX                      | 5.0.0-beta.9   |
+| Framework       | Astro                    | 6.1.2          |
+| Content         | MDX                      | 5.0.3          |
 | Styling         | UnoCSS (presetWind4)     | ^66.6.2        |
 | Islands         | Preact                   | ^10.28.3       |
 | Diagrams        | Mermaid + mermaid-isomorphic | ^11.12.2 / ^3.0.4 |
