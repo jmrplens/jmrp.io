@@ -401,6 +401,7 @@ test.describe("i18n: JSON-LD inLanguage", () => {
               type === "BlogPosting" ||
               type === "TechArticle" ||
               (Array.isArray(type) &&
+                // eslint-disable-next-line sonarjs/argument-type -- type elements are strings from JSON-LD
                 (type.includes("BlogPosting") || type.includes("TechArticle")))
             );
           });
@@ -508,7 +509,9 @@ test.describe("i18n: Translation key parity", () => {
     );
 
     // Find missing keys in each direction
+    // eslint-disable-next-line sonarjs/argument-type -- both arrays are string[], false positive with TS6
     const missingInEs = enKeys.filter((k: string) => !esKeys.includes(k));
+    // eslint-disable-next-line sonarjs/argument-type -- both arrays are string[], false positive with TS6
     const missingInEn = esKeys.filter((k: string) => !enKeys.includes(k));
 
     expect(
@@ -532,7 +535,9 @@ test.describe("i18n: Translation key parity", () => {
       a.localeCompare(b),
     );
 
+    // eslint-disable-next-line sonarjs/argument-type -- both arrays are string[], false positive with TS6
     const missingInEs = enKeys.filter((k: string) => !esKeys.includes(k));
+    // eslint-disable-next-line sonarjs/argument-type -- both arrays are string[], false positive with TS6
     const missingInEn = esKeys.filter((k: string) => !enKeys.includes(k));
 
     expect(

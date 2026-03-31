@@ -55,7 +55,8 @@ async function getSpeculationRules(
     const scripts = document.querySelectorAll(
       'script[type="speculationrules"]',
     );
-    return [...scripts].map((script) => {
+    // eslint-disable-next-line sonarjs/function-return-type -- nullable map callback is intentional
+    return [...scripts].map((script): SpeculationRule | null => {
       const content = script.textContent;
       if (!content?.trim()) return null;
       try {

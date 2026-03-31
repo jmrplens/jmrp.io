@@ -108,11 +108,14 @@ export async function getSitemapUrls(): Promise<string[]> {
 
     if (
       sitemap.isIndex &&
-      typeof parsed === "object" &&
+      // eslint-disable-next-line sonarjs/in-operator-type-error -- parsed is narrowed by parseStringPromise return type
       "sitemapindex" in parsed
     ) {
       await processSitemapIndex(parsed.sitemapindex, urls);
-    } else if (typeof parsed === "object" && "urlset" in parsed) {
+    } else if (
+      // eslint-disable-next-line sonarjs/in-operator-type-error -- parsed is narrowed by parseStringPromise return type
+      "urlset" in parsed
+    ) {
       urls.push(...extractPathnames(parsed.urlset));
     }
 
@@ -222,7 +225,7 @@ export async function getPagesFromSitemap(): Promise<PageInfo[]> {
     // Handle sitemap index vs standard sitemap
     if (
       sitemap.isIndex &&
-      typeof parsed === "object" &&
+      // eslint-disable-next-line sonarjs/in-operator-type-error -- parsed is narrowed by parseStringPromise return type
       "sitemapindex" in parsed
     ) {
       // Recursively resolve sitemap index using the shared processSitemapIndex
@@ -246,7 +249,7 @@ export async function getPagesFromSitemap(): Promise<PageInfo[]> {
         return { name, url: urlPath };
       });
     } else if (
-      typeof parsed === "object" &&
+      // eslint-disable-next-line sonarjs/in-operator-type-error -- parsed is narrowed by parseStringPromise return type
       "urlset" in parsed &&
       Array.isArray(parsed.urlset.url)
     ) {

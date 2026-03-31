@@ -99,7 +99,8 @@ export async function highlightCode(
   }
 
   // Lazy-load the language if not yet registered
-  const loaded = highlighter.getLoadedLanguages();
+  const loaded: string[] = highlighter.getLoadedLanguages();
+  // eslint-disable-next-line sonarjs/argument-type -- langName is string, loaded is BundledLanguage[], valid check
   if (!loaded.includes(langName)) {
     try {
       await (langRegistration
