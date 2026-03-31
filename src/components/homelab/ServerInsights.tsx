@@ -926,7 +926,7 @@ export default function ServerInsights({
             label={t.resourceLoad}
             cpuUsage={s.cpu_usage_avg}
             memUsage={s.mem_used_percent}
-            cpuTemp={s.cpu_temp}
+            cpuTemp={null}
             loadStatus={loadStatus}
             t={t}
             fmtVal={fmtVal}
