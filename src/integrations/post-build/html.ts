@@ -24,6 +24,7 @@ import {
 /**
  * Decodes Data URI data part based on encoding.
  */
+
 function decodeData(
   data: string,
   isBase64: boolean,
@@ -69,6 +70,7 @@ function getAssetFilename(buffer: Buffer, mime: string): string {
 /**
  * Extracts a data URI to a physical file and returns the new relative URL.
  */
+
 function extractDataUri(
   rawDataUri: string,
   targetDir: string,

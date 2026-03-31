@@ -44,7 +44,7 @@ async function getJsonLd(page: Page): Promise<JsonLdDocument> {
 /** Check if a schema's @type matches the given type (handles array @type) */
 function matchesType(schemaType: unknown, type: string): boolean {
   if (Array.isArray(schemaType)) {
-    return schemaType.includes(type);
+    return (schemaType as string[]).includes(type);
   }
   return schemaType === type;
 }

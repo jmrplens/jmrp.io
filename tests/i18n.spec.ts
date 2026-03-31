@@ -508,8 +508,8 @@ test.describe("i18n: Translation key parity", () => {
     );
 
     // Find missing keys in each direction
-    const missingInEs = enKeys.filter((k) => !esKeys.includes(k));
-    const missingInEn = esKeys.filter((k) => !enKeys.includes(k));
+    const missingInEs = enKeys.filter((k: string) => !esKeys.includes(k));
+    const missingInEn = esKeys.filter((k: string) => !enKeys.includes(k));
 
     expect(
       missingInEs,
@@ -532,8 +532,8 @@ test.describe("i18n: Translation key parity", () => {
       a.localeCompare(b),
     );
 
-    const missingInEs = enKeys.filter((k) => !esKeys.includes(k));
-    const missingInEn = esKeys.filter((k) => !enKeys.includes(k));
+    const missingInEs = enKeys.filter((k: string) => !esKeys.includes(k));
+    const missingInEn = esKeys.filter((k: string) => !enKeys.includes(k));
 
     expect(
       missingInEs,

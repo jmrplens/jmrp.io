@@ -106,9 +106,13 @@ export async function getSitemapUrls(): Promise<string[]> {
       | SitemapIndexResult;
     const urls: string[] = [];
 
-    if (sitemap.isIndex && "sitemapindex" in parsed) {
+    if (
+      sitemap.isIndex &&
+      typeof parsed === "object" &&
+      "sitemapindex" in parsed
+    ) {
       await processSitemapIndex(parsed.sitemapindex, urls);
-    } else if (parsed && "urlset" in parsed) {
+    } else if (typeof parsed === "object" && "urlset" in parsed) {
       urls.push(...extractPathnames(parsed.urlset));
     }
 
@@ -216,7 +220,11 @@ export async function getPagesFromSitemap(): Promise<PageInfo[]> {
     let urls: PageInfo[] = [];
 
     // Handle sitemap index vs standard sitemap
-    if (sitemap.isIndex && "sitemapindex" in parsed) {
+    if (
+      sitemap.isIndex &&
+      typeof parsed === "object" &&
+      "sitemapindex" in parsed
+    ) {
       // Recursively resolve sitemap index using the shared processSitemapIndex
       // The 'in' check narrows the type to SitemapIndexResult
       const resolvedUrls: string[] = [];
@@ -237,7 +245,11 @@ export async function getPagesFromSitemap(): Promise<PageInfo[]> {
                 .join(" - ");
         return { name, url: urlPath };
       });
-    } else if ("urlset" in parsed && Array.isArray(parsed.urlset.url)) {
+    } else if (
+      typeof parsed === "object" &&
+      "urlset" in parsed &&
+      Array.isArray(parsed.urlset.url)
+    ) {
       urls = parsed.urlset.url
         .filter(
           (entry) =>
