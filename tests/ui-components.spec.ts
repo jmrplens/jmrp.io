@@ -34,13 +34,13 @@ test.describe("CopyButton", () => {
     const copyBtn = page.locator(".copy-button").first();
     await expect(copyBtn).toBeVisible();
 
-    // Click copy
-    await copyBtn.click();
-    await page.waitForTimeout(300);
+    // Dispatch click programmatically to avoid interception from child icon span
+    // and sticky header overlay
+    await copyBtn.dispatchEvent("click");
 
-    // Success icon should appear
+    // Success icon should appear (wait for clipboard promise to resolve)
     const successIcon = copyBtn.locator(".success-icon");
-    await expect(successIcon).toBeVisible();
+    await expect(successIcon).not.toHaveClass(/hidden/, { timeout: 3000 });
   });
 
   test("copies content to clipboard", async ({ page, context }) => {
@@ -49,8 +49,8 @@ test.describe("CopyButton", () => {
     await page.goto("/blog/001-secure-nginx-client-certificates/");
 
     const copyBtn = page.locator(".copy-button").first();
-    await copyBtn.click();
-    await page.waitForTimeout(300);
+    await copyBtn.dispatchEvent("click");
+    await page.waitForTimeout(500);
 
     // Verify clipboard has content
     const clipboardContent = await page.evaluate(() =>

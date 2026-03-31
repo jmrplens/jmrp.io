@@ -205,6 +205,16 @@ export default defineConfig({
         dark: githubDark,
       },
       langs: [routerosGrammar],
+      transformers: [
+        {
+          pre(node) {
+            // Ensure all code blocks are keyboard-focusable (scrollable-region-focusable)
+            if (!node.properties.tabindex) {
+              node.properties.tabindex = "0";
+            }
+          },
+        },
+      ],
     },
     // Remark plugins: transformation before HTML compilation
     remarkPlugins: [remarkMath, remarkMermaidBypass],

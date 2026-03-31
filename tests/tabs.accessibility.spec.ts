@@ -1,3 +1,4 @@
+/* eslint-disable playwright/no-conditional-in-test -- Focus navigation checks need conditionals */
 import { expect, test } from "@playwright/test";
 
 /** Blog post URL with tabs for testing - avoiding magic strings */
@@ -63,8 +64,17 @@ test.describe("Tabs & Code Block Accessibility", () => {
     await page.keyboard.press("Tab");
     await expect(codeContainer).toBeFocused();
 
-    // 3. Tab -> Should leave the component (Next element)
+    // 3. Tab -> May land on inner <pre> (post-build adds tabindex="0" for a11y)
     await page.keyboard.press("Tab");
+
+    // 4. Keep tabbing until we leave the component
+    // (inner <pre> may be focusable for scrollable-region-focusable compliance)
+    const stillInside = await fileContent.evaluate((wrapper) =>
+      wrapper.contains(document.activeElement),
+    );
+    if (stillInside) {
+      await page.keyboard.press("Tab");
+    }
 
     // Verify we are NOT focused on the code container anymore
     await expect(codeContainer).not.toBeFocused();

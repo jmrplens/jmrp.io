@@ -711,8 +711,13 @@ const i18n = {
       </div>
 
       <div class="csp-output-wrapper">
+        {
+          /* eslint-disable astro/jsx-a11y/no-noninteractive-tabindex -- scrollable region requires keyboard access */
+        }
         <pre
-          class="csp-output"><code id={`${uniqueId}-output`}>Content-Security-Policy: ...</code></pre>
+          class="csp-output"
+          tabindex="0"><code id={`${uniqueId}-output`}>Content-Security-Policy: ...</code></pre>
+        {/* eslint-enable astro/jsx-a11y/no-noninteractive-tabindex */}
         <button
           class="csp-copy-btn"
           type="button"

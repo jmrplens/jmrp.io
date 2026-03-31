@@ -573,6 +573,18 @@ function sanitizeLanguage(lang: string): string {
 function processCodeBlocks($: cheerio.CheerioAPI): boolean {
   let modified = false;
   let regionCount = 0;
+
+  // Ensure all Shiki code blocks have tabindex="0" for keyboard scrolling
+  // (axe: scrollable-region-focusable). Shiki sets this by default but the
+  // Astro MDX pipeline may strip it for some languages.
+  $("pre.astro-code").each((_, el) => {
+    const $el = $(el);
+    if (!$el.attr("tabindex")) {
+      $el.attr("tabindex", "0");
+      modified = true;
+    }
+  });
+
   $("pre[tabindex='0'], pre[role='region']").each((_, el) => {
     const $el = $(el);
     if ($el.closest("section[aria-label]").length > 0) {

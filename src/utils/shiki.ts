@@ -135,6 +135,11 @@ export async function highlightCode(
           node.properties.style = styleVal + "; overflow-x: auto;";
 
           node.properties.dataLanguage = langName;
+
+          // Ensure keyboard focusability (axe: scrollable-region-focusable)
+          if (!node.properties.tabindex) {
+            node.properties.tabindex = "0";
+          }
         },
       },
     ],

@@ -51,11 +51,11 @@ This post covers the **full bidirectional protocol** that every bouncer must imp
 
 1. **LAPI → Bouncer**: Receiving and processing decisions (who to block, for how long, and why).
 2. **Bouncer → System**: Translating decisions into concrete remediation actions.
+3. **Bouncer → LAPI**: Reporting usage metrics back so operators can monitor enforcement.
 4. **Reconciliation**: Detecting and recovering from state drift between the bouncer and the target system.
 5. **Observability**: Health endpoints, structured logs, and Prometheus metrics for production monitoring.
 
 Each of these layers introduces design decisions that affect reliability, performance, and operational experience.
-3. **Bouncer → LAPI**: Reporting usage metrics back so operators can monitor enforcement.
 
 The concepts here are **language-agnostic**. Whether you build your bouncer in Go, Python, Rust, or shell scripts, the protocol and design patterns are identical. We use [cs-routeros-bouncer](https://github.com/jmrplens/cs-routeros-bouncer) as a real-world case study, but every pattern applies universally.
 

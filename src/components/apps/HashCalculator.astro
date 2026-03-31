@@ -141,8 +141,13 @@ const algorithms = [
         <div class="hash-example-label">
           {t("tools.hashCalculator.htmlExampleLabel")}
         </div>
+        {
+          /* eslint-disable astro/jsx-a11y/no-noninteractive-tabindex -- scrollable region requires keyboard access */
+        }
         <pre
-          class="hash-example-code"><code id={`${uniqueId}-html`}>...</code></pre>
+          class="hash-example-code"
+          tabindex="0"><code id={`${uniqueId}-html`}>...</code></pre>
+        {/* eslint-enable astro/jsx-a11y/no-noninteractive-tabindex */}
       </div>
     </div>
   </div>
