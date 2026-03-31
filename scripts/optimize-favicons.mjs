@@ -34,22 +34,40 @@ const getHostname = (url) => {
 };
 
 /**
+ * Recursively collect all MDX/MD files from a directory.
+ * @param {string} dir - Directory to scan
+ * @returns {string[]} Array of absolute file paths
+ */
+const collectFiles = (dir) => {
+  const entries = fs.readdirSync(dir, { withFileTypes: true });
+  const files = [];
+  for (const entry of entries) {
+    const fullPath = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      files.push(...collectFiles(fullPath));
+    } else if (
+      (entry.name.endsWith(".mdx") || entry.name.endsWith(".md")) &&
+      !entry.name.startsWith("_")
+    ) {
+      files.push(fullPath);
+    }
+  }
+  return files;
+};
+
+/**
  * Collect all unique hostnames from all posts.
  * Uses markdown link regex to properly extract URLs from [text](url) patterns.
  */
 const collectHostnames = () => {
   const hostnames = new Set();
-  const files = fs
-    .readdirSync(POSTS_DIR)
-    .filter(
-      (f) => (f.endsWith(".mdx") || f.endsWith(".md")) && !f.startsWith("_"),
-    );
+  const files = collectFiles(POSTS_DIR);
 
   // Regex to find markdown links: [text](url) — supports one level of nested parentheses
   const linkRegex = /\[([^\]]+)\]\(([^)]+(?:\([^)]+\)[^)]*)*)\)/g;
 
   for (const file of files) {
-    const content = fs.readFileSync(path.join(POSTS_DIR, file), "utf-8");
+    const content = fs.readFileSync(file, "utf-8");
 
     // Strip code blocks to avoid false positives from code examples
     const bodyWithoutCode = content

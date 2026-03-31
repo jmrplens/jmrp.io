@@ -67,7 +67,7 @@ test.describe("Integration Flows", () => {
     await page.goto("/homelab");
     await expect(page.locator("h1")).toContainText("Homelab");
     // Verify Homelab-specific content is present
-    await expect(page.locator(".infrastructure-section")).toBeVisible();
+    await expect(page.locator(".infrastructure-section").first()).toBeVisible();
   });
 
   test("GitHub page renders repository cards", async ({ page }) => {

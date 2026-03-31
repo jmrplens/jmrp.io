@@ -95,6 +95,7 @@ test.describe("External Links Security", () => {
         const rel = (await link.getAttribute("rel")) ?? "";
 
         // Skip rel="me" links — they intentionally omit noopener/noreferrer
+        // eslint-disable-next-line sonarjs/argument-type -- split() returns string[], false positive
         if (rel.split(/\s+/).includes("me")) continue;
 
         expect(rel, `Link ${href} on ${url} missing noopener`).toContain(

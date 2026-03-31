@@ -23,8 +23,7 @@ test.describe("Deep Accessibility & Interaction Tests", () => {
 
     // 2. Headings hierarchy
     // Ensure we have one H1
-    const h1Count = await page.locator("h1").count();
-    expect(h1Count).toBe(1);
+    await expect(page.locator("h1")).toHaveCount(1);
   });
 
   test("GitHub Search Keyboard Interaction", async ({ page }) => {
@@ -153,7 +152,7 @@ test.describe("Deep Accessibility & Interaction Tests", () => {
     await page.goto("/cv");
 
     // Focus body start
-    await page.focus("body");
+    await page.locator("body").focus();
 
     // Tab to skip link
     await page.keyboard.press("Tab");

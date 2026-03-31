@@ -24,6 +24,8 @@ import {
 /**
  * Decodes Data URI data part based on encoding.
  */
+
+// eslint-disable-next-line sonarjs/function-return-type -- nullable return is intentional
 function decodeData(
   data: string,
   isBase64: boolean,
@@ -69,6 +71,8 @@ function getAssetFilename(buffer: Buffer, mime: string): string {
 /**
  * Extracts a data URI to a physical file and returns the new relative URL.
  */
+
+// eslint-disable-next-line sonarjs/function-return-type -- nullable return is intentional
 function extractDataUri(
   rawDataUri: string,
   targetDir: string,

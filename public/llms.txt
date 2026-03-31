@@ -2,7 +2,7 @@
 
 > Personal technical blog and portfolio of José Manuel Requena Plens — R&D Engineer specializing in Embedded Systems, Acoustics, and Industrial Software Development.
 
-> Last updated: 2026-02-19
+> Last updated: 2026-03-31
 
 > For comprehensive context including detailed blog post topics, tool features, and author background, see [llms-full.txt](https://jmrp.io/llms-full.txt).
 
@@ -29,6 +29,7 @@ José Manuel Requena Plens (JMRP) is a multidisciplinary engineer building contr
 - [MikroTik Honeypot: Trap & Auto-Block](https://jmrp.io/blog/006-implementing-mikrotik-honeypot/)
 - [MikroTik WireGuard VPN: Dual-Stack](https://jmrp.io/blog/007-mikrotik-wireguard-dual-stack-vpn/)
 - [MikroTik PPPoE + DHCPv6-PD: Dual-Stack](https://jmrp.io/blog/008-mikrotik-pppoe-dualstack-digi/)
+- [Running a Tor Bridge on Linux](https://jmrp.io/blog/009-running-tor-bridge/)
 
 ## Developer Tools
 

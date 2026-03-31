@@ -390,7 +390,7 @@ server: jmrp.io`;
 
     /* ====== URL Fetch ====== */
     if (fetchBtn && urlInput) {
-      fetchBtn.addEventListener("click", function () {
+      fetchBtn.addEventListener("click", async function () {
         var url = urlInput.value.trim();
         if (!url) return;
         if (!/^https?:\/\//.test(url)) url = "https://" + url;
@@ -403,39 +403,45 @@ server: jmrp.io`;
           fetchStatus.className = "hdr-fetch-status hdr-fetch-loading";
         }
 
-        fetch(url, { method: "HEAD", mode: "cors", redirect: "follow" })
-          .then(function (res) {
-            var lines = [];
-            res.headers.forEach(function (value, name) {
-              lines.push(name + ": " + value);
+        try {
+          var res = await fetch(
+            "/api/headers-proxy?url=" + encodeURIComponent(url),
+          );
+          var data = await res.json();
+          if (!res.ok || data.error) {
+            throw new Error(data.error || i18n.failedToFetchDefault);
+          }
+          var lines = [];
+          if (data.headers && data.headers.length) {
+            data.headers.forEach(function (h) {
+              lines.push(h.name + ": " + h.value);
             });
-            if (lines.length === 0) {
-              throw new Error(i18n.noHeadersReturned);
-            }
-            textarea.value = lines.join("\n");
-            if (fetchStatus) {
-              fetchStatus.textContent = tpl(i18n.fetchedHeaders, {
-                count: lines.length,
-              });
-              fetchStatus.className = "hdr-fetch-status hdr-fetch-warn";
-            }
-            analyze();
-          })
-          .catch(function (err) {
-            if (fetchStatus) {
-              fetchStatus.textContent = tpl(i18n.failedToFetch, {
-                msg: err.message || i18n.failedToFetchDefault,
-                url: url,
-              });
-              fetchStatus.className = "hdr-fetch-status hdr-fetch-error";
-            }
-          })
-          .finally(function () {
-            fetchBtn.disabled = false;
-            fetchBtn.innerHTML =
-              '<span class="i-mdi:download" aria-hidden="true"></span> ' +
-              i18n.fetch;
-          });
+          }
+          if (lines.length === 0) {
+            throw new Error(i18n.noHeadersReturned);
+          }
+          textarea.value = lines.join("\n");
+          if (fetchStatus) {
+            fetchStatus.textContent = tpl(i18n.fetchedHeaders, {
+              count: lines.length,
+            });
+            fetchStatus.className = "hdr-fetch-status hdr-fetch-success";
+          }
+          analyze();
+        } catch (err) {
+          if (fetchStatus) {
+            fetchStatus.textContent = tpl(i18n.failedToFetch, {
+              msg: err.message || i18n.failedToFetchDefault,
+              url: url,
+            });
+            fetchStatus.className = "hdr-fetch-status hdr-fetch-error";
+          }
+        } finally {
+          fetchBtn.disabled = false;
+          fetchBtn.innerHTML =
+            '<span class="i-mdi:download" aria-hidden="true"></span> ' +
+            i18n.fetch;
+        }
       });
 
       urlInput.addEventListener("keydown", function (e) {
@@ -1498,6 +1504,11 @@ server: jmrp.io`;
     background: rgb(245 158 11 / 10%);
   }
 
+  .hdr-fetch-success {
+    color: #166534;
+    background: rgb(34 197 94 / 10%);
+  }
+
   .hdr-fetch-error {
     color: #991b1b;
     background: rgb(239 68 68 / 10%);
@@ -1505,6 +1516,10 @@ server: jmrp.io`;
 
   :root[data-theme="dark"] .hdr-fetch-warn {
     color: #fcd34d;
+  }
+
+  :root[data-theme="dark"] .hdr-fetch-success {
+    color: #86efac;
   }
 
   :root[data-theme="dark"] .hdr-fetch-error {

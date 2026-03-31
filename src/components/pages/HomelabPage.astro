@@ -8,6 +8,8 @@ import "@styles/components/homelab-components.css";
 
 import type { InfrastructureTranslations } from "@components/homelab/InfrastructureInsights";
 import InfrastructureInsights from "@components/homelab/InfrastructureInsights";
+import type { ServerInsightsTranslations } from "@components/homelab/ServerInsights";
+import ServerInsights from "@components/homelab/ServerInsights";
 import ServiceCard from "@components/homelab/ServiceCard.astro";
 import type { ServiceStatsTranslations } from "@components/homelab/ServiceStats";
 import ServiceStats from "@components/homelab/ServiceStats";
@@ -70,6 +72,7 @@ const infrastructureTranslations: InfrastructureTranslations = {
   statusOptimal: t("pages.homelab.statusOptimal"),
   statusHealthy: t("pages.homelab.statusHealthy"),
   statusUnknown: t("pages.homelab.statusUnknown"),
+  cpuTemp: t("pages.homelab.cpuTemp"),
 };
 
 const serviceStatsTranslations: ServiceStatsTranslations = {
@@ -84,6 +87,235 @@ const serviceStatsTranslations: ServiceStatsTranslations = {
   viewMonitor: t("pages.homelab.viewMonitor"),
   viewMonitorLFAria: t("pages.homelab.viewMonitorLFAria"),
   viewMonitorMFAria: t("pages.homelab.viewMonitorMFAria"),
+};
+
+/** Shared translation keys used by all ServerInsights instances. */
+const serverInsightsCommon = {
+  cpuUsagePrefix: t("pages.homelab.cpuUsagePrefix"),
+  percentCPU: t("pages.homelab.percentCPU"),
+  memoryUsage: t("pages.homelab.memoryUsage"),
+  percentRAM: t("pages.homelab.percentRAM"),
+  loadStatus: t("pages.homelab.loadStatus"),
+  statusCritical: t("pages.homelab.statusCritical"),
+  statusHigh: t("pages.homelab.statusHigh"),
+  statusElevated: t("pages.homelab.statusElevated"),
+  statusOptimal: t("pages.homelab.statusOptimal"),
+  statusHealthy: t("pages.homelab.statusHealthy"),
+  statusUnknown: t("pages.homelab.statusUnknown"),
+  resourceLoad: t("pages.homelab.resourceLoad"),
+  dbConnections: t("pages.homelab.dbConnections"),
+  redisMemory: t("pages.homelab.redisMemory"),
+  services: t("pages.homelab.servicesLabel"),
+  database: t("pages.homelab.databaseLabel"),
+};
+
+const matrixInsightsTranslations: ServerInsightsTranslations = {
+  ...serverInsightsCommon,
+  ariaLabel: t("pages.homelab.matrixStatsAriaLabel"),
+  error: t("pages.homelab.matrixStatsError"),
+  matrixWorkers: t("pages.homelab.matrixWorkers"),
+  matrixWorkersUnit: t("pages.homelab.matrixWorkersUnit"),
+  matrixMainProcess: t("pages.homelab.matrixMainProcess"),
+  matrixRunning: t("pages.homelab.matrixRunning"),
+  matrixStopped: t("pages.homelab.matrixStopped"),
+  matrixRooms: t("pages.homelab.matrixRooms"),
+  matrixLocalRooms: t("pages.homelab.matrixLocalRooms"),
+  matrixUsers: t("pages.homelab.matrixUsers"),
+  matrixLocalUsers: t("pages.homelab.matrixLocalUsers"),
+  matrixFederation: t("pages.homelab.matrixFederation"),
+  matrixFederationServers: t("pages.homelab.matrixFederationServers"),
+  matrixTotalEvents: t("pages.homelab.matrixTotalEvents"),
+  matrixDbSize: t("pages.homelab.matrixDbSize"),
+  matrixSynapse: t("pages.homelab.matrixSynapse"),
+  sidekiqJobs: "",
+  sidekiqJobsUnit: "",
+  sidekiqFailed: "",
+  sidekiqRetry: "",
+  sidekiqScheduled: "",
+  sidekiqProcesses: "",
+  pumaThreads: "",
+  mastodonFederation: "",
+  mastodonKnownDomains: "",
+  mastodonKnownPeers: "",
+  mastodonDbSize: "",
+  mastodonMediaStorage: "",
+  storageTitle: "",
+  storageUnit: "",
+  poolHealth: "",
+  arcCache: "",
+  cpuTemp: t("pages.homelab.cpuTemp"),
+  mikrotikSystem: "",
+  mikrotikCpuFrequency: "",
+  mikrotikMhz: "",
+  mikrotikStorage: "",
+  mikrotikNetwork: "",
+  mikrotikWanDownload: "",
+  mikrotikWanUpload: "",
+  mikrotikWanPackets: "",
+  mikrotikPacketsUnit: "",
+  mikrotikSecurity: "",
+  mikrotikActiveConnections: "",
+  mikrotikCrowdsecBlocked: "",
+  mikrotikBlacklistScanners: "",
+  mikrotikHoneypotHits: "",
+  mikrotikPortScanners: "",
+};
+
+const mastodonInsightsTranslations: ServerInsightsTranslations = {
+  ...serverInsightsCommon,
+  ariaLabel: t("pages.homelab.mastodonStatsAriaLabel"),
+  error: t("pages.homelab.mastodonStatsError"),
+  sidekiqJobs: t("pages.homelab.sidekiqJobs"),
+  sidekiqJobsUnit: t("pages.homelab.sidekiqJobsUnit"),
+  sidekiqFailed: t("pages.homelab.sidekiqFailed"),
+  sidekiqRetry: t("pages.homelab.sidekiqRetry"),
+  sidekiqScheduled: t("pages.homelab.sidekiqScheduled"),
+  sidekiqProcesses: t("pages.homelab.sidekiqProcesses"),
+  pumaThreads: t("pages.homelab.pumaThreads"),
+  mastodonFederation: t("pages.homelab.mastodonFederation"),
+  mastodonKnownDomains: t("pages.homelab.mastodonKnownDomains"),
+  mastodonKnownPeers: t("pages.homelab.mastodonKnownPeers"),
+  mastodonDbSize: t("pages.homelab.mastodonDbSize"),
+  mastodonMediaStorage: t("pages.homelab.mastodonMediaStorage"),
+  matrixWorkers: "",
+  matrixWorkersUnit: "",
+  matrixMainProcess: "",
+  matrixRunning: "",
+  matrixStopped: "",
+  matrixRooms: "",
+  matrixLocalRooms: "",
+  matrixUsers: "",
+  matrixLocalUsers: "",
+  matrixFederation: "",
+  matrixFederationServers: "",
+  matrixTotalEvents: "",
+  matrixDbSize: "",
+  matrixSynapse: "",
+  storageTitle: "",
+  storageUnit: "",
+  poolHealth: "",
+  arcCache: "",
+  cpuTemp: t("pages.homelab.cpuTemp"),
+  mikrotikSystem: "",
+  mikrotikCpuFrequency: "",
+  mikrotikMhz: "",
+  mikrotikStorage: "",
+  mikrotikNetwork: "",
+  mikrotikWanDownload: "",
+  mikrotikWanUpload: "",
+  mikrotikWanPackets: "",
+  mikrotikPacketsUnit: "",
+  mikrotikSecurity: "",
+  mikrotikActiveConnections: "",
+  mikrotikCrowdsecBlocked: "",
+  mikrotikBlacklistScanners: "",
+  mikrotikHoneypotHits: "",
+  mikrotikPortScanners: "",
+};
+
+const truenasInsightsTranslations: ServerInsightsTranslations = {
+  ...serverInsightsCommon,
+  ariaLabel: t("pages.homelab.truenasStatsAriaLabel"),
+  error: t("pages.homelab.truenasStatsError"),
+  storageTitle: t("pages.homelab.storageTitle"),
+  storageUnit: t("pages.homelab.storageUnit"),
+  poolHealth: t("pages.homelab.poolHealth"),
+  arcCache: t("pages.homelab.arcCache"),
+  cpuTemp: t("pages.homelab.cpuTemp"),
+  matrixWorkers: "",
+  matrixWorkersUnit: "",
+  matrixMainProcess: "",
+  matrixRunning: "",
+  matrixStopped: "",
+  matrixRooms: "",
+  matrixLocalRooms: "",
+  matrixUsers: "",
+  matrixLocalUsers: "",
+  matrixFederation: "",
+  matrixFederationServers: "",
+  matrixTotalEvents: "",
+  matrixDbSize: "",
+  matrixSynapse: "",
+  sidekiqJobs: "",
+  sidekiqJobsUnit: "",
+  sidekiqFailed: "",
+  sidekiqRetry: "",
+  sidekiqScheduled: "",
+  sidekiqProcesses: "",
+  pumaThreads: "",
+  mastodonFederation: "",
+  mastodonKnownDomains: "",
+  mastodonKnownPeers: "",
+  mastodonDbSize: "",
+  mastodonMediaStorage: "",
+  mikrotikSystem: "",
+  mikrotikCpuFrequency: "",
+  mikrotikMhz: "",
+  mikrotikStorage: "",
+  mikrotikNetwork: "",
+  mikrotikWanDownload: "",
+  mikrotikWanUpload: "",
+  mikrotikWanPackets: "",
+  mikrotikPacketsUnit: "",
+  mikrotikSecurity: "",
+  mikrotikActiveConnections: "",
+  mikrotikCrowdsecBlocked: "",
+  mikrotikBlacklistScanners: "",
+  mikrotikHoneypotHits: "",
+  mikrotikPortScanners: "",
+};
+
+const mikrotikInsightsTranslations: ServerInsightsTranslations = {
+  ...serverInsightsCommon,
+  ariaLabel: t("pages.homelab.mikrotikStatsAriaLabel"),
+  error: t("pages.homelab.mikrotikStatsError"),
+  mikrotikSystem: t("pages.homelab.mikrotikSystem"),
+  mikrotikCpuFrequency: t("pages.homelab.mikrotikCpuFrequency"),
+  mikrotikMhz: t("pages.homelab.mikrotikMhz"),
+  mikrotikStorage: t("pages.homelab.mikrotikStorage"),
+  mikrotikNetwork: t("pages.homelab.mikrotikNetwork"),
+  mikrotikWanDownload: t("pages.homelab.mikrotikWanDownload"),
+  mikrotikWanUpload: t("pages.homelab.mikrotikWanUpload"),
+  mikrotikWanPackets: t("pages.homelab.mikrotikWanPackets"),
+  mikrotikPacketsUnit: t("pages.homelab.mikrotikPacketsUnit"),
+  mikrotikSecurity: t("pages.homelab.mikrotikSecurity"),
+  mikrotikActiveConnections: t("pages.homelab.mikrotikActiveConnections"),
+  mikrotikCrowdsecBlocked: t("pages.homelab.mikrotikCrowdsecBlocked"),
+  mikrotikBlacklistScanners: t("pages.homelab.mikrotikBlacklistScanners"),
+  mikrotikHoneypotHits: t("pages.homelab.mikrotikHoneypotHits"),
+  mikrotikPortScanners: t("pages.homelab.mikrotikPortScanners"),
+  cpuTemp: t("pages.homelab.cpuTemp"),
+  // Empty strings for other servers' keys
+  matrixWorkers: "",
+  matrixWorkersUnit: "",
+  matrixMainProcess: "",
+  matrixRunning: "",
+  matrixStopped: "",
+  matrixRooms: "",
+  matrixLocalRooms: "",
+  matrixUsers: "",
+  matrixLocalUsers: "",
+  matrixFederation: "",
+  matrixFederationServers: "",
+  matrixTotalEvents: "",
+  matrixDbSize: "",
+  matrixSynapse: "",
+  sidekiqJobs: "",
+  sidekiqJobsUnit: "",
+  sidekiqFailed: "",
+  sidekiqRetry: "",
+  sidekiqScheduled: "",
+  sidekiqProcesses: "",
+  pumaThreads: "",
+  mastodonFederation: "",
+  mastodonKnownDomains: "",
+  mastodonKnownPeers: "",
+  mastodonDbSize: "",
+  mastodonMediaStorage: "",
+  storageTitle: "",
+  storageUnit: "",
+  poolHealth: "",
+  arcCache: "",
 };
 
 interface Provider {
@@ -170,6 +402,13 @@ const servicesSchema = {
   description={t("pages.homelab.description")}
   schema={servicesSchema}
 >
+  {/* HMAC token injected by Nginx sub_filter at serve time for API auth */}
+  <div
+    data-homelab-token="NGINX_HOMELAB_TOKEN"
+    hidden
+    aria-hidden="true"
+  >
+  </div>
   <section aria-label={t("aria.homelabInfrastructure")}>
     <div class="container">
       <h1 class="page-title">{t("pages.homelab.title")}</h1>
@@ -223,6 +462,74 @@ const servicesSchema = {
         <InfrastructureInsights
           client:visible
           translations={infrastructureTranslations}
+        />
+      </section>
+
+      <section
+        class="infrastructure-insights"
+        aria-labelledby="node-matrix-homeserver"
+      >
+        <h2
+          class="section-subtitle"
+          id="node-matrix-homeserver"
+        >
+          {t("pages.homelab.matrixNode")}
+        </h2>
+        <ServerInsights
+          client:visible
+          type="matrix"
+          translations={matrixInsightsTranslations}
+        />
+      </section>
+
+      <section
+        class="infrastructure-insights"
+        aria-labelledby="node-mastodon-instance"
+      >
+        <h2
+          class="section-subtitle"
+          id="node-mastodon-instance"
+        >
+          {t("pages.homelab.mastodonNode")}
+        </h2>
+        <ServerInsights
+          client:visible
+          type="mastodon"
+          translations={mastodonInsightsTranslations}
+        />
+      </section>
+
+      <section
+        class="infrastructure-insights"
+        aria-labelledby="node-truenas-storage"
+      >
+        <h2
+          class="section-subtitle"
+          id="node-truenas-storage"
+        >
+          {t("pages.homelab.truenasNode")}
+        </h2>
+        <ServerInsights
+          client:visible
+          type="truenas"
+          translations={truenasInsightsTranslations}
+        />
+      </section>
+
+      <section
+        class="infrastructure-insights"
+        aria-labelledby="node-edge-router"
+      >
+        <h2
+          class="section-subtitle"
+          id="node-edge-router"
+        >
+          {t("pages.homelab.routerNode")}
+        </h2>
+        <ServerInsights
+          client:visible
+          type="mikrotik"
+          translations={mikrotikInsightsTranslations}
         />
       </section>
     </div>

@@ -63,7 +63,9 @@ ignorePaths:
   - html-validation.json
   - rss-validation.json
   - accessibility-report/**
+  - skills-lock.json
   - accessibility-report.json
+  - tools.yaml
   - lighthouse-results/**
   - playwright-report/**
   - test-results/**
@@ -85,6 +87,9 @@ overrides:
   - filename: "src/content/cv/es.yaml"
     language: es,en
   - filename: "src/i18n/translations/es/**"
+    language: es,en
+  # PDF metadata script has Spanish certificate/course names
+  - filename: "scripts/optimize-pdf-metadata.py"
     language: es,en
   # RSS template has odd interpolation patterns
   - filename: "src/pages/rss.xml.ts"

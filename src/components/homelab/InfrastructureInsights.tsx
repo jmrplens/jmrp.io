@@ -88,6 +88,8 @@ export interface InfrastructureTranslations {
   statusHealthy: string;
   /** Status text when load status cannot be determined. */
   statusUnknown: string;
+  /** Label for CPU temperature. */
+  cpuTemp: string;
 }
 
 /** Component props */
@@ -112,6 +114,7 @@ interface HomelabStats {
   rate_limited_503_24h: number;
   cpu_usage_avg: number;
   mem_used_percent: number;
+  cpu_temp: number | null;
   top_security_countries: Country[];
 }
 
@@ -137,6 +140,7 @@ function isValidHomelabStats(data: unknown): data is HomelabStats {
 
   return (
     requiredNumericFields.every((field) => typeof d[field] === "number") &&
+    (typeof d.cpu_temp === "number" || d.cpu_temp === null) &&
     Array.isArray(d.top_security_countries) &&
     d.top_security_countries.every(
       (c: unknown) =>
@@ -249,8 +253,12 @@ export default function InfrastructureInsights({ translations: t }: Props) {
 
       isFetchingRef.current = true;
       try {
+        const token =
+          document.querySelector<HTMLElement>("[data-homelab-token]")?.dataset
+            .homelabToken ?? "";
         const res = await fetch("/api/homelab/stats", {
           signal: controller.signal,
+          headers: { "X-Homelab-Token": token },
         });
         if (res.ok) {
           const data = (await res.json()) as unknown;
@@ -531,6 +539,14 @@ export default function InfrastructureInsights({ translations: t }: Props) {
               <output aria-labelledby="label-memory">
                 {displayVal(stats?.mem_used_percent, formatPercent)}
                 <small aria-hidden="true"> {t.percentRAM}</small>
+              </output>
+            </div>
+            <div className="detail-row">
+              <span id="label-cpu-temp">{t.cpuTemp}</span>
+              <output aria-labelledby="label-cpu-temp">
+                {stats?.cpu_temp == null
+                  ? "—"
+                  : `${Math.round(stats.cpu_temp)}°C`}
               </output>
             </div>
             <div className="detail-row">

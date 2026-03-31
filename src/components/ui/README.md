@@ -529,6 +529,26 @@ import Code from "@/components/ui/Code.astro";
 
 ---
 
+### CodeBlock
+
+Lightweight syntax-highlighted code block — outputs bare `<pre><code>` with no wrapper, header, copy button, or other visual chrome. Uses the same Shiki highlighting pipeline as `Code`.
+
+```mdx
+import CodeBlock from "@/components/ui/CodeBlock.astro";
+
+<CodeBlock lang="routeros">
+  /ip firewall filter add chain=forward action=drop
+</CodeBlock>
+```
+
+**Props:**
+
+- `lang?: string` - Language for syntax highlighting (default: "text")
+
+**When to use:** Inside `<TabPanel noPadding>` or anywhere you need highlighted code without the visual chrome that `Code` adds. Solves the issue where bare code fences inside component slots lose their Shiki CSS.
+
+---
+
 ### FileContent
 
 Display file content inside a file-like window frame with filename header, icon detection, and copy button.

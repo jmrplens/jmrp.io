@@ -1,0 +1,56 @@
+---
+/**
+ * CodeBlock Component
+ * Renders syntax-highlighted code without any visual chrome (no header, no copy
+ * button, no wrapper box). Useful inside TabPanel or wherever a bare highlighted
+ * `<pre><code>` is needed.
+ *
+ * Usage:
+ * <CodeBlock lang="routeros">
+ *   /ip/firewall/filter add chain=forward action=drop
+ * </CodeBlock>
+ *
+ * Or wrapping a markdown code fence:
+ * <CodeBlock lang="yaml">
+ * ```yaml
+ * key: value
+ * ```
+ * </CodeBlock>
+ */
+import { decodeHtml } from "@utils/html";
+import { highlightCode, resolveShikiLanguage } from "@utils/shiki";
+import type { BuiltinLanguage, SpecialLanguage } from "shiki";
+
+interface Props {
+  lang?: BuiltinLanguage | SpecialLanguage | string;
+  code?: string;
+}
+
+const { lang = "text", code } = Astro.props;
+
+// Use code prop if provided, otherwise render slot content
+const slotContent = code ?? (await Astro.slots.render("default"));
+const trimmedContent = (slotContent ?? "").trim();
+
+// Extract raw code — strip any pre/code HTML wrappers from MDX code fences
+let rawCode = trimmedContent;
+const isHtml = /^<(?:pre|code)\b/i.test(trimmedContent);
+
+if (isHtml) {
+  const match = trimmedContent.match(
+    /^<pre[^>]*><code[^>]*>([\s\S]*?)<\/code><\/pre>$/,
+  );
+  rawCode = match
+    ? decodeHtml(match[1].replaceAll(/<[^>]*>/g, ""))
+    : decodeHtml(trimmedContent.replaceAll(/<[^>]*>/g, ""));
+} else {
+  rawCode = decodeHtml(trimmedContent);
+}
+
+// Highlight using the shared Shiki singleton (produces sh- prefixed classes with CSS)
+const highlightedHtml = rawCode
+  ? await highlightCode(rawCode, resolveShikiLanguage(lang))
+  : "";
+---
+
+{highlightedHtml && <Fragment set:html={highlightedHtml} />}

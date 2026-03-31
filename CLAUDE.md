@@ -1,7 +1,7 @@
 # CLAUDE.md - AI Context for jmrp.io
 
 > **Purpose**: Comprehensive context for Claude, Copilot, Gemini, and other AI agents working on this codebase.
-> **Last verified**: February 2026 (Astro 6.0.0-beta.11, UnoCSS 66.6.0)
+> **Last verified**: March 2026 (Astro 6.1.2, UnoCSS 66.6.7)
 
 ## Project Overview
 
@@ -30,13 +30,13 @@
 
 | Layer           | Technology               | Version        |
 | --------------- | ------------------------ | -------------- |
-| Framework       | Astro                    | 6.0.0-beta.11  |
-| Content         | MDX                      | 5.0.0-beta.7   |
-| Styling         | UnoCSS (presetWind4)     | ^66.6.0        |
+| Framework       | Astro                    | 6.1.2          |
+| Content         | MDX                      | 5.0.3          |
+| Styling         | UnoCSS (presetWind4)     | ^66.6.2        |
 | Islands         | Preact                   | ^10.28.3       |
 | Diagrams        | Mermaid + mermaid-isomorphic | ^11.12.2 / ^3.0.4 |
 | Math            | rehype-mathjax (SSR)     | ^7.1.0         |
-| Syntax          | Shiki                    | ^3.22.0        |
+| Syntax          | Shiki                    | ^4.0.0         |
 | Testing         | Playwright + Axe-core    | ^1.58.2        |
 | Icons           | Iconify (12 collections) | @iconify-json/* |
 | Package Manager | pnpm                     | >=10           |
@@ -348,6 +348,7 @@ All JSON-LD wrapped in `safeJsonLd()` — escapes `<`, `>`, `&`, `\u2028`, `\u20
 | Component         | Import                                                                                                      | Key Props                                       |
 | ----------------- | ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
 | `Code`            | `@components/ui/Code.astro`                                                                                 | `lang`, `title`, `showLineNumbers`, `highlight` |
+| `CodeBlock`       | `@components/ui/CodeBlock.astro`                                                                            | `lang` — bare highlight, no chrome (for TabPanel) |
 | `FileContent`     | `@components/ui/FileContent.astro`                                                                          | `filename`, `language`, `collapsible`           |
 | `TerminalCommand` | `@components/ui/TerminalCommand.astro`                                                                      | `title`, `prompt`                               |
 | `TerminalOutput`  | `@components/ui/TerminalOutput.astro`                                                                       | Output display                                  |

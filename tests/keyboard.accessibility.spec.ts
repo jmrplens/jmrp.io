@@ -19,7 +19,7 @@ test.describe("Keyboard Navigation Accessibility", () => {
     await page.goto("/");
 
     // Ensure we are in a clean state (start at body)
-    await page.focus("body");
+    await page.locator("body").focus();
 
     // 1. Tab to "Skip to content" then Logo
     // Ensure the page is hydrated/ready by waiting for a key element
@@ -60,7 +60,7 @@ test.describe("Keyboard Navigation Accessibility", () => {
     await page.goto("/");
 
     // Ensure we start fresh
-    await page.focus("body");
+    await page.locator("body").focus();
 
     // 1. Tab to Skip Link
     await page.keyboard.press("Tab");
@@ -190,6 +190,7 @@ test.describe("Keyboard Navigation Accessibility", () => {
           rate_limited_503_24h: 5,
           cpu_usage_avg: 15.5,
           mem_used_percent: 45.2,
+          cpu_temp: 42,
           top_security_countries: [{ code: "US", count: 100 }],
         }),
       });
@@ -197,8 +198,8 @@ test.describe("Keyboard Navigation Accessibility", () => {
 
     await page.goto("/homelab/");
 
-    // 1. Find the infrastructure section
-    const section = page.locator(".infrastructure-section");
+    // 1. Find the infrastructure section (first one is InfrastructureInsights/Nginx)
+    const section = page.locator(".infrastructure-section").first();
     await expect(section).toBeVisible();
 
     // Ensure component hydration triggers (client:visible)
@@ -238,7 +239,7 @@ test.describe("Keyboard Navigation Accessibility", () => {
 
     // 3. Run Axe on the section
     const results = await new AxeBuilder({ page })
-      .include(".infrastructure-section")
+      .include(".infrastructure-section:first-of-type")
       .analyze();
 
     expect(results.violations).toEqual([]);
