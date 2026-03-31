@@ -29,7 +29,7 @@ José Manuel Requena Plens (JMRP) is a multidisciplinary engineer building contr
 - [MikroTik Honeypot: Trap & Auto-Block](https://jmrp.io/blog/006-implementing-mikrotik-honeypot/)
 - [MikroTik WireGuard VPN: Dual-Stack](https://jmrp.io/blog/007-mikrotik-wireguard-dual-stack-vpn/)
 - [MikroTik PPPoE + DHCPv6-PD: Dual-Stack](https://jmrp.io/blog/008-mikrotik-pppoe-dualstack-digi/)
-- [Designing a CrowdSec Bouncer](https://jmrp.io/blog/009-designing-crowdsec-bouncer/)
+- [Running a Tor Bridge on Linux](https://jmrp.io/blog/009-running-tor-bridge/)
 
 ## Developer Tools
 

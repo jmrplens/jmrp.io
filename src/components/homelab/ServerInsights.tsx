@@ -398,7 +398,7 @@ function getHealthColor(health: string): string {
 }
 
 /**
- * Server insights component for Matrix, Mastodon, TrueNAS, and Docker.
+ * Server insights component for Matrix, Mastodon, TrueNAS, and MikroTik.
  * Displays real-time statistics fetched from `/api/homelab/{type}` endpoints.
  */
 export default function ServerInsights({
