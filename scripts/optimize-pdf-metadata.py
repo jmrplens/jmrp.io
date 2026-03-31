@@ -324,6 +324,7 @@ PDF_METADATA = {
 
 def update_pdf_metadata(filepath: str, metadata: dict) -> bool:
     """Update PDF DocInfo metadata using pikepdf."""
+    pdf = None
     try:
         pdf = pikepdf.open(filepath, allow_overwriting_input=True)
 
@@ -346,20 +347,22 @@ def update_pdf_metadata(filepath: str, metadata: dict) -> bool:
         pdf.docinfo[pikepdf.Name.Keywords] = keywords
 
         pdf.save(filepath)
-        pdf.close()
         return True
     except Exception as e:
-        print(f"  ERROR: {e}", file=sys.stderr)
+        print(f"  ERROR [{filepath}]: {e}", file=sys.stderr)
         return False
+    finally:
+        if pdf is not None:
+            pdf.close()
 
 
 def _find_unmapped_pdfs():
     """Find PDF files not present in the metadata map."""
     all_pdfs = set()
-    for root, dirs, files in os.walk(BASE_DIR):
+    for root, _dirs, files in os.walk(BASE_DIR):
         for f in files:
             if f.endswith(".pdf"):
-                rel = os.path.relpath(os.path.join(root, f), BASE_DIR)
+                rel = os.path.relpath(os.path.join(root, f), BASE_DIR).replace(os.sep, "/")
                 all_pdfs.add(rel)
     return all_pdfs - set(PDF_METADATA.keys())
 
