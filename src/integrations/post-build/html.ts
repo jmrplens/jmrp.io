@@ -259,8 +259,8 @@ async function processSingleHtmlFile(
   // UnoCSS Icon Purge: Remove CSS rules for icons that are not present as classes in the HTML
   if (purgeUnusedIcons($)) isModified = true;
 
-  // Accessibility: Code blocks
-  if (processCodeBlocks($)) isModified = true;
+  // Accessibility: Code blocks (locale-aware labels)
+  if (processCodeBlocks($, file, distDir)) isModified = true;
 
   // Performance: Block prefetch for binary files
   if (processLinks($)) isModified = true;
@@ -572,9 +572,34 @@ function sanitizeLanguage(lang: string): string {
   return lang.replaceAll(/[^a-zA-Z0-9_-]/g, "").toLowerCase() || "code";
 }
 
-function processCodeBlocks($: cheerio.CheerioAPI): boolean {
+/**
+ * Detects the locale from the output file path relative to dist.
+ * Files under `dist/es/` are Spanish; everything else is English (default).
+ */
+function detectLocaleFromPath(file: string, distDir: string): "en" | "es" {
+  const rel = path.relative(distDir, file).split(path.sep);
+  return rel[0] === "es" ? "es" : "en";
+}
+
+/** Locale-aware label for orphan code blocks wrapped during post-build. */
+function codeSnippetLabel(
+  displayLang: string,
+  index: number,
+  locale: "en" | "es",
+): string {
+  return locale === "es"
+    ? `Fragmento de código ${displayLang} ${index}`
+    : `${displayLang} snippet ${index}`;
+}
+
+function processCodeBlocks(
+  $: cheerio.CheerioAPI,
+  file: string,
+  distDir: string,
+): boolean {
   let modified = false;
   let regionCount = 0;
+  const locale = detectLocaleFromPath(file, distDir);
   $("pre[tabindex='0'], pre[role='region']").each((_, el) => {
     const $el = $(el);
     if ($el.closest("section[aria-label]").length > 0) {
@@ -596,7 +621,8 @@ function processCodeBlocks($: cheerio.CheerioAPI): boolean {
     regionCount++;
     const safeLang = sanitizeLanguage($el.attr("data-language") || "code");
     const displayLang = safeLang.charAt(0).toUpperCase() + safeLang.slice(1);
-    const wrapperHtml = `<section aria-label="${displayLang} snippet ${regionCount}" class="code-section-wrapper"></section>`;
+    const label = codeSnippetLabel(displayLang, regionCount, locale);
+    const wrapperHtml = `<section aria-label="${label}" class="code-section-wrapper"></section>`;
     $el.wrap(wrapperHtml);
     $el.removeAttr("role");
     modified = true;
