@@ -117,3 +117,7 @@ temp_workflow/
 # Backup files
 *.backup
 accessibility-report.json
+# MCP/external tool configs (not project code)
+tools.yaml
+# Demo output (videos, large assets)
+demo-output/
