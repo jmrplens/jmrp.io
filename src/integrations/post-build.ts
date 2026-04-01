@@ -510,6 +510,20 @@ function clearNginxCache(
 }
 
 /**
+ * Safely serializes an unknown value to a string.
+ * Handles strings directly, uses JSON.stringify with a try/catch fallback
+ * to prevent crashes on circular references, BigInt, or throwing toJSON.
+ */
+function safeStringify(value: unknown): string {
+  if (typeof value === "string") return value;
+  try {
+    return JSON.stringify(value) ?? String(value);
+  } catch {
+    return String(value);
+  }
+}
+
+/**
  * Handles validation errors after deployment by reverting to the original content.
  *
  * @param validationError - The caught validation error.
@@ -537,7 +551,7 @@ function handleNginxValidationError(
   const validationMessage =
     validationError instanceof Error
       ? (validationError.stack ?? validationError.message)
-      : JSON.stringify(validationError);
+      : safeStringify(validationError);
   logger.error(validationMessage);
 
   try {
@@ -564,7 +578,7 @@ function handleNginxValidationError(
   // If revert was successful, re-throw the original error to inform the implementation that the new config was rejected
   throw validationError instanceof Error
     ? validationError
-    : new Error(JSON.stringify(validationError));
+    : new Error(validationMessage);
 }
 
 /**

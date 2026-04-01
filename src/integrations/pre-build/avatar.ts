@@ -139,6 +139,20 @@ async function fetchGitHubAvatarBuffer(): Promise<Buffer> {
 }
 
 /**
+ * Safely serializes an unknown value to a string.
+ * Handles strings directly, uses JSON.stringify with a try/catch fallback
+ * to prevent crashes on circular references, BigInt, or throwing toJSON.
+ */
+function safeStringify(value: unknown): string {
+  if (typeof value === "string") return value;
+  try {
+    return JSON.stringify(value) ?? String(value);
+  } catch {
+    return String(value);
+  }
+}
+
+/**
  * Handles errors during avatar fetching by applying fallbacks.
  *
  * @param error - The caught error.
@@ -152,8 +166,7 @@ function handleAvatarError(
   fallbackPath: string,
   logger: AstroIntegrationLogger,
 ) {
-  const message =
-    error instanceof Error ? error.message : JSON.stringify(error);
+  const message = error instanceof Error ? error.message : safeStringify(error);
   logger.warn(`Could not download GitHub avatar (${message}). Using fallback.`);
 
   // Clean up partial write if any (unlikely with sync write but good practice)
