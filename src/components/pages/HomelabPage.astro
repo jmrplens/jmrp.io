@@ -13,6 +13,8 @@ import ServerInsights from "@components/homelab/ServerInsights";
 import ServiceCard from "@components/homelab/ServiceCard.astro";
 import type { ServiceStatsTranslations } from "@components/homelab/ServiceStats";
 import ServiceStats from "@components/homelab/ServiceStats";
+import type { TorStatsTranslations } from "@components/homelab/TorStats";
+import TorStats from "@components/homelab/TorStats";
 import { defaultLocale, type Locale } from "@i18n/config";
 import { useTranslatedPath, useTranslations } from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
@@ -87,6 +89,26 @@ const serviceStatsTranslations: ServiceStatsTranslations = {
   viewMonitor: t("pages.homelab.viewMonitor"),
   viewMonitorLFAria: t("pages.homelab.viewMonitorLFAria"),
   viewMonitorMFAria: t("pages.homelab.viewMonitorMFAria"),
+};
+
+const torStatsTranslations: TorStatsTranslations = {
+  serviceUnavailable: t("pages.homelab.torStatsError"),
+  running: t("pages.homelab.torRunning"),
+  offline: t("pages.homelab.torOffline"),
+  version: t("pages.homelab.torVersion"),
+  recommended: t("pages.homelab.torRecommended"),
+  obsolete: t("pages.homelab.torObsolete"),
+  flags: t("pages.homelab.torFlags"),
+  transports: t("pages.homelab.torTransports"),
+  traffic24h: t("pages.homelab.torTraffic24h"),
+  download: t("pages.homelab.torDownload"),
+  upload: t("pages.homelab.torUpload"),
+  clients24h: t("pages.homelab.torClients24h"),
+  orConnections: t("pages.homelab.torOrConnections"),
+  circuits: t("pages.homelab.torCircuits"),
+  connections24h: t("pages.homelab.torConnections24h"),
+  advertisedBandwidth: t("pages.homelab.torAdvertisedBandwidth"),
+  location: t("pages.homelab.torLocation"),
 };
 
 /** Shared translation keys used by all ServerInsights instances. */
@@ -378,6 +400,30 @@ const services: Service[] = [
   },
 ];
 
+/** Tor services displayed as separate cards alongside the main services grid. */
+const torServices = [
+  {
+    id: "tor-bridge",
+    title: t("pages.homelab.torBridgeName"),
+    icon: "simple-icons:torproject",
+    description: t("pages.homelab.torBridgeDescription"),
+    url: "https://bridges.torproject.org/",
+    linkText: t("pages.homelab.torBridgeLink"),
+    torType: "bridge" as const,
+    name: t("pages.homelab.torBridgeName"),
+  },
+  {
+    id: "tor-relay",
+    title: t("pages.homelab.torRelayName"),
+    icon: "simple-icons:torproject",
+    description: t("pages.homelab.torRelayDescription"),
+    url: "https://community.torproject.org/relay/",
+    linkText: t("pages.homelab.torRelayLink"),
+    torType: "relay" as const,
+    name: t("pages.homelab.torRelayName"),
+  },
+];
+
 const servicesSchema = {
   "@context": "https://schema.org",
   "@type": "CollectionPage",
@@ -387,13 +433,22 @@ const servicesSchema = {
   ).toString(),
   name: t("pages.homelab.schemaName"),
   inLanguage: locale,
-  hasPart: services.map((service) => ({
-    "@type": "Service",
-    name: service.name,
-    description: service.description,
-    url: service.url,
-    provider: service.provider,
-  })),
+  hasPart: [
+    ...services.map((service) => ({
+      "@type": "Service",
+      name: service.name,
+      description: service.description,
+      url: service.url,
+      provider: service.provider,
+    })),
+    ...torServices.map((service) => ({
+      "@type": "Service",
+      name: service.name,
+      description: service.description,
+      url: service.url,
+      provider: defaultProvider,
+    })),
+  ],
 };
 ---
 
@@ -442,6 +497,28 @@ const servicesSchema = {
                   client:visible
                   type={service.statsType}
                   translations={serviceStatsTranslations}
+                />
+              </div>
+            </ServiceCard>
+          ))
+        }
+        {
+          torServices.map((service) => (
+            <ServiceCard
+              title={service.title}
+              icon={service.icon}
+              description={service.description}
+              link={service.url}
+              linkText={service.linkText}
+            >
+              <div
+                id={`${service.id}-stats`}
+                class="stats-container"
+              >
+                <TorStats
+                  client:visible
+                  type={service.torType}
+                  translations={torStatsTranslations}
                 />
               </div>
             </ServiceCard>

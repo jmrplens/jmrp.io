@@ -268,3 +268,122 @@
     transform: translateX(100%);
   }
 }
+
+/* ===== Tor Stats ===== */
+.tor-flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+  font-size: 0.85em;
+}
+
+.tor-flags-label {
+  font-weight: var(--fw-medium);
+  color: var(--color-text-muted);
+}
+
+.tor-flags-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.tor-flag-badge {
+  padding: 1px 8px;
+  font-size: 0.8em;
+  color: var(--color-primary);
+  background: var(--color-primary-bg, rgb(179 137 245 / 10%));
+  border-radius: 10px;
+}
+
+:root[data-theme="light"] .tor-flag-badge {
+  color: var(--color-primary);
+  background: var(--color-primary-bg, rgb(124 58 237 / 10%));
+}
+
+.tor-transport-badge {
+  padding: 1px 8px;
+  font-family: var(--font-mono);
+  font-size: 0.8em;
+  color: var(--color-status-online, #10b981);
+  background: var(--color-status-online-bg, rgb(16 185 129 / 10%));
+  border-radius: 10px;
+}
+
+:root[data-theme="light"] .tor-transport-badge {
+  color: var(--color-status-online, #059669);
+  background: var(--color-status-online-bg, rgb(5 150 105 / 10%));
+}
+
+.tor-version-badge {
+  padding: 1px 6px;
+  font-size: 0.8em;
+  border-radius: 8px;
+}
+
+.tor-version-badge--ok {
+  color: var(--color-status-online, #10b981);
+  background: var(--color-status-online-bg, rgb(16 185 129 / 10%));
+}
+
+.tor-version-badge--warn {
+  color: var(--color-status-warn, #f59e0b);
+  background: var(--color-status-warn-bg, rgb(245 158 11 / 10%));
+}
+
+:root[data-theme="light"] .tor-version-badge--ok {
+  color: var(--color-status-online, #059669);
+  background: var(--color-status-online-bg, rgb(5 150 105 / 10%));
+}
+
+:root[data-theme="light"] .tor-version-badge--warn {
+  color: var(--color-status-warn, #d97706);
+  background: var(--color-status-warn-bg, rgb(217 119 6 / 10%));
+}
+
+.tor-metrics {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.tor-metric-header {
+  font-size: 0.85em;
+  font-weight: var(--fw-medium);
+  color: var(--color-text-muted);
+}
+
+.tor-metric-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+.tor-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: 0.4rem 0.6rem;
+  background: var(--color-bg-subtle);
+  border-radius: var(--radius-sm);
+}
+
+.tor-metric-label {
+  font-size: 0.75em;
+  color: var(--color-text-muted);
+}
+
+.tor-metric-value {
+  font-size: 0.9em;
+  color: var(--color-text);
+}
+
+.status-badge--offline {
+  color: var(--color-status-offline, #ef4444);
+  background: var(--color-status-offline-bg, rgb(239 68 68 / 10%));
+}
+
+.status-dot--offline {
+  background: var(--color-status-offline, #ef4444);
+}
