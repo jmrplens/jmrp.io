@@ -144,7 +144,7 @@ function isValidTorResponse(data: unknown): data is TorApiResponse {
  * @returns A discriminated result with the API data or an error message.
  */
 function fetchTorStats(): Promise<FetchResult> {
-  if (sharedFetchPromise) return sharedFetchPromise;
+  if (sharedFetchPromise !== null) return sharedFetchPromise;
 
   sharedFetchPromise = (async (): Promise<FetchResult> => {
     try {

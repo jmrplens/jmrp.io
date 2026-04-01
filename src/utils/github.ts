@@ -159,7 +159,7 @@ export async function fetchRepositoriesByName(
     });
 
     const batchResults = await Promise.all(batchPromises);
-    results.push(...(batchResults.filter(Boolean) as GitHubRepo[]));
+    results.push(...batchResults.filter((r): r is GitHubRepo => r != null));
   }
 
   return results;
