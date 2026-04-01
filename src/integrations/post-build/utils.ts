@@ -109,7 +109,8 @@ export function getFileHash(
   algorithm: "sha384" | "sha512" = "sha512",
 ): string {
   const cacheKey = `${filePath}:${algorithm}`;
-  if (cache.has(cacheKey)) return cache.get(cacheKey)!;
+  const cached = cache.get(cacheKey);
+  if (cached !== undefined) return cached;
   const content = fs.readFileSync(filePath);
   const hash = `${algorithm}-${crypto.createHash(algorithm).update(content).digest("base64")}`;
   cache.set(cacheKey, hash);

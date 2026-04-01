@@ -534,11 +534,11 @@ function handleNginxValidationError(
   logger.error(
     "⚠ Nginx validation failed! Reverting to previous configuration.",
   );
-  logger.error(
+  const validationMessage =
     validationError instanceof Error
-      ? validationError.stack || validationError.message
-      : String(validationError),
-  );
+      ? (validationError.stack ?? validationError.message)
+      : JSON.stringify(validationError);
+  logger.error(validationMessage);
 
   try {
     performRollback(systemNginxPath, originalContent, assetsRollback);
@@ -564,7 +564,7 @@ function handleNginxValidationError(
   // If revert was successful, re-throw the original error to inform the implementation that the new config was rejected
   throw validationError instanceof Error
     ? validationError
-    : new Error(String(validationError));
+    : new Error(JSON.stringify(validationError));
 }
 
 /**

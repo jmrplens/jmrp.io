@@ -152,7 +152,8 @@ function handleAvatarError(
   fallbackPath: string,
   logger: AstroIntegrationLogger,
 ) {
-  const message = error instanceof Error ? error.message : String(error);
+  const message =
+    error instanceof Error ? error.message : JSON.stringify(error);
   logger.warn(`Could not download GitHub avatar (${message}). Using fallback.`);
 
   // Clean up partial write if any (unlikely with sync write but good practice)
