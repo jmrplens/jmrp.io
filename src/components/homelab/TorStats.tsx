@@ -1,3 +1,4 @@
+import type { ComponentChildren } from "preact";
 import { useEffect, useState } from "preact/hooks";
 
 /** Translations required by TorStats. Passed from Astro parent. */
@@ -72,6 +73,11 @@ interface TorApiResponse {
   relay: TorNodeData;
 }
 
+/** Discriminated fetch result to decouple error handling from the fetch logic. */
+type FetchResult =
+  | { ok: true; data: TorApiResponse }
+  | { ok: false; error: string };
+
 /**
  * Format bytes into a human-readable string.
  *
@@ -81,7 +87,10 @@ interface TorApiResponse {
 function formatBytes(bytes: number): string {
   if (bytes === 0) return "0 B";
   const units = ["B", "KB", "MB", "GB", "TB"];
-  const i = Math.floor(Math.log(bytes) / Math.log(1024));
+  const i = Math.min(
+    Math.floor(Math.log(bytes) / Math.log(1024)),
+    units.length - 1,
+  );
   const value = bytes / Math.pow(1024, i);
   return `${value.toFixed(value < 10 ? 1 : 0)} ${units[i]}`;
 }
@@ -96,35 +105,79 @@ function formatBandwidth(bps: number): string {
   return `${formatBytes(bps)}/s`;
 }
 
+/** Cached homelab token read from the DOM once. */
+let cachedToken: string | null = null;
+
+/** Reads the homelab token from the DOM, caching it for subsequent calls. */
+function getHomelabToken(): string {
+  if (cachedToken !== null) return cachedToken;
+  cachedToken =
+    document.querySelector<HTMLElement>("[data-homelab-token]")?.dataset
+      .homelabToken ?? "";
+  return cachedToken;
+}
+
+/** Module-level cached promise so both bridge + relay share a single request. */
+let sharedFetchPromise: Promise<FetchResult> | null = null;
+
+/**
+ * Validate that the API response has the expected shape.
+ *
+ * @param data - The parsed JSON from the API.
+ * @returns True if the data matches TorApiResponse.
+ */
+function isValidTorResponse(data: unknown): data is TorApiResponse {
+  if (typeof data !== "object" || data === null) return false;
+  const obj = data as Record<string, unknown>;
+  return (
+    typeof obj.bridge === "object" &&
+    obj.bridge !== null &&
+    typeof obj.relay === "object" &&
+    obj.relay !== null
+  );
+}
+
 /**
  * Fetch Tor statistics from the homelab API.
+ * Uses a module-level shared promise so concurrent callers reuse the same request.
  *
- * @param setError - Callback to signal an error state.
- * @returns The full Tor API response or null on failure.
+ * @returns A discriminated result with the API data or an error message.
  */
-async function fetchTorStats(
-  setError: (error: boolean) => void,
-): Promise<TorApiResponse | null> {
-  try {
-    const token =
-      document.querySelector<HTMLElement>("[data-homelab-token]")?.dataset
-        .homelabToken ?? "";
-    const headers: HeadersInit = token ? { "X-Homelab-Token": token } : {};
+function fetchTorStats(): Promise<FetchResult> {
+  if (sharedFetchPromise) return sharedFetchPromise;
 
-    const res = await fetch("/api/homelab/tor", { headers }).catch(() => null);
-    if (!res?.ok) {
-      setError(true);
-      return null;
-    }
+  sharedFetchPromise = (async (): Promise<FetchResult> => {
+    try {
+      const token = getHomelabToken();
+      const headers: HeadersInit = token ? { "X-Homelab-Token": token } : {};
 
-    return (await res.json()) as TorApiResponse;
-  } catch (error) {
-    if (import.meta.env.DEV) {
-      console.error("Failed to fetch Tor stats", error);
+      const res = await fetch("/api/homelab/tor", { headers }).catch(
+        () => null,
+      );
+      if (!res?.ok) {
+        return { ok: false, error: `HTTP ${res?.status ?? "network error"}` };
+      }
+
+      const json: unknown = await res.json();
+      if (!isValidTorResponse(json)) {
+        return { ok: false, error: "Invalid API response shape" };
+      }
+
+      return { ok: true, data: json };
+    } catch (error) {
+      if (import.meta.env.DEV) {
+        console.error("Failed to fetch Tor stats", error);
+      }
+      return {
+        ok: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+      };
+    } finally {
+      sharedFetchPromise = null;
     }
-    setError(true);
-    return null;
-  }
+  })();
+
+  return sharedFetchPromise;
 }
 
 /** Returns the display text for a Tor node's running status. */
@@ -134,26 +187,6 @@ function getStatusText(
 ): string {
   if (!data) return "...";
   return data.running ? t.running : t.offline;
-}
-
-/** Renders the version info block for a Tor node. */
-function TorVersionInfo({
-  data,
-  translations: t,
-}: {
-  readonly data: TorNodeData;
-  readonly translations: TorStatsTranslations;
-}) {
-  return (
-    <div className="status-text-muted">
-      <strong className="status-text">Tor {data.version}</strong>{" "}
-      <span
-        className={`tor-version-badge ${data.recommended_version ? "tor-version-badge--ok" : "tor-version-badge--warn"}`}
-      >
-        {data.recommended_version ? `✓ ${t.recommended}` : `⚠ ${t.obsolete}`}
-      </span>
-    </div>
-  );
 }
 
 /** Renders the flag badges for a Tor node. Returns empty fragment if no flags. */
@@ -184,124 +217,61 @@ function TorFlagList({
   );
 }
 
-/**
- * Renders the Tor Bridge service card stats.
- *
- * @param props - Component properties.
- * @param props.data - Bridge node data from the API.
- * @param props.translations - Translated strings.
- */
-function BridgeStats({
-  data,
-  translations: t,
+/** A single metric cell (label + value). */
+function TorMetric({
+  label,
+  value,
 }: {
-  readonly data: TorNodeData | null;
-  readonly translations: TorStatsTranslations;
+  readonly label: string;
+  readonly value: string;
 }) {
   return (
-    <div className="stats-wrapper-col">
-      {/* Status + Version */}
-      <div className="status-header">
-        <div
-          className={`status-badge${data && !data.running ? " status-badge--offline" : ""}`}
-        >
-          <span
-            className={`status-dot${data && !data.running ? " status-dot--offline" : ""}`}
-          ></span>
-          <strong>{getStatusText(data, t)}</strong>
-        </div>
-        {data ? (
-          <TorVersionInfo
-            data={data}
-            translations={t}
-          />
-        ) : null}
-      </div>
-
-      {data ? (
-        <TorFlagList
-          flags={data.flags}
-          label={t.flags}
-        />
-      ) : null}
-
-      {data?.transports ? (
-        <TorFlagList
-          flags={data.transports}
-          label={t.transports}
-          badgeClass="tor-transport-badge"
-        />
-      ) : null}
-
-      {/* Traffic 24h */}
-      <div className="tor-metrics">
-        <div className="tor-metric-header">{t.traffic24h}</div>
-        <div className="tor-metric-grid">
-          <div className="tor-metric">
-            <span className="tor-metric-label">{t.download}</span>
-            <strong className="tor-metric-value">
-              {data ? formatBytes(data.traffic_read_24h) : "..."}
-            </strong>
-          </div>
-          <div className="tor-metric">
-            <span className="tor-metric-label">{t.upload}</span>
-            <strong className="tor-metric-value">
-              {data ? formatBytes(data.traffic_write_24h) : "..."}
-            </strong>
-          </div>
-        </div>
-      </div>
-
-      {/* Bridge-specific stats */}
-      <div className="tor-metric-grid">
-        <div className="tor-metric">
-          <span className="tor-metric-label">{t.clients24h}</span>
-          <strong className="tor-metric-value">
-            {data?.clients_24h?.toLocaleString() ?? "..."}
-          </strong>
-        </div>
-        <div className="tor-metric">
-          <span className="tor-metric-label">{t.advertisedBandwidth}</span>
-          <strong className="tor-metric-value">
-            {data ? formatBandwidth(data.advertised_bandwidth) : "..."}
-          </strong>
-        </div>
-      </div>
+    <div className="tor-metric">
+      <span className="tor-metric-label">{label}</span>
+      <strong className="tor-metric-value">{value}</strong>
     </div>
   );
 }
 
 /**
- * Renders the Tor Relay service card stats.
- *
- * @param props - Component properties.
- * @param props.data - Relay node data from the API.
- * @param props.translations - Translated strings.
+ * Shared layout for both Bridge and Relay cards.
+ * Renders the common status header, flags, traffic section, and a slot
+ * for type-specific metrics, eliminating markup duplication.
  */
-function RelayStats({
+function TorNodeCard({
   data,
   translations: t,
+  children,
 }: {
   readonly data: TorNodeData | null;
   readonly translations: TorStatsTranslations;
+  readonly children: ComponentChildren;
 }) {
+  const isOffline = data !== null && !data.running;
+
   return (
     <div className="stats-wrapper-col">
       {/* Status + Version */}
       <div className="status-header">
         <div
-          className={`status-badge${data && !data.running ? " status-badge--offline" : ""}`}
+          className={`status-badge${isOffline ? " status-badge--offline" : ""}`}
         >
           <span
-            className={`status-dot${data && !data.running ? " status-dot--offline" : ""}`}
+            className={`status-dot${isOffline ? " status-dot--offline" : ""}`}
           ></span>
           <strong>{getStatusText(data, t)}</strong>
         </div>
         {data ? (
-          <TorVersionInfo
-            data={data}
-            translations={t}
-          />
+          <div className="status-text-muted">
+            <strong className="status-text">Tor {data.version}</strong>{" "}
+            <span
+              className={`tor-version-badge ${data.recommended_version ? "tor-version-badge--ok" : "tor-version-badge--warn"}`}
+            >
+              {data.recommended_version
+                ? `✓ ${t.recommended}`
+                : `⚠ ${t.obsolete}`}
+            </span>
+          </div>
         ) : null}
       </div>
 
@@ -316,51 +286,26 @@ function RelayStats({
       <div className="tor-metrics">
         <div className="tor-metric-header">{t.traffic24h}</div>
         <div className="tor-metric-grid">
-          <div className="tor-metric">
-            <span className="tor-metric-label">{t.download}</span>
-            <strong className="tor-metric-value">
-              {data ? formatBytes(data.traffic_read_24h) : "..."}
-            </strong>
-          </div>
-          <div className="tor-metric">
-            <span className="tor-metric-label">{t.upload}</span>
-            <strong className="tor-metric-value">
-              {data ? formatBytes(data.traffic_write_24h) : "..."}
-            </strong>
-          </div>
+          <TorMetric
+            label={t.download}
+            value={data ? formatBytes(data.traffic_read_24h) : "..."}
+          />
+          <TorMetric
+            label={t.upload}
+            value={data ? formatBytes(data.traffic_write_24h) : "..."}
+          />
         </div>
       </div>
 
-      {/* Relay-specific stats */}
-      <div className="tor-metric-grid">
-        <div className="tor-metric">
-          <span className="tor-metric-label">{t.orConnections}</span>
-          <strong className="tor-metric-value">
-            {data?.or_connections?.toLocaleString() ?? "..."}
-          </strong>
-        </div>
-        <div className="tor-metric">
-          <span className="tor-metric-label">{t.circuits}</span>
-          <strong className="tor-metric-value">
-            {data?.circuits_open?.toLocaleString() ?? "..."}
-          </strong>
-        </div>
-      </div>
-      <div className="tor-metric-grid">
-        <div className="tor-metric">
-          <span className="tor-metric-label">{t.connections24h}</span>
-          <strong className="tor-metric-value">
-            {data?.connections_24h?.toLocaleString() ?? "..."}
-          </strong>
-        </div>
-      </div>
+      {/* Type-specific metrics */}
+      {children}
     </div>
   );
 }
 
 /**
  * Displays live Tor statistics for a bridge or relay node.
- * Fetches data from /api/homelab/tor and renders the appropriate sub-component.
+ * Fetches data from /api/homelab/tor and renders the appropriate card layout.
  *
  * @param props - Component properties.
  * @param props.type - The node type: "bridge" or "relay".
@@ -375,29 +320,71 @@ export default function TorStats({ type, translations: t }: Props) {
     setData(null);
     setError(false);
 
-    const fetchData = async () => {
-      const response = await fetchTorStats(setError);
-      if (response) {
-        setData(type === "bridge" ? response.bridge : response.relay);
+    const load = async () => {
+      const result = await fetchTorStats();
+      if (result.ok) {
+        setData(type === "bridge" ? result.data.bridge : result.data.relay);
+      } else {
+        setError(true);
       }
     };
 
-    void fetchData();
+    void load();
   }, [type]);
 
   if (error) {
     return <div className="stats-error">{t.serviceUnavailable}</div>;
   }
 
-  return type === "bridge" ? (
-    <BridgeStats
+  return (
+    <TorNodeCard
       data={data}
       translations={t}
-    />
-  ) : (
-    <RelayStats
-      data={data}
-      translations={t}
-    />
+    >
+      {type === "bridge" ? (
+        <>
+          {data?.transports ? (
+            <TorFlagList
+              flags={data.transports}
+              label={t.transports}
+              badgeClass="tor-transport-badge"
+            />
+          ) : null}
+          <div className="tor-metric-grid">
+            <TorMetric
+              label={t.clients24h}
+              value={data?.clients_24h?.toLocaleString() ?? "..."}
+            />
+            <TorMetric
+              label={t.advertisedBandwidth}
+              value={data ? formatBandwidth(data.advertised_bandwidth) : "..."}
+            />
+          </div>
+        </>
+      ) : (
+        <>
+          <div className="tor-metric-grid">
+            <TorMetric
+              label={t.orConnections}
+              value={data?.or_connections?.toLocaleString() ?? "..."}
+            />
+            <TorMetric
+              label={t.circuits}
+              value={data?.circuits_open?.toLocaleString() ?? "..."}
+            />
+          </div>
+          <div className="tor-metric-grid">
+            <TorMetric
+              label={t.connections24h}
+              value={data?.connections_24h?.toLocaleString() ?? "..."}
+            />
+            <TorMetric
+              label={t.location}
+              value={data?.location ?? "..."}
+            />
+          </div>
+        </>
+      )}
+    </TorNodeCard>
   );
 }
