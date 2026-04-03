@@ -81,7 +81,7 @@
     "astro": "6.1.2",
     "citation-js": "^0.7.22",
     "marked": "^17.0.5",
-    "mermaid": "^11.13.0",
+    "mermaid": "^11.14.0",
     "preact": "^10.29.0",
     "rehype-external-links": "^3.0.0",
     "rehype-mathjax": "^7.1.0",
