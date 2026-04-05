@@ -1,6 +1,6 @@
 # Interactive Tools — Agent Reference
 
-> 15 components, ~25,800 lines total. **All use vanilla JS** via `<script is:inline>` — NO Preact.
+> 14 standalone tools + 1 internal helper component, ~25,800 lines total. **All use vanilla JS** via `<script is:inline>` — NO Preact.
 
 ## Architecture Rules
 
@@ -26,7 +26,7 @@
 | `ModbusFrameBuilder` | 2741 | embedded | `modbus-frame-builder` |
 | `NginxConfigGenerator` | 2293 | network | `nginx-config-generator` |
 | `PasswordGenerator` | 1808 | security | `password-generator` |
-| `RegexFlavorTable` | 115 | developer | — (helper, not standalone) |
+| `RegexFlavorTable` | 115 | developer | — *(internal helper embedded in `RegexTester`, not registered in `componentMap`)* |
 | `RegexTester` | 1355 | developer | `regex-tester` |
 | `SubnetCalculator` | 2327 | network | `subnet-calculator` |
 | `TimestampConverter` | 1259 | developer | `timestamp-converter` |
@@ -87,9 +87,9 @@ const locale = getLangFromUrl(Astro.url);
 const t = useTranslations(locale);
 ---
 <div
-  data-error-msg={t("shared.error")}
-  data-copy-label={t("shared.copy")}
-  data-copied-label={t("shared.copied")}
+  data-error-msg={t("tools.shared.error")}
+  data-copy-label={t("tools.shared.copy")}
+  data-copied-label={t("tools.shared.copied")}
 >
   <!-- Tool UI -->
 </div>

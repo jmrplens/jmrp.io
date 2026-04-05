@@ -33,7 +33,7 @@
 | Framework       | Astro                    | 6.1.2          |
 | Content         | MDX                      | 5.0.3          |
 | Styling         | UnoCSS (presetWind4)     | ^66.6.2        |
-| Islands         | Preact                   | ^10.28.3       |
+| Islands         | Preact                   | ^10.29.0       |
 | Diagrams        | Mermaid + mermaid-isomorphic | ^11.12.2 / ^3.0.4 |
 | Math            | rehype-mathjax (SSR)     | ^7.1.0         |
 | Syntax          | Shiki                    | ^4.0.0         |
@@ -51,6 +51,8 @@
 ├── src/
 │   ├── content/                # Content Collections (MDX, YAML, BibTeX)
 │   │   ├── posts/              # Blog posts (MDX, numbered: 001-slug.mdx)
+│   │   │   ├── en/             # English posts
+│   │   │   └── es/             # Spanish posts
 │   │   ├── tools/              # Interactive tools (MDX)
 │   │   ├── cv/                 # Resume data (main.yaml)
 │   │   ├── publications_data/  # papers.bib + coauthors.yaml
@@ -77,7 +79,7 @@
 ├── scripts/
 │   ├── ci/                     # 20 CI automation scripts
 │   └── *.mjs                   # Development tools (11 scripts)
-├── tests/                      # 12 Playwright test suites + utils
+├── tests/                      # 17 Playwright test suites + utils
 ├── docs/                       # Extended documentation
 ├── public/                     # Static assets (favicons, llms.txt, PDFs)
 └── dist/                       # Build output (atomic swap deployment)
@@ -643,11 +645,11 @@ Blog posts and tools content are **not currently translated** — MDX files exis
 
 ## Testing
 
-### Test Suites (12 files)
+### Test Suites (17 files)
 
 | Suite                            | Purpose                                                    |
 | -------------------------------- | ---------------------------------------------------------- |
-| `accessibility.spec.ts`          | Axe-core WCAG 2.1 AA per-page (light + dark themes)        |
+| `accessibility.spec.ts`          | Axe-core WCAG 2.2 AA per-page (light + dark themes)        |
 | `deep.accessibility.spec.ts`     | Semantic landmarks, keyboard, heading order, copy buttons  |
 | `keyboard.accessibility.spec.ts` | Menu, skip link, mobile menu, theme toggle navigation      |
 | `tabs.accessibility.spec.ts`     | Zero-JS radio group keyboard nav, FileContent focus        |
@@ -658,6 +660,12 @@ Blog posts and tools content are **not currently translated** — MDX files exis
 | `performance.spec.ts`            | LCP, lazy loading, preloads, reduced motion, broken links  |
 | `prerender.spec.ts`              | Speculation rules injection, CSP compliance                |
 | `icons.spec.ts`                  | UnoCSS icon consistency per-page                           |
+| `content-integrity.spec.ts`      | Frontmatter validation, description length, slug uniqueness |
+| `edge-cases.spec.ts`             | 404 handling, malformed URLs, edge inputs                  |
+| `i18n.spec.ts`                   | EN/ES routing, translated strings, locale switching        |
+| `schema-validation.spec.ts`      | JSON-LD schema correctness per page type                   |
+| `tools.functional.spec.ts`       | Interactive tool input/output behavior                     |
+| `ui-components.spec.ts`          | UI component rendering and prop validation                 |
 | `global-setup.ts`                | Pre-generates page cache from sitemap for parallel tests   |
 | `global-teardown.ts`             | Cleanup after test runs                                    |
 
@@ -702,7 +710,7 @@ Blog posts and tools content are **not currently translated** — MDX files exis
 
 ### Workflow (`.github/workflows/ci.yml`)
 
-```
+```text
 ci-setup → build → [parallel quality checks] → [parallel tests] → reporting
 ```
 
@@ -753,17 +761,20 @@ pnpm exec sonar-scanner
 | `TELEGRAM_CHAT_ID`              | Server   | CSP reporter Telegram chat           |
 | `LOCALE_FILTER`                 | CI/Test  | Filter test pages by locale (`en` or `es`). Used in accessibility and Lighthouse CI matrices |
 
+> None of these variables are required for local development. `SONAR_TOKEN` and `SONAR_PROJECT_KEY` are only needed to run SonarCloud steps 12–13 of `pnpm verify`; those steps are skipped automatically when the variables are absent.
+
 ---
 
 ## Config Files
 
 ### TypeScript Path Aliases (`tsconfig.json`)
 
-```
+```text
 @components/* → src/components/*    @assets/*     → src/assets/*
 @layouts/*    → src/layouts/*       @utils/*      → src/utils/*
 @styles/*     → src/styles/*        @data/*       → src/data/*
 @languages/*  → src/languages/*     @src/*        → src/*
+@i18n         → src/i18n/index.ts   @i18n/*       → src/i18n/*
 ```
 
 JSX: `react-jsx` with `jsxImportSource: "preact"`. Extends: `astro/tsconfigs/strict`.

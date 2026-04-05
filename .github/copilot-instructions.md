@@ -7,7 +7,7 @@
 ### TypeScript
 
 - Strict mode (`astro/tsconfigs/strict`)
-- Use path aliases: `@components/*`, `@layouts/*`, `@utils/*`, `@assets/*`, `@styles/*`, `@data/*`, `@languages/*`, `@src/*`
+- Use path aliases: `@components/*`, `@layouts/*`, `@utils/*`, `@assets/*`, `@styles/*`, `@data/*`, `@languages/*`, `@src/*`, `@i18n/*`
 - Prefer `interface` over `type` for component Props
 - Use JSDoc comments for all exported functions and interfaces
 - No `any` — use `unknown` with type guards

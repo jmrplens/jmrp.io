@@ -67,4 +67,8 @@ const titleId = `section-${crypto.getRandomValues(new Uint32Array(1))[0]}`;
 @utils/*      → src/utils/*
 @assets/*     → src/assets/*
 @styles/*     → src/styles/*
+@data/*       → src/data/*
+@languages/*  → src/languages/*
+@src/*        → src/*
+@i18n/*       → src/i18n/*
 ```
