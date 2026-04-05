@@ -56,7 +56,7 @@ pnpm exec cspell lint . # Spell check (bilingual EN/ES)
 pnpm exec prettier --check .  # Format check
 ```
 
-4. **Available test suites** (11 total):
+4. **Available test suites** (17 total):
    - `accessibility.spec.ts` — axe-core WCAG 2.2 AA (light + dark themes)
    - `deep.accessibility.spec.ts` — Semantic landmarks, heading order
    - `keyboard.accessibility.spec.ts` — Menu, skip link, tab navigation
@@ -68,3 +68,9 @@ pnpm exec prettier --check .  # Format check
    - `performance.spec.ts` — LCP, lazy loading, broken links
    - `prerender.spec.ts` — Speculation rules + CSP compliance
    - `icons.spec.ts` — UnoCSS icon consistency
+   - `content-integrity.spec.ts` — Frontmatter validation, description length, slug uniqueness
+   - `edge-cases.spec.ts` — 404 handling, malformed URLs, edge inputs
+   - `i18n.spec.ts` — EN/ES routing, translated strings, locale switching
+   - `schema-validation.spec.ts` — JSON-LD schema correctness per page type
+   - `tools.functional.spec.ts` — Interactive tool input/output behavior
+   - `ui-components.spec.ts` — UI component rendering and prop validation

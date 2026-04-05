@@ -73,13 +73,14 @@ import Callout from "@components/ui/Callout.astro";
 #### Collapsible
 ```mdx
 import Collapsible from "@components/ui/Collapsible.astro";
-<Collapsible title="Click to expand">
+<Collapsible summary="Click to expand">
   Hidden content here.
 </Collapsible>
 ```
 | Prop | Type | Default |
 |------|------|---------|
-| `summary` / `title` | `string` | `"Details"` |
+| `summary` | `string` | `"Details"` |
+| `title` | `string` | — *(alias for `summary`, kept for backward compatibility)* |
 
 ---
 
@@ -131,6 +132,21 @@ import DeprecatedNotice from "@components/ui/DeprecatedNotice.astro";
 | `alternative` | `string` | No |
 | `alternativeUrl` | `string` | No |
 | `removalDate` | `string` | No |
+
+#### FallbackBanner
+```mdx
+import FallbackBanner from "@components/ui/FallbackBanner.astro";
+<FallbackBanner locale={locale} />
+```
+Displays a notice when content is shown in the default locale (EN) because no translation
+exists for the user's requested locale. Renders nothing when `locale === defaultLocale`.
+
+| Prop | Type | Required |
+|------|------|----------|
+| `locale` | `Locale` | **Yes** |
+
+> Typically used in bilingual page layouts, not in MDX blog posts. The `locale` value
+> comes from `getLangFromUrl(Astro.url)`.
 
 ---
 

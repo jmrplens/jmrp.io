@@ -60,19 +60,26 @@ Before submitting a Pull Request, you **must** ensure the project passes all qua
 pnpm verify
 ```
 
-This master script (`scripts/run-verify.mjs`) orchestrates the entire QA pipeline in order:
+This master script (`scripts/run-verify.mjs`) orchestrates 14 sequential steps (fail-fast, except SonarCloud):
 
-1.  **Static Analysis**: `astro check` (Types), `eslint`, `prettier`.
-2.  **Linting**: `stylelint` (CSS).
-3.  **Build**: `pnpm run build` (Production build).
-4.  **Content Validation**: HTML validation, RSS feed check, Schema.org check.
-5.  **Icon Consistency**: `pnpm verify-icons` (Custom script to ensure all icons have CSS rules).
-6.  **Documentation**: JSDoc comment coverage tracking.
-7.  **Security**: `pnpm audit` (dependencies) and SonarCloud analysis (code quality).
-8.  **External Audits**:
-    - **Spelling**: `cspell` for bilingual (EN/ES) codebase spell checking.
-    - **Links**: `lychee` for dead link verification in generated HTML.
-9.  **E2E Testing**: Playwright tests (Functional & Accessibility matrices).
+| # | Step | Command |
+|---|------|---------|
+| 1 | Astro Check (types) | `pnpm typecheck --minimumFailingSeverity warning` |
+| 2 | ESLint | `pnpm lint --max-warnings=0` |
+| 3 | Prettier | `pnpm exec prettier --check .` |
+| 4 | Stylelint (CSS) | `pnpm lint:css` |
+| 5 | Production Build | `pnpm run build` |
+| 6 | HTML5 Validation | `pnpm lint:html` |
+| 7 | RSS Feed Validation | `node scripts/ci/validate-rss.mjs dist` |
+| 8 | Schema.org JSON-LD | `node scripts/ci/validate-schema.mjs dist` |
+| 9 | Spelling (CSpell) | `pnpm exec cspell lint .` |
+| 10 | Broken Links (Lychee) | `lychee --config lychee.toml --root-dir dist dist/**/*.html` |
+| 11 | JSDoc Coverage | `node scripts/ci/calculate-jsdoc-coverage.mjs` |
+| 12 | SonarCloud Analysis | `pnpm exec sonar-scanner` *(requires `SONAR_TOKEN`)* |
+| 13 | SonarCloud Issues | `node scripts/ci/get-sonar-issues.mjs` *(requires `SONAR_TOKEN` + `SONAR_PROJECT_KEY`)* |
+| 14 | Playwright E2E | `pnpm test:e2e` |
+
+> **Note**: `pnpm verify-icons` is a separate icon consistency check — it is **not** part of the `pnpm verify` pipeline. Run it independently when adding or changing icons.
 
 **Automatic PR Updates:**
 Our CI/CD pipeline is designed to be helpful and non-intrusive. Instead of creating new comments for every push, the CI scripts will **update existing PR comments** when results change. This keeps the PR timeline clean and preserves history.
