@@ -51,6 +51,8 @@
 ├── src/
 │   ├── content/                # Content Collections (MDX, YAML, BibTeX)
 │   │   ├── posts/              # Blog posts (MDX, numbered: 001-slug.mdx)
+│   │   │   ├── en/             # English posts
+│   │   │   └── es/             # Spanish posts
 │   │   ├── tools/              # Interactive tools (MDX)
 │   │   ├── cv/                 # Resume data (main.yaml)
 │   │   ├── publications_data/  # papers.bib + coauthors.yaml
@@ -759,6 +761,8 @@ pnpm exec sonar-scanner
 | `TELEGRAM_CHAT_ID`              | Server   | CSP reporter Telegram chat           |
 | `LOCALE_FILTER`                 | CI/Test  | Filter test pages by locale (`en` or `es`). Used in accessibility and Lighthouse CI matrices |
 
+> None of these variables are required for local development. `SONAR_TOKEN` and `SONAR_PROJECT_KEY` are only needed to run SonarCloud steps 12–13 of `pnpm verify`; those steps are skipped automatically when the variables are absent.
+
 ---
 
 ## Config Files
@@ -770,6 +774,7 @@ pnpm exec sonar-scanner
 @layouts/*    → src/layouts/*       @utils/*      → src/utils/*
 @styles/*     → src/styles/*        @data/*       → src/data/*
 @languages/*  → src/languages/*     @src/*        → src/*
+@i18n         → src/i18n/index.ts   @i18n/*       → src/i18n/*
 ```
 
 JSX: `react-jsx` with `jsxImportSource: "preact"`. Extends: `astro/tsconfigs/strict`.
@@ -804,22 +809,6 @@ Steps:
 3. Verifies Nginx config (`nginx -t`) and reloads
 4. Purges Cloudflare cache via API
 5. CSP Reporter runs as separate service (`scripts/csp-reporter.mjs`)
-
----
-
-## Environment Variables
-
-| Variable | Required | Used by | Purpose |
-| -------- | -------- | ------- | ------- |
-| `PUBLIC_CF_BEACON_TOKEN` | Production only | `src/layouts/BaseHead.astro` | Cloudflare Web Analytics beacon token |
-| `SONAR_TOKEN` | CI only | `pnpm verify` steps 12–13 | SonarCloud authentication |
-| `SONAR_PROJECT_KEY` | CI only | `scripts/ci/get-sonar-issues.mjs` | SonarCloud project identifier (`jmrplens_jmrp.io`) |
-| `TELEGRAM_BOT_TOKEN` | Optional | `scripts/csp-reporter.mjs` | CSP violation Telegram notifications |
-| `TELEGRAM_CHAT_ID` | Optional | `scripts/csp-reporter.mjs` | Telegram chat to receive CSP violation alerts |
-
-None of these are required for local development. `SONAR_TOKEN` and `SONAR_PROJECT_KEY`
-are only needed to run SonarCloud steps 12–13 of `pnpm verify`; those steps are skipped
-automatically when the variables are absent.
 
 ---
 

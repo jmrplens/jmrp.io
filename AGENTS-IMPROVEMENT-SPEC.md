@@ -45,14 +45,14 @@ files. Missing from the list: `content-integrity.spec.ts`, `edge-cases.spec.ts`,
 **Fix**: Update the count to 17 and add the six missing suites with one-line
 descriptions:
 
-| Suite | Focus |
-|---|---|
+| Suite                       | Focus                                                       |
+| --------------------------- | ----------------------------------------------------------- |
 | `content-integrity.spec.ts` | Frontmatter validation, description length, slug uniqueness |
-| `edge-cases.spec.ts` | 404 handling, malformed URLs, edge inputs |
-| `i18n.spec.ts` | EN/ES routing, translated strings, locale switching |
-| `schema-validation.spec.ts` | JSON-LD schema correctness per page type |
-| `tools.functional.spec.ts` | Interactive tool input/output behavior |
-| `ui-components.spec.ts` | UI component rendering and prop validation |
+| `edge-cases.spec.ts`        | 404 handling, malformed URLs, edge inputs                   |
+| `i18n.spec.ts`              | EN/ES routing, translated strings, locale switching         |
+| `schema-validation.spec.ts` | JSON-LD schema correctness per page type                    |
+| `tools.functional.spec.ts`  | Interactive tool input/output behavior                      |
+| `ui-components.spec.ts`     | UI component rendering and prop validation                  |
 
 ---
 
@@ -100,6 +100,7 @@ a new "Banners" group) with its props table and a usage example.
 ### F6 — `.github/copilot-instructions.md` and `.github/instructions/astro-components.instructions.md`: missing `@i18n/*` alias
 
 **Files**:
+
 - `.github/copilot-instructions.md` (TypeScript section)
 - `.github/instructions/astro-components.instructions.md` (Path Aliases section)
 
@@ -146,6 +147,7 @@ Agents adding translations, fixing missing keys, or adding a new locale have no 
 workflow. The `docs/I18N_GUIDE.md` exists but is not surfaced as an invokable skill.
 
 **Frontmatter**:
+
 ```yaml
 name: i18n
 description: Add or update translations for the EN/ES bilingual system. Use when asked about translations, missing keys, locale routing, or adding a new language.
@@ -153,6 +155,7 @@ argument-hint: "[action: add-key|fix-missing|audit|new-locale]"
 ```
 
 **Content to include**:
+
 - Translation file locations: `src/i18n/translations/{en,es}/{common,tools}.ts`
 - The `t()` pattern with import snippet
 - Interpolation syntax: `t("key", { param: value })` with `{param}` in string
@@ -174,6 +177,7 @@ has several non-obvious steps (number lookup, description length enforcement, dr
 component imports) that benefit from a skill.
 
 **Frontmatter**:
+
 ```yaml
 name: new-blog-post
 description: Scaffold and write a new MDX blog post. Use when asked to create a blog post, write an article, or add content to the posts collection.
@@ -181,6 +185,7 @@ argument-hint: "[topic] [tags]"
 ```
 
 **Content to include**:
+
 - How to determine the next file number (check `src/content/posts/` for highest `NNN-`)
 - Full frontmatter template with all fields and constraints
 - `description` ≤ 155 chars — enforced by `tests/content-integrity.spec.ts`
@@ -200,6 +205,7 @@ argument-hint: "[topic] [tags]"
 no Claude skill. The accessibility and i18n requirements are easy to miss.
 
 **Frontmatter**:
+
 ```yaml
 name: new-component
 description: Create a new reusable Astro UI component in src/components/ui/. Use when asked to add a component, build a UI element, or extend the component library.
@@ -207,6 +213,7 @@ argument-hint: "[component-name] [description]"
 ```
 
 **Content to include**:
+
 - File location: `src/components/ui/ComponentName.astro`
 - Required structure: Props interface → unique ID generation → template → scoped style
 - Accessibility checklist: `aria-labelledby`, keyboard access, focus-visible, ARIA roles
@@ -227,26 +234,27 @@ exists. Agents from platforms that look for `AGENTS.md` get no context.
 
 **Approach**: Create a lean `AGENTS.md` that is a navigation index, not a duplicate of
 `CLAUDE.md`. It should:
+
 - State the project in 2–3 sentences
 - List the 7 core principles (already in CLAUDE.md)
 - Point to the authoritative files for each concern:
 
 ```markdown
-| Need | File |
-|---|---|
-| Full project context | CLAUDE.md |
-| UI component usage | src/components/ui/AGENTS.md |
-| Interactive tools | src/components/apps/AGENTS.md |
-| Build & verify | .claude/skills/astro-build/SKILL.md |
-| Accessibility audit | .claude/skills/accessibility-audit/SKILL.md |
-| CSP/SRI debugging | .claude/skills/csp-debug/SKILL.md |
-| i18n / translations | .claude/skills/i18n/SKILL.md |
-| Blog post workflow | .claude/skills/new-blog-post/SKILL.md |
-| New component | .claude/skills/new-component/SKILL.md |
-| Coding conventions | .github/copilot-instructions.md |
-| Blog writing guide | docs/BLOG_POST_GUIDE.md |
-| Accessibility guide | docs/ACCESSIBILITY_GUIDE.md |
-| i18n guide | docs/I18N_GUIDE.md |
+| Need                 | File                                        |
+| -------------------- | ------------------------------------------- |
+| Full project context | CLAUDE.md                                   |
+| UI component usage   | src/components/ui/AGENTS.md                 |
+| Interactive tools    | src/components/apps/AGENTS.md               |
+| Build & verify       | .claude/skills/astro-build/SKILL.md         |
+| Accessibility audit  | .claude/skills/accessibility-audit/SKILL.md |
+| CSP/SRI debugging    | .claude/skills/csp-debug/SKILL.md           |
+| i18n / translations  | .claude/skills/i18n/SKILL.md                |
+| Blog post workflow   | .claude/skills/new-blog-post/SKILL.md       |
+| New component        | .claude/skills/new-component/SKILL.md       |
+| Coding conventions   | .github/copilot-instructions.md             |
+| Blog writing guide   | docs/BLOG_POST_GUIDE.md                     |
+| Accessibility guide  | docs/ACCESSIBILITY_GUIDE.md                 |
+| i18n guide           | docs/I18N_GUIDE.md                          |
 ```
 
 - List the anti-patterns (already in CLAUDE.md §Anti-Patterns) — these are the most
@@ -262,11 +270,13 @@ exists. Agents from platforms that look for `AGENTS.md` get no context.
 tools, but nothing for `src/i18n/**`. Agents editing translation files get no guidance.
 
 **Frontmatter**:
+
 ```yaml
 applyTo: "src/i18n/**/*.ts"
 ```
 
 **Content**: Mirror the i18n section from `.claude/rules/astro-components.md` plus:
+
 - File structure: `translations/{en,es}/{common,tools}.ts`
 - Key naming convention (dot-notation, section prefix: `nav.`, `ui.`, `aria.`, `tools.`)
 - Both locales must be updated together — never add a key to one without the other
@@ -284,31 +294,31 @@ have to grep for them.
 **Fix**: Add an "Environment Variables" section to `CLAUDE.md` (or a dedicated
 `docs/ENV_VARS.md` linked from CLAUDE.md):
 
-| Variable | Required | Used by | Purpose |
-|---|---|---|---|
-| `PUBLIC_CF_BEACON_TOKEN` | Production only | `BaseHead.astro` | Cloudflare Web Analytics |
-| `SONAR_TOKEN` | CI only | `pnpm verify` steps 12–13 | SonarCloud authentication |
-| `SONAR_PROJECT_KEY` | CI only | `scripts/ci/get-sonar-issues.mjs` | SonarCloud project identifier |
-| `TELEGRAM_BOT_TOKEN` | Optional | `scripts/csp-reporter.mjs` | CSP violation notifications |
-| `TELEGRAM_CHAT_ID` | Optional | `scripts/csp-reporter.mjs` | CSP violation notification target |
+| Variable                 | Required        | Used by                           | Purpose                           |
+| ------------------------ | --------------- | --------------------------------- | --------------------------------- |
+| `PUBLIC_CF_BEACON_TOKEN` | Production only | `BaseHead.astro`                  | Cloudflare Web Analytics          |
+| `SONAR_TOKEN`            | CI only         | `pnpm verify` steps 12–13         | SonarCloud authentication         |
+| `SONAR_PROJECT_KEY`      | CI only         | `scripts/ci/get-sonar-issues.mjs` | SonarCloud project identifier     |
+| `TELEGRAM_BOT_TOKEN`     | Optional        | `scripts/csp-reporter.mjs`        | CSP violation notifications       |
+| `TELEGRAM_CHAT_ID`       | Optional        | `scripts/csp-reporter.mjs`        | CSP violation notification target |
 
 ---
 
 ## Priority order
 
-| Priority | Item | Effort | Impact |
-|---|---|---|---|
-| 1 | F2 — Fix run-tests suite count | Low | High — agents run wrong test commands |
-| 2 | F3 — Fix apps/AGENTS.md tool count | Low | Medium — confuses tool registration |
-| 3 | F1 — Fix CONTRIBUTING.md pipeline | Low | Medium — misleads contributors |
-| 4 | F5 — Add FallbackBanner to ui/AGENTS.md | Low | Medium — component is invisible to agents |
-| 5 | F6 — Add `@i18n/*` alias to instructions | Low | High — used in every component |
-| 6 | A4 — Create root AGENTS.md | Low | High — platform compatibility |
-| 7 | A1 — Create i18n skill | Medium | High — most complex unguided workflow |
-| 8 | A2 — Create new-blog-post skill | Medium | Medium — frequent task |
-| 9 | A3 — Create new-component skill | Medium | Medium — multi-file workflow |
-| 10 | A5 — Create i18n instructions file | Low | Medium — path-scoped guidance gap |
-| 11 | A6 — Document env vars | Low | Medium — setup and CI debugging |
-| 12 | F4 — Fix Collapsible prop ambiguity | Low | Low — minor confusion |
-| 13 | F7 — Update CLAUDE.md version stamp | Low | Low — cosmetic accuracy |
-| 14 | F8 — Update CLAUDE.md test count | Low | Low — cosmetic accuracy |
+| Priority | Item                                     | Effort | Impact                                    |
+| -------- | ---------------------------------------- | ------ | ----------------------------------------- |
+| 1        | F2 — Fix run-tests suite count           | Low    | High — agents run wrong test commands     |
+| 2        | F3 — Fix apps/AGENTS.md tool count       | Low    | Medium — confuses tool registration       |
+| 3        | F1 — Fix CONTRIBUTING.md pipeline        | Low    | Medium — misleads contributors            |
+| 4        | F5 — Add FallbackBanner to ui/AGENTS.md  | Low    | Medium — component is invisible to agents |
+| 5        | F6 — Add `@i18n/*` alias to instructions | Low    | High — used in every component            |
+| 6        | A4 — Create root AGENTS.md               | Low    | High — platform compatibility             |
+| 7        | A1 — Create i18n skill                   | Medium | High — most complex unguided workflow     |
+| 8        | A2 — Create new-blog-post skill          | Medium | Medium — frequent task                    |
+| 9        | A3 — Create new-component skill          | Medium | Medium — multi-file workflow              |
+| 10       | A5 — Create i18n instructions file       | Low    | Medium — path-scoped guidance gap         |
+| 11       | A6 — Document env vars                   | Low    | Medium — setup and CI debugging           |
+| 12       | F4 — Fix Collapsible prop ambiguity      | Low    | Low — minor confusion                     |
+| 13       | F7 — Update CLAUDE.md version stamp      | Low    | Low — cosmetic accuracy                   |
+| 14       | F8 — Update CLAUDE.md test count         | Low    | Low — cosmetic accuracy                   |

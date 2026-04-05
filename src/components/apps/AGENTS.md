@@ -87,9 +87,9 @@ const locale = getLangFromUrl(Astro.url);
 const t = useTranslations(locale);
 ---
 <div
-  data-error-msg={t("shared.error")}
-  data-copy-label={t("shared.copy")}
-  data-copied-label={t("shared.copied")}
+  data-error-msg={t("tools.shared.error")}
+  data-copy-label={t("tools.shared.copy")}
+  data-copied-label={t("tools.shared.copied")}
 >
   <!-- Tool UI -->
 </div>

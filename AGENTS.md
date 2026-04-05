@@ -22,21 +22,21 @@ zero client-side JS (except Preact islands for real-time homelab data), WCAG 2.2
 
 ## Quick Reference
 
-| Need | File |
-|------|------|
-| Full project context | [`CLAUDE.md`](./CLAUDE.md) |
-| UI component usage (35 components) | [`src/components/ui/AGENTS.md`](./src/components/ui/AGENTS.md) |
-| Interactive tools (14 tools) | [`src/components/apps/AGENTS.md`](./src/components/apps/AGENTS.md) |
-| Build, verify & QA pipeline | [`.claude/skills/astro-build/SKILL.md`](./.claude/skills/astro-build/SKILL.md) |
-| Accessibility audit (WCAG 2.2) | [`.claude/skills/accessibility-audit/SKILL.md`](./.claude/skills/accessibility-audit/SKILL.md) |
-| CSP / SRI debugging | [`.claude/skills/csp-debug/SKILL.md`](./.claude/skills/csp-debug/SKILL.md) |
-| i18n / translations (EN/ES) | [`.claude/skills/i18n/SKILL.md`](./.claude/skills/i18n/SKILL.md) |
-| Write a blog post | [`.claude/skills/new-blog-post/SKILL.md`](./.claude/skills/new-blog-post/SKILL.md) |
-| Create a UI component | [`.claude/skills/new-component/SKILL.md`](./.claude/skills/new-component/SKILL.md) |
-| Coding conventions | [`.github/copilot-instructions.md`](./.github/copilot-instructions.md) |
-| Blog writing guide | [`docs/BLOG_POST_GUIDE.md`](./docs/BLOG_POST_GUIDE.md) |
-| Accessibility guide | [`docs/ACCESSIBILITY_GUIDE.md`](./docs/ACCESSIBILITY_GUIDE.md) |
-| i18n guide | [`docs/I18N_GUIDE.md`](./docs/I18N_GUIDE.md) |
+| Need                               | File                                                                                           |
+| ---------------------------------- | ---------------------------------------------------------------------------------------------- |
+| Full project context               | [`CLAUDE.md`](./CLAUDE.md)                                                                     |
+| UI component usage (35 components) | [`src/components/ui/AGENTS.md`](./src/components/ui/AGENTS.md)                                 |
+| Interactive tools (14 tools)       | [`src/components/apps/AGENTS.md`](./src/components/apps/AGENTS.md)                             |
+| Build, verify & QA pipeline        | [`.claude/skills/astro-build/SKILL.md`](./.claude/skills/astro-build/SKILL.md)                 |
+| Accessibility audit (WCAG 2.2)     | [`.claude/skills/accessibility-audit/SKILL.md`](./.claude/skills/accessibility-audit/SKILL.md) |
+| CSP / SRI debugging                | [`.claude/skills/csp-debug/SKILL.md`](./.claude/skills/csp-debug/SKILL.md)                     |
+| i18n / translations (EN/ES)        | [`.claude/skills/i18n/SKILL.md`](./.claude/skills/i18n/SKILL.md)                               |
+| Write a blog post                  | [`.claude/skills/new-blog-post/SKILL.md`](./.claude/skills/new-blog-post/SKILL.md)             |
+| Create a UI component              | [`.claude/skills/new-component/SKILL.md`](./.claude/skills/new-component/SKILL.md)             |
+| Coding conventions                 | [`.github/copilot-instructions.md`](./.github/copilot-instructions.md)                         |
+| Blog writing guide                 | [`docs/BLOG_POST_GUIDE.md`](./docs/BLOG_POST_GUIDE.md)                                         |
+| Accessibility guide                | [`docs/ACCESSIBILITY_GUIDE.md`](./docs/ACCESSIBILITY_GUIDE.md)                                 |
+| i18n guide                         | [`docs/I18N_GUIDE.md`](./docs/I18N_GUIDE.md)                                                   |
 
 ---
 
@@ -44,20 +44,20 @@ zero client-side JS (except Preact islands for real-time homelab data), WCAG 2.2
 
 Never do any of the following:
 
-| ❌ Anti-pattern | Why |
-|----------------|-----|
-| Inline `<script>` tags | Breaks CSP nonce-only policy |
-| `style="..."` attributes | Use UnoCSS classes instead |
-| `getElementById` / hardcoded IDs | Use `data-*` attributes; generate IDs with `crypto.getRandomValues()` |
-| Fixed pixel widths | Use `%`, `rem`, `ch` |
-| Missing `alt` text on images | Accessibility requirement |
-| Color as the only indicator | Add icons or text alongside color |
-| Hardcoded English strings in components | Use `t()` from `useTranslations()` |
-| Preact in tool components | Tools use `<script is:inline>` only; Preact is for `src/components/homelab/` |
-| `<script>` tags in MDX | Breaks CSP |
-| `description` > 155 chars in frontmatter | Enforced by `content-integrity.spec.ts` |
-| Skipping heading levels (h2 → h4) | Breaks accessibility and document outline |
-| Missing `ariaLabel` on `<Mermaid>` | Required for screen readers |
+| ❌ Anti-pattern                          | Why                                                                          |
+| ---------------------------------------- | ---------------------------------------------------------------------------- |
+| Inline `<script>` tags                   | Breaks CSP nonce-only policy                                                 |
+| `style="..."` attributes                 | Use UnoCSS classes instead                                                   |
+| `getElementById` / hardcoded IDs         | Use `data-*` attributes; generate IDs with `crypto.getRandomValues()`        |
+| Fixed pixel widths                       | Use `%`, `rem`, `ch`                                                         |
+| Missing `alt` text on images             | Accessibility requirement                                                    |
+| Color as the only indicator              | Add icons or text alongside color                                            |
+| Hardcoded English strings in components  | Use `t()` from `useTranslations()`                                           |
+| Preact in tool components                | Tools use `<script is:inline>` only; Preact is for `src/components/homelab/` |
+| `<script>` tags in MDX                   | Breaks CSP                                                                   |
+| `description` > 155 chars in frontmatter | Enforced by `content-integrity.spec.ts`                                      |
+| Skipping heading levels (h2 → h4)        | Breaks accessibility and document outline                                    |
+| Missing `ariaLabel` on `<Mermaid>`       | Required for screen readers                                                  |
 
 ---
 

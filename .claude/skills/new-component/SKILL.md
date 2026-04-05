@@ -33,7 +33,7 @@ const locale = getLangFromUrl(Astro.url);
 const t = useTranslations(locale);
 
 // Generate a unique ID for accessibility linkage
-const uid = `component-${Array.from(crypto.getRandomValues(new Uint8Array(4))).map(b => b.toString(16).padStart(2, "0")).join("")}`;
+const uid = `component-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
 ---
 
 <div class="component-name" aria-labelledby={uid}>
@@ -88,7 +88,7 @@ const uid = `component-${Array.from(crypto.getRandomValues(new Uint8Array(4))).m
 
 **IDs**
 - Always generate unique IDs with `crypto.getRandomValues()` — never hardcode
-- Pattern: `Array.from(crypto.getRandomValues(new Uint8Array(4))).map(b => b.toString(16).padStart(2, "0")).join("")`
+- Pattern: `` `prefix-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}` ``
 
 **Security**
 - No inline styles (`style="..."`) — use UnoCSS classes or scoped CSS
@@ -131,7 +131,13 @@ pnpm test:e2e tests/accessibility.spec.ts   # Axe-core check
 
 ```typescript
 @components/* → src/components/*
-@i18n/*       → src/i18n/*
+@layouts/*    → src/layouts/*
+@assets/*     → src/assets/*
 @utils/*      → src/utils/*
 @styles/*     → src/styles/*
+@data/*       → src/data/*
+@languages/*  → src/languages/*
+@i18n         → src/i18n/index.ts  (barrel import)
+@i18n/*       → src/i18n/*
+@src/*        → src/*
 ```

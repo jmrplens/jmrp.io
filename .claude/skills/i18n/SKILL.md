@@ -68,8 +68,8 @@ const t = useTranslations(locale);
 ---
 <div
   data-error-msg={t("ui.error")}
-  data-copy-label={t("shared.copy")}
-  data-copied-label={t("shared.copied")}
+  data-copy-label={t("tools.shared.copy")}
+  data-copied-label={t("tools.shared.copied")}
 >
   <!-- tool UI -->
 </div>

@@ -62,22 +62,22 @@ pnpm verify
 
 This master script (`scripts/run-verify.mjs`) orchestrates 14 sequential steps (fail-fast, except SonarCloud):
 
-| # | Step | Command |
-|---|------|---------|
-| 1 | Astro Check (types) | `pnpm typecheck --minimumFailingSeverity warning` |
-| 2 | ESLint | `pnpm lint --max-warnings=0` |
-| 3 | Prettier | `pnpm exec prettier --check .` |
-| 4 | Stylelint (CSS) | `pnpm lint:css` |
-| 5 | Production Build | `pnpm run build` |
-| 6 | HTML5 Validation | `pnpm lint:html` |
-| 7 | RSS Feed Validation | `node scripts/ci/validate-rss.mjs dist` |
-| 8 | Schema.org JSON-LD | `node scripts/ci/validate-schema.mjs dist` |
-| 9 | Spelling (CSpell) | `pnpm exec cspell lint .` |
-| 10 | Broken Links (Lychee) | `lychee --config lychee.toml --root-dir dist dist/**/*.html` |
-| 11 | JSDoc Coverage | `node scripts/ci/calculate-jsdoc-coverage.mjs` |
-| 12 | SonarCloud Analysis | `pnpm exec sonar-scanner` *(requires `SONAR_TOKEN`)* |
-| 13 | SonarCloud Issues | `node scripts/ci/get-sonar-issues.mjs` *(requires `SONAR_TOKEN` + `SONAR_PROJECT_KEY`)* |
-| 14 | Playwright E2E | `pnpm test:e2e` |
+| #   | Step                  | Command                                                                                 |
+| --- | --------------------- | --------------------------------------------------------------------------------------- |
+| 1   | Astro Check (types)   | `pnpm typecheck --minimumFailingSeverity warning`                                       |
+| 2   | ESLint                | `pnpm lint --max-warnings=0`                                                            |
+| 3   | Prettier              | `pnpm exec prettier --check .`                                                          |
+| 4   | Stylelint (CSS)       | `pnpm lint:css`                                                                         |
+| 5   | Production Build      | `pnpm run build`                                                                        |
+| 6   | HTML5 Validation      | `pnpm lint:html`                                                                        |
+| 7   | RSS Feed Validation   | `node scripts/ci/validate-rss.mjs dist`                                                 |
+| 8   | Schema.org JSON-LD    | `node scripts/ci/validate-schema.mjs dist`                                              |
+| 9   | Spelling (CSpell)     | `pnpm exec cspell lint .`                                                               |
+| 10  | Broken Links (Lychee) | `lychee --config lychee.toml --root-dir dist dist/**/*.html`                            |
+| 11  | JSDoc Coverage        | `node scripts/ci/calculate-jsdoc-coverage.mjs`                                          |
+| 12  | SonarCloud Analysis   | `pnpm exec sonar-scanner` _(requires `SONAR_TOKEN`)_                                    |
+| 13  | SonarCloud Issues     | `node scripts/ci/get-sonar-issues.mjs` _(requires `SONAR_TOKEN` + `SONAR_PROJECT_KEY`)_ |
+| 14  | Playwright E2E        | `pnpm test:e2e`                                                                         |
 
 > **Note**: `pnpm verify-icons` is a separate icon consistency check — it is **not** part of the `pnpm verify` pipeline. Run it independently when adding or changing icons.
 
