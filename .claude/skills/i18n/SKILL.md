@@ -18,7 +18,7 @@ Add and maintain translations for the jmrp.io bilingual (EN/ES) system.
 
 ## Translation Files
 
-```
+```text
 src/i18n/translations/
 ├── index.ts          # Barrel — merges common + tools per locale
 ├── en/
@@ -31,7 +31,7 @@ src/i18n/translations/
 
 Key naming convention: dot-notation with section prefix.
 
-```
+```text
 nav.*       Navigation items
 ui.*        Generic UI labels (buttons, states, messages)
 aria.*      ARIA labels for screen readers
@@ -51,7 +51,7 @@ const t = useTranslations(locale);
 <nav aria-label={t("aria.mainNav")}>
   <a href="/">{t("nav.home")}</a>
 </nav>
-<p>{t("ui.backTo", { page: "Blog" })}</p>
+<p>{t("ui.backTo", { page: t("nav.blog") })}</p>
 ```
 
 - Call `getLangFromUrl` + `useTranslations` once per component frontmatter

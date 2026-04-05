@@ -1,7 +1,8 @@
 # AGENTS.md — jmrp.io
 
 Personal technical blog and portfolio built with **Astro 6** (SSG). Bilingual EN/ES,
-zero client-side JS (except Preact islands for real-time homelab data), WCAG 2.2 AA,
+minimal client-side JS — progressive enhancement via `<script is:inline>` for tools
+and Preact islands for real-time homelab data only. WCAG 2.2 AA,
 100/100 PageSpeed, nonce-only CSP.
 
 > For full project context see [`CLAUDE.md`](./CLAUDE.md).
@@ -22,21 +23,21 @@ zero client-side JS (except Preact islands for real-time homelab data), WCAG 2.2
 
 ## Quick Reference
 
-| Need                               | File                                                                                           |
-| ---------------------------------- | ---------------------------------------------------------------------------------------------- |
-| Full project context               | [`CLAUDE.md`](./CLAUDE.md)                                                                     |
-| UI component usage (35 components) | [`src/components/ui/AGENTS.md`](./src/components/ui/AGENTS.md)                                 |
-| Interactive tools (14 tools)       | [`src/components/apps/AGENTS.md`](./src/components/apps/AGENTS.md)                             |
-| Build, verify & QA pipeline        | [`.claude/skills/astro-build/SKILL.md`](./.claude/skills/astro-build/SKILL.md)                 |
-| Accessibility audit (WCAG 2.2)     | [`.claude/skills/accessibility-audit/SKILL.md`](./.claude/skills/accessibility-audit/SKILL.md) |
-| CSP / SRI debugging                | [`.claude/skills/csp-debug/SKILL.md`](./.claude/skills/csp-debug/SKILL.md)                     |
-| i18n / translations (EN/ES)        | [`.claude/skills/i18n/SKILL.md`](./.claude/skills/i18n/SKILL.md)                               |
-| Write a blog post                  | [`.claude/skills/new-blog-post/SKILL.md`](./.claude/skills/new-blog-post/SKILL.md)             |
-| Create a UI component              | [`.claude/skills/new-component/SKILL.md`](./.claude/skills/new-component/SKILL.md)             |
-| Coding conventions                 | [`.github/copilot-instructions.md`](./.github/copilot-instructions.md)                         |
-| Blog writing guide                 | [`docs/BLOG_POST_GUIDE.md`](./docs/BLOG_POST_GUIDE.md)                                         |
-| Accessibility guide                | [`docs/ACCESSIBILITY_GUIDE.md`](./docs/ACCESSIBILITY_GUIDE.md)                                 |
-| i18n guide                         | [`docs/I18N_GUIDE.md`](./docs/I18N_GUIDE.md)                                                   |
+| Need                           | File                                                                                           |
+| ------------------------------ | ---------------------------------------------------------------------------------------------- |
+| Full project context           | [`CLAUDE.md`](./CLAUDE.md)                                                                     |
+| UI component usage             | [`src/components/ui/AGENTS.md`](./src/components/ui/AGENTS.md)                                 |
+| Interactive tools              | [`src/components/apps/AGENTS.md`](./src/components/apps/AGENTS.md)                             |
+| Build, verify & QA pipeline    | [`.claude/skills/astro-build/SKILL.md`](./.claude/skills/astro-build/SKILL.md)                 |
+| Accessibility audit (WCAG 2.2) | [`.claude/skills/accessibility-audit/SKILL.md`](./.claude/skills/accessibility-audit/SKILL.md) |
+| CSP / SRI debugging            | [`.claude/skills/csp-debug/SKILL.md`](./.claude/skills/csp-debug/SKILL.md)                     |
+| i18n / translations (EN/ES)    | [`.claude/skills/i18n/SKILL.md`](./.claude/skills/i18n/SKILL.md)                               |
+| Write a blog post              | [`.claude/skills/new-blog-post/SKILL.md`](./.claude/skills/new-blog-post/SKILL.md)             |
+| Create a UI component          | [`.claude/skills/new-component/SKILL.md`](./.claude/skills/new-component/SKILL.md)             |
+| Coding conventions             | [`.github/copilot-instructions.md`](./.github/copilot-instructions.md)                         |
+| Blog writing guide             | [`docs/BLOG_POST_GUIDE.md`](./docs/BLOG_POST_GUIDE.md)                                         |
+| Accessibility guide            | [`docs/ACCESSIBILITY_GUIDE.md`](./docs/ACCESSIBILITY_GUIDE.md)                                 |
+| i18n guide                     | [`docs/I18N_GUIDE.md`](./docs/I18N_GUIDE.md)                                                   |
 
 ---
 
