@@ -12,7 +12,7 @@ and Preact islands for real-time homelab data only. WCAG 2.2 AA,
 ## Core Principles
 
 1. **WCAG 2.2 AA** (AAA when possible) — all components must pass axe-core
-2. **Zero client-side JS** — no JavaScript unless necessary (islands pattern)
+2. **Minimal client-side JS** — progressive enhancement via `<script is:inline>` for tools, Preact islands for homelab only
 3. **No inline styles** — UnoCSS utility classes or scoped `<style>` blocks only
 4. **No inline `<script>`** — use `<script is:inline>` with `nonce="NGINX_CSP_NONCE"`
 5. **Dark-first theme** — dark mode is default, light is the override

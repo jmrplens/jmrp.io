@@ -710,7 +710,7 @@ Blog posts and tools content are **not currently translated** — MDX files exis
 
 ### Workflow (`.github/workflows/ci.yml`)
 
-```
+```text
 ci-setup → build → [parallel quality checks] → [parallel tests] → reporting
 ```
 
@@ -769,7 +769,7 @@ pnpm exec sonar-scanner
 
 ### TypeScript Path Aliases (`tsconfig.json`)
 
-```
+```text
 @components/* → src/components/*    @assets/*     → src/assets/*
 @layouts/*    → src/layouts/*       @utils/*      → src/utils/*
 @styles/*     → src/styles/*        @data/*       → src/data/*
