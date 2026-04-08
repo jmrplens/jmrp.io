@@ -18,6 +18,7 @@ amazonbot
 amicro
 anonimización
 anonymization
+anymatch
 apca
 apipa
 aplicable
@@ -204,6 +205,7 @@ exfiltration
 fastcgi
 fastly
 fasttrack
+fdir
 fediverse
 fediverso
 feedly
@@ -334,6 +336,7 @@ macbook
 malformados
 mantenible
 mantiene
+mapbox
 mapeos
 marketeq
 martín
@@ -457,6 +460,7 @@ picó
 pkill
 placa
 plens
+pluginutils
 politècnica
 poolprefix
 postbuild
@@ -577,6 +581,7 @@ silverlight
 sitemapindex
 slaac
 smallstep
+smol
 snowden
 sonarcloud
 sonarjs
@@ -588,6 +593,7 @@ spañol
 speculationrules
 sqlmap
 srcnat
+srvx
 ssdp
 ssllabs
 sslv
@@ -615,6 +621,7 @@ tldr
 tlnp
 toctou
 toggleable
+tootallnate
 topbar
 torproject
 torrc
