@@ -25,32 +25,33 @@ overrides:
   '@vercel/blob': '>=2.2.0'
   path-to-regexp: '>=6.3.0'
   shiki: ^4.0.0
-  get-uri>basic-ftp: ^5.2.1
-  mermaid>dompurify: ^3.3.2
-  speech-rule-engine>@xmldom/xmldom: ^0.9.9
-  anymatch>picomatch: ^2.3.2
-  micromatch>picomatch: ^2.3.2
-  '@rollup/pluginutils>picomatch': '>=2.3.2 <3 || >=4.0.4'
-  fdir>picomatch: ^4.0.4
-  tinyglobby>picomatch: ^4.0.4
-  '@vercel/node>undici': ^5.29.0
-  '@vercel/blob>undici': ^6.24.0
-  cheerio>undici: ^7.24.0
-  '@vercel/sandbox>undici': ^7.24.0
-  '@vercel/fun>tar': ^7.5.11
-  '@mapbox/node-pre-gyp>tar': ^7.5.11
-  '@vercel/fun>@tootallnate/once': ^3.0.1
-  '@vercel/backends>srvx': ^0.11.13
-  '@vercel/python-analysis>minimatch': ^10.2.3
-  yaml-language-server>yaml: ^2.8.3
-  patch-package>yaml: ^2.8.3
+  '@astrojs/markdown-remark>smol-toml': ^1.6.1
   '@astrojs/yaml2ts>yaml': ^2.8.3
+  '@mapbox/node-pre-gyp>tar': ^7.5.11
+  '@rollup/pluginutils@^4>picomatch': ^2.3.2
+  '@rollup/pluginutils@^5>picomatch': ^4.0.4
+  '@vercel/backends>srvx': ^0.11.13
+  '@vercel/blob>undici': ^6.24.0
+  '@vercel/fun>@tootallnate/once': ^3.0.1
+  '@vercel/fun>tar': ^7.5.11
+  '@vercel/node>undici': ^5.29.0
+  '@vercel/python-analysis>minimatch': ^10.2.3
   '@vercel/python-analysis>smol-toml': ^1.6.1
   '@vercel/rust>smol-toml': ^1.6.1
-  '@astrojs/markdown-remark>smol-toml': ^1.6.1
+  '@vercel/sandbox>undici': ^7.24.0
+  anymatch>picomatch: ^2.3.2
   astro>smol-toml: ^1.6.1
-  vercel>smol-toml: ^1.6.1
+  cheerio>undici: ^7.24.0
+  fdir>picomatch: ^4.0.4
   flat-cache>flatted: ^3.4.2
+  get-uri>basic-ftp: ^5.2.1
+  mermaid>dompurify: ^3.3.2
+  micromatch>picomatch: ^2.3.2
+  patch-package>yaml: ^2.8.3
+  speech-rule-engine>@xmldom/xmldom: ^0.9.9
+  tinyglobby>picomatch: ^4.0.4
+  vercel>smol-toml: ^1.6.1
+  yaml-language-server>yaml: ^2.8.3
 
 importers:
 
@@ -9719,7 +9720,7 @@ snapshots:
   '@rollup/pluginutils@4.2.1':
     dependencies:
       estree-walker: 2.0.2
-      picomatch: 4.0.4
+      picomatch: 2.3.2
 
   '@rollup/pluginutils@5.3.0(rollup@4.60.1)':
     dependencies:
