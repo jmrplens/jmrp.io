@@ -30,6 +30,22 @@ interface SocialLink {
   rel?: string;
 }
 
+/**
+ * Normalizes the rel attribute for external links.
+ * Ensures required tokens (external, noopener, noreferrer) are always present
+ * while preserving any extra tokens (e.g. "me" for identity verification).
+ *
+ * @param rel - Optional rel string from config.
+ * @returns Normalized rel string with all required tokens.
+ */
+function normalizeExternalRel(rel?: string): string {
+  const parts = new Set((rel ?? "").split(/\s+/).filter(Boolean));
+  parts.add("external");
+  parts.add("noopener");
+  parts.add("noreferrer");
+  return [...parts].join(" ");
+}
+
 const socialLinks: SocialLink[] = [];
 
 if (socials.github_username) {
@@ -202,7 +218,7 @@ const socialLinksWithType = socialLinks.map((link) => {
           <a
             href={link.url}
             target="_blank"
-            rel={link.rel || "noopener noreferrer"}
+            rel={normalizeExternalRel(link.rel)}
             aria-label={t("aria.visitProfile", { name: link.label })}
             title={link.label}
             class="social-btn"
