@@ -30,6 +30,22 @@ interface SocialLink {
   rel?: string;
 }
 
+/**
+ * Normalizes the rel attribute for external links.
+ * Ensures required tokens (external, noopener, noreferrer) are always present
+ * while preserving any extra tokens (e.g. "me" for identity verification).
+ *
+ * @param rel - Optional rel string from config.
+ * @returns Normalized rel string with all required tokens.
+ */
+function normalizeExternalRel(rel?: string): string {
+  const parts = new Set((rel ?? "").split(/\s+/).filter(Boolean));
+  parts.add("external");
+  parts.add("noopener");
+  parts.add("noreferrer");
+  return [...parts].join(" ");
+}
+
 const socialLinks: SocialLink[] = [];
 
 if (socials.github_username) {
@@ -85,12 +101,14 @@ if (socials.custom_social) {
         url: item.url,
         icon: item.icon,
         label: item.title,
+        rel: item.rel,
       });
     } else if (item.icon_name) {
       socialLinks.push({
         url: item.url,
         icon_name: item.icon_name,
         label: item.title,
+        rel: item.rel,
       });
     } else if (item.icon_light && item.icon_dark) {
       socialLinks.push({
@@ -98,6 +116,7 @@ if (socials.custom_social) {
         img_light: item.icon_light,
         img_dark: item.icon_dark,
         label: item.title,
+        rel: item.rel,
       });
     } else {
       // Generic fallback
@@ -105,6 +124,7 @@ if (socials.custom_social) {
         url: item.url,
         icon: "fa-solid:link",
         label: item.title,
+        rel: item.rel,
       });
     }
   }
@@ -198,7 +218,7 @@ const socialLinksWithType = socialLinks.map((link) => {
           <a
             href={link.url}
             target="_blank"
-            rel={link.rel || "noopener noreferrer"}
+            rel={normalizeExternalRel(link.rel)}
             aria-label={t("aria.visitProfile", { name: link.label })}
             title={link.label}
             class="social-btn"

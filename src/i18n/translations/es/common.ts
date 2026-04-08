@@ -453,8 +453,8 @@ export const common = {
       torRelayName: "Relay Tor",
       torRelayDescription:
         "Relay intermedio que reenvía tráfico cifrado dentro de la red Tor desde Reino Unido.",
-      torBridgeLink: "Sobre los puentes Tor",
-      torRelayLink: "Sobre los relays Tor",
+      torBridgeLink: "Ver en Tor Metrics",
+      torRelayLink: "Ver en Tor Metrics",
       torRunning: "Activo",
       torOffline: "Inactivo",
       torVersion: "Versión",

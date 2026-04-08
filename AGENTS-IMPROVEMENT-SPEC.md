@@ -146,7 +146,7 @@ actual count is 17 spec files.
 
 **Why**: The i18n system is the most complex recurring task not covered by a skill.
 Agents adding translations, fixing missing keys, or adding a new locale have no guided
-workflow. The `docs/I18N_GUIDE.md` exists but is not surfaced as an invokable skill.
+workflow. The `docs/I18N_GUIDE.md` exists but is not surfaced as an invocable skill.
 
 **Frontmatter**:
 

@@ -49,6 +49,8 @@ export default defineConfig({
     },
   ],
   safelist: [
+    // Footer custom_social icons (dynamically generated from socials.yaml)
+    "i-mdi:key",
     "i-devicon:html5",
     "i-devicon:javascript",
     "i-simple-icons:mikrotik",

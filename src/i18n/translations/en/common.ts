@@ -452,8 +452,8 @@ export const common = {
       torRelayName: "Tor Relay",
       torRelayDescription:
         "Middle relay forwarding encrypted traffic within the Tor network from United Kingdom.",
-      torBridgeLink: "Learn about Tor Bridges",
-      torRelayLink: "Learn about Tor Relays",
+      torBridgeLink: "View on Tor Metrics",
+      torRelayLink: "View on Tor Metrics",
       torRunning: "Running",
       torOffline: "Offline",
       torVersion: "Version",

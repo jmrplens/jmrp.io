@@ -357,7 +357,27 @@ export default function TorStats({ type, translations: t }: Props) {
             />
             <TorMetric
               label={t.advertisedBandwidth}
-              value={data ? formatBandwidth(data.advertised_bandwidth) : "..."}
+              value={
+                data?.advertised_bandwidth == null
+                  ? "..."
+                  : formatBandwidth(data.advertised_bandwidth)
+              }
+            />
+          </div>
+          <div className="tor-metric-grid">
+            <TorMetric
+              label={t.orConnections}
+              value={data?.or_connections?.toLocaleString() ?? "..."}
+            />
+            <TorMetric
+              label={t.circuits}
+              value={data?.circuits_open?.toLocaleString() ?? "..."}
+            />
+          </div>
+          <div className="tor-metric-grid">
+            <TorMetric
+              label={t.location}
+              value={data?.location ?? "..."}
             />
           </div>
         </>
@@ -381,6 +401,16 @@ export default function TorStats({ type, translations: t }: Props) {
             <TorMetric
               label={t.location}
               value={data?.location ?? "..."}
+            />
+          </div>
+          <div className="tor-metric-grid">
+            <TorMetric
+              label={t.advertisedBandwidth}
+              value={
+                data?.advertised_bandwidth == null
+                  ? "..."
+                  : formatBandwidth(data.advertised_bandwidth)
+              }
             />
           </div>
         </>
