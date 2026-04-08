@@ -141,6 +141,7 @@ const site_config = defineCollection({
             icon_name: z.string().optional(),
             icon_light: z.string().optional(),
             icon_dark: z.string().optional(),
+            rel: z.string().optional(),
           }),
         )
         .optional(),

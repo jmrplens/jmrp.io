@@ -357,7 +357,11 @@ export default function TorStats({ type, translations: t }: Props) {
             />
             <TorMetric
               label={t.advertisedBandwidth}
-              value={data ? formatBandwidth(data.advertised_bandwidth) : "..."}
+              value={
+                data?.advertised_bandwidth == null
+                  ? "..."
+                  : formatBandwidth(data.advertised_bandwidth)
+              }
             />
           </div>
           <div className="tor-metric-grid">
@@ -402,7 +406,11 @@ export default function TorStats({ type, translations: t }: Props) {
           <div className="tor-metric-grid">
             <TorMetric
               label={t.advertisedBandwidth}
-              value={data ? formatBandwidth(data.advertised_bandwidth) : "..."}
+              value={
+                data?.advertised_bandwidth == null
+                  ? "..."
+                  : formatBandwidth(data.advertised_bandwidth)
+              }
             />
           </div>
         </>

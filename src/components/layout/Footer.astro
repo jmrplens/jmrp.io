@@ -85,12 +85,14 @@ if (socials.custom_social) {
         url: item.url,
         icon: item.icon,
         label: item.title,
+        rel: item.rel,
       });
     } else if (item.icon_name) {
       socialLinks.push({
         url: item.url,
         icon_name: item.icon_name,
         label: item.title,
+        rel: item.rel,
       });
     } else if (item.icon_light && item.icon_dark) {
       socialLinks.push({
@@ -98,6 +100,7 @@ if (socials.custom_social) {
         img_light: item.icon_light,
         img_dark: item.icon_dark,
         label: item.title,
+        rel: item.rel,
       });
     } else {
       // Generic fallback
@@ -105,6 +108,7 @@ if (socials.custom_social) {
         url: item.url,
         icon: "fa-solid:link",
         label: item.title,
+        rel: item.rel,
       });
     }
   }

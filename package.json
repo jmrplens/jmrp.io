@@ -24,7 +24,7 @@
     "typescript"
   ],
   "engines": {
-    "node": ">=22.12.0",
+    "node": ">=22.18.0",
     "pnpm": ">=10"
   },
   "pnpm": {
