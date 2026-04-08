@@ -25,7 +25,7 @@ overrides:
   '@vercel/blob': '>=2.2.0'
   path-to-regexp: '>=6.3.0'
   shiki: ^4.0.0
-  basic-ftp: '>=5.2.1'
+  get-uri>basic-ftp: ^5.2.1
 
 importers:
 
