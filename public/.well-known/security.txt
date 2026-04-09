@@ -1,16 +1,23 @@
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA512
+
 # Security Policy for jmrp.io
 # RFC 9116: https://www.rfc-editor.org/rfc/rfc9116.html
 
-Contact: https://jmrp.io
 Contact: mailto:mail@jmrp.io
+Contact: https://github.com/jmrplens/jmrp.io/security/advisories/new
+Encryption: openpgp4fpr:0A993B268654DBBA52B7E8D3FCF653391E2C91FC
+Encryption: https://keys.openpgp.org/vks/v1/by-fingerprint/0A993B268654DBBA52B7E8D3FCF653391E2C91FC
 Preferred-Languages: en, es
 Canonical: https://jmrp.io/.well-known/security.txt
+Policy: https://github.com/jmrplens/jmrp.io/security/policy
 
 # Expires: This file should be reviewed and updated annually
-Expires: 2026-12-17T23:59:59.000Z
+Expires: 2027-04-09T23:59:59.000Z
+-----BEGIN PGP SIGNATURE-----
 
-# Policy
-Policy: https://jmrp.io
-
-# Acknowledgments
-# Thank you for helping to keep jmrp.io secure!
+iHUEARYKAB0WIQQKmTsmhlTbulK36NP89lM5HiyR/AUCadbtnQAKCRD89lM5HiyR
+/FP6AQCatKHZgMGWlnsYH14lfLzlEyWGedyCwc3NIHoClyS4SwEA8AKYmJpzTvK0
+13WgxZlpX0PvmSUW7nTNlP1xOVLryAQ=
+=V7PZ
+-----END PGP SIGNATURE-----
