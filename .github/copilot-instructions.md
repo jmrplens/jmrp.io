@@ -77,6 +77,15 @@
 - Formatting: `formatDate()`, `formatNumber()`, `pluralize()` from `@i18n/utils`
 - See `docs/I18N_GUIDE.md` for complete reference
 
+### Security Files
+
+- `public/.well-known/security.txt` is PGP clearsigned — **always re-sign after editing**:
+  ```bash
+  gpg --clearsign --default-key 0A993B268654DBBA52B7E8D3FCF653391E2C91FC public/.well-known/security.txt \
+    && mv public/.well-known/security.txt.asc public/.well-known/security.txt
+  ```
+- Verify with `gpg --verify public/.well-known/security.txt`
+
 ### Commit Style
 
 - Conventional commits: `feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:`

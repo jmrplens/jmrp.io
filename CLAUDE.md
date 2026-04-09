@@ -953,6 +953,7 @@ flowchart LR
 12. **❌ Preact in tools** — Tools use vanilla JS via `<script is:inline>`
 13. **❌ Missing `ariaLabel` on Mermaid** — Required for accessibility
 14. **❌ Hardcoded English strings in components** — Use `t()` from `useTranslations()` for all UI text
+15. **❌ Editing `public/.well-known/security.txt` without re-signing** — The file is PGP clearsigned. After any edit, re-sign with: `gpg --clearsign --default-key 0A993B268654DBBA52B7E8D3FCF653391E2C91FC public/.well-known/security.txt && mv public/.well-known/security.txt.asc public/.well-known/security.txt`
 
 ---
 
