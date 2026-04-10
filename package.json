@@ -163,7 +163,7 @@
     "lighthouse": "^13.1.0",
     "mermaid-isomorphic": "^3.1.0",
     "playwright": "^1.59.1",
-    "prettier": "^3.8.1",
+    "prettier": "^3.8.2",
     "prettier-plugin-astro": "^0.14.1",
     "puppeteer": "^24.40.0",
     "rehype-mermaid": "^3.0.0",
