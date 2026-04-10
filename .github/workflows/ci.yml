@@ -29,7 +29,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Post Initial Comment
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             const { default: script } = await import(`file://${process.env.GITHUB_WORKSPACE}/scripts/ci/update-ci-comment.mjs`)
@@ -644,7 +644,7 @@ jobs:
       - uses: actions/checkout@v6
       - name: Update CI Comment (SA Results)
         if: github.event_name == 'pull_request'
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         env:
           OUTCOME_ASTRO: ${{ needs.sa-astro.result }}
           OUTCOME_PRETTIER: ${{ needs.sa-prettier.result }}
@@ -983,7 +983,7 @@ jobs:
           DEPLOY_URL=$(npx vercel deploy ./dist-reports --archive=tgz --name jmrp-ci-reports --token="$VERCEL_TOKEN" --yes --public $IS_PROD --meta prid=$PR_ID)
           echo "url=$DEPLOY_URL" >> $GITHUB_OUTPUT
       - name: Update CI Comment (Final Results)
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         env:
           VERCEL_URL: ${{ steps.deploy.outputs.url }}
           OUTCOME_ASTRO: ${{ needs.sa-astro.result }}
