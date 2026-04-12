@@ -422,6 +422,16 @@ const torServices = [
     torType: "relay" as const,
     name: t("pages.homelab.torRelayName"),
   },
+  {
+    id: "tor-relay-es",
+    title: t("pages.homelab.torRelayEsName"),
+    icon: "simple-icons:torproject",
+    description: t("pages.homelab.torRelayEsDescription"),
+    url: "https://metrics.torproject.org/rs.html#details/3467943E5042BA46FCE4DE8517B0EBCD5D1BBB1D",
+    linkText: t("pages.homelab.torRelayEsLink"),
+    torType: "relay-es" as const,
+    name: t("pages.homelab.torRelayEsName"),
+  },
 ];
 
 const servicesSchema = {

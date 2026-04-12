@@ -450,11 +450,15 @@ export const common = {
       torBridgeName: "Puente Tor",
       torBridgeDescription:
         "Puente de transporte pluggable que ayuda a usuarios censurados a acceder a la red Tor. Ejecuta obfs4 y WebTunnel.",
-      torRelayName: "Relay Tor",
+      torRelayName: "Relay Tor (UK)",
       torRelayDescription:
         "Relay intermedio que reenvía tráfico cifrado dentro de la red Tor desde Reino Unido.",
+      torRelayEsName: "Relay Tor (ES)",
+      torRelayEsDescription:
+        "Relay intermedio que reenvía tráfico cifrado dentro de la red Tor desde España.",
       torBridgeLink: "Ver en Tor Metrics",
       torRelayLink: "Ver en Tor Metrics",
+      torRelayEsLink: "Ver en Tor Metrics",
       torRunning: "Activo",
       torOffline: "Inactivo",
       torVersion: "Versión",

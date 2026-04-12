@@ -41,7 +41,7 @@ export interface TorStatsTranslations {
 
 /** Props for TorStats component */
 interface Props {
-  readonly type: "bridge" | "relay";
+  readonly type: "bridge" | "relay" | "relay-es";
   readonly translations: TorStatsTranslations;
 }
 
@@ -71,6 +71,7 @@ interface TorNodeData {
 interface TorApiResponse {
   bridge: TorNodeData;
   relay: TorNodeData;
+  relay_es: TorNodeData;
 }
 
 /** Discriminated fetch result to decouple error handling from the fetch logic. */
@@ -133,7 +134,9 @@ function isValidTorResponse(data: unknown): data is TorApiResponse {
     typeof obj.bridge === "object" &&
     obj.bridge !== null &&
     typeof obj.relay === "object" &&
-    obj.relay !== null
+    obj.relay !== null &&
+    typeof obj.relay_es === "object" &&
+    obj.relay_es !== null
   );
 }
 
@@ -323,7 +326,13 @@ export default function TorStats({ type, translations: t }: Props) {
     const load = async () => {
       const result = await fetchTorStats();
       if (result.ok) {
-        setData(type === "bridge" ? result.data.bridge : result.data.relay);
+        if (type === "bridge") {
+          setData(result.data.bridge);
+        } else if (type === "relay-es") {
+          setData(result.data.relay_es);
+        } else {
+          setData(result.data.relay);
+        }
       } else {
         setError(true);
       }
