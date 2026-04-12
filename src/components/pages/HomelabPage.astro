@@ -13,7 +13,10 @@ import ServerInsights from "@components/homelab/ServerInsights";
 import ServiceCard from "@components/homelab/ServiceCard.astro";
 import type { ServiceStatsTranslations } from "@components/homelab/ServiceStats";
 import ServiceStats from "@components/homelab/ServiceStats";
-import type { TorStatsTranslations } from "@components/homelab/TorStats";
+import type {
+  TorStatsTranslations,
+  TorType,
+} from "@components/homelab/TorStats";
 import TorStats from "@components/homelab/TorStats";
 import { defaultLocale, type Locale } from "@i18n/config";
 import { useTranslatedPath, useTranslations } from "@i18n/utils";
@@ -409,7 +412,7 @@ const torServices = [
     description: t("pages.homelab.torBridgeDescription"),
     url: "https://metrics.torproject.org/rs.html#details/1508F567C54ECF5373CE2EF3BF02C62EEA1B320E",
     linkText: t("pages.homelab.torBridgeLink"),
-    torType: "bridge" as const,
+    torType: "bridge" as TorType,
     name: t("pages.homelab.torBridgeName"),
   },
   {
@@ -419,7 +422,7 @@ const torServices = [
     description: t("pages.homelab.torRelayDescription"),
     url: "https://metrics.torproject.org/rs.html#details/B442687AD97B8CC73F3AED95D76E1F47A5504C14",
     linkText: t("pages.homelab.torRelayLink"),
-    torType: "relay" as const,
+    torType: "relay" as TorType,
     name: t("pages.homelab.torRelayName"),
   },
   {
@@ -429,7 +432,7 @@ const torServices = [
     description: t("pages.homelab.torRelayEsDescription"),
     url: "https://metrics.torproject.org/rs.html#details/3467943E5042BA46FCE4DE8517B0EBCD5D1BBB1D",
     linkText: t("pages.homelab.torRelayEsLink"),
-    torType: "relay-es" as const,
+    torType: "relay-es" as TorType,
     name: t("pages.homelab.torRelayEsName"),
   },
 ];

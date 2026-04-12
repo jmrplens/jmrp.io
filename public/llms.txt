@@ -15,7 +15,7 @@ José Manuel Requena Plens (JMRP) is a multidisciplinary engineer building contr
 - [Blog](https://jmrp.io/blog/): Technical articles on Nginx, MikroTik, networking, security, and DevOps
 - [CV](https://jmrp.io/cv/): Professional curriculum vitae and experience
 - [Publications](https://jmrp.io/publications/): Academic papers on acoustics, metamaterials, and ultrasound
-- [Homelab](https://jmrp.io/homelab/): Self-hosted infrastructure — Mastodon, Matrix, Meshtastic
+- [Homelab](https://jmrp.io/homelab/): Self-hosted infrastructure — Mastodon, Matrix, Meshtastic, Tor relays
 - [GitHub](https://jmrp.io/github/): Open source projects and contributions
 - [Tools](https://jmrp.io/tools/): Free browser-based developer tools (privacy-first, no server calls)
 

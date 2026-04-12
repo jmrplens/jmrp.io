@@ -29,7 +29,7 @@ Academic research papers on acoustics, metamaterials, ultrasound propagation, an
 
 ### Homelab (https://jmrp.io/homelab/)
 
-Self-hosted infrastructure status page — Mastodon, Matrix, and Meshtastic services running on personal hardware.
+Self-hosted infrastructure status page — Mastodon, Matrix, Meshtastic, and Tor relays running on personal hardware.
 
 ### GitHub (https://jmrp.io/github/)
 
