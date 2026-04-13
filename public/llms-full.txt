@@ -2,7 +2,7 @@
 
 > Personal technical blog and portfolio of José Manuel Requena Plens — R&D Engineer specializing in Embedded Systems, Acoustics, and Industrial Software Development. This document provides comprehensive context for AI models.
 
-> Last updated: 2026-04-08
+> Last updated: 2026-04-12
 
 ## About the Author
 
@@ -29,7 +29,7 @@ Academic research papers on acoustics, metamaterials, ultrasound propagation, an
 
 ### Homelab (https://jmrp.io/homelab/)
 
-Self-hosted infrastructure status page — Mastodon, Matrix, and Meshtastic services running on personal hardware.
+Self-hosted infrastructure status page — Mastodon, Matrix, Meshtastic, and Tor relays running on personal hardware.
 
 ### GitHub (https://jmrp.io/github/)
 

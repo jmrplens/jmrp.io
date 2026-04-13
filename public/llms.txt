@@ -2,7 +2,7 @@
 
 > Personal technical blog and portfolio of José Manuel Requena Plens — R&D Engineer specializing in Embedded Systems, Acoustics, and Industrial Software Development.
 
-> Last updated: 2026-04-08
+> Last updated: 2026-04-12
 
 > For comprehensive context including detailed blog post topics, tool features, and author background, see [llms-full.txt](https://jmrp.io/llms-full.txt).
 
@@ -15,7 +15,7 @@ José Manuel Requena Plens (JMRP) is a multidisciplinary engineer building contr
 - [Blog](https://jmrp.io/blog/): Technical articles on Nginx, MikroTik, networking, security, and DevOps
 - [CV](https://jmrp.io/cv/): Professional curriculum vitae and experience
 - [Publications](https://jmrp.io/publications/): Academic papers on acoustics, metamaterials, and ultrasound
-- [Homelab](https://jmrp.io/homelab/): Self-hosted infrastructure — Mastodon, Matrix, Meshtastic
+- [Homelab](https://jmrp.io/homelab/): Self-hosted infrastructure — Mastodon, Matrix, Meshtastic, Tor relays
 - [GitHub](https://jmrp.io/github/): Open source projects and contributions
 - [Tools](https://jmrp.io/tools/): Free browser-based developer tools (privacy-first, no server calls)
 
