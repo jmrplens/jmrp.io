@@ -103,7 +103,7 @@
     "@iconify-json/logos": "^1.2.11",
     "@iconify-json/marketeq": "^1.2.2",
     "@iconify-json/mdi": "^1.2.3",
-    "@iconify-json/simple-icons": "^1.2.77",
+    "@iconify-json/simple-icons": "^1.2.78",
     "@unocss/astro": "^66.6.8",
     "astro": "6.1.5",
     "citation-js": "^0.7.22",
