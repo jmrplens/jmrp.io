@@ -23,6 +23,7 @@ exclude = [
     'http://www\.upv\.es/ficha-personal/rpico',
     'http://www\.upv\.es/ficha-personal/victorsm',
     'https://nojigon\.webs\.upv\.es/.*',
+    'https://www\.csic\.es/.*',
     # Ignore Astro/Template variables
     '.*\$\{.*',
     '.*\%7B.*',
