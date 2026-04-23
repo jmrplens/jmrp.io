@@ -353,7 +353,7 @@ export default function TorStats({ type, translations: t }: Props) {
       data={data}
       translations={t}
     >
-      {type === "bridge" ? (
+      {type === "bridge" || type === "bridge-es1" ? (
         <>
           {data?.transports ? (
             <TorFlagList
