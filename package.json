@@ -114,7 +114,7 @@
     "rehype-mathjax": "^7.1.0",
     "rehype-raw": "^7.0.0",
     "remark-math": "^6.0.0",
-    "sanitize-html": "^2.17.2",
+    "sanitize-html": "^2.17.3",
     "shiki": "^4.0.2",
     "unocss": "^66.6.8",
     "vite": "^7.3.2"
