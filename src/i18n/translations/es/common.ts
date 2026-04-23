@@ -456,6 +456,10 @@ export const common = {
       torRelayEsName: "Relay Tor (ES)",
       torRelayEsDescription:
         "Relay intermedio que reenvía tráfico cifrado dentro de la red Tor desde España.",
+      torBridgeEs1Name: "Bridge Tor (ES1)",
+      torBridgeEs1Description:
+        "Bridge de transporte pluggable que ayuda a usuarios censurados a acceder a la red Tor desde El Campello, Alicante. Ejecuta obfs4 y WebTunnel.",
+      torBridgeEs1Link: "Ver en Tor Metrics",
       torBridgeLink: "Ver en Tor Metrics",
       torRelayLink: "Ver en Tor Metrics",
       torRelayEsLink: "Ver en Tor Metrics",

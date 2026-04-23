@@ -69,11 +69,12 @@ interface TorNodeData {
 }
 
 /** The valid node type values for TorStats. */
-export type TorType = "bridge" | "relay" | "relay-es";
+export type TorType = "bridge" | "bridge-es1" | "relay" | "relay-es";
 
 /** Full API response */
 interface TorApiResponse {
   bridge: TorNodeData;
+  bridge_es1?: TorNodeData;
   relay: TorNodeData;
   relay_es?: TorNodeData;
 }
@@ -330,6 +331,7 @@ export default function TorStats({ type, translations: t }: Props) {
       if (result.ok) {
         const dataMap: Record<TorType, TorNodeData | undefined> = {
           bridge: result.data.bridge,
+          "bridge-es1": result.data.bridge_es1,
           relay: result.data.relay,
           "relay-es": result.data.relay_es,
         };

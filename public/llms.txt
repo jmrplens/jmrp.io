@@ -2,7 +2,7 @@
 
 > Personal technical blog and portfolio of José Manuel Requena Plens — R&D Engineer specializing in Embedded Systems, Acoustics, and Industrial Software Development.
 
-> Last updated: 2026-04-12
+> Last updated: 2026-04-23
 
 > For comprehensive context including detailed blog post topics, tool features, and author background, see [llms-full.txt](https://jmrp.io/llms-full.txt).
 
