@@ -447,7 +447,7 @@ export const common = {
       mikrotikHoneypotHits: "Impactos Honeypot",
       mikrotikPortScanners: "Escáneres de Puertos Bloqueados",
       // Tor Network
-      torBridgeName: "Puente Tor",
+      torBridgeName: "Bridge Tor (ES0)",
       torBridgeDescription:
         "Puente de transporte pluggable que ayuda a usuarios censurados a acceder a la red Tor. Ejecuta obfs4 y WebTunnel.",
       torRelayName: "Relay Tor (UK)",
@@ -458,7 +458,7 @@ export const common = {
         "Relay intermedio que reenvía tráfico cifrado dentro de la red Tor desde España.",
       torBridgeEs1Name: "Bridge Tor (ES1)",
       torBridgeEs1Description:
-        "Bridge de transporte pluggable que ayuda a usuarios censurados a acceder a la red Tor desde El Campello, Alicante. Ejecuta obfs4 y WebTunnel.",
+        "Bridge de transporte pluggable que ayuda a usuarios censurados a acceder a la red Tor desde Alicante. Ejecuta obfs4 y WebTunnel.",
       torBridgeEs1Link: "Ver en Tor Metrics",
       torBridgeLink: "Ver en Tor Metrics",
       torRelayLink: "Ver en Tor Metrics",

@@ -106,16 +106,9 @@ export async function getSitemapUrls(): Promise<string[]> {
       | SitemapIndexResult;
     const urls: string[] = [];
 
-    if (
-      sitemap.isIndex &&
-      // eslint-disable-next-line sonarjs/in-operator-type-error -- parsed is narrowed by parseStringPromise return type
-      "sitemapindex" in parsed
-    ) {
+    if (sitemap.isIndex && "sitemapindex" in parsed) {
       await processSitemapIndex(parsed.sitemapindex, urls);
-    } else if (
-      // eslint-disable-next-line sonarjs/in-operator-type-error -- parsed is narrowed by parseStringPromise return type
-      "urlset" in parsed
-    ) {
+    } else if ("urlset" in parsed) {
       urls.push(...extractPathnames(parsed.urlset));
     }
 
@@ -223,11 +216,7 @@ export async function getPagesFromSitemap(): Promise<PageInfo[]> {
     let urls: PageInfo[] = [];
 
     // Handle sitemap index vs standard sitemap
-    if (
-      sitemap.isIndex &&
-      // eslint-disable-next-line sonarjs/in-operator-type-error -- parsed is narrowed by parseStringPromise return type
-      "sitemapindex" in parsed
-    ) {
+    if (sitemap.isIndex && "sitemapindex" in parsed) {
       // Recursively resolve sitemap index using the shared processSitemapIndex
       // The 'in' check narrows the type to SitemapIndexResult
       const resolvedUrls: string[] = [];
@@ -248,11 +237,7 @@ export async function getPagesFromSitemap(): Promise<PageInfo[]> {
                 .join(" - ");
         return { name, url: urlPath };
       });
-    } else if (
-      // eslint-disable-next-line sonarjs/in-operator-type-error -- parsed is narrowed by parseStringPromise return type
-      "urlset" in parsed &&
-      Array.isArray(parsed.urlset.url)
-    ) {
+    } else if ("urlset" in parsed && Array.isArray(parsed.urlset.url)) {
       urls = parsed.urlset.url
         .filter(
           (entry) =>

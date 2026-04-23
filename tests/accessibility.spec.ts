@@ -18,7 +18,7 @@ import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 import { createHtmlReport } from "axe-html-reporter";
 
-import type { AxeResult, PageAccessibilityResult, PageInfo } from "./utils";
+import type { PageAccessibilityResult, PageInfo } from "./utils";
 import { getCachedPages } from "./utils";
 
 // ---------------------------------------------------------------------------
@@ -103,8 +103,8 @@ test.describe("Accessibility Tests (Axe-core WCAG 2.1 AA)", () => {
         incomplete: accessibilityScanResults.incomplete.length,
         violationIds: accessibilityScanResults.violations.map((v) => v.id),
         reportPath: reportFileName,
-        detailedViolations: accessibilityScanResults.violations as AxeResult[],
-        detailedIncomplete: accessibilityScanResults.incomplete as AxeResult[],
+        detailedViolations: accessibilityScanResults.violations,
+        detailedIncomplete: accessibilityScanResults.incomplete,
       };
 
       fs.writeFileSync(

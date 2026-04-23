@@ -19,7 +19,6 @@ export function vitePrefetchNoncePlugin(): Plugin {
     name: "vite-prefetch-nonce",
     enforce: "post",
 
-    // eslint-disable-next-line sonarjs/function-return-type -- Vite plugin API expects null | TransformResult
     transform(code, id) {
       // Only process Astro's prefetch module using stricter pattern
       if (!prefetchModulePattern.test(id)) {

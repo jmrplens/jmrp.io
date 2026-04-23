@@ -9,9 +9,9 @@ import {
 
 // Map of custom language names to their grammar definitions
 const customLanguages: Record<string, LanguageRegistration> = {
-  routeros: routerosGrammar as unknown as LanguageRegistration,
-  mikrotik: routerosGrammar as unknown as LanguageRegistration,
-  rsc: routerosGrammar as unknown as LanguageRegistration,
+  routeros: routerosGrammar,
+  mikrotik: routerosGrammar,
+  rsc: routerosGrammar,
 };
 
 /**
@@ -100,12 +100,12 @@ export async function highlightCode(
 
   // Lazy-load the language if not yet registered
   const loaded: string[] = highlighter.getLoadedLanguages();
-  // eslint-disable-next-line sonarjs/argument-type -- langName is string, loaded is BundledLanguage[], valid check
+
   if (!loaded.includes(langName)) {
     try {
       await (langRegistration
         ? highlighter.loadLanguage(langRegistration)
-        : highlighter.loadLanguage(langName as BuiltinLanguage));
+        : highlighter.loadLanguage(langName));
     } catch {
       console.warn(
         `[Shiki] Language "${langName}" not found, falling back to plaintext.`,
