@@ -41,7 +41,7 @@ export interface TorStatsTranslations {
 
 /** Props for TorStats component */
 interface Props {
-  /** The node type: `"bridge"` (obfs4/WebTunnel), `"relay"` (UK middle relay), or `"relay-es"` (ES middle relay). */
+  /** The node type: `"bridge"` (obfs4/WebTunnel, UK), `"bridge-es1"` (obfs4/WebTunnel, ES), `"relay"` (UK middle relay), or `"relay-es"` (ES middle relay). */
   readonly type: TorType;
   readonly translations: TorStatsTranslations;
 }
@@ -314,7 +314,7 @@ function TorNodeCard({
  * Fetches data from /api/homelab/tor and renders the appropriate card layout.
  *
  * @param props - Component properties.
- * @param props.type - The node type: `"bridge"` (obfs4/WebTunnel), `"relay"` (UK middle relay), or `"relay-es"` (ES middle relay).
+ * @param props.type - The node type: `"bridge"` (obfs4/WebTunnel, UK), `"bridge-es1"` (obfs4/WebTunnel, ES), `"relay"` (UK middle relay), or `"relay-es"` (ES middle relay).
  * @param props.translations - Translated strings for the component.
  * @returns The rendered stats component.
  */
