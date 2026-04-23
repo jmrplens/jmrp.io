@@ -35,24 +35,6 @@ export interface PublicationGroup {
 }
 
 /**
- * Metadata for a co-author, including their name variations and profile link.
- */
-interface Coauthor {
-  /** List of first names or initials to match against. */
-  firstname: string[];
-  /** URL to the co-author's profile. */
-  url: string;
-}
-
-/**
- * Map of co-author family names to their respective details.
- */
-interface CoauthorMap {
-  /** Mapping of family name to co-author details. */
-  [family: string]: Coauthor[];
-}
-
-/**
  * Fetches, parses, and processes publications from the BibTeX file.
  * File location: src/data/publications/bibliography/papers.bib
  *
@@ -78,7 +60,7 @@ export async function getPublications(
     const fileContents = await fs.promises.readFile(filePath, "utf-8");
 
     const coauthorsEntry = await getEntry("publications_data", "coauthors");
-    const coauthors = (coauthorsEntry?.data || {}) as CoauthorMap;
+    const coauthors = coauthorsEntry?.data || {};
 
     /**
      * Helper to manually extract custom fields from the raw BibTeX string.
@@ -217,11 +199,9 @@ export async function getPublications(
       const type = item.type;
 
       // Manually inject slides/poster/pdf if missing
-      item.slides =
-        (item.slides as string) ?? extractCustomField(item.id, "slides");
-      item.poster =
-        (item.poster as string) ?? extractCustomField(item.id, "poster");
-      item.pdf = (item.pdf as string) ?? extractCustomField(item.id, "pdf");
+      item.slides = item.slides ?? extractCustomField(item.id, "slides");
+      item.poster = item.poster ?? extractCustomField(item.id, "poster");
+      item.pdf = item.pdf ?? extractCustomField(item.id, "pdf");
 
       // Extract raw bibtex entry for display/copying
       item.bibtex = extractRawBibtex(item.id);

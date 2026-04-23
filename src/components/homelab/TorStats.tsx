@@ -41,7 +41,7 @@ export interface TorStatsTranslations {
 
 /** Props for TorStats component */
 interface Props {
-  /** The node type: `"bridge"` (obfs4/WebTunnel), `"relay"` (UK middle relay), or `"relay-es"` (ES middle relay). */
+  /** The node type: `"bridge"` (obfs4/WebTunnel, UK), `"bridge-es1"` (obfs4/WebTunnel, ES), `"relay"` (UK middle relay), or `"relay-es"` (ES middle relay). */
   readonly type: TorType;
   readonly translations: TorStatsTranslations;
 }
@@ -69,11 +69,12 @@ interface TorNodeData {
 }
 
 /** The valid node type values for TorStats. */
-export type TorType = "bridge" | "relay" | "relay-es";
+export type TorType = "bridge" | "bridge-es1" | "relay" | "relay-es";
 
 /** Full API response */
 interface TorApiResponse {
   bridge: TorNodeData;
+  bridge_es1?: TorNodeData;
   relay: TorNodeData;
   relay_es?: TorNodeData;
 }
@@ -313,7 +314,7 @@ function TorNodeCard({
  * Fetches data from /api/homelab/tor and renders the appropriate card layout.
  *
  * @param props - Component properties.
- * @param props.type - The node type: `"bridge"` (obfs4/WebTunnel), `"relay"` (UK middle relay), or `"relay-es"` (ES middle relay).
+ * @param props.type - The node type: `"bridge"` (obfs4/WebTunnel, UK), `"bridge-es1"` (obfs4/WebTunnel, ES), `"relay"` (UK middle relay), or `"relay-es"` (ES middle relay).
  * @param props.translations - Translated strings for the component.
  * @returns The rendered stats component.
  */
@@ -330,6 +331,7 @@ export default function TorStats({ type, translations: t }: Props) {
       if (result.ok) {
         const dataMap: Record<TorType, TorNodeData | undefined> = {
           bridge: result.data.bridge,
+          "bridge-es1": result.data.bridge_es1,
           relay: result.data.relay,
           "relay-es": result.data.relay_es,
         };
@@ -351,7 +353,7 @@ export default function TorStats({ type, translations: t }: Props) {
       data={data}
       translations={t}
     >
-      {type === "bridge" ? (
+      {type === "bridge" || type === "bridge-es1" ? (
         <>
           {data?.transports ? (
             <TorFlagList

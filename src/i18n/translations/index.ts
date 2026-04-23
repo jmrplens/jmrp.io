@@ -35,5 +35,5 @@ export type Translations = DeepStringify<typeof translations.en>;
  * @returns The translations object for the locale.
  */
 export function getTranslations(locale: Locale): Translations {
-  return translations[locale] as Translations;
+  return translations[locale];
 }
