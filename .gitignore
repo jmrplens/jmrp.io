@@ -109,6 +109,7 @@ cv_latex/*.pdf
 PROJECT_KNOWLEDGE.md
 GEMINI.md
 # Implementation plans and audit docs (local only)
+plan/
 AI_CONFIG_TASKS.md
 AI_CONTEXT_ROADMAP.md
 SEO_AUDIT.md

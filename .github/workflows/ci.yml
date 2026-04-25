@@ -55,7 +55,7 @@ jobs:
           key: optimized-images-${{ runner.os }}-${{ hashFiles('astro.config.mjs', 'pnpm-lock.yaml', 'src/**/*.{png,jpg,jpeg,webp,avif,gif,svg}', 'public/**/*.{png,jpg,jpeg,webp,avif,gif,svg}') }}
           restore-keys: |
             optimized-images-${{ runner.os }}-
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v6
         with:
           node-version: 22
@@ -82,7 +82,7 @@ jobs:
     needs: build
     steps:
       - uses: actions/checkout@v6
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v6
         with:
           node-version: 22
@@ -105,7 +105,7 @@ jobs:
     needs: build
     steps:
       - uses: actions/checkout@v6
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v6
         with:
           node-version: 22
@@ -128,7 +128,7 @@ jobs:
     needs: build
     steps:
       - uses: actions/checkout@v6
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v6
         with:
           node-version: 22
@@ -151,7 +151,7 @@ jobs:
     needs: build
     steps:
       - uses: actions/checkout@v6
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v6
         with:
           node-version: 22
@@ -174,7 +174,7 @@ jobs:
     needs: build
     steps:
       - uses: actions/checkout@v6
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v6
         with:
           node-version: 22
@@ -199,7 +199,7 @@ jobs:
       coverage: ${{ steps.jsdoc_calc.outputs.coverage }}
     steps:
       - uses: actions/checkout@v6
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v6
         with:
           node-version: 22
@@ -271,7 +271,7 @@ jobs:
     needs: build
     steps:
       - uses: actions/checkout@v6
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v6
         with:
           node-version-file: package.json
@@ -317,7 +317,7 @@ jobs:
         with:
           name: dist-build
           path: dist
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v6
         with:
           node-version: 22
@@ -351,7 +351,7 @@ jobs:
         with:
           name: dist-build
           path: dist
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v6
         with:
           node-version: 22
@@ -394,7 +394,7 @@ jobs:
         with:
           name: dist-build
           path: dist
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v6
         with:
           node-version: 22
@@ -436,7 +436,7 @@ jobs:
         with:
           name: dist-build
           path: dist
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v6
         with:
           node-version: 22
@@ -478,7 +478,7 @@ jobs:
         with:
           name: dist-build
           path: dist
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v6
         with:
           node-version: 22
@@ -510,7 +510,7 @@ jobs:
         with:
           name: dist-build
           path: dist
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v6
         with:
           node-version: 22
@@ -551,7 +551,7 @@ jobs:
         with:
           name: dist-build
           path: dist
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v6
         with:
           node-version: 22
@@ -594,7 +594,7 @@ jobs:
         with:
           name: dist-build
           path: dist
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v6
         with:
           node-version: 22
@@ -669,7 +669,7 @@ jobs:
     if: always()
     steps:
       - uses: actions/checkout@v6
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v6
         with:
           node-version: 22
@@ -776,7 +776,7 @@ jobs:
     if: always()
     steps:
       - uses: actions/checkout@v6
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v6
         with:
           node-version: 22
@@ -934,7 +934,7 @@ jobs:
         with:
           name: lychee-report
           path: .
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v6
         with:
           node-version: 22
