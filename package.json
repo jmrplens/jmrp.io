@@ -122,7 +122,7 @@
   },
   "devDependencies": {
     "@astrojs/check": "0.9.8",
-    "@axe-core/playwright": "^4.11.2",
+    "@axe-core/playwright": "^4.11.3",
     "@cspell/dict-es-es": "^3.0.8",
     "@gorazdo/eslint-plugin-preact": "^1.0.7",
     "@iconify-json/devicon": "^1.2.62",
