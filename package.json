@@ -106,7 +106,7 @@
     "@iconify-json/mdi": "^1.2.3",
     "@iconify-json/simple-icons": "^1.2.79",
     "@unocss/astro": "^66.6.8",
-    "astro": "6.1.9",
+    "astro": "6.2.1",
     "citation-js": "^0.7.22",
     "marked": "^18.0.2",
     "mermaid": "^11.14.0",
@@ -121,7 +121,7 @@
     "vite": "^7.3.2"
   },
   "devDependencies": {
-    "@astrojs/check": "0.9.8",
+    "@astrojs/check": "0.9.9",
     "@axe-core/playwright": "^4.11.2",
     "@cspell/dict-es-es": "^3.0.8",
     "@gorazdo/eslint-plugin-preact": "^1.0.7",
