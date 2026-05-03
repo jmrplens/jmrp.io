@@ -21,9 +21,9 @@ export interface ServerInsightsTranslations {
   matrixRooms: string;
   /** Label for Matrix local rooms count. */
   matrixLocalRooms: string;
-  /** Label for Matrix known users count. */
+  /** Label for Matrix local users count. */
   matrixUsers: string;
-  /** Label for Matrix known remote users count. */
+  /** Label for Matrix remote users count. */
   matrixRemoteUsers: string;
   /** Label for Matrix federation heading. */
   matrixFederation: string;
@@ -646,7 +646,7 @@ export default function ServerInsights({
             <div className="insight-details">
               <div className="detail-row">
                 <span>{t.matrixUsers}</span>
-                <output>{fmtVal(s.total_users)}</output>
+                <output>{fmtVal(s.local_users)}</output>
               </div>
               <div className="detail-row">
                 <span>{t.matrixRemoteUsers}</span>
