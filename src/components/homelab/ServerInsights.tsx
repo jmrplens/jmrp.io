@@ -23,8 +23,8 @@ export interface ServerInsightsTranslations {
   matrixLocalRooms: string;
   /** Label for Matrix known users count. */
   matrixUsers: string;
-  /** Label for Matrix local users count. */
-  matrixLocalUsers: string;
+  /** Label for Matrix known remote users count. */
+  matrixRemoteUsers: string;
   /** Label for Matrix federation heading. */
   matrixFederation: string;
   /** Label for Matrix known federation servers. */
@@ -143,6 +143,7 @@ interface MatrixStats {
   active_workers: number;
   total_rooms: number;
   total_users: number;
+  remote_users: number;
   main_running: boolean;
   local_users: number;
   local_rooms: number;
@@ -225,6 +226,7 @@ function isValidMatrixStats(data: unknown): data is MatrixStats {
     typeof d.active_workers === "number" &&
     typeof d.total_rooms === "number" &&
     typeof d.total_users === "number" &&
+    typeof d.remote_users === "number" &&
     typeof d.main_running === "boolean" &&
     typeof d.local_users === "number" &&
     typeof d.local_rooms === "number" &&
@@ -647,8 +649,8 @@ export default function ServerInsights({
                 <output>{fmtVal(s.total_users)}</output>
               </div>
               <div className="detail-row">
-                <span>{t.matrixLocalUsers}</span>
-                <output>{fmtVal(s.local_users)}</output>
+                <span>{t.matrixRemoteUsers}</span>
+                <output>{fmtVal(s.remote_users)}</output>
               </div>
             </div>
           </article>
