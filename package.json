@@ -180,7 +180,7 @@
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.59.1",
     "unist-util-visit": "^5.1.0",
-    "vercel": "^53.0.1",
+    "vercel": "^53.2.0",
     "vite-plugin-compression2": "^2.5.3",
     "vite-plugin-image-optimizer": "^2.0.3",
     "xml2js": "^0.6.2"
