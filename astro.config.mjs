@@ -1,15 +1,14 @@
 // @ts-check
 // Adapters and Integrations
+import { unified } from "@astrojs/markdown-remark";
 import mdx from "@astrojs/mdx";
 import preact from "@astrojs/preact";
 import sitemap from "@astrojs/sitemap";
 import UnoCSS from "@unocss/astro";
 import { defineConfig, envField, fontProviders } from "astro/config";
 import rehypeExternalLinks from "rehype-external-links";
-import rehypeMathjax from "rehype-mathjax";
 import rehypeMermaid from "rehype-mermaid";
 import rehypeRaw from "rehype-raw";
-import remarkMath from "remark-math";
 import { ViteImageOptimizer } from "vite-plugin-image-optimizer";
 
 import { rehypeLinkDisambiguator } from "./scripts/rehype-link-disambiguator.mjs";
@@ -186,8 +185,7 @@ export default defineConfig({
       })(),
     }),
     mdx({
-      // MDX needs to know about remark plugins too if we want it to work in .mdx files
-      remarkPlugins: [remarkMermaidBypass],
+      // remark/rehype plugins are inherited from `markdown.processor` below
       optimize: true,
     }),
     preact({
@@ -206,110 +204,111 @@ export default defineConfig({
       },
       langs: [routerosGrammar],
     },
-    // Remark plugins: transformation before HTML compilation
-    remarkPlugins: [remarkMath, remarkMermaidBypass],
-    // Rehype plugins: transformation of the HTML output
-    rehypePlugins: [
-      rehypeMathjax,
-      [
-        rehypeMermaid,
-        {
-          strategy: "inline-svg",
-          mermaidConfig: {
-            theme: "base",
-            themeVariables: {
-              // --- LIGHT MODE Defaults (GitHub Light Style) ---
-              // These serve as the base for the SVG generation.
-              // CSS Variables in Mermaid.astro will override these at runtime for Dark Mode.
+    processor: unified({
+      // Remark plugins: transformation before HTML compilation
+      remarkPlugins: [remarkMermaidBypass],
+      // Rehype plugins: transformation of the HTML output
+      rehypePlugins: [
+        [
+          rehypeMermaid,
+          {
+            strategy: "inline-svg",
+            mermaidConfig: {
+              theme: "base",
+              themeVariables: {
+                // --- LIGHT MODE Defaults (GitHub Light Style) ---
+                // These serve as the base for the SVG generation.
+                // CSS Variables in Mermaid.astro will override these at runtime for Dark Mode.
 
-              // General
-              textColor: "#000000",
-              primaryColor: "#ffffff",
-              primaryTextColor: "#000000",
-              primaryBorderColor: "#d0d7de",
-              lineColor: "#000000",
-              secondaryColor: "#f6f8fa",
-              tertiaryColor: "#ffffff",
-              mainBkg: "#ffffff",
+                // General
+                textColor: "#000000",
+                primaryColor: "#ffffff",
+                primaryTextColor: "#000000",
+                primaryBorderColor: "#d0d7de",
+                lineColor: "#000000",
+                secondaryColor: "#f6f8fa",
+                tertiaryColor: "#ffffff",
+                mainBkg: "#ffffff",
 
-              // Nodes/Flowchart
-              nodeBkg: "#ffffff",
-              nodeBorder: "#d0d7de",
-              nodeTextColor: "#000000",
-              clusterBkg: "#f6f8fa",
-              clusterBorder: "#d0d7de",
-              titleColor: "#000000",
-              edgeLabelBackground: "#ffffff",
-              defaultLinkColor: "#000000",
-              arrowheadColor: "#000000",
+                // Nodes/Flowchart
+                nodeBkg: "#ffffff",
+                nodeBorder: "#d0d7de",
+                nodeTextColor: "#000000",
+                clusterBkg: "#f6f8fa",
+                clusterBorder: "#d0d7de",
+                titleColor: "#000000",
+                edgeLabelBackground: "#ffffff",
+                defaultLinkColor: "#000000",
+                arrowheadColor: "#000000",
 
-              // Sequence Diagram
-              actorBkg: "#eaeef2",
-              actorBorder: "#d0d7de",
-              actorTextColor: "#000000",
-              actorLineColor: "#000000",
-              signalColor: "#000000",
-              signalTextColor: "#000000",
-              labelBoxBkgColor: "#f6f8fa",
-              labelBoxBorderColor: "#d0d7de",
-              labelTextColor: "#000000",
-              loopTextColor: "#000000",
-              noteBkgColor: "#fff9c4",
-              noteTextColor: "#000000",
-              noteBorderColor: "#d4a72c",
-              messageTextColor: "#000000",
-              messageLineColor: "#000000",
-              sequenceNumberColor: "#000000",
+                // Sequence Diagram
+                actorBkg: "#eaeef2",
+                actorBorder: "#d0d7de",
+                actorTextColor: "#000000",
+                actorLineColor: "#000000",
+                signalColor: "#000000",
+                signalTextColor: "#000000",
+                labelBoxBkgColor: "#f6f8fa",
+                labelBoxBorderColor: "#d0d7de",
+                labelTextColor: "#000000",
+                loopTextColor: "#000000",
+                noteBkgColor: "#fff9c4",
+                noteTextColor: "#000000",
+                noteBorderColor: "#d4a72c",
+                messageTextColor: "#000000",
+                messageLineColor: "#000000",
+                sequenceNumberColor: "#000000",
 
-              // Groupings/Loops
-              loopBkgColor: "#f6f8fa",
-              loopBorderColor: "#d0d7de",
-              activationBkgColor: "#eaeef2",
-              activationBorderColor: "#d0d7de",
+                // Groupings/Loops
+                loopBkgColor: "#f6f8fa",
+                loopBorderColor: "#d0d7de",
+                activationBkgColor: "#eaeef2",
+                activationBorderColor: "#d0d7de",
 
-              // State Diagram
-              stateBkg: "#ffffff",
-              stateLabelColor: "#000000",
-              stateBorder: "#d0d7de",
-              altBackground: "#f6f8fa",
+                // State Diagram
+                stateBkg: "#ffffff",
+                stateLabelColor: "#000000",
+                stateBorder: "#d0d7de",
+                altBackground: "#f6f8fa",
 
-              // Class Diagram
-              classText: "#000000",
-              classBkg: "#ffffff",
-              classBorder: "#d0d7de",
+                // Class Diagram
+                classText: "#000000",
+                classBkg: "#ffffff",
+                classBorder: "#d0d7de",
 
-              // Pie Chart
-              pie1: "#0969da",
-              pie2: "#1a7f37",
-              pie3: "#8250df",
-              pie4: "#cf222e",
-              pie5: "#bf8700",
-              pie6: "#6e7781",
-              pieTitleTextSize: "20px",
-              pieTitleTextColor: "#000000",
-              pieSectionTextColor: "#ffffff",
-              pieLegendTextColor: "#000000",
-              pieStrokeColor: "#ffffff",
-              pieStrokeWidth: "2px",
-              pieOuterStrokeWidth: "2px",
-              pieOpacity: "1",
+                // Pie Chart
+                pie1: "#0969da",
+                pie2: "#1a7f37",
+                pie3: "#8250df",
+                pie4: "#cf222e",
+                pie5: "#bf8700",
+                pie6: "#6e7781",
+                pieTitleTextSize: "20px",
+                pieTitleTextColor: "#000000",
+                pieSectionTextColor: "#ffffff",
+                pieLegendTextColor: "#000000",
+                pieStrokeColor: "#ffffff",
+                pieStrokeWidth: "2px",
+                pieOuterStrokeWidth: "2px",
+                pieOpacity: "1",
+              },
+            },
+            launchOptions: {
+              args: ["--no-sandbox", "--disable-setuid-sandbox"],
             },
           },
-          launchOptions: {
-            args: ["--no-sandbox", "--disable-setuid-sandbox"],
+        ],
+        rehypeRaw,
+        [
+          rehypeExternalLinks,
+          {
+            rel: ["external", "noopener", "noreferrer"],
+            target: "_blank",
           },
-        },
+        ],
+        rehypeLinkDisambiguator,
       ],
-      rehypeRaw,
-      [
-        rehypeExternalLinks,
-        {
-          rel: ["external", "noopener", "noreferrer"],
-          target: "_blank",
-        },
-      ],
-      rehypeLinkDisambiguator,
-    ],
+    }),
   },
 
   // Vite configuration (underlying bundler)
@@ -395,7 +394,7 @@ export default defineConfig({
     },
     build: {
       cssCodeSplit: true,
-      // Increased threshold to accommodate large math (mathjax) and rendering (mermaid) chunks.
+      // Increased threshold to accommodate large rendering (mermaid) chunks.
       // Optimization is handled via ViteImageOptimizer and CSS extraction in post-build.
       chunkSizeWarningLimit: 1000,
     },

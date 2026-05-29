@@ -35,7 +35,6 @@
 | Styling         | UnoCSS (presetWind4)     | ^66.6.2        |
 | Islands         | Preact                   | ^10.29.0       |
 | Diagrams        | Mermaid + mermaid-isomorphic | ^11.12.2 / ^3.0.4 |
-| Math            | rehype-mathjax (SSR)     | ^7.1.0         |
 | Syntax          | Shiki                    | ^4.0.0         |
 | Testing         | Playwright + Axe-core    | ^1.58.2        |
 | Icons           | Iconify (12 collections) | @iconify-json/* |
@@ -501,12 +500,10 @@ Additional security headers: HSTS (2 years), X-Content-Type-Options, X-Frame-Opt
 
 ### Remark Plugins
 
-- `remarkMath` — LaTeX math blocks
 - `remarkMermaidBypass` — Transforms `mermaid-render` blocks to `<pre class="mermaid">`
 
 ### Rehype Plugins
 
-- `rehypeMathjax` — MathJax SSR rendering
 - `rehypeMermaid` — Mermaid SSR (inline-svg strategy with theme variables)
 - `rehypeRaw` — Allow raw HTML in MDX
 - `rehypeExternalLinks` — `rel="external noopener noreferrer"`, `target="_blank"`
