@@ -78,10 +78,12 @@ const site_config = defineCollection({
         .object({
           name: z.string(),
           jobTitle: z.string(),
-          worksFor: z.object({
-            name: z.string(),
-            url: z.url().optional(),
-          }),
+          worksFor: z
+            .object({
+              name: z.string(),
+              url: z.url().optional(),
+            })
+            .optional(),
         })
         .optional(),
       // Social links for JSON-LD sameAs and dynamic rendering

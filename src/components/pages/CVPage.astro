@@ -90,10 +90,6 @@ const personSchema = {
     url: "https://jmrp.io",
     image: "https://jmrp.io/assets/mehome.webp",
     sameAs: siteData.social_links?.map((s) => s.url) || [],
-    worksFor: {
-      "@type": "Organization",
-      name: "Power Electronics",
-    },
     knowsAbout:
       technicalSkills?.type === "list_groups"
         ? technicalSkills.contents.flatMap((g) => g.items.map((i) => i.name))

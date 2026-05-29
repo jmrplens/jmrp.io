@@ -223,7 +223,7 @@ export const common = {
       heroSubtitle:
         "Software Engineer & Researcher. <br>Bridging the gap between <strong>Acoustics</strong>, <strong>Electronics</strong>, and <strong>Code</strong>.",
       heroBio1:
-        "I'm a multidisciplinary engineer currently building control systems for renewable energy at <strong>Power Electronics</strong>. My background is rooted in <strong>Acoustics research</strong>, having worked on noise mitigation for the <strong>European Space Agency (ESA)</strong> and biomedical ultrasound at <strong>UPV</strong>.",
+        "I'm a multidisciplinary engineer who enjoys solving technical problems where <strong>hardware</strong>, <strong>software</strong> and <strong>applied research</strong> meet. I've worked on projects across very different domains —from <strong>academic research</strong> to <strong>industrial development</strong>— and that diversity is what motivates me the most.",
       heroBio2:
         "I thrive on the challenge of integrating hardware and software. When I'm not coding industrial systems, I'm an active <strong>Open Source</strong> contributor and a passionate self-hoster, constantly refining my homelab and building tools for the community. <a href='/cv/'>Check out my CV</a> to see the full journey.",
       viewCV: "View CV",

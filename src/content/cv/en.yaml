@@ -19,16 +19,18 @@
       institution: Power Electronics (<a href="https://power-electronics.com/en" aria-label="PE - Power Electronics website">PE</a>)
       department: Solar + Storage (<a href="https://power-electronics.com/en/solar" aria-label="PE Solar - Power Electronics Solar & Storage division">PE Solar</a>)
       location: Lliria, Spain
-      year: Apr 2023 - Current
+      year: Apr 2023 - May 2026
       summary: >
-        Firmware development for embedded systems (STM32 and ARM architectures) applied to power electronics, specifically for utility-scale inverters in renewable energy plants (Solar & Storage).
+        Firmware development for solar inverters and control systems in photovoltaic plants, working on STM32 microcontrollers with bare-metal and RTOS environments.
         <br><br>
         Key contributions:
       description:
-        - "Development of real-time control software in C for high-power inverters using CMake, Keil uVision and CLion."
-        - "Implementation and maintenance of industrial communication protocols: I2C, SPI, SCI, RS485, Modbus RTU and Modbus TCP."
-        - "Design and development of automated testing tools and verification scripts using Python."
-        - "Management of software versions and collaborative workflows using Git."
+        - "Optimized the embedded file system, reducing access times and improving stability under continuous operation."
+        - "Improved TCP communications performance, reducing latency and increasing the robustness of the network stack."
+        - "Optimized tasks on STM32: reduced stack and heap usage, and tuned CPU cycles to improve real-time performance."
+        - "Implementation and maintenance of industrial communications: Modbus RTU/TCP, UART, I2C and SPI."
+        - "Development in C with HAL layers and low-level peripheral management."
+        - "Test automation on real hardware using Python, including unit, integration and stress tests."
 
     - title: Predoctoral researcher
       institution: Polytechnic University of Valencia (<a href="https://www.upv.es/index-en.html" aria-label="UPV - Polytechnic University of Valencia">UPV</a>) + Spanish National Research Council (<a href="https://www.csic.es/en" aria-label="CSIC - Spanish National Research Council">CSIC</a>) + Hospital La Fe (<a href="https://www.iislafe.es/en/" aria-label="IIS - Institute for Health Research La Fe">IIS</a>)

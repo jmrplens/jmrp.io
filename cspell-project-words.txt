@@ -372,6 +372,7 @@ metasuperficies
 metasurface
 metasurfaces
 microcontroller
+microcontrollers
 microservicios
 middlebox
 middleboxes
@@ -636,6 +637,7 @@ trixie
 truenas
 ttfb
 uaaaaj
+uart
 ulnp
 ultrasónica
 ultrathin
