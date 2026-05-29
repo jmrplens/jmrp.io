@@ -19,16 +19,18 @@
       institution: Power Electronics (<a href="https://power-electronics.com/en" aria-label="PE - Power Electronics website">PE</a>)
       department: Solar + Storage (<a href="https://power-electronics.com/en/solar" aria-label="PE Solar - Power Electronics Solar & Storage division">PE Solar</a>)
       location: Llíria, España
-      year: Abr 2023 - Actualidad
+      year: Abr 2023 - May 2026
       summary: >
-        Desarrollo de firmware para sistemas embebidos (arquitecturas STM32 y ARM) aplicado a electrónica de potencia, específicamente para inversores a escala de utilidad en plantas de energía renovable (Solar & Storage).
+        Desarrollo de firmware para inversores solares y sistemas de control en plantas fotovoltaicas, trabajando sobre microcontroladores STM32 con entornos bare-metal y RTOS.
         <br><br>
         Contribuciones clave:
       description:
-        - "Desarrollo de software de control en tiempo real en C para inversores de alta potencia utilizando CMake, Keil uVision y CLion."
-        - "Implementación y mantenimiento de protocolos de comunicación industrial: I2C, SPI, SCI, RS485, Modbus RTU y Modbus TCP."
-        - "Diseño y desarrollo de herramientas de prueba automatizadas y scripts de verificación en Python."
-        - "Gestión de versiones de software y flujos de trabajo colaborativos mediante Git."
+        - "Optimización del sistema de archivos embebido, reduciendo tiempos de acceso y mejorando la estabilidad en operación continua."
+        - "Mejora del rendimiento en comunicaciones TCP, reduciendo latencia y aumentando la robustez del stack de red."
+        - "Optimización de tareas en STM32: reducción de consumo de stack y heap, y ajuste de ciclos de CPU para mejorar el rendimiento en tiempo real."
+        - "Implementación y mantenimiento de comunicaciones industriales: Modbus RTU/TCP, UART, I2C y SPI."
+        - "Desarrollo en C con capas HAL y gestión de periféricos de bajo nivel."
+        - "Automatización de pruebas sobre hardware real mediante Python, incluyendo tests unitarios, de integración y de estrés."
 
     - title: Investigador predoctoral
       institution: Universitat Politècnica de València (<a href="https://www.upv.es/index-es.html" aria-label="UPV - Universitat Politècnica de València">UPV</a>) + Consejo Superior de Investigaciones Científicas (<a href="https://www.csic.es/es" aria-label="CSIC - Consejo Superior de Investigaciones Científicas">CSIC</a>) + Hospital La Fe (<a href="https://www.iislafe.es/" aria-label="IIS - Instituto de Investigación Sanitaria La Fe">IIS</a>)

@@ -223,7 +223,7 @@ export const common = {
       heroSubtitle:
         "Ingeniero de Software & Investigador. <br>Tendiendo puentes entre la <strong>Acústica</strong>, la <strong>Electrónica</strong> y el <strong>Código</strong>.",
       heroBio1:
-        "Soy un ingeniero multidisciplinar que actualmente desarrolla sistemas de control para energías renovables en <strong>Power Electronics</strong>. Mi trayectoria parte de la <strong>investigación en acústica</strong>, donde trabajé en mitigación de ruido para la <strong>Agencia Espacial Europea (ESA)</strong> y ultrasonido biomédico en la <strong>UPV</strong>.",
+        "Soy un ingeniero multidisciplinar que disfruta resolviendo problemas técnicos allá donde se cruzan el <strong>hardware</strong>, el <strong>software</strong> y la <strong>investigación aplicada</strong>. He pasado por proyectos en ámbitos muy distintos —desde la <strong>investigación académica</strong> hasta el <strong>desarrollo industrial</strong>—, y esa diversidad es la que más me motiva.",
       heroBio2:
         "Disfruto del reto de integrar hardware y software. Cuando no estoy programando sistemas industriales, contribuyo activamente al <strong>Open Source</strong> y soy un apasionado del self-hosting, donde no paro de mejorar mi homelab y crear herramientas para la comunidad. <a href='/es/cv/'>Consulta mi CV</a> para ver la trayectoria completa.",
       viewCV: "Ver CV",

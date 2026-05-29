@@ -36,7 +36,6 @@ const hero = {
 const person = siteData.person || {
   name: siteData.author || "José Manuel Requena Plens",
   jobTitle: t("seo.jobTitle"),
-  worksFor: { name: "Power Electronics" },
 };
 
 // Fetch data concurrently with error handling for external API
@@ -67,11 +66,13 @@ const personSchema = [
       image: new URL(mehomeImg.src, getSiteUrl()).toString(),
       sameAs: siteData.social_links?.map((s) => s.url) || [],
       jobTitle: t("seo.jobTitle"),
-      worksFor: {
-        "@type": "Organization",
-        name: person.worksFor.name,
-        ...(person.worksFor.url && { url: person.worksFor.url }),
-      },
+      ...(person.worksFor && {
+        worksFor: {
+          "@type": "Organization",
+          name: person.worksFor.name,
+          ...(person.worksFor.url && { url: person.worksFor.url }),
+        },
+      }),
     },
   },
 ];
