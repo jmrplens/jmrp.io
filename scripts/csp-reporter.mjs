@@ -137,8 +137,10 @@ const server = http.createServer((req, res) => {
  * Processes the received report and handles logging/notification
  */
 function processReport(report, ip, ua) {
+  // Defensive check: report must be an object (parsed JSON)
+  if (!report || typeof report !== "object") return;
   const r = report["csp-report"] || report;
-  if (!r) return;
+  if (!r || typeof r !== "object") return;
 
   // Silently discard known false positives (browser extensions, antivirus,
   // userscripts, browser-internal pages, prefetch quirks, bots/crawlers and

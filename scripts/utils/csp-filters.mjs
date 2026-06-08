@@ -90,7 +90,9 @@ export function isExtensionViolation(r) {
   if (source === "sandbox eval code") return true;
 
   // Antivirus/security suites that inject scripts into pages (Kaspersky Protection).
-  if (/kaspersky-labs\.com/i.test(source)) return true;
+  // Extract hostname to avoid substring artifacts, then check domain suffix.
+  const host = hostOf(source);
+  if (host && /kaspersky-labs\.com$/i.test(host)) return true;
 
   return false;
 }
@@ -176,7 +178,12 @@ export function isPrefetchFalsePositive(r) {
 export function isBotUserAgent(ua) {
   if (typeof ua !== "string" || !ua) return false;
   const lower = ua.toLowerCase();
-  if (BOT_UA_TOKENS.some((token) => lower.includes(token))) return true;
+  // Use word-boundary regex for "bot/crawl/spider" to avoid false positives on
+  // "robot", "robotic", "automotive", etc. Other tokens are unambiguous identifiers.
+  if (/\b(bot|crawl|spider|slurp)\b/i.test(ua)) return true;
+  // Check exact matches for unambiguous bot/tool identifiers
+  if (BOT_UA_TOKENS.slice(4).some((token) => lower.includes(token)))
+    return true;
 
   // Chromium UA template missing the mandatory "Chrome/" token → scraper/render
   // bot. Real Chromium browsers always include "Chrome/<version>"; real Safari
