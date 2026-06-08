@@ -90,7 +90,7 @@ export function isExtensionViolation(r) {
   if (source === "sandbox eval code") return true;
 
   // Antivirus/security suites that inject scripts into pages (Kaspersky Protection).
-  if (/\bkaspersky-labs\.com\b/i.test(source)) return true;
+  if (/kaspersky-labs\.com/i.test(source)) return true;
 
   return false;
 }
