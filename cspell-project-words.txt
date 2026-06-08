@@ -8,6 +8,7 @@ acusticox
 addrlist
 adminer
 afmt
+aiohttp
 aire
 ajústala
 aleatorizado
@@ -185,6 +186,7 @@ ekus
 elche
 elimínala
 elimínalo
+embedly
 emergencias
 encriptación
 enddate
@@ -205,6 +207,8 @@ euronoise
 exceptionresp
 exfiltración
 exfiltration
+externalagent
+facebookexternalhit
 fastcgi
 fastly
 fasttrack
@@ -240,9 +244,11 @@ gorazdo
 greylisting
 groby
 groupby
+gstatic
 guarinos
 guillem
 hardvard
+headlesschrome
 healthz
 helpdesk
 herramienta
@@ -303,6 +309,7 @@ jmrp
 jmrplens
 josé
 journalctl
+kaspersky
 keil
 keyid
 Keyoxide
@@ -323,6 +330,7 @@ lekies
 leyendo
 lhci
 libkql
+libwww
 lighthouseci
 línea
 linkitems
@@ -437,6 +445,7 @@ ocsp
 oficial
 oids
 okabe
+okhttp
 omfile
 omgilibot
 ondrej
@@ -609,6 +618,7 @@ surý
 sysstat
 syverson
 tabler
+tampermonkey
 tarpit
 tarpiteadas
 tarpits
@@ -651,6 +661,8 @@ unparseable
 urandom
 urlencode
 usar
+userscript
+userscripts
 útil
 valència
 valencian
@@ -662,6 +674,7 @@ vicent
 víctor
 videollamadas
 viénot
+violentmonkey
 viridis
 vlan
 vlsm
@@ -683,6 +696,7 @@ writesingleregister
 xcto
 xframe
 xmlrpc
+yastatic
 youtube
 ytxt
 zcvgkwkj
