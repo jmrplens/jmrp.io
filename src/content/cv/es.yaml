@@ -230,11 +230,11 @@
           icon: simple-icons:modelcontextprotocol
           level: 4
         - name: Agentes de IA para programar
-          desc: (Claude Code, Copilot, skills/flujos de agentes)
+          desc: (Claude Code, Copilot, habilidades/flujos de agentes)
           icon: simple-icons:claude
           level: 4
         - name: Integración de LLMs
-          desc: (API, prompt engineering, tool-use)
+          desc: (API, prompt engineering, uso de herramientas)
           icon: mdi:brain
           level: 3
 
