@@ -88,7 +88,7 @@ function extractDataUri(
     const metadata = rawDataUri.substring(5, commaIndex);
     const data = rawDataUri.slice(Math.max(0, commaIndex + 1));
     const isBase64 = metadata.includes(";base64");
-    const mime = metadata.split(";")[0] || "application/octet-stream";
+    const mime = metadata.split(";", 1)[0] || "application/octet-stream";
 
     const buffer = decodeData(data, isBase64, logger, suffix);
     if (!buffer) return null;
@@ -525,7 +525,7 @@ function collectImageDomains($: cheerio.CheerioAPI, cspData: CspData) {
     const $el = $(el);
     const sources = ($el.attr("src") || "") + " " + ($el.attr("srcset") || "");
     for (const srcCandidate of sources.split(/,?\s+/)) {
-      const src = srcCandidate.trim().split(" ")[0];
+      const src = srcCandidate.trim().split(" ", 1)[0];
       if (src && (src.startsWith("http") || src.startsWith("//"))) {
         try {
           const url = src.startsWith("//")
@@ -634,7 +634,7 @@ function processLinks($: cheerio.CheerioAPI): boolean {
     const $el = $(el);
     const rawHref = $el.attr("href") || "";
     // Strip query string and fragment before checking extension
-    const href = rawHref.split(/[?#]/)[0].toLowerCase();
+    const href = rawHref.split(/[?#]/, 1)[0].toLowerCase();
     if (
       BINARY_EXTENSIONS.some((ext) => href.endsWith(ext)) &&
       $el.attr("data-astro-prefetch") !== "false"

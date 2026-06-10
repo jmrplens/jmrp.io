@@ -354,6 +354,7 @@ export default defineConfig({
             {
               name: "addAttributesToSVGElement",
               params: {
+                // eslint-disable-next-line unicorn/prefer-https -- SVG namespace URI per W3C spec, must remain http
                 attributes: [{ xmlns: "http://www.w3.org/2000/svg" }],
               },
             },

@@ -40,7 +40,7 @@ export function remarkMermaidBypass() {
           },
         };
 
-        parent.children.splice(index, 1, newNode);
+        parent.children[index] = newNode;
         return index + 1;
       }
     });

@@ -47,6 +47,7 @@ const presets = [
     pattern: String.raw`https?://[^\s/$.?#].[^\s]*`,
     flags: "gi",
     sample:
+      // eslint-disable-next-line unicorn/prefer-https -- demo string intentionally shows http variant matched by https? regex
       "Visit https://example.com/path?q=1#hash\nOr http://sub.domain.org/page\nNot a URL: ftp://files.example.com",
   },
   {
@@ -71,7 +72,7 @@ const presets = [
   },
   {
     label: "UUID",
-    pattern: String.raw`[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}`,
+    pattern: "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
     flags: "gi",
     sample:
       "ID: 550e8400-e29b-41d4-a716-446655440000\nSession: a1b2c3d4-e5f6-7890-abcd-ef1234567890",
@@ -85,7 +86,7 @@ const presets = [
   },
   {
     label: "MAC Address",
-    pattern: String.raw`(?:[0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}`,
+    pattern: "(?:[0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}",
     flags: "gi",
     sample:
       "Ethernet: 00:1A:2B:3C:4D:5E\nWiFi: AA-BB-CC-DD-EE-FF\nInvalid: GG:HH:II:JJ:KK:LL",

@@ -91,7 +91,7 @@ const server = http.createServer((req, res) => {
       req.socket.remoteAddress ||
       "Unknown"
     )
-      .split(",")[0]
+      .split(",", 1)[0]
       .trim();
     const userAgent = (req.headers["user-agent"] || "Unknown").trim();
 

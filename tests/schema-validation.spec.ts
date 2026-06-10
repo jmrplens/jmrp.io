@@ -113,18 +113,18 @@ test.describe("Common schemas on representative pages", () => {
       await page.goto(url);
       const jsonLd = await getJsonLd(page);
 
-      const webSite = findInGraph(jsonLd, "WebSite");
-      expect(webSite).not.toBeNull();
-      if (!webSite) return;
+      const website = findInGraph(jsonLd, "WebSite");
+      expect(website).not.toBeNull();
+      if (!website) return;
 
-      expect(webSite["@type"]).toBe("WebSite");
-      expect(isValidUrl(webSite["@id"])).toBe(true);
-      expect(isValidUrl(webSite.url)).toBe(true);
-      expect(isNonEmptyStr(webSite.name)).toBe(true);
-      expect(isNonEmptyStr(webSite.description)).toBe(true);
-      expect(isNonEmptyStr(webSite.inLanguage)).toBe(true);
+      expect(website["@type"]).toBe("WebSite");
+      expect(isValidUrl(website["@id"])).toBe(true);
+      expect(isValidUrl(website.url)).toBe(true);
+      expect(isNonEmptyStr(website.name)).toBe(true);
+      expect(isNonEmptyStr(website.description)).toBe(true);
+      expect(isNonEmptyStr(website.inLanguage)).toBe(true);
 
-      const publisher = webSite.publisher as JsonLdSchema | undefined;
+      const publisher = website.publisher as JsonLdSchema | undefined;
       expect(publisher).toBeDefined();
       if (publisher) {
         expect(publisher["@type"]).toBe("Person");
@@ -349,10 +349,7 @@ test.describe("URL correctness in schemas", () => {
       if (typeof obj !== "object" || obj === null) return;
       const rec = obj as Record<string, unknown>;
       for (const [key, val] of Object.entries(rec)) {
-        if (
-          (key === "@id" || key === "url" || key === "item") &&
-          typeof val === "string"
-        ) {
+        if (["@id", "url", "item"].includes(key) && typeof val === "string") {
           // All URL-like fields must be absolute http(s) URLs
           expect(
             isValidUrl(val),
@@ -401,7 +398,7 @@ test.describe("URL correctness in schemas", () => {
         if (
           !insideExternal &&
           !isExtKey &&
-          (key === "@id" || key === "url" || key === "item") &&
+          ["@id", "url", "item"].includes(key) &&
           typeof val === "string" &&
           isValidUrl(val)
         ) {

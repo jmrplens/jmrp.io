@@ -2,7 +2,7 @@
 
 <!-- Project & Status -->
 
-![Astro](https://img.shields.io/badge/astro-6.0.0--beta.13-orange?style=flat&logo=astro)
+![Astro](https://img.shields.io/badge/astro-6.4.6-orange?style=flat&logo=astro)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 [![Dependabot](https://badgen.net/badge/Dependabot/enabled/green?icon=dependabot)](https://github.com/jmrplens/jmrp.io/pulls)
 [![CI Dashboard](https://img.shields.io/badge/CI_Dashboard-Live_Status-blueviolet?style=for-the-badge&logo=vercel)](https://jmrp-ci-reports.vercel.app)
@@ -65,7 +65,7 @@ This is the source code for my personal website, **[jmrp.io](https://jmrp.io)**,
 
 ## 🛠️ Tech Stack
 
-- **Framework**: [Astro v6 (Beta)](https://astro.build/)
+- **Framework**: [Astro v6](https://astro.build/)
 - **UI Components**: [Preact](https://preactjs.com/) (islands only)
 - **Styling**: [UnoCSS](https://unocss.dev/) (`presetWind4`) & CSS Custom Properties
 - **Content**: [MDX](https://mdxjs.com/), [Mermaid](https://mermaid.js.org/) (SSR), [MathJax](https://www.mathjax.org/) (SSR)
@@ -117,7 +117,7 @@ This is the source code for my personal website, **[jmrp.io](https://jmrp.io)**,
 
 ### Prerequisites
 
-- **Node.js (v22.12.0+)**: Required for advanced build and CI features.
+- **Node.js (v22.18.0+)**: Required for advanced build and CI features.
 - **pnpm (v10.0.0+)**: Required package manager.
 
 ### Installation

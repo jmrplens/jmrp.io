@@ -66,7 +66,7 @@ try {
     // Robust extraction without complex regex to satisfy Sonar
     const startIdx = urlLine.indexOf("https://");
     if (startIdx !== -1) {
-      const potentialUrl = urlLine.substring(startIdx).split(/\s/)[0];
+      const potentialUrl = urlLine.substring(startIdx).split(/\s/, 1)[0];
       // Manual trim of common trailing punctuation to avoid ReDoS
       let endIdx = potentialUrl.length;
       while (endIdx > 0 && ". ,;:!?)]".includes(potentialUrl[endIdx - 1])) {

@@ -33,9 +33,9 @@ function getExtensionFromMime(mime: string): string {
   }
 
   // Extract subtype and sanitize
-  const subtype = normalizedMime.split("/")[1] || "";
+  const subtype = normalizedMime.split("/", 2)[1] || "";
   // Remove +suffix (e.g., svg+xml -> svg)
-  const basetype = subtype.split("+")[0];
+  const basetype = subtype.split("+", 1)[0];
   // Strip non-alphanumeric and limit length
   const sanitized = basetype.replaceAll(/[^a-z0-9]/gi, "").slice(0, 10);
   return sanitized || "bin";
@@ -76,6 +76,7 @@ const svgoConfig: Config = {
     {
       name: "addAttributesToSVGElement",
       params: {
+        // eslint-disable-next-line unicorn/prefer-https -- SVG namespace URI per W3C spec, must remain http
         attributes: [{ xmlns: "http://www.w3.org/2000/svg" }],
       },
     },
@@ -173,7 +174,7 @@ export async function extractCssDataUris(
       const metadata = rawDataUri.substring(5, commaIndex);
       const data = rawDataUri.slice(commaIndex + 1);
       const isBase64 = metadata.includes(";base64");
-      const mime = metadata.split(";")[0] || "application/octet-stream";
+      const mime = metadata.split(";", 1)[0] || "application/octet-stream";
 
       const buffer = isBase64
         ? Buffer.from(data.trim(), "base64")
