@@ -100,6 +100,7 @@ ciberseguridad
 cilíndricos
 ciphersuites
 clases
+claude
 clickjacking
 cliente
 clientes
@@ -236,6 +237,8 @@ genpsk
 geoipupdate
 geolocalización
 gescoform
+githubactions
+gitlab
 gnupg
 goldschlag
 gonzález
@@ -309,6 +312,7 @@ jmrp
 jmrplens
 josé
 journalctl
+JTAG
 kaspersky
 keil
 keyid
@@ -630,6 +634,7 @@ texto
 thrs
 tik's
 timedatectl
+Tiva
 timpibot
 tldr
 tlnp

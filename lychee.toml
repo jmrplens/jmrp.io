@@ -27,6 +27,7 @@ exclude = [
     'https://cienciagandia\.webs\.upv\.es/.*',
     'https://i3m\.csic\.upv\.es/.*',
     'https://igic\.webs\.upv\.es/.*',
+    'https://cvnet\.cpd\.ua\.es/.*',
     # Ignore Astro/Template variables
     '.*\$\{.*',
     '.*\%7B.*',

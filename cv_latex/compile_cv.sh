@@ -27,10 +27,12 @@ compile_latex() {
         return 1
     fi
     
-    # Run biber for bibliography
-    if ! biber "$filename" > /dev/null 2>&1; then
-        echo "  ✗ Error: biber failed for ${filename}"
-        return 1
+    # Run biber for bibliography (skip if biblatex is not in use, i.e. no .bcf was generated)
+    if [ -f "${filename}.bcf" ]; then
+        if ! biber "$filename" > /dev/null 2>&1; then
+            echo "  ✗ Error: biber failed for ${filename}"
+            return 1
+        fi
     fi
     
     # Run xelatex (multiple passes for references/layout)

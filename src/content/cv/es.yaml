@@ -156,9 +156,23 @@
         - name: STM32 y ARM
           icon: simple-icons:arm
           level: 4
+        - name: ESP32 / ESP-IDF
+          icon: simple-icons:espressif
+          level: 4
+        - name: Texas Instruments
+          desc: (MSP430, Tiva C, Code Composer Studio)
+          icon: mdi:chip
+          level: 3
+        - name: FreeRTOS / RTOS
+          icon: mdi:clock-fast
+          level: 4
         - name: Protocolos Com.
           desc: (I2C, SPI, RS485, Modbus)
           icon: fa-solid:project-diagram
+          level: 4
+        - name: Depuración HW
+          desc: (JTAG / SWD)
+          icon: fa-solid:bug
           level: 4
         - name: Keil uVision
           icon: simple-icons:arm
@@ -166,9 +180,6 @@
         - name: Instrumentación
           desc: (Osciloscopios, DAQs, Anal. lóg.)
           icon: fa-solid:wave-square
-          level: 4
-        - name: Espressif / Arduino
-          icon: logos:arduino
           level: 4
 
     - category: Ingeniería de Software y Herramientas
@@ -180,8 +191,25 @@
         - name: C++
           icon: logos:c-plusplus
           level: 3
+        - name: Clang Tooling
+          desc: (clangd, clang-format, clang-tidy)
+          icon: vscode-icons:file-type-clangd
+          level: 3
         - name: Git
           icon: logos:git-icon
+          level: 4
+        - name: GitHub
+          icon: mdi:github
+          level: 4
+        - name: GitLab
+          icon: mdi:gitlab
+          level: 4
+        - name: CI/CD
+          desc: (GitHub Actions)
+          icon: simple-icons:githubactions
+          level: 4
+        - name: Docker
+          icon: logos:docker-icon
           level: 4
         - name: MATLAB
           icon: vscode-icons:file-type-matlab
@@ -194,6 +222,22 @@
           icon: logos:jetbrains
           level: 4
 
+    - category: IA e Ingeniería de Agentes
+      icon: mdi:robot-outline
+      items:
+        - name: Model Context Protocol (MCP)
+          desc: (Desarrollo de servidores en Go)
+          icon: simple-icons:modelcontextprotocol
+          level: 4
+        - name: Agentes de IA para programar
+          desc: (Claude Code, Copilot, skills/flujos de agentes)
+          icon: simple-icons:claude
+          level: 4
+        - name: Integración de LLMs
+          desc: (API, prompt engineering, tool-use)
+          icon: mdi:brain
+          level: 3
+
     - category: Simulación y Acústica
       icon: fa-solid:wave-square
       items:
@@ -203,18 +247,15 @@
         - name: LabView
           icon: simple-icons:labview
           level: 3
-        - name: CATT-Acoustic
-          icon: fa-solid:volume-up
-          level: 4
-        - name: EASE
-          icon: fa-solid:volume-up
-          level: 3
 
     - category: General y Plataformas
       icon: fa-solid:desktop
       items:
         - name: Linux / Unix
           icon: logos:linux-tux
+          level: 4
+        - name: TCP/IP y Redes
+          icon: fa-solid:network-wired
           level: 4
         - name: MacOS
           icon: simple-icons:apple

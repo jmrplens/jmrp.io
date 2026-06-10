@@ -23,7 +23,8 @@
 
 %% Formato página
 \geometry{left=2cm,right=2cm,marginparwidth=6.8cm,marginparsep=1.2cm,top=1.5cm,bottom=1.5cm}
-\usepackage{calc} 
+\usepackage{calc}
+\usepackage{needspace}
 
 % Fuente
 \usepackage[default]{lato}
@@ -70,10 +71,10 @@
 \renewcommand{\itemmarker}{{\small\textbullet}}
 \renewcommand{\ratingmarker}{\faCircle}
 
-%% BIBLIOGRAFIA
+%% BIBLIOGRAFIA (disabled — uncomment to show Publications section again)
 % \usepackage[style=apa6,sorting=ydnt]{biblatex}
-\input{pubs-authoryear.cfg}
-\addbibresource{resources/papers.bib}
+%\input{pubs-authoryear.cfg}
+%\addbibresource{resources/papers.bib}
 \usepackage{fontawesome5}
 
 \begin{document}
@@ -299,18 +300,26 @@ Asociación con domicilio en la Escuela Politécnica Superior de la Universidad 
 \cvskillheader{Firmware Embebido y Electrónica}
 \cvskill{\faCuttlefish~C}{4}
 \cvskill{\faMicrochip~STM32 \& ARM}{4}
-\cvskill{\faNetworkWired~Protocolos de com.}{4}
-\cvskill{\faLaptopCode~Keil uVision}{4}
+\cvskill{\faIcon{wifi}~ESP32 / ESP-IDF}{4}
+\cvskill{\faMemory~Texas Instruments}{3}
+\cvskill{\faClock~FreeRTOS / RTOS}{4}
+\cvskill{\faProjectDiagram~Protocolos de com.}{4}
+\cvskill{\faBug~Depuración HW}{4}
+\cvskill{\faMicrochip~Keil uVision}{4}
 \cvskill{\faTools~Instrumentación}{4}
-\cvskill{\faMicrochip~Espressif / Arduino}{4}
 
 \vspace{1em}
 
 \cvskillheader{Simulación y Acústica}
 \cvskill{\faAtom~COMSOL Multiphysics}{4}
 \cvskill{\faWaveSquare~LabView}{3}
-\cvskill{\faVolumeUp~CATT-Acoustic}{4}
-\cvskill{\faVolumeUp~EASE}{3}
+
+\vspace{1em}
+
+\cvskillheader{IA e Ingeniería de Agentes}
+\cvskill{\faPlug~Model Context Protocol (MCP)}{4}
+\cvskill{\faRobot~Agentes de IA para programar}{4}
+\cvskill{\faBrain~Integración de LLMs}{3}
 \end{minipage}
 \vspace{0.5em}
 \hfill
@@ -318,7 +327,12 @@ Asociación con domicilio en la Escuela Politécnica Superior de la Universidad 
 \cvskillheader{Ingeniería de Software y Herramientas}
 \cvskill{\faPython~Python}{4}
 \cvskill{\faCode~C++}{3}
+\cvskill{\faBroom~Clang Tooling}{3}
 \cvskill{\faGit*~Git}{4}
+\cvskill{\faGithub~GitHub}{4}
+\cvskill{\faGitlab~GitLab}{4}
+\cvskill{\faInfinity~CI/CD}{4}
+\cvskill{\faDocker~Docker}{4}
 \cvskill{\faFileCode~MATLAB}{4}
 \cvskill{\faCogs~CMake}{3}
 \cvskill{\faToolbox~JetBrains Toolbox}{4}
@@ -327,6 +341,7 @@ Asociación con domicilio en la Escuela Politécnica Superior de la Universidad 
 
 \cvskillheader{General y Plataformas}
 \cvskill{\faLinux~Linux / Unix}{4}
+\cvskill{\faNetworkWired~TCP/IP y Redes}{4}
 \cvskill{\faApple~MacOS}{4}
 \cvskill{\faWindows~Windows}{4}
 \cvskill{\faFile~LaTeX}{4}
@@ -347,6 +362,7 @@ Asociación con domicilio en la Escuela Politécnica Superior de la Universidad 
 
 %
 \vspace{1.5em}
+\needspace{8cm}
 \cvsection{Educación}
 
 \cvsubsection{Formación oficial}
@@ -423,6 +439,7 @@ Titulación obtenida junto a las 2 especializaciones: Ingeniería Acústica y Te
 \divider 
 
 \vspace{1.5em}
+\needspace{8cm}
 \cvsection{Certificados}
 \vspace{-0.6em}
 {\footnotesize Los certificados son accesibles pulsando sobre el nombre de cada uno de ellos.}
@@ -431,7 +448,7 @@ Titulación obtenida junto a las 2 especializaciones: Ingeniería Acústica y Te
 \begin{minipage}[t]{0.49\textwidth}
     {\normalsize\bfseries\color{emphasis}Prevención de riesgos laborales}\par\smallskip
     \small
-    \begin{tabular}{@{} l @{\extracolsep{\fill}} r @{}}
+    \begin{tabular*}{\linewidth}{@{} l @{\extracolsep{\fill}} r @{}}
     	\href{https://jmrp.io/pdf/certificates/PRL/PRL_Generico.pdf}{Genérico} & \href{https://invassat.gva.es/}{INVASSAT}. {\bf 50} H.\\
     	\href{https://jmrp.io/pdf/certificates/PRL/PRL_Nanomateriales.pdf}{Nanomateriales} & \href{https://invassat.gva.es/}{INVASSAT}. {\bf 50} H.\\
     	\href{https://jmrp.io/pdf/certificates/PRL/PRL_Quimico.pdf}{Químico} & \href{https://invassat.gva.es/}{INVASSAT}. {\bf 50} H.\\
@@ -440,26 +457,26 @@ Titulación obtenida junto a las 2 especializaciones: Ingeniería Acústica y Te
     	\href{https://jmrp.io/pdf/certificates/PRL/PRL_Educativo.pdf}{Educativo} & \href{https://invassat.gva.es/}{INVASSAT}. {\bf 50} H.\\
     	\href{https://jmrp.io/pdf/certificates/PRL/PRL_Servicios.pdf}{Servicios} & \href{https://invassat.gva.es/}{INVASSAT}. {\bf 50} H.\\
     	\href{https://jmrp.io/pdf/certificates/CertificadoPRLUPV.pdf}{Investigación} & \href{https://www.cfp.upv.es/formacion-permanente/curso/prevencion-riesgos-laborales-perfil-investigador-laboratorio_55773.html}{UPV}. {\bf 15} H.\\
-    \end{tabular}
+    \end{tabular*}
     
     \vspace{1em}
 
     {\normalsize\bfseries\color{emphasis}Laboral/Industrial}\par\smallskip
     \small
-    \begin{tabular}{@{} l @{\extracolsep{\fill}} r @{}}
+    \begin{tabular*}{\linewidth}{@{} l @{\extracolsep{\fill}} r @{}}
     	\href{https://jmrp.io/pdf/certificates/Certificado_Carretilla.pdf}{Operador carretilla} & \href{https://gescoform.es/}{Gescoform}. {\bf 15} H.\\
     	\href{https://www.asonaman.es/files/crt/2022/10/09/CBBUWIQEBMUJKENWAKEZHYAGHKKA.pdf}{Manipulador alimentos} & \href{https://www.asonaman.es/}{Asonaman}. {\bf 30} H.\\
     	\href{https://jmrp.io/pdf/certificates/PlanesAutoproteccion.pdf}{Planes autoprotección} & \href{https://invassat.gva.es/}{INVASSAT}. {\bf 15} H.\\
     	\href{https://jmrp.io/pdf/certificates/ElectricidadEstatica.pdf}{Electricidad estática} & \href{https://invassat.gva.es/}{INVASSAT}. {\bf 15} H.\\
     	\href{https://jmrp.io/pdf/certificates/ProteccionDeDatos.pdf}{Protección de datos} & \href{https://www.csirtcv.gva.es/}{CSIRT-CV}. {\bf 10} H.\\
-    \end{tabular}
+    \end{tabular*}
 \end{minipage}
 \vspace{0.5em}
 \hfill
 \begin{minipage}[t]{0.49\textwidth}
     {\normalsize\bfseries\color{emphasis}Competencias transversales}\par\smallskip
     \small
-    \begin{tabular}{@{} l @{\extracolsep{\fill}} r @{}}
+    \begin{tabular*}{\linewidth}{@{} l @{\extracolsep{\fill}} r @{}}
     	\href{https://jmrp.io/pdf/certificates/PerspectivaDeGenero.pdf}{Perspectiva de género} & \href{https://eves.san.gva.es}{EVES}. {\bf 20} H.\\
     	\href{https://jmrp.io/pdf/certificates/TrabajoEnEquipo.pdf}{Trabajo en equipo} & \href{https://labora.gva.es/es/ciutadania}{Labora}. {\bf 25} H.\\
     	\href{https://jmrp.io/pdf/certificates/DesignThinking.pdf}{Design Thinking} & \href{https://labora.gva.es/es/ciutadania}{Labora}. {\bf 25} H.\\
@@ -468,17 +485,17 @@ Titulación obtenida junto a las 2 especializaciones: Ingeniería Acústica y Te
     	\href{https://jmrp.io/pdf/certificates/AutonomiaInnovacion.pdf}{Autonomía, innovación} & \href{https://labora.gva.es/es/ciutadania}{Labora}. {\bf 25} H.\\
     	\href{https://jmrp.io/pdf/certificates/MejoraEficiencia.pdf}{Mejora eficiencia prof.} & \href{https://labora.gva.es/es/ciutadania}{Labora}. {\bf 25} H.\\
     	\href{https://jmrp.io/pdf/certificates/EmprendimientoPerspectivaGenero.pdf}{Emprendimiento} & \href{https://www.cfp.upv.es/formacion-permanente/curso/emprendimiento-perspectiva-genero_86214.html}{UPV}. {\bf 20} H.\\
-    \end{tabular}
+    \end{tabular*}
     
     \vspace{1em}
 
     {\normalsize\bfseries\color{emphasis}Tecnologías de la información}\par\smallskip
     \small
-    \begin{tabular}{@{} l @{\extracolsep{\fill}} r @{}}
+    \begin{tabular*}{\linewidth}{@{} l @{\extracolsep{\fill}} r @{}}
     	\href{https://courses.edx.org/certificates/f1fb6cbd6f39431c9f57c7ee3a5dc3ad}{Using Python for Research} & \href{https://vpal.harvard.edu/harvard-online-harvardx}{HarvardX}. {\bf 50} H.\\
     	\href{https://courses.edx.org/certificates/62fed4c86a17427ebb5b6bbbc39e34df}{Analyzing Data w/ Python} & \href{https://www.edx.org/school/ibm}{IBM}. {\bf 20} H.\\
     	\href{https://courses.edx.org/certificates/0f49b9baa42f4464b2e0d99ade544790}{Visualizing Data w/ Python} & \href{https://www.edx.org/school/ibm}{IBM}. {\bf 20} H.\\
-    \end{tabular}
+    \end{tabular*}
 \end{minipage}
 \vspace{0.5em}
 \par\vspace{1em}
@@ -492,17 +509,19 @@ Titulación obtenida junto a las 2 especializaciones: Ingeniería Acústica y Te
 	\item {\bf \href{http://www.upv.es/pls/oalu/sic_gdoc.get_content?P_ASI=40012&P_IDIOMA=c&P_VISTA=&P_TIT=0&P_CACA=2022}{Computación científica}}. \href{http://www.upv.es/es}{UPV}. 50 Horas.
 	\item {\bf \href{http://www.upv.es/pls/oalu/sic_gdoc.get_content?P_ASI=40016&P_IDIOMA=c&P_VISTA=&P_TIT=0&P_CACA=2022}{Perspectiva de género en la investigación}}. \href{http://www.upv.es/es}{UPV}. 50 Horas.
 \end{itemize}
-\vspace{1.5em}
-\cvsection{Publicaciones}
-\vspace{0.5em}
-\vspace{-1em}
-\begin{justify}
-Algunas publicaciones han sido presentadas en conferencias, la mayoría de las diapositivas están disponibles en mi sitio web: \href{https://jmrp.io/publications/}{\bf jmrp.io/publications}.
-\end{justify}
-\nocite{*}
-\printbibliography[heading=none]
+
+% Sección de publicaciones desactivada — descomentar para volver a mostrarla
+%\vspace{1.5em}
+%\cvsection{Publicaciones}
+%\vspace{0.5em}
+%\vspace{-1em}
+%\begin{justify}
+%Algunas publicaciones han sido presentadas en conferencias, la mayoría de las diapositivas están disponibles en mi sitio web: \href{https://jmrp.io/publications/}{\bf jmrp.io/publications}.
+%\end{justify}
+%\nocite{*}
+%\printbibliography[heading=none]
 %
-\vspace{-1em}
+%\vspace{-1em}
 %\cvsection{Referencias}
 %%
 %%% \cvref{name}{email}{mailing address}
