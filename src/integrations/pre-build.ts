@@ -12,7 +12,7 @@ import { setupCfBeacon } from "./pre-build/beacon.js";
  * @param logger - The Astro logger instance.
  */
 function updateLlmsDate(logger: AstroIntegrationLogger): void {
-  const buildDate = new Date().toISOString().split("T")[0];
+  const buildDate = new Date().toISOString().split("T", 1)[0];
   for (const file of ["public/llms.txt", "public/llms-full.txt"]) {
     if (fs.existsSync(file)) {
       const content = fs.readFileSync(file, "utf-8");

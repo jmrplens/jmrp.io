@@ -308,7 +308,7 @@ test.describe("Build Output Verification", () => {
       .map((s) => s.trim())
       .filter((s) => s.length > 0);
     const directiveNames = new Set(
-      directiveSegments.map((seg) => seg.split(/\s+/)[0]),
+      directiveSegments.map((seg) => seg.split(/\s+/, 1)[0]),
     );
 
     const requiredDirectives = [

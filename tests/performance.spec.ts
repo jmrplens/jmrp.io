@@ -319,7 +319,7 @@ test.describe("Content Integrity", () => {
       // Check each unique link
       for (const href of internalLinks) {
         // Normalize and skip already checked
-        const normalizedHref = href.split("#")[0].split("?")[0];
+        const normalizedHref = href.split("#", 1)[0].split("?", 1)[0];
         // eslint-disable-next-line playwright/no-conditional-in-test -- Required for deduplication
         if (checkedLinks.has(normalizedHref) || normalizedHref === "") {
           continue;

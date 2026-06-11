@@ -131,7 +131,7 @@ export function resolveFile(
   baseDir: string,
   distDir: string,
 ): string | null {
-  const cleanUrl = url.split("?")[0].split("#")[0];
+  const cleanUrl = url.split("?", 1)[0].split("#", 1)[0];
   if (cleanUrl.startsWith("http") || cleanUrl.startsWith("//")) return null;
 
   const filePath = cleanUrl.startsWith("/")

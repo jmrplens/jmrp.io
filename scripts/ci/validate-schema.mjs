@@ -67,7 +67,7 @@ function validatePersonSchema(schema, p, errors, warnings) {
 /**
  * Validates a WebSite schema
  */
-function validateWebSiteSchema(schema, p, errors, validateNested) {
+function validateWebsiteSchema(schema, p, errors, validateNested) {
   if (!schema.name) errors.push(`${p}: Missing name`);
   if (!schema.url) errors.push(`${p}: Missing url`);
   validateNested("publisher");
@@ -157,7 +157,7 @@ function validateSingleSchema(schema, prefix = "") {
       break;
     }
     case "WebSite": {
-      validateWebSiteSchema(schema, p, errors, validateNested);
+      validateWebsiteSchema(schema, p, errors, validateNested);
       break;
     }
     case "BlogPosting":

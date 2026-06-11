@@ -463,7 +463,7 @@ const htmlContent = `<!DOCTYPE html>
         <a href="../" class="back-link">← Back to Dashboard</a>
         <header>
             <h1>♿ Accessibility Report</h1>
-            <div class="subtitle">WCAG 2.1 AA — axe-core audit · Generated ${new Date().toISOString().split("T")[0]}</div>
+            <div class="subtitle">WCAG 2.1 AA — axe-core audit · Generated ${new Date().toISOString().split("T", 1)[0]}</div>
         </header>
 
         <!-- Summary Cards -->
