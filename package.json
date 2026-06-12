@@ -117,7 +117,7 @@
     "@gorazdo/eslint-plugin-preact": "^1.0.7",
     "@iconify-json/devicon": "^1.2.62",
     "@iconify-json/tabler": "^1.2.35",
-    "@iconify-json/vscode-icons": "^1.2.54",
+    "@iconify-json/vscode-icons": "^1.2.56",
     "@lhci/cli": "^0.15.1",
     "@playwright/test": "^1.60.0",
     "@types/he": "^1.2.3",
