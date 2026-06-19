@@ -27,7 +27,7 @@ jobs:
       contents: read
       pull-requests: write
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Post Initial Comment
         uses: actions/github-script@v9
         with:
@@ -41,7 +41,7 @@ jobs:
     timeout-minutes: 15
     needs: ci-setup
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Cache Playwright Browsers
         id: playwright-cache
         uses: actions/cache@v5
@@ -81,7 +81,7 @@ jobs:
     timeout-minutes: 5
     needs: build
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v6
         with:
@@ -104,7 +104,7 @@ jobs:
     timeout-minutes: 5
     needs: build
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v6
         with:
@@ -127,7 +127,7 @@ jobs:
     timeout-minutes: 5
     needs: build
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v6
         with:
@@ -150,7 +150,7 @@ jobs:
     timeout-minutes: 5
     needs: build
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v6
         with:
@@ -173,7 +173,7 @@ jobs:
     timeout-minutes: 5
     needs: build
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v6
         with:
@@ -198,7 +198,7 @@ jobs:
     outputs:
       coverage: ${{ steps.jsdoc_calc.outputs.coverage }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v6
         with:
@@ -230,7 +230,7 @@ jobs:
     timeout-minutes: 5
     needs: build
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Restore lychee cache
         uses: actions/cache@v5
         with:
@@ -270,7 +270,7 @@ jobs:
     timeout-minutes: 5
     needs: build
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v6
         with:
@@ -293,7 +293,7 @@ jobs:
     timeout-minutes: 5
     needs: build
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - name: SonarQube Scan
@@ -311,7 +311,7 @@ jobs:
     timeout-minutes: 5
     needs: build
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Download build artifact
         uses: actions/download-artifact@v7
         with:
@@ -345,7 +345,7 @@ jobs:
     timeout-minutes: 5
     needs: build
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Download build artifact
         uses: actions/download-artifact@v7
         with:
@@ -388,7 +388,7 @@ jobs:
     timeout-minutes: 5
     needs: build
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Download build artifact
         uses: actions/download-artifact@v7
         with:
@@ -430,7 +430,7 @@ jobs:
     timeout-minutes: 5
     needs: build
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Download build artifact
         uses: actions/download-artifact@v7
         with:
@@ -472,7 +472,7 @@ jobs:
     timeout-minutes: 5
     needs: build
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Download build artifact
         uses: actions/download-artifact@v7
         with:
@@ -504,7 +504,7 @@ jobs:
     timeout-minutes: 30
     needs: build
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Download build artifact
         uses: actions/download-artifact@v7
         with:
@@ -545,7 +545,7 @@ jobs:
         locale: [en, es]
       fail-fast: false
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Download build artifact
         uses: actions/download-artifact@v7
         with:
@@ -588,7 +588,7 @@ jobs:
         locale: [en, es]
       fail-fast: false
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Download build artifact
         uses: actions/download-artifact@v7
         with:
@@ -641,7 +641,7 @@ jobs:
       contents: read
       pull-requests: write
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Update CI Comment (SA Results)
         if: github.event_name == 'pull_request'
         uses: actions/github-script@v9
@@ -668,7 +668,7 @@ jobs:
     needs: accessibility
     if: always()
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v6
         with:
@@ -775,7 +775,7 @@ jobs:
     needs: lighthouse-audit
     if: always()
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v6
         with:
@@ -885,7 +885,7 @@ jobs:
       contents: read
       pull-requests: write
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Download Accessibility Dashboard
         uses: actions/download-artifact@v7
         continue-on-error: true
