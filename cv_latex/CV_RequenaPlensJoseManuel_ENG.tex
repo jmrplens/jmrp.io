@@ -9,16 +9,21 @@
 %% Clase documento
 \documentclass[10pt,a4paper,ragged2e,normalphoto,withhyper]{altacv}
 
+%% XMP metadata stream (read by search engines: Google, Bing, Scholar).
+%% Loaded after hyperref, which the class pulls in via the "withhyper" option.
+\usepackage{hyperxmp}
+
 %% Etiquetas del pdf
 \hypersetup{%
+    pdfdisplaydoctitle=true,
+    keeppdfinfo=true,
     baseurl={https://jmrp.io},
 	pdfauthor={José Manuel Requena Plens},
-	pdftitle={CV of José Manuel Requena Plens},
-	pdfsubject={Curriculum Vitae of José Manuel Requena Plens},
-	pdfproducer={LaTeX},
-	pdfcreator={Texifier with LuaLatex on MacOS},
-	pdflang={en-EN},
-	pdfkeywords={CV, Curriculum Vitae, Jose Manuel Requena Plens, Information},
+	pdftitle={José Manuel Requena Plens - Embedded Firmware and Software Engineer (CV)},
+	pdfsubject={Curriculum Vitae - Embedded firmware, software engineering and QA / test automation},
+	pdfcreator={LaTeX (XeLaTeX) with altacv},
+	pdflang={en},
+	pdfkeywords={José Manuel Requena Plens, CV, Curriculum Vitae, Resume, Embedded Firmware Engineer, Software Engineer, QA Engineer, Firmware, Embedded Systems, STM32, ARM, C, C++, Python, RTOS, FreeRTOS, Test Automation, CI/CD, Valencia, Spain},
     }
     
 %% Formato página
@@ -71,7 +76,7 @@
 
 \begin{document}
 \name{José Manuel Requena Plens}
-\tagline{R\&D Engineer specializing in Embedded Systems \& Acoustics. \newline Software Engineer.}
+\tagline{Embedded Firmware \& Software Engineer \newline C · C++ · Python · RTOS · Test Automation · CI/CD}
 \photo{2.5cm}{foto}
 \personalinfo{
   \email{jmrplens@gmail.com}
@@ -105,6 +110,7 @@
 
 \begin{minipage}{\linewidth}
 \cvevent{Software Engineer}{\href{https://power-electronics.com/}{Power Electronics}}{April 2023 -- May 2026}{R\&D Department. Solar area.}
+\vspace{-1em}
 \begin{justify}
 Firmware development for solar inverters and control systems in photovoltaic plants, working on STM32 microcontrollers with bare-metal and RTOS environments.
 \end{justify}
@@ -114,7 +120,7 @@ Firmware development for solar inverters and control systems in photovoltaic pla
 	\item Optimized tasks on STM32: reduced stack and heap usage, and tuned CPU cycles to improve real-time performance.
 	\item Implementation and maintenance of industrial communications: Modbus RTU/TCP, UART, I2C and SPI.
 	\item Development in C with HAL layers and low-level peripheral management.
-	\item Test automation on real hardware using Python, including unit, integration and stress tests.
+	\item Hardware-in-the-loop (HIL) test automation in Python (pytest): unit, integration and stress tests integrated into CI/CD pipelines.
 \end{itemize}
 \end{minipage}
 \vspace{0.5em}
@@ -122,7 +128,7 @@ Firmware development for solar inverters and control systems in photovoltaic pla
 \divider
 
 \begin{minipage}{\linewidth}
-\cvevent{Predoctoral researcher}{\href{http://www.upv.es/en}{Polytechnic University of Valencia} + \href{https://www.csic.es/en}{CSIC} + \href{https://www.iislafe.es/es/}{Hospital La Fe} + \href{https://innoavi.es/en/}{AVI}}{Enero 2023 -- April 2023}{\href{https://www.i3m-stim.i3m.upv.es/}{Medical Imaging and Therapy Systems i3M}}
+\cvevent{Predoctoral researcher}{\href{http://www.upv.es/en}{Polytechnic University of Valencia} + \href{https://www.csic.es/en}{CSIC} + \href{https://www.iislafe.es/es/}{Hospital La Fe} + \href{https://innoavi.es/en/}{AVI}}{January 2023 -- April 2023}{\href{https://www.i3m-stim.i3m.upv.es/}{Medical Imaging and Therapy Systems i3M}}
 \vspace{-1em}
 \begin{justify}
 Researcher in the R\&D line: {\bf Acoustic Metamaterials for Ultrasound Histotripsy treatments}.
@@ -226,7 +232,7 @@ Internship in different research projects in the \href{https://iufacyt.ua.es/es/
 \divider
 
 \begin{minipage}{\linewidth}
-\cvevent{Founder and Vocal Member}{\href{https://www.linkedin.com/company/a-\%C2\%B5tech/}{AµTech}}{Septiembre 2016 -- Julio 2018}{\href{https://www.ua.es/en/index.html}{University of Alicante}}
+\cvevent{Founder and Vocal Member}{\href{https://www.linkedin.com/company/a-\%C2\%B5tech/}{AµTech}}{September 2016 -- July 2018}{\href{https://www.ua.es/en/index.html}{University of Alicante}}
 \vspace{-1em}
 \begin{justify}
 Association based at the Higher Polytechnic School of the University of Alicante. Founded in 2016. Promotes project-oriented microcontroller programming knowledge.
@@ -246,31 +252,28 @@ Association based at the Higher Polytechnic School of the University of Alicante
 \divider 
 
 \begin{minipage}{\linewidth}
-\cvevent{Sound technician}{\href{http://acusticox.com/}{Acusticox}}{June 2011 --  February 2018}{Cox, Alicante}
-
-\begin{itemize}
-	\item Equipment installation and adjustment for events.
-	\item Equipment installation and adjustment for permanent installation.
-	\item FOH Technician.
-	\item Customer acquisition.
-\end{itemize}
+\cvevent{Sound technician}{\href{http://acusticox.com/}{Acusticox}}{June 2011 -- February 2018}{Cox, Alicante}
+\begin{justify}
+Installation and tuning of audio equipment for live events and permanent installations; FOH technician.
+\end{justify}
 \end{minipage}
 \vspace{0.5em}
 
 
-\divider
-
-
-\begin{minipage}{\linewidth}
-\cvevent{Laboratory technician}{\href{https://profdent.es/}{Profdent}}{September 2005 -- November 2009}{Alicante}
-
-\begin{itemize}
-	\item Reception of work from dentists.
-	\item Model preparation and retouching.
-	\item Minor responsibilities.
-\end{itemize}
-\end{minipage}
-\vspace{0.5em}
+%% Profdent (dental lab technician) hidden — low relevance for current target
+%% roles. Uncomment the block below to restore it.
+%\divider
+%
+%\begin{minipage}{\linewidth}
+%\cvevent{Laboratory technician}{\href{https://profdent.es/}{Profdent}}{September 2005 -- November 2009}{Alicante}
+%
+%\begin{itemize}
+%	\item Reception of work from dentists.
+%	\item Model preparation and retouching.
+%	\item Minor responsibilities.
+%\end{itemize}
+%\end{minipage}
+%\vspace{0.5em}
 
 %\cvsection{A Day of My Life}
 %
@@ -313,7 +316,7 @@ Association based at the Higher Polytechnic School of the University of Alicante
 
 \cvskillheader{AI \& Agentic Engineering}
 \cvskill{\faPlug~Model Context Protocol (MCP)}{4}
-\cvskill{\faRobot~AI Coding Agents}{4}
+\cvskill{\faRobot~AI Agents \& Best Practices}{4}
 \cvskill{\faBrain~LLM Integration}{3}
 \end{minipage}
 \hfill
@@ -364,23 +367,14 @@ Association based at the Higher Polytechnic School of the University of Alicante
 \cvsubsection{Formal education}
 
 \begin{minipage}{\linewidth}
-\cvevent{\href{http://www.upv.es/entidades/EDOCTORADO/info/1005218normali.html}{PhD in Health and Wellness Technologies}}{\small \href{http://www.upv.es/en}{Polytechnic University of Valencia}}{September 2020 -- 2023}{\href{https://www.i3m-stim.i3m.upv.es/}{Medical Imaging and Therapy Systems i3M}}
+\cvevent{\href{http://www.upv.es/entidades/EDOCTORADO/info/1005218normali.html}{PhD in Health and Wellness Technologies}}{\small \href{http://www.upv.es/en}{Polytechnic University of Valencia}}{September 2020 -- 2023 (not completed)}{\href{https://www.i3m-stim.i3m.upv.es/}{Medical Imaging and Therapy Systems i3M}}
 
 \begin{description}
 	
 \item[Title] \begin{justify}Industrial and biomedical applications of metamaterials for the control of acoustic beams. In this project, we propose to combine new air-coupled ultrasound transducers with hyperbolic metamaterials to design vision systems that exceed the imaging capabilities of traditional systems.\end{justify}
 \vspace{0.5em}
 \item[Description] \begin{justify}
-During my PhD in Acoustic Engineering applied to Biomedicine, I conducted advanced research:
-\begin{itemize}
-    \item Biomedical signal processing and acoustic analysis algorithms.
-    \item Ultrasound characterization for medical applications.
-    \item Computational modeling and simulation of acoustic phenomena.
-    \item Development of experimental methodologies for biomedical studies.
-    \item Publication of results in specialized conferences and journals.
-\end{itemize}
-\vspace{0.5em}
-After nearly completing the doctoral program, I made the strategic decision to redirect my career toward industrial software development. This transition allowed me to apply my solid foundation in data analysis, programming, and analytical thinking to the software sector, where I found a more direct alignment between my technical skills and my long-term professional goals.
+Research in acoustic engineering applied to biomedicine: biomedical signal processing, ultrasound characterization, and computational modeling and simulation of acoustic phenomena. I redirected my career toward industrial software development before completing the doctorate, applying my foundation in programming, data analysis and analytical problem-solving.
 \end{justify}
 \end{description}
 
@@ -408,7 +402,7 @@ Degree obtained with honors in: Fundamentals of Acoustics, Acoustic Isolation, M
 \divider
 
 \begin{minipage}{\linewidth}
-\cvevent{\href{https://web.ua.es/en/oia/documentos/publicaciones/grados-folletos/grado-ingenieria-sonido-imagen.pdf}{Degree in Telecommunication Engineering in Sound and Image}}{\small \href{https://www.ua.es/}{Universidad de Alicante}}{Julio 2018}{\href{https://eps.ua.es/en/home.html}{Higher Polytechnic School}}
+\cvevent{\href{https://web.ua.es/en/oia/documentos/publicaciones/grados-folletos/grado-ingenieria-sonido-imagen.pdf}{Degree in Telecommunication Engineering in Sound and Image}}{\small \href{https://www.ua.es/}{University of Alicante}}{July 2018}{\href{https://eps.ua.es/en/home.html}{Higher Polytechnic School}}
 \vspace{-0.5em}
 \begin{justify}
 Degree obtained together with the 2 specializations: Acoustic Engineering and Audiovisual Technology.
@@ -425,7 +419,7 @@ Degree obtained together with the 2 specializations: Acoustic Engineering and Au
 \divider
 
 \begin{minipage}{\linewidth}
-\cvevent{\href{https://www.todofp.es/dam/jcr:4466fc14-1a96-4781-9e62-35a60e791d30/equipos-electronicos-de-consumo-ingles-pdf.pdf}{Certificate of Higher Education in Electronics Technician} \& \href{https://www.todofp.es/dam/jcr:b431f75a-979a-4b79-a5b8-b8e84d654a11/sonido-ingles-pdf.pdf}{Superior Sound Technician}}{\small \href{https://elche.salesianos.edu/colegio/san-jose-artesano/}{IES Salesianos (San Jóse Artesano)} | \href{https://ies-berlanga.info/index.php/es/}{IES Luis García Berlanga} + \href{https://sptcv.net/ciudad-de-la-luz/}{Ciudad de la Luz}}{2009 | 2011}{Elche | Alicante}
+\cvevent{\href{https://www.todofp.es/dam/jcr:4466fc14-1a96-4781-9e62-35a60e791d30/equipos-electronicos-de-consumo-ingles-pdf.pdf}{Certificate of Higher Education in Electronics Technician} \& \href{https://www.todofp.es/dam/jcr:b431f75a-979a-4b79-a5b8-b8e84d654a11/sonido-ingles-pdf.pdf}{Superior Sound Technician}}{\small \href{https://elche.salesianos.edu/colegio/san-jose-artesano/}{IES Salesianos (San José Artesano)} | \href{https://ies-berlanga.info/index.php/es/}{IES Luis García Berlanga} + \href{https://sptcv.net/ciudad-de-la-luz/}{Ciudad de la Luz}}{2009 | 2011}{Elche | Alicante}
 \vspace{0.5em}
 
 \noindent \cvtag{\href{https://jmrp.io/pdf/degree/ElectronicSound.pdf}{Diplomas}} 
@@ -480,6 +474,7 @@ Degree obtained together with the 2 specializations: Acoustic Engineering and Au
     	\href{https://jmrp.io/pdf/certificates/AutonomiaInnovacion.pdf}{Autonomy, innovation} & \href{https://labora.gva.es/es/ciutadania}{Labora}. {\bf 25} H.\\
     	\href{https://jmrp.io/pdf/certificates/MejoraEficiencia.pdf}{Prof. efficiency} & \href{https://labora.gva.es/es/ciutadania}{Labora}. {\bf 25} H.\\
     	\href{https://jmrp.io/pdf/certificates/EmprendimientoPerspectivaGenero.pdf}{Entrepreneurship} & \href{https://www.cfp.upv.es/formacion-permanente/curso/emprendimiento-perspectiva-genero_86214.html}{UPV}. {\bf 20} H.\\
+    	\href{http://www.upv.es/pls/oalu/sic_gdoc.get_content?P_ASI=40016&P_VISTA=&P_TIT=0&P_CACA=2022&P_IDIOMA=i}{Gender persp. in research} & \href{http://www.upv.es/es}{UPV}. {\bf 50} H.\\
     \end{tabular*}
 
     \vspace{1em}
@@ -490,19 +485,25 @@ Degree obtained together with the 2 specializations: Acoustic Engineering and Au
     	\href{https://courses.edx.org/certificates/f1fb6cbd6f39431c9f57c7ee3a5dc3ad}{Using Python for Research} & \href{https://vpal.harvard.edu/harvard-online-harvardx}{HarvardX}. {\bf 50} H.\\
     	\href{https://courses.edx.org/certificates/62fed4c86a17427ebb5b6bbbc39e34df}{Analyzing Data w/ Python} & \href{https://www.edx.org/school/ibm}{IBM}. {\bf 20} H.\\
     	\href{https://courses.edx.org/certificates/0f49b9baa42f4464b2e0d99ade544790}{Visualizing Data w/ Python} & \href{https://www.edx.org/school/ibm}{IBM}. {\bf 20} H.\\
+    	\href{http://www.upv.es/pls/oalu/sic_gdoc.get_content?P_ASI=40010&P_VISTA=&P_TIT=0&P_CACA=2022&P_IDIOMA=i}{Numerical methods (MATLAB)} & \href{http://www.upv.es/es}{UPV}. {\bf 50} H.\\
+    	\href{http://www.upv.es/pls/oalu/sic_gdoc.get_content?P_ASI=40012&P_VISTA=&P_TIT=0&P_CACA=2022&P_IDIOMA=i}{Scientific computing} & \href{http://www.upv.es/es}{UPV}. {\bf 50} H.\\
+    	\href{http://www.upv.es/pls/oalu/sic_gdoc.get_content?P_ASI=40011&P_VISTA=&P_TIT=0&P_CACA=2022&P_IDIOMA=i}{Documents with LaTeX} & \href{http://www.upv.es/es}{UPV}. {\bf 56} H.\\
     \end{tabular*}
 \end{minipage}
 \par\vspace{1em}
 
-\cvsubsection{Courses and seminars}
-\normalsize
-\begin{itemize}\setlength\itemsep{0em}
-	\item {\bf \href{https://jmrp.io/pdf/programs/COST2019.pdf}{Use and characterisation of new acoustic treatments and tools}}. \href{https://www.cost.eu/}{European Cooperation in Science and Technology (COST)}. 15 Hours.
-	\item {\bf \href{http://www.upv.es/pls/oalu/sic_gdoc.get_content?P_ASI=40010&P_VISTA=&P_TIT=0&P_CACA=2022&P_IDIOMA=i}{Numerical methods with MATLAB}}. \href{http://www.upv.es/es}{UPV}. 50 Hours.
-	\item {\bf \href{http://www.upv.es/pls/oalu/sic_gdoc.get_content?P_ASI=40011&P_VISTA=&P_TIT=0&P_CACA=2022&P_IDIOMA=i}{Composition of high quality documents and presentations with LaTeX}}. \href{http://www.upv.es/es}{UPV}. 56 Hours.
-	\item {\bf \href{http://www.upv.es/pls/oalu/sic_gdoc.get_content?P_ASI=40012&P_VISTA=&P_TIT=0&P_CACA=2022&P_IDIOMA=i}{Scientific computing}}. \href{http://www.upv.es/es}{UPV}. 50 Hours.
-	\item {\bf \href{http://www.upv.es/pls/oalu/sic_gdoc.get_content?P_ASI=40016&P_VISTA=&P_TIT=0&P_CACA=2022&P_IDIOMA=i}{Gender perspective in research}}. \href{http://www.upv.es/es}{UPV}. 50 Hours.
-\end{itemize}
+%% "Courses and seminars" folded into the certificate tables above (Information
+%% technology & Transversal competences). Original standalone subsection kept
+%% commented for recovery.
+%\cvsubsection{Courses and seminars}
+%\normalsize
+%\begin{itemize}\setlength\itemsep{0em}
+%	\item {\bf \href{https://jmrp.io/pdf/programs/COST2019.pdf}{Use and characterisation of new acoustic treatments and tools}}. \href{https://www.cost.eu/}{European Cooperation in Science and Technology (COST)}. 15 Hours.
+%	\item {\bf \href{http://www.upv.es/pls/oalu/sic_gdoc.get_content?P_ASI=40010&P_VISTA=&P_TIT=0&P_CACA=2022&P_IDIOMA=i}{Numerical methods with MATLAB}}. \href{http://www.upv.es/es}{UPV}. 50 Hours.
+%	\item {\bf \href{http://www.upv.es/pls/oalu/sic_gdoc.get_content?P_ASI=40011&P_VISTA=&P_TIT=0&P_CACA=2022&P_IDIOMA=i}{Composition of high quality documents and presentations with LaTeX}}. \href{http://www.upv.es/es}{UPV}. 56 Hours.
+%	\item {\bf \href{http://www.upv.es/pls/oalu/sic_gdoc.get_content?P_ASI=40012&P_VISTA=&P_TIT=0&P_CACA=2022&P_IDIOMA=i}{Scientific computing}}. \href{http://www.upv.es/es}{UPV}. 50 Hours.
+%	\item {\bf \href{http://www.upv.es/pls/oalu/sic_gdoc.get_content?P_ASI=40016&P_VISTA=&P_TIT=0&P_CACA=2022&P_IDIOMA=i}{Gender perspective in research}}. \href{http://www.upv.es/es}{UPV}. 50 Hours.
+%\end{itemize}
 
 % Publications section disabled — uncomment to show again
 %\vspace{1em}
