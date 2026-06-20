@@ -1,0 +1,190 @@
+---
+/**
+ * FileDownload — a download card for a static file in `public/`.
+ *
+ * Reads the file's size (and line count for text files) at build time and
+ * renders an accessible download link showing the name, weight, and type.
+ *
+ * @example
+ * <FileDownload href="/downloads/gen_i18n.py" filename="gen_i18n.py"
+ *   description="PlatformIO pre-build codegen" />
+ */
+import { readFileSync, statSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+
+import { getLangFromUrl, useTranslations } from "@i18n/utils";
+
+interface Props {
+  /** Path to the file under `public/`, e.g. `/downloads/gen_i18n.py`. */
+  href: string;
+  /** Display name. Defaults to the basename of `href`. */
+  filename?: string;
+  /** Optional one-line description shown under the name. */
+  description?: string;
+  /** Override the auto-detected icon (UnoCSS class, e.g. `i-devicon:python`). */
+  icon?: string;
+}
+
+const { href, filename, description, icon } = Astro.props;
+const locale = getLangFromUrl(Astro.url);
+const t = useTranslations(locale);
+
+const name = filename ?? href.split("/").pop() ?? "file";
+const ext = name.includes(".") ? name.split(".").pop()!.toLowerCase() : "";
+
+const ICONS: Record<string, string> = {
+  py: "i-devicon:python",
+  js: "i-devicon:javascript",
+  mjs: "i-devicon:javascript",
+  ts: "i-devicon:typescript",
+  json: "i-mdi:code-json",
+  c: "i-mdi:language-c",
+  cpp: "i-devicon:cplusplus",
+  h: "i-mdi:language-c",
+  sh: "i-mdi:bash",
+  yaml: "i-mdi:file-cog-outline",
+  yml: "i-mdi:file-cog-outline",
+  csv: "i-mdi:file-delimited-outline",
+  md: "i-mdi:language-markdown",
+};
+const TEXT_EXT = new Set([
+  "py",
+  "js",
+  "mjs",
+  "ts",
+  "json",
+  "txt",
+  "csv",
+  "md",
+  "c",
+  "cpp",
+  "h",
+  "yaml",
+  "yml",
+  "sh",
+]);
+const fileIcon = icon ?? ICONS[ext] ?? "i-mdi:file-download-outline";
+
+// Read size + line count at build time. Degrade gracefully if absent.
+let sizeLabel = "";
+let lineLabel = "";
+try {
+  const path = fileURLToPath(
+    new URL(`../../../public${href}`, import.meta.url),
+  );
+  const bytes = statSync(path).size;
+  sizeLabel = bytes < 1024 ? `${bytes} B` : `${(bytes / 1024).toFixed(1)} KB`;
+  if (TEXT_EXT.has(ext)) {
+    const lines = readFileSync(path, "utf8")
+      .replace(/\n$/, "")
+      .split("\n").length;
+    lineLabel = `${lines.toLocaleString(locale)} ${t("ui.lines")}`;
+  }
+} catch {
+  // File not found at build — render without size/line metadata.
+}
+
+const sub = [description, ext ? `.${ext}` : "", sizeLabel, lineLabel]
+  .filter(Boolean)
+  .join(" · ");
+const ariaLabel = `${t("ui.download")}: ${name}${sizeLabel ? ` (${sizeLabel})` : ""}`;
+---
+
+<div class="file-download">
+  <span
+    class={`file-download__icon ${fileIcon}`}
+    aria-hidden="true"
+  ></span>
+  <div class="file-download__meta">
+    <span class="file-download__name">{name}</span>
+    {sub && <span class="file-download__sub">{sub}</span>}
+  </div>
+  <a
+    class="file-download__btn"
+    href={href}
+    download
+    aria-label={ariaLabel}
+  >
+    <span
+      class="i-mdi:download"
+      aria-hidden="true"
+    ></span>
+    {t("ui.download")}
+  </a>
+</div>
+
+<style>
+  .file-download {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    padding: 1rem 1.25rem;
+    margin: 1.5rem 0;
+    background: var(--color-bg-subtle);
+    border: var(--border-1);
+    border-radius: var(--radius-md);
+  }
+
+  .file-download__icon {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    color: var(--color-primary);
+  }
+
+  .file-download__meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    min-width: 0;
+  }
+
+  .file-download__name {
+    font-family: var(--font-mono);
+    font-size: 0.95rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-heading);
+    overflow-wrap: anywhere;
+  }
+
+  .file-download__sub {
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+  }
+
+  .file-download__btn {
+    display: inline-flex;
+    gap: 0.4rem;
+    align-items: center;
+    padding: 0.5rem 0.9rem;
+    margin-left: auto;
+    font-size: 0.85rem;
+    font-weight: var(--fw-medium);
+    color: var(--color-on-primary);
+    white-space: nowrap;
+    text-decoration: none;
+    background: var(--color-primary);
+    border-radius: var(--radius-sm);
+    transition: background-color 0.15s;
+  }
+
+  .file-download__btn:hover,
+  .file-download__btn:focus-visible {
+    background: var(--color-primary-hover);
+  }
+
+  .file-download__btn span {
+    width: 18px;
+    height: 18px;
+  }
+
+  @media (width <= 480px) {
+    .file-download {
+      flex-wrap: wrap;
+    }
+
+    .file-download__btn {
+      margin-left: 0;
+    }
+  }
+</style>

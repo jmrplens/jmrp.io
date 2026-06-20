@@ -50,6 +50,7 @@ ignorePaths:
   - dist_new
   - dist_old
   - .git
+  - plan/** # gitignored working notes (Spanish prose), not part of the project
   - pnpm-lock.yaml
   - package-lock.json
   - "*.trie.gz"

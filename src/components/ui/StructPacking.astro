@@ -1,0 +1,371 @@
+---
+/**
+ * StructPacking Component
+ *
+ * A zero-JS diagram of a C/C++ struct's in-memory layout, computing and showing
+ * the alignment padding holes between members and any trailing padding. Great
+ * for explaining why `sizeof` is bigger than the sum of the members. Theme-aware,
+ * responsive, and accessible (role="img" + sr-only table).
+ *
+ * Alignment defaults to each member's size, capped by the architecture's max
+ * alignment (4 bytes on 32-bit, 8 on 64-bit); override per member with `align`.
+ *
+ * @example
+ * <StructPacking
+ *   title="struct Packet"
+ *   arch="32-bit"
+ *   members={[
+ *     { type: "uint8_t", name: "flag", size: 1 },
+ *     { type: "uint32_t", name: "id", size: 4 },
+ *     { type: "uint16_t", name: "len", size: 2 },
+ *   ]}
+ * />
+ */
+
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslations } from "@i18n/utils";
+
+interface Member {
+  /** C/C++ type (e.g. "uint32_t"). */
+  type: string;
+  /** Member name. */
+  name: string;
+  /** Size in bytes. */
+  size: number;
+  /** Alignment requirement (defaults to size, capped by the architecture). */
+  align?: number;
+  /** Optional CSS color override; otherwise cycles a palette. */
+  color?: string;
+}
+
+interface Props {
+  /** Optional title shown above the diagram. */
+  title?: string;
+  /** Target architecture — caps the maximum alignment. Default "32-bit". */
+  arch?: "32-bit" | "64-bit";
+  /** Struct members in declaration order. */
+  members: Member[];
+  /** Caption below the diagram. */
+  caption?: string;
+  /** Accessibility label for the whole figure. */
+  ariaLabel?: string;
+}
+
+const { title, arch = "32-bit", members, caption, ariaLabel } = Astro.props;
+
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
+
+const PALETTE = 6;
+const maxAlign = arch === "64-bit" ? 8 : 4;
+const alignOf = (m: Member) => Math.min(m.align ?? m.size, maxAlign);
+
+interface Seg {
+  label: string;
+  detail: string;
+  bytes: number;
+  offset: number;
+  padding: boolean;
+  color: string | null;
+}
+
+const segments: Seg[] = [];
+let offset = 0;
+for (const [i, m] of members.entries()) {
+  const a = alignOf(m);
+  const pad = (a - (offset % a)) % a;
+  if (pad > 0) {
+    segments.push({
+      label: t("components.structPacking.padding"),
+      detail: `${pad} B`,
+      bytes: pad,
+      offset,
+      padding: true,
+      color: null,
+    });
+    offset += pad;
+  }
+  segments.push({
+    label: m.name,
+    detail: `${m.type} · ${m.size} B`,
+    bytes: m.size,
+    offset,
+    padding: false,
+    color: m.color ?? `var(--sp-${(i % PALETTE) + 1})`,
+  });
+  offset += m.size;
+}
+
+// Trailing padding to the struct's own alignment.
+const structAlign =
+  members.length > 0 ? Math.max(...members.map((m) => alignOf(m))) : 1;
+const tailPad = (structAlign - (offset % structAlign)) % structAlign;
+if (tailPad > 0) {
+  segments.push({
+    label: t("components.structPacking.padding"),
+    detail: `${tailPad} B`,
+    bytes: tailPad,
+    offset,
+    padding: true,
+    color: null,
+  });
+  offset += tailPad;
+}
+
+const totalSize = offset || 1;
+const paddingBytes = segments
+  .filter((s) => s.padding)
+  .reduce((sum, s) => sum + s.bytes, 0);
+
+const summary =
+  ariaLabel ??
+  (title
+    ? t("components.structPacking.ariaWithTitle", {
+        title,
+        count: String(members.length),
+      })
+    : t("components.structPacking.ariaWithoutTitle", {
+        count: String(members.length),
+      }));
+---
+
+<figure
+  class="struct-packing"
+  role="img"
+  aria-label={summary}
+>
+  {title && <figcaption class="struct-packing__title">{title}</figcaption>}
+
+  <div class="struct-packing__track">
+    {
+      segments.map((seg) => {
+        const widthPct = (seg.bytes / totalSize) * 100;
+        return (
+          <span
+            class:list={[
+              "struct-packing__seg",
+              seg.padding && "struct-packing__seg--pad",
+            ]}
+            style={
+              seg.padding
+                ? `flex-grow:${widthPct.toFixed(3)}`
+                : `flex-grow:${widthPct.toFixed(3)};background-color:${seg.color}`
+            }
+            title={`${seg.label}: ${seg.detail} (@${seg.offset})`}
+          >
+            <span class="struct-packing__offset">@{seg.offset}</span>
+            {widthPct >= 12 && (
+              <span class="struct-packing__name">{seg.label}</span>
+            )}
+          </span>
+        );
+      })
+    }
+  </div>
+
+  <ul class="struct-packing__legend">
+    {
+      segments.map((seg) => (
+        <li class="struct-packing__legend-item">
+          <span
+            class:list={[
+              "struct-packing__swatch",
+              seg.padding && "struct-packing__swatch--pad",
+            ]}
+            style={seg.padding ? undefined : `background-color:${seg.color}`}
+            aria-hidden="true"
+          />
+          <span class="struct-packing__legend-text">
+            <b>{seg.label}</b> · {seg.detail} · @{seg.offset}
+          </span>
+        </li>
+      ))
+    }
+  </ul>
+
+  <p class="struct-packing__summary">
+    <b>sizeof = {totalSize} B</b>
+    {
+      paddingBytes > 0 && (
+        <>
+          {" "}
+          · {paddingBytes} B {t("components.structPacking.padding")}
+        </>
+      )
+    }
+  </p>
+
+  <table class="sr-only">
+    <caption>{title ?? "Struct layout"}</caption>
+    <thead>
+      <tr>
+        <th scope="col">Member</th>
+        <th scope="col">Offset</th>
+        <th scope="col">Detail</th>
+      </tr>
+    </thead>
+    <tbody>
+      {
+        segments.map((seg) => (
+          <tr>
+            <td>{seg.label}</td>
+            <td>{seg.offset}</td>
+            <td>{seg.detail}</td>
+          </tr>
+        ))
+      }
+    </tbody>
+  </table>
+
+  {caption && <p class="struct-packing__caption">{caption}</p>}
+</figure>
+
+<style>
+  .struct-packing {
+    --sp-1: #b389f5;
+    --sp-2: #58d6df;
+    --sp-3: #fbbf24;
+    --sp-4: #6ee7a8;
+    --sp-5: #f0789b;
+    --sp-6: #7aa2ff;
+    --sp-on: #0b0b13;
+    --sp-pad-bg: var(--color-bg-subtle, rgb(255 255 255 / 5%));
+
+    margin: 1.5rem 0;
+  }
+
+  .struct-packing__title {
+    margin-bottom: 1rem;
+    font-size: 1rem;
+    font-weight: var(--fw-semibold, 600);
+    color: var(--color-text-heading);
+  }
+
+  .struct-packing__track {
+    display: flex;
+    overflow: hidden;
+    border-radius: var(--radius-sm, 4px);
+  }
+
+  .struct-packing__seg {
+    display: flex;
+    flex-basis: 0;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.2rem;
+    min-height: 3rem;
+    padding: 0.3rem 0.25rem;
+    overflow: hidden;
+    color: var(--sp-on);
+    text-align: center;
+  }
+
+  .struct-packing__seg + .struct-packing__seg {
+    border-left: 2px solid var(--color-bg, #000);
+  }
+
+  .struct-packing__seg--pad {
+    color: var(--color-text-muted);
+    background-color: var(--sp-pad-bg);
+    background-image: repeating-linear-gradient(
+      45deg,
+      rgb(127 127 127 / 25%) 0,
+      rgb(127 127 127 / 25%) 5px,
+      transparent 5px,
+      transparent 10px
+    );
+  }
+
+  .struct-packing__offset {
+    align-self: flex-start;
+    font-size: 0.65rem;
+    font-weight: var(--fw-semibold, 600);
+    opacity: 75%;
+  }
+
+  .struct-packing__name {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 0.8rem;
+    font-weight: var(--fw-semibold, 600);
+    white-space: nowrap;
+  }
+
+  .struct-packing__legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem 1rem;
+    padding: 0;
+    margin: 0.85rem 0 0;
+    list-style: none;
+  }
+
+  .struct-packing__legend-item {
+    display: inline-flex;
+    column-gap: 0.4rem;
+    align-items: baseline;
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+  }
+
+  .struct-packing__swatch {
+    flex-shrink: 0;
+    align-self: center;
+    width: 0.7rem;
+    height: 0.7rem;
+    border-radius: 2px;
+  }
+
+  .struct-packing__swatch--pad {
+    background-color: var(--sp-pad-bg);
+    background-image: repeating-linear-gradient(
+      45deg,
+      rgb(127 127 127 / 35%) 0,
+      rgb(127 127 127 / 35%) 3px,
+      transparent 3px,
+      transparent 6px
+    );
+  }
+
+  .struct-packing__legend-text b {
+    font-weight: var(--fw-semibold, 600);
+    color: var(--color-text);
+  }
+
+  .struct-packing__summary {
+    margin: 0.7rem 0 0;
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+  }
+
+  .struct-packing__summary b {
+    color: var(--color-text);
+  }
+
+  .struct-packing__caption {
+    margin-top: 1rem;
+    font-size: 0.8125rem;
+    font-style: italic;
+    color: var(--color-text-muted);
+    text-align: center;
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    white-space: nowrap;
+    clip-path: inset(50%);
+  }
+
+  @media (width <= 640px) {
+    .struct-packing__name {
+      display: none;
+    }
+  }
+</style>

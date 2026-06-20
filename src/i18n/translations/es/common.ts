@@ -25,6 +25,8 @@ export const common = {
     search: "Buscar",
     close: "Cerrar",
     open: "Abrir",
+    download: "Descargar",
+    lines: "líneas",
     language: "Idioma",
     english: "English",
     spanish: "Español",
@@ -192,6 +194,25 @@ export const common = {
     barChart: {
       ariaWithTitle: "Gráfico de barras: {title}. Mostrando {count} elementos.",
       ariaWithoutTitle: "Gráfico de barras mostrando {count} elementos",
+    },
+    memoryMap: {
+      ariaWithTitle:
+        "Distribución de memoria: {title}. Mostrando {count} regiones.",
+      ariaWithoutTitle: "Distribución de memoria mostrando {count} regiones",
+    },
+    registerMap: {
+      ariaWithTitle: "Disposición de registro: {title}. {count} campos.",
+      ariaWithoutTitle: "Disposición de registro con {count} campos",
+      reserved: "reservado",
+    },
+    byteFrame: {
+      ariaWithTitle: "Disposición de bytes: {title}. {count} campos.",
+      ariaWithoutTitle: "Disposición de bytes con {count} campos",
+    },
+    structPacking: {
+      ariaWithTitle: "Disposición de struct: {title}. {count} miembros.",
+      ariaWithoutTitle: "Disposición de struct con {count} miembros",
+      padding: "relleno",
     },
     timeline: {
       standard: "Estándar",
@@ -380,8 +401,7 @@ export const common = {
       viewMap: "Ver Mapa",
       viewMapAria: "Ver Mapa en PotatoMesh",
       viewMonitor: "Ver Monitor",
-      viewMonitorLFAria: "Ver Monitor en MeshMonitor LF",
-      viewMonitorMFAria: "Ver Monitor en MeshMonitor MF",
+      viewMonitorAria: "Ver Monitor en MeshMonitor",
       // ServerInsights — Matrix
       matrixNode: "Nodo: Servidor Matrix",
       matrixStatsAriaLabel: "Estadísticas en tiempo real del servidor Matrix",

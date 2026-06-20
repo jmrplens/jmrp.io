@@ -1,4 +1,5 @@
 aalarge
+Abbrechen
 abuseipdb
 accionable
 achromatopsia
@@ -17,6 +18,8 @@ algoritmos
 alimentario
 amazonbot
 amicro
+ancel
+Annulla
 anonimización
 anonymization
 anymatch
@@ -49,6 +52,8 @@ autofirmado
 autogenera
 autogeneradas
 autorenew
+autosar
+avanti
 backlink
 baiduspider
 baneando
@@ -57,14 +62,18 @@ baneo
 basados
 basetype
 bcast
+bearb
 berlanga
 berlín
 bibtex
+bigdog
 bingbot
 biomédicas
 biomedicina
 biomédico
 biomédicos
+bitfield
+bitnum
 bjmrp
 blackhole
 blinkmacsystemfont
@@ -73,9 +82,11 @@ brea
 brettel
 brotlied
 bypassable
+bytearray
 bytespider
 calcuta
 campello
+cancelar
 CAPI
 carbajo
 carray
@@ -99,8 +110,11 @@ chinanet
 ciberseguridad
 cilíndricos
 ciphersuites
+ciphertext
 clases
 claude
+clearsign
+clearsigned
 clickjacking
 cliente
 clientes
@@ -110,6 +124,7 @@ cloudflare
 cloudflareinsights
 cnet
 cnrs
+codegen
 codificaciones
 código
 coep
@@ -126,13 +141,13 @@ computacionalmente
 comsol
 configurarlas
 consolas
+constexpr
 contenedores
 contenido
 continuar
 conversor
 cplusplus
-clearsign
-clearsigned
+cppreference
 credentialless
 crlnumber
 crowdsec
@@ -140,6 +155,7 @@ crowdsecurity
 cscli
 csic
 csirt
+cstdint
 curso
 d'acoustique
 dakfl
@@ -148,14 +164,25 @@ dcid
 ddns
 debian
 dedup
+deduplica
+deduplicación
+deduplicadas
+deduplicado
+deduplican
+deduplicaron
 deepcode
 delega
 denorms
 dentistas
+depurabilidad
 desactualizados
 descárgalos
 desconexión
 deseleccionar
+desincronizando
+despliégalo
+desreferenciado
+desync
 deuteranopía
 devicon
 dfests
@@ -167,6 +194,7 @@ difusores
 digi
 dingledine
 dios
+direccionarlo
 directo
 dirinfo
 disambiguator
@@ -180,6 +208,7 @@ dport
 dproto
 dstnat
 dualstack
+dwyer
 ecssmet
 editables
 educativo
@@ -198,10 +227,12 @@ epoll
 epsg
 escanéalo
 escartí
+Espace
 español
 espressif
 establécela
 establécelo
+estáticamente
 estudio
 ethernet
 euronoise
@@ -221,6 +252,7 @@ firehol
 firewalld
 firmándolo
 firstname
+fmerge
 focusables
 fouc
 Fragmento
@@ -230,6 +262,7 @@ fullchain
 Funkolab
 gandia
 garcía
+gelöscht
 gencrl
 generico
 genkey
@@ -237,6 +270,7 @@ genpsk
 geoipupdate
 geolocalización
 gescoform
+getcwd
 githubactions
 gitlab
 gnupg
@@ -250,6 +284,7 @@ groupby
 gstatic
 guarinos
 guillem
+halten
 hardvard
 headlesschrome
 healthz
@@ -285,6 +320,8 @@ igic
 imagesift
 imudp
 Índice
+indietro
+indirección
 inet
 ingeniería
 inicial
@@ -320,6 +357,7 @@ Keyoxide
 keypair
 keypairs
 keypoint
+kleidos
 kolkata
 kpii
 labora
@@ -331,6 +369,7 @@ LAPI's
 ldaps
 leakspeed
 lekies
+lexicográficamente
 leyendo
 lhci
 libkql
@@ -359,6 +398,7 @@ martínez
 martı́n
 masscan
 mathjax
+mathworks
 matlab
 mbap
 mbpoll
@@ -368,6 +408,7 @@ medkit
 mehome
 membrana
 menlo
+meshmonitor
 meshtastic
 metacarácter
 metacharacter
@@ -391,9 +432,11 @@ middleboxes
 mikro
 mikrotik
 milisegundos
+misra
 mobike
 modbus
 modicon
+modifica
 monitorea
 monlist
 morcillo
@@ -433,6 +476,7 @@ nonced
 nontext
 noout
 nopush
+noqa
 nosniff
 nosonar
 nospaces
@@ -446,6 +490,7 @@ nxdomain
 obfs
 observabilidad
 ocsp
+öffnen
 oficial
 oids
 okabe
@@ -456,6 +501,7 @@ ondrej
 ondřej
 oneshot
 otras
+ouvrir
 página
 panish
 parseadas
@@ -463,6 +509,7 @@ parsear
 parseo
 partir
 passout
+pathlib
 pcre
 pdfs
 pégala
@@ -490,6 +537,7 @@ precompartida
 predoctoral
 preferir
 preflights
+preprocesador
 prerenderingchange
 prereq
 prerouting
@@ -500,6 +548,7 @@ prid
 privkey
 profdent
 profesional
+progmem
 programa
 prometheus
 proplist
@@ -526,6 +575,8 @@ rdnss
 readyz
 reaplicarlas
 recompila
+recompilaciones
+recompiles
 reconecta
 reconexión
 reconexiones
@@ -539,14 +590,18 @@ refactorizar
 referenciarla
 reformateada
 regextype
+réglages
 regs
 reimagining
 reinicios
 reintentan
 relación
 remediations
+renderiza
 renderizado
 renderizan
+renderizando
+renderizar
 renegocia
 replaceability
 representación
@@ -558,12 +613,14 @@ respondedor
 respuestas
 restaura
 retrocedarán
+reubicable
 reuseport
 reverberado
 reverberante
 rgpd
 rmem
 robótico
+rodata
 rproto
 rsassa
 rslave
@@ -585,6 +642,7 @@ securepassword
 segoe
 semiempírico
 sendfile
+serialización
 servicios
 sfmono
 shanghái
@@ -600,6 +658,7 @@ slaac
 smallstep
 smol
 snowden
+sobrecoste
 sonarcloud
 sonarjs
 sonido
@@ -614,6 +673,7 @@ srvx
 ssdp
 ssllabs
 sslv
+startswith
 strs
 subred
 subredes
@@ -632,10 +692,12 @@ tecniacústica
 temporización
 texto
 thrs
+tieni
 tik's
 timedatectl
-Tiva
 timpibot
+tinify
+Tiva
 tldr
 tlnp
 toctou
@@ -644,8 +706,10 @@ tootallnate
 topbar
 torproject
 torrc
+totp
 traceroute
 transmítela
+tresor
 trevorcox
 tritanopía
 trixie
@@ -672,6 +736,7 @@ userscripts
 valència
 valencian
 verificar
+verlust
 versiones
 vibroacústica
 vibroacústico
@@ -689,7 +754,9 @@ webfinger
 webmin
 webroot
 webtunnel
+weiter
 wellons
+werror
 whatwg
 whistleblowers
 winbox
@@ -706,3 +773,4 @@ youtube
 ytxt
 zcvgkwkj
 zgrab
+zurück

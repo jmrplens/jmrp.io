@@ -1,0 +1,292 @@
+---
+/**
+ * ByteFrame Component
+ *
+ * A zero-JS byte-layout diagram for a binary frame or struct: a single bar of
+ * proportional, color-coded fields with byte offsets and sizes — the classic
+ * "packet diagram". Supports a trailing variable-length field. Theme-aware,
+ * responsive (inline labels collapse to the legend on small screens), and
+ * accessible (role="img" + sr-only table).
+ *
+ * @example
+ * <ByteFrame
+ *   title="Encrypted record"
+ *   fields={[
+ *     { label: "ver", bytes: 1 },
+ *     { label: "IV", bytes: 12 },
+ *     { label: "tag", bytes: 16, note: "HMAC" },
+ *     { label: "ciphertext", bytes: 32, variable: true },
+ *   ]}
+ * />
+ */
+
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslations } from "@i18n/utils";
+
+interface Field {
+  /** Field name. */
+  label: string;
+  /** Size in bytes (for a variable field, a representative size for proportions). */
+  bytes: number;
+  /** Mark a trailing variable-length field (shows "…" for its size). */
+  variable?: boolean;
+  /** Optional note shown in the legend. */
+  note?: string;
+  /** Optional CSS color override; otherwise cycles a palette. */
+  color?: string;
+}
+
+interface Props {
+  /** Optional title shown above the diagram. */
+  title?: string;
+  /** Fields in byte order. */
+  fields: Field[];
+  /** Caption below the diagram. */
+  caption?: string;
+  /** Accessibility label for the whole figure. */
+  ariaLabel?: string;
+}
+
+const { title, fields, caption, ariaLabel } = Astro.props;
+
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
+
+const PALETTE = 6;
+const total = fields.reduce((sum, f) => sum + Math.max(0, f.bytes), 0) || 1;
+
+let offset = 0;
+let approximate = false;
+const segments = fields.map((f, i) => {
+  const start = offset;
+  offset += Math.max(0, f.bytes);
+  const prefix = approximate ? "~" : "";
+  const offsetLabel = f.variable ? `@${start}+` : `@${prefix}${start}`;
+  const seg = {
+    label: f.label,
+    note: f.note,
+    bytes: f.bytes,
+    variable: Boolean(f.variable),
+    color: f.color ?? `var(--bf-${(i % PALETTE) + 1})`,
+    widthPct: (Math.max(0, f.bytes) / total) * 100,
+    offsetLabel,
+    sizeLabel: f.variable ? "…" : `${f.bytes} B`,
+  };
+  if (f.variable) approximate = true;
+  return seg;
+});
+
+const summary =
+  ariaLabel ??
+  (title
+    ? t("components.byteFrame.ariaWithTitle", {
+        title,
+        count: String(fields.length),
+      })
+    : t("components.byteFrame.ariaWithoutTitle", {
+        count: String(fields.length),
+      }));
+---
+
+<figure
+  class="byte-frame"
+  role="img"
+  aria-label={summary}
+>
+  {title && <figcaption class="byte-frame__title">{title}</figcaption>}
+
+  <div class="byte-frame__track">
+    {
+      segments.map((seg) => (
+        <span
+          class:list={[
+            "byte-frame__seg",
+            seg.variable && "byte-frame__seg--var",
+          ]}
+          style={`flex-grow:${seg.widthPct.toFixed(3)};background-color:${seg.color}`}
+          title={`${seg.label}: ${seg.sizeLabel} (${seg.offsetLabel})`}
+        >
+          <span class="byte-frame__offset">{seg.offsetLabel}</span>
+          {seg.widthPct >= 14 && (
+            <span class="byte-frame__name">{seg.label}</span>
+          )}
+          <span class="byte-frame__size">{seg.sizeLabel}</span>
+        </span>
+      ))
+    }
+  </div>
+
+  <ul class="byte-frame__legend">
+    {
+      segments.map((seg) => (
+        <li class="byte-frame__legend-item">
+          <span
+            class="byte-frame__swatch"
+            style={`background-color:${seg.color}`}
+            aria-hidden="true"
+          />
+          <span class="byte-frame__legend-text">
+            <b>{seg.label}</b> · {seg.sizeLabel} · {seg.offsetLabel}
+            {seg.note && <span class="byte-frame__note"> — {seg.note}</span>}
+          </span>
+        </li>
+      ))
+    }
+  </ul>
+
+  <table class="sr-only">
+    <caption>{title ?? "Byte layout"}</caption>
+    <thead>
+      <tr>
+        <th scope="col">Field</th>
+        <th scope="col">Offset</th>
+        <th scope="col">Size</th>
+      </tr>
+    </thead>
+    <tbody>
+      {
+        segments.map((seg) => (
+          <tr>
+            <td>{seg.label}</td>
+            <td>{seg.offsetLabel}</td>
+            <td>{seg.sizeLabel}</td>
+          </tr>
+        ))
+      }
+    </tbody>
+  </table>
+
+  {caption && <p class="byte-frame__caption">{caption}</p>}
+</figure>
+
+<style>
+  .byte-frame {
+    --bf-1: #b389f5;
+    --bf-2: #58d6df;
+    --bf-3: #fbbf24;
+    --bf-4: #6ee7a8;
+    --bf-5: #f0789b;
+    --bf-6: #7aa2ff;
+    --bf-on: #0b0b13;
+
+    margin: 1.5rem 0;
+  }
+
+  .byte-frame__title {
+    margin-bottom: 1rem;
+    font-size: 1rem;
+    font-weight: var(--fw-semibold, 600);
+    color: var(--color-text-heading);
+  }
+
+  .byte-frame__track {
+    display: flex;
+    overflow: hidden;
+    border-radius: var(--radius-sm, 4px);
+  }
+
+  .byte-frame__seg {
+    display: flex;
+    flex-basis: 0;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.2rem;
+    min-height: 3rem;
+    padding: 0.3rem 0.25rem;
+    overflow: hidden;
+    color: var(--bf-on);
+    text-align: center;
+  }
+
+  .byte-frame__seg + .byte-frame__seg {
+    border-left: 2px solid var(--color-bg, #000);
+  }
+
+  /* Variable-length field: a hatched fade to signal "and so on". */
+  .byte-frame__seg--var {
+    background-image: repeating-linear-gradient(
+      45deg,
+      rgb(0 0 0 / 12%) 0,
+      rgb(0 0 0 / 12%) 6px,
+      transparent 6px,
+      transparent 12px
+    );
+  }
+
+  .byte-frame__offset {
+    align-self: flex-start;
+    font-size: 0.65rem;
+    font-weight: var(--fw-semibold, 600);
+    opacity: 75%;
+  }
+
+  .byte-frame__name {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 0.8rem;
+    font-weight: var(--fw-semibold, 600);
+    white-space: nowrap;
+  }
+
+  .byte-frame__size {
+    font-size: 0.7rem;
+    opacity: 85%;
+  }
+
+  .byte-frame__legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem 1rem;
+    padding: 0;
+    margin: 0.85rem 0 0;
+    list-style: none;
+  }
+
+  .byte-frame__legend-item {
+    display: inline-flex;
+    column-gap: 0.4rem;
+    align-items: baseline;
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+  }
+
+  .byte-frame__swatch {
+    flex-shrink: 0;
+    align-self: center;
+    width: 0.7rem;
+    height: 0.7rem;
+    border-radius: 2px;
+  }
+
+  .byte-frame__legend-text b {
+    font-weight: var(--fw-semibold, 600);
+    color: var(--color-text);
+  }
+
+  .byte-frame__caption {
+    margin-top: 1rem;
+    font-size: 0.8125rem;
+    font-style: italic;
+    color: var(--color-text-muted);
+    text-align: center;
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    white-space: nowrap;
+    clip-path: inset(50%);
+  }
+
+  @media (width <= 640px) {
+    .byte-frame__name {
+      display: none;
+    }
+  }
+</style>

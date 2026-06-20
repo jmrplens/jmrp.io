@@ -1,0 +1,336 @@
+---
+/**
+ * MemoryMap Component
+ *
+ * A reusable, zero-JS diagram for memory / storage distribution: one or more
+ * labelled bars (regions like FLASH, RAM, a flash partition table…), each split
+ * into proportional, color-coded segments with size labels. Theme-aware via CSS
+ * (no raster), responsive, and accessible (role="img" + a visually-hidden table).
+ *
+ * Two scales:
+ *  - "shared" (default): every bar uses the same bytes→width ratio, so a small
+ *    region renders as a short bar — good for "X dwarfs Y" comparisons.
+ *  - "fill": every bar fills the width and segments are proportional within it —
+ *    good for showing the composition of a single region (e.g. a partition map).
+ *
+ * @example
+ * <MemoryMap
+ *   title="Where it lives"
+ *   scale="shared"
+ *   bars={[
+ *     { label: "FLASH", segments: [
+ *       { label: "kPool", bytes: 13374, sizeLabel: "≈ 13.4 KB" },
+ *       { label: "kOffsets", bytes: 2690, sizeLabel: "≈ 2.6 KB" },
+ *     ]},
+ *     { label: "RAM", segments: [
+ *       { label: "language index", bytes: 1, sizeLabel: "1 byte" },
+ *     ]},
+ *   ]}
+ *   caption="Everything is constexpr .rodata…"
+ * />
+ */
+
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslations } from "@i18n/utils";
+
+interface Segment {
+  /** Segment label (e.g. a symbol or region name). */
+  label: string;
+  /** Size in bytes — drives the segment's proportional width. */
+  bytes: number;
+  /** Optional display string for the size (defaults to an auto-formatted value). */
+  sizeLabel?: string;
+  /** Optional CSS color override (hex or `var(--…)`); otherwise cycles a palette. */
+  color?: string;
+}
+
+interface Bar {
+  /** Region label, shown to the left of the bar. */
+  label: string;
+  /** Segments that make up this region, left to right. */
+  segments: Segment[];
+}
+
+interface Props {
+  /** Optional title shown above the diagram. */
+  title?: string;
+  /** Bars (regions) to render. */
+  bars: Bar[];
+  /** Scale across bars. Default "shared". */
+  scale?: "shared" | "fill";
+  /** Caption shown below the diagram. */
+  caption?: string;
+  /** Accessibility label for the whole figure. */
+  ariaLabel?: string;
+}
+
+const { title, bars, scale = "shared", caption, ariaLabel } = Astro.props;
+
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
+
+/** Auto-format a byte count to a compact string. */
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  const kib = bytes / 1024;
+  return `${kib.toFixed(kib < 10 ? 1 : 0)} KB`;
+}
+
+const PALETTE = 6;
+let colorIndex = 0;
+
+// Resolve per-segment colors once (stable across the bar and its legend).
+const resolvedBars = bars.map((bar) => ({
+  label: bar.label,
+  total: bar.segments.reduce((sum, s) => sum + Math.max(0, s.bytes), 0),
+  segments: bar.segments.map((seg) => ({
+    ...seg,
+    resolvedColor: seg.color ?? `var(--mm-${(colorIndex++ % PALETTE) + 1})`,
+  })),
+}));
+const globalMax = Math.max(1, ...resolvedBars.map((b) => b.total));
+
+const summary =
+  ariaLabel ??
+  (title
+    ? t("components.memoryMap.ariaWithTitle", {
+        title,
+        count: String(bars.length),
+      })
+    : t("components.memoryMap.ariaWithoutTitle", {
+        count: String(bars.length),
+      }));
+---
+
+<figure
+  class="memory-map"
+  role="img"
+  aria-label={summary}
+>
+  {title && <figcaption class="memory-map__title">{title}</figcaption>}
+
+  <div class="memory-map__bars">
+    {
+      resolvedBars.map((bar) => {
+        const trackPct =
+          scale === "shared" ? Math.max(3, (bar.total / globalMax) * 100) : 100;
+        return (
+          <div class="memory-map__row">
+            <span class="memory-map__region">{bar.label}</span>
+            <div class="memory-map__track-wrap">
+              <div
+                class="memory-map__track"
+                style={`width:${trackPct.toFixed(2)}%`}
+              >
+                {bar.segments.map((seg) => {
+                  const widthPct =
+                    bar.total > 0
+                      ? (Math.max(0, seg.bytes) / bar.total) * 100
+                      : 100;
+                  // Only label segments wide enough to hold the text (>=20% of
+                  // the container); the legend below always carries the full name.
+                  const showLabel = (trackPct / 100) * widthPct >= 20;
+                  return (
+                    <span
+                      class="memory-map__seg"
+                      style={`flex-grow:${widthPct.toFixed(3)};background-color:${seg.resolvedColor}`}
+                      title={`${seg.label}: ${seg.sizeLabel ?? formatBytes(seg.bytes)}`}
+                    >
+                      {showLabel && (
+                        <span class="memory-map__seg-label">{seg.label}</span>
+                      )}
+                    </span>
+                  );
+                })}
+              </div>
+            </div>
+            <ul class="memory-map__legend">
+              {bar.segments.map((seg) => (
+                <li class="memory-map__legend-item">
+                  <span
+                    class="memory-map__swatch"
+                    style={`background-color:${seg.resolvedColor}`}
+                    aria-hidden="true"
+                  />
+                  <span class="memory-map__legend-text">
+                    {seg.label} —{" "}
+                    <b>{seg.sizeLabel ?? formatBytes(seg.bytes)}</b>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        );
+      })
+    }
+  </div>
+
+  <table class="sr-only">
+    <caption>{title ?? "Memory distribution"}</caption>
+    <thead>
+      <tr>
+        <th scope="col">Region</th>
+        <th scope="col">Segment</th>
+        <th scope="col">Size</th>
+      </tr>
+    </thead>
+    <tbody>
+      {
+        bars.flatMap((bar) =>
+          bar.segments.map((seg) => (
+            <tr>
+              <td>{bar.label}</td>
+              <td>{seg.label}</td>
+              <td>{seg.sizeLabel ?? formatBytes(seg.bytes)}</td>
+            </tr>
+          )),
+        )
+      }
+    </tbody>
+  </table>
+
+  {caption && <p class="memory-map__caption">{caption}</p>}
+</figure>
+
+<style>
+  .memory-map {
+    /* Theme-aware palette (dark-first). */
+    --mm-1: #b389f5; /* violet */
+    --mm-2: #58d6df; /* cyan */
+    --mm-3: #fbbf24; /* amber */
+    --mm-4: #6ee7a8; /* green */
+    --mm-5: #f0789b; /* pink */
+    --mm-6: #7aa2ff; /* blue */
+    --mm-track-bg: var(--color-bg-subtle, rgb(255 255 255 / 5%));
+    --mm-on-seg: #0b0b13;
+
+    margin: 1.5rem 0;
+  }
+
+  .memory-map__title {
+    margin-bottom: 1rem;
+    font-size: 1rem;
+    font-weight: var(--fw-semibold, 600);
+    color: var(--color-text-heading);
+  }
+
+  .memory-map__bars {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  .memory-map__row {
+    display: grid;
+    grid-template-areas: "region track" "region legend";
+    grid-template-columns: 4.5rem 1fr;
+    gap: 0.4rem 0.75rem;
+    align-items: center;
+  }
+
+  .memory-map__region {
+    grid-area: region;
+    font-size: 0.875rem;
+    font-weight: var(--fw-bold, 700);
+    color: var(--color-text-heading);
+    text-align: right;
+  }
+
+  .memory-map__track-wrap {
+    grid-area: track;
+  }
+
+  .memory-map__track {
+    display: flex;
+    min-width: 1.5rem;
+    height: 2rem;
+    overflow: hidden;
+    background: var(--mm-track-bg);
+    border-radius: var(--radius-sm, 4px);
+  }
+
+  .memory-map__seg {
+    display: flex;
+    flex-shrink: 1;
+    flex-basis: 0;
+    align-items: center;
+    justify-content: center;
+    min-width: 0.5rem;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .memory-map__seg + .memory-map__seg {
+    border-left: 2px solid var(--color-bg, #000);
+  }
+
+  .memory-map__seg-label {
+    padding: 0 0.4rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 0.8rem;
+    font-weight: var(--fw-semibold, 600);
+    color: var(--mm-on-seg);
+    white-space: nowrap;
+  }
+
+  .memory-map__legend {
+    display: flex;
+    flex-wrap: wrap;
+    grid-area: legend;
+    gap: 0.35rem 1rem;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+  }
+
+  .memory-map__legend-item {
+    display: inline-flex;
+    column-gap: 0.4rem;
+    align-items: center;
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+  }
+
+  .memory-map__swatch {
+    flex-shrink: 0;
+    width: 0.7rem;
+    height: 0.7rem;
+    border-radius: 2px;
+  }
+
+  .memory-map__legend-text b {
+    font-weight: var(--fw-semibold, 600);
+    color: var(--color-text);
+  }
+
+  .memory-map__caption {
+    margin-top: 1rem;
+    font-size: 0.8125rem;
+    font-style: italic;
+    color: var(--color-text-muted);
+    text-align: center;
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    white-space: nowrap;
+    clip-path: inset(50%);
+  }
+
+  @media (width <= 640px) {
+    .memory-map__row {
+      grid-template-columns: 3.5rem 1fr;
+    }
+
+    /* On phones the bars are pure color blocks; the legend carries the text. */
+    .memory-map__seg-label {
+      display: none;
+    }
+  }
+</style>

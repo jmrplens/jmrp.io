@@ -20,10 +20,8 @@ export interface ServiceStatsTranslations {
   viewMapAria: string;
   /** Visible text for the "view monitor" link. */
   viewMonitor: string;
-  /** ARIA label for the "view monitor" link (long-form variant). */
-  viewMonitorLFAria: string;
-  /** ARIA label for the "view monitor" link (medium-form variant). */
-  viewMonitorMFAria: string;
+  /** ARIA label for the "view monitor" link. */
+  viewMonitorAria: string;
 }
 
 /** Component props for ServiceStats */
@@ -64,8 +62,7 @@ interface MatrixStatsData {
 /** Combined Meshtastic network statistics data */
 interface MeshtasticStatsData {
   potatoNodes: number;
-  lfNodes: number;
-  mfNodes: number;
+  meshmonitorNodes: number;
   potatoVersion: string;
 }
 
@@ -218,10 +215,9 @@ async function fetchMeshtasticStats(
   setError: (error: boolean) => void,
 ): Promise<MeshtasticStatsData> {
   try {
-    const [resPotato, resLF, resMF, potatoVersion] = await Promise.all([
+    const [resPotato, resMeshmonitor, potatoVersion] = await Promise.all([
       fetch("/api/proxy/potato/nodes").catch(() => null),
-      fetch("/api/proxy/mesh/lf").catch(() => null),
-      fetch("/api/proxy/mesh/mf").catch(() => null),
+      fetch("/api/proxy/mesh/meshmonitor").catch(() => null),
       fetchPotatoVersion(),
     ]);
 
@@ -232,28 +228,27 @@ async function fetchMeshtasticStats(
     );
     const potatoNodes = Array.isArray(potatoData) ? potatoData.length : 0;
 
-    const lfData = await safeFetchJson<{
+    const meshmonitorData = await safeFetchJson<{
       data?: { activeNodes: number };
-    } | null>(resLF, "Failed to parse Meshtastic LF response", null);
-    const lfNodes = lfData?.data?.activeNodes ?? 0;
+    } | null>(
+      resMeshmonitor,
+      "Failed to parse Meshtastic MeshMonitor response",
+      null,
+    );
+    const meshmonitorNodes = meshmonitorData?.data?.activeNodes ?? 0;
 
-    const mfData = await safeFetchJson<{
-      data?: { activeNodes: number };
-    } | null>(resMF, "Failed to parse Meshtastic MF response", null);
-    const mfNodes = mfData?.data?.activeNodes ?? 0;
-
-    // Signal error if all three main data fetches failed
-    if (!resPotato?.ok && !resLF?.ok && !resMF?.ok) {
+    // Signal error if both main data fetches failed
+    if (!resPotato?.ok && !resMeshmonitor?.ok) {
       setError(true);
     }
 
-    return { potatoNodes, lfNodes, mfNodes, potatoVersion };
+    return { potatoNodes, meshmonitorNodes, potatoVersion };
   } catch (error) {
     if (import.meta.env.DEV) {
       console.error("Failed to fetch Meshtastic stats", error);
     }
     setError(true);
-    return { potatoNodes: 0, lfNodes: 0, mfNodes: 0, potatoVersion: "" };
+    return { potatoNodes: 0, meshmonitorNodes: 0, potatoVersion: "" };
   }
 }
 
@@ -492,8 +487,7 @@ function MeshtasticStats({
   readonly translations: ServiceStatsTranslations;
 }) {
   const potatoNodes = stats?.potatoNodes;
-  const lfNodes = stats?.lfNodes;
-  const mfNodes = stats?.mfNodes;
+  const meshmonitorNodes = stats?.meshmonitorNodes;
   const potatoVersion = stats?.potatoVersion;
 
   return (
@@ -509,19 +503,10 @@ function MeshtasticStats({
       />
 
       <MeshRow
-        title="MeshMonitor LF"
-        nodes={lfNodes}
-        linkHref="https://mesh_lf.jmrp.io/meshmonitor"
-        linkLabel={t.viewMonitorLFAria}
-        linkText={t.viewMonitor}
-        nodesLabel={t.nodes}
-      />
-
-      <MeshRow
-        title="MeshMonitor MF"
-        nodes={mfNodes}
-        linkHref="https://mesh_mf.jmrp.io/meshmonitor"
-        linkLabel={t.viewMonitorMFAria}
+        title="MeshMonitor"
+        nodes={meshmonitorNodes}
+        linkHref="https://meshmonitor.jmrp.io"
+        linkLabel={t.viewMonitorAria}
         linkText={t.viewMonitor}
         nodesLabel={t.nodes}
       />

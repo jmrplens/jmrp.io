@@ -25,6 +25,8 @@ export const common = {
     search: "Search",
     close: "Close",
     open: "Open",
+    download: "Download",
+    lines: "lines",
     language: "Language",
     english: "English",
     spanish: "Español",
@@ -192,6 +194,24 @@ export const common = {
     barChart: {
       ariaWithTitle: "Bar chart: {title}. Showing {count} items.",
       ariaWithoutTitle: "Bar chart showing {count} items",
+    },
+    memoryMap: {
+      ariaWithTitle: "Memory distribution: {title}. Showing {count} regions.",
+      ariaWithoutTitle: "Memory distribution showing {count} regions",
+    },
+    registerMap: {
+      ariaWithTitle: "Register layout: {title}. {count} fields.",
+      ariaWithoutTitle: "Register layout with {count} fields",
+      reserved: "reserved",
+    },
+    byteFrame: {
+      ariaWithTitle: "Byte layout: {title}. {count} fields.",
+      ariaWithoutTitle: "Byte layout with {count} fields",
+    },
+    structPacking: {
+      ariaWithTitle: "Struct layout: {title}. {count} members.",
+      ariaWithoutTitle: "Struct layout with {count} members",
+      padding: "padding",
     },
     timeline: {
       standard: "Standard",
@@ -380,8 +400,7 @@ export const common = {
       viewMap: "View Map",
       viewMapAria: "View Map on PotatoMesh",
       viewMonitor: "View Monitor",
-      viewMonitorLFAria: "View Monitor on MeshMonitor LF",
-      viewMonitorMFAria: "View Monitor on MeshMonitor MF",
+      viewMonitorAria: "View Monitor on MeshMonitor",
       // ServerInsights — Matrix
       matrixNode: "Node: Matrix Homeserver",
       matrixStatsAriaLabel: "Matrix server real-time statistics",

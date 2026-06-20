@@ -1,0 +1,1395 @@
+---
+/**
+ * StringPoolPacker Component
+ * Visualizes the flash cost of a pointer table vs a packed, tail-merged string
+ * pool with uint16 offsets — the technique from the i18n string-pool blog post.
+ *
+ * Two input modes:
+ *  - "Lines": one string per line (each line = one index entry).
+ *  - "CSV":   id + one column per language (the real firmware layout), with an
+ *             identifier × language lookup that simulates tr() / gen::string().
+ * The breakdown shows each string's byte offset, making it concrete that a
+ * tail-merged string is read by pool + offset just like any other.
+ */
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslations } from "@i18n/utils";
+
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
+
+interface Props {
+  title?: string;
+}
+
+const { title } = Astro.props;
+
+const linesExample = [
+  "OK",
+  "OK",
+  "Cancel",
+  "Cancelar",
+  "ancel",
+  "Settings",
+  "in Bluetooth Settings",
+  "Kleidos",
+  "Kleidos",
+].join("\n");
+
+const csvExample = [
+  "id,en,es,fr,de,it",
+  "BRAND,Kleidos,Kleidos,Kleidos,Kleidos,Kleidos",
+  "CommonOk,OK,OK,OK,OK,OK",
+  "CommonBt,BT,BT,BT,BT,BT",
+  "CommonUsb,USB,USB,USB,USB,USB",
+  "CommonTotp,TOTP,TOTP,TOTP,TOTP,TOTP",
+  "CommonPin,PIN,PIN,PIN,PIN,PIN",
+  "CommonId,ID,ID,ID,ID,ID",
+  "CommonIp,IP,IP,IP,IP,IP",
+  "CommonMac,MAC,MAC,MAC,MAC,MAC",
+  "CommonBle,BLE,BLE,BLE,BLE,BLE",
+  "CommonWifi,Wi-Fi,Wi-Fi,Wi-Fi,Wi-Fi,Wi-Fi",
+  "CommonOn,On,On,On,On,On",
+  "CommonOff,Off,Off,Off,Off,Off",
+  "CommonCancel,Cancel,Cancelar,Annuler,Abbrechen,Annulla",
+  "SetTitle,Settings,Ajustes,Réglages,Einstellungen,Impostazioni",
+  "SetBt,Bluetooth Settings,Ajustes Bluetooth,Réglages Bluetooth,Bluetooth-Einstellungen,Impostazioni Bluetooth",
+].join("\n");
+
+const uniqueId = `spp-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
+
+/** Strings the inline script needs at runtime. */
+const i18n = {
+  emptyState: t("tools.stringPoolPacker.emptyState"),
+  statusStored: t("tools.stringPoolPacker.statusStored"),
+  statusTail: t("tools.stringPoolPacker.statusTail"),
+  savedFmt: t("tools.stringPoolPacker.savedFmt"),
+  noSaving: t("tools.stringPoolPacker.noSaving"),
+  guardOk: t("tools.stringPoolPacker.guardOk"),
+  guardExceeded: t("tools.stringPoolPacker.guardExceeded"),
+  occurrences: t("tools.stringPoolPacker.occurrences"),
+  truncated: t("tools.stringPoolPacker.truncated"),
+  csvError: t("tools.stringPoolPacker.csvError"),
+  lookupResolved: t("tools.stringPoolPacker.lookupResolved"),
+  lookupTail: t("tools.stringPoolPacker.lookupTail"),
+};
+---
+
+<div
+  class="spp"
+  data-spp-id={uniqueId}
+>
+  {title && <div class="spp-title">{title}</div>}
+
+  {/* Mode toggle */}
+  <fieldset class="spp-modes">
+    <legend class="spp-label">
+      <span
+        class="i-mdi:toggle-switch-outline spp-label-icon"
+        aria-hidden="true"
+      ></span>
+      {t("tools.stringPoolPacker.modeLabel")}
+    </legend>
+    <div class="spp-mode-tabs">
+      <label class="spp-mode-tab">
+        <input
+          type="radio"
+          name={`${uniqueId}-mode`}
+          value="lines"
+          checked
+        />
+        <span>{t("tools.stringPoolPacker.modeLines")}</span>
+      </label>
+      <label class="spp-mode-tab">
+        <input
+          type="radio"
+          name={`${uniqueId}-mode`}
+          value="csv"
+        />
+        <span>{t("tools.stringPoolPacker.modeCsv")}</span>
+      </label>
+    </div>
+  </fieldset>
+
+  <div class="spp-controls">
+    {/* Lines panel */}
+    <div
+      class="spp-panel"
+      data-panel="lines"
+    >
+      <label
+        class="spp-label"
+        for={`${uniqueId}-lines`}
+      >
+        <span
+          class="i-mdi:format-list-bulleted spp-label-icon"
+          aria-hidden="true"
+        ></span>
+        {t("tools.stringPoolPacker.inputLabel")}
+      </label>
+      <textarea
+        id={`${uniqueId}-lines`}
+        class="spp-textarea"
+        rows="9"
+        spellcheck="false"
+        autocomplete="off"
+        placeholder={t("tools.stringPoolPacker.inputPlaceholder")}
+        >{linesExample}</textarea
+      >
+      <p class="spp-hint">{t("tools.stringPoolPacker.inputHint")}</p>
+    </div>
+
+    {/* CSV panel */}
+    <div
+      class="spp-panel"
+      data-panel="csv"
+      hidden
+    >
+      <label
+        class="spp-label"
+        for={`${uniqueId}-csv`}
+      >
+        <span
+          class="i-mdi:table spp-label-icon"
+          aria-hidden="true"
+        ></span>
+        {t("tools.stringPoolPacker.csvInputLabel")}
+      </label>
+      <textarea
+        id={`${uniqueId}-csv`}
+        class="spp-textarea"
+        rows="9"
+        spellcheck="false"
+        autocomplete="off"
+        >{csvExample}</textarea
+      >
+      <p class="spp-hint">{t("tools.stringPoolPacker.csvHint")}</p>
+    </div>
+
+    {/* Shared side controls */}
+    <fieldset class="spp-fieldset">
+      <legend class="spp-label">
+        <span
+          class="i-mdi:memory spp-label-icon"
+          aria-hidden="true"
+        ></span>
+        {t("tools.stringPoolPacker.pointerWidthLabel")}
+      </legend>
+      <div class="spp-radios">
+        <label class="spp-radio">
+          <input
+            type="radio"
+            name={`${uniqueId}-pw`}
+            value="4"
+            checked
+          />
+          <span>{t("tools.stringPoolPacker.bits32")}</span>
+        </label>
+        <label class="spp-radio">
+          <input
+            type="radio"
+            name={`${uniqueId}-pw`}
+            value="8"
+          />
+          <span>{t("tools.stringPoolPacker.bits64")}</span>
+        </label>
+      </div>
+      <button
+        type="button"
+        class="spp-example-btn"
+        data-action="example"
+      >
+        <span
+          class="i-mdi:lightbulb-on-outline"
+          aria-hidden="true"
+        ></span>
+        {t("tools.stringPoolPacker.loadExample")}
+      </button>
+    </fieldset>
+  </div>
+
+  {/* Identifier lookup (CSV mode only) */}
+  <div
+    class="spp-lookup"
+    data-lookup
+    hidden
+  >
+    <div class="spp-lookup-head">
+      <span
+        class="i-mdi:magnify spp-label-icon"
+        aria-hidden="true"
+      ></span>
+      {t("tools.stringPoolPacker.lookupTitle")}
+    </div>
+    <div class="spp-lookup-row">
+      <label class="spp-lookup-field">
+        <span>{t("tools.stringPoolPacker.lookupIdLabel")}</span>
+        <select
+          class="spp-select"
+          data-lookup-id
+        ></select>
+      </label>
+      <label class="spp-lookup-field">
+        <span>{t("tools.stringPoolPacker.lookupLangLabel")}</span>
+        <select
+          class="spp-select"
+          data-lookup-lang
+        ></select>
+      </label>
+    </div>
+    <output
+      class="spp-lookup-out"
+      data-lookup-out
+    ></output>
+  </div>
+
+  <div
+    class="spp-results"
+    aria-live="polite"
+    data-results
+  >
+    {/* Stat cards */}
+    <div class="spp-stats">
+      <div class="spp-stat">
+        <span
+          class="spp-stat-value"
+          data-stat="entries"
+          >0</span
+        >
+        <span class="spp-stat-label"
+          >{t("tools.stringPoolPacker.statEntries")}</span
+        >
+      </div>
+      <div class="spp-stat">
+        <span
+          class="spp-stat-value"
+          data-stat="distinct"
+          >0</span
+        >
+        <span class="spp-stat-label"
+          >{t("tools.stringPoolPacker.statDistinct")}</span
+        >
+      </div>
+      <div class="spp-stat">
+        <span
+          class="spp-stat-value"
+          data-stat="packed"
+          >0</span
+        >
+        <span class="spp-stat-label"
+          >{t("tools.stringPoolPacker.statPacked")}</span
+        >
+      </div>
+      <div class="spp-stat">
+        <span
+          class="spp-stat-value"
+          data-stat="poolBytes"
+          >0</span
+        >
+        <span class="spp-stat-label"
+          >{t("tools.stringPoolPacker.statPoolBytes")}</span
+        >
+      </div>
+    </div>
+
+    {/* Comparison */}
+    <div class="spp-compare">
+      <div class="spp-approach">
+        <div class="spp-approach-head">
+          {t("tools.stringPoolPacker.pointerApproach")}
+        </div>
+        <dl class="spp-rows">
+          <div class="spp-row">
+            <dt>{t("tools.stringPoolPacker.rowIndex")}</dt>
+            <dd data-ptr="index">—</dd>
+          </div>
+          <div class="spp-row">
+            <dt>{t("tools.stringPoolPacker.rowBlob")}</dt>
+            <dd data-ptr="blob">—</dd>
+          </div>
+          <div class="spp-row spp-row--total">
+            <dt>{t("tools.stringPoolPacker.rowTotal")}</dt>
+            <dd data-ptr="total">—</dd>
+          </div>
+        </dl>
+        <div
+          class="spp-bar"
+          aria-hidden="true"
+        >
+          <span
+            class="spp-bar-fill spp-bar-fill--ptr"
+            data-bar="ptr"
+          ></span>
+        </div>
+      </div>
+
+      <div class="spp-approach">
+        <div class="spp-approach-head">
+          {t("tools.stringPoolPacker.packedApproach")}
+        </div>
+        <dl class="spp-rows">
+          <div class="spp-row">
+            <dt>{t("tools.stringPoolPacker.rowIndex")}</dt>
+            <dd data-pk="index">—</dd>
+          </div>
+          <div class="spp-row">
+            <dt>{t("tools.stringPoolPacker.rowBlob")}</dt>
+            <dd data-pk="blob">—</dd>
+          </div>
+          <div class="spp-row spp-row--total">
+            <dt>{t("tools.stringPoolPacker.rowTotal")}</dt>
+            <dd data-pk="total">—</dd>
+          </div>
+        </dl>
+        <div
+          class="spp-bar"
+          aria-hidden="true"
+        >
+          <span
+            class="spp-bar-fill spp-bar-fill--pk"
+            data-bar="pk"
+          ></span>
+        </div>
+      </div>
+    </div>
+
+    <div
+      class="spp-saving"
+      data-saving
+    >
+    </div>
+    <div
+      class="spp-guard"
+      data-guard
+    >
+    </div>
+
+    <p class="spp-retrieval">
+      <span
+        class="i-mdi:cursor-default-click-outline"
+        aria-hidden="true"
+      ></span>
+      {t("tools.stringPoolPacker.retrievalNote")}
+    </p>
+
+    {/* Breakdown */}
+    <div class="spp-breakdown">
+      <div class="spp-breakdown-head">
+        {t("tools.stringPoolPacker.breakdownTitle")}
+      </div>
+      <div class="spp-table-wrap">
+        <table class="spp-table">
+          <thead>
+            <tr>
+              <th scope="col">{t("tools.stringPoolPacker.colString")}</th>
+              <th scope="col">{t("tools.stringPoolPacker.colOcc")}</th>
+              <th scope="col">{t("tools.stringPoolPacker.colOffset")}</th>
+              <th scope="col">{t("tools.stringPoolPacker.colBytes")}</th>
+              <th scope="col">{t("tools.stringPoolPacker.colStatus")}</th>
+            </tr>
+          </thead>
+          <tbody data-tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <p class="spp-privacy">
+    <span
+      class="i-mdi:shield-lock-outline"
+      aria-hidden="true"
+    ></span>
+    {t("tools.stringPoolPacker.privacyNote")}
+  </p>
+</div>
+
+<script is:inline define:vars={{ uniqueId, i18n, locale }}>
+  // cspell:ignore atrás retour zurück indietro siguiente suivant weiter avanti
+  // cspell:ignore bloquear verrouiller sperren blocca bóveda borrada coffre
+  // cspell:ignore effacé cancellato idioma langue sprache lingua annuler
+  // cspell:ignore abbrechen annulla cancelar tresor gelöscht verlust kleidos ancel
+  // cspell:ignore ajustes réglages einstellungen impostazioni
+  const root = document.querySelector(`[data-spp-id="${uniqueId}"]`);
+  if (root) {
+    const linesInput = document.getElementById(`${uniqueId}-lines`);
+    const csvInput = document.getElementById(`${uniqueId}-csv`);
+    const tbody = root.querySelector("[data-tbody]");
+    const savingEl = root.querySelector("[data-saving]");
+    const guardEl = root.querySelector("[data-guard]");
+    const lookupBox = root.querySelector("[data-lookup]");
+    const lookupId = root.querySelector("[data-lookup-id]");
+    const lookupLang = root.querySelector("[data-lookup-lang]");
+    const lookupOut = root.querySelector("[data-lookup-out]");
+    const enc = new TextEncoder();
+    const MAX_ROWS = 250;
+
+    const fmt = (n) => Number(n).toLocaleString(locale);
+    const byteLen = (s) => enc.encode(s).length;
+    const setText = (sel, value) => {
+      const el = root.querySelector(sel);
+      if (el) el.textContent = value;
+    };
+
+    function getMode() {
+      const m = root.querySelector(`input[name="${uniqueId}-mode"]:checked`);
+      return m ? m.value : "lines";
+    }
+    function getPointerWidth() {
+      const c = root.querySelector(`input[name="${uniqueId}-pw"]:checked`);
+      return c ? parseInt(c.value, 10) : 4;
+    }
+
+    /**
+     * Pack a set of DISTINCT strings into a tail-merged blob and record the
+     * byte offset of every string (including tail-merged ones, whose offset
+     * points partway into a longer entry).
+     */
+    function packPool(distinct) {
+      const sorted = [...distinct].sort(
+        (a, b) => byteLen(b) - byteLen(a) || (a < b ? -1 : a > b ? 1 : 0),
+      );
+      let blobBytes = 0;
+      const poolEntries = [];
+      const offsetOf = new Map();
+      const status = new Map(); // s -> { tail, into }
+      for (const s of sorted) {
+        let into = "";
+        for (const p of poolEntries) {
+          if (p !== s && p.endsWith(s)) {
+            into = p;
+            break;
+          }
+        }
+        if (into) {
+          offsetOf.set(s, offsetOf.get(into) + (byteLen(into) - byteLen(s)));
+          status.set(s, { tail: true, into });
+        } else {
+          offsetOf.set(s, blobBytes);
+          blobBytes += byteLen(s) + 1; // + NUL
+          poolEntries.push(s);
+          status.set(s, { tail: false, into: "" });
+        }
+      }
+      return { offsetOf, blobBytes, poolEntries, status };
+    }
+
+    /** Minimal CSV parser: header row + data rows, simple quoted fields. */
+    function parseCsv(text) {
+      const lines = text.split("\n").map((l) => l.replace(/\r$/, ""));
+      const rows = [];
+      for (const line of lines) {
+        if (!line.trim()) continue;
+        const fields = [];
+        let cur = "";
+        let inQ = false;
+        for (let i = 0; i < line.length; i++) {
+          const ch = line[i];
+          if (inQ) {
+            if (ch === '"' && line[i + 1] === '"') {
+              cur += '"';
+              i++;
+            } else if (ch === '"') {
+              inQ = false;
+            } else {
+              cur += ch;
+            }
+          } else if (ch === '"') {
+            inQ = true;
+          } else if (ch === ",") {
+            fields.push(cur);
+            cur = "";
+          } else {
+            cur += ch;
+          }
+        }
+        fields.push(cur);
+        rows.push(fields.map((f) => f.trim()));
+      }
+      if (rows.length < 2) return null;
+      const header = rows[0].map((h) => h.toLowerCase());
+      if (header[0] !== "id") return null;
+      const langs = header.slice(1).filter((h) => h.length > 0);
+      if (langs.length === 0) return null;
+      const enIdx = 0; // first language column is the fallback
+      const data = [];
+      for (let r = 1; r < rows.length; r++) {
+        const cols = rows[r];
+        if (!cols[0]) continue;
+        const values = langs.map((_, c) => cols[c + 1] || "");
+        // Empty cell falls back to the first language column (mirrors firmware).
+        const filled = values.map((v) => (v ? v : values[enIdx] || ""));
+        data.push({ id: cols[0], values: filled });
+      }
+      return { langs, rows: data };
+    }
+
+    function renderShared(cells, packed, pw) {
+      const N = cells.length;
+      const counts = new Map();
+      for (const c of cells) counts.set(c, (counts.get(c) || 0) + 1);
+      const distinct = [...counts.keys()];
+
+      const blobDedupBytes = distinct.reduce((a, s) => a + byteLen(s) + 1, 0);
+      const blobTailBytes = packed.blobBytes;
+      const offsetWidth =
+        blobTailBytes < 0x10000 ? 2 : blobTailBytes < 0x100000000 ? 4 : 8;
+      const ptrIndex = N * pw;
+      const pkIndex = N * offsetWidth;
+      const ptrTotal = ptrIndex + blobDedupBytes;
+      const pkTotal = pkIndex + blobTailBytes;
+      const saved = ptrTotal - pkTotal;
+      const pct = ptrTotal > 0 ? Math.round((saved / ptrTotal) * 1000) / 10 : 0;
+      const idxSave =
+        ptrIndex > 0 ? Math.round((1 - pkIndex / ptrIndex) * 100) : 0;
+
+      setText('[data-stat="entries"]', fmt(N));
+      setText('[data-stat="distinct"]', fmt(distinct.length));
+      setText('[data-stat="packed"]', fmt(packed.poolEntries.length));
+      setText('[data-stat="poolBytes"]', fmt(blobTailBytes));
+
+      const B = (n) => fmt(n) + " B";
+      setText('[data-ptr="index"]', `${B(ptrIndex)} (${N}×${pw})`);
+      setText('[data-ptr="blob"]', B(blobDedupBytes));
+      setText('[data-ptr="total"]', B(ptrTotal));
+      setText('[data-pk="index"]', `${B(pkIndex)} (${N}×${offsetWidth})`);
+      setText('[data-pk="blob"]', B(blobTailBytes));
+      setText('[data-pk="total"]', B(pkTotal));
+
+      const maxTotal = Math.max(ptrTotal, pkTotal, 1);
+      const ptrBar = root.querySelector('[data-bar="ptr"]');
+      const pkBar = root.querySelector('[data-bar="pk"]');
+      if (ptrBar)
+        ptrBar.style.setProperty(
+          "--spp-bar-w",
+          (ptrTotal / maxTotal) * 100 + "%",
+        );
+      if (pkBar)
+        pkBar.style.setProperty(
+          "--spp-bar-w",
+          (pkTotal / maxTotal) * 100 + "%",
+        );
+
+      if (savingEl) {
+        if (saved > 0) {
+          savingEl.textContent = i18n.savedFmt
+            .replace("{idx}", String(idxSave))
+            .replace("{n}", fmt(saved))
+            .replace("{pct}", String(pct));
+          savingEl.dataset.state = "good";
+        } else {
+          savingEl.textContent = i18n.noSaving;
+          savingEl.dataset.state = "neutral";
+        }
+      }
+      if (guardEl) {
+        if (offsetWidth === 2) {
+          guardEl.textContent = i18n.guardOk;
+          guardEl.dataset.state = "good";
+        } else {
+          guardEl.textContent = i18n.guardExceeded.replace(
+            "{w}",
+            String(offsetWidth),
+          );
+          guardEl.dataset.state = "warn";
+        }
+      }
+
+      renderBreakdown(distinct, counts, packed);
+    }
+
+    function renderBreakdown(distinct, counts, packed) {
+      if (!tbody) return;
+      tbody.textContent = "";
+      const ordered = [...distinct].sort((a, b) => {
+        const ta = packed.status.get(a).tail,
+          tb = packed.status.get(b).tail;
+        if (ta !== tb) return ta ? 1 : -1;
+        return counts.get(b) - counts.get(a);
+      });
+      const rows = ordered.slice(0, MAX_ROWS);
+      const frag = document.createDocumentFragment();
+      for (const s of rows) {
+        const st = packed.status.get(s);
+        const tr = document.createElement("tr");
+
+        const tdStr = document.createElement("td");
+        const code = document.createElement("code");
+        code.textContent = s === "" ? "∅" : s;
+        tdStr.appendChild(code);
+
+        const tdOcc = document.createElement("td");
+        tdOcc.textContent = i18n.occurrences.replace("{n}", fmt(counts.get(s)));
+
+        const tdOff = document.createElement("td");
+        tdOff.className = "spp-num";
+        tdOff.textContent = "@" + fmt(packed.offsetOf.get(s));
+
+        const tdBytes = document.createElement("td");
+        tdBytes.className = "spp-num";
+        tdBytes.textContent = st.tail ? "0" : fmt(byteLen(s) + 1);
+
+        const tdStatus = document.createElement("td");
+        const badge = document.createElement("span");
+        if (st.tail) {
+          badge.className = "spp-badge spp-badge--tail";
+          badge.textContent = st.into
+            ? i18n.statusTail.replace("{s}", st.into)
+            : i18n.statusTail.replace('"{s}"', "").trim();
+        } else {
+          badge.className = "spp-badge spp-badge--stored";
+          badge.textContent = i18n.statusStored;
+        }
+        tdStatus.appendChild(badge);
+
+        tr.append(tdStr, tdOcc, tdOff, tdBytes, tdStatus);
+        frag.appendChild(tr);
+      }
+      if (ordered.length > MAX_ROWS) {
+        const tr = document.createElement("tr");
+        const td = document.createElement("td");
+        td.colSpan = 5;
+        td.className = "spp-truncated";
+        td.textContent = i18n.truncated
+          .replace("{n}", fmt(MAX_ROWS))
+          .replace("{total}", fmt(ordered.length));
+        tr.appendChild(td);
+        frag.appendChild(tr);
+      }
+      if (rows.length === 0) {
+        const tr = document.createElement("tr");
+        const td = document.createElement("td");
+        td.colSpan = 5;
+        td.className = "spp-truncated";
+        td.textContent = i18n.emptyState;
+        tr.appendChild(td);
+        frag.appendChild(tr);
+      }
+      tbody.appendChild(frag);
+    }
+
+    // State for the lookup (populated in CSV mode).
+    let csvState = null;
+
+    function analyzeLines() {
+      const cells = linesInput.value
+        .split("\n")
+        .map((l) => l.replace(/\r$/, ""))
+        .filter((l) => l.length > 0);
+      const distinct = [...new Set(cells)];
+      const packed = packPool(distinct);
+      renderShared(cells, packed, getPointerWidth());
+    }
+
+    function analyzeCsv() {
+      const parsed = parseCsv(csvInput.value);
+      if (!parsed) {
+        if (savingEl) {
+          savingEl.textContent = i18n.csvError;
+          savingEl.dataset.state = "warn";
+        }
+        if (tbody) tbody.textContent = "";
+        csvState = null;
+        populateLookup();
+        return;
+      }
+      const cells = [];
+      for (const row of parsed.rows) {
+        for (const v of row.values) cells.push(v);
+      }
+      const distinct = [...new Set(cells)];
+      const packed = packPool(distinct);
+      renderShared(cells, packed, getPointerWidth());
+      csvState = { ...parsed, packed };
+      populateLookup();
+    }
+
+    function populateLookup() {
+      if (!lookupId || !lookupLang) return;
+      if (!csvState) {
+        lookupId.textContent = "";
+        lookupLang.textContent = "";
+        if (lookupOut) lookupOut.textContent = "";
+        return;
+      }
+      const prevId = lookupId.value;
+      const prevLang = lookupLang.value;
+      lookupId.textContent = "";
+      lookupLang.textContent = "";
+      csvState.rows.forEach((r, i) => {
+        const o = document.createElement("option");
+        o.value = String(i);
+        o.textContent = r.id;
+        lookupId.appendChild(o);
+      });
+      csvState.langs.forEach((lang, i) => {
+        const o = document.createElement("option");
+        o.value = String(i);
+        o.textContent = lang.toUpperCase();
+        lookupLang.appendChild(o);
+      });
+      if (prevId && Number(prevId) < csvState.rows.length)
+        lookupId.value = prevId;
+      if (prevLang && Number(prevLang) < csvState.langs.length)
+        lookupLang.value = prevLang;
+      renderLookup();
+    }
+
+    function renderLookup() {
+      if (!lookupOut || !csvState) return;
+      const ri = parseInt(lookupId.value, 10) || 0;
+      const li = parseInt(lookupLang.value, 10) || 0;
+      const row = csvState.rows[ri];
+      if (!row) {
+        lookupOut.textContent = "";
+        return;
+      }
+      const value = row.values[li];
+      const off = csvState.packed.offsetOf.get(value);
+      const st = csvState.packed.status.get(value);
+      lookupOut.textContent = "";
+      const code = document.createElement("code");
+      code.textContent = i18n.lookupResolved
+        .replace("{lang}", String(li))
+        .replace("{id}", String(ri))
+        .replace("{off}", fmt(off))
+        .replace("{val}", value === "" ? "∅" : value);
+      lookupOut.appendChild(code);
+      if (st && st.tail && st.into) {
+        const note = document.createElement("span");
+        note.className = "spp-lookup-note";
+        note.textContent = i18n.lookupTail.replace("{s}", st.into);
+        lookupOut.appendChild(note);
+      }
+    }
+
+    function setMode(mode) {
+      const linesPanel = root.querySelector('[data-panel="lines"]');
+      const csvPanel = root.querySelector('[data-panel="csv"]');
+      if (linesPanel) linesPanel.hidden = mode !== "lines";
+      if (csvPanel) csvPanel.hidden = mode !== "csv";
+      if (lookupBox) lookupBox.hidden = mode !== "csv";
+      if (mode === "csv") analyzeCsv();
+      else analyzeLines();
+    }
+
+    function recompute() {
+      if (getMode() === "csv") analyzeCsv();
+      else analyzeLines();
+    }
+
+    function debounce(fn, delay) {
+      let timer;
+      return function (...args) {
+        clearTimeout(timer);
+        timer = setTimeout(() => fn.apply(this, args), delay);
+      };
+    }
+
+    linesInput.addEventListener("input", debounce(analyzeLines, 150));
+    csvInput.addEventListener("input", debounce(analyzeCsv, 150));
+    root
+      .querySelectorAll(`input[name="${uniqueId}-pw"]`)
+      .forEach((r) => r.addEventListener("change", recompute));
+    root
+      .querySelectorAll(`input[name="${uniqueId}-mode"]`)
+      .forEach((r) => r.addEventListener("change", () => setMode(getMode())));
+    if (lookupId) lookupId.addEventListener("change", renderLookup);
+    if (lookupLang) lookupLang.addEventListener("change", renderLookup);
+
+    const exampleBtn = root.querySelector('[data-action="example"]');
+    if (exampleBtn) {
+      exampleBtn.addEventListener("click", () => {
+        if (getMode() === "csv") {
+          csvInput.value = [
+            "id,en,es,fr,de,it",
+            "BRAND,Kleidos,Kleidos,Kleidos,Kleidos,Kleidos",
+            "CommonOk,OK,OK,OK,OK,OK",
+            "CommonBt,BT,BT,BT,BT,BT",
+            "CommonUsb,USB,USB,USB,USB,USB",
+            "CommonTotp,TOTP,TOTP,TOTP,TOTP,TOTP",
+            "CommonPin,PIN,PIN,PIN,PIN,PIN",
+            "CommonId,ID,ID,ID,ID,ID",
+            "CommonIp,IP,IP,IP,IP,IP",
+            "CommonMac,MAC,MAC,MAC,MAC,MAC",
+            "CommonBle,BLE,BLE,BLE,BLE,BLE",
+            "CommonWifi,Wi-Fi,Wi-Fi,Wi-Fi,Wi-Fi,Wi-Fi",
+            "CommonOn,On,On,On,On,On",
+            "CommonOff,Off,Off,Off,Off,Off",
+            "CommonCancel,Cancel,Cancelar,Annuler,Abbrechen,Annulla",
+            "SetTitle,Settings,Ajustes,Réglages,Einstellungen,Impostazioni",
+            "SetBt,Bluetooth Settings,Ajustes Bluetooth,Réglages Bluetooth,Bluetooth-Einstellungen,Impostazioni Bluetooth",
+          ].join("\n");
+          analyzeCsv();
+        } else {
+          linesInput.value = [
+            "OK",
+            "OK",
+            "Cancel",
+            "Cancelar",
+            "ancel",
+            "Settings",
+            "in Bluetooth Settings",
+            "Kleidos",
+            "Kleidos",
+          ].join("\n");
+          analyzeLines();
+        }
+      });
+    }
+
+    setMode("lines");
+  }
+</script>
+
+<style>
+  .spp {
+    margin: 1.5rem 0;
+    overflow: hidden;
+    background: var(--color-bg-subtle);
+    border: var(--border-1);
+    border-radius: var(--radius-md);
+  }
+
+  .spp-title {
+    padding: 1rem 1.25rem;
+    font-size: 1.1rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-heading);
+    background: var(--color-bg-secondary);
+    border-bottom: var(--border-1);
+  }
+
+  .spp-modes {
+    padding: 1.25rem 1.25rem 0;
+    margin: 0;
+    border: 0;
+  }
+
+  .spp-mode-tabs {
+    display: inline-flex;
+    gap: 0.25rem;
+    padding: 0.25rem;
+    background: var(--color-bg);
+    border: var(--border-1);
+    border-radius: var(--radius-md);
+  }
+
+  .spp-mode-tab {
+    cursor: pointer;
+  }
+
+  .spp-mode-tab span {
+    display: inline-block;
+    padding: 0.4rem 0.9rem;
+    font-size: 0.85rem;
+    font-weight: var(--fw-medium);
+    color: var(--color-text-muted);
+    border-radius: var(--radius-sm);
+  }
+
+  .spp-mode-tab input {
+    position: absolute;
+    pointer-events: none;
+    opacity: 0%;
+  }
+
+  .spp-mode-tab input:checked + span {
+    color: var(--color-on-primary);
+    background: var(--color-primary);
+  }
+
+  .spp-mode-tab input:focus-visible + span {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  .spp-controls {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+    padding: 1.25rem;
+  }
+
+  @media (width >= 768px) {
+    .spp-controls {
+      grid-template-columns: 2fr 1fr;
+    }
+  }
+
+  .spp-label {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    margin-bottom: 0.5rem;
+    font-size: 0.85rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .spp-label-icon {
+    width: 18px;
+    height: 18px;
+  }
+
+  .spp-panel {
+    display: flex;
+    flex-direction: column;
+    grid-column: 1;
+  }
+
+  /* The [hidden] attribute must win over display:flex so only the active
+     input mode (Lines or CSV) is shown. */
+  .spp-panel[hidden],
+  .spp-lookup[hidden] {
+    display: none;
+  }
+
+  .spp-textarea {
+    width: 100%;
+    min-height: 180px;
+    padding: 0.875rem;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    line-height: 1.5;
+    color: var(--color-text);
+    resize: vertical;
+    background: var(--color-bg);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+    transition:
+      border-color 0.15s,
+      box-shadow 0.15s;
+  }
+
+  .spp-textarea:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgb(var(--color-primary-rgb) / 15%);
+  }
+
+  .spp-hint {
+    margin: 0.5rem 0 0;
+    font-size: 0.78rem;
+    line-height: 1.5;
+    color: var(--color-text-muted);
+  }
+
+  .spp-fieldset {
+    grid-column: 1;
+    padding: 0;
+    margin: 0;
+    border: 0;
+  }
+
+  @media (width >= 768px) {
+    .spp-fieldset {
+      grid-row: 1;
+      grid-column: 2;
+    }
+  }
+
+  .spp-radios {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .spp-radio {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    font-size: 0.9rem;
+    color: var(--color-text);
+    cursor: pointer;
+  }
+
+  .spp-radio input {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--color-primary);
+  }
+
+  .spp-example-btn {
+    display: inline-flex;
+    gap: 0.4rem;
+    align-items: center;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8rem;
+    font-weight: var(--fw-medium);
+    color: var(--color-text);
+    cursor: pointer;
+    background: var(--color-bg);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+    transition:
+      border-color 0.15s,
+      color 0.15s;
+  }
+
+  .spp-example-btn:hover,
+  .spp-example-btn:focus-visible {
+    color: var(--color-primary);
+    border-color: var(--color-primary);
+  }
+
+  /* Identifier lookup */
+  .spp-lookup {
+    padding: 1rem 1.25rem;
+    margin: 0 1.25rem 1.25rem;
+    background: var(--color-bg);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+  }
+
+  .spp-lookup-head {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    margin-bottom: 0.75rem;
+    font-size: 0.85rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-heading);
+  }
+
+  .spp-lookup-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .spp-lookup-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    font-size: 0.78rem;
+    color: var(--color-text-muted);
+  }
+
+  .spp-select {
+    padding: 0.4rem 0.6rem;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    color: var(--color-text);
+    background: var(--color-bg-subtle);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+  }
+
+  .spp-lookup-out {
+    display: block;
+  }
+
+  .spp-lookup-out code {
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    color: var(--color-primary);
+    overflow-wrap: anywhere;
+  }
+
+  .spp-lookup-note {
+    display: block;
+    margin-top: 0.35rem;
+    font-size: 0.78rem;
+    color: var(--color-text-muted);
+  }
+
+  .spp-results {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    padding: 0 1.25rem 1.25rem;
+  }
+
+  .spp-stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
+
+  @media (width >= 640px) {
+    .spp-stats {
+      grid-template-columns: repeat(4, 1fr);
+    }
+  }
+
+  .spp-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 0.875rem;
+    text-align: center;
+    background: var(--color-bg);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+  }
+
+  .spp-stat-value {
+    font-family: var(--font-mono);
+    font-size: 1.35rem;
+    font-weight: var(--fw-bold);
+    color: var(--color-primary);
+  }
+
+  .spp-stat-label {
+    font-size: 0.72rem;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .spp-compare {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  @media (width >= 640px) {
+    .spp-compare {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  .spp-approach {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 1rem;
+    background: var(--color-bg);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+  }
+
+  .spp-approach-head {
+    font-size: 0.85rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-heading);
+  }
+
+  .spp-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    margin: 0;
+  }
+
+  .spp-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    font-size: 0.82rem;
+  }
+
+  .spp-row dt {
+    color: var(--color-text-muted);
+  }
+
+  .spp-row dd {
+    margin: 0;
+    font-family: var(--font-mono);
+    color: var(--color-text);
+  }
+
+  .spp-row--total {
+    padding-top: 0.35rem;
+    margin-top: 0.15rem;
+    font-weight: var(--fw-semibold);
+    border-top: var(--border-1);
+  }
+
+  .spp-row--total dd {
+    color: var(--color-text-heading);
+  }
+
+  .spp-bar {
+    height: 8px;
+    overflow: hidden;
+    background: var(--color-bg-subtle);
+    border-radius: 999px;
+  }
+
+  .spp-bar-fill {
+    display: block;
+    width: var(--spp-bar-w, 0);
+    height: 100%;
+    border-radius: 999px;
+    transition: width 0.3s ease;
+  }
+
+  .spp-bar-fill--ptr {
+    background: var(--color-text-muted);
+  }
+
+  .spp-bar-fill--pk {
+    background: var(--color-primary);
+  }
+
+  .spp-saving,
+  .spp-guard {
+    padding: 0.6rem 0.875rem;
+    font-size: 0.85rem;
+    font-weight: var(--fw-medium);
+    text-align: center;
+    border-radius: var(--radius-sm);
+  }
+
+  .spp-saving[data-state="good"] {
+    color: #065f46;
+    background: rgb(16 185 129 / 12%);
+  }
+
+  :root[data-theme="dark"] .spp-saving[data-state="good"] {
+    color: #34d399;
+  }
+
+  .spp-saving[data-state="neutral"] {
+    color: var(--color-text-muted);
+    background: var(--color-bg);
+  }
+
+  .spp-saving[data-state="warn"],
+  .spp-guard[data-state="warn"] {
+    color: #92400e;
+    background: rgb(245 158 11 / 14%);
+  }
+
+  :root[data-theme="dark"] .spp-saving[data-state="warn"],
+  :root[data-theme="dark"] .spp-guard[data-state="warn"] {
+    color: #fbbf24;
+  }
+
+  .spp-guard {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+  }
+
+  .spp-guard[data-state="good"] {
+    color: var(--color-text-muted);
+    background: var(--color-bg);
+  }
+
+  .spp-retrieval {
+    display: flex;
+    gap: 0.5rem;
+    align-items: flex-start;
+    padding: 0.75rem 0.875rem;
+    margin: 0;
+    font-size: 0.82rem;
+    line-height: 1.5;
+    color: var(--color-text-muted);
+    background: var(--color-bg);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+  }
+
+  .spp-retrieval span {
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    margin-top: 0.15rem;
+    color: var(--color-primary);
+  }
+
+  .spp-breakdown-head {
+    margin-bottom: 0.5rem;
+    font-size: 0.85rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .spp-table-wrap {
+    max-height: 320px;
+    overflow: auto;
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+  }
+
+  .spp-table {
+    width: 100%;
+    font-size: 0.82rem;
+    border-collapse: collapse;
+  }
+
+  .spp-table th,
+  .spp-table td {
+    padding: 0.5rem 0.75rem;
+    text-align: left;
+    border-bottom: var(--border-1);
+  }
+
+  .spp-table th {
+    position: sticky;
+    top: 0;
+    font-size: 0.72rem;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    background: var(--color-bg-secondary);
+  }
+
+  .spp-table td code {
+    font-family: var(--font-mono);
+    color: var(--color-text-heading);
+    overflow-wrap: anywhere;
+  }
+
+  .spp-num {
+    font-family: var(--font-mono);
+    color: var(--color-text-muted);
+    text-align: right;
+  }
+
+  .spp-table tr:last-child td {
+    border-bottom: 0;
+  }
+
+  .spp-badge {
+    display: inline-block;
+    padding: 0.1rem 0.45rem;
+    font-size: 0.72rem;
+    font-weight: var(--fw-medium);
+    border-radius: var(--radius-sm);
+  }
+
+  .spp-badge--stored {
+    color: var(--color-text-muted);
+    background: var(--color-bg-subtle);
+  }
+
+  .spp-badge--tail {
+    color: #5b21b6;
+    background: rgb(139 92 246 / 14%);
+  }
+
+  :root[data-theme="dark"] .spp-badge--tail {
+    color: #c4b5fd;
+  }
+
+  .spp-truncated {
+    font-style: italic;
+    color: var(--color-text-muted);
+    text-align: center;
+  }
+
+  .spp-privacy {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    padding: 0.875rem 1.25rem;
+    margin: 0;
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+    background: var(--color-bg-secondary);
+    border-top: var(--border-1);
+  }
+
+  .spp-privacy span {
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+  }
+</style>
