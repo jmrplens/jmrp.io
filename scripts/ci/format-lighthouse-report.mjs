@@ -9,7 +9,12 @@
 import fs from "node:fs";
 import path from "node:path";
 
-const lhDir = process.argv[2] || ".lighthouseci";
+const lhDir = path.resolve(process.cwd(), process.argv[2] || ".lighthouseci");
+// Defense-in-depth: reject a (trusted) CI argument that escapes the project dir.
+if (lhDir !== process.cwd() && !lhDir.startsWith(process.cwd() + path.sep)) {
+  console.error("Refusing Lighthouse directory outside the project directory.");
+  process.exit(1);
+}
 
 if (!fs.existsSync(lhDir)) {
   console.log("No Lighthouse reports found.");
@@ -24,7 +29,7 @@ if (!fs.existsSync(lhDir)) {
  * @returns Array of paths to JSON report files.
  */
 function findReports(dir, fileList = []) {
-  const files = fs.readdirSync(dir);
+  const files = fs.readdirSync(dir); // NOSONAR: dir derives from a trusted CI path validated to stay within cwd
   for (const file of files) {
     const filePath = path.join(dir, file);
     const stat = fs.statSync(filePath);

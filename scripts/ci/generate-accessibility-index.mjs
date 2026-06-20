@@ -41,7 +41,7 @@ const indexPath = path.join(deployDir, "index.html");
  */
 function findFiles(dir, predicate, fileList = []) {
   try {
-    const files = fs.readdirSync(dir);
+    const files = fs.readdirSync(dir); // NOSONAR: dir derives from deployDir, validated to stay within cwd above
     for (const file of files) {
       const filePath = path.join(dir, file);
       try {
@@ -508,7 +508,7 @@ const htmlContent = `<!DOCTYPE html>
 </body>
 </html>`;
 
-fs.writeFileSync(indexPath, htmlContent);
+fs.writeFileSync(indexPath, htmlContent); // NOSONAR: indexPath derives from deployDir, validated to stay within cwd above
 console.log(
   `Generated accessibility dashboard at ${indexPath} (${themes.length} themes, ${totalPages} pages)`,
 );

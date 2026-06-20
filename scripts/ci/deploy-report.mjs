@@ -7,7 +7,7 @@
  * Usage: node deploy-report.mjs <dir> <project-name>
  */
 
-import { execSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 
 const dir = process.argv[2];
 const projectName = process.argv[3];
@@ -49,13 +49,22 @@ try {
   // Note: We do NOT pass --production, so this creates a preview deploy.
   // Vercel allocates a unique URL for every deploy regardless.
   // Pass token via env to avoid exposure in process list/logs
-  const cmd = `npx vercel deploy ${dir} --name=${projectName} --yes --public`;
-
-  const output = execSync(cmd, {
+  // execFileSync runs WITHOUT a shell, so the validated `dir`/`projectName`
+  // (allow-list regex + no "..") can't be interpreted as shell metacharacters.
+  const vercelArgs = [
+    "vercel",
+    "deploy",
+    dir,
+    `--name=${projectName}`,
+    "--yes",
+    "--public",
+  ];
+  const execOpts = {
     encoding: "utf-8",
     env: { ...process.env, VERCEL_TOKEN: token },
     timeout: 300_000, // 5 minutes timeout
-  });
+  };
+  const output = execFileSync("npx", vercelArgs, execOpts); // NOSONAR: args validated above, no shell
 
   // Robustly extract the Vercel deployment URL from output
   const lines = output.split("\n");
