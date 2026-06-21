@@ -39,6 +39,10 @@ if (!src && !hasPair) {
     "ThemeImage: provide either `src`, or both `srcLight` and `srcDark`.",
   );
 }
+// The two modes are mutually exclusive — passing both would render duplicates.
+if (src && hasPair) {
+  throw new Error("ThemeImage: pass `src` OR `srcLight`+`srcDark`, not both.");
+}
 
 // Capped at 760px on desktop (see scoped styles) so it never invades the layout.
 const widths = [360, 540, 720, 960, 1200];

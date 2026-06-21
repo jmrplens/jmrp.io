@@ -128,6 +128,7 @@ const i18n = {
       </label>
       <textarea
         id={`${uniqueId}-lines`}
+        data-spp-lines
         class="spp-textarea"
         rows="9"
         spellcheck="false"
@@ -156,6 +157,7 @@ const i18n = {
       </label>
       <textarea
         id={`${uniqueId}-csv`}
+        data-spp-csv
         class="spp-textarea"
         rows="9"
         spellcheck="false"
@@ -418,8 +420,8 @@ const i18n = {
   // cspell:ignore ajustes réglages einstellungen impostazioni
   const root = document.querySelector(`[data-spp-id="${uniqueId}"]`);
   if (root) {
-    const linesInput = document.getElementById(`${uniqueId}-lines`);
-    const csvInput = document.getElementById(`${uniqueId}-csv`);
+    const linesInput = root.querySelector("[data-spp-lines]");
+    const csvInput = root.querySelector("[data-spp-csv]");
     const tbody = root.querySelector("[data-tbody]");
     const savingEl = root.querySelector("[data-saving]");
     const guardEl = root.querySelector("[data-guard]");
@@ -698,6 +700,11 @@ const i18n = {
           savingEl.dataset.state = "warn";
         }
         if (tbody) tbody.textContent = "";
+        // Clear stale comparison numbers so a failed parse can't leave them up.
+        for (const el of root.querySelectorAll("[data-ptr],[data-pk]"))
+          el.textContent = "—";
+        for (const el of root.querySelectorAll("[data-stat]"))
+          el.textContent = "0";
         csvState = null;
         populateLookup();
         return;

@@ -29,6 +29,13 @@ const { href, filename, description, icon } = Astro.props;
 const locale = getLangFromUrl(Astro.url);
 const t = useTranslations(locale);
 
+// Normalize to a root-absolute public URL and reject traversal: the href
+// indexes a file under public/ at build time, so ".." is never valid.
+if (href.includes("..")) {
+  throw new Error(`FileDownload: href must not contain "..": ${href}`);
+}
+const normalizedHref = href.startsWith("/") ? href : `/${href}`;
+
 const name = filename ?? href.split("/").pop() ?? "file";
 const ext = name.includes(".") ? name.split(".").pop()!.toLowerCase() : "";
 
@@ -70,7 +77,7 @@ let sizeLabel = "";
 let lineLabel = "";
 try {
   const path = fileURLToPath(
-    new URL(`../../../public${href}`, import.meta.url),
+    new URL(`../../../public${normalizedHref}`, import.meta.url),
   );
   const bytes = statSync(path).size;
   const kb = new Intl.NumberFormat(locale, {
@@ -105,7 +112,7 @@ const ariaLabel = `${t("ui.download")}: ${name}${sizeLabel ? ` (${sizeLabel})` :
   </div>
   <a
     class="file-download__btn"
-    href={href}
+    href={normalizedHref}
     download
     aria-label={ariaLabel}
   >

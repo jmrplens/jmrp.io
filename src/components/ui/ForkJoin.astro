@@ -132,7 +132,7 @@ const summary =
 
   <div
     class={`fj__branches${before.length > 0 ? " fj__branches--forked" : ""}`}
-    style={`--fj-cols:${n}`}
+    style={`--fj-cols:${Math.max(n, 1)}`}
   >
     {
       branches.map((node) => (
