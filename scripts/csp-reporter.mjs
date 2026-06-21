@@ -180,7 +180,7 @@ function processReport(report, ip, ua) {
   // Clean up cache periodically (every hour)
   if (reportCache.size > 1000) {
     const oneHourAgo = now - 60 * 60 * 1000;
-    for (const [key, timestamp] of reportCache.entries()) {
+    for (const [key, timestamp] of reportCache) {
       if (timestamp < oneHourAgo) reportCache.delete(key);
     }
   }

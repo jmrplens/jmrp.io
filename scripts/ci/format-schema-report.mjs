@@ -39,9 +39,8 @@ console.log("");
 if (summary.totalErrors > 0 || summary.totalWarnings > 0) {
   console.log("| Page | Errors | Warnings |");
   console.log("| :--- | :---: | :---: |");
-  for (const r of results.filter(
-    (r) => r.errors.length > 0 || r.warnings.length > 0,
-  )) {
+  for (const r of results) {
+    if (r.errors.length === 0 && r.warnings.length === 0) continue;
     const errorCount = r.errors.reduce((acc, s) => acc + s.errors.length, 0);
     const warningCount = r.warnings.reduce(
       (acc, s) => acc + s.warnings.length,

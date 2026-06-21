@@ -20,14 +20,12 @@ const getUrls = () => {
   ];
 
   const postsDir = "dist/blog";
-  let postUrls = [];
-
-  if (fs.existsSync(postsDir)) {
-    postUrls = fs
-      .readdirSync(postsDir, { withFileTypes: true })
-      .filter((dirent) => dirent.isDirectory() && dirent.name !== "tags")
-      .map((dirent) => `${BASE_URL}/blog/${dirent.name}/`);
-  }
+  const postUrls = fs.existsSync(postsDir)
+    ? fs
+        .readdirSync(postsDir, { withFileTypes: true })
+        .filter((dirent) => dirent.isDirectory() && dirent.name !== "tags")
+        .map((dirent) => `${BASE_URL}/blog/${dirent.name}/`)
+    : [];
 
   return [...baseUrls, ...postUrls];
 };

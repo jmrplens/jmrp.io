@@ -50,7 +50,7 @@ export async function generateRssItem(
   pathPrefix: string,
 ): Promise<string> {
   const link = `${pathPrefix}/blog/${post.data.slug}/`;
-  const fullLink = new URL(link, site).toString();
+  const fullLink = new URL(link, site).href;
   const t = useTranslations(locale);
   const description = post.data.description || t("seo.siteDescription");
 
@@ -69,8 +69,8 @@ export async function generateRssItem(
         width: 400,
       });
       // JPEG chosen over WebP for maximum compatibility with RSS readers
-      const imgUrl = new URL(opt.src, site).toString();
-      const thumbUrl = new URL(thumb.src, site).toString();
+      const imgUrl = new URL(opt.src, site).href;
+      const thumbUrl = new URL(thumb.src, site).href;
 
       // RSS 2.0 Enclosure (Used by most modern readers for the main image)
       customData += `<enclosure url="${escapeXml(imgUrl)}" length="0" type="image/jpeg" />\n`;
@@ -155,7 +155,7 @@ export async function generateRssFeed(
     <title>${escapeXml(t("seo.rssFeedTitle"))}</title>
     <description>${escapeXml(t("seo.siteDescription"))}</description>
     <link>${escapeXml(site + pathPrefix)}</link>
-    <atom:link href="${escapeXml(new URL(feedUrl, site).toString())}" rel="self" type="application/rss+xml" />
+    <atom:link href="${escapeXml(new URL(feedUrl, site).href)}" rel="self" type="application/rss+xml" />
     <language>${localeConfig[locale].bcp47.toLowerCase()}</language>
     <copyright>${t("rss.copyright", { year })}</copyright>
     <managingEditor>mail@jmrp.io (José Manuel Requena Plens)</managingEditor>
@@ -165,7 +165,7 @@ export async function generateRssFeed(
     <generator>Astro RSS Generator (Manual)</generator>
     <docs>https://www.rssboard.org/rss-specification</docs>
     <image>
-      <url>${escapeXml(new URL("/favicon.png", site).toString())}</url>
+      <url>${escapeXml(new URL("/favicon.png", site).href)}</url>
       <title>${escapeXml(t("seo.rssFeedTitle"))}</title>
       <link>${escapeXml(site + pathPrefix)}</link>
     </image>

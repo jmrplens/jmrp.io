@@ -68,10 +68,12 @@ export async function optimizeImages(
     const results = await Promise.all(batch.map((f) => processFile(f)));
 
     for (const res of results) {
-      if (res.optimized) {
-        optimizedCount++;
-        totalSaved += res.saved;
+      if (!res.optimized) {
+        continue;
       }
+
+      optimizedCount++;
+      totalSaved += res.saved;
     }
   }
 

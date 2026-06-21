@@ -77,10 +77,7 @@ const certificates = cvData.find((s) => s.type === "certificate_list");
 const personSchema = {
   "@context": "https://schema.org",
   "@type": "ProfilePage",
-  "@id": new URL(
-    "#profile",
-    new URL(Astro.url.pathname, getSiteUrl()),
-  ).toString(),
+  "@id": new URL("#profile", new URL(Astro.url.pathname, getSiteUrl())).href,
   inLanguage: locale,
   mainEntity: {
     "@type": "Person",

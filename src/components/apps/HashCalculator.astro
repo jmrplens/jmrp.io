@@ -103,7 +103,7 @@ const algorithms = [
                   data-target={`${uniqueId}-${algo.id}`}
                   aria-label={t("tools.hashCalculator.copyShaHash").replace(
                     "{algo}",
-                    algo.name,
+                    () => algo.name,
                   )}
                 >
                   <span class="i-mdi:content-copy" />

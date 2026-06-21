@@ -54,11 +54,11 @@ test.describe("Performance Optimizations", () => {
             observer.disconnect();
             resolve(lcpValue);
           } else {
-            globalThis.setTimeout(poll, pollInterval);
+            setTimeout(poll, pollInterval);
           }
         };
 
-        globalThis.setTimeout(poll, pollInterval);
+        setTimeout(poll, pollInterval);
       });
     });
 

@@ -285,11 +285,13 @@ function discoverRssFeeds(distDir) {
   try {
     const entries = fs.readdirSync(distDir, { withFileTypes: true });
     for (const entry of entries) {
-      if (entry.isDirectory()) {
-        const localeFeed = path.join(distDir, entry.name, "rss.xml");
-        if (fs.existsSync(localeFeed)) {
-          feeds.push(localeFeed);
-        }
+      if (!entry.isDirectory()) {
+        continue;
+      }
+
+      const localeFeed = path.join(distDir, entry.name, "rss.xml");
+      if (fs.existsSync(localeFeed)) {
+        feeds.push(localeFeed);
       }
     }
   } catch {
@@ -331,7 +333,8 @@ async function validateRSS() {
 
   // If a specific file was passed (not just a directory), validate only that file
   const isSpecificFile =
-    process.argv.length > 3 || process.argv[2]?.endsWith(".xml");
+    globalThis.process.argv.length > 3 ||
+    globalThis.process.argv[2]?.endsWith(".xml");
   const feedFiles = isSpecificFile ? [rssFile] : discoverRssFeeds(distDir);
 
   if (feedFiles.length === 0) {

@@ -25,7 +25,7 @@ export function calculateHealthScore(saOutcomes = {}, qualityOutcomes = {}) {
   }
 
   // Deduction for Quality failures (-10 each)
-  for (const [, outcome] of Object.entries(qualityOutcomes)) {
+  for (const outcome of Object.values(qualityOutcomes)) {
     if (outcome === "failure") {
       score -= 10;
     }

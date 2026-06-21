@@ -113,7 +113,7 @@ test.describe("UnoCSS Icons Consistency", () => {
         ).toEqual([]);
 
         // Check 3: Each icon rule must be defined ONLY ONCE
-        const duplicatedIcons = [...definedIcons.entries()]
+        const duplicatedIcons = [...definedIcons]
           .filter(([_, count]) => count > 1)
           .map(([icon, count]) => `${icon} (defined ${count} times)`);
 

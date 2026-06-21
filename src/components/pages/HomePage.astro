@@ -54,16 +54,16 @@ const latestPosts = postEntries.slice(0, 3).map((e) => e.post);
 const personSchema = [
   {
     "@type": "ProfilePage",
-    "@id": new URL("#profile", getSiteUrl()).toString(),
+    "@id": new URL("#profile", getSiteUrl()).href,
     name: person.name,
     url: getSiteUrl(),
     inLanguage: locale,
     mainEntity: {
       "@type": "Person",
-      "@id": new URL("#person", getSiteUrl()).toString(),
+      "@id": new URL("#person", getSiteUrl()).href,
       name: person.name,
       url: getSiteUrl(),
-      image: new URL(mehomeImg.src, getSiteUrl()).toString(),
+      image: new URL(mehomeImg.src, getSiteUrl()).href,
       sameAs: siteData.social_links?.map((s) => s.url) || [],
       jobTitle: t("seo.jobTitle"),
       ...(person.worksFor && {

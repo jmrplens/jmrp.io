@@ -91,7 +91,8 @@ const fullTitle = (() => {
 
   if (`${title} | ${suffix}`.length <= 65) {
     return `${title} | ${suffix}`;
-  } else if (`${title} | ${shortSuffix}`.length <= 65) {
+  }
+  if (`${title} | ${shortSuffix}`.length <= 65) {
     return `${title} | ${shortSuffix}`;
   }
   return title;
@@ -147,17 +148,17 @@ const ogImageMime = (() => {
 // 1. WebSite Schema (Global)
 const websiteSchema = {
   "@type": "WebSite",
-  "@id": new URL("#website", getSiteUrl()).toString(),
+  "@id": new URL("#website", getSiteUrl()).href,
   url: getSiteUrl(),
   name: siteData.author,
   description: t("seo.siteDescription"),
   inLanguage: locale,
   publisher: {
     "@type": "Person",
-    "@id": new URL("#person", getSiteUrl()).toString(),
+    "@id": new URL("#person", getSiteUrl()).href,
     name: siteData.author,
     url: getSiteUrl(),
-    image: new URL(defaultOgImage.src, getSiteUrl()).toString(),
+    image: new URL(defaultOgImage.src, getSiteUrl()).href,
     sameAs: siteData.social_links?.map((link) => link.url) || [],
   },
 };
@@ -175,7 +176,7 @@ const navLabelKeyMap: Record<string, TranslationKey> = {
 const navSchema = (siteData.nav || []).map((item) => ({
   "@type": "SiteNavigationElement",
   name: navLabelKeyMap[item.href] ? t(navLabelKeyMap[item.href]) : item.label,
-  url: new URL(item.href, getSiteUrl()).toString(),
+  url: new URL(item.href, getSiteUrl()).href,
 }));
 
 // 3. Breadcrumb Schema (Automatic)
@@ -193,7 +194,7 @@ const breadcrumbList = {
     ...pathSegments.map((segment, index) => {
       const path = `/${pathSegments.slice(0, index + 1).join("/")}/`;
       const isLastSegment = index === pathSegments.length - 1;
-      const absoluteUrl = new URL(path, getSiteUrl()).toString();
+      const absoluteUrl = new URL(path, getSiteUrl()).href;
 
       // Prefer page title for the last segment if available
       const fallbackName = segment

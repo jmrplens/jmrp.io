@@ -41,7 +41,7 @@ if (lcpPost && lcpPost.data.coverImage) {
 }
 
 // Schema.org: CollectionPage with ItemList for Blog Index
-const baseUrl = new URL(Astro.url.pathname, getSiteUrl()).toString();
+const baseUrl = new URL(Astro.url.pathname, getSiteUrl()).href;
 const schema = {
   "@type": "CollectionPage",
   "@id": `${baseUrl}#collection`,
@@ -54,7 +54,7 @@ const schema = {
     itemListElement: posts.map((post, index) => ({
       "@type": "ListItem",
       position: index + 1,
-      url: new URL(`/blog/${post.data.slug}/`, getSiteUrl()).toString(),
+      url: new URL(`/blog/${post.data.slug}/`, getSiteUrl()).href,
       name: post.data.title,
     })),
   },

@@ -72,11 +72,12 @@ for (const filePath of files) {
 
     // Detect theme
     const lowerPath = filePath.toLowerCase();
-    let theme = "unknown";
-    if (lowerPath.includes("/light/") || lowerPath.includes("\\light\\"))
-      theme = "light";
-    if (lowerPath.includes("/dark/") || lowerPath.includes("\\dark\\"))
-      theme = "dark";
+    const isLight =
+      lowerPath.includes("/light/") || lowerPath.includes("\\light\\");
+    const isDark =
+      lowerPath.includes("/dark/") || lowerPath.includes("\\dark\\");
+    const fallbackTheme = isDark ? "dark" : "unknown";
+    const theme = isLight ? "light" : fallbackTheme;
 
     const scores = {
       p: Math.round((json.categories.performance?.score || 0) * 100),

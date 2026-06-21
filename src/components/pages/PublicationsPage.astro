@@ -21,13 +21,10 @@ const allPublications = publicationGroups.flatMap((group) => group.items);
 const collectionSchema = {
   "@context": "https://schema.org",
   "@type": "CollectionPage",
-  "@id": new URL(
-    "#collection",
-    new URL(Astro.url.pathname, getSiteUrl()),
-  ).toString(),
+  "@id": new URL("#collection", new URL(Astro.url.pathname, getSiteUrl())).href,
   name: t("pages.publications.title"),
   description: t("pages.publications.schemaDescription"),
-  url: new URL(Astro.url.pathname, getSiteUrl()).toString(),
+  url: new URL(Astro.url.pathname, getSiteUrl()).href,
   inLanguage: locale,
   mainEntity: {
     "@type": "ItemList",

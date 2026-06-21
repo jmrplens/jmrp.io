@@ -92,9 +92,7 @@ export function isExtensionViolation(r) {
   // Antivirus/security suites that inject scripts into pages (Kaspersky Protection).
   // Extract hostname to avoid substring artifacts, then check domain suffix.
   const host = hostOf(source);
-  if (host && /kaspersky-labs\.com$/i.test(host)) return true;
-
-  return false;
+  return Boolean(host && /kaspersky-labs\.com$/i.test(host));
 }
 
 /**
@@ -114,9 +112,7 @@ export function isBrowserInternalViolation(r) {
   // Firefox internal resource:// scripts and styles.
   if (source === "resource" || source.startsWith("resource:")) return true;
   if (source === "blob" || source.startsWith("blob:")) return true;
-  if (blocked === "blob" || blocked.startsWith("blob:")) return true;
-
-  return false;
+  return Boolean(blocked === "blob" || blocked.startsWith("blob:"));
 }
 
 /**
@@ -188,15 +184,11 @@ export function isBotUserAgent(ua) {
   // Chromium UA template missing the mandatory "Chrome/" token → scraper/render
   // bot. Real Chromium browsers always include "Chrome/<version>"; real Safari
   // uses "Version/<n> Safari/605.x", never bare "AppleWebKit/537.36 … Safari/537.36".
-  if (
+  return (
     /AppleWebKit\/537\.36/.test(ua) &&
     /Safari\/537\.36/.test(ua) &&
     !/Chrome\/\d/.test(ua)
-  ) {
-    return true;
-  }
-
-  return false;
+  );
 }
 
 /**

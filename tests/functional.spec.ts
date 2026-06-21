@@ -29,11 +29,13 @@ test.describe("Site-wide Functional Checks", () => {
       // Listen for console errors
       const consoleErrors: string[] = [];
       page.on("console", (msg) => {
-        if (msg.type() === "error") {
-          const text = msg.text();
-          if (!shouldIgnoreError(text)) {
-            consoleErrors.push(`[${msg.type()}] ${text}`);
-          }
+        if (msg.type() !== "error") {
+          return;
+        }
+
+        const text = msg.text();
+        if (!shouldIgnoreError(text)) {
+          consoleErrors.push(`[${msg.type()}] ${text}`);
         }
       });
 

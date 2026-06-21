@@ -47,6 +47,26 @@ export default [
     rules: {
       ...eslintPluginUnicorn.configs.recommended.rules,
       "unicorn/prevent-abbreviations": "off", // Too strict (props, env, args, etc.)
+      // New in v66–v68; same spirit as prevent-abbreviations / readability — off.
+      "unicorn/name-replacements": "off", // Too strict (btn, msg, i, e, el, fn, …)
+      "unicorn/consistent-boolean-name": "off", // Opinionated is/has/can boolean naming
+      "unicorn/max-nested-calls": "off", // Forces intermediate vars; hurts readability here
+      "unicorn/no-for-each": "off", // for…of vs forEach is fine (cf. no-array-for-each)
+      "unicorn/prefer-await": "off", // intentional .then/.catch (e.g. .catch(() => null))
+      "unicorn/prefer-iterator-to-array": "off", // [...x] / Array.from is the portable form
+      "unicorn/prefer-array-from-map": "off", // stylistic
+      "unicorn/no-break-in-nested-loop": "off", // breaking out of nested loops is fine
+      "unicorn/no-declarations-before-early-exit": "off", // declaring before guards reads fine
+      "unicorn/no-top-level-assignment-in-function": "off", // stylistic
+      "unicorn/no-computed-property-existence-check": "off", // obj[k] value-check ≠ Object.hasOwn
+      "unicorn/prefer-number-coercion": "off", // Number()/parseInt are clear and intentional
+      "unicorn/no-unreadable-for-of-expression": "off", // stylistic
+      "unicorn/prefer-minimal-ternary": "off", // stylistic
+      "unicorn/prefer-hoisting-branch-code": "off", // stylistic
+      // Buffer.from(x, "base64") is standard Node and is the right type for the
+      // crypto/fs (Buffer) flows in post-build; the Uint8Array.fromBase64 form
+      // is adopted where it's a clean swap (scripts/preview-rss.mjs).
+      "unicorn/prefer-uint8array-base64": "off",
       "unicorn/no-null": "off", // null is standard in many APIs
       "unicorn/filename-case": "off", // Avoid renaming existing files
       "unicorn/prefer-top-level-await": "off", // Can break in some CJS contexts or older envs
@@ -178,6 +198,18 @@ export default [
 
   // 9. SonarJS Configuration (Quality & Security)
   sonarjs.configs.recommended,
+  {
+    rules: {
+      // Stricter sibling of slow-regex (already off below); the flagged regexes
+      // run on author content / CI input, not untrusted user input.
+      "sonarjs/super-linear-regex": "off",
+      // Keep the guardrail but raise the bar — a couple of parsers sit just over
+      // the default 15; refactoring them carries more risk than value.
+      "sonarjs/cognitive-complexity": ["error", 30],
+      // Forcing a click is a legitimate tool in our E2E (e.g. modal backdrops).
+      "sonarjs/no-forced-browser-interaction": "off",
+    },
+  },
   {
     files: ["**/*.astro", "src/integrations/post-build/*.ts"],
     rules: {

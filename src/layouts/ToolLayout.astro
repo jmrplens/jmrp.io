@@ -40,7 +40,7 @@ const toolSchema = {
   "@type": "SoftwareApplication",
   name: title,
   description,
-  url: new URL(`/tools/${slug}/`, getSiteUrl()).toString(),
+  url: new URL(`/tools/${slug}/`, getSiteUrl()).href,
   applicationCategory: "WebApplication",
   operatingSystem: "Web Browser",
   offers: { "@type": "Offer", price: 0, priceCurrency: "USD" },

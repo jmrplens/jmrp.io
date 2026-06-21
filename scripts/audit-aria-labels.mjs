@@ -4,13 +4,13 @@ import * as cheerio from "cheerio";
 
 // Terminal colors
 const C = {
-  reset: "\u001B[0m",
-  bright: "\u001B[1m",
-  dim: "\u001B[2m",
-  cyan: "\u001B[36m",
-  green: "\u001B[32m",
-  yellow: "\u001B[33m",
-  red: "\u001B[31m",
+  reset: "\u{1B}[0m",
+  bright: "\u{1B}[1m",
+  dim: "\u{1B}[2m",
+  cyan: "\u{1B}[36m",
+  green: "\u{1B}[32m",
+  yellow: "\u{1B}[33m",
+  red: "\u{1B}[31m",
 };
 
 /**

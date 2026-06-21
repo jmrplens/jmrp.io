@@ -29,7 +29,7 @@ import type {
  * @returns Filtered list based on locale.
  */
 export function filterPagesByLocale(pages: PageInfo[]): PageInfo[] {
-  const locale = process.env.LOCALE_FILTER?.toLowerCase();
+  const locale = globalThis.process.env.LOCALE_FILTER?.toLowerCase();
   if (!locale) return pages;
 
   if (locale === "en") {
