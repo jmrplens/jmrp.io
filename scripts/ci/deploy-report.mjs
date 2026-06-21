@@ -28,7 +28,11 @@ if (
   !dirPattern.test(dir) ||
   !projectNamePattern.test(projectName) ||
   dir.includes("..") ||
-  projectName.includes("..")
+  projectName.includes("..") ||
+  // A leading "-" would let Vercel read the value as an option (e.g. a stray
+  // "--prod"), so reject it for both positional arguments.
+  dir.startsWith("-") ||
+  projectName.startsWith("-")
 ) {
   console.error(
     "Invalid directory or project name: contains unsafe characters",

@@ -362,6 +362,7 @@ jmrp
 jmrplens
 josé
 journalctl
+jssecurity
 JTAG
 kaspersky
 Kconfig
