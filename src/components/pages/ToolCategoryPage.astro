@@ -62,13 +62,10 @@ const meta = categoryMeta[category] ?? {
 
 const schema = {
   "@type": "CollectionPage",
-  "@id": new URL(
-    "#collection",
-    new URL(Astro.url.pathname, getSiteUrl()),
-  ).toString(),
+  "@id": new URL("#collection", new URL(Astro.url.pathname, getSiteUrl())).href,
   name: meta.name,
   description: meta.description,
-  url: new URL(Astro.url.pathname, getSiteUrl()).toString(),
+  url: new URL(Astro.url.pathname, getSiteUrl()).href,
   inLanguage: locale,
   mainEntity: {
     "@type": "ItemList",
@@ -76,7 +73,7 @@ const schema = {
       (tool: { data: { slug: string; title: string } }, index: number) => ({
         "@type": "ListItem",
         position: index + 1,
-        url: new URL(`/tools/${tool.data.slug}/`, getSiteUrl()).toString(),
+        url: new URL(`/tools/${tool.data.slug}/`, getSiteUrl()).href,
         name: tool.data.title,
       }),
     ),

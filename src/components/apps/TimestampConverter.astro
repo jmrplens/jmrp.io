@@ -34,11 +34,13 @@ const i18n = {
   invalidTimestamp: t("tools.timestampConverter.invalidTimestamp"),
   autoDetectedAsSeconds: t("tools.timestampConverter.autoDetectedAs").replace(
     "{unit}",
-    t("tools.timestampConverter.seconds").toLowerCase(),
+    () => t("tools.timestampConverter.seconds").toLowerCase(),
   ),
   autoDetectedAsMilliseconds: t(
     "tools.timestampConverter.autoDetectedAs",
-  ).replace("{unit}", t("tools.timestampConverter.milliseconds").toLowerCase()),
+  ).replace("{unit}", () =>
+    t("tools.timestampConverter.milliseconds").toLowerCase(),
+  ),
   invalidDate: t("tools.timestampConverter.invalidDate"),
   year: t("tools.timestampConverter.year"),
   years: t("tools.timestampConverter.years"),

@@ -238,14 +238,14 @@ const i18n = {
               role="group"
               aria-label={t("tools.cronBuilder.selectFieldValues").replace(
                 "{field}",
-                f.label.toLowerCase(),
+                () => f.label.toLowerCase(),
               )}
             >
               {Array.from({ length: f.max - f.min + 1 }, (_, i) => {
                 const val = f.min + i;
                 let displayLabel = String(val);
                 if (f.id === "month") displayLabel = monthLabels[i];
-                if (f.id === "dow") displayLabel = dowLabels[i];
+                else if (f.id === "dow") displayLabel = dowLabels[i];
                 return (
                   <button
                     type="button"

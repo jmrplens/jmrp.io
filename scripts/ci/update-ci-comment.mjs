@@ -114,7 +114,7 @@ function getExecutiveHighlights(saResults) {
   const highlights = [];
 
   const bundle = safeReadJson("bundle-analysis.json");
-  if (bundle?.readableCodeSize && bundle?.readableAssetSize) {
+  if (bundle?.readableCodeSize && bundle.readableAssetSize) {
     highlights.push(
       `- 📦 **Bundle Size:** Code: **${bundle.readableCodeSize}** | Assets: **${bundle.readableAssetSize}**`,
     );

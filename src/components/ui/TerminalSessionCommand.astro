@@ -126,7 +126,7 @@ if (ariaLabel) {
             class="prompt"
             aria-hidden="true"
           >
-            {!line.isEmpty && !line.isComment ? prompt : "\u00A0"}
+            {!line.isEmpty && !line.isComment ? prompt : "\u{A0}"}
           </span>
           <span class:list={["line-content", { "is-comment": line.isComment }]}>
             {line.text}

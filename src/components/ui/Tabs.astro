@@ -51,7 +51,7 @@ if (labels.length === 0) {
 
 // Generate unique ID with random entropy for collision avoidance
 // Use globalThis.crypto for compatibility across Node.js versions
-const cryptoAPI = globalThis.crypto;
+const cryptoAPI = crypto;
 const entropy = cryptoAPI.getRandomValues(new Uint32Array(1))[0].toString(36);
 
 const labelSlug =

@@ -137,11 +137,13 @@ function validateSingleSchema(schema, prefix = "") {
 
     if (Array.isArray(schema[propName])) {
       for (const [i, item] of schema[propName].entries()) {
-        if (typeof item === "object") {
-          const res = validateSingleSchema(item, `${p}.${propName}[${i}]`);
-          errors.push(...res.errors);
-          warnings.push(...res.warnings);
+        if (typeof item !== "object") {
+          continue;
         }
+
+        const res = validateSingleSchema(item, `${p}.${propName}[${i}]`);
+        errors.push(...res.errors);
+        warnings.push(...res.warnings);
       }
     } else if (typeof schema[propName] === "object") {
       const res = validateSingleSchema(schema[propName], `${p}.${propName}`);

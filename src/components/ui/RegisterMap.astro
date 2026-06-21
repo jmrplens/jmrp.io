@@ -95,8 +95,8 @@ const runs: Run[] = [];
 for (let b = width - 1; b >= 0; ) {
   const o = owner[b];
   let lo = b;
-  while (lo - 1 >= 0 && owner[lo - 1] === o) lo--;
-  const bitsLabel = b === lo ? `${b}` : `${b}:${lo}`;
+  while (lo >= 1 && owner[lo - 1] === o) lo--;
+  const bitsLabel = b === lo ? String(b) : `${b}:${lo}`;
   runs.push(
     o === null
       ? {

@@ -20,29 +20,31 @@ import { visit } from "unist-util-visit";
 export function remarkMermaidBypass() {
   return (tree) => {
     visit(tree, "code", (node, index, parent) => {
-      if (node.lang === "mermaid-render") {
-        // Use proper hast node structure instead of type: "html"
-        // This ensures content is properly handled by the processor
-        const newNode = {
-          type: "paragraph", // Use paragraph as container type
-          position: node.position,
-          data: {
-            hName: "pre",
-            hProperties: {
-              className: ["mermaid"],
-            },
-            hChildren: [
-              {
-                type: "text",
-                value: node.value, // Text nodes are auto-escaped by hast
-              },
-            ],
-          },
-        };
-
-        parent.children[index] = newNode;
-        return index + 1;
+      if (node.lang !== "mermaid-render") {
+        return;
       }
+
+      // Use proper hast node structure instead of type: "html"
+      // This ensures content is properly handled by the processor
+      const newNode = {
+        type: "paragraph", // Use paragraph as container type
+        position: node.position,
+        data: {
+          hName: "pre",
+          hProperties: {
+            className: ["mermaid"],
+          },
+          hChildren: [
+            {
+              type: "text",
+              value: node.value, // Text nodes are auto-escaped by hast
+            },
+          ],
+        },
+      };
+
+      parent.children[index] = newNode;
+      return index + 1;
     });
   };
 }

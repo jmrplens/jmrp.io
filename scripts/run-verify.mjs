@@ -20,13 +20,13 @@ try {
 
 // ANSI colors for pretty output
 const colors = {
-  reset: "\u001B[0m",
-  bright: "\u001B[1m",
-  green: "\u001B[32m",
-  yellow: "\u001B[33m",
-  red: "\u001B[31m",
-  cyan: "\u001B[36m",
-  magenta: "\u001B[35m",
+  reset: "\u{1B}[0m",
+  bright: "\u{1B}[1m",
+  green: "\u{1B}[32m",
+  yellow: "\u{1B}[33m",
+  red: "\u{1B}[31m",
+  cyan: "\u{1B}[36m",
+  magenta: "\u{1B}[35m",
 };
 
 /**
@@ -155,15 +155,14 @@ function runVerify() {
       `${colors.green}${colors.bright}✨ ALL CHECKS PASSED SUCCESSFULLY! (${duration}s)${colors.reset}`,
     );
     return true;
-  } else {
-    console.error(
-      `${colors.red}${colors.bright}💥 VERIFICATION FAILED! (${duration}s)${colors.reset}`,
-    );
-    console.error(
-      `${colors.red}   Failed step: ${failedSteps[0]}${colors.reset}`,
-    );
-    return false;
   }
+  console.error(
+    `${colors.red}${colors.bright}💥 VERIFICATION FAILED! (${duration}s)${colors.reset}`,
+  );
+  console.error(
+    `${colors.red}   Failed step: ${failedSteps[0]}${colors.reset}`,
+  );
+  return false;
 }
 
 // Ensure reports are cleaned before starting

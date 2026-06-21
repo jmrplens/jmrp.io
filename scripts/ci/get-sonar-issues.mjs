@@ -86,10 +86,12 @@ async function checkNoSonar(component, line) {
 
     let fullPath = null;
     for (const p of possiblePaths) {
-      if (fs.existsSync(p) && fs.statSync(p).isFile()) {
-        fullPath = p;
-        break;
+      if (!(fs.existsSync(p) && fs.statSync(p).isFile())) {
+        continue;
       }
+
+      fullPath = p;
+      break;
     }
 
     if (!fullPath) {

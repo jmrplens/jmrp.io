@@ -27,7 +27,7 @@ export const getSiteUrl = (): string => {
 export const getAbsoluteUrl = (path: string): string => {
   const base = getSiteUrl(); // Call outside try-catch so errors propagate unchanged
   try {
-    return new URL(path, base).toString();
+    return new URL(path, base).href;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     throw new Error(

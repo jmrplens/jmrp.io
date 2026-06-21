@@ -97,10 +97,8 @@ if (post.data.coverImage) {
 const articleSchema = [
   {
     "@type": "BlogPosting",
-    "@id": new URL(
-      "#article",
-      new URL(`/blog/${post.data.slug}`, getSiteUrl()),
-    ).toString(),
+    "@id": new URL("#article", new URL(`/blog/${post.data.slug}`, getSiteUrl()))
+      .href,
     headline: post.data.title,
     description: post.data.description,
     datePublished: post.data.publishedDate.toISOString(),
@@ -109,25 +107,25 @@ const articleSchema = [
     ).toISOString(),
     publisher: {
       "@type": "Person",
-      "@id": new URL("#person", getSiteUrl()).toString(),
+      "@id": new URL("#person", getSiteUrl()).href,
       name: siteData.author,
       url: getSiteUrl(),
     },
     author: {
       "@type": "Person",
-      "@id": new URL("#person", getSiteUrl()).toString(),
+      "@id": new URL("#person", getSiteUrl()).href,
       name: siteData.author,
       url: getSiteUrl(),
     },
-    image: new URL(jsonLdImage, getSiteUrl()).toString(),
+    image: new URL(jsonLdImage, getSiteUrl()).href,
     mainEntityOfPage: {
       "@type": "WebPage",
-      "@id": new URL(`/blog/${post.data.slug}`, getSiteUrl()).toString(),
+      "@id": new URL(`/blog/${post.data.slug}`, getSiteUrl()).href,
     },
     inLanguage: locale,
     ...(post.data.tags.length > 0 && { keywords: post.data.tags }),
     isPartOf: {
-      "@id": new URL("#website", getSiteUrl()).toString(),
+      "@id": new URL("#website", getSiteUrl()).href,
     },
   },
 ];

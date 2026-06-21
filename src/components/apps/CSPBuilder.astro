@@ -753,15 +753,15 @@ const i18n = {
           set:html={t("tools.cspBuilder.strictInfoText")
             .replace(
               "{scriptSrcNonce}",
-              `<strong>${t("tools.cspBuilder.scriptSrcNonce")}</strong>`,
+              () => `<strong>${t("tools.cspBuilder.scriptSrcNonce")}</strong>`,
             )
             .replace(
               "{objectSrcNone}",
-              `<strong>${t("tools.cspBuilder.objectSrcNone")}</strong>`,
+              () => `<strong>${t("tools.cspBuilder.objectSrcNone")}</strong>`,
             )
             .replace(
               "{baseUriNone}",
-              `<strong>${t("tools.cspBuilder.baseUriNone")}</strong>`,
+              () => `<strong>${t("tools.cspBuilder.baseUriNone")}</strong>`,
             )}
         />
       </div>

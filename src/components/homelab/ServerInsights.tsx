@@ -469,10 +469,29 @@ function ResourceLoadCard({
 }
 
 /**
+ * Validate a fetched payload against the expected shape for the server type.
+ */
+function isValidStatsForType(type: Props["type"], data: unknown): boolean {
+  switch (type) {
+    case "matrix": {
+      return isValidMatrixStats(data);
+    }
+    case "mastodon": {
+      return isValidMastodonStats(data);
+    }
+    case "truenas": {
+      return isValidTrueNASStats(data);
+    }
+    case "mikrotik": {
+      return isValidMikroTikStats(data);
+    }
+  }
+}
+
+/**
  * Server insights component for Matrix, Mastodon, TrueNAS, and MikroTik.
  * Displays real-time statistics fetched from `/api/homelab/{type}` endpoints.
  */
-// eslint-disable-next-line sonarjs/cognitive-complexity -- Multi-view component with inherent branching per server type
 export default function ServerInsights({
   type,
   translations: t,
@@ -501,27 +520,7 @@ export default function ServerInsights({
         });
         if (res.ok) {
           const data: unknown = await res.json();
-          let isValid = false;
-          switch (type) {
-            case "matrix": {
-              isValid = isValidMatrixStats(data);
-              break;
-            }
-            case "mastodon": {
-              isValid = isValidMastodonStats(data);
-              break;
-            }
-            case "truenas": {
-              isValid = isValidTrueNASStats(data);
-              break;
-            }
-            case "mikrotik": {
-              isValid = isValidMikroTikStats(data);
-              break;
-            }
-          }
-
-          if (isValid) {
+          if (isValidStatsForType(type, data)) {
             setStats(
               data as
                 | MatrixStats

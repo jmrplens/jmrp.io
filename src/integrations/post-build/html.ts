@@ -366,7 +366,7 @@ function processStyles($: cheerio.CheerioAPI, enableCsp: boolean): boolean {
   if (styleToClassMap.size > 0) {
     let cssRules = "";
     const bs = "\\";
-    for (const [styleDef, className] of styleToClassMap.entries()) {
+    for (const [styleDef, className] of styleToClassMap) {
       const sanitizedStyle = styleDef
         .replaceAll(bs, String.raw`\5c `)
         .replaceAll("<", String.raw`\3c `)

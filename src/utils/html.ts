@@ -127,6 +127,6 @@ export function safeJsonLd(data: unknown): string {
     .replaceAll("<", String.raw`\u003c`)
     .replaceAll(">", String.raw`\u003e`)
     .replaceAll("&", String.raw`\u0026`)
-    .replaceAll("\u2028", String.raw`\u2028`)
-    .replaceAll("\u2029", String.raw`\u2029`);
+    .replaceAll("\u{2028}", String.raw`\u2028`)
+    .replaceAll("\u{2029}", String.raw`\u2029`);
 }

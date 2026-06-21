@@ -39,7 +39,7 @@
 | Testing         | Playwright + Axe-core    | ^1.60.0 / ^4.12.1 |
 | Icons           | Iconify (12 collections) | @iconify-json/* |
 | Package Manager | pnpm                     | >=10           |
-| Node            | Required                 | >=22.18.0      |
+| Node            | Required                 | >=24.0.0 (LTS) |
 
 ---
 

@@ -34,13 +34,11 @@ const avatarSrcSetString = avatarSrcSetResolves.join(", ");
 
 const githubSchema = {
   "@type": "ProfilePage",
-  "@id": new URL(
-    "#github-profile",
-    new URL(Astro.url.pathname, getSiteUrl()),
-  ).toString(),
+  "@id": new URL("#github-profile", new URL(Astro.url.pathname, getSiteUrl()))
+    .href,
   name: t("pages.github.title"),
   description: t("pages.github.schemaDescription"),
-  url: new URL(Astro.url.pathname, getSiteUrl()).toString(),
+  url: new URL(Astro.url.pathname, getSiteUrl()).href,
   inLanguage: locale,
   mainEntity: {
     "@type": "Person",

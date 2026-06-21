@@ -52,9 +52,9 @@ export function generateAccessibilityIndexHtml(
           <a href="${escapeHtml(r.reportPath)}" class="page-link">
             <span class="status">${r.violations === 0 ? "✅" : "❌"}</span>
             <div class="details">
-              <span class="page-name">${escapeHtml(`${r.name || r.page || ""}`)}</span>
+              <span class="page-name">${escapeHtml(r.name || r.page || "")}</span>
               <div style="margin-top: 4px;">
-                <span class="page-url">${escapeHtml(`${r.url || ""}`)}</span>
+                <span class="page-url">${escapeHtml(r.url || "")}</span>
               </div>
               ${r.violations > 0 ? `<div class="violations">⚠️ ${r.violations} violations found</div>` : ""}
             </div>

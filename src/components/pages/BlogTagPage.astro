@@ -46,23 +46,20 @@ const articleWord = pluralize(
 // Schema.org: CollectionPage with ItemList
 const schema = {
   "@type": "CollectionPage",
-  "@id": new URL(
-    "#collection",
-    new URL(Astro.url.pathname, getSiteUrl()),
-  ).toString(),
+  "@id": new URL("#collection", new URL(Astro.url.pathname, getSiteUrl())).href,
   name: t("pages.blogTags.schemaName", { tag }),
   description: t("pages.blogTags.schemaDescription", {
     count: posts.length,
     tag,
   }),
-  url: new URL(Astro.url.pathname, getSiteUrl()).toString(),
+  url: new URL(Astro.url.pathname, getSiteUrl()).href,
   inLanguage: locale,
   mainEntity: {
     "@type": "ItemList",
     itemListElement: posts.map((post, index) => ({
       "@type": "ListItem",
       position: index + 1,
-      url: new URL(`/blog/${post.data.slug}/`, getSiteUrl()).toString(),
+      url: new URL(`/blog/${post.data.slug}/`, getSiteUrl()).href,
       name: post.data.title,
     })),
   },

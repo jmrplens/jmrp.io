@@ -34,10 +34,7 @@ const config: Record<
 };
 
 const { icon, class: badgeClass, prefix } = config[type];
-const displayValue =
-  value !== undefined && value !== null
-    ? value
-    : type.charAt(0).toUpperCase() + type.slice(1);
+const displayValue = value ?? type.charAt(0).toUpperCase() + type.slice(1);
 ---
 
 <span class={`version-badge ${badgeClass}`}>

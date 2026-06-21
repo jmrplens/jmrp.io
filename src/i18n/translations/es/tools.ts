@@ -649,7 +649,7 @@ export const tools = {
     pastePemPlaceholder: "Pega aquí el certificado en formato PEM...",
     inspectCertificate: "Inspeccionar Certificado",
     // Fetch states & errors
-    fetching: "Obteniendo\u2026",
+    fetching: "Obteniendo\u{2026}",
     invalidUrl: "URL no válida",
     noCertsFound: "No se encontraron certificados para {hostname}",
     couldNotParse: "No se pudo analizar ningún certificado",
@@ -713,11 +713,11 @@ export const tools = {
     subjectKeyId: "ID de Clave del Sujeto",
     authorityKeyId: "ID de Clave de Autoridad",
     ctScts: "CT SCTs",
-    ctPresent: "Presente \u2713",
+    ctPresent: "Presente \u{2713}",
     ctNotFound: "No encontrado",
     // Fingerprint
     sha256Fingerprint: "Huella Digital SHA-256",
-    computing: "Calculando\u2026",
+    computing: "Calculando\u{2026}",
     unavailable: "No disponible",
     // Security findings
     unknown: "Desconocido",
@@ -725,26 +725,26 @@ export const tools = {
     certExpiresIn: "El certificado expira en {days} días",
     certValid: "El certificado es válido",
     rsaKeyTooSmall:
-      "Clave RSA demasiado pequeña ({bits} bits) \u2014 mínimo 2048 requerido",
-    rsaKeyOk: "Clave RSA de {bits} bits \u2713",
-    rsaKeyStrong: "Clave RSA de {bits} bits (fuerte) \u2713",
-    ecdsaKeyStrong: "Clave ECDSA {curve} (fuerte) \u2713",
+      "Clave RSA demasiado pequeña ({bits} bits) \u{2014} mínimo 2048 requerido",
+    rsaKeyOk: "Clave RSA de {bits} bits \u{2713}",
+    rsaKeyStrong: "Clave RSA de {bits} bits (fuerte) \u{2713}",
+    ecdsaKeyStrong: "Clave ECDSA {curve} (fuerte) \u{2713}",
     ecCurve: "Curva EC: {curve}",
-    sha1Deprecated: "Firma SHA-1 \u2014 obsoleta e insegura",
-    sigAlgOk: "Firma {alg} \u2713",
+    sha1Deprecated: "Firma SHA-1 \u{2014} obsoleta e insegura",
+    sigAlgOk: "Firma {alg} \u{2713}",
     selfSignedWarning:
-      "Certificado autofirmado \u2014 no confiable por los navegadores",
-    sansPresent: "{count} Nombre(s) Alternativo(s) del Sujeto \u2713",
+      "Certificado autofirmado \u{2014} no confiable por los navegadores",
+    sansPresent: "{count} Nombre(s) Alternativo(s) del Sujeto \u{2713}",
     noSans:
-      "Sin Nombres Alternativos del Sujeto \u2014 los navegadores modernos requieren SANs",
+      "Sin Nombres Alternativos del Sujeto \u{2014} los navegadores modernos requieren SANs",
     wildcardDetected: "Certificado comodín detectado",
     isCaCert: "Este es un certificado CA",
-    ctSctsPresent: "SCTs de Transparencia de Certificados presentes \u2713",
+    ctSctsPresent: "SCTs de Transparencia de Certificados presentes \u{2713}",
     noCtScts:
-      "No se encontraron SCTs de CT \u2014 puede no ser confiable por Chrome",
+      "No se encontraron SCTs de CT \u{2014} puede no ser confiable por Chrome",
     validityExceeds:
-      "Validez del certificado {days} días \u2014 excede el máximo de 398 días (CA/B Forum)",
-    validityPeriodOk: "Período de validez {days} días \u2713",
+      "Validez del certificado {days} días \u{2014} excede el máximo de 398 días (CA/B Forum)",
+    validityPeriodOk: "Período de validez {days} días \u{2713}",
   },
   httpHeadersAnalyzer: {
     // Etiquetas de interfaz
@@ -760,8 +760,8 @@ export const tools = {
     fetchingHeaders: "Obteniendo cabeceras...",
     noHeadersReturned:
       "No se obtuvieron cabeceras — el servidor puede haber rechazado la solicitud.",
-    fetchedHeaders: "\u2713 Se obtuvieron {count} cabeceras.",
-    failedToFetch: "\u2717 {msg}",
+    fetchedHeaders: "\u{2713} Se obtuvieron {count} cabeceras.",
+    failedToFetch: "\u{2717} {msg}",
     failedToFetchDefault: "Error al obtener",
     // Títulos de sección
     cookieSecurity: "Seguridad de cookies",
@@ -778,8 +778,8 @@ export const tools = {
     inconsistenciesCount: "{count} inconsistencias",
     // Etiquetas de resultado
     recommended: "Recomendado:",
-    learnMore: "Más información \u2192",
-    cspBuilderTool: "Herramienta CSP Builder \u2192",
+    learnMore: "Más información \u{2192}",
+    cspBuilderTool: "Herramienta CSP Builder \u{2192}",
     // Etiquetas de severidad
     severityCritical: "crítico",
     severityHigh: "alto",
@@ -791,109 +791,113 @@ export const tools = {
     cspDesc:
       "Controla qué recursos se pueden cargar. Esencial para prevenir ataques XSS y de inyección.",
     cspMissing:
-      "Ausente \u2014 alto riesgo de XSS. Usa la herramienta CSP Builder para generar una política.",
-    cspDefaultSrcNone: "default-src 'none' \u2713",
+      "Ausente \u{2014} alto riesgo de XSS. Usa la herramienta CSP Builder para generar una política.",
+    cspDefaultSrcNone: "default-src 'none' \u{2713}",
     cspDefaultSrcSelf:
-      "default-src 'self' \u2713 (considera 'none' para una política más estricta)",
+      "default-src 'self' \u{2713} (considera 'none' para una política más estricta)",
     cspMissingDefaultSrc: "Falta fallback de default-src",
     cspUnsafeInline:
-      "script-src 'unsafe-inline' \u2014 anula la protección XSS",
-    cspUnsafeEval: "'unsafe-eval' \u2014 permite ejecución dinámica de código",
+      "script-src 'unsafe-inline' \u{2014} anula la protección XSS",
+    cspUnsafeEval:
+      "'unsafe-eval' \u{2014} permite ejecución dinámica de código",
     cspDangerousSource: "Fuente peligrosa en script-src (comodín/data:/blob:)",
     cspTrustsAllHttps:
-      "script-src confía en todo HTTPS \u2014 prefiere orígenes explícitos o nonces",
+      "script-src confía en todo HTTPS \u{2014} prefiere orígenes explícitos o nonces",
     cspCdnBypass:
-      "Las listas de CDN pueden eludirse vía JSONP \u2014 prefiere nonces",
-    cspUsesNonces: "Usa nonces \u2713",
+      "Las listas de CDN pueden eludirse vía JSONP \u{2014} prefiere nonces",
+    cspUsesNonces: "Usa nonces \u{2713}",
     cspMissingNonces:
-      "Faltan nonces \u2014 considera nonces para un control más estricto (+4 pts)",
-    cspStrictDynamic: "strict-dynamic \u2713",
+      "Faltan nonces \u{2014} considera nonces para un control más estricto (+4 pts)",
+    cspStrictDynamic: "strict-dynamic \u{2713}",
     cspMissingStrictDynamic:
-      "Falta strict-dynamic \u2014 recomendado con nonces para CSP Level 3 (+3 pts)",
-    cspObjectSrcNone: "object-src 'none' \u2713",
+      "Falta strict-dynamic \u{2014} recomendado con nonces para CSP Level 3 (+3 pts)",
+    cspObjectSrcNone: "object-src 'none' \u{2713}",
     cspMissingObjectSrc:
-      "Falta object-src 'none' \u2014 vector de bypass de plugins (+2 pts)",
-    cspBaseUriRestricted: "base-uri restringido \u2713",
+      "Falta object-src 'none' \u{2014} vector de bypass de plugins (+2 pts)",
+    cspBaseUriRestricted: "base-uri restringido \u{2713}",
     cspMissingBaseUri:
-      "Falta base-uri \u2014 vulnerable a inyección de etiqueta base (+1 pt)",
-    cspFormActionDefined: "form-action definido \u2713",
+      "Falta base-uri \u{2014} vulnerable a inyección de etiqueta base (+1 pt)",
+    cspFormActionDefined: "form-action definido \u{2713}",
     cspMissingFormAction:
-      "Falta form-action \u2014 los formularios pueden enviar datos a servidores atacantes (+1 pt)",
-    cspFrameAncestorsDefined: "frame-ancestors definido \u2713",
+      "Falta form-action \u{2014} los formularios pueden enviar datos a servidores atacantes (+1 pt)",
+    cspFrameAncestorsDefined: "frame-ancestors definido \u{2713}",
     cspMissingFrameAncestors:
-      "Falta frame-ancestors \u2014 usa 'none' para prevenir enmarcado (+1 pt)",
-    cspUpgradeInsecure: "upgrade-insecure-requests \u2713",
+      "Falta frame-ancestors \u{2014} usa 'none' para prevenir enmarcado (+1 pt)",
+    cspUpgradeInsecure: "upgrade-insecure-requests \u{2713}",
     cspMissingUpgradeInsecure: "Falta upgrade-insecure-requests (+1 pt)",
-    cspReportingConfigured: "Reporte CSP configurado \u2713",
+    cspReportingConfigured: "Reporte CSP configurado \u{2713}",
     cspNoReporting:
-      "Sin reporte CSP \u2014 añade report-uri o report-to para monitorear violaciones (+1 pt)",
-    cspTrustedTypes: "Trusted Types habilitado \u2713",
+      "Sin reporte CSP \u{2014} añade report-uri o report-to para monitorear violaciones (+1 pt)",
+    cspTrustedTypes: "Trusted Types habilitado \u{2713}",
     // HSTS
     hstsDesc:
       "Fuerza conexiones HTTPS. Previene ataques de degradación de protocolo y secuestro de cookies.",
-    hstsMissing: "Ausente \u2014 vulnerable a ataques de degradación",
+    hstsMissing: "Ausente \u{2014} vulnerable a ataques de degradación",
     hstsMaxAgeZero: "max-age=0 desactiva HSTS efectivamente",
-    hstsMaxAge2Years: "max-age \u2265 2 años \u2713",
+    hstsMaxAge2Years: "max-age \u{2265} 2 años \u{2713}",
     hstsMaxAge1Year:
-      "max-age \u2265 1 año \u2014 aumenta a 63072000 para 2 años (+1 pt)",
-    hstsMaxAgeLow: "max-age debería ser \u2265 31536000 (1 año)",
-    hstsIncludeSubDomains: "includeSubDomains \u2713",
+      "max-age \u{2265} 1 año \u{2014} aumenta a 63072000 para 2 años (+1 pt)",
+    hstsMaxAgeLow: "max-age debería ser \u{2265} 31536000 (1 año)",
+    hstsIncludeSubDomains: "includeSubDomains \u{2713}",
     hstsMissingIncludeSubDomains: "Falta includeSubDomains (+2 pts)",
-    hstsPreload: "preload \u2713 (enviar a hstspreload.org)",
+    hstsPreload: "preload \u{2713} (enviar a hstspreload.org)",
     hstsMissingPreload:
-      "Falta preload \u2014 añádelo para ser elegible en la lista de precarga HSTS (+2 pts)",
+      "Falta preload \u{2014} añádelo para ser elegible en la lista de precarga HSTS (+2 pts)",
     // X-Content-Type-Options
     xctDesc:
       "Previene el rastreo de tipos MIME. Debe establecerse como 'nosniff'. Evita que los navegadores interpreten archivos como un tipo MIME diferente.",
-    xctMissing: "Ausente \u2014 el navegador puede rastrear tipos MIME",
-    xctCorrect: "Configurado correctamente como nosniff \u2713",
+    xctMissing: "Ausente \u{2014} el navegador puede rastrear tipos MIME",
+    xctCorrect: "Configurado correctamente como nosniff \u{2713}",
     xctWrong: "Debería ser exactamente 'nosniff'",
     // X-Frame-Options
     xfoDesc:
       "Previene clickjacking controlando la incrustación en iframes. CSP frame-ancestors es el reemplazo moderno.",
-    xfoMissing: "Ausente \u2014 considera añadirlo o usar CSP frame-ancestors",
-    xfoDeny: "Establecido como DENY \u2713",
+    xfoMissing:
+      "Ausente \u{2014} considera añadirlo o usar CSP frame-ancestors",
+    xfoDeny: "Establecido como DENY \u{2713}",
     xfoSameorigin:
-      "Establecido como SAMEORIGIN \u2014 DENY es más restrictivo (+2 pts)",
+      "Establecido como SAMEORIGIN \u{2014} DENY es más restrictivo (+2 pts)",
     xfoUnexpected: "Valor inesperado: {val}",
     // Referrer-Policy
     rpDesc:
       "Controla cuánta información de referencia se envía con las solicitudes. Previene la filtración de rutas URL sensibles a terceros.",
     rpMissing:
-      "Ausente \u2014 la URL completa puede filtrarse en la cabecera Referer",
-    rpSecure: "Política segura: {val} \u2713",
+      "Ausente \u{2014} la URL completa puede filtrarse en la cabecera Referer",
+    rpSecure: "Política segura: {val} \u{2713}",
     rpAcceptable:
       "Aceptable pero se prefiere 'strict-origin-when-cross-origin' (+3 pts)",
     rpUnsafeUrl:
-      "unsafe-url \u2014 URL completa filtrada en todas las solicitudes",
+      "unsafe-url \u{2014} URL completa filtrada en todas las solicitudes",
     rpConsider: "Considera una política más restrictiva",
     // Permissions-Policy
     ppDesc:
       "Controla qué funciones del navegador (cámara, micrófono, geolocalización, etc.) se pueden usar. Reduce la superficie de ataque del contenido incrustado.",
-    ppMissing: "Ausente \u2014 funciones del navegador sin restricciones",
-    ppDisabled: "{feature} deshabilitado \u2713",
+    ppMissing: "Ausente \u{2014} funciones del navegador sin restricciones",
+    ppDisabled: "{feature} deshabilitado \u{2713}",
     ppMissingRestriction: "Falta restricción {feature}=() (+1 pt)",
     // X-XSS-Protection
     xxpDesc:
       "Filtro XSS heredado. Debería ser '0' (deshabilitado) cuando CSP está presente. Sin CSP, '1; mode=block' proporciona protección básica.",
     xxpAbsentCorrect:
-      "Ausente \u2014 correcto, CSP proporciona protección superior \u2713",
-    xxpDisabledCorrect: "Correctamente deshabilitado \u2713 (CSP lo reemplaza)",
+      "Ausente \u{2014} correcto, CSP proporciona protección superior \u{2713}",
+    xxpDisabledCorrect:
+      "Correctamente deshabilitado \u{2713} (CSP lo reemplaza)",
     xxpShouldBeZero:
-      "Debería ser '0' cuando CSP está presente \u2014 el auditor XSS puede introducir vulnerabilidades",
-    xxpMissingNoCsp: "Ausente y sin CSP \u2014 sin protección XSS en absoluto",
+      "Debería ser '0' cuando CSP está presente \u{2014} el auditor XSS puede introducir vulnerabilidades",
+    xxpMissingNoCsp:
+      "Ausente y sin CSP \u{2014} sin protección XSS en absoluto",
     xxpDisabledNoCsp:
-      "Deshabilitado pero sin CSP \u2014 considera añadir CSP o '1; mode=block'",
+      "Deshabilitado pero sin CSP \u{2014} considera añadir CSP o '1; mode=block'",
     xxpLegacyEnabled:
-      "Filtro heredado habilitado \u2014 añade CSP para protección adecuada",
+      "Filtro heredado habilitado \u{2014} añade CSP para protección adecuada",
     xxpConsiderCsp: "Considera añadir CSP para protección robusta",
     // COOP
     coopDesc:
       "Aísla el contexto de navegación de ventanas emergentes de otros orígenes. Previene ataques de canal lateral tipo Spectre.",
-    coopMissing: "Ausente \u2014 contexto de navegación no aislado",
-    coopSameOrigin: "same-origin \u2713",
+    coopMissing: "Ausente \u{2014} contexto de navegación no aislado",
+    coopSameOrigin: "same-origin \u{2713}",
     coopPartialIsolation:
-      "Aislamiento parcial \u2014 permite ventanas emergentes",
+      "Aislamiento parcial \u{2014} permite ventanas emergentes",
     coopConsiderSameOrigin:
       "Considera same-origin para aislamiento completo (+3 pts)",
     coopUnexpected: "Valor inesperado",
@@ -901,20 +905,20 @@ export const tools = {
     corpDesc:
       "Controla qué orígenes pueden cargar tus recursos. Previene fugas de datos mediante solicitudes de otros orígenes.",
     corpMissing:
-      "Ausente \u2014 los recursos pueden cargarse desde otros orígenes",
-    corpSameOrigin: "same-origin \u2713",
-    corpSameSite: "same-site \u2014 más restrictivo que cross-origin",
+      "Ausente \u{2014} los recursos pueden cargarse desde otros orígenes",
+    corpSameOrigin: "same-origin \u{2713}",
+    corpSameSite: "same-site \u{2014} más restrictivo que cross-origin",
     corpConsiderSameOrigin2:
       "Considera same-origin para la protección más estricta (+2 pts)",
-    corpCrossOrigin: "cross-origin \u2014 menos restrictivo",
+    corpCrossOrigin: "cross-origin \u{2014} menos restrictivo",
     corpConsiderSameOrigin5:
       "Considera same-origin para la protección más estricta (+5 pts)",
     // COEP
     coepDesc:
       "Controla la incrustación de recursos de otros orígenes. Requerido para SharedArrayBuffer y temporizadores de alta resolución.",
-    coepMissing: "Ausente \u2014 no se puede usar SharedArrayBuffer",
-    coepRequireCorp: "require-corp \u2713",
-    coepCredentialless: "credentialless \u2014 aceptable",
+    coepMissing: "Ausente \u{2014} no se puede usar SharedArrayBuffer",
+    coepRequireCorp: "require-corp \u{2713}",
+    coepCredentialless: "credentialless \u{2014} aceptable",
     coepConsiderRequireCorp:
       "Considera require-corp para aislamiento completo de orígenes cruzados (+2 pts)",
     coepUnexpected: "Valor inesperado",
@@ -929,35 +933,37 @@ export const tools = {
     xGeneratorDesc:
       "Revela el CMS o framework utilizado (ej: WordPress, Drupal).",
     // Verificaciones de fuga de información
-    serverNotExposed: "No expuesto \u2713",
+    serverNotExposed: "No expuesto \u{2713}",
     serverProxyCdn:
-      "Proxy/CDN identificado ('{val}') \u2014 servidor de origen no expuesto \u2713",
+      "Proxy/CDN identificado ('{val}') \u{2014} servidor de origen no expuesto \u{2713}",
     serverVersionExposed:
-      "Expone la versión del servidor ('{val}') \u2014 elimina el número de versión",
+      "Expone la versión del servidor ('{val}') \u{2014} elimina el número de versión",
     serverNameExposed:
-      "Nombre del servidor expuesto ('{val}') \u2014 considera eliminarlo",
+      "Nombre del servidor expuesto ('{val}') \u{2014} considera eliminarlo",
     xPoweredByExposed:
-      "Expone tecnología: '{val}' \u2014 elimina esta cabecera",
+      "Expone tecnología: '{val}' \u{2014} elimina esta cabecera",
     xAspnetVersionExposed:
-      "Expone versión de ASP.NET: '{val}' \u2014 elimínala",
-    xAspnetMvcVersionExposed: "Expone versión de ASP.NET MVC \u2014 elimínala",
-    xGeneratorExposed: "Expone generador: '{val}' \u2014 elimínalo",
+      "Expone versión de ASP.NET: '{val}' \u{2014} elimínala",
+    xAspnetMvcVersionExposed:
+      "Expone versión de ASP.NET MVC \u{2014} elimínala",
+    xGeneratorExposed: "Expone generador: '{val}' \u{2014} elimínalo",
     // Seguridad de cookies
-    cookieMissingSecure: "Falta la marca Secure \u2014 cookie enviada por HTTP",
+    cookieMissingSecure:
+      "Falta la marca Secure \u{2014} cookie enviada por HTTP",
     cookieMissingHttpOnly:
-      "Falta la marca HttpOnly \u2014 accesible por JavaScript",
-    cookieMissingSameSite: "Falta el atributo SameSite \u2014 riesgo de CSRF",
+      "Falta la marca HttpOnly \u{2014} accesible por JavaScript",
+    cookieMissingSameSite: "Falta el atributo SameSite \u{2014} riesgo de CSRF",
     cookieSameSiteNoneNoSecure: "SameSite=None requiere la marca Secure",
-    cookieHostPrefix: "Usa el prefijo __Host- \u2713 (más seguro)",
-    cookieSecurePrefix: "Usa el prefijo __Secure- \u2713",
-    cookieAllPresent: "Secure, HttpOnly, SameSite todos presentes \u2713",
+    cookieHostPrefix: "Usa el prefijo __Host- \u{2713} (más seguro)",
+    cookieSecurePrefix: "Usa el prefijo __Secure- \u{2713}",
+    cookieAllPresent: "Secure, HttpOnly, SameSite todos presentes \u{2713}",
     // Consistencia entre cabeceras
     consistencyXfoNoCspFrameAncestors:
-      "X-Frame-Options está establecido pero falta CSP frame-ancestors \u2014 añade frame-ancestors para navegadores modernos",
+      "X-Frame-Options está establecido pero falta CSP frame-ancestors \u{2014} añade frame-ancestors para navegadores modernos",
     consistencyXxpNotZero:
-      "CSP está presente pero X-XSS-Protection no es '0' \u2014 deshabilita el auditor heredado para evitar introducir vulnerabilidades",
+      "CSP está presente pero X-XSS-Protection no es '0' \u{2014} deshabilita el auditor heredado para evitar introducir vulnerabilidades",
     consistencyUpgradeNoHsts:
-      "upgrade-insecure-requests establecido en CSP pero falta HSTS \u2014 añade HSTS para aplicación completa de HTTPS",
+      "upgrade-insecure-requests establecido en CSP pero falta HSTS \u{2014} añade HSTS para aplicación completa de HTTPS",
     consistencyXfoContradictsFrameAncestors:
       "X-Frame-Options ({val}) contradice CSP frame-ancestors 'none'",
   },
@@ -1029,7 +1035,7 @@ export const tools = {
     framePlaceholder: "Configura los campos anteriores para generar una trama",
     // JS — hints de dirección
     protocolAddress: "Dirección de protocolo: {addr} (0x{hex})",
-    modiconAddress: "Modicon {raw} \u2192 dirección {addr} (0x{hex})",
+    modiconAddress: "Modicon {raw} \u{2192} dirección {addr} (0x{hex})",
     hexAddr: "Hex: 0x{hex}",
     // JS — etiquetas dinámicas
     labelValue: "Valor",
@@ -1053,8 +1059,8 @@ export const tools = {
     value: "Valor",
     registerPair: "Par de registros",
     // JS — validación CRC/LRC
-    crcValid: "\u2713 Válido",
-    crcInvalid: "\u2717 Inválido (esperado {expected})",
+    crcValid: "\u{2713} Válido",
+    crcInvalid: "\u{2717} Inválido (esperado {expected})",
     // JS — hints de respuesta
     hintReadRegisterData:
       "Formato: [conteo de bytes] [datos de registro]. Ejemplo: 04 00 0A 00 64 (2 registros: 10, 100)",
@@ -1108,7 +1114,7 @@ export const tools = {
     toggleEnableHttps: "Habilitar HTTPS",
     labelCertificate: "Certificado",
     labelPrivateKey: "Clave privada",
-    toggleRedirectHttp: "Redirigir HTTP \u2192 HTTPS",
+    toggleRedirectHttp: "Redirigir HTTP \u{2192} HTTPS",
     // Proxy inverso
     sectionReverseProxy: "Proxy inverso",
     toggleEnableProxy: "Habilitar proxy inverso",

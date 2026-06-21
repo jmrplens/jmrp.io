@@ -26,7 +26,7 @@ const toolEntries = await getToolsForLocale(locale);
 const allTools = toolEntries.map((e) => e.tool);
 
 /** Group tools by category and sort categories by defined order. */
-const categories = Object.entries(
+const categories = Object.values(
   allTools.reduce<
     Record<string, { id: string; name: string; tools: typeof allTools }>
   >((acc, tool) => {
@@ -42,14 +42,14 @@ const categories = Object.entries(
     return acc;
   }, {}),
 )
-  .map(([, value]) => value)
+  .map((value) => value)
   .sort(
     (a, b) =>
       (categoryMeta[a.id]?.order ?? 99) - (categoryMeta[b.id]?.order ?? 99),
   );
 
 const baseUrl = new URL(Astro.url.pathname, getSiteUrl());
-const collectionUrl = new URL("#collection", baseUrl).toString();
+const collectionUrl = new URL("#collection", baseUrl).href;
 
 const toolsSchema = {
   "@context": "https://schema.org",
@@ -59,10 +59,7 @@ const toolsSchema = {
   description: t("pages.tools.description"),
   inLanguage: locale,
   hasPart: allTools.map((tool) => {
-    const toolUrl = new URL(
-      `/tools/${tool.data.slug}/`,
-      getSiteUrl(),
-    ).toString();
+    const toolUrl = new URL(`/tools/${tool.data.slug}/`, getSiteUrl()).href;
     return {
       "@type": "SoftwareApplication",
       name: tool.data.title,
