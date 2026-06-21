@@ -46,9 +46,9 @@ const binPadded = binFull.padStart(Math.ceil(binFull.length / 4) * 4, "0");
 const nibbles = binPadded.match(/.{4}/g) ?? [binPadded];
 
 const baseRows = [
-  { base: "Hex", val: hex },
-  { base: "Dec", val: dec },
-  { base: "Oct", val: oct },
+  { base: t("components.numberBases.hex"), val: hex },
+  { base: t("components.numberBases.dec"), val: dec },
+  { base: t("components.numberBases.oct"), val: oct },
 ];
 
 const summary =

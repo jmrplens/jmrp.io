@@ -40,16 +40,13 @@ interface Props {
   ariaLabel?: string;
 }
 
-const {
-  title,
-  frames,
-  growthLabel = "deeper — most recent call",
-  caption,
-  ariaLabel,
-} = Astro.props;
+const { title, frames, growthLabel, caption, ariaLabel } = Astro.props;
 
 const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
 const t = useTranslations(locale);
+
+// Fall back to the localized default when the caller doesn't override it.
+const growth = growthLabel ?? t("components.callStack.growthLabel");
 
 const PALETTE = 6;
 const resolved = frames.map((f, i) => ({
@@ -97,7 +94,7 @@ const summary =
     aria-hidden="true"
   >
     <span class="cstack__growth-arrow">↓</span>
-    {growthLabel}
+    {growth}
   </p>
 
   {caption && <p class="cstack__caption">{caption}</p>}

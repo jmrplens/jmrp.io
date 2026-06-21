@@ -139,13 +139,13 @@ const summary =
   </div>
 
   <table class="sr-only">
-    <caption>{title ?? "Before/after"}</caption>
+    <caption>{title ?? t("components.deltaCompare.srCaption")}</caption>
     <thead>
       <tr>
-        <th scope="col">Metric</th>
-        <th scope="col">Before</th>
-        <th scope="col">After</th>
-        <th scope="col">Change</th>
+        <th scope="col">{t("components.deltaCompare.srMetric")}</th>
+        <th scope="col">{t("components.deltaCompare.srBefore")}</th>
+        <th scope="col">{t("components.deltaCompare.srAfter")}</th>
+        <th scope="col">{t("components.deltaCompare.srChange")}</th>
       </tr>
     </thead>
     <tbody>

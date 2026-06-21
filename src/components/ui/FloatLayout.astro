@@ -56,10 +56,20 @@ const mantissaBits = bits.slice(1 + expWidth);
 const expRaw = Number.parseInt(expBits, 2);
 
 const groups = [
-  { name: "sign", w: 1, bits: signBits, color: "var(--fl-1)" },
-  { name: "exponent", w: expWidth, bits: expBits, color: "var(--fl-2)" },
   {
-    name: "mantissa",
+    name: t("components.floatLayout.sign"),
+    w: 1,
+    bits: signBits,
+    color: "var(--fl-1)",
+  },
+  {
+    name: t("components.floatLayout.exponent"),
+    w: expWidth,
+    bits: expBits,
+    color: "var(--fl-2)",
+  },
+  {
+    name: t("components.floatLayout.mantissa"),
     w: mantissaWidth,
     bits: mantissaBits,
     color: "var(--fl-3)",

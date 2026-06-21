@@ -221,7 +221,7 @@ function getBarColor(index: number, item: BarData): string {
                 aria-valuenow={item.value}
                 aria-valuemin={0}
                 aria-valuemax={maxValue}
-                aria-valuetext={`${nf.format(item.value)}${valueUnit ? ` ${valueUnit}` : ""} (${pf.format(totalPercentage)}% of total)`}
+                aria-valuetext={`${nf.format(item.value)}${valueUnit ? ` ${valueUnit}` : ""} (${pf.format(totalPercentage)}% ${t("components.barChart.ofTotal")})`}
                 data-value={item.value}
                 data-max={maxValue}
                 title={`${item.label}: ${item.value}${valueUnit ? ` ${valueUnit}` : ""}`}

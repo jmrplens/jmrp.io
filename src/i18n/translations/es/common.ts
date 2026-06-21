@@ -194,6 +194,7 @@ export const common = {
     barChart: {
       ariaWithTitle: "Gráfico de barras: {title}. Mostrando {count} elementos.",
       ariaWithoutTitle: "Gráfico de barras mostrando {count} elementos",
+      ofTotal: "del total",
     },
     memoryMap: {
       ariaWithTitle:
@@ -208,6 +209,10 @@ export const common = {
     byteFrame: {
       ariaWithTitle: "Disposición de bytes: {title}. {count} campos.",
       ariaWithoutTitle: "Disposición de bytes con {count} campos",
+      srCaption: "Disposición de bytes",
+      srField: "Campo",
+      srOffset: "Offset",
+      srSize: "Tamaño",
     },
     structPacking: {
       ariaWithTitle: "Disposición de struct: {title}. {count} miembros.",
@@ -217,6 +222,11 @@ export const common = {
     deltaCompare: {
       ariaWithTitle: "Comparación antes/después: {title}. {count} métricas.",
       ariaWithoutTitle: "Comparación antes/después con {count} métricas",
+      srCaption: "Antes/después",
+      srMetric: "Métrica",
+      srBefore: "Antes",
+      srAfter: "Después",
+      srChange: "Cambio",
     },
     layerStack: {
       ariaWithTitle: "Pila de capas: {title}. {count} capas.",
@@ -237,10 +247,16 @@ export const common = {
     numberBases: {
       ariaWithTitle: "Bases numéricas: {title}.",
       ariaWithoutTitle: "Un número mostrado en varias bases",
+      hex: "Hex",
+      dec: "Dec",
+      oct: "Oct",
     },
     floatLayout: {
       ariaWithTitle: "Disposición de coma flotante: {title}.",
       ariaWithoutTitle: "Disposición de bits IEEE 754",
+      sign: "signo",
+      exponent: "exponente",
+      mantissa: "mantisa",
     },
     packetDiagram: {
       ariaWithTitle: "Disposición de paquete: {title}. {count} campos.",
@@ -253,6 +269,7 @@ export const common = {
     callStack: {
       ariaWithTitle: "Pila de llamadas: {title}. {count} marcos.",
       ariaWithoutTitle: "Pila de llamadas con {count} marcos",
+      growthLabel: "más profundo — llamada más reciente",
     },
     encodingDiagram: {
       ariaWithTitle: "Codificación: {title}.",
