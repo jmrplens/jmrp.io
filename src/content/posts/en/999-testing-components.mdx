@@ -38,6 +38,7 @@ import LayerStack from "@components/ui/LayerStack.astro";
 import CallStack from "@components/ui/CallStack.astro";
 import Matrix from "@components/ui/Matrix.astro";
 import Pipeline from "@components/ui/Pipeline.astro";
+import ForkJoin from "@components/ui/ForkJoin.astro";
 import ThemeImage from "@components/ui/ThemeImage.astro";
 import FileDownload from "@components/ui/FileDownload.astro";
 import demoImage from "../../../assets/images/blog/csp-shield.webp";
@@ -663,6 +664,30 @@ Numbered stages with per-stage notes and the artifact on each arrow.
     { name: "gen_i18n.py", note: "pack + tail-merge", via: "raw strings" },
     { name: "clang++ -Os", note: "→ .rodata", via: ".cpp" },
     { name: "firmware.elf", note: "13.4 KB pool", via: ".o" },
+  ]}
+/>
+
+### ForkJoin
+
+A fork → join data-flow: a linear chain splits into parallel artifacts, then merges into a second chain. Highlighted branches, curved SVG connectors and optional phase tags.
+
+<ForkJoin
+  title="Build-time generation, runtime lookup"
+  beforeLabel="Build time"
+  afterLabel="Runtime"
+  ariaLabel="The generator forks into kPool and kOffsets, which the accessor joins to return a string the UI renders."
+  before={[
+    { name: "strings.csv", note: "id, en, es, fr, de, it" },
+    { name: "generator", note: "dedup + tail-merge" },
+  ]}
+  branches={[
+    { name: "kPool", note: "one packed blob" },
+    { name: "kOffsets", note: "uint16 table" },
+  ]}
+  after={[
+    { name: "gen::string(lang, id)", note: "kPool.data() + offset" },
+    { name: "i18n::tr(StringId)" },
+    { name: "UI render" },
   ]}
 />
 
