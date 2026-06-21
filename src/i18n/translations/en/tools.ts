@@ -1366,6 +1366,7 @@ export const tools = {
     rowIndex: "Index table",
     rowBlob: "String blob",
     rowTotal: "Total",
+    rowReloc: "Relocations",
     breakdownTitle: "Per-string breakdown",
     colString: "String",
     colOcc: "Occurrences",

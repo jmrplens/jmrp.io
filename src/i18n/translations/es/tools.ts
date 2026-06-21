@@ -1395,6 +1395,7 @@ export const tools = {
     rowIndex: "Tabla de índice",
     rowBlob: "Blob de cadenas",
     rowTotal: "Total",
+    rowReloc: "Relocations",
     breakdownTitle: "Desglose por cadena",
     colString: "Cadena",
     colOcc: "Apariciones",

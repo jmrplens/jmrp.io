@@ -310,6 +310,10 @@ const i18n = {
             <dt>{t("tools.stringPoolPacker.rowTotal")}</dt>
             <dd data-ptr="total">—</dd>
           </div>
+          <div class="spp-row spp-row--reloc">
+            <dt>{t("tools.stringPoolPacker.rowReloc")}</dt>
+            <dd data-ptr="reloc">—</dd>
+          </div>
         </dl>
         <div
           class="spp-bar"
@@ -338,6 +342,10 @@ const i18n = {
           <div class="spp-row spp-row--total">
             <dt>{t("tools.stringPoolPacker.rowTotal")}</dt>
             <dd data-pk="total">—</dd>
+          </div>
+          <div class="spp-row spp-row--reloc">
+            <dt>{t("tools.stringPoolPacker.rowReloc")}</dt>
+            <dd data-pk="reloc">—</dd>
           </div>
         </dl>
         <div
@@ -553,6 +561,9 @@ const i18n = {
       setText('[data-pk="index"]', `${B(pkIndex)} (${N}×${offsetWidth})`);
       setText('[data-pk="blob"]', B(blobTailBytes));
       setText('[data-pk="total"]', B(pkTotal));
+      // One relocation per pointer cell; offsets are position-independent integers.
+      setText('[data-ptr="reloc"]', fmt(N));
+      setText('[data-pk="reloc"]', "0");
 
       const maxTotal = Math.max(ptrTotal, pkTotal, 1);
       const ptrBar = root.querySelector('[data-bar="ptr"]');
@@ -1201,6 +1212,12 @@ const i18n = {
 
   .spp-row--total dd {
     color: var(--color-text-heading);
+  }
+
+  .spp-row--reloc {
+    margin-top: 0.1rem;
+    font-size: 0.85em;
+    color: var(--color-text-muted);
   }
 
   .spp-bar {
