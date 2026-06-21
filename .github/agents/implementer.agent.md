@@ -1,13 +1,7 @@
 ---
+name: implementer
 description: Implement features and code changes following project conventions
 model: sonnet
-tools:
-  - search
-  - codebase
-  - editFiles
-  - terminalCommand
-  - findUsages
-  - fetch
 handoffs:
   - label: Request Review
     agent: reviewer
