@@ -41,12 +41,10 @@ const categories = Object.values(
     acc[cat].tools.push(tool);
     return acc;
   }, {}),
-)
-  .map((value) => value)
-  .sort(
-    (a, b) =>
-      (categoryMeta[a.id]?.order ?? 99) - (categoryMeta[b.id]?.order ?? 99),
-  );
+).sort(
+  (a, b) =>
+    (categoryMeta[a.id]?.order ?? 99) - (categoryMeta[b.id]?.order ?? 99),
+);
 
 const baseUrl = new URL(Astro.url.pathname, getSiteUrl());
 const collectionUrl = new URL("#collection", baseUrl).href;

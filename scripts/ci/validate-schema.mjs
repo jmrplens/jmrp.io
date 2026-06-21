@@ -137,7 +137,7 @@ function validateSingleSchema(schema, prefix = "") {
 
     if (Array.isArray(schema[propName])) {
       for (const [i, item] of schema[propName].entries()) {
-        if (typeof item !== "object") {
+        if (item === null || typeof item !== "object") {
           continue;
         }
 
