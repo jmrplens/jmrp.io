@@ -105,7 +105,7 @@ server {
     }
 
     # MeshMonitor (Protected with Token)
-    location = /api/proxy/mesh/lf { 
+    location = /api/proxy/mesh/meshmonitor {
         proxy_pass http://127.0.0.1:3001/meshmonitor/api/v1/network;
         proxy_set_header Authorization "Bearer YOUR_TOKEN_HERE";
         proxy_set_header Host $host;

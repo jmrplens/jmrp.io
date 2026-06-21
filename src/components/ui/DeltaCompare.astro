@@ -1,0 +1,327 @@
+---
+/**
+ * DeltaCompare Component
+ *
+ * Before/after metric comparison: each row shows a "before" bar above an
+ * "after" bar on a shared per-row scale, plus the delta (absolute + %) and an
+ * up/down arrow colored by whether the change is an improvement. Built for
+ * optimization write-ups (flash saved, sizeof shrunk, latency, etc.).
+ *
+ * @example
+ * <DeltaCompare
+ *   unit=" B"
+ *   rows={[
+ *     { label: "Index table", before: 5300, after: 2650 },
+ *     { label: "Firmware", before: 1341067, after: 1338903 },
+ *   ]}
+ * />
+ */
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslations } from "@i18n/utils";
+
+interface Row {
+  /** Metric name. */
+  label: string;
+  /** Value before the change. */
+  before: number;
+  /** Value after the change. */
+  after: number;
+  /** Whether a lower value is better (default true). */
+  lowerIsBetter?: boolean;
+}
+
+interface Props {
+  /** Optional title. */
+  title?: string;
+  /** Metric rows. */
+  rows: Row[];
+  /** Unit suffix appended to values (e.g. " B", " ms"). */
+  unit?: string;
+  /** Caption below the figure. */
+  caption?: string;
+  /** Accessibility label. */
+  ariaLabel?: string;
+}
+
+const { title, rows, unit = "", caption, ariaLabel } = Astro.props;
+
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
+// Group thousands even for 4-digit numbers (es CLDR skips them otherwise).
+const nf = new Intl.NumberFormat(locale, { useGrouping: "always" });
+// Locale-aware percentage (decimal separator + sign).
+const pf = new Intl.NumberFormat(locale, {
+  maximumFractionDigits: 1,
+  signDisplay: "exceptZero",
+});
+
+const computed = rows.map((r) => {
+  const max = Math.max(r.before, r.after, 1);
+  const lowerBetter = r.lowerIsBetter ?? true;
+  const diff = r.after - r.before;
+  const pct = r.before === 0 ? 0 : (diff / r.before) * 100;
+  const better = lowerBetter ? diff < 0 : diff > 0;
+  const neutral = diff === 0;
+  let status = "same";
+  if (!neutral) status = better ? "good" : "bad";
+  let arrow = "→";
+  if (!neutral) arrow = diff < 0 ? "▼" : "▲";
+  return {
+    label: r.label,
+    before: r.before,
+    after: r.after,
+    beforePct: (r.before / max) * 100,
+    afterPct: (r.after / max) * 100,
+    diff,
+    pct,
+    status,
+    arrow,
+  };
+});
+
+const summary =
+  ariaLabel ??
+  (title
+    ? t("components.deltaCompare.ariaWithTitle", {
+        title,
+        count: String(rows.length),
+      })
+    : t("components.deltaCompare.ariaWithoutTitle", {
+        count: String(rows.length),
+      }));
+---
+
+<figure
+  class="delta"
+  role="img"
+  aria-label={summary}
+>
+  {title && <figcaption class="delta__title">{title}</figcaption>}
+
+  <div class="delta__rows">
+    {
+      computed.map((r) => (
+        <div class="delta__row">
+          <div class="delta__label">{r.label}</div>
+          <div class="delta__bars">
+            <div class="delta__line">
+              <div
+                class="delta__bar delta__bar--before"
+                style={`width:${r.beforePct.toFixed(2)}%`}
+              />
+              <span class="delta__val">
+                {nf.format(r.before)}
+                {unit}
+              </span>
+            </div>
+            <div class="delta__line">
+              <div
+                class={`delta__bar delta__bar--${r.status}`}
+                style={`width:${r.afterPct.toFixed(2)}%`}
+              />
+              <span class="delta__val">
+                {nf.format(r.after)}
+                {unit}
+              </span>
+            </div>
+          </div>
+          <div class={`delta__badge delta__badge--${r.status}`}>
+            {r.arrow} {pf.format(r.pct)}%
+            <span class="delta__badge-abs">
+              ({r.diff > 0 ? "+" : ""}
+              {nf.format(r.diff)}
+              {unit})
+            </span>
+          </div>
+        </div>
+      ))
+    }
+  </div>
+
+  <table class="sr-only">
+    <caption>{title ?? t("components.deltaCompare.srCaption")}</caption>
+    <thead>
+      <tr>
+        <th scope="col">{t("components.deltaCompare.srMetric")}</th>
+        <th scope="col">{t("components.deltaCompare.srBefore")}</th>
+        <th scope="col">{t("components.deltaCompare.srAfter")}</th>
+        <th scope="col">{t("components.deltaCompare.srChange")}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {
+        computed.map((r) => (
+          <tr>
+            <td>{r.label}</td>
+            <td>
+              {nf.format(r.before)}
+              {unit}
+            </td>
+            <td>
+              {nf.format(r.after)}
+              {unit}
+            </td>
+            <td>{pf.format(r.pct)}%</td>
+          </tr>
+        ))
+      }
+    </tbody>
+  </table>
+
+  {caption && <p class="delta__caption">{caption}</p>}
+</figure>
+
+<style>
+  .delta {
+    /* Dark-theme defaults: light hues read on the dark background. */
+    --delta-before: var(--color-text-muted, #8b949e);
+    --delta-good: #6ee7a8;
+    --delta-bad: #f0789b;
+    --delta-same: #7aa2ff;
+    --delta-on: #0b0b13;
+
+    margin: 1.5rem 0;
+  }
+
+  /* Light theme needs darker hues so the badge text clears WCAG AA on white. */
+  @media (prefers-color-scheme: light) {
+    .delta {
+      --delta-good: #15803d;
+      --delta-bad: #be123c;
+      --delta-same: #1d4ed8;
+    }
+  }
+
+  :root[data-theme="dark"] .delta {
+    --delta-good: #6ee7a8;
+    --delta-bad: #f0789b;
+    --delta-same: #7aa2ff;
+  }
+
+  :root[data-theme="light"] .delta {
+    --delta-good: #15803d;
+    --delta-bad: #be123c;
+    --delta-same: #1d4ed8;
+  }
+
+  .delta__title {
+    margin-bottom: 1rem;
+    font-size: 1rem;
+    font-weight: var(--fw-semibold, 600);
+    color: var(--color-text-heading);
+  }
+
+  .delta__rows {
+    display: flex;
+    flex-direction: column;
+    gap: 1.1rem;
+  }
+
+  .delta__row {
+    display: grid;
+    grid-template-columns: 7rem 1fr auto;
+    column-gap: 0.75rem;
+    align-items: center;
+  }
+
+  .delta__label {
+    font-size: 0.85rem;
+    font-weight: var(--fw-semibold, 600);
+    color: var(--color-text-heading);
+  }
+
+  .delta__bars {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    min-width: 0;
+  }
+
+  .delta__line {
+    display: flex;
+    column-gap: 0.5rem;
+    align-items: center;
+  }
+
+  .delta__bar {
+    min-width: 2px;
+    height: 1rem;
+    background: var(--delta-before);
+    border-radius: var(--radius-sm, 4px);
+  }
+
+  .delta__bar--before {
+    opacity: 55%;
+  }
+
+  .delta__bar--good {
+    background: var(--delta-good);
+  }
+
+  .delta__bar--bad {
+    background: var(--delta-bad);
+  }
+
+  .delta__bar--same {
+    background: var(--delta-same);
+  }
+
+  .delta__val {
+    font-size: 0.78rem;
+    color: var(--color-text-muted);
+    white-space: nowrap;
+  }
+
+  .delta__badge {
+    font-size: 0.82rem;
+    font-weight: var(--fw-bold, 700);
+    white-space: nowrap;
+  }
+
+  .delta__badge--good {
+    color: var(--delta-good);
+  }
+
+  .delta__badge--bad {
+    color: var(--delta-bad);
+  }
+
+  .delta__badge--same {
+    color: var(--delta-same);
+  }
+
+  .delta__badge-abs {
+    font-weight: var(--fw-normal, 400);
+    color: var(--color-text-muted);
+  }
+
+  .delta__caption {
+    margin-top: 1rem;
+    font-size: 0.8125rem;
+    font-style: italic;
+    color: var(--color-text-muted);
+    text-align: center;
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    white-space: nowrap;
+    clip-path: inset(50%);
+  }
+
+  @media (width <= 640px) {
+    .delta__row {
+      grid-template-columns: 1fr;
+      row-gap: 0.35rem;
+    }
+
+    .delta__badge {
+      justify-self: start;
+    }
+  }
+</style>

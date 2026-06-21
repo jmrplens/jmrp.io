@@ -1,0 +1,165 @@
+---
+/**
+ * LayerStack Component
+ *
+ * A vertical stack of labelled bands for hardware/software layers, abstraction
+ * levels, an OSI model, a boot sequence, etc. Each layer is a colored band
+ * with a name and an optional side note. Top layer first.
+ *
+ * @example
+ * <LayerStack
+ *   title="Firmware stack"
+ *   layers={[
+ *     { name: "Application", note: "your code" },
+ *     { name: "HAL", note: "vendor drivers" },
+ *     { name: "Registers / silicon" },
+ *   ]}
+ * />
+ */
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslations } from "@i18n/utils";
+
+interface Layer {
+  /** Layer name. */
+  name: string;
+  /** Optional note shown beside the band. */
+  note?: string;
+  /** Optional CSS color override; otherwise cycles a palette. */
+  color?: string;
+}
+
+interface Props {
+  /** Optional title. */
+  title?: string;
+  /** Layers, top to bottom. */
+  layers: Layer[];
+  /** Caption below the figure. */
+  caption?: string;
+  /** Accessibility label. */
+  ariaLabel?: string;
+}
+
+const { title, layers, caption, ariaLabel } = Astro.props;
+
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
+
+const PALETTE = 6;
+const resolved = layers.map((l, i) => ({
+  ...l,
+  resolvedColor: l.color ?? `var(--ls-${(i % PALETTE) + 1})`,
+}));
+
+const summary =
+  ariaLabel ??
+  (title
+    ? t("components.layerStack.ariaWithTitle", {
+        title,
+        count: String(layers.length),
+      })
+    : t("components.layerStack.ariaWithoutTitle", {
+        count: String(layers.length),
+      }));
+---
+
+<figure
+  class="layers"
+  role="img"
+  aria-label={summary}
+>
+  {title && <figcaption class="layers__title">{title}</figcaption>}
+
+  <ol class="layers__stack">
+    {
+      resolved.map((l) => (
+        <li class="layers__row">
+          <div
+            class="layers__band"
+            style={`background-color:${l.resolvedColor}`}
+          >
+            <span class="layers__name">{l.name}</span>
+          </div>
+          {l.note && <span class="layers__note">{l.note}</span>}
+        </li>
+      ))
+    }
+  </ol>
+
+  {caption && <p class="layers__caption">{caption}</p>}
+</figure>
+
+<style>
+  .layers {
+    --ls-1: #b389f5;
+    --ls-2: #7aa2ff;
+    --ls-3: #58d6df;
+    --ls-4: #6ee7a8;
+    --ls-5: #fbbf24;
+    --ls-6: #f0789b;
+    --ls-on: #0b0b13;
+
+    margin: 1.5rem 0;
+  }
+
+  .layers__title {
+    margin-bottom: 1rem;
+    font-size: 1rem;
+    font-weight: var(--fw-semibold, 600);
+    color: var(--color-text-heading);
+  }
+
+  .layers__stack {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    max-width: 32rem;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+  }
+
+  .layers__row {
+    display: flex;
+    column-gap: 0.75rem;
+    align-items: center;
+  }
+
+  .layers__band {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.75rem;
+    padding: 0.5rem 0.75rem;
+    color: var(--ls-on);
+    text-align: center;
+    border-radius: var(--radius-sm, 4px);
+  }
+
+  .layers__name {
+    font-size: 0.9rem;
+    font-weight: var(--fw-semibold, 600);
+  }
+
+  .layers__note {
+    flex-shrink: 0;
+    width: 9rem;
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+  }
+
+  .layers__caption {
+    margin-top: 1rem;
+    font-size: 0.8125rem;
+    font-style: italic;
+    color: var(--color-text-muted);
+    text-align: center;
+  }
+
+  @media (width <= 640px) {
+    .layers__note {
+      width: 6rem;
+      font-size: 0.72rem;
+    }
+  }
+</style>

@@ -2,7 +2,7 @@
 
 > Personal technical blog and portfolio of José Manuel Requena Plens — R&D Engineer specializing in Embedded Systems, Acoustics, and Industrial Software Development. This document provides comprehensive context for AI models.
 
-> Last updated: 2026-06-10
+> Last updated: 2026-06-21
 
 ## About the Author
 
@@ -106,6 +106,13 @@ Free browser-based developer tools. All processing runs client-side — no data 
 - **Description**: Guide to running obfs4 and WebTunnel Tor bridges on Linux with Nginx camouflage, firewall hardening, Prometheus monitoring, and CrowdSec.
 - **Topics covered**: Tor bridge setup, obfs4 pluggable transport, WebTunnel bridge, Nginx reverse proxy camouflage, firewall hardening, Prometheus monitoring, CrowdSec integration, bridge distribution, anti-censorship technology.
 
+### 10. What the Linker Won't Do: Packing i18n Strings on an MCU
+- **URL**: https://jmrp.io/blog/010-packed-i18n-string-pool/
+- **Published**: 2026-06-20
+- **Tags**: Firmware, C++, Embedded, ESP32, i18n
+- **Description**: A build-time generator packs firmware UI translations into one string pool indexed by uint16 offsets, halving the index table on a 32-bit MCU.
+- **Topics covered**: packed/deduplicated/tail-merged string pool, uint16 offset table vs const char* pointer table, index-table halving, relocation elimination, optimizer-proof structural savings, linker tail-merging (GNU ld / ld.lld), full-firmware -O sweep, LTO limits, cross-platform pointer width (AVR/Cortex-M/RISC-V/64-bit), exact scaling arithmetic, PlatformIO build-time codegen.
+
 ---
 
 ## Developer Tools (Detailed)
@@ -182,6 +189,11 @@ Free browser-based developer tools. All processing runs client-side — no data 
 - **URL**: https://jmrp.io/tools/modbus-frame-builder/
 - **Description**: Build and decode Modbus RTU/TCP/ASCII frames with CRC-16/LRC calculation, register value interpretation, response builder, exception handling, and color-coded byte visualization.
 - **Features**: RTU/TCP/ASCII frame modes, CRC-16 and LRC calculation, function code support (01-06, 15-16), register value interpretation (INT16, UINT16, FLOAT32), exception response handling, byte-level visualization.
+
+#### String Pool Packer
+- **URL**: https://jmrp.io/tools/string-pool-packer/
+- **Description**: Pack a list of strings (or a CSV of IDs × languages) into a deduplicated, tail-merged string pool indexed by uint16 offsets, and compare it against a const char* pointer table.
+- **Features**: deduplication + tail-merge packing, pointer-table vs packed-pool cost (index/blob/total + relocations), per-string offset breakdown, CSV (IDs × languages) and plain-list modes, configurable pointer width, client-side only.
 
 ### MikroTik Tools
 

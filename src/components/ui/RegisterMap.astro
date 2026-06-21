@@ -1,0 +1,397 @@
+---
+/**
+ * RegisterMap Component
+ *
+ * A zero-JS bit-field diagram for a hardware register, flag word, or packed
+ * bitfield struct. Renders a bit ruler (MSB → LSB) above color-coded field
+ * boxes; unused bits are auto-filled as "reserved". Theme-aware, accessible
+ * (role="img" + sr-only table), and horizontally scrollable on narrow screens.
+ *
+ * @example
+ * <RegisterMap
+ *   title="CONFIG (16-bit)"
+ *   width={16}
+ *   fields={[
+ *     { name: "MODE", bits: "15:14" },
+ *     { name: "EN", bits: 13 },
+ *     { name: "PRESCALER", bits: "7:0", note: "clock divider" },
+ *   ]}
+ * />
+ */
+
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslations } from "@i18n/utils";
+
+interface Field {
+  /** Field name. */
+  name: string;
+  /** A single bit (e.g. 5) or an inclusive range "hi:lo" (e.g. "15:14"). */
+  bits: number | string;
+  /** Optional CSS color override; otherwise cycles a palette. */
+  color?: string;
+  /** Optional note shown in the legend. */
+  note?: string;
+}
+
+interface Props {
+  /** Optional title shown above the diagram. */
+  title?: string;
+  /** Total register width in bits (default 16). */
+  width?: number;
+  /** Fields, in any order. */
+  fields: Field[];
+  /** Caption below the diagram. */
+  caption?: string;
+  /** Accessibility label for the whole figure. */
+  ariaLabel?: string;
+}
+
+const { title, width = 16, fields, caption, ariaLabel } = Astro.props;
+
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
+
+const PALETTE = 6;
+let colorIndex = 0;
+
+const parsed = fields.map((f) => {
+  let hi: number;
+  let lo: number;
+  if (typeof f.bits === "number") {
+    hi = lo = f.bits;
+  } else {
+    const [a, b] = f.bits.split(":").map((x) => Number.parseInt(x.trim(), 10));
+    hi = Math.max(a, b ?? a);
+    lo = Math.min(a, b ?? a);
+  }
+  return {
+    name: f.name,
+    note: f.note,
+    hi,
+    lo,
+    color: f.color ?? `var(--rm-${(colorIndex++ % PALETTE) + 1})`,
+  };
+});
+
+// Map each bit to its owning field index (or null = reserved).
+const owner: (number | null)[] = Array.from({ length: width }, () => null);
+for (const [i, p] of parsed.entries()) {
+  for (let b = p.lo; b <= p.hi; b++) {
+    if (b >= 0 && b < width) owner[b] = i;
+  }
+}
+
+// Group contiguous bits into runs, walking MSB → LSB.
+interface Run {
+  hi: number;
+  lo: number;
+  span: number;
+  name: string;
+  bitsLabel: string;
+  color: string | null;
+  reserved: boolean;
+}
+const runs: Run[] = [];
+for (let b = width - 1; b >= 0; ) {
+  const o = owner[b];
+  let lo = b;
+  while (lo - 1 >= 0 && owner[lo - 1] === o) lo--;
+  const bitsLabel = b === lo ? `${b}` : `${b}:${lo}`;
+  runs.push(
+    o === null
+      ? {
+          hi: b,
+          lo,
+          span: b - lo + 1,
+          name: t("components.registerMap.reserved"),
+          bitsLabel,
+          color: null,
+          reserved: true,
+        }
+      : {
+          hi: b,
+          lo,
+          span: b - lo + 1,
+          name: parsed[o].name,
+          bitsLabel,
+          color: parsed[o].color,
+          reserved: false,
+        },
+  );
+  b = lo - 1;
+}
+
+const bitNumbers = Array.from({ length: width }, (_, i) => width - 1 - i);
+
+const reservedLabel = t("components.registerMap.reserved");
+const reservedRanges = runs.filter((r) => r.reserved).map((r) => r.bitsLabel);
+
+const summary =
+  ariaLabel ??
+  (title
+    ? t("components.registerMap.ariaWithTitle", {
+        title,
+        count: String(fields.length),
+      })
+    : t("components.registerMap.ariaWithoutTitle", {
+        count: String(fields.length),
+      }));
+---
+
+<figure
+  class="register-map"
+  role="img"
+  aria-label={summary}
+>
+  {title && <figcaption class="register-map__title">{title}</figcaption>}
+
+  <div class="register-map__scroll">
+    <div
+      class:list={[
+        "register-map__grid",
+        width > 16 && "register-map__grid--dense",
+      ]}
+      style={`grid-template-columns:repeat(${width},minmax(0,1fr));--rm-cols:${width}`}
+    >
+      {bitNumbers.map((n) => <span class="register-map__bitnum">{n}</span>)}
+      {
+        runs.map((run) => (
+          <span
+            class:list={[
+              "register-map__field",
+              run.reserved && "register-map__field--reserved",
+            ]}
+            style={
+              run.reserved
+                ? `grid-column:span ${run.span}`
+                : `grid-column:span ${run.span};background-color:${run.color}`
+            }
+            title={`${run.name} [${run.bitsLabel}]`}
+          >
+            <span class="register-map__field-name">{run.name}</span>
+            <span class="register-map__field-bits">{run.bitsLabel}</span>
+          </span>
+        ))
+      }
+    </div>
+  </div>
+
+  <ul class="register-map__legend">
+    {
+      parsed.map((p) => (
+        <li class="register-map__legend-item">
+          <span
+            class="register-map__swatch"
+            style={`background-color:${p.color}`}
+            aria-hidden="true"
+          />
+          <span class="register-map__legend-text">
+            <b>{p.name}</b> [{p.hi === p.lo ? p.hi : `${p.hi}:${p.lo}`}]
+            {p.note && <span class="register-map__note"> — {p.note}</span>}
+          </span>
+        </li>
+      ))
+    }
+    {
+      reservedRanges.length > 0 && (
+        <li class="register-map__legend-item">
+          <span
+            class="register-map__swatch register-map__swatch--reserved"
+            aria-hidden="true"
+          />
+          <span class="register-map__legend-text">
+            <b>{reservedLabel}</b> [{reservedRanges.join(", ")}]
+          </span>
+        </li>
+      )
+    }
+  </ul>
+
+  <table class="sr-only">
+    <caption>{title ?? "Register layout"}</caption>
+    <thead>
+      <tr>
+        <th scope="col">Field</th>
+        <th scope="col">Bits</th>
+        <th scope="col">Note</th>
+      </tr>
+    </thead>
+    <tbody>
+      {
+        parsed.map((p) => (
+          <tr>
+            <td>{p.name}</td>
+            <td>{p.hi === p.lo ? p.hi : `${p.hi}:${p.lo}`}</td>
+            <td>{p.note ?? ""}</td>
+          </tr>
+        ))
+      }
+      {
+        runs
+          .filter((r) => r.reserved)
+          .map((r) => (
+            <tr>
+              <td>{reservedLabel}</td>
+              <td>{r.bitsLabel}</td>
+              <td />
+            </tr>
+          ))
+      }
+    </tbody>
+  </table>
+
+  {caption && <p class="register-map__caption">{caption}</p>}
+</figure>
+
+<style>
+  .register-map {
+    --rm-1: #b389f5;
+    --rm-2: #58d6df;
+    --rm-3: #fbbf24;
+    --rm-4: #6ee7a8;
+    --rm-5: #f0789b;
+    --rm-6: #7aa2ff;
+    --rm-on: #0b0b13;
+    --rm-track-bg: var(--color-bg-subtle, rgb(255 255 255 / 5%));
+
+    margin: 1.5rem 0;
+  }
+
+  .register-map__title {
+    margin-bottom: 1rem;
+    font-size: 1rem;
+    font-weight: var(--fw-semibold, 600);
+    color: var(--color-text-heading);
+  }
+
+  .register-map__scroll {
+    overflow-x: auto;
+  }
+
+  .register-map__grid {
+    display: grid;
+    gap: 0.4rem 3px;
+
+    /* Keep cells readable; the wrapper scrolls if the container is narrower. */
+    min-width: calc(var(--rm-cols, 1) * 1.5rem);
+  }
+
+  .register-map__bitnum {
+    font-size: 0.7rem;
+    color: var(--color-text-muted);
+    text-align: center;
+  }
+
+  .register-map__field {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.6rem;
+    padding: 0.3rem 0.2rem;
+    overflow: hidden;
+    color: var(--rm-on);
+    border-radius: var(--radius-sm, 4px);
+  }
+
+  .register-map__field--reserved {
+    color: var(--color-text-muted);
+    background: var(--rm-track-bg);
+  }
+
+  .register-map__field-name {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 0.8rem;
+    font-weight: var(--fw-semibold, 600);
+    white-space: nowrap;
+  }
+
+  .register-map__field-bits {
+    font-size: 0.68rem;
+    opacity: 85%;
+  }
+
+  .register-map__legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem 1rem;
+    padding: 0;
+    margin: 0.85rem 0 0;
+    list-style: none;
+  }
+
+  .register-map__legend-item {
+    display: inline-flex;
+    column-gap: 0.4rem;
+    align-items: baseline;
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+  }
+
+  .register-map__swatch {
+    flex-shrink: 0;
+    align-self: center;
+    width: 0.7rem;
+    height: 0.7rem;
+    border-radius: 2px;
+  }
+
+  /* Matches the muted "reserved" field boxes — bordered so it reads on dark. */
+  .register-map__swatch--reserved {
+    background: var(--rm-track-bg);
+    border: 1px solid var(--color-border);
+  }
+
+  .register-map__legend-text b {
+    font-weight: var(--fw-semibold, 600);
+    color: var(--color-text);
+  }
+
+  .register-map__caption {
+    margin-top: 1rem;
+    font-size: 0.8125rem;
+    font-style: italic;
+    color: var(--color-text-muted);
+    text-align: center;
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    white-space: nowrap;
+    clip-path: inset(50%);
+  }
+
+  /* Narrow screens: fit the register to the viewport instead of scrolling. */
+  @media (width <= 640px) {
+    .register-map__scroll {
+      overflow-x: visible;
+    }
+
+    .register-map__grid {
+      gap: 0.3rem 2px;
+      min-width: 0;
+    }
+
+    /* Dense registers (e.g. 32-bit): squeezed to the viewport the per-bit
+       numbers would overlap, so drop the ruler. Each field box still shows its
+       bit range (start:end) and the legend lists every field in full. */
+    .register-map__grid--dense .register-map__bitnum {
+      display: none;
+    }
+
+    .register-map__field-name {
+      font-size: 0.72rem;
+    }
+
+    .register-map__field-bits {
+      font-size: 0.62rem;
+    }
+  }
+</style>

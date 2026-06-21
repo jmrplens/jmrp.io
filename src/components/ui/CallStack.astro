@@ -1,0 +1,187 @@
+---
+/**
+ * CallStack Component
+ *
+ * A vertical stack of call frames (function + optional detail) with a side rail
+ * showing the growth direction. For recursion, stack overflow, calling
+ * conventions. Frames are listed outermost first (top).
+ *
+ * @example
+ * <CallStack
+ *   frames={[
+ *     { name: "main()" },
+ *     { name: "parse(buf, len)", detail: "locals: 24 B" },
+ *     { name: "decode()", detail: "recursion depth 3" },
+ *   ]}
+ * />
+ */
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslations } from "@i18n/utils";
+
+interface Frame {
+  /** Function signature / frame name. */
+  name: string;
+  /** Optional detail (locals, return address, size…). */
+  detail?: string;
+  /** Optional CSS color override for the accent. */
+  color?: string;
+}
+
+interface Props {
+  /** Optional title. */
+  title?: string;
+  /** Frames, outermost first. */
+  frames: Frame[];
+  /** Growth direction label shown on the rail (default "deeper ↓"). */
+  growthLabel?: string;
+  /** Caption below the figure. */
+  caption?: string;
+  /** Accessibility label. */
+  ariaLabel?: string;
+}
+
+const { title, frames, growthLabel, caption, ariaLabel } = Astro.props;
+
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
+
+// Fall back to the localized default when the caller doesn't override it.
+const growth = growthLabel ?? t("components.callStack.growthLabel");
+
+const PALETTE = 6;
+const resolved = frames.map((f, i) => ({
+  ...f,
+  resolvedColor: f.color ?? `var(--cs-${(i % PALETTE) + 1})`,
+}));
+
+const summary =
+  ariaLabel ??
+  (title
+    ? t("components.callStack.ariaWithTitle", {
+        title,
+        count: String(frames.length),
+      })
+    : t("components.callStack.ariaWithoutTitle", {
+        count: String(frames.length),
+      }));
+---
+
+<figure
+  class="cstack"
+  role="img"
+  aria-label={summary}
+>
+  {title && <figcaption class="cstack__title">{title}</figcaption>}
+
+  <ol class="cstack__frames">
+    {
+      resolved.map((f) => (
+        <li class="cstack__frame">
+          <span
+            class="cstack__accent"
+            style={`background-color:${f.resolvedColor}`}
+            aria-hidden="true"
+          />
+          <span class="cstack__name">{f.name}</span>
+          {f.detail && <span class="cstack__detail">{f.detail}</span>}
+        </li>
+      ))
+    }
+  </ol>
+
+  <p
+    class="cstack__growth"
+    aria-hidden="true"
+  >
+    <span class="cstack__growth-arrow">↓</span>
+    {growth}
+  </p>
+
+  {caption && <p class="cstack__caption">{caption}</p>}
+</figure>
+
+<style>
+  .cstack {
+    --cs-1: #b389f5;
+    --cs-2: #7aa2ff;
+    --cs-3: #58d6df;
+    --cs-4: #6ee7a8;
+    --cs-5: #fbbf24;
+    --cs-6: #f0789b;
+
+    margin: 1.5rem 0;
+  }
+
+  .cstack__title {
+    margin-bottom: 1rem;
+    font-size: 1rem;
+    font-weight: var(--fw-semibold, 600);
+    color: var(--color-text-heading);
+  }
+
+  .cstack__frames {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    max-width: 34rem;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+  }
+
+  .cstack__growth {
+    display: flex;
+    column-gap: 0.45rem;
+    align-items: center;
+    max-width: 34rem;
+    margin: 0.55rem 0 0;
+    font-size: 0.78rem;
+    color: var(--color-text-muted);
+  }
+
+  .cstack__growth-arrow {
+    font-size: 1.05rem;
+    font-weight: var(--fw-bold, 700);
+    line-height: 1;
+    color: var(--color-primary);
+  }
+
+  .cstack__frame {
+    display: flex;
+    column-gap: 0.6rem;
+    align-items: baseline;
+    padding: 0.6rem 0.75rem;
+    background: var(--color-bg-subtle);
+    border: var(--border-1);
+    border-radius: var(--radius-sm, 4px);
+  }
+
+  .cstack__accent {
+    flex-shrink: 0;
+    align-self: stretch;
+    width: 4px;
+    border-radius: 2px;
+  }
+
+  .cstack__name {
+    flex: 1;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    font-weight: var(--fw-semibold, 600);
+    color: var(--color-text-heading);
+  }
+
+  .cstack__detail {
+    font-size: 0.78rem;
+    color: var(--color-text-muted);
+    text-align: right;
+  }
+
+  .cstack__caption {
+    margin-top: 1rem;
+    font-size: 0.8125rem;
+    font-style: italic;
+    color: var(--color-text-muted);
+    text-align: center;
+  }
+</style>

@@ -1,11 +1,7 @@
 ---
+name: reviewer
 description: Review code for accessibility, security, performance, and convention compliance
 model: sonnet
-tools:
-  - search
-  - codebase
-  - findUsages
-  - fetch
 handoffs:
   - label: Fix Issues
     agent: implementer

@@ -1,0 +1,241 @@
+---
+/**
+ * SubnetSplit Component
+ *
+ * Shows an IPv4 address as four octets of bits, split into the network portion
+ * (first /prefix bits) and the host portion, with a summary (mask, network,
+ * broadcast, usable hosts).
+ *
+ * @example
+ * <SubnetSplit ip="192.168.1.10" prefix={26} />
+ */
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslations } from "@i18n/utils";
+
+interface Props {
+  /** Optional title. */
+  title?: string;
+  /** Dotted IPv4 address. */
+  ip: string;
+  /** CIDR prefix length (0–32). */
+  prefix: number;
+  /** Caption below the figure. */
+  ariaLabel?: string;
+  caption?: string;
+}
+
+const { title, ip, prefix, caption, ariaLabel } = Astro.props;
+
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
+
+const octets = ip.split(".").map((o) => Number.parseInt(o, 10) & 255);
+const u32 =
+  ((octets[0] << 24) | (octets[1] << 16) | (octets[2] << 8) | octets[3]) >>> 0;
+const mask = prefix === 0 ? 0 : (-1 << (32 - prefix)) >>> 0;
+const network = (u32 & mask) >>> 0;
+const broadcast = (network | (~mask >>> 0)) >>> 0;
+const dotted = (v: number) =>
+  [24, 16, 8, 0].map((s) => (v >>> s) & 255).join(".");
+let hosts = 2 ** (32 - prefix) - 2;
+if (prefix === 32) hosts = 1;
+else if (prefix === 31) hosts = 2;
+
+// 32 bits, grouped into 4 octets, each bit tagged network / host.
+const octetBits = [0, 1, 2, 3].map((oi) =>
+  Array.from({ length: 8 }, (_, bi) => {
+    const bitIndex = oi * 8 + bi; // 0 = MSB
+    return {
+      value: (u32 >>> (31 - bitIndex)) & 1,
+      network: bitIndex < prefix,
+    };
+  }),
+);
+
+const summary =
+  ariaLabel ??
+  (title
+    ? t("components.subnetSplit.ariaWithTitle", { title })
+    : t("components.subnetSplit.ariaWithoutTitle"));
+---
+
+<figure
+  class="subnet"
+  role="img"
+  aria-label={summary}
+>
+  {title && <figcaption class="subnet__title">{title}</figcaption>}
+
+  <div class="subnet__octets">
+    {
+      octetBits.map((bitsArr, oi) => (
+        <div class="subnet__octet">
+          <div class="subnet__bits">
+            {bitsArr.map((bit) => (
+              <span
+                class:list={[
+                  "subnet__bit",
+                  bit.network ? "subnet__bit--net" : "subnet__bit--host",
+                ]}
+              >
+                {bit.value}
+              </span>
+            ))}
+          </div>
+          <span class="subnet__decimal">{octets[oi]}</span>
+        </div>
+      ))
+    }
+  </div>
+
+  <ul class="subnet__legend">
+    <li class="subnet__legend-item">
+      <span
+        class="subnet__swatch subnet__swatch--net"
+        aria-hidden="true"
+      ></span>
+      <span>network /{prefix}</span>
+    </li>
+    <li class="subnet__legend-item">
+      <span
+        class="subnet__swatch subnet__swatch--host"
+        aria-hidden="true"
+      ></span>
+      <span>host ({32 - prefix} bits)</span>
+    </li>
+  </ul>
+
+  <dl class="subnet__facts">
+    <div><dt>CIDR</dt><dd>{ip}/{prefix}</dd></div>
+    <div><dt>Mask</dt><dd>{dotted(mask)}</dd></div>
+    <div><dt>Network</dt><dd>{dotted(network)}</dd></div>
+    <div><dt>Broadcast</dt><dd>{dotted(broadcast)}</dd></div>
+    <div>
+      <dt>Usable hosts</dt><dd>
+        {hosts.toLocaleString(locale, { useGrouping: "always" })}
+      </dd>
+    </div>
+  </dl>
+
+  {caption && <p class="subnet__caption">{caption}</p>}
+</figure>
+
+<style>
+  .subnet {
+    --sn-net: #b389f5;
+    --sn-host: #58d6df;
+    --sn-on: #0b0b13;
+
+    margin: 1.5rem 0;
+  }
+
+  .subnet__title {
+    margin-bottom: 1rem;
+    font-size: 1rem;
+    font-weight: var(--fw-semibold, 600);
+    color: var(--color-text-heading);
+  }
+
+  .subnet__octets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem 1rem;
+  }
+
+  .subnet__octet {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    align-items: center;
+  }
+
+  .subnet__bits {
+    display: flex;
+    gap: 2px;
+  }
+
+  .subnet__bit {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.3rem;
+    height: 1.5rem;
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--sn-on);
+    border-radius: 3px;
+  }
+
+  .subnet__bit--net {
+    background: var(--sn-net);
+  }
+
+  .subnet__bit--host {
+    background: var(--sn-host);
+  }
+
+  .subnet__decimal {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    font-weight: var(--fw-semibold, 600);
+    color: var(--color-text-heading);
+  }
+
+  .subnet__legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem 1rem;
+    padding: 0;
+    margin: 0.85rem 0 0;
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+    list-style: none;
+  }
+
+  .subnet__legend-item {
+    display: inline-flex;
+    column-gap: 0.4rem;
+    align-items: center;
+  }
+
+  .subnet__swatch {
+    width: 0.7rem;
+    height: 0.7rem;
+    border-radius: 2px;
+  }
+
+  .subnet__swatch--net {
+    background: var(--sn-net);
+  }
+
+  .subnet__swatch--host {
+    background: var(--sn-host);
+  }
+
+  .subnet__facts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem 1.5rem;
+    margin: 0.85rem 0 0;
+    font-size: 0.82rem;
+  }
+
+  .subnet__facts dt {
+    font-weight: var(--fw-semibold, 600);
+    color: var(--color-text-muted);
+  }
+
+  .subnet__facts dd {
+    margin: 0;
+    font-family: var(--font-mono);
+    color: var(--color-text-heading);
+  }
+
+  .subnet__caption {
+    margin-top: 1rem;
+    font-size: 0.8125rem;
+    font-style: italic;
+    color: var(--color-text-muted);
+    text-align: center;
+  }
+</style>

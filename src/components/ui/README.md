@@ -33,6 +33,25 @@ This directory contains all the reusable UI components for the jmrp.io blog/webs
 | [Collapsible](#collapsible)         | Expandable section             | Optional/detailed content                  |
 | [References](#references)           | Reference links section        | External resources                         |
 | [YouTube](#youtube)                 | YouTube embed                  | Video content                              |
+| [MemoryMap](#memorymap)             | Memory region bars             | Flash/RAM budgets, region sizing           |
+| [StructPacking](#structpacking)     | C/C++ struct layout            | Alignment, padding, `sizeof`               |
+| [RegisterMap](#registermap)         | Register bit-fields            | MCU/peripheral registers                   |
+| [ByteFrame](#byteframe)             | Single-row byte layout         | Wire/record formats                        |
+| [PacketDiagram](#packetdiagram)     | RFC multi-row header           | IPv4/TCP/UDP/QUIC, binary formats          |
+| [SubnetSplit](#subnetsplit)         | IP network/host split          | CIDR / subnetting                          |
+| [BitwiseOp](#bitwiseop)             | Bitwise op, bit-by-bit         | Masks, flags, shifts                       |
+| [NumberBases](#numberbases)         | hex/dec/oct/bin of a value     | Constants, addresses                       |
+| [FloatLayout](#floatlayout)         | IEEE 754 bit layout            | Floating-point                             |
+| [TimingDiagram](#timingdiagram)     | Digital waveforms (SVG)        | SPI/I²C/UART, bus timing                    |
+| [EncodingDiagram](#encodingdiagram) | Token → bytes                  | UTF-8, base64, varint                      |
+| [DeltaCompare](#deltacompare)       | Before/after metric bars       | Optimization results                       |
+| [LayerStack](#layerstack)           | Stacked HW/SW layers           | OSI, firmware stack, abstraction levels    |
+| [CallStack](#callstack)             | Call frames + growth           | Recursion, calling conventions             |
+| [Matrix](#matrix)                   | Labelled 2-D grid              | Lookup tables, bitmaps, matrices           |
+| [Pipeline](#pipeline)               | Numbered stages + data-flow    | Build/CPU pipelines, data flow             |
+| [ForkJoin](#forkjoin)               | Fork → join data-flow          | Producer → parallel artifacts → consumer   |
+| [ThemeImage](#themeimage)           | Light/dark responsive image    | Per-theme diagrams/screenshots             |
+| [FileDownload](#filedownload)       | Download card                  | Offering a file/asset                      |
 
 ---
 
@@ -895,6 +914,389 @@ These components are primarily used internally or for specific purposes:
 
 ---
 
+## Diagram & Embedded Components
+
+Zero-JS, theme-aware, responsive SVG/CSS diagrams for systems, embedded, C/C++ and networking content. All render `role="img"` figures with an i18n `aria-label` (keys under `components.*`) and an `sr-only` fallback where relevant.
+
+### MemoryMap
+
+Horizontal stacked bars for memory/region distribution (like `BarChart` but for byte regions), with a shared or fill scale and a legend.
+
+```mdx
+import MemoryMap from "@components/ui/MemoryMap.astro";
+
+<MemoryMap
+  title="Where it lives"
+  scale="shared"
+  bars={[
+    { label: "FLASH", segments: [
+      { label: "kPool", bytes: 13374, sizeLabel: "13.4 KB" },
+      { label: "kOffsets", bytes: 2690, sizeLabel: "2.6 KB" },
+    ] },
+    { label: "RAM", segments: [{ label: "runtime", bytes: 1 }] },
+  ]}
+/>
+```
+
+**Props:** `bars[]` (`{ label, segments[] }`), `scale?: "shared" | "fill"`, `title?`, `caption?`, `ariaLabel?`. Inline segment labels hide below 640 px.
+
+**When to use:** Flash/RAM budgets, segment/region sizing, allocation comparisons.
+
+### StructPacking
+
+C/C++ `struct` layout: members, computed padding holes and `sizeof`, for 32- or 64-bit alignment.
+
+```mdx
+import StructPacking from "@components/ui/StructPacking.astro";
+
+<StructPacking
+  arch="64-bit"
+  members={[
+    { type: "uint8_t", name: "tag", size: 1 },
+    { type: "void*", name: "next", size: 8 },
+    { type: "uint16_t", name: "count", size: 2 },
+  ]}
+/>
+```
+
+**Props:** `members[]` (`{ type, name, size, align?, color? }`), `arch?: "32-bit" | "64-bit"`, `title?`, `caption?`, `ariaLabel?`.
+
+**When to use:** Explaining alignment, padding and field reordering wins.
+
+### RegisterMap
+
+A hardware register bit-field: named fields by bit (`number` or `"hi:lo"`), reserved gaps auto-filled, with a legend (incl. a reserved swatch).
+
+```mdx
+import RegisterMap from "@components/ui/RegisterMap.astro";
+
+<RegisterMap
+  title="CTRL"
+  width={32}
+  fields={[
+    { name: "EN", bits: 0 },
+    { name: "MODE", bits: "2:1" },
+    { name: "PRIO", bits: "7:4", note: "priority" },
+  ]}
+/>
+```
+
+**Props:** `fields[]` (`{ name, bits, color?, note? }`), `width?: number`, `title?`, `caption?`, `ariaLabel?`. Fits to width on mobile; the bit ruler hides on dense (>16-bit) registers.
+
+**When to use:** MCU/peripheral register documentation.
+
+### ByteFrame
+
+A single-row byte layout: fields with byte offsets, variable-length (hatched) fields and per-field notes.
+
+```mdx
+import ByteFrame from "@components/ui/ByteFrame.astro";
+
+<ByteFrame
+  title="Inside kPool"
+  fields={[
+    { label: "len", bytes: 1 },
+    { label: "UTF-8 bytes", bytes: 5, variable: true },
+    { label: "NUL", bytes: 1 },
+  ]}
+/>
+```
+
+**Props:** `fields[]` (`{ label, bytes, variable?, note?, color? }`), `title?`, `caption?`, `ariaLabel?`.
+
+**When to use:** Wire/record formats that fit one row. For multi-row protocol headers use `PacketDiagram`.
+
+### PacketDiagram
+
+An RFC-style protocol header: fields flow across fixed-width rows (default 32 bits) and a field that crosses a row boundary is split, with a bit ruler and legend.
+
+```mdx
+import PacketDiagram from "@components/ui/PacketDiagram.astro";
+
+<PacketDiagram
+  title="IPv4 header"
+  bitsPerRow={32}
+  fields={[
+    { name: "Version", bits: 4 },
+    { name: "IHL", bits: 4 },
+    { name: "Total Length", bits: 16 },
+  ]}
+/>
+```
+
+**Props:** `fields[]` (`{ name, bits, color? }`), `bitsPerRow?: number`, `title?`, `caption?`, `ariaLabel?`. Fits to width on mobile (ruler hidden; legend covers truncation).
+
+**When to use:** IPv4/TCP/UDP/QUIC headers, multi-row binary formats.
+
+### SubnetSplit
+
+An IPv4 address as four octets of bits, split into the network (first `/prefix` bits) and host portions, with mask/network/broadcast/usable-hosts facts.
+
+```mdx
+import SubnetSplit from "@components/ui/SubnetSplit.astro";
+
+<SubnetSplit ip="192.168.1.10" prefix={26} />
+```
+
+**Props:** `ip: string`, `prefix: number`, `title?`, `caption?`, `ariaLabel?`. Octets wrap on mobile.
+
+**When to use:** CIDR / subnetting explanations.
+
+### BitwiseOp
+
+A bitwise operation bit-by-bit (`& | ^`, shifts `<< >>`, unary `~`): operand rows above a highlighted result row, aligned so set bits line up.
+
+```mdx
+import BitwiseOp from "@components/ui/BitwiseOp.astro";
+
+<BitwiseOp width={8} a={0xb2} op="&" b={0x0f} aLabel="flags" bLabel="mask" />
+```
+
+**Props:** `a: number`, `op`, `b?: number`, `width?: number`, `aLabel?`, `bLabel?`, `title?`, `caption?`, `ariaLabel?`.
+
+**When to use:** Masks, flags, shift tricks.
+
+### NumberBases
+
+One integer in hex, decimal, octal and nibble-grouped binary, aligned in a monospace grid.
+
+```mdx
+import NumberBases from "@components/ui/NumberBases.astro";
+
+<NumberBases value={0xb8} bits={8} />
+```
+
+**Props:** `value: number`, `bits?: number`, `title?`, `caption?`, `ariaLabel?`.
+
+**When to use:** Magic constants, addresses, masks.
+
+### FloatLayout
+
+An IEEE 754 decode: a proportional sign · exponent · mantissa bar, the raw bit groups (as colored pills) and a decode summary. Single or double precision.
+
+```mdx
+import FloatLayout from "@components/ui/FloatLayout.astro";
+
+<FloatLayout value={0.15625} precision="single" />
+```
+
+**Props:** `value: number`, `precision?: "single" | "double"`, `title?`, `caption?`, `ariaLabel?`.
+
+**When to use:** Floating-point representation.
+
+### TimingDiagram
+
+A digital timing diagram (a WaveDrom-style subset) rendered as zero-JS SVG. Each signal has a `wave` string: `0`/`1` wires, `p`/`n` clocks, `.` extend, `x` don't-care, `z` hi-Z, `=`/`2`-`9` data buses (labels from `data`).
+
+```mdx
+import TimingDiagram from "@components/ui/TimingDiagram.astro";
+
+<TimingDiagram
+  signals={[
+    { name: "SCLK", wave: "p......" },
+    { name: "MOSI", wave: "x=.=.=x", data: ["cmd", "addr", "data"] },
+    { name: "CS", wave: "10.....1" },
+  ]}
+/>
+```
+
+**Props:** `signals[]` (`{ name, wave, data? }`), `title?`, `caption?`, `ariaLabel?`. Scrolls horizontally when wide.
+
+**When to use:** SPI/I²C/UART, bus transactions, interrupt timing.
+
+### EncodingDiagram
+
+Maps source tokens to bytes: each row is a character/codepoint/value → its encoded bytes.
+
+```mdx
+import EncodingDiagram from "@components/ui/EncodingDiagram.astro";
+
+<EncodingDiagram
+  title="UTF-8"
+  rows={[
+    { label: "A (U+0041)", bytes: ["41"] },
+    { label: "é (U+00E9)", bytes: ["C3", "A9"] },
+  ]}
+/>
+```
+
+**Props:** `rows[]` (`{ label, bytes[], note? }`), `title?`, `caption?`, `ariaLabel?`.
+
+**When to use:** UTF-8, base64, varint and other encodings.
+
+### DeltaCompare
+
+Before/after metric comparison: per row a "before" bar above an "after" bar on a shared scale, plus the delta (absolute + %) and an improvement arrow.
+
+```mdx
+import DeltaCompare from "@components/ui/DeltaCompare.astro";
+
+<DeltaCompare
+  unit=" B"
+  rows={[
+    { label: "Index table", before: 5300, after: 2650 },
+    { label: "Firmware", before: 1341067, after: 1338903 },
+  ]}
+/>
+```
+
+**Props:** `rows[]` (`{ label, before, after, lowerIsBetter? }`), `unit?: string`, `title?`, `caption?`, `ariaLabel?`.
+
+**When to use:** Optimization results (flash saved, `sizeof` shrunk, latency).
+
+### LayerStack
+
+A vertical stack of labelled bands for hardware/software layers, abstraction levels, an OSI model or a boot sequence, with optional side notes.
+
+```mdx
+import LayerStack from "@components/ui/LayerStack.astro";
+
+<LayerStack
+  layers={[
+    { name: "Application", note: "your code" },
+    { name: "HAL" },
+    { name: "Registers / silicon" },
+  ]}
+/>
+```
+
+**Props:** `layers[]` (`{ name, note?, color? }`), `title?`, `caption?`, `ariaLabel?`.
+
+**When to use:** Layered architectures (OSI, firmware stack, TLS records).
+
+### CallStack
+
+A vertical stack of call frames (function + optional detail) with a growth indicator. Frames are listed outermost first.
+
+```mdx
+import CallStack from "@components/ui/CallStack.astro";
+
+<CallStack
+  frames={[
+    { name: "main()" },
+    { name: "parse(buf, len)", detail: "locals: 24 B" },
+    { name: "decode()", detail: "recursion depth 3" },
+  ]}
+/>
+```
+
+**Props:** `frames[]` (`{ name, detail?, color? }`), `growthLabel?: string`, `title?`, `caption?`, `ariaLabel?`.
+
+**When to use:** Recursion, stack overflow, calling conventions.
+
+### Matrix
+
+A labelled 2-D grid: row + column headers around a cell matrix, with optional highlighted cells. Scrolls horizontally on overflow.
+
+```mdx
+import Matrix from "@components/ui/Matrix.astro";
+
+<Matrix
+  rowHeader="lang"
+  cols={["BRAND", "OK"]}
+  rows={["EN", "ES"]}
+  cells={[
+    ["@9379", "@1164"],
+    ["@9379", "@1164"],
+  ]}
+  highlight={[[0, 0], [1, 0]]}
+/>
+```
+
+**Props:** `rows[]`, `cols[]`, `cells[][]`, `rowHeader?`, `highlight?: [r,c][]`, `title?`, `caption?`, `ariaLabel?`.
+
+**When to use:** Lookup tables (lang × id), bitmaps/tile maps, adjacency matrices.
+
+### Pipeline
+
+A linear sequence of numbered stages. Each stage is a card with a color accent and an optional tool/detail note; the arrow into a stage can carry the artifact handed over (`via`). Horizontal on desktop, vertical on mobile.
+
+```mdx
+import Pipeline from "@components/ui/Pipeline.astro";
+
+<Pipeline
+  stages={[
+    { name: "strings.json", note: "EN · ES" },
+    { name: "gen_i18n.py", note: "pack + tail-merge", via: "raw strings" },
+    { name: "firmware.elf", note: "13.4 KB .rodata", via: ".o" },
+  ]}
+/>
+```
+
+**Props:** `stages[]` (`{ name, note?, via?, color? }`), `title?`, `caption?`, `ariaLabel?`.
+
+**When to use:** Build pipelines, CPU pipelines, data-flow stages. For arbitrary graphs use `Mermaid`.
+
+### ForkJoin
+
+A vertical data-flow diagram for the **fork → join** shape: a linear chain that splits into parallel artifacts (the fork / "Y") and merges them back into a second linear chain (the join / inverted "Y"). Curved SVG connectors, highlighted branches, optional phase tags. Zero-JS, theme-aware.
+
+```mdx
+import ForkJoin from "@components/ui/ForkJoin.astro";
+
+<ForkJoin
+  ariaLabel="The generator forks into kPool and kOffsets, which the accessor joins to return a string."
+  beforeLabel="Build time"
+  afterLabel="Runtime"
+  before={[
+    { name: "strings.csv", note: "id, en, es" },
+    { name: "generator", note: "dedup + tail-merge" },
+  ]}
+  branches={[
+    { name: "kPool", note: "one packed blob" },
+    { name: "kOffsets", note: "uint16 table" },
+  ]}
+  after={[
+    { name: "gen::string()", note: "kPool.data() + offset" },
+    { name: "UI render" },
+  ]}
+  caption="Build-time generation, runtime lookup"
+/>
+```
+
+**Props:** `branches[]` (`{ name, note?, color? }`, required), `before?[]`, `after?[]`, `beforeLabel?`, `afterLabel?`, `title?`, `caption?`, `ariaLabel?`.
+
+**When to use:** Producer → artifacts → consumer flows where one step forks into parallel outputs that a later step joins (e.g. a generator emitting two tables read together). Best with 2–3 branches. For a linear sequence use `Pipeline`; for arbitrary graphs use `Mermaid`.
+
+### ThemeImage
+
+A responsive figure that swaps between a light and dark image (or shows a single image), with an optional caption. Zero-JS theme swap.
+
+```mdx
+import ThemeImage from "@components/ui/ThemeImage.astro";
+
+<ThemeImage
+  srcLight="/img/diagram-light.webp"
+  srcDark="/img/diagram-dark.webp"
+  alt="Request flow diagram"
+  caption="Request flow"
+/>
+```
+
+**Props:** `src` OR `srcLight` + `srcDark`, `alt`, `caption?`, `loading?`.
+
+**When to use:** Diagrams/screenshots that need per-theme variants without invading desktop layout.
+
+### FileDownload
+
+A download card for an attachment (filename, size, type) with a download button.
+
+```mdx
+import FileDownload from "@components/ui/FileDownload.astro";
+
+<FileDownload
+  href="/files/string-pool.zip"
+  filename="string-pool.zip"
+  size="4 KB"
+/>
+```
+
+**Props:** `href`, `filename`, `size?`, `description?`.
+
+**When to use:** Offering a sample file, config or asset for download.
+
+---
+
 ## Best Practices
 
 ### Import Patterns
@@ -951,4 +1353,4 @@ src/components/ui/
 
 ---
 
-_Last updated: February 2026_
+_Last updated: June 2026_

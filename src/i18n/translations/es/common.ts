@@ -25,6 +25,8 @@ export const common = {
     search: "Buscar",
     close: "Cerrar",
     open: "Abrir",
+    download: "Descargar",
+    lines: "líneas",
     language: "Idioma",
     english: "English",
     spanish: "Español",
@@ -192,6 +194,94 @@ export const common = {
     barChart: {
       ariaWithTitle: "Gráfico de barras: {title}. Mostrando {count} elementos.",
       ariaWithoutTitle: "Gráfico de barras mostrando {count} elementos",
+      ofTotal: "del total",
+    },
+    memoryMap: {
+      ariaWithTitle:
+        "Distribución de memoria: {title}. Mostrando {count} regiones.",
+      ariaWithoutTitle: "Distribución de memoria mostrando {count} regiones",
+    },
+    registerMap: {
+      ariaWithTitle: "Disposición de registro: {title}. {count} campos.",
+      ariaWithoutTitle: "Disposición de registro con {count} campos",
+      reserved: "reservado",
+    },
+    byteFrame: {
+      ariaWithTitle: "Disposición de bytes: {title}. {count} campos.",
+      ariaWithoutTitle: "Disposición de bytes con {count} campos",
+      srCaption: "Disposición de bytes",
+      srField: "Campo",
+      srOffset: "Offset",
+      srSize: "Tamaño",
+    },
+    structPacking: {
+      ariaWithTitle: "Disposición de struct: {title}. {count} miembros.",
+      ariaWithoutTitle: "Disposición de struct con {count} miembros",
+      padding: "relleno",
+    },
+    deltaCompare: {
+      ariaWithTitle: "Comparación antes/después: {title}. {count} métricas.",
+      ariaWithoutTitle: "Comparación antes/después con {count} métricas",
+      srCaption: "Antes/después",
+      srMetric: "Métrica",
+      srBefore: "Antes",
+      srAfter: "Después",
+      srChange: "Cambio",
+    },
+    layerStack: {
+      ariaWithTitle: "Pila de capas: {title}. {count} capas.",
+      ariaWithoutTitle: "Pila de capas con {count} capas",
+    },
+    matrix: {
+      ariaWithTitle: "Matriz: {title}. {rows} filas por {cols} columnas.",
+      ariaWithoutTitle: "Matriz con {rows} filas y {cols} columnas",
+    },
+    timingDiagram: {
+      ariaWithTitle: "Diagrama de tiempos: {title}. {count} señales.",
+      ariaWithoutTitle: "Diagrama de tiempos con {count} señales",
+    },
+    bitwiseOp: {
+      ariaWithTitle: "Operación de bits: {title}.",
+      ariaWithoutTitle: "Diagrama de operación de bits ({bits} bits)",
+    },
+    numberBases: {
+      ariaWithTitle: "Bases numéricas: {title}.",
+      ariaWithoutTitle: "Un número mostrado en varias bases",
+      hex: "Hex",
+      dec: "Dec",
+      oct: "Oct",
+    },
+    floatLayout: {
+      ariaWithTitle: "Disposición de coma flotante: {title}.",
+      ariaWithoutTitle: "Disposición de bits IEEE 754",
+      sign: "signo",
+      exponent: "exponente",
+      mantissa: "mantisa",
+    },
+    packetDiagram: {
+      ariaWithTitle: "Disposición de paquete: {title}. {count} campos.",
+      ariaWithoutTitle: "Disposición de paquete con {count} campos",
+    },
+    subnetSplit: {
+      ariaWithTitle: "División de subred: {title}.",
+      ariaWithoutTitle: "División red/host de una dirección IP",
+    },
+    callStack: {
+      ariaWithTitle: "Pila de llamadas: {title}. {count} marcos.",
+      ariaWithoutTitle: "Pila de llamadas con {count} marcos",
+      growthLabel: "más profundo — llamada más reciente",
+    },
+    encodingDiagram: {
+      ariaWithTitle: "Codificación: {title}.",
+      ariaWithoutTitle: "Diagrama de codificación de bytes",
+    },
+    pipeline: {
+      ariaWithTitle: "Pipeline: {title}. {count} etapas.",
+      ariaWithoutTitle: "Pipeline con {count} etapas",
+    },
+    forkJoin: {
+      ariaWithTitle: "Diagrama de flujo fork-join: {title}",
+      ariaWithoutTitle: "Diagrama de flujo fork-join",
     },
     timeline: {
       standard: "Estándar",
@@ -380,8 +470,7 @@ export const common = {
       viewMap: "Ver Mapa",
       viewMapAria: "Ver Mapa en PotatoMesh",
       viewMonitor: "Ver Monitor",
-      viewMonitorLFAria: "Ver Monitor en MeshMonitor LF",
-      viewMonitorMFAria: "Ver Monitor en MeshMonitor MF",
+      viewMonitorAria: "Ver Monitor en MeshMonitor",
       // ServerInsights — Matrix
       matrixNode: "Nodo: Servidor Matrix",
       matrixStatsAriaLabel: "Estadísticas en tiempo real del servidor Matrix",

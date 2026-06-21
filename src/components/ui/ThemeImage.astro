@@ -1,0 +1,131 @@
+---
+/**
+ * ThemeImage — a responsive `<figure>` image that can swap by color theme.
+ *
+ * Pass a single `src` to use one image in both themes, or `srcLight` + `srcDark`
+ * to show a different image per theme. The swap is zero-JS and mirrors the
+ * site's dark-first logic (`:root[data-theme]` + `prefers-color-scheme`).
+ *
+ * Capped width keeps it from invading the layout on desktop; full-width on
+ * small screens. Images are optimized via `astro:assets`.
+ *
+ * @example
+ * import light from "@assets/images/blog/diagram-light.webp";
+ * import dark from "@assets/images/blog/diagram-dark.webp";
+ * <ThemeImage srcLight={light} srcDark={dark} alt="…" caption="…" />
+ */
+import { Image } from "astro:assets";
+
+interface Props {
+  /** Image used in both themes (mutually exclusive with srcLight/srcDark). */
+  src?: ImageMetadata;
+  /** Image shown in light mode (requires srcDark). */
+  srcLight?: ImageMetadata;
+  /** Image shown in dark mode (requires srcLight). */
+  srcDark?: ImageMetadata;
+  /** Descriptive alt text (required for accessibility). */
+  alt: string;
+  /** Optional caption rendered under the image. */
+  caption?: string;
+  /** Loading strategy. Default "lazy". */
+  loading?: "lazy" | "eager";
+}
+
+const { src, srcLight, srcDark, alt, caption, loading = "lazy" } = Astro.props;
+
+const hasPair = Boolean(srcLight && srcDark);
+if (!src && !hasPair) {
+  throw new Error(
+    "ThemeImage: provide either `src`, or both `srcLight` and `srcDark`.",
+  );
+}
+// The two modes are mutually exclusive — passing both would render duplicates.
+if (src && hasPair) {
+  throw new Error("ThemeImage: pass `src` OR `srcLight`+`srcDark`, not both.");
+}
+
+// Capped at 760px on desktop (see scoped styles) so it never invades the layout.
+const widths = [360, 540, 720, 960, 1200];
+const sizes = "(max-width: 760px) 100vw, 760px";
+const common = { alt, loading, widths, sizes } as const;
+---
+
+<figure class="theme-image">
+  {
+    src && (
+      <Image
+        src={src}
+        {...common}
+      />
+    )
+  }
+  {
+    hasPair && (
+      <>
+        <Image
+          src={srcLight!}
+          {...common}
+          class="theme-image__img theme-image__img--light"
+        />
+        <Image
+          src={srcDark!}
+          {...common}
+          class="theme-image__img theme-image__img--dark"
+        />
+      </>
+    )
+  }
+  {caption && <figcaption class="theme-image__caption">{caption}</figcaption>}
+</figure>
+
+<style>
+  .theme-image {
+    width: 100%;
+    max-width: 760px;
+    margin: 1.5rem auto;
+    text-align: center;
+  }
+
+  .theme-image :global(img) {
+    width: 100%;
+    height: auto;
+    border: var(--border-1);
+    border-radius: var(--radius-md);
+  }
+
+  /* Dark-first: show the dark image, hide the light one (mirrors global.css). */
+  .theme-image__img--light {
+    display: none;
+  }
+
+  .theme-image__img--dark {
+    display: block;
+  }
+
+  /* Explicit light theme. */
+  :root[data-theme="light"] .theme-image__img--light {
+    display: block;
+  }
+
+  :root[data-theme="light"] .theme-image__img--dark {
+    display: none;
+  }
+
+  /* OS prefers light and the theme isn't forced to dark. */
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) .theme-image__img--light {
+      display: block;
+    }
+
+    :root:not([data-theme="dark"]) .theme-image__img--dark {
+      display: none;
+    }
+  }
+
+  .theme-image__caption {
+    margin-top: 0.6rem;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    color: var(--color-text-muted);
+  }
+</style>

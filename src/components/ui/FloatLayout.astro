@@ -1,0 +1,211 @@
+---
+/**
+ * FloatLayout Component
+ *
+ * Decodes a number into its IEEE 754 bit layout (sign · exponent · mantissa) as
+ * a proportional bar plus the raw bit groups and a decode summary. Single or
+ * double precision.
+ *
+ * @example
+ * <FloatLayout value={0.15625} precision="single" />
+ */
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslations } from "@i18n/utils";
+
+interface Props {
+  /** Optional title. */
+  title?: string;
+  /** The value to decode. */
+  value: number;
+  /** "single" (32-bit, default) or "double" (64-bit). */
+  precision?: "single" | "double";
+  /** Caption below the figure. */
+  caption?: string;
+  /** Accessibility label. */
+  ariaLabel?: string;
+}
+
+const { title, value, precision = "single", caption, ariaLabel } = Astro.props;
+
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
+
+const dv = new DataView(new ArrayBuffer(8));
+let bits: string;
+let expWidth: number;
+let bias: number;
+if (precision === "double") {
+  dv.setFloat64(0, value);
+  bits =
+    dv.getUint32(0).toString(2).padStart(32, "0") +
+    dv.getUint32(4).toString(2).padStart(32, "0");
+  expWidth = 11;
+  bias = 1023;
+} else {
+  dv.setFloat32(0, value);
+  bits = dv.getUint32(0).toString(2).padStart(32, "0");
+  expWidth = 8;
+  bias = 127;
+}
+const total = bits.length;
+const mantissaWidth = total - 1 - expWidth;
+
+const signBits = bits.slice(0, 1);
+const expBits = bits.slice(1, 1 + expWidth);
+const mantissaBits = bits.slice(1 + expWidth);
+const expRaw = Number.parseInt(expBits, 2);
+
+const groups = [
+  {
+    name: t("components.floatLayout.sign"),
+    w: 1,
+    bits: signBits,
+    color: "var(--fl-1)",
+  },
+  {
+    name: t("components.floatLayout.exponent"),
+    w: expWidth,
+    bits: expBits,
+    color: "var(--fl-2)",
+  },
+  {
+    name: t("components.floatLayout.mantissa"),
+    w: mantissaWidth,
+    bits: mantissaBits,
+    color: "var(--fl-3)",
+  },
+];
+
+const summary =
+  ariaLabel ??
+  (title
+    ? t("components.floatLayout.ariaWithTitle", { title })
+    : t("components.floatLayout.ariaWithoutTitle"));
+---
+
+<figure
+  class="float"
+  role="img"
+  aria-label={summary}
+>
+  {title && <figcaption class="float__title">{title}</figcaption>}
+
+  <div class="float__bar">
+    {
+      groups.map((g) => (
+        <div
+          class="float__seg"
+          style={`flex-grow:${g.w};background-color:${g.color}`}
+        >
+          <span class="float__seg-name">{g.name}</span>
+          <span class="float__seg-w">{g.w} b</span>
+        </div>
+      ))
+    }
+  </div>
+
+  <p class="float__bits">
+    {
+      groups.map((g) => (
+        <span
+          class="float__chunk"
+          style={`background-color:${g.color}`}
+        >
+          {g.bits}
+        </span>
+      ))
+    }
+  </p>
+
+  <p class="float__decode">
+    <b>{value}</b> · s = {signBits} · e = {expRaw} − {bias} = {expRaw - bias}
+  </p>
+
+  {caption && <p class="float__caption">{caption}</p>}
+</figure>
+
+<style>
+  .float {
+    --fl-1: #f0789b;
+    --fl-2: #fbbf24;
+    --fl-3: #58d6df;
+    --fl-on: #0b0b13;
+
+    margin: 1.5rem 0;
+  }
+
+  .float__title {
+    margin-bottom: 1rem;
+    font-size: 1rem;
+    font-weight: var(--fw-semibold, 600);
+    color: var(--color-text-heading);
+  }
+
+  .float__bar {
+    display: flex;
+    overflow: hidden;
+    border-radius: var(--radius-sm, 4px);
+  }
+
+  .float__seg {
+    display: flex;
+    flex-basis: 0;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 2rem;
+    min-height: 3rem;
+    padding: 0.3rem;
+    color: var(--fl-on);
+    text-align: center;
+  }
+
+  .float__seg + .float__seg {
+    border-left: 2px solid var(--color-bg, #000);
+  }
+
+  .float__seg-name {
+    font-size: 0.82rem;
+    font-weight: var(--fw-semibold, 600);
+  }
+
+  .float__seg-w {
+    font-size: 0.68rem;
+    opacity: 85%;
+  }
+
+  .float__bits {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin: 0.6rem 0 0;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+  }
+
+  .float__chunk {
+    padding: 0.1rem 0.4rem;
+    color: var(--fl-on);
+    word-break: break-all;
+    border-radius: var(--radius-sm, 4px);
+  }
+
+  .float__decode {
+    margin: 0.6rem 0 0;
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+  }
+
+  .float__decode b {
+    font-family: var(--font-mono);
+    color: var(--color-text-heading);
+  }
+
+  .float__caption {
+    margin-top: 1rem;
+    font-size: 0.8125rem;
+    font-style: italic;
+    color: var(--color-text-muted);
+    text-align: center;
+  }
+</style>

@@ -1,0 +1,103 @@
+---
+title: "Empaquetador de String Pool"
+slug: "string-pool-packer"
+description: "Compara una tabla de punteros con un pool de cadenas empaquetado y tail-merged con offsets uint16. Pega cadenas y observa el dedup y el ahorro."
+subtitle: "Comprueba cómo un pool de cadenas deduplicado y tail-merged con offsets uint16 supera a una tabla const char* para guardar textos de UI en un MCU de 32 bits."
+icon: "i-mdi:package-variant-closed"
+category: "embedded"
+tags: ["i18n", "embedded", "firmware", "c++", "flash", "optimization"]
+appComponent: "StringPoolPacker"
+lang: "es"
+---
+
+<h2>Sobre esta herramienta</h2>
+<p>
+  El firmware que muestra texto de UI en varios idiomas suele guardarlo como una
+  tabla 2-D de punteros <code>const char*</code> — uno por celda (idioma × ID de
+  cadena). En un MCU de 32 bits cada puntero son 4 bytes de puro coste de índice,
+  antes de un solo carácter de texto. Esta herramienta muestra lo que ahorras al
+  pasar a un único <strong>pool de cadenas empaquetado</strong> más una tabla de
+  offsets <code>uint16</code> de 2 bytes, con las cadenas idénticas deduplicadas
+  y los sufijos <strong>tail-merged</strong> dentro de cadenas más largas.
+</p>
+<p>
+  Es el complemento interactivo del artículo{" "}
+  <a href="/blog/010-packed-i18n-string-pool/">
+    What the Linker Won't Do: Packing i18n Strings on an MCU
+  </a>
+  .
+</p>
+
+<h3>Dos modos</h3>
+<ul>
+  <li>
+    <strong>Líneas</strong> — pega cadenas una por línea; cada línea es una
+    entrada del índice (una celda idioma × ID).
+  </li>
+  <li>
+    <strong>CSV</strong> — el formato real del firmware: una cabecera{" "}
+    <code>id,en,es,…</code> y una fila por ID de cadena, una columna por idioma.
+    Cada celda es una entrada del índice, y un{" "}
+    <strong>lookup por identificador × idioma</strong> simula el{" "}
+    <code>tr()</code> del firmware: eliges un ID y un idioma y la herramienta
+    muestra el offset y la cadena resueltos (<code>gen::string(lang, id)</code> →{" "}
+    <code>pool + offset</code>).
+  </li>
+</ul>
+
+<h3>Cómo usarla</h3>
+<ol>
+  <li>
+    Elige el modo <strong>Líneas</strong> o <strong>CSV</strong> y pega tus datos
+    (usa <strong>Cargar ejemplo</strong> como punto de partida).
+  </li>
+  <li>
+    Elige el <strong>ancho de puntero</strong> de tu objetivo (4 bytes para un
+    MCU de 32 bits, 8 bytes para un host de 64 bits).
+  </li>
+  <li>
+    Lee la comparación: bytes de la tabla de índice, bytes del blob de cadenas y
+    el total para el enfoque de tabla de punteros y el de pool empaquetado.
+  </li>
+  <li>
+    Revisa el desglose por cadena — con el <strong>offset en bytes</strong> de
+    cada una — para ver cuáles se <strong>deduplicaron</strong> y cuáles se{" "}
+    <strong>fusionaron por sufijo</strong> (tail-merge) dentro de una cadena más
+    larga (su offset apunta dentro de esa entrada más larga).
+  </li>
+</ol>
+
+<h3>Qué calcula</h3>
+<ul>
+  <li>
+    <strong>Tabla de índice</strong> — entradas × 4 B (punteros) frente a
+    entradas × 2 B (offsets <code>uint16</code>). Esta reducción a la mitad es la
+    ganancia estructural que ningún linker hace por ti.
+  </li>
+  <li>
+    <strong>Dedup</strong> — las cadenas idénticas (compartidas entre idiomas,
+    como <code>"OK"</code>) se guardan una sola vez.
+  </li>
+  <li>
+    <strong>Tail-merge</strong> — una cadena que es el sufijo de otra reutiliza
+    los bytes de la más larga (colocada primero la más larga), justo lo que hace
+    el generador en tiempo de compilación.
+  </li>
+  <li>
+    <strong>Guardia uint16</strong> — avisa cuando el pool supera los 64 KiB,
+    punto en el que los offsets ya no caben en un <code>uint16</code>.
+  </li>
+  <li>
+    <strong>Recuperación</strong> — toda cadena, almacenada o tail-merged, se lee
+    con <code>pool + offset</code>. Una cadena tail-merged nunca se guarda aparte;
+    su offset simplemente cae dentro de una entrada más larga, así que la
+    búsqueda sigue siendo O(1) e idéntica para todas.
+  </li>
+</ul>
+
+<h3>Privacidad</h3>
+<p>
+  Todo el análisis, la deduplicación, el tail-merge y el conteo de bytes ocurren
+  por completo en tu navegador. Nada de lo que escribes se transmite a ningún
+  servidor.
+</p>

@@ -25,6 +25,8 @@ export const common = {
     search: "Search",
     close: "Close",
     open: "Open",
+    download: "Download",
+    lines: "lines",
     language: "Language",
     english: "English",
     spanish: "Español",
@@ -192,6 +194,93 @@ export const common = {
     barChart: {
       ariaWithTitle: "Bar chart: {title}. Showing {count} items.",
       ariaWithoutTitle: "Bar chart showing {count} items",
+      ofTotal: "of total",
+    },
+    memoryMap: {
+      ariaWithTitle: "Memory distribution: {title}. Showing {count} regions.",
+      ariaWithoutTitle: "Memory distribution showing {count} regions",
+    },
+    registerMap: {
+      ariaWithTitle: "Register layout: {title}. {count} fields.",
+      ariaWithoutTitle: "Register layout with {count} fields",
+      reserved: "reserved",
+    },
+    byteFrame: {
+      ariaWithTitle: "Byte layout: {title}. {count} fields.",
+      ariaWithoutTitle: "Byte layout with {count} fields",
+      srCaption: "Byte layout",
+      srField: "Field",
+      srOffset: "Offset",
+      srSize: "Size",
+    },
+    structPacking: {
+      ariaWithTitle: "Struct layout: {title}. {count} members.",
+      ariaWithoutTitle: "Struct layout with {count} members",
+      padding: "padding",
+    },
+    deltaCompare: {
+      ariaWithTitle: "Before/after comparison: {title}. {count} metrics.",
+      ariaWithoutTitle: "Before/after comparison with {count} metrics",
+      srCaption: "Before/after",
+      srMetric: "Metric",
+      srBefore: "Before",
+      srAfter: "After",
+      srChange: "Change",
+    },
+    layerStack: {
+      ariaWithTitle: "Layer stack: {title}. {count} layers.",
+      ariaWithoutTitle: "Layer stack with {count} layers",
+    },
+    matrix: {
+      ariaWithTitle: "Matrix: {title}. {rows} rows by {cols} columns.",
+      ariaWithoutTitle: "Matrix with {rows} rows and {cols} columns",
+    },
+    timingDiagram: {
+      ariaWithTitle: "Timing diagram: {title}. {count} signals.",
+      ariaWithoutTitle: "Timing diagram with {count} signals",
+    },
+    bitwiseOp: {
+      ariaWithTitle: "Bitwise operation: {title}.",
+      ariaWithoutTitle: "Bitwise operation diagram ({bits}-bit)",
+    },
+    numberBases: {
+      ariaWithTitle: "Number bases: {title}.",
+      ariaWithoutTitle: "A number shown in several bases",
+      hex: "Hex",
+      dec: "Dec",
+      oct: "Oct",
+    },
+    floatLayout: {
+      ariaWithTitle: "Floating-point layout: {title}.",
+      ariaWithoutTitle: "IEEE 754 floating-point bit layout",
+      sign: "sign",
+      exponent: "exponent",
+      mantissa: "mantissa",
+    },
+    packetDiagram: {
+      ariaWithTitle: "Packet layout: {title}. {count} fields.",
+      ariaWithoutTitle: "Packet layout with {count} fields",
+    },
+    subnetSplit: {
+      ariaWithTitle: "Subnet split: {title}.",
+      ariaWithoutTitle: "IP address network/host split",
+    },
+    callStack: {
+      ariaWithTitle: "Call stack: {title}. {count} frames.",
+      ariaWithoutTitle: "Call stack with {count} frames",
+      growthLabel: "deeper — most recent call",
+    },
+    encodingDiagram: {
+      ariaWithTitle: "Encoding: {title}.",
+      ariaWithoutTitle: "Byte-encoding diagram",
+    },
+    pipeline: {
+      ariaWithTitle: "Pipeline: {title}. {count} stages.",
+      ariaWithoutTitle: "Pipeline with {count} stages",
+    },
+    forkJoin: {
+      ariaWithTitle: "Fork-join data-flow diagram: {title}",
+      ariaWithoutTitle: "Fork-join data-flow diagram",
     },
     timeline: {
       standard: "Standard",
@@ -380,8 +469,7 @@ export const common = {
       viewMap: "View Map",
       viewMapAria: "View Map on PotatoMesh",
       viewMonitor: "View Monitor",
-      viewMonitorLFAria: "View Monitor on MeshMonitor LF",
-      viewMonitorMFAria: "View Monitor on MeshMonitor MF",
+      viewMonitorAria: "View Monitor on MeshMonitor",
       // ServerInsights — Matrix
       matrixNode: "Node: Matrix Homeserver",
       matrixStatsAriaLabel: "Matrix server real-time statistics",

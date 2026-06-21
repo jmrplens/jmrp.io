@@ -22,6 +22,26 @@ import DecisionTree from "@components/ui/DecisionTree.astro";
 import StateNotice from "@components/ui/StateNotice.astro";
 import SecurityRating from "@components/ui/SecurityRating.astro";
 import Prerequisite from "@components/ui/Prerequisite.astro";
+import MemoryMap from "@components/ui/MemoryMap.astro";
+import StructPacking from "@components/ui/StructPacking.astro";
+import RegisterMap from "@components/ui/RegisterMap.astro";
+import ByteFrame from "@components/ui/ByteFrame.astro";
+import PacketDiagram from "@components/ui/PacketDiagram.astro";
+import SubnetSplit from "@components/ui/SubnetSplit.astro";
+import BitwiseOp from "@components/ui/BitwiseOp.astro";
+import NumberBases from "@components/ui/NumberBases.astro";
+import FloatLayout from "@components/ui/FloatLayout.astro";
+import TimingDiagram from "@components/ui/TimingDiagram.astro";
+import EncodingDiagram from "@components/ui/EncodingDiagram.astro";
+import DeltaCompare from "@components/ui/DeltaCompare.astro";
+import LayerStack from "@components/ui/LayerStack.astro";
+import CallStack from "@components/ui/CallStack.astro";
+import Matrix from "@components/ui/Matrix.astro";
+import Pipeline from "@components/ui/Pipeline.astro";
+import ForkJoin from "@components/ui/ForkJoin.astro";
+import ThemeImage from "@components/ui/ThemeImage.astro";
+import FileDownload from "@components/ui/FileDownload.astro";
+import demoImage from "../../../assets/images/blog/csp-shield.webp";
 
 This page demonstrates all the new UI components available for blog posts.
 
@@ -382,6 +402,320 @@ Add `'nonce-$cspNonce'` to your `script-src` directive.
 </StepByStep>
 
 <SecurityRating rating="A+" title="Result" description="Following these steps will give you an A+ rating on Mozilla Observatory." />
+
+---
+
+## Memory & Layout Diagrams
+
+Zero-JS, theme-aware diagrams for systems, embedded and C/C++ content.
+
+### MemoryMap
+
+Stacked bars for memory regions (flash/RAM budgets, segment sizing).
+
+<MemoryMap
+  title="Where the string pool lives"
+  scale="shared"
+  bars={[
+    { label: "FLASH", segments: [
+      { label: "kPool", bytes: 13374, sizeLabel: "13.4 KB" },
+      { label: "kOffsets", bytes: 2690, sizeLabel: "2.6 KB" },
+    ] },
+    { label: "RAM", segments: [{ label: "runtime", bytes: 1 }] },
+  ]}
+/>
+
+---
+
+### StructPacking
+
+C/C++ struct layout with computed padding holes and `sizeof`.
+
+<StructPacking
+  arch="64-bit"
+  members={[
+    { type: "uint8_t", name: "tag", size: 1 },
+    { type: "void*", name: "next", size: 8 },
+    { type: "uint16_t", name: "count", size: 2 },
+  ]}
+/>
+
+---
+
+### RegisterMap
+
+A hardware register's bit-fields; reserved gaps fill automatically.
+
+<RegisterMap
+  title="CTRL"
+  width={32}
+  fields={[
+    { name: "ENABLE", bits: 0 },
+    { name: "MODE", bits: "2:1" },
+    { name: "PRIORITY", bits: "7:4", note: "0–15" },
+  ]}
+/>
+
+---
+
+### ByteFrame
+
+A single-row byte layout with fixed and variable-length fields.
+
+<ByteFrame
+  title="A packed string entry"
+  fields={[
+    { label: "len", bytes: 1 },
+    { label: "UTF-8 bytes", bytes: 5, variable: true },
+    { label: "NUL", bytes: 1 },
+  ]}
+/>
+
+---
+
+## Networking Diagrams
+
+### PacketDiagram
+
+An RFC-style header: fields wrap across 32-bit rows and split on boundaries.
+
+<PacketDiagram
+  title="UDP header"
+  bitsPerRow={32}
+  fields={[
+    { name: "Source Port", bits: 16 },
+    { name: "Destination Port", bits: 16 },
+    { name: "Length", bits: 16 },
+    { name: "Checksum", bits: 16 },
+  ]}
+/>
+
+---
+
+### SubnetSplit
+
+An IPv4 address split into network and host bits, with the derived facts.
+
+<SubnetSplit
+  title="192.168.1.10 /26"
+  ip="192.168.1.10"
+  prefix={26}
+/>
+
+---
+
+## Bits & Numbers
+
+### BitwiseOp
+
+A bitwise operation shown bit-by-bit, with the result highlighted.
+
+<BitwiseOp
+  title="Masking the low nibble"
+  width={8}
+  a={0xb2}
+  op="&"
+  b={0x0f}
+  aLabel="flags"
+  bLabel="mask"
+/>
+
+---
+
+### NumberBases
+
+One integer in hex, decimal, octal and nibble-grouped binary.
+
+<NumberBases
+  title="0xB8"
+  value={0xb8}
+  bits={8}
+/>
+
+---
+
+### FloatLayout
+
+An IEEE 754 decode: sign · exponent · mantissa bar, bit groups and value.
+
+<FloatLayout
+  title="0.15625 (single precision)"
+  value={0.15625}
+  precision="single"
+/>
+
+---
+
+## Signals & Encoding
+
+### TimingDiagram
+
+A WaveDrom-style digital timing diagram rendered as zero-JS SVG.
+
+<TimingDiagram
+  title="SPI mode 0 — single byte"
+  signals={[
+    { name: "CS", wave: "10......1" },
+    { name: "SCLK", wave: "0p......0" },
+    { name: "MOSI", wave: "x=.=.=.=x", data: ["b7", "b6", "b5", "b4"] },
+    { name: "MISO", wave: "z=.=.=.=z", data: ["r7", "r6", "r5", "r4"] },
+  ]}
+/>
+
+---
+
+### EncodingDiagram
+
+Maps source tokens to their encoded bytes.
+
+<EncodingDiagram
+  title="UTF-8 encoding"
+  rows={[
+    { label: "A (U+0041)", bytes: ["41"] },
+    { label: "é (U+00E9)", bytes: ["C3", "A9"] },
+    { label: "€ (U+20AC)", bytes: ["E2", "82", "AC"] },
+  ]}
+/>
+
+---
+
+## Comparison, Structure & Flow
+
+### DeltaCompare
+
+Before/after metric bars with the delta and an improvement arrow.
+
+<DeltaCompare
+  title="What the i18n change saved"
+  unit=" B"
+  rows={[
+    { label: "Index table", before: 5300, after: 2650 },
+    { label: "Firmware", before: 1341067, after: 1338903 },
+  ]}
+/>
+
+---
+
+### LayerStack
+
+A vertical stack of hardware/software layers with side notes.
+
+<LayerStack
+  title="Where a tr() call lands"
+  layers={[
+    { name: "UI / call site", note: "tr(StringId)" },
+    { name: "i18n::tr()", note: "range check + fallback" },
+    { name: "gen::string()", note: "kPool.data() + offset" },
+    { name: "Flash (XIP)", note: "memory-mapped" },
+  ]}
+/>
+
+---
+
+### CallStack
+
+Call frames with a growth indicator (outermost first).
+
+<CallStack
+  title="A tr() lookup, deepest last"
+  frames={[
+    { name: "ui::drawScreen()" },
+    { name: "tr(StringId::PinEnter)", detail: "bounds + fallback" },
+    { name: "gen::string(lang, idx)", detail: "kPool.data() + offset" },
+  ]}
+/>
+
+---
+
+### Matrix
+
+A labelled 2-D grid with optional highlighted cells.
+
+<Matrix
+  title="kOffsets — a slice of the table"
+  rowHeader="lang"
+  cols={["BRAND", "CommonOk", "CommonCancel"]}
+  rows={["EN", "ES", "FR"]}
+  cells={[
+    ["@9379", "@1164", "@12542"],
+    ["@9379", "@1164", "@11279"],
+    ["@9379", "@1164", "@11901"],
+  ]}
+  highlight={[
+    [0, 0],
+    [1, 0],
+    [2, 0],
+    [0, 1],
+    [1, 1],
+    [2, 1],
+  ]}
+/>
+
+---
+
+### Pipeline
+
+Numbered stages with per-stage notes and the artifact on each arrow.
+
+<Pipeline
+  title="From source strings to flashed firmware"
+  stages={[
+    { name: "strings.json", note: "EN · ES" },
+    { name: "gen_i18n.py", note: "pack + tail-merge", via: "raw strings" },
+    { name: "clang++ -Os", note: "→ .rodata", via: ".cpp" },
+    { name: "firmware.elf", note: "13.4 KB pool", via: ".o" },
+  ]}
+/>
+
+### ForkJoin
+
+A fork → join data-flow: a linear chain splits into parallel artifacts, then merges into a second chain. Highlighted branches, curved SVG connectors and optional phase tags.
+
+<ForkJoin
+  title="Build-time generation, runtime lookup"
+  beforeLabel="Build time"
+  afterLabel="Runtime"
+  ariaLabel="The generator forks into kPool and kOffsets, which the accessor joins to return a string the UI renders."
+  before={[
+    { name: "strings.csv", note: "id, en, es, fr, de, it" },
+    { name: "generator", note: "dedup + tail-merge" },
+  ]}
+  branches={[
+    { name: "kPool", note: "one packed blob" },
+    { name: "kOffsets", note: "uint16 table" },
+  ]}
+  after={[
+    { name: "gen::string(lang, id)", note: "kPool.data() + offset" },
+    { name: "i18n::tr(StringId)" },
+    { name: "UI render" },
+  ]}
+/>
+
+---
+
+## Media & Files
+
+### ThemeImage
+
+A responsive figure that can swap between light and dark variants.
+
+<ThemeImage
+  src={demoImage}
+  alt="Example diagram used to demonstrate the ThemeImage component"
+  caption="A single image shown in both themes"
+/>
+
+---
+
+### FileDownload
+
+A download card for an attachment under `public/`.
+
+<FileDownload
+  href="/pdf/CV_RequenaPlensJoseManuel_ENG.pdf"
+  filename="CV.pdf"
+  description="Example download served from the public folder"
+/>
 
 ---
 

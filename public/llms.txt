@@ -2,7 +2,7 @@
 
 > Personal technical blog and portfolio of José Manuel Requena Plens — R&D Engineer specializing in Embedded Systems, Acoustics, and Industrial Software Development.
 
-> Last updated: 2026-06-10
+> Last updated: 2026-06-21
 
 > For comprehensive context including detailed blog post topics, tool features, and author background, see [llms-full.txt](https://jmrp.io/llms-full.txt).
 
@@ -12,7 +12,7 @@ José Manuel Requena Plens (JMRP) is a multidisciplinary engineer building contr
 
 ## Sections
 
-- [Blog](https://jmrp.io/blog/): Technical articles on Nginx, MikroTik, networking, security, and DevOps
+- [Blog](https://jmrp.io/blog/): Technical articles on Nginx, MikroTik, networking, security, embedded firmware, and DevOps
 - [CV](https://jmrp.io/cv/): Professional curriculum vitae and experience
 - [Publications](https://jmrp.io/publications/): Academic papers on acoustics, metamaterials, and ultrasound
 - [Homelab](https://jmrp.io/homelab/): Self-hosted infrastructure — Mastodon, Matrix, Meshtastic, Tor relays
@@ -30,6 +30,7 @@ José Manuel Requena Plens (JMRP) is a multidisciplinary engineer building contr
 - [MikroTik WireGuard VPN: Dual-Stack](https://jmrp.io/blog/007-mikrotik-wireguard-dual-stack-vpn/)
 - [MikroTik PPPoE + DHCPv6-PD: Dual-Stack](https://jmrp.io/blog/008-mikrotik-pppoe-dualstack-digi/)
 - [Running a Tor Bridge on Linux](https://jmrp.io/blog/009-running-tor-bridge/)
+- [What the Linker Won't Do: Packing i18n Strings on an MCU](https://jmrp.io/blog/010-packed-i18n-string-pool/)
 
 ## Developer Tools
 
@@ -47,6 +48,7 @@ José Manuel Requena Plens (JMRP) is a multidisciplinary engineer building contr
 - [Color Contrast Checker](https://jmrp.io/tools/color-contrast-checker/): WCAG contrast ratio checker
 - [Timestamp Converter](https://jmrp.io/tools/timestamp-converter/): Unix timestamp conversions
 - [Modbus Frame Builder](https://jmrp.io/tools/modbus-frame-builder/): Build Modbus RTU/TCP frames
+- [String Pool Packer](https://jmrp.io/tools/string-pool-packer/): Pack i18n strings into a deduplicated, tail-merged pool with uint16 offsets
 
 ## Contact
 

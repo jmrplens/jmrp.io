@@ -515,6 +515,284 @@ import References from "@components/ui/References.astro";
 
 ---
 
+### Diagram & Embedded
+
+Zero-JS, theme-aware, responsive SVG/CSS diagrams for systems / embedded / C-C++ / networking content. All are `role="img"` figures with an i18n `aria-label` (keys under `components.*`). Prefer these over `Mermaid` for the structured cases below; keep `Mermaid` for arbitrary graphs.
+
+#### MemoryMap
+```mdx
+import MemoryMap from "@components/ui/MemoryMap.astro";
+<MemoryMap title="Where it lives" scale="shared" bars={[
+  { label: "FLASH", segments: [
+    { label: "kPool", bytes: 13374, sizeLabel: "13.4 KB" },
+    { label: "kOffsets", bytes: 2690, sizeLabel: "2.6 KB" },
+  ] },
+  { label: "RAM", segments: [{ label: "runtime", bytes: 1 }] },
+]} />
+```
+| Prop | Type | Required |
+|------|------|----------|
+| `bars` | `Array<{ label; segments: Array<{ label; bytes; sizeLabel?; color? }> }>` | **Yes** |
+| `scale` | `"shared" \| "fill"` | No (`"fill"`) |
+| `title` / `caption` / `ariaLabel` | `string` | No |
+
+#### StructPacking
+```mdx
+import StructPacking from "@components/ui/StructPacking.astro";
+<StructPacking arch="64-bit" members={[
+  { type: "uint8_t", name: "tag", size: 1 },
+  { type: "void*", name: "next", size: 8 },
+  { type: "uint16_t", name: "count", size: 2 },
+]} />
+```
+| Prop | Type | Required |
+|------|------|----------|
+| `members` | `Array<{ type; name; size; align?; color? }>` | **Yes** |
+| `arch` | `"32-bit" \| "64-bit"` | No (`"64-bit"`) |
+| `title` / `caption` / `ariaLabel` | `string` | No |
+
+#### RegisterMap
+```mdx
+import RegisterMap from "@components/ui/RegisterMap.astro";
+<RegisterMap title="CTRL" width={32} fields={[
+  { name: "EN", bits: 0 },
+  { name: "MODE", bits: "2:1" },
+  { name: "PRIO", bits: "7:4", note: "priority" },
+]} />
+```
+| Prop | Type | Required |
+|------|------|----------|
+| `fields` | `Array<{ name; bits: number \| "hi:lo"; color?; note? }>` | **Yes** |
+| `width` | `number` | No (`32`) |
+| `title` / `caption` / `ariaLabel` | `string` | No |
+
+Reserved gaps auto-fill; fits to width on mobile (ruler hidden when >16-bit).
+
+#### ByteFrame
+```mdx
+import ByteFrame from "@components/ui/ByteFrame.astro";
+<ByteFrame title="Inside kPool" fields={[
+  { label: "len", bytes: 1 },
+  { label: "UTF-8 bytes", bytes: 5, variable: true },
+  { label: "NUL", bytes: 1 },
+]} />
+```
+| Prop | Type | Required |
+|------|------|----------|
+| `fields` | `Array<{ label; bytes; variable?; note?; color? }>` | **Yes** |
+| `title` / `caption` / `ariaLabel` | `string` | No |
+
+Single row; for multi-row protocol headers use `PacketDiagram`.
+
+#### PacketDiagram
+```mdx
+import PacketDiagram from "@components/ui/PacketDiagram.astro";
+<PacketDiagram title="IPv4 header" bitsPerRow={32} fields={[
+  { name: "Version", bits: 4 }, { name: "IHL", bits: 4 },
+  { name: "Total Length", bits: 16 },
+]} />
+```
+| Prop | Type | Required |
+|------|------|----------|
+| `fields` | `Array<{ name; bits; color? }>` | **Yes** |
+| `bitsPerRow` | `number` | No (`32`) |
+| `title` / `caption` / `ariaLabel` | `string` | No |
+
+Fields that cross a row boundary are split. Fits to width on mobile.
+
+#### SubnetSplit
+```mdx
+import SubnetSplit from "@components/ui/SubnetSplit.astro";
+<SubnetSplit ip="192.168.1.10" prefix={26} />
+```
+| Prop | Type | Required |
+|------|------|----------|
+| `ip` | `string` | **Yes** |
+| `prefix` | `number` | **Yes** |
+| `title` / `caption` / `ariaLabel` | `string` | No |
+
+#### BitwiseOp
+```mdx
+import BitwiseOp from "@components/ui/BitwiseOp.astro";
+<BitwiseOp width={8} a={0xb2} op="&" b={0x0f} aLabel="flags" bLabel="mask" />
+```
+| Prop | Type | Required |
+|------|------|----------|
+| `a` | `number` | **Yes** |
+| `op` | `"&" \| "\|" \| "^" \| "<<" \| ">>" \| "~"` | **Yes** |
+| `b` | `number` | No (shift amount / operand) |
+| `width` | `number` | No (`8`) |
+| `aLabel` / `bLabel` / `title` / `caption` / `ariaLabel` | `string` | No |
+
+#### NumberBases
+```mdx
+import NumberBases from "@components/ui/NumberBases.astro";
+<NumberBases value={0xb8} bits={8} />
+```
+| Prop | Type | Required |
+|------|------|----------|
+| `value` | `number` | **Yes** |
+| `bits` | `number` | No (`8`) |
+| `title` / `caption` / `ariaLabel` | `string` | No |
+
+#### FloatLayout
+```mdx
+import FloatLayout from "@components/ui/FloatLayout.astro";
+<FloatLayout value={0.15625} precision="single" />
+```
+| Prop | Type | Required |
+|------|------|----------|
+| `value` | `number` | **Yes** |
+| `precision` | `"single" \| "double"` | No (`"single"`) |
+| `title` / `caption` / `ariaLabel` | `string` | No |
+
+#### TimingDiagram
+```mdx
+import TimingDiagram from "@components/ui/TimingDiagram.astro";
+<TimingDiagram signals={[
+  { name: "SCLK", wave: "p......" },
+  { name: "MOSI", wave: "x=.=.=x", data: ["cmd", "addr", "data"] },
+  { name: "CS", wave: "10.....1" },
+]} />
+```
+| Prop | Type | Required |
+|------|------|----------|
+| `signals` | `Array<{ name; wave; data? }>` | **Yes** |
+| `title` / `caption` / `ariaLabel` | `string` | No |
+
+Wave chars: `0`/`1` wire, `p`/`n` clock, `.` extend, `x` don't-care, `z` hi-Z, `=`/`2`-`9` data bus. Scrolls horizontally when wide.
+
+#### EncodingDiagram
+```mdx
+import EncodingDiagram from "@components/ui/EncodingDiagram.astro";
+<EncodingDiagram title="UTF-8" rows={[
+  { label: "A (U+0041)", bytes: ["41"] },
+  { label: "é (U+00E9)", bytes: ["C3", "A9"] },
+]} />
+```
+| Prop | Type | Required |
+|------|------|----------|
+| `rows` | `Array<{ label; bytes: string[]; note? }>` | **Yes** |
+| `title` / `caption` / `ariaLabel` | `string` | No |
+
+#### DeltaCompare
+```mdx
+import DeltaCompare from "@components/ui/DeltaCompare.astro";
+<DeltaCompare unit=" B" rows={[
+  { label: "Index table", before: 5300, after: 2650 },
+  { label: "Firmware", before: 1341067, after: 1338903 },
+]} />
+```
+| Prop | Type | Required |
+|------|------|----------|
+| `rows` | `Array<{ label; before; after; lowerIsBetter? }>` | **Yes** |
+| `unit` | `string` | No |
+| `title` / `caption` / `ariaLabel` | `string` | No |
+
+#### LayerStack
+```mdx
+import LayerStack from "@components/ui/LayerStack.astro";
+<LayerStack layers={[
+  { name: "Application", note: "your code" },
+  { name: "HAL" },
+  { name: "Registers / silicon" },
+]} />
+```
+| Prop | Type | Required |
+|------|------|----------|
+| `layers` | `Array<{ name; note?; color? }>` | **Yes** |
+| `title` / `caption` / `ariaLabel` | `string` | No |
+
+#### CallStack
+```mdx
+import CallStack from "@components/ui/CallStack.astro";
+<CallStack frames={[
+  { name: "main()" },
+  { name: "parse(buf, len)", detail: "locals: 24 B" },
+  { name: "decode()", detail: "recursion depth 3" },
+]} />
+```
+| Prop | Type | Required |
+|------|------|----------|
+| `frames` | `Array<{ name; detail?; color? }>` | **Yes** |
+| `growthLabel` | `string` | No |
+| `title` / `caption` / `ariaLabel` | `string` | No |
+
+#### Matrix
+```mdx
+import Matrix from "@components/ui/Matrix.astro";
+<Matrix rowHeader="lang" cols={["BRAND", "OK"]} rows={["EN", "ES"]} cells={[
+  ["@9379", "@1164"],
+  ["@9379", "@1164"],
+]} highlight={[[0, 0], [1, 0]]} />
+```
+| Prop | Type | Required |
+|------|------|----------|
+| `rows` / `cols` | `(string \| number)[]` | **Yes** |
+| `cells` | `(string \| number)[][]` | **Yes** |
+| `rowHeader` | `string` | No |
+| `highlight` | `[number, number][]` | No |
+| `title` / `caption` / `ariaLabel` | `string` | No |
+
+#### Pipeline
+```mdx
+import Pipeline from "@components/ui/Pipeline.astro";
+<Pipeline stages={[
+  { name: "strings.json", note: "EN · ES" },
+  { name: "gen_i18n.py", note: "pack + tail-merge", via: "raw strings" },
+  { name: "firmware.elf", note: "13.4 KB .rodata", via: ".o" },
+]} />
+```
+| Prop | Type | Required |
+|------|------|----------|
+| `stages` | `Array<{ name; note?; via?; color? }>` | **Yes** |
+| `title` / `caption` / `ariaLabel` | `string` | No |
+
+`via` labels the arrow into a stage (the artifact handed over). Vertical on mobile.
+
+#### ForkJoin
+```mdx
+import ForkJoin from "@components/ui/ForkJoin.astro";
+<ForkJoin
+  ariaLabel="The generator forks into kPool and kOffsets, which the accessor joins."
+  beforeLabel="Build time" afterLabel="Runtime"
+  before={[{ name: "strings.csv", note: "id, en, es" }, { name: "generator" }]}
+  branches={[{ name: "kPool", note: "blob" }, { name: "kOffsets", note: "uint16" }]}
+  after={[{ name: "gen::string()" }, { name: "UI render" }]}
+/>
+```
+| Prop | Type | Required |
+|------|------|----------|
+| `branches` | `Array<{ name; note?; color? }>` | **Yes** |
+| `before` / `after` | `Array<{ name; note?; color? }>` | No |
+| `beforeLabel` / `afterLabel` | `string` | No |
+| `title` / `caption` / `ariaLabel` | `string` | No |
+
+Fork → join data-flow: a linear chain splits into parallel `branches` then merges into another chain. Best with 2–3 branches. Linear sequence → `Pipeline`; arbitrary graph → `Mermaid`.
+
+#### ThemeImage
+```mdx
+import ThemeImage from "@components/ui/ThemeImage.astro";
+<ThemeImage srcLight="/img/x-light.webp" srcDark="/img/x-dark.webp" alt="Request flow" caption="Request flow" />
+```
+| Prop | Type | Required |
+|------|------|----------|
+| `src` OR (`srcLight` + `srcDark`) | `string` | **Yes** |
+| `alt` | `string` | **Yes** |
+| `caption` / `loading` | `string` | No |
+
+#### FileDownload
+```mdx
+import FileDownload from "@components/ui/FileDownload.astro";
+<FileDownload href="/files/string-pool.zip" filename="string-pool.zip" size="4 KB" />
+```
+| Prop | Type | Required |
+|------|------|----------|
+| `href` / `filename` | `string` | **Yes** |
+| `size` / `description` | `string` | No |
+
+---
+
 ## Accessibility Checklist
 
 | Rule | Details |

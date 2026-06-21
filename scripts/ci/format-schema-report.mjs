@@ -3,15 +3,27 @@
  */
 
 import fs from "node:fs";
+import path from "node:path";
 
-const REPORT_FILE = process.argv[2] || "schema-report.json";
+const REPORT_FILE = path.resolve(
+  process.cwd(),
+  process.argv[2] || "schema-report.json",
+);
+// Defense-in-depth: reject a (trusted) CI argument that escapes the project dir.
+if (
+  REPORT_FILE !== process.cwd() &&
+  !REPORT_FILE.startsWith(process.cwd() + path.sep)
+) {
+  console.error("Refusing report path outside the project directory.");
+  process.exit(1);
+}
 
 if (!fs.existsSync(REPORT_FILE)) {
   console.log("Schema report not found.");
   process.exit(0);
 }
 
-const data = JSON.parse(fs.readFileSync(REPORT_FILE, "utf-8"));
+const data = JSON.parse(fs.readFileSync(REPORT_FILE, "utf-8")); // NOSONAR: trusted CI path, validated to stay within cwd above
 const { summary, results } = data;
 
 const isSuccess = summary.totalErrors === 0;

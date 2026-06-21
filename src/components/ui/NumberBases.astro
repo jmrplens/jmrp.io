@@ -1,0 +1,147 @@
+---
+/**
+ * NumberBases Component
+ *
+ * Shows one integer in hex, decimal, octal and (nibble-grouped) binary, aligned
+ * in a small monospace grid. For magic constants, masks, addresses.
+ *
+ * @example
+ * <NumberBases value={0xb8} bits={8} />
+ */
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslations } from "@i18n/utils";
+
+interface Props {
+  /** Optional title. */
+  title?: string;
+  /** The integer value. */
+  value: number;
+  /** Bit width for padding the binary (default 8). */
+  bits?: number;
+  /** Caption below the figure. */
+  caption?: string;
+  /** Accessibility label. */
+  ariaLabel?: string;
+}
+
+const { title, value, bits = 8, caption, ariaLabel } = Astro.props;
+
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
+
+const u = value >>> 0;
+const hex =
+  "0x" +
+  u
+    .toString(16)
+    .toUpperCase()
+    .padStart(Math.ceil(bits / 4), "0");
+const dec = u.toString(10);
+const oct = "0o" + u.toString(8);
+const binFull = u
+  .toString(2)
+  .padStart(Math.ceil(bits / 4) * 4, "0")
+  .slice(-bits);
+const binPadded = binFull.padStart(Math.ceil(binFull.length / 4) * 4, "0");
+const nibbles = binPadded.match(/.{4}/g) ?? [binPadded];
+
+const baseRows = [
+  { base: t("components.numberBases.hex"), val: hex },
+  { base: t("components.numberBases.dec"), val: dec },
+  { base: t("components.numberBases.oct"), val: oct },
+];
+
+const summary =
+  ariaLabel ??
+  (title
+    ? t("components.numberBases.ariaWithTitle", { title })
+    : t("components.numberBases.ariaWithoutTitle"));
+---
+
+<figure
+  class="nbases"
+  role="img"
+  aria-label={summary}
+>
+  {title && <figcaption class="nbases__title">{title}</figcaption>}
+
+  <dl class="nbases__grid">
+    {
+      baseRows.map((r) => (
+        <div class="nbases__row">
+          <dt class="nbases__base">{r.base}</dt>
+          <dd class="nbases__val">{r.val}</dd>
+        </div>
+      ))
+    }
+    <div class="nbases__row">
+      <dt class="nbases__base">Bin</dt>
+      <dd class="nbases__val nbases__bin">
+        {nibbles.map((n) => <span class="nbases__nibble">{n}</span>)}
+      </dd>
+    </div>
+  </dl>
+
+  {caption && <p class="nbases__caption">{caption}</p>}
+</figure>
+
+<style>
+  .nbases {
+    margin: 1.5rem 0;
+  }
+
+  .nbases__title {
+    margin-bottom: 1rem;
+    font-size: 1rem;
+    font-weight: var(--fw-semibold, 600);
+    color: var(--color-text-heading);
+  }
+
+  .nbases__grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    margin: 0;
+  }
+
+  .nbases__row {
+    display: grid;
+    grid-template-columns: 3rem 1fr;
+    column-gap: 0.75rem;
+    align-items: baseline;
+  }
+
+  .nbases__base {
+    font-size: 0.8rem;
+    font-weight: var(--fw-semibold, 600);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+  }
+
+  .nbases__val {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: 0.95rem;
+    color: var(--color-text-heading);
+  }
+
+  .nbases__bin {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .nbases__nibble {
+    padding: 0.1rem 0.4rem;
+    background: var(--color-bg-subtle);
+    border-radius: var(--radius-sm, 4px);
+  }
+
+  .nbases__caption {
+    margin-top: 1rem;
+    font-size: 0.8125rem;
+    font-style: italic;
+    color: var(--color-text-muted);
+    text-align: center;
+  }
+</style>

@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 import sharp from "sharp";
 
@@ -141,7 +142,12 @@ const processFavicon = async (hostname) => {
   }
 };
 
-const run = async () => {
+/**
+ * Scan posts for external links and download any favicon not already cached.
+ * Idempotent: existing icons are skipped, per-host failures degrade gracefully.
+ * Safe to call from the pre-build integration — never calls `process.exit`.
+ */
+export const generateFavicons = async () => {
   console.log("🔍 Scanning posts for external links...");
   const hostnames = collectHostnames();
   console.log(`📊 Found ${hostnames.length} unique domains.`);
@@ -156,11 +162,19 @@ const run = async () => {
   console.log("✨ Done!");
 };
 
-try {
-  await run();
-} catch (error) {
-  const message = error instanceof Error ? error.message : String(error);
-  const stack = error instanceof Error ? `\n${error.stack}` : "";
-  console.error(`Fatal error: ${message}${stack}`);
-  process.exit(1);
+// CLI entry point — only runs `process.exit` when invoked directly
+// (`node scripts/optimize-favicons.mjs`), not when imported by the build.
+const invokedDirectly =
+  process.argv[1] &&
+  path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+
+if (invokedDirectly) {
+  try {
+    await generateFavicons();
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    const stack = error instanceof Error ? `\n${error.stack}` : "";
+    console.error(`Fatal error: ${message}${stack}`);
+    process.exit(1);
+  }
 }

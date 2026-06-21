@@ -1,0 +1,270 @@
+---
+/**
+ * PacketDiagram Component
+ *
+ * An RFC-style protocol header: fields laid out across fixed-width rows
+ * (default 32 bits), wrapping and splitting a field across rows when it crosses
+ * a row boundary, with a bit ruler and a legend. For IPv4/TCP/UDP/QUIC headers
+ * and binary formats.
+ *
+ * @example
+ * <PacketDiagram
+ *   bitsPerRow={32}
+ *   fields={[
+ *     { name: "Version", bits: 4 },
+ *     { name: "IHL", bits: 4 },
+ *     { name: "Total Length", bits: 16 },
+ *   ]}
+ * />
+ */
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslations } from "@i18n/utils";
+
+interface Field {
+  /** Field name. */
+  name: string;
+  /** Width in bits. */
+  bits: number;
+  /** Optional CSS color override; otherwise cycles a palette. */
+  color?: string;
+}
+
+interface Props {
+  /** Optional title. */
+  title?: string;
+  /** Bits per row (default 32). */
+  bitsPerRow?: number;
+  /** Fields in order. */
+  fields: Field[];
+  /** Caption below the figure. */
+  caption?: string;
+  /** Accessibility label. */
+  ariaLabel?: string;
+}
+
+const { title, bitsPerRow = 32, fields, caption, ariaLabel } = Astro.props;
+
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
+
+const PALETTE = 6;
+const fieldColors = fields.map(
+  (f, i) => f.color ?? `var(--pk-${(i % PALETTE) + 1})`,
+);
+
+interface Seg {
+  name: string;
+  bits: number;
+  span: number;
+  color: string;
+  continuation: boolean;
+}
+const segs: Seg[] = [];
+let pos = 0;
+for (const [i, f] of fields.entries()) {
+  let remaining = Math.max(1, f.bits);
+  let first = true;
+  while (remaining > 0) {
+    const col = pos % bitsPerRow;
+    const take = Math.min(remaining, bitsPerRow - col);
+    segs.push({
+      name: first ? f.name : "",
+      bits: f.bits,
+      span: take,
+      color: fieldColors[i],
+      continuation: !first,
+    });
+    pos += take;
+    remaining -= take;
+    first = false;
+  }
+}
+
+const ruler = Array.from({ length: bitsPerRow }, (_, i) => i);
+const dense = bitsPerRow > 16;
+
+const summary =
+  ariaLabel ??
+  (title
+    ? t("components.packetDiagram.ariaWithTitle", {
+        title,
+        count: String(fields.length),
+      })
+    : t("components.packetDiagram.ariaWithoutTitle", {
+        count: String(fields.length),
+      }));
+---
+
+<figure
+  class="packet"
+  role="img"
+  aria-label={summary}
+>
+  {title && <figcaption class="packet__title">{title}</figcaption>}
+
+  <div class="packet__scroll">
+    <div
+      class:list={["packet__grid", dense && "packet__grid--dense"]}
+      style={`grid-template-columns:repeat(${bitsPerRow},minmax(0,1fr));--pk-cols:${bitsPerRow}`}
+    >
+      {ruler.map((n) => <span class="packet__bitnum">{n}</span>)}
+      {
+        segs.map((s) => (
+          <span
+            class:list={[
+              "packet__field",
+              s.continuation && "packet__field--cont",
+            ]}
+            style={`grid-column:span ${s.span};background-color:${s.color}`}
+            title={`${s.name || "…"} (${s.bits} bits)`}
+          >
+            <span class="packet__field-name">{s.name}</span>
+            {!s.continuation && (
+              <span class="packet__field-bits">{s.bits}</span>
+            )}
+          </span>
+        ))
+      }
+    </div>
+  </div>
+
+  <ul class="packet__legend">
+    {
+      fields.map((f, i) => (
+        <li class="packet__legend-item">
+          <span
+            class="packet__swatch"
+            style={`background-color:${fieldColors[i]}`}
+            aria-hidden="true"
+          />
+          <span class="packet__legend-text">
+            <b>{f.name}</b> — {f.bits} bits
+          </span>
+        </li>
+      ))
+    }
+  </ul>
+
+  {caption && <p class="packet__caption">{caption}</p>}
+</figure>
+
+<style>
+  .packet {
+    --pk-1: #b389f5;
+    --pk-2: #58d6df;
+    --pk-3: #fbbf24;
+    --pk-4: #6ee7a8;
+    --pk-5: #f0789b;
+    --pk-6: #7aa2ff;
+    --pk-on: #0b0b13;
+
+    margin: 1.5rem 0;
+  }
+
+  .packet__title {
+    margin-bottom: 1rem;
+    font-size: 1rem;
+    font-weight: var(--fw-semibold, 600);
+    color: var(--color-text-heading);
+  }
+
+  .packet__scroll {
+    overflow-x: auto;
+  }
+
+  .packet__grid {
+    display: grid;
+    gap: 3px;
+    min-width: calc(var(--pk-cols, 1) * 1.4rem);
+  }
+
+  .packet__bitnum {
+    font-size: 0.62rem;
+    color: var(--color-text-muted);
+    text-align: center;
+  }
+
+  .packet__field {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.4rem;
+    padding: 0.25rem 0.2rem;
+    overflow: hidden;
+    color: var(--pk-on);
+    border-radius: var(--radius-sm, 4px);
+  }
+
+  .packet__field--cont {
+    border-radius: 0 var(--radius-sm, 4px) var(--radius-sm, 4px) 0;
+    opacity: 92%;
+  }
+
+  .packet__field-name {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 0.74rem;
+    font-weight: var(--fw-semibold, 600);
+    white-space: nowrap;
+  }
+
+  .packet__field-bits {
+    font-size: 0.62rem;
+    opacity: 85%;
+  }
+
+  .packet__legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem 1rem;
+    padding: 0;
+    margin: 0.85rem 0 0;
+    list-style: none;
+  }
+
+  .packet__legend-item {
+    display: inline-flex;
+    column-gap: 0.4rem;
+    align-items: baseline;
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+  }
+
+  .packet__swatch {
+    flex-shrink: 0;
+    align-self: center;
+    width: 0.7rem;
+    height: 0.7rem;
+    border-radius: 2px;
+  }
+
+  .packet__legend-text b {
+    font-weight: var(--fw-semibold, 600);
+    color: var(--color-text);
+  }
+
+  .packet__caption {
+    margin-top: 1rem;
+    font-size: 0.8125rem;
+    font-style: italic;
+    color: var(--color-text-muted);
+    text-align: center;
+  }
+
+  @media (width <= 640px) {
+    .packet__scroll {
+      overflow-x: visible;
+    }
+
+    .packet__grid {
+      gap: 2px;
+      min-width: 0;
+    }
+
+    .packet__grid--dense .packet__bitnum {
+      display: none;
+    }
+  }
+</style>

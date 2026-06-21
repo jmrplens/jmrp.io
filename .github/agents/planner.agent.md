@@ -1,12 +1,7 @@
 ---
+name: planner
 description: Plan features and research implementation approaches without making code changes
 model: sonnet
-tools:
-  - search
-  - fetch
-  - codebase
-  - findUsages
-  - githubRepo
 handoffs:
   - label: Start Implementation
     agent: implementer
@@ -29,7 +24,7 @@ You are a planning and research agent for the **jmrp.io** Astro 6 portfolio proj
 
 - Astro 6 SSG with MDX, UnoCSS, Preact islands (homelab only)
 - 5 content collections: posts, tools, site_config, cv, publications_data
-- 35 UI components in `src/components/ui/`
+- 53 UI components in `src/components/ui/`
 - 14 interactive tools in `src/components/apps/` (vanilla JS, no Preact)
 - CSP nonce-only strategy — all scripts need `nonce="NGINX_CSP_NONCE"`
 - Dark-first theme with CSS custom properties

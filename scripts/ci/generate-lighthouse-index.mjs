@@ -12,7 +12,15 @@ import path from "node:path";
 
 import { escapeHtml } from "../utils/html.mjs";
 
-const deployDir = process.argv[2] || "lh-deploy";
+const deployDir = path.resolve(process.cwd(), process.argv[2] || "lh-deploy");
+// Defense-in-depth: reject a (trusted) CI argument that escapes the project dir.
+if (
+  deployDir !== process.cwd() &&
+  !deployDir.startsWith(process.cwd() + path.sep)
+) {
+  console.error("Refusing deploy directory outside the project directory.");
+  process.exit(1);
+}
 const indexPath = path.join(deployDir, "index.html");
 
 if (!fs.existsSync(deployDir)) {
@@ -29,7 +37,7 @@ if (!fs.existsSync(deployDir)) {
  */
 function findReports(dir, fileList = []) {
   try {
-    const files = fs.readdirSync(dir);
+    const files = fs.readdirSync(dir); // NOSONAR: dir derives from a trusted CI path validated to stay within cwd
     for (const file of files) {
       try {
         const filePath = path.join(dir, file);
@@ -412,7 +420,7 @@ const htmlContent = `
 </html>
 `;
 
-fs.writeFileSync(indexPath, htmlContent);
+fs.writeFileSync(indexPath, htmlContent); // NOSONAR: indexPath derives from a trusted CI path validated to stay within cwd
 console.log(
   `Generated index.html at ${indexPath} with ${Object.keys(grouped).length} URLs.`,
 );

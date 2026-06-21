@@ -1,3 +1,4 @@
+import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 
 import type { AstroIntegration, AstroIntegrationLogger } from "astro";
@@ -25,6 +26,32 @@ function updateLlmsDate(logger: AstroIntegrationLogger): void {
         logger.info(`Updated build date in ${file}`);
       }
     }
+  }
+}
+
+/**
+ * Downloads any reference favicons not already cached in `src/assets/icons/`.
+ *
+ * Wraps `scripts/optimize-favicons.mjs` (idempotent: only new domains hit the
+ * network). Failures are non-fatal — the References component falls back to a
+ * globe icon — so this never breaks the build.
+ *
+ * @param logger - The Astro logger instance.
+ */
+function setupReferenceFavicons(logger: AstroIntegrationLogger): void {
+  try {
+    // Run as a child process: importing the script here conflicts with Vite's
+    // module runner during astro:config:setup. The script is idempotent.
+    execFileSync(process.execPath, ["scripts/optimize-favicons.mjs"], {
+      cwd: process.cwd(),
+      stdio: "inherit",
+      timeout: 120_000,
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    logger.warn(
+      `Reference favicons skipped (${message}). The globe fallback will be used.`,
+    );
   }
 }
 
@@ -64,6 +91,7 @@ export default function preBuildIntegration(): AstroIntegration {
           if (command === "build") {
             await setupCfBeacon(env.PUBLIC_CF_BEACON_TOKEN, logger);
             updateLlmsDate(logger);
+            setupReferenceFavicons(logger);
           }
 
           // Always setup icons detection to ensure UnoCSS finds them

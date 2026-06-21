@@ -1,0 +1,101 @@
+---
+title: "String-Pool Packer"
+slug: "string-pool-packer"
+description: "Compare a pointer table vs a packed, tail-merged string pool with uint16 offsets. Paste strings and watch dedup, tail-merge, and bytes saved."
+subtitle: "See how a deduplicated, tail-merged string pool with uint16 offsets beats a const char* pointer table for storing UI strings on a 32-bit MCU."
+icon: "i-mdi:package-variant-closed"
+category: "embedded"
+tags: ["i18n", "embedded", "firmware", "c++", "flash", "optimization"]
+appComponent: "StringPoolPacker"
+---
+
+<h2>About This Tool</h2>
+<p>
+  Firmware that ships UI text in several languages usually stores it as a 2-D
+  table of <code>const char*</code> pointers — one per (language × string ID)
+  cell. On a 32-bit MCU each pointer is 4 bytes of pure index overhead, before a
+  single character of text. This tool shows what you save by switching to a
+  single <strong>packed string pool</strong> plus a table of 2-byte
+  <code>uint16</code> offsets, with identical strings deduplicated and suffixes{" "}
+  <strong>tail-merged</strong> into longer strings.
+</p>
+<p>
+  It is the interactive companion to the article{" "}
+  <a href="/blog/010-packed-i18n-string-pool/">
+    What the Linker Won't Do: Packing i18n Strings on an MCU
+  </a>
+  .
+</p>
+
+<h3>Two modes</h3>
+<ul>
+  <li>
+    <strong>Lines</strong> — paste strings one per line; each line is one index
+    entry (a single language × ID cell).
+  </li>
+  <li>
+    <strong>CSV</strong> — the real firmware layout: a header{" "}
+    <code>id,en,es,…</code> and one row per string ID, one column per language.
+    Every cell becomes an index entry, and an{" "}
+    <strong>identifier × language lookup</strong> simulates the firmware's{" "}
+    <code>tr()</code>: pick an ID and a language and the tool shows the resolved
+    offset and string (<code>gen::string(lang, id)</code> →{" "}
+    <code>pool + offset</code>).
+  </li>
+</ul>
+
+<h3>How to Use</h3>
+<ol>
+  <li>
+    Choose <strong>Lines</strong> or <strong>CSV</strong> mode and paste your
+    data (use <strong>Load example</strong> for a starting point).
+  </li>
+  <li>
+    Pick the <strong>pointer width</strong> for your target (4 bytes for a 32-bit
+    MCU, 8 bytes for a 64-bit host).
+  </li>
+  <li>
+    Read the comparison: index-table bytes, string-blob bytes, and the total for
+    both the pointer-table and the packed-pool approach.
+  </li>
+  <li>
+    Scan the per-string breakdown — including each string's{" "}
+    <strong>byte offset</strong> — to see which strings were{" "}
+    <strong>deduplicated</strong> and which were <strong>tail-merged</strong>{" "}
+    into a longer string (their offset points partway into that longer entry).
+  </li>
+</ol>
+
+<h3>What It Computes</h3>
+<ul>
+  <li>
+    <strong>Index table</strong> — entries × 4 B (pointers) versus entries × 2 B
+    (<code>uint16</code> offsets). This halving is the structural win no linker
+    can do for you.
+  </li>
+  <li>
+    <strong>Dedup</strong> — identical strings (shared across languages, like
+    <code>"OK"</code>) are stored once.
+  </li>
+  <li>
+    <strong>Tail-merge</strong> — a string that is the suffix of another reuses
+    the longer string's bytes (placed longest-first), exactly what the build-time
+    generator does.
+  </li>
+  <li>
+    <strong>uint16 guard</strong> — flags when the pool grows past 64 KiB, at
+    which point offsets no longer fit in a <code>uint16</code>.
+  </li>
+  <li>
+    <strong>Retrieval</strong> — every string, stored or tail-merged, is read by{" "}
+    <code>pool + offset</code>. A tail-merged string is never stored separately;
+    its offset simply lands inside a longer entry, so lookup stays O(1) and
+    identical for every string.
+  </li>
+</ul>
+
+<h3>Privacy</h3>
+<p>
+  All parsing, deduplication, tail-merging, and byte counting happen entirely in
+  your browser. Nothing you type is transmitted to any server.
+</p>

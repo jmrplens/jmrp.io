@@ -155,3 +155,24 @@ Used for displaying file contents with a filename header.
   }
 </FileContent>
 ```
+
+### 7. Diagram & Embedded components
+
+The `MemoryMap`, `StructPacking`, `RegisterMap`, `ByteFrame`, `PacketDiagram`, `SubnetSplit`, `BitwiseOp`, `NumberBases`, `FloatLayout`, `TimingDiagram`, `EncodingDiagram`, `DeltaCompare`, `LayerStack`, `CallStack`, `Matrix` and `Pipeline` components share one accessibility pattern: each renders a `role="img"` figure with an i18n `aria-label` (keys under `components.*`), so a screen reader announces a single meaningful name instead of reading every cell.
+
+**Best Practice:**
+
+- Always pass a `title` (or an explicit `ariaLabel`) so the generated label is descriptive — without it the label falls back to a generic count (e.g. "Register layout with 3 fields").
+- The decorative SVG/CSS internals are `aria-hidden`; where a tabular fallback matters (e.g. `DeltaCompare`) an `sr-only` table carries the data.
+- Colors are paired with text/positional cues (set-bit highlighting, before/after order, legends), never color alone.
+
+```jsx
+<RegisterMap
+  title="CTRL register"
+  width={32}
+  fields={[
+    { name: "EN", bits: 0 },
+    { name: "MODE", bits: "2:1" },
+  ]}
+/>
+```

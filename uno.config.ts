@@ -53,6 +53,7 @@ export default defineConfig({
     "i-mdi:key",
     "i-devicon:html5",
     "i-devicon:javascript",
+    "i-devicon:cplusplus",
     "i-simple-icons:mikrotik",
     "i-mdi:file-outline",
     "i-mdi:file-cog-outline",
@@ -77,6 +78,14 @@ export default defineConfig({
     "i-logos:opera",
     // LanguageSwitcher icon
     "i-tabler:language",
+    // FileDownload component (icon chosen dynamically from file extension)
+    "i-mdi:file-download-outline",
+    "i-devicon:python",
+    "i-devicon:typescript",
+    "i-mdi:language-c",
+    "i-mdi:bash",
+    "i-mdi:file-delimited-outline",
+    "i-mdi:language-markdown",
   ],
   presets: [
     presetWind4({

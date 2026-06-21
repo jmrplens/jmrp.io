@@ -1,0 +1,158 @@
+---
+/**
+ * EncodingDiagram Component
+ *
+ * Shows how inputs map to bytes: each row is a source token (a character,
+ * codepoint, value…) → its encoded bytes. For UTF-8, base64, varint, etc.
+ *
+ * @example
+ * <EncodingDiagram
+ *   title="UTF-8"
+ *   rows={[
+ *     { label: "A (U+0041)", bytes: ["41"] },
+ *     { label: "é (U+00E9)", bytes: ["C3", "A9"] },
+ *     { label: "€ (U+20AC)", bytes: ["E2", "82", "AC"] },
+ *   ]}
+ * />
+ */
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslations } from "@i18n/utils";
+
+interface Row {
+  /** Source token. */
+  label: string;
+  /** Encoded byte strings (e.g. hex). */
+  bytes: string[];
+  /** Optional note shown after the bytes. */
+  note?: string;
+}
+
+interface Props {
+  /** Optional title. */
+  title?: string;
+  /** Rows to render. */
+  rows: Row[];
+  /** Caption below the figure. */
+  caption?: string;
+  /** Accessibility label. */
+  ariaLabel?: string;
+}
+
+const { title, rows, caption, ariaLabel } = Astro.props;
+
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
+
+const summary =
+  ariaLabel ??
+  (title
+    ? t("components.encodingDiagram.ariaWithTitle", { title })
+    : t("components.encodingDiagram.ariaWithoutTitle"));
+---
+
+<figure
+  class="enc"
+  role="img"
+  aria-label={summary}
+>
+  {title && <figcaption class="enc__title">{title}</figcaption>}
+
+  <ul class="enc__rows">
+    {
+      rows.map((row) => (
+        <li class="enc__row">
+          <span class="enc__src">{row.label}</span>
+          <span
+            class="enc__arrow"
+            aria-hidden="true"
+          >
+            →
+          </span>
+          <span class="enc__bytes">
+            {row.bytes.map((byte) => (
+              <span class="enc__byte">{byte}</span>
+            ))}
+          </span>
+          {row.note && <span class="enc__note">{row.note}</span>}
+        </li>
+      ))
+    }
+  </ul>
+
+  {caption && <p class="enc__caption">{caption}</p>}
+</figure>
+
+<style>
+  .enc {
+    --enc-byte: #58d6df;
+    --enc-on: #0b0b13;
+
+    margin: 1.5rem 0;
+  }
+
+  .enc__title {
+    margin-bottom: 1rem;
+    font-size: 1rem;
+    font-weight: var(--fw-semibold, 600);
+    color: var(--color-text-heading);
+  }
+
+  .enc__rows {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+  }
+
+  .enc__row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem 0.6rem;
+    align-items: center;
+  }
+
+  .enc__src {
+    min-width: 7rem;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    color: var(--color-text-heading);
+  }
+
+  .enc__arrow {
+    color: var(--color-text-muted);
+  }
+
+  .enc__bytes {
+    display: inline-flex;
+    gap: 4px;
+  }
+
+  .enc__byte {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.2rem;
+    padding: 0.2rem 0.4rem;
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    font-weight: var(--fw-semibold, 600);
+    color: var(--enc-on);
+    background: var(--enc-byte);
+    border-radius: var(--radius-sm, 4px);
+  }
+
+  .enc__note {
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+  }
+
+  .enc__caption {
+    margin-top: 1rem;
+    font-size: 0.8125rem;
+    font-style: italic;
+    color: var(--color-text-muted);
+    text-align: center;
+  }
+</style>
