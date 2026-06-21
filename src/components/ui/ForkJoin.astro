@@ -1,0 +1,351 @@
+---
+/**
+ * ForkJoin Component
+ *
+ * A vertical data-flow diagram for the "fork → join" shape: a linear chain
+ * that splits into parallel artifacts (the fork / "Y") and then merges them
+ * back into a second linear chain (the join / inverted "Y"). Built for
+ * producer → artifacts → consumer flows such as "generator emits kPool +
+ * kOffsets, then the accessor reads both". Zero-JS, theme-aware SVG connectors.
+ *
+ * `before` / `after` are optional linear chains; `branches` is the parallel
+ * middle. Optional `beforeLabel` / `afterLabel` tag the two phases (e.g.
+ * build-time vs runtime). Best with 2–3 branches.
+ *
+ * @example
+ * <ForkJoin
+ *   ariaLabel="Generator forks into kPool and kOffsets, which the accessor joins."
+ *   beforeLabel="Build time"
+ *   afterLabel="Runtime"
+ *   before={[{ name: "strings.csv", note: "id, en, es" }, { name: "generator" }]}
+ *   branches={[{ name: "kPool" }, { name: "kOffsets" }]}
+ *   after={[{ name: "gen::string()" }, { name: "UI render" }]}
+ * />
+ */
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslations } from "@i18n/utils";
+
+interface FJNode {
+  /** Node label (rendered monospace). */
+  name: string;
+  /** Optional smaller detail line under the name. */
+  note?: string;
+  /** Optional CSS color override for the accent (branches). */
+  color?: string;
+}
+
+interface Props {
+  /** Optional title above the diagram. */
+  title?: string;
+  /** Linear chain before the fork (top, e.g. source → generator). */
+  before?: FJNode[];
+  /** Parallel artifacts: the fork targets and the join sources. */
+  branches: FJNode[];
+  /** Linear chain after the join (bottom, e.g. accessor → render). */
+  after?: FJNode[];
+  /** Optional phase tag for the top region (e.g. "Build time"). */
+  beforeLabel?: string;
+  /** Optional phase tag for the bottom region (e.g. "Runtime"). */
+  afterLabel?: string;
+  /** Caption below the figure. */
+  caption?: string;
+  /** Accessibility label (describes the whole flow). */
+  ariaLabel?: string;
+}
+
+const {
+  title,
+  before = [],
+  branches,
+  after = [],
+  beforeLabel,
+  afterLabel,
+  caption,
+  ariaLabel,
+} = Astro.props;
+
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
+
+const n = branches.length;
+// Center x (0–100) of each branch column, used as the SVG fan endpoints.
+const centers = branches.map((_, i) =>
+  Number((((i + 0.5) / n) * 100).toFixed(2)),
+);
+
+const summary =
+  ariaLabel ??
+  (title
+    ? t("components.forkJoin.ariaWithTitle", { title })
+    : t("components.forkJoin.ariaWithoutTitle"));
+---
+
+<figure
+  class="fj"
+  role="img"
+  aria-label={summary}
+>
+  {title && <figcaption class="fj__title">{title}</figcaption>}
+
+  {beforeLabel && <span class="fj__phase">{beforeLabel}</span>}
+
+  {
+    before.map((node, i) => (
+      <>
+        {i > 0 && (
+          <svg
+            class="fj__link"
+            viewBox="0 0 16 28"
+            aria-hidden="true"
+          >
+            <line
+              x1="8"
+              y1="0"
+              x2="8"
+              y2="20"
+            />
+            <polygon points="8,27 4,19 12,19" />
+          </svg>
+        )}
+        <div class="fj__node">
+          <span class="fj__name">{node.name}</span>
+          {node.note && <span class="fj__note">{node.note}</span>}
+        </div>
+      </>
+    ))
+  }
+
+  {
+    before.length > 0 && (
+      <svg
+        class="fj__edge"
+        viewBox="0 0 100 40"
+        preserveAspectRatio="none"
+        aria-hidden="true"
+      >
+        {centers.map((x) => (
+          <path d={`M50 0 C50 20 ${x} 20 ${x} 40`} />
+        ))}
+      </svg>
+    )
+  }
+
+  <div
+    class={`fj__branches${before.length > 0 ? " fj__branches--forked" : ""}`}
+    style={`--fj-cols:${n}`}
+  >
+    {
+      branches.map((node) => (
+        <div
+          class="fj__node fj__node--branch"
+          style={node.color ? `--fj-accent:${node.color}` : undefined}
+        >
+          <span class="fj__name">{node.name}</span>
+          {node.note && <span class="fj__note">{node.note}</span>}
+        </div>
+      ))
+    }
+  </div>
+
+  {
+    after.length > 0 && (
+      <svg
+        class="fj__edge"
+        viewBox="0 0 100 40"
+        preserveAspectRatio="none"
+        aria-hidden="true"
+      >
+        {centers.map((x) => (
+          <path d={`M${x} 0 C${x} 20 50 20 50 40`} />
+        ))}
+      </svg>
+    )
+  }
+
+  {
+    after.map((node, i) => (
+      <>
+        {i > 0 && (
+          <svg
+            class="fj__link"
+            viewBox="0 0 16 28"
+            aria-hidden="true"
+          >
+            <line
+              x1="8"
+              y1="0"
+              x2="8"
+              y2="20"
+            />
+            <polygon points="8,27 4,19 12,19" />
+          </svg>
+        )}
+        <div class={`fj__node${i === 0 ? " fj__node--target" : ""}`}>
+          <span class="fj__name">{node.name}</span>
+          {node.note && <span class="fj__note">{node.note}</span>}
+        </div>
+      </>
+    ))
+  }
+
+  {afterLabel && <span class="fj__phase fj__phase--end">{afterLabel}</span>}
+
+  {caption && <p class="fj__caption">{caption}</p>}
+</figure>
+
+<style>
+  .fj {
+    --fj-accent: var(--color-accent);
+    --fj-line: var(--color-text-muted);
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    max-width: 640px;
+    margin: 1.5rem auto;
+  }
+
+  .fj__title {
+    margin-bottom: 1rem;
+    font-size: 1rem;
+    font-weight: var(--fw-semibold, 600);
+    color: var(--color-text-heading);
+    text-align: center;
+  }
+
+  .fj__phase {
+    padding: 0.15rem 0.65rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.66rem;
+    font-weight: var(--fw-semibold, 600);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    background: var(--color-bg-subtle);
+    border: var(--border-1);
+    border-radius: 999px;
+  }
+
+  .fj__phase--end {
+    margin-top: 0.5rem;
+    margin-bottom: 0;
+  }
+
+  .fj__node {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    max-width: 24rem;
+    padding: 0.6rem 0.95rem;
+    text-align: center;
+    background: var(--color-bg-subtle);
+    border: var(--border-1);
+    border-radius: var(--radius-md, 8px);
+  }
+
+  .fj__node--branch {
+    max-width: none;
+    background: var(--color-bg-secondary);
+    border-color: var(--fj-accent);
+
+    /* 2px accent border lives inside the box (no overflow), so the full-width
+       branches never clip their highlight at the figure's edges. */
+    border-width: 2px;
+  }
+
+  .fj__node--branch .fj__name {
+    color: var(--fj-accent);
+  }
+
+  .fj__name {
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    font-weight: var(--fw-semibold, 600);
+    color: var(--color-text-heading);
+    word-break: break-word;
+  }
+
+  .fj__note {
+    margin-top: 0.15rem;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--color-text-muted);
+    word-break: break-word;
+  }
+
+  .fj__branches {
+    display: grid;
+    grid-template-columns: repeat(var(--fj-cols, 2), 1fr);
+    gap: 0.9rem;
+    align-self: stretch;
+    width: 100%;
+  }
+
+  .fj__edge {
+    align-self: stretch;
+    width: 100%;
+    height: 2.6rem;
+  }
+
+  .fj__edge path {
+    fill: none;
+    stroke: var(--fj-line);
+    stroke-width: 1.5;
+    vector-effect: non-scaling-stroke;
+  }
+
+  /* Straight 1→1 connectors: a crisp SVG line + filled arrowhead, matching the
+     1.5px stroke of the fork/join curves. */
+  .fj__link {
+    width: 16px;
+    height: 1.7rem;
+  }
+
+  .fj__link line {
+    stroke: var(--fj-line);
+    stroke-width: 1.5;
+  }
+
+  .fj__link polygon {
+    fill: var(--fj-line);
+  }
+
+  /* Arrowheads where a curved connector meets a box. Slim filled triangle that
+     sits flush at the box's top edge so the curve flows into it. */
+  .fj__branches--forked .fj__node--branch::before,
+  .fj__node--target::before {
+    position: absolute;
+    top: -8px;
+    left: 50%;
+    width: 0;
+    height: 0;
+    content: "";
+    border-top: 8px solid var(--fj-line);
+    border-right: 4.5px solid transparent;
+    border-left: 4.5px solid transparent;
+    transform: translateX(-50%);
+  }
+
+  .fj__caption {
+    margin-top: 1rem;
+    font-size: 0.8125rem;
+    font-style: italic;
+    color: var(--color-text-muted);
+    text-align: center;
+  }
+
+  @media (width <= 520px) {
+    .fj__branches {
+      gap: 0.5rem;
+    }
+
+    .fj__node {
+      padding: 0.5rem 0.6rem;
+    }
+
+    .fj__name {
+      font-size: 0.74rem;
+    }
+  }
+</style>

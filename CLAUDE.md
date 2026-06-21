@@ -404,6 +404,7 @@ Zero-JS, theme-aware, responsive SVG/CSS diagrams for systems/embedded/C++/netwo
 | `CallStack`       | `@components/ui/CallStack.astro`        | `frames[] {name,detail?}` — call frames + growth                |
 | `Matrix`          | `@components/ui/Matrix.astro`           | `rows`, `cols`, `cells[][]`, `highlight?` — labelled 2-D grid   |
 | `Pipeline`        | `@components/ui/Pipeline.astro`         | `stages[] {name,note?,via?}` — numbered stages + data-flow      |
+| `ForkJoin`        | `@components/ui/ForkJoin.astro`         | `before?[]`, `branches[]`, `after?[]` — fork→join data-flow     |
 | `ThemeImage`      | `@components/ui/ThemeImage.astro`       | `src` or `srcLight`+`srcDark`, `alt` — light/dark image swap    |
 | `FileDownload`    | `@components/ui/FileDownload.astro`     | `href`, `filename`, `size?` — download card                     |
 

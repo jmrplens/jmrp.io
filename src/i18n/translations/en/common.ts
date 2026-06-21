@@ -261,6 +261,10 @@ export const common = {
       ariaWithTitle: "Pipeline: {title}. {count} stages.",
       ariaWithoutTitle: "Pipeline with {count} stages",
     },
+    forkJoin: {
+      ariaWithTitle: "Fork-join data-flow diagram: {title}",
+      ariaWithoutTitle: "Fork-join data-flow diagram",
+    },
     timeline: {
       standard: "Standard",
       deprecated: "Deprecated",

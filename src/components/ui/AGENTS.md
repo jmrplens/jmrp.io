@@ -750,6 +750,26 @@ import Pipeline from "@components/ui/Pipeline.astro";
 
 `via` labels the arrow into a stage (the artifact handed over). Vertical on mobile.
 
+#### ForkJoin
+```mdx
+import ForkJoin from "@components/ui/ForkJoin.astro";
+<ForkJoin
+  ariaLabel="The generator forks into kPool and kOffsets, which the accessor joins."
+  beforeLabel="Build time" afterLabel="Runtime"
+  before={[{ name: "strings.csv", note: "id, en, es" }, { name: "generator" }]}
+  branches={[{ name: "kPool", note: "blob" }, { name: "kOffsets", note: "uint16" }]}
+  after={[{ name: "gen::string()" }, { name: "UI render" }]}
+/>
+```
+| Prop | Type | Required |
+|------|------|----------|
+| `branches` | `Array<{ name; note?; color? }>` | **Yes** |
+| `before` / `after` | `Array<{ name; note?; color? }>` | No |
+| `beforeLabel` / `afterLabel` | `string` | No |
+| `title` / `caption` / `ariaLabel` | `string` | No |
+
+Fork → join data-flow: a linear chain splits into parallel `branches` then merges into another chain. Best with 2–3 branches. Linear sequence → `Pipeline`; arbitrary graph → `Mermaid`.
+
 #### ThemeImage
 ```mdx
 import ThemeImage from "@components/ui/ThemeImage.astro";

@@ -49,6 +49,7 @@ This directory contains all the reusable UI components for the jmrp.io blog/webs
 | [CallStack](#callstack)             | Call frames + growth           | Recursion, calling conventions             |
 | [Matrix](#matrix)                   | Labelled 2-D grid              | Lookup tables, bitmaps, matrices           |
 | [Pipeline](#pipeline)               | Numbered stages + data-flow    | Build/CPU pipelines, data flow             |
+| [ForkJoin](#forkjoin)               | Fork → join data-flow          | Producer → parallel artifacts → consumer   |
 | [ThemeImage](#themeimage)           | Light/dark responsive image    | Per-theme diagrams/screenshots             |
 | [FileDownload](#filedownload)       | Download card                  | Offering a file/asset                      |
 
@@ -1225,6 +1226,37 @@ import Pipeline from "@components/ui/Pipeline.astro";
 **Props:** `stages[]` (`{ name, note?, via?, color? }`), `title?`, `caption?`, `ariaLabel?`.
 
 **When to use:** Build pipelines, CPU pipelines, data-flow stages. For arbitrary graphs use `Mermaid`.
+
+### ForkJoin
+
+A vertical data-flow diagram for the **fork → join** shape: a linear chain that splits into parallel artifacts (the fork / "Y") and merges them back into a second linear chain (the join / inverted "Y"). Curved SVG connectors, highlighted branches, optional phase tags. Zero-JS, theme-aware.
+
+```mdx
+import ForkJoin from "@components/ui/ForkJoin.astro";
+
+<ForkJoin
+  ariaLabel="The generator forks into kPool and kOffsets, which the accessor joins to return a string."
+  beforeLabel="Build time"
+  afterLabel="Runtime"
+  before={[
+    { name: "strings.csv", note: "id, en, es" },
+    { name: "generator", note: "dedup + tail-merge" },
+  ]}
+  branches={[
+    { name: "kPool", note: "one packed blob" },
+    { name: "kOffsets", note: "uint16 table" },
+  ]}
+  after={[
+    { name: "gen::string()", note: "kPool.data() + offset" },
+    { name: "UI render" },
+  ]}
+  caption="Build-time generation, runtime lookup"
+/>
+```
+
+**Props:** `branches[]` (`{ name, note?, color? }`, required), `before?[]`, `after?[]`, `beforeLabel?`, `afterLabel?`, `title?`, `caption?`, `ariaLabel?`.
+
+**When to use:** Producer → artifacts → consumer flows where one step forks into parallel outputs that a later step joins (e.g. a generator emitting two tables read together). Best with 2–3 branches. For a linear sequence use `Pipeline`; for arbitrary graphs use `Mermaid`.
 
 ### ThemeImage
 
