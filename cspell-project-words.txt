@@ -115,6 +115,7 @@ ciphersuites
 ciphertext
 clases
 claude
+CLDR
 clearsign
 clearsigned
 clickjacking
@@ -620,6 +621,7 @@ reinicios
 reintentan
 rela
 relación
+reloc
 relr
 remediations
 renderiza
