@@ -226,7 +226,7 @@ Varias cosas hacen que esto sea seguro y barato de adoptar:
   ariaLabel="Huella en flash, ambos diseños a la misma escala. El esquema básico es un blob de literales de unos 13,8 KB más una tabla de punteros de 5,5 KB, 19.273 bytes en total. El esquema empaquetado es un pool de 13,5 KB más una tabla de offsets de 2,7 KB, 16.261 bytes en total. Los dos blobs son casi igual de largos; la diferencia visible es la tabla índice, que se reduce a la mitad al pasar de la versión de punteros a la de offsets."
   bars={[
     {
-      label: "Ingenuo (tabla de punteros)",
+      label: "Básico (tabla de punteros)",
       segments: [
         { label: "blob de literales", bytes: 13813, sizeLabel: "≈ 13,8 KB", color: "var(--mm-6)" },
         { label: "tabla de punteros (4 B)", bytes: 5460, sizeLabel: "≈ 5,5 KB", color: "var(--mm-5)" },
@@ -392,7 +392,7 @@ Estos son los números del build real `sticks3` (5 idiomas, 273 IDs), empaquetad
     { label: "datos i18n (pool + tabla)", before: 19273, after: 16261 },
     { label: "Imagen de firmware", before: 1564784, after: 1562560 },
   ]}
-  caption="Ingenuo (antes) vs empaquetado (después) en -Os. El índice se reduce a la mitad con un −2.730 B (−50%) constante; los datos i18n bajan −3.012 B; todo el firmware encoge −2.224 B — todas las métricas a favor del diseño empaquetado."
+  caption="Básico (antes) vs empaquetado (después) en -Os. El índice se reduce a la mitad con un −2.730 B (−50%) constante; los datos i18n bajan −3.012 B; todo el firmware encoge −2.224 B — todas las métricas a favor del diseño empaquetado."
 />
 
 Reducir el índice a la mitad es la mejora limpia y estructural — un **−2.730 B (−50%)** constante que, como veremos, no se mueve con el nivel de optimización. Pero fíjate en que el delta del firmware (−2.224 B) es _más pequeño_ que el delta de datos (−3.012 B), y hay una razón honesta:
@@ -411,7 +411,7 @@ Hay una segunda diferencia estructural que los recuentos de bytes no muestran. U
   title="Relocations en el índice i18n (por objeto)"
   ariaLabel="Conteo de relocations antes/después en el objeto del índice i18n. La tabla de punteros básica emite 1.365 relocations, una por celda; la tabla de offsets empaquetada emite cero."
   rows={[{ label: "relocations", before: 1365, after: 0 }]}
-  caption="Ingenuo (antes): un registro R_XTENSA_32 por celda — 1.365 en total, 16.380 B de .rela en el objeto. Empaquetado (después): la tabla de offsets son enteros, así que su sección de datos no lleva ninguna relocation (las únicas dos en el lado empaquetado son las cargas de dirección base del accessor — una constante que no escala)."
+  caption="Básico (antes): un registro R_XTENSA_32 por celda — 1.365 en total, 16.380 B de .rela en el objeto. Empaquetado (después): la tabla de offsets son enteros, así que su sección de datos no lleva ninguna relocation (las únicas dos en el lado empaquetado son las cargas de dirección base del accessor — una constante que no escala)."
 />
 
 En este firmware es una señal estructural limpia, no un coste en runtime. La imagen está **enlazada estáticamente y es execute-in-place**, así que el linker resuelve los 1.365 registros básicos a direcciones absolutas _en tiempo de enlace_ — ninguno de los dos formatos arrastra relocations al `.bin` final, y lo que sobrevive son exactamente los **+2.730 B** de la tabla de punteros. Pero el conteo es el indicador honesto de "cuántas direcciones hay que materializar": el empaquetado es **O(1)** (dos cargas de base en el accessor), el básico es **O(celdas)** — una por cadena, creciendo con cada ID y cada idioma que añades. También deja la tabla _independiente de la posición_, que es el único sitio donde se gana el sueldo en un dispositivo que se actualiza en campo: con **delta OTA** (enviar un diff binario) una tabla de punteros absolutos cambia cada vez que algo aguas arriba en flash desplaza sus direcciones, inflando el parche, mientras que los offsets enteros se quedan quietos — una ventaja estructural, aunque no he medido los tamaños de parche.
