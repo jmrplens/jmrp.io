@@ -32,6 +32,7 @@ apparmor
 applebot
 aquí
 arduino
+arsc
 artesano
 asonaman
 asonoman
@@ -179,6 +180,7 @@ denorms
 dentistas
 depurabilidad
 desactualizados
+descárgalo
 descárgalos
 desconexión
 deseleccionar
@@ -193,10 +195,14 @@ dfmt
 diceware
 diffbot
 diffie
+diffs
 difusores
 digi
 dingledine
 dios
+direccionado
+direccionan
+direccionar
 direccionarlo
 directo
 dirinfo
@@ -257,6 +263,7 @@ firehol
 firewalld
 firmándolo
 firstname
+flto
 fmerge
 focusables
 fouc
@@ -356,6 +363,7 @@ josé
 journalctl
 JTAG
 kaspersky
+Kconfig
 keil
 keyid
 Keyoxide
@@ -391,6 +399,7 @@ localised
 logfile
 loggable
 londres
+lvgl
 macbook
 malformados
 mantenible
@@ -508,6 +517,8 @@ omgilibot
 ondrej
 ondřej
 oneshot
+optimizador
+optimizadores
 otras
 ouvrir
 página
@@ -553,6 +564,7 @@ preshared
 presharedkey
 previsualiza
 prid
+PRIO
 privkey
 profdent
 profesional
@@ -581,6 +593,7 @@ ramis
 rdata
 rdnss
 readyz
+realinea
 reaplicarlas
 recompila
 recompilaciones
@@ -589,8 +602,10 @@ reconecta
 reconexión
 reconexiones
 recursión
+redibujado
 redirección
 redirecciones
+reempaqueta
 reenvíos
 reescritura
 refactorización
@@ -603,7 +618,9 @@ regs
 reimagining
 reinicios
 reintentan
+rela
 relación
+relr
 remediations
 renderiza
 renderizado
@@ -622,6 +639,7 @@ respuestas
 restaura
 retrocedarán
 reubicable
+reubicables
 reuseport
 reverberado
 reverberante
@@ -634,6 +652,7 @@ rproto
 rsassa
 rslave
 rubén
+rustc
 ruta
 saes
 salesianos
@@ -781,6 +800,7 @@ writesingleregister
 xcto
 xframe
 xmlrpc
+xtensa
 yastatic
 youtube
 ytxt

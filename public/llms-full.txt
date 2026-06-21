@@ -2,7 +2,7 @@
 
 > Personal technical blog and portfolio of José Manuel Requena Plens — R&D Engineer specializing in Embedded Systems, Acoustics, and Industrial Software Development. This document provides comprehensive context for AI models.
 
-> Last updated: 2026-06-20
+> Last updated: 2026-06-21
 
 ## About the Author
 
