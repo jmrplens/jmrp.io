@@ -213,6 +213,54 @@ export const common = {
       ariaWithoutTitle: "Struct layout with {count} members",
       padding: "padding",
     },
+    deltaCompare: {
+      ariaWithTitle: "Before/after comparison: {title}. {count} metrics.",
+      ariaWithoutTitle: "Before/after comparison with {count} metrics",
+    },
+    layerStack: {
+      ariaWithTitle: "Layer stack: {title}. {count} layers.",
+      ariaWithoutTitle: "Layer stack with {count} layers",
+    },
+    matrix: {
+      ariaWithTitle: "Matrix: {title}. {rows} rows by {cols} columns.",
+      ariaWithoutTitle: "Matrix with {rows} rows and {cols} columns",
+    },
+    timingDiagram: {
+      ariaWithTitle: "Timing diagram: {title}. {count} signals.",
+      ariaWithoutTitle: "Timing diagram with {count} signals",
+    },
+    bitwiseOp: {
+      ariaWithTitle: "Bitwise operation: {title}.",
+      ariaWithoutTitle: "Bitwise operation diagram ({bits}-bit)",
+    },
+    numberBases: {
+      ariaWithTitle: "Number bases: {title}.",
+      ariaWithoutTitle: "A number shown in several bases",
+    },
+    floatLayout: {
+      ariaWithTitle: "Floating-point layout: {title}.",
+      ariaWithoutTitle: "IEEE 754 floating-point bit layout",
+    },
+    packetDiagram: {
+      ariaWithTitle: "Packet layout: {title}. {count} fields.",
+      ariaWithoutTitle: "Packet layout with {count} fields",
+    },
+    subnetSplit: {
+      ariaWithTitle: "Subnet split: {title}.",
+      ariaWithoutTitle: "IP address network/host split",
+    },
+    callStack: {
+      ariaWithTitle: "Call stack: {title}. {count} frames.",
+      ariaWithoutTitle: "Call stack with {count} frames",
+    },
+    encodingDiagram: {
+      ariaWithTitle: "Encoding: {title}.",
+      ariaWithoutTitle: "Byte-encoding diagram",
+    },
+    pipeline: {
+      ariaWithTitle: "Pipeline: {title}. {count} stages.",
+      ariaWithoutTitle: "Pipeline with {count} stages",
+    },
     timeline: {
       standard: "Standard",
       deprecated: "Deprecated",

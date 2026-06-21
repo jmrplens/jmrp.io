@@ -123,6 +123,9 @@ for (let b = width - 1; b >= 0; ) {
 
 const bitNumbers = Array.from({ length: width }, (_, i) => width - 1 - i);
 
+const reservedLabel = t("components.registerMap.reserved");
+const reservedRanges = runs.filter((r) => r.reserved).map((r) => r.bitsLabel);
+
 const summary =
   ariaLabel ??
   (title
@@ -144,8 +147,11 @@ const summary =
 
   <div class="register-map__scroll">
     <div
-      class="register-map__grid"
-      style={`grid-template-columns:repeat(${width},minmax(0,1fr));min-width:${(width * 1.5).toFixed(1)}rem`}
+      class:list={[
+        "register-map__grid",
+        width > 16 && "register-map__grid--dense",
+      ]}
+      style={`grid-template-columns:repeat(${width},minmax(0,1fr));--rm-cols:${width}`}
     >
       {bitNumbers.map((n) => <span class="register-map__bitnum">{n}</span>)}
       {
@@ -186,6 +192,19 @@ const summary =
         </li>
       ))
     }
+    {
+      reservedRanges.length > 0 && (
+        <li class="register-map__legend-item">
+          <span
+            class="register-map__swatch register-map__swatch--reserved"
+            aria-hidden="true"
+          />
+          <span class="register-map__legend-text">
+            <b>{reservedLabel}</b> [{reservedRanges.join(", ")}]
+          </span>
+        </li>
+      )
+    }
   </ul>
 
   <table class="sr-only">
@@ -206,6 +225,17 @@ const summary =
             <td>{p.note ?? ""}</td>
           </tr>
         ))
+      }
+      {
+        runs
+          .filter((r) => r.reserved)
+          .map((r) => (
+            <tr>
+              <td>{reservedLabel}</td>
+              <td>{r.bitsLabel}</td>
+              <td />
+            </tr>
+          ))
       }
     </tbody>
   </table>
@@ -241,6 +271,9 @@ const summary =
   .register-map__grid {
     display: grid;
     gap: 0.4rem 3px;
+
+    /* Keep cells readable; the wrapper scrolls if the container is narrower. */
+    min-width: calc(var(--rm-cols, 1) * 1.5rem);
   }
 
   .register-map__bitnum {
@@ -305,6 +338,12 @@ const summary =
     border-radius: 2px;
   }
 
+  /* Matches the muted "reserved" field boxes — bordered so it reads on dark. */
+  .register-map__swatch--reserved {
+    background: var(--rm-track-bg);
+    border: 1px solid var(--color-border);
+  }
+
   .register-map__legend-text b {
     font-weight: var(--fw-semibold, 600);
     color: var(--color-text);
@@ -327,5 +366,32 @@ const summary =
     overflow: hidden;
     white-space: nowrap;
     clip-path: inset(50%);
+  }
+
+  /* Narrow screens: fit the register to the viewport instead of scrolling. */
+  @media (width <= 640px) {
+    .register-map__scroll {
+      overflow-x: visible;
+    }
+
+    .register-map__grid {
+      gap: 0.3rem 2px;
+      min-width: 0;
+    }
+
+    /* Dense registers (e.g. 32-bit): squeezed to the viewport the per-bit
+       numbers would overlap, so drop the ruler. Each field box still shows its
+       bit range (start:end) and the legend lists every field in full. */
+    .register-map__grid--dense .register-map__bitnum {
+      display: none;
+    }
+
+    .register-map__field-name {
+      font-size: 0.72rem;
+    }
+
+    .register-map__field-bits {
+      font-size: 0.62rem;
+    }
   }
 </style>

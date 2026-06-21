@@ -74,6 +74,7 @@ biomédico
 biomédicos
 bitfield
 bitnum
+bitop
 bjmrp
 blackhole
 blinkmacsystemfont
@@ -129,6 +130,7 @@ codificaciones
 código
 coep
 colegio
+colhead
 colorbrewer
 comando
 compartición
@@ -155,6 +157,7 @@ crowdsecurity
 cscli
 csic
 csirt
+cstack
 cstdint
 curso
 d'acoustique
@@ -206,6 +209,8 @@ domótica
 dorder
 dport
 dproto
+drom
+DSCP
 dstnat
 dualstack
 dwyer
@@ -440,6 +445,7 @@ modifica
 monitorea
 monlist
 morcillo
+mosi
 movistar
 mppe
 mrru
@@ -458,6 +464,7 @@ myjob
 nameopt
 nanomateriales
 nanomaterials
+nbases
 nedry
 netwatch
 networkidle
@@ -470,6 +477,7 @@ nikto
 nimda
 nkhj
 nmap
+nobits
 nodelay
 nodir
 nonced
@@ -621,6 +629,7 @@ rgpd
 rmem
 robótico
 rodata
+rowhead
 rproto
 rsassa
 rslave
@@ -637,9 +646,11 @@ sapc
 saura
 scannerwork
 scid
+sclk
 scts
 securepassword
 segoe
+segs
 semiempírico
 sendfile
 serialización
@@ -675,6 +686,7 @@ ssllabs
 sslv
 startswith
 strs
+subnetting
 subred
 subredes
 subresource
@@ -735,6 +747,7 @@ userscripts
 útil
 valència
 valencian
+varint
 verificar
 verlust
 versiones

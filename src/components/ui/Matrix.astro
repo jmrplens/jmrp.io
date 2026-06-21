@@ -1,0 +1,197 @@
+---
+/**
+ * Matrix Component
+ *
+ * A labelled 2-D grid: row + column headers around a cell matrix, with optional
+ * highlighted cells. For lookup tables (language × id), bitmaps/tile maps,
+ * adjacency matrices, register banks, etc. Scrolls horizontally if it overflows.
+ *
+ * @example
+ * <Matrix
+ *   rowHeader="lang"
+ *   cols={["BRAND", "OK", "Cancel"]}
+ *   rows={["EN", "ES"]}
+ *   cells={[
+ *     ["@9379", "@1164", "@12542"],
+ *     ["@9379", "@1164", "@11279"],
+ *   ]}
+ *   highlight={[[0, 1], [1, 1]]}
+ * />
+ */
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslations } from "@i18n/utils";
+
+interface Props {
+  /** Optional title. */
+  title?: string;
+  /** Column header labels. */
+  cols: (string | number)[];
+  /** Row header labels. */
+  rows: (string | number)[];
+  /** Cell values, indexed [row][col]. */
+  cells: (string | number)[][];
+  /** Optional label for the top-left corner (the row-header column). */
+  rowHeader?: string;
+  /** Optional [row, col] pairs to highlight. */
+  highlight?: [number, number][];
+  /** Caption below the figure. */
+  caption?: string;
+  /** Accessibility label. */
+  ariaLabel?: string;
+}
+
+const {
+  title,
+  cols,
+  rows,
+  cells,
+  rowHeader = "",
+  highlight = [],
+  caption,
+  ariaLabel,
+} = Astro.props;
+
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
+
+const hi = new Set(highlight.map(([r, c]) => `${r}:${c}`));
+
+const summary =
+  ariaLabel ??
+  (title
+    ? t("components.matrix.ariaWithTitle", {
+        title,
+        rows: String(rows.length),
+        cols: String(cols.length),
+      })
+    : t("components.matrix.ariaWithoutTitle", {
+        rows: String(rows.length),
+        cols: String(cols.length),
+      }));
+---
+
+<figure
+  class="matrix"
+  aria-label={summary}
+>
+  {title && <figcaption class="matrix__title">{title}</figcaption>}
+
+  <div class="matrix__scroll">
+    <table class="matrix__table">
+      <thead>
+        <tr>
+          <th
+            scope="col"
+            class="matrix__corner"
+            >{rowHeader}</th
+          >
+          {
+            cols.map((c) => (
+              <th
+                scope="col"
+                class="matrix__colhead"
+              >
+                {c}
+              </th>
+            ))
+          }
+        </tr>
+      </thead>
+      <tbody>
+        {
+          rows.map((rLabel, r) => (
+            <tr>
+              <th
+                scope="row"
+                class="matrix__rowhead"
+              >
+                {rLabel}
+              </th>
+              {cols.map((_, c) => (
+                <td
+                  class:list={[
+                    "matrix__cell",
+                    hi.has(`${r}:${c}`) && "matrix__cell--hi",
+                  ]}
+                >
+                  {cells[r]?.[c] ?? ""}
+                </td>
+              ))}
+            </tr>
+          ))
+        }
+      </tbody>
+    </table>
+  </div>
+
+  {caption && <p class="matrix__caption">{caption}</p>}
+</figure>
+
+<style>
+  .matrix {
+    --mx-hi: color-mix(in srgb, var(--color-primary) 28%, transparent);
+
+    margin: 1.5rem 0;
+  }
+
+  .matrix__title {
+    margin-bottom: 1rem;
+    font-size: 1rem;
+    font-weight: var(--fw-semibold, 600);
+    color: var(--color-text-heading);
+  }
+
+  .matrix__scroll {
+    overflow-x: auto;
+  }
+
+  .matrix__table {
+    font-size: 0.82rem;
+    border-collapse: collapse;
+  }
+
+  .matrix__corner {
+    padding: 0.35rem 0.6rem;
+    font-weight: var(--fw-semibold, 600);
+    color: var(--color-text-muted);
+    text-align: left;
+  }
+
+  .matrix__colhead,
+  .matrix__rowhead {
+    padding: 0.35rem 0.6rem;
+    font-weight: var(--fw-semibold, 600);
+    color: var(--color-text-heading);
+    white-space: nowrap;
+  }
+
+  .matrix__colhead {
+    text-align: center;
+  }
+
+  .matrix__rowhead {
+    text-align: right;
+  }
+
+  .matrix__cell {
+    padding: 0.35rem 0.6rem;
+    color: var(--color-text);
+    text-align: center;
+    white-space: nowrap;
+    border: var(--border-1);
+  }
+
+  .matrix__cell--hi {
+    font-weight: var(--fw-semibold, 600);
+    color: var(--color-text-heading);
+    background: var(--mx-hi);
+  }
+
+  .matrix__caption {
+    margin-top: 1rem;
+    font-size: 0.8125rem;
+    font-style: italic;
+    color: var(--color-text-muted);
+    text-align: center;
+  }
+</style>

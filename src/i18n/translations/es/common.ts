@@ -214,6 +214,54 @@ export const common = {
       ariaWithoutTitle: "Disposición de struct con {count} miembros",
       padding: "relleno",
     },
+    deltaCompare: {
+      ariaWithTitle: "Comparación antes/después: {title}. {count} métricas.",
+      ariaWithoutTitle: "Comparación antes/después con {count} métricas",
+    },
+    layerStack: {
+      ariaWithTitle: "Pila de capas: {title}. {count} capas.",
+      ariaWithoutTitle: "Pila de capas con {count} capas",
+    },
+    matrix: {
+      ariaWithTitle: "Matriz: {title}. {rows} filas por {cols} columnas.",
+      ariaWithoutTitle: "Matriz con {rows} filas y {cols} columnas",
+    },
+    timingDiagram: {
+      ariaWithTitle: "Diagrama de tiempos: {title}. {count} señales.",
+      ariaWithoutTitle: "Diagrama de tiempos con {count} señales",
+    },
+    bitwiseOp: {
+      ariaWithTitle: "Operación de bits: {title}.",
+      ariaWithoutTitle: "Diagrama de operación de bits ({bits} bits)",
+    },
+    numberBases: {
+      ariaWithTitle: "Bases numéricas: {title}.",
+      ariaWithoutTitle: "Un número mostrado en varias bases",
+    },
+    floatLayout: {
+      ariaWithTitle: "Disposición de coma flotante: {title}.",
+      ariaWithoutTitle: "Disposición de bits IEEE 754",
+    },
+    packetDiagram: {
+      ariaWithTitle: "Disposición de paquete: {title}. {count} campos.",
+      ariaWithoutTitle: "Disposición de paquete con {count} campos",
+    },
+    subnetSplit: {
+      ariaWithTitle: "División de subred: {title}.",
+      ariaWithoutTitle: "División red/host de una dirección IP",
+    },
+    callStack: {
+      ariaWithTitle: "Pila de llamadas: {title}. {count} marcos.",
+      ariaWithoutTitle: "Pila de llamadas con {count} marcos",
+    },
+    encodingDiagram: {
+      ariaWithTitle: "Codificación: {title}.",
+      ariaWithoutTitle: "Diagrama de codificación de bytes",
+    },
+    pipeline: {
+      ariaWithTitle: "Pipeline: {title}. {count} etapas.",
+      ariaWithoutTitle: "Pipeline con {count} etapas",
+    },
     timeline: {
       standard: "Estándar",
       deprecated: "Obsoleto",

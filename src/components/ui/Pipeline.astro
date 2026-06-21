@@ -1,0 +1,245 @@
+---
+/**
+ * Pipeline Component
+ *
+ * A linear sequence of numbered stages. Each stage is a card with a color
+ * accent, the step name and an optional tool/detail note; the arrow into a
+ * stage can carry the artifact handed over from the previous one (`via`). This
+ * encodes order + tool + data-flow, not just a row of boxes. Horizontal on
+ * desktop, vertical on narrow screens.
+ *
+ * @example
+ * <Pipeline
+ *   stages={[
+ *     { name: "strings.json", note: "EN · ES" },
+ *     { name: "gen_i18n.py", note: "pack + tail-merge", via: "raw strings" },
+ *     { name: "firmware.elf", note: "13.4 KB .rodata", via: ".o" },
+ *   ]}
+ * />
+ */
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslations } from "@i18n/utils";
+
+interface Stage {
+  /** Stage name. */
+  name: string;
+  /** Optional tool / detail note under the name. */
+  note?: string;
+  /** Optional label on the arrow leading into this stage (the artifact in). */
+  via?: string;
+  /** Optional CSS color override for the accent. */
+  color?: string;
+}
+
+interface Props {
+  /** Optional title. */
+  title?: string;
+  /** Stages in order. */
+  stages: Stage[];
+  /** Caption below the figure. */
+  caption?: string;
+  /** Accessibility label. */
+  ariaLabel?: string;
+}
+
+const { title, stages, caption, ariaLabel } = Astro.props;
+
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
+
+const PALETTE = 6;
+const resolved = stages.map((s, i) => ({
+  ...s,
+  accent: s.color ?? `var(--pl-${(i % PALETTE) + 1})`,
+}));
+
+const summary =
+  ariaLabel ??
+  (title
+    ? t("components.pipeline.ariaWithTitle", {
+        title,
+        count: String(stages.length),
+      })
+    : t("components.pipeline.ariaWithoutTitle", {
+        count: String(stages.length),
+      }));
+---
+
+<figure
+  class="pipeline"
+  role="img"
+  aria-label={summary}
+>
+  {title && <figcaption class="pipeline__title">{title}</figcaption>}
+
+  <ol class="pipeline__flow">
+    {
+      resolved.map((s, i) => (
+        <li class="pipeline__item">
+          {i > 0 && (
+            <span
+              class="pipeline__edge"
+              aria-hidden="true"
+            >
+              {s.via && <span class="pipeline__via">{s.via}</span>}
+              <span class="pipeline__arrow">→</span>
+            </span>
+          )}
+          <span
+            class="pipeline__stage"
+            style={`--pl-accent:${s.accent}`}
+          >
+            <span class="pipeline__num">{i + 1}</span>
+            <span class="pipeline__name">{s.name}</span>
+            {s.note && <span class="pipeline__note">{s.note}</span>}
+          </span>
+        </li>
+      ))
+    }
+  </ol>
+
+  {caption && <p class="pipeline__caption">{caption}</p>}
+</figure>
+
+<style>
+  .pipeline {
+    --pl-1: #b389f5;
+    --pl-2: #58d6df;
+    --pl-3: #6ee7a8;
+    --pl-4: #fbbf24;
+    --pl-5: #f0789b;
+    --pl-6: #7aa2ff;
+    --pl-on: #0b0b13;
+
+    margin: 1.5rem 0;
+  }
+
+  .pipeline__title {
+    margin-bottom: 1rem;
+    font-size: 1rem;
+    font-weight: var(--fw-semibold, 600);
+    color: var(--color-text-heading);
+  }
+
+  .pipeline__flow {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
+    padding: 0.7rem 0 0 0.7rem;
+    margin: 0;
+    list-style: none;
+  }
+
+  .pipeline__item {
+    display: flex;
+    flex: 1;
+    align-items: stretch;
+    min-width: 0;
+  }
+
+  .pipeline__edge {
+    display: flex;
+    flex-shrink: 0;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0 0.3rem;
+  }
+
+  .pipeline__via {
+    max-width: 6rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    color: var(--color-text-muted);
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  .pipeline__arrow {
+    font-size: 1.15rem;
+    line-height: 1;
+    color: var(--color-text-muted);
+  }
+
+  .pipeline__stage {
+    position: relative;
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 3.25rem;
+    padding: 0.7rem 0.75rem 0.6rem;
+    text-align: center;
+    background: var(--color-bg-subtle);
+    border: var(--border-1);
+    border-top: 3px solid var(--pl-accent, var(--color-border));
+    border-radius: var(--radius-md, 8px);
+  }
+
+  .pipeline__num {
+    position: absolute;
+    top: -0.6rem;
+    left: -0.6rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.25rem;
+    height: 1.25rem;
+    font-size: 0.68rem;
+    font-weight: var(--fw-bold, 700);
+    color: var(--pl-on);
+    background: var(--pl-accent, var(--color-primary));
+    border-radius: 50%;
+  }
+
+  .pipeline__name {
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    font-weight: var(--fw-semibold, 600);
+    color: var(--color-text-heading);
+    word-break: break-word;
+  }
+
+  .pipeline__note {
+    margin-top: 0.15rem;
+    font-size: 0.72rem;
+    color: var(--color-text-muted);
+  }
+
+  .pipeline__caption {
+    margin-top: 1rem;
+    font-size: 0.8125rem;
+    font-style: italic;
+    color: var(--color-text-muted);
+    text-align: center;
+  }
+
+  @media (width <= 640px) {
+    .pipeline__flow {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .pipeline__item {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .pipeline__edge {
+      flex-direction: row;
+      column-gap: 0.4rem;
+      padding: 0.3rem 0;
+    }
+
+    .pipeline__via {
+      max-width: none;
+    }
+
+    .pipeline__arrow {
+      transform: rotate(90deg);
+    }
+  }
+</style>

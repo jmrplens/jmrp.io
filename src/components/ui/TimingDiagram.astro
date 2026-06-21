@@ -1,0 +1,371 @@
+---
+/**
+ * TimingDiagram Component
+ *
+ * A zero-JS digital timing diagram (a WaveDrom-style subset) rendered as SVG.
+ * Each signal has a `wave` string, one character per time unit:
+ *   0 1   low / high wire
+ *   p n   positive / negative clock pulse
+ *   .     extend the previous unit
+ *   x     don't-care
+ *   z     high-impedance (mid level)
+ *   = 2-9 data bus (label taken in order from `data`)
+ *
+ * @example
+ * <TimingDiagram
+ *   signals={[
+ *     { name: "SCLK", wave: "p......" },
+ *     { name: "MOSI", wave: "x=.=.=x", data: ["cmd", "addr", "data"] },
+ *     { name: "CS",   wave: "10.....1" },
+ *   ]}
+ * />
+ */
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslations } from "@i18n/utils";
+
+interface Signal {
+  /** Signal name (shown on the left). */
+  name: string;
+  /** Wave string (one char per time unit). */
+  wave: string;
+  /** Labels for data (`=`/`2`-`9`) units, in order. */
+  data?: string[];
+}
+
+interface Props {
+  /** Optional title. */
+  title?: string;
+  /** Signals, top to bottom. */
+  signals: Signal[];
+  /** Caption below the figure. */
+  caption?: string;
+  /** Accessibility label. */
+  ariaLabel?: string;
+}
+
+const { title, signals, caption, ariaLabel } = Astro.props;
+
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
+
+const U = 46;
+const LABEL_W = 80;
+const ROW_H = 26;
+const ROW_GAP = 20;
+const PAD_X = 8;
+const PAD_TOP = 8;
+const PAD_BOTTOM = 8;
+const DATA_PALETTE = [
+  "#58d6df",
+  "#b389f5",
+  "#6ee7a8",
+  "#fbbf24",
+  "#f0789b",
+  "#7aa2ff",
+];
+
+const uid = `td-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
+const maxLen = Math.max(...signals.map((s) => s.wave.length), 1);
+const svgW = LABEL_W + maxLen * U + PAD_X * 2;
+const svgH =
+  PAD_TOP + signals.length * (ROW_H + ROW_GAP) - ROW_GAP + PAD_BOTTOM;
+const xAt = (u: number) => PAD_X + LABEL_W + u * U;
+
+type Kind = "wire" | "clk" | "z" | "x" | "data";
+interface Unit {
+  kind: Kind;
+  val: string;
+  label: string | null;
+  cont: boolean;
+}
+interface Box {
+  x: number;
+  w: number;
+  label: string;
+  fill: string | null;
+}
+interface Rendered {
+  name: string;
+  top: number;
+  yName: number;
+  path: string;
+  boxes: Box[];
+}
+
+type Base = { kind: Kind; val: string; label: string | null };
+
+function classify(ch: string, label: string | null): Base {
+  if (ch === "0" || ch === "1") return { kind: "wire", val: ch, label: null };
+  if (ch === "p" || ch === "P") return { kind: "clk", val: "p", label: null };
+  if (ch === "n" || ch === "N") return { kind: "clk", val: "n", label: null };
+  if (ch === "z") return { kind: "z", val: "", label: null };
+  if (ch === "x") return { kind: "x", val: "", label: null };
+  if (ch === "=" || /[2-9]/.test(ch)) return { kind: "data", val: ch, label };
+  return { kind: "wire", val: "0", label: null };
+}
+
+function resolveUnits(wave: string, data?: string[]): Unit[] {
+  const units: Unit[] = [];
+  let base: Base = { kind: "wire", val: "0", label: null };
+  let dataI = 0;
+  for (const ch of wave) {
+    if (ch === ".") {
+      units.push({ ...base, cont: true });
+      continue;
+    }
+    const isData = ch === "=" || /[2-9]/.test(ch);
+    base = classify(ch, isData ? (data?.[dataI++] ?? "") : null);
+    units.push({ ...base, cont: false });
+  }
+  return units;
+}
+
+function dataFill(u: Unit): string | null {
+  if (u.kind !== "data") return null;
+  if (u.val === "=") return DATA_PALETTE[0];
+  return DATA_PALETTE[(Number(u.val) - 2) % DATA_PALETTE.length];
+}
+
+function wireSeg(
+  u: Unit,
+  x0: number,
+  x1: number,
+  yHi: number,
+  yLo: number,
+  yMid: number,
+  prevY: number | null,
+): { seg: string; y: number } {
+  let y = yLo;
+  if (u.kind === "z") y = yMid;
+  else if (u.val === "1") y = yHi;
+  let seg = "";
+  if (prevY === null) seg = `M ${x0} ${y} `;
+  else if (prevY !== y) seg = `L ${x0} ${y} `;
+  seg += `L ${x1} ${y} `;
+  return { seg, y };
+}
+
+function clockSeg(
+  val: string,
+  x0: number,
+  x1: number,
+  yHi: number,
+  yLo: number,
+): string {
+  const mid = (x0 + x1) / 2;
+  return val === "p"
+    ? `M ${x0} ${yLo} L ${x0} ${yHi} L ${mid} ${yHi} L ${mid} ${yLo} L ${x1} ${yLo} `
+    : `M ${x0} ${yHi} L ${x0} ${yLo} L ${mid} ${yLo} L ${mid} ${yHi} L ${x1} ${yHi} `;
+}
+
+function runEnd(units: Unit[], i: number): number {
+  let end = i;
+  while (end + 1 < units.length && units[end + 1].cont) end++;
+  return end;
+}
+
+function buildRow(sig: Signal, si: number): Rendered {
+  const top = PAD_TOP + si * (ROW_H + ROW_GAP);
+  const yHi = top;
+  const yLo = top + ROW_H;
+  const yMid = top + ROW_H / 2;
+  const units = resolveUnits(sig.wave, sig.data);
+
+  let path = "";
+  const boxes: Box[] = [];
+  let prevY: number | null = null;
+
+  for (let i = 0; i < units.length; i++) {
+    const u = units[i];
+    const x0 = xAt(i);
+    const x1 = xAt(i + 1);
+
+    if (u.kind === "wire" || u.kind === "z") {
+      const r = wireSeg(u, x0, x1, yHi, yLo, yMid, prevY);
+      path += r.seg;
+      prevY = r.y;
+    } else if (u.kind === "clk") {
+      path += clockSeg(u.val, x0, x1, yHi, yLo);
+      prevY = null;
+    } else if (u.cont) {
+      prevY = null;
+    } else {
+      const bx = xAt(i);
+      boxes.push({
+        x: bx,
+        w: xAt(runEnd(units, i) + 1) - bx,
+        label: u.label ?? "",
+        fill: dataFill(u),
+      });
+      prevY = null;
+    }
+  }
+
+  return { name: sig.name, top: yHi, yName: yMid + 4, path, boxes };
+}
+
+const rows: Rendered[] = signals.map((sig, si) => buildRow(sig, si));
+
+const summary =
+  ariaLabel ??
+  (title
+    ? t("components.timingDiagram.ariaWithTitle", {
+        title,
+        count: String(signals.length),
+      })
+    : t("components.timingDiagram.ariaWithoutTitle", {
+        count: String(signals.length),
+      }));
+---
+
+<figure
+  class="timing"
+  role="img"
+  aria-label={summary}
+>
+  {title && <figcaption class="timing__title">{title}</figcaption>}
+
+  <div class="timing__scroll">
+    <svg
+      class="timing__svg"
+      viewBox={`0 0 ${svgW} ${svgH}`}
+      width={svgW}
+      height={svgH}
+      aria-hidden="true"
+    >
+      <defs>
+        <pattern
+          id={`${uid}-hatch`}
+          width="6"
+          height="6"
+          patternUnits="userSpaceOnUse"
+          patternTransform="rotate(45)"
+        >
+          <rect
+            width="6"
+            height="6"
+            class="timing__x-bg"
+          ></rect>
+          <line
+            x1="0"
+            y1="0"
+            x2="0"
+            y2="6"
+            class="timing__x-line"
+          ></line>
+        </pattern>
+      </defs>
+      {
+        rows.map((r) => (
+          <g>
+            <text
+              x={PAD_X}
+              y={r.yName}
+              class="timing__name"
+            >
+              {r.name}
+            </text>
+            {r.boxes.map((b) => (
+              <g>
+                <rect
+                  x={b.x}
+                  y={r.top}
+                  width={b.w}
+                  height={ROW_H}
+                  rx="3"
+                  fill={b.fill ?? `url(#${uid}-hatch)`}
+                  class={b.fill ? "timing__data" : "timing__x"}
+                />
+                {b.label && (
+                  <text
+                    x={b.x + b.w / 2}
+                    y={r.yName}
+                    text-anchor="middle"
+                    class="timing__data-label"
+                  >
+                    {b.label}
+                  </text>
+                )}
+              </g>
+            ))}
+            <path
+              d={r.path}
+              class="timing__wire"
+            />
+          </g>
+        ))
+      }
+    </svg>
+  </div>
+
+  {caption && <p class="timing__caption">{caption}</p>}
+</figure>
+
+<style>
+  .timing {
+    margin: 1.5rem 0;
+  }
+
+  .timing__title {
+    margin-bottom: 1rem;
+    font-size: 1rem;
+    font-weight: var(--fw-semibold, 600);
+    color: var(--color-text-heading);
+  }
+
+  .timing__scroll {
+    overflow-x: auto;
+  }
+
+  .timing__svg {
+    max-width: none;
+    height: auto;
+  }
+
+  .timing__wire {
+    fill: none;
+    stroke: var(--color-text);
+    stroke-width: 2;
+    stroke-linejoin: round;
+  }
+
+  .timing__name {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    fill: var(--color-text-heading);
+  }
+
+  .timing__data {
+    stroke: var(--color-bg);
+    stroke-width: 1;
+  }
+
+  .timing__data-label {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 600;
+    fill: #0b0b13;
+  }
+
+  .timing__x-bg {
+    fill: var(--color-bg-subtle);
+  }
+
+  .timing__x-line {
+    stroke: var(--color-text-muted);
+    stroke-width: 1.5;
+  }
+
+  .timing__x {
+    stroke: var(--color-border);
+    stroke-width: 1;
+  }
+
+  .timing__caption {
+    margin-top: 1rem;
+    font-size: 0.8125rem;
+    font-style: italic;
+    color: var(--color-text-muted);
+    text-align: center;
+  }
+</style>
