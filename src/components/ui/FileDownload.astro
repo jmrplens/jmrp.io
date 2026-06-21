@@ -73,12 +73,16 @@ try {
     new URL(`../../../public${href}`, import.meta.url),
   );
   const bytes = statSync(path).size;
-  sizeLabel = bytes < 1024 ? `${bytes} B` : `${(bytes / 1024).toFixed(1)} KB`;
+  const kb = new Intl.NumberFormat(locale, {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  }).format(bytes / 1024);
+  sizeLabel = bytes < 1024 ? `${bytes} B` : `${kb} KB`;
   if (TEXT_EXT.has(ext)) {
     const lines = readFileSync(path, "utf8")
       .replace(/\n$/, "")
       .split("\n").length;
-    lineLabel = `${lines.toLocaleString(locale)} ${t("ui.lines")}`;
+    lineLabel = `${lines.toLocaleString(locale, { useGrouping: "always" })} ${t("ui.lines")}`;
   }
 } catch {
   // File not found at build — render without size/line metadata.

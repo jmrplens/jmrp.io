@@ -110,7 +110,11 @@ const summary =
     <div><dt>Mask</dt><dd>{dotted(mask)}</dd></div>
     <div><dt>Network</dt><dd>{dotted(network)}</dd></div>
     <div><dt>Broadcast</dt><dd>{dotted(broadcast)}</dd></div>
-    <div><dt>Usable hosts</dt><dd>{hosts.toLocaleString(locale)}</dd></div>
+    <div>
+      <dt>Usable hosts</dt><dd>
+        {hosts.toLocaleString(locale, { useGrouping: "always" })}
+      </dd>
+    </div>
   </dl>
 
   {caption && <p class="subnet__caption">{caption}</p>}

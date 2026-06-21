@@ -47,7 +47,13 @@ const { title, rows, unit = "", caption, ariaLabel } = Astro.props;
 
 const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
 const t = useTranslations(locale);
-const nf = new Intl.NumberFormat(locale);
+// Group thousands even for 4-digit numbers (es CLDR skips them otherwise).
+const nf = new Intl.NumberFormat(locale, { useGrouping: "always" });
+// Locale-aware percentage (decimal separator + sign).
+const pf = new Intl.NumberFormat(locale, {
+  maximumFractionDigits: 1,
+  signDisplay: "exceptZero",
+});
 
 const computed = rows.map((r) => {
   const max = Math.max(r.before, r.after, 1);
@@ -120,8 +126,7 @@ const summary =
             </div>
           </div>
           <div class={`delta__badge delta__badge--${r.status}`}>
-            {r.arrow} {r.pct > 0 ? "+" : ""}
-            {r.pct.toFixed(r.pct % 1 === 0 ? 0 : 1)}%
+            {r.arrow} {pf.format(r.pct)}%
             <span class="delta__badge-abs">
               ({r.diff > 0 ? "+" : ""}
               {nf.format(r.diff)}
@@ -156,10 +161,7 @@ const summary =
               {nf.format(r.after)}
               {unit}
             </td>
-            <td>
-              {r.pct > 0 ? "+" : ""}
-              {r.pct.toFixed(1)}%
-            </td>
+            <td>{pf.format(r.pct)}%</td>
           </tr>
         ))
       }

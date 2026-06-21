@@ -82,6 +82,9 @@ const {
 
 const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
 const t = useTranslations(locale);
+// Locale-aware value (grouped) and percentage (decimal separator) formatting.
+const nf = new Intl.NumberFormat(locale, { useGrouping: "always" });
+const pf = new Intl.NumberFormat(locale, { maximumFractionDigits: 1 });
 
 // Generate unique ID for this chart instance based on content hash
 const chartId = createHash("sha256")
@@ -218,7 +221,7 @@ function getBarColor(index: number, item: BarData): string {
                 aria-valuenow={item.value}
                 aria-valuemin={0}
                 aria-valuemax={maxValue}
-                aria-valuetext={`${item.value.toLocaleString()}${valueUnit ? ` ${valueUnit}` : ""} (${totalPercentage.toFixed(1)}% of total)`}
+                aria-valuetext={`${nf.format(item.value)}${valueUnit ? ` ${valueUnit}` : ""} (${pf.format(totalPercentage)}% of total)`}
                 data-value={item.value}
                 data-max={maxValue}
                 title={`${item.label}: ${item.value}${valueUnit ? ` ${valueUnit}` : ""}`}
@@ -229,7 +232,7 @@ function getBarColor(index: number, item: BarData): string {
                       class="value"
                       aria-hidden="true"
                     >
-                      {item.value.toLocaleString()}
+                      {nf.format(item.value)}
                       {valueUnit && <span class="unit"> {valueUnit}</span>}
                     </span>
                   )}
@@ -246,7 +249,7 @@ function getBarColor(index: number, item: BarData): string {
                       class="percentage"
                       aria-hidden="true"
                     >
-                      {totalPercentage.toFixed(1)}%
+                      {pf.format(totalPercentage)}%
                     </span>
                   )}
                 </span>
@@ -276,8 +279,8 @@ function getBarColor(index: number, item: BarData): string {
           return (
             <tr>
               <td>{item.label}</td>
-              <td>{item.value.toLocaleString()}</td>
-              <td>{totalPercentage.toFixed(1)}%</td>
+              <td>{nf.format(item.value)}</td>
+              <td>{pf.format(totalPercentage)}%</td>
             </tr>
           );
         })

@@ -69,11 +69,16 @@ const { title, bars, scale = "shared", caption, ariaLabel } = Astro.props;
 const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
 const t = useTranslations(locale);
 
-/** Auto-format a byte count to a compact string. */
+/** Auto-format a byte count to a compact, locale-aware string. */
 function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   const kib = bytes / 1024;
-  return `${kib.toFixed(kib < 10 ? 1 : 0)} KB`;
+  const digits = kib < 10 ? 1 : 0;
+  const kb = new Intl.NumberFormat(locale, {
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+  }).format(kib);
+  return `${kb} KB`;
 }
 
 const PALETTE = 6;
