@@ -173,6 +173,7 @@ const summary =
 
 <style>
   .delta {
+    /* Dark-theme defaults: light hues read on the dark background. */
     --delta-before: var(--color-text-muted, #8b949e);
     --delta-good: #6ee7a8;
     --delta-bad: #f0789b;
@@ -180,6 +181,27 @@ const summary =
     --delta-on: #0b0b13;
 
     margin: 1.5rem 0;
+  }
+
+  /* Light theme needs darker hues so the badge text clears WCAG AA on white. */
+  @media (prefers-color-scheme: light) {
+    .delta {
+      --delta-good: #15803d;
+      --delta-bad: #be123c;
+      --delta-same: #1d4ed8;
+    }
+  }
+
+  :root[data-theme="dark"] .delta {
+    --delta-good: #6ee7a8;
+    --delta-bad: #f0789b;
+    --delta-same: #7aa2ff;
+  }
+
+  :root[data-theme="light"] .delta {
+    --delta-good: #15803d;
+    --delta-bad: #be123c;
+    --delta-same: #1d4ed8;
   }
 
   .delta__title {
