@@ -60,7 +60,7 @@
 │   ├── types.ts                # Global TypeScript types
 │   ├── components/
 │   │   ├── apps/               # Interactive tools (vanilla JS, no Preact)
-│   │   ├── ui/                 # 35 reusable UI components
+│   │   ├── ui/                 # 53 reusable UI components
 │   │   ├── layout/             # BaseHead, Header, Footer, ToC
 │   │   ├── homelab/            # Preact islands (InfrastructureInsights, ServiceStats)
 │   │   ├── blog/               # PostCard, PostGrid, TagCloud
@@ -302,7 +302,7 @@ All JSON-LD wrapped in `safeJsonLd()` — escapes `<`, `>`, `&`, `\u2028`, `\u20
 
 ---
 
-## UI Components (35 total)
+## UI Components (53 total)
 
 ### Content & Summary
 
@@ -381,6 +381,31 @@ All JSON-LD wrapped in `safeJsonLd()` — escapes `<`, `>`, `&`, `\u2028`, `\u20
 | `IconDetector`     | `@components/ui/IconDetector.astro`     | Icon consistency check            |
 | `SRIEventListener` | `@components/ui/SRIEventListener.astro` | SRI integrity for event listeners |
 | `ThemeToggle`      | `@components/ui/ThemeToggle.astro`      | Theme switcher                    |
+
+### Diagram & Embedded
+
+Zero-JS, theme-aware, responsive SVG/CSS diagrams for systems/embedded/C++/networking. All render `role="img"` with i18n `aria-label` (keys under `components.*`). Prefer these over `Mermaid` for the structured cases; keep `Mermaid` for arbitrary graphs.
+
+| Component         | Import                                  | Key Props                                                        |
+| ----------------- | --------------------------------------- | --------------------------------------------------------------- |
+| `MemoryMap`       | `@components/ui/MemoryMap.astro`        | `bars[]`, `scale: "shared"\|"fill"` — memory region bars        |
+| `StructPacking`   | `@components/ui/StructPacking.astro`    | `members[]`, `arch: "32-bit"\|"64-bit"` — padding + `sizeof`    |
+| `RegisterMap`     | `@components/ui/RegisterMap.astro`      | `fields[] {name,bits}`, `width` — register bit-fields           |
+| `ByteFrame`       | `@components/ui/ByteFrame.astro`        | `fields[] {label,bytes,variable?}` — single-row byte layout     |
+| `PacketDiagram`   | `@components/ui/PacketDiagram.astro`    | `fields[] {name,bits}`, `bitsPerRow` — RFC multi-row header     |
+| `SubnetSplit`     | `@components/ui/SubnetSplit.astro`      | `ip`, `prefix` — IP network/host split + facts                  |
+| `BitwiseOp`       | `@components/ui/BitwiseOp.astro`        | `a`, `op`, `b?`, `width` — bitwise op bit-by-bit                 |
+| `NumberBases`     | `@components/ui/NumberBases.astro`      | `value`, `bits` — hex/dec/oct/bin                               |
+| `FloatLayout`     | `@components/ui/FloatLayout.astro`      | `value`, `precision` — IEEE 754 bit layout                      |
+| `TimingDiagram`   | `@components/ui/TimingDiagram.astro`    | `signals[] {name,wave,data?}` — WaveDrom-subset SVG waveforms   |
+| `EncodingDiagram` | `@components/ui/EncodingDiagram.astro`  | `rows[] {label,bytes[]}` — token → bytes (UTF-8/base64)         |
+| `DeltaCompare`    | `@components/ui/DeltaCompare.astro`     | `rows[] {label,before,after}`, `unit` — before/after metrics    |
+| `LayerStack`      | `@components/ui/LayerStack.astro`       | `layers[] {name,note?}` — stacked HW/SW layers                  |
+| `CallStack`       | `@components/ui/CallStack.astro`        | `frames[] {name,detail?}` — call frames + growth                |
+| `Matrix`          | `@components/ui/Matrix.astro`           | `rows`, `cols`, `cells[][]`, `highlight?` — labelled 2-D grid   |
+| `Pipeline`        | `@components/ui/Pipeline.astro`         | `stages[] {name,note?,via?}` — numbered stages + data-flow      |
+| `ThemeImage`      | `@components/ui/ThemeImage.astro`       | `src` or `srcLight`+`srcDark`, `alt` — light/dark image swap    |
+| `FileDownload`    | `@components/ui/FileDownload.astro`     | `href`, `filename`, `size?` — download card                     |
 
 ### Barrel Exports
 
@@ -972,10 +997,11 @@ flowchart LR
 | File                                     | Purpose                                          |
 | ---------------------------------------- | ------------------------------------------------ |
 | `.claude/settings.json`                  | Permissions, denied ops, hooks                   |
-| `.claude/skills/*/SKILL.md`             | Skills: astro-build, accessibility-audit, csp-debug |
+| `.claude/skills/*/SKILL.md`             | Claude-only skills: `i18n`, `new-blog-post`, `new-component`; `astro-build`, `accessibility-audit`, `csp-debug` are symlinks to `.github/skills/` |
+| `.claude/agents/*.agent.md`             | Symlinks to `.github/agents/` (planner, implementer, reviewer) |
 | `.claude/rules/*.md`                     | Path-scoped rules (4 files, `paths` frontmatter) |
 
-> **Note**: Agents are only defined in `.github/agents/` to avoid duplicates in VS Code's agent picker (VS Code reads both `.github/agents/` and `.claude/agents/`).
+> **Note**: The shared agents (`.github/agents/`) and Copilot skills (`.github/skills/`) are the single source of truth; `.claude/agents/` and the matching `.claude/skills/` entries are **symlinks** to them, so Copilot and Claude Code share the same files (no duplication). The agent frontmatter is cross-compatible (`name`, `description`, `model`); it intentionally omits `tools:` so agents **inherit all tools** (no restrictions), and the Copilot-only `handoffs:` key is ignored by Claude Code.
 
 ### Cross-Platform
 
@@ -983,7 +1009,6 @@ flowchart LR
 | ---------------------------------------- | ------------------------------------------------ |
 | `CLAUDE.md`                              | Primary AI context (this file) — VS Code + Claude Code |
 | `CLAUDE.local.md`                        | Personal overrides (gitignored)                  |
-| `GEMINI.md`                              | Quick reference for Google Gemini                |
 | `src/components/ui/AGENTS.md`            | UI component quick reference for agents          |
 | `src/components/apps/AGENTS.md`          | Interactive tools reference for agents           |
 
