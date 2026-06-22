@@ -24,6 +24,8 @@
  *   ]}}
  * />
  */
+import { getLangFromUrl, useTranslations } from "@i18n/utils";
+
 type Status = "danger" | "safe" | "neutral";
 
 interface Step {
@@ -61,14 +63,17 @@ interface Props {
   safeLabel?: string;
 }
 
+const locale = getLangFromUrl(Astro.url);
+const t = useTranslations(locale);
+
 const {
   left,
   right,
   title,
   caption,
   ariaLabel,
-  dangerLabel = "unsafe step",
-  safeLabel = "safe step",
+  dangerLabel = t("components.orderedCompare.unsafeStep"),
+  safeLabel = t("components.orderedCompare.safeStep"),
 } = Astro.props;
 
 const lanes = [
@@ -84,7 +89,7 @@ const statusIcon: Record<Status, string> = {
 const statusName: Record<Status, string> = {
   danger: dangerLabel,
   safe: safeLabel,
-  neutral: "step",
+  neutral: t("components.orderedCompare.neutralStep"),
 };
 ---
 
@@ -138,10 +143,10 @@ const statusName: Record<Status, string> = {
     <caption>{title ?? ariaLabel}</caption>
     <thead>
       <tr>
-        <th scope="col">Path</th>
-        <th scope="col">Step</th>
-        <th scope="col">Action</th>
-        <th scope="col">Status</th>
+        <th scope="col">{t("components.orderedCompare.path")}</th>
+        <th scope="col">{t("components.orderedCompare.step")}</th>
+        <th scope="col">{t("components.orderedCompare.action")}</th>
+        <th scope="col">{t("components.orderedCompare.status")}</th>
       </tr>
     </thead>
     <tbody>

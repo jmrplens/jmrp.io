@@ -21,6 +21,8 @@
  *   pass={{ label: "Return credential" }}
  * />
  */
+import { getLangFromUrl, useTranslations } from "@i18n/utils";
+
 interface Gate {
   /** Gate name (rendered emphasized). */
   label: string;
@@ -52,19 +54,25 @@ interface Props {
   ariaLabel?: string;
 }
 
+const locale = getLangFromUrl(Astro.url);
+const t = useTranslations(locale);
+
 const {
   title,
   steps,
   reject,
   pass,
-  rejectTag = "any failure",
+  rejectTag = t("components.gauntlet.rejectTag"),
   caption,
   ariaLabel,
 } = Astro.props as Props;
 
 const summary =
   ariaLabel ??
-  `${title ?? "Decision gauntlet"}: ${steps.length} checks in order; any failure fails closed, all passing returns the result.`;
+  t("components.gauntlet.aria", {
+    title: title ?? t("components.gauntlet.titleFallback"),
+    count: steps.length,
+  });
 ---
 
 <figure
@@ -126,9 +134,9 @@ const summary =
     <caption>{title ?? summary}</caption>
     <thead>
       <tr>
-        <th scope="col">Check</th>
-        <th scope="col">On pass</th>
-        <th scope="col">On failure</th>
+        <th scope="col">{t("components.gauntlet.check")}</th>
+        <th scope="col">{t("components.gauntlet.onPass")}</th>
+        <th scope="col">{t("components.gauntlet.onFailure")}</th>
       </tr>
     </thead>
     <tbody>

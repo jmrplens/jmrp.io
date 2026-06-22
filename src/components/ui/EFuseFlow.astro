@@ -8,8 +8,9 @@
  * "reachable by software" (a stored pepper the CPU can read) — make the security
  * difference between the two device-binding backends legible at a glance.
  *
- * All copy is passed in as props (no i18n keys). Theme-aware, responsive,
- * accessible (role="img" + sr-only table).
+ * Content copy is passed in as props; chrome (reach labels, sr-only table) is
+ * localised via components.efuseFlow.* keys. Theme-aware, responsive, accessible
+ * (role="img" + sr-only table).
  *
  * @example
  * <EFuseFlow
@@ -36,6 +37,8 @@
  *   ]}
  * />
  */
+
+import { getLangFromUrl, useTranslations } from "@i18n/utils";
 
 interface Lane {
   /** "sealed" (key never leaves HW) or "reachable" (CPU can read the secret). */
@@ -64,6 +67,9 @@ interface Props {
   /** Accessibility label for the whole figure (required). */
   ariaLabel: string;
 }
+
+const locale = getLangFromUrl(Astro.url);
+const t = useTranslations(locale);
 
 const { title, lanes, caption, ariaLabel } = Astro.props as Props;
 ---
@@ -116,8 +122,8 @@ const { title, lanes, caption, ariaLabel } = Astro.props as Props;
               aria-hidden="true"
             />
             {lane.reachable
-              ? "Secret is reachable by software"
-              : "Secret never reaches software"}
+              ? t("components.efuseFlow.reachYes")
+              : t("components.efuseFlow.reachNo")}
           </p>
 
           {lane.note && <p class="eff__note">{lane.note}</p>}
@@ -127,13 +133,13 @@ const { title, lanes, caption, ariaLabel } = Astro.props as Props;
   </div>
 
   <table class="sr-only">
-    <caption>{title ?? "Where the device secret lives"}</caption>
+    <caption>{title ?? t("components.efuseFlow.tableCaption")}</caption>
     <thead>
       <tr>
-        <th scope="col">Backend</th>
-        <th scope="col">Device secret</th>
-        <th scope="col">Crosses to software</th>
-        <th scope="col">Software-reachable?</th>
+        <th scope="col">{t("components.efuseFlow.backend")}</th>
+        <th scope="col">{t("components.efuseFlow.deviceSecret")}</th>
+        <th scope="col">{t("components.efuseFlow.crossesToSoftware")}</th>
+        <th scope="col">{t("components.efuseFlow.softwareReachable")}</th>
       </tr>
     </thead>
     <tbody>
@@ -146,7 +152,11 @@ const { title, lanes, caption, ariaLabel } = Astro.props as Props;
               {lane.secretNote ? ` (${lane.secretNote})` : ""}
             </td>
             <td>{lane.crosses}</td>
-            <td>{lane.reachable ? "Yes" : "No"}</td>
+            <td>
+              {lane.reachable
+                ? t("components.efuseFlow.yes")
+                : t("components.efuseFlow.no")}
+            </td>
           </tr>
         ))
       }

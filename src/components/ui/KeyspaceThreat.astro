@@ -9,8 +9,9 @@
  * throughput so the visual gap reads honestly even when one number dwarfs the
  * other. Theme-aware, responsive, accessible (role="img" + sr-only table).
  *
- * All copy is passed in as props (no i18n keys) so it can live entirely in MDX;
- * only the numeric grouping is localised from the active page locale.
+ * Content copy is passed in as props (so it can live in MDX); generic chrome
+ * (sr-only table headers, scale note) and numeric grouping are localised from
+ * the active page locale via components.keyspaceThreat.* keys.
  *
  * @example
  * <KeyspaceThreat
@@ -26,7 +27,7 @@
  * />
  */
 
-import { getLangFromUrl } from "@i18n/utils";
+import { getLangFromUrl, useTranslations } from "@i18n/utils";
 
 interface Props {
   /** Name of the secret being attacked (e.g. "4-digit PIN"). */
@@ -68,6 +69,7 @@ const {
 } = Astro.props as Props;
 
 const locale = getLangFromUrl(Astro.url);
+const t = useTranslations(locale);
 const nf = new Intl.NumberFormat(locale, { useGrouping: "always" });
 
 // Log scale: both magnitudes share one axis so the gap between a tiny keyspace
@@ -135,30 +137,40 @@ const rows = [
     class="kst__scale-note"
     aria-hidden="true"
   >
-    Bars are on a logarithmic scale.
+    {t("components.keyspaceThreat.scaleNote")}
   </p>
 
   <table class="sr-only">
     <caption
-      >{title ?? `${secretLabel}: keyspace vs attacker throughput`}</caption
+      >{
+        title ??
+          t("components.keyspaceThreat.tableCaption", { secret: secretLabel })
+      }</caption
     >
     <thead>
       <tr>
-        <th scope="col">Quantity</th>
-        <th scope="col">Value</th>
+        <th scope="col">{t("components.keyspaceThreat.quantity")}</th>
+        <th scope="col">{t("components.keyspaceThreat.value")}</th>
       </tr>
     </thead>
     <tbody>
       <tr>
-        <td>{secretLabel} keyspace</td>
+        <td
+          >{
+            t("components.keyspaceThreat.keyspaceRow", { secret: secretLabel })
+          }</td
+        >
         <td>{nf.format(keyspace)}</td>
       </tr>
       <tr>
         <td>{throughputLabel}</td>
-        <td>{nf.format(throughput)} guesses/s</td>
+        <td
+          >{nf.format(throughput)}
+          {t("components.keyspaceThreat.guessesPerSec")}</td
+        >
       </tr>
       <tr>
-        <td>Verdict</td>
+        <td>{t("components.keyspaceThreat.verdict")}</td>
         <td>{verdict}</td>
       </tr>
     </tbody>

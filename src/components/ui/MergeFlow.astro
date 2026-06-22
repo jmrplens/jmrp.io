@@ -21,6 +21,8 @@
  *   ]}
  * />
  */
+import { getLangFromUrl, useTranslations } from "@i18n/utils";
+
 interface MergeInput {
   /** Input label (rendered monospace). */
   name: string;
@@ -48,11 +50,17 @@ interface Props {
   ariaLabel?: string;
 }
 
+const locale = getLangFromUrl(Astro.url);
+const t = useTranslations(locale);
+
 const { title, stages, caption, ariaLabel } = Astro.props as Props;
 
 const summary =
   ariaLabel ??
-  `${title ?? "Merge flow"}: ${stages.length} stages, each combining inputs into one output that feeds the next.`;
+  t("components.mergeFlow.aria", {
+    title: title ?? t("components.mergeFlow.titleFallback"),
+    count: stages.length,
+  });
 ---
 
 <figure
@@ -114,9 +122,9 @@ const summary =
     <caption>{title ?? summary}</caption>
     <thead>
       <tr>
-        <th scope="col">Operation</th>
-        <th scope="col">Inputs</th>
-        <th scope="col">Output</th>
+        <th scope="col">{t("components.mergeFlow.operation")}</th>
+        <th scope="col">{t("components.mergeFlow.inputs")}</th>
+        <th scope="col">{t("components.mergeFlow.output")}</th>
       </tr>
     </thead>
     <tbody>

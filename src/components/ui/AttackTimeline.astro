@@ -7,8 +7,9 @@
  * cuts it off. Each step has a kind that colours its rail node and adds a
  * non-colour glyph: `attacker` (a move the adversary makes), `loop` (a repeated
  * step), `leak` (information gained), or `blocked` (where the design stops it).
- * Zero client JS; theme-aware; accessible (role="img" + .sr-only table). All
- * text is passed as props, so the component carries no i18n chrome.
+ * Zero client JS; theme-aware; accessible (role="img" + .sr-only table). Step
+ * text is passed as props; generic chrome (sr-only headers, kind labels) is
+ * localised via components.attackTimeline.* keys.
  *
  * @example
  * <AttackTimeline
@@ -44,7 +45,12 @@ interface Props {
   ariaLabel: string;
 }
 
+import { getLangFromUrl, useTranslations } from "@i18n/utils";
+
 const { steps, title, caption, ariaLabel } = Astro.props;
+
+const locale = getLangFromUrl(Astro.url);
+const t = useTranslations(locale);
 
 const kindIcon: Record<Kind, string> = {
   attacker: "i-mdi:account-arrow-right",
@@ -53,10 +59,10 @@ const kindIcon: Record<Kind, string> = {
   blocked: "i-mdi:shield-check",
 };
 const kindName: Record<Kind, string> = {
-  attacker: "attacker action",
-  loop: "repeated step",
-  leak: "information leaked",
-  blocked: "blocked by design",
+  attacker: t("components.attackTimeline.attacker"),
+  loop: t("components.attackTimeline.loop"),
+  leak: t("components.attackTimeline.leak"),
+  blocked: t("components.attackTimeline.blocked"),
 };
 ---
 
@@ -99,9 +105,9 @@ const kindName: Record<Kind, string> = {
     <caption>{title ?? ariaLabel}</caption>
     <thead>
       <tr>
-        <th scope="col">Step</th>
-        <th scope="col">Kind</th>
-        <th scope="col">Action</th>
+        <th scope="col">{t("components.attackTimeline.step")}</th>
+        <th scope="col">{t("components.attackTimeline.kind")}</th>
+        <th scope="col">{t("components.attackTimeline.action")}</th>
       </tr>
     </thead>
     <tbody>
