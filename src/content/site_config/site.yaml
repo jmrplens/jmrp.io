@@ -24,6 +24,18 @@ person:
     - "https://orcid.org/0000-0003-1250-6212"
     - "https://www.researchgate.net/profile/Jose-Requena-Plens-2"
     - "https://www.mathworks.com/matlabcentral/profile/authors/5890853"
+  # Expertise topics emitted as Person `knowsAbout` site-wide.
+  knowsAbout:
+    - "Embedded Systems"
+    - "Firmware"
+    - "Cryptography"
+    - "Network Security"
+    - "Nginx"
+    - "MikroTik RouterOS"
+    - "WireGuard"
+    - "IPv6"
+    - "Acoustics"
+    - "Signal Processing"
 
 # Social links for JSON-LD sameAs and dynamic rendering
 # These are canonical URLs used across the site

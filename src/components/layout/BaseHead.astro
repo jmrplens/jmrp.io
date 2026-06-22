@@ -145,11 +145,15 @@ const ogImageMime = (() => {
 
 // --- Schema.org Construction ---
 
+// Canonical site root WITH trailing slash, so entity @id/url/item values match
+// the page canonical form (avoids fragmenting the entity graph).
+const siteRoot = new URL("/", getSiteUrl()).href;
+
 // 1. WebSite Schema (Global)
 const websiteSchema = {
   "@type": "WebSite",
   "@id": new URL("#website", getSiteUrl()).href,
-  url: getSiteUrl(),
+  url: siteRoot,
   name: siteData.author,
   description: t("seo.siteDescription"),
   inLanguage: locale,
@@ -158,7 +162,8 @@ const websiteSchema = {
     "@id": new URL("#person", getSiteUrl()).href,
     name: siteData.author,
     jobTitle: siteData.person?.jobTitle ?? siteData.jobTitle,
-    url: getSiteUrl(),
+    description: t("pages.cv.schemaDescription"),
+    url: siteRoot,
     image: new URL(defaultOgImage.src, getSiteUrl()).href,
     ...(siteData.person?.worksFor && {
       worksFor: {
@@ -168,6 +173,9 @@ const websiteSchema = {
           url: siteData.person.worksFor.url,
         }),
       },
+    }),
+    ...(siteData.person?.knowsAbout && {
+      knowsAbout: siteData.person.knowsAbout,
     }),
     sameAs: buildSameAs(siteData.social_links, siteData.person?.sameAs),
   },
@@ -193,13 +201,13 @@ const navSchema = (siteData.nav || []).map((item) => ({
 const pathSegments = Astro.url.pathname.split("/").filter(Boolean);
 const breadcrumbList = {
   "@type": "BreadcrumbList",
-  "@id": `${getSiteUrl()}#breadcrumb`,
+  "@id": `${siteRoot}#breadcrumb`,
   itemListElement: [
     {
       "@type": "ListItem",
       position: 1,
       name: t("nav.home"),
-      item: getSiteUrl(),
+      item: siteRoot,
     },
     ...pathSegments.map((segment, index) => {
       const path = `/${pathSegments.slice(0, index + 1).join("/")}/`;

@@ -402,6 +402,7 @@ export const common = {
     },
     blogPost: {
       backToBlog: "Back to Blog",
+      updatedOn: "Updated {date}",
       coverImageAlt: "Cover image for {title}",
       readAction: "Read article →",
       codeFallback: "Code",

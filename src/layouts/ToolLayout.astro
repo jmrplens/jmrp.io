@@ -9,6 +9,7 @@
  *   - default: The tool component (rendered inside `.tool-container`)
  *   - info: Content inside the `<section class="tool-info">` card
  */
+import FAQ from "@components/ui/FAQ.astro";
 import { defaultLocale, type Locale } from "@i18n/config";
 import { useTranslatedPath, useTranslations } from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
@@ -27,9 +28,12 @@ interface Props {
   slug: string;
   /** Optional extra schema fields merged into the generated SoftwareApplication schema. */
   extraSchema?: Record<string, unknown>;
+  /** FAQ pairs — rendered as an accessible section + emitted as FAQPage JSON-LD. */
+  faq?: { question: string; answer: string }[];
 }
 
-const { title, description, subtitle, icon, slug, extraSchema } = Astro.props;
+const { title, description, subtitle, icon, slug, extraSchema, faq } =
+  Astro.props;
 
 const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
 const t = useTranslations(locale);
@@ -46,19 +50,36 @@ const toolSchema = {
   url: toolUrl,
   applicationCategory: "WebApplication",
   operatingSystem: "Web Browser",
-  offers: { "@type": "Offer", price: 0, priceCurrency: "USD" },
+  offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
   isAccessibleForFree: true,
   author: { "@id": new URL("#person", getSiteUrl()).href },
   creator: { "@id": new URL("#person", getSiteUrl()).href },
   inLanguage: locale,
   ...extraSchema,
 };
+
+// Secondary FAQPage node (from the tool's `faq` frontmatter), merged into the graph.
+const faqNode =
+  faq && faq.length > 0
+    ? {
+        "@type": "FAQPage",
+        "@id": `${toolUrl}#faq`,
+        isPartOf: { "@id": `${toolUrl}#software` },
+        mainEntity: faq.map((item) => ({
+          "@type": "Question",
+          name: item.question,
+          acceptedAnswer: { "@type": "Answer", text: item.answer },
+        })),
+      }
+    : undefined;
+
+const pageSchema = faqNode ? [toolSchema, faqNode] : toolSchema;
 ---
 
 <BaseLayout
   title={title}
   description={description}
-  schema={toolSchema}
+  schema={pageSchema}
 >
   <div class="tool-page">
     <div class="content-wrapper">
@@ -98,6 +119,8 @@ const toolSchema = {
           </section>
         )
       }
+
+      {faq && faq.length > 0 && <FAQ items={faq} />}
     </div>
   </div>
 </BaseLayout>

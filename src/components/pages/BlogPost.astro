@@ -240,6 +240,21 @@ const articleSchema = [
             <time datetime={post.data.publishedDate.toISOString()}>
               {formatDate(post.data.publishedDate, locale)}
             </time>
+            {
+              post.data.updatedDate && (
+                <>
+                  <span class="separator">•</span>
+                  <time
+                    class="updated"
+                    datetime={post.data.updatedDate.toISOString()}
+                  >
+                    {t("pages.blogPost.updatedOn", {
+                      date: formatDate(post.data.updatedDate, locale),
+                    })}
+                  </time>
+                </>
+              )
+            }
             <span class="separator">•</span>
             {
               post.data.tags && (

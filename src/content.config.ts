@@ -127,6 +127,9 @@ const site_config = defineCollection({
           // appear as footer social icons (e.g. Google Scholar, ORCID, ResearchGate).
           // Merged with `social_links` to build the full Person `sameAs` array.
           sameAs: z.array(z.url()).optional(),
+          // Topics emitted as Person `knowsAbout` on every page, so single-page
+          // AI crawls still see the entity's expertise profile.
+          knowsAbout: z.array(z.string()).optional(),
         })
         .optional(),
       // Social links for JSON-LD sameAs and dynamic rendering
@@ -351,6 +354,13 @@ const tools = defineCollection({
     appProps: z.record(z.string(), z.any()).optional(),
     publishedDate: z.coerce.date().optional(),
     updatedDate: z.coerce.date().optional(),
+    /**
+     * FAQ pairs for the tool. Rendered as a visible accessible FAQ section AND
+     * emitted as FAQPage JSON-LD — single source of truth. Only genuine Q&A.
+     */
+    faq: z
+      .array(z.object({ question: z.string(), answer: z.string() }))
+      .optional(),
   }),
 });
 
