@@ -14,9 +14,7 @@ export async function getStaticPaths() {
   const tags = getUniqueTags(allPosts);
   return tags.map(({ tag }) => {
     const filteredPosts = allPosts.filter((post) =>
-      post.data.tags.some(
-        (t) => t.toLowerCase().replaceAll(/\s+/g, "-") === tag,
-      ),
+      post.data.tags.some((t) => t.toLowerCase() === tag),
     );
     return {
       params: { tag },
