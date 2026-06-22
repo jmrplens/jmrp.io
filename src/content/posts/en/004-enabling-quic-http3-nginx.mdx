@@ -53,11 +53,21 @@ import Collapsible from "@components/ui/Collapsible.astro";
 import Mermaid from "@components/ui/Mermaid.astro";
 import Table from "@components/ui/Table.astro";
 import Code from "@components/ui/Code.astro";
+import TLDRSummary from "@components/ui/TLDRSummary.astro";
 
 
 The web has relied on **TCP** for over four decades. But modern applications—with their demands for real-time interactivity, mobile connectivity, and instant page loads—have exposed TCP's fundamental limitations. Enter **QUIC** and **HTTP/3**: a complete reimagining of web transport that abandons TCP in favor of UDP to deliver a faster, more secure, and resilient internet.
 
 In this comprehensive guide, we'll explore the history and architecture of QUIC, understand why it solves problems that TCP cannot, and walk through a complete production-ready Nginx configuration.
+
+<TLDRSummary title="TL;DR — QUIC and HTTP/3 on Nginx">
+  - **QUIC runs over UDP, not TCP**: HTTP/3 maps HTTP semantics onto QUIC, which is built on UDP and mandates TLS 1.3.
+  - **Solves HOL blocking**: QUIC streams are independent at the transport layer, so a lost packet only stalls its own stream — not all multiplexed streams as in HTTP/2 over TCP.
+  - **Faster handshakes and connection migration**: combined transport+crypto handshake (1-RTT, or 0-RTT on resume) plus Connection IDs that survive network changes (Wi-Fi → mobile).
+  - **Nginx needs 1.25.0+ with `--with-http_v3_module`** and a QUIC-capable SSL library (OpenSSL 3.5.1+, BoringSSL, QuicTLS, or LibreSSL 3.6+).
+  - **Core config**: add `listen 443 quic reuseport;`, enable `http3 on`, TLS 1.3, and the `Alt-Svc` header; `reuseport` must appear on exactly one listener per address:port.
+  - **Open UDP/443 on the firewall** (server and cloud provider) or QUIC fails silently and clients fall back to HTTP/2; verify with `curl --http3`, DevTools, or `quic="h3"` in the access log.
+</TLDRSummary>
 
 ---
 

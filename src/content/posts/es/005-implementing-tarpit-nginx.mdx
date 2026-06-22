@@ -53,8 +53,17 @@ import TerminalOutput from "@components/ui/TerminalOutput.astro";
 import Table from "@components/ui/Table.astro";
 import Code from "@components/ui/Code.astro";
 import Collapsible from "@components/ui/Collapsible.astro";
+import TLDRSummary from "@components/ui/TLDRSummary.astro";
 
 Si alguna vez has revisado los logs de tu servidor, seguramente habrás visto innumerables intentos de acceso a archivos como `/.env`, `/wp-login.php`, `/.git/config` o `/admin`. Se trata de escáneres automatizados que sondean tu servidor en busca de vulnerabilidades. Aunque bloquearlos con una response 403 o 404 funciona, hay un enfoque mucho más *satisfactorio*: **atraparlos en un tarpit**.
+
+<TLDRSummary title="TL;DR — Atrapa escáneres en un tarpit lento de Nginx">
+- **Un tarpit gotea los datos lentamente** (unos 10 bytes/segundo) para que los escáneres maliciosos se queden atascados en lugar de reintentar al instante como hacen tras un 403/404.
+- **Tres piezas en Nginx**: una carga útil aleatoria grande con el módulo Perl, `limit_rate` para limitar la entrega y un `log_format` dedicado que fuerza el status **418** para un parseo limpio.
+- **Las rutas sensibles devuelven 418** (`/.env`, `/.git`, backups, exploits de CMS, dotfiles) y `error_page 418 = @tarpit` las redirige al snippet de respuesta lenta.
+- **Un map de IPs de confianza** fija la rate a 0 y devuelve un 403 normal, de modo que el tráfico de administración nunca queda atrapado accidentalmente.
+- **CrowdSec banea automáticamente** a los reincidentes mediante un parser y un escenario leaky (p. ej. 3 impactos en 5 minutos); Fail2Ban y el reporte a AbuseIPDB son alternativas.
+</TLDRSummary>
 
 ## ¿Qué es un tarpit?
 

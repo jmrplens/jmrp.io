@@ -55,6 +55,7 @@ import TerminalCommand from "@components/ui/TerminalCommand.astro";
 import FileContent from "@components/ui/FileContent.astro";
 import TerminalOutput from "@components/ui/TerminalOutput.astro";
 import Table from "@components/ui/Table.astro";
+import TLDRSummary from "@components/ui/TLDRSummary.astro";
 
 Al desplegar aplicaciones web modernas —especialmente las que están en containers o en plataformas gestionadas— a menudo no tienes acceso directo al web root. ¿Qué pasa cuando necesitas servir `robots.txt`, `security.txt` o un endpoint de health check? No puedes simplemente meter un archivo en una imagen Docker.
 
@@ -66,6 +67,15 @@ Al desplegar aplicaciones web modernas —especialmente las que están en contai
 - **Archivos de cumplimiento de seguridad** que cambian independientemente de las versiones de la aplicación
 
 En esta guía completa, exploraremos las potentes directivas de Nginx para servir archivos virtuales, desde técnicas básicas hasta patrones avanzados utilizados en despliegues de producción con Kubernetes.
+
+<TLDRSummary title="TL;DR — sirve archivos que Nginx nunca lee del disco">
+  - **El location matching gana por prioridad, no por el orden de la configuración:** exacto `=` primero, luego `^~`, después regex y por último el prefijo más largo — usa `=` para archivos virtuales como `/robots.txt`.
+  - **`root` vs `alias` vs `try_files`:** `root` añade la URI, `alias` reemplaza el prefijo coincidente y `try_files` comprueba archivos en orden con un fallback.
+  - **La directiva `return` sirve contenido inline** (texto, JSON, redirecciones, `204` vacío) sin ningún archivo físico; establece el tipo con `default_type`.
+  - **Las named locations (`@nombre`) e `internal`** habilitan fallbacks de SPA, proxy a backend y descargas protegidas (cuidado con el path traversal usando `$arg_file`).
+  - **Sirve archivos web estándar y `.well-known`** (robots.txt, humans.txt, favicon.ico, security.txt, ACME challenges) inline o con `alias`.
+  - **Usa njs solo para lógica;** añade probes de salud de Kubernetes de coincidencia exacta con `access_log off`, y valida con `nginx -t` y recarga.
+</TLDRSummary>
 
 ---
 

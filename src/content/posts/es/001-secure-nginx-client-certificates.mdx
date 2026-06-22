@@ -56,12 +56,21 @@ import TerminalOutput from "@components/ui/TerminalOutput.astro";
 import Collapsible from "@components/ui/Collapsible.astro";
 import Mermaid from "@components/ui/Mermaid.astro";
 import Table from "@components/ui/Table.astro";
+import TLDRSummary from "@components/ui/TLDRSummary.astro";
 
 **[Mutual TLS (mTLS)](https://www.cloudflare.com/learning/access-management/what-is-mutual-tls/)** representa el estándar de referencia para asegurar servicios web privados. A diferencia de las contraseñas, las API keys o incluso el 2FA, mTLS requiere que el cliente (tu navegador/dispositivo) presente un certificado criptográfico firmado por tu propia Certificate Authority (CA) — un secreto que _no puede_ ser robado mediante phishing, adivinado o forzado por fuerza bruta.
 
 Si el cliente no tiene el certificado, Nginx rechaza la conexión **antes** de que la aplicación siquiera se cargue. Esto es perfecto para asegurar paneles de administración privados, interfaces NAS o herramientas internas.
 
 En esta guía completa, te guiaré a través de la implementación de mTLS en Nginx, cubriendo todo desde la creación de una certificate authority hasta temas avanzados como **revocación OCSP vs CRL**, **arquitectura Zero Trust** y **ajuste de rendimiento**. Esta guía incorpora las mejores prácticas de [Smallstep](https://smallstep.com/hello-mtls), [SSL.com](https://www.ssl.com/article/authenticating-users-and-iot-devices-with-mutual-tls/) y la [documentación oficial de Nginx](https://nginx.org/en/docs/http/ngx_http_ssl_module.html).
+
+<TLDRSummary title="TL;DR — mTLS en Nginx de un vistazo">
+- **mTLS no puede ser víctima de phishing** porque el cliente debe presentar un certificado firmado por tu propia CA; la clave privada nunca sale del dispositivo ni se transmite, así que Nginx rechaza las conexiones sin un certificado válido **antes** de que la aplicación se cargue.
+- **Crea tu propia PKI**: genera una CA **RSA de 4096 bits** válida 10 años y firma certificados de cliente por dispositivo (mínimo 2048 bits, validez de 1 año), distribuyéndolos como paquetes **PKCS12 (.p12)** protegidos por contraseña.
+- **Actívalo en Nginx** con `ssl_client_certificate` (tu CA), `ssl_verify_client on` y `ssl_verify_depth`; nunca uses `optional_no_ca` en producción. Restringe a **TLS 1.2/1.3** con cipher suites ECDHE fuertes.
+- **Añade control granular** con un `map` sobre `$ssl_client_s_dn` para listas de permitidos por CN, y usa `$ssl_client_verify` para que los clientes autenticados **eviten el rate limiting**.
+- **Revoca certificados comprometidos** mediante **CRL** (`openssl ca -revoke` + `-gencrl`, luego `ssl_crl`) para despliegues pequeños u **OCSP** para los más grandes — regenera el CRL y recarga Nginx cada vez. Automatiza la creación y renovación con scripts.
+</TLDRSummary>
 
 ---
 

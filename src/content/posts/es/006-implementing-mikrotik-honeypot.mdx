@@ -53,6 +53,7 @@ import TerminalOutput from "@components/ui/TerminalOutput.astro";
 import Table from "@components/ui/Table.astro";
 import Code from "@components/ui/Code.astro";
 import BarChart from "@components/ui/BarChart.astro";
+import TLDRSummary from "@components/ui/TLDRSummary.astro";
 
 Cualquier router conectado a internet sufre un bombardeo constante de escaneos automatizados. Los bots sondean sistemáticamente todo el espacio de direcciones IPv4 —y cada vez más IPv6— en busca de servicios vulnerables: servidores SSH con contraseñas débiles, bases de datos expuestas, endpoints RDP desactualizados o dispositivos IoT mal configurados.
 
@@ -63,6 +64,14 @@ La mayoría de administradores responden descartando silenciosamente estos paque
 3. **Bloquear** a los actores maliciosos para que no accedan a *ningún* servicio de tu red.
 
 Esta guía te lleva paso a paso por la implementación de un honeypot listo para producción en RouterOS, con soporte completo para IPv4 e IPv6.
+
+<TLDRSummary title="TL;DR — el honeypot de MikroTik en pocas palabras">
+- **Atrapa y bloquea automáticamente**: las reglas de detección en la tabla Filter coinciden con `connection-state=new` en puertos trampa y ejecutan `add-src-to-address-list` para incluir a los escáneres en la lista negra de forma automática.
+- **Bloqueo de alto rendimiento**: una regla drop en prerouting de la tabla RAW descarta el tráfico de la lista negra antes del connection tracking, ahorrando CPU y memoria en routers que reciben miles de ataques.
+- **No te bloquees a ti mismo**: crea primero una `WhiteList`; las reglas usan `src-address-list=!WhiteList` y los baneos usan `address-list-timeout=4h` para evitar bloqueos permanentes de IPs dinámicas.
+- **Dual-stack**: un conjunto de reglas IPv6 idéntico usa una lista `BlackList_PortScanners_v6` separada para cobertura completa de IPv4 e IPv6.
+- **Threat intelligence**: reenvía los logs del firewall con prefijo `[HONEYPOT]` a un servidor syslog remoto e intégralos con CrowdSec para recopilar las IPs de los atacantes.
+</TLDRSummary>
 
 ---
 

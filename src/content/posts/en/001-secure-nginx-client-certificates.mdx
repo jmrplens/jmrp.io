@@ -55,12 +55,21 @@ import TerminalOutput from "@components/ui/TerminalOutput.astro";
 import Collapsible from "@components/ui/Collapsible.astro";
 import Mermaid from "@components/ui/Mermaid.astro";
 import Table from "@components/ui/Table.astro";
+import TLDRSummary from "@components/ui/TLDRSummary.astro";
 
 **[Mutual TLS (mTLS)](https://www.cloudflare.com/learning/access-management/what-is-mutual-tls/)** represents the gold standard for securing private web services. Unlike passwords, API keys, or even 2FA, mTLS requires the client (your browser/device) to present a cryptographic certificate signed by your own Certificate Authority (CA)—a secret that _cannot_ be phished, guessed, or brute-forced.
 
 If the client doesn't have the certificate, Nginx rejects the connection **before** the application even loads. This is perfect for securing private administration panels, NAS interfaces, or internal tools.
 
 In this comprehensive guide, I'll walk you through implementing mTLS on Nginx, covering everything from creating a certificate authority to advanced topics like **OCSP vs CRL revocation**, **Zero Trust architecture**, and **performance tuning**. This guide incorporates best practices from [Smallstep](https://smallstep.com/hello-mtls), [SSL.com](https://www.ssl.com/article/authenticating-users-and-iot-devices-with-mutual-tls/), and [official Nginx documentation](https://nginx.org/en/docs/http/ngx_http_ssl_module.html).
+
+<TLDRSummary title="TL;DR — mTLS on Nginx in a nutshell">
+- **mTLS is unphishable** because the client must present a certificate signed by your own CA; the private key never leaves the device and is never transmitted, so Nginx rejects connections without a valid cert **before** the app loads.
+- **Build your own PKI**: create a **4096-bit RSA** CA valid for 10 years, then sign per-device client certs (2048-bit minimum, 1-year validity) and distribute them as password-protected **PKCS12 (.p12)** bundles.
+- **Enable it in Nginx** with `ssl_client_certificate` (your CA), `ssl_verify_client on`, and `ssl_verify_depth`; never use `optional_no_ca` in production. Restrict to **TLS 1.2/1.3** with strong ECDHE ciphers.
+- **Add fine-grained control** with a `map` on `$ssl_client_s_dn` for CN allowlists, and use `$ssl_client_verify` to let authenticated clients **bypass rate limiting**.
+- **Revoke compromised certs** via **CRL** (`openssl ca -revoke` + `-gencrl`, then `ssl_crl`) for small setups or **OCSP** for larger ones — regenerate the CRL and reload Nginx every time. Automate creation and renewal with scripts.
+</TLDRSummary>
 
 ---
 

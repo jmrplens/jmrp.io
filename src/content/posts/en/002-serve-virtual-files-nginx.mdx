@@ -54,6 +54,7 @@ import TerminalCommand from "@components/ui/TerminalCommand.astro";
 import FileContent from "@components/ui/FileContent.astro";
 import TerminalOutput from "@components/ui/TerminalOutput.astro";
 import Table from "@components/ui/Table.astro";
+import TLDRSummary from "@components/ui/TLDRSummary.astro";
 
 When deploying modern web applications—especially containerized ones or services on managed platforms—you often don't have direct access to the web root. What happens when you need to serve `robots.txt`, `security.txt`, or a health check endpoint? You can't just drop a file into a Docker image.
 
@@ -65,6 +66,15 @@ When deploying modern web applications—especially containerized ones or servic
 - **Security compliance** files that change independently of app versions
 
 In this comprehensive guide, we'll explore Nginx's powerful directives for serving virtual files, from basic techniques to advanced patterns used in production Kubernetes deployments.
+
+<TLDRSummary title="TL;DR — serve files Nginx never reads from disk">
+  - **Location matching wins by priority, not config order:** exact `=` first, then `^~`, then regex, then longest prefix — use `=` for virtual files like `/robots.txt`.
+  - **`root` vs `alias` vs `try_files`:** `root` appends the URI, `alias` replaces the matched prefix, `try_files` checks files in order with a fallback.
+  - **The `return` directive serves inline content** (text, JSON, redirects, empty `204`) without any physical file; set the type with `default_type`.
+  - **Named locations (`@name`) and `internal`** enable SPA fallbacks, backend proxying, and protected downloads (watch for path traversal with `$arg_file`).
+  - **Serve standard web and `.well-known` files** (robots.txt, humans.txt, favicon.ico, security.txt, ACME challenges) inline or via `alias`.
+  - **Use njs only for logic;** add exact-match Kubernetes health probes with `access_log off`, then validate with `nginx -t` and reload.
+</TLDRSummary>
 
 ---
 

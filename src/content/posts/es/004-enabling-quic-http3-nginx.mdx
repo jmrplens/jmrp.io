@@ -54,11 +54,21 @@ import Collapsible from "@components/ui/Collapsible.astro";
 import Mermaid from "@components/ui/Mermaid.astro";
 import Table from "@components/ui/Table.astro";
 import Code from "@components/ui/Code.astro";
+import TLDRSummary from "@components/ui/TLDRSummary.astro";
 
 
 La web ha dependido de **TCP** durante más de cuatro décadas. Pero las aplicaciones modernas —con sus exigencias de interactividad en tiempo real, conectividad móvil y cargas de página instantáneas— han expuesto las limitaciones fundamentales de TCP. Llegan **QUIC** y **HTTP/3**: una reinvención completa del transporte web que abandona TCP en favor de UDP para ofrecer un internet más rápido, seguro y resiliente.
 
 En esta guía completa, exploraremos la historia y la arquitectura de QUIC, entenderemos por qué resuelve problemas que TCP no puede, y recorreremos una configuración completa de Nginx lista para producción.
+
+<TLDRSummary title="TL;DR — QUIC y HTTP/3 en Nginx">
+  - **QUIC funciona sobre UDP, no TCP**: HTTP/3 mapea la semántica HTTP sobre QUIC, que se construye sobre UDP y exige TLS 1.3.
+  - **Resuelve el HOL blocking**: los streams de QUIC son independientes en la capa de transporte, así que un paquete perdido solo bloquea su propio stream, no todos los streams multiplexados como en HTTP/2 sobre TCP.
+  - **Handshakes más rápidos y migración de conexión**: handshake combinado de transporte+criptografía (1-RTT, o 0-RTT al reanudar) más Connection IDs que sobreviven a los cambios de red (Wi-Fi → datos móviles).
+  - **Nginx necesita 1.25.0+ con `--with-http_v3_module`** y una biblioteca SSL con soporte QUIC (OpenSSL 3.5.1+, BoringSSL, QuicTLS o LibreSSL 3.6+).
+  - **Configuración base**: añade `listen 443 quic reuseport;`, activa `http3 on`, TLS 1.3 y la cabecera `Alt-Svc`; `reuseport` debe aparecer en exactamente un listener por dirección:puerto.
+  - **Abre UDP/443 en el firewall** (servidor y proveedor cloud) o QUIC fallará silenciosamente y los clientes retrocederán a HTTP/2; verifica con `curl --http3`, las DevTools o `quic="h3"` en el log de acceso.
+</TLDRSummary>
 
 ---
 

@@ -52,6 +52,7 @@ import TerminalOutput from "@components/ui/TerminalOutput.astro";
 import Table from "@components/ui/Table.astro";
 import Code from "@components/ui/Code.astro";
 import BarChart from "@components/ui/BarChart.astro";
+import TLDRSummary from "@components/ui/TLDRSummary.astro";
 
 Every router connected to the internet faces a relentless barrage of automated scans. Bots systematically probe the entire IPv4 address space—and increasingly IPv6—searching for vulnerable services: SSH servers with weak passwords, exposed databases, outdated RDP endpoints, or misconfigured IoT devices.
 
@@ -62,6 +63,14 @@ Most administrators respond by silently dropping these packets. But what if you 
 3. **Block** malicious actors from accessing *any* service on your network.
 
 This guide walks you through implementing a production-ready honeypot on RouterOS, complete with both IPv4 and IPv6 support.
+
+<TLDRSummary title="TL;DR — MikroTik honeypot in a nutshell">
+- **Trap & auto-block**: detection rules in the Filter table match `connection-state=new` on bait ports and run `add-src-to-address-list` to blacklist scanners automatically.
+- **High-performance blocking**: a RAW prerouting drop rule discards blacklisted traffic before connection tracking, saving CPU and memory on routers facing thousands of attacks.
+- **Don't lock yourself out**: build a `WhiteList` first; rules use `src-address-list=!WhiteList`, and bans use `address-list-timeout=4h` to avoid permanent blocks on dynamic IPs.
+- **Dual-stack**: a mirrored IPv6 ruleset uses a separate `BlackList_PortScanners_v6` list for full IPv4 + IPv6 coverage.
+- **Threat intelligence**: forward `[HONEYPOT]` firewall logs to a remote syslog server and feed them into CrowdSec to collect attacker IPs.
+</TLDRSummary>
 
 ---
 
