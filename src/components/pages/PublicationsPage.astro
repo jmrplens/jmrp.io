@@ -18,8 +18,25 @@ const publicationGroups = await getPublications(locale);
 
 const allPublications = publicationGroups.flatMap((group) => group.items);
 
+/**
+ * Builds the most precise ISO date the BibTeX entry supports:
+ * `YYYY-MM-DD` / `YYYY-MM` / `YYYY` depending on the `date-parts` available.
+ */
+const formatIssuedDate = (issued?: {
+  "date-parts": number[][];
+}): string | undefined => {
+  const parts = issued?.["date-parts"]?.[0];
+  if (!parts?.[0]) return undefined;
+  const [year, month, day] = parts;
+  const pad = (n: number) => String(n).padStart(2, "0");
+  if (month && day) return `${year}-${pad(month)}-${pad(day)}`;
+  if (month) return `${year}-${pad(month)}`;
+  return String(year);
+};
+
+// `@context` omitted: merged into the page-level @graph (BaseLayout) which
+// already declares the context.
 const collectionSchema = {
-  "@context": "https://schema.org",
   "@type": "CollectionPage",
   "@id": new URL("#collection", new URL(Astro.url.pathname, getSiteUrl())).href,
   name: t("pages.publications.title"),
@@ -35,9 +52,7 @@ const collectionSchema = {
         "@type": "ScholarlyArticle",
         headline: pub.title,
         name: pub.title,
-        datePublished: pub.issued?.["date-parts"]?.[0]?.[0]
-          ? String(pub.issued["date-parts"][0][0])
-          : undefined,
+        datePublished: formatIssuedDate(pub.issued),
         author:
           pub.author?.map((a: { family: string; given?: string }) => ({
             "@type": "Person",
