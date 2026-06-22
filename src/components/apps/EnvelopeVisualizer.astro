@@ -256,6 +256,8 @@ const segs = [
       const pass = passInput.value;
       if (!secret) {
         state = live = null;
+        tampered = false;
+        restoreBtn.hidden = true;
         for (const id of Object.keys(byteHosts)) byteHosts[id].textContent = "";
         encKeyEl.textContent = macKeyEl.textContent = "…";
         setVerdict("empty");

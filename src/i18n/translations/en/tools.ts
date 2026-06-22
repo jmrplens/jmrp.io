@@ -1415,7 +1415,7 @@ export const tools = {
     infeasibleBody:
       "Every guess needs the original chip's sealed secret, which can't be extracted — so a dumped flash is useless on any other hardware.",
     verdictInstant:
-      "A short secret behind a feasible work factor falls effectively instantly offline.",
+      "A short secret behind a feasible work factor falls almost instantly under an offline attack.",
     verdictShort:
       "Still within reach for a patient attacker — the work factor only buys hours to months.",
     verdictLong:

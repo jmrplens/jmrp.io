@@ -9,7 +9,8 @@
  * throughput so the visual gap reads honestly even when one number dwarfs the
  * other. Theme-aware, responsive, accessible (role="img" + sr-only table).
  *
- * All copy is passed in as props (no i18n keys) so it can live entirely in MDX.
+ * All copy is passed in as props (no i18n keys) so it can live entirely in MDX;
+ * only the numeric grouping is localised from the active page locale.
  *
  * @example
  * <KeyspaceThreat
@@ -24,6 +25,8 @@
  *   verdictTone="bad"
  * />
  */
+
+import { getLangFromUrl } from "@i18n/utils";
 
 interface Props {
   /** Name of the secret being attacked (e.g. "4-digit PIN"). */
@@ -64,7 +67,8 @@ const {
   ariaLabel,
 } = Astro.props as Props;
 
-const nf = new Intl.NumberFormat("en", { useGrouping: "always" });
+const locale = getLangFromUrl(Astro.url);
+const nf = new Intl.NumberFormat(locale, { useGrouping: "always" });
 
 // Log scale: both magnitudes share one axis so the gap between a tiny keyspace
 // and a huge throughput is legible. Guard against <= 0.

@@ -31,6 +31,8 @@ José Manuel Requena Plens (JMRP) is a multidisciplinary engineer building contr
 - [MikroTik PPPoE + DHCPv6-PD: Dual-Stack](https://jmrp.io/blog/008-mikrotik-pppoe-dualstack-digi/)
 - [Running a Tor Bridge on Linux](https://jmrp.io/blog/009-running-tor-bridge/)
 - [What the Linker Won't Do: Packing i18n Strings on an MCU](https://jmrp.io/blog/010-packed-i18n-string-pool/)
+- [A Vault File That Fails Closed: Encrypt-then-MAC on an MCU](https://jmrp.io/blog/011-encrypt-then-mac-vault/)
+- [Your 4-Digit PIN Is Fine: Device-Bound Keys on ESP32-S3](https://jmrp.io/blog/012-device-bound-key-derivation/)
 
 ## Developer Tools
 
