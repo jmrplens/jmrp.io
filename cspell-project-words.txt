@@ -923,3 +923,5 @@ deduplicar
 autodetecta
 autogenere
 autoasignada
+Wikidata
+wikidata

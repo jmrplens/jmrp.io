@@ -22,6 +22,9 @@ faq:
     answer: "Use `return` for static content because it is faster; use njs (Nginx JavaScript) only when you need logic such as conditional content or dynamic JSON. Unlike `return`, which serves static strings, njs allows full programmatic control."
   - question: "How do I add Kubernetes liveness and readiness probes with Nginx?"
     answer: "Define exact-match location blocks that return a simple response, such as `location = /healthz { access_log off; return 200 'OK'; }` for liveness and `location = /ready { access_log off; return 200 'Ready'; }` for readiness. Disabling access_log keeps the logs from being spammed by frequent probes."
+topics:
+  - name: "Nginx"
+    wikidata: "Q306144"
 articleType: "TechArticle"
 proficiencyLevel: "Intermediate"
 howto:

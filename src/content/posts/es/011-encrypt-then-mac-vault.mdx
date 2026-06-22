@@ -18,6 +18,15 @@ faq:
     answer: "El HMAC autentica un prefijo de contexto — ver ‖ recordType ‖ slotId ‖ generation — así que un fichero movido a otro slot, retipado o sustituido por una revisión más antigua falla el tag, incluso frente a un atacante con acceso en bruto a la flash y sin PIN."
   - question: "¿Necesita encrypt-then-MAC claves separadas?"
     answer: "Sí. El cifrado y la autenticación usan claves independientes derivadas del PIN. Reutilizar una sola clave para el cifrador y para el MAC debilita la construcción y debe evitarse."
+topics:
+  - name: "Authenticated encryption"
+    wikidata: "Q15263584"
+  - name: "ESP32"
+    wikidata: "Q27921668"
+  - name: "HMAC"
+    wikidata: "Q1669397"
+  - name: "Advanced Encryption Standard"
+    wikidata: "Q190746"
 articleType: "TechArticle"
 proficiencyLevel: "Expert"
 ---

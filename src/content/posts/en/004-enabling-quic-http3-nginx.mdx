@@ -22,6 +22,15 @@ faq:
     answer: "UDP is connectionless, so without reuseport all QUIC packets are handled by a single Nginx worker, creating a bottleneck. The reuseport kernel feature distributes packets across workers, but it must appear on exactly one listen directive per address:port globally or Nginx fails to start."
   - question: "How do I verify HTTP/3 is working?"
     answer: "Use modern curl with curl -I --http3 https://yoursite, enable the Protocol column in browser DevTools and look for h3, use online tools like http3check.net or cloudflare-quic.com, or grep your Nginx access log for quic=\"h3\"."
+topics:
+  - name: "HTTP/3"
+    wikidata: "Q58797190"
+  - name: "QUIC"
+    wikidata: "Q7265601"
+  - name: "Nginx"
+    wikidata: "Q306144"
+  - name: "Transport Layer Security"
+    wikidata: "Q206494"
 articleType: "TechArticle"
 proficiencyLevel: "Intermediate"
 howto:

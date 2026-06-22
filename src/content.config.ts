@@ -48,6 +48,15 @@ const posts = defineCollection({
         .enum(["Beginner", "Intermediate", "Expert"])
         .optional(),
       /**
+       * Canonical topics for JSON-LD `about`/`mentions`, linked to Wikidata.
+       * The first entry becomes `about` (primary topic); the rest `mentions`.
+       * `wikidata` is the bare Q-id (e.g. "Q1133706"); verify it resolves to the
+       * intended entity — a wrong Q-id is worse than none.
+       */
+      topics: z
+        .array(z.object({ name: z.string(), wikidata: z.string() }))
+        .optional(),
+      /**
        * FAQ pairs. Rendered as a visible accessible FAQ section AND emitted as
        * FAQPage JSON-LD — single source of truth. Only add genuine Q&A.
        */

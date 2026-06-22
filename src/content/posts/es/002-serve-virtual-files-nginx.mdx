@@ -23,6 +23,9 @@ faq:
     answer: "Usa `return` para contenido estático porque es más rápido; usa njs (Nginx JavaScript) solo cuando necesites lógica como contenido condicional o JSON dinámico. A diferencia de `return`, que solo sirve cadenas estáticas, njs permite control programático completo."
   - question: "¿Cómo añado probes de liveness y readiness de Kubernetes con Nginx?"
     answer: "Define bloques location de coincidencia exacta que devuelvan una respuesta simple, como `location = /healthz { access_log off; return 200 'OK'; }` para liveness y `location = /ready { access_log off; return 200 'Ready'; }` para readiness. Desactivar access_log evita que los logs se saturen con los probes frecuentes."
+topics:
+  - name: "Nginx"
+    wikidata: "Q306144"
 articleType: "TechArticle"
 proficiencyLevel: "Intermediate"
 howto:

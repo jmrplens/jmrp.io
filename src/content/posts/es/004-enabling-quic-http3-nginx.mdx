@@ -23,6 +23,15 @@ faq:
     answer: "UDP no tiene conexión, así que sin reuseport todos los paquetes QUIC los maneja un único worker de Nginx, creando un cuello de botella. La función reuseport del kernel distribuye los paquetes entre los workers, pero debe aparecer en exactamente una directiva listen por dirección:puerto a nivel global o Nginx no arrancará."
   - question: "¿Cómo verifico que HTTP/3 funciona?"
     answer: "Usa curl moderno con curl -I --http3 https://tusitio, activa la columna Protocolo en las DevTools del navegador y busca h3, usa herramientas online como http3check.net o cloudflare-quic.com, o filtra el log de acceso de Nginx por quic=\"h3\"."
+topics:
+  - name: "HTTP/3"
+    wikidata: "Q58797190"
+  - name: "QUIC"
+    wikidata: "Q7265601"
+  - name: "Nginx"
+    wikidata: "Q306144"
+  - name: "Transport Layer Security"
+    wikidata: "Q206494"
 articleType: "TechArticle"
 proficiencyLevel: "Intermediate"
 howto:

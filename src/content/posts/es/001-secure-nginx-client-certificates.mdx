@@ -23,6 +23,11 @@ faq:
     answer: "Con CRL el servidor descarga la lista completa de certificados revocados (simple, archivo en disco, pero con retardo y mayor ancho de banda), mientras que OCSP consulta a un respondedor por un solo certificado (casi en tiempo real y menor ancho de banda, pero requiere ejecutar un servicio respondedor OCSP). CRL se recomienda para despliegues pequeños; OCSP es más eficiente para los más grandes."
   - question: "¿Qué tamaños de clave debo usar para la CA y los certificados de cliente?"
     answer: "Usa RSA de 4096 bits (o ECDSA P-384) para la CA, con un mínimo de 2048 bits para los clientes. La CA debería ser válida durante unos 10 años, mientras que los certificados de cliente deberían tener una validez corta de un año como máximo."
+topics:
+  - name: "Transport Layer Security"
+    wikidata: "Q206494"
+  - name: "Nginx"
+    wikidata: "Q306144"
 articleType: "TechArticle"
 proficiencyLevel: "Expert"
 howto:

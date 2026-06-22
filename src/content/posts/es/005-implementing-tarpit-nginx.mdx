@@ -22,6 +22,9 @@ faq:
     answer: "Define un map de Nginx con IPs de confianza (localhost, tu VPN, tu IP estática) y establece su tarpit rate a 0. El snippet del tarpit devuelve un 403 estándar para las IPs de confianza y las excluye del log, de modo que el tráfico de administración nunca queda atrapado accidentalmente."
   - question: "¿Cómo puedo banear automáticamente las IPs atrapadas por el tarpit?"
     answer: "Integra CrowdSec con un parser y un escenario de tipo leaky (por ejemplo, banear tras 3 impactos en el tarpit en 5 minutos) que lea el log del tarpit. Alternativas más sencillas incluyen Fail2Ban, y puedes reportar las IPs capturadas a AbuseIPDB para contribuir a la defensa colectiva."
+topics:
+  - name: "Nginx"
+    wikidata: "Q306144"
 articleType: "TechArticle"
 proficiencyLevel: "Intermediate"
 howto:

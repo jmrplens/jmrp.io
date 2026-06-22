@@ -139,6 +139,22 @@ const articleNode = {
     keywords: post.data.tags,
     articleSection: post.data.tags[0],
   }),
+  // Topic entities linked to Wikidata: first = about (primary), rest = mentions.
+  ...(post.data.topics &&
+    post.data.topics.length > 0 && {
+      about: {
+        "@type": "Thing",
+        name: post.data.topics[0].name,
+        "@id": `https://www.wikidata.org/wiki/${post.data.topics[0].wikidata}`,
+      },
+      ...(post.data.topics.length > 1 && {
+        mentions: post.data.topics.slice(1).map((topic) => ({
+          "@type": "Thing",
+          name: topic.name,
+          "@id": `https://www.wikidata.org/wiki/${topic.wikidata}`,
+        })),
+      }),
+    }),
   // Surface the lead/summary to voice assistants and AI readers.
   speakable: {
     "@type": "SpeakableSpecification",

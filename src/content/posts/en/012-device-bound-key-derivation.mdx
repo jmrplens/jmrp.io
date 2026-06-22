@@ -21,6 +21,13 @@ faq:
     answer: "HKDF (RFC 5869) is a published, analyzed extract-then-expand KDF that turns a non-uniform secret into uniform key material with domain separation, keeping the construction standard and citable. It's built on one HMAC primitive so output is byte-identical on both host and device, and it's pinned by a known-answer test against the RFC 5869 Appendix A vectors."
   - question: "What happens to the vault if the device dies?"
     answer: "A dead or wiped chip is unrecoverable by design, because the key is bound to that specific silicon and can't be reconstructed elsewhere. Recovery relies on an export/backup path set up beforehand, not key escrow. The eFuse burn is also one-time and irreversible."
+topics:
+  - name: "Key derivation function"
+    wikidata: "Q3496793"
+  - name: "ESP32"
+    wikidata: "Q27921668"
+  - name: "PBKDF2"
+    wikidata: "Q3952834"
 articleType: "TechArticle"
 proficiencyLevel: "Expert"
 ---
