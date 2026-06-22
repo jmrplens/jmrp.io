@@ -4,7 +4,9 @@
  * Renders individual tool pages from the `tools` content collection.
  */
 import Base64Encoder from "@components/apps/Base64Encoder.astro";
+import BruteForceCost from "@components/apps/BruteForceCost.astro";
 import CertInspector from "@components/apps/CertInspector.astro";
+import EnvelopeVisualizer from "@components/apps/EnvelopeVisualizer.astro";
 import ColorContrastChecker from "@components/apps/ColorContrastChecker.astro";
 import CronBuilder from "@components/apps/CronBuilder.astro";
 import CSPBuilder from "@components/apps/CSPBuilder.astro";
@@ -29,8 +31,10 @@ interface Props {
 /** Static map of appComponent names → imported Astro components. */
 const componentMap: Record<string, any> = {
   Base64Encoder,
+  BruteForceCost,
   CSPBuilder,
   CertInspector,
+  EnvelopeVisualizer,
   ColorContrastChecker,
   CronBuilder,
   HTTPHeadersAnalyzer,

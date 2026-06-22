@@ -1,0 +1,688 @@
+---
+/**
+ * BruteForceCost Component
+ *
+ * Offline brute-force cost calculator. Pick a secret space (PIN/charset ×
+ * length), a PBKDF2 work factor, and attacker GPU throughput, and it shows how
+ * long an offline sweep takes — then a "device binding" toggle flips the offline
+ * attack to infeasible (each guess needs the original chip's secret). Pure
+ * client-side math, no crypto. Companion to post 012.
+ */
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslations } from "@i18n/utils";
+
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
+const bcp47 = locale === "es" ? "es-ES" : "en-US";
+
+const uniqueId = `bfc-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
+
+const i18n = {
+  guesses: t("tools.bruteForceCost.guessesPerSec"),
+  ms: t("tools.bruteForceCost.unitMs"),
+  sec: t("tools.bruteForceCost.unitSec"),
+  min: t("tools.bruteForceCost.unitMin"),
+  hour: t("tools.bruteForceCost.unitHour"),
+  day: t("tools.bruteForceCost.unitDay"),
+  year: t("tools.bruteForceCost.unitYear"),
+  universe: t("tools.bruteForceCost.unitUniverse"),
+  subMs: t("tools.bruteForceCost.subMs"),
+  infeasibleTitle: t("tools.bruteForceCost.infeasibleTitle"),
+  infeasibleBody: t("tools.bruteForceCost.infeasibleBody"),
+  verdictInstant: t("tools.bruteForceCost.verdictInstant"),
+  verdictShort: t("tools.bruteForceCost.verdictShort"),
+  verdictLong: t("tools.bruteForceCost.verdictLong"),
+  exhaust: t("tools.bruteForceCost.exhaustLabel"),
+  expected: t("tools.bruteForceCost.expectedLabel"),
+};
+
+// Raw SHA-256 H/s by hardware (hashcat-class figures). PBKDF2-HMAC-SHA256 cost
+// is derived as rawSha / (2 * iterations) — two SHA-256 compressions per round.
+const hardware = [
+  { name: "NVIDIA RTX 5090", sha: 28_353e6 },
+  { name: "NVIDIA RTX 4090", sha: 21_975e6 },
+  { name: "NVIDIA RTX 4080", sha: 13_700e6 },
+  { name: "NVIDIA RTX 3090", sha: 9866e6 },
+  { name: "NVIDIA RTX 3060", sha: 3900e6 },
+  { name: t("tools.bruteForceCost.cpu16"), sha: 1500e6 },
+  { name: t("tools.bruteForceCost.rig8"), sha: 28_353e6 * 8 },
+  { name: t("tools.bruteForceCost.gpuCluster"), sha: 28_353e6 * 100 },
+];
+const charsets = [
+  { id: "digits", label: t("tools.bruteForceCost.charsetDigits"), size: 10 },
+  {
+    id: "alnumLower",
+    label: t("tools.bruteForceCost.charsetAlnumLower"),
+    size: 36,
+  },
+  { id: "alnum", label: t("tools.bruteForceCost.charsetAlnum"), size: 62 },
+  { id: "full", label: t("tools.bruteForceCost.charsetFull"), size: 95 },
+];
+---
+
+<div
+  class="bfc"
+  data-bfc-id={uniqueId}
+  data-bcp47={bcp47}
+>
+  <div class="bfc-controls">
+    <label class="bfc-ctrl">
+      <span class="bfc-ctrl-label"
+        >{t("tools.bruteForceCost.charsetLabel")}</span
+      >
+      <select
+        class="bfc-select"
+        data-bfc-charset
+      >
+        {charsets.map((c) => <option value={c.size}>{c.label}</option>)}
+      </select>
+    </label>
+
+    <label class="bfc-ctrl">
+      <span class="bfc-ctrl-label"
+        >{t("tools.bruteForceCost.lengthLabel")} (<span data-bfc-lenval>4</span
+        >)</span
+      >
+      <input
+        type="range"
+        class="bfc-range"
+        data-bfc-length
+        min="3"
+        max="20"
+        value="4"
+      />
+    </label>
+
+    <label class="bfc-ctrl">
+      <span class="bfc-ctrl-label"
+        >{t("tools.bruteForceCost.iterationsLabel")}</span
+      >
+      <select
+        class="bfc-select"
+        data-bfc-iters
+      >
+        <option value="35000">{t("tools.bruteForceCost.presetProd")}</option>
+        <option value="600000">{t("tools.bruteForceCost.presetOwasp")}</option>
+        <option value="1000">{t("tools.bruteForceCost.presetBench")}</option>
+        <option value="custom">{t("tools.bruteForceCost.custom")}</option>
+      </select>
+    </label>
+
+    <label class="bfc-ctrl">
+      <span class="bfc-ctrl-label"
+        >{t("tools.bruteForceCost.hardwareLabel")}</span
+      >
+      <select
+        class="bfc-select"
+        data-bfc-hw
+      >
+        {hardware.map((h) => <option value={h.sha}>{h.name}</option>)}
+        <option value="custom">{t("tools.bruteForceCost.custom")}</option>
+      </select>
+    </label>
+  </div>
+
+  <div
+    class="bfc-controls bfc-custom-row"
+    data-bfc-custom-hw-row
+    hidden
+  >
+    <label class="bfc-ctrl">
+      <span class="bfc-ctrl-label"
+        >{t("tools.bruteForceCost.customRateLabel")}</span
+      >
+      <input
+        type="number"
+        class="bfc-input"
+        data-bfc-custom-rate
+        min="0"
+        step="any"
+        value="10000"
+      />
+    </label>
+    <label class="bfc-ctrl">
+      <span class="bfc-ctrl-label"
+        >{t("tools.bruteForceCost.customUnitLabel")}</span
+      >
+      <select
+        class="bfc-select"
+        data-bfc-custom-unit
+      >
+        <option value="1">H/s</option>
+        <option value="1000">kH/s</option>
+        <option
+          value="1000000"
+          selected
+          >MH/s</option
+        >
+        <option value="1000000000">GH/s</option>
+      </select>
+    </label>
+  </div>
+
+  <div
+    class="bfc-controls bfc-custom-row"
+    data-bfc-custom-iters-row
+    hidden
+  >
+    <label class="bfc-ctrl">
+      <span class="bfc-ctrl-label"
+        >{t("tools.bruteForceCost.customItersLabel")}</span
+      >
+      <input
+        type="number"
+        class="bfc-input"
+        data-bfc-custom-iters
+        min="1"
+        step="1"
+        value="100000"
+      />
+    </label>
+  </div>
+
+  {/* Device-binding switch */}
+  <label class="bfc-toggle">
+    <input
+      type="checkbox"
+      class="bfc-toggle-input"
+      data-bfc-binding
+    />
+    <span
+      class="bfc-toggle-track"
+      aria-hidden="true"
+    ></span>
+    <span class="bfc-toggle-title"
+      >{t("tools.bruteForceCost.bindingLabel")}</span
+    >
+    <span class="bfc-toggle-hint">{t("tools.bruteForceCost.bindingHint")}</span>
+  </label>
+
+  {/* Results */}
+  <div
+    class="bfc-result"
+    data-bfc-result
+    role="status"
+    aria-live="polite"
+  >
+    <div class="bfc-stats">
+      <div class="bfc-stat">
+        <span class="bfc-stat-label"
+          >{t("tools.bruteForceCost.keyspaceLabel")}</span
+        >
+        <span
+          class="bfc-stat-value"
+          data-bfc-keyspace
+          >—</span
+        >
+      </div>
+      <div class="bfc-stat">
+        <span class="bfc-stat-label">{t("tools.bruteForceCost.rateLabel")}</span
+        >
+        <span
+          class="bfc-stat-value"
+          data-bfc-rate
+          >—</span
+        >
+      </div>
+    </div>
+
+    <div
+      class="bfc-headline"
+      data-bfc-headline
+    >
+      <span
+        class="bfc-headline-label"
+        data-bfc-headline-label
+        >{t("tools.bruteForceCost.exhaustLabel")}</span
+      >
+      <span
+        class="bfc-headline-value"
+        data-bfc-time
+        >—</span
+      >
+      <span
+        class="bfc-headline-sub"
+        data-bfc-expected
+      ></span>
+    </div>
+
+    <div
+      class="bfc-verdict"
+      data-bfc-verdict
+    >
+    </div>
+  </div>
+
+  <p class="bfc-note">
+    <span
+      class="i-mdi:shield-lock-outline bfc-note-icon"
+      aria-hidden="true"
+    ></span>
+    {t("tools.bruteForceCost.onlineNote")}
+  </p>
+</div>
+
+<script is:inline define:vars={{ uniqueId, i18n }}>
+  const root = document.querySelector(`[data-bfc-id="${uniqueId}"]`);
+  if (root) {
+    const nf = new Intl.NumberFormat(root.dataset.bcp47);
+    const charsetEl = root.querySelector("[data-bfc-charset]");
+    const lengthEl = root.querySelector("[data-bfc-length]");
+    const lenValEl = root.querySelector("[data-bfc-lenval]");
+    const itersEl = root.querySelector("[data-bfc-iters]");
+    const hwEl = root.querySelector("[data-bfc-hw]");
+    const customRateEl = root.querySelector("[data-bfc-custom-rate]");
+    const customUnitEl = root.querySelector("[data-bfc-custom-unit]");
+    const customItersEl = root.querySelector("[data-bfc-custom-iters]");
+    const customHwRow = root.querySelector("[data-bfc-custom-hw-row]");
+    const customItersRow = root.querySelector("[data-bfc-custom-iters-row]");
+    const bindingEl = root.querySelector("[data-bfc-binding]");
+    const keyspaceEl = root.querySelector("[data-bfc-keyspace]");
+    const rateEl = root.querySelector("[data-bfc-rate]");
+    const headlineEl = root.querySelector("[data-bfc-headline]");
+    const headlineLabelEl = root.querySelector("[data-bfc-headline-label]");
+    const timeEl = root.querySelector("[data-bfc-time]");
+    const expectedEl = root.querySelector("[data-bfc-expected]");
+    const verdictEl = root.querySelector("[data-bfc-verdict]");
+
+    const YEAR = 31557600; // seconds in a Julian year
+    const UNIVERSE = 1.38e10; // age of the universe in years
+
+    function fmtBig(n) {
+      if (n < 1e6) return nf.format(Math.round(n));
+      if (n < 1e15) return nf.format(Math.round(n));
+      return n.toExponential(2);
+    }
+
+    function humanize(sec) {
+      if (sec < 1e-3) return { v: i18n.subMs, u: "" };
+      if (sec < 1) return { v: nf.format(Math.round(sec * 1000)), u: i18n.ms };
+      if (sec < 60)
+        return { v: nf.format(Math.round(sec * 10) / 10), u: i18n.sec };
+      if (sec < 3600)
+        return { v: nf.format(Math.round(sec / 60)), u: i18n.min };
+      if (sec < 86400)
+        return { v: nf.format(Math.round(sec / 3600)), u: i18n.hour };
+      if (sec < YEAR)
+        return { v: nf.format(Math.round(sec / 86400)), u: i18n.day };
+      const years = sec / YEAR;
+      if (years < 1e9) return { v: fmtBig(years), u: i18n.year };
+      return { v: fmtBig(years / UNIVERSE), u: i18n.universe };
+    }
+
+    function compute() {
+      const size = Number(charsetEl.value);
+      const len = Number(lengthEl.value);
+      const bound = bindingEl.checked;
+
+      lenValEl.textContent = String(len);
+
+      // Custom hardware / iteration selections reveal their own input rows.
+      const hwCustom = hwEl.value === "custom";
+      const itersCustom = itersEl.value === "custom";
+      customHwRow.hidden = !hwCustom;
+      customItersRow.hidden = !itersCustom;
+
+      const sha = hwCustom
+        ? (parseFloat(customRateEl.value) || 0) * Number(customUnitEl.value)
+        : Number(hwEl.value);
+      const iters = itersCustom
+        ? Math.max(1, Math.floor(Number(customItersEl.value) || 1))
+        : Number(itersEl.value);
+
+      const keyspace = Math.pow(size, len);
+      // PBKDF2-HMAC-SHA256 ≈ 2 SHA-256 compressions per iteration.
+      const rate = sha > 0 ? sha / (2 * iters) : 0;
+
+      keyspaceEl.textContent = fmtBig(keyspace);
+      rateEl.textContent = rate > 0 ? fmtBig(rate) + " " + i18n.guesses : "—";
+
+      root.classList.toggle("bfc--bound", bound);
+
+      if (!bound && rate <= 0) {
+        verdictEl.className = "bfc-verdict";
+        verdictEl.textContent = i18n.enterRate;
+        headlineLabelEl.textContent = i18n.exhaust;
+        timeEl.textContent = "—";
+        expectedEl.textContent = "";
+        headlineEl.className = "bfc-headline";
+        return;
+      }
+
+      if (bound) {
+        verdictEl.className = "bfc-verdict bfc-verdict--bound";
+        verdictEl.innerHTML = "";
+        const icon = document.createElement("span");
+        icon.className = "i-mdi:lock-check-outline bfc-verdict-icon";
+        icon.setAttribute("aria-hidden", "true");
+        const t1 = document.createElement("strong");
+        t1.textContent = i18n.infeasibleTitle;
+        const t2 = document.createElement("span");
+        t2.textContent = i18n.infeasibleBody;
+        const wrap = document.createElement("span");
+        wrap.append(t1, document.createElement("br"), t2);
+        verdictEl.append(icon, wrap);
+        headlineLabelEl.textContent = i18n.exhaust;
+        timeEl.textContent = "∞";
+        expectedEl.textContent = "";
+        headlineEl.className = "bfc-headline bfc-headline--bound";
+        return;
+      }
+
+      const exhaust = keyspace / rate;
+      const expected = exhaust / 2;
+      const h = humanize(exhaust);
+      headlineLabelEl.textContent = i18n.exhaust;
+      timeEl.textContent = h.u ? `${h.v} ${h.u}` : h.v;
+      const he = humanize(expected);
+      expectedEl.textContent =
+        i18n.expected + ": " + (he.u ? `${he.v} ${he.u}` : he.v);
+
+      // Verdict: how bad is it?
+      let cls, txt;
+      if (exhaust < 1) {
+        cls = "instant";
+        txt = i18n.verdictInstant;
+      } else if (exhaust < YEAR) {
+        cls = "short";
+        txt = i18n.verdictShort;
+      } else {
+        cls = "long";
+        txt = i18n.verdictLong;
+      }
+      headlineEl.className = `bfc-headline bfc-headline--${cls}`;
+      verdictEl.className = `bfc-verdict bfc-verdict--${cls}`;
+      verdictEl.textContent = txt;
+    }
+
+    root.addEventListener("input", compute);
+    root.addEventListener("change", compute);
+    compute();
+  }
+</script>
+
+<style>
+  .bfc {
+    margin: 1.5rem 0;
+    padding: 1.25rem;
+    background: var(--color-bg-subtle);
+    border: var(--border-1);
+    border-radius: var(--radius-md);
+  }
+
+  .bfc-controls {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  @media (width >= 640px) {
+    .bfc-controls {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  .bfc-ctrl {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  .bfc-ctrl-label {
+    font-size: 0.78rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .bfc-select {
+    width: 100%;
+    padding: 0.55rem 0.6rem;
+    font-size: 0.85rem;
+    color: var(--color-text);
+    background: var(--color-bg);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+  }
+
+  .bfc-input {
+    width: 100%;
+    padding: 0.55rem 0.6rem;
+    font-size: 0.85rem;
+    color: var(--color-text);
+    background: var(--color-bg);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+  }
+
+  .bfc-custom-row {
+    margin-top: 1rem;
+  }
+
+  .bfc-range {
+    width: 100%;
+    accent-color: var(--color-primary);
+  }
+
+  .bfc-toggle {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    column-gap: 0.7rem;
+    align-items: center;
+    padding: 0.8rem 0.9rem;
+    margin-top: 1rem;
+    cursor: pointer;
+    background: var(--color-bg);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+  }
+
+  .bfc-toggle-input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .bfc-toggle-track {
+    position: relative;
+    grid-column: 1;
+    grid-row: 1 / span 2;
+    flex-shrink: 0;
+    width: 42px;
+    height: 24px;
+    background: var(--color-border);
+    border-radius: 999px;
+    transition: background 0.15s;
+  }
+
+  .bfc-toggle-track::after {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 18px;
+    height: 18px;
+    content: "";
+    background: #fff;
+    border-radius: 50%;
+    transition: transform 0.15s;
+  }
+
+  .bfc-toggle-input:checked + .bfc-toggle-track {
+    background: #10b981;
+  }
+
+  .bfc-toggle-input:checked + .bfc-toggle-track::after {
+    transform: translateX(18px);
+  }
+
+  .bfc-toggle-input:focus-visible + .bfc-toggle-track {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  .bfc-toggle-title {
+    grid-column: 2;
+    grid-row: 1;
+    font-size: 0.88rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-heading);
+  }
+
+  .bfc-toggle-hint {
+    grid-column: 2;
+    grid-row: 2;
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+  }
+
+  .bfc-result {
+    margin-top: 1.25rem;
+    overflow: hidden;
+    border: var(--border-1);
+    border-radius: var(--radius-md);
+  }
+
+  .bfc-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border-bottom: var(--border-1);
+  }
+
+  .bfc-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    padding: 0.75rem 0.9rem;
+  }
+
+  .bfc-stat + .bfc-stat {
+    border-left: var(--border-1);
+  }
+
+  .bfc-stat-label {
+    font-size: 0.68rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .bfc-stat-value {
+    font-family: var(--font-mono);
+    font-size: 0.95rem;
+    color: var(--color-text-heading);
+    overflow-wrap: anywhere;
+  }
+
+  .bfc-headline {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    padding: 1rem 0.9rem;
+    text-align: center;
+    background: var(--color-bg);
+  }
+
+  .bfc-headline-label {
+    font-size: 0.68rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .bfc-headline-value {
+    font-size: 1.9rem;
+    font-weight: var(--fw-bold);
+    line-height: 1.1;
+    color: var(--color-text-heading);
+  }
+
+  .bfc-headline-sub {
+    font-size: 0.78rem;
+    color: var(--color-text-muted);
+  }
+
+  .bfc-headline--instant .bfc-headline-value {
+    color: #ef4444;
+  }
+  .bfc-headline--short .bfc-headline-value {
+    color: #f59e0b;
+  }
+  .bfc-headline--long .bfc-headline-value,
+  .bfc-headline--bound .bfc-headline-value {
+    color: #10b981;
+  }
+
+  :root[data-theme="dark"] .bfc-headline--instant .bfc-headline-value {
+    color: #f87171;
+  }
+  :root[data-theme="dark"] .bfc-headline--short .bfc-headline-value {
+    color: #fbbf24;
+  }
+  :root[data-theme="dark"] .bfc-headline--long .bfc-headline-value,
+  :root[data-theme="dark"] .bfc-headline--bound .bfc-headline-value {
+    color: #34d399;
+  }
+
+  .bfc-verdict {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    padding: 0.7rem 0.9rem;
+    font-size: 0.85rem;
+    border-top: var(--border-1);
+  }
+
+  .bfc-verdict-icon {
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+    color: #10b981;
+  }
+
+  .bfc-verdict--instant {
+    color: #b91c1c;
+    background: rgb(239 68 68 / 8%);
+  }
+  .bfc-verdict--short {
+    color: #92400e;
+    background: rgb(245 158 11 / 8%);
+  }
+  .bfc-verdict--long {
+    color: #065f46;
+    background: rgb(16 185 129 / 8%);
+  }
+  .bfc-verdict--bound {
+    color: #065f46;
+    background: rgb(16 185 129 / 10%);
+  }
+
+  :root[data-theme="dark"] .bfc-verdict--instant {
+    color: #f87171;
+  }
+  :root[data-theme="dark"] .bfc-verdict--short {
+    color: #fbbf24;
+  }
+  :root[data-theme="dark"] .bfc-verdict--long,
+  :root[data-theme="dark"] .bfc-verdict--bound {
+    color: #34d399;
+  }
+
+  .bfc-note {
+    display: flex;
+    gap: 0.5rem;
+    align-items: flex-start;
+    margin: 1rem 0 0;
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+  }
+
+  .bfc-note-icon {
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    margin-top: 0.1rem;
+  }
+</style>

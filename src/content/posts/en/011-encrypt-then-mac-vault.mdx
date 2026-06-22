@@ -1,0 +1,628 @@
+---
+title: "A Vault File That Fails Closed: Encrypt-then-MAC on an MCU"
+slug: "011-encrypt-then-mac-vault"
+publishedDate: 2026-06-16
+description: "How a hardware password manager authenticates every vault file before it decrypts: encrypt-then-MAC, verify-before-decrypt, and fail-closed reads."
+author: "José Manuel Requena Plens"
+authorEmail: "mail@jmrp.io"
+draft: false
+tags: ["Security", "Cryptography", "Firmware", "ESP32", "C++"]
+---
+
+import Callout from "@components/ui/Callout.astro";
+import TLDRSummary from "@components/ui/TLDRSummary.astro";
+import Table from "@components/ui/Table.astro";
+import ByteFrame from "@components/ui/ByteFrame.astro";
+import Code from "@components/ui/Code.astro";
+import ForkJoin from "@components/ui/ForkJoin.astro";
+import Gauntlet from "@components/ui/Gauntlet.astro";
+import Pipeline from "@components/ui/Pipeline.astro";
+import BeforeAfter from "@components/ui/BeforeAfter.astro";
+import IconList from "@components/ui/IconList.astro";
+import SecurityRating from "@components/ui/SecurityRating.astro";
+import OrderedCompare from "@components/ui/OrderedCompare.astro";
+import AttackTimeline from "@components/ui/AttackTimeline.astro";
+import CapabilityMatrix from "@components/ui/CapabilityMatrix.astro";
+
+A password vault has one job at rest: hand back exactly the bytes you stored, or refuse. Not "probably," not "best effort" — a vault that returns *almost* your password, or that behaves differently when a file has been tampered with, is worse than no vault at all. On a microcontroller, where the encrypted files live on a flash chip an attacker can desolder and read, "refuse" has to be the default for everything that isn't provably authentic.
+
+This post is about the file format I use in **a hardware password manager I'm building (not yet released)** — an ESP32-class device that stores credentials on its internal flash. The whole design rests on one rule that is surprisingly easy to get wrong: **never decrypt a byte you haven't authenticated first.** Get the order wrong and you've built a [padding oracle](https://en.wikipedia.org/wiki/Padding_oracle_attack). Get it right and the vault *fails closed*.
+
+<TLDRSummary title="TL;DR — What this format does">
+- Every vault file is an **encrypt-then-MAC** envelope: `[ver][iv][hmacTag][cipher]`. The tag authenticates a **context prefix** — `ver ‖ recordType ‖ slotId ‖ generation` — ahead of the IV and ciphertext.
+- On read, the tag is recomputed and compared **in constant time _before_ any decryption** — verify-before-decrypt.
+- Binding slot, type, and a freshness counter makes a **relocated, retyped, or rolled-back** file fail the MAC — even against an attacker with raw flash access but no PIN.
+- The freshness counters live in `meta.bin`, which is **itself authenticated**; mutations are crash-safe (stage → commit → promote).
+- Encryption and authentication use **separate keys**; every reject path produces **no plaintext** and wipes its scratch.
+</TLDRSummary>
+
+---
+
+## Decrypt-first is a footgun
+
+First, the threat. This is a device you can hold in your hand, and the credentials live on a flash chip soldered to the board. An attacker who steals it isn't limited to typing PINs at the screen: they can desolder the flash and read it on a bench programmer, or dump it over a debug port, and walk away with the raw ciphertext. From then on the attack is *offline* — no lockout, no rate limit, all the time in the world. The [threat model](https://en.wikipedia.org/wiki/Threat_model) for the firmware treats raw flash readout as a real possibility (mitigated in production by the ESP32's own flash encryption), so the file format has to assume the attacker is holding the exact bytes it wrote and is free to modify them and feed them back.
+
+That's what makes decrypt-first dangerous. The intuitive design is the wrong one: you have ciphertext, you want plaintext, so you decrypt — and only then, maybe, you check whether the result "looks right." To see why that order is fatal, you have to look at what AES-CBC decryption actually does on the way out.
+
+A block cipher only handles fixed-size blocks (16 bytes for AES), so a record is padded up to a block boundary with [PKCS#7 padding](https://www.rfc-editor.org/rfc/rfc5652#section-6.3): if 5 bytes are missing, append five `0x05` bytes; if 11 are missing, eleven `0x0B`. [CBC mode](https://en.wikipedia.org/wiki/Block_cipher_mode_of_operation#Cipher_block_chaining_\(CBC\)) chains the blocks together — each ciphertext block is XORed into the *next* block's decryption — which is exactly the lever an attacker pulls. By tampering with one ciphertext block, they control the bytes that come out of the *following* block, and the decryptor's last act is to look at those bytes and decide whether the padding is well-formed.
+
+And *whether the padding is valid is an observable fact.* If an attacker can tell a "bad padding" failure from any other failure — through an error message, a log line, or just a timing difference in how long the response takes — they've got an oracle that answers one yes/no question per query. That single bit, asked enough times, peels off the plaintext one byte at a time, no key required:
+
+<AttackTimeline
+  title="How a padding oracle peels off a byte"
+  caption="Each query yields one bit — 'padding valid?' — and that bit is enough to recover a byte, then a block, then the file. Encrypt-then-MAC removes the oracle by never reaching the decrypt step for a tampered file."
+  ariaLabel="A five-step attacker timeline for a CBC padding-oracle attack. Step 1, the attacker captures a target ciphertext block and the block before it. Step 2, a repeated step: tamper with a byte of the preceding block and submit the modified ciphertext to the decryptor. Step 3, information leaks: a distinguishable padding-valid versus padding-invalid response reveals one intermediate byte, and from it one plaintext byte. Step 4, the attacker repeats across all 256 byte values and all 16 positions to recover the whole block, then every block. Step 5, blocked by design: with encrypt-then-MAC the MAC check fails first, so the decrypt and unpad steps are never reached and the oracle never answers."
+  steps={[
+    {
+      kind: "attacker",
+      text: "Steal a target ciphertext block C and the block C₋₁ that precedes it.",
+    },
+    {
+      kind: "loop",
+      text: "Tamper with one byte of C₋₁ and submit the modified ciphertext for decryption.",
+      note: "CBC XORs C₋₁ into the next block, so this byte controls the decrypted output.",
+    },
+    {
+      kind: "leak",
+      text: "A distinguishable 'bad padding' vs. 'other error' response reveals one intermediate byte — and from it, one plaintext byte.",
+    },
+    {
+      kind: "attacker",
+      text: "Repeat across the 256 possible values, then all 16 positions, then every block, until the whole file is recovered.",
+    },
+    {
+      kind: "blocked",
+      text: "Encrypt-then-MAC: the MAC check fails first, so the decrypt + unpad path is never reached. The oracle never gets to answer.",
+    },
+  ]}
+/>
+
+That is the [padding oracle attack](https://www.iacr.org/archive/eurocrypt2002/23320530/cbc02_e02d.pdf), first described by Serge Vaudenay in 2002, and it has been breaking real protocols for two decades: [Lucky Thirteen](https://www.ieee-security.org/TC/SP2013/papers/4977a526.pdf) against TLS in 2013, [POODLE](https://openssl-library.org/files/ssl-poodle.pdf) against SSL 3.0 in 2014.
+
+Moxie Marlinspike distilled the lesson into [The Cryptographic Doom Principle](https://moxie.org/2011/12/13/the-cryptographic-doom-principle.html): *"if you have to perform any cryptographic operation before verifying the MAC on a message you've received, it will somehow inevitably lead to doom."* Decryption is a cryptographic operation. So the MAC check has to come first.
+
+<Callout type="warning" title="The order is the whole game">
+The dangerous version and the safe version use the *same primitives* — AES-CBC, HMAC-SHA256, a constant-time compare. The only difference is **what happens before what**. A vault that decrypts an unauthenticated file has already lost, no matter how strong the cipher is.
+</Callout>
+
+## Three ways to combine a cipher and a MAC
+
+Authenticated encryption needs both a cipher (for confidentiality) and a MAC (for integrity). There are exactly three ways to bolt them together, and they are **not** equally safe. The canonical analysis is Bellare and Namprempre's [*Authenticated Encryption: Relations among Notions and Analysis of the Generic Composition Paradigm*](https://eprint.iacr.org/2000/025) ([J. Cryptology, 2008](https://doi.org/10.1007/s00145-008-9026-x)), reinforced for secure channels by Hugo Krawczyk's [*The Order of Encryption and Authentication for Protecting Communications*](https://eprint.iacr.org/2001/045).
+
+<Table title="The three generic compositions">
+  <thead>
+    <tr>
+      <th scope="col">Composition</th>
+      <th scope="col">What it does</th>
+      <th scope="col">Notably used by</th>
+      <th scope="col">Verdict</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>**Encrypt-and-MAC** (E&amp;M)</td>
+      <td>MAC the plaintext, encrypt the plaintext, send both</td>
+      <td>SSH</td>
+      <td>Not generically secure — the MAC can leak plaintext, and you must decrypt to verify</td>
+    </tr>
+    <tr>
+      <td>**MAC-then-Encrypt** (MtE)</td>
+      <td>MAC the plaintext, then encrypt plaintext+MAC together</td>
+      <td>TLS (CBC ciphersuites)</td>
+      <td>You must **decrypt before you can check** — the doom path; source of Lucky Thirteen</td>
+    </tr>
+    <tr>
+      <td>**Encrypt-then-MAC** (EtM)</td>
+      <td>Encrypt the plaintext, then MAC the *ciphertext*</td>
+      <td>IPsec</td>
+      <td>**Generically secure.** The MAC gate-keeps the ciphertext, so you verify without decrypting</td>
+    </tr>
+  </tbody>
+</Table>
+
+Encrypt-then-MAC is the only one where you can authenticate the message **without touching the cipher** — the tag is computed over the ciphertext, so checking it requires no decryption. That property is exactly what kills the padding oracle: a tampered file never reaches the decrypt path. So that is what the vault uses.
+
+Put the two orderings side by side and the doom is obvious. The composition isn't an academic taxonomy — it's a decision about *which step runs first when an attacker hands you bytes*:
+
+<OrderedCompare
+  title="Same primitives, opposite outcomes"
+  caption="MAC-then-Encrypt forces a decryption on attacker-controlled input before the integrity check; Encrypt-then-MAC gate-keeps with the tag, so a forged file is rejected before the cipher ever runs."
+  ariaLabel="A side-by-side comparison of two orderings on the read path. The MAC-then-Encrypt path, marked as the doom path: step 1, receive a possibly-tampered file; step 2 is an unsafe step, decrypt it, which touches the attacker's bytes and runs the PKCS#7 unpad that leaks the oracle; step 3 is also unsafe, only now check the MAC, which is already too late. The Encrypt-then-MAC path, marked safe: step 1, receive a possibly-tampered file; step 2 is a safe step, recompute and check the MAC tag over the ciphertext first; step 3 is a safe step, decrypt only if the tag verified, so a forged file is rejected before any decryption."
+  dangerLabel="unsafe — attacker bytes touched before the check"
+  safeLabel="safe — verified before any decryption"
+  left={{
+    label: "MAC-then-Encrypt (the doom path)",
+    verdict: "must decrypt before it can check",
+    steps: [
+      { text: "Receive a possibly-tampered file", status: "neutral" },
+      {
+        text: "Decrypt it — touches attacker bytes, runs PKCS#7 unpad",
+        status: "danger",
+        note: "this is where the oracle leaks",
+      },
+      {
+        text: "Only now check the MAC — already too late",
+        status: "danger",
+      },
+    ],
+  }}
+  right={{
+    label: "Encrypt-then-MAC (the vault)",
+    verdict: "checks before it decrypts",
+    steps: [
+      { text: "Receive a possibly-tampered file", status: "neutral" },
+      {
+        text: "Recompute & check the MAC over the ciphertext first",
+        status: "safe",
+        note: "no decryption needed to do this",
+      },
+      {
+        text: "Decrypt only if the tag verified",
+        status: "safe",
+      },
+    ],
+  }}
+/>
+
+## The envelope: `[ver][iv][hmacTag][cipher]`
+
+Every encrypted file in the vault — each credential, each TOTP secret, the listing index — is one self-contained envelope with a fixed prefix:
+
+<ByteFrame
+  title="Vault file envelope"
+  ariaLabel="A byte-layout diagram of a vault file. From the start: a 1-byte version field, a 16-byte IV, a 32-byte HMAC tag, then a variable-length ciphertext field."
+  caption="The HMAC tag is stored inline, between the IV and the ciphertext — no sidecar files."
+  fields={[
+    { label: "ver", bytes: 1, note: "format version" },
+    { label: "IV", bytes: 16, note: "random per write" },
+    { label: "hmacTag", bytes: 32, note: "HMAC-SHA256" },
+    { label: "cipher", bytes: 48, variable: true, note: "AES-256-CBC" },
+  ]}
+/>
+
+The on-disk layout above is the whole file — but the tag authenticates a little *more* than the file holds. Ahead of the IV and ciphertext, the firmware prepends a 7-byte **authenticated context prefix** and [HMACs](https://www.rfc-editor.org/rfc/rfc2104) the lot (over [SHA-256](https://csrc.nist.gov/pubs/fips/180-4/upd1/final)) with the file's MAC sub-key:
+
+<Code lang="cpp" title="vault_envelope.h — the authenticated message">
+```cpp
+// authPrefix = ver(1) ‖ recordType(1) ‖ slotId(1) ‖ generation(4, LE)
+// authMsg    = authPrefix ‖ iv ‖ cipher
+std::array<uint8_t, kEnvelopeContextSize + kIvSize + MaxCipher> message{};
+size_t n = writeEnvelopeContext(message.data(), type, slot, generation); // 7 B
+std::memcpy(message.data() + n, iv, kIvSize);        n += kIvSize;
+std::memcpy(message.data() + n, cipher, cipherLen);  n += cipherLen;
+
+VaultCrypto::hmacSha256(macKey, macKeyLen, message.data(), n, tagOut.data());
+VaultCrypto::secureWipe(message.data(), message.size());
+```
+</Code>
+
+That context prefix is **never written to the file** — the on-disk version byte stays `0x01` and the layout doesn't change a single byte. `recordType` and `slotId` come from *where the file lives* (which path, which slot); `generation` comes from the authenticated `meta.bin`. So the tag proves that *this exact ciphertext, in this exact slot, of this exact type, at this exact revision* belongs here, untouched — not just that someone who knew the key produced some ciphertext. Why those three extra fields earn their keep is [its own section](#what-the-tag-really-binds-slot-type-and-freshness); first, the basics of writing and reading one.
+
+The **IV** (initialization vector) is the 16 random bytes that seed CBC's chaining for the first block; without it, two records with the same first block would decrypt to the same plaintext, leaking equality. The vault draws a fresh IV from the ESP32 hardware RNG on *every* write, so saving the same password twice produces two completely different ciphertexts — an attacker reading flash can't even tell that two slots hold the same value. The IV isn't secret (it's stored in the clear, right there in the envelope), but it must be unpredictable and unique per write, and authenticating it under the tag stops anyone from quietly substituting one.
+
+## Writing a record: encrypt, then MAC
+
+The write path is encrypt-then-MAC in the literal order of its name. The plaintext is first serialized to a packed binary record (more on that [later](#defense-in-depth-constant-time-padding--a-fail-closed-codec)), then encrypted with AES-256-CBC under the *encryption* sub-key, then the tag is computed over the ciphertext under the *MAC* sub-key, and finally the four parts are written out:
+
+<Code lang="cpp" title="save() — the encrypt-then-MAC write path (trimmed)">
+```cpp
+// Encrypt-then-MAC: encrypt the record, then authenticate the ciphertext.
+VaultCrypto::encrypt(keys.enc.data(), plainBuf.data(), plainLen,
+                     iv.data(), cipherBuf.data(), &cipherLen);
+computeTag(keys, id, generation, iv.data(), cipherBuf.data(), cipherLen, tag);
+
+// Persist [ver][iv][hmacTag][cipher].
+const uint8_t ver = kCredFormatVersion;
+f.write(&ver, kCredVerSize);
+f.write(iv.data(), kIvSize);
+f.write(tag.data(), kCredHmacTagSize);
+f.write(cipherBuf.data(), cipherLen);
+
+// Every transient buffer is wiped before this function returns.
+VaultCrypto::secureWipe(cipherBuf.data(), cipherBuf.size());
+VaultCrypto::secureWipe(iv.data(), iv.size());
+VaultCrypto::secureWipe(tag.data(), tag.size());
+```
+</Code>
+
+Note the wiping. The plaintext, the keys, and the scratch buffers all hold secret material, and on a device that can be powered down and probed, leaving them in RAM is a liability. Every buffer is cleared with a zeroize primitive that the compiler is not allowed to optimize away — [`mbedtls_platform_zeroize`](https://mbed-tls.readthedocs.io/projects/api/en/development/api/file/platform__util_8h/) on the device, which exists precisely because a plain `memset` can be elided as a "dead store."
+
+## Reading a record: verify, _then_ decrypt
+
+This is the section the whole format exists for. When the vault loads a credential, it does five things in a strict order, and **any** failure at **any** step returns nothing:
+
+<Code lang="cpp" title="load() — verify-before-decrypt, fail-closed (trimmed)">
+```cpp
+// Fail-closed: wipe the caller's record up front, so EVERY reject path
+// (bad size, version, MAC, decrypt, or decode) leaves no residue behind.
+out.wipe();
+
+// 1. Structural checks: plausible size, ciphertext is a whole number of blocks.
+if (fileSize < kCredMinFileSize || fileSize > kCredMaxFileSize) return false;
+const size_t cipherLen = fileSize - kCredHeaderSize;
+if ((cipherLen % kAesBlockSize) != 0)                           return false;
+
+// 2. Read [ver][iv][storedTag][cipher]; reject an unknown format version.
+//    ... (reads omitted) ...
+if (ver != kCredFormatVersion)                                  return false;
+
+// 3. Verify-before-decrypt: recompute the tag and compare in CONSTANT TIME.
+computeTag(keys, id, generation, iv.data(), cipherBuf.data(), cipherLen, expectedTag);
+if (!VaultCrypto::constantTimeEqual(expectedTag.data(), storedTag.data(),
+                                    kCredHmacTagSize)) {
+    // MAC mismatch → tampered or corrupt. Wipe scratch, produce no plaintext.
+    return false;
+}
+
+// 4. Tag verified — only now is it safe to decrypt.
+VaultCrypto::decrypt(keys.enc.data(), iv.data(), cipherBuf.data(),
+                     cipherLen, plainBuf.data(), &plainLen);
+
+// 5. Decode the packed plaintext with a strict, fail-closed codec.
+return decodeCredential(plainBuf.data(), plainLen, out);
+```
+</Code>
+
+Two details make this safe rather than merely sequential.
+
+First, the **constant-time compare**. "Constant-time" here means concrete: the comparison takes the *same amount of work regardless of the data*, so its duration tells an observer nothing about the secret. A naïve `memcmp` does the opposite — it returns the instant it finds the first differing byte. Feed it a guessed tag and the time it takes to say "no" reveals *how many leading bytes you got right*: a tag matching the first 3 bytes returns measurably later than one that's wrong at byte 0. An attacker who can measure that turns tag forgery into a byte-at-a-time search, ~256 tries per byte instead of 2²⁵⁶ for the whole tag. The vault never uses `memcmp` on secret-dependent data; it uses a branch-free comparison that XOR-accumulates every byte difference into one value and only checks that value at the very end — same number of operations whether the tag matches on byte 0 or byte 31:
+
+<Code lang="cpp" title="constantTimeEqual — no early exit, no secret-dependent branch">
+```cpp
+bool VaultCrypto::constantTimeEqual(const uint8_t* a, const uint8_t* b, size_t len) {
+#ifdef ESP_PLATFORM
+    return mbedtls_ct_memcmp(a, b, len) == 0;   // hardware/library CT primitive
+#else
+    volatile uint8_t diff = 0;                  // 'volatile' blocks the optimizer
+    for (size_t i = 0; i < len; i++) diff |= a[i] ^ b[i];
+    return diff == 0;
+#endif
+}
+```
+</Code>
+
+On the device this delegates to [`mbedtls_ct_memcmp`](https://mbed-tls.readthedocs.io/projects/api/en/development/api/file/constant__time_8h/); on the host test build it falls back to a `volatile` accumulator so the compiler can't reintroduce a short-circuit. If you've never seen why this matters, Coda Hale's [*A Lesson In Timing Attacks*](https://codahale.com/a-lesson-in-timing-attacks/) is the classic five-minute explanation; [BearSSL's constant-time notes](https://www.bearssl.org/constanttime.html) go deeper.
+
+Second, **fail-closed**. The record is wiped *before* anything is read, so there is no code path — not a bad size, not a bad version, not a MAC mismatch, not a decrypt failure, not a malformed record — that can leave a partially-populated credential in the caller's buffer. The function either returns `true` with a complete record or `false` with nothing.
+
+<Gauntlet
+  caption="Every reject path produces no plaintext — the read returns a complete credential or nothing at all."
+  ariaLabel="A decision gauntlet for reading a vault file. Five checks run in order: plausible size and block alignment, known format version, MAC tag matches in constant time, decrypts with valid padding, and record decodes. Passing each check flows down to the next; failing any one diverts to a single shared fail-closed outcome that wipes scratch and produces no plaintext. Only when all five pass is the decoded credential returned."
+  steps={[
+    { label: "Size & alignment", detail: "block-aligned?" },
+    { label: "Known version", detail: "format byte" },
+    { label: "MAC tag matches", detail: "constant-time" },
+    { label: "Decrypts", detail: "padding valid?" },
+    { label: "Record decodes", detail: "bounds-checked" },
+  ]}
+  reject={{ label: "Fail closed", detail: "wipe scratch · no plaintext" }}
+  pass={{ label: "Return credential" }}
+/>
+
+## What the tag really binds: slot, type, and freshness
+
+A tag over `ver ‖ iv ‖ cipher` proves the ciphertext is genuine — but it says nothing about three things the format also needs to promise: *which* slot a file belongs to, *what kind* of record it is, and *how recent* it is. An attacker with raw flash write (a programmer or the debug port) but **no PIN** can turn each silence into an attack:
+
+<Table title="Three gaps a ciphertext-only tag leaves open">
+  <thead>
+    <tr>
+      <th scope="col">Attack (raw flash write, no PIN)</th>
+      <th scope="col">Why it worked</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>**Cross-slot substitution** — copy `cred_05.bin` over `cred_03.bin`</td>
+      <td>Both sealed with the same key, so the relocated file verified and served slot 5's secret as slot 3 — one site's password typed into another's form</td>
+    </tr>
+    <tr>
+      <td>**Cross-type confusion** — drop a credential file onto a TOTP path</td>
+      <td>Same key and version byte; only the record decoder's shape check stood in the way, not an authenticated discriminator</td>
+    </tr>
+    <tr>
+      <td>**Selective rollback** — restore an older, authentic file for one slot</td>
+      <td>Nothing recorded *how fresh* a file should be, so a stale-but-genuine envelope (a password you just rotated away) still verified</td>
+    </tr>
+  </tbody>
+</Table>
+
+The fix binds the missing context *into the tag itself*. This is exactly the role of [associated data](https://www.rfc-editor.org/rfc/rfc5116#section-2.1) in an AEAD scheme — context that must be **authenticated but not encrypted** — except here it's folded directly into the encrypt-then-MAC tag rather than passed to a single-pass cipher. The 7-byte prefix is centralized in one place, so every record module — and the re-key path — computes it bit-identically:
+
+<Code lang="cpp" title="vault_envelope.h — writeEnvelopeContext (one centralized prefix)">
+```cpp
+// ver(1) ‖ recordType(1) ‖ slotId(1) ‖ generation(4, little-endian)
+inline size_t writeEnvelopeContext(uint8_t* out, EnvelopeRecordType type,
+                                   uint8_t slot, uint32_t generation) {
+    out[0] = kEnvelopeVersion;            // 0x01 — unchanged on disk
+    out[1] = static_cast<uint8_t>(type);  // Credential / Totp / Index
+    out[2] = slot;                        // the slot this file belongs to
+    out[3] =  generation        & 0xFF;   // per-slot freshness counter,
+    out[4] = (generation >> 8)  & 0xFF;   //   little-endian
+    out[5] = (generation >> 16) & 0xFF;
+    out[6] = (generation >> 24) & 0xFF;
+    return kEnvelopeContextSize;          // 7
+}
+```
+</Code>
+
+Now a relocated file carries the wrong `slotId`, a retyped file the wrong `recordType`, and a rolled-back file an old `generation`. In each case the tag the firmware recomputes no longer matches the one on disk, so the read fails closed **before a single byte is decrypted** — the same verify-before-decrypt gate, now guarding three more promises:
+
+<CapabilityMatrix
+  title="What binding each context field defeats"
+  subjectHeader="Bound field"
+  yesLabel="Closes"
+  noLabel="—"
+  caption="recordType and slotId close type-confusion and relocation outright; generation closes selective rollback — one record reverted while the rest of the vault moves on."
+  ariaLabel="A matrix mapping each authenticated context field to the attack it defeats. recordType closes cross-type confusion; slotId closes cross-slot substitution; generation closes selective same-slot rollback. Each field closes exactly one of the three."
+  columns={["Cross-slot move", "Cross-type swap", "Selective rollback"]}
+  rows={[
+    {
+      label: "recordType",
+      note: "Credential / Totp / Index",
+      cells: ["no", "yes", "no"],
+    },
+    {
+      label: "slotId",
+      note: "which slot the file is",
+      cells: ["yes", "no", "no"],
+    },
+    {
+      label: "generation",
+      note: "per-slot freshness",
+      cells: ["no", "no", "yes"],
+    },
+  ]}
+/>
+
+## The root of trust: authenticating `meta.bin`
+
+The `generation` counters have to live somewhere, and that somewhere has to be tamper-evident — otherwise an attacker would simply lower a counter to make a stale file look current. They live in `meta.bin`: the small header the device reads first, holding the salts, the PIN verifier, and now a **per-slot generation table** — all sealed under its own HMAC tag.
+
+<ByteFrame
+  title="meta.bin — authenticated metadata (formatVer 0x02)"
+  ariaLabel="A byte-layout of meta.bin: a 2-byte magic 'KV', a 1-byte format version 0x02, a 16-byte KDF salt, a 32-byte PIN verifier, a 16-byte HMAC salt, a variable-length per-slot generation table of one uint32 per slot, and a trailing 32-byte HMAC tag computed over every byte before it."
+  caption="Unlike index.bin, meta.bin is never rebuilt from the record files — it is the root of trust. The trailing tag authenticates every preceding byte, including the generation table."
+  fields={[
+    { label: "magic", bytes: 2, note: '"KV"' },
+    { label: "ver", bytes: 1, note: "0x02" },
+    { label: "kdfSalt", bytes: 16 },
+    { label: "pinVerifier", bytes: 32, note: "HMAC" },
+    { label: "hmacSalt", bytes: 16 },
+    { label: "genTable", bytes: 28, variable: true, note: "u32 / slot" },
+    { label: "metaTag", bytes: 32, note: "HMAC, last" },
+  ]}
+/>
+
+Because the metadata is authenticated, the unlock sequence becomes a careful ladder: nothing in the file is trusted until the tag checks out, and a wrong PIN derives a different master key — so the metadata tag and the PIN verifier both miss at once.
+
+<Pipeline
+  title="Unlock: trust nothing until the tag verifies"
+  caption="A wrong PIN derives a different master key, so the meta tag and the PIN verifier both mismatch — unlock fails closed before the generation table or salts are ever trusted."
+  ariaLabel="A six-stage fail-closed unlock pipeline. One: parse meta.bin's magic, version, and length, trusting nothing yet. Two: derive the master key with PBKDF2 from the PIN and the KDF salt. Three: derive the MAC sub-key using the HMAC salt. Four: verify the metadata tag in constant time — the gate — before trusting anything. Five: check the PIN verifier, the second gate. Six: the vault is unlocked and the generation table is now trusted."
+  stages={[
+    { name: "parse meta.bin", note: "magic · ver · length" },
+    { name: "PBKDF2", note: "PIN + kdfSalt", via: "no trust yet" },
+    { name: "derive macKey", note: "+ hmacSalt" },
+    { name: "verify metaTag", note: "constant-time", via: "gate" },
+    { name: "check pinVerifier", note: "unlock gate", via: "ok" },
+    { name: "unlocked", note: "table trusted" },
+  ]}
+/>
+
+An old or format-mismatched `meta.bin` — say a `formatVer 0x01` left over from before this change — simply fails to authenticate, and the vault is re-provisioned. There is no migration and no dual-read: one on-flash format, ever. (The device isn't in production, so there's no real data to migrate.)
+
+## Crash-safe anti-rollback
+
+Selective rollback is a [replay attack](https://www.rfc-editor.org/rfc/rfc4949) — the attacker re-presents an authentic-but-stale file — and the standard defense is a *freshness value*: a monotonic counter the verifier expects to only ever increase, so a replayed older record fails the check. But a freshness counter is only as good as its update story. Every mutation — add, edit, **or delete** — bumps the slot's `generation`, and the record is rewritten under the new value. That creates a torn-write hazard: lose power *between* writing the record (under generation N+1) and writing `meta.bin` (which records N+1), and the two disagree. Resolve that wrong and you either brick a valid slot or quietly re-open the rollback you just closed.
+
+The firmware makes the **`meta.bin` swap the single commit point** — written to a temp file, then [atomically renamed](https://pubs.opengroup.org/onlinepubs/9699919799/functions/rename.html) into place, so a reader always sees the old `meta.bin` or the new one, never a torn half-write — and recovers deterministically around it:
+
+<Pipeline
+  title="Crash-safe mutation — the meta swap is the commit point"
+  caption="The meta.bin rename is the one linearization point. On reboot, recovery recomputes the staged record's tag at the current generation: it either verifies (finish the promote) or it doesn't (discard the orphan, keep the old value)."
+  ariaLabel="A four-stage crash-safe mutation pipeline. STAGE: write the new record to a staging path under generation N plus 1, with a small marker naming the type and slot. COMMIT: bump the generation in meta.bin and persist it atomically by a temp-file rename — the rename is the commit point. PROMOTE: rename the staged record onto its canonical path. CLEANUP: remove the marker."
+  stages={[
+    { name: "STAGE", note: "record → staging, gen N+1" },
+    { name: "COMMIT", note: "meta.bin rename", via: "commit point" },
+    { name: "PROMOTE", note: "staged → canonical", via: "after commit" },
+    { name: "CLEANUP", note: "remove marker" },
+  ]}
+/>
+
+On the next boot, `recoverPendingMutation` recomputes the staged record's tag at the *current* `meta.gen[type][slot]`. If it verifies, the commit happened (the crash landed after the rename) → finish the promote. If it doesn't, the commit never happened → discard the orphan and keep the canonical record under the old generation. No window bricks a slot or silently re-opens rollback, and each crash window has its own native test. Because a `delete` bumps the generation too, a deleted entry can't be resurrected by replaying its old file.
+
+## The honest boundary: open vs `_secure`
+
+Binding `generation` closes *selective* rollback — reverting one record while the rest of the vault moves on. It does **not**, on the open (developer-flashable) builds, close a *full snapshot* rollback: revert the entire vault — `meta.bin` and every record together — to an earlier, internally consistent state, and the counters revert with it, so nothing looks out of place. Catching that needs anti-rollback state living *outside* the rewritable flash, which is exactly what the hardened `_secure` builds add.
+
+<Table title="Which rollback each build catches">
+  <thead>
+    <tr>
+      <th scope="col">Rollback variant</th>
+      <th scope="col">Open builds</th>
+      <th scope="col">`_secure` builds</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>**Selective** — one record reverted, `meta.bin` moves on</td>
+      <td>**Closed** — fails the generation-bound MAC</td>
+      <td>Closed</td>
+    </tr>
+    <tr>
+      <td>**Full snapshot** — `meta.bin` + every record reverted together</td>
+      <td>**Not** closed — the whole set is self-consistent</td>
+      <td>**Closed** — Secure Boot + Flash Encryption + NVS anti-rollback</td>
+    </tr>
+  </tbody>
+</Table>
+
+I'd rather state that boundary plainly than oversell it. The generation counter is **defense-in-depth for the non-secure builds** against the far more practical selective attack; the whole-vault time-warp is a hardware problem, solved in hardware on the builds that opt into burning eFuses.
+
+## Two keys from one master: key separation
+
+The envelope uses two different keys — one to encrypt, one to MAC — and that is deliberate. The security argument for encrypt-then-MAC assumes the encryption and authentication keys are *independent*; reusing one key for both jobs voids the guarantee and invites cross-protocol mischief. So the vault derives separate sub-keys from a single master key, each tagged with a distinct domain-separation label, following the long-standing [key-separation guidance](https://csrc.nist.gov/pubs/sp/800/57/pt1/r5/final) — [NIST SP 800-57 Part 1](https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-57pt1r5.pdf) puts it plainly: "a single key should be used for only one purpose":
+
+<Code lang="cpp" title="vault_keys — distinct labels per purpose">
+```cpp
+// One PBKDF2-derived master key fans out into three single-purpose sub-keys.
+//   encKey      = HMAC(masterKey, "vault-enc")              -> AES-256-CBC key
+//   macKey      = HMAC(masterKey, "vault-mac" || hmacSalt)  -> file HMAC key
+//   pinVerifier = HMAC(masterKey, "vault-pin")              -> unlock check
+VaultCrypto::hmacSha256(masterKey.data(), masterKey.size(),
+                        kEncKeyLabel, kEncLabelLen, out.enc.data());
+deriveMacKey(masterKey, hmacSalt, out.mac);  // label || per-vault hmacSalt
+```
+</Code>
+
+<ForkJoin
+  caption="One master key, three single-purpose sub-keys — each derived with a distinct HMAC label so no key ever does two jobs."
+  ariaLabel="One PBKDF2-derived master key fans out via HMAC into three single-purpose sub-keys: an encryption key from the label vault-enc, a MAC key from the label vault-mac concatenated with a per-vault salt, and a PIN verifier from the label vault-pin."
+  before={[{ name: "masterKey", note: "PBKDF2-derived" }]}
+  branches={[
+    { name: "encKey", note: 'HMAC(·, "vault-enc")' },
+    { name: "macKey", note: 'HMAC(·, "vault-mac" ‖ salt)' },
+    { name: "pinVerifier", note: 'HMAC(·, "vault-pin")' },
+  ]}
+/>
+
+The third sub-key, the PIN verifier, is how the device checks the PIN without storing it: unlock derives the master key from the entered PIN, computes the verifier, and compares it — again in constant time — against the stored value. A wrong PIN simply produces a different verifier, with no hint about *how* wrong it was. (The verifier sits in the `meta.bin` header alongside the salts; the PIN itself is never written anywhere.)
+
+The point of the split is that each key can do *exactly one thing*. If the same key both encrypted files and authenticated them, a clever attacker could try to make ciphertext and tags interact — and the clean security proof for encrypt-then-MAC, which assumes the two keys are independent, would simply no longer apply. Keeping them separate means a compromise or misuse of one capability can't borrow another:
+
+<CapabilityMatrix
+  title="What each sub-key can — and can't — do"
+  subjectHeader="Sub-key"
+  yesLabel="Can"
+  noLabel="Cannot"
+  caption="Three keys, three jobs. The HMAC labels are the domain separation that makes each key usable for one purpose only — the encryption key can never stand in for the MAC key, and neither can verify the PIN."
+  ariaLabel="A capability matrix with three derived sub-keys as rows and three jobs as columns. The encryption key (encKey) can encrypt and decrypt vault files, but cannot authenticate a file and cannot verify the PIN. The MAC key (macKey) cannot encrypt or decrypt, can authenticate a file by computing or checking the HMAC tag, and cannot verify the PIN. The PIN verifier key cannot encrypt or decrypt, cannot authenticate a file, and can verify the PIN at unlock."
+  columns={[
+    "Encrypt / decrypt files",
+    "Authenticate a file (HMAC tag)",
+    "Verify the PIN",
+  ]}
+  rows={[
+    {
+      label: "encKey",
+      note: 'HMAC(master, "vault-enc")',
+      cells: ["yes", "no", "no"],
+    },
+    {
+      label: "macKey",
+      note: 'HMAC(master, "vault-mac" ‖ salt)',
+      cells: ["no", "yes", "no"],
+    },
+    {
+      label: "pinVerifier",
+      note: 'HMAC(master, "vault-pin")',
+      cells: ["no", "no", "yes"],
+    },
+  ]}
+/>
+
+## Defense in depth: constant-time padding + a fail-closed codec
+
+Because the MAC is verified first, a tampered file never reaches the decryption code, which means the classic padding oracle is *unreachable* by construction. The padding check below is therefore **defense in depth**, not the primary defense — belt and suspenders for the case where authenticated-but-corrupt data still needs to be rejected cleanly. It validates [PKCS#7 padding](https://www.rfc-editor.org/rfc/rfc5652#section-6.3) in constant time and reports a single unified failure, so it leaks nothing through logs or timing regardless:
+
+<Code lang="cpp" title="Constant-time PKCS#7 padding check, unified failure">
+```cpp
+// The last byte claims the pad length; fold every check into one mask.
+uint8_t padByte    = plainOut[cipherLen - 1];
+uint8_t padInvalid = 0;
+padInvalid |= (padByte == 0);                  // pad length 0 is illegal
+padInvalid |= (padByte > kAesBlockSize);       // pad length > block is illegal
+for (size_t i = 0; i < kAesBlockSize; i++) {
+    uint8_t mask = (i < padByte) ? 0xFF : 0x00;     // examine the whole block
+    padInvalid |= (plainOut[cipherLen - 1 - i] ^ padByte) & mask;
+}
+if (padInvalid != 0) {           // one message for corruption AND bad padding
+    LOG_ERROR(kTag, "Decryption failed");
+    mbedtls_platform_zeroize(plainOut, cipherLen);
+    return false;
+}
+```
+</Code>
+
+The decrypted plaintext is then handed to an **in-house binary codec**, not a general-purpose parser. The decrypted bytes are the most sensitive range in the whole product, and I don't want a JSON or CBOR library — with its surface area, its allocations, its surprises — anywhere near them. The decoder is a forward-only cursor where every read is bounds-checked before it copies, every string length is rejected if it exceeds the field's compile-time cap, and any trailing garbage fails the record:
+
+<Code lang="cpp" title="record_codec — a bounds-checked, fail-closed reader">
+```cpp
+// need(n): are n more bytes available, without integer-overflow wraparound?
+bool need(size_t n) const noexcept { return off_ + n <= len_ && off_ + n >= off_; }
+
+// Read a length-prefixed string: reject len > field-capacity BEFORE copying.
+template <size_t N>
+bool readStrBody(InplaceString<N>& dst, size_t len) noexcept {
+    if (len > N || !need(len)) return false;   // fail closed, no partial copy
+    std::memcpy(dst.data(), p_ + off_, len);
+    dst.data()[len] = '\0';                     // NUL-terminate the destination
+    dst.resyncLength();
+    off_ += len;
+    return true;
+}
+```
+</Code>
+
+<Callout type="keypoint" title="Authenticated, but still parsed defensively">
+The EtM tag already proves the plaintext is genuine before the codec runs, so these checks guard a small, authenticated surface. They stay anyway: defense in depth costs almost nothing here, and a corrupt flash page or a future bug shouldn't be able to turn decoded bytes into a buffer overrun. This is the same instinct behind a real-world encrypted-vault format like [KeePass's KDBX](https://keepass.info/help/kb/kdbx.html), whose [KDBX 4 revision](https://keepass.info/help/kb/kdbx_4.html) authenticates its header and payload with HMAC-SHA256 rather than trusting the container.
+</Callout>
+
+## Why CBC+HMAC and not AES-GCM?
+
+A fair question. The modern default for authenticated encryption is an [AEAD](https://en.wikipedia.org/wiki/Authenticated_encryption) construction like [AES-GCM](https://csrc.nist.gov/pubs/sp/800/38/d/final), which fuses encryption and authentication into one primitive and is harder to assemble incorrectly. If I were starting a greenfield protocol, GCM (or ChaCha20-Poly1305) would be the obvious pick.
+
+The vault uses encrypt-then-MAC with AES-256-CBC and HMAC-SHA256 for a specific, boring reason: **backend uniformity**. The same code has to produce byte-identical output in two very different environments — a host build (where the unit tests run, against the legacy Mbed TLS API) and the device (where Mbed TLS 4.0's PSA Crypto API is the only public path). CBC, HMAC, and a hand-verified compare are trivially available and deterministic across both; leaning on GCM's nonce-management rules across two backends adds a sharper footgun than the one I'm avoiding. Encrypt-then-MAC is the [generically secure composition](https://eprint.iacr.org/2000/025), so building AEAD out of CBC+HMAC this way is sound — it's how IPsec (in its standard configuration) and KDBX 4 do it too.
+
+<BeforeAfter beforeLabel="AES-GCM (AEAD)" afterLabel="AES-CBC + HMAC (EtM)">
+<div slot="before">
+
+**One primitive, one key.** Encryption and authentication are fused; less to wire up by hand.
+
+<IconList
+  ariaLabel="AES-GCM trade-offs"
+  items={[
+    { kind: "pro", text: "Modern default; misuse-resistant if nonces are unique" },
+    { kind: "warn", text: "Nonce reuse is catastrophic (key recovery)" },
+    { kind: "warn", text: "Backend and nonce rules must match exactly across host and device" },
+  ]}
+/>
+
+</div>
+<div slot="after">
+
+**Two primitives, two keys, explicit order.** More moving parts, but each is simple and deterministic.
+
+<IconList
+  ariaLabel="AES-CBC plus HMAC trade-offs"
+  items={[
+    { kind: "pro", text: "Byte-identical on legacy Mbed TLS (host) and PSA (device)" },
+    { kind: "pro", text: "EtM is provably the safe composition" },
+    { kind: "pro", text: "A fresh random IV per write, authenticated by the tag" },
+  ]}
+/>
+
+</div>
+</BeforeAfter>
+
+One honest footnote on the implementation: PSA's transition guide suggests `psa_mac_verify` over "compute a tag, then `mbedtls_ct_memcmp`." The vault deliberately keeps the compute-and-compare form because it runs identically on both backends — and the comparison is still constant-time. It's a trade of one PSA convenience for backend uniformity, made with eyes open.
+
+## Listing without decrypting everything: the O(1) index
+
+There's a nice side effect of treating every file as an independent envelope. Listing the vault doesn't mean decrypting every credential — that would be slow and would needlessly expose every secret in RAM. Instead a single encrypted `index.bin`, in the exact same `[ver][iv][hmacTag][cipher]` envelope, caches only the *non-secret* metadata each credential needs in a list view: its id, name, username, brand, and a couple of flags — never the password, URL, notes, or TOTP secret.
+
+<Callout type="info" title="One read, one decrypt">
+Showing the credential list is **one file read plus one decrypt**, regardless of how many credentials exist. The heavy per-credential decrypt happens only when you actually open one. The index is just a cache: if it's missing or its MAC doesn't verify, it's rebuilt from the authenticated per-credential files, which are always the source of truth.
+</Callout>
+
+## Fail closed, by construction
+
+The cipher isn't what makes this vault trustworthy at rest — the *order of operations* is. Authenticate the slot, type, freshness, IV, and ciphertext with a separate key; verify that tag in constant time before a single byte is decrypted; authenticate the metadata that holds the freshness counters; wipe everything on the way out; and let every error path converge on the same answer: nothing. Get those right and AES-256 is almost an implementation detail.
+
+<SecurityRating
+  rating="A"
+  title="Encrypt-then-MAC, context-bound, verify-before-decrypt, fail-closed"
+  description="Binding slot, type, and a freshness counter into the tag — and authenticating the metadata that holds those counters — removes the padding-oracle class and defeats relocation, type-confusion, and selective rollback before any decryption. The residual gaps are by design: full-snapshot rollback (closed only on _secure builds) and the low entropy of a short PIN (the next post)."
+/>
+
+There's one thing this format doesn't solve, though. All of it protects the *file* — but the encryption key still ultimately comes from a short PIN, and a short PIN has very little entropy. *On* the device that's fine: a brute-force guard locks out and eventually wipes the vault after a handful of wrong PINs, so online guessing dies quickly. The problem is *offline*. If someone desolders the flash and copies the ciphertext, the lockout never runs — they can derive keys from PIN guesses on a GPU, with no device in the loop to stop them — and a 4-digit keyspace falls in a fraction of a second. (Production flash encryption raises that bar, but the file format shouldn't have to depend on it.) Closing that gap needs a different trick: one that mixes a secret only the original chip can produce into the key, so the exfiltrated ciphertext is useless on any other hardware. That's the [next post](/blog/012-device-bound-key-derivation/).

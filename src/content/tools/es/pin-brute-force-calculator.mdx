@@ -1,0 +1,64 @@
+---
+title: "Calculadora de Fuerza Bruta Offline de PIN"
+slug: "pin-brute-force-calculator"
+description: "Estima cuánto tarda una GPU offline en romper un PIN por fuerza bruta con PBKDF2; activa la vinculación al chip y mira cómo se vuelve inviable."
+subtitle: "Elige el espacio del secreto, un factor de trabajo PBKDF2 y el ritmo de una GPU para ver el tiempo de crackeo — y cómo la vinculación hardware mata el ataque offline."
+icon: "i-mdi:timer-lock-outline"
+category: "security"
+tags: ["security", "cryptography", "pbkdf2", "brute-force", "pin", "key-derivation"]
+appComponent: "BruteForceCost"
+lang: "es"
+---
+
+<h2>Sobre esta herramienta</h2>
+<p>
+  Un PIN de 4 dígitos solo tiene <strong>10.000</strong> valores posibles. Esta
+  calculadora muestra qué significa eso frente a un atacante{" "}
+  <strong>offline</strong> que ha volcado la flash: elige un espacio de secreto,
+  un factor de trabajo <strong>PBKDF2</strong> y una GPU, y estima el tiempo de
+  barrer todo el espacio de claves.
+</p>
+<p>
+  Luego activa la <strong>vinculación al dispositivo</strong> — y el ataque
+  offline se vuelve inviable, porque cada intento necesita un secreto por-chip
+  que no puede extraerse del hardware.
+</p>
+<p>
+  Es la compañera interactiva del artículo{" "}
+  <a href="/es/blog/012-device-bound-key-derivation/">
+    Your 4-Digit PIN Is Fine: Device-Bound Keys on ESP32-S3
+  </a>
+  .
+</p>
+
+<h3>Qué calcula</h3>
+<ul>
+  <li>
+    <strong>Espacio de claves</strong> — el tamaño del alfabeto elevado a la
+    longitud del secreto.
+  </li>
+  <li>
+    <strong>Ritmo del atacante</strong> — el rendimiento SHA-256 bruto de la GPU
+    dividido por el trabajo de PBKDF2 (≈ dos compresiones SHA-256 por iteración).
+  </li>
+  <li>
+    <strong>Tiempo</strong> — espacio de claves ÷ ritmo para probar cada
+    candidato; el tiempo esperado para <em>encontrar</em> el secreto es
+    aproximadamente la mitad.
+  </li>
+</ul>
+
+<h3>Una nota sobre el realismo</h3>
+<p>
+  Esto modela el ataque <em>offline</em> sobre un vault exfiltrado. En el propio
+  dispositivo, los intentos online se detienen primero con un bloqueo por fuerza
+  bruta que borra el vault tras unos pocos intentos fallidos — el número de
+  iteraciones se dimensiona para la latencia de desbloqueo, no como defensa
+  contra fuerza bruta.
+</p>
+
+<h3>Privacidad</h3>
+<p>
+  Todo se calcula en tu navegador con aritmética simple. No se transmite ninguna
+  entrada a ningún sitio.
+</p>

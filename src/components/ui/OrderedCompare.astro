@@ -1,0 +1,327 @@
+---
+/**
+ * OrderedCompare Component
+ *
+ * Two side-by-side ordered lanes (e.g. a "doom path" vs a "safe path"), each a
+ * numbered vertical list of steps. Every step carries a status that colours its
+ * marker and adds a non-colour glyph, so the comparison reads without relying on
+ * colour alone. Zero client JS; theme-aware via design tokens; accessible
+ * (role="img" + an .sr-only table fallback). All text is passed as props, so the
+ * component holds no i18n chrome of its own.
+ *
+ * @example
+ * <OrderedCompare
+ *   ariaLabel="Two ordered paths compared step by step."
+ *   left={{ label: "MAC-then-Encrypt", verdict: "decrypt before you can check", steps: [
+ *     { text: "Receive ciphertext", status: "neutral" },
+ *     { text: "Decrypt (touches attacker bytes)", status: "danger" },
+ *     { text: "Only now check the MAC", status: "danger" },
+ *   ]}}
+ *   right={{ label: "Encrypt-then-MAC", verdict: "verify without decrypting", steps: [
+ *     { text: "Receive ciphertext", status: "neutral" },
+ *     { text: "Check the MAC first", status: "safe" },
+ *     { text: "Decrypt only if it passed", status: "safe" },
+ *   ]}}
+ * />
+ */
+type Status = "danger" | "safe" | "neutral";
+
+interface Step {
+  /** Step text. */
+  text: string;
+  /** Visual status of the step. */
+  status?: Status;
+  /** Optional small note under the step. */
+  note?: string;
+}
+
+interface Lane {
+  /** Lane heading. */
+  label: string;
+  /** Optional one-line verdict shown under the heading. */
+  verdict?: string;
+  /** Ordered steps top to bottom. */
+  steps: Step[];
+}
+
+interface Props {
+  /** Left lane (rendered first / on top on mobile). */
+  left: Lane;
+  /** Right lane. */
+  right: Lane;
+  /** Optional title above the figure. */
+  title?: string;
+  /** Caption below the figure. */
+  caption?: string;
+  /** Accessibility label (required for a meaningful description). */
+  ariaLabel: string;
+  /** Glyph + label for the danger status (defaults to a cross). */
+  dangerLabel?: string;
+  /** Glyph + label for the safe status (defaults to a check). */
+  safeLabel?: string;
+}
+
+const {
+  left,
+  right,
+  title,
+  caption,
+  ariaLabel,
+  dangerLabel = "unsafe step",
+  safeLabel = "safe step",
+} = Astro.props;
+
+const lanes = [
+  { side: "left" as const, ...left },
+  { side: "right" as const, ...right },
+];
+
+const statusIcon: Record<Status, string> = {
+  danger: "i-mdi:close-thick",
+  safe: "i-mdi:check-bold",
+  neutral: "i-mdi:circle-medium",
+};
+const statusName: Record<Status, string> = {
+  danger: dangerLabel,
+  safe: safeLabel,
+  neutral: "step",
+};
+---
+
+<figure
+  class="ord-cmp"
+  role="img"
+  aria-label={ariaLabel}
+>
+  {title && <figcaption class="ord-cmp__title">{title}</figcaption>}
+
+  <div class="ord-cmp__grid">
+    {
+      lanes.map((lane) => (
+        <div class:list={["ord-cmp__lane", `ord-cmp__lane--${lane.side}`]}>
+          <div class="ord-cmp__head">
+            <p class="ord-cmp__label">{lane.label}</p>
+            {lane.verdict && <p class="ord-cmp__verdict">{lane.verdict}</p>}
+          </div>
+          <ol class="ord-cmp__steps">
+            {lane.steps.map((s, i) => {
+              const status = s.status ?? "neutral";
+              return (
+                <li class:list={["ord-cmp__step", `ord-cmp__step--${status}`]}>
+                  <span
+                    class="ord-cmp__marker"
+                    aria-hidden="true"
+                  >
+                    <span class="ord-cmp__num">{i + 1}</span>
+                    <span class:list={["ord-cmp__glyph", statusIcon[status]]} />
+                  </span>
+                  <span class="ord-cmp__body">
+                    <span class="ord-cmp__text">{s.text}</span>
+                    {s.note && <span class="ord-cmp__note">{s.note}</span>}
+                  </span>
+                </li>
+              );
+            })}
+          </ol>
+        </div>
+      ))
+    }
+  </div>
+
+  <table class="sr-only">
+    <caption>{title ?? ariaLabel}</caption>
+    <thead>
+      <tr>
+        <th scope="col">Path</th>
+        <th scope="col">Step</th>
+        <th scope="col">Action</th>
+        <th scope="col">Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      {
+        lanes.map((lane) =>
+          lane.steps.map((s, i) => (
+            <tr>
+              <td>{lane.label}</td>
+              <td>{i + 1}</td>
+              <td>{s.text}</td>
+              <td>{statusName[s.status ?? "neutral"]}</td>
+            </tr>
+          )),
+        )
+      }
+    </tbody>
+  </table>
+
+  {caption && <p class="ord-cmp__caption">{caption}</p>}
+</figure>
+
+<style>
+  .ord-cmp {
+    --oc-danger: #f0789b;
+    --oc-safe: #6ee7a8;
+    --oc-neutral: var(--color-border);
+    --oc-on: #0b0b13;
+
+    margin: 1.5rem 0;
+  }
+
+  .ord-cmp__title {
+    margin-bottom: 1rem;
+    font-size: 1rem;
+    font-weight: var(--fw-semibold, 600);
+    color: var(--color-text-heading);
+  }
+
+  .ord-cmp__grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  @media (width >= 768px) {
+    .ord-cmp__grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  .ord-cmp__lane {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    padding: 0.9rem 1rem 1.1rem;
+    background: var(--color-bg-subtle);
+    border: var(--border-1);
+    border-top: 3px solid var(--oc-accent, var(--color-border));
+    border-radius: var(--radius-md, 8px);
+  }
+
+  .ord-cmp__lane--left {
+    --oc-accent: var(--oc-danger);
+  }
+
+  .ord-cmp__lane--right {
+    --oc-accent: var(--oc-safe);
+  }
+
+  .ord-cmp__head {
+    margin-bottom: 0.75rem;
+  }
+
+  .ord-cmp__label {
+    margin: 0;
+    font-size: 0.92rem;
+    font-weight: var(--fw-bold, 700);
+    color: var(--color-text-heading);
+  }
+
+  .ord-cmp__verdict {
+    margin: 0.2rem 0 0;
+    font-size: 0.78rem;
+    font-style: italic;
+    color: var(--color-text-muted);
+  }
+
+  .ord-cmp__steps {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+    counter-reset: none;
+  }
+
+  .ord-cmp__step {
+    display: flex;
+    gap: 0.6rem;
+    align-items: flex-start;
+  }
+
+  .ord-cmp__marker {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    font-size: 0.72rem;
+    font-weight: var(--fw-bold, 700);
+    color: var(--oc-on);
+    background: var(--oc-marker, var(--oc-neutral));
+    border-radius: 50%;
+  }
+
+  .ord-cmp__step--danger .ord-cmp__marker {
+    --oc-marker: var(--oc-danger);
+  }
+
+  .ord-cmp__step--safe .ord-cmp__marker {
+    --oc-marker: var(--oc-safe);
+  }
+
+  .ord-cmp__step--neutral .ord-cmp__marker {
+    color: var(--color-text);
+    background: var(--color-bg-secondary);
+    border: var(--border-1);
+  }
+
+  /* The number is the default; the glyph overlays on status steps. */
+  .ord-cmp__glyph {
+    display: none;
+    font-size: 0.95rem;
+  }
+
+  .ord-cmp__step--danger .ord-cmp__num,
+  .ord-cmp__step--safe .ord-cmp__num {
+    display: none;
+  }
+
+  .ord-cmp__step--danger .ord-cmp__glyph,
+  .ord-cmp__step--safe .ord-cmp__glyph {
+    display: inline-block;
+  }
+
+  .ord-cmp__body {
+    display: flex;
+    flex-direction: column;
+    padding-top: 0.1rem;
+  }
+
+  .ord-cmp__text {
+    font-size: 0.85rem;
+    line-height: 1.45;
+    color: var(--color-text);
+  }
+
+  .ord-cmp__step--danger .ord-cmp__text {
+    font-weight: var(--fw-semibold, 600);
+    color: var(--color-text-heading);
+  }
+
+  .ord-cmp__note {
+    margin-top: 0.1rem;
+    font-size: 0.72rem;
+    color: var(--color-text-muted);
+  }
+
+  .ord-cmp__caption {
+    margin-top: 1rem;
+    font-size: 0.8125rem;
+    font-style: italic;
+    color: var(--color-text-muted);
+    text-align: center;
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    white-space: nowrap;
+    clip-path: inset(50%);
+  }
+</style>

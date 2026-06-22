@@ -1383,6 +1383,82 @@ export const tools = {
     warnNoDefaultSrc:
       "Falta default-src. Sin él, algunas directivas pueden no tener respaldo.",
   },
+  etmEnvelope: {
+    secretLabel: "Secreto a guardar",
+    passphraseLabel: "Frase de paso (clave)",
+    keyDerivationNote:
+      "De una clave maestra (SHA-256 de la frase) se derivan dos subclaves con etiquetas HMAC distintas — así la clave de cifrado y la de MAC nunca son la misma.",
+    encKeyLabel: "encKey",
+    macKeyLabel: "macKey",
+    envelopeHeading: "Sobre sellado",
+    tamperHint:
+      "Pulsa cualquier byte para alterarlo (simula manipulación en flash) y observa el camino de lectura de abajo.",
+    restore: "Restaurar",
+    fieldVer: "ver · 1 B",
+    fieldIv: "iv · 16 B",
+    fieldTag: "hmacTag · 32 B",
+    fieldCipher: "cipher · AES-256-CBC",
+    readHeading: "Camino de lectura",
+    step1:
+      "Recalcula el tag sobre ver ‖ iv ‖ cipher y compáralo en tiempo constante.",
+    step2: "Descifra solo si el tag verifica.",
+    emptyState: "Escribe un secreto arriba para sellarlo en un sobre.",
+    okVerdict: "Tag verificado — seguro descifrar.",
+    failVerdict:
+      "La verificación del MAC falló — fail closed. No se intenta descifrar; no se produce texto plano.",
+    decryptedLabel: "descifrado",
+    byteTitle: "Pulsa para alterar este byte",
+    insecureContext:
+      "Esta demo en vivo necesita un contexto seguro — ábrela por HTTPS o en localhost para ejecutar la criptografía en el navegador.",
+  },
+  bruteForceCost: {
+    charsetLabel: "Alfabeto del secreto",
+    charsetDigits: "Dígitos (PIN) — 10",
+    charsetAlnumLower: "Minúsculas + dígitos — 36",
+    charsetAlnum: "Letras + dígitos — 62",
+    charsetFull: "Todo ASCII imprimible — 95",
+    lengthLabel: "Longitud",
+    iterationsLabel: "Iteraciones PBKDF2",
+    presetProd: "35.000 (producción del dispositivo)",
+    presetOwasp: "600.000 (OWASP 2025)",
+    presetBench: "1.000 (benchmark de hashcat)",
+    hardwareLabel: "Hardware del atacante",
+    gpuCluster: "Clúster de 100× RTX 5090",
+    cpu16: "CPU moderna de 16 núcleos",
+    rig8: "Equipo de 8× RTX 5090",
+    custom: "Personalizado…",
+    customRateLabel: "Ritmo de la GPU (SHA-256 bruto)",
+    customUnitLabel: "Unidad",
+    customItersLabel: "Iteraciones personalizadas",
+    enterRate: "Introduce un ritmo arriba para estimar el tiempo.",
+    bindingLabel: "Vinculación al dispositivo (Tier-2)",
+    bindingHint:
+      "Cada intento necesita un secreto por-chip sellado en hardware, así que no puede reproducirse fuera del dispositivo.",
+    keyspaceLabel: "Espacio de claves",
+    rateLabel: "Ritmo del atacante",
+    guessesPerSec: "intentos/s",
+    exhaustLabel: "Tiempo para probar todo el espacio",
+    expectedLabel: "esperado (½)",
+    infeasibleTitle: "Inviable offline.",
+    infeasibleBody:
+      "Cada intento necesita el secreto sellado del chip original, que no puede extraerse — así que una flash volcada es inútil en cualquier otro hardware.",
+    verdictInstant:
+      "Un secreto corto tras un factor de trabajo asumible cae prácticamente al instante offline.",
+    verdictShort:
+      "Aún al alcance de un atacante paciente — el factor de trabajo solo compra de horas a meses.",
+    verdictLong:
+      "El espacio de claves por sí solo basta para resistir un barrido offline — pero pocos usuarios eligen secretos tan fuertes.",
+    onlineNote:
+      "Esto modela el ataque offline (una flash volcada). En el propio dispositivo, los intentos online están limitados por un bloqueo que borra el vault tras unos pocos intentos.",
+    unitMs: "ms",
+    unitSec: "s",
+    unitMin: "min",
+    unitHour: "horas",
+    unitDay: "días",
+    unitYear: "años",
+    unitUniverse: "× la edad del universo",
+    subMs: "< 1 ms",
+  },
   stringPoolPacker: {
     inputLabel: "Cadenas (una por línea)",
     inputPlaceholder: "Pega una cadena por línea...",

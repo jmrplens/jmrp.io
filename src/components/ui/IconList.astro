@@ -1,0 +1,126 @@
+---
+/**
+ * IconList Component
+ *
+ * A compact list whose items are prefixed with a meaning-carrying SVG icon
+ * (UnoCSS `i-mdi:*`, coloured via CSS like Callout) instead of an emoji. Use for
+ * pros/cons / trade-off bullets. `kind` selects the icon + colour; the text and
+ * the icon shape both carry the meaning, so it is not colour-only.
+ *
+ * @example
+ * <IconList items={[
+ *   { kind: "pro",  text: "EtM is provably the safe composition" },
+ *   { kind: "warn", text: "Nonce reuse is catastrophic" },
+ * ]} />
+ */
+interface IconItem {
+  /** pro = good/check, con = bad/cross, warn = caveat, info = neutral. */
+  kind: "pro" | "con" | "warn" | "info";
+  /** Item text. */
+  text: string;
+}
+
+interface Props {
+  /** Items in order. */
+  items: IconItem[];
+  /** Optional accessible label for the list. */
+  ariaLabel?: string;
+}
+
+const { items, ariaLabel } = Astro.props as Props;
+
+/* Bare `collection:name` literals so the icon extractor picks them up (mirrors
+   Callout). The class is built as `i-${name}` below. */
+const icons: Record<IconItem["kind"], string> = {
+  pro: "mdi:check-circle-outline",
+  con: "mdi:close-circle-outline",
+  warn: "mdi:alert-outline",
+  info: "mdi:information-outline",
+};
+---
+
+<ul
+  class="il"
+  aria-label={ariaLabel}
+>
+  {
+    items.map((it) => (
+      <li class="il__item">
+        <span
+          class={`i-${icons[it.kind]} il__icon il__icon--${it.kind}`}
+          aria-hidden="true"
+        />
+        <span class="il__text">{it.text}</span>
+      </li>
+    ))
+  }
+</ul>
+
+<style>
+  .il {
+    /* Dark-first accent colours (match Callout's 400-scale). */
+    --il-pro: #34d399;
+    --il-con: #f87171;
+    --il-warn: #fbbf24;
+    --il-info: #60a5fa;
+
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    padding: 0;
+    margin: 0.75rem 0 0;
+    list-style: none;
+  }
+
+  .il__item {
+    display: flex;
+    gap: 0.5rem;
+    align-items: flex-start;
+  }
+
+  .il__icon {
+    flex-shrink: 0;
+    width: 1.15rem;
+    height: 1.15rem;
+    margin-top: 0.12rem; /* align with text cap-height */
+  }
+
+  .il__icon--pro {
+    color: var(--il-pro);
+  }
+
+  .il__icon--con {
+    color: var(--il-con);
+  }
+
+  .il__icon--warn {
+    color: var(--il-warn);
+  }
+
+  .il__icon--info {
+    color: var(--il-info);
+  }
+
+  .il__text {
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: var(--color-text);
+  }
+
+  /* Light-mode contrast (>= 4.5:1), mirroring Callout's 700-scale overrides. */
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) .il {
+      --il-pro: #047857;
+      --il-con: #b91c1c;
+      --il-warn: #b45309;
+      --il-info: #1d4ed8;
+    }
+  }
+
+  :root[data-theme="light"] .il {
+    --il-pro: #047857;
+    --il-con: #b91c1c;
+    --il-warn: #b45309;
+    --il-info: #1d4ed8;
+  }
+</style>
