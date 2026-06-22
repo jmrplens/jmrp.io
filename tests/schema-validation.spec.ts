@@ -290,7 +290,9 @@ test.describe("SoftwareApplication schema on tool pages", () => {
 
     const offers = app.offers as JsonLdSchema;
     expect(offers["@type"]).toBe("Offer");
-    expect(offers.price).toBe(0);
+    // price is a string per schema.org Offer (spec-correct), paired with isAccessibleForFree.
+    expect(offers.price).toBe("0");
+    expect(app.isAccessibleForFree).toBe(true);
   });
 });
 
