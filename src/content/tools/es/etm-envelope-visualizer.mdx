@@ -1,8 +1,8 @@
 ---
-title: "Visualizador del Sobre Encrypt-then-MAC"
+title: "Visualizador del sobre Encrypt-then-MAC"
 slug: "etm-envelope-visualizer"
-description: "Sella un secreto en un sobre encrypt-then-MAC, altera un byte y observa cómo la lectura verifica el tag antes de descifrar y falla cerrado."
-subtitle: "Demo interactiva de [ver][iv][hmacTag][cipher] con AES-256-CBC + HMAC-SHA256 real en tu navegador: altera un byte y mira cómo verify-before-decrypt lo rechaza."
+description: "Sella un secreto en un sobre encrypt-then-MAC, altera un byte y observa cómo la lectura verifica el tag antes de descifrar y se bloquea ante el fallo."
+subtitle: "Demo interactiva de [ver][iv][hmacTag][cipher] con AES-256-CBC + HMAC-SHA256 real en tu navegador: altera un byte y mira cómo la verificación antes de descifrar lo rechaza."
 icon: "i-mdi:lock-check-outline"
 category: "security"
 tags: ["security", "cryptography", "encrypt-then-mac", "aes", "hmac", "firmware"]
@@ -12,7 +12,7 @@ lang: "es"
 
 <h2>Sobre esta herramienta</h2>
 <p>
-  Cada fichero del vault es un sobre <strong>encrypt-then-MAC</strong>:{" "}
+  Cada fichero de la bóveda es un sobre <strong>encrypt-then-MAC</strong>:{" "}
   <code>[ver][iv][hmacTag][cipher]</code>. Esta herramienta construye uno de
   verdad en tu navegador — deriva subclaves <code>encKey</code> y{" "}
   <code>macKey</code> distintas, cifra el secreto con{" "}
@@ -21,10 +21,7 @@ lang: "es"
 </p>
 <p>
   Es la compañera interactiva del artículo{" "}
-  <a href="/es/blog/011-encrypt-then-mac-vault/">
-    Un fichero de vault que falla cerrado: encrypt-then-MAC en un MCU
-  </a>
-  .
+  <a href="/es/blog/011-encrypt-then-mac-vault/">Una bóveda con bloqueo ante fallos: Encrypt-then-MAC en un MCU</a>.
 </p>
 
 <h3>Cómo usarla</h3>
@@ -40,8 +37,8 @@ lang: "es"
   <li>
     Observa el <strong>camino de lectura</strong>: el tag se recalcula y compara{" "}
     <em>antes</em> de cualquier descifrado. Un solo byte alterado hace fallar el
-    MAC, así que la lectura <strong>falla cerrado</strong> — no se intenta
-    descifrar y no se produce texto plano.
+    MAC, así que la lectura <strong>se bloquea ante el fallo</strong> — no se
+    intenta descifrar y no se produce texto plano.
   </li>
   <li>
     Pulsa <strong>Restaurar</strong> para deshacer la manipulación y ver cómo la
@@ -58,13 +55,13 @@ lang: "es"
     misma.
   </li>
   <li>
-    <strong>Verify-before-decrypt</strong> — el tag se comprueba primero, así que
-    un fichero manipulado nunca llega al descifrado AES-CBC (donde, si no,
-    viviría un oráculo de padding).
+    <strong>Verificar antes de descifrar</strong> — el tag se comprueba primero,
+    así que un fichero manipulado nunca llega al descifrado AES-CBC (donde, si
+    no, viviría un oráculo de padding).
   </li>
   <li>
-    <strong>Fail-closed</strong> — cualquier fallo no devuelve nada, nunca un
-    texto plano parcial o "a medias".
+    <strong>Bloqueo ante fallos</strong> — cualquier fallo no devuelve nada,
+    nunca un texto plano parcial o "a medias".
   </li>
 </ul>
 

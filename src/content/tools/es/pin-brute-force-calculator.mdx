@@ -1,5 +1,5 @@
 ---
-title: "Calculadora de Fuerza Bruta Offline de PIN"
+title: "Calculadora de fuerza bruta offline de PIN"
 slug: "pin-brute-force-calculator"
 description: "Estima cuánto tarda una GPU offline en romper un PIN por fuerza bruta con PBKDF2; activa la vinculación al chip y mira cómo se vuelve inviable."
 subtitle: "Elige el espacio del secreto, un factor de trabajo PBKDF2 y el ritmo de una GPU para ver el tiempo de crackeo — y cómo la vinculación hardware mata el ataque offline."
@@ -25,7 +25,7 @@ lang: "es"
 </p>
 <p>
   Es la compañera interactiva del artículo{" "}
-  <a href="/es/blog/012-device-bound-key-derivation/">PIN de 4 dígitos basta: claves vinculadas al dispositivo en ESP32-S3</a>.
+  <a href="/es/blog/012-device-bound-key-derivation/">Un PIN de 4 dígitos basta: claves vinculadas al ESP32-S3</a>.
 </p>
 
 <h3>Qué calcula</h3>
@@ -47,9 +47,10 @@ lang: "es"
 
 <h3>Una nota sobre el realismo</h3>
 <p>
-  Esto modela el ataque <em>offline</em> sobre un vault exfiltrado. En el propio
-  dispositivo, los intentos online se detienen primero con un bloqueo por fuerza
-  bruta que borra el vault tras unos pocos intentos fallidos — el número de
+  Esto modela el ataque <em>offline</em> sobre una bóveda exfiltrada. En el
+  propio dispositivo, los intentos online se detienen primero con un bloqueo por
+  fuerza bruta que borra la bóveda tras unos pocos intentos fallidos — el número
+  de
   iteraciones se dimensiona para la latencia de desbloqueo, no como defensa
   contra fuerza bruta.
 </p>

@@ -1386,6 +1386,8 @@ export const tools = {
   etmEnvelope: {
     secretLabel: "Secreto a guardar",
     passphraseLabel: "Frase de paso (clave)",
+    secretExample: "mi contraseña super secreta",
+    passphraseExample: "caballo correcto batería grapa",
     keyDerivationNote:
       "De una clave maestra (SHA-256 de la frase) se derivan dos subclaves con etiquetas HMAC distintas — así la clave de cifrado y la de MAC nunca son la misma.",
     encKeyLabel: "encKey",
@@ -1405,7 +1407,7 @@ export const tools = {
     emptyState: "Escribe un secreto arriba para sellarlo en un sobre.",
     okVerdict: "Tag verificado — seguro descifrar.",
     failVerdict:
-      "La verificación del MAC falló — fail closed. No se intenta descifrar; no se produce texto plano.",
+      "La verificación del MAC falló — bloqueo ante fallos. No se intenta descifrar; no se produce texto plano.",
     decryptedLabel: "descifrado",
     byteTitle: "Pulsa para alterar este byte",
     insecureContext:
@@ -1449,7 +1451,7 @@ export const tools = {
     verdictLong:
       "El espacio de claves por sí solo basta para resistir un barrido offline — pero pocos usuarios eligen secretos tan fuertes.",
     onlineNote:
-      "Esto modela el ataque offline (una flash volcada). En el propio dispositivo, los intentos online están limitados por un bloqueo que borra el vault tras unos pocos intentos.",
+      "Esto modela el ataque offline (una flash volcada). En el propio dispositivo, los intentos online están limitados por un bloqueo que borra la bóveda tras unos pocos intentos.",
     unitMs: "ms",
     unitSec: "s",
     unitMin: "min",

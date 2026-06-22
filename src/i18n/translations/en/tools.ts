@@ -1358,6 +1358,8 @@ export const tools = {
   etmEnvelope: {
     secretLabel: "Secret to store",
     passphraseLabel: "Passphrase (key)",
+    secretExample: "my super-secret password",
+    passphraseExample: "correct horse battery staple",
     keyDerivationNote:
       "Two sub-keys are derived from one master key (SHA-256 of the passphrase) with distinct HMAC labels — so the encryption key and the MAC key are never the same.",
     encKeyLabel: "encKey",
