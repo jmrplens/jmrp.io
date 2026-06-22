@@ -26,12 +26,12 @@ import EFuseFlow from "@components/ui/EFuseFlow.astro";
 
 Un PIN de cuatro dígitos tiene diez mil valores posibles. No es una errata ni un marcador de posición para "ya pondremos uno más largo luego" — es el secreto real que desbloquea la bóveda de **un gestor de contraseñas hardware que estoy construyendo (aún sin publicar)**, un dispositivo de clase ESP32 que guarda tus credenciales en su flash interna. Diez mil. Una sola GPU moderna recorre diez mil de _cualquier cosa_ antes de que termines de leer esta frase.
 
-Entonces, ¿cómo es eso seguro? La respuesta honesta es que en un microcontrolador normalmente _no lo es_, y el arreglo habitual — subir el número de iteraciones de derivación de clave hasta que la fuerza bruta "tarde demasiado" — falla en silencio en este tipo de silicio. Este artículo va sobre el arreglo que sí funciona: vincular la clave al chip físico para que cada intento offline necesite un secreto que el atacante no puede extraer, mientras un pequeño guard en el dispositivo se encarga de los intentos que alguien hace a mano.
+Entonces, ¿cómo es eso seguro? La respuesta honesta es que en un microcontrolador normalmente _no lo es_, y el arreglo habitual — subir el número de iteraciones de derivación de clave hasta que la fuerza bruta "tarde demasiado" — falla en silencio en este tipo de silicio. Este artículo va sobre el arreglo que sí funciona: vincular la clave al chip físico para que cada intento offline necesite un secreto que el atacante no puede extraer, mientras una pequeña protección en el dispositivo se encarga de los intentos que alguien hace a mano.
 
 <TLDRSummary title="TL;DR — Por qué un PIN de 4 dígitos sobrevive a un volcado de flash">
 - Un PIN de 4 dígitos son **10⁴ = 10.000** combinaciones. Una RTX 5090 ejecuta PBKDF2-HMAC-SHA256 a **~11,16 MH/s**, así que barre cada PIN offline en **bastante menos de un milisegundo**.
 - El número de iteraciones de PBKDF2 **no te salva en un MCU**: el conteo se dimensiona para un desbloqueo de ~2 segundos en el dispositivo, y sea cual sea el conteo que haga eso llevadero, una GPU lo hace muchísimo más rápido.
-- Las dos amenazas son distintas. El adivinado **online** (alguien con el dispositivo en la mano) está acotado por un guard de **lockout / borrado-tras-10**. El adivinado **offline** (alguien que volcó la flash) necesita una defensa diferente.
+- Las dos amenazas son distintas. El adivinado **online** (alguien con el dispositivo en la mano) está acotado por una protección de **lockout / borrado-tras-10**. El adivinado **offline** (alguien que volcó la flash) necesita una defensa diferente.
 - Esa defensa es la **vinculación al dispositivo**: tras PBKDF2, se mezcla un `deviceSecret` por-chip con **HKDF** (RFC 5869). En el ESP32-S3 el secreto es un **eFuse-HMAC** que la CPU no puede leer; en el ESP32 clásico es un **pepper en NVS**.
 - Una clave vinculada al dispositivo solo se reproduce en el chip original, así que un barrido offline por GPU de un espacio de 10.000 claves se convierte en un ataque offline **imposible** — una ganancia categórica, no lineal.
 </TLDRSummary>
@@ -63,7 +63,7 @@ Así que lo único que hace viable un PIN corto es asegurarse de que el atacante
 
 <AttackSurfaceMatrix
   title="Online vs offline: dos atacantes distintos, dos controles distintos"
-  ariaLabel="El atacante online tiene el dispositivo en la mano y teclea PINs en el teclado; lo detiene el guard de fuerza bruta, que bloquea y borra tras 10 intentos. El atacante offline ha volcado la flash y muele intentos en una GPU; lo detiene la derivación de clave vinculada al dispositivo, porque el secreto por-chip no puede reproducirse fuera del chip."
+  ariaLabel="El atacante online tiene el dispositivo en la mano y teclea PINs en el teclado; lo detiene la protección contra fuerza bruta, que bloquea y borra tras 10 intentos. El atacante offline ha volcado la flash y muele intentos en una GPU; lo detiene la derivación de clave vinculada al dispositivo, porque el secreto por-chip no puede reproducirse fuera del chip."
   lanes={[
     {
       kind: "online",
@@ -78,7 +78,7 @@ Así que lo único que hace viable un PIN corto es asegurarse de que el atacante
         "Saltarse el contador de intentos persistente",
         "Adelantar al temporizador de lockout respaldado por el RTC",
       ],
-      stoppedBy: "Guard de fuerza bruta (lockout y luego borrado al 10)",
+      stoppedBy: "Protección contra fuerza bruta (lockout y luego borrado al 10)",
     },
     {
       kind: "offline",
@@ -127,7 +127,7 @@ uint32_t BruteForceGuard::registerFailure() {
 Esta es la defensa canónica para un secreto corto, y es lo que quiere decir [NIST SP 800-63B](https://csrc.nist.gov/pubs/sp/800/63/b/4/final) cuando te dice que **limites la tasa del adivinado online** — su revisión 4 topa los intentos fallidos consecutivos en 100 deshabilitando el autenticador, y añade una cláusula más estricta dirigida justo a secretos como un PIN: cuando el secreto de autenticación lleva **menos de 64 bits** de entropía, el verificador _deberá_ limitar la tasa del número total de intentos fallidos consecutivos. Un PIN de 13,3 bits cae de lleno dentro de esa cláusula. Para un atacante que teclea físicamente en el teclado, un PIN de 10.000 valores tras un "tienes unos diez intentos, y luego borro todo" es genuinamente fuerte. Diez intentos de diez mil son un 0,1 % de probabilidad, y solo tienes una pasada.
 
 <Callout type="keypoint" title="Todo el problema en una frase">
-El guard de fuerza bruta solo acota los intentos **en el dispositivo**. En el momento en que un atacante puede desoldar la flash y adivinar **fuera del dispositivo**, el contador deja de importar — nunca llaman a mi código. Ese carril offline es lo que cierra el resto de este artículo.
+La protección contra fuerza bruta solo acota los intentos **en el dispositivo**. En el momento en que un atacante puede desoldar la flash y adivinar **fuera del dispositivo**, el contador deja de importar — nunca llaman a mi código. Ese carril offline es lo que cierra el resto de este artículo.
 </Callout>
 
 ---
@@ -159,18 +159,18 @@ El número de iteraciones compra tiempo real contra una contraseña de _alta ent
 
 ## La idea: vincular la clave al silicio
 
-Si no puedes hacer cada intento offline lo bastante lento, haz que cada intento offline **necesite algo que el atacante no tiene**. Después de que PBKDF2 produce la master key a partir del PIN y el salt, mezclo un `deviceSecret` de 32 bytes que solo el chip original puede producir. El verificador almacenado en flash se deriva entonces de esa master key _vinculada_. Un atacante que vuelca la flash tiene el texto cifrado y el salt, pero recalcular la clave para cualquier intento de PIN exige ahora el secreto por-chip — y ese secreto nunca aparece en la flash que copió.
+Si no puedes hacer cada intento offline lo bastante lento, haz que cada intento offline **necesite algo que el atacante no tiene**. Después de que PBKDF2 produce la clave maestra a partir del PIN y el salt, mezclo un `deviceSecret` de 32 bytes que solo el chip original puede producir. El verificador almacenado en flash se deriva entonces de esa clave maestra _vinculada_. Un atacante que vuelca la flash tiene el texto cifrado y el salt, pero recalcular la clave para cualquier intento de PIN exige ahora el secreto por-chip — y ese secreto nunca aparece en la flash que copió.
 
-Este es todo el truco, y cambia el ataque de _lineal_ a _categórico_. Antes de la vinculación, el atacante offline necesita 10.000 evaluaciones baratas de PBKDF2 y gana. Después de la vinculación, necesita un secreto que físicamente no sale del chip, así que el ataque offline no se vuelve más lento — deja de existir. El único sitio donde se puede comprobar un intento es de vuelta en el dispositivo, donde el guard de lockout-y-borrado está esperando.
+Este es todo el truco, y cambia el ataque de _lineal_ a _categórico_. Antes de la vinculación, el atacante offline necesita 10.000 evaluaciones baratas de PBKDF2 y gana. Después de la vinculación, necesita un secreto que físicamente no sale del chip, así que el ataque offline no se vuelve más lento — deja de existir. El único sitio donde se puede comprobar un intento es de vuelta en el dispositivo, donde la protección de lockout-y-borrado está esperando.
 
 <Pipeline
   title="Dónde encaja la vinculación en la cadena del KDF"
   caption="provision() y unlock() ejecutan esta misma cadena; el paso de bind es idéntico en ambas, así que el verificador solo se reproduce en el mismo chip."
-  ariaLabel="La cadena de derivación de clave, de izquierda a derecha: el PIN alimenta PBKDF2-SHA256 con el kdfSalt para producir la master key; bindMasterKey mezcla el secreto del dispositivo mediante HKDF para producir la master key vinculada; la clave vinculada deriva el verificador del PIN que se compara, en tiempo constante, contra el valor almacenado en flash."
+  ariaLabel="La cadena de derivación de clave, de izquierda a derecha: el PIN alimenta PBKDF2-SHA256 con el kdfSalt para producir la clave maestra; bindMasterKey mezcla el secreto del dispositivo mediante HKDF para producir la clave maestra vinculada; la clave vinculada deriva el verificador del PIN que se compara, en tiempo constante, contra el valor almacenado en flash."
   stages={[
     { name: "PIN + kdfSalt", note: "secreto de usuario + 16 bytes aleatorios" },
     { name: "PBKDF2-SHA256", note: "35k iters (Tier 1)", via: "password" },
-    { name: "master key", note: "32 bytes", via: "derive" },
+    { name: "clave maestra", note: "32 bytes", via: "derive" },
     { name: "bindMasterKey()", note: "HKDF + deviceSecret (Tier 2)", via: "master" },
     { name: "pinVerifier", note: "HMAC, comparación en tiempo constante", via: "bound key" },
   ]}
@@ -229,7 +229,7 @@ El "secreto que solo este chip puede producir" tiene dos implementaciones, elegi
     <tr>
       <td>**`None`**</td>
       <td>Builds abiertos / sin capacidad</td>
-      <td>Identidad — la master key se deja sin cambios</td>
+      <td>Identidad — la clave maestra se deja sin cambios</td>
       <td data-status="info">Sin vinculación (builds de dev reflasheables)</td>
     </tr>
   </tbody>
@@ -351,13 +351,13 @@ Ambos backends producen un `deviceSecret` de 32 bytes y se lo entregan al mismo 
 
 ## Mezclarlo con HKDF, no con un HMAC hecho a mano
 
-Una vez que tienes un secreto del dispositivo de 32 bytes y una master key de PBKDF2 de 32 bytes, hay que combinarlos en una clave nueva. La tentación es echar mano de un `HMAC(deviceSecret, master)` pelado y darlo por hecho. Yo no lo hice, porque existe un primitivo publicado y analizado construido justo para esto: **[HKDF](https://www.rfc-editor.org/rfc/rfc5869)** (RFC 5869), el KDF de extract-then-expand cuyo argumento de seguridad expuso Hugo Krawczyk en [_Cryptographic Extraction and Key Derivation: The HKDF Scheme_](https://eprint.iacr.org/2010/264). HKDF te convierte un secreto no uniforme en material de clave uniforme _con separación de dominio_, y usarlo tal cual mantiene toda la construcción como algo citable y estándar en lugar de algo que me inventé un martes.
+Una vez que tienes un secreto del dispositivo de 32 bytes y una clave maestra de PBKDF2 de 32 bytes, hay que combinarlos en una clave nueva. La tentación es echar mano de un `HMAC(deviceSecret, master)` pelado y darlo por hecho. Yo no lo hice, porque existe un primitivo publicado y analizado construido justo para esto: **[HKDF](https://www.rfc-editor.org/rfc/rfc5869)** (RFC 5869), el KDF de extract-then-expand cuyo argumento de seguridad expuso Hugo Krawczyk en [_Cryptographic Extraction and Key Derivation: The HKDF Scheme_](https://eprint.iacr.org/2010/264). HKDF te convierte un secreto no uniforme en material de clave uniforme _con separación de dominio_, y usarlo tal cual mantiene toda la construcción como algo citable y estándar en lugar de algo que me inventé un martes.
 
 La construcción es la canónica de dos pasos:
 
 <MergeFlow
-  caption="HKDF vincula la clave en dos pasos: extraer un PRK con clave del secreto del dispositivo, luego expandirlo bajo una etiqueta versionada hasta la master key vinculada."
-  ariaLabel="La vinculación HKDF mostrada como dos etapas de fusión. Etapa uno, HKDF-Extract combina el secreto del dispositivo como salt con la master key de PBKDF2 como material de clave de entrada para producir una clave pseudoaleatoria, PRK. Etapa dos, HKDF-Expand combina ese PRK con la cadena info vault-device-bind-v1 para producir la master key vinculada de 32 bytes."
+  caption="HKDF vincula la clave en dos pasos: extraer un PRK con clave del secreto del dispositivo, luego expandirlo bajo una etiqueta versionada hasta la clave maestra vinculada."
+  ariaLabel="La vinculación HKDF mostrada como dos etapas de fusión. Etapa uno, HKDF-Extract combina el secreto del dispositivo como salt con la clave maestra de PBKDF2 como material de clave de entrada para producir una clave pseudoaleatoria, PRK. Etapa dos, HKDF-Expand combina ese PRK con la cadena info vault-device-bind-v1 para producir la clave maestra vinculada de 32 bytes."
   stages={[
     {
       op: "HKDF-Extract",
@@ -373,12 +373,12 @@ La construcción es la canónica de dos pasos:
         { name: "PRK", role: "del extract" },
         { name: '"vault-device-bind-v1"', role: "info" },
       ],
-      out: { name: "master key vinculada", note: "32 bytes" },
+      out: { name: "clave maestra vinculada", note: "32 bytes" },
     },
   ]}
 />
 
-El salt es el secreto del dispositivo y el material de clave de entrada es la master de PBKDF2, así que `PRK = HKDF-Extract(salt = deviceSecret, IKM = master)` y luego `boundMaster = HKDF-Expand(PRK, info = "vault-device-bind-v1", L = 32)`. La cadena `info` versionada es separación de dominio: si alguna vez cambio la construcción de la vinculación, un `info` distinto hace que las claves nuevas sean demostrablemente distintas de las viejas.
+El salt es el secreto del dispositivo y el material de clave de entrada es la clave maestra de PBKDF2, así que `PRK = HKDF-Extract(salt = deviceSecret, IKM = master)` y luego `boundMaster = HKDF-Expand(PRK, info = "vault-device-bind-v1", L = 32)`. La cadena `info` versionada es separación de dominio: si alguna vez cambio la construcción de la vinculación, un `info` distinto hace que las claves nuevas sean demostrablemente distintas de las viejas.
 
 Aquí va el detalle de ingeniería del que estoy más orgulloso. Mi HKDF está construido sobre el propio `VaultCrypto::hmacSha256` del firmware, no sobre el módulo HKDF de una librería — y eso es una característica, no reinvención. El dispositivo corre PSA Crypto sobre mbedTLS 4.0; los tests nativos en el host corren un mbedTLS legacy. Lo crucial: **mbedTLS 4.0 eliminó el módulo legacy `mbedtls_hkdf`** (se espera que manejes `psa_key_derivation_*` con `PSA_ALG_HKDF` en su lugar), así que un HKDF portable que llame al módulo viejo simplemente no compilará en el dispositivo, y uno que llame solo a la ruta PSA no correrá en el host. Al construir HKDF sobre un único primitivo HMAC que existe en ambos backends, obtengo **salida byte a byte idéntica en todas partes** y esquivo por completo el cambio de API de 3.6 a 4.0.
 
@@ -400,7 +400,7 @@ for (uint32_t counter = 1; ok && done < outLen; ++counter) {
 ```
 </Code>
 
-`bindMasterKey()` lo ata todo: para el backend `None` retorna de inmediato con la master intacta; en otro caso computa el secreto del dispositivo, ejecuta HKDF, sobrescribe la master key in situ con el resultado vinculado, y limpia cada valor intermedio con `secureWipe` antes de retornar.
+`bindMasterKey()` lo ata todo: para el backend `None` retorna de inmediato con la clave maestra intacta; en otro caso computa el secreto del dispositivo, ejecuta HKDF, sobrescribe la clave maestra in situ con el resultado vinculado, y limpia cada valor intermedio con `secureWipe` antes de retornar.
 
 ---
 
@@ -453,12 +453,12 @@ Mi validación en el dispositivo de la ruta **eFuse-HMAC** sigue pendiente de un
 
 ## Cierre: un PIN corto, dos defensas complementarias
 
-Da un paso atrás y el diseño es una división del trabajo limpia. Un PIN de 4 dígitos no tiene nada que hacer contra una GPU offline y es perfectamente válido contra alguien que teclea en un teclado — así que defiendo cada carril con el control que de verdad le encaja. El adivinado **online** se topa con el guard de fuerza bruta: un puñado de intentos, lockouts que escalan y un borrado de la bóveda al décimo. El adivinado **offline** se topa con la vinculación al dispositivo: un secreto por-chip, sellado en el periférico HMAC en el S3 o guardado en NVS cifrado en el ESP32 clásico, mezclado en la clave con HKDF para que la master key vinculada solo se reproduzca jamás en el silicio original.
+Da un paso atrás y el diseño es una división del trabajo limpia. Un PIN de 4 dígitos no tiene nada que hacer contra una GPU offline y es perfectamente válido contra alguien que teclea en un teclado — así que defiendo cada carril con el control que de verdad le encaja. El adivinado **online** se topa con la protección contra fuerza bruta: un puñado de intentos, lockouts que escalan y un borrado de la bóveda al décimo. El adivinado **offline** se topa con la vinculación al dispositivo: un secreto por-chip, sellado en el periférico HMAC en el S3 o guardado en NVS cifrado en el ESP32 clásico, mezclado en la clave con HKDF para que la clave maestra vinculada solo se reproduzca jamás en el silicio original.
 
 Ninguna defensa por sí sola basta. El lockout no significa nada si el atacante puede adivinar fuera del dispositivo; la vinculación no significa nada contra alguien que simplemente sigue tecleando PINs. Juntas, una flash volcada es solo texto cifrado y un salt para una clave que el atacante no puede recalcular, y un dispositivo robado está a diez intentos de quedar borrado. Así es como diez mil combinaciones se vuelven genuinamente suficientes.
 
 <SecurityRating
   rating="A"
   title="PIN de 4 dígitos, vinculado al dispositivo"
-  description="Un guard de fuerza bruta online (lockout que escala, borrado-tras-10) acota el adivinado en el dispositivo, mientras que la vinculación al dispositivo por eFuse-HMAC o pepper en NVS vía HKDF hace inviable un barrido offline por GPU del espacio de 10.000 claves del PIN. La salvedad honesta: la bóveda está atada al chip, así que un dispositivo muerto es irrecuperable por diseño — la recuperación es vía exportación/copia de seguridad, no custodia."
+  description="Una protección contra fuerza bruta online (lockout que escala, borrado-tras-10) acota el adivinado en el dispositivo, mientras que la vinculación al dispositivo por eFuse-HMAC o pepper en NVS vía HKDF hace inviable un barrido offline por GPU del espacio de 10.000 claves del PIN. La salvedad honesta: la bóveda está atada al chip, así que un dispositivo muerto es irrecuperable por diseño — la recuperación es vía exportación/copia de seguridad, no custodia."
 />
