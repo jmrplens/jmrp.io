@@ -72,7 +72,7 @@ import {
   </li>
 </ul>
 
-<h3>How to Use</h3>
+<h3>How do I use it?</h3>
 <ol>
   <li>
     Enter a Unix timestamp to see date, timezone table, and all formats update
@@ -96,7 +96,7 @@ import {
   </li>
 </ol>
 
-<h3>Auto-Detection Logic</h3>
+<h3>How does auto-detection work?</h3>
 <p>
   When the unit selector is set to <strong>Auto</strong> (default), the tool
   determines the unit based on the input magnitude:
@@ -203,7 +203,7 @@ import {
   </tbody>
 </table>
 
-<h3>Privacy</h3>
+<h3>Is my data private?</h3>
 <p>
   All conversions happen entirely in your browser using JavaScript's built-in{" "}
   <code>Date</code> and <code>Intl</code> APIs. No timestamp data is transmitted
@@ -214,7 +214,7 @@ import {
 <h3>Linux Command Reference</h3>
 <p>Common timestamp operations from the terminal:</p>
 
-<h4>Get Current Timestamp</h4>
+<h4>How do I get the current timestamp?</h4>
 <TerminalSession>
   <TerminalSessionCommand>date +%s</TerminalSessionCommand>
   <TerminalSessionOutput title="Unix Timestamp (seconds)">
@@ -222,7 +222,7 @@ import {
   </TerminalSessionOutput>
 </TerminalSession>
 
-<h4>Timestamp to Date</h4>
+<h4>How do I convert a timestamp to a date?</h4>
 <TerminalSession>
   <TerminalSessionCommand>
     date -d @1739361234 "+%Y-%m-%d %H:%M:%S %Z"
@@ -232,7 +232,7 @@ import {
   </TerminalSessionOutput>
 </TerminalSession>
 
-<h4>Date to Timestamp</h4>
+<h4>How do I convert a date to a timestamp?</h4>
 <TerminalSession>
   <TerminalSessionCommand>
     date -d "2025-02-12 12:53:54" +%s
@@ -242,7 +242,7 @@ import {
   </TerminalSessionOutput>
 </TerminalSession>
 
-<h4>Convert Between Timezones</h4>
+<h4>How do I convert between timezones?</h4>
 <TerminalSession>
   <TerminalSessionCommand>
     TZ="America/New_York" date -d @1739361234 "+%Y-%m-%d %H:%M:%S %Z"
@@ -252,7 +252,7 @@ import {
   </TerminalSessionOutput>
 </TerminalSession>
 
-<h4>Milliseconds Timestamp</h4>
+<h4>How do I get a millisecond timestamp?</h4>
 <TerminalSession>
   <TerminalSessionCommand>date +%s%3N</TerminalSessionCommand>
   <TerminalSessionOutput title="Unix Timestamp (milliseconds)">
@@ -260,7 +260,7 @@ import {
   </TerminalSessionOutput>
 </TerminalSession>
 
-<h4>ISO 8601 and RFC 2822</h4>
+<h4>How do I output ISO 8601 and RFC 2822?</h4>
 <TerminalSession>
   <TerminalSessionCommand>
     ```

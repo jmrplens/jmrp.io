@@ -61,7 +61,7 @@ import {
   </li>
 </ul>
 
-<h3>How to Use</h3>
+<h3>How do I use this tool?</h3>
 <ol>
   <li>Enable the directives you need for your website</li>
   <li>Use quick presets to add common third-party services</li>
@@ -88,7 +88,7 @@ import {
   Once you've configured your CSP, you can verify it using terminal tools.
 </p>
 
-<h4>Check CSP Header with curl</h4>
+<h4>How do I check the CSP header with curl?</h4>
 <TerminalSession>
   <TerminalSessionCommand>
     curl -I https://jmrp.io | grep -i "content-security-policy"
@@ -98,7 +98,7 @@ import {
   </TerminalSessionOutput>
 </TerminalSession>
 
-<h4>Calculate Hash for Inline Script</h4>
+<h4>How do I calculate the hash for an inline script?</h4>
 <TerminalSession>
   <TerminalSessionCommand>
     echo -n 'alert("Hello");' | openssl dgst -sha256 -binary | openssl base64

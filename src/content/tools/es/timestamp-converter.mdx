@@ -74,7 +74,7 @@ import {
   </li>
 </ul>
 
-<h3>Cómo usar</h3>
+<h3>¿Cómo se usa?</h3>
 <ol>
   <li>
     Introduce un timestamp Unix para ver la fecha, la tabla de zonas horarias
@@ -98,7 +98,7 @@ import {
   </li>
 </ol>
 
-<h3>Lógica de autodetección</h3>
+<h3>¿Cómo funciona la autodetección?</h3>
 <p>
   Cuando el selector de unidad está en <strong>Auto</strong> (por defecto), la
   herramienta determina la unidad según la magnitud de la entrada:
@@ -206,7 +206,7 @@ import {
   </tbody>
 </table>
 
-<h3>Privacidad</h3>
+<h3>¿Son privados mis datos?</h3>
 <p>
   Todas las conversiones ocurren completamente en tu navegador usando las APIs
   integradas de JavaScript <code>Date</code> e <code>Intl</code>. No se
@@ -217,7 +217,7 @@ import {
 <h3>Referencia de comandos Linux</h3>
 <p>Operaciones de timestamp comunes desde la terminal:</p>
 
-<h4>Obtener el timestamp actual</h4>
+<h4>¿Cómo obtengo el timestamp actual?</h4>
 <TerminalSession>
   <TerminalSessionCommand>date +%s</TerminalSessionCommand>
   <TerminalSessionOutput title="Timestamp Unix (segundos)">
@@ -225,7 +225,7 @@ import {
   </TerminalSessionOutput>
 </TerminalSession>
 
-<h4>Timestamp a fecha</h4>
+<h4>¿Cómo convierto un timestamp a fecha?</h4>
 <TerminalSession>
   <TerminalSessionCommand>
     date -d @1739361234 "+%Y-%m-%d %H:%M:%S %Z"
@@ -235,7 +235,7 @@ import {
   </TerminalSessionOutput>
 </TerminalSession>
 
-<h4>Fecha a timestamp</h4>
+<h4>¿Cómo convierto una fecha a timestamp?</h4>
 <TerminalSession>
   <TerminalSessionCommand>
     date -d "2025-02-12 12:53:54" +%s
@@ -245,7 +245,7 @@ import {
   </TerminalSessionOutput>
 </TerminalSession>
 
-<h4>Convertir entre zonas horarias</h4>
+<h4>¿Cómo convierto entre zonas horarias?</h4>
 <TerminalSession>
   <TerminalSessionCommand>
     TZ="America/New_York" date -d @1739361234 "+%Y-%m-%d %H:%M:%S %Z"
@@ -255,7 +255,7 @@ import {
   </TerminalSessionOutput>
 </TerminalSession>
 
-<h4>Timestamp en milisegundos</h4>
+<h4>¿Cómo obtengo un timestamp en milisegundos?</h4>
 <TerminalSession>
   <TerminalSessionCommand>date +%s%3N</TerminalSessionCommand>
   <TerminalSessionOutput title="Timestamp Unix (milisegundos)">
@@ -263,7 +263,7 @@ import {
   </TerminalSessionOutput>
 </TerminalSession>
 
-<h4>ISO 8601 y RFC 2822</h4>
+<h4>¿Cómo genero ISO 8601 y RFC 2822?</h4>
 <TerminalSession>
   <TerminalSessionCommand>
     ```

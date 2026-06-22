@@ -26,14 +26,14 @@ import {
   TerminalSessionOutput,
 } from "@components/ui/terminal-session";
 
-<h2>About This Tool</h2>
+<h2>What does this tool do?</h2>
 <p>
   Analyze your HTTP response headers for security best practices. The tool
   evaluates 10 critical security headers, checks for information leakage, and
   provides a weighted score with actionable recommendations. You can paste
   headers manually or fetch them directly from a URL.
 </p>
-<h3>Headers Analyzed</h3>
+<h3>Which headers are analyzed?</h3>
 <ul>
   <li>
     <strong>Content-Security-Policy</strong> (25 pts) — XSS and injection
@@ -96,7 +96,7 @@ import {
     <strong>F</strong> (0-29) — Critical, most headers missing
   </li>
 </ul>
-<h3>How to Use</h3>
+<h3>How do I use it?</h3>
 <ol>
   <li>
     Enter a URL and click Fetch, or paste headers from browser DevTools / curl
@@ -104,7 +104,7 @@ import {
   <li>Click Analyze to see the security score and recommendations</li>
   <li>Fix missing headers in your server configuration and re-analyze</li>
 </ol>
-<h3>Privacy</h3>
+<h3>Is my data private?</h3>
 <p>
   All analysis happens entirely in your browser. When using the Fetch feature,
   the request is made directly from your browser — no server-side proxy is used.

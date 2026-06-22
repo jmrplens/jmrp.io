@@ -87,7 +87,7 @@ import {
   </li>
 </ul>
 
-<h3>How to Use</h3>
+<h3>How do I use this tool?</h3>
 <h4>Build Mode</h4>
 <ol>
   <li>
@@ -474,7 +474,7 @@ import {
   </tbody>
 </table>
 
-<h3>Privacy</h3>
+<h3>Is my Modbus data sent to a server?</h3>
 <p>
   All frame building, decoding, CRC/LRC calculation, and data interpretation
   happens entirely in your browser. No Modbus data is transmitted to any server.
@@ -559,7 +559,7 @@ import {
   </TerminalSessionOutput>
 </TerminalSession>
 
-<h3>CRC-16 Calculation</h3>
+<h3>How is the CRC-16 calculated?</h3>
 <p>
   Modbus RTU uses CRC-16 with the polynomial <code>0xA001</code>
   (reflected form of <code>0x8005</code>). The CRC is calculated over all bytes
@@ -567,7 +567,7 @@ import {
   <strong>little-endian</strong> order (low byte first, high byte second).
 </p>
 
-<h3>LRC Calculation</h3>
+<h3>How is the LRC calculated?</h3>
 <p>
   Modbus ASCII uses a Longitudinal Redundancy Check. The LRC is the
   <strong>two's complement</strong> of the 8-bit sum of all bytes in the message
