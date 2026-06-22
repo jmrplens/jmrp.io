@@ -6,8 +6,10 @@
  */
 import "@styles/blog.css";
 
+import AuthorCard from "@components/blog/AuthorCard.astro";
 import TableOfContentsDrawer from "@components/layout/TableOfContentsDrawer.astro";
 import Callout from "@components/ui/Callout.astro";
+import FAQ from "@components/ui/FAQ.astro";
 import Code from "@components/ui/Code.astro";
 import FallbackBanner from "@components/ui/FallbackBanner.astro";
 import References from "@components/ui/References.astro";
@@ -94,40 +96,109 @@ if (post.data.coverImage) {
   jsonLdImage = schemaImage.src;
 }
 
-const articleSchema = [
-  {
-    "@type": "BlogPosting",
-    "@id": new URL("#article", new URL(`/blog/${post.data.slug}`, getSiteUrl()))
-      .href,
-    headline: post.data.title,
-    description: post.data.description,
-    datePublished: post.data.publishedDate.toISOString(),
-    dateModified: (
-      post.data.updatedDate || post.data.publishedDate
-    ).toISOString(),
-    publisher: {
-      "@type": "Person",
-      "@id": new URL("#person", getSiteUrl()).href,
-      name: siteData.author,
-      url: getSiteUrl(),
-    },
-    author: {
-      "@type": "Person",
-      "@id": new URL("#person", getSiteUrl()).href,
-      name: siteData.author,
-      url: getSiteUrl(),
-    },
-    image: new URL(jsonLdImage, getSiteUrl()).href,
-    mainEntityOfPage: {
-      "@type": "WebPage",
-      "@id": new URL(`/blog/${post.data.slug}`, getSiteUrl()).href,
-    },
-    inLanguage: locale,
-    ...(post.data.tags.length > 0 && { keywords: post.data.tags }),
-    isPartOf: {
-      "@id": new URL("#website", getSiteUrl()).href,
-    },
+// Canonical page URL — trailing slash so `@id`/`mainEntityOfPage` reconcile with
+// the page canonical (broken links between the article entity and its page otherwise).
+const postUrl = new URL(`/blog/${post.data.slug}/`, getSiteUrl()).href;
+
+// Approximate body word count (code blocks already stripped in `bodyWithoutCode`).
+const wordCount = bodyWithoutCode
+  .replaceAll(/<[^>]+>/g, " ")
+  .replaceAll(/[#>*_`~[\]()!]/g, " ")
+  .split(/\s+/)
+  .filter(Boolean).length;
+
+const personRef = { "@id": new URL("#person", getSiteUrl()).href };
+
+// Primary article node. `articleType` (frontmatter) selects BlogPosting vs the
+// more specific, AI-recognized TechArticle for engineering guides.
+const articleNode = {
+  "@type": post.data.articleType,
+  "@id": `${postUrl}#article`,
+  headline: post.data.title,
+  description: post.data.description,
+  datePublished: post.data.publishedDate.toISOString(),
+  // Only emit dateModified when the post was actually updated, so identical
+  // published/modified dates don't dilute the freshness signal.
+  ...(post.data.updatedDate && {
+    dateModified: post.data.updatedDate.toISOString(),
+  }),
+  publisher: personRef,
+  author: personRef,
+  image: new URL(jsonLdImage, getSiteUrl()).href,
+  mainEntityOfPage: {
+    "@type": "WebPage",
+    "@id": postUrl,
   },
+  inLanguage: locale,
+  wordCount,
+  ...(post.data.articleType === "TechArticle" &&
+    post.data.proficiencyLevel && {
+      proficiencyLevel: post.data.proficiencyLevel,
+    }),
+  ...(post.data.tags.length > 0 && {
+    keywords: post.data.tags,
+    articleSection: post.data.tags[0],
+  }),
+  // Surface the lead/summary to voice assistants and AI readers.
+  speakable: {
+    "@type": "SpeakableSpecification",
+    cssSelector: [".post-header h1", ".post-header .lead"],
+  },
+  isPartOf: {
+    "@id": new URL("#website", getSiteUrl()).href,
+  },
+};
+
+// Secondary graph nodes: FAQPage (from `faq`) and HowTo (from `howto`).
+// Both share the post's `faq`/`howto` frontmatter as the single source of truth.
+const faqNode =
+  post.data.faq && post.data.faq.length > 0
+    ? {
+        "@type": "FAQPage",
+        "@id": `${postUrl}#faq`,
+        isPartOf: { "@id": `${postUrl}#article` },
+        mainEntity: post.data.faq.map((item) => ({
+          "@type": "Question",
+          name: item.question,
+          acceptedAnswer: { "@type": "Answer", text: item.answer },
+        })),
+      }
+    : undefined;
+
+const howtoNode = post.data.howto
+  ? {
+      "@type": "HowTo",
+      "@id": `${postUrl}#howto`,
+      name: post.data.howto.name,
+      ...(post.data.howto.totalTime && {
+        totalTime: post.data.howto.totalTime,
+      }),
+      ...(post.data.howto.tools && {
+        tool: post.data.howto.tools.map((name) => ({
+          "@type": "HowToTool",
+          name,
+        })),
+      }),
+      ...(post.data.howto.supplies && {
+        supply: post.data.howto.supplies.map((name) => ({
+          "@type": "HowToSupply",
+          name,
+        })),
+      }),
+      step: post.data.howto.steps.map((s, i) => ({
+        "@type": "HowToStep",
+        position: i + 1,
+        name: s.name,
+        text: s.text,
+        ...(s.anchor && { url: `${postUrl}#${s.anchor}` }),
+      })),
+    }
+  : undefined;
+
+const articleSchema = [
+  articleNode,
+  ...(faqNode ? [faqNode] : []),
+  ...(howtoNode ? [howtoNode] : []),
 ];
 ---
 
@@ -225,7 +296,13 @@ const articleSchema = [
     <div class="layout-grid content-wrapper">
       <div class="prose">
         <Content components={{ Callout, Tabs, TabPanel, YouTube, Code }} />
+        {
+          post.data.faq && post.data.faq.length > 0 && (
+            <FAQ items={post.data.faq} />
+          )
+        }
         <References references={finalReferences} />
+        <AuthorCard />
       </div>
     </div>
   </article>

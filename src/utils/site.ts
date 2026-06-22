@@ -35,3 +35,20 @@ export const getAbsoluteUrl = (path: string): string => {
     );
   }
 };
+
+/**
+ * Builds the canonical, de-duplicated `sameAs` array for the Person JSON-LD entity.
+ * Combines the visible footer social links with the extra academic/identity URLs
+ * declared under `person.sameAs` (Google Scholar, ORCID, ResearchGate, MATLAB Central…),
+ * which strengthen AI entity recognition without cluttering the footer.
+ *
+ * @param socialLinks - The `social_links` array from site config (footer + sameAs).
+ * @param extras - The `person.sameAs` extras (schema-only entity URLs).
+ * @returns A de-duplicated array of absolute profile URLs.
+ */
+export const buildSameAs = (
+  socialLinks?: { url: string }[],
+  extras?: string[],
+): string[] => [
+  ...new Set([...(socialLinks?.map((l) => l.url) ?? []), ...(extras ?? [])]),
+];

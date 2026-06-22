@@ -81,6 +81,7 @@ export const common = {
     cvNavigation: "CV Navigation",
   },
   components: {
+    faqHeading: "Frequently asked questions",
     copyButton: {
       clipboardUnavailable: "Clipboard API unavailable",
       failedToCopy: "Failed to copy!",
@@ -405,6 +406,14 @@ export const common = {
       readAction: "Read article →",
       codeFallback: "Code",
       codeExampleTemplate: "{lang} example {index}",
+      authorRole: "R&D Engineer",
+      aboutAuthor: "About the author",
+      authorBio:
+        "José M. Requena Plens is an R&D engineer working where acoustics, electronics, and firmware meet — writing about embedded systems, security, and self-hosted infrastructure.",
+      authorViewCv: "View CV",
+      authorAvatarAlt: "Photo of {author}",
+      aiDisclosure:
+        "Drafted with AI assistance; reviewed, tested, and verified by the author.",
     },
     blogTags: {
       titlePrefix: "Blog - #",

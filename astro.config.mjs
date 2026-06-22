@@ -15,6 +15,7 @@ import { rehypeLinkDisambiguator } from "./scripts/rehype-link-disambiguator.mjs
 import { remarkMermaidBypass } from "./scripts/remark-mermaid-bypass.mjs";
 import postBuildIntegration from "./src/integrations/post-build.ts";
 import preBuildIntegration from "./src/integrations/pre-build.ts";
+import { getPostDateMap } from "./src/integrations/sitemap-post-dates.ts";
 import { vitePrefetchNoncePlugin } from "./src/integrations/vite-plugin-prefetch-nonce.ts";
 import routerosGrammar from "./src/languages/routeros.tmLanguage.json";
 
@@ -82,6 +83,12 @@ export default defineConfig({
         access: "public",
         optional: true,
       }),
+      // Bing Webmaster API key for the URL Submission API (used in post-build).
+      BING_WEBMASTER_API_KEY: envField.string({
+        context: "server",
+        access: "secret",
+        optional: true,
+      }),
       POSTBUILD_NGINX_SNIPPETS_PATH: envField.string({
         context: "server",
         access: "secret",
@@ -142,6 +149,8 @@ export default defineConfig({
         !page.includes("/999-"),
       serialize: (() => {
         const buildTimestamp = new Date().toISOString();
+        // Real per-post modification dates (frontmatter), keyed by slug.
+        const postDates = getPostDateMap();
         return (item) => {
           const url = item.url;
           // Strip locale prefix for pattern matching
@@ -175,11 +184,18 @@ export default defineConfig({
             priority = 0.3;
           }
 
+          // Use the real post date when this is a blog post; otherwise the
+          // build timestamp (static/index/tool pages regenerate every build).
+          const postSlugMatch = /^\/blog\/([^/]+)\/?$/.exec(path);
+          const lastmod =
+            (postSlugMatch && postDates.get(postSlugMatch[1])) ||
+            buildTimestamp;
+
           return /** @type {import("@astrojs/sitemap").SitemapItem} */ ({
             ...item,
             priority,
             changefreq,
-            lastmod: buildTimestamp,
+            lastmod,
           });
         };
       })(),

@@ -17,6 +17,19 @@ export function stripHtml(html: string | undefined | null): string {
 }
 
 /**
+ * Strips HTML tags AND decodes entities to produce clean plain text.
+ *
+ * `stripHtml` (sanitize-html) HTML-encodes ampersands in its output
+ * (`R&D` → `R&amp;D`). When that string is later embedded in JSON-LD, the
+ * value ends up as the literal entity (`R&amp;D`) instead of `R&D`, which AI
+ * parsers and screen readers read verbatim. Decoding after stripping yields
+ * the intended plain text for Schema.org string values.
+ */
+export function stripToText(html: string | undefined | null): string {
+  return he.decode(stripHtml(html));
+}
+
+/**
  * Sanitizes HTML to allow only safe tags (basic formatting).
  * Explicitly configured with a safe allowlist for better maintainability.
  * Handles null/undefined inputs gracefully.

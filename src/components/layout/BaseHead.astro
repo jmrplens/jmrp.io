@@ -22,7 +22,7 @@ import {
 } from "@i18n/utils";
 import type { SiteConfig } from "@src/types";
 import { safeJsonLd } from "@utils/html";
-import { getSiteUrl } from "@utils/site";
+import { getSiteUrl, buildSameAs } from "@utils/site";
 // Variable Fonts (managed by Astro Experimental Fonts)
 import type { ImageMetadata } from "astro";
 import { Font, getImage } from "astro:assets";
@@ -157,9 +157,19 @@ const websiteSchema = {
     "@type": "Person",
     "@id": new URL("#person", getSiteUrl()).href,
     name: siteData.author,
+    jobTitle: siteData.person?.jobTitle ?? siteData.jobTitle,
     url: getSiteUrl(),
     image: new URL(defaultOgImage.src, getSiteUrl()).href,
-    sameAs: siteData.social_links?.map((link) => link.url) || [],
+    ...(siteData.person?.worksFor && {
+      worksFor: {
+        "@type": "Organization",
+        name: siteData.person.worksFor.name,
+        ...(siteData.person.worksFor.url && {
+          url: siteData.person.worksFor.url,
+        }),
+      },
+    }),
+    sameAs: buildSameAs(siteData.social_links, siteData.person?.sameAs),
   },
 };
 

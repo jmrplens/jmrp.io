@@ -1,0 +1,200 @@
+---
+/**
+ * FAQ — accessible, fully-collapsible frequently-asked-questions section.
+ *
+ * The whole block collapses under its title (an outer `<details>`), and each
+ * Q&A is itself a nested `<details>`/`<summary>` disclosure. All native: zero-JS,
+ * keyboard accessible, and screen-reader friendly (open/closed announced
+ * natively; the title keeps its `<h2>` heading semantics inside the summary).
+ * Answer content stays in the DOM even when collapsed, so it remains fully
+ * crawlable/indexable. The `FAQPage` JSON-LD is emitted separately from the same
+ * `faq` frontmatter (in BlogPost), so structured data never depends on visibility.
+ */
+import { getLangFromUrl, useTranslations } from "@i18n/utils";
+
+interface Props {
+  /** Question/answer pairs. */
+  items: { question: string; answer: string }[];
+  /** Whether the outer block starts expanded. Defaults to collapsed. */
+  open?: boolean;
+}
+
+const { items, open = false } = Astro.props;
+const locale = getLangFromUrl(Astro.url);
+const t = useTranslations(locale);
+const headingId = `faq-${crypto.getRandomValues(new Uint32Array(1))[0]}`;
+---
+
+{
+  items.length > 0 && (
+    <section
+      class="faq"
+      aria-labelledby={headingId}
+    >
+      <details
+        class="faq__group"
+        open={open}
+      >
+        <summary class="faq__group-summary">
+          <h2
+            id={headingId}
+            class="faq__heading"
+          >
+            <span
+              class="i-mdi:comment-question-outline faq__heading-icon"
+              aria-hidden="true"
+            />
+            {t("components.faqHeading")}
+          </h2>
+          <span
+            class="i-mdi:chevron-down faq__group-chevron"
+            aria-hidden="true"
+          />
+        </summary>
+        <div class="faq__list">
+          {items.map((item) => (
+            <details class="faq__item">
+              <summary class="faq__question">
+                <span class="faq__question-text">{item.question}</span>
+                <span
+                  class="i-mdi:chevron-down faq__chevron"
+                  aria-hidden="true"
+                />
+              </summary>
+              <div class="faq__answer">
+                <p>{item.answer}</p>
+              </div>
+            </details>
+          ))}
+        </div>
+      </details>
+    </section>
+  )
+}
+
+<style>
+  .faq {
+    margin-block-start: var(--space-lg);
+    padding-block-start: var(--space-md);
+    border-block-start: var(--border-1);
+  }
+
+  /* --- Outer collapsible group --- */
+  .faq__group {
+    margin: 0;
+  }
+
+  .faq__group-summary {
+    display: flex;
+    gap: var(--space-md);
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    list-style: none;
+  }
+
+  .faq__group-summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .faq__group-summary:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 4px;
+    border-radius: var(--radius-sm);
+  }
+
+  .faq__heading {
+    display: flex;
+    gap: var(--space-sm);
+    align-items: center;
+    margin: 0;
+  }
+
+  .faq__heading-icon {
+    color: var(--color-primary);
+    width: 1.1em;
+    height: 1.1em;
+  }
+
+  .faq__group-chevron {
+    flex-shrink: 0;
+    width: 1.5em;
+    height: 1.5em;
+    color: var(--color-text-muted);
+    transition: transform 0.2s ease;
+  }
+
+  .faq__group[open] .faq__group-chevron {
+    transform: rotate(180deg);
+  }
+
+  /* --- Inner per-question disclosures --- */
+  .faq__list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    margin-block-start: var(--space-md);
+  }
+
+  .faq__item {
+    background: var(--color-bg-subtle);
+    border: var(--border-1);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+  }
+
+  .faq__question {
+    display: flex;
+    gap: var(--space-md);
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-md);
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-heading);
+    cursor: pointer;
+    list-style: none;
+  }
+
+  .faq__question::-webkit-details-marker {
+    display: none;
+  }
+
+  .faq__question:hover {
+    background: var(--color-bg-header);
+  }
+
+  .faq__item:focus-within {
+    border-color: var(--color-primary);
+  }
+
+  .faq__question:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: -2px;
+  }
+
+  .faq__chevron {
+    flex-shrink: 0;
+    color: var(--color-text-muted);
+    transition: transform 0.2s ease;
+  }
+
+  .faq__item[open] .faq__chevron {
+    transform: rotate(180deg);
+  }
+
+  .faq__answer {
+    padding: 0 var(--space-md) var(--space-md);
+    color: var(--color-text);
+  }
+
+  .faq__answer p {
+    margin: 0;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .faq__chevron,
+    .faq__group-chevron {
+      transition: none;
+    }
+  }
+</style>

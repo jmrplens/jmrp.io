@@ -1,0 +1,173 @@
+---
+/**
+ * AuthorCard — end-of-post author byline/bio block.
+ *
+ * Surfaces the author's identity and credentials at the point of consumption so
+ * both readers and AI entity-extractors can bind the post to the credentialed
+ * Person entity (links to CV, Publications, GitHub, Google Scholar). The visible
+ * links mirror the `#person` `sameAs` graph emitted in the page <head>.
+ */
+import mehomeImg from "@assets/mehome.webp";
+import {
+  getLangFromUrl,
+  useTranslations,
+  useTranslatedPath,
+} from "@i18n/utils";
+import type { SiteConfig } from "@src/types";
+import { getEntry } from "astro:content";
+import { Image } from "astro:assets";
+
+const locale = getLangFromUrl(Astro.url);
+const t = useTranslations(locale);
+const translatePath = useTranslatedPath(locale);
+
+const siteEntry = await getEntry("site_config", "site");
+const siteData = (siteEntry?.data || {}) as SiteConfig;
+const author = siteData.author;
+
+const githubUrl = siteData.social_links?.find((l) => l.name === "GitHub")?.url;
+const scholarUrl = siteData.person?.sameAs?.find((u) =>
+  u.includes("scholar.google"),
+);
+
+const headingId = `author-${crypto.getRandomValues(new Uint32Array(1))[0]}`;
+const externalRel = "external noopener noreferrer";
+---
+
+<aside
+  class="author-card"
+  aria-labelledby={headingId}
+>
+  <Image
+    src={mehomeImg}
+    alt={t("pages.blogPost.authorAvatarAlt", { author })}
+    class="author-card__avatar"
+    width={72}
+    height={72}
+    loading="lazy"
+  />
+  <div class="author-card__body">
+    <p class="author-card__eyebrow">{t("pages.blogPost.aboutAuthor")}</p>
+    <p
+      id={headingId}
+      class="author-card__name"
+    >
+      <span class="author-card__fullname">{author}</span>
+      <span class="author-card__role">{t("pages.blogPost.authorRole")}</span>
+    </p>
+    <p class="author-card__bio">{t("pages.blogPost.authorBio")}</p>
+    <nav
+      class="author-card__links"
+      aria-label={t("pages.blogPost.aboutAuthor")}
+    >
+      <a href={translatePath("/cv/")}>{t("pages.blogPost.authorViewCv")}</a>
+      <a href={translatePath("/publications/")}>{t("nav.publications")}</a>
+      {
+        githubUrl && (
+          <a
+            href={githubUrl}
+            target="_blank"
+            rel={externalRel}
+          >
+            GitHub
+          </a>
+        )
+      }
+      {
+        scholarUrl && (
+          <a
+            href={scholarUrl}
+            target="_blank"
+            rel={externalRel}
+          >
+            Google Scholar
+          </a>
+        )
+      }
+    </nav>
+    <p class="author-card__disclosure">{t("pages.blogPost.aiDisclosure")}</p>
+  </div>
+</aside>
+
+<style>
+  .author-card {
+    display: flex;
+    gap: var(--space-md);
+    align-items: flex-start;
+    margin-block-start: var(--space-lg);
+    padding: var(--space-md-lg);
+    background: var(--color-bg-subtle);
+    border: var(--border-1);
+    border-radius: var(--radius-lg);
+  }
+
+  .author-card__avatar {
+    flex-shrink: 0;
+    border-radius: var(--radius-lg);
+    width: 72px;
+    height: 72px;
+    object-fit: cover;
+  }
+
+  .author-card__body {
+    min-width: 0;
+  }
+
+  .author-card__eyebrow {
+    margin: 0;
+    font-size: 0.8rem;
+    font-weight: var(--fw-semibold);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--color-text-muted);
+  }
+
+  .author-card__name {
+    margin: var(--space-xs) 0 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--space-sm);
+  }
+
+  .author-card__fullname {
+    font-weight: var(--fw-bold);
+    color: var(--color-text-heading);
+  }
+
+  .author-card__role {
+    font-size: 0.9rem;
+    color: var(--color-primary);
+  }
+
+  .author-card__bio {
+    margin: var(--space-sm) 0 var(--space-md);
+    color: var(--color-text);
+    font-size: 0.95rem;
+  }
+
+  .author-card__links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-md);
+    font-size: 0.9rem;
+  }
+
+  .author-card__links a {
+    color: var(--color-primary);
+    text-decoration: none;
+    font-weight: var(--fw-medium);
+  }
+
+  .author-card__links a:hover,
+  .author-card__links a:focus-visible {
+    text-decoration: underline;
+  }
+
+  .author-card__disclosure {
+    margin: var(--space-md) 0 0;
+    font-size: 0.8rem;
+    font-style: italic;
+    color: var(--color-text-muted);
+  }
+</style>

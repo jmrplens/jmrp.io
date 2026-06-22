@@ -35,6 +35,45 @@ const posts = defineCollection({
       authorEmail: z.email().optional(),
       coverImage: image().optional(),
       tags: z.array(z.string()).default([]),
+      /**
+       * Schema.org primary type for the post. Use "TechArticle" for engineering
+       * guides/tutorials (more specific, AI-recognized) and "BlogPosting" for
+       * narrative posts. Defaults to "BlogPosting".
+       */
+      articleType: z
+        .enum(["BlogPosting", "TechArticle"])
+        .default("BlogPosting"),
+      /** Difficulty hint emitted on TechArticle (`proficiencyLevel`). */
+      proficiencyLevel: z
+        .enum(["Beginner", "Intermediate", "Expert"])
+        .optional(),
+      /**
+       * FAQ pairs. Rendered as a visible accessible FAQ section AND emitted as
+       * FAQPage JSON-LD — single source of truth. Only add genuine Q&A.
+       */
+      faq: z
+        .array(z.object({ question: z.string(), answer: z.string() }))
+        .optional(),
+      /**
+       * HowTo schema for step-by-step guides. Emitted as a secondary `HowTo`
+       * graph node (strong AI-assistant signal; the visible steps already live
+       * in the post body). `anchor` links a step to its in-page section id.
+       */
+      howto: z
+        .object({
+          name: z.string(),
+          totalTime: z.string().optional(), // ISO 8601 duration, e.g. PT30M
+          tools: z.array(z.string()).optional(),
+          supplies: z.array(z.string()).optional(),
+          steps: z.array(
+            z.object({
+              name: z.string(),
+              text: z.string(),
+              anchor: z.string().optional(),
+            }),
+          ),
+        })
+        .optional(),
     }),
 });
 
@@ -84,6 +123,10 @@ const site_config = defineCollection({
               url: z.url().optional(),
             })
             .optional(),
+          // Additional canonical entity URLs for JSON-LD `sameAs` that should NOT
+          // appear as footer social icons (e.g. Google Scholar, ORCID, ResearchGate).
+          // Merged with `social_links` to build the full Person `sameAs` array.
+          sameAs: z.array(z.url()).optional(),
         })
         .optional(),
       // Social links for JSON-LD sameAs and dynamic rendering

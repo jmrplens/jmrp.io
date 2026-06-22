@@ -14,8 +14,8 @@ import { useTranslations } from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
 import type { SiteConfig } from "@src/types";
 import { getCVData } from "@utils/cv";
-import { sanitize, stripHtml } from "@utils/html";
-import { getSiteUrl } from "@utils/site";
+import { sanitize, stripToText } from "@utils/html";
+import { getSiteUrl, getAbsoluteUrl, buildSameAs } from "@utils/site";
 import { getEntry } from "astro:content";
 
 const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
@@ -75,18 +75,18 @@ const technicalSkills = cvData.find((s) => s.type === "list_groups");
 const certificates = cvData.find((s) => s.type === "certificate_list");
 
 const personSchema = {
-  "@context": "https://schema.org",
   "@type": "ProfilePage",
   "@id": new URL("#profile", new URL(Astro.url.pathname, getSiteUrl())).href,
   inLanguage: locale,
   mainEntity: {
     "@type": "Person",
+    "@id": new URL("#person", getSiteUrl()).href,
     name: "José Manuel Requena Plens",
     jobTitle: t("seo.jobTitle"),
     description: t("pages.cv.schemaDescription"),
     url: "https://jmrp.io",
     image: "https://jmrp.io/assets/mehome.webp",
-    sameAs: siteData.social_links?.map((s) => s.url) || [],
+    sameAs: buildSameAs(siteData.social_links, siteData.person?.sameAs),
     knowsAbout:
       technicalSkills?.type === "list_groups"
         ? technicalSkills.contents.flatMap((g) => g.items.map((i) => i.name))
@@ -95,8 +95,10 @@ const personSchema = {
       formalEducation?.type === "time_table"
         ? formalEducation.contents.map((edu) => ({
             "@type": "EducationalOrganization",
-            name: edu.institution ? stripHtml(edu.institution) : undefined,
-            department: edu.department ? stripHtml(edu.department) : undefined,
+            name: edu.institution ? stripToText(edu.institution) : undefined,
+            department: edu.department
+              ? stripToText(edu.department)
+              : undefined,
           }))
         : [],
     hasOccupation:
@@ -104,7 +106,7 @@ const personSchema = {
         ? experience.contents.map((job) => ({
             "@type": "Occupation",
             name: job.title,
-            description: job.summary ? stripHtml(job.summary) : undefined,
+            description: job.summary ? stripToText(job.summary) : undefined,
           }))
         : [],
     hasCredential:
@@ -118,7 +120,7 @@ const personSchema = {
                 "@type": "Organization",
                 name: cert.school,
               },
-              url: cert.link,
+              ...(cert.link && { url: getAbsoluteUrl(cert.link) }),
             })),
           )
         : [],

@@ -81,6 +81,7 @@ export const common = {
     cvNavigation: "Navegación del CV",
   },
   components: {
+    faqHeading: "Preguntas frecuentes",
     copyButton: {
       clipboardUnavailable: "API del portapapeles no disponible",
       failedToCopy: "¡Error al copiar!",
@@ -407,6 +408,14 @@ export const common = {
       readAction: "Leer artículo →",
       codeFallback: "Código",
       codeExampleTemplate: "Ejemplo {lang} {index}",
+      authorRole: "Ingeniero de I+D",
+      aboutAuthor: "Sobre el autor",
+      authorBio:
+        "José M. Requena Plens es ingeniero de I+D que trabaja donde se cruzan la acústica, la electrónica y el firmware — escribe sobre sistemas embebidos, seguridad e infraestructura autoalojada.",
+      authorViewCv: "Ver CV",
+      authorAvatarAlt: "Foto de {author}",
+      aiDisclosure:
+        "Redactado con asistencia de IA; revisado, probado y verificado por el autor.",
     },
     blogTags: {
       titlePrefix: "Blog - #",
