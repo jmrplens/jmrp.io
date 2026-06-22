@@ -39,22 +39,25 @@ const icons: Record<IconItem["kind"], string> = {
 };
 ---
 
-<ul
+<div
   class="il"
+  role={ariaLabel ? "group" : undefined}
   aria-label={ariaLabel}
 >
-  {
-    items.map((it) => (
-      <li class="il__item">
-        <span
-          class={`i-${icons[it.kind]} il__icon il__icon--${it.kind}`}
-          aria-hidden="true"
-        />
-        <span class="il__text">{it.text}</span>
-      </li>
-    ))
-  }
-</ul>
+  <ul class="il__list">
+    {
+      items.map((it) => (
+        <li class="il__item">
+          <span
+            class={`i-${icons[it.kind]} il__icon il__icon--${it.kind}`}
+            aria-hidden="true"
+          />
+          <span class="il__text">{it.text}</span>
+        </li>
+      ))
+    }
+  </ul>
+</div>
 
 <style>
   .il {
@@ -63,7 +66,9 @@ const icons: Record<IconItem["kind"], string> = {
     --il-con: #f87171;
     --il-warn: #fbbf24;
     --il-info: #60a5fa;
+  }
 
+  .il__list {
     display: flex;
     flex-direction: column;
     gap: 0.4rem;

@@ -403,8 +403,8 @@ const charsets = [
 
 <style>
   .bfc {
-    margin: 1.5rem 0;
     padding: 1.25rem;
+    margin: 1.5rem 0;
     background: var(--color-bg-subtle);
     border: var(--border-1);
     border-radius: var(--radius-md);
@@ -480,15 +480,15 @@ const charsets = [
 
   .bfc-toggle-input {
     position: absolute;
-    opacity: 0;
     pointer-events: none;
+    opacity: 0%;
   }
 
   .bfc-toggle-track {
     position: relative;
-    grid-column: 1;
-    grid-row: 1 / span 2;
     flex-shrink: 0;
+    grid-row: 1 / span 2;
+    grid-column: 1;
     width: 42px;
     height: 24px;
     background: var(--color-border);
@@ -522,16 +522,16 @@ const charsets = [
   }
 
   .bfc-toggle-title {
-    grid-column: 2;
     grid-row: 1;
+    grid-column: 2;
     font-size: 0.88rem;
     font-weight: var(--fw-semibold);
     color: var(--color-text-heading);
   }
 
   .bfc-toggle-hint {
-    grid-column: 2;
     grid-row: 2;
+    grid-column: 2;
     font-size: 0.75rem;
     color: var(--color-text-muted);
   }
@@ -607,9 +607,11 @@ const charsets = [
   .bfc-headline--instant .bfc-headline-value {
     color: #ef4444;
   }
+
   .bfc-headline--short .bfc-headline-value {
     color: #f59e0b;
   }
+
   .bfc-headline--long .bfc-headline-value,
   .bfc-headline--bound .bfc-headline-value {
     color: #10b981;
@@ -618,9 +620,11 @@ const charsets = [
   :root[data-theme="dark"] .bfc-headline--instant .bfc-headline-value {
     color: #f87171;
   }
+
   :root[data-theme="dark"] .bfc-headline--short .bfc-headline-value {
     color: #fbbf24;
   }
+
   :root[data-theme="dark"] .bfc-headline--long .bfc-headline-value,
   :root[data-theme="dark"] .bfc-headline--bound .bfc-headline-value {
     color: #34d399;
@@ -646,14 +650,17 @@ const charsets = [
     color: #b91c1c;
     background: rgb(239 68 68 / 8%);
   }
+
   .bfc-verdict--short {
     color: #92400e;
     background: rgb(245 158 11 / 8%);
   }
+
   .bfc-verdict--long {
     color: #065f46;
     background: rgb(16 185 129 / 8%);
   }
+
   .bfc-verdict--bound {
     color: #065f46;
     background: rgb(16 185 129 / 10%);
@@ -662,9 +669,11 @@ const charsets = [
   :root[data-theme="dark"] .bfc-verdict--instant {
     color: #f87171;
   }
+
   :root[data-theme="dark"] .bfc-verdict--short {
     color: #fbbf24;
   }
+
   :root[data-theme="dark"] .bfc-verdict--long,
   :root[data-theme="dark"] .bfc-verdict--bound {
     color: #34d399;

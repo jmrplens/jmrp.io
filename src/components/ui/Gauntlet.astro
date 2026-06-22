@@ -156,6 +156,20 @@ const summary =
     margin: 1.5rem 0;
   }
 
+  /* Light-mode accents: darken the neon text colours to meet WCAG AA (>= 4.5:1)
+     on light backgrounds. Backgrounds stay as low-opacity tints. */
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) .gt {
+      --gt-pass: #0f6e3d;
+      --gt-danger: #be123c;
+    }
+  }
+
+  :root[data-theme="light"] .gt {
+    --gt-pass: #0f6e3d;
+    --gt-danger: #be123c;
+  }
+
   .gt__title {
     margin-bottom: 1rem;
     font-size: 1rem;
@@ -183,8 +197,8 @@ const summary =
   .gt__gate {
     position: relative;
     display: flex;
-    align-items: center;
     column-gap: 0.6rem;
+    align-items: center;
     padding: 0.6rem 0.85rem;
     background: var(--color-bg-subtle);
     border: var(--border-1);
@@ -310,8 +324,8 @@ const summary =
     top: 0.6rem;
     bottom: 0.6rem;
     left: 50%;
-    border-left: 2px dashed var(--gt-danger);
     content: "";
+    border-left: 2px dashed var(--gt-danger);
   }
 
   .gt__outcome--reject::before {
@@ -321,8 +335,8 @@ const summary =
     /* Run from the rail line (half a rail to the left) to the card's edge. */
     left: calc(var(--gt-rail) / -2);
     width: calc(var(--gt-rail) / 2);
-    border-top: 2px dashed var(--gt-danger);
     content: "";
+    border-top: 2px dashed var(--gt-danger);
   }
 
   .gt__caption {

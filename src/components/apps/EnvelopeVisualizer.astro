@@ -439,11 +439,29 @@ const segs = [
     --ev-tag: #f0789b;
     --ev-cipher: #b389f5;
 
-    margin: 1.5rem 0;
     padding: 1.25rem;
+    margin: 1.5rem 0;
     background: var(--color-bg-subtle);
     border: var(--border-1);
     border-radius: var(--radius-md);
+  }
+
+  /* Light-mode accents: the neon defaults are used as small label text, which
+     fails WCAG AA on light backgrounds. Darken them to >= 4.5:1. */
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) .ev {
+      --ev-ver: #92400e;
+      --ev-iv: #155e75;
+      --ev-tag: #9d174d;
+      --ev-cipher: #6d28d9;
+    }
+  }
+
+  :root[data-theme="light"] .ev {
+    --ev-ver: #92400e;
+    --ev-iv: #155e75;
+    --ev-tag: #9d174d;
+    --ev-cipher: #6d28d9;
   }
 
   .ev-inputs {
@@ -616,12 +634,15 @@ const segs = [
   .ev-seg-label--ver {
     color: var(--ev-ver);
   }
+
   .ev-seg-label--iv {
     color: var(--ev-iv);
   }
+
   .ev-seg-label--tag {
     color: var(--ev-tag);
   }
+
   .ev-seg-label--cipher {
     color: var(--ev-cipher);
   }
@@ -649,19 +670,22 @@ const segs = [
   }
 
   .ev-byte:hover {
-    transform: translateY(-1px);
     border-color: var(--color-text-muted);
+    transform: translateY(-1px);
   }
 
   .ev-byte--ver {
     border-bottom: 2px solid var(--ev-ver);
   }
+
   .ev-byte--iv {
     border-bottom: 2px solid var(--ev-iv);
   }
+
   .ev-byte--tag {
     border-bottom: 2px solid var(--ev-tag);
   }
+
   .ev-byte--cipher {
     border-bottom: 2px solid var(--ev-cipher);
   }
@@ -722,7 +746,7 @@ const segs = [
   }
 
   .ev-verdict--ok {
-    color: #047857;
+    color: #0f6e3d;
     background: rgb(16 185 129 / 10%);
     border-color: #10b981;
   }

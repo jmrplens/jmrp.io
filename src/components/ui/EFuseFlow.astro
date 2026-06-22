@@ -168,10 +168,10 @@ const { title, lanes, caption, ariaLabel } = Astro.props as Props;
 
   @media (prefers-color-scheme: light) {
     .eff {
-      --eff-sealed: #15803d;
+      --eff-sealed: #0f6e3d;
       --eff-reachable: #b45309;
       --eff-yes: #be123c;
-      --eff-no: #15803d;
+      --eff-no: #0f6e3d;
     }
   }
 
@@ -183,10 +183,10 @@ const { title, lanes, caption, ariaLabel } = Astro.props as Props;
   }
 
   :root[data-theme="light"] .eff {
-    --eff-sealed: #15803d;
+    --eff-sealed: #0f6e3d;
     --eff-reachable: #b45309;
     --eff-yes: #be123c;
-    --eff-no: #15803d;
+    --eff-no: #0f6e3d;
   }
 
   .eff__title {
@@ -228,8 +228,8 @@ const { title, lanes, caption, ariaLabel } = Astro.props as Props;
   .eff__diagram {
     display: flex;
     flex-wrap: wrap;
-    align-items: stretch;
     gap: 0.5rem;
+    align-items: stretch;
   }
 
   .eff__node {
