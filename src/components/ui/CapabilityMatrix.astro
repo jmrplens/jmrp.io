@@ -1,0 +1,257 @@
+---
+/**
+ * CapabilityMatrix Component
+ *
+ * A grid of "can / can't" capabilities: rows are subjects (e.g. derived keys),
+ * columns are capabilities, and each cell is yes / no / n-a rendered with both a
+ * glyph and a word (never colour alone). Good for "what each key can and can't
+ * do" separation-of-duties tables. Zero client JS; theme-aware; accessible (a
+ * real <table> with scoped headers + role-based cell text). All text is passed
+ * as props, so the component holds no i18n chrome of its own.
+ *
+ * @example
+ * <CapabilityMatrix
+ *   ariaLabel="What each derived key can and cannot do."
+ *   subjectHeader="Sub-key"
+ *   columns={["Encrypt / decrypt files", "Authenticate a file", "Verify the PIN"]}
+ *   rows={[
+ *     { label: "encKey", cells: ["yes", "no", "no"] },
+ *     { label: "macKey", cells: ["no", "yes", "no"] },
+ *     { label: "pinVerifier", cells: ["no", "no", "yes"] },
+ *   ]}
+ * />
+ */
+type Cell = "yes" | "no" | "na";
+
+interface Row {
+  /** Row (subject) label. */
+  label: string;
+  /** Optional note shown under the label. */
+  note?: string;
+  /** One value per column, in column order. */
+  cells: Cell[];
+}
+
+interface Props {
+  /** Column (capability) headers. */
+  columns: string[];
+  /** Rows (subjects) with one cell per column. */
+  rows: Row[];
+  /** Label for the top-left corner (the subject column). */
+  subjectHeader?: string;
+  /** Optional title above the figure. */
+  title?: string;
+  /** Caption below the figure. */
+  caption?: string;
+  /** Accessibility label (required). */
+  ariaLabel: string;
+  /** Word shown for a "yes" cell. */
+  yesLabel?: string;
+  /** Word shown for a "no" cell. */
+  noLabel?: string;
+  /** Word shown for a not-applicable cell. */
+  naLabel?: string;
+}
+
+const {
+  columns,
+  rows,
+  subjectHeader = "",
+  title,
+  caption,
+  ariaLabel,
+  yesLabel = "Yes",
+  noLabel = "No",
+  naLabel = "—",
+} = Astro.props;
+
+const cellIcon: Record<Cell, string> = {
+  yes: "i-mdi:check-circle",
+  no: "i-mdi:close-circle",
+  na: "i-mdi:minus-circle-outline",
+};
+const cellWord: Record<Cell, string> = {
+  yes: yesLabel,
+  no: noLabel,
+  na: naLabel,
+};
+---
+
+<figure
+  class="cap-mx"
+  role="img"
+  aria-label={ariaLabel}
+>
+  {title && <figcaption class="cap-mx__title">{title}</figcaption>}
+
+  <div class="cap-mx__scroll">
+    <table class="cap-mx__table">
+      {title && <caption class="sr-only">{title}</caption>}
+      <thead>
+        <tr>
+          <th
+            scope="col"
+            class="cap-mx__corner"
+            >{subjectHeader}</th
+          >
+          {
+            columns.map((c) => (
+              <th
+                scope="col"
+                class="cap-mx__colhead"
+              >
+                {c}
+              </th>
+            ))
+          }
+        </tr>
+      </thead>
+      <tbody>
+        {
+          rows.map((row) => (
+            <tr>
+              <th
+                scope="row"
+                class="cap-mx__rowhead"
+              >
+                <span class="cap-mx__rowlabel">{row.label}</span>
+                {row.note && <span class="cap-mx__rownote">{row.note}</span>}
+              </th>
+              {columns.map((_, c) => {
+                const v = row.cells[c] ?? "na";
+                return (
+                  <td class:list={["cap-mx__cell", `cap-mx__cell--${v}`]}>
+                    <span
+                      class:list={["cap-mx__icon", cellIcon[v]]}
+                      aria-hidden="true"
+                    />
+                    <span class="cap-mx__word">{cellWord[v]}</span>
+                  </td>
+                );
+              })}
+            </tr>
+          ))
+        }
+      </tbody>
+    </table>
+  </div>
+
+  {caption && <p class="cap-mx__caption">{caption}</p>}
+</figure>
+
+<style>
+  .cap-mx {
+    --cm-yes: #6ee7a8;
+    --cm-no: #f0789b;
+    --cm-na: var(--color-text-muted);
+
+    margin: 1.5rem 0;
+  }
+
+  .cap-mx__title {
+    margin-bottom: 1rem;
+    font-size: 1rem;
+    font-weight: var(--fw-semibold, 600);
+    color: var(--color-text-heading);
+  }
+
+  .cap-mx__scroll {
+    overflow-x: auto;
+  }
+
+  .cap-mx__table {
+    width: 100%;
+    font-size: 0.82rem;
+    border-collapse: collapse;
+  }
+
+  .cap-mx__corner {
+    padding: 0.45rem 0.7rem;
+    font-weight: var(--fw-semibold, 600);
+    color: var(--color-text-muted);
+    text-align: left;
+  }
+
+  .cap-mx__colhead {
+    padding: 0.45rem 0.7rem;
+    font-weight: var(--fw-semibold, 600);
+    vertical-align: bottom;
+    color: var(--color-text-heading);
+    text-align: center;
+  }
+
+  .cap-mx__rowhead {
+    padding: 0.45rem 0.7rem;
+    text-align: left;
+    white-space: nowrap;
+    border-top: var(--border-1);
+  }
+
+  .cap-mx__rowlabel {
+    display: block;
+    font-family: var(--font-mono);
+    font-weight: var(--fw-semibold, 600);
+    color: var(--color-text-heading);
+  }
+
+  .cap-mx__rownote {
+    display: block;
+    margin-top: 0.1rem;
+    font-size: 0.7rem;
+    color: var(--color-text-muted);
+    white-space: normal;
+  }
+
+  .cap-mx__cell {
+    padding: 0.45rem 0.7rem;
+    text-align: center;
+    border-top: var(--border-1);
+    border-left: var(--border-1);
+  }
+
+  .cap-mx__icon {
+    margin-right: 0.3rem;
+    font-size: 1.05rem;
+    vertical-align: -0.18em;
+  }
+
+  .cap-mx__cell--yes .cap-mx__icon {
+    color: var(--cm-yes);
+  }
+
+  .cap-mx__cell--no .cap-mx__icon {
+    color: var(--cm-no);
+  }
+
+  .cap-mx__cell--na .cap-mx__icon {
+    color: var(--cm-na);
+  }
+
+  .cap-mx__word {
+    font-size: 0.78rem;
+    color: var(--color-text);
+  }
+
+  .cap-mx__cell--no .cap-mx__word {
+    color: var(--color-text-muted);
+  }
+
+  .cap-mx__caption {
+    margin-top: 1rem;
+    font-size: 0.8125rem;
+    font-style: italic;
+    color: var(--color-text-muted);
+    text-align: center;
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    white-space: nowrap;
+    clip-path: inset(50%);
+  }
+</style>

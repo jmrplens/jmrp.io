@@ -1,0 +1,390 @@
+---
+/**
+ * AttackSurfaceMatrix Component
+ *
+ * A side-by-side "threat lanes" card contrasting two attacker models (e.g. the
+ * ONLINE attacker who must guess on the device vs the OFFLINE attacker who has
+ * dumped the flash and grinds on a GPU). Each lane lists what the attacker can
+ * do, the rate they get, and the single control that actually stops them. Built
+ * to make the online-vs-offline split tangible.
+ *
+ * Content copy is passed in as props; chrome (the "stopped by" label, sr-only
+ * table) is localised via components.attackSurfaceMatrix.* keys. Theme-aware,
+ * zero-JS, responsive (lanes stack on mobile), accessible (role="img" + table).
+ *
+ * @example
+ * <AttackSurfaceMatrix
+ *   ariaLabel="The online attacker guesses on the device and is stopped by the lockout/wipe guard; the offline attacker grinds on a GPU and is stopped by device binding."
+ *   lanes={[
+ *     {
+ *       kind: "online",
+ *       title: "Online attacker",
+ *       subtitle: "Has the device, types PINs",
+ *       rate: "~10 guesses before wipe",
+ *       can: ["Enter PINs on the keypad", "Reboot and retry"],
+ *       cannot: ["Bypass the attempt counter", "Beat the RTC lockout timer"],
+ *       stoppedBy: "Brute-force guard (lockout / wipe-10)",
+ *     },
+ *     {
+ *       kind: "offline",
+ *       title: "Offline attacker",
+ *       subtitle: "Dumped the flash, runs a GPU",
+ *       rate: "11.16 MH/s — all 10^4 PINs in < 1 ms",
+ *       can: ["Read ciphertext and salt", "Run unlimited PBKDF2 on a GPU"],
+ *       cannot: ["Reproduce the device secret off-chip"],
+ *       stoppedBy: "Device-bound key derivation (eFuse-HMAC / NVS pepper)",
+ *     },
+ *   ]}
+ * />
+ */
+
+import { getLangFromUrl, useTranslations } from "@i18n/utils";
+
+interface Lane {
+  /** "online" or "offline" — drives the accent color and default icon. */
+  kind: "online" | "offline";
+  /** Lane heading. */
+  title: string;
+  /** Short descriptor under the heading. */
+  subtitle?: string;
+  /** Effective guess rate this attacker gets. */
+  rate?: string;
+  /** Capabilities this attacker has. */
+  can: string[];
+  /** Things this attacker cannot do. */
+  cannot: string[];
+  /** The single control that stops this attacker. */
+  stoppedBy: string;
+}
+
+interface Props {
+  /** Optional title above the figure. */
+  title?: string;
+  /** The two (or more) attacker lanes. */
+  lanes: Lane[];
+  /** Caption below the figure. */
+  caption?: string;
+  /** Accessibility label for the whole figure (required). */
+  ariaLabel: string;
+}
+
+const locale = getLangFromUrl(Astro.url);
+const t = useTranslations(locale);
+
+const { title, lanes, caption, ariaLabel } = Astro.props as Props;
+
+const ICON: Record<Lane["kind"], string> = {
+  online: "i-mdi:gesture-tap-button",
+  offline: "i-mdi:chip",
+};
+---
+
+<figure
+  class="asm"
+  role="img"
+  aria-label={ariaLabel}
+>
+  {title && <figcaption class="asm__title">{title}</figcaption>}
+
+  <div class="asm__lanes">
+    {
+      lanes.map((lane) => (
+        <div class={`asm__lane asm__lane--${lane.kind}`}>
+          <div class="asm__lane-head">
+            <span
+              class={`asm__lane-icon ${ICON[lane.kind]}`}
+              aria-hidden="true"
+            />
+            <span class="asm__lane-titles">
+              <span class="asm__lane-title">{lane.title}</span>
+              {lane.subtitle && (
+                <span class="asm__lane-subtitle">{lane.subtitle}</span>
+              )}
+            </span>
+          </div>
+
+          {lane.rate && (
+            <p class="asm__rate">
+              <span
+                class="asm__rate-icon i-mdi:speedometer"
+                aria-hidden="true"
+              />
+              {lane.rate}
+            </p>
+          )}
+
+          <ul class="asm__list asm__list--can">
+            {lane.can.map((item) => (
+              <li>
+                <span
+                  class="asm__bullet i-mdi:check-bold"
+                  aria-hidden="true"
+                />
+                {item}
+              </li>
+            ))}
+          </ul>
+
+          <ul class="asm__list asm__list--cannot">
+            {lane.cannot.map((item) => (
+              <li>
+                <span
+                  class="asm__bullet i-mdi:close-thick"
+                  aria-hidden="true"
+                />
+                {item}
+              </li>
+            ))}
+          </ul>
+
+          <p class="asm__stopped">
+            <span
+              class="asm__stopped-icon i-mdi:shield-lock"
+              aria-hidden="true"
+            />
+            <span>
+              <span class="asm__stopped-label">
+                {t("components.attackSurfaceMatrix.stoppedBy")}
+              </span>
+              {lane.stoppedBy}
+            </span>
+          </p>
+        </div>
+      ))
+    }
+  </div>
+
+  <table class="sr-only">
+    <caption
+      >{title ?? t("components.attackSurfaceMatrix.tableCaption")}</caption
+    >
+    <thead>
+      <tr>
+        <th scope="col">{t("components.attackSurfaceMatrix.attacker")}</th>
+        <th scope="col">{t("components.attackSurfaceMatrix.rate")}</th>
+        <th scope="col">{t("components.attackSurfaceMatrix.can")}</th>
+        <th scope="col">{t("components.attackSurfaceMatrix.cannot")}</th>
+        <th scope="col">{t("components.attackSurfaceMatrix.stoppedBy")}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {
+        lanes.map((lane) => (
+          <tr>
+            <td>
+              {lane.title}
+              {lane.subtitle ? ` (${lane.subtitle})` : ""}
+            </td>
+            <td>{lane.rate ?? "—"}</td>
+            <td>{lane.can.join("; ")}</td>
+            <td>{lane.cannot.join("; ")}</td>
+            <td>{lane.stoppedBy}</td>
+          </tr>
+        ))
+      }
+    </tbody>
+  </table>
+
+  {caption && <p class="asm__caption">{caption}</p>}
+</figure>
+
+<style>
+  .asm {
+    --asm-online: #7aa2ff;
+    --asm-offline: #f0789b;
+    --asm-can: #6ee7a8;
+    --asm-cannot: #f0789b;
+
+    margin: 1.5rem 0;
+  }
+
+  @media (prefers-color-scheme: light) {
+    .asm {
+      --asm-online: #1d4ed8;
+      --asm-offline: #be123c;
+      --asm-can: #15803d;
+      --asm-cannot: #be123c;
+    }
+  }
+
+  :root[data-theme="dark"] .asm {
+    --asm-online: #7aa2ff;
+    --asm-offline: #f0789b;
+    --asm-can: #6ee7a8;
+    --asm-cannot: #f0789b;
+  }
+
+  :root[data-theme="light"] .asm {
+    --asm-online: #1d4ed8;
+    --asm-offline: #be123c;
+    --asm-can: #15803d;
+    --asm-cannot: #be123c;
+  }
+
+  .asm__title {
+    margin-bottom: 1rem;
+    font-size: 1rem;
+    font-weight: var(--fw-semibold, 600);
+    color: var(--color-text-heading);
+  }
+
+  .asm__lanes {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+    gap: 1rem;
+  }
+
+  .asm__lane {
+    display: flex;
+    flex-direction: column;
+    padding: 1rem;
+    background: var(--color-bg-subtle);
+    border: var(--border-1);
+    border-top: 3px solid var(--color-border);
+    border-radius: var(--radius-md, 8px);
+  }
+
+  .asm__lane--online {
+    border-top-color: var(--asm-online);
+  }
+
+  .asm__lane--offline {
+    border-top-color: var(--asm-offline);
+  }
+
+  .asm__lane-head {
+    display: flex;
+    gap: 0.6rem;
+    align-items: center;
+    margin-bottom: 0.7rem;
+  }
+
+  .asm__lane-icon {
+    flex-shrink: 0;
+    width: 1.5rem;
+    height: 1.5rem;
+  }
+
+  .asm__lane--online .asm__lane-icon {
+    color: var(--asm-online);
+  }
+
+  .asm__lane--offline .asm__lane-icon {
+    color: var(--asm-offline);
+  }
+
+  .asm__lane-titles {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .asm__lane-title {
+    font-size: 0.95rem;
+    font-weight: var(--fw-bold, 700);
+    color: var(--color-text-heading);
+  }
+
+  .asm__lane-subtitle {
+    font-size: 0.78rem;
+    color: var(--color-text-muted);
+  }
+
+  .asm__rate {
+    display: flex;
+    gap: 0.4rem;
+    align-items: center;
+    padding: 0.4rem 0.55rem;
+    margin: 0 0 0.7rem;
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--color-text);
+    background: var(--color-bg-secondary);
+    border-radius: var(--radius-sm, 4px);
+  }
+
+  .asm__rate-icon {
+    flex-shrink: 0;
+    width: 0.95rem;
+    height: 0.95rem;
+    color: var(--color-text-muted);
+  }
+
+  .asm__list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    padding: 0;
+    margin: 0 0 0.6rem;
+    list-style: none;
+  }
+
+  .asm__list li {
+    display: flex;
+    gap: 0.45rem;
+    align-items: baseline;
+    font-size: 0.82rem;
+    color: var(--color-text);
+  }
+
+  .asm__bullet {
+    position: relative;
+    top: 0.15rem;
+    flex-shrink: 0;
+    width: 0.85rem;
+    height: 0.85rem;
+  }
+
+  .asm__list--can .asm__bullet {
+    color: var(--asm-can);
+  }
+
+  .asm__list--cannot .asm__bullet {
+    color: var(--asm-cannot);
+  }
+
+  .asm__stopped {
+    display: flex;
+    gap: 0.5rem;
+    align-items: flex-start;
+    padding-top: 0.7rem;
+    margin: auto 0 0;
+    font-size: 0.82rem;
+    color: var(--color-text);
+    border-top: var(--border-1);
+  }
+
+  .asm__stopped-icon {
+    flex-shrink: 0;
+    width: 1.05rem;
+    height: 1.05rem;
+    color: var(--color-primary);
+  }
+
+  .asm__stopped-label {
+    display: block;
+    font-size: 0.7rem;
+    font-weight: var(--fw-bold, 700);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .asm__caption {
+    margin-top: 1rem;
+    font-size: 0.8125rem;
+    font-style: italic;
+    color: var(--color-text-muted);
+    text-align: center;
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    white-space: nowrap;
+    clip-path: inset(50%);
+  }
+</style>

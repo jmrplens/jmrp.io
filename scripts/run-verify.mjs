@@ -112,8 +112,9 @@ function runVerify() {
     {
       name: "Analyze: SonarCloud Issues",
       command: "node scripts/ci/get-sonar-issues.mjs",
-      condition: () =>
-        !!process.env.SONAR_TOKEN && !!process.env.SONAR_PROJECT_KEY,
+      // Project key falls back to sonar-project.properties, so SONAR_TOKEN alone
+      // is enough to gate this step.
+      condition: () => !!process.env.SONAR_TOKEN,
     },
     { name: "Tests: Playwright E2E", command: "pnpm test:e2e" },
   ];

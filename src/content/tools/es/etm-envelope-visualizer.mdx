@@ -1,0 +1,72 @@
+---
+title: "Visualizador del sobre Encrypt-then-MAC"
+slug: "etm-envelope-visualizer"
+description: "Sella un secreto en un sobre encrypt-then-MAC, altera un byte y observa cómo la lectura verifica el tag antes de descifrar y se bloquea ante el fallo."
+subtitle: "Demo interactiva de [ver][iv][hmacTag][cipher] con AES-256-CBC + HMAC-SHA256 real en tu navegador: altera un byte y mira cómo la verificación antes de descifrar lo rechaza."
+icon: "i-mdi:lock-check-outline"
+category: "security"
+tags: ["security", "cryptography", "encrypt-then-mac", "aes", "hmac", "firmware"]
+appComponent: "EnvelopeVisualizer"
+lang: "es"
+---
+
+<h2>Sobre esta herramienta</h2>
+<p>
+  Cada fichero de la bóveda es un sobre <strong>encrypt-then-MAC</strong>:{" "}
+  <code>[ver][iv][hmacTag][cipher]</code>. Esta herramienta construye uno de
+  verdad en tu navegador — deriva subclaves <code>encKey</code> y{" "}
+  <code>macKey</code> distintas, cifra el secreto con{" "}
+  <strong>AES-256-CBC</strong> y autentica juntos el byte de versión, el IV y el
+  texto cifrado con <strong>HMAC-SHA256</strong>.
+</p>
+<p>
+  Es la compañera interactiva del artículo{" "}
+  <a href="/es/blog/011-encrypt-then-mac-vault/">Una bóveda con bloqueo ante fallos: Encrypt-then-MAC en un MCU</a>.
+</p>
+
+<h3>Cómo usarla</h3>
+<ol>
+  <li>
+    Escribe un secreto y una frase de paso — el sobre se sella en vivo según
+    escribes.
+  </li>
+  <li>
+    <strong>Pulsa cualquier byte</strong> para alterarlo, simulando manipulación
+    en una flash que un atacante ha volcado.
+  </li>
+  <li>
+    Observa el <strong>camino de lectura</strong>: el tag se recalcula y compara{" "}
+    <em>antes</em> de cualquier descifrado. Un solo byte alterado hace fallar el
+    MAC, así que la lectura <strong>se bloquea ante el fallo</strong> — no se
+    intenta descifrar y no se produce texto plano.
+  </li>
+  <li>
+    Pulsa <strong>Restaurar</strong> para deshacer la manipulación y ver cómo la
+    lectura vuelve a tener éxito.
+  </li>
+</ol>
+
+<h3>Qué muestra</h3>
+<ul>
+  <li>
+    <strong>Separación de claves</strong> — una frase de paso se convierte en una
+    clave maestra, que se abre en subclaves <code>encKey</code> y{" "}
+    <code>macKey</code> distintas. La clave de cifrado y la de MAC nunca son la
+    misma.
+  </li>
+  <li>
+    <strong>Verificar antes de descifrar</strong> — el tag se comprueba primero,
+    así que un fichero manipulado nunca llega al descifrado AES-CBC (donde, si
+    no, viviría un oráculo de padding).
+  </li>
+  <li>
+    <strong>Bloqueo ante fallos</strong> — cualquier fallo no devuelve nada,
+    nunca un texto plano parcial o "a medias".
+  </li>
+</ul>
+
+<h3>Privacidad</h3>
+<p>
+  Toda la criptografía se ejecuta enteramente en tu navegador con la Web Crypto
+  API. Nada de lo que escribes se transmite a ningún servidor.
+</p>

@@ -1,0 +1,373 @@
+---
+/**
+ * EFuseFlow Component
+ *
+ * A zero-JS diagram of where a per-device secret lives relative to the CPU's
+ * reach. Two stacked lanes — one "inside the peripheral" (the eFuse key never
+ * crosses the hardware boundary; only the HMAC result comes back) and one
+ * "reachable by software" (a stored pepper the CPU can read) — make the security
+ * difference between the two device-binding backends legible at a glance.
+ *
+ * Content copy is passed in as props; chrome (reach labels, sr-only table) is
+ * localised via components.efuseFlow.* keys. Theme-aware, responsive, accessible
+ * (role="img" + sr-only table).
+ *
+ * @example
+ * <EFuseFlow
+ *   ariaLabel="The eFuse key stays inside the HMAC peripheral; software only ever sees the HMAC output. The NVS pepper is stored where the CPU can read it."
+ *   lanes={[
+ *     {
+ *       kind: "sealed",
+ *       title: "eFuse-HMAC (ESP32-S3)",
+ *       secret: "eFuse key block",
+ *       secretNote: "burned HMAC_UP, read-protected",
+ *       crosses: "HMAC-SHA256 result (32 B)",
+ *       reachable: false,
+ *       note: "Key bytes never leave the peripheral — unreadable by software or JTAG.",
+ *     },
+ *     {
+ *       kind: "reachable",
+ *       title: "NVS pepper (classic ESP32)",
+ *       secret: "32-byte pepper",
+ *       secretNote: "encrypted NVS",
+ *       crosses: "the pepper itself",
+ *       reachable: true,
+ *       note: "Software-reachable: confidentiality rests on flash + NVS encryption.",
+ *     },
+ *   ]}
+ * />
+ */
+
+import { getLangFromUrl, useTranslations } from "@i18n/utils";
+
+interface Lane {
+  /** "sealed" (key never leaves HW) or "reachable" (CPU can read the secret). */
+  kind: "sealed" | "reachable";
+  /** Lane heading (the backend name). */
+  title: string;
+  /** Name of the device secret held in this lane. */
+  secret: string;
+  /** Short note under the secret (where/how it is held). */
+  secretNote?: string;
+  /** What actually crosses the boundary to software. */
+  crosses: string;
+  /** Whether software can read the secret itself. */
+  reachable: boolean;
+  /** One-line takeaway for the lane. */
+  note?: string;
+}
+
+interface Props {
+  /** Optional title above the figure. */
+  title?: string;
+  /** The backend lanes (typically two). */
+  lanes: Lane[];
+  /** Caption below the figure. */
+  caption?: string;
+  /** Accessibility label for the whole figure (required). */
+  ariaLabel: string;
+}
+
+const locale = getLangFromUrl(Astro.url);
+const t = useTranslations(locale);
+
+const { title, lanes, caption, ariaLabel } = Astro.props as Props;
+---
+
+<figure
+  class="eff"
+  role="img"
+  aria-label={ariaLabel}
+>
+  {title && <figcaption class="eff__title">{title}</figcaption>}
+
+  <div class="eff__lanes">
+    {
+      lanes.map((lane) => (
+        <div class={`eff__lane eff__lane--${lane.kind}`}>
+          <p class="eff__lane-title">{lane.title}</p>
+
+          <div class="eff__diagram">
+            <span class="eff__node eff__node--secret">
+              <span
+                class={`eff__node-icon ${lane.kind === "sealed" ? "i-mdi:lock" : "i-mdi:database-lock"}`}
+                aria-hidden="true"
+              />
+              <span class="eff__node-name">{lane.secret}</span>
+              {lane.secretNote && (
+                <span class="eff__node-note">{lane.secretNote}</span>
+              )}
+            </span>
+
+            <span
+              class="eff__edge"
+              aria-hidden="true"
+            >
+              <span class="eff__edge-label">{lane.crosses}</span>
+              <span class="eff__edge-arrow i-mdi:arrow-right-thin" />
+            </span>
+
+            <span class="eff__node eff__node--cpu">
+              <span
+                class="eff__node-icon i-mdi:cpu-64-bit"
+                aria-hidden="true"
+              />
+              <span class="eff__node-name">CPU / software</span>
+            </span>
+          </div>
+
+          <p class={`eff__reach eff__reach--${lane.reachable ? "yes" : "no"}`}>
+            <span
+              class={`eff__reach-icon ${lane.reachable ? "i-mdi:eye-outline" : "i-mdi:eye-off-outline"}`}
+              aria-hidden="true"
+            />
+            {lane.reachable
+              ? t("components.efuseFlow.reachYes")
+              : t("components.efuseFlow.reachNo")}
+          </p>
+
+          {lane.note && <p class="eff__note">{lane.note}</p>}
+        </div>
+      ))
+    }
+  </div>
+
+  <table class="sr-only">
+    <caption>{title ?? t("components.efuseFlow.tableCaption")}</caption>
+    <thead>
+      <tr>
+        <th scope="col">{t("components.efuseFlow.backend")}</th>
+        <th scope="col">{t("components.efuseFlow.deviceSecret")}</th>
+        <th scope="col">{t("components.efuseFlow.crossesToSoftware")}</th>
+        <th scope="col">{t("components.efuseFlow.softwareReachable")}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {
+        lanes.map((lane) => (
+          <tr>
+            <td>{lane.title}</td>
+            <td>
+              {lane.secret}
+              {lane.secretNote ? ` (${lane.secretNote})` : ""}
+            </td>
+            <td>{lane.crosses}</td>
+            <td>
+              {lane.reachable
+                ? t("components.efuseFlow.yes")
+                : t("components.efuseFlow.no")}
+            </td>
+          </tr>
+        ))
+      }
+    </tbody>
+  </table>
+
+  {caption && <p class="eff__caption">{caption}</p>}
+</figure>
+
+<style>
+  .eff {
+    --eff-sealed: #6ee7a8;
+    --eff-reachable: #fbbf24;
+    --eff-yes: #f0789b;
+    --eff-no: #6ee7a8;
+
+    margin: 1.5rem 0;
+  }
+
+  @media (prefers-color-scheme: light) {
+    .eff {
+      --eff-sealed: #0f6e3d;
+      --eff-reachable: #b45309;
+      --eff-yes: #be123c;
+      --eff-no: #0f6e3d;
+    }
+  }
+
+  :root[data-theme="dark"] .eff {
+    --eff-sealed: #6ee7a8;
+    --eff-reachable: #fbbf24;
+    --eff-yes: #f0789b;
+    --eff-no: #6ee7a8;
+  }
+
+  :root[data-theme="light"] .eff {
+    --eff-sealed: #0f6e3d;
+    --eff-reachable: #b45309;
+    --eff-yes: #be123c;
+    --eff-no: #0f6e3d;
+  }
+
+  .eff__title {
+    margin-bottom: 1rem;
+    font-size: 1rem;
+    font-weight: var(--fw-semibold, 600);
+    color: var(--color-text-heading);
+  }
+
+  .eff__lanes {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .eff__lane {
+    padding: 1rem;
+    background: var(--color-bg-subtle);
+    border: var(--border-1);
+    border-left: 3px solid var(--color-border);
+    border-radius: var(--radius-md, 8px);
+  }
+
+  .eff__lane--sealed {
+    border-left-color: var(--eff-sealed);
+  }
+
+  .eff__lane--reachable {
+    border-left-color: var(--eff-reachable);
+  }
+
+  .eff__lane-title {
+    margin: 0 0 0.8rem;
+    font-size: 0.9rem;
+    font-weight: var(--fw-bold, 700);
+    color: var(--color-text-heading);
+  }
+
+  .eff__diagram {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: stretch;
+  }
+
+  .eff__node {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 8rem;
+    padding: 0.6rem 0.7rem;
+    text-align: center;
+    background: var(--color-bg-secondary);
+    border: var(--border-1);
+    border-radius: var(--radius-sm, 4px);
+  }
+
+  .eff__lane--sealed .eff__node--secret {
+    border-color: var(--eff-sealed);
+  }
+
+  .eff__lane--reachable .eff__node--secret {
+    border-color: var(--eff-reachable);
+  }
+
+  .eff__node-icon {
+    width: 1.4rem;
+    height: 1.4rem;
+    color: var(--color-text-muted);
+  }
+
+  .eff__lane--sealed .eff__node--secret .eff__node-icon {
+    color: var(--eff-sealed);
+  }
+
+  .eff__lane--reachable .eff__node--secret .eff__node-icon {
+    color: var(--eff-reachable);
+  }
+
+  .eff__node-name {
+    margin-top: 0.25rem;
+    font-size: 0.8rem;
+    font-weight: var(--fw-semibold, 600);
+    color: var(--color-text-heading);
+  }
+
+  .eff__node-note {
+    margin-top: 0.1rem;
+    font-size: 0.7rem;
+    color: var(--color-text-muted);
+  }
+
+  .eff__edge {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 6rem;
+    padding: 0 0.3rem;
+  }
+
+  .eff__edge-label {
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    color: var(--color-text-muted);
+    text-align: center;
+  }
+
+  .eff__edge-arrow {
+    width: 1.6rem;
+    height: 1.6rem;
+    color: var(--color-text-muted);
+  }
+
+  .eff__reach {
+    display: flex;
+    gap: 0.4rem;
+    align-items: center;
+    margin: 0.8rem 0 0;
+    font-size: 0.82rem;
+    font-weight: var(--fw-semibold, 600);
+  }
+
+  .eff__reach--yes {
+    color: var(--eff-yes);
+  }
+
+  .eff__reach--no {
+    color: var(--eff-no);
+  }
+
+  .eff__reach-icon {
+    flex-shrink: 0;
+    width: 1rem;
+    height: 1rem;
+  }
+
+  .eff__note {
+    margin: 0.4rem 0 0;
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+  }
+
+  .eff__caption {
+    margin-top: 1rem;
+    font-size: 0.8125rem;
+    font-style: italic;
+    color: var(--color-text-muted);
+    text-align: center;
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    white-space: nowrap;
+    clip-path: inset(50%);
+  }
+
+  @media (width <= 640px) {
+    .eff__diagram {
+      flex-direction: column;
+    }
+
+    .eff__edge-arrow {
+      transform: rotate(90deg);
+    }
+  }
+</style>

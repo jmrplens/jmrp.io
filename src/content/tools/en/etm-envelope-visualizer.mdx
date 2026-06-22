@@ -1,0 +1,69 @@
+---
+title: "Encrypt-then-MAC Envelope Visualizer"
+slug: "etm-envelope-visualizer"
+description: "Seal a secret into an encrypt-then-MAC envelope, flip a byte, and watch the read verify the tag before decrypting — and fail closed on tampering."
+subtitle: "An interactive [ver][iv][hmacTag][cipher] demo with real AES-256-CBC + HMAC-SHA256 in your browser: tamper a byte and see verify-before-decrypt reject it."
+icon: "i-mdi:lock-check-outline"
+category: "security"
+tags: ["security", "cryptography", "encrypt-then-mac", "aes", "hmac", "firmware"]
+appComponent: "EnvelopeVisualizer"
+---
+
+<h2>About This Tool</h2>
+<p>
+  Every file in the vault is an <strong>encrypt-then-MAC</strong> envelope:{" "}
+  <code>[ver][iv][hmacTag][cipher]</code>. This tool builds one for real in your
+  browser — it derives separate <code>encKey</code> and <code>macKey</code>{" "}
+  sub-keys, encrypts the secret with <strong>AES-256-CBC</strong>, and
+  authenticates the version byte, IV, and ciphertext together with{" "}
+  <strong>HMAC-SHA256</strong>.
+</p>
+<p>
+  It is the interactive companion to the article{" "}
+  <a href="/blog/011-encrypt-then-mac-vault/">A Vault File That Fails Closed: Encrypt-then-MAC on an MCU</a>.
+</p>
+
+<h3>How to Use</h3>
+<ol>
+  <li>
+    Type a secret and a passphrase — the envelope is sealed live as you type.
+  </li>
+  <li>
+    <strong>Click any byte</strong> to flip it, simulating tampering on a flash
+    chip an attacker has dumped.
+  </li>
+  <li>
+    Watch the <strong>read path</strong>: the tag is recomputed and compared{" "}
+    <em>before</em> any decryption. A single flipped byte fails the MAC, so the
+    read <strong>fails closed</strong> — no decryption is attempted and no
+    plaintext is produced.
+  </li>
+  <li>
+    Hit <strong>Restore</strong> to undo the tampering and watch the read
+    succeed again.
+  </li>
+</ol>
+
+<h3>What It Shows</h3>
+<ul>
+  <li>
+    <strong>Key separation</strong> — one passphrase becomes a master key, which
+    fans out into distinct <code>encKey</code> and <code>macKey</code> sub-keys.
+    The encryption key and the MAC key are never the same.
+  </li>
+  <li>
+    <strong>Verify-before-decrypt</strong> — the tag is checked first, so a
+    tampered file never reaches the AES-CBC decrypt path (where a padding oracle
+    would otherwise live).
+  </li>
+  <li>
+    <strong>Fail-closed</strong> — any failure returns nothing, never a partial
+    or "best-effort" plaintext.
+  </li>
+</ul>
+
+<h3>Privacy</h3>
+<p>
+  All cryptography runs entirely in your browser via the Web Crypto API. Nothing
+  you type is transmitted to any server.
+</p>

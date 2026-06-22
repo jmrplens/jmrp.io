@@ -141,4 +141,4 @@ const runAudit = async () => {
   if (totalIssues === 0) console.log("✨ MOBILE COMBINATIONS PASSED 99%!");
 };
 
-runAudit();
+await runAudit();

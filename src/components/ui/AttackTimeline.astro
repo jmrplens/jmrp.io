@@ -1,0 +1,277 @@
+---
+/**
+ * AttackTimeline Component
+ *
+ * A numbered, vertical timeline of attacker steps — for walking through an
+ * exploit (e.g. a padding-oracle byte-recovery loop) and showing where a defence
+ * cuts it off. Each step has a kind that colours its rail node and adds a
+ * non-colour glyph: `attacker` (a move the adversary makes), `loop` (a repeated
+ * step), `leak` (information gained), or `blocked` (where the design stops it).
+ * Zero client JS; theme-aware; accessible (role="img" + .sr-only table). Step
+ * text is passed as props; generic chrome (sr-only headers, kind labels) is
+ * localised via components.attackTimeline.* keys.
+ *
+ * @example
+ * <AttackTimeline
+ *   ariaLabel="Padding-oracle attack steps and where encrypt-then-MAC blocks them."
+ *   steps={[
+ *     { kind: "attacker", text: "Capture one ciphertext block." },
+ *     { kind: "loop", text: "Flip the last byte of the previous block; submit." },
+ *     { kind: "leak", text: "'Bad padding' vs other error reveals one plaintext byte." },
+ *     { kind: "attacker", text: "Repeat across all 256 values, then all 16 bytes." },
+ *     { kind: "blocked", text: "EtM: the MAC check fails first — decrypt is never reached." },
+ *   ]}
+ * />
+ */
+type Kind = "attacker" | "loop" | "leak" | "blocked";
+
+interface Step {
+  /** Step text. */
+  text: string;
+  /** Step kind (controls glyph + accent). */
+  kind?: Kind;
+  /** Optional short note under the step. */
+  note?: string;
+}
+
+interface Props {
+  /** Ordered attacker steps. */
+  steps: Step[];
+  /** Optional title above the figure. */
+  title?: string;
+  /** Caption below the figure. */
+  caption?: string;
+  /** Accessibility label (required). */
+  ariaLabel: string;
+}
+
+import { getLangFromUrl, useTranslations } from "@i18n/utils";
+
+const { steps, title, caption, ariaLabel } = Astro.props;
+
+const locale = getLangFromUrl(Astro.url);
+const t = useTranslations(locale);
+
+const kindIcon: Record<Kind, string> = {
+  attacker: "i-mdi:account-arrow-right",
+  loop: "i-mdi:refresh",
+  leak: "i-mdi:water-alert",
+  blocked: "i-mdi:shield-check",
+};
+const kindName: Record<Kind, string> = {
+  attacker: t("components.attackTimeline.attacker"),
+  loop: t("components.attackTimeline.loop"),
+  leak: t("components.attackTimeline.leak"),
+  blocked: t("components.attackTimeline.blocked"),
+};
+---
+
+<figure
+  class="atk-tl"
+  role="img"
+  aria-label={ariaLabel}
+>
+  {title && <figcaption class="atk-tl__title">{title}</figcaption>}
+
+  <ol class="atk-tl__list">
+    {
+      steps.map((s, i) => {
+        const kind = s.kind ?? "attacker";
+        return (
+          <li class:list={["atk-tl__step", `atk-tl__step--${kind}`]}>
+            <span
+              class="atk-tl__node"
+              aria-hidden="true"
+            >
+              <span class="atk-tl__num">{i + 1}</span>
+            </span>
+            <span class="atk-tl__card">
+              <span
+                class:list={["atk-tl__icon", kindIcon[kind]]}
+                aria-hidden="true"
+              />
+              <span class="atk-tl__body">
+                <span class="atk-tl__text">{s.text}</span>
+                {s.note && <span class="atk-tl__note">{s.note}</span>}
+              </span>
+            </span>
+          </li>
+        );
+      })
+    }
+  </ol>
+
+  <table class="sr-only">
+    <caption>{title ?? ariaLabel}</caption>
+    <thead>
+      <tr>
+        <th scope="col">{t("components.attackTimeline.step")}</th>
+        <th scope="col">{t("components.attackTimeline.kind")}</th>
+        <th scope="col">{t("components.attackTimeline.action")}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {
+        steps.map((s, i) => (
+          <tr>
+            <td>{i + 1}</td>
+            <td>{kindName[s.kind ?? "attacker"]}</td>
+            <td>{s.text}</td>
+          </tr>
+        ))
+      }
+    </tbody>
+  </table>
+
+  {caption && <p class="atk-tl__caption">{caption}</p>}
+</figure>
+
+<style>
+  .atk-tl {
+    --at-attacker: #fbbf24;
+    --at-loop: #7aa2ff;
+    --at-leak: #f0789b;
+    --at-blocked: #6ee7a8;
+    --at-on: #0b0b13;
+
+    margin: 1.5rem 0;
+  }
+
+  .atk-tl__title {
+    margin-bottom: 1rem;
+    font-size: 1rem;
+    font-weight: var(--fw-semibold, 600);
+    color: var(--color-text-heading);
+  }
+
+  .atk-tl__list {
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+  }
+
+  .atk-tl__step {
+    position: relative;
+    display: flex;
+    gap: 0.85rem;
+    align-items: stretch;
+    padding-bottom: 0.7rem;
+  }
+
+  /* The connecting rail between nodes. */
+  .atk-tl__step::before {
+    position: absolute;
+    top: 1.6rem;
+    bottom: -0.1rem;
+    left: 0.8rem;
+    width: 2px;
+    content: "";
+    background: var(--color-border);
+  }
+
+  .atk-tl__step:last-child {
+    padding-bottom: 0;
+  }
+
+  .atk-tl__step:last-child::before {
+    display: none;
+  }
+
+  .atk-tl__node {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 1.65rem;
+    height: 1.65rem;
+    font-size: 0.74rem;
+    font-weight: var(--fw-bold, 700);
+    color: var(--at-on);
+    background: var(--at-accent, var(--color-border));
+    border-radius: 50%;
+  }
+
+  .atk-tl__step--attacker {
+    --at-accent: var(--at-attacker);
+  }
+
+  .atk-tl__step--loop {
+    --at-accent: var(--at-loop);
+  }
+
+  .atk-tl__step--leak {
+    --at-accent: var(--at-leak);
+  }
+
+  .atk-tl__step--blocked {
+    --at-accent: var(--at-blocked);
+  }
+
+  .atk-tl__card {
+    display: flex;
+    flex: 1;
+    gap: 0.55rem;
+    align-items: flex-start;
+    min-width: 0;
+    padding: 0.5rem 0.75rem;
+    background: var(--color-bg-subtle);
+    border: var(--border-1);
+    border-left: 3px solid var(--at-accent, var(--color-border));
+    border-radius: var(--radius-sm, 4px);
+  }
+
+  .atk-tl__step--blocked .atk-tl__card {
+    background: color-mix(in srgb, var(--at-blocked) 12%, transparent);
+  }
+
+  .atk-tl__icon {
+    flex-shrink: 0;
+    margin-top: 0.1rem;
+    font-size: 1.05rem;
+    color: var(--at-accent, var(--color-text-muted));
+  }
+
+  .atk-tl__body {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .atk-tl__text {
+    font-size: 0.85rem;
+    line-height: 1.45;
+    color: var(--color-text);
+  }
+
+  .atk-tl__step--blocked .atk-tl__text {
+    font-weight: var(--fw-semibold, 600);
+    color: var(--color-text-heading);
+  }
+
+  .atk-tl__note {
+    margin-top: 0.15rem;
+    font-size: 0.72rem;
+    color: var(--color-text-muted);
+  }
+
+  .atk-tl__caption {
+    margin-top: 1rem;
+    font-size: 0.8125rem;
+    font-style: italic;
+    color: var(--color-text-muted);
+    text-align: center;
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    white-space: nowrap;
+    clip-path: inset(50%);
+  }
+</style>

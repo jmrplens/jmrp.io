@@ -1,0 +1,378 @@
+---
+/**
+ * Gauntlet Component
+ *
+ * A "series of checks that all drain to one failure" diagram: an ordered stack
+ * of gates where passing flows straight down to the next gate (and finally to a
+ * single success outcome), while failing ANY gate diverts to one shared
+ * fail-closed sink on the right. Built for verify-before-decrypt / validation
+ * pipelines where every reject path converges on the same result. Zero-JS,
+ * theme-aware, accessible (role="img" + an .sr-only table of pass/reject paths).
+ *
+ * @example
+ * <Gauntlet
+ *   ariaLabel="Read flow: size, version, MAC, decrypt, decode — any failure fails closed."
+ *   steps={[
+ *     { label: "Size & alignment", detail: "block-aligned?" },
+ *     { label: "Known version" },
+ *     { label: "MAC tag matches", detail: "constant-time" },
+ *   ]}
+ *   reject={{ label: "Fail closed", detail: "wipe scratch · no plaintext" }}
+ *   pass={{ label: "Return credential" }}
+ * />
+ */
+import { getLangFromUrl, useTranslations } from "@i18n/utils";
+
+interface Gate {
+  /** Gate name (rendered emphasized). */
+  label: string;
+  /** Optional smaller detail line under the label. */
+  detail?: string;
+}
+
+interface Outcome {
+  /** Outcome label. */
+  label: string;
+  /** Optional smaller detail line. */
+  detail?: string;
+}
+
+interface Props {
+  /** Optional title above the diagram. */
+  title?: string;
+  /** Ordered gates; passing each flows down to the next. */
+  steps: Gate[];
+  /** The single shared failure outcome every reject path leads to. */
+  reject: Outcome;
+  /** The success outcome reached only when every gate passes. */
+  pass: Outcome;
+  /** Small tag over the reject sink (default: "any failure"). */
+  rejectTag?: string;
+  /** Caption below the figure. */
+  caption?: string;
+  /** Accessibility label describing the whole flow (recommended). */
+  ariaLabel?: string;
+}
+
+const locale = getLangFromUrl(Astro.url);
+const t = useTranslations(locale);
+
+const {
+  title,
+  steps,
+  reject,
+  pass,
+  rejectTag = t("components.gauntlet.rejectTag"),
+  caption,
+  ariaLabel,
+} = Astro.props as Props;
+
+const summary =
+  ariaLabel ??
+  t("components.gauntlet.aria", {
+    title: title ?? t("components.gauntlet.titleFallback"),
+    count: steps.length,
+  });
+---
+
+<figure
+  class="gt"
+  role="img"
+  aria-label={summary}
+>
+  {title && <figcaption class="gt__title">{title}</figcaption>}
+
+  <div class="gt__body">
+    <div class="gt__chain">
+      {
+        steps.map((s, i) => (
+          <>
+            <div class="gt__gate">
+              <span class="gt__num">{i + 1}</span>
+              <span class="gt__text">
+                <span class="gt__label">{s.label}</span>
+                {s.detail && <span class="gt__detail">{s.detail}</span>}
+              </span>
+              <span
+                class="gt__x"
+                aria-hidden="true"
+              >
+                ✗
+              </span>
+            </div>
+            <span
+              class="gt__down"
+              aria-hidden="true"
+            >
+              ✓
+            </span>
+          </>
+        ))
+      }
+      <div class="gt__outcome gt__outcome--pass">
+        <span class="gt__label">{pass.label}</span>
+        {pass.detail && <span class="gt__detail">{pass.detail}</span>}
+      </div>
+    </div>
+
+    <div
+      class="gt__rail"
+      aria-hidden="true"
+    >
+    </div>
+
+    <div class="gt__outcome gt__outcome--reject">
+      <span class="gt__reject-tag">{rejectTag}</span>
+      <span class="gt__label">{reject.label}</span>
+      {reject.detail && <span class="gt__detail">{reject.detail}</span>}
+    </div>
+  </div>
+
+  {caption && <p class="gt__caption">{caption}</p>}
+
+  <table class="sr-only">
+    <caption>{title ?? summary}</caption>
+    <thead>
+      <tr>
+        <th scope="col">{t("components.gauntlet.check")}</th>
+        <th scope="col">{t("components.gauntlet.onPass")}</th>
+        <th scope="col">{t("components.gauntlet.onFailure")}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {
+        steps.map((s, i) => (
+          <tr>
+            <td>{s.label}</td>
+            <td>{i < steps.length - 1 ? steps[i + 1].label : pass.label}</td>
+            <td>{reject.label}</td>
+          </tr>
+        ))
+      }
+    </tbody>
+  </table>
+</figure>
+
+<style>
+  .gt {
+    --gt-pass: #6ee7a8;
+    --gt-danger: #f0789b;
+    --gt-pass-bg: rgb(110 231 168 / 12%);
+    --gt-danger-bg: rgb(240 120 155 / 12%);
+    --gt-rail: 1.6rem; /* width of the rail gutter column (single source of truth) */
+
+    margin: 1.5rem 0;
+  }
+
+  /* Light-mode accents: darken the neon text colours to meet WCAG AA (>= 4.5:1)
+     on light backgrounds. Backgrounds stay as low-opacity tints. */
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) .gt {
+      --gt-pass: #0f6e3d;
+      --gt-danger: #be123c;
+    }
+  }
+
+  :root[data-theme="light"] .gt {
+    --gt-pass: #0f6e3d;
+    --gt-danger: #be123c;
+  }
+
+  .gt__title {
+    margin-bottom: 1rem;
+    font-size: 1rem;
+    font-weight: var(--fw-semibold, 600);
+    color: var(--color-text-heading);
+  }
+
+  .gt__body {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) var(--gt-rail) clamp(
+        6.5rem,
+        28%,
+        11rem
+      );
+    align-items: stretch;
+  }
+
+  .gt__chain {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    min-width: 0;
+  }
+
+  .gt__gate {
+    position: relative;
+    display: flex;
+    column-gap: 0.6rem;
+    align-items: center;
+    padding: 0.6rem 0.85rem;
+    background: var(--color-bg-subtle);
+    border: var(--border-1);
+    border-left: 3px solid var(--color-accent);
+    border-radius: var(--radius-md, 8px);
+  }
+
+  .gt__num {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 1.35rem;
+    height: 1.35rem;
+    font-size: 0.7rem;
+    font-weight: var(--fw-bold, 700);
+    color: var(--color-on-primary);
+    background: var(--color-accent);
+    border-radius: 50%;
+  }
+
+  .gt__text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .gt__label {
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    font-weight: var(--fw-semibold, 600);
+    color: var(--color-text-heading);
+    overflow-wrap: break-word;
+  }
+
+  .gt__detail {
+    margin-top: 0.1rem;
+    font-size: 0.7rem;
+    color: var(--color-text-muted);
+    overflow-wrap: break-word;
+  }
+
+  /* The red "✗" sitting on the right edge of each gate, over the rail gutter. */
+  .gt__x {
+    position: absolute;
+    top: 50%;
+
+    /* Centre the ✗ exactly on the rail line: anchor its right edge half a rail
+       past the gate, then shift right by half its own width (box-model-safe). */
+    right: calc(var(--gt-rail) / -2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.2rem;
+    height: 1.2rem;
+    font-size: 0.78rem;
+    font-weight: var(--fw-bold, 700);
+    color: var(--gt-danger);
+    background: var(--color-bg);
+    border: 1.5px solid var(--gt-danger);
+    border-radius: 50%;
+    transform: translate(50%, -50%);
+  }
+
+  /* The green "pass" connector (a check + downward flow) between gates. */
+  .gt__down {
+    align-self: center;
+    padding: 0.2rem 0;
+    font-size: 0.78rem;
+    font-weight: var(--fw-bold, 700);
+    line-height: 1;
+    color: var(--gt-pass);
+  }
+
+  .gt__down::after {
+    display: block;
+    margin: 0.1rem auto 0;
+    color: var(--color-text-muted);
+    content: "↓";
+  }
+
+  .gt__outcome {
+    display: flex;
+    flex-direction: column;
+    padding: 0.65rem 0.9rem;
+    border: 2px solid;
+    border-radius: var(--radius-md, 8px);
+  }
+
+  .gt__outcome--pass {
+    align-items: center;
+    text-align: center;
+    background: var(--gt-pass-bg);
+    border-color: var(--gt-pass);
+  }
+
+  .gt__outcome--reject {
+    position: relative;
+    grid-column: 3;
+    align-self: center;
+    background: var(--gt-danger-bg);
+    border-color: var(--gt-danger);
+  }
+
+  .gt__reject-tag {
+    margin-bottom: 0.2rem;
+    font-size: 0.6rem;
+    font-weight: var(--fw-semibold, 600);
+    color: var(--gt-danger);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+  }
+
+  /* The vertical dashed rail in the gutter that every "✗" drops onto, and the
+     horizontal tick that feeds the reject sink. */
+  .gt__rail {
+    position: relative;
+    grid-column: 2;
+  }
+
+  .gt__rail::before {
+    position: absolute;
+    top: 0.6rem;
+    bottom: 0.6rem;
+    left: 50%;
+    content: "";
+    border-left: 2px dashed var(--gt-danger);
+  }
+
+  .gt__outcome--reject::before {
+    position: absolute;
+    top: 50%;
+
+    /* Run from the rail line (half a rail to the left) to the card's edge. */
+    left: calc(var(--gt-rail) / -2);
+    width: calc(var(--gt-rail) / 2);
+    content: "";
+    border-top: 2px dashed var(--gt-danger);
+  }
+
+  .gt__caption {
+    margin-top: 1rem;
+    font-size: 0.8125rem;
+    font-style: italic;
+    color: var(--color-text-muted);
+    text-align: center;
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    white-space: nowrap;
+    clip-path: inset(50%);
+  }
+
+  @media (width <= 560px) {
+    .gt__gate {
+      padding: 0.5rem 0.6rem;
+    }
+
+    .gt__label {
+      font-size: 0.76rem;
+    }
+  }
+</style>

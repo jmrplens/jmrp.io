@@ -1,0 +1,297 @@
+---
+/**
+ * MergeFlow Component
+ *
+ * A vertical chain of "combine" stages: each stage merges two or more inputs
+ * through a named operation into one output, and that output carries into the
+ * next stage. Built for extract-then-expand / mixing constructions (e.g. HKDF:
+ * salt + IKM → PRK, then PRK + info → OKM). Zero-JS, theme-aware, accessible
+ * (role="img" + an .sr-only table of inputs → output per stage).
+ *
+ * @example
+ * <MergeFlow
+ *   ariaLabel="HKDF: deviceSecret salt and master IKM extract a PRK, expanded with info into a bound key."
+ *   stages={[
+ *     { op: "HKDF-Extract",
+ *       inputs: [{ name: "deviceSecret", role: "salt" }, { name: "master", role: "IKM" }],
+ *       out: { name: "PRK", note: "pseudorandom key" } },
+ *     { op: "HKDF-Expand",
+ *       inputs: [{ name: "PRK", role: "from extract" }, { name: "info", role: "context" }],
+ *       out: { name: "bound key", note: "32 B" } },
+ *   ]}
+ * />
+ */
+import { getLangFromUrl, useTranslations } from "@i18n/utils";
+
+interface MergeInput {
+  /** Input label (rendered monospace). */
+  name: string;
+  /** Optional role tag shown above the input (e.g. "salt", "IKM", "info"). */
+  role?: string;
+}
+
+interface MergeStage {
+  /** The operation that combines the inputs (e.g. "HKDF-Extract"). */
+  op: string;
+  /** Two or more inputs joined by "+". */
+  inputs: MergeInput[];
+  /** The single output, which carries into the next stage. */
+  out: { name: string; note?: string };
+}
+
+interface Props {
+  /** Optional title above the diagram. */
+  title?: string;
+  /** Merge stages in order. */
+  stages: MergeStage[];
+  /** Caption below the figure. */
+  caption?: string;
+  /** Accessibility label describing the whole flow (recommended). */
+  ariaLabel?: string;
+}
+
+const locale = getLangFromUrl(Astro.url);
+const t = useTranslations(locale);
+
+const { title, stages, caption, ariaLabel } = Astro.props as Props;
+
+const summary =
+  ariaLabel ??
+  t("components.mergeFlow.aria", {
+    title: title ?? t("components.mergeFlow.titleFallback"),
+    count: stages.length,
+  });
+---
+
+<figure
+  class="mf"
+  role="img"
+  aria-label={summary}
+>
+  {title && <figcaption class="mf__title">{title}</figcaption>}
+
+  <ol class="mf__stages">
+    {
+      stages.map((st, i) => (
+        <li class="mf__stage">
+          {i > 0 && (
+            <span
+              class="mf__carry"
+              aria-hidden="true"
+            >
+              ↓
+            </span>
+          )}
+          <div class="mf__inputs">
+            {st.inputs.map((inp, j) => (
+              <>
+                {j > 0 && (
+                  <span
+                    class="mf__plus"
+                    aria-hidden="true"
+                  >
+                    +
+                  </span>
+                )}
+                <span class="mf__chip">
+                  {inp.role && <span class="mf__role">{inp.role}</span>}
+                  <span class="mf__chip-name">{inp.name}</span>
+                </span>
+              </>
+            ))}
+          </div>
+          <span class="mf__op">{st.op}</span>
+          <span
+            class="mf__arrow"
+            aria-hidden="true"
+          >
+            ↓
+          </span>
+          <div class="mf__out">
+            <span class="mf__out-name">{st.out.name}</span>
+            {st.out.note && <span class="mf__out-note">{st.out.note}</span>}
+          </div>
+        </li>
+      ))
+    }
+  </ol>
+
+  {caption && <p class="mf__caption">{caption}</p>}
+
+  <table class="sr-only">
+    <caption>{title ?? summary}</caption>
+    <thead>
+      <tr>
+        <th scope="col">{t("components.mergeFlow.operation")}</th>
+        <th scope="col">{t("components.mergeFlow.inputs")}</th>
+        <th scope="col">{t("components.mergeFlow.output")}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {
+        stages.map((st) => (
+          <tr>
+            <td>{st.op}</td>
+            <td>
+              {st.inputs
+                .map((inp) =>
+                  inp.role ? `${inp.name} (${inp.role})` : inp.name,
+                )
+                .join(" + ")}
+            </td>
+            <td>{st.out.name}</td>
+          </tr>
+        ))
+      }
+    </tbody>
+  </table>
+</figure>
+
+<style>
+  .mf {
+    --mf-accent: var(--color-accent);
+
+    max-width: 30rem;
+    margin: 1.5rem auto;
+  }
+
+  .mf__title {
+    margin-bottom: 1rem;
+    font-size: 1rem;
+    font-weight: var(--fw-semibold, 600);
+    color: var(--color-text-heading);
+    text-align: center;
+  }
+
+  .mf__stages {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+  }
+
+  .mf__stage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    padding: 0.85rem 0.75rem;
+    background: var(--color-bg-subtle);
+    border: var(--border-1);
+    border-radius: var(--radius-md, 8px);
+  }
+
+  .mf__inputs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 0.55rem;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .mf__plus {
+    font-size: 1rem;
+    font-weight: var(--fw-bold, 700);
+    color: var(--color-text-muted);
+  }
+
+  .mf__chip {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0.35rem 0.6rem;
+    background: var(--color-bg-secondary);
+    border: var(--border-1);
+    border-radius: var(--radius-sm, 4px);
+  }
+
+  .mf__role {
+    font-size: 0.6rem;
+    font-weight: var(--fw-semibold, 600);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .mf__chip-name {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    font-weight: var(--fw-semibold, 600);
+    color: var(--color-text-heading);
+    overflow-wrap: anywhere;
+  }
+
+  .mf__op {
+    padding: 0.2rem 0.7rem;
+    margin-top: 0.55rem;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    font-weight: var(--fw-semibold, 600);
+    color: var(--mf-accent);
+    background: var(--color-bg);
+    border: 1.5px solid var(--mf-accent);
+    border-radius: 999px;
+  }
+
+  .mf__arrow {
+    margin-top: 0.2rem;
+    font-size: 0.95rem;
+    line-height: 1;
+    color: var(--color-text-muted);
+  }
+
+  .mf__out {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0.4rem 0.8rem;
+    margin-top: 0.2rem;
+    text-align: center;
+    background: var(--color-bg-secondary);
+    border: 2px solid var(--mf-accent);
+    border-radius: var(--radius-md, 8px);
+  }
+
+  .mf__out-name {
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    font-weight: var(--fw-semibold, 600);
+    color: var(--mf-accent);
+    overflow-wrap: anywhere;
+  }
+
+  .mf__out-note {
+    margin-top: 0.1rem;
+    font-size: 0.7rem;
+    color: var(--color-text-muted);
+  }
+
+  /* The carry arrow linking one stage's output into the next stage's inputs. */
+  .mf__carry {
+    margin: 0.1rem 0 0.45rem;
+    font-size: 1.1rem;
+    line-height: 1;
+    color: var(--mf-accent);
+  }
+
+  .mf__caption {
+    margin-top: 1rem;
+    font-size: 0.8125rem;
+    font-style: italic;
+    color: var(--color-text-muted);
+    text-align: center;
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    white-space: nowrap;
+    clip-path: inset(50%);
+  }
+</style>

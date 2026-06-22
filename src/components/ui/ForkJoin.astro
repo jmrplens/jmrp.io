@@ -336,16 +336,26 @@ const summary =
   }
 
   @media (width <= 520px) {
+    /* Keep the branches side by side, but tighten the inner padding and shrink
+       the note so the labels fit the narrow columns without breaking mid-token. */
     .fj__branches {
-      gap: 0.5rem;
+      gap: 0.4rem;
     }
 
     .fj__node {
-      padding: 0.5rem 0.6rem;
+      padding: 0.45rem 0.4rem;
+    }
+
+    .fj__node--branch {
+      padding: 0.45rem 0.3rem;
     }
 
     .fj__name {
-      font-size: 0.74rem;
+      font-size: 0.72rem;
+    }
+
+    .fj__note {
+      font-size: 0.6rem;
     }
   }
 </style>

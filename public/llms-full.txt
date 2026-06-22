@@ -2,7 +2,7 @@
 
 > Personal technical blog and portfolio of José Manuel Requena Plens — R&D Engineer specializing in Embedded Systems, Acoustics, and Industrial Software Development. This document provides comprehensive context for AI models.
 
-> Last updated: 2026-06-21
+> Last updated: 2026-06-22
 
 ## About the Author
 
@@ -108,10 +108,24 @@ Free browser-based developer tools. All processing runs client-side — no data 
 
 ### 10. What the Linker Won't Do: Packing i18n Strings on an MCU
 - **URL**: https://jmrp.io/blog/010-packed-i18n-string-pool/
-- **Published**: 2026-06-20
+- **Published**: 2026-06-10
 - **Tags**: Firmware, C++, Embedded, ESP32, i18n
 - **Description**: A build-time generator packs firmware UI translations into one string pool indexed by uint16 offsets, halving the index table on a 32-bit MCU.
 - **Topics covered**: packed/deduplicated/tail-merged string pool, uint16 offset table vs const char* pointer table, index-table halving, relocation elimination, optimizer-proof structural savings, linker tail-merging (GNU ld / ld.lld), full-firmware -O sweep, LTO limits, cross-platform pointer width (AVR/Cortex-M/RISC-V/64-bit), exact scaling arithmetic, PlatformIO build-time codegen.
+
+### 11. A Vault File That Fails Closed: Encrypt-then-MAC on an MCU
+- **URL**: https://jmrp.io/blog/011-encrypt-then-mac-vault/
+- **Published**: 2026-06-16
+- **Tags**: Security, Cryptography, Firmware, ESP32, C++
+- **Description**: How a hardware password manager authenticates every vault file before it decrypts: encrypt-then-MAC, verify-before-decrypt, and fail-closed reads.
+- **Topics covered**: encrypt-then-MAC (EtM) composition, verify-before-decrypt, fail-closed reads, the [ver][iv][hmacTag][cipher] envelope, constant-time MAC verification, AES-256-CBC + HMAC-SHA256, single-key derivation into enc/mac/PIN sub-keys, authenticated context fields (recordType/slotId/generation) defeating cross-type, cross-slot, and rollback attacks, O(1) encrypted index, crash-safe atomic mutation (stage/commit/promote/cleanup), padding-oracle defense, Mbed TLS / PSA backend uniformity.
+
+### 12. Your 4-Digit PIN Is Fine: Device-Bound Keys on ESP32-S3
+- **URL**: https://jmrp.io/blog/012-device-bound-key-derivation/
+- **Published**: 2026-06-22
+- **Tags**: Security, Cryptography, Firmware, ESP32, Key Derivation
+- **Description**: Why PBKDF2 iterations can't protect a 4-digit PIN on a microcontroller, and how an eFuse-HMAC device secret plus HKDF stops offline brute force.
+- **Topics covered**: offline brute force vs online lockout, PBKDF2 work-factor limits on an MCU, keyspace vs attacker throughput, eFuse-stored device secret, HMAC-based device binding, HKDF key derivation, non-extractable per-chip secret, defeating dumped-flash attacks, unlock-latency vs brute-force sizing.
 
 ---
 

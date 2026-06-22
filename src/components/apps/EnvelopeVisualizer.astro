@@ -1,0 +1,779 @@
+---
+/**
+ * EnvelopeVisualizer Component
+ *
+ * Interactive encrypt-then-MAC envelope demo. Seals a secret into the vault's
+ * `[ver][iv][hmacTag][cipher]` envelope with real WebCrypto (AES-256-CBC +
+ * HMAC-SHA256, separate enc/mac sub-keys), lets you flip any byte, and shows the
+ * read path verifying the tag in constant time BEFORE decrypting — so a tampered
+ * envelope fails closed with no plaintext. Companion to post 011. Zero server.
+ */
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslations } from "@i18n/utils";
+
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
+
+const uniqueId = `env-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
+
+/** Strings handed to the inline script (no module imports in is:inline). */
+const i18n = {
+  emptyState: t("tools.etmEnvelope.emptyState"),
+  okVerdict: t("tools.etmEnvelope.okVerdict"),
+  failVerdict: t("tools.etmEnvelope.failVerdict"),
+  decryptedLabel: t("tools.etmEnvelope.decryptedLabel"),
+  byteTitle: t("tools.etmEnvelope.byteTitle"),
+  bytesLabel: t("tools.shared.bytes"),
+  insecureContext: t("tools.etmEnvelope.insecureContext"),
+  error: t("tools.shared.error"),
+};
+
+const segs = [
+  { id: "ver", label: t("tools.etmEnvelope.fieldVer") },
+  { id: "iv", label: t("tools.etmEnvelope.fieldIv") },
+  { id: "tag", label: t("tools.etmEnvelope.fieldTag") },
+  { id: "cipher", label: t("tools.etmEnvelope.fieldCipher") },
+];
+---
+
+<div
+  class="ev"
+  data-ev-id={uniqueId}
+>
+  <div class="ev-inputs">
+    <label class="ev-field">
+      <span class="ev-label">
+        <span
+          class="i-mdi:form-textbox-password ev-label-icon"
+          aria-hidden="true"
+        ></span>
+        {t("tools.etmEnvelope.secretLabel")}
+      </span>
+      <input
+        type="text"
+        class="ev-input"
+        data-ev-secret
+        value={t("tools.etmEnvelope.secretExample")}
+        spellcheck="false"
+        autocomplete="off"
+      />
+    </label>
+    <label class="ev-field">
+      <span class="ev-label">
+        <span
+          class="i-mdi:key-outline ev-label-icon"
+          aria-hidden="true"
+        ></span>
+        {t("tools.etmEnvelope.passphraseLabel")}
+      </span>
+      <input
+        type="text"
+        class="ev-input"
+        data-ev-pass
+        value={t("tools.etmEnvelope.passphraseExample")}
+        spellcheck="false"
+        autocomplete="off"
+      />
+    </label>
+  </div>
+
+  {/* Derived sub-keys */}
+  <div class="ev-keys">
+    <span class="ev-keys-note">{t("tools.etmEnvelope.keyDerivationNote")}</span>
+    <div class="ev-key-row">
+      <span class="ev-key-tag ev-key-tag--enc"
+        >{t("tools.etmEnvelope.encKeyLabel")}</span
+      >
+      <code data-ev-enckey>…</code>
+    </div>
+    <div class="ev-key-row">
+      <span class="ev-key-tag ev-key-tag--mac"
+        >{t("tools.etmEnvelope.macKeyLabel")}</span
+      >
+      <code data-ev-mackey>…</code>
+    </div>
+  </div>
+
+  {/* Envelope bytes */}
+  <div class="ev-envelope-head">
+    <span class="ev-section-title"
+      >{t("tools.etmEnvelope.envelopeHeading")}
+      <span
+        class="ev-total"
+        data-ev-total
+      ></span></span
+    >
+    <button
+      type="button"
+      class="ev-restore"
+      data-ev-restore
+      hidden
+    >
+      <span
+        class="i-mdi:restore"
+        aria-hidden="true"
+      ></span>
+      {t("tools.etmEnvelope.restore")}
+    </button>
+  </div>
+  <p class="ev-tamper-hint">{t("tools.etmEnvelope.tamperHint")}</p>
+
+  <div
+    class="ev-envelope"
+    data-ev-envelope
+  >
+    {
+      segs.map((s) => (
+        <div
+          class="ev-seg"
+          data-ev-seg-wrap={s.id}
+        >
+          <span class={`ev-seg-label ev-seg-label--${s.id}`}>{s.label}</span>
+          <div
+            class="ev-bytes"
+            data-ev-bytes={s.id}
+          />
+        </div>
+      ))
+    }
+  </div>
+
+  {/* Read path verdict */}
+  <div class="ev-section-title ev-read-title">
+    {t("tools.etmEnvelope.readHeading")}
+  </div>
+  <ol class="ev-steps">
+    <li class="ev-step">
+      <span
+        class="ev-step-icon i-mdi:numeric-1-circle-outline"
+        aria-hidden="true"
+      ></span>
+      {t("tools.etmEnvelope.step1")}
+    </li>
+    <li class="ev-step">
+      <span
+        class="ev-step-icon i-mdi:numeric-2-circle-outline"
+        aria-hidden="true"
+      ></span>
+      {t("tools.etmEnvelope.step2")}
+    </li>
+  </ol>
+
+  <div
+    class="ev-verdict"
+    data-ev-verdict
+    role="status"
+    aria-live="polite"
+  >
+  </div>
+</div>
+
+<script is:inline define:vars={{ uniqueId, i18n }}>
+  const root = document.querySelector(`[data-ev-id="${uniqueId}"]`);
+  if (root) {
+    const enc = new TextEncoder();
+    const dec = new TextDecoder();
+    const VER = 0x01;
+
+    const secretInput = root.querySelector("[data-ev-secret]");
+    const passInput = root.querySelector("[data-ev-pass]");
+    const encKeyEl = root.querySelector("[data-ev-enckey]");
+    const macKeyEl = root.querySelector("[data-ev-mackey]");
+    const verdictEl = root.querySelector("[data-ev-verdict]");
+    const restoreBtn = root.querySelector("[data-ev-restore]");
+    const totalEl = root.querySelector("[data-ev-total]");
+    const byteHosts = {
+      ver: root.querySelector('[data-ev-bytes="ver"]'),
+      iv: root.querySelector('[data-ev-bytes="iv"]'),
+      tag: root.querySelector('[data-ev-bytes="tag"]'),
+      cipher: root.querySelector('[data-ev-bytes="cipher"]'),
+    };
+
+    // Working state: the sealed segments (original) + a live (possibly tampered) copy.
+    let state = null; // { ver, iv, tag, cipher: Uint8Array, encKey, macKey } (originals)
+    let live = null; // { ver, iv, tag, cipher } (Uint8Array copies the user can flip)
+    let tampered = false;
+
+    const toHex = (bytes) =>
+      Array.from(bytes)
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join("");
+
+    async function hmac(keyBytes, msg) {
+      const k = await crypto.subtle.importKey(
+        "raw",
+        keyBytes,
+        { name: "HMAC", hash: "SHA-256" },
+        false,
+        ["sign"],
+      );
+      return new Uint8Array(await crypto.subtle.sign("HMAC", k, msg));
+    }
+
+    async function deriveKeys(passphrase) {
+      const master = new Uint8Array(
+        await crypto.subtle.digest("SHA-256", enc.encode(passphrase)),
+      );
+      const encKey = await hmac(master, enc.encode("vault-enc"));
+      const macKey = await hmac(master, enc.encode("vault-mac"));
+      return { encKey, macKey };
+    }
+
+    function concat(...arrs) {
+      const total = arrs.reduce((n, a) => n + a.length, 0);
+      const out = new Uint8Array(total);
+      let off = 0;
+      for (const a of arrs) {
+        out.set(a, off);
+        off += a.length;
+      }
+      return out;
+    }
+
+    // Constant-time-style compare (the UI mirrors the firmware's intent).
+    function ctEqual(a, b) {
+      if (a.length !== b.length) return false;
+      let diff = 0;
+      for (let i = 0; i < a.length; i++) diff |= a[i] ^ b[i];
+      return diff === 0;
+    }
+
+    async function seal() {
+      verdictEl.textContent = "";
+      totalEl.textContent = "";
+      // WebCrypto's subtle API is only available in a secure context
+      // (HTTPS or localhost). Fail gracefully elsewhere instead of erroring.
+      if (!window.isSecureContext || !window.crypto || !crypto.subtle) {
+        state = live = null;
+        for (const id of Object.keys(byteHosts)) byteHosts[id].textContent = "";
+        encKeyEl.textContent = macKeyEl.textContent = "—";
+        verdictEl.className = "ev-verdict ev-verdict--empty";
+        verdictEl.textContent = i18n.insecureContext;
+        restoreBtn.hidden = true;
+        return;
+      }
+      const secret = secretInput.value;
+      const pass = passInput.value;
+      if (!secret) {
+        state = live = null;
+        tampered = false;
+        restoreBtn.hidden = true;
+        for (const id of Object.keys(byteHosts)) byteHosts[id].textContent = "";
+        encKeyEl.textContent = macKeyEl.textContent = "…";
+        setVerdict("empty");
+        return;
+      }
+      try {
+        const { encKey, macKey } = await deriveKeys(pass);
+        encKeyEl.textContent = toHex(encKey).slice(0, 24) + "…";
+        macKeyEl.textContent = toHex(macKey).slice(0, 24) + "…";
+
+        const iv = crypto.getRandomValues(new Uint8Array(16));
+        const aesKey = await crypto.subtle.importKey(
+          "raw",
+          encKey,
+          { name: "AES-CBC" },
+          false,
+          ["encrypt", "decrypt"],
+        );
+        const cipher = new Uint8Array(
+          await crypto.subtle.encrypt(
+            { name: "AES-CBC", iv },
+            aesKey,
+            enc.encode(secret),
+          ),
+        );
+        const ver = new Uint8Array([VER]);
+        const tag = await hmac(macKey, concat(ver, iv, cipher));
+
+        state = { ver, iv, tag, cipher, encKey, macKey, aesKey };
+        live = {
+          ver: ver.slice(),
+          iv: iv.slice(),
+          tag: tag.slice(),
+          cipher: cipher.slice(),
+        };
+        tampered = false;
+        render();
+        await readPath();
+      } catch (e) {
+        verdictEl.className = "ev-verdict ev-verdict--fail";
+        verdictEl.textContent = i18n.error;
+      }
+    }
+
+    function render() {
+      for (const id of Object.keys(byteHosts)) {
+        const host = byteHosts[id];
+        host.textContent = "";
+        const bytes = live[id];
+        bytes.forEach((b, idx) => {
+          const cell = document.createElement("button");
+          cell.type = "button";
+          cell.className = `ev-byte ev-byte--${id}`;
+          cell.textContent = b.toString(16).padStart(2, "0");
+          cell.dataset.seg = id;
+          cell.dataset.idx = String(idx);
+          cell.title = i18n.byteTitle;
+          if (state[id][idx] !== b) cell.classList.add("ev-byte--flipped");
+          host.appendChild(cell);
+        });
+      }
+      const total =
+        live.ver.length + live.iv.length + live.tag.length + live.cipher.length;
+      totalEl.textContent = i18n.bytesLabel.replace("{count}", String(total));
+      restoreBtn.hidden = !tampered;
+    }
+
+    async function readPath() {
+      if (!state) return;
+      // Verify-before-decrypt: recompute the tag over ver || iv || cipher.
+      const expected = await hmac(
+        state.macKey,
+        concat(live.ver, live.iv, live.cipher),
+      );
+      const ok = ctEqual(expected, live.tag);
+      if (!ok) {
+        setVerdict("fail");
+        return;
+      }
+      // Tag verified — only now decrypt.
+      try {
+        const aesKey = await crypto.subtle.importKey(
+          "raw",
+          state.encKey,
+          { name: "AES-CBC" },
+          false,
+          ["decrypt"],
+        );
+        const plain = new Uint8Array(
+          await crypto.subtle.decrypt(
+            { name: "AES-CBC", iv: live.iv },
+            aesKey,
+            live.cipher,
+          ),
+        );
+        setVerdict("ok", dec.decode(plain));
+      } catch (e) {
+        // Authenticated but undecryptable (shouldn't happen for pristine data).
+        setVerdict("fail");
+      }
+    }
+
+    function setVerdict(kind, plaintext) {
+      if (kind === "empty") {
+        verdictEl.className = "ev-verdict ev-verdict--empty";
+        verdictEl.textContent = i18n.emptyState;
+        return;
+      }
+      if (kind === "fail") {
+        verdictEl.className = "ev-verdict ev-verdict--fail";
+        verdictEl.innerHTML = "";
+        const icon = document.createElement("span");
+        icon.className = "i-mdi:close-octagon-outline ev-verdict-icon";
+        icon.setAttribute("aria-hidden", "true");
+        const txt = document.createElement("span");
+        txt.textContent = i18n.failVerdict;
+        verdictEl.append(icon, txt);
+        return;
+      }
+      // ok
+      verdictEl.className = "ev-verdict ev-verdict--ok";
+      verdictEl.innerHTML = "";
+      const icon = document.createElement("span");
+      icon.className = "i-mdi:check-decagram-outline ev-verdict-icon";
+      icon.setAttribute("aria-hidden", "true");
+      const txt = document.createElement("span");
+      txt.textContent = i18n.okVerdict + " ";
+      const out = document.createElement("strong");
+      out.className = "ev-plain";
+      out.textContent = plaintext;
+      const lbl = document.createElement("span");
+      lbl.className = "ev-plain-label";
+      lbl.textContent = i18n.decryptedLabel + ": ";
+      verdictEl.append(icon, txt, lbl, out);
+    }
+
+    // Flip a byte on click (event delegation over the envelope).
+    root.querySelector("[data-ev-envelope]").addEventListener("click", (e) => {
+      const cell = e.target.closest(".ev-byte");
+      if (!cell || !live) return;
+      const seg = cell.dataset.seg;
+      const idx = Number(cell.dataset.idx);
+      live[seg][idx] ^= 0xff; // flip all bits of that byte
+      tampered = true;
+      render();
+      readPath();
+    });
+
+    restoreBtn.addEventListener("click", () => {
+      if (!state) return;
+      live = {
+        ver: state.ver.slice(),
+        iv: state.iv.slice(),
+        tag: state.tag.slice(),
+        cipher: state.cipher.slice(),
+      };
+      tampered = false;
+      render();
+      readPath();
+    });
+
+    function debounce(fn, d) {
+      let to;
+      return (...a) => {
+        clearTimeout(to);
+        to = setTimeout(() => fn(...a), d);
+      };
+    }
+    const onInput = debounce(seal, 200);
+    secretInput.addEventListener("input", onInput);
+    passInput.addEventListener("input", onInput);
+
+    seal();
+  }
+</script>
+
+<style>
+  .ev {
+    --ev-ver: #fbbf24;
+    --ev-iv: #58d6df;
+    --ev-tag: #f0789b;
+    --ev-cipher: #b389f5;
+
+    padding: 1.25rem;
+    margin: 1.5rem 0;
+    background: var(--color-bg-subtle);
+    border: var(--border-1);
+    border-radius: var(--radius-md);
+  }
+
+  /* Light-mode accents: the neon defaults are used as small label text, which
+     fails WCAG AA on light backgrounds. Darken them to >= 4.5:1. */
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) .ev {
+      --ev-ver: #92400e;
+      --ev-iv: #155e75;
+      --ev-tag: #9d174d;
+      --ev-cipher: #6d28d9;
+    }
+  }
+
+  :root[data-theme="light"] .ev {
+    --ev-ver: #92400e;
+    --ev-iv: #155e75;
+    --ev-tag: #9d174d;
+    --ev-cipher: #6d28d9;
+  }
+
+  .ev-inputs {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  @media (width >= 640px) {
+    .ev-inputs {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  .ev-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  .ev-label {
+    display: flex;
+    gap: 0.4rem;
+    align-items: center;
+    font-size: 0.78rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .ev-label-icon {
+    width: 16px;
+    height: 16px;
+  }
+
+  .ev-input {
+    width: 100%;
+    padding: 0.6rem 0.75rem;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    color: var(--color-text);
+    background: var(--color-bg);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+  }
+
+  .ev-input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+  }
+
+  .ev-keys {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    padding: 0.75rem;
+    margin-top: 1rem;
+    background: var(--color-bg);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+  }
+
+  .ev-keys-note {
+    font-size: 0.72rem;
+    color: var(--color-text-muted);
+  }
+
+  .ev-key-row {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+  }
+
+  .ev-key-row code {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--color-text);
+    overflow-wrap: anywhere;
+  }
+
+  .ev-key-tag {
+    flex-shrink: 0;
+    padding: 0.1rem 0.4rem;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    font-weight: var(--fw-semibold);
+    border-radius: var(--radius-sm);
+  }
+
+  .ev-key-tag--enc {
+    color: var(--ev-cipher);
+    background: rgb(179 137 245 / 14%);
+  }
+
+  .ev-key-tag--mac {
+    color: var(--ev-tag);
+    background: rgb(240 120 155 / 14%);
+  }
+
+  .ev-total {
+    font-size: 0.72rem;
+    font-weight: var(--fw-medium);
+    color: var(--color-text-muted);
+  }
+
+  .ev-envelope-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 1.25rem;
+  }
+
+  .ev-section-title {
+    font-size: 0.8rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .ev-restore {
+    display: inline-flex;
+    gap: 0.3rem;
+    align-items: center;
+    padding: 0.3rem 0.6rem;
+    font-size: 0.75rem;
+    color: var(--color-text);
+    cursor: pointer;
+    background: var(--color-bg);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+  }
+
+  .ev-restore:hover {
+    border-color: var(--color-primary);
+  }
+
+  .ev-restore span {
+    width: 14px;
+    height: 14px;
+  }
+
+  .ev-tamper-hint {
+    margin: 0.35rem 0 0.75rem;
+    font-size: 0.78rem;
+    color: var(--color-text-muted);
+  }
+
+  .ev-envelope {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+
+  .ev-seg {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+
+  .ev-seg-label {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    font-weight: var(--fw-semibold);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .ev-seg-label--ver {
+    color: var(--ev-ver);
+  }
+
+  .ev-seg-label--iv {
+    color: var(--ev-iv);
+  }
+
+  .ev-seg-label--tag {
+    color: var(--ev-tag);
+  }
+
+  .ev-seg-label--cipher {
+    color: var(--ev-cipher);
+  }
+
+  .ev-bytes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+  }
+
+  .ev-byte {
+    min-width: 1.7rem;
+    padding: 0.2rem 0;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--color-text);
+    text-align: center;
+    cursor: pointer;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 3px;
+    transition:
+      transform 0.1s,
+      border-color 0.1s;
+  }
+
+  .ev-byte:hover {
+    border-color: var(--color-text-muted);
+    transform: translateY(-1px);
+  }
+
+  .ev-byte--ver {
+    border-bottom: 2px solid var(--ev-ver);
+  }
+
+  .ev-byte--iv {
+    border-bottom: 2px solid var(--ev-iv);
+  }
+
+  .ev-byte--tag {
+    border-bottom: 2px solid var(--ev-tag);
+  }
+
+  .ev-byte--cipher {
+    border-bottom: 2px solid var(--ev-cipher);
+  }
+
+  .ev-byte--flipped {
+    color: #fff;
+    background: #ef4444;
+    border-color: #ef4444;
+  }
+
+  .ev-read-title {
+    margin-top: 1.5rem;
+  }
+
+  .ev-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    padding: 0;
+    margin: 0.5rem 0 0.75rem;
+    list-style: none;
+  }
+
+  .ev-step {
+    display: flex;
+    gap: 0.4rem;
+    align-items: center;
+    font-size: 0.82rem;
+    color: var(--color-text);
+  }
+
+  .ev-step-icon {
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    color: var(--color-text-muted);
+  }
+
+  .ev-verdict {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    padding: 0.75rem 0.9rem;
+    font-size: 0.9rem;
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-sm);
+  }
+
+  .ev-verdict-icon {
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+  }
+
+  .ev-verdict--empty {
+    color: var(--color-text-muted);
+    border-style: dashed;
+  }
+
+  .ev-verdict--ok {
+    color: #0f6e3d;
+    background: rgb(16 185 129 / 10%);
+    border-color: #10b981;
+  }
+
+  .ev-verdict--fail {
+    color: #b91c1c;
+    background: rgb(239 68 68 / 10%);
+    border-color: #ef4444;
+  }
+
+  :root[data-theme="dark"] .ev-verdict--ok {
+    color: #34d399;
+  }
+
+  :root[data-theme="dark"] .ev-verdict--fail {
+    color: #f87171;
+  }
+
+  .ev-plain-label {
+    color: var(--color-text-muted);
+  }
+
+  .ev-plain {
+    font-family: var(--font-mono);
+    color: var(--color-text-heading);
+    overflow-wrap: anywhere;
+  }
+</style>
