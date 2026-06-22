@@ -7,6 +7,17 @@ icon: "i-mdi:timer-lock-outline"
 category: "security"
 tags: ["security", "cryptography", "pbkdf2", "brute-force", "pin", "key-derivation"]
 appComponent: "BruteForceCost"
+faq:
+  - question: "How long does it take to brute-force a 4-digit PIN?"
+    answer: "A 4-digit PIN has only 10,000 possible values, so a GPU with no key-stretching cracks it almost instantly. The real defense is a PBKDF2 work factor that slows each guess, or device binding that makes offline guessing infeasible."
+  - question: "Does increasing the PBKDF2 iteration count stop brute-force attacks?"
+    answer: "Higher iteration counts multiply the per-guess cost, raising the time to sweep the whole keyspace, but the count is sized for unlock latency, not as the brute-force defense. For a small PIN keyspace it slows an offline attacker but does not make the attack infeasible on its own."
+  - question: "How does device binding make a PIN brute-force infeasible?"
+    answer: "Device binding mixes a per-chip secret into key derivation, so every guess needs hardware that can't be extracted from the dumped flash. The attacker can no longer test candidates offline against the exfiltrated vault."
+  - question: "How does the calculator estimate attacker speed?"
+    answer: "It divides the GPU's raw SHA-256 throughput by the PBKDF2 work, treating each iteration as roughly two SHA-256 compressions. Keyspace divided by that rate gives the time to try every candidate; the expected time to find the secret is about half of that."
+  - question: "Is anything I type sent to a server?"
+    answer: "No. Every value is computed in your browser with simple arithmetic, and no inputs are transmitted anywhere."
 ---
 
 <h2>About This Tool</h2>

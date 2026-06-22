@@ -7,6 +7,17 @@ icon: "i-mdi:lock-check-outline"
 category: "security"
 tags: ["security", "cryptography", "encrypt-then-mac", "aes", "hmac", "firmware"]
 appComponent: "EnvelopeVisualizer"
+faq:
+  - question: "What does \"encrypt-then-MAC\" mean?"
+    answer: "It means you encrypt the plaintext first, then compute a MAC over the resulting ciphertext (plus the version byte and IV). On read, the MAC is verified before any decryption is attempted."
+  - question: "Why verify the MAC before decrypting?"
+    answer: "Checking the tag first means a tampered file never reaches the AES-CBC decrypt path, which closes off padding-oracle attacks. If the tag does not match, the read fails closed and no plaintext is produced."
+  - question: "Why use separate keys for encryption and the MAC?"
+    answer: "Reusing one key for both AES and HMAC is unsafe, so the passphrase derives a master key that fans out into distinct encKey and macKey sub-keys. The encryption key and the MAC key are never the same value."
+  - question: "What happens when I flip a byte in the envelope?"
+    answer: "Flipping any byte changes the data the HMAC covers, so the recomputed tag no longer matches the stored tag. The read fails closed — no decryption runs and no plaintext is returned."
+  - question: "Is my secret or passphrase sent anywhere?"
+    answer: "No. All cryptography runs entirely in your browser via the Web Crypto API, and nothing you type is transmitted to any server."
 ---
 
 <h2>About This Tool</h2>

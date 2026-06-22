@@ -7,6 +7,17 @@ icon: "i-mdi:regex"
 category: "developer"
 tags: ["regex", "regexp", "pattern", "grep", "sed", "testing"]
 appComponent: "RegexTester"
+faq:
+  - question: "Are my regex patterns and test strings sent to a server?"
+    answer: "No. All pattern matching and text processing runs entirely in your browser using JavaScript's built-in RegExp engine. Your patterns and test strings never leave your device."
+  - question: "Which regex flavor does this tester use?"
+    answer: "It uses JavaScript's native RegExp engine, which follows the ECMAScript specification. Patterns may behave differently in PCRE, Python, or POSIX tools, so check the flavor comparison table before porting them."
+  - question: "What do the g, i, m, s, and u flags do?"
+    answer: "g finds all matches instead of just the first, i makes matching case-insensitive, m makes ^ and $ match the start/end of each line, s lets . match newlines, and u enables full Unicode matching and property escapes."
+  - question: "How do I test a find-and-replace?"
+    answer: "Toggle Replace Mode and enter a replacement string. You can reference captured groups with $1, the whole match with $&, and named groups with $<name>."
+  - question: "Why does my pattern hang or take a long time?"
+    answer: "Patterns like (a+)+b cause catastrophic backtracking on long non-matching input. The tool shows the execution time for each test, so if a pattern takes more than a few milliseconds, simplify it or use negated character classes instead of greedy wildcards."
 ---
 
 import RegexFlavorTable from "@components/apps/RegexFlavorTable.astro";

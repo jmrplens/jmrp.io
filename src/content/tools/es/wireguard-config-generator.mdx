@@ -8,6 +8,17 @@ category: "mikrotik"
 tags: ["wireguard", "vpn", "mikrotik", "routeros", "ipv6", "firewall"]
 appComponent: "WireGuardConfigGenerator"
 lang: "es"
+faq:
+  - question: "¿Están seguras mis claves de WireGuard con este generador?"
+    answer: "Sí. La herramienta se ejecuta completamente en tu navegador y no envía ningún dato a ningún servidor. Por defecto deja que RouterOS autogenere las claves en el dispositivo, así que las claves privadas no necesitan introducirse en la herramienta."
+  - question: "¿Cuál es la diferencia entre túnel completo y túnel dividido?"
+    answer: "El túnel completo enruta todo el tráfico del cliente por la VPN (AllowedIPs = 0.0.0.0/0 y ::/0), mientras que el túnel dividido solo enruta las subredes concretas que indiques. Usa el túnel dividido cuando los clientes deban llegar a tu LAN sin enviar su tráfico general de internet por la VPN."
+  - question: "¿Qué debo poner en AllowedIPs para un peer?"
+    answer: "En la configuración del cliente, AllowedIPs define qué destinos se envían por el túnel: usa 0.0.0.0/0, ::/0 para túnel completo o solo tus subredes VPN y LAN para túnel dividido. En el lado del router, la dirección permitida de cada peer es su IP VPN asignada, que el generador rellena automáticamente."
+  - question: "¿Cuántos peers puedo añadir?"
+    answer: "Puedes añadir peers ilimitados. Cada dispositivo cliente recibe una dirección IP única autoasignada y su propio archivo .conf, con personalización opcional por peer."
+  - question: "¿Por qué la configuración incluye MSS clamping y un montaje dual-stack IPv6?"
+    answer: "El MSS clamping evita problemas de fragmentación sobre el túnel calculando automáticamente el valor MSS adecuado. El dual-stack añade direccionamiento IPv4 más IPv6 ULA con NAT66 para que los clientes funcionen en redes con IPv6; puedes elegir el preset solo IPv4 si no necesitas IPv6."
 ---
 
 <h2>Acerca de esta herramienta</h2>

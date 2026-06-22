@@ -8,6 +8,17 @@ category: "network"
 tags: ["nginx", "servidor", "ssl", "tls", "reverse-proxy", "http3"]
 appComponent: "NginxConfigGenerator"
 lang: "es"
+faq:
+  - question: "¿Se envía mi configuración de servidor a algún servidor?"
+    answer: "No. Toda la generación de configuración ocurre completamente en tu navegador. Los dominios, las direcciones IP y las rutas de backend nunca se transmiten, por lo que la arquitectura de tu servidor permanece privada."
+  - question: "¿Dónde coloco el archivo de configuración Nginx generado?"
+    answer: "Copia la salida en el directorio de sitios de tu Nginx (normalmente /etc/nginx/sites-available/ con un enlace simbólico en sites-enabled/, o /etc/nginx/conf.d/). Luego ejecuta \"nginx -t\" para validar y \"nginx -s reload\" para aplicarla sin interrumpir las conexiones."
+  - question: "¿Cómo activo QUIC/HTTP3 en la configuración generada?"
+    answer: "Activa la opción QUIC/HTTP3 en la sección SSL/TLS. Ten en cuenta que tu compilación de Nginx debe incluir el módulo http_v3: compruébalo con \"nginx -V\" y busca --with-http_v3_module."
+  - question: "¿Qué hace la funcionalidad tarpit?"
+    answer: "El tarpit envía deliberadamente respuestas lentas a atacantes y escáneres que acceden a rutas bloqueadas o de exploits (como wp-admin o phpMyAdmin), desperdiciando su tiempo y recursos en lugar de devolver un error rápido."
+  - question: "¿Con qué preset debería empezar?"
+    answer: "Elige el preset más cercano a tu caso de uso — Estático, Reverse Proxy, SPA, PHP-FPM, Servidor API o Fortificado — y personaliza desde ahí el dominio, la ruta raíz y las rutas de los certificados SSL."
 ---
 
 import {

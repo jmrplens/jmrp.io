@@ -7,6 +7,17 @@ icon: "i-mdi:clock-outline"
 category: "developer"
 tags: ["cron", "scheduling", "linux", "crontab", "automation"]
 appComponent: "CronBuilder"
+faq:
+  - question: "What is a cron expression?"
+    answer: "A cron expression is a string of five space-separated fields (minute, hour, day of month, month, day of week) that tells a Unix-like scheduler when to run a task repeatedly."
+  - question: "How do I run a cron job every 5 minutes?"
+    answer: "Use the step syntax \"*/5 * * * *\". You can build it here by selecting the minute field's step or picking the \"every 5 minutes\" preset, then copy the generated crontab line."
+  - question: "Does this tool send my cron expression to a server?"
+    answer: "No. All parsing, the human-readable description, and the next-execution preview run entirely in your browser. The shareable link only encodes the expression in the URL."
+  - question: "What happens when both day of month and day of week are set?"
+    answer: "Most cron implementations use OR logic: when neither field is \"*\", the job runs whenever either the day-of-month or the day-of-week condition matches."
+  - question: "Why does my cron job fail even though the schedule is correct?"
+    answer: "Cron runs with a minimal PATH and the system timezone, so use absolute paths for commands and check timedatectl. Redirect output with \">> /var/log/myjob.log 2>&1\" to capture errors."
 ---
 
 import {

@@ -7,6 +7,17 @@ icon: "i-mdi:chip"
 category: "embedded"
 tags: ["modbus", "rtu", "tcp", "industrial", "plc", "embedded", "serial"]
 appComponent: "ModbusFrameBuilder"
+faq:
+  - question: "What is the difference between Modbus RTU and Modbus TCP frames?"
+    answer: "RTU frames are binary and end with a 16-bit CRC for serial lines, while TCP frames prepend a 7-byte MBAP header (transaction ID, protocol ID, length, unit ID) and drop the CRC because TCP/IP handles error checking. This tool builds and decodes both, plus Modbus ASCII with LRC."
+  - question: "How is the Modbus RTU CRC-16 calculated?"
+    answer: "It uses the CRC-16 polynomial 0xA001 (the reflected form of 0x8005) computed over every byte except the CRC itself, then appended low byte first, high byte second. The tool calculates and validates it automatically when you build or decode a frame."
+  - question: "Why do my 32-bit register values look wrong when decoded?"
+    answer: "Modbus registers are 16-bit, so 32-bit integers and floats span two registers and vendors disagree on the order. Try switching the byte order between Big-Endian, Little-Endian, Mid Big-Endian, and Mid Little-Endian in the data interpretation panel until the value matches your device."
+  - question: "What does a Modbus exception response look like?"
+    answer: "The slave echoes the function code ORed with 0x80 followed by an exception code such as 01 (Illegal Function) or 02 (Illegal Data Address). Paste the frame into Decode mode and the tool flags the exception and names the error."
+  - question: "Is my Modbus data sent to a server?"
+    answer: "No. All frame building, decoding, CRC/LRC calculation, and data interpretation run entirely in your browser; nothing is transmitted. The shareable link only encodes frame parameters in the URL query string."
 ---
 
 import {

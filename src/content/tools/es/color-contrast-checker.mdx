@@ -8,6 +8,17 @@ category: "developer"
 tags: ["accesibilidad", "wcag", "contraste", "color", "a11y", "apca"]
 appComponent: "ColorContrastChecker"
 lang: "es"
+faq:
+  - question: "¿Cuál es el ratio de contraste mínimo de WCAG 2.2 para texto normal?"
+    answer: "El texto normal necesita al menos 4.5:1 para AA y 7:1 para AAA. El texto grande (18pt+, o 14pt+ en negrita) solo necesita 3:1 para AA y 4.5:1 para AAA."
+  - question: "¿Cuál es la diferencia entre el contraste de WCAG 2.2 y APCA?"
+    answer: "WCAG 2.x usa un simple ratio de luminancia, mientras que APCA (previsto para WCAG 3.0) modela la percepción humana, teniendo en cuenta la polaridad del texto, el tamaño y el peso de la fuente. Esta herramienta muestra ambos para que puedas compararlos."
+  - question: "¿El verificador de contraste se ejecuta en mi navegador?"
+    answer: "Sí. Todos los cálculos de contraste se realizan íntegramente en el lado del cliente y ningún dato de color se envía a ningún servidor. Los enlaces compartibles solo codifican los colores en los parámetros de la URL."
+  - question: "¿Por qué comprobar los colores frente a las simulaciones de daltonismo?"
+    answer: "Aproximadamente el 8% de los hombres y el 0,5% de las mujeres tienen alguna deficiencia en la visión del color, por lo que un par que aprueba para visión típica puede fallar para ellos. Cada tarjeta de simulación muestra el ratio de contraste percibido para protanopia, deuteranopia, tritanopia y acromatopsia."
+  - question: "¿Qué cubre la comprobación de contraste no-texto (SC 1.4.11)?"
+    answer: "Aplica el mínimo de WCAG 2.2 de 3:1 a componentes de interfaz como botones, campos de entrada y bordes, además de objetos gráficos que transmiten información \"con significado\"."
 ---
 
 import {

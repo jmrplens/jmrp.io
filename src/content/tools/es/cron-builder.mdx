@@ -8,6 +8,17 @@ category: "developer"
 tags: ["cron", "programación", "linux", "crontab", "automatización"]
 appComponent: "CronBuilder"
 lang: "es"
+faq:
+  - question: "¿Qué es una expresión cron?"
+    answer: "Una expresión cron es una cadena de cinco campos separados por espacios (minuto, hora, día del mes, mes, día de la semana) que indica a un programador tipo Unix cuándo ejecutar una tarea de forma recurrente."
+  - question: "¿Cómo ejecuto una tarea cron cada 5 minutos?"
+    answer: "Usa la sintaxis de paso \"*/5 * * * *\". Puedes construirla aquí seleccionando el paso en el campo de minutos o eligiendo el preset \"cada 5 minutos\", y luego copiar la línea de crontab generada."
+  - question: "¿Esta herramienta envía mi expresión cron a un servidor?"
+    answer: "No. Todo el análisis, la descripción legible y la vista previa de próximas ejecuciones se realizan íntegramente en tu navegador. El enlace compartible solo codifica la expresión en la URL."
+  - question: "¿Qué ocurre cuando se definen a la vez el día del mes y el día de la semana?"
+    answer: "La mayoría de implementaciones de cron usan lógica OR: cuando ninguno de los dos campos es \"*\", la tarea se ejecuta cuando se cumple cualquiera de las dos condiciones (día del mes o día de la semana)."
+  - question: "¿Por qué falla mi tarea cron si la programación es correcta?"
+    answer: "Cron se ejecuta con un PATH mínimo y la zona horaria del sistema, así que usa rutas absolutas para los comandos y comprueba timedatectl. Redirige la salida con \">> /var/log/myjob.log 2>&1\" para capturar errores."
 ---
 
 import {

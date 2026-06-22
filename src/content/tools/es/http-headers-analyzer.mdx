@@ -8,6 +8,17 @@ category: "security"
 tags: ["http", "headers", "seguridad", "hsts", "csp", "análisis"]
 appComponent: "HTTPHeadersAnalyzer"
 lang: "es"
+faq:
+  - question: "¿Qué cabeceras HTTP de seguridad comprueba esta herramienta?"
+    answer: "Evalúa 10 cabeceras críticas, entre ellas Content-Security-Policy, Strict-Transport-Security, X-Content-Type-Options, X-Frame-Options, Referrer-Policy, Permissions-Policy y las tres políticas Cross-Origin. También detecta fugas de información en las cabeceras \"Server\", \"X-Powered-By\" y \"X-AspNet-Version\"."
+  - question: "¿Cómo se calcula la puntuación de seguridad?"
+    answer: "Cada cabecera tiene un peso según su impacto, siendo Content-Security-Policy la de mayor valor (25 puntos) y X-XSS-Protection la menor (3 puntos). El total ponderado se traduce en una calificación de A+ (90-100) hasta F (0-29)."
+  - question: "¿Por qué faltan algunas cabeceras al obtenerlas desde una URL?"
+    answer: "La función Fetch se ejecuta directamente en tu navegador, por lo que las restricciones de CORS pueden ocultar ciertas cabeceras de respuesta. Para obtener resultados completos, pega las cabeceras capturadas con curl -sI o copiadas desde DevTools del navegador."
+  - question: "¿Se envían mis datos a un servidor al analizar las cabeceras?"
+    answer: "No. Todo el análisis se realiza íntegramente en tu navegador, y la solicitud opcional de Fetch se hace directamente desde tu navegador sin ningún proxy del lado del servidor."
+  - question: "¿Debo configurar todavía X-XSS-Protection?"
+    answer: "No. X-XSS-Protection es un filtro legacy que los navegadores modernos ignoran o que puede introducir vulnerabilidades; el valor recomendado es \"0\" para desactivarlo, y una Content-Security-Policy sólida es la defensa adecuada contra XSS."
 ---
 
 import {

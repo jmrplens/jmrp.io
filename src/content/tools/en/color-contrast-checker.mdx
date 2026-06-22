@@ -7,6 +7,17 @@ icon: "i-mdi:palette-outline"
 category: "developer"
 tags: ["accessibility", "wcag", "contrast", "color", "a11y", "apca"]
 appComponent: "ColorContrastChecker"
+faq:
+  - question: "What is the minimum WCAG 2.2 contrast ratio for normal text?"
+    answer: "Normal text needs at least 4.5:1 for AA and 7:1 for AAA. Large text (18pt+, or 14pt+ bold) only needs 3:1 for AA and 4.5:1 for AAA."
+  - question: "What's the difference between WCAG 2.2 contrast and APCA?"
+    answer: "WCAG 2.x uses a simple luminance ratio, while APCA (planned for WCAG 3.0) models human perception, accounting for text polarity, font size, and weight. This tool reports both so you can compare them."
+  - question: "Does the contrast checker run in my browser?"
+    answer: "Yes. All contrast calculations happen entirely client-side and no color data is sent to any server. Shareable links only encode the colors in the URL parameters."
+  - question: "Why check colors against color blindness simulations?"
+    answer: "Roughly 8% of men and 0.5% of women have some color vision deficiency, so a pair that passes for typical vision may still fail for them. Each simulation card shows the perceived contrast ratio for protanopia, deuteranopia, tritanopia, and achromatopsia."
+  - question: "What does the non-text contrast (SC 1.4.11) check cover?"
+    answer: "It applies the WCAG 2.2 minimum of 3:1 to UI components such as buttons, inputs, and borders, plus graphical objects that convey information \"meaning\"."
 ---
 
 import {

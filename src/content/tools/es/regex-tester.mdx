@@ -8,6 +8,17 @@ category: "developer"
 tags: ["regex", "regexp", "patrón", "grep", "sed", "pruebas"]
 appComponent: "RegexTester"
 lang: "es"
+faq:
+  - question: "¿Mis patrones regex y cadenas de prueba se envían a un servidor?"
+    answer: "No. Todo el análisis de patrones y el procesamiento de texto se ejecuta íntegramente en tu navegador usando el motor RegExp nativo de JavaScript. Tus patrones y cadenas de prueba nunca salen de tu dispositivo."
+  - question: "¿Qué sabor de regex usa este probador?"
+    answer: "Usa el motor nativo RegExp de JavaScript, que sigue la especificación ECMAScript. Los patrones pueden comportarse de forma distinta en PCRE, Python o herramientas POSIX, así que consulta la tabla de comparación de sabores antes de portarlos."
+  - question: "¿Qué hacen los flags g, i, m, s y u?"
+    answer: "g encuentra todas las coincidencias en lugar de solo la primera, i hace la búsqueda insensible a mayúsculas, m hace que ^ y $ coincidan con el inicio/fin de cada línea, s permite que . coincida con saltos de línea, y u habilita la coincidencia Unicode completa y los escapes de propiedades."
+  - question: "¿Cómo pruebo un buscar y reemplazar?"
+    answer: "Activa el modo de reemplazo e introduce una cadena de reemplazo. Puedes referenciar grupos capturados con $1, la coincidencia completa con $&, y grupos con nombre con $<name>."
+  - question: "¿Por qué mi patrón se bloquea o tarda mucho?"
+    answer: "Patrones como (a+)+b provocan backtracking catastrófico con entradas largas que no coinciden. La herramienta muestra el tiempo de ejecución de cada prueba, así que si un patrón tarda más de unos milisegundos, simplifícalo o usa character classes negadas en lugar de comodines voraces."
 ---
 
 import RegexFlavorTable from "@components/apps/RegexFlavorTable.astro";

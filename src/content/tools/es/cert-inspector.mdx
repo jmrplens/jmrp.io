@@ -8,6 +8,17 @@ category: "security"
 tags: ["ssl", "tls", "certificados", "x509", "pem", "seguridad"]
 appComponent: "CertInspector"
 lang: "es"
+faq:
+  - question: "¿Se sube mi certificado a un servidor?"
+    answer: "No. Todo el análisis ASN.1/DER, el cálculo de la huella SHA-256 y la evaluación de seguridad se ejecutan completamente en tu navegador. Los datos PEM pegados nunca salen de tu dispositivo."
+  - question: "¿Puedo inspeccionar un certificado privado o interno?"
+    answer: "Sí. Pega los datos codificados en PEM directamente en lugar de obtenerlos por URL. La obtención por URL depende de APIs públicas de logs de Certificate Transparency (certspotter, crt.sh) y solo funciona con certificados registrados públicamente."
+  - question: "¿Qué comprueba la evaluación de seguridad?"
+    answer: "Evalúa la fortaleza de la clave, el algoritmo de firma, la duración de la validez y el cumplimiento de Certificate Transparency (SCT), señalando claves débiles, algoritmos obsoletos y periodos de validez demasiado largos."
+  - question: "¿Qué es un Subject Alternative Name (SAN)?"
+    answer: "Un SAN enumera todos los nombres de host, IPs, correos o URIs para los que el certificado es válido. Los navegadores modernos ignoran el Common Name y comparan el host solicitado con las entradas SAN, por lo que un SAN ausente provoca errores de confianza."
+  - question: "¿Cómo inspecciono un certificado sin esta herramienta?"
+    answer: "Usa OpenSSL desde la terminal, por ejemplo \"openssl s_client -connect host:443\" canalizado a \"openssl x509 -noout -text\". La referencia de comandos Linux de arriba incluye fragmentos listos para usar."
 ---
 
 import {

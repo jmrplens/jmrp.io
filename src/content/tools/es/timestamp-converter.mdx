@@ -10,6 +10,17 @@ appComponent: "TimestampConverter"
 lang: "es"
 appProps:
   title: ""
+faq:
+  - question: "¿Qué es un timestamp Unix?"
+    answer: "Un timestamp Unix es el número de segundos transcurridos desde el Unix Epoch (1970-01-01 00:00:00 UTC), sin contar los segundos intercalares. Es independiente de la zona horaria, lo que lo hace ideal para almacenar e intercambiar instantes en APIs, logs y bases de datos."
+  - question: "¿Cómo sé si mi timestamp está en segundos o milisegundos?"
+    answer: "Cuenta los dígitos: 10 dígitos o menos casi siempre son segundos, mientras que 13 dígitos (lo que devuelve Date.now() de JavaScript) son milisegundos. Esta herramienta autodetecta la unidad según la magnitud, pero puedes anularla con el selector Segundos / Milisegundos."
+  - question: "¿Depende un timestamp Unix de la zona horaria?"
+    answer: "No. El mismo timestamp Unix representa el mismo instante en toda la Tierra; solo cambia su representación legible según la zona horaria. Esta herramienta muestra ese único instante en 11 ciudades a la vez para que compares las horas locales en paralelo."
+  - question: "¿Qué es el problema del año 2038 (Y2K38)?"
+    answer: "En los sistemas que almacenan el tiempo en un entero con signo de 32 bits, el timestamp 2147483647 (2038-01-19 03:14:07 UTC) es el valor máximo; un segundo después se desborda a un número negativo. La solución es usar timestamps de 64 bits, que esta herramienta maneja sin problemas."
+  - question: "¿Se envían mis datos a un servidor?"
+    answer: "No. Todas las conversiones se ejecutan completamente en tu navegador usando las APIs integradas Date e Intl de JavaScript, y ningún dato de timestamp sale de tu dispositivo. Los enlaces compartibles solo codifican el timestamp en los parámetros de la URL."
 ---
 
 import {

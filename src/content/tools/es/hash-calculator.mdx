@@ -10,6 +10,17 @@ appComponent: "HashCalculator"
 lang: "es"
 appProps:
   showExplanation: true
+faq:
+  - question: "¿Cuándo debo usar un hash CSP en lugar de un nonce?"
+    answer: "Usa un hash para scripts o estilos inline cuyo contenido nunca cambia, así puedes permitirlos sin \"unsafe-inline\". Si el script contiene valores dinámicos como un ID de usuario, usa un nonce, porque cualquier cambio en el contenido invalida el hash."
+  - question: "¿Por qué mi script inline se sigue bloqueando tras añadir el hash?"
+    answer: "Los hashes CSP requieren una coincidencia exacta byte a byte, así que incluso un espacio o salto de línea de más genera un hash distinto y el navegador bloquea el script. Asegúrate de calcular el hash solo del contenido interno, sin las etiquetas \"<script>\" o \"<style>\"."
+  - question: "¿Cuál es la diferencia entre un hash CSP y un hash SRI?"
+    answer: "Un hash CSP (SHA-256 en base64) autoriza código inline específico en tu Content Security Policy. Un hash SRI (normalmente SHA-384) va en el atributo \"integrity\" de una etiqueta script o link externa para verificar que el archivo descargado no ha sido manipulado."
+  - question: "¿Se envía el contenido de mi script a un servidor?"
+    answer: "No. Todo el cálculo del hash se ejecuta localmente en tu navegador mediante la Web Crypto API, por lo que el contenido de tu script o estilo nunca se transmite por la red."
+  - question: "¿Qué algoritmo de hash debo elegir?"
+    answer: "SHA-256 es la opción estándar y más compatible para CSP. SHA-384 y SHA-512 también son válidos y se usan habitualmente para Subresource Integrity, pero SHA-256 basta para casi todos los casos de uso de CSP."
 ---
 
 <h2>Acerca de esta herramienta</h2>

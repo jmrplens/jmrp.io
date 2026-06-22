@@ -7,6 +7,17 @@ icon: "i-mdi:shield-lock-outline"
 category: "security"
 tags: ["csp", "security", "headers", "xss", "nginx"]
 appComponent: "CSPBuilder"
+faq:
+  - question: "What is a Content Security Policy and why do I need one?"
+    answer: "A Content Security Policy (CSP) is an HTTP response header that tells the browser which sources of content are trusted, helping detect and mitigate attacks like Cross-Site Scripting (XSS) and data injection. It is a critical defense-in-depth layer for any modern website."
+  - question: "Is my CSP configuration sent to a server?"
+    answer: "No. All policy building and formatting happens entirely in your browser. No domains, URLs, or policy settings ever leave your device."
+  - question: "Which server formats can I export to?"
+    answer: "The builder generates ready-to-use configuration in 7 formats, including Nginx, Apache, Cloudflare, and Vercel. Select your server and copy the output directly into your configuration."
+  - question: "What does Report-Only mode do?"
+    answer: "Report-Only mode lets you test a policy without actually blocking any resources. The browser reports violations it would have blocked, so you can refine your CSP safely before enforcing it."
+  - question: "Why does the tool warn about 'unsafe-inline'?"
+    answer: "The security assessment flags insecure configurations like 'unsafe-inline' because they weaken your policy by allowing inline scripts or styles, defeating much of CSP's protection against XSS. Prefer nonces or hashes instead."
 ---
 
 import {

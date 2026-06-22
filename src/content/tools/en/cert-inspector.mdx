@@ -7,6 +7,17 @@ icon: "i-mdi:certificate"
 category: "security"
 tags: ["ssl", "tls", "certificates", "x509", "pem", "security"]
 appComponent: "CertInspector"
+faq:
+  - question: "Is my certificate uploaded to a server?"
+    answer: "No. All ASN.1/DER parsing, SHA-256 fingerprinting, and the security assessment run entirely in your browser. Pasted PEM data never leaves your device."
+  - question: "Can I inspect a private or internal certificate?"
+    answer: "Yes. Paste the PEM-encoded data directly instead of fetching by URL. URL fetching relies on public Certificate Transparency log APIs (certspotter, crt.sh) and only works for publicly logged certificates."
+  - question: "What does the security assessment check?"
+    answer: "It evaluates key strength, the signature algorithm, the validity duration, and Certificate Transparency (SCT) compliance, flagging weak keys, deprecated algorithms, and overly long validity periods."
+  - question: "What is a Subject Alternative Name (SAN)?"
+    answer: "A SAN lists every hostname, IP, email, or URI a certificate is valid for. Modern browsers ignore the Common Name and match the requested host against the SAN entries, so a missing SAN causes trust errors."
+  - question: "How do I inspect a certificate without this tool?"
+    answer: "Use OpenSSL from the terminal, for example \"openssl s_client -connect host:443\" piped into \"openssl x509 -noout -text\". The Linux command reference above lists ready-to-use snippets."
 ---
 
 import {

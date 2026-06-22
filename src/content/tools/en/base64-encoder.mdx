@@ -7,6 +7,17 @@ icon: "i-mdi:swap-horizontal"
 category: "developer"
 tags: ["base64", "encoding", "decoding", "hex", "url-encoding"]
 appComponent: "Base64Encoder"
+faq:
+  - question: "Is Base64 a form of encryption?"
+    answer: "No. Base64 is an encoding scheme, not encryption. It makes binary data safe to transmit as text but provides no confidentiality, since anyone can decode it instantly. Never use it to protect secrets."
+  - question: "What is the difference between Base64 and Base64URL?"
+    answer: "Standard Base64 (RFC 4648) uses + and / characters plus = padding, which can break inside URLs. Base64URL replaces them with - and _ and usually drops the padding, making it safe for URLs and JWTs."
+  - question: "Is my data uploaded to a server when I encode a file?"
+    answer: "No. All encoding and decoding runs entirely in your browser. Files you drop are never uploaded, so your data never leaves your device."
+  - question: "Why is my Base64 output larger than the original file?"
+    answer: "Base64 represents every 3 bytes of input as 4 ASCII characters, so the output is roughly 33% larger than the source data. This is expected overhead for any Base64 encoding."
+  - question: "What is a Data URI and when should I use it?"
+    answer: "A Data URI embeds the Base64-encoded content directly inside CSS or HTML using a data:<mime-type>;base64,... prefix, avoiding a separate file request. Enable the Data URI toggle to get a ready-to-paste string for small assets like icons."
 ---
 
 import {

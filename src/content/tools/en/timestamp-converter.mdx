@@ -9,6 +9,17 @@ tags: ["timestamp", "unix", "date", "time", "timezone", "iso8601"]
 appComponent: "TimestampConverter"
 appProps:
   title: ""
+faq:
+  - question: "What is a Unix timestamp?"
+    answer: "A Unix timestamp is the number of seconds elapsed since the Unix Epoch (1970-01-01 00:00:00 UTC), not counting leap seconds. It is timezone-independent, which makes it ideal for storing and exchanging moments in APIs, logs, and databases."
+  - question: "How do I know if my timestamp is in seconds or milliseconds?"
+    answer: "Count the digits: 10 digits or fewer is almost always seconds, while 13 digits (what JavaScript's Date.now() returns) is milliseconds. This tool auto-detects the unit by magnitude, but you can override it with the Seconds / Milliseconds toggle."
+  - question: "Does a Unix timestamp depend on the timezone?"
+    answer: "No. The same Unix timestamp represents the same instant everywhere on Earth; only its human-readable rendering changes per timezone. This tool shows that single moment across 11 cities at once so you can compare local times side by side."
+  - question: "What is the Year 2038 problem (Y2K38)?"
+    answer: "On systems that store time in a signed 32-bit integer, the timestamp 2147483647 (2038-01-19 03:14:07 UTC) is the maximum value; one second later it overflows to a negative number. The fix is to use 64-bit timestamps, which this tool handles without issue."
+  - question: "Is my data sent to a server?"
+    answer: "No. All conversions run entirely in your browser using JavaScript's built-in Date and Intl APIs, and no timestamp data leaves your device. Shareable links only encode the timestamp in URL parameters."
 ---
 
 import {

@@ -8,6 +8,17 @@ category: "security"
 tags: ["security", "cryptography", "pbkdf2", "brute-force", "pin", "key-derivation"]
 appComponent: "BruteForceCost"
 lang: "es"
+faq:
+  - question: "¿Cuánto se tarda en romper por fuerza bruta un PIN de 4 dígitos?"
+    answer: "Un PIN de 4 dígitos solo tiene 10.000 valores posibles, así que una GPU sin endurecimiento de clave lo rompe casi al instante. La defensa real es un factor de trabajo PBKDF2 que ralentiza cada intento, o la vinculación al dispositivo que vuelve inviable el ataque offline."
+  - question: "¿Aumentar el número de iteraciones de PBKDF2 detiene los ataques de fuerza bruta?"
+    answer: "Más iteraciones multiplican el coste por intento y elevan el tiempo de barrer todo el espacio de claves, pero ese número se dimensiona para la latencia de desbloqueo, no como defensa contra fuerza bruta. Con un espacio de claves de PIN tan pequeño ralentiza al atacante offline pero no hace inviable el ataque por sí solo."
+  - question: "¿Cómo vuelve inviable la fuerza bruta la vinculación al dispositivo?"
+    answer: "La vinculación al dispositivo mezcla un secreto por-chip en la derivación de clave, así que cada intento necesita hardware que no puede extraerse de la flash volcada. El atacante ya no puede probar candidatos offline contra la bóveda exfiltrada."
+  - question: "¿Cómo estima la calculadora la velocidad del atacante?"
+    answer: "Divide el rendimiento SHA-256 bruto de la GPU entre el trabajo de PBKDF2, tratando cada iteración como unas dos compresiones SHA-256. El espacio de claves dividido por ese ritmo da el tiempo de probar cada candidato; el tiempo esperado para encontrar el secreto es aproximadamente la mitad."
+  - question: "¿Se envía a algún servidor lo que escribo?"
+    answer: "No. Cada valor se calcula en tu navegador con aritmética simple y no se transmite ninguna entrada a ningún sitio."
 ---
 
 <h2>Sobre esta herramienta</h2>
