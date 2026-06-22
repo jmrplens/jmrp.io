@@ -74,8 +74,8 @@ const headingId = `faq-${crypto.getRandomValues(new Uint32Array(1))[0]}`;
 
 <style>
   .faq {
-    margin-block-start: var(--space-lg);
     padding-block-start: var(--space-md);
+    margin-block-start: var(--space-lg);
     border-block-start: var(--border-1);
   }
 
@@ -111,9 +111,9 @@ const headingId = `faq-${crypto.getRandomValues(new Uint32Array(1))[0]}`;
   }
 
   .faq__heading-icon {
-    color: var(--color-primary);
     width: 1.1em;
     height: 1.1em;
+    color: var(--color-primary);
   }
 
   .faq__group-chevron {
@@ -137,10 +137,10 @@ const headingId = `faq-${crypto.getRandomValues(new Uint32Array(1))[0]}`;
   }
 
   .faq__item {
+    overflow: hidden;
     background: var(--color-bg-subtle);
     border: var(--border-1);
     border-radius: var(--radius-md);
-    overflow: hidden;
   }
 
   .faq__question {

@@ -15,7 +15,7 @@ import BaseLayout from "@layouts/BaseLayout.astro";
 import type { SiteConfig } from "@src/types";
 import { getCVData } from "@utils/cv";
 import { sanitize, stripToText } from "@utils/html";
-import { getSiteUrl, getAbsoluteUrl, buildSameAs } from "@utils/site";
+import { buildSameAs, getAbsoluteUrl, getSiteUrl } from "@utils/site";
 import { getEntry } from "astro:content";
 
 const locale = (Astro.currentLocale ?? defaultLocale) as Locale;

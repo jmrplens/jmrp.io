@@ -110,6 +110,38 @@ export async function generateLlmsFullTxt(siteUrl: string): Promise<string> {
   const posts = await getEnglishPosts();
   const tools = await getSortedTools();
 
+  const postSection = posts.flatMap((p) => {
+    const d = p.data;
+    return [
+      `### ${d.title}`,
+      "",
+      `URL: ${siteUrl}/blog/${d.slug}/`,
+      `Type: ${d.articleType}`,
+      ...(d.description ? [`Summary: ${d.description}`] : []),
+      ...(d.tags.length > 0 ? [`Tags: ${d.tags.join(", ")}`] : []),
+      ...(d.faq && d.faq.length > 0
+        ? ["", "Questions answered:", ...d.faq.map((f) => `- ${f.question}`)]
+        : []),
+      ...((d.howto?.steps?.length ?? 0) > 0
+        ? [
+            "",
+            `Steps (${d.howto?.name}):`,
+            ...(d.howto?.steps ?? []).map((s, i) => `${i + 1}. ${s.name}`),
+          ]
+        : []),
+      "",
+    ];
+  });
+
+  const toolSection = tools.flatMap((t) => [
+    `### ${t.data.title}`,
+    "",
+    `URL: ${siteUrl}/tools/${t.data.slug}/`,
+    `Category: ${t.data.category}`,
+    t.data.description,
+    "",
+  ]);
+
   const lines = [
     "# jmrp.io — Full Context",
     "",
@@ -123,45 +155,19 @@ export async function generateLlmsFullTxt(siteUrl: string): Promise<string> {
     "",
     "## Blog Posts",
     "",
-  ];
-
-  for (const p of posts) {
-    const d = p.data;
-    lines.push(`### ${d.title}`, "");
-    lines.push(`URL: ${siteUrl}/blog/${d.slug}/`);
-    if (d.articleType) lines.push(`Type: ${d.articleType}`);
-    if (d.description) lines.push(`Summary: ${d.description}`);
-    if (d.tags.length) lines.push(`Tags: ${d.tags.join(", ")}`);
-    if (d.faq?.length) {
-      lines.push("", "Questions answered:");
-      for (const f of d.faq) lines.push(`- ${f.question}`);
-    }
-    if (d.howto?.steps?.length) {
-      lines.push("", `Steps (${d.howto.name}):`);
-      d.howto.steps.forEach((s, i) => lines.push(`${i + 1}. ${s.name}`));
-    }
-    lines.push("");
-  }
-
-  lines.push("## Developer Tools", "");
-  for (const t of tools) {
-    lines.push(
-      `### ${t.data.title}`,
-      "",
-      `URL: ${siteUrl}/tools/${t.data.slug}/`,
-      `Category: ${t.data.category}`,
-      `${t.data.description}`,
-      "",
-    );
-  }
-
-  lines.push("## Contact", "", ...CONTACT.map((c) => `- ${c}`), "");
-  lines.push(
+    ...postSection,
+    "## Developer Tools",
+    "",
+    ...toolSection,
+    "## Contact",
+    "",
+    ...CONTACT.map((c) => `- ${c}`),
+    "",
     "## Technical Details",
     "",
     ...TECHNICAL_DETAILS.map((d) => `- ${d}`),
     "",
-  );
+  ];
 
   return lines.join("\n");
 }

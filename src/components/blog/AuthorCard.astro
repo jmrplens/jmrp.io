@@ -10,12 +10,12 @@
 import mehomeImg from "@assets/mehome.webp";
 import {
   getLangFromUrl,
-  useTranslations,
   useTranslatedPath,
+  useTranslations,
 } from "@i18n/utils";
 import type { SiteConfig } from "@src/types";
-import { getEntry } from "astro:content";
 import { Image } from "astro:assets";
+import { getEntry } from "astro:content";
 
 const locale = getLangFromUrl(Astro.url);
 const t = useTranslations(locale);
@@ -94,8 +94,8 @@ const externalRel = "external noopener noreferrer";
     display: flex;
     gap: var(--space-md);
     align-items: flex-start;
-    margin-block-start: var(--space-lg);
     padding: var(--space-md-lg);
+    margin-block-start: var(--space-lg);
     background: var(--color-bg-subtle);
     border: var(--border-1);
     border-radius: var(--radius-lg);
@@ -103,10 +103,10 @@ const externalRel = "external noopener noreferrer";
 
   .author-card__avatar {
     flex-shrink: 0;
-    border-radius: var(--radius-lg);
     width: 72px;
     height: 72px;
     object-fit: cover;
+    border-radius: var(--radius-lg);
   }
 
   .author-card__body {
@@ -117,17 +117,17 @@ const externalRel = "external noopener noreferrer";
     margin: 0;
     font-size: 0.8rem;
     font-weight: var(--fw-semibold);
+    color: var(--color-text-muted);
     text-transform: uppercase;
     letter-spacing: 0.04em;
-    color: var(--color-text-muted);
   }
 
   .author-card__name {
-    margin: var(--space-xs) 0 0;
     display: flex;
     flex-wrap: wrap;
-    align-items: baseline;
     gap: var(--space-sm);
+    align-items: baseline;
+    margin: var(--space-xs) 0 0;
   }
 
   .author-card__fullname {
@@ -142,8 +142,8 @@ const externalRel = "external noopener noreferrer";
 
   .author-card__bio {
     margin: var(--space-sm) 0 var(--space-md);
-    color: var(--color-text);
     font-size: 0.95rem;
+    color: var(--color-text);
   }
 
   .author-card__links {
@@ -154,9 +154,9 @@ const externalRel = "external noopener noreferrer";
   }
 
   .author-card__links a {
+    font-weight: var(--fw-medium);
     color: var(--color-primary);
     text-decoration: none;
-    font-weight: var(--fw-medium);
   }
 
   .author-card__links a:hover,

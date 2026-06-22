@@ -17,11 +17,11 @@ import type { AstroIntegration, AstroIntegrationLogger } from "astro";
 import { submitToBingWebmaster } from "./post-build/bing.js";
 import { purgeCloudflareCache } from "./post-build/cloudflare.js";
 import { compressAssets } from "./post-build/compression.js";
-import { submitToIndexNow } from "./post-build/indexnow.js";
 import { finalizeCspConfig } from "./post-build/csp.js";
 import { extractCssDataUris } from "./post-build/css.js";
 import { processHtmlFiles } from "./post-build/html.js";
 import { optimizeImages } from "./post-build/images.js";
+import { submitToIndexNow } from "./post-build/indexnow.js";
 import type { CspData } from "./post-build/types.js";
 
 /**

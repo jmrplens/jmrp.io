@@ -176,13 +176,15 @@ test.describe("Common schemas on representative pages", () => {
 
 // ─── BlogPosting ─────────────────────────────────────────────────────
 
-test.describe("BlogPosting schema", () => {
+test.describe("Article schema", () => {
   test("validates blog post structured data", async ({ page }) => {
     await blockCloudflare(page);
     await page.goto("/blog/001-secure-nginx-client-certificates/");
     const jsonLd = await getJsonLd(page);
 
-    const post = findInGraph(jsonLd, "BlogPosting");
+    // Engineering guides use the more specific TechArticle; otherwise BlogPosting.
+    const post =
+      findInGraph(jsonLd, "TechArticle") ?? findInGraph(jsonLd, "BlogPosting");
     expect(post).not.toBeNull();
     if (!post) return;
 
@@ -191,11 +193,15 @@ test.describe("BlogPosting schema", () => {
     expect((post.description as string).length).toBeLessThanOrEqual(155);
 
     expect(isIsoDate(post.datePublished)).toBe(true);
-    expect(isIsoDate(post.dateModified)).toBe(true);
+    // dateModified is only emitted when the post was actually updated.
+    if (post.dateModified !== undefined) {
+      expect(isIsoDate(post.dateModified)).toBe(true);
+    }
 
+    // Author references the site-wide #person entity (defined in the WebSite node).
     const author = post.author as JsonLdSchema;
-    expect(author["@type"]).toBe("Person");
-    expect(isNonEmptyStr(author.name)).toBe(true);
+    expect(isNonEmptyStr(author["@id"])).toBe(true);
+    expect(author["@id"]).toContain("#person");
 
     expect(isValidUrl(post.image)).toBe(true);
     expect(isNonEmptyStr(post.inLanguage)).toBe(true);
