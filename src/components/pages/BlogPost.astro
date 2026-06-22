@@ -21,7 +21,7 @@ import { formatDate, useTranslatedPath, useTranslations } from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
 import type { SiteConfig } from "@src/types";
 import { getSiteUrl } from "@utils/site";
-import { getImage, Image } from "astro:assets";
+import { getImage, Picture } from "astro:assets";
 import { type CollectionEntry, getEntry, render } from "astro:content";
 import * as cheerio from "cheerio";
 
@@ -269,7 +269,7 @@ const articleSchema = [
           {
             post.data.coverImage && (
               <div class="cover-image-container">
-                <Image
+                <Picture
                   src={post.data.coverImage}
                   alt={t("pages.blogPost.coverImageAlt", {
                     title: post.data.title,
@@ -277,7 +277,7 @@ const articleSchema = [
                   class="cover-image"
                   width={1200}
                   height={675}
-                  format="webp"
+                  formats={["avif", "webp"]}
                   loading="eager"
                   decoding="sync"
                   fetchpriority="high"
