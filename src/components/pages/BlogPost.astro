@@ -142,7 +142,7 @@ const articleNode = {
   // Surface the lead/summary to voice assistants and AI readers.
   speakable: {
     "@type": "SpeakableSpecification",
-    cssSelector: [".post-header h1", ".post-header .lead"],
+    cssSelector: [".post-header h1", ".post-header .lead", ".tldr-content"],
   },
   isPartOf: {
     "@id": new URL("#website", getSiteUrl()).href,

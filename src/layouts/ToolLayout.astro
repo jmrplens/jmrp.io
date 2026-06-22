@@ -35,15 +35,21 @@ const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
 const t = useTranslations(locale);
 const translatePath = useTranslatedPath(locale);
 
+const toolUrl = new URL(`/tools/${slug}/`, getSiteUrl()).href;
+// `@context` is intentionally omitted: this node is merged into the page-level
+// JSON-LD `@graph`, which already declares the context.
 const toolSchema = {
-  "@context": "https://schema.org",
   "@type": "SoftwareApplication",
+  "@id": `${toolUrl}#software`,
   name: title,
   description,
-  url: new URL(`/tools/${slug}/`, getSiteUrl()).href,
+  url: toolUrl,
   applicationCategory: "WebApplication",
   operatingSystem: "Web Browser",
   offers: { "@type": "Offer", price: 0, priceCurrency: "USD" },
+  isAccessibleForFree: true,
+  author: { "@id": new URL("#person", getSiteUrl()).href },
+  creator: { "@id": new URL("#person", getSiteUrl()).href },
   inLanguage: locale,
   ...extraSchema,
 };
