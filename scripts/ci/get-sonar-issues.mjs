@@ -8,7 +8,27 @@ import path from "node:path";
  * and prints them to the terminal for developer action.
  */
 
-const PROJECT_KEY = process.env.SONAR_PROJECT_KEY;
+/**
+ * Resolve the SonarCloud project key: env var first, then the public
+ * `sonar.projectKey` from sonar-project.properties (single source of truth) so
+ * local runs work without exporting SONAR_PROJECT_KEY.
+ */
+function resolveProjectKey() {
+  if (process.env.SONAR_PROJECT_KEY) return process.env.SONAR_PROJECT_KEY;
+  try {
+    const props = fs.readFileSync(
+      path.join(process.cwd(), "sonar-project.properties"),
+      "utf8",
+    );
+    const match = props.match(/^\s*sonar\.projectKey\s*=\s*(.+?)\s*$/m);
+    if (match) return match[1].trim();
+  } catch {
+    // Properties file missing/unreadable — fall back to the empty-key guard.
+  }
+  return "";
+}
+
+const PROJECT_KEY = resolveProjectKey();
 const SONAR_TOKEN = process.env.SONAR_TOKEN;
 
 const logger = {
