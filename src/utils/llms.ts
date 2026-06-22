@@ -1,0 +1,167 @@
+/**
+ * llms.txt / llms-full.txt generators (llmstxt.org standard).
+ *
+ * Both files are generated from the content collections (posts, tools) so they
+ * stay in sync with the site automatically — no hand maintenance. `llms.txt` is
+ * a concise link index; `llms-full.txt` enriches each post with its description,
+ * tags, FAQ questions, and HowTo step names (all sourced from frontmatter).
+ */
+import { getCollection } from "astro:content";
+
+/** Curated, site-level narrative reused by both files. */
+const DESCRIPTION =
+  "Personal technical blog and portfolio of José Manuel Requena Plens — R&D Engineer specializing in Embedded Systems, Acoustics, and Industrial Software Development.";
+
+const ABOUT =
+  "José Manuel Requena Plens (JMRP) is a multidisciplinary engineer building control systems for renewable energy at Power Electronics. Background in Acoustics research, noise mitigation for the European Space Agency (ESA), and biomedical ultrasound at UPV. Active open source contributor and self-hoster.";
+
+const CONTACT = [
+  "GitHub: https://github.com/jmrplens",
+  "LinkedIn: https://www.linkedin.com/in/jmrplens",
+  "Google Scholar: https://scholar.google.com/citations?user=9b0kPaUAAAAJ",
+  "ORCID: https://orcid.org/0000-0003-1250-6212",
+  "Mastodon: https://mstdn.jmrp.io/@jmrplens",
+  "Email: mail@jmrp.io",
+];
+
+const TECHNICAL_DETAILS = [
+  "Built with Astro 6 (Static Site Generation)",
+  "Bilingual: English (default) and Spanish — all content available in both languages under the /es/ prefix",
+  "Zero client-side JavaScript (except progressive enhancement islands)",
+  "WCAG 2.2 AA/AAA accessibility compliant",
+  "Content Security Policy with SRI hashes",
+  "RSS feeds: https://jmrp.io/rss.xml (EN) and https://jmrp.io/es/rss.xml (ES)",
+];
+
+const today = () => new Date().toISOString().slice(0, 10);
+
+/** Published English posts, ordered by their numbered slug (chronological). */
+async function getEnglishPosts() {
+  const posts = await getCollection(
+    "posts",
+    (p) => p.data.lang === "en" && !p.data.draft,
+  );
+  return posts.sort((a, b) => a.data.slug.localeCompare(b.data.slug));
+}
+
+async function getSortedTools() {
+  const tools = await getCollection("tools");
+  return tools.sort((a, b) => a.data.title.localeCompare(b.data.title));
+}
+
+function sectionsBlock(siteUrl: string): string {
+  return [
+    "## Sections",
+    "",
+    `- [Blog](${siteUrl}/blog/): Technical articles on Nginx, MikroTik, networking, security, embedded firmware, and DevOps`,
+    `- [CV](${siteUrl}/cv/): Professional curriculum vitae and experience`,
+    `- [Publications](${siteUrl}/publications/): Academic papers on acoustics, metamaterials, and ultrasound`,
+    `- [Homelab](${siteUrl}/homelab/): Self-hosted infrastructure — Mastodon, Matrix, Meshtastic, Tor relays`,
+    `- [GitHub](${siteUrl}/github/): Open source projects and contributions`,
+    `- [Tools](${siteUrl}/tools/): Free browser-based developer tools (privacy-first, no server calls)`,
+  ].join("\n");
+}
+
+/** Generates the concise `llms.txt` index. */
+export async function generateLlmsTxt(siteUrl: string): Promise<string> {
+  const posts = await getEnglishPosts();
+  const tools = await getSortedTools();
+
+  const lines = [
+    "# jmrp.io",
+    "",
+    `> ${DESCRIPTION}`,
+    "",
+    `> Last updated: ${today()}`,
+    "",
+    `> For comprehensive context including blog post topics, FAQs, and tool features, see [llms-full.txt](${siteUrl}/llms-full.txt).`,
+    "",
+    "## About",
+    "",
+    ABOUT,
+    "",
+    sectionsBlock(siteUrl),
+    "",
+    "## Blog Posts",
+    "",
+    ...posts.map((p) => `- [${p.data.title}](${siteUrl}/blog/${p.data.slug}/)`),
+    "",
+    "## Developer Tools",
+    "",
+    ...tools.map(
+      (t) =>
+        `- [${t.data.title}](${siteUrl}/tools/${t.data.slug}/): ${t.data.description}`,
+    ),
+    "",
+    "## Contact",
+    "",
+    ...CONTACT.map((c) => `- ${c}`),
+    "",
+    "## Technical Details",
+    "",
+    ...TECHNICAL_DETAILS.map((d) => `- ${d}`),
+    "",
+  ];
+  return lines.join("\n");
+}
+
+/** Generates the enriched `llms-full.txt` with per-post detail. */
+export async function generateLlmsFullTxt(siteUrl: string): Promise<string> {
+  const posts = await getEnglishPosts();
+  const tools = await getSortedTools();
+
+  const lines = [
+    "# jmrp.io — Full Context",
+    "",
+    `> ${DESCRIPTION}`,
+    "",
+    `> Last updated: ${today()}`,
+    "",
+    "## About the Author",
+    "",
+    ABOUT,
+    "",
+    "## Blog Posts",
+    "",
+  ];
+
+  for (const p of posts) {
+    const d = p.data;
+    lines.push(`### ${d.title}`, "");
+    lines.push(`URL: ${siteUrl}/blog/${d.slug}/`);
+    if (d.articleType) lines.push(`Type: ${d.articleType}`);
+    if (d.description) lines.push(`Summary: ${d.description}`);
+    if (d.tags.length) lines.push(`Tags: ${d.tags.join(", ")}`);
+    if (d.faq?.length) {
+      lines.push("", "Questions answered:");
+      for (const f of d.faq) lines.push(`- ${f.question}`);
+    }
+    if (d.howto?.steps?.length) {
+      lines.push("", `Steps (${d.howto.name}):`);
+      d.howto.steps.forEach((s, i) => lines.push(`${i + 1}. ${s.name}`));
+    }
+    lines.push("");
+  }
+
+  lines.push("## Developer Tools", "");
+  for (const t of tools) {
+    lines.push(
+      `### ${t.data.title}`,
+      "",
+      `URL: ${siteUrl}/tools/${t.data.slug}/`,
+      `Category: ${t.data.category}`,
+      `${t.data.description}`,
+      "",
+    );
+  }
+
+  lines.push("## Contact", "", ...CONTACT.map((c) => `- ${c}`), "");
+  lines.push(
+    "## Technical Details",
+    "",
+    ...TECHNICAL_DETAILS.map((d) => `- ${d}`),
+    "",
+  );
+
+  return lines.join("\n");
+}
