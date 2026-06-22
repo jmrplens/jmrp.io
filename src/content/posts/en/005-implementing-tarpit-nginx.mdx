@@ -8,6 +8,40 @@ authorEmail: "mail@jmrp.io"
 draft: false
 coverImage: "../../../assets/images/blog/tarpit-nginx.webp"
 tags: ["Nginx", "Security", "Tarpit"]
+faq:
+  - question: "What is a tarpit in network security?"
+    answer: "A tarpit (or \"sticky honeypot\") is a security mechanism that slows down attackers by deliberately responding to their requests at an extremely slow rate. It accepts the connection but drip-feeds data so slowly that the attacker's tools get stuck, wasting their time and resources."
+  - question: "Why use a tarpit instead of just blocking with a 403 or 404?"
+    answer: "Unlike blocking, which lets an attacker instantly retry, a tarpit wastes their limited connections, gathers intelligence on their IPs and target paths, and can even crash poorly-written scanning tools. The trade-off is that it holds server connections open, so you should be selective about which paths trigger it."
+  - question: "How do I implement an HTTP tarpit in Nginx?"
+    answer: "Use three pieces: a large random payload (generated via the Perl module), the limit_rate directive to throttle delivery to about 10 bytes/second, and a dedicated log format. Sensitive paths return 418, and an error_page 418 = @tarpit handler routes those requests into the slow-response snippet."
+  - question: "Why force the log status code to 418 when the tarpit returns 200?"
+    answer: "The client must receive a 200 OK to stay connected and stuck, but hardcoding 418 in the log_format gives log parsers like CrowdSec or Fail2Ban a clean, high-fidelity signal to identify and ban tarpitted requests without complex parsing."
+  - question: "How do I avoid tarpitting myself or trusted IPs?"
+    answer: "Define an Nginx map of trusted IPs (localhost, your VPN, your static IP) and set their tarpit rate to 0. The tarpit snippet returns a standard 403 for trusted IPs and excludes them from the log, so admin traffic is never accidentally trapped."
+  - question: "How can I automatically ban IPs caught by the tarpit?"
+    answer: "Integrate CrowdSec with a parser and a leaky-bucket scenario (for example, ban after 3 tarpit hits in 5 minutes) reading the tarpit log. Simpler alternatives include Fail2Ban, and you can report captured IPs to AbuseIPDB to contribute to collective defense."
+articleType: "TechArticle"
+proficiencyLevel: "Intermediate"
+howto:
+  name: "Implement an HTTP tarpit in Nginx"
+  totalTime: "PT20M"
+  tools:
+    - "Nginx"
+    - "CrowdSec"
+  steps:
+    - name: "Prepare the http block"
+      text: "In nginx.conf, define maps for trusted IPs, the dynamic tarpit rate, and the loggable flag, plus a dedicated log_format that forces status 418 and a perl_set that generates a large random payload."
+    - name: "Create the tarpit snippet"
+      text: "Write a reusable snippet that logs only tarpitted requests, returns 403 for trusted IPs, applies limit_rate to throttle delivery to about 10 bytes/second, and returns 200 with the slow random content."
+    - name: "Define the sensitive paths"
+      text: "In a dedicated snippet, return 418 for sensitive locations such as /.env, /.git, backup extensions, CMS exploit paths, and dotfiles, marking them as traps."
+    - name: "Configure the server block"
+      text: "In the site config, map error_page 418 to a named @tarpit location that includes the tarpit snippet, and include the sensitive-paths snippet so traps route into the slow response."
+    - name: "Test the configuration"
+      text: "Run nginx -t and reload Nginx, then probe a trap with a curl request using a short timeout to confirm the connection stays open while data drips in slowly."
+    - name: "Integrate CrowdSec to auto-ban"
+      text: "Add a CrowdSec parser and a leaky-bucket scenario that read the tarpit log to automatically ban IPs that trigger the tarpit repeatedly."
 ---
 
 import Callout from "@components/ui/Callout.astro";

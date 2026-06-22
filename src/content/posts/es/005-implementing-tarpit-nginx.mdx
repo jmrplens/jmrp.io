@@ -9,6 +9,40 @@ authorEmail: "mail@jmrp.io"
 draft: false
 coverImage: "../../../assets/images/blog/tarpit-nginx.webp"
 tags: ["Nginx", "Security", "Tarpit"]
+faq:
+  - question: "¿Qué es un tarpit en seguridad de red?"
+    answer: "Un tarpit (o \"sticky honeypot\") es un mecanismo de seguridad que ralentiza a los atacantes respondiendo deliberadamente a sus request a una velocidad extremadamente lenta. Acepta la conexión pero gotea los datos tan lentamente que las herramientas del atacante se quedan atascadas, desperdiciando su tiempo y recursos."
+  - question: "¿Por qué usar un tarpit en lugar de bloquear con un 403 o 404?"
+    answer: "A diferencia del bloqueo, que permite al atacante reintentar al instante, un tarpit malgasta sus conexiones limitadas, recopila inteligencia sobre sus IPs y rutas objetivo, e incluso puede provocar fallos en herramientas de escaneo mal programadas. El compromiso es que mantiene conexiones del servidor abiertas, por lo que conviene ser selectivo con qué rutas lo activan."
+  - question: "¿Cómo implemento un tarpit HTTP en Nginx?"
+    answer: "Usa tres piezas: una carga útil aleatoria grande (generada con el módulo Perl), la directiva limit_rate para limitar la entrega a unos 10 bytes/segundo y un formato de log dedicado. Las rutas sensibles devuelven 418, y un manejador error_page 418 = @tarpit redirige esas request al snippet de respuesta lenta."
+  - question: "¿Por qué forzar el status code 418 en el log si el tarpit devuelve 200?"
+    answer: "El cliente debe recibir un 200 OK para seguir conectado y atascado, pero codificar 418 directamente en el log_format ofrece a parsers como CrowdSec o Fail2Ban una señal clara y de alta fidelidad para identificar y banear las request tarpiteadas sin parseo complejo."
+  - question: "¿Cómo evito atraparme a mí mismo o a IPs de confianza?"
+    answer: "Define un map de Nginx con IPs de confianza (localhost, tu VPN, tu IP estática) y establece su tarpit rate a 0. El snippet del tarpit devuelve un 403 estándar para las IPs de confianza y las excluye del log, de modo que el tráfico de administración nunca queda atrapado accidentalmente."
+  - question: "¿Cómo puedo banear automáticamente las IPs atrapadas por el tarpit?"
+    answer: "Integra CrowdSec con un parser y un escenario de tipo leaky (por ejemplo, banear tras 3 impactos en el tarpit en 5 minutos) que lea el log del tarpit. Alternativas más sencillas incluyen Fail2Ban, y puedes reportar las IPs capturadas a AbuseIPDB para contribuir a la defensa colectiva."
+articleType: "TechArticle"
+proficiencyLevel: "Intermediate"
+howto:
+  name: "Implementar un tarpit HTTP en Nginx"
+  totalTime: "PT20M"
+  tools:
+    - "Nginx"
+    - "CrowdSec"
+  steps:
+    - name: "Preparar el bloque http"
+      text: "En nginx.conf, define los maps para las IPs de confianza, el tarpit rate dinámico y el flag de logging, además de un log_format dedicado que fuerza el status 418 y un perl_set que genera una carga útil aleatoria grande."
+    - name: "Crear el snippet del tarpit"
+      text: "Escribe un snippet reutilizable que registre solo las request tarpiteadas, devuelva 403 para las IPs de confianza, aplique limit_rate para limitar la entrega a unos 10 bytes/segundo y devuelva 200 con el contenido lento aleatorio."
+    - name: "Definir las rutas sensibles"
+      text: "En un snippet dedicado, devuelve 418 para las locations sensibles como /.env, /.git, extensiones de backup, rutas de exploit de CMS y dotfiles, marcándolas como trampas."
+    - name: "Configurar el server block"
+      text: "En la configuración del sitio, asocia error_page 418 a una location nombrada @tarpit que incluye el snippet del tarpit, e incluye el snippet de rutas sensibles para que las trampas se redirijan a la respuesta lenta."
+    - name: "Probar la configuración"
+      text: "Ejecuta nginx -t y recarga Nginx, luego sondea una trampa con una request curl usando un timeout corto para confirmar que la conexión permanece abierta mientras los datos gotean lentamente."
+    - name: "Integrar CrowdSec para banear automáticamente"
+      text: "Añade un parser de CrowdSec y un escenario de tipo leaky que lean el log del tarpit para banear automáticamente las IPs que activan el tarpit de forma repetida."
 ---
 
 import Callout from "@components/ui/Callout.astro";

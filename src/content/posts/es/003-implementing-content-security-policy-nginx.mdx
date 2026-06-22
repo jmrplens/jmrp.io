@@ -7,7 +7,44 @@ updatedDate: 2026-02-06
 description: "Domina Content Security Policy de cero a A+ — nonces, hashes, strict-dynamic, Trusted Types, prevención de bypass y configuraciones Nginx en producción."
 coverImage: "../../../assets/images/blog/csp-shield.webp"
 tags: ["Nginx", "Security", "CSP"]
+faq:
+  - question: "¿Cuál es la CSP más sencilla para empezar en Nginx?"
+    answer: "Añade la única cabecera `add_header Content-Security-Policy \"default-src 'self'\" always;` a tu bloque server. Esto le indica al navegador que solo permita recursos de tu mismo origen (mismo esquema, host y puerto), bloqueando inmediatamente los scripts externos, los scripts inline y los estilos inline."
+  - question: "¿Por qué los nonces son mejores que las allowlists de dominios en CSP?"
+    answer: "La investigación de Google reveló que el 94,72 % de las CSP basadas en allowlist se pueden eludir, porque los CDN de confianza suelen alojar endpoints JSONP, redirecciones abiertas o script gadgets que los atacantes explotan. Los nonces son tokens criptográficamente aleatorios por petición que un atacante no puede adivinar, así que ofrecen protección real contra XSS sin importar qué bibliotecas se carguen."
+  - question: "¿Cómo pueden los sitios estáticos usar nonces si el HTML se genera en tiempo de build?"
+    answer: "Coloca un placeholder como `CSP_NONCE_NGINX` en tus plantillas en tiempo de build y haz que Nginx genere un nonce único por petición con `set $cspNonce $request_id;` y reemplace el placeholder con `sub_filter`. El mismo valor `$cspNonce` va en la cabecera CSP, de modo que el nonce del HTML y el de la cabecera siempre coinciden."
+  - question: "¿Qué hace 'strict-dynamic' en una CSP?"
+    answer: "`'strict-dynamic'` permite que los scripts cargados por un script ya confiable también se ejecuten sin necesitar su propio nonce, de forma que la confianza se propaga por la cadena. Cuando está presente, las fuentes de tipo allowlist como `'self'` o dominios específicos se ignoran para la carga de scripts: solo los nonces y hashes otorgan la confianza inicial."
+  - question: "¿Qué directivas son obligatorias para una CSP estricta?"
+    answer: "Una CSP estricta usa nonces o hashes en lugar de allowlists de dominios, incluye `'strict-dynamic'` para la carga dinámica de scripts, establece `object-src 'none'` para bloquear plugins y establece `base-uri 'none'` para prevenir la inyección de etiquetas base."
+  - question: "¿Cómo despliego CSP de forma segura sin romper mi sitio?"
+    answer: "Nunca despliegues una CSP estricta directamente en producción. Primero ejecútala en modo `Content-Security-Policy-Report-Only` durante una o dos semanas para registrar violaciones sin bloquear, corrige problemas como los inline event handlers y las llamadas a `eval()`, y luego cambia a la aplicación gradualmente."
 draft: false
+articleType: "TechArticle"
+proficiencyLevel: "Beginner"
+howto:
+  name: "Implementar una Content Security Policy estricta en Nginx"
+  totalTime: "PT45M"
+  tools:
+    - "Nginx"
+  steps:
+    - name: "Añadir una cabecera CSP inicial"
+      text: "Añade `add_header Content-Security-Policy \"default-src 'self'\" always;` a tu bloque server de Nginx. Esto bloquea inmediatamente los scripts externos, los scripts inline y los estilos inline."
+    - name: "Comprobar y recargar Nginx"
+      text: "Ejecuta `sudo nginx -t && sudo systemctl reload nginx` para validar la configuración y aplicarla. Abre la consola del navegador para inspeccionar las violaciones de CSP."
+    - name: "Construir una política base de Nivel 6"
+      text: "Amplía la cabecera a `default-src 'none'` más `script-src`, `style-src`, `img-src`, `font-src`, `connect-src`, `object-src 'none'`, `base-uri 'none'`, `frame-ancestors 'none'`, `form-action 'self'` y `upgrade-insecure-requests` explícitos."
+    - name: "Inyectar nonces por petición para scripts inline"
+      text: "Coloca un placeholder `CSP_NONCE_NGINX` en tus plantillas, establece `set $cspNonce $request_id;` y usa `sub_filter` para reemplazar el placeholder con el mismo nonce que va en la cabecera CSP."
+    - name: "Pasar a modo estricto con nonces y strict-dynamic"
+      text: "Cambia script-src a `'nonce-$cspNonce' 'strict-dynamic'` y mantén `object-src 'none'` y `base-uri 'none'`. Esto descarta las frágiles allowlists de dominios en favor de nonces criptográficos."
+    - name: "Desplegar en modo report-only"
+      text: "Publica la política estricta como `Content-Security-Policy-Report-Only` durante una o dos semanas con un `report-uri` para registrar las violaciones sin bloquear nada."
+    - name: "Analizar y corregir las violaciones"
+      text: "Revisa los informes y soluciona los problemas: convierte los inline event handlers a `addEventListener()`, reemplaza `eval()` con `JSON.parse()` y añade nonces a los scripts inline."
+    - name: "Activar la aplicación"
+      text: "Cambia de `Content-Security-Policy-Report-Only` a `Content-Security-Policy` para empezar a bloquear las violaciones, manteniendo opcionalmente una cabecera report-only para probar políticas más estrictas en el futuro."
 ---
 
 import Callout from "@components/ui/Callout.astro";

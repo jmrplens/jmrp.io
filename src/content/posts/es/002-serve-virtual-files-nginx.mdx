@@ -10,6 +10,42 @@ draft: false
 lang: "es"
 coverImage: "../../../assets/images/blog/virtual-files.webp"
 tags: ["Nginx", "DevOps", "Containers", "Kubernetes"]
+faq:
+  - question: "¿Cómo sirvo robots.txt o un health check en Nginx sin un archivo en disco?"
+    answer: "Usa un bloque location con la directiva return para enviar contenido inline, por ejemplo `location = /robots.txt { default_type text/plain; return 200 \"User-agent: *\\nAllow: /\\n\"; }`. Esto sirve el contenido directamente desde la configuración sin ningún archivo físico, ideal para containers y plataformas gestionadas donde no puedes modificar la imagen ni el filesystem."
+  - question: "¿Cuál es la diferencia entre root y alias en Nginx?"
+    answer: "`root` añade la URI de la petición a la ruta indicada, así que `root /var/www` con una petición a `/images/photo.jpg` sirve `/var/www/images/photo.jpg`. `alias` reemplaza el prefijo coincidente del location con la ruta, así que `alias /data/photos/` para `location /images/` sirve `/data/photos/photo.jpg`. Usa `root` para document roots estándar y `alias` para archivos en ubicaciones no estándar."
+  - question: "¿Por qué mi bloque location de Nginx no coincide con la petición correcta?"
+    answer: "Nginx selecciona los locations por prioridad, no por el orden en el archivo de configuración. La coincidencia exacta (`=`) gana primero, luego el prefijo con `^~`, luego regex (`~` y `~*`), y por último el prefijo simple por coincidencia más larga. Usa `=` para archivos virtuales como `/robots.txt` para que gane la coincidencia exacta y Nginx deje de buscar inmediatamente, que es además la opción más rápida."
+  - question: "¿Cómo establezco el Content-Type de una respuesta return inline en Nginx?"
+    answer: "Usa la directiva `default_type` dentro del bloque location, por ejemplo `default_type application/json;` antes de un `return 200` con JSON. La directiva `add_header` puede añadir otros headers pero solo se aplica a ciertos códigos de respuesta (200, 201, 204, 206, 301, 302, 303, 304, 307, 308) a menos que se use el flag `always`."
+  - question: "¿Debo usar njs o la directiva return para archivos virtuales en Nginx?"
+    answer: "Usa `return` para contenido estático porque es más rápido; usa njs (Nginx JavaScript) solo cuando necesites lógica como contenido condicional o JSON dinámico. A diferencia de `return`, que solo sirve cadenas estáticas, njs permite control programático completo."
+  - question: "¿Cómo añado probes de liveness y readiness de Kubernetes con Nginx?"
+    answer: "Define bloques location de coincidencia exacta que devuelvan una respuesta simple, como `location = /healthz { access_log off; return 200 'OK'; }` para liveness y `location = /ready { access_log off; return 200 'Ready'; }` para readiness. Desactivar access_log evita que los logs se saturen con los probes frecuentes."
+articleType: "TechArticle"
+proficiencyLevel: "Intermediate"
+howto:
+  name: "Servir archivos virtuales en Nginx sin I/O de disco"
+  tools:
+    - "Nginx"
+  steps:
+    - name: "Entender la prioridad del location matching"
+      text: "Aprende cómo Nginx selecciona un bloque location por prioridad y no por el orden en la configuración: coincidencia exacta (=) primero, luego prefijo con ^~, después regex y por último prefijo simple por coincidencia más larga. Usa = para archivos virtuales como /robots.txt para que gane la coincidencia exacta."
+    - name: "Elegir entre root, alias o try_files"
+      text: "Elige la directiva que controla dónde busca Nginx los archivos. Usa root para document roots estándar, alias para servir archivos desde ubicaciones no estándar y try_files para comprobar archivos en orden con un fallback final."
+    - name: "Servir contenido inline con la directiva return"
+      text: "Usa return para enviar contenido pequeño directamente desde la configuración, como `return 200 \"User-agent: *\\nAllow: /\\n\";`, y establece el Content-Type con default_type. Esto evita crear archivos físicos para robots.txt, respuestas JSON o pings vacíos."
+    - name: "Añadir named locations y fallbacks internos"
+      text: "Define named locations con prefijo @ para patrones de fallback como el enrutamiento de SPA o el proxy a un backend, y usa la directiva internal para prevenir el acceso directo a archivos protegidos."
+    - name: "Definir archivos web estándar y .well-known"
+      text: "Añade bloques location de coincidencia exacta para robots.txt, humans.txt, favicon.ico, security.txt y las rutas de ACME challenge, sirviéndolos inline con return o desde disco con alias."
+    - name: "Usar njs para archivos virtuales dinámicos"
+      text: "Carga el módulo ngx_http_js_module y usa js_content con una función njs cuando necesites lógica como contenido condicional o JSON dinámico. Reserva njs para los casos que return no puede gestionar, ya que return es más rápido para contenido estático."
+    - name: "Añadir endpoints de salud y monitorización"
+      text: "Crea endpoints de coincidencia exacta para los probes de liveness, readiness y startup de Kubernetes que devuelvan una respuesta simple con access_log off, y expón métricas de stub_status restringidas a redes internas."
+    - name: "Validar y recargar la configuración"
+      text: "Ejecuta `sudo nginx -t` para comprobar la sintaxis, luego `sudo nginx -s reload` para aplicar los cambios, y prueba los archivos virtuales con curl revisando el error log si algo falla."
 ---
 
 import Callout from "@components/ui/Callout.astro";

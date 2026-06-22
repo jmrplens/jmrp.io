@@ -10,6 +10,21 @@ authorEmail: "mail@jmrp.io"
 draft: false
 coverImage: "../../../assets/images/blog/string-pool.webp"
 tags: ["Firmware", "C++", "Embedded", "ESP32", "i18n"]
+faq:
+  - question: "¿Qué es un pool de cadenas i18n empaquetado?"
+    answer: "Sustituye la tabla básica de punteros const char* por dos piezas de datos generados: un único blob de flash con cada traducción terminada en NUL, y una tabla por idioma de offsets uint16_t dentro de ese blob. Un offset es solo el byte donde empieza una cadena C, así que tr() sigue devolviendo un const char* corriente."
+  - question: "¿Por qué usar offsets uint16_t en vez de una tabla de punteros?"
+    answer: "En un MCU de 32 bits cada const char* ocupa 4 bytes, así que una rejilla de 5×273 cuesta 5.460 bytes de puro direccionamiento. Un offset uint16_t ocupa 2 bytes, reduciendo la tabla índice a la mitad, a 2.730 bytes (−50%) — una mejora estructural que ningún linker, ni siquiera LTO, hará por ti."
+  - question: "¿No deduplica y hace tail-merge el linker ya por su cuenta?"
+    answer: "Sí — GNU ld hace tail-merge de cadenas idénticas y de sufijos por defecto, y ld.lld lo hace con -O2. Por eso el blob empaquetado es solo unos 282 B más pequeño que lo que produce el linker. La mejora real, a prueba de optimizador, es estructural: reducir la tabla índice a la mitad y borrar las relocations, algo que el linker no puede hacer."
+  - question: "¿Cuánta RAM usa el pool de cadenas?"
+    answer: "Cero, más allá de un índice de idioma actual de un byte. Tanto el pool como la tabla de offsets son constexpr .rodata, así que viven enteramente en flash; en el ESP32 están mapeados en memoria (execute-in-place) y se leen con cargas normales."
+  - question: "¿Cuánto firmware ahorró el empaquetado en realidad?"
+    answer: "El firmware encogió 2.224 B netos en el -Os de producción, sin cambios de API ni en los puntos de llamada. El ahorro es menor que el −2.730 B de reducir el índice a la mitad porque agrupar en un pool renuncia a unos 500 B de deduplicación cruzada del linker; la mejora neta la sostienen la tabla a la mitad y las 1.365 relocations borradas, no el blob."
+  - question: "¿Escala la técnica y funciona en otros MCUs?"
+    answer: "La eliminación de relocations escala sin límite (una por celda), pero el −50% de tabla solo se mantiene mientras el pool cabe en un offset de 16 bits (unos 1.300 IDs); pasado eso un offset uint32 iguala el ancho del puntero. No es específica del ESP32: cualquier Cortex-M de 32 bits obtiene el mismo −50%, y un objetivo de 64 bits ahorra −75% por celda."
+articleType: "TechArticle"
+proficiencyLevel: "Expert"
 ---
 
 import TLDRSummary from "@components/ui/TLDRSummary.astro";

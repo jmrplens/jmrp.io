@@ -10,6 +10,39 @@ updatedDate: 2026-01-14
 draft: false
 coverImage: "../../../assets/images/blog/http3-quic.webp"
 tags: ["Nginx", "HTTP3", "Performance"]
+faq:
+  - question: "¿Qué necesito para habilitar HTTP/3 en Nginx?"
+    answer: "Necesitas Nginx 1.25.0 o superior (el soporte HTTP/3 se añadió a mediados de 2023) compilado con --with-http_v3_module, además de una biblioteca SSL con soporte QUIC como OpenSSL 3.5.1+, BoringSSL, QuicTLS o LibreSSL 3.6+. TLS 1.3 es obligatorio para QUIC."
+  - question: "¿HTTP/3 usa TCP o UDP?"
+    answer: "HTTP/3 funciona sobre QUIC, que se construye sobre UDP en lugar de TCP. Debes abrir el puerto UDP 443 tanto en el firewall del servidor como en el del proveedor cloud, o QUIC fallará silenciosamente y los clientes retrocederán a HTTP/2."
+  - question: "¿Cómo resuelve QUIC el head-of-line blocking de TCP?"
+    answer: "TCP ve todo como un único flujo ordenado de bytes, así que un solo paquete perdido bloquea todos los streams multiplexados de HTTP/2 hasta su retransmisión. QUIC implementa streams en la capa de transporte, dando entrega independiente a cada stream, por lo que un paquete perdido solo afecta a su propio stream."
+  - question: "¿Por qué mi navegador sigue mostrando HTTP/2 en la primera visita?"
+    answer: "Es normal. En la primera visita los navegadores usan HTTP/2 para descubrir la cabecera Alt-Svc que anuncia HTTP/3; en peticiones posteriores o tras recargar cambian a HTTP/3."
+  - question: "¿Por qué es crítico el flag reuseport para QUIC en Nginx?"
+    answer: "UDP no tiene conexión, así que sin reuseport todos los paquetes QUIC los maneja un único worker de Nginx, creando un cuello de botella. La función reuseport del kernel distribuye los paquetes entre los workers, pero debe aparecer en exactamente una directiva listen por dirección:puerto a nivel global o Nginx no arrancará."
+  - question: "¿Cómo verifico que HTTP/3 funciona?"
+    answer: "Usa curl moderno con curl -I --http3 https://tusitio, activa la columna Protocolo en las DevTools del navegador y busca h3, usa herramientas online como http3check.net o cloudflare-quic.com, o filtra el log de acceso de Nginx por quic=\"h3\"."
+articleType: "TechArticle"
+proficiencyLevel: "Intermediate"
+howto:
+  name: "Habilitar QUIC y HTTP/3 en Nginx"
+  totalTime: "PT30M"
+  tools:
+    - "Nginx"
+  steps:
+    - name: "Verificar o instalar Nginx con soporte HTTP/3"
+      text: "Ejecuta nginx -V y confirma que la compilación incluye --with-http_v3_module y una biblioteca SSL con soporte QUIC (OpenSSL 3.5.1+, BoringSSL, QuicTLS o LibreSSL 3.6+). Si falta, instala Nginx 1.25.0+ desde el repositorio de Ondřej Surý o el mainline oficial, o compílalo desde el código fuente con QuicTLS."
+    - name: "Añadir los listeners QUIC y TCP"
+      text: "En el bloque server, mantén los listeners estándar listen 443 ssl para HTTP/1.1 y HTTP/2, y añade listen 443 quic reuseport para IPv4 e IPv6 para habilitar QUIC sobre UDP. El flag reuseport debe aparecer en exactamente una directiva listen por dirección:puerto a nivel global."
+    - name: "Configurar TLS 1.3 y activar HTTP/3"
+      text: "Define ssl_protocols incluyendo TLSv1.3 (obligatorio para QUIC), apunta ssl_certificate y ssl_certificate_key a tu certificado y activa el protocolo con http3 on."
+    - name: "Anunciar HTTP/3 con la cabecera Alt-Svc"
+      text: "Añade la cabecera add_header Alt-Svc 'h3=\":443\"; ma=86400' always para que los navegadores descubran HTTP/3 en la primera visita por HTTP/2 y cambien a él en las peticiones siguientes."
+    - name: "Abrir el puerto UDP 443 en el firewall"
+      text: "QUIC usa UDP, no TCP, así que permite UDP/443 (por ejemplo sudo ufw allow 443/udp) tanto en el firewall del servidor como en el del proveedor cloud, o QUIC fallará silenciosamente y los clientes retrocederán a HTTP/2."
+    - name: "Verificar que HTTP/3 funciona"
+      text: "Prueba con curl -I --http3 https://tusitio, comprueba la columna Protocolo buscando h3 en las DevTools del navegador, usa herramientas online como http3check.net o cloudflare-quic.com, o filtra el log de acceso de Nginx por quic=\"h3\"."
 ---
 
 import Callout from "@components/ui/Callout.astro";

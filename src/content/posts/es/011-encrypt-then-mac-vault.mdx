@@ -9,6 +9,17 @@ author: "José Manuel Requena Plens"
 authorEmail: "mail@jmrp.io"
 draft: false
 tags: ["Security", "Cryptography", "Firmware", "ESP32", "C++"]
+faq:
+  - question: "¿Qué es encrypt-then-MAC?"
+    answer: "Encrypt-then-MAC autentica el texto cifrado antes de cualquier descifrado. Cada fichero de la bóveda es un sobre — [ver][iv][hmacTag][cipher] — y el tag HMAC se verifica en tiempo constante antes de que se ejecute AES, así que un fichero manipulado se rechaza sin descifrarse jamás."
+  - question: "¿Por qué verificar el MAC antes de descifrar?"
+    answer: "Descifrar primero abre un oráculo de padding: el paso de descifrado inspecciona el padding PKCS#7 y filtra diferencias de tiempo o de error que un atacante explota offline. Verificar el tag primero hace que ningún byte controlado por el atacante llegue al cifrador — la bóveda se bloquea ante el fallo (fail-closed)."
+  - question: "¿Cómo impide el formato un fichero de bóveda revertido o reubicado?"
+    answer: "El HMAC autentica un prefijo de contexto — ver ‖ recordType ‖ slotId ‖ generation — así que un fichero movido a otro slot, retipado o sustituido por una revisión más antigua falla el tag, incluso frente a un atacante con acceso en bruto a la flash y sin PIN."
+  - question: "¿Necesita encrypt-then-MAC claves separadas?"
+    answer: "Sí. El cifrado y la autenticación usan claves independientes derivadas del PIN. Reutilizar una sola clave para el cifrador y para el MAC debilita la construcción y debe evitarse."
+articleType: "TechArticle"
+proficiencyLevel: "Expert"
 ---
 
 import Callout from "@components/ui/Callout.astro";

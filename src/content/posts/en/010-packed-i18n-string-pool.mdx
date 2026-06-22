@@ -9,6 +9,21 @@ authorEmail: "mail@jmrp.io"
 draft: false
 coverImage: "../../../assets/images/blog/string-pool.webp"
 tags: ["Firmware", "C++", "Embedded", "ESP32", "i18n"]
+faq:
+  - question: "What is a packed i18n string pool?"
+    answer: "It replaces the naïve table of const char* pointers with two pieces of generated data: a single flash blob holding every NUL-terminated translation, and a per-language table of uint16_t offsets into that blob. An offset is just the byte where a C string begins, so tr() still returns a plain const char*."
+  - question: "Why use uint16_t offsets instead of a pointer table?"
+    answer: "On a 32-bit MCU each const char* is 4 bytes, so a 5×273 grid costs 5,460 bytes of pure addressing. A uint16_t offset is 2 bytes, halving the index table to 2,730 bytes (−50%) — a structural win no linker, and not even LTO, will do for you."
+  - question: "Doesn't the linker already deduplicate and tail-merge strings?"
+    answer: "Yes — GNU ld tail-merges identical strings and suffixes by default, and ld.lld does so at -O2. So the packed blob is only about 282 B smaller than what the linker produces. The real, optimizer-proof win is structural: halving the index table and erasing the relocations, which the linker cannot do."
+  - question: "How much RAM does the string pool use?"
+    answer: "Zero beyond a one-byte current-language index. Both the pool and the offset table are constexpr .rodata, so they live entirely in flash; on the ESP32 they are memory-mapped (execute-in-place) and read with ordinary loads."
+  - question: "How much firmware did packing actually save?"
+    answer: "Net firmware shrank 2,224 B at the shipped -Os, with no API or call-site changes. The saving is smaller than the −2,730 B index halving because pooling forfeits about 500 B of cross-module linker dedup; the table halving plus the erased 1,365 relocations carry the net gain, not the blob."
+  - question: "Does the technique scale and work on other MCUs?"
+    answer: "The relocation elimination scales without limit (one per cell), but the −50% table win holds only while the pool fits a 16-bit offset (about 1,300 IDs); past that a uint32 offset matches the pointer width. It is not ESP32-specific: any 32-bit Cortex-M gets the same −50%, and a 64-bit target saves −75% per cell."
+articleType: "TechArticle"
+proficiencyLevel: "Expert"
 ---
 
 import TLDRSummary from "@components/ui/TLDRSummary.astro";

@@ -9,7 +9,50 @@ authorEmail: "mail@jmrp.io"
 draft: false
 coverImage: "../../../assets/images/blog/tor-bridge.webp"
 tags: ["Tor", "Privacy", "Linux", "Security", "Nginx"]
-
+faq:
+  - question: "¿Qué es un bridge de Tor y por qué son tan importantes los bridges?"
+    answer: "Un bridge es un punto de entrada oculto a la red Tor que no está listado en el directorio público de Tor, por lo que ayuda a usuarios en países censurados a alcanzar Tor incluso cuando los relés conocidos están bloqueados. En 2026 la red tiene aproximadamente 8,000 relés pero solo alrededor de 2,000 bridges, lo que los convierte en el recurso más crítico y escaso para la evasión de censura."
+  - question: "¿Cuál es la diferencia entre obfs4 y WebTunnel?"
+    answer: "obfs4 hace que el tráfico de Tor parezca bytes aleatorios para resistir la huella dactilar DPI y es fácil de configurar, mientras que WebTunnel disfraza el tráfico como navegación HTTPS/WebSocket ordinaria, haciéndolo casi imposible de bloquear pero requiriendo un servidor web y un dominio. Ejecutar ambos en un servidor proporciona dos métodos de evasión diferentes a la vez."
+  - question: "¿Por qué ORPort debe usar 0.0.0.0 en lugar de 127.0.0.1 detrás de NAT?"
+    answer: "Tor ejecuta una prueba de auto-accesibilidad que verifica que el ORPort sea accesible desde Internet, y vincularlo a localhost (127.0.0.1) hace que esa prueba falle. Detrás de un router debes usar ORPort 0.0.0.0:9001 (o tu IP de LAN) y reenviar el puerto 9001 desde el router."
+  - question: "¿Qué puertos necesito reenviar para un bridge de Tor?"
+    answer: "Reenvía TCP 9001 (ORPort, siempre requerido), TCP 4443 (obfs4, si ejecutas obfs4) y TCP 443 (HTTPS para WebTunnel vía Nginx, si ejecutas WebTunnel). Las direcciones IPv6 son globalmente enrutables, así que necesitan reglas de firewall que permitan el tráfico en lugar de reenvío de puertos."
+  - question: "¿Por qué la ruta secreta de WebTunnel devuelve un error 502 con curl?"
+    answer: "Un error 502 Bad Gateway al hacer curl a la ruta secreta es comportamiento esperado, porque WebTunnel requiere un apretón de manos de protocolo WebSocket/WebTunnel adecuado que un simple GET HTTP no puede realizar. Si los clientes de Tor pueden conectarse, todo funciona correctamente."
+  - question: "¿Cuánto tarda mi bridge en obtener banderas de relay y conexiones de clientes?"
+    answer: "Las banderas aparecen gradualmente: Running y Valid tardan alrededor de 1 hora, Stable necesita unos 7 días de tiempo de actividad continuo y Guard unos 8 días. BridgeDB distribuye los nuevos bridges a lo largo de 24–48 horas, así que es normal esperar hasta una semana antes de ver tus primeras conexiones de clientes."
+articleType: "TechArticle"
+proficiencyLevel: "Intermediate"
+howto:
+  name: "Ejecutar un bridge Tor obfs4 + WebTunnel en Linux"
+  totalTime: "PT60M"
+  tools:
+    - "Tor"
+    - "obfs4proxy"
+    - "WebTunnel"
+    - "Nginx"
+    - "Prometheus"
+    - "CrowdSec"
+  steps:
+    - name: "Instalar Tor del repositorio oficial"
+      text: "Añade la clave GPG y el repositorio APT del Proyecto Tor, luego instala tor, deb.torproject.org-keyring y obfs4proxy. Los paquetes de distribución suelen estar desactualizados, así que usa siempre el repositorio oficial."
+    - name: "Compilar e instalar el servidor WebTunnel"
+      text: "Instala Go, clona el código fuente de WebTunnel y compila el binario webtunnel-server en /usr/local/bin. El binario aún no está empaquetado para Debian, por lo que se compila desde la fuente."
+    - name: "Configurar el bridge de Tor en torrc"
+      text: "Haz una copia de seguridad de /etc/tor/torrc y establece BridgeRelay 1, ORPort 0.0.0.0:9001 y los plugins de transporte obfs4 y WebTunnel. Genera una ruta secreta de URL de 24 caracteres para WebTunnel."
+    - name: "Configurar Nginx para el camuflaje de WebTunnel"
+      text: "Crea un sitio web de camuflaje simple, obtén un certificado TLS de Let's Encrypt y añade un bloque de servidor Nginx que haga proxy inverso de la ruta secreta al puerto local de WebTunnel con cabeceras de actualización WebSocket."
+    - name: "Configurar el reenvío de puertos y el firewall"
+      text: "Reenvía TCP 9001, 4443 y 443 desde el router al servidor y permítelos en UFW o iptables. IPv6 necesita reglas de firewall que permitan el tráfico en lugar de reenvío NAT."
+    - name: "Permitir obfs4proxy en AppArmor"
+      text: "En Debian/Ubuntu, pon el perfil de obfs4proxy en modo complain o añade una regla de permiso explícita para que AppArmor no bloquee la ejecución."
+    - name: "Iniciar el bridge y verificar que funciona"
+      text: "Reinicia Tor, observa los logs para confirmar un bootstrap exitoso y el self-test del ORPort, comprueba que tor, obfs4proxy y webtunnel-server estén en ejecución y en escucha, y recupera la huella digital del bridge."
+    - name: "Configurar el monitoreo con Prometheus y Grafana"
+      text: "Añade un target de scrape de Prometheus para el MetricsPort (9052), restringe el acceso a tu servidor de monitoreo y construye paneles de Grafana para ancho de banda, conexiones, banderas de relay y salud."
+    - name: "Integrar CrowdSec sin bloquear clientes de Tor"
+      text: "Añade un bypass de tres capas — reglas ACCEPT de iptables antes de CROWDSEC_CHAIN, una excepción Lua de Nginx para el dominio de Tor y una lista blanca del parser de CrowdSec — y persiste las reglas de iptables mediante un servicio systemd."
 ---
 
 import Callout from "@components/ui/Callout.astro";

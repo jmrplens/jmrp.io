@@ -9,6 +9,42 @@ updatedDate: 2025-12-18
 draft: false
 coverImage: "../../../assets/images/blog/virtual-files.webp"
 tags: ["Nginx", "DevOps", "Containers", "Kubernetes"]
+faq:
+  - question: "How do I serve robots.txt or a health check in Nginx without a file on disk?"
+    answer: "Use a location block with the return directive to send inline content, for example `location = /robots.txt { default_type text/plain; return 200 \"User-agent: *\\nAllow: /\\n\"; }`. This serves the content directly from the config without any physical file, which is ideal for containers and managed platforms where you can't modify the image or filesystem."
+  - question: "What is the difference between root and alias in Nginx?"
+    answer: "`root` appends the request URI to the given path, so `root /var/www` with a request for `/images/photo.jpg` serves `/var/www/images/photo.jpg`. `alias` replaces the matched location prefix with the path, so `alias /data/photos/` for `location /images/` serves `/data/photos/photo.jpg`. Use `root` for standard document roots and `alias` for files in non-standard locations."
+  - question: "Why is my Nginx location block not matching the right request?"
+    answer: "Nginx selects locations by priority, not config file order. Exact match (`=`) wins first, then prefix with `^~`, then regex (`~` and `~*`), then plain prefix by longest match. Use `=` for virtual files like `/robots.txt` so the exact match wins and Nginx stops searching immediately, which is also the fastest option."
+  - question: "How do I set the Content-Type for an inline return response in Nginx?"
+    answer: "Use the `default_type` directive inside the location block, for example `default_type application/json;` before a JSON `return 200`. The `add_header` directive can add other headers but only applies to certain response codes (200, 201, 204, 206, 301, 302, 303, 304, 307, 308) unless the `always` flag is used."
+  - question: "Should I use njs or the return directive for virtual files in Nginx?"
+    answer: "Use `return` for static content because it is faster; use njs (Nginx JavaScript) only when you need logic such as conditional content or dynamic JSON. Unlike `return`, which serves static strings, njs allows full programmatic control."
+  - question: "How do I add Kubernetes liveness and readiness probes with Nginx?"
+    answer: "Define exact-match location blocks that return a simple response, such as `location = /healthz { access_log off; return 200 'OK'; }` for liveness and `location = /ready { access_log off; return 200 'Ready'; }` for readiness. Disabling access_log keeps the logs from being spammed by frequent probes."
+articleType: "TechArticle"
+proficiencyLevel: "Intermediate"
+howto:
+  name: "Serve virtual files in Nginx without disk I/O"
+  tools:
+    - "Nginx"
+  steps:
+    - name: "Understand location matching priority"
+      text: "Learn how Nginx selects a location block by priority rather than config order: exact match (=) first, then prefix with ^~, then regex, then plain prefix by longest match. Use = for virtual files like /robots.txt so the exact match wins."
+    - name: "Choose root, alias, or try_files"
+      text: "Pick the directive that controls where Nginx looks for files. Use root for standard document roots, alias to serve files from non-standard locations, and try_files to check files in order with a final fallback."
+    - name: "Serve inline content with the return directive"
+      text: "Use return to send small content directly from the config, such as `return 200 \"User-agent: *\\nAllow: /\\n\";`, and set the Content-Type with default_type. This avoids creating physical files for robots.txt, JSON responses, or empty pings."
+    - name: "Add named locations and internal fallbacks"
+      text: "Define named locations prefixed with @ for fallback patterns like SPA routing or proxying to a backend, and use the internal directive to prevent direct access to protected files."
+    - name: "Define standard web and .well-known files"
+      text: "Add exact-match location blocks for robots.txt, humans.txt, favicon.ico, security.txt, and ACME challenge paths, serving them either inline with return or from disk with alias."
+    - name: "Use njs for dynamic virtual files"
+      text: "Load the ngx_http_js_module and use js_content with an njs function when you need logic such as conditional content or dynamic JSON. Reserve njs for cases that return cannot handle, since return is faster for static content."
+    - name: "Add health and monitoring endpoints"
+      text: "Create exact-match endpoints for Kubernetes liveness, readiness, and startup probes that return a simple response with access_log off, and expose stub_status metrics restricted to internal networks."
+    - name: "Validate and reload the configuration"
+      text: "Run `sudo nginx -t` to check the syntax, then `sudo nginx -s reload` to apply changes, and test the virtual files with curl while checking the error log if something fails."
 ---
 
 import Callout from "@components/ui/Callout.astro";

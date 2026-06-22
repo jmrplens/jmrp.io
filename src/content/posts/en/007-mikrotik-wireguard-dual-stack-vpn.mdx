@@ -8,6 +8,44 @@ authorEmail: "mail@jmrp.io"
 draft: false
 coverImage: "../../../assets/images/blog/wireguard-vpn.webp"
 tags: ["MikroTik", "WireGuard", "VPN", "IPv6", "Security"]
+faq:
+  - question: "What RouterOS version do I need for WireGuard on MikroTik?"
+    answer: "You need MikroTik RouterOS 7.x or later, since WireGuard has been built in since RouterOS 7. The guide is tested on RouterOS 7.x with an RB5009 but applies to any MikroTik router with WireGuard support."
+  - question: "Why use a ULA prefix and NAT66 for IPv6 instead of global addresses?"
+    answer: "VPN clients get private Unique Local Addresses (ULA) in the fd00::/8 range, which are guaranteed not to conflict with public IPv6 addresses. The router then NAT66-translates them to your ISP-assigned global IPv6 prefix when clients access the internet."
+  - question: "Why use a non-standard WireGuard port like 53537 instead of 51820?"
+    answer: "Using a non-standard port instead of the default 51820 helps avoid automated scans targeting common VPN ports. Some networks also block standard VPN ports, so a high random port may offer better connectivity."
+  - question: "What is the difference between full tunnel and split tunnel?"
+    answer: "Full tunnel (AllowedIPs = 0.0.0.0/0, ::/0) routes all traffic through the VPN, hiding your location but adding latency. Split tunnel routes only specific networks (like your home LAN) through the VPN, giving better performance for general internet use."
+  - question: "Why is persistent-keepalive needed for WireGuard clients?"
+    answer: "The persistent-keepalive=25s setting sends a keepalive packet every 25 seconds, maintaining the NAT translation for mobile devices behind NAT and allowing the server to send data to the client even when the client hasn't sent anything recently."
+  - question: "Does IPv6 over the VPN work if my ISP doesn't provide IPv6?"
+    answer: "No global IPv6 internet access. NAT66 translates the client's ULA address to your ISP's global IPv6 prefix, so without an ISP prefix there is nothing to translate to. The tunnel itself still carries IPv6 between client and router, but no further."
+articleType: "TechArticle"
+proficiencyLevel: "Intermediate"
+howto:
+  name: "Configure a dual-stack WireGuard VPN on MikroTik RouterOS"
+  totalTime: "PT45M"
+  tools:
+    - "MikroTik RouterOS device"
+    - "WireGuard client"
+  steps:
+    - name: "Create the WireGuard interface"
+      text: "Add a WireGuard interface on the MikroTik router with a custom listen port; RouterOS generates the keypair automatically. Retrieve the server's public key to configure clients later."
+    - name: "Assign IPv4 and IPv6 addresses"
+      text: "Assign both an IPv4 address and an IPv6 ULA address to the WireGuard interface so it acts as the gateway for VPN clients. Set advertise=no on the IPv6 address."
+    - name: "Add the interface to interface lists"
+      text: "Add the WireGuard interface to the VPN and LAN interface lists so firewall rules handle its traffic correctly and clients can reach local resources."
+    - name: "Configure firewall rules"
+      text: "Add input rules to accept WireGuard on its UDP port, forward rules to allow clients to reach the internet and the home LAN, and an address list for the WireGuard network."
+    - name: "Configure NAT/masquerade"
+      text: "Add IPv4 masquerade and IPv6 NAT66 srcnat rules so VPN clients' private addresses are translated to your public IP and ISP-assigned global IPv6 prefix."
+    - name: "Tune MSS clamping and the RAW table"
+      text: "Add a change-mss mangle rule to prevent fragmentation over the tunnel, and RAW prerouting rules to skip flood protection for WireGuard traffic."
+    - name: "Add WireGuard peers (clients)"
+      text: "Add a peer per device with a unique keypair, preshared key, and dedicated IPv4/IPv6 allowed-address, using persistent-keepalive=25s for devices behind NAT."
+    - name: "Configure the client and verify the connection"
+      text: "Set up each client device via QR code or a manual config file, then verify the handshake on both ends and test IPv4 and IPv6 connectivity through the tunnel."
 ---
 
 import Callout from "@components/ui/Callout.astro";
