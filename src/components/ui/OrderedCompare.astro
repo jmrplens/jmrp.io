@@ -113,7 +113,13 @@ const statusName: Record<Status, string> = {
                     aria-hidden="true"
                   >
                     <span class="ord-cmp__num">{i + 1}</span>
-                    <span class:list={["ord-cmp__glyph", statusIcon[status]]} />
+                    {status !== "neutral" && (
+                      <span class="ord-cmp__badge">
+                        <span
+                          class:list={["ord-cmp__glyph", statusIcon[status]]}
+                        />
+                      </span>
+                    )}
                   </span>
                   <span class="ord-cmp__body">
                     <span class="ord-cmp__text">{s.text}</span>
@@ -240,6 +246,7 @@ const statusName: Record<Status, string> = {
   }
 
   .ord-cmp__marker {
+    position: relative;
     display: inline-flex;
     flex-shrink: 0;
     align-items: center;
@@ -267,20 +274,26 @@ const statusName: Record<Status, string> = {
     border: var(--border-1);
   }
 
-  /* The number is the default; the glyph overlays on status steps. */
+  /* The step number always shows; the ✓/✗ status glyph rides in a small corner
+     badge so the comparison still reads without relying on colour alone (the
+     shape, not just the colour, carries the status). */
+  .ord-cmp__badge {
+    position: absolute;
+    right: -0.3rem;
+    bottom: -0.3rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 0.95rem;
+    height: 0.95rem;
+    background: var(--color-bg);
+    border-radius: 50%;
+  }
+
   .ord-cmp__glyph {
-    display: none;
-    font-size: 0.95rem;
-  }
-
-  .ord-cmp__step--danger .ord-cmp__num,
-  .ord-cmp__step--safe .ord-cmp__num {
-    display: none;
-  }
-
-  .ord-cmp__step--danger .ord-cmp__glyph,
-  .ord-cmp__step--safe .ord-cmp__glyph {
-    display: inline-block;
+    width: 0.62rem;
+    height: 0.62rem;
+    color: var(--color-text);
   }
 
   .ord-cmp__body {
