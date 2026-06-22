@@ -20,8 +20,13 @@ function resolveProjectKey() {
       path.join(process.cwd(), "sonar-project.properties"),
       "utf8",
     );
-    const match = props.match(/^\s*sonar\.projectKey\s*=\s*(.+?)\s*$/m);
-    if (match) return match[1].trim();
+    for (const line of props.split("\n")) {
+      const trimmed = line.trim();
+      if (trimmed.startsWith("sonar.projectKey")) {
+        const eq = trimmed.indexOf("=");
+        if (eq !== -1) return trimmed.slice(eq + 1).trim();
+      }
+    }
   } catch {
     // Properties file missing/unreadable — fall back to the empty-key guard.
   }
