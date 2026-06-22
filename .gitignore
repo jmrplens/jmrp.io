@@ -78,6 +78,7 @@ jsdoc-coverage/
 # Playwright test results and reports
 test-results/
 playwright-report/
+.playwright-mcp/
 accessibility-report/
 test-report.html
 test-report.json

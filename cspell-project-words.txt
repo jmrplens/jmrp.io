@@ -166,6 +166,7 @@ cplusplus
 cppreference
 crackeo
 credentialless
+cripto
 crlnumber
 crowdsec
 crowdsecurity
@@ -275,6 +276,7 @@ euronoise
 exceptionresp
 exfil
 exfiltración
+exfiltrada
 exfiltrado
 exfiltrated
 exfiltration
@@ -587,6 +589,7 @@ pathlib
 pcre
 pdfs
 pégala
+pelín
 perjudicial
 persístela
 personalízalo
