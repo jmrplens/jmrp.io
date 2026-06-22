@@ -25,6 +25,7 @@ import SecurityRating from "@components/ui/SecurityRating.astro";
 import OrderedCompare from "@components/ui/OrderedCompare.astro";
 import AttackTimeline from "@components/ui/AttackTimeline.astro";
 import CapabilityMatrix from "@components/ui/CapabilityMatrix.astro";
+import Collapsible from "@components/ui/Collapsible.astro";
 
 Una bóveda de contraseñas tiene un único trabajo en reposo: devolverte exactamente los bytes que guardaste, o negarse. No "probablemente", no "lo intento" — una bóveda que devuelve _casi_ tu contraseña, o que se comporta de forma distinta cuando un fichero ha sido manipulado, es peor que no tener bóveda. En un microcontrolador, donde los ficheros cifrados viven en un chip de flash que un atacante puede desoldar y leer, "negarse" tiene que ser el valor por defecto para todo lo que no sea demostrablemente auténtico.
 
@@ -38,31 +39,44 @@ Este artículo trata del formato de fichero que uso en **un gestor de contraseñ
 - El cifrado y la autenticación usan **claves separadas**; cada camino de rechazo no produce **ningún texto plano** y borra su scratch.
 </TLDRSummary>
 
+<Collapsible title="Glosario rápido (si no vienes de cripto)">
+- **Texto plano · texto cifrado**: el dato legible (tu contraseña) y su versión revuelta e ilegible una vez cifrada.
+- **Cifrar · clave**: revolver un dato con una _clave_ (un secreto), de forma que solo quien tenga la clave pueda recuperar el original. Aquí la clave nace de tu PIN.
+- **Cifrador de bloque (AES) · padding**: AES cifra en trozos fijos de 16 bytes; el _padding_ son los bytes de relleno que completan el último trozo.
+- **MAC · HMAC · tag**: un sello a prueba de manipulación. El HMAC calcula, con una clave, un _tag_ (una huella corta); si alguien cambia un solo byte, el tag deja de cuadrar.
+- **IV** (vector de inicialización): bytes aleatorios, uno nuevo por escritura, que hacen que cifrar dos veces el mismo dato dé resultados distintos.
+- **KDF · PBKDF2**: una función que "estira" un secreto débil (un PIN) hasta convertirlo en una clave, lenta a propósito para fastidiar a quien adivina.
+- **Fuerza bruta offline**: probar todas las combinaciones en tu propio hardware, con una copia robada de los datos y sin límite de intentos.
+- **slot**: cada hueco numerado donde la bóveda guarda una credencial.
+</Collapsible>
+
 ---
 
 ## Descifrar primero es pegarse un tiro en el pie
 
 Primero, la amenaza. Es un dispositivo que cabe en la mano, y las credenciales viven en un chip de flash soldado a la placa. Un atacante que lo roba no se limita a teclear PINs en la pantalla: puede desoldar la flash y leerla en un programador de banco, o volcarla por un puerto de depuración, y marcharse con el texto cifrado en bruto. A partir de ahí el ataque es _offline_ — sin bloqueo, sin límite de tasa, con todo el tiempo del mundo. El [modelo de amenaza](https://en.wikipedia.org/wiki/Threat_model) del firmware trata el volcado en bruto de la flash como una posibilidad real (mitigada en producción por la propia flash encryption del ESP32), así que el formato de fichero tiene que asumir que el atacante tiene en la mano exactamente los bytes que escribió y es libre de modificarlos y devolvérselos al sistema.
 
-Eso es lo que hace que descifrar primero sea peligroso. El diseño intuitivo es el equivocado: tienes texto cifrado, quieres texto plano, así que descifras — y solo entonces, quizá, compruebas si el resultado "tiene buena pinta". Para ver por qué ese orden es fatal, hay que mirar qué hace realmente el descifrado AES-CBC al salir.
+Eso es lo que hace que descifrar primero sea peligroso. El diseño intuitivo es el equivocado: tienes texto cifrado, quieres texto plano, así que descifras — y solo entonces, quizá, compruebas si el resultado "tiene buena pinta". Para ver por qué ese orden es fatal, hay que asomarse a lo que ocurre por dentro.
 
-Un cifrador de bloque solo maneja bloques de tamaño fijo (16 bytes en AES), así que un registro se rellena hasta el límite del bloque con [padding PKCS#7](https://www.rfc-editor.org/rfc/rfc5652#section-6.3): si faltan 5 bytes, se añaden cinco bytes `0x05`; si faltan 11, once `0x0B`. El [modo CBC](https://en.wikipedia.org/wiki/Block_cipher_mode_of_operation#Cipher_block_chaining_\(CBC\)) encadena los bloques entre sí — cada bloque de texto cifrado se XORea en el descifrado del bloque _siguiente_ — que es exactamente la palanca de la que tira un atacante. Manipulando un bloque de texto cifrado, controla los bytes que salen del bloque _posterior_, y el último acto del descifrador es mirar esos bytes y decidir si el padding está bien formado.
+Empecemos por lo básico: AES es un _cifrador de bloque_, y eso significa que solo sabe trabajar con trozos de tamaño fijo —16 bytes cada uno—. Como tus datos casi nunca miden un múltiplo exacto de 16, el último trozo se completa con bytes de relleno —el _padding_— hasta cuadrar el bloque. El esquema [PKCS#7](https://www.rfc-editor.org/rfc/rfc5652#section-6.3) lo hace con una regla simple: si faltan 5 bytes, añade cinco bytes `0x05`; si faltan 11, once `0x0B`. Al descifrar, lo último que hace el algoritmo es mirar ese padding y comprobar que está bien formado.
 
-Y _si el padding es válido o no es un hecho observable_. Si un atacante puede distinguir un fallo de "padding incorrecto" de cualquier otro fallo — a través de un mensaje de error, una línea de log o simplemente una diferencia de tiempo en cuánto tarda la respuesta — tiene un oráculo que responde una pregunta de sí/no por consulta. Ese único bit, preguntado suficientes veces, va pelando el texto plano byte a byte, sin necesidad de la clave:
+Ahora la pieza que lo vuelve peligroso. AES en [modo CBC](https://en.wikipedia.org/wiki/Block_cipher_mode_of_operation#Cipher_block_chaining_\(CBC\)) encadena los bloques: cada bloque de texto cifrado se mezcla (con un XOR) en el descifrado del bloque _siguiente_. Piénsalo como una fila de fichas de dominó —tocar una mueve la de al lado—. Eso le da al atacante una palanca: si manipula un bloque del texto cifrado, controla byte a byte lo que sale del bloque posterior, incluido ese padding final que el descifrador va a inspeccionar.
+
+Y aquí está la trampa: _que el padding sea válido o no es algo que el sistema delata_. Si el atacante puede distinguir un fallo de "padding incorrecto" de cualquier otro —por un mensaje de error distinto, una línea de log, o simplemente porque la respuesta tarda un pelín más—, entonces tiene un **oráculo**: una caja a la que hace una pregunta de sí/no por intento y que siempre le responde con la verdad. Es como un rival de ajedrez que, sin querer, hace una mueca cada vez que tu jugada le conviene: ese gesto, repetido, le basta para reconstruir la partida. Con ese único bit —"¿padding válido?"— preguntado las veces suficientes, va pelando el texto plano byte a byte, _sin tener jamás la clave_:
 
 <AttackTimeline
-  title="Cómo un oráculo de padding pela un byte"
+  title="Cómo un oráculo de padding saca un byte"
   caption="Cada consulta produce un bit — '¿padding válido?' — y ese bit basta para recuperar un byte, luego un bloque, luego el fichero. Encrypt-then-MAC elimina el oráculo al no llegar nunca al paso de descifrado con un fichero manipulado."
   ariaLabel="Una línea temporal de cinco pasos del atacante en un ataque de oráculo de padding sobre CBC. Paso 1, el atacante captura un bloque de texto cifrado objetivo y el bloque que lo precede. Paso 2, un paso que se repite: manipula un byte del bloque anterior y envía el texto cifrado modificado al descifrador. Paso 3, se filtra información: una respuesta distinguible de padding-válido frente a padding-inválido revela un byte intermedio, y de él un byte de texto plano. Paso 4, el atacante repite sobre los 256 valores de byte y las 16 posiciones para recuperar todo el bloque, y luego cada bloque. Paso 5, bloqueado por diseño: con encrypt-then-MAC la comprobación del MAC falla primero, así que los pasos de descifrado y de quitar padding nunca se alcanzan y el oráculo nunca responde."
   steps={[
     {
       kind: "attacker",
-      text: "Roba un bloque de texto cifrado objetivo C y el bloque C₋₁ que lo precede.",
+      text: "Roba el bloque de texto cifrado que quiere leer (el bloque objetivo) y el bloque anterior, el que va justo antes.",
     },
     {
       kind: "loop",
-      text: "Manipula un byte de C₋₁ y envía el texto cifrado modificado para descifrarlo.",
-      note: "CBC XORea C₋₁ en el bloque siguiente, así que este byte controla la salida descifrada.",
+      text: "Manipula un byte del bloque anterior y reenvía el texto cifrado modificado para que se descifre.",
+      note: "En CBC, el bloque anterior se mezcla (con un XOR) en el descifrado del siguiente, así que ese byte controla lo que sale.",
     },
     {
       kind: "leak",
@@ -89,7 +103,9 @@ La versión peligrosa y la versión segura usan las _mismas primitivas_ — AES-
 
 ## Tres maneras de combinar un cifrador y un MAC
 
-El cifrado autenticado necesita tanto un cifrador (para la confidencialidad) como un MAC (para la integridad). Hay exactamente tres formas de ensamblarlos, y **no** son igual de seguras. El análisis canónico es el de Bellare y Namprempre, [_Authenticated Encryption: Relations among Notions and Analysis of the Generic Composition Paradigm_](https://eprint.iacr.org/2000/025) ([J. Cryptology, 2008](https://doi.org/10.1007/s00145-008-9026-x)), reforzado para canales seguros por el de Hugo Krawczyk, [_The Order of Encryption and Authentication for Protecting Communications_](https://eprint.iacr.org/2001/045).
+Cifrar resuelve la **confidencialidad** —que nadie pueda leer el secreto—, pero no la **integridad** —saber que nadie lo ha manipulado por el camino—. De eso se encarga el **MAC**. Piénsalo como el _sello de lacre_ de una carta antigua: el remitente estampa el lacre con un sello que solo él tiene (la clave), y el destinatario comprueba que sigue intacto antes de abrir; si alguien interceptó y reescribió la carta, el lacre ya no cuadra y se descarta sin leerla. El HMAC es ese sello en versión criptográfica: con una clave produce un _tag_ corto a partir del mensaje, y cambiar un solo byte lo invalida.
+
+El cifrado autenticado necesita, por tanto, las dos piezas —un cifrador (para la confidencialidad) y un MAC (para la integridad)—, pero hay exactamente tres formas de ensamblarlas, y **no** son igual de seguras. El análisis canónico es el de Bellare y Namprempre, [_Authenticated Encryption: Relations among Notions and Analysis of the Generic Composition Paradigm_](https://eprint.iacr.org/2000/025) ([J. Cryptology, 2008](https://doi.org/10.1007/s00145-008-9026-x)), reforzado para canales seguros por el de Hugo Krawczyk, [_The Order of Encryption and Authentication for Protecting Communications_](https://eprint.iacr.org/2001/045).
 
 <Table title="Las tres composiciones genéricas">
   <thead>
@@ -129,7 +145,7 @@ Pon los dos órdenes uno al lado del otro y la perdición es evidente. La compos
 <OrderedCompare
   title="Mismas primitivas, resultados opuestos"
   caption="MAC-then-Encrypt fuerza un descifrado sobre entrada controlada por el atacante antes de la comprobación de integridad; Encrypt-then-MAC hace de guardián con el tag, así que un fichero falsificado se rechaza antes de que el cifrador llegue a ejecutarse."
-  ariaLabel="Una comparación lado a lado de dos órdenes en el camino de lectura. El camino MAC-then-Encrypt, marcado como el camino de la perdición: paso 1, recibe un fichero posiblemente manipulado; el paso 2 es un paso inseguro, descifrarlo, que toca los bytes del atacante y ejecuta el quitado de padding PKCS#7 que filtra el oráculo; el paso 3 también es inseguro, solo ahora comprueba el MAC, lo que ya es demasiado tarde. El camino Encrypt-then-MAC, marcado seguro: paso 1, recibe un fichero posiblemente manipulado; el paso 2 es un paso seguro, recalcula y comprueba primero el tag del MAC sobre el texto cifrado; el paso 3 es un paso seguro, descifra solo si el tag verificó, así que un fichero falsificado se rechaza antes de cualquier descifrado."
+  ariaLabel="Una comparación lado a lado de dos órdenes en el camino de lectura. El camino MAC-then-Encrypt, marcado como el camino de la perdición: paso 1, recibe un fichero posiblemente manipulado; el paso 2 es un paso inseguro, descifrarlo, que toca los bytes del atacante y quita el padding PKCS#7, que es lo que filtra el oráculo; el paso 3 también es inseguro, solo ahora comprueba el MAC, lo que ya es demasiado tarde. El camino Encrypt-then-MAC, marcado seguro: paso 1, recibe un fichero posiblemente manipulado; el paso 2 es un paso seguro, recalcula y comprueba primero el tag del MAC sobre el texto cifrado; el paso 3 es un paso seguro, descifra solo si el tag verificó, así que un fichero falsificado se rechaza antes de cualquier descifrado."
   dangerLabel="inseguro — bytes del atacante tocados antes de la comprobación"
   safeLabel="seguro — verificado antes de cualquier descifrado"
   left={{
@@ -138,9 +154,9 @@ Pon los dos órdenes uno al lado del otro y la perdición es evidente. La compos
     steps: [
       { text: "Recibe un fichero posiblemente manipulado", status: "neutral" },
       {
-        text: "Descífralo — toca bytes del atacante, ejecuta el quitado de padding PKCS#7",
+        text: "Descífralo — toca bytes del atacante y quita el padding PKCS#7",
         status: "danger",
-        note: "aquí es donde se filtra el oráculo",
+        note: "aquí es donde el oráculo filtra información",
       },
       {
         text: "Solo ahora comprueba el MAC — ya demasiado tarde",
@@ -168,10 +184,10 @@ Pon los dos órdenes uno al lado del otro y la perdición es evidente. La compos
 
 ## El sobre: `[ver][iv][hmacTag][cipher]`
 
-Cada fichero cifrado de la bóveda — cada credencial, cada secreto TOTP, el índice de listado — es un sobre autocontenido con un prefijo fijo:
+Cada fichero cifrado de la bóveda —cada credencial, cada secreto TOTP, el índice de listado— es un **sobre** autocontenido. La imagen es la de un sobre de correo: por fuera lleva en claro solo lo justo para manejarlo y verificarlo (la versión, el IV y el tag que hace de sello), y dentro viaja la carta cifrada. Todos siguen el mismo prefijo fijo:
 
 <ByteFrame
-  title="Sobre del fichero de bóveda"
+  title="El sobre del fichero de bóveda"
   ariaLabel="Un diagrama de disposición de bytes de un fichero de bóveda. Desde el inicio: un campo de versión de 1 byte, un IV de 16 bytes, un tag HMAC de 32 bytes, y luego un campo de texto cifrado de longitud variable."
   caption="El tag HMAC se almacena en línea, entre el IV y el texto cifrado — sin ficheros adjuntos aparte."
   fields={[
@@ -233,6 +249,10 @@ Fíjate en el borrado. El texto plano, las claves y los buffers de scratch conti
 
 Esta es la sección por la que existe todo el formato. Cuando la bóveda carga una credencial, hace cinco cosas en un orden estricto, y **cualquier** fallo en **cualquier** paso no devuelve nada:
 
+<Callout type="tip" title="La regla de oro, en una frase">
+Comprobar el sello antes de abrir el sobre. Si el tag no cuadra, el fichero se rechaza **sin descifrar ni un solo byte** — así el atacante nunca consigue que el dispositivo "reaccione" a sus bytes manipulados, que era justo lo que alimentaba el oráculo de padding.
+</Callout>
+
 <Code lang="cpp" title="load() — verificar-antes-de-descifrar, con bloqueo ante fallos (recortado)">
 ```cpp
 // Fail-closed: wipe the caller's record up front, so EVERY reject path
@@ -267,23 +287,21 @@ return decodeCredential(plainBuf.data(), plainLen, out);
 
 Dos detalles hacen esto seguro, en lugar de meramente secuencial.
 
-Primero, la **comparación en tiempo constante**. "Tiempo constante" aquí significa algo concreto: la comparación lleva el _mismo trabajo con independencia de los datos_, así que su duración no le dice nada al observador sobre el secreto. Un `memcmp` ingenuo hace lo contrario — retorna en el instante en que encuentra el primer byte que difiere. Aliméntalo con un tag adivinado y el tiempo que tarda en decir "no" revela _cuántos bytes iniciales has acertado_: un tag que coincide en los primeros 3 bytes retorna medible­mente más tarde que uno que falla en el byte 0. Un atacante que pueda medir eso convierte la falsificación del tag en una búsqueda byte a byte, ~256 intentos por byte en lugar de 2²⁵⁶ para el tag entero. La bóveda nunca usa `memcmp` sobre datos que dependen de secretos; usa una comparación sin ramas que acumula con XOR cada diferencia de byte en un único valor y solo comprueba ese valor al final del todo — el mismo número de operaciones tanto si el tag coincide en el byte 0 como en el byte 31:
+Primero, la **comparación en tiempo constante**. Imagina un candado de combinación que hiciera _clic_ —y tardara un pelín más en responder— cada vez que aciertas un dígito: adivinarlo a ciegas dejaría de ser desesperante, porque el propio candado te va soplando "caliente, caliente". Una comparación de bytes normal filtra justo esa pista. "Tiempo constante" aquí significa algo concreto: la comparación lleva el _mismo trabajo con independencia de los datos_, así que su duración no le dice nada al observador sobre el secreto. Un `memcmp` ingenuo hace lo contrario — retorna en el instante en que encuentra el primer byte que difiere. Aliméntalo con un tag adivinado y el tiempo que tarda en decir "no" revela _cuántos bytes iniciales has acertado_: un tag que coincide en los primeros 3 bytes retorna medible­mente más tarde que uno que falla en el byte 0. Un atacante que pueda medir eso convierte la falsificación del tag en una búsqueda byte a byte, ~256 intentos por byte en lugar de 2<sup>256</sup> para el tag entero. La bóveda nunca usa `memcmp` sobre datos que dependen de secretos; usa una comparación sin ramas que acumula con XOR cada diferencia de byte en un único valor y solo comprueba ese valor al final del todo — el mismo número de operaciones tanto si el tag coincide en el byte 0 como en el byte 31:
 
-<Code lang="cpp" title="constantTimeEqual — sin salida temprana, sin ramas dependientes del secreto">
+<Code lang="cpp" title="La idea de una comparación en tiempo constante">
 ```cpp
-bool VaultCrypto::constantTimeEqual(const uint8_t* a, const uint8_t* b, size_t len) {
-#ifdef ESP_PLATFORM
-    return mbedtls_ct_memcmp(a, b, len) == 0;   // hardware/library CT primitive
-#else
-    volatile uint8_t diff = 0;                  // 'volatile' blocks the optimizer
-    for (size_t i = 0; i < len; i++) diff |= a[i] ^ b[i];
-    return diff == 0;
-#endif
+// The vault calls Mbed TLS's mbedtls_ct_memcmp; this is the idea it implements:
+bool constantTimeEqual(const uint8_t* a, const uint8_t* b, size_t len) {
+    volatile uint8_t diff = 0;            // 'volatile' stops the optimizer
+    for (size_t i = 0; i < len; i++)      // always touch EVERY byte
+        diff |= a[i] ^ b[i];
+    return diff == 0;                     // one check, at the very end
 }
 ```
 </Code>
 
-En el dispositivo esto delega en [`mbedtls_ct_memcmp`](https://mbed-tls.readthedocs.io/projects/api/en/development/api/file/constant__time_8h/); en el build de test del host recurre a un acumulador `volatile` para que el compilador no pueda reintroducir un cortocircuito. Si nunca has visto por qué esto importa, [_A Lesson In Timing Attacks_](https://codahale.com/a-lesson-in-timing-attacks/) de Coda Hale es la clásica explicación de cinco minutos; las [notas sobre tiempo constante de BearSSL](https://www.bearssl.org/constanttime.html) van más a fondo.
+La bóveda no escribe ese bucle a mano: llama a [`mbedtls_ct_memcmp`](https://mbed-tls.readthedocs.io/projects/api/en/development/api/file/constant__time_8h/) de Mbed TLS —el primitivo de comparación en tiempo constante de la librería—, que hace exactamente esto. Si nunca has visto por qué importa, [_A Lesson In Timing Attacks_](https://codahale.com/a-lesson-in-timing-attacks/) de Coda Hale es la clásica explicación de cinco minutos; las [notas sobre tiempo constante de BearSSL](https://www.bearssl.org/constanttime.html) van más a fondo.
 
 Segundo, **bloqueo ante fallos** (_fail-closed_). El registro se borra _antes_ de leer nada, así que no hay ningún camino de código — ni un tamaño incorrecto, ni una versión incorrecta, ni un MAC que no coincide, ni un fallo de descifrado, ni un registro malformado — que pueda dejar una credencial parcialmente poblada en el buffer del llamante. La función o bien retorna `true` con un registro completo, o `false` sin nada.
 
@@ -303,7 +321,7 @@ Segundo, **bloqueo ante fallos** (_fail-closed_). El registro se borra _antes_ d
 
 ## Qué vincula realmente el tag: slot, tipo y frescura
 
-Un tag sobre `ver ‖ iv ‖ cipher` demuestra que el texto cifrado es genuino — pero no dice nada sobre tres cosas que el formato también necesita prometer: a _qué_ slot pertenece un fichero, _qué tipo_ de registro es, y _cómo de reciente_ es. Un atacante con escritura en bruto de la flash (un programador o el puerto de depuración) pero **sin PIN** puede convertir cada silencio en un ataque:
+Un tag sobre `ver ‖ iv ‖ cipher` demuestra que el texto cifrado es genuino — pero no dice nada sobre tres cosas que el formato también necesita prometer: a _qué_ slot pertenece un fichero, _qué tipo_ de registro es, y _cómo de reciente_ es. Un atacante con escritura en bruto de la flash (un programador o el puerto de depuración) pero **sin PIN** puede convertir cada silencio en un ataque — y cada uno tiene su equivalente cotidiano: echar una carta en el **buzón equivocado** (slot equivocado), **cambiar la etiqueta** de una caja para que pase por otra cosa (tipo equivocado), o colar **el recibo del mes pasado** como si fuera el de hoy (una revisión obsoleta):
 
 <Table title="Tres huecos que deja un tag solo sobre el texto cifrado">
   <thead>
@@ -347,10 +365,10 @@ inline size_t writeEnvelopeContext(uint8_t* out, EnvelopeRecordType type,
 ```
 </Code>
 
-Ahora un fichero reubicado lleva el `slotId` equivocado, un fichero retipado el `recordType` equivocado, y un fichero revertido un `generation` antiguo. En cada caso el tag que el firmware recalcula ya no coincide con el del disco, así que la lectura se bloquea ante el fallo **antes de descifrar un solo byte** — la misma puerta de verificar antes de descifrar, ahora guardando tres promesas más:
+Así, un fichero reubicado lleva el `slotId` equivocado, un fichero retipado el `recordType` equivocado, y un fichero revertido un `generation` antiguo. En cada caso el tag que el firmware recalcula ya no coincide con el del disco, así que la lectura se bloquea ante el fallo **antes de descifrar un solo byte** — la misma puerta de verificar antes de descifrar, que cubre tres promesas más:
 
 <CapabilityMatrix
-  title="Qué derrota vincular cada campo de contexto"
+  title="Qué derrota la vinculación de cada campo de contexto"
   subjectHeader="Campo vinculado"
   yesLabel="Cierra"
   noLabel="—"
@@ -378,7 +396,9 @@ Ahora un fichero reubicado lleva el `slotId` equivocado, un fichero retipado el 
 
 ## La raíz de confianza: autenticar `meta.bin`
 
-Los contadores de `generation` tienen que vivir en algún sitio, y ese sitio tiene que ser a prueba de manipulación — de lo contrario un atacante simplemente bajaría un contador para hacer que un fichero obsoleto pareciera actual. Viven en `meta.bin`: la pequeña cabecera que el dispositivo lee primero, que contiene los salts, el verificador de PIN, y ahora una **tabla de generation por slot** — todo sellado bajo su propio tag HMAC.
+Cada comprobación hasta aquí se ha apoyado en que algo ya era de fiar: las claves, los contadores de frescura. Esa confianza tiene que tocar fondo en algún sitio: en una **raíz de confianza**, la única pieza que no te toca cuestionar, porque si estuviera falseada todo lo construido encima heredaría la mentira. Aquí esa pieza es `meta.bin`.
+
+Los contadores de `generation` tienen que vivir en algún sitio, y ese sitio tiene que ser a prueba de manipulación — de lo contrario un atacante simplemente bajaría un contador para hacer que un fichero obsoleto pareciera actual. Viven en `meta.bin`: la pequeña cabecera que el dispositivo lee primero, que contiene los salts, el verificador de PIN y una **tabla de generation por slot** — todo sellado bajo su propio tag HMAC.
 
 <ByteFrame
   title="meta.bin — metadatos autenticados (formatVer 0x02)"
@@ -411,18 +431,18 @@ Como los metadatos están autenticados, la secuencia de desbloqueo se convierte 
   ]}
 />
 
-Un `meta.bin` antiguo o con formato desajustado — pongamos un `formatVer 0x01` que sobró de antes de este cambio — simplemente no se autentica, y la bóveda se re-aprovisiona. No hay migración ni doble lectura: un solo formato en flash, siempre. (El dispositivo no está en producción, así que no hay datos reales que migrar.)
+Un `meta.bin` antiguo o con formato desajustado — pongamos un `formatVer 0x01` de una versión anterior — simplemente no se autentica, y la bóveda se re-aprovisiona. No hay migración ni doble lectura: un solo formato en flash, siempre. (El dispositivo no está en producción, así que no hay datos reales que migrar.)
 
 ## Anti-rollback resistente a cortes de corriente
 
 El rollback selectivo es un [ataque de repetición](https://www.rfc-editor.org/rfc/rfc4949) — el atacante re-presenta un fichero auténtico-pero-obsoleto — y la defensa estándar es un _valor de frescura_: un contador monótono que el verificador espera que solo aumente, de modo que un registro antiguo repetido falle la comprobación. Pero un contador de frescura solo vale tanto como su historia de actualización. Cada mutación — añadir, editar **o borrar** — incrementa el `generation` del slot, y el registro se reescribe bajo el nuevo valor. Eso crea un riesgo de escritura partida (_torn write_): pierde corriente _entre_ escribir el registro (bajo generation N+1) y escribir `meta.bin` (que registra N+1), y los dos discrepan. Resuelve eso mal y o bien dejas inservible un slot válido o bien reabres en silencio el rollback que acabas de cerrar.
 
-El firmware hace que el **intercambio de `meta.bin` sea el único punto de commit** — se escribe en un fichero temporal y luego se [renombra atómicamente](https://pubs.opengroup.org/onlinepubs/9699919799/functions/rename.html) a su sitio, así que un lector siempre ve el `meta.bin` antiguo o el nuevo, nunca una escritura partida a medias — y se recupera de forma determinista en torno a él:
+La solución es elegir un único instante indivisible que "cuente" — como la firma de un contrato: antes de que el bolígrafo se levante nada es vinculante, después lo es todo. El firmware hace que el **intercambio de `meta.bin` sea ese instante** — se escribe en un fichero temporal y luego se [renombra atómicamente](https://pubs.opengroup.org/onlinepubs/9699919799/functions/rename.html) a su sitio, así que un lector siempre ve el `meta.bin` antiguo o el nuevo, nunca una escritura partida a medias — y se recupera de forma determinista en torno a él:
 
 <Pipeline
   title="Mutación resistente a cortes — el intercambio de meta es el punto de commit"
   caption="El renombrado de meta.bin es el único punto de linealización. Al reiniciar, la recuperación recalcula el tag del registro en staging a la generation actual: o bien verifica (termina el promote) o no (descarta el huérfano, conserva el valor antiguo)."
-  ariaLabel="Una pipeline de mutación resistente a cortes de cuatro etapas. STAGE: escribe el nuevo registro en una ruta de staging bajo generation N más 1, con un pequeño marcador que nombra el tipo y el slot. COMMIT: incrementa la generation en meta.bin y persístela atómicamente mediante un renombrado de fichero temporal — el renombrado es el punto de commit. PROMOTE: renombra el registro en staging a su ruta canónica. CLEANUP: elimina el marcador."
+  ariaLabel="Una secuencia de mutación resistente a cortes de cuatro etapas. STAGE: escribe el nuevo registro en una ruta de staging bajo generation N más 1, con un pequeño marcador que nombra el tipo y el slot. COMMIT: incrementa la generation en meta.bin y persístela atómicamente mediante un renombrado de fichero temporal — el renombrado es el punto de commit. PROMOTE: renombra el registro en staging a su ruta canónica. CLEANUP: elimina el marcador."
   stages={[
     { name: "STAGE", note: "registro → staging, gen N+1" },
     { name: "COMMIT", note: "renombrado de meta.bin", via: "punto de commit" },
@@ -463,7 +483,7 @@ Prefiero enunciar ese límite con claridad antes que sobrevenderlo. El contador 
 
 ## Dos claves a partir de una maestra: separación de claves
 
-El sobre usa dos claves distintas — una para cifrar, otra para el MAC — y eso es deliberado. El argumento de seguridad de encrypt-then-MAC asume que las claves de cifrado y de autenticación son _independientes_; reutilizar una sola clave para ambos trabajos anula la garantía e invita a travesuras entre protocolos. Así que la bóveda deriva sub-claves separadas a partir de una única clave maestra, cada una etiquetada con una etiqueta de separación de dominio distinta, siguiendo la [guía de separación de claves](https://csrc.nist.gov/pubs/sp/800/57/pt1/r5/final) de toda la vida — el [NIST SP 800-57 Part 1](https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-57pt1r5.pdf) lo dice sin rodeos: "una clave debería usarse para un solo propósito":
+El sobre usa dos claves distintas — una para cifrar, otra para el MAC — y eso es deliberado (el mismo instinto que dice que la llave de casa, la del coche y la del buzón deberían ser tres llaves distintas). El argumento de seguridad de encrypt-then-MAC asume que las claves de cifrado y de autenticación son _independientes_; reutilizar una sola clave para ambos trabajos anula la garantía e invita a travesuras entre protocolos. Así que la bóveda deriva sub-claves separadas a partir de una única clave maestra, cada una etiquetada con una etiqueta de separación de dominio distinta, siguiendo la [guía de separación de claves](https://csrc.nist.gov/pubs/sp/800/57/pt1/r5/final) de toda la vida — el [NIST SP 800-57 Part 1](https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-57pt1r5.pdf) lo dice sin rodeos: "una clave debería usarse para un solo propósito":
 
 <Code lang="cpp" title="vault_keys — etiquetas distintas por propósito">
 ```cpp
@@ -611,7 +631,7 @@ Una nota al pie honesta sobre la implementación: la guía de transición de PSA
 
 ## Listar sin descifrarlo todo: el índice O(1)
 
-Hay un buen efecto secundario de tratar cada fichero como un sobre independiente. Listar la bóveda no significa descifrar cada credencial — eso sería lento y expondría innecesariamente cada secreto en RAM. En su lugar, un único `index.bin` cifrado, en exactamente el mismo sobre `[ver][iv][hmacTag][cipher]`, cachea solo los metadatos _no secretos_ que cada credencial necesita en una vista de lista: su id, nombre, usuario, marca y un par de flags — nunca la contraseña, la URL, las notas ni el secreto TOTP.
+Hay un buen efecto secundario de tratar cada fichero como un sobre independiente (ese «O(1)» del título es jerga para «el coste no crece por mucho que tengas mil credenciales»). Listar la bóveda no significa descifrar cada credencial — eso sería lento y expondría innecesariamente cada secreto en RAM. En su lugar, un único `index.bin` cifrado, en exactamente el mismo sobre `[ver][iv][hmacTag][cipher]`, cachea solo los metadatos _no secretos_ que cada credencial necesita en una vista de lista: su id, nombre, usuario, marca y un par de flags — nunca la contraseña, la URL, las notas ni el secreto TOTP.
 
 <Callout type="info" title="Una lectura, un descifrado">
 Mostrar la lista de credenciales es **una lectura de fichero más un descifrado**, sin importar cuántas credenciales existan. El descifrado pesado por credencial solo ocurre cuando abres una de verdad. El índice es solo una caché: si falta o su MAC no verifica, se reconstruye a partir de los ficheros por credencial autenticados, que son siempre la fuente de verdad.
@@ -619,7 +639,7 @@ Mostrar la lista de credenciales es **una lectura de fichero más un descifrado*
 
 ## Bloqueo ante fallos, por construcción
 
-No es el cifrador lo que hace esta bóveda digna de confianza en reposo — es el _orden de las operaciones_. Autentica el slot, el tipo, la frescura, el IV y el texto cifrado con una clave separada; verifica ese tag en tiempo constante antes de descifrar un solo byte; autentica los metadatos que contienen los contadores de frescura; borra todo al salir; y haz que cada camino de error converja en la misma respuesta: nada. Acierta en eso y AES-256 es casi un detalle de implementación.
+No es el cifrador lo que hace esta bóveda digna de confianza en reposo — es el _orden de las operaciones_. Dicho en simple: nunca te fíes de un fichero hasta que su sello cuadre y, ante la duda, no entregues nada. Autentica el slot, el tipo, la frescura, el IV y el texto cifrado con una clave separada; verifica ese tag en tiempo constante antes de descifrar un solo byte; autentica los metadatos que contienen los contadores de frescura; borra todo al salir; y haz que cada camino de error converja en la misma respuesta: nada. Acierta en eso y AES-256 es casi un detalle de implementación.
 
 <SecurityRating
   rating="A"

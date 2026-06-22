@@ -22,6 +22,7 @@ import SecurityRating from "@components/ui/SecurityRating.astro";
 import KeyspaceThreat from "@components/ui/KeyspaceThreat.astro";
 import AttackSurfaceMatrix from "@components/ui/AttackSurfaceMatrix.astro";
 import EFuseFlow from "@components/ui/EFuseFlow.astro";
+import Collapsible from "@components/ui/Collapsible.astro";
 
 A four-digit PIN has ten thousand possible values. That is not a typo and it is not a placeholder for "a longer one later" — it is the real secret that unlocks the vault on **a hardware password manager I'm building (not yet released)**, an ESP32-class device that keeps your credentials on its internal flash. Ten thousand. A single modern GPU runs through ten thousand of *anything* before you finish reading this sentence.
 
@@ -35,11 +36,23 @@ So how is that safe? The honest answer is that on a microcontroller it usually *
 - A device-bound key only reproduces on the original chip, so an offline GPU sweep of a 10,000-key space becomes an **impossible** offline attack — a categorical, not linear, gain.
 </TLDRSummary>
 
+<Collapsible title="Quick glossary (if crypto isn't your background)">
+- **Entropy · keyspace**: how hard a secret is to guess. A 4-digit PIN has 10,000 combinations (~13.3 bits): very little.
+- **Brute force**: trying every combination, one by one, until one works.
+- **Online vs offline**: _online_ = guessing against the device itself, which can slow you down; _offline_ = guessing against a stolen copy, on your own hardware, with no limit.
+- **KDF · PBKDF2 · iterations (work factor)**: a function that turns the PIN into a key by repeating a calculation many times, to make each attempt deliberately slow.
+- **GPU · hashrate (H/s)**: a graphics card tries millions of keys per second; "H/s" is guesses per second.
+- **Device binding · device secret**: mixing into the key a secret unique to _this_ chip that can't leave it.
+- **eFuse**: bits burned into the silicon (once) that the chip can use but that can't be read back.
+- **HKDF**: the standard, analyzed method for mixing and deriving keys from a secret.
+- **pepper · NVS**: the _pepper_ is an extra secret shared across the whole device (a cousin of salt); _NVS_ is the ESP32's persistent key-value store.
+</Collapsible>
+
 ---
 
 ## A 4-digit PIN has no entropy
 
-Let's be blunt about the keyspace. Four decimal digits is `10^4`, which is exactly ten thousand values. That is roughly **13.3 bits** of entropy if every PIN is equally likely — and they aren't, because humans pick `1234` and `0000` and their birth year far more often than chance would suggest. There is no clever KDF, no cipher, no amount of salting that adds entropy to a secret that small. The secret is the secret.
+Let's be blunt about the keyspace. Four decimal digits is 10<sup>4</sup>, which is exactly ten thousand values — roughly **13.3 bits** of _entropy_ (the jargon for "how hard it is to guess") if every PIN were equally likely, and they aren't, because humans pick `1234` and `0000` and their birth year far more often than chance would suggest. A 4-digit PIN is, at heart, a bike lock with 10,000 positions: plenty against someone trying by hand, laughable against a machine that runs through all of them in a blink. There is no clever KDF, no cipher, no amount of salting that adds entropy to a secret that small. The secret is the secret.
 
 The reason a PIN this short is even defensible is that *guessing it costs something*, and the cost depends entirely on **where** the attacker is allowed to guess.
 
@@ -58,7 +71,7 @@ The reason a PIN this short is even defensible is that *guessing it costs someth
 
 That `11.16 MH/s` figure is not hypothetical. It comes straight from a published [hashcat benchmark of the RTX 5090](https://gist.github.com/Chick3nman/09bac0775e6393468c2925c1e1363d5c), where PBKDF2-HMAC-SHA256 (hashcat mode 10900) runs at about **11,157 kH/s** on a single card — and raw SHA-256 at roughly **28.35 GH/s** (mode 1400). At eleven million guesses per second, ten thousand PINs is `10000 / 11_160_000 ≈ 0.0009` seconds. The PIN, treated as an offline-attackable secret, is already gone.
 
-So the only thing that makes a short PIN viable is making sure the attacker **can't get offline** — and bounding how fast they can guess **online**.
+The difference between **online** and **offline** is everything here. _Online_ is the thief standing at your door trying keys: you can slam it shut after a few tries. _Offline_ is the thief who took a copy of the lock back to their workshop, where they file keys unwatched, with all the time in the world. So the only thing that makes a short PIN viable is making sure the attacker **can't get offline** — and bounding how fast they can guess **online**.
 
 <AttackSurfaceMatrix
   title="Online vs offline: two different attackers, two different controls"
@@ -160,7 +173,7 @@ Iteration count buys real time against a *high-entropy* password being attacked 
 
 If you can't make each offline guess slow enough, make each offline guess **need something the attacker doesn't have**. After PBKDF2 produces the master key from the PIN and salt, I mix in a 32-byte `deviceSecret` that only the original chip can produce. The verifier stored on flash is then derived from that *bound* master key. An attacker who dumps the flash has the ciphertext and the salt, but recomputing the key for any PIN guess now requires the per-chip secret — and that secret never appears on the flash they copied.
 
-This is the whole trick, and it changes the attack from *linear* to *categorical*. Before binding, the offline attacker needs 10,000 cheap PBKDF2 evaluations and wins. After binding, they need a secret that physically does not leave the chip, so the offline attack doesn't get slower — it stops existing. The only place a guess can be checked is back on the device, where the lockout-and-wipe guard is waiting.
+It's like requiring, on top of the PIN, an ingredient that exists only in *this one* chip and can't be copied: however perfect the flash copy the thief walks off with, without that ingredient their 10,000 tries go nowhere. This is the whole trick, and it changes the attack from *linear* to *categorical*. Before binding, the offline attacker needs 10,000 cheap PBKDF2 evaluations and wins. After binding, they need a secret that physically does not leave the chip, so the offline attack doesn't get slower — it stops existing. The only place a guess can be checked is back on the device, where the lockout-and-wipe guard is waiting.
 
 <Pipeline
   title="Where binding slots into the KDF chain"
@@ -236,25 +249,11 @@ The "secret only this chip can produce" has two implementations, picked at compi
 
 The selection is a compile-time cascade. The `EFuseHmac` path only compiles where ESP-IDF enables its PSA opaque HMAC driver, and ESP-IDF gates *that* on `SOC_HMAC_SUPPORTED` — so the same macro that means "this chip has the HMAC peripheral" doubles as the gate for picking the strong backend. No capability and a hardened build falls back to the pepper; an open build resolves to `None`.
 
-<Code lang="cpp" title="device_secret.cpp — backend selection">
-```cpp
-DeviceSecretBackend DeviceSecret::activeBackend() {
-#if DEVICE_BIND_EFUSE          // _secure + SOC_HMAC_SUPPORTED
-    return DeviceSecretBackend::EFuseHmac;
-#elif defined(ESP_PLATFORM) && defined(SECURE_BUILD)
-    return DeviceSecretBackend::NvsPepper;   // _secure, classic ESP32
-#else
-    return DeviceSecretBackend::None;        // open build: no binding
-#endif
-}
-```
-</Code>
-
 ---
 
 ## eFuse-HMAC: a key the CPU can't read
 
-On the ESP32-S3 the device secret is computed by the [HMAC peripheral](https://docs.espressif.com/projects/esp-idf/en/stable/esp32s3/api-reference/peripherals/hmac.html), and the property that matters is right there in Espressif's own documentation: in "upstream" mode the peripheral computes an HMAC over a message using a key burned into [eFuse](https://docs.espressif.com/projects/esp-idf/en/stable/esp32s3/api-reference/system/efuse.html), and **the eFuse key never leaves the module** — the HMAC result is returned to software by design, but the key bytes are not. The key block is burned with the purpose `ESP_EFUSE_KEY_PURPOSE_HMAC_UP` (value **8**) and read-protected, so software and JTAG simply cannot read it back. You feed in a message, you get back a 32-byte tag, and the key stays sealed.
+Think of a sealed black box with a secret inside: you can hand it a message and it returns an answer computed with that secret, but there's no way to open it and read the secret out. That is almost literally the ESP32-S3's HMAC peripheral. The device secret is computed by that [HMAC peripheral](https://docs.espressif.com/projects/esp-idf/en/stable/esp32s3/api-reference/peripherals/hmac.html), and the property that matters is right there in Espressif's own documentation: in "upstream" mode the peripheral computes an HMAC over a message using a key burned into [eFuse](https://docs.espressif.com/projects/esp-idf/en/stable/esp32s3/api-reference/system/efuse.html), and **the eFuse key never leaves the module** — the HMAC result is returned to software by design, but the key bytes are not. The key block is burned with the purpose `ESP_EFUSE_KEY_PURPOSE_HMAC_UP` (value **8**) and read-protected, so software and JTAG simply cannot read it back. You feed in a message, you get back a 32-byte tag, and the key stays sealed.
 
 <EFuseFlow
   title="Two backends, one question: can software read the secret?"
@@ -295,13 +294,7 @@ std::memcpy(message.data() + kLabelLen, vaultSalt, vaultSaltLen);
 esp_hmac_opaque_key_t opaque = {};
 opaque.efuse_key_id = kHmacEfuseKeyId;                   // HMAC_KEY0 by default
 
-psa_key_attributes_t attr = PSA_KEY_ATTRIBUTES_INIT;
-psa_set_key_usage_flags(&attr, PSA_KEY_USAGE_SIGN_MESSAGE);
-psa_set_key_algorithm(&attr, PSA_ALG_HMAC(PSA_ALG_SHA_256));
-psa_set_key_type(&attr, PSA_KEY_TYPE_HMAC);
-psa_set_key_bits(&attr, kDeviceSecretSize * 8);
-psa_set_key_lifetime(&attr, PSA_KEY_LIFETIME_ESP_HMAC_VOLATILE);
-
+// PSA attributes (elided): an opaque, volatile HMAC-SHA256 key.
 psa_import_key(&attr, /* reference to opaque */ ..., sizeof(opaque), &keyId);
 
 // Runs entirely inside the HMAC peripheral; out[] receives the 32-byte tag.
@@ -350,7 +343,7 @@ Both backends produce a 32-byte `deviceSecret` and hand it to the same mixing st
 
 ## Mixing it in with HKDF, not a hand-rolled HMAC
 
-Once you have a 32-byte device secret and a 32-byte PBKDF2 master key, you need to combine them into a new key. The temptation is to reach for a bare `HMAC(deviceSecret, master)` and call it done. I didn't, because there's a published, analyzed primitive built for exactly this: **[HKDF](https://www.rfc-editor.org/rfc/rfc5869)** (RFC 5869), the extract-then-expand KDF whose security argument was laid out by Hugo Krawczyk in [*Cryptographic Extraction and Key Derivation: The HKDF Scheme*](https://eprint.iacr.org/2010/264). HKDF gives you a non-uniform secret turned into uniform key material *with domain separation*, and using it verbatim keeps the whole construction a citable, standard one rather than something I invented on a Tuesday.
+Once you have a 32-byte device secret and a 32-byte PBKDF2 master key, you need to combine them into a new key. The temptation is to reach for a bare `HMAC(deviceSecret, master)` and call it done. I didn't, because there's a published, analyzed primitive built for exactly this — the certified tool instead of mixing by eye: **[HKDF](https://www.rfc-editor.org/rfc/rfc5869)** (RFC 5869), the extract-then-expand KDF whose security argument was laid out by Hugo Krawczyk in [*Cryptographic Extraction and Key Derivation: The HKDF Scheme*](https://eprint.iacr.org/2010/264). HKDF gives you a non-uniform secret turned into uniform key material *with domain separation*, and using it verbatim keeps the whole construction a citable, standard one rather than something I invented on a Tuesday.
 
 The construction is the canonical two-step:
 
@@ -405,7 +398,7 @@ for (uint32_t counter = 1; ok && done < outLen; ++counter) {
 
 ## Proving it: a known-answer test
 
-A binding that's wrong is worse than no binding — if `provision()` and `unlock()` ever disagreed by a single byte, every unlock would fail and the vault would be bricked. So the construction is pinned by tests, and the load-bearing one is a **known-answer test** against the published vectors in [RFC 5869 Appendix A](https://www.rfc-editor.org/rfc/rfc5869#appendix-A). Because the HKDF runs identically on the host and the device, asserting it against the RFC vector on the native build proves the HKDF primitive itself is byte-exact — so the binding it computes is reproduced identically on host and device.
+A binding that's wrong is worse than no binding — if `provision()` and `unlock()` ever disagreed by a single byte, every unlock would fail and the vault would be bricked. So the construction is pinned by tests, and the load-bearing one is a **known-answer test** — checking that our output matches a set of official reference numbers byte for byte, like checking a result against the answer key — against the published vectors in [RFC 5869 Appendix A](https://www.rfc-editor.org/rfc/rfc5869#appendix-A). Because the HKDF runs identically on the host and the device, asserting it against the RFC vector on the native build proves the HKDF primitive itself is byte-exact — so the binding it computes is reproduced identically on host and device.
 
 <Code lang="cpp" title="test_device_secret.cpp — RFC 5869 Appendix A.1 known-answer test">
 ```cpp

@@ -24,6 +24,7 @@ import SecurityRating from "@components/ui/SecurityRating.astro";
 import OrderedCompare from "@components/ui/OrderedCompare.astro";
 import AttackTimeline from "@components/ui/AttackTimeline.astro";
 import CapabilityMatrix from "@components/ui/CapabilityMatrix.astro";
+import Collapsible from "@components/ui/Collapsible.astro";
 
 A password vault has one job at rest: hand back exactly the bytes you stored, or refuse. Not "probably," not "best effort" — a vault that returns *almost* your password, or that behaves differently when a file has been tampered with, is worse than no vault at all. On a microcontroller, where the encrypted files live on a flash chip an attacker can desolder and read, "refuse" has to be the default for everything that isn't provably authentic.
 
@@ -37,17 +38,30 @@ This post is about the file format I use in **a hardware password manager I'm bu
 - Encryption and authentication use **separate keys**; every reject path produces **no plaintext** and wipes its scratch.
 </TLDRSummary>
 
+<Collapsible title="Quick glossary (if crypto isn't your background)">
+- **Plaintext · ciphertext**: the readable data (your password) and its scrambled, unreadable form once encrypted.
+- **Encrypt · key**: scramble data with a _key_ (a secret) so only someone holding the key can reverse it. Here the key comes from your PIN.
+- **Block cipher (AES) · padding**: AES encrypts in fixed 16-byte chunks; _padding_ is the filler bytes that top up the last chunk.
+- **MAC · HMAC · tag**: a tamper-evident seal. HMAC uses a key to compute a _tag_ (a short fingerprint); change a single byte and the tag stops matching.
+- **IV** (initialization vector): random bytes, a fresh one per write, so encrypting the same data twice gives different results.
+- **KDF · PBKDF2**: a function that "stretches" a weak secret (a PIN) into a key, deliberately slow to frustrate guessers.
+- **Offline brute force**: trying every combination on your own hardware, with a stolen copy of the data and no attempt limit.
+- **slot**: each numbered place where the vault stores one credential.
+</Collapsible>
+
 ---
 
 ## Decrypt-first is a footgun
 
 First, the threat. This is a device you can hold in your hand, and the credentials live on a flash chip soldered to the board. An attacker who steals it isn't limited to typing PINs at the screen: they can desolder the flash and read it on a bench programmer, or dump it over a debug port, and walk away with the raw ciphertext. From then on the attack is *offline* — no lockout, no rate limit, all the time in the world. The [threat model](https://en.wikipedia.org/wiki/Threat_model) for the firmware treats raw flash readout as a real possibility (mitigated in production by the ESP32's own flash encryption), so the file format has to assume the attacker is holding the exact bytes it wrote and is free to modify them and feed them back.
 
-That's what makes decrypt-first dangerous. The intuitive design is the wrong one: you have ciphertext, you want plaintext, so you decrypt — and only then, maybe, you check whether the result "looks right." To see why that order is fatal, you have to look at what AES-CBC decryption actually does on the way out.
+That's what makes decrypt-first dangerous. The intuitive design is the wrong one: you have ciphertext, you want plaintext, so you decrypt — and only then, maybe, you check whether the result "looks right." To see why that order is fatal, you have to look at what happens inside.
 
-A block cipher only handles fixed-size blocks (16 bytes for AES), so a record is padded up to a block boundary with [PKCS#7 padding](https://www.rfc-editor.org/rfc/rfc5652#section-6.3): if 5 bytes are missing, append five `0x05` bytes; if 11 are missing, eleven `0x0B`. [CBC mode](https://en.wikipedia.org/wiki/Block_cipher_mode_of_operation#Cipher_block_chaining_\(CBC\)) chains the blocks together — each ciphertext block is XORed into the *next* block's decryption — which is exactly the lever an attacker pulls. By tampering with one ciphertext block, they control the bytes that come out of the *following* block, and the decryptor's last act is to look at those bytes and decide whether the padding is well-formed.
+Start with the basics: AES is a *block cipher* — it only knows how to work on fixed-size chunks, 16 bytes each. Since your data almost never lands on an exact multiple of 16, the last chunk is topped up with filler bytes — the *padding* — until it fills the block. [PKCS#7](https://www.rfc-editor.org/rfc/rfc5652#section-6.3) does this by a simple rule: if 5 bytes are missing, append five `0x05` bytes; if 11 are missing, eleven `0x0B`. When decrypting, the very last thing the algorithm does is look at that padding and check it's well-formed.
 
-And *whether the padding is valid is an observable fact.* If an attacker can tell a "bad padding" failure from any other failure — through an error message, a log line, or just a timing difference in how long the response takes — they've got an oracle that answers one yes/no question per query. That single bit, asked enough times, peels off the plaintext one byte at a time, no key required:
+Now the part that makes it dangerous. AES in [CBC mode](https://en.wikipedia.org/wiki/Block_cipher_mode_of_operation#Cipher_block_chaining_\(CBC\)) chains the blocks: each ciphertext block is mixed (with an XOR) into the *next* one's decryption. Think of a row of dominoes — nudge one and you move its neighbor. That hands the attacker a lever: tamper with one ciphertext block and you control, byte by byte, what comes out of the block after it — including that final padding the decryptor is about to inspect.
+
+And here's the trap: *whether the padding is valid is something the system gives away.* If the attacker can tell a "bad padding" failure from any other — a different error message, a log line, or simply a reply that takes a hair longer — they've got an **oracle**: a box they can ask one yes/no question per try, and it always answers truthfully. It's like a chess opponent who, without meaning to, winces whenever your move helps them: that tell, repeated, is enough to reconstruct the game. With that single "is the padding valid?" bit, asked enough times, they peel the plaintext apart one byte at a time, *without ever holding the key*:
 
 <AttackTimeline
   title="How a padding oracle peels off a byte"
@@ -56,12 +70,12 @@ And *whether the padding is valid is an observable fact.* If an attacker can tel
   steps={[
     {
       kind: "attacker",
-      text: "Steal a target ciphertext block C and the block C₋₁ that precedes it.",
+      text: "Steal the ciphertext block they want to read (the target block) and the block right before it.",
     },
     {
       kind: "loop",
-      text: "Tamper with one byte of C₋₁ and submit the modified ciphertext for decryption.",
-      note: "CBC XORs C₋₁ into the next block, so this byte controls the decrypted output.",
+      text: "Tamper with one byte of the preceding block and resubmit the modified ciphertext for decryption.",
+      note: "In CBC, the preceding block is mixed (XORed) into the next block's decryption, so that byte controls what comes out.",
     },
     {
       kind: "leak",
@@ -88,7 +102,9 @@ The dangerous version and the safe version use the *same primitives* — AES-CBC
 
 ## Three ways to combine a cipher and a MAC
 
-Authenticated encryption needs both a cipher (for confidentiality) and a MAC (for integrity). There are exactly three ways to bolt them together, and they are **not** equally safe. The canonical analysis is Bellare and Namprempre's [*Authenticated Encryption: Relations among Notions and Analysis of the Generic Composition Paradigm*](https://eprint.iacr.org/2000/025) ([J. Cryptology, 2008](https://doi.org/10.1007/s00145-008-9026-x)), reinforced for secure channels by Hugo Krawczyk's [*The Order of Encryption and Authentication for Protecting Communications*](https://eprint.iacr.org/2001/045).
+Encrypting solves **confidentiality** — nobody can read the secret — but not **integrity** — knowing nobody tampered with it along the way. That's the **MAC**'s job. Think of it as the _wax seal_ on an old letter: the sender stamps the seal with a signet only they hold (the key), and the recipient checks it's still intact before opening; if someone intercepted and rewrote the letter, the seal no longer matches and it's discarded unread. HMAC is that seal in cryptographic form: with a key it produces a short _tag_ from the message, and changing a single byte invalidates it.
+
+Authenticated encryption therefore needs both pieces — a cipher (for confidentiality) and a MAC (for integrity) — but there are exactly three ways to bolt them together, and they are **not** equally safe. The canonical analysis is Bellare and Namprempre's [*Authenticated Encryption: Relations among Notions and Analysis of the Generic Composition Paradigm*](https://eprint.iacr.org/2000/025) ([J. Cryptology, 2008](https://doi.org/10.1007/s00145-008-9026-x)), reinforced for secure channels by Hugo Krawczyk's [*The Order of Encryption and Authentication for Protecting Communications*](https://eprint.iacr.org/2001/045).
 
 <Table title="The three generic compositions">
   <thead>
@@ -167,7 +183,7 @@ Put the two orderings side by side and the doom is obvious. The composition isn'
 
 ## The envelope: `[ver][iv][hmacTag][cipher]`
 
-Every encrypted file in the vault — each credential, each TOTP secret, the listing index — is one self-contained envelope with a fixed prefix:
+Every encrypted file in the vault — each credential, each TOTP secret, the listing index — is one self-contained **envelope**. Picture a postal envelope: the outside carries, in the clear, just enough to handle and verify it (the version, the IV, and the tag that acts as the seal), and the encrypted letter rides inside. They all share the same fixed prefix:
 
 <ByteFrame
   title="Vault file envelope"
@@ -232,6 +248,10 @@ Note the wiping. The plaintext, the keys, and the scratch buffers all hold secre
 
 This is the section the whole format exists for. When the vault loads a credential, it does five things in a strict order, and **any** failure at **any** step returns nothing:
 
+<Callout type="tip" title="The golden rule, in one line">
+Check the seal before opening the envelope. If the tag doesn't match, the file is rejected **without decrypting a single byte** — so the attacker never gets the device to "react" to their tampered bytes, which is exactly what fed the padding oracle.
+</Callout>
+
 <Code lang="cpp" title="load() — verify-before-decrypt, fail-closed (trimmed)">
 ```cpp
 // Fail-closed: wipe the caller's record up front, so EVERY reject path
@@ -266,23 +286,21 @@ return decodeCredential(plainBuf.data(), plainLen, out);
 
 Two details make this safe rather than merely sequential.
 
-First, the **constant-time compare**. "Constant-time" here means concrete: the comparison takes the *same amount of work regardless of the data*, so its duration tells an observer nothing about the secret. A naïve `memcmp` does the opposite — it returns the instant it finds the first differing byte. Feed it a guessed tag and the time it takes to say "no" reveals *how many leading bytes you got right*: a tag matching the first 3 bytes returns measurably later than one that's wrong at byte 0. An attacker who can measure that turns tag forgery into a byte-at-a-time search, ~256 tries per byte instead of 2²⁵⁶ for the whole tag. The vault never uses `memcmp` on secret-dependent data; it uses a branch-free comparison that XOR-accumulates every byte difference into one value and only checks that value at the very end — same number of operations whether the tag matches on byte 0 or byte 31:
+First, the **constant-time compare**. Imagine a combination lock that gave a little _click_ — and took a hair longer to answer — each time you got a digit right: guessing it blind would stop being hopeless, because the lock itself keeps whispering "warmer, warmer." An ordinary byte comparison leaks exactly that hint. "Constant-time" here means concrete: the comparison takes the *same amount of work regardless of the data*, so its duration tells an observer nothing about the secret. A naïve `memcmp` does the opposite — it returns the instant it finds the first differing byte. Feed it a guessed tag and the time it takes to say "no" reveals *how many leading bytes you got right*: a tag matching the first 3 bytes returns measurably later than one that's wrong at byte 0. An attacker who can measure that turns tag forgery into a byte-at-a-time search, ~256 tries per byte instead of 2<sup>256</sup> for the whole tag. The vault never uses `memcmp` on secret-dependent data; it uses a branch-free comparison that XOR-accumulates every byte difference into one value and only checks that value at the very end — same number of operations whether the tag matches on byte 0 or byte 31:
 
-<Code lang="cpp" title="constantTimeEqual — no early exit, no secret-dependent branch">
+<Code lang="cpp" title="What a constant-time compare boils down to">
 ```cpp
-bool VaultCrypto::constantTimeEqual(const uint8_t* a, const uint8_t* b, size_t len) {
-#ifdef ESP_PLATFORM
-    return mbedtls_ct_memcmp(a, b, len) == 0;   // hardware/library CT primitive
-#else
-    volatile uint8_t diff = 0;                  // 'volatile' blocks the optimizer
-    for (size_t i = 0; i < len; i++) diff |= a[i] ^ b[i];
-    return diff == 0;
-#endif
+// The vault calls Mbed TLS's mbedtls_ct_memcmp; this is the idea it implements:
+bool constantTimeEqual(const uint8_t* a, const uint8_t* b, size_t len) {
+    volatile uint8_t diff = 0;            // 'volatile' stops the optimizer
+    for (size_t i = 0; i < len; i++)      // always touch EVERY byte
+        diff |= a[i] ^ b[i];
+    return diff == 0;                     // one check, at the very end
 }
 ```
 </Code>
 
-On the device this delegates to [`mbedtls_ct_memcmp`](https://mbed-tls.readthedocs.io/projects/api/en/development/api/file/constant__time_8h/); on the host test build it falls back to a `volatile` accumulator so the compiler can't reintroduce a short-circuit. If you've never seen why this matters, Coda Hale's [*A Lesson In Timing Attacks*](https://codahale.com/a-lesson-in-timing-attacks/) is the classic five-minute explanation; [BearSSL's constant-time notes](https://www.bearssl.org/constanttime.html) go deeper.
+The vault doesn't hand-write that loop — it calls Mbed TLS's [`mbedtls_ct_memcmp`](https://mbed-tls.readthedocs.io/projects/api/en/development/api/file/constant__time_8h/), the library's constant-time comparison primitive, which does exactly this. If you've never seen why this matters, Coda Hale's [*A Lesson In Timing Attacks*](https://codahale.com/a-lesson-in-timing-attacks/) is the classic five-minute explanation; [BearSSL's constant-time notes](https://www.bearssl.org/constanttime.html) go deeper.
 
 Second, **fail-closed**. The record is wiped *before* anything is read, so there is no code path — not a bad size, not a bad version, not a MAC mismatch, not a decrypt failure, not a malformed record — that can leave a partially-populated credential in the caller's buffer. The function either returns `true` with a complete record or `false` with nothing.
 
@@ -302,7 +320,7 @@ Second, **fail-closed**. The record is wiped *before* anything is read, so there
 
 ## What the tag really binds: slot, type, and freshness
 
-A tag over `ver ‖ iv ‖ cipher` proves the ciphertext is genuine — but it says nothing about three things the format also needs to promise: *which* slot a file belongs to, *what kind* of record it is, and *how recent* it is. An attacker with raw flash write (a programmer or the debug port) but **no PIN** can turn each silence into an attack:
+A tag over `ver ‖ iv ‖ cipher` proves the ciphertext is genuine — but it says nothing about three things the format also needs to promise: *which* slot a file belongs to, *what kind* of record it is, and *how recent* it is. An attacker with raw flash write (a programmer or the debug port) but **no PIN** can turn each silence into an attack — and each maps to something mundane: dropping a letter in the **wrong mailbox** (wrong slot), **relabeling a box** so it passes for another kind (wrong type), or sliding **last month's receipt** back in as if it were today's (a stale revision):
 
 <Table title="Three gaps a ciphertext-only tag leaves open">
   <thead>
@@ -346,7 +364,7 @@ inline size_t writeEnvelopeContext(uint8_t* out, EnvelopeRecordType type,
 ```
 </Code>
 
-Now a relocated file carries the wrong `slotId`, a retyped file the wrong `recordType`, and a rolled-back file an old `generation`. In each case the tag the firmware recomputes no longer matches the one on disk, so the read fails closed **before a single byte is decrypted** — the same verify-before-decrypt gate, now guarding three more promises:
+So a relocated file carries the wrong `slotId`, a retyped file the wrong `recordType`, and a rolled-back file an old `generation`. In each case the tag the firmware recomputes no longer matches the one on disk, so the read fails closed **before a single byte is decrypted** — the same verify-before-decrypt gate, guarding three more promises:
 
 <CapabilityMatrix
   title="What binding each context field defeats"
@@ -377,7 +395,9 @@ Now a relocated file carries the wrong `slotId`, a retyped file the wrong `recor
 
 ## The root of trust: authenticating `meta.bin`
 
-The `generation` counters have to live somewhere, and that somewhere has to be tamper-evident — otherwise an attacker would simply lower a counter to make a stale file look current. They live in `meta.bin`: the small header the device reads first, holding the salts, the PIN verifier, and now a **per-slot generation table** — all sealed under its own HMAC tag.
+Every check so far has leaned on something already being trustworthy — the keys, the freshness counters. That trust has to bottom out somewhere: in a **root of trust**, the one piece you don't get to question, because if it were forged everything built on top would inherit the lie. Here that piece is `meta.bin`.
+
+The `generation` counters have to live somewhere, and that somewhere has to be tamper-evident — otherwise an attacker would simply lower a counter to make a stale file look current. They live in `meta.bin`: the small header the device reads first, holding the salts, the PIN verifier, and a **per-slot generation table** — all sealed under its own HMAC tag.
 
 <ByteFrame
   title="meta.bin — authenticated metadata (formatVer 0x02)"
@@ -410,13 +430,13 @@ Because the metadata is authenticated, the unlock sequence becomes a careful lad
   ]}
 />
 
-An old or format-mismatched `meta.bin` — say a `formatVer 0x01` left over from before this change — simply fails to authenticate, and the vault is re-provisioned. There is no migration and no dual-read: one on-flash format, ever. (The device isn't in production, so there's no real data to migrate.)
+An old or format-mismatched `meta.bin` — say a `formatVer 0x01` from an earlier version — simply fails to authenticate, and the vault is re-provisioned. There is no migration and no dual-read: one on-flash format, ever. (The device isn't in production, so there's no real data to migrate.)
 
 ## Crash-safe anti-rollback
 
 Selective rollback is a [replay attack](https://www.rfc-editor.org/rfc/rfc4949) — the attacker re-presents an authentic-but-stale file — and the standard defense is a *freshness value*: a monotonic counter the verifier expects to only ever increase, so a replayed older record fails the check. But a freshness counter is only as good as its update story. Every mutation — add, edit, **or delete** — bumps the slot's `generation`, and the record is rewritten under the new value. That creates a torn-write hazard: lose power *between* writing the record (under generation N+1) and writing `meta.bin` (which records N+1), and the two disagree. Resolve that wrong and you either brick a valid slot or quietly re-open the rollback you just closed.
 
-The firmware makes the **`meta.bin` swap the single commit point** — written to a temp file, then [atomically renamed](https://pubs.opengroup.org/onlinepubs/9699919799/functions/rename.html) into place, so a reader always sees the old `meta.bin` or the new one, never a torn half-write — and recovers deterministically around it:
+The fix is to pick one single, indivisible moment that "counts" — like the signature on a contract: before the pen lifts nothing is binding, after it everything is. The firmware makes the **`meta.bin` swap that moment** — written to a temp file, then [atomically renamed](https://pubs.opengroup.org/onlinepubs/9699919799/functions/rename.html) into place, so a reader always sees the old `meta.bin` or the new one, never a torn half-write — and recovers deterministically around it:
 
 <Pipeline
   title="Crash-safe mutation — the meta swap is the commit point"
@@ -462,7 +482,7 @@ I'd rather state that boundary plainly than oversell it. The generation counter 
 
 ## Two keys from one master: key separation
 
-The envelope uses two different keys — one to encrypt, one to MAC — and that is deliberate. The security argument for encrypt-then-MAC assumes the encryption and authentication keys are *independent*; reusing one key for both jobs voids the guarantee and invites cross-protocol mischief. So the vault derives separate sub-keys from a single master key, each tagged with a distinct domain-separation label, following the long-standing [key-separation guidance](https://csrc.nist.gov/pubs/sp/800/57/pt1/r5/final) — [NIST SP 800-57 Part 1](https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-57pt1r5.pdf) puts it plainly: "a single key should be used for only one purpose":
+The envelope uses two different keys — one to encrypt, one to MAC — and that is deliberate (the same instinct that says your house key, car key, and mailbox key should be three different keys). The security argument for encrypt-then-MAC assumes the encryption and authentication keys are *independent*; reusing one key for both jobs voids the guarantee and invites cross-protocol mischief. So the vault derives separate sub-keys from a single master key, each tagged with a distinct domain-separation label, following the long-standing [key-separation guidance](https://csrc.nist.gov/pubs/sp/800/57/pt1/r5/final) — [NIST SP 800-57 Part 1](https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-57pt1r5.pdf) puts it plainly: "a single key should be used for only one purpose":
 
 <Code lang="cpp" title="vault_keys — distinct labels per purpose">
 ```cpp
@@ -610,7 +630,7 @@ One honest footnote on the implementation: PSA's transition guide suggests `psa_
 
 ## Listing without decrypting everything: the O(1) index
 
-There's a nice side effect of treating every file as an independent envelope. Listing the vault doesn't mean decrypting every credential — that would be slow and would needlessly expose every secret in RAM. Instead a single encrypted `index.bin`, in the exact same `[ver][iv][hmacTag][cipher]` envelope, caches only the *non-secret* metadata each credential needs in a list view: its id, name, username, brand, and a couple of flags — never the password, URL, notes, or TOTP secret.
+There's a nice side effect of treating every file as an independent envelope (the "O(1)" in the heading is just jargon for "the cost stays flat no matter how many credentials you have"). Listing the vault doesn't mean decrypting every credential — that would be slow and would needlessly expose every secret in RAM. Instead a single encrypted `index.bin`, in the exact same `[ver][iv][hmacTag][cipher]` envelope, caches only the *non-secret* metadata each credential needs in a list view: its id, name, username, brand, and a couple of flags — never the password, URL, notes, or TOTP secret.
 
 <Callout type="info" title="One read, one decrypt">
 Showing the credential list is **one file read plus one decrypt**, regardless of how many credentials exist. The heavy per-credential decrypt happens only when you actually open one. The index is just a cache: if it's missing or its MAC doesn't verify, it's rebuilt from the authenticated per-credential files, which are always the source of truth.
@@ -618,7 +638,7 @@ Showing the credential list is **one file read plus one decrypt**, regardless of
 
 ## Fail closed, by construction
 
-The cipher isn't what makes this vault trustworthy at rest — the *order of operations* is. Authenticate the slot, type, freshness, IV, and ciphertext with a separate key; verify that tag in constant time before a single byte is decrypted; authenticate the metadata that holds the freshness counters; wipe everything on the way out; and let every error path converge on the same answer: nothing. Get those right and AES-256 is almost an implementation detail.
+The cipher isn't what makes this vault trustworthy at rest — the *order of operations* is. Put plainly: never trust a file until its seal checks out, and when in doubt, hand back nothing. Authenticate the slot, type, freshness, IV, and ciphertext with a separate key; verify that tag in constant time before a single byte is decrypted; authenticate the metadata that holds the freshness counters; wipe everything on the way out; and let every error path converge on the same answer: nothing. Get those right and AES-256 is almost an implementation detail.
 
 <SecurityRating
   rating="A"
