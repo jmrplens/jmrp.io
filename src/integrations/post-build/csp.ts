@@ -51,11 +51,11 @@ export async function finalizeCspConfig(
   // Nonce-only CSP: all scripts/styles use nonces, external same-origin covered by 'self'
   // default-src 'none' denies everything not explicitly allowed — recommended by Mozilla Observatory.
   // Every resource type has its own explicit directive (script-src, style-src, img-src, etc.).
-  // Prefetch/prerender: Astro uses Speculation Rules (Chrome) or <link rel="prefetch"> (Firefox).
-  // Chrome checks the deprecated prefetch-src directive — prefetch-src 'self' covers it.
-  // Firefox does NOT support prefetch-src and falls back to default-src 'none', which blocks
-  // same-origin <link rel="prefetch"> elements. This is a known false positive — the prefetch
-  // fails silently without affecting functionality. The CSP reporter filters these out.
+  // Prefetch/prerender: `prefetch-src` was removed from the CSP spec and is unrecognized by
+  // current browsers (Chrome logs "Unrecognized Content-Security-Policy directive 'prefetch-src'";
+  // Firefox never supported it), so it is intentionally omitted. Chrome's Speculation Rules
+  // prefetch is governed by `script-src` (the nonce'd speculationrules script); other prefetch
+  // falls back to `default-src` — no functional loss versus the old directive, minus the warning.
   // worker-src 'self' is added explicitly since no dedicated worker-src would otherwise
   // fall back to the blocked default-src.
   const cspHeader = [
@@ -63,7 +63,6 @@ export async function finalizeCspConfig(
     "script-src 'self' 'nonce-$cspNonce' 'strict-dynamic'",
     "style-src 'self' 'nonce-$cspNonce'",
     "worker-src 'self'",
-    "prefetch-src 'self'",
     ...commonCspDirectives,
   ]
     .map((s) => s.trim())

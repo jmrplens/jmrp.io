@@ -193,10 +193,9 @@ test.describe("Article schema", () => {
     expect((post.description as string).length).toBeLessThanOrEqual(155);
 
     expect(isIsoDate(post.datePublished)).toBe(true);
-    // dateModified is only emitted when the post was actually updated.
-    if (post.dateModified !== undefined) {
-      expect(isIsoDate(post.dateModified)).toBe(true);
-    }
+    // dateModified is always emitted (updatedDate when revised, else
+    // publishedDate) and must be a valid ISO date.
+    expect(isIsoDate(post.dateModified)).toBe(true);
 
     // Author references the site-wide #person entity (defined in the WebSite node).
     const author = post.author as JsonLdSchema;

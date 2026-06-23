@@ -118,11 +118,12 @@ const articleNode = {
   headline: post.data.title,
   description: post.data.description,
   datePublished: post.data.publishedDate.toISOString(),
-  // Only emit dateModified when the post was actually updated, so identical
-  // published/modified dates don't dilute the freshness signal.
-  ...(post.data.updatedDate && {
-    dateModified: post.data.updatedDate.toISOString(),
-  }),
+  // Always emit dateModified: for a never-edited post the last modification IS
+  // its publication date (Google/Schema.org recommend it on Article — a
+  // freshness signal AI engines read); revised posts use their real updatedDate.
+  dateModified: (
+    post.data.updatedDate ?? post.data.publishedDate
+  ).toISOString(),
   publisher: personRef,
   author: personRef,
   image: new URL(jsonLdImage, getSiteUrl()).href,
@@ -311,7 +312,7 @@ const articleSchema = [
                   height={675}
                   formats={["avif", "webp"]}
                   loading="eager"
-                  decoding="sync"
+                  decoding="async"
                   fetchpriority="high"
                   widths={coverImageWidths}
                   sizes={coverImageSizes}

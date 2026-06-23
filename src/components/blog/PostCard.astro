@@ -14,6 +14,10 @@ const { post, loading = "lazy", fetchpriority = "auto" } = Astro.props;
 const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
 const t = useTranslations(locale);
 const translatePath = useTranslatedPath(locale);
+
+// Show a single, most-relevant date: the update date when the post was revised,
+// otherwise the publication date (avoids displaying two dates on the listing).
+const displayDate = post.data.updatedDate ?? post.data.publishedDate;
 ---
 
 <article class="post-card">
@@ -38,8 +42,8 @@ const translatePath = useTranslatedPath(locale);
   }
   <div class="card-content">
     <div class="post-meta">
-      <time datetime={post.data.publishedDate.toISOString()}>
-        {formatDate(post.data.publishedDate, locale)}
+      <time datetime={displayDate.toISOString()}>
+        {formatDate(displayDate, locale)}
       </time>
       {
         post.data.tags && (
