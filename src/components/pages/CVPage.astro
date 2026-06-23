@@ -467,10 +467,15 @@ const personSchema = {
     transform: translateY(-2px);
   }
 
-  .timeline-content::before {
+  /* Decorative notch linking the card to the timeline rail. It lives on
+     .timeline-marker (a sibling of .timeline-content) instead of as a ::before
+     on the content card so axe-core can resolve the background of the links
+     inside and verify their contrast — a ::before on the text's ancestor made
+     `color-contrast` report "incomplete" (could not determine background). */
+  .timeline-marker::after {
     position: absolute;
-    top: 22px;
-    left: -6px;
+    top: -3px;
+    left: calc(var(--space-lg) + 1px);
     width: 12px;
     height: 12px;
     content: "";
@@ -481,7 +486,7 @@ const personSchema = {
     transition: border-color 0.2s;
   }
 
-  .timeline-content:hover::before {
+  .timeline-item:hover .timeline-marker::after {
     border-bottom-color: var(--color-primary);
     border-left-color: var(--color-primary);
   }

@@ -128,7 +128,7 @@ const removalMessages: Record<NoticeType, string | null> = {
   class={`state-notice state-notice--${type}`}
   role="note"
   aria-label={displayTitle}
-  style={`--sn-color: ${current.color}; --sn-bg-color: ${current.bgColor}; --sn-text-color: ${current.textColor};`}
+  style={`--sn-color: ${current.color}; --sn-bg-color: ${current.bgColor};`}
 >
   <div class="sn-header">
     <span
@@ -268,6 +268,35 @@ const removalMessages: Record<NoticeType, string | null> = {
 
   .sn-content :global(p:first-child) {
     margin-top: 0;
+  }
+
+  /* Per-variant accessible text colour for light theme. Defined here (not via
+     the element's inline style) so the dark-theme overrides below win through
+     the normal cascade — an inline custom property would outrank them and was
+     leaving dark-mode text at ~2:1 contrast. These mirror the (now light-only)
+     config values. */
+  .state-notice--deprecated {
+    --sn-text-color: #991b1b; /* red-800, ~5.8:1 */
+  }
+
+  .state-notice--mandatory {
+    --sn-text-color: #065f46; /* emerald-800, ~6.5:1 */
+  }
+
+  .state-notice--experimental {
+    --sn-text-color: #92400e; /* amber-800, ~6.3:1 */
+  }
+
+  .state-notice--preview {
+    --sn-text-color: #1e40af; /* blue-800, ~6.1:1 */
+  }
+
+  .state-notice--breaking {
+    --sn-text-color: #7f1d1d; /* red-900, ~7.8:1 */
+  }
+
+  .state-notice--security {
+    --sn-text-color: #9a3412; /* orange-800, ~5.9:1 */
   }
 
   /* Dark mode: use lighter text colors for WCAG AA contrast (≥4.5:1) */
