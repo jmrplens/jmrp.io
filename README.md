@@ -117,7 +117,7 @@ This is the source code for my personal website, **[jmrp.io](https://jmrp.io)**,
 
 ### Prerequisites
 
-- **Node.js (v22.18.0+)**: Required for advanced build and CI features.
+- **Node.js (v24.0.0+)**: Required for advanced build and CI features.
 - **pnpm (v11.0.0+)**: Required package manager.
 
 ### Installation

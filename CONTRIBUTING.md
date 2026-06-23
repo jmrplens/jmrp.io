@@ -6,7 +6,7 @@ Thank you for your interest in contributing to **jmrp.io**! This document outlin
 
 ### Prerequisites
 
-- **Node.js**: v22.0.0 or higher.
+- **Node.js**: v24.0.0 or higher.
 - **pnpm**: v11+ (managed via `corepack` or `npm i -g pnpm`).
 - **[lychee](https://github.com/lycheeverse/lychee)**: A fast, async link checker (required for `pnpm verify`). Install via `cargo install lychee` or download from [releases](https://github.com/lycheeverse/lychee/releases).
 - **[Playwright Browsers](https://playwright.dev/docs/browsers)**: Run `pnpm exec playwright install` after installation.
