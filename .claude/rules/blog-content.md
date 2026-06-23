@@ -35,7 +35,7 @@ howto: # optional, step-by-step guides → HowTo JSON-LD (see content.config.ts)
 
 ## Required for every post
 
-- **TL;DR**: open the body with `<TLDRSummary>` (renders as `<h2>` answer-target)
+- **TL;DR**: a `<TLDRSummary>` near the top — after a short intro paragraph, before the first `##` (renders as `<h2>` answer-target). Consistent format: cover → intro → TL;DR → body.
 - **`articleType: "TechArticle"`** for guides; verified **`topics`** Q-ids (1 about + ≤5 mentions); a genuine **`faq`**
 - **`howto`** for step-by-step guides
 - The FAQ section, JSON-LD, author bio card, and References are auto-rendered by `BlogPost.astro` — do NOT add `<FAQ>`/`<AuthorCard>` by hand

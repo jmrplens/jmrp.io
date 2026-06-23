@@ -60,7 +60,7 @@ Before submitting a Pull Request, you **must** ensure the project passes all qua
 pnpm verify
 ```
 
-This master script (`scripts/run-verify.mjs`) orchestrates 14 sequential steps (fail-fast, except SonarCloud):
+This master script (`scripts/run-verify.mjs`) orchestrates 13 sequential steps (fail-fast, except SonarCloud):
 
 | #   | Step                  | Command                                                                                 |
 | --- | --------------------- | --------------------------------------------------------------------------------------- |
@@ -79,6 +79,8 @@ This master script (`scripts/run-verify.mjs`) orchestrates 14 sequential steps (
 | 13  | Playwright E2E        | `pnpm test:e2e`                                                                         |
 
 > **Schema.org JSON-LD** is validated at build via [`schema-dts`](https://github.com/google/schema-dts) `satisfies` types on every JSON-LD builder, checked by step 1 (Astro Check) — no separate step.
+
+**Automatic icon check:**
 
 > **Note**: `pnpm verify-icons` is a separate icon consistency check — it is **not** part of the `pnpm verify` pipeline. Run it independently when adding or changing icons.
 

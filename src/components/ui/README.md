@@ -704,6 +704,7 @@ flowchart TB
 - `maxHeight?: string` - Maximum diagram height (e.g., "400px")
 
 **Semantic node classes:** Apply CSS classes to nodes for color-coding:
+
 - `.success` - Green (allowed/passed)
 - `.warning` - Yellow (caution)
 - `.danger` - Red (blocked/error)
@@ -781,6 +782,7 @@ import BrowserSupport from "@/components/ui/BrowserSupport.astro";
 - `note?: string` - Additional notes about support limitations
 
 **Support levels:**
+
 - `full` - Green checkmark, fully supported
 - `partial` - Yellow warning, some features missing
 - `none` - Red X, not supported
@@ -848,6 +850,7 @@ import Table from "@/components/ui/Table.astro";
 **Semantic cell attributes:**
 
 Use `data-status` on `<td>` elements for colored status cells:
+
 - `data-status="success"` - Green (active, supported)
 - `data-status="error"` - Red (deprecated, failed)
 - `data-status="warning"` - Yellow (experimental, partial)

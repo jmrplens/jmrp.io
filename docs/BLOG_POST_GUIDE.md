@@ -10,11 +10,12 @@
 
 2. Edit the frontmatter with your post details. **Replace `013` with the next available number; the `slug` must start with that same `NNN-` prefix.**
 
-3. Open the body with a `<TLDRSummary>`, then write your content using Markdown/MDX.
+3. Follow the standard opening — cover → a short intro paragraph (the "entradilla") → a `<TLDRSummary>` (before the first `##`) — then write your content using Markdown/MDX.
 
 4. Add the **GEO / structured-data frontmatter** (see below): `articleType`, verified `topics` Q-ids, and a genuine `faq`.
 
 5. Build and preview:
+
    ```bash
    pnpm dev --host   # live preview (reviewable from another device on the LAN)
    # or, to match production output:
@@ -247,15 +248,13 @@ console.log(greeting);
 ```
 ````
 
-````
-
 ### Images
 
 Place images in `public/img/` and reference them:
 
 ```markdown
 ![Alt text](/img/my-image.jpg)
-````
+```
 
 ### Links
 
@@ -296,7 +295,7 @@ Before publishing your post:
 
 - [ ] `slug` starts with the `NNN-` prefix and is unique
 - [ ] Description is under 155 characters
-- [ ] **`<TLDRSummary>` opens the body** (the TL;DR answer-target)
+- [ ] **`<TLDRSummary>` near the top** — after the intro paragraph, before the first `##` (the TL;DR answer-target)
 - [ ] **`articleType`** set (`TechArticle` for guides)
 - [ ] **`topics`** present, each Q-id verified against Wikidata
 - [ ] **`faq`** has genuine questions with concise answers
@@ -368,9 +367,9 @@ pnpm run preview
 
 ### Validation
 
-- **RSS Feed**: https://validator.w3.org/feed/
-- **Schema**: https://validator.schema.org/
-- **SEO**: https://pagespeed.web.dev/
+- **RSS Feed**: <https://validator.w3.org/feed/>
+- **Schema**: <https://validator.schema.org/>
+- **SEO**: <https://pagespeed.web.dev/>
 
 ## Need Help?
 

@@ -1,0 +1,28 @@
+// markdownlint-cli2 configuration.
+// Runs only on .md files (never .mdx — those are MDX/JSX, not CommonMark).
+// Prose-formatting rules that fight long tables, intentional inline HTML and
+// frontmatter files are disabled; the structural rules (blank lines around
+// headings/fences/lists/tables, list numbering, trailing spaces) are kept.
+{
+  "config": {
+    "default": true,
+    "MD013": false, // line-length — prose and wide reference tables are long by design
+    "MD033": false, // inline HTML — docs intentionally use <details>/<summary>/<h4>/<picture>
+    "MD041": false, // first line need not be an H1 (YAML frontmatter precedes it)
+    "MD024": { "siblings_only": true }, // allow repeated headings under different parents
+    "MD026": false, // allow trailing "?"/":" in headings (e.g. "Need Help?")
+    "MD036": false, // emphasis-as-heading is false-positive-prone for labels
+    "MD060": false, // table-column alignment is owned by Prettier (the CI formatter)
+    "MD051": false, // link-fragments mis-resolves emoji-prefixed GitHub heading anchors
+  },
+  "globs": ["**/*.md"],
+  "ignores": [
+    "node_modules",
+    "**/node_modules",
+    "dist",
+    "dist_*",
+    "plan", // git-ignored working notes, not part of the repo
+    "CHANGELOG.md",
+    "**/*.mdx",
+  ],
+}

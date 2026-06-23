@@ -46,24 +46,28 @@ const t = useTranslations(locale);
 ### Content & Summary
 
 #### TLDRSummary
+
 ```mdx
 import TLDRSummary from "@components/ui/TLDRSummary.astro";
 <TLDRSummary>
   Quick summary of the article.
 </TLDRSummary>
 ```
+
 | Prop | Type | Default |
 |------|------|---------|
 | `title` | `string` | `"TL;DR"` |
 | `collapsed` | `boolean` | `false` |
 
 #### Callout
+
 ```mdx
 import Callout from "@components/ui/Callout.astro";
 <Callout type="warning" title="Watch out">
   Important information here.
 </Callout>
 ```
+
 | Prop | Type | Default |
 |------|------|---------|
 | `type` | `"info" \| "warning" \| "error" \| "success" \| "tip" \| "note" \| "keypoint" \| "important"` | `"info"` |
@@ -71,18 +75,21 @@ import Callout from "@components/ui/Callout.astro";
 | `icon` | `string` | auto from type |
 
 #### Collapsible
+
 ```mdx
 import Collapsible from "@components/ui/Collapsible.astro";
 <Collapsible summary="Click to expand">
   Hidden content here.
 </Collapsible>
 ```
+
 | Prop | Type | Default |
 |------|------|---------|
 | `summary` | `string` | `"Details"` |
 | `title` | `string` | — *(alias for `summary`, kept for backward compatibility)* |
 
 #### FAQ
+
 Accessible, fully-collapsible FAQ section. Zero-JS: an outer `<details>` (whose
 `<summary>` keeps the `<h2>` heading) wraps one nested `<details>` per question.
 Answer text stays in the DOM when collapsed, so it remains crawlable/indexable.
@@ -96,6 +103,7 @@ Answer text stays in the DOM when collapsed, so it remains crawlable/indexable.
 import FAQ from "@components/ui/FAQ.astro";
 <FAQ items={[{ question: "Q?", answer: "A." }]} />
 ```
+
 | Prop | Type | Default |
 |------|------|---------|
 | `items` | `{ question: string; answer: string }[]` | **Yes** |
@@ -106,10 +114,12 @@ import FAQ from "@components/ui/FAQ.astro";
 ### Status & Version
 
 #### StateNotice
+
 ```mdx
 import StateNotice from "@components/ui/StateNotice.astro";
 <StateNotice type="experimental" feature="New API" />
 ```
+
 | Prop | Type | Default |
 |------|------|---------|
 | `type` | `"deprecated" \| "mandatory" \| "experimental" \| "preview" \| "breaking" \| "security"` | `"deprecated"` |
@@ -120,20 +130,24 @@ import StateNotice from "@components/ui/StateNotice.astro";
 | `title` | `string` | — |
 
 #### VersionBadge
+
 ```mdx
 import VersionBadge from "@components/ui/VersionBadge.astro";
 <VersionBadge type="new" value="v2.0" />
 ```
+
 | Prop | Type | Default |
 |------|------|---------|
 | `type` | `"version" \| "level" \| "deprecated" \| "new" \| "experimental" \| "stable"` | `"version"` |
 | `value` | `string` | capitalized type |
 
 #### SecurityRating
+
 ```mdx
 import SecurityRating from "@components/ui/SecurityRating.astro";
 <SecurityRating rating="A+" title="SSL Labs" description="Perfect score" />
 ```
+
 | Prop | Type | Required |
 |------|------|----------|
 | `rating` | `"A+" \| "A" \| "B" \| "C" \| "D" \| "E" \| "F"` | **Yes** |
@@ -141,10 +155,12 @@ import SecurityRating from "@components/ui/SecurityRating.astro";
 | `description` | `string` | No |
 
 #### DeprecatedNotice
+
 ```mdx
 import DeprecatedNotice from "@components/ui/DeprecatedNotice.astro";
 <DeprecatedNotice feature="oldAPI" alternative="newAPI" alternativeUrl="/docs/new" />
 ```
+
 | Prop | Type | Required |
 |------|------|----------|
 | `feature` | `string` | **Yes** |
@@ -153,10 +169,12 @@ import DeprecatedNotice from "@components/ui/DeprecatedNotice.astro";
 | `removalDate` | `string` | No |
 
 #### FallbackBanner
+
 ```mdx
 import FallbackBanner from "@components/ui/FallbackBanner.astro";
 <FallbackBanner locale={locale} />
 ```
+
 Displays a notice when content is shown in the default locale (EN) because no translation
 exists for the user's requested locale. Renders nothing when `locale === defaultLocale`.
 
@@ -172,6 +190,7 @@ exists for the user's requested locale. Renders nothing when `locale === default
 ### Lists & Steps
 
 #### CheckList
+
 ```mdx
 import CheckList from "@components/ui/CheckList.astro";
 <CheckList title="Requirements">
@@ -181,6 +200,7 @@ import CheckList from "@components/ui/CheckList.astro";
   <li data-check="optional">Nice to have</li>
 </CheckList>
 ```
+
 | Prop | Type | Default |
 |------|------|---------|
 | `title` | `string` | — |
@@ -188,6 +208,7 @@ import CheckList from "@components/ui/CheckList.astro";
 Valid `data-check` values: `"check"`, `"cross"`, `"warning"`, `"optional"`
 
 #### StepByStep
+
 ```mdx
 import StepByStep from "@components/ui/StepByStep.astro";
 <StepByStep title="Installation">
@@ -196,11 +217,13 @@ import StepByStep from "@components/ui/StepByStep.astro";
   <li>Verify the installation</li>
 </StepByStep>
 ```
+
 | Prop | Type | Default |
 |------|------|---------|
 | `title` | `string` | — |
 
 #### Prerequisite
+
 ```mdx
 import Prerequisite from "@components/ui/Prerequisite.astro";
 <Prerequisite>
@@ -210,6 +233,7 @@ import Prerequisite from "@components/ui/Prerequisite.astro";
   </ul>
 </Prerequisite>
 ```
+
 | Prop | Type | Default |
 |------|------|---------|
 | `title` | `string` | `"Prerequisites"` |
@@ -221,10 +245,12 @@ import Prerequisite from "@components/ui/Prerequisite.astro";
 ### Documentation
 
 #### DirectiveCard
+
 ```mdx
 import DirectiveCard from "@components/ui/DirectiveCard.astro";
 <DirectiveCard name="proxy_pass" syntax="proxy_pass URL" description="Sets the upstream server" mdnUrl="https://..." />
 ```
+
 | Prop | Type | Required |
 |------|------|----------|
 | `name` | `string` | **Yes** |
@@ -235,10 +261,12 @@ import DirectiveCard from "@components/ui/DirectiveCard.astro";
 | `since` | `string` | No |
 
 #### APIEndpoint
+
 ```mdx
 import APIEndpoint from "@components/ui/APIEndpoint.astro";
 <APIEndpoint method="GET" path="/api/users" description="List all users" auth />
 ```
+
 | Prop | Type | Required |
 |------|------|----------|
 | `method` | `"GET" \| "POST" \| "PUT" \| "PATCH" \| "DELETE"` | **Yes** |
@@ -247,6 +275,7 @@ import APIEndpoint from "@components/ui/APIEndpoint.astro";
 | `auth` | `boolean` | No |
 
 #### KeyValue
+
 ```mdx
 import KeyValue from "@components/ui/KeyValue.astro";
 <KeyValue title="Configuration" items={[
@@ -254,6 +283,7 @@ import KeyValue from "@components/ui/KeyValue.astro";
   { key: "Protocol", value: "TLS 1.3" }
 ]} />
 ```
+
 | Prop | Type | Default |
 |------|------|---------|
 | `title` | `string` | — |
@@ -265,6 +295,7 @@ import KeyValue from "@components/ui/KeyValue.astro";
 ### Comparison & Decision
 
 #### BeforeAfter
+
 ```mdx
 import BeforeAfter from "@components/ui/BeforeAfter.astro";
 <BeforeAfter beforeLabel="Old Config" afterLabel="New Config">
@@ -272,6 +303,7 @@ import BeforeAfter from "@components/ui/BeforeAfter.astro";
   <Fragment slot="after">New code here</Fragment>
 </BeforeAfter>
 ```
+
 | Prop | Type | Default |
 |------|------|---------|
 | `beforeLabel` | `string` | `"Before"` |
@@ -280,6 +312,7 @@ import BeforeAfter from "@components/ui/BeforeAfter.astro";
 **Slots**: `before`, `after` (named)
 
 #### DecisionTree
+
 ```mdx
 import DecisionTree from "@components/ui/DecisionTree.astro";
 <DecisionTree question="Which protocol to use?">
@@ -287,6 +320,7 @@ import DecisionTree from "@components/ui/DecisionTree.astro";
   <details><summary>REST API? → HTTP/2</summary>Standard request/response pattern.</details>
 </DecisionTree>
 ```
+
 | Prop | Type | Required |
 |------|------|----------|
 | `question` | `string` | **Yes** |
@@ -296,6 +330,7 @@ import DecisionTree from "@components/ui/DecisionTree.astro";
 ### Code & Terminal
 
 #### Code
+
 ```mdx
 import Code from "@components/ui/Code.astro";
 <Code lang="nginx" title="nginx.conf">
@@ -304,6 +339,7 @@ server {
 }
 </Code>
 ```
+
 | Prop | Type | Default |
 |------|------|---------|
 | `lang` | `string` | `"text"` |
@@ -312,12 +348,14 @@ server {
 | `class` | `string` | — |
 
 #### CodeBlock
+
 ```mdx
 import CodeBlock from "@components/ui/CodeBlock.astro";
 <CodeBlock lang="routeros">
 /ip firewall filter add chain=forward action=drop
 </CodeBlock>
 ```
+
 | Prop | Type | Default |
 |------|------|---------|
 | `lang` | `string` | `"text"` |
@@ -325,12 +363,14 @@ import CodeBlock from "@components/ui/CodeBlock.astro";
 > Lightweight code highlighting — same Shiki output as `Code` but with **no wrapper, header, or copy button**. Use inside `<TabPanel noPadding>` or anywhere bare highlighted code is needed.
 
 #### FileContent
+
 ```mdx
 import FileContent from "@components/ui/FileContent.astro";
 <FileContent filename="/etc/nginx/nginx.conf" language="nginx" collapsible>
 server { listen 80; }
 </FileContent>
 ```
+
 | Prop | Type | Required |
 |------|------|----------|
 | `filename` | `string` | **Yes** |
@@ -340,29 +380,34 @@ server { listen 80; }
 | `ariaLabel` | `string` | auto |
 
 #### TerminalCommand
+
 ```mdx
 import TerminalCommand from "@components/ui/TerminalCommand.astro";
 <TerminalCommand>
 sudo nginx -t && sudo systemctl reload nginx
 </TerminalCommand>
 ```
+
 | Prop | Type | Default |
 |------|------|---------|
 | `ariaLabel` | `string` | auto from content |
 
 #### TerminalOutput
+
 ```mdx
 import TerminalOutput from "@components/ui/TerminalOutput.astro";
 <TerminalOutput title="Test Results">
 All tests passed (43/43)
 </TerminalOutput>
 ```
+
 | Prop | Type | Default |
 |------|------|---------|
 | `title` | `string` | — |
 | `ariaLabel` | `string` | auto |
 
 #### TerminalSession (multi-command)
+
 ```mdx
 import { TerminalSession, TerminalSessionCommand, TerminalSessionOutput } from "@components/ui/terminal-session";
 <TerminalSession title="Setup">
@@ -377,6 +422,7 @@ import { TerminalSession, TerminalSessionCommand, TerminalSessionOutput } from "
   </TerminalSessionCommand>
 </TerminalSession>
 ```
+
 **TerminalSession** props: `title`, `ariaLabel`
 **TerminalSessionCommand** props: `prompt` (default `"$"`), `ariaLabel`
 **TerminalSessionOutput** props: `title`, `ariaLabel`
@@ -386,6 +432,7 @@ import { TerminalSession, TerminalSessionCommand, TerminalSessionOutput } from "
 ### Visual & Data
 
 #### Mermaid
+
 ```mdx
 import Mermaid from "@components/ui/Mermaid.astro";
 <Mermaid caption="Network topology" ariaLabel="Diagram showing network topology with firewall and servers">
@@ -395,6 +442,7 @@ flowchart LR
     B -->|Block| D[Drop]:::danger
 </Mermaid>
 ```
+
 | Prop | Type | Required |
 |------|------|----------|
 | `ariaLabel` | `string` | **Strongly recommended** |
@@ -406,6 +454,7 @@ flowchart LR
 **Node classes**: `.success` (green), `.warning` (yellow), `.danger` (red), `.info` (blue), `.highlight` (purple), `.secondary` (gray)
 
 #### BarChart
+
 ```mdx
 import BarChart from "@components/ui/BarChart.astro";
 <BarChart title="Response Times" data={[
@@ -414,6 +463,7 @@ import BarChart from "@components/ui/BarChart.astro";
   { label: "Caddy", value: 18 }
 ]} valueUnit="ms" colorScheme="okabe-ito" />
 ```
+
 | Prop | Type | Required |
 |------|------|----------|
 | `data` | `Array<{ label: string; value: number; color?: string }>` | **Yes** |
@@ -427,6 +477,7 @@ import BarChart from "@components/ui/BarChart.astro";
 | `caption` | `string` | No |
 
 #### BrowserSupport
+
 ```mdx
 import BrowserSupport from "@components/ui/BrowserSupport.astro";
 <BrowserSupport browsers={[
@@ -435,6 +486,7 @@ import BrowserSupport from "@components/ui/BrowserSupport.astro";
   { browser: "safari", version: "15+", support: "partial", note: "No WebP" }
 ]} />
 ```
+
 | Prop | Type | Required |
 |------|------|----------|
 | `browsers` | `BrowserInfo[]` | **Yes** |
@@ -443,6 +495,7 @@ import BrowserSupport from "@components/ui/BrowserSupport.astro";
 `BrowserInfo`: `{ browser: "chrome" | "firefox" | "safari" | "edge" | "opera"; version?: string; support: "full" | "partial" | "none" | "unknown"; note?: string }`
 
 #### Table
+
 ```mdx
 import Table from "@components/ui/Table.astro";
 <Table title="Comparison" striped highlight>
@@ -452,6 +505,7 @@ import Table from "@components/ui/Table.astro";
   </tbody>
 </Table>
 ```
+
 | Prop | Type | Default |
 |------|------|---------|
 | `title` | `string` | — |
@@ -464,6 +518,7 @@ import Table from "@components/ui/Table.astro";
 Cell `data-status`: `"success"`, `"error"`, `"warning"`, `"info"`
 
 #### Timeline
+
 ```mdx
 import Timeline from "@components/ui/Timeline.astro";
 <Timeline events={[
@@ -472,6 +527,7 @@ import Timeline from "@components/ui/Timeline.astro";
   { date: "2024-06", title: "v1.0", description: "First stable release" }
 ]} />
 ```
+
 | Prop | Type | Required |
 |------|------|----------|
 | `events` | `TimelineEvent[]` | **Yes** |
@@ -497,6 +553,7 @@ import { Tabs, TabPanel } from "@components/ui/tabs";
   </TabPanel>
 </Tabs>
 ```
+
 **Tabs** props: `class`
 **TabPanel** props: `label` (required), `noPadding`
 
@@ -507,10 +564,12 @@ import { Tabs, TabPanel } from "@components/ui/tabs";
 ### Media
 
 #### YouTube
+
 ```mdx
 import YouTube from "@components/ui/YouTube.astro";
 <YouTube id="dQw4w9WgXcQ" title="Tutorial: Setting up Nginx" />
 ```
+
 | Prop | Type | Required |
 |------|------|----------|
 | `id` | `string` | **Yes** |
@@ -539,6 +598,7 @@ import References from "@components/ui/References.astro";
 Zero-JS, theme-aware, responsive SVG/CSS diagrams for systems / embedded / C-C++ / networking content. All are `role="img"` figures with an i18n `aria-label` (keys under `components.*`). Prefer these over `Mermaid` for the structured cases below; keep `Mermaid` for arbitrary graphs.
 
 #### MemoryMap
+
 ```mdx
 import MemoryMap from "@components/ui/MemoryMap.astro";
 <MemoryMap title="Where it lives" scale="shared" bars={[
@@ -549,6 +609,7 @@ import MemoryMap from "@components/ui/MemoryMap.astro";
   { label: "RAM", segments: [{ label: "runtime", bytes: 1 }] },
 ]} />
 ```
+
 | Prop | Type | Required |
 |------|------|----------|
 | `bars` | `Array<{ label; segments: Array<{ label; bytes; sizeLabel?; color? }> }>` | **Yes** |
@@ -556,6 +617,7 @@ import MemoryMap from "@components/ui/MemoryMap.astro";
 | `title` / `caption` / `ariaLabel` | `string` | No |
 
 #### StructPacking
+
 ```mdx
 import StructPacking from "@components/ui/StructPacking.astro";
 <StructPacking arch="64-bit" members={[
@@ -564,6 +626,7 @@ import StructPacking from "@components/ui/StructPacking.astro";
   { type: "uint16_t", name: "count", size: 2 },
 ]} />
 ```
+
 | Prop | Type | Required |
 |------|------|----------|
 | `members` | `Array<{ type; name; size; align?; color? }>` | **Yes** |
@@ -571,6 +634,7 @@ import StructPacking from "@components/ui/StructPacking.astro";
 | `title` / `caption` / `ariaLabel` | `string` | No |
 
 #### RegisterMap
+
 ```mdx
 import RegisterMap from "@components/ui/RegisterMap.astro";
 <RegisterMap title="CTRL" width={32} fields={[
@@ -579,6 +643,7 @@ import RegisterMap from "@components/ui/RegisterMap.astro";
   { name: "PRIO", bits: "7:4", note: "priority" },
 ]} />
 ```
+
 | Prop | Type | Required |
 |------|------|----------|
 | `fields` | `Array<{ name; bits: number \| "hi:lo"; color?; note? }>` | **Yes** |
@@ -588,6 +653,7 @@ import RegisterMap from "@components/ui/RegisterMap.astro";
 Reserved gaps auto-fill; fits to width on mobile (ruler hidden when >16-bit).
 
 #### ByteFrame
+
 ```mdx
 import ByteFrame from "@components/ui/ByteFrame.astro";
 <ByteFrame title="Inside kPool" fields={[
@@ -596,6 +662,7 @@ import ByteFrame from "@components/ui/ByteFrame.astro";
   { label: "NUL", bytes: 1 },
 ]} />
 ```
+
 | Prop | Type | Required |
 |------|------|----------|
 | `fields` | `Array<{ label; bytes; variable?; note?; color? }>` | **Yes** |
@@ -604,6 +671,7 @@ import ByteFrame from "@components/ui/ByteFrame.astro";
 Single row; for multi-row protocol headers use `PacketDiagram`.
 
 #### PacketDiagram
+
 ```mdx
 import PacketDiagram from "@components/ui/PacketDiagram.astro";
 <PacketDiagram title="IPv4 header" bitsPerRow={32} fields={[
@@ -611,6 +679,7 @@ import PacketDiagram from "@components/ui/PacketDiagram.astro";
   { name: "Total Length", bits: 16 },
 ]} />
 ```
+
 | Prop | Type | Required |
 |------|------|----------|
 | `fields` | `Array<{ name; bits; color? }>` | **Yes** |
@@ -620,10 +689,12 @@ import PacketDiagram from "@components/ui/PacketDiagram.astro";
 Fields that cross a row boundary are split. Fits to width on mobile.
 
 #### SubnetSplit
+
 ```mdx
 import SubnetSplit from "@components/ui/SubnetSplit.astro";
 <SubnetSplit ip="192.168.1.10" prefix={26} />
 ```
+
 | Prop | Type | Required |
 |------|------|----------|
 | `ip` | `string` | **Yes** |
@@ -631,10 +702,12 @@ import SubnetSplit from "@components/ui/SubnetSplit.astro";
 | `title` / `caption` / `ariaLabel` | `string` | No |
 
 #### BitwiseOp
+
 ```mdx
 import BitwiseOp from "@components/ui/BitwiseOp.astro";
 <BitwiseOp width={8} a={0xb2} op="&" b={0x0f} aLabel="flags" bLabel="mask" />
 ```
+
 | Prop | Type | Required |
 |------|------|----------|
 | `a` | `number` | **Yes** |
@@ -644,10 +717,12 @@ import BitwiseOp from "@components/ui/BitwiseOp.astro";
 | `aLabel` / `bLabel` / `title` / `caption` / `ariaLabel` | `string` | No |
 
 #### NumberBases
+
 ```mdx
 import NumberBases from "@components/ui/NumberBases.astro";
 <NumberBases value={0xb8} bits={8} />
 ```
+
 | Prop | Type | Required |
 |------|------|----------|
 | `value` | `number` | **Yes** |
@@ -655,10 +730,12 @@ import NumberBases from "@components/ui/NumberBases.astro";
 | `title` / `caption` / `ariaLabel` | `string` | No |
 
 #### FloatLayout
+
 ```mdx
 import FloatLayout from "@components/ui/FloatLayout.astro";
 <FloatLayout value={0.15625} precision="single" />
 ```
+
 | Prop | Type | Required |
 |------|------|----------|
 | `value` | `number` | **Yes** |
@@ -666,6 +743,7 @@ import FloatLayout from "@components/ui/FloatLayout.astro";
 | `title` / `caption` / `ariaLabel` | `string` | No |
 
 #### TimingDiagram
+
 ```mdx
 import TimingDiagram from "@components/ui/TimingDiagram.astro";
 <TimingDiagram signals={[
@@ -674,6 +752,7 @@ import TimingDiagram from "@components/ui/TimingDiagram.astro";
   { name: "CS", wave: "10.....1" },
 ]} />
 ```
+
 | Prop | Type | Required |
 |------|------|----------|
 | `signals` | `Array<{ name; wave; data? }>` | **Yes** |
@@ -682,6 +761,7 @@ import TimingDiagram from "@components/ui/TimingDiagram.astro";
 Wave chars: `0`/`1` wire, `p`/`n` clock, `.` extend, `x` don't-care, `z` hi-Z, `=`/`2`-`9` data bus. Scrolls horizontally when wide.
 
 #### EncodingDiagram
+
 ```mdx
 import EncodingDiagram from "@components/ui/EncodingDiagram.astro";
 <EncodingDiagram title="UTF-8" rows={[
@@ -689,12 +769,14 @@ import EncodingDiagram from "@components/ui/EncodingDiagram.astro";
   { label: "é (U+00E9)", bytes: ["C3", "A9"] },
 ]} />
 ```
+
 | Prop | Type | Required |
 |------|------|----------|
 | `rows` | `Array<{ label; bytes: string[]; note? }>` | **Yes** |
 | `title` / `caption` / `ariaLabel` | `string` | No |
 
 #### DeltaCompare
+
 ```mdx
 import DeltaCompare from "@components/ui/DeltaCompare.astro";
 <DeltaCompare unit=" B" rows={[
@@ -702,6 +784,7 @@ import DeltaCompare from "@components/ui/DeltaCompare.astro";
   { label: "Firmware", before: 1341067, after: 1338903 },
 ]} />
 ```
+
 | Prop | Type | Required |
 |------|------|----------|
 | `rows` | `Array<{ label; before; after; lowerIsBetter? }>` | **Yes** |
@@ -709,6 +792,7 @@ import DeltaCompare from "@components/ui/DeltaCompare.astro";
 | `title` / `caption` / `ariaLabel` | `string` | No |
 
 #### LayerStack
+
 ```mdx
 import LayerStack from "@components/ui/LayerStack.astro";
 <LayerStack layers={[
@@ -717,12 +801,14 @@ import LayerStack from "@components/ui/LayerStack.astro";
   { name: "Registers / silicon" },
 ]} />
 ```
+
 | Prop | Type | Required |
 |------|------|----------|
 | `layers` | `Array<{ name; note?; color? }>` | **Yes** |
 | `title` / `caption` / `ariaLabel` | `string` | No |
 
 #### CallStack
+
 ```mdx
 import CallStack from "@components/ui/CallStack.astro";
 <CallStack frames={[
@@ -731,6 +817,7 @@ import CallStack from "@components/ui/CallStack.astro";
   { name: "decode()", detail: "recursion depth 3" },
 ]} />
 ```
+
 | Prop | Type | Required |
 |------|------|----------|
 | `frames` | `Array<{ name; detail?; color? }>` | **Yes** |
@@ -738,6 +825,7 @@ import CallStack from "@components/ui/CallStack.astro";
 | `title` / `caption` / `ariaLabel` | `string` | No |
 
 #### Matrix
+
 ```mdx
 import Matrix from "@components/ui/Matrix.astro";
 <Matrix rowHeader="lang" cols={["BRAND", "OK"]} rows={["EN", "ES"]} cells={[
@@ -745,6 +833,7 @@ import Matrix from "@components/ui/Matrix.astro";
   ["@9379", "@1164"],
 ]} highlight={[[0, 0], [1, 0]]} />
 ```
+
 | Prop | Type | Required |
 |------|------|----------|
 | `rows` / `cols` | `(string \| number)[]` | **Yes** |
@@ -754,6 +843,7 @@ import Matrix from "@components/ui/Matrix.astro";
 | `title` / `caption` / `ariaLabel` | `string` | No |
 
 #### Pipeline
+
 ```mdx
 import Pipeline from "@components/ui/Pipeline.astro";
 <Pipeline stages={[
@@ -762,6 +852,7 @@ import Pipeline from "@components/ui/Pipeline.astro";
   { name: "firmware.elf", note: "13.4 KB .rodata", via: ".o" },
 ]} />
 ```
+
 | Prop | Type | Required |
 |------|------|----------|
 | `stages` | `Array<{ name; note?; via?; color? }>` | **Yes** |
@@ -770,6 +861,7 @@ import Pipeline from "@components/ui/Pipeline.astro";
 `via` labels the arrow into a stage (the artifact handed over). Vertical on mobile.
 
 #### ForkJoin
+
 ```mdx
 import ForkJoin from "@components/ui/ForkJoin.astro";
 <ForkJoin
@@ -780,6 +872,7 @@ import ForkJoin from "@components/ui/ForkJoin.astro";
   after={[{ name: "gen::string()" }, { name: "UI render" }]}
 />
 ```
+
 | Prop | Type | Required |
 |------|------|----------|
 | `branches` | `Array<{ name; note?; color? }>` | **Yes** |
@@ -790,10 +883,12 @@ import ForkJoin from "@components/ui/ForkJoin.astro";
 Fork → join data-flow: a linear chain splits into parallel `branches` then merges into another chain. Best with 2–3 branches. Linear sequence → `Pipeline`; arbitrary graph → `Mermaid`.
 
 #### ThemeImage
+
 ```mdx
 import ThemeImage from "@components/ui/ThemeImage.astro";
 <ThemeImage srcLight="/img/x-light.webp" srcDark="/img/x-dark.webp" alt="Request flow" caption="Request flow" />
 ```
+
 | Prop | Type | Required |
 |------|------|----------|
 | `src` OR (`srcLight` + `srcDark`) | `string` | **Yes** |
@@ -801,10 +896,12 @@ import ThemeImage from "@components/ui/ThemeImage.astro";
 | `caption` / `loading` | `string` | No |
 
 #### FileDownload
+
 ```mdx
 import FileDownload from "@components/ui/FileDownload.astro";
 <FileDownload href="/files/string-pool.zip" filename="string-pool.zip" size="4 KB" />
 ```
+
 | Prop | Type | Required |
 |------|------|----------|
 | `href` / `filename` | `string` | **Yes** |
@@ -830,6 +927,7 @@ import FileDownload from "@components/ui/FileDownload.astro";
 ## Do's and Don'ts
 
 ### Do
+
 - Import from barrel exports for Tabs and TerminalSession
 - Use `data-check` attributes on `<li>` inside `CheckList`
 - Provide `ariaLabel` on `Mermaid` diagrams
@@ -838,6 +936,7 @@ import FileDownload from "@components/ui/FileDownload.astro";
 - Use named slots (`before`/`after`) for `BeforeAfter`
 
 ### Don't
+
 - Don't use Preact components in blog posts (Astro only)
 - Don't skip heading levels (h2 → h4)
 - Don't use inline styles — use UnoCSS classes

@@ -112,8 +112,10 @@ howto: # Optional — step-by-step guides → HowTo JSON-LD
 
 File naming: `001-post-slug.mdx`. Files starting with `_` are excluded.
 
-> **GEO baseline (every post):** opens with `<TLDRSummary>` (the TL;DR answer-target,
-> rendered as `<h2>`); sets `articleType: "TechArticle"` for guides; carries verified
+> **GEO baseline (every post):** includes a `<TLDRSummary>` near the top — after a
+> short intro paragraph (the "entradilla"), before the first `##` (the TL;DR
+> answer-target, rendered as `<h2>`; consistent format: cover → intro → TL;DR →
+> body); sets `articleType: "TechArticle"` for guides; carries verified
 > `topics` Q-ids and a genuine `faq`. The **FAQ section, the JSON-LD (TechArticle/
 > FAQPage/HowTo + `about`/`mentions`), the author bio card (`AuthorCard`), and the
 > References list are emitted automatically by `BlogPost.astro`** from the frontmatter —
@@ -324,7 +326,7 @@ All JSON-LD wrapped in `safeJsonLd()` — escapes `<`, `>`, `&`, `\u2028`, `\u20
 
 | Component     | Import                             | Key Props                                                          |
 | ------------- | ---------------------------------- | ------------------------------------------------------------------ |
-| `TLDRSummary` | `@components/ui/TLDRSummary.astro` | Slot content (TL;DR answer-target — open every post with it)       |
+| `TLDRSummary` | `@components/ui/TLDRSummary.astro` | Slot content (TL;DR answer-target — near the top of every post, after the intro) |
 | `FAQ`         | `@components/ui/FAQ.astro`         | `items: {question,answer}[]`, `open?` — usually wired from the `faq` frontmatter (renders FAQ + FAQPage JSON-LD), not imported in MDX |
 | `Callout`     | `@components/ui/Callout.astro`     | `type: "info"\|"warning"\|"error"\|"success"\|"tip"\|"note"\|"keypoint"\|"important"`, `title?` |
 | `Collapsible` | `@components/ui/Collapsible.astro` | `title`, `open?`                                                   |
@@ -430,7 +432,7 @@ Zero-JS, theme-aware, responsive SVG/CSS diagrams for systems/embedded/C++/netwo
 - `tabs.ts`: Re-exports `Tabs` + `TabPanel`
 - `terminal-session.ts`: Re-exports `TerminalSession` + `TerminalSessionCommand` + `TerminalSessionOutput`
 
-### Documentation
+### Component Documentation
 
 - **Full component docs**: `src/components/ui/README.md`
 - **Agent quick reference**: `src/components/ui/AGENTS.md`
@@ -858,7 +860,7 @@ Steps:
 pnpm dev              # Start dev server (port 4321)
 pnpm build            # Production build (atomic swap)
 pnpm preview          # Preview production build
-pnpm verify           # FULL QA pipeline — 14 steps (run before PR)
+pnpm verify           # FULL QA pipeline — 13 steps (run before PR)
 pnpm typecheck        # astro check
 pnpm lint             # ESLint
 pnpm lint:css         # Stylelint
@@ -905,7 +907,7 @@ Steps 5-13 require a prior build. Steps 11-12 are skipped without env vars. Pre-
 1. Copy `src/content/posts/en/_template.mdx`
 2. Rename with numbered prefix: `013-my-post.mdx` (next free `NNN`; `slug` must match the prefix)
 3. Update frontmatter: title, slug, publishedDate, tags, description ≤ 155 chars, **plus the GEO fields** — `articleType: "TechArticle"` (guides), `proficiencyLevel`, verified `topics` Q-ids, a genuine `faq`, and `howto` for step-by-step guides
-4. Open the body with **`<TLDRSummary>`** (the TL;DR answer-target), then import + use other components
+4. Standard opening: a short intro paragraph (the "entradilla"), then **`<TLDRSummary>`** (before the first `##`), then import + use other components
 5. Write content with MDX (avoid duplicate heading text — it creates ambiguous ToC anchors)
 6. References auto-collected from markdown links + HTML `<a>` tags; the FAQ section, JSON-LD (TechArticle/FAQPage/HowTo + about/mentions), and the `AuthorCard` are **auto-rendered by `BlogPost.astro`** from the frontmatter — do not hand-add them
 7. For a Spanish version, mirror to `src/content/posts/es/` with translated `faq` and the SAME `topics` Q-ids

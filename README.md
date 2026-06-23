@@ -81,7 +81,7 @@ This is the source code for my personal website, **[jmrp.io](https://jmrp.io)**,
 <details>
 <summary>Click to expand folder structure</summary>
 
-```
+```text
 /
 ├── src/
 │   ├── components/       # Reusable Astro & Preact components

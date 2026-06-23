@@ -68,12 +68,14 @@ const uid = `component-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
 ## Component rules
 
 **Structure**
+
 - `interface Props` at the top of frontmatter with JSDoc on each prop
 - Destructure from `Astro.props`
 - Scoped `<style>` block — no `is:global` unless justified
 - Use CSS custom properties from `src/styles/global.css` — no hardcoded colors or sizes
 
 **Accessibility (WCAG 2.2 AA)**
+
 - `aria-labelledby` for sections with a visible heading
 - `aria-label` when there is no visible heading — use `t()` for the label value
 - `role="note"` for informational asides
@@ -82,21 +84,25 @@ const uid = `component-${crypto.getRandomValues(new Uint32Array(1))[0].toString(
 - Icons: `<span class="i-{collection}:{name}" aria-hidden="true"></span>`
 
 **i18n**
+
 - All user-facing text uses `t()` from `useTranslations()` — never hardcode English
 - Import pattern: `import { getLangFromUrl, useTranslations } from "@i18n/utils";`
 - Props like `title` that come from the caller (post content) are not translated internally
 
 **IDs**
+
 - Always generate unique IDs with `crypto.getRandomValues()` — never hardcode
 - Pattern: `` `prefix-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}` ``
 
 **Security**
+
 - No inline styles (`style="..."`) — use UnoCSS classes or scoped CSS
 - External links: `rel="external noopener noreferrer"` + `target="_blank"`
 
 ## Step 2 — Add to AGENTS.md
 
 Add an entry to `src/components/ui/AGENTS.md` under the appropriate section. Include:
+
 - A working MDX usage example
 - A props table with types, defaults, and required/optional marking
 

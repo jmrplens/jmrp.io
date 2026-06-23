@@ -4,9 +4,9 @@ This guide outlines the best practices for using MDX components in blog posts to
 
 ## Core Principles
 
-1.  **Determinism:** The site's HTML should be identical every time it builds if the content hasn't changed. Avoid dynamic IDs or random numbers.
-2.  **Semantic HTML:** Use the correct component for the job (e.g., `<TerminalCommand>` for shell commands, `<Table>` for data).
-3.  **Explicit Context:** Provide `aria-label`, `title`, or `caption` props to give context to screen readers.
+1. **Determinism:** The site's HTML should be identical every time it builds if the content hasn't changed. Avoid dynamic IDs or random numbers.
+2. **Semantic HTML:** Use the correct component for the job (e.g., `<TerminalCommand>` for shell commands, `<Table>` for data).
+3. **Explicit Context:** Provide `aria-label`, `title`, or `caption` props to give context to screen readers.
 
 ## Component Usage
 

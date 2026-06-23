@@ -50,6 +50,7 @@ const uniqueId = `${input:name.toLowerCase()}-${Array.from(crypto.getRandomValue
 ```
 
 **Rules**:
+
 - Props interface at top of frontmatter with JSDoc comments
 - Scoped `<style>` block — no `is:global` unless justified
 - Use CSS custom properties from `src/styles/global.css`

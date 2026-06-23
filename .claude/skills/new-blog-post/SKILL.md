@@ -43,6 +43,8 @@ faq:                             # genuine Q&A about THIS post → FAQ section +
 import TLDRSummary from "@components/ui/TLDRSummary.astro";
 import Callout from "@components/ui/Callout.astro";
 
+A short intro paragraph (the "entradilla") that frames the problem and why it matters.
+
 <TLDRSummary>
   One-paragraph, self-contained summary of the key takeaway (the answer-target).
 </TLDRSummary>
@@ -65,9 +67,11 @@ import Callout from "@components/ui/Callout.astro";
 
 These are required for the site's GEO / accessibility / structured-data standards:
 
-1. **TL;DR** — every post opens its body with `<TLDRSummary>` (renders as an `<h2>`
-   answer-target that AI engines extract). Make it a self-contained summary of the
-   conclusion, not a "what you'll learn" preview.
+1. **TL;DR** — every post includes a `<TLDRSummary>` near the top, after a short
+   intro paragraph (the "entradilla") and before the first `##` heading. It renders
+   as an `<h2>` answer-target that AI engines extract — make it a self-contained
+   summary of the conclusion, not a "what you'll learn" preview. (Consistent
+   format across the blog: cover → intro → TL;DR → body.)
 2. **`articleType`** — set `"TechArticle"` for engineering guides/tutorials (the
    norm here); leave the default `"BlogPosting"` only for narrative/opinion posts.
 3. **`topics` (Wikidata Q-ids)** — 1 primary (`about`) + up to 5 secondary

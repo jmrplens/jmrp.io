@@ -23,7 +23,7 @@ tags: []
 Documentation about what this tool does and how to use it.
 ```
 
-2. **Create the Astro component** at `src/components/apps/${input:componentName}.astro`:
+1. **Create the Astro component** at `src/components/apps/${input:componentName}.astro`:
 
 ```astro
 ---
@@ -60,13 +60,13 @@ interface Props {
 </style>
 ```
 
-3. **Register in componentMap**: Add entry to `src/pages/tools/[...slug].astro`:
+1. **Register in componentMap**: Add entry to `src/pages/tools/[...slug].astro`:
 
 ```typescript
 ${input:componentName}: (await import("@components/apps/${input:componentName}.astro")).default,
 ```
 
-4. **Design rules**:
+1. **Design rules**:
    - **No Preact** — Tools use `<script is:inline>` with vanilla JS
    - **No inline styles** — Use UnoCSS classes or scoped `<style>`
    - **Data attributes** — Use `data-*` for DOM selection, not `getElementById`

@@ -32,6 +32,8 @@ faq: # genuine Q&A about THIS post → rendered FAQ section + FAQPage JSON-LD
 import TLDRSummary from "@components/ui/TLDRSummary.astro";
 import Callout from "@components/ui/Callout.astro";
 
+A short intro paragraph (the "entradilla") that frames the problem.
+
 <TLDRSummary>
 Self-contained summary of the key takeaway (the answer-target).
 </TLDRSummary>
@@ -45,8 +47,8 @@ Content here...
 Content here...
 ```
 
-3. **Every post must include** (GEO / structured-data standards):
-   - **TL;DR**: open the body with `<TLDRSummary>` (renders as an `<h2>` answer-target) — a self-contained summary, not a "what you'll learn" preview.
+1. **Every post must include** (GEO / structured-data standards):
+   - **TL;DR**: a `<TLDRSummary>` near the top — after a short intro paragraph (the "entradilla"), before the first `##` (renders as an `<h2>` answer-target). A self-contained summary, not a "what you'll learn" preview.
    - **`articleType: "TechArticle"`** for engineering guides (default `"BlogPosting"` only for narrative).
    - **`topics`** with Wikidata Q-ids: 1 `about` + up to 5 `mentions`. **Verify each Q-id** resolves to the intended entity via `wbsearchentities` before using it.
    - **`faq`**: genuine reader questions with concise answers (rendered as a collapsible FAQ at the end + `FAQPage` JSON-LD). Only real Q&A.
@@ -55,11 +57,11 @@ Content here...
 
    > The FAQ section, the JSON-LD (TechArticle/FAQPage/HowTo + about/mentions), the author bio card, and the References list are rendered automatically by `BlogPost.astro` from the frontmatter — do NOT add `<FAQ>`, `<AuthorCard>`, or schema by hand.
 
-4. **Content rules**:
+2. **Content rules**:
    - `description` MUST be ≤ 155 characters (enforced by Playwright tests)
    - Heading hierarchy: h1 (auto from title) → h2 → h3 — never skip levels; avoid two headings with identical text (duplicate ToC entries / ambiguous anchors)
    - All images require descriptive `alt` text; `<Mermaid>` requires `ariaLabel`
    - No inline styles, no `<script>` tags
    - External links: `rel="external noopener noreferrer"` + `target="_blank"` (automatic)
 
-5. **Available UI components**: TLDRSummary, Callout, Collapsible, Tabs/TabPanel, Mermaid, Code, FileContent, TerminalCommand, TerminalOutput, TerminalSession, CheckList, StepByStep, BeforeAfter, Table, Timeline, YouTube, and more. See `src/components/ui/AGENTS.md`. (FAQ and AuthorCard are not imported — they come from frontmatter/layout.)
+3. **Available UI components**: TLDRSummary, Callout, Collapsible, Tabs/TabPanel, Mermaid, Code, FileContent, TerminalCommand, TerminalOutput, TerminalSession, CheckList, StepByStep, BeforeAfter, Table, Timeline, YouTube, and more. See `src/components/ui/AGENTS.md`. (FAQ and AuthorCard are not imported — they come from frontmatter/layout.)

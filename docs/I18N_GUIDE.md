@@ -27,7 +27,7 @@ The site is bilingual (English/Spanish) using Astro's built-in i18n routing with
 
 ## Architecture
 
-```
+```text
 src/i18n/
 ├── config.ts              # Locale type, defaultLocale, localeConfig
 ├── index.ts               # Barrel export (re-exports everything)
