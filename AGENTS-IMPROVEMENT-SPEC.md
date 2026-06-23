@@ -1,12 +1,12 @@
 # AGENTS-IMPROVEMENT-SPEC.md
 
 > **Status**: ✅ Completed (April 2026) — preserved as a historical reference. Contents may be stale.
->
-> Concrete improvement plan for the agent context files in this repository.
-> Based on audit of: `CLAUDE.md`, `src/components/ui/AGENTS.md`, `src/components/apps/AGENTS.md`,
-> `.claude/rules/*.md`, `.claude/skills/*/SKILL.md`, `.claude/settings.json`,
-> `.github/agents/*.agent.md`, `.github/instructions/*.instructions.md`,
-> `.github/prompts/*.prompt.md`, `.github/copilot-instructions.md`, `CONTRIBUTING.md`.
+
+Concrete improvement plan for the agent context files in this repository.
+Based on audit of: `CLAUDE.md`, `src/components/ui/AGENTS.md`, `src/components/apps/AGENTS.md`,
+`.claude/rules/*.md`, `.claude/skills/*/SKILL.md`, `.claude/settings.json`,
+`.github/agents/*.agent.md`, `.github/instructions/*.instructions.md`,
+`.github/prompts/*.prompt.md`, `.github/copilot-instructions.md`, `CONTRIBUTING.md`.
 
 ---
 
