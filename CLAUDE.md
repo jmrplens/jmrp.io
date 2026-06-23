@@ -92,18 +92,34 @@
 
 ```yaml
 title: string # Required
-slug: string # Required
+slug: string # Required — must start with the NNN- numeric prefix
 publishedDate: Date # Required (YYYY-MM-DD)
-updatedDate: Date # Optional
+updatedDate: Date # Optional (else dateModified falls back to publishedDate)
 description: string # Optional (≤ 155 chars for SEO)
 author: string # Optional
 authorEmail: string # Optional
 draft: boolean # Default: false
 tags: string[] # Default: []
-coverImage: ImageMeta # Optional (relative image)
+coverImage: ImageMeta # Optional (relative image → AVIF+WebP <picture>)
+# --- GEO / structured-data fields ---
+articleType: "BlogPosting" | "TechArticle" # Default: BlogPosting (use TechArticle for guides)
+proficiencyLevel: "Beginner" | "Intermediate" | "Expert" # Optional (TechArticle)
+topics: { name: string; wikidata: string }[] # Wikidata Q-ids → about (first) + mentions (rest), max 6
+faq: { question: string; answer: string }[] # → FAQ section + FAQPage JSON-LD
+howto: # Optional — step-by-step guides → HowTo JSON-LD
+  { name, totalTime?, tools?[], supplies?[], steps[{ name, text, anchor? }] }
 ```
 
 File naming: `001-post-slug.mdx`. Files starting with `_` are excluded.
+
+> **GEO baseline (every post):** opens with `<TLDRSummary>` (the TL;DR answer-target,
+> rendered as `<h2>`); sets `articleType: "TechArticle"` for guides; carries verified
+> `topics` Q-ids and a genuine `faq`. The **FAQ section, the JSON-LD (TechArticle/
+> FAQPage/HowTo + `about`/`mentions`), the author bio card (`AuthorCard`), and the
+> References list are emitted automatically by `BlogPost.astro`** from the frontmatter —
+> never hand-add `<FAQ>`/`<AuthorCard>`/schema in MDX. Spanish posts carry their own
+> translated `faq` and the SAME `topics` Q-ids. Verify Q-ids via the Wikidata
+> `wbsearchentities` API before use.
 
 ### `tools` — Interactive Tools (MDX)
 
@@ -308,7 +324,8 @@ All JSON-LD wrapped in `safeJsonLd()` — escapes `<`, `>`, `&`, `\u2028`, `\u20
 
 | Component     | Import                             | Key Props                                                          |
 | ------------- | ---------------------------------- | ------------------------------------------------------------------ |
-| `TLDRSummary` | `@components/ui/TLDRSummary.astro` | Slot content                                                       |
+| `TLDRSummary` | `@components/ui/TLDRSummary.astro` | Slot content (TL;DR answer-target — open every post with it)       |
+| `FAQ`         | `@components/ui/FAQ.astro`         | `items: {question,answer}[]`, `open?` — usually wired from the `faq` frontmatter (renders FAQ + FAQPage JSON-LD), not imported in MDX |
 | `Callout`     | `@components/ui/Callout.astro`     | `type: "info"\|"warning"\|"error"\|"success"\|"tip"\|"note"\|"keypoint"\|"important"`, `title?` |
 | `Collapsible` | `@components/ui/Collapsible.astro` | `title`, `open?`                                                   |
 
@@ -885,12 +902,15 @@ Steps 5-13 require a prior build. Steps 11-12 are skipped without env vars. Pre-
 
 ## Writing Blog Posts
 
-1. Copy `src/content/posts/_template.mdx`
-2. Rename with numbered prefix: `009-my-post.mdx`
-3. Update frontmatter (title, slug, publishedDate, tags, description ≤ 155 chars)
-4. Import needed components
-5. Write content with MDX
-6. References auto-collected from markdown links + HTML `<a>` tags in content
+1. Copy `src/content/posts/en/_template.mdx`
+2. Rename with numbered prefix: `013-my-post.mdx` (next free `NNN`; `slug` must match the prefix)
+3. Update frontmatter: title, slug, publishedDate, tags, description ≤ 155 chars, **plus the GEO fields** — `articleType: "TechArticle"` (guides), `proficiencyLevel`, verified `topics` Q-ids, a genuine `faq`, and `howto` for step-by-step guides
+4. Open the body with **`<TLDRSummary>`** (the TL;DR answer-target), then import + use other components
+5. Write content with MDX (avoid duplicate heading text — it creates ambiguous ToC anchors)
+6. References auto-collected from markdown links + HTML `<a>` tags; the FAQ section, JSON-LD (TechArticle/FAQPage/HowTo + about/mentions), and the `AuthorCard` are **auto-rendered by `BlogPost.astro`** from the frontmatter — do not hand-add them
+7. For a Spanish version, mirror to `src/content/posts/es/` with translated `faq` and the SAME `topics` Q-ids
+
+Full workflow + field reference: the `new-blog-post` skill and `docs/BLOG_POST_GUIDE.md`.
 
 ### Component Usage in MDX
 
@@ -954,7 +974,7 @@ flowchart LR
 - **robots.txt**: 17+ AI bots + 6 search engine bots explicitly allowed, Sitemap reference, llms.txt references
 - **Sitemap**: Auto-generated with filter (excludes /404, test pages) and `lastmod`
 - **RSS**: Custom RSS 2.0 with atom:link, enclosures, media:content/thumbnail, channel image
-- **JSON-LD**: @graph pattern on all pages, page-specific schemas (BlogPosting, SoftwareApplication, ProfilePage, CollectionPage)
+- **JSON-LD**: @graph pattern on all pages, page-specific schemas (TechArticle/BlogPosting + FAQPage + HowTo + `about`/`mentions` Wikidata topics on posts; SoftwareApplication + FAQPage on tools; ProfilePage, CollectionPage, ScholarlyArticle). Validated at build via `schema-dts`.
 - **Meta descriptions**: All ≤ 155 chars, validated by Playwright tests
 - **noIndex**: 404 page excluded from indexing
 - **llms.txt/llms-full.txt**: LLM context files (llmstxt.org standard)

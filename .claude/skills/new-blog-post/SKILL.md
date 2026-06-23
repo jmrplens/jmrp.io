@@ -19,25 +19,32 @@ a permanent test fixture, not a real post.
 
 ## Step 2 — Create the file
 
-Path: `src/content/posts/en/NNN-your-slug.mdx`
-
-Use the template at `src/content/posts/en/_template.mdx` as the base. Minimum required
-frontmatter:
+Path: `src/content/posts/en/NNN-your-slug.mdx`. Use `src/content/posts/en/_template.mdx`
+as the base. A complete, GEO-optimized post carries this frontmatter:
 
 ```mdx
 ---
 title: "Post Title"
-slug: "post-slug"
+slug: "NNN-post-slug"            # MUST start with the NNN- numeric prefix
 publishedDate: 2025-01-15
 description: "SEO description — must be ≤ 155 characters"
 tags: ["tag1", "tag2"]
 draft: true
+# --- GEO / structured-data fields (see "What every post must include") ---
+articleType: "TechArticle"       # technical guide/tutorial; "BlogPosting" for narrative
+proficiencyLevel: "Intermediate" # Beginner | Intermediate | Expert (optional)
+topics:                          # Wikidata-linked topics — first = about, rest = mentions
+  - name: "Topic Name"
+    wikidata: "Q12345"           # VERIFIED bare Q-id
+faq:                             # genuine Q&A about THIS post → FAQ section + FAQPage JSON-LD
+  - question: "A real question a reader would ask?"
+    answer: "A concise, self-contained answer."
 ---
 import TLDRSummary from "@components/ui/TLDRSummary.astro";
 import Callout from "@components/ui/Callout.astro";
 
 <TLDRSummary>
-  One-paragraph summary of the post.
+  One-paragraph, self-contained summary of the key takeaway (the answer-target).
 </TLDRSummary>
 
 ## Introduction
@@ -49,36 +56,68 @@ import Callout from "@components/ui/Callout.astro";
 ...
 ```
 
+> The visible **FAQ section, the `TechArticle`/`FAQPage`/`HowTo` JSON-LD, the
+> `about`/`mentions` topic linking, the author bio card, and the References list are
+> all rendered automatically by `BlogPost.astro` from the frontmatter** — do NOT add
+> `<FAQ>`, `<AuthorCard>`, or hand-written schema in the MDX body.
+
+## What every post must include
+
+These are required for the site's GEO / accessibility / structured-data standards:
+
+1. **TL;DR** — every post opens its body with `<TLDRSummary>` (renders as an `<h2>`
+   answer-target that AI engines extract). Make it a self-contained summary of the
+   conclusion, not a "what you'll learn" preview.
+2. **`articleType`** — set `"TechArticle"` for engineering guides/tutorials (the
+   norm here); leave the default `"BlogPosting"` only for narrative/opinion posts.
+3. **`topics` (Wikidata Q-ids)** — 1 primary (`about`) + up to 5 secondary
+   (`mentions`), max 6. Each `{ name, wikidata }`. **Verify every Q-id** resolves to
+   the intended entity before using it (a wrong Q-id is worse than none):
+   `https://www.wikidata.org/w/api.php?action=wbsearchentities&search=<term>&language=en&format=json&limit=5`
+4. **`faq`** — a handful of genuine questions a reader would ask, with concise
+   self-contained answers. Rendered as a collapsible FAQ at the end + emitted as
+   `FAQPage` JSON-LD. Only real Q&A — never padding.
+5. **`howto`** (step-by-step guides only) — mirror the post's ordered steps into a
+   `HowTo` graph node (`name`, optional `totalTime` ISO-8601, `tools`, `supplies`,
+   and `steps[] { name, text, anchor }`). The visible steps stay in the body.
+6. **Bilingual parity** — when a Spanish version exists (`src/content/posts/es/NNN-*.mdx`),
+   it carries its OWN `faq` (translated) and the SAME `topics` Q-ids (English Wikidata
+   labels, identical Q-ids in both locales).
+
 ## Frontmatter rules
 
 | Field | Constraint |
 |-------|-----------|
 | `title` | Required |
-| `slug` | Required — must be unique across all posts |
+| `slug` | Required — must start with the `NNN-` numeric prefix, unique across posts |
 | `publishedDate` | Required — format `YYYY-MM-DD` |
-| `description` | Optional but recommended — **≤ 155 characters** (enforced by `content-integrity.spec.ts`) |
-| `draft` | Set `true` while writing; remove or set `false` to publish |
+| `description` | Recommended — **≤ 155 characters** (enforced by `content-integrity.spec.ts`) |
+| `draft` | `true` while writing; remove or set `false` to publish |
 | `tags` | Optional array of lowercase strings |
-| `updatedDate` | Optional — set when revising a published post |
-| `coverImage` | Optional — path relative to `public/` |
+| `updatedDate` | Optional — set when revising a published post (emits a real `dateModified`; otherwise `dateModified` falls back to `publishedDate`) |
+| `coverImage` | Optional — relative image (rendered as an AVIF+WebP `<picture>`) |
+| `articleType` | `"TechArticle"` (guides) or `"BlogPosting"` (default) |
+| `proficiencyLevel` | Optional — `Beginner` / `Intermediate` / `Expert` |
+| `topics` | `[{ name, wikidata }]` — verified Q-ids; first = `about`, rest = `mentions` |
+| `faq` | `[{ question, answer }]` — genuine Q&A |
+| `howto` | Step-by-step guides only — see schema in `content.config.ts` |
 
 ## Content rules
 
-- **Heading hierarchy**: h1 is auto-generated from `title` — start content at h2, then h3. Never skip levels.
+- **Heading hierarchy**: h1 is auto-generated from `title` — start content at h2, then h3. Never skip levels. Avoid two headings with identical text (duplicate ToC entries / ambiguous anchors).
 - **All images** require descriptive `alt` text
 - **`<Mermaid>`** requires `ariaLabel` prop
 - **No `<script>` tags** in MDX — breaks CSP
 - **No inline styles** — use UnoCSS classes
 - **External links**: `rel="external noopener noreferrer"` + `target="_blank"` (applied automatically by rehype plugin)
+- **Inline cross-links**: link to a sibling post when the body genuinely references its subject (improves topical authority); never force it
 - **Blog content is English only** — UI chrome is translated, post body is not
-- **References** are auto-collected from markdown links and `<a>` tags; add explicit ones in frontmatter `references:` array
+- **References** are auto-collected from markdown links and `<a>` tags; add explicit ones in the frontmatter `references:` array
 
 ## Available UI components
 
-Import from `@components/ui/`. See `src/components/ui/AGENTS.md` for full reference with
-props tables and examples.
-
-Commonly used in posts:
+Import from `@components/ui/`. See `src/components/ui/AGENTS.md` for the full reference
+with props tables and examples. Commonly used in posts:
 
 ```mdx
 import TLDRSummary from "@components/ui/TLDRSummary.astro";
@@ -97,21 +136,25 @@ import BeforeAfter from "@components/ui/BeforeAfter.astro";
 import StateNotice from "@components/ui/StateNotice.astro";
 ```
 
+> `FAQ` and `AuthorCard` are NOT imported in posts — they are rendered by the layout
+> from the `faq` frontmatter and the site author data.
+
 ## Step 3 — Verify
 
 ```bash
-# Check description length and frontmatter constraints
+# Frontmatter constraints (description length, slug uniqueness, etc.)
 pnpm test:e2e tests/content-integrity.spec.ts
 
-# Full build check (catches MDX syntax errors)
+# Full build check — also validates the JSON-LD (TechArticle/FAQPage/HowTo/topics)
+# against Schema.org via schema-dts types
 pnpm build
 ```
 
 ## Draft workflow
 
-1. Create file with `draft: true`
-2. Run `pnpm dev` to preview at `http://localhost:4321`
-3. Write and iterate
+1. Create the file with `draft: true`
+2. `pnpm dev --host` to preview (review from another device on the LAN via its IP)
+3. Write and iterate; add `faq` + `topics` once the content is settled
 4. Set `draft: false` (or remove the field) when ready to publish
 5. Run `pnpm verify` before committing
 

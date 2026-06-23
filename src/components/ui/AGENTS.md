@@ -82,6 +82,25 @@ import Collapsible from "@components/ui/Collapsible.astro";
 | `summary` | `string` | `"Details"` |
 | `title` | `string` | — *(alias for `summary`, kept for backward compatibility)* |
 
+#### FAQ
+Accessible, fully-collapsible FAQ section. Zero-JS: an outer `<details>` (whose
+`<summary>` keeps the `<h2>` heading) wraps one nested `<details>` per question.
+Answer text stays in the DOM when collapsed, so it remains crawlable/indexable.
+
+> **You normally do NOT import `<FAQ>` in MDX.** Posts and tools declare a `faq`
+> array in **frontmatter**; the layout renders this component AND emits the
+> matching `FAQPage` JSON-LD from the same data (single source of truth). Import
+> it directly only for an ad-hoc FAQ outside a post/tool.
+
+```astro
+import FAQ from "@components/ui/FAQ.astro";
+<FAQ items={[{ question: "Q?", answer: "A." }]} />
+```
+| Prop | Type | Default |
+|------|------|---------|
+| `items` | `{ question: string; answer: string }[]` | **Yes** |
+| `open` | `boolean` | `false` (outer block starts collapsed) |
+
 ---
 
 ### Status & Version
