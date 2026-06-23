@@ -8,14 +8,16 @@ import "@styles/blog.css";
 import PostGrid from "@components/blog/PostGrid.astro";
 import TagCloud from "@components/blog/TagCloud.astro";
 import { defaultLocale, type Locale } from "@i18n/config";
-import { useTranslations } from "@i18n/utils";
+import { useTranslatedPath, useTranslations } from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
 import { getPostsForLocale } from "@utils/blog";
 import { getSiteUrl } from "@utils/site";
 import { getImage } from "astro:assets";
+import type { CollectionPage, ListItem } from "schema-dts";
 
 const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
 const t = useTranslations(locale);
+const translatePath = useTranslatedPath(locale);
 
 const entries = await getPostsForLocale(locale);
 const posts = entries.map((e) => e.post);
@@ -51,14 +53,18 @@ const schema = {
   inLanguage: locale,
   mainEntity: {
     "@type": "ItemList",
-    itemListElement: posts.map((post, index) => ({
-      "@type": "ListItem",
-      position: index + 1,
-      url: new URL(`/blog/${post.data.slug}/`, getSiteUrl()).href,
-      name: post.data.title,
-    })),
+    numberOfItems: posts.length,
+    itemListElement: posts.map(
+      (post, index): ListItem => ({
+        "@type": "ListItem",
+        position: index + 1,
+        url: new URL(translatePath(`/blog/${post.data.slug}/`), getSiteUrl())
+          .href,
+        name: post.data.title,
+      }),
+    ),
   },
-};
+} satisfies CollectionPage;
 ---
 
 <BaseLayout

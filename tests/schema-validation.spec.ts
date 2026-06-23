@@ -176,13 +176,15 @@ test.describe("Common schemas on representative pages", () => {
 
 // ─── BlogPosting ─────────────────────────────────────────────────────
 
-test.describe("BlogPosting schema", () => {
+test.describe("Article schema", () => {
   test("validates blog post structured data", async ({ page }) => {
     await blockCloudflare(page);
     await page.goto("/blog/001-secure-nginx-client-certificates/");
     const jsonLd = await getJsonLd(page);
 
-    const post = findInGraph(jsonLd, "BlogPosting");
+    // Engineering guides use the more specific TechArticle; otherwise BlogPosting.
+    const post =
+      findInGraph(jsonLd, "TechArticle") ?? findInGraph(jsonLd, "BlogPosting");
     expect(post).not.toBeNull();
     if (!post) return;
 
@@ -191,11 +193,14 @@ test.describe("BlogPosting schema", () => {
     expect((post.description as string).length).toBeLessThanOrEqual(155);
 
     expect(isIsoDate(post.datePublished)).toBe(true);
+    // dateModified is always emitted (updatedDate when revised, else
+    // publishedDate) and must be a valid ISO date.
     expect(isIsoDate(post.dateModified)).toBe(true);
 
+    // Author references the site-wide #person entity (defined in the WebSite node).
     const author = post.author as JsonLdSchema;
-    expect(author["@type"]).toBe("Person");
-    expect(isNonEmptyStr(author.name)).toBe(true);
+    expect(isNonEmptyStr(author["@id"])).toBe(true);
+    expect(author["@id"]).toContain("#person");
 
     expect(isValidUrl(post.image)).toBe(true);
     expect(isNonEmptyStr(post.inLanguage)).toBe(true);
@@ -220,7 +225,16 @@ test.describe("ProfilePage schema on homepage", () => {
     expect(profile).not.toBeNull();
     if (!profile) return;
 
-    const person = profile.mainEntity as JsonLdSchema;
+    // mainEntity is a typed reference to the canonical #person node, which is
+    // defined once as the WebSite publisher (avoids a duplicate, thinner Person
+    // sharing the same @id). Resolve the reference and validate the full node.
+    const ref = profile.mainEntity as JsonLdSchema;
+    expect(ref["@type"]).toBe("Person");
+
+    const website = findInGraph(jsonLd, "WebSite");
+    expect(website).not.toBeNull();
+    const person = (website?.publisher ?? {}) as JsonLdSchema;
+    expect(person["@id"]).toBe(ref["@id"]);
     expect(person["@type"]).toBe("Person");
     expect(isNonEmptyStr(person.name)).toBe(true);
     expect(isValidUrl(person.url)).toBe(true);
@@ -284,7 +298,9 @@ test.describe("SoftwareApplication schema on tool pages", () => {
 
     const offers = app.offers as JsonLdSchema;
     expect(offers["@type"]).toBe("Offer");
-    expect(offers.price).toBe(0);
+    // price is a string per schema.org Offer (spec-correct), paired with isAccessibleForFree.
+    expect(offers.price).toBe("0");
+    expect(app.isAccessibleForFree).toBe(true);
   });
 });
 
@@ -383,6 +399,7 @@ test.describe("URL correctness in schemas", () => {
       "alumniOf",
       "hasCredential",
       "memberOf",
+      "identifier", // ORCID PropertyValue.url points to orcid.org by design
     ]);
 
     /** Collect @id and url values (skip external subtrees) */

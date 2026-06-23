@@ -91,10 +91,10 @@ function runVerify() {
       name: "Lint: RSS Feed",
       command: "node scripts/ci/validate-rss.mjs dist",
     },
-    {
-      name: "Lint: Schema.org JSON-LD",
-      command: "node scripts/ci/validate-schema.mjs dist",
-    },
+    // Schema.org JSON-LD correctness is enforced at build time via schema-dts
+    // types (`satisfies`) on the schema builders, checked by `astro check`
+    // above — the official Google Schema.org TypeScript vocabulary, far more
+    // thorough than the previous hand-rolled output checker.
     { name: "Lint: Spelling (CSpell)", command: "pnpm exec cspell lint ." },
     {
       name: "Lint: Broken Links (Lychee)",

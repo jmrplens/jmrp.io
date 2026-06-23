@@ -35,6 +35,66 @@ const posts = defineCollection({
       authorEmail: z.email().optional(),
       coverImage: image().optional(),
       tags: z.array(z.string()).default([]),
+      /**
+       * Schema.org primary type for the post. Use "TechArticle" for engineering
+       * guides/tutorials (more specific, AI-recognized) and "BlogPosting" for
+       * narrative posts. Defaults to "BlogPosting".
+       */
+      articleType: z
+        .enum(["BlogPosting", "TechArticle"])
+        .default("BlogPosting"),
+      /** Difficulty hint emitted on TechArticle (`proficiencyLevel`). */
+      proficiencyLevel: z
+        .enum(["Beginner", "Intermediate", "Expert"])
+        .optional(),
+      /**
+       * Canonical topics for JSON-LD `about`/`mentions`, linked to Wikidata.
+       * The first entry becomes `about` (primary topic); the rest `mentions`.
+       * `wikidata` is the bare Q-id (e.g. "Q1133706"); verify it resolves to the
+       * intended entity — a wrong Q-id is worse than none.
+       */
+      topics: z
+        .array(
+          z.object({
+            name: z.string().min(1),
+            wikidata: z
+              .string()
+              .regex(/^Q\d+$/, "wikidata must be a bare Q-id, e.g. Q1128636"),
+          }),
+        )
+        .optional(),
+      /**
+       * FAQ pairs. Rendered as a visible accessible FAQ section AND emitted as
+       * FAQPage JSON-LD — single source of truth. Only add genuine Q&A.
+       */
+      faq: z
+        .array(
+          z.object({
+            question: z.string().min(1),
+            answer: z.string().min(1),
+          }),
+        )
+        .optional(),
+      /**
+       * HowTo schema for step-by-step guides. Emitted as a secondary `HowTo`
+       * graph node (strong AI-assistant signal; the visible steps already live
+       * in the post body). `anchor` links a step to its in-page section id.
+       */
+      howto: z
+        .object({
+          name: z.string(),
+          totalTime: z.string().optional(), // ISO 8601 duration, e.g. PT30M
+          tools: z.array(z.string()).optional(),
+          supplies: z.array(z.string()).optional(),
+          steps: z.array(
+            z.object({
+              name: z.string(),
+              text: z.string(),
+              anchor: z.string().optional(),
+            }),
+          ),
+        })
+        .optional(),
     }),
 });
 
@@ -84,6 +144,13 @@ const site_config = defineCollection({
               url: z.url().optional(),
             })
             .optional(),
+          // Additional canonical entity URLs for JSON-LD `sameAs` that should NOT
+          // appear as footer social icons (e.g. Google Scholar, ORCID, ResearchGate).
+          // Merged with `social_links` to build the full Person `sameAs` array.
+          sameAs: z.array(z.url()).optional(),
+          // Topics emitted as Person `knowsAbout` on every page, so single-page
+          // AI crawls still see the entity's expertise profile.
+          knowsAbout: z.array(z.string()).optional(),
         })
         .optional(),
       // Social links for JSON-LD sameAs and dynamic rendering
@@ -308,6 +375,23 @@ const tools = defineCollection({
     appProps: z.record(z.string(), z.any()).optional(),
     publishedDate: z.coerce.date().optional(),
     updatedDate: z.coerce.date().optional(),
+    /**
+     * FAQ pairs for the tool. Rendered as a visible accessible FAQ section AND
+     * emitted as FAQPage JSON-LD — single source of truth. Only genuine Q&A.
+     */
+    faq: z
+      .array(
+        z.object({
+          question: z.string().min(1),
+          answer: z.string().min(1),
+        }),
+      )
+      .optional(),
+    /**
+     * Short feature bullets for the tool, emitted as SoftwareApplication
+     * `featureList` JSON-LD to give AI engines a richer capability description.
+     */
+    features: z.array(z.string()).optional(),
   }),
 });
 

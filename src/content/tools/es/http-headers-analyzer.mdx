@@ -6,8 +6,25 @@ subtitle: "Analiza cabeceras HTTP de seguridad y obtén una puntuación con reco
 icon: "i-mdi:web"
 category: "security"
 tags: ["http", "headers", "seguridad", "hsts", "csp", "análisis"]
+features:
+  - "Analiza 10 cabeceras de seguridad críticas"
+  - "Puntuación ponderada con calificación de A+ a F"
+  - "Detecta cabeceras con fugas de información"
+  - "Obtén desde URL o pega las cabeceras manualmente"
+  - "Todo el análisis se ejecuta en tu navegador"
 appComponent: "HTTPHeadersAnalyzer"
 lang: "es"
+faq:
+  - question: "¿Qué cabeceras HTTP de seguridad comprueba esta herramienta?"
+    answer: "Evalúa 10 cabeceras críticas, entre ellas Content-Security-Policy, Strict-Transport-Security, X-Content-Type-Options, X-Frame-Options, Referrer-Policy, Permissions-Policy y las tres políticas Cross-Origin. También detecta fugas de información en las cabeceras \"Server\", \"X-Powered-By\" y \"X-AspNet-Version\"."
+  - question: "¿Cómo se calcula la puntuación de seguridad?"
+    answer: "Cada cabecera tiene un peso según su impacto, siendo Content-Security-Policy la de mayor valor (25 puntos) y X-XSS-Protection la menor (3 puntos). El total ponderado se traduce en una calificación de A+ (90-100) hasta F (0-29)."
+  - question: "¿Por qué faltan algunas cabeceras al obtenerlas desde una URL?"
+    answer: "La función Fetch se ejecuta directamente en tu navegador, por lo que las restricciones de CORS pueden ocultar ciertas cabeceras de respuesta. Para obtener resultados completos, pega las cabeceras capturadas con curl -sI o copiadas desde DevTools del navegador."
+  - question: "¿Se envían mis datos a un servidor al analizar las cabeceras?"
+    answer: "No. Todo el análisis se realiza íntegramente en tu navegador, y la solicitud opcional de Fetch se hace directamente desde tu navegador sin ningún proxy del lado del servidor."
+  - question: "¿Debo configurar todavía X-XSS-Protection?"
+    answer: "No. X-XSS-Protection es un filtro legacy que los navegadores modernos ignoran o que puede introducir vulnerabilidades; el valor recomendado es \"0\" para desactivarlo, y una Content-Security-Policy sólida es la defensa adecuada contra XSS."
 ---
 
 import {
@@ -16,7 +33,7 @@ import {
   TerminalSessionOutput,
 } from "@components/ui/terminal-session";
 
-<h2>Acerca de esta herramienta</h2>
+<h2>¿Qué hace esta herramienta?</h2>
 <p>
   Analiza las cabeceras HTTP de respuesta en busca de buenas prácticas de
   seguridad. La herramienta evalúa 10 cabeceras de seguridad críticas, detecta
@@ -24,7 +41,7 @@ import {
   recomendaciones prácticas. Puedes pegar las cabeceras manualmente u obtenerlas
   directamente desde una URL.
 </p>
-<h3>Cabeceras analizadas</h3>
+<h3>¿Qué cabeceras se analizan?</h3>
 <ul>
   <li>
     <strong>Content-Security-Policy</strong> (25 pts) — prevención de XSS e
@@ -91,7 +108,7 @@ import {
     <strong>F</strong> (0-29) — Crítica, faltan la mayoría de cabeceras
   </li>
 </ul>
-<h3>Cómo usar</h3>
+<h3>¿Cómo se usa?</h3>
 <ol>
   <li>
     Introduce una URL y pulsa Fetch, o pega las cabeceras desde DevTools del
@@ -105,7 +122,7 @@ import {
     a analizar
   </li>
 </ol>
-<h3>Privacidad</h3>
+<h3>¿Son privados mis datos?</h3>
 <p>
   Todo el análisis se realiza íntegramente en tu navegador. Cuando usas la
   función Fetch, la solicitud se hace directamente desde tu navegador — no se

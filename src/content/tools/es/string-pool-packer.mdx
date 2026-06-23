@@ -6,8 +6,25 @@ subtitle: "Comprueba cómo un pool de cadenas deduplicado y tail-merged con offs
 icon: "i-mdi:package-variant-closed"
 category: "embedded"
 tags: ["i18n", "embedded", "firmware", "c++", "flash", "optimization"]
+features:
+  - "Compara tabla de punteros y pool empaquetado"
+  - "Deduplicación y tail-merge de cadenas"
+  - "Offset uint16 y aviso de 64 KiB"
+  - "Modos de entrada por líneas y CSV"
+  - "Se ejecuta localmente en tu navegador"
 appComponent: "StringPoolPacker"
 lang: "es"
+faq:
+  - question: "¿Por qué las tablas de punteros const char* desperdician tanta flash en un MCU?"
+    answer: "Cada celda de una tabla 2-D (idioma × ID de cadena) guarda un puntero, que son 4 bytes en un MCU de 32 bits antes de un solo carácter de texto. Pasar a una tabla de offsets uint16 reduce ese coste de índice a la mitad, una ganancia estructural que el linker no hace por ti."
+  - question: "¿Cuánto puede ahorrar un pool de cadenas empaquetado y tail-merged frente a una tabla de punteros?"
+    answer: "El ahorro viene de tres sitios: reducir el índice a la mitad (de punteros de 4 bytes a offsets uint16 de 2 bytes), deduplicar las cadenas idénticas compartidas entre idiomas y fusionar por sufijo las cadenas que son sufijo de otras más largas. Pega tus cadenas reales para ver el total exacto de bytes de ambos formatos."
+  - question: "¿Qué es el tail-merge en un pool de cadenas?"
+    answer: "El tail-merge guarda una cadena que es el sufijo de otra más larga apuntando su offset dentro de esa entrada más larga, en lugar de almacenarla aparte. Las cadenas se colocan primero las más largas para que el sufijo más corto reutilice los mismos bytes."
+  - question: "¿Cuándo dejan de funcionar los offsets uint16 en un pool de cadenas?"
+    answer: "Los offsets uint16 solo pueden direccionar los primeros 64 KiB del pool. La herramienta avisa cuando tu pool supera ese límite, momento en el que necesitarías offsets más anchos para alcanzar las cadenas posteriores."
+  - question: "¿Esta herramienta envía mis cadenas a un servidor?"
+    answer: "No. Todo el análisis, la deduplicación, el tail-merge y el conteo de bytes ocurren por completo en tu navegador, y nada de lo que escribes se transmite a ningún sitio."
 ---
 
 <h2>Sobre esta herramienta</h2>
@@ -45,7 +62,7 @@ lang: "es"
   </li>
 </ul>
 
-<h3>Cómo usarla</h3>
+<h3>¿Cómo se usa?</h3>
 <ol>
   <li>
     Elige el modo <strong>Líneas</strong> o <strong>CSV</strong> y pega tus datos
@@ -67,7 +84,7 @@ lang: "es"
   </li>
 </ol>
 
-<h3>Qué calcula</h3>
+<h3>¿Qué calcula?</h3>
 <ul>
   <li>
     <strong>Tabla de índice</strong> — entradas × 4 B (punteros) frente a
@@ -95,7 +112,7 @@ lang: "es"
   </li>
 </ul>
 
-<h3>Privacidad</h3>
+<h3>¿Mis datos son privados?</h3>
 <p>
   Todo el análisis, la deduplicación, el tail-merge y el conteo de bytes ocurren
   por completo en tu navegador. Nada de lo que escribes se transmite a ningún

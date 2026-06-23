@@ -6,7 +6,24 @@ subtitle: "Build production-ready MikroTik WireGuard VPN configurations with a v
 icon: "i-mdi:vpn"
 category: "mikrotik"
 tags: ["wireguard", "vpn", "mikrotik", "routeros", "ipv6", "firewall"]
+features:
+  - "MikroTik RouterOS WireGuard script output"
+  - "Dual-stack IPv4/IPv6 with NAT and firewall"
+  - "Unlimited peers with client .conf files"
+  - "Full or split tunnel and QR support"
+  - "Runs locally in your browser"
 appComponent: "WireGuardConfigGenerator"
+faq:
+  - question: "Are my WireGuard keys safe with this generator?"
+    answer: "Yes. The tool runs entirely in your browser and sends no data to any server. By default it lets RouterOS auto-generate the keys on the device, so private keys never need to be entered into the tool at all."
+  - question: "What is the difference between full tunnel and split tunnel?"
+    answer: "Full tunnel routes all client traffic through the VPN (AllowedIPs = 0.0.0.0/0 and ::/0), while split tunnel only routes the specific subnets you list. Use split tunnel when clients should reach your LAN without sending their general internet traffic over the VPN."
+  - question: "What should I put in AllowedIPs for a peer?"
+    answer: "On the client config, AllowedIPs defines which destinations are sent through the tunnel: use 0.0.0.0/0, ::/0 for a full tunnel or just your VPN and LAN subnets for split tunnel. On the router side, each peer's allowed address is its assigned VPN IP, which the generator fills in automatically."
+  - question: "How many peers can I add?"
+    answer: "You can add unlimited peers. Each client device gets a unique auto-assigned IP address and its own .conf file, with optional per-peer customization."
+  - question: "Why does the config include MSS clamping and a dual-stack IPv6 setup?"
+    answer: "MSS clamping prevents fragmentation problems over the tunnel by auto-calculating the right MSS value. Dual-stack adds IPv4 plus IPv6 ULA addressing with NAT66 so clients work on IPv6-capable networks; you can pick the IPv4-only preset if you don't need IPv6."
 ---
 
 <h2>About This Tool</h2>
@@ -56,7 +73,7 @@ appComponent: "WireGuardConfigGenerator"
   </li>
 </ul>
 
-<h3>How to Use</h3>
+<h3>How do I use it?</h3>
 <ol>
   <li>
     Select a <strong>preset</strong> to start with a common configuration, or

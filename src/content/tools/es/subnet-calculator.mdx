@@ -6,8 +6,25 @@ subtitle: "Kit completo de redes IPv4/IPv6: calculadora de subredes, informació
 icon: "i-mdi:lan"
 category: "network"
 tags: ["redes", "ip", "subnet", "cidr", "ipv4", "ipv6", "vlsm"]
+features:
+  - "Cálculo de subredes IPv4 e IPv6"
+  - "Planificador VLSM con análisis de desperdicio"
+  - "Conversión de rangos a bloques CIDR"
+  - "Detección de tipo de dirección y DNS inverso"
+  - "Se ejecuta localmente en tu navegador"
 appComponent: "SubnetCalculator"
 lang: "es"
+faq:
+  - question: "¿Cómo calculo el número de hosts utilizables en una subred?"
+    answer: "Los hosts utilizables son el total de direcciones del prefijo menos la dirección de red y la de broadcast, así que un /24 tiene 254 hosts utilizables (256 − 2). Introduce la IP y el prefijo CIDR y la herramienta indica automáticamente los hosts utilizables, el rango de hosts, el broadcast y la máscara."
+  - question: "¿Cuál es la diferencia entre una subred /30 y una /31?"
+    answer: "Una /30 tiene 4 direcciones con 2 hosts utilizables tras reservar red y broadcast, mientras que una /31 (RFC 3021) usa sus 2 direcciones para un enlace punto a punto sin broadcast. Ambas son habituales en enlaces entre routers."
+  - question: "¿Por qué /64 es el tamaño de subred estándar en IPv6?"
+    answer: "El prefijo /64 es requerido por SLAAC, que deriva el identificador de interfaz de 64 bits del host, por lo que es el tamaño estándar para casi todas las subredes IPv6. La herramienta usa aritmética BigInt para manejar con precisión estos cálculos de 128 bits."
+  - question: "¿Cómo convierto un rango de IP arbitrario en bloques CIDR?"
+    answer: "Usa el modo Rango a CIDR: introduce las direcciones IPv4 de inicio y fin y la herramienta devuelve el conjunto mínimo de prefijos CIDR que cubren exactamente el rango. Esto es útil para reglas de firewall, agregación de rutas y listas de control de acceso."
+  - question: "¿Se envían a algún sitio mis datos de direcciones IP al usar esta calculadora?"
+    answer: "No. Todos los cálculos se ejecutan íntegramente en tu navegador y no se envía ninguna dirección IP ni dato de red a ningún servidor. La herramienta sigue funcionando sin conexión tras la carga inicial de la página."
 ---
 
 import {
@@ -73,7 +90,7 @@ import {
   </li>
 </ul>
 
-<h2>Cómo usar</h2>
+<h2>¿Cómo se usa?</h2>
 
 <h3>Calculadora de subredes</h3>
 <ol>
@@ -668,7 +685,7 @@ import {
   </TerminalSessionOutput>
 </TerminalSession>
 
-<h2>Explicación de VLSM</h2>
+<h2>¿Qué es VLSM?</h2>
 <p>
   <strong>Variable Length Subnet Masking (VLSM)</strong> permite dividir una red
   en subredes de diferentes tamaños, minimizando el desperdicio de direcciones.
@@ -689,7 +706,7 @@ import {
   innecesaria la variación de tamaños.
 </p>
 
-<h2>Algoritmo de rango a CIDR</h2>
+<h2>¿Cómo funciona la conversión de rango a CIDR?</h2>
 <p>
   Convertir un rango de IP arbitrario a bloques CIDR encuentra el conjunto
   mínimo de prefijos que cubren exactamente el rango. Para cada posición:

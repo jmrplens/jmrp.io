@@ -21,6 +21,7 @@ pnpm test:e2e --ui                 # Interactive mode
 ```
 
 Stop `astro dev` before testing — dev server lacks nonces/SRI:
+
 ```bash
 pkill -f "astro dev" 2>/dev/null; pnpm test:e2e
 ```

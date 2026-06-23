@@ -6,8 +6,25 @@ subtitle: "Codifica y decodifica entre múltiples formatos con soporte de archiv
 icon: "i-mdi:swap-horizontal"
 category: "developer"
 tags: ["base64", "codificación", "decodificación", "hex", "url-encoding"]
+features:
+  - "Codifica y decodifica Base64 y Base64URL"
+  - "Convierte URL, hex, entidades HTML y binario"
+  - "Codifica archivos arrastrando con vista previa"
+  - "Genera Data URIs para CSS y HTML"
+  - "Todo en el navegador, sin subidas"
 appComponent: "Base64Encoder"
 lang: "es"
+faq:
+  - question: "¿Base64 es una forma de cifrado?"
+    answer: "No. Base64 es un esquema de codificación, no de cifrado. Hace que los datos binarios se puedan transmitir como texto, pero no aporta confidencialidad, ya que cualquiera puede decodificarlo al instante. Nunca lo uses para proteger secretos."
+  - question: "¿Cuál es la diferencia entre Base64 y Base64URL?"
+    answer: "El Base64 estándar (RFC 4648) usa los caracteres + y / junto con el relleno =, que puede romper las URLs. Base64URL los sustituye por - y _ y normalmente elimina el relleno, lo que lo hace seguro para URLs y JWTs."
+  - question: "¿Se sube mi archivo a un servidor cuando lo codifico?"
+    answer: "No. Toda la codificación y decodificación se ejecuta completamente en tu navegador. Los archivos que arrastras nunca se suben, por lo que tus datos nunca salen de tu dispositivo."
+  - question: "¿Por qué la salida Base64 es más grande que el archivo original?"
+    answer: "Base64 representa cada 3 bytes de entrada como 4 caracteres ASCII, por lo que la salida es aproximadamente un 33 % mayor que los datos de origen. Es la sobrecarga esperada en cualquier codificación Base64."
+  - question: "¿Qué es un Data URI y cuándo debo usarlo?"
+    answer: "Un Data URI embebe el contenido codificado en Base64 directamente en CSS o HTML usando el prefijo data:<tipo-mime>;base64,..., evitando una petición de archivo aparte. Activa el prefijo Data URI para obtener una cadena lista para pegar en recursos pequeños como iconos."
 ---
 
 import {
@@ -43,7 +60,7 @@ import {
     <strong>Documentos</strong> — PDF, JSON, texto plano y cualquier otro archivo
   </li>
 </ul>
-<h3>Cómo usar</h3>
+<h3>¿Cómo se usa?</h3>
 <ol>
   <li>
     Cambia entre el modo <strong>Texto</strong> y <strong>Archivo</strong> usando
@@ -57,14 +74,14 @@ import {
   <li>Activa el prefijo Data URI para embeber directamente en CSS/HTML</li>
   <li>Usa el botón Descargar para guardar Base64 decodificado como archivo</li>
 </ol>
-<h3>Privacidad</h3>
+<h3>¿Son privados mis datos?</h3>
 <p>
   Toda la codificación y decodificación ocurre completamente en tu navegador.
   No se sube ningún archivo a ningún servidor. Tus datos nunca salen de tu
   dispositivo.
 </p>
 
-<h3>Referencia de comandos Linux</h3>
+<h3>¿Cómo se hace desde la terminal de Linux?</h3>
 <p>
   Puedes realizar las mismas operaciones desde la terminal usando herramientas
   integradas de Linux. Estos son los ejemplos más comunes:

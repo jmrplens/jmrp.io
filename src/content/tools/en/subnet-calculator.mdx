@@ -6,7 +6,24 @@ subtitle: "Full IPv4/IPv6 networking toolkit: subnet calculator, address info, V
 icon: "i-mdi:lan"
 category: "network"
 tags: ["networking", "ip", "subnet", "cidr", "ipv4", "ipv6", "vlsm"]
+features:
+  - "IPv4 and IPv6 subnet calculation"
+  - "VLSM planner with waste analysis"
+  - "Range-to-CIDR block conversion"
+  - "Address type detection and reverse DNS"
+  - "Runs locally in your browser"
 appComponent: "SubnetCalculator"
+faq:
+  - question: "How do I calculate the number of usable hosts in a subnet?"
+    answer: "Usable hosts equal the total addresses in the prefix minus the network and broadcast addresses, so a /24 has 254 usable hosts (256 − 2). Enter the IP and CIDR prefix and the tool reports usable hosts, host range, broadcast, and mask automatically."
+  - question: "What is the difference between a /30 and a /31 subnet?"
+    answer: "A /30 has 4 addresses with 2 usable hosts after reserving network and broadcast, while a /31 (RFC 3021) uses both of its 2 addresses for a point-to-point link with no broadcast. Both are common for router-to-router links."
+  - question: "Why is /64 the standard subnet size for IPv6?"
+    answer: "A /64 prefix is required by SLAAC, which derives the 64-bit interface identifier from the host, so it is the standard size for almost every IPv6 subnet. The tool uses BigInt math to handle these 128-bit calculations accurately."
+  - question: "How do I convert an arbitrary IP range into CIDR blocks?"
+    answer: "Use the Range to CIDR mode: enter the start and end IPv4 addresses and the tool returns the minimal set of CIDR prefixes that exactly cover the range. This is useful for firewall rules, route aggregation, and access control lists."
+  - question: "Is my IP address data sent anywhere when I use this calculator?"
+    answer: "No. All calculations run entirely in your browser and no IP addresses or network data are sent to any server. The tool keeps working offline after the initial page load."
 ---
 
 import {
@@ -68,7 +85,7 @@ import {
   </li>
 </ul>
 
-<h2>How to Use</h2>
+<h2>How do I use it?</h2>
 
 <h3>Subnet Calculator</h3>
 <ol>
@@ -658,7 +675,7 @@ import {
   </TerminalSessionOutput>
 </TerminalSession>
 
-<h2>VLSM Explanation</h2>
+<h2>What is VLSM?</h2>
 <p>
   <strong>Variable Length Subnet Masking (VLSM)</strong> allows dividing a
   network into subnets of different sizes, minimizing wasted addresses. The
@@ -679,7 +696,7 @@ import {
   unnecessary.
 </p>
 
-<h2>Range to CIDR Algorithm</h2>
+<h2>How does range-to-CIDR conversion work?</h2>
 <p>
   Converting an arbitrary IP range to CIDR blocks finds the minimal set of
   prefixes that exactly cover the range. For each position:

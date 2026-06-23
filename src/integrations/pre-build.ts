@@ -8,30 +8,6 @@ import { GITHUB_AVATAR_PATH, setupGithubAvatar } from "./pre-build/avatar.js";
 import { setupCfBeacon } from "./pre-build/beacon.js";
 
 /**
- * Updates the "Last updated" date in llms.txt files to the current build date.
- *
- * @param logger - The Astro logger instance.
- */
-function updateLlmsDate(logger: AstroIntegrationLogger): void {
-  const buildDate = new Date().toISOString().split("T", 1)[0];
-  for (const file of ["public/llms.txt", "public/llms-full.txt"]) {
-    if (!fs.existsSync(file)) {
-      continue;
-    }
-
-    const content = fs.readFileSync(file, "utf-8");
-    const updated = content.replace(
-      /^> Last updated: \d{4}-\d{2}-\d{2}/m,
-      () => `> Last updated: ${buildDate}`,
-    );
-    if (updated !== content) {
-      fs.writeFileSync(file, updated, "utf-8");
-      logger.info(`Updated build date in ${file}`);
-    }
-  }
-}
-
-/**
  * Downloads any reference favicons not already cached in `src/assets/icons/`.
  *
  * Wraps `scripts/optimize-favicons.mjs` (idempotent: only new domains hit the
@@ -92,7 +68,6 @@ export default function preBuildIntegration(): AstroIntegration {
           // Only fetch beacon if we are building for production
           if (command === "build") {
             await setupCfBeacon(env.PUBLIC_CF_BEACON_TOKEN, logger);
-            updateLlmsDate(logger);
             setupReferenceFavicons(logger);
           }
 

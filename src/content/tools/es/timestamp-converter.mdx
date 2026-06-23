@@ -6,10 +6,27 @@ subtitle: "Convierte entre timestamps Unix, ISO 8601 y fechas legibles con compa
 icon: "i-mdi:clock-time-four-outline"
 category: "developer"
 tags: ["timestamp", "unix", "fecha", "hora", "zona-horaria", "iso8601"]
+features:
+  - "Conversión bidireccional de timestamp y fecha"
+  - "Detección automática de segundos o milisegundos"
+  - "Formatos ISO 8601, RFC 2822 y corto"
+  - "Compara un instante en 11 zonas horarias"
+  - "Se ejecuta localmente en tu navegador"
 appComponent: "TimestampConverter"
 lang: "es"
 appProps:
   title: ""
+faq:
+  - question: "¿Qué es un timestamp Unix?"
+    answer: "Un timestamp Unix es el número de segundos transcurridos desde el Unix Epoch (1970-01-01 00:00:00 UTC), sin contar los segundos intercalares. Es independiente de la zona horaria, lo que lo hace ideal para almacenar e intercambiar instantes en APIs, logs y bases de datos."
+  - question: "¿Cómo sé si mi timestamp está en segundos o milisegundos?"
+    answer: "Cuenta los dígitos: 10 dígitos o menos casi siempre son segundos, mientras que 13 dígitos (lo que devuelve Date.now() de JavaScript) son milisegundos. Esta herramienta autodetecta la unidad según la magnitud, pero puedes anularla con el selector Segundos / Milisegundos."
+  - question: "¿Depende un timestamp Unix de la zona horaria?"
+    answer: "No. El mismo timestamp Unix representa el mismo instante en toda la Tierra; solo cambia su representación legible según la zona horaria. Esta herramienta muestra ese único instante en 11 ciudades a la vez para que compares las horas locales en paralelo."
+  - question: "¿Qué es el problema del año 2038 (Y2K38)?"
+    answer: "En los sistemas que almacenan el tiempo en un entero con signo de 32 bits, el timestamp 2147483647 (2038-01-19 03:14:07 UTC) es el valor máximo; un segundo después se desborda a un número negativo. La solución es usar timestamps de 64 bits, que esta herramienta maneja sin problemas."
+  - question: "¿Se envían mis datos a un servidor?"
+    answer: "No. Todas las conversiones se ejecutan completamente en tu navegador usando las APIs integradas Date e Intl de JavaScript, y ningún dato de timestamp sale de tu dispositivo. Los enlaces compartibles solo codifican el timestamp en los parámetros de la URL."
 ---
 
 import {
@@ -63,7 +80,7 @@ import {
   </li>
 </ul>
 
-<h3>Cómo usar</h3>
+<h3>¿Cómo se usa?</h3>
 <ol>
   <li>
     Introduce un timestamp Unix para ver la fecha, la tabla de zonas horarias
@@ -87,7 +104,7 @@ import {
   </li>
 </ol>
 
-<h3>Lógica de autodetección</h3>
+<h3>¿Cómo funciona la autodetección?</h3>
 <p>
   Cuando el selector de unidad está en <strong>Auto</strong> (por defecto), la
   herramienta determina la unidad según la magnitud de la entrada:
@@ -195,7 +212,7 @@ import {
   </tbody>
 </table>
 
-<h3>Privacidad</h3>
+<h3>¿Son privados mis datos?</h3>
 <p>
   Todas las conversiones ocurren completamente en tu navegador usando las APIs
   integradas de JavaScript <code>Date</code> e <code>Intl</code>. No se
@@ -206,7 +223,7 @@ import {
 <h3>Referencia de comandos Linux</h3>
 <p>Operaciones de timestamp comunes desde la terminal:</p>
 
-<h4>Obtener el timestamp actual</h4>
+<h4>¿Cómo obtengo el timestamp actual?</h4>
 <TerminalSession>
   <TerminalSessionCommand>date +%s</TerminalSessionCommand>
   <TerminalSessionOutput title="Timestamp Unix (segundos)">
@@ -214,7 +231,7 @@ import {
   </TerminalSessionOutput>
 </TerminalSession>
 
-<h4>Timestamp a fecha</h4>
+<h4>¿Cómo convierto un timestamp a fecha?</h4>
 <TerminalSession>
   <TerminalSessionCommand>
     date -d @1739361234 "+%Y-%m-%d %H:%M:%S %Z"
@@ -224,7 +241,7 @@ import {
   </TerminalSessionOutput>
 </TerminalSession>
 
-<h4>Fecha a timestamp</h4>
+<h4>¿Cómo convierto una fecha a timestamp?</h4>
 <TerminalSession>
   <TerminalSessionCommand>
     date -d "2025-02-12 12:53:54" +%s
@@ -234,7 +251,7 @@ import {
   </TerminalSessionOutput>
 </TerminalSession>
 
-<h4>Convertir entre zonas horarias</h4>
+<h4>¿Cómo convierto entre zonas horarias?</h4>
 <TerminalSession>
   <TerminalSessionCommand>
     TZ="America/New_York" date -d @1739361234 "+%Y-%m-%d %H:%M:%S %Z"
@@ -244,7 +261,7 @@ import {
   </TerminalSessionOutput>
 </TerminalSession>
 
-<h4>Timestamp en milisegundos</h4>
+<h4>¿Cómo obtengo un timestamp en milisegundos?</h4>
 <TerminalSession>
   <TerminalSessionCommand>date +%s%3N</TerminalSessionCommand>
   <TerminalSessionOutput title="Timestamp Unix (milisegundos)">
@@ -252,7 +269,7 @@ import {
   </TerminalSessionOutput>
 </TerminalSession>
 
-<h4>ISO 8601 y RFC 2822</h4>
+<h4>¿Cómo genero ISO 8601 y RFC 2822?</h4>
 <TerminalSession>
   <TerminalSessionCommand>
     ```

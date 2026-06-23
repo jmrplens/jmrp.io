@@ -8,6 +8,30 @@ author: "José Manuel Requena Plens"
 authorEmail: "mail@jmrp.io"
 draft: false
 tags: ["Security", "Cryptography", "Firmware", "ESP32", "C++"]
+topics:
+  - name: "Authenticated encryption"
+    wikidata: "Q15263584"
+  - name: "HMAC"
+    wikidata: "Q1669397"
+  - name: "Advanced Encryption Standard"
+    wikidata: "Q190746"
+  - name: "Padding oracle attack"
+    wikidata: "Q7123320"
+  - name: "ESP32"
+    wikidata: "Q27921668"
+  - name: "PBKDF2"
+    wikidata: "Q3952834"
+articleType: "TechArticle"
+proficiencyLevel: "Expert"
+faq:
+  - question: "What is encrypt-then-MAC?"
+    answer: "Encrypt-then-MAC authenticates the ciphertext before any decryption. Each vault file is an envelope — [ver][iv][hmacTag][cipher] — and the HMAC tag is verified in constant time before AES runs, so a tampered file is rejected without ever being decrypted."
+  - question: "Why verify the MAC before decrypting?"
+    answer: "Decrypting first exposes a padding oracle: the decrypt step inspects PKCS#7 padding and leaks timing or error differences an attacker can exploit offline. Verifying the tag first means no attacker-controlled bytes ever reach the cipher — the vault fails closed."
+  - question: "How does the format stop a rolled-back or relocated vault file?"
+    answer: "The HMAC authenticates a context prefix — ver ‖ recordType ‖ slotId ‖ generation — so a file moved to another slot, retyped, or replaced with an older generation fails the tag, even against an attacker with raw flash access and no PIN."
+  - question: "Does encrypt-then-MAC need separate keys?"
+    answer: "Yes. Encryption and authentication use independent keys derived from the PIN. Reusing a single key for both the cipher and the MAC weakens the construction and should be avoided."
 ---
 
 import Callout from "@components/ui/Callout.astro";

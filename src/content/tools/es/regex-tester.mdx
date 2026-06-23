@@ -6,8 +6,25 @@ subtitle: "Prueba expresiones regulares con resaltado en tiempo real, capture gr
 icon: "i-mdi:regex"
 category: "developer"
 tags: ["regex", "regexp", "patrón", "grep", "sed", "pruebas"]
+features:
+  - "Resaltado de coincidencias en tiempo real"
+  - "Grupos de captura con y sin nombre"
+  - "Modo de reemplazo con retrorreferencias"
+  - "Flags g/i/m/s/u conmutables y presets"
+  - "Se ejecuta localmente en tu navegador"
 appComponent: "RegexTester"
 lang: "es"
+faq:
+  - question: "¿Mis patrones regex y cadenas de prueba se envían a un servidor?"
+    answer: "No. Todo el análisis de patrones y el procesamiento de texto se ejecuta íntegramente en tu navegador usando el motor RegExp nativo de JavaScript. Tus patrones y cadenas de prueba nunca salen de tu dispositivo."
+  - question: "¿Qué sabor de regex usa este probador?"
+    answer: "Usa el motor nativo RegExp de JavaScript, que sigue la especificación ECMAScript. Los patrones pueden comportarse de forma distinta en PCRE, Python o herramientas POSIX, así que consulta la tabla de comparación de sabores antes de portarlos."
+  - question: "¿Qué hacen los flags g, i, m, s y u?"
+    answer: "g encuentra todas las coincidencias en lugar de solo la primera, i hace la búsqueda insensible a mayúsculas, m hace que ^ y $ coincidan con el inicio/fin de cada línea, s permite que . coincida con saltos de línea, y u habilita la coincidencia Unicode completa y los escapes de propiedades."
+  - question: "¿Cómo pruebo un buscar y reemplazar?"
+    answer: "Activa el modo de reemplazo e introduce una cadena de reemplazo. Puedes referenciar grupos capturados con $1, la coincidencia completa con $&, y grupos con nombre con $<name>."
+  - question: "¿Por qué mi patrón se bloquea o tarda mucho?"
+    answer: "Patrones como (a+)+b provocan backtracking catastrófico con entradas largas que no coinciden. La herramienta muestra el tiempo de ejecución de cada prueba, así que si un patrón tarda más de unos milisegundos, simplifícalo o usa character classes negadas en lugar de comodines voraces."
 ---
 
 import RegexFlavorTable from "@components/apps/RegexFlavorTable.astro";
@@ -58,7 +75,7 @@ import {
   </li>
 </ul>
 
-<h3>Cómo usar</h3>
+<h3>¿Cómo se usa?</h3>
 <ol>
   <li>Introduce tu patrón regex en el campo de patrón</li>
   <li>Configura los flags deseados (g, i, m, s, u) usando las casillas</li>
@@ -82,7 +99,7 @@ import {
   </li>
 </ol>
 
-<h3>Flags de regex explicados</h3>
+<h3>¿Qué hacen los flags de regex?</h3>
 <p>
   Los flags (también llamados modificadores) cambian cómo el motor de regex
   interpreta tu patrón. En JavaScript se colocan después del delimitador de
@@ -215,7 +232,7 @@ import {
   </div>
 </div>
 
-<h3>JavaScript frente a otros sabores de regex</h3>
+<h3>¿En qué se diferencia el regex de JavaScript de otros sabores?</h3>
 <p>
   Esta herramienta usa el motor nativo <code>RegExp</code> de JavaScript, que
   sigue la especificación ECMAScript. Algunas diferencias a tener en cuenta al
@@ -223,7 +240,7 @@ import {
 </p>
 <RegexFlavorTable />
 
-<h3>Consejos de rendimiento de regex</h3>
+<h3>¿Cómo puedo mejorar el rendimiento de regex?</h3>
 <ul>
   <li>
     <strong>Evita el backtracking catastrófico</strong> — patrones como{" "}

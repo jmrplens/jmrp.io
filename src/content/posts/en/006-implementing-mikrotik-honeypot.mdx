@@ -8,6 +8,53 @@ authorEmail: "mail@jmrp.io"
 draft: false
 coverImage: "../../../assets/images/blog/mikrotik-honeypot.webp"
 tags: ["MikroTik", "Security", "Honeypot"]
+faq:
+  - question: "What is a honeypot?"
+    answer: "A honeypot is a security mechanism that creates a decoy system designed to attract and detect attackers, luring them away from legitimate targets while gathering intelligence about their methods. NIST SP 800-53 includes honeypots as a formal security control (SC-26)."
+  - question: "Why does the honeypot only monitor \"new\" connections?"
+    answer: "Reconnaissance happens on the first packet (the TCP SYN), which carries the \"new\" state. Matching only \"new\" avoids false positives from already-established legitimate sessions and minimizes CPU overhead since only the initial probe is inspected."
+  - question: "Why use the RAW table instead of the Filter table to block scanners?"
+    answer: "The RAW table processes packets before connection tracking, so blocking blacklisted attackers there means the router never allocates memory or CPU to track their connections. On routers handling thousands of attacks daily this significantly reduces resource usage; detection still runs in the Filter table."
+  - question: "How do I avoid blocking myself when deploying the honeypot?"
+    answer: "Create a whitelist address-list and add your own IP before enabling any rules. The honeypot rules use src-address-list=!WhiteList so whitelisted IPs are never blocked; if you lock yourself out you'll need physical access to recover."
+  - question: "Why are blocked IPs banned for only 4 hours instead of permanently?"
+    answer: "The rules use address-list-timeout=4h for a temporary ban. Attacker IPs are often dynamic and reassigned, so permanent bans risk blocking legitimate users later."
+  - question: "Does the honeypot work with IPv6?"
+    answer: "Yes. The guide provides a separate IPv6 configuration that mirrors IPv4, using a distinct BlackList_PortScanners_v6 address list for comprehensive dual-stack protection."
+topics:
+  - name: "Honeypot"
+    wikidata: "Q911932"
+  - name: "MikroTik"
+    wikidata: "Q913580"
+  - name: "Firewall"
+    wikidata: "Q80998"
+  - name: "Port scanner"
+    wikidata: "Q833766"
+  - name: "IPv6"
+    wikidata: "Q2551624"
+  - name: "Denial-of-service attack"
+    wikidata: "Q131406"
+articleType: "TechArticle"
+proficiencyLevel: "Intermediate"
+howto:
+  name: "Build a MikroTik honeypot to trap and auto-block port scanners"
+  totalTime: "PT30M"
+  tools:
+    - "MikroTik RouterOS device"
+    - "Linux server running CrowdSec (optional)"
+  steps:
+    - name: "Create the whitelist"
+      text: "Before deploying any blocking rules, create a WhiteList address-list and add your own IPs, VPN endpoints, and trusted services. This prevents accidentally locking yourself out, since the honeypot rules use src-address-list=!WhiteList."
+    - name: "Deploy the IPv4 honeypot configuration"
+      text: "Add the Filter-table detection rules that match connection-state=new on trapped TCP/UDP ports and run action=add-src-to-address-list, then a DROP rule for blacklisted sources. Finish with a RAW prerouting drop rule for high-performance blocking."
+    - name: "Deploy the IPv6 honeypot configuration"
+      text: "Apply the mirrored IPv6 ruleset using the separate BlackList_PortScanners_v6 address list for the same trapped ports, providing dual-stack protection across the Filter and RAW tables."
+    - name: "Forward logs to a remote syslog server"
+      text: "Set the remote logging action with your syslog server IP and send firewall logs (including the [HONEYPOT] prefixes) so attacker IPs can be collected for threat intelligence."
+    - name: "Integrate the logs with CrowdSec"
+      text: "Configure rsyslog to write MikroTik logs to a file, add a CrowdSec acquisition for that file, install the MikroTik parser, and reload CrowdSec to extract attacker IPs automatically."
+    - name: "Test the honeypot"
+      text: "From an IP not on the whitelist, connect to a trapped port such as Telnet (23) or SSH, then confirm the IP appears in the BlackList address-list and that the RAW rule drops its traffic. Remove the test IP afterwards."
 ---
 
 import Callout from "@components/ui/Callout.astro";
@@ -18,16 +65,25 @@ import TerminalOutput from "@components/ui/TerminalOutput.astro";
 import Table from "@components/ui/Table.astro";
 import Code from "@components/ui/Code.astro";
 import BarChart from "@components/ui/BarChart.astro";
+import TLDRSummary from "@components/ui/TLDRSummary.astro";
 
 Every router connected to the internet faces a relentless barrage of automated scans. Bots systematically probe the entire IPv4 address space—and increasingly IPv6—searching for vulnerable services: SSH servers with weak passwords, exposed databases, outdated RDP endpoints, or misconfigured IoT devices.
 
-Most administrators respond by silently dropping these packets. But what if you could turn these attacks into actionable intelligence? By configuring your **MikroTik** router as a lightweight **honeypot**, you can:
+Most administrators respond by [silently dropping these packets](/blog/005-implementing-tarpit-nginx/). But what if you could turn these attacks into actionable intelligence? By configuring your **MikroTik** router as a lightweight **honeypot**, you can:
 
 1. **Detect** unauthorized reconnaissance before it becomes a breach.
 2. **Log** attacker IPs for analysis and threat intelligence sharing.
 3. **Block** malicious actors from accessing *any* service on your network.
 
 This guide walks you through implementing a production-ready honeypot on RouterOS, complete with both IPv4 and IPv6 support.
+
+<TLDRSummary title="TL;DR — MikroTik honeypot in a nutshell">
+- **Trap & auto-block**: detection rules in the Filter table match `connection-state=new` on bait ports and run `add-src-to-address-list` to blacklist scanners automatically.
+- **High-performance blocking**: a RAW prerouting drop rule discards blacklisted traffic before connection tracking, saving CPU and memory on routers facing thousands of attacks.
+- **Don't lock yourself out**: build a `WhiteList` first; rules use `src-address-list=!WhiteList`, and bans use `address-list-timeout=4h` to avoid permanent blocks on dynamic IPs.
+- **Dual-stack**: a mirrored IPv6 ruleset uses a separate `BlackList_PortScanners_v6` list for full IPv4 + IPv6 coverage.
+- **Threat intelligence**: forward `[HONEYPOT]` firewall logs to a remote syslog server and feed them into CrowdSec to collect attacker IPs.
+</TLDRSummary>
 
 ---
 

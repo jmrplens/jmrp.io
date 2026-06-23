@@ -22,11 +22,17 @@ import {
 } from "@i18n/utils";
 import type { SiteConfig } from "@src/types";
 import { safeJsonLd } from "@utils/html";
-import { getSiteUrl } from "@utils/site";
+import { buildSameAs, getSiteUrl } from "@utils/site";
 // Variable Fonts (managed by Astro Experimental Fonts)
 import type { ImageMetadata } from "astro";
 import { Font, getImage } from "astro:assets";
 import { getEntry } from "astro:content";
+import type {
+  BreadcrumbList,
+  ListItem,
+  SiteNavigationElement,
+  WebSite,
+} from "schema-dts";
 
 const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
 const t = useTranslations(locale);
@@ -145,11 +151,19 @@ const ogImageMime = (() => {
 
 // --- Schema.org Construction ---
 
+// Canonical site root WITH trailing slash, so entity @id/url/item values match
+// the page canonical form (avoids fragmenting the entity graph).
+const siteRoot = new URL("/", getSiteUrl()).href;
+
+// Machine-readable ORCID identifier for the Person, derived from sameAs.
+const orcidUrl = siteData.person?.sameAs?.find((u) => u.includes("orcid.org"));
+const orcidId = /orcid\.org\/([\dX-]+)/i.exec(orcidUrl ?? "")?.[1];
+
 // 1. WebSite Schema (Global)
 const websiteSchema = {
   "@type": "WebSite",
   "@id": new URL("#website", getSiteUrl()).href,
-  url: getSiteUrl(),
+  url: siteRoot,
   name: siteData.author,
   description: t("seo.siteDescription"),
   inLanguage: locale,
@@ -157,11 +171,33 @@ const websiteSchema = {
     "@type": "Person",
     "@id": new URL("#person", getSiteUrl()).href,
     name: siteData.author,
-    url: getSiteUrl(),
+    jobTitle: siteData.person?.jobTitle ?? siteData.jobTitle,
+    description: t("pages.cv.schemaDescription"),
+    url: siteRoot,
     image: new URL(defaultOgImage.src, getSiteUrl()).href,
-    sameAs: siteData.social_links?.map((link) => link.url) || [],
+    ...(siteData.person?.worksFor && {
+      worksFor: {
+        "@type": "Organization",
+        name: siteData.person.worksFor.name,
+        ...(siteData.person.worksFor.url && {
+          url: siteData.person.worksFor.url,
+        }),
+      },
+    }),
+    ...(siteData.person?.knowsAbout && {
+      knowsAbout: siteData.person.knowsAbout,
+    }),
+    ...(orcidId && {
+      identifier: {
+        "@type": "PropertyValue",
+        propertyID: "ORCID",
+        value: orcidId,
+        url: orcidUrl,
+      },
+    }),
+    sameAs: buildSameAs(siteData.social_links, siteData.person?.sameAs),
   },
-};
+} satisfies WebSite;
 
 // 2. Navigation Schema — use translated labels
 const navLabelKeyMap: Record<string, TranslationKey> = {
@@ -173,25 +209,29 @@ const navLabelKeyMap: Record<string, TranslationKey> = {
   "/publications/": "nav.publications",
   "/github/": "nav.repositories",
 };
-const navSchema = (siteData.nav || []).map((item) => ({
-  "@type": "SiteNavigationElement",
-  name: navLabelKeyMap[item.href] ? t(navLabelKeyMap[item.href]) : item.label,
-  url: new URL(item.href, getSiteUrl()).href,
-}));
+const navSchema = (siteData.nav || []).map(
+  (item): SiteNavigationElement => ({
+    "@type": "SiteNavigationElement",
+    name: navLabelKeyMap[item.href] ? t(navLabelKeyMap[item.href]) : item.label,
+    url: new URL(item.href, getSiteUrl()).href,
+  }),
+);
 
 // 3. Breadcrumb Schema (Automatic)
 const pathSegments = Astro.url.pathname.split("/").filter(Boolean);
 const breadcrumbList = {
   "@type": "BreadcrumbList",
-  "@id": `${getSiteUrl()}#breadcrumb`,
+  // Page-scoped @id so each page's breadcrumb trail is a distinct graph node
+  // (a single site-wide id would collapse different trails into one).
+  "@id": `${new URL(Astro.url.pathname, getSiteUrl()).href}#breadcrumb`,
   itemListElement: [
     {
       "@type": "ListItem",
       position: 1,
       name: t("nav.home"),
-      item: getSiteUrl(),
+      item: siteRoot,
     },
-    ...pathSegments.map((segment, index) => {
+    ...pathSegments.map((segment, index): ListItem => {
       const path = `/${pathSegments.slice(0, index + 1).join("/")}/`;
       const isLastSegment = index === pathSegments.length - 1;
       const absoluteUrl = new URL(path, getSiteUrl()).href;
@@ -213,7 +253,7 @@ const breadcrumbList = {
       };
     }),
   ],
-};
+} satisfies BreadcrumbList;
 
 // 4. Merge Logic
 // We use a @graph to include multiple items (Website, Page, Breadcrumbs, etc.)

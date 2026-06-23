@@ -6,8 +6,25 @@ subtitle: "Demo interactiva de [ver][iv][hmacTag][cipher] con AES-256-CBC + HMAC
 icon: "i-mdi:lock-check-outline"
 category: "security"
 tags: ["security", "cryptography", "encrypt-then-mac", "aes", "hmac", "firmware"]
+features:
+  - "Sellado de sobre AES-256-CBC + HMAC-SHA256 en vivo"
+  - "Derivación de subclaves encKey y macKey separadas"
+  - "Pulsa cualquier byte para simular manipulación"
+  - "Demuestra verificar antes de descifrar y fallar cerrado"
+  - "Web Crypto API, nada sale de tu navegador"
 appComponent: "EnvelopeVisualizer"
 lang: "es"
+faq:
+  - question: "¿Qué significa \"encrypt-then-MAC\"?"
+    answer: "Significa que primero ciframos el texto plano y luego calculamos un MAC sobre el texto cifrado resultante (más el byte de versión y el IV). En la lectura, el MAC se verifica antes de intentar cualquier descifrado."
+  - question: "¿Por qué verificar el MAC antes de descifrar?"
+    answer: "Comprobar el tag primero hace que un fichero manipulado nunca llegue al descifrado AES-CBC, lo que cierra los ataques de oráculo de padding. Si el tag no coincide, la lectura se bloquea ante el fallo y no se produce texto plano."
+  - question: "¿Por qué usar claves distintas para el cifrado y el MAC?"
+    answer: "Reutilizar una misma clave para AES y HMAC es inseguro, así que la frase de paso deriva una clave maestra que se abre en subclaves encKey y macKey distintas. La clave de cifrado y la de MAC nunca son el mismo valor."
+  - question: "¿Qué ocurre cuando altero un byte del sobre?"
+    answer: "Alterar cualquier byte cambia los datos que cubre el HMAC, así que el tag recalculado deja de coincidir con el tag almacenado. La lectura se bloquea ante el fallo: no se descifra nada y no se devuelve texto plano."
+  - question: "¿Se envía mi secreto o frase de paso a algún sitio?"
+    answer: "No. Toda la criptografía se ejecuta enteramente en tu navegador con la Web Crypto API, y nada de lo que escribes se transmite a ningún servidor."
 ---
 
 <h2>Sobre esta herramienta</h2>
@@ -24,7 +41,7 @@ lang: "es"
   <a href="/es/blog/011-encrypt-then-mac-vault/">Una bóveda con bloqueo ante fallos: Encrypt-then-MAC en un MCU</a>.
 </p>
 
-<h3>Cómo usarla</h3>
+<h3>¿Cómo se usa?</h3>
 <ol>
   <li>
     Escribe un secreto y una frase de paso — el sobre se sella en vivo según
@@ -46,7 +63,7 @@ lang: "es"
   </li>
 </ol>
 
-<h3>Qué muestra</h3>
+<h3>¿Qué muestra?</h3>
 <ul>
   <li>
     <strong>Separación de claves</strong> — una frase de paso se convierte en una

@@ -6,7 +6,57 @@ updatedDate: 2026-02-06
 description: "Master Content Security Policy from zero to A+ — nonces, hashes, strict-dynamic, Trusted Types, bypass prevention, and production Nginx configs."
 coverImage: "../../../assets/images/blog/csp-shield.webp"
 tags: ["Nginx", "Security", "CSP"]
+faq:
+  - question: "What is the simplest CSP to start with on Nginx?"
+    answer: "Add the single header `add_header Content-Security-Policy \"default-src 'self'\" always;` to your server block. This tells the browser to only allow resources from your exact origin (same scheme, host, and port), immediately blocking external scripts, inline scripts, and inline styles."
+  - question: "Why are nonces better than domain allowlists for CSP?"
+    answer: "Google research found that 94.72% of allowlist-based CSPs can be bypassed, because trusted CDNs often host JSONP endpoints, open redirects, or script gadgets that attackers abuse. Nonces are cryptographically random per-request tokens that an attacker cannot guess, so they provide real XSS protection regardless of which libraries are loaded."
+  - question: "How can static sites use nonces if HTML is built ahead of time?"
+    answer: "Put a placeholder like `CSP_NONCE_NGINX` in your templates at build time, then have Nginx generate a unique nonce per request with `set $cspNonce $request_id;` and replace the placeholder using `sub_filter`. The same `$cspNonce` value goes into the CSP header, so the nonce in the HTML and the header always match."
+  - question: "What does 'strict-dynamic' do in a CSP?"
+    answer: "`'strict-dynamic'` lets scripts loaded by an already-trusted script also execute without needing their own nonce, so trust propagates down the chain. When it is present, allowlist sources like `'self'` or specific domains are ignored for script loading—only nonces and hashes grant initial trust."
+  - question: "Which directives are required for a strict CSP?"
+    answer: "A strict CSP uses nonces or hashes instead of domain allowlists, includes `'strict-dynamic'` for dynamic script loading, sets `object-src 'none'` to block plugins, and sets `base-uri 'none'` to prevent base tag injection."
+  - question: "How should I deploy CSP safely without breaking my site?"
+    answer: "Never deploy strict CSP directly to production. First run it in `Content-Security-Policy-Report-Only` mode for one to two weeks to log violations without blocking, fix issues like inline event handlers and `eval()` calls, then switch to enforcement gradually."
 draft: false
+topics:
+  - name: "Content Security Policy"
+    wikidata: "Q1128636"
+  - name: "Nginx"
+    wikidata: "Q306144"
+  - name: "Cross-site scripting"
+    wikidata: "Q371199"
+  - name: "Cryptographic nonce"
+    wikidata: "Q1749235"
+  - name: "Clickjacking"
+    wikidata: "Q163231"
+  - name: "Web application security"
+    wikidata: "Q1509541"
+articleType: "TechArticle"
+proficiencyLevel: "Beginner"
+howto:
+  name: "Implement a strict Content Security Policy on Nginx"
+  totalTime: "PT45M"
+  tools:
+    - "Nginx"
+  steps:
+    - name: "Add a starter CSP header"
+      text: "Add `add_header Content-Security-Policy \"default-src 'self'\" always;` to your Nginx server block. This immediately blocks external scripts, inline scripts, and inline styles."
+    - name: "Test and reload Nginx"
+      text: "Run `sudo nginx -t && sudo systemctl reload nginx` to validate the configuration and apply it. Open the browser console to inspect any CSP violations."
+    - name: "Build a baseline Level 6 policy"
+      text: "Expand the header to `default-src 'none'` plus explicit `script-src`, `style-src`, `img-src`, `font-src`, `connect-src`, `object-src 'none'`, `base-uri 'none'`, `frame-ancestors 'none'`, `form-action 'self'`, and `upgrade-insecure-requests`."
+    - name: "Inject per-request nonces for inline scripts"
+      text: "Place a `CSP_NONCE_NGINX` placeholder in your templates, then set `set $cspNonce $request_id;` and use `sub_filter` to replace the placeholder with the same nonce that goes into the CSP header."
+    - name: "Go strict with nonces and strict-dynamic"
+      text: "Switch script-src to `'nonce-$cspNonce' 'strict-dynamic'` and keep `object-src 'none'` and `base-uri 'none'`. This drops fragile domain allowlists in favor of cryptographic nonces."
+    - name: "Deploy in report-only mode"
+      text: "Ship the strict policy as `Content-Security-Policy-Report-Only` for one to two weeks with a `report-uri` so violations are logged without blocking anything."
+    - name: "Analyze and fix violations"
+      text: "Review the reports and remediate issues: convert inline event handlers to `addEventListener()`, replace `eval()` with `JSON.parse()`, and add nonces to inline scripts."
+    - name: "Enable enforcement"
+      text: "Switch from `Content-Security-Policy-Report-Only` to `Content-Security-Policy` to start blocking violations, optionally keeping a report-only header to test stricter future policies."
 ---
 
 import Callout from "@components/ui/Callout.astro";

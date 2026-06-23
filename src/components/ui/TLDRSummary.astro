@@ -26,7 +26,7 @@ const { title = t("components.tldr.title"), collapsed = false } = Astro.props;
       class="i-mdi:lightning-bolt tldr-icon"
       aria-hidden="true"
     ></span>
-    <span class="tldr-title">{title}</span>
+    <h2 class="tldr-title">{title}</h2>
     <span
       class="i-mdi:chevron-down tldr-chevron"
       aria-hidden="true"
@@ -81,6 +81,11 @@ const { title = t("components.tldr.title"), collapsed = false } = Astro.props;
 
   .tldr-title {
     flex: 1;
+    margin: 0;
+    font-size: 1rem;
+    font-weight: var(--fw-semibold);
+    line-height: inherit;
+    color: inherit;
   }
 
   .tldr-chevron {

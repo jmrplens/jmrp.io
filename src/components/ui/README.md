@@ -7,6 +7,7 @@ This directory contains all the reusable UI components for the jmrp.io blog/webs
 | Component                           | Purpose                        | When to Use                                |
 | ----------------------------------- | ------------------------------ | ------------------------------------------ |
 | [TLDRSummary](#tldrsummary)         | Executive summary box          | Start of long articles/sections            |
+| [FAQ](#faq)                         | Collapsible Q&A + FAQPage JSON-LD | End of posts/tools (via `faq` frontmatter) |
 | [Callout](#callout)                 | Highlighted information boxes  | Notes, warnings, tips, important info      |
 | [CheckList](#checklist)             | Styled checklists              | Requirements, steps with states            |
 | [StateNotice](#statenotice)         | Status indicators              | Deprecated, preview, experimental features |
@@ -130,6 +131,37 @@ import Collapsible from "@/components/ui/Collapsible.astro";
 - `open?: boolean` - Start expanded (default: false)
 
 **When to use:** For supplementary information that not all readers need, such as advanced options, detailed explanations, or troubleshooting steps.
+
+---
+
+### FAQ
+
+Accessible, fully-collapsible frequently-asked-questions section. Zero-JS and
+native: an outer `<details>` (whose `<summary>` carries the `<h2>` heading) wraps
+one nested `<details>`/`<summary>` per question. Answer content stays in the DOM
+even when collapsed, so it remains fully crawlable and indexable.
+
+```astro
+import FAQ from "@components/ui/FAQ.astro";
+
+<FAQ
+  items={[
+    { question: "Why verify the MAC before decrypting?", answer: "To avoid a padding oracle." },
+    { question: "Does it run client-side?", answer: "Yes — no server calls." },
+  ]}
+/>
+```
+
+**Props:**
+
+- `items: { question: string; answer: string }[]` - Q&A pairs (required)
+- `open?: boolean` - Outer block starts expanded (default: false)
+
+**When to use:** Reach for the `faq` **frontmatter** on a post or tool rather than
+importing this component directly. The layout (`BlogPost.astro` / `ToolLayout.astro`)
+renders `<FAQ>` from that array **and** emits the matching `FAQPage` JSON-LD from
+the same data — one source of truth for the visible FAQ and the structured data.
+Import `<FAQ>` manually only for an ad-hoc FAQ outside the post/tool flow.
 
 ---
 
@@ -672,6 +704,7 @@ flowchart TB
 - `maxHeight?: string` - Maximum diagram height (e.g., "400px")
 
 **Semantic node classes:** Apply CSS classes to nodes for color-coding:
+
 - `.success` - Green (allowed/passed)
 - `.warning` - Yellow (caution)
 - `.danger` - Red (blocked/error)
@@ -749,6 +782,7 @@ import BrowserSupport from "@/components/ui/BrowserSupport.astro";
 - `note?: string` - Additional notes about support limitations
 
 **Support levels:**
+
 - `full` - Green checkmark, fully supported
 - `partial` - Yellow warning, some features missing
 - `none` - Red X, not supported
@@ -816,6 +850,7 @@ import Table from "@/components/ui/Table.astro";
 **Semantic cell attributes:**
 
 Use `data-status` on `<td>` elements for colored status cells:
+
 - `data-status="success"` - Green (active, supported)
 - `data-status="error"` - Red (deprecated, failed)
 - `data-status="warning"` - Yellow (experimental, partial)

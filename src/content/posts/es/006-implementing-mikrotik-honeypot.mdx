@@ -9,6 +9,53 @@ authorEmail: "mail@jmrp.io"
 draft: false
 coverImage: "../../../assets/images/blog/mikrotik-honeypot.webp"
 tags: ["MikroTik", "Security", "Honeypot"]
+faq:
+  - question: "¿Qué es un honeypot?"
+    answer: "Un honeypot es un mecanismo de seguridad que crea un sistema señuelo diseñado para atraer y detectar atacantes, alejándolos de los objetivos legítimos mientras recopila inteligencia sobre sus métodos. NIST SP 800-53 incluye los honeypots como un control de seguridad formal (SC-26)."
+  - question: "¿Por qué el honeypot solo monitoriza conexiones \"new\"?"
+    answer: "El reconocimiento ocurre en el primer packet (el TCP SYN), que lleva el estado \"new\". Apuntar solo a \"new\" evita falsos positivos de sesiones legítimas ya establecidas y minimiza la carga de CPU, ya que solo se inspecciona el sondeo inicial."
+  - question: "¿Por qué usar la tabla RAW en lugar de la tabla Filter para bloquear escáneres?"
+    answer: "La tabla RAW procesa los packets antes del connection tracking, así que bloquear ahí a los atacantes de la lista negra hace que el router no asigne memoria ni CPU para rastrear sus conexiones. En routers que gestionan miles de ataques diarios esto reduce significativamente el uso de recursos; la detección sigue ejecutándose en la tabla Filter."
+  - question: "¿Cómo evito bloquearme a mí mismo al desplegar el honeypot?"
+    answer: "Crea una lista blanca (address-list) y añade tu propia IP antes de activar cualquier regla. Las reglas del honeypot usan src-address-list=!WhiteList, así que las IPs de la allowlist nunca se bloquean; si te bloqueas a ti mismo necesitarás acceso físico para recuperarte."
+  - question: "¿Por qué las IPs bloqueadas se banean solo 4 horas en lugar de permanentemente?"
+    answer: "Las reglas usan address-list-timeout=4h para un bloqueo temporal. Las IPs de los atacantes suelen ser dinámicas y reasignarse, por lo que los bloqueos permanentes arriesgan bloquear a usuarios legítimos después."
+  - question: "¿Funciona el honeypot con IPv6?"
+    answer: "Sí. La guía incluye una configuración IPv6 separada idéntica a IPv4, usando una lista de direcciones distinta BlackList_PortScanners_v6 para una protección dual-stack completa."
+topics:
+  - name: "Honeypot"
+    wikidata: "Q911932"
+  - name: "MikroTik"
+    wikidata: "Q913580"
+  - name: "Firewall"
+    wikidata: "Q80998"
+  - name: "Port scanner"
+    wikidata: "Q833766"
+  - name: "IPv6"
+    wikidata: "Q2551624"
+  - name: "Denial-of-service attack"
+    wikidata: "Q131406"
+articleType: "TechArticle"
+proficiencyLevel: "Intermediate"
+howto:
+  name: "Crear un honeypot en MikroTik para atrapar y bloquear escáneres de puertos"
+  totalTime: "PT30M"
+  tools:
+    - "Dispositivo MikroTik con RouterOS"
+    - "Servidor Linux con CrowdSec (opcional)"
+  steps:
+    - name: "Crear la lista blanca"
+      text: "Antes de desplegar cualquier regla de bloqueo, crea una address-list WhiteList y añade tus propias IPs, endpoints VPN y servicios de confianza. Esto evita bloquearte a ti mismo, ya que las reglas del honeypot usan src-address-list=!WhiteList."
+    - name: "Desplegar la configuración del honeypot IPv4"
+      text: "Añade las reglas de detección de la tabla Filter que coinciden con connection-state=new en los puertos trampa TCP/UDP y ejecutan action=add-src-to-address-list, seguidas de una regla DROP para los orígenes de la lista negra. Termina con una regla drop en prerouting de la tabla RAW para un bloqueo de alto rendimiento."
+    - name: "Desplegar la configuración del honeypot IPv6"
+      text: "Aplica el conjunto de reglas IPv6 idéntico usando la lista de direcciones separada BlackList_PortScanners_v6 para los mismos puertos trampa, proporcionando protección dual-stack en las tablas Filter y RAW."
+    - name: "Reenviar los logs a un servidor syslog remoto"
+      text: "Configura la acción de logging remoto con la IP de tu servidor syslog y envía los logs del firewall (incluidos los prefijos [HONEYPOT]) para poder recopilar las IPs de los atacantes como threat intelligence."
+    - name: "Integrar los logs con CrowdSec"
+      text: "Configura rsyslog para escribir los logs de MikroTik en un archivo, añade una adquisición de CrowdSec para ese archivo, instala el parser de MikroTik y recarga CrowdSec para extraer las IPs de los atacantes automáticamente."
+    - name: "Probar el honeypot"
+      text: "Desde una IP que no esté en la lista blanca, conéctate a un puerto trampa como Telnet (23) o SSH, y comprueba que la IP aparece en la address-list BlackList y que la regla RAW descarta su tráfico. Elimina la IP de prueba al terminar."
 ---
 
 import Callout from "@components/ui/Callout.astro";
@@ -19,16 +66,25 @@ import TerminalOutput from "@components/ui/TerminalOutput.astro";
 import Table from "@components/ui/Table.astro";
 import Code from "@components/ui/Code.astro";
 import BarChart from "@components/ui/BarChart.astro";
+import TLDRSummary from "@components/ui/TLDRSummary.astro";
 
 Cualquier router conectado a internet sufre un bombardeo constante de escaneos automatizados. Los bots sondean sistemáticamente todo el espacio de direcciones IPv4 —y cada vez más IPv6— en busca de servicios vulnerables: servidores SSH con contraseñas débiles, bases de datos expuestas, endpoints RDP desactualizados o dispositivos IoT mal configurados.
 
-La mayoría de administradores responden descartando silenciosamente estos paquetes. Pero, ¿y si pudieras convertir estos ataques en inteligencia accionable? Configurando tu router **MikroTik** como un **honeypot** ligero, puedes:
+La mayoría de administradores responden [descartando silenciosamente estos paquetes](/es/blog/005-implementing-tarpit-nginx/). Pero, ¿y si pudieras convertir estos ataques en inteligencia accionable? Configurando tu router **MikroTik** como un **honeypot** ligero, puedes:
 
 1. **Detectar** reconocimientos no autorizados antes de que se conviertan en una brecha.
 2. **Registrar** las IPs de los atacantes para análisis y compartición de threat intelligence.
 3. **Bloquear** a los actores maliciosos para que no accedan a *ningún* servicio de tu red.
 
 Esta guía te lleva paso a paso por la implementación de un honeypot listo para producción en RouterOS, con soporte completo para IPv4 e IPv6.
+
+<TLDRSummary title="TL;DR — el honeypot de MikroTik en pocas palabras">
+- **Atrapa y bloquea automáticamente**: las reglas de detección en la tabla Filter coinciden con `connection-state=new` en puertos trampa y ejecutan `add-src-to-address-list` para incluir a los escáneres en la lista negra de forma automática.
+- **Bloqueo de alto rendimiento**: una regla drop en prerouting de la tabla RAW descarta el tráfico de la lista negra antes del connection tracking, ahorrando CPU y memoria en routers que reciben miles de ataques.
+- **No te bloquees a ti mismo**: crea primero una `WhiteList`; las reglas usan `src-address-list=!WhiteList` y los baneos usan `address-list-timeout=4h` para evitar bloqueos permanentes de IPs dinámicas.
+- **Dual-stack**: un conjunto de reglas IPv6 idéntico usa una lista `BlackList_PortScanners_v6` separada para cobertura completa de IPv4 e IPv6.
+- **Threat intelligence**: reenvía los logs del firewall con prefijo `[HONEYPOT]` a un servidor syslog remoto e intégralos con CrowdSec para recopilar las IPs de los atacantes.
+</TLDRSummary>
 
 ---
 

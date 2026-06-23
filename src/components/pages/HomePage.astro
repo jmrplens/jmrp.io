@@ -17,6 +17,7 @@ import { sanitize } from "@utils/html";
 import { getSiteUrl } from "@utils/site";
 import { Image } from "astro:assets";
 import { getEntry } from "astro:content";
+import type { ProfilePage } from "schema-dts";
 
 const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
 const t = useTranslations(locale);
@@ -58,23 +59,13 @@ const personSchema = [
     name: person.name,
     url: getSiteUrl(),
     inLanguage: locale,
+    // Typed reference to the single, fully-populated #person node (defined as
+    // the WebSite publisher in BaseHead) instead of re-emitting a thinner copy.
     mainEntity: {
       "@type": "Person",
       "@id": new URL("#person", getSiteUrl()).href,
-      name: person.name,
-      url: getSiteUrl(),
-      image: new URL(mehomeImg.src, getSiteUrl()).href,
-      sameAs: siteData.social_links?.map((s) => s.url) || [],
-      jobTitle: t("seo.jobTitle"),
-      ...(person.worksFor && {
-        worksFor: {
-          "@type": "Organization",
-          name: person.worksFor.name,
-          ...(person.worksFor.url && { url: person.worksFor.url }),
-        },
-      }),
     },
-  },
+  } satisfies ProfilePage,
 ];
 ---
 

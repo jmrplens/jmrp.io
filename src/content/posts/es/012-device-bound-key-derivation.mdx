@@ -9,6 +9,34 @@ author: "José Manuel Requena Plens"
 authorEmail: "mail@jmrp.io"
 draft: false
 tags: ["Security", "Cryptography", "Firmware", "ESP32", "Key Derivation"]
+faq:
+  - question: "¿Cómo puede ser seguro un PIN de 4 dígitos en un gestor de contraseñas hardware?"
+    answer: "Un PIN de 4 dígitos solo es seguro porque dos defensas complementarias acotan dónde puede adivinar un atacante. Una protección contra fuerza bruta online permite unos diez intentos antes de borrar la bóveda, y la derivación de clave vinculada al dispositivo mezcla un secreto por-chip en la clave para que un barrido offline por GPU del espacio de 10.000 PINs no pueda reproducirse fuera del chip original."
+  - question: "¿Por qué un número alto de iteraciones de PBKDF2 no protege un PIN en un microcontrolador?"
+    answer: "El número de iteraciones debe ser lo bastante bajo como para que el desbloqueo del usuario legítimo sea llevadero — unos 2 segundos, lo que significa 35.000 iteraciones en el ESP32-S3 y 25.000 en el ESP32 clásico. Las 600.000 recomendadas por OWASP empujarían un solo desbloqueo a unos 32 segundos en el S3 y 47 en el ESP32 clásico, mientras una GPU sigue barriendo los 10.000 PINs en menos de un milisegundo."
+  - question: "¿Qué es la vinculación al dispositivo en la derivación de clave?"
+    answer: "La vinculación al dispositivo mezcla un deviceSecret por-chip de 32 bytes en la clave maestra tras PBKDF2, usando HKDF. El verificador almacenado en flash solo se reproduce entonces en el chip original, así que un atacante que vuelque la flash sigue sin poder recalcular la clave sin el secreto — convirtiendo un ataque offline de fuerza bruta de lineal a categóricamente imposible."
+  - question: "¿De dónde sale el secreto del dispositivo por-chip en el ESP32?"
+    answer: "Tiene dos backends elegidos en tiempo de compilación. En el ESP32-S3 es un eFuse-HMAC: el periférico HMAC computa un tag usando una clave en eFuse protegida contra lectura que nunca sale del silicio. En el ESP32 clásico, que no tiene periférico HMAC, es un pepper aleatorio de 32 bytes almacenado en NVS cifrado — más débil, pero aun así frena un volcado de flash ingenuo."
+  - question: "¿Por qué usar HKDF en lugar de un HMAC hecho a mano para mezclar el secreto del dispositivo?"
+    answer: "HKDF (RFC 5869) es un KDF de extract-then-expand publicado y analizado que convierte un secreto no uniforme en material de clave uniforme con separación de dominio, manteniendo la construcción estándar y citable. Está construido sobre un único primitivo HMAC, así que la salida es byte a byte idéntica en host y dispositivo, y queda fijado por un known-answer test contra los vectores del Apéndice A de la RFC 5869."
+  - question: "¿Qué pasa con la bóveda si el dispositivo muere?"
+    answer: "Un chip muerto o borrado es irrecuperable por diseño, porque la clave está vinculada a ese silicio concreto y no puede reconstruirse en otro sitio. La recuperación se apoya en una ruta de exportación/copia de seguridad preparada de antemano, no en custodia de claves. El quemado del eFuse es además de una sola vez e irreversible."
+topics:
+  - name: "Key derivation function"
+    wikidata: "Q3496793"
+  - name: "PBKDF2"
+    wikidata: "Q3952834"
+  - name: "HKDF"
+    wikidata: "Q24962849"
+  - name: "eFuse"
+    wikidata: "Q5323010"
+  - name: "ESP32"
+    wikidata: "Q27921668"
+  - name: "Brute-force attack"
+    wikidata: "Q869370"
+articleType: "TechArticle"
+proficiencyLevel: "Expert"
 ---
 
 import Callout from "@components/ui/Callout.astro";

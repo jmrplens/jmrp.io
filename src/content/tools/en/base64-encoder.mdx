@@ -6,7 +6,24 @@ subtitle: "Encode and decode between multiple formats including file support. Dr
 icon: "i-mdi:swap-horizontal"
 category: "developer"
 tags: ["base64", "encoding", "decoding", "hex", "url-encoding"]
+features:
+  - "Encode and decode Base64 and Base64URL"
+  - "Convert URL, hex, HTML entities, and binary"
+  - "Encode files via drag-and-drop with preview"
+  - "Generate Data URIs for CSS and HTML"
+  - "Runs fully client-side, no uploads"
 appComponent: "Base64Encoder"
+faq:
+  - question: "Is Base64 a form of encryption?"
+    answer: "No. Base64 is an encoding scheme, not encryption. It makes binary data safe to transmit as text but provides no confidentiality, since anyone can decode it instantly. Never use it to protect secrets."
+  - question: "What is the difference between Base64 and Base64URL?"
+    answer: "Standard Base64 (RFC 4648) uses + and / characters plus = padding, which can break inside URLs. Base64URL replaces them with - and _ and usually drops the padding, making it safe for URLs and JWTs."
+  - question: "Is my data uploaded to a server when I encode a file?"
+    answer: "No. All encoding and decoding runs entirely in your browser. Files you drop are never uploaded, so your data never leaves your device."
+  - question: "Why is my Base64 output larger than the original file?"
+    answer: "Base64 represents every 3 bytes of input as 4 ASCII characters, so the output is roughly 33% larger than the source data. This is expected overhead for any Base64 encoding."
+  - question: "What is a Data URI and when should I use it?"
+    answer: "A Data URI embeds the Base64-encoded content directly inside CSS or HTML using a data:<mime-type>;base64,... prefix, avoiding a separate file request. Enable the Data URI toggle to get a ready-to-paste string for small assets like icons."
 ---
 
 import {
@@ -41,7 +58,7 @@ import {
     <strong>Documents</strong> — PDF, JSON, plain text, and any other file
   </li>
 </ul>
-<h3>How to Use</h3>
+<h3>How do I use it?</h3>
 <ol>
   <li>
     Switch between <strong>Text</strong> and <strong>File</strong> mode using
@@ -55,13 +72,13 @@ import {
   <li>Toggle the Data URI prefix for ready-to-use CSS/HTML embedding</li>
   <li>Use the Download button to save decoded Base64 back as a file</li>
 </ol>
-<h3>Privacy</h3>
+<h3>Is my data private?</h3>
 <p>
   All encoding and decoding happens entirely in your browser. No files are
   uploaded to any server. Your data never leaves your device.
 </p>
 
-<h3>Linux Command Reference</h3>
+<h3>How do I do this from the Linux terminal?</h3>
 <p>
   You can achieve the same operations from the terminal using built-in Linux
   tools. Here are the most common examples:
@@ -92,7 +109,7 @@ import {
     base64 -w0 image.png > image.b64
   </TerminalSessionCommand>
   <TerminalSessionOutput title="Binary to Base64">
-    (El comando genera el archivo image.b64 con el contenido en una sola línea)
+    (The command writes image.b64 with the content on a single line)
   </TerminalSessionOutput>
 </TerminalSession>
 
@@ -101,11 +118,11 @@ import {
     base64 --decode image.b64 > restored.png
   </TerminalSessionCommand>
   <TerminalSessionOutput title="Base64 to Binary">
-    (Restaura el archivo original a partir de su representación Base64)
+    (Restores the original file from its Base64 representation)
   </TerminalSessionOutput>
 </TerminalSession>
 
-<h4>Data URI para CSS / HTML</h4>
+<h4>Data URI for CSS / HTML</h4>
 <TerminalSession>
   <TerminalSessionCommand>
     ```
@@ -117,7 +134,7 @@ import {
   </TerminalSessionOutput>
 </TerminalSession>
 
-<h4>Otras Codificaciones</h4>
+<h4>Other Encodings</h4>
 <TerminalSession>
   <TerminalSessionCommand>
     ```
@@ -138,7 +155,7 @@ import {
   </TerminalSessionOutput>
 </TerminalSession>
 
-<h4>Verificar Integridad</h4>
+<h4>Verify Integrity</h4>
 <TerminalSession>
   <TerminalSessionCommand>
     ```

@@ -11,12 +11,14 @@ Audit and fix accessibility issues in jmrp.io for WCAG 2.2 AA compliance.
 ## Running Accessibility Tests
 
 ### Full Accessibility Suite
+
 ```bash
 pkill -f "astro dev" 2>/dev/null
 pnpm test:e2e --project=accessibility
 ```
 
 ### Specific Suites
+
 ```bash
 # axe-core automated checks (light + dark themes)
 pnpm test:e2e tests/accessibility.spec.ts
@@ -32,6 +34,7 @@ pnpm test:e2e tests/tabs.accessibility.spec.ts
 ```
 
 ### ARIA Label Audit (on built HTML)
+
 ```bash
 node scripts/audit-aria-labels.mjs
 ```
@@ -39,28 +42,33 @@ node scripts/audit-aria-labels.mjs
 ## WCAG Requirements
 
 ### Color Contrast
+
 - Text: ≥4.5:1 ratio (AA), target ≥7:1 (AAA)
 - Large text (≥18px bold or ≥24px): ≥3:1 ratio
 - Use the Color Contrast Checker tool at `/tools/color-contrast-checker/`
 - Use CSS custom properties — they're pre-verified for contrast
 
 ### Heading Hierarchy
+
 - h1 is auto-generated from page title
 - Use h2 → h3, never skip levels (h2 → h4 is invalid)
 - Each section should have exactly one heading level
 
 ### Interactive Elements
+
 - All interactive elements must be keyboard accessible
 - Visible focus indicators required (`:focus-visible`)
 - `prefers-reduced-motion` support for animations
 - Tab order must be logical (avoid `tabindex` > 0)
 
 ### Images & Media
+
 - All `<img>` require descriptive `alt` text
 - Decorative images: `alt=""` + `aria-hidden="true"`
 - `<Mermaid>` requires `ariaLabel` prop
 
 ### Component-Specific
+
 | Component | Requirement |
 |-----------|-------------|
 | `Mermaid` | `ariaLabel` required |
@@ -71,6 +79,7 @@ node scripts/audit-aria-labels.mjs
 | `Callout` | `role="note"` already included |
 
 ### ARIA Patterns
+
 - `aria-labelledby` for sections with visible headings
 - `aria-label` when no visible heading exists
 - `aria-expanded` for toggleable elements
@@ -78,6 +87,8 @@ node scripts/audit-aria-labels.mjs
 - `role="note"` for informational asides
 
 ## Accessibility Reports
+
 Reports are saved to `accessibility-report/` after running tests. Check:
+
 - `accessibility-summary-dark.json` / `accessibility-summary-light.json`
 - Individual page reports (HTML format)

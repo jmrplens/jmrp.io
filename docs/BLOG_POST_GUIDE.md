@@ -5,18 +5,27 @@
 1. Copy the template file:
 
    ```bash
-   cp src/content/posts/_template.mdx src/content/posts/000-my-new-post.mdx
+   cp src/content/posts/en/_template.mdx src/content/posts/en/013-my-new-post.mdx
    ```
 
-2. Edit the frontmatter with your post details. **Replace `000` with the next available number.**
+2. Edit the frontmatter with your post details. **Replace `013` with the next available number; the `slug` must start with that same `NNN-` prefix.**
 
-3. Write your content using Markdown/MDX
+3. Follow the standard opening — cover → a short intro paragraph (the "entradilla") → a `<TLDRSummary>` (before the first `##`) — then write your content using Markdown/MDX.
 
-4. Build and preview:
+4. Add the **GEO / structured-data frontmatter** (see below): `articleType`, verified `topics` Q-ids, and a genuine `faq`.
+
+5. Build and preview:
+
    ```bash
-   pnpm run build
-   pnpm run preview
+   pnpm dev --host   # live preview (reviewable from another device on the LAN)
+   # or, to match production output:
+   pnpm run build && pnpm run preview
    ```
+
+> The visible FAQ section, the JSON-LD (TechArticle/FAQPage/HowTo + about/mentions),
+> the author bio card, and the References list are rendered automatically from the
+> frontmatter by `BlogPost.astro` — you never hand-write `<FAQ>`, `<AuthorCard>`, or
+> schema in the MDX body.
 
 ## Frontmatter Fields Reference
 
@@ -40,6 +49,45 @@
 | `tags`        | Array   | Post categories/tags   | `["nginx", "security"]`       | `[]`                    |
 | `references`  | Array   | External citations     | See below                     | `[]`                    |
 
+### GEO / Structured-Data Fields
+
+These power the post's Schema.org graph and AI discoverability. Every post should set
+`articleType`, `topics`, and `faq`; `howto` is for step-by-step guides.
+
+| Field              | Type   | Description                                                                                             |
+| ------------------ | ------ | ------------------------------------------------------------------------------------------------------- |
+| `articleType`      | Enum   | `"TechArticle"` for engineering guides (the norm), `"BlogPosting"` (default) for narrative              |
+| `proficiencyLevel` | Enum   | `Beginner` / `Intermediate` / `Expert` (optional, emitted on TechArticle)                               |
+| `topics`           | Array  | `{ name, wikidata }` — **verified** Wikidata Q-ids → JSON-LD `about` (first) + `mentions` (rest), max 6 |
+| `faq`              | Array  | `{ question, answer }` — genuine Q&A → rendered FAQ section + `FAQPage` JSON-LD                         |
+| `howto`            | Object | `{ name, totalTime?, tools?[], supplies?[], steps[{ name, text, anchor? }] }` → `HowTo` JSON-LD         |
+
+```yaml
+articleType: "TechArticle"
+proficiencyLevel: "Intermediate"
+topics:
+  - name: "Content Security Policy" # first = `about` (primary topic)
+    wikidata: "Q1128636"
+  - name: "Cross-site scripting" # rest = `mentions`
+    wikidata: "Q371199"
+faq:
+  - question: "Why must the MAC be verified before decrypting?"
+    answer: "To avoid a padding oracle — never act on bytes you have not authenticated."
+howto: # step-by-step guides only
+  name: "Enable mutual TLS on Nginx"
+  totalTime: "PT45M"
+  steps:
+    - name: "Create the certificate authority"
+      text: "Generate the root CA key and certificate."
+      anchor: "creating-your-certificate-authority" # links to the in-page heading id
+```
+
+**Verify every Q-id** before using it — query
+`https://www.wikidata.org/w/api.php?action=wbsearchentities&search=<term>&language=en&format=json&limit=5`
+and confirm the entity's description matches how you use the topic. A wrong Q-id is worse
+than none. The Spanish version of a post uses its own translated `faq` but the **same**
+`topics` Q-ids (English Wikidata labels).
+
 ### References Format
 
 ```yaml
@@ -55,18 +103,34 @@ references:
 ```yaml
 ---
 title: "Securing Nginx with Client Certificates (mTLS)"
+slug: "001-secure-nginx-client-certificates" # starts with the NNN- prefix
 description: "A comprehensive guide on implementing Mutual TLS (mTLS) with Nginx."
 author: "José Manuel Requena Plens"
 authorEmail: "mail@jmrp.io"
 publishedDate: 2025-12-16
-updatedDate: 2025-12-16
 draft: false
 # coverImage: "/img/nginx-mtls-cover.jpg"  # Optional custom cover
 tags: ["nginx", "security", "linux", "certificates", "tutorial"]
+articleType: "TechArticle"
+proficiencyLevel: "Intermediate"
+topics:
+  - name: "Mutual authentication"
+    wikidata: "Q6944186"
+  - name: "Transport Layer Security"
+    wikidata: "Q206494"
+faq:
+  - question: "Do clients need a certificate from a public CA?"
+    answer: "No — mTLS uses your own private CA; only your server trusts it."
 references:
   - text: "Nginx SSL Module Documentation"
     url: "https://nginx.org/en/docs/http/ngx_http_ssl_module.html"
 ---
+import TLDRSummary from "@components/ui/TLDRSummary.astro";
+
+<TLDRSummary>
+Mutual TLS makes Nginx require a client certificate signed by your private CA —
+strong, password-less authentication for admin endpoints and APIs.
+</TLDRSummary>
 ```
 
 ## Available MDX Components
@@ -116,31 +180,29 @@ print("Hello")
 </Tabs>
 ````
 
-### CompareCode
+### BeforeAfter
 
-Display "Bad" vs "Good" code side-by-side. Useful for showing security fixes or refactoring.
-**Note:** The header titles default to "Blocked / Insecure" (Red) and "Allowed / Secure" (Green) but can be overridden.
+Display "before" vs "after" (e.g. vulnerable vs secure) side-by-side. Useful for
+showing security fixes or refactoring. Labels are set via `beforeLabel`/`afterLabel`
+and the content goes in the `before` / `after` slots.
 
 ````mdx
-<CompareCode
-  badTitle="Vulnerable"
-  goodTitle="Secure"
->
-  <div slot="bad">
+<BeforeAfter beforeLabel="Vulnerable" afterLabel="Secure">
+  <div slot="before">
 
 ```javascript
 eval(input);
 ```
 
   </div>
-  <div slot="good">
+  <div slot="after">
 
 ```javascript
 JSON.parse(input);
 ```
 
   </div>
-</CompareCode>
+</BeforeAfter>
 ````
 
 ### YouTube Embed
@@ -165,7 +227,7 @@ Display all references at the end of your post:
 ### Component Layout Notes
 
 - **Full Width Components:** `Callout`
-- **Centered / Width-Restricted Components (70ch):** `Code` blocks, `Tabs`, `CompareCode`, `YouTube`, `TerminalCommand`, `TerminalOutput`.
+- **Centered / Width-Restricted Components (70ch):** `Code` blocks, `Tabs`, `BeforeAfter`, `YouTube`, `TerminalCommand`, `TerminalOutput`.
 
 ## Content Writing Tips
 
@@ -186,15 +248,13 @@ console.log(greeting);
 ```
 ````
 
-````
-
 ### Images
 
 Place images in `public/img/` and reference them:
 
 ```markdown
 ![Alt text](/img/my-image.jpg)
-````
+```
 
 ### Links
 
@@ -220,26 +280,33 @@ All posts are automatically included in the RSS feed at `/rss.xml`:
 
 ## Schema.org Metadata
 
-Each post automatically generates:
+Each post automatically generates (all from frontmatter, validated at build via `schema-dts`):
 
-- `BlogPosting` schema with all metadata
+- `TechArticle` (or `BlogPosting`) with headline, dates, `wordCount`, `articleSection`,
+  `proficiencyLevel`, `speakable`, and `author`/`publisher` referencing the site `#person`
+- `dateModified` — the `updatedDate` when revised, otherwise `publishedDate`
+- `about` (primary topic) + `mentions` (rest), each linked to its Wikidata Q-id from `topics`
+- `FAQPage` from `faq`, and `HowTo` from `howto`
 - `BreadcrumbList` for navigation
-- References author from main site schema
-- Includes publication and modification dates
 
 ## Publishing Checklist
 
 Before publishing your post:
 
-- [ ] Title is clear and descriptive
-- [ ] Description is under 160 characters
-- [ ] Author and email are correct
-- [ ] Published date is set
-- [ ] Draft is set to `false`
+- [ ] `slug` starts with the `NNN-` prefix and is unique
+- [ ] Description is under 155 characters
+- [ ] **`<TLDRSummary>` near the top** — after the intro paragraph, before the first `##` (the TL;DR answer-target)
+- [ ] **`articleType`** set (`TechArticle` for guides)
+- [ ] **`topics`** present, each Q-id verified against Wikidata
+- [ ] **`faq`** has genuine questions with concise answers
+- [ ] `howto` added if the post is a step-by-step guide
+- [ ] No two headings share identical text (ambiguous ToC anchors)
+- [ ] Author and email are correct; published date is set; draft is `false`
 - [ ] Tags are relevant and consistent with existing posts
 - [ ] References are properly formatted
 - [ ] All images have alt text
 - [ ] Code examples have language specified
+- [ ] Spanish version (if any) has its own translated `faq` and the SAME `topics` Q-ids
 - [ ] External links open in new tab (automatic)
 - [ ] Test locally with `pnpm run build && pnpm run preview`
 - [ ] Check mobile responsiveness
@@ -300,13 +367,16 @@ pnpm run preview
 
 ### Validation
 
-- **RSS Feed**: https://validator.w3.org/feed/
-- **Schema**: https://validator.schema.org/
-- **SEO**: https://pagespeed.web.dev/
+- **RSS Feed**: <https://validator.w3.org/feed/>
+- **Schema**: <https://validator.schema.org/>
+- **SEO**: <https://pagespeed.web.dev/>
 
 ## Need Help?
 
-- Template file: `src/content/posts/_template.mdx`
-- Schema definition: `src/content/config.ts`
+- Template file: `src/content/posts/en/_template.mdx`
+- Frontmatter schema: `src/content.config.ts` (the `posts` collection)
 - RSS configuration: `src/pages/rss.xml.ts`
-- Post layout: `src/pages/blog/[...slug].astro`
+- Post layout & JSON-LD builder: `src/components/pages/BlogPost.astro` (rendered by `src/pages/blog/[...slug].astro`)
+- FAQ component: `src/components/ui/FAQ.astro`
+- Author card: `src/components/blog/AuthorCard.astro`
+- `new-blog-post` skill: `.claude/skills/new-blog-post/SKILL.md`

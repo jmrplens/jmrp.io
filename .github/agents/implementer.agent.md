@@ -41,6 +41,7 @@ You are an implementation agent for the **jmrp.io** Astro 6 portfolio project.
 ## After Implementation
 
 Run these to verify:
+
 ```bash
 pnpm typecheck        # TypeScript check
 pnpm lint             # ESLint

@@ -9,6 +9,55 @@ updatedDate: 2025-12-16
 draft: false
 coverImage: "../../../assets/images/blog/mtls-auth.webp"
 tags: ["Nginx", "Security", "mTLS"]
+faq:
+  - question: "What is Mutual TLS (mTLS)?"
+    answer: "Mutual TLS requires the client to present a cryptographic certificate signed by your own Certificate Authority, so both server and client verify each other's identity. If the client doesn't have a valid certificate, Nginx rejects the connection before the application even loads."
+  - question: "Why can't mTLS be phished?"
+    answer: "Client certificates are never transmitted (only a signature proving possession is sent), are bound to hardware in secure keychains/TPMs, and require private-key access that never leaves the device. Even if an attacker steals your password and intercepts your 2FA code, they still can't access the resource without the certificate file on an authorized device."
+  - question: "What does the ssl_verify_client directive control in Nginx?"
+    answer: "It controls how Nginx handles client certificates: on requires a valid certificate and rejects connections without one, optional accepts a valid cert but proceeds without it, optional_no_ca accepts any cert with no CA validation (development only), and off requires no client certificate. Never use optional_no_ca in production, as it defeats the purpose of mTLS."
+  - question: "How do I revoke a lost or compromised client certificate?"
+    answer: "Use openssl ca -revoke to revoke the certificate, then regenerate the CRL with openssl ca -gencrl and point Nginx at it with ssl_crl. You must regenerate the CRL and reload Nginx every time you revoke a certificate."
+  - question: "What is the difference between CRL and OCSP revocation?"
+    answer: "CRL has the server download the full list of revoked certificates (simple, file-on-disk, but delayed and higher bandwidth), while OCSP queries a responder for a single certificate (near real-time and lower bandwidth, but requires running an OCSP responder service). CRL is recommended for small deployments; OCSP is more efficient for larger ones."
+  - question: "What key sizes should I use for the CA and client certificates?"
+    answer: "Use 4096-bit RSA (or P-384 ECDSA) for the CA, with a minimum of 2048-bit keys for clients. The CA should be valid for about 10 years, while client certificates should have a short validity of one year maximum."
+topics:
+  - name: "Mutual authentication"
+    wikidata: "Q6944186"
+  - name: "Transport Layer Security"
+    wikidata: "Q206494"
+  - name: "Nginx"
+    wikidata: "Q306144"
+  - name: "Public-key infrastructure"
+    wikidata: "Q658476"
+  - name: "OpenSSL"
+    wikidata: "Q1052790"
+  - name: "Zero trust architecture"
+    wikidata: "Q104852562"
+articleType: "TechArticle"
+proficiencyLevel: "Expert"
+howto:
+  name: "Secure Nginx with mutual TLS (mTLS) client certificates"
+  totalTime: "PT45M"
+  tools:
+    - "Nginx"
+    - "OpenSSL"
+  steps:
+    - name: "Set up the PKI directory"
+      text: "Create the /etc/nginx/pki directory structure (ca, certs, crl, private, newcerts), secure the private directory with chmod 700, and initialize the OpenSSL CA database files (index.txt, serial, crlnumber)."
+    - name: "Create the certificate authority"
+      text: "Write a comprehensive openssl.cnf with CA defaults, policies, and the v3_ca and v3_client extension profiles, then generate the 4096-bit CA private key and a self-signed CA certificate valid for 10 years."
+    - name: "Generate client certificates"
+      text: "For each device, generate a private key, create a CSR with the client's CN, and sign it with your CA using the v3_client extensions to produce a client certificate."
+    - name: "Export a PKCS12 bundle"
+      text: "Bundle the client certificate, private key, and CA certificate into a password-protected .p12 file for distribution to browsers and mobile devices."
+    - name: "Configure Nginx for mTLS"
+      text: "In the server block, point ssl_client_certificate at your CA, set ssl_verify_client on, configure ssl_verify_depth and strong TLS protocols/ciphers, then test with nginx -t and reload."
+    - name: "Add certificate revocation (CRL)"
+      text: "Revoke compromised certificates with openssl ca -revoke, regenerate the CRL with openssl ca -gencrl, enable it via ssl_crl, and reload Nginx every time a certificate is revoked."
+    - name: "Install certificates on client devices"
+      text: "Transfer the .p12 file securely and import it into the keychain or certificate store on iOS, macOS, Windows, Android, or via curl on Linux."
 ---
 
 import Callout from "@components/ui/Callout.astro";
@@ -19,12 +68,21 @@ import TerminalOutput from "@components/ui/TerminalOutput.astro";
 import Collapsible from "@components/ui/Collapsible.astro";
 import Mermaid from "@components/ui/Mermaid.astro";
 import Table from "@components/ui/Table.astro";
+import TLDRSummary from "@components/ui/TLDRSummary.astro";
 
 **[Mutual TLS (mTLS)](https://www.cloudflare.com/learning/access-management/what-is-mutual-tls/)** represents the gold standard for securing private web services. Unlike passwords, API keys, or even 2FA, mTLS requires the client (your browser/device) to present a cryptographic certificate signed by your own Certificate Authority (CA)—a secret that _cannot_ be phished, guessed, or brute-forced.
 
 If the client doesn't have the certificate, Nginx rejects the connection **before** the application even loads. This is perfect for securing private administration panels, NAS interfaces, or internal tools.
 
 In this comprehensive guide, I'll walk you through implementing mTLS on Nginx, covering everything from creating a certificate authority to advanced topics like **OCSP vs CRL revocation**, **Zero Trust architecture**, and **performance tuning**. This guide incorporates best practices from [Smallstep](https://smallstep.com/hello-mtls), [SSL.com](https://www.ssl.com/article/authenticating-users-and-iot-devices-with-mutual-tls/), and [official Nginx documentation](https://nginx.org/en/docs/http/ngx_http_ssl_module.html).
+
+<TLDRSummary title="TL;DR — mTLS on Nginx in a nutshell">
+- **mTLS is unphishable** because the client must present a certificate signed by your own CA; the private key never leaves the device and is never transmitted, so Nginx rejects connections without a valid cert **before** the app loads.
+- **Build your own PKI**: create a **4096-bit RSA** CA valid for 10 years, then sign per-device client certs (2048-bit minimum, 1-year validity) and distribute them as password-protected **PKCS12 (.p12)** bundles.
+- **Enable it in Nginx** with `ssl_client_certificate` (your CA), `ssl_verify_client on`, and `ssl_verify_depth`; never use `optional_no_ca` in production. Restrict to **TLS 1.2/1.3** with strong ECDHE ciphers.
+- **Add fine-grained control** with a `map` on `$ssl_client_s_dn` for CN allowlists, and use `$ssl_client_verify` to let authenticated clients **bypass rate limiting**.
+- **Revoke compromised certs** via **CRL** (`openssl ca -revoke` + `-gencrl`, then `ssl_crl`) for small setups or **OCSP** for larger ones — regenerate the CRL and reload Nginx every time. Automate creation and renewal with scripts.
+</TLDRSummary>
 
 ---
 

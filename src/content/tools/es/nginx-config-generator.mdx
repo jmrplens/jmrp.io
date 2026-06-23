@@ -6,8 +6,25 @@ subtitle: "Genera bloques de servidor Nginx listos para producción con bloques 
 icon: "i-devicon:nginx"
 category: "network"
 tags: ["nginx", "servidor", "ssl", "tls", "reverse-proxy", "http3"]
+features:
+  - "Seis presets: estático, proxy, SPA, PHP, API, reforzado"
+  - "TLS moderno con QUIC/HTTP3 y OCSP stapling"
+  - "Balanceo de carga upstream y proxy inverso"
+  - "Rate limiting, tarpit y cabeceras de seguridad"
+  - "Se genera en el navegador, nada se envía"
 appComponent: "NginxConfigGenerator"
 lang: "es"
+faq:
+  - question: "¿Se envía mi configuración de servidor a algún servidor?"
+    answer: "No. Toda la generación de configuración ocurre completamente en tu navegador. Los dominios, las direcciones IP y las rutas de backend nunca se transmiten, por lo que la arquitectura de tu servidor permanece privada."
+  - question: "¿Dónde coloco el archivo de configuración Nginx generado?"
+    answer: "Copia la salida en el directorio de sitios de tu Nginx (normalmente /etc/nginx/sites-available/ con un enlace simbólico en sites-enabled/, o /etc/nginx/conf.d/). Luego ejecuta \"nginx -t\" para validar y \"nginx -s reload\" para aplicarla sin interrumpir las conexiones."
+  - question: "¿Cómo activo QUIC/HTTP3 en la configuración generada?"
+    answer: "Activa la opción QUIC/HTTP3 en la sección SSL/TLS. Ten en cuenta que tu compilación de Nginx debe incluir el módulo http_v3: compruébalo con \"nginx -V\" y busca --with-http_v3_module."
+  - question: "¿Qué hace la funcionalidad tarpit?"
+    answer: "El tarpit envía deliberadamente respuestas lentas a atacantes y escáneres que acceden a rutas bloqueadas o de exploits (como wp-admin o phpMyAdmin), desperdiciando su tiempo y recursos en lugar de devolver un error rápido."
+  - question: "¿Con qué preset debería empezar?"
+    answer: "Elige el preset más cercano a tu caso de uso — Estático, Reverse Proxy, SPA, PHP-FPM, Servidor API o Fortificado — y personaliza desde ahí el dominio, la ruta raíz y las rutas de los certificados SSL."
 ---
 
 import {
@@ -59,7 +76,7 @@ import {
   </li>
 </ul>
 
-<h3>Cómo usar</h3>
+<h3>¿Cómo se usa?</h3>
 <ol>
   <li>Empieza con un preset que se ajuste a tu caso de uso</li>
   <li>Personaliza el dominio, la ruta raíz y las rutas de los certificados SSL</li>
@@ -82,7 +99,7 @@ import {
 <h3>Referencia de comandos Linux</h3>
 <p>Comandos comunes para gestionar Nginx y verificar configuraciones:</p>
 
-<h4>Verificar configuración</h4>
+<h4>¿Cómo verifico la configuración?</h4>
 <TerminalSession>
   <TerminalSessionCommand>nginx -t</TerminalSessionCommand>
   <TerminalSessionOutput title="Resultado de la validación">
@@ -93,7 +110,7 @@ import {
   </TerminalSessionOutput>
 </TerminalSession>
 
-<h4>Recargar configuración (sin interrupciones)</h4>
+<h4>¿Cómo recargo la configuración sin interrupciones?</h4>
 <TerminalSession>
   <TerminalSessionCommand>nginx -s reload</TerminalSessionCommand>
   <TerminalSessionOutput title="Resultado de la recarga">
@@ -101,7 +118,7 @@ import {
   </TerminalSessionOutput>
 </TerminalSession>
 
-<h4>Comprobar versión y módulos</h4>
+<h4>¿Cómo compruebo la versión y los módulos?</h4>
 <TerminalSession>
   <TerminalSessionCommand>nginx -V</TerminalSessionCommand>
   <TerminalSessionOutput title="Detalles de compilación">

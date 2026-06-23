@@ -57,17 +57,20 @@ The `appComponent` field in `src/content/tools/*.mdx` frontmatter maps to a key 
 ## Common Patterns
 
 ### ID Generation
+
 ```javascript
 const prefix = Array.from(crypto.getRandomValues(new Uint8Array(4)))
   .map(b => b.toString(16).padStart(2, '0')).join('');
 ```
 
 ### DOM Selection
+
 ```javascript
 const el = document.querySelector(`[data-${prefix}-input]`);
 ```
 
 ### Event Delegation
+
 ```javascript
 container.addEventListener('click', (e) => {
   const btn = e.target.closest('[data-action]');

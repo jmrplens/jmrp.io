@@ -9,7 +9,7 @@
 # REQUIRED FIELDS
 # ----------------------------------------------------------------------------
 title: "Your Post Title Here"
-slug: "post-url-slug" # Required for permanent links
+slug: "NNN-post-url-slug" # Required — must start with the NNN- numeric prefix
 publishedDate: 2025-12-17  # Format: YYYY-MM-DD
 
 # LANGUAGE — omit for English (default), set "es" for Spanish posts
@@ -35,22 +35,60 @@ draft: false  # Set to true to hide from production builds
 # Tags/Categories (optional but recommended for organization)
 tags: ["category1", "category2", "topic"]
 
-# References (optional - for citing sources)
-references:
-  - text: "Reference Title"
-    url: "https://example.com/reference"
-  - text: "Another Reference"
-    url: "https://example.com/another"
+# GEO / STRUCTURED-DATA FIELDS (see docs/BLOG_POST_GUIDE.md)
+# ----------------------------------------------------------------------------
+# Schema.org type: "TechArticle" for engineering guides (the norm), else "BlogPosting"
+articleType: "TechArticle"
+# Difficulty hint (optional): Beginner | Intermediate | Expert
+proficiencyLevel: "Intermediate"
+# Wikidata topics → JSON-LD `about` (first) + `mentions` (rest), max 6.
+# VERIFY each Q-id resolves to the intended entity (a wrong Q-id is worse than none).
+topics:
+  - name: "Primary Topic"
+    wikidata: "Q12345"
+  - name: "Secondary Topic"
+    wikidata: "Q67890"
+# FAQ → rendered as a collapsible FAQ section at the end + FAQPage JSON-LD.
+# Only genuine questions a reader would ask. The Spanish version gets its own translation.
+faq:
+  - question: "A real question about this post?"
+    answer: "A concise, self-contained answer."
+# HowTo (step-by-step guides only) → HowTo JSON-LD; the visible steps stay in the body.
+# howto:
+#   name: "How to do X"
+#   totalTime: "PT30M"  # ISO 8601 duration (optional)
+#   steps:
+#     - name: "First step"
+#       text: "What to do."
+#       anchor: "first-step"  # links the step to its in-page heading id
+
+# References: NOT a frontmatter field — the layout auto-collects every markdown
+# link and <a> in the body and renders a References list at the end of the post.
+# Just cite sources inline (e.g. [Nginx docs](https://nginx.org/...)).
 ---
 
+import TLDRSummary from "@components/ui/TLDRSummary.astro";
 import Callout from "@components/ui/Callout.astro";
-import References from "@components/ui/References.astro";
 import { Tabs, TabPanel } from "@components/ui/tabs";
 import YouTube from "@components/ui/YouTube.astro";
 import BeforeAfter from "@components/ui/BeforeAfter.astro";
 
+{/* Standard opening: a one-paragraph intro (the "entradilla") that frames the
+problem, then a <TLDRSummary> before the first H2. The TL;DR renders as an <h2>
+answer-target that AI engines extract — keep it a self-contained takeaway. */}
+
+A short introductory paragraph that frames the problem and why it matters.
+
+<TLDRSummary>
+One-paragraph summary of the key takeaway (not a "what you'll learn" preview).
+</TLDRSummary>
+
 {/* ========================================================================
 POST CONTENT STARTS HERE
+
+NOTE: the FAQ section, the JSON-LD (TechArticle/FAQPage/HowTo + about/mentions),
+the author bio card, and the References list are rendered AUTOMATICALLY by the
+layout from the frontmatter — do NOT add <FAQ> or <AuthorCard> here by hand.
 ======================================================================== */}
 
 Your post content goes here. You can use standard Markdown and MDX components.
@@ -107,11 +145,11 @@ Centered, responsive video:
 
 <YouTube id="VIDEO_ID_HERE" title="Video Title" />
 
-### References Section
+### References
 
-Add at the end of your post to display all references:
-
-<References references={frontmatter.references} />
+Don't add a References component or list yourself: cite sources inline with normal
+markdown links (`[Nginx docs](https://nginx.org/...)`) and the layout collects them
+into a References section at the end of the post automatically.
 
 {/* ========================================================================
 FIELD REFERENCE
@@ -123,13 +161,21 @@ FIELD REFERENCE
     - slug: String - Permalinks
 
     OPTIONAL:
-    - description: String - SEO description (recommended)
+    - description: String - SEO description (recommended, ≤155 chars)
     - author: String - Author name (defaults to "José Manuel Requena Plens")
     - authorEmail: String (email format) - Author email for RSS (defaults to "mail@jmrp.io")
-    - updatedDate: Date (YYYY-MM-DD) - Last update date (defaults to publishedDate)
+    - updatedDate: Date (YYYY-MM-DD) - Last update date (else dateModified falls back to publishedDate)
     - draft: Boolean - Draft status (defaults to false)
     - coverImage: String - Path to cover image (defaults to site default)
     - tags: Array[String] - Post tags/categories
-    - references: Array[{text: String, url: String}] - External references
+    (references are not a field — they are auto-collected from body links)
+
+    GEO / STRUCTURED DATA:
+    - articleType: "TechArticle" (guides) | "BlogPosting" (default)
+    - proficiencyLevel: "Beginner" | "Intermediate" | "Expert" (optional)
+    - topics: Array[{name: String, wikidata: "Q12345"}] - verified Wikidata Q-ids;
+              first = about (primary), rest = mentions (max 6 total)
+    - faq: Array[{question: String, answer: String}] - genuine Q&A → FAQ section + FAQPage JSON-LD
+    - howto: {name, totalTime?, tools?[], supplies?[], steps[{name, text, anchor?}]} - step-by-step guides
 
     ======================================================================== */}

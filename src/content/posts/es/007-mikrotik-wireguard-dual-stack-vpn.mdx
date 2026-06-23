@@ -9,6 +9,57 @@ authorEmail: "mail@jmrp.io"
 draft: false
 coverImage: "../../../assets/images/blog/wireguard-vpn.webp"
 tags: ["MikroTik", "WireGuard", "VPN", "IPv6", "Security"]
+faq:
+  - question: "¿Qué versión de RouterOS necesito para usar WireGuard en MikroTik?"
+    answer: "Necesitas MikroTik RouterOS 7.x o posterior, ya que WireGuard viene integrado desde RouterOS 7. La guía está probada en RouterOS 7.x con un RB5009, pero es aplicable a cualquier router MikroTik con soporte WireGuard."
+  - question: "¿Por qué usar un prefix ULA y NAT66 para IPv6 en lugar de direcciones globales?"
+    answer: "Los clientes VPN reciben direcciones privadas Unique Local (ULA) del rango fd00::/8, que no entran en conflicto con direcciones IPv6 públicas. El router las traduce luego mediante NAT66 al prefix IPv6 global asignado por tu ISP cuando los clientes acceden a internet."
+  - question: "¿Por qué usar un port no estándar como 53537 en lugar del 51820?"
+    answer: "Usar un port no estándar en lugar del 51820 por defecto ayuda a evitar escaneos automatizados dirigidos a puertos VPN conocidos. Algunas redes también bloquean puertos VPN estándar, así que un port alto aleatorio puede ofrecer mejor conectividad."
+  - question: "¿Cuál es la diferencia entre full tunnel y split tunnel?"
+    answer: "El full tunnel (AllowedIPs = 0.0.0.0/0, ::/0) encamina todo el tráfico por la VPN, ocultando tu ubicación pero añadiendo latencia. El split tunnel encamina solo redes específicas (como tu LAN doméstica) por la VPN, ofreciendo mejor rendimiento para el uso general de internet."
+  - question: "¿Por qué es necesario persistent-keepalive en los clientes WireGuard?"
+    answer: "El ajuste persistent-keepalive=25s envía un paquete keepalive cada 25 segundos, manteniendo la traducción NAT para dispositivos móviles detrás de NAT y permitiendo al servidor enviar datos al cliente aunque este no haya enviado nada recientemente."
+  - question: "¿Funciona el IPv6 por la VPN si mi ISP no proporciona IPv6?"
+    answer: "No hay acceso a internet por IPv6 global. NAT66 traduce la dirección ULA del cliente al prefix IPv6 global de tu ISP, así que sin un prefix del ISP no hay nada a lo que traducir. El tunnel sigue transportando IPv6 entre cliente y router, pero no más allá."
+topics:
+  - name: "WireGuard"
+    wikidata: "Q28975568"
+  - name: "MikroTik"
+    wikidata: "Q913580"
+  - name: "RouterOS"
+    wikidata: "Q12036888"
+  - name: "Virtual private network"
+    wikidata: "Q170963"
+  - name: "IPv6"
+    wikidata: "Q2551624"
+  - name: "Network address translation"
+    wikidata: "Q11182"
+articleType: "TechArticle"
+proficiencyLevel: "Intermediate"
+howto:
+  name: "Configurar una VPN WireGuard dual-stack en MikroTik RouterOS"
+  totalTime: "PT45M"
+  tools:
+    - "Dispositivo MikroTik RouterOS"
+    - "Cliente WireGuard"
+  steps:
+    - name: "Crear la interface WireGuard"
+      text: "Añade una interface WireGuard en el router MikroTik con un port de escucha personalizado; RouterOS genera el par de claves automáticamente. Recupera la clave pública del servidor para configurar los clientes después."
+    - name: "Asignar direcciones IPv4 e IPv6"
+      text: "Asigna a la interface WireGuard una dirección IPv4 y una dirección ULA IPv6 para que actúe como gateway de los clientes VPN. Establece advertise=no en la dirección IPv6."
+    - name: "Añadir la interface a las listas de interfaces"
+      text: "Añade la interface WireGuard a las listas VPN y LAN para que las reglas de firewall traten su tráfico correctamente y los clientes accedan a los recursos locales."
+    - name: "Configurar las reglas de firewall"
+      text: "Añade reglas de input para aceptar WireGuard en su port UDP, reglas de forward para permitir el acceso de los clientes a internet y a la LAN doméstica, y una address list para la red WireGuard."
+    - name: "Configurar NAT/Masquerade"
+      text: "Añade reglas srcnat de masquerade IPv4 y NAT66 IPv6 para que las direcciones privadas de los clientes VPN se traduzcan a tu IP pública y al prefix IPv6 global asignado por tu ISP."
+    - name: "Ajustar el MSS clamping y la tabla RAW"
+      text: "Añade una regla mangle change-mss para evitar la fragmentación por el tunnel y reglas RAW en prerouting para omitir la protección antiflood del tráfico WireGuard."
+    - name: "Añadir peers WireGuard (clientes)"
+      text: "Añade un peer por dispositivo con un par de claves único, clave precompartida y un allowed-address IPv4/IPv6 dedicado, usando persistent-keepalive=25s para dispositivos detrás de NAT."
+    - name: "Configurar el cliente y verificar la conexión"
+      text: "Configura cada dispositivo cliente mediante código QR o un fichero de configuración manual, y luego verifica el handshake en ambos extremos y prueba la conectividad IPv4 e IPv6 por el tunnel."
 ---
 
 import Callout from "@components/ui/Callout.astro";
@@ -428,7 +479,7 @@ Para que los clientes VPN accedan a internet, sus direcciones privadas deben tra
 </Code>
 
 <Callout type="info" title="NAT66 explicado">
-La filosofía tradicional de IPv6 desaconseja el NAT, prefiriendo la conectividad extremo a extremo. Sin embargo, NAT66 (masquerade para IPv6) resulta práctico en VPNs que usan direcciones ULA. Tus clientes VPN utilizan direcciones ULA privadas, que se traducen al prefix IPv6 global asignado por tu ISP cuando acceden a internet.
+La filosofía tradicional de IPv6 desaconseja el NAT, prefiriendo la conectividad extremo a extremo. Sin embargo, NAT66 (masquerade para IPv6) resulta práctico en VPNs que usan direcciones ULA. Tus clientes VPN utilizan direcciones ULA privadas, que se traducen al [prefix IPv6 global asignado por tu ISP](/es/blog/008-mikrotik-pppoe-dualstack-digi/) cuando acceden a internet.
 </Callout>
 
 ---
@@ -586,7 +637,7 @@ cat privatekey publickey presharedkey
 ```
 </TerminalCommand>
 
-#### Añadir peer en MikroTik
+#### Añadir peer en MikroTik (Linux / macOS)
 
 Usa la **public key** del cliente (no la private key) y la preshared key:
 
@@ -624,7 +675,7 @@ wg genpsk
 ```
 </TerminalCommand>
 
-#### Añadir peer en MikroTik
+#### Añadir peer en MikroTik (Windows)
 
 <Code lang="routeros" title="Añadir peer WireGuard (Windows)">
 ```routeros

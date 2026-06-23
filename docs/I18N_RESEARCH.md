@@ -157,7 +157,7 @@ import { languages } from "@i18n/ui";
 
 Para contenido localizado en collections, Astro recomienda carpetas por locale:
 
-```
+```text
 src/content/posts/
 ├── en/
 │   └── post-1.mdx

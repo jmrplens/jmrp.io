@@ -8,6 +8,34 @@ author: "José Manuel Requena Plens"
 authorEmail: "mail@jmrp.io"
 draft: false
 tags: ["Security", "Cryptography", "Firmware", "ESP32", "Key Derivation"]
+faq:
+  - question: "How can a 4-digit PIN be secure on a hardware password manager?"
+    answer: "A 4-digit PIN is only safe because two complementary defenses bound where an attacker can guess. An online brute-force guard allows about ten attempts before wiping the vault, and device-bound key derivation mixes a per-chip secret into the key so an offline GPU sweep of the 10,000-PIN space can't be reproduced off the original chip."
+  - question: "Why can't a high PBKDF2 iteration count protect a PIN on a microcontroller?"
+    answer: "The iteration count must stay low enough that the legitimate user's unlock is bearable — about 2 seconds, which means 35,000 iterations on the ESP32-S3 and 25,000 on classic ESP32. OWASP's recommended 600,000 would push a single unlock to roughly 32 seconds on the S3 and 47 on classic ESP32, while a GPU still sweeps all 10,000 PINs in under a millisecond."
+  - question: "What is device binding in key derivation?"
+    answer: "Device binding mixes a 32-byte per-chip deviceSecret into the master key after PBKDF2, using HKDF. The verifier stored on flash then only reproduces on the original chip, so an attacker who dumps the flash still can't recompute the key without the secret — turning an offline brute-force attack from linear into categorically impossible."
+  - question: "Where does the per-chip device secret come from on the ESP32?"
+    answer: "It has two backends chosen at compile time. On the ESP32-S3 it's an eFuse-HMAC: the HMAC peripheral computes a tag using an eFuse key that's read-protected and never leaves the silicon. On classic ESP32, which has no HMAC peripheral, it's a random 32-byte NVS pepper stored in encrypted NVS — weaker, but it still defeats a naive flash dump."
+  - question: "Why use HKDF instead of a hand-rolled HMAC to mix in the device secret?"
+    answer: "HKDF (RFC 5869) is a published, analyzed extract-then-expand KDF that turns a non-uniform secret into uniform key material with domain separation, keeping the construction standard and citable. It's built on one HMAC primitive so output is byte-identical on both host and device, and it's pinned by a known-answer test against the RFC 5869 Appendix A vectors."
+  - question: "What happens to the vault if the device dies?"
+    answer: "A dead or wiped chip is unrecoverable by design, because the key is bound to that specific silicon and can't be reconstructed elsewhere. Recovery relies on an export/backup path set up beforehand, not key escrow. The eFuse burn is also one-time and irreversible."
+topics:
+  - name: "Key derivation function"
+    wikidata: "Q3496793"
+  - name: "PBKDF2"
+    wikidata: "Q3952834"
+  - name: "HKDF"
+    wikidata: "Q24962849"
+  - name: "eFuse"
+    wikidata: "Q5323010"
+  - name: "ESP32"
+    wikidata: "Q27921668"
+  - name: "Brute-force attack"
+    wikidata: "Q869370"
+articleType: "TechArticle"
+proficiencyLevel: "Expert"
 ---
 
 import Callout from "@components/ui/Callout.astro";

@@ -6,7 +6,24 @@ subtitle: "Build cron expressions visually with interactive field selectors, hum
 icon: "i-mdi:clock-outline"
 category: "developer"
 tags: ["cron", "scheduling", "linux", "crontab", "automation"]
+features:
+  - "Build cron expressions with visual field selectors"
+  - "Choose from 14 common schedule presets"
+  - "Read human-readable schedule descriptions"
+  - "Preview the next 10 executions"
+  - "Generate crontab lines and shareable links"
 appComponent: "CronBuilder"
+faq:
+  - question: "What is a cron expression?"
+    answer: "A cron expression is a string of five space-separated fields (minute, hour, day of month, month, day of week) that tells a Unix-like scheduler when to run a task repeatedly."
+  - question: "How do I run a cron job every 5 minutes?"
+    answer: "Use the step syntax \"*/5 * * * *\". You can build it here by selecting the minute field's step or picking the \"every 5 minutes\" preset, then copy the generated crontab line."
+  - question: "Does this tool send my cron expression to a server?"
+    answer: "No. All parsing, the human-readable description, and the next-execution preview run entirely in your browser. The shareable link only encodes the expression in the URL."
+  - question: "What happens when both day of month and day of week are set?"
+    answer: "Most cron implementations use OR logic: when neither field is \"*\", the job runs whenever either the day-of-month or the day-of-week condition matches."
+  - question: "Why does my cron job fail even though the schedule is correct?"
+    answer: "Cron runs with a minimal PATH and the system timezone, so use absolute paths for commands and check timedatectl. Redirect output with \">> /var/log/myjob.log 2>&1\" to capture errors."
 ---
 
 import {
@@ -70,7 +87,7 @@ import {
   </li>
 </ul>
 
-<h3>How to Use</h3>
+<h3>How do I use this tool?</h3>
 <ol>
   <li>
     Click values in the <strong>Field Selectors</strong> to toggle them. Use
@@ -97,7 +114,7 @@ import {
   </li>
 </ol>
 
-<h3>Cron Expression Format</h3>
+<h3>What is the cron expression format?</h3>
 <p>
   A standard cron expression consists of <strong>5 fields</strong>
   separated by spaces:
@@ -304,7 +321,7 @@ import {
   </tbody>
 </table>
 
-<h3>Privacy</h3>
+<h3>Is my data private?</h3>
 <p>
   All expression parsing and execution calculation happens entirely in your
   browser. No cron data is transmitted to any server. The shareable link only

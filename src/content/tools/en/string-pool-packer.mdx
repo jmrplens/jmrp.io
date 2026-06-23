@@ -6,7 +6,24 @@ subtitle: "See how a deduplicated, tail-merged string pool with uint16 offsets b
 icon: "i-mdi:package-variant-closed"
 category: "embedded"
 tags: ["i18n", "embedded", "firmware", "c++", "flash", "optimization"]
+features:
+  - "Pointer table vs packed pool comparison"
+  - "String deduplication and tail-merging"
+  - "uint16 offset and 64 KiB guard"
+  - "Lines and CSV i18n input modes"
+  - "Runs locally in your browser"
 appComponent: "StringPoolPacker"
+faq:
+  - question: "Why do const char* pointer tables waste so much flash on an MCU?"
+    answer: "Each cell in a 2-D (language × string ID) table holds a pointer, which is 4 bytes on a 32-bit MCU before a single character of text. Switching to a uint16 offset table halves that index overhead, a structural win the linker can't make for you."
+  - question: "How much can a packed, tail-merged string pool save versus a pointer table?"
+    answer: "The savings come from three places: halving the index (4-byte pointers to 2-byte uint16 offsets), deduplicating identical strings shared across languages, and tail-merging strings that are suffixes of longer ones. Paste your real strings to see the exact byte total for both layouts."
+  - question: "What is tail-merging in a string pool?"
+    answer: "Tail-merging stores a string that is the suffix of a longer one by pointing its offset partway into that longer entry, instead of storing it separately. Strings are placed longest-first so the shorter suffix reuses the same bytes."
+  - question: "When do uint16 offsets stop working for a string pool?"
+    answer: "uint16 offsets can only address the first 64 KiB of the pool. The tool flags when your pool grows past that limit, at which point you would need wider offsets to reach later strings."
+  - question: "Does this tool send my strings to a server?"
+    answer: "No. All parsing, deduplication, tail-merging, and byte counting happen entirely in your browser, and nothing you type is transmitted anywhere."
 ---
 
 <h2>About This Tool</h2>
@@ -44,7 +61,7 @@ appComponent: "StringPoolPacker"
   </li>
 </ul>
 
-<h3>How to Use</h3>
+<h3>How do I use it?</h3>
 <ol>
   <li>
     Choose <strong>Lines</strong> or <strong>CSV</strong> mode and paste your
@@ -66,7 +83,7 @@ appComponent: "StringPoolPacker"
   </li>
 </ol>
 
-<h3>What It Computes</h3>
+<h3>What does it compute?</h3>
 <ul>
   <li>
     <strong>Index table</strong> — entries × 4 B (pointers) versus entries × 2 B
@@ -94,7 +111,7 @@ appComponent: "StringPoolPacker"
   </li>
 </ul>
 
-<h3>Privacy</h3>
+<h3>Is my data private?</h3>
 <p>
   All parsing, deduplication, tail-merging, and byte counting happen entirely in
   your browser. Nothing you type is transmitted to any server.

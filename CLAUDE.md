@@ -92,18 +92,36 @@
 
 ```yaml
 title: string # Required
-slug: string # Required
+slug: string # Required — must start with the NNN- numeric prefix
 publishedDate: Date # Required (YYYY-MM-DD)
-updatedDate: Date # Optional
+updatedDate: Date # Optional (else dateModified falls back to publishedDate)
 description: string # Optional (≤ 155 chars for SEO)
 author: string # Optional
 authorEmail: string # Optional
 draft: boolean # Default: false
 tags: string[] # Default: []
-coverImage: ImageMeta # Optional (relative image)
+coverImage: ImageMeta # Optional (relative image → AVIF+WebP <picture>)
+# --- GEO / structured-data fields ---
+articleType: "BlogPosting" | "TechArticle" # Default: BlogPosting (use TechArticle for guides)
+proficiencyLevel: "Beginner" | "Intermediate" | "Expert" # Optional (TechArticle)
+topics: { name: string; wikidata: string }[] # Wikidata Q-ids → about (first) + mentions (rest), max 6
+faq: { question: string; answer: string }[] # → FAQ section + FAQPage JSON-LD
+howto: # Optional — step-by-step guides → HowTo JSON-LD
+  { name, totalTime?, tools?[], supplies?[], steps[{ name, text, anchor? }] }
 ```
 
 File naming: `001-post-slug.mdx`. Files starting with `_` are excluded.
+
+> **GEO baseline (every post):** includes a `<TLDRSummary>` near the top — after a
+> short intro paragraph (the "entradilla"), before the first `##` (the TL;DR
+> answer-target, rendered as `<h2>`; consistent format: cover → intro → TL;DR →
+> body); sets `articleType: "TechArticle"` for guides; carries verified
+> `topics` Q-ids and a genuine `faq`. The **FAQ section, the JSON-LD (TechArticle/
+> FAQPage/HowTo + `about`/`mentions`), the author bio card (`AuthorCard`), and the
+> References list are emitted automatically by `BlogPost.astro`** from the frontmatter —
+> never hand-add `<FAQ>`/`<AuthorCard>`/schema in MDX. Spanish posts carry their own
+> translated `faq` and the SAME `topics` Q-ids. Verify Q-ids via the Wikidata
+> `wbsearchentities` API before use.
 
 ### `tools` — Interactive Tools (MDX)
 
@@ -308,7 +326,8 @@ All JSON-LD wrapped in `safeJsonLd()` — escapes `<`, `>`, `&`, `\u2028`, `\u20
 
 | Component     | Import                             | Key Props                                                          |
 | ------------- | ---------------------------------- | ------------------------------------------------------------------ |
-| `TLDRSummary` | `@components/ui/TLDRSummary.astro` | Slot content                                                       |
+| `TLDRSummary` | `@components/ui/TLDRSummary.astro` | Slot content (TL;DR answer-target — near the top of every post, after the intro) |
+| `FAQ`         | `@components/ui/FAQ.astro`         | `items: {question,answer}[]`, `open?` — usually wired from the `faq` frontmatter (renders FAQ + FAQPage JSON-LD), not imported in MDX |
 | `Callout`     | `@components/ui/Callout.astro`     | `type: "info"\|"warning"\|"error"\|"success"\|"tip"\|"note"\|"keypoint"\|"important"`, `title?` |
 | `Collapsible` | `@components/ui/Collapsible.astro` | `title`, `open?`                                                   |
 
@@ -413,7 +432,7 @@ Zero-JS, theme-aware, responsive SVG/CSS diagrams for systems/embedded/C++/netwo
 - `tabs.ts`: Re-exports `Tabs` + `TabPanel`
 - `terminal-session.ts`: Re-exports `TerminalSession` + `TerminalSessionCommand` + `TerminalSessionOutput`
 
-### Documentation
+### Component Documentation
 
 - **Full component docs**: `src/components/ui/README.md`
 - **Agent quick reference**: `src/components/ui/AGENTS.md`
@@ -841,7 +860,7 @@ Steps:
 pnpm dev              # Start dev server (port 4321)
 pnpm build            # Production build (atomic swap)
 pnpm preview          # Preview production build
-pnpm verify           # FULL QA pipeline — 14 steps (run before PR)
+pnpm verify           # FULL QA pipeline — 13 steps (run before PR)
 pnpm typecheck        # astro check
 pnpm lint             # ESLint
 pnpm lint:css         # Stylelint
@@ -861,35 +880,39 @@ pnpm exec prettier --check .  # Format check (runs at end of build)
 
 ### `pnpm verify` Pipeline Detail (`scripts/run-verify.mjs`)
 
-14 sequential steps, fail-fast (except SonarCloud):
+13 sequential steps, fail-fast (except SonarCloud):
 
-1. **Astro Check** — `pnpm typecheck --minimumFailingSeverity warning`
+1. **Astro Check** — `pnpm typecheck --minimumFailingSeverity warning` (also validates all JSON-LD `@graph` builders against Schema.org via `schema-dts` `satisfies` types — the official Google Schema.org TypeScript vocabulary)
 2. **ESLint** — `pnpm lint --max-warnings=0`
 3. **Prettier** — `pnpm exec prettier --check .`
 4. **Stylelint** — `pnpm lint:css`
 5. **Production Build** — `pnpm run build` (includes pre-build + post-build integrations)
 6. **HTML5 Validation** — `pnpm lint:html`
 7. **RSS Feed Validation** — `node scripts/ci/validate-rss.mjs dist`
-8. **Schema.org JSON-LD** — `node scripts/ci/validate-schema.mjs dist`
-9. **Spelling (CSpell)** — `pnpm exec cspell lint .`
-10. **Broken Links (Lychee)** — `lychee --config lychee.toml --root-dir dist dist/**/*.html`
-11. **JSDoc Coverage** — `node scripts/ci/calculate-jsdoc-coverage.mjs`
-12. **SonarCloud Analysis** — `pnpm exec sonar-scanner` *(conditional: requires `SONAR_TOKEN`)*
-13. **SonarCloud Issues** — `node scripts/ci/get-sonar-issues.mjs` *(conditional: requires `SONAR_TOKEN` + `SONAR_PROJECT_KEY`)*
-14. **Playwright E2E** — `pnpm test:e2e`
+8. **Spelling (CSpell)** — `pnpm exec cspell lint .`
+9. **Broken Links (Lychee)** — `lychee --config lychee.toml --root-dir dist dist/**/*.html`
+10. **JSDoc Coverage** — `node scripts/ci/calculate-jsdoc-coverage.mjs`
+11. **SonarCloud Analysis** — `pnpm exec sonar-scanner` *(conditional: requires `SONAR_TOKEN`)*
+12. **SonarCloud Issues** — `node scripts/ci/get-sonar-issues.mjs` *(conditional: requires `SONAR_TOKEN` + `SONAR_PROJECT_KEY`)*
+13. **Playwright E2E** — `pnpm test:e2e`
 
-Steps 6-14 require a prior build. Steps 12-13 are skipped without env vars. Pre-run cleanup: removes `schema-report.json`, `html-validation.json`, `rss-validation.json`.
+> **Schema.org validation**: JSON-LD correctness is enforced at build via `schema-dts` types on every schema builder (`BaseHead`, `BlogPost`, `ToolLayout`, `HomePage`, `CVPage`, `PublicationsPage`, `BlogIndex`, `BlogTagPage`), checked by step 1. This replaced a hand-rolled output checker that had no cases for TechArticle/FAQPage/HowTo/SoftwareApplication/CollectionPage and wrongly rejected valid JSON-LD `@id` node references.
+
+Steps 5-13 require a prior build. Steps 11-12 are skipped without env vars. Pre-run cleanup: removes `html-validation.json`, `rss-validation.json`.
 
 ---
 
 ## Writing Blog Posts
 
-1. Copy `src/content/posts/_template.mdx`
-2. Rename with numbered prefix: `009-my-post.mdx`
-3. Update frontmatter (title, slug, publishedDate, tags, description ≤ 155 chars)
-4. Import needed components
-5. Write content with MDX
-6. References auto-collected from markdown links + HTML `<a>` tags in content
+1. Copy `src/content/posts/en/_template.mdx`
+2. Rename with numbered prefix: `013-my-post.mdx` (next free `NNN`; `slug` must match the prefix)
+3. Update frontmatter: title, slug, publishedDate, tags, description ≤ 155 chars, **plus the GEO fields** — `articleType: "TechArticle"` (guides), `proficiencyLevel`, verified `topics` Q-ids, a genuine `faq`, and `howto` for step-by-step guides
+4. Standard opening: a short intro paragraph (the "entradilla"), then **`<TLDRSummary>`** (before the first `##`), then import + use other components
+5. Write content with MDX (avoid duplicate heading text — it creates ambiguous ToC anchors)
+6. References auto-collected from markdown links + HTML `<a>` tags; the FAQ section, JSON-LD (TechArticle/FAQPage/HowTo + about/mentions), and the `AuthorCard` are **auto-rendered by `BlogPost.astro`** from the frontmatter — do not hand-add them
+7. For a Spanish version, mirror to `src/content/posts/es/` with translated `faq` and the SAME `topics` Q-ids
+
+Full workflow + field reference: the `new-blog-post` skill and `docs/BLOG_POST_GUIDE.md`.
 
 ### Component Usage in MDX
 
@@ -953,7 +976,7 @@ flowchart LR
 - **robots.txt**: 17+ AI bots + 6 search engine bots explicitly allowed, Sitemap reference, llms.txt references
 - **Sitemap**: Auto-generated with filter (excludes /404, test pages) and `lastmod`
 - **RSS**: Custom RSS 2.0 with atom:link, enclosures, media:content/thumbnail, channel image
-- **JSON-LD**: @graph pattern on all pages, page-specific schemas (BlogPosting, SoftwareApplication, ProfilePage, CollectionPage)
+- **JSON-LD**: @graph pattern on all pages, page-specific schemas (TechArticle/BlogPosting + FAQPage + HowTo + `about`/`mentions` Wikidata topics on posts; SoftwareApplication + FAQPage on tools; ProfilePage, CollectionPage, ScholarlyArticle). Validated at build via `schema-dts`.
 - **Meta descriptions**: All ≤ 155 chars, validated by Playwright tests
 - **noIndex**: 404 page excluded from indexing
 - **llms.txt/llms-full.txt**: LLM context files (llmstxt.org standard)

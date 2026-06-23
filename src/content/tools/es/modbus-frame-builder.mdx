@@ -6,8 +6,25 @@ subtitle: "Construye, decodifica e inspecciona tramas Modbus RTU/TCP/ASCII con c
 icon: "i-mdi:chip"
 category: "embedded"
 tags: ["modbus", "rtu", "tcp", "industrial", "plc", "embebido", "serial"]
+features:
+  - "Construye tramas Modbus RTU, TCP y ASCII"
+  - "CRC-16, LRC y cabeceras MBAP automáticos"
+  - "Decodifica tramas hex y detecta excepciones"
+  - "Interpreta registros con orden de bytes seleccionable"
+  - "Funciona en el navegador, sin servidor"
 appComponent: "ModbusFrameBuilder"
 lang: "es"
+faq:
+  - question: "¿Cuál es la diferencia entre las tramas Modbus RTU y Modbus TCP?"
+    answer: "Las tramas RTU son binarias y terminan con un CRC de 16 bits para líneas serie, mientras que las TCP anteponen una cabecera MBAP de 7 bytes (transaction ID, protocol ID, longitud, unit ID) y omiten el CRC porque TCP/IP se encarga del control de errores. Esta herramienta construye y decodifica ambas, además de Modbus ASCII con LRC."
+  - question: "¿Cómo se calcula el CRC-16 de Modbus RTU?"
+    answer: "Usa el polinomio CRC-16 0xA001 (forma reflejada de 0x8005) calculado sobre todos los bytes excepto el propio CRC, y se añade primero el byte bajo y después el alto. La herramienta lo calcula y valida automáticamente al construir o decodificar una trama."
+  - question: "¿Por qué mis valores de registro de 32 bits aparecen incorrectos al decodificar?"
+    answer: "Los registros Modbus son de 16 bits, por lo que los enteros y floats de 32 bits ocupan dos registros y los fabricantes no coinciden en el orden. Prueba a cambiar el orden de bytes entre Big-Endian, Little-Endian, Mid Big-Endian y Mid Little-Endian en el panel de interpretación de datos hasta que el valor coincida con tu dispositivo."
+  - question: "¿Qué aspecto tiene una respuesta de excepción Modbus?"
+    answer: "El esclavo devuelve el function code en OR con 0x80 seguido de un código de excepción como 01 (Illegal Function) o 02 (Illegal Data Address). Pega la trama en el modo Decode y la herramienta detecta la excepción y nombra el error."
+  - question: "¿Se envían mis datos Modbus a un servidor?"
+    answer: "No. Toda la construcción de tramas, decodificación, cálculo de CRC/LRC e interpretación de datos se realiza íntegramente en tu navegador; nada se transmite. El enlace compartible solo codifica los parámetros de la trama en los parámetros de la URL."
 ---
 
 import {
@@ -82,7 +99,7 @@ import {
   </li>
 </ul>
 
-<h3>Cómo usar</h3>
+<h3>¿Cómo uso esta herramienta?</h3>
 <h4>Modo construcción</h4>
 <ol>
   <li>
@@ -475,7 +492,7 @@ import {
   </tbody>
 </table>
 
-<h3>Privacidad</h3>
+<h3>¿Se envían mis datos Modbus a un servidor?</h3>
 <p>
   Toda la construcción de tramas, decodificación, cálculo de CRC/LRC e
   interpretación de datos se realiza íntegramente en tu navegador. Ningún dato
@@ -564,7 +581,7 @@ import {
   </TerminalSessionOutput>
 </TerminalSession>
 
-<h3>Cálculo de CRC-16</h3>
+<h3>¿Cómo se calcula el CRC-16?</h3>
 <p>
   Modbus RTU usa CRC-16 con el polinomio <code>0xA001</code>
   (forma reflejada de <code>0x8005</code>). El CRC se calcula sobre todos los
@@ -572,7 +589,7 @@ import {
   <strong>little-endian</strong> (byte bajo primero, byte alto segundo).
 </p>
 
-<h3>Cálculo de LRC</h3>
+<h3>¿Cómo se calcula el LRC?</h3>
 <p>
   Modbus ASCII usa un Longitudinal Redundancy Check. El LRC es el{" "}
   <strong>complemento a dos</strong> de la suma de 8 bits de todos los bytes del

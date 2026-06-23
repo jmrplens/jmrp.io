@@ -6,8 +6,25 @@ subtitle: "Construye cabeceras Content Security Policy de forma interactiva. Act
 icon: "i-mdi:shield-lock-outline"
 category: "security"
 tags: ["csp", "seguridad", "cabeceras", "xss", "nginx"]
+features:
+  - "Activa más de 20 directivas CSP por categoría"
+  - "Presets rápidos para servicios de terceros comunes"
+  - "Exporta a 7 formatos (Nginx, Apache, Vercel)"
+  - "Modo Report-Only y evaluación de seguridad en vivo"
+  - "Funciona enteramente en tu navegador"
 appComponent: "CSPBuilder"
 lang: "es"
+faq:
+  - question: "¿Qué es una Content Security Policy y por qué la necesito?"
+    answer: "Una Content Security Policy (CSP) es una cabecera de respuesta HTTP que indica al navegador qué fuentes de contenido son de confianza, ayudando a detectar y mitigar ataques como Cross-Site Scripting (XSS) e inyección de datos. Es una capa de defensa en profundidad crítica para cualquier sitio web moderno."
+  - question: "¿Se envía mi configuración CSP a algún servidor?"
+    answer: "No. Toda la construcción y formateo de políticas ocurre completamente en tu navegador. Ningún dominio, URL ni configuración de política sale de tu dispositivo."
+  - question: "¿A qué formatos de servidor puedo exportar?"
+    answer: "El constructor genera configuración lista para usar en 7 formatos, incluyendo Nginx, Apache, Cloudflare y Vercel. Selecciona tu servidor y copia el resultado directamente en tu configuración."
+  - question: "¿Qué hace el modo Report-Only?"
+    answer: "El modo Report-Only te permite probar una política sin bloquear ningún recurso. El navegador informa de las violaciones que habría bloqueado, para que puedas afinar tu CSP de forma segura antes de aplicarla."
+  - question: "¿Por qué la herramienta advierte sobre 'unsafe-inline'?"
+    answer: "La evaluación de seguridad señala configuraciones inseguras como 'unsafe-inline' porque debilitan tu política al permitir scripts o estilos inline, anulando gran parte de la protección de CSP frente al XSS. Es preferible usar nonces o hashes."
 ---
 
 import {
@@ -53,7 +70,7 @@ import {
   </li>
 </ul>
 
-<h3>Cómo usar</h3>
+<h3>¿Cómo uso esta herramienta?</h3>
 <ol>
   <li>Activa las directivas que necesites para tu sitio web</li>
   <li>Usa los presets rápidos para añadir servicios de terceros comunes</li>
@@ -81,7 +98,7 @@ import {
   terminal.
 </p>
 
-<h4>Comprobar la cabecera CSP con curl</h4>
+<h4>¿Cómo compruebo la cabecera CSP con curl?</h4>
 <TerminalSession>
   <TerminalSessionCommand>
     curl -I https://jmrp.io | grep -i "content-security-policy"
@@ -91,7 +108,7 @@ import {
   </TerminalSessionOutput>
 </TerminalSession>
 
-<h4>Calcular hash para script inline</h4>
+<h4>¿Cómo calculo el hash de un script inline?</h4>
 <TerminalSession>
   <TerminalSessionCommand>
     echo -n 'alert("Hello");' | openssl dgst -sha256 -binary | openssl base64
