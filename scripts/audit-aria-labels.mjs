@@ -149,11 +149,10 @@ function getInterest(tagName, attrs) {
  * Visible text content of an element, excluding `aria-hidden` subtrees (so
  * decorative icons inside a link/button don't pollute its accessible name).
  *
- * @param {import("cheerio").CheerioAPI} $ - The cheerio instance.
  * @param {import("cheerio").Cheerio<never>} $el - The element wrapper.
  * @returns {string} The visible, accessible text.
  */
-function visibleText($, $el) {
+function visibleText($el) {
   return $el.clone().find('[aria-hidden="true"]').remove().end().text().trim();
 }
 
@@ -202,7 +201,7 @@ function getAccName($, $el, attrs) {
   if (attrs.alt !== undefined) return attrs.alt.trim();
 
   // 5. Visible text (excluding aria-hidden decorative content)
-  const txt = visibleText($, $el);
+  const txt = visibleText($el);
   if (txt) return txt;
 
   // 6. Nested labelled descendant (icon-only link wrapping <img alt> / [aria-label]).
@@ -353,8 +352,7 @@ function evaluateElement($, el, freq, nameHrefs) {
     hasName: !!accName,
     isRedundant:
       !!attrs.ariaLabel &&
-      attrs.ariaLabel.trim().toLowerCase() ===
-        visibleText($, $el).toLowerCase(),
+      attrs.ariaLabel.trim().toLowerCase() === visibleText($el).toLowerCase(),
     isGeneric: interest.isInteractive && isGenericName(accName),
     isInteractive: interest.isInteractive,
     // An accessible name is required for: interactive controls, an <img> with no

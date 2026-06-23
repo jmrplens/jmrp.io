@@ -110,17 +110,6 @@ function parseMarkdownLinks(text: string): string {
     list-style: none;
   }
 
-  /* Vertical line from first dot center to last dot center */
-  .timeline::before {
-    position: absolute;
-    top: calc(var(--tl-dot-offset) + var(--tl-dot-size) / 2);
-    bottom: calc(var(--tl-dot-offset) + var(--tl-dot-size) / 2);
-    left: calc(var(--tl-marker-col) / 2 - var(--tl-line-width) / 2);
-    width: var(--tl-line-width);
-    content: "";
-    background: var(--color-border);
-  }
-
   .tl-event {
     display: grid;
     grid-template-columns: var(--tl-marker-col) 1fr;
@@ -135,9 +124,30 @@ function parseMarkdownLinks(text: string): string {
 
   /* Marker column */
   .tl-marker {
+    position: relative;
     display: flex;
     justify-content: center;
     padding-top: var(--tl-dot-offset);
+  }
+
+  /* Connecting line, drawn per-row on the marker cell (a sibling of the
+     content) rather than as a ::before on the .timeline container. Keeping it
+     off the text's ancestor chain lets axe-core resolve the background of the
+     text/links inside and verify their contrast (it was reported as
+     `color-contrast` incomplete otherwise). Each segment runs from this dot's
+     centre to the next dot's centre; hidden on the last row. */
+  .tl-marker::before {
+    position: absolute;
+    top: calc(var(--tl-dot-offset) + var(--tl-dot-size) / 2);
+    bottom: calc(-1rem - var(--tl-dot-offset) - var(--tl-dot-size) / 2);
+    left: calc(50% - var(--tl-line-width) / 2);
+    width: var(--tl-line-width);
+    content: "";
+    background: var(--color-border);
+  }
+
+  .tl-event:last-child .tl-marker::before {
+    display: none;
   }
 
   /* Small colored dot */
@@ -168,7 +178,7 @@ function parseMarkdownLinks(text: string): string {
     font-family: var(--font-mono);
     font-size: 0.7rem;
     font-weight: var(--fw-medium);
-    color: var(--tl-accent, var(--color-text-muted));
+    color: var(--tl-badge-fg, var(--tl-accent, var(--color-text-muted)));
     background: var(--tl-bg-muted, rgb(0 0 0 / 6%));
     border-radius: 0.1875rem;
   }
@@ -178,7 +188,7 @@ function parseMarkdownLinks(text: string): string {
     padding: 0.0625rem 0.375rem;
     font-size: 0.65rem;
     font-weight: var(--fw-semibold);
-    color: var(--tl-accent, var(--color-text-muted));
+    color: var(--tl-badge-fg, var(--tl-accent, var(--color-text-muted)));
     text-transform: uppercase;
     letter-spacing: 0.025em;
     background: var(--tl-bg-muted, rgb(0 0 0 / 6%));
@@ -221,6 +231,10 @@ function parseMarkdownLinks(text: string): string {
 
   .tl-success {
     --tl-accent: var(--color-success, #10b981);
+
+    /* Darker ink for the date/type chips so their text meets WCAG AA on the
+       light success tint (the bright accent failed at ~2.3:1). */
+    --tl-badge-fg: #065f46;
     --tl-bg-muted: color-mix(
       in srgb,
       var(--color-success, #10b981) 12%,
@@ -230,6 +244,10 @@ function parseMarkdownLinks(text: string): string {
 
   .tl-warning {
     --tl-accent: var(--color-warning, #f59e0b);
+
+    /* Darker ink for the chips so their text meets WCAG AA on the light
+       warning tint (the bright accent failed at ~2.0:1). */
+    --tl-badge-fg: #8a5000;
     --tl-bg-muted: color-mix(
       in srgb,
       var(--color-warning, #f59e0b) 12%,
@@ -250,6 +268,13 @@ function parseMarkdownLinks(text: string): string {
   /* Dark mode */
   :global([data-theme="dark"]) .tl-default {
     --tl-bg-muted: rgb(255 255 255 / 8%);
+  }
+
+  /* On the dark tinted chips the bright accent already meets AA, so the
+     light-theme dark ink is reverted here. */
+  :global([data-theme="dark"]) .tl-success,
+  :global([data-theme="dark"]) .tl-warning {
+    --tl-badge-fg: var(--tl-accent);
   }
 
   /* Responsive */

@@ -467,6 +467,11 @@ const personSchema = {
     transform: translateY(-2px);
   }
 
+  /* Decorative notch linking the card to the timeline rail. Kept as a ::before
+     on .timeline-content (flush with the card edge). This makes axe report the
+     card's links as `color-contrast` "incomplete" (it can't resolve a pseudo
+     ancestor's background), but that is benign — the unmasked audit confirmed
+     no hidden contrast failure here. */
   .timeline-content::before {
     position: absolute;
     top: 22px;
